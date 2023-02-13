@@ -6999,7 +6999,7 @@ CAS<~>
     self.assertEqual(nm.GetIntProp("bar"), 2)
     self.assertEqual(nm.foo, 1)
 
-  def testGithubIssue(self):
+  def testGithubIssue6306(self):
     # test of unpickling
     props = Chem.GetDefaultPickleProperties()
     try:
