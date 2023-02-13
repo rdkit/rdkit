@@ -650,7 +650,7 @@ def _MolsNestedToLinear(mols_matrix, legends_matrix = None, highlightAtomLists_m
       padded_matrix = [pad_list(row, row_length, pad_with) for row in input_matrix]
       return padded_matrix
 
-  def flatten_twoD_list(twoD_list: list[list]) -> list:
+  def flatten_twoD_list(twoD_list: list) -> list:
       return [item for sublist in twoD_list for item in sublist]
 
   # Pad matrices so they're rectangular (same length for each sublist),
