@@ -6999,6 +6999,18 @@ CAS<~>
     self.assertEqual(nm.GetIntProp("bar"), 2)
     self.assertEqual(nm.foo, 1)
 
+  def testGithubIssue(self):
+    # test of unpickling
+    props = Chem.GetDefaultPickleProperties()
+    try:
+      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps) 
+      mols = [Chem.MolFromSmiles(s) for s in ["C","CC"]]
+      scaffolds = [MurckoScaffold.GetScaffoldForMol(m) for m in mols]
+      # this shouldn't throw an exception
+      unpickler = [pickle.loads(pickle.dumps(m)) for m in mols]
+    finally:
+      Chem.SetDefaultPickleProperties(props)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
