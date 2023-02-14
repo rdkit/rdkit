@@ -3356,4 +3356,16 @@ M  END
       std::cerr << MolToV3KMolBlock(cp) << std::endl;
     }
   }
+  SECTION("more complex 1") {
+    std::string smi =
+        "[H][C@@]12CC(=O)N1[C@@H](C(=O)O)C(C)(C)S2(=O)=O |(-2.78382,0.183015,;-1.38222,-0.351313,;-2.12923,-1.65207,;-0.828466,-2.39908,;-0.436905,-3.84707,;-0.0814577,-1.09832,;1.03095,-0.0920638,;2.49888,-0.400554,;2.96569,-1.82607,;3.50001,0.71647,;0.41769,1.27685,;1.8432,1.74365,;0.102447,2.74335,;-1.07373,1.11662,;-1.07718,2.61662,;-2.56587,1.26998,)|";
+    SmilesParserParams spps;
+    spps.removeHs = false;
+    auto m = SmilesToMol(smi, spps);
+    REQUIRE(m);
+    Chirality::BondWedgingParameters bwps;
+    bwps.wedgeTwoBondsIfPossible = true;
+    Chirality::wedgeMolBonds(*m, &m->getConformer(), &bwps);
+    m->debugMol(std::cerr);
+  }
 }

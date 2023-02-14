@@ -397,9 +397,14 @@ void addSecondWedgeAroundAtom(ROMol &mol, Bond *refBond,
   Bond *bondToWedge = nullptr;
   for (auto bond : mol.atomBonds(atom)) {
     if (bond == refBond || bond->getBondType() != Bond::BondType::SINGLE ||
-        bond->getBondDir() != Bond::BondDir::NONE) {
+        bond->getBondDir() != Bond::BondDir::NONE ||
+        bond->getOtherAtom(atom)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED) {
       continue;
     }
+
+    // FIX: There's more checking required here
+
     auto bVect = conf->getAtomPos(bond->getEndAtomIdx());
     bVect.z = 0.0;
     bVect = aloc.directionVector(bVect);
@@ -410,7 +415,6 @@ void addSecondWedgeAroundAtom(ROMol &mol, Bond *refBond,
       minAngle = angle;
     }
   }
-  // FIX: There's more checking required here
   // if we got a bond and the angle is < 120 degrees (quasi-arbitrary)
   if (bondToWedge && minAngle < 2 * M_PI / 3) {
     bondToWedge->setBondDir(refBond->getBondDir() == Bond::BondDir::BEGINDASH

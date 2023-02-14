@@ -2258,6 +2258,13 @@ ARGUMENTS:\n\
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
+    python::class_<Chirality::BondWedgingParameters>(
+        "BondWedgingParameters",
+        "Parameters controlling how bond wedging is done.")
+        .def_readwrite(
+            "wedgeTwoBondsIfPossible",
+            &Chirality::BondWedgingParameters::wedgeTwoBondsIfPossible,
+            "whenever possible add two wedged bonds to each stereocenter");
     docString =
         "Set the wedging on single bonds in a molecule.\n\
    The wedging scheme used is that from Mol files.\n\
@@ -2268,9 +2275,9 @@ ARGUMENTS:\n\
     - conformer: the conformer to use to determine wedge direction\n\
 \n\
 \n";
-    python::def("WedgeMolBonds",
-                (void (*)(ROMol &, const Conformer *))Chirality::wedgeMolBonds,
-                (python::arg("mol"), python::arg("conformer")),
+    python::def("WedgeMolBonds", Chirality::wedgeMolBonds,
+                (python::arg("mol"), python::arg("conformer"),
+                 python::arg("params") = python::object()),
                 docString.c_str());
 
     docString =
