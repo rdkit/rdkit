@@ -25,6 +25,7 @@ from io import StringIO
 import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
 from rdkit.Chem import rdqueries
+from rdkit.Chem.Scaffolds import MurckoScaffold
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
