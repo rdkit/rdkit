@@ -1360,25 +1360,20 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
     mol.getPropIfPresent(cxsgTracker, sgTracker);
     std::vector<StereoGroup> mol_stereo_groups(mol.getStereoGroups());
     TEST_ASSERT(mol_stereo_groups.size() == sgTracker.size());
-    bool found = false;
-    for (unsigned int i = 0; i < sgTracker.size(); ++i) {
-      if (sgTracker[i] == group_id) {
-        // yep, we've seen it before, so just add these atoms to it.
-        auto gAtoms = mol_stereo_groups[i].getAtoms();
-        gAtoms.insert(gAtoms.end(), atoms.begin(), atoms.end());
-        mol_stereo_groups[i] =
-            StereoGroup(mol_stereo_groups[i].getGroupType(), std::move(gAtoms));
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
+
+    auto iter = std::find(sgTracker.begin(), sgTracker.end(), group_id);
+    if (iter != sgTracker.end()) {
+      auto index = iter - sgTracker.begin();
+      auto gAtoms = mol_stereo_groups[index].getAtoms();
+      gAtoms.insert(gAtoms.end(), atoms.begin(), atoms.end());
+      mol_stereo_groups[index] = StereoGroup(
+          mol_stereo_groups[index].getGroupType(), std::move(gAtoms));
+    } else {
       // not seen this before, create a new stereogroup
       mol_stereo_groups.emplace_back(group_type, std::move(atoms));
       sgTracker.resize(mol_stereo_groups.size());
       sgTracker.back() = group_id;
       mol.setProp(cxsgTracker, sgTracker);
-    } else {
     }
 
     mol.setStereoGroups(std::move(mol_stereo_groups));
