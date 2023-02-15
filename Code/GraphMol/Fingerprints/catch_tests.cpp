@@ -759,11 +759,15 @@ TEST_CASE("topological torsions shorted paths") {
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
         TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>());
     REQUIRE(fpGenerator);
-    static_cast<TopologicalTorsion::TopologicalTorsionArguments *>(fpGenerator->getOptions())->df_countSimulation = false;
+    static_cast<TopologicalTorsion::TopologicalTorsionArguments *>(
+        fpGenerator->getOptions())
+        ->df_countSimulation = false;
     std::unique_ptr<SparseBitVect> fp(fpGenerator->getSparseFingerprint(*mol));
-    CHECK(fp->getNumOnBits()==2);
-    static_cast<TopologicalTorsion::TopologicalTorsionArguments *>(fpGenerator->getOptions())->df_onlyShortestPaths = true;
+    CHECK(fp->getNumOnBits() == 3);
+    static_cast<TopologicalTorsion::TopologicalTorsionArguments *>(
+        fpGenerator->getOptions())
+        ->df_onlyShortestPaths = true;
     fp.reset(fpGenerator->getSparseFingerprint(*mol));
-    CHECK(fp->getNumOnBits()==0);
+    CHECK(fp->getNumOnBits() == 1);
   }
 }
