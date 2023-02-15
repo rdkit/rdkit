@@ -42,7 +42,7 @@ OutputType TopologicalTorsionEnvGenerator<OutputType>::getResultSize() const {
 std::string TopologicalTorsionArguments::infoString() const {
   return "TopologicalTorsionArguments torsionAtomCount=" +
              std::to_string(d_torsionAtomCount) + " onlyShortestPaths="
-         << std::to_string(df_onlyShortestPaths);
+         + std::to_string(df_onlyShortestPaths);
 };
 
 template <typename OutputType>
@@ -108,8 +108,12 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
     }
   }
   boost::dynamic_bitset<> pAtoms(mol.getNumAtoms());
+  bool useBonds = false;
+  bool useHs = false;
+  int rootedAtAtom = -1;
   PATH_LIST paths = findAllPathsOfLengthN(
-      mol, topologicalTorsionArguments->d_torsionAtomCount, false);
+      mol, topologicalTorsionArguments->d_torsionAtomCount, useBonds, useHs,
+      rootedAtAtom, topologicalTorsionArguments->df_onlyShortestPaths);
   for (PATH_LIST::const_iterator pathIt = paths.begin(); pathIt != paths.end();
        ++pathIt) {
     bool keepIt = true;
