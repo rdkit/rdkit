@@ -620,7 +620,35 @@ public class Chemv2Tests extends GraphMolTest {
         phenyl.delete();
     }
 
-
+    @Test
+    public void testStereoChemFunctions() {
+        RWMol m = RWMol.MolFromSmiles("CC(O)Cl |(-3.9163,5.4767,;-3.9163,3.9367,;-2.5826,3.1667,;-5.25,3.1667,),wU:1.0|");
+        assertTrue(m != null);
+        int bondcfg;
+        assertEquals(m.getBondWithIdx(0).getProp("_MolFileBondCfg"), "1");
+        assertEquals(m.getAtomWithIdx(1).getChiralTag(), Atom.ChiralType.CHI_TETRAHEDRAL_CW);
+        m = RWMol.MolFromSmiles("CC(O)Cl |(-3.9163,5.4767,;-3.9163,3.9367,;-2.5826,3.1667,;-5.25,3.1667,),wD:1.0|");
+        assertTrue(m != null);
+        assertEquals(m.getBondWithIdx(0).getProp("_MolFileBondCfg"), "3");
+        assertEquals(m.getAtomWithIdx(1).getChiralTag(), Atom.ChiralType.CHI_TETRAHEDRAL_CCW);
+        m.invertMolBlockWedgingInfo();
+        assertEquals(m.getBondWithIdx(0).getProp("_MolFileBondCfg"), "1");
+        m.reapplyMolBlockWedging();
+        RDKFuncs.assignChiralTypesFromBondDirs(m);
+        assertEquals(m.getAtomWithIdx(1).getChiralTag(), Atom.ChiralType.CHI_TETRAHEDRAL_CW);
+        m.invertMolBlockWedgingInfo();
+        assertEquals(m.getBondWithIdx(0).getProp("_MolFileBondCfg"), "3");
+        m.reapplyMolBlockWedging();
+        RDKFuncs.assignChiralTypesFromBondDirs(m);
+        assertEquals(m.getAtomWithIdx(1).getChiralTag(), Atom.ChiralType.CHI_TETRAHEDRAL_CCW);
+        m.clearMolBlockWedgingInfo();
+        m.getAtomWithIdx(1).setChiralTag(Atom.ChiralType.CHI_UNSPECIFIED);
+        assertFalse(m.getBondWithIdx(0).hasProp("_MolFileBondCfg"));
+        m.reapplyMolBlockWedging();
+        RDKFuncs.assignChiralTypesFromBondDirs(m);
+        assertEquals(m.getAtomWithIdx(1).getChiralTag(), Atom.ChiralType.CHI_UNSPECIFIED);
+    }
+    
     public static void main(String args[]) {
         org.junit.runner.JUnitCore.main("org.RDKit.Chemv2Tests");
     }
