@@ -88,7 +88,7 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
   // This method can be used to distinguish query atoms from standard atoms:
   bool hasQuery() const override { return dp_query != nullptr; }
 
-  //! replaces our current query with the value passed in
+  //! returns the label associated to this query
   std::string getQueryType() const override { return dp_query->getTypeLabel(); }
 
   //! replaces our current query with the value passed in
