@@ -15,14 +15,13 @@
 
 #include <boost/any.hpp>
 
-#ifdef RDK_BUILD_MAEPARSER_SUPPORT
-#include <maeparser/Writer.hpp>
-#endif  // RDK_BUILD_MAEPARSER_SUPPORT
-
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/RDLog.h>
 
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+#undef RDK_BUILD_MAEPARSER_SUPPORT
+#endif
 #include "MolWriters.h"
 #include "FileParsers.h"
 
