@@ -132,8 +132,13 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     hasVal = true;
     needParen = true;
   } else if (descrip == "AtomAtomicNum") {
-    res << "#";
-    hasVal = true;
+    std::string symbol;
+    if (qatom->getPropIfPresent(common_properties::smilesSymbol, symbol)) {
+      res << symbol;
+    } else {
+      res << "#";
+      hasVal = true;
+    }
     needParen = true;
   } else if (descrip == "AtomExplicitDegree") {
     res << "D";
@@ -253,14 +258,29 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     int atNum;
     bool isAromatic;
     parseAtomType(equery->getVal(), atNum, isAromatic);
-    std::string symbol = PeriodicTable::getTable()->getElementSymbol(atNum);
-    if (isAromatic) {
-      symbol[0] += ('a' - 'A');
-    }
-    res << symbol;
-    if (!SmilesWrite::inOrganicSubset(atNum)) {
+
+    std::string symbol;
+    auto hasCustomSymbol =
+        qatom->getPropIfPresent(common_properties::smilesSymbol, symbol);
+    if (hasCustomSymbol) {
+      if (isAromatic) {
+        res << symbol << "&a";
+      } else {
+        res << symbol << "&A";
+      }
       needParen = true;
+    } else {
+      symbol = PeriodicTable::getTable()->getElementSymbol(atNum);
+      if (isAromatic) {
+        symbol[0] += ('a' - 'A');
+      }
+      res << symbol;
+
+      if (!SmilesWrite::inOrganicSubset(atNum)) {
+        needParen = true;
+      }
     }
+
   } else {
     BOOST_LOG(rdWarningLog)
         << "Cannot write SMARTS for query type : " << descrip
@@ -366,8 +386,9 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
       }
       break;
     case Bond::ZERO:
-      res = "~"; // Actually means "any", but we use ~ for unknown bond types in SMILES,
-      break;     // and this will match a ZOB.
+      res = "~";  // Actually means "any", but we use ~ for unknown bond types
+                  // in SMILES,
+      break;      // and this will match a ZOB.
     default:
       res = "";
   }
@@ -705,7 +726,10 @@ std::string getNonQueryAtomSmarts(const Atom *atom) {
     res << isotope;
   }
 
-  if (SmilesWrite::inOrganicSubset(atom->getAtomicNum())) {
+  std::string symbol;
+  if (atom->getPropIfPresent(common_properties::smilesSymbol, symbol)) {
+    res << symbol;
+  } else if (SmilesWrite::inOrganicSubset(atom->getAtomicNum())) {
     res << "#" << atom->getAtomicNum();
   } else {
     res << atom->getSymbol();
