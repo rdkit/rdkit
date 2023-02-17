@@ -875,7 +875,6 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
     origConformer.reset(new Conformer(mol.getConformer()));
   }
   if (alignOnly) {
-    RDGeom::Transform3D trans;
     std::vector<MatchVectType> matches;
     std::unique_ptr<ROMol> molHs;
     ROMol *prbMol = &mol;
@@ -906,12 +905,13 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
             const auto templateAtom = templateMol.getAtomWithIdx(pair.first);
             const auto prbAtom = prbMol->getAtomWithIdx(pair.second);
             bool isRGroup = templateAtom->getAtomicNum() == 0 && templateAtom->getDegree() == 1;
-            if (isRGroup && prbAtom->getAtomicNum() > 1) {
-              prunedMatch.push_back(std::move(pair));
+            if (isRGroup) {
+              if (prbAtom->getAtomicNum() == 1) {
+                continue;
+              }
               ++nMatchedHeavies;
-            } else if (!isRGroup) {
-              prunedMatch.push_back(std::move(pair));
             }
+            prunedMatch.push_back(std::move(pair));
           }
           if (nMatchedHeavies < maxMatchedHeavies) {
             break;
@@ -929,6 +929,7 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
       if (!mol.getNumConformers()) {
         RDDepict::compute2DCoords(mol);
       }
+      RDGeom::Transform3D trans;
       MolAlign::getBestAlignmentTransform(mol, templateMol, trans, match,
                                           confId, confId, matches, MAX_MATCHES);
       std::for_each(match.begin(), match.end(),
