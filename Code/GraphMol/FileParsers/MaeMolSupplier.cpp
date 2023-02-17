@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -208,6 +209,15 @@ void parseStereoBondLabel(RWMol &mol, const std::string &stereo_prop) {
   bond->setStereo(type);
 }
 
+std::string strip_prefix_from_mae_property(const std::string &propName) {
+  const char &first = propName[0];
+  if ((first == 'b' || first == 'i' || first == 'r' || first == 's') &&
+      (strncmp(&propName.c_str()[1], "_rdk_", 5) == 0)) {
+    return propName.substr(6);
+  }
+  return propName;
+}
+
 //! Copy over the structure properties, including stereochemistry.
 void set_mol_properties(RWMol &mol, const mae::Block &ct_block) {
   for (const auto &prop : ct_block.getProperties<std::string>()) {
@@ -219,17 +229,21 @@ void set_mol_properties(RWMol &mol, const mae::Block &ct_block) {
     } else if (prop.first.find(mae::CT_EZ_PROP_PREFIX) == 0) {
       parseStereoBondLabel(mol, prop.second);
     } else {
-      mol.setProp(prop.first, prop.second);
+      auto propName = strip_prefix_from_mae_property(prop.first);
+      mol.setProp(propName, prop.second);
     }
   }
   for (const auto &prop : ct_block.getProperties<double>()) {
-    mol.setProp(prop.first, prop.second);
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    mol.setProp(propName, prop.second);
   }
   for (const auto &prop : ct_block.getProperties<int>()) {
-    mol.setProp(prop.first, prop.second);
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    mol.setProp(propName, prop.second);
   }
   for (const auto &prop : ct_block.getProperties<mae::BoolProperty>()) {
-    mol.setProp(prop.first, static_cast<bool>(prop.second));
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    mol.setProp(propName, static_cast<bool>(prop.second));
   }
 }
 
@@ -247,7 +261,8 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
       continue;
     }
 
-    atom.setProp(prop.first, prop.second->at(i));
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    atom.setProp(propName, prop.second->at(i));
   }
 
   for (const auto &prop : atom_block.getProperties<double>()) {
@@ -263,7 +278,8 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
       continue;
     }
 
-    atom.setProp(prop.first, prop.second->at(i));
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    atom.setProp(propName, prop.second->at(i));
   }
   for (const auto &prop : atom_block.getProperties<int>()) {
     if (prop.first == mae::ATOM_ATOMIC_NUM) {
@@ -280,7 +296,8 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
       // Formal charge has a specific setter
       atom.setFormalCharge(prop.second->at(i));
     } else {
-      atom.setProp(prop.first, prop.second->at(i));
+      auto propName = strip_prefix_from_mae_property(prop.first);
+      atom.setProp(propName, prop.second->at(i));
     }
   }
   for (const auto &prop : atom_block.getProperties<mae::BoolProperty>()) {
@@ -288,7 +305,8 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
       continue;
     }
 
-    atom.setProp(prop.first, static_cast<bool>(prop.second->at(i)));
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    atom.setProp(propName, static_cast<bool>(prop.second->at(i)));
   }
 }
 
@@ -339,7 +357,14 @@ void addBonds(const mae::IndexedBlock &bond_block, RWMol &mol) {
     const auto from_atom = from_atoms->at(i) - 1;
     const auto to_atom = to_atoms->at(i) - 1;
     const auto order = bolookup.find(orders->at(i))->second;
-    if (from_atom > to_atom) {
+    if (auto bond = mol.getBondBetweenAtoms(from_atom, to_atom);
+        bond != nullptr) {
+      if (order != bond->getBondType()) {
+        BOOST_LOG(rdWarningLog)
+            << "WARNING: bond between atoms " << from_atom << " and " << to_atom
+            << " is defined more than once with different bond orders. "
+            << "The first definition will be honored, and the rest will be ignored.";
+      }
       continue;  // Maestro files may double-list some bonds
     }
 

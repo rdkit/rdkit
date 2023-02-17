@@ -9,22 +9,22 @@ rdkit_python_extension(rdchem
                        SmilesParse ChemTransforms SubstructMatch GraphMol)
 
 rdkit_python_extension(rdmolops
-                       rdmolops.cpp MolOps.cpp 
+                       rdmolops.cpp MolOps.cpp
                        ChiralityOps.cpp
                        DEST Chem
                        LINK_LIBRARIES
                        ChemReactions Depictor
                        FileParsers SubstructMatch Fingerprints ChemTransforms
-                       Subgraphs SmilesParse MolTransforms GraphMol )
+                       Subgraphs SmilesParse MolTransforms GraphMol)
 
 rdkit_python_extension(rdqueries
                        rdqueries.cpp Queries.cpp
                        DEST Chem
                        LINK_LIBRARIES
-                       GraphMol  )
+                       GraphMol)
 
 if(RDK_BUILD_MAEPARSER_SUPPORT)
-    set (maesupplier MaeMolSupplier.cpp)
+    set (maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
     include_directories(${maeparser_INCLUDE_DIRS})
 endif()
 
@@ -39,17 +39,17 @@ set(rdmolfiles_sources rdmolfiles.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
                        TDTWriter.cpp CompressedSDMolSupplier.cpp
                        PDBWriter.cpp
-											 MultithreadedSmilesMolSupplier.cpp
-											 MultithreadedSDMolSupplier.cpp)
+                       MultithreadedSmilesMolSupplier.cpp
+                       MultithreadedSDMolSupplier.cpp)
 else(RDK_BUILD_COMPRESSED_SUPPLIERS)
 set(rdmolfiles_sources rdmolfiles.cpp
                        ForwardSDMolSupplier.cpp ${maesupplier}
                        SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
                        TDTWriter.cpp
-                       PDBWriter.cpp 
-											 MultithreadedSmilesMolSupplier.cpp
-											 MultithreadedSDMolSupplier.cpp)
+                       PDBWriter.cpp
+                       MultithreadedSmilesMolSupplier.cpp
+                       MultithreadedSDMolSupplier.cpp)
 
 endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 
@@ -57,7 +57,7 @@ rdkit_python_extension(rdmolfiles
                        ${rdmolfiles_sources}
                        DEST Chem
                        LINK_LIBRARIES  SubstructMatch
-		       SmilesParse FileParsers GraphMol
+                       SmilesParse FileParsers GraphMol
                        RDGeometryLib RDGeneral RDBoost)
 
 rdkit_python_extension(rdtrajectory
@@ -66,7 +66,7 @@ rdkit_python_extension(rdtrajectory
                        LINK_LIBRARIES Trajectory RDGeometryLib RDGeneral RDBoost GraphMol)
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
-  set_target_properties(rdmolfiles PROPERTIES DEFINE_SYMBOL SUPPORT_COMPRESSED_SUPPLIERS )
+  set_target_properties(rdmolfiles PROPERTIES DEFINE_SYMBOL SUPPORT_COMPRESSED_SUPPLIERS)
 endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 
 add_pytest(pyGraphMolWrap
@@ -84,7 +84,7 @@ add_pytest(pyTestSGroups
 if (RDK_TEST_MULTITHREADED)
   add_pytest(pyTestThreads
            ${CMAKE_CURRENT_SOURCE_DIR}/testThreads.py)
-	add_pytest(pyTestMultithreadedMolSupplier
+  add_pytest(pyTestMultithreadedMolSupplier
          ${CMAKE_CURRENT_SOURCE_DIR}/testMultithreadedMolSupplier.py)
 endif (RDK_TEST_MULTITHREADED)
 
