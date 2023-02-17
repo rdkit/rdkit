@@ -681,6 +681,9 @@ void wrap_smiwriter();
 void wrap_sdwriter();
 void wrap_tdtwriter();
 void wrap_pdbwriter();
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+void wrap_maewriter();
+#endif
 
 // MultithreadedMolSupplier stuff
 void wrap_multiSmiSupplier();
@@ -2153,6 +2156,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   wrap_sdwriter();
   wrap_tdtwriter();
   wrap_pdbwriter();
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+  wrap_maewriter();
+#endif
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
   /********************************************************
