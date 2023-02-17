@@ -18,6 +18,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -2365,4 +2366,45 @@ TEST_CASE("SMARTS for molecule with zero order bond should match itself") {
   SubstructMatchParameters ps;
   ps.maxMatches = 1;
   CHECK(SubstructMatch(*m, *q, ps).size() == 1);
+}
+
+TEST_CASE("smilesSymbol in SMARTS", "[smarts][smilesSymbol]") {
+  // Probably just the first case is going to be useful to people
+  SECTION("smilesSymbol without queries") {
+    auto m = "CC*"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(2)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[#6]-[#6]-[Xa]");
+  }
+  SECTION("smilesSymbol with query on other atoms") {
+    auto m = "[#6]cc"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[Xa]cc");
+  }
+  SECTION("smilesSymbol with aromaticity query") {
+    auto m = "ccc"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[Xa&a]cc");
+  }
+  SECTION("smilesSymbol with aliphatic query") {
+    auto m = "CCC"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[Xa&A]CC");
+  }
+  SECTION("smilesSymbol with additional queries") {
+    auto m = "[#6]C[#6]"_smarts;
+    REQUIRE(m);
+    auto atom = m->getAtomWithIdx(1);
+
+    atom->expandQuery(makeAtomExplicitDegreeQuery(3), Queries::COMPOSITE_AND);
+    atom->expandQuery(makeAtomTotalValenceQuery(4), Queries::COMPOSITE_AND);
+    atom->expandQuery(makeAtomFormalChargeQuery(2), Queries::COMPOSITE_AND);
+
+    atom->setProp(common_properties::smilesSymbol, "Xa");
+
+    CHECK(MolToSmarts(*m) == "[#6][Xa&A&D3&v4&+2][#6]");
+  }
 }
