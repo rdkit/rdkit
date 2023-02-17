@@ -439,9 +439,9 @@ def _CanonicalizeStereoGroups(mol):
     compare the CXSMILES of those.
     """
 
-  # if not len(mol.GetStereoGroups()):
-  Chem.CanonicalizeEnhancedStereo(mol)
-  return Chem.MolToCXSmiles(mol), mol
+  if not len(mol.GetStereoGroups()):
+    Chem.CanonicalizeEnhancedStereo(mol)
+    return Chem.MolToCXSmiles(mol), mol
 
   mol = Chem.Mol(mol)
 
