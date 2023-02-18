@@ -189,9 +189,9 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
 
   auto isMetal = [](const Atom *a) -> bool {
     // This is the list of not metal atoms from QueryOps.cpp
-    static const std::set<int> notMetals{1,  2,  5,  6,  7,  8,  9,  10,
-                                         14, 15, 16, 17, 18, 33, 34, 35,
-                                         36, 52, 53, 54, 85, 86};
+    static const std::set<int> notMetals{0,  1,  2,  5,  6,  7,  8,  9,
+                                         10, 14, 15, 16, 17, 18, 33, 34,
+                                         35, 36, 52, 53, 54, 85, 86};
     return (notMetals.find(a->getAtomicNum()) == notMetals.end());
   };
   auto noDative = [](const Atom *a) -> bool {
