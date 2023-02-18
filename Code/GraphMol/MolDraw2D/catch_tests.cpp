@@ -6844,6 +6844,7 @@ M  END
     REQUIRE(a);
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
       REQUIRE_NOTHROW(drawer.drawMolecule(*a));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -6856,7 +6857,6 @@ M  END
     }
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
-      drawer.drawOptions().useComplexQueryAtomSymbols = true;
       REQUIRE_NOTHROW(drawer.drawMolecule(*a));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -6892,6 +6892,7 @@ M  END
     REQUIRE(ah);
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
       REQUIRE_NOTHROW(drawer.drawMolecule(*ah));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -6904,7 +6905,6 @@ M  END
     }
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
-      drawer.drawOptions().useComplexQueryAtomSymbols = true;
       REQUIRE_NOTHROW(drawer.drawMolecule(*ah));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -6940,6 +6940,7 @@ M  END
     REQUIRE(q);
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
       REQUIRE_NOTHROW(drawer.drawMolecule(*q));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -6952,7 +6953,6 @@ M  END
     }
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
-      drawer.drawOptions().useComplexQueryAtomSymbols = true;
       REQUIRE_NOTHROW(drawer.drawMolecule(*q));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -6988,6 +6988,7 @@ M  END
     REQUIRE(qh);
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
       REQUIRE_NOTHROW(drawer.drawMolecule(*qh));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -7000,7 +7001,6 @@ M  END
     }
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
-      drawer.drawOptions().useComplexQueryAtomSymbols = true;
       REQUIRE_NOTHROW(drawer.drawMolecule(*qh));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -7038,6 +7038,7 @@ M  END
     REQUIRE(x);
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
       REQUIRE_NOTHROW(drawer.drawMolecule(*x));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -7050,7 +7051,6 @@ M  END
     }
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
-      drawer.drawOptions().useComplexQueryAtomSymbols = true;
       REQUIRE_NOTHROW(drawer.drawMolecule(*x));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -7088,6 +7088,7 @@ M  END
     REQUIRE(xh);
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
       REQUIRE_NOTHROW(drawer.drawMolecule(*xh));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -7100,7 +7101,6 @@ M  END
     }
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
-      drawer.drawOptions().useComplexQueryAtomSymbols = true;
       REQUIRE_NOTHROW(drawer.drawMolecule(*xh));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -7138,6 +7138,7 @@ M  END
     REQUIRE(m);
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
       REQUIRE_NOTHROW(drawer.drawMolecule(*m));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -7151,7 +7152,6 @@ M  END
     }
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
-      drawer.drawOptions().useComplexQueryAtomSymbols = true;
       REQUIRE_NOTHROW(drawer.drawMolecule(*m));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -7189,6 +7189,7 @@ M  END
     REQUIRE(mh);
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
       REQUIRE_NOTHROW(drawer.drawMolecule(*mh));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -7202,7 +7203,6 @@ M  END
     }
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
-      drawer.drawOptions().useComplexQueryAtomSymbols = true;
       REQUIRE_NOTHROW(drawer.drawMolecule(*mh));
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
