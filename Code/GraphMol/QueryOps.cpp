@@ -478,6 +478,7 @@ ATOM_OR_QUERY *makeMAtomQuery() {
   // using the definition from Marvin Sketch, which produces the following
   // SMARTS:
   // !#1!#2!#5!#6!#7!#8!#9!#10!#14!#15!#16!#17!#18!#33!#34!#35!#36!#52!#53!#54!#85!#86
+  // We expanded this with !#0 as part of #6106
   // it's easier to define what isn't a metal than what is. :-)
   ATOM_OR_QUERY *res = makeMHAtomQuery();
   res->addChild(
@@ -490,10 +491,13 @@ ATOM_OR_QUERY *makeMHAtomQuery() {
   // using the definition from Marvin Sketch, which produces the following
   // SMARTS:
   // !#2!#5!#6!#7!#8!#9!#10!#14!#15!#16!#17!#18!#33!#34!#35!#36!#52!#53!#54!#85!#86
+  // We expanded this with !#0 as part of #6106
   // it's easier to define what isn't a metal than what is. :-)
   auto *res = new ATOM_OR_QUERY;
   res->setDescription("AtomOr");
   res->setNegation(true);
+  res->addChild(
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(0)));
   res->addChild(
       Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(2)));
   res->addChild(
