@@ -3397,6 +3397,8 @@ M  END
     std::cerr << " -------------- " << std::endl;
     Chirality::wedgeMolBonds(*m, &m->getConformer(), &bwps);
     CHECK(m->getBondWithIdx(1)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondWithIdx(1)->getBeginAtomIdx() == 2);
     CHECK(m->getBondWithIdx(2)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondWithIdx(2)->getBeginAtomIdx() == 2);
   }
 }

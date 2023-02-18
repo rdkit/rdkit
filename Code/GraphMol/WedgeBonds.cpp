@@ -424,6 +424,10 @@ void addSecondWedgeAroundAtom(ROMol &mol, Bond *refBond,
     bondToWedge->setBondDir(refBond->getBondDir() == Bond::BondDir::BEGINDASH
                                 ? Bond::BondDir::BEGINWEDGE
                                 : Bond::BondDir::BEGINDASH);
+    if (bondToWedge->getBeginAtomIdx() != atom->getIdx()) {
+      bondToWedge->setEndAtomIdx(bondToWedge->getBeginAtomIdx());
+      bondToWedge->setBeginAtomIdx(atom->getIdx());
+    }
   }
 }
 }  // namespace
