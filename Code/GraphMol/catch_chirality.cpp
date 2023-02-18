@@ -3387,6 +3387,16 @@ M  END
     Chirality::wedgeMolBonds(*m, &m->getConformer(), &bwps);
     CHECK(m->getBondWithIdx(12)->getBondDir() != Bond::BondDir::NONE);
     CHECK(m->getBondWithIdx(13)->getBondDir() != Bond::BondDir::NONE);
-    m->debugMol(std::cerr);
+  }
+  SECTION("another one") {
+    auto m =
+        "CC[C@@]1(O)C(=O)OCc2c1cc1-c3nc4ccccc4cc3Cn1c2=O |(-2.67178,3.55256,;-2.43493,2.07138,;-3.59925,1.12567,;-4.32841,2.43652,;-5.01681,0.635215,;-6.15033,1.61763,;-5.30084,-0.837648,;-4.16731,-1.82006,;-2.74976,-1.3296,;-2.46573,0.143259,;-1.04818,0.633713,;0.085343,-0.348697,;1.57389,-0.163687,;2.43243,1.06631,;3.92692,0.937796,;4.78546,2.1678,;6.27994,2.03928,;6.91588,0.680758,;6.05734,-0.549244,;4.56286,-0.420725,;3.70432,-1.65073,;2.20983,-1.52221,;1.11432,-2.54683,;-0.198688,-1.82156,;-1.61624,-2.31201,;-1.90027,-3.78488,)|"_smiles;
+    REQUIRE(m);
+    Chirality::BondWedgingParameters bwps;
+    bwps.wedgeTwoBondsIfPossible = true;
+    std::cerr << " -------------- " << std::endl;
+    Chirality::wedgeMolBonds(*m, &m->getConformer(), &bwps);
+    CHECK(m->getBondWithIdx(1)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondWithIdx(2)->getBondDir() != Bond::BondDir::NONE);
   }
 }
