@@ -379,6 +379,10 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol,
 }
 
 namespace {
+// conditions here:
+// 1. only degree four atoms (IUPAC)
+// 2. no ring bonds (IUPAC)
+// 3. not to chiral atoms (general IUPAC wedging rule)
 void addSecondWedgeAroundAtom(ROMol &mol, Bond *refBond,
                               const Conformer *conf) {
   PRECONDITION(refBond, "no reference bond provided");
@@ -399,7 +403,7 @@ void addSecondWedgeAroundAtom(ROMol &mol, Bond *refBond,
     if (bond == refBond || bond->getBondType() != Bond::BondType::SINGLE ||
         bond->getBondDir() != Bond::BondDir::NONE ||
         bond->getOtherAtom(atom)->getChiralTag() !=
-            Atom::ChiralType::CHI_UNSPECIFIED) {
+            Atom::ChiralType::CHI_UNSPECIFIED || mol.getRingInfo()->numBondRings(bond->getIdx()) ) {
       continue;
     }
 
@@ -432,6 +436,10 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
   }
   if (!params) {
     params = &defaultWedgingParams;
+  }
+  // we need ring info
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+    MolOps::findSSSR(mol);
   }
 
   auto wedgeBonds = pickBondsToWedge(mol, params);
