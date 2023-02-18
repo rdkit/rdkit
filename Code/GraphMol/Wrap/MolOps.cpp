@@ -2264,7 +2264,12 @@ ARGUMENTS:\n\
         .def_readwrite(
             "wedgeTwoBondsIfPossible",
             &Chirality::BondWedgingParameters::wedgeTwoBondsIfPossible,
-            "whenever possible add two wedged bonds to each stereocenter");
+            R"DOC(If this is enabled then two bonds will be wedged at chiral
+  centers subject to the following constraints:
+    1. ring bonds will not be wedged
+    2. bonds to chiral centers will not be wedged
+    3. bonds separated by more than 120 degrees will not be
+        wedged)DOC");
     docString =
         "Set the wedging on single bonds in a molecule.\n\
    The wedging scheme used is that from Mol files.\n\

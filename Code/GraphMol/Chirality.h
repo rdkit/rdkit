@@ -204,7 +204,13 @@ RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
                                                const StereoType &s);
 
 struct RDKIT_GRAPHMOL_EXPORT BondWedgingParameters {
-  bool wedgeTwoBondsIfPossible = false;
+  bool wedgeTwoBondsIfPossible =
+      false;  //!< If this is enabled then two bonds will be wedged at chiral
+              //!< centers subject to the following constraints:
+              //!<   1. ring bonds will not be wedged
+              //!<   2. bonds to chiral centers will not be wedged
+              //!<   3. bonds separated by more than 120 degrees will not be
+              //!<      wedged
 };
 
 namespace detail {
