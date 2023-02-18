@@ -398,6 +398,7 @@ void addSecondWedgeAroundAtom(ROMol &mol, Bond *refBond,
   refVect.z = 0.0;
   refVect = aloc.directionVector(refVect);
   double minAngle = 10000.0;
+  unsigned int bestDegree = 100;
   Bond *bondToWedge = nullptr;
   for (auto bond : mol.atomBonds(atom)) {
     if (bond == refBond || bond->getBondType() != Bond::BondType::SINGLE ||
@@ -414,9 +415,11 @@ void addSecondWedgeAroundAtom(ROMol &mol, Bond *refBond,
     bVect.z = 0.0;
     bVect = aloc.directionVector(bVect);
     auto angle = refVect.angleTo(bVect);
-    if (angle < minAngle) {
+    if ((angle - minAngle) < 5 * M_PI / 180 &&
+        bond->getOtherAtom(atom)->getDegree() <= bestDegree) {
       bondToWedge = bond;
       minAngle = angle;
+      bestDegree = bond->getOtherAtom(atom)->getDegree();
     }
   }
   // if we got a bond and the angle is < 120 degrees (quasi-arbitrary)

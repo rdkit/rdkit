@@ -3353,7 +3353,6 @@ M  END
             cp.getBondBetweenAtoms(1, 3)->getBondDir());
       CHECK(cp.getBondBetweenAtoms(1, 0)->getBondDir() == Bond::BondDir::NONE);
       CHECK(cp.getBondBetweenAtoms(1, 2)->getBondDir() == Bond::BondDir::NONE);
-      std::cerr << MolToV3KMolBlock(cp) << std::endl;
     }
   }
   SECTION(
@@ -3394,11 +3393,21 @@ M  END
     REQUIRE(m);
     Chirality::BondWedgingParameters bwps;
     bwps.wedgeTwoBondsIfPossible = true;
-    std::cerr << " -------------- " << std::endl;
     Chirality::wedgeMolBonds(*m, &m->getConformer(), &bwps);
     CHECK(m->getBondWithIdx(1)->getBondDir() != Bond::BondDir::NONE);
     CHECK(m->getBondWithIdx(1)->getBeginAtomIdx() == 2);
     CHECK(m->getBondWithIdx(2)->getBondDir() != Bond::BondDir::NONE);
     CHECK(m->getBondWithIdx(2)->getBeginAtomIdx() == 2);
+  }
+  SECTION("favor degree 1") {
+    auto m =
+        "[H][C@@]12CC[C@@](C)(O)[C@H](CC[C@@](C)(O)C=C)[C@@]1(C)CCCC2(C)C |(3.59567,-1.0058,;2.33379,-0.194852,;2.4456,-1.69068,;1.20608,-2.53542,;-0.145252,-1.88434,;-1.63777,-1.73471,;-0.551787,-3.3282,;-0.257063,-0.388514,;-1.60839,0.262569,;-2.84791,-0.582176,;-4.19924,0.068907,;-5.55057,0.71999,;-4.85032,-1.28242,;-3.54816,1.42024,;-4.3929,2.65976,;0.982456,0.456231,;-0.368873,1.10731,;0.870645,1.95206,;2.11016,2.7968,;3.46149,2.14572,;3.5733,0.649893,;5.02699,1.01975,;4.35205,-0.632117,)|"_smiles;
+    REQUIRE(m);
+    Chirality::BondWedgingParameters bwps;
+    bwps.wedgeTwoBondsIfPossible = true;
+    Chirality::wedgeMolBonds(*m, &m->getConformer(), &bwps);
+    CHECK(m->getBondWithIdx(9)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondWithIdx(10)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::NONE);
   }
 }
