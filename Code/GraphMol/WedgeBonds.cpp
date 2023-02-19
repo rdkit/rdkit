@@ -343,9 +343,10 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol,
   static int noNbrs = 100;
   auto [chiNbrs, nChiralNbrs] = detail::countChiralNbrs(mol, noNbrs);
   if (chiNbrs) {
-    std::sort(indices.begin(), indices.end(), [&](auto i1, auto i2) {
-      return nChiralNbrs[i1] < nChiralNbrs[i2];
-    });
+    std::sort(indices.begin(), indices.end(),
+              [&nChiralNbrs = nChiralNbrs](auto i1, auto i2) {
+                return nChiralNbrs[i1] < nChiralNbrs[i2];
+              });
   }
 #if 0
   std::cerr << "  nbrs: ";
