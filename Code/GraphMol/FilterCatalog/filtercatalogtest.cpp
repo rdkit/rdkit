@@ -260,7 +260,6 @@ void testFilterCatalogCHEMBL() {
         FilterCatalogParams params;
         params.addCatalog(catalog);
         FilterCatalog filtercat(params);
-        std::cout << entries[i] << " " <<filtercat.getNumEntries() << std::endl;
         TEST_ASSERT(entries[i++] == filtercat.getNumEntries());
     }
 }
