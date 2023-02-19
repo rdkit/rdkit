@@ -278,9 +278,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_complex_query_atoms_10.svg", 2592662841U},
     {"test_complex_query_atoms_11.svg", 3667326374U},
     {"test_complex_query_atoms_12.svg", 582133495U},
-    {"test_complex_query_atoms_13.svg", 2311607000U},
+    {"test_complex_query_atoms_13.svg", 557287774U},
     {"test_complex_query_atoms_14.svg", 3566661047U},
-    {"test_complex_query_atoms_15.svg", 288029925U},
+    {"test_complex_query_atoms_15.svg", 4188921077U},
     {"test_complex_query_atoms_16.svg", 1980695915U},
     {"test_github6041b.svg", 3485054881U}};
 
@@ -7147,7 +7147,7 @@ M  END
       outs.flush();
       outs.close();
       CHECK(extractQueryAtomSymbol(text) ==
-            "![He,B,C,N,O,F,Ne,Si,P,S,Cl,Ar,As,Se,Br,Kr,Te,I,Xe,At,Rn,H]");
+            "![*,He,B,C,N,O,F,Ne,Si,P,S,Cl,Ar,As,Se,Br,Kr,Te,I,Xe,At,Rn,H]");
       check_file_hash(nameBase + "_13.svg");
     }
     {
@@ -7198,7 +7198,7 @@ M  END
       outs.flush();
       outs.close();
       CHECK(extractQueryAtomSymbol(text) ==
-            "![He,B,C,N,O,F,Ne,Si,P,S,Cl,Ar,As,Se,Br,Kr,Te,I,Xe,At,Rn]");
+            "![*,He,B,C,N,O,F,Ne,Si,P,S,Cl,Ar,As,Se,Br,Kr,Te,I,Xe,At,Rn]");
       check_file_hash(nameBase + "_15.svg");
     }
     {
