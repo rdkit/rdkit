@@ -2386,13 +2386,13 @@ TEST_CASE("smilesSymbol in SMARTS", "[smarts][smilesSymbol]") {
     auto m = "ccc"_smarts;
     REQUIRE(m);
     m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
-    CHECK(MolToSmarts(*m) == "[Xa&a]cc");
+    CHECK(MolToSmarts(*m) == "[Xa;a]cc");
   }
   SECTION("smilesSymbol with aliphatic query") {
     auto m = "CCC"_smarts;
     REQUIRE(m);
     m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
-    CHECK(MolToSmarts(*m) == "[Xa&A]CC");
+    CHECK(MolToSmarts(*m) == "[Xa;A]CC");
   }
   SECTION("smilesSymbol with additional queries") {
     auto m = "[#6]C[#6]"_smarts;
@@ -2405,6 +2405,18 @@ TEST_CASE("smilesSymbol in SMARTS", "[smarts][smilesSymbol]") {
 
     atom->setProp(common_properties::smilesSymbol, "Xa");
 
-    CHECK(MolToSmarts(*m) == "[#6][Xa&A&D3&v4&+2][#6]");
+    CHECK(MolToSmarts(*m) == "[#6][Xa;A&D3&v4&+2][#6]");
+  }
+  SECTION("degree query") {
+    auto m = "[X3]-C"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[Xa;X3]-C");
+  }
+  SECTION("atom list") {
+    auto m = "[C,N,O]C"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[Xa;C,N,O]C");
   }
 }
