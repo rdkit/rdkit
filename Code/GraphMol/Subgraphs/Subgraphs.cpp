@@ -455,11 +455,8 @@ findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
   //
   PRECONDITION(lowerLen <= upperLen, "");
 
-  double *distMat = nullptr;
-  if (onlyShortestPaths) {
-    // the molecule owns this pointer
-    distMat = MolOps::getDistanceMat(mol);
-  }
+  // the molecule owns the distance matrix pointer (if we need to get it)
+  double *distMat = onlyShortestPaths ? MolOps::getDistanceMat(mol) : nullptr;
   int *adjMat, dim;
   dim = mol.getNumAtoms();
   adjMat = new int[dim * dim];
