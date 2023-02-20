@@ -127,8 +127,9 @@ void DrawMol::createDrawObjects() {
     // expecting, so we need to rebuild everything.
 
     // furthermore, if it's a fully flexible canvas and the font scale is
-    // greater than the global scale, there's a possibility that the
-    // characters might go off the sides of the canvas (Github6111)
+    // greater than the global scale, if there are characters at the edge
+    // of the image, the canvas won't be big enough (Github6111). Rebuild
+    // with an appropriate relative font size.
     if (flexiCanvasX_ && flexiCanvasY_ && (fontScale_ - scale_) > 1e-4) {
       width_ = -1;
       height_ = -1;
