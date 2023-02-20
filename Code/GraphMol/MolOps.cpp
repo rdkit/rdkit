@@ -660,6 +660,48 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         (*fragsMolAtomMapping).push_back((*mci).second);
       }
     }
+    // copy stereoGroups (if present)
+    if (!mol.getStereoGroups().empty()) {
+      boost::dynamic_bitset<> keptSGs(mol.getStereoGroups().size(), 0);
+      for (unsigned int frag = 0; frag < nFrags; ++frag) {
+        auto re = res[frag];
+        std::vector<StereoGroup> fragsgs;
+        for (auto &sg : mol.getStereoGroups()) {
+          bool inThisFrag = true;
+          for (auto sga : sg.getAtoms()) {
+            if ((*mapping)[sga->getIdx()] != frag) {
+              inThisFrag = false;
+              break;
+            }
+          }
+          if (!inThisFrag) {
+            continue;
+          }
+          std::vector<Atom *> sgats;
+          for (auto sga : sg.getAtoms()) {
+            sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
+          }
+          fragsgs.push_back(StereoGroup(sg.getGroupType(), sgats));
+          keptSGs.set(frag);
+        }
+        if (!fragsgs.empty()) {
+          re->setStereoGroups(std::move(fragsgs));
+        }
+      }
+      // remove chiral tags from atoms which were in stereo groups but aren't
+      // any longer
+      for (unsigned int i = 0; i < keptSGs.size(); ++i) {
+        if (!keptSGs[i]) {
+          const auto &sg = mol.getStereoGroups()[i];
+          for (const auto sga : sg.getAtoms()) {
+            auto fragIdx = (*mapping)[sga->getIdx()];
+            res[fragIdx]
+                ->getAtomWithIdx(ids[sga->getIdx()])
+                ->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+          }
+        }
+      }
+    }
   }
 
   if (sanitizeFrags) {
