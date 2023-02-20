@@ -7216,3 +7216,13 @@ M  END
     }
   }
 }
+
+TEST_CASE("ACS1996 should not throw exception with no coords - Github 6112") {
+  std::string nameBase = "test_github6112";
+  auto m = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
+  m->setProp<std::string>("_Name", "mol1");
+  REQUIRE(m);
+  MolDraw2DSVG drawer(-1, -1);
+  CHECK_NOTHROW(
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 1", nullptr, nullptr));
+}
