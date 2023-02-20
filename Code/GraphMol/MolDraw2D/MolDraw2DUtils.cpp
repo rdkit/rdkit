@@ -440,7 +440,7 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
   }
   double meanBondLen = 1.0;
   if (drawer.drawOptions().prepareMolsBeforeDrawing &&
-      not mol.getNumConformers()) {
+      !mol.getNumConformers()) {
     // compute 2D coordinates in a standard orientation.  This needs to be
     // done on a copy because mol is const.
     const bool canonOrient = true;
