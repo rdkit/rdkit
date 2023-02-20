@@ -958,50 +958,52 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
     //    we rebuild coordinates from scratch, hence pre-existing
     //    wedging info is not valid anymore
     // 2. there is a match
-    // 3. the original molecle has no coordinates to start with
+    // 3. the original molecule has no coordinates to start with
     //    (in that case it should already have no wedging info either, anyway)
     // If there is no match and we do not accept failure, we keep
     // existing coordinates and hence also keep the wedging info
     bool shouldNeverClearWedgingInfo = match.empty() && !acceptFailure;
     bool shouldClearWedgingInfo = (match.empty() && acceptFailure) || !molOrig;
-    if (!shouldNeverClearWedgingInfo && !shouldClearWedgingInfo) {
-      std::set<unsigned int> molMatchIndices;
-      std::transform(match.begin(), match.end(),
-        std::inserter(molMatchIndices, molMatchIndices.begin()), [](const auto &pair) {
-        return pair.second;
-      });
-      // if any of the bonds that have wedging information from the molblock
-      // has at least one atom which is not part of the scaffold, we cannot
-      // preserve wedging information
-      auto molBonds = mol.bonds();
-      shouldClearWedgingInfo = std::any_of(molBonds.begin(), molBonds.end(), [&molMatchIndices](const auto b) {
-        return ((b->hasProp(common_properties::_MolFileBondStereo) || b->hasProp(common_properties::_MolFileBondCfg))
-          && (!molMatchIndices.count(b->getBeginAtomIdx()) || !molMatchIndices.count(b->getEndAtomIdx())));
-      });
-    }
-    if (!shouldNeverClearWedgingInfo && !shouldClearWedgingInfo) {
-      // check that scaffold coordinates have not changed, which may
-      // happen when using CoordGen
-      const auto &molPos = mol.getConformer().getPositions();
-      const auto &templatePos = templateMol.getConformer().getPositions();
-      shouldClearWedgingInfo = std::any_of(match.begin(), match.end(), [&molPos, &templatePos, MSD_THRESHOLD](const auto &pair) {
-        return (molPos.at(pair.second) - templatePos.at(pair.first)).lengthSq() > MSD_THRESHOLD;
-      });
-    }
-    // final check: we still might need to invert wedging if the molecule
-    // has flipped to match the scaffold
-    if (!shouldNeverClearWedgingInfo && !shouldClearWedgingInfo) {
-      RDGeom::Transform3D trans;
-      MatchVectType identityMatch(match.size());
-      std::transform(match.begin(), match.end(), identityMatch.begin(), [](const auto &pair) {
-        return std::make_pair(pair.second, pair.second);
-      });
-      auto rmsd = MolAlign::getAlignmentTransform(*molOrig, mol, trans, confId, confId, &identityMatch);
-      // this should not happen as we checked that previously, but we are notoriously paranoid
-      if (rmsd > RMSD_THRESHOLD) {
-        shouldClearWedgingInfo = true;
-      } else {
-        invertWedgingIfMolHasFlipped(mol, trans);
+    if (!shouldNeverClearWedgingInfo) {
+      if (!shouldClearWedgingInfo) {
+        std::set<unsigned int> molMatchIndices;
+        std::transform(match.begin(), match.end(),
+          std::inserter(molMatchIndices, molMatchIndices.begin()), [](const auto &pair) {
+          return pair.second;
+        });
+        // if any of the bonds that have wedging information from the molblock
+        // has at least one atom which is not part of the scaffold, we cannot
+        // preserve wedging information
+        auto molBonds = mol.bonds();
+        shouldClearWedgingInfo = std::any_of(molBonds.begin(), molBonds.end(), [&molMatchIndices](const auto b) {
+          return ((b->hasProp(common_properties::_MolFileBondStereo) || b->hasProp(common_properties::_MolFileBondCfg))
+            && (!molMatchIndices.count(b->getBeginAtomIdx()) || !molMatchIndices.count(b->getEndAtomIdx())));
+        });
+      }
+      if (!shouldClearWedgingInfo) {
+        // check that scaffold coordinates have not changed, which may
+        // happen when using CoordGen
+        const auto &molPos = mol.getConformer().getPositions();
+        const auto &templatePos = templateMol.getConformer().getPositions();
+        shouldClearWedgingInfo = std::any_of(match.begin(), match.end(), [&molPos, &templatePos, MSD_THRESHOLD](const auto &pair) {
+          return (molPos.at(pair.second) - templatePos.at(pair.first)).lengthSq() > MSD_THRESHOLD;
+        });
+      }
+      // final check: we still might need to invert wedging if the molecule
+      // has flipped to match the scaffold
+      if (!shouldClearWedgingInfo) {
+        RDGeom::Transform3D trans;
+        MatchVectType identityMatch(match.size());
+        std::transform(match.begin(), match.end(), identityMatch.begin(), [](const auto &pair) {
+          return std::make_pair(pair.second, pair.second);
+        });
+        auto rmsd = MolAlign::getAlignmentTransform(*molOrig, mol, trans, confId, confId, &identityMatch);
+        // this should not happen as we checked that previously, but we are notoriously paranoid
+        if (rmsd > RMSD_THRESHOLD) {
+          shouldClearWedgingInfo = true;
+        } else {
+          invertWedgingIfMolHasFlipped(mol, trans);
+        }
       }
     }
     if (shouldClearWedgingInfo) {
