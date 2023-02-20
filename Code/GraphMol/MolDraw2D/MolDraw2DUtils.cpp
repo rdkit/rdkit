@@ -439,23 +439,19 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
         << std::endl;
   }
   double meanBondLen = 1.0;
-  const ROMol *draw_mol = nullptr;
   if (drawer.drawOptions().prepareMolsBeforeDrawing &&
       not mol.getNumConformers()) {
-    // compute 2D coordinates in a standard orientation.  Taking a pointer
-    // to the copy and drawing that means there won't be another 2D coord
-    // calculation in drawMolecule.
+    // compute 2D coordinates in a standard orientation.  This needs to be
+    // done on a copy because mol is const.
     const bool canonOrient = true;
     RWMol cpy(mol);
     RDDepict::compute2DCoords(cpy, nullptr, canonOrient);
     meanBondLen = MolDraw2DUtils::meanBondLength(cpy, confId);
-    draw_mol = &cpy;
   } else {
     meanBondLen = MolDraw2DUtils::meanBondLength(mol, confId);
-    draw_mol = &mol;
   }
   setACS1996Options(drawer.drawOptions(), meanBondLen);
-  drawer.drawMolecule(*draw_mol, legend, highlight_atoms, highlight_bonds,
+  drawer.drawMolecule(mol, legend, highlight_atoms, highlight_bonds,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
                       confId);
 }
