@@ -262,6 +262,55 @@ void testFilterCatalogCHEMBL() {
         FilterCatalog filtercat(params);
         TEST_ASSERT(entries[i++] == filtercat.getNumEntries());
     }
+    
+    {
+        const std::vector<std::pair<std::string, std::string>> tests = {
+            {"CN=NC", "Filter5_azo"},
+            {"CN=N", "Filter5_azo"},
+            {"N=N", "Filter5_azo"},
+            {"NN=N", ""},
+            {"CC(=O)CCBr", "Filter26_alkyl_halide|Filter30_beta_halo_carbonyl|Filter75_alkyl_Br_I"},
+            {"CC(=O)CCI", "Filter26_alkyl_halide|Filter30_beta_halo_carbonyl|Filter75_alkyl_Br_I"},
+            {"C(=O)CCI", "Filter26_alkyl_halide|Filter30_beta_halo_carbonyl|Filter38_aldehyde|Filter75_alkyl_Br_I"},
+            {"NC(=O)CCI", "Filter26_alkyl_halide|Filter75_alkyl_Br_I"},
+            {"CC=NOS(=O)N", "Filter18_oxime_ester|Filter89_hydroxylamine"},
+            {"NC=NOP(=O)N", "Filter89_hydroxylamine"},
+            {"C=NOP(=O)N", "Filter18_oxime_ester|Filter89_hydroxylamine"},
+            {"NC=NO", "Filter89_hydroxylamine"},
+            {"CC(=O)NOC", ""}
+        };
+        FilterCatalogParams params;
+        params.addCatalog(FilterCatalogParams::CHEMBL_Inpharmatica);
+        FilterCatalog catalog(params);
+        for(auto &test: tests) {
+            std::unique_ptr<RWMol> mol(SmilesToMol(test.first));
+            std::string matches;
+            for (auto &match: catalog.getMatches(*mol)) {
+                if (matches.size()) matches += "|";
+                matches += match->getDescription();
+            }
+            //std::cerr << test.first << " " << test.second << " " << matches << std::endl;
+            TEST_ASSERT(matches == test.second);
+        }
+    }
+    {
+        const std::vector<std::pair<std::string, std::string>> tests = {
+            {"CN=C", ""},
+                {"CN=CC", "acyclic imines"} , {"CN=C(C)", "acyclic imines"}, {"C1N=CC1", ""}
+        };
+        FilterCatalogParams params;
+        params.addCatalog(FilterCatalogParams::CHEMBL_LINT);
+        FilterCatalog catalog(params);
+        for(auto &test: tests) {
+            std::unique_ptr<RWMol> mol(SmilesToMol(test.first));
+            std::string matches;
+            for (auto &match: catalog.getMatches(*mol)) {
+                if (matches.size()) matches += "|";
+                matches += match->getDescription();
+            }
+            TEST_ASSERT(matches == test.second);
+        }
+    }
 }
 
 int main() {
