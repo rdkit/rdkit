@@ -491,6 +491,14 @@ struct filtercat_wrapper {
           .value("BRENK", FilterCatalogParams::BRENK)
           .value("NIH", FilterCatalogParams::NIH)
           .value("ZINC", FilterCatalogParams::ZINC)
+          .value("CHEMBL_Glaxo", FilterCatalogParams::CHEMBL_Glaxo)
+          .value("CHEMBL_Dundee", FilterCatalogParams::CHEMBL_Dundee)
+          .value("CHEMBL_BMS", FilterCatalogParams::CHEMBL_BMS)
+          .value("CHEMBL_SureChEMBL", FilterCatalogParams::CHEMBL_SureChEMBL)
+          .value("CHEMBL_MLSMR", FilterCatalogParams::CHEMBL_MLSMR)
+    	  .value("CHEMBL_Inpharmatica", FilterCatalogParams::CHEMBL_Inpharmatica)
+          .value("CHEMBL_LINT", FilterCatalogParams::CHEMBL_LINT)
+          .value("CHEMBL", FilterCatalogParams::CHEMBL)		 
           .value("ALL", FilterCatalogParams::ALL);
     }
 
