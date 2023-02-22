@@ -220,7 +220,6 @@ class TestCase(unittest.TestCase):
                                            pruneRmsThresh=1.5)
       nconfs.append(len(cids))
 
-    print(nconfs, expected)
     d = [abs(x - y) for x, y in zip(expected, nconfs)]
     # print(nconfs)
     self.assertTrue(max(d) <= 1)
@@ -633,7 +632,6 @@ class TestCase(unittest.TestCase):
     """
         test for a macrocycle molecule, ETKDGv3 samples trans amide
     """
-
     def get_atom_mapping(mol, smirks="[O:1]=[C:2]@;-[NX3:3]-[H:4]"):
       qmol = Chem.MolFromSmarts(smirks)
       ind_map = {}
@@ -679,18 +677,17 @@ class TestCase(unittest.TestCase):
     self.assertEqual(list(ts[0]["signs"]), [1, 1, 1, 1, 1, 1])
     self.assertEqual(list(ts[0]["atomIndices"]), [0, 1, 2, 3])
 
-
 def testTrackFailures(self):
-  params = AllChem.ETKDGv3()
-  params.trackFailures = True
-  params.maxIterations = 50
-  params.randomSeed = 42
-  mol = Chem.MolFromSmiles('C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC')
-  mol = Chem.AddHs(mol)
-  AllChem.EmbedMolecule(mol, params)
-  cnts = params.GetFailureCounts()
-  self.assertGreater(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 5)
-  self.assertGreater(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION], 10)
+    params = AllChem.ETKDGv3()
+    params.trackFailures = True
+    params.maxIterations = 50
+    params.randomSeed = 42
+    mol = Chem.MolFromSmiles('C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC')
+    mol = Chem.AddHs(mol)
+    AllChem.EmbedMolecule(mol, params)
+    cnts  = params.GetFailureCounts()
+    self.assertGreater(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS],5)
+    self.assertGreater(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION],10)
 
 
 if __name__ == '__main__':
