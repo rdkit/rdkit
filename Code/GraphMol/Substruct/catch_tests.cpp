@@ -417,25 +417,25 @@ TEST_CASE(
 }
 
 TEST_CASE("Github #6002: hang in substructure search with query molecule") {
-  //   SECTION("simplified") {
-  //     auto mol = R"CTAB(
-  //   Mrv2211 02092314292D
+  SECTION("simplified") {
+    auto mol = R"CTAB(
+  Mrv2211 02092314292D
 
-  //   5  4  0  0  0  0            999 V2000
-  //     0.0000    3.6020    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  //     0.7145    4.0145    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
-  //     1.4290    4.4270    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  //     1.1270    3.3001    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  //     0.3020    4.7291    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  //   1  2  6  0  0  0  0
-  //   2  3  2  0  0  0  0
-  //   2  4  2  0  0  0  0
-  //   2  5  6  0  0  0  0
-  // M  END
-  // )CTAB"_ctab;
-  //     REQUIRE(mol);
-  //     CHECK(SubstructMatch(*mol, *mol).empty());
-  //   }
+  5  4  0  0  0  0            999 V2000
+    0.0000    3.6020    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    4.0145    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4290    4.4270    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1270    3.3001    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3020    4.7291    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  6  0  0  0  0
+  2  3  2  0  0  0  0
+  2  4  2  0  0  0  0
+  2  5  6  0  0  0  0
+M  END
+  )CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(SubstructMatch(*mol, *mol).empty());
+  }
   SECTION("simplified 2") {
     auto mol = R"CTAB(
   Mrv2211 02092317102D          
@@ -462,7 +462,6 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
-    std::cerr << "------------" << std::endl;
 
     CHECK(SubstructMatch(*mol, *mol).empty());
   }
@@ -506,7 +505,6 @@ M  END
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
-    std::cerr << "------------" << std::endl;
     CHECK(SubstructMatch(*mol, *mol).empty());
   }
 }

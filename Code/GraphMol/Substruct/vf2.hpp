@@ -129,12 +129,6 @@ node_id *SortNodesByFrequency(const Graph *g) {
   }
   std::sort(vect.begin(), vect.end(), nodeInfoComp1);
 
-  std::cerr << "1 --------------" << std::endl;
-  for (auto &ni : vect) {
-    std::cerr << " " << ni.id << "(" << ni.in << "," << ni.out << ") ";
-  }
-  std::cerr << std::endl;
-
   unsigned int run = 1;
   for (unsigned int i = 0; i < vect.size(); i += run) {
     for (run = 1; i + run < vect.size() && vect[i + run].in == vect[i].in &&
@@ -148,12 +142,6 @@ node_id *SortNodesByFrequency(const Graph *g) {
     }
   }
   std::sort(vect.begin(), vect.end(), nodeInfoComp2);
-
-  std::cerr << "2 --------------" << std::endl;
-  for (auto &ni : vect) {
-    std::cerr << " " << ni.id << "(" << ni.in << "," << ni.out << ") ";
-  }
-  std::cerr << std::endl;
 
   node_id *nodes = new node_id[vect.size()];
   for (unsigned int i = 0; i < vect.size(); ++i) {
@@ -174,12 +162,6 @@ node_id *SortNodesByDegree(const Graph *g) {
     ++bNode;
   }
   std::sort(vect.begin(), vect.end());
-
-  // std::cerr << "1 --------------" << std::endl;
-  // for (auto &ni : vect) {
-  //   std::cerr << " " << ni.id << "(" << ni.in << "," << ni.out << ") ";
-  // }
-  // std::cerr << std::endl;
 
   node_id *nodes = new node_id[vect.size()];
   for (unsigned int i = 0; i < vect.size(); ++i) {
