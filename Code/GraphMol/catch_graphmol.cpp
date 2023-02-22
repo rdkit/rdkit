@@ -2961,3 +2961,10 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
     TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
   }
 }
+
+TEST_CASE("github #6100: bonds to dummy atoms considered as dative") {
+  SECTION("as reported") {
+    auto m = "C[O](C)*"_smiles;
+    REQUIRE(!m);
+  }
+}
