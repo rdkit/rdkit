@@ -144,26 +144,6 @@ node_id *SortNodesByFrequency(const Graph *g) {
   return nodes;
 }
 
-template <class Graph>
-node_id *SortNodesByDegree(const Graph *g) {
-  std::vector<std::pair<unsigned int, unsigned int>> vect;
-  vect.reserve(boost::num_vertices(*g));
-  typename Graph::vertex_iterator bNode, eNode;
-  boost::tie(bNode, eNode) = boost::vertices(*g);
-  while (bNode != eNode) {
-    vect.emplace_back(boost::out_degree(*bNode, *g), vect.size());
-    ++bNode;
-  }
-  std::sort(vect.begin(), vect.end());
-
-  node_id *nodes = new node_id[vect.size()];
-  for (unsigned int i = 0; i < vect.size(); ++i) {
-    nodes[i] = vect[vect.size() - 1 - i].second;
-  }
-
-  return nodes;
-}
-
 /*----------------------------------------------------------
  * class VF2SubState
  * A representation of the SSS current state
