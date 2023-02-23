@@ -68,7 +68,7 @@ steps:
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     conda install ipython matplotlib-base 
-    conda install -c conda-forge sphinx myst-parser
+    conda install -c conda-forge  sphinx=3.1.2 "jinja2<3.1" recommonmark 
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
