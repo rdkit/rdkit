@@ -106,8 +106,6 @@ Other pull requests:
  (github pull #6105 from greglandrum)
   - Fixes #6106
  (github pull #6107 from greglandrum)
-  - Fix small ACS1996 drawing being cropped.
- (github pull #6114 from DavidACosgrove)
 
 
 # Release_2022.09.4
