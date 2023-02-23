@@ -2,7 +2,6 @@
 (Changes relative to Release_2022.09.4)
 
 ## Important Note:
-
 Due to a mistake Greg made while going through his release workflow, the
 following bug fixes which were on the "fixed" list for the 2022.09.4 release
 were not actually included in that release:
@@ -29,9 +28,86 @@ were not actually included in that release:
 These fixes are all included in this release.
 
 ## Acknowledgements
+Christopher Von Bargen, Jonathan Bisson, shang chien, David Cosgrove, Iren Azra
+Azra Coskun, Maria Kadukova, Brian Kelley, Chris Kuenneth, Dan Nealschneider,
+Ricardo Rodriguez-Schmidt, Paolo Tosco, Franz Waibl, 'Derek', 'dangthatsright' 
 
 ## Bug Fixes:
-
+  - Missing update path for postgreSQL from 3.8 to 4.2
+ (github #5734 from Deltaus)
+  - Chemical drawings should be automatically enabled on Colab
+ (github #5868 from kuelumbus)
+  - Adjust expected test results for newer freetype versions
+ (github #5979 from greglandrum)
+  - CanonicalRankAtomsInFragment example in the documentation is not reproducible
+ (github #5986 from chmnk)
+  - Exception in RegistrationHash for molecules with bad bond directions
+ (github #5987 from d-b-w)
+  - Updated the GetMolHash docstring for accuracy
+ (github #5988 from irenazra)
+  - Fix a problem with pickling molecules with more than 255 rings
+ (github #5992 from greglandrum)
+  - Support Python 3.11
+ (github #5994 from greglandrum)
+  - Incorrect disconnection of CC(=O)O[Mg]OC(=O)C
+ (github #5997 from DavidACosgrove)
+  - Remove `and` from C++ headers
+ (github #6003 from d-b-w)
+  - [PH3] incorrectly recognized as potential stereo center
+ (github #6011 from greglandrum)
+  - Potential nontetrahedral stereo is recognized when nontetrahedral stereo is disabled.
+ (github #6012 from greglandrum)
+  - MolEnumerator is not propagating query information to molecules
+ (github #6014 from greglandrum)
+  - Reactions do not propagate query information to products
+ (github #6015 from greglandrum)
+  - Error rendering to very small canvas
+ (github #6025 from DavidACosgrove)
+  - Bad double bond drawn for collinear atoms
+ (github #6027 from DavidACosgrove)
+  - Fix some minor leaks
+ (github #6029 from ricrogz)
+  - Cannot draw molecule which includes an atom with a `[!#X]` query (for any X)
+ (github #6033 from ShangChien)
+  - FragmentOnBonds may create unexpected radicals
+ (github #6034 from ricrogz)
+  - Calling MurckoScaffold on molecule causes bug in pickling
+ (github #6036 from dangthatsright)
+  - Bump maeparser and coordgen versions
+ (github #6039 from ricrogz)
+  - Issues with ACS1996 drawing mode on a small canvas
+ (github #6041 from DavidACosgrove)
+  - Cyclobutyl group in a macrocycle triggers a stereo center
+ (github #6049 from cdvonbargen)
+  - stereogroups not combined when parsing CXSMILES
+ (github #6050 from greglandrum)
+  - Regression in depicting molecules with MDL query atoms
+ (github #6054 from ptosco)
+  - Remove check for ring information from Atom::Match
+ (github #6063 from fwaibl)
+  - Correct docstring for minFontSize.
+ (github #6066 from DavidACosgrove)
+  - Disable POPCNT on M1
+ (github #6081 from bjonnh-work)
+  - Dummy atoms should not be considered to be metals for M and MH queries
+ (github #6106 from greglandrum)
+Other pull requests:
+  - Enable optional visualization of complex query atoms in a more compact form
+ (github pull #6056 from ptosco)
+  - Fixes #6049
+ (github pull #6061 from greglandrum)
+  - Fixes #6050
+ (github pull #6071 from greglandrum)
+  - Fixes #5986
+ (github pull #6072 from greglandrum)
+  - Properly check for boost::any in rdvalue_is
+ (github pull #6086 from bp-kelley)
+  - Fixes #6100
+ (github pull #6105 from greglandrum)
+  - Fixes #6106
+ (github pull #6107 from greglandrum)
+  - Fix small ACS1996 drawing being cropped.
+ (github pull #6114 from DavidACosgrove)
 
 
 # Release_2022.09.4
