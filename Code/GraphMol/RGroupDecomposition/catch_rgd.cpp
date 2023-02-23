@@ -740,8 +740,8 @@ TEST_CASE("MDL R labels from original core") {
       CHECK(n == mols.size());
       CHECK(rows.size() == n);
       CHECK(unmatched.empty());
-      CHECK(rows[0]["Core"]->getAtomWithIdx(4)->getAtomicNum() == 0);
-      CHECK(!rows[0]["Core"]->getAtomWithIdx(4)->hasProp(
+      CHECK(rows[0]["Core"]->getAtomWithIdx(0)->getAtomicNum() == 0);
+      CHECK(!rows[0]["Core"]->getAtomWithIdx(0)->hasProp(
           common_properties::dummyLabel));
       CHECK(rows[0]["Core"]->getAtomWithIdx(5)->getAtomicNum() == 0);
       CHECK(!rows[0]["Core"]->getAtomWithIdx(5)->hasProp(
@@ -760,8 +760,8 @@ TEST_CASE("MDL R labels from original core") {
       CHECK(n == mols.size());
       CHECK(rows.size() == n);
       CHECK(unmatched.empty());
-      CHECK(rows[0]["Core"]->getAtomWithIdx(4)->getAtomicNum() == 0);
-      CHECK(rows[0]["Core"]->getAtomWithIdx(4)->hasProp(
+      CHECK(rows[0]["Core"]->getAtomWithIdx(0)->getAtomicNum() == 0);
+      CHECK(rows[0]["Core"]->getAtomWithIdx(0)->hasProp(
           common_properties::dummyLabel));
       CHECK(rows[0]["Core"]->getAtomWithIdx(5)->getAtomicNum() == 0);
       CHECK(rows[0]["Core"]->getAtomWithIdx(5)->hasProp(
