@@ -1,3 +1,39 @@
+# Release_2022.09.5
+(Changes relative to Release_2022.09.4)
+
+## Important Note:
+
+Due to a mistake Greg made while going through his release workflow, the
+following bug fixes which were on the "fixed" list for the 2022.09.4 release
+were not actually included in that release:
+
+  - Allow building PgSQL RPM and DEB packages
+ (github #5836 from ptosco)
+  - Set emsdk path for freetype in emscripten builds
+ (github #5857 from ptosco)
+  - Fix #5810 in V2000 mol files.
+ (github #5864 from eloyfelix)
+  - use enhanced stereo when uniquifying in SimpleEnum
+ (github #5874 from greglandrum)
+  - Fix documentation example for KeyFromPropHolder
+ (github #5886 from gedeck)
+  - Allow unrecognized atom types when strictParsing=False
+ (github #5891 from greglandrum)
+  - clear MDL Rgroup labels from core atoms when we aren't using them
+ (github #5904 from greglandrum)
+  - AvalonTools: Avoid that trailing garbage pollutes the fmemopen buffer
+ (github #5928 from ptosco)
+  - Tiny change to get demo.html to load in legacy browsers
+ (github #5964 from ptosco)
+
+These fixes are all included in this release.
+
+## Acknowledgements
+
+## Bug Fixes:
+
+
+
 # Release_2022.09.4
 (Changes relative to Release_2022.09.3)
 
