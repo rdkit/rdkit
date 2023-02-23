@@ -403,8 +403,6 @@ class AtomLabelFunctor {
       }
     }
     res = atomCompat(d_query[i], d_mol[j], d_params);
-    // std::cerr << "          a" << d_query[i]->getIdx() << "-"
-    //           << d_mol[j]->getIdx() << "? " << res << std::endl;
     return res;
   }
 
@@ -432,9 +430,6 @@ class BondLabelFunctor {
       }
     }
     bool res = bondCompat(d_query[i], d_mol[j], d_params);
-    // std::cerr << "  b" << d_query[i]->getIdx() << "-" << d_mol[j]->getIdx()
-    //           << "? " << res << std::endl;
-
     return res;
   }
 

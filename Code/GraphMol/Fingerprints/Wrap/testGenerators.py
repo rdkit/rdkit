@@ -328,6 +328,17 @@ class TestCase(unittest.TestCase):
     fp = g.GetFingerprint(m)
     self.assertEqual(fp.GetNumOnBits(), 10)
 
+  def testTopologicalTorsionShortestPaths(self):
+    m = Chem.MolFromSmiles('CC1CCC1')
+    g = rdFingerprintGenerator.GetTopologicalTorsionGenerator()
+    fp = g.GetSparseCountFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 3)
+
+    g.GetOptions().onlyShortestPaths = True
+    fp = g.GetSparseCountFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 1)
 
 if __name__ == '__main__':
   unittest.main()

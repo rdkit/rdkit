@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2020 Greg Landrum
+//  Copyright (C) 2016-2023 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "catch.hpp"
 #include <RDGeneral/test.h>
 #include <string>
 #include <GraphMol/RDKitBase.h>
@@ -16,35 +17,32 @@
 #include <RDGeneral/RDLog.h>
 using namespace RDKit;
 
-void testBase() {
-  BOOST_LOG(rdInfoLog) << "testing base functionality" << std::endl;
+TEST_CASE("base functionality") {
   {  // it works when nothing is provided
     std::string smiles = "CC";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 2);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
-void testCoords2D() {
-  BOOST_LOG(rdInfoLog) << "testing reading 2D coordinates" << std::endl;
+TEST_CASE("reading 2D coordinates") {
   {
     std::string smiles = "CC |(0,.75,;0,-.75,)|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 2);
-    TEST_ASSERT(m->getNumConformers() == 1);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).x) < 1e-4);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).y - 0.75) < 1e-4);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).z) < 1e-4);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).x) < 1e-4);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).y + 0.75) < 1e-4);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).z) < 1e-4);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(m->getNumConformers() == 1);
+    CHECK(fabs(m->getConformer().getAtomPos(0).x) < 1e-4);
+    CHECK(fabs(m->getConformer().getAtomPos(0).y - 0.75) < 1e-4);
+    CHECK(fabs(m->getConformer().getAtomPos(0).z) < 1e-4);
+    CHECK(fabs(m->getConformer().getAtomPos(1).x) < 1e-4);
+    CHECK(fabs(m->getConformer().getAtomPos(1).y + 0.75) < 1e-4);
+    CHECK(fabs(m->getConformer().getAtomPos(1).z) < 1e-4);
 
     delete m;
   }
@@ -53,35 +51,33 @@ void testCoords2D() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 2);
-    TEST_ASSERT(m->getNumConformers() == 1);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).x) < 1e-4);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).y) < 1e-4);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).z) < 1e-4);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).x) < 1e-4);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).y) < 1e-4);
-    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).z + 0.75) < 1e-4);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(m->getNumConformers() == 1);
+    CHECK(fabs(m->getConformer().getAtomPos(0).x) < 1e-4);
+    CHECK(fabs(m->getConformer().getAtomPos(0).y) < 1e-4);
+    CHECK(fabs(m->getConformer().getAtomPos(0).z) < 1e-4);
+    CHECK(fabs(m->getConformer().getAtomPos(1).x) < 1e-4);
+    CHECK(fabs(m->getConformer().getAtomPos(1).y) < 1e-4);
+    CHECK(fabs(m->getConformer().getAtomPos(1).z + 0.75) < 1e-4);
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testAtomLabels() {
-  BOOST_LOG(rdInfoLog) << "testing reading Atom Labels" << std::endl;
+TEST_CASE("reading Atom Labels") {
   {
     std::string smiles = "CCC |$foo;;bar$|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
-                    common_properties::atomLabel) == "foo");
-    TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>(
-                    common_properties::atomLabel) == "bar");
-    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "foo");
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::atomLabel) == "bar");
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
     delete m;
   }
   {  // attachment points, example from the docs
@@ -89,19 +85,19 @@ void testAtomLabels() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 7);
-    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum() == 0);
-    TEST_ASSERT(m->getAtomWithIdx(3)->getProp<std::string>(
-                    common_properties::atomLabel) == "_AP1");
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 7);
+    CHECK(m->getAtomWithIdx(3)->getAtomicNum() == 0);
+    CHECK(m->getAtomWithIdx(3)->getProp<std::string>(
+              common_properties::atomLabel) == "_AP1");
     // we used to set an atom map for attachment points. This was github #3393
-    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomMapNum() == 0);
+    CHECK(m->getAtomWithIdx(3)->getAtomMapNum() == 0);
 
-    TEST_ASSERT(m->getAtomWithIdx(5)->getAtomicNum() == 0);
-    TEST_ASSERT(m->getAtomWithIdx(5)->getProp<std::string>(
-                    common_properties::atomLabel) == "_AP2");
+    CHECK(m->getAtomWithIdx(5)->getAtomicNum() == 0);
+    CHECK(m->getAtomWithIdx(5)->getProp<std::string>(
+              common_properties::atomLabel) == "_AP2");
     // we used to set an atom map for attachment points. This was github #3393
-    TEST_ASSERT(m->getAtomWithIdx(5)->getAtomMapNum() == 0);
+    CHECK(m->getAtomWithIdx(5)->getAtomMapNum() == 0);
 
     delete m;
   }
@@ -110,16 +106,16 @@ void testAtomLabels() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
-                    common_properties::atomLabel) == "Q_e");
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
-                    common_properties::atomLabel) == "QH_p");
-    TEST_ASSERT(!m->getAtomWithIdx(2)->hasProp(common_properties::atomLabel));
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
-    TEST_ASSERT(!m->getAtomWithIdx(2)->hasQuery());
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "Q_e");
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::atomLabel) == "QH_p");
+    CHECK(!m->getAtomWithIdx(2)->hasProp(common_properties::atomLabel));
+    CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(!m->getAtomWithIdx(2)->hasQuery());
 
     delete m;
   }
@@ -128,17 +124,16 @@ void testAtomLabels() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 2);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
-                    common_properties::atomLabel) == "AH_p");
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
-    TEST_ASSERT(m->getAtomWithIdx(0)->getQuery()->getDescription() ==
-                "AtomAtomicNum");
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
-    TEST_ASSERT(m->getAtomWithIdx(1)->getQuery()->getDescription() ==
-                "AtomNull");
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::atomLabel) == "AH_p");
+    CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
+    CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(m->getAtomWithIdx(0)->getQuery()->getDescription() ==
+          "AtomAtomicNum");
+    CHECK(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomNull");
 
     delete m;
   }
@@ -148,16 +143,16 @@ void testAtomLabels() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 2);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
-                    common_properties::atomLabel) == "XH_p");
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
-    TEST_ASSERT(m->getAtomWithIdx(0)->getQuery()->getDescription() ==
-                "AtomAtomicNum");
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
-    TEST_ASSERT(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomOr");
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::atomLabel) == "XH_p");
+    CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
+    CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(m->getAtomWithIdx(0)->getQuery()->getDescription() ==
+          "AtomAtomicNum");
+    CHECK(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomOr");
 
     delete m;
   }
@@ -166,36 +161,34 @@ void testAtomLabels() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 2);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
-                    common_properties::atomLabel) == "MH_p");
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
-                    common_properties::atomLabel) == "M_p");
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
-    TEST_ASSERT(m->getAtomWithIdx(0)->getQuery()->getDescription() == "AtomOr");
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
-    TEST_ASSERT(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomOr");
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "MH_p");
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::atomLabel) == "M_p");
+    CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(m->getAtomWithIdx(0)->getQuery()->getDescription() == "AtomOr");
+    CHECK(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomOr");
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testCXSmilesAndName() {
-  BOOST_LOG(rdInfoLog) << "testing CSXMILES and mol name" << std::endl;
+TEST_CASE("CXSMILES and mol name") {
   {
     std::string smiles = "CCC |$foo;;bar$|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     params.parseName = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
-                    common_properties::atomLabel) == "foo");
-    TEST_ASSERT(m->getProp<std::string>("_CXSMILES_Data") == "|$foo;;bar$|");
-    TEST_ASSERT(!m->hasProp("_Name"));
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "foo");
+    CHECK(m->getProp<std::string>("_CXSMILES_Data") == "|$foo;;bar$|");
+    CHECK(!m->hasProp("_Name"));
     delete m;
   }
   {
@@ -205,34 +198,32 @@ void testCXSmilesAndName() {
     params.parseName = true;
 
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
-                    common_properties::atomLabel) == "foo");
-    TEST_ASSERT(m->getProp<std::string>("_CXSMILES_Data") == "|$foo;;bar$|");
-    TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "ourname");
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "foo");
+    CHECK(m->getProp<std::string>("_CXSMILES_Data") == "|$foo;;bar$|");
+    CHECK(m->getProp<std::string>(common_properties::_Name) == "ourname");
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testCoordinateBonds() {
-  BOOST_LOG(rdInfoLog) << "testing coordinate bonds" << std::endl;
+TEST_CASE("coordinate bonds") {
   {
     std::string smiles = "[Fe]1C=C1 |C:1.0,2.2|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getBondBetweenAtoms(1, 2));
-    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1));
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 1);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 2));
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 2)->getBondType() == Bond::DATIVE);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 2)->getBeginAtomIdx() == 2);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    CHECK(m->getBondBetweenAtoms(1, 2));
+    CHECK(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DOUBLE);
+    CHECK(m->getBondBetweenAtoms(0, 1));
+    CHECK(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
+    CHECK(m->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 1);
+    CHECK(m->getBondBetweenAtoms(0, 2));
+    CHECK(m->getBondBetweenAtoms(0, 2)->getBondType() == Bond::DATIVE);
+    CHECK(m->getBondBetweenAtoms(0, 2)->getBeginAtomIdx() == 2);
     delete m;
   }
   {
@@ -240,33 +231,31 @@ void testCoordinateBonds() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 2));
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 2)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1));
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 0);
-    TEST_ASSERT(m->getBondBetweenAtoms(1, 2));
-    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DATIVE);
-    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBeginAtomIdx() == 2);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    CHECK(m->getBondBetweenAtoms(0, 2));
+    CHECK(m->getBondBetweenAtoms(0, 2)->getBondType() == Bond::DOUBLE);
+    CHECK(m->getBondBetweenAtoms(0, 1));
+    CHECK(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
+    CHECK(m->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 0);
+    CHECK(m->getBondBetweenAtoms(1, 2));
+    CHECK(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DATIVE);
+    CHECK(m->getBondBetweenAtoms(1, 2)->getBeginAtomIdx() == 2);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testRadicals() {
-  BOOST_LOG(rdInfoLog) << "testing radicals" << std::endl;
+TEST_CASE("radicals") {
   {
     std::string smiles = "[O]C[O] |^1:0,2|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
-    TEST_ASSERT(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    CHECK(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
+    CHECK(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
 
     delete m;
   }
@@ -275,11 +264,11 @@ void testRadicals() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 2);
-    TEST_ASSERT(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    CHECK(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 2);
+    CHECK(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
 
     delete m;
   }
@@ -288,23 +277,20 @@ void testRadicals() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 4);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
-    TEST_ASSERT(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(3)->getNumRadicalElectrons() == 1);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1));
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 1);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 4);
+    CHECK(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
+    CHECK(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+    CHECK(m->getAtomWithIdx(3)->getNumRadicalElectrons() == 1);
+    CHECK(m->getBondBetweenAtoms(0, 1));
+    CHECK(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
+    CHECK(m->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 1);
 
     delete m;
   }
-
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testAtomValues() {
-  BOOST_LOG(rdInfoLog) << "testing atom values" << std::endl;
+TEST_CASE("atom values") {
   {  // testing atom values
     std::string smiles =
         "CCC1=CC=CC=C1 |$_AV:value 2;&#59;value1;value "
@@ -312,28 +298,25 @@ void testAtomValues() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 8);
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molFileValue));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
-                    common_properties::molFileValue) == "value 2");
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 8);
+    CHECK(m->getAtomWithIdx(0)->hasProp(common_properties::molFileValue));
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::molFileValue) == "value 2");
 
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molFileValue));
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
-                    common_properties::molFileValue) == ";value1");
+    CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::molFileValue));
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::molFileValue) == ";value1");
 
-    TEST_ASSERT(m->getAtomWithIdx(2)->hasProp(common_properties::molFileValue));
-    TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>(
-                    common_properties::molFileValue) == "value 5;6");
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::molFileValue));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::molFileValue) == "value 5;6");
 
     delete m;
   }
-
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testAtomProps() {
-  BOOST_LOG(rdInfoLog) << "testing atom properties" << std::endl;
+TEST_CASE("atom properties") {
   {  // testing atom properties
     std::string smiles =
         "C1CN1 "
@@ -341,17 +324,16 @@ void testAtomProps() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("prop1"));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("prop1") == "val1");
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("prop2"));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("prop2") == "val2");
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("prop2"));
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>("prop2") == "v2&4");
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("prop1"));
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>("prop1") ==
-                "v1;2;3");
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    CHECK(m->getAtomWithIdx(0)->hasProp("prop1"));
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("prop1") == "val1");
+    CHECK(m->getAtomWithIdx(0)->hasProp("prop2"));
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("prop2") == "val2");
+    CHECK(m->getAtomWithIdx(1)->hasProp("prop2"));
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>("prop2") == "v2&4");
+    CHECK(m->getAtomWithIdx(1)->hasProp("prop1"));
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>("prop1") == "v1;2;3");
 
     delete m;
   }
@@ -363,42 +345,36 @@ void testAtomProps() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("prop2"));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("prop2") == "val2");
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("prop1"));
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>("prop1") ==
-                "v1;2;3");
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molFileValue));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
-                    common_properties::molFileValue) == "value 2");
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    CHECK(m->getAtomWithIdx(0)->hasProp("prop2"));
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("prop2") == "val2");
+    CHECK(m->getAtomWithIdx(1)->hasProp("prop1"));
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>("prop1") == "v1;2;3");
+    CHECK(m->getAtomWithIdx(0)->hasProp(common_properties::molFileValue));
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::molFileValue) == "value 2");
 
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molFileValue));
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
-                    common_properties::molFileValue) == ";value1");
+    CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::molFileValue));
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::molFileValue) == ";value1");
 
     delete m;
   }
-
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testGithub1968() {
-  BOOST_LOG(rdInfoLog)
-      << "testing Github1968: CXSMILES should be parsed before H removal"
-      << std::endl;
+TEST_CASE("Github1968: CXSMILES should be parsed before H removal") {
   {  // the original report
     std::string smiles = "[H]C* |$;;X$|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 2);
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
-                    common_properties::atomLabel) == "X");
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::atomLabel) == "X");
+    CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
     delete m;
   }
   {
@@ -406,47 +382,44 @@ void testGithub1968() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 2);
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
-                    common_properties::atomLabel) == "X");
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::atomLabel) == "X");
+    CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testEnhancedStereo() {
-  BOOST_LOG(rdInfoLog) << "Testing CXSMILES Enhanced Stereo" << std::endl;
-
+TEST_CASE("enhanced stereo") {
   std::vector<unsigned int> atom_ref1({4, 5});
   {
     std::string smiles = "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 8);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 8);
 
     auto &stereo_groups = m->getStereoGroups();
 
-    TEST_ASSERT(stereo_groups.size() == 2);
+    CHECK(stereo_groups.size() == 2);
 
     auto stg = stereo_groups.begin();
-    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+    CHECK(stg->getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
     {
       auto &atoms = stg->getAtoms();
-      TEST_ASSERT(atoms.size() == 1);
-      TEST_ASSERT(atoms[0]->getIdx() == 1);
+      CHECK(atoms.size() == 1);
+      CHECK(atoms[0]->getIdx() == 1);
     }
     ++stg;
-    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_OR);
+    CHECK(stg->getGroupType() == StereoGroupType::STEREO_OR);
     {
       auto &atoms = stg->getAtoms();
-      TEST_ASSERT(atoms.size() == 2);
-      TEST_ASSERT(atoms[0]->getIdx() == 3);
-      TEST_ASSERT(atoms[1]->getIdx() == 5);
+      CHECK(atoms.size() == 2);
+      CHECK(atoms[0]->getIdx() == 3);
+      CHECK(atoms[1]->getIdx() == 5);
     }
     delete m;
   }
@@ -455,54 +428,48 @@ void testEnhancedStereo() {
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 8);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 8);
 
     auto &stereo_groups = m->getStereoGroups();
 
-    TEST_ASSERT(stereo_groups.size() == 2);
+    CHECK(stereo_groups.size() == 2);
 
     auto stg = stereo_groups.begin();
-    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_AND);
+    CHECK(stg->getGroupType() == StereoGroupType::STEREO_AND);
     {
       auto &atoms = stg->getAtoms();
-      TEST_ASSERT(atoms.size() == 2);
-      TEST_ASSERT(atoms[0]->getIdx() == 3);
-      TEST_ASSERT(atoms[1]->getIdx() == 5);
+      CHECK(atoms.size() == 2);
+      CHECK(atoms[0]->getIdx() == 3);
+      CHECK(atoms[1]->getIdx() == 5);
     }
     ++stg;
-    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+    CHECK(stg->getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
     {
       auto &atoms = stg->getAtoms();
-      TEST_ASSERT(atoms.size() == 1);
-      TEST_ASSERT(atoms[0]->getIdx() == 1);
+      CHECK(atoms.size() == 1);
+      CHECK(atoms[0]->getIdx() == 1);
     }
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testHTMLCharCodes() {
-  BOOST_LOG(rdInfoLog) << "Testing CXSMILES with HTML char codes" << std::endl;
-
+TEST_CASE("HTML char codes") {
   {
     std::string smiles = R"(CCCC* |$;;;;_AP1$,Sg:n:2:2&#44;6-7:ht|)";
     SmilesParserParams params;
     params.allowCXSMILES = true;
 
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
+    REQUIRE(m);
 
-    TEST_ASSERT(m->getNumAtoms() == 5);
+    CHECK(m->getNumAtoms() == 5);
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testErrorsInCXSmiles() {
-  BOOST_LOG(rdInfoLog) << "Testing handling of errors in CXSMILES" << std::endl;
-
+TEST_CASE("errors in CXSMILES") {
   {
     std::string smiles = R"(CC |failure)";
     SmilesParserParams params;
@@ -512,12 +479,12 @@ void testErrorsInCXSmiles() {
       m = SmilesToMol(smiles, params);
     } catch (const SmilesParseException &) {
     }
-    TEST_ASSERT(!m);
+    CHECK(!m);
 
     params.strictCXSMILES = false;
     m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 2);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
 
     delete m;
   }
@@ -527,84 +494,74 @@ void testErrorsInCXSmiles() {
     SmilesParserParams params;
     params.strictCXSMILES = false;
     ROMol *m = SmilesToMol(smiles, params);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 2);
-    TEST_ASSERT(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    CHECK(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 2);
+    CHECK(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
     delete m;
   }
-
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testMDLQueriesInCXSmiles() {
-  BOOST_LOG(rdInfoLog) << "Testing handling of MDL queries in CXSMILES"
-                       << std::endl;
-
+TEST_CASE("MDL queries") {
   {  // just ring bonds
     auto m =
         "[#6]-[#6]-1-[#6]-[#6]-1 "
         "|rb:0:0,1:*,2:2|"_smiles;
-    TEST_ASSERT(m);
+    REQUIRE(m);
     auto sma = MolToSmarts(*m);
-    TEST_ASSERT(sma == "[#6&x0]-[#6&x2]1-[#6&x2]-[#6]-1");
+    CHECK(sma == "[#6&x0]-[#6&x2]1-[#6&x2]-[#6]-1");
   }
 
   {  // unsaturation
     auto m =
         "[#6]-[#6]-1-[#6]-[#6]-1 "
         "|u:0,2|"_smiles;
-    TEST_ASSERT(m);
+    REQUIRE(m);
     auto sma = MolToSmarts(*m);
-    TEST_ASSERT(sma == "[#6&$(*=,:,#*)]-[#6]1-[#6&$(*=,:,#*)]-[#6]-1");
+    CHECK(sma == "[#6&$(*=,:,#*)]-[#6]1-[#6&$(*=,:,#*)]-[#6]-1");
   }
 
   {  // substitution count
     auto m =
         "[#6]-[#6]-1-[#6]-[#6]-1 "
         "|s:3:*,1:3|"_smiles;
-    TEST_ASSERT(m);
+    REQUIRE(m);
     auto sma = MolToSmarts(*m);
-    TEST_ASSERT(sma == "[#6]-[#6&d3]1-[#6]-[#6&d2]-1");
+    CHECK(sma == "[#6]-[#6&d3]1-[#6]-[#6&d2]-1");
   }
 
   {  // everything together
     auto m =
         "[#6]-[#6]-1-[#6]-[#6]-1 "
         "|rb:0:0,1:*,2:2,s:3:*,u:0|"_smiles;
-    TEST_ASSERT(m);
+    REQUIRE(m);
     auto sma = MolToSmarts(*m);
-    TEST_ASSERT(sma == "[#6&x0&$(*=,:,#*)]-[#6&x2]1-[#6&x2]-[#6&d2]-1");
+    CHECK(sma == "[#6&x0&$(*=,:,#*)]-[#6&x2]1-[#6&x2]-[#6&d2]-1");
   }
-
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testLinknodesInCXSmiles() {
-  BOOST_LOG(rdInfoLog) << "Testing handling of LINKNODES in CXSMILES"
-                       << std::endl;
-
+TEST_CASE("LINKNODES") {
   {
     auto m = "OC1CCC(F)C1 |LN:1:1.3.2.6|"_smiles;
-    TEST_ASSERT(m);
+    REQUIRE(m);
     std::string lns;
-    TEST_ASSERT(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
-    TEST_ASSERT(lns == "1 3 2 2 3 2 7")
+    CHECK(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
+    CHECK(lns == "1 3 2 2 3 2 7");
   }
   {
     auto m = "OC1CCC(F)C1 |LN:1:1.3.2.6,4:1.4.3.6|"_smiles;
-    TEST_ASSERT(m);
+    REQUIRE(m);
     std::string lns;
-    TEST_ASSERT(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
-    TEST_ASSERT(lns == "1 3 2 2 3 2 7|1 4 2 5 4 5 7")
+    CHECK(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
+    CHECK(lns == "1 3 2 2 3 2 7|1 4 2 5 4 5 7");
   }
   {  // linknodes with implicit outer atoms
     auto m = "OC1CCCC1 |LN:4:1.3|"_smiles;
-    TEST_ASSERT(m);
+    REQUIRE(m);
     std::string lns;
-    TEST_ASSERT(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
-    TEST_ASSERT(lns == "1 3 2 5 4 5 6")
+    CHECK(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
+    CHECK(lns == "1 3 2 5 4 5 6");
   }
   {  // linknodes with implicit outer atoms : fails because atom is
      // three-connected
@@ -614,75 +571,74 @@ void testLinknodesInCXSmiles() {
     } catch (const RDKit::SmilesParseException &) {
       ok = true;
     }
-    TEST_ASSERT(ok);
+    CHECK(ok);
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testVariableAttachmentInCXSmiles() {
-  BOOST_LOG(rdInfoLog)
-      << "Testing handling of variable attachment bonds in CXSMILES"
-      << std::endl;
-
+TEST_CASE("variable attachment bonds") {
   {
     auto m = "CO*.C1=CC=NC=C1 |m:2:3.5.4|"_smiles;
-    TEST_ASSERT(m);
+    REQUIRE(m);
     const auto bnd = m->getBondBetweenAtoms(1, 2);
-    TEST_ASSERT(bnd);
-    TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondAttach));
-    TEST_ASSERT(bnd->getProp<std::string>(
-                    common_properties::_MolFileBondAttach) == "ANY");
-    TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondEndPts));
-    TEST_ASSERT(bnd->getProp<std::string>(
-                    common_properties::_MolFileBondEndPts) == "(3 4 6 5)");
+    REQUIRE(bnd);
+    CHECK(bnd->hasProp(common_properties::_MolFileBondAttach));
+    CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondAttach) ==
+          "ANY");
+    CHECK(bnd->hasProp(common_properties::_MolFileBondEndPts));
+    CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondEndPts) ==
+          "(3 4 6 5)");
   }
 
   {
     auto m = "F*.Cl*.C1=CC=NC=C1 |m:1:9.8,3:4.5|"_smiles;
-    TEST_ASSERT(m);
+    REQUIRE(m);
     {
       const auto bnd = m->getBondBetweenAtoms(0, 1);
-      TEST_ASSERT(bnd);
-      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondAttach));
-      TEST_ASSERT(bnd->getProp<std::string>(
-                      common_properties::_MolFileBondAttach) == "ANY");
-      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondEndPts));
-      TEST_ASSERT(bnd->getProp<std::string>(
-                      common_properties::_MolFileBondEndPts) == "(2 10 9)");
+      REQUIRE(bnd);
+      CHECK(bnd->hasProp(common_properties::_MolFileBondAttach));
+      CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondAttach) ==
+            "ANY");
+      CHECK(bnd->hasProp(common_properties::_MolFileBondEndPts));
+      CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondEndPts) ==
+            "(2 10 9)");
     }
     {
       const auto bnd = m->getBondBetweenAtoms(2, 3);
-      TEST_ASSERT(bnd);
-      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondAttach));
-      TEST_ASSERT(bnd->getProp<std::string>(
-                      common_properties::_MolFileBondAttach) == "ANY");
-      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondEndPts));
-      TEST_ASSERT(bnd->getProp<std::string>(
-                      common_properties::_MolFileBondEndPts) == "(2 5 6)");
+      REQUIRE(bnd);
+      CHECK(bnd->hasProp(common_properties::_MolFileBondAttach));
+      CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondAttach) ==
+            "ANY");
+      CHECK(bnd->hasProp(common_properties::_MolFileBondEndPts));
+      CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondEndPts) ==
+            "(2 5 6)");
     }
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
-  RDLog::InitLogs();
-#if 1
-  testBase();
-  testCoords2D();
-  testAtomLabels();
-  testCXSmilesAndName();
-  testCoordinateBonds();
-  testRadicals();
-  testAtomValues();
-#endif
-  testAtomProps();
-  testGithub1968();
-  testEnhancedStereo();
-  testHTMLCharCodes();
-  testErrorsInCXSmiles();
-  testMDLQueriesInCXSmiles();
-  testLinknodesInCXSmiles();
-  testVariableAttachmentInCXSmiles();
+TEST_CASE("github #6050: stereogroups not combined") {
+  SECTION("basics") {
+    auto m =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,o1:7,&2:1,&3:5,r|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getStereoGroups().size() == 3);
+  }
+  SECTION("duplicate indices") {
+    auto m =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,o3:7,&2:1,&3:5,r|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getStereoGroups().size() == 3);
+    CHECK(m->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+    CHECK(m->getStereoGroups()[0].getAtoms().size() == 2);
+    CHECK(m->getStereoGroups()[1].getGroupType() == StereoGroupType::STEREO_OR);
+    CHECK(m->getStereoGroups()[1].getAtoms().size() == 1);
+  }
+  SECTION("multiple repeats") {
+    auto m =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@H](O)[C@@H](C)[C@H](C)[C@H](C)O |o1:7,&2:1,&3:3,5,o1:9,11,o1:13,r|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getStereoGroups().size() == 3);
+    CHECK(m->getStereoGroups()[0].getGroupType() == StereoGroupType::STEREO_OR);
+    CHECK(m->getStereoGroups()[0].getAtoms().size() == 4);
+  }
 }

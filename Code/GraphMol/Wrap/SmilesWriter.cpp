@@ -64,9 +64,9 @@ std::string swDocStr =
     "aromatic bonds for molecules that have been kekulized).\n\n";
 struct smiwriter_wrap {
   static void wrap() {
-    python::class_<SmilesWriter>("SmilesWriter",
-                                 "A class for writing molecules to text files.",
-                                 python::no_init)
+    python::class_<SmilesWriter, boost::noncopyable>(
+        "SmilesWriter", "A class for writing molecules to text files.",
+        python::no_init)
         .def("__init__",
              python::make_constructor(
                  &getSmilesWriter, python::default_call_policies(),

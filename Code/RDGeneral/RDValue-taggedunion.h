@@ -350,18 +350,29 @@ template <class T>
 inline bool rdvalue_is(RDValue_cast_t v) {
   const short tag =
       RDTypeTag::GetTag<typename boost::remove_reference<T>::type>();
-  if (v.getTag() == tag) {
-    return true;
-  }
 
   // If we are an Any tag, check the any type info
+  //  see the template specialization below if we are
+  //  looking for a boost any directly
   if (v.getTag() == RDTypeTag::AnyTag) {
     return v.value.a->type() == typeid(T);
   }
 
+  if (v.getTag() == tag) {
+    return true;
+  }
+  
   return false;
 }
 
+template <>
+inline bool rdvalue_is<boost::any>(RDValue_cast_t v) {
+  // If we are explicitly looking for a boost::any
+  //  then just check the top level tag
+  const short tag =
+      RDTypeTag::GetTag<boost::any>();
+  return v.getTag() == tag;
+}
 /////////////////////////////////////////////////////////////////////////////////////
 // rdvalue_cast<T>
 //

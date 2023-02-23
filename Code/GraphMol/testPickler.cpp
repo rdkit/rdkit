@@ -844,6 +844,22 @@ void testIssue3316407() {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testGithubIssue6036() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing github issue 6036" << std::endl;
+  // Root cause
+  //  MurckoDecompose sets a boost::any as a distance matrix as well as
+  //  setting an explicit bit vector.  This checks to ensure that
+  //  rdvalue_is correctly works for ExplicitBitVectors and doesn't return
+  //  true when a boost::any has been set that isn't an explicit bit vector
+  auto m = "C"_smiles;
+  boost::shared_array<double> sptr;
+  m->setProp("shared_array", sptr);
+  std::string pkl;
+  MolPickler::pickleMol(*m, pkl, PicklerOps::AllProps);
+  std::unique_ptr<RWMol> roundTripped(new RWMol(pkl));  
+}
+
 void testIssue3496759() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Testing sf.net issue 3496759." << std::endl;
@@ -1866,4 +1882,5 @@ int main(int argc, char *argv[]) {
   testPropertyOptions();
   testAdditionalQueryPickling();
   testBoostSerialization();
+  testGithubIssue6036();
 }
