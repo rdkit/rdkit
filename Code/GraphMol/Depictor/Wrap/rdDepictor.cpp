@@ -247,7 +247,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      bondLength - change the default bond length for depiction \n\
      forceRDKit - use RDKit to generate coordinates even if \n\
                   preferCoordGen is set to true\n\
-     useRingTemplates - use templates to generate coordinates of complicated\n\
+     useRingTemplates - use templates to generate coordinates of complex\n\
                   ring systems\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
