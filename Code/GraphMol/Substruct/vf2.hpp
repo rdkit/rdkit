@@ -62,33 +62,26 @@ static bool nodeInfoComp1(const NodeInfo &a, const NodeInfo &b) {
  * The ordering by frequency/valence.
  * The frequency is in the out field, the valence in `in'.
  */
-static bool nodeInfoComp2(const NodeInfo &a, const NodeInfo &b) {
+static int nodeInfoComp2(const NodeInfo &a, const NodeInfo &b) {
   if (!a.in && b.in) {
-    return false;
+    return 1;
   }
   if (a.in && !b.in) {
-    return true;
+    return -1;
   }
   if (a.out < b.out) {
-    return true;
+    return -1;
   }
   if (a.out > b.out) {
-    return false;
+    return 1;
   }
   if (a.in < b.in) {
-    return true;
+    return -1;
   }
   if (a.in > b.in) {
-    return false;
+    return 1;
   }
-  return false;
-}
-
-/**
- * The ordering by in/out degree
- */
-static bool nodeInfoComp3(const NodeInfo &a, const NodeInfo &b) {
-  return nodeInfoComp1(b, a);
+  return 0;
 }
 
 template <class Graph, class VertexDescr, class EdgeDescr>
@@ -129,12 +122,6 @@ node_id *SortNodesByFrequency(const Graph *g) {
   }
   std::sort(vect.begin(), vect.end(), nodeInfoComp1);
 
-  std::cerr << "1 --------------" << std::endl;
-  for (auto &ni : vect) {
-    std::cerr << " " << ni.id << "(" << ni.in << "," << ni.out << ") ";
-  }
-  std::cerr << std::endl;
-
   unsigned int run = 1;
   for (unsigned int i = 0; i < vect.size(); i += run) {
     for (run = 1; i + run < vect.size() && vect[i + run].in == vect[i].in &&
@@ -148,42 +135,6 @@ node_id *SortNodesByFrequency(const Graph *g) {
     }
   }
   std::sort(vect.begin(), vect.end(), nodeInfoComp2);
-
-  std::cerr << "2 --------------" << std::endl;
-  for (auto &ni : vect) {
-    std::cerr << " " << ni.id << "(" << ni.in << "," << ni.out << ") ";
-  }
-  std::cerr << std::endl;
-
-  node_id *nodes = new node_id[vect.size()];
-  for (unsigned int i = 0; i < vect.size(); ++i) {
-    nodes[i] = vect[i].id;
-  }
-
-  return nodes;
-}
-
-template <class Graph>
-node_id *SortNodesByDegree(const Graph *g) {
-  std::vector<NodeInfo> vect;
-  vect.reserve(boost::num_vertices(*g));
-  typename Graph::vertex_iterator bNode, eNode;
-  boost::tie(bNode, eNode) = boost::vertices(*g);
-  while (bNode != eNode) {
-    NodeInfo t;
-    t.id = vect.size();
-    t.in = boost::out_degree(*bNode, *g);  // <- assuming undirected graph
-    t.out = boost::out_degree(*bNode, *g);
-    vect.push_back(t);
-    ++bNode;
-  }
-  std::sort(vect.begin(), vect.end(), nodeInfoComp3);
-
-  // std::cerr << "1 --------------" << std::endl;
-  // for (auto &ni : vect) {
-  //   std::cerr << " " << ni.id << "(" << ni.in << "," << ni.out << ") ";
-  // }
-  // std::cerr << std::endl;
 
   node_id *nodes = new node_id[vect.size()];
   for (unsigned int i = 0; i < vect.size(); ++i) {
@@ -231,7 +182,7 @@ class VF2SubState {
         n1(num_vertices(*ag1)),
         n2(num_vertices(*ag2)) {
     if (sortNodes) {
-      order = SortNodesByDegree(ag1);
+      order = SortNodesByFrequency(ag1);
     } else {
       order = nullptr;
     }
@@ -711,7 +662,7 @@ bool vf2_all(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
              EdgeLabeling &edge_labeling, MatchChecking &match_checking,
              DoubleBackInsertionSequence &F, unsigned int max_results = 1000) {
   detail::VF2SubState<const Graph, VertexLabeling, EdgeLabeling, MatchChecking>
-      s0(&g1, &g2, vertex_labeling, edge_labeling, match_checking, true);
+      s0(&g1, &g2, vertex_labeling, edge_labeling, match_checking, false);
   detail::node_id *ni1 = new detail::node_id[num_vertices(g1)];
   detail::node_id *ni2 = new detail::node_id[num_vertices(g2)];
 
