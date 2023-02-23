@@ -59,10 +59,10 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
                                   //!< to improve the depiction
   bool forceRDKit = false;  //!< use RDKit to generate coordinates even if
                             //!< preferCoordGen is set to true
-  bool useRingTemplates = false;  //!< whether to use ring system templates for 
+  bool useRingTemplates = false;  //!< whether to use ring system templates for
                                   //!< generating initial coordinates
 
-  Compute2DCoordParameters() {}
+  Compute2DCoordParameters() = default;
 };
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule

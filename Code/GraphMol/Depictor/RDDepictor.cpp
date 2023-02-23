@@ -264,19 +264,19 @@ void embedFusedSystems(const RDKit::ROMol &mol,
       frings.push_back(arings.at(rid));
     }
 
-    // don't allow ring system templates if >2 atoms in this ring system
-    // have a user-defined coordinate from coordMap
+    // don't allow ring system templates if >1 atom in this ring system
+    // has a user-defined coordinate from coordMap
     bool allowRingTemplates = useRingTemplates;
     if (useRingTemplates && coordMap) {
-      std::unordered_set<unsigned int> coordMapAtoms;
+      boost::dynamic_bitset<> coordMapAtoms(mol.getNumAtoms());
       for (const auto& ring : frings) {
         for (const auto& aid : ring) {
           if (coordMap->find(aid) != coordMap->end()) {
-            coordMapAtoms.insert(aid);
+            coordMapAtoms.set(aid);
           }
         }
       }
-      allowRingTemplates = (coordMapAtoms.size() < 2);
+      allowRingTemplates = (coordMapAtoms.count() < 2);
     }
 
     EmbeddedFrag efrag(&mol, frings, allowRingTemplates);

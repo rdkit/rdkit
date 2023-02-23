@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2023 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,10 +8,11 @@
 //  of the RDKit source tree.
 //
 
-
 #include <GraphMol/ROMol.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/MolOps.h>
+
+#include "TemplateSmiles.h"
 
 #include <iostream>
 #include <fstream>
@@ -48,15 +49,10 @@ class CoordinateTemplates {
  private:
   CoordinateTemplates() {
     // load templates into m_templates map by atom count
-    std::string rdbase = getenv("RDBASE");
-    std::string fpath = rdbase + "/Data/ring_system_templates.smi";
-    std::ifstream cxsmiles_templates (fpath);
-    std::string smiles;
-    while(std::getline(cxsmiles_templates, smiles)) {
+    for (const auto& smiles : TEMPLATE_SMILES) {
         std::shared_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol(smiles));
         m_templates[mol->getNumAtoms()].push_back(mol);
     }
-    cxsmiles_templates.close();
   }
 
   CoordinateTemplates(const CoordinateTemplates&) = delete;

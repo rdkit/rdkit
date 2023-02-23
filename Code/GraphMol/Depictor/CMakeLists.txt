@@ -18,7 +18,6 @@ rdkit_library(Depictor
 target_compile_definitions(Depictor PRIVATE RDKIT_DEPICTOR_BUILD)
 
 rdkit_headers(DepictUtils.h
-              Templates.h
               EmbeddedFrag.h
               RDDepictor.h DEST GraphMol/Depictor)
 
