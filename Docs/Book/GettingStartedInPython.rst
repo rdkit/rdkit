@@ -3397,7 +3397,7 @@ Lipinski's "Rule of 5" [#lipinski]_ was introduced to estimate the oral bioavail
   >>> from rdkit import Chem
   >>> from rdkit.Chem import Descriptors
   >>> mol = Chem.MolFromSmiles('CC(=O)Nc1ccc(O)cc1')  # e.g. Paracetamol
-  >>> # Ro5 descriptors
+  # Ro5 descriptors
   >>> MW = Descriptors.MolWt(mol)
   >>> HBA = Descriptors.NOCount(mol)
   >>> HBD = Descriptors.NHOHCount(mol)
@@ -3405,7 +3405,8 @@ Lipinski's "Rule of 5" [#lipinski]_ was introduced to estimate the oral bioavail
   >>> conditions = [MW <= 500, HBA <= 10, HBD <= 5, LogP <= 5]
   >>> pass_ro5 = conditions.count(True) >= 3
   >>> print(pass_ro5)
-
+  True
+  
 Filtering Unwanted Substructures
 ================================
 Pan Assay Interference Compounds (or PAINS) [#pains]_ are molecules that display non-specific binding, leading to unwanted side effects and false-positives in virtual screening. Common PAINS motifs include toxoflavin, isothiazolones, hydroxyphenyl hydrazones, curcumin, phenolsulfonamides, rhodanines, enones, quinones, and catechols. 
