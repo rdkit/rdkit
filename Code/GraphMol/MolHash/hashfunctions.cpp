@@ -475,7 +475,9 @@ bool HasNbrInScaffold(Atom *aptr, unsigned char *is_in_scaffold) {
 
 std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles) {
   PRECONDITION(mol, "bad molecule");
-  RDKit::MolOps::fastFindRings(*mol);
+  if (!mol->getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(*mol);
+  }
 
   unsigned int maxatomidx = mol->getNumAtoms();
   auto *is_in_scaffold = (unsigned char *)alloca(maxatomidx);
@@ -690,8 +692,10 @@ std::string RegioisomerHash(RWMol *mol, bool useCXSmiles) {
 
   // we need a copy of the molecule so that we can loop over the bonds of
   // something while modifying something else
-  RDKit::MolOps::fastFindRings(*mol);
   RDKit::ROMol molcpy(*mol);
+  if (molcpy.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(molcpy);
+  }
   for (int i = molcpy.getNumBonds() - 1; i >= 0; --i) {
     auto bptr = molcpy.getBondWithIdx(i);
     int split = RegioisomerBond(bptr);

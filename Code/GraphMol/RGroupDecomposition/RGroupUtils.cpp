@@ -110,13 +110,10 @@ bool isDummyRGroupAttachment(const Atom &atom) {
   if (isUserRLabel(atom)) {
     return true;
   }
-  int rlabel_type = 0;
-  bool unlabelled_core_attachment = false;
-  if (atom.hasProp(RLABEL) && atom.getPropIfPresent(RLABEL_TYPE, rlabel_type) &&
-      static_cast<Labelling>(rlabel_type) == Labelling::INDEX_LABELS &&
-      atom.getPropIfPresent(UNLABELLED_CORE_ATTACHMENT,
-                            unlabelled_core_attachment) &&
-      unlabelled_core_attachment) {
+  bool unlabeled_core_attachment = false;
+  if (atom.getPropIfPresent(UNLABELED_CORE_ATTACHMENT,
+                            unlabeled_core_attachment) &&
+      unlabeled_core_attachment) {
     return true;
   }
   return false;

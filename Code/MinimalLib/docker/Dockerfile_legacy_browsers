@@ -1,0 +1,53 @@
+# Example usage of this Dockerfile:
+# (the build-arg arguments are all optional)
+#
+# 1. cd to Code/MinimalLib/docker
+# cd Code/MinimalLib/docker
+#
+# 2. generate an image of the build-stage from the main Dockerfile
+#    (the build-arg arguments are all optional)
+# docker build --target build-stage -t rdkit-minimallib-build-stage --network=host \
+#  --build-arg "RDKIT_GIT_URL=https://github.com/myfork/rdkit.git" \
+#  --build-arg "RDKIT_BRANCH=mybranch" .
+#
+# 3. build the JS-only version of MinimalLib for legacy browsers
+#    (requires the rdkit-minimallib-build-stage image built in step 2)
+# docker build -t rdkit-minimallib-legacy --network=host -f Dockerfile_legacy_browsers .
+#
+# 4. create a temporary container and copy built libraries
+#    from the container to your local filesystem, then destroy
+#    the temporary container
+# docker create --name=rdkit-minimallib-legacy-container rdkit-minimallib-legacy:latest --entrypoint /
+# docker cp rdkit-minimallib-legacy-container:/RDKit_minimal_legacy.js ../demo
+# docker rm rdkit-minimallib-legacy-container
+#
+# To test in a legacy browser, do the following:
+# sed 's|RDKit_minimal\.js|RDKit_minimal_legacy.js|' < ../demo/demo.html > ../demo/demo_legacy.html
+# then point your browser to demo_legacy.html
+
+
+FROM rdkit-minimallib-build-stage as build-stage-legacy
+
+WORKDIR $RDBASE/build
+RUN emcmake cmake -DRDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS=ON \
+  -DCMAKE_EXE_LINKER_FLAGS="-s SINGLE_FILE=1 -s LEGACY_VM_SUPPORT=1 -s MIN_IE_VERSION=11 -s WASM=0 --memory-init-file 0 -s MODULARIZE=1 -s EXPORT_NAME=\"'initRDKitModule'\"" ..
+
+# build and "install"
+RUN make -j2 RDKit_minimal && echo -e '\
+var toObj=function(c){if(null===c||"undefined"===typeof c)throw new TypeError("this is null or undefined");return Object(c)};Uint8Array.prototype.fill||Object.defineProperty(Uint8Array.prototype,"fill",{value:function(c,b,d){var e=toObj(this),a=e.length>>>0;b>>=0;b=0>b?Math.max(a+b,0):Math.min(b,a);d="undefined"===typeof d?a:d>>0;for(a=0>d?Math.max(a+d,0):Math.min(d,a);b<a;)e[b]=c,++b;return e}});\n\
+Uint8Array.prototype.copyWithin||Object.defineProperty(Uint8Array.prototype,"copyWithin",{value:function(c,b,d){var e=toObj(this),a=e.length>>>0;c>>=0;c=0>c?Math.max(a+c,0):Math.min(c,a);b>>=0;b=0>b?Math.max(a+b,0):Math.min(b,a);d="undefined"===typeof d?a:d>>0;a=Math.min((0>d?Math.max(a+d,0):Math.min(d,a))-b,a-c);d=1;b<c&&c<b+a&&(d=-1,b+=a-1,c+=a-1);for(;0<a;)b in e?e[c]=e[b]:delete e[c],b+=d,c+=d,--a;return e}});\n\
+String.prototype.includes||Object.defineProperty(String.prototype,"includes",{value:function(c,b){var d=toObj(this);if(c instanceof RegExp)throw new TypeError("first argument must not be a RegExp");return-1!==d.indexOf(c,b||0)}});\n\
+Array.prototype.includes||Object.defineProperty(Array.prototype,"includes",{value:function(c,b){var d=toObj(this),e=d.length>>>0;if(0===e)return!1;var a=b||0;for(a=Math.max(0<=a?a:e-Math.abs(a),0);a<e;){var f=d[a],g=c;if(f===g||"number"===typeof f&&"number"===typeof g&&isNaN(f)&&isNaN(g))return!0;++a}return!1}});String.prototype.startsWith||Object.defineProperty(String.prototype,"startsWith",{value:function(c,b){var d=toObj(this),e=0<b?b|0:0;return d.substring(e,e+c.length)===c}});\n\
+' > ../Code/MinimalLib/demo/RDKit_minimal_legacy.js && \
+    sed 's|\(var *initRDKitModule *= *(\)\(() *=>\)\( *{\)|\1function()\3|' \
+      < Code/MinimalLib/RDKit_minimal.js >> ../Code/MinimalLib/demo/RDKit_minimal_legacy.js
+
+# run the tests
+WORKDIR /src/rdkit/Code/MinimalLib/tests
+RUN RDKIT_MINIMAL_JS="../demo/RDKit_minimal_legacy.js" node tests.js
+
+# Copy pure js RDKit MinimalLib file to use in legacy browsers
+# This feature requires the BuildKit backend
+# https://docs.docker.com/engine/reference/commandline/build/#custom-build-outputs
+FROM scratch as export-stage-legacy
+COPY --from=build-stage-legacy /src/rdkit/Code/MinimalLib/demo/RDKit_minimal_legacy.js /

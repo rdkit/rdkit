@@ -342,7 +342,7 @@ public class WrapperTests extends GraphMolTest {
 	assertEquals(prods.size(), 1);
 	for(int idx = 0; idx < prods.size(); idx++) {
 	    if(idx == 0) {
-		assertEquals(prods.get(idx).MolToSmiles(true), "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1");
+		assertEquals(prods.get(idx).MolToSmiles(true), "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1");
 	    }
 	}
 

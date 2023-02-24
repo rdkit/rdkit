@@ -44,6 +44,11 @@ RDKIT_RDKITCFFI_EXPORT char *get_inchi_for_molblock(const char *ctab,
 RDKIT_RDKITCFFI_EXPORT char *get_inchikey_for_inchi(const char *inchi);
 RDKIT_RDKITCFFI_EXPORT char *get_rxn(const char *input, size_t *mol_sz,
                                      const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char **get_mol_frags(const char *pkl, size_t pkl_sz,
+                                            size_t **frags_pkl_sz_array,
+                                            size_t *num_frags,
+                                            const char *details_json,
+                                            char **mappings_json);
 
 // substructure
 RDKIT_RDKITCFFI_EXPORT char *get_substruct_match(const char *mol_pkl,
@@ -91,6 +96,11 @@ RDKIT_RDKITCFFI_EXPORT char *get_atom_pair_fp(const char *pkl, size_t pkl_sz,
                                               const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_atom_pair_fp_as_bytes(
     const char *pkl, size_t pkl_sz, size_t *nbytes, const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_maccs_fp(const char *pkl, size_t pkl_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_maccs_fp_as_bytes(const char *pkl,
+                                                   size_t pkl_sz,
+                                                   size_t *nbytes);
+
 #ifdef RDK_BUILD_AVALON_SUPPORT
 RDKIT_RDKITCFFI_EXPORT char *get_avalon_fp(const char *pkl, size_t pkl_sz,
                                            const char *details_json);

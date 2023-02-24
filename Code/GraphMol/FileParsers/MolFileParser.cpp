@@ -1370,6 +1370,31 @@ void convertComplexNameToQuery(Atom *query, std::string_view symb) {
   }
 }
 
+namespace {
+void setRGPProps(const std::string_view symb, Atom *res) {
+  PRECONDITION(res, "bad atom pointer");
+  // set the dummy label so that this is shown correctly
+  // in other pieces of the code :
+  std::string symbc(symb);
+  res->setProp(common_properties::dummyLabel, symbc);
+}
+
+void lookupAtomicNumber(Atom *res, const std::string &symb, bool strictParsing) {
+  try {
+    res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
+  } catch (const Invar::Invariant &e) {
+    if (strictParsing || symb.empty()) {
+      delete res;
+      throw FileParseException(e.what());
+    } else {
+      res->setAtomicNum(0);
+      res->setProp(common_properties::dummyLabel, symb);
+    }
+  }
+}
+
+}  // namespace
+
 Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
                            unsigned int line, bool strictParsing) {
   std::string symb;
@@ -1464,6 +1489,11 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
         }
       }
     }
+    if (symb[0] == 'R') {
+      // we used to skip R# here because that really should be handled by an
+      // RGP spec, but that turned out to not be permissive enough... <sigh>
+      setRGPProps(symb, res);
+    }
   } else if (symb == "D") {  // mol blocks support "D" and "T" as shorthand...
                              // handle that.
     res->setAtomicNum(1);
@@ -1479,12 +1509,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
     if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
       symb[1] = static_cast<char>(tolower(symb[1]));
     }
-    try {
-      res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
-    } catch (const Invar::Invariant &e) {
-      delete res;
-      throw FileParseException(e.what());
-    }
+    lookupAtomicNumber(res, symb, strictParsing);
   }
 
   // res->setPos(pX,pY,pZ);
@@ -2052,7 +2077,8 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
   return fileComplete;
 }
 
-Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line) {
+Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
+                           bool strictParsing) {
   bool negate = false;
   token = FileParserUtils::strip(token);
   if (token.size() > 3 && (token[0] == 'N' || token[0] == 'n') &&
@@ -2136,6 +2162,11 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line) {
           res->setIsotope(rnumber);
         }
       }
+      if (token[0] == 'R') {
+        // we used to skip R# here because that really should be handled by an
+        // RGP spec, but that turned out to not be permissive enough... <sigh>
+        setRGPProps(token, res);
+      }
     } else if (token == "D") {  // mol blocks support "D" and "T" as
                                 // shorthand... handle that.
       res = new Atom(1);
@@ -2152,8 +2183,8 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line) {
       if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z') {
         tcopy[1] = static_cast<char>(tolower(token[1]));
       }
-
-      res = new Atom(PeriodicTable::getTable()->getAtomicNumber(tcopy));
+      res = new Atom(0);
+      lookupAtomicNumber(res, tcopy, strictParsing);
     }
   }
 
@@ -2453,7 +2484,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
     }
-    Atom *atom = ParseV3000AtomSymbol(*token, line);
+    Atom *atom = ParseV3000AtomSymbol(*token, line, strictParsing);
 
     // now the position;
     RDGeom::Point3D pos;
@@ -2820,6 +2851,7 @@ void processSMARTSQ(RWMol &mol, const SubstanceGroup &sg) {
       query = new RecursiveStructureQuery(m.release());
     }
     at->setQuery(query);
+    at->setProp(common_properties::MRV_SMA, sma);
     at->setProp(common_properties::_MolFileAtomQuery, 1);
   }
 }

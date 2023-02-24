@@ -45,7 +45,7 @@ class TestFixtureTemplate : public boost::noncopyable {
     if (m_env_var_set) {
       (*m_setter_func)(m_flag_state);
     } else {
-#if _MSC_VER
+#ifdef _WIN32
       _putenv_s(m_var.c_str(), "");
 #else
       unsetenv(m_var.c_str());
@@ -1784,11 +1784,10 @@ TEST_CASE(
     "Github #4215: Ring stereo being discarded in spiro systems, using deprecated useLegacyStereo option") {
   // Note: this bug is still there when using the legacy stereochemistry
   // assignment. It's "non-trivial" to fix there and we've opted not to
-  SmilesParserParams ps;
-  ps.useLegacyStereo = false;
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+  Chirality::setUseLegacyStereoPerception(false);
   SECTION("original failing example") {
-    std::unique_ptr<RWMol> m{
-        SmilesToMol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2", ps)};
+    std::unique_ptr<RWMol> m{SmilesToMol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2")};
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
@@ -1818,7 +1817,7 @@ TEST_CASE(
     }
   }
   SECTION("original passing example") {
-    std::unique_ptr<RWMol> m{SmilesToMol("C[C@H]1CCC2(CC1)CC[C@H](C)CC2", ps)};
+    std::unique_ptr<RWMol> m{SmilesToMol("C[C@H]1CCC2(CC1)CC[C@H](C)CC2")};
     REQUIRE(m);
     // if the middle is unspecified, the two ends can't be specified
     CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
@@ -1847,8 +1846,7 @@ TEST_CASE(
     }
   }
   SECTION("specified chirality on spiro atom") {
-    std::unique_ptr<RWMol> m{
-        SmilesToMol("C[C@H]1CC[C@@]2(CC[C@H](C)CC2)CC1", ps)};
+    std::unique_ptr<RWMol> m{SmilesToMol("C[C@H]1CC[C@@]2(CC[C@H](C)CC2)CC1")};
     REQUIRE(m);
     // now the middle is specified, so the two ends are as well
     CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
@@ -1883,7 +1881,7 @@ TEST_CASE(
   }
   SECTION("three spiro rings, unspecified spiro links") {
     std::unique_ptr<RWMol> m{
-        SmilesToMol("C[C@H]1CCC2(CC1)CCC1(CC[C@H](C)CC1)CC2", ps)};
+        SmilesToMol("C[C@H]1CCC2(CC1)CCC1(CC[C@H](C)CC1)CC2")};
     REQUIRE(m);
     {
       bool cleanIt = true;
@@ -1901,7 +1899,7 @@ TEST_CASE(
   }
   SECTION("three spiro rings, specified spiro links") {
     std::unique_ptr<RWMol> m{
-        SmilesToMol("C[C@H]1CC[C@@]2(CC1)CC[C@]1(CC[C@H](C)CC1)CC2", ps)};
+        SmilesToMol("C[C@H]1CC[C@@]2(CC1)CC[C@]1(CC[C@H](C)CC1)CC2")};
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
@@ -3245,14 +3243,6 @@ TEST_CASE("double bond stereo with new chirality perception") {
       CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
       CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
     }
-    {
-      SmilesParserParams ps;
-      ps.useLegacyStereo = false;
-      std::unique_ptr<RWMol> m{SmilesToMol("C/C=C/C", ps)};
-      REQUIRE(m);
-      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
-      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
-    }
   }
   SECTION("ring bonds") {
     {
@@ -3261,13 +3251,59 @@ TEST_CASE("double bond stereo with new chirality perception") {
       CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
       CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
     }
-    {
-      SmilesParserParams ps;
-      ps.useLegacyStereo = false;
-      std::unique_ptr<RWMol> m{SmilesToMol("C1/C=C/CCCCCCC1", ps)};
+  }
+}
+
+TEST_CASE("false positives from new stereo code") {
+  SECTION("elements") {
+    std::vector<std::string> examples{"P", "PC", "S", "SC", "S(F)C"};
+    for (auto &smi : examples) {
+      INFO(smi);
+      std::unique_ptr<RWMol> m{SmilesToMol(smi)};
       REQUIRE(m);
-      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
-      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+      auto si = Chirality::findPotentialStereo(*m);
+      CHECK(si.empty());
+    }
+  }
+  SECTION("non-tetrahedral and implicit Hs") {
+    std::vector<std::string> examples{
+        "[SiH4]",         "[SiH3]C",      "[SH4]",     "[PH5]",
+        "[PH4]C",         "[SH6]",        "[SH5]C",    "[SiH2](C)C",
+        "[PH3](C)C",      "[PH2](C)(C)C", "[SH4](C)C", "[SH3](C)(C)C",
+        "[SH2](C)(C)(C)C"};
+    {
+      AllowNontetrahedralChiralityFixture reset_non_tetrahedral_allowed;
+      Chirality::setAllowNontetrahedralChirality(false);
+      for (auto &smi : examples) {
+        INFO(smi);
+        std::unique_ptr<RWMol> m{SmilesToMol(smi)};
+        REQUIRE(m);
+        auto si = Chirality::findPotentialStereo(*m);
+        CHECK(si.empty());
+      }
+    }
+    {
+      AllowNontetrahedralChiralityFixture reset_non_tetrahedral_allowed;
+      Chirality::setAllowNontetrahedralChirality(true);
+      for (auto &smi : examples) {
+        INFO(smi);
+        std::unique_ptr<RWMol> m{SmilesToMol(smi)};
+        REQUIRE(m);
+        auto si = Chirality::findPotentialStereo(*m);
+        CHECK(si.size() == 1);
+      }
+    }
+  }
+}
+
+TEST_CASE(
+    "Github #6049: Cyclobutyl group in a macrocycle triggers a stereo center") {
+  SECTION("as reported") {
+    auto mol = "O=S1(=O)C=CC=C2CCCCC3CC(C3)N21"_smiles;
+    REQUIRE(mol);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    for (const auto &sg : stereoInfo) {
+      CHECK(sg.centeredOn != 15);
     }
   }
 }

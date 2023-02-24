@@ -16,8 +16,9 @@ logger = logging.getLogger("rdkit")
 # if we are running in a jupyter notebook, enable the extensions
 try:
   kernel_name = get_ipython().__class__.__name__
+  module_name = get_ipython().__class__.__module__
 
-  if kernel_name == 'ZMQInteractiveShell':
+  if kernel_name == 'ZMQInteractiveShell' or module_name == 'google.colab._shell':
     logger.info("Enabling RDKit %s jupyter extensions" % __version__)
     from rdkit.Chem.Draw import IPythonConsole
     rdBase.LogToPythonStderr()

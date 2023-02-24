@@ -68,7 +68,7 @@ typedef std::vector<std::string> STR_VECT;
      UChar_Vect vec = new UChar_Vect();
      vec.reserve(b.length);
      for (int size=0;size<b.length;++size) {
-       vec.add(b[size]);
+       vec.add((short)b[size]);
      }
      return new FilterCatalog(vec);
    }
@@ -188,7 +188,7 @@ typedef std::vector<std::string> STR_VECT;
      UChar_Vect vec = new UChar_Vect();
      vec.reserve(b.length);
      for (int size=0;size<b.length;++size) {
-       vec.add(b[size]);
+       vec.add((short)b[size]);
      }
      return new FilterCatalog(vec);
    }

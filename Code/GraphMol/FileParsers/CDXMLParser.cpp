@@ -21,7 +21,6 @@
 #include "MolFileStereochem.h"
 #include <RDGeneral/FileParseException.h>
 
-
 using boost::property_tree::ptree;
 namespace RDKit {
 
@@ -40,9 +39,9 @@ const std::string CDX_BOND_ID("_CDX_BOND_ID");
 const std::string CDX_BOND_ORDERING("CDXML_BOND_ORDERING");
 
 struct BondInfo {
-  int bond_id;
-  int start;
-  int end;
+  int bond_id = -1;
+  int start = -1;
+  int end = -1;
   Bond::BondType order;
   std::string display;
   Bond::BondType getBondType() { return order; }
@@ -134,7 +133,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   }
   mol.setProp(CDXML_FRAG_ID, frag_id);
   // for atom in frag
-  int atom_id=-1;
+  int atom_id = -1;
   std::vector<BondInfo> bonds;
   std::map<int, StereoGroupInfo> sgroups;
 
@@ -161,93 +160,96 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       std::string nodetype = "";
       for (auto &attr : node.second.get_child("<xmlattr>")) {
         try {
-            if (attr.first == "id") {
-              atom_id = stoi(attr.second.data());
-              if (ids.find(atom_id) != ids.end()) {
-                BOOST_LOG(rdErrorLog) << "Warning, duplicated atom id " << atom_id
-                                      << " skipping fragment" << std::endl;
+          if (attr.first == "id") {
+            atom_id = stoi(attr.second.data());
+            if (ids.find(atom_id) != ids.end()) {
+              BOOST_LOG(rdErrorLog) << "Warning, duplicated atom id " << atom_id
+                                    << " skipping fragment" << std::endl;
+              skip_fragment = true;
+              break;
+            }
+          } else if (attr.first == "Element") {
+            elemno = stoi(attr.second.data());
+          } else if (attr.first == "NumHydrogens") {
+            num_hydrogens = stoi(attr.second.data());
+            explicitHs = true;
+          } else if (attr.first == "Charge") {
+            charge = stoi(attr.second.data());
+          } else if (attr.first == "Isotope") {
+            isotope = stoi(attr.second.data());
+          } else if (attr.first == "NodeType") {
+            nodetype = attr.second.data();
+            if (nodetype == "Nickname" || nodetype == "Fragment") {
+              elemno = 0;
+              atommap = atom_id;
+            } else if (nodetype == "ExternalConnectionPoint") {
+              if (external_attachment <= 0) {
+                BOOST_LOG(rdErrorLog)
+                    << "External Connection Point is not set skipping fragment";
                 skip_fragment = true;
                 break;
               }
-            } else if (attr.first == "Element") {
-              elemno = stoi(attr.second.data());
-            } else if (attr.first == "NumHydrogens") {
-              num_hydrogens = stoi(attr.second.data());
-              explicitHs = true;
-            } else if (attr.first == "Charge") {
-              charge = stoi(attr.second.data());
-            } else if (attr.first == "Isotope") {
-              isotope = stoi(attr.second.data());
-            } else if (attr.first == "NodeType") {
-              nodetype = attr.second.data();
-              if (nodetype == "Nickname" || nodetype == "Fragment") {
-                elemno = 0;
-                atommap = atom_id;
-              } else if (nodetype == "ExternalConnectionPoint") {
-                if (external_attachment <= 0) {
-                  BOOST_LOG(rdErrorLog)
-                      << "External Connection Point is not set skipping fragment";
-                  skip_fragment = true;
+              elemno = 0;
+              atommap = external_attachment;
+              mergeparent = external_attachment;
+            } else if (nodetype == "GenericNickname") {
+              // RGroups for example?
+              for (auto &tnode : node.second) {
+                if (tnode.first == "t") {
+                  for (auto &snode : tnode.second) {
+                    if (snode.first == "s") {
+                      auto s = snode.second.data();
+                      if (s.size()) {
+                        if (s[0] == 'R') {
+                          if (s.size() > 1) {
+                            rgroup_num = stoi(s.substr(1));
+                          }
+                          elemno = 0;
+                          query_label = s;
+                        } else if (s == "A") {
+                          query_label = s;
+                          elemno = 0;
+                        } else if (s == "Q") {
+                          query_label = s;
+                          elemno = 0;
+                        }
+                      }
+                      break;
+                    }
+                  }
                   break;
                 }
-                elemno = 0;
-                atommap = external_attachment;
-                mergeparent = external_attachment;
-              } else if (nodetype == "GenericNickname") {
-                // RGroups for example?
-                for (auto &tnode : node.second) {
-                  if (tnode.first == "t") {
-                    for (auto &snode : tnode.second) {
-                      if (snode.first == "s") {
-                        auto s = snode.second.data();
-                        if (s.size()) {
-                          if (s[0] == 'R') {
-                            if (s.size() > 1) {
-                              rgroup_num = stoi(s.substr(1));
-                            }
-                            elemno = 0;
-                            query_label = s;
-                          } else if (s == "A") {
-                            query_label = s;
-                            elemno = 0;
-                          } else if (s == "Q") {
-                            query_label = s;
-                            elemno = 0;
-                          }
-                        }
-                        break;
-                      }
-                    }
-                    break;
-                  }
-                }
-              } else if (nodetype == "ElementList") {
-                query_label = "ElementList";
               }
-            } else if (attr.first == "ElementList") {
-              elementlist = to_vec<int>(attr.second.data());
-
-            } else if (attr.first == "p") {
-              atom_coords = to_vec<double>(attr.second.data());
-            } else if (attr.first == "EnhancedStereoGroupNum") {
-              sgroup = stoi(attr.second.data());
-            } else if (attr.first == "EnhancedStereoType") {
-              auto stereo_type = attr.second.data();
-              if (stereo_type == "And") {
-                grouptype = StereoGroupType::STEREO_AND;
-              } else if (stereo_type == "Or") {
-                grouptype = StereoGroupType::STEREO_OR;
-              } else if (stereo_type == "Absolute") {
-                grouptype = StereoGroupType::STEREO_ABSOLUTE;
-              } else {
-                BOOST_LOG(rdWarningLog) << "Unhandled enhanced stereo type "
-                                        << stereo_type << " ignoring" << std::endl;
-              }
+            } else if (nodetype == "ElementList") {
+              query_label = "ElementList";
             }
+          } else if (attr.first == "ElementList") {
+            elementlist = to_vec<int>(attr.second.data());
+
+          } else if (attr.first == "p") {
+            atom_coords = to_vec<double>(attr.second.data());
+          } else if (attr.first == "EnhancedStereoGroupNum") {
+            sgroup = stoi(attr.second.data());
+          } else if (attr.first == "EnhancedStereoType") {
+            auto stereo_type = attr.second.data();
+            if (stereo_type == "And") {
+              grouptype = StereoGroupType::STEREO_AND;
+            } else if (stereo_type == "Or") {
+              grouptype = StereoGroupType::STEREO_OR;
+            } else if (stereo_type == "Absolute") {
+              grouptype = StereoGroupType::STEREO_ABSOLUTE;
+            } else {
+              BOOST_LOG(rdWarningLog)
+                  << "Unhandled enhanced stereo type " << stereo_type
+                  << " ignoring" << std::endl;
+            }
+          }
         } catch (...) {
-            BOOST_LOG(rdErrorLog) << "Failed to parse XML fragment " << frag_id
-                << " node: " << node.first << " attribute: " << attr.first << ": " << attr.second.data() << std::endl;
-            return false;
+          BOOST_LOG(rdErrorLog)
+              << "Failed to parse XML fragment " << frag_id
+              << " node: " << node.first << " attribute: " << attr.first << ": "
+              << attr.second.data() << std::endl;
+          return false;
         }
       }
       // add the atom
@@ -331,37 +333,47 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       Bond::BondType order = Bond::SINGLE;
       std::string display;
       for (auto &attr : node.second.get_child("<xmlattr>")) {
-          try {
-            if (attr.first == "id") {
-              bond_id = stoi(attr.second.data());
-            } else if (attr.first == "B") {
-              start_atom = stoi(attr.second.data());
-            } else if (attr.first == "E") {
-              end_atom = stoi(attr.second.data());
-            } else if (attr.first == "Order") {
-              if (attr.second.data() == "1.5") {
-                order = Bond::BondType::AROMATIC;
-              } else {
-                int bond_order = stoi(attr.second.data());
-                                      
-                 switch(bond_order) {
-                    case 1: order = Bond::BondType::SINGLE; break;
-                    case 2: order = Bond::BondType::DOUBLE; break;
-                    case 3: order = Bond::BondType::TRIPLE; break;
-                    case 4: order = Bond::BondType::QUADRUPLE; break;
-                    default:
-                         throw std::invalid_argument("Unhandled bond order");
-                 }
+        try {
+          if (attr.first == "id") {
+            bond_id = stoi(attr.second.data());
+          } else if (attr.first == "B") {
+            start_atom = stoi(attr.second.data());
+          } else if (attr.first == "E") {
+            end_atom = stoi(attr.second.data());
+          } else if (attr.first == "Order") {
+            if (attr.second.data() == "1.5") {
+              order = Bond::BondType::AROMATIC;
+            } else {
+              int bond_order = stoi(attr.second.data());
+
+              switch (bond_order) {
+                case 1:
+                  order = Bond::BondType::SINGLE;
+                  break;
+                case 2:
+                  order = Bond::BondType::DOUBLE;
+                  break;
+                case 3:
+                  order = Bond::BondType::TRIPLE;
+                  break;
+                case 4:
+                  order = Bond::BondType::QUADRUPLE;
+                  break;
+                default:
+                  throw std::invalid_argument("Unhandled bond order");
               }
-            } else if (attr.first ==
-                       "Display") {  // gets wedge/hash stuff and probably more
-              display = attr.second.data();
             }
-          } catch(...) {
-              BOOST_LOG(rdErrorLog) << "Failed to parse XML fragment " << frag_id
-                  << " node: " << node.first << " attribute: " << attr.first << ": " << attr.second.data() << std::endl;
-              return false;
+          } else if (attr.first ==
+                     "Display") {  // gets wedge/hash stuff and probably more
+            display = attr.second.data();
           }
+        } catch (...) {
+          BOOST_LOG(rdErrorLog)
+              << "Failed to parse XML fragment " << frag_id
+              << " node: " << node.first << " attribute: " << attr.first << ": "
+              << attr.second.data() << std::endl;
+          return false;
+        }
       }
       // CHECK_INVARIANT(start_atom>=0 && end_atom>=0 && start_atom != end_atom,
       // "Bad bond in CDXML");
@@ -376,8 +388,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       } else {
         bonds.push_back(bond);
       }
-
-    }  // end if atom or bond
+      // end if atom or bond 
+    } 
   }    // for node
 
   // add bonds
@@ -410,6 +422,20 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       } else if (bond.display == "WedgedHashBegin" ||
                  bond.display == "WedgedHashEnd") {
         bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
+      } else if (bond.display == "Wavy") {
+        switch(bond.getBondType()) {
+            case Bond::BondType::SINGLE:
+              bnd->setBondDir(Bond::BondDir::UNKNOWN);
+              break;
+            case Bond::BondType::DOUBLE:
+              bnd->setBondDir(Bond::BondDir::EITHERDOUBLE);
+              bnd->setStereo(Bond::STEREOANY);
+              break;
+            default:
+              BOOST_LOG(rdWarningLog)
+                << "ignoring Wavy bond set on a non double bond id: "
+                << bond.bond_id  << std::endl;
+        }
       }
     }
   }
@@ -633,7 +659,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
               << std::endl;
           continue;
         }
-        CHECK_INVARIANT(sz % 2 == 0,"bad size");
+        CHECK_INVARIANT(sz % 2 == 0, "bad size");
         for (int i = 0; i < sz / 2; ++i) {
           unsigned int idx1 = scheme.ReactionStepAtomMap[i * 2];
           unsigned int idx2 = scheme.ReactionStepAtomMap[i * 2 + 1];

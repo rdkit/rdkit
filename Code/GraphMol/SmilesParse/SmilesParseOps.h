@@ -15,6 +15,7 @@
 namespace RDKit {
 class RWMol;
 class Atom;
+class QueryBond;
 }  // namespace RDKit
 namespace SmilesParseOps {
 RDKIT_SMILESPARSE_EXPORT void CheckRingClosureBranchStatus(RDKit::Atom *atom,
@@ -55,6 +56,12 @@ RDKIT_SMILESPARSE_EXPORT void ClearAtomChemicalProps(RDKit::Atom *atom);
 //! legal
 RDKIT_SMILESPARSE_EXPORT bool checkChiralPermutation(int chiralTag,
                                                      int permutation);
+
+//! this is a bit of a hack to try and get nicer "SMILES" from
+//! a SMARTS molecule
+RDKIT_SMILESPARSE_EXPORT RDKit::QueryBond *getUnspecifiedQueryBond(
+    const RDKit::Atom *a1, const RDKit::Atom *a2);
+
 namespace detail {
 constexpr auto _needsDetectBondStereo = "_needsDetectBondStereo";
 constexpr auto _needsDetectAtomStereo = "_needsDetectAtomStereo";

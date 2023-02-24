@@ -56,7 +56,7 @@
      UChar_Vect vec = new UChar_Vect();
      vec.reserve(b.length);
      for (int size=0;size<b.length;++size) {
-       vec.add(b[size]);
+       vec.add((short)b[size]);
      }
      return new SubstructLibrary(vec);
    }
@@ -107,7 +107,7 @@
      UChar_Vect vec = new UChar_Vect();
      vec.reserve(b.length);
      for (int size=0;size<b.length;++size) {
-       vec.add(b[size]);
+       vec.add((short)b[size]);
      }
      return new SubstructLibrary(vec);
    }

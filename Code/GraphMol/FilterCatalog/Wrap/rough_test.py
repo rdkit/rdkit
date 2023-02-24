@@ -579,6 +579,21 @@ class TestCase(unittest.TestCase):
     print("running")
     results = FilterCatalog.RunFilterCatalog(fc, smiles*10, numThreads=3)
 
-
+  def test_pw_chembl_filters(self):
+    # just ensure we have the right numbers
+    tests = ((FilterCatalogParams.FilterCatalogs.CHEMBL_BMS, 180),
+             (FilterCatalogParams.FilterCatalogs.CHEMBL_LINT, 57),
+             (FilterCatalogParams.FilterCatalogs.CHEMBL_Glaxo, 55),
+             (FilterCatalogParams.FilterCatalogs.CHEMBL_MLSMR, 116),
+             (FilterCatalogParams.FilterCatalogs.CHEMBL_Dundee, 105),
+             (FilterCatalogParams.FilterCatalogs.CHEMBL_Inpharmatica, 91),
+             (FilterCatalogParams.FilterCatalogs.CHEMBL_SureChEMBL, 166),
+             )
+    for catalog_idx, num in tests:
+      params = FilterCatalog.FilterCatalogParams()
+      self.assertTrue(params.AddCatalog(catalog_idx))
+      catalog = FilterCatalog.FilterCatalog(params)
+      self.assertTrue(num == catalog.GetNumEntries())
+      
 if __name__ == '__main__':
   unittest.main()

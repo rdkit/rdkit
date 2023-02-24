@@ -206,9 +206,11 @@ def EnumerateReaction(
 
   def _uniqueOnly(lst):
     seen = []
+    ps = Chem.SmilesWriteParams()
+    cxflags = Chem.CXSmilesFields.CX_ENHANCEDSTEREO
     for entry in lst:
       if entry:
-        smi = '.'.join(sorted([Chem.MolToSmiles(x, True) for x in entry]))
+        smi = '.'.join(sorted([Chem.MolToCXSmiles(x, ps, cxflags) for x in entry]))
         if smi not in seen:
           seen.append(smi)
           yield entry

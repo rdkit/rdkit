@@ -63,7 +63,7 @@ python::object MolToBinaryWithProps(const ROMol &self, unsigned int props) {
 //  since molecules have a constructor that takes a binary string
 //  we only need to provide getinitargs()
 //
-struct mol_pickle_suite : python::pickle_suite {
+struct mol_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const ROMol &self) {
     return python::make_tuple(MolToBinary(self));
   };

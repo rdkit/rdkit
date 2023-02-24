@@ -267,6 +267,35 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
   def __call__(self, mol):
     raise NotImplementedError("Please implement the __call__ method")
 
+def CalcMolDescriptors(mol, missingVal=None, silent=True):
+    ''' calculate the full set of descriptors for a molecule
+    
+    Parameters
+    ----------
+    mol : RDKit molecule
+    missingVal : float, optional
+                 This will be used if a particular descriptor cannot be calculated
+    silent : bool, optional
+             if True then exception messages from descriptors will be displayed
+
+    Returns
+    -------
+    dict 
+         A dictionary with decriptor names as keys and the descriptor values as values
+    '''
+    res = {}
+    for nm,fn in _descList:
+        # some of the descriptor fucntions can throw errors if they fail, catch those here:
+        try:
+            val = fn(mol)
+        except:
+            if not silent:
+              import traceback
+              traceback.print_exc()
+            val = missingVal
+        res[nm] = val
+    return res
+
 
 # ------------------------------------
 #

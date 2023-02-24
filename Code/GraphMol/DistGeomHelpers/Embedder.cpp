@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-//#define DEBUG_EMBEDDING 1
+// #define DEBUG_EMBEDDING 0
 #include "Embedder.h"
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
@@ -37,21 +37,49 @@
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
+#include <mutex>
 #endif
 
 //#define DEBUG_EMBEDDING 1
 
+#ifdef M_PI_2
+#undef M_PI_2
+#endif
+
 namespace {
-const double ERROR_TOL = 0.00001;
+constexpr double M_PI_2 = 1.57079632679489661923;
+constexpr double ERROR_TOL = 0.00001;
+constexpr size_t MAX_TRACKED_FAILURES = 10;
 // these tolerances, all to detect and filter out bogus conformations, are a
 // delicate balance between sensitive enough to detect obviously bad
 // conformations but not so sensitive that a bunch of ok conformations get
 // filtered out, which slows down the whole conformation generation process
-const double MAX_MINIMIZED_E_PER_ATOM = 0.05;
-const double MAX_MINIMIZED_E_CONTRIB = 0.20;
-const double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
-const double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
+constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.05;
+constexpr double MAX_MINIMIZED_E_CONTRIB = 0.20;
+constexpr double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
+constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
 }  // namespace
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+namespace {
+std::mutex &failmutex_get() {
+  // create on demand
+  static std::mutex _mutex;
+  return _mutex;
+}
+
+void failmutex_create() {
+  std::mutex &mutex = failmutex_get();
+  std::lock_guard<std::mutex> test_lock(mutex);
+}
+
+std::mutex &GetFailMutex() {
+  static std::once_flag flag;
+  std::call_once(flag, failmutex_create);
+  return failmutex_get();
+}
+}  // namespace
+#endif
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -241,6 +269,10 @@ struct EmbedArgs {
   DistGeom::BoundsMatPtr mmat;
   DistGeom::VECT_CHIRALSET const *chiralCenters;
   DistGeom::VECT_CHIRALSET const *tetrahedralCarbons;
+  std::vector<std::tuple<unsigned int, unsigned int, unsigned int>> const
+      *doubleBondEnds;
+  std::vector<std::pair<std::vector<unsigned int>, int>> const
+      *stereoDoubleBonds;
   ForceFields::CrystalFF::CrystalFFDetails *etkdgDetails;
 };
 }  // namespace detail
@@ -636,9 +668,76 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   return planar;
 }
 
+bool doubleBondGeometryChecks(const RDGeom::PointPtrVect &positions,
+                              const detail::EmbedArgs &eargs, EmbedParameters &,
+                              double linearTol = 1e-3) {
+  if (eargs.doubleBondEnds) {
+    for (const auto &itm : *eargs.doubleBondEnds) {
+      const auto &a0 = *positions[std::get<0>(itm)];
+      const auto &a1 = *positions[std::get<1>(itm)];
+      const auto &a2 = *positions[std::get<2>(itm)];
+      RDGeom::Point3D p0(a0[0], a0[1], a0[2]);
+      RDGeom::Point3D p1(a1[0], a1[1], a1[2]);
+      RDGeom::Point3D p2(a2[0], a2[1], a2[2]);
+
+      // check for a linear arrangement
+
+      auto v1 = p1 - p0;
+      v1.normalize();
+      auto v2 = p1 - p2;
+      v2.normalize();
+      // this is the arrangement:
+      //     a0
+      //       \       [intentionally left blank]
+      //        a1 = a2
+      // we want to be sure it's not actually:
+      //   ao - a1 = a2
+      if (v1.dotProduct(v2) + 1.0 < linearTol) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
+                            const detail::EmbedArgs &eargs, EmbedParameters &) {
+  for (const auto &itm : *eargs.stereoDoubleBonds) {
+    // itm is a pair with [controlling_atoms], sign
+    // where the sign tells us about cis/trans
+
+    const auto &a0 = *positions[itm.first[0]];
+    const auto &a1 = *positions[itm.first[1]];
+    const auto &a2 = *positions[itm.first[2]];
+    const auto &a3 = *positions[itm.first[3]];
+    RDGeom::Point3D p0(a0[0], a0[1], a0[2]);
+    RDGeom::Point3D p1(a1[0], a1[1], a1[2]);
+    RDGeom::Point3D p2(a2[0], a2[1], a2[2]);
+    RDGeom::Point3D p3(a3[0], a3[1], a3[2]);
+
+    // check the dihedral and be super permissive. Here's the logic of the
+    // check:
+    // The second element of the dihedralBond item contains 1 for trans
+    //   bonds and -1 for cis bonds.
+    // The dihedral is between 0 and 180. subtracting 90 from that gives:
+    //   positive values for dihedrals > 90 (closer to trans than cis)
+    //   negative values for dihedrals < 90 (closer to cis than trans)
+    // So multiplying the result of the subtracion from the second element of
+    //   the dihedralBond element will give a positive value if the dihedral is
+    //   closer to correct than it is to incorrect and a negative value
+    //   otherwise.
+    auto dihedral = RDGeom::computeDihedralAngle(p0, p1, p2, p3);
+    if ((dihedral - M_PI_2) * itm.second < 0) {
+      // closer to incorrect than correct... it's a bad geometry
+      return false;
+    }
+  }
+  return true;
+}
+
 bool finalChiralChecks(RDGeom::PointPtrVect *positions,
                        const detail::EmbedArgs &eargs,
-                       const EmbedParameters &) {
+                       EmbedParameters &embedParams) {
   // "distance matrix" chirality test
   std::set<int> atoms;
   for (const auto &chiralSet : *eargs.chiralCenters) {
@@ -657,6 +756,13 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
       std::cerr << " fail3a! (" << atomsToCheck[0] << ") iter: "  //<< iter
                 << std::endl;
 #endif
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        embedParams.failures[EmbedFailureCauses::FINAL_CHIRAL_BOUNDS]++;
+      }
+
       return false;
     }
   }
@@ -670,6 +776,12 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
       std::cerr << " fail3b! (" << chiralSet->d_idx0 << ") iter: "  //<< iter
                 << std::endl;
 #endif
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        embedParams.failures[EmbedFailureCauses::FINAL_CENTER_IN_VOLUME]++;
+      }
       return false;
     }
   }
@@ -678,7 +790,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
 }
 
 bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
-                 EmbedParameters embedParams, int seed) {
+                 EmbedParameters &embedParams, int seed) {
   PRECONDITION(positions, "bogus positions");
   if (embedParams.maxIterations == 0) {
     embedParams.maxIterations = 10 * positions->size();
@@ -694,8 +806,8 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   }
 
   RDKit::double_source_type *rng = nullptr;
-  RDKit::rng_type *generator;
-  RDKit::uniform_double *distrib;
+  RDKit::rng_type *generator = nullptr;
+  RDKit::uniform_double *distrib = nullptr;
   CHECK_INVARIANT(seed >= -1,
                   "random seed must either be positive, zero, or negative one");
   if (seed > -1) {
@@ -716,17 +828,35 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     }
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
-#ifdef DEBUG_EMBEDDING
     if (!gotCoords) {
-      std::cerr << "Initial embedding failed!, Iter: " << iter << std::endl;
-    }
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
-    if (gotCoords) {
+        embedParams.failures[EmbedFailureCauses::INITIAL_COORDS]++;
+      }
+    } else {
       gotCoords =
           EmbeddingOps::firstMinimization(positions, eargs, embedParams);
-      if (gotCoords) {
+      if (!gotCoords) {
+        if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+          std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+          embedParams.failures[EmbedFailureCauses::FIRST_MINIMIZATION]++;
+        }
+      } else {
         gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs,
                                                           embedParams);
+        if (!gotCoords) {
+          if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+            std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+            embedParams
+                .failures[EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS]++;
+          }
+        }
       }
 
       // Check if any of our chiral centers are badly out of whack.
@@ -734,6 +864,14 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           eargs.chiralCenters->size() > 0) {
         gotCoords =
             EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
+        if (!gotCoords) {
+          if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+            std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+            embedParams.failures[EmbedFailureCauses::CHECK_CHIRAL_CENTERS]++;
+          }
+        }
       }
       // redo the minimization if we have a chiral center
       // or have started from random coords.
@@ -741,6 +879,15 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           (eargs.chiralCenters->size() > 0 || embedParams.useRandomCoords)) {
         gotCoords = EmbeddingOps::minimizeFourthDimension(positions, eargs,
                                                           embedParams);
+        if (!gotCoords) {
+          if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+            std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+            embedParams
+                .failures[EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION]++;
+          }
+        }
       }
 
       // (ET)(K)DG
@@ -748,15 +895,47 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
                         embedParams.useBasicKnowledge)) {
         gotCoords = EmbeddingOps::minimizeWithExpTorsions(*positions, eargs,
                                                           embedParams);
+        if (!gotCoords) {
+          if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+            std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+            embedParams.failures[EmbedFailureCauses::ETK_MINIMIZATION]++;
+          }
+        }
       }
-      // test if chirality is correct
-      if (embedParams.enforceChirality && gotCoords &&
-          (eargs.chiralCenters->size() > 0)) {
-        gotCoords =
-            EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
+      if (gotCoords) {
+        gotCoords = EmbeddingOps::doubleBondGeometryChecks(*positions, eargs,
+                                                           embedParams);
+        if (!gotCoords && embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+          std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+          embedParams.failures[EmbedFailureCauses::LINEAR_DOUBLE_BOND]++;
+        }
       }
-    }  // if(gotCoords)
-  }    // while
+      // test if stereo is correct
+      if (embedParams.enforceChirality && gotCoords) {
+        if (!eargs.chiralCenters->empty()) {
+          // test if chirality is correct. Any additional test failures
+          // will be tracked there if necessary.
+          gotCoords =
+              EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
+        }
+        if (gotCoords && !eargs.stereoDoubleBonds->empty()) {
+          gotCoords = EmbeddingOps::doubleBondStereoChecks(*positions, eargs,
+                                                           embedParams);
+          if (!gotCoords && embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+            std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+            embedParams.failures[EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO]++;
+          }
+        }
+      }
+    }
+
+  }  // while
   if (seed > -1) {
     delete rng;
     delete generator;
@@ -765,6 +944,52 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   return gotCoords;
 }
 
+void findDoubleBonds(
+    const ROMol &mol,
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        &doubleBondEnds,
+    std::vector<std::pair<std::vector<unsigned int>, int>> &stereoDoubleBonds,
+    const std::map<int, RDGeom::Point3D> *coordMap) {
+  doubleBondEnds.clear();
+  stereoDoubleBonds.clear();
+  for (const auto bnd : mol.bonds()) {
+    if (bnd->getBondType() == Bond::BondType::DOUBLE) {
+      for (const auto atm : {bnd->getBeginAtom(), bnd->getEndAtom()}) {
+        if (atm->getDegree() < 2) {
+          continue;
+        }
+        auto oatm = bnd->getOtherAtom(atm);
+        for (const auto nbr : mol.atomNeighbors(atm)) {
+          if (nbr == oatm) {
+            continue;
+          }
+          doubleBondEnds.emplace_back(nbr->getIdx(), atm->getIdx(),
+                                      oatm->getIdx());
+        }
+      }
+      // if there's stereo, handle that too:
+      if (bnd->getStereo() > Bond::BondStereo::STEREOANY) {
+        // only do this if the controlling atoms aren't in the coord map
+        if (coordMap &&
+            coordMap->find(bnd->getStereoAtoms()[0]) != coordMap->end() &&
+            coordMap->find(bnd->getStereoAtoms()[1]) != coordMap->end()) {
+          continue;
+        }
+        int sign = 1;
+        if (bnd->getStereo() == Bond::BondStereo::STEREOCIS ||
+            bnd->getStereo() == Bond::BondStereo::STEREOZ) {
+          sign = -1;
+        }
+        std::pair<std::vector<unsigned int>, int> elem{
+            {static_cast<unsigned>(bnd->getStereoAtoms()[0]),
+             bnd->getBeginAtomIdx(), bnd->getEndAtomIdx(),
+             static_cast<unsigned>(bnd->getStereoAtoms()[1])},
+            sign};
+        stereoDoubleBonds.push_back(elem);
+      }
+    }
+  }
+}
 void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
                     DistGeom::VECT_CHIRALSET &tetrahedralCenters,
                     const std::map<int, RDGeom::Point3D> *coordMap) {
@@ -964,7 +1189,7 @@ bool multiplication_overflows_(T a, T b) {
 }
 
 void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
-                  const EmbedParameters *params) {
+                  EmbedParameters *params) {
   PRECONDITION(eargs, "bogus eargs");
   PRECONDITION(params, "bogus params");
   unsigned int nAtoms = eargs->mmat->numRows();
@@ -1091,7 +1316,14 @@ std::vector<std::vector<unsigned int>> getMolSelfMatches(
 }  // end of namespace detail
 
 void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
-                        const EmbedParameters &params) {
+                        EmbedParameters &params) {
+  if (params.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+    params.failures.resize(MAX_TRACKED_FAILURES);
+    std::fill(params.failures.begin(), params.failures.end(), 0);
+  }
   if (!mol.getNumAtoms()) {
     throw ValueErrorException("molecule has no atoms");
   }
@@ -1190,8 +1422,16 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
                                  coordMap);
 
-    // if we have any chiral centers or are using random coordinates, we will
-    // first embed the molecule in four dimensions, otherwise we will use 3D
+    // find double bonds
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        doubleBondEnds;
+    std::vector<std::pair<std::vector<unsigned int>, int>> stereoDoubleBonds;
+    EmbeddingOps::findDoubleBonds(*piece, doubleBondEnds, stereoDoubleBonds,
+                                  coordMap);
+
+    // if we have any chiral centers or are using random coordinates, we
+    // will first embed the molecule in four dimensions, otherwise we will
+    // use 3D
     bool fourD = false;
     if (params.useRandomCoords || chiralCenters.size() > 0) {
       fourD = true;
@@ -1199,9 +1439,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     int numThreads = getNumThreadsToUse(params.numThreads);
 
     // do the embedding, using multiple threads if requested
-    detail::EmbedArgs eargs = {
-        &confsOk, fourD,          &fragMapping,        &confs,       fragIdx,
-        mmat,     &chiralCenters, &tetrahedralCarbons, &etkdgDetails};
+    detail::EmbedArgs eargs = {&confsOk,        fourD,
+                               &fragMapping,    &confs,
+                               fragIdx,         mmat,
+                               &chiralCenters,  &tetrahedralCarbons,
+                               &doubleBondEnds, &stereoDoubleBonds,
+                               &etkdgDetails};
     if (numThreads == 1) {
       detail::embedHelper_(0, 1, &eargs, &params);
     }

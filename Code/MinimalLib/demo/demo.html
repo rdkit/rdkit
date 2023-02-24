@@ -73,7 +73,7 @@
         db.outerHTML = "<div id='descrs'>" +
           "<b>AMW:</b> " + descrs.amw +
           "<br /><b>MolLogP:</b> " + descrs.CrippenClogP +
-          "<br /><b>MFP2:</b> " + mol.get_morgan_fp(2, 128) +
+          "<br /><b>MFP2:</b> " + mol.get_morgan_fp(JSON.stringify({ radius: 2, nBits: 128 })) +
           "</div>";
       }
     }
@@ -112,7 +112,7 @@
     var svg = "";
     try {
       svg = rxn.get_svg(798, 198);
-    } catch {}
+    } catch (e) {}
     if (svg == "") {
       return;
     }

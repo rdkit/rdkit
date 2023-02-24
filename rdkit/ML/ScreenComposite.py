@@ -426,7 +426,7 @@ def ShowVoteResults(indices, data, composite, nResultCodes, threshold, verbose=1
     print('average correct confidence:   % 6.4f' % avgGood)
     print('average incorrect confidence: % 6.4f' % avgBad)
 
-  voteTab = numpy.zeros((nResultCodes, nResultCodes), numpy.int)
+  voteTab = numpy.zeros((nResultCodes, nResultCodes), numpy.int32)
   for res in goodRes:
     voteTab[res, res] += 1
   for ans, res, conf, idx in badVotes:
@@ -719,12 +719,12 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
   if setup is not None:
     setup(nModels * data.GetNPts())
 
-  nGood = numpy.zeros(nModels, numpy.float)
-  nBad = numpy.zeros(nModels, numpy.float)
-  nSkip = numpy.zeros(nModels, numpy.float)
-  confGood = numpy.zeros(nModels, numpy.float)
-  confBad = numpy.zeros(nModels, numpy.float)
-  confSkip = numpy.zeros(nModels, numpy.float)
+  nGood = numpy.zeros(nModels, float)
+  nBad = numpy.zeros(nModels, float)
+  nSkip = numpy.zeros(nModels, float)
+  confGood = numpy.zeros(nModels, float)
+  confBad = numpy.zeros(nModels, float)
+  confSkip = numpy.zeros(nModels, float)
   voteTab = None
   if goodVotes is None:
     goodVotes = []
@@ -792,7 +792,7 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
       appendExamples=appendExamples, goodVotes=goodVotes, badVotes=badVotes, noVotes=noVotes,
       errorEstimate=errorEstimate)
     if voteTab is None:
-      voteTab = numpy.zeros(vT.shape, numpy.float)
+      voteTab = numpy.zeros(vT.shape, float)
     if hasattr(details, 'errorAnalysis') and details.errorAnalysis:
       for a, p, c, idx in badVotes:
         label = testIdx[idx]
@@ -944,8 +944,8 @@ def ScreenToHtml(nGood, nBad, nRej, avgGood, avgBad, avgSkip, voteTable, imgDir=
   nPoss = len(voteTable)
   pureCounts = numpy.sum(voteTable, 1)
   accCounts = numpy.sum(voteTable, 0)
-  pureVect = numpy.zeros(nPoss, numpy.float)
-  accVect = numpy.zeros(nPoss, numpy.float)
+  pureVect = numpy.zeros(nPoss, float)
+  accVect = numpy.zeros(nPoss, float)
   for i in range(nPoss):
     if pureCounts[i]:
       pureVect[i] = float(voteTable[i, i]) / pureCounts[i]
@@ -1397,14 +1397,14 @@ if __name__ == '__main__':
       if len(details.screenVoteTol) > 1:
         message('\n-----*****-----*****-----*****-----*****-----*****-----*****-----\n')
         message('Tolerance: %f' % tol)
-      nGood = numpy.zeros(nModels, numpy.float)
-      nBad = numpy.zeros(nModels, numpy.float)
-      nSkip = numpy.zeros(nModels, numpy.float)
-      confGood = numpy.zeros(nModels, numpy.float)
-      confBad = numpy.zeros(nModels, numpy.float)
-      confSkip = numpy.zeros(nModels, numpy.float)
+      nGood = numpy.zeros(nModels, float)
+      nBad = numpy.zeros(nModels, float)
+      nSkip = numpy.zeros(nModels, float)
+      confGood = numpy.zeros(nModels, float)
+      confBad = numpy.zeros(nModels, float)
+      confSkip = numpy.zeros(nModels, float)
       if details.enrichTgt >= 0:
-        enrichments = numpy.zeros(nModels, numpy.float)
+        enrichments = numpy.zeros(nModels, float)
       goodVoteDict = {}
       badVoteDict = {}
       noVoteDict = {}
@@ -1434,7 +1434,7 @@ if __name__ == '__main__':
             badVotes=badVotes, noVotes=noVotes, goodVotes=goodVotes,
             errorEstimate=details.errorEstimate)
           if voteTab is None:
-            voteTab = numpy.zeros(vT.shape, numpy.float)
+            voteTab = numpy.zeros(vT.shape, float)
           if details.errorAnalysis:
             for a, p, c, idx in badVotes:
               label = testIdx[idx]

@@ -41,125 +41,125 @@ bool isAromaticAtom(const Atom &atom) {
 // Determine whether or not an element is to the left of carbon.
 bool isEarlyAtom(int atomicNum) {
   static const bool table[119] = {
-    false, // #0 *
-    false, // #1 H
-    false,  // #2 He
-    true,  // #3 Li
-    true,  // #4 Be
-    true,  // #5 B
-    false, // #6 C
-    false, // #7 N
-    false, // #8 O
-    false, // #9 F
-    false, // #10 Ne
-    true,  // #11 Na
-    true,  // #12 Mg
-    true,  // #13 Al
-    false, // #14 Si
-    false, // #15 P
-    false, // #16 S
-    false, // #17 Cl
-    false, // #18 Ar
-    true,  // #19 K
-    true,  // #20 Ca
-    true,  // #21 Sc
-    true,  // #22 Ti
-    false, // #23 V
-    false, // #24 Cr
-    false, // #25 Mn
-    false, // #26 Fe
-    false, // #27 Co
-    false, // #28 Ni
-    false, // #29 Cu
-    true,  // #30 Zn
-    true,  // #31 Ga
-    true,  // #32 Ge  see github #2606
-    false, // #33 As
-    false, // #34 Se
-    false, // #35 Br
-    false, // #36 Kr
-    true,  // #37 Rb
-    true,  // #38 Sr
-    true,  // #39 Y
-    true,  // #40 Zr
-    true,  // #41 Nb
-    false, // #42 Mo
-    false, // #43 Tc
-    false, // #44 Ru
-    false, // #45 Rh
-    false, // #46 Pd
-    false, // #47 Ag
-    true,  // #48 Cd
-    true,  // #49 In
-    true,  // #50 Sn  see github #2606
-    true,  // #51 Sb  see github #2775
-    false, // #52 Te
-    false, // #53 I
-    false, // #54 Xe
-    true,  // #55 Cs
-    true,  // #56 Ba
-    true,  // #57 La
-    true,  // #58 Ce
-    true,  // #59 Pr
-    true,  // #60 Nd
-    true,  // #61 Pm
-    false, // #62 Sm
-    false, // #63 Eu
-    false, // #64 Gd
-    false, // #65 Tb
-    false, // #66 Dy
-    false, // #67 Ho
-    false, // #68 Er
-    false, // #69 Tm
-    false, // #70 Yb
-    false, // #71 Lu
-    true,  // #72 Hf
-    true,  // #73 Ta
-    false, // #74 W
-    false, // #75 Re
-    false, // #76 Os
-    false, // #77 Ir
-    false, // #78 Pt
-    false, // #79 Au
-    true,  // #80 Hg
-    true,  // #81 Tl
-    true,  // #82 Pb  see github #2606
-    true,  // #83 Bi  see github #2775
-    false, // #84 Po
-    false, // #85 At
-    false, // #86 Rn
-    true,  // #87 Fr
-    true,  // #88 Ra
-    true,  // #89 Ac
-    true,  // #90 Th
-    true,  // #91 Pa
-    true,  // #92 U
-    true,  // #93 Np
-    false, // #94 Pu
-    false, // #95 Am
-    false, // #96 Cm
-    false, // #97 Bk
-    false, // #98 Cf
-    false, // #99 Es
-    false, // #100 Fm
-    false, // #101 Md
-    false, // #102 No
-    false, // #103 Lr
-    true,  // #104 Rf
-    true,  // #105 Db
-    true,  // #106 Sg
-    true,  // #107 Bh
-    true,  // #108 Hs
-    true,  // #109 Mt
-    true,  // #110 Ds
-    true,  // #111 Rg
-    true,  // #112 Cn
-    true,  // #113 Nh
-    true,  // #114 Fl
-    true,  // #115 Mc
-    true,  // #116 Lv
-    true,  // #117 Ts
-    true,  // #118 Og
+      false,  // #0 *
+      false,  // #1 H
+      false,  // #2 He
+      true,   // #3 Li
+      true,   // #4 Be
+      true,   // #5 B
+      false,  // #6 C
+      false,  // #7 N
+      false,  // #8 O
+      false,  // #9 F
+      false,  // #10 Ne
+      true,   // #11 Na
+      true,   // #12 Mg
+      true,   // #13 Al
+      false,  // #14 Si
+      false,  // #15 P
+      false,  // #16 S
+      false,  // #17 Cl
+      false,  // #18 Ar
+      true,   // #19 K
+      true,   // #20 Ca
+      true,   // #21 Sc
+      true,   // #22 Ti
+      false,  // #23 V
+      false,  // #24 Cr
+      false,  // #25 Mn
+      false,  // #26 Fe
+      false,  // #27 Co
+      false,  // #28 Ni
+      false,  // #29 Cu
+      true,   // #30 Zn
+      true,   // #31 Ga
+      true,   // #32 Ge  see github #2606
+      false,  // #33 As
+      false,  // #34 Se
+      false,  // #35 Br
+      false,  // #36 Kr
+      true,   // #37 Rb
+      true,   // #38 Sr
+      true,   // #39 Y
+      true,   // #40 Zr
+      true,   // #41 Nb
+      false,  // #42 Mo
+      false,  // #43 Tc
+      false,  // #44 Ru
+      false,  // #45 Rh
+      false,  // #46 Pd
+      false,  // #47 Ag
+      true,   // #48 Cd
+      true,   // #49 In
+      true,   // #50 Sn  see github #2606
+      true,   // #51 Sb  see github #2775
+      false,  // #52 Te
+      false,  // #53 I
+      false,  // #54 Xe
+      true,   // #55 Cs
+      true,   // #56 Ba
+      true,   // #57 La
+      true,   // #58 Ce
+      true,   // #59 Pr
+      true,   // #60 Nd
+      true,   // #61 Pm
+      false,  // #62 Sm
+      false,  // #63 Eu
+      false,  // #64 Gd
+      false,  // #65 Tb
+      false,  // #66 Dy
+      false,  // #67 Ho
+      false,  // #68 Er
+      false,  // #69 Tm
+      false,  // #70 Yb
+      false,  // #71 Lu
+      true,   // #72 Hf
+      true,   // #73 Ta
+      false,  // #74 W
+      false,  // #75 Re
+      false,  // #76 Os
+      false,  // #77 Ir
+      false,  // #78 Pt
+      false,  // #79 Au
+      true,   // #80 Hg
+      true,   // #81 Tl
+      true,   // #82 Pb  see github #2606
+      true,   // #83 Bi  see github #2775
+      false,  // #84 Po
+      false,  // #85 At
+      false,  // #86 Rn
+      true,   // #87 Fr
+      true,   // #88 Ra
+      true,   // #89 Ac
+      true,   // #90 Th
+      true,   // #91 Pa
+      true,   // #92 U
+      true,   // #93 Np
+      false,  // #94 Pu
+      false,  // #95 Am
+      false,  // #96 Cm
+      false,  // #97 Bk
+      false,  // #98 Cf
+      false,  // #99 Es
+      false,  // #100 Fm
+      false,  // #101 Md
+      false,  // #102 No
+      false,  // #103 Lr
+      true,   // #104 Rf
+      true,   // #105 Db
+      true,   // #106 Sg
+      true,   // #107 Bh
+      true,   // #108 Hs
+      true,   // #109 Mt
+      true,   // #110 Ds
+      true,   // #111 Rg
+      true,   // #112 Cn
+      true,   // #113 Nh
+      true,   // #114 Fl
+      true,   // #115 Mc
+      true,   // #116 Lv
+      true,   // #117 Ts
+      true,   // #118 Og
   };
   return ((unsigned int)atomicNum < 119) && table[atomicNum];
 }
@@ -322,9 +322,7 @@ int Atom::calcExplicitValence(bool strict) {
   // FIX: contributions of bonds to valence are being done at best
   // approximately
   double accum = 0;
-  for (const auto &nbri :
-       boost::make_iterator_range(getOwningMol().getAtomBonds(this))) {
-    const auto bnd = getOwningMol()[nbri];
+  for (const auto bnd : getOwningMol().atomBonds(this)) {
     accum += bnd->getValenceContrib(this);
   }
   accum += getNumExplicitHs();
@@ -353,8 +351,11 @@ int Atom::calcExplicitValence(bool strict) {
     int pval = dv + chr;
     const INT_VECT &valens =
         PeriodicTable::getTable()->getValenceList(d_atomicNum);
-    for (auto vi = valens.begin(); vi != valens.end() && *vi != -1; ++vi) {
-      int val = (*vi) + chr;
+    for (auto val : valens) {
+      if (val == -1) {
+        break;
+      }
+      val += chr;
       if (val > accum) {
         break;
       } else {
@@ -398,7 +399,8 @@ int Atom::calcExplicitValence(bool strict) {
     }
     const INT_VECT &valens =
         PeriodicTable::getTable()->getValenceList(d_atomicNum);
-    int maxValence = *(valens.rbegin());
+
+    int maxValence = valens.back();
     // maxValence == -1 signifies that we'll take anything at the high end
     if (maxValence > 0 && effectiveValence > maxValence) {
       // the explicit valence is greater than any
@@ -500,6 +502,7 @@ int Atom::calcImplicitValence(bool strict) {
   // only default valences
   const INT_VECT &valens =
       PeriodicTable::getTable()->getValenceList(d_atomicNum);
+
   int explicitPlusRadV = getExplicitValence() + getNumRadicalElectrons();
   int chg = getFormalCharge();
 
@@ -583,7 +586,7 @@ int Atom::calcImplicitValence(bool strict) {
       }
     }
     if (res < 0) {
-      if (strict) {
+      if (strict && valens.back() != -1) {
         // this means that the explicit valence is greater than any
         // allowed valence for the atoms - raise an error
         std::ostringstream errout;
@@ -636,13 +639,7 @@ bool Atom::Match(Atom const *what) const {
   //   [*] matches [*],[1*],[2*],etc.
   //   [1*] only matches [*] and [1*]
   if (res) {
-    if (this->dp_mol && what->dp_mol &&
-        this->getOwningMol().getRingInfo()->isInitialized() &&
-        what->getOwningMol().getRingInfo()->isInitialized() &&
-        this->getOwningMol().getRingInfo()->numAtomRings(d_index) >
-            what->getOwningMol().getRingInfo()->numAtomRings(what->d_index)) {
-      res = false;
-    } else if (!this->getAtomicNum()) {
+    if (!this->getAtomicNum()) {
       // this is the new behavior, based on the isotopes:
       int tgt = this->getIsotope();
       int test = what->getIsotope();

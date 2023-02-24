@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -39,11 +39,23 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionFPGenerator(
 
   return TopologicalTorsion::getTopologicalTorsionGenerator<OutputType>(
       includeChirality, torsionAtomCount, atomInvariantsGenerator,
-      countSimulation, countBounds, fpSize, false);
+      countSimulation, fpSize, countBounds, false);
 }
 
 void exportTopologicalTorsion() {
   // Topological torsion fingerprint does not support 32 bit output yet
+  python::class_<TopologicalTorsion::TopologicalTorsionArguments,
+                 python::bases<FingerprintArguments>, boost::noncopyable>(
+      "TopologicalTorsionFingerprintOptions", python::no_init)
+      .def_readwrite(
+          "torsionAtomCount",
+          &TopologicalTorsion::TopologicalTorsionArguments::d_torsionAtomCount,
+          "number of atoms to be included in the paths")
+      .def_readwrite(
+          "onlyShortestPaths",
+          &TopologicalTorsion::TopologicalTorsionArguments::
+              df_onlyShortestPaths,
+          "whether or not to only include paths which are the shortest path between the start and end atoms");
 
   python::def(
       "GetTopologicalTorsionGenerator",

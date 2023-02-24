@@ -539,7 +539,7 @@ Types of stereochemistry supported
 
 The RDKit currently fully supports tetrahedral atomic stereochemistry and
 cis/trans stereochemistry at double bonds. There is partial support for
-non-tetrahedral stereochemistry, see the section :ref:`Support for non-tetrahedral atomic stereochemistry`.
+non-tetrahedral stereochemistry, see the section :ref:`Non-tetrahedral-stereo`.
 
 Identification of potential stereoatoms/stereobonds
 ---------------------------------------------------
@@ -709,6 +709,7 @@ stereochemistry for stereogenic atoms and bonds. This supersedes other
 specifications in the CXSMILES except for ``ctu`` and ``w``.
 
 
+.. _Non-tetrahedral-stereo:
 
 Support for non-tetrahedral atomic stereochemistry
 ==================================================
@@ -1603,38 +1604,107 @@ Here are the steps involved, in order.
 
      This step should not generate exceptions.
 
-  3. ``updatePropertyCache``: calculates the explicit and implicit valences on
+  3. ``cleanUpOrganometallics``: standardizes a small number of non-standard
+     situations encountered in organometallics. The cleanup operations are:
+     
+       - replaces single bonds from hypervalent atoms to metals with dative bonds.
+
+     This step should not generate exceptions.
+
+  4. ``updatePropertyCache``: calculates the explicit and implicit valences on
      all atoms. This generates exceptions for atoms in higher-than-allowed
      valence states. This step is always performed, but if it is "skipped"
      the test for non-standard valences will not be carried out.
 
-  4. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
+  5. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
      algorithm (discussed in the Getting Started document).
 
-  5. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
+  6. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
      exception if a ring cannot be kekulized or if aromatic bonds are found
      outside of rings.
 
-  6. ``assignRadicals``: determines the number of radical electrons (if any) on
+  7. ``assignRadicals``: determines the number of radical electrons (if any) on
      each atom.
 
-  7. ``setAromaticity``: identifies the aromatic rings and ring systems
+  8. ``setAromaticity``: identifies the aromatic rings and ring systems
      (see above), sets the aromatic flag on atoms and bonds, sets bond orders
      to aromatic.
 
-  8. ``setConjugation``: identifies which bonds are conjugated
+  9. ``setConjugation``: identifies which bonds are conjugated
 
-  9. ``setHybridization``: calculates the hybridization state of each atom
+  10. ``setHybridization``: calculates the hybridization state of each atom
 
-  10. ``cleanupChirality``: removes chiral tags from atoms that are not sp3
+  11. ``cleanupChirality``: removes chiral tags from atoms that are not sp3
       hybridized.
 
-  11. ``adjustHs``: adds explicit Hs where necessary to preserve the chemistry.
+  12. ``adjustHs``: adds explicit Hs where necessary to preserve the chemistry.
       This is typically needed for heteroatoms in aromatic rings. The classic
       example is the nitrogen atom in pyrrole.
 
+  13. ``updatePropertyCache``: re-calculates the explicit and implicit valences on
+     all atoms. This generates exceptions for atoms in higher-than-allowed
+     valence states. This step is required to catch some edge cases where input 
+     atoms with non-physical valences are accepted if they are flagged as aromatic.
+
+
 The individual steps can be toggled on or off when calling
 ``MolOps::sanitizeMol`` or ``Chem.SanitizeMol``.
+
+JSON Support
+************
+
+The RDKit supports writing to/reading from two closely related JSON formats: 
+commonchem (https://github.com/CommonChem/CommonChem) and rdkitjson. commonchem is a well-documented format designed to be used for efficient interchange between molecular toolkits. rdkitjson is an extension to commonchem which includes additional features allowing RDKit molecules to be serialized to JSON. The extensions in rdkitjson - enhanced stereo and substance groups - are generally useful, so it's easy to imagine them being integrated into commonchem at some point in the future.
+
+Lists of molecules can be converted to JSON with ``MolInterchange::MolsToJSONData()`` (C++) or ``Chem.MolsToJSONData()`` (Python). Those calls take an optional parameters object which can be used to specify whether commonchem or rdkitjson is generated. The default is to generate rdkitjson.
+
+JSON data can be converted back to RDKit molecules using ``MolInterchange::JSONDataToMols()`` (C++) or ``Chem.JSONDataToMols()`` (Python). The parser will automatically determine whether or not its working with commonchem or rdkitjson.
+
+rdkitjson format
+================
+
+Enhanced stereo 
+---------------
+
+Here's the rdkitjson representation of the stereo groups from the molecule ``C[C@@H]1C([C@H](O)F)O[C@H](C)C([C@@H](O)F)[C@@H]1C |a:7,o1:3,10,&1:1,&2:13|``::
+
+   'stereoGroups': [{'type': 'abs', 'atoms': [7]},
+    {'type': 'or', 'atoms': [3, 10]},
+    {'type': 'and', 'atoms': [1]},
+    {'type': 'and', 'atoms': [13]}],
+
+Substance groups 
+----------------
+
+Here's the rdkitjson representation of a ``SUP`` substance group::
+
+   'substanceGroups': [{'properties': {'TYPE': 'SUP',
+      'index': 1,
+      'LABEL': 'Boc',
+      'DATAFIELDS': '[]'},
+     'atoms': [7, 8, 9, 10, 11, 12, 13],
+     'bonds': [8],
+     'brackets': [[[6.24, -2.9, 0.0], [6.24, -2.9, 0.0], [0.0, 0.0, 0.0]]],
+     'cstates': [{'bond': 8, 'vector': [0.0, 0.82, 0.0]}],
+     'attachPoints': [{'aIdx': 12, 'lvIdx': 5, 'id': '1'}]}],
+
+
+and one for an ``SRU`` group::
+ 
+   'substanceGroups': [{'properties': {'TYPE': 'SRU',
+      'index': 1,
+      'CONNECT': 'HT',
+      'LABEL': 'n',
+      'DATAFIELDS': '[]'},
+     'atoms': [2, 1, 4],
+     'bonds': [2, 0],
+     'brackets': [[[-3.9538, 4.3256, 0.0],
+                   [-3.0298, 2.7252, 0.0],
+                   [0.0, 0.0, 0.0]],
+                  [[-5.4618, 2.8611, 0.0], 
+                   [-6.3858, 4.4615, 0.0], 
+                   [0.0, 0.0, 0.0]]]}],
+ 
 
 Implementation Details
 **********************
@@ -1965,8 +2035,10 @@ Use cases
 
 The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation and depiction are future goals.
 
-It is possible to enumerate the elements of a ``StereoGroup`` using the function :py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`, which also
-preserves membership in the original ``StereoGroup``.
+It is possible to enumerate the elements of a ``StereoGroup`` using the function
+:py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`. Note that
+this removes the ``StereoGroup`` information from the products since they now
+correspond to specific molecules:
 
 .. doctest ::
 
@@ -1977,7 +2049,7 @@ preserves membership in the original ``StereoGroup``.
   [1]
   >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
   >>> [Chem.MolToCXSmiles(x) for x in EnumerateStereoisomers(m)]
-  ['C[C@@H](F)C[C@H](O)Cl |&1:1|', 'C[C@H](F)C[C@H](O)Cl |&1:1|']
+  ['C[C@@H](F)C[C@H](O)Cl', 'C[C@H](F)C[C@H](O)Cl']
 
 Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``StereoGroup`` as long as the reaction doesn't create or destroy chirality at the atom.
 

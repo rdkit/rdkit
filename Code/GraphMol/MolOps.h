@@ -441,15 +441,16 @@ typedef enum {
   SANITIZE_SETHYBRIDIZATION = 0x80,
   SANITIZE_CLEANUPCHIRALITY = 0x100,
   SANITIZE_ADJUSTHS = 0x200,
+  SANITIZE_CLEANUP_ORGANOMETALLICS = 0x400,
   SANITIZE_ALL = 0xFFFFFFF
 } SanitizeFlags;
 
 //! \brief carries out a collection of tasks for cleaning up a molecule and
-/// ensuring
-//! that it makes "chemical sense"
+//! ensuring that it makes "chemical sense"
 /*!
    This functions calls the following in sequence
      -# MolOps::cleanUp()
+     -# MolOps::cleanUpOrganometallics()
      -# mol.updatePropertyCache()
      -# MolOps::symmetrizeSSSR()
      -# MolOps::Kekulize()
@@ -459,6 +460,7 @@ typedef enum {
      -# MolOps::setHybridization()
      -# MolOps::cleanupChirality()
      -# MolOps::adjustHs()
+     -# mol.updatePropertyCache()
 
    \param mol : the RWMol to be cleaned
 
@@ -583,6 +585,20 @@ RDKIT_GRAPHMOL_EXPORT int setAromaticity(
 */
 RDKIT_GRAPHMOL_EXPORT void cleanUp(RWMol &mol);
 
+//! Designed to be called by the sanitizer to handle special cases for
+//! organometallic species before valence is perceived
+/*!
+
+    Currently this:
+     - replaces single bonds between "hypervalent" organic atoms and metals with
+       dative bonds (this is following an IUPAC recommendation:
+       https://iupac.qmul.ac.uk/tetrapyrrole/TP8.html)
+
+   \param mol    the molecule of interest
+
+*/
+RDKIT_GRAPHMOL_EXPORT void cleanUpOrganometallics(RWMol &mol);
+
 //! Called by the sanitizer to assign radical counts to atoms
 RDKIT_GRAPHMOL_EXPORT void assignRadicals(RWMol &mol);
 
@@ -608,17 +624,17 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 
    \param mol             the molecule of interest
 
-   \param markAtomsBonds  if this is set to true, \c isAromatic boolean settings
-   on both the Bonds and Atoms are turned to false following the Kekulization,
-   otherwise they are left alone in their original state.
+   \param markAtomsBonds  if this is set to true, \c isAromatic boolean
+   settings on both the Bonds and Atoms are turned to false following the
+   Kekulization, otherwise they are left alone in their original state.
 
    \param maxBackTracks   the maximum number of attempts at back-tracking. The
    algorithm uses a back-tracking procedure to revisit a previous setting of
    double bond if we hit a wall in the kekulization process
 
    <b>Notes:</b>
-     - this does not modify query bonds which have bond type queries (like those
-       which come from SMARTS) or rings containing them.
+     - this does not modify query bonds which have bond type queries (like
+   those which come from SMARTS) or rings containing them.
      - even if \c markAtomsBonds is \c false the \c BondType for all modified
        aromatic bonds will be changed from \c RDKit::Bond::AROMATIC to \c
        RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
@@ -632,9 +648,9 @@ RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
 
    \param mol             the molecule of interest
 
-   \param markAtomsBonds  if this is set to true, \c isAromatic boolean settings
-   on both the Bonds and Atoms are turned to false following the Kekulization,
-   otherwise they are left alone in their original state.
+   \param markAtomsBonds  if this is set to true, \c isAromatic boolean
+   settings on both the Bonds and Atoms are turned to false following the
+   Kekulization, otherwise they are left alone in their original state.
 
    \param maxBackTracks   the maximum number of attempts at back-tracking. The
    algorithm uses a back-tracking procedure to revisit a previous setting of
@@ -895,9 +911,9 @@ RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 
 
   NOTE that this does not check to see if atoms are chiral centers (i.e. all
-  substituents are different), it merely sets the chiral type flags based on the
-  coordinates and atom ordering. Use \c assignStereochemistryFrom3D() if you
-  want chiral flags only on actual stereocenters.
+  substituents are different), it merely sets the chiral type flags based on
+  the coordinates and atom ordering. Use \c assignStereochemistryFrom3D() if
+  you want chiral flags only on actual stereocenters.
 */
 RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFrom3D(
     ROMol &mol, int confId = -1, bool replaceExistingTags = true);
@@ -992,7 +1008,8 @@ RDKIT_GRAPHMOL_EXPORT void removeStereochemistry(ROMol &mol);
 
   This function is useful in the following situations:
     - when parsing a mol file; for the bonds marked here, coordinate
-      information on the neighbors can be used to indentify cis or trans states
+      information on the neighbors can be used to indentify cis or trans
+  states
     - when writing a mol file; bonds that can be cis/trans but not marked as
       either need to be specially marked in the mol file
     - finding double bonds with unspecified stereochemistry so they
@@ -1003,8 +1020,8 @@ RDKIT_GRAPHMOL_EXPORT void removeStereochemistry(ROMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol,
                                                     bool cleanIt = false);
-//! \brief Uses the molParity atom property to assign ChiralType to a molecule's
-//! atoms
+//! \brief Uses the molParity atom property to assign ChiralType to a
+//! molecule's atoms
 /*!
   \param mol                  the molecule of interest
   \param replaceExistingTags  if this flag is true, any existing atomic chiral

@@ -462,7 +462,7 @@ unsigned int calcNumSpiroAtoms(const ROMol &mol,
   return atoms->size();
 }
 
-const std::string NumBridgeheadAtomsVersion = "1.0.0";
+const std::string NumBridgeheadAtomsVersion = "2.0.0";
 unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
                                     std::vector<unsigned int> *atoms) {
   if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {

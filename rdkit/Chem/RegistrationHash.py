@@ -101,7 +101,7 @@ def GetMolHash(all_layers, hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> s
   """
     Generate a molecular hash using a specified set of layers.
 
-    :param mol: the molecule to generate the hash for
+    :param all_layers: a dictionary of layers
     :param hash_scheme: enum encoding information layers for the hash
     :return: hash for the given scheme constructed from the input layers
     """
@@ -126,6 +126,8 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   # Work on a copy with all non-stereogenic Hydrogens removed
   mol = _RemoveUnnecessaryHs(original_molecule, preserve_stereogenic_hs=True)
   _StripAtomMapLabels(mol)
+
+  Chem.CanonicalizeEnhancedStereo(mol)
 
   formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
   cxsmiles, canonical_mol = _CanonicalizeStereoGroups(mol)
@@ -437,8 +439,9 @@ def _CanonicalizeStereoGroups(mol):
     compare the CXSMILES of those.
     """
 
-  if not len(mol.GetStereoGroups()):
-    return Chem.MolToCXSmiles(mol), mol
+  # if not len(mol.GetStereoGroups()):
+  Chem.CanonicalizeEnhancedStereo(mol)
+  return Chem.MolToCXSmiles(mol), mol
 
   mol = Chem.Mol(mol)
 
@@ -457,6 +460,13 @@ def _CanonicalizeStereoGroups(mol):
   opts = EnumerateStereoisomers.StereoEnumerationOptions()
   opts.onlyStereoGroups = True
   opts.unique = False
+
+  # Before enumerating stereoisomers, we strip the bond directions to prevent
+  # an exception when enumerating centers near double bonds.
+  # Registration code sometimes handles molecules with user-defined bond directions,
+  # which may not be valid.
+  for bond in mol.GetBonds():
+    bond.SetBondDir(Chem.BondDir.NONE)
 
   resultMol = None
   resultCXSmiles = ''

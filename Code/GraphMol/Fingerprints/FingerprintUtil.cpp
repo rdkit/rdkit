@@ -18,8 +18,6 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/tuple/tuple_comparison.hpp>
 #include <algorithm>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>

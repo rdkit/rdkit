@@ -49,6 +49,21 @@ AtomInvariantsGenerator *getRDKitAtomInvGen() {
 }
 
 void exportRDKit() {
+  python::class_<RDKitFP::RDKitFPArguments, python::bases<FingerprintArguments>,
+                 boost::noncopyable>("RDKitFingerprintOptions", python::no_init)
+      .def_readwrite("minPath", &RDKitFP::RDKitFPArguments::d_minPath,
+                     "minimum path length (in bonds) to be included")
+      .def_readwrite("maxPath", &RDKitFP::RDKitFPArguments::d_maxPath,
+                     "maximum path length (in bonds) to be included")
+      .def_readwrite(
+          "useHs", &RDKitFP::RDKitFPArguments::df_useHs,
+          "use explicit Hs in the paths (if molecule has explicit Hs)")
+      .def_readwrite("branchedPaths",
+                     &RDKitFP::RDKitFPArguments::df_branchedPaths,
+                     "generate branched subgraphs, not just linear ones")
+      .def_readwrite("useBondOrder",
+                     &RDKitFP::RDKitFPArguments::df_useBondOrder,
+                     "include bond orders in the path hashes");
   python::def(
       "GetRDKitFPGenerator", &getRDKitFPGenerator<std::uint64_t>,
       (python::arg("minPath") = 1, python::arg("maxPath") = 7,

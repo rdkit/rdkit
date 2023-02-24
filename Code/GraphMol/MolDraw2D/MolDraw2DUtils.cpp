@@ -51,11 +51,9 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
 void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
                           bool wedgeBonds, bool forceCoords, bool wavyBonds) {
   if (kekulize) {
-    try {
-      MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
-    } catch (const RDKit::AtomKekulizeException &e) {
-      BOOST_LOG(rdInfoLog) << e.what() << std::endl;
-    }
+    RDLog::LogStateSetter blocker;
+    MolOps::KekulizeIfPossible(
+        mol, false);  // kekulize, but keep the aromatic flags!
   }
   if (addChiralHs) {
     std::vector<unsigned int> chiralAts;
@@ -92,9 +90,11 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
                             const std::map<int, DrawColour> *highlight_atom_map,
                             const std::map<int, DrawColour> *highlight_bond_map,
                             const std::map<int, double> *highlight_radii,
-                            int confId, bool kekulize) {
+                            int confId, bool kekulize, bool addChiralHs,
+                            bool wedgeBonds, bool forceCoords, bool wavyBonds) {
   RWMol cpy(mol);
-  prepareMolForDrawing(cpy, kekulize);
+  prepareMolForDrawing(cpy, kekulize, addChiralHs, wedgeBonds, forceCoords,
+                       wavyBonds);
   // having done the prepare, we don't want to do it again in drawMolecule.
   bool old_prep_mol = drawer.drawOptions().prepareMolsBeforeDrawing;
   drawer.drawOptions().prepareMolsBeforeDrawing = false;
@@ -215,6 +215,7 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(useMolBlockWedging);
   PT_OPT_GET(scalingFactor);
   PT_OPT_GET(drawMolsSameScale);
+  PT_OPT_GET(useComplexQueryAtomSymbols);
 
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);

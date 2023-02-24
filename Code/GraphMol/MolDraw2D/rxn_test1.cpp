@@ -48,14 +48,14 @@ namespace {
 static const bool DELETE_WITH_GOOD_HASH = true;
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"rxn_test1_1.svg", 46725873U},     {"rxn_test1_2.svg", 2822273042U},
-    {"rxn_test1_3.svg", 3749362740U},   {"rxn_test1_4.svg", 2720989271U},
-    {"rxn_test1_5.svg", 3245376196U},   {"rxn_test1_6.svg", 3282888040U},
-    {"rxn_test1_7.svg", 1748644916U},   {"rxn_test2_1.svg", 409647324U},
-    {"rxn_test2_2_1.svg", 1275078201U}, {"rxn_test2_2_2.svg", 2689198952U},
-    {"rxn_test2_2_3.svg", 3750657998U}, {"rxn_test2_2_4.svg", 844519751U},
-    {"rxn_test3_1.svg", 3321754513U},   {"rxn_test4_1.svg", 1987969092U},
-    {"rxn_test4_2.svg", 946039978U},
+    {"rxn_test1_1.svg", 3868841820U},   {"rxn_test1_2.svg", 2533266150U},
+    {"rxn_test1_3.svg", 4102887313U},   {"rxn_test1_4.svg", 1734308476U},
+    {"rxn_test1_5.svg", 3787137197U},   {"rxn_test1_6.svg", 4153617489U},
+    {"rxn_test1_7.svg", 3233001411U},   {"rxn_test2_1.svg", 1009440897U},
+    {"rxn_test2_2_1.svg", 2613626821U}, {"rxn_test2_2_2.svg", 3134170338U},
+    {"rxn_test2_2_3.svg", 3025050848U}, {"rxn_test2_2_4.svg", 3557375723U},
+    {"rxn_test3_1.svg", 125426675U},    {"rxn_test4_1.svg", 3061904151U},
+    {"rxn_test4_2.svg", 108789094U},
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {

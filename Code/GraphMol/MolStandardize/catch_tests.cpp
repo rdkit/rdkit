@@ -1025,3 +1025,16 @@ TEST_CASE("Github #5402: order dependence of tautomer transforms") {
     CHECK(MolToSmiles(*res1) == MolToSmiles(*res2));
   }
 }
+
+TEST_CASE("Github 5784: kekulization error when enumerating tautomers") {
+  std::vector<std::string> smis{"NC1=NC=NC(C)=C1", "CC1N=CN(C)C(=O)C=1",
+                                "CC1=CC=CC(=O)N1C"};
+  for (const auto &smi : smis) {
+    INFO(smi);
+    std::unique_ptr<ROMol> m{SmilesToMol(smi)};
+    REQUIRE(m);
+    MolStandardize::TautomerEnumerator te;
+    std::unique_ptr<ROMol> res(te.canonicalize(*m));
+    REQUIRE(res);
+  }
+}

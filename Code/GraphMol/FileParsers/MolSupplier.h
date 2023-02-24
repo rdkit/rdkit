@@ -296,9 +296,9 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   void checkForEnd();
 
   bool df_end = false;  // have we reached the end of the file?
-  int d_len = 0;        // total number of smiles in the file
-  int d_next = 0;       // the  molecule we are ready to read
-  int d_line = 0;       // line number we are currently on
+  long d_len = 0;       // total number of smiles in the file
+  long d_next = 0;      // the  molecule we are ready to read
+  size_t d_line = 0;    // line number we are currently on
   std::vector<std::streampos>
       d_molpos;  // vector of positions in the file for molecules
   std::vector<int> d_lineNums;
@@ -409,7 +409,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
    */
 
  public:
-  MaeMolSupplier() { init(); }
+  MaeMolSupplier() {}
 
   explicit MaeMolSupplier(std::shared_ptr<std::istream> inStream,
                           bool sanitize = true, bool removeHs = true);
@@ -426,18 +426,27 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   void reset() override;
   ROMol *next() override;
   bool atEnd() override;
+  void moveTo(unsigned int idx);
+  ROMol *operator[](unsigned int idx);
+  unsigned int length();
 
   void close() override { dp_sInStream.reset(); }
+
+  void setData(const std::string &text, bool sanitize = true,
+               bool removeHs = true);
 
  private:
   void moveToNextBlock();
 
  protected:
-  bool df_sanitize, df_removeHs;
+  bool df_sanitize;
+  bool df_removeHs;
   std::shared_ptr<schrodinger::mae::Reader> d_reader;
   std::shared_ptr<schrodinger::mae::Block> d_next_struct;
   std::shared_ptr<std::istream> dp_sInStream;
   std::string d_stored_exc;
+  unsigned d_position;
+  unsigned d_length;
 };
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
 }  // namespace RDKit

@@ -11,7 +11,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-from recommonmark.parser import CommonMarkParser
 import sys
 import os
 
@@ -28,7 +27,8 @@ sys.path.insert(0, os.path.abspath('exts'))
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-  'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'recommonmark', 'sphinx.ext.autosectionlabel'
+  'sphinx.ext.autodoc', 'sphinx.ext.doctest', 
+  'myst_parser'
 ]  # , 'extapi']
 #autosummary_generate = True
 doctest_test_doctest_blocks = ""

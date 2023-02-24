@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Boran Adas, Google Summer of Code
+//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,14 +18,11 @@
 namespace RDKit {
 namespace TopologicalTorsion {
 
-template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionArguments
-    : public FingerprintArguments<OutputType> {
+    : public FingerprintArguments {
  public:
-  const bool df_includeChirality;
-  const uint32_t d_torsionAtomCount;
-
-  OutputType getResultSize() const override;
+  uint32_t d_torsionAtomCount = 4;
+  bool df_onlyShortestPaths = false;
 
   std::string infoString() const override;
 
@@ -55,12 +52,16 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionAtomEnv
   const INT_VECT d_atomPath;
 
  public:
-  OutputType getBitId(FingerprintArguments<OutputType> *arguments,
-                      const std::vector<std::uint32_t> *atomInvariants,
-                      const std::vector<std::uint32_t> *bondInvariants,
-                      const AdditionalOutput *additionalOutput,
-                      const bool hashResults = false,
-                      const std::uint64_t fpSize = 0) const override;
+  OutputType getBitId(
+      FingerprintArguments *arguments,                   // unused
+      const std::vector<std::uint32_t> *atomInvariants,  // unused
+      const std::vector<std::uint32_t> *bondInvariants,  // unused
+      AdditionalOutput *additionalOutput,                // unused
+      const bool hashResults = false,                    // unused
+      const std::uint64_t fpSize = 0                     // unused
+  ) const override;
+  void updateAdditionalOutput(AdditionalOutput *output,
+                              size_t bitId) const override;
   /**
    \brief Construct a new Topological Torsion Atom Env object
 
@@ -75,7 +76,7 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
     : public AtomEnvironmentGenerator<OutputType> {
  public:
   std::vector<AtomEnvironment<OutputType> *> getEnvironments(
-      const ROMol &mol, FingerprintArguments<OutputType> *arguments,
+      const ROMol &mol, FingerprintArguments *arguments,
       const std::vector<std::uint32_t> *fromAtoms,
       const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
       const AdditionalOutput *additionalOutput,
@@ -84,6 +85,7 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
+  OutputType getResultSize() const override;
 };
 
 /**
@@ -114,13 +116,13 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
 
  */
 template <typename OutputType>
-RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *
-getTopologicalTorsionGenerator(
-    const bool includeChirality = false, const uint32_t torsionAtomCount = 4,
-    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-    const bool countSimulation = true,
-    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-    const std::uint32_t fpSize = 2048, const bool ownsAtomInvGen = false);
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType>
+    *getTopologicalTorsionGenerator(
+        bool includeChirality = false, uint32_t torsionAtomCount = 4,
+        AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
+        bool countSimulation = true, std::uint32_t fpSize = 2048,
+        std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+        bool ownsAtomInvGen = false);
 }  // namespace TopologicalTorsion
 }  // namespace RDKit
 

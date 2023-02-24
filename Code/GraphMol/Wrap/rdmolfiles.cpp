@@ -18,6 +18,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/new_canon.h>
+#include <GraphMol/Canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -596,7 +597,8 @@ python::tuple MolsFromPNGString(python::object png, const std::string &tag,
   return python::tuple(res);
 }
 
-python::object MolsFromCDXMLFile(const char *filename, bool sanitize, bool removeHs) {
+python::object MolsFromCDXMLFile(const char *filename, bool sanitize,
+                                 bool removeHs) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
     mols = CDXMLFileToMols(filename, sanitize, removeHs);
@@ -610,18 +612,19 @@ python::object MolsFromCDXMLFile(const char *filename, bool sanitize, bool remov
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
-    ROMOL_SPTR sptr(static_cast<ROMol*>(mol.release()));
+    ROMOL_SPTR sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
   return python::tuple(res);
 }
 
-python::tuple MolsFromCDXML(python::object cdxml, bool sanitize, bool removeHs) {
+python::tuple MolsFromCDXML(python::object cdxml, bool sanitize,
+                            bool removeHs) {
   auto mols = CDXMLToMols(pyObjectToString(cdxml), sanitize, removeHs);
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
-    ROMOL_SPTR sptr(static_cast<ROMol*>(mol.release()));
+    ROMOL_SPTR sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
   return python::tuple(res);
@@ -655,6 +658,10 @@ python::dict MetadataFromPNGString(python::object png) {
   return translateMetadata(metadata);
 }
 
+void CanonicalizeEnhancedStereo(ROMol &mol) {
+  Canon::canonicalizeEnhancedStereo(mol);
+}
+
 }  // namespace RDKit
 
 // MolSupplier stuff
@@ -674,6 +681,9 @@ void wrap_smiwriter();
 void wrap_sdwriter();
 void wrap_tdtwriter();
 void wrap_pdbwriter();
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+void wrap_maewriter();
+#endif
 
 // MultithreadedMolSupplier stuff
 void wrap_multiSmiSupplier();
@@ -1134,11 +1144,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                      "being returned")
       .def_readwrite("removeHs", &RDKit::SmilesParserParams::removeHs,
                      "controls whether or not Hs are removed before the "
-                     "molecule is returned")
-      .def_readwrite(
-          "useLegacyStereo", &RDKit::SmilesParserParams::useLegacyStereo,
-          "controls whether or not the legacy stereochemistry "
-          "perception code is used. DEPRECATED: Please use Chem.SetUseLegacyStereoPerception() instead.");
+                     "molecule is returned");
   python::class_<RDKit::SmartsParserParams, boost::noncopyable>(
       "SmartsParserParams", "Parameters controlling SMARTS Parsing")
       .def_readwrite("debugParse", &RDKit::SmartsParserParams::debugParse,
@@ -1881,9 +1887,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
    >>> mol = MolFromSmiles('C1NCN1.C1NCN1')\n\
    >>> list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False))\n\
-   [0,1,0,1,-1,-1,-1,-1]\n\
+   [4,6,4,6,-1,-1,-1,-1]\n\
    >>> list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False))\n\
-   [-1,-1,-1,-1,0,1,0,1]\n\
+   [-1,-1,-1,-1,4,6,4,6]\n\
 \n\
   ARGUMENTS:\n\
 \n\
@@ -1909,6 +1915,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("breakTies") = true, python::arg("includeChirality") = true,
        python::arg("includeIsotopes") = true),
       docString.c_str());
+
+  python::def("CanonicalizeEnhancedStereo", CanonicalizeEnhancedStereo,
+              (python::arg("mol")));
 
   python::def(
       "CreateAtomIntPropertyList", FileParserUtils::createAtomIntPropertyList,
@@ -1974,9 +1983,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
      RETURNS:
        a Mol object, None on failure.)DOC";
-  
-  std::string cdxml_notes =
-    R"DOC()DOC";
+
+  std::string cdxml_notes = R"DOC()DOC";
 
   python::def(
       "MolFromPNGFile", MolFromPNGFile,
@@ -2009,12 +2017,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
      RETURNS:
        an iterator of parsed Mol objects.)DOC";
-  
+
   python::def("MolsFromCDXMLFile", MolsFromCDXMLFile,
-	      (python::arg("filename"), python::arg("sanitize")=true, python::arg("removeHs")=true),
-	      docString.c_str()
-);
-  
+              (python::arg("filename"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
+              docString.c_str());
+
   docString =
       R"DOC(Construct a molecule from a cdxml string.
 
@@ -2032,12 +2040,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
      RETURNS:
        an iterator of parsed Mol objects.)DOC";
-  
+
   python::def("MolsFromCDXML", MolsFromCDXML,
-	      (python::arg("cdxml"), python::arg("sanitize")=true, python::arg("removeHs")=true),
-	      docString.c_str()
-	      );
-  
+              (python::arg("cdxml"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
+              docString.c_str());
+
   docString =
       R"DOC(Adds molecular metadata to PNG data read from a file.
 
@@ -2148,6 +2156,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   wrap_sdwriter();
   wrap_tdtwriter();
   wrap_pdbwriter();
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+  wrap_maewriter();
+#endif
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
   /********************************************************

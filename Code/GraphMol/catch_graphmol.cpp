@@ -21,6 +21,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -1969,6 +1970,14 @@ TEST_CASE("bridgehead queries", "[query]") {
       }
     }
   }
+  SECTION("Github #6049") {
+    auto m = "C1C=CC=C2CCCCC3CC(C3)N21"_smiles;
+    REQUIRE(m);
+    CHECK(!queryIsAtomBridgehead(m->getAtomWithIdx(13)));
+    CHECK(!queryIsAtomBridgehead(m->getAtomWithIdx(4)));
+    CHECK(queryIsAtomBridgehead(m->getAtomWithIdx(11)));
+    CHECK(queryIsAtomBridgehead(m->getAtomWithIdx(9)));
+  }
 }
 
 TEST_CASE("replaceAtom/Bond should not screw up bookmarks", "[RWMol]") {
@@ -2017,7 +2026,7 @@ TEST_CASE("github #4071: StereoGroups not preserved by RenumberAtoms()",
             mol->getStereoGroups()[i].getGroupType());
     }
     CHECK(MolToCXSmiles(*nmol) ==
-          "C[C@H]([C@@H](C)[C@@H](C)O)[C@@H](C)O |o1:7,&1:1,&2:2,&3:4|");
+          "C[C@H](O)[C@H](C)[C@H](C)[C@H](C)O |o1:1,&1:3,&2:5,&3:7|");
   }
 }
 
@@ -2367,6 +2376,7 @@ TEST_CASE("allow 5 valent N/P/As to kekulize", "[kekulization]") {
   ps.sanitize = false;
   SECTION("kekulization") {
     for (const auto &pr : tests) {
+      INFO(pr.first);
       std::unique_ptr<RWMol> m{SmilesToMol(pr.first, ps)};
       REQUIRE(m);
       m->updatePropertyCache(false);
@@ -2376,6 +2386,7 @@ TEST_CASE("allow 5 valent N/P/As to kekulize", "[kekulization]") {
   }
   SECTION("sanitization") {
     for (const auto &pr : tests) {
+      INFO(pr.first);
       std::unique_ptr<RWMol> m{SmilesToMol(pr.first, ps)};
       REQUIRE(m);
       m->updatePropertyCache(false);
@@ -2802,5 +2813,158 @@ TEST_CASE(
       INFO(smi);
       CHECK_THROWS_AS(SmilesToMol(smi), MolSanitizeException);
     }
+  }
+}
+
+TEST_CASE("extended valences for alkali earths") {
+  SECTION("valence of 2") {
+    // make sure the valence of two works
+    std::vector<std::pair<std::string, unsigned int>> cases{
+        {"C[Be]", 1},  {"C[Mg]", 1},  {"C[Ca]", 1},  {"C[Sr]", 1},
+        {"C[Ba]", 1},  {"C[Ra]", 1},  {"C[Be]C", 0}, {"C[Mg]C", 0},
+        {"C[Ca]C", 0}, {"C[Sr]C", 0}, {"C[Ba]C", 0}, {"C[Ra]C", 0}};
+
+    for (const auto &pr : cases) {
+      INFO(pr.first);
+      std::unique_ptr<RWMol> m{SmilesToMol(pr.first)};
+      REQUIRE(m);
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      m->getAtomWithIdx(1)->setNumRadicalElectrons(0);
+      MolOps::sanitizeMol(*m);
+      CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == pr.second);
+    }
+  }
+  SECTION("higher valence") {
+    // make sure the valence of two works
+    std::vector<std::pair<std::string, unsigned int>> cases{{"C[Mg](C)C", 0},
+                                                            {"C[Ca](C)C", 0},
+                                                            {"C[Sr](C)C", 0},
+                                                            {"C[Ba](C)C", 0},
+                                                            {"C[Ra](C)C", 0}};
+
+    for (const auto &pr : cases) {
+      INFO(pr.first);
+      std::unique_ptr<RWMol> m{SmilesToMol(pr.first)};
+      REQUIRE(m);
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      m->getAtomWithIdx(1)->setNumRadicalElectrons(0);
+      MolOps::sanitizeMol(*m);
+      CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == pr.second);
+    }
+  }
+  SECTION("everybody loves grignards") {
+    auto m = "CC(C)O[Mg](Cl)(<-O1CCCC1)<-O1CCCC1"_smiles;
+    REQUIRE(m);
+  }
+}
+
+TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
+  SECTION("basics") {
+    std::vector<std::string> smis = {
+        "Cc1(C)=NCCCC1",  // one bogus aromatic atom
+    };
+    for (const auto &smi : smis) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), AtomValenceException);
+    }
+  }
+  SECTION("as reported") {
+    std::vector<std::string> smis = {
+        "c1c(ccc2NC(CN=c(c21)(C)C)=O)O",
+        "c1c(c2n(C(NC(Oc2cc1)C)c1c[nH]cn1)=O)O",
+        "c1c2C(c4c(cc(c(C(=O)O)c4)O)O)Oc(c2c(c(O)c1O)O)(=O)O",
+        "c12C(CN(C)C)CCCCN=c(c2cc2c1cc[nH]c2)(C)C"};
+    for (const auto &smi : smis) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), MolSanitizeException);
+    }
+  }
+  SECTION("edge cases atoms") {
+    std::vector<std::string> smis = {
+        "c1c(ccc2NC(CN=c(c21)=C)=O)O",     // exocyclic double bond
+        "c1c(ccc2NC(Cn=c(c21)(C)C)=O)O",   // even more bogus aromatic atoms
+        "c1c(ccc2NC(CN=c(c21)(:c)C)=O)O",  // even more bogus aromatic atoms
+    };
+    for (const auto &smi : smis) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), AtomValenceException);
+    }
+  }
+  SECTION("edge cases kekulization") {
+    std::vector<std::string> smis = {
+        "c12ccccc1=NCCC2",  // adjacent to an actual aromatic ring
+        "Cc1(C)=NCCCc1",    // two bogus aromatic atoms
+        "Cc1(C)nCCCC=1",    // two bogus aromatic atoms
+        "Cc1(C)nCCCc1",     // three bogus aromatic atoms
+        "Cc:1(C):nCCCc:1",  // three bogus aromatic atoms
+    };
+    for (const auto &smi : smis) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), KekulizeException);
+    }
+  }
+}
+
+TEST_CASE("Stop caching ring finding results") {
+  SECTION("basics") {
+    auto m = "C1C2CC1CCC2"_smiles;
+    REQUIRE(m);
+    // symmetrized result
+    CHECK(m->getRingInfo()->numRings() == 3);
+    auto rcount = MolOps::findSSSR(*m);
+    CHECK(rcount == 2);
+    CHECK(m->getRingInfo()->numRings() == 2);
+    rcount = MolOps::symmetrizeSSSR(*m);
+    CHECK(rcount == 3);
+    CHECK(m->getRingInfo()->numRings() == 3);
+    MolOps::fastFindRings(*m);
+    CHECK(m->getRingInfo()->numRings() == 2);
+  }
+}
+
+TEST_CASE("molecules with more than 255 rings produce a bad pickle") {
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+  bool sanitize = false;
+  std::unique_ptr<RWMol> mol(
+      MolFileToMol(pathName + "mol_with_pickle_error.mol", sanitize));
+  REQUIRE(mol);
+  mol->updatePropertyCache(false);
+  unsigned int opThatFailed = 0;
+  MolOps::sanitizeMol(*mol, opThatFailed,
+                      MolOps::SanitizeFlags::SANITIZE_ALL ^
+                          MolOps::SanitizeFlags::SANITIZE_PROPERTIES ^
+                          MolOps::SANITIZE_KEKULIZE);
+  CHECK(mol->getRingInfo()->numRings() > 300);
+  std::string pkl;
+  MolPickler::pickleMol(*mol, pkl);
+  RWMol nMol(pkl);
+  CHECK(nMol.getRingInfo()->numRings() == mol->getRingInfo()->numRings());
+}
+
+TEST_CASE("molecules with single bond to metal atom use dative instead") {
+  // Change heme coordination from single bond to dative.
+  // Test mols are CHEBI:26355, CHEBI:60344, CHEBI:17627.  26355 should be
+  // changed (Github 6019) the other two should not be.
+  // 4th mol is one that gave other problems during testing.
+  std::vector<std::pair<std::string, std::string>> test_vals{
+      {"CC1=C(CCC(O)=O)C2=[N]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N]5[Fe]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"},
+      {"CC1=C(CCC([O-])=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC([O-])=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25"},
+      {"CC1=C(CCC(O)=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)O)c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)O)=CC1=[N+]25"},
+      {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
+       "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
+  for (size_t i = 0; i < test_vals.size(); ++i) {
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
+    TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
+  }
+}
+
+TEST_CASE("github #6100: bonds to dummy atoms considered as dative") {
+  SECTION("as reported") {
+    auto m = "C[O](C)*"_smiles;
+    REQUIRE(!m);
   }
 }

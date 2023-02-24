@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Boran Adas, Google Summer of Code
+//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -104,15 +104,11 @@ class RDKIT_FINGERPRINTS_EXPORT MorganBondInvGenerator
  \brief Class for holding Morgan fingerprint specific arguments
 
  */
-template <typename OutputType>
-class RDKIT_FINGERPRINTS_EXPORT MorganArguments
-    : public FingerprintArguments<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT MorganArguments : public FingerprintArguments {
  public:
-  const bool df_includeChirality;
-  const bool df_onlyNonzeroInvariants;
-  const unsigned int d_radius;
-
-  OutputType getResultSize() const override;
+  bool df_onlyNonzeroInvariants = false;
+  unsigned int d_radius = 3;
+  bool df_includeRedundantEnvironments = false;
 
   std::string infoString() const override;
 
@@ -130,12 +126,20 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments
    be set if the count is higher than the number provided for that spot
    \param fpSize size of the generated fingerprint, does not affect the sparse
    versions
-   */
-  MorganArguments(const unsigned int radius, const bool countSimulation = false,
-                  const bool includeChirality = false,
-                  const bool onlyNonzeroInvariants = false,
-                  const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-                  const std::uint32_t fpSize = 2048);
+   \param includeRedundantEnvironments if set redundant environments will be
+   included in the fingerprint
+  */
+  MorganArguments(unsigned int radius, bool countSimulation = false,
+                  bool includeChirality = false,
+                  bool onlyNonzeroInvariants = false,
+                  std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+                  std::uint32_t fpSize = 2048,
+                  bool includeRedundantEnvironments = false)
+      : FingerprintArguments(countSimulation, countBounds, fpSize, 1,
+                             includeChirality),
+        df_onlyNonzeroInvariants(onlyNonzeroInvariants),
+        d_radius(radius),
+        df_includeRedundantEnvironments(includeRedundantEnvironments){};
 };
 
 /**
@@ -151,12 +155,16 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomEnv
   const unsigned int d_layer;
 
  public:
-  OutputType getBitId(FingerprintArguments<OutputType> *arguments,
-                      const std::vector<std::uint32_t> *atomInvariants,
-                      const std::vector<std::uint32_t> *bondInvariants,
-                      const AdditionalOutput *additionalOutput,
-                      const bool hashResults = false,
-                      const std::uint64_t fpSize = 0) const override;
+  OutputType getBitId(
+      FingerprintArguments *arguments,                   // unused
+      const std::vector<std::uint32_t> *atomInvariants,  // unused
+      const std::vector<std::uint32_t> *bondInvariants,  // unused
+      AdditionalOutput *additionalOutput,                // unused
+      const bool hashResults = false,                    // unused
+      const std::uint64_t fpSize = 0                     // unused
+  ) const override;
+  void updateAdditionalOutput(AdditionalOutput *output,
+                              size_t bitId) const override;
 
   /**
    \brief Construct a new MorganAtomEnv object
@@ -178,7 +186,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
     : public AtomEnvironmentGenerator<OutputType> {
  public:
   std::vector<AtomEnvironment<OutputType> *> getEnvironments(
-      const ROMol &mol, FingerprintArguments<OutputType> *arguments,
+      const ROMol &mol, FingerprintArguments *arguments,
       const std::vector<std::uint32_t> *fromAtoms,
       const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
       const AdditionalOutput *additionalOutput,
@@ -187,7 +195,66 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
+  OutputType getResultSize() const override;
 };
+
+/**
+ \brief Get a fingerprint generator for Morgan fingerprint
+
+ \tparam OutputType determines the size of the bitIds and the result, can be 32
+ or 64 bit unsigned integer
+
+ \param radius the number of iterations to grow the fingerprint
+
+ \param countSimulation if set, use count simulation while generating the
+ fingerprint
+
+ \param includeChirality if set, chirality information will be added to the
+ generated bit id, independently from bond invariants
+
+ \param onlyNonzeroInvariants if set, bits will only be set from atoms that
+ have a nonzero invariant
+
+ \param countBounds boundaries for count simulation, corresponding bit will be
+ set if the count is higher than the number provided for that spot
+
+ \param fpSize size of the generated fingerprint, does not affect the sparse
+ versions
+ \param countSimulation if set, use count simulation while generating the
+ fingerprint
+ \param includeChirality sets includeChirality flag for both MorganArguments
+ and the default bond generator MorganBondInvGenerator
+ \param useBondTypes if set, bond types will be included as a part of the
+ default bond invariants
+ \param onlyNonzeroInvariants if set, bits will only be set from atoms that
+ have a nonzero invariant
+ \param includeRedundantEnvironments if set redundant environments will be
+ included in the fingerprint
+ \param atomInvariantsGenerator custom atom invariants generator to use
+ \param bondInvariantsGenerator custom  bond invariants generator to use
+ \param ownsAtomInvGen  if set atom invariants  generator is destroyed with the
+ fingerprint generator
+ \param ownsBondInvGen  if set bond invariants generator is destroyed with the
+ fingerprint generator
+
+ \return FingerprintGenerator<OutputType>* that generates Morgan fingerprints
+
+This generator supports the following \c AdditionalOutput types:
+  - \c atomToBits : which bits each atom is the central atom for
+  - \c atomCounts : how many bits each atom sets
+  - \c bitInfoMap : map from bitId to (atomId, radius) pairs
+
+ */
+template <typename OutputType>
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getMorganGenerator(
+    unsigned int radius, bool countSimulation, bool includeChirality,
+    bool useBondTypes, bool onlyNonzeroInvariants,
+    bool includeRedundantEnvironments,
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
+    BondInvariantsGenerator *bondInvariantsGenerator = nullptr,
+    std::uint32_t fpSize = 2048,
+    std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+    bool ownsAtomInvGen = false, bool ownsBondInvGen = false);
 
 /**
  \brief Get a fingerprint generator for Morgan fingerprint
@@ -235,15 +302,21 @@ This generator supports the following \c AdditionalOutput types:
 
  */
 template <typename OutputType>
-RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getMorganGenerator(
-    const unsigned int radius, const bool countSimulation = false,
-    const bool includeChirality = false, const bool useBondTypes = true,
-    const bool onlyNonzeroInvariants = false,
+FingerprintGenerator<OutputType> *getMorganGenerator(
+    unsigned int radius, bool countSimulation = false,
+    bool includeChirality = false, bool useBondTypes = true,
+    bool onlyNonzeroInvariants = false,
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
     BondInvariantsGenerator *bondInvariantsGenerator = nullptr,
-    const std::uint32_t fpSize = 2048,
-    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-    const bool ownsAtomInvGen = false, const bool ownsBondInvGen = false);
+    std::uint32_t fpSize = 2048,
+    std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+    bool ownsAtomInvGen = false, bool ownsBondInvGen = false) {
+  return getMorganGenerator<OutputType>(
+      radius, countSimulation, includeChirality, useBondTypes,
+      onlyNonzeroInvariants, false, atomInvariantsGenerator,
+      bondInvariantsGenerator, fpSize, countBounds, ownsAtomInvGen,
+      ownsBondInvGen);
+};
 
 }  // namespace MorganFingerprint
 }  // namespace RDKit

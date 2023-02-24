@@ -28,6 +28,7 @@
 #include <clocale>
 #include <cstdlib>
 
+#include <regex>
 #include <string>
 #include <fstream>
 #include <boost/lexical_cast.hpp>
@@ -4663,7 +4664,7 @@ void testParseCHG() {
                          22, -1, 26, -1, 27, -1, 28, 4,  29, -1, 31, 1,  32,
                          -1, 34, -1, 35, 1,  36, -1, 38, -1, 0,  0};
   // Shouldn't seg fault, throw exception or have a null mol
-  RWMol *m = MolBlockToMol(molblock_chg);
+  std::unique_ptr<RWMol> m(MolBlockToMol(molblock_chg));
   size_t i = 0;
   while (1) {
     if (charges[i] == 0) {
@@ -4678,20 +4679,23 @@ void testParseCHG() {
 
   TEST_ASSERT(m);
   std::string out = MolToMolBlock(*m);
-  const std::string sub = "M  CHG";
-  std::vector<size_t> positions;
+  // There are now dative bonds in the molecule, so the mol block will
+  // be forced to V3000.
+  std::regex chg_all("CHG="), chg_m1("CHG=-1"), chg_p1("CHG=1"),
+      chg_p4("CHG=4");
+  TEST_ASSERT(
+      std::distance(std::sregex_iterator(out.begin(), out.end(), chg_all),
+                    std::sregex_iterator()) == 24);
+  TEST_ASSERT(
+      std::distance(std::sregex_iterator(out.begin(), out.end(), chg_m1),
+                    std::sregex_iterator()) == 18);
+  TEST_ASSERT(
+      std::distance(std::sregex_iterator(out.begin(), out.end(), chg_p1),
+                    std::sregex_iterator()) == 4);
+  TEST_ASSERT(
+      std::distance(std::sregex_iterator(out.begin(), out.end(), chg_p4),
+                    std::sregex_iterator()) == 2);
 
-  size_t pos = out.find(sub, 0);
-  while (pos != std::string::npos) {
-    positions.push_back(pos);
-    size_t num_entries =
-        strtol(out.substr(pos + sub.size(), 3).c_str(), nullptr, 10);
-    TEST_ASSERT(num_entries == 8);
-    pos = out.find(sub, pos + 1);
-  }
-  TEST_ASSERT(positions.size() == 3);  // 24/3 == 8
-
-  delete m;
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 

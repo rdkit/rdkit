@@ -1,0 +1,9 @@
+CREATE OR REPLACE FUNCTION mol_from_smiles(text) 
+RETURNS mol 
+@RDKIT_PARALLEL_SAFE@
+AS 'select mol_from_smiles($1::cstring);' 
+LANGUAGE SQL IMMUTABLE 
+RETURNS NULL ON NULL INPUT;
+
+CREATE CAST (text as mol) WITH FUNCTION mol_from_smiles(text) AS IMPLICIT;
+CREATE CAST (varchar as mol) WITH FUNCTION mol_from_smiles(text) AS IMPLICIT;

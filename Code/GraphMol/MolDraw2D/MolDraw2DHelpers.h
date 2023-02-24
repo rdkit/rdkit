@@ -282,6 +282,11 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool drawMolsSameScale = true;  // when drawing multiple molecules with
                                   // DrawMolecules, forces them to use the same
                                   // scale.  Default is true.
+  bool useComplexQueryAtomSymbols =
+      true;   // replace any atom, any hetero, any halo queries
+              // with complex query symbols A, Q, X, M, optionally followed
+              // by H if hydrogen is included (except for AH, which stays *).
+              // Default is true.
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(

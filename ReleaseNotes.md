@@ -7,6 +7,9 @@
 
 ## Backwards incompatible changes
 
+- The ring-finding functions will now run even if the molecule already has ring information. Older versions of the RDKit would return whatever ring information was present, even if it had been generated using a different algorithm.
+- The canonical SMILES and CXSMILES generated for molecules with enhanced stereochemistry (stereo groups) is different than in previous releases. The enhanced stereochemistry information and the stereo groups themselves are now canonical. This does *not* affect molecules which do not have enhanced stereo and will not have any effect if you generate non-isomeric SMILES. This change also affects the output of the MolHash and RegistrationHash code when applied to molecules with enhanced stereo.
+
 ## Bug Fixes:
 
 ## Cleanup work:
@@ -14,6 +17,21 @@
 ## New Features and Enhancements:
 
 ## Code removed in this release:
+- The `SmilesParserParams` option `useLegacyStereo` has been removed. Please use
+  `SetUseLegacyStereoPerception()` instead. 
+- The following JS methods:
+  * generate_aligned_coords()
+  * get_morgan_fp()
+  * get_morgan_fp_as_uint8array()
+  * get_pattern_fp()
+  * get_pattern_fp_as_uint8array()
+  which used to take several individual parameters have been removed. 
+  Please use the versions which take a single JSON string parameter.
+- The `PrintAsBase64PNGString` function in `PandasTools` has been removed.
+  Please use `PrintAsImageString` instead.
+
+
+
 
 ## Deprecated code (to be removed in a future release):
 

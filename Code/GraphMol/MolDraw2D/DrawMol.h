@@ -159,7 +159,7 @@ class DrawMol {
                       const std::pair<DrawColour, DrawColour> &cols);
   void makeWavyBond(Bond *bond, double offset,
                     const std::pair<DrawColour, DrawColour> &cols);
-  void makeDativeBond(Bond *bond,
+  void makeDativeBond(Bond *bond, double offset,
                       const std::pair<DrawColour, DrawColour> &cols);
   void makeZeroBond(Bond *bond, const std::pair<DrawColour, DrawColour> &cols,
                     const DashPattern &dashPattern);
@@ -309,9 +309,11 @@ std::string getAtomListText(const Atom &atom);
 DrawColour getColourByAtomicNum(int atomicNum,
                                 const MolDrawOptions &drawOptions);
 DrawColour getHighlightBondColour(
-    int bondIdx, const MolDrawOptions &drawOptions,
+    const Bond *bond, const MolDrawOptions &drawOptions,
     const std::vector<int> &highlightBonds,
-    const std::map<int, DrawColour> &highlightBondMap);
+    const std::map<int, DrawColour> &highlightBondMap,
+    const std::vector<int> &highlightAtoms,
+    const std::map<int, DrawColour> &highlightAtomMap);
 double getHighlightBondWidth(
     const MolDrawOptions &drawOptions, int bond_idx,
     const std::map<int, int> *highlight_linewidth_multipliers);

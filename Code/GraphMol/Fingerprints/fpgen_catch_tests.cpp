@@ -1,0 +1,230 @@
+//
+//  Copyright (C) 2022 Greg Landrum
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
+#include "catch.hpp"
+
+#include <RDGeneral/RDLog.h>
+#include <GraphMol/RDKitBase.h>
+#include <RDGeneral/test.h>
+#include <GraphMol/Fingerprints/AtomPairs.h>
+#include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Fingerprints/AtomPairGenerator.h>
+#include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
+#include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
+#include <GraphMol/Fingerprints/FingerprintGenerator.h>
+
+#include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+
+using namespace RDKit;
+
+TEST_CASE("includeRedundantEnvironments") {
+  auto mol = "CC(=O)O"_smiles;
+  REQUIRE(mol);
+  SECTION("basics") {
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(2)};
+    REQUIRE(fpgen);
+    {
+      std::unique_ptr<SparseIntVect<std::uint32_t>> fp{
+          fpgen->getCountFingerprint(*mol)};
+      REQUIRE(fp);
+      CHECK(fp->getTotalVal() == 8);
+    }
+    // turn on inclusion of redundant bits
+    dynamic_cast<MorganFingerprint::MorganArguments *>(fpgen->getOptions())
+        ->df_includeRedundantEnvironments = true;
+    {
+      std::unique_ptr<SparseIntVect<std::uint32_t>> fp{
+          fpgen->getCountFingerprint(*mol)};
+      REQUIRE(fp);
+      CHECK(fp->getTotalVal() == 12);
+    }
+  }
+}
+
+TEST_CASE(
+    "github #5838: FP count simulation is not accounted for when additional output is requested") {
+  SECTION("as reported") {
+    auto m = "OCCCCCCN"_smiles;
+    REQUIRE(m);
+
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpgen(
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>());
+    REQUIRE(fpgen);
+    CHECK(fpgen->getOptions()->df_countSimulation);
+    {
+      AdditionalOutput ao;
+      ao.allocateBitPaths();
+      ao.allocateAtomToBits();
+      ao.allocateAtomCounts();
+      FingerprintFuncArguments args;
+      args.additionalOutput = &ao;
+      std::unique_ptr<ExplicitBitVect> fp{fpgen->getFingerprint(*m, args)};
+      REQUIRE(fp);
+      CHECK(fp->getNumOnBits() == ao.bitPaths->size());
+      std::vector<int> obl;
+      fp->getOnBits(obl);
+      for (const auto bid : obl) {
+        INFO(bid);
+        CHECK(ao.bitPaths->find(bid) != ao.bitPaths->end());
+      }
+      std::vector<unsigned int> atomCounts{1, 2, 3, 4, 4, 3, 2, 1};
+      CHECK(*ao.atomCounts == atomCounts);
+      std::vector<std::vector<std::uint64_t>> atomToBits = {{0},
+                                                            {0, 284, 285},
+                                                            {0, 284, 285},
+                                                            {0, 284, 285},
+                                                            {284, 285, 384},
+                                                            {284, 285, 384},
+                                                            {284, 285, 384},
+                                                            {384}};
+      CHECK(*ao.atomToBits == atomToBits);
+    }
+    {
+      AdditionalOutput ao;
+      ao.allocateBitPaths();
+      ao.allocateAtomToBits();
+      ao.allocateAtomCounts();
+      FingerprintFuncArguments args;
+      args.additionalOutput = &ao;
+      std::unique_ptr<SparseBitVect> fp{fpgen->getSparseFingerprint(*m, args)};
+      REQUIRE(fp);
+      CHECK(fp->getNumOnBits() == ao.bitPaths->size());
+      std::vector<int> obl;
+      fp->getOnBits(obl);
+      for (const auto bid : obl) {
+        INFO(bid);
+        CHECK(ao.bitPaths->find(bid) != ao.bitPaths->end());
+      }
+      std::vector<unsigned int> atomCounts{1, 2, 3, 4, 4, 3, 2, 1};
+      CHECK(*ao.atomCounts == atomCounts);
+      std::vector<std::vector<std::uint64_t>> atomToBits = {
+          {1046732804},
+          {1046732804, 1046733088, 1046733089},
+          {1046732804, 1046733088, 1046733089},
+          {1046732804, 1046733088, 1046733089},
+          {1046733088, 1046733089, 1046733188},
+          {1046733088, 1046733089, 1046733188},
+          {1046733088, 1046733089, 1046733188},
+          {1046733188}};
+      CHECK(*ao.atomToBits == atomToBits);
+    }
+  }
+  SECTION("morgan") {
+    auto m = "OCCCCCCN"_smiles;
+    REQUIRE(m);
+
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpgen(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    REQUIRE(fpgen);
+    fpgen->getOptions()->df_countSimulation = true;
+    {
+      AdditionalOutput ao;
+      ao.allocateBitInfoMap();
+      ao.allocateAtomToBits();
+      ao.allocateAtomCounts();
+      FingerprintFuncArguments args;
+      args.additionalOutput = &ao;
+      std::unique_ptr<ExplicitBitVect> fp{fpgen->getFingerprint(*m, args)};
+      REQUIRE(fp);
+      CHECK(fp->getNumOnBits() == ao.bitInfoMap->size());
+      std::vector<int> obl;
+      fp->getOnBits(obl);
+      for (const auto bid : obl) {
+        INFO(bid);
+        CHECK(ao.bitInfoMap->find(bid) != ao.bitInfoMap->end());
+      }
+      std::vector<unsigned int> atomCounts{2, 3, 3, 3, 3, 3, 3, 2};
+      CHECK(*ao.atomCounts == atomCounts);
+      std::vector<std::vector<std::uint64_t>> atomToBits = {
+          {888, 1180},
+          {320, 321, 322, 424, 1892},
+          {116, 320, 321, 322, 1500, 1501, 1502},
+          {320, 321, 322, 476, 477, 1500, 1501, 1502},
+          {320, 321, 322, 476, 477, 1500, 1501, 1502},
+          {232, 320, 321, 322, 1500, 1501, 1502},
+          {320, 321, 322, 1216, 1972},
+          {588, 1876},
+      };
+      CHECK(*ao.atomToBits == atomToBits);
+    }
+    {
+      AdditionalOutput ao;
+      ao.allocateBitInfoMap();
+      ao.allocateAtomToBits();
+      ao.allocateAtomCounts();
+      FingerprintFuncArguments args;
+      args.additionalOutput = &ao;
+      std::unique_ptr<SparseBitVect> fp{fpgen->getSparseFingerprint(*m, args)};
+      REQUIRE(fp);
+      CHECK(fp->getNumOnBits() == ao.bitInfoMap->size());
+      std::vector<int> obl;
+      fp->getOnBits(obl);
+      // there's an unfortunate bit of information loss happening here
+      // due to the fact that the SparseBitVect uses ints, so we have to
+      // do this test backwards:
+      for (auto pr : *ao.bitInfoMap) {
+        INFO(pr.first);
+        CHECK(std::find(obl.begin(), obl.end(), (int)(pr.first)) != obl.end());
+      }
+      // for (auto i = 0u; i < m->getNumAtoms(); ++i) {
+      //   std::cerr << " {";
+      //   std::copy(ao.atomToBits->at(i).begin(), ao.atomToBits->at(i).end(),
+      //             std::ostream_iterator<std::uint64_t>(std::cerr, ", "));
+      //   std::cerr << " }," << std::endl;
+      // }
+      std::vector<unsigned int> atomCounts{2, 3, 3, 3, 3, 3, 3, 2};
+      CHECK(*ao.atomCounts == atomCounts);
+      std::vector<std::vector<std::uint64_t>> atomToBits = {
+          {1845699452, 3458649244},
+          {391602504, 391602505, 391602506, 3018396076, 3209717616},
+          {391602504, 391602505, 391602506, 1746877920, 1746877921, 1746877922,
+           3245328504},
+          {391602504, 391602505, 391602506, 647852508, 647852509, 1746877920,
+           1746877921, 1746877922},
+          {391602504, 391602505, 391602506, 647852508, 647852509, 1746877920,
+           1746877921, 1746877922},
+          {391602504, 391602505, 391602506, 1746877920, 1746877921, 1746877922,
+           4225765616},
+          {10672060, 391602504, 391602505, 391602506, 3149364416},
+          {1781206876, 3391828556}};
+      CHECK(*ao.atomToBits == atomToBits);
+    }
+  }
+}
+
+TEST_CASE("numBitsPerFeature") {
+  auto mol = "CC(=O)O"_smiles;
+  REQUIRE(mol);
+  SECTION("basics") {
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(2)};
+    REQUIRE(fpgen);
+    {
+      std::unique_ptr<SparseIntVect<std::uint32_t>> fp{
+          fpgen->getCountFingerprint(*mol)};
+      REQUIRE(fp);
+      CHECK(fp->getTotalVal() == 8);
+    }
+    // turn on multiple bits per feature:
+    fpgen->getOptions()->d_numBitsPerFeature = 2;
+    {
+      std::unique_ptr<SparseIntVect<std::uint32_t>> fp{
+          fpgen->getCountFingerprint(*mol)};
+      REQUIRE(fp);
+      CHECK(fp->getTotalVal() == 16);
+    }
+    CHECK(fpgen->infoString().find("bitsPerFeature=2") != std::string::npos);
+  }
+}

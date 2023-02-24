@@ -229,6 +229,10 @@ void RingInfo::reset() {
   d_bondMembers.clear();
   d_atomRings.clear();
   d_bondRings.clear();
+#ifdef RDK_USE_URF
+  d_atomRingFamilies.clear();
+  d_bondRingFamilies.clear();
+#endif
 }
 void RingInfo::preallocate(unsigned int numAtoms, unsigned int numBonds) {
   d_atomMembers.resize(numAtoms);

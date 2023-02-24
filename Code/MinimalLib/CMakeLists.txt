@@ -39,7 +39,7 @@ if(RDK_BUILD_CFFI_LIB)
         MolInterchange Abbreviations CIPLabeler 
         MolDraw2D Depictor 
         RDInchiLib SubstructMatch FileParsers 
-        SmilesParse GraphMol RingDecomposerLib RDGeometryLib RDGeneral )
+        SmilesParse GraphMol RDGeometryLib RDGeneral )
         if(RDK_URF_LIBS)
             list(APPEND LIBS_TO_USE RingDecomposerLib)
         endif()

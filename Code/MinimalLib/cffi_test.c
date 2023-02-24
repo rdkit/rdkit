@@ -10,12 +10,179 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef WIN32
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
+#define _DEFINED_USE_MATH_DEFINES
+#endif
+#endif
 #include <math.h>
+#ifdef _DEFINED_USE_MATH_DEFINES
+#undef _DEFINED_USE_MATH_DEFINES
+#undef _USE_MATH_DEFINES
+#endif
 #include "cffiwrapper.h"
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
 #include <assert.h>
+
+static const char molblock_native_wedging[] = "\n\
+  MJ201100                      \n\
+\n\
+ 18 21  0  0  1  0  0  0  0  0999 V2000\n\
+   -0.8540   -1.4441    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.3019   -0.8310    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.5185   -0.9172    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.8540   -0.1635    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.6825    0.6434    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.1379    0.7296    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.5504    1.4441    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.4734   -0.0239    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.2409    0.3885    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.6609   -1.2726    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.2130   -1.8857    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.9580   -2.6703    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.1511   -2.8419    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.5990   -2.2287    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.0201   -1.7143    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.5720   -2.3275    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.3171   -3.1121    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.5100   -3.2835    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  3  1  0  0  0  0\n\
+  4  3  1  0  0  0  0\n\
+  4  5  1  0  0  0  0\n\
+  6  5  1  0  0  0  0\n\
+  6  7  1  1  0  0  0\n\
+  6  8  1  0  0  0  0\n\
+  8  9  1  1  0  0  0\n\
+  8  2  1  0  0  0  0\n\
+  4  9  1  1  0  0  0\n\
+  2  1  1  1  0  0  0\n\
+ 10 11  1  0  0  0  0\n\
+ 11 12  2  0  0  0  0\n\
+ 12 13  1  0  0  0  0\n\
+ 13 14  2  0  0  0  0\n\
+  1 10  2  0  0  0  0\n\
+  1 14  1  0  0  0  0\n\
+ 15 16  2  0  0  0  0\n\
+ 16 17  1  0  0  0  0\n\
+ 11 15  1  0  0  0  0\n\
+ 17 18  2  0  0  0  0\n\
+ 12 18  1  0  0  0  0\n\
+M  END\n";
+
+static const char quinoline_scaffold[] = "\n\
+  MJ201100                      \n\
+\n\
+ 10 11  0  0  1  0  0  0  0  0999 V2000\n\
+   -8.1001    2.8219    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -8.8145    2.4094    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -8.8145    1.5843    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -8.1001    1.1718    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -7.3856    1.5843    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -7.3856    2.4094    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -6.6711    1.1718    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -5.9566    1.5842    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -5.9566    2.4092    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -6.6711    2.8218    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  3  1  0  0  0  0\n\
+  3  4  2  0  0  0  0\n\
+  4  5  1  0  0  0  0\n\
+  5  6  2  0  0  0  0\n\
+  7  8  2  0  0  0  0\n\
+  8  9  1  0  0  0  0\n\
+  9 10  2  0  0  0  0\n\
+  5  7  1  0  0  0  0\n\
+ 10  6  1  0  0  0  0\n\
+  1  2  2  0  0  0  0\n\
+  6  1  1  0  0  0  0\n\
+M  END\n";
+
+void find_wedged_bonds(char *molblock, int *have1, int *have6) {
+  molblock = strdup(molblock);
+  assert(molblock);
+  size_t molblock_len = strlen(molblock);
+  char *line_start = molblock;
+  char *line_end = strpbrk(line_start, "\n");
+  int line_num = 0;
+  unsigned int i;
+  unsigned int j;
+  unsigned int s;
+  unsigned int e;
+  int n_atoms = -1;
+  int n_bonds = -1;
+  int b[4];
+  *have1 = 0;
+  *have6 = 0;
+  while (line_end) {
+    *line_end = '\0';
+    if (line_num == 3) {
+      assert(strlen(line_start) > 6);
+      line_start[6] = '\0';
+      sscanf(&line_start[3], "%d", &n_bonds);
+      line_start[3] = '\0';
+      sscanf(line_start, "%d", &n_atoms);
+      assert(n_atoms >= 0 && n_bonds >= 0);
+    } else if (line_num > 3 + n_atoms && line_num < 4 + n_atoms + n_bonds) {
+      for (i = 0; i < 4; ++i) {
+        j = 3 - i;
+        s = j * 3;
+        e = (j + 1) * 3;
+        line_start[e] = '\0';
+        sscanf(&line_start[s], "%d", &b[j]);
+      }
+      assert(b[0] >= 1 && b[0] <= n_atoms);
+      assert(b[1] >= 1 && b[1] <= n_atoms);
+      assert(b[2] == 1 || b[2] == 2);
+      assert(b[3] == 0 || b[3] == 1 || b[3] == 6);
+      if (b[3] == 1) {
+        *have1 = 1;
+      }
+      if (b[3] == 6) {
+        *have6 = 1;
+      }
+    }
+    line_start = line_end + 1;
+    if (line_start >= molblock + molblock_len) {
+      break;
+    }
+    line_end = strpbrk(line_start, "\n");
+    if (!line_end) {
+      line_end = molblock + molblock_len;
+    }
+    ++line_num;
+  }
+  free(molblock);
+}
+
+int extract_bond_coords(char *svg, char *bond, double *coord1, double *coord2) {
+  svg = strdup(svg);
+  assert(svg);
+  char *line = strtok(svg, "\n");
+  char *str = NULL;
+  double dummy[2];
+  coord1 = coord1 ? coord1 : dummy;
+  coord2 = coord2 ? coord2 : dummy;
+  while (line) {
+    str = strstr(line, bond);
+    if (str) {
+      str = strstr(str, "M ");
+    }
+    if (str) {
+      assert(sscanf(str, "M %lf,%lf L %lf,%lf", &coord1[0], &coord1[1], &coord2[0], &coord2[1]) == 4);
+      break;
+    }
+    line = strtok(NULL, "\n");
+  }
+  free(svg);
+  return (str ? 1 : 0);
+}
+
+double angle_deg_between_vectors(double *v1, double *v2) {
+  return 180 / M_PI * acos((v1[0] * v2[0] + v1[1] * v2[1])
+    / sqrt((v1[0] * v1[0] + v1[1] * v1[1]) * (v2[0] * v2[0] + v2[1] * v2[1])));
+}
 
 void test_io() {
   char *pkl;
@@ -41,7 +208,7 @@ void test_io() {
   smiles = NULL;
 
   char *json = get_json(pkl, pkl_size, NULL);
-  assert(strstr(json, "commonchem"));
+  assert(strstr(json, "rdkitjson"));
 
   pkl2 = get_mol(json, &pkl2_size, "");
   assert(pkl2);
@@ -111,7 +278,11 @@ M  END",
 
   //---------
   // mol block
-  char *molblock = get_molblock(pkl, pkl_size, NULL);
+  char *molblock = get_molblock(NULL, pkl_size, NULL);
+  assert(!molblock);
+  molblock = get_molblock(pkl, 0, NULL);
+  assert(!molblock);
+  molblock = get_molblock(pkl, pkl_size, NULL);
   pkl2 = get_mol(molblock, &pkl2_size, "");
   assert(pkl2);
   assert(pkl2_size > 0);
@@ -123,6 +294,51 @@ M  END",
   pkl2 = NULL;
   free(molblock);
   molblock = NULL;
+
+  pkl2 = get_mol(molblock_native_wedging, &pkl2_size, "");
+  assert(pkl2);
+  assert(pkl2_size > 0);
+  molblock = get_molblock(pkl2, pkl2_size, NULL);
+  assert(strstr(molblock, "4  3  1  6"));
+  assert(!strstr(molblock, "H  "));
+  free(molblock);
+  molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
+  assert(!strstr(molblock, "4  3  1  6"));
+  assert(strstr(molblock, "6  7  1  1"));
+  assert(!strstr(molblock, "H  "));
+  free(molblock);
+  molblock = get_molblock(pkl2, pkl2_size, "{\"addChiralHs\":true}");
+  assert(strstr(molblock, "H  "));
+  free(molblock);
+  // Here we want to test that the original molblock wedging is preserved and inverted
+  // as the coordinates are rigid-body rotated
+  size_t scaffold_pkl_size;
+  int have1;
+  int have6;
+  char *scaffold = get_mol(quinoline_scaffold, &scaffold_pkl_size, NULL);
+  assert(set_2d_coords_aligned(&pkl2, &pkl2_size, scaffold, scaffold_pkl_size,
+                                "{\"acceptFailure\":false,\"alignOnly\":true}", NULL));
+  molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
+  find_wedged_bonds(molblock, &have1, &have6);
+  assert(!have1 && have6);
+  assert(!strstr(molblock, "4  3  1  6"));
+  assert(strstr(molblock, "6  7  1  6"));
+  assert(!strstr(molblock, "H  "));
+  free(molblock);
+  free(pkl2);
+  // Here we want to test that the original molblock wedging gets cleared
+  // and hence wedging is recomputed as the coordinates are re-generated
+  pkl2 = get_mol(molblock_native_wedging, &pkl2_size, "");
+  assert(pkl2);
+  assert(pkl2_size > 0);
+  assert(set_2d_coords_aligned(&pkl2, &pkl2_size, scaffold, scaffold_pkl_size,
+                                "{\"acceptFailure\":false}", NULL));
+  molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
+  find_wedged_bonds(molblock, &have1, &have6);
+  assert(have1 && have6);
+  free(molblock);
+  free(pkl2);
+  free(scaffold);
 
   molblock = get_v3kmolblock(pkl, pkl_size, NULL);
   pkl2 = get_mol(molblock, &pkl2_size, "");
@@ -236,7 +452,30 @@ void test_svg() {
   free(svg);
 
   free(pkl);
-  pkl = NULL;
+
+  pkl = get_mol(molblock_native_wedging, &pkl_size, "");
+  assert(pkl);
+  assert(pkl_size > 0);
+  char *svg1 = get_svg(pkl, pkl_size, "{\"width\":350,\"height\":300}");
+  assert(strstr(svg1, "width='350px'"));
+  assert(strstr(svg1, "height='300px'"));
+  assert(strstr(svg1, "</svg>"));
+  assert(strstr(svg1, "atom-17"));
+  assert(strstr(svg1, "atom-18"));
+  assert(strstr(svg1, "atom-19"));
+  char *svg2 = get_svg(
+      pkl, pkl_size,
+      "{\"width\":350,\"height\":300,\"useMolBlockWedging\":true,\"wedgeBonds\":false,\"addChiralHs\":false}");
+  assert(strstr(svg2, "width='350px'"));
+  assert(strstr(svg2, "height='300px'"));
+  assert(strstr(svg2, "</svg>"));
+  assert(strstr(svg2, "atom-17"));
+  assert(!strstr(svg2, "atom-18"));
+  assert(!strstr(svg2, "atom-19"));
+  free(svg1);
+  free(svg2);
+
+  free(pkl);
   printf("  done\n");
   printf("--------------------------\n");
 }
@@ -478,6 +717,15 @@ void test_fingerprints() {
   assert(nbytes == 8);
   free(fp);
 
+  assert(!get_maccs_fp(NULL, 0));
+  fp = get_maccs_fp(mpkl, mpkl_size);
+  assert(!strcmp(
+      fp, "00000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000001100000000000000100000001000001000000000101000100000000100001000111110"));
+  free(fp);
+  assert(!get_maccs_fp_as_bytes(NULL, 0, &nbytes));
+  fp = get_maccs_fp_as_bytes(mpkl, mpkl_size, &nbytes);
+  assert(nbytes == 21);
+  free(fp);
 #ifdef RDK_BUILD_AVALON_SUPPORT
   assert(!get_avalon_fp(NULL, 0, NULL));
   fp = get_avalon_fp(mpkl, mpkl_size, "{\"nBits\":64}");
@@ -953,6 +1201,597 @@ void test_standardize() {
   printf("--------------------------\n");
 }
 
+void test_get_mol_frags() {
+  printf("--------------------------\n");
+  printf("  test_get_mol_frags\n");
+  char *mpkl;
+  char *smi;
+  size_t mpkl_size;
+  size_t *frags_pkl_sz_array = NULL;
+  size_t num_frags = 0;
+  char **frags_mpkl_array = NULL;
+  char *mappings_json = NULL;
+  size_t i;
+
+  mpkl = get_mol("n1ccccc1.CC(C)C.OCCCN", &mpkl_size, "");
+  const char *expected_frag_smiles[] = {"c1ccncc1", "CC(C)C", "NCCCO"};
+  const char *expected_frag_smiles_non_sanitized[] = {"CN(C)(C)C", "c1ccc1"};
+  const char *expected_mappings =
+      "{\"frags\":[0,0,0,0,0,0,1,1,1,1,2,2,2,2,2],\"fragsMolAtomMapping\":[[0,1,2,3,4,5],[6,7,8,9],[10,11,12,13,14]]}";
+
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags, "", NULL);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(num_frags == 3);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+
+  frags_mpkl_array = get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array,
+                                   &num_frags, "", &mappings_json);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(mappings_json);
+  assert(num_frags == 3);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+  assert(!strcmp(mappings_json, expected_mappings));
+  free(mappings_json);
+  mappings_json = NULL;
+  free(mpkl);
+  mpkl = NULL;
+
+  mpkl = get_mol("N(C)(C)(C)C.c1ccc1", &mpkl_size, "{\"sanitize\":false}");
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags, "", NULL);
+  assert(!frags_mpkl_array);
+  assert(!frags_pkl_sz_array);
+  assert(num_frags == 0);
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags,
+                    "{\"sanitizeFrags\":false}", NULL);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(num_frags == 2);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles_non_sanitized[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+  free(mpkl);
+  mpkl = NULL;
+
+  printf("  done\n");
+  printf("--------------------------\n");
+}
+
+void get_wedged_mol_and_inverted_wedges(char **wedged_pkl, size_t *wedged_pkl_size, char **inverted_wedges) {
+  *wedged_pkl = get_mol("\n\
+     RDKit          2D\n\
+\n\
+ 29 34  0  0  1  0  0  0  0  0999 V2000\n\
+    1.3719    5.1304    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.5985    3.7907    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.9482    3.7907    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.7216    5.1304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.2685    5.1304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.8994    3.5835    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.5597    4.3569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.5597    5.9038    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.8994    6.6771    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -5.2389    5.9038    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -6.5784    6.6771    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -5.2389    4.3569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.3719    2.4510    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.5985    1.1115    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.3719   -0.2276    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.9188   -0.2276    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.6921    1.1115    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.9188    2.4510    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    5.2389    1.1115    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    6.0124   -0.2276    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    5.2389   -1.5673    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.6921   -1.5673    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.8996   -5.0201    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    5.2391   -4.2467    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.5777   -6.5331    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.9909   -5.9040    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    6.0124   -2.9070    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    6.3306   -6.6772    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    6.5784   -5.0201    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  1\n\
+  2  3  1  0\n\
+  3  4  1  0\n\
+  5  4  1  6\n\
+  5  6  1  0\n\
+  6  7  1  0\n\
+  7  8  1  0\n\
+  9  8  1  1\n\
+  5  9  1  0\n\
+  9 10  1  0\n\
+ 10 11  1  1\n\
+ 10 12  1  0\n\
+  6 12  1  1\n\
+  2 13  1  0\n\
+ 13 14  2  0\n\
+ 14 15  1  0\n\
+ 15 16  2  0\n\
+ 16 17  1  0\n\
+ 17 18  2  0\n\
+ 13 18  1  0\n\
+ 17 19  1  0\n\
+ 19 20  1  0\n\
+ 20 21  1  0\n\
+ 21 22  1  0\n\
+ 16 22  1  0\n\
+ 23 24  1  0\n\
+ 23 25  1  0\n\
+ 25 26  1  0\n\
+ 24 27  1  0\n\
+ 27 26  1  0\n\
+ 26 28  1  0\n\
+ 24 29  1  0\n\
+ 28 29  1  0\n\
+ 21 27  1  0\n\
+M  END\n", wedged_pkl_size, "");
+  assert(*wedged_pkl);
+  *inverted_wedges = strdup("  2  1  1  6\n\
+  2  3  1  0\n\
+  3  4  1  0\n\
+  5  4  1  1\n\
+  5  6  1  0\n\
+  6  7  1  0\n\
+  7  8  1  0\n\
+  9  8  1  6\n\
+  5  9  1  0\n\
+  9 10  1  0\n\
+ 10 11  1  6\n\
+ 10 12  1  0\n\
+  6 12  1  6\n\
+  2 13  1  0\n\
+ 13 14  2  0\n\
+ 14 15  1  0\n\
+ 15 16  2  0\n\
+ 16 17  1  0\n\
+ 17 18  2  0\n\
+ 13 18  1  0\n\
+ 17 19  1  0\n\
+ 19 20  1  0\n\
+ 20 21  1  0\n\
+ 21 22  1  0\n\
+ 16 22  1  0\n\
+ 23 24  1  0\n\
+ 23 25  1  0\n\
+ 25 26  1  0\n\
+ 24 27  1  0\n\
+ 27 26  1  0\n\
+ 26 28  1  0\n\
+ 24 29  1  0\n\
+ 28 29  1  0\n\
+ 21 27  1  0\n");
+  assert(*inverted_wedges);
+}
+
+void test_wedging_all_within_scaffold() {
+  printf("--------------------------\n");
+  printf("  test_wedging_all_within_scaffold\n");
+  char *mpkl;
+  size_t mpkl_size;
+  char *inverted_wedges;
+  get_wedged_mol_and_inverted_wedges(&mpkl, &mpkl_size, &inverted_wedges);
+  size_t tpkl_size;
+  char *tpkl = get_mol("\n\
+     RDKit          2D\n\
+\n\
+ 13 14  0  0  1  0  0  0  0  0999 V2000\n\
+   -1.6549    2.5755    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.8814    1.2358    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.6653    1.2358    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.4385    2.5755    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.9854    2.5755    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.6161    1.0286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.2766    1.8019    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.2766    3.3487    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.6161    4.1222    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.9558    3.3487    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    6.2953    4.1222    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.9558    1.8019    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.6549   -0.1037    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  0\n\
+  2  3  1  0\n\
+  3  4  1  0\n\
+  5  4  1  1\n\
+  5  6  1  0\n\
+  6  7  1  6\n\
+  7  8  1  0\n\
+  9  8  1  6\n\
+  5  9  1  0\n\
+  9 10  1  0\n\
+ 10 11  1  6\n\
+ 10 12  1  0\n\
+  6 12  1  0\n\
+  2 13  1  6\n\
+M  END\n", &tpkl_size, "");
+  // the "alignOnly" alignment should succeed and preserve molblock wedging
+  // (inverted with respect to the original molecule)
+  // it should feature a narrow angle between the bridge bonds
+  // as the original geometry of the bridge is preserved
+  size_t mpkl_copy_size;
+  char *mpkl_copy;
+  char *molblock;
+  char *svg;
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":false,\"alignOnly\":true}", NULL));
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  svg = get_svg(mpkl_copy, mpkl_copy_size,
+    "{\"width\":350,\"height\":300,\"useMolBlockWedging\":true,\"wedgeBonds\":true,\"addChiralHs\":false}");
+  double xy23[2];
+  double xy26[2];
+  double xy25[2];
+  double v1[2];
+  double v2[2];
+  assert(extract_bond_coords(svg, "atom-23 atom-26", xy23, xy26));
+  assert(extract_bond_coords(svg, "atom-26 atom-25", NULL, xy25));
+  v1[0] = xy23[0] - xy26[0];
+  v1[1] = xy23[1] - xy26[1];
+  v2[0] = xy25[0] - xy26[0];
+  v2[1] = xy25[1] - xy26[1];
+  double v1v2Theta = angle_deg_between_vectors(v1, v2);
+  assert(v1v2Theta > 10.0 && v1v2Theta < 15.0);
+  assert(strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  free(svg);
+  // the "rebuild" alignment should succeed and preserve molblock wedging
+  // (inverted with respect to the original molecule)
+  // it should feature a much wider angle between the bridge bonds as the
+  // bridged system is entirely rebuilt since it is not part of the scaffold
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":false}", NULL));
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  svg = get_svg(mpkl_copy, mpkl_copy_size,
+    "{\"width\":350,\"height\":300,\"useMolBlockWedging\":true,\"wedgeBonds\":true,\"addChiralHs\":false}");
+  assert(extract_bond_coords(svg, "atom-23 atom-26", xy23, xy26));
+  assert(extract_bond_coords(svg, "atom-26 atom-25", NULL, xy25));
+  v1[0] = xy23[0] - xy26[0];
+  v1[1] = xy23[1] - xy26[1];
+  v2[0] = xy25[0] - xy26[0];
+  v2[1] = xy25[1] - xy26[1];
+  v1v2Theta = angle_deg_between_vectors(v1, v2);
+  assert(v1v2Theta > 105.0 && v1v2Theta < 110.0);
+  assert(strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  free(svg);
+  // the "rebuildCoordGen" alignment should succeed and clear original wedging
+  // it should feature an even wider angle between the bridge bonds as CoordGen
+  // has a template for the bridged system.
+  // Additionally, CoordGen also rebuilds the scaffold, therefore original wedging
+  // should be cleared
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":false,\"useCoordGen\":true}", NULL));
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  svg = get_svg(mpkl_copy, mpkl_copy_size,
+    "{\"width\":350,\"height\":300,\"useMolBlockWedging\":true,\"wedgeBonds\":true,\"addChiralHs\":false}");
+  assert(extract_bond_coords(svg, "atom-23 atom-26", xy23, xy26));
+  assert(extract_bond_coords(svg, "atom-26 atom-25", NULL, xy25));
+  v1[0] = xy23[0] - xy26[0];
+  v1[1] = xy23[1] - xy26[1];
+  v2[0] = xy25[0] - xy26[0];
+  v2[1] = xy25[1] - xy26[1];
+  v1v2Theta = angle_deg_between_vectors(v1, v2);
+  assert(v1v2Theta > 145.0 && v1v2Theta < 150.0);
+  assert(!strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  free(svg);
+  free(mpkl);
+  free(inverted_wedges);
+  free(tpkl);
+}
+
+void test_wedging_outside_scaffold() {
+  printf("--------------------------\n");
+  printf("  test_wedging_outside_scaffold\n");
+  char *mpkl;
+  size_t mpkl_size;
+  char *inverted_wedges;
+  get_wedged_mol_and_inverted_wedges(&mpkl, &mpkl_size, &inverted_wedges);
+  size_t tpkl_size;
+  char *tpkl = get_mol("\n\
+     RDKit          2D\n\
+\n\
+  9 10  0  0  1  0  0  0  0  0999 V2000\n\
+   -0.8816    0.5663    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.6651    0.5663    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.2958   -0.9804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.0435   -0.2072    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.0435    1.3395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.2958    2.1129    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.6355    1.3395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.9750    2.1129    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.6355   -0.2072    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  1\n\
+  2  3  1  0\n\
+  3  4  1  6\n\
+  4  5  1  0\n\
+  6  5  1  6\n\
+  2  6  1  0\n\
+  6  7  1  0\n\
+  7  8  1  6\n\
+  7  9  1  0\n\
+  3  9  1  0\n\
+M  END\n", &tpkl_size, "");
+  // the "alignOnly" alignment should succeed and preserve molblock wedging
+  // (inverted with respect to the original molecule)
+  // it should feature a narrow angle between the bridge bonds
+  // as the original geometry of the bridge is preserved
+  size_t mpkl_copy_size;
+  char *mpkl_copy;
+  char *molblock;
+  char *svg;
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":false,\"alignOnly\":true}", NULL));
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  svg = get_svg(mpkl_copy, mpkl_copy_size,
+    "{\"width\":350,\"height\":300,\"useMolBlockWedging\":true,\"wedgeBonds\":true,\"addChiralHs\":false}");
+  double xy23[2];
+  double xy26[2];
+  double xy25[2];
+  double v1[2];
+  double v2[2];
+  assert(extract_bond_coords(svg, "atom-23 atom-26", xy23, xy26));
+  assert(extract_bond_coords(svg, "atom-26 atom-25", NULL, xy25));
+  v1[0] = xy23[0] - xy26[0];
+  v1[1] = xy23[1] - xy26[1];
+  v2[0] = xy25[0] - xy26[0];
+  v2[1] = xy25[1] - xy26[1];
+  double v1v2Theta = angle_deg_between_vectors(v1, v2);
+  assert(v1v2Theta > 10.0 && v1v2Theta < 15.0);
+  assert(strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  free(svg);
+  // the "rebuild" alignment should succeed and clear molblock wedging
+  // it should feature a much wider angle between the bridge bonds as the
+  // bridged system is entirely rebuilt since it is not part of the scaffold
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":false}", NULL));
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  svg = get_svg(mpkl_copy, mpkl_copy_size,
+    "{\"width\":350,\"height\":300,\"useMolBlockWedging\":true,\"wedgeBonds\":true,\"addChiralHs\":false}");
+  assert(extract_bond_coords(svg, "atom-23 atom-26", xy23, xy26));
+  assert(extract_bond_coords(svg, "atom-26 atom-25", NULL, xy25));
+  v1[0] = xy23[0] - xy26[0];
+  v1[1] = xy23[1] - xy26[1];
+  v2[0] = xy25[0] - xy26[0];
+  v2[1] = xy25[1] - xy26[1];
+  v1v2Theta = angle_deg_between_vectors(v1, v2);
+  assert(v1v2Theta > 105.0 && v1v2Theta < 110.0);
+  assert(!strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  free(svg);
+  // the "rebuildCoordGen" alignment should succeed and clear original wedging
+  // it should feature an even wider angle between the bridge bonds as CoordGen
+  // has a template for the bridged system.
+  // Additionally, CoordGen also rebuilds the scaffold, therefore original wedging
+  // should be cleared
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":false,\"useCoordGen\":true}", NULL));
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  svg = get_svg(mpkl_copy, mpkl_copy_size,
+    "{\"width\":350,\"height\":300,\"useMolBlockWedging\":true,\"wedgeBonds\":true,\"addChiralHs\":false}");
+  assert(extract_bond_coords(svg, "atom-23 atom-26", xy23, xy26));
+  assert(extract_bond_coords(svg, "atom-26 atom-25", NULL, xy25));
+  v1[0] = xy23[0] - xy26[0];
+  v1[1] = xy23[1] - xy26[1];
+  v2[0] = xy25[0] - xy26[0];
+  v2[1] = xy25[1] - xy26[1];
+  v1v2Theta = angle_deg_between_vectors(v1, v2);
+  assert(v1v2Theta > 145.0 && v1v2Theta < 150.0);
+  assert(!strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  free(svg);
+  free(mpkl);
+  free(inverted_wedges);
+  free(tpkl);
+}
+
+void test_wedging_if_no_match() {
+  printf("--------------------------\n");
+  printf("  test_wedging_if_no_match\n");
+  char *mpkl;
+  size_t mpkl_size;
+  char *inverted_wedges;
+  get_wedged_mol_and_inverted_wedges(&mpkl, &mpkl_size, &inverted_wedges);
+  size_t tpkl_size;
+  char *tpkl = get_mol("\n\
+     RDKit          2D\n\
+\n\
+ 13 14  0  0  1  0  0  0  0  0999 V2000\n\
+   -1.6549    2.5755    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.8814    1.2358    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.6653    1.2358    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.4385    2.5755    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.9854    2.5755    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.6161    1.0286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.2766    1.8019    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.2766    3.3487    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.6161    4.1222    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.9558    3.3487    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    6.2953    4.1222    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.9558    1.8019    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.6549   -0.1037    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  0\n\
+  2  3  1  0\n\
+  3  4  1  0\n\
+  5  4  1  1\n\
+  5  6  1  0\n\
+  6  7  1  6\n\
+  7  8  1  0\n\
+  9  8  1  6\n\
+  5  9  1  0\n\
+  9 10  1  0\n\
+ 10 11  1  6\n\
+ 10 12  1  0\n\
+  6 12  1  0\n\
+  2 13  1  6\n\
+M  END\n", &tpkl_size, "");
+  char *orig_molblock = get_molblock(mpkl, mpkl_size, "{\"useMolBlockWedging\":true}");
+  // the "alignOnly" alignment should return "" if acceptFailure is false
+  // and preserve the original coordinates
+  char *mpkl_copy;
+  size_t mpkl_copy_size;
+  char *molblock;
+  char *match;
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(!set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":false,\"alignOnly\":true}", &match));
+  assert(!match);
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  assert(!strcmp(molblock, orig_molblock));
+  assert(!strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  // the "alignOnly" alignment should return "{}" if acceptFailure is true
+  // and generate new coordinates, hence wedging should be cleared
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":true,\"alignOnly\":true}", &match));
+  assert(!strcmp(match, "{}"));
+  free(match);
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  assert(strcmp(molblock, orig_molblock));
+  assert(!strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  // the "rebuild" alignment should return "" if acceptFailure is false
+  // and preserve the original coordinates
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(!set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":false}", &match));
+  assert(!match);
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  assert(!strcmp(molblock, orig_molblock));
+  assert(!strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  // the "rebuild" alignment should return "{}" if acceptFailure is true
+  // and generate new coordinates, hence wedging should be cleared
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":true}", &match));
+  assert(!strcmp(match, "{}"));
+  free(match);
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  assert(strcmp(molblock, orig_molblock));
+  assert(!strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  // the "rebuildCoordGen" alignment should return "" if acceptFailure is false
+  // and preserve the original coordinates
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(!set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":false,\"useCoordGen\":true}", &match));
+  assert(!match);
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  assert(!strcmp(molblock, orig_molblock));
+  assert(!strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  // the "rebuildCoordGen" alignment should return "{}" if acceptFailure is true
+  // and generate new coordinates, hence wedging should be cleared
+  mpkl_copy_size = mpkl_size;
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  assert(set_2d_coords_aligned(&mpkl_copy, &mpkl_copy_size, tpkl, tpkl_size,
+                                "{\"acceptFailure\":true,\"useCoordGen\":true}", &match));
+  assert(!strcmp(match, "{}"));
+  free(match);
+  molblock = get_molblock(mpkl_copy, mpkl_copy_size, "{\"useMolBlockWedging\":true}");
+  assert(strcmp(molblock, orig_molblock));
+  assert(!strstr(molblock, inverted_wedges));
+  free(mpkl_copy);
+  free(molblock);
+  free(mpkl);
+  free(inverted_wedges);
+  free(orig_molblock);
+  free(tpkl);
+}
+
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -969,5 +1808,9 @@ int main() {
   test_modifications();
   test_coords();
   test_standardize();
+  test_get_mol_frags();
+  test_wedging_all_within_scaffold();
+  test_wedging_outside_scaffold();
+  test_wedging_if_no_match();
   return 0;
 }

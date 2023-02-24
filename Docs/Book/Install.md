@@ -16,19 +16,19 @@ The easiest way to get Conda is having it installed as part of the [Anaconda Pyt
 
 Creating a new conda environment with the RDKit installed requires one single command similar to the following::
 
-```shellsession
+```shell-session
 $ conda create -c conda-forge -n my-rdkit-env rdkit
 ```
 
 Finally, the new environment must be activated so that the corresponding python interpreter becomes available in the same shell:
 
-```shellsession
+```shell-session
 $ conda activate my-rdkit-env
 ```
 
 If for some reason this does not work, try:
 
-```shellsession
+```shell-session
 $ cd [anaconda folder]/bin
 $ source activate my-rdkit-env
 ```
@@ -181,7 +181,7 @@ Note: Older versions of RDKit might be available at the [`rdkit-pypi`](https://p
 
 Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu repositories. To install:
 
-```shellsession
+```shell-session
 $ sudo apt-get install python-rdkit librdkit1 rdkit-data
 ```
 
@@ -239,7 +239,7 @@ If you have any problems with this step, check the boost [installation instructi
 
 Fetch the source, here as tar.gz but you could use git as well:
 
-```shellsession
+```shell-session
 $ wget https://github.com/rdkit/rdkit/archive/Release_XXXX_XX_X.tar.gz
 ```
 

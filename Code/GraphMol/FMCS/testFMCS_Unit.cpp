@@ -2521,8 +2521,7 @@ void testGitHub4498() {
 
 void testBondStereo() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "FindMCS should check bond stereo"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "FindMCS should check bond stereo" << std::endl;
   {
     std::vector<ROMOL_SPTR> mols = {"CC\\C=C/CC"_smiles, "CC\\C=C\\CC"_smiles};
 

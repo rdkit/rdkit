@@ -33,13 +33,30 @@ python::tuple JSONToMols(const std::string &jsonBlock,
   return python::tuple(result);
 }
 
-std::string MolsToJSON(const python::object &mols) {
+std::string MolsToJSON(const python::object &mols,
+                       const python::object pyparams) {
   auto pymols = pythonObjectToVect<const RDKit::ROMol *>(mols);
   if (!pymols) {
     return "";
   }
-  return RDKit::MolInterchange::MolsToJSONData(*pymols);
+  RDKit::MolInterchange::JSONWriteParameters params =
+      RDKit::MolInterchange::defaultJSONWriteParameters;
+  if (pyparams) {
+    params =
+        python::extract<RDKit::MolInterchange::JSONWriteParameters>(pyparams);
+  }
+  return RDKit::MolInterchange::MolsToJSONData(*pymols, params);
 }
+std::string MolToJSON(const RDKit::ROMol &mol, const python::object pyparams) {
+  RDKit::MolInterchange::JSONWriteParameters params =
+      RDKit::MolInterchange::defaultJSONWriteParameters;
+  if (pyparams) {
+    params =
+        python::extract<RDKit::MolInterchange::JSONWriteParameters>(pyparams);
+  }
+  return RDKit::MolInterchange::MolToJSONData(mol, params);
+}
+
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdMolInterchange) {
@@ -72,6 +89,14 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
                      "use atomic H counts from the JSON. You may want to set "
                      "this to False when parsing queries.");
 
+  python::class_<RDKit::MolInterchange::JSONWriteParameters,
+                 boost::noncopyable>("JSONWriteParameters",
+                                     "Parameters controlling the JSON writer")
+      .def_readwrite(
+          "useRDKitExtensions",
+          &RDKit::MolInterchange::JSONWriteParameters::useRDKitExtensions,
+          "use RDKit extensions to the commonchem format");
+
   std::string docString;
   docString =
       "Convert a single molecule to JSON\n\
@@ -80,10 +105,9 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
       - mol: the molecule to work with\n\
     RETURNS:\n\
       a string\n";
-  python::def("MolToJSON",
-              (std::string(*)(
-                  const RDKit::ROMol &))RDKit::MolInterchange::MolToJSONData,
-              (python::arg("mol")), docString.c_str());
+  python::def("MolToJSON", MolToJSON,
+              (python::arg("mol"), python::arg("params") = python::object()),
+              docString.c_str());
   docString =
       "Convert a set of molecules to JSON\n\
 \n\
@@ -91,7 +115,8 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
       - mols: the molecules to work with\n\
     RETURNS:\n\
       a string\n";
-  python::def("MolsToJSON", MolsToJSON, (python::arg("mols")),
+  python::def("MolsToJSON", MolsToJSON,
+              (python::arg("mols"), python::arg("params") = python::object()),
               docString.c_str());
   docString =
       "Convert JSON to a tuple of molecules\n\

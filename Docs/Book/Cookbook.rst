@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_38**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_40**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -175,8 +175,8 @@ Include Stereo Annotations
 Black and White Molecules
 ==========================
 
-| **Author:** Greg Landrum
-| **Source:** `<https://gist.github.com/greglandrum/d85d5693e57c306e30057ec4d4d11342>`_
+| **Author:** Greg Landrum and Vincent Scalfani
+| **Source:** `<https://gist.github.com/greglandrum/d85d5693e57c306e30057ec4d4d11342>`_ and `<https://github.com/rdkit/rdkit/discussions/5885>`_
 | **Index ID#:** RDKitCB_1
 | **Summary:** Draw a molecule in black and white.
 
@@ -199,6 +199,39 @@ Black and White Molecules
    Draw.MolsToGridImage(ms)
 
 .. image:: images/RDKitCB_1_im1.png
+
+.. testcode::
+
+   # Alternatively, use the rdMolDraw2D package
+   from rdkit.Chem.Draw import rdMolDraw2D
+   import io
+   from PIL import Image
+
+   drawer = rdMolDraw2D.MolDraw2DCairo(500,180,200,180)
+   drawer.drawOptions().useBWAtomPalette()
+   drawer.DrawMolecules(ms)
+   drawer.FinishDrawing()
+   bio = io.BytesIO(drawer.GetDrawingText())
+   Image.open(bio)
+
+.. image:: images/RDKitCB_1_im2.png
+
+.. testcode::
+
+   # works for reactions too:
+   # rxn is from https://github.com/rdkit/UGM_2020/blob/master/Notebooks/Landrum_WhatsNew.ipynb
+   from rdkit.Chem import rdChemReactions
+   rxn = rdChemReactions.ReactionFromSmarts("[cH:1]:1:[cH:2]:[cH:3]:[cH:4]:[cH:5](-[C:6]#[N:7]):[c:8]:1-[Cl].\
+   [cH:10]:1:[cH:11]:[cH:12](-[Cl:16]):[cH:13]:[cH:14]:[cH:15]:1-B(-O)-O>>\
+   [cH:1]:1:[cH:2]:[cH:3]:[cH:4]:[cH:5](-[C:6]#[N:7]):[c:8]:1-[cH:15]:1[cH:10]:[cH:11]:[cH:12](-[Cl:16]):[cH:13]:[cH:14]:1")
+   drawer = rdMolDraw2D.MolDraw2DCairo(700,300)
+   drawer.drawOptions().useBWAtomPalette()
+   drawer.DrawReaction(rxn)
+   drawer.FinishDrawing()
+   bio = io.BytesIO(drawer.GetDrawingText())
+   Image.open(bio)
+
+.. image:: images/RDKitCB_1_im3.png
 
 Highlight a Substructure in a Molecule
 =======================================
@@ -291,6 +324,102 @@ Highlight Molecule Differences
 
 .. image:: images/RDKitCB_36_im1.png
 
+
+Highlight Entire Molecule
+==================================
+
+| **Author:** Vincent Scalfani
+| **Original Source:** `<https://github.com/vfscalfani/CSN_tutorial>`_
+| **Index ID#:** RDKitCB_38
+| **Summary:** Highlight all atoms and bonds
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Draw import rdMolDraw2D
+   import io
+   from PIL import Image
+   
+
+.. testcode::
+
+   mol = Chem.MolFromSmiles('CC(C)CN1C(=O)COC2=C1C=CC(=C2)NC(=O)/C=C/C3=CC=CC=C3')
+   rgba_color = (0.0, 0.0, 1.0, 0.1) # transparent blue
+    
+   atoms = []
+   for a in mol.GetAtoms():
+       atoms.append(a.GetIdx())
+    
+   bonds = []
+   for bond in mol.GetBonds():
+       aid1 = atoms[bond.GetBeginAtomIdx()]
+       aid2 = atoms[bond.GetEndAtomIdx()]
+       bonds.append(mol.GetBondBetweenAtoms(aid1,aid2).GetIdx())
+
+   drawer = rdMolDraw2D.MolDraw2DCairo(350,300)
+   drawer.drawOptions().fillHighlights=True
+   drawer.drawOptions().setHighlightColour((rgba_color))
+   drawer.drawOptions().highlightBondWidthMultiplier=20
+   drawer.drawOptions().clearBackground = False
+   rdMolDraw2D.PrepareAndDrawMolecule(drawer, mol, highlightAtoms=atoms, highlightBonds=bonds)
+   bio = io.BytesIO(drawer.GetDrawingText())
+   Image.open(bio)
+
+.. image:: images/RDKitCB_38_im0.png
+
+Highlight Molecule with Multiple Colors
+===========================================
+
+| **Author:** Vincent Scalfani
+| **Original Source:** Adapted from `<http://rdkit.blogspot.com/2020/04/new-drawing-options-in-202003-release.html>`_
+| **Index ID#:** RDKitCB_39
+| **Summary:** Highlight a molecule with different colors based on if the atom/bond is aromatic.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Draw import rdMolDraw2D
+   import io
+   from PIL import Image
+   from collections import defaultdict
+
+.. testcode::
+
+   mol = Chem.MolFromSmiles('CC1=CC(=CC=C1)NC(=O)CCC2=CC=CC=C2')        
+   colors = [(0.0, 0.0, 1.0, 0.1), (1.0, 0.0, 0.0, 0.2)]
+
+   athighlights = defaultdict(list)
+   arads = {}
+   for a in mol.GetAtoms():
+       if a.GetIsAromatic():
+           aid = a.GetIdx()
+           athighlights[aid].append(colors[0])
+           arads[aid] = 0.3
+       else:
+           aid = a.GetIdx()
+           athighlights[aid].append(colors[1])
+           arads[aid] = 0.3
+  
+   bndhighlights = defaultdict(list)
+   for bond in mol.GetBonds():
+       aid1 = bond.GetBeginAtomIdx()
+       aid2 = bond.GetEndAtomIdx()
+       
+       if bond.GetIsAromatic():
+           bid = mol.GetBondBetweenAtoms(aid1,aid2).GetIdx()
+           bndhighlights[bid].append(colors[0])
+       else:
+           bid = mol.GetBondBetweenAtoms(aid1,aid2).GetIdx()
+           bndhighlights[bid].append(colors[1])
+         
+   d2d = rdMolDraw2D.MolDraw2DCairo(350,400)
+   d2d.DrawMoleculeWithHighlights(mol,"",dict(athighlights),dict(bndhighlights),arads,{})
+   d2d.FinishDrawing()
+   bio = io.BytesIO(d2d.GetDrawingText())
+   Image.open(bio)
+
+.. image:: images/RDKitCB_39_im0.png
+
 Without Implicit Hydrogens
 ===========================
 
@@ -360,50 +489,59 @@ With Abbreviations
 
 .. testcode::
 
-   # See available abbreviations
+   # See available abbreviations and their SMILES
+   # where * is the dummy atom that the group would attach to
    abbrevs = rdAbbreviations.GetDefaultAbbreviations()
+   labels = ["Abbrev", "SMILES"]
+   line = '--------'
+
+   print(f"{labels[0]:<10} {labels[1]}")
+   print(f"{line:<10} {line}")
    for a in abbrevs:
-       print(a.label)
+      print(f"{a.label:<10} {Chem.MolToSmiles(a.mol)}")
 
 .. testoutput::
 
-   CO2Et
-   COOEt
-   OiBu
-   nDec
-   nNon
-   nOct
-   nHept
-   nHex
-   nPent
-   iPent
-   tBu
-   iBu
-   nBu
-   iPr
-   nPr
-   Et
-   NCF3
-   CF3
-   CCl3
-   CN
-   NC
-   N(OH)CH3
-   NO2
-   NO
-   SO3H
-   CO2H
-   COOH
-   OEt
-   OAc
-   NHAc
-   Ac
-   CHO
-   NMe
-   SMe
-   OMe
-   CO2-
-   COO-
+   Abbrev     SMILES
+   --------   --------
+   CO2Et      *C(=O)OCC
+   COOEt      *C(=O)OCC
+   OiBu       *OCC(C)C
+   nDec       *CCCCCCCCCC
+   nNon       *CCCCCCCCC
+   nOct       *CCCCCCCC
+   nHept      *CCCCCCC
+   nHex       *CCCCCC
+   nPent      *CCCCC
+   iPent      *C(C)CCC
+   tBu        *C(C)(C)C
+   iBu        *C(C)CC
+   nBu        *CCCC
+   iPr        *C(C)C
+   nPr        *CCC
+   Et         *CC
+   NCF3       *NC(F)(F)F
+   CF3        *C(F)(F)F
+   CCl3       *C(Cl)(Cl)Cl
+   CN         *C#N
+   NC         *[N+]#[C-]
+   N(OH)CH3   *N(C)[OH]
+   NO2        *[N+](=O)[O-]
+   NO         *N=O
+   SO3H       *S(=O)(=O)[OH]
+   CO2H       *C(=O)[OH]
+   COOH       *C(=O)[OH]
+   OEt        *OCC
+   OAc        *OC(C)=O
+   NHAc       *NC(C)=O
+   Ac         *C(C)=O
+   CHO        *C=O
+   NMe        *NC
+   SMe        *SC
+   OMe        *OC
+   CO2-       *C(=O)[O-]
+   COO-       *C(=O)[O-]
+
 
 Using CoordGen Library
 ========================
