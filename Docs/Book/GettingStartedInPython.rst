@@ -3397,6 +3397,7 @@ Lipinski's "Rule of 5" [#lipinski]_ was introduced to estimate the oral bioavail
   >>> from rdkit import Chem
   >>> from rdkit.Chem import Descriptors
   >>> mol = Chem.MolFromSmiles('CC(=O)Nc1ccc(O)cc1')  # e.g. Paracetamol
+  
   # Ro5 descriptors
   >>> MW = Descriptors.MolWt(mol)
   >>> HBA = Descriptors.NOCount(mol)
