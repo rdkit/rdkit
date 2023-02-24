@@ -67,6 +67,10 @@ double FeatureLibrary::FeatureScore(
 		n_features += count;
 		++n_unique_features;
 	};
+	if (n_features == 0.0) {
+		n_features = 1.0;
+		n_unique_features = 1.0;
+	};
 	score /= n_features;
 	// Calculate a correction term for the fingerprint density that deems
 	// symmetrical molecules easier to synthesize and viceversa.
