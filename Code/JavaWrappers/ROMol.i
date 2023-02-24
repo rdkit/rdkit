@@ -155,6 +155,20 @@ void setPreferCoordGen(bool val) {
 bool getPreferCoordGen();
 void setPreferCoordGen(bool);
 
+#ifdef SWIGJAVA
+%typemap(jni) std::string RDKit::ROMol::toByteArray "jbyteArray"
+%typemap(jtype) std::string RDKit::ROMol::toByteArray "byte[]"
+%typemap(jstype) std::string RDKit::ROMol::toByteArray "byte[]"
+%typemap(javaout) std::string RDKit::ROMol::toByteArray {
+  return $jnicall;
+}
+%typemap(out) std::string RDKit::ROMol::toByteArray {
+  $result = JCALL1(NewByteArray, jenv, $1.size());
+  JCALL4(SetByteArrayRegion, jenv, $result, 0, $1.size(), (const jbyte*)$1.c_str());
+}
+#endif
+%template(UChar_Vect) std::vector<unsigned char>;
+
 %extend RDKit::ROMol {
   std::string getProp(const std::string key){
     std::string res;
@@ -498,7 +512,7 @@ void setPreferCoordGen(bool);
     std::copy(sres.begin(),sres.end(),res.begin());
     return res;
   };
-  static RDKit::ROMOL_SPTR MolFromBinary(std::vector<int> pkl){
+  static RDKit::ROMOL_SPTR MolFromBinary(const std::vector<int> &pkl){
     std::string sres;
     sres.resize(pkl.size());
     std::copy(pkl.begin(),pkl.end(),sres.begin());
@@ -511,6 +525,45 @@ void setPreferCoordGen(bool);
     }
     return RDKit::ROMOL_SPTR(res);
   }
+#ifdef SWIGJAVA
+  const std::string toByteArray() {
+    std::string sres;
+    RDKit::MolPickler::pickleMol(*($self), sres);
+    return sres;
+  }
+	static RDKit::ROMOL_SPTR fromUCharVect(const std::vector<unsigned char> &pkl) {
+    std::string sres(pkl.begin(), pkl.end());
+    RDKit::ROMol *res;
+    try {
+      res = new RDKit::ROMol(sres);
+    } catch (const RDKit::MolPicklerException &e) {
+      res = nullptr;
+      throw;
+    }
+    return RDKit::ROMOL_SPTR(res);
+  }
+#endif
+
+#ifdef SWIGCSHARP
+  const std::vector<unsigned char> toByteArray() {
+    std::string sres;
+    RDKit::MolPickler::pickleMol(*($self), sres);
+    const std::vector<unsigned char> vec(sres.begin(), sres.end());
+    return vec;
+  }
+#endif
+
+%typemap(javacode) ROMol %{
+  public static ROMol fromByteArray(byte[] pkl) {
+  UChar_Vect vec = new UChar_Vect();
+  vec.reserve(pkl.length);
+  for (int i = 0; i < pkl.length; ++i) {
+    vec.add((short)pkl[i]);
+  }
+  return ROMol.fromUCharVect(vec);
+}
+%}
+
 
   /* From AddHs.cpp */
   RDKit::ROMol *addHs(bool explicitOnly,bool addCoords=false){
