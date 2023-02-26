@@ -71,6 +71,7 @@
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
 %template(Atom_Vect) std::vector<RDKit::Atom*>;
 %template(StereoGroup_Vect) std::vector<RDKit::StereoGroup>;
+%template(UChar_Vect) std::vector<unsigned char>;
 
 // These prevent duplicate definitions in Java code
 %ignore RDKit::ROMol::hasProp(std::string const) const ;
@@ -96,6 +97,19 @@
 %ignore RDKit::ROMol::getTopology() const ;
 
 
+#ifdef SWIGJAVA
+%typemap(jni) std::string RDKit::ROMol::toByteArray "jbyteArray"
+%typemap(jtype) std::string RDKit::ROMol::toByteArray "byte[]"
+%typemap(jstype) std::string RDKit::ROMol::toByteArray "byte[]"
+%typemap(javaout) std::string RDKit::ROMol::toByteArray {
+  return $jnicall;
+}
+%typemap(out) std::string RDKit::ROMol::toByteArray {
+  $result = JCALL1(NewByteArray, jenv, $1.size());
+  JCALL4(SetByteArrayRegion, jenv, $result, 0, $1.size(), (const jbyte*)$1.c_str());
+}
+#endif
+
 /*
  * Special handling for Conformer objects which should not be GCed until the molecule is destroyed
  * We want to modify the behavior of the Conformer coming into the addConformer method without
@@ -113,6 +127,51 @@
   private long getCPtrAndReleaseControl(Conformer conf) {
     conf.setSwigCMemOwn(false);
     return Conformer.getCPtr(conf);
+  }
+  public static ROMol fromByteArray(byte[] pkl) {
+    UChar_Vect vec = null;
+    try {
+      vec = new UChar_Vect();
+      vec.reserve(pkl.length);
+      for (int i = 0; i < pkl.length; ++i) {
+        vec.add((byte)pkl[i]);
+      }
+      return ROMol.fromUCharVect(vec);
+    } finally {
+      if (vec != null) {
+        vec.delete();
+      }
+    }
+  }
+%}
+%typemap(cscode) RDKit::ROMol %{
+  public static ROMol FromByteArray(byte[] pkl) {
+    UChar_Vect vec = null;
+    try {
+      vec = new UChar_Vect();
+      vec.Capacity = pkl.Length;
+      for (int i = 0; i < pkl.Length; ++i) {
+        vec.Add((byte)pkl[i]);
+      }
+      return ROMol.fromUCharVect(vec);
+    } finally {
+      if (vec != null) {
+        vec.Dispose();
+      }
+    }
+  }
+  public byte[] ToByteArray() {
+    UChar_Vect vec = null;
+    try {
+      vec = toUCharVect();
+      byte[] res = new byte[vec.Count];
+      vec.CopyTo(res);
+      return res;
+    } finally {
+      if (vec != null) {
+        vec.Dispose();
+      }
+    }
   }
 %}
 %include <GraphMol/ROMol.h>
@@ -156,19 +215,12 @@ bool getPreferCoordGen();
 void setPreferCoordGen(bool);
 
 #ifdef SWIGJAVA
-%typemap(jni) std::string RDKit::ROMol::toByteArray "jbyteArray"
-%typemap(jtype) std::string RDKit::ROMol::toByteArray "byte[]"
-%typemap(jstype) std::string RDKit::ROMol::toByteArray "byte[]"
-%typemap(javaout) std::string RDKit::ROMol::toByteArray {
-  return $jnicall;
-}
-%typemap(out) std::string RDKit::ROMol::toByteArray {
-  $result = JCALL1(NewByteArray, jenv, $1.size());
-  JCALL4(SetByteArrayRegion, jenv, $result, 0, $1.size(), (const jbyte*)$1.c_str());
-}
+%javamethodmodifiers RDKit::ROMol::fromUCharVect "private";
 #endif
-%template(UChar_Vect) std::vector<unsigned char>;
-
+#ifdef SWIGCSHARP
+%csmethodmodifiers RDKit::ROMol::fromUCharVect "private";
+%csmethodmodifiers RDKit::ROMol::toUCharVect "private";
+#endif
 %extend RDKit::ROMol {
   std::string getProp(const std::string key){
     std::string res;
@@ -531,7 +583,16 @@ void setPreferCoordGen(bool);
     RDKit::MolPickler::pickleMol(*($self), sres);
     return sres;
   }
-	static RDKit::ROMOL_SPTR fromUCharVect(const std::vector<unsigned char> &pkl) {
+#endif
+#ifdef SWIGCSHARP
+  const std::vector<unsigned char> toUCharVect() {
+    std::string sres;
+    RDKit::MolPickler::pickleMol(*($self), sres);
+    const std::vector<unsigned char> vec(sres.begin(), sres.end());
+    return vec;
+  }
+#endif
+  static RDKit::ROMOL_SPTR fromUCharVect(const std::vector<unsigned char> &pkl) {
     std::string sres(pkl.begin(), pkl.end());
     RDKit::ROMol *res;
     try {
@@ -542,28 +603,6 @@ void setPreferCoordGen(bool);
     }
     return RDKit::ROMOL_SPTR(res);
   }
-#endif
-
-#ifdef SWIGCSHARP
-  const std::vector<unsigned char> toByteArray() {
-    std::string sres;
-    RDKit::MolPickler::pickleMol(*($self), sres);
-    const std::vector<unsigned char> vec(sres.begin(), sres.end());
-    return vec;
-  }
-#endif
-
-%typemap(javacode) ROMol %{
-  public static ROMol fromByteArray(byte[] pkl) {
-  UChar_Vect vec = new UChar_Vect();
-  vec.reserve(pkl.length);
-  for (int i = 0; i < pkl.length; ++i) {
-    vec.add((short)pkl[i]);
-  }
-  return ROMol.fromUCharVect(vec);
-}
-%}
-
 
   /* From AddHs.cpp */
   RDKit::ROMol *addHs(bool explicitOnly,bool addCoords=false){
