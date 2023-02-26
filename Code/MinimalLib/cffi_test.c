@@ -1791,6 +1791,18 @@ M  END\n", &tpkl_size, "");
   free(tpkl);
 }
 
+void test_removehs() {
+  printf("--------------------------\n");
+  printf("  test_removehs\n");
+  size_t mpkl_size;
+  char *mpkl = get_mol("N1C=CC(=O)c2ccc(N(C)(C)(C)(C)C)cc12", &mpkl_size, "{\"sanitize\":false,\"removeHs\":false}");
+  char *smi = get_smiles(mpkl, mpkl_size, "");
+  assert(mpkl);
+  assert(!strcmp(smi, "CN(C)(C)(C)(C)c1ccc2c(c1)NC=CC2=O"));
+  free(smi);
+  free(mpkl);
+}
+
 
 int main() {
   enable_logging();
@@ -1812,5 +1824,6 @@ int main() {
   test_wedging_all_within_scaffold();
   test_wedging_outside_scaffold();
   test_wedging_if_no_match();
+  test_removehs();
   return 0;
 }
