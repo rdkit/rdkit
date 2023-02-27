@@ -26,6 +26,7 @@ namespace SmilesParseOps {
 using namespace RDKit;
 
 const std::string cxsmilesindex = "_cxsmilesindex";
+const std::string cxsgTracker = "_sgTracker";
 
 // FIX: once this can be automated using constexpr, do so
 const std::vector<std::string_view> pseudoatoms{"Pol", "Mod"};
@@ -1320,8 +1321,8 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
   ++first;
 
   // OR and AND groups carry a group number
+  unsigned int group_id = 0;
   if (group_type != StereoGroupType::STEREO_ABSOLUTE) {
-    unsigned int group_id = 0;
     read_int(first, last, group_id);
   }
 
@@ -1352,8 +1353,29 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
     }
   }
   if (!atoms.empty()) {
+    // we need to do a bit of work to check whether or not we've already seen
+    // this particular StereoGroup (was Github #6050)
+    group_id = 10 * group_id + static_cast<unsigned int>(group_type);
+    std::vector<unsigned int> sgTracker;
+    mol.getPropIfPresent(cxsgTracker, sgTracker);
     std::vector<StereoGroup> mol_stereo_groups(mol.getStereoGroups());
-    mol_stereo_groups.emplace_back(group_type, std::move(atoms));
+    TEST_ASSERT(mol_stereo_groups.size() == sgTracker.size());
+
+    auto iter = std::find(sgTracker.begin(), sgTracker.end(), group_id);
+    if (iter != sgTracker.end()) {
+      auto index = iter - sgTracker.begin();
+      auto gAtoms = mol_stereo_groups[index].getAtoms();
+      gAtoms.insert(gAtoms.end(), atoms.begin(), atoms.end());
+      mol_stereo_groups[index] = StereoGroup(
+          mol_stereo_groups[index].getGroupType(), std::move(gAtoms));
+    } else {
+      // not seen this before, create a new stereogroup
+      mol_stereo_groups.emplace_back(group_type, std::move(atoms));
+      sgTracker.resize(mol_stereo_groups.size());
+      sgTracker.back() = group_id;
+      mol.setProp(cxsgTracker, sgTracker);
+    }
+
     mol.setStereoGroups(std::move(mol_stereo_groups));
   }
 
@@ -1496,6 +1518,7 @@ void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
   }
   processCXSmilesLabels(mol);
   mol.clearProp("_cxsmilesLabelsProcessed");
+  mol.clearProp(cxsgTracker);
 }
 }  // end of namespace SmilesParseOps
 

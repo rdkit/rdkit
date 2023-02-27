@@ -17,6 +17,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <boost/algorithm/string/split.hpp>
@@ -48,227 +49,246 @@ static const bool DELETE_WITH_GOOD_HASH = true;
 // provided in the call to check_file_hash().
 // These values are for a build with FreeType, so expect them all to be
 // wrong when building without.
-static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"testAtomTags_1.svg", 146691388U},
-    {"testAtomTags_2.svg", 3210393969U},
-    {"testAtomTags_3.svg", 2131854465U},
-    {"contourMol_1.svg", 3218870758U},
-    {"contourMol_2.svg", 2353351393U},
-    {"contourMol_3.svg", 3493070184U},
-    {"contourMol_4.svg", 764999893U},
-    {"testDativeBonds_1.svg", 555607912U},
-    {"testDativeBonds_2.svg", 93109626U},
-    {"testDativeBonds_3.svg", 3944956974U},
-    {"testDativeBonds_2a.svg", 1026259021U},
-    {"testDativeBonds_2b.svg", 3842058701U},
-    {"testDativeBonds_2c.svg", 1000280203U},
-    {"testDativeBonds_2d.svg", 3605527201U},
-    {"testZeroOrderBonds_1.svg", 582365640U},
-    {"testFoundations_1.svg", 767448647U},
-    {"testFoundations_2.svg", 1248494165U},
-    {"testTest_1.svg", 1248494165U},
-    {"testKekulizationProblems_1.svg", 3747357148U},
-    {"testAtomBondIndices_1.svg", 3247225756U},
-    {"testAtomBondIndices_2.svg", 2812688864U},
-    {"testAtomBondIndices_3.svg", 3653054459U},
-    {"testAtomBondIndices_4.svg", 635195563U},
-    {"testAtomBondIndices_5.svg", 23594241U},
-    {"testAtomBondIndices_6.svg", 1127540948U},
-    {"testGithub3226_1.svg", 4099803989U},
-    {"testGithub3226_2.svg", 3134615187U},
-    {"testGithub3226_3.svg", 1488097417U},
-    {"testGithub3369_1.svg", 4165525787U},
-    {"testIncludeRadicals_1a.svg", 2528551797U},
-    {"testIncludeRadicals_1b.svg", 3075507489U},
-    {"testLegendsAndDrawing-1.svg", 1693176512U},
-    {"testGithub3577-1.svg", 3974438540U},
-    {"testHandDrawn-1.svg", 799391905U},
-    {"testHandDrawn-2.svg", 1696668329U},
-    {"testHandDrawn-3.svg", 3293983707U},
-    {"testHandDrawn-4.svg", 3348972281U},
-    {"testHandDrawn-5a.svg", 1171105985U},
-    {"testHandDrawn-5b.svg", 1165866976U},
-    {"testBrackets-1a.svg", 3257646535U},
-    {"testBrackets-1b.svg", 776088825U},
-    {"testBrackets-1c.svg", 3257646535U},
-    {"testBrackets-1d.svg", 776088825U},
-    {"testBrackets-1e.svg", 1202405256U},
-    {"testBrackets-2a.svg", 728321376U},
-    {"testBrackets-2b.svg", 1408188695U},
-    {"testBrackets-2c.svg", 728321376U},
-    {"testBrackets-2d.svg", 1408188695U},
-    {"testBrackets-3a.svg", 791450653U},
-    {"testBrackets-4a.svg", 769125635U},
-    {"testBrackets-4b.svg", 4066682338U},
-    {"testBrackets-5a.svg", 1388227932U},
-    {"testBrackets-5768.svg", 3070888879U},
-    {"testSGroupData-1a.svg", 1463366807U},
-    {"testSGroupData-1b.svg", 223883202U},
-    {"testSGroupData-2a.svg", 3547547260U},
-    {"testSGroupData-2b.svg", 2573013307U},
-    {"testSGroupData-3a.svg", 2220120573U},
-    {"testPositionVariation-1.svg", 444914699U},
-    {"testPositionVariation-1b.svg", 3646629289U},
-    {"testPositionVariation-2.svg", 624353208U},
-    {"testPositionVariation-3.svg", 3408717052U},
-    {"testPositionVariation-4.svg", 4125874052U},
-    {"testNoAtomLabels-1.svg", 2648234379U},
-    {"testNoAtomLabels-2.svg", 3213096674U},
-    {"testQueryBonds-1a.svg", 713354870U},
-    {"testQueryBonds-1b.svg", 2517713542U},
-    {"testQueryBonds-1c.svg", 3119135647U},
-    {"testQueryBonds-2.svg", 69341882U},
-    {"testLinkNodes-2-0.svg", 2952965907U},
-    {"testLinkNodes-2-30.svg", 4117540200U},
-    {"testLinkNodes-2-60.svg", 520576199U},
-    {"testLinkNodes-2-90.svg", 1403605120U},
-    {"testLinkNodes-2-120.svg", 3607355853U},
-    {"testLinkNodes-2-150.svg", 177350824U},
-    {"testLinkNodes-2-180.svg", 3809030739U},
-    {"testMolAnnotations-1.svg", 1091624544U},
-    {"testMolAnnotations-2a.svg", 2203886283U},
-    {"testMolAnnotations-2b.svg", 400443600U},
-    {"testMolAnnotations-2c.svg", 3954034822U},
-    {"testMolAnnotations-3a.svg", 1752047273U},
-    {"testMolAnnotations-3b.svg", 2068377089U},
-    {"testMolAnnotations-3c.svg", 4288169182U},
-    {"testMolAnnotations-3d.svg", 1514775509U},
-    {"testMolAnnotations-4a.svg", 569955128U},
-    {"testLinkNodes-1-0.svg", 2929724949U},
-    {"testLinkNodes-1-30.svg", 800625899U},
-    {"testLinkNodes-1-60.svg", 609508172U},
-    {"testLinkNodes-1-90.svg", 2665766032U},
-    {"testLinkNodes-1-120.svg", 992989277U},
-    {"testLinkNodes-1-150.svg", 1392691166U},
-    {"testLinkNodes-1-180.svg", 130695597U},
-    {"testGithub3744.svg", 2774492807U},
-    {"testAtomLists-1.svg", 2751373083U},
-    {"testAtomLists-2.svg", 385738799U},
-    {"testIsoDummyIso.svg", 1696129196U},
-    {"testNoIsoDummyIso.svg", 2004687512U},
-    {"testIsoNoDummyIso.svg", 2734544682U},
-    {"testNoIsoNoDummyIso.svg", 918094584U},
-    {"testDeuteriumTritium.svg", 2634768249U},
-    {"testHydrogenBonds1.svg", 4137715598U},
-    {"testHydrogenBonds2.svg", 2044702263U},
-    {"testGithub3912.1.svg", 3081580881U},
-    {"testGithub3912.2.svg", 1662866562U},
-    {"testGithub2976.svg", 971026582U},
-    {"testReactionCoords.svg", 4128536127U},
-    {"testAnnotationColors.svg", 445523422U},
-    {"testGithub4323_1.svg", 1993234598U},
-    {"testGithub4323_2.svg", 2933922429U},
-    {"testGithub4323_3.svg", 1773544359U},
-    {"testGithub4323_4.svg", 213795827U},
-    {"testGithub4238_1.svg", 629357140U},
-    {"testGithub4508_1.svg", 3784765069U},
-    {"testGithub4508_1b.svg", 3433942203U},
-    {"testGithub4508_2.svg", 326155865U},
-    {"testGithub4508_2b.svg", 662225995U},
-    {"testGithub4538.svg", 3198623323U},
-    {"testDarkMode.1.svg", 1977391752U},
-    {"testMonochrome.1.svg", 1776897420U},
-    {"testMonochrome.2.svg", 399259780U},
-    {"testAvalon.1.svg", 1614166818U},
-    {"testCDK.1.svg", 3108685638U},
-    {"testGithub4519_1.svg", 473230604U},
-    {"testGithub4519_2.svg", 2515716875U},
-    {"testGithub4519_3.svg", 1017109741U},
-    {"testGithub4519_4.svg", 645908829U},
-    {"testBaseFontSize.1a.svg", 3939288880U},
-    {"testBaseFontSize.1b.svg", 2617787443U},
-    {"testBaseFontSize.2a.svg", 1031690455U},
-    {"testBaseFontSize.2b.svg", 3440038194U},
-    {"testFlexiCanvas.1a.svg", 3145560884U},
-    {"testFlexiCanvas.1b.svg", 1140847713U},
-    {"testFlexiCanvas.1c.svg", 2832891200U},
-    {"testFlexiCanvas.1d.svg", 4220526884U},
-    {"testFlexiCanvas.2.svg", 1185770886U},
-    {"testSemiFlexiCanvas.1a.svg", 414967968U},
-    {"testSemiFlexiCanvas.1b.svg", 367831852U},
-    {"testSemiFlexiCanvas.1c.svg", 316673185U},
-    {"testFlexiCanvas.3.svg", 3822475112U},
-    {"testFlexiCanvas.4a.svg", 438150211U},
-    {"testFlexiCanvas.4b.svg", 2015277207U},
-    {"testFlexiCanvas.4c.svg", 3138663789U},
-    {"testFlexiCanvas.4d.svg", 1950746506U},
-    {"testFlexiCanvas.5a.svg", 1204456580U},
-    {"testFlexiCanvas.5b.svg", 4164471763U},
-    {"testFlexiCanvas.5c.svg", 2381227232U},
-    {"testFlexiCanvas.5d.svg", 2157866153U},
-    {"testFlexiCanvas.6a.svg", 4104973953U},
-    {"testFlexiCanvas.6b.svg", 2392263541U},
-    {"testFlexiCanvas.6c.svg", 4104973953U},
-    {"testFlexiCanvas.6d.svg", 4104973953U},
-    {"testFlexiCanvas.7a.svg", 918094125U},
-    {"testFlexiCanvas.7b.svg", 4094511140U},
-    {"testFlexiCanvas.7c.svg", 918094125U},
-    {"testFlexiCanvas.7d.svg", 918094125U},
-    {"testGithub4764.sz1.svg", 1112373450U},
-    {"testGithub4764.sz2.svg", 3676136052U},
-    {"testGithub4764.sz3.svg", 2565894452U},
-    {"testDrawArc1.svg", 4039810147U},
-    {"testMetalWedges.svg", 3278785383U},
-    {"testVariableLegend_1.svg", 3914441319U},
-    {"testVariableLegend_2.svg", 3458084009U},
-    {"testVariableLegend_3.svg", 1996551457U},
-    {"testGithub_5061.svg", 2698477851U},
-    {"testGithub_5185.svg", 2944445711U},
-    {"testGithub_5269_1.svg", 2884233026U},
-    {"testGithub_5269_2.svg", 2987891082U},
-    {"test_classes_wavy_bonds.svg", 1271445012U},
-    {"testGithub_5383_1.svg", 1391972140U},
-    {"github5156_1.svg", 695855770U},
-    {"github5156_2.svg", 1130781980U},
-    {"github5156_3.svg", 3284451122U},
-    {"test_molblock_wedges.svg", 1106580037U},
-    {"github5383_1.svg", 2353351393U},
-    {"acs1996_1.svg", 51426601U},
-    {"acs1996_2.svg", 833573044U},
-    {"acs1996_3.svg", 4007912653U},
-    {"acs1996_4.svg", 3372558370U},
-    {"acs1996_5.svg", 2883542240U},
-    {"acs1996_6.svg", 1380727178U},
-    {"acs1996_7.svg", 2718384395U},
-    {"acs1996_8.svg", 939325262U},
-    {"acs1996_9.svg", 2607143500U},
-    {"acs1996_10.svg", 199499735U},
-    {"acs1996_11.svg", 3821838912U},
-    {"acs1996_12.svg", 2233727631U},
-    {"test_unspec_stereo.svg", 599119798U},
-    {"light_blue_h_no_label_1.svg", 3735371135U},
-    {"test_github_5534.svg", 574501211U},
-    {"bond_highlights_1.svg", 1426179967U},
-    {"bond_highlights_2.svg", 3654242474U},
-    {"bond_highlights_3.svg", 2068128924U},
-    {"bond_highlights_4.svg", 2068128924U},
-    {"bond_highlights_5.svg", 4115973245U},
-    {"bond_highlights_6.svg", 1566801788U},
-    {"bond_highlights_7.svg", 2101261688U},
-    {"bond_highlights_8.svg", 3826056528U},
-    {"bond_highlights_9.svg", 2915809284U},
-    {"testGithub5486_1.svg", 1149144091U},
-    {"testGithub5511_1.svg", 940106456U},
-    {"testGithub5511_2.svg", 1448975272U},
-    {"test_github5767.svg", 3153964439U},
-    {"test_github5704_1.svg", 2803704016U},
-    {"test_github5704_2.svg", 2000837483U},
-    {"test_github5704_3.svg", 2359820445U},
-    {"test_github5704_4.svg", 2033407805U},
-    {"test_github5943.svg", 1111951851U},
-    {"test_github5947.svg", 2858910387U},
-    {"test_github5767.svg", 3153964439U},
-    {"test_github5949.svg", 1324215728U},
-    {"test_github5974.svg", 394879876U},
-    {"test_github5963.svg", 582369551U},
-    {"test_github6025.svg", 1908346499U},
-    {"test_github5963.svg", 582369551U},
-    {"test_github6027_1.svg", 1864343362U},
-    {"test_github6027_2.svg", 330549720U},
-    {"test_github6041b.svg", 3485054881U},
-    {"test_github6058_1.svg", 1415665999U},
-    {"test_github6058_2.svg", 975113873U},
-    {"test_github6058_3.svg", 1622516445U},
+static const std::map<std::string, std::hash_result_t> SVG_HASHES =
+    {
+        {"testAtomTags_1.svg", 146691388U},
+        {"testAtomTags_2.svg", 3210393969U},
+        {"testAtomTags_3.svg", 2131854465U},
+        {"contourMol_1.svg", 3218870758U},
+        {"contourMol_2.svg", 2353351393U},
+        {"contourMol_3.svg", 3493070184U},
+        {"contourMol_4.svg", 764999893U},
+        {"testDativeBonds_1.svg", 555607912U},
+        {"testDativeBonds_2.svg", 93109626U},
+        {"testDativeBonds_3.svg", 3944956974U},
+        {"testDativeBonds_2a.svg", 1026259021U},
+        {"testDativeBonds_2b.svg", 3842058701U},
+        {"testDativeBonds_2c.svg", 1000280203U},
+        {"testDativeBonds_2d.svg", 3605527201U},
+        {"testZeroOrderBonds_1.svg", 582365640U},
+        {"testFoundations_1.svg", 767448647U},
+        {"testFoundations_2.svg", 1248494165U},
+        {"testTest_1.svg", 1248494165U},
+        {"testKekulizationProblems_1.svg", 3747357148U},
+        {"testAtomBondIndices_1.svg", 3247225756U},
+        {"testAtomBondIndices_2.svg", 2812688864U},
+        {"testAtomBondIndices_3.svg", 3653054459U},
+        {"testAtomBondIndices_4.svg", 635195563U},
+        {"testAtomBondIndices_5.svg", 23594241U},
+        {"testAtomBondIndices_6.svg", 1127540948U},
+        {"testGithub3226_1.svg", 4099803989U},
+        {"testGithub3226_2.svg", 3134615187U},
+        {"testGithub3226_3.svg", 1488097417U},
+        {"testGithub3369_1.svg", 4165525787U},
+        {"testIncludeRadicals_1a.svg", 2528551797U},
+        {"testIncludeRadicals_1b.svg", 3075507489U},
+        {"testLegendsAndDrawing-1.svg", 1693176512U},
+        {"testGithub3577-1.svg", 3974438540U},
+        {"testHandDrawn-1.svg", 799391905U},
+        {"testHandDrawn-2.svg", 1696668329U},
+        {"testHandDrawn-3.svg", 3293983707U},
+        {"testHandDrawn-4.svg", 3348972281U},
+        {"testHandDrawn-5a.svg", 1171105985U},
+        {"testHandDrawn-5b.svg", 1165866976U},
+        {"testBrackets-1a.svg", 3257646535U},
+        {"testBrackets-1b.svg", 776088825U},
+        {"testBrackets-1c.svg", 3257646535U},
+        {"testBrackets-1d.svg", 776088825U},
+        {"testBrackets-1e.svg", 1202405256U},
+        {"testBrackets-2a.svg", 728321376U},
+        {"testBrackets-2b.svg", 1408188695U},
+        {"testBrackets-2c.svg", 728321376U},
+        {"testBrackets-2d.svg", 1408188695U},
+        {"testBrackets-3a.svg", 791450653U},
+        {"testBrackets-4a.svg", 769125635U},
+        {"testBrackets-4b.svg", 4066682338U},
+        {"testBrackets-5a.svg", 1388227932U},
+        {"testBrackets-5768.svg", 3070888879U},
+        {"testSGroupData-1a.svg", 1463366807U},
+        {"testSGroupData-1b.svg", 223883202U},
+        {"testSGroupData-2a.svg", 3547547260U},
+        {"testSGroupData-2b.svg", 2573013307U},
+        {"testSGroupData-3a.svg", 2220120573U},
+        {"testPositionVariation-1.svg", 444914699U},
+        {"testPositionVariation-1b.svg", 3646629289U},
+        {"testPositionVariation-2.svg", 624353208U},
+        {"testPositionVariation-3.svg", 3408717052U},
+        {"testPositionVariation-4.svg", 4125874052U},
+        {"testNoAtomLabels-1.svg", 2648234379U},
+        {"testNoAtomLabels-2.svg", 3213096674U},
+        {"testQueryBonds-1a.svg", 713354870U},
+        {"testQueryBonds-1b.svg", 2517713542U},
+        {"testQueryBonds-1c.svg", 3119135647U},
+        {"testQueryBonds-2.svg", 69341882U},
+        {"testLinkNodes-2-0.svg", 2952965907U},
+        {"testLinkNodes-2-30.svg", 4117540200U},
+        {"testLinkNodes-2-60.svg", 520576199U},
+        {"testLinkNodes-2-90.svg", 1403605120U},
+        {"testLinkNodes-2-120.svg", 3607355853U},
+        {"testLinkNodes-2-150.svg", 177350824U},
+        {"testLinkNodes-2-180.svg", 3809030739U},
+        {"testMolAnnotations-1.svg", 1091624544U},
+        {"testMolAnnotations-2a.svg", 2203886283U},
+        {"testMolAnnotations-2b.svg", 400443600U},
+        {"testMolAnnotations-2c.svg", 3954034822U},
+        {"testMolAnnotations-3a.svg", 1752047273U},
+        {"testMolAnnotations-3b.svg", 2068377089U},
+        {"testMolAnnotations-3c.svg", 4288169182U},
+        {"testMolAnnotations-3d.svg", 1514775509U},
+        {"testMolAnnotations-4a.svg", 569955128U},
+        {"testLinkNodes-1-0.svg", 2929724949U},
+        {"testLinkNodes-1-30.svg", 800625899U},
+        {"testLinkNodes-1-60.svg", 609508172U},
+        {"testLinkNodes-1-90.svg", 2665766032U},
+        {"testLinkNodes-1-120.svg", 992989277U},
+        {"testLinkNodes-1-150.svg", 1392691166U},
+        {"testLinkNodes-1-180.svg", 130695597U},
+        {"testGithub3744.svg", 2774492807U},
+        {"testAtomLists-1.svg", 2751373083U},
+        {"testAtomLists-2.svg", 385738799U},
+        {"testIsoDummyIso.svg", 1696129196U},
+        {"testNoIsoDummyIso.svg", 2004687512U},
+        {"testIsoNoDummyIso.svg", 2734544682U},
+        {"testNoIsoNoDummyIso.svg", 918094584U},
+        {"testDeuteriumTritium.svg", 2634768249U},
+        {"testHydrogenBonds1.svg", 4137715598U},
+        {"testHydrogenBonds2.svg", 2044702263U},
+        {"testGithub3912.1.svg", 3081580881U},
+        {"testGithub3912.2.svg", 1662866562U},
+        {"testGithub2976.svg", 971026582U},
+        {"testReactionCoords.svg", 4128536127U},
+        {"testAnnotationColors.svg", 445523422U},
+        {"testGithub4323_1.svg", 1993234598U},
+        {"testGithub4323_2.svg", 2933922429U},
+        {"testGithub4323_3.svg", 1773544359U},
+        {"testGithub4323_4.svg", 213795827U},
+        {"testGithub4238_1.svg", 629357140U},
+        {"testGithub4508_1.svg", 3784765069U},
+        {"testGithub4508_1b.svg", 3433942203U},
+        {"testGithub4508_2.svg", 326155865U},
+        {"testGithub4508_2b.svg", 662225995U},
+        {"testGithub4538.svg", 3198623323U},
+        {"testDarkMode.1.svg", 1977391752U},
+        {"testMonochrome.1.svg", 1776897420U},
+        {"testMonochrome.2.svg", 399259780U},
+        {"testAvalon.1.svg", 1614166818U},
+        {"testCDK.1.svg", 3108685638U},
+        {"testGithub4519_1.svg", 473230604U},
+        {"testGithub4519_2.svg", 2515716875U},
+        {"testGithub4519_3.svg", 1017109741U},
+        {"testGithub4519_4.svg", 645908829U},
+        {"testBaseFontSize.1a.svg", 3939288880U},
+        {"testBaseFontSize.1b.svg", 2617787443U},
+        {"testBaseFontSize.2a.svg", 1031690455U},
+        {"testBaseFontSize.2b.svg", 3440038194U},
+        {"testFlexiCanvas.1a.svg", 3145560884U},
+        {"testFlexiCanvas.1b.svg", 1140847713U},
+        {"testFlexiCanvas.1c.svg", 2832891200U},
+        {"testFlexiCanvas.1d.svg", 4220526884U},
+        {"testFlexiCanvas.2.svg", 1185770886U},
+        {"testSemiFlexiCanvas.1a.svg", 414967968U},
+        {"testSemiFlexiCanvas.1b.svg", 367831852U},
+        {"testSemiFlexiCanvas.1c.svg", 316673185U},
+        {"testFlexiCanvas.3.svg", 3822475112U},
+        {"testFlexiCanvas.4a.svg", 438150211U},
+        {"testFlexiCanvas.4b.svg", 2015277207U},
+        {"testFlexiCanvas.4c.svg", 3138663789U},
+        {"testFlexiCanvas.4d.svg", 1950746506U},
+        {"testFlexiCanvas.5a.svg", 1204456580U},
+        {"testFlexiCanvas.5b.svg", 4164471763U},
+        {"testFlexiCanvas.5c.svg", 2381227232U},
+        {"testFlexiCanvas.5d.svg", 2157866153U},
+        {"testFlexiCanvas.6a.svg", 4104973953U},
+        {"testFlexiCanvas.6b.svg", 2392263541U},
+        {"testFlexiCanvas.6c.svg", 4104973953U},
+        {"testFlexiCanvas.6d.svg", 4104973953U},
+        {"testFlexiCanvas.7a.svg", 918094125U},
+        {"testFlexiCanvas.7b.svg", 4094511140U},
+        {"testFlexiCanvas.7c.svg", 918094125U},
+        {"testFlexiCanvas.7d.svg", 918094125U},
+        {"testGithub4764.sz1.svg", 1112373450U},
+        {"testGithub4764.sz2.svg", 3676136052U},
+        {"testGithub4764.sz3.svg", 2565894452U},
+        {"testDrawArc1.svg", 4039810147U},
+        {"testMetalWedges.svg", 3278785383U},
+        {"testVariableLegend_1.svg", 3914441319U},
+        {"testVariableLegend_2.svg", 3458084009U},
+        {"testVariableLegend_3.svg", 1996551457U},
+        {"testGithub_5061.svg", 2698477851U},
+        {"testGithub_5185.svg", 2944445711U},
+        {"testGithub_5269_1.svg", 2884233026U},
+        {"testGithub_5269_2.svg", 2987891082U},
+        {"test_classes_wavy_bonds.svg", 1271445012U},
+        {"testGithub_5383_1.svg", 1391972140U},
+        {"github5156_1.svg", 695855770U},
+        {"github5156_2.svg", 1130781980U},
+        {"github5156_3.svg", 3284451122U},
+        {"test_molblock_wedges.svg", 1106580037U},
+        {"github5383_1.svg", 2353351393U},
+        {"acs1996_1.svg", 51426601U},
+        {"acs1996_2.svg", 833573044U},
+        {"acs1996_3.svg", 580751118U},
+        {"acs1996_4.svg", 1695920511U},
+        {"acs1996_5.svg", 2883542240U},
+        {"acs1996_6.svg", 1380727178U},
+        {"acs1996_7.svg", 2718384395U},
+        {"acs1996_8.svg", 939325262U},
+        {"acs1996_9.svg", 2607143500U},
+        {"acs1996_10.svg", 199499735U},
+        {"acs1996_11.svg", 2028939343U},
+        {"acs1996_12.svg", 2233727631U},
+        {"test_unspec_stereo.svg", 599119798U},
+        {"light_blue_h_no_label_1.svg", 3735371135U},
+        {"test_github_5534.svg", 574501211U},
+        {"bond_highlights_1.svg", 1426179967U},
+        {"bond_highlights_2.svg", 3654242474U},
+        {"bond_highlights_3.svg", 2068128924U},
+        {"bond_highlights_4.svg", 2068128924U},
+        {"bond_highlights_5.svg", 4115973245U},
+        {"bond_highlights_6.svg", 1566801788U},
+        {"bond_highlights_7.svg", 3347700584U},
+        {"bond_highlights_8.svg", 3826056528U},
+        {"bond_highlights_9.svg", 2915809284U},
+        {"testGithub5486_1.svg", 1149144091U},
+        {"testGithub5511_1.svg", 940106456U},
+        {"testGithub5511_2.svg", 1448975272U},
+        {"test_github5767.svg", 3153964439U},
+        {"test_github5704_1.svg", 2803704016U},
+        {"test_github5704_2.svg", 2000837483U},
+        {"test_github5704_3.svg", 2359820445U},
+        {"test_github5704_4.svg", 2033407805U},
+        {"test_github5943.svg", 1111951851U},
+        {"test_github5947.svg", 2858910387U},
+        {"test_github5767.svg", 3153964439U},
+        {"test_github5949.svg", 1324215728U},
+        {"test_github5974.svg", 394879876U},
+        {"test_github5963.svg", 582369551U},
+        {"test_github6025.svg", 1908346499U},
+        {"test_github5963.svg", 582369551U},
+        {"test_github6027_1.svg", 1864343362U},
+        {"test_github6027_2.svg", 330549720U},
+        {"test_github6041b.svg", 3485054881U},
+        {"test_complex_query_atoms_1.svg", 1569543436U},
+        {"test_complex_query_atoms_2.svg", 1958885073U},
+        {"test_complex_query_atoms_3.svg", 2485432018U},
+        {"test_complex_query_atoms_4.svg", 2485432018U},
+        {"test_complex_query_atoms_5.svg", 3301518551U},
+        {"test_complex_query_atoms_6.svg", 3415494504U},
+        {"test_complex_query_atoms_7.svg", 3857334874U},
+        {"test_complex_query_atoms_8.svg", 3355019842U},
+        {"test_complex_query_atoms_9.svg", 952404505U},
+        {"test_complex_query_atoms_10.svg", 2592662841U},
+        {"test_complex_query_atoms_11.svg", 3667326374U},
+        {"test_complex_query_atoms_12.svg", 582133495U},
+        {"test_complex_query_atoms_13.svg", 557287774U},
+        {"test_complex_query_atoms_14.svg", 3566661047U},
+        {"test_complex_query_atoms_15.svg", 4188921077U},
+        {"test_complex_query_atoms_16.svg", 1980695915U},
+        {"test_github6041b.svg", 3485054881U},
+        {"test_github6111_1.svg", 3458417163U},
+        {"test_github6058_1.svg", 1415665999U},
+        {"test_github6058_2.svg", 975113873U},
+        {"test_github6058_3.svg", 1622516445U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -6792,6 +6812,452 @@ M  END
   }
 }
 
+TEST_CASE("Optionally depict complex query atoms in a more compact form") {
+  std::string nameBase = "test_complex_query_atoms";
+  auto extractQueryAtomSymbol = [](const std::string &text) {
+    std::istringstream ss(text);
+    std::string line;
+    std::regex regex("^<text[^>]*>([^<])*</text>");
+    std::smatch match;
+    std::string res;
+    while (std::getline(ss, line)) {
+      if (std::regex_match(line, match, regex)) {
+        REQUIRE(match.size() == 2);
+        res += match[1];
+      }
+    }
+    return res;
+  };
+  SECTION("any heavy") {
+    auto a = R"CTAB(
+  MJ201100
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(a);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*a));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_1.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "![H]");
+      check_file_hash(nameBase + "_1.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*a));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_2.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(a->getAtomWithIdx(a->getNumAtoms() - 1)->getQueryType() == "A");
+      CHECK(extractQueryAtomSymbol(text) == "A");
+      check_file_hash(nameBase + "_2.svg");
+    }
+  }
+  SECTION("any atom") {
+    auto ah = R"CTAB(
+  MJ201100
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 AH  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(ah);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*ah));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_3.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "*");
+      check_file_hash(nameBase + "_3.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*ah));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_4.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(ah->getAtomWithIdx(ah->getNumAtoms() - 1)->getQueryType() == "AH");
+      CHECK(extractQueryAtomSymbol(text) == "*");
+      check_file_hash(nameBase + "_4.svg");
+    }
+  }
+  SECTION("any hetero") {
+    auto q = R"CTAB(
+  MJ201100
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 Q   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(q);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*q));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_5.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "![C,H]");
+      check_file_hash(nameBase + "_5.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*q));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_6.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(q->getAtomWithIdx(q->getNumAtoms() - 1)->getQueryType() == "Q");
+      CHECK(extractQueryAtomSymbol(text) == "Q");
+      check_file_hash(nameBase + "_6.svg");
+    }
+  }
+  SECTION("any hetero or hydrogen") {
+    auto qh = R"CTAB(
+  MJ201100
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 QH  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(qh);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*qh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_7.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "![C]");
+      check_file_hash(nameBase + "_7.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*qh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_8.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(qh->getAtomWithIdx(qh->getNumAtoms() - 1)->getQueryType() == "QH");
+      CHECK(extractQueryAtomSymbol(text) == "QH");
+      check_file_hash(nameBase + "_8.svg");
+    }
+  }
+  SECTION("any halo") {
+    auto x = R"CTAB(
+  MJ201100
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3344    0.8919    0.0000 X   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+M  END
+  )CTAB"_ctab;
+
+    REQUIRE(x);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*x));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_9.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "[F,Cl,Br,I,At]");
+      check_file_hash(nameBase + "_9.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*x));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_10.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(x->getAtomWithIdx(x->getNumAtoms() - 1)->getQueryType() == "X");
+      CHECK(extractQueryAtomSymbol(text) == "X");
+      check_file_hash(nameBase + "_10.svg");
+    }
+  }
+  SECTION("any halo or hydrogen") {
+    auto xh = R"CTAB(
+  MJ201100
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3344    0.8919    0.0000 XH  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+M  END
+  )CTAB"_ctab;
+
+    REQUIRE(xh);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*xh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_11.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "[F,Cl,Br,I,At,H]");
+      check_file_hash(nameBase + "_11.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*xh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_12.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(xh->getAtomWithIdx(xh->getNumAtoms() - 1)->getQueryType() == "XH");
+      CHECK(extractQueryAtomSymbol(text) == "XH");
+      check_file_hash(nameBase + "_12.svg");
+    }
+  }
+  SECTION("any metal") {
+    auto m = R"CTAB(
+  MJ201100
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3344    0.8919    0.0000 M   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+M  END
+  )CTAB"_ctab;
+
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*m));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_13.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) ==
+            "![*,He,B,C,N,O,F,Ne,Si,P,S,Cl,Ar,As,Se,Br,Kr,Te,I,Xe,At,Rn,H]");
+      check_file_hash(nameBase + "_13.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*m));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_14.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(m->getAtomWithIdx(m->getNumAtoms() - 1)->getQueryType() == "M");
+      CHECK(extractQueryAtomSymbol(text) == "M");
+      check_file_hash(nameBase + "_14.svg");
+    }
+  }
+  SECTION("any metal or hydrogen") {
+    auto mh = R"CTAB(
+  MJ201100
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3344    0.8919    0.0000 MH  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+M  END
+  )CTAB"_ctab;
+
+    REQUIRE(mh);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = false;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*mh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_15.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) ==
+            "![*,He,B,C,N,O,F,Ne,Si,P,S,Cl,Ar,As,Se,Br,Kr,Te,I,Xe,At,Rn]");
+      check_file_hash(nameBase + "_15.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*mh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_16.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(mh->getAtomWithIdx(mh->getNumAtoms() - 1)->getQueryType() == "MH");
+      CHECK(extractQueryAtomSymbol(text) == "MH");
+      check_file_hash(nameBase + "_16.svg");
+    }
+  }
+}
+
+TEST_CASE("ACS1996 mode crops small molecules - Github 6111") {
+  std::string nameBase = "test_github6111";
+  {
+    auto m = "[*:1]N[*:2]"_smiles;
+    RDDepict::compute2DCoords(*m);
+    m->setProp<std::string>("_Name", "mol1");
+    REQUIRE(m);
+    MolDraw2DSVG drawer(-1, -1);
+    MolDraw2DUtils::drawMolACS1996(drawer, *m, "", nullptr, nullptr);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "_1.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+
+    // check that selected y coords don't go outside of the viewBox.
+    std::regex vbox(R"(viewBox='(\d+)\s+(\d+)\s+(\d+)\s+(\d+)'>)");
+    auto match1_begin = std::sregex_iterator(text.begin(), text.end(), vbox);
+    std::smatch match = *match1_begin;
+    auto ymin = std::stod(match[2]);
+    auto ymax = std::stod(match[4]);
+
+    std::regex atom0(R"(class='atom-\d+' d='M\s+(\d+\.\d+)\s+(\d+\.\d+))");
+    auto match2_begin = std::sregex_iterator(text.begin(), text.end(), atom0);
+    auto match2_end = std::sregex_iterator();
+    for (std::sregex_iterator i = match2_begin; i != match2_end; ++i) {
+      std::smatch match = *i;
+      auto y = std::stod(match[2]);
+      CHECK((y >= ymin && y <= ymax));
+    }
+    check_file_hash(nameBase + "_1.svg");
+  }
+}
 TEST_CASE("Github6058: bad double bonds drawn in ferrocene") {
   auto extractBondPoints = [](const std::string &text,
                               const std::regex &bond) -> std::vector<Point2D> {

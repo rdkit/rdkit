@@ -681,6 +681,9 @@ void wrap_smiwriter();
 void wrap_sdwriter();
 void wrap_tdtwriter();
 void wrap_pdbwriter();
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+void wrap_maewriter();
+#endif
 
 // MultithreadedMolSupplier stuff
 void wrap_multiSmiSupplier();
@@ -1884,9 +1887,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
    >>> mol = MolFromSmiles('C1NCN1.C1NCN1')\n\
    >>> list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False))\n\
-   [0,1,0,1,-1,-1,-1,-1]\n\
+   [4,6,4,6,-1,-1,-1,-1]\n\
    >>> list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False))\n\
-   [-1,-1,-1,-1,0,1,0,1]\n\
+   [-1,-1,-1,-1,4,6,4,6]\n\
 \n\
   ARGUMENTS:\n\
 \n\
@@ -2153,6 +2156,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   wrap_sdwriter();
   wrap_tdtwriter();
   wrap_pdbwriter();
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+  wrap_maewriter();
+#endif
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
   /********************************************************
