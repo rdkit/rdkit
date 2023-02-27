@@ -431,6 +431,11 @@ void cleanupMol(ROMol &mol) {
   MolOps::cleanUp(rwmol);
 }
 
+void cleanUpOrganometallicsMol(ROMol &mol) {
+  auto &rwmol = static_cast<RWMol &>(mol);
+  MolOps::cleanUpOrganometallics(rwmol);
+}
+
 void setAromaticityMol(ROMol &mol, MolOps::AromaticityModel model) {
   auto &wmol = static_cast<RWMol &>(mol);
   MolOps::setAromaticity(wmol, model);
@@ -964,6 +969,8 @@ struct molops_wrapper {
     python::enum_<MolOps::SanitizeFlags>("SanitizeFlags")
         .value("SANITIZE_NONE", MolOps::SANITIZE_NONE)
         .value("SANITIZE_CLEANUP", MolOps::SANITIZE_CLEANUP)
+        .value("SANITIZE_CLEANUP_ORGANOMETALLICS",
+               MolOps::SANITIZE_CLEANUP_ORGANOMETALLICS)
         .value("SANITIZE_PROPERTIES", MolOps::SANITIZE_PROPERTIES)
         .value("SANITIZE_SYMMRINGS", MolOps::SANITIZE_SYMMRINGS)
         .value("SANITIZE_KEKULIZE", MolOps::SANITIZE_KEKULIZE)
@@ -1581,6 +1588,21 @@ to the terminal dummy atoms.\n\
 \n";
     python::def("Cleanup", cleanupMol, (python::arg("mol")), docString.c_str());
 
+    // ------------------------------------------------------------------------
+    docString =
+        "cleans up certain common bad functionalities in the organometallic molecule\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+  NOTES:\n\
+\n\
+    - The molecule is modified in place.\n\
+\n";
+    python::def("CleanupOrganometallics", cleanUpOrganometallicsMol,
+                (python::arg("mol")), docString.c_str());
+
     python::enum_<MolOps::AromaticityModel>("AromaticityModel")
         .value("AROMATICITY_DEFAULT", MolOps::AROMATICITY_DEFAULT)
         .value("AROMATICITY_RDKIT", MolOps::AROMATICITY_RDKIT)
@@ -1784,6 +1806,9 @@ returns a vector of the indices of the atoms mentioned in the prop.\n";
     - rootedAtAtom: (optional) if nonzero, only paths from the specified\n\
       atom will be returned.\n\
 \n\
+    - onlyShortestPaths: (optional) if set then only paths which are <= the shortest\n\
+      path between the begin and end atoms will be included in the results\n\
+\n\
   RETURNS: a tuple of tuples with IDs for the bonds.\n\
 \n\
   NOTES: \n\
@@ -1805,7 +1830,8 @@ returns a vector of the indices of the atoms mentioned in the prop.\n";
     python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthN,
                 (python::arg("mol"), python::arg("length"),
                  python::arg("useBonds") = true, python::arg("useHs") = false,
-                 python::arg("rootedAtAtom") = -1),
+                 python::arg("rootedAtAtom") = -1,
+                 python::arg("onlyShortestPaths") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------

@@ -61,8 +61,8 @@ void testCleanup() {
     RWMOL_SPTR m = "C[Hg]C"_smiles;
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "C[Hg]C")
-    BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
   }
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testStandardizeSm() {

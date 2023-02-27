@@ -1604,37 +1604,44 @@ Here are the steps involved, in order.
 
      This step should not generate exceptions.
 
-  3. ``updatePropertyCache``: calculates the explicit and implicit valences on
+  3. ``cleanUpOrganometallics``: standardizes a small number of non-standard
+     situations encountered in organometallics. The cleanup operations are:
+     
+       - replaces single bonds from hypervalent atoms to metals with dative bonds.
+
+     This step should not generate exceptions.
+
+  4. ``updatePropertyCache``: calculates the explicit and implicit valences on
      all atoms. This generates exceptions for atoms in higher-than-allowed
      valence states. This step is always performed, but if it is "skipped"
      the test for non-standard valences will not be carried out.
 
-  4. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
+  5. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
      algorithm (discussed in the Getting Started document).
 
-  5. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
+  6. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
      exception if a ring cannot be kekulized or if aromatic bonds are found
      outside of rings.
 
-  6. ``assignRadicals``: determines the number of radical electrons (if any) on
+  7. ``assignRadicals``: determines the number of radical electrons (if any) on
      each atom.
 
-  7. ``setAromaticity``: identifies the aromatic rings and ring systems
+  8. ``setAromaticity``: identifies the aromatic rings and ring systems
      (see above), sets the aromatic flag on atoms and bonds, sets bond orders
      to aromatic.
 
-  8. ``setConjugation``: identifies which bonds are conjugated
+  9. ``setConjugation``: identifies which bonds are conjugated
 
-  9. ``setHybridization``: calculates the hybridization state of each atom
+  10. ``setHybridization``: calculates the hybridization state of each atom
 
-  10. ``cleanupChirality``: removes chiral tags from atoms that are not sp3
+  11. ``cleanupChirality``: removes chiral tags from atoms that are not sp3
       hybridized.
 
-  11. ``adjustHs``: adds explicit Hs where necessary to preserve the chemistry.
+  12. ``adjustHs``: adds explicit Hs where necessary to preserve the chemistry.
       This is typically needed for heteroatoms in aromatic rings. The classic
       example is the nitrogen atom in pyrrole.
 
-  12. ``updatePropertyCache``: re-calculates the explicit and implicit valences on
+  13. ``updatePropertyCache``: re-calculates the explicit and implicit valences on
      all atoms. This generates exceptions for atoms in higher-than-allowed
      valence states. This step is required to catch some edge cases where input 
      atoms with non-physical valences are accepted if they are flagged as aromatic.
@@ -2028,8 +2035,10 @@ Use cases
 
 The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation and depiction are future goals.
 
-It is possible to enumerate the elements of a ``StereoGroup`` using the function :py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`, which also
-preserves membership in the original ``StereoGroup``.
+It is possible to enumerate the elements of a ``StereoGroup`` using the function
+:py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`. Note that
+this removes the ``StereoGroup`` information from the products since they now
+correspond to specific molecules:
 
 .. doctest ::
 
@@ -2040,7 +2049,7 @@ preserves membership in the original ``StereoGroup``.
   [1]
   >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
   >>> [Chem.MolToCXSmiles(x) for x in EnumerateStereoisomers(m)]
-  ['C[C@@H](F)C[C@H](O)Cl |&1:1|', 'C[C@H](F)C[C@H](O)Cl |&1:1|']
+  ['C[C@@H](F)C[C@H](O)Cl', 'C[C@H](F)C[C@H](O)Cl']
 
 Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``StereoGroup`` as long as the reaction doesn't create or destroy chirality at the atom.
 

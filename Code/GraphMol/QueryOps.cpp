@@ -20,7 +20,7 @@ namespace RDKit {
 // common general queries
 
 int queryIsAtomBridgehead(Atom const *at) {
-  // at least three ring bonds, at least one ring bond in a ring which shares at
+  // at least three ring bonds, all ring bonds in a ring which shares at
   // least two bonds with another ring involving this atom
   //
   // We can't just go with "at least three ring bonds shared between multiple
@@ -35,10 +35,9 @@ int queryIsAtomBridgehead(Atom const *at) {
   if (!ri || !ri->isInitialized()) {
     return 0;
   }
-  // track which bonds involve this atom
+  // track which ring bonds involve this atom
   boost::dynamic_bitset<> atomRingBonds(mol.getNumBonds());
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    const auto &bnd = mol[nbri];
+  for (const auto bnd : mol.atomBonds(at)) {
     if (ri->numBondRings(bnd->getIdx())) {
       atomRingBonds.set(bnd->getIdx());
     }
@@ -47,13 +46,13 @@ int queryIsAtomBridgehead(Atom const *at) {
     return 0;
   }
 
-  boost::dynamic_bitset<> bondsInRing(mol.getNumBonds());
+  boost::dynamic_bitset<> bondsInRingI(mol.getNumBonds());
+  boost::dynamic_bitset<> ringsOverlap(ri->numRings());
   for (unsigned int i = 0; i < ri->bondRings().size(); ++i) {
-    bondsInRing.reset();
+    bondsInRingI.reset();
     bool atomInRingI = false;
-
     for (const auto bidx : ri->bondRings()[i]) {
-      bondsInRing.set(bidx);
+      bondsInRingI.set(bidx);
       if (atomRingBonds[bidx]) {
         atomInRingI = true;
       }
@@ -68,18 +67,23 @@ int queryIsAtomBridgehead(Atom const *at) {
         if (atomRingBonds[bidx]) {
           atomInRingJ = true;
         }
-        if (bondsInRing[bidx]) {
+        if (bondsInRingI[bidx]) {
           ++overlap;
         }
         if (overlap >= 2 && atomInRingJ) {
           // we have two rings containing the atom which share at least two
           // bonds:
-          return 1;
+          ringsOverlap.set(i);
+          ringsOverlap.set(j);
+          break;
         }
       }
     }
+    if (!ringsOverlap[i]) {
+      return 0;
+    }
   }
-  return 0;
+  return 1;
 }
 
 //! returns a Query for matching atoms with a particular number of ring bonds
@@ -474,6 +478,7 @@ ATOM_OR_QUERY *makeMAtomQuery() {
   // using the definition from Marvin Sketch, which produces the following
   // SMARTS:
   // !#1!#2!#5!#6!#7!#8!#9!#10!#14!#15!#16!#17!#18!#33!#34!#35!#36!#52!#53!#54!#85!#86
+  // We expanded this with !#0 as part of #6106
   // it's easier to define what isn't a metal than what is. :-)
   ATOM_OR_QUERY *res = makeMHAtomQuery();
   res->addChild(
@@ -486,10 +491,13 @@ ATOM_OR_QUERY *makeMHAtomQuery() {
   // using the definition from Marvin Sketch, which produces the following
   // SMARTS:
   // !#2!#5!#6!#7!#8!#9!#10!#14!#15!#16!#17!#18!#33!#34!#35!#36!#52!#53!#54!#85!#86
+  // We expanded this with !#0 as part of #6106
   // it's easier to define what isn't a metal than what is. :-)
   auto *res = new ATOM_OR_QUERY;
   res->setDescription("AtomOr");
   res->setNegation(true);
+  res->addChild(
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(0)));
   res->addChild(
       Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(2)));
   res->addChild(

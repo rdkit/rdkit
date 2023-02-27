@@ -1970,6 +1970,14 @@ TEST_CASE("bridgehead queries", "[query]") {
       }
     }
   }
+  SECTION("Github #6049") {
+    auto m = "C1C=CC=C2CCCCC3CC(C3)N21"_smiles;
+    REQUIRE(m);
+    CHECK(!queryIsAtomBridgehead(m->getAtomWithIdx(13)));
+    CHECK(!queryIsAtomBridgehead(m->getAtomWithIdx(4)));
+    CHECK(queryIsAtomBridgehead(m->getAtomWithIdx(11)));
+    CHECK(queryIsAtomBridgehead(m->getAtomWithIdx(9)));
+  }
 }
 
 TEST_CASE("replaceAtom/Bond should not screw up bookmarks", "[RWMol]") {
@@ -2018,7 +2026,7 @@ TEST_CASE("github #4071: StereoGroups not preserved by RenumberAtoms()",
             mol->getStereoGroups()[i].getGroupType());
     }
     CHECK(MolToCXSmiles(*nmol) ==
-          "C[C@H]([C@@H](C)[C@@H](C)O)[C@@H](C)O |o1:7,&1:1,&2:2,&3:4|");
+          "C[C@H](O)[C@H](C)[C@H](C)[C@H](C)O |o1:1,&1:3,&2:5,&3:7|");
   }
 }
 
@@ -2932,6 +2940,33 @@ TEST_CASE("molecules with more than 255 rings produce a bad pickle") {
   MolPickler::pickleMol(*mol, pkl);
   RWMol nMol(pkl);
   CHECK(nMol.getRingInfo()->numRings() == mol->getRingInfo()->numRings());
+}
+
+TEST_CASE("molecules with single bond to metal atom use dative instead") {
+  // Change heme coordination from single bond to dative.
+  // Test mols are CHEBI:26355, CHEBI:60344, CHEBI:17627.  26355 should be
+  // changed (Github 6019) the other two should not be.
+  // 4th mol is one that gave other problems during testing.
+  std::vector<std::pair<std::string, std::string>> test_vals{
+      {"CC1=C(CCC(O)=O)C2=[N]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N]5[Fe]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"},
+      {"CC1=C(CCC([O-])=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC([O-])=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25"},
+      {"CC1=C(CCC(O)=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)O)c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)O)=CC1=[N+]25"},
+      {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
+       "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
+  for (size_t i = 0; i < test_vals.size(); ++i) {
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
+    TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
+  }
+}
+
+TEST_CASE("github #6100: bonds to dummy atoms considered as dative") {
+  SECTION("as reported") {
+    auto m = "C[O](C)*"_smiles;
+    REQUIRE(!m);
+  }
 }
 
 TEST_CASE("Remove atom updates bond ENDPTS prop") {

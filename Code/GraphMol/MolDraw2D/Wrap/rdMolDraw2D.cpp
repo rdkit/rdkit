@@ -790,7 +790,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "maximum font size in pixels. default=40, -1 means no"
                      " maximum.")
       .def_readwrite("minFontSize", &RDKit::MolDrawOptions::minFontSize,
-                     "minimum font size in pixels. default=12, -1 means no"
+                     "minimum font size in pixels. default=6, -1 means no"
                      " minimum.")
       .def_readwrite(
           "fixedFontSize", &RDKit::MolDrawOptions::fixedFontSize,
@@ -924,6 +924,13 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      &RDKit::MolDrawOptions::drawMolsSameScale,
                      "when drawing multiple molecules with DrawMolecules,"
                      " forces them to use the same scale.  Default is true.")
+      .def_readwrite(
+          "useComplexQueryAtomSymbols",
+          &RDKit::MolDrawOptions::useComplexQueryAtomSymbols,
+          "replace any atom, any hetero, any halo queries "
+          "with complex query symbols A, Q, X, M, optionally followed "
+          "by H if hydrogen is included (except for AH, which stays *). "
+          "Default is true")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            "method for getting the colour of variable attachment points")
       .def("setVariableAttachmentColour", &RDKit::setVariableAttachmentColour,

@@ -18,6 +18,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -264,7 +265,7 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
     auto mol = "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|"_smiles;
     REQUIRE(mol);
     auto smi = MolToCXSmiles(*mol);
-    CHECK(smi == "C[C@@H]([C@H](C)F)[C@@H](C)Br |a:2,o1:1,5|");
+    CHECK(smi == "C[C@H](F)[C@@H](C)[C@H](C)Br |a:1,o1:3,5|");
   }
 
   SECTION("enhanced stereo 2") {
@@ -281,7 +282,7 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
     auto smi = MolToCXSmiles(*mol);
     CHECK(
         smi ==
-        "C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C |a:9,o1:2,4,o2:14,16,&1:1,7,&2:11,18|");
+        "C[C@H]1N[C@H](C)[C@H](C2[C@H](C)O[C@H](C)[C@H](C)[C@@H]2C)[C@H](C)[C@H]1C |a:5,o1:1,18,o2:10,12,&1:3,16,&2:7,14|");
   }
 
   SECTION("enhanced stereo 4") {
@@ -695,9 +696,10 @@ TEST_CASE(
     auto smarts = MolToSmarts(*m);
     // this will change if/when the definition of the query changes, just have
     // to update then
-    CHECK(smarts ==
-          "[#6]-[!#2&!#5&!#6&!#7&!#8&!#9&!#10&!#14&!#15&!#16&!#17&!#18&!#33&!#"
-          "34&!#35&!#36&!#52&!#53&!#54&!#85&!#86&!#1]");
+    CHECK(
+        smarts ==
+        "[#6]-[!#0&!#2&!#5&!#6&!#7&!#8&!#9&!#10&!#14&!#15&!#16&!#17&!#18&!#33&!#"
+        "34&!#35&!#36&!#52&!#53&!#54&!#85&!#86&!#1]");
   }
   SECTION("serialization") {
     std::string pkl;
@@ -2357,13 +2359,65 @@ TEST_CASE("Github #5683: SMARTS bond ordering should be the same as SMILES") {
   }
 }
 
-TEST_CASE("SMARTS for molecule with zero order bond should match itself")
-{
-    auto m = "CN(<-[Li+])C"_smiles;
-    m->getBondBetweenAtoms(1, 2)->setBondType(Bond::BondType::ZERO);
-    const auto sma = MolToSmarts(*m);
-    std::unique_ptr<ROMol> q{SmartsToMol(sma)};
-    SubstructMatchParameters ps;
-    ps.maxMatches = 1;
-    CHECK(SubstructMatch(*m, *q, ps).size() == 1);
+TEST_CASE("SMARTS for molecule with zero order bond should match itself") {
+  auto m = "CN(<-[Li+])C"_smiles;
+  m->getBondBetweenAtoms(1, 2)->setBondType(Bond::BondType::ZERO);
+  const auto sma = MolToSmarts(*m);
+  std::unique_ptr<ROMol> q{SmartsToMol(sma)};
+  SubstructMatchParameters ps;
+  ps.maxMatches = 1;
+  CHECK(SubstructMatch(*m, *q, ps).size() == 1);
+}
+
+TEST_CASE("smilesSymbol in SMARTS", "[smarts][smilesSymbol]") {
+  // Probably just the first case is going to be useful to people
+  SECTION("smilesSymbol without queries") {
+    auto m = "CC*"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(2)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[#6]-[#6]-[Xa]");
+  }
+  SECTION("smilesSymbol with query on other atoms") {
+    auto m = "[#6]cc"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[Xa]cc");
+  }
+  SECTION("smilesSymbol with aromaticity query") {
+    auto m = "ccc"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[Xa;a]cc");
+  }
+  SECTION("smilesSymbol with aliphatic query") {
+    auto m = "CCC"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[Xa;A]CC");
+  }
+  SECTION("smilesSymbol with additional queries") {
+    auto m = "[#6]C[#6]"_smarts;
+    REQUIRE(m);
+    auto atom = m->getAtomWithIdx(1);
+
+    atom->expandQuery(makeAtomExplicitDegreeQuery(3), Queries::COMPOSITE_AND);
+    atom->expandQuery(makeAtomTotalValenceQuery(4), Queries::COMPOSITE_AND);
+    atom->expandQuery(makeAtomFormalChargeQuery(2), Queries::COMPOSITE_AND);
+
+    atom->setProp(common_properties::smilesSymbol, "Xa");
+
+    CHECK(MolToSmarts(*m) == "[#6][Xa;A&D3&v4&+2][#6]");
+  }
+  SECTION("degree query") {
+    auto m = "[X3]-C"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[Xa;X3]-C");
+  }
+  SECTION("atom list") {
+    auto m = "[C,N,O]C"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
+    CHECK(MolToSmarts(*m) == "[Xa;C,N,O]C");
+  }
 }

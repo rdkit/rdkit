@@ -182,6 +182,62 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
     }
   }
 }
+
+void metalBondCleanup(RWMol &mol, Atom *atom) {
+  PRECONDITION(atom, "bad atom in metalBondCleanup");
+  // The IUPAC recommendation for ligand->metal coordination bonds is that they
+  // be single.  This upsets the RDKit valence model, as seen in CHEBI:26355,
+  // heme b.  If the valence of a non-metal atom is above the maximum in the
+  // RDKit model, and there are single bonds from it to metal
+  // change those bonds to atom->metal dative.
+
+  auto isMetal = [](const Atom *a) -> bool {
+    // This is the list of not metal atoms from QueryOps.cpp
+    static const std::set<int> notMetals{0,  1,  2,  5,  6,  7,  8,  9,
+                                         10, 14, 15, 16, 17, 18, 33, 34,
+                                         35, 36, 52, 53, 54, 85, 86};
+    return (notMetals.find(a->getAtomicNum()) == notMetals.end());
+  };
+  auto noDative = [](const Atom *a) -> bool {
+    static const std::set<int> noD{1, 2, 9, 10};
+    return (noD.find(a->getAtomicNum()) != noD.end());
+  };
+  if (!isMetal(atom)) {
+    return;
+  }
+  const auto &valens =
+      PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
+  if (valens.back() != -1) {
+    // the atom can only have specific valences, so leave it.
+    return;
+  }
+  for (auto bond : mol.atomBonds(atom)) {
+    auto otherAtom = bond->getOtherAtom(atom);
+    if (!isMetal(otherAtom) && !noDative(otherAtom)) {
+      auto ev = otherAtom->calcExplicitValence(false);
+      // Check the explicit valence of the non-metal against the allowed
+      // valences of the atom, adjusted by its formal charge.  This means that
+      // N+ is treated the same as C, O+ the same as N.  This allows for,
+      // for example, c1cccc[n+]1-[Fe] to be acceptable and not turned into
+      // c1cccc[n+]1->[Fe].  After all, c1cccc[n+]1-C is ok.  Although this is
+      // a poor example because c1ccccn1->[Fe] appears to be the normal
+      // way that pyridine complexes with transition metals.  Heme b in
+      // CHEBI:26355 is an example of when this is required.
+      int effAtomicNum =
+          otherAtom->getAtomicNum() - otherAtom->getFormalCharge();
+      if (effAtomicNum <= 0) {
+        continue;
+      }
+      const auto &otherValens =
+          PeriodicTable::getTable()->getValenceList(effAtomicNum);
+      if (otherValens.back() > 0 && ev > otherValens.back()) {
+        bond->setBondType(RDKit::Bond::BondType::DATIVE);
+        bond->setBeginAtom(otherAtom);
+        bond->setEndAtom(atom);
+      }
+    }
+  }
+}
 }  // namespace
 
 void cleanUp(RWMol &mol) {
@@ -199,6 +255,12 @@ void cleanUp(RWMol &mol) {
         halogenCleanup(mol, atom);
         break;
     }
+  }
+}
+
+void cleanUpOrganometallics(RWMol &mol) {
+  for (auto atom : mol.atoms()) {
+    metalBondCleanup(mol, atom);
   }
 }
 
@@ -322,6 +384,12 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   if (sanitizeOps & operationThatFailed) {
     // clean up things like nitro groups
     cleanUp(mol);
+  }
+
+  operationThatFailed = SANITIZE_CLEANUP_ORGANOMETALLICS;
+  if (sanitizeOps & operationThatFailed) {
+    // clean up things like nitro groups
+    cleanUpOrganometallics(mol);
   }
 
   // update computed properties on atoms and bonds:

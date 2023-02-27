@@ -16,7 +16,7 @@
 namespace RDKit {
 namespace MolInterchange {
 constexpr int currentMolJSONVersion = 10;
-constexpr int currentRDKitJSONVersion = 10;
+constexpr int currentRDKitJSONVersion = 11;
 constexpr int currentRDKitRepresentationVersion = 2;
 constexpr int currentChargeRepresentationVersion = 10;
 constexpr int currentQueryRepresentationVersion = 10;
@@ -33,9 +33,11 @@ static const std::map<Atom::ChiralType, std::string> inv_chilookup = {
     {Atom::CHI_OTHER, "other"}};
 
 static const std::map<unsigned int, Bond::BondType> bolookup = {
-    {0, Bond::ZERO}, {1, Bond::SINGLE}, {2, Bond::DOUBLE}, {3, Bond::TRIPLE}};
+    {0, Bond::ZERO},   {1, Bond::SINGLE},    {2, Bond::DOUBLE},
+    {3, Bond::TRIPLE}, {4, Bond::QUADRUPLE}, {17, Bond::DATIVE}};
 static const std::map<Bond::BondType, unsigned int> inv_bolookup = {
-    {Bond::ZERO, 0}, {Bond::SINGLE, 1}, {Bond::DOUBLE, 2}, {Bond::TRIPLE, 3}};
+    {Bond::ZERO, 0},   {Bond::SINGLE, 1},    {Bond::DOUBLE, 2},
+    {Bond::TRIPLE, 3}, {Bond::QUADRUPLE, 4}, {Bond::DATIVE, 17}};
 
 static const std::map<std::string, Bond::BondStereo> stereoBondlookup = {
     {"unspecified", Bond::STEREONONE},

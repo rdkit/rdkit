@@ -7,6 +7,12 @@
 //  of the RDKit source tree.
 //
 
+#include <algorithm>
+#include <fstream>
+#include <string>
+#include <string_view>
+#include <streambuf>
+
 #include "RDGeneral/test.h"
 #include "catch.hpp"
 #include <RDGeneral/Invariant.h>
@@ -5512,3 +5518,498 @@ NO_CHARGES
     REQUIRE(m);
   }
 }
+
+std::string read_file(const std::string &fname) {
+  std::ifstream ifs(fname);
+  return std::string(std::istreambuf_iterator<char>(ifs),
+                     std::istreambuf_iterator<char>());
+}
+
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+TEST_CASE("MaeMolSupplier setData and reset methods",
+          "[mae][MaeMolSupplier][reader]") {
+  std::string rdbase = getenv("RDBASE");
+
+  MaeMolSupplier supplier;
+
+  std::vector<std::string> mol_names1 = {
+      "48",  "78",  "128", "163", "164", "170", "180", "186",
+      "192", "203", "210", "211", "213", "220", "229", "256"};
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+  auto data1 = read_file(fname1);
+
+  supplier.setData(data1);
+
+  // Test the reset method by iterating the same input twice
+  for (unsigned i = 0; i < 2; ++i) {
+    unsigned j = 0;
+    while (!supplier.atEnd()) {
+      INFO("First input, lap " + std::to_string(i) + ", mol " +
+           std::to_string(j));
+
+      std::unique_ptr<ROMol> mol(supplier.next());
+      REQUIRE(mol != nullptr);
+
+      std::string mol_name;
+      REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+      REQUIRE(j < mol_names1.size());
+      CHECK(mol_name == mol_names1[j]);
+
+      ++j;
+    }
+    INFO("First input, mol count");
+    CHECK(j == 16);
+
+    supplier.reset();
+  }
+
+  // Now reuse the supplier with some different input
+  std::string fname2 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/stereochem.mae";
+  auto data2 = read_file(fname2);
+
+  supplier.setData(data2);
+
+  unsigned i = 0;
+  while (!supplier.atEnd()) {
+    INFO("Second input, mol " + std::to_string(i));
+
+    std::unique_ptr<ROMol> molptr;
+    try {
+      molptr.reset(supplier.next());
+    } catch (const Invar::Invariant &) {
+      // the 4th structure is intentionally bad.
+    }
+
+    REQUIRE((i == 3) ^ (molptr != nullptr));
+
+    ++i;
+  }
+  INFO("Second input, mol count");
+  CHECK(i == 5);
+
+  // Reset throws if called after close
+  INFO("Reset after close");
+  supplier.close();
+  REQUIRE_THROWS_AS(supplier.reset(), Invar::Invariant);
+}
+
+TEST_CASE("MaeMolSupplier length", "[mae][MaeMolSupplier][reader]") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+
+  std::vector<std::string> mol_names = {
+      "48",  "78",  "128", "163", "164", "170", "180", "186",
+      "192", "203", "210", "211", "213", "220", "229", "256"};
+  auto mols_in_file = mol_names.size();
+
+  MaeMolSupplier supplier(fname1);
+
+  CHECK(supplier.length() == mols_in_file);
+
+  unsigned i = 0;
+  for (; i < 2; ++i) {
+    std::unique_ptr<ROMol> mol(supplier.next());
+
+    std::string mol_name;
+    REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+    CHECK(mol_name == mol_names[i]);
+  }
+
+  CHECK(supplier.length() == mols_in_file);
+
+  while (!supplier.atEnd()) {
+    std::unique_ptr<ROMol> mol(supplier.next());
+
+    std::string mol_name;
+    REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+    CHECK(mol_name == mol_names[i]);
+    ++i;
+  }
+
+  CHECK(i == mols_in_file);
+  CHECK(supplier.length() == mols_in_file);
+  CHECK(supplier.atEnd());
+}
+
+TEST_CASE("MaeMolSupplier and operator[]", "[mae][MaeMolSupplier][reader]") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+
+  std::vector<std::string> mol_names = {
+      "48",  "78",  "128", "163", "164", "170", "180", "186",
+      "192", "203", "210", "211", "213", "220", "229", "256"};
+  auto mols_in_file = mol_names.size();
+
+  MaeMolSupplier supplier(fname1);
+
+  std::string mol_name;
+  for (unsigned i = 0; i < mols_in_file; ++i) {
+    std::unique_ptr<ROMol> mol(supplier[i]);
+    REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+    CHECK(mol_name == mol_names[i]);
+
+    auto j = mols_in_file - (i + 1);
+    mol.reset(supplier[j]);
+    REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+    CHECK(mol_name == mol_names[j]);
+  }
+
+  CHECK_THROWS_AS(supplier[mols_in_file], FileParseException);
+  CHECK_THROWS_AS(supplier[-1], FileParseException);
+}
+
+TEST_CASE("MaeMolSupplier is3D flag", "[mae][MaeMolSupplier][reader]") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+
+  MaeMolSupplier supplier(fname1);
+
+  std::unique_ptr<ROMol> mol(supplier[0]);
+
+  std::string mol_name;
+  REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+  CHECK(mol_name == "48");
+
+  CHECK(mol->getConformer().is3D() == true);
+
+  std::string fname2 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/benzene.mae";
+
+  supplier.setData(read_file(fname2));
+
+  mol.reset(supplier[0]);
+
+  REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+  CHECK(mol_name == "Structure1");
+
+  CHECK(mol->getConformer().is3D() == false);
+}
+
+void check_roundtripped_properties(RDProps &original, RDProps &roundtrip) {
+  // We don't care about the computed or private props
+  original.clearComputedProps();
+  auto includePrivate = false;
+  auto originalPropNames = original.getPropList(includePrivate);
+  auto roundtripPropNames = roundtrip.getPropList(includePrivate);
+
+  // We allow the roundtrip to add extra info, but the original
+  // properties must be present
+  REQUIRE(roundtripPropNames.size() >= originalPropNames.size());
+
+  std::sort(originalPropNames.begin(), originalPropNames.end());
+  std::sort(roundtripPropNames.begin(), roundtripPropNames.end());
+
+  REQUIRE(std::includes(roundtripPropNames.begin(), roundtripPropNames.end(),
+                        originalPropNames.begin(), originalPropNames.end()));
+
+  for (const auto &o : original.getDict().getData()) {
+    if (o.key == detail::computedPropName) {
+      continue;
+    }
+
+    UNSCOPED_INFO("Checking property = " << o.key);
+
+    switch (o.val.getTag()) {
+      case RDTypeTag::BoolTag:
+        CHECK(rdvalue_cast<bool>(o.val) == roundtrip.getProp<bool>(o.key));
+        break;
+
+      case RDTypeTag::IntTag:
+      case RDTypeTag::UnsignedIntTag:
+        CHECK(rdvalue_cast<int>(o.val) == roundtrip.getProp<int>(o.key));
+        break;
+
+      case RDTypeTag::DoubleTag:
+      case RDTypeTag::FloatTag:
+        CHECK(rdvalue_cast<double>(o.val) == roundtrip.getProp<double>(o.key));
+        break;
+
+      case RDTypeTag::StringTag:
+        CHECK(rdvalue_cast<std::string>(o.val) ==
+              roundtrip.getProp<std::string>(o.key));
+        break;
+
+      default:
+        throw std::runtime_error("Unexpected property type");
+    }
+  }
+}
+
+TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
+  auto mol = "C1CCCCC1"_smiles;
+  REQUIRE(mol);
+
+  auto add_some_props = [](RDProps &obj, const std::string &prefix) {
+    obj.setProp(prefix + "_bool_prop", false);
+    obj.setProp(prefix + "_int_prop", 42);
+    obj.setProp(prefix + "_real_prop", 3.141592);
+    obj.setProp(prefix + "_string_prop", "this is just a dummy property");
+  };
+
+  add_some_props(*mol, "mol");
+  add_some_props(*mol->getAtomWithIdx(0), "atom");
+  add_some_props(*mol->getBondWithIdx(0), "bond");
+
+  SECTION("Check output") {
+    mol->setProp(common_properties::_Name, "test mol 1");
+
+    // The writer always takes ownership of the stream!
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+
+    auto mae = oss->str();
+
+    // Check for the Maestro file header
+    REQUIRE(mae.find("s_m_m2io_version") != std::string::npos);
+
+    // Check the CT header and Structure properties
+    auto ctBlockStart = mae.find("f_m_ct");
+    REQUIRE(ctBlockStart != std::string::npos);
+
+    auto atomBlockStart = mae.find("m_atom[6]");
+    REQUIRE(atomBlockStart != std::string::npos);
+
+    auto bondBlockStart = mae.find("m_bond[6]");
+    REQUIRE(bondBlockStart != std::string::npos);
+
+    std::string_view ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
+    std::string_view atomBlock(&mae[atomBlockStart],
+                               bondBlockStart - atomBlockStart);
+    std::string_view bondBlock(&mae[bondBlockStart]);
+
+    // Check mol properties
+    CHECK(ctBlock.find("s_m_title") != std::string::npos);
+
+    CHECK(ctBlock.find("b_rdk_mol_bool_prop") != std::string::npos);
+    CHECK(ctBlock.find("i_rdk_mol_int_prop") != std::string::npos);
+    CHECK(ctBlock.find("r_rdk_mol_real_prop") != std::string::npos);
+    CHECK(ctBlock.find("s_rdk_mol_string_prop") != std::string::npos);
+
+    // Check Atom properties
+    CHECK(atomBlock.find("r_m_x_coord") != std::string::npos);
+    CHECK(atomBlock.find("r_m_y_coord") != std::string::npos);
+    CHECK(atomBlock.find("r_m_z_coord") != std::string::npos);
+    CHECK(atomBlock.find("i_m_atomic_number") != std::string::npos);
+    CHECK(atomBlock.find("i_m_formal_charge") != std::string::npos);
+    CHECK(atomBlock.find("s_m_color_rgb") != std::string::npos);
+
+    CHECK(atomBlock.find("b_rdk_atom_bool_prop") != std::string::npos);
+    CHECK(atomBlock.find("i_rdk_atom_int_prop") != std::string::npos);
+    CHECK(atomBlock.find("r_rdk_atom_real_prop") != std::string::npos);
+    CHECK(atomBlock.find("s_rdk_atom_string_prop") != std::string::npos);
+
+    // Check Bond properties
+    CHECK(bondBlock.find("i_m_from") != std::string::npos);
+    CHECK(bondBlock.find("i_m_to") != std::string::npos);
+    CHECK(bondBlock.find("i_m_order") != std::string::npos);
+
+    CHECK(bondBlock.find("b_rdk_bond_bool_prop") != std::string::npos);
+    CHECK(bondBlock.find("i_rdk_bond_int_prop") != std::string::npos);
+    CHECK(bondBlock.find("r_rdk_bond_real_prop") != std::string::npos);
+    CHECK(bondBlock.find("s_rdk_bond_string_prop") != std::string::npos);
+  }
+
+  SECTION("Check Property filtering") {
+    std::vector<std::string> keptProps{
+        "mol_bool_prop",
+        "atom_int_prop",
+        "bond_real_prop",
+        "non_existent_property",
+    };
+
+    mol->setProp(common_properties::_Name, "test mol 2");
+
+    // The writer always takes ownership of the stream!
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+
+    w.setProps(keptProps);
+
+    std::string heavyAtomColor = "131313";
+    w.write(*mol, heavyAtomColor);
+    w.flush();
+
+    auto mae = oss->str();
+
+    // Check for the Maestro file header
+    REQUIRE(mae.find("s_m_m2io_version") != std::string::npos);
+
+    // Check the CT header and Structure properties
+    auto ctBlockStart = mae.find("f_m_ct");
+    REQUIRE(ctBlockStart != std::string::npos);
+
+    auto atomBlockStart = mae.find("m_atom[6]");
+    REQUIRE(atomBlockStart != std::string::npos);
+
+    auto bondBlockStart = mae.find("m_bond[6]");
+    REQUIRE(bondBlockStart != std::string::npos);
+
+    std::string_view ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
+    std::string_view atomBlock(&mae[atomBlockStart],
+                               bondBlockStart - atomBlockStart);
+    std::string_view bondBlock(&mae[bondBlockStart]);
+
+    // Check mol properties
+    CHECK(ctBlock.find("s_m_title") != std::string::npos);
+
+    CHECK(ctBlock.find("b_rdk_mol_bool_prop") != std::string::npos);
+
+    CHECK(ctBlock.find("i_rdk_mol_int_prop") == std::string::npos);
+    CHECK(ctBlock.find("r_rdk_mol_real_prop") == std::string::npos);
+    CHECK(ctBlock.find("s_rdk_mol_string_prop") == std::string::npos);
+
+    // Check Atom properties
+    CHECK(atomBlock.find("r_m_x_coord") != std::string::npos);
+    CHECK(atomBlock.find("r_m_y_coord") != std::string::npos);
+    CHECK(atomBlock.find("r_m_z_coord") != std::string::npos);
+    CHECK(atomBlock.find("i_m_atomic_number") != std::string::npos);
+    CHECK(atomBlock.find("i_m_formal_charge") != std::string::npos);
+    CHECK(atomBlock.find("s_m_color_rgb") != std::string::npos);
+
+    CHECK(atomBlock.find("i_rdk_atom_int_prop") != std::string::npos);
+
+    CHECK(atomBlock.find("b_rdk_atom_bool_prop") == std::string::npos);
+    CHECK(atomBlock.find("r_rdk_atom_real_prop") == std::string::npos);
+    CHECK(atomBlock.find("s_rdk_atom_string_prop") == std::string::npos);
+
+    // Check Bond properties
+    CHECK(bondBlock.find("i_m_from") != std::string::npos);
+    CHECK(bondBlock.find("i_m_to") != std::string::npos);
+    CHECK(bondBlock.find("i_m_order") != std::string::npos);
+
+    CHECK(bondBlock.find("r_rdk_bond_real_prop") != std::string::npos);
+
+    CHECK(bondBlock.find("b_rdk_bond_bool_prop") == std::string::npos);
+    CHECK(bondBlock.find("i_rdk_bond_int_prop") == std::string::npos);
+    CHECK(bondBlock.find("s_rdk_bond_string_prop") == std::string::npos);
+
+    size_t pos = 0;
+    unsigned atom_color_count = 0;
+    while (pos < std::string::npos) {
+      pos = atomBlock.find(heavyAtomColor, pos + 1);
+      atom_color_count += (pos != std::string::npos);
+    }
+
+    CHECK(atom_color_count == mol->getNumAtoms());
+  }
+
+  SECTION("Check roundtrip") {
+    mol->setProp(common_properties::_Name, "test mol 3");
+
+    // The writer always takes ownership of the stream!
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+
+    auto iss = new std::istringstream(oss->str());
+    MaeMolSupplier r(iss);
+
+    std::unique_ptr<ROMol> roundtrip_mol(r.next());
+    REQUIRE(roundtrip_mol);
+
+    REQUIRE(MolToSmiles(*roundtrip_mol) == "C1CCCCC1");
+
+    {
+      INFO("Checking mol properties");
+      check_roundtripped_properties(*mol, *roundtrip_mol);
+    }
+    {
+      INFO("Checking atom properties");
+      for (unsigned i = 0; i < mol->getNumAtoms(); ++i) {
+        check_roundtripped_properties(*mol->getAtomWithIdx(i),
+                                      *roundtrip_mol->getAtomWithIdx(i));
+      }
+    }
+    // Maeparser does not parse bond properties, so don't check them.
+  }
+
+  SECTION("getText()") {
+    mol->setProp(common_properties::_Name, "test mol 4");
+
+    // The writer always takes ownership of the stream!
+    auto oss = new std::ostringstream;
+    std::string mae;
+    {
+      MaeWriter w(oss);
+      w.write(*mol);
+      mae = oss->str();
+    }
+
+    // Check for the Maestro file header
+    REQUIRE(mae.find("s_m_m2io_version") != std::string::npos);
+
+    // Check the CT header and Structure properties
+    auto ctBlockStart = mae.find("f_m_ct");
+    REQUIRE(ctBlockStart != std::string::npos);
+
+    std::string_view ctBlock(&mae[ctBlockStart]);
+
+    CHECK(ctBlock == MaeWriter::getText(*mol));
+  }
+}
+
+TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer]") {
+  SECTION("No atoms") {
+    ROMol m;
+
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(m);
+    w.flush();
+
+    CHECK(oss->str().empty());
+  }
+  SECTION("No bonds") {
+    auto m = "C"_smiles;
+    REQUIRE(m);
+
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*m);
+    w.flush();
+
+    auto mae = oss->str();
+    REQUIRE(!mae.empty());
+
+    CHECK(mae.find("m_atom[1]") != std::string::npos);
+    CHECK(mae.find("m_bond[") == std::string::npos);
+  }
+  SECTION("Not kekulizable bonds") {
+    bool debug = false;
+    bool sanitize = false;
+    std::unique_ptr<ROMol> m(SmilesToMol(
+        "c1cncc1", debug, sanitize));  // This SMILES is intentionally bad!
+    REQUIRE(m);
+
+    m->getBondWithIdx(0)->setBondType(Bond::AROMATIC);
+
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*m);
+    w.flush();
+
+    CHECK(oss->str().empty());
+  }
+  SECTION("Unsupported bonds") {
+    auto m = "CC"_smiles;
+    REQUIRE(m);
+
+    m->getBondWithIdx(0)->setBondType(Bond::DATIVEONE);
+
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*m);
+    w.flush();
+
+    CHECK(oss->str().empty());
+  }
+}
+#endif
