@@ -163,10 +163,18 @@ bool getUseLegacyStereoPerception() {
 void setUseLegacyStereoPerception(bool val) {
   RDKit::Chirality::setUseLegacyStereoPerception(val);
 }
+bool getAllowNontetrahedralChirality() {
+  return RDKit::Chirality::getAllowNontetrahedralChirality();
+}
+void setAllowNontetrahedralChirality(bool val) {
+  RDKit::Chirality::setAllowNontetrahedralChirality(val);
+}
 %}
 
 bool getUseLegacyStereoPerception();
 void setUseLegacyStereoPerception(bool);
+bool getAllowNontetrahedralChirality();
+void setAllowNontetrahedralChirality(bool);
 
 %extend RDKit::ROMol {
   std::string getProp(const std::string key){

@@ -623,6 +623,7 @@ public class Chemv2Tests extends GraphMolTest {
     @Test
     public void testStereoChemFunctions() {
         boolean useLegacyStereo = RDKFuncs.getUseLegacyStereoPerception();
+        boolean allowNonTetrahedralChirality = RDKFuncs.getAllowNontetrahedralChirality();
         try {
             RWMol m = RWMol.MolFromSmiles("CC(O)Cl |(-3.9163,5.4767,;-3.9163,3.9367,;-2.5826,3.1667,;-5.25,3.1667,),wU:1.0|");
             assertTrue(m != null);
@@ -659,8 +660,36 @@ public class Chemv2Tests extends GraphMolTest {
             m = RWMol.MolFromSmiles("O[C@@]1(C)C/C(/C1)=C(/C)\\CC");
             assertTrue(m != null);
             assertEquals(m.MolToSmiles(), "CC/C(C)=C1\\C[C@](C)(O)C1");
+            m.delete();
+            RDKFuncs.setUseLegacyStereoPerception(useLegacyStereo);
+            String ctab = "\n" +
+                "  Mrv2108 09132105183D          \n" +
+                "\n" +
+                "  5  4  0  0  0  0            999 V2000\n" +
+                "   -1.2500    1.4518    0.0000 Pt  0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   -1.2500    2.2768    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   -0.4250    1.4518    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   -2.0750    1.4518    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   -1.2500    0.6268    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "  1  2  1  0  0  0  0\n" +
+                "  1  3  1  0  0  0  0\n" +
+                "  1  4  1  0  0  0  0\n" +
+                "  1  5  1  0  0  0  0\n" +
+                "M  END\n";
+            RDKFuncs.setAllowNontetrahedralChirality(true);
+            m = RWMol.MolFromMolBlock(ctab);
+            assertTrue(m != null);
+            assertEquals(m.MolToSmiles(), "F[Pt@SP3](F)(Cl)Cl");
+            m.delete();
+            RDKFuncs.setAllowNontetrahedralChirality(false);
+            m = RWMol.MolFromMolBlock(ctab);
+            assertTrue(m != null);
+            assertEquals(m.MolToSmiles(), "F[Pt](F)(Cl)Cl");
+            m.delete();
+            RDKFuncs.setAllowNontetrahedralChirality(allowNonTetrahedralChirality);
         } finally {
             RDKFuncs.setUseLegacyStereoPerception(useLegacyStereo);
+            RDKFuncs.setAllowNontetrahedralChirality(allowNonTetrahedralChirality);
         }
     }
     

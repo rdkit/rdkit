@@ -756,6 +756,14 @@ void prefer_coordgen(bool useCoordGen) {
 #endif
 }
 
-void use_legacy_stereo_perception(bool value) {
+bool use_legacy_stereo_perception(bool value) {
+  bool was = Chirality::getUseLegacyStereoPerception();
   Chirality::setUseLegacyStereoPerception(value);
+  return was;
+}
+
+bool allow_non_tetrahedral_chirality(bool value) {
+  bool was = Chirality::getAllowNontetrahedralChirality();
+  Chirality::setAllowNontetrahedralChirality(value);
+  return was;
 }
