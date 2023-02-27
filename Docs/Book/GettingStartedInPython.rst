@@ -3606,7 +3606,7 @@ The NIH filter [#jadhav]_, [#doveston]_ defined a list of functional groups with
 All of the available filters can also be considered at once. Additional information such as the class and description of the unwanted substructures can be obtained using the FilterCatalogEntry object:
 
 .. doctest::
-
+  
   >>> from rdkit import Chem
   >>> from rdkit.Chem.FilterCatalog import FilterCatalog, FilterCatalogParams
   
@@ -3618,8 +3618,8 @@ All of the available filters can also be considered at once. Additional informat
   True
   >>> catalog_all = FilterCatalog(params_all)
 
-  >>> print([entry.GetProp('FilterSet') for entry in catalog_all.GetMatches(mol) if 'FilterSet' in entry.GetPropList()])
-  ['PAINS_A', 'Brenk', 'NIH']
+  >>> print([entry.GetProp('FilterSet') for entry in catalog_all.GetMatches(mol)])
+  ['PAINS_A', 'Brenk', 'NIH', 'ChEMBL23_Dundee', 'ChEMBL23_BMS', 'ChEMBL23_MLSMR', 'ChEMBL23_Inpharmatica', 'ChEMBL23_LINT']
   >>> print([entry.GetDescription() for entry in catalog_all.GetMatches(mol)])
   ['azo_A(324)', 'diazo_group', 'azo_aryl', 'diazo group', 'azo_aryl', 'Azo', 'Filter5_azo', 'acyclic N-,=N and not N bound to carbonyl or sulfone']
   
