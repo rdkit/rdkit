@@ -143,12 +143,15 @@ RWMol *mol_from_input(const std::string &input,
     unsigned int sanitizeOps = MolOps::SANITIZE_ADJUSTHS;
     try {
       if (sanitize) {
-        sanitizeOps = MolOps::SANITIZE_ALL;
+        unsigned int failedOp;
+        unsigned int sanitizeOps = MolOps::SANITIZE_ALL;
         if (!kekulize) {
           sanitizeOps ^= MolOps::SANITIZE_KEKULIZE;
         }
+        MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
+      } else {
+        res->updatePropertyCache(false);
       }
-      MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
       MolOps::assignStereochemistry(*res, true, true, true);
       if (mergeQueryHs) {
         MolOps::mergeQueryHs(*res);
