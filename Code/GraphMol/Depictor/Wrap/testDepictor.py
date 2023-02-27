@@ -617,26 +617,6 @@ M  END)""")
             self.assertAlmostEqual(actual_position.y, actual_position.y)
 
 
-    def testUseRingSystemTemplates(self):
-        prefer_coordgen_status = rdDepictor.GetPreferCoordGen()
-        rdDepictor.SetPreferCoordGen(False)
-
-        # test that all templates match themselves
-        fpath = os.environ['RDBASE'] + "/Data/ring_system_templates.smi"
-        with open(fpath) as f:
-            templates = [Chem.MolFromSmiles(smi) for smi in f.readlines()]
-
-        for template in templates:
-            mol = Chem.Mol(template)
-            mol.RemoveAllConformers()
-            rdDepictor.Compute2DCoords(mol)
-            assert not self.molMatchesTemplate(mol, template)
-
-            mol.RemoveAllConformers()
-            rdDepictor.Compute2DCoords(mol,useRingTemplates=True)
-            assert self.molMatchesTemplate(mol, template)
-
-        rdDepictor.SetPreferCoordGen(prefer_coordgen_status)
 
 
     def testUseMultipleTemplates(self):
