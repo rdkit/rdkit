@@ -193,7 +193,7 @@ const unsigned int NUM_BRENK_PROPS =
 // Thiol Protease. J Med Chem 53 (2009) 37D51. doi:10.1021/jm901070c.
 //
 #include "nih.in"
-  
+
 const unsigned int NUM_NIH =
     static_cast<unsigned int>(sizeof(NIH) / sizeof(FilterData_t));
 
@@ -362,17 +362,15 @@ const unsigned int NUM_ZINC_PROPS =
 #include "chembl_glaxo.in"
 
 const unsigned int NUM_CHEMBL_Glaxo =
-static_cast<unsigned int>(sizeof(CHEMBL_Glaxo) / sizeof(FilterData_t));
-    
+    static_cast<unsigned int>(sizeof(CHEMBL_Glaxo) / sizeof(FilterData_t));
 
 const FilterProperty_t CHEMBL_Glaxo_PROPS[] = {
+    {"FilterSet", "ChEMBL23_Glaxo"},
     {"Reference", "https://github.com/PatWalters/rd_filters"},
     {"Scope", "ChEMBL 23 structural alerts rule-set: CHEMBL_Glaxo"}};
 
-
-const unsigned int NUM_CHEMBL_Glaxo_PROPS =
-    static_cast<unsigned int>(sizeof(CHEMBL_Glaxo_PROPS) / sizeof(FilterProperty_t));
-
+const unsigned int NUM_CHEMBL_Glaxo_PROPS = static_cast<unsigned int>(
+    sizeof(CHEMBL_Glaxo_PROPS) / sizeof(FilterProperty_t));
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // # Chembl 23 structural alert, rule set CHEMBL_Dundee
@@ -380,17 +378,15 @@ const unsigned int NUM_CHEMBL_Glaxo_PROPS =
 #include "chembl_dundee.in"
 
 const unsigned int NUM_CHEMBL_Dundee =
-static_cast<unsigned int>(sizeof(CHEMBL_Dundee) / sizeof(FilterData_t));
-    
+    static_cast<unsigned int>(sizeof(CHEMBL_Dundee) / sizeof(FilterData_t));
 
 const FilterProperty_t CHEMBL_Dundee_PROPS[] = {
+    {"FilterSet", "ChEMBL23_Dundee"},
     {"Reference", "https://github.com/PatWalters/rd_filters"},
     {"Scope", "ChEMBL 23 structural alerts rule-set: CHEMBL_Dundee"}};
 
-
-const unsigned int NUM_CHEMBL_Dundee_PROPS =
-    static_cast<unsigned int>(sizeof(CHEMBL_Dundee_PROPS) / sizeof(FilterProperty_t));
-
+const unsigned int NUM_CHEMBL_Dundee_PROPS = static_cast<unsigned int>(
+    sizeof(CHEMBL_Dundee_PROPS) / sizeof(FilterProperty_t));
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // # Chembl 23 structural alert, rule set CHEMBL_BMS
@@ -398,17 +394,15 @@ const unsigned int NUM_CHEMBL_Dundee_PROPS =
 #include "chembl_bms.in"
 
 const unsigned int NUM_CHEMBL_BMS =
-static_cast<unsigned int>(sizeof(CHEMBL_BMS) / sizeof(FilterData_t));
-    
+    static_cast<unsigned int>(sizeof(CHEMBL_BMS) / sizeof(FilterData_t));
 
 const FilterProperty_t CHEMBL_BMS_PROPS[] = {
+    {"FilterSet", "ChEMBL23_BMS"},
     {"Reference", "https://github.com/PatWalters/rd_filters"},
     {"Scope", "ChEMBL 23 structural alerts rule-set: CHEMBL_BMS"}};
 
-
-const unsigned int NUM_CHEMBL_BMS_PROPS =
-    static_cast<unsigned int>(sizeof(CHEMBL_BMS_PROPS) / sizeof(FilterProperty_t));
-
+const unsigned int NUM_CHEMBL_BMS_PROPS = static_cast<unsigned int>(
+    sizeof(CHEMBL_BMS_PROPS) / sizeof(FilterProperty_t));
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // # Chembl 23 structural alert, rule set CHEMBL_SureChEMBL
@@ -416,17 +410,15 @@ const unsigned int NUM_CHEMBL_BMS_PROPS =
 #include "chembl_surechembl.in"
 
 const unsigned int NUM_CHEMBL_SureChEMBL =
-static_cast<unsigned int>(sizeof(CHEMBL_SureChEMBL) / sizeof(FilterData_t));
-    
+    static_cast<unsigned int>(sizeof(CHEMBL_SureChEMBL) / sizeof(FilterData_t));
 
 const FilterProperty_t CHEMBL_SureChEMBL_PROPS[] = {
+    {"FilterSet", "ChEMBL23_SureChEMBL"},
     {"Reference", "https://github.com/PatWalters/rd_filters"},
     {"Scope", "ChEMBL 23 structural alerts rule-set: CHEMBL_SureChEMBL"}};
 
-
-const unsigned int NUM_CHEMBL_SureChEMBL_PROPS =
-    static_cast<unsigned int>(sizeof(CHEMBL_SureChEMBL_PROPS) / sizeof(FilterProperty_t));
-
+const unsigned int NUM_CHEMBL_SureChEMBL_PROPS = static_cast<unsigned int>(
+    sizeof(CHEMBL_SureChEMBL_PROPS) / sizeof(FilterProperty_t));
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // # Chembl 23 structural alert, rule set CHEMBL_MLSMR
@@ -434,35 +426,31 @@ const unsigned int NUM_CHEMBL_SureChEMBL_PROPS =
 #include "chembl_mlsmr.in"
 
 const unsigned int NUM_CHEMBL_MLSMR =
-static_cast<unsigned int>(sizeof(CHEMBL_MLSMR) / sizeof(FilterData_t));
-    
+    static_cast<unsigned int>(sizeof(CHEMBL_MLSMR) / sizeof(FilterData_t));
 
 const FilterProperty_t CHEMBL_MLSMR_PROPS[] = {
+    {"FilterSet", "ChEMBL23_MLSMR"},
     {"Reference", "https://github.com/PatWalters/rd_filters"},
     {"Scope", "ChEMBL 23 structural alerts rule-set: CHEMBL_MLSMR"}};
 
-
-const unsigned int NUM_CHEMBL_MLSMR_PROPS =
-    static_cast<unsigned int>(sizeof(CHEMBL_MLSMR_PROPS) / sizeof(FilterProperty_t));
-
+const unsigned int NUM_CHEMBL_MLSMR_PROPS = static_cast<unsigned int>(
+    sizeof(CHEMBL_MLSMR_PROPS) / sizeof(FilterProperty_t));
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // # Chembl 23 structural alert, rule set CHEMBL_Inpharmatica
 //
 #include "chembl_inpharmatica.in"
 
-const unsigned int NUM_CHEMBL_Inpharmatica =
-static_cast<unsigned int>(sizeof(CHEMBL_Inpharmatica) / sizeof(FilterData_t));
-    
+const unsigned int NUM_CHEMBL_Inpharmatica = static_cast<unsigned int>(
+    sizeof(CHEMBL_Inpharmatica) / sizeof(FilterData_t));
 
 const FilterProperty_t CHEMBL_Inpharmatica_PROPS[] = {
+    {"FilterSet", "ChEMBL23_Inpharmatica"},
     {"Reference", "https://github.com/PatWalters/rd_filters"},
     {"Scope", "ChEMBL 23 structural alerts rule-set: CHEMBL_Inpharmatica"}};
 
-
-const unsigned int NUM_CHEMBL_Inpharmatica_PROPS =
-    static_cast<unsigned int>(sizeof(CHEMBL_Inpharmatica_PROPS) / sizeof(FilterProperty_t));
-
+const unsigned int NUM_CHEMBL_Inpharmatica_PROPS = static_cast<unsigned int>(
+    sizeof(CHEMBL_Inpharmatica_PROPS) / sizeof(FilterProperty_t));
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // # Chembl 23 structural alert, rule set CHEMBL_LINT
@@ -470,14 +458,15 @@ const unsigned int NUM_CHEMBL_Inpharmatica_PROPS =
 #include "chembl_lint.in"
 
 const unsigned int NUM_CHEMBL_LINT =
-static_cast<unsigned int>(sizeof(CHEMBL_LINT) / sizeof(FilterData_t));
+    static_cast<unsigned int>(sizeof(CHEMBL_LINT) / sizeof(FilterData_t));
 
 const FilterProperty_t CHEMBL_LINT_PROPS[] = {
+    {"FilterSet", "ChEMBL23_LINT"},
     {"Reference", "https://github.com/PatWalters/rd_filters"},
     {"Scope", "ChEMBL 23 structural alerts rule-set: CHEMBL_LINT"}};
 
-const unsigned int NUM_CHEMBL_LINT_PROPS =
-    static_cast<unsigned int>(sizeof(CHEMBL_LINT_PROPS) / sizeof(FilterProperty_t));
+const unsigned int NUM_CHEMBL_LINT_PROPS = static_cast<unsigned int>(
+    sizeof(CHEMBL_LINT_PROPS) / sizeof(FilterProperty_t));
 
 ////////////////////////////////////////////////////////////////////////
 // API
@@ -508,7 +497,7 @@ unsigned int GetNumEntries(FilterCatalogParams::FilterCatalogs catalog) {
     case FilterCatalogParams::CHEMBL_Inpharmatica:
       return NUM_CHEMBL_Inpharmatica;
     case FilterCatalogParams::CHEMBL_LINT:
-      return NUM_CHEMBL_LINT;      
+      return NUM_CHEMBL_LINT;
     default:
       return 0;
   }
