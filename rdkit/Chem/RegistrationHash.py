@@ -130,13 +130,13 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   Chem.CanonicalizeEnhancedStereo(mol)
 
   formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
-  cxsmiles, canonical_mol = _CanonicalizeStereoGroups(mol)
-  tautomer_hash = GetStereoTautomerHash(canonical_mol)
+  cxsmiles = Chem.MolToCXSmiles(mol)
+  tautomer_hash = GetStereoTautomerHash(mol)
 
   canonical_smiles = GetCanonicalSmiles(cxsmiles)
-  sgroup_data = _CanonicalizeSGroups(canonical_mol, dataFieldNames=data_field_names)
+  sgroup_data = _CanonicalizeSGroups(mol, dataFieldNames=data_field_names)
 
-  no_stereo_tautomer_hash, no_stereo_smiles = GetNoStereoLayers(canonical_mol)
+  no_stereo_tautomer_hash, no_stereo_smiles = GetNoStereoLayers(mol)
 
   return {
     HashLayer.CANONICAL_SMILES: canonical_smiles,
@@ -399,48 +399,3 @@ class EnhancedStereoUpdateMode(enum.Enum):
   REMOVE_WEIGHTS = enum.auto()
 
 
-def _UpdateEnhancedStereoGroupWeights(mol, mode):
-  if mode == EnhancedStereoUpdateMode.ADD_WEIGHTS:
-    factor = 1
-  elif mode == EnhancedStereoUpdateMode.REMOVE_WEIGHTS:
-    factor = -1
-  else:
-    raise ValueError('Invalid Enhanced Stereo weight update mode')
-
-  isotopesModified = False
-  stgs = mol.GetStereoGroups()
-  for stg in stgs:
-    stgt = stg.GetGroupType()
-    weight = factor * ENHANCED_STEREO_GROUP_WEIGHTS[stgt]
-    for at in stg.GetAtoms():
-
-      # Make sure the isotope is reasonable and is not present in more than
-      # one stereo group, and we are not messing it up
-      isotope = at.GetIsotope()
-      if mode == EnhancedStereoUpdateMode.ADD_WEIGHTS and isotope > 999:
-        raise ValueError(
-          f'Enhanced stereo group canonicalization does not support isotopes above 999. Atom {at.GetIdx()} is {isotope}'
-        )
-
-      at.SetIsotope(isotope + weight)
-      isotopesModified = True
-
-  return mol, isotopesModified
-
-
-def _CanonicalizeStereoGroups(mol):
-  """
-    Returns canonical CXSmiles and the corresponding molecule with the
-    stereo groups canonicalized.
-
-    The RDKit canonicalization code does not currently take stereo groups into
-    account. We work around that by using EnumerateStereoisomers() to generate
-    all possible instances of the molecule's stereogroups and then lexically
-    compare the CXSMILES of those.
-    """
-
-  if not len(mol.GetStereoGroups()):
-      return Chem.MolToCXSmiles(mol), mol
-
-  Chem.CanonicalizeEnhancedStereo(mol)
-  return Chem.MolToCXSmiles(mol), mol
