@@ -439,50 +439,8 @@ def _CanonicalizeStereoGroups(mol):
     compare the CXSMILES of those.
     """
 
-  # if not len(mol.GetStereoGroups()):
+  if not len(mol.GetStereoGroups()):
+      return Chem.MolToCXSmiles(mol), mol
+
   Chem.CanonicalizeEnhancedStereo(mol)
   return Chem.MolToCXSmiles(mol), mol
-
-  mol = Chem.Mol(mol)
-
-  # add ring info if not initialized yet
-  Chem.FastFindRings(mol)
-
-  # To solve the problem we add isotope tags to the atoms involved in stereo
-  # groups. These allow the canonicalization to tell the difference between
-  # AND and OR (and have the happy side effect of allowing the
-  # presence/absence of a stereo group to affect the canonicalization)
-  mol, isotopesModified = _UpdateEnhancedStereoGroupWeights(mol,
-                                                            EnhancedStereoUpdateMode.ADD_WEIGHTS)
-
-  # We're going to be generating canonical SMILES here anyway, so skip the
-  # "unique" option for the sake of efficiency
-  opts = EnumerateStereoisomers.StereoEnumerationOptions()
-  opts.onlyStereoGroups = True
-  opts.unique = False
-
-  # Before enumerating stereoisomers, we strip the bond directions to prevent
-  # an exception when enumerating centers near double bonds.
-  # Registration code sometimes handles molecules with user-defined bond directions,
-  # which may not be valid.
-  for bond in mol.GetBonds():
-    bond.SetBondDir(Chem.BondDir.NONE)
-
-  resultMol = None
-  resultCXSmiles = ''
-  for isomer in EnumerateStereoisomers.EnumerateStereoisomers(mol, opts):
-    # We need to generate the canonical CXSMILES for the molecule with
-    # the isotope tags.
-    cxSmiles = Chem.MolToCXSmiles(isomer)
-    if resultMol is None or cxSmiles < resultCXSmiles:
-      resultMol = isomer
-      resultCXSmiles = cxSmiles
-
-  extraIsotopeRemovalRegex = re.compile(r'\[[1-3]0*([1-9]?[0-9]*[A-Z][a-z]?)@')
-  resultCXSmiles = extraIsotopeRemovalRegex.sub(r'[\1@', resultCXSmiles)
-
-  if isotopesModified:
-    resultMol, _ = _UpdateEnhancedStereoGroupWeights(resultMol,
-                                                     EnhancedStereoUpdateMode.REMOVE_WEIGHTS)
-
-  return resultCXSmiles, resultMol
