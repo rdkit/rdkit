@@ -228,9 +228,14 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
       if (effAtomicNum <= 0) {
         continue;
       }
+      // otherAtom is a non-metal, so if its atomic number is > 2, it should
+      // obey the octet rule (2*ev <= 8).  If it doesn't, don't set the bond to
+      // dative, so the molecule is later flagged as having bad valence.
+      // [CH4]-[Na] being a case in point, line 1800 of
+      // FileParsers/file_parsers_catch.cpp.
       const auto &otherValens =
           PeriodicTable::getTable()->getValenceList(effAtomicNum);
-      if (otherValens.back() > 0 && ev > otherValens.back()) {
+      if (otherValens.back() > 0 && ev > otherValens.back() && ev <= 4) {
         bond->setBondType(RDKit::Bond::BondType::DATIVE);
         bond->setBeginAtom(otherAtom);
         bond->setEndAtom(atom);
