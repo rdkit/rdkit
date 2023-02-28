@@ -64,6 +64,7 @@
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/MolBundle.h>
+#include <GraphMol/Chirality.h>
 #include <sstream>
 %}
 
@@ -155,6 +156,26 @@ void setPreferCoordGen(bool val) {
 bool getPreferCoordGen();
 void setPreferCoordGen(bool);
 
+%{
+bool getUseLegacyStereoPerception() {
+  return RDKit::Chirality::getUseLegacyStereoPerception();
+}
+void setUseLegacyStereoPerception(bool val) {
+  RDKit::Chirality::setUseLegacyStereoPerception(val);
+}
+bool getAllowNontetrahedralChirality() {
+  return RDKit::Chirality::getAllowNontetrahedralChirality();
+}
+void setAllowNontetrahedralChirality(bool val) {
+  RDKit::Chirality::setAllowNontetrahedralChirality(val);
+}
+%}
+
+bool getUseLegacyStereoPerception();
+void setUseLegacyStereoPerception(bool);
+bool getAllowNontetrahedralChirality();
+void setAllowNontetrahedralChirality(bool);
+
 %extend RDKit::ROMol {
   std::string getProp(const std::string key){
     std::string res;
@@ -167,14 +188,18 @@ void setPreferCoordGen(bool);
     return self->addConformer(ownedConf, assignId);
   }
 
-  std::string MolToSmiles(bool doIsomericSmiles=false,bool doKekule=false, int rootedAtAtom=-1){
-    return RDKit::MolToSmiles(*($self),doIsomericSmiles,doKekule,rootedAtAtom);
+  std::string MolToSmiles(bool doIsomericSmiles=true, bool doKekule=false, int rootedAtAtom=-1, bool canonical=true,
+                          bool allBondsExplicit=false, bool allHsExplicit=false, bool doRandom=false) {
+    return RDKit::MolToSmiles(*($self), doIsomericSmiles, doKekule, rootedAtAtom, canonical, allBondsExplicit, allHsExplicit, doRandom);
   }
-  std::string MolToMolBlock(bool includeStereo=true, int confId=-1) {
-    return RDKit::MolToMolBlock(*($self),includeStereo,confId);
+  std::string MolToSmiles(const RDKit::SmilesWriteParams &params) {
+    return RDKit::MolToSmiles(*($self), params);
   }
-  void MolToMolFile(std::string fName,bool includeStereo=true, int confId=-1,bool kekulize=true) {
-    RDKit::MolToMolFile(*($self), fName, includeStereo, confId, kekulize);
+  std::string MolToMolBlock(bool includeStereo=true, int confId=-1, bool kekulize=true, bool forceV3000=false) {
+    return RDKit::MolToMolBlock(*($self), includeStereo, confId, kekulize, forceV3000);
+  }
+  void MolToMolFile(std::string fName,bool includeStereo=true, int confId=-1, bool kekulize=true, bool forceV3000=false) {
+    RDKit::MolToMolFile(*($self), fName, includeStereo, confId, kekulize, forceV3000);
   }
   std::string MolToTPLText(std::string partialChargeProp="_GasteigerCharge", bool writeFirstConfTwice=false) {
     return RDKit::MolToTPLText(*($self), partialChargeProp, writeFirstConfTwice);

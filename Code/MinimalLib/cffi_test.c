@@ -1803,6 +1803,68 @@ void test_removehs() {
   free(mpkl);
 }
 
+void test_use_legacy_stereo() {
+  printf("--------------------------\n");
+  printf("  test_use_legacy_stereo\n");
+  short orig_setting = use_legacy_stereo_perception(1);
+  char *mpkl;
+  size_t mpkl_size;
+  mpkl = get_mol("O[C@@]1(C)C/C(/C1)=C(/C)\\CC", &mpkl_size, "");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  char *smiles = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smiles, "CCC(C)=C1CC(C)(O)C1"));
+  free(smiles);
+  free(mpkl);
+  use_legacy_stereo_perception(0);
+  mpkl = get_mol("O[C@@]1(C)C/C(/C1)=C(/C)\\CC", &mpkl_size, "");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  smiles = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smiles, "CC/C(C)=C1\\C[C@](C)(O)C1"));
+  free(smiles);
+  free(mpkl);
+  use_legacy_stereo_perception(orig_setting);
+}
+
+void test_allow_non_tetrahedral_chirality() {
+  printf("--------------------------\n");
+  printf("  test_allow_non_tetrahedral_chirality\n");
+  char ctab[] = "\n\
+  Mrv2108 09132105183D          \n\
+\n\
+  5  4  0  0  0  0            999 V2000\n\
+   -1.2500    1.4518    0.0000 Pt  0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.2500    2.2768    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.4250    1.4518    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.0750    1.4518    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.2500    0.6268    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0  0  0  0\n\
+  1  3  1  0  0  0  0\n\
+  1  4  1  0  0  0  0\n\
+  1  5  1  0  0  0  0\n\
+M  END\n";
+  short orig_setting = allow_non_tetrahedral_chirality(1);
+  char *mpkl;
+  size_t mpkl_size;
+  mpkl = get_mol(ctab, &mpkl_size, "");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  char *smiles = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smiles, "F[Pt@SP3](F)(Cl)Cl"));
+  free(smiles);
+  free(mpkl);
+  allow_non_tetrahedral_chirality(0);
+  mpkl = get_mol(ctab, &mpkl_size, "");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  smiles = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smiles, "F[Pt](F)(Cl)Cl"));
+  free(smiles);
+  free(mpkl);
+  allow_non_tetrahedral_chirality(orig_setting);
+}
+
 
 int main() {
   enable_logging();
@@ -1825,5 +1887,7 @@ int main() {
   test_wedging_outside_scaffold();
   test_wedging_if_no_match();
   test_removehs();
+  test_use_legacy_stereo();
+  test_allow_non_tetrahedral_chirality();
   return 0;
 }
