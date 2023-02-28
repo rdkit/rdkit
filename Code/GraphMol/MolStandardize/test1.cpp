@@ -1491,7 +1491,7 @@ void testOrganometallics() {
       {"MOL_00009.mol",
        R"(CN(C)c1ccc(P(C(C)(C)C)C(C)(C)C)cc1.CN(C)c1ccc(P(C(C)(C)C)C(C)(C)C)cc1.[Cl-].[Cl-].[Pd+2])"},
       {"MOL_00010.mol",
-       R"(*.C[C-]=Cc1ccccc1.Cc1cc(C(c2ccccc2)c2ccccc2)c(N2[CH-]N(c3c(C(c4ccccc4)c4ccccc4)cc(C)cc3C(c3ccccc3)c3ccccc3)CC2)c(C(c2ccccc2)c2ccccc2)c1.[Cl-].[Pd+2])"},
+       R"(Cc1cc(C(c2ccccc2)c2ccccc2)c(-n2[c-][n+](-c3c(C(c4ccccc4)c4ccccc4)cc(C)cc3C(c3ccccc3)c3ccccc3)cc2)c(C(c2ccccc2)c2ccccc2)c1.[CH2-]/C=C/c1ccccc1.[Cl-].[Pd+2])"},
       {"MOL_00011.mol",
        R"([Cl-].[Cl-].[Ni+2].c1ccc(P(CCCP(c2ccccc2)c2ccccc2)c2ccccc2)cc1)"},
       {"MOL_00012.mol", R"(C1=C\CC/C=C\CC/1.CC1=C(C)C(=O)C(C)=C(C)C1=O.[Ni])"},
@@ -1525,8 +1525,8 @@ void testOrganometallics() {
     SDMolSupplier mol_supplier(full_file, takeOwnership);
     std::unique_ptr<ROMol> m(mol_supplier.next());
     std::unique_ptr<ROMol> dm(MolStandardize::disconnectOrganometallics(*m));
-    //    std::cout << test_file.first << " : " << MolToSmiles(*dm) <<
-    //    std::endl;
+    //    std::cout << test_file.first << " got : " << MolToSmiles(*dm)
+    //              << " expected : " << test_file.second << std::endl;
     TEST_ASSERT(MolToSmiles(*dm) == test_file.second);
     std::unique_ptr<RWMol> em(new RWMol(*m));
     MolStandardize::disconnectOrganometallics(*em);
