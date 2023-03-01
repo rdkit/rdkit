@@ -1,6 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
-//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (C) 2001-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -667,22 +666,16 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         auto re = res[frag];
         std::vector<StereoGroup> fragsgs;
         for (auto &sg : mol.getStereoGroups()) {
-          bool inThisFrag = true;
-          for (auto sga : sg.getAtoms()) {
-            if ((*mapping)[sga->getIdx()] != frag) {
-              inThisFrag = false;
-              break;
-            }
-          }
-          if (!inThisFrag) {
-            continue;
-          }
           std::vector<Atom *> sgats;
           for (auto sga : sg.getAtoms()) {
-            sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
+            if ((*mapping)[sga->getIdx()] == frag) {
+              sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
+            }
           }
-          fragsgs.push_back(StereoGroup(sg.getGroupType(), sgats));
-          keptSGs.set(frag);
+          if (!sgats.empty()) {
+            fragsgs.push_back(StereoGroup(sg.getGroupType(), sgats));
+            keptSGs.set(frag);
+          }
         }
         if (!fragsgs.empty()) {
           re->setStereoGroups(std::move(fragsgs));

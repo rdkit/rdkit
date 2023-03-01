@@ -2991,11 +2991,11 @@ TEST_CASE("github #4642: Enhanced Stereo is lost when using GetMolFrags") {
     REQUIRE(m);
     auto frags = MolOps::getMolFrags(*m);
     REQUIRE(frags.size() == 2);
-    CHECK(frags[0]->getStereoGroups().empty());
-    CHECK(frags[1]->getStereoGroups().size() == 1);
-    CHECK(frags[0]->getAtomWithIdx(2)->getChiralTag() ==
+    CHECK(frags[0]->getStereoGroups().size() == 1);
+    CHECK(frags[1]->getStereoGroups().size() == 2);
+    CHECK(frags[0]->getAtomWithIdx(2)->getChiralTag() !=
           Atom::ChiralType::CHI_UNSPECIFIED);
-    CHECK(frags[1]->getAtomWithIdx(1)->getChiralTag() ==
+    CHECK(frags[1]->getAtomWithIdx(1)->getChiralTag() !=
           Atom::ChiralType::CHI_UNSPECIFIED);
     CHECK(frags[1]->getAtomWithIdx(4)->getChiralTag() !=
           Atom::ChiralType::CHI_UNSPECIFIED);
