@@ -863,6 +863,12 @@ function test_sanitize() {
     assert(mol.is_valid());
 }
 
+function test_removehs() {
+    const badValenceSmiles = 'N1C=CC(=O)c2ccc(N(C)(C)(C)(C)C)cc12';
+    mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ sanitize: false, removeHs: false }));
+    assert(mol.is_valid());
+}
+
 function test_flexicanvas() {
     var mol = RDKitModule.get_mol("CCCC");
     assert.equal(mol.is_valid(),1);
@@ -1798,6 +1804,7 @@ initRDKitModule().then(function(instance) {
     test_has_coords();
     test_kekulize();
     test_sanitize();
+    test_removehs();
     test_normalize_depiction();
     test_straighten_depiction();
     test_flexicanvas();
