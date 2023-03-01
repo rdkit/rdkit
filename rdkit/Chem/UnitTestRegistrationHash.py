@@ -276,13 +276,15 @@ M  END
             ),
         )
         for mols_smis in groups:
-            print()
             csmis = set()
             for smi in mols_smis:
                 mol = Chem.MolFromSmiles(smi)
-                csmi = Chem.CanonicalizeEnhancedStereo(mol)
+                Chem.CanonicalizeEnhancedStereo(mol)
+                csmi = Chem.MolToCXSmiles(mol)
                 csmis.add(csmi)
             self.assertEqual(len(csmis), 1)
+            self.assertNotEqual(list(csmis)[0], None)
+
 
     def test_enhanced_stereo_canonicalizer_non_matching(self):
         # Uncorrected example in SHARED-7811. These are NOT equivalent,
@@ -296,7 +298,6 @@ M  END
             Chem.CanonicalizeEnhancedStereo(mol)
             csmi = Chem.MolToCXSmiles(mol)
             csmis.add(csmi)
-
         self.assertEqual(len(csmis), 2)
 
     def test_enhanced_stereo_regex(self):
