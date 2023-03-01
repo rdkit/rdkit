@@ -178,9 +178,9 @@ RDKIT_MOLSTANDARDIZE_EXPORT std::string standardizeSmiles(
 //! indices of the atoms involved in the haptic bond) then the dummy atom
 //! is removed also.
 //! Do the disconnection in place.
-void disconnectOrganometallics(RWMol &mol);
+RDKIT_MOLSTANDARDIZE_EXPORT void disconnectOrganometallics(RWMol &mol);
 //! As above, but returns new disconnected molecule.
-ROMol *disconnectOrganometallics(const ROMol &mol);
+RDKIT_MOLSTANDARDIZE_EXPORT ROMol *disconnectOrganometallics(const ROMol &mol);
 
 //! TODO
 RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::string> enumerateTautomerSmiles(
