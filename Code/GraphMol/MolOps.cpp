@@ -661,7 +661,6 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     }
     // copy stereoGroups (if present)
     if (!mol.getStereoGroups().empty()) {
-      boost::dynamic_bitset<> keptSGs(mol.getStereoGroups().size(), 0);
       for (unsigned int frag = 0; frag < nFrags; ++frag) {
         auto re = res[frag];
         std::vector<StereoGroup> fragsgs;
@@ -674,7 +673,6 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
           }
           if (!sgats.empty()) {
             fragsgs.push_back(StereoGroup(sg.getGroupType(), sgats));
-            keptSGs.set(frag);
           }
         }
         if (!fragsgs.empty()) {
