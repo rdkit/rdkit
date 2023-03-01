@@ -681,19 +681,6 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
           re->setStereoGroups(std::move(fragsgs));
         }
       }
-      // remove chiral tags from atoms which were in stereo groups but aren't
-      // any longer
-      for (unsigned int i = 0; i < keptSGs.size(); ++i) {
-        if (!keptSGs[i]) {
-          const auto &sg = mol.getStereoGroups()[i];
-          for (const auto sga : sg.getAtoms()) {
-            auto fragIdx = (*mapping)[sga->getIdx()];
-            res[fragIdx]
-                ->getAtomWithIdx(ids[sga->getIdx()])
-                ->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
-          }
-        }
-      }
     }
   }
 
