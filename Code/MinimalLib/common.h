@@ -139,8 +139,6 @@ RWMol *mol_from_input(const std::string &input,
     res = nullptr;
   }
   if (res) {
-    unsigned int failedOp;
-    unsigned int sanitizeOps = MolOps::SANITIZE_ADJUSTHS;
     try {
       if (sanitize) {
         unsigned int failedOp;
