@@ -280,7 +280,7 @@ M  END
             csmis = set()
             for smi in mols_smis:
                 mol = Chem.MolFromSmiles(smi)
-                csmi, _ = RegistrationHash._CanonicalizeStereoGroups(mol)
+                csmi = Chem.CanonicalizeEnhancedStereo(mol)
                 csmis.add(csmi)
             self.assertEqual(len(csmis), 1)
 
@@ -293,7 +293,8 @@ M  END
         csmis = set()
         for smi in (s1, s3):
             mol = Chem.MolFromSmiles(smi)
-            csmi, _ = RegistrationHash._CanonicalizeStereoGroups(mol)
+            Chem.CanonicalizeEnhancedStereo(mol)
+            csmi = Chem.MolToCXSmiles(mol)
             csmis.add(csmi)
 
         self.assertEqual(len(csmis), 2)
