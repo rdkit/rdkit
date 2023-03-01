@@ -40,7 +40,7 @@ class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
 };
 
 struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
-  RDGeom::INT_POINT2D_MAP *coordMap =
+  const RDGeom::INT_POINT2D_MAP *coordMap =
       nullptr;  //!< a map of int to Point2D, between atom IDs and their
                 //!< locations.  This is the container the user needs to
                 //!< fill if he/she wants to specify coordinates for a portion
@@ -117,7 +117,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
 
 */
 RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
-    RDKit::ROMol &mol, RDGeom::INT_POINT2D_MAP *coordMap = nullptr,
+    RDKit::ROMol &mol, const RDGeom::INT_POINT2D_MAP *coordMap = nullptr,
     bool canonOrient = false, bool clearConfs = true,
     unsigned int nFlipsPerSample = 0, unsigned int nSamples = 0,
     int sampleSeed = 0, bool permuteDeg4Nodes = false, bool forceRDKit = false,
