@@ -88,16 +88,6 @@ namespace Descriptors {
  */
 RDKIT_DESCRIPTORS_EXPORT void calcOxidationNumbers(const ROMol &mol);
 
-/*!
- * Calculate the oxidation number (state) of the atom of interest, which
- * must be in a parent molecule which is in kekulized form.  If it's not
- * kekulized (it checks for bond bond types of 1.5), it raises a
- * ValueErrorException.
- * @param atom the atom of interest
- * @return the oxidation state as an integer
- */
-RDKIT_DESCRIPTORS_EXPORT int calcOxidationNumberByEN(const Atom *atom);
-
 }  // end of namespace Descriptors
 }  // end of namespace RDKit
 #endif
