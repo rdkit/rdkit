@@ -522,7 +522,7 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
 }
 
 unsigned int compute2DCoords(RDKit::ROMol &mol,
-                             RDGeom::INT_POINT2D_MAP *coordMap,
+                             const RDGeom::INT_POINT2D_MAP *coordMap,
                              bool canonOrient, bool clearConfs,
                              unsigned int nFlipsPerSample,
                              unsigned int nSamples, int sampleSeed,
