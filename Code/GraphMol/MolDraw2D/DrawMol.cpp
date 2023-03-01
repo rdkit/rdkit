@@ -125,6 +125,23 @@ void DrawMol::createDrawObjects() {
       ignoreFontLimits) {
     // in either of these cases, the relative font size isn't what we were
     // expecting, so we need to rebuild everything.
+
+    // furthermore, if it's a fully flexible canvas and the font scale is
+    // greater than the global scale, if there are characters at the edge
+    // of the image, the canvas won't be big enough (Github6111). Rebuild
+    // with an appropriate relative font size.
+    if (flexiCanvasX_ && flexiCanvasY_ && (fontScale_ - scale_) > 1e-4) {
+      width_ = -1;
+      height_ = -1;
+      auto currScale = textDrawer_.fontScale();
+      auto relScale = fontScale_ / scale_;
+      resetEverything();
+      fontScale_ = relScale;
+      textDrawer_.setFontScale(relScale, true);
+      extractAll(scale_);
+      calculateScale();
+      textDrawer_.setFontScale(currScale, true);
+    }
     setScale(scale_, textDrawer_.fontScale(), ignoreFontLimits);
   } else {
     finishCreateDrawObjects();

@@ -273,7 +273,7 @@ Atom::ChiralType atomChiralTypeFromBondDir(const ROMol &mol, const Bond *bond,
             (dir2 != Bond::NONE && dir2 != dir0)) {
           BOOST_LOG(rdWarningLog)
               << "Warning: conflicting stereochemistry at atom "
-              << bond->getBeginAtomIdx() << " ignored."
+              << bond->getBeginAtomIdx() << " ignored"
               << " by rule 1a." << std::endl;
           return Atom::CHI_UNSPECIFIED;
         }
@@ -282,7 +282,7 @@ Atom::ChiralType atomChiralTypeFromBondDir(const ROMol &mol, const Bond *bond,
         if (dir1 == dir0 && dir1 == dir2) {
           BOOST_LOG(rdWarningLog)
               << "Warning: conflicting stereochemistry at atom "
-              << bond->getBeginAtomIdx() << " ignored."
+              << bond->getBeginAtomIdx() << " ignored"
               << " by rule 1b." << std::endl;
           return Atom::CHI_UNSPECIFIED;
         }
@@ -309,7 +309,7 @@ Atom::ChiralType atomChiralTypeFromBondDir(const ROMol &mol, const Bond *bond,
                dir0 != dir2)) {  // middle two examples
             BOOST_LOG(rdWarningLog)
                 << "Warning: conflicting stereochemistry at atom "
-                << bond->getBeginAtomIdx() << " ignored."
+                << bond->getBeginAtomIdx() << " ignored"
                 << " by rule 2a." << std::endl;
             return Atom::CHI_UNSPECIFIED;
           }
@@ -318,7 +318,7 @@ Atom::ChiralType atomChiralTypeFromBondDir(const ROMol &mol, const Bond *bond,
           // angles less than 180" case above
           BOOST_LOG(rdWarningLog)
               << "Warning: conflicting stereochemistry at atom "
-              << bond->getBeginAtomIdx() << " ignored."
+              << bond->getBeginAtomIdx() << " ignored"
               << " by rule 2b." << std::endl;
           return Atom::CHI_UNSPECIFIED;
         }

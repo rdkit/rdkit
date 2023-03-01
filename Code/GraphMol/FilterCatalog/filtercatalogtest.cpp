@@ -216,7 +216,6 @@ void testFilterCatalogThreadedRunner() {
   int count = 0;
   while (std::getline(infile, line)) {
     if (count) {
-      std::cerr << line << std::endl;
       smiles.push_back(line);
     }
     count += 1;
@@ -229,7 +228,6 @@ void testFilterCatalogThreadedRunner() {
   count = 0;
   for (auto &entries : results) {
     TEST_ASSERT(entries.size() > 0);
-    std::cerr << count << " " << entries[0]->getDescription() << std::endl;
     switch (count) {
       case 0:
         TEST_ASSERT(entries[0]->getDescription() == "hzone_phenol_A(479)");
@@ -245,6 +243,102 @@ void testFilterCatalogThreadedRunner() {
   }
 }
 
+void testFilterCatalogCHEMBL() {
+    FilterCatalogParams params;
+    auto catalogs = {FilterCatalogParams::CHEMBL_BMS,
+        FilterCatalogParams::CHEMBL_LINT,
+        FilterCatalogParams::CHEMBL_Glaxo,
+        FilterCatalogParams::CHEMBL_MLSMR,
+        FilterCatalogParams::CHEMBL_Dundee,
+        FilterCatalogParams::CHEMBL_Inpharmatica,
+        FilterCatalogParams::CHEMBL_SureChEMBL};
+    std::vector<int> entries = {180, 57, 55, 116, 105, 91, 166};
+    int i=0;
+    for (auto catalog : catalogs) {
+        FilterCatalogParams params;
+        params.addCatalog(catalog);
+        FilterCatalog filtercat(params);
+        TEST_ASSERT(entries[i++] == filtercat.getNumEntries());
+    }
+    
+    { // Test inpharmatica merge hydrogens
+        const std::vector<std::pair<std::string, std::string>> tests = {
+            {"CN=NC", "Filter5_azo"},
+            {"CN=N", "Filter5_azo"},
+            {"N=N", "Filter5_azo"},
+            {"NN=N", ""},
+            {"CC(=O)CCBr", "Filter26_alkyl_halide|Filter30_beta_halo_carbonyl|Filter75_alkyl_Br_I"},
+            {"CC(=O)CCI", "Filter26_alkyl_halide|Filter30_beta_halo_carbonyl|Filter75_alkyl_Br_I"},
+            {"C(=O)CCI", "Filter26_alkyl_halide|Filter30_beta_halo_carbonyl|Filter38_aldehyde|Filter75_alkyl_Br_I"},
+            {"NC(=O)CCI", "Filter26_alkyl_halide|Filter75_alkyl_Br_I"},
+            {"CC=NOS(=O)N", "Filter18_oxime_ester|Filter89_hydroxylamine"},
+            {"NC=NOP(=O)N", "Filter89_hydroxylamine"},
+            {"C=NOP(=O)N", "Filter18_oxime_ester|Filter89_hydroxylamine"},
+            {"NC=NO", "Filter89_hydroxylamine"},
+            {"CC(=O)NOC", ""},
+            {"[Fe]C", "Filter9_metal"},
+            {"[FeH]", "Filter9_metal"},
+            {"[Fe]", ""},
+            {"CN=O", "Filter12_nitroso"},
+            {"N=O", "Filter12_nitroso"},
+            {"S=P", "Filter13_PS_double_bond|Filter61_phosphor_halide_and_P_S_bond"},
+            {"S=PC", "Filter13_PS_double_bond|Filter61_phosphor_halide_and_P_S_bond"},
+            {"CC(=O)SC", "Filter29_thioester"},
+            {"CC(=S)SC", "Filter29_thioester"},
+            {"CC(=N)SC", "Filter29_thioester"},
+            {"CC(=O)S", "Filter29_thioester|Filter74_thiol"},
+            {"CC(=S)S", "Filter29_thioester|Filter74_thiol"},
+            {"CC(=N)S", "Filter29_thioester|Filter74_thiol"},
+            {"SO", "Filter31_so_bond|Filter74_thiol"},
+            {"SOC", "Filter31_so_bond|Filter74_thiol"},
+            {"c1csocc1", ""},
+            {"OO", "Filter32_oo_bond"},
+            {"COO", "Filter32_oo_bond"},
+            {"c1coocc1", ""},
+            {"CC(=O)C=C", "Filter44_michael_acceptor2"},
+            {"C(=O)C=C", "Filter38_aldehyde|Filter44_michael_acceptor2"},
+            {"OC(=O)C=C", "Filter44_michael_acceptor2"},
+            {"C1(=O)C=CC(=O)C=C1", "Filter53_para_quinones"},
+            {"CIC", "Filter49_halogen|Filter75_alkyl_Br_I"},
+            {"CI(C)C", "Filter49_halogen|Filter75_alkyl_Br_I"}
+        };
+        FilterCatalogParams params;
+        params.addCatalog(FilterCatalogParams::CHEMBL_Inpharmatica);
+        FilterCatalog catalog(params);
+        for(auto &test: tests) {
+            std::unique_ptr<RWMol> mol(SmilesToMol(test.first));
+            std::string matches;
+            for (auto &match: catalog.getMatches(*mol)) {
+                if (matches.size()) matches += "|";
+                matches += match->getDescription();
+            }
+            
+            TEST_ASSERT(matches == test.second);
+        }
+    }
+    {
+        // Test Lint merge hydrogens
+        const std::vector<std::pair<std::string, std::string>> tests = {
+            {"CN=C", ""},
+            {"CN=CC", "acyclic imines"},
+            {"CN=C(C)", "acyclic imines"},
+            {"C1N=CC1", ""}
+        };
+        FilterCatalogParams params;
+        params.addCatalog(FilterCatalogParams::CHEMBL_LINT);
+        FilterCatalog catalog(params);
+        for(auto &test: tests) {
+            std::unique_ptr<RWMol> mol(SmilesToMol(test.first));
+            std::string matches;
+            for (auto &match: catalog.getMatches(*mol)) {
+                if (matches.size()) matches += "|";
+                matches += match->getDescription();
+            }
+            TEST_ASSERT(matches == test.second);
+        }
+    }
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -252,5 +346,6 @@ int main() {
   testFilterCatalog();
   testFilterCatalogEntry();
   testFilterCatalogThreadedRunner();
+  testFilterCatalogCHEMBL();
   return 0;
 }

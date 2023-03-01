@@ -61,37 +61,44 @@
 #endif
 
 %typemap(javacode) ExplicitBitVect %{
-     public static ExplicitBitVect fromByteArray(byte[] fp) {
-     UChar_Vect vec = new UChar_Vect();
-     vec.reserve(fp.length);
-     for (int size=0;size<fp.length;++size) {
-       vec.add((short)fp[size]);
-     }
-     return new ExplicitBitVect(vec);
-   }
+  public static ExplicitBitVect fromByteArray(byte[] fp) {
+    UChar_Vect vec = null;
+    try {
+      vec = new UChar_Vect();
+      vec.reserve(fp.length);
+      for (int size=0;size<fp.length;++size) {
+        vec.add((short)fp[size]);
+      }
+      return new ExplicitBitVect(vec);
+    } finally {
+      if (vec != null) {
+        vec.delete();
+      }
+    }
+  }
 %}
 
 %include <DataStructs/ExplicitBitVect.h>
 %newobject ExplicitBitVect::getOnBits;
 %extend ExplicitBitVect {
-	IntVect *getOnBits() {
-	  IntVect* bits = new IntVect;
-	  ($self)->getOnBits(*bits);
-	  return bits;
-	}
+  IntVect *getOnBits() {
+    IntVect* bits = new IntVect;
+    ($self)->getOnBits(*bits);
+    return bits;
+  }
 }
 
 #ifdef SWIGJAVA
 
 %extend ExplicitBitVect {
-	const std::string toByteArray() {
-		return ($self)->toString();
-	}
+  const std::string toByteArray() {
+    return ($self)->toString();
+  }
 
-	ExplicitBitVect(const std::vector<unsigned char> & data ) {
-    	std::string str(data.begin(), data.end());
-    	return new ExplicitBitVect(str);
-  	}
+  ExplicitBitVect(const std::vector<unsigned char> & data ) {
+      std::string str(data.begin(), data.end());
+      return new ExplicitBitVect(str);
+    }
 }
 
 #endif
