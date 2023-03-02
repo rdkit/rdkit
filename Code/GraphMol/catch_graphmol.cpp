@@ -2968,3 +2968,36 @@ TEST_CASE("github #6100: bonds to dummy atoms considered as dative") {
     REQUIRE(!m);
   }
 }
+
+TEST_CASE("github #4642: Enhanced Stereo is lost when using GetMolFrags") {
+  SECTION("as reported") {
+    auto m = "CCCC.C[C@H](F)C[C@H](O)Cl |o1:5,o2:8|"_smiles;
+    REQUIRE(m);
+    auto frags = MolOps::getMolFrags(*m);
+    REQUIRE(frags.size() == 2);
+    CHECK(frags[0]->getStereoGroups().empty());
+    CHECK(frags[1]->getStereoGroups().size() == 2);
+  }
+  SECTION("each fragment has groups") {
+    auto m = "CC[C@@H](C)O.C[C@H](F)C[C@H](O)Cl |o1:6,o2:9,o3:2|"_smiles;
+    REQUIRE(m);
+    auto frags = MolOps::getMolFrags(*m);
+    REQUIRE(frags.size() == 2);
+    CHECK(frags[0]->getStereoGroups().size() == 1);
+    CHECK(frags[1]->getStereoGroups().size() == 2);
+  }
+  SECTION("group split between fragments") {
+    auto m = "CC[C@@H](C)O.C[C@H](F)C[C@H](O)Cl |o1:2,6,o2:9|"_smiles;
+    REQUIRE(m);
+    auto frags = MolOps::getMolFrags(*m);
+    REQUIRE(frags.size() == 2);
+    CHECK(frags[0]->getStereoGroups().size() == 1);
+    CHECK(frags[1]->getStereoGroups().size() == 2);
+    CHECK(frags[0]->getAtomWithIdx(2)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(frags[1]->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(frags[1]->getAtomWithIdx(4)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+}
