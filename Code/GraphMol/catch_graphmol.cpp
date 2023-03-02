@@ -3131,17 +3131,17 @@ TEST_CASE("get haptic bond end points") {
       MolFileToMol(pathName + "MOL_00002.mol", sanitize));
   REQUIRE(mol);
   auto bond = mol->getBondWithIdx(0);
-  auto endPts = MolOps::hapticBondEndpoints(bond);
+  auto endPts = MolOps::details::hapticBondEndpoints(bond);
   CHECK(std::vector<int>{1, 2, 3, 4, 0} == endPts);
   bond = mol->getBondWithIdx(11);
-  endPts = MolOps::hapticBondEndpoints(bond);
+  endPts = MolOps::details::hapticBondEndpoints(bond);
   CHECK(std::vector<int>{6, 7, 8, 9, 5} == endPts);
   // dative but not haptic
   bond = mol->getBondWithIdx(49);
-  endPts = MolOps::hapticBondEndpoints(bond);
+  endPts = MolOps::details::hapticBondEndpoints(bond);
   CHECK(std::vector<int>{} == endPts);
   // not dative
   bond = mol->getBondWithIdx(1);
-  endPts = MolOps::hapticBondEndpoints(bond);
+  endPts = MolOps::details::hapticBondEndpoints(bond);
   CHECK(std::vector<int>{} == endPts);
 }

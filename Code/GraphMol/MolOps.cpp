@@ -871,30 +871,6 @@ unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
   return numPropAtoms;
 }
 
-std::vector<int> hapticBondEndpoints(const Bond *bond) {
-  // This would ideally use ParseV3000Array but I'm buggered if I can get
-  // the linker to find it.  The issue, I think, is that it's in the
-  // FileParsers library which is built after GraphMol so not available
-  // to link in.  It can't be built first because it needs GraphMol.
-  //      std::vector<unsigned int> oats =
-  //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
-  // Returns the atom indices i.e. subtracts 1 from the numbers in the prop.
-  std::vector<int> oats;
-  std::string endpts;
-  if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts)) {
-    if ('(' == endpts.front() && ')' == endpts.back()) {
-      endpts = endpts.substr(1, endpts.length() - 2);
-      boost::char_separator<char> sep(" ");
-      boost::tokenizer<boost::char_separator<char>> tokens(endpts, sep);
-      auto beg = tokens.begin();
-      ++beg;
-      std::transform(beg, tokens.end(), std::back_inserter(oats),
-                     [](const std::string &a) { return std::stod(a) - 1; });
-    }
-  }
-  return oats;
-}
-
 ROMol *hapticBondsToDative(const ROMol &mol) {
   auto *res = new RWMol(mol);
   hapticBondsToDative(*res);
@@ -906,7 +882,7 @@ void hapticBondsToDative(RWMol &mol) {
   std::vector<std::pair<unsigned int, unsigned int>> bondsToAdd;
   for (const auto &bond : mol.bonds()) {
     if (bond->getBondType() == Bond::BondType::DATIVE) {
-      auto oats = hapticBondEndpoints(bond);
+      auto oats = details::hapticBondEndpoints(bond);
       if (oats.empty()) {
         continue;
       }
@@ -1048,5 +1024,30 @@ void dativeBondsToHaptic(RWMol &mol) {
   }
 }
 
+namespace details {
+std::vector<int> hapticBondEndpoints(const Bond *bond) {
+  // This would ideally use ParseV3000Array but I'm buggered if I can get
+  // the linker to find it.  The issue, I think, is that it's in the
+  // FileParsers library which is built after GraphMol so not available
+  // to link in.  It can't be built first because it needs GraphMol.
+  //      std::vector<unsigned int> oats =
+  //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
+  // Returns the atom indices i.e. subtracts 1 from the numbers in the prop.
+  std::vector<int> oats;
+  std::string endpts;
+  if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts)) {
+    if ('(' == endpts.front() && ')' == endpts.back()) {
+      endpts = endpts.substr(1, endpts.length() - 2);
+      boost::char_separator<char> sep(" ");
+      boost::tokenizer<boost::char_separator<char>> tokens(endpts, sep);
+      auto beg = tokens.begin();
+      ++beg;
+      std::transform(beg, tokens.end(), std::back_inserter(oats),
+                     [](const std::string &a) { return std::stod(a) - 1; });
+    }
+  }
+  return oats;
+}
+}  // end of namespace details
 };  // end of namespace MolOps
 };  // end of namespace RDKit
