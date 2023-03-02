@@ -5578,7 +5578,7 @@ TEST_CASE("MaeMolSupplier setData and reset methods",
     std::unique_ptr<ROMol> molptr;
     try {
       molptr.reset(supplier.next());
-    } catch (const Invar::Invariant &) {
+    } catch (const FileParseException &) {
       // the 4th structure is intentionally bad.
     }
 
