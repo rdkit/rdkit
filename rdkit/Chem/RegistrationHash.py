@@ -30,7 +30,6 @@ from typing import Iterable
 from typing import Optional
 
 from rdkit import Chem
-from rdkit.Chem import EnumerateStereoisomers
 from rdkit.Chem import rdMolHash
 
 ATOM_PROP_MAP_NUMBER = 'molAtomMapNumber'
@@ -127,16 +126,21 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   mol = _RemoveUnnecessaryHs(original_molecule, preserve_stereogenic_hs=True)
   _StripAtomMapLabels(mol)
 
+  cxflagsnone = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO #| Chem.CXSmilesFields.CX_SGROUPS
+  ps = Chem.SmilesWriteParams()
+
   Chem.CanonicalizeEnhancedStereo(mol)
 
   formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
-  cxsmiles, canonical_mol = _CanonicalizeStereoGroups(mol)
-  tautomer_hash = GetStereoTautomerHash(canonical_mol)
+  cxsmiles = Chem.MolToCXSmiles(
+    mol, ps, cxflagsnone)
+  tautomer_hash = GetStereoTautomerHash(mol)
 
-  canonical_smiles = GetCanonicalSmiles(cxsmiles)
-  sgroup_data = _CanonicalizeSGroups(canonical_mol, dataFieldNames=data_field_names)
+  canonical_smiles = cxsmiles
 
-  no_stereo_tautomer_hash, no_stereo_smiles = GetNoStereoLayers(canonical_mol)
+  sgroup_data = _CanonicalizeSGroups(mol, dataFieldNames=data_field_names)
+
+  no_stereo_tautomer_hash, no_stereo_smiles = GetNoStereoLayers(mol)
 
   return {
     HashLayer.CANONICAL_SMILES: canonical_smiles,
@@ -180,11 +184,14 @@ def GetStereoTautomerHash(molecule):
   useCxSmiles = True
   hash_with_cxExtensions = rdMolHash.MolHash(no_h_mol, rdMolHash.HashFunction.HetAtomTautomer,
                                              useCxSmiles)
+  # print(hash_with_cxExtensions)
 
-  # since the cxSmiles can include anything, we want to only include
-  # enhanced stereo information
-  canonical_smiles = GetCanonicalSmiles(hash_with_cxExtensions)
-  return canonical_smiles
+  # # since the cxSmiles can include anything, we want to only include
+  # # enhanced stereo information
+  # canonical_smiles = GetCanonicalSmiles(hash_with_cxExtensions)
+
+  # return canonical_smiles
+  return hash_with_cxExtensions
 
 
 def GetCanonicalSmiles(cxsmiles):
@@ -399,90 +406,3 @@ class EnhancedStereoUpdateMode(enum.Enum):
   REMOVE_WEIGHTS = enum.auto()
 
 
-def _UpdateEnhancedStereoGroupWeights(mol, mode):
-  if mode == EnhancedStereoUpdateMode.ADD_WEIGHTS:
-    factor = 1
-  elif mode == EnhancedStereoUpdateMode.REMOVE_WEIGHTS:
-    factor = -1
-  else:
-    raise ValueError('Invalid Enhanced Stereo weight update mode')
-
-  isotopesModified = False
-  stgs = mol.GetStereoGroups()
-  for stg in stgs:
-    stgt = stg.GetGroupType()
-    weight = factor * ENHANCED_STEREO_GROUP_WEIGHTS[stgt]
-    for at in stg.GetAtoms():
-
-      # Make sure the isotope is reasonable and is not present in more than
-      # one stereo group, and we are not messing it up
-      isotope = at.GetIsotope()
-      if mode == EnhancedStereoUpdateMode.ADD_WEIGHTS and isotope > 999:
-        raise ValueError(
-          f'Enhanced stereo group canonicalization does not support isotopes above 999. Atom {at.GetIdx()} is {isotope}'
-        )
-
-      at.SetIsotope(isotope + weight)
-      isotopesModified = True
-
-  return mol, isotopesModified
-
-
-def _CanonicalizeStereoGroups(mol):
-  """
-    Returns canonical CXSmiles and the corresponding molecule with the
-    stereo groups canonicalized.
-
-    The RDKit canonicalization code does not currently take stereo groups into
-    account. We work around that by using EnumerateStereoisomers() to generate
-    all possible instances of the molecule's stereogroups and then lexically
-    compare the CXSMILES of those.
-    """
-
-  # if not len(mol.GetStereoGroups()):
-  Chem.CanonicalizeEnhancedStereo(mol)
-  return Chem.MolToCXSmiles(mol), mol
-
-  mol = Chem.Mol(mol)
-
-  # add ring info if not initialized yet
-  Chem.FastFindRings(mol)
-
-  # To solve the problem we add isotope tags to the atoms involved in stereo
-  # groups. These allow the canonicalization to tell the difference between
-  # AND and OR (and have the happy side effect of allowing the
-  # presence/absence of a stereo group to affect the canonicalization)
-  mol, isotopesModified = _UpdateEnhancedStereoGroupWeights(mol,
-                                                            EnhancedStereoUpdateMode.ADD_WEIGHTS)
-
-  # We're going to be generating canonical SMILES here anyway, so skip the
-  # "unique" option for the sake of efficiency
-  opts = EnumerateStereoisomers.StereoEnumerationOptions()
-  opts.onlyStereoGroups = True
-  opts.unique = False
-
-  # Before enumerating stereoisomers, we strip the bond directions to prevent
-  # an exception when enumerating centers near double bonds.
-  # Registration code sometimes handles molecules with user-defined bond directions,
-  # which may not be valid.
-  for bond in mol.GetBonds():
-    bond.SetBondDir(Chem.BondDir.NONE)
-
-  resultMol = None
-  resultCXSmiles = ''
-  for isomer in EnumerateStereoisomers.EnumerateStereoisomers(mol, opts):
-    # We need to generate the canonical CXSMILES for the molecule with
-    # the isotope tags.
-    cxSmiles = Chem.MolToCXSmiles(isomer)
-    if resultMol is None or cxSmiles < resultCXSmiles:
-      resultMol = isomer
-      resultCXSmiles = cxSmiles
-
-  extraIsotopeRemovalRegex = re.compile(r'\[[1-3]0*([1-9]?[0-9]*[A-Z][a-z]?)@')
-  resultCXSmiles = extraIsotopeRemovalRegex.sub(r'[\1@', resultCXSmiles)
-
-  if isotopesModified:
-    resultMol, _ = _UpdateEnhancedStereoGroupWeights(resultMol,
-                                                     EnhancedStereoUpdateMode.REMOVE_WEIGHTS)
-
-  return resultCXSmiles, resultMol
