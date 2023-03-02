@@ -5956,7 +5956,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
   }
 }
 
-TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer]") {
+TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer][bug]") {
   SECTION("No atoms") {
     ROMol m;
 
@@ -6012,4 +6012,121 @@ TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer]") {
     CHECK(oss->str().empty());
   }
 }
+
+TEST_CASE("GitHub issue #6153: MaeMolSupplier requires bond block",
+          "[mae][MaeMolSupplier][reader]") {
+  SECTION("Reported issue: allow structure blocks without bond block") {
+    std::string maeBlock = R"MAE(f_m_ct {
+  s_m_title
+  :::
+  ""
+  m_atom[1] {
+    # First column is Index #
+    r_m_x_coord
+    r_m_y_coord
+    r_m_z_coord
+    i_m_atomic_number
+    i_m_formal_charge
+    s_m_color_rgb
+    :::
+    1 -2.542857 2.171429 0.000000 6 0 A0A0A0
+    :::
+  }
+})MAE";
+
+    MaeMolSupplier supplier;
+    supplier.setData(maeBlock);
+
+    std::unique_ptr<ROMol> mol{supplier.next()};
+    CHECK(mol);
+    CHECK(mol->getNumAtoms() == 1);
+  }
+
+  SECTION("Fail on ct block without atom block") {
+    std::string maeBlock = R"MAE(f_m_ct {
+  s_m_title
+  :::
+  ""
+  }
+})MAE";
+
+    MaeMolSupplier supplier;
+    supplier.setData(maeBlock);
+
+    CHECK_THROWS_AS(supplier.next(), FileParseException);
+  }
+
+  SECTION("Fail on atom block without atoms #1") {
+    // Note that the number of elements in the block is not
+    // read from the block header!
+    std::string maeBlock = R"MAE(f_m_ct {
+  s_m_title
+  :::
+  ""
+  m_atom[1] {
+    # First column is Index #
+    r_m_x_coord
+    r_m_y_coord
+    r_m_z_coord
+    i_m_atomic_number
+    i_m_formal_charge
+    s_m_color_rgb
+    :::
+    :::
+  }
+})MAE";
+
+    MaeMolSupplier supplier;
+    CHECK_THROWS_AS(supplier.setData(maeBlock), FileParseException);
+  }
+  SECTION("Fail on atom block without atoms #2") {
+    // Note that the number of elements in the block is not
+    // read from the block header!
+    std::string maeBlock = R"MAE(f_m_ct {
+  s_m_title
+  :::
+  ""
+  m_atom[1] {
+    # First column is Index #
+    r_m_x_coord
+    r_m_y_coord
+    r_m_z_coord
+    i_m_atomic_number
+    i_m_formal_charge
+    s_m_color_rgb
+    :::
+    1 -2.542857 2.171429 0.000000 6 0 A0A0A0
+    :::
+  }
+}
+
+f_m_ct {
+  s_m_title
+  :::
+  ""
+  m_atom[1] {
+    # First column is Index #
+    r_m_x_coord
+    r_m_y_coord
+    r_m_z_coord
+    i_m_atomic_number
+    i_m_formal_charge
+    s_m_color_rgb
+    :::
+    :::
+  }
+})MAE";
+
+    MaeMolSupplier supplier;
+    supplier.setData(maeBlock);
+
+    // The first structure is ok
+    std::unique_ptr<ROMol> mol{supplier.next()};
+    CHECK(mol);
+    CHECK(mol->getNumAtoms() == 1);
+
+    CHECK_THROWS_AS(supplier.next(), FileParseException);
+  }
+}
+
 #endif
