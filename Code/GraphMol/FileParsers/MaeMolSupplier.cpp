@@ -473,7 +473,7 @@ void MaeMolSupplier::init() {
 
   try {
     d_next_struct = d_reader->next(mae::CT_BLOCK);
-  } catch (const std::exception &e) {
+  } catch (const mae::read_exception &e) {
     throw FileParseException(e.what());
   }
 }
@@ -524,7 +524,7 @@ ROMol *MaeMolSupplier::next() {
 void MaeMolSupplier::moveToNextBlock() {
   try {
     d_next_struct = d_reader->next(mae::CT_BLOCK);
-  } catch (const std::exception &e) {
+  } catch (const mae::read_exception &e) {
     d_stored_exc = e.what();
   }
   ++d_position;
