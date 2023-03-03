@@ -381,8 +381,15 @@ void build_mol(RWMol &mol, mae::Block &structure_block, bool sanitize,
   const auto &atom_block = structure_block.getIndexedBlock(mae::ATOM_BLOCK);
   addAtoms(*atom_block, mol);
 
-  const auto &bond_block = structure_block.getIndexedBlock(mae::BOND_BLOCK);
-  addBonds(*bond_block, mol);
+  std::shared_ptr<const mae::IndexedBlock> bond_block{nullptr};
+  try {
+    bond_block = structure_block.getIndexedBlock(mae::BOND_BLOCK);
+  } catch (const std::out_of_range &) {
+    // In Maestro files, the atom block is mandatory, but the bond block is not.
+  }
+  if (bond_block != nullptr) {
+    addBonds(*bond_block, mol);
+  }
 
   // These properties need to be set last, as stereochemistry is defined here,
   // and it requires atoms and bonds to be available.
@@ -503,10 +510,10 @@ ROMol *MaeMolSupplier::next() {
 
   try {
     build_mol(*mol, *d_next_struct, df_sanitize, df_removeHs);
-  } catch (...) {
+  } catch (const std::exception &e) {
     delete mol;
     moveToNextBlock();
-    throw;
+    throw FileParseException(e.what());
   }
 
   moveToNextBlock();
