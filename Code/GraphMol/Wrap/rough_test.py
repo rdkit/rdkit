@@ -3536,6 +3536,16 @@ CAS<~>
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
     self.assertEqual(l, (0, 2, 3, 4))
 
+    m = Chem.MolFromSmiles('CC12CCN(CC1)C2')
+    qa = rdqueries.IsBridgeheadQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 4))
+
+    m = Chem.MolFromSmiles('OCCOC')
+    qa = rdqueries.NonHydrogenDegreeEqualsQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 2, 3))
+
   def test89UnicodeInput(self):
     m = Chem.MolFromSmiles(u'c1ccccc1')
     self.assertTrue(m is not None)
