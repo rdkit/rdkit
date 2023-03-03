@@ -279,11 +279,10 @@ M  END
             csmis = set()
             for smi in mols_smis:
                 mol = Chem.MolFromSmiles(smi)
-                Chem.CanonicalizeEnhancedStereo(mol)
                 csmi = Chem.MolToCXSmiles(mol)
+                self.assertIsNotNone(csmi)
                 csmis.add(csmi)
             self.assertEqual(len(csmis), 1)
-            self.assertNotEqual(list(csmis)[0], None)
 
 
     def test_enhanced_stereo_canonicalizer_non_matching(self):
@@ -295,7 +294,6 @@ M  END
         csmis = set()
         for smi in (s1, s3):
             mol = Chem.MolFromSmiles(smi)
-            Chem.CanonicalizeEnhancedStereo(mol)
             csmi = Chem.MolToCXSmiles(mol)
             csmis.add(csmi)
         self.assertEqual(len(csmis), 2)
