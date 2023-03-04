@@ -284,7 +284,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_complex_query_atoms_16.svg", 1980695915U},
     {"test_github6041b.svg", 3485054881U},
     {"test_github6111_1.svg", 3458417163U},
-    {"test_github6112.svg", 908847383U}};
+    {"test_github6112.svg", 908847383U},
+    {"test_github6160_1.svg", 3669327545U},
+    {"test_github6160_2.svg", 3704672111U},
+    {"test_github6160_3.svg", 2431440968U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -7279,7 +7282,7 @@ TEST_CASE("Bad double bond - Github 6160") {
     std::unique_ptr<ROMol> m(SmilesToMol(smiles[i]));
     m->setProp<std::string>("_Name", "mol" + std::to_string(i + 1));
     REQUIRE(m);
-    MolDraw2DSVG drawer(300, 300);
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
     // it's a bit easier to deal with in BW.
     assignBWPalette(drawer.drawOptions().atomColourPalette);
     drawer.drawOptions().addBondIndices = true;
@@ -7309,13 +7312,9 @@ TEST_CASE("Bad double bond - Github 6160") {
       points.push_back(Point2D(stod(match[1]), stod(match[2])));
       points.push_back(Point2D(stod(match[3]), stod(match[4])));
     }
-    std::cout << points[0] << " -> " << points[1] << " :: " << points[2]
-              << " -> " << points[3] << std::endl;
     auto vec1 = points[0].directionVector(points[1]);
     auto vec2 = points[2].directionVector(points[3]);
-    std::cout << vec1 << " : " << vec2 << " : " << vec1.dotProduct(vec2)
-              << std::endl;
     REQUIRE(fabs(1.0 - vec1.dotProduct((vec2))) < 1.0e-4);
-    check_file_hash(svgName + ".svg");
+    check_file_hash(svgName);
   }
 }

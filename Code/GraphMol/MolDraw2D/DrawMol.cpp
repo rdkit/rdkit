@@ -1593,9 +1593,6 @@ void DrawMol::makeStandardBond(Bond *bond, double doubleBondOffset) {
   int endAt = bond->getEndAtomIdx();
   std::pair<DrawColour, DrawColour> cols = getBondColours(bond);
 
-  if (bond->getIdx() == 12) {
-    std::cout << "bond 12" << std::endl;
-  }
   auto bt = bond->getBondType();
   if (bt == Bond::DOUBLE || bt == Bond::AROMATIC) {
     makeDoubleBondLines(bond, doubleBondOffset, cols);
