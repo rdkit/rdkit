@@ -1699,16 +1699,6 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
               }
             }
             --unassignedBonds;
-          } else {
-            // we get here if we either don't have neighbors or if there were
-            // duplicate neighbors. In either case there should definitely be no
-            // stereo on the bond
-            dblBond->setBondDir(Bond::BondDir::NONE);
-            dblBond->getStereoAtoms().clear();
-            dblBond->clearProp(common_properties::_UnknownStereo);
-            dblBond->setStereo(Bond::STEREONONE);
-            assignedABond = true;
-            --unassignedBonds;
           }
         }
       }
