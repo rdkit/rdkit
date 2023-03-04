@@ -2064,10 +2064,6 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
       }
     }
     if (!hasStereoBonds && bond->getBondType() == Bond::DOUBLE) {
-      if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
-        hasStereoBonds = true;
-        continue;
-      }
       for (auto nbond : mol.atomBonds(bond->getBeginAtom())) {
         if (nbond->getBondDir() == Bond::ENDDOWNRIGHT ||
             nbond->getBondDir() == Bond::ENDUPRIGHT) {
