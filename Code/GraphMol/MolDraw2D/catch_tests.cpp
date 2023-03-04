@@ -7272,16 +7272,45 @@ TEST_CASE("ACS1996 should not throw exception with no coords - Github 6112") {
 
 TEST_CASE("Bad double bond - Github 6160") {
   std::string nameBase = "test_github6160";
-  auto m = "c1ccccc1NC=NCCS(=O)(=NC)N"_smiles;
-  m->setProp<std::string>("_Name", "mol1");
-  REQUIRE(m);
-  MolDraw2DSVG drawer(300, 300);
-  MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m);
-  drawer.finishDrawing();
-  std::string text = drawer.getDrawingText();
-  std::ofstream outs(nameBase + ".svg");
-  outs << text;
-  outs.flush();
-  outs.close();
+  std::vector<std::string> smiles{"c1ccccc1NC=NCCS(=O)(=NC)N",
+                                  "c1ccccc1NC=NCCS(=O)(=NCC(Cl)(F)C)N"};
+  for (auto i = 0; i < smiles.size(); ++i) {
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles[i]));
+    m->setProp<std::string>("_Name", "mol" + std::to_string(i + 1));
+    REQUIRE(m);
+    MolDraw2DSVG drawer(300, 300);
+    // it's a bit easier to deal with in BW.
+    assignBWPalette(drawer.drawOptions().atomColourPalette);
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawOptions().addAtomIndices = true;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "_" + std::to_string(i + 1) + ".svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+
+    // check that the two lines for bond atom-11 atom-13 are parallel.
+    std::regex bond5(
+        "'bond-12 atom-11 atom-13' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 2);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond5);
+    auto match_end = std::sregex_iterator();
+    std::vector<Point2D> points;
+    for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+      std::smatch match = *i;
+      points.push_back(Point2D(stod(match[4]), stod(match[2])));
+      points.push_back(Point2D(stod(match[3]), stod(match[4])));
+    }
+    auto vec1 = points[0].directionVector(points[1]);
+    auto vec2 = points[2].directionVector(points[3]);
+    REQUIRE(!MolDraw2D_detail::doLinesIntersect(points[0], points[1], points[2],
+                                                points[3], nullptr));
+  }
   check_file_hash(nameBase + ".svg");
 }
