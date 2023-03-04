@@ -26,24 +26,32 @@ class TestCase(unittest.TestCase):
   def testAtomPairTypes(self):
     params = rdMD.AtomPairsParameters
     mol = Chem.MolFromSmiles("C=C")
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) ==
-                    rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1)))
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) ==
-                    1 | (1 | 1 << params.numPiBits) << params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) == rdMD.GetAtomPairAtomCode(
+        mol.GetAtomWithIdx(1)))
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) == 1
+      | (1 | 1 << params.numPiBits) << params.numBranchBits)
 
     mol = Chem.MolFromSmiles("C#CO")
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) !=
-                    rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1)))
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) ==
-                    1 | (2 | 1 << params.numPiBits) << params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1)) ==
-                    2 | (2 | 1 << params.numPiBits) << params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(2)) ==
-                    1 | (0 | 3 << params.numPiBits) << params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1), 1) ==
-                    1 | (2 | 1 << params.numPiBits) << params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1), 2) ==
-                    0 | (2 | 1 << params.numPiBits) << params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) != rdMD.GetAtomPairAtomCode(
+        mol.GetAtomWithIdx(1)))
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) == 1
+      | (2 | 1 << params.numPiBits) << params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1)) == 2
+      | (2 | 1 << params.numPiBits) << params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(2)) == 1
+      | (0 | 3 << params.numPiBits) << params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1), 1) == 1
+      | (2 | 1 << params.numPiBits) << params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1), 2) == 0
+      | (2 | 1 << params.numPiBits) << params.numBranchBits)
 
   def testAtomPairTypesChirality(self):
     mols = [Chem.MolFromSmiles(x) for x in ("CC(F)Cl", "C[C@@H](F)Cl", "C[C@H](F)Cl")]
@@ -110,7 +118,7 @@ class TestCase(unittest.TestCase):
   def testRootedAtomPairs(self):
     m = Chem.MolFromSmiles('Oc1ccccc1')
     fp1 = rdMD.GetAtomPairFingerprint(m)
-    fp2 = rdMD.GetAtomPairFingerprint(m, fromAtoms=(0,))
+    fp2 = rdMD.GetAtomPairFingerprint(m, fromAtoms=(0, ))
     nz1 = fp1.GetNonzeroElements()
     nz2 = fp2.GetNonzeroElements()
     for k, v in nz2.items():
@@ -147,7 +155,7 @@ class TestCase(unittest.TestCase):
   def testRootedTorsions(self):
     m = Chem.MolFromSmiles('Oc1ccccc1')
     fp1 = rdMD.GetTopologicalTorsionFingerprint(m)
-    fp2 = rdMD.GetTopologicalTorsionFingerprint(m, fromAtoms=(0,))
+    fp2 = rdMD.GetTopologicalTorsionFingerprint(m, fromAtoms=(0, ))
     nz1 = fp1.GetNonzeroElements()
     nz2 = fp2.GetNonzeroElements()
     for k, v in nz2.items():
@@ -156,9 +164,9 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('COCC')
     fp1 = rdMD.GetTopologicalTorsionFingerprint(m)
     self.assertEqual(len(fp1.GetNonzeroElements()), 1)
-    fp1 = rdMD.GetTopologicalTorsionFingerprint(m, fromAtoms=(0,))
+    fp1 = rdMD.GetTopologicalTorsionFingerprint(m, fromAtoms=(0, ))
     self.assertEqual(len(fp1.GetNonzeroElements()), 1)
-    fp1 = rdMD.GetTopologicalTorsionFingerprint(m, fromAtoms=(1,))
+    fp1 = rdMD.GetTopologicalTorsionFingerprint(m, fromAtoms=(1, ))
     self.assertEqual(len(fp1.GetNonzeroElements()), 0)
 
   def testMorganFingerprints(self):
@@ -199,7 +207,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(fp.GetNonzeroElements()) == 10)
 
     mol = Chem.MolFromSmiles('CCCCC')
-    fp = rdMD.GetMorganFingerprint(mol, 0, fromAtoms=(0,))
+    fp = rdMD.GetMorganFingerprint(mol, 0, fromAtoms=(0, ))
     self.assertTrue(len(fp.GetNonzeroElements()) == 1)
 
     mol = Chem.MolFromSmiles('CC1CC1')
@@ -465,13 +473,13 @@ class TestCase(unittest.TestCase):
 
   def testNumRotatableBonds(self):
     for s in [
-      "C1CC1CC",
-      "CCNC(=O)NCC",
-      'Cc1cccc(C)c1c1c(C)cccc1C',
-      'CCc1cccc(C)c1c1c(C)cccc1CC',
-      'Cc1cccc(C)c1c1c(C)nccc1C',
-      'Cc1cccc(C)c1c1c(C)cccc1',
-      'CCO',
+        "C1CC1CC",
+        "CCNC(=O)NCC",
+        'Cc1cccc(C)c1c1c(C)cccc1C',
+        'CCc1cccc(C)c1c1c(C)cccc1CC',
+        'Cc1cccc(C)c1c1c(C)nccc1C',
+        'Cc1cccc(C)c1c1c(C)cccc1',
+        'CCO',
     ]:
       m = Chem.MolFromSmiles(s)
 
@@ -559,25 +567,25 @@ class TestCase(unittest.TestCase):
     self.assertEqual(rdMD.CalcNumUnspecifiedAtomStereoCenters(m), 1)
     # Tests from Berend Huisman:
     for (smiles, expected) in (
-        ("C", 0),
-        ("c1ccccc1", 0),
-        ("CC(Cl)Br", 1),
-        ("CCC(C)C(Cl)Br", 2),
-        ("CCC(C(Cl)Br)C(F)I", 3),
-        ("[H][C@](F)(I)C(CC)C(Cl)Br", 3),
-        ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 3),
+      ("C", 0),
+      ("c1ccccc1", 0),
+      ("CC(Cl)Br", 1),
+      ("CCC(C)C(Cl)Br", 2),
+      ("CCC(C(Cl)Br)C(F)I", 3),
+      ("[H][C@](F)(I)C(CC)C(Cl)Br", 3),
+      ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 3),
     ):
       mol = Chem.MolFromSmiles(smiles)
       actual = len(Chem.FindMolChiralCenters(mol, includeUnassigned=True))
       self.assertEqual(rdMD.CalcNumAtomStereoCenters(mol), expected)
     for (smiles, expected) in (
-        ("C", 0),
-        ("c1ccccc1", 0),
-        ("CC(Cl)Br", 1),
-        ("CCC(C)C(Cl)Br", 2),
-        ("CCC(C(Cl)Br)C(F)I", 3),
-        ("[H][C@](F)(I)C(CC)C(Cl)Br", 2),
-        ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 1),
+      ("C", 0),
+      ("c1ccccc1", 0),
+      ("CC(Cl)Br", 1),
+      ("CCC(C)C(Cl)Br", 2),
+      ("CCC(C(Cl)Br)C(F)I", 3),
+      ("[H][C@](F)(I)C(CC)C(Cl)Br", 2),
+      ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 1),
     ):
       mol = Chem.MolFromSmiles(smiles)
       actual = sum(1 for x in Chem.FindMolChiralCenters(mol, includeUnassigned=True) if x[1] == '?')
@@ -625,38 +633,38 @@ class TestCase(unittest.TestCase):
       32.11691025659743, 10.3711255714102, 1.7258015589384423, -1.813025067747632,
       2.0032623406582895, -1.5648237280483932, 7.798895708674262, 1.480463460412681
     ],
-      [
-        32.133385673916855, 10.690498814349603, 1.5812862454321042, -1.3924158848795094,
-        1.9109090827066813, -1.1624011856503906, 7.073072952311218, 2.0294988143496093
-      ],
-      [
-        32.09203038492705, 10.585642854940236, 1.5531725323483636, -1.6095571920399787,
-        1.6095355058255407, -1.6264025009240035, 7.798379459554676, 1.8522004089765778
-      ],
-      [
-        32.16623472793675, 11.912765272063261, 1.3229624149945334, -1.5095023144073105,
-        1.699644712375421, -1.2539447123754206, 7.974132068991219, 2.370867931008784
-      ],
-      [
-        32.19696040763111, 11.912196087574864, 1.571634336328628, -1.5986639964786287,
-        1.4708186703193278, -1.7011978973115978, 7.829987043024966, 0.6900118228151252
-      ],
-      [
-        31.130920829765557, 11.856079170234391, 1.652795743173261, -1.8120831465729346,
-        2.1415709560249625, -1.4818709560249614, 7.546153955380794, 2.12884604461921
-      ],
-      [
-        31.059700934072303, 11.958086319851176, 1.271920282698931, -1.2044337292760101,
-        1.6734005705339297, -0.9875941256320955, 7.220415332975225, 0.601201124030627
-      ],
-      [
-        31.163638790374048, 11.855143433013291, 1.8876168729214116, -1.862911092419536,
-        2.279553713445213, -1.6070814330824321, 7.610231826377116, 0.5859042224902173
-      ],
-      [
-        31.111807418763107, 11.906469225329653, 1.5848247701762241, -1.5909887821270712,
-        2.0038391834918317, -1.3277290609201042, 7.422700514979134, 0.5941465179281992
-      ]]
+                [
+                  32.133385673916855, 10.690498814349603, 1.5812862454321042, -1.3924158848795094,
+                  1.9109090827066813, -1.1624011856503906, 7.073072952311218, 2.0294988143496093
+                ],
+                [
+                  32.09203038492705, 10.585642854940236, 1.5531725323483636, -1.6095571920399787,
+                  1.6095355058255407, -1.6264025009240035, 7.798379459554676, 1.8522004089765778
+                ],
+                [
+                  32.16623472793675, 11.912765272063261, 1.3229624149945334, -1.5095023144073105,
+                  1.699644712375421, -1.2539447123754206, 7.974132068991219, 2.370867931008784
+                ],
+                [
+                  32.19696040763111, 11.912196087574864, 1.571634336328628, -1.5986639964786287,
+                  1.4708186703193278, -1.7011978973115978, 7.829987043024966, 0.6900118228151252
+                ],
+                [
+                  31.130920829765557, 11.856079170234391, 1.652795743173261, -1.8120831465729346,
+                  2.1415709560249625, -1.4818709560249614, 7.546153955380794, 2.12884604461921
+                ],
+                [
+                  31.059700934072303, 11.958086319851176, 1.271920282698931, -1.2044337292760101,
+                  1.6734005705339297, -0.9875941256320955, 7.220415332975225, 0.601201124030627
+                ],
+                [
+                  31.163638790374048, 11.855143433013291, 1.8876168729214116, -1.862911092419536,
+                  2.279553713445213, -1.6070814330824321, 7.610231826377116, 0.5859042224902173
+                ],
+                [
+                  31.111807418763107, 11.906469225329653, 1.5848247701762241, -1.5909887821270712,
+                  2.0038391834918317, -1.3277290609201042, 7.422700514979134, 0.5941465179281992
+                ]]
     for i, smi in enumerate(smiles):
       mol = Chem.MolFromSmiles(smi)
       res = rdMD.BCUT2D(mol)
@@ -694,7 +702,7 @@ class TestCase(unittest.TestCase):
       bcut2 = rdMD.BCUT2D(m, "property not existing on the atom")
       self.assertTrue(0, "Failed to handle not existing properties")
     except KeyError as e:
-      self.assertEqual(e.args, ("property not existing on the atom",))
+      self.assertEqual(e.args, ("property not existing on the atom", ))
 
     for atom in m.GetAtoms():
       atom.SetProp("bad_prop", "not a double")
