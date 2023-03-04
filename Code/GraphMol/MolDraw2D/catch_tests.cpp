@@ -7273,7 +7273,8 @@ TEST_CASE("ACS1996 should not throw exception with no coords - Github 6112") {
 TEST_CASE("Bad double bond - Github 6160") {
   std::string nameBase = "test_github6160";
   std::vector<std::string> smiles{"c1ccccc1NC=NCCS(=O)(=NC)N",
-                                  "c1ccccc1NC=NCCS(=O)(=NCC(Cl)(F)C)N"};
+                                  "c1ccccc1NC=NCCS(=O)(=NCC(Cl)(F)C)N",
+                                  "c1ccccc1NC=NCCS(=O)(=CCC(Cl)(F)C)N"};
   for (auto i = 0; i < smiles.size(); ++i) {
     std::unique_ptr<ROMol> m(SmilesToMol(smiles[i]));
     m->setProp<std::string>("_Name", "mol" + std::to_string(i + 1));
@@ -7286,7 +7287,8 @@ TEST_CASE("Bad double bond - Github 6160") {
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs(nameBase + "_" + std::to_string(i + 1) + ".svg");
+    std::string svgName = nameBase + "_" + std::to_string(i + 1) + ".svg";
+    std::ofstream outs(svgName);
     outs << text;
     outs.flush();
     outs.close();
@@ -7304,13 +7306,16 @@ TEST_CASE("Bad double bond - Github 6160") {
     std::vector<Point2D> points;
     for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
       std::smatch match = *i;
-      points.push_back(Point2D(stod(match[4]), stod(match[2])));
+      points.push_back(Point2D(stod(match[1]), stod(match[2])));
       points.push_back(Point2D(stod(match[3]), stod(match[4])));
     }
+    std::cout << points[0] << " -> " << points[1] << " :: " << points[2]
+              << " -> " << points[3] << std::endl;
     auto vec1 = points[0].directionVector(points[1]);
     auto vec2 = points[2].directionVector(points[3]);
-    REQUIRE(!MolDraw2D_detail::doLinesIntersect(points[0], points[1], points[2],
-                                                points[3], nullptr));
+    std::cout << vec1 << " : " << vec2 << " : " << vec1.dotProduct(vec2)
+              << std::endl;
+    REQUIRE(fabs(1.0 - vec1.dotProduct((vec2))) < 1.0e-4);
+    check_file_hash(svgName + ".svg");
   }
-  check_file_hash(nameBase + ".svg");
 }
