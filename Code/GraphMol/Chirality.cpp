@@ -2065,6 +2065,8 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
       } else if (bond->getBondType() == Bond::DOUBLE) {
         if (bond->getBondDir() == Bond::EITHERDOUBLE) {
           bond->setStereo(Bond::STEREOANY);
+          bond->getStereoAtoms().clear();
+          bond->setBondDir(Bond::NONE);
         } else if (bond->getStereo() != Bond::STEREOANY) {
           bond->setStereo(Bond::STEREONONE);
           bond->getStereoAtoms().clear();
@@ -2268,8 +2270,14 @@ void stereoPerception(ROMol &mol, bool cleanIt,
       atom->clearProp(common_properties::_CIPCode);
       atom->clearProp(common_properties::_ChiralityPossible);
     }
+    for (auto bond : mol.bonds()) {
+      if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
+        bond->setStereo(Bond::BondStereo::STEREOANY);
+        bond->getStereoAtoms().clear();
+        bond->setBondDir(Bond::BondDir::NONE);
+      }
+    }
   }
-
   // we need cis/trans markers on the double bonds... set those now:
   MolOps::setBondStereoFromDirections(mol);
 

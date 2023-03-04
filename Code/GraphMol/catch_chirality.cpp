@@ -3346,14 +3346,18 @@ TEST_CASE(
       Chirality::setUseLegacyStereoPerception(false);
       auto cp(*m);
       RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
-      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::EITHERDOUBLE);
+      // the crossed bond dir has been translated to unknown stereo:
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOANY);
     }
     {
       UseLegacyStereoPerceptionFixture reset_stereo_perception;
       Chirality::setUseLegacyStereoPerception(true);
       auto cp(*m);
       RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
-      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::EITHERDOUBLE);
+      // the crossed bond dir has been translated to unknown stereo:
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOANY);
     }
   }
   SECTION("make sure stereoatoms are also cleared") {
