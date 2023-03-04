@@ -2793,6 +2793,12 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
       // in a ring, we need to draw the bond inside the ring
       bondInsideRing(bond, offset, l2s, l2f);
     } else {
+      // if there are atom labels at both ends, straddle the atom-atom vector
+      // rather than the normal 1 line on the vector, the other to the side.
+      if (atomLabels_[at1->getIdx()] && atomLabels_[at2->getIdx()]) {
+        doubleBondTerminal(at1, at2, offset, l1s, l1f, l2s, l2f);
+        offset /= 2.0;
+      }
       bondNonRing(bond, offset, l2s, l2f);
     }
     if ((Bond::EITHERDOUBLE == bond.getBondDir()) ||
