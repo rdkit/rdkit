@@ -7269,3 +7269,19 @@ TEST_CASE("ACS1996 should not throw exception with no coords - Github 6112") {
   outs.close();
   check_file_hash(nameBase + ".svg");
 }
+
+TEST_CASE("Bad double bond - Github 6160") {
+  std::string nameBase = "test_github6160";
+  auto m = "c1ccccc1NC=NCCS(=O)(=NC)N"_smiles;
+  m->setProp<std::string>("_Name", "mol1");
+  REQUIRE(m);
+  MolDraw2DSVG drawer(300, 300);
+  MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs(nameBase + ".svg");
+  outs << text;
+  outs.flush();
+  outs.close();
+  check_file_hash(nameBase + ".svg");
+}
