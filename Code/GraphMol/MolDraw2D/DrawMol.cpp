@@ -2895,12 +2895,12 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
   const Atom *thirdAtom = nullptr;
   const Atom *fourthAtom = nullptr;
 
-  bool begTrunc(!atomLabels_[begAt->getIdx()]);
-  bool endTrunc(!atomLabels_[endAt->getIdx()]);
+  bool begTrunc = !atomLabels_[begAt->getIdx()];
+  bool endTrunc = !atomLabels_[endAt->getIdx()];
 
   // find a neighbour of at1 that isn't at2 and if possible isn't directly
   // opposite at1 to at2.
-  auto goodOtherNbor = [&](Atom *at1, Atom *at2) -> const Atom * {
+  auto nonColinearNbor = [&](Atom *at1, Atom *at2) -> const Atom * {
     const Atom *thirdAtom = nullptr;
     for (auto i = 1; i < at1->getDegree(); ++i) {
       thirdAtom = otherNeighbor(at1, at2, i, *drawMol_);
@@ -2942,7 +2942,7 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
         areBondsTrans(atCds_[thirdAtom->getIdx()], atCds_[begAt->getIdx()],
                       atCds_[endAt->getIdx()], atCds_[fourthAtom->getIdx()]);
     if (isTrans) {
-      fourthAtom = goodOtherNbor(endAt, begAt);
+      fourthAtom = nonColinearNbor(endAt, begAt);
     }
     l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(), begAt->getIdx(),
                         offset, endTrunc);
@@ -2956,7 +2956,7 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
         areBondsTrans(atCds_[thirdAtom->getIdx()], atCds_[begAt->getIdx()],
                       atCds_[endAt->getIdx()], atCds_[fourthAtom->getIdx()]);
     if (isTrans) {
-      thirdAtom = goodOtherNbor(begAt, endAt);
+      thirdAtom = nonColinearNbor(begAt, endAt);
       l2s = doubleBondEnd(thirdAtom->getIdx(), begAt->getIdx(), endAt->getIdx(),
                           offset, endTrunc);
     }
@@ -2971,7 +2971,7 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
         areBondsTrans(atCds_[thirdAtom->getIdx()], atCds_[begAt->getIdx()],
                       atCds_[endAt->getIdx()], atCds_[fourthAtom->getIdx()]);
     if (isTrans) {
-      fourthAtom = goodOtherNbor(endAt, begAt);
+      fourthAtom = nonColinearNbor(endAt, begAt);
     }
     l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(), begAt->getIdx(),
                         offset, endTrunc);
@@ -3683,12 +3683,10 @@ bool areBondsTrans(const Point2D &at1, const Point2D &at2, const Point2D &at3,
 
 // ****************************************************************************
 bool areBondsLinear(const Point2D &at1, const Point2D &at2, const Point2D &at3,
-                    const Point2D &at4) {
-  Point2D v21 = at1 - at2;
-  v21.normalize();
-  Point2D v34 = at4 - at3;
-  v34.normalize();
-  return (fabs(1.0 - fabs(v21.dotProduct(v34))) < 0.0004);
+                    const Point2D &at4, double tol) {
+  Point2D v21 = at1.directionVector(at2);
+  Point2D v34 = at4.directionVector(at3);
+  return (fabs(1.0 - fabs(v21.dotProduct(v34))) < tol);
 }
 
 // ****************************************************************************
