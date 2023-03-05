@@ -441,7 +441,7 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
 void determineBonds(RWMol &mol, bool useHueckel, int charge, double covFactor,
                     bool allowChargedFragments, bool embedChiral,
                     bool useAtomMap) {
-  if(mol->getNumAtoms() <= 1){
+  if(mol.getNumAtoms() <= 1){
     return;
   }
   determineConnectivity(mol, useHueckel, charge, covFactor);
