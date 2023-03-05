@@ -13,7 +13,6 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 #include <GraphMol/PeriodicTable.h>
-#include <GraphMol/RDKitQueries.h>
 
 #include <vector>
 #include <algorithm>
@@ -34,10 +33,7 @@
 
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/tokenizer.hpp>
-#include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
-#include <GraphMol/FileParsers/MolSGroupParsing.h>
 
 const int ci_LOCAL_INF = static_cast<int>(1e8);
 
@@ -227,14 +223,9 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
       if (effAtomicNum <= 0) {
         continue;
       }
-      // otherAtom is a non-metal, so if its atomic number is > 2, it should
-      // obey the octet rule (2*ev <= 8).  If it doesn't, don't set the bond to
-      // dative, so the molecule is later flagged as having bad valence.
-      // [CH4]-[Na] being a case in point, line 1800 of
-      // FileParsers/file_parsers_catch.cpp.
       const auto &otherValens =
           PeriodicTable::getTable()->getValenceList(effAtomicNum);
-      if (otherValens.back() > 0 && ev > otherValens.back() && ev <= 4) {
+      if (otherValens.back() > 0 && ev > otherValens.back()) {
         bond->setBondType(RDKit::Bond::BondType::DATIVE);
         bond->setBeginAtom(otherAtom);
         bond->setEndAtom(atom);
@@ -890,184 +881,5 @@ unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
   }
   return numPropAtoms;
 }
-
-ROMol *hapticBondsToDative(const ROMol &mol) {
-  auto *res = new RWMol(mol);
-  hapticBondsToDative(*res);
-  return static_cast<ROMol *>(res);
-}
-
-void hapticBondsToDative(RWMol &mol) {
-  std::vector<unsigned int> dummiesToGo;
-  std::vector<std::pair<unsigned int, unsigned int>> bondsToAdd;
-  for (const auto &bond : mol.bonds()) {
-    if (bond->getBondType() == Bond::BondType::DATIVE) {
-      auto oats = details::hapticBondEndpoints(bond);
-      if (oats.empty()) {
-        continue;
-      }
-      Atom *dummy = nullptr;
-      Atom *metal = nullptr;
-      if (bond->getBeginAtom()->getAtomicNum() == 0) {
-        dummy = bond->getBeginAtom();
-        metal = bond->getEndAtom();
-      } else if (bond->getEndAtom()->getAtomicNum() == 0) {
-        metal = bond->getBeginAtom();
-        dummy = bond->getEndAtom();
-      }
-      if (dummy == nullptr) {
-        continue;
-      }
-      for (auto oat : oats) {
-        auto atom = mol.getAtomWithIdx(oat);
-        if (atom) {
-          bondsToAdd.push_back(std::make_pair(atom->getIdx(), metal->getIdx()));
-        }
-      }
-      dummiesToGo.push_back(dummy->getIdx());
-    }
-  }
-  for (const auto &b2a : bondsToAdd) {
-    auto atom = mol.getAtomWithIdx(b2a.first);
-    auto metal = mol.getAtomWithIdx(b2a.second);
-    mol.addBond(atom, metal, Bond::DATIVE);
-  }
-  sort(dummiesToGo.begin(), dummiesToGo.end(), std::greater<>());
-  for (auto d : dummiesToGo) {
-    mol.removeAtom(d);
-  }
-}
-
-ROMol *dativeBondsToHaptic(const ROMol &mol) {
-  auto *res = new RWMol(mol);
-  dativeBondsToHaptic(*res);
-  return static_cast<ROMol *>(res);
-}
-
-namespace {
-// return sets of contiguous atoms of more than 1 atom that are in
-// allAts.
-std::vector<std::vector<unsigned int>> contiguousAtoms(
-    const ROMol &mol, const std::vector<unsigned int> &allAts) {
-  std::vector<std::vector<unsigned int>> contigAts;
-  std::vector<char> doneAts(mol.getNumAtoms(), 0);
-  std::vector<char> inAllAts(mol.getNumAtoms(), 0);
-  for (auto a : allAts) {
-    inAllAts[a] = 1;
-  }
-  for (size_t i = 0; i < allAts.size(); ++i) {
-    if (doneAts[allAts[i]]) {
-      continue;
-    }
-    contigAts.push_back(std::vector<unsigned int>());
-    std::list<const Atom *> toDo{mol.getAtomWithIdx(allAts[i])};
-    while (!toDo.empty()) {
-      auto nextAt = toDo.front();
-      toDo.pop_front();
-      if (!doneAts[nextAt->getIdx()]) {
-        doneAts[nextAt->getIdx()] = 1;
-        contigAts.back().push_back(nextAt->getIdx());
-      }
-      for (const auto &nbri :
-           boost::make_iterator_range(mol.getAtomNeighbors(nextAt))) {
-        if (inAllAts[nbri] && !doneAts[nbri]) {
-          toDo.push_back(mol.getAtomWithIdx(nbri));
-        }
-      }
-    }
-    if (contigAts.back().size() < 2) {
-      contigAts.pop_back();
-    }
-  }
-  return contigAts;
-}
-
-// add to the molecule a dummy atom in the molecule centred on the
-// atoms passed in, with a dative bond from it to the metal atom.
-void addDativeBond(RWMol &mol, unsigned int metalIdx,
-                   std::vector<unsigned int> hapticAtoms) {
-  // This rigmarole is required to get a * in the V3000 file as the symbol
-  // for the atom.
-  auto dummyAt = new QueryAtom(0);
-  auto *res = new ATOM_NULL_QUERY;
-  res->setDataFunc(nullDataFun);
-  res->setMatchFunc(nullQueryFun);
-  res->setDescription("AtomNull");
-  dummyAt->setQuery(res);
-  unsigned int dummyIdx = mol.addAtom(dummyAt);
-  RDGeom::Point3D dummyPos;
-  std::ostringstream oss;
-  for (auto ha : hapticAtoms) {
-    auto haPos = mol.getConformer().getAtomPos(ha);
-    dummyPos.x += haPos.x;
-    dummyPos.y += haPos.y;
-    oss << ha << " ";
-  }
-  dummyPos.x /= hapticAtoms.size();
-  dummyPos.y /= hapticAtoms.size();
-  mol.getConformer().setAtomPos(dummyIdx, dummyPos);
-  unsigned int numbonds = mol.addBond(dummyIdx, metalIdx, Bond::DATIVE);
-  auto bond = mol.getBondWithIdx(numbonds - 1);
-  std::string endpts = "(" + oss.str();
-  if (endpts[endpts.length() - 1] == ' ') {
-    endpts = endpts.substr(0, endpts.length() - 1);
-  }
-  endpts += ")";
-  bond->setProp(common_properties::_MolFileBondEndPts, endpts);
-}
-}  // namespace
-
-void dativeBondsToHaptic(RWMol &mol) {
-  // first collect all the atoms that have a dative bond to them.
-  std::map<unsigned int, std::vector<unsigned int>> dativeAtoms;
-  for (const auto &b : mol.bonds()) {
-    if (b->getBondType() == Bond::DATIVE) {
-      auto ins = dativeAtoms.find(b->getEndAtomIdx());
-      if (ins == dativeAtoms.end()) {
-        dativeAtoms.insert(
-            std::make_pair(b->getEndAtomIdx(),
-                           std::vector<unsigned int>{b->getBeginAtomIdx()}));
-      } else {
-        ins->second.push_back(b->getBeginAtomIdx());
-      }
-    }
-  }
-
-  for (auto &dativeSet : dativeAtoms) {
-    auto contigAtoms = contiguousAtoms(mol, dativeSet.second);
-    for (const auto &ca : contigAtoms) {
-      addDativeBond(mol, dativeSet.first, ca);
-      for (auto cat : ca) {
-        mol.removeBond(dativeSet.first, cat);
-      }
-    }
-  }
-}
-
-namespace details {
-std::vector<int> hapticBondEndpoints(const Bond *bond) {
-  // This would ideally use ParseV3000Array but I'm buggered if I can get
-  // the linker to find it.  The issue, I think, is that it's in the
-  // FileParsers library which is built after GraphMol so not available
-  // to link in.  It can't be built first because it needs GraphMol.
-  //      std::vector<unsigned int> oats =
-  //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
-  // Returns the atom indices i.e. subtracts 1 from the numbers in the prop.
-  std::vector<int> oats;
-  std::string endpts;
-  if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts)) {
-    if ('(' == endpts.front() && ')' == endpts.back()) {
-      endpts = endpts.substr(1, endpts.length() - 2);
-      boost::char_separator<char> sep(" ");
-      boost::tokenizer<boost::char_separator<char>> tokens(endpts, sep);
-      auto beg = tokens.begin();
-      ++beg;
-      std::transform(beg, tokens.end(), std::back_inserter(oats),
-                     [](const std::string &a) { return std::stod(a) - 1; });
-    }
-  }
-  return oats;
-}
-}  // end of namespace details
 };  // end of namespace MolOps
 };  // end of namespace RDKit

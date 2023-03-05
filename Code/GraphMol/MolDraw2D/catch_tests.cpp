@@ -7314,7 +7314,7 @@ TEST_CASE("Bad double bond - Github 6160") {
     }
     auto vec1 = points[0].directionVector(points[1]);
     auto vec2 = points[2].directionVector(points[3]);
-    CHECK(vec1.dotProduct(vec2) == Approx(1.0).margin(1.0e-4));
+    REQUIRE(fabs(1.0 - vec1.dotProduct((vec2))) < 1.0e-4);
     check_file_hash(svgName);
   }
 }

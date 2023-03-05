@@ -3545,16 +3545,6 @@ CAS<~>
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
     self.assertEqual(l, (0, 2, 3, 4))
 
-    m = Chem.MolFromSmiles('CC12CCN(CC1)C2')
-    qa = rdqueries.IsBridgeheadQueryAtom()
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (1, 4))
-
-    m = Chem.MolFromSmiles('OCCOC')
-    qa = rdqueries.NonHydrogenDegreeEqualsQueryAtom(2)
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (1, 2, 3))
-
   def test89UnicodeInput(self):
     m = Chem.MolFromSmiles(u'c1ccccc1')
     self.assertTrue(m is not None)
@@ -7196,24 +7186,6 @@ CAS<~>
 
     self.assertEqual(mae, iomae[ctBlockStart:])
 
-
-  def test_HapticBondsToDative(self):
-    fefile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
-                          'ferrocene.mol')
-    femol = Chem.MolFromMolFile(fefile)
-    newfemol = Chem.rdmolops.HapticBondsToDative(femol)
-    self.assertEqual(Chem.MolToSmiles(newfemol),
-                     'c12->[Fe+2]3456789(<-c1c->3[cH-]->4c->52)<-c1c->6c->7[cH-]->8c->91')
-    
-    
-  def test_DativeBondsToHaptic(self):
-    fefile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
-                          'ferrocene.mol')
-    femol = Chem.MolFromMolFile(fefile)
-    newfemol = Chem.rdmolops.HapticBondsToDative(femol)
-    backfemol = Chem.rdmolops.DativeBondsToHaptic(newfemol)
-    self.assertEqual(Chem.MolToSmiles(femol), Chem.MolToSmiles(backfemol))
-    
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

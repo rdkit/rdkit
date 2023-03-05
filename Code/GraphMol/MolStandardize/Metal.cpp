@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include "Metal.h"
-#include <GraphMol/FileParsers/MolSGroupParsing.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RDKitBase.h>
@@ -26,52 +25,34 @@ class RWMol;
 class ROMol;
 
 namespace MolStandardize {
-
-MetalDisconnector::MetalDisconnector(const MetalDisconnectorOptions &options)
-    : metal_nof_(
+MetalDisconnector::MetalDisconnector()
+    : metal_nof(
           SmartsToMol("[Li,Na,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,"
                       "Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,"
                       "W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[#7,#8,F]")),
-      options_(options) {
+      metal_non(SmartsToMol(
+          "[Al,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,Hf,Ta,"
+          "W,Re,Os,Ir,Pt,Au]~[B,C,Si,P,As,Sb,S,Se,Te,Cl,Br,I,At]")) {
   BOOST_LOG(rdInfoLog) << "Initializing MetalDisconnector\n";
-  std::string metalList =
-      "Al,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,Hf,Ta,"
-      "W,Re,Os,Ir,Pt,Au]~";
-  std::string nonMetalList = "Si,P,As,Sb,S,Se,Te,Cl,Br,I,At]";
-  if (options_.splitGrignards) {
-    metalList = "[Li,Na,Mg,K," + metalList;
-  } else {
-    metalList = "[" + metalList;
-  }
-  if (options_.splitAromaticC) {
-    nonMetalList = "[B,#6," + nonMetalList;
-  } else {
-    nonMetalList = "[B,C," + nonMetalList;
-  }
-  std::string metal_non_smt = metalList + nonMetalList;
-  metal_non_.reset(RDKit::SmartsToMol(metal_non_smt));
-  std::string metalDummySmt = metalList + "[*]";
-  metalDummy_.reset(RDKit::SmartsToMol(metalDummySmt));
 };
 
-MetalDisconnector::MetalDisconnector(const MetalDisconnector &other)
-    : metal_nof_(other.metal_nof_),
-      metal_non_(other.metal_non_),
-      metalDummy_(other.metalDummy_),
-      options_(other.options_){};
+MetalDisconnector::MetalDisconnector(const MetalDisconnector &other) {
+  metal_nof = other.metal_nof;
+  metal_non = other.metal_non;
+};
 
 MetalDisconnector::~MetalDisconnector(){};
 
-ROMol *MetalDisconnector::getMetalNof() { return metal_nof_.get(); }
+ROMol *MetalDisconnector::getMetalNof() { return metal_nof.get(); }
 
-ROMol *MetalDisconnector::getMetalNon() { return metal_non_.get(); }
+ROMol *MetalDisconnector::getMetalNon() { return metal_non.get(); }
 
 void MetalDisconnector::setMetalNof(const ROMol &mol) {
-  this->metal_nof_.reset(new ROMol(mol));
+  this->metal_nof.reset(new ROMol(mol));
 }
 
 void MetalDisconnector::setMetalNon(const ROMol &mol) {
-  this->metal_non_.reset(new ROMol(mol));
+  this->metal_non.reset(new ROMol(mol));
 }
 
 ROMol *MetalDisconnector::disconnect(const ROMol &mol) {
@@ -82,7 +63,7 @@ ROMol *MetalDisconnector::disconnect(const ROMol &mol) {
 
 void MetalDisconnector::disconnect(RWMol &mol) {
   BOOST_LOG(rdInfoLog) << "Running MetalDisconnector\n";
-  std::list<ROMOL_SPTR> metalList = {metal_nof_, metal_non_};
+  std::list<ROMOL_SPTR> metalList = {metal_nof, metal_non};
   std::map<int, NonMetal> nonMetals;
   std::map<int, int> metalChargeExcess;
   for (auto &query : metalList) {
@@ -121,17 +102,7 @@ void MetalDisconnector::disconnect(RWMol &mol) {
     //	std::cout << "After removing bond and charge adjustment: " <<
     // MolToSmiles(mol) << std::endl;
   }
-  if (options_.adjustCharges) {
-    adjust_charges(mol, nonMetals, metalChargeExcess);
-  }
-  if (options_.removeHapticDummies) {
-    remove_haptic_dummies(mol);
-  }
-}
 
-void MetalDisconnector::adjust_charges(RDKit::RWMol &mol,
-                                       std::map<int, NonMetal> &nonMetals,
-                                       std::map<int, int> &metalChargeExcess) {
   for (auto it = nonMetals.begin(); it != nonMetals.end(); ++it) {
     auto a = mol.getAtomWithIdx(it->first);
     // do not blindly trust the original formal charge as it is often wrong
@@ -252,53 +223,5 @@ void MetalDisconnector::adjust_charges(RDKit::RWMol &mol,
     a->updatePropertyCache();
   }
 }
-
-void MetalDisconnector::remove_haptic_dummies(RDKit::RWMol &mol) {
-  std::vector<MatchVectType> matches;
-  SubstructMatch(mol, *metalDummy_, matches);
-  std::vector<unsigned int> dummiesToGo;
-  for (const auto &match : matches) {
-    int metal_idx = match[0].second;
-    int dummy_idx = match[1].second;
-    auto bond = mol.getBondBetweenAtoms(metal_idx, dummy_idx);
-    std::string sprop;
-    if (bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
-                               sprop)) {
-      if (sprop.length() && sprop[0] == '(' &&
-          sprop[sprop.length() - 1] == ')') {
-        dummiesToGo.push_back(dummy_idx);
-      }
-    }
-  }
-  // The atom indices are recalculated after each atom removal, so take them
-  // out in descending order. Bonds are taken out when the atom is removed.
-  std::sort(dummiesToGo.begin(), dummiesToGo.end(), std::greater{});
-  for (auto a : dummiesToGo) {
-    mol.removeAtom(a);
-  }
-}
-
-// This is declared in MolStandardize.h not Metal.h
-void disconnectOrganometallics(RWMol &mol) {
-  RDKit::MolStandardize::MetalDisconnectorOptions mdOptions;
-  mdOptions.splitGrignards = true;
-  mdOptions.splitAromaticC = true;
-  mdOptions.adjustCharges = false;
-  mdOptions.removeHapticDummies = true;
-  RDKit::MolStandardize::MetalDisconnector md(mdOptions);
-  md.disconnect(mol);
-}
-
-// This is declared in MolStandardize.h not Metal.h
-ROMol *disconnectOrganometallics(const ROMol &mol) {
-  RDKit::MolStandardize::MetalDisconnectorOptions mdOptions;
-  mdOptions.splitGrignards = true;
-  mdOptions.splitAromaticC = true;
-  mdOptions.adjustCharges = false;
-  mdOptions.removeHapticDummies = true;
-  RDKit::MolStandardize::MetalDisconnector md(mdOptions);
-  return md.disconnect(mol);
-}
-
 }  // namespace MolStandardize
 }  // namespace RDKit

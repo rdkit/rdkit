@@ -61,7 +61,6 @@ QAFUNC1(ExplicitValence, makeAtomExplicitValenceQuery, int);
 QAFUNC1(TotalValence, makeAtomTotalValenceQuery, int);
 QAFUNC1(ExplicitDegree, makeAtomExplicitDegreeQuery, int);
 QAFUNC1(TotalDegree, makeAtomTotalDegreeQuery, int);
-QAFUNC1(NonHydrogenDegree, makeAtomNonHydrogenDegreeQuery, int);
 
 QAFUNC1(HCount, makeAtomHCountQuery, int);
 QAFUNC1(Mass, makeAtomMassQuery, int);
@@ -83,7 +82,6 @@ QAFUNC2(IsAliphaticQueryAtom, makeAtomAliphaticQuery, int);
 QAFUNC2(IsInRingQueryAtom, makeAtomInRingQuery, int);
 QAFUNC2(HasChiralTagQueryAtom, makeAtomHasChiralTagQuery, int);
 QAFUNC2(MissingChiralTagQueryAtom, makeAtomMissingChiralTagQuery, int);
-QAFUNC2(IsBridgeheadQueryAtom, makeAtomIsBridgeheadQuery, int);
 
 QAFUNC2(AAtomQueryAtom, makeAAtomQuery, int);
 QAFUNC2(AHAtomQueryAtom, makeAHAtomQuery, int);
@@ -189,7 +187,6 @@ struct queries_wrapper {
     QADEF1(NumRadicalElectrons)
     QADEF1(NumHeteroatomNeighbors)
     QADEF1(NumAliphaticHeteroatomNeighbors)
-    QADEF1(NonHydrogenDegree)
 
     QADEF2(IsUnsaturated);
     QADEF2(IsAromatic);
@@ -197,7 +194,6 @@ struct queries_wrapper {
     QADEF2(IsInRing);
     QADEF2(HasChiralTag);
     QADEF2(MissingChiralTag);
-    QADEF2(IsBridgehead);
 
     QADEF2(AAtom);
     QADEF2(AHAtom);

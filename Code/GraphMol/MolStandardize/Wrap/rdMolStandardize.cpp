@@ -107,9 +107,6 @@ RDKit::ROMol *superParentHelper(const RDKit::ROMol *mol, python::object params,
   return parentHelper(mol, params, skip_standardize,
                       RDKit::MolStandardize::superParent);
 }
-RDKit::ROMol *disconnectOrganometallicsHelper(RDKit::ROMol &mol) {
-  return RDKit::MolStandardize::disconnectOrganometallics(mol);
-}
 
 }  // namespace
 
@@ -264,12 +261,6 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
   python::def("CanonicalTautomer", canonicalTautomerHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
-              python::return_value_policy<python::manage_new_object>());
-  docString =
-      "Returns the molecule disconnected using the organometallics"
-      " rules.";
-  python::def("DisconnectOrganometallics", disconnectOrganometallicsHelper,
-              (python::arg("mol")), docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
   wrap_validate();
