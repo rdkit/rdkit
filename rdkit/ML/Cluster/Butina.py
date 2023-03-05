@@ -55,14 +55,15 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
            ...
          )
          The first element for each cluster is its centroid.
-
   """
   if isDistData and len(data) > (nPts * (nPts - 1) / 2):
     logger.warning("Distance matrix is too long")
-  nbrLists = [None] * nPts
-  for i in range(nPts):
-    nbrLists[i] = []
 
+  # Create an empty matrix of booleans with a point for each i,j pair of molecule numbers.
+  # Also tally the count of all pairs, skipping duplicates, and all self-comparison.
+  # For efficiency, we never change the size of this bit bit-table.  We just flip bits.
+  matrix_passing_threshold: numpy.array = numpy.zeros([nPts, nPts], dtype=bool)
+  counts: numpy.array = numpy.zeros([nPts], dtype=numpy.int32)
   dmIdx = 0
   for i in range(nPts):
     for j in range(i):
@@ -72,23 +73,31 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
         dij = data[dmIdx]
         dmIdx += 1
       if dij <= distThresh:
-        nbrLists[i].append(j)
-        nbrLists[j].append(i)
+        matrix_passing_threshold[i, j] = True
+        matrix_passing_threshold[j, i] = True
+        counts[i] += 1
+        counts[j] += 1
+      else:
+        pass
+
   # sort by the number of neighbors:
-  tLists = [(len(y), x) for x, y in enumerate(nbrLists)]
+  tLists = [(counts[i], i) for i in range(nPts)]
   tLists.sort(reverse=True)
 
   res = []
-  seen = [0] * nPts
+  seen = numpy.zeros([nPts], dtype=bool)
   while tLists:
     _, idx = tLists.pop(0)
     if seen[idx]:
       continue
-    tRes = [idx]
-    for nbr in nbrLists[idx]:
-      if not seen[nbr]:
-        tRes.append(nbr)
-        seen[nbr] = 1
+
+    new_cluster = [idx]
+    for jdx_other_cluster in range(nPts):
+      if matrix_passing_threshold[idx, jdx_other_cluster]:
+        if not seen[jdx_other_cluster]:
+          new_cluster.append(jdx_other_cluster)
+          seen[jdx_other_cluster] = True
+
     # update the number of neighbors:
     # remove all members of the new cluster from the list of
     # neighbors and reorder the tLists
@@ -96,18 +105,25 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
       # get the list of affected molecules, i.e. all molecules
       # which have at least one of the members of the new cluster
       # as a neighbor
-      nbrNbr = [nbrLists[t] for t in tRes]
-      nbrNbr = frozenset().union(*nbrNbr)
+      neighbors = set()
+      for idx_new_cluster in new_cluster:
+          for jdx_other_cluster in range(nPts):
+              if matrix_passing_threshold[idx_new_cluster, jdx_other_cluster]:
+                  neighbors.add(jdx_other_cluster)
+      neighbors = frozenset(neighbors)
+
       # loop over all remaining molecules in tLists but only
       # consider unassigned and affected compounds
-      for x, y in enumerate(tLists):
-        y1 = y[1]
-        if seen[y1] or (y1 not in nbrNbr):
+      for tlist_n, tlist_count_and_idx in enumerate(tLists):
+        idx_remaining_cluster = tlist_count_and_idx[1]
+        if seen[idx_remaining_cluster] or (idx_remaining_cluster not in neighbors):
           continue
         # update the number of neighbors
-        nbrLists[y1] = set(nbrLists[y1]).difference(tRes)
-        tLists[x] = (len(nbrLists[y1]), y1)
+        for jdx_other_cluster in new_cluster:
+            matrix_passing_threshold[idx_remaining_cluster, jdx_other_cluster] = False
+        tLists[tlist_n] = (numpy.count_nonzero(matrix_passing_threshold[idx_remaining_cluster, :]), idx_remaining_cluster)
+
       # now reorder the list
       tLists.sort(reverse=True)
-    res.append(tuple(tRes))
+    res.append(tuple(new_cluster))
   return tuple(res)
