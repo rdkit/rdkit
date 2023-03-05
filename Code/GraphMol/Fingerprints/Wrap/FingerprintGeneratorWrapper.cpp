@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -108,14 +108,15 @@ SparseIntVect<OutputType> *getSparseCountFingerprint(
     additionalOutput = python::extract<AdditionalOutput *>(py_additionalOutput);
   }
 
-  SparseIntVect<OutputType> *result = fpGen->getSparseCountFingerprint(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-      customAtomInvariants, customBondInvariants);
+  FingerprintFuncArguments args(fromAtoms, ignoreAtoms, confId,
+                                additionalOutput, customAtomInvariants,
+                                customBondInvariants);
+  auto result = fpGen->getSparseCountFingerprint(mol, args);
 
   delete fromAtoms;
   delete ignoreAtoms;
 
-  return result;
+  return result.release();
 }
 
 template <typename OutputType>
@@ -136,14 +137,15 @@ SparseBitVect *getSparseFingerprint(
     additionalOutput = python::extract<AdditionalOutput *>(py_additionalOutput);
   }
 
-  SparseBitVect *result = fpGen->getSparseFingerprint(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-      customAtomInvariants, customBondInvariants);
+  FingerprintFuncArguments args(fromAtoms, ignoreAtoms, confId,
+                                additionalOutput, customAtomInvariants,
+                                customBondInvariants);
+  auto result = fpGen->getSparseFingerprint(mol, args);
 
   delete fromAtoms;
   delete ignoreAtoms;
 
-  return result;
+  return result.release();
 }
 
 template <typename OutputType>
@@ -164,14 +166,15 @@ SparseIntVect<std::uint32_t> *getCountFingerprint(
     additionalOutput = python::extract<AdditionalOutput *>(py_additionalOutput);
   }
 
-  SparseIntVect<std::uint32_t> *result = fpGen->getCountFingerprint(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-      customAtomInvariants, customBondInvariants);
+  FingerprintFuncArguments args(fromAtoms, ignoreAtoms, confId,
+                                additionalOutput, customAtomInvariants,
+                                customBondInvariants);
+  auto result = fpGen->getCountFingerprint(mol, args);
 
   delete fromAtoms;
   delete ignoreAtoms;
 
-  return result;
+  return result.release();
 }
 
 template <typename OutputType>
@@ -193,14 +196,15 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
     additionalOutput = python::extract<AdditionalOutput *>(py_additionalOutput);
   }
 
-  ExplicitBitVect *result = fpGen->getFingerprint(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-      customAtomInvariants, customBondInvariants);
+  FingerprintFuncArguments args(fromAtoms, ignoreAtoms, confId,
+                                additionalOutput, customAtomInvariants,
+                                customBondInvariants);
+  auto result = fpGen->getFingerprint(mol, args);
 
   delete fromAtoms;
   delete ignoreAtoms;
 
-  return result;
+  return result.release();
 }
 
 template <typename OutputType>
@@ -257,6 +261,11 @@ python::object getNumPyCountFingerprint(
 template <typename OutputType>
 std::string getInfoString(const FingerprintGenerator<OutputType> *fpGen) {
   return std::string(fpGen->infoString());
+}
+
+template <typename OutputType>
+FingerprintArguments *getOptions(FingerprintGenerator<OutputType> *fpGen) {
+  return fpGen->getOptions();
 }
 
 const std::vector<const ROMol *> convertPyArgumentsForBulk(
@@ -386,6 +395,167 @@ python::object getBitInfoMapHelper(const AdditionalOutput &ao) {
   return std::move(res);
 }
 
+namespace {
+template <typename T>
+void wrapGenerator(const std::string &nm) {
+  python::class_<FingerprintGenerator<T>, boost::noncopyable>(nm.c_str(),
+                                                              python::no_init)
+      .def("GetSparseCountFingerprint", getSparseCountFingerprint<T>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1,
+            python::arg("customAtomInvariants") = python::list(),
+            python::arg("customBondInvariants") = python::list(),
+            python::arg("additionalOutput") = python::object()),
+           "Generates a sparse count fingerprint\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - fromAtoms: indices of atoms to use while generating the "
+           "fingerprint\n"
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
+           "the fingerprint\n"
+           "    - confId: 3D confirmation to use, only used by AtomPair "
+           "fingerprint\n"
+           "    - customAtomInvariants: custom atom invariants to be used, "
+           "overrides invariants from the invariant generator\n"
+           "    - customBondInvariants: custom bond invariants to be used, "
+           "overrides invariants from the invariant generator\n\n"
+           "    - additionalOutput: AdditionalOutput instance used to return "
+           "extra information about the bits\n\n"
+           "  RETURNS: a SparseIntVect containing fingerprint\n\n",
+           python::return_value_policy<python::manage_new_object>())
+      .def("GetSparseFingerprint", getSparseFingerprint<T>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1,
+            python::arg("customAtomInvariants") = python::list(),
+            python::arg("customBondInvariants") = python::list(),
+            python::arg("additionalOutput") = python::object()),
+           "Generates a sparse fingerprint\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - fromAtoms: indices of atoms to use while generating the "
+           "fingerprint\n"
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
+           "the fingerprint\n"
+           "    - confId: 3D confirmation to use, only used by AtomPair "
+           "fingerprint\n"
+           "    - customAtomInvariants: custom atom invariants to be used, "
+           "overrides invariants from the invariant generator\n"
+           "    - customBondInvariants: custom bond invariants to be used, "
+           "overrides invariants from the invariant generator\n\n"
+           "    - additionalOutput: AdditionalOutput instance used to return "
+           "extra information about the bits\n\n"
+           "  RETURNS: a SparseBitVect containing fingerprint\n\n",
+           python::return_value_policy<python::manage_new_object>())
+      .def("GetCountFingerprint", getCountFingerprint<T>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1,
+            python::arg("customAtomInvariants") = python::list(),
+            python::arg("customBondInvariants") = python::list(),
+            python::arg("additionalOutput") = python::object()),
+           "Generates a count fingerprint\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - fromAtoms: indices of atoms to use while generating the "
+           "fingerprint\n"
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
+           "the fingerprint\n"
+           "    - confId: 3D confirmation to use, only used by AtomPair "
+           "fingerprint\n"
+           "    - customAtomInvariants: custom atom invariants to be used, "
+           "overrides invariants from the invariant generator\n"
+           "    - customBondInvariants: custom bond invariants to be used, "
+           "overrides invariants from the invariant generator\n\n"
+           "    - additionalOutput: AdditionalOutput instance used to return "
+           "extra information about the bits\n\n"
+           "  RETURNS: a SparseIntVect containing fingerprint\n\n",
+           python::return_value_policy<python::manage_new_object>())
+      .def("GetCountFingerprintAsNumPy", getNumPyCountFingerprint<T>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1,
+            python::arg("customAtomInvariants") = python::list(),
+            python::arg("customBondInvariants") = python::list(),
+            python::arg("additionalOutput") = python::object()),
+           "Generates a count fingerprint\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - fromAtoms: indices of atoms to use while generating the "
+           "fingerprint\n"
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
+           "the fingerprint\n"
+           "    - confId: 3D confirmation to use, only used by AtomPair "
+           "fingerprint\n"
+           "    - customAtomInvariants: custom atom invariants to be used, "
+           "overrides invariants from the invariant generator\n"
+           "    - customBondInvariants: custom bond invariants to be used, "
+           "overrides invariants from the invariant generator\n\n"
+           "    - additionalOutput: AdditionalOutput instance used to return "
+           "extra information about the bits\n\n"
+           "  RETURNS: a numpy array containing the fingerprint\n\n")
+      .def("GetFingerprint", getFingerprint<T>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1,
+            python::arg("customAtomInvariants") = python::list(),
+            python::arg("customBondInvariants") = python::list(),
+            python::arg("additionalOutput") = python::object()),
+           "Generates a fingerprint\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - fromAtoms: indices of atoms to use while generating the "
+           "fingerprint\n"
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
+           "the fingerprint\n"
+           "    - confId: 3D confirmation to use, only used by AtomPair "
+           "fingerprint\n"
+           "    - customAtomInvariants: custom atom invariants to be used, "
+           "overrides invariants from the invariant generator\n"
+           "    - customBondInvariants: custom bond invariants to be used, "
+           "overrides invariants from the invariant generator\n\n"
+           "    - additionalOutput: AdditionalOutput instance used to return "
+           "extra information about the bits\n\n"
+           "  RETURNS: a ExplicitBitVect containing fingerprint\n\n",
+           python::return_value_policy<python::manage_new_object>())
+      .def("GetFingerprintAsNumPy", getNumPyFingerprint<T>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1,
+            python::arg("customAtomInvariants") = python::list(),
+            python::arg("customBondInvariants") = python::list(),
+            python::arg("additionalOutput") = python::object()),
+           "Generates a fingerprint\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - fromAtoms: indices of atoms to use while generating the "
+           "fingerprint\n"
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
+           "the fingerprint\n"
+           "    - confId: 3D confirmation to use, only used by AtomPair "
+           "fingerprint\n"
+           "    - customAtomInvariants: custom atom invariants to be used, "
+           "overrides invariants from the invariant generator\n"
+           "    - customBondInvariants: custom bond invariants to be used, "
+           "overrides invariants from the invariant generator\n\n"
+           "    - additionalOutput: AdditionalOutput instance used to return "
+           "extra information about the bits\n\n"
+           "  RETURNS: a numpy array containing the fingerprint\n\n")
+      .def("GetInfoString", getInfoString<T>,
+           "Returns a string containing information about the fingerprint "
+           "generator\n\n"
+           "  RETURNS: an information string\n\n")
+      .def("GetOptions", getOptions<T>,
+           python::return_value_policy<python::reference_existing_object>(),
+           "return the fingerprint options object");
+}
+
+void setCountBoundsHelper(FingerprintArguments &opts, python::object bounds) {
+  pythonObjectToVect(bounds, opts.d_countBounds);
+}
+}  // namespace
+
 BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
   rdkit_import_array();
   python::class_<AtomInvariantsGenerator, boost::noncopyable>(
@@ -395,316 +565,49 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
       "BondInvariantsGenerator", python::no_init);
 
   python::class_<AdditionalOutput, boost::noncopyable>("AdditionalOutput")
-      .def("AllocateAtomToBits", &AdditionalOutput::allocateAtomToBits)
-      .def("AllocateBitInfoMap", &AdditionalOutput::allocateBitInfoMap)
-      .def("AllocateBitPaths", &AdditionalOutput::allocateBitPaths)
-      .def("AllocateAtomCounts", &AdditionalOutput::allocateAtomCounts)
+      .def("AllocateAtomToBits", &AdditionalOutput::allocateAtomToBits,
+           "synonym for CollectAtomToBits()")
+      .def("AllocateBitInfoMap", &AdditionalOutput::allocateBitInfoMap,
+           "synonym for CollectBitInfoMap()")
+      .def("AllocateBitPaths", &AdditionalOutput::allocateBitPaths,
+           "synonym for CollectBitPaths()")
+      .def("AllocateAtomCounts", &AdditionalOutput::allocateAtomCounts,
+           "synonym for CollectAtomCounts()")
+      .def(
+          "CollectAtomToBits", &AdditionalOutput::allocateAtomToBits,
+          "toggle collection of information mapping each atom to the bits it is involved in.")
+      .def(
+          "CollectBitInfoMap", &AdditionalOutput::allocateBitInfoMap,
+          "toggles collection of information mapping each atom to more detail about the atom environment (not available from all fingerprints)")
+      .def(
+          "CollectBitPaths", &AdditionalOutput::allocateBitPaths,
+          "toggles collection of information matching each atom to information about the paths it is involved in (not available from all fingerprints).")
+      .def(
+          "CollectAtomCounts", &AdditionalOutput::allocateAtomCounts,
+          "toggles collection of information about the number of bits each atom is involved in")
       .def("GetAtomToBits", &getAtomToBitsHelper)
       .def("GetBitInfoMap", &getBitInfoMapHelper)
       .def("GetBitPaths", &getBitPathsHelper)
       .def("GetAtomCounts", &getAtomCountsHelper);
 
-  python::class_<FingerprintGenerator<std::uint32_t>, boost::noncopyable>(
-      "FingerprintGenerator32", python::no_init)
-      .def("GetSparseCountFingerprint",
-           getSparseCountFingerprint<std::uint32_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a sparse count fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a SparseIntVect containing fingerprint\n\n",
-           python::return_value_policy<python::manage_new_object>())
-      .def("GetSparseFingerprint", getSparseFingerprint<std::uint32_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a sparse fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a SparseBitVect containing fingerprint\n\n",
-           python::return_value_policy<python::manage_new_object>())
-      .def("GetCountFingerprint", getCountFingerprint<std::uint32_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a count fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a SparseIntVect containing fingerprint\n\n",
-           python::return_value_policy<python::manage_new_object>())
-      .def("GetCountFingerprintAsNumPy",
-           getNumPyCountFingerprint<std::uint32_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a count fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a numpy array containing the fingerprint\n\n")
-      .def("GetFingerprint", getFingerprint<std::uint32_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a ExplicitBitVect containing fingerprint\n\n",
-           python::return_value_policy<python::manage_new_object>())
-      .def("GetFingerprintAsNumPy", getNumPyFingerprint<std::uint32_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a numpy array containing the fingerprint\n\n")
-      .def("GetInfoString", getInfoString<std::uint32_t>,
-           "Returns a string containing information about the fingerprint "
-           "generator\n\n"
-           "  RETURNS: an information string\n\n");
+  python::class_<FingerprintArguments, boost::noncopyable>("FingerprintOptions",
+                                                           python::no_init)
+      .def_readwrite("countSimulation",
+                     &FingerprintArguments::df_countSimulation,
+                     "use count simulation")
+      .def_readwrite(
+          "includeChirality", &FingerprintArguments::df_includeChirality,
+          "include chirality in atom invariants (not for all fingerprints)")
+      .def_readwrite("fpSize", &FingerprintArguments::d_fpSize,
+                     "size of the fingerprints created")
+      .def_readwrite("numBitsPerFeature",
+                     &FingerprintArguments::d_numBitsPerFeature,
+                     "number of bits to set for each feature")
+      .def("SetCountBounds", &setCountBoundsHelper,
+           "set the bins for the count bounds");
 
-  python::class_<FingerprintGenerator<std::uint64_t>, boost::noncopyable>(
-      "FingerprintGenerator64", python::no_init)
-      .def("GetSparseCountFingerprint",
-           getSparseCountFingerprint<std::uint64_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a sparse count fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a SparseIntVect containing fingerprint\n\n",
-           python::return_value_policy<python::manage_new_object>())
-      .def("GetSparseFingerprint", getSparseFingerprint<std::uint64_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a sparse fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a SparseBitVect containing fingerprint\n\n",
-           python::return_value_policy<python::manage_new_object>())
-      .def("GetCountFingerprint", getCountFingerprint<std::uint64_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a count fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a SparseIntVect containing fingerprint\n\n",
-           python::return_value_policy<python::manage_new_object>())
-      .def("GetCountFingerprintAsNumPy",
-           getNumPyCountFingerprint<std::uint64_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a count fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a numpy array containing the fingerprint\n\n")
-      .def("GetFingerprint", getFingerprint<std::uint64_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a ExplicitBitVect containing fingerprint\n\n",
-           python::return_value_policy<python::manage_new_object>())
-      .def("GetFingerprintAsNumPy", getNumPyFingerprint<std::uint64_t>,
-           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
-            python::arg("ignoreAtoms") = python::list(),
-            python::arg("confId") = -1,
-            python::arg("customAtomInvariants") = python::list(),
-            python::arg("customBondInvariants") = python::list(),
-            python::arg("additionalOutput") = python::object()),
-           "Generates a fingerprint\n\n"
-           "  ARGUMENTS:\n"
-           "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indices of atoms to use while generating the "
-           "fingerprint\n"
-           "    - ignoreAtoms: indices of atoms to exclude while generating "
-           "the fingerprint\n"
-           "    - confId: 3D confirmation to use, only used by AtomPair "
-           "fingerprint\n"
-           "    - customAtomInvariants: custom atom invariants to be used, "
-           "overrides invariants from the invariant generator\n"
-           "    - customBondInvariants: custom bond invariants to be used, "
-           "overrides invariants from the invariant generator\n\n"
-           "    - additionalOutput: AdditionalOutput instance used to return "
-           "extra information about the bits\n\n"
-           "  RETURNS: a numpy array containing fingerprint\n\n")
-      .def("GetInfoString", getInfoString<std::uint64_t>,
-           "Returns a string containing information about the fingerprint "
-           "generator\n\n"
-           "  RETURNS: an information string\n\n");
+  wrapGenerator<std::uint32_t>("FingeprintGenerator32");
+  wrapGenerator<std::uint64_t>("FingeprintGenerator64");
 
   python::enum_<FPType>("FPType")
       .value("RDKitFP", FPType::RDKitFP)

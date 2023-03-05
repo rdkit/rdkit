@@ -94,25 +94,12 @@ TEST_CASE("RDKit bits per feature", "[fpgenerator][rdkit]") {
           std::string::npos);
   }
   SECTION("change numBitsPerFeature") {
-    // I won't lie: having to do this makes my head hurt, but fixing it to
-    // create a ctor that takes a Parameters object is more effort than I can
-    // devote at the moment
     unsigned int minPath = 1;
     unsigned int maxPath = 2;
-    bool useHs = true;
-    bool branchedPaths = true;
-    bool useBondOrder = true;
-    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
-    bool countSimulation = false;
-    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-    std::uint32_t fpSize = 2048;
-    std::uint32_t numBitsPerFeature = 1;
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
-        RDKitFP::getRDKitFPGenerator<std::uint64_t>(
-            minPath, maxPath, useHs, branchedPaths, useBondOrder,
-            atomInvariantsGenerator, countSimulation, countBounds, fpSize,
-            numBitsPerFeature));
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>(minPath, maxPath));
     REQUIRE(fpGenerator);
+    fpGenerator->getOptions()->d_numBitsPerFeature = 1;
     std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(*m1));
     REQUIRE(fp);
     CHECK(fp->getNumBits() == 2048);
@@ -289,11 +276,16 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
   SECTION("folded bitInfo") {
     // clang-format off
     AdditionalOutput::bitPathsType expected = {
+          {562, {{2}}},
+          {709, {{0, 1}}},
+          {1118, {{0, 1, 2}}},
+          {1183, {{1, 2}}},
           {1233, {{0, 1, 2}}},
           {1308, {{0}, {1}}},
           {1339, {{2}}},
           {1728, {{1, 2}}},
-          {1813, {{0, 1}}}
+          {1772, {{0}, {1}}},
+          {1813, {{0, 1}}},
         };
     // clang-format on
 
@@ -302,6 +294,7 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
       ao.allocateBitPaths();
       std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(
           *m1, fromAtoms, ignoreAtoms, confId, &ao));
+
       CHECK(*ao.bitPaths == expected);
     }
     {
@@ -316,11 +309,11 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
 
   SECTION("folded atomToBits atomCounts") {
     AdditionalOutput::atomToBitsType expected1 = {
-        {1308, 1813, 1233},
-        {1308, 1308, 1813, 1728, 1233},
-        {1308, 1339, 1813, 1728, 1233},
-        {1339, 1728, 1233}};
-    AdditionalOutput::atomCountsType expected2 = {3, 5, 5, 3};
+        {1308, 1772, 1813, 709, 1233, 1118},
+        {1308, 1772, 1813, 709, 1728, 1183, 1233, 1118},
+        {1308, 1772, 1339, 562, 1813, 709, 1728, 1183, 1233, 1118},
+        {1339, 562, 1728, 1183, 1233, 1118}};
+    AdditionalOutput::atomCountsType expected2 = {6, 10, 10, 6};
 
     {
       AdditionalOutput ao;
@@ -346,11 +339,16 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
   SECTION("unfolded bitInfo") {
     // clang-format off
     AdditionalOutput::bitPathsType expected = {
-        {3977409745, {{0, 1, 2}}},
-        {4275705116, {{0}, {1}}},
-        {4274652475, {{2}}},
+        {54413874, {{2}}},
+        {257418334, {{0, 1, 2}}},
+        {986785516, {{0}, {1}}},
+        {1135572127, {{1, 2}}},
+        {1433230021, {{0, 1}}},
         {1524090560, {{1, 2}}},
-        {1940446997, {{0, 1}}}
+        {1940446997, {{0, 1}}},
+        {3977409745, {{0, 1, 2}}},
+        {4274652475, {{2}}},
+        {4275705116, {{0}, {1}}},
       };
     // clang-format on
 
@@ -373,11 +371,13 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
 
   SECTION("unfolded atomToBits atomCounts") {
     AdditionalOutput::atomToBitsType expected1 = {
-        {4275705116, 1940446997, 3977409745},
-        {4275705116, 4275705116, 1940446997, 1524090560, 3977409745},
-        {4275705116, 4274652475, 1940446997, 1524090560, 3977409745},
-        {4274652475, 1524090560, 3977409745}};
-    AdditionalOutput::atomCountsType expected2 = {3, 5, 5, 3};
+        {4275705116, 986785516, 1940446997, 1433230021, 3977409745, 257418334},
+        {4275705116, 986785516, 1940446997, 1433230021, 1524090560, 1135572127,
+         3977409745, 257418334},
+        {4275705116, 986785516, 4274652475, 54413874, 1940446997, 1433230021,
+         1524090560, 1135572127, 3977409745, 257418334},
+        {4274652475, 54413874, 1524090560, 1135572127, 3977409745, 257418334}};
+    AdditionalOutput::atomCountsType expected2 = {6, 10, 10, 6};
 
     {
       AdditionalOutput ao;
@@ -416,7 +416,7 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
       // clang-format off
       AdditionalOutput::bitPathsType expected = {
           {0, {{0, 1, 2, 3}}},
-          {384, {{1, 2, 3, 4}}}
+          {1536, {{1, 2, 3, 4}}}
       };
       // clang-format on
       AdditionalOutput ao;
@@ -447,7 +447,7 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
 
     {
       AdditionalOutput::atomToBitsType expected1 = {
-          {0}, {0, 384}, {0, 384}, {0, 384}, {384}};
+          {0}, {0, 1536}, {0, 1536}, {0, 1536}, {1536}};
       AdditionalOutput ao;
       ao.allocateAtomCounts();
       ao.allocateAtomToBits();
@@ -474,8 +474,8 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
     {
       // clang-format off
       AdditionalOutput::bitPathsType expected = {
-          {261685121, {{1, 2, 3, 4}}},
-          {262078465, {{0, 1, 2, 3}}},
+          {1046740484, {{1, 2, 3, 4}}},
+          {1048313860, {{0, 1, 2, 3}}},
       };
       // clang-format on
       AdditionalOutput ao;
@@ -505,11 +505,11 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
     AdditionalOutput::atomCountsType expected2 = {1, 2, 2, 2, 1};
 
     {
-      AdditionalOutput::atomToBitsType expected1 = {{262078465},
-                                                    {262078465, 261685121},
-                                                    {262078465, 261685121},
-                                                    {262078465, 261685121},
-                                                    {261685121}};
+      AdditionalOutput::atomToBitsType expected1 = {{1048313860},
+                                                    {1046740484, 1048313860},
+                                                    {1046740484, 1048313860},
+                                                    {1046740484, 1048313860},
+                                                    {1046740484}};
       AdditionalOutput ao;
       ao.allocateAtomCounts();
       ao.allocateAtomToBits();
@@ -549,9 +549,9 @@ TEST_CASE("AtomPairGenerator bit info", "[fpgenerator][AP]") {
   SECTION("folded bitInfo") {
     {
       AdditionalOutput::bitInfoMapType expected = {
-          {351, {{0, 1}}},
-          {479, {{0, 2}}},
-          {399, {{1, 2}}},
+          {1404, {{0, 1}}},
+          {1916, {{0, 2}}},
+          {1596, {{1, 2}}},
       };
       AdditionalOutput ao;
       ao.allocateBitInfoMap();
@@ -579,9 +579,9 @@ TEST_CASE("AtomPairGenerator bit info", "[fpgenerator][AP]") {
 
     {
       AdditionalOutput::atomToBitsType expected1 = {
-          {351, 479},
-          {351, 399},
-          {479, 399},
+          {1404, 1916},
+          {1404, 1596},
+          {1596, 1916},
       };
       AdditionalOutput ao;
       ao.allocateAtomCounts();
@@ -611,9 +611,9 @@ TEST_CASE("AtomPairGenerator bit info", "[fpgenerator][AP]") {
   SECTION("unfolded bitInfo") {
     {
       AdditionalOutput::bitInfoMapType expected = {
-          {1979743, {{0, 1}}},
-          {1979871, {{0, 2}}},
-          {2016655, {{1, 2}}},
+          {7918972, {{0, 1}}},
+          {7919484, {{0, 2}}},
+          {8066620, {{1, 2}}},
       };
       AdditionalOutput ao;
       ao.allocateBitInfoMap();
@@ -641,7 +641,7 @@ TEST_CASE("AtomPairGenerator bit info", "[fpgenerator][AP]") {
 
     {
       AdditionalOutput::atomToBitsType expected1 = {
-          {1979743, 1979871}, {1979743, 2016655}, {1979871, 2016655}};
+          {7918972, 7919484}, {7918972, 8066620}, {7919484, 8066620}};
       AdditionalOutput ao;
       ao.allocateAtomCounts();
       ao.allocateAtomToBits();
@@ -723,30 +723,15 @@ TEST_CASE("RDKit set countBounds", "[fpgenerator][rdkit]") {
   SECTION("change countBounds") {
     unsigned int minPath = 1;
     unsigned int maxPath = 7;
-    bool useHs = true;
-    bool branchedPaths = true;
-    bool useBondOrder = true;
-    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
-    bool countSimulation = true;
-    std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-    std::uint32_t fpSize = 2048;
-    std::uint32_t numBitsPerFeature = 2;
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
-        RDKitFP::getRDKitFPGenerator<std::uint64_t>(
-            minPath, maxPath, useHs, branchedPaths, useBondOrder,
-            atomInvariantsGenerator, countSimulation, countBounds, fpSize,
-            numBitsPerFeature));
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>(minPath, maxPath));
     REQUIRE(fpGenerator);
+    fpGenerator->getOptions()->df_countSimulation = true;
     std::unique_ptr<ExplicitBitVect> fp1(fpGenerator->getFingerprint(*m1));
     REQUIRE(fp1);
     CHECK(fp1->getNumBits() == 2048);
 
-    countBounds = {2, 8, 16, 32};
-    fpGenerator.reset(RDKitFP::getRDKitFPGenerator<std::uint64_t>(
-        minPath, maxPath, useHs, branchedPaths, useBondOrder,
-        atomInvariantsGenerator, countSimulation, countBounds, fpSize,
-        numBitsPerFeature));
-    REQUIRE(fpGenerator);
+    fpGenerator->getOptions()->d_countBounds = {2, 8, 16, 32};
     std::unique_ptr<ExplicitBitVect> fp2(fpGenerator->getFingerprint(*m1));
     REQUIRE(fp2);
     CHECK(fp2->getNumBits() == 2048);
@@ -764,5 +749,25 @@ TEST_CASE(
     std::vector<std::uint32_t> invars(mol->getNumAtoms());
     MorganFingerprints::getConnectivityInvariants(*mol, invars);
     CHECK(invars[1] == invars[0]);
+  }
+}
+
+TEST_CASE("topological torsions shorted paths") {
+  SECTION("basics") {
+    auto mol = "CC1CCC1"_smiles;
+    REQUIRE(mol);
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>());
+    REQUIRE(fpGenerator);
+    static_cast<TopologicalTorsion::TopologicalTorsionArguments *>(
+        fpGenerator->getOptions())
+        ->df_countSimulation = false;
+    std::unique_ptr<SparseBitVect> fp(fpGenerator->getSparseFingerprint(*mol));
+    CHECK(fp->getNumOnBits() == 3);
+    static_cast<TopologicalTorsion::TopologicalTorsionArguments *>(
+        fpGenerator->getOptions())
+        ->df_onlyShortestPaths = true;
+    fp.reset(fpGenerator->getSparseFingerprint(*mol));
+    CHECK(fp->getNumOnBits() == 1);
   }
 }

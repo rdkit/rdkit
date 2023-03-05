@@ -1,6 +1,8 @@
 //
 //
 //  Copyright (c) 2009-2010, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without

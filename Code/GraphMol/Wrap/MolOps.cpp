@@ -431,6 +431,11 @@ void cleanupMol(ROMol &mol) {
   MolOps::cleanUp(rwmol);
 }
 
+void cleanUpOrganometallicsMol(ROMol &mol) {
+  auto &rwmol = static_cast<RWMol &>(mol);
+  MolOps::cleanUpOrganometallics(rwmol);
+}
+
 void setAromaticityMol(ROMol &mol, MolOps::AromaticityModel model) {
   auto &wmol = static_cast<RWMol &>(mol);
   MolOps::setAromaticity(wmol, model);
@@ -932,12 +937,22 @@ ROMol *molzip_new(const ROMol &a, const MolzipParams &p) {
   return molzip(a, p).release();
 }
 
+ROMol *molzipHelper(python::object &pmols, const MolzipParams &p) {
+  auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
+  if (mols == nullptr || mols->empty()) {
+    return nullptr;
+  }
+  return molzip(*mols, p).release();
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
     python::enum_<MolOps::SanitizeFlags>("SanitizeFlags")
         .value("SANITIZE_NONE", MolOps::SANITIZE_NONE)
         .value("SANITIZE_CLEANUP", MolOps::SANITIZE_CLEANUP)
+        .value("SANITIZE_CLEANUP_ORGANOMETALLICS",
+               MolOps::SANITIZE_CLEANUP_ORGANOMETALLICS)
         .value("SANITIZE_PROPERTIES", MolOps::SANITIZE_PROPERTIES)
         .value("SANITIZE_SYMMRINGS", MolOps::SANITIZE_SYMMRINGS)
         .value("SANITIZE_KEKULIZE", MolOps::SANITIZE_KEKULIZE)
@@ -1555,6 +1570,21 @@ to the terminal dummy atoms.\n\
 \n";
     python::def("Cleanup", cleanupMol, (python::arg("mol")), docString.c_str());
 
+    // ------------------------------------------------------------------------
+    docString =
+        "cleans up certain common bad functionalities in the organometallic molecule\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+  NOTES:\n\
+\n\
+    - The molecule is modified in place.\n\
+\n";
+    python::def("CleanupOrganometallics", cleanUpOrganometallicsMol,
+                (python::arg("mol")), docString.c_str());
+
     python::enum_<MolOps::AromaticityModel>("AromaticityModel")
         .value("AROMATICITY_DEFAULT", MolOps::AROMATICITY_DEFAULT)
         .value("AROMATICITY_RDKIT", MolOps::AROMATICITY_RDKIT)
@@ -1718,6 +1748,9 @@ to the terminal dummy atoms.\n\
     - rootedAtAtom: (optional) if nonzero, only paths from the specified\n\
       atom will be returned.\n\
 \n\
+    - onlyShortestPaths: (optional) if set then only paths which are <= the shortest\n\
+      path between the begin and end atoms will be included in the results\n\
+\n\
   RETURNS: a tuple of tuples with IDs for the bonds.\n\
 \n\
   NOTES: \n\
@@ -1739,7 +1772,8 @@ to the terminal dummy atoms.\n\
     python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthN,
                 (python::arg("mol"), python::arg("length"),
                  python::arg("useBonds") = true, python::arg("useHs") = false,
-                 python::arg("rootedAtAtom") = -1),
+                 python::arg("rootedAtAtom") = -1,
+                 python::arg("onlyShortestPaths") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -2541,6 +2575,10 @@ EXAMPLES:\n\n\
                        &MolzipParams::enforceValenceRules,
                        "If true (default) enforce valences after zipping\n\
 Setting this to false allows assembling chemically incorrect fragments.")
+        .def_readwrite(
+            "generateCoordinates", &MolzipParams::generateCoordinates,
+            "If true will add depiction coordinates to input molecules and\n\
+zipped molecule (for molzipFragments only)")
         .def("setAtomSymbols", &RDKit::setAtomSymbols,
              "Set the atom symbols used to zip mols together when using "
              "AtomType labeling");
@@ -2582,6 +2620,15 @@ The atoms to zip can be specified with the MolzipParams class.\n\
         (ROMol * (*)(const ROMol &, const MolzipParams &)) & molzip_new,
         (python::arg("a"), python::arg("params") = MolzipParams()),
         "zip together two molecules using the given matching parameters",
+        python::return_value_policy<python::manage_new_object>());
+
+    python::def(
+        "molzipFragments",
+        (ROMol * (*)(python::object &, const MolzipParams &)) & molzipHelper,
+        (python::arg("mols"), python::arg("params") = MolzipParams()),
+        "zip together multiple molecules from an R group decomposition \n\
+using the given matching parameters.  The first molecule in the list\n\
+must be the core",
         python::return_value_policy<python::manage_new_object>());
 
     // ------------------------------------------------------------------------

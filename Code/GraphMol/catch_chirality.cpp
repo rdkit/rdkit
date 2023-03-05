@@ -3253,3 +3253,57 @@ TEST_CASE("double bond stereo with new chirality perception") {
     }
   }
 }
+
+TEST_CASE("false positives from new stereo code") {
+  SECTION("elements") {
+    std::vector<std::string> examples{"P", "PC", "S", "SC", "S(F)C"};
+    for (auto &smi : examples) {
+      INFO(smi);
+      std::unique_ptr<RWMol> m{SmilesToMol(smi)};
+      REQUIRE(m);
+      auto si = Chirality::findPotentialStereo(*m);
+      CHECK(si.empty());
+    }
+  }
+  SECTION("non-tetrahedral and implicit Hs") {
+    std::vector<std::string> examples{
+        "[SiH4]",         "[SiH3]C",      "[SH4]",     "[PH5]",
+        "[PH4]C",         "[SH6]",        "[SH5]C",    "[SiH2](C)C",
+        "[PH3](C)C",      "[PH2](C)(C)C", "[SH4](C)C", "[SH3](C)(C)C",
+        "[SH2](C)(C)(C)C"};
+    {
+      AllowNontetrahedralChiralityFixture reset_non_tetrahedral_allowed;
+      Chirality::setAllowNontetrahedralChirality(false);
+      for (auto &smi : examples) {
+        INFO(smi);
+        std::unique_ptr<RWMol> m{SmilesToMol(smi)};
+        REQUIRE(m);
+        auto si = Chirality::findPotentialStereo(*m);
+        CHECK(si.empty());
+      }
+    }
+    {
+      AllowNontetrahedralChiralityFixture reset_non_tetrahedral_allowed;
+      Chirality::setAllowNontetrahedralChirality(true);
+      for (auto &smi : examples) {
+        INFO(smi);
+        std::unique_ptr<RWMol> m{SmilesToMol(smi)};
+        REQUIRE(m);
+        auto si = Chirality::findPotentialStereo(*m);
+        CHECK(si.size() == 1);
+      }
+    }
+  }
+}
+
+TEST_CASE(
+    "Github #6049: Cyclobutyl group in a macrocycle triggers a stereo center") {
+  SECTION("as reported") {
+    auto mol = "O=S1(=O)C=CC=C2CCCCC3CC(C3)N21"_smiles;
+    REQUIRE(mol);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    for (const auto &sg : stereoInfo) {
+      CHECK(sg.centeredOn != 15);
+    }
+  }
+}

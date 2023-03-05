@@ -11,22 +11,24 @@ it's intended to be shallow, but broad
 import doctest
 import gc
 import gzip
+import importlib.util
 import logging
 import os
+import pickle
 import sys
 import tempfile
 import unittest
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from io import StringIO
+from io import BytesIO, StringIO
 
 import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
 from rdkit.Chem import rdqueries
+from rdkit.Chem.Scaffolds import MurckoScaffold
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
-import importlib.util
 spec = importlib.util.spec_from_loader("TestReplaceCore", loader=None)
 TestReplaceCore = importlib.util.module_from_spec(spec)
 code = """
@@ -470,7 +472,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m2 is not None)
     self.assertEqual(m2.GetNumAtoms(), 2)
     self.assertTrue(m2.GetAtomWithIdx(1).HasQuery())
-    
+
     # test github758
     m = Chem.MolFromSmiles('CCC')
     self.assertEqual(m.GetNumAtoms(), 3)
@@ -2840,7 +2842,7 @@ CAS<~>
       i += 1
     self.assertEqual(i, 16)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
   def testMaeStreamSupplier(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.maegz')
@@ -2871,7 +2873,7 @@ CAS<~>
       i += 1
     self.assertEqual(i, 16)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
   def testMaeFileSupplier(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.mae')
@@ -2889,7 +2891,7 @@ CAS<~>
       i += 1
     self.assertEqual(i, 16)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
   def testMaeFileSupplierException(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'bad_ppty.mae')
@@ -2912,6 +2914,70 @@ CAS<~>
 
     self.assertFalse(suppl.atEnd())
     self.assertTrue(ok)
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
+  def testMaeFileSupplierSetData(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.mae')
+    molNames = [
+      "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+      "220", "229", "256"
+    ]
+    suppl = Chem.MaeMolSupplier()
+
+    with open(fileN) as f:
+      data = f.read()
+
+    suppl.SetData(data)
+
+    self.assertEqual(len(suppl), 16)
+
+    for i, mol in enumerate(suppl):
+      self.assertTrue(mol)
+      self.assertEqual(mol.GetProp("_Name"), molNames[i])
+
+    self.assertEqual(i, 15)
+
+    # Do it again, to check the reset() method
+    suppl.reset()
+
+    self.assertEqual(len(suppl), 16)
+
+    for i, mol in enumerate(suppl):
+      self.assertTrue(mol)
+      self.assertEqual(mol.GetProp("_Name"), molNames[i])
+
+    self.assertEqual(i, 15)
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
+  def testMaeFileSupplierGetItem(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.mae')
+    molNames = [
+      "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+      "220", "229", "256"
+    ]
+    with Chem.MaeMolSupplier(fileN) as suppl:
+      num_mols = len(suppl)
+      self.assertEqual(num_mols, 16)
+
+      for i in range(num_mols):
+        self.assertEqual(suppl[i].GetProp("_Name"), molNames[i])
+
+        j = -(i + 1)
+        self.assertEqual(suppl[j].GetProp("_Name"), molNames[j])
+
+      for i in (num_mols, 2 * num_mols, -(num_mols + 1), -2 * (num_mols + 1)):
+        self.assertRaises(IndexError, lambda: suppl[i])
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
+  def testMaeFileSupplierExceptionMsgs(self):
+    maeBlock = "f_m_ct {\n  s_m_title\n  :::\n  " "\n  }\n}"
+
+    with Chem.MaeMolSupplier() as suppl:
+      suppl.SetData(maeBlock)
+      self.assertRaisesRegex(RuntimeError, r'File parsing error: Indexed block not found: m_atom',
+                             lambda: next(suppl))
 
   def test66StreamSupplierIter(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -2937,7 +3003,6 @@ CAS<~>
   def test67StreamSupplierStringIO(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
-    from io import BytesIO
     sio = BytesIO(gzip.open(fileN).read())
     suppl = Chem.ForwardSDMolSupplier(sio)
     molNames = [
@@ -2986,8 +3051,6 @@ CAS<~>
     self.assertEqual(i, 16)
 
   def test70StreamSDWriter(self):
-    from io import BytesIO, StringIO
-
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
     inf = gzip.open(fileN)
@@ -3018,7 +3081,6 @@ CAS<~>
     self.assertEqual(i, 16)
 
   def test71StreamSmilesWriter(self):
-    from io import StringIO
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'esters.sdf')
     suppl = Chem.ForwardSDMolSupplier(fileN)
@@ -3039,7 +3101,6 @@ CAS<~>
     self.assertEqual(txt.count('\n'), 7)
 
   def test72StreamTDTWriter(self):
-    from io import StringIO
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'esters.sdf')
     suppl = Chem.ForwardSDMolSupplier(fileN)
@@ -3483,6 +3544,16 @@ CAS<~>
     qa = rdqueries.NumHeteroatomNeighborsGreaterQueryAtom(0)
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
     self.assertEqual(l, (0, 2, 3, 4))
+
+    m = Chem.MolFromSmiles('CC12CCN(CC1)C2')
+    qa = rdqueries.IsBridgeheadQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 4))
+
+    m = Chem.MolFromSmiles('OCCOC')
+    qa = rdqueries.NonHydrogenDegreeEqualsQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 2, 3))
 
   def test89UnicodeInput(self):
     m = Chem.MolFromSmiles(u'c1ccccc1')
@@ -3966,7 +4037,7 @@ CAS<~>
     mol = Chem.MolFromSmiles('O=[N+][O-]')
     supp = Chem.ResonanceMolSupplier(mol)
     supp.atEnd()
-    
+
   def testSubstructMatchAcetate(self):
     mol = Chem.MolFromSmiles('CC(=O)[O-]')
     query = Chem.MolFromSmarts('C(=O)[O-]')
@@ -5673,7 +5744,6 @@ $$$$
     self.assertTrue(l[1] is None)
     self.assertTrue(l[2] is None)
 
-    from io import BytesIO
     sio = BytesIO(sdf)
     suppl3 = Chem.ForwardSDMolSupplier(sio)
     l = [x for x in suppl3]
@@ -5715,7 +5785,6 @@ M  END
     self.assertTrue(l[0] is not None)
     self.assertTrue(l[1] is not None)
 
-    from io import BytesIO
     sio = BytesIO(sdf)
     suppl3 = Chem.ForwardSDMolSupplier(sio)
     l = [x for x in suppl3]
@@ -6496,7 +6565,6 @@ M  END
     self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
 
   def test_github3553(self):
-    from io import StringIO
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
                          'github3553.sdf')
     sdSup = Chem.SDMolSupplier(fileN)
@@ -6568,7 +6636,6 @@ M  END
   def testContextManagers(self):
     from rdkit import RDLogger
     RDLogger.DisableLog('rdApp.*')
-    from io import StringIO
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
                          'github3553.sdf')
     with Chem.SDMolSupplier(fileN) as suppl:
@@ -6933,6 +7000,201 @@ CAS<~>
     self.assertNotEqual(m.GetAtomWithIdx(9).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
 
     Chem.SetUseLegacyStereoPerception(origVal)
+
+  def test_picklingWithAddedAttribs(self):
+    m = Chem.MolFromSmiles("C")
+    m.foo = 1
+    m.SetIntProp("bar", 2)
+    pkl = pickle.dumps(m)
+    nm = pickle.loads(pkl)
+    self.assertEqual(nm.GetIntProp("bar"), 2)
+    self.assertEqual(nm.foo, 1)
+
+  def testGithubIssue6306(self):
+    # test of unpickling
+    props = Chem.GetDefaultPickleProperties()
+    try:
+      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
+      mols = [Chem.MolFromSmiles(s) for s in ["C", "CC"]]
+      scaffolds = [MurckoScaffold.GetScaffoldForMol(m) for m in mols]
+      # this shouldn't throw an exception
+      unpickler = [pickle.loads(pickle.dumps(m)) for m in mols]
+    finally:
+      Chem.SetDefaultPickleProperties(props)
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not built with MAEParser support")
+  def testMaeWriter(self):
+    mol = Chem.MolFromSmiles("C1CCCCC1")
+    self.assertTrue(mol)
+    title = "random test mol"
+    mol.SetProp('_Name', title)
+
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'outMaeWriter.mae')
+    writer1 = Chem.MaeWriter(ofile)
+
+    osio = StringIO()
+    writer2 = Chem.MaeWriter(osio)
+
+    for writer in (writer1, writer2):
+      writer.write(mol)
+      writer.close()
+      del writer
+
+    with open(ofile) as f:
+      maefile = f.read()
+
+    self.assertEqual(maefile, osio.getvalue())
+
+    self.assertIn('s_m_m2io_version', maefile)
+
+    self.assertIn('f_m_ct', maefile)
+
+    self.assertIn('s_m_title', maefile)
+    self.assertIn(title, maefile)
+
+    self.assertIn(f' m_atom[{mol.GetNumAtoms()}] {{', maefile)
+
+    self.assertEqual(maefile.count("A0A0A0"), 6)  # 6 grey-colored heavy atoms
+
+    self.assertTrue(f' m_bond[{mol.GetNumBonds()}] {{', maefile)
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not built with MAEParser support")
+  def testMaeWriterProps(self):
+    mol = Chem.MolFromSmiles("C1CCCCC1")
+    self.assertTrue(mol)
+
+    title = "random test mol"
+    mol.SetProp('_Name', title)
+
+    boolProp = False
+    intProp = 123454321
+    realProp = 2.718282  # Mae files have a predefined precision of 6 digits!
+    strProp = r"This is a dummy prop, yay!"
+
+    ignored_prop = 'ignored_prop'
+    str_dummy_prop = 'str_dummy_prop'
+    mol_prop = 'mol_prop'
+    atom_prop = 'atom_prop'
+    bond_prop = 'bond_prop'
+    exported_props = [str_dummy_prop, mol_prop, atom_prop, bond_prop]
+
+    mol.SetIntProp(mol_prop, intProp)
+    mol.SetProp(str_dummy_prop, strProp)
+    mol.SetProp(ignored_prop, ignored_prop)
+
+    atomIdx = 2
+    at = mol.GetAtomWithIdx(atomIdx)
+    at.SetDoubleProp(atom_prop, realProp)
+    at.SetProp(str_dummy_prop, strProp)
+    at.SetProp(ignored_prop, ignored_prop)
+
+    bondIdx = 4
+    b = mol.GetBondWithIdx(bondIdx)
+    b.SetBoolProp(bond_prop, boolProp)
+    b.SetProp(str_dummy_prop, strProp)
+    b.SetProp(ignored_prop, ignored_prop)
+
+    heavyAtomColor = "767676"
+
+    osio = StringIO()
+    with Chem.MaeWriter(osio) as w:
+      w.SetProps(exported_props)
+      w.write(mol, heavyAtomColor=heavyAtomColor)
+
+    maestr = osio.getvalue()
+
+    ctBlockStart = maestr.find('f_m_ct')
+    atomBlockStart = maestr.find(' m_atom[')
+    bondBlockStart = maestr.find(' m_bond[')
+
+    self.assertNotEqual(ctBlockStart, -1)
+    self.assertNotEqual(atomBlockStart, -1)
+    self.assertNotEqual(bondBlockStart, -1)
+
+    self.assertGreater(bondBlockStart, atomBlockStart)
+    self.assertGreater(atomBlockStart, ctBlockStart)
+
+    # structure properties
+    self.assertIn(mol_prop, maestr[ctBlockStart:atomBlockStart])
+    self.assertIn(str(intProp), maestr[ctBlockStart:atomBlockStart])
+
+    self.assertIn(str_dummy_prop, maestr[ctBlockStart:atomBlockStart])
+    self.assertIn(strProp, maestr[ctBlockStart:atomBlockStart])
+
+    self.assertNotIn(ignored_prop, maestr[ctBlockStart:atomBlockStart])
+
+    # atom properties
+    self.assertIn(atom_prop, maestr[atomBlockStart:bondBlockStart])
+    self.assertIn(str_dummy_prop, maestr[atomBlockStart:bondBlockStart])
+
+    self.assertNotIn(ignored_prop, maestr[atomBlockStart:bondBlockStart])
+
+    for line in maestr[atomBlockStart:bondBlockStart].split('\n'):
+      if line.strip().startswith(str(atomIdx + 1)):
+        break
+    self.assertIn(str(realProp), line)
+    self.assertIn(strProp, line)
+    self.assertIn(heavyAtomColor, line)
+
+    # bond properties
+    self.assertIn(bond_prop, maestr[bondBlockStart:])
+    self.assertIn(str_dummy_prop, maestr[bondBlockStart:])
+
+    self.assertNotIn(ignored_prop, maestr[bondBlockStart:])
+
+    for line in maestr[bondBlockStart:].split('\n'):
+      if line.strip().startswith(str(bondIdx + 1)):
+        break
+    self.assertIn(str(int(boolProp)), line)
+    self.assertIn(strProp, line)
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not built with MAEParser support")
+  def testMaeWriterRoundtrip(self):
+    smiles = "C1CCCCC1"
+    mol = Chem.MolFromSmiles(smiles)
+    self.assertTrue(mol)
+
+    osio = StringIO()
+    with Chem.MaeWriter(osio) as w:
+      w.write(mol)
+
+    isio = BytesIO(osio.getvalue().encode())
+    with Chem.MaeMolSupplier(isio) as r:
+      roundtrip_mol = next(r)
+    self.assertTrue(roundtrip_mol)
+
+    self.assertEqual(Chem.MolToSmiles(roundtrip_mol), smiles)
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not built with MAEParser support")
+  def testMaeWriterGetText(self):
+    smiles = "C1CCCCC1"
+    mol = Chem.MolFromSmiles(smiles)
+    self.assertTrue(mol)
+
+    dummy_prop = 'dummy_prop'
+    another_dummy_prop = 'another_dummy_prop'
+    mol.SetProp(dummy_prop, dummy_prop)
+    mol.SetProp(another_dummy_prop, another_dummy_prop)
+
+    heavyAtomColor = "767676"
+
+    osio = StringIO()
+    with Chem.MaeWriter(osio) as w:
+      w.SetProps([dummy_prop])
+      w.write(mol, heavyAtomColor=heavyAtomColor)
+
+    iomae = osio.getvalue()
+
+    ctBlockStart = iomae.find('f_m_ct')
+    self.assertNotEqual(ctBlockStart, -1)
+
+    self.assertIn(dummy_prop, iomae)
+    self.assertNotIn(another_dummy_prop, iomae)
+
+    mae = Chem.MaeWriter.GetText(mol, heavyAtomColor, -1, [dummy_prop])
+
+    self.assertEqual(mae, iomae[ctBlockStart:])
 
 
 if __name__ == '__main__':

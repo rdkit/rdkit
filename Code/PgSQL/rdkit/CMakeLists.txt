@@ -203,9 +203,10 @@ if(MSVC)
   set(installPgSQLName "${installPgSQLName}.bat")
   set(installPgSQLCopyCommand "copy /Y")
   set(installPgSQLSeparator "\\")
-  set(installPgSQLBody "")
   set(BAT_QUOTE "\"")
   set(SH_QUOTE "")
+  set(PG_CPACK_STAGING_DIR "")
+  set(installPgSQLBody "")
   string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PG_CURRENT_SOURCE_DIR ${PG_CURRENT_SOURCE_DIR})
   string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PG_CURRENT_BINARY_DIR ${PG_CURRENT_BINARY_DIR})
   string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PG_PKGLIBDIR ${PG_PKGLIBDIR})
@@ -216,9 +217,15 @@ else()
   set(installPgSQLName "${installPgSQLName}.sh")
   set(installPgSQLCopyCommand "cp")
   set(installPgSQLSeparator "/")
-  set(installPgSQLBody "set -x\n")
   set(BAT_QUOTE "")
   set(SH_QUOTE "\"")
+  set(PG_CPACK_STAGING_DIR "\$DESTDIR")
+  set(installPgSQLBody
+    "set -x\n"
+    "test -n \"${PG_CPACK_STAGING_DIR}\" && \\\n"
+    "  mkdir -p \"${PG_CPACK_STAGING_DIR}${PG_EXTENSIONDIR}\" && \\\n"
+    "  mkdir -p \"${PG_CPACK_STAGING_DIR}${PG_PKGLIBDIR}\"\n"
+  )
 endif()
 set(testPgSQLBody "cd \"${PG_CURRENT_BINARY_DIR}\"\n"
     "\"${PGREGRESS_BINARY}\" --inputdir=sql "
@@ -265,11 +272,11 @@ foreach(file ${files})
   configure_file(${file} ${output_name})
 endforeach()
 set(installPgSQLBody "${installPgSQLBody}"
-    "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
-    "${installPgSQLCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_EXTENSIONDIR}\"\n"
-    "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}update_sql${installPgSQLSeparator}${SH_QUOTE}*.sql${BAT_QUOTE} \"${PG_EXTENSIONDIR}\"\n"
-    "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
-    "\"${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n")
+  "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_CPACK_STAGING_DIR}${PG_EXTENSIONDIR}\"\n"
+  "${installPgSQLCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_CPACK_STAGING_DIR}${PG_EXTENSIONDIR}\"\n"
+  "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}update_sql${installPgSQLSeparator}${SH_QUOTE}*.sql${BAT_QUOTE} \"${PG_CPACK_STAGING_DIR}${PG_EXTENSIONDIR}\"\n"
+  "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" \"${PG_CPACK_STAGING_DIR}${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n"
+)
 file(WRITE ${testPgSQLName} ${testPgSQLBody})
 file(WRITE ${installPgSQLName} ${installPgSQLBody})
 foreach(testDir sql data expected)

@@ -100,18 +100,11 @@ DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
       angle_(angle) {
   PRECONDITION(points_.size() == 2, "arrow bad points size");
 
-  // the two ends of the arrowhead are used for collision detection so they
+  // the two ends of the arrowhead are used for collision detection so we
   // may as well store them.
-  auto delta = points_[0] - points_[1];
-  auto cos_angle = std::cos(angle_), sin_angle = std::sin(angle_);
-  auto p1 = points_[0];
-  p1.x += frac * (delta.x * cos_angle + delta.y * sin_angle);
-  p1.y += frac * (delta.y * cos_angle - delta.x * sin_angle);
+  Point2D ab(points_[1]), p1, p2;
+  MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[0], fill_, frac_, angle_);
   points_.push_back(p1);
-
-  auto p2 = points_[1];
-  p2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
-  p2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
   points_.push_back(p2);
 }
 
@@ -168,14 +161,11 @@ void DrawShapeEllipse::myDraw(MolDraw2D &drawer) const {
 // ****************************************************************************
 void DrawShapeEllipse::findExtremes(double &xmin, double &xmax, double &ymin,
                                     double &ymax) const {
-  auto wb2 = points_[1].x;
-  auto hb2 = points_[1].y;
-  auto cx = points_[0].x + wb2;
-  auto cy = points_[0].y + hb2;
-  xmin = std::min(cx - wb2, xmin);
-  xmax = std::max(cx + wb2, xmax);
-  ymin = std::min(cy - hb2, ymin);
-  ymax = std::max(cy + hb2, ymax);
+  // points_[0] is the centre, points_[1] the radii
+  xmin = std::min(points_[0].x - points_[1].x, xmin);
+  xmax = std::max(points_[0].x + points_[1].x, xmax);
+  ymin = std::min(points_[0].y - points_[1].y, ymin);
+  ymax = std::max(points_[0].y + points_[1].y, ymax);
 }
 
 // ****************************************************************************
@@ -534,6 +524,12 @@ void DrawShapeDashedWedge::buildLines() {
   double dashSep = 2.5 + lineWidth_;
   double centralLen = (at1Cds_ - midend).length();
   unsigned int nDashes = rdcast<unsigned int>(std::round(centralLen / dashSep));
+  // There should be at least 3 dashes so we can see which way the wedge
+  // is going (Github6041b).
+  unsigned int numDashesNeeded = oneLessDash_ ? 4 : 3;
+  if (nDashes < numDashesNeeded) {
+    nDashes = numDashesNeeded;
+  }
   if (!nDashes) {
     points_.push_back(end1Cds_);
     points_.push_back(end2Cds_);

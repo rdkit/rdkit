@@ -14,6 +14,8 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 
+class JSMolIterator;
+
 class JSMol {
  public:
   JSMol() : d_mol(nullptr) {}
@@ -22,8 +24,14 @@ class JSMol {
   std::string get_cxsmiles() const;
   std::string get_smarts() const;
   std::string get_cxsmarts() const;
-  std::string get_molblock() const;
-  std::string get_v3Kmolblock() const;
+  std::string get_molblock(const std::string &details) const;
+  std::string get_molblock() const {
+    return get_molblock("{}");
+  }
+  std::string get_v3Kmolblock(const std::string &details) const;
+  std::string get_v3Kmolblock() const {
+    return get_v3Kmolblock("{}");
+  }
   std::string get_pickle() const;
   std::string get_inchi() const;
   std::string get_json() const;
@@ -116,8 +124,11 @@ class JSMol {
     return set_prop(key, val, false);
   }
   std::string get_prop(const std::string &key) const;
+  bool clear_prop(const std::string &key);
   std::string remove_hs() const;
+  bool remove_hs_in_place();
   std::string add_hs() const;
+  bool add_hs_in_place();
   double normalize_depiction(int canonicalize, double scaleFactor);
   double normalize_depiction(int canonicalize) {
     return normalize_depiction(canonicalize, -1.);
@@ -125,10 +136,33 @@ class JSMol {
   double normalize_depiction() { return normalize_depiction(1, -1.); }
   void straighten_depiction(bool minimizeRotation);
   void straighten_depiction() { straighten_depiction(false); }
+  std::pair<JSMolIterator *, std::string> get_frags(
+      const std::string &details_json);
+  std::pair<JSMolIterator *, std::string> get_frags() {
+    return get_frags("{}");
+  }
 
   std::unique_ptr<RDKit::RWMol> d_mol;
   static constexpr int d_defaultWidth = 250;
   static constexpr int d_defaultHeight = 200;
+};
+
+class JSMolIterator {
+ public:
+  JSMolIterator(const std::vector<RDKit::ROMOL_SPTR> &mols)
+      : d_mols(mols), d_idx(0){};
+  JSMol *next() {
+    return (d_idx < d_mols.size()
+                ? new JSMol(new RDKit::RWMol(*d_mols.at(d_idx++)))
+                : nullptr);
+  }
+  void reset() { d_idx = 0; }
+  bool at_end() { return d_idx == d_mols.size(); }
+  size_t size() { return d_mols.size(); }
+
+ private:
+  std::vector<RDKit::ROMOL_SPTR> d_mols;
+  size_t d_idx;
 };
 
 class JSReaction {
@@ -193,4 +227,5 @@ JSMol *get_qmol(const std::string &input);
 JSReaction *get_rxn(const std::string &input, const std::string &details_json);
 std::string version();
 void prefer_coordgen(bool prefer);
-void use_legacy_stereo_perception(bool value);
+bool use_legacy_stereo_perception(bool value);
+bool allow_non_tetrahedral_chirality(bool value);

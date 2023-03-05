@@ -38,9 +38,9 @@ std::string pdbwDocStr =
     "     - flavor: (optional) \n\n";
 struct pdbwriter_wrap {
   static void wrap() {
-    python::class_<PDBWriter>("PDBWriter",
-                              "A class for writing molecules to PDB files.",
-                              python::no_init)
+    python::class_<PDBWriter, boost::noncopyable>(
+        "PDBWriter", "A class for writing molecules to PDB files.",
+        python::no_init)
         .def("__init__",
              python::make_constructor(
                  &getPDBWriter, python::default_call_policies(),

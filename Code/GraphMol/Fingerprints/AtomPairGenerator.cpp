@@ -25,8 +25,7 @@ AtomPairAtomInvGenerator::AtomPairAtomInvGenerator(
 
 std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
     const ROMol &mol) const {
-  std::vector<std::uint32_t> *atomInvariants =
-      new std::vector<std::uint32_t>(mol.getNumAtoms());
+  auto *atomInvariants = new std::vector<std::uint32_t>(mol.getNumAtoms());
 
   for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
        atomItI != mol.endAtoms(); ++atomItI) {
@@ -39,9 +38,7 @@ std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
 }
 
 std::string AtomPairAtomInvGenerator::infoString() const {
-  return "AtomPairInvariantGenerator includeChirality=" +
-         std::to_string(df_includeChirality) +
-         " topologicalTorsionCorrection=" +
+  return "AtomPairInvariantGenerator topologicalTorsionCorrection=" +
          std::to_string(df_topologicalTorsionCorrection);
 }
 
@@ -51,47 +48,64 @@ AtomPairAtomInvGenerator *AtomPairAtomInvGenerator::clone() const {
 }
 
 template <typename OutputType>
-OutputType AtomPairArguments<OutputType>::getResultSize() const {
+OutputType AtomPairEnvGenerator<OutputType>::getResultSize() const {
   OutputType result = 1;
   return (result << (numAtomPairFingerprintBits +
-                     2 * (df_includeChirality ? numChiralBits : 0)));
+                     2 * (this->dp_fingerprintArguments->df_includeChirality
+                              ? numChiralBits
+                              : 0)));
 }
 
-template <typename OutputType>
-AtomPairArguments<OutputType>::AtomPairArguments(
+AtomPairArguments::AtomPairArguments(
     const bool countSimulation, const bool includeChirality, const bool use2D,
     const unsigned int minDistance, const unsigned int maxDistance,
     const std::vector<std::uint32_t> countBounds, const std::uint32_t fpSize)
-    : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize),
-      df_includeChirality(includeChirality),
+    : FingerprintArguments(countSimulation, countBounds, fpSize, 1,
+                           includeChirality),
       df_use2D(use2D),
       d_minDistance(minDistance),
       d_maxDistance(maxDistance) {
   PRECONDITION(minDistance <= maxDistance, "bad distances provided");
 }
 
-template <typename OutputType>
-std::string AtomPairArguments<OutputType>::infoString() const {
-  return "AtomPairArguments includeChirality=" +
-         std::to_string(df_includeChirality) +
-         " use2D=" + std::to_string(df_use2D) +
+std::string AtomPairArguments::infoString() const {
+  return "AtomPairArguments use2D=" + std::to_string(df_use2D) +
          " minDistance=" + std::to_string(d_minDistance) +
          " maxDistance=" + std::to_string(d_maxDistance);
 }
 
 template <typename OutputType>
+void AtomPairAtomEnv<OutputType>::updateAdditionalOutput(
+    AdditionalOutput *additionalOutput, size_t bitId) const {
+  PRECONDITION(additionalOutput, "bad output pointer");
+  if (additionalOutput->bitInfoMap) {
+    (*additionalOutput->bitInfoMap)[bitId].emplace_back(d_atomIdFirst,
+                                                        d_atomIdSecond);
+  }
+  if (additionalOutput->atomToBits) {
+    additionalOutput->atomToBits->at(d_atomIdFirst).push_back(bitId);
+    additionalOutput->atomToBits->at(d_atomIdSecond).push_back(bitId);
+  }
+  if (additionalOutput->atomCounts) {
+    additionalOutput->atomCounts->at(d_atomIdFirst)++;
+    additionalOutput->atomCounts->at(d_atomIdSecond)++;
+  }
+}
+
+template <typename OutputType>
 OutputType AtomPairAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *arguments,
+    FingerprintArguments *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *,  // bondInvariants
-    const AdditionalOutput *additionalOutput, const bool hashResults,
-    const std::uint64_t fpSize) const {
+    AdditionalOutput *,                  // additionalOutput,
+    const bool hashResults,
+    const std::uint64_t  // fpSize
+) const {
   PRECONDITION((atomInvariants->size() >= d_atomIdFirst) &&
                    (atomInvariants->size() >= d_atomIdSecond),
                "bad atom invariants size");
 
-  auto *atomPairArguments =
-      dynamic_cast<AtomPairArguments<OutputType> *>(arguments);
+  auto *atomPairArguments = dynamic_cast<AtomPairArguments *>(arguments);
 
   std::uint32_t codeSizeLimit =
       (1 << (codeSize +
@@ -114,24 +128,6 @@ OutputType AtomPairAtomEnv<OutputType>::getBitId(
                             atomPairArguments->df_includeChirality);
   }
 
-  if (additionalOutput) {
-    std::uint32_t tBitId = bitId;
-    if (fpSize) {
-      tBitId = tBitId % fpSize;
-    }
-    if (additionalOutput->bitInfoMap) {
-      (*additionalOutput->bitInfoMap)[tBitId].emplace_back(d_atomIdFirst,
-                                                           d_atomIdSecond);
-    }
-    if (additionalOutput->atomToBits) {
-      additionalOutput->atomToBits->at(d_atomIdFirst).push_back(tBitId);
-      additionalOutput->atomToBits->at(d_atomIdSecond).push_back(tBitId);
-    }
-    if (additionalOutput->atomCounts) {
-      additionalOutput->atomCounts->at(d_atomIdFirst)++;
-      additionalOutput->atomCounts->at(d_atomIdSecond)++;
-    }
-  }
   return bitId;
 }
 
@@ -146,7 +142,7 @@ AtomPairAtomEnv<OutputType>::AtomPairAtomEnv(const unsigned int atomIdFirst,
 template <typename OutputType>
 std::vector<AtomEnvironment<OutputType> *>
 AtomPairEnvGenerator<OutputType>::getEnvironments(
-    const ROMol &mol, FingerprintArguments<OutputType> *arguments,
+    const ROMol &mol, FingerprintArguments *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
@@ -159,8 +155,7 @@ AtomPairEnvGenerator<OutputType>::getEnvironments(
                    additionalOutput->atomToBits->size() == atomCount,
                "bad atomToBits size in AdditionalOutput");
 
-  auto *atomPairArguments =
-      dynamic_cast<AtomPairArguments<OutputType> *>(arguments);
+  auto *atomPairArguments = dynamic_cast<AtomPairArguments *>(arguments);
   std::vector<AtomEnvironment<OutputType> *> result =
       std::vector<AtomEnvironment<OutputType> *>();
   const double *distanceMatrix;
@@ -220,10 +215,9 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
     const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen) {
   AtomEnvironmentGenerator<OutputType> *atomPairEnvGenerator =
       new AtomPair::AtomPairEnvGenerator<OutputType>();
-  FingerprintArguments<OutputType> *atomPairArguments =
-      new AtomPair::AtomPairArguments<OutputType>(
-          useCountSimulation, includeChirality, use2D, minDistance, maxDistance,
-          countBounds, fpSize);
+  FingerprintArguments *atomPairArguments = new AtomPair::AtomPairArguments(
+      useCountSimulation, includeChirality, use2D, minDistance, maxDistance,
+      countBounds, fpSize);
 
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {

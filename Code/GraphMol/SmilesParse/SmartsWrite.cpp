@@ -100,7 +100,7 @@ void describeQuery(const T *query, std::string leader = "\t") {
 const static std::string _qatomHasStereoSet = "_qatomHasStereoSet";
 std::string getAtomSmartsSimple(const QueryAtom *qatom,
                                 const Atom::QUERYATOM_QUERY *query,
-                                bool &needParen) {
+                                bool &needParen, bool checkForSymbol = false) {
   PRECONDITION(query, "bad query");
 
   auto *equery = dynamic_cast<const ATOM_EQUALS_QUERY *>(query);
@@ -132,9 +132,11 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     hasVal = true;
     needParen = true;
   } else if (descrip == "AtomAtomicNum") {
-    res << "#";
-    hasVal = true;
-    needParen = true;
+    if (!qatom->hasProp(common_properties::smilesSymbol)) {
+      res << "#";
+      hasVal = true;
+      needParen = true;
+    }
   } else if (descrip == "AtomExplicitDegree") {
     res << "D";
     hasVal = true;
@@ -253,13 +255,22 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     int atNum;
     bool isAromatic;
     parseAtomType(equery->getVal(), atNum, isAromatic);
-    std::string symbol = PeriodicTable::getTable()->getElementSymbol(atNum);
-    if (isAromatic) {
-      symbol[0] += ('a' - 'A');
-    }
-    res << symbol;
-    if (!SmilesWrite::inOrganicSubset(atNum)) {
-      needParen = true;
+    if (!checkForSymbol || !qatom->hasProp(common_properties::smilesSymbol)) {
+      std::string symbol = PeriodicTable::getTable()->getElementSymbol(atNum);
+      if (isAromatic) {
+        symbol[0] += ('a' - 'A');
+      }
+      res << symbol;
+
+      if (!SmilesWrite::inOrganicSubset(atNum)) {
+        needParen = true;
+      }
+    } else {
+      if (isAromatic) {
+        res << "a";
+      } else {
+        res << "A";
+      }
     }
   } else {
     BOOST_LOG(rdWarningLog)
@@ -365,6 +376,10 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
         res = "->";
       }
       break;
+    case Bond::ZERO:
+      res = "~";  // Actually means "any", but we use ~ for unknown bond types
+                  // in SMILES,
+      break;      // and this will match a ZOB.
     default:
       res = "";
   }
@@ -463,8 +478,10 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
     csmarts1 = getRecursiveStructureQuerySmarts(child1);
     features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_RECURSION);
   } else if ((dsc1 != "AtomOr") && (dsc1 != "AtomAnd")) {
-    // child 1 is a simple node
-    csmarts1 = getAtomSmartsSimple(qatom, child1, needParen);
+    // child 1 is a simple node, but we only check for the smilesSymbol
+    //  if descrip=="AtomAnd"
+    csmarts1 =
+        getAtomSmartsSimple(qatom, child1, needParen, descrip == "AtomAnd");
     bool nneg = (negate) ^ (child1->getNegation());
     if (nneg) {
       csmarts1 = "!" + csmarts1;
@@ -702,7 +719,10 @@ std::string getNonQueryAtomSmarts(const Atom *atom) {
     res << isotope;
   }
 
-  if (SmilesWrite::inOrganicSubset(atom->getAtomicNum())) {
+  std::string symbol;
+  if (atom->getPropIfPresent(common_properties::smilesSymbol, symbol)) {
+    res << symbol;
+  } else if (SmilesWrite::inOrganicSubset(atom->getAtomicNum())) {
     res << "#" << atom->getAtomicNum();
   } else {
     res << atom->getSymbol();
@@ -846,42 +866,50 @@ std::string GetAtomSmarts(const Atom *atom) {
   if (descrip.empty()) {
     // we have simple atom - just generate the smiles and return
     res = SmilesWrite::GetAtomSmiles(atom);
-    if (res[0] == '[') {
-      // chop the brackets off, we'll put them back on later:
+    return res;
+  } else {
+    if ((descrip == "AtomOr") || (descrip == "AtomAnd")) {
+      const QueryAtom *qatom = dynamic_cast<const QueryAtom *>(atom);
+      PRECONDITION(qatom, "could not convert atom to query atom");
+      // we have a composite query
       needParen = true;
-      res = res.substr(1, res.size() - 2);
-    }
-  } else if ((descrip == "AtomOr") || (descrip == "AtomAnd")) {
-    const QueryAtom *qatom = dynamic_cast<const QueryAtom *>(atom);
-    PRECONDITION(qatom, "could not convert atom to query atom");
-    // we have a composite query
-    needParen = true;
-    res = _recurseGetSmarts(qatom, query, query->getNegation(), queryFeatures);
-    if (res.length() == 1) {  // single atom symbol we don't need parens
-      needParen = false;
-    }
-  } else if (descrip == "RecursiveStructure") {
-    // it's a bare recursive structure query:
-    res = getRecursiveStructureQuerySmarts(query);
-    needParen = true;
-  } else {  // we have a simple smarts
-    const QueryAtom *qatom = dynamic_cast<const QueryAtom *>(atom);
-    PRECONDITION(qatom, "could not convert atom to query atom");
-    res = getAtomSmartsSimple(qatom, query, needParen);
-    if (query->getNegation()) {
-      res = "!" + res;
+      res =
+          _recurseGetSmarts(qatom, query, query->getNegation(), queryFeatures);
+      if (res.length() == 1) {  // single atom symbol we don't need parens
+        needParen = false;
+      }
+    } else if (descrip == "RecursiveStructure") {
+      // it's a bare recursive structure query:
+      res = getRecursiveStructureQuerySmarts(query);
       needParen = true;
+    } else {  // we have a simple smarts
+      const QueryAtom *qatom = dynamic_cast<const QueryAtom *>(atom);
+      PRECONDITION(qatom, "could not convert atom to query atom");
+      res = getAtomSmartsSimple(qatom, query, needParen, true);
+      if (query->getNegation()) {
+        res = "!" + res;
+        needParen = true;
+      }
     }
+    std::string mapNum;
+    if (atom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
+      needParen = true;
+      res += ":" + mapNum;
+    }
+    std::string symbol;
+    if (atom->getPropIfPresent(common_properties::smilesSymbol, symbol)) {
+      needParen = true;
+      if (!res.empty()) {
+        res = symbol + ";" + res;
+      } else {
+        res = symbol;
+      }
+    }
+    if (needParen) {
+      res = "[" + res + "]";
+    }
+    return res;
   }
-  std::string mapNum;
-  if (atom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
-    needParen = true;
-    res += ":" + mapNum;
-  }
-  if (needParen) {
-    res = "[" + res + "]";
-  }
-  return res;
 }
 
 std::string GetBondSmarts(const Bond *bond, int atomToLeftIdx) {

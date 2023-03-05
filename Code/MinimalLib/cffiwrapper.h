@@ -44,6 +44,11 @@ RDKIT_RDKITCFFI_EXPORT char *get_inchi_for_molblock(const char *ctab,
 RDKIT_RDKITCFFI_EXPORT char *get_inchikey_for_inchi(const char *inchi);
 RDKIT_RDKITCFFI_EXPORT char *get_rxn(const char *input, size_t *mol_sz,
                                      const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char **get_mol_frags(const char *pkl, size_t pkl_sz,
+                                            size_t **frags_pkl_sz_array,
+                                            size_t *num_frags,
+                                            const char *details_json,
+                                            char **mappings_json);
 
 // substructure
 RDKIT_RDKITCFFI_EXPORT char *get_substruct_match(const char *mol_pkl,
@@ -143,6 +148,10 @@ RDKIT_RDKITCFFI_EXPORT void free_ptr(char *ptr);
 RDKIT_RDKITCFFI_EXPORT char *version();
 RDKIT_RDKITCFFI_EXPORT void enable_logging();
 RDKIT_RDKITCFFI_EXPORT void disable_logging();
+
+// chirality
+RDKIT_RDKITCFFI_EXPORT short use_legacy_stereo_perception(short value);
+RDKIT_RDKITCFFI_EXPORT short allow_non_tetrahedral_chirality(short value);
 
 #ifdef __cplusplus
 }

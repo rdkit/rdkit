@@ -136,7 +136,7 @@ PyObject *tautomerGetSubstructMatchesWithTautomers(
 }  // namespace
 
 namespace RDKit {
-struct tautomerquery_pickle_suite : python::pickle_suite {
+struct tautomerquery_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const TautomerQuery &self) {
     if (!TautomerQueryCanSerialize()) {
       throw_runtime_error("Pickling of TautomerQuery instances is not enabled");

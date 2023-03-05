@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2017 Sereina Riniker
+//  Copyright (C) 2017-2023 Sereina Riniker and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,8 @@
 #ifndef _RD_TORSIONPREFERENCES_H_
 #define _RD_TORSIONPREFERENCES_H_
 #include <vector>
+#include <string>
+#include <memory>
 
 namespace RDKit {
 class ROMol;
@@ -18,6 +20,17 @@ class ROMol;
 
 namespace ForceFields {
 namespace CrystalFF {
+
+//! A structure used to the experimental torsion patterns
+struct RDKIT_FORCEFIELDHELPERS_EXPORT ExpTorsionAngle {
+  unsigned int torsionIdx;
+  std::string smarts;
+  std::vector<double> V;
+  std::vector<int> signs;
+  std::unique_ptr<const RDKit::ROMol> dp_pattern;
+  unsigned int idx[4];
+};
+
 struct CrystalFFDetails {
   std::vector<std::vector<int>> expTorsionAtoms;
   std::vector<std::pair<std::vector<int>, std::vector<double>>>
@@ -35,6 +48,15 @@ RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
     bool useExpTorsions = false, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = false, bool useBasicKnowledge = false,
     unsigned int version = 1, bool verbose = false);
+
+//! \overload
+RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
+    const RDKit::ROMol &mol, CrystalFFDetails &details,
+    std::vector<std::tuple<unsigned int, std::vector<unsigned int>, const ExpTorsionAngle *>> &torsionBonds,
+    bool useExpTorsions = false, bool useSmallRingTorsions = false,
+    bool useMacrocycleTorsions = false, bool useBasicKnowledge = false,
+    unsigned int version = 1, bool verbose = false);
+
 }  // namespace CrystalFF
 }  // namespace ForceFields
 

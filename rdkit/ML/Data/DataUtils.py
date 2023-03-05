@@ -52,7 +52,7 @@
 
 
 import csv
-import random
+from rdkit import RDRandom as random
 import re
 
 import numpy

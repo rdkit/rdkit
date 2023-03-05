@@ -462,9 +462,9 @@ public class ChemReactionTests extends GraphMolTest {
           
           assertEquals( 1, prods0.size() );
           assertEquals( 1, prods0.get(0).size() );    
-          assertEquals( expected_result0.MolToSmiles(), prods0.get(0).get(0).MolToSmiles() );
-          assertEquals( expected_sidechain0.MolToSmiles(),
-                        ChemicalReaction.ReduceProductToSideChains(prods0.get(0).get(0)).MolToSmiles());
+          assertEquals( expected_result0.MolToSmiles(false), prods0.get(0).get(0).MolToSmiles(false) );
+          assertEquals( expected_sidechain0.MolToSmiles(false),
+                        ChemicalReaction.ReduceProductToSideChains(prods0.get(0).get(0)).MolToSmiles(false));
               
           ROMol_Vect_Vect prods1 = rxn.runReactant(reag2, 1);
           ROMol expected_result1 = RWMol.MolFromSmiles("NCNCc1ncc(Cl)cc1Br");
@@ -476,12 +476,12 @@ public class ChemReactionTests extends GraphMolTest {
           
           assertEquals( 1, prods1.size() );
           assertEquals( 1, prods1.get(0).size() );    
-          assertEquals( expected_result1.MolToSmiles(), prods1.get(0).get(0).MolToSmiles() );
-          assertEquals( expected_sidechain1.MolToSmiles(),
-                        ChemicalReaction.ReduceProductToSideChains(prods1.get(0).get(0)).MolToSmiles());
-          assertEquals( expected_sidechain1_nodummies.MolToSmiles(),
+          assertEquals( expected_result1.MolToSmiles(false), prods1.get(0).get(0).MolToSmiles(false) );
+          assertEquals( expected_sidechain1.MolToSmiles(false),
+                        ChemicalReaction.ReduceProductToSideChains(prods1.get(0).get(0)).MolToSmiles(false));
+          assertEquals( expected_sidechain1_nodummies.MolToSmiles(false),
                         ChemicalReaction.ReduceProductToSideChains(
-                            prods1.get(0).get(0),false).MolToSmiles());
+                            prods1.get(0).get(0),false).MolToSmiles(false));
           
           
         }

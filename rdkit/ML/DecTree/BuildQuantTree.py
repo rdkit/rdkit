@@ -8,7 +8,7 @@
 """
 
 import numpy
-import random
+from rdkit import RDRandom as random
 from rdkit.ML.DecTree import QuantTree, ID3
 from rdkit.ML.InfoTheory import entropy
 from rdkit.ML.Data import Quantize

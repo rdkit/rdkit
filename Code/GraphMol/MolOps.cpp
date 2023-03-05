@@ -1,6 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
-//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (C) 2001-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -178,24 +177,85 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
     }
   }
 }
+
+void metalBondCleanup(RWMol &mol, Atom *atom) {
+  PRECONDITION(atom, "bad atom in metalBondCleanup");
+  // The IUPAC recommendation for ligand->metal coordination bonds is that they
+  // be single.  This upsets the RDKit valence model, as seen in CHEBI:26355,
+  // heme b.  If the valence of a non-metal atom is above the maximum in the
+  // RDKit model, and there are single bonds from it to metal
+  // change those bonds to atom->metal dative.
+
+  auto isMetal = [](const Atom *a) -> bool {
+    // This is the list of not metal atoms from QueryOps.cpp
+    static const std::set<int> notMetals{0,  1,  2,  5,  6,  7,  8,  9,
+                                         10, 14, 15, 16, 17, 18, 33, 34,
+                                         35, 36, 52, 53, 54, 85, 86};
+    return (notMetals.find(a->getAtomicNum()) == notMetals.end());
+  };
+  auto noDative = [](const Atom *a) -> bool {
+    static const std::set<int> noD{1, 2, 9, 10};
+    return (noD.find(a->getAtomicNum()) != noD.end());
+  };
+  if (!isMetal(atom)) {
+    return;
+  }
+  const auto &valens =
+      PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
+  if (valens.back() != -1) {
+    // the atom can only have specific valences, so leave it.
+    return;
+  }
+  for (auto bond : mol.atomBonds(atom)) {
+    auto otherAtom = bond->getOtherAtom(atom);
+    if (!isMetal(otherAtom) && !noDative(otherAtom)) {
+      auto ev = otherAtom->calcExplicitValence(false);
+      // Check the explicit valence of the non-metal against the allowed
+      // valences of the atom, adjusted by its formal charge.  This means that
+      // N+ is treated the same as C, O+ the same as N.  This allows for,
+      // for example, c1cccc[n+]1-[Fe] to be acceptable and not turned into
+      // c1cccc[n+]1->[Fe].  After all, c1cccc[n+]1-C is ok.  Although this is
+      // a poor example because c1ccccn1->[Fe] appears to be the normal
+      // way that pyridine complexes with transition metals.  Heme b in
+      // CHEBI:26355 is an example of when this is required.
+      int effAtomicNum =
+          otherAtom->getAtomicNum() - otherAtom->getFormalCharge();
+      if (effAtomicNum <= 0) {
+        continue;
+      }
+      const auto &otherValens =
+          PeriodicTable::getTable()->getValenceList(effAtomicNum);
+      if (otherValens.back() > 0 && ev > otherValens.back()) {
+        bond->setBondType(RDKit::Bond::BondType::DATIVE);
+        bond->setBeginAtom(otherAtom);
+        bond->setEndAtom(atom);
+      }
+    }
+  }
+}
 }  // namespace
 
 void cleanUp(RWMol &mol) {
-  ROMol::AtomIterator ai;
-  for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
-    switch ((*ai)->getAtomicNum()) {
+  for (auto atom : mol.atoms()) {
+    switch (atom->getAtomicNum()) {
       case 7:
-        nitrogenCleanup(mol, *ai);
+        nitrogenCleanup(mol, atom);
         break;
       case 15:
-        phosphorusCleanup(mol, *ai);
+        phosphorusCleanup(mol, atom);
         break;
       case 17:
       case 35:
       case 53:
-        halogenCleanup(mol, *ai);
+        halogenCleanup(mol, atom);
         break;
     }
+  }
+}
+
+void cleanUpOrganometallics(RWMol &mol) {
+  for (auto atom : mol.atoms()) {
+    metalBondCleanup(mol, atom);
   }
 }
 
@@ -210,12 +270,12 @@ void adjustHs(RWMol &mol) {
   //  sanitized, aromaticity has been perceived, and the implicit
   //  valence of everything has been calculated.
   //
-  for (ROMol::AtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
-    int origImplicitV = (*ai)->getImplicitValence();
-    (*ai)->calcExplicitValence(false);
-    int origExplicitV = (*ai)->getNumExplicitHs();
+  for (auto atom : mol.atoms()) {
+    int origImplicitV = atom->getImplicitValence();
+    atom->calcExplicitValence(false);
+    int origExplicitV = atom->getNumExplicitHs();
 
-    int newImplicitV = (*ai)->calcImplicitValence(false);
+    int newImplicitV = atom->calcImplicitValence(false);
     //
     //  Case 1: The disappearing Hydrogen
     //    Smiles:  O=C1NC=CC2=C1C=CC=C2
@@ -233,8 +293,8 @@ void adjustHs(RWMol &mol) {
     //    <phew> that takes way longer to comment than it does to
     //    write:
     if (newImplicitV < origImplicitV) {
-      (*ai)->setNumExplicitHs(origExplicitV + (origImplicitV - newImplicitV));
-      (*ai)->calcExplicitValence(false);
+      atom->setNumExplicitHs(origExplicitV + (origImplicitV - newImplicitV));
+      atom->calcExplicitValence(false);
     }
   }
 }
@@ -321,6 +381,12 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
     cleanUp(mol);
   }
 
+  operationThatFailed = SANITIZE_CLEANUP_ORGANOMETALLICS;
+  if (sanitizeOps & operationThatFailed) {
+    // clean up things like nitro groups
+    cleanUpOrganometallics(mol);
+  }
+
   // update computed properties on atoms and bonds:
   operationThatFailed = SANITIZE_PROPERTIES;
   if (sanitizeOps & operationThatFailed) {
@@ -384,6 +450,12 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
     adjustHs(mol);
   }
 
+  // now that everything has been cleaned up, go through and check/update the
+  // computed valences on atoms and bonds one more time
+  operationThatFailed = SANITIZE_PROPERTIES;
+  if (sanitizeOps & operationThatFailed) {
+    mol.updatePropertyCache(true);
+  }
   operationThatFailed = 0;
 }
 
@@ -587,6 +659,27 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         (*fragsMolAtomMapping).push_back((*mci).second);
       }
     }
+    // copy stereoGroups (if present)
+    if (!mol.getStereoGroups().empty()) {
+      for (unsigned int frag = 0; frag < nFrags; ++frag) {
+        auto re = res[frag];
+        std::vector<StereoGroup> fragsgs;
+        for (auto &sg : mol.getStereoGroups()) {
+          std::vector<Atom *> sgats;
+          for (auto sga : sg.getAtoms()) {
+            if ((*mapping)[sga->getIdx()] == frag) {
+              sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
+            }
+          }
+          if (!sgats.empty()) {
+            fragsgs.push_back(StereoGroup(sg.getGroupType(), sgats));
+          }
+        }
+        if (!fragsgs.empty()) {
+          re->setStereoGroups(std::move(fragsgs));
+        }
+      }
+    }
   }
 
   if (sanitizeFrags) {
@@ -781,9 +874,8 @@ int getFormalCharge(const ROMol &mol) {
 
 unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
   unsigned numPropAtoms = 0;
-  for (ROMol::ConstAtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms();
-       ++ai) {
-    if ((*ai)->hasProp(prop)) {
+  for (const auto atom : mol.atoms()) {
+    if (atom->hasProp(prop)) {
       ++numPropAtoms;
     }
   }

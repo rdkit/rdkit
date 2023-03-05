@@ -1340,15 +1340,15 @@ select mol_to_smarts(mol_adjust_query_properties('*c1ncc(*)cc1'::qmol));
 
 -- CXSmiles
 SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
-         mol_to_smiles         
--------------------------------
- C[C@@H]([C@H](C)F)[C@@H](C)Br
+        mol_to_smiles         
+------------------------------
+ C[C@H](F)[C@@H](C)[C@H](C)Br
 (1 row)
 
 SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
-              mol_to_cxsmiles               
---------------------------------------------
- C[C@@H]([C@H](C)F)[C@@H](C)Br |a:2,o1:1,5|
+              mol_to_cxsmiles              
+-------------------------------------------
+ C[C@H](F)[C@@H](C)[C@H](C)Br |a:1,o1:3,5|
 (1 row)
 
 SELECT mol_to_cxsmarts(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
@@ -1365,9 +1365,9 @@ SELECT mol_to_cxsmarts(qmol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a
 
 -- CXSmiles from mol_out
 SELECT mol_out(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
-                  mol_out                   
---------------------------------------------
- C[C@@H]([C@H](C)F)[C@@H](C)Br |a:2,o1:1,5|
+                  mol_out                  
+-------------------------------------------
+ C[C@H](F)[C@@H](C)[C@H](C)Br |a:1,o1:3,5|
 (1 row)
 
 -- github #3688: bad input to qmol_from_ctab() crashes db
@@ -1477,5 +1477,38 @@ select mol_from_smiles('CCN(=O)=O') @> 'CN(=O)=O';
  ?column? 
 ----------
  t
+(1 row)
+
+-- github #6002: molcmp failure
+select mol_cmp(mol_from_ctab('
+  Mrv2211 02092314292D
+
+  5  4  0  0  0  0            999 V2000
+    0.0000    3.6020    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    4.0145    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4290    4.4270    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1270    3.3001    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3020    4.7291    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  6  0  0  0  0
+  2  3  2  0  0  0  0
+  2  4  2  0  0  0  0
+  2  5  6  0  0  0  0
+M  END'),mol_from_ctab('
+  Mrv2211 02092314292D
+
+  5  4  0  0  0  0            999 V2000
+    0.0000    3.6020    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    4.0145    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4290    4.4270    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1270    3.3001    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3020    4.7291    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  6  0  0  0  0
+  2  3  2  0  0  0  0
+  2  4  2  0  0  0  0
+  2  5  6  0  0  0  0
+M  END'));
+ mol_cmp 
+---------
+       0
 (1 row)
 

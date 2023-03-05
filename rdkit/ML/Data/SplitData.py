@@ -121,7 +121,7 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
         resTest.append(i)
   else:
     perm = list(range(nPts))
-    random.shuffle(perm, random=random.random)
+    RDRandom.shuffle(perm, random=random.random)
     nTrain = int(nPts * frac)
 
     resData = list(perm[:nTrain])

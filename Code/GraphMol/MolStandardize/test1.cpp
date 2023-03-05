@@ -33,6 +33,12 @@ void testCleanup() {
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "CCC(=O)[O-].[Na+]");
   }
+  {
+    // Github 5997
+    auto m = "CC(=O)O[Mg]OC(=O)C"_smiles;
+    RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
+    TEST_ASSERT(MolToSmiles(*res) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
+  }
 
   // Test metal ion is untouched during standardize.
   {
@@ -53,8 +59,8 @@ void testCleanup() {
     RWMOL_SPTR m = "C[Hg]C"_smiles;
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "C[Hg]C")
-    BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
   }
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testStandardizeSm() {
@@ -108,6 +114,13 @@ void testMetalDisconnector() {
 
   MolStandardize::MetalDisconnector md;
   unsigned int failedOp;
+  {
+    auto m(SmilesToMol("[O-]C(=O)C.[Mg+2][O-]C(=O)C", 0, false));
+    MolOps::sanitizeMol(*m, failedOp, MolOps::SANITIZE_CLEANUP);
+    TEST_ASSERT(m);
+    md.disconnect(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
+  }
 
   // testing overloaded function
   {
@@ -180,6 +193,14 @@ void testMetalDisconnector() {
     TEST_ASSERT(m);
     md.disconnect(*m);
     TEST_ASSERT(MolToSmiles(*m) == "CC(=O)[O-].[Na+]");
+  }
+  // make sure that -1 as a valence is dealt with (Github 5997)
+  {
+    RWMOL_SPTR m(SmilesToMol("[O-]C(=O)C.[Mg+2][O-]C(=O)C", 0, false));
+    MolOps::sanitizeMol(*m, failedOp, MolOps::SANITIZE_CLEANUP);
+    TEST_ASSERT(m);
+    md.disconnect(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
   }
 
   // test that badly specified dative bonds are perceived as such

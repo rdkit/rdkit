@@ -228,7 +228,7 @@ class TestCase(unittest.TestCase):
     ao.AllocateAtomToBits()
     fp = g.GetFingerprint(m1, additionalOutput=ao)
     self.assertIsNone(ao.GetAtomCounts())
-    self.assertEqual(ao.GetAtomToBits(), ((351, 479), (351, 399), (479, 399)))
+    self.assertEqual(ao.GetAtomToBits(), ((1404, 1916), (1404, 1596), (1596, 1916)))
     self.assertIsNone(ao.GetBitInfoMap())
     self.assertIsNone(ao.GetBitPaths())
 
@@ -237,7 +237,7 @@ class TestCase(unittest.TestCase):
     fp = g.GetFingerprint(m1, additionalOutput=ao)
     self.assertIsNone(ao.GetAtomCounts())
     self.assertIsNone(ao.GetAtomToBits())
-    self.assertEqual(ao.GetBitInfoMap(), {351: ((0, 1), ), 399: ((1, 2), ), 479: ((0, 2), )})
+    self.assertEqual(ao.GetBitInfoMap(), {1404: ((0, 1), ), 1596: ((1, 2), ), 1916: ((0, 2), )})
     self.assertIsNone(ao.GetBitPaths())
 
   def testCountBounds(self):
@@ -285,17 +285,60 @@ class TestCase(unittest.TestCase):
 
   def testMorganRedundantEnvironments(self):
     m = Chem.MolFromSmiles('CC(=O)O')
-   
+
     g = rdFingerprintGenerator.GetMorganGenerator(2)
     fp = g.GetSparseCountFingerprint(m)
-    self.assertEqual(fp.GetTotalVal(),8)
-   
-    g = rdFingerprintGenerator.GetMorganGenerator(2,includeRedundantEnvironments=True)
+    self.assertEqual(fp.GetTotalVal(), 8)
+
+    g = rdFingerprintGenerator.GetMorganGenerator(2, includeRedundantEnvironments=True)
     fp = g.GetSparseCountFingerprint(m)
-    self.assertEqual(fp.GetTotalVal(),12)
+    self.assertEqual(fp.GetTotalVal(), 12)
 
+  def testFingerprintOptions(self):
+    m = Chem.MolFromSmiles('CC(=O)O')
 
+    g = rdFingerprintGenerator.GetMorganGenerator(2)
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 8)
 
+    g.GetOptions().numBitsPerFeature = 2
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 16)
+
+    g.GetOptions().includeRedundantEnvironments = True
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 24)
+
+    m = Chem.MolFromSmiles('CC(=O)C')
+    g = rdFingerprintGenerator.GetAtomPairGenerator()
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 6)
+    g.GetOptions().countSimulation = False
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 4)
+    g.GetOptions().maxDistance = 1
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 2)
+
+    m = Chem.MolFromSmiles('OC(C)(C)C')
+    g = rdFingerprintGenerator.GetAtomPairGenerator()
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 7)
+    g.GetOptions().SetCountBounds((1, 2, 3, 4))
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 10)
+
+  def testTopologicalTorsionShortestPaths(self):
+    m = Chem.MolFromSmiles('CC1CCC1')
+    g = rdFingerprintGenerator.GetTopologicalTorsionGenerator()
+    fp = g.GetSparseCountFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 3)
+
+    g.GetOptions().onlyShortestPaths = True
+    fp = g.GetSparseCountFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 1)
 
 if __name__ == '__main__':
   unittest.main()

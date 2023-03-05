@@ -26,6 +26,35 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(ms),len(nms))
     self.assertEqual([Chem.MolToSmiles(x) for x in ms],[Chem.MolToSmiles(x) for x in nms])
 
+  def test2(self):
+    smis = ("C[C@H](O)C[C@@H](C)F |o1:1,4|","C[C@H](O)CC[C@@H](C)F |&1:1,5|")
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+    json = rdMolInterchange.MolToJSON(ms[0])
+    self.assertIn('stereoGroups',json)
+    self.assertIn('"or"',json)
+    self.assertIn('[1,4]',json)
+    
+    json = rdMolInterchange.MolToJSON(ms[1])
+    self.assertIn('stereoGroups',json)
+    self.assertIn('"and"',json)
+    self.assertIn('[1,5]',json)
+    
+    json = rdMolInterchange.MolsToJSON(ms)
+    self.assertIn('stereoGroups',json)
+    self.assertIn('"or"',json)
+    self.assertIn('[1,4]',json)
+    self.assertIn('"and"',json)
+    self.assertIn('[1,5]',json)
+    
+    ps = rdMolInterchange.JSONWriteParameters()
+    ps.useRDKitExtensions = False
+    json = rdMolInterchange.MolToJSON(ms[1],ps)
+    self.assertNotIn('stereoGroups',json)
+    json = rdMolInterchange.MolsToJSON(ms,ps)
+    self.assertNotIn('stereoGroups',json)
 
+
+
+  
 if __name__ == '__main__':
   unittest.main()

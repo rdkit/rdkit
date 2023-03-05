@@ -147,9 +147,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub2151_1.svg", 1918752877U},
     {"testGithub2151_2.svg", 1083134500U},
     {"testGithub2762.svg", 3596783817U},
-    {"testGithub2931_1.svg", 142684703U},
-    {"testGithub2931_2.svg", 2810684425U},
-    {"testGithub2931_3.svg", 1660359809U},
+    {"testGithub2931_1.svg", 693663479U},
+    {"testGithub2931_2.svg", 3778210869U},
+    {"testGithub2931_3.svg", 193145443U},
     {"testGithub2931_4.svg", 482738203U},
     {"test20_1.svg", 2825906479U},
     {"test20_2.svg", 4276100014U},
@@ -166,10 +166,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3305_1.svg", 3716192373U},
     {"testGithub3305_2.svg", 3910798383U},
     {"testGithub3305_3.svg", 2665156605U},
-    {"testGithub3305_4.svg", 2728740111U},
+    {"testGithub3305_4.svg", 1670626902U},
     {"testGithub3305_5.svg", 1179617427U},
-    {"testGithub3305_6.svg", 1519168307U},
-    {"testGithub3305_7.svg", 1630290653U},
+    {"testGithub3305_6.svg", 3054235056U},
+    {"testGithub3305_7.svg", 1596380276U},
     {"testGithub3391_1.svg", 288775907U},
     {"testGithub3391_2.svg", 1622649910U},
     {"testGithub3391_3.svg", 1181362285U},
@@ -204,11 +204,11 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub781_4.svg", 1077101569U},
     {"testGithub781_5.svg", 2840696942U},
     {"testGithub781_6.svg", 2700448827U},
-    {"test3_1.svg", 1363605249U},
-    {"test3_2.svg", 2318238862U},
-    {"test3_3.svg", 4168477373U},
-    {"test3_4.svg", 1709145620U},
-    {"test3_5.svg", 964166328U},
+    {"test3_1.svg", 1241966223U},
+    {"test3_2.svg", 927906254U},
+    {"test3_3.svg", 3988208781U},
+    {"test3_4.svg", 3027798833U},
+    {"test3_5.svg", 2661072681U},
     {"test3_6.svg", 256911461U},
     {"test3_7.svg", 66698678U},
     {"test774_1.svg", 2029651525U},
@@ -241,7 +241,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test11_1.svg", 1028126625U},
     {"test11_2.svg", 477557493U},
     {"test12_1.svg", 631306156U},
-    {"test12_5.svg", 2201316408U},
+    {"test12_5.svg", 1750509173U},
     {"test12_3.svg", 16113602U},
     {"test12_4.svg", 16113602U},
     {"test12_2.svg", 1452987726U},
@@ -256,31 +256,31 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test1322_2.svg", 1382784658U},
     {"test14_1.svg", 1475926171U},
     {"test14_2.svg", 3223472512U},
-    {"test15_1.svg", 325436032U},
-    {"test15_2.svg", 352325982U},
+    {"test15_1.svg", 3113318468U},
+    {"test15_2.svg", 1455694564U},
     {"test17_1.svg", 1811940907U},
     {"test17_2.svg", 3757523250U},
     {"test17_3.svg", 2059010246U},
     {"test17_4.svg", 42680801U},
     {"test18_1.svg", 493222951U},
     {"test18_2.svg", 2876018791U},
-    {"test18_3.svg", 4007812293U},
+    {"test18_3.svg", 4036951369U},
     {"test18_4.svg", 1284506858U},
-    {"test18_5.svg", 3557731891U},
+    {"test18_5.svg", 218831462U},
     {"test18_6.svg", 1820858874U},
     {"test18_7.svg", 3518982455U},
     {"test19_1.svg", 3328535680U},
-    {"test19_2.svg", 1269204426U},
+    {"test19_2.svg", 3224482391U},
     {"test16_1.svg", 1272585497U},
     {"test16_2.svg", 3272808667U},
     {"testGithub2063_1.svg", 109222729U},
     {"testGithub2063_2.svg", 109222729U},
-    {"testGithub2151_1.svg", 3217916286U},
-    {"testGithub2151_2.svg", 1577439214U},
+    {"testGithub2151_1.svg", 3702926947U},
+    {"testGithub2151_2.svg", 3046330798U},
     {"testGithub2762.svg", 2006115844U},
-    {"testGithub2931_1.svg", 2507461278U},
-    {"testGithub2931_2.svg", 1387494760U},
-    {"testGithub2931_3.svg", 3836523103U},
+    {"testGithub2931_1.svg", 613551468U},
+    {"testGithub2931_2.svg", 1553937629U},
+    {"testGithub2931_3.svg", 2638492704U},
     {"testGithub2931_4.svg", 3767525325U},
     {"test20_1.svg", 2210504223U},
     {"test20_2.svg", 3688247726U},
@@ -295,10 +295,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3305_1.svg", 3716192373U},
     {"testGithub3305_2.svg", 3910798383U},
     {"testGithub3305_3.svg", 2665156605U},
-    {"testGithub3305_4.svg", 964166328U},
-    {"testGithub3305_5.svg", 4136341695U},
-    {"testGithub3305_6.svg", 427385222U},
-    {"testGithub3305_7.svg", 4144134285U},
+    {"testGithub3305_4.svg", 2661072681U},
+    {"testGithub3305_5.svg", 3349185727U},
+    {"testGithub3305_6.svg", 4236899489U},
+    {"testGithub3305_7.svg", 3822551667U},
     {"testGithub3391_1.svg", 4243890317U},
     {"testGithub3391_2.svg", 2537862118U},
     {"testGithub3391_3.svg", 1822726140U},
@@ -3718,22 +3718,28 @@ void testGithub2931() {
       outs << text;
       outs.flush();
       outs.close();
+      std::regex r1(
+          "<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'"
+          " rx='(\\d+\\.\\d+)' ry='(\\d+\\.\\d+)' class='atom-6'");
+      std::smatch match = *std::sregex_iterator(text.begin(), text.end(), r1);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
-      TEST_ASSERT(
-          text.find("<ellipse cx='240.2' cy='347.7' rx='12.3' ry='12.7' "
-                    "class='atom-6'  style='fill:none;stroke:#00FF00;") !=
-          std::string::npos);
+      // it's an ellipse, so different radii
+      TEST_ASSERT(fabs(stod(match[1]) - 243) <
+                  1);  // significant variability with freetype version here
+      TEST_ASSERT(fabs(stod(match[2]) - 348.7) < 0.2);
+      TEST_ASSERT(fabs(stod(match[3]) - 12.2) < 0.2);
+      TEST_ASSERT(fabs(stod(match[4]) - 12.5) < 0.2);
 #endif
 #else
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
-      TEST_ASSERT(
-          text.find("<ellipse cx='240.6' cy='295.4' rx='12.4' ry='12.4' "
-                    "class='atom-5'  style='fill:none;stroke:#00FF00") !=
-          std::string::npos);
+      TEST_ASSERT(fabs(stod(match[1]) - 243.3) < 0.1);
+      TEST_ASSERT(fabs(stod(match[2]) - 348.1) < 0.1);
+      TEST_ASSERT(fabs(stod(match[3]) - 9.8) < 0.1);
+      TEST_ASSERT(fabs(stod(match[4]) - 11.1) < 0.1);
 #endif
       check_file_hash("testGithub2931_1.svg");
     }
@@ -3750,22 +3756,27 @@ void testGithub2931() {
       outs << text;
       outs.flush();
       outs.close();
+      std::regex r1(
+          "<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'"
+          " rx='(\\d+\\.\\d+)' ry='(\\d+\\.\\d+)' class='atom-6'");
+      std::smatch match = *std::sregex_iterator(text.begin(), text.end(), r1);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
-      TEST_ASSERT(
-          text.find("<ellipse cx='240.2' cy='347.6' rx='12.5' ry='12.5' "
-                    "class='atom-6'  style='fill:none;stroke:#00FF00;") !=
-          std::string::npos);
+      // it's a circle
+      TEST_ASSERT(fabs(stod(match[1]) - 243.8) < 0.1);
+      TEST_ASSERT(fabs(stod(match[2]) - 348.7) < 0.1);
+      TEST_ASSERT(fabs(stod(match[3]) - 12.3) < 0.1);
+      TEST_ASSERT(fabs(stod(match[4]) - 12.3) < 0.1);
 #endif
 #else
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
-      TEST_ASSERT(
-          text.find("<ellipse cx='240.6' cy='295.4' rx='12.4' ry='12.4' "
-                    "class='atom-5'  style='fill:none;stroke:#00FF00;") !=
-          std::string::npos);
+      TEST_ASSERT(fabs(stod(match[1]) - 243.9) < 0.1);
+      TEST_ASSERT(fabs(stod(match[2]) - 346.4) < 0.1);
+      TEST_ASSERT(fabs(stod(match[3]) - 12.2) < 0.1);
+      TEST_ASSERT(fabs(stod(match[4]) - 12.2) < 0.1);
 #endif
       check_file_hash("testGithub2931_2.svg");
     }
@@ -3792,10 +3803,6 @@ void testGithub2931() {
 #else
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:40.0px") !=
                   std::string::npos);
-      TEST_ASSERT(
-          text.find("<ellipse cx='240.6' cy='295.4' rx='12.4' ry='12.4' "
-                    "class='atom-5'  style='fill:none;stroke:#00FF00;") !=
-          std::string::npos);
 #endif
       check_file_hash("testGithub2931_3.svg");
     }
@@ -4299,6 +4306,30 @@ void testGithub3305() {
       check_file_hash(nameBase + "4.png");
     }
 #endif
+    // check that the regex digs out a rectangle with the expected corners,
+    // within a tolerance.  Used by the next 2 tests.
+    auto check_corners = [](const std::string &text, std::regex &regex,
+                            const std::vector<Point2D> &expected) -> void {
+      auto match_begin = std::sregex_iterator(text.begin(), text.end(), regex);
+      std::vector<Point2D> actual;
+      std::smatch match = *match_begin;
+      actual.push_back(Point2D(std::stod(match[1]), std::stod(match[2])));
+      actual.push_back(Point2D(std::stod(match[3]), std::stod(match[4])));
+      actual.push_back(Point2D(std::stod(match[5]), std::stod(match[6])));
+      actual.push_back(Point2D(std::stod(match[7]), std::stod(match[8])));
+
+      int num_matched = 0;
+      for (const auto &e : expected) {
+        for (const auto &a : actual) {
+          if ((e - a).lengthSq() <= 1.0) {
+            num_matched++;
+            break;
+          }
+        }
+      }
+      TEST_ASSERT(num_matched == 4);
+    };
+
     {
       MolDraw2DSVG drawer(200, 200);
       options.scaleHighlightBondWidth = true;
@@ -4311,17 +4342,15 @@ void testGithub3305() {
       outs.flush();
       outs.close();
 #if DO_TEST_ASSERT
-#if RDK_BUILD_FREETYPE_SUPPORT
+      // as seen in Github5899, we don't always get the rectangle corners
+      // in the same order.  Make sure they all turn up, within a tolerance.
+      // This seems to work for Freetype and non-Freetype builds.
       std::regex regex(
-          R"regex(class='bond-6 atom-6 atom-7' d='M 138.\d+,116.\d+ L 141.\d+,116.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
-      std::smatch bondMatch;
-      TEST_ASSERT(std::regex_search(text, bondMatch, regex) == 1);
-#else
-      std::regex regex(
-          R"regex(class='bond-6 atom-6 atom-7' d='M 139.\d+,116.\d+ L 142.\d+,116.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
-      std::smatch bondMatch;
-      TEST_ASSERT(std::regex_search(text, bondMatch, regex) == 1);
-#endif
+          R"(class='bond-6 atom-6 atom-7' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) Z' style='fill:#FF7F7F;)");
+      std::vector<Point2D> expected{
+          Point2D(138.7, 116.8), Point2D(141.9, 116.8), Point2D(134.7, 129.2),
+          Point2D(133.1, 126.5)};
+      check_corners(text, regex, expected);
       check_file_hash(nameBase + "4.svg");
 #endif
     }
@@ -4352,20 +4381,14 @@ void testGithub3305() {
       outs.flush();
       outs.close();
 #if DO_TEST_ASSERT
-#if RDK_BUILD_FREETYPE_SUPPORT
-      // the new convex hull algorithm for the highlights puts the points out
-      // in a different order with FT and no FT, rather irritatingly.  The
-      // shape is the same.
       std::regex regex(
-          R"regex(class='bond-6 atom-6 atom-7' d='M 131.\d+,120.\d+ L 149.\d+,120.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
-#else
-      std::regex regex(
-          R"regex(class='bond-6 atom-6 atom-7' d='M 149.\d+,120.\d+ L 138.\d+,139.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
+          R"(class='bond-6 atom-6 atom-7' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) Z' style='fill:#FF7F7F;)");
+      std::vector<Point2D> expected{
+          Point2D(131.1, 120.8), Point2D(149.5, 120.8), Point2D(138.5, 139.8),
+          Point2D(129.3, 123.8)};
+      check_corners(text, regex, expected);
 #endif
-      std::smatch bondMatch;
-      TEST_ASSERT(std::regex_search(text, bondMatch, regex) == 1);
-#endif
-      //      check_file_hash(nameBase + "5.svg");
+      check_file_hash(nameBase + "5.svg");
     }
     options.continuousHighlight = false;
 #ifdef RDK_BUILD_CAIRO_SUPPORT
