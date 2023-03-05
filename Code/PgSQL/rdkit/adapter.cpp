@@ -559,6 +559,7 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   params.useChirality = useChirality;
   params.useEnhancedStereo = useEnhancedStereo;
   params.maxMatches = 1;
+  params.useQueryQueryMatches = true;  // <- this was part of github #6002
   auto mv1 = RDKit::SubstructMatch(*im, *am, params);
   auto mv2 = RDKit::SubstructMatch(*am, *im, params);
   bool ss1 = mv1.size() != 0;
@@ -593,6 +594,7 @@ extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality) {
     params.useChirality = getDoChiralSSS();
     params.useEnhancedStereo = getDoEnhancedStereoSSS();
   }
+  params.useQueryQueryMatches = true;
   params.maxMatches = 1;
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
@@ -611,6 +613,7 @@ extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify,
     params.useEnhancedStereo = getDoEnhancedStereoSSS();
   }
   params.uniquify = uniquify;
+  params.useQueryQueryMatches = true;
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
