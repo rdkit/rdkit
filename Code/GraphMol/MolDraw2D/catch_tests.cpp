@@ -283,7 +283,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_complex_query_atoms_15.svg", 4188921077U},
     {"test_complex_query_atoms_16.svg", 1980695915U},
     {"test_github6041b.svg", 3485054881U},
-    {"test_github6111_1.svg", 3458417163U}};
+    {"test_github6111_1.svg", 3458417163U},
+    {"test_github6112.svg", 908847383U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -7251,4 +7252,20 @@ TEST_CASE("ACS1996 mode crops small molecules - Github 6111") {
     }
     check_file_hash(nameBase + "_1.svg");
   }
+}
+
+TEST_CASE("ACS1996 should not throw exception with no coords - Github 6112") {
+  std::string nameBase = "test_github6112";
+  auto m = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
+  m->setProp<std::string>("_Name", "mol1");
+  REQUIRE(m);
+  MolDraw2DSVG drawer(-1, -1);
+  MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 1", nullptr, nullptr);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs(nameBase + ".svg");
+  outs << text;
+  outs.flush();
+  outs.close();
+  check_file_hash(nameBase + ".svg");
 }

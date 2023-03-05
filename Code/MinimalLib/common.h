@@ -147,6 +147,8 @@ RWMol *mol_from_input(const std::string &input,
           sanitizeOps ^= MolOps::SANITIZE_KEKULIZE;
         }
         MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
+      } else {
+        res->updatePropertyCache(false);
       }
       MolOps::assignStereochemistry(*res, true, true, true);
       if (mergeQueryHs) {

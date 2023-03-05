@@ -218,7 +218,7 @@ int testMolSup() {
       std::unique_ptr<ROMol> nmol;
       try {
         nmol.reset(maesup.next());
-      } catch (const Invar::Invariant &) {
+      } catch (const FileParseException &) {
         // just ignore this failure
       }
       TEST_ASSERT(!nmol);
@@ -2816,7 +2816,7 @@ void testGitHub2881() {
     ROMol *mol = nullptr;
     try {
       mol = suppl.next();
-    } catch (const Invar::Invariant &) {
+    } catch (const FileParseException &) {
     }
     TEST_ASSERT(!mol);
   }

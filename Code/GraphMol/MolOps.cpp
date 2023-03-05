@@ -1,6 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
-//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (C) 2001-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -667,6 +666,27 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
       for (INT_INT_VECT_MAP_CI mci = comMap.begin(); mci != comMap.end();
            mci++) {
         (*fragsMolAtomMapping).push_back((*mci).second);
+      }
+    }
+    // copy stereoGroups (if present)
+    if (!mol.getStereoGroups().empty()) {
+      for (unsigned int frag = 0; frag < nFrags; ++frag) {
+        auto re = res[frag];
+        std::vector<StereoGroup> fragsgs;
+        for (auto &sg : mol.getStereoGroups()) {
+          std::vector<Atom *> sgats;
+          for (auto sga : sg.getAtoms()) {
+            if ((*mapping)[sga->getIdx()] == frag) {
+              sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
+            }
+          }
+          if (!sgats.empty()) {
+            fragsgs.push_back(StereoGroup(sg.getGroupType(), sgats));
+          }
+        }
+        if (!fragsgs.empty()) {
+          re->setStereoGroups(std::move(fragsgs));
+        }
       }
     }
   }
