@@ -126,14 +126,16 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   mol = _RemoveUnnecessaryHs(original_molecule, preserve_stereogenic_hs=True)
   _StripAtomMapLabels(mol)
 
-  cxflagsnone = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO #| Chem.CXSmilesFields.CX_SGROUPS
+  cxflag = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
   ps = Chem.SmilesWriteParams()
 
   Chem.CanonicalizeEnhancedStereo(mol)
 
   formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
+
   cxsmiles = Chem.MolToCXSmiles(
-    mol, ps, cxflagsnone)
+    mol, ps, cxflag)
+
   tautomer_hash = GetStereoTautomerHash(mol)
 
   canonical_smiles = cxsmiles
@@ -180,41 +182,19 @@ def GetStereoTautomerHash(molecule):
   no_h_mol = _RemoveUnnecessaryHs(molecule)
   no_h_mol.UpdatePropertyCache(False)
 
+  cxflags = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+  ps = Chem.SmilesWriteParams()
+  cxsmiles = Chem.MolToCXSmiles(
+    no_h_mol, ps, cxflags)
+
+  no_h_mol= Chem.MolFromSmiles(cxsmiles)
+
   # setting useCxSmiles param value to always include enhanced stereo info
   useCxSmiles = True
   hash_with_cxExtensions = rdMolHash.MolHash(no_h_mol, rdMolHash.HashFunction.HetAtomTautomer,
                                              useCxSmiles)
-  # print(hash_with_cxExtensions)
 
-  # # since the cxSmiles can include anything, we want to only include
-  # # enhanced stereo information
-  # canonical_smiles = GetCanonicalSmiles(hash_with_cxExtensions)
-
-  # return canonical_smiles
   return hash_with_cxExtensions
-
-
-def GetCanonicalSmiles(cxsmiles):
-  smiles_parts = (p.strip() for p in cxsmiles.split('|'))
-  smiles_parts = [p for p in smiles_parts if p]
-  if not smiles_parts:
-    return '', ''
-  elif len(smiles_parts) > 2:
-    raise ValueError('Unexpected number of fragments in canonical CXSMILES')
-
-  canonical_smiles = smiles_parts[0]
-  stereo_groups = ''
-  if len(smiles_parts) == 2:
-    # note: as with many regex-based things, this is fragile
-    groups = ENHANCED_STEREO_GROUP_REGEX.findall(smiles_parts[1])
-    if groups:
-      # We might have other CXSMILES extensions that aren't stereo groups
-      stereo_groups = f"|{','.join(sorted(groups))}|"
-
-  if stereo_groups:
-    return canonical_smiles + " " + stereo_groups
-
-  return canonical_smiles
 
 
 def GetNoStereoLayers(mol):
@@ -349,7 +329,7 @@ def _CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder, sortAtomAndBondOrder):
   return res
 
 
-def _CaonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder):
+def _CanonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder):
   """
     NOTES: if sortAtomAndBondOrder is true then the atom and bond lists will be sorted.
     This assumes that the ordering of those lists is not important
@@ -380,7 +360,7 @@ def _CanonicalizeSGroups(mol, dataFieldNames=None, sortAtomAndBondOrder=True):
     elif sg.GetProp("TYPE") == "SRU":
       lres = _CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder, sortAtomAndBondOrder)
     elif sg.GetProp("TYPE") == "COP":
-      lres = _CaonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder)
+      lres = _CanonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder)
 
     if lres is not None:
       res.append(lres)
