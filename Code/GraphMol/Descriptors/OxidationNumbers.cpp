@@ -63,6 +63,7 @@
 //    DEALINGS IN THE SOFTWARE.
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Descriptors/OxidationNumbers.h>
 
 namespace RDKit {
 namespace Descriptors {

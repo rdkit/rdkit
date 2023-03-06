@@ -278,27 +278,5 @@ void MetalDisconnector::remove_haptic_dummies(RDKit::RWMol &mol) {
   }
 }
 
-// This is declared in MolStandardize.h not Metal.h
-void disconnectOrganometallics(RWMol &mol) {
-  RDKit::MolStandardize::MetalDisconnectorOptions mdOptions;
-  mdOptions.splitGrignards = true;
-  mdOptions.splitAromaticC = true;
-  mdOptions.adjustCharges = false;
-  mdOptions.removeHapticDummies = true;
-  RDKit::MolStandardize::MetalDisconnector md(mdOptions);
-  md.disconnect(mol);
-}
-
-// This is declared in MolStandardize.h not Metal.h
-ROMol *disconnectOrganometallics(const ROMol &mol) {
-  RDKit::MolStandardize::MetalDisconnectorOptions mdOptions;
-  mdOptions.splitGrignards = true;
-  mdOptions.splitAromaticC = true;
-  mdOptions.adjustCharges = false;
-  mdOptions.removeHapticDummies = true;
-  RDKit::MolStandardize::MetalDisconnector md(mdOptions);
-  return md.disconnect(mol);
-}
-
 }  // namespace MolStandardize
 }  // namespace RDKit

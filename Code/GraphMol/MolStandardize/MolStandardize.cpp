@@ -285,5 +285,25 @@ std::vector<std::string> enumerateTautomerSmiles(
   return res.smiles();
 }
 
+void disconnectOrganometallics(RWMol &mol) {
+  RDKit::MolStandardize::MetalDisconnectorOptions mdOptions;
+  mdOptions.splitGrignards = true;
+  mdOptions.splitAromaticC = true;
+  mdOptions.adjustCharges = false;
+  mdOptions.removeHapticDummies = true;
+  RDKit::MolStandardize::MetalDisconnector md(mdOptions);
+  md.disconnect(mol);
+}
+
+ROMol *disconnectOrganometallics(const ROMol &mol) {
+  RDKit::MolStandardize::MetalDisconnectorOptions mdOptions;
+  mdOptions.splitGrignards = true;
+  mdOptions.splitAromaticC = true;
+  mdOptions.adjustCharges = false;
+  mdOptions.removeHapticDummies = true;
+  RDKit::MolStandardize::MetalDisconnector md(mdOptions);
+  return md.disconnect(mol);
+}
+
 }  // end of namespace MolStandardize
 }  // namespace RDKit
