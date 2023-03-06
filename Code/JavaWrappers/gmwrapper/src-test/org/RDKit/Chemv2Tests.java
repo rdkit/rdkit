@@ -535,7 +535,7 @@ public class Chemv2Tests extends GraphMolTest {
         BufferedReader reader = null;
         try {
             String filename = "java_warning_log.txt";
-            RDKFuncs.getRdWarningLog().getRDLogger().SetTee(filename);
+            RDKFuncs.getRdWarningLog().SetTee(filename);
             mol = RWMol.MolFromMolBlock(badMolBlock, true, true, false);
             reader = new BufferedReader(new FileReader(filename));
             String line = reader.readLine();

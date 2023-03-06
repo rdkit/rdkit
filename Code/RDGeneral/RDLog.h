@@ -16,7 +16,6 @@
 #include "BoostStartInclude.h"
 #include <boost/iostreams/tee.hpp>
 #include <boost/iostreams/stream.hpp>
-#include <boost/shared_ptr.hpp>
 #include "BoostEndInclude.h"
 #include <iostream>
 #include <fstream>
@@ -114,7 +113,7 @@ RDKIT_RDGENERAL_EXPORT std::ostream &toStream(std::ostream &);
   RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream)  \
                                        : *(__arg__->dp_dest))
 
-using RDLogger = boost::shared_ptr<boost::logging::rdLogger>;
+using RDLogger = std::shared_ptr<boost::logging::rdLogger>;
 
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdAppLog;
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdDebugLog;
