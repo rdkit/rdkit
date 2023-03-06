@@ -284,7 +284,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_complex_query_atoms_16.svg", 1980695915U},
     {"test_github6041b.svg", 3485054881U},
     {"test_github6111_1.svg", 3458417163U},
-    {"test_github6112.svg", 908847383U}};
+    {"test_github6112.svg", 908847383U},
+    {"test_github6160_1.svg", 3669327545U},
+    {"test_github6160_2.svg", 3704672111U},
+    {"test_github6160_3.svg", 2431440968U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -7268,4 +7271,50 @@ TEST_CASE("ACS1996 should not throw exception with no coords - Github 6112") {
   outs.flush();
   outs.close();
   check_file_hash(nameBase + ".svg");
+}
+
+TEST_CASE("Bad double bond - Github 6160") {
+  std::string nameBase = "test_github6160";
+  std::vector<std::string> smiles{"c1ccccc1NC=NCCS(=O)(=NC)N",
+                                  "c1ccccc1NC=NCCS(=O)(=NCC(Cl)(F)C)N",
+                                  "c1ccccc1NC=NCCS(=O)(=CCC(Cl)(F)C)N"};
+  for (auto i = 0; i < smiles.size(); ++i) {
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles[i]));
+    m->setProp<std::string>("_Name", "mol" + std::to_string(i + 1));
+    REQUIRE(m);
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    // it's a bit easier to deal with in BW.
+    assignBWPalette(drawer.drawOptions().atomColourPalette);
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawOptions().addAtomIndices = true;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::string svgName = nameBase + "_" + std::to_string(i + 1) + ".svg";
+    std::ofstream outs(svgName);
+    outs << text;
+    outs.flush();
+    outs.close();
+
+    // check that the two lines for bond atom-11 atom-13 are parallel.
+    std::regex bond5(
+        "'bond-12 atom-11 atom-13' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 2);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond5);
+    auto match_end = std::sregex_iterator();
+    std::vector<Point2D> points;
+    for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+      std::smatch match = *i;
+      points.push_back(Point2D(stod(match[1]), stod(match[2])));
+      points.push_back(Point2D(stod(match[3]), stod(match[4])));
+    }
+    auto vec1 = points[0].directionVector(points[1]);
+    auto vec2 = points[2].directionVector(points[3]);
+    CHECK(vec1.dotProduct(vec2) == Approx(1.0).margin(1.0e-4));
+    check_file_hash(svgName);
+  }
 }
