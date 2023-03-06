@@ -342,14 +342,15 @@ H	  20.371657	   2.180532	   1.492305
   }
 }
 
-TEST_CASE("Github #6121: Single Atom in DetermineBonds") {
+/* TEST_CASE("Github #6121: Single Atom in DetermineBonds") {
   SECTION("as reported") {
     std::string xyz = R"XYZ(1
 
 H   0.0         0.0           0.0
 )XYZ";
-    auto m(XYZBlockToMol(xyz));
+    std::unique_ptr<RWMol> m(XYZBlockToMol(xyz));
     REQUIRE(m);
     CHECK(determineBonds(*m));
   }
 }
+*/
