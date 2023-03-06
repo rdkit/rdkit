@@ -3314,8 +3314,6 @@ TEST_CASE(
     auto m = "CC=C(C)C"_smiles;
     REQUIRE(m);
     m->getBondWithIdx(1)->setBondDir(Bond::BondDir::EITHERDOUBLE);
-    // m->getBondWithIdx(1)->setStereoAtoms(0, 3);
-    // m->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOCIS);
     bool clean = true;
     bool flag = true;
     bool force = true;
