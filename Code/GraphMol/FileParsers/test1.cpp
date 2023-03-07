@@ -954,7 +954,6 @@ void testDblBondStereochem() {
     m1 = MolFileToMol(fName);
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
-    TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir() == Bond::EITHERDOUBLE);
     delete m1;
   }
 
@@ -3180,8 +3179,7 @@ void testIssue3375684() {
     RWMol *m = MolFileToMol(fName);
 
     TEST_ASSERT(m->getBondBetweenAtoms(6, 7)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondBetweenAtoms(6, 7)->getBondDir() ==
-                Bond::EITHERDOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(6, 7)->getStereo() == Bond::STEREOANY);
     delete m;
   }
   {

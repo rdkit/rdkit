@@ -3578,7 +3578,7 @@ TEST_CASE("double bond stereo should not be set when the coords are all zero") {
 M  END)CTAB"_ctab;
   REQUIRE(m);
   REQUIRE(m->getBondBetweenAtoms(1, 2));
-  CHECK(m->getBondBetweenAtoms(1, 2)->getBondDir() == Bond::EITHERDOUBLE);
+  CHECK(m->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOANY);
 }
 
 TEST_CASE("Handle MRV_COORDINATE_BOND_TYPE data Substance Groups") {
