@@ -14,6 +14,7 @@
 
 using namespace RDKit;
 
+
 TEST_CASE("Determine Connectivity") {
   SECTION("Van der Waals") {
     unsigned int numTests = 39;
@@ -338,5 +339,17 @@ H	  20.371657	   2.180532	   1.492305
     REQUIRE(m);
     determineBonds(*m);
     CHECK(m->getNumAtoms() == 102);
+  }
+}
+
+TEST_CASE("Github #6121: Single Atom in DetermineBonds") {
+  SECTION("as reported") {
+    std::string xyz = R"XYZ(1
+
+H   0.0         0.0           0.0
+)XYZ";
+    std::unique_ptr<RWMol> m(XYZBlockToMol(xyz));
+    REQUIRE(m);
+    determineBonds(*m);
   }
 }

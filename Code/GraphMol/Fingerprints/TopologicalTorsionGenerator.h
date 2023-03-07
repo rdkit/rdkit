@@ -21,7 +21,8 @@ namespace TopologicalTorsion {
 class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionArguments
     : public FingerprintArguments {
  public:
-  uint32_t d_torsionAtomCount;
+  uint32_t d_torsionAtomCount = 4;
+  bool df_onlyShortestPaths = false;
 
   std::string infoString() const override;
 

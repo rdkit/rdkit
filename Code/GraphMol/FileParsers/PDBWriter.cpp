@@ -7,24 +7,27 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
+
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+#undef RDK_BUILD_MAEPARSER_SUPPORT
+#endif
+#include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/MonomerInfo.h>
+#include <GraphMol/RDKitBase.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/LocaleSwitcher.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/FileParsers/MolWriters.h>
-#include <GraphMol/FileParsers/FileParsers.h>
-
-#include <GraphMol/MonomerInfo.h>
 
 // PDBWriter support multiple "flavors" of PDB output
 // flavor & 1 : Write MODEL/ENDMDL lines around each record
