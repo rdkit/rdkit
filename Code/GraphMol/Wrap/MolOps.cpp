@@ -1748,6 +1748,9 @@ to the terminal dummy atoms.\n\
     - rootedAtAtom: (optional) if nonzero, only paths from the specified\n\
       atom will be returned.\n\
 \n\
+    - onlyShortestPaths: (optional) if set then only paths which are <= the shortest\n\
+      path between the begin and end atoms will be included in the results\n\
+\n\
   RETURNS: a tuple of tuples with IDs for the bonds.\n\
 \n\
   NOTES: \n\
@@ -1769,7 +1772,8 @@ to the terminal dummy atoms.\n\
     python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthN,
                 (python::arg("mol"), python::arg("length"),
                  python::arg("useBonds") = true, python::arg("useHs") = false,
-                 python::arg("rootedAtAtom") = -1),
+                 python::arg("rootedAtAtom") = -1,
+                 python::arg("onlyShortestPaths") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------

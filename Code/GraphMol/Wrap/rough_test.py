@@ -2842,7 +2842,7 @@ CAS<~>
       i += 1
     self.assertEqual(i, 16)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
   def testMaeStreamSupplier(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.maegz')
@@ -2873,7 +2873,7 @@ CAS<~>
       i += 1
     self.assertEqual(i, 16)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
   def testMaeFileSupplier(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.mae')
@@ -2891,7 +2891,7 @@ CAS<~>
       i += 1
     self.assertEqual(i, 16)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
   def testMaeFileSupplierException(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'bad_ppty.mae')
@@ -2915,7 +2915,7 @@ CAS<~>
     self.assertFalse(suppl.atEnd())
     self.assertTrue(ok)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
   def testMaeFileSupplierSetData(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.mae')
@@ -2949,7 +2949,7 @@ CAS<~>
 
     self.assertEqual(i, 15)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
   def testMaeFileSupplierGetItem(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.mae')
@@ -2969,6 +2969,15 @@ CAS<~>
 
       for i in (num_mols, 2 * num_mols, -(num_mols + 1), -2 * (num_mols + 1)):
         self.assertRaises(IndexError, lambda: suppl[i])
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
+  def testMaeFileSupplierExceptionMsgs(self):
+    maeBlock = "f_m_ct {\n  s_m_title\n  :::\n  " "\n  }\n}"
+
+    with Chem.MaeMolSupplier() as suppl:
+      suppl.SetData(maeBlock)
+      self.assertRaisesRegex(RuntimeError, r'File parsing error: Indexed block not found: m_atom',
+                             lambda: next(suppl))
 
   def test66StreamSupplierIter(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -3535,6 +3544,16 @@ CAS<~>
     qa = rdqueries.NumHeteroatomNeighborsGreaterQueryAtom(0)
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
     self.assertEqual(l, (0, 2, 3, 4))
+
+    m = Chem.MolFromSmiles('CC12CCN(CC1)C2')
+    qa = rdqueries.IsBridgeheadQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 4))
+
+    m = Chem.MolFromSmiles('OCCOC')
+    qa = rdqueries.NonHydrogenDegreeEqualsQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 2, 3))
 
   def test89UnicodeInput(self):
     m = Chem.MolFromSmiles(u'c1ccccc1')
@@ -7003,7 +7022,7 @@ CAS<~>
     finally:
       Chem.SetDefaultPickleProperties(props)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not built with MAEParser support")
   def testMaeWriter(self):
     mol = Chem.MolFromSmiles("C1CCCCC1")
     self.assertTrue(mol)
@@ -7040,7 +7059,7 @@ CAS<~>
 
     self.assertTrue(f' m_bond[{mol.GetNumBonds()}] {{', maefile)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not built with MAEParser support")
   def testMaeWriterProps(self):
     mol = Chem.MolFromSmiles("C1CCCCC1")
     self.assertTrue(mol)
@@ -7130,7 +7149,7 @@ CAS<~>
     self.assertIn(str(int(boolProp)), line)
     self.assertIn(strProp, line)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not built with MAEParser support")
   def testMaeWriterRoundtrip(self):
     smiles = "C1CCCCC1"
     mol = Chem.MolFromSmiles(smiles)
@@ -7147,7 +7166,7 @@ CAS<~>
 
     self.assertEqual(Chem.MolToSmiles(roundtrip_mol), smiles)
 
-  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not built with MAEParser support")
   def testMaeWriterGetText(self):
     smiles = "C1CCCCC1"
     mol = Chem.MolFromSmiles(smiles)

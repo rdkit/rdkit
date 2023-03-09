@@ -50,7 +50,13 @@ void exportTopologicalTorsion() {
       .def_readwrite(
           "torsionAtomCount",
           &TopologicalTorsion::TopologicalTorsionArguments::d_torsionAtomCount,
-          "number of atoms to be included in the paths");
+          "number of atoms to be included in the paths")
+      .def_readwrite(
+          "onlyShortestPaths",
+          &TopologicalTorsion::TopologicalTorsionArguments::
+              df_onlyShortestPaths,
+          "whether or not to only include paths which are the shortest path between the start and end atoms");
+
   python::def(
       "GetTopologicalTorsionGenerator",
       &getTopologicalTorsionFPGenerator<std::uint64_t>,

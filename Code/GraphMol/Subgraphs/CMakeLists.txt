@@ -10,3 +10,4 @@ target_include_directories(Subgraphs PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR
 
 rdkit_test(testSubgraphs1 test1.cpp LINK_LIBRARIES Subgraphs SmilesParse )
 rdkit_test(testSubgraphs2 test2.cpp LINK_LIBRARIES SmilesParse Subgraphs )
+rdkit_catch_test(subgraphsCatch catch_tests.cpp LINK_LIBRARIES SmilesParse Subgraphs)

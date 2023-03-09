@@ -227,4 +227,5 @@ JSMol *get_qmol(const std::string &input);
 JSReaction *get_rxn(const std::string &input, const std::string &details_json);
 std::string version();
 void prefer_coordgen(bool prefer);
-void use_legacy_stereo_perception(bool value);
+bool use_legacy_stereo_perception(bool value);
+bool allow_non_tetrahedral_chirality(bool value);

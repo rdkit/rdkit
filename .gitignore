@@ -6,7 +6,7 @@
 /Code/JavaWrappers/csharp_wrapper/swig_csharp
 /Data/Fonts/ComicNeue-*
 /Data/Fonts/OFL.txt
-
+/vcpkg/*
 #- Eclipse files
 /.project
 /.pydevproject

@@ -52,14 +52,21 @@
 %template(UChar_Vect) std::vector<unsigned char>;
 
 %typemap(javacode) RDKit::SubstructLibrary %{
-     public static SubstructLibrary Deserialize(byte[] b) {
-     UChar_Vect vec = new UChar_Vect();
-     vec.reserve(b.length);
-     for (int size=0;size<b.length;++size) {
-       vec.add((short)b[size]);
-     }
-     return new SubstructLibrary(vec);
-   }
+  public static SubstructLibrary Deserialize(byte[] b) {
+    UChar_Vect vec = null;
+    try {
+      vec = new UChar_Vect();
+      vec.reserve(b.length);
+      for (int size=0;size<b.length;++size) {
+        vec.add((short)b[size]);
+      }
+      return new SubstructLibrary(vec);
+    } finally {
+      if (vec != null) {
+        vec.delete();
+      }
+    }
+  }
 %}
 
 %extend RDKit::SubstructLibrary {

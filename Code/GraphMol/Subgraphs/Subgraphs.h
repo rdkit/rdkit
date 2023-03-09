@@ -115,17 +115,19 @@ RDKIT_SUBGRAPHS_EXPORT PATH_LIST findUniqueSubgraphsOfLengthN(
  *                      Hs to the graph.
  *   \param rootedAtAtom - if non-negative, only subgraphs that start at
  *                         this atom will be returned.
+ *   \param onlyShortestPaths - if set then only paths which are <= the shortest
+ *                              path between the begin and end atoms will be
+ *                              included in the results
  *
  *   The result is a list of paths (i.e. list of list of bond indices)
  */
-RDKIT_SUBGRAPHS_EXPORT PATH_LIST findAllPathsOfLengthN(const ROMol &mol,
-                                                       unsigned int targetLen,
-                                                       bool useBonds = true,
-                                                       bool useHs = false,
-                                                       int rootedAtAtom = -1);
+RDKIT_SUBGRAPHS_EXPORT PATH_LIST findAllPathsOfLengthN(
+    const ROMol &mol, unsigned int targetLen, bool useBonds = true,
+    bool useHs = false, int rootedAtAtom = -1, bool onlyShortestPaths = false);
 RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
     const ROMol &mol, unsigned int lowerLen, unsigned int upperLen,
-    bool useBonds = true, bool useHs = false, int rootedAtAtom = -1);
+    bool useBonds = true, bool useHs = false, int rootedAtAtom = -1, 
+    bool onlyShortestPaths = false);
 
 //! \brief Find bond subgraphs of a particular radius around an atom.
 //!        Return empty result if there is no bond at the requested radius.
@@ -146,8 +148,8 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
  */
 RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
-    bool useHs=false, bool enforceSize=true,
-    std::unordered_map<unsigned int, unsigned int> *atomMap=nullptr);
+    bool useHs = false, bool enforceSize = true,
+    std::unordered_map<unsigned int, unsigned int> *atomMap = nullptr);
 
 }  // namespace RDKit
 

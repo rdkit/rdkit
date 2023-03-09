@@ -9,6 +9,8 @@
 
 - The ring-finding functions will now run even if the molecule already has ring information. Older versions of the RDKit would return whatever ring information was present, even if it had been generated using a different algorithm.
 - The canonical SMILES and CXSMILES generated for molecules with enhanced stereochemistry (stereo groups) is different than in previous releases. The enhanced stereochemistry information and the stereo groups themselves are now canonical. This does *not* affect molecules which do not have enhanced stereo and will not have any effect if you generate non-isomeric SMILES. This change also affects the output of the MolHash and RegistrationHash code when applied to molecules with enhanced stereo.
+- The doIsomericSmiles parameter in Java and C# ROMol.MolToSmiles() now defaults to true (previously it was false), thus aligning to the C++ and Python behavior.
+- Double bonds which are marked as crossed (i.e. `bond.GetBondDir() == Bond.BondDir.EITHERDOUBLE`) now have their BondStereo set to `Bond.BondStereo.STEREOANY` and the BondDir information removed by default when molecules are parsed or `AssignStereochemistry()` is called with the `cleanIt` argument set to True.
 
 ## Bug Fixes:
 

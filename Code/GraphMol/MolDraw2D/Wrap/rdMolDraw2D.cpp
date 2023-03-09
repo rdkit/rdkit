@@ -930,7 +930,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "replace any atom, any hetero, any halo queries "
           "with complex query symbols A, Q, X, M, optionally followed "
           "by H if hydrogen is included (except for AH, which stays *). "
-          "Default is false")
+          "Default is true")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            "method for getting the colour of variable attachment points")
       .def("setVariableAttachmentColour", &RDKit::setVariableAttachmentColour,

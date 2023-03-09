@@ -149,6 +149,10 @@ RDKIT_RDKITCFFI_EXPORT char *version();
 RDKIT_RDKITCFFI_EXPORT void enable_logging();
 RDKIT_RDKITCFFI_EXPORT void disable_logging();
 
+// chirality
+RDKIT_RDKITCFFI_EXPORT short use_legacy_stereo_perception(short value);
+RDKIT_RDKITCFFI_EXPORT short allow_non_tetrahedral_chirality(short value);
+
 #ifdef __cplusplus
 }
 #endif
