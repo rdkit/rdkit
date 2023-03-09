@@ -3001,3 +3001,23 @@ TEST_CASE("github #4642: Enhanced Stereo is lost when using GetMolFrags") {
           Atom::ChiralType::CHI_UNSPECIFIED);
   }
 }
+
+TEST_CASE("Github #6119: No warning when merging explicit H query atoms with no bonds", "[bug][molops]"){
+  SECTION("Zero degree AtomOr Query"){
+    std::unique_ptr<RWMol> m{SmartsToMol("[#6,#1]")};
+    REQUIRE(m);
+    //Test log will show "WARNING: merging explicit H queries involved in ORs is not supported. This query will not be merged"
+    MolOps::mergeQueryHs(*m);
+  }
+  SECTION("One degree AtomOr Query"){
+    std::unique_ptr<RWMol> m{SmartsToMol("C[#6,#1]")};
+    REQUIRE(m);
+    //Test log will show "WARNING: merging explicit H queries involved in ORs is not supported. This query will not be merged"
+    MolOps::mergeQueryHs(*m);
+  }
+  SECTION("Atoms that are not H"){
+    std::unique_ptr<RWMol> m{SmartsToMol("C[#6,#7]")};
+    REQUIRE(m);
+    MolOps::mergeQueryHs(*m);
+  }
+}
