@@ -216,6 +216,20 @@ M  END
         layers = hash_sdf(structure)
         self.assertEqual(layers, expected_layers)
 
+        expected_layers_with_data_field = {
+                HashLayer.CANONICAL_SMILES: 'CCCCCCC',
+                HashLayer.ESCAPE: '',
+                HashLayer.FORMULA: 'C7H16',
+                HashLayer.NO_STEREO_SMILES: 'CCCCCCC',
+                HashLayer.NO_STEREO_TAUTOMER_HASH: 'CCCCCCC_0_0',
+                HashLayer.SGROUP_DATA: '[{"fieldName": "lambda max", "atom": [6], "bonds": [], "value": "250"}]',
+                HashLayer.TAUTOMER_HASH: 'CCCCCCC_0_0'
+        }
+
+        layers_with_data_field = hash_sdf(structure, data_field_names="lambda max")
+        self.assertEqual(layers_with_data_field, expected_layers_with_data_field)
+
+
     def test_stereo_imine_hash(self):
         stereo_mol = Chem.MolFromSmiles(r'[H]\N=C\C', sanitize=False)
         stereo = RegistrationHash.GetMolLayers(stereo_mol)
