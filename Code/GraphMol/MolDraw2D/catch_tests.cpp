@@ -287,7 +287,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github6112.svg", 908847383U},
     {"test_github6160_1.svg", 3669327545U},
     {"test_github6160_2.svg", 3704672111U},
-    {"test_github6160_3.svg", 2431440968U}};
+    {"test_github6160_3.svg", 2431440968U},
+    {"test_github6170.svg", 865612473U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -7316,5 +7317,72 @@ TEST_CASE("Bad double bond - Github 6160") {
     auto vec2 = points[2].directionVector(points[3]);
     CHECK(vec1.dotProduct(vec2) == Approx(1.0).margin(1.0e-4));
     check_file_hash(svgName);
+  }
+}
+
+TEST_CASE("No crossing for oddly drawn double bond - Github 6170") {
+  std::string nameBase = "test_github6170";
+  auto m = R"CTAB(
+     RDKit          2D
+
+  8  7  0  0  0  0  0  0  0  0999 V2000
+    3.0428   -1.6819    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0022    1.7243    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8934   -1.6549    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1949   -2.8653    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9237    1.6929    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1521    2.9055    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6779   -1.6657    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6267    1.6960    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  2  3
+  1  4  1  0
+  2  5  2  3
+  2  6  1  0
+  3  7  1  0
+  5  8  1  0
+M  END
+  )CTAB"_ctab;
+
+  auto doBondsIntersect = [](const std::string &text, const std::regex &bond) -> void {
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), bond),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 2);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond);
+    auto match_end = std::sregex_iterator();
+    std::vector<Point2D> points;
+    for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+      std::smatch match = *i;
+      points.push_back(Point2D(stod(match[1]), stod(match[2])));
+      points.push_back(Point2D(stod(match[3]), stod(match[4])));
+    }
+    REQUIRE(MolDraw2D_detail::doLinesIntersect(
+        points[0], points[1], points[2], points[3], nullptr));
+  };
+
+  REQUIRE(m);
+  {
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    // it's a bit easier to deal with in BW.
+    assignBWPalette(drawer.drawOptions().atomColourPalette);
+    drawer.drawOptions().addAtomIndices = true;
+    REQUIRE_NOTHROW(drawer.drawMolecule(*m));
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + ".svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    // check that the two lines for both double bonds intersect.
+    std::regex bond1(
+        "'bond-1 atom-0 atom-2' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    doBondsIntersect(text, bond1);
+    std::regex bond3(
+        "'bond-3 atom-1 atom-4' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    doBondsIntersect(text, bond3);
+    check_file_hash(nameBase + ".svg");
   }
 }
