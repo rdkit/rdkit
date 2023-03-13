@@ -3307,3 +3307,80 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE(
+    "assignStereochemistry should clear crossed double bonds that can't have stereo") {
+  SECTION("basics") {
+    auto m = "CC=C(C)C"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setBondDir(Bond::BondDir::EITHERDOUBLE);
+    bool clean = true;
+    bool flag = true;
+    bool force = true;
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(false);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+    }
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(true);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+    }
+  }
+  SECTION("make sure we don't mess with actual potential stereosystems") {
+    auto m = "CC=C(C)[13CH3]"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setBondDir(Bond::BondDir::EITHERDOUBLE);
+    bool clean = true;
+    bool flag = true;
+    bool force = true;
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(false);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      // the crossed bond dir has been translated to unknown stereo:
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOANY);
+    }
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(true);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      // the crossed bond dir has been translated to unknown stereo:
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOANY);
+    }
+  }
+  SECTION("make sure stereoatoms are also cleared") {
+    auto m = "CC=C(C)C"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setBondDir(Bond::BondDir::EITHERDOUBLE);
+    m->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    bool clean = true;
+    bool flag = true;
+    bool force = true;
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(false);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondWithIdx(1)->getStereoAtoms().empty());
+    }
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(true);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondWithIdx(1)->getStereoAtoms().empty());
+    }
+  }
+}

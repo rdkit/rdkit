@@ -122,12 +122,11 @@ pains_c = [
 
 DIRNAME = os.path.join(os.path.dirname(sys.argv[0]))
 PAINS_CSV = os.path.join(DIRNAME, "..", "..", "..", "Data", "Pains", "wehi_pains.csv")
-FILTER_IN = os.path.join(DIRNAME, "Filters.cpp.in")
 PAINS_A_FILENAME = os.path.join(DIRNAME, "pains_a.in")
 PAINS_B_FILENAME = os.path.join(DIRNAME, "pains_b.in")
 PAINS_C_FILENAME = os.path.join(DIRNAME, "pains_c.in")
 
-for fn in (PAINS_CSV, FILTER_IN, PAINS_A_FILENAME, PAINS_B_FILENAME, PAINS_B_FILENAME):
+for fn in (PAINS_CSV, PAINS_A_FILENAME, PAINS_B_FILENAME, PAINS_B_FILENAME):
   if not os.path.exists(fn):
     raise IOError("Could not find necessary file: %s", fn)
 
