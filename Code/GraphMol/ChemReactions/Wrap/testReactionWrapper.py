@@ -38,7 +38,7 @@ import pickle
 
 from rdkit import rdBase
 from rdkit import Chem
-from rdkit.Chem import rdChemReactions
+from rdkit.Chem import AllChem, rdChemReactions
 from rdkit import Geometry
 from rdkit import RDConfig
 from rdkit.Chem.SimpleEnum import Enumerator
