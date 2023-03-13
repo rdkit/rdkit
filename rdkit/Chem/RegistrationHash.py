@@ -138,14 +138,12 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
 
   tautomer_hash = GetStereoTautomerHash(mol)
 
-  canonical_smiles = cxsmiles
-
   sgroup_data = _CanonicalizeSGroups(mol, dataFieldNames=data_field_names)
 
   no_stereo_tautomer_hash, no_stereo_smiles = GetNoStereoLayers(mol)
 
   return {
-    HashLayer.CANONICAL_SMILES: canonical_smiles,
+    HashLayer.CANONICAL_SMILES: cxsmiles,
     HashLayer.ESCAPE: escape or "",
     HashLayer.FORMULA: formula,
     HashLayer.NO_STEREO_SMILES: no_stereo_smiles,
