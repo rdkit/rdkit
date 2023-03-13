@@ -1082,6 +1082,21 @@ M  END
 
     self.assertEqual(reaction.GetNumReactantTemplates(), reaction2.GetNumReactantTemplates())
 
+  def testGithub6138(self):
+    mol = Chem.MolFromSmiles("COc1ccccc1Oc1nc(Nc2cc(C)[nH]n2)cc2ccccc12")
+    rxn = AllChem.ReactionFromSmarts("([c:1]:[n&H1&+0&D2:3]:[n:2])>>([c:1]:[n&H0&+0&D3:3](:[n:2])-C1-C-C-C-C-O-1)")
+
+    def run(r):
+      return Chem.MolToSmiles(r.RunReactants((mol,))[0][0])
+
+    rxn_reloaded = pickle.loads(pickle.dumps(rxn))
+
+    res1 = Chem.MolToSmiles(rxn.RunReactants((mol,))[0][0])
+    res2 = Chem.MolToSmiles(rxn_reloaded.RunReactants((mol,))[0][0])
+    rxn_reloaded_after_use = pickle.loads(pickle.dumps(rxn))
+    res3 = Chem.MolToSmiles(rxn_reloaded_after_use.RunReactants((mol,))[0][0])
+    self.assertEqual(res1, res2)
+    self.assertEqual(res1, res3)
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)

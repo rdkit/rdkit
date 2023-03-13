@@ -146,7 +146,8 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss,
   streamWrite(ss, BEGINREACTANTS);
   for (auto tmpl = rxn->beginReactantTemplates();
        tmpl != rxn->endReactantTemplates(); ++tmpl) {
-    MolPickler::pickleMol(tmpl->get(), ss);
+    MolPickler::pickleMol(tmpl->get(), ss,
+                          PicklerOps::PropertyPickleOptions::AllProps);
   }
   streamWrite(ss, ENDREACTANTS);
 
@@ -154,7 +155,7 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss,
   for (auto tmpl = rxn->beginProductTemplates();
        tmpl != rxn->endProductTemplates(); ++tmpl) {
     MolPickler::pickleMol(tmpl->get(), ss,
-                          PicklerOps::PropertyPickleOptions::AtomProps);
+                          PicklerOps::PropertyPickleOptions::AllProps);
   }
   streamWrite(ss, ENDPRODUCTS);
 
