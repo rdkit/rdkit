@@ -1072,8 +1072,8 @@ bool isQueryH(const Atom *atom) {
     }
   }
 
-  if (atom->getDegree() != 1 && atom->getDegree() != 0) {
-    // only degree 1
+  if (!(atom->getDegree() <= 1)) {
+    // bonded and unbonded H atoms will continue rest will be returned
     return false;
   }
 

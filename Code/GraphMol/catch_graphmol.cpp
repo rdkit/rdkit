@@ -3006,13 +3006,13 @@ TEST_CASE("Github #6119: No warning when merging explicit H query atoms with no 
   SECTION("Zero degree AtomOr Query"){
     std::unique_ptr<RWMol> m{SmartsToMol("[#6,#1]")};
     REQUIRE(m);
-    //Test log will show "WARNING: merging explicit H queries involved in ORs is not supported. This query will not be merged"
+    //Test log will show upon success "WARNING: merging explicit H queries involved in ORs is not supported. This query will not be merged"
     MolOps::mergeQueryHs(*m);
   }
   SECTION("One degree AtomOr Query"){
     std::unique_ptr<RWMol> m{SmartsToMol("C[#6,#1]")};
     REQUIRE(m);
-    //Test log will show "WARNING: merging explicit H queries involved in ORs is not supported. This query will not be merged"
+    //Test log will show upon success "WARNING: merging explicit H queries involved in ORs is not supported. This query will not be merged"
     MolOps::mergeQueryHs(*m);
   }
   SECTION("Atoms that are not H"){
