@@ -2798,6 +2798,15 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
       }
       bondNonRing(bond, offset, l2s, l2f);
     }
+
+    // Occasionally, as seen in Github6170, a bad geometry about a bond can
+    // result in the bonds being crossed as perpendiculars have become
+    // confused.  Usually this is the result of when a bond to the
+    // double bond is roughly linear with it.  This is a cheap test to see if
+    // this has happened, uncrossing them if necessary.
+    if (!areBondsLinear(l1s, l1f, l2f, l2s)) {
+      std::swap(l1s, l2s);
+    }
     if ((Bond::EITHERDOUBLE == bond.getBondDir()) ||
         (Bond::STEREOANY == bond.getStereo())) {
       // crossed bond
