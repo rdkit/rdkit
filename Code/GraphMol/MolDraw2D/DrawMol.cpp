@@ -2804,7 +2804,7 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
     // confused.  Usually this is the result of when a bond to the
     // double bond is roughly linear with it.  This is a cheap test to see if
     // this has happened, uncrossing them if necessary.
-    if (!areBondsLinear(l1s, l1f, l2f, l2s)) {
+    if (!areBondsParallel(l1s, l1f, l2f, l2s)) {
       std::swap(l1s, l2s);
     }
     if ((Bond::EITHERDOUBLE == bond.getBondDir()) ||
@@ -2913,8 +2913,9 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
     const Atom *thirdAtom = nullptr;
     for (auto i = 1; i < at1->getDegree(); ++i) {
       thirdAtom = otherNeighbor(at1, at2, i, *drawMol_);
-      if (!areBondsLinear(atCds_[at1->getIdx()], atCds_[at2->getIdx()],
-                          atCds_[at1->getIdx()], atCds_[thirdAtom->getIdx()])) {
+      if (!areBondsParallel(atCds_[at1->getIdx()], atCds_[at2->getIdx()],
+                            atCds_[at1->getIdx()],
+                            atCds_[thirdAtom->getIdx()])) {
         return thirdAtom;
       }
     }
@@ -3691,8 +3692,8 @@ bool areBondsTrans(const Point2D &at1, const Point2D &at2, const Point2D &at3,
 }
 
 // ****************************************************************************
-bool areBondsLinear(const Point2D &at1, const Point2D &at2, const Point2D &at3,
-                    const Point2D &at4, double tol) {
+bool areBondsParallel(const Point2D &at1, const Point2D &at2,
+                      const Point2D &at3, const Point2D &at4, double tol) {
   Point2D v21 = at1.directionVector(at2);
   Point2D v34 = at4.directionVector(at3);
   return (fabs(1.0 - fabs(v21.dotProduct(v34))) < tol);
