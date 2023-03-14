@@ -79,10 +79,15 @@ int toInt(const std::string_view input, bool acceptSpaces) {
     while (*txt == ' ') {
       ++txt;
       --sz;
+      // have we run off the end of the view?
+      if (sz < 1U) {
+        throw boost::bad_lexical_cast();
+      }
     }
   }
   int res = 0;
   std::from_chars(txt, txt + sz, res);
+
   return res;
 }
 int toInt(const std::string &input, bool acceptSpaces) {
