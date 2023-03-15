@@ -54,6 +54,7 @@
 %javaconst(1);
 #endif
 %include <GraphMol/FileParsers/FileParsers.h>
+%ignore RDKit::v2;
 %include <GraphMol/SmilesParse/SmilesParse.h>
 %include <GraphMol/RWMol.h>
 

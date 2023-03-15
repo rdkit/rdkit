@@ -34,6 +34,7 @@
 %{
 #include <GraphMol/SmilesParse/SmilesParse.h>
 %}
+%ignore RDKit::v2;
 %ignore SmilesToMol;
 %ignore SmartsToMol;
 %include <GraphMol/SmilesParse/SmilesParse.h>
