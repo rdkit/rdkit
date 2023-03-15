@@ -12,7 +12,7 @@
 - The doIsomericSmiles parameter in Java and C# ROMol.MolToSmiles() now defaults to true (previously it was false), thus aligning to the C++ and Python behavior.
 - Double bonds which are marked as crossed (i.e. `bond.GetBondDir() == Bond.BondDir.EITHERDOUBLE`) now have their BondStereo set to `Bond.BondStereo.STEREOANY` and the BondDir information removed by default when molecules are parsed or `AssignStereochemistry()` is called with the `cleanIt` argument set to True.
 - The conformers generated for molecules with three-coordinate chiral centers will be somewhat different due to the fix for #5883.
-
+- The default value of `SmartsParserParams.mergeHs` is now false in order to reflect the default value of the `mergeHs` argument to `MolFromSmarts()`.
 
 ## Bug Fixes:
 

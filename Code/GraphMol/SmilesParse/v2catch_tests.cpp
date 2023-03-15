@@ -27,27 +27,43 @@ using namespace RDKit::v2;
 
 TEST_CASE("v2 basics") {
   {
-    auto mol = SmilesParse::SmilesToMol("CCC");
+    auto mol = SmilesParse::SmilesToMol("CCO[H]");
     REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
   }
   {
-    auto mol = RDKit::v2::SmilesParse::SmartsToMol("CC[R]");
+    SmilesParse::SmilesParserParams ps;
+    ps.removeHs = false;
+    auto mol = SmilesParse::SmilesToMol("CCO[H]", &ps);
     REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 4);
   }
   {
-    auto atm = RDKit::v2::SmilesParse::SmilesToAtom("C");
+    auto mol = SmilesParse::SmartsToMol("[H]CC[R]");
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 4);
+  }
+  {
+    SmilesParse::SmartsParserParams ps;
+    ps.mergeHs = true;
+    auto mol = SmilesParse::SmartsToMol("[H]CC[R]", &ps);
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+  }
+  {
+    auto atm = SmilesParse::SmilesToAtom("C");
     REQUIRE(atm);
   }
   {
-    auto bnd = RDKit::v2::SmilesParse::SmilesToBond("-");
+    auto bnd = SmilesParse::SmilesToBond("-");
     REQUIRE(bnd);
   }
   {
-    auto atm = RDKit::v2::SmilesParse::SmartsToAtom("[R]");
+    auto atm = SmilesParse::SmartsToAtom("[R]");
     REQUIRE(atm);
   }
   {
-    auto bnd = RDKit::v2::SmilesParse::SmartsToBond("@");
+    auto bnd = SmilesParse::SmartsToBond("@");
     REQUIRE(bnd);
   }
 }
