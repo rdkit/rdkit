@@ -165,7 +165,8 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss,
     streamWrite(ss, BEGINAGENTS);
     for (auto tmpl = rxn->beginAgentTemplates();
          tmpl != rxn->endAgentTemplates(); ++tmpl) {
-      MolPickler::pickleMol(tmpl->get(), ss);
+      // reagents don't have private properties set during initialization
+      MolPickler::pickleMol(tmpl->get(), ss, PicklerOps::PropertyPickleOptions::AtomProps);
     }
     streamWrite(ss, ENDAGENTS);
   }
