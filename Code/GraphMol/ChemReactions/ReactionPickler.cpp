@@ -146,15 +146,18 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss,
   streamWrite(ss, BEGINREACTANTS);
   for (auto tmpl = rxn->beginReactantTemplates();
        tmpl != rxn->endReactantTemplates(); ++tmpl) {
-    MolPickler::pickleMol(tmpl->get(), ss);
+    auto props = rxn->df_needsInit ? PicklerOps::PropertyPickleOptions::NoProps :
+      PicklerOps::PropertyPickleOptions::AllProps;
+    MolPickler::pickleMol(tmpl->get(), ss, props);
   }
   streamWrite(ss, ENDREACTANTS);
 
   streamWrite(ss, BEGINPRODUCTS);
   for (auto tmpl = rxn->beginProductTemplates();
        tmpl != rxn->endProductTemplates(); ++tmpl) {
-    MolPickler::pickleMol(tmpl->get(), ss,
-                          PicklerOps::PropertyPickleOptions::AtomProps);
+    auto props = rxn->df_needsInit ? PicklerOps::PropertyPickleOptions::AtomProps :
+      PicklerOps::PropertyPickleOptions::AllProps;
+    MolPickler::pickleMol(tmpl->get(), ss, props);
   }
   streamWrite(ss, ENDPRODUCTS);
 
@@ -162,7 +165,8 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss,
     streamWrite(ss, BEGINAGENTS);
     for (auto tmpl = rxn->beginAgentTemplates();
          tmpl != rxn->endAgentTemplates(); ++tmpl) {
-      MolPickler::pickleMol(tmpl->get(), ss);
+      // reagents don't have private properties set during initialization
+      MolPickler::pickleMol(tmpl->get(), ss, PicklerOps::PropertyPickleOptions::AtomProps);
     }
     streamWrite(ss, ENDAGENTS);
   }

@@ -7775,6 +7775,26 @@ void testChemicalReactionCopyAssignment() {
   delete rxn2;
 }
 
+void testGithub6138() {
+  // Pickling reactions removed some of their properties set after reaction
+    // initialization
+  auto rxn_smarts = "[c:1]:[n&H1&+0&D2:3]:[n:2]>>[c:1]:[3n&H0&+0&D3:3]:[2n:2]";
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(rxn_smarts));
+  ROMOL_SPTR mol("c1cn[nH]c1"_smiles);
+  rxn->initReactantMatchers();
+  MOL_SPTR_VECT reacts;
+  reacts.push_back(mol);
+  auto prods = rxn->runReactants(reacts);
+  std::string pkl;
+  ReactionPickler::pickleReaction(*rxn, pkl);
+  std::unique_ptr<ChemicalReaction> lrxn(new ChemicalReaction());
+  ReactionPickler::reactionFromPickle(pkl, lrxn.get());
+  auto prods2 = lrxn->runReactants(reacts);
+  auto s1 =MolToSmiles(*prods[0][0]);
+  auto s2 =MolToSmiles(*prods2[0][0]);
+  TEST_ASSERT(s1 == s2);
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -7874,6 +7894,7 @@ int main() {
   testGithub4410();
   testMultiTemplateRxnQueries();
   testChemicalReactionCopyAssignment();
+  testGithub6138();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
