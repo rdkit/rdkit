@@ -114,6 +114,10 @@ unsigned int toUnsigned(const std::string_view input, bool acceptSpaces) {
     while (*txt == ' ') {
       ++txt;
       --sz;
+      // have we run off the end of the view?
+      if (sz < 1U) {
+        throw boost::bad_lexical_cast();
+      }
     }
   }
   unsigned int res = 0;
