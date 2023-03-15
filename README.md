@@ -94,6 +94,8 @@ a Python library for building, manipulating, analyzing and automatic design of m
 - [Vernalis KNIME nodes](https://www.knime.com/book/vernalis-nodes-for-knime-trusted-extension)
 - [Erlwood KNIME nodes](https://www.knime.com/community/erlwood)
 - [AZOrange](https://github.com/AZcompTox/AZOrange)
+- [pychemprojections](https://github.com/vandan-revanur/pychemprojections) - python library for visualizing various 2D projections of molecules.
+- [pychemovality](https://github.com/vandan-revanur/pychemovality) - python library for estimating the ovality of molecules.
 
 ## License
 
