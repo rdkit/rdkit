@@ -81,8 +81,6 @@ int toInt(const std::string_view input, bool acceptSpaces) {
       --sz;
       // have we run off the end of the view?
       if (sz < 1U) {
-        // If we have a blank input string, should this throw or return 0?
-        // throw boost::bad_lexical_cast();
         return 0;
       }
     }
