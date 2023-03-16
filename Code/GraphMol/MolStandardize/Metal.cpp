@@ -264,8 +264,7 @@ void MetalDisconnector::remove_haptic_dummies(RDKit::RWMol &mol) {
     std::string sprop;
     if (bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
                                sprop)) {
-      if (sprop.length() && sprop[0] == '(' &&
-          sprop[sprop.length() - 1] == ')') {
+      if (sprop.length() > 4 && sprop[0] == '(' && sprop.back() == ')') {
         dummiesToGo.push_back(dummy_idx);
       }
     }
@@ -273,9 +272,11 @@ void MetalDisconnector::remove_haptic_dummies(RDKit::RWMol &mol) {
   // The atom indices are recalculated after each atom removal, so take them
   // out in descending order. Bonds are taken out when the atom is removed.
   std::sort(dummiesToGo.begin(), dummiesToGo.end(), std::greater{});
+  mol.beginBatchEdit();
   for (auto a : dummiesToGo) {
     mol.removeAtom(a);
   }
+  mol.commitBatchEdit();
 }
 
 }  // namespace MolStandardize
