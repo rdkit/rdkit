@@ -110,14 +110,14 @@
 %}
 
 // ===== SmilesParseException =====
-%typemap(javabase) RDKit::SmilesParseException "java.lang.RuntimeException";
-%typemap(throws, throws="org.RDKit.SmilesParseException") RDKit::SmilesParseException {
+%typemap(javabase) RDKit::SmilesParse::SmilesParseException "java.lang.RuntimeException";
+%typemap(throws, throws="org.RDKit.SmilesParseException") RDKit::SmilesParse::SmilesParseException {
   jclass excep = jenv->FindClass("org/RDKit/SmilesParseException");
   if (excep)
     jenv->ThrowNew(excep, $1.what());
   return $null;
 }
-%typemap(javacode) RDKit::SmilesParseException %{
+%typemap(javacode) RDKit::SmilesParse::SmilesParseException %{
   public String getMessage() {
     return what();
   }
