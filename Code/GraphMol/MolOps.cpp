@@ -984,7 +984,7 @@ std::vector<std::vector<unsigned int>> contiguousAtoms(
 
 // add to the molecule a dummy atom in the molecule centred on the
 // atoms passed in, with a dative bond from it to the metal atom.
-void addDativeBond(RWMol &mol, unsigned int metalIdx,
+void addHapticBond(RWMol &mol, unsigned int metalIdx,
                    std::vector<unsigned int> hapticAtoms) {
   // This rigmarole is required to get a * in the V3000 file as the symbol
   // for the atom.
@@ -1036,7 +1036,7 @@ void dativeBondsToHaptic(RWMol &mol) {
   for (auto &dativeSet : dativeAtoms) {
     auto contigAtoms = contiguousAtoms(mol, dativeSet.second);
     for (const auto &ca : contigAtoms) {
-      addDativeBond(mol, dativeSet.first, ca);
+      addHapticBond(mol, dativeSet.first, ca);
       for (auto cat : ca) {
         mol.removeBond(dativeSet.first, cat);
       }
