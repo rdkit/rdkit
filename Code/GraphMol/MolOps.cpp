@@ -900,6 +900,7 @@ ROMol *hapticBondsToDative(const ROMol &mol) {
 void hapticBondsToDative(RWMol &mol) {
   std::vector<unsigned int> dummiesToGo;
   std::vector<std::pair<unsigned int, unsigned int>> bondsToAdd;
+  mol.beginBatchEdit();
   for (const auto &bond : mol.bonds()) {
     if (bond->getBondType() == Bond::BondType::DATIVE) {
       auto oats = details::hapticBondEndpoints(bond);
@@ -921,21 +922,13 @@ void hapticBondsToDative(RWMol &mol) {
       for (auto oat : oats) {
         auto atom = mol.getAtomWithIdx(oat);
         if (atom) {
-          bondsToAdd.push_back(std::make_pair(atom->getIdx(), metal->getIdx()));
+          mol.addBond(atom, metal, Bond::DATIVE);
         }
       }
-      dummiesToGo.push_back(dummy->getIdx());
+      mol.removeAtom(dummy);
     }
   }
-  for (const auto &b2a : bondsToAdd) {
-    auto atom = mol.getAtomWithIdx(b2a.first);
-    auto metal = mol.getAtomWithIdx(b2a.second);
-    mol.addBond(atom, metal, Bond::DATIVE);
-  }
-  sort(dummiesToGo.begin(), dummiesToGo.end(), std::greater<>());
-  for (auto d : dummiesToGo) {
-    mol.removeAtom(d);
-  }
+  mol.commitBatchEdit();
 }
 
 ROMol *dativeBondsToHaptic(const ROMol &mol) {
@@ -982,7 +975,7 @@ std::vector<std::vector<unsigned int>> contiguousAtoms(
   return contigAts;
 }
 
-// add to the molecule a dummy atom in the molecule centred on the
+// add to the molecule a dummy atom centred on the
 // atoms passed in, with a dative bond from it to the metal atom.
 void addHapticBond(RWMol &mol, unsigned int metalIdx,
                    std::vector<unsigned int> hapticAtoms) {
@@ -1018,7 +1011,9 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
 }  // namespace
 
 void dativeBondsToHaptic(RWMol &mol) {
-  // first collect all the atoms that have a dative bond to them.
+  // First collect all the atoms that have a dative bond to them.
+  // Assume that the ones of interest will have a metal as their
+  // end atoms.
   std::map<unsigned int, std::vector<unsigned int>> dativeAtoms;
   for (const auto &b : mol.bonds()) {
     if (b->getBondType() == Bond::DATIVE) {
@@ -1033,7 +1028,11 @@ void dativeBondsToHaptic(RWMol &mol) {
     }
   }
 
+  mol.beginBatchEdit();
   for (auto &dativeSet : dativeAtoms) {
+    // Find the sets of contiguous atoms in the dativeAtoms lists.  Each one
+    // will be the EndPts of a haptic bond going to the metal atom that is
+    // dativeSet.first.
     auto contigAtoms = contiguousAtoms(mol, dativeSet.second);
     for (const auto &ca : contigAtoms) {
       addHapticBond(mol, dativeSet.first, ca);
@@ -1042,6 +1041,7 @@ void dativeBondsToHaptic(RWMol &mol) {
       }
     }
   }
+  mol.commitBatchEdit();
 }
 
 namespace details {
