@@ -840,10 +840,10 @@ bool updateBonds(ROMol &mol, const std::vector<unsigned int> &aranks,
   return needAnotherRound;
 }
 
-void cleanMolStereo(ROMol &mol, boost::dynamic_bitset<> &fixedAtoms,
-                    boost::dynamic_bitset<> &knownAtoms,
-                    boost::dynamic_bitset<> &fixedBonds,
-                    boost::dynamic_bitset<> &knownBonds) {
+void cleanMolStereo(ROMol &mol, const boost::dynamic_bitset<> &fixedAtoms,
+                    const boost::dynamic_bitset<> &knownAtoms,
+                    const boost::dynamic_bitset<> &fixedBonds,
+                    const boost::dynamic_bitset<> &knownBonds) {
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     if (!fixedAtoms[i] && knownAtoms[i]) {
       switch (mol.getAtomWithIdx(i)->getChiralTag()) {
@@ -865,9 +865,11 @@ void cleanMolStereo(ROMol &mol, boost::dynamic_bitset<> &fixedAtoms,
     }
   }
   for (auto i = 0u; i < mol.getNumBonds(); ++i) {
+    auto bond = mol.getBondWithIdx(i);
     if (!fixedBonds[i] && knownBonds[i]) {
-      // FIX only does known double bonds
-      mol.getBondWithIdx(i)->setStereo(Bond::BondStereo::STEREONONE);
+      bond->setStereo(Bond::BondStereo::STEREONONE);
+      bond->setBondDir(Bond::BondDir::NONE);
+      bond->getStereoAtoms().clear();
     }
   }
 }

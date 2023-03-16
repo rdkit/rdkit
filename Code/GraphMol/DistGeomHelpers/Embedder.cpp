@@ -34,13 +34,14 @@
 #include <boost/dynamic_bitset.hpp>
 #include <iomanip>
 #include <RDGeneral/RDThreads.h>
+#include <typeinfo>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
 #include <mutex>
 #endif
 
-//#define DEBUG_EMBEDDING 1
+// #define DEBUG_EMBEDDING 1
 
 #ifdef M_PI_2
 #undef M_PI_2
@@ -1016,7 +1017,13 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         // we should at least have 3 though
         CHECK_INVARIANT(nbrs.size() >= 3, "Cannot be a chiral center");
 
+        double volLowerBound = 5.0;
+        double volUpperBound = 100.0;
+
         if (nbrs.size() < 4) {
+          // we get lower volumes if there are three neighbors,
+          //  this was github #5883
+          volLowerBound = 2.0;
           nbrs.insert(nbrs.end(), atom->getIdx());
         }
 
@@ -1024,13 +1031,15 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         // volume
         if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
           // positive chiral volume
-          auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1],
-                                               nbrs[2], nbrs[3], 5.0, 100.0);
+          auto *cset =
+              new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1], nbrs[2],
+                                      nbrs[3], volLowerBound, volUpperBound);
           DistGeom::ChiralSetPtr cptr(cset);
           chiralCenters.push_back(cptr);
         } else if (chiralType == Atom::CHI_TETRAHEDRAL_CW) {
-          auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1],
-                                               nbrs[2], nbrs[3], -100.0, -5.0);
+          auto *cset =
+              new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1], nbrs[2],
+                                      nbrs[3], -volUpperBound, -volLowerBound);
           DistGeom::ChiralSetPtr cptr(cset);
           chiralCenters.push_back(cptr);
         } else {

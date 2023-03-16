@@ -2306,6 +2306,18 @@ ARGUMENTS:\n\
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
+    python::class_<Chirality::BondWedgingParameters>(
+        "BondWedgingParameters",
+        "Parameters controlling how bond wedging is done.")
+        .def_readwrite(
+            "wedgeTwoBondsIfPossible",
+            &Chirality::BondWedgingParameters::wedgeTwoBondsIfPossible,
+            R"DOC(If this is enabled then two bonds will be wedged at chiral
+  centers subject to the following constraints:
+    1. ring bonds will not be wedged
+    2. bonds to chiral centers will not be wedged
+    3. bonds separated by more than 120 degrees will not be
+        wedged)DOC");
     docString =
         "Set the wedging on single bonds in a molecule.\n\
    The wedging scheme used is that from Mol files.\n\
@@ -2316,7 +2328,10 @@ ARGUMENTS:\n\
     - conformer: the conformer to use to determine wedge direction\n\
 \n\
 \n";
-    python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
+    python::def("WedgeMolBonds", Chirality::wedgeMolBonds,
+                (python::arg("mol"), python::arg("conformer"),
+                 python::arg("params") = python::object()),
+                docString.c_str());
 
     docString =
         "Set the wedging to that which was read from the original\n\

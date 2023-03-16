@@ -338,6 +338,12 @@ void getBondHighlightsForAtoms(const ROMol &mol,
 // direction to at3->at4.  Basically, if the dot product is negative.
 bool areBondsTrans(const Point2D &at1, const Point2D &at2, const Point2D &at3,
                    const Point2D &at4);
+// returns true if the vector at2->at1 points is roughly linear with
+// direction of at3->at4.  Basically, if the dot product is 1.0 within the
+// given tolerance.
+bool areBondsParallel(const Point2D &at1, const Point2D &at2,
+                      const Point2D &at3, const Point2D &at4,
+                      double tol = 1.0e-4);
 
 // find the nborNum'th neighbour of firstAtom that isn't secondAtom
 const Atom *otherNeighbor(const Atom *firstAtom, const Atom *secondAtom,
