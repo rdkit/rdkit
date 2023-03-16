@@ -182,10 +182,12 @@ RDKIT_MOLSTANDARDIZE_EXPORT std::string standardizeSmiles(
 //! The options are splitGrignards, splitAromaticC, adjustCharges and
 //! removeHapticDummies.  Roll on C++20 and designated initializers!
 RDKIT_MOLSTANDARDIZE_EXPORT void disconnectOrganometallics(
-    RWMol &mol, MetalDisconnectorOptions mdo = {true, true, false, true});
+    RWMol &mol, RDKit::MolStandardize::MetalDisconnectorOptions mdo = {
+                    true, true, false, true});
 //! As above, but returns new disconnected molecule.
 RDKIT_MOLSTANDARDIZE_EXPORT ROMol *disconnectOrganometallics(
-    const ROMol &mol, MetalDisconnectorOptions mdo = {true, true, false, true});
+    const ROMol &mol, RDKit::MolStandardize::MetalDisconnectorOptions mdo = {
+                          true, true, false, true});
 
 //! TODO
 RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::string> enumerateTautomerSmiles(

@@ -285,13 +285,14 @@ std::vector<std::string> enumerateTautomerSmiles(
   return res.smiles();
 }
 
-void disconnectOrganometallics(RWMol &mol, MetalDisconnectorOptions mdo) {
+void disconnectOrganometallics(
+    RWMol &mol, RDKit::MolStandardize::MetalDisconnectorOptions mdo) {
   RDKit::MolStandardize::MetalDisconnector md(mdo);
   md.disconnect(mol);
 }
 
-ROMol *disconnectOrganometallics(const ROMol &mol,
-                                 MetalDisconnectorOptions mdo) {
+ROMol *disconnectOrganometallics(
+    const ROMol &mol, RDKit::MolStandardize::MetalDisconnectorOptions mdo) {
   RDKit::MolStandardize::MetalDisconnector md(mdo);
   return md.disconnect(mol);
 }
