@@ -36,6 +36,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/tokenizer.hpp>
 #include <Geometry/point.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
 
@@ -982,11 +983,7 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   // This rigmarole is required to get a * in the V3000 file as the symbol
   // for the atom.
   auto dummyAt = new QueryAtom(0);
-  auto *res = new ATOM_NULL_QUERY;
-  res->setDataFunc(nullDataFun);
-  res->setMatchFunc(nullQueryFun);
-  res->setDescription("AtomNull");
-  dummyAt->setQuery(res);
+  dummyAt->setQuery(makeAtomNullQuery());
   unsigned int dummyIdx = mol.addAtom(dummyAt);
   RDGeom::Point3D dummyPos;
   std::ostringstream oss;
