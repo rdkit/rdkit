@@ -3132,24 +3132,29 @@ TEST_CASE("convert explicit dative bonds to haptic bond") {
   pathName += "/Code/GraphMol/MolStandardize/test_data/";
   std::vector<std::string> test_data{"ferrocene.mol", "MOL_00002.mol",
                                      "MOL_00010.mol"};
+  // MOL_00010.mol only has 1 dummy, so duplicating the test to fit in.
+  std::vector<std::tuple<int, int, float, float, float, float>> exp_res{
+      {11, 12, -36.5, 13.5, -36.4, 8.6},
+      {43, 44, -36.5, 13.5, -36.4, 8.6},
+      {82, 82, -1.0, -0.7, -1.0, -0.7}};
   {
     // doing in place
-    for (const auto &td : test_data) {
-      std::unique_ptr<RWMol> mol(MolFileToMol(pathName + td));
+    for (size_t i = 0; i < 3; ++i) {
+      std::unique_ptr<RWMol> mol(MolFileToMol(pathName + test_data[i]));
       REQUIRE(mol);
       auto initSmi = MolToSmiles(*mol);
       MolOps::hapticBondsToDative(*mol);
       MolOps::dativeBondsToHaptic(*mol);
       CHECK(initSmi == MolToSmiles(*mol));
-      std::cout << MolToMolBlock(*mol) << std::endl;
-      // Check the dummy atoms are in the right place.  They should
+      // Check the dummy atoms are in the right place for.  They should
       // be atoms 11 and 12.
-      auto dummy1pos = mol->getConformer().getAtomPos(11);
-      REQUIRE_THAT(dummy1pos.x, Catch::WithinAbs(-36.5, 0.1));
-      REQUIRE_THAT(dummy1pos.y, Catch::WithinAbs(13.5, 0.1));
-      auto dummy2pos = mol->getConformer().getAtomPos(12);
-      REQUIRE_THAT(dummy2pos.x, Catch::WithinAbs(-36.4, 0.1));
-      REQUIRE_THAT(dummy2pos.y, Catch::WithinAbs(8.6, 0.1));
+      auto [d1, d2, d1x, d1y, d2x, d2y] = exp_res[i];
+      auto dummy1pos = mol->getConformer().getAtomPos(d1);
+      REQUIRE_THAT(dummy1pos.x, Catch::WithinAbs(d1x, 0.1));
+      REQUIRE_THAT(dummy1pos.y, Catch::WithinAbs(d1y, 0.1));
+      auto dummy2pos = mol->getConformer().getAtomPos(d2);
+      REQUIRE_THAT(dummy2pos.x, Catch::WithinAbs(d2x, 0.1));
+      REQUIRE_THAT(dummy2pos.y, Catch::WithinAbs(d2y, 0.1));
     }
   }
   {

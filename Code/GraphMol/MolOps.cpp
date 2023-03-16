@@ -1004,7 +1004,7 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
     oss << ha << " ";
   }
   std::string endpts = "(" + oss.str();
-  if (endpts[endpts.length() - 1] == ' ') {
+  if (endpts.back() == ' ') {
     endpts = endpts.substr(0, endpts.length() - 1);
   }
   endpts += ")";
