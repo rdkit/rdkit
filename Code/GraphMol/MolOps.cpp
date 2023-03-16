@@ -980,10 +980,10 @@ std::vector<std::vector<unsigned int>> contiguousAtoms(
 // atoms passed in, with a dative bond from it to the metal atom.
 void addHapticBond(RWMol &mol, unsigned int metalIdx,
                    std::vector<unsigned int> hapticAtoms) {
-  // This rigmarole is required to get a * in the V3000 file as the symbol
-  // for the atom.
+  // So there is a * in the V3000 file as the symbol for the atom.
   auto dummyAt = new QueryAtom(0);
   dummyAt->setQuery(makeAtomNullQuery());
+
   unsigned int dummyIdx = mol.addAtom(dummyAt);
   for (auto i = 0; i < mol.getNumConformers(); ++i) {
     auto &conf = mol.getConformer(i);
