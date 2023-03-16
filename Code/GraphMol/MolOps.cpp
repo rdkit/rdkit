@@ -985,17 +985,24 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   auto dummyAt = new QueryAtom(0);
   dummyAt->setQuery(makeAtomNullQuery());
   unsigned int dummyIdx = mol.addAtom(dummyAt);
-  RDGeom::Point3D dummyPos;
-  std::ostringstream oss;
-  for (auto ha : hapticAtoms) {
-    auto haPos = mol.getConformer().getAtomPos(ha);
-    dummyPos += haPos;
-    oss << ha << " ";
+  for (auto i = 0; i < mol.getNumConformers(); ++i) {
+    auto &conf = mol.getConformer(i);
+    RDGeom::Point3D dummyPos;
+    for (auto ha : hapticAtoms) {
+      auto haPos = conf.getAtomPos(ha);
+      dummyPos += haPos;
+    }
+    dummyPos /= hapticAtoms.size();
+    conf.setAtomPos(dummyIdx, dummyPos);
   }
-  dummyPos /= hapticAtoms.size();
-  mol.getConformer().setAtomPos(dummyIdx, dummyPos);
   unsigned int numbonds = mol.addBond(dummyIdx, metalIdx, Bond::DATIVE);
   auto bond = mol.getBondWithIdx(numbonds - 1);
+
+  // Get the atom numbers for the end points.
+  std::ostringstream oss;
+  for (auto ha : hapticAtoms) {
+    oss << ha << " ";
+  }
   std::string endpts = "(" + oss.str();
   if (endpts[endpts.length() - 1] == ' ') {
     endpts = endpts.substr(0, endpts.length() - 1);

@@ -3141,6 +3141,15 @@ TEST_CASE("convert explicit dative bonds to haptic bond") {
       MolOps::hapticBondsToDative(*mol);
       MolOps::dativeBondsToHaptic(*mol);
       CHECK(initSmi == MolToSmiles(*mol));
+      std::cout << MolToMolBlock(*mol) << std::endl;
+      // Check the dummy atoms are in the right place.  They should
+      // be atoms 11 and 12.
+      auto dummy1pos = mol->getConformer().getAtomPos(11);
+      REQUIRE_THAT(dummy1pos.x, Catch::WithinAbs(-36.5, 0.1));
+      REQUIRE_THAT(dummy1pos.y, Catch::WithinAbs(13.5, 0.1));
+      auto dummy2pos = mol->getConformer().getAtomPos(12);
+      REQUIRE_THAT(dummy2pos.x, Catch::WithinAbs(-36.4, 0.1));
+      REQUIRE_THAT(dummy2pos.y, Catch::WithinAbs(8.6, 0.1));
     }
   }
   {
