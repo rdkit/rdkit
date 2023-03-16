@@ -992,12 +992,10 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   std::ostringstream oss;
   for (auto ha : hapticAtoms) {
     auto haPos = mol.getConformer().getAtomPos(ha);
-    dummyPos.x += haPos.x;
-    dummyPos.y += haPos.y;
+    dummyPos += haPos;
     oss << ha << " ";
   }
-  dummyPos.x /= hapticAtoms.size();
-  dummyPos.y /= hapticAtoms.size();
+  dummyPos /= hapticAtoms.size();
   mol.getConformer().setAtomPos(dummyIdx, dummyPos);
   unsigned int numbonds = mol.addBond(dummyIdx, metalIdx, Bond::DATIVE);
   auto bond = mol.getBondWithIdx(numbonds - 1);
