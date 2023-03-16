@@ -160,7 +160,7 @@ void testMetalDisconnector() {
     TEST_ASSERT(MolToSmiles(*m) == "O=C([O-])CCc1ccccc1[Mg]Br.[Na+]");
   }
 
-  // test input own metal_non_, metal_nof_
+  // test input own dp_metal_non, dp_metal_nof
   // missing out Na
   {
     MolStandardize::MetalDisconnector md2;

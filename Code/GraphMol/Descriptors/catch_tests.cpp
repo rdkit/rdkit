@@ -307,9 +307,9 @@ TEST_CASE("Oxidation numbers") {
   SECTION("Syngenta tests") {
     // These are from
     // https://github.com/syngenta/linchemin/blob/main/tests/cheminfo/test_functions.py#L385
-    // and thus subject to the license at
-    ////
-    /// https://github.com/syngenta/linchemin/blob/f44fda38e856eaa876483c94284ee6788d2c27f4/LICENSE
+    // and thus subject to the MIT license at
+    //
+    // https://github.com/syngenta/linchemin/blob/f44fda38e856eaa876483c94284ee6788d2c27f4/LICENSE
     std::vector<std::tuple<std::string, std::string, std::map<int, int>>>
         test_set{
             {"A-001",
