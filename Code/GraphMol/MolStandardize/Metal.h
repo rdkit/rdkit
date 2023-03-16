@@ -32,16 +32,13 @@ namespace MolStandardize {
 */
 
 struct RDKIT_MOLSTANDARDIZE_EXPORT MetalDisconnectorOptions {
-  bool splitGrignards =
-      false;  // Whether to split Grignard-type complexes. Default false.
-  bool splitAromaticC =
-      false;  // Whether to split metal-aromatic C bonds.  Default false.
-  bool adjustCharges =
-      true;  // Whether to adjust charges on ligand atoms.  Default true.
+  bool splitGrignards = false;  // Whether to split Grignard-type complexes.
+  bool splitAromaticC = false;  // Whether to split metal-aromatic C bonds.
+  bool adjustCharges = true;    // Whether to adjust charges on ligand atoms.
   bool removeHapticDummies =
       false;  // Whether to remove the dummy atoms representing haptic bonds.
               // Such dummies are bonded to the metal with a bond
-              // that has the _MolFileBondEndPts prop set.  Default false.
+              // that has the _MolFileBondEndPts prop set.
 };
 
 class RDKIT_MOLSTANDARDIZE_EXPORT MetalDisconnector {
@@ -51,8 +48,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MetalDisconnector {
   MetalDisconnector(const MetalDisconnector &other);
   ~MetalDisconnector();
 
-  ROMol *getMetalNof();  // {return metal_nof_;}
-  ROMol *getMetalNon();  // {return metal_non_;}
+  ROMol *getMetalNof();  // {return dp_metal_nof;}
+  ROMol *getMetalNon();  // {return dp_metal_non;}
   void setMetalNof(const ROMol &mol);
   void setMetalNon(const ROMol &mol);
 
@@ -78,11 +75,11 @@ accordingly.
     std::vector<int> boundMetalIndices;
   };
   int chargeAdjustment(const Atom *a, int order);
-  ROMOL_SPTR metal_nof_;
-  ROMOL_SPTR metal_non_;
-  ROMOL_SPTR metalDummy_;
+  ROMOL_SPTR dp_metal_nof;
+  ROMOL_SPTR dp_metal_non;
+  ROMOL_SPTR dp_metalDummy;
 
-  const MetalDisconnectorOptions options_;
+  const MetalDisconnectorOptions d_options;
 
   void adjust_charges(RDKit::RWMol &mol, std::map<int, NonMetal> &nonMetals,
                       std::map<int, int> &metalChargeExcess);
