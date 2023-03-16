@@ -97,6 +97,12 @@ class TestCase(unittest.TestCase):
     opts.splitAromaticC = True
     opts.adjustCharges = False
     opts.removeHapticDummies = True
+    def_opts = rdMolStandardize.MetalDisconnectorOptions()
+    self.assertNotEqual(def_opts.splitGrignards, opts.splitGrignards)
+    self.assertNotEqual(def_opts.splitAromaticC, opts.splitAromaticC)
+    self.assertNotEqual(def_opts.adjustCharges, opts.adjustCharges)
+    self.assertNotEqual(def_opts.removeHapticDummies, opts.splitRemoveHapticDummies)
+    
     md = rdMolStandardize.MetalDisconnector(opts)
 
     grigfile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
