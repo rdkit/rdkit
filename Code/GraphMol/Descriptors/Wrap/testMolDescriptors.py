@@ -719,8 +719,8 @@ class TestCase(unittest.TestCase):
     # sure the wrappers are working.
     m = Chem.MolFromSmiles("CO")
     rdMD.CalcOxidationNumbers(m)
-    self.assertEqual(m.GetAtomWithIdx(0).GetProp('OxidationNumber'), '-2')
-    self.assertEqual(m.GetAtomWithIdx(1).GetProp('OxidationNumber'), '-2')
+    self.assertEqual(m.GetAtomWithIdx(0).GetIntProp('OxidationNumber'), -2)
+    self.assertEqual(m.GetAtomWithIdx(1).GetIntProp('OxidationNumber'), -2)
 
     rdbase = environ["RDBASE"]
     ffile = Path(rdbase) / 'Code' / 'GraphMol' / 'MolStandardize' / 'test_data' / 'ferrocene.mol'
