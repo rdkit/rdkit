@@ -18,6 +18,7 @@
 
 #include <string>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolStandardize/Metal.h>
 
 namespace RDKit {
 class RWMol;
@@ -178,9 +179,13 @@ RDKIT_MOLSTANDARDIZE_EXPORT std::string standardizeSmiles(
 //! indices of the atoms involved in the haptic bond) then the dummy atom
 //! is removed also.
 //! Do the disconnection in place.
-RDKIT_MOLSTANDARDIZE_EXPORT void disconnectOrganometallics(RWMol &mol);
+//! The options are splitGrignards, splitAromaticC, adjustCharges and
+//! removeHapticDummies.  Roll on C++20 and designated initializers!
+RDKIT_MOLSTANDARDIZE_EXPORT void disconnectOrganometallics(
+    RWMol &mol, MetalDisconnectorOptions mdo = {true, true, false, true});
 //! As above, but returns new disconnected molecule.
-RDKIT_MOLSTANDARDIZE_EXPORT ROMol *disconnectOrganometallics(const ROMol &mol);
+RDKIT_MOLSTANDARDIZE_EXPORT ROMol *disconnectOrganometallics(
+    const ROMol &mol, MetalDisconnectorOptions mdo = {true, true, false, true});
 
 //! TODO
 RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::string> enumerateTautomerSmiles(

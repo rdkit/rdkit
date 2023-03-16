@@ -285,23 +285,14 @@ std::vector<std::string> enumerateTautomerSmiles(
   return res.smiles();
 }
 
-void disconnectOrganometallics(RWMol &mol) {
-  RDKit::MolStandardize::MetalDisconnectorOptions mdOptions;
-  mdOptions.splitGrignards = true;
-  mdOptions.splitAromaticC = true;
-  mdOptions.adjustCharges = false;
-  mdOptions.removeHapticDummies = true;
-  RDKit::MolStandardize::MetalDisconnector md(mdOptions);
+void disconnectOrganometallics(RWMol &mol, MetalDisconnectorOptions mdo) {
+  RDKit::MolStandardize::MetalDisconnector md(mdo);
   md.disconnect(mol);
 }
 
-ROMol *disconnectOrganometallics(const ROMol &mol) {
-  RDKit::MolStandardize::MetalDisconnectorOptions mdOptions;
-  mdOptions.splitGrignards = true;
-  mdOptions.splitAromaticC = true;
-  mdOptions.adjustCharges = false;
-  mdOptions.removeHapticDummies = true;
-  RDKit::MolStandardize::MetalDisconnector md(mdOptions);
+ROMol *disconnectOrganometallics(const ROMol &mol,
+                                 MetalDisconnectorOptions mdo) {
+  RDKit::MolStandardize::MetalDisconnector md(mdo);
   return md.disconnect(mol);
 }
 
