@@ -1662,35 +1662,36 @@ to the terminal dummy atoms.\n\
                 docString.c_str());
 
     docString =
-        R"DOC(One way of showing haptic bonds (such as cyclopentadiene to"
-        " iron in ferrocene) is to use a dummy atom with a dative bond to the"
-        " iron atom with the bond labelled with the atoms involved in the"
-        " organic end of the bond.  Another way is to have explicit dative"
-        " bonds from the atoms of the haptic group to the metal atom.  This"
-        " function converts the former representation to the latter."
-        ""
-        "ARGUMENTS:"
-        ""
-        "  - mol: the molecule to use"
-        ""
-        "RETURNS:"
-        "  a modified copy of the molecule)DOC";
+        R"DOC(One way of showing haptic bonds (such as cyclopentadiene to
+iron in ferrocene) is to use a dummy atom with a dative bond to the
+iron atom with the bond labelled with the atoms involved in the
+organic end of the bond.  Another way is to have explicit dative
+bonds from the atoms of the haptic group to the metal atom.  This
+function converts the former representation to the latter.
+
+ARGUMENTS:
+
+  - mol: the molecule to use
+
+RETURNS:
+  a modified copy of the molecule)DOC";
     python::def("HapticBondsToDative", hapticBondsToDativeHelper,
                 (python::arg("mol")), docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
     docString =
-        R"DOC(Does the reverse of hapticBondsToDative.  If there are multiple"
-        " contiguous atoms attached by dative bonds to an atom (probably a metal"
-        " atom), the dative bonds will be replaced by a dummy atom in their"
-        " centre attached to the (metal) atom by a dative bond, which is"
-        " labelled with ENDPTS of the atoms that had the original dative bonds."
-        ""
-        "ARGUMENTS:"
-        ""
-        "  - mol: the molecule to use"
-        ""
-        "RETURNS: a modified copy of the molecule)DOC";
+        R"DOC(Does the reverse of hapticBondsToDative.  If there are multiple
+contiguous atoms attached by dative bonds to an atom (probably a metal
+atom), the dative bonds will be replaced by a dummy atom in their
+centre attached to the (metal) atom by a dative bond, which is
+labelled with ENDPTS of the atoms that had the original dative bonds.
+
+ARGUMENTS:
+
+  - mol: the molecule to use
+
+RETURNS:
+  a modified copy of the molecule)DOC";
     python::def("DativeBondsToHaptic", dativeBondsToHapticHelper,
                 (python::arg("mol")), docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
