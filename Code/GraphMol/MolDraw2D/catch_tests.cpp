@@ -288,7 +288,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github6160_1.svg", 3669327545U},
     {"test_github6160_2.svg", 3704672111U},
     {"test_github6160_3.svg", 2431440968U},
-    {"test_github6170.svg", 865612473U}};
+    {"test_github6170.svg", 865612473U},
+    {"test_getMolSize.svg", 3574937936U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -7279,7 +7280,7 @@ TEST_CASE("Bad double bond - Github 6160") {
   std::vector<std::string> smiles{"c1ccccc1NC=NCCS(=O)(=NC)N",
                                   "c1ccccc1NC=NCCS(=O)(=NCC(Cl)(F)C)N",
                                   "c1ccccc1NC=NCCS(=O)(=CCC(Cl)(F)C)N"};
-  for (auto i = 0; i < smiles.size(); ++i) {
+  for (auto i = 0u; i < smiles.size(); ++i) {
     std::unique_ptr<ROMol> m(SmilesToMol(smiles[i]));
     m->setProp<std::string>("_Name", "mol" + std::to_string(i + 1));
     REQUIRE(m);
@@ -7344,7 +7345,8 @@ TEST_CASE("No crossing for oddly drawn double bond - Github 6170") {
 M  END
   )CTAB"_ctab;
 
-  auto doBondsIntersect = [](const std::string &text, const std::regex &bond) -> void {
+  auto doBondsIntersect = [](const std::string &text,
+                             const std::regex &bond) -> void {
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), bond),
                       std::sregex_iterator()));
@@ -7357,8 +7359,8 @@ M  END
       points.push_back(Point2D(stod(match[1]), stod(match[2])));
       points.push_back(Point2D(stod(match[3]), stod(match[4])));
     }
-    REQUIRE(MolDraw2D_detail::doLinesIntersect(
-        points[0], points[1], points[2], points[3], nullptr));
+    REQUIRE(MolDraw2D_detail::doLinesIntersect(points[0], points[1], points[2],
+                                               points[3], nullptr));
   };
 
   REQUIRE(m);
@@ -7383,6 +7385,55 @@ M  END
         "'bond-3 atom-1 atom-4' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
         " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
     doBondsIntersect(text, bond3);
+    check_file_hash(nameBase + ".svg");
+  }
+}
+
+TEST_CASE("getMolSize()") {
+  std::string nameBase = "test_getMolSize";
+  auto mol = "Oc1ccc(C(=O)O)cc1"_smiles;
+  REQUIRE(mol);
+  SECTION("basics") {
+    MolDraw2DSVG drawer(-1, -1);
+    drawer.drawMolecule(*mol);
+    auto dims = std::make_pair(drawer.width(), drawer.height());
+    CHECK(dims == drawer.getMolSize(*mol));
+  }
+  SECTION("calculate size pre-drawing") {
+    MolDraw2DSVG drawer(-1, -1);
+    auto sz = drawer.getMolSize(*mol);
+    drawer.drawMolecule(*mol);
+    auto dims = std::make_pair(drawer.width(), drawer.height());
+    CHECK(dims == sz);
+    CHECK(dims == drawer.getMolSize(*mol));
+  }
+
+  SECTION("drawing with it") {
+    MolDraw2DSVG drawer(1000, 1000, -1, -1, true);
+    drawer.setFlexiMode(true);
+    drawer.clearDrawing();
+    drawer.drawOptions().clearBackground = false;
+    auto dims = drawer.getMolSize(*mol, "m1");
+    drawer.setOffset(500 - dims.first / 2, 500 - dims.second / 2);
+    drawer.drawMolecule(*mol, "m1");
+
+    auto dims2 = drawer.getMolSize(*mol, "m2");
+    CHECK(dims == dims2);
+    drawer.setOffset(500 - dims2.first / 2 + 100, 300 + dims2.second);
+    drawer.drawMolecule(*mol, "m2");
+
+    drawer.setOffset(500 - dims2.first / 2 - 200, 700 + dims2.second);
+    drawer.drawMolecule(*mol, "m3");
+
+    drawer.setOffset(500 - dims2.first / 2 - 400, 500 + dims2.second / 2);
+    drawer.drawMolecule(*mol, "m4");
+
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + ".svg");
+    outs << text;
+    outs.flush();
+    outs.close();
     check_file_hash(nameBase + ".svg");
   }
 }

@@ -2911,7 +2911,7 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
   // opposite at1 to at2.
   auto nonColinearNbor = [&](Atom *at1, Atom *at2) -> const Atom * {
     const Atom *thirdAtom = nullptr;
-    for (auto i = 1; i < at1->getDegree(); ++i) {
+    for (auto i = 1u; i < at1->getDegree(); ++i) {
       thirdAtom = otherNeighbor(at1, at2, i, *drawMol_);
       if (!areBondsParallel(atCds_[at1->getIdx()], atCds_[at2->getIdx()],
                             atCds_[at1->getIdx()],
