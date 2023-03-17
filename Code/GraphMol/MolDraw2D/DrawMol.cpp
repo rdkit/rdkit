@@ -63,8 +63,8 @@ DrawMol::DrawMol(
       yMax_(std::numeric_limits<double>::lowest() / 2.0),
       xRange_(std::numeric_limits<double>::max()),
       yRange_(std::numeric_limits<double>::max()),
-      flexiCanvasX_(width_ < 0.0),
-      flexiCanvasY_(height_ < 0.0) {
+      flexiCanvasX_(width < 0.0),
+      flexiCanvasY_(height < 0.0) {
   if (highlight_atoms) {
     highlightAtoms_ = *highlight_atoms;
   }
