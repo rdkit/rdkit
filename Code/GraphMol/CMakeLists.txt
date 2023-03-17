@@ -56,8 +56,8 @@ rdkit_headers(Atom.h
               MolBundle.h
               DEST GraphMol)
 
-add_subdirectory(Depictor)
 add_subdirectory(SmilesParse)
+add_subdirectory(Depictor)
 add_subdirectory(FileParsers)
 add_subdirectory(Substruct)
 add_subdirectory(GenericGroups)
