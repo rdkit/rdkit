@@ -1662,7 +1662,7 @@ to the terminal dummy atoms.\n\
                 docString.c_str());
 
     docString =
-        "One way of showing haptic bonds (such as cyclopentadiene to"
+        R"DOC(One way of showing haptic bonds (such as cyclopentadiene to"
         " iron in ferrocene) is to use a dummy atom with a dative bond to the"
         " iron atom with the bond labelled with the atoms involved in the"
         " organic end of the bond.  Another way is to have explicit dative"
@@ -1674,13 +1674,13 @@ to the terminal dummy atoms.\n\
         "  - mol: the molecule to use"
         ""
         "RETURNS:"
-        "  a modified copy of the molecule";
+        "  a modified copy of the molecule)DOC";
     python::def("HapticBondsToDative", hapticBondsToDativeHelper,
                 (python::arg("mol")), docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
     docString =
-        "Does the reverse of hapticBondsToDative.  If there are multiple"
+        R"DOC(Does the reverse of hapticBondsToDative.  If there are multiple"
         " contiguous atoms attached by dative bonds to an atom (probably a metal"
         " atom), the dative bonds will be replaced by a dummy atom in their"
         " centre attached to the (metal) atom by a dative bond, which is"
@@ -1690,8 +1690,7 @@ to the terminal dummy atoms.\n\
         ""
         "  - mol: the molecule to use"
         ""
-        "RETURNS: a modified copy of the molecule"
-        "";
+        "RETURNS: a modified copy of the molecule)DOC";
     python::def("DativeBondsToHaptic", dativeBondsToHapticHelper,
                 (python::arg("mol")), docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());

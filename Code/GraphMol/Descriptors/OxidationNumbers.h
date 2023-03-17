@@ -17,16 +17,9 @@
 
 #include <RDGeneral/export.h>
 
-/*!
-  Calculates a molecule's exact molecular weight
+#ifndef RD_OXIDATION_NUMBERS_MAR2023
+#define RD_OXIDATION_NUMBERS_MAR2023
 
-\param mol        the molecule of interest
-  \param onlyHeavy  (optional) if this is true (the default is false),
-    only heavy atoms will be included in the MW calculation
-
-*/
-
-#ifndef __RD_OXIDATION_NUMBERS__
 namespace RDKit {
 class Atom;
 class ROMol;
