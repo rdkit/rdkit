@@ -232,8 +232,8 @@ void DrawMolMCH::fixHighlightJoinProblems(
     for (auto &bondHL : bondHighlights) {
       if (atomHL->atom1_ == bondHL->atom1_ ||
           atomHL->atom1_ == bondHL->atom2_) {
-        // A filled bond highlight is a polyline, with 4 points, so 2 is
-        // opposite 0.  An unfilled bond highlight is a single line, with
+        // A multicoloured bond highlight is a polyline, with 4 points, so 2 is
+        // opposite 0.  Normally a bond highlight is a single line, with
         // only 2 points.
         int p2 = bondHL->points_.size() == 2 ? 1 : 2;
         bool ins = doesLineIntersectArc(
