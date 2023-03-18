@@ -288,7 +288,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github6160_1.svg", 3669327545U},
     {"test_github6160_2.svg", 3704672111U},
     {"test_github6160_3.svg", 2431440968U},
-    {"test_github6170.svg", 865612473U}};
+    {"test_github6170.svg", 865612473U},
+    {"test_github6200_1.svg", 1827224658U},
+    {"test_github6200_2.svg", 661919921U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -7344,7 +7346,8 @@ TEST_CASE("No crossing for oddly drawn double bond - Github 6170") {
 M  END
   )CTAB"_ctab;
 
-  auto doBondsIntersect = [](const std::string &text, const std::regex &bond) -> void {
+  auto doBondsIntersect = [](const std::string &text,
+                             const std::regex &bond) -> void {
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), bond),
                       std::sregex_iterator()));
@@ -7357,8 +7360,8 @@ M  END
       points.push_back(Point2D(stod(match[1]), stod(match[2])));
       points.push_back(Point2D(stod(match[3]), stod(match[4])));
     }
-    REQUIRE(MolDraw2D_detail::doLinesIntersect(
-        points[0], points[1], points[2], points[3], nullptr));
+    REQUIRE(MolDraw2D_detail::doLinesIntersect(points[0], points[1], points[2],
+                                               points[3], nullptr));
   };
 
   REQUIRE(m);
@@ -7384,5 +7387,131 @@ M  END
         " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
     doBondsIntersect(text, bond3);
     check_file_hash(nameBase + ".svg");
+  }
+}
+
+TEST_CASE(
+    "Filled circles in multi-coloured highlights with very large circles - Github 6200") {
+  std::string nameBase = "test_github6200";
+
+  auto testArcs = [](const std::string &text, const std::regex &atomLine,
+                     int numArcs, double arcLength) -> void {
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), atomLine),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == numArcs);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), atomLine);
+    auto match_end = std::sregex_iterator();
+    // Check that the lengths of the lines in the arc are the correct size.
+    for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+      std::smatch match = *i;
+      auto p1 = Point2D(stod(match[1]), stod(match[2]));
+      auto p2 = Point2D(stod(match[3]), stod(match[4]));
+      auto p3 = Point2D(stod(match[5]), stod(match[6]));
+      REQUIRE_THAT((p1 - p2).length(),
+                   Catch::Matchers::WithinAbs(arcLength, 0.1));
+      REQUIRE_THAT((p2 - p3).length(),
+                   Catch::Matchers::WithinAbs(arcLength, 0.1));
+    }
+  };
+  {
+    auto m = "N#CC(C#N)=C1C(=O)c2cccc3cccc1c23"_smiles;
+    REQUIRE(m);
+
+    std::vector<DrawColour> colours = {
+        DrawColour(0.8, 0.0, 0.8), DrawColour(0.8, 0.8, 0.0),
+        DrawColour(0.0, 0.8, 0.8), DrawColour(0.0, 0.0, 0.8)};
+
+    auto rings = m->getRingInfo();
+    auto &atomRings = rings->atomRings();
+    std::map<int, std::vector<DrawColour>> atomCols;
+    std::map<int, double> atomRads;
+    for (auto i = 0; i < atomRings.size(); ++i) {
+      for (auto j = 0; j < atomRings[i].size(); ++j) {
+        auto ex = atomCols.find(atomRings[i][j]);
+        if (ex == atomCols.end()) {
+          std::vector<DrawColour> cvec(1, colours[i]);
+          atomCols.insert(std::make_pair(atomRings[i][j], cvec));
+        } else {
+          if (ex->second.end() ==
+              find(ex->second.begin(), ex->second.end(), colours[i])) {
+            ex->second.push_back(colours[i]);
+          }
+        }
+        atomRads[atomRings[i][j]] = 0.35;
+      }
+    }
+
+    auto &bondRings = rings->bondRings();
+    std::map<int, int> bondMults;
+    std::map<int, std::vector<DrawColour>> bondCols;
+    for (auto i = 0; i < bondRings.size(); ++i) {
+      for (auto j = 0; j < bondRings[i].size(); ++j) {
+        auto ex = bondCols.find(bondRings[i][j]);
+        if (ex == bondCols.end()) {
+          std::vector<DrawColour> cvec(1, colours[i]);
+          bondCols.insert(std::make_pair(bondRings[i][j], cvec));
+        } else {
+          if (ex->second.end() ==
+              find(ex->second.begin(), ex->second.end(), colours[i])) {
+            ex->second.push_back(colours[i]);
+          }
+        }
+      }
+    }
+    {
+      MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().fillHighlights = true;
+      drawer.drawMoleculeWithHighlights(*m, "Test 1", atomCols, bondCols,
+                                        atomRads, bondMults);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::string svgName = nameBase + "_1.svg";
+      std::ofstream outs(svgName);
+      outs << text;
+      outs.flush();
+      outs.close();
+      std::regex atom17(
+          "class='atom-17' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+          " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+      // there are 3 arcs on atom-17, for a 3 colour highlight.
+      testArcs(text, atom17, 3, 0.9);
+    }
+    check_file_hash(nameBase + "_1.svg");
+  }
+
+  {
+    // Check that #6194 is the same issue and also fixed.
+    auto m = "CCC"_smiles;
+    REQUIRE(m);
+
+    std::vector<DrawColour> colours = {DrawColour(0.8, 0.0, 0.8),
+                                       DrawColour(0.8, 0.8, 0.0)};
+    std::map<int, std::vector<DrawColour>> atomCols;
+    atomCols.insert(std::make_pair(0, std::vector<DrawColour>{colours[0]}));
+    atomCols.insert(std::make_pair(1, std::vector<DrawColour>{colours[0]}));
+    atomCols.insert(
+        std::make_pair(2, std::vector<DrawColour>{colours[0], colours[1]}));
+    std::map<int, double> atomRads;
+    std::map<int, int> bondMults;
+    std::map<int, std::vector<DrawColour>> bondCols;
+
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().fillHighlights = true;
+    drawer.drawMoleculeWithHighlights(*m, "Test 1", atomCols, bondCols,
+                                      atomRads, bondMults);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::string svgName = nameBase + "_2.svg";
+    std::ofstream outs(svgName);
+    outs << text;
+    outs.flush();
+    outs.close();
+    std::regex atom2(
+        "class='atom-2' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    // there are 2 arcs on atom-2, for a 2 colour highlight.
+    testArcs(text, atom2, 2, 2.15);
+    check_file_hash(nameBase + "_2.svg");
   }
 }
