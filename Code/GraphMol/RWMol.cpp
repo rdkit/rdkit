@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 
+#include <boost/tokenizer.hpp>
+
 // our stuff
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -281,12 +283,54 @@ void RWMol::removeAtom(Atom *atom) {
   }
   // now deal with bonds:
   //   their end indices may need to be decremented and their
-  //   indices will need to be handled
+  //   indices will need to be handled and if they have an
+  //   ENDPTS prop that includes idx, it will need updating.
   unsigned int nBonds = 0;
   EDGE_ITER beg, end;
   boost::tie(beg, end) = getEdges();
+  std::string sprop;
   while (beg != end) {
     Bond *bond = d_graph[*beg++];
+    if (bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                               sprop)) {
+      // This would ideally use ParseV3000Array but I'm buggered if I can get
+      // the linker to find it.
+      //      std::vector<unsigned int> oats =
+      //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(sprop);
+      if ('(' == sprop.front() && ')' == sprop.back()) {
+        sprop = sprop.substr(1, sprop.length() - 2);
+
+        // This is doing what ParseV3000Array would do.
+        boost::char_separator<char> sep(" ");
+        boost::tokenizer<boost::char_separator<char>> tokens(sprop, sep);
+        unsigned int num_ats = std::stod(*tokens.begin());
+        std::vector<unsigned int> oats;
+        auto beg = tokens.begin();
+        ++beg;
+        std::transform(beg, tokens.end(), std::back_inserter(oats),
+                       [](const std::string &a) { return std::stod(a); });
+
+        auto idx_pos = std::find(oats.begin(), oats.end(), idx + 1);
+        if (idx_pos != oats.end()) {
+          oats.erase(idx_pos);
+          --num_ats;
+        }
+        if (!num_ats) {
+          bond->clearProp(RDKit::common_properties::_MolFileBondEndPts);
+          bond->clearProp(common_properties::_MolFileBondAttach);
+        } else {
+          sprop = "(" + std::to_string(num_ats) + " ";
+          for (auto &i : oats) {
+            if (i > idx + 1) {
+              --i;
+            }
+            sprop += std::to_string(i) + " ";
+          }
+          sprop[sprop.length() - 1] = ')';
+          bond->setProp(RDKit::common_properties::_MolFileBondEndPts, sprop);
+        }
+      }
+    }
     unsigned int tmpIdx = bond->getBeginAtomIdx();
     if (tmpIdx > idx) {
       bond->setBeginAtomIdx(tmpIdx - 1);

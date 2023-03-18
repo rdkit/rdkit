@@ -18,6 +18,7 @@
 
 #include <string>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolStandardize/Metal.h>
 
 namespace RDKit {
 class RWMol;
@@ -168,6 +169,25 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *superParent(
 /// This is the equivalent of calling cleanup() on each of the molecules
 RDKIT_MOLSTANDARDIZE_EXPORT std::string standardizeSmiles(
     const std::string &smiles);
+
+//! Do a disconnection of an organometallic complex according to rules
+//! preferred by Syngenta.  All bonds to metals are broken, including
+//! covalent bonds to Group I/II metals (so including Grignards, lithium
+//! complexes etc.).  The ligands are left in the charge states they came
+//! in with.  If there are haptic bonds defined by a dummy atom bonded to
+//! a metal by a bond that has a _MolFileBondEndPts (which will contain the
+//! indices of the atoms involved in the haptic bond) then the dummy atom
+//! is removed also.
+//! Do the disconnection in place.
+//! The options are splitGrignards, splitAromaticC, adjustCharges and
+//! removeHapticDummies.  Roll on C++20 and designated initializers!
+RDKIT_MOLSTANDARDIZE_EXPORT void disconnectOrganometallics(
+    RWMol &mol, RDKit::MolStandardize::MetalDisconnectorOptions mdo = {
+                    true, true, false, true});
+//! As above, but returns new disconnected molecule.
+RDKIT_MOLSTANDARDIZE_EXPORT ROMol *disconnectOrganometallics(
+    const ROMol &mol, RDKit::MolStandardize::MetalDisconnectorOptions mdo = {
+                          true, true, false, true});
 
 //! TODO
 RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::string> enumerateTautomerSmiles(
