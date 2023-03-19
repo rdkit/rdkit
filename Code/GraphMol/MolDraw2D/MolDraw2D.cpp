@@ -1179,7 +1179,6 @@ std::pair<int, int> MolDraw2D::getMolSize(
       mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
       highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
       nullptr, highlight_radii, supportsAnnotations(), confId);
-  dm.setOffsets(x_offset_, y_offset_);
   dm.createDrawObjects();
   return std::make_pair(dm.width_, dm.height_);
 }

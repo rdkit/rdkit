@@ -331,7 +331,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! return the height of the drawing panels.
   int panelHeight() const { return panel_height_; }
 
-  //! when FlexiMode is set, molecules will always been drawn
+  //! when FlexiMode is set, molecules will always be drawn
   //! with the default values for bond length, font size, etc.
   void setFlexiMode(bool mode) {
     flexiMode_ = mode;
