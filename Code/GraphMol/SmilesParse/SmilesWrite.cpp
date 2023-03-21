@@ -652,6 +652,10 @@ std::string MolToCXSmiles(const ROMol &mol, const SmilesWriteParams &params,
                           std::uint32_t flags) {
   auto res = MolToSmiles(mol, params);
   if (!res.empty()) {
+    if (!params.doIsomericSmiles && flags & SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO) {
+      flags ^= (SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO);
+    }
+
     auto cxext = SmilesWrite::getCXExtensions(mol, flags);
     if (!cxext.empty()) {
       res += " " + cxext;
