@@ -445,7 +445,6 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
                         highlight_atom_map, highlight_bond_map, highlight_radii,
                         confId);
   };
-  double meanBondLen = 1.0;
   if (!mol.getNumConformers()) {
     // compute 2D coordinates in a standard orientation.  This needs to be
     // done on a copy because mol is const.

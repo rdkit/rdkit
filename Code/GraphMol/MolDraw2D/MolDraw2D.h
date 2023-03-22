@@ -85,7 +85,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     coordinates
 
   */
-  virtual void drawMolecule(
+  void drawMolecule(
       const ROMol &mol, const std::string &legend,
       const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,
@@ -94,20 +94,21 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   //! \overload
-  virtual void drawMolecule(
-      const ROMol &mol, const std::vector<int> *highlight_atoms = nullptr,
-      const std::map<int, DrawColour> *highlight_map = nullptr,
-      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
+  void drawMolecule(const ROMol &mol,
+                    const std::vector<int> *highlight_atoms = nullptr,
+                    const std::map<int, DrawColour> *highlight_map = nullptr,
+                    const std::map<int, double> *highlight_radii = nullptr,
+                    int confId = -1);
 
   //! \overload
-  virtual void drawMolecule(
-      const ROMol &mol, const std::string &legend,
-      const std::vector<int> *highlight_atoms = nullptr,
-      const std::map<int, DrawColour> *highlight_map = nullptr,
-      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
+  void drawMolecule(const ROMol &mol, const std::string &legend,
+                    const std::vector<int> *highlight_atoms = nullptr,
+                    const std::map<int, DrawColour> *highlight_map = nullptr,
+                    const std::map<int, double> *highlight_radii = nullptr,
+                    int confId = -1);
 
   //! \overload
-  virtual void drawMolecule(
+  void drawMolecule(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,
       const std::map<int, DrawColour> *highlight_atom_map = nullptr,
@@ -131,7 +132,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     \param confId          : (optional) conformer ID to be used for atomic
     coordinates
   */
-  virtual void drawMoleculeWithHighlights(
+  void drawMoleculeWithHighlights(
       const ROMol &mol, const std::string &legend,
       const std::map<int, std::vector<DrawColour>> &highlight_atom_map,
       const std::map<int, std::vector<DrawColour>> &highlight_bond_map,
@@ -165,7 +166,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     If the number of rows or columns ends up being <= 1, molecules will be
     being drawn in a single row/column.
   */
-  virtual void drawMolecules(
+  void drawMolecules(
       const std::vector<ROMol *> &mols,
       const std::vector<std::string> *legends = nullptr,
       const std::vector<std::vector<int>> *highlight_atoms = nullptr,
@@ -189,10 +190,19 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     \param confIds   : (optional) vector of confIds to use for rendering. These
     are numbered by reactants, then agents, then products.
   */
-  virtual void drawReaction(
+  void drawReaction(
       const ChemicalReaction &rxn, bool highlightByReactant = false,
       const std::vector<DrawColour> *highlightColorsReactants = nullptr,
       const std::vector<int> *confIds = nullptr);
+
+  //! returns the size of the box for the molecule with current drawing settings
+  std::pair<int, int> getMolSize(
+      const ROMol &mol, const std::string &legend = "",
+      const std::vector<int> *highlight_atoms = nullptr,
+      const std::vector<int> *highlight_bonds = nullptr,
+      const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   //! clears the contents of the drawing
   virtual void clearDrawing() {
@@ -313,16 +323,28 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       &atomSyms() const;
 
   //! return the width of the drawing area.
-  virtual int width() const { return width_; }
+  int width() const { return width_; }
   //! return the height of the drawing area.
-  virtual int height() const { return height_; }
+  int height() const { return height_; }
   //! return the width of the drawing panels.
-  virtual int panelWidth() const { return panel_width_; }
+  int panelWidth() const { return panel_width_; }
   //! return the height of the drawing panels.
-  virtual int panelHeight() const { return panel_height_; }
-  virtual int drawHeight() const { return panel_height_ - legend_height_; }
+  int panelHeight() const { return panel_height_; }
+
+  //! when FlexiMode is set, molecules will always be drawn
+  //! with the default values for bond length, font size, etc.
+  void setFlexiMode(bool mode) {
+    flexiMode_ = mode;
+    if (mode) {
+      panel_width_ = -1;
+      panel_height_ = -1;
+    }
+  }
+  bool flexiMode() const { return flexiMode_; }
+
+  int drawHeight() const { return panel_height_ - legend_height_; }
   // returns the width to draw a line in draw coords.
-  virtual double getDrawLineWidth() const;
+  double getDrawLineWidth() const;
 
   //! returns the drawing scale (conversion from molecular coords -> drawing
   /// coords)
@@ -358,7 +380,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual const DashPattern &dash() const { return curr_dash_; }
 
   //! sets the current line width
-  virtual void setLineWidth(double width) { drawOptions().bondLineWidth = width; }
+  virtual void setLineWidth(double width) {
+    drawOptions().bondLineWidth = width;
+  }
   //! returns the current line width
   virtual double lineWidth() const { return drawOptions().bondLineWidth; }
 
@@ -480,6 +504,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // if the user calls setScale() to explicitly force a scale on the
   // DrawMols, this is set to true.
   bool forceScale_ = false;
+  bool flexiMode_ = false;
   double scale_, fontScale_;
   int x_offset_, y_offset_;  // translation in screen coordinates
   bool fill_polys_;
