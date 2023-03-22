@@ -56,7 +56,9 @@ the PostgreSQL service.
 If you can gain sudo privileges, you can install the cartridge
 as shown below.
 ```
-$ sudo /etc/init.d/postgresql stop
+# On SysV-based Linux distributions such as WSL2 Ubuntu 20.04
+# replace with sudo service postgresql stop
+$ sudo systemctl stop postgresql
  * Stopping PostgreSQL 15 database server
 $ sudo sh /home/build/build/rdkit/Code/PgSQL/rdkit/pgsql_install.sh
 + test -n 
@@ -64,7 +66,9 @@ $ sudo sh /home/build/build/rdkit/Code/PgSQL/rdkit/pgsql_install.sh
 + cp /home/build/src/rdkit/Code/PgSQL/rdkit/rdkit.control /usr/share/postgresql/15/extension
 + cp /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--3.8--4.0.sql /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--4.0--4.0.1.sql /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--4.0--4.1.sql /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--4.0.1--4.1.sql /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--4.1--4.1.1.sql /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--4.1.1--4.2.sql /usr/share/postgresql/15/extension
 + cp /home/build/build/rdkit/Code/PgSQL/rdkit/librdkit.so /usr/lib/postgresql/15/lib/rdkit.so
-$ sudo /etc/init.d/postgresql start
+# On SysV-based Linux distributions such as WSL2 Ubuntu 20.04
+# replace with sudo service postgresql start
+$ sudo systemctl start postgresql
  * Starting PostgreSQL 15 database server
 ```
 To test the RDKit cartridge, I create a `build` user with superuser
@@ -87,12 +91,8 @@ The reason why I get the above error is that I built RDKit against
 conda libraries, and the conda `libstdc++.so.6` is newer than Ubuntu's.
 Therefore I need to make sure that PostgreSQL loads the cartridge
 using the conda libraries preferentially, when possible.
-For this, I need to adjust the PostgreSQL environment, as documented
-in its `init.d` file:
-```
-$ grep environment /etc/init.d/postgresql
-# Setting environment variables for the postmaster here does not work; please
-# set them in /etc/postgresql/<version>/<cluster>/environment instead.
+For this, I need to adjust the PostgreSQL environment in
+`/etc/postgresql/<version>/<cluster>/environment`.
 ```
 Therefore, I set `LD_LIBRARY_PATH` in `/etc/postgresql/15/main/environment`
 to include RDKit and conda libraries:
@@ -101,8 +101,9 @@ $ echo "LD_LIBRARY_PATH = '/home/build/install/rdkit_wsl64/lib:$CONDA_PREFIX/lib
 ```
 Then I restart PostgreSQL:
 ```
-$ sudo /etc/init.d/postgresql restart
-$ sudo /etc/init.d/postgresql restart
+# On SysV-based Linux distributions such as WSL2 Ubuntu 20.04
+# replace with sudo service postgresql restart
+$ sudo systemctl restart postgresql
  * Restarting PostgreSQL 15 database server
 ```
 As expected, this time the cartridge loads successfully:
