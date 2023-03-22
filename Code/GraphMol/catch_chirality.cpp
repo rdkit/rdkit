@@ -3385,7 +3385,6 @@ TEST_CASE(
   }
 }
 
-
 TEST_CASE("adding two wedges to chiral centers") {
   SECTION("basics") {
     auto mol = R"CTAB(
@@ -3488,4 +3487,29 @@ M  END
     CHECK(m->getBondWithIdx(10)->getBondDir() != Bond::BondDir::NONE);
     CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::NONE);
   }
+}
+
+TEST_CASE(
+    "RDKit Issue #6217: Atoms may get flagged with non-tetrahedral stereo even when it is not allowed",
+    "[bug][stereo][non-tetrahedral]") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+  Chirality::setUseLegacyStereoPerception(false);
+
+  AllowNontetrahedralChiralityFixture reset_non_tetrahedral_allowed;
+  Chirality::setAllowNontetrahedralChirality(false);
+
+  auto m = "CS(=O)(=O)O"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 5);
+
+  auto stereoInfo = Chirality::findPotentialStereo(*m);
+  CHECK(stereoInfo.size() == 0);
+
+  auto at = m->getAtomWithIdx(1);
+
+  auto sinfo = Chirality::detail::getStereoInfo(at);
+  CHECK(sinfo.type == Chirality::StereoType::Atom_Tetrahedral);
+
+  REQUIRE(at->getAtomicNum() == 16);
+  CHECK(!at->hasProp(common_properties::_ChiralityPossible));
 }
