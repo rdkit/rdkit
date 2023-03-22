@@ -272,7 +272,7 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2, ignoreColinearBonds
     # get the torsions
     tmp = []
     num = len(r)
-    maxdev = 180.0 * math.exp(-0.025 * (num - 14) * (num - 14))
+    maxdev = 180.0 if 14 <= num else 180.0 * math.exp(-0.025 * (num - 14) * (num - 14))
     for i in range(len(r)):
       tmp.append((r[i], r[(i + 1) % num], r[(i + 2) % num], r[(i + 3) % num]))
     tors_list_rings.append((tmp, maxdev))
