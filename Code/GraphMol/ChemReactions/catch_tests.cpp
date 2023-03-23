@@ -1413,3 +1413,49 @@ TEST_CASE("Github #6015: Reactions do not propagate query information to product
    
   }
 }
+
+TEST_CASE(
+  "Github #6195: Failed to parse reaction with reacting center status set on bond") {
+  SECTION("check parse") {
+    std::string rxnBlock = R"RXN($RXN
+ACS Document 1996
+  ChemDraw03132312282D
+
+  1  1
+$MOL
+
+
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.0000    0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  1  0  0
+   -0.0000   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0
+   -0.7145   -0.6187    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0
+    0.7145   -0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  4  0  0
+  1  2  2  0        0
+  2  3  1  0        0
+  2  4  1  0        0
+M  END
+$MOL
+
+
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+   -0.3572    0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  1  0  0
+   -0.3572   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0
+   -1.0717   -0.6187    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0
+    0.3572   -0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  4  0  0
+    1.0717   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0        0
+  2  3  1  0        0
+  2  4  1  0        0
+  4  5  1  0        4
+M  END
+)RXN";
+    std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
+    REQUIRE(rxn);
+    CHECK(rxn->getNumReactantTemplates()==1);
+    CHECK(rxn->getNumProductTemplates()==1);
+    CHECK(rxn->getNumAgentTemplates()==0);
+    CHECK(rxn->getProducts()[0]->getBondWithIdx(3)->getProp<int>("molReactStatus") == 4);
+  }
+}
