@@ -289,6 +289,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github6160_2.svg", 3704672111U},
     {"test_github6160_3.svg", 2431440968U},
     {"test_github6170.svg", 865612473U},
+    {"test_getMolSize.svg", 3574937936U},
     {"test_github6200_1.svg", 1827224658U},
     {"test_github6200_2.svg", 661919921U}};
 
@@ -7281,7 +7282,7 @@ TEST_CASE("Bad double bond - Github 6160") {
   std::vector<std::string> smiles{"c1ccccc1NC=NCCS(=O)(=NC)N",
                                   "c1ccccc1NC=NCCS(=O)(=NCC(Cl)(F)C)N",
                                   "c1ccccc1NC=NCCS(=O)(=CCC(Cl)(F)C)N"};
-  for (auto i = 0; i < smiles.size(); ++i) {
+  for (auto i = 0u; i < smiles.size(); ++i) {
     std::unique_ptr<ROMol> m(SmilesToMol(smiles[i]));
     m->setProp<std::string>("_Name", "mol" + std::to_string(i + 1));
     REQUIRE(m);
@@ -7386,6 +7387,55 @@ M  END
         "'bond-3 atom-1 atom-4' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
         " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
     doBondsIntersect(text, bond3);
+    check_file_hash(nameBase + ".svg");
+  }
+}
+
+TEST_CASE("getMolSize()") {
+  std::string nameBase = "test_getMolSize";
+  auto mol = "Oc1ccc(C(=O)O)cc1"_smiles;
+  REQUIRE(mol);
+  SECTION("basics") {
+    MolDraw2DSVG drawer(-1, -1);
+    drawer.drawMolecule(*mol);
+    auto dims = std::make_pair(drawer.width(), drawer.height());
+    CHECK(dims == drawer.getMolSize(*mol));
+  }
+  SECTION("calculate size pre-drawing") {
+    MolDraw2DSVG drawer(-1, -1);
+    auto sz = drawer.getMolSize(*mol);
+    drawer.drawMolecule(*mol);
+    auto dims = std::make_pair(drawer.width(), drawer.height());
+    CHECK(dims == sz);
+    CHECK(dims == drawer.getMolSize(*mol));
+  }
+
+  SECTION("drawing with it") {
+    MolDraw2DSVG drawer(1000, 1000, -1, -1, true);
+    drawer.setFlexiMode(true);
+    drawer.clearDrawing();
+    drawer.drawOptions().clearBackground = false;
+    auto dims = drawer.getMolSize(*mol, "m1");
+    drawer.setOffset(500 - dims.first / 2, 500 - dims.second / 2);
+    drawer.drawMolecule(*mol, "m1");
+
+    auto dims2 = drawer.getMolSize(*mol, "m2");
+    CHECK(dims == dims2);
+    drawer.setOffset(500 - dims2.first / 2 + 100, 300 + dims2.second);
+    drawer.drawMolecule(*mol, "m2");
+
+    drawer.setOffset(500 - dims2.first / 2 - 200, 700 + dims2.second);
+    drawer.drawMolecule(*mol, "m3");
+
+    drawer.setOffset(500 - dims2.first / 2 - 400, 500 + dims2.second / 2);
+    drawer.drawMolecule(*mol, "m4");
+
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + ".svg");
+    outs << text;
+    outs.flush();
+    outs.close();
     check_file_hash(nameBase + ".svg");
   }
 }

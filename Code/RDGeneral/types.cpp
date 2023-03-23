@@ -115,6 +115,7 @@ const std::string origNoImplicit = "origNoImplicit";
 const std::string ringMembership = "ringMembership";
 const std::string smilesSymbol = "smilesSymbol";
 const std::string atomLabel = "atomLabel";
+const std::string OxidationNumber = "OxidationNumber";
 const std::string internalRgroupSmiles = "internalRgroupSmiles";
 
 const std::string molSubstCount = "molSubstCount";
