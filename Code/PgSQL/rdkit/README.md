@@ -93,7 +93,7 @@ Therefore I need to make sure that PostgreSQL loads the cartridge
 using the conda libraries preferentially, when possible.
 For this, I need to adjust the PostgreSQL environment in
 `/etc/postgresql/<version>/<cluster>/environment`.
-```
+
 Therefore, I set `LD_LIBRARY_PATH` in `/etc/postgresql/15/main/environment`
 to include RDKit and conda libraries:
 ```
