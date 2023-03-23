@@ -269,8 +269,8 @@ void embedFusedSystems(const RDKit::ROMol &mol,
     bool allowRingTemplates = useRingTemplates;
     if (useRingTemplates && coordMap) {
       boost::dynamic_bitset<> coordMapAtoms(mol.getNumAtoms());
-      for (const auto& ring : frings) {
-        for (const auto& aid : ring) {
+      for (const auto &ring : frings) {
+        for (const auto &aid : ring) {
           if (coordMap->find(aid) != coordMap->end()) {
             coordMapAtoms.set(aid);
           }
@@ -420,7 +420,8 @@ void computeInitialCoords(RDKit::ROMol &mol,
   RDKit::VECT_INT_VECT arings;
 
   // first find all the rings
-  RDKit::MolOps::symmetrizeSSSR(mol, arings);
+  bool includeDativeBonds = true;
+  RDKit::MolOps::symmetrizeSSSR(mol, arings, includeDativeBonds);
 
   // do stereochemistry
   RDKit::MolOps::assignStereochemistry(mol, false);
@@ -439,7 +440,8 @@ void computeInitialCoords(RDKit::ROMol &mol,
 
   if (arings.size() > 0) {
     // first deal with the fused rings
-    DepictorLocal::embedFusedSystems(mol, arings, efrags, coordMap, useRingTemplates);
+    DepictorLocal::embedFusedSystems(mol, arings, efrags, coordMap,
+                                     useRingTemplates);
   }
 
   // do non-tetrahedral stereo
@@ -555,7 +557,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
 //
 //
 unsigned int compute2DCoords(RDKit::ROMol &mol,
-                             const Compute2DCoordParameters& params) {
+                             const Compute2DCoordParameters &params) {
   if (mol.needsUpdatePropertyCache()) {
     mol.updatePropertyCache(false);
   }
@@ -581,9 +583,9 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     // bonds in the structure or flip only bonds along the shortest
     // path between colliding atoms - don't do both
     if ((params.nSamples > 0) && (params.nFlipsPerSample > 0)) {
-      eri.randomSampleFlipsAndPermutations(params.nFlipsPerSample, params.nSamples,
-                                           params.sampleSeed, nullptr, 0.0,
-                                           params.permuteDeg4Nodes);
+      eri.randomSampleFlipsAndPermutations(
+          params.nFlipsPerSample, params.nSamples, params.sampleSeed, nullptr,
+          0.0, params.permuteDeg4Nodes);
     } else {
       eri.removeCollisionsBondFlip();
     }
