@@ -153,23 +153,15 @@ using RDKit::SmilesParse::SmartsParserParams;
 using RDKit::SmilesParse::SmilesParseException;
 using RDKit::SmilesParse::SmilesParserParams;
 
-// c++ core guidelines F.60: prefer T* over T& when "no argument" is a valid
-// option
 inline std::unique_ptr<RDKit::RWMol> SmilesToMol(
-    const std::string &smi, const SmilesParserParams *params = nullptr) {
-  SmilesParserParams defaultParams;
-  if (!params) {
-    params = &defaultParams;
-  }
-  return std::unique_ptr<RDKit::RWMol>{RDKit::v1::SmilesToMol(smi, *params)};
+    const std::string &smi,
+    const SmilesParserParams &params = SmilesParserParams()) {
+  return std::unique_ptr<RDKit::RWMol>{RDKit::v1::SmilesToMol(smi, params)};
 };
 inline std::unique_ptr<RDKit::RWMol> SmartsToMol(
-    const std::string &sma, const SmartsParserParams *params = nullptr) {
-  SmartsParserParams defaultParams;
-  if (!params) {
-    params = &defaultParams;
-  }
-  return std::unique_ptr<RDKit::RWMol>{RDKit::v1::SmartsToMol(sma, *params)};
+    const std::string &sma,
+    const SmartsParserParams &params = SmartsParserParams()) {
+  return std::unique_ptr<RDKit::RWMol>{RDKit::v1::SmartsToMol(sma, params)};
 }
 
 inline std::unique_ptr<RDKit::Atom> SmilesToAtom(const std::string &smi) {

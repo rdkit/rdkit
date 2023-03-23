@@ -34,7 +34,7 @@ TEST_CASE("v2 basics") {
   {
     SmilesParse::SmilesParserParams ps;
     ps.removeHs = false;
-    auto mol = SmilesParse::SmilesToMol("CCO[H]", &ps);
+    auto mol = SmilesParse::SmilesToMol("CCO[H]", ps);
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 4);
   }
@@ -46,7 +46,7 @@ TEST_CASE("v2 basics") {
   {
     SmilesParse::SmartsParserParams ps;
     ps.mergeHs = true;
-    auto mol = SmilesParse::SmartsToMol("[H]CC[R]", &ps);
+    auto mol = SmilesParse::SmartsToMol("[H]CC[R]", ps);
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 3);
   }
