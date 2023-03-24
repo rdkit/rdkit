@@ -36,6 +36,8 @@ ATOM_PROP_MAP_NUMBER = 'molAtomMapNumber'
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_CXFLAG = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
 ENHANCED_STEREO_GROUP_REGEX = re.compile(r'((?:a|[&o]\d+):\d+(?:,\d+)*)')
 
 ENHANCED_STEREO_GROUP_WEIGHTS = {
@@ -112,7 +114,7 @@ def GetMolHash(all_layers, hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> s
 
 
 def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[Iterable] = None,
-                 escape: Optional[str] = None) -> set(HashLayer):
+                 escape: Optional[str] = None, cxflag = DEFAULT_CXFLAG) -> set(HashLayer):
   """
     Generate layers of data about that could be used to identify a molecule
 
@@ -126,17 +128,15 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   mol = _RemoveUnnecessaryHs(original_molecule, preserve_stereogenic_hs=True)
   _StripAtomMapLabels(mol)
 
-  cxflag = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
-  ps = Chem.SmilesWriteParams()
-
   Chem.CanonicalizeEnhancedStereo(mol)
 
   formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
 
+  ps = Chem.SmilesWriteParams()
   cxsmiles = Chem.MolToCXSmiles(
     mol, ps, cxflag)
 
-  tautomer_hash = GetStereoTautomerHash(mol)
+  tautomer_hash = GetStereoTautomerHash(mol, cxflag=cxflag)
 
   sgroup_data = _CanonicalizeSGroups(mol, dataFieldNames=data_field_names)
 
@@ -171,7 +171,7 @@ def _RemoveUnnecessaryHs(rdk_mol, preserve_stereogenic_hs=False):
   return edited_mol
 
 
-def GetStereoTautomerHash(molecule):
+def GetStereoTautomerHash(molecule, cxflag=DEFAULT_CXFLAG):
   if molecule.GetNumAtoms() == 0:
     return EMPTY_MOL_TAUTOMER_HASH
 
@@ -180,10 +180,9 @@ def GetStereoTautomerHash(molecule):
   no_h_mol = _RemoveUnnecessaryHs(molecule)
   no_h_mol.UpdatePropertyCache(False)
 
-  cxflags = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
   ps = Chem.SmilesWriteParams()
   cxsmiles = Chem.MolToCXSmiles(
-    no_h_mol, ps, cxflags)
+    no_h_mol, ps, cxflag)
 
   no_h_mol= Chem.MolFromSmiles(cxsmiles)
 
