@@ -227,11 +227,12 @@ TEST_CASE("use ring system templates") {
 TEST_CASE("dative bonds and rings") {
   auto mol = "O->[Pt]1(<-O)<-NC2CCC2N->1"_smiles;
   REQUIRE(mol);
+  auto rings = mol->getRingInfo();
+  CHECK(rings->numRings() == 1);  // the dative bonds are ignored
   RDDepict::compute2DCoords(*mol);
-  std::cerr << MolToV3KMolBlock(*mol) << std::endl;
+  CHECK(rings->numRings() == 1);  // ensure the ring count hasn't changed
   auto conf = mol->getConformer();
   auto v1 = conf.getAtomPos(1) - conf.getAtomPos(3);
   auto v2 = conf.getAtomPos(1) - conf.getAtomPos(8);
   CHECK_THAT(v1.length(), Catch::Matchers::WithinAbs(v2.length(), 0.01));
-  mol->debugMol(std::cerr);
 }

@@ -572,9 +572,11 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     return cid;
   };
 #endif
+
+  RDKit::ROMol cp(mol);
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(mol, params.coordMap, efrags, params.useRingTemplates);
+  computeInitialCoords(cp, params.coordMap, efrags, params.useRingTemplates);
 
 #if 1
   // perform random sampling here to improve the density
