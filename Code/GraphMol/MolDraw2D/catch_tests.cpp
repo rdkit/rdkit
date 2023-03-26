@@ -7476,8 +7476,8 @@ TEST_CASE(
     auto &atomRings = rings->atomRings();
     std::map<int, std::vector<DrawColour>> atomCols;
     std::map<int, double> atomRads;
-    for (auto i = 0; i < atomRings.size(); ++i) {
-      for (auto j = 0; j < atomRings[i].size(); ++j) {
+    for (auto i = 0u; i < atomRings.size(); ++i) {
+      for (auto j = 0u; j < atomRings[i].size(); ++j) {
         auto ex = atomCols.find(atomRings[i][j]);
         if (ex == atomCols.end()) {
           std::vector<DrawColour> cvec(1, colours[i]);
@@ -7495,8 +7495,8 @@ TEST_CASE(
     auto &bondRings = rings->bondRings();
     std::map<int, int> bondMults;
     std::map<int, std::vector<DrawColour>> bondCols;
-    for (auto i = 0; i < bondRings.size(); ++i) {
-      for (auto j = 0; j < bondRings[i].size(); ++j) {
+    for (auto i = 0u; i < bondRings.size(); ++i) {
+      for (auto j = 0u; j < bondRings[i].size(); ++j) {
         auto ex = bondCols.find(bondRings[i][j]);
         if (ex == bondCols.end()) {
           std::vector<DrawColour> cvec(1, colours[i]);
