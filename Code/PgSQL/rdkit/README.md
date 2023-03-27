@@ -193,7 +193,7 @@ And attempt to load the cartridge in the database:
 >psql -c 'create extension rdkit' -p 6433 nci5k
 CREATE EXTENSION
 ```
-Should you see an error mesage such as
+Should you see an error message such as
 ```
 ERROR:  could not load library "m:/a3/envs/rdkit_devel/Library/lib/rdkit.dll": The specified module could not be found.
 ```
