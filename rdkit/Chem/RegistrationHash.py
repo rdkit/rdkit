@@ -180,16 +180,11 @@ def GetStereoTautomerHash(molecule, cxflag=DEFAULT_CXFLAG):
   no_h_mol = _RemoveUnnecessaryHs(molecule)
   no_h_mol.UpdatePropertyCache(False)
 
-  ps = Chem.SmilesWriteParams()
-  cxsmiles = Chem.MolToCXSmiles(
-    no_h_mol, ps, cxflag)
-
-  no_h_mol= Chem.MolFromSmiles(cxsmiles)
-
   # setting useCxSmiles param value to always include enhanced stereo info
   useCxSmiles = True
+  cx_flags_to_skip = Chem.CXSmilesFields.CX_ALL ^ cxflag
   hash_with_cxExtensions = rdMolHash.MolHash(no_h_mol, rdMolHash.HashFunction.HetAtomTautomer,
-                                             useCxSmiles)
+                                             useCxSmiles,cx_flags_to_skip)
 
   return hash_with_cxExtensions
 

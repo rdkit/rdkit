@@ -24,9 +24,9 @@ namespace {
 
 void addCXExtensions(RDKit::RWMol *mol, std::string &result,
                      unsigned additionalSkips = 0) {
+  unsigned int cxflagsToSkip = additionalSkips | RDKit::SmilesWrite::CX_COORDS;
   auto cxext = RDKit::SmilesWrite::getCXExtensions(
-      *mol, RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_COORDS ^
-                additionalSkips);
+      *mol, RDKit::SmilesWrite::CX_ALL ^ cxflagsToSkip);
   if (!cxext.empty()) {
     result += " " + cxext;
   }
@@ -363,7 +363,8 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles) {
   return result;
 }
 
-std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
+std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles,
+                         unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -405,7 +406,7 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
   }
   result += buffer;
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
 
   return result;
@@ -863,7 +864,8 @@ std::string ArthorSubOrderHash(RWMol *mol) {
 }
 }  // namespace
 
-std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
+std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles,
+                    unsigned cxFlagsToSkip) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -896,7 +898,7 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
       result = MesomerHash(mol, false, useCXSmiles);
       break;
     case HashFunction::HetAtomTautomer:
-      result = TautomerHash(mol, false, useCXSmiles);
+      result = TautomerHash(mol, false, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::HetAtomProtomer:
       result = TautomerHash(mol, true, useCXSmiles);
