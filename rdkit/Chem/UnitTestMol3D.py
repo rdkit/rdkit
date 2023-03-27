@@ -163,6 +163,12 @@ class TestCase(unittest.TestCase):
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
     self.assertEqual(len(tors_list), 1)
 
+  def testTorsionAngleLeargerThan14(self):
+    # incorrect value from more than 15-membered ring
+    mol = Chem.MolFromSmiles('C1' + 'C' * 13 + 'C1')
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
+    self.assertAlmostEqual(tors_list_rings[-1][1], 180.0, 4)
+
   def assertBondStereoRoundTrips(self, fname):
     path = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', fname)
     mol = Chem.MolFromMolFile(path)

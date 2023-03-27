@@ -275,7 +275,8 @@ StereoInfo getStereoInfo(const Atom *atom) {
         default:
           UNDER_CONSTRUCTION("unrecognized chiral flag");
       }
-    } else if (isAtomPotentialNontetrahedralCenter(atom)) {
+    } else if (getAllowNontetrahedralChirality() &&
+               isAtomPotentialNontetrahedralCenter(atom)) {
       if (stereo == Atom::CHI_UNSPECIFIED) {
         switch (atom->getTotalDegree()) {
           case 4:

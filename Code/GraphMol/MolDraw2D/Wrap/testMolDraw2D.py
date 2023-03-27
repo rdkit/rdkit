@@ -783,6 +783,18 @@ M  END''')
       drawer.FinishDrawing()
       drawer.WriteDrawingText('testACSMode_1.png')
 
+  def testMolSize(self):
+    m = Chem.MolFromSmiles("CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+]")
+    AllChem.Compute2DCoords(m)
+    rdMolDraw2D.PrepareMolForDrawing(m)
+    d2d = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+    d2d.DrawMolecule(m)
+    sz = d2d.Width(), d2d.Height()
+
+    d2d = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+    sz2 = d2d.GetMolSize(m)
+    self.assertEqual(sz, sz2)
+
 
 if __name__ == "__main__":
   unittest.main()

@@ -232,16 +232,26 @@ void DrawMolMCH::fixHighlightJoinProblems(
     for (auto &bondHL : bondHighlights) {
       if (atomHL->atom1_ == bondHL->atom1_ ||
           atomHL->atom1_ == bondHL->atom2_) {
+        // A multicoloured bond highlight is a polyline, with 4 points, so 2 is
+        // opposite 0.  Normally a bond highlight is a single line, with
+        // only 2 points.
+        int p2 = bondHL->points_.size() == 2 ? 1 : 2;
         bool ins = doesLineIntersectArc(
             atomHL->points_[0], atomHL->points_[1].x, atomHL->points_[1].y, 0.0,
-            360.0, 0.0, bondHL->points_[0], bondHL->points_[1]);
+            360.0, 0.0, bondHL->points_[0], bondHL->points_[p2]);
         if (!ins) {
           fettledAtoms.push_back(i);
           while (!ins) {
             double dist1 = (atomHL->points_[0] - bondHL->points_[0]).length();
-            double dist2 = (atomHL->points_[0] - bondHL->points_[1]).length();
+            double dist2 = (atomHL->points_[0] - bondHL->points_[p2]).length();
             double maxrad =
                 std::max(atomHL->points_[1].x, atomHL->points_[1].y);
+            // If it's a filled highlight, the bond highlight won't have been
+            // truncated at the outer radius of the circle, because there's no
+            // need.  Set the dist2 to the radius now.
+            if (dist2 < 1.0e-4) {
+              dist2 = maxrad;
+            }
             double upscaler = 1.25 * std::min(dist1, dist2) / maxrad;
             if (upscaler <= 1.0) {
               upscaler = 1.1;
@@ -249,7 +259,7 @@ void DrawMolMCH::fixHighlightJoinProblems(
             atomHL->points_[1] *= upscaler;
             ins = doesLineIntersectArc(atomHL->points_[0], atomHL->points_[1].x,
                                        atomHL->points_[1].y, 0.0, 360, 0.0,
-                                       bondHL->points_[0], bondHL->points_[1]);
+                                       bondHL->points_[0], bondHL->points_[p2]);
           }
         }
       }
