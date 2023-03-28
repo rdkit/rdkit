@@ -11,6 +11,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <deque>
 
 #include <string>
 #include <GraphMol/RDKitBase.h>
@@ -363,7 +364,7 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles) {
   return result;
 }
 
-std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
+std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -371,14 +372,115 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
   int charge = 0;
 
   boost::dynamic_bitset<> bondsToModify(mol->getNumBonds());
+  boost::dynamic_bitset<> bondsConsidered(mol->getNumBonds());
+  boost::dynamic_bitset<> atomsToModify(mol->getNumAtoms());
 
   for (auto bptr : mol->bonds()) {
-    if (bptr->getBondType() != Bond::SINGLE &&
-        (bptr->getIsConjugated() || bptr->getBeginAtom()->getAtomicNum() != 6 ||
-         bptr->getEndAtom()->getAtomicNum() != 6)) {
-      bondsToModify.set(bptr->getIdx());
+    if (bondsToModify[bptr->getIdx()]) {
+      continue;
+    }
+    boost::dynamic_bitset<> conjSystem(mol->getNumBonds());
+    boost::dynamic_bitset<> atomsInSystem(mol->getNumAtoms());
+    unsigned int activeHeteroatoms = 0;
+    unsigned int activeHeteroHs = 0;
+    unsigned int activeNonheteroHs = 0;
+    std::deque<const Bond *> bq;
+    bq.push_back(bptr);
+    while (!bq.empty()) {
+      auto bnd = bq.front();
+      bq.pop_front();
+      if (bondsConsidered[bnd->getIdx()]) {
+        continue;
+      }
+      for (const auto atm :
+           std::vector<const Atom *>{bnd->getBeginAtom(), bnd->getEndAtom()}) {
+        if (atomsInSystem[atm->getIdx()]) {
+          continue;
+        }
+        if (atm->getAtomicNum() == 6) {
+          if (atm->getTotalNumHs()) {
+            ++activeNonheteroHs;
+          }
+        } else if (atm->getAtomicNum() > 1) {
+          // FIX: be more restrictive than just "is heteroatom"?
+          ++activeHeteroatoms;
+          activeHeteroHs += atm->getTotalNumHs();
+          conjSystem.set(bnd->getIdx());
+        }
+        for (auto nbrBnd : mol->atomBonds(atm)) {
+          if (nbrBnd == bnd || bondsConsidered[nbrBnd->getIdx()]) {
+            continue;
+          }
+          if (nbrBnd->getBondType() != Bond::BondType::SINGLE ||
+              bnd->getIsAromatic()) {
+            // automatically add non-single bonds
+            bq.push_back(nbrBnd);
+          } else {
+            auto oatom = nbrBnd->getOtherAtom(atm);
+            // add single bonds to atoms with a H they can contribute:
+            if (oatom->getTotalNumHs()) {
+              bq.push_back(nbrBnd);
+            }
+          }
+        }
+      }
+    }
+    if (activeHeteroatoms && !conjSystem.empty()) {
+      bondsToModify |= conjSystem;
     }
   }
+
+  for (auto aptr : mol->atoms()) {
+    if (!atomsToModify[aptr->getIdx()]) {
+      continue;
+    }
+    charge += aptr->getFormalCharge();
+    aptr->setIsAromatic(false);
+    aptr->setFormalCharge(0);
+    if (aptr->getAtomicNum() != 6) {
+      hcount += aptr->getTotalNumHs(false);
+      aptr->setNoImplicit(true);
+      aptr->setNumExplicitHs(0);
+    }
+  }
+
+  for (auto bptr : mol->bonds()) {
+    if (!bondsToModify[bptr->getIdx()]) {
+      continue;
+    }
+    bptr->setIsAromatic(false);
+    bptr->setBondType(Bond::SINGLE);
+    bptr->setStereo(Bond::BondStereo::STEREONONE);
+  }
+
+  if (!bondsToModify.empty() || !atomsToModify.empty()) {
+    MolOps::assignRadicals(*mol);
+    // we may have just destroyed some stereocenters/bonds
+    // clean that up:
+    bool cleanIt = true;
+    bool force = true;
+    MolOps::assignStereochemistry(*mol, cleanIt, force);
+  }
+  result = MolToSmiles(*mol);
+  if (!proto) {
+    sprintf(buffer, "_%d_%d", hcount, charge);
+  } else {
+    sprintf(buffer, "_%d", hcount - charge);
+  }
+  result += buffer;
+  if (useCXSmiles) {
+    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+  }
+
+  return result;
+}
+
+std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
+  PRECONDITION(mol, "bad molecule");
+  std::string result;
+  char buffer[32];
+  int hcount = 0;
+  int charge = 0;
 
   for (auto aptr : mol->atoms()) {
     charge += aptr->getFormalCharge();
@@ -392,7 +494,9 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
   }
 
   for (auto bptr : mol->bonds()) {
-    if (bondsToModify[bptr->getIdx()]) {
+    if (bptr->getBondType() != Bond::SINGLE &&
+        (bptr->getIsConjugated() || bptr->getBeginAtom()->getAtomicNum() != 6 ||
+         bptr->getEndAtom()->getAtomicNum() != 6)) {
       bptr->setIsAromatic(false);
       bptr->setBondType(Bond::SINGLE);
       bptr->setStereo(Bond::BondStereo::STEREONONE);
@@ -905,6 +1009,9 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
       break;
     case HashFunction::HetAtomTautomer:
       result = TautomerHash(mol, false, useCXSmiles);
+      break;
+    case HashFunction::HetAtomTautomerv2:
+      result = TautomerHashv2(mol, false, useCXSmiles);
       break;
     case HashFunction::HetAtomProtomer:
       result = TautomerHash(mol, true, useCXSmiles);

@@ -39,7 +39,8 @@ enum class HashFunction {
   NetCharge = 14,
   SmallWorldIndexBR = 15,
   SmallWorldIndexBRL = 16,
-  ArthorSubstructureOrder = 17
+  ArthorSubstructureOrder = 17,
+  HetAtomTautomerv2 = 18,
 };
 
 RDKIT_MOLHASH_EXPORT std::string MolHash(RWMol *mol, HashFunction func,
