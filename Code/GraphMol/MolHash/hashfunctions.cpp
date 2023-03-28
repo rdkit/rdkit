@@ -370,6 +370,16 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
   int hcount = 0;
   int charge = 0;
 
+  boost::dynamic_bitset<> bondsToModify(mol->getNumBonds());
+
+  for (auto bptr : mol->bonds()) {
+    if (bptr->getBondType() != Bond::SINGLE &&
+        (bptr->getIsConjugated() || bptr->getBeginAtom()->getAtomicNum() != 6 ||
+         bptr->getEndAtom()->getAtomicNum() != 6)) {
+      bondsToModify.set(bptr->getIdx());
+    }
+  }
+
   for (auto aptr : mol->atoms()) {
     charge += aptr->getFormalCharge();
     aptr->setIsAromatic(false);
@@ -382,9 +392,7 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
   }
 
   for (auto bptr : mol->bonds()) {
-    if (bptr->getBondType() != Bond::SINGLE &&
-        (bptr->getIsConjugated() || bptr->getBeginAtom()->getAtomicNum() != 6 ||
-         bptr->getEndAtom()->getAtomicNum() != 6)) {
+    if (bondsToModify[bptr->getIdx()]) {
       bptr->setIsAromatic(false);
       bptr->setBondType(Bond::SINGLE);
       bptr->setStereo(Bond::BondStereo::STEREONONE);
