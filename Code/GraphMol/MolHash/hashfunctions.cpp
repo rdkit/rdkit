@@ -392,6 +392,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
       if (bondsConsidered[bnd->getIdx()]) {
         continue;
       }
+      bondsConsidered.set(bnd->getIdx());
       for (const auto atm :
            std::vector<const Atom *>{bnd->getBeginAtom(), bnd->getEndAtom()}) {
         if (atomsInSystem[atm->getIdx()]) {
@@ -400,12 +401,14 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
         if (atm->getAtomicNum() == 6) {
           if (atm->getTotalNumHs()) {
             ++activeNonheteroHs;
+            atomsInSystem.set(atm->getIdx());
           }
         } else if (atm->getAtomicNum() > 1) {
           // FIX: be more restrictive than just "is heteroatom"?
           ++activeHeteroatoms;
           activeHeteroHs += atm->getTotalNumHs();
           conjSystem.set(bnd->getIdx());
+          atomsInSystem.set(atm->getIdx());
         }
         for (auto nbrBnd : mol->atomBonds(atm)) {
           if (nbrBnd == bnd || bondsConsidered[nbrBnd->getIdx()]) {
