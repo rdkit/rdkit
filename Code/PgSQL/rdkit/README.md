@@ -1,6 +1,6 @@
-PgSQL/rdkit is a PostgreSQL contribution module, which implements 
-*mol* datatype to describe molecules and *fp* datatype for fingerprints,  
-basic comparison operations, similarity operation (tanimoto, dice) and  index 
+PgSQL/rdkit is a PostgreSQL contribution module, which implements
+*mol* datatype to describe molecules and *fp* datatype for fingerprints,
+basic comparison operations, similarity operation (tanimoto, dice) and  index
 support (using GiST indexing framework).
 
 **Compatibility**: PostgreSQL 9.1+
@@ -18,11 +18,49 @@ Set `RDK_PGSQL_STATIC` to `ON` to statically link all RDKit libraries; to `OFF`
 to dynamically link them:
 ```
     -D RDK_PGSQL_STATIC=OFF
-```    
+```
 
 # Linux
 
-if PostgreSQL is installed in a location where CMake is unable to find it,
+## Cartridge installation into conda PostgreSQL
+If you build the PostgreSQL cartridge against the conda `postgresql` package,
+CMake will find it without having to specify its location through CMake
+switches. Also installation will be straightforward as it will not require
+root privileges.
+Build RDKit in the usual way running `cmake`, followed by `make && make install`.
+You should see the following message:
+```
+=====================================================================
+PostgreSQL cartridge installation succeeded.
+=====================================================================
+Restart the PostgreSQL service before using the PostgreSQL
+RDKit cartridge.
+=====================================================================
+```
+To test the cartridge, first I initialize a database directory:
+```
+$ initdb /home/build/postgresdb
+```
+I edit the /home/build/postgresdb/postgresql.conf configuration file
+to set the connection port to 6432 since on my system the default
+`5432` is already in use, then I start the PostgreSQL server:
+```
+$ pg_ctl -D /home/build/postgresdb -l /home/build/postgresdb/logfile start
+waiting for server to start.... done
+server started
+```
+To test the RDKit cartridge, I create a a small test database:
+```
+$ createdb -p 6432 nci5K
+```
+And attempt to load the cartridge in the database:
+```
+$ psql -c 'create extension rdkit' -p 6432 -h /tmp nci5K
+CREATE EXTENSION
+```
+
+## Cartridge installation into non-conda PostgreSQL
+If PostgreSQL is installed in a location where CMake is unable to find it,
 point the PostgreSQL-related CMake switches to the appropriate directories.
 For example, these are the settings for PostgreSQL 15 on Ubuntu 20.04 LTS:
 ```
@@ -46,7 +84,7 @@ install the cartridge. For example, on my WSL Ubuntu 20.04 LTS install I get:
 =====================================================================
 This might be due to insufficient privileges.
 Check /home/build/build/rdkit/Code/PgSQL/rdkit/pgsql_install.sh
-for correctness of installation paths. If everything is OK, gain 
+for correctness of installation paths. If everything is OK, gain
 administrator privileges, stop the PostgreSQL service, run
 /home/build/build/rdkit/Code/PgSQL/rdkit/pgsql_install.sh
 to install the PostgreSQL RDKit cartridge, then start again
@@ -61,7 +99,7 @@ as shown below.
 $ sudo systemctl stop postgresql
  * Stopping PostgreSQL 15 database server
 $ sudo sh /home/build/build/rdkit/Code/PgSQL/rdkit/pgsql_install.sh
-+ test -n 
++ test -n
 + cp /home/build/build/rdkit/Code/PgSQL/rdkit/rdkit--4.2.sql /usr/share/postgresql/15/extension
 + cp /home/build/src/rdkit/Code/PgSQL/rdkit/rdkit.control /usr/share/postgresql/15/extension
 + cp /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--3.8--4.0.sql /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--4.0--4.0.1.sql /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--4.0--4.1.sql /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--4.0.1--4.1.sql /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--4.1--4.1.1.sql /home/build/build/rdkit/Code/PgSQL/rdkit/update_sql/rdkit--4.1.1--4.2.sql /usr/share/postgresql/15/extension
@@ -75,8 +113,8 @@ To test the RDKit cartridge, I create a `build` user with superuser
 privileges:
 ```
 $ sudo -u postgres createuser -d -s -P build
-Enter password for new role: 
-Enter it again: 
+Enter password for new role:
+Enter it again:
 ```
 Then I create a small test database:
 ```
@@ -116,6 +154,60 @@ The RDKit cartridge is now to ready to be used on the `nci5K` database.
 
 # Windows
 
+## Cartridge installation into conda PostgreSQL
+If you build the PostgreSQL cartridge against the conda `postgresql` package,
+CMake will find it without having to specify its location through CMake
+switches. Also installation will be straightforward as it will not require
+root privileges.
+Build RDKit in the usual way: configure with `cmake`, then build and install:
+```
+>cmake --build . --parallel %NUMBER_OF_PROCESSORS% --target install --config Release
+```
+You should see the following message:
+```
+=====================================================================
+PostgreSQL cartridge installation succeeded.
+=====================================================================
+Restart the PostgreSQL service before using the PostgreSQL
+RDKit cartridge.
+=====================================================================
+```
+To test the cartridge, first I initialize a database directory:
+```
+>initdb M:\postgresdb
+```
+I edit the M:\postgresdb\postgresql.conf configuration file
+to set the connection port to 6433 since on my system the default
+`5432` is already in use, then I start the PostgreSQL server:
+```
+>pg_ctl -D M:\postgresdb -l M:\postgresdb\logfile start
+waiting for server to start.... done
+server started
+```
+To test the RDKit cartridge, I create a a small test database:
+```
+>createdb -p 6433 nci5K
+```
+And attempt to load the cartridge in the database:
+```
+>psql -c 'create extension rdkit' -p 6433 nci5k
+CREATE EXTENSION
+```
+Should you see an error message such as
+```
+ERROR:  could not load library "m:/a3/envs/rdkit_devel/Library/lib/rdkit.dll": The specified module could not be found.
+```
+this would indicate that some of the dependencies cannot be located in the
+current `PATH`; for example, in my case I had to add the directory where
+I chose to install RDKit DLLs as well as the MSYS2 directory containing
+the `cairo-2.dll` dependency:
+```
+>set PATH=M:\install\rdkit_vs2022_conda_postgres\Lib;C:\msys64\mingw64\bin;%PATH%
+```
+Once you set your `PATH` appropriately, the cartridge should then load
+without errors.
+
+## Cartridge installation into non-conda PostgreSQL
 if PostgreSQL is installed in a location where CMake is unable to find it,
 point the PostgreSQL-related CMake switches to the appropriate directories.
 For example, these are the settings for PostgreSQL 15 on Windows 11:
@@ -203,13 +295,13 @@ Password:
 ```
 Then, in a normal CMD prompt as the build user, I create a small test database:
 ```
->"C:\Program Files\PostgreSQL\15\bin\createdb.exe" -p 6432 -W nci5K 
+>"C:\Program Files\PostgreSQL\15\bin\createdb.exe" -p 6432 -W nci5K
 Password:
 ```
 And attempt to load the cartridge in the database:
 ```
 "C:\Program Files\PostgreSQL\15\bin\psql.exe" -c "create extension rdkit" -p 6432 -W nci5K
-Password: 
+Password:
 CREATE EXTENSION
 ```
 If you get an error such as
@@ -225,7 +317,44 @@ exactly which DLL is trying to be loaded without success.
 
 # macOS
 
+## Cartridge installation into conda PostgreSQL
+If you build the PostgreSQL cartridge against the conda `postgresql` package,
+CMake will find it without having to specify its location through CMake
+switches. Also installation will be straightforward as it will not require
+root privileges.
+Build RDKit in the usual way running `cmake`, followed by `make && make install`.
+You should see the following message:
+```
+=====================================================================
+PostgreSQL cartridge installation succeeded.
+=====================================================================
+Restart the PostgreSQL service before using the PostgreSQL
+RDKit cartridge.
+=====================================================================
+```
+To test the cartridge, first I initialize a database directory:
+```
+% initdb /Users/build/postgresdb
+```
+I edit the /Users/build/postgresdb/postgresql.conf configuration file
+to set the connection port to 6432 since on my system the default
+`5432` is already in use, then I start the PostgreSQL server:
+```
+% pg_ctl -D /Users/build/postgresdb -l /Users/build/postgresdb/logfile start
+waiting for server to start.... done
+server started
+```
+To test the RDKit cartridge, I create a a small test database:
+```
+% createdb -p 6432 nci5K
+```
+And attempt to load the cartridge in the database:
+```
+% psql -c 'create extension rdkit' -p 6432 nci5K
+CREATE EXTENSION
+```
 
+## Cartridge installation into non-conda PostgreSQL
 if PostgreSQL is installed in a location where CMake is unable to find it,
 point the PostgreSQL-related CMake switches to the appropriate directories.
 For example, these are the settings for PostgreSQL 15 on macOS 13.0.1:
@@ -250,7 +379,7 @@ install the cartridge. For example, on my WSL Ubuntu 20.04 LTS install I get:
 =====================================================================
 This might be due to insufficient privileges.
 Check /Users/build/build/rdkit/Code/PgSQL/rdkit/pgsql_install.sh
-for correctness of installation paths. If everything is OK, gain 
+for correctness of installation paths. If everything is OK, gain
 administrator privileges, stop the PostgreSQL service, run
 /Users/build/build/rdkit/Code/PgSQL/rdkit/pgsql_install.sh
 to install the PostgreSQL RDKit cartridge, then start again
@@ -279,20 +408,20 @@ server started
 To test the RDKit cartridge, I create a `build` user with superuser
 privileges:
 ```
-% sudo -u postgres /Library/PostgreSQL/15/bin/createuser -d -s -P build 
-Enter password for new role: 
-Enter it again: 
-Password: 
+% sudo -u postgres /Library/PostgreSQL/15/bin/createuser -d -s -P build
+Enter password for new role:
+Enter it again:
+Password:
 ```
 Then I create a small test database:
 ```
 % /Library/PostgreSQL/15/bin/createdb nci5K
-Password: 
+Password:
 ```
 And attempt to load the cartridge in the database:
 ```
-% /Library/PostgreSQL/15/bin/psql -c 'create extension rdkit' nci5K           
-Password for user build: 
+% /Library/PostgreSQL/15/bin/psql -c 'create extension rdkit' nci5K
+Password for user build:
 ERROR:  could not load library "/Library/PostgreSQL/15/lib/postgresql/rdkit.so": dlopen(/Library/PostgreSQL/15/lib/postgresql/rdkit.so, 0x000A): Library not loaded: @rpath/libRDKitAvalonLib.1.dylib
   Referenced from: [...]
 ```
@@ -311,8 +440,8 @@ I can add another `LC_RPATH` using `install_name_tool`:
 ```
 As expected, this time the cartridge loads successfully:
 ```
-% /Library/PostgreSQL/15/bin/psql -c 'create extension rdkit' nci5K   
-Password for user build: 
+% /Library/PostgreSQL/15/bin/psql -c 'create extension rdkit' nci5K
+Password for user build:
 CREATE EXTENSION
 ```
 The RDKit cartridge is now to ready to be used on the `nci5K` database.
