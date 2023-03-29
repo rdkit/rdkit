@@ -31,15 +31,16 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+
 namespace RDKit {
 namespace details {
-void updateSubMolConfs(const ROMol &mol, RWMol &res,
-                       boost::dynamic_bitset<> &removedAtoms) {
+void updateSubMolConfs(const ROMol& mol, RWMol& res,
+                       boost::dynamic_bitset<>& removedAtoms) {
   // update conformer information:
   res.clearConformers();
   for (auto citer = mol.beginConformers(); citer != mol.endConformers();
        ++citer) {
-    auto *newConf = new Conformer(res.getNumAtoms());
+    auto* newConf = new Conformer(res.getNumAtoms());
     newConf->setId((*citer)->getId());
     newConf->set3D((*citer)->is3D());
     int aIdx = 0;
@@ -52,7 +53,7 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
     res.addConformer(newConf, false);
   }
 }
-}  // namespace details
+} // namespace details
 
 namespace {
 struct SideChainMapping {
@@ -61,20 +62,26 @@ struct SideChainMapping {
   bool useMatch;
 
   SideChainMapping(int molIndex)
-      : molIndex(molIndex), coreIndex(-1), useMatch(false) {}
+    : molIndex(molIndex),
+      coreIndex(-1),
+      useMatch(false) {
+  }
+
   SideChainMapping(int molIndex, int coreIndex, bool useMatch)
-      : molIndex(molIndex), coreIndex(coreIndex), useMatch(useMatch) {}
+    : molIndex(molIndex),
+      coreIndex(coreIndex),
+      useMatch(useMatch) {
+  }
 };
+} // namespace
 
-}  // namespace
-
-ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
+ROMol* deleteSubstructs(const ROMol& mol, const ROMol& query, bool onlyFrags,
                         bool useChirality) {
-  auto *res = new RWMol(mol, false);
+  auto* res = new RWMol(mol, false);
   std::vector<MatchVectType> fgpMatches;
   std::vector<MatchVectType>::const_iterator mati;
   VECT_INT_VECT
-  matches;  // all matches on the molecule - list of list of atom ids
+      matches; // all matches on the molecule - list of list of atom ids
   MatchVectType::const_iterator mi;
   // do the substructure matching and get the atoms that match the query
   const bool uniquify = true;
@@ -89,7 +96,7 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
   }
 
   for (mati = fgpMatches.begin(); mati != fgpMatches.end(); mati++) {
-    INT_VECT match;  // each match onto the molecule - list of atoms ids
+    INT_VECT match; // each match onto the molecule - list of atoms ids
     for (mi = mati->begin(); mi != mati->end(); mi++) {
       match.push_back(mi->second);
     }
@@ -113,10 +120,10 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
           Union((*mxi), delList, tmp);
           delList = tmp;
           break;
-        }  // end of if we found a matching fragment
-      }    // endof loop over matches
-    }      // end of loop over fragments
-  }        // end of if onlyFrags
+        } // end of if we found a matching fragment
+      }   // endof loop over matches
+    }     // end of loop over fragments
+  }       // end of if onlyFrags
   else {
     // in this case we want to delete any matches we find
     // simply loop over the matches and collect the atoms that need to
@@ -148,9 +155,9 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
 }
 
 std::vector<ROMOL_SPTR> replaceSubstructs(
-    const ROMol &mol, const ROMol &query, const ROMol &replacement,
-    bool replaceAll, unsigned int replacementConnectionPoint,
-    bool useChirality) {
+  const ROMol& mol, const ROMol& query, const ROMol& replacement,
+  bool replaceAll, unsigned int replacementConnectionPoint,
+  bool useChirality) {
   PRECONDITION(replacementConnectionPoint < replacement.getNumAtoms(),
                "bad replacementConnectionPoint");
   std::vector<ROMOL_SPTR> res;
@@ -176,8 +183,8 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
   // now loop over the list of matches and replace them:
   for (std::vector<MatchVectType>::const_iterator mati = fgpMatches.begin();
        mati != fgpMatches.end(); mati++) {
-    INT_VECT match;  // each match onto the molecule - list of atoms ids
-    for (const auto &mi : *mati) {
+    INT_VECT match; // each match onto the molecule - list of atoms ids
+    for (const auto& mi : *mati) {
       match.push_back(mi.second);
     }
 
@@ -187,7 +194,7 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
     if (!replaceAll || !res.size()) {
       res.push_back(ROMOL_SPTR(new ROMol(mol, false)));
     }
-    RWMol *newMol = static_cast<RWMol *>(res.rbegin()->get());
+    RWMol* newMol = static_cast<RWMol*>(res.rbegin()->get());
 
     // we need a tab to the orig number of atoms because the
     // new molecule will start numbered above this:
@@ -198,14 +205,14 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
 
     // loop over the central atom's (the first atom in match) bonds
     // and duplicate any that connect to the remainder of the molecule:
-    Atom *origAtom = newMol->getAtomWithIdx(match[0]);
+    Atom* origAtom = newMol->getAtomWithIdx(match[0]);
     ROMol::ADJ_ITER nbrIdx, endNbrs;
     boost::tie(nbrIdx, endNbrs) = newMol->getAtomNeighbors(origAtom);
     while (nbrIdx != endNbrs) {
       // we don't want to duplicate any "intra-match" bonds:
       if (!std::binary_search(sortMatch.begin(), sortMatch.end(),
                               int(*nbrIdx))) {
-        Bond *oBond = newMol->getBondBetweenAtoms(match[0], *nbrIdx);
+        Bond* oBond = newMol->getBondBetweenAtoms(match[0], *nbrIdx);
         CHECK_INVARIANT(oBond, "required bond not found");
         newMol->addBond(numOrigAtoms + replacementConnectionPoint, *nbrIdx,
                         oBond->getBondType());
@@ -232,7 +239,7 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
   if (delList.size()) {
     if (replaceAll) {
       // remove the atoms from the delList:
-      auto *newMol = static_cast<RWMol *>(res[0].get());
+      auto* newMol = static_cast<RWMol*>(res[0].get());
       newMol->beginBatchEdit();
       for (auto idx : delList) {
         removedAtoms.set(idx);
@@ -243,8 +250,8 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
 
     // clear conformers and computed props and do basic updates
     // on the resulting molecules, but allow unhappiness:
-    for (auto &re : res) {
-      details::updateSubMolConfs(mol, *(RWMol *)re.get(), removedAtoms);
+    for (auto& re : res) {
+      details::updateSubMolConfs(mol, *(RWMol*)re.get(), removedAtoms);
       re->clearComputedProps(true);
       re->updatePropertyCache(false);
     }
@@ -252,7 +259,7 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
   return res;
 }
 
-ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
+ROMol* replaceSidechains(const ROMol& mol, const ROMol& coreQuery,
                          bool useChirality) {
   MatchVectType matchV;
 
@@ -273,7 +280,7 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
     matchingIndices[mvit->second] = 1;
   }
 
-  auto *newMol = new RWMol(mol);
+  auto* newMol = new RWMol(mol);
   boost::dynamic_bitset<> keepSet(newMol->getNumAtoms());
   std::vector<unsigned int> dummyIndices;
   for (MatchVectType::const_iterator mvit = matchV.begin();
@@ -292,8 +299,8 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
           // save it
           keepSet.set(*nbrIdx);
           dummyIndices.push_back(*nbrIdx);
-          Atom *at = newMol->getAtomWithIdx(*nbrIdx);
-          Bond *b = newMol->getBondBetweenAtoms(mvit->second, *nbrIdx);
+          Atom* at = newMol->getAtomWithIdx(*nbrIdx);
+          Bond* b = newMol->getBondBetweenAtoms(mvit->second, *nbrIdx);
           if (b) {
             b->setIsAromatic(false);
             b->setBondType(Bond::SINGLE);
@@ -335,10 +342,10 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
   // the resulting molecule, but allow unhappiness:
   newMol->clearComputedProps(true);
   newMol->updatePropertyCache(false);
-  return static_cast<ROMol *>(newMol);
+  return static_cast<ROMol*>(newMol);
 }
 
-ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
+ROMol* replaceCore(const ROMol& mol, const ROMol& coreQuery,
                    bool replaceDummies, bool labelByIndex,
                    bool requireDummyMatch, bool useChirality) {
   MatchVectType matchV;
@@ -361,15 +368,15 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
 namespace {
 const std::string replaceCoreDummyBond = "_replaceCoreDummyBond";
 
-int findNbrBond(RWMol &mol, Bond *bond, Atom *bondAtom, const INT_VECT &bring,
-                const boost::dynamic_bitset<> &removedAtoms) {
+int findNbrBond(RWMol& mol, Bond* bond, Atom* bondAtom, const INT_VECT& bring,
+                const boost::dynamic_bitset<>& removedAtoms) {
   int res = -1;
   for (const auto nbrBond : mol.atomBonds(bondAtom)) {
     if (nbrBond != bond &&
         (nbrBond->hasProp(replaceCoreDummyBond) ||
          (!removedAtoms[nbrBond->getOtherAtomIdx(bondAtom->getIdx())] &&
           std::find(bring.begin(), bring.end(), nbrBond->getIdx()) !=
-              bring.end()))) {
+          bring.end()))) {
       res = nbrBond->getOtherAtomIdx(bondAtom->getIdx());
       break;
     }
@@ -377,12 +384,12 @@ int findNbrBond(RWMol &mol, Bond *bond, Atom *bondAtom, const INT_VECT &bring,
   return res;
 }
 
-void setSubMolBrokenRingStereo(RWMol &mol,
-                               const boost::dynamic_bitset<> &removedAtoms) {
+void setSubMolBrokenRingStereo(RWMol& mol,
+                               const boost::dynamic_bitset<>& removedAtoms) {
   PRECONDITION(mol.getRingInfo() && mol.getRingInfo()->isInitialized(),
                "bad ringinfo");
 
-  for (const auto &bring : mol.getRingInfo()->bondRings()) {
+  for (const auto& bring : mol.getRingInfo()->bondRings()) {
     // check whether or not this bond ring is affected by the removal
     if (std::find_if(bring.begin(), bring.end(),
                      [&mol, &removedAtoms](auto idx) {
@@ -398,7 +405,7 @@ void setSubMolBrokenRingStereo(RWMol &mol,
              bond->getBondType() == Bond::BondType::DOUBLE) &&
             bond->getStereo() == Bond::BondStereo::STEREONONE &&
             mol.getRingInfo()->minBondRingSize(bond->getIdx()) <
-                Chirality::minRingSizeForDoubleBondStereo &&
+            Chirality::minRingSizeForDoubleBondStereo &&
             !removedAtoms[bond->getBeginAtomIdx()] &&
             !removedAtoms[bond->getEndAtomIdx()]) {
           // find the two neighboring bonds which are in the ring or to the
@@ -420,10 +427,10 @@ void setSubMolBrokenRingStereo(RWMol &mol,
     }
   }
 }
-}  // namespace
+} // namespace
 
-ROMol *replaceCore(const ROMol &mol, const ROMol &core,
-                   const MatchVectType &matchV, bool replaceDummies,
+ROMol* replaceCore(const ROMol& mol, const ROMol& core,
+                   const MatchVectType& matchV, bool replaceDummies,
                    bool labelByIndex, bool requireDummyMatch) {
   unsigned int origNumAtoms = mol.getNumAtoms();
   std::vector<std::pair<int, SideChainMapping>> matches;
@@ -433,14 +440,14 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   std::vector<int> allIndices(origNumAtoms, -1);
   boost::dynamic_bitset<> molAtomsMapped(origNumAtoms);
   boost::dynamic_bitset<> multipleMappedMolAtoms(origNumAtoms);
-  for (const auto &mvit : matchV) {
+  for (const auto& mvit : matchV) {
     if (mvit.first < 0 || mvit.first >= rdcast<int>(core.getNumAtoms())) {
       throw ValueErrorException(
-          "Supplied MatchVect indices out of bounds of the core molecule");
+        "Supplied MatchVect indices out of bounds of the core molecule");
     }
     if (mvit.second < 0 || mvit.second >= rdcast<int>(mol.getNumAtoms())) {
       throw ValueErrorException(
-          "Supplied MatchVect indices out of bounds of the target molecule");
+        "Supplied MatchVect indices out of bounds of the target molecule");
     }
     bool useMatch = false;
     if (replaceDummies || core.getAtomWithIdx(mvit.first)->getAtomicNum() > 0) {
@@ -458,14 +465,14 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
   boost::dynamic_bitset<> multipleOwnedBonds(mol.getNumBonds());
   if (multipleMappedMolAtoms.any()) {
-    for (const auto &match : matches) {
-      const auto &mappingInfo = match.second;
+    for (const auto& match : matches) {
+      const auto& mappingInfo = match.second;
       if (multipleMappedMolAtoms[mappingInfo.molIndex]) {
         auto coreAtom = core.getAtomWithIdx(mappingInfo.coreIndex);
         CHECK_INVARIANT(
-            coreAtom->getDegree() == 1,
-            "Multiple core atoms match a mol atom, but one of the core "
-            "atoms has degree > 1 ");
+          coreAtom->getDegree() == 1,
+          "Multiple core atoms match a mol atom, but one of the core "
+          "atoms has degree > 1 ");
         auto coreNeighborIdx =
             core[*core.getAtomNeighbors(coreAtom).first]->getIdx();
         auto molNeighborIdx =
@@ -473,7 +480,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
                          [coreNeighborIdx](std::pair<int, int> p) {
                            return p.first == static_cast<int>(coreNeighborIdx);
                          })
-                ->second;
+            ->second;
         if (molNeighborIdx > -1) {
           auto connectingBond =
               mol.getBondBetweenAtoms(mappingInfo.molIndex, molNeighborIdx);
@@ -485,9 +492,10 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
     }
   }
 
-  auto *newMol = new RWMol(mol);
-  std::vector<Atom *> keepList;
-  std::map<Atom *, int> dummyAtomMap;
+  auto* newMol = new RWMol(mol);
+  std::vector<Atom*> keepList;
+  std::map<Atom*, int> dummyAtomMap;
+  std::map<const Atom*, Atom*> molAtomMap;
 
   // go through the matches in query order, not target molecule
   //  order
@@ -499,23 +507,24 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   }
 
   std::sort(matches.begin(), matches.end(),
-            [](const std::pair<int, SideChainMapping> &p1,
-               const std::pair<int, SideChainMapping> &p2) {
+            [](const std::pair<int, SideChainMapping>& p1,
+               const std::pair<int, SideChainMapping>& p2) {
               if (p1.second.coreIndex == p2.second.coreIndex) {
                 return p1.first < p2.first;
               }
               return p1.second.coreIndex < p2.second.coreIndex;
             });
-  std::vector<std::pair<int, Atom *>> dummies;
+  std::vector<std::pair<int, Atom*>> dummies;
 
-  std::list<Bond *> allNewBonds;
-  for (const auto &match : matches) {
-    const auto &mappingInfo = match.second;
+  std::list<Bond*> allNewBonds;
+  for (const auto& match : matches) {
+    const auto& mappingInfo = match.second;
 
     if (!mappingInfo.useMatch) {
-      Atom *sidechainAtom = newMol->getAtomWithIdx(mappingInfo.molIndex);
+      Atom* sidechainAtom = newMol->getAtomWithIdx(mappingInfo.molIndex);
       // we're keeping the sidechain atoms:
       keepList.push_back(sidechainAtom);
+      molAtomMap[mol.getAtomWithIdx(mappingInfo.molIndex)] = sidechainAtom;
 
       // loop over our neighbors and see if any are in the match:
       std::list<unsigned int> nbrList;
@@ -529,18 +538,18 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
         ++nbrIter;
       }
       unsigned int whichNbr = 0;
-      std::list<Bond *> newBonds;
+      std::list<Bond*> newBonds;
       for (std::list<unsigned int>::const_iterator lIter = nbrList.begin();
            lIter != nbrList.end(); ++lIter) {
         unsigned int nbrIdx = *lIter;
-        Bond *connectingBond =
+        Bond* connectingBond =
             newMol->getBondBetweenAtoms(mappingInfo.molIndex, nbrIdx);
         bool bondToCore = matchingIndices[nbrIdx] > -1;
         auto coreBond =
             bondToCore && allIndices[nbrIdx] > -1 && mappingInfo.coreIndex > -1
-                ? core.getBondBetweenAtoms(mappingInfo.coreIndex,
-                                           allIndices[nbrIdx])
-                : nullptr;
+              ? core.getBondBetweenAtoms(mappingInfo.coreIndex,
+                                         allIndices[nbrIdx])
+              : nullptr;
         if (bondToCore && multipleMappedMolAtoms[mappingInfo.molIndex] &&
             mappingInfo.coreIndex > -1) {
           // The core has multiple atoms that map onto this mol atom - check we
@@ -555,11 +564,11 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           // we've matched an atom in the core.
           if (requireDummyMatch &&
               core.getAtomWithIdx(matchingIndices[nbrIdx])->getAtomicNum() !=
-                  0) {
+              0) {
             delete newMol;
             return nullptr;
           }
-          auto *newAt = new Atom(0);
+          auto* newAt = new Atom(0);
 
           // if we were not in the matching list, still keep
           //  the original indices (replaceDummies=False)
@@ -582,7 +591,10 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           newMol->addAtom(newAt, false, true);
           dummyAtomMap[newAt] = nbrIdx;
           keepList.push_back(newAt);
-          Bond *bnd = connectingBond->copy();
+          // Do we want to copy over stereo group information to dummies?
+          // I think that is a bad idea, but uncomment the line below to do so
+          // molAtomMap[mol.getAtomWithIdx(nbrIdx)] = newAt;
+          Bond* bnd = connectingBond->copy();
           if (bnd->getBeginAtomIdx() ==
               static_cast<size_t>(mappingInfo.molIndex)) {
             bnd->setEndAtomIdx(newAt->getIdx());
@@ -639,7 +651,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
         ++whichNbr;
       }
       // add the bonds now, after we've finished the loop over neighbors:
-      for (auto &newBond : newBonds) {
+      for (auto& newBond : newBonds) {
         newBond->setProp(replaceCoreDummyBond, 1);
         newMol->addBond(newBond, true);
       }
@@ -654,12 +666,12 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
     }
   } else {
     // don't sort, just label by the index
-    for (auto &dummy : dummies) {
+    for (auto& dummy : dummies) {
       dummy.second->setIsotope(dummy.first);
     }
   }
 
-  std::vector<Atom *> delList;
+  std::vector<Atom*> delList;
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
   bool removedRingAtom = false;
   newMol->beginBatchEdit();
@@ -686,7 +698,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
   // Update any terminal dummy atom coordinates after removing atoms not in the
   // keeplist and calling updateSubMolConfs
-  for (auto &newBond : allNewBonds) {
+  for (auto& newBond : allNewBonds) {
     auto beginAtom = newBond->getBeginAtom();
     auto endAtom = newBond->getEndAtom();
     CHECK_INVARIANT(beginAtom->getDegree() == 1 || endAtom->getDegree() == 1,
@@ -700,30 +712,49 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
                                       endAtom->getIdx());
       }
     }
-
-    // make a guess at the position of the dummy atoms showing the attachment
-    // point:
-    for (auto citer = mol.beginConformers(); citer != mol.endConformers();
-         ++citer) {
-      Conformer &newConf = newMol->getConformer((*citer)->getId());
-      for (auto iter = dummyAtomMap.begin(); iter != dummyAtomMap.end();
-           ++iter) {
-        newConf.setAtomPos(iter->first->getIdx(),
-                           (*citer)->getAtomPos(iter->second));
-      }
-    }
-
-    // clear computed props and do basic updates on
-    // the resulting molecule, but allow unhappiness:
-    newMol->clearComputedProps(true);
-    newMol->updatePropertyCache(false);
   }
 
-  return static_cast<ROMol *>(newMol);
+  // make a guess at the position of the dummy atoms showing the attachment
+  // point:
+  for (auto citer = mol.beginConformers(); citer != mol.endConformers();
+       ++citer) {
+    Conformer& newConf = newMol->getConformer((*citer)->getId());
+    for (auto iter = dummyAtomMap.begin(); iter != dummyAtomMap.end();
+         ++iter) {
+      newConf.setAtomPos(iter->first->getIdx(),
+                         (*citer)->getAtomPos(iter->second));
+    }
+  }
+
+  // Copy over any stereo groups that lie in the new molecule
+  if (!mol.getStereoGroups().empty()) {
+    std::vector<StereoGroup> newStereoGroups;
+    for (auto& stereoGroup : mol.getStereoGroups()) {
+      std::vector<Atom*> newStereoAtoms;
+      for (auto stereoGroupAtom : stereoGroup.getAtoms()) {
+        if (auto found = molAtomMap.find(stereoGroupAtom);
+          found != molAtomMap.end()) {
+          newStereoAtoms.push_back(found->second);
+        }
+      }
+      if (! newStereoAtoms.empty()) {
+        newStereoGroups.
+            emplace_back(stereoGroup.getGroupType(), newStereoAtoms);
+      }
+    }
+    newMol->setStereoGroups(std::move(newStereoGroups));
+  }
+
+  // clear computed props and do basic updates on
+  // the resulting molecule, but allow unhappiness:
+  newMol->clearComputedProps(true);
+  newMol->updatePropertyCache(false);
+
+  return static_cast<ROMol*>(newMol);
 }
 
-ROMol *MurckoDecompose(const ROMol &mol) {
-  auto *res = new RWMol(mol);
+ROMol* MurckoDecompose(const ROMol& mol) {
+  auto* res = new RWMol(mol);
   unsigned int nAtoms = res->getNumAtoms();
   if (!nAtoms) {
     return res;
@@ -735,13 +766,13 @@ ROMol *MurckoDecompose(const ROMol &mol) {
   mol.getProp(common_properties::DistanceMatrix_Paths, pathMat);
 
   boost::dynamic_bitset<> keepAtoms(nAtoms);
-  const RingInfo *ringInfo = res->getRingInfo();
+  const RingInfo* ringInfo = res->getRingInfo();
   for (unsigned int i = 0; i < nAtoms; ++i) {
     if (ringInfo->numAtomRings(i)) {
       keepAtoms[i] = 1;
     }
   }
-  const VECT_INT_VECT &rings = ringInfo->atomRings();
+  const VECT_INT_VECT& rings = ringInfo->atomRings();
   // std::cerr<<"  rings: "<<rings.size()<<std::endl;
   // now find the shortest paths between each ring system and mark the atoms
   // along each as being keepers:
@@ -767,14 +798,14 @@ ROMol *MurckoDecompose(const ROMol &mol) {
   res->beginBatchEdit();
   for (unsigned int i = 0; i < nAtoms; ++i) {
     if (!keepAtoms[i]) {
-      Atom *atom = res->getAtomWithIdx(i);
+      Atom* atom = res->getAtomWithIdx(i);
       bool removeIt = true;
 
       // check if the atom has a neighboring keeper:
       for (auto nbr : res->atomNeighbors(atom)) {
         if (keepAtoms[nbr->getIdx()]) {
           if (res->getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
-                  ->getBondType() == Bond::DOUBLE) {
+                 ->getBondType() == Bond::DOUBLE) {
             removeIt = false;
             break;
           } else if (nbr->getIsAromatic() && nbr->getAtomicNum() != 6) {
@@ -804,12 +835,12 @@ ROMol *MurckoDecompose(const ROMol &mol) {
   details::updateSubMolConfs(mol, *res, removedAtoms);
   res->clearComputedProps();
 
-  return (ROMol *)res;
+  return (ROMol*)res;
 }
 
-ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
+ROMol* combineMols(const ROMol& mol1, const ROMol& mol2,
                    RDGeom::Point3D offset) {
-  auto *res = new RWMol(mol1);
+  auto* res = new RWMol(mol1);
   int nAtoms1 = res->getNumAtoms();
   res->insertMol(mol2);
 
@@ -822,26 +853,26 @@ ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
     }
     for (auto conf1It = res->beginConformers(); conf1It != res->endConformers();
          ++conf1It) {
-      Conformer *conf1 = (*conf1It).get();
+      Conformer* conf1 = (*conf1It).get();
       try {
-        const Conformer *conf2 = &mol2.getConformer(conf1->getId());
+        const Conformer* conf2 = &mol2.getConformer(conf1->getId());
         for (unsigned int i = 0; i < mol2.getNumAtoms(); ++i) {
           conf1->setAtomPos(i + nAtoms1, conf2->getAtomPos(i) + offset);
         }
-      } catch (ConformerException &) {
+      } catch (ConformerException&) {
         BOOST_LOG(rdWarningLog) << "combineMols: conformer id "
                                 << conf1->getId() << " not found in mol2";
       }
     }
   }
   res->clearComputedProps(true);
-  return (ROMol *)res;
+  return (ROMol*)res;
 }
 
 void addRecursiveQueries(
-    ROMol &mol, const std::map<std::string, ROMOL_SPTR> &queries,
-    const std::string &propName,
-    std::vector<std::pair<unsigned int, std::string>> *reactantLabels) {
+  ROMol& mol, const std::map<std::string, ROMOL_SPTR>& queries,
+  const std::string& propName,
+  std::vector<std::pair<unsigned int, std::string>>* reactantLabels) {
   std::string delim = ",";
   boost::char_separator<char> sep(delim.c_str());
   if (reactantLabels != nullptr) {
@@ -851,7 +882,7 @@ void addRecursiveQueries(
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    Atom *at = mol[*atBegin];
+    Atom* at = mol[*atBegin];
     ++atBegin;
     if (!at->hasProp(propName)) {
       continue;
@@ -859,14 +890,14 @@ void addRecursiveQueries(
     std::string pval;
     at->getProp(propName, pval);
     std::string maybeSmarts =
-        pval;  // keep unmodified in case we are a smarts string
+        pval; // keep unmodified in case we are a smarts string
     boost::algorithm::to_lower(pval);
     if (reactantLabels != nullptr) {
       std::pair<unsigned int, std::string> label(at->getIdx(), pval);
       (*reactantLabels).push_back(label);
     }
 
-    QueryAtom::QUERYATOM_QUERY *qToAdd = nullptr;
+    QueryAtom::QUERYATOM_QUERY* qToAdd = nullptr;
     bool notFound = false;
     if (pval.find(delim) != std::string::npos) {
       boost::tokenizer<boost::char_separator<char>> tokens(pval, sep);
@@ -881,7 +912,7 @@ void addRecursiveQueries(
           notFound = true;
           break;
         }
-        auto *tqp = new RecursiveStructureQuery(new ROMol(*(iter->second)));
+        auto* tqp = new RecursiveStructureQuery(new ROMol(*(iter->second)));
         std::shared_ptr<RecursiveStructureQuery> nq(tqp);
         qToAdd->addChild(nq);
       }
@@ -896,7 +927,7 @@ void addRecursiveQueries(
 
     if (notFound) {
       // See if we are actually a smarts expression already
-      RWMol *m = nullptr;
+      RWMol* m = nullptr;
       try {
         m = SmartsToMol(maybeSmarts);
         if (!m) {
@@ -911,17 +942,17 @@ void addRecursiveQueries(
     if (!at->hasQuery()) {
       QueryAtom qAt(*at);
       unsigned int idx = at->getIdx();
-      static_cast<RWMol &>(mol).replaceAtom(idx, &qAt);
+      static_cast<RWMol&>(mol).replaceAtom(idx, &qAt);
       at = mol.getAtomWithIdx(idx);
     }
     at->expandQuery(qToAdd, Queries::COMPOSITE_AND);
   }
 }
 
-void parseQueryDefFile(std::istream *inStream,
-                       std::map<std::string, ROMOL_SPTR> &queryDefs,
-                       bool standardize, const std::string &delimiter,
-                       const std::string &comment, unsigned int nameColumn,
+void parseQueryDefFile(std::istream* inStream,
+                       std::map<std::string, ROMOL_SPTR>& queryDefs,
+                       bool standardize, const std::string& delimiter,
+                       const std::string& comment, unsigned int nameColumn,
                        unsigned int smartsColumn) {
   PRECONDITION(inStream, "no stream");
   queryDefs.clear();
@@ -953,7 +984,7 @@ void parseQueryDefFile(std::istream *inStream,
     if (qname == "" || qval == "") {
       continue;
     }
-    RWMol *m = nullptr;
+    RWMol* m = nullptr;
     try {
       m = SmartsToMol(qval);
     } catch (...) {
@@ -971,10 +1002,11 @@ void parseQueryDefFile(std::istream *inStream,
     queryDefs[qname] = msptr;
   }
 }
-void parseQueryDefFile(const std::string &filename,
-                       std::map<std::string, ROMOL_SPTR> &queryDefs,
-                       bool standardize, const std::string &delimiter,
-                       const std::string &comment, unsigned int nameColumn,
+
+void parseQueryDefFile(const std::string& filename,
+                       std::map<std::string, ROMOL_SPTR>& queryDefs,
+                       bool standardize, const std::string& delimiter,
+                       const std::string& comment, unsigned int nameColumn,
                        unsigned int smartsColumn) {
   std::ifstream inStream(filename.c_str());
   if (!inStream || (inStream.bad())) {
@@ -985,13 +1017,14 @@ void parseQueryDefFile(const std::string &filename,
   parseQueryDefFile(&inStream, queryDefs, standardize, delimiter, comment,
                     nameColumn, smartsColumn);
 }
-void parseQueryDefText(const std::string &queryDefText,
-                       std::map<std::string, ROMOL_SPTR> &queryDefs,
-                       bool standardize, const std::string &delimiter,
-                       const std::string &comment, unsigned int nameColumn,
+
+void parseQueryDefText(const std::string& queryDefText,
+                       std::map<std::string, ROMOL_SPTR>& queryDefs,
+                       bool standardize, const std::string& delimiter,
+                       const std::string& comment, unsigned int nameColumn,
                        unsigned int smartsColumn) {
   std::stringstream inStream(queryDefText);
   parseQueryDefFile(&inStream, queryDefs, standardize, delimiter, comment,
                     nameColumn, smartsColumn);
 }
-}  // end of namespace RDKit
+} // end of namespace RDKit
