@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -81,6 +81,10 @@ RDKIT_FILEPARSERS_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
 ///  potential stereocenters with unspecified chirality
 RDKIT_FILEPARSERS_EXPORT void markUnspecifiedStereoAsUnknown(ROMol &mol,
                                                              int confId = -1);
+
+//! generate enhanced stereo groups based on the status of the chiral flag
+//! property
+RDKIT_FILEPARSERS_EXPORT void translateChiralFlagToStereoGroups(ROMol &mol);
 
 }  // namespace RDKit
 #endif
