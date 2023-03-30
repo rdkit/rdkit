@@ -82,8 +82,7 @@ TEST_CASE("convert explicit dative bonds to haptic bond") {
       MolOps::hapticBondsToDative(*mol);
       MolOps::dativeBondsToHaptic(*mol);
       CHECK(initSmi == MolToSmiles(*mol));
-      // Check the dummy atoms are in the right place for.  They should
-      // be atoms 11 and 12.
+      // Check the dummy atoms are in the right place.
       auto [d1, d2, d1x, d1y, d2x, d2y] = exp_res[i];
       auto dummy1pos = mol->getConformer().getAtomPos(d1);
       REQUIRE_THAT(dummy1pos.x, Catch::WithinAbs(d1x, 0.1));
@@ -102,6 +101,10 @@ TEST_CASE("convert explicit dative bonds to haptic bond") {
       auto mol1 = MolOps::hapticBondsToDative(*mol);
       auto mol2 = MolOps::dativeBondsToHaptic(*mol1);
       CHECK(initSmi == MolToSmiles(*mol2));
+      for (const auto &b : mol2->bonds()) {
+        if (b->getBondType() == Bond::DATIVE) {
+        }
+      }
     }
   }
 }
@@ -127,4 +130,30 @@ TEST_CASE("get haptic bond end points") {
   bond = mol->getBondWithIdx(1);
   endPts = MolOps::details::hapticBondEndpoints(bond);
   CHECK(std::vector<int>{} == endPts);
+}
+
+TEST_CASE("Github 6252 - wrong endpoints after dativeBondsToHaptic") {
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/MolStandardize/test_data/";
+  std::string ferroccene = pathName + "ferrocene.mol";
+  {
+    std::unique_ptr<RWMol> mol(MolFileToMol(ferroccene));
+    REQUIRE(mol);
+    auto initSmi = MolToSmiles(*mol);
+    MolOps::hapticBondsToDative(*mol);
+    MolOps::dativeBondsToHaptic(*mol);
+    CHECK(initSmi == MolToSmiles(*mol));
+    std::string endpts;
+    int numEp = 0;
+    std::vector<std::string> expEndPts{"(5 2 3 1 4 5)", "(5 7 8 6 9 10)"};
+    for (const auto &b : mol->bonds()) {
+      if (b->getBondType() == Bond::DATIVE) {
+        if (b->getPropIfPresent(common_properties::_MolFileBondEndPts,
+                                endpts)) {
+          CHECK(expEndPts[numEp++] == endpts);
+        }
+      }
+    }
+    CHECK(numEp == 2);
+  }
 }
