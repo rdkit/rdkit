@@ -259,7 +259,7 @@ TEST_CASE("Oxidation numbers") {
       std::vector<std::string> smis{"CO", "C=O", "C(=O)O", "S(=O)(=O)(O)O"};
       std::vector<std::vector<int>> expected{
           {-2, -2}, {0, -2}, {2, -2, -2}, {6, -2, -2, -2, -2}};
-      for (auto i = 0; i < smis.size(); ++i) {
+      for (auto i = 0u; i < smis.size(); ++i) {
         std::unique_ptr<RWMol> mol(RDKit::SmilesToMol(smis[i]));
         Descriptors::calcOxidationNumbers(*mol);
         for (const auto &a : mol->atoms()) {
