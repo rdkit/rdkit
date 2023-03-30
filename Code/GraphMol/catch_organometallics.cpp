@@ -12,6 +12,7 @@
 
 #include <GraphMol/RWMol.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
 using namespace RDKit;
@@ -126,6 +127,29 @@ TEST_CASE("get haptic bond end points") {
   bond = mol->getBondWithIdx(1);
   endPts = MolOps::details::hapticBondEndpoints(bond);
   CHECK(std::vector<int>{} == endPts);
+}
+
+TEST_CASE("Rings and dative bonds") {
+  SECTION("ferrocene") {
+    auto m =
+        "C12->[Fe+2]3456789(<-C1=C->3[CH-]->4C->5=2)<-C1=C->6[CH-]->7C->8=C->91"_smiles;
+    REQUIRE(m);
+    std::vector<std::vector<int>> rings;
+    auto nrings = MolOps::symmetrizeSSSR(*m, rings);
+    CHECK(nrings == 2);
+    CHECK(rings[0].size() == 5);
+    CHECK(rings[1].size() == 5);
+  }
+}
+
+TEST_CASE("aromaticity and dative bonds") {
+  SECTION("ferrocene") {
+    auto m =
+        "C12->[Fe+2]3456789(<-C1=C->3[CH-]->4C->5=2)<-C1=C->6[CH-]->7C->8=C->91"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(1)->getIsAromatic());
+  }
 }
 
 TEST_CASE("Github 6252 - wrong endpoints after dativeBondsToHaptic") {

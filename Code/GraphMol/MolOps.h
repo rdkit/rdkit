@@ -688,6 +688,8 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
   \param res used to return the vector of rings. Each entry is a vector with
       atom indices.  This information is also stored in the molecule's
       RingInfo structure, so this argument is optional (see overload)
+  \param includeDativeBonds - determines whether or not dative bonds are used in
+      the ring finding.
 
   \return number of smallest rings found
 
@@ -723,10 +725,12 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
   done. The extra rings this process adds can be quite useful.
 */
 RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
-                                   std::vector<std::vector<int>> &res);
+                                   std::vector<std::vector<int>> &res,
+                                   bool includeDativeBonds = false);
 //! \overload
-RDKIT_GRAPHMOL_EXPORT int findSSSR(
-    const ROMol &mol, std::vector<std::vector<int>> *res = nullptr);
+RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
+                                   std::vector<std::vector<int>> *res = nullptr,
+                                   bool includeDativeBonds = false);
 
 //! use a DFS algorithm to identify ring bonds and atoms in a molecule
 /*!
@@ -756,6 +760,8 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
   \param res used to return the vector of rings. Each entry is a vector with
       atom indices.  This information is also stored in the molecule's
       RingInfo structure, so this argument is optional (see overload)
+  \param includeDativeBonds - determines whether or not dative bonds are used in
+      the ring finding.
 
   \return the total number of rings = (new rings + old SSSRs)
 
@@ -764,9 +770,11 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
   first
 */
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
-                                         std::vector<std::vector<int>> &res);
+                                         std::vector<std::vector<int>> &res,
+                                         bool includeDativeBonds = false);
 //! \overload
-RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
+                                         bool includeDativeBonds = false);
 
 //! @}
 
