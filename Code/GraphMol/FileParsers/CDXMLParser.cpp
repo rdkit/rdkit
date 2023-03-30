@@ -388,9 +388,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       } else {
         bonds.push_back(bond);
       }
-      // end if atom or bond 
-    } 
-  }    // for node
+      // end if atom or bond
+    }
+  }  // for node
 
   // add bonds
   if (!skip_fragment) {
@@ -423,18 +423,18 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                  bond.display == "WedgedHashEnd") {
         bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
       } else if (bond.display == "Wavy") {
-        switch(bond.getBondType()) {
-            case Bond::BondType::SINGLE:
-              bnd->setBondDir(Bond::BondDir::UNKNOWN);
-              break;
-            case Bond::BondType::DOUBLE:
-              bnd->setBondDir(Bond::BondDir::EITHERDOUBLE);
-              bnd->setStereo(Bond::STEREOANY);
-              break;
-            default:
-              BOOST_LOG(rdWarningLog)
+        switch (bond.getBondType()) {
+          case Bond::BondType::SINGLE:
+            bnd->setBondDir(Bond::BondDir::UNKNOWN);
+            break;
+          case Bond::BondType::DOUBLE:
+            bnd->setBondDir(Bond::BondDir::EITHERDOUBLE);
+            bnd->setStereo(Bond::STEREOANY);
+            break;
+          default:
+            BOOST_LOG(rdWarningLog)
                 << "ignoring Wavy bond set on a non double bond id: "
-                << bond.bond_id  << std::endl;
+                << bond.bond_id << std::endl;
         }
       }
     }
@@ -521,7 +521,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                 mol->clearProp(NEEDS_FUSE);
                 std::unique_ptr<ROMol> fused;
                 try {
-                  fused = std::move(molzip(*mol, molzip_params));
+                  fused = molzip(*mol, molzip_params);
                 } catch (Invar::Invariant &) {
                   BOOST_LOG(rdWarningLog)
                       << "Failed fusion of fragment skipping... " << frag_id

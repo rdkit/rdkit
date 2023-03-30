@@ -26,7 +26,6 @@ using boost::multiprecision::uint1024_t;
 
 namespace {
 
-
 // see http://phrogz.net/lazy-cartesian-product
 template <typename T>
 struct LazyCartesianProduct {
@@ -60,9 +59,9 @@ template <typename T>
 std::vector<T> LazyCartesianProduct<T>::entryAt(uint1024_t pos) const {
   auto length = d_listOfLists.size();
   std::vector<T> res(length);
-  for (auto i = 0; i < length; ++i) {
-    res[i] = d_listOfLists[i][static_cast<size_t>(static_cast<uint1024_t>(pos / d_divs[i]) %
-                                                 d_mods[i])];
+  for (auto i = 0u; i < length; ++i) {
+    res[i] = d_listOfLists[i][static_cast<size_t>(
+        static_cast<uint1024_t>(pos / d_divs[i]) % d_mods[i])];
   }
   return res;
 }
@@ -74,7 +73,7 @@ std::vector<unsigned int> possibleValences(
   auto numBonds = atom->getDegree();
 
   auto valences = atomicValence.find(atomNum);
-  if(valences == atomicValence.end()){
+  if (valences == atomicValence.end()) {
     std::stringstream ss;
     ss << "determineBondOrdering() does not work with element "
        << RDKit::PeriodicTable::getTable()->getElementSymbol(atomNum);
@@ -441,7 +440,7 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
 void determineBonds(RWMol &mol, bool useHueckel, int charge, double covFactor,
                     bool allowChargedFragments, bool embedChiral,
                     bool useAtomMap) {
-  if(mol.getNumAtoms() <= 1){
+  if (mol.getNumAtoms() <= 1) {
     return;
   }
   determineConnectivity(mol, useHueckel, charge, covFactor);
