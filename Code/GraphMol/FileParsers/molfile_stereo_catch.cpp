@@ -74,9 +74,26 @@ M  END
     CHECK(sgs[0].getAtoms().size() == 1);
     CHECK(sgs[0].getAtoms()[0]->getIdx() == 1);
 
-    translateChiralFlagToStereoGroups(zeroFlag);
-    CHECK(!zeroFlag.hasProp(common_properties::_MolFileChiralFlag));
-    CHECK(zeroFlag.getStereoGroups().empty());
+    {
+      RWMol cp(zeroFlag);
+      translateChiralFlagToStereoGroups(cp);
+      CHECK(!cp.hasProp(common_properties::_MolFileChiralFlag));
+      auto sgs = cp.getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_AND);
+      CHECK(sgs[0].getAtoms().size() == 1);
+      CHECK(sgs[0].getAtoms()[0]->getIdx() == 1);
+    }
+    {
+      RWMol cp(zeroFlag);
+      translateChiralFlagToStereoGroups(cp, StereoGroupType::STEREO_OR);
+      CHECK(!cp.hasProp(common_properties::_MolFileChiralFlag));
+      auto sgs = cp.getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_OR);
+      CHECK(sgs[0].getAtoms().size() == 1);
+      CHECK(sgs[0].getAtoms()[0]->getIdx() == 1);
+    }
 
     translateChiralFlagToStereoGroups(noFlag);
     CHECK(!noFlag.hasProp(common_properties::_MolFileChiralFlag));
@@ -98,6 +115,19 @@ M  END
     CHECK(sgs[0].getAtoms().size() == 2);
     CHECK(sgs[0].getAtoms()[0]->getIdx() == 1);
     CHECK(sgs[0].getAtoms()[1]->getIdx() == 5);
+
+    {
+      RWMol zeroFlag(*noFlag);
+      zeroFlag.setProp(common_properties::_MolFileChiralFlag, 0);
+      translateChiralFlagToStereoGroups(zeroFlag);
+      CHECK(!zeroFlag.hasProp(common_properties::_MolFileChiralFlag));
+      auto sgs = zeroFlag.getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_AND);
+      CHECK(sgs[0].getAtoms().size() == 2);
+      CHECK(sgs[0].getAtoms()[0]->getIdx() == 1);
+      CHECK(sgs[0].getAtoms()[1]->getIdx() == 5);
+    }
   }
 
   SECTION("pre-existing ABS stereogroup") {

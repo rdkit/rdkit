@@ -321,13 +321,18 @@ void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
   }
 }
 
-void translateChiralFlagToStereoGroups(ROMol &mol) {
-  int flagVal = 0;
-  mol.getPropIfPresent(common_properties::_MolFileChiralFlag, flagVal);
-  mol.clearProp(common_properties::_MolFileChiralFlag);
-  if (!flagVal) {
+void translateChiralFlagToStereoGroups(ROMol &mol,
+                                       StereoGroupType zeroFlagGroupType) {
+  if (!mol.hasProp(common_properties::_MolFileChiralFlag)) {
     return;
   }
+  int flagVal = 0;
+  mol.getProp(common_properties::_MolFileChiralFlag, flagVal);
+  mol.clearProp(common_properties::_MolFileChiralFlag);
+
+  StereoGroupType sgType =
+      flagVal ? StereoGroupType::STEREO_ABSOLUTE : zeroFlagGroupType;
+
   auto sgs = mol.getStereoGroups();
 
   boost::dynamic_bitset<> sgAtoms(mol.getNumAtoms());
@@ -337,21 +342,22 @@ void translateChiralFlagToStereoGroups(ROMol &mol) {
       sgAtoms.set(aptr->getIdx());
     }
     // if we already have an ABS group, we'll add to it
-    if (!absGroup && sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+    if (sgType == StereoGroupType::STEREO_ABSOLUTE && !absGroup &&
+        sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
       absGroup = &sg;
     }
   }
   ROMol::ATOM_PTR_VECT stereoAts;
   for (const auto atom : mol.atoms()) {
     if (!sgAtoms[atom->getIdx()] &&
-        atom->getChiralTag() != Atom::ChiralType::CHI_OTHER &&
-        atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
+        (atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
+         atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW)) {
       stereoAts.push_back(atom);
     }
   }
   if (!stereoAts.empty()) {
     if (!absGroup) {
-      sgs.emplace_back(StereoGroupType::STEREO_ABSOLUTE, stereoAts);
+      sgs.emplace_back(sgType, stereoAts);
       mol.setStereoGroups(sgs);
     } else {
       std::vector<StereoGroup> newSgs;

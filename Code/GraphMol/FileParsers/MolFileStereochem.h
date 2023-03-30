@@ -83,8 +83,26 @@ RDKIT_FILEPARSERS_EXPORT void markUnspecifiedStereoAsUnknown(ROMol &mol,
                                                              int confId = -1);
 
 //! generate enhanced stereo groups based on the status of the chiral flag
-//! property
-RDKIT_FILEPARSERS_EXPORT void translateChiralFlagToStereoGroups(ROMol &mol);
+/// property
+/*
+ \param mol: molecule to be modified
+ \param zeroFlagGroupType: how to handle non-grouped stereo centers when the
+        chiral flag is set to zero
+
+  If the chiral flag is set to a value of 1 then all specified tetrahedral
+  chiral centers which are not already in StereoGroups will be added to an
+  ABS StereoGroup.
+
+  If the chiral flag is set to a value of 0 then all specified tetrahedral
+  chiral centers will be added to a StereoGroup of the type zeroFlagGroupType
+
+  If there is no chiral flag set (i.e. the property is not present), the
+  molecule will not be modified.
+
+*/
+RDKIT_FILEPARSERS_EXPORT void translateChiralFlagToStereoGroups(
+    ROMol &mol,
+    StereoGroupType zeroFlagGroupType = StereoGroupType::STEREO_AND);
 
 }  // namespace RDKit
 #endif
