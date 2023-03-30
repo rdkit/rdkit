@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2021  Greg Landrum and other RDKit contributors
+#  Copyright (C) 2003-2023  Greg Landrum and other RDKit contributors
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -7214,6 +7214,38 @@ CAS<~>
     backfemol = Chem.rdmolops.DativeBondsToHaptic(newfemol)
     self.assertEqual(Chem.MolToSmiles(femol), Chem.MolToSmiles(backfemol))
     
+  def testTranslateChiralFlag(self):
+    mol = Chem.MolFromSmiles("C[C@@](N)(F)C[C@](C)(O)F |a:1|")
+    flagMol = Chem.Mol(mol)
+    flagMol.SetIntProp("_MolFileChiralFlag",1)
+    Chem.TranslateChiralFlagToStereoGroups(flagMol)
+    sgs = flagMol.GetStereoGroups()
+    self.assertEqual(len(sgs),1)
+    self.assertEqual(len(sgs[0].GetAtoms()), 2)
+    self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
+
+    flagMol = Chem.Mol(mol)
+    flagMol.SetIntProp("_MolFileChiralFlag",0)
+    Chem.TranslateChiralFlagToStereoGroups(flagMol)
+    sgs = flagMol.GetStereoGroups()
+    self.assertEqual(len(sgs),2)
+    self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
+    self.assertEqual(len(sgs[0].GetAtoms()), 1)
+
+    self.assertEqual(sgs[1].GetGroupType(), Chem.StereoGroupType.STEREO_AND)
+    self.assertEqual(len(sgs[1].GetAtoms()), 1)
+
+    flagMol = Chem.Mol(mol)
+    flagMol.SetIntProp("_MolFileChiralFlag",0)
+    Chem.TranslateChiralFlagToStereoGroups(flagMol, Chem.StereoGroupType.STEREO_OR)
+    sgs = flagMol.GetStereoGroups()
+    self.assertEqual(len(sgs),2)
+    self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
+    self.assertEqual(len(sgs[0].GetAtoms()), 1)
+
+    self.assertEqual(sgs[1].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    self.assertEqual(len(sgs[1].GetAtoms()), 1)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

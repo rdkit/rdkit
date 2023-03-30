@@ -2878,6 +2878,27 @@ A note on the flags controlling which atoms/bonds are modified:
                 Chirality::getUseLegacyStereoPerception,
                 "returns whether or not the legacy stereo perception code is "
                 "being used");
+
+    python::def(
+        "TranslateChiralFlagToStereoGroups", translateChiralFlagToStereoGroups,
+        (python::arg("mol"),
+         python::arg("zeroFlagGroupType") = StereoGroupType::STEREO_AND),
+        R"DOC(Generate enhanced stereo groups based on the status of the chiral flag property.
+
+  Arguments:
+   - mol: molecule to be modified
+   - zeroFlagGroupType: how to handle non-grouped stereo centers when the
+          chiral flag is set to zero
+
+  If the chiral flag is set to a value of 1 then all specified tetrahedral
+  chiral centers which are not already in StereoGroups will be added to an
+  ABS StereoGroup.
+
+  If the chiral flag is set to a value of 0 then all specified tetrahedral
+  chiral centers will be added to a StereoGroup of the type zeroFlagGroupType
+
+  If there is no chiral flag set (i.e. the property is not present), the
+  molecule will not be modified.)DOC");
   }
 };
 }  // namespace RDKit
