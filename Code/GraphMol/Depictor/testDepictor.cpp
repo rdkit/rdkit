@@ -821,13 +821,12 @@ void testGitHubIssue1073() {
     RWMol *m = SmartsToMol(smarts);
     TEST_ASSERT(m);
 
+    // compute2DCoords does ring finding internally, so there's no error
     RDDepict::compute2DCoords(*m);
 
+    // but the molecule itself is not modified
     RingInfo *ri = m->getRingInfo();
-    TEST_ASSERT(ri->isInitialized());
-    TEST_ASSERT(ri->isAtomInRingOfSize(0, 6));
-    TEST_ASSERT(ri->isAtomInRingOfSize(0, 5));
-    TEST_ASSERT(!ri->isAtomInRingOfSize(0, 9));
+    TEST_ASSERT(!ri->isInitialized());
 
     delete m;
   }

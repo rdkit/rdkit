@@ -306,9 +306,9 @@ ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
   return res;
 }
 
-VECT_INT_VECT getSSSR(ROMol &mol) {
+VECT_INT_VECT getSSSR(ROMol &mol, bool includeDativeBonds) {
   VECT_INT_VECT rings;
-  MolOps::findSSSR(mol, rings);
+  MolOps::findSSSR(mol, rings, includeDativeBonds);
   return rings;
 }
 
@@ -466,9 +466,9 @@ void setHybridizationMol(ROMol &mol) {
   MolOps::setHybridization(wmol);
 }
 
-VECT_INT_VECT getSymmSSSR(ROMol &mol) {
+VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds) {
   VECT_INT_VECT rings;
-  MolOps::symmetrizeSSSR(mol, rings);
+  MolOps::symmetrizeSSSR(mol, rings, includeDativeBonds);
   return rings;
 }
 PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
@@ -1055,11 +1055,14 @@ struct molops_wrapper {
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use.\n\
+    - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
          The length of this will be equal to NumBonds-NumAtoms+1 for single-fragment molecules.\n\
 \n";
-    python::def("GetSSSR", getSSSR, docString.c_str());
+    python::def("GetSSSR", getSSSR,
+                (python::arg("mol"), python::arg("includeDativeBonds") = false),
+                docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
@@ -1072,10 +1075,13 @@ struct molops_wrapper {
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use.\n\
+    - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
-    python::def("GetSymmSSSR", getSymmSSSR, docString.c_str());
+    python::def("GetSymmSSSR", getSymmSSSR,
+                (python::arg("mol"), python::arg("includeDativeBonds") = false),
+                docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =

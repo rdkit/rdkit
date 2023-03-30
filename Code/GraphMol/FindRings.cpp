@@ -67,6 +67,15 @@ void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
 
 }  // end of namespace RingUtils
 
+namespace RDKit {
+namespace {
+bool bondIsDative(const RDKit::Bond &bond) {
+  auto bt = bond.getBondType();
+  return bt == Bond::BondType::DATIVE || bt == Bond::BondType::DATIVEL ||
+         bt == Bond::BondType::DATIVER || bt == Bond::BondType::DATIVEONE;
+}
+}  // namespace
+}  // namespace RDKit
 namespace FindRings {
 using namespace RDKit;
 
@@ -847,16 +856,16 @@ bool findRingConnectingAtoms(const ROMol &tMol, const Bond *bond,
 
 namespace RDKit {
 namespace MolOps {
-int findSSSR(const ROMol &mol, VECT_INT_VECT *res) {
+int findSSSR(const ROMol &mol, VECT_INT_VECT *res, bool includeDativeBonds) {
   if (!res) {
     VECT_INT_VECT rings;
-    return findSSSR(mol, rings);
+    return findSSSR(mol, rings, includeDativeBonds);
   } else {
-    return findSSSR(mol, (*res));
+    return findSSSR(mol, (*res), includeDativeBonds);
   }
 }
 
-int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
+int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
   res.resize(0);
   if (mol.getRingInfo()->isInitialized()) {
     mol.getRingInfo()->reset();
@@ -871,12 +880,14 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   boost::dynamic_bitset<> activeBonds(nbnds);
   activeBonds.set();
 
-  // Zero-order bonds are not candidates for rings
+  // Zero-order bonds are not candidates for rings, and dative bonds may also be
+  // out
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
     const Bond *bond = mol[*firstB];
-    if (bond->getBondType() == Bond::ZERO) {
+    if (bond->getBondType() == Bond::ZERO ||
+        (!includeDativeBonds && bondIsDative(*bond))) {
       activeBonds[bond->getIdx()] = 0;
     }
     ++firstB;
@@ -892,14 +903,11 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     int deg = atom->getDegree();
     atomDegrees[i] = deg;
     atomDegreesWithZeroOrderBonds[i] = deg;
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(atom);
-    while (beg != end) {
-      const Bond *bond = mol[*beg];
-      if (bond->getBondType() == Bond::ZERO) {
+    for (const auto bond : mol.atomBonds(atom)) {
+      if (bond->getBondType() == Bond::ZERO ||
+          (!includeDativeBonds && bondIsDative(*bond))) {
         atomDegrees[i]--;
       }
-      ++beg;
     }
   }
 
@@ -1117,18 +1125,18 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   return rdcast<int>(res.size());
 }
 
-int symmetrizeSSSR(ROMol &mol) {
+int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds) {
   VECT_INT_VECT tmp;
-  return symmetrizeSSSR(mol, tmp);
+  return symmetrizeSSSR(mol, tmp, includeDativeBonds);
 };
 
-int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
+int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
   res.clear();
   VECT_INT_VECT sssrs;
 
   // FIX: need to set flag here the symmetrization has been done in order to
   // avoid repeating this work
-  findSSSR(mol, sssrs);
+  findSSSR(mol, sssrs, includeDativeBonds);
 
   res.reserve(sssrs.size());
   for (const auto &r : sssrs) {

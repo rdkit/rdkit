@@ -81,8 +81,14 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
   setupTextDrawer();
+  // we need ring info for drawing, so copy the molecule
+  // in order to add it
+  ROMol lmol(mol);
+  if (!lmol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(lmol);
+  }
   drawMols_.emplace_back(new MolDraw2D_detail::DrawMol(
-      mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
+      lmol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
       highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
       nullptr, highlight_radii, supportsAnnotations(), confId));
   drawMols_.back()->setOffsets(x_offset_, y_offset_);
