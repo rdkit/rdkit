@@ -23,6 +23,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 
@@ -1518,5 +1519,18 @@ TEST_CASE("Github #6211: substructmatchparams for chemical reactions") {
         }
       }
     }
+  }
+
+  SECTION("serialization") {
+    auto rxn = "[C:1][C@:2]([N:3])[O:4]>>[C:1][C@@:2]([N:3])[O:4]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    rxn->getSubstructParams().useChirality = true;
+    std::string pkl;
+    ReactionPickler::pickleReaction(*rxn,pkl);
+    ChemicalReaction rxn2;
+    ReactionPickler::reactionFromPickle(pkl,rxn2);
+    CHECK(rxn2.getSubstructParams().useChirality == true);
+
   }
 }
