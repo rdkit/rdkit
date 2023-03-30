@@ -1098,5 +1098,13 @@ M  END
     self.assertEqual(res1, res2)
     self.assertEqual(res1, res3)
 
+  def testGithub6211(self):
+    rxn = AllChem.ReactionFromSmarts("[C:1][C@:2]([N:3])[O:4]>>[C:1][C@@:2]([N:3])[O:4]")
+    mol = Chem.MolFromSmiles("CC[C@@H](N)O")
+    self.assertEqual(Chem.MolToSmiles(rxn.RunReactants((mol, ))[0][0]), "CC[C@H](N)O")
+    rxn.GetSubstructParams().useChirality = True
+    self.assertEqual(len(rxn.RunReactants((mol, ))), 0)
+
+
 if __name__ == '__main__':
   unittest.main(verbosity=True)
