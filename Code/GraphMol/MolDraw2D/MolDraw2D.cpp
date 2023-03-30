@@ -81,8 +81,14 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
   setupTextDrawer();
+  // we need ring info for drawing, so copy the molecule
+  // in order to add it
+  ROMol lmol(mol);
+  if (!lmol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(lmol);
+  }
   drawMols_.emplace_back(new MolDraw2D_detail::DrawMol(
-      mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
+      lmol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
       highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
       nullptr, highlight_radii, supportsAnnotations(), confId));
   drawMols_.back()->setOffsets(x_offset_, y_offset_);
@@ -774,10 +780,16 @@ void MolDraw2D::setActiveAtmIdx(int at_idx1, int at_idx2) {
 void MolDraw2D::fixVariableDimensions(
     const MolDraw2D_detail::DrawMol &drawMol) {
   if (panel_width_ == -1) {
-    width_ = panel_width_ = drawMol.width_;
+    width_ = drawMol.width_;
+    if (!flexiMode_) {
+      panel_width_ = width_;
+    }
   }
   if (panel_height_ == -1) {
-    height_ = panel_height_ = drawMol.height_;
+    height_ = drawMol.height_;
+    if (!flexiMode_) {
+      panel_height_ = height_;
+    }
   }
 }
 
@@ -1159,6 +1171,22 @@ void MolDraw2D::setupTextDrawer() {
     BOOST_LOG(rdWarningLog) << "Falling back to original font file "
                             << text_drawer_->getFontFile() << "." << std::endl;
   }
+}
+
+std::pair<int, int> MolDraw2D::getMolSize(
+    const ROMol &mol, const std::string &legend,
+    const std::vector<int> *highlight_atoms,
+    const std::vector<int> *highlight_bonds,
+    const std::map<int, DrawColour> *highlight_atom_map,
+    const std::map<int, DrawColour> *highlight_bond_map,
+    const std::map<int, double> *highlight_radii, int confId) {
+  setupTextDrawer();
+  MolDraw2D_detail::DrawMol dm(
+      mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
+      highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
+      nullptr, highlight_radii, supportsAnnotations(), confId);
+  dm.createDrawObjects();
+  return std::make_pair(dm.width_, dm.height_);
 }
 
 }  // namespace RDKit

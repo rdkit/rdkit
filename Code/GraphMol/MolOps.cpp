@@ -677,7 +677,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         for (auto &sg : mol.getStereoGroups()) {
           std::vector<Atom *> sgats;
           for (auto sga : sg.getAtoms()) {
-            if ((*mapping)[sga->getIdx()] == frag) {
+            if ((*mapping)[sga->getIdx()] == static_cast<int>(frag)) {
               sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
             }
           }
@@ -985,7 +985,7 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   dummyAt->setQuery(makeAtomNullQuery());
 
   unsigned int dummyIdx = mol.addAtom(dummyAt);
-  for (auto i = 0; i < mol.getNumConformers(); ++i) {
+  for (auto i = 0u; i < mol.getNumConformers(); ++i) {
     auto &conf = mol.getConformer(i);
     RDGeom::Point3D dummyPos;
     for (auto ha : hapticAtoms) {

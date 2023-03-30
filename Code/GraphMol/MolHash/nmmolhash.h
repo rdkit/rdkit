@@ -43,7 +43,8 @@ enum class HashFunction {
 };
 
 RDKIT_MOLHASH_EXPORT std::string MolHash(RWMol *mol, HashFunction func,
-                                         bool useCXSmiles = false);
+                                         bool useCXSmiles = false,
+                                         unsigned cxFlagsToSkip = 0);
 
 enum class StripType {
   AtomStereo = 1,

@@ -346,8 +346,10 @@ void EmbeddedFrag::setupAttachmentPoints() {
   }
 }
 
-bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsigned int ring_count) {
-  CoordinateTemplates& coordinate_templates = CoordinateTemplates::getRingSystemTemplates();
+bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
+                                   unsigned int ring_count) {
+  CoordinateTemplates &coordinate_templates =
+      CoordinateTemplates::getRingSystemTemplates();
 
   // only look for an exact match to the ring system because our method of
   // completing rings from a template isn't reliably better than not using
@@ -357,20 +359,20 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsig
   }
 
   // make a mol out of the induced subgraph using the ring system atoms
-  RDKit::RWMol rs_mol (*dp_mol);
+  RDKit::RWMol rs_mol(*dp_mol);
 
   // track original indices so that we can map template coordinates correctly
-  for (auto& at : rs_mol.atoms()) {
+  for (auto &at : rs_mol.atoms()) {
     at->setProp(RDKit::common_properties::molAtomMapNumber, at->getIdx());
   }
 
-  boost::dynamic_bitset<> rs_atoms (dp_mol->getNumAtoms());
+  boost::dynamic_bitset<> rs_atoms(dp_mol->getNumAtoms());
   for (auto aidx : ringSystemAtoms) {
     rs_atoms.set(aidx);
   }
 
   rs_mol.beginBatchEdit();
-  for (auto& at : dp_mol->atoms()) {
+  for (auto &at : dp_mol->atoms()) {
     if (!rs_atoms.test(at->getIdx())) {
       rs_mol.removeAtom(at->getIdx());
     }
@@ -380,9 +382,10 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsig
   // find template that this mol matches to, if any
   RDKit::MatchVectType match;
   std::shared_ptr<RDKit::ROMol> template_mol(nullptr);
-  for (const auto mol : coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
-    // To reduce how often we have to do substructure matches, check ring info and
-    // bond count first
+  for (const auto &mol :
+       coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
+    // To reduce how often we have to do substructure matches, check ring info
+    // and bond count first
     if (mol->getNumBonds() != rs_mol.getNumBonds()) {
       continue;
     } else if (mol->getRingInfo()->numRings() != ring_count) {
@@ -404,10 +407,10 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsig
 
   // copy over new coordinates
   auto conf = template_mol->getConformer();
-  for (auto& [template_aidx, rs_aidx] : match) {
+  for (auto &[template_aidx, rs_aidx] : match) {
     auto mol_aidx = rs_mol.getAtomWithIdx(rs_aidx)->getAtomMapNum();
-    RDGeom::Point2D loc (conf.getAtomPos(template_aidx));
-    EmbeddedAtom new_at (mol_aidx, loc);
+    RDGeom::Point2D loc(conf.getAtomPos(template_aidx));
+    EmbeddedAtom new_at(mol_aidx, loc);
     new_at.df_fixed = true;
     d_eatoms.emplace(mol_aidx, new_at);
   }
@@ -420,7 +423,8 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsig
 // NOTE: the individual rings in fusedRings must appear in traversal order.
 //    This is what is provided by the current ring-finding code.
 //
-void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings, bool useRingTemplates) {
+void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
+                                   bool useRingTemplates) {
   PRECONDITION(dp_mol, "");
   // ok this is what we are going to do here
   // embed each of the individual rings. Then
