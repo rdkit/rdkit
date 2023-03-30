@@ -1480,8 +1480,13 @@ TEST_CASE("Github #6211: substructmatchparams for chemical reactions") {
         if (outSmi != "") {
           REQUIRE(prods.size() == 1);
           CHECK(MolToSmiles(*prods[0][0]) == outSmi);
+          CHECK(isMoleculeReactantOfReaction(*rxn,*reacts.front()));
+          std::unique_ptr<RWMol> prod{SmilesToMol(outSmi)};
+          REQUIRE(prod);
+          CHECK(isMoleculeProductOfReaction(*rxn,*prod));
         } else {
           CHECK(prods.empty());
+          CHECK(!isMoleculeReactantOfReaction(*rxn,*reacts.front()));
         }
       }
     }
@@ -1500,8 +1505,13 @@ TEST_CASE("Github #6211: substructmatchparams for chemical reactions") {
         if (outSmi != "") {
           REQUIRE(prods.size() == 1);
           CHECK(MolToSmiles(*prods[0][0]) == outSmi);
+          CHECK(isMoleculeReactantOfReaction(*rxn,*reacts.front()));
+          std::unique_ptr<RWMol> prod{SmilesToMol(outSmi)};
+          REQUIRE(prod);
+          CHECK(isMoleculeProductOfReaction(*rxn,*prod));
         } else {
           CHECK(prods.empty());
+          CHECK(!isMoleculeReactantOfReaction(*rxn,*reacts.front()));
         }
       }
       // make sure the parameters are copied
