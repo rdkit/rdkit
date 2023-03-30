@@ -435,7 +435,7 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
               double vol = v1.dotProduct(v2.crossProduct(v3));
               // FIX: this is almost certainly wrong and should use the chiral
               // tag
-              if ((cipCode == "S" && vol < 0) || (cipCode == "R" && vol > 0)) {
+              if ((otherAtom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW && vol < 0) || (otherAtom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW && vol > 0)) {
                 dirVect *= -1;
               }
             }
