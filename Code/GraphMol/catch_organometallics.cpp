@@ -101,10 +101,6 @@ TEST_CASE("convert explicit dative bonds to haptic bond") {
       auto mol1 = MolOps::hapticBondsToDative(*mol);
       auto mol2 = MolOps::dativeBondsToHaptic(*mol1);
       CHECK(initSmi == MolToSmiles(*mol2));
-      for (const auto &b : mol2->bonds()) {
-        if (b->getBondType() == Bond::DATIVE) {
-        }
-      }
     }
   }
 }
@@ -145,20 +141,15 @@ TEST_CASE("Github 6252 - wrong endpoints after dativeBondsToHaptic") {
     CHECK(initSmi == MolToSmiles(*mol));
     std::string endpts;
     std::string attach;
-    int numEp = 0;
-    std::vector<std::string> expEndPts{"(5 2 3 1 4 5)", "(5 7 8 6 9 10)"};
-    for (const auto &b : mol->bonds()) {
-      if (b->getBondType() == Bond::DATIVE) {
-        if (b->getPropIfPresent(common_properties::_MolFileBondEndPts,
-                                endpts)) {
-          CHECK(expEndPts[numEp++] == endpts);
-        }
-        if (b->getPropIfPresent(common_properties::_MolFileBondAttach,
-                                attach)) {
-          CHECK("ALL" == attach);
-        }
-      }
-    }
-    CHECK(numEp == 2);
+    auto bond10 = mol->getBondWithIdx(10);
+    CHECK(bond10->getBondType() == Bond::DATIVE);
+    CHECK(bond10->getPropIfPresent(common_properties::_MolFileBondEndPts,
+                                   endpts));
+    CHECK(endpts == "(5 2 3 1 4 5)");
+    auto bond11 = mol->getBondWithIdx(11);
+    CHECK(bond11->getBondType() == Bond::DATIVE);
+    CHECK(bond11->getPropIfPresent(common_properties::_MolFileBondEndPts,
+                                   endpts));
+    CHECK(endpts == "(5 7 8 6 9 10)");
   }
 }
