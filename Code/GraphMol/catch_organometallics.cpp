@@ -144,6 +144,7 @@ TEST_CASE("Github 6252 - wrong endpoints after dativeBondsToHaptic") {
     MolOps::dativeBondsToHaptic(*mol);
     CHECK(initSmi == MolToSmiles(*mol));
     std::string endpts;
+    std::string attach;
     int numEp = 0;
     std::vector<std::string> expEndPts{"(5 2 3 1 4 5)", "(5 7 8 6 9 10)"};
     for (const auto &b : mol->bonds()) {
@@ -151,6 +152,10 @@ TEST_CASE("Github 6252 - wrong endpoints after dativeBondsToHaptic") {
         if (b->getPropIfPresent(common_properties::_MolFileBondEndPts,
                                 endpts)) {
           CHECK(expEndPts[numEp++] == endpts);
+        }
+        if (b->getPropIfPresent(common_properties::_MolFileBondAttach,
+                                attach)) {
+          CHECK("ALL" == attach);
         }
       }
     }

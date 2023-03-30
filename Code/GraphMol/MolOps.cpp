@@ -1011,6 +1011,7 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   }
   endpts += ")";
   bond->setProp(common_properties::_MolFileBondEndPts, endpts);
+  bond->setProp<std::string>(common_properties::_MolFileBondAttach, "ALL");
 }
 }  // namespace
 
