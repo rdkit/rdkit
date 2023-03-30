@@ -3515,7 +3515,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "RDKit Issue #XXXX: C atom with mix of implicit + \"Atom\" has potential stereo",
+    "RDKit Issue #6239: Tri-coordinate atom with implicit + neighbor H atom is found potentially chiral",
     "[bug][stereo]") {
   // Parametrize test to run under legacy and new stereo perception
   const auto legacy_stereo = GENERATE(true, false);
