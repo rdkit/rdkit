@@ -49,8 +49,8 @@ bool getValFromEnvironment(const char *var, bool defVal) {
   return defVal;
 }
 
-bool is_protium(const Atom &atom) {
-  return atom.getAtomicNum() == 1 && atom.getIsotope() < 2;
+bool is_regular_h(const Atom &atom) {
+  return atom.getAtomicNum() == 1 && atom.getIsotope() == 0;
 }
 
 // ----------------------------------- -----------------------------------
@@ -115,7 +115,7 @@ Atom::ChiralType atomChiralTypeFromBondDir(const ROMol &mol, const Bond *bond,
   bool hSeen = false;
 
   neighborBondIndices.push_back(bond->getIdx());
-  if (is_protium(*bondAtom)) {
+  if (is_regular_h(*bondAtom)) {
     hSeen = true;
   }
 
@@ -126,7 +126,7 @@ Atom::ChiralType atomChiralTypeFromBondDir(const ROMol &mol, const Bond *bond,
       // break;
     }
     if (nbrBond != bond) {
-      if (is_protium(*nbrBond->getOtherAtom(atom))) {
+      if (is_regular_h(*nbrBond->getOtherAtom(atom))) {
         hSeen = true;
       }
       neighborBondIndices.push_back(nbrBond->getIdx());
@@ -827,7 +827,7 @@ unsigned int getAtomNonzeroDegree(const Atom *atom) {
 
 bool has_protium_neighbor(const ROMol &mol, const Atom *atom) {
   for (const auto nbr : mol.atomNeighbors(atom)) {
-    if (is_protium(*nbr)) {
+    if (is_regular_h(*nbr)) {
       return true;
     }
   }
