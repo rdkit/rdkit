@@ -3,6 +3,8 @@ steps:
   displayName: Setup build environment
 - script: |
     conda config --set always_yes yes --set changeps1 no
+    conda install -n base conda-libmamba-solver
+    conda config --set solver libmamba
     conda info -a
     conda create --name rdkit_build ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
