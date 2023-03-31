@@ -3,6 +3,7 @@ steps:
   displayName: Setup build environment
 - script: |
     conda config --set always_yes yes --set changeps1 no
+    conda update -n base -c defaults conda
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba
     conda info -a
