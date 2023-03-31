@@ -468,8 +468,13 @@ recursive_query: BEGIN_RECURSE mol END_RECURSE {
   QueryAtom *qA = new QueryAtom();
   //  FIX: there's maybe a leak here
   RWMol *molP = (*molList)[$2];
+  CHECK_INVARIANT(molP, "no molecule");
   // close any rings in the molecule:
-  SmilesParseOps::CloseMolRings(molP,0);
+  auto errorMsg = SmilesParseOps::CloseMolRings(*molP,0);
+  if (!errorMsg.empty()) {
+    BOOST_LOG(rdErrorLog) << errorMsg << std::endl;
+    YYABORT;
+  }
 
   //molP->debugMol(std::cout);
   qA->setQuery(new RecursiveStructureQuery(molP));
@@ -489,8 +494,13 @@ recursive_query: BEGIN_RECURSE mol END_RECURSE {
   QueryAtom *qA = new QueryAtom();
   //  FIX: there's maybe a leak here
   RWMol *molP = (*molList)[$2];
+  CHECK_INVARIANT(molP, "no molecule");
   // close any rings in the molecule:
-  SmilesParseOps::CloseMolRings(molP,0);
+  auto errorMsg = SmilesParseOps::CloseMolRings(*molP,0);
+  if (!errorMsg.empty()) {
+    BOOST_LOG(rdErrorLog) << errorMsg << std::endl;
+    YYABORT;
+  }
 
   //molP->debugMol(std::cout);
   qA->setQuery(new RecursiveStructureQuery(molP,$5));

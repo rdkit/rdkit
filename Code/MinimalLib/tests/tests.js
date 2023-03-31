@@ -1767,6 +1767,22 @@ M  END
     }
 }
 
+function test_leak() {
+    for (let i = 0; i < 500; i++) {
+        let mol;
+        try{
+            mol = RDKitModule.get_mol('CODE-123456')
+        } catch (e) {
+            if (mol !== null && mol !== undefined) {
+                mol?.delete();
+            }
+        }
+        if (mol !== null && mol !== undefined) {
+            mol?.delete();
+        }
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -1819,6 +1835,7 @@ initRDKitModule().then(function(instance) {
     test_wedging_if_no_match();
     test_get_frags();
     test_hs_in_place();
+    test_leak();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

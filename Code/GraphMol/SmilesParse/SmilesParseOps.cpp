@@ -207,7 +207,11 @@ bool operator<(const std::pair<T, T> &p1, const std::pair<T, T> &p2) {
 
 void AdjustAtomChiralityFlags(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
-  for (auto atom : mol->atoms()) {
+  AdjustAtomChiralityFlags(*mol);
+}
+
+void AdjustAtomChiralityFlags(RWMol &mol) {
+  for (auto atom : mol.atoms()) {
     Atom::ChiralType chiralType = atom->getChiralTag();
     if (chiralType == Atom::CHI_TETRAHEDRAL_CW ||
         chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
@@ -233,8 +237,8 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       neighbors.emplace_back(atom->getIdx(), -1);
       std::list<size_t> bondOrder;
       for (auto nbrIdx :
-           boost::make_iterator_range(mol->getAtomNeighbors(atom))) {
-        Bond *nbrBond = mol->getBondBetweenAtoms(atom->getIdx(), nbrIdx);
+           boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+        Bond *nbrBond = mol.getBondBetweenAtoms(atom->getIdx(), nbrIdx);
         if (std::find(ringClosures.begin(), ringClosures.end(),
                       static_cast<int>(nbrBond->getIdx())) ==
             ringClosures.end()) {
@@ -296,7 +300,7 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       //      those cases by looking for unsaturated atoms
       //
       if (Canon::chiralAtomNeedsTagInversion(
-              *mol, atom, atom->hasProp(common_properties::_SmilesStart),
+              mol, atom, atom->hasProp(common_properties::_SmilesStart),
               ringClosures.size())) {
         ++nSwaps;
       }
@@ -312,9 +316,13 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
   }
 }  // namespace SmilesParseOps
 
-Bond::BondType GetUnspecifiedBondType(const RWMol *mol, const Atom *atom1,
+Bond::BondType GetUnspecifiedBondType(const RWMol *, const Atom *atom1,
                                       const Atom *atom2) {
-  PRECONDITION(mol, "no molecule");
+  return GetUnspecifiedBondType(atom1, atom2);
+}
+
+Bond::BondType GetUnspecifiedBondType(const Atom *atom1,
+                                      const Atom *atom2) {
   PRECONDITION(atom1, "no atom1");
   PRECONDITION(atom2, "no atom2");
   Bond::BondType res;
@@ -325,11 +333,16 @@ Bond::BondType GetUnspecifiedBondType(const RWMol *mol, const Atom *atom1,
   }
   return res;
 }
+
 void SetUnspecifiedBondTypes(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
-  for (auto bond : mol->bonds()) {
+  SetUnspecifiedBondTypes(*mol);
+}
+
+void SetUnspecifiedBondTypes(RWMol &mol) {
+  for (auto bond : mol.bonds()) {
     if (bond->hasProp(RDKit::common_properties::_unspecifiedOrder)) {
-      bond->setBondType(GetUnspecifiedBondType(mol, bond->getBeginAtom(),
+      bond->setBondType(GetUnspecifiedBondType(bond->getBeginAtom(),
                                                bond->getEndAtom()));
       if (bond->getBondType() == Bond::AROMATIC) {
         bond->setIsAromatic(true);
@@ -378,9 +391,17 @@ bool checkChiralPermutation(int chiralTag, int permutation) {
   return true;
 }
 
+// deprecated
 void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict) {
   PRECONDITION(mol, "no molecule");
-  for (const auto atom : mol->atoms()) {
+  auto error = CheckChiralitySpecifications(*mol, strict);
+  if (!error.empty()) {
+    throw SmilesParseException(error.c_str());
+  }
+}
+
+std::string CheckChiralitySpecifications(RDKit::RWMol &mol, bool strict) {
+  for (const auto atom : mol.atoms()) {
     int permutation;
     if (atom->getChiralTag() > RDKit::Atom::ChiralType::CHI_OTHER &&
         permutationLimits.find(atom->getChiralTag()) !=
@@ -394,7 +415,7 @@ void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict) {
                 .str();
         BOOST_LOG(rdWarningLog) << error << std::endl;
         if (strict) {
-          throw SmilesParseException(error);
+          return error;
         }
       }
       // directly convert @TH1 -> @ and @TH2 -> @@
@@ -409,9 +430,19 @@ void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict) {
       }
     }
   }
+  return "";
 }
 
+// deprecated
 void CloseMolRings(RWMol *mol, bool toleratePartials) {
+  PRECONDITION(mol, "no molecule");
+  auto error = CloseMolRings(*mol, toleratePartials);
+  if (!error.empty()) {
+    throw SmilesParseException(error.c_str());
+  }
+}
+
+std::string CloseMolRings(RWMol &mol, bool toleratePartials) {
   //  Here's what we want to do here:
   //    loop through the molecule's atom bookmarks
   //    for each bookmark:
@@ -421,10 +452,9 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
   //       whilst doing this, we have to be cognizant of the fact that
   //          there may well be partial bonds in the molecule which need
   //          to be tied in as well.  WOO HOO! IT'S A BIG MESS!
-  PRECONDITION(mol, "no molecule");
 
-  auto bookmarkIt = mol->getAtomBookmarks()->begin();
-  while (bookmarkIt != mol->getAtomBookmarks()->end()) {
+  auto bookmarkIt = mol.getAtomBookmarks()->begin();
+  while (bookmarkIt != mol.getAtomBookmarks()->end()) {
     auto &bookmark = *bookmarkIt;
     // don't bother even considering bookmarks outside
     // the range used for rings
@@ -436,7 +466,9 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
         Atom *atom1 = *atomIt;
         ++atomIt;
         if (!toleratePartials && atomIt == atomsEnd) {
-          ReportParseError("unclosed ring");
+          std::string msg = "unclosed ring";
+          ReportParseError(msg.c_str(), false);
+          return msg;
         } else if (atomIt != atomsEnd && *atomIt == atom1) {
           // make sure we don't try to connect an atom to itself
           // this was github #1925
@@ -445,8 +477,9 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
                   "duplicated ring closure %1% bonds atom %2% to itself"} %
               bookmark.first % atom1->getIdx();
           std::string msg = fmt.str();
-          ReportParseError(msg.c_str(), true);
-        } else if (mol->getBondBetweenAtoms(atom1->getIdx(),
+          ReportParseError(msg.c_str(), false);
+          return msg;
+        } else if (mol.getBondBetweenAtoms(atom1->getIdx(),
                                             (*atomIt)->getIdx()) != nullptr) {
           auto fmt =
               boost::format{
@@ -454,7 +487,8 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
                   "%3%"} %
               bookmark.first % atom1->getIdx() % (*atomIt)->getIdx();
           std::string msg = fmt.str();
-          ReportParseError(msg.c_str(), true);
+          ReportParseError(msg.c_str(), false);
+          return msg;
         } else if (atomIt != atomsEnd) {
           // we actually found an atom, so connect it to the first
           Atom *atom2 = *atomIt;
@@ -464,7 +498,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           // We're guaranteed two partial bonds, one for each time
           // the ring index was used.  We give the first specification
           // priority.
-          CHECK_INVARIANT(mol->hasBondBookmark(bookmark.first),
+          CHECK_INVARIANT(mol.hasBondBookmark(bookmark.first),
                           "Missing bond bookmark");
 
           // now use the info from the partial bond:
@@ -472,7 +506,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           // directionality (with a minor caveat documented below) and will
           // have its beginning atom set already:
           RWMol::BOND_PTR_LIST bonds =
-              mol->getAllBondsWithBookmark(bookmark.first);
+              mol.getAllBondsWithBookmark(bookmark.first);
           auto bondIt = bonds.begin();
           CHECK_INVARIANT(bonds.size() >= 2, "Missing bond");
 
@@ -482,8 +516,8 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           Bond *bond2 = *bondIt;
 
           // remove those bonds from the bookmarks:
-          mol->clearBondBookmark(bookmark.first, bond1);
-          mol->clearBondBookmark(bookmark.first, bond2);
+          mol.clearBondBookmark(bookmark.first, bond1);
+          mol.clearBondBookmark(bookmark.first, bond2);
 
           // Make sure the bonds have the correct starting atoms:
           CHECK_INVARIANT(bond1->getBeginAtomIdx() == atom1->getIdx(),
@@ -548,7 +582,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           }
           if (matchedBond->getBondType() == Bond::UNSPECIFIED &&
               !matchedBond->hasQuery()) {
-            Bond::BondType bondT = GetUnspecifiedBondType(mol, atom1, atom2);
+            Bond::BondType bondT = GetUnspecifiedBondType(atom1, atom2);
             matchedBond->setBondType(bondT);
           }
           matchedBond->setOwningMol(mol);
@@ -557,7 +591,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           }
 
           // add the bond:
-          bondIdx = mol->addBond(matchedBond, true);
+          bondIdx = mol.addBond(matchedBond, true);
 
           // we found a bond, so update the atom's _RingClosures
           // property:
@@ -590,13 +624,14 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
       int mark = bookmark.first;
       ++bookmarkIt;
       for (const auto atom : bookmarkedAtomsToRemove) {
-        mol->clearAtomBookmark(mark, atom);
+        mol.clearAtomBookmark(mark, atom);
       }
     } else {
       ++bookmarkIt;
     }
   }
-};
+  return "";
+}
 
 void CleanupAfterParsing(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
