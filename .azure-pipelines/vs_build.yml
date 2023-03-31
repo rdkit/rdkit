@@ -3,17 +3,15 @@ steps:
   displayName: Setup build environment
 - script: |
     conda config --set always_yes yes --set changeps1 no
-    conda update -n base -c defaults conda
-    conda install -n base conda-libmamba-solver
-    conda config --set solver libmamba
+    conda install -n base mamba
     conda info -a
-    conda create --name rdkit_build ^
+    mamba create --name rdkit_build ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
         py-boost=$(boost_version) libboost=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas
     call activate rdkit_build
-    conda install -c conda-forge sphinx myst-parser jupyter
-    conda install -c conda-forge cmake nbval
+    mamba install -c conda-forge sphinx myst-parser jupyter
+    mamba install -c conda-forge cmake nbval
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=
