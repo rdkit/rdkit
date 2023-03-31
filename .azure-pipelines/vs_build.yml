@@ -3,7 +3,7 @@ steps:
   displayName: Setup build environment
 - script: |
     conda config --set always_yes yes --set changeps1 no
-    conda install -n base mamba
+    conda install -n base -c conda-forge mamba
     conda info -a
     mamba create --name rdkit_build ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
