@@ -5,9 +5,9 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda install -n base -c conda-forge mamba
     conda info -a
-    mamba create --name rdkit_build ^
-        boost-cpp=$(boost_version) boost=$(boost_version) ^
-        py-boost=$(boost_version) libboost=$(boost_version) ^
+    mamba create --name rdkit_build -c conda-forge ^
+        $(python) boost-cpp=$(boost_version) boost=$(boost_version) ^
+        boost-cpp=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas
     conda activate rdkit_build
     mamba install -c conda-forge cmake nbval
