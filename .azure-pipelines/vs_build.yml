@@ -9,7 +9,7 @@ steps:
         $(python) boost-cpp=$(boost_version) boost=$(boost_version) ^
         boost-cpp=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas
-    call activate rdkit_build
+    conda activate rdkit_build
     mamba install -c conda-forge sphinx myst-parser jupyter
     mamba install -c conda-forge cmake nbval
   displayName: Install dependencies
