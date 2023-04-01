@@ -53,6 +53,26 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
     res.addConformer(newConf, false);
   }
 }
+void copyStereoGroups(const std::map<const Atom *, Atom*> &molAtomMap, const ROMol &mol, RWMol &newMol) {
+  // Copy over any stereo groups that lie in the new molecule
+  if (!mol.getStereoGroups().empty()) {
+    std::vector<StereoGroup> newStereoGroups;
+    for (auto &stereoGroup : mol.getStereoGroups()) {
+      std::vector<Atom *> newStereoAtoms;
+      for (const auto stereoGroupAtom : stereoGroup.getAtoms()) {
+        if (auto found = molAtomMap.find(stereoGroupAtom);
+            found != molAtomMap.end()) {
+          newStereoAtoms.push_back(found->second);
+        }
+      }
+      if (!newStereoAtoms.empty()) {
+        newStereoGroups.emplace_back(stereoGroup.getGroupType(),
+                                     newStereoAtoms);
+      }
+    }
+    newMol.setStereoGroups(std::move(newStereoGroups));
+  }
+}
 }  // namespace details
 
 namespace {
@@ -716,24 +736,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
     }
   }
 
-  // Copy over any stereo groups that lie in the new molecule
-  if (!mol.getStereoGroups().empty()) {
-    std::vector<StereoGroup> newStereoGroups;
-    for (auto &stereoGroup : mol.getStereoGroups()) {
-      std::vector<Atom *> newStereoAtoms;
-      for (auto stereoGroupAtom : stereoGroup.getAtoms()) {
-        if (auto found = molAtomMap.find(stereoGroupAtom);
-            found != molAtomMap.end()) {
-          newStereoAtoms.push_back(found->second);
-        }
-      }
-      if (!newStereoAtoms.empty()) {
-        newStereoGroups.emplace_back(stereoGroup.getGroupType(),
-                                     newStereoAtoms);
-      }
-    }
-    newMol->setStereoGroups(std::move(newStereoGroups));
-  }
+  // copy over stereo groups
+  details::copyStereoGroups(molAtomMap, mol, *newMol);
 
   // clear computed props and do basic updates on
   // the resulting molecule, but allow unhappiness:

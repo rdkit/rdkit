@@ -264,23 +264,7 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
   }
 
   // Copy over any stereo groups that lie in the extracted core
-  if (!mol.getStereoGroups().empty()) {
-    std::vector<StereoGroup> coreStereoGroups;
-    for (auto &stereoGroup : mol.getStereoGroups()) {
-      std::vector<Atom *> coreStereoAtoms;
-      for (auto stereoGroupAtom : stereoGroup.getAtoms()) {
-        if (auto found = molAtomMap.find(stereoGroupAtom);
-            found != molAtomMap.end()) {
-          coreStereoAtoms.push_back(found->second);
-        }
-      }
-      if (!coreStereoAtoms.empty()) {
-        coreStereoGroups.emplace_back(stereoGroup.getGroupType(),
-                                      coreStereoAtoms);
-      }
-    }
-    extractedCore->setStereoGroups(std::move(coreStereoGroups));
-  }
+  details::copyStereoGroups(molAtomMap, mol, *extractedCore);
 
   extractedCore->clearComputedProps(true);
   extractedCore->updatePropertyCache(false);
