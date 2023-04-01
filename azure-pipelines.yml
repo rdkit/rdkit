@@ -47,7 +47,7 @@ jobs:
     vmImage: windows-2019
   variables:
     python: python=3.8
-    boost_version: 1.71.0
+    boost_version: 1.80.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python_name: python38
   steps:
@@ -58,7 +58,7 @@ jobs:
     vmImage: windows-2019
   variables:
     python: python=3.8
-    boost_version: 1.71.0
+    boost_version: 1.80.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python_name: python38
   steps:
