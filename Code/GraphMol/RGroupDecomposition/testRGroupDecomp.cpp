@@ -1128,9 +1128,10 @@ Br[*:3]
 Br[*:3]
 )RES");
   }
-  {  // repeat that without symmetrization (testing #3224)
-     // Still three groups added, but bromine and fluorine
-     // are not aligned between R1 and R3
+  {
+    // repeat that without symmetrization (testing #3224)
+    // Still three groups added, but bromine and fluorine
+    // are not aligned between R1 and R3
     RGroupDecompositionParameters ps;
     ps.matchingStrategy = RDKit::NoSymmetrization;
     RGroupDecomposition decomp(*core, ps);
@@ -3549,7 +3550,7 @@ void testRGroupCoordinatesAddedToCore() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog)
-      << "Test that cordinates for R groups are properly added to core when the core has coordinates and the target does not"
+      << "Test that coordinates for R groups are properly added to core when the core has coordinates and the target does not"
       << std::endl;
   auto core = R"CTAB(ACS Document 1996
   ChemDraw05202112262D
@@ -3609,7 +3610,7 @@ M  END
       auto coreAtoms = core->atoms();
       auto originalAtom = std::find_if(
           coreAtoms.begin(), coreAtoms.end(), [rGroupNum](const auto &a) {
-              return static_cast<int>(a->getIsotope()) == rGroupNum;
+            return static_cast<int>(a->getIsotope()) == rGroupNum;
           });
       TEST_ASSERT(originalAtom != coreAtoms.end());
       const auto &originalPoint =
@@ -3623,6 +3624,188 @@ M  END
     }
   }
   TEST_ASSERT(numberGroups == 2);
+}
+
+void testStereoGroupsPreserved() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test that stereo group information is copied from input structure to core and R groups"
+      << std::endl;
+  auto core = R"CTAB(
+  ChemDraw02132309392D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -1.071690 1.031297 0.000000 0
+M  V30 2 C -1.071690 0.206260 0.000000 0
+M  V30 3 C -0.357230 -0.206259 0.000000 0
+M  V30 4 C 0.357230 0.206260 0.000000 0
+M  V30 5 C 0.357230 1.031297 0.000000 0
+M  V30 6 C -0.357230 1.443816 0.000000 0
+M  V30 7 C -0.357230 -1.031297 0.000000 0
+M  V30 8 N 0.357230 -1.443816 0.000000 0
+M  V30 9 R1 -1.071690 -1.443816 0.000000 0
+M  V30 10 Cl 1.071690 1.443816 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 1 3 7
+M  V30 8 1 7 8 CFG=1
+M  V30 9 1 7 9
+M  V30 10 1 5 10
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+
+  auto mol1 = R"CTAB(
+  ChemDraw02032311272D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 16 17 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 0.348623 1.031250 0.000000 0
+M  V30 2 C 0.348623 0.206250 0.000000 0
+M  V30 3 C 1.063094 -0.206250 0.000000 0
+M  V30 4 C 1.777565 0.206250 0.000000 0
+M  V30 5 C 1.777565 1.031250 0.000000 0
+M  V30 6 C 1.063094 1.443750 0.000000 0
+M  V30 7 C 1.063094 -1.031250 0.000000 0
+M  V30 8 N 1.777565 -1.443750 0.000000 0
+M  V30 9 C 0.348623 -1.443750 0.000000 0
+M  V30 10 C -0.365848 -1.031250 0.000000 0
+M  V30 11 C -0.452084 -0.210769 0.000000 0
+M  V30 12 C -1.259056 -0.039242 0.000000 0
+M  V30 13 C -1.671556 -0.753713 0.000000 0
+M  V30 14 C -1.119523 -1.366808 0.000000 0
+M  V30 15 O -2.492036 -0.839949 0.000000 0
+M  V30 16 Cl 2.492036 1.443750 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 1 3 7
+M  V30 8 1 7 8 CFG=1
+M  V30 9 1 7 9
+M  V30 10 1 9 10
+M  V30 11 1 10 11
+M  V30 12 1 11 12
+M  V30 13 1 12 13
+M  V30 14 1 13 14
+M  V30 15 1 14 10
+M  V30 16 1 13 15 CFG=3
+M  V30 17 1 5 16
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(2 7 13)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+
+  auto mol2 = R"CTAB(
+  ChemDraw02032311382D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 18 19 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.348623 1.388485 0.000000 0
+M  V30 2 C 0.348623 0.563485 0.000000 0
+M  V30 3 C 1.063094 0.150985 0.000000 0
+M  V30 4 C 1.777565 0.563485 0.000000 0
+M  V30 5 C 1.777565 1.388485 0.000000 0
+M  V30 6 C 1.063094 1.800985 0.000000 0
+M  V30 7 C 1.063094 -0.674015 0.000000 0
+M  V30 8 N 1.777565 -1.086515 0.000000 0
+M  V30 9 C 0.348623 -1.086515 0.000000 0
+M  V30 10 C -0.365848 -0.674015 0.000000 0
+M  V30 11 C -0.452084 0.146466 0.000000 0
+M  V30 12 C -1.259056 0.317993 0.000000 0
+M  V30 13 C -1.671556 -0.396478 0.000000 0
+M  V30 14 C -1.119523 -1.009572 0.000000 0
+M  V30 15 O -2.492036 -0.482714 0.000000 0
+M  V30 16 Cl 2.492036 1.800986 0.000000 0
+M  V30 17 O -0.063877 -1.800986 0.000000 0
+M  V30 18 C 0.761123 -1.800986 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 1 3 7
+M  V30 8 1 7 8 CFG=1
+M  V30 9 1 7 9
+M  V30 10 1 9 10
+M  V30 11 1 10 11
+M  V30 12 1 11 12
+M  V30 13 1 12 13
+M  V30 14 1 13 14
+M  V30 15 1 14 10
+M  V30 16 1 13 15 CFG=3
+M  V30 17 1 5 16
+M  V30 18 1 9 17 CFG=1
+M  V30 19 1 9 18 CFG=3
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(2 7 9)
+M  V30 MDLV30/STEREL1 ATOMS=(1 13)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  params.allowMultipleRGroupsOnUnlabelled = true;
+  params.onlyMatchAtRGroups = false;
+  RGroupDecomposition decomp(*core, params);
+  auto result = decomp.add(*mol1);
+  TEST_ASSERT(result == 0);
+  result = decomp.add(*mol2);
+  TEST_ASSERT(result == 1);
+  decomp.process();
+
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 2);
+  TEST_ASSERT(rows[0].size() == 2);
+  TEST_ASSERT(rows[1].size() == 2);
+
+  auto core1 = rows[0]["Core"];
+  TEST_ASSERT(core1->getStereoGroups().size() == 1);
+  TEST_ASSERT(core1->getStereoGroups()[0].getGroupType() ==
+              StereoGroupType::STEREO_ABSOLUTE);
+  auto r1 = rows[0]["R1"];
+  TEST_ASSERT(r1->getStereoGroups().size() == 1);
+  TEST_ASSERT(r1->getStereoGroups()[0].getGroupType() ==
+              StereoGroupType::STEREO_ABSOLUTE);
+
+  auto core2 = rows[1]["Core"];
+  TEST_ASSERT(core2->getStereoGroups().size() == 1);
+  TEST_ASSERT(core2->getStereoGroups()[0].getGroupType() ==
+              StereoGroupType::STEREO_ABSOLUTE);
+  auto r2 = rows[1]["R1"];
+  TEST_ASSERT(r2->getStereoGroups().size() == 2);
+  TEST_ASSERT(r2->getStereoGroups()[0].getGroupType() ==
+              StereoGroupType::STEREO_ABSOLUTE);
+  TEST_ASSERT(r2->getStereoGroups()[1].getGroupType() ==
+              StereoGroupType::STEREO_OR);
 }
 
 int main() {
@@ -3685,6 +3868,7 @@ int main() {
   testGitHub5631();
   testGithub5613();
   testRGroupCoordinatesAddedToCore();
+  testStereoGroupsPreserved();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
