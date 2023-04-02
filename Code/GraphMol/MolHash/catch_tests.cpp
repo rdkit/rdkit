@@ -409,8 +409,15 @@ TEST_CASE("keto enol tautomer") {
         {"C=O", "[CH2][O]_0_0", "C=O_0_0"},
         {"CC=O", "C[CH][O]_0_0", "[CH2][CH][O]_1_0"},
         {"C=CO", "[CH2][CH][O]_1_0", "[CH2][CH][O]_1_0"},
-        {"CC(C)=O", "C[C](C)[O]_0_0", "[CH2][C]([CH])[O]_1_0"},
-        {"C=C(C)O", "[CH2][C](C)[O]_1_0", "[CH2][C]([CH])[O]_1_0"},
+        {"C=COC", "[CH2][CH]OC_0_0", "C=COC_0_0"},
+        {"CC(C)(C)C=O", "CC(C)(C)[CH][O]_0_0", "CC(C)(C)C=O_0_0"},
+        {"CC(C)=CO", "C[C](C)[CH][O]_1_0", "C[C](C)[CH][O]_1_0"},
+        {"COC=O", "CO[CH][O]_0_0", "COC=O_0_0"},
+        {"CNC=O", "C[N][CH][O]_1_0", "C[N][CH][O]_1_0"},
+        {"CN(C)C=O", "CN(C)[CH][O]_0_0", "CN(C)C=O_0_0"},
+        {"CC(C)(C)NC=O", "CC(C)(C)[N][CH][O]_1_0", "CC(C)(C)[N][CH][O]_1_0"},
+        {"CC(C)=O", "C[C](C)[O]_0_0", "[CH2][C](C)[O]_1_0"},
+        {"C=C(C)O", "[CH2][C](C)[O]_1_0", "[CH2][C](C)[O]_1_0"},
         {"c1ccccc1", "[CH]1[CH][CH][CH][CH][CH]1_0_0", "c1ccccc1_0_0"},
         {"CN(C)C=O", "CN(C)[CH][O]_0_0", "CN(C)C=O_0_0"},
     };
@@ -426,6 +433,7 @@ TEST_CASE("keto enol tautomer") {
       }
       {
         RWMol cp(*m);
+        std::cerr << "!_!_!_!_!_!" << std::endl;
         auto hsh2 =
             MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
         CHECK(hsh2 == std::get<2>(tpl));
