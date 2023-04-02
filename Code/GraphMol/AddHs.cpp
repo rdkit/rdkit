@@ -359,39 +359,21 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
       // --------------------------------------------------------------------------
       boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(otherAtom);
 
-      if (otherAtom->hasProp(common_properties::_CIPCode)) {
-        // if the central atom is chiral, we'll order the neighbors
-        // by CIP rank:
-        std::vector<std::pair<unsigned int, int>> nbrs;
-        while (nbrIdx != endNbrs) {
-          if (*nbrIdx != idx) {
-            const Atom *tAtom = mol.getAtomWithIdx(*nbrIdx);
-            unsigned int cip = 0;
-            tAtom->getPropIfPresent<unsigned int>(common_properties::_CIPRank,
-                                                  cip);
-            nbrs.emplace_back(cip, rdcast<int>(*nbrIdx));
+      // We're using chiral tag for checking chirality, so we just take the
+      // initial order
+      while (nbrIdx != endNbrs) {
+        if (*nbrIdx != idx) {
+          if (!nbr1) {
+            nbr1 = mol.getAtomWithIdx(*nbrIdx);
+          } else if (!nbr2) {
+            nbr2 = mol.getAtomWithIdx(*nbrIdx);
+          } else {
+            nbr3 = mol.getAtomWithIdx(*nbrIdx);
           }
-          ++nbrIdx;
         }
-        std::sort(nbrs.begin(), nbrs.end());
-        nbr1 = mol.getAtomWithIdx(nbrs[0].second);
-        nbr2 = mol.getAtomWithIdx(nbrs[1].second);
-        nbr3 = mol.getAtomWithIdx(nbrs[2].second);
-      } else {
-        // central atom isn't chiral, so the neighbor ordering isn't important:
-        while (nbrIdx != endNbrs) {
-          if (*nbrIdx != idx) {
-            if (!nbr1) {
-              nbr1 = mol.getAtomWithIdx(*nbrIdx);
-            } else if (!nbr2) {
-              nbr2 = mol.getAtomWithIdx(*nbrIdx);
-            } else {
-              nbr3 = mol.getAtomWithIdx(*nbrIdx);
-            }
-          }
-          ++nbrIdx;
-        }
+        ++nbrIdx;
       }
+
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
       TEST_ASSERT(nbr3);
@@ -432,8 +414,7 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
               RDGeom::Point3D v2 = nbr1Vect - nbr3Vect;
               RDGeom::Point3D v3 = nbr2Vect - nbr3Vect;
               double vol = v1.dotProduct(v2.crossProduct(v3));
-              // FIX: this is almost certainly wrong and should use the chiral
-              // tag
+
               if ((otherAtom->getChiralTag() ==
                        Atom::ChiralType::CHI_TETRAHEDRAL_CCW &&
                    vol < 0) ||
