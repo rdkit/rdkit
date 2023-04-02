@@ -14,7 +14,6 @@
 #include "GraphMol/Substruct/SubstructUtils.h"
 
 namespace RDKit {
-
 namespace {
 // From answer 12 in
 // https://stackoverflow.com/questions/5279051/how-can-i-create-cartesian-product-of-vector-of-vectors
@@ -71,6 +70,7 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
   std::set<int> atomIndicesToKeep;
   std::vector<Bond *> newBonds;
   std::map<Atom *, int> dummyAtomMap;
+  std::map<const Atom *, Atom *> molAtomMap;
   bool hasCoreDummies = false;
   for (auto &pair : match) {
     const auto queryAtom = core->getAtomWithIdx(pair.first);
@@ -90,6 +90,7 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
       continue;
     } else {
       atomIndicesToKeep.insert(pair.second);
+      molAtomMap[mol.getAtomWithIdx(pair.second)] = targetAtom;
       int neighborNumber = -1;
 #ifdef VERBOSE
       std::cerr << "Atom Chirality In " << targetAtom->getChiralTag()
@@ -124,6 +125,8 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
             // Hydrogen needed to define chirality is present in target but
             // not mapped to core.  Copy it to the extracted core
             hydrogensToAdd.push_back(static_cast<int>(targetNeighborIndex));
+            molAtomMap[mol.getAtomWithIdx(targetNeighborIndex)] =
+                targetNeighborAtom;
           } else if (isChiral) {
             // There is a heavy sidechain in the decomp that is connected to
             // the core by an unknown bond (onlyMatchAtRGroups = False and
@@ -259,6 +262,9 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
       }
     }
   }
+
+  // Copy over any stereo groups that lie in the extracted core
+  details::copyStereoGroups(molAtomMap, mol, *extractedCore);
 
   extractedCore->clearComputedProps(true);
   extractedCore->updatePropertyCache(false);
@@ -810,5 +816,4 @@ int RCore::matchingIndexToCoreIndex(int matchingIndex) const {
                   "Matched atom missing core index");
   return atom->getProp<int>(RLABEL_CORE_INDEX);
 }
-
 }  // namespace RDKit

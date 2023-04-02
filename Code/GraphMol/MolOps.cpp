@@ -998,17 +998,20 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   unsigned int numbonds = mol.addBond(dummyIdx, metalIdx, Bond::DATIVE);
   auto bond = mol.getBondWithIdx(numbonds - 1);
 
-  // Get the atom numbers for the end points.
+  // Get the atom numbers for the end points.  First number is the
+  // count, the rest count from 1.
   std::ostringstream oss;
+  oss << "(" << hapticAtoms.size() << " ";
   for (auto ha : hapticAtoms) {
-    oss << ha << " ";
+    oss << ha + 1 << " ";
   }
-  std::string endpts = "(" + oss.str();
+  std::string endpts{oss.str()};
   if (endpts.back() == ' ') {
     endpts = endpts.substr(0, endpts.length() - 1);
   }
   endpts += ")";
   bond->setProp(common_properties::_MolFileBondEndPts, endpts);
+  bond->setProp<std::string>(common_properties::_MolFileBondAttach, "ALL");
 }
 }  // namespace
 
