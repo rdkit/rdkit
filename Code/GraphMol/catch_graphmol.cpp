@@ -3106,7 +3106,7 @@ M  END
     const auto &conf = m->getConformer();
     // Hydrogen will always be in the last position
     const RDGeom::Point3D HPos = conf.getAtomPos(4);
-    // Ensure the hydrogen is placed on the same side of the carbon as it was originally.
+    // Ensure the hydrogen is placed on the same side of the carbon as it was originally. 
     const RDGeom::Point3D targetPos = RDGeom::Point3D(-.5384, 2.3132, 0.9096);
     const auto distToTarget = HPos - targetPos;
     CHECK(distToTarget.lengthSq() < 0.1);
