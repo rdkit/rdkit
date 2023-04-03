@@ -8,13 +8,14 @@ import sys
 from rdkit import Chem
 from rdkit.Chem import FilterCatalog
 from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import RDConfig
     
 FilterMatch = namedtuple('FilterMatch', ('SubstructureMatches', 'Min_N_O_filter', 'Frac_N_O', 'Covalent', 'SpecialMol', 'SeverityScore'))
 
 # Build the filter catalog using the RDKit filterCatalog module
 def buildFilterCatalog():
 
-    inhousefilter = pd.read_csv('SubstructureFilter_HitTriaging_wPubChemExamples.csv')
+    inhousefilter = pd.read_csv(f'{RDConfig.RDContribDir}/NIBRSubstructureFilters/SubstructureFilter_HitTriaging_wPubChemExamples.csv')
     inhouseFiltersCat = FilterCatalog.FilterCatalog()
     for i in range(inhousefilter.shape[0]):
         mincount=1
