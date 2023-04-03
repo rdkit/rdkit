@@ -139,7 +139,6 @@ initRDKitGUC()
                            NULL
                            );
 
-
   DefineCustomIntVariable(
                            "rdkit.sss_fp_size",
                            "Size (in bits) of the fingerprint used for substructure screening",

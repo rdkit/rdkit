@@ -56,6 +56,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/GenericGroups/GenericGroups.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
@@ -582,7 +583,7 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
-extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality) {
+extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality, bool useMatchers) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
   RDKit::SubstructMatchParameters params;
@@ -594,7 +595,13 @@ extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality) {
     params.useEnhancedStereo = getDoEnhancedStereoSSS();
   }
   params.maxMatches = 1;
-  auto matchVect = RDKit::SubstructMatch(*im, *am, params);
+
+  if (useMatchers) {
+    GenericGroups::setGenericQueriesFromProperties(*am);
+    params.useGenericMatchers = true;
+  }
+
+    auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
 

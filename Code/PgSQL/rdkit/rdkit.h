@@ -118,7 +118,7 @@ bool isValidMolBlob(char *data, int len);
 
 int molcmp(CROMol i, CROMol a);
 
-int MolSubstruct(CROMol i, CROMol a, bool useChirality);
+int MolSubstruct(CROMol i, CROMol a, bool useChirality, bool useMatchers);
 int MolSubstructCount(CROMol i, CROMol a, bool uniquify, bool useChirality);
 
 bytea *makeMolSignature(CROMol data);
