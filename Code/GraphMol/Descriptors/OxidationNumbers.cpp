@@ -60,6 +60,11 @@ int calcOxidationNumberByEN(const Atom *atom) {
   float parEN = get_en(atom->getAtomicNum());
 
   for (const auto &bond : atom->getOwningMol().atomBonds(atom)) {
+    if (bond->getBondType() == Bond::DATIVE || bond->getBondType() == Bond::DATIVEONE
+        || bond->getBondType() == Bond::DATIVEL || bond->getBondType() == Bond::DATIVER
+        || bond->getBondType() == Bond::NONE) {
+      continue;
+    }
     auto otherAtom = bond->getOtherAtom(atom);
     if (otherAtom->getAtomicNum() > 1) {
       float en_diff = parEN - get_en(otherAtom->getAtomicNum());
