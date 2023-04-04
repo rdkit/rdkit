@@ -403,32 +403,120 @@ M  END
   }
 }
 
-TEST_CASE("keto enol tautomer") {
+TEST_CASE("tautomer v2") {
+  SECTION("matches") {
+    // pairs of {molecules with the same hash} {molecules with different hashes
+    // from those}
+    std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>>
+        data = {
+            {{"CC=O", "C=CO"}, {}},
+            {{"CCC=O", "CC=CO"}, {"C=CCO"}},
+            {{"CC(=O)CC(=O)C", "C=C(O)CC(=O)C", "CC(=O)C=C(O)C",
+              "C=C(O)C=C(O)C", "C=C(O)CC(O)=C"},
+             {}},
+            {{"CN=CF", "C=NCF"}, {"CNCF"}},
+            {{"Cc1n[nH]cc1", "Cc1[nH][n]cc1", "CC1N=NCC=1", "CC1=NN=CC1"}, {}},
+            {{"O=C1C=CC(=O)C=C1"}, {"Oc1ccc(O)cc1", "O=C1C=CC(O)C=C1"}},
+
+            // {"C=COC", "[CH2][CH]OC_0_0", "C=COC_0_0"},
+            // {"CC(C)(C)C=O", "CC(C)(C)[CH][O]_0_0", "CC(C)(C)C=O_0_0"},
+            // {"CC(C)=CO", "C[C](C)[CH][O]_1_0", "C[C](C)[CH][O]_1_0"},
+            // {"COC=O", "CO[CH][O]_0_0", "COC=O_0_0"},
+            // {"CNC=O", "C[N][CH][O]_1_0", "C[N][CH][O]_1_0"},
+            // {"CN(C)C=O", "CN(C)[CH][O]_0_0", "CN(C)C=O_0_0"},
+            // {"CC(C)(C)NC=O", "CC(C)(C)[N][CH][O]_1_0",
+            // "CC(C)(C)[N][CH][O]_1_0"},
+            // {"CC(C)=O", "C[C](C)[O]_0_0", "[CH2][C](C)[O]_1_0"},
+            // {"C=C(C)O", "[CH2][C](C)[O]_1_0", "[CH2][C](C)[O]_1_0"},
+            // {"c1ccccc1", "[CH]1[CH][CH][CH][CH][CH]1_0_0", "c1ccccc1_0_0"},
+            // {"n1ccccc1", "[CH]1[CH][CH][N][CH][CH]1_0_0", ""},
+            // {"N1CCCCC1", "C1CC[N]CC1_1_0", "C1CCNCC1_0_0"},
+            // {"N1C=CCC(F)C1", "FC1C[CH][CH][N]C1_1_0",
+            // "FC1C[CH][CH][N]C1_1_0"},
+            // {"CN(C)C=O", "CN(C)[CH][O]_0_0", "CN(C)C=O_0_0"},
+            // {"CCC=C(O)C", "CC[CH][C](C)[O]_1_0", "[CH2]CC[C](C)[O]_1_0"},
+            // {"CCCC(=O)C", "CCC[C](C)[O]_0_0", "[CH2]CC[C](C)[O]_1_0"},
+            // {"CCCC(O)=C", "[CH2][C]([O])CCC_1_0", "[CH2]CC[C](C)[O]_1_0"},
+            // {"C=CCC(O)C", "[CH2][C]([O])CCC_1_0", "[CH2]CC[C](C)[O]_1_0"},
+            // {"C=NC(=O)C", "[CH2][N][C](C)[O]_0_0",
+            // "[CH2][N][C]([CH2])[O]_1_0"},
+            // {"C=NC(O)=C", "[CH2][N][C]([CH2])[O]_1_0",
+            // "[CH2][N][C]([CH2])[O]_1_0"},
+            // {"CC(=O)CC(=O)C", "C[C]([O])C[C](C)[O]_0_0",
+            //  "[CH2][C]([O])C[C]([CH2])[O]_2_0"},
+            // {"CC(=O)C=C(O)C", "C[C]([O])[CH][C](C)[O]_1_0",
+            //  "[CH2][C]([O])C[C]([CH2])[O]_2_0"},
+            // {"C=C(O)C=C(O)C", "[CH2][C]([O])[CH][C](C)[O]_2_0",
+            //  "[CH2][C]([O])C[C]([CH2])[O]_2_0"},
+            // {"C=C(O)CC(O)=C", "[CH2][C]([O])C[C]([CH2])[O]_2_0",
+            //  "[CH2][C]([O])C[C]([CH2])[O]_2_0"},
+            // {"CC(=O)CCC(=O)C", "C[C]([O])CC[C](C)[O]_0_0", ""},
+            // {"CC(=O)C=CC(=O)C", "C[C]([O])[CH][CH][C](C)[O]_0_0",
+            //  "[CH2][C]([O])[CH][CH][C](C)[O]_1_0"},
+        };
+    for (const auto &[same, diff] : data) {
+      std::unique_ptr<RWMol> m{SmilesToMol(same[0])};
+      REQUIRE(m);
+      RWMol cp(*m);
+      std::cerr << "!_!_!_!_!_!" << std::endl;
+      auto ref =
+          MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+      for (auto i = 1u; i < same.size(); ++i) {
+        INFO(same[0] + "->" + same[i]);
+        std::unique_ptr<RWMol> m2{SmilesToMol(same[i])};
+        REQUIRE(m2);
+        RWMol cp(*m2);
+        std::cerr << "****** !_!_!_!_!_!" << std::endl;
+        auto hsh =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+        CHECK(hsh == ref);
+      }
+      for (auto i = 0u; i < diff.size(); ++i) {
+        INFO(same[0] + "->" + diff[i]);
+        std::unique_ptr<RWMol> m2{SmilesToMol(diff[i])};
+        REQUIRE(m2);
+        RWMol cp(*m2);
+        std::cerr << "xxxxx !_!_!_!_!_!" << std::endl;
+        auto hsh =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+        CHECK(hsh != ref);
+      }
+    }
+  }
+
   SECTION("basics") {
     std::vector<std::tuple<std::string, std::string, std::string>> data = {
-        {"C=O", "[CH2][O]_0_0", "C=O_0_0"},
-        {"CC=O", "C[CH][O]_0_0", "[CH2][CH][O]_1_0"},
-        {"C=CO", "[CH2][CH][O]_1_0", "[CH2][CH][O]_1_0"},
-        {"C=COC", "[CH2][CH]OC_0_0", "C=COC_0_0"},
-        {"CC(C)(C)C=O", "CC(C)(C)[CH][O]_0_0", "CC(C)(C)C=O_0_0"},
-        {"CC(C)=CO", "C[C](C)[CH][O]_1_0", "C[C](C)[CH][O]_1_0"},
-        {"COC=O", "CO[CH][O]_0_0", "COC=O_0_0"},
-        {"CNC=O", "C[N][CH][O]_1_0", "C[N][CH][O]_1_0"},
-        {"CN(C)C=O", "CN(C)[CH][O]_0_0", "CN(C)C=O_0_0"},
-        {"CC(C)(C)NC=O", "CC(C)(C)[N][CH][O]_1_0", "CC(C)(C)[N][CH][O]_1_0"},
-        {"CC(C)=O", "C[C](C)[O]_0_0", "[CH2][C](C)[O]_1_0"},
-        {"C=C(C)O", "[CH2][C](C)[O]_1_0", "[CH2][C](C)[O]_1_0"},
-        {"c1ccccc1", "[CH]1[CH][CH][CH][CH][CH]1_0_0", "c1ccccc1_0_0"},
-        {"n1ccccc1", "[CH]1[CH][CH][N][CH][CH]1_0_0", ""},
-        {"N1CCCCC1", "C1CC[N]CC1_1_0", ""},
-        {"N1C=CCCC1", "[CH]1[CH][N]CCC1_1_0", ""},
-        {"CN(C)C=O", "CN(C)[CH][O]_0_0", "CN(C)C=O_0_0"},
-        {"CCC=C(O)C", "CC[CH][C](C)[O]_1_0", "[CH2]CC[C](C)[O]_1_0"},
-        {"CCCC(=O)C", "CCC[C](C)[O]_0_0", "[CH2]CC[C](C)[O]_1_0"},
-        {"CCCC(O)=C", "[CH2][C]([O])CCC_1_0", "[CH2]CC[C](C)[O]_1_0"},
-        {"C=CCC(O)C", "[CH2][C]([O])CCC_1_0", "[CH2]CC[C](C)[O]_1_0"},
-        {"C=NC(=O)C", "[CH2][N][C](C)[O]_0_0", "[CH2][N][C]([CH2])[O]_1_0"},
-        {"C=NC(O)=C", "[CH2][N][C]([CH2])[O]_1_0", "[CH2][N][C]([CH2])[O]_1_0"},
+        {"C=O", "[CH2][O]_0_0", "[CH2]=[O]_0_0"},
+        {"CC=O", "C[CH][O]_0_0", "[C]:[C]:[O]_4_0"},
+        {"C=CO", "[CH2][CH][O]_1_0", "[C]:[C]:[O]_4_0"},
+        {"c1ccccc1", "[CH]1[CH][CH][CH][CH][CH]1_0_0",
+         "[cH]1:[cH]:[cH]:[cH]:[cH]:[cH]:1_0_0"},
+        {"n1ccccc1", "[CH]1[CH][CH][N][CH][CH]1_0_0",
+         "[C]1:[C]:[C]:[N]:[C]:[C]:1_5_0"},
+        {"Nc1ccccc1", "[N][C]1[CH][CH][CH][CH][CH]1_2_0",
+         "[N]:[C]1:[C]:[C]:[C]:[C]:[C]:1_7_0"},
+        {"C=COC", "[CH2][CH]OC_0_0", "[CH2]=[CH]-[O]-[CH3]_0_0"},
+        {"CC(C)(C)C=O", "CC(C)(C)[CH][O]_0_0",
+         "[CH3]-[C](-[CH3])(-[CH3])-[CH]=[O]_0_0"},
+        // {"CC(C)=CO", "C[C](C)[CH][O]_1_0", "C[C](C)[CH][O]_1_0"},
+        {"COC=O", "CO[CH][O]_0_0", "[CH3]-[O]-[CH]=[O]_0_0"},
+        // {"CNC=O", "C[N][CH][O]_1_0", "C[N][CH][O]_1_0"},
+        {"CN(C)C=O", "CN(C)[CH][O]_0_0", "[CH3]-[N](-[CH3])-[CH]=[O]_0_0"},
+        // {"CC(C)(C)NC=O", "CC(C)(C)[N][CH][O]_1_0", "CC(C)(C)[N][CH][O]_1_0"},
+        // {"CC(C)=O", "C[C](C)[O]_0_0", "[CH2][C](C)[O]_1_0"},
+        // {"C=C(C)O", "[CH2][C](C)[O]_1_0", "[CH2][C](C)[O]_1_0"},
+        {"N1CCC1", "C1C[N]C1_1_0", "[CH2]1-[CH2]-[NH]-[CH2]-1_0_0"},
+        {"CC=CC(=O)C", "C[CH][CH][C](C)[O]_0_0",
+         "[C]:[C](:[O]):[C]:[C]-[CH3]_5_0"},
+        // {"N1C=CCC(F)C1", "FC1C[CH][CH][N]C1_1_0", "FC1C[CH][CH][N]C1_1_0"},
+        // {"CN(C)C=O", "CN(C)[CH][O]_0_0", "CN(C)C=O_0_0"},
+        // {"CCC=C(O)C", "CC[CH][C](C)[O]_1_0", "[CH2]CC[C](C)[O]_1_0"},
+        // {"CCCC(=O)C", "CCC[C](C)[O]_0_0", "[CH2]CC[C](C)[O]_1_0"},
+        // {"CCCC(O)=C", "[CH2][C]([O])CCC_1_0", "[CH2]CC[C](C)[O]_1_0"},
+        // {"C=CCC(O)C", "[CH2][C]([O])CCC_1_0", "[CH2]CC[C](C)[O]_1_0"},
+        // {"C=NC(=O)C", "[CH2][N][C](C)[O]_0_0", "[CH2][N][C]([CH2])[O]_1_0"},
+        // {"C=NC(O)=C", "[CH2][N][C]([CH2])[O]_1_0",
+        // "[CH2][N][C]([CH2])[O]_1_0"},
         // {"CC(=O)CC(=O)C", "C[C]([O])C[C](C)[O]_0_0",
         //  "[CH2][C]([O])C[C]([CH2])[O]_2_0"},
         // {"CC(=O)C=C(O)C", "C[C]([O])[CH][C](C)[O]_1_0",
@@ -457,6 +545,7 @@ TEST_CASE("keto enol tautomer") {
         auto hsh2 =
             MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
         CHECK(hsh2 == std::get<2>(tpl));
+        // std::cerr << std::get<0>(tpl) << " -> " << hsh2 << std::endl;
       }
     }
   }

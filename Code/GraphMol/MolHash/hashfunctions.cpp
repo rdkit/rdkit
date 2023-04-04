@@ -385,25 +385,67 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
   // an atom which is neither unsaturated nor has implicit Hs is not
   // eligible
   auto isCandidateAtom = [](const Atom *aptr) {
+    // std::cerr << "\t\t"
+    //           << "isCandidate: " << aptr->getIdx() << " "
+    //           << aptr->getTotalNumHs() << " " << queryAtomUnsaturated(aptr)
+    //           << std::endl;
     return aptr->getTotalNumHs() || queryAtomUnsaturated(aptr);
+  };
+
+  auto isHeteroAtom = [](const Atom *aptr) {
+    auto atNum = aptr->getAtomicNum();
+    return atNum != 6 && atNum > 1;
+  };
+
+  auto isUnsaturatedBond = [](const Bond *bptr) {
+    return bptr->getIsAromatic() ||
+           bptr->getBondType() == Bond::BondType::AROMATIC ||
+           bptr->getBondType() == Bond::BondType::DOUBLE ||
+           bptr->getBondType() == Bond::BondType::TRIPLE;
   };
 
   // we'll consider a bond as possible for a tautomeric system
   // if it is non-saturated, i.e. aromatic or not single and both atoms involved
   // are candidates
-  auto isPossibleTautomericBond = [&isCandidateAtom](const Bond *bptr) {
-    return (bptr->getBondType() != Bond::BondType::SINGLE ||
-            bptr->getIsAromatic()) &&
-           isCandidateAtom(bptr->getBeginAtom()) &&
+  auto isPossibleTautomericBond = [&isCandidateAtom,
+                                   &isUnsaturatedBond](const Bond *bptr) {
+    return isUnsaturatedBond(bptr) && isCandidateAtom(bptr->getBeginAtom()) &&
            isCandidateAtom(bptr->getEndAtom());
   };
 
   // a bond is a possible starting bond if it involves a candidate hetereoatom
-  auto isPossibleStartingBond = [&isCandidateAtom](const Bond *bptr) {
-    for (const auto at :
-         std::vector<const Atom *>{bptr->getBeginAtom(), bptr->getEndAtom()}) {
-      auto atNum = at->getAtomicNum();
-      if (atNum != 6 && atNum > 1 && isCandidateAtom(at)) {
+  // (unsaturated or with an H) and an unsaturated atom
+  auto isPossibleStartingBond = [&isHeteroAtom,
+                                 &isCandidateAtom](const Bond *bptr) {
+    auto heteroBeg = isHeteroAtom(bptr->getBeginAtom()) &&
+                     isCandidateAtom(bptr->getBeginAtom());
+    auto heteroEnd =
+        isHeteroAtom(bptr->getEndAtom()) && isCandidateAtom(bptr->getEndAtom());
+    // at least one atom has to be an eligible heteroatom:
+    if (!heteroBeg && !heteroEnd) {
+      return false;
+    }
+
+    auto unsatBeg = queryAtomUnsaturated(bptr->getBeginAtom());
+    auto unsatEnd = queryAtomUnsaturated(bptr->getEndAtom());
+
+    // at least one has to be unsaturated:
+    if (!unsatBeg && !unsatEnd) {
+      return false;
+    }
+
+    return true;
+  };
+
+  boost::dynamic_bitset<> startBonds(mol->getNumBonds());
+  for (const auto bnd : mol->bonds()) {
+    startBonds.set(bnd->getIdx(), isPossibleStartingBond(bnd));
+  }
+  std::cerr << " START BONDS: " << startBonds << std::endl;
+
+  auto hasStartBond = [&startBonds](const Atom *aptr) {
+    for (const auto nbr : aptr->getOwningMol().atomBonds(aptr)) {
+      if (startBonds[nbr->getIdx()]) {
         return true;
       }
     }
@@ -414,15 +456,43 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
     // If this has already been considered or is not a possible starting bond,
     // then skip it
     if (bondsToModify[bptr->getIdx()] || bondsConsidered[bptr->getIdx()] ||
-        !isPossibleStartingBond(bptr)) {
+        !startBonds[bptr->getIdx()]) {
       continue;
     }
     boost::dynamic_bitset<> conjSystem(mol->getNumBonds());
     boost::dynamic_bitset<> atomsInSystem(mol->getNumAtoms());
     boost::dynamic_bitset<> possibleDonorCs(mol->getNumAtoms());
+    boost::dynamic_bitset<> possibleAcceptorCs(mol->getNumAtoms());
     unsigned int activeHeteroHs = 0;
     std::deque<const Bond *> bq;
-    bq.push_back(bptr);
+    // we will definitely consider this bond
+    bondsConsidered.set(bptr->getIdx());
+    conjSystem.set(bptr->getIdx());
+    // also include eligible neighbor bonds:
+    for (const auto atm :
+         std::vector<const Atom *>{bptr->getBeginAtom(), bptr->getEndAtom()}) {
+      if (atm->getAtomicNum() == 6) {
+        if (atm->getTotalNumHs()) {
+          possibleDonorCs.set(atm->getIdx());
+        }
+        if (queryAtomUnsaturated(atm)) {
+          possibleAcceptorCs.set(atm->getIdx());
+        }
+      } else if (isHeteroAtom(atm)) {
+        activeHeteroHs += atm->getTotalNumHs();
+      }
+
+      for (const auto nbrBond : mol->atomBonds(atm)) {
+        if (nbrBond == bptr || bondsToModify[nbrBond->getIdx()]) {
+          continue;
+        }
+        // if the bond is unsaturated or to an atom with free Hs, include it:
+        if (isUnsaturatedBond(nbrBond) ||
+            nbrBond->getOtherAtom(atm)->getTotalNumHs()) {
+          bq.push_back(nbrBond);
+        }
+      }
+    }
     while (!bq.empty()) {
       auto bnd = bq.front();
       bq.pop_front();
@@ -448,25 +518,25 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
         for (auto nbrBnd : mol->atomBonds(atm)) {
           auto oatom = nbrBnd->getOtherAtom(atm);
           if (nbrBnd == bnd || bondsConsidered[nbrBnd->getIdx()] ||
-              !isCandidateAtom(oatom)) {
+              (!isCandidateAtom(oatom) && !hasStartBond(oatom)) ||
+              (!nbrBnd->getIsConjugated() && !hasStartBond(atm))) {
             continue;
           }
-          if (nbrBnd->getIsConjugated() || isPossibleTautomericBond(nbrBnd)) {
-            // automatically add non-single bonds or conjugated bonds
-            bq.push_back(nbrBnd);
-          } else {
-            // add single bonds to atoms with a H they can contribute:
-            if (oatom->getTotalNumHs()) {
-              bq.push_back(nbrBnd);
-            }
-          }
+          // if (possibleAcceptorCs[atm->getIdx()] &&
+          // isUnsaturatedBond(nbrBond)) {
+          //   possibleAcceptorCs.set(atm->getIdx(), 0);
+          //   possibleAcceptorCs.set(oatom->getIdx());
+          // }
+          bq.push_back(nbrBnd);
         }
       }
     }
     // we need to have at least two bonds and include at least one active H
     if (conjSystem.count() > 1 && (activeHeteroHs || possibleDonorCs.any())) {
-      std::cerr << "CONJ: " << conjSystem << std::endl;
+      std::cerr << "CONJ: " << conjSystem << " hetero " << activeHeteroHs
+                << " donor " << possibleDonorCs << std::endl;
       bondsToModify |= conjSystem;
+#if 0      
       if (!activeHeteroHs) {
         // if there are no Hs in the system from heteroatoms, then we need
         // to take one from one of the Cs in the system. Do that canonically
@@ -478,20 +548,47 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
         }
 
         int cIdx = -1;
-        for (auto i = 0; i < mol->getNumAtoms(); ++i) {
+        for (auto i = 0u; i < mol->getNumAtoms(); ++i) {
           if (possibleDonorCs[i] &&
               (cIdx < 0 || atomRanks[i] < atomRanks[cIdx])) {
             cIdx = i;
           }
         }
+        std::cerr << "  MODIFY: " << cIdx << std::endl;
+        auto cToModify = mol->getAtomWithIdx(cIdx);
+        auto nHs = cToModify->getTotalNumHs() - 1;
+        cToModify->setNoImplicit(true);
+        cToModify->setNumExplicitHs(nHs);
+        ++hcount;
+      } else if (possibleAcceptorCs.any()) {
+        // if there are Hs in the system from heteroatoms, then we may need
+        // to add Hs back to Cs in the system. Do that canonically
+
+        // get the atom ranks if we haven't done so already:
+        if (atomRanks.empty()) {
+          bool breakTies = false;
+          Canon::rankMolAtoms(*mol, atomRanks, breakTies);
+        }
+
+        int cIdx = -1;
+        for (auto i = 0u; i < mol->getNumAtoms(); ++i) {
+          if (possibleDonorCs[i] &&
+              (cIdx < 0 || atomRanks[i] < atomRanks[cIdx])) {
+            cIdx = i;
+          }
+        }
+        std::cerr << "  MODIFY: " << cIdx << std::endl;
         auto cToModify = mol->getAtomWithIdx(cIdx);
         auto nHs = cToModify->getTotalNumHs() - 1;
         cToModify->setNoImplicit(true);
         cToModify->setNumExplicitHs(nHs);
         ++hcount;
       }
+#endif
     }
   }
+
+  std::cerr << "FINAL: " << bondsToModify << std::endl;
 
   boost::dynamic_bitset<> atomsToModify(mol->getNumAtoms());
   if (bondsToModify.any()) {
@@ -500,7 +597,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
         continue;
       }
       bptr->setIsAromatic(false);
-      bptr->setBondType(Bond::SINGLE);
+      bptr->setBondType(Bond::AROMATIC);
       bptr->setStereo(Bond::BondStereo::STEREONONE);
       atomsToModify.set(bptr->getBeginAtomIdx());
       atomsToModify.set(bptr->getEndAtomIdx());
@@ -513,13 +610,19 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
         continue;
       }
       charge += aptr->getFormalCharge();
+      hcount += aptr->getTotalNumHs();
       aptr->setIsAromatic(false);
       aptr->setFormalCharge(0);
+#if 0
       if (aptr->getAtomicNum() != 6) {
         hcount += aptr->getTotalNumHs(false);
         aptr->setNoImplicit(true);
         aptr->setNumExplicitHs(0);
       }
+#else
+      aptr->setNoImplicit(true);
+      aptr->setNumExplicitHs(0);
+#endif
     }
   }
 
@@ -531,7 +634,11 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
     bool force = true;
     MolOps::assignStereochemistry(*mol, cleanIt, force);
   }
-  result = MolToSmiles(*mol);
+
+  SmilesWriteParams ps;
+  ps.allBondsExplicit = true;
+  ps.allHsExplicit = true;
+  result = MolToSmiles(*mol, ps);
   if (!proto) {
     sprintf(buffer, "_%d_%d", hcount, charge);
   } else {
