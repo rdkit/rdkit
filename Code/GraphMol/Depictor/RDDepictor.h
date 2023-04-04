@@ -39,6 +39,21 @@ class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
   std::string _msg;
 };
 
+//! \brief Set the path to the file containing the ring system templates
+/*!
+
+  \param template_path the file path to a file containing the ring system templates.
+      Each template must be a single line in the file represented using CXSMILES,
+      and the structure should be a single ring system.
+
+  \return true if the file was successfully loaded, false otherwise
+
+*/
+bool RDKIT_DEPICTOR_EXPORT setRingSystemTemplates(const std::string template_path);
+
+//! \brief Load default ring system templates to be used in 2D coordinate generation
+void RDKIT_DEPICTOR_EXPORT loadDefaultRingSystemTemplates();
+
 struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
   const RDGeom::INT_POINT2D_MAP *coordMap =
       nullptr;  //!< a map of int to Point2D, between atom IDs and their

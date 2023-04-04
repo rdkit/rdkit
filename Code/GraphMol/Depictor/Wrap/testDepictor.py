@@ -9,6 +9,8 @@ import sys
 import unittest
 
 import numpy as np
+import tempfile
+
 from rdkit import Chem
 from rdkit import Geometry
 from rdkit import RDConfig
@@ -616,9 +618,6 @@ M  END)""")
             self.assertAlmostEqual(actual_position.x, expected_position.x)
             self.assertAlmostEqual(actual_position.y, actual_position.y)
 
-
-
-
     def testUseMultipleTemplates(self):
         prefer_coordgen_status = rdDepictor.GetPreferCoordGen()
         rdDepictor.SetPreferCoordGen(False)
@@ -651,7 +650,6 @@ M  END)""")
         assert self.molMatchesTemplate(three_linked_templates, template3)
 
         rdDepictor.SetPreferCoordGen(prefer_coordgen_status)
-
 
     def testUseTemplateAndCoordMap(self):
         prefer_coordgen_status = rdDepictor.GetPreferCoordGen()
@@ -700,6 +698,57 @@ M  END)""")
 
         rdDepictor.SetPreferCoordGen(prefer_coordgen_status)
 
+    def testSetRingSystemTemplates(self):
+        prefer_coordgen_status = rdDepictor.GetPreferCoordGen()
+        rdDepictor.SetPreferCoordGen(False)
+
+        mol = Chem.MolFromSmiles("C1CC2CCOC3OC4CCC(C1)C23OO4")
+        default_template = Chem.MolFromSmiles("C1CC2CCOC3OC4CCC(C1)C23OO4 |(3.53,-1.22,;3.53,0.3,;2.21,1.06,;2.21,2.59,;0.89,3.35,;-0.43,2.59,;-0.43,1.06,;-1.9,0.65,;-2.47,-0.76,;-1.71,-2.08,;-0.2,-2.29,;0.89,-1.22,;2.21,-1.99,;0.89,0.3,;0.12,-0.83,;-1.19,-1.25,)|")
+        user_provided_template = Chem.MolFromSmiles("C1CC2CCOC3OC4CCC(C1)C23OO4 |(-0.5537,-3.1595,;-1.6057,-2.003,;-1.4262,-0.4072,;-2.9804,0.0271,;-3.5191,1.502,;-2.2028,2.3562,;-0.6818,1.8511,;1.0592,1.4391,;2.6123,1.8366,;3.5191,0.5341,;2.6067,-0.7521,;1.0061,-0.773,;0.7888,-2.3546,;-0.0405,0.5251,;0.4049,2.3,;1.7604,3.1594,)|")
+
+        # default templates are loaded automatically
+        rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
+        assert self.molMatchesTemplate(mol, default_template)
+
+        # set to user-provided template, this will delete default templates
+        fpath = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Depictor', 'test_data', 'ring_system_templates.smi')
+        success = rdDepictor.SetRingSystemTemplates(fpath)
+        assert success
+
+        rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
+        assert self.molMatchesTemplate(mol, user_provided_template)
+
+        # set back to default ring system templates
+        rdDepictor.LoadDefaultRingSystemTemplates()
+        rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
+        assert self.molMatchesTemplate(mol, default_template)
+
+        rdDepictor.SetPreferCoordGen(prefer_coordgen_status)
+
+    def testSetBadRingSystemTemplates(self):
+        prefer_coordgen_status = rdDepictor.GetPreferCoordGen()
+        rdDepictor.SetPreferCoordGen(False)
+
+        with tempfile.NamedTemporaryFile() as tmp_file:
+            tmp_file.write(b"invalidsmiles")
+            tmp_file.seek(0)
+            assert not rdDepictor.SetRingSystemTemplates(tmp_file.name)
+
+        with tempfile.NamedTemporaryFile() as tmp_file:
+            # not a ring system
+            tmp_file.write(b"C |(-0.5537,-3.1595)|")
+            tmp_file.seek(0)
+            assert not rdDepictor.SetRingSystemTemplates(tmp_file.name)
+
+        with tempfile.NamedTemporaryFile() as tmp_file:
+            # no coordinates
+            tmp_file.write(b"C1CCCCC1")
+            tmp_file.seek(0)
+            assert not rdDepictor.SetRingSystemTemplates(tmp_file.name)
+
+        rdDepictor.SetPreferCoordGen(prefer_coordgen_status)
+        # set back to default ring system templates
+        rdDepictor.LoadDefaultRingSystemTemplates()
 
 if __name__ == '__main__':
     unittest.main()

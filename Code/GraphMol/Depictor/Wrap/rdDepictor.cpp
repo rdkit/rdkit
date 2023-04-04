@@ -209,6 +209,15 @@ BOOST_PYTHON_MODULE(rdDepictor) {
               "Has no effect (CoordGen support not enabled)"
 #endif
   );
+  python::def("SetRingSystemTemplates", RDDepict::setRingSystemTemplates,
+              (python::arg("template_dir")),
+              "Loads the ring system templates from the specified file to be "
+              "used in 2D coordinate generation. Each template must be a single "
+              "line in the file represented using CXSMILES, and the structure should "
+              "be a single ring system. Returns true if the templates were loaded "
+              "successfully, and false otherwise.");
+  python::def("LoadDefaultRingSystemTemplates", RDDepict::loadDefaultRingSystemTemplates,
+              "Loads the default ring system templates and removes existing ones, if present.");
   python::def(
       "GetPreferCoordGen", getPreferCoordGen,
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
