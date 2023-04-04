@@ -465,6 +465,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
     }
     // we need to have at least two bonds and include at least one active H
     if (conjSystem.count() > 1 && (activeHeteroHs || possibleDonorCs.any())) {
+      std::cerr << "CONJ: " << conjSystem << std::endl;
       bondsToModify |= conjSystem;
       if (!activeHeteroHs) {
         // if there are no Hs in the system from heteroatoms, then we need
@@ -476,9 +477,10 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
           Canon::rankMolAtoms(*mol, atomRanks, breakTies);
         }
 
-        auto cIdx = 0u;
-        for (auto i = cIdx; i < mol->getNumAtoms(); ++i) {
-          if (possibleDonorCs[i] && atomRanks[i] < atomRanks[cIdx]) {
+        int cIdx = -1;
+        for (auto i = 0; i < mol->getNumAtoms(); ++i) {
+          if (possibleDonorCs[i] &&
+              (cIdx < 0 || atomRanks[i] < atomRanks[cIdx])) {
             cIdx = i;
           }
         }
