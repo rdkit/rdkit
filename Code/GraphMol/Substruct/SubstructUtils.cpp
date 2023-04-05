@@ -218,6 +218,7 @@ std::vector<MatchVectType> sortMatchesByDegreeOfCoreSubstitution(
 }
 
 #define PT_OPT_GET(opt) params.opt = pt.get(#opt, params.opt)
+#define PT_OPT_PUT(opt) pt.put(#opt, params.opt);
 
 void updateSubstructMatchParamsFromJSON(SubstructMatchParameters &params,
                                         const std::string &json) {
@@ -236,6 +237,23 @@ void updateSubstructMatchParamsFromJSON(SubstructMatchParameters &params,
   PT_OPT_GET(uniquify);
   PT_OPT_GET(maxMatches);
   PT_OPT_GET(numThreads);
+}
+
+std::string substructMatchParamsToJSON(const SubstructMatchParameters &params) {
+  boost::property_tree::ptree pt;
+
+  PT_OPT_PUT(useChirality);
+  PT_OPT_PUT(useEnhancedStereo);
+  PT_OPT_PUT(aromaticMatchesConjugated);
+  PT_OPT_PUT(useQueryQueryMatches);
+  PT_OPT_PUT(recursionPossible);
+  PT_OPT_PUT(uniquify);
+  PT_OPT_PUT(maxMatches);
+  PT_OPT_PUT(numThreads);
+
+  std::stringstream ss;
+  boost::property_tree::json_parser::write_json(ss, pt);
+  return ss.str();
 }
 
 }  // namespace RDKit

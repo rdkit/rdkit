@@ -23,6 +23,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 
@@ -1457,5 +1458,89 @@ M  END
     CHECK(rxn->getNumProductTemplates()==1);
     CHECK(rxn->getNumAgentTemplates()==0);
     CHECK(rxn->getProducts()[0]->getBondWithIdx(3)->getProp<int>("molReactStatus") == 4);
+  }
+}
+
+TEST_CASE("Github #6211: substructmatchparams for chemical reactions") {
+  SECTION("Basics") {
+    auto rxn = "[C:1][C@:2]([N:3])[O:4]>>[C:1][C@@:2]([N:3])[O:4]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    {
+      // defaults
+      std::vector<std::tuple<std::string, std::string>> data = {
+          {"CC[C@H](N)O", "CC[C@@H](N)O"},
+          {"CC[C@@H](N)O", "CC[C@H](N)O"},
+          {"CCC(N)O", "CCC(N)O"}};
+      for (const auto& [inSmi, outSmi] : data) {
+        INFO(inSmi);
+        MOL_SPTR_VECT reacts = {ROMOL_SPTR(SmilesToMol(inSmi))};
+        REQUIRE(reacts[0]);
+        auto prods = rxn->runReactants(reacts);
+        if (outSmi != "") {
+          REQUIRE(prods.size() == 1);
+          CHECK(MolToSmiles(*prods[0][0]) == outSmi);
+          CHECK(isMoleculeReactantOfReaction(*rxn,*reacts.front()));
+          std::unique_ptr<RWMol> prod{SmilesToMol(outSmi)};
+          REQUIRE(prod);
+          CHECK(isMoleculeProductOfReaction(*rxn,*prod));
+        } else {
+          CHECK(prods.empty());
+          CHECK(!isMoleculeReactantOfReaction(*rxn,*reacts.front()));
+        }
+      }
+    }
+    {
+      // use chiral matching (makes sure the parameters are actually used)
+      std::vector<std::tuple<std::string, std::string>> data = {
+          {"CC[C@H](N)O", "CC[C@@H](N)O"},
+          {"CC[C@@H](N)O", ""},
+          {"CCC(N)O", ""}};
+      rxn->getSubstructParams().useChirality = true;
+      for (const auto& [inSmi, outSmi] : data) {
+        INFO(inSmi);
+        MOL_SPTR_VECT reacts = {ROMOL_SPTR(SmilesToMol(inSmi))};
+        REQUIRE(reacts[0]);
+        auto prods = rxn->runReactants(reacts);
+        if (outSmi != "") {
+          REQUIRE(prods.size() == 1);
+          CHECK(MolToSmiles(*prods[0][0]) == outSmi);
+          CHECK(isMoleculeReactantOfReaction(*rxn,*reacts.front()));
+          std::unique_ptr<RWMol> prod{SmilesToMol(outSmi)};
+          REQUIRE(prod);
+          CHECK(isMoleculeProductOfReaction(*rxn,*prod));
+        } else {
+          CHECK(prods.empty());
+          CHECK(!isMoleculeReactantOfReaction(*rxn,*reacts.front()));
+        }
+      }
+      // make sure the parameters are copied
+      ChemicalReaction cpy(*rxn);
+      for (const auto& [inSmi, outSmi] : data) {
+        INFO(inSmi);
+        MOL_SPTR_VECT reacts = {ROMOL_SPTR(SmilesToMol(inSmi))};
+        REQUIRE(reacts[0]);
+        auto prods = cpy.runReactants(reacts);
+        if (outSmi != "") {
+          REQUIRE(prods.size() == 1);
+          CHECK(MolToSmiles(*prods[0][0]) == outSmi);
+        } else {
+          CHECK(prods.empty());
+        }
+      }
+    }
+  }
+
+  SECTION("serialization") {
+    auto rxn = "[C:1][C@:2]([N:3])[O:4]>>[C:1][C@@:2]([N:3])[O:4]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    rxn->getSubstructParams().useChirality = true;
+    std::string pkl;
+    ReactionPickler::pickleReaction(*rxn,pkl);
+    ChemicalReaction rxn2;
+    ReactionPickler::reactionFromPickle(pkl,rxn2);
+    CHECK(rxn2.getSubstructParams().useChirality == true);
+
   }
 }

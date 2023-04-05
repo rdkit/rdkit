@@ -154,9 +154,9 @@ class StereoBondEndCap {
 };
 }  // namespace
 
-VectMatchVectType getReactantMatchesToTemplate(const ROMol &reactant,
-                                               const ROMol &templ,
-                                               unsigned int maxMatches) {
+VectMatchVectType getReactantMatchesToTemplate(
+    const ROMol &reactant, const ROMol &templ, unsigned int maxMatches,
+    const SubstructMatchParameters &ssparams) {
   // NOTE that we are *not* uniquifying the results.
   //   This is because we need multiple matches in reactions. For example,
   //   The ring-closure coded as:
@@ -177,7 +177,7 @@ VectMatchVectType getReactantMatchesToTemplate(const ROMol &reactant,
   //   with uniquifying their results.
   VectMatchVectType res;
 
-  SubstructMatchParameters ssps;
+  SubstructMatchParameters ssps = ssparams;
   ssps.uniquify = false;
   ssps.maxMatches = maxMatches;
   auto matchesHere = SubstructMatch(reactant, templ, ssps);
@@ -214,8 +214,9 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
   for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter, i++) {
     if (matchSingleReactant == MatchAll || matchSingleReactant == i) {
-      auto matches = getReactantMatchesToTemplate(*reactants[i].get(),
-                                                  *iter->get(), maxMatches);
+      auto matches =
+          getReactantMatchesToTemplate(*reactants[i].get(), *iter->get(),
+                                       maxMatches, rxn.getSubstructParams());
       if (matches.empty()) {
         // no point continuing if we don't match one of the reactants:
         res = false;
@@ -1781,7 +1782,7 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant) {
   }
 
   auto reactantMatch = ReactionRunnerUtils::getReactantMatchesToTemplate(
-      reactant, *reactantTemplate, 1);
+      reactant, *reactantTemplate, 1, rxn.getSubstructParams());
   if (reactantMatch.empty()) {
     return false;
   }
