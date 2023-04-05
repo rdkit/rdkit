@@ -439,6 +439,14 @@ TEST_CASE("tautomer v2") {
               "N1C(=O)NC(=O)C2CN=NC2=1"},
              {}},
             // ---------------------------
+            // more stereochemistry
+            // ---------------------------
+            {{"C[C@H](F)C=O", "C[C@@H](F)C=O", "CC(F)C=O"}, {}},
+            {{"C[C@H](F)CC=O"}, {"C[C@@H](F)CC=O", "CC(F)CC=O"}},
+            {{"C/C=C/O", "C/C=C\\O", "CC=CO"}, {}},
+            {{"C/C=C/C=O", "C/C=C\\C=O", "CC=CC=O"}, {}},
+            {{"C/C=C/CC=O"}, {"C/C=C\\CC=O", "CC=CCC=O"}},
+            // ---------------------------
             // some areas for potential improvement
             // ---------------------------
             // these two are tautomers, but the current algorithm does not catch
