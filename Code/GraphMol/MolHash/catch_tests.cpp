@@ -461,7 +461,7 @@ TEST_CASE("tautomer v2") {
       std::unique_ptr<RWMol> m{SmilesToMol(same[0])};
       REQUIRE(m);
       RWMol cp(*m);
-      std::cerr << "!_!_!_!_!_!" << std::endl;
+      // std::cerr << "!_!_!_!_!_!" << std::endl;
       auto ref =
           MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
       for (auto i = 1u; i < same.size(); ++i) {
@@ -469,7 +469,7 @@ TEST_CASE("tautomer v2") {
         std::unique_ptr<RWMol> m2{SmilesToMol(same[i])};
         REQUIRE(m2);
         RWMol cp(*m2);
-        std::cerr << "****** !_!_!_!_!_!" << std::endl;
+        // std::cerr << "****** !_!_!_!_!_!" << std::endl;
         auto hsh =
             MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
         CHECK(hsh == ref);
@@ -479,7 +479,7 @@ TEST_CASE("tautomer v2") {
         std::unique_ptr<RWMol> m2{SmilesToMol(diff[i])};
         REQUIRE(m2);
         RWMol cp(*m2);
-        std::cerr << "xxxxx !_!_!_!_!_!" << std::endl;
+        // std::cerr << "xxxxx !_!_!_!_!_!" << std::endl;
         auto hsh =
             MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
         CHECK(hsh != ref);
@@ -544,11 +544,9 @@ TEST_CASE("tautomer v2") {
       }
       {
         RWMol cp(*m);
-        std::cerr << "!_!_!_!_!_!" << std::endl;
         auto hsh2 =
             MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
         CHECK(hsh2 == std::get<2>(tpl));
-        // std::cerr << std::get<0>(tpl) << " -> " << hsh2 << std::endl;
       }
     }
   }
