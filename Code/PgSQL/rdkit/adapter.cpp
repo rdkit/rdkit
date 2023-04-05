@@ -583,6 +583,12 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
+extern "C" CROMol MolSetGenericQueryFromProperties(CROMol a) {
+  auto *am = (ROMol *)a;
+  GenericGroups::setGenericQueriesFromProperties(*am);
+  return (CROMol) am;
+}
+
 extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality, bool useMatchers) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
@@ -596,12 +602,9 @@ extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality, bool useMatch
   }
   params.maxMatches = 1;
 
-  if (useMatchers) {
-    GenericGroups::setGenericQueriesFromProperties(*am);
-    params.useGenericMatchers = true;
-  }
+  params.useGenericMatchers = useMatchers;
 
-    auto matchVect = RDKit::SubstructMatch(*im, *am, params);
+  auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
 
