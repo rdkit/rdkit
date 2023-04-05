@@ -123,8 +123,7 @@ Datum mol_substruct_query(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  CROMol aq=MolSetGenericQueryFromProperties(a);
-  PG_RETURN_BOOL(MolSubstruct(i, aq, false, true));
+  PG_RETURN_BOOL(MolSubstruct(i, a, false, true));
 }
 
 
@@ -170,8 +169,7 @@ Datum mol_rsubstruct_query(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  CROMol iq=MolSetGenericQueryFromProperties(i);
-
+  PG_RETURN_BOOL(MolSubstruct(a, i, false, true));
 }
 
 PGDLLEXPORT Datum mol_rsubstruct_chiral(PG_FUNCTION_ARGS);

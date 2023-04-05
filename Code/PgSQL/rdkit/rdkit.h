@@ -118,7 +118,6 @@ bool isValidMolBlob(char *data, int len);
 
 int molcmp(CROMol i, CROMol a);
 
-CROMol MolSetGenericQueryFromProperties(CROMol a);
 int MolSubstruct(CROMol i, CROMol a, bool useChirality, bool useMatchers);
 int MolSubstructCount(CROMol i, CROMol a, bool uniquify, bool useChirality);
 
