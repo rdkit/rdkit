@@ -677,7 +677,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         for (auto &sg : mol.getStereoGroups()) {
           std::vector<Atom *> sgats;
           for (auto sga : sg.getAtoms()) {
-            if ((*mapping)[sga->getIdx()] == frag) {
+            if ((*mapping)[sga->getIdx()] == static_cast<int>(frag)) {
               sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
             }
           }
@@ -985,7 +985,7 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   dummyAt->setQuery(makeAtomNullQuery());
 
   unsigned int dummyIdx = mol.addAtom(dummyAt);
-  for (auto i = 0; i < mol.getNumConformers(); ++i) {
+  for (auto i = 0u; i < mol.getNumConformers(); ++i) {
     auto &conf = mol.getConformer(i);
     RDGeom::Point3D dummyPos;
     for (auto ha : hapticAtoms) {
@@ -998,17 +998,20 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   unsigned int numbonds = mol.addBond(dummyIdx, metalIdx, Bond::DATIVE);
   auto bond = mol.getBondWithIdx(numbonds - 1);
 
-  // Get the atom numbers for the end points.
+  // Get the atom numbers for the end points.  First number is the
+  // count, the rest count from 1.
   std::ostringstream oss;
+  oss << "(" << hapticAtoms.size() << " ";
   for (auto ha : hapticAtoms) {
-    oss << ha << " ";
+    oss << ha + 1 << " ";
   }
-  std::string endpts = "(" + oss.str();
+  std::string endpts{oss.str()};
   if (endpts.back() == ' ') {
     endpts = endpts.substr(0, endpts.length() - 1);
   }
   endpts += ")";
   bond->setProp(common_properties::_MolFileBondEndPts, endpts);
+  bond->setProp<std::string>(common_properties::_MolFileBondAttach, "ALL");
 }
 }  // namespace
 

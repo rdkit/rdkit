@@ -58,7 +58,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"contourMol_3.svg", 3493070184U},
     {"contourMol_4.svg", 764999893U},
     {"testDativeBonds_1.svg", 555607912U},
-    {"testDativeBonds_2.svg", 93109626U},
+    {"testDativeBonds_2.svg", 2355686690U},
     {"testDativeBonds_3.svg", 3944956974U},
     {"testDativeBonds_2a.svg", 1026259021U},
     {"testDativeBonds_2b.svg", 3842058701U},
@@ -718,7 +718,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_2.svg");
 
-    CHECK(text.find("-8' d='M 101.1,79.8 L 95.8,87.1' "
+    CHECK(text.find("-8' d='M 101.1,77.2 L 95.8,84.5' "
                     "style='fill:none;fill-rule:evenodd;stroke:#0000FF;") !=
           std::string::npos);
   }
@@ -7476,8 +7476,8 @@ TEST_CASE(
     auto &atomRings = rings->atomRings();
     std::map<int, std::vector<DrawColour>> atomCols;
     std::map<int, double> atomRads;
-    for (auto i = 0; i < atomRings.size(); ++i) {
-      for (auto j = 0; j < atomRings[i].size(); ++j) {
+    for (auto i = 0u; i < atomRings.size(); ++i) {
+      for (auto j = 0u; j < atomRings[i].size(); ++j) {
         auto ex = atomCols.find(atomRings[i][j]);
         if (ex == atomCols.end()) {
           std::vector<DrawColour> cvec(1, colours[i]);
@@ -7495,8 +7495,8 @@ TEST_CASE(
     auto &bondRings = rings->bondRings();
     std::map<int, int> bondMults;
     std::map<int, std::vector<DrawColour>> bondCols;
-    for (auto i = 0; i < bondRings.size(); ++i) {
-      for (auto j = 0; j < bondRings[i].size(); ++j) {
+    for (auto i = 0u; i < bondRings.size(); ++i) {
+      for (auto j = 0u; j < bondRings[i].size(); ++j) {
         auto ex = bondCols.find(bondRings[i][j]);
         if (ex == bondCols.end()) {
           std::vector<DrawColour> cvec(1, colours[i]);

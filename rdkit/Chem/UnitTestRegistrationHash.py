@@ -323,6 +323,78 @@ M  END
 
         self.assertEqual(no_stereo_hash, stereo_hash)
 
+    def test_non_matching_pseudoatom_label(self):
+
+        pol_sdf = """
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 Pol 0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END"""
+
+        mod_sdf = """
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 Mod 0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END"""
+
+        carbon_sdf = """
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END"""
+
+        pol_hash = RegistrationHash.GetMolHash(hash_sdf(pol_sdf))
+        mod_hash = RegistrationHash.GetMolHash(hash_sdf(mod_sdf))
+        carbon_hash = RegistrationHash.GetMolHash(hash_sdf(carbon_sdf))
+
+        hashes = {pol_hash,mod_hash, carbon_hash}
+        self.assertEqual(len(hashes), 3)
+
+    def test_matching_pseudoatom_label(self):
+
+        pol_sdf = """
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 Pol 0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END"""
+
+        pol_sdf_2 = """
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    2.5981   -0.0000    0.0000 Pol 0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END"""
+
+        pol_hash = RegistrationHash.GetMolHash(hash_sdf(pol_sdf))
+        pol_hash_2 = RegistrationHash.GetMolHash(hash_sdf(pol_sdf_2))
+
+        hashes = {pol_hash,pol_hash_2}
+        self.assertEqual(len(hashes), 1)
+
 
     def test_hash_schemes(self):
 

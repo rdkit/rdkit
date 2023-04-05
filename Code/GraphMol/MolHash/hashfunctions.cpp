@@ -27,9 +27,9 @@ namespace {
 
 void addCXExtensions(RDKit::RWMol *mol, std::string &result,
                      unsigned additionalSkips = 0) {
+  unsigned int cxflagsToSkip = additionalSkips | RDKit::SmilesWrite::CX_COORDS;
   auto cxext = RDKit::SmilesWrite::getCXExtensions(
-      *mol, RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_COORDS ^
-                additionalSkips);
+      *mol, RDKit::SmilesWrite::CX_ALL ^ cxflagsToSkip);
   if (!cxext.empty()) {
     result += " " + cxext;
   }
@@ -293,7 +293,8 @@ void NormalizeHCount(Atom *aptr) {
   aptr->setNumExplicitHs(hcount);
 }
 
-std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles) {
+std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
+                           unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   int charge = 0;
@@ -325,13 +326,14 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles) {
   result = MolToSmiles(*mol);
 
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
 
   return result;
 }
 
-std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles) {
+std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles,
+                        unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -361,7 +363,7 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles) {
     result += buffer;
   }
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
   return result;
 }
@@ -426,7 +428,8 @@ bool hasStartBond(const Atom *aptr, const boost::dynamic_bitset<> &startBonds) {
 }
 }  // namespace
 
-std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
+std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
+                           unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -571,13 +574,14 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
   }
   result += buffer;
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
 
   return result;
 }
 
-std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
+std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles,
+                         unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -619,7 +623,7 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
   }
   result += buffer;
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
 
   return result;
@@ -687,7 +691,8 @@ bool HasNbrInScaffold(Atom *aptr, unsigned char *is_in_scaffold) {
   return false;
 }
 
-std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles) {
+std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
+                                   unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   if (!mol->getRingInfo()->isInitialized()) {
     MolOps::fastFindRings(*mol);
@@ -730,12 +735,13 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles) {
   std::string result;
   result = MolToSmiles(*mol);
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
   return result;
 }
 
-std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles) {
+std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles,
+                               unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::vector<Atom *> for_deletion;
   do {
@@ -773,7 +779,7 @@ std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles) {
   std::string result;
   result = MolToSmiles(*mol);
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
   return result;
 }
@@ -901,7 +907,8 @@ void ClearEZStereo(Atom *atm) {
   }
 }
 
-std::string RegioisomerHash(RWMol *mol, bool useCXSmiles) {
+std::string RegioisomerHash(RWMol *mol, bool useCXSmiles,
+                            unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
 
   // we need a copy of the molecule so that we can loop over the bonds of
@@ -952,7 +959,7 @@ std::string RegioisomerHash(RWMol *mol, bool useCXSmiles) {
 
   std::string result = MolToSmiles(*mol);
   if (useCXSmiles) {
-    addCXExtensions(mol, result);
+    addCXExtensions(mol, result, cxFlagsToSkip);
   }
 
   return result;
@@ -1077,7 +1084,8 @@ std::string ArthorSubOrderHash(RWMol *mol) {
 }
 }  // namespace
 
-std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
+std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles,
+                    unsigned cxFlagsToSkip) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -1086,37 +1094,37 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
   switch (func) {
     default:
     case HashFunction::AnonymousGraph:
-      result = AnonymousGraph(mol, false, useCXSmiles);
+      result = AnonymousGraph(mol, false, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::ElementGraph:
-      result = AnonymousGraph(mol, true, useCXSmiles);
+      result = AnonymousGraph(mol, true, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::CanonicalSmiles:
       result = MolToSmiles(*mol);
       if (useCXSmiles) {
-        addCXExtensions(mol, result);
+        addCXExtensions(mol, result, cxFlagsToSkip);
       }
       break;
     case HashFunction::MurckoScaffold:
-      result = MurckoScaffoldHash(mol, useCXSmiles);
+      result = MurckoScaffoldHash(mol, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::ExtendedMurcko:
-      result = ExtendedMurckoScaffold(mol, useCXSmiles);
+      result = ExtendedMurckoScaffold(mol, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::Mesomer:
-      result = MesomerHash(mol, true, useCXSmiles);
+      result = MesomerHash(mol, true, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::RedoxPair:
-      result = MesomerHash(mol, false, useCXSmiles);
+      result = MesomerHash(mol, false, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::HetAtomTautomer:
-      result = TautomerHash(mol, false, useCXSmiles);
+      result = TautomerHash(mol, false, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::HetAtomTautomerv2:
       result = TautomerHashv2(mol, false, useCXSmiles);
       break;
     case HashFunction::HetAtomProtomer:
-      result = TautomerHash(mol, true, useCXSmiles);
+      result = TautomerHash(mol, true, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::MolFormula:
       result = NMMolecularFormula(mol);
@@ -1144,7 +1152,7 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
       result = ArthorSubOrderHash(mol);
       break;
     case HashFunction::Regioisomer:
-      result = RegioisomerHash(mol, useCXSmiles);
+      result = RegioisomerHash(mol, useCXSmiles, cxFlagsToSkip);
       break;
   }
   return result;

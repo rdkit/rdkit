@@ -30,12 +30,13 @@ from typing import Iterable
 from typing import Optional
 
 from rdkit import Chem
-from rdkit.Chem import EnumerateStereoisomers
 from rdkit.Chem import rdMolHash
 
 ATOM_PROP_MAP_NUMBER = 'molAtomMapNumber'
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_CXFLAG = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
 
 ENHANCED_STEREO_GROUP_REGEX = re.compile(r'((?:a|[&o]\d+):\d+(?:,\d+)*)')
 
@@ -113,7 +114,7 @@ def GetMolHash(all_layers, hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> s
 
 
 def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[Iterable] = None,
-                 escape: Optional[str] = None) -> set(HashLayer):
+                 escape: Optional[str] = None, cxflag = DEFAULT_CXFLAG) -> set(HashLayer):
   """
     Generate layers of data about that could be used to identify a molecule
 
@@ -130,16 +131,19 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   Chem.CanonicalizeEnhancedStereo(mol)
 
   formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
-  cxsmiles = Chem.MolToCXSmiles(mol)
-  tautomer_hash = GetStereoTautomerHash(mol)
 
-  canonical_smiles = GetCanonicalSmiles(cxsmiles)
+  ps = Chem.SmilesWriteParams()
+  cxsmiles = Chem.MolToCXSmiles(
+    mol, ps, cxflag)
+
+  tautomer_hash = GetStereoTautomerHash(mol, cxflag=cxflag)
+
   sgroup_data = _CanonicalizeSGroups(mol, dataFieldNames=data_field_names)
 
   no_stereo_tautomer_hash, no_stereo_smiles = GetNoStereoLayers(mol)
 
   return {
-    HashLayer.CANONICAL_SMILES: canonical_smiles,
+    HashLayer.CANONICAL_SMILES: cxsmiles,
     HashLayer.ESCAPE: escape or "",
     HashLayer.FORMULA: formula,
     HashLayer.NO_STEREO_SMILES: no_stereo_smiles,
@@ -167,7 +171,7 @@ def _RemoveUnnecessaryHs(rdk_mol, preserve_stereogenic_hs=False):
   return edited_mol
 
 
-def GetStereoTautomerHash(molecule):
+def GetStereoTautomerHash(molecule, cxflag=DEFAULT_CXFLAG):
   if molecule.GetNumAtoms() == 0:
     return EMPTY_MOL_TAUTOMER_HASH
 
@@ -178,36 +182,11 @@ def GetStereoTautomerHash(molecule):
 
   # setting useCxSmiles param value to always include enhanced stereo info
   useCxSmiles = True
+  cx_flags_to_skip = Chem.CXSmilesFields.CX_ALL ^ cxflag
   hash_with_cxExtensions = rdMolHash.MolHash(no_h_mol, rdMolHash.HashFunction.HetAtomTautomer,
-                                             useCxSmiles)
+                                             useCxSmiles,cx_flags_to_skip)
 
-  # since the cxSmiles can include anything, we want to only include
-  # enhanced stereo information
-  canonical_smiles = GetCanonicalSmiles(hash_with_cxExtensions)
-  return canonical_smiles
-
-
-def GetCanonicalSmiles(cxsmiles):
-  smiles_parts = (p.strip() for p in cxsmiles.split('|'))
-  smiles_parts = [p for p in smiles_parts if p]
-  if not smiles_parts:
-    return '', ''
-  elif len(smiles_parts) > 2:
-    raise ValueError('Unexpected number of fragments in canonical CXSMILES')
-
-  canonical_smiles = smiles_parts[0]
-  stereo_groups = ''
-  if len(smiles_parts) == 2:
-    # note: as with many regex-based things, this is fragile
-    groups = ENHANCED_STEREO_GROUP_REGEX.findall(smiles_parts[1])
-    if groups:
-      # We might have other CXSMILES extensions that aren't stereo groups
-      stereo_groups = f"|{','.join(sorted(groups))}|"
-
-  if stereo_groups:
-    return canonical_smiles + " " + stereo_groups
-
-  return canonical_smiles
+  return hash_with_cxExtensions
 
 
 def GetNoStereoLayers(mol):
@@ -342,7 +321,7 @@ def _CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder, sortAtomAndBondOrder):
   return res
 
 
-def _CaonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder):
+def _CanonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder):
   """
     NOTES: if sortAtomAndBondOrder is true then the atom and bond lists will be sorted.
     This assumes that the ordering of those lists is not important
@@ -373,7 +352,7 @@ def _CanonicalizeSGroups(mol, dataFieldNames=None, sortAtomAndBondOrder=True):
     elif sg.GetProp("TYPE") == "SRU":
       lres = _CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder, sortAtomAndBondOrder)
     elif sg.GetProp("TYPE") == "COP":
-      lres = _CaonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder)
+      lres = _CanonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder)
 
     if lres is not None:
       res.append(lres)

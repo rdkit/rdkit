@@ -38,14 +38,14 @@ If the dataframe is containing a molecule format in a column (e.g. smiles), like
 >>> import os
 >>> from rdkit import RDConfig
 >>> antibiotics = pd.DataFrame(columns=['Name','Smiles'])
->>> antibiotics = antibiotics.append({'Smiles':'CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C',
-...   'Name':'Penicilline G'}, ignore_index=True)#Penicilline G
->>> antibiotics = antibiotics.append({
+>>> antibiotics = pd.concat([antibiotics, pd.DataFrame.from_records([{'Smiles':'CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C',
+...   'Name':'Penicilline G'}])], ignore_index=True) #Penicilline G
+>>> antibiotics = pd.concat([antibiotics,pd.DataFrame.from_records([{
 ...   'Smiles':'CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O',
-...   'Name':'Tetracycline'}, ignore_index=True)#Tetracycline
->>> antibiotics = antibiotics.append({
+...   'Name':'Tetracycline'}])], ignore_index=True) #Tetracycline
+>>> antibiotics = pd.concat([antibiotics,pd.DataFrame.from_records([{
 ...   'Smiles':'CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O)O)C',
-...   'Name':'Ampicilline'}, ignore_index=True)#Ampicilline
+...   'Name':'Ampicilline'}])], ignore_index=True) #Ampicilline
 >>> print([str(x) for x in  antibiotics.columns])
 ['Name', 'Smiles']
 >>> print(antibiotics)
@@ -135,6 +135,7 @@ from rdkit.Chem import Draw
 from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
+
 InteractiveRenderer = None
 drawOptions = None
 if hasattr(rdkit, 'IPythonConsole'):
@@ -176,6 +177,7 @@ def _molge(x, y):
     return True
   else:
     return False
+
 
 def PrintAsImageString(x):
   """Returns the molecules as base64 encoded PNG image or as SVG"""
@@ -395,7 +397,8 @@ def ChangeMoleculeRendering(frame=None, renderer='image'):
     log.warning("Failed to patch pandas - unable to change molecule rendering")
 
 
-def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumeric=False, forceV3000=False):
+def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumeric=False,
+             forceV3000=False):
   '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as
     SDF tags if specified in the "properties" list. "properties=list(df.columns)" would export
     all columns.
@@ -546,10 +549,12 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300), formats=N
         img = Draw.MolToImage(m if isinstance(m, Chem.Mol) else Chem.Mol(), size=size)
         img.save(image_data, format='PNG')
         worksheet.insert_image(row_idx_actual, col_idx, "f", {'image_data': image_data})
-        worksheet.set_column(col_idx, col_idx, width=size[0] / 6.)  # looks like height is not in px?
+        worksheet.set_column(col_idx, col_idx,
+                             width=size[0] / 6.)  # looks like height is not in px?
       elif str(dataTypes[col]) == "object":
         # string length is limited in xlsx
-        worksheet.write_string(row_idx_actual, col_idx, str(row[col])[:32000], cell_formats['write_string'])
+        worksheet.write_string(row_idx_actual, col_idx,
+                               str(row[col])[:32000], cell_formats['write_string'])
       elif ('float' in str(dataTypes[col])) or ('int' in str(dataTypes[col])):
         if (row[col] != np.nan) or (row[col] != np.inf):
           worksheet.write_number(row_idx_actual, col_idx, row[col], cell_formats['write_number'])
@@ -558,6 +563,7 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300), formats=N
 
   workbook.close()
   image_data.close()
+
 
 def FrameToGridImage(frame, column='ROMol', legendsCol=None, **kwargs):
   '''
@@ -674,7 +680,7 @@ if __name__ == '__main__':  # pragma: nocover
       from rdkit import RDConfig
       sdfFile = os.path.join(RDConfig.RDDataDir, 'NCI/first_200.props.sdf')
       frame = LoadSDF(sdfFile)
-      SaveXlsxFromFrame(frame, 'foo.xlsx', formats={ 'write_string': {'text_wrap': True} })
+      SaveXlsxFromFrame(frame, 'foo.xlsx', formats={'write_string': {'text_wrap': True}})
 
     @unittest.skipIf(pd is None, 'pandas not installed')
     def testGithub3701(self):
