@@ -28,7 +28,7 @@
 
 namespace RDKit {
 namespace Canon {
-class canon_atom;
+struct canon_atom;
 
 struct RDKIT_GRAPHMOL_EXPORT bondholder {
   Bond::BondType bondType{Bond::BondType::UNSPECIFIED};

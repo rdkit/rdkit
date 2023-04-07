@@ -65,6 +65,8 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
 
 ## Projects using RDKit
 
+- [pychemprojections](https://github.com/vandan-revanur/pychemprojections) - python library for visualizing various 2D projections of molecules.
+- [pychemovality](https://github.com/vandan-revanur/pychemovality) - python library for estimating the ovality of molecules.
 - [ChEMBL Structure Pipeline](https://github.com/chembl/ChEMBL_Structure_Pipeline) - ChEMBL protocols used to standardise and salt strip molecules.
 - [FPSim2](https://github.com/chembl/FPSim2) - Simple package for fast molecular similarity searches.
 - [Datamol](https://datamol.io/) ([docs](https://doc.datamol.io/stable/), [repo](https://github.com/datamol-org/datamol/)) - A Python library to intuitively manipulate molecules.

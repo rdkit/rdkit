@@ -8,6 +8,8 @@ from rdkit import DataStructs
 from rdkit import RDConfig
 from rdkit.Geometry import rdGeometry as rdG
 import unittest
+from os import environ
+from pathlib import Path
 
 haveBCUT = hasattr(rdMD, 'BCUT2D')
 
@@ -24,24 +26,32 @@ class TestCase(unittest.TestCase):
   def testAtomPairTypes(self):
     params = rdMD.AtomPairsParameters
     mol = Chem.MolFromSmiles("C=C")
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==
-                    rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1)))
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==
-                    1 | (1 | 1<<params.numPiBits)<<params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) == rdMD.GetAtomPairAtomCode(
+        mol.GetAtomWithIdx(1)))
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) == 1
+      | (1 | 1 << params.numPiBits) << params.numBranchBits)
 
     mol = Chem.MolFromSmiles("C#CO")
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))!=
-                    rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1)))
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==
-                    1 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1))==
-                    2 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(2))==
-                    1 | (0 | 3<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),1)==
-                    1 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),2)==
-                    0 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) != rdMD.GetAtomPairAtomCode(
+        mol.GetAtomWithIdx(1)))
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0)) == 1
+      | (2 | 1 << params.numPiBits) << params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1)) == 2
+      | (2 | 1 << params.numPiBits) << params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(2)) == 1
+      | (0 | 3 << params.numPiBits) << params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1), 1) == 1
+      | (2 | 1 << params.numPiBits) << params.numBranchBits)
+    self.assertTrue(
+      rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1), 2) == 0
+      | (2 | 1 << params.numPiBits) << params.numBranchBits)
 
   def testAtomPairTypesChirality(self):
     mols = [Chem.MolFromSmiles(x) for x in ("CC(F)Cl", "C[C@@H](F)Cl", "C[C@H](F)Cl")]
@@ -471,7 +481,6 @@ class TestCase(unittest.TestCase):
         'Cc1cccc(C)c1c1c(C)cccc1',
         'CCO',
     ]:
-
       m = Chem.MolFromSmiles(s)
 
       v1 = rdMD.CalcNumRotatableBonds(m)
@@ -660,8 +669,8 @@ class TestCase(unittest.TestCase):
       mol = Chem.MolFromSmiles(smi)
       res = rdMD.BCUT2D(mol)
       self.assertEqual(len(res), 8)
-      for rv,ev in zip(res,expected[i]):
-        self.assertAlmostEqual(rv,ev)
+      for rv, ev in zip(res, expected[i]):
+        self.assertAlmostEqual(rv, ev)
       # print(list(res))  # - expected[i])
       # self.assertAlmostEqual(list(res), expected[i])
 
@@ -704,6 +713,21 @@ class TestCase(unittest.TestCase):
       self.assertTrue(0, "Failed to handle bad prop (not a double)")
     except RuntimeError as e:
       self.assertTrue("boost::bad_any_cast" in str(e))
+
+  def testOxidationNumbers(self):
+    # majority of tests are in the C++ layer.  These are just to make
+    # sure the wrappers are working.
+    m = Chem.MolFromSmiles("CO")
+    rdMD.CalcOxidationNumbers(m)
+    self.assertEqual(m.GetAtomWithIdx(0).GetIntProp('OxidationNumber'), -2)
+    self.assertEqual(m.GetAtomWithIdx(1).GetIntProp('OxidationNumber'), -2)
+
+    rdbase = environ["RDBASE"]
+    ffile = Path(rdbase) / 'Code' / 'GraphMol' / 'MolStandardize' / 'test_data' / 'ferrocene.mol'
+    ferrocene = Chem.MolFromMolFile(str(ffile))
+    Chem.Kekulize(ferrocene)
+    rdMD.CalcOxidationNumbers(ferrocene)
+    self.assertEqual(ferrocene.GetAtomWithIdx(10).GetProp('OxidationNumber'), '2')
 
 
 if __name__ == '__main__':

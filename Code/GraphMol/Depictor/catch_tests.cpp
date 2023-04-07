@@ -207,3 +207,32 @@ TEST_CASE("octahedral", "[nontetrahedral]") {
     CHECK(v1.length() > v6.length());
   }
 }
+
+TEST_CASE("use ring system templates") {
+  auto mol = "C1CCC2C(C1)C1CCN2NN1"_smiles;
+  RDDepict::Compute2DCoordParameters params;
+  RDDepict::compute2DCoords(*mol, params);
+  auto diff =
+      mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
+  // when templates are not used, bond from 10-11 is very short
+  TEST_ASSERT(RDKit::feq(diff.length(), 0.116, .1));
+
+  params.useRingTemplates = true;
+  RDDepict::compute2DCoords(*mol, params);
+  diff =
+      mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
+  TEST_ASSERT(RDKit::feq(diff.length(), 1.0, .1))
+}
+
+TEST_CASE("dative bonds and rings") {
+  auto mol = "O->[Pt]1(<-O)<-NC2CCC2N->1"_smiles;
+  REQUIRE(mol);
+  auto rings = mol->getRingInfo();
+  CHECK(rings->numRings() == 1);  // the dative bonds are ignored
+  RDDepict::compute2DCoords(*mol);
+  CHECK(rings->numRings() == 1);  // ensure the ring count hasn't changed
+  auto conf = mol->getConformer();
+  auto v1 = conf.getAtomPos(1) - conf.getAtomPos(3);
+  auto v2 = conf.getAtomPos(1) - conf.getAtomPos(8);
+  CHECK_THAT(v1.length(), Catch::Matchers::WithinAbs(v2.length(), 0.01));
+}

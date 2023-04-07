@@ -306,9 +306,9 @@ ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
   return res;
 }
 
-VECT_INT_VECT getSSSR(ROMol &mol) {
+VECT_INT_VECT getSSSR(ROMol &mol, bool includeDativeBonds) {
   VECT_INT_VECT rings;
-  MolOps::findSSSR(mol, rings);
+  MolOps::findSSSR(mol, rings, includeDativeBonds);
   return rings;
 }
 
@@ -450,15 +450,25 @@ void assignRadicalsMol(ROMol &mol) {
   auto &wmol = static_cast<RWMol &>(mol);
   MolOps::assignRadicals(wmol);
 }
+namespace {
+ROMol *hapticBondsToDativeHelper(const ROMol &mol) {
+  ROMol *res = MolOps::hapticBondsToDative(mol);
+  return res;
+}
+ROMol *dativeBondsToHapticHelper(const ROMol &mol) {
+  ROMol *res = MolOps::dativeBondsToHaptic(mol);
+  return res;
+}
+}  // namespace
 
 void setHybridizationMol(ROMol &mol) {
   auto &wmol = static_cast<RWMol &>(mol);
   MolOps::setHybridization(wmol);
 }
 
-VECT_INT_VECT getSymmSSSR(ROMol &mol) {
+VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds) {
   VECT_INT_VECT rings;
-  MolOps::symmetrizeSSSR(mol, rings);
+  MolOps::symmetrizeSSSR(mol, rings, includeDativeBonds);
   return rings;
 }
 PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
@@ -1045,11 +1055,14 @@ struct molops_wrapper {
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use.\n\
+    - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
          The length of this will be equal to NumBonds-NumAtoms+1 for single-fragment molecules.\n\
 \n";
-    python::def("GetSSSR", getSSSR, docString.c_str());
+    python::def("GetSSSR", getSSSR,
+                (python::arg("mol"), python::arg("includeDativeBonds") = false),
+                docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
@@ -1062,10 +1075,13 @@ struct molops_wrapper {
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use.\n\
+    - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
-    python::def("GetSymmSSSR", getSymmSSSR, docString.c_str());
+    python::def("GetSymmSSSR", getSymmSSSR,
+                (python::arg("mol"), python::arg("includeDativeBonds") = false),
+                docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
@@ -1650,6 +1666,41 @@ to the terminal dummy atoms.\n\
 \n";
     python::def("AssignRadicals", assignRadicalsMol, (python::arg("mol")),
                 docString.c_str());
+
+    docString =
+        R"DOC(One way of showing haptic bonds (such as cyclopentadiene to
+iron in ferrocene) is to use a dummy atom with a dative bond to the
+iron atom with the bond labelled with the atoms involved in the
+organic end of the bond.  Another way is to have explicit dative
+bonds from the atoms of the haptic group to the metal atom.  This
+function converts the former representation to the latter.
+
+ARGUMENTS:
+
+  - mol: the molecule to use
+
+RETURNS:
+  a modified copy of the molecule)DOC";
+    python::def("HapticBondsToDative", hapticBondsToDativeHelper,
+                (python::arg("mol")), docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());
+
+    docString =
+        R"DOC(Does the reverse of hapticBondsToDative.  If there are multiple
+contiguous atoms attached by dative bonds to an atom (probably a metal
+atom), the dative bonds will be replaced by a dummy atom in their
+centre attached to the (metal) atom by a dative bond, which is
+labelled with ENDPTS of the atoms that had the original dative bonds.
+
+ARGUMENTS:
+
+  - mol: the molecule to use
+
+RETURNS:
+  a modified copy of the molecule)DOC";
+    python::def("DativeBondsToHaptic", dativeBondsToHapticHelper,
+                (python::arg("mol")), docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());
 
     // ------------------------------------------------------------------------
     docString =
@@ -2262,6 +2313,18 @@ ARGUMENTS:\n\
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
+    python::class_<Chirality::BondWedgingParameters>(
+        "BondWedgingParameters",
+        "Parameters controlling how bond wedging is done.")
+        .def_readwrite(
+            "wedgeTwoBondsIfPossible",
+            &Chirality::BondWedgingParameters::wedgeTwoBondsIfPossible,
+            R"DOC(If this is enabled then two bonds will be wedged at chiral
+  centers subject to the following constraints:
+    1. ring bonds will not be wedged
+    2. bonds to chiral centers will not be wedged
+    3. bonds separated by more than 120 degrees will not be
+        wedged)DOC");
     docString =
         "Set the wedging on single bonds in a molecule.\n\
    The wedging scheme used is that from Mol files.\n\
@@ -2272,7 +2335,10 @@ ARGUMENTS:\n\
     - conformer: the conformer to use to determine wedge direction\n\
 \n\
 \n";
-    python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
+    python::def("WedgeMolBonds", Chirality::wedgeMolBonds,
+                (python::arg("mol"), python::arg("conformer"),
+                 python::arg("params") = python::object()),
+                docString.c_str());
 
     docString =
         "Set the wedging to that which was read from the original\n\

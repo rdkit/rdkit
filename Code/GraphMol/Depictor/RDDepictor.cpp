@@ -244,7 +244,9 @@ void embedNontetrahedralStereo(const RDKit::ROMol &mol,
 // arings: indices of atoms in rings
 void embedFusedSystems(const RDKit::ROMol &mol,
                        const RDKit::VECT_INT_VECT &arings,
-                       std::list<EmbeddedFrag> &efrags) {
+                       std::list<EmbeddedFrag> &efrags,
+                       const RDGeom::INT_POINT2D_MAP *coordMap,
+                       bool useRingTemplates) {
   RDKit::INT_INT_VECT_MAP neighMap;
   RingUtils::makeRingNeighborMap(arings, neighMap);
 
@@ -261,7 +263,23 @@ void embedFusedSystems(const RDKit::ROMol &mol,
     for (auto rid : fused) {
       frings.push_back(arings.at(rid));
     }
-    EmbeddedFrag efrag(&mol, frings);
+
+    // don't allow ring system templates if >1 atom in this ring system
+    // has a user-defined coordinate from coordMap
+    bool allowRingTemplates = useRingTemplates;
+    if (useRingTemplates && coordMap) {
+      boost::dynamic_bitset<> coordMapAtoms(mol.getNumAtoms());
+      for (const auto &ring : frings) {
+        for (const auto &aid : ring) {
+          if (coordMap->find(aid) != coordMap->end()) {
+            coordMapAtoms.set(aid);
+          }
+        }
+      }
+      allowRingTemplates = (coordMapAtoms.count() < 2);
+    }
+
+    EmbeddedFrag efrag(&mol, frings, allowRingTemplates);
     efrag.setupNewNeighs();
     efrags.push_back(efrag);
     size_t rix;
@@ -392,7 +410,8 @@ struct ThetaBin {
 
 void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
-                          std::list<EmbeddedFrag> &efrags) {
+                          std::list<EmbeddedFrag> &efrags,
+                          bool useRingTemplates) {
   std::vector<int> atomRanks;
   atomRanks.resize(mol.getNumAtoms());
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
@@ -401,7 +420,8 @@ void computeInitialCoords(RDKit::ROMol &mol,
   RDKit::VECT_INT_VECT arings;
 
   // first find all the rings
-  RDKit::MolOps::symmetrizeSSSR(mol, arings);
+  bool includeDativeBonds = true;
+  RDKit::MolOps::symmetrizeSSSR(mol, arings, includeDativeBonds);
 
   // do stereochemistry
   RDKit::MolOps::assignStereochemistry(mol, false);
@@ -420,7 +440,8 @@ void computeInitialCoords(RDKit::ROMol &mol,
 
   if (arings.size() > 0) {
     // first deal with the fused rings
-    DepictorLocal::embedFusedSystems(mol, arings, efrags);
+    DepictorLocal::embedFusedSystems(mol, arings, efrags, coordMap,
+                                     useRingTemplates);
   }
 
   // do non-tetrahedral stereo
@@ -501,6 +522,27 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
   }
   return confId;
 }
+
+unsigned int compute2DCoords(RDKit::ROMol &mol,
+                             const RDGeom::INT_POINT2D_MAP *coordMap,
+                             bool canonOrient, bool clearConfs,
+                             unsigned int nFlipsPerSample,
+                             unsigned int nSamples, int sampleSeed,
+                             bool permuteDeg4Nodes, bool forceRDKit,
+                             bool useRingTemplates) {
+  Compute2DCoordParameters params;
+  params.coordMap = coordMap;
+  params.canonOrient = canonOrient;
+  params.clearConfs = clearConfs;
+  params.nFlipsPerSample = nFlipsPerSample;
+  params.nSamples = nSamples;
+  params.sampleSeed = sampleSeed;
+  params.permuteDeg4Nodes = permuteDeg4Nodes;
+  params.forceRDKit = forceRDKit;
+  params.useRingTemplates = useRingTemplates;
+  return compute2DCoords(mol, params);
+}
+
 //
 //
 // 50,000 foot algorithm:
@@ -515,28 +557,26 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
 //
 //
 unsigned int compute2DCoords(RDKit::ROMol &mol,
-                             const RDGeom::INT_POINT2D_MAP *coordMap,
-                             bool canonOrient, bool clearConfs,
-                             unsigned int nFlipsPerSample,
-                             unsigned int nSamples, int sampleSeed,
-                             bool permuteDeg4Nodes, bool forceRDKit) {
+                             const Compute2DCoordParameters &params) {
   if (mol.needsUpdatePropertyCache()) {
     mol.updatePropertyCache(false);
   }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   // default to use CoordGen if we have it installed
-  if (!forceRDKit && preferCoordGen) {
-    RDKit::CoordGen::CoordGenParams params;
-    if (coordMap) {
-      params.coordMap = *coordMap;
+  if (!params.forceRDKit && preferCoordGen) {
+    RDKit::CoordGen::CoordGenParams coordgen_params;
+    if (params.coordMap) {
+      coordgen_params.coordMap = *params.coordMap;
     }
-    auto cid = RDKit::CoordGen::addCoords(mol, &params);
+    auto cid = RDKit::CoordGen::addCoords(mol, &coordgen_params);
     return cid;
   };
 #endif
+
+  RDKit::ROMol cp(mol);
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(mol, coordMap, efrags);
+  computeInitialCoords(cp, params.coordMap, efrags, params.useRingTemplates);
 
 #if 1
   // perform random sampling here to improve the density
@@ -544,10 +584,10 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     // either sample the 2D space by randomly flipping rotatable
     // bonds in the structure or flip only bonds along the shortest
     // path between colliding atoms - don't do both
-    if ((nSamples > 0) && (nFlipsPerSample > 0)) {
-      eri.randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples,
-                                           sampleSeed, nullptr, 0.0,
-                                           permuteDeg4Nodes);
+    if ((params.nSamples > 0) && (params.nFlipsPerSample > 0)) {
+      eri.randomSampleFlipsAndPermutations(
+          params.nFlipsPerSample, params.nSamples, params.sampleSeed, nullptr,
+          0.0, params.permuteDeg4Nodes);
     } else {
       eri.removeCollisionsBondFlip();
     }
@@ -557,8 +597,8 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     eri.removeCollisionsOpenAngles();
     eri.removeCollisionsShortenBonds();
   }
-  if (!coordMap || !coordMap->size()) {
-    if (canonOrient && efrags.size()) {
+  if (!params.coordMap || !params.coordMap->size()) {
+    if (params.canonOrient && efrags.size()) {
       // if we do not have any prespecified coordinates - canonicalize
       // the orientation of the fragment so that the longest axes fall
       // along the x-axis etc.
@@ -570,12 +610,12 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   DepictorLocal::_shiftCoords(efrags);
 #endif
   // create a conformation on the molecule and copy the coordinates
-  auto cid = copyCoordinate(mol, efrags, clearConfs);
+  auto cid = copyCoordinate(mol, efrags, params.clearConfs);
 
   // special case for a single-atom coordMap template
-  if ((coordMap) && (coordMap->size() == 1)) {
+  if ((params.coordMap) && (params.coordMap->size() == 1)) {
     auto &conf = mol.getConformer(cid);
-    auto cRef = coordMap->begin();
+    auto cRef = params.coordMap->begin();
     const auto &confPos = conf.getAtomPos(cRef->first);
     auto refPos = cRef->second;
     refPos.x -= confPos.x;
@@ -639,7 +679,7 @@ unsigned int compute2DCoordsMimicDistMat(
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes, bool) {
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(mol, nullptr, efrags);
+  computeInitialCoords(mol, nullptr, efrags, false);
 
   // now perform random flips of rotatable bonds so that we can sample the space
   // and try to mimic the distances in dmat

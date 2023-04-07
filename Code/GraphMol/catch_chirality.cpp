@@ -3307,3 +3307,209 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE(
+    "assignStereochemistry should clear crossed double bonds that can't have stereo") {
+  SECTION("basics") {
+    auto m = "CC=C(C)C"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setBondDir(Bond::BondDir::EITHERDOUBLE);
+    bool clean = true;
+    bool flag = true;
+    bool force = true;
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(false);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+    }
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(true);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+    }
+  }
+  SECTION("make sure we don't mess with actual potential stereosystems") {
+    auto m = "CC=C(C)[13CH3]"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setBondDir(Bond::BondDir::EITHERDOUBLE);
+    bool clean = true;
+    bool flag = true;
+    bool force = true;
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(false);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      // the crossed bond dir has been translated to unknown stereo:
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOANY);
+    }
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(true);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      // the crossed bond dir has been translated to unknown stereo:
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOANY);
+    }
+  }
+  SECTION("make sure stereoatoms are also cleared") {
+    auto m = "CC=C(C)C"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setBondDir(Bond::BondDir::EITHERDOUBLE);
+    m->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    bool clean = true;
+    bool flag = true;
+    bool force = true;
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(false);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondWithIdx(1)->getStereoAtoms().empty());
+    }
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(true);
+      auto cp(*m);
+      RDKit::MolOps::assignStereochemistry(cp, clean, force, flag);
+      CHECK(cp.getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondWithIdx(1)->getStereoAtoms().empty());
+    }
+  }
+}
+
+TEST_CASE("adding two wedges to chiral centers") {
+  SECTION("basics") {
+    auto mol = R"CTAB(
+  Mrv2219 02112315062D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 O -3.6667 2.5 0 0
+M  V30 2 C -2.333 3.27 0 0 CFG=1
+M  V30 3 F -0.9993 2.5 0 0
+M  V30 4 C -3.103 4.6037 0 0
+M  V30 5 N -1.3955 4.4918 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 5);
+    {
+      RWMol cp(*mol);
+      Chirality::wedgeMolBonds(cp);
+      CHECK(cp.getBondBetweenAtoms(1, 3)->getBondDir() != Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 0)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 2)->getBondDir() == Bond::BondDir::NONE);
+    }
+    {
+      RWMol cp(*mol);
+      Chirality::BondWedgingParameters ps;
+      ps.wedgeTwoBondsIfPossible = true;
+      Chirality::wedgeMolBonds(cp, nullptr, &ps);
+      CHECK(cp.getBondBetweenAtoms(1, 3)->getBondDir() != Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() != Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() !=
+            cp.getBondBetweenAtoms(1, 3)->getBondDir());
+      CHECK(cp.getBondBetweenAtoms(1, 0)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 2)->getBondDir() == Bond::BondDir::NONE);
+    }
+  }
+  SECTION(
+      "more complex 1, this should only have one wedge for each of the two chiral centers") {
+    std::string smi =
+        "[H][C@@]12CC(=O)N1[C@@H](C(=O)O)C(C)(C)S2(=O)=O |(-2.78382,0.183015,;-1.38222,-0.351313,;-2.12923,-1.65207,;-0.828466,-2.39908,;-0.436905,-3.84707,;-0.0814577,-1.09832,;1.03095,-0.0920638,;2.49888,-0.400554,;2.96569,-1.82607,;3.50001,0.71647,;0.41769,1.27685,;1.8432,1.74365,;0.102447,2.74335,;-1.07373,1.11662,;-1.07718,2.61662,;-2.56587,1.26998,)|";
+    SmilesParserParams spps;
+    spps.removeHs = false;
+    auto m = SmilesToMol(smi, spps);
+    REQUIRE(m);
+    Chirality::BondWedgingParameters bwps;
+    bwps.wedgeTwoBondsIfPossible = true;
+    Chirality::wedgeMolBonds(*m, &m->getConformer(), &bwps);
+    unsigned nWedged = 0;
+    for (const auto bond : m->bonds()) {
+      if (bond->getBondDir() != Bond::BondDir::NONE) {
+        ++nWedged;
+      }
+    }
+    CHECK(nWedged == 2);
+  }
+  SECTION("more complex 2, have two wedges around the chiral center") {
+    std::string smi =
+        "[H][C@@]12CCCN1C(=O)CN1C(=O)[C@](C)(N)O[C@]12O |(-0.888297,0.626611,;-1.19852,-0.840959,;-1.94707,-2.14084,;-3.41464,-1.83061,;-3.5731,-0.339006,;-2.20347,0.272634,;-1.74154,1.69974,;-2.74648,2.81333,;-0.274666,2.01325,;0.730277,0.899655,;2.23028,0.901335,;3.11059,2.11585,;2.6954,-0.52473,;3.44685,-1.82293,;4.06503,0.0869091,;1.48286,-1.40777,;0.26835,-0.527448,;-0.0418744,-1.99502,)|";
+    SmilesParserParams spps;
+    spps.removeHs = false;
+    auto m = SmilesToMol(smi, spps);
+    REQUIRE(m);
+    Chirality::BondWedgingParameters bwps;
+    bwps.wedgeTwoBondsIfPossible = true;
+    Chirality::wedgeMolBonds(*m, &m->getConformer(), &bwps);
+    CHECK(m->getBondWithIdx(12)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondWithIdx(13)->getBondDir() != Bond::BondDir::NONE);
+  }
+  SECTION("another one") {
+    auto m =
+        "CC[C@@]1(O)C(=O)OCc2c1cc1-c3nc4ccccc4cc3Cn1c2=O |(-2.67178,3.55256,;-2.43493,2.07138,;-3.59925,1.12567,;-4.32841,2.43652,;-5.01681,0.635215,;-6.15033,1.61763,;-5.30084,-0.837648,;-4.16731,-1.82006,;-2.74976,-1.3296,;-2.46573,0.143259,;-1.04818,0.633713,;0.085343,-0.348697,;1.57389,-0.163687,;2.43243,1.06631,;3.92692,0.937796,;4.78546,2.1678,;6.27994,2.03928,;6.91588,0.680758,;6.05734,-0.549244,;4.56286,-0.420725,;3.70432,-1.65073,;2.20983,-1.52221,;1.11432,-2.54683,;-0.198688,-1.82156,;-1.61624,-2.31201,;-1.90027,-3.78488,)|"_smiles;
+    REQUIRE(m);
+    Chirality::BondWedgingParameters bwps;
+    bwps.wedgeTwoBondsIfPossible = true;
+    Chirality::wedgeMolBonds(*m, &m->getConformer(), &bwps);
+    CHECK(m->getBondWithIdx(1)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondWithIdx(1)->getBeginAtomIdx() == 2);
+    CHECK(m->getBondWithIdx(2)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondWithIdx(2)->getBeginAtomIdx() == 2);
+  }
+  SECTION("favor degree 1") {
+    auto m =
+        "[H][C@@]12CC[C@@](C)(O)[C@H](CC[C@@](C)(O)C=C)[C@@]1(C)CCCC2(C)C |(3.59567,-1.0058,;2.33379,-0.194852,;2.4456,-1.69068,;1.20608,-2.53542,;-0.145252,-1.88434,;-1.63777,-1.73471,;-0.551787,-3.3282,;-0.257063,-0.388514,;-1.60839,0.262569,;-2.84791,-0.582176,;-4.19924,0.068907,;-5.55057,0.71999,;-4.85032,-1.28242,;-3.54816,1.42024,;-4.3929,2.65976,;0.982456,0.456231,;-0.368873,1.10731,;0.870645,1.95206,;2.11016,2.7968,;3.46149,2.14572,;3.5733,0.649893,;5.02699,1.01975,;4.35205,-0.632117,)|"_smiles;
+    REQUIRE(m);
+    Chirality::BondWedgingParameters bwps;
+    bwps.wedgeTwoBondsIfPossible = true;
+    Chirality::wedgeMolBonds(*m, &m->getConformer(), &bwps);
+    CHECK(m->getBondWithIdx(9)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondWithIdx(10)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::NONE);
+  }
+}
+
+TEST_CASE(
+    "RDKit Issue #6217: Atoms may get flagged with non-tetrahedral stereo even when it is not allowed",
+    "[bug][stereo][non-tetrahedral]") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+  Chirality::setUseLegacyStereoPerception(false);
+
+  AllowNontetrahedralChiralityFixture reset_non_tetrahedral_allowed;
+  Chirality::setAllowNontetrahedralChirality(false);
+
+  auto m = "CS(=O)(=O)O"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 5);
+
+  auto stereoInfo = Chirality::findPotentialStereo(*m);
+  CHECK(stereoInfo.size() == 0);
+
+  auto at = m->getAtomWithIdx(1);
+
+  auto sinfo = Chirality::detail::getStereoInfo(at);
+  CHECK(sinfo.type == Chirality::StereoType::Atom_Tetrahedral);
+
+  REQUIRE(at->getAtomicNum() == 16);
+  CHECK(!at->hasProp(common_properties::_ChiralityPossible));
+}

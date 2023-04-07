@@ -22,6 +22,7 @@ namespace RDKit {
 class Atom;
 class Bond;
 class ROMol;
+class Conformer;
 
 namespace Chirality {
 
@@ -201,6 +202,40 @@ RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
                                                const StereoSpecified &s);
 RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
                                                const StereoType &s);
+
+struct RDKIT_GRAPHMOL_EXPORT BondWedgingParameters {
+  bool wedgeTwoBondsIfPossible =
+      false;  //!< If this is enabled then two bonds will be wedged at chiral
+              //!< centers subject to the following constraints:
+              //!<   1. ring bonds will not be wedged
+              //!<   2. bonds to chiral centers will not be wedged
+              //!<   3. bonds separated by more than 120 degrees will not be
+              //!<      wedged
+};
+
+namespace detail {
+RDKIT_GRAPHMOL_EXPORT Bond::BondDir determineBondWedgeState(
+    const Bond *bond, unsigned int fromAtomIdx, const Conformer *conf);
+RDKIT_GRAPHMOL_EXPORT Bond::BondDir determineBondWedgeState(
+    const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf);
+RDKIT_GRAPHMOL_EXPORT std::pair<bool, INT_VECT> countChiralNbrs(
+    const ROMol &mol, int noNbrs);
+RDKIT_GRAPHMOL_EXPORT int pickBondToWedge(const Atom *atom, const ROMol &mol,
+                                          const INT_VECT &nChiralNbrs,
+                                          const INT_MAP_INT &resSoFar,
+                                          int noNbrs);
+}  // namespace detail
+
+//! picks the bonds which should be wedged
+/// \returns a map from bond idx -> controlling atom idx
+RDKIT_GRAPHMOL_EXPORT INT_MAP_INT pickBondsToWedge(
+    const ROMol &mol, const BondWedgingParameters *params = nullptr);
+
+RDKIT_GRAPHMOL_EXPORT void wedgeMolBonds(
+    ROMol &mol, const Conformer *conf = nullptr,
+    const BondWedgingParameters *params = nullptr);
+RDKIT_GRAPHMOL_EXPORT void wedgeBond(Bond *bond, unsigned int fromAtomIdx,
+                                     const Conformer *conf);
 
 }  // namespace Chirality
 }  // namespace RDKit

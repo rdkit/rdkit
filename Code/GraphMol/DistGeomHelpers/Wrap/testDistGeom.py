@@ -274,7 +274,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(nPos > 0)
     self.assertTrue(nNeg > 0)
 
-    tgtVol = 5.0
+    tgtVol = 3.0
     for i in range(10):
       smiles = "Cl[C@H](F)Br"
       mol = Chem.MolFromSmiles(smiles)

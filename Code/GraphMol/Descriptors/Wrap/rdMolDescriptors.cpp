@@ -16,6 +16,7 @@
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/AtomFeat.h>
+#include <GraphMol/Descriptors/OxidationNumbers.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
@@ -1179,7 +1180,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   // exposes calcNumRotatableBondOptions (must be a better way!)
 
   docString =
-      "Options for generating rotatble bonds\n\
+      "Options for generating rotatable bonds\n\
  NonStrict - standard loose definitions\n\
  Strict - stricter definition excluding amides, esters, etc\n\
  StrictLinkages - adds rotors between rotatable bonds\n\
@@ -1823,5 +1824,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("BCUT2D", BCUT_atomprops,
               (python::arg("mol"), python::arg("atom_propname")),
               docString.c_str());
+
+  docString =
+      "Adds the oxidation number/state to the atoms of a molecule as"
+      " property OxidationNumber on each atom.  Use Pauling"
+      " electronegativities."
+      "  This is experimental code, still under development.";
+  python::def("CalcOxidationNumbers", RDKit::Descriptors::calcOxidationNumbers,
+              (python::arg("mol")), docString.c_str());
 #endif
 }

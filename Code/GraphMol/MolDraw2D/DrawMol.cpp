@@ -63,8 +63,8 @@ DrawMol::DrawMol(
       yMax_(std::numeric_limits<double>::lowest() / 2.0),
       xRange_(std::numeric_limits<double>::max()),
       yRange_(std::numeric_limits<double>::max()),
-      flexiCanvasX_(width_ < 0.0),
-      flexiCanvasY_(height_ < 0.0) {
+      flexiCanvasX_(width < 0.0),
+      flexiCanvasY_(height < 0.0) {
   if (highlight_atoms) {
     highlightAtoms_ = *highlight_atoms;
   }
@@ -2798,6 +2798,15 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
       }
       bondNonRing(bond, offset, l2s, l2f);
     }
+
+    // Occasionally, as seen in Github6170, a bad geometry about a bond can
+    // result in the bonds being crossed as perpendiculars have become
+    // confused.  Usually this is the result of when a bond to the
+    // double bond is roughly linear with it.  This is a cheap test to see if
+    // this has happened, uncrossing them if necessary.
+    if (!areBondsParallel(l1s, l1f, l2f, l2s)) {
+      std::swap(l1s, l2s);
+    }
     if ((Bond::EITHERDOUBLE == bond.getBondDir()) ||
         (Bond::STEREOANY == bond.getStereo())) {
       // crossed bond
@@ -2902,10 +2911,11 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
   // opposite at1 to at2.
   auto nonColinearNbor = [&](Atom *at1, Atom *at2) -> const Atom * {
     const Atom *thirdAtom = nullptr;
-    for (auto i = 1; i < at1->getDegree(); ++i) {
+    for (auto i = 1u; i < at1->getDegree(); ++i) {
       thirdAtom = otherNeighbor(at1, at2, i, *drawMol_);
-      if (!areBondsLinear(atCds_[at1->getIdx()], atCds_[at2->getIdx()],
-                          atCds_[at1->getIdx()], atCds_[thirdAtom->getIdx()])) {
+      if (!areBondsParallel(atCds_[at1->getIdx()], atCds_[at2->getIdx()],
+                            atCds_[at1->getIdx()],
+                            atCds_[thirdAtom->getIdx()])) {
         return thirdAtom;
       }
     }
@@ -3682,8 +3692,8 @@ bool areBondsTrans(const Point2D &at1, const Point2D &at2, const Point2D &at3,
 }
 
 // ****************************************************************************
-bool areBondsLinear(const Point2D &at1, const Point2D &at2, const Point2D &at3,
-                    const Point2D &at4, double tol) {
+bool areBondsParallel(const Point2D &at1, const Point2D &at2,
+                      const Point2D &at3, const Point2D &at4, double tol) {
   Point2D v21 = at1.directionVector(at2);
   Point2D v34 = at4.directionVector(at3);
   return (fabs(1.0 - fabs(v21.dotProduct(v34))) < tol);

@@ -642,3 +642,26 @@ TEST_CASE("github #6050: stereogroups not combined") {
     CHECK(m->getStereoGroups()[0].getAtoms().size() == 4);
   }
 }
+
+TEST_CASE("github #6225: removes enhanced stereo if doIsomericSmiles is false") {
+  { // Gets rid of chiral centers
+    std::string smiles = "O[C@H](Br)[C@H](F)C |&1:1,3|";
+    ROMol *m = SmilesToMol(smiles);
+    SmilesWriteParams params;
+    params.doIsomericSmiles = false;
+    REQUIRE(m);
+    CHECK(MolToCXSmiles(*m, params) == "CC(F)C(O)Br");
+    delete m;
+  }
+
+  // cis-trans flags
+  {
+    std::string smiles = "C1CCCC/C=C/CCC1 |ctu:5|";
+    ROMol *m = SmilesToMol(smiles);
+    SmilesWriteParams params;
+    params.doIsomericSmiles = false;
+    REQUIRE(m);
+    CHECK(MolToCXSmiles(*m, params) == "C1=CCCCCCCCC1");
+    delete m;
+  }
+}
