@@ -141,15 +141,14 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
     for (ROMOL_SPTR agent_template : other.m_agentTemplates) {
       m_agentTemplates.emplace_back(new RWMol(*agent_template));
     }
+    d_substructParams = other.d_substructParams;
   }
 
  public:
   ChemicalReaction() : RDProps() {}
   //! construct a reaction from a pickle string
   ChemicalReaction(const std::string &binStr);
-  ChemicalReaction(const ChemicalReaction &other) : RDProps() {
-    copy(other);
-  }
+  ChemicalReaction(const ChemicalReaction &other) : RDProps() { copy(other); }
   ChemicalReaction &operator=(const ChemicalReaction &other) {
     if (this != &other) {
       copy(other);
@@ -364,10 +363,16 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   //! getImplicitProertiesFlag() for a discussion of what this means.
   void setImplicitPropertiesFlag(bool val) { df_implicitProperties = val; }
 
+  const SubstructMatchParameters &getSubstructParams() const {
+    return d_substructParams;
+  }
+  SubstructMatchParameters &getSubstructParams() { return d_substructParams; }
+
  private:
   bool df_needsInit{true};
   bool df_implicitProperties{false};
   MOL_SPTR_VECT m_reactantTemplates, m_productTemplates, m_agentTemplates;
+  SubstructMatchParameters d_substructParams;
 };
 
 //! tests whether or not the molecule has a substructure match

@@ -439,6 +439,10 @@ python::object addReactionToPNGFileHelper(const ChemicalReaction &rxn,
   return retval;
 }
 
+SubstructMatchParameters *getParamsHelper(ChemicalReaction &rxn) {
+  return &rxn.getSubstructParams();
+}
+
 }  // namespace RDKit
 
 void wrap_enumeration();
@@ -631,6 +635,11 @@ Sample Usage:
       .def("GetAgents", &RDKit::ChemicalReaction::getAgents,
            python::return_value_policy<python::reference_existing_object>(),
            "get the agent templates")
+      .def("GetSubstructParams", RDKit::getParamsHelper,
+           python::return_value_policy<
+               python::reference_existing_object,
+               python::with_custodian_and_ward_postcall<0, 1>>(),
+           "get the parameter object controlling the substructure matching")
 
       // properties
       .def("SetProp", RDKit::MolSetProp<RDKit::ChemicalReaction, std::string>,

@@ -935,9 +935,8 @@ class StereoGroupTests(unittest.TestCase):
     products = _reactAndSummarize('[O:1].[C:2]=O>>[O:1][C:2][O:1]',
                                   'Cl[C@@H](Br)C[C@H](Br)CCO |&1:1,4|', 'CC(=O)C')
     # stereogroup manually checked, product SMILES assumed correct.
-    self.assertEqual(
-      products,
-      'CC(C)(OCC[C@H](Br)C[C@H](Cl)Br)OCC[C@H](Br)C[C@H](Cl)Br |&1:6,9,15,18|')
+    self.assertEqual(products,
+                     'CC(C)(OCC[C@H](Br)C[C@H](Cl)Br)OCC[C@H](Br)C[C@H](Cl)Br |&1:6,9,15,18|')
 
     # Stereogroup atoms are not in the reaction, but have multiple copies in the
     # product.
@@ -1084,19 +1083,28 @@ M  END
 
   def testGithub6138(self):
     mol = Chem.MolFromSmiles("COc1ccccc1Oc1nc(Nc2cc(C)[nH]n2)cc2ccccc12")
-    rxn = AllChem.ReactionFromSmarts("([c:1]:[n&H1&+0&D2:3]:[n:2])>>([c:1]:[n&H0&+0&D3:3](:[n:2])-C1-C-C-C-C-O-1)")
+    rxn = AllChem.ReactionFromSmarts(
+      "([c:1]:[n&H1&+0&D2:3]:[n:2])>>([c:1]:[n&H0&+0&D3:3](:[n:2])-C1-C-C-C-C-O-1)")
 
     def run(r):
-      return Chem.MolToSmiles(r.RunReactants((mol,))[0][0])
+      return Chem.MolToSmiles(r.RunReactants((mol, ))[0][0])
 
     rxn_reloaded = pickle.loads(pickle.dumps(rxn))
 
-    res1 = Chem.MolToSmiles(rxn.RunReactants((mol,))[0][0])
-    res2 = Chem.MolToSmiles(rxn_reloaded.RunReactants((mol,))[0][0])
+    res1 = Chem.MolToSmiles(rxn.RunReactants((mol, ))[0][0])
+    res2 = Chem.MolToSmiles(rxn_reloaded.RunReactants((mol, ))[0][0])
     rxn_reloaded_after_use = pickle.loads(pickle.dumps(rxn))
-    res3 = Chem.MolToSmiles(rxn_reloaded_after_use.RunReactants((mol,))[0][0])
+    res3 = Chem.MolToSmiles(rxn_reloaded_after_use.RunReactants((mol, ))[0][0])
     self.assertEqual(res1, res2)
     self.assertEqual(res1, res3)
+
+  def testGithub6211(self):
+    rxn = AllChem.ReactionFromSmarts("[C:1][C@:2]([N:3])[O:4]>>[C:1][C@@:2]([N:3])[O:4]")
+    mol = Chem.MolFromSmiles("CC[C@@H](N)O")
+    self.assertEqual(Chem.MolToSmiles(rxn.RunReactants((mol, ))[0][0]), "CC[C@H](N)O")
+    rxn.GetSubstructParams().useChirality = True
+    self.assertEqual(len(rxn.RunReactants((mol, ))), 0)
+
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)

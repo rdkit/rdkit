@@ -1828,7 +1828,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString =
       "Adds the oxidation number/state to the atoms of a molecule as"
       " property OxidationNumber on each atom.  Use Pauling"
-      " electronegativities.";
+      " electronegativities."
+      "  This is experimental code, still under development.";
   python::def("CalcOxidationNumbers", RDKit::Descriptors::calcOxidationNumbers,
               (python::arg("mol")), docString.c_str());
 #endif

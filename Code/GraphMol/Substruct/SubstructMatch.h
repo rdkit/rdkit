@@ -67,6 +67,8 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
 
 RDKIT_SUBSTRUCTMATCH_EXPORT void updateSubstructMatchParamsFromJSON(
     SubstructMatchParameters &params, const std::string &json);
+RDKIT_SUBSTRUCTMATCH_EXPORT std::string substructMatchParamsToJSON(
+    const SubstructMatchParameters &params);
 
 //! Find a substructure match for a query in a molecule
 /*!

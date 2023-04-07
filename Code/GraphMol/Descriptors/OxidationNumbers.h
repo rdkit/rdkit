@@ -29,6 +29,7 @@ namespace Descriptors {
  * Calculates the oxidation numbers (states) of the atoms in a molecule
  * and stores them in the property _OxidationNumber on the atoms.  Uses Pauling
  * electronegativies.
+ * This is experimental code, still under development.
  *
  * @param mol the molecule of interest
  */
