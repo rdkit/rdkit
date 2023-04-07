@@ -33,7 +33,7 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
   bool df_owner;
   bool df_enabled;
 
-  std::ofstream *helperstream;
+  std::ofstream *dp_teeHelperStream;
   RDTee *tee;
   RDTeeStream *teestream;
 
@@ -41,7 +41,7 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
       : dp_dest(dest),
         df_owner(owner),
         df_enabled(true),
-        helperstream(nullptr),
+        dp_teeHelperStream(nullptr),
         tee(nullptr),
         teestream(nullptr) {}
 
@@ -59,7 +59,7 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
     if (dp_dest) {
       auto s = new std::ofstream(filename);
       SetTee(*s);
-      helperstream = s;
+      dp_teeHelperStream = s;
     }
   }
 
@@ -75,10 +75,10 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
       delete tee;
       tee = nullptr;
       teestream = nullptr;
-      if (helperstream) {
-        helperstream->close();
-        delete helperstream;
-        helperstream = nullptr;
+      if (dp_teeHelperStream) {
+        dp_teeHelperStream->close();
+        delete dp_teeHelperStream;
+        dp_teeHelperStream = nullptr;
       }
     }
   }
