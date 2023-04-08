@@ -371,7 +371,8 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles,
 namespace {
 // candidate atoms are either unsaturated or have implicit Hs
 bool isCandidateAtom(const Atom *aptr) {
-  return aptr->getTotalNumHs() || queryAtomUnsaturated(aptr);
+  return aptr->getTotalNumHs() || aptr->getIsAromatic() ||
+         queryAtomUnsaturated(aptr);
 }
 
 // atomic number > 1, not carbon
@@ -406,8 +407,10 @@ bool isPossibleStartingBond(const Bond *bptr) {
     return false;
   }
 
-  auto unsatBeg = queryAtomUnsaturated(bptr->getBeginAtom());
-  auto unsatEnd = queryAtomUnsaturated(bptr->getEndAtom());
+  auto unsatBeg = bptr->getBeginAtom()->getIsAromatic() ||
+                  queryAtomUnsaturated(bptr->getBeginAtom());
+  auto unsatEnd = bptr->getEndAtom()->getIsAromatic() ||
+                  queryAtomUnsaturated(bptr->getEndAtom());
 
   // at least one has to be unsaturated:
   if (!unsatBeg && !unsatEnd) {
@@ -507,6 +510,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         }
         for (auto nbrBnd : mol->atomBonds(atm)) {
           auto oatom = nbrBnd->getOtherAtom(atm);
+
           if (nbrBnd == bnd || bondsConsidered[nbrBnd->getIdx()] ||
               (!isCandidateAtom(oatom) && !hasStartBond(oatom, startBonds)) ||
               (!nbrBnd->getIsConjugated() && !hasStartBond(atm, startBonds))) {
