@@ -1016,6 +1016,20 @@ CREATE OPERATOR @> (
 	JOIN = contjoinsel
 );
 
+CREATE OR REPLACE FUNCTION substruct_query(mol, mol)
+RETURNS bool
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @>> (
+	LEFTARG = mol,
+	RIGHTARG = mol,
+	PROCEDURE = substruct_query(mol, mol),
+	COMMUTATOR = '<<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
 CREATE OR REPLACE FUNCTION substruct_chiral(mol, mol)
 RETURNS bool
 @RDKIT_PARALLEL_SAFE@
@@ -1061,6 +1075,19 @@ CREATE OPERATOR @> (
 	JOIN = contjoinsel
 );
 
+CREATE OR REPLACE FUNCTION substruct_query(mol, qmol)
+RETURNS bool
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @>> (
+	LEFTARG = mol,
+	RIGHTARG = qmol,
+	PROCEDURE = substruct_query(mol, mol),
+	COMMUTATOR = '<<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
 
 CREATE OR REPLACE FUNCTION rsubstruct(mol, mol)
 RETURNS bool
@@ -1075,6 +1102,21 @@ CREATE OPERATOR <@ (
 	RESTRICT = contsel,
 	JOIN = contjoinsel
 );
+
+CREATE OR REPLACE FUNCTION rsubstruct_query(mol, mol)
+RETURNS bool
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_rsubstruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR <<@ (
+	LEFTARG = mol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct_query(mol, mol),
+	COMMUTATOR = '@>>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
 CREATE OR REPLACE FUNCTION rsubstruct_chiral(mol, mol)
 RETURNS bool
 @RDKIT_PARALLEL_SAFE@
@@ -1094,6 +1136,21 @@ CREATE OPERATOR <@ (
 	RESTRICT = contsel,
 	JOIN = contjoinsel
 );
+
+CREATE OR REPLACE FUNCTION rsubstruct_query(qmol, mol)
+RETURNS bool
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_rsubstruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR <<@ (
+	LEFTARG = qmol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct_query(qmol, mol),
+	COMMUTATOR = '@>>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
 
 -- mol comparison
 

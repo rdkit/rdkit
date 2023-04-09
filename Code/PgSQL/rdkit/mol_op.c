@@ -108,8 +108,24 @@ Datum mol_substruct(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  PG_RETURN_BOOL(MolSubstruct(i, a, false));
+  PG_RETURN_BOOL(MolSubstruct(i, a, false, false));
 }
+
+PGDLLEXPORT Datum mol_substruct_query(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_substruct_query);
+Datum mol_substruct_query(PG_FUNCTION_ARGS) {
+  CROMol i, a;
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
+
+  PG_RETURN_BOOL(MolSubstruct(i, a, false, true));
+}
+
 
 PGDLLEXPORT Datum mol_substruct_chiral(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_substruct_chiral);
@@ -123,7 +139,7 @@ Datum mol_substruct_chiral(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  PG_RETURN_BOOL(MolSubstruct(i, a, true));
+  PG_RETURN_BOOL(MolSubstruct(i, a, true, false));
 }
 
 PGDLLEXPORT Datum mol_rsubstruct(PG_FUNCTION_ARGS);
@@ -138,8 +154,24 @@ Datum mol_rsubstruct(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  PG_RETURN_BOOL(MolSubstruct(a, i, false));
+  PG_RETURN_BOOL(MolSubstruct(a, i, false, false));
 }
+
+PGDLLEXPORT Datum mol_rsubstruct_query(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_rsubstruct_query);
+Datum mol_rsubstruct_query(PG_FUNCTION_ARGS) {
+  CROMol i, a;
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
+
+  PG_RETURN_BOOL(MolSubstruct(a, i, false, true));
+}
+
 PGDLLEXPORT Datum mol_rsubstruct_chiral(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_rsubstruct_chiral);
 Datum mol_rsubstruct_chiral(PG_FUNCTION_ARGS) {
@@ -152,7 +184,7 @@ Datum mol_rsubstruct_chiral(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  PG_RETURN_BOOL(MolSubstruct(a, i, true));
+  PG_RETURN_BOOL(MolSubstruct(a, i, true, false));
 }
 
 PGDLLEXPORT Datum mol_substruct_count(PG_FUNCTION_ARGS);
