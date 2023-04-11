@@ -49,6 +49,10 @@ bool getValFromEnvironment(const char *var, bool defVal) {
   return defVal;
 }
 
+bool is_regular_h(const Atom &atom) {
+  return atom.getAtomicNum() == 1 && atom.getIsotope() == 0;
+}
+
 // ----------------------------------- -----------------------------------
 // This algorithm is identical to that used in the CombiCode Mol file
 //  parser (also developed by RD).
@@ -111,7 +115,7 @@ Atom::ChiralType atomChiralTypeFromBondDir(const ROMol &mol, const Bond *bond,
   bool hSeen = false;
 
   neighborBondIndices.push_back(bond->getIdx());
-  if (bondAtom->getAtomicNum() == 1 && bondAtom->getIsotope() == 0) {
+  if (is_regular_h(*bondAtom)) {
     hSeen = true;
   }
 
@@ -122,8 +126,7 @@ Atom::ChiralType atomChiralTypeFromBondDir(const ROMol &mol, const Bond *bond,
       // break;
     }
     if (nbrBond != bond) {
-      if ((nbrBond->getOtherAtom(atom)->getAtomicNum() == 1 &&
-           nbrBond->getOtherAtom(atom)->getIsotope() == 0)) {
+      if (is_regular_h(*nbrBond->getOtherAtom(atom))) {
         hSeen = true;
       }
       neighborBondIndices.push_back(nbrBond->getIdx());
@@ -821,6 +824,16 @@ unsigned int getAtomNonzeroDegree(const Atom *atom) {
   }
   return res;
 }
+
+bool has_protium_neighbor(const ROMol &mol, const Atom *atom) {
+  for (const auto nbr : mol.atomNeighbors(atom)) {
+    if (is_regular_h(*nbr)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace detail
 
 typedef std::pair<int, int> INT_PAIR;
@@ -1433,30 +1446,38 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
       // less than three neighbors is never stereogenic
       // unless it is a phosphine/arsine with implicit H (this is from InChI)
       legalCenter = false;
-    } else if (nzDegree == 3 && atom->getTotalNumHs() != 1) {
-      // assume something that's really three coordinate isn't potentially
-      // chiral, then look for exceptions
-      legalCenter = false;
-      if (atom->getAtomicNum() == 7) {
-        // three-coordinate N additional requirements:
-        //   in a ring of size 3  (from InChI)
-        // OR
-        /// is a bridgehead atom (RDKit extension)
-        if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
-            queryIsAtomBridgehead(atom)) {
-          legalCenter = true;
+    } else if (nzDegree == 3) {
+      if (atom->getTotalNumHs() == 1) {
+        // three-coordinate with more than one H is never stereogenic
+        if (detail::has_protium_neighbor(mol, atom)) {
+          legalCenter = false;
         }
-      } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
-        // three-coordinate phosphines and arsines
-        // are always treated as stereogenic even with H atom neighbors.
-        // (this is from InChI)
-        legalCenter = true;
-      } else if (atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) {
-        if (atom->getExplicitValence() == 4 ||
-            (atom->getExplicitValence() == 3 && atom->getFormalCharge() == 1)) {
-          // we also accept sulfur or selenium with either a positive charge
-          // or a double bond:
+      } else {
+        // assume something that's really three coordinate isn't potentially
+        // chiral, then look for exceptions
+        legalCenter = false;
+        if (atom->getAtomicNum() == 7) {
+          // three-coordinate N additional requirements:
+          //   in a ring of size 3  (from InChI)
+          // OR
+          /// is a bridgehead atom (RDKit extension)
+          if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
+              queryIsAtomBridgehead(atom)) {
+            legalCenter = true;
+          }
+        } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
+          // three-coordinate phosphines and arsines
+          // are always treated as stereogenic even with H atom neighbors.
+          // (this is from InChI)
           legalCenter = true;
+        } else if (atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) {
+          if (atom->getExplicitValence() == 4 ||
+              (atom->getExplicitValence() == 3 &&
+               atom->getFormalCharge() == 1)) {
+            // we also accept sulfur or selenium with either a positive charge
+            // or a double bond:
+            legalCenter = true;
+          }
         }
       }
     }
