@@ -25,7 +25,13 @@ namespace RDKit {
             ~StereoEnumerationOptions() {};
     };
 
-    class _BondFlipper {
+    class _Flipper {
+        public:
+            virtual void flip(bool flag);
+            virtual ~_Flipper() {};
+    };
+
+    class _BondFlipper : public _Flipper {
         public:
             _BondFlipper(Bond *bond);
             void flip(bool flag);
@@ -33,7 +39,7 @@ namespace RDKit {
             Bond* bond;
     };
 
-    class _AtomFlipper {
+    class _AtomFlipper : public _Flipper {
         public:
             _AtomFlipper(Atom *atom);
             void flip(bool flag);
@@ -41,13 +47,15 @@ namespace RDKit {
             Atom* atom;
     };
 
-    class _StereoGroupFlipper {
+    class _StereoGroupFlipper : public _Flipper {
         public:
             _StereoGroupFlipper(RDKit::StereoGroup* group);
             void flip(bool flag);
         private:
             std::vector<std::tuple<Atom*, RDKit::Atom::ChiralType> > _original_parities;
     };
+
+    std::vector<_Flipper*> _get_flippers(ROMol* mol, const StereoEnumerationOptions& options);
 
     class _RangeBitsGenerator;
 
