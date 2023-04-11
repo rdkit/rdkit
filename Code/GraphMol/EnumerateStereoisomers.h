@@ -28,7 +28,6 @@ namespace RDKit {
     class _BondFlipper {
         public:
             _BondFlipper(Bond *bond);
-            ~_BondFlipper();
             void flip(bool flag);
         private:
             Bond* bond;
@@ -37,7 +36,6 @@ namespace RDKit {
     class _AtomFlipper {
         public:
             _AtomFlipper(Atom *atom);
-            ~_AtomFlipper();
             void flip(bool flag);
         private:
             Atom* atom;
@@ -46,7 +44,6 @@ namespace RDKit {
     class _StereoGroupFlipper {
         public:
             _StereoGroupFlipper(RDKit::StereoGroup* group);
-            ~_StereoGroupFlipper();
             void flip(bool flag);
         private:
             std::vector<std::tuple<Atom*, RDKit::Atom::ChiralType> > _original_parities;
