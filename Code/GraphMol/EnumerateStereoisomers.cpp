@@ -11,9 +11,8 @@ namespace RDKit {
             max_isomers(max_isomers),
             rand(rand) {}
 
-    _BondFlipper::_BondFlipper(Bond *bond) {
-        bond = bond;
-    };
+    _BondFlipper::_BondFlipper(Bond *bond) :
+        bond(bond) {};
 
     void _BondFlipper::flip(bool flag) {
         if (flag) {
