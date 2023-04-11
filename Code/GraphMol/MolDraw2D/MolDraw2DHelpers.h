@@ -151,7 +151,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool splitBonds = false;             // split bonds into per atom segments
                             // most useful for dynamic manipulation of drawing
                             // especially for svg
-  DrawColour highlightColour{1, 0.5, 0.5, 1.0};  // default highlight color
+  DrawColour highlightColour{1.0, 0.5, 0.5, 1.0};  // default highlight color
   bool continuousHighlight = true;  // highlight by drawing an outline
                                     // *underneath* the molecule
   bool fillHighlights = true;     // fill the areas used to highlight atoms and
@@ -166,7 +166,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool clearBackground = true;  // toggles clearing the background before
                                 // drawing a molecule
   DrawColour backgroundColour{
-      1, 1, 1, 1};          // color to be used while clearing the background
+      1.0, 1.0, 1.0, 1.0};  // color to be used while clearing the background
+  DrawColour queryColour{0.5, 0.5, 0.5,
+                         1.0};  // color to be used for query bonds
   int legendFontSize = 16;  // font size (in pixels) to be used for the legend
                             // (if present)
   double legendFraction =
@@ -198,8 +200,10 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;  // disables inclusion of atom labels in the rendering
   std::vector<std::vector<int>> atomRegions;  // regions
   DrawColour symbolColour{
-      0, 0, 0, 1};  // color to be used for the symbols and arrows in reactions
-  DrawColour annotationColour{0, 0, 0, 1};  // color to be used for annotations
+      0.0, 0.0, 0.0,
+      1.0};  // color to be used for the symbols and arrows in reactions
+  DrawColour annotationColour{0.0, 0.0, 0.0,
+                              1.0};  // color to be used for annotations
   double bondLineWidth = 2.0;   // default line width when drawing bonds
   bool scaleBondWidth = false;  // whether to apply scale() to the bond width
   bool scaleHighlightBondWidth = true;   // likewise with bond highlights.

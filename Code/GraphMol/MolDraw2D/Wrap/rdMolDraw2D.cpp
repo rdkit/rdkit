@@ -447,11 +447,17 @@ python::tuple colourToPyTuple(const DrawColour &clr) {
 python::object getBgColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.backgroundColour);
 }
+python::object getQyColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.queryColour);
+}
 python::object getHighlightColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.highlightColour);
 }
 void setBgColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.backgroundColour = pyTupleToDrawColour(tpl);
+}
+void setQyColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.queryColour = pyTupleToDrawColour(tpl);
 }
 void setHighlightColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.highlightColour = pyTupleToDrawColour(tpl);
@@ -757,10 +763,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("splitBonds", &RDKit::MolDrawOptions::splitBonds)
       .def("getBackgroundColour", &RDKit::getBgColour,
            "method returning the background colour")
+      .def("getQueryColour", &RDKit::getQyColour,
+           "method returning the query colour")
       .def("getHighlightColour", &RDKit::getHighlightColour,
            "method returning the highlight colour")
       .def("setBackgroundColour", &RDKit::setBgColour,
            "method for setting the background colour")
+      .def("setQueryColour", &RDKit::setQyColour,
+           "method for setting the query colour")
       .def("setHighlightColour", &RDKit::setHighlightColour,
            "method for setting the highlight colour")
       .def("getSymbolColour", &RDKit::getSymbolColour,

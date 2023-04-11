@@ -219,6 +219,7 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
 
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
+  get_colour_option(&pt, "queryColour", opts.queryColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
   get_colour_option(&pt, "symbolColour", opts.symbolColour);
   get_colour_option(&pt, "annotationColour", opts.annotationColour);
