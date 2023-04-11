@@ -1,6 +1,14 @@
+// RDKit includes
 #include <RDGeneral/export.h>
 #include "Atom.h"
 #include "Bond.h"
+#include "StereoGroup.h"
+
+// std includes
+#include <tuple>
+#include <vector>
+#include <iostream>
+
 #ifndef RD_ENUMSTEREO_H
 #define RD_ENUMSTEREO_H
 
@@ -35,7 +43,14 @@ namespace RDKit {
             Atom* atom;
     };
 
-    class _StereoGroupFlipper;
+    class _StereoGroupFlipper {
+        public:
+            _StereoGroupFlipper(RDKit::StereoGroup* group);
+            ~_StereoGroupFlipper();
+            void flip(bool flag);
+        private:
+            std::vector<std::tuple<Atom*, RDKit::Atom::ChiralType> > _original_parities;
+    };
 
     class _RangeBitsGenerator;
 

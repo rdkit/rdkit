@@ -22,11 +22,11 @@ namespace RDKit {
         } else {
             bond->setStereo(Bond::STEREOTRANS);
         }
-    }
+    };
 
     _AtomFlipper::_AtomFlipper(Atom* atom) {
         atom = atom;
-    }
+    };
 
     void _AtomFlipper::flip(bool flag) {
         if (flag) {
@@ -34,5 +34,30 @@ namespace RDKit {
         } else {
             atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
         }
-    }
+    };
+
+    _StereoGroupFlipper::_StereoGroupFlipper(RDKit::StereoGroup* group) {
+        _original_parities = std::vector<std::tuple<Atom*, RDKit::Atom::ChiralType> >();
+        for (Atom* atom : group->getAtoms()) {
+            _original_parities.push_back(std::make_tuple(atom, atom->getChiralTag()));
+        }
+    };
+
+    void _StereoGroupFlipper::flip(bool flag) {
+        if (flag) {
+            for (auto& atom_parity : _original_parities) {
+                std::get<0>(atom_parity)->setChiralTag(std::get<1>(atom_parity));
+            } 
+        } else {
+            for (auto& atom_parity : _original_parities) {
+                if (std::get<1>(atom_parity) == Atom::CHI_TETRAHEDRAL_CW) {
+                    std::get<0>(atom_parity)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+                } else if (std::get<1>(atom_parity) == Atom::CHI_TETRAHEDRAL_CCW) {
+                    std::get<0>(atom_parity)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+                }
+            }
+        }
+    };
+
+    
 }
