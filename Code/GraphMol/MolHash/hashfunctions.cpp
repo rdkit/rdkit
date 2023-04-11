@@ -15,6 +15,8 @@
 #include <cstdio>
 #include <deque>
 
+// #define VERBOSE_HASH 1
+
 #include <string>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
@@ -446,9 +448,16 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   boost::dynamic_bitset<> startBonds(mol->getNumBonds());
   for (const auto bnd : mol->bonds()) {
     startBonds.set(bnd->getIdx(), isPossibleStartingBond(bnd));
-  }
-  // std::cerr << " START BONDS: " << startBonds << std::endl;
 
+    // std::cerr << "  start? " << bnd->getIdx() << ": " <<
+    // bnd->getBeginAtomIdx()
+    //           << "-" << bnd->getEndAtomIdx() << " ? "
+    //           << isPossibleStartingBond(bnd) << " consider? "
+    //           << bondsConsidered[bnd->getIdx()] << std::endl;
+  }
+#ifdef VERBOSE_HASH
+  std::cerr << " START BONDS: " << startBonds << std::endl;
+#endif
   for (auto bptr : mol->bonds()) {
     // If this has already been considered or is not a possible starting bond,
     // then skip it
@@ -461,9 +470,6 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
     boost::dynamic_bitset<> possibleDonorCs(mol->getNumAtoms());
     unsigned int activeHeteroHs = 0;
     std::deque<const Bond *> bq;
-    // we will definitely consider this bond
-    bondsConsidered.set(bptr->getIdx());
-    conjSystem.set(bptr->getIdx());
     // also include eligible neighbor bonds:
     for (const auto atm :
          std::vector<const Atom *>{bptr->getBeginAtom(), bptr->getEndAtom()}) {
@@ -474,15 +480,25 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
       } else if (isHeteroAtom(atm)) {
         activeHeteroHs += atm->getTotalNumHs();
       }
-
       for (const auto nbrBond : mol->atomBonds(atm)) {
-        if (nbrBond == bptr || bondsToModify[nbrBond->getIdx()]) {
+        if (nbrBond == bptr || bondsConsidered[nbrBond->getIdx()]) {
           continue;
         }
+        auto oatom = nbrBond->getOtherAtom(atm);
+
         // if the bond is unsaturated or to an atom with free Hs, include it:
-        if (isUnsaturatedBond(nbrBond) ||
-            nbrBond->getOtherAtom(atm)->getTotalNumHs()) {
+        if (isUnsaturatedBond(nbrBond) || oatom->getTotalNumHs()) {
+          // std::cerr << "    push " << nbrBond->getIdx() << " "
+          //           << nbrBond->getBeginAtomIdx() << "-"
+          //           << nbrBond->getEndAtomIdx() << std::endl;
+
           bq.push_back(nbrBond);
+          // std::cerr << " #### SET1 " << bptr->getIdx() << std::endl;
+
+          // now we know that we should consider this bond
+
+          bondsConsidered.set(bptr->getIdx());
+          conjSystem.set(bptr->getIdx());
         }
       }
     }
@@ -492,6 +508,11 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
       if (bondsConsidered[bnd->getIdx()]) {
         continue;
       }
+
+      // std::cerr << "BQ: " << bnd->getIdx() << ": " << bnd->getBeginAtomIdx()
+      //           << "-" << bnd->getEndAtomIdx() << std::endl;
+      // std::cerr << " #### SET2 " << bnd->getIdx() << std::endl;
+
       bondsConsidered.set(bnd->getIdx());
       conjSystem.set(bnd->getIdx());
       for (const auto atm :
@@ -511,25 +532,37 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         for (auto nbrBnd : mol->atomBonds(atm)) {
           auto oatom = nbrBnd->getOtherAtom(atm);
 
+          // std::cerr << "  check neighbor " << atm->getIdx() << "-"
+          //           << oatom->getIdx() << std::endl;
+          // std::cerr << "    " << bondsConsidered[nbrBnd->getIdx()] << " ica "
+          //           << isCandidateAtom(oatom) << " hsb "
+          //           << hasStartBond(oatom, startBonds) << " gic "
+          //           << nbrBnd->getIsConjugated() << " hsb "
+          //           << hasStartBond(atm, startBonds) << std::endl;
+
           if (nbrBnd == bnd || bondsConsidered[nbrBnd->getIdx()] ||
               (!isCandidateAtom(oatom) && !hasStartBond(oatom, startBonds)) ||
-              (!nbrBnd->getIsConjugated() && !hasStartBond(atm, startBonds))) {
+              (!isUnsaturatedBond(nbrBnd) && !hasStartBond(atm, startBonds))) {
+            // (!nbrBnd->getIsConjugated() && !hasStartBond(atm, startBonds))) {
             continue;
           }
           bq.push_back(nbrBnd);
+          // std::cerr << "  added!" << std::endl;
         }
       }
     }
     // we need to have at least two bonds and include at least one active H
     if (conjSystem.count() > 1 && (activeHeteroHs || possibleDonorCs.any())) {
-      // std::cerr << "CONJ: " << conjSystem << " hetero " << activeHeteroHs
-      //           << " donor " << possibleDonorCs << std::endl;
+#ifdef VERBOSE_HASH
+      std::cerr << "CONJ: " << conjSystem << " hetero " << activeHeteroHs
+                << " donor " << possibleDonorCs << std::endl;
+#endif
       bondsToModify |= conjSystem;
     }
   }
-
-  // std::cerr << "FINAL: " << bondsToModify << std::endl;
-
+#ifdef VERBOSE_HASH
+  std::cerr << "FINAL: " << bondsToModify << std::endl;
+#endif
   boost::dynamic_bitset<> atomsToModify(mol->getNumAtoms());
   if (bondsToModify.any()) {
     for (auto bptr : mol->bonds()) {

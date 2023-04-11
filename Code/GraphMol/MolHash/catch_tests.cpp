@@ -425,8 +425,8 @@ TEST_CASE("tautomer v2") {
             // imine stereochemistry is lost:
             {{"CC/C=N/C", "CC/C=N\\C", "CCC=NC", "C/C=C/NC"}, {}},
             // but only when tautomers can happen:
-            {{"FC(F)(F)/C=N/C(F)(F)F"},
-             {"FC(F)(F)/C=N\\C(F)(F)F", "FC(F)(F)C=NC(F)(F)F"}},
+            {{"FC(F)(F)/C(F)=N/C(F)(F)F"},
+             {"FC(F)(F)/C(F)=N\\C(F)(F)F", "FC(F)(F)C(F)=NC(F)(F)F"}},
             {{"NC(=N)CC(=O)C", "NC(N)=CC(=O)C", "NC(=N)CC(O)=C",
               "NC(=N)C=C(O)C"},
              {}},
@@ -553,7 +553,7 @@ TEST_CASE("tautomer v2") {
 }
 
 TEST_CASE("tautomer hash problem cases") {
-  SECTION("Caught in testing") {
+  SECTION("sulfur problem") {
     auto m = R"CTAB(
      RDKit          2D
 
@@ -610,5 +610,68 @@ M  END
     auto hsh =
         MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
     CHECK(hsh.find("[s]") == std::string::npos);
+  }
+  SECTION("atom order") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+ 17 18  0  0  0  0  0  0  0  0999 V2000
+   12.9442  -15.7431    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   10.7279  -14.6717    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.7266  -15.4976    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.4381  -15.9096    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.4361  -14.2599    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.1526  -14.6678    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.1578  -15.4930    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.4251  -15.0725    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.9359  -14.4079    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.0130  -14.2612    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.0123  -13.4380    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    9.3004  -14.6734    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   14.2501  -15.0676    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   14.6661  -15.7779    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   14.6573  -14.3521    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   15.4893  -15.7728    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9055  -16.4831    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  8  1  0
+  8  9  2  0
+  9  6  1  0
+  6  5  2  0
+  5  2  1  0
+  6  7  1  0
+ 10 11  1  0
+ 10 12  2  0
+  2 10  1  0
+  3  4  1  0
+  4  7  2  0
+ 13 14  1  0
+ 13 15  2  0
+  8 13  1  0
+  2  3  2  0
+ 14 16  1  0
+  7  1  1  0
+ 16 17  1  0
+M  END
+
+> <chembl_id>
+CHEMBL503643
+
+> <chembl_pref_name>
+None
+)CTAB"_ctab;
+    REQUIRE(m);
+    std::vector<std::string> row = {"CCOC(=O)c1cc2cc(C(=O)O)ccc2[nH]1",
+                                    "CCOC(=O)c1cc2cc(ccc2[nH]1)C(O)=O",
+                                    "O(C(=O)c1cc2c(ccc(c2)C(=O)O)[nH]1)CC"};
+    auto hsh =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+    for (const auto &smi : row) {
+      std::unique_ptr<RWMol> mi{SmilesToMol(smi)};
+      REQUIRE(mi);
+      auto hshi =
+          MolHash::MolHash(mi.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh == hshi);
+      break;
+    }
   }
 }
