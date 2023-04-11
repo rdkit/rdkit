@@ -57,5 +57,36 @@ namespace RDKit {
         }
     };
 
+    std::vector<_Flipper*> _get_flippers(ROMol* mol, const StereoEnumerationOptions options) {
+        std::vector<RDKit::Chirality::StereoInfo> potential_stereo = RDKit::Chirality::findPotentialStereo(*mol);
 
+        std::vector<_Flipper*> flippers = std::vector<_Flipper*>();
+        if (!options.only_stereo_groups) {
+            for (auto atom : mol->atoms()) {
+                if (atom->hasProp("_ChiralityPossible")) {
+                    if (!options.only_unassigned || atom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+                        flippers.push_back(new _AtomFlipper(atom));
+                    }
+                }
+            }
+            
+            for (auto bond : mol->bonds()) {
+                Bond::BondStereo bstereo = bond->getStereo();
+                if (bstereo != Bond::STEREONONE) {
+                    if (!options.only_unassigned || bstereo == Bond::STEREOANY) {
+                        flippers.push_back(new _BondFlipper(bond));
+                    }
+                }
+            }
+        } 
+
+        if (options.only_unassigned) {
+            for (auto group : mol->getStereoGroups()) {
+                if (group.getGroupType() != StereoGroupType::STEREO_ABSOLUTE) {
+                    flippers.push_back(new _StereoGroupFlipper(&group));
+                }
+            }
+        }
+        return flippers;
+    };
 }

@@ -2,7 +2,9 @@
 #include <RDGeneral/export.h>
 #include "Atom.h"
 #include "Bond.h"
+#include "ROMol.h"
 #include "StereoGroup.h"
+#include <GraphMol/Chirality.h>
 
 // std includes
 #include <tuple>
@@ -55,7 +57,7 @@ namespace RDKit {
             std::vector<std::tuple<Atom*, RDKit::Atom::ChiralType> > _original_parities;
     };
 
-    std::vector<_Flipper*> _get_flippers(ROMol* mol, const StereoEnumerationOptions& options);
+    std::vector<_Flipper*> _get_flippers(ROMol* mol, const StereoEnumerationOptions options=StereoEnumerationOptions());
 
     class _RangeBitsGenerator;
 
