@@ -100,6 +100,39 @@ M  END
     CHECK(noFlag.getStereoGroups().empty());
   }
 
+  SECTION("explicit zero chiral flag") {
+    auto zeroFlag = R"CTAB(
+  Mrv2211 03302308372D          
+
+  5  4  0  0  o  0            999 V2000
+   -6.5625    3.9286    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.8480    4.3411    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+   -5.1336    3.9286    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.1775    5.0826    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.4384    5.0893    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2  5  1  1  0  0  0
+  2  4  1  6  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(zeroFlag);
+    int flag;
+    CHECK(zeroFlag->getPropIfPresent(common_properties::_MolFileChiralFlag,
+                                     flag));
+    CHECK(flag == 0);
+    {
+      RWMol cp(*zeroFlag);
+      translateChiralFlagToStereoGroups(cp);
+      CHECK(!cp.hasProp(common_properties::_MolFileChiralFlag));
+      auto sgs = cp.getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_AND);
+      CHECK(sgs[0].getAtoms().size() == 1);
+      CHECK(sgs[0].getAtoms()[0]->getIdx() == 1);
+    }
+  }
+
   SECTION("multiple stereocenters") {
     auto noFlag = "C[C@@](N)(F)C[C@](C)(O)F"_smiles;
     REQUIRE(noFlag);
