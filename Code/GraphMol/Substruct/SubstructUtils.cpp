@@ -79,8 +79,8 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
   bool doesRGroupMatchHydrogen(const std::pair<int, int> &pair) const {
     const auto queryAtom = d_query.getAtomWithIdx(pair.first);
     const auto molAtom = d_mol.getAtomWithIdx(pair.second);
-    return (queryAtom->getAtomicNum() == 0 && queryAtom->getDegree() == 1 &&
-            molAtom->getAtomicNum() == 1);
+    return (molAtom->getAtomicNum() == 1 &&
+            isAtomTerminalRGroupOrQueryHydrogen(queryAtom));
   }
   double computeScore(const RDKit::MatchVectType &match) const {
     double penalty = 0.0;
@@ -215,6 +215,14 @@ std::vector<MatchVectType> sortMatchesByDegreeOfCoreSubstitution(
   detail::ScoreMatchesByDegreeOfCoreSubstitution matchScorer(mol, core,
                                                              matches);
   return matchScorer.sortMatchesByDegreeOfCoreSubstitution();
+}
+
+bool isAtomTerminalRGroupOrQueryHydrogen(const Atom *atom) {
+  return atom->getDegree() == 1 &&
+         (atom->getAtomicNum() == 0 ||
+          (atom->hasQuery() &&
+           describeQuery(atom).find("AtomAtomicNum 1 = val") !=
+               std::string::npos));
 }
 
 #define PT_OPT_GET(opt) params.opt = pt.get(#opt, params.opt)
