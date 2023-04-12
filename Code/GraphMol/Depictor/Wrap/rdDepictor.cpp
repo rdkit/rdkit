@@ -210,12 +210,20 @@ BOOST_PYTHON_MODULE(rdDepictor) {
 #endif
   );
   python::def("SetRingSystemTemplates", RDDepict::setRingSystemTemplates,
-              (python::arg("template_dir")),
+              (python::arg("templatePath")),
               "Loads the ring system templates from the specified file to be "
               "used in 2D coordinate generation. Each template must be a single "
               "line in the file represented using CXSMILES, and the structure should "
-              "be a single ring system. Returns true if the templates were loaded "
-              "successfully, and false otherwise.");
+              "be a single ring system. Throws a DepictException if any templates "
+              "are invalid.");
+  python::def("AddRingSystemTemplates", RDDepict::addRingSystemTemplates,
+              (python::arg("templatePath")),
+              "Adds the ring system templates from the specified file to be "
+              "used in 2D coordinate generation. If there are duplicates, the most "
+              "recently added template will be used. Each template must be a single "
+              "line in the file represented using CXSMILES, and the structure should "
+              "be a single ring system. Throws a DepictException if any templates "
+              "are invalid.");
   python::def("LoadDefaultRingSystemTemplates", RDDepict::loadDefaultRingSystemTemplates,
               "Loads the default ring system templates and removes existing ones, if present.");
   python::def(

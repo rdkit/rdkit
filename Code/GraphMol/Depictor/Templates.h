@@ -36,18 +36,19 @@ class CoordinateTemplates {
     return template_mols;
   }
 
-  bool hasTemplateOfSize(unsigned int atom_count) {
-    if (m_templates.find(atom_count) != m_templates.end()) {
+  bool hasTemplateOfSize(unsigned int atomCount) {
+    if (m_templates.find(atomCount) != m_templates.end()) {
         return true;
     }
     return false;
   }
 
-  const std::vector<std::shared_ptr<RDKit::ROMol>>& getMatchingTemplates(unsigned int atom_count) {
-    return m_templates[atom_count];
+  const std::vector<std::shared_ptr<RDKit::ROMol>>& getMatchingTemplates(unsigned int atomCount) {
+    return m_templates[atomCount];
   }
 
-  bool setRingSystemTemplates(const std::string& template_dir);
+  void setRingSystemTemplates(const std::string& templatePath);
+  void addRingSystemTemplates(const std::string& templatePath);
 
   //! check if a template is considered valid
   /*
@@ -61,7 +62,7 @@ class CoordinateTemplates {
         - consists of only 1 fragment
 
    */
-  static bool isValidTemplate(RDKit::ROMol& mol, const std::string& smiles);
+  static void assertValidTemplate(RDKit::ROMol& mol, const std::string& smiles);
 
   void loadDefaultTemplates() {
     clearTemplates();
@@ -89,6 +90,8 @@ class CoordinateTemplates {
   ~CoordinateTemplates() {
     clearTemplates();
   }
+
+  void loadTemplatesFromPath(const std::string& templatePath, std::unordered_map<unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>>& templates);
 
   std::unordered_map<unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>> m_templates;
 };

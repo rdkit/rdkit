@@ -1475,7 +1475,7 @@ void testValidRingSystemTemplates() {
   constexpr double RDKIT_BOND_LEN = 1.5;
   for (auto& smiles : TEMPLATE_SMILES) {
     ROMol* mol = SmilesToMol(smiles);
-    TEST_ASSERT(RDDepict::CoordinateTemplates::isValidTemplate(*mol, smiles));
+    RDDepict::CoordinateTemplates::assertValidTemplate(*mol, smiles);
 
     // also check whether the bonds in the template are the correct length
     double avg_length = 0.0;

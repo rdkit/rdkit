@@ -705,9 +705,7 @@ M  END)""")
 
             # set to user-provided template, this will delete default templates
             fpath = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Depictor', 'test_data', 'ring_system_templates.smi')
-            success = rdDepictor.SetRingSystemTemplates(fpath)
-            assert success
-
+            rdDepictor.SetRingSystemTemplates(fpath)
             rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
             assert self.molMatchesTemplate(mol, user_provided_template)
 
@@ -720,19 +718,29 @@ M  END)""")
         with tempfile.NamedTemporaryFile() as tmp_file:
             tmp_file.write(b"invalidsmiles")
             tmp_file.seek(0)
-            assert not rdDepictor.SetRingSystemTemplates(tmp_file.name)
+            with self.assertRaises(ValueError):
+                rdDepictor.SetRingSystemTemplates(tmp_file.name)
 
         with tempfile.NamedTemporaryFile() as tmp_file:
             # not a ring system
             tmp_file.write(b"C |(-0.5537,-3.1595)|")
             tmp_file.seek(0)
-            assert not rdDepictor.SetRingSystemTemplates(tmp_file.name)
+            with self.assertRaises(ValueError):
+                rdDepictor.SetRingSystemTemplates(tmp_file.name)
 
         with tempfile.NamedTemporaryFile() as tmp_file:
             # no coordinates
             tmp_file.write(b"C1CCCCC1")
             tmp_file.seek(0)
-            assert not rdDepictor.SetRingSystemTemplates(tmp_file.name)
+            with self.assertRaises(ValueError):
+                rdDepictor.SetRingSystemTemplates(tmp_file.name)
+
+        with tempfile.NamedTemporaryFile() as tmp_file:
+            # bridged ring system
+            tmp_file.write(b"c1ccccc1-c1ccccc1")
+            tmp_file.seek(0)
+            with self.assertRaises(ValueError):
+                rdDepictor.SetRingSystemTemplates(tmp_file.name)
 
         # set back to default ring system templates
         rdDepictor.LoadDefaultRingSystemTemplates()

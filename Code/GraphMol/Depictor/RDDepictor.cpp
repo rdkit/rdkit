@@ -524,12 +524,17 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
   return confId;
 }
 
-bool setRingSystemTemplates(const std::string template_path) {
+void setRingSystemTemplates(const std::string template_path) {
     // CoordinateTemplates is a singleton that holds all the templates, starting with the default templates
     // if different templates are set using `RDDepictor::SetRingSystemTemplates`, the default templates are
     // replaced by the new templates
     CoordinateTemplates &coordinate_templates = CoordinateTemplates::getRingSystemTemplates();
-    return coordinate_templates.setRingSystemTemplates(template_path);
+    coordinate_templates.setRingSystemTemplates(template_path);
+}
+
+void addRingSystemTemplates(const std::string template_path) {
+    CoordinateTemplates &coordinate_templates = CoordinateTemplates::getRingSystemTemplates();
+    coordinate_templates.addRingSystemTemplates(template_path);
 }
 
 void loadDefaultRingSystemTemplates() {
