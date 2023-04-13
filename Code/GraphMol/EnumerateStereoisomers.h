@@ -5,11 +5,13 @@
 #include "StereoGroup.h"
 #include <RDGeneral/export.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 // std includes
-#include <cmath>
 #include <tuple>
+#include <cmath>
 #include <vector>
+#include <utility>
 #include <iostream>
 
 #ifndef RD_ENUMSTEREO_H
@@ -66,7 +68,7 @@ namespace RDKit {
 
     unsigned int get_stereoisomer_count(ROMol* mol, const StereoEnumerationOptions options=StereoEnumerationOptions());
 
-    std::vector<ROMOL_SPTR> enumerate_stereoisomers(ROMol* mol, const StereoEnumerationOptions options=StereoEnumerationOptions(), bool verbose=false);
+    std::vector<ROMol*> enumerate_stereoisomers(ROMol* mol, const StereoEnumerationOptions options=StereoEnumerationOptions(), bool verbose=false);
 
 }
 

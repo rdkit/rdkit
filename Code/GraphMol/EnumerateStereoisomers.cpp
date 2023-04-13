@@ -94,4 +94,45 @@ namespace RDKit {
         std::vector<_Flipper*> flippers = _get_flippers(mol, options);
         return std::pow(2, flippers.size());
     }
+
+    std::vector<ROMol*> enumerate_stereoisomers(ROMol* mol, const StereoEnumerationOptions options=StereoEnumerationOptions(), bool verbose=false) {
+        for (auto atom : mol->atoms()) {
+            atom->clearProp("_CIPCode");
+        }
+        for (auto bond : mol->bonds()) {
+            if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
+                bond->setBondDir(Bond::BondDir::NONE);
+            }
+        }
+        std::vector<_Flipper*> flippers = _get_flippers(mol, options);
+        unsigned int n_centers = flippers.size();
+
+        if (!n_centers) {
+            return std::vector<ROMol*>{mol};
+        }
+
+        if (options.max_isomers == 0 || std::pow(2, n_centers) <= options.max_isomers) {
+            std::vector<unsigned int> bitsource = _RangeBitsGenerator(n_centers);
+        } else {
+            if (!options.rand) {
+                // deterministic random seed invariant to input atom order
+                std::vector<std::pair<int, int> > ordered_atoms;
+                for (auto atom : mol->atoms()) {
+                    ordered_atoms.push_back(std::make_pair(atom->getDegree(), atom->getAtomicNum()));
+                }
+                std::sort(ordered_atoms.begin(), ordered_atoms.end());
+                std::size_t seed = std::hash<std::vector<std::pair<int, int>>>(ordered_atoms);
+                rand = srand(seed);
+            } else {
+                rand = srand(options.rand);
+            }
+        }
+
+        std::set<std::string> seen_isomers;
+        int num_isomers = 0;
+
+
+
+
+    }
 }
