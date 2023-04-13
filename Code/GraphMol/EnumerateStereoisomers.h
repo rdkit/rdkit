@@ -4,8 +4,10 @@
 #include "ROMol.h"
 #include "StereoGroup.h"
 #include <RDGeneral/export.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/DistGeomHelpers/Embedder.h>
 
 // std includes
 #include <tuple>

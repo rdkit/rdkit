@@ -128,11 +128,43 @@ namespace RDKit {
             }
         }
 
+        bitsource = _UniqueRandomBitsGenerator(n_centers, options.max_isomers, rand);
+
         std::set<std::string> seen_isomers;
         int num_isomers = 0;
+        for (auto bitflag : bitsource) {
+            for (int i = 0; i < n_centers; ++i) {
+                flippers[i]->flip(bitflag & (1 << i));
+            }
 
+            RWMol* isomer;
+            if (mol->getStereoGroups()) {
+                std::vector<StereoGroup> empty_group;
+                isomer = new RWMol(*mol);
+                isomer->setStereoGroups(std::move(empty_group));
 
+            } else {
+                isomer = new RWMol(*mol);
+            }
+            MolOps::setDoubleBondNeighborDirections(*isomer);
+            isomer->clearComputedProps(false);
 
+            MolOps::assignStereochemistry(*isomer, true, true, true);
+            if (options.unique) {
+                std::string cansmi = MolToSmiles(*isomer, true);
+                if (seen_isomers.find(cansmi) != seen_isomers.end()) {
+                    continue;
+                }
+
+                seen_isomers.insert(cansmi);
+            }
+
+            if (options.try_embedding) {
+                MolOps::addHs(*isomer);
+                DGeomHelpers::EmbedMolecule(*isomer, bitflag & 0x7fffffff);
+
+            }
+        }
 
     }
 }
