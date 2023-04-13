@@ -745,5 +745,28 @@ M  END)""")
         # set back to default ring system templates
         rdDepictor.LoadDefaultRingSystemTemplates()
 
+    def testAddRingSystemTemplates(self):
+        with rdDepictor.UsingCoordGen(False):
+            # this is what is in the default ring system templates
+            mol = Chem.MolFromSmiles("C1CCCN2CCCC(CC1)C2")
+            default_template = Chem.MolFromSmiles("C1CCCN2CCCC(CC1)C2 |(2.64,1.53,;3.1,0.11,;2.52,-1.28,;1.17,-1.94,;-0.28,-1.57,;-1.7,-2.03,;-2.82,-1.03,;-2.51,0.44,;-1.08,0.9,;-0.13,2.06,;1.35,2.31,;0.03,-0.1,)|")
+            new_template_smi = "C1CCCN2CCCC(CC1)C2 |(3.2585,-0.7733,;3.2585,0.7733,;2.225,1.9568,;0.6347,2.17,;-0.8068,1.4216,;-2.4372,1.3464,;-3.2585,0,;-2.4372,-1.3464,;-0.8068,-1.4216,;0.6347,-2.17,;2.225,-1.9569,;-0.6701,0,)|"
+            new_template = Chem.MolFromSmiles(new_template_smi)
+
+            rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
+            assert self.molMatchesTemplate(mol, default_template)
+
+            with tempfile.NamedTemporaryFile() as tmp_file:
+                tmp_file.write(new_template_smi.encode('utf-8'))
+                tmp_file.seek(0)
+                rdDepictor.AddRingSystemTemplates(tmp_file.name)
+
+            # now the new template should be used
+            rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
+            assert self.molMatchesTemplate(mol, new_template)
+
+        # set back to default ring system templates
+        rdDepictor.LoadDefaultRingSystemTemplates()
+
 if __name__ == '__main__':
     unittest.main()

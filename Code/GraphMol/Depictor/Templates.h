@@ -19,7 +19,7 @@
 #include <unordered_map>
 
 namespace RDDepict {
-class CoordinateTemplates {
+class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
  public:
   //! returns a reference to the singleton CoordinateTemplates
   /*
