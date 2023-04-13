@@ -431,29 +431,33 @@ bool hasStartBond(const Atom *aptr, const boost::dynamic_bitset<> &startBonds) {
   }
   return false;
 }
+
+// skip the neighbor bond if otherAtom isn't a candidate and doesn't have a
+// start bond OR if the bond is neither unsaturated nor conjugated and atom
+// doesn't have a start bond
+bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
+                      const Bond *nbrBond,
+                      const boost::dynamic_bitset<> &startBonds) {
+  return (
+      (!isCandidateAtom(otherAtom) && !hasStartBond(otherAtom, startBonds)) ||
+      (!isUnsaturatedBond(nbrBond) && !nbrBond->getIsConjugated() &&
+       !hasStartBond(atom, startBonds)));
+}
 }  // namespace
 
 std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                            unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
-  char buffer[32];
   unsigned int hcount = 0;
   int charge = 0;
 
   boost::dynamic_bitset<> bondsToModify(mol->getNumBonds());
   boost::dynamic_bitset<> bondsConsidered(mol->getNumBonds());
-  boost::dynamic_bitset<> carbonsToModify(mol->getNumAtoms());
 
   boost::dynamic_bitset<> startBonds(mol->getNumBonds());
   for (const auto bnd : mol->bonds()) {
     startBonds.set(bnd->getIdx(), isPossibleStartingBond(bnd));
-
-    // std::cerr << "  start? " << bnd->getIdx() << ": " <<
-    // bnd->getBeginAtomIdx()
-    //           << "-" << bnd->getEndAtomIdx() << " ? "
-    //           << isPossibleStartingBond(bnd) << " consider? "
-    //           << bondsConsidered[bnd->getIdx()] << std::endl;
   }
 #ifdef VERBOSE_HASH
   std::cerr << " START BONDS: " << startBonds << std::endl;
@@ -467,7 +471,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
     }
     boost::dynamic_bitset<> conjSystem(mol->getNumBonds());
     boost::dynamic_bitset<> atomsInSystem(mol->getNumAtoms());
-    boost::dynamic_bitset<> possibleDonorCs(mol->getNumAtoms());
+    unsigned int numDonorCs = 0;
     unsigned int activeHeteroHs = 0;
     std::deque<const Bond *> bq;
     // also include eligible neighbor bonds:
@@ -475,7 +479,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
          std::vector<const Atom *>{bptr->getBeginAtom(), bptr->getEndAtom()}) {
       if (atm->getAtomicNum() == 6) {
         if (atm->getTotalNumHs()) {
-          possibleDonorCs.set(atm->getIdx());
+          ++numDonorCs;
         }
       } else if (isHeteroAtom(atm)) {
         activeHeteroHs += atm->getTotalNumHs();
@@ -487,21 +491,39 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         auto oatom = nbrBond->getOtherAtom(atm);
 
         // if the bond is unsaturated or to an atom with free Hs, include it:
-        if (isUnsaturatedBond(nbrBond) || oatom->getTotalNumHs()) {
-          // std::cerr << "    push " << nbrBond->getIdx() << " "
-          //           << nbrBond->getBeginAtomIdx() << "-"
-          //           << nbrBond->getEndAtomIdx() << std::endl;
+        // if (isUnsaturatedBond(nbrBond) || oatom->getTotalNumHs()) {
 
-          bq.push_back(nbrBond);
-          // std::cerr << " #### SET1 " << bptr->getIdx() << std::endl;
+#ifdef VERBOSE_HASH
+        std::cerr << "  check neighbor1 " << nbrBond->getIdx() << " from "
+                  << atm->getIdx() << "-" << oatom->getIdx() << std::endl;
+        std::cerr << "    " << bondsConsidered[nbrBond->getIdx()] << " icao "
+                  << isCandidateAtom(oatom) << " hsbo "
+                  << hasStartBond(oatom, startBonds) << " unsat "
+                  << isUnsaturatedBond(nbrBond) << " icaa "
+                  << isCandidateAtom(atm) << " hsba "
+                  << hasStartBond(atm, startBonds) << std::endl;
+#endif
 
-          // now we know that we should consider this bond
-
-          bondsConsidered.set(bptr->getIdx());
-          conjSystem.set(bptr->getIdx());
+        if (skipNeighborBond(atm, oatom, nbrBond, startBonds) &&
+            skipNeighborBond(oatom, atm, nbrBond, startBonds)) {
+          continue;
         }
+
+#ifdef VERBOSE_HASH
+        std::cerr << "    push " << nbrBond->getIdx() << " "
+                  << nbrBond->getBeginAtomIdx() << "-"
+                  << nbrBond->getEndAtomIdx() << std::endl;
+        std::cerr << " #### SET1 " << bptr->getIdx() << std::endl;
+#endif
+        bq.push_back(nbrBond);
+
+        // now we know that we should consider this bond
+
+        bondsConsidered.set(bptr->getIdx());
+        conjSystem.set(bptr->getIdx());
       }
     }
+
     while (!bq.empty()) {
       auto bnd = bq.front();
       bq.pop_front();
@@ -509,10 +531,11 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         continue;
       }
 
-      // std::cerr << "BQ: " << bnd->getIdx() << ": " << bnd->getBeginAtomIdx()
-      //           << "-" << bnd->getEndAtomIdx() << std::endl;
-      // std::cerr << " #### SET2 " << bnd->getIdx() << std::endl;
-
+#ifdef VERBOSE_HASH
+      std::cerr << "BQ: " << bnd->getIdx() << ": " << bnd->getBeginAtomIdx()
+                << "-" << bnd->getEndAtomIdx() << std::endl;
+      std::cerr << " #### SET2 " << bnd->getIdx() << std::endl;
+#endif
       bondsConsidered.set(bnd->getIdx());
       conjSystem.set(bnd->getIdx());
       for (const auto atm :
@@ -522,7 +545,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         }
         if (atm->getAtomicNum() == 6) {
           if (atm->getTotalNumHs()) {
-            possibleDonorCs.set(atm->getIdx());
+            ++numDonorCs;
             atomsInSystem.set(atm->getIdx());
           }
         } else if (atm->getAtomicNum() > 1) {
@@ -530,34 +553,45 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
           atomsInSystem.set(atm->getIdx());
         }
         for (auto nbrBnd : mol->atomBonds(atm)) {
+          if (nbrBnd == bnd) {
+            continue;
+          }
           auto oatom = nbrBnd->getOtherAtom(atm);
 
-          // std::cerr << "  check neighbor " << atm->getIdx() << "-"
-          //           << oatom->getIdx() << std::endl;
-          // std::cerr << "    " << bondsConsidered[nbrBnd->getIdx()] << " ica "
-          //           << isCandidateAtom(oatom) << " hsb "
-          //           << hasStartBond(oatom, startBonds) << " gic "
-          //           << nbrBnd->getIsConjugated() << " hsb "
-          //           << hasStartBond(atm, startBonds) << std::endl;
-
-          if (nbrBnd == bnd || bondsConsidered[nbrBnd->getIdx()] ||
-              (!isCandidateAtom(oatom) && !hasStartBond(oatom, startBonds)) ||
-              (!isUnsaturatedBond(nbrBnd) && !hasStartBond(atm, startBonds))) {
-            // (!nbrBnd->getIsConjugated() && !hasStartBond(atm, startBonds))) {
+#ifdef VERBOSE_HASH
+          std::cerr << "  check neighbor " << nbrBnd->getIdx() << " from "
+                    << atm->getIdx() << "-" << oatom->getIdx() << std::endl;
+          std::cerr << "    " << bondsConsidered[nbrBnd->getIdx()] << " icao "
+                    << isCandidateAtom(oatom) << " hsbo "
+                    << hasStartBond(oatom, startBonds) << " unsat "
+                    << isUnsaturatedBond(nbrBnd) << " icaa "
+                    << isCandidateAtom(atm) << " hsba "
+                    << hasStartBond(atm, startBonds) << std::endl;
+#endif
+          if (bondsConsidered[nbrBnd->getIdx()] ||
+              (skipNeighborBond(atm, oatom, nbrBnd, startBonds) &&
+               skipNeighborBond(oatom, atm, nbrBnd, startBonds))) {
             continue;
           }
           bq.push_back(nbrBnd);
-          // std::cerr << "  added!" << std::endl;
+#ifdef VERBOSE_HASH
+          std::cerr << "  added!" << std::endl;
+#endif
         }
       }
     }
     // we need to have at least two bonds and include at least one active H
-    if (conjSystem.count() > 1 && (activeHeteroHs || possibleDonorCs.any())) {
+    if (conjSystem.count() > 1 && (activeHeteroHs || numDonorCs)) {
 #ifdef VERBOSE_HASH
       std::cerr << "CONJ: " << conjSystem << " hetero " << activeHeteroHs
                 << " donor " << possibleDonorCs << std::endl;
 #endif
       bondsToModify |= conjSystem;
+    } else {
+#ifdef VERBOSE_HASH
+      std::cerr << "REJECT CONJ: " << conjSystem << " hetero " << activeHeteroHs
+                << " donor " << possibleDonorCs << std::endl;
+#endif
     }
   }
 #ifdef VERBOSE_HASH
@@ -604,6 +638,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   ps.allBondsExplicit = true;
   ps.allHsExplicit = true;
   result = MolToSmiles(*mol, ps);
+  char buffer[32];
   if (!proto) {
     sprintf(buffer, "_%d_%d", hcount, charge);
   } else {
