@@ -1657,6 +1657,28 @@ void testFragmentOnBonds() {
     delete mol;
     delete nmol;
   }
+  {
+    std::string smi = "CN1C=CN(C)[C]1->[Pd]<-[C]1N(C)C=CN1C";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 15);
+    unsigned int indices[] = {6, 7};
+    std::vector<unsigned int> bindices(
+        indices, indices + (sizeof(indices) / sizeof(indices[0])));
+    std::vector<unsigned int> cutsPerAtom(mol->getNumAtoms());
+    ROMol *nmol = MolFragmenter::fragmentOnBonds(*mol, bindices, false, nullptr,
+                                                 nullptr, &cutsPerAtom);
+    TEST_ASSERT(nmol);
+    TEST_ASSERT(nmol->getNumAtoms() == 15);
+    TEST_ASSERT(cutsPerAtom[6] == 1);
+    TEST_ASSERT(cutsPerAtom[7] == 2);
+    TEST_ASSERT(cutsPerAtom[8] == 1);
+    TEST_ASSERT(nmol->getAtomWithIdx(6)->getNumExplicitHs() == 0);
+    TEST_ASSERT(nmol->getAtomWithIdx(7)->getNumExplicitHs() == 0);
+    TEST_ASSERT(nmol->getAtomWithIdx(8)->getNumExplicitHs() == 0);
+    delete mol;
+    delete nmol;
+  }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }

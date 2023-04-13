@@ -535,10 +535,10 @@ ROMol *fragmentOnBonds(
         conf->setAtomPos(idx2, conf->getAtomPos(eidx));
       }
     } else {
-      // was github issues 429, 6034
+      // was github issues 429, 6034, 6287
       for (auto idx : {bidx, eidx}) {
         if (auto tatom = res->getAtomWithIdx(idx);
-            tatom->getNoImplicit() ||
+            tatom->getNoImplicit() && bT != 17 ||
             (tatom->getIsAromatic() && tatom->getAtomicNum() != 6)) {
           tatom->setNumExplicitHs(tatom->getNumExplicitHs() + 1);
         } else {
