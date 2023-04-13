@@ -14,6 +14,7 @@
 - The doIsomericSmiles parameter in Java and C# ROMol.MolToSmiles() now defaults to true (previously it was false), thus aligning to the C++ and Python behavior.
 - Double bonds which are marked as crossed (i.e. `bond.GetBondDir() == Bond.BondDir.EITHERDOUBLE`) now have their BondStereo set to `Bond.BondStereo.STEREOANY` and the BondDir information removed by default when molecules are parsed or `AssignStereochemistry()` is called with the `cleanIt` argument set to True.
 - The conformers generated for molecules with three-coordinate chiral centers will be somewhat different due to the fix for #5883.
+- Molecules which come from Mol or SDF files will now always have the "_MolFileChiralFlag" property set to the value of the chiral flag in the CTAB. In previous versions the property was not set if the chiral flag was 0.
 
 
 ## Bug Fixes:

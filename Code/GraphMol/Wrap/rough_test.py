@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2021  Greg Landrum and other RDKit contributors
+#  Copyright (C) 2003-2023  Greg Landrum and other RDKit contributors
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -4376,6 +4376,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t2.46E-05\t3',
         '_Name': 48,
         'CAS_RN': '15716-70-8',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '15716-70-8',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t3',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4386,6 +4387,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t9.80E-05\t3',
         '_Name': 78,
         'CAS_RN': '6290-84-2',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '6290-84-2',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t3',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4396,6 +4398,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t4.60E-05\t4',
         '_Name': 128,
         'CAS_RN': '5395-10-8',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5395-10-8',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4406,6 +4409,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '6.75E-04\tM\t>\t6.75E-04\t2',
         '_Name': 163,
         'CAS_RN': '81-11-8',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '81-11-8',
         'NCI_AIDS_Antiviral_Screen_EC50': '6.75E-04\tM\t>\t6.75E-04\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4416,6 +4420,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t2',
         '_Name': 164,
         'CAS_RN': '5325-43-9',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5325-43-9',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4425,6 +4430,7 @@ $$$$
         'NSC': 170,
         '_Name': 170,
         'CAS_RN': '999-99-9',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '999-99-9',
         'NCI_AIDS_Antiviral_Screen_EC50': '9.47E-04\tM\t>\t9.47E-04\t1',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4436,6 +4442,7 @@ $$$$
         '6.46E-04\tM\t=\t5.80E-04\t2\n1.81E-03\tM\t=\t6.90E-04\t2',
         '_Name': 180,
         'CAS_RN': '69-72-7',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '69-72-7',
         'NCI_AIDS_Antiviral_Screen_EC50':
         '6.46E-04\tM\t>\t6.46E-04\t2\n1.81E-03\tM\t>\t1.81E-03\t2',
@@ -4447,6 +4454,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '1.44E-04\tM\t=\t2.49E-05\t2',
         '_Name': 186,
         'CAS_RN': '518-75-2',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '518-75-2',
         'NCI_AIDS_Antiviral_Screen_EC50': '1.44E-04\tM\t>\t1.44E-04\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4457,6 +4465,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t3.38E-06\t2',
         '_Name': 192,
         'CAS_RN': '2217-55-2',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '2217-55-2',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4466,6 +4475,7 @@ $$$$
         'NSC': 203,
         '_Name': 203,
         'CAS_RN': '1155-00-6',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '1155-00-6',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
       },
@@ -4475,6 +4485,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '1.33E-03\tM\t>\t1.33E-03\t2',
         '_Name': 210,
         'CAS_RN': '5325-75-7',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5325-75-7',
         'NCI_AIDS_Antiviral_Screen_EC50': '1.33E-03\tM\t>\t1.33E-03\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4486,6 +4497,7 @@ $$$$
         '2.00E-04\tM\t>\t2.00E-04\t8\n2.00E-03\tM\t=\t1.12E-03\t2',
         '_Name': 211,
         'CAS_RN': '5325-76-8',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5325-76-8',
         'NCI_AIDS_Antiviral_Screen_EC50':
         '2.00E-04\tM\t>\t7.42E-05\t8\n2.00E-03\tM\t=\t6.35E-05\t2',
@@ -4497,6 +4509,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         '_Name': 213,
         'CAS_RN': '119-80-2',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '119-80-2',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4507,6 +4520,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         '_Name': 220,
         'CAS_RN': '5325-83-7',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5325-83-7',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4517,6 +4531,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t2',
         '_Name': 229,
         'CAS_RN': '5325-88-2',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5325-88-2',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4527,6 +4542,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         '_Name': 256,
         'CAS_RN': '5326-06-7',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5326-06-7',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -7214,6 +7230,38 @@ CAS<~>
     backfemol = Chem.rdmolops.DativeBondsToHaptic(newfemol)
     self.assertEqual(Chem.MolToSmiles(femol), Chem.MolToSmiles(backfemol))
     
+  def testTranslateChiralFlag(self):
+    mol = Chem.MolFromSmiles("C[C@@](N)(F)C[C@](C)(O)F |a:1|")
+    flagMol = Chem.Mol(mol)
+    flagMol.SetIntProp("_MolFileChiralFlag",1)
+    Chem.TranslateChiralFlagToStereoGroups(flagMol)
+    sgs = flagMol.GetStereoGroups()
+    self.assertEqual(len(sgs),1)
+    self.assertEqual(len(sgs[0].GetAtoms()), 2)
+    self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
+
+    flagMol = Chem.Mol(mol)
+    flagMol.SetIntProp("_MolFileChiralFlag",0)
+    Chem.TranslateChiralFlagToStereoGroups(flagMol)
+    sgs = flagMol.GetStereoGroups()
+    self.assertEqual(len(sgs),2)
+    self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
+    self.assertEqual(len(sgs[0].GetAtoms()), 1)
+
+    self.assertEqual(sgs[1].GetGroupType(), Chem.StereoGroupType.STEREO_AND)
+    self.assertEqual(len(sgs[1].GetAtoms()), 1)
+
+    flagMol = Chem.Mol(mol)
+    flagMol.SetIntProp("_MolFileChiralFlag",0)
+    Chem.TranslateChiralFlagToStereoGroups(flagMol, Chem.StereoGroupType.STEREO_OR)
+    sgs = flagMol.GetStereoGroups()
+    self.assertEqual(len(sgs),2)
+    self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
+    self.assertEqual(len(sgs[0].GetAtoms()), 1)
+
+    self.assertEqual(sgs[1].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    self.assertEqual(len(sgs[1].GetAtoms()), 1)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
