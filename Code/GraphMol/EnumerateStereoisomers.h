@@ -1,12 +1,13 @@
 // RDKit includes
-#include <RDGeneral/export.h>
 #include "Atom.h"
 #include "Bond.h"
 #include "ROMol.h"
 #include "StereoGroup.h"
+#include <RDGeneral/export.h>
 #include <GraphMol/Chirality.h>
 
 // std includes
+#include <cmath>
 #include <tuple>
 #include <vector>
 #include <iostream>
@@ -62,6 +63,11 @@ namespace RDKit {
     class _RangeBitsGenerator;
 
     class _UniqueRandomBitsGenerator;
+
+    unsigned int get_stereoisomer_count(ROMol* mol, const StereoEnumerationOptions options=StereoEnumerationOptions());
+
+    std::vector<ROMOL_SPTR> enumerate_stereoisomers(ROMol* mol, const StereoEnumerationOptions options=StereoEnumerationOptions(), bool verbose=false);
+
 }
 
 #endif // RD_ENUMSTEREO_H

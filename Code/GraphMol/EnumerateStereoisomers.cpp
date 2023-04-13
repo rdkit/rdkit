@@ -89,4 +89,9 @@ namespace RDKit {
         }
         return flippers;
     };
+    
+    unsigned int get_stereoisomer_count(ROMol* mol, const StereoEnumerationOptions options=StereoEnumerationOptions()) {
+        std::vector<_Flipper*> flippers = _get_flippers(mol, options);
+        return std::pow(2, flippers.size());
+    }
 }
