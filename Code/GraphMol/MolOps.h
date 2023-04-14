@@ -587,6 +587,9 @@ RDKIT_GRAPHMOL_EXPORT void cleanUp(RWMol &mol);
 //! organometallic species before valence is perceived
 /*!
 
+    \b Note that this function is experimental and may either change in behavior
+   or be replaced with something else in future releases.
+
     Currently this:
      - replaces single bonds between "hypervalent" organic atoms and metals with
        dative bonds (this is following an IUPAC recommendation:
