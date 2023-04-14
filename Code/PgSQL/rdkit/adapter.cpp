@@ -2092,6 +2092,8 @@ extern "C" char *computeNMMolHash(CROMol data, const char *which) {
     func = RDKit::MolHash::HashFunction::Mesomer;
   } else if (!strcmp(which, "HetAtomTautomer")) {
     func = RDKit::MolHash::HashFunction::HetAtomTautomer;
+  } else if (!strcmp(which, "HetAtomTautomerv2")) {
+    func = RDKit::MolHash::HashFunction::HetAtomTautomerv2;
   } else if (!strcmp(which, "HetAtomProtomer")) {
     func = RDKit::MolHash::HashFunction::HetAtomProtomer;
   } else if (!strcmp(which, "RedoxPair")) {
