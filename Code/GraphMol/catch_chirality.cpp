@@ -3513,3 +3513,36 @@ TEST_CASE(
   REQUIRE(at->getAtomicNum() == 16);
   CHECK(!at->hasProp(common_properties::_ChiralityPossible));
 }
+
+TEST_CASE(
+    "RDKit Issue #6239: Tri-coordinate atom with implicit + neighbor H atom is found potentially chiral",
+    "[bug][stereo]") {
+  // Parametrize test to run under legacy and new stereo perception
+  const auto legacy_stereo = GENERATE(true, false);
+  INFO("Legacy stereo perception == " << legacy_stereo)
+
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+  Chirality::setUseLegacyStereoPerception(legacy_stereo);
+
+  auto p = SmilesParserParams();
+  p.removeHs = false;
+
+  std::unique_ptr<RWMol> m{SmilesToMol("[H]C(C)CC", p)};
+
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 5);
+
+  auto at = m->getAtomWithIdx(1);
+  REQUIRE(at->getAtomicNum() == 6);
+  REQUIRE(at->getDegree() == 3);
+
+  CHECK(!at->hasProp(common_properties::_ChiralityPossible));
+
+  CHECK(!Chirality::detail::isAtomPotentialTetrahedralCenter(at));
+
+  auto stereoInfo = Chirality::findPotentialStereo(*m);
+  CHECK(stereoInfo.size() == 0);
+
+  auto sinfo = Chirality::detail::getStereoInfo(at);
+  CHECK(sinfo.type == Chirality::StereoType::Atom_Tetrahedral);
+}

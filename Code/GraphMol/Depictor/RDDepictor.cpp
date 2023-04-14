@@ -22,6 +22,7 @@
 #include <cmath>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Rings.h>
+#include <GraphMol/QueryAtom.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>
 #include <Geometry/Transform3D.h>
@@ -751,7 +752,7 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
     // terminal dummy atoms
     allowOptionalAttachments = false;
     for (const auto queryAtom : query.atoms()) {
-      if (queryAtom->getAtomicNum() == 0 && queryAtom->getDegree() == 1) {
+      if (RDKit::isAtomTerminalRGroupOrQueryHydrogen(queryAtom)) {
         allowOptionalAttachments = true;
         break;
       }

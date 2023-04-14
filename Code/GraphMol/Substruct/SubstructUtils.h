@@ -39,6 +39,9 @@ RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType>
 sortMatchesByDegreeOfCoreSubstitution(
     const ROMol& mol, const ROMol& core,
     const std::vector<MatchVectType>& matches);
+RDKIT_SUBSTRUCTMATCH_EXPORT bool isAtomTerminalRGroupOrQueryHydrogen(
+    const Atom* atom);
+
 }  // namespace RDKit
 
 #endif
