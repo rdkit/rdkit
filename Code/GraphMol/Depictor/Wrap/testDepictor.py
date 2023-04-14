@@ -715,7 +715,7 @@ M  END)""")
             assert self.molMatchesTemplate(mol, default_template)
 
     def testSetBadRingSystemTemplates(self):
-        with tempfile.NamedTemporaryFile() as tmp_file:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
             tmp_file.write(b"invalidsmiles")
             tmp_file.seek(0)
             with self.assertRaises(ValueError):
