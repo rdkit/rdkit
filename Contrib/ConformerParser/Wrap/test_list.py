@@ -1,4 +1,6 @@
-tests = [("python", "testConformerParser.py", {}), ]
+tests = [
+  ("python", "testConformerParser.py", {}),
+]
 
 longTests = []
 

@@ -12,7 +12,6 @@
 
 """
 
-
 import tempfile, os, time
 try:
   import pythoncom
@@ -268,6 +267,7 @@ except ImportError:
   def MolToPilImage(dataStr, inFormat='chemical/daylight-smiles', outFormat='image/gif'):
     print('You need to have PIL installed to use this functionality')
     return None
+
 
 # ------------------------------------------------------------------
 #  interactions with Chem3D

@@ -51,8 +51,8 @@ class TestCase(unittest.TestCase):
     ffeat.SetType("HBondDonor1")
     self.assertTrue(ffeat.GetType() == "HBondDonor1")
 
-    ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(1.0, 2.0,
-                                                                                           3.0))
+    ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1",
+                                                 geom.Point3D(1.0, 2.0, 3.0))
     self.assertTrue(ffeat.GetId() == -1)
     self.assertTrue(ffeat.GetFamily() == "HBondDonor")
     self.assertTrue(ffeat.GetType() == "HBondDonor1")
@@ -85,8 +85,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(ptFeq(ffeat2.GetPos(), ffeat.GetPos()))
 
     # Check that the old pickled versions have not been broken
-    inTF = open(
-      os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/feat.pkl'), 'r')
+    inTF = open(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/feat.pkl'),
+                'r')
     buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
     inTF.close()
     inF = io.BytesIO(buf)
@@ -101,8 +101,8 @@ class TestCase(unittest.TestCase):
     # uncomment the following to generate (overwrite) new version of pickled
     # data file
     #pickle.dump(ffeat,file(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'wb+'))
-    inTF = open(
-      os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'), 'r')
+    inTF = open(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),
+                'r')
     buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
     inTF.close()
     inF = io.BytesIO(buf)

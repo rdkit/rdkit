@@ -11,7 +11,6 @@
 
 """
 
-
 from rdkit.Dbase import DbUtils, DbInfo, DbModule
 
 

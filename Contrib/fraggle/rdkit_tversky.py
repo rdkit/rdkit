@@ -43,8 +43,9 @@ parser = OptionParser(
 parser.add_option('-f', '--frags', dest='f_file', type='string',
                   help="File containing the query fragmentations from Fraggle")
 parser.add_option(
-  '-c', '--cutoff', dest='cutoff', type='float', default=0.8,
-  help="Cutoff for Tversy similarity. Only Tversky results with similarity greater than the cutoff will be output. DEFAULT = 0.8")
+  '-c', '--cutoff', dest='cutoff', type='float', default=0.8, help=
+  "Cutoff for Tversy similarity. Only Tversky results with similarity greater than the cutoff will be output. DEFAULT = 0.8"
+)
 
 #parse the command line options
 (options, args) = parser.parse_args()

@@ -6,7 +6,6 @@
 
 """
 
-
 from rdkit import RDConfig
 from rdkit.ML.Descriptors import Parser, Descriptors
 from rdkit.utils import chemutils

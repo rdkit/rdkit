@@ -121,8 +121,8 @@ def _toHTML(mol):
     content = InteractiveRenderer.generateHTMLBody(mol, molSize, legend=nm, useSVG=ipython_useSVG)
   else:
     if not ipython_useSVG:
-      png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True,
-                           kekulize=kekulizeStructures, drawOptions=drawOptions)
+      png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, kekulize=kekulizeStructures,
+                           drawOptions=drawOptions)
       png = base64.b64encode(png)
       content = f'<image src="data:image/png;base64,{png.decode()}">'
     else:

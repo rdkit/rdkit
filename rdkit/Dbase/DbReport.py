@@ -9,7 +9,6 @@
 #  of the RDKit source tree.
 #
 
-
 try:
   from reportlab import platypus
 except ImportError:
@@ -224,8 +223,10 @@ else:
     kwargs['transform'] = tform
     tbl = conn.GetReportlabTable(*args, **kwargs)
     tbl.setStyle(
-      platypus.TableStyle([('GRID', (0, 0), (-1, -1), 1, colors.black),
-                           ('FONT', (0, 0), (-1, -1), 'Times-Roman', 8), ]))
+      platypus.TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONT', (0, 0), (-1, -1), 'Times-Roman', 8),
+      ]))
 
     if smiCol > -1 and tform:
       tbl._argW[smiCol] = tform.width * 1.2

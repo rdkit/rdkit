@@ -248,20 +248,22 @@ is white
     o = []
   else:
     o = [cgo.ALPHA, 1 - transparency]
-  o.extend([cgo.CYLINDER,
-            x1,
-            y1,
-            z1,
-            x2,
-            y2,
-            z2,
-            rad,
-            r1,
-            g1,
-            b1,
-            r2,
-            g2,
-            b2, ])
+  o.extend([
+    cgo.CYLINDER,
+    x1,
+    y1,
+    z1,
+    x2,
+    y2,
+    z2,
+    rad,
+    r1,
+    g1,
+    b1,
+    r2,
+    g2,
+    b2,
+  ])
   obj.extend(o)
   cgoDict[id] = obj
   cmd.load_cgo(obj, id, 1)

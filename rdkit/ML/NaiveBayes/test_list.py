@@ -1,4 +1,6 @@
-tests = [("python", "UnitTestNB.py", {}), ]
+tests = [
+  ("python", "UnitTestNB.py", {}),
+]
 
 longTests = []
 if __name__ == '__main__':

@@ -114,7 +114,7 @@ def GetMolHash(all_layers, hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> s
 
 
 def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[Iterable] = None,
-                 escape: Optional[str] = None, cxflag = DEFAULT_CXFLAG) -> set(HashLayer):
+                 escape: Optional[str] = None, cxflag=DEFAULT_CXFLAG) -> set(HashLayer):
   """
     Generate layers of data about that could be used to identify a molecule
 
@@ -133,8 +133,7 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
 
   ps = Chem.SmilesWriteParams()
-  cxsmiles = Chem.MolToCXSmiles(
-    mol, ps, cxflag)
+  cxsmiles = Chem.MolToCXSmiles(mol, ps, cxflag)
 
   tautomer_hash = GetStereoTautomerHash(mol, cxflag=cxflag)
 
@@ -184,7 +183,7 @@ def GetStereoTautomerHash(molecule, cxflag=DEFAULT_CXFLAG):
   useCxSmiles = True
   cx_flags_to_skip = Chem.CXSmilesFields.CX_ALL ^ cxflag
   hash_with_cxExtensions = rdMolHash.MolHash(no_h_mol, rdMolHash.HashFunction.HetAtomTautomer,
-                                             useCxSmiles,cx_flags_to_skip)
+                                             useCxSmiles, cx_flags_to_skip)
 
   return hash_with_cxExtensions
 
@@ -376,5 +375,3 @@ def _CanonicalizeSGroups(mol, dataFieldNames=None, sortAtomAndBondOrder=True):
 class EnhancedStereoUpdateMode(enum.Enum):
   ADD_WEIGHTS = enum.auto()
   REMOVE_WEIGHTS = enum.auto()
-
-

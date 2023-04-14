@@ -92,10 +92,12 @@ class TestCase(unittest.TestCase):
     for bit in [1, 3, 4]:
       ensemble.AddBit(bit)
 
-    sigBs = [([0, 0, 0, 0, 0, 0], (0, 0, 0)),
-             ([0, 1, 0, 1, 0, 0], (1, 1, 0)),
-             ([0, 1, 0, 0, 1, 0], (1, 0, 1)),
-             ([0, 1, 0, 0, 1, 1], (1, 0, 1)), ]
+    sigBs = [
+      ([0, 0, 0, 0, 0, 0], (0, 0, 0)),
+      ([0, 1, 0, 1, 0, 0], (1, 1, 0)),
+      ([0, 1, 0, 0, 1, 0], (1, 0, 1)),
+      ([0, 1, 0, 0, 1, 1], (1, 0, 1)),
+    ]
     ensemble.InitScoreTable(conn, self.dbTblName)
     for bs, tgt in sigBs:
       ensemble.ScoreToDb(bs, conn)
@@ -117,10 +119,12 @@ class TestCase(unittest.TestCase):
     for bit in [1, 3, 4]:
       ensemble.AddBit(bit)
 
-    sigBs = [([0, 0, 0, 0, 0, 0], (0, 0, 0)),
-             ([0, 1, 0, 1, 0, 0], (1, 1, 0)),
-             ([0, 1, 0, 0, 1, 0], (1, 0, 1)),
-             ([0, 1, 0, 0, 1, 1], (1, 0, 1)), ]
+    sigBs = [
+      ([0, 0, 0, 0, 0, 0], (0, 0, 0)),
+      ([0, 1, 0, 1, 0, 0], (1, 1, 0)),
+      ([0, 1, 0, 0, 1, 0], (1, 0, 1)),
+      ([0, 1, 0, 0, 1, 1], (1, 0, 1)),
+    ]
     ensemble.InitScoreTable(conn, self.dbTblName, idInfo='id varchar(10)', actInfo='act int')
     for bs, tgt in sigBs:
       ensemble.ScoreToDb(bs, conn, id='foo', act=1)

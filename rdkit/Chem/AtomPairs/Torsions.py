@@ -27,6 +27,7 @@ from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.AtomPairs import Utils
 from rdkit.Chem.rdMolDescriptors import (GetTopologicalTorsionFingerprint,
                                          GetHashedTopologicalTorsionFingerprint)
+
 GetTopologicalTorsionFingerprintAsIntVect = rdMolDescriptors.GetTopologicalTorsionFingerprint
 
 
@@ -57,7 +58,7 @@ def pyScorePath(mol, path, size, atomCodes=None):
   >>> pyScorePath(m, (0, 1, 2, 4), 4) == t
   1
 
-  """ 
+  """
   codes = [None] * size
   for i in range(size):
     if i == 0 or i == size - 1:
@@ -80,7 +81,7 @@ def pyScorePath(mol, path, size, atomCodes=None):
       if codes[beg] > codes[end]:
         codes.reverse()
       break
-  
+
   accum = 0
   codeSize = rdMolDescriptors.AtomPairsParameters.codeSize
   for i, code in enumerate(codes):

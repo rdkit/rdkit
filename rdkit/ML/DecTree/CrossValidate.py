@@ -9,7 +9,6 @@ cross validation == evaluating the accuracy of a tree.
 
 """
 
-
 import numpy
 
 from rdkit.ML.Data import SplitData

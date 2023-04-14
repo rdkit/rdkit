@@ -1,9 +1,9 @@
-
 from rdkit import Chem
 from rdkit import RDConfig
 import time, sys, gzip
 import pickle
 from rdkit.RDLogger import logger
+
 logger = logger()
 
 logger.info('reading smarts')

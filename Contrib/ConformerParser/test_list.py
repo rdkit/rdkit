@@ -1,4 +1,6 @@
-tests = [("testExecs/testConformerParser.exe", "", {}), ]
+tests = [
+  ("testExecs/testConformerParser.exe", "", {}),
+]
 
 longTests = []
 

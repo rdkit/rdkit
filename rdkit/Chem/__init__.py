@@ -18,6 +18,7 @@ from rdkit import RDConfig
 from rdkit import DataStructs
 from rdkit.Geometry import rdGeometry
 from rdkit.Chem import rdchem
+
 _HasSubstructMatchStr = rdchem._HasSubstructMatchStr
 from rdkit.Chem.rdchem import *
 from rdkit.Chem.rdmolfiles import *

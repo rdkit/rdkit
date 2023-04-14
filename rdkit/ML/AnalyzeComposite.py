@@ -27,7 +27,6 @@ Usage:  AnalyzeComposite [optional args] <models>
       -v: be verbose whilst screening
 """
 
-
 import sys
 
 import numpy
@@ -37,7 +36,6 @@ from rdkit.ML import ScreenComposite
 from rdkit.ML.Data import Stats
 from rdkit.ML.DecTree import TreeUtils, Tree
 import pickle
-
 
 __VERSION_STRING = "2.2.0"
 
@@ -276,8 +274,10 @@ def Usage():
 if __name__ == "__main__":
   import getopt
   try:
-    args, extras = getopt.getopt(sys.argv[1:], 'n:d:N:vX', ('skip',
-                                                            'enrich=', ))
+    args, extras = getopt.getopt(sys.argv[1:], 'n:d:N:vX', (
+      'skip',
+      'enrich=',
+    ))
   except Exception:
     Usage()
 

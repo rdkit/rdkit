@@ -1,4 +1,3 @@
-
 from rdkit import Chem
 from rdkit.Chem.PyMol import MolViewer
 from rdkit.Chem import AllChem

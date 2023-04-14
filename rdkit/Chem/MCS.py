@@ -1,9 +1,10 @@
 # This work was funded by Roche and generously donated to the free
 # and open source cheminformatics community.
 import warnings
+
 warnings.simplefilter('default', DeprecationWarning)
 warnings.warn("The rdkit.Chem.MCS module is deprecated; please use rdkit.Chem.rdFMCS instead.",
-              DeprecationWarning,stacklevel=2)
+              DeprecationWarning, stacklevel=2)
 ## Copyright (c) 2012 Andrew Dalke Scientific AB
 ## Andrew Dalke <dalke@dalkescientific.com>
 ##
@@ -261,16 +262,18 @@ class MCSResult(object):
     return msg
 
 
-def FindMCS(mols,
-            minNumAtoms=2,
-            maximize=Default.maximize,
-            atomCompare=Default.atomCompare,
-            bondCompare=Default.bondCompare,
-            matchValences=Default.matchValences,
-            ringMatchesRingOnly=False,
-            completeRingsOnly=False,
-            timeout=Default.timeout,
-            threshold=None, ):
+def FindMCS(
+  mols,
+  minNumAtoms=2,
+  maximize=Default.maximize,
+  atomCompare=Default.atomCompare,
+  bondCompare=Default.bondCompare,
+  matchValences=Default.matchValences,
+  ringMatchesRingOnly=False,
+  completeRingsOnly=False,
+  timeout=Default.timeout,
+  threshold=None,
+):
   """Find the maximum common substructure of a set of molecules
 
     ***************************************************
@@ -361,18 +364,20 @@ def FindMCS(mols,
     (The MCS after 50 seconds contained 511 atoms.)
     """
   warnings.warn("The rdkit.Chem.MCS module is deprecated; please use rdkit.Chem.rdFMCS instead.",
-              DeprecationWarning,stacklevel=2)
+                DeprecationWarning, stacklevel=2)
 
-  ores = fmcs.fmcs(mols,
-                   minNumAtoms=minNumAtoms,
-                   maximize=maximize,
-                   atomCompare=atomCompare,
-                   bondCompare=bondCompare,
-                   threshold=threshold,
-                   matchValences=matchValences,
-                   ringMatchesRingOnly=ringMatchesRingOnly,
-                   completeRingsOnly=completeRingsOnly,
-                   timeout=timeout, )
+  ores = fmcs.fmcs(
+    mols,
+    minNumAtoms=minNumAtoms,
+    maximize=maximize,
+    atomCompare=atomCompare,
+    bondCompare=bondCompare,
+    threshold=threshold,
+    matchValences=matchValences,
+    ringMatchesRingOnly=ringMatchesRingOnly,
+    completeRingsOnly=completeRingsOnly,
+    timeout=timeout,
+  )
   return MCSResult(ores)
 
 

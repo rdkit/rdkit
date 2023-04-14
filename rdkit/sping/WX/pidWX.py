@@ -211,6 +211,7 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
 
     self.sizeChanged = false
 
+
 ############################################################################
 
 

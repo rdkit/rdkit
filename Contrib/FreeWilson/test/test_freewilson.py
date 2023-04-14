@@ -2,6 +2,7 @@ import freewilson as fw
 from rdkit import rdBase, Chem
 import csv, os, io
 import logging
+
 PATH = os.path.join(os.path.dirname(fw.__file__), 'data')
 assert os.path.exists(PATH), PATH
 

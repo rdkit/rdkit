@@ -171,7 +171,7 @@ class FeatMapParser(object):
           p.featDirs.append(self._parsePoint(value))
         else:
           raise FeatMapParseError(f'FeatPoint option {name} not recognized on line {self._lineNum}')
-        
+
       feats.append(p)
       l = self._NextLine()
     return feats

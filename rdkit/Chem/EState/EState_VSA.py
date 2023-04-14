@@ -17,7 +17,6 @@ import bisect
 import numpy
 from rdkit.Chem.EState.EState import EStateIndices as EStateIndices_
 from rdkit.Chem.MolSurf import _LabuteHelper as VSAContribs_
-
 """
 
 These default VSA bins were chosen using the PP3K solubility data
@@ -127,6 +126,7 @@ def _InstallDescriptors():
   for nbin in range(len(estateBins) + 1):
     name, fn = _descriptor_EState_VSA(nbin)
     globals()[name] = fn
+
 
 # Change log for EState_VSA descriptors:
 #  version 1.0.1: optimizations, values unaffected

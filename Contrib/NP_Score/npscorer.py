@@ -13,7 +13,6 @@
 # peter ertl, august 2015
 #
 
-
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 import sys, math, gzip, pickle

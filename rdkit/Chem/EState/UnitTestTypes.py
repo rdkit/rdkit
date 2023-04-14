@@ -47,10 +47,10 @@ class TestCase(unittest.TestCase):
 
   def test2_complexMolecules(self):
     data = [
-      ('c1[nH]cnc1CC(N)C(O)=O', ['aaCH', 'aaNH', 'aaCH', 'aaN', 'aasC', 'ssCH2', 'sssCH', 'sNH2',
-                                 'dssC', 'sOH', 'dO']),
-      ('c1nc[n-]c1CC(N)C(O)=O', ['aaCH', 'aaN', 'aaCH', 'aaN', 'aasC', 'ssCH2', 'sssCH', 'sNH2',
-                                 'dssC', 'sOH', 'dO']),
+      ('c1[nH]cnc1CC(N)C(O)=O',
+       ['aaCH', 'aaNH', 'aaCH', 'aaN', 'aasC', 'ssCH2', 'sssCH', 'sNH2', 'dssC', 'sOH', 'dO']),
+      ('c1nc[n-]c1CC(N)C(O)=O',
+       ['aaCH', 'aaN', 'aaCH', 'aaN', 'aasC', 'ssCH2', 'sssCH', 'sNH2', 'dssC', 'sOH', 'dO']),
       ('c1cccc2c1cccc2',
        ['aaCH', 'aaCH', 'aaCH', 'aaCH', 'aaaC', 'aaaC', 'aaCH', 'aaCH', 'aaCH', 'aaCH']),
     ]

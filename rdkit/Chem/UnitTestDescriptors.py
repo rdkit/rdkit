@@ -203,7 +203,8 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('CCCO')
     descs = Descriptors.CalcMolDescriptors(mol)
     self.assertTrue('MolLogP' in descs)
-    self.assertEqual(descs['NumHDonors'],1)
-  
+    self.assertEqual(descs['NumHDonors'], 1)
+
+
 if __name__ == '__main__':
   unittest.main()

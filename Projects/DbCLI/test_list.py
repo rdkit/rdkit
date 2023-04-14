@@ -1,4 +1,6 @@
-tests = [("python", "TestDbCLI.py", {}), ]
+tests = [
+  ("python", "TestDbCLI.py", {}),
+]
 
 longTests = []
 

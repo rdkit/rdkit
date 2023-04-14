@@ -8,7 +8,6 @@
 #  of the RDKit source tree.
 #
 
-
 import argparse
 import re
 import os

@@ -66,6 +66,7 @@ class ChemdrawPanel(QWidget):
     if self.cdx:
       self.cdx = None
 
+
 # demo code
 if __name__ == '__main__':
   import sys, container

@@ -190,8 +190,8 @@ class TestCase(unittest.TestCase):
 
   def test_TypeFinder(self):
     data = [('-', 1.45, 'abc', None), (20, 3, 'defgh', None)]
-    self.assertEqual(
-      DbUtils.TypeFinder(data, 2, 4, nullMarker='-'), [[int, 2], [float, 4], [str, 5], [-1, 1]])
+    self.assertEqual(DbUtils.TypeFinder(data, 2, 4, nullMarker='-'),
+                     [[int, 2], [float, 4], [str, 5], [-1, 1]])
 
   def test_AdjustColHeadings(self):
     headers = ['abc def', ' abc def', 'abc-def ', 'abc.def']
@@ -205,9 +205,8 @@ class TestCase(unittest.TestCase):
   def test_GetTypeStrings(self):
     headers = ['pk', 'a', 'b', 'c']
     colTypes = [(int, 2), (int, 3), (float, 5), (str, 10)]
-    self.assertEqual(
-      DbUtils.GetTypeStrings(headers, colTypes),
-      ['pk integer', 'a integer', 'b double precision', 'c varchar(10)'])
+    self.assertEqual(DbUtils.GetTypeStrings(headers, colTypes),
+                     ['pk integer', 'a integer', 'b double precision', 'c varchar(10)'])
     self.assertEqual(
       DbUtils.GetTypeStrings(headers, colTypes, keyCol='pk'),
       ['pk integer not null primary key', 'a integer', 'b double precision', 'c varchar(10)'])

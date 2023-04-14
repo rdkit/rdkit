@@ -240,13 +240,17 @@ class TestCase(unittest.TestCase):
         fps.append(fp)
     mmp = rdSimDivPickers.MaxMinPicker()
     ids = list(mmp.LazyBitVectorPick(fps, len(fps), 20, seed=42))
-    self.assertEqual(ids,[374,720,690,339,875,842,404,725,120,385,115,868,630,
-                          881,516,497,412,718,869,407])
+    self.assertEqual(ids, [
+      374, 720, 690, 339, 875, 842, 404, 725, 120, 385, 115, 868, 630, 881, 516, 497, 412, 718, 869,
+      407
+    ])
 
     ids = list(
       mmp.LazyBitVectorPick(fps, len(fps), 20, firstPicks=[374, 720, 690, 339, 875], seed=42))
-    self.assertEqual(ids,[374,720,690,339,875,842,404,725,120,385,115,868,630,
-                          881,516,497,412,718,869,407])
+    self.assertEqual(ids, [
+      374, 720, 690, 339, 875, 842, 404, 725, 120, 385, 115, 868, 630, 881, 516, 497, 412, 718, 869,
+      407
+    ])
 
   def testBitVectorMaxMin4(self):
     # threshold tests
@@ -259,8 +263,10 @@ class TestCase(unittest.TestCase):
         fps.append(fp)
     mmp = rdSimDivPickers.MaxMinPicker()
     ids, threshold = mmp.LazyBitVectorPickWithThreshold(fps, len(fps), 20, -1.0, seed=42)
-    self.assertEqual(list(ids),[374,720,690,339,875,842,404,725,120,385,115,868,630,
-                          881,516,497,412,718,869,407])
+    self.assertEqual(list(ids), [
+      374, 720, 690, 339, 875, 842, 404, 725, 120, 385, 115, 868, 630, 881, 516, 497, 412, 718, 869,
+      407
+    ])
 
     self.assertAlmostEqual(threshold, 0.8977, 4)
 

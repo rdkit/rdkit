@@ -12,6 +12,7 @@ from boost import mpi
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.RDLogger import logger
+
 logger = logger()
 
 

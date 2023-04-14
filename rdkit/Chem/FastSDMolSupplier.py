@@ -11,6 +11,7 @@ import sys
 from rdkit import Chem
 
 import warnings
+
 warnings.warn(
   "The FastSDMolSupplier class has been deprecated, please use Chem.SDMolSupplier instead",
   DeprecationWarning)

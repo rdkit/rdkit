@@ -814,5 +814,6 @@ M  END''')
     text = d2d.GetDrawingText()
     self.assertTrue("#7F7F7F" not in text)
 
+
 if __name__ == "__main__":
   unittest.main()

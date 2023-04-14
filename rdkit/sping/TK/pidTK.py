@@ -17,6 +17,7 @@ You can find the latest version of this file:
 # we depend on PIL for rotated strings so watch for changes in PIL
 
 import Tkinter, tkFont
+
 tk = Tkinter
 import rdkit.sping.pid
 
@@ -178,12 +179,13 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
 
   __TRANSPARENT = ''  # transparent for Tk color
 
-  def __init__(self,
-               size=(300, 300),
-               name="sping.TK",
-               master=None,
-               scrollingViewPortSize=None,  # a 2-tuple to define the size of the viewport
-               **kw):
+  def __init__(
+      self,
+      size=(300, 300),
+      name="sping.TK",
+      master=None,
+      scrollingViewPortSize=None,  # a 2-tuple to define the size of the viewport
+      **kw):
     """This canvas allows you to add a tk.Canvas with a sping API for drawing.
         To add scrollbars, the simpliest method is to set the 'scrollingViewPortSize'
         equal to a tuple that describes the width and height of the visible porition
@@ -425,6 +427,7 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
         new_item = self.create_line(pointlist, **d)
 
     self._item_ids.append(new_item)
+
 
 #def drawFigure(self, partList,
 #               edgeColor=None, edgeWidth=None, fillColor=None):

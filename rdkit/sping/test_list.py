@@ -1,7 +1,8 @@
 tests = [
-  ("python", "test_list.py", {'dir': 'tests'}),
+  ("python", "test_list.py", {
+    'dir': 'tests'
+  }),
 ]
-
 
 longTests = []
 

@@ -79,8 +79,8 @@ class TestCase(unittest.TestCase):
     self.failUnless(cfac.GetNumMolFeatures(mol, includeOnly="Bogus") == 0)
 
     self.failUnlessRaises(IndexError, lambda: cfac.GetMolFeature(mol, 1, includeOnly="HBondDonor"))
-    self.failUnlessRaises(
-      IndexError, lambda: cfac.GetMolFeature(mol, 2, includeOnly="HBondAcceptor"))
+    self.failUnlessRaises(IndexError,
+                          lambda: cfac.GetMolFeature(mol, 2, includeOnly="HBondAcceptor"))
     f = cfac.GetMolFeature(mol, 0, includeOnly="HBondDonor")
     self.failUnless(f.GetFamily() == 'HBondDonor')
 
@@ -126,15 +126,15 @@ EndFeature\r
     Weights 1.0
 EndFeature
 """
-    self.failUnlessRaises(
-      ValueError, lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
+    self.failUnlessRaises(ValueError,
+                          lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
     fdefBlock = \
 """DefineFeature HDonor1 [N,O;!H0]
     Family HBondDonor
     Weights 1.0
 """
-    self.failUnlessRaises(
-      ValueError, lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
+    self.failUnlessRaises(ValueError,
+                          lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
 
     self.failUnlessRaises(IOError, lambda: ChemicalFeatures.BuildFeatureFactory('noSuchFile.txt'))
 

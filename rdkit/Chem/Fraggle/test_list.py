@@ -1,4 +1,6 @@
-tests = [("python", "UnitTestFraggle.py", {}), ]
+tests = [
+  ("python", "UnitTestFraggle.py", {}),
+]
 
 longTests = []
 

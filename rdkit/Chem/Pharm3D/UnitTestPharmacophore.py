@@ -39,12 +39,14 @@ class TestCase(unittest.TestCase):
                    EndFeature\n"""
 
     self.featFactory = ChemicalFeatures.BuildFeatureFactoryFromString(self.fdefBlock)
-    self.feats = [ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
-                                                       Geometry.Point3D(0.0, 0.0, 0.0)),
-                  ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
-                                                       Geometry.Point3D(2.65, 0.0, 0.0)),
-                  ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1',
-                                                       Geometry.Point3D(5.12, 0.908, 0.0)), ]
+    self.feats = [
+      ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
+                                           Geometry.Point3D(0.0, 0.0, 0.0)),
+      ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
+                                           Geometry.Point3D(2.65, 0.0, 0.0)),
+      ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1',
+                                           Geometry.Point3D(5.12, 0.908, 0.0)),
+    ]
     self.pcophore = Pharmacophore.Pharmacophore(self.feats)
 
   def test1Basics(self):

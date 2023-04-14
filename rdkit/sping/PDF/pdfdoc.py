@@ -282,6 +282,7 @@ def testOutputGrabber():
   gr.close()
   print('Data...', data)
 
+
 ##############################################################
 #
 #            PDF Object Hierarchy
@@ -320,9 +321,8 @@ class PDFCatalog(PDFObject):
   "requires RefPages and RefOutlines set"
 
   def __init__(self):
-    self.template = LINEEND.join([
-      '<<', '/Type /Catalog', '/Pages %d 0 R', '/Outlines %d 0 R', '>>'
-    ])
+    self.template = LINEEND.join(
+      ['<<', '/Type /Catalog', '/Pages %d 0 R', '/Outlines %d 0 R', '>>'])
 
   def save(self, file):
     file.write(self.template % (self.RefPages, self.RefOutlines) + LINEEND)
@@ -347,7 +347,7 @@ class PDFInfo(PDFObject):
         "<</Title (%s)", "/Author (%s)", "/CreationDate (D:%s)", "/Producer (PDFgen)",
         "/Subject (%s)", ">>"
       ]) % (pdfutils._escape(self.title), pdfutils._escape(self.author), self.datestr,
-                     pdfutils._escape(self.subject)) + LINEEND)
+            pdfutils._escape(self.subject)) + LINEEND)
 
 
 class PDFOutline(PDFObject):

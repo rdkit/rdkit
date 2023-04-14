@@ -1,5 +1,7 @@
-tests = [("python", "UnitTestTrainer.py", {}),
-         ("python", "UnitTestOther.py", {}), ]
+tests = [
+  ("python", "UnitTestTrainer.py", {}),
+  ("python", "UnitTestOther.py", {}),
+]
 
 longTests = []
 if __name__ == '__main__':

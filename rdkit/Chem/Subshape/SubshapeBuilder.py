@@ -1,8 +1,7 @@
 #
-# Copyright (C) 2007 by Greg Landrum 
+# Copyright (C) 2007 by Greg Landrum
 #  All rights reserved
 #
-
 
 import copy
 import time
