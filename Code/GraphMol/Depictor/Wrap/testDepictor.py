@@ -756,7 +756,7 @@ M  END)""")
             rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
             assert self.molMatchesTemplate(mol, default_template)
 
-            with tempfile.NamedTemporaryFile() as tmp_file:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
                 tmp_file.write(new_template_smi.encode('utf-8'))
                 tmp_file.seek(0)
                 rdDepictor.AddRingSystemTemplates(tmp_file.name)
