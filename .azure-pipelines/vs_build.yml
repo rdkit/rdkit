@@ -62,7 +62,7 @@ steps:
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
     cd Docs/Book
-    make doctest
+    sphinx-build.exe -b doctest -d _build/doctees . _build/doctest
   displayName: Run documentation tests
 - task: PublishTestResults@2
   inputs:
