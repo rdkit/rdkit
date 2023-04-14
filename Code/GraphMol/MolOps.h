@@ -441,7 +441,6 @@ typedef enum {
   SANITIZE_SETHYBRIDIZATION = 0x80,
   SANITIZE_CLEANUPCHIRALITY = 0x100,
   SANITIZE_ADJUSTHS = 0x200,
-  SANITIZE_CLEANUP_ORGANOMETALLICS = 0x400,
   SANITIZE_ALL = 0xFFFFFFF
 } SanitizeFlags;
 
@@ -450,7 +449,6 @@ typedef enum {
 /*!
    This functions calls the following in sequence
      -# MolOps::cleanUp()
-     -# MolOps::cleanUpOrganometallics()
      -# mol.updatePropertyCache()
      -# MolOps::symmetrizeSSSR()
      -# MolOps::Kekulize()

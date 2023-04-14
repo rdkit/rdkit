@@ -4677,8 +4677,7 @@ void testParseCHG() {
 
   TEST_ASSERT(m);
   // Write it out in V3000 format, which makes counting the different charges
-  // easier but is really because of a change that caused it always to write
-  // V3000 but which is no longer extant.
+  // easier
   bool forceV3000(true);
   std::string out = MolToMolBlock(*m, true, -1, true, forceV3000);
   std::regex chg_all("CHG="), chg_m1("CHG=-1"), chg_p1("CHG=1"),

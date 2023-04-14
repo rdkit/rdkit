@@ -2957,7 +2957,12 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
       {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
        "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
   for (size_t i = 0; i < test_vals.size(); ++i) {
-    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first, ps));
+    // MolOps::cleanUp(*m);
+    MolOps::cleanUpOrganometallics(*m);
+    MolOps::sanitizeMol(*m);
     TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
   }
 }

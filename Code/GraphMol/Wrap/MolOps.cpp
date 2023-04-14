@@ -961,8 +961,6 @@ struct molops_wrapper {
     python::enum_<MolOps::SanitizeFlags>("SanitizeFlags")
         .value("SANITIZE_NONE", MolOps::SANITIZE_NONE)
         .value("SANITIZE_CLEANUP", MolOps::SANITIZE_CLEANUP)
-        .value("SANITIZE_CLEANUP_ORGANOMETALLICS",
-               MolOps::SANITIZE_CLEANUP_ORGANOMETALLICS)
         .value("SANITIZE_PROPERTIES", MolOps::SANITIZE_PROPERTIES)
         .value("SANITIZE_SYMMRINGS", MolOps::SANITIZE_SYMMRINGS)
         .value("SANITIZE_KEKULIZE", MolOps::SANITIZE_KEKULIZE)
