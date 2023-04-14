@@ -4,7 +4,6 @@
 #  All Rights Reserved
 #
 
-
 import bisect
 
 from rdkit import DataStructs

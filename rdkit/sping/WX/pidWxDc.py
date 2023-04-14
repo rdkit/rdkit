@@ -150,6 +150,7 @@ class PiddleWxDc(sping_pid.Canvas):
     extents = self.dc.GetFullTextExtent(' ', wx_font)
     return extents[2]
 
+
 #------------- drawing methods --------------
 # Note default parameters "=None" means use the defaults set in the
 # Canvas method: defaultLineColor, etc.

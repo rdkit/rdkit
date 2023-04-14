@@ -2,7 +2,6 @@ tests = [
   ("python", "testallps.py", {}),
 ]
 
-
 longTests = []
 
 if __name__ == '__main__':

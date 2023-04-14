@@ -47,12 +47,13 @@ from collections import defaultdict
 from rdkit.Chem.Fraggle import FraggleSim
 
 parser = OptionParser(
-  description="Program to post-process Tversky search results as part of Fraggle",
-  epilog="Format of input file: query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim\t"
+  description="Program to post-process Tversky search results as part of Fraggle", epilog=
+  "Format of input file: query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim\t"
   "Output: SMILES,ID,QuerySMI,QueryID,Fraggle_Similarity,RDK5_Similarity")
 parser.add_option(
-  '-c', '--cutoff', action='store', dest='cutoff', type='float', default=0.7,
-  help="Cutoff for fraggle similarity. Only results with similarity greater than the cutoff will be output. DEFAULT = 0.7")
+  '-c', '--cutoff', action='store', dest='cutoff', type='float', default=0.7, help=
+  "Cutoff for fraggle similarity. Only results with similarity greater than the cutoff will be output. DEFAULT = 0.7"
+)
 parser.add_option('-p', '--pfp', action='store', dest='pfp', type='float', default=0.8,
                   help="Cutoff for partial fp similarity. DEFAULT = 0.8")
 

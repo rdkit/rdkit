@@ -26,11 +26,13 @@ class Canvas(CanvasBase):
   # fix that here:
   fontScale = 1.2
 
-  def __init__(self,
-               img=None,
-               imageType=None,  # determines file type
-               fileName=None,  # if set determines output file name
-               size=None, ):
+  def __init__(
+    self,
+    img=None,
+    imageType=None,  # determines file type
+    fileName=None,  # if set determines output file name
+    size=None,
+  ):
     if img is None:
       try:
         import Image
@@ -159,7 +161,7 @@ class Canvas(CanvasBase):
 
   def addCanvasPolygon(self, ps, color=(0, 0, 0), fill=True, stroke=False, **kwargs):
     if not fill and not stroke:
-      return 
+      return
     dps = []
     for p in ps:
       dps.extend(p)

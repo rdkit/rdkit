@@ -60,8 +60,8 @@ class TestCase(unittest.TestCase):
     tt = Torsions.GetTopologicalTorsionFingerprint(mol)
     self.assertEqual(tt.GetNonzeroElements(), {4437590049: 2, 8732557345: 2, 4445978657: 2})
     tt = Torsions.GetTopologicalTorsionFingerprintAsIds(mol)
-    self.assertEqual(
-      sorted(tt), [4437590049, 4437590049, 4445978657, 4445978657, 8732557345, 8732557345])
+    self.assertEqual(sorted(tt),
+                     [4437590049, 4437590049, 4445978657, 4445978657, 8732557345, 8732557345])
     tt = Torsions.GetTopologicalTorsionFingerprintAsIntVect(mol)
     self.assertEqual(tt.GetNonzeroElements(), {4437590049: 2, 8732557345: 2, 4445978657: 2})
 

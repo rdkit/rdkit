@@ -5,7 +5,6 @@
 
 """
 
-
 import unittest
 
 from rdkit import RDConfig
@@ -44,8 +43,10 @@ class TestCase(unittest.TestCase):
   def testCalc(self):
     # " testing descriptor calculation "
     argV = ['CrPt3', 'fcc', 'AuCu3', 58.09549962, 1, 4, 0.228898, 8.876, 1]
-    nameV = ['Compound', 'Structure', 'Structure_Type', 'Volume', 'Z', 'Atoms_per_Formula_Unit',
-             'Hardness', 'RawDOS_Ef', 'IsFerromagnetic']
+    nameV = [
+      'Compound', 'Structure', 'Structure_Type', 'Volume', 'Z', 'Atoms_per_Formula_Unit',
+      'Hardness', 'RawDOS_Ef', 'IsFerromagnetic'
+    ]
     c = Dispatch('RD.DescCalc')
     c.LoadCalculator(RDConfig.RDCodeDir + '/ml/descriptors/test_data/ferro.dsc')
     descVect = np.array(c.CalcDescriptors(argV, nameV))

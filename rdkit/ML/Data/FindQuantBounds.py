@@ -2,8 +2,6 @@
 #  Copyright (C) 2001  greg Landrum
 #
 
-
-
 from rdkit.Dbase import DbConnection
 from rdkit.ML.Data import Quantize
 

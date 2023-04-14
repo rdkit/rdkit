@@ -39,7 +39,8 @@ if __name__ == '__main__':
 
   if (len(sys.argv) >= 2):
     print(
-      "Program that canonicalises an input SMIRKS so its in same format as MMP identification program.\n")
+      "Program that canonicalises an input SMIRKS so its in same format as MMP identification program.\n"
+    )
     print("USAGE: ./cansmirks.py <file_of_smirks\n")
     sys.exit(1)
 

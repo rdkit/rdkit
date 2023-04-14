@@ -3,7 +3,6 @@
 
 """
 
-
 from rdkit import RDConfig
 import unittest, os, sys
 

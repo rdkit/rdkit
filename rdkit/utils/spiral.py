@@ -1,4 +1,3 @@
-
 from numpy import *
 from rdkit.sping import pid
 import math

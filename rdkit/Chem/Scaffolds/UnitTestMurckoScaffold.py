@@ -49,15 +49,14 @@ class TestCase(unittest.TestCase):
       self.assertEqual(calcScaffold1, calcScaffold2)
 
   def test_MurckScaffoldSmilesFromSmiles(self):
-    self.assertEqual(
-      MurckoScaffoldSmilesFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1'), 'c1ccc(Oc2ccccn2)cc1')
+    self.assertEqual(MurckoScaffoldSmilesFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1'),
+                     'c1ccc(Oc2ccccn2)cc1')
     self.assertEqual(MurckoScaffoldSmilesFromSmiles('CCCC'), '')
 
   def test_MurckoScaffoldSmiles(self):
     self.assertEqual(MurckoScaffoldSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1'), 'c1ccc(Oc2ccccn2)cc1')
-    self.assertEqual(
-      MurckoScaffoldSmiles(mol=Chem.MolFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')),
-      'c1ccc(Oc2ccccn2)cc1')
+    self.assertEqual(MurckoScaffoldSmiles(mol=Chem.MolFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')),
+                     'c1ccc(Oc2ccccn2)cc1')
     self.assertRaises(ValueError, MurckoScaffoldSmiles, smiles=None, mol=None)
 
   def test_MakeScaffoldGeneric(self):

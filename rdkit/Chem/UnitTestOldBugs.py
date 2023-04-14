@@ -72,7 +72,9 @@ class TestCase(unittest.TestCase):
 
     """
     from rdkit.Chem import MolSurf
-    inD = [('[O-][N+](=O)C1=CNC(=N)S1', 82.78), ]
+    inD = [
+      ('[O-][N+](=O)C1=CNC(=N)S1', 82.78),
+    ]
     for smi, val in inD:
       mol = Chem.MolFromSmiles(smi)
       v = MolSurf.TPSA(mol)

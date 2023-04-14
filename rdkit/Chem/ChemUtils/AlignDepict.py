@@ -30,12 +30,12 @@ def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
       raise ValueError("Core does not map to itself")
   else:
     coreMatch = list(range(core.GetNumAtoms(onlyExplicit=True)))
-  
+
   if corePattern:
     match = mol.GetSubstructMatch(corePattern)
   else:
     match = mol.GetSubstructMatch(core)
-  
+
   if not match:
     if not acceptFailure:
       raise ValueError('Substructure match with core not found.')

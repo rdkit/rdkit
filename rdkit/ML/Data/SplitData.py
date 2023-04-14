@@ -3,7 +3,6 @@
 #    All Rights Reserved
 #
 
-
 import random
 
 from rdkit import RDRandom

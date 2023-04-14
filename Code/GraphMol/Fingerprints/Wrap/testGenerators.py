@@ -340,5 +340,6 @@ class TestCase(unittest.TestCase):
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)
 
+
 if __name__ == '__main__':
   unittest.main()

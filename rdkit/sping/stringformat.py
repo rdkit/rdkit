@@ -27,7 +27,6 @@ StringFormat XML characters
        Greek Letter Symbols as specified in MathML
 """
 
-
 #       How it works: Each tag grouping <b></b> sets a flag upon entry and
 #       clears the flag upon exit.  Each call to handle_data creates a
 #       StringSegment which takes on all of the characteristics specified
@@ -239,16 +238,19 @@ class StringFormatter(xmllib.XMLParser):
     self.underline = 0
 
     # set up handlers for various tags
-    self.elements = {'b': (self.start_b, self.end_b),
-                     'u': (self.start_u, self.end_u),
-                     'i': (self.start_i, self.end_i),
-                     'super': (self.start_super, self.end_super),
-                     'sub': (self.start_sub, self.end_sub)}
+    self.elements = {
+      'b': (self.start_b, self.end_b),
+      'u': (self.start_u, self.end_u),
+      'i': (self.start_i, self.end_i),
+      'super': (self.start_super, self.end_super),
+      'sub': (self.start_sub, self.end_sub)
+    }
 
     # automatically add handlers for all of the greek characters
     for item in greekchars.keys():
-      self.elements[item] = (lambda attr,self=self,letter=greekchars[item]:
-              self.start_greek(attr,letter), self.end_greek)
+      self.elements[item] = (
+        lambda attr, self=self, letter=greekchars[item]: self.start_greek(attr, letter),
+        self.end_greek)
 
     # flag for greek characters
     self.greek = 0
@@ -320,6 +322,7 @@ def fontAscent(canvas, font=None):
 def fontDescent(canvas, font=None):
   "Find the descent (extent below base) of the given font."
   return canvas.fontDescent(font)
+
 
 #------------------------------------------------------------------------
 # create an instantiation of the StringFormatter
@@ -547,6 +550,7 @@ def stringformatTest():
   drawString(canvas, "That's &alpha;ll <u>folks</u><super>&omega;</super>", x, y)
 
   canvas.flush()
+
 
 #test1()
 #test2()

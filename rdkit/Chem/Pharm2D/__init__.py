@@ -6,8 +6,9 @@
 """
 
 
-def DefaultSigFactory(fdefFile=None, minPointCount=2, maxPointCount=3,
-                      bins=[(2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 100)]):
+def DefaultSigFactory(fdefFile=None, minPointCount=2, maxPointCount=3, bins=[(2, 3), (3, 4), (4, 5),
+                                                                             (5, 6), (6, 7), (7, 8),
+                                                                             (8, 100)]):
   from rdkit.Chem.Pharm2D import SigFactory
   from rdkit.Chem import ChemicalFeatures
   if fdefFile is None:

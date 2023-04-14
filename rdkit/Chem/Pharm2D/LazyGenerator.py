@@ -11,7 +11,6 @@
 
 """
 
-
 from rdkit.Chem.Pharm2D import SigFactory, Matcher
 
 raise NotImplementedError('not finished yet')
@@ -67,8 +66,9 @@ class Generator(object):
     else:
       self.bits = None
 
-    featFamilies = [fam for fam in sigFactory.featFactory.GetFeatureFamilies()
-                    if fam not in sigFactory.skipFeats]
+    featFamilies = [
+      fam for fam in sigFactory.featFactory.GetFeatureFamilies() if fam not in sigFactory.skipFeats
+    ]
     nFeats = len(featFamilies)
     featMatches = {}
     for fam in featFamilies:

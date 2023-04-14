@@ -40,6 +40,7 @@ from rdkit import rdBase
 import logging
 from rdkit import RDConfig, RDLogger
 from rdkit.RDLogger import logger
+
 logger = logger()
 from rdkit import Chem
 from rdkit.Chem import rdSubstructLibrary

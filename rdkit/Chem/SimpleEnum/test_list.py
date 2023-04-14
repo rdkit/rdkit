@@ -1,4 +1,6 @@
-tests = [("python", "UnitTestEnumerator.py", {}), ]
+tests = [
+  ("python", "UnitTestEnumerator.py", {}),
+]
 
 longTests = []
 

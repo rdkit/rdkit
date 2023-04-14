@@ -15,8 +15,9 @@ from rdkit.VLib import Supply, Filter
 #fName = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib','test_data','NCI_aids.10.dupes.sdf')
 #supplier = SDSupply.SDSupplyNode(fName)
 # instead though, we want a simpler input:
-smis = ['CCOC', 'CCO.Cl', 'CC(=O)[O-].[Na+]', 'CC[Cu]CC', 'OCC', 'C[N+](C)(C)C.[Cl-]',
-        '[Na+].[Cl-]']
+smis = [
+  'CCOC', 'CCO.Cl', 'CC(=O)[O-].[Na+]', 'CC[Cu]CC', 'OCC', 'C[N+](C)(C)C.[Cl-]', '[Na+].[Cl-]'
+]
 mols = [Chem.MolFromSmiles(x) for x in smis]
 # name the molecules (only needed because we built them from smiles):
 for i in range(len(mols)):

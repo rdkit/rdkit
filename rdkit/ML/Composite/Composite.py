@@ -476,8 +476,8 @@ class Composite(object):
         model, frac2 = pruner(model, model.GetTrainingExamples(), model.GetTestExamples(),
                               minimizeTestErrorOnly=0)
         frac = frac2
-      if (hasattr(self, '_modelFilterFrac') and self._modelFilterFrac != 0 and
-          hasattr(model, '_trainIndices')):
+      if (hasattr(self, '_modelFilterFrac') and self._modelFilterFrac != 0
+          and hasattr(model, '_trainIndices')):
         # correct the model's training indices:
         trainIndices = [trainIdx[x] for x in model._trainIndices]
         model._trainIndices = trainIndices

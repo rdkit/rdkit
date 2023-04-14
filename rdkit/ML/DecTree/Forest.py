@@ -7,7 +7,6 @@
 
 """
 
-
 import numpy
 
 from rdkit.ML.DecTree import CrossValidate, PruneTree

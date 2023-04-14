@@ -1,5 +1,3 @@
-
-
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.PyMol import MolViewer
@@ -43,7 +41,6 @@ print(pruneStats)
 
 import os, tempfile
 from rdkit import Geometry
-
 
 fName = tempfile.NamedTemporaryFile(suffix='.grd', delete=False).name
 Geometry.WriteGridToFile(ns1.coarseGrid.grid, fName)

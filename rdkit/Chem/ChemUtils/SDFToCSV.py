@@ -37,7 +37,7 @@ def Convert(suppl, outFile, keyCol=None, stopAfter=-1, includeChirality=False, s
     else:
       smi = mol.GetProp(smilesFrom)
       smi = Chem.MolToSmiles(Chem.MolFromSmiles(smi), isomericSmiles=includeChirality)
-    
+
     outL = []
     if keyCol:
       outL.append(str(mol.GetProp(keyCol)))
@@ -67,10 +67,10 @@ def initParser():
 
 
 def existingFile(filename):
-    """ 'type' for argparse - check that filename exists """
-    if not os.path.exists(filename):
-      raise argparse.ArgumentTypeError("{0} does not exist".format(filename))
-    return filename
+  """ 'type' for argparse - check that filename exists """
+  if not os.path.exists(filename):
+    raise argparse.ArgumentTypeError("{0} does not exist".format(filename))
+  return filename
 
 
 def main():

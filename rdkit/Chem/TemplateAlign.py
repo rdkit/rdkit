@@ -13,11 +13,13 @@ from rdkit.Chem import rdDepictor
 from rdkit import Geometry
 
 
-def AlignMolToTemplate2D(mol,
-                         template,
-                         match=None,
-                         clearConfs=False,
-                         templateConfId=-1, ):
+def AlignMolToTemplate2D(
+  mol,
+  template,
+  match=None,
+  clearConfs=False,
+  templateConfId=-1,
+):
   """
    Arguments:
 

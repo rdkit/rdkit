@@ -1,4 +1,6 @@
-tests = [("python", "SimilarityPickers.py", {}), ]
+tests = [
+  ("python", "SimilarityPickers.py", {}),
+]
 
 longTests = []
 

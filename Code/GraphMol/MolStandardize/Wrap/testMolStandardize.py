@@ -90,7 +90,8 @@ class TestCase(unittest.TestCase):
                           'ruthenium.mol')
     rumol = Chem.MolFromMolFile(rufile)
     disrumol = rdMolStandardize.DisconnectOrganometallics(rumol)
-    self.assertEqual(Chem.MolToSmiles(disrumol), "[Cl-].[Cl-].[Cl-].[Cl-].[Ru+2].[Ru+2].c1ccccc1.c1ccccc1")
+    self.assertEqual(Chem.MolToSmiles(disrumol),
+                     "[Cl-].[Cl-].[Cl-].[Cl-].[Ru+2].[Ru+2].c1ccccc1.c1ccccc1")
 
     opts = rdMolStandardize.MetalDisconnectorOptions()
     opts.splitGrignards = True
@@ -102,18 +103,19 @@ class TestCase(unittest.TestCase):
     self.assertNotEqual(def_opts.splitAromaticC, opts.splitAromaticC)
     self.assertNotEqual(def_opts.adjustCharges, opts.adjustCharges)
     self.assertNotEqual(def_opts.removeHapticDummies, opts.removeHapticDummies)
-    
+
     md = rdMolStandardize.MetalDisconnector(opts)
 
     grigfile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
-                           'grignard_2.mol')
+                            'grignard_2.mol')
     grigmol = Chem.MolFromMolFile(grigfile)
     disgrigmol = md.Disconnect(grigmol)
     self.assertEqual(Chem.MolToSmiles(disgrigmol), "[Cl-].[Mg+2].[c-]1ccccc1")
 
     # and passing in the options explicitly
     disrumol = rdMolStandardize.DisconnectOrganometallics(rumol, opts)
-    self.assertEqual(Chem.MolToSmiles(disrumol), "[Cl-].[Cl-].[Cl-].[Cl-].[Ru+2].[Ru+2].c1ccccc1.c1ccccc1")
+    self.assertEqual(Chem.MolToSmiles(disrumol),
+                     "[Cl-].[Cl-].[Cl-].[Cl-].[Ru+2].[Ru+2].c1ccccc1.c1ccccc1")
 
   def test6Charge(self):
     mol = Chem.MolFromSmiles("C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O")

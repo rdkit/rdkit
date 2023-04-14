@@ -4,6 +4,7 @@ from rdkit import RDConfig
 import unittest
 import os
 from rdkit.RDLogger import logger
+
 logger = logger()
 
 

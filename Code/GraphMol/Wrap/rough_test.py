@@ -7212,7 +7212,6 @@ CAS<~>
 
     self.assertEqual(mae, iomae[ctBlockStart:])
 
-
   def test_HapticBondsToDative(self):
     fefile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
                           'ferrocene.mol')
@@ -7220,8 +7219,7 @@ CAS<~>
     newfemol = Chem.rdmolops.HapticBondsToDative(femol)
     self.assertEqual(Chem.MolToSmiles(newfemol),
                      'c12->[Fe+2]3456789(<-c1c->3[cH-]->4c->52)<-c1c->6c->7[cH-]->8c->91')
-    
-    
+
   def test_DativeBondsToHaptic(self):
     fefile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
                           'ferrocene.mol')
@@ -7229,22 +7227,22 @@ CAS<~>
     newfemol = Chem.rdmolops.HapticBondsToDative(femol)
     backfemol = Chem.rdmolops.DativeBondsToHaptic(newfemol)
     self.assertEqual(Chem.MolToSmiles(femol), Chem.MolToSmiles(backfemol))
-    
+
   def testTranslateChiralFlag(self):
     mol = Chem.MolFromSmiles("C[C@@](N)(F)C[C@](C)(O)F |a:1|")
     flagMol = Chem.Mol(mol)
-    flagMol.SetIntProp("_MolFileChiralFlag",1)
+    flagMol.SetIntProp("_MolFileChiralFlag", 1)
     Chem.TranslateChiralFlagToStereoGroups(flagMol)
     sgs = flagMol.GetStereoGroups()
-    self.assertEqual(len(sgs),1)
+    self.assertEqual(len(sgs), 1)
     self.assertEqual(len(sgs[0].GetAtoms()), 2)
     self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
 
     flagMol = Chem.Mol(mol)
-    flagMol.SetIntProp("_MolFileChiralFlag",0)
+    flagMol.SetIntProp("_MolFileChiralFlag", 0)
     Chem.TranslateChiralFlagToStereoGroups(flagMol)
     sgs = flagMol.GetStereoGroups()
-    self.assertEqual(len(sgs),2)
+    self.assertEqual(len(sgs), 2)
     self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
     self.assertEqual(len(sgs[0].GetAtoms()), 1)
 
@@ -7252,10 +7250,10 @@ CAS<~>
     self.assertEqual(len(sgs[1].GetAtoms()), 1)
 
     flagMol = Chem.Mol(mol)
-    flagMol.SetIntProp("_MolFileChiralFlag",0)
+    flagMol.SetIntProp("_MolFileChiralFlag", 0)
     Chem.TranslateChiralFlagToStereoGroups(flagMol, Chem.StereoGroupType.STEREO_OR)
     sgs = flagMol.GetStereoGroups()
-    self.assertEqual(len(sgs),2)
+    self.assertEqual(len(sgs), 2)
     self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
     self.assertEqual(len(sgs[0].GetAtoms()), 1)
 

@@ -5,6 +5,7 @@ n.b. if a file with the same name (i.e. sln.yy) is found twice
  in the source tree, this will break"""
 
 import os, sys
+
 source_dir, info_file = sys.argv[1:3]
 print(source_dir, info_file)
 

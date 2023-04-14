@@ -18,7 +18,6 @@ Sample Usage:
 
 """
 
-
 import pickle
 
 import numpy
@@ -51,7 +50,7 @@ def GetDistanceMatrix(data, metric, isSimilarity=1):
         fp1 = DataStructs.FoldFingerprint(fp1, nBits1 / nBits2)
       elif nBits2 > nBits1:
         fp2 = DataStructs.FoldFingerprint(fp2, nBits2 / nBits1)
-      
+
       if isSimilarity:
         distsMatrix[nSoFar] = 1.0 - metric(fp1, fp2)
       else:
@@ -78,7 +77,7 @@ def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
   clustTree._ptLabels = labels
   if acts:
     clustTree._ptValues = acts
-  
+
   for pt in clustTree.GetPoints():
     idx = pt.GetIndex() - 1
     pt.SetName(labels[idx])
@@ -87,7 +86,7 @@ def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
         pt.SetData(int(acts[idx]))
       except Exception:
         pass
-  
+
   if not returnDistances:
     return clustTree
   return clustTree, dMat

@@ -262,6 +262,7 @@ def RegisterItems(conn, table, values, columnName, rows, startId='', idColName='
     conn.Commit()
   return len(values) - len(dbData), ids
 
+
 # ------------------------------------
 #
 #  doctest boilerplate

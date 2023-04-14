@@ -6,4 +6,5 @@ separated file and annotates the atoms of the molecules with their pharmacophore
 Use 'FeatFinderCLI.py --help' for further information
 '''
 from rdkit.Chem import FeatFinderCLI
+
 FeatFinderCLI.main()

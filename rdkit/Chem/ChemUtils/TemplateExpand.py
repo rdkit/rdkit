@@ -5,6 +5,7 @@
 #
 
 from rdkit import RDLogger as logging
+
 logger = logging.logger()
 logger.setLevel(logging.INFO)
 from rdkit import Chem
@@ -13,6 +14,7 @@ from rdkit.Chem import AllChem
 from rdkit.Chem.ChemUtils.AlignDepict import AlignDepict
 
 import sys
+
 _version = "0.8.0"
 _greet = "This is TemplateExpand version %s" % _version
 
@@ -80,6 +82,7 @@ Usage: TemplateExpand [options] template <sidechains>
 def Usage():
   print(_usage, file=sys.stderr)
   sys.exit(-1)
+
 
 nDumped = 0
 
@@ -162,7 +165,7 @@ def Explode(template, sidechains, outF, autoNames=True, do3D=False, useTethers=F
     templateName = template.GetProp('_Name')
   except KeyError:
     templateName = "template"
-  
+
   for mol in _exploder(template, 0, sidechains, core, chainIndices, autoNames=autoNames,
                        templateName=templateName, do3D=do3D, useTethers=useTethers):
     outF.write(Chem.MolToMolBlock(mol))
@@ -248,10 +251,10 @@ def ConstructSidechains(suppl, sma=None, replace=True, useAll=False):
           tmp = None
     else:
       tmp = [(idx + 1, mol)]
-    
+
     if tmp:
       res.extend(tmp)
-  
+
   return res
 
 

@@ -617,8 +617,9 @@ def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, 
   tfd = CalculateTFD(torsion1, torsion2, weights=weights)
   return tfd
 
+
 def GetBestTFDBetweenMolecules(mol1, mol2, confId1=-1, useWeights=True, maxDev='equal',
-                           symmRadius=2, ignoreColinearBonds=True):
+                               symmRadius=2, ignoreColinearBonds=True):
   """ Wrapper to calculate the best TFD between a single conformer of mol1 and all the conformers of mol2
       Important: The two molecules must be isomorphic
 
@@ -656,9 +657,8 @@ def GetBestTFDBetweenMolecules(mol1, mol2, confId1=-1, useWeights=True, maxDev='
     # second molecule
     torsion2 = CalculateTorsionAngles(mol2, tl, tlr, confId=conf.GetId())
     tfd = CalculateTFD(torsion1, torsion2, weights=weights)
-    best = min(best,tfd)
+    best = min(best, tfd)
   return best
-
 
 
 def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):

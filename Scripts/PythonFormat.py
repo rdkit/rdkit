@@ -19,8 +19,10 @@ import sys
 rdbase = os.environ.get('RDBASE', '')
 styleConfig = os.path.join(rdbase, 'setup.cfg')
 
-excludeDirs = [os.path.join(rdbase, 'build'),
-               os.path.join(rdbase, 'External'), ]
+excludeDirs = [
+  os.path.join(rdbase, 'build'),
+  os.path.join(rdbase, 'External'),
+]
 
 
 def pythonFiles(dirname=rdbase):

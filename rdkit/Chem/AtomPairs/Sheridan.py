@@ -27,7 +27,7 @@ from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint, GetTopologicalTorsionFingerprint
 
 numPathBits = rdMolDescriptors.AtomPairsParameters.numPathBits
-_maxPathLen = (1 << numPathBits) - 1  # Unused variable 
+_maxPathLen = (1 << numPathBits) - 1  # Unused variable
 numFpBits = numPathBits + 2 * rdMolDescriptors.AtomPairsParameters.codeSize
 fpLen = 1 << numFpBits
 

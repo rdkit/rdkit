@@ -1,7 +1,7 @@
-
 from rdkit.SimDivFilters import rdSimDivPickers as rdsimdiv
 import numpy
 from rdkit import RDRandom
+
 RDRandom.seed(23)
 
 pkr = rdsimdiv.MaxMinPicker()

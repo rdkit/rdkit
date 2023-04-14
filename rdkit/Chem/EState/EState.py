@@ -54,7 +54,7 @@ def EStateIndices(mol, force=True):
       N = GetPrincipleQuantumNumber(atNum)
       Is[i] = (4. / (N * N) * dv + 1) / d
   dists = Chem.GetDistanceMatrix(mol, useBO=0, useAtomWts=0) + 1
-  
+
   accum = numpy.zeros(nAtoms, dtype=numpy.float64)
   for i in range(nAtoms):
     for j in range(i + 1, nAtoms):
@@ -63,7 +63,7 @@ def EStateIndices(mol, force=True):
         tmp = (Is[i] - Is[j]) / (p * p)
         accum[i] += tmp
         accum[j] -= tmp
-  
+
   res = accum + Is
   mol._eStateIndices = res
   return res

@@ -1,4 +1,3 @@
-
 from Numeric import *
 import linalg
 

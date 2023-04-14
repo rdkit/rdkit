@@ -31,7 +31,6 @@
 #  Created by Greg Landrum October 2006
 #
 
-
 import os.path
 import unittest
 
