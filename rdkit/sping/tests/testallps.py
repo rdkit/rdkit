@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import unittest
+
 import pidtest
+
 from rdkit.sping.PS import pidPS
 
 

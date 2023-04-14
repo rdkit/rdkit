@@ -1,12 +1,11 @@
-from contextlib import contextmanager
 import os
 import sys
 import unittest
-
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem.ChemUtils.SDFToCSV import Convert, initParser
+from contextlib import contextmanager
 from io import StringIO
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem.ChemUtils.SDFToCSV import Convert, initParser
 
 
 class TestCase(unittest.TestCase):

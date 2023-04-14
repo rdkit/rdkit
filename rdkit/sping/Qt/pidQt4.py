@@ -27,11 +27,13 @@ Greg Landrum (glandrum@users.sourceforge.net)
 
 """
 
-from rdkit.sping import pid
-import types
-from PyQt4 import QtCore, QtGui, QtSvg
-from math import *
 import copy
+import types
+from math import *
+
+from PyQt4 import QtCore, QtGui, QtSvg
+
+from rdkit.sping import pid
 
 
 def _ColorToQt(color):
@@ -371,8 +373,10 @@ def dashtest(canvas):
 
 if __name__ == '__main__':
   import sys
-  from rdkit.sping.pid import *
+
   from PIL import Image
+
+  from rdkit.sping.pid import *
   app = QtGui.QApplication(sys.argv)
   w = QtGui.QGraphicsView()
 

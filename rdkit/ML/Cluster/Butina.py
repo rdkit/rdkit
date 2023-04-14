@@ -8,6 +8,7 @@
 
 """
 import numpy
+
 from rdkit import RDLogger
 
 logger = RDLogger.logger()

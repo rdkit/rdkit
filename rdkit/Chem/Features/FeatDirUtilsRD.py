@@ -11,6 +11,7 @@
 import math
 
 import numpy
+
 from rdkit import Chem, Geometry
 
 # BIG NOTE: we are going assume atom IDs starting from 0 instead of 1

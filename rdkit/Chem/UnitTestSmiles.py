@@ -12,8 +12,10 @@
 - canonicalization
 - stereo chemistry parsing consistency
 """
-import unittest, os
+import os
 import pickle
+import unittest
+
 from rdkit import Chem
 
 

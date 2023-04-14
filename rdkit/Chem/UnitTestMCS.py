@@ -1,5 +1,5 @@
-import unittest
 import time
+import unittest
 
 from rdkit import Chem
 from rdkit.Chem import rdFMCS

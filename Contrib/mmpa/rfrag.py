@@ -33,8 +33,9 @@
 # Modifications and optimizations by Greg Landrum, July 2015
 #
 
-import sys
 import re
+import sys
+
 from rdkit import Chem
 from rdkit.Chem import rdMMPA
 

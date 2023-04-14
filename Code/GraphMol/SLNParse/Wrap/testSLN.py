@@ -32,12 +32,12 @@
 #
 # Created by Greg Landrum, September 2006
 #
-from rdkit import Chem
-from rdkit.Chem import rdSLNParse
-from rdkit import Geometry
-from rdkit import RDConfig
+import os
+import sys
 import unittest
-import os, sys
+
+from rdkit import Chem, Geometry, RDConfig
+from rdkit.Chem import rdSLNParse
 
 
 class TestCase(unittest.TestCase):

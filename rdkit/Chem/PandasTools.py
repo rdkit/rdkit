@@ -122,18 +122,15 @@ dataframe, we use a custom formatter for columns containing RDKit molecules,
 and also disable escaping of HTML where needed.
 '''
 
-from base64 import b64encode
-import sys
 import logging
+import sys
+from base64 import b64encode
 
 import numpy as np
+
 import rdkit
-from rdkit import Chem
-from rdkit import DataStructs
-from rdkit.Chem import AllChem
-from rdkit.Chem import Draw
-from rdkit.Chem import SDWriter
-from rdkit.Chem import rdchem
+from rdkit import Chem, DataStructs
+from rdkit.Chem import AllChem, Draw, SDWriter, rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
 InteractiveRenderer = None
@@ -677,6 +674,7 @@ if __name__ == '__main__':  # pragma: nocover
     @unittest.skipIf(xlsxwriter is None or pd is None, 'pandas/xlsxwriter not installed')
     def testGithub1507(self):
       import os
+
       from rdkit import RDConfig
       sdfFile = os.path.join(RDConfig.RDDataDir, 'NCI/first_200.props.sdf')
       frame = LoadSDF(sdfFile)

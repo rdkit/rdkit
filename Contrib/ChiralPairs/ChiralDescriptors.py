@@ -30,11 +30,11 @@
 #
 # Created by Nadine Schneider & Peter Ertl, July 2017
 
-from collections import defaultdict, Counter, namedtuple
-
-import seaborn as sns
-import numpy as np
 import re
+from collections import Counter, defaultdict, namedtuple
+
+import numpy as np
+import seaborn as sns
 from numpy import linalg
 
 from rdkit import Chem
@@ -406,7 +406,8 @@ def generateChiralDescriptors(mol, verbose=False):
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
+  import doctest
+  import sys
   return doctest.testmod(sys.modules["__main__"])
 
 

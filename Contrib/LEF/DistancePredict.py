@@ -29,9 +29,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
-from rdkit import Chem
-from rdkit import DataStructs
 from CreateFps import GetMolFingerprint
+
+from rdkit import Chem, DataStructs
 from rdkit.ML.KNN.KNNRegressionModel import KNNRegressionModel
 from rdkit.RDLogger import logger
 
@@ -48,8 +48,9 @@ nameField = 'Compound_orig'
 propField = 'chemical_shift_1'
 
 weightedAverage = True
-import types, copy
-from optparse import OptionParser, Option, OptionValueError
+import copy
+import types
+from optparse import Option, OptionParser, OptionValueError
 
 
 def check_floatlist(option, opt, value):

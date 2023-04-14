@@ -18,7 +18,9 @@
 #    - frames.smi containing the (canonical) smiles and count of occurrence
 #
 
-import os, sys
+import os
+import sys
+
 from Chem import AllChem as Chem
 
 

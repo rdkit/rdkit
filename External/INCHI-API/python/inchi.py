@@ -33,8 +33,8 @@ INCHI_AVAILABLE = True
 
 import logging
 
-from rdkit.Chem import rdinchi
 from rdkit import RDLogger
+from rdkit.Chem import rdinchi
 
 logger = RDLogger.logger()
 

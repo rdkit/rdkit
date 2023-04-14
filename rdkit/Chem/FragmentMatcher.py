@@ -98,7 +98,8 @@ class FragmentMatcher(object):
   #  doctest boilerplate
   #
 def _test():
-  import doctest, sys
+  import doctest
+  import sys
   return doctest.testmod(sys.modules["__main__"])
 
 

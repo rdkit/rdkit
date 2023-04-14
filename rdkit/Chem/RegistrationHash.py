@@ -26,8 +26,7 @@ import hashlib
 import json
 import logging
 import re
-from typing import Iterable
-from typing import Optional
+from typing import Iterable, Optional
 
 from rdkit import Chem
 from rdkit.Chem import rdMolHash

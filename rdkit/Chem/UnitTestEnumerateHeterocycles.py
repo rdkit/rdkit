@@ -1,16 +1,14 @@
-import doctest
-import unittest
-
-import os
 import csv
+import doctest
+import os
+import unittest
 from random import Random
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from rdkit.Chem.EnumerateHeterocycles import (
-  GetHeterocycleReactionSmarts,
-  GetHeterocycleReactions,
-  EnumerateHeterocycles,
-)
+from rdkit.Chem.EnumerateHeterocycles import (EnumerateHeterocycles,
+                                              GetHeterocycleReactions,
+                                              GetHeterocycleReactionSmarts)
 
 
 def has_radical(mol):

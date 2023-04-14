@@ -4,13 +4,15 @@
 #
 #  @@ All Rights Reserved @@
 #
-import os, sys
 import io
-import unittest
+import os
 import pickle
-from rdkit import RDConfig
-from rdkit import DataStructs as ds
 import random
+import sys
+import unittest
+
+from rdkit import DataStructs as ds
+from rdkit import RDConfig
 
 
 def feq(v1, v2, tol=1e-4):

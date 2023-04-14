@@ -30,13 +30,13 @@
 #
 # Created by Nadine Schneider, July 2016
 
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import rdqueries
-
-from collections import defaultdict, Counter
 import itertools
+from collections import Counter, defaultdict
+
 import numpy as np
+
+from rdkit import Chem
+from rdkit.Chem import AllChem, rdqueries
 
 from . import utils
 

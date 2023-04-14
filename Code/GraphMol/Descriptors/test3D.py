@@ -1,12 +1,9 @@
-from rdkit import Chem
-from rdkit import rdBase
-from rdkit import RDConfig
 import os
-
-from rdkit.Chem import rdMolDescriptors as rdMD
-from rdkit.Chem import AllChem
-
 import time
+
+from rdkit import Chem, RDConfig, rdBase
+from rdkit.Chem import AllChem
+from rdkit.Chem import rdMolDescriptors as rdMD
 
 
 def get3D(m, is3d):

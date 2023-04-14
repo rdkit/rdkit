@@ -54,19 +54,20 @@ _description = """
 """
 import argparse
 
-from rdkit import RDConfig
-from rdkit import Chem
-from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.Dbase import DbModule
-from rdkit.RDLogger import logger
+from rdkit import Chem, RDConfig
 from rdkit.Chem.MolDb import Loader
+from rdkit.Dbase import DbModule
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.RDLogger import logger
 
 logger = logger()
-import sys, os
 import io
+import os
 import pickle
-from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory, LayeredOptions
+import sys
+
 from rdkit.Chem.MolDb import FingerprintUtils
+from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory, LayeredOptions
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----
 

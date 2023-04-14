@@ -9,6 +9,7 @@
 #  of the RDKit source tree.
 #
 import copy
+
 from rdkit.Chem.FeatMaps import FeatMaps
 
 

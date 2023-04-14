@@ -8,8 +8,9 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit.Chem.FeatMaps.FeatMapPoint import FeatMapPoint
 import math
+
+from rdkit.Chem.FeatMaps.FeatMapPoint import FeatMapPoint
 
 
 class FeatMapScoreMode(object):

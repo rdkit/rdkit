@@ -6,11 +6,10 @@ import doctest
 import os.path
 import unittest
 
-from rdkit import RDConfig
-from rdkit import RDRandom
+from rdkit import RDConfig, RDRandom
 from rdkit.ML.Data import DataUtils
-from rdkit.ML.KNN import CrossValidate, DistFunctions
-from rdkit.ML.KNN import KNNModel, KNNRegressionModel
+from rdkit.ML.KNN import (CrossValidate, DistFunctions, KNNModel,
+                          KNNRegressionModel)
 
 
 def feq(a, b, tol=1e-4):

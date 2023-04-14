@@ -1,10 +1,11 @@
 # $Id$
 #
-from rdkit import Chem
-from rdkit.Chem import rdReducedGraphs as rdRG
-from rdkit import RDConfig
-import numpy
 import unittest
+
+import numpy
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import rdReducedGraphs as rdRG
 
 
 class TestCase(unittest.TestCase):

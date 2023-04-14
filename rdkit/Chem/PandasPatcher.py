@@ -1,9 +1,10 @@
-from io import StringIO
+import importlib
 import logging
 import re
-import importlib
+from io import StringIO
 from xml.dom import minidom
 from xml.parsers.expat import ExpatError
+
 from rdkit.Chem import Mol
 
 log = logging.getLogger(__name__)

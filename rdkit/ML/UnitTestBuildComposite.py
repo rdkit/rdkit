@@ -13,12 +13,12 @@
 """
 import io
 import os
+import pickle
 import unittest
 
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import BuildComposite
-import pickle
 
 
 class TestCase(unittest.TestCase):

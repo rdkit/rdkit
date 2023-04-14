@@ -1,8 +1,9 @@
-import time
 import gzip
-import random
 import os
+import random
 import sys
+import time
+
 import rdkit
 from rdkit import Chem
 from rdkit.Chem import AllChem

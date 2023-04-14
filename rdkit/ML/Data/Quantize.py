@@ -16,7 +16,9 @@ lie.
 """
 
 import numpy
+
 from rdkit.ML.InfoTheory import entropy
+
 try:
   from rdkit.ML.Data import cQuantize
 except ImportError:

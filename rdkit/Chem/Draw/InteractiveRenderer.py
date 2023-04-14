@@ -9,16 +9,19 @@
 #  of the RDKit source tree.
 #
 """ Interactive molecule rendering through rdkit-structure-renderer.js """
-from xml.dom import minidom
-import uuid
 import base64
 import json
-import re
 import logging
-from . import rdMolDraw2D
+import re
+import uuid
+from xml.dom import minidom
+
 from IPython.display import HTML, display
+
 from rdkit import Chem
 from rdkit.Chem import Draw
+
+from . import rdMolDraw2D
 
 log = logging.getLogger(__name__)
 

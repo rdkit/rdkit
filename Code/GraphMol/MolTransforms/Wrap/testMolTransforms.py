@@ -1,11 +1,13 @@
-from rdkit import RDConfig
-import os, sys, math
+import math
+import os
+import sys
 import unittest
+
 import numpy as np
-from rdkit import DataStructs
-from rdkit import Chem
-from rdkit.Geometry import rdGeometry as geom
+
+from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Chem import rdMolTransforms as rdmt
+from rdkit.Geometry import rdGeometry as geom
 
 
 def feq(v1, v2, tol=1.0e-4):

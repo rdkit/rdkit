@@ -1,7 +1,8 @@
-import sys
-from rdkit import Chem
-import threading
 import multiprocessing
+import sys
+import threading
+
+from rdkit import Chem
 
 # this just tests some threading stuff to ensure it doesn't crash with python
 #  releasing the GIL smarts are recursive...

@@ -1,8 +1,8 @@
 import unittest
 
 from rdkit import Chem
-from rdkit.Geometry.rdGeometry import Point3D
 from rdkit.Chem.Features.FeatDirUtilsRD import GetDonor2FeatVects
+from rdkit.Geometry.rdGeometry import Point3D
 
 
 class TestCase(unittest.TestCase):

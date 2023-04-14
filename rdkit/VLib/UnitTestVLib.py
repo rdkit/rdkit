@@ -11,9 +11,9 @@
 
 import doctest
 import unittest
-
-from rdkit.VLib import Node, Filter, Output, Supply, Transform
 from io import StringIO
+
+from rdkit.VLib import Filter, Node, Output, Supply, Transform
 
 
 def load_tests(loader, tests, ignore):

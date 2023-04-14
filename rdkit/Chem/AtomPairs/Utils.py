@@ -8,9 +8,10 @@
 #  of the RDKit source tree.
 #
 
+import math
+
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
-import math
 
 
 def ExplainAtomCode(code, branchSubtract=0, includeChirality=False):
@@ -359,8 +360,8 @@ def CosineSimilarity(v1, v2):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

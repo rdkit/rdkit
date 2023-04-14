@@ -5,8 +5,7 @@
 
 import numpy
 
-from rdkit import Chem, Geometry
-from rdkit import RDLogger
+from rdkit import Chem, Geometry, RDLogger
 from rdkit.Chem.Subshape import SubshapeObjects
 from rdkit.Numerics import Alignment
 
@@ -334,6 +333,7 @@ class SubshapeAligner(object):
 
 if __name__ == '__main__':  # pragma: nocover
   import pickle
+
   from rdkit.Chem.PyMol import MolViewer
   with open('target.pkl', 'rb') as f:
     tgtMol, tgtShape = pickle.load(f)

@@ -2,8 +2,11 @@
 """basic unit testing code for the substructure matching
 
 """
+import os
+import sys
+import unittest
+
 import RDConfig
-import unittest, os, sys
 
 
 class TestCase(unittest.TestCase):

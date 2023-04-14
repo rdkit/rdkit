@@ -4,12 +4,11 @@
 #     All Rights Reserved
 #
 
-from rdkit import RDConfig
-from rdkit import Chem
 import os.path
 
+from rdkit import Chem, RDConfig
+from rdkit.VLib import Filter, Supply
 from rdkit.VLib.NodeLib import *
-from rdkit.VLib import Supply, Filter
 
 # this would be a real input, from an sd file:
 #fName = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib','test_data','NCI_aids.10.dupes.sdf')
@@ -48,6 +47,7 @@ dupeFilter.AddParent(atsFilter)
 print('post-dupes:', len([x for x in dupeFilter]))
 
 import StringIO
+
 # a StringIO object acts like a file:
 io = StringIO.StringIO()
 output = SmilesOutput.OutputNode(dest=io, delim=', ', idField='Name')

@@ -35,9 +35,10 @@
 
 import sys
 import unittest
-import sys
+
 from rdkit import Chem
 from rdkit.RDLogger import logger
+
 try:
   import matplotlib
 except ImportError:

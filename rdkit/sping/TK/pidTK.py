@@ -16,7 +16,8 @@ You can find the latest version of this file:
 """
 # we depend on PIL for rotated strings so watch for changes in PIL
 
-import Tkinter, tkFont
+import tkFont
+import Tkinter
 
 tk = Tkinter
 import rdkit.sping.pid
@@ -301,8 +302,9 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
   def _drawRotatedString(self, s, x, y, font=None, color=None, angle=0):
     # we depend on PIL for rotated strings so watch for changes in PIL
     try:
-      import rdkit.sping.PIL.pidPIL
       from PIL import Image, ImageTk
+
+      import rdkit.sping.PIL.pidPIL
       pp = rdkit.sping.PIL.pidPIL
     except ImportError:
       raise ImportError("Rotated strings only possible with PIL support")
@@ -342,7 +344,7 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
 
     # rotate
     if angle:
-      from math import pi, sin, cos
+      from math import cos, pi, sin
       tempimg = tempimg.rotate(angle, Image.BILINEAR)
       temppen = ImageDraw.ImageDraw(tempimg)
       radians = -angle * pi / 180.0

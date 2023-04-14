@@ -30,9 +30,12 @@
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
 
+import pickle
+import re
+import sys
+
 from rdkit import Chem
 from rdkit.Chem import BRICS
-import sys, pickle, re
 
 inF = file(sys.argv[1], 'r')
 inLs = inF.readlines()

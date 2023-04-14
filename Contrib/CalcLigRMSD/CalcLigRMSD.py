@@ -7,9 +7,10 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+import numpy as np
+
 from rdkit import Chem
 from rdkit.Chem import rdFMCS
-import numpy as np
 
 
 def CalcLigRMSD(lig1, lig2, rename_lig2=True, output_filename="tmp.pdb"):

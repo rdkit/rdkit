@@ -11,9 +11,12 @@
 """ uses DSViewer to interact with molecules
 
 """
-from rdkit import Chem
+import os
+import tempfile
+
 from win32com.client import Dispatch
-import tempfile, os
+
+from rdkit import Chem
 
 _nextDisplayId = 1
 

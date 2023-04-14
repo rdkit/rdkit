@@ -8,7 +8,6 @@ are actually the same.
 import unittest
 
 from rdkit import Chem
-
 from rdkit.Chem import RegistrationHash
 from rdkit.Chem.RegistrationHash import HashLayer
 

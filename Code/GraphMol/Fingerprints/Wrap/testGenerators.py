@@ -1,7 +1,9 @@
+import unittest
+
+import numpy as np
+
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
-import numpy as np
-import unittest
 
 
 class TestCase(unittest.TestCase):

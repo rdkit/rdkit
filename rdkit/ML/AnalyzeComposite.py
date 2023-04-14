@@ -27,6 +27,7 @@ Usage:  AnalyzeComposite [optional args] <models>
       -v: be verbose whilst screening
 """
 
+import pickle
 import sys
 
 import numpy
@@ -34,8 +35,7 @@ import numpy
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import ScreenComposite
 from rdkit.ML.Data import Stats
-from rdkit.ML.DecTree import TreeUtils, Tree
-import pickle
+from rdkit.ML.DecTree import Tree, TreeUtils
 
 __VERSION_STRING = "2.2.0"
 

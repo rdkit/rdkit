@@ -8,6 +8,7 @@
 
 """
 import numpy
+
 from rdkit.ML.Data import Quantize
 
 

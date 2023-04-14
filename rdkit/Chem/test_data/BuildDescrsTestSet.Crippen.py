@@ -1,7 +1,7 @@
-from rdkit import RDConfig
 import os.path
 import pickle
-from rdkit import Chem
+
+from rdkit import Chem, RDConfig
 from rdkit.Chem import Descriptors
 
 descrs = [

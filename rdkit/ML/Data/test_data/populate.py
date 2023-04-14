@@ -1,6 +1,7 @@
+from io import StringIO
+
 import RDConfig
 from Dbase import DbUtils
-from io import StringIO
 
 basic_2class = """ID,VAL,ACT
 id-1,1.0,0

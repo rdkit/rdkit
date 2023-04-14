@@ -54,11 +54,11 @@ are very small and are not compromising the usefulness of using Qed in your dail
     Journal of Chemical Information and Computer Sciences, 39, 868-873 [https://doi.org/10.1021/ci990307l]
 
 """
-from collections import namedtuple
 import math
+from collections import namedtuple
 
 from rdkit import Chem
-from rdkit.Chem import MolSurf, Crippen
+from rdkit.Chem import Crippen, MolSurf
 from rdkit.Chem import rdMolDescriptors as rdmd
 from rdkit.Chem.ChemUtils.DescriptorUtilities import setDescriptorVersion
 
@@ -239,8 +239,8 @@ def default(mol):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

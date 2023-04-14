@@ -44,9 +44,10 @@ Greg Landrum (greglandrum@earthlink.net) 3/10/2000
 
 """
 
-from rdkit.sping.pid import *
-from rdkit.sping.PDF import pdfmetrics  # for font info
 from math import *
+
+from rdkit.sping.PDF import pdfmetrics  # for font info
+from rdkit.sping.pid import *
 
 #SVG_HEADER = """<?xml version="1.0" encoding="iso-8859-1"?>
 #<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN"

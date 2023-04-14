@@ -29,9 +29,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
-from rdkit import Chem
-from rdkit import DataStructs
 from CreateFps import GetMolFingerprint
+
+from rdkit import Chem, DataStructs
 from rdkit.RDLogger import logger
 
 logger = logger()

@@ -47,10 +47,11 @@ Credits:
     
 '''
 
-import htmllib
 import formatter
 import string
 from types import *
+
+import htmllib
 import piddle
 
 TRACE = 0

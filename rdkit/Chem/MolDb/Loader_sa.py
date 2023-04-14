@@ -9,11 +9,13 @@
 #
 import os
 
-from rdkit import Chem
-from rdkit.Chem import AllChem, Crippen, Descriptors, Lipinski
-from sqlalchemy import Column, Float, Integer, LargeBinary, String, Text, create_engine
+from sqlalchemy import (Column, Float, Integer, LargeBinary, String, Text,
+                        create_engine)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
+from rdkit import Chem
+from rdkit.Chem import AllChem, Crippen, Descriptors, Lipinski
 
 decBase = declarative_base()
 

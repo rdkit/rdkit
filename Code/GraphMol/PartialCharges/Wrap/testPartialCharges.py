@@ -1,12 +1,10 @@
-import unittest
-import os
 import io
-
+import os
 import pickle
+import unittest
 
-from rdkit import Chem
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdPartialCharges
-from rdkit import RDConfig
 
 
 def feq(v1, v2, tol2=1e-4):
@@ -114,7 +112,7 @@ class TestCase(unittest.TestCase):
   def testGithubIssue577(self):
     """ tests handling of Github issue 577 """
     m1 = Chem.MolFromSmiles('CCO')
-    from locale import setlocale, LC_NUMERIC
+    from locale import LC_NUMERIC, setlocale
     try:
       setlocale(LC_NUMERIC, "de_DE")
     except Exception:

@@ -3,10 +3,11 @@
 # Created by Greg Landrum, July 2008
 #
 
-from rdkit import RDConfig
-import os, sys
+import os
+import sys
 import unittest
-from rdkit import DataStructs, Chem
+
+from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Avalon import pyAvalonTools
 
 struchk_conf_path = os.path.join(RDConfig.RDDataDir, 'struchk', '')

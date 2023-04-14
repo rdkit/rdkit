@@ -5,10 +5,10 @@
 
 """
 
+import math
 import unittest
 
 from rdkit.ML.Descriptors import Parser
-import math
 
 
 class TestCase(unittest.TestCase):

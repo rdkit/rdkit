@@ -33,13 +33,15 @@ Greg Landrum (greg.landrum@gmail.com) 3/28/2005
 
 """
 
-from rdkit.sping.pid import *
-from rdkit.sping.PDF import pidPDF, pdfmetrics
-from reportlab.lib import colors
-from reportlab.graphics import shapes
-import os, types
-
+import os
+import types
 from math import *
+
+from reportlab.graphics import shapes
+from reportlab.lib import colors
+
+from rdkit.sping.PDF import pdfmetrics, pidPDF
+from rdkit.sping.pid import *
 
 
 def colorToRL(color):

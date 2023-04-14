@@ -59,6 +59,7 @@ To get the standard set of RECAP results, use GetLeaves():
 """
 import sys
 import weakref
+
 from rdkit import Chem
 from rdkit.Chem import rdChemReactions as Reactions
 

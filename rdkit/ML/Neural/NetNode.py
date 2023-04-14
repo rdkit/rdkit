@@ -20,6 +20,7 @@
 
 """
 import numpy
+
 from . import ActFuncs
 
 

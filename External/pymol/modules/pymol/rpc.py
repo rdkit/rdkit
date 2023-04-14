@@ -14,9 +14,15 @@
   RD Version: $Rev$            
 """
 
+import os
+import sys
+import tempfile
+import threading
+import time
+import types
+
 import SimpleXMLRPCServer
-import threading, sys, time, types, os, tempfile
-from pymol import cmd, cgo
+from pymol import cgo, cmd
 
 # initial port to try for the server
 _xmlPort = 9123

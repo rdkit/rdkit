@@ -5,7 +5,7 @@
 
 # from elementtree.ElementTree import ElementTree, Element, SubElement
 import time
-from xml.etree.ElementTree import ElementTree, Element, SubElement
+from xml.etree.ElementTree import Element, ElementTree, SubElement
 
 
 def _ConvertModelPerformance(perf, modelPerf):
@@ -127,8 +127,8 @@ def PackageToXml(pkg, summary="N/A", trainingDataId='N/A', dataPerformance=[],
 
 
 if __name__ == '__main__':  # pragma: nocover
-  import sys
   import pickle
+  import sys
   from io import StringIO
   pkg = pickle.load(open(sys.argv[1], 'rb'))
   perf = (.80, .95, .70, [[4, 1], [1, 4]])

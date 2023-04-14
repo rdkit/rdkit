@@ -3,11 +3,12 @@
 This module puts the various PIDDLE backends through their paces.
 """
 
-from rdkit.sping import pagesizes
-from rdkit.sping.pid import *
+import math
 # The original code imported letters, a more generic lisit. This is no longer supported.
 from string import ascii_letters as LETTERS
-import math
+
+from rdkit.sping import pagesizes
+from rdkit.sping.pid import *
 
 backends = ['PDF', 'PIL', 'TK', 'PS', 'SVG', 'WX']  # 'piddleAI','piddleQD','piddleGL' ]
 backends.sort()

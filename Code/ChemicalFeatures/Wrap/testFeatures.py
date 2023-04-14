@@ -5,12 +5,13 @@
 #  @@ All Rights Reserved @@
 #
 
-import os, sys
 import io
-import unittest
+import os
 import pickle
-from rdkit import RDConfig
-from rdkit import Chem
+import sys
+import unittest
+
+from rdkit import Chem, RDConfig
 from rdkit.Chem import ChemicalFeatures
 from rdkit.Geometry import rdGeometry as geom
 

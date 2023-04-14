@@ -28,8 +28,9 @@ else:
 have_pango = False
 if 'RDK_NOPANGO' not in os.environ:
   if have_cairocffi:
-    import cffi
     import platform
+
+    import cffi
     ffi = cffi.FFI()
     ffi.cdef('''
         /* GLib */

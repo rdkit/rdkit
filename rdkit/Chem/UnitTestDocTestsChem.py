@@ -1,9 +1,11 @@
-import unittest
 import doctest
+import unittest
+
 from rdkit import Chem
-from rdkit.Chem import FragmentMatcher, MACCSkeys, Descriptors, TemplateAlign
-from rdkit.Chem import Recap, BRICS, AllChem, PropertyMol, SaltRemover, EnumerateHeterocycles, EnumerateStereoisomers
-from rdkit.Chem import rdDepictor
+from rdkit.Chem import (BRICS, AllChem, Descriptors, EnumerateHeterocycles,
+                        EnumerateStereoisomers, FragmentMatcher, MACCSkeys,
+                        PropertyMol, Recap, SaltRemover, TemplateAlign,
+                        rdDepictor)
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument

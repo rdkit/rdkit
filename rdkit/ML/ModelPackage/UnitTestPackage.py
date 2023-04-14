@@ -3,21 +3,21 @@
 #
 """ unit tests for the model and descriptor packager """
 import os
-from rdkit import RDRandom as random
+import pickle
 import unittest
+from io import BytesIO
 from xml.dom import minidom
 from xml.etree import ElementTree as ET
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
+from rdkit import RDRandom as random
 from rdkit.Chem import Descriptors
 from rdkit.ML.Composite import Composite
 from rdkit.ML.Data import DataUtils
-from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator
+from rdkit.ML.Descriptors.MoleculeDescriptors import \
+    MolecularDescriptorCalculator
 from rdkit.ML.ModelPackage import Packager, PackageUtils
 from rdkit.ML.ModelPackage.Packager import ModelPackage
-from io import BytesIO
-import pickle
 
 
 def feq(a, b, tol=1e-4):

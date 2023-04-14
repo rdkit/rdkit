@@ -30,12 +30,13 @@
 #
 # Created by Jameed Hussain, July 2013
 
-import sys
 import os
 import re
 import sqlite3
 import subprocess
+import sys
 from optparse import OptionParser
+
 from indexing import cansmirk, heavy_atom_count
 from rfrag import fragment_mol
 

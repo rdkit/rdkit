@@ -37,16 +37,15 @@ except ImportError:
   raise ImportError("This code requires the RDKit to be built with AvalonTools support")
 
 import base64
-from collections import namedtuple
 import hashlib
 import logging
 import os
 import re
 import tempfile
 import uuid
+from collections import namedtuple
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem.MolKey import InchiInfo
 
 
@@ -432,8 +431,8 @@ def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

@@ -1,27 +1,30 @@
 # coding=utf-8
 # Copyright (c) 2014 Merck KGaA
 
-import os, re, gzip, json, requests, sys, optparse, csv
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import SDWriter
-from rdkit.Chem import Descriptors
-from rdkit.ML.Descriptors import MoleculeDescriptors
-from scipy import interp
-from scipy import stats
-from sklearn import cross_validation
-from sklearn.ensemble import RandomForestClassifier
-from sklearn import metrics
-from sklearn.cross_validation import train_test_split
-from sklearn.metrics import roc_curve, auc
-from sklearn.metrics import precision_score, recall_score
-from sklearn import preprocessing
-import pickle
-from pickle import Unpickler
-import numpy as np
+import csv
+import gzip
+import json
 import math
+import optparse
+import os
+import pickle
+import re
+import sys
+from pickle import Unpickler
+
+import numpy as np
+import requests
 from pylab import *
-from sklearn.metrics import make_scorer
+from scipy import interp, stats
+from sklearn import cross_validation, metrics, preprocessing
+from sklearn.cross_validation import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (auc, make_scorer, precision_score, recall_score,
+                             roc_curve)
+
+from rdkit import Chem
+from rdkit.Chem import AllChem, Descriptors, SDWriter
+from rdkit.ML.Descriptors import MoleculeDescriptors
 
 kappa_template = '''\
 %(kind)s Kappa Coefficient
@@ -227,6 +230,7 @@ SAS Manual
       elif wt == 'toeplitz':
         #assume toeplitz structure
         from scipy.linalg import toeplitz
+
         #weights = toeplitz(np.arange(table.shape[0]))
         weights = toeplitz(weights)
       else:

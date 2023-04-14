@@ -12,6 +12,7 @@
 
 """
 import unittest
+
 from rdkit import Chem
 from rdkit.Chem import Fragments
 

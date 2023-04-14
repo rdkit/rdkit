@@ -13,15 +13,12 @@
 """
 
 import unittest
+from io import StringIO
 
 import numpy
 
-from rdkit.ML.Cluster import ClusterUtils
-from rdkit.ML.Cluster import Clusters
+from rdkit.ML.Cluster import Clusters, ClusterUtils, Murtagh
 from rdkit.TestRunner import redirect_stdout
-from io import StringIO
-
-from rdkit.ML.Cluster import Murtagh
 
 
 class TestCase(unittest.TestCase):

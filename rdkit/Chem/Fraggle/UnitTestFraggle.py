@@ -9,8 +9,7 @@
 import doctest
 import unittest
 
-from rdkit import Chem
-from rdkit import rdBase
+from rdkit import Chem, rdBase
 from rdkit.Chem.Fraggle import FraggleSim
 from rdkit.Chem.Fraggle.FraggleSim import select_fragments
 

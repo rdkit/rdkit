@@ -30,10 +30,12 @@
 #
 # Created by Jameed Hussain, September 2012
 
-import sys
 import re
-from rdkit import Chem
+import sys
+
 from indexing import cansmirk
+
+from rdkit import Chem
 
 if __name__ == '__main__':
 

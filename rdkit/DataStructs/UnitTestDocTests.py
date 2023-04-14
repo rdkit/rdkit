@@ -9,11 +9,13 @@
 #  of the RDKit source tree.
 #
 
-import unittest
 import doctest
-from rdkit.DataStructs import BitUtils, VectCollection, LazySignature, FingerprintSimilarity
-from rdkit import DataStructs, Chem
+import unittest
+
+from rdkit import Chem, DataStructs
 from rdkit.Chem.Fingerprints.FingerprintMols import FingerprinterDetails
+from rdkit.DataStructs import (BitUtils, FingerprintSimilarity, LazySignature,
+                               VectCollection)
 
 
 def load_tests(loader, tests, ignore):

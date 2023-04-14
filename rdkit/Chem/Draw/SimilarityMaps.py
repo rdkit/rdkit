@@ -44,13 +44,10 @@ except RuntimeError:
 
 import numpy
 
-from rdkit import Chem
-from rdkit import DataStructs
-from rdkit import Geometry
-from rdkit.Chem import Draw
-from rdkit.Chem.Draw import rdMolDraw2D
-from rdkit.Chem import rdDepictor
+from rdkit import Chem, DataStructs, Geometry
+from rdkit.Chem import Draw, rdDepictor
 from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit.Chem.Draw import rdMolDraw2D
 
 
 def _DeleteFpInfoAttr(mol):

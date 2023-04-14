@@ -9,13 +9,11 @@
     According to a paper from Schulz-Gasch et al., JCIM, 52, 1499-1512 (2012).
 
 """
-from rdkit import rdBase
-from rdkit import RDConfig
-from rdkit import Geometry
-from rdkit import Chem
-from rdkit.Chem import rdchem
-from rdkit.Chem import rdMolDescriptors
-import math, os
+import math
+import os
+
+from rdkit import Chem, Geometry, RDConfig, rdBase
+from rdkit.Chem import rdchem, rdMolDescriptors
 
 
 def _doMatch(inv, atoms):
@@ -349,6 +347,7 @@ def _findCentralBond(mol, distmat):
       Return: atom indices of the two most central atoms (in order)
   """
   from numpy import std
+
   # get the most central atom = atom with the least STD of shortest distances
   stds = []
   for i in range(mol.GetNumAtoms()):

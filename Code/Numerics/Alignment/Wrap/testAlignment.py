@@ -4,12 +4,14 @@ Replaced numpy.oldnumeric with numpy methods - Jan 2015, PGedeck
 """
 #pylint: disable=E1101,C0111,R0904
 
+import copy
+import math
+import unittest
+
+import numpy as np
+
 import rdkit.Numerics.rdAlignment as rdAlg
 from rdkit import Geometry
-import unittest
-import numpy as np
-import math
-import copy
 
 
 def lstFeq(l1, l2, tol=1.e-4):

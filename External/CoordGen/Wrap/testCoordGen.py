@@ -6,11 +6,13 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 
+import copy
+import os
+import sys
 import unittest
-import os, sys, copy
 
-from rdkit.Chem import rdCoordGen, rdMolAlign
 from rdkit import Chem, Geometry
+from rdkit.Chem import rdCoordGen, rdMolAlign
 
 
 def compareConfs(c1, c2, match, tol=1e-2, alignIt=False):

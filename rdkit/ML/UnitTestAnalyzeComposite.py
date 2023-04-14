@@ -12,11 +12,11 @@
 
 """
 import os
+import pickle
 import unittest
 
 from rdkit import RDConfig
 from rdkit.ML import AnalyzeComposite
-import pickle
 
 
 class TestCase(unittest.TestCase):

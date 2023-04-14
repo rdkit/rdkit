@@ -4,10 +4,13 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import unittest, subprocess, os
+import os
+import subprocess
+import sys
+import unittest
+
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
-import sys
 
 
 class TestCase(unittest.TestCase):

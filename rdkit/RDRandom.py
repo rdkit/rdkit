@@ -11,9 +11,8 @@
 
 """
 
-import sys
-
 import random as _random
+import sys
 
 random = _random.random
 randrange = _random.randrange

@@ -25,8 +25,8 @@ The fingerprints can be accessed through the following functions:
 """
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.AtomPairs import Utils
-from rdkit.Chem.rdMolDescriptors import (GetTopologicalTorsionFingerprint,
-                                         GetHashedTopologicalTorsionFingerprint)
+from rdkit.Chem.rdMolDescriptors import (
+    GetHashedTopologicalTorsionFingerprint, GetTopologicalTorsionFingerprint)
 
 GetTopologicalTorsionFingerprintAsIntVect = rdMolDescriptors.GetTopologicalTorsionFingerprint
 
@@ -167,8 +167,8 @@ def GetTopologicalTorsionFingerprintAsIds(mol, targetSize=4):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

@@ -7,10 +7,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 
+import numpy as np
+
 # generates reference data for the PMI descriptors
 from rdkit import Chem
 from rdkit.Chem import AllChem
-import numpy as np
 
 
 def GetMoments(mol, includeWeights):

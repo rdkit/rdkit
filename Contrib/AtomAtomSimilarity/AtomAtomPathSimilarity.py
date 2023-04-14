@@ -3,16 +3,14 @@
 #
 # Original author: Richard Hall
 #
-import numpy
 import time
 import unittest
 
+import numpy
 from scipy.optimize import linear_sum_assignment
 
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import rdmolops
-from rdkit import DataStructs
+from rdkit import Chem, DataStructs
+from rdkit.Chem import AllChem, rdmolops
 from rdkit.Chem.Fingerprints import FingerprintMols
 
 _BK_ = {

@@ -10,7 +10,6 @@
 #
 import random
 import unittest
-
 from io import StringIO
 
 from rdkit.DataStructs.TopNContainer import TopNContainer, _exampleCode

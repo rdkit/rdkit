@@ -6,10 +6,11 @@
 #   __ native drawArc
 #   __ drawImage support (work on Pyart side of things)
 
-import pyart
-from rdkit.sping.pid import *
-from rdkit.sping.PDF import pdfmetrics
 import Fontmapping  # helps by mapping pid font classes to Pyart font names
+import pyart
+
+from rdkit.sping.PDF import pdfmetrics
+from rdkit.sping.pid import *
 
 # note for now I'm just going to do the standard PDF fonts & forget the rest
 

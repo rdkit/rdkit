@@ -8,8 +8,8 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import RDRandom as random
 from rdkit import Chem
+from rdkit import RDRandom as random
 
 
 def RandomizeMolBlock(molB):

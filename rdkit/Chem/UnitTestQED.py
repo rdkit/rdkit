@@ -1,10 +1,9 @@
-from collections import namedtuple
 import doctest
 import os.path
 import unittest
+from collections import namedtuple
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import QED
 
 doLong = False

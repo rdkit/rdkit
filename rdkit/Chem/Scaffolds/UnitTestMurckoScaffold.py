@@ -3,15 +3,15 @@
 # Created by Peter Gedeck, June 2008
 #
 
-from collections import namedtuple
 import doctest
 import unittest
+from collections import namedtuple
 
 from rdkit import Chem
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from rdkit.Chem.Scaffolds.MurckoScaffold import (GetScaffoldForMol, _pyGetScaffoldForMol,
-                                                 MurckoScaffoldSmilesFromSmiles,
-                                                 MurckoScaffoldSmiles, MakeScaffoldGeneric)
+from rdkit.Chem.Scaffolds.MurckoScaffold import (
+    GetScaffoldForMol, MakeScaffoldGeneric, MurckoScaffoldSmiles,
+    MurckoScaffoldSmilesFromSmiles, _pyGetScaffoldForMol)
 
 TestMolecule = namedtuple('TestMolecule', 'smiles,scaffold')
 

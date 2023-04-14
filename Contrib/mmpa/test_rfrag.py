@@ -3,7 +3,10 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import unittest, subprocess, os
+import os
+import subprocess
+import unittest
+
 from rdkit import RDConfig
 
 

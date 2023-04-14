@@ -7,14 +7,14 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import time
+import argparse
 import gzip
+import time
+
 import rdkit
-from rdkit import Chem
-from rdkit import DataStructs
+from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem
 from rdkit.RDLogger import logger
-import argparse
 
 logger = logger()
 

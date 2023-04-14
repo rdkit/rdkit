@@ -4,14 +4,14 @@
 """ unit tests for the QuantTree implementation """
 
 import io
+import pickle
 import unittest
+from io import StringIO
 
 from rdkit import RDConfig
 from rdkit.ML.DecTree import BuildQuantTree
 from rdkit.ML.DecTree.QuantTree import QuantTreeNode
 from rdkit.TestRunner import redirect_stdout
-from io import StringIO
-import pickle
 
 
 def cmp(t1, t2):

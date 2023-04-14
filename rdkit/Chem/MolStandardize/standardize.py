@@ -16,11 +16,12 @@ import logging
 
 from rdkit import Chem
 
-from .metal import MetalDisconnector
-from .fragment import PREFER_ORGANIC, LargestFragmentChooser, FragmentRemover
-from .normalize import NORMALIZATIONS, MAX_RESTARTS, Normalizer
-from .tautomer import TAUTOMER_TRANSFORMS, TAUTOMER_SCORES, MAX_TAUTOMERS, TautomerCanonicalizer, TautomerEnumerator
 from .charge import ACID_BASE_PAIRS, CHARGE_CORRECTIONS, Reionizer, Uncharger
+from .fragment import PREFER_ORGANIC, FragmentRemover, LargestFragmentChooser
+from .metal import MetalDisconnector
+from .normalize import MAX_RESTARTS, NORMALIZATIONS, Normalizer
+from .tautomer import (MAX_TAUTOMERS, TAUTOMER_SCORES, TAUTOMER_TRANSFORMS,
+                       TautomerCanonicalizer, TautomerEnumerator)
 from .utils import memoized_property
 
 log = logging.getLogger(__name__)

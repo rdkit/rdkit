@@ -11,6 +11,7 @@
 
 import copy
 import struct
+
 from rdkit import DataStructs
 
 
@@ -273,8 +274,8 @@ class VectCollection(object):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

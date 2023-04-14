@@ -1,8 +1,7 @@
 import unittest
 
-from rdkit import Chem
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdMolInterchange
-from rdkit import RDConfig
 
 
 class TestCase(unittest.TestCase):

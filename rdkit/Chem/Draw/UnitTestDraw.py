@@ -7,18 +7,15 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import re
 import os
 import pathlib
+import re
 import sys
 import tempfile
 import unittest
 
 from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import Draw
-from rdkit.Chem import rdDepictor
-from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import AllChem, Draw, rdDepictor, rdMolDescriptors
 
 try:
   from rdkit.Chem.Draw import IPythonConsole

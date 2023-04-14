@@ -246,11 +246,11 @@ except ImportError:
 import copy
 import itertools
 import re
-import weakref
-from heapq import heappush, heappop, heapify
-from itertools import chain, combinations
-from collections import defaultdict, Counter, namedtuple
 import time
+import weakref
+from collections import Counter, defaultdict, namedtuple
+from heapq import heapify, heappop, heappush
+from itertools import chain, combinations
 
 ### A place to set global options
 # (Is this really useful?)

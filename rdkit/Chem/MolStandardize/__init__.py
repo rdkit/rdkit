@@ -16,9 +16,10 @@ import logging
 from rdkit import Chem
 from rdkit.Chem.MolStandardize import rdMolStandardize
 
-from .standardize import Standardizer, standardize_smiles, enumerate_tautomers_smiles, canonicalize_tautomer_smiles
-from .validate import Validator, validate_smiles
 from .errors import MolVSError, StandardizeError, ValidateError
+from .standardize import (Standardizer, canonicalize_tautomer_smiles,
+                          enumerate_tautomers_smiles, standardize_smiles)
+from .validate import Validator, validate_smiles
 
 __title__ = 'MolVS'
 __version__ = '0.1.1'

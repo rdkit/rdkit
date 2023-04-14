@@ -1,7 +1,9 @@
-from rdkit import RDConfig
-from rdkit import Chem
-import unittest, os.path
+import os.path
+import unittest
+
 import sascorer
+
+from rdkit import Chem, RDConfig
 
 print(sascorer.__file__)
 
@@ -21,7 +23,9 @@ class TestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  import sys, getopt, re
+  import getopt
+  import re
+  import sys
   doLong = 0
   if len(sys.argv) > 1:
     args, extras = getopt.getopt(sys.argv[1:], 'l')

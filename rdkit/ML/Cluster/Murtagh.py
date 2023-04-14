@@ -13,6 +13,7 @@
 import numpy
 
 from rdkit.ML.Cluster import Clusters
+
 try:
   from rdkit.ML.Cluster.Clustering import MurtaghCluster, MurtaghDistCluster
 except ImportError:

@@ -9,11 +9,9 @@ import sys
 import unittest
 
 import numpy as np
-from rdkit import Chem
-from rdkit import Geometry
-from rdkit import RDConfig
-from rdkit.Chem import rdDepictor
-from rdkit.Chem import rdMolAlign
+
+from rdkit import Chem, Geometry, RDConfig
+from rdkit.Chem import rdDepictor, rdMolAlign
 from rdkit.Chem.ChemUtils import AlignDepict
 
 

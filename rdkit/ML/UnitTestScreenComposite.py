@@ -13,11 +13,11 @@
 """
 import io
 import os
+import pickle
 import unittest
 
 from rdkit import RDConfig
 from rdkit.ML import ScreenComposite
-import pickle
 
 
 class TestCase(unittest.TestCase):

@@ -33,7 +33,7 @@
 
 """
 
-from rdkit.Chem.Pharm2D import Utils, SigFactory
+from rdkit.Chem.Pharm2D import SigFactory, Utils
 from rdkit.RDLogger import logger
 
 logger = logger()

@@ -29,15 +29,17 @@ This requires Imaging to be installed as a package PIL
 # 6/22/99: updated drawString to handle non-integer x and y
 
 from rdkit.sping.pid import *
+
 try:
   import Image
-  import ImageFont
   import ImageDraw
+  import ImageFont
 except ImportError:
   from PIL import Image, ImageFont, ImageDraw
-import math
 
+import math
 import os
+
 if __name__ == '__main__':
   _fontprefix = os.path.join(os.curdir, 'pilfonts')
 else:
@@ -366,7 +368,7 @@ class PILCanvas(Canvas):
 
     # rotate
     if angle:
-      from math import pi, sin, cos
+      from math import cos, pi, sin
       tempimg = tempimg.rotate(angle, Image.BILINEAR)
       temppen = ImageDraw.ImageDraw(tempimg)
       radians = -angle * pi / 180.0

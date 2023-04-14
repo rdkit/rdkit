@@ -1,15 +1,13 @@
+import math
 import os
 import sys
 import unittest
-import math
 
-from rdkit import RDConfig
-from rdkit import DataStructs
-from rdkit import Chem
+from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Chem import rdMolAlign
-from rdkit.Geometry import rdGeometry as geom
-from rdkit.Chem import rdShapeHelpers as rdshp
 from rdkit.Chem import rdMolTransforms as rdmt
+from rdkit.Chem import rdShapeHelpers as rdshp
+from rdkit.Geometry import rdGeometry as geom
 
 
 class TestCase(unittest.TestCase):

@@ -30,11 +30,11 @@
 #
 # Created by Jameed Hussain, October 2013
 
-import sys
 import re
+import sys
 from optparse import OptionParser
-from rdkit import Chem
-from rdkit import DataStructs
+
+from rdkit import Chem, DataStructs
 
 parser = OptionParser(
   description="Program to Tversky search results as part of Fraggle",

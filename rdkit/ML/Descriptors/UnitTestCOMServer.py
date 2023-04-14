@@ -7,8 +7,9 @@
 
 import unittest
 
-from rdkit import RDConfig
 import numpy as np
+
+from rdkit import RDConfig
 
 try:
   from win32com.client import Dispatch

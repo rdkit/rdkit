@@ -8,12 +8,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from contextlib import closing
 import unittest
-
+from contextlib import closing
 from io import StringIO
 
-from rdkit.Chem.FeatMaps import FeatMaps, FeatMapParser
+from rdkit.Chem.FeatMaps import FeatMapParser, FeatMaps
 
 
 def feq(n1, n2, tol=1e-5):

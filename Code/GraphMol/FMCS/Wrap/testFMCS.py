@@ -1,6 +1,7 @@
-import unittest
 import sys
+import unittest
 from io import StringIO
+
 from rdkit import Chem
 from rdkit.Chem import rdFMCS
 

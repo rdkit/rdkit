@@ -49,8 +49,8 @@ def GetDbNames(user='sysdba', password='masterkey', dirName='.', dBase='::templa
       names = ['::' + str(x[0]) for x in c.fetchall()]
     names.remove(dBase)
   elif DbModule.fileWildcard:
-    import os.path
     import glob
+    import os.path
     names = glob.glob(os.path.join(dirName, DbModule.fileWildcard))
   else:
     names = []

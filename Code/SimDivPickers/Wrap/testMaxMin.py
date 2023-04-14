@@ -1,6 +1,7 @@
-from rdkit.SimDivFilters import rdSimDivPickers as rdsimdiv
 import numpy
+
 from rdkit import RDRandom
+from rdkit.SimDivFilters import rdSimDivPickers as rdsimdiv
 
 RDRandom.seed(23)
 

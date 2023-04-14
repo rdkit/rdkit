@@ -18,6 +18,7 @@ import unittest
 from io import StringIO
 
 import numpy as np
+
 from rdkit import Chem
 from rdkit.Chem import EState
 

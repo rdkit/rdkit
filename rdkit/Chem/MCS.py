@@ -35,6 +35,7 @@ warnings.warn("The rdkit.Chem.MCS module is deprecated; please use rdkit.Chem.rd
 ## OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from rdkit.Chem import fmcs
 from rdkit.Chem.fmcs import Default
+
 """MCS - find a Maximum Common Substructure
 
 This software finds the maximum common substructure of a set of
@@ -386,7 +387,8 @@ def FindMCS(
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
+  import doctest
+  import sys
   return doctest.testmod(sys.modules["__main__"],
                          optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
 

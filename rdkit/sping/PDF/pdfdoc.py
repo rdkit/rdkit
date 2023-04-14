@@ -16,21 +16,20 @@ piddlePDF calls pdfgen and offers a high-level interface.
 
 import os
 import sys
-import time
 import tempfile
+import time
+from math import ceil, cos, pi, sin
 from types import *
-from math import sin, cos, pi, ceil
 
 try:
   import zlib
 except ImportError:
   print("zlib not available, page compression not available")
 
+from . import pdfmetrics, pdfutils
 from .pdfgeom import bezierArc
-
-from . import pdfutils
 from .pdfutils import LINEEND  # this constant needed in both
-from . import pdfmetrics
+
 ##############################################################
 #
 #            Constants and declarations

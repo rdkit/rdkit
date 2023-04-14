@@ -1,6 +1,8 @@
 # must be run from this directory
 
-import csv, os, sys
+import csv
+import os
+import sys
 
 py3 = sys.version_info[0] == 3
 
@@ -174,6 +176,7 @@ def write_pains(filename, data):
   if t != data:
     if py3:
       import io
+
       # newline = don't convert to windows style
       with io.open(filename, 'w', newline='') as f:
         f.write(data)

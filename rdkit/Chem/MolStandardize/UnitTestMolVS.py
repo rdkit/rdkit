@@ -18,6 +18,7 @@ from collections import namedtuple
 
 import molvs
 from molvs import Standardizer, validate
+
 from rdkit import Chem, RDConfig
 
 doLong = False

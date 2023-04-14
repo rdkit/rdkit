@@ -11,12 +11,12 @@
 
 import doctest
 import unittest
+from io import StringIO
 
 from rdkit import Chem, RDLogger
-from rdkit.VLib.NodeLib import SDSupply, SmartsMolFilter, SmartsRemover
-from rdkit.VLib.NodeLib import SmilesDupeFilter, SmilesOutput, SmilesSupply
+from rdkit.VLib.NodeLib import (SDSupply, SmartsMolFilter, SmartsRemover,
+                                SmilesDupeFilter, SmilesOutput, SmilesSupply)
 from rdkit.VLib.Supply import SupplyNode
-from io import StringIO
 
 
 def load_tests(loader, tests, ignore):

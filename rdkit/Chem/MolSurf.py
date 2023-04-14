@@ -19,8 +19,7 @@ import bisect
 import numpy
 
 from rdkit import Chem
-from rdkit.Chem import Crippen
-from rdkit.Chem import rdPartialCharges, rdMolDescriptors
+from rdkit.Chem import Crippen, rdMolDescriptors, rdPartialCharges
 
 ptable = Chem.GetPeriodicTable()
 bondScaleFacts = [.1, 0, .2, .3]  # aromatic,single,double,triple

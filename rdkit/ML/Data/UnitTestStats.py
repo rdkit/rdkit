@@ -5,8 +5,10 @@
 
 """
 import unittest
-from rdkit.ML.Data import Stats
+
 import numpy
+
+from rdkit.ML.Data import Stats
 
 FLOAT_TOL = 1e-4
 

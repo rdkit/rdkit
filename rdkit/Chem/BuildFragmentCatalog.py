@@ -64,6 +64,7 @@
 """
 
 import os
+import pickle
 import sys
 
 import numpy
@@ -72,8 +73,6 @@ from rdkit import RDConfig
 from rdkit.Chem import FragmentCatalog
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import InfoTheory
-
-import pickle
 
 
 def message(msg, dest=sys.stdout):

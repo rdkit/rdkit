@@ -30,10 +30,11 @@
 #
 # Created by Nadine Schneider, July 2016
 
+import copy
+from collections import defaultdict
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from collections import defaultdict
-import copy
 
 
 def transferAgentsToReactants(rxn):
