@@ -298,6 +298,8 @@ Riccardo Vianello, Franz Waibl, Rachel Walker, Patrick Walters,
   (github issue #5121 from marcostenta)
   - add molecular filter examples
  (github pull #5647 from RPirie96)
+   - Use templates in RDKit coordinate generation
+ (github pull #5643 from rachelnwalker)
   - add MACCS fp to the MinimalLib
  (github pull #5707 from eloyfelix)
   - Enable additional parameters in prepareAndDrawMolecule() and expose them to CFFI/MinimalLib
@@ -755,8 +757,6 @@ Rachel Walker, balducci, GLPG-GT
  (github pull #5635 from ptosco)
   - Support stereo for double bonds in rings from CXSMILES
  (github pull #5636 from greglandrum)
-   - Use templates in RDKit coordinate generation
- (github pull #5643 from rachelnwalker)
   - add stop condition for arom calc of large ringysystems
  (github pull #5648 from alexwahab)
   - Speed up ring detection by reducing allocations
