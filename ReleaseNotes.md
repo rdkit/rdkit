@@ -1,7 +1,23 @@
-# Release_2023.03.1
+# Release_2023.03.1b1
 (Changes relative to Release_2022.09.1)
 
 ## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Michael Banck, Christopher Von Bargen, Jason Biggs, Jonathan Bisson, Jacob
+Bloom, shang chien, David Cosgrove, Iren Azra Azra Coskun, Andrew Dalke, Eloy
+Félix, Peter Gedeck, Desmond Gilmour, Mosè Giordano, Emanuele Guidotti, Tad
+Hurst, Gareth Jones, Calvin Josenhans, Maria Kadukova, Brian Kelley, Joos
+Kiener, Chris Kuenneth, Martin Larralde, Krzysztof Maziarz, Jeremy Monat, Michel
+Moreau, Rocco Moretti, Lucas Morin, Dan Nealschneider, Noel O'Boyle, Vladas
+Oleinikovas, Rachael Pirie, Ricardo Rodriguez-Schmidt, Vincent F. Scalfani,
+Gregor Simm, Marco Stenta, Georgi Stoychev, Paolo Tosco, Kazuya Ujihara,
+Riccardo Vianello, Franz Waibl, Rachel Walker, Patrick Walters,
+'dangthatsright', 'mihalyszabo88', 'Deltaus', 'radchenkods',
+'josh-collaborationspharma', 'jkh', 'yamasakih'
+
 
 ## Highlights
 
@@ -18,10 +34,384 @@
 
 
 ## Bug Fixes:
+  - GetSubstructMatches uniquify and maxMatches don't work well together
+ (github issue #888 from adalke)
+  - DrawRDKBits raised RDKit error when it applied to the compounds that contains imidazole.
+ (github issue #2164 from yamasakih) 
+  - MolFromMol2File: O.co2 atom type correctness check ignores phosphate groups
+ (github issue #3246 from chmnk)
+  - Enhanced Stereo is lost when using GetMolFrags(m, asMols=True)
+ (github issue #4845 from kienerj)
+  - Segfault with coordgen v3.0.0
+ (github issue #4845 from lucasmorin222)
+  - Dative bond and alkali and alkaline earth metals
+  (github issue #5120 from marcostenta)
+  - RGD Stereochemistry in decomposed structure is not copied to the matching core
+ (github issue #5613 from jones-gareth)
+  - fp.ToList() fails for empty molecule
+ (github issue #5677 from baoilleach)
+  - SMILES and SMARTS parse bonds in a different order
+ (github issue #5683 from ricrogz)
+  - postgresql makefile needs to be updated to use c++17
+ (github issue #5685 from mbanck)
+  - Exception raised when reading very large SMILES file
+ (github issue #5692 from DavidACosgrove)
+  - Update warning message about aromaticity detection
+ (github pull #5696 from d-b-w)
+  - stop building catch_main when tests are disabled
+ (github pull #5697 from greglandrum)
+  - Make PandasTools.RGroupDecompositionToFrame re-entrant
+ (github pull #5698 from greglandrum)
+  - PandasTools.RGroupDecompositionToFrame() should call ChangeMoleculeRendering()
+ (github issue #5702 from greglandrum)
+  - MolDraw2D should automatically set bond highlight color when atom colors are changed
+ (github issue #5704 from greglandrum)
+  - Use correct `_WIN32` macro for checking Windows target
+ (github pull #5710 from giordano)
+  - Environment not set properly in chirality tests for MinGW builds
+ (github pull #5711 from ptosco)
+  - windows.h header should be lowercase
+ (github pull #5712 from ptosco)
+  - Fixes bond index parsing for w/c/t/ctu labels in CXSMILES/CXSMARTS
+ (github pull #5722 from ricrogz)
+  - Fix a deprecation warning in pythonTestDirRoot
+ (github pull #5723 from ricrogz)
+  - allowNontetrahedralChiralty should be honored when reading/writing SMILES
+ (github pull #5728 from greglandrum)
+  - CFFI/MinimalLib fixes
+ (github pull #5729 from ptosco)
+  - Allow setting custom FREETYPE_LIBRARY/FREETYPE_INCLUDE_DIRS through CMake
+ (github pull #5730 from ptosco)
+  - Missing update path for postgreSQL from 3.8 to 4.2
+ (github issue #5734 from Deltaus)
+  - Avoid passing a NULL pointer to CanSmiles()
+ (github pull #5750 from ptosco)
+  - CDXML reader incorrectly sets stereo on crossed double bonds
+ (github issue #5752 from baoilleach)
+  - `R` atom label information lost in molfile if not backed by a `M RGP` entry
+ (github issue #5763 from eloyfelix)
+  - Missing monomer labels when depicting `MON` SGroups
+ (github issue #5767 from eloyfelix)
+  - Wrongly oriented SGroup bracket
+ (github issue #5768 from eloyfelix)
+  - Adjust LocaleSwitcher on Windows when RDK_BUILD_THREADSAFE_SSS not set
+ (github pull #5783 from roccomoretti)
+  - KekulizationException in tautomer canonicalization
+ (github issue #5784 from d-b-w)
+  - ChemicalReactionToRxnBlock ignores separateAgents if forceV3000 is true
+ (github issue #5785 from jacobbloom)
+  - extend the allowed valences of the alkali earths
+ (github pull #5786 from greglandrum)
+  - Minimallib build (rdkit-js) not working for release 2022.09.2
+ (github issue #5792 from MichelML)
+  - Remove dependency on MSVC runtime DLL in MinGW builds
+ (github pull #5800 from ptosco)
+  - Update macOS target platform to 10.13
+ (github pull #5802 from ptosco)
+  - `R#` atom label information lost in molfile if not handled by the `RGP` spec
+ (github issue #5810 from eloyfelix)
+  - Stop using recommonmark in the documentation
+ (github issue #5812 from greglandrum)
+  - Properties with new lines can create invalid SDFiles
+ (github issue #5827 from bp-kelley)
+  - Allow building PgSQL RPM and DEB packages
+ (github pull #5836 from ptosco)
+  - Additional output is incorrect when FP count simulation is active
+ (github issue #5838 from ptosco)
+  - Explicit valence check SiPa13fails for certain SMILES
+ (github issue #5849 from josh-collaborationspharma)
+  - Set emsdk path for freetype in emscripten builds
+ (github pull #5857 from ptosco)
+  - DrawMorganBit fails by default 
+ (github issue #5863 from eguidotti)
+  - Fix #5810 in V2000 mol files.
+ (github pull #5864 from eloyfelix)
+  - Chemical drawings should be automatically enabled on Colab
+ (github pull #5868 from kuelumbus)
+  - use enhanced stereo when uniquifying in SimpleEnum
+ (github pull #5874 from greglandrum)
+  - Conformer Generation Fails for three-coordinate Ns with specified stereo
+ (github issue #5883 from gncs)
+  - Fix documentation example for KeyFromPropHolder
+ (github pull #5886 from gedeck)
+  - Allow unrecognized atom types when strictParsing=False
+ (github pull #5891 from greglandrum)
+  - DetermineBonds assigning methyl carbon as tetrahedral center
+ (github issue #5894 from jasondbiggs)
+  - numpy.float is no longer supported and causes exceptions 
+ (github issue #5895 from PatWalters)
+  - moldraw2DTest1 failure when building on aarch64
+ (github issue #5899 from vfscalfani)
+  - DetermineBondOrders running out of memory on medium-sized disconnected structure
+ (github issue #5902 from jasondbiggs)
+  - clear MDL Rgroup labels from core atoms when we aren't using them
+ (github pull #5904 from greglandrum)
+  - Conformer generator produces strange structure for substituted butadiene
+ (github issue #5913 from gncs)
+  - `MHFPEncoder::Distance` doesn't compute a (Jaccard) distance
+ (github issue #5919 from althonos)
+  - AvalonTools: Avoid that trailing garbage pollutes the fmemopen buffer
+ (github pull #5928 from ptosco)
+  - "not" queries in molfiles get inverted
+ (github issue #5930 from d-b-w)
+  - CalcTPSA() doesn't use options when caching
+ (github issue #5941 from greglandrum)
+  - Bad drawing of end points for dative bonds
+ (github issue #5943 from DavidACosgrove)
+  - Extremes of drawn ellipses not being calculated correctly.
+ (github issue #5947 from DavidACosgrove)
+  - Arrow heads of dative bonds are different sizes
+ (github issue #5949 from DavidACosgrove)
+  - stop caching ring-finding results
+ (github pull #5955 from greglandrum)
+  - Wrong bond endpoint when connecting to wedge bond in 2D image
+ (github issue #5963 from stgeo)
+  - Tiny change to get demo.html to load in legacy browsers
+ (github pull #5964 from ptosco)
+  - detect bad double bond stereo in conformer generation 
+ (github pull #5967 from greglandrum)
+  - drawing code should not generate kekulization errors
+ (github issue #5974 from greglandrum)
+  - Adjust expected test results for newer freetype versions
+ (github pull #5979 from greglandrum)
+  - CanonicalRankAtomsInFragment example in the documentation is not reproducible
+ (github issue #5986 from chmnk)
+  - Exception in RegistrationHash for molecules with bad bond directions
+ (github pull #5987 from d-b-w)
+  - Updated the GetMolHash docstring for accuracy
+ (github pull #5988 from irenazra)
+  - Fix a problem with pickling molecules with more than 255 rings
+ (github pull #5992 from greglandrum)
+  - Support Python 3.11
+ (github pull #5994 from greglandrum)
+  - Incorrect disconnection of CC(=O)O[Mg]OC(=O)C
+ (github issue #5997 from DavidACosgrove)
+  - PostgreSQL autovacuum stuck when molecules with query features are stored in mol columns
+ (github issue #6002 from mihalyszabo88)
+  - Remove `and` from C++ headers
+ (github pull #6003 from d-b-w)
+  - [PH3] incorrectly recognized as potential stereo center
+ (github issue #6011 from greglandrum)
+  - Potential nontetrahedral stereo is recognized when nontetrahedral stereo is disabled.
+ (github issue #6012 from greglandrum)
+  - MolEnumerator is not propagating query information to molecules
+ (github issue #6014 from greglandrum)
+  - Reactions do not propagate query information to products
+ (github issue #6015 from greglandrum)
+  - Error rendering to very small canvas
+ (github issue #6025 from DavidACosgrove)
+  - Bad double bond drawn for collinear atoms
+ (github issue #6027 from DavidACosgrove)
+  - Fix some minor leaks
+ (github pull #6029 from ricrogz)
+  - Cannot draw molecule which includes an atom with a `[!#X]` query (for any X)
+ (github issue #6033 from ShangChien)
+  - FragmentOnBonds may create unexpected radicals
+ (github issue #6034 from ricrogz)
+  - Calling MurckoScaffold on molecule causes bug in pickling
+ (github issue #6036 from dangthatsright)
+  - Bump maeparser and coordgen versions
+ (github pull #6039 from ricrogz)
+  - enhanced stereo is still included in CXSMILES if isomericSmiles=False
+ (github issue #6040 from greglandrum)
+  - Issues with ACS1996 drawing mode on a small canvas
+ (github issue #6041 from DavidACosgrove)
+  - Cyclobutyl group in a macrocycle triggers a stereo center
+ (github issue #6049 from cdvonbargen)
+  - stereogroups not combined when parsing CXSMILES
+ (github issue #6050 from greglandrum)
+  - Regression in depicting molecules with MDL query atoms
+ (github issue #6054 from ptosco)
+  - Do not include dative bonds in ring finding by default
+ (github issue #6058 from DavidACosgrove)
+  - Remove check for ring information from Atom::Match
+ (github pull #6063 from fwaibl)
+  - Correct docstring for minFontSize.
+ (github pull #6066 from DavidACosgrove)
+  - Minor code cleanup
+ (github pull #6101 from ptosco)
+  - Dummy atoms should not be considered to be metals for M and MH queries
+ (github issue #6106 from greglandrum)
+  - Drawing in ACS mode crops small images
+ (github issue #6111 from DavidACosgrove)
+  - Drawing in ACS1996 mode throws ValueError: Bad Conformer Id if molecule has no coords
+ (github issue #6112 from DavidACosgrove)
+  - DetermineBonds fails for single H atom
+ (github issue #6121 from gncs)
+  - MinimalLib: avoid that assignStereochemistry() fails when removeHs=true
+ (github pull #6134 from ptosco)
+  - Round-tripping a reaction through pickle changes the outputs from RunReactants
+ (github issue #6138 from kmaziarz)
+  - RGD and enhanced stereochemistry
+ (github issue #6146 from jones-gareth)
+  - MaeMolSupplier requires bond block
+ (github issue #6153 from cdvonbargen)
+  - Incorrect doule bond drawing with MolDraw2DSVG
+ (github issue #6160 from radchenkods)
+  - BondDir not cleared from bonds that aren't stereoactive
+ (github pull #6162 from greglandrum)
+  - Crossed bond not correctly drawn
+ (github issue #6170 from ptosco)
+  - ReactionFromRxnBlock fails on bond with reacting center status set
+ (github issue #6195 from jones-gareth)
+  - Possible regression in the atom/bond highlighting code
+ (github issue #6200 from ptosco)
+  - Updated README to build the PostgreSQL cartridge + bug fix
+ (github pull #6214 from ptosco)
+  - Atoms may get flagged with non-tetrahedral stereo even when it is not allowed
+ (github issue #6217 from ricrogz)
+  - Fix TorsionFingerprints for 15 membered rings
+ (github pull #6228 from kazuyaujihara)
+  - Fix build warnings
+ (github pull #6235 from ricrogz)
+  - Tri-coordinate atom with implicit + neighbor H atom is found potentially chiral
+ (github issue #6239 from ricrogz)
+  - DativeBondsToHaptic doesn't set _MolFileBondEndPts correctly.
+ (github issue #6252 from DavidACosgrove)
+  - Round-tripping ferrocene through HapticBondsToDatives loses drawing highlights.
+ (github issue #6253 from DavidACosgrove)
+  - Using Chiral Tag instead of CIPCode to ensure preservation of chirality in addHs
+ (github pull #6259 from HalflingHelper)
+  - Update assignSubstructureFilters.py
+ (github pull #6270 from OleinikovasV)
+  - deal with deprecated DataFrame.append method
+ (github pull #6272 from greglandrum)
+  - compile-time error with GCC 12.2.1 on Fedora 36
+ (github issue #6274 from rvianello)
 
 ## Cleanup work:
+  - Do deprecations for the 2023.03 release
+ (github pull #5675 from greglandrum)
+  - run clang_format
+ (github pull #5676 from greglandrum)
+  - Cleanup work on documentation Makefile
+ (github pull #5804 from greglandrum)
+  - Refactor RGD moving function implementations from header to source files
+ (github pull #5958 from jones-gareth)
+  - Disable POPCNT on M1
+ (github pull #6081 from bjonnh-work)
+  - Remove spurious full stops from warnings.
+ (github pull #6124 from DavidACosgrove)
 
 ## New Features and Enhancements:
+  - mol V3000: multicenter dative bond
+  (github issue #5121 from marcostenta)
+  - add molecular filter examples
+ (github pull #5647 from RPirie96)
+   - Use templates in RDKit coordinate generation
+ (github pull #5643 from rachelnwalker)
+  - add MACCS fp to the MinimalLib
+ (github pull #5707 from eloyfelix)
+  - Enable additional parameters in prepareAndDrawMolecule() and expose them to CFFI/MinimalLib
+ (github pull #5731 from ptosco)
+  - add includeRedundantEnvironments support to GetMorganGenerator
+ (github pull #5732 from greglandrum)
+  - FingerprintGenerator refactoring
+ (github pull #5748 from greglandrum)
+  - Expose RDLog to SWIG wrappers
+ (github pull #5749 from ptosco)
+  - Add a timeout protection for CIP calculations
+ (github pull #5772 from tadhurst-cdd)
+  - Expose getMolFrags in CFFI and MinimalLib
+ (github pull #5774 from ptosco)
+  - Get the wrappers working with SWIG 4.0
+ (github pull #5795 from greglandrum)
+  - Update AvalonTools to version 2.0.4a
+ (github pull #5796 from ptosco)
+  - Add early example of drawing a molecule to Getting Started with the RDKit in Python
+ (github pull #5803 from bertiewooster)
+  - Enable get_molblock(details_json) from MinimalLib
+ (github pull #5806 from ptosco)
+  - Improvements to PandasTools.SaveXlsxFromFrame
+ (github pull #5835 from ptosco)
+  - swap boost::tuple to std::tuple
+ (github pull #5851 from greglandrum)
+  - Make it easy to calculate all 2D descriptors
+ (github pull #5892 from greglandrum)
+  - Introduces AvgIpc descriptor
+ (github pull #5896 from greglandrum)
+  - Add SMILES to each group abbreviation in Cookbook
+ (github pull #5908 from bertiewooster)
+  - Support SubstanceGroups and StereoGroups in JSON
+ (github pull #5909 from greglandrum)
+  - Add info about mergeHs to README.
+ (github pull #5910 from DavidACosgrove)
+  - Cookbook - update entry 1 and add entries 38 and 39
+ (github pull #5918 from vfscalfani)
+  - Allow the sources of conformer generation failures to be retrieved
+ (github pull #5960 from greglandrum)
+  - Create getExperimentalTorsions() function
+ (github pull #5969 from greglandrum)
+  - Molblock wedging improvements
+ (github pull #5981 from ptosco)
+  - MinimalLib JS functions to add/remove Hs in place
+ (github pull #5984 from ptosco)
+  - Adds Pat Walter's Chembl Filters extraction to the FilterCatalog
+ (github pull #5991 from bp-kelley)
+  - Add depiction coordinates to molzip
+ (github pull #5993 from jones-gareth)
+  - Enable using STL algorithms on ROMol atoms and bonds
+ (github pull #5995 from ptosco)
+  - Enable building MinimalLib as a plain JS file for usage in legacy/headless browsers
+ (github pull #5999 from ptosco)
+  - Allow WriteSDF to create v3000 SDF files
+ (github pull #6004 from jkhales)
+  - add maxRecursiveMatches to SubstructMatchParameters
+ (github issue #6017 from greglandrum)
+  - Expose fingerprint generator options to python
+ (github pull #6024 from greglandrum)
+  - Allow SMARTS of zero order bonds to match zero order bonds
+ (github pull #6037 from d-b-w)
+  - Change IUPAC metal->non-metal single bonds to dative
+ (github pull #6038 from DavidACosgrove)
+  - Add canonicalization of stereo groups (enhanced stereo)
+ (github pull #6051 from greglandrum)
+  - Improve MaeMolSupplier API
+ (github pull #6053 from ricrogz)
+  - Enable optional visualization of complex query atoms in a more compact form
+ (github pull #6056 from ptosco)
+  - Start a Maestro file (.mae) writer.
+ (github pull #6069 from ricrogz)
+  - Expose some stereochemistry-related functions to SWIG wrappers
+ (github pull #6075 from ptosco)
+  - Add option to only include shortest paths for topological torsion fingerprints
+ (github pull #6090 from greglandrum)
+  - Enable "smilesSymbol" substitution in SMARTS
+ (github pull #6096 from ricrogz)
+  - Add the option to wedge two bonds at chiral centers
+ (github pull #6108 from greglandrum)
+  - Another minor code cleanup
+ (github pull #6109 from ptosco)
+  - A few SWIG tweaks
+ (github pull #6110 from ptosco)
+  - Stereochemistry-related SWIG updates
+ (github pull #6127 from ptosco)
+  - SWIG pickling improvements (and other cleanup)
+ (github pull #6133 from ptosco)
+  - Improved handling of organometallics
+ (github pull #6139 from DavidACosgrove)
+  - expose two missing QueryAtom types to python
+ (github pull #6158 from greglandrum)
+  - Support Pseudoatoms like Pol and Mod in the RegistrationHash
+ (github pull #6175 from irenazra)
+  - Better name for areBondsLinear.
+ (github pull #6196 from DavidACosgrove)
+  - add features to allow drawing molecules in arbitrary positions on a large canvas
+ (github pull #6210 from greglandrum)
+  - Support chirality when determining if a molecule is a reaction reactant
+ (github issue #6211 from jones-gareth)  
+  - rdMolHash.MolHash function should allow customization of the CXSmiles via Chem.CXSmilesFields
+ (github issue #6224 from irenazra)
+  - Updated README for cartridge installation into conda PostgreSQL
+ (github pull #6236 from ptosco)
+  - Add a function to translate the MDL chiral flag into enhanced stereo groups
+ (github issue #6241 from ricrogz)
+  - Add support for generic matching in the PgSQL cartridge
+ (github pull #6269 from bjonnh-work)
+  - allowOptionalAttachments should also include terminal query atoms matching hydrogen
+ (github pull #6280 from ptosco)
+  - Exposed queryColour in MolDrawOptions
+ (github pull #6282 from ptosco)
 
 ## Code removed in this release:
 - The `SmilesParserParams` option `useLegacyStereo` has been removed. Please use
@@ -379,6 +769,7 @@ Rachel Walker, balducci, GLPG-GT
  (github pull #5663 from d-b-w)
   - Expose two SubstructUtils functions to SWIG wrappers
  (github pull #5666 from ptosco)
+ 
 
 ## Code removed in this release:
 - The C++ class `RDLog::BlockLogs` has been removed. Please use the class `RDLog::LogStateSetter`. The Python class rdBase.BlockLogs() is still available and supported.
