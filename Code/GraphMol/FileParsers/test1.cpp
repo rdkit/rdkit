@@ -4676,9 +4676,10 @@ void testParseCHG() {
   }
 
   TEST_ASSERT(m);
-  std::string out = MolToMolBlock(*m);
-  // There are now dative bonds in the molecule, so the mol block will
-  // be forced to V3000.
+  // Write it out in V3000 format, which makes counting the different charges
+  // easier
+  bool forceV3000(true);
+  std::string out = MolToMolBlock(*m, true, -1, true, forceV3000);
   std::regex chg_all("CHG="), chg_m1("CHG=-1"), chg_p1("CHG=1"),
       chg_p4("CHG=4");
   TEST_ASSERT(

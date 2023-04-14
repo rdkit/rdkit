@@ -1767,6 +1767,24 @@ M  END
     }
 }
 
+function test_query_colour() {
+    var mol = RDKitModule.get_qmol('c1ccc2nc([*:1])nc([*:2])c2c1');
+    try {
+        var svg1 = mol.get_svg_with_highlights(JSON.stringify({width: 350, height: 300}));
+        assert(svg1.includes("width='350px'"));
+        assert(svg1.includes("height='300px'"));
+        assert(svg1.includes("</svg>"));
+        assert(svg1.includes("#7F7F7F"));
+        var svg2 = mol.get_svg_with_highlights(JSON.stringify({width: 350, height: 300, queryColour: [0.0, 0.0, 0.0]}));
+        assert(svg2.includes("width='350px'"));
+        assert(svg2.includes("height='300px'"));
+        assert(svg2.includes("</svg>"));
+        assert(!svg2.includes("#7F7F7F"));
+    } finally {
+        mol.delete();
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -1819,6 +1837,7 @@ initRDKitModule().then(function(instance) {
     test_wedging_if_no_match();
     test_get_frags();
     test_hs_in_place();
+    test_query_colour();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

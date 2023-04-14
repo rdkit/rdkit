@@ -12,7 +12,7 @@
 
 #include <algorithm>
 #include <limits>
-
+#include <fstream>
 #include <boost/format.hpp>
 
 #include <GraphMol/RDKitBase.h>
@@ -2957,7 +2957,12 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
       {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
        "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
   for (size_t i = 0; i < test_vals.size(); ++i) {
-    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first, ps));
+    // MolOps::cleanUp(*m);
+    MolOps::cleanUpOrganometallics(*m);
+    MolOps::sanitizeMol(*m);
     TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
   }
 }
@@ -3035,5 +3040,147 @@ TEST_CASE("Github #6119: No warning when merging explicit H query atoms with no 
     TEST_ASSERT(ss.str().find("WARNING: merging explicit H queries involved in ORs is not supported. "
                               "This query will not be merged") ==
                               std::string::npos);
+  }
+}
+
+TEST_CASE("Remove atom updates bond ENDPTS prop") {
+  auto m = R"CTAB(ferrocene-ish
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 15 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.619616 1.206807 0.000000 0 CHG=-1
+M  V30 2 C 0.211483 1.768553 0.000000 0
+M  V30 3 C -1.283936 1.861329 0.000000 0
+M  V30 4 C -1.796429 1.358429 0.000000 0
+M  V30 5 C -0.634726 0.966480 0.000000 0
+M  V30 6 C 0.654379 -1.415344 0.000000 0 CHG=-1
+M  V30 7 C 0.249886 -0.858607 0.000000 0
+M  V30 8 C -1.232145 -0.766661 0.000000 0
+M  V30 9 C -1.740121 -1.265073 0.000000 0
+M  V30 10 C -0.580425 -1.662922 0.000000 0
+M  V30 11 C 1.759743 0.755930 0.000000 0
+M  V30 12 C 1.796429 -1.861329 0.000000 0
+M  V30 13 Fe -0.554442 0.032137 0.000000 0 VAL=2
+M  V30 14 * -0.601210 1.478619 0.000000 0
+M  V30 15 * -0.537835 -1.172363 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 5
+M  V30 2 2 4 5
+M  V30 3 1 4 3
+M  V30 4 2 2 3
+M  V30 5 1 1 2
+M  V30 6 1 6 10
+M  V30 7 2 9 10
+M  V30 8 1 9 8
+M  V30 9 2 7 8
+M  V30 10 1 6 7
+M  V30 11 1 1 11
+M  V30 12 1 6 12
+M  V30 13 9 14 13 ENDPTS=(5 1 2 3 4 5) ATTACH=ANY
+M  V30 14 9 15 13 ENDPTS=(5 9 10 7 8 6) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  std::string sprop;
+  auto bond = m->getBondWithIdx(12U);
+  CHECK(bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                               sprop));
+  CHECK(std::string("(5 1 2 3 4 5)") == sprop);
+  m->removeAtom(2U);
+  bond = m->getBondWithIdx(10U);
+  CHECK(bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                               sprop));
+  CHECK(std::string("(4 1 2 3 4)") == sprop);
+  m->removeAtom(0U);
+  m->removeAtom(0U);
+  m->removeAtom(0U);
+  m->removeAtom(0U);
+  CHECK(!bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                                sprop));
+  CHECK(!bond->getPropIfPresent(RDKit::common_properties::_MolFileBondAttach,
+                                sprop));
+  // the original bond should now have index 6
+  CHECK(bond->getIdx() == 6);
+
+  // the other dative bond is now attached to different atom indices
+  bond = m->getBondWithIdx(7U);
+  CHECK(bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                               sprop));
+  CHECK(std::string("(5 4 5 2 3 1)") == sprop);
+  // remove atom 5 (6 in the file - the final methyl off the first
+  // methyl-cyclopentadiene ring
+  m->removeAtom(5U);
+  CHECK(bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                               sprop));
+  CHECK(std::string("(5 4 5 2 3 1)") == sprop);
+}
+
+TEST_CASE("github #6237: Correctly placing hydrogens based on Chiral Tag") {
+  SECTION("Clockwise") {  // Chiral Tag (CW) Agrees with CIPCode ('R')
+    std::string mb = R"CTAB(testmol
+  CT1066645023
+
+  5  4  0  0  1  0  0  0  0  0999 V2000
+    0.0021   -0.0041    0.0020 Br  0  0  0  0  0  0  0  0  0  0  0  0
+    1.6669    2.5858    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7012    2.4252   -1.1206 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0246    1.9617    0.0128 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5348    2.3132    0.9096 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0  0  0  0
+  2  4  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+M  END
+    )CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    bool explicitOnly = false;
+    bool addCoords = true;
+    RDKit::ROMol * m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    REQUIRE(m->getNumAtoms() == 5);
+    const auto &conf = m->getConformer();
+    // Hydrogen will always be in the last position
+    const RDGeom::Point3D HPos = conf.getAtomPos(4);
+    // Ensure the hydrogen is placed on the same side of the carbon as it was originally. 
+    const RDGeom::Point3D targetPos = RDGeom::Point3D(-.5384, 2.3132, 0.9096);
+    const auto distToTarget = HPos - targetPos;
+    CHECK(distToTarget.lengthSq() < 0.1);
+  }
+
+  SECTION("Counterclockwise") {  // Chiral Tag (CCW) Different from CIPCode (R) due to different ordering of atoms
+    std::string mb = R"CTAB(testmol
+  CT1066645023
+
+  5  4  0  0  1  0  0  0  0  0999 V2000
+    1.6669    2.5858    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    0.0021   -0.0041    0.0020 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5348    2.3132    0.9096 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0246    1.9617    0.0128 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7012    2.4252   -1.1206 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0  0  0  0
+  2  4  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    bool explicitOnly = false;
+    bool addCoords = true;
+    RDKit::ROMol * m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    REQUIRE(m->getNumAtoms() == 5);
+    const auto &conf = m->getConformer();
+    // Hydrogen will always be in the last position
+    const RDGeom::Point3D HPos = conf.getAtomPos(4);
+    // Ensure the hydrogen is placed on the same side of the carbon as it was originally.
+    const RDGeom::Point3D targetPos = RDGeom::Point3D(-.5384, 2.3132, 0.9096);
+    const auto distToTarget = HPos - targetPos;
+    CHECK(distToTarget.lengthSq() < 0.1);
   }
 }

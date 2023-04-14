@@ -24,7 +24,7 @@
 #include <map>
 #include <list>
 
-//#define VERBOSE_CANON 1
+// #define VERBOSE_CANON 1
 
 namespace RDKit {
 
@@ -652,6 +652,11 @@ std::string MolToCXSmiles(const ROMol &mol, const SmilesWriteParams &params,
                           std::uint32_t flags) {
   auto res = MolToSmiles(mol, params);
   if (!res.empty()) {
+    if (!params.doIsomericSmiles) {
+      flags &= ~(SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO |
+                 SmilesWrite::CXSmilesFields::CX_BOND_CFG);
+    }
+
     auto cxext = SmilesWrite::getCXExtensions(mol, flags);
     if (!cxext.empty()) {
       res += " " + cxext;

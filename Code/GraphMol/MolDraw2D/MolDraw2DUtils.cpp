@@ -219,6 +219,7 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
 
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
+  get_colour_option(&pt, "queryColour", opts.queryColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
   get_colour_option(&pt, "symbolColour", opts.symbolColour);
   get_colour_option(&pt, "annotationColour", opts.annotationColour);
@@ -445,7 +446,6 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
                         highlight_atom_map, highlight_bond_map, highlight_radii,
                         confId);
   };
-  double meanBondLen = 1.0;
   if (!mol.getNumConformers()) {
     // compute 2D coordinates in a standard orientation.  This needs to be
     // done on a copy because mol is const.

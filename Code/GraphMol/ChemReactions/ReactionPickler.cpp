@@ -22,7 +22,7 @@ using std::int32_t;
 using std::uint32_t;
 
 namespace RDKit {
-const int32_t ReactionPickler::versionMajor = 2;
+const int32_t ReactionPickler::versionMajor = 3;
 const int32_t ReactionPickler::versionMinor = 0;
 const int32_t ReactionPickler::versionPatch = 0;
 const int32_t ReactionPickler::endianId = 0xDEADBEEF;
@@ -146,15 +146,20 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss,
   streamWrite(ss, BEGINREACTANTS);
   for (auto tmpl = rxn->beginReactantTemplates();
        tmpl != rxn->endReactantTemplates(); ++tmpl) {
-    MolPickler::pickleMol(tmpl->get(), ss);
+    auto props = rxn->df_needsInit
+                     ? PicklerOps::PropertyPickleOptions::NoProps
+                     : PicklerOps::PropertyPickleOptions::AllProps;
+    MolPickler::pickleMol(tmpl->get(), ss, props);
   }
   streamWrite(ss, ENDREACTANTS);
 
   streamWrite(ss, BEGINPRODUCTS);
   for (auto tmpl = rxn->beginProductTemplates();
        tmpl != rxn->endProductTemplates(); ++tmpl) {
-    MolPickler::pickleMol(tmpl->get(), ss,
-                          PicklerOps::PropertyPickleOptions::AtomProps);
+    auto props = rxn->df_needsInit
+                     ? PicklerOps::PropertyPickleOptions::AtomProps
+                     : PicklerOps::PropertyPickleOptions::AllProps;
+    MolPickler::pickleMol(tmpl->get(), ss, props);
   }
   streamWrite(ss, ENDPRODUCTS);
 
@@ -162,10 +167,22 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss,
     streamWrite(ss, BEGINAGENTS);
     for (auto tmpl = rxn->beginAgentTemplates();
          tmpl != rxn->endAgentTemplates(); ++tmpl) {
-      MolPickler::pickleMol(tmpl->get(), ss);
+      // reagents don't have private properties set during initialization
+      MolPickler::pickleMol(tmpl->get(), ss,
+                            PicklerOps::PropertyPickleOptions::AtomProps);
     }
     streamWrite(ss, ENDAGENTS);
   }
+
+  // -------------------
+  //
+  // Write SSS parameters
+  //
+  // -------------------
+  streamWrite(ss, BEGINSSSPARAMS);
+  auto json = substructMatchParamsToJSON(rxn->getSubstructParams());
+  streamWrite(ss, json);
+  streamWrite(ss, ENDSSSPARAMS);
 
   if (propertyFlags & PicklerOps::MolProps) {
     streamWrite(ss, BEGINPROPS);
@@ -261,6 +278,20 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
           "Bad pickle format: ENDAGENTS tag not found.");
     }
   }
+  if (version >= 3000) {
+    streamRead(ss, tag);
+    if (tag == BEGINSSSPARAMS) {
+      std::string json;
+      streamRead(ss, json, version);
+      updateSubstructMatchParamsFromJSON(rxn->getSubstructParams(), json);
+      streamRead(ss, tag);
+      if (tag != ENDSSSPARAMS) {
+        throw ReactionPicklerException(
+            "Bad pickle format: ENDSSSPARAMS tag not found.");
+      }
+    }
+  }
+
   streamRead(ss, tag);
   if (tag == BEGINPROPS) {
     _unpickleProperties(ss, *rxn);

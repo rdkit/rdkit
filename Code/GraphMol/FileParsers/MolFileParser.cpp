@@ -79,10 +79,15 @@ int toInt(const std::string_view input, bool acceptSpaces) {
     while (*txt == ' ') {
       ++txt;
       --sz;
+      // have we run off the end of the view?
+      if (sz < 1U) {
+        return 0;
+      }
     }
   }
   int res = 0;
   std::from_chars(txt, txt + sz, res);
+
   return res;
 }
 int toInt(const std::string &input, bool acceptSpaces) {
@@ -109,6 +114,10 @@ unsigned int toUnsigned(const std::string_view input, bool acceptSpaces) {
     while (*txt == ' ') {
       ++txt;
       --sz;
+      // have we run off the end of the view?
+      if (sz < 1U) {
+        return 0;
+      }
     }
   }
   unsigned int res = 0;
@@ -1379,7 +1388,8 @@ void setRGPProps(const std::string_view symb, Atom *res) {
   res->setProp(common_properties::dummyLabel, symbc);
 }
 
-void lookupAtomicNumber(Atom *res, const std::string &symb, bool strictParsing) {
+void lookupAtomicNumber(Atom *res, const std::string &symb,
+                        bool strictParsing) {
   try {
     res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
   } catch (const Invar::Invariant &e) {
@@ -3048,9 +3058,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     chiralFlag = FileParserUtils::toUnsigned(splitLine[4]);
   }
 
-  if (chiralFlag) {
-    mol->setProp(common_properties::_MolFileChiralFlag, chiralFlag);
-  }
+  mol->setProp(common_properties::_MolFileChiralFlag, chiralFlag);
 
   if (nAtoms) {
     ParseV3000AtomBlock(inStream, line, nAtoms, mol, conf, strictParsing);
@@ -3431,9 +3439,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     }
   }
 
-  if (chiralFlag) {
-    res->setProp(common_properties::_MolFileChiralFlag, chiralFlag);
-  }
+  res->setProp(common_properties::_MolFileChiralFlag, chiralFlag);
 
   Conformer *conf = nullptr;
   try {

@@ -77,6 +77,10 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
     } else if (nzDegree == 3) {
       // three-coordinate with a single H we'll accept automatically:
       if (atom->getTotalNumHs() == 1) {
+        if (detail::has_protium_neighbor(mol, atom)) {
+          // more than one H is never stereogenic
+          return false;
+        }
         return true;
       } else {
         // otherwise we default to not being a legal center
@@ -275,7 +279,8 @@ StereoInfo getStereoInfo(const Atom *atom) {
         default:
           UNDER_CONSTRUCTION("unrecognized chiral flag");
       }
-    } else if (isAtomPotentialNontetrahedralCenter(atom)) {
+    } else if (getAllowNontetrahedralChirality() &&
+               isAtomPotentialNontetrahedralCenter(atom)) {
       if (stereo == Atom::CHI_UNSPECIFIED) {
         switch (atom->getTotalDegree()) {
           case 4:

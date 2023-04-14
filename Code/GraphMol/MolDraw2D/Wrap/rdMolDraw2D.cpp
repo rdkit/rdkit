@@ -198,6 +198,34 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
   delete har;
 }
 
+python::tuple getMolSizeHelper(MolDraw2D &self, const ROMol &mol,
+                               python::object highlight_atoms,
+                               python::object highlight_bonds,
+                               python::object highlight_atom_map,
+                               python::object highlight_bond_map,
+                               python::object highlight_atom_radii, int confId,
+                               std::string legend) {
+  std::unique_ptr<std::vector<int>> highlightAtoms =
+      pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
+  std::unique_ptr<std::vector<int>> highlightBonds =
+      pythonObjectToVect(highlight_bonds, static_cast<int>(mol.getNumBonds()));
+  // FIX: support these
+  ColourPalette *ham = pyDictToColourMap(highlight_atom_map);
+  ColourPalette *hbm = pyDictToColourMap(highlight_bond_map);
+  std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
+
+  auto sz = self.getMolSize(mol, legend, highlightAtoms.get(),
+                            highlightBonds.get(), ham, hbm, har, confId);
+
+  delete ham;
+  delete hbm;
+  delete har;
+  python::list res;
+  res.append(sz.first);
+  res.append(sz.second);
+
+  return python::tuple(res);
+}
 void drawMoleculeWithHighlightsHelper(
     MolDraw2D &self, const ROMol &mol, std::string legend,
     python::object highlight_atom_map, python::object highlight_bond_map,
@@ -419,11 +447,17 @@ python::tuple colourToPyTuple(const DrawColour &clr) {
 python::object getBgColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.backgroundColour);
 }
+python::object getQyColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.queryColour);
+}
 python::object getHighlightColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.highlightColour);
 }
 void setBgColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.backgroundColour = pyTupleToDrawColour(tpl);
+}
+void setQyColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.queryColour = pyTupleToDrawColour(tpl);
 }
 void setHighlightColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.highlightColour = pyTupleToDrawColour(tpl);
@@ -729,10 +763,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("splitBonds", &RDKit::MolDrawOptions::splitBonds)
       .def("getBackgroundColour", &RDKit::getBgColour,
            "method returning the background colour")
+      .def("getQueryColour", &RDKit::getQyColour,
+           "method returning the query colour")
       .def("getHighlightColour", &RDKit::getHighlightColour,
            "method returning the highlight colour")
       .def("setBackgroundColour", &RDKit::setBgColour,
            "method for setting the background colour")
+      .def("setQueryColour", &RDKit::setQyColour,
+           "method for setting the query colour")
       .def("setHighlightColour", &RDKit::setHighlightColour,
            "method for setting the highlight colour")
       .def("getSymbolColour", &RDKit::getSymbolColour,
@@ -959,6 +997,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            python::arg("highlightAtomRadii") = python::object(),
            python::arg("confId") = -1, python::arg("legend") = std::string("")),
           "renders a molecule\n")
+      .def(
+          "GetMolSize", RDKit::getMolSizeHelper,
+          (python::arg("self"), python::arg("mol"),
+           python::arg("highlightAtoms") = python::object(),
+           python::arg("highlightBonds") = python::object(),
+           python::arg("highlightAtomColors") = python::object(),
+           python::arg("highlightBondColors") = python::object(),
+           python::arg("highlightAtomRadii") = python::object(),
+           python::arg("confId") = -1, python::arg("legend") = std::string("")),
+          "returns the width and height required to draw a molecule at the current size")
       .def("DrawMoleculeWithHighlights",
            RDKit::drawMoleculeWithHighlightsHelper,
            (python::arg("self"), python::arg("mol"), python::arg("legend"),
@@ -996,6 +1044,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
             python::arg("minv"), python::arg("maxv"),
             python::arg("mol") = python::object()),
            "uses the values provided to set the drawing scaling")
+      .def("FlexiMode", &RDKit::MolDraw2D::flexiMode,
+           "returns whether or not FlexiMode is being used")
+      .def(
+          "SetFlexiMode", &RDKit::MolDraw2D::setFlexiMode,
+          "when FlexiMode is set, molecules will always been drawn with the default values for bond length, font size, etc.")
       .def("SetLineWidth", &RDKit::MolDraw2D::setLineWidth,
            "set the line width being used")
       .def("SetColour", &RDKit::setDrawerColour,

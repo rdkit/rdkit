@@ -230,7 +230,7 @@ endif()
 set(testPgSQLBody "cd \"${PG_CURRENT_BINARY_DIR}\"\n"
     "\"${PGREGRESS_BINARY}\" --inputdir=sql "
     "${PGREGRESS_BINDIR_SWITCH} rdkit-91 "
-    "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction fmcs"
+    "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction fmcs query"
     " ${avalonRegress} ${inchiRegress} ${jsonRegress}\n")
 file(STRINGS ${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control
     PG_EXTVERSION LIMIT_COUNT 1 REGEX default_version)
@@ -268,6 +268,9 @@ configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
 file(GLOB files "update_sql/*.in")
 foreach(file ${files})
   string(REPLACE ".in" "" output_name ${file})
+  if(MSVC)
+    string(REGEX REPLACE "/" ${REGEX_SEPARATOR} output_name ${output_name})
+  endif()
   string(REPLACE "${PG_CURRENT_SOURCE_DIR}" "${PG_CURRENT_BINARY_DIR}" output_name ${output_name})
   configure_file(${file} ${output_name})
 endforeach()
