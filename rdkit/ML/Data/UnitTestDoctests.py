@@ -6,10 +6,10 @@
 """
 import doctest
 import unittest
-
-from rdkit.ML.Data import SplitData, DataUtils
-from rdkit.TestRunner import redirect_stdout
 from io import StringIO
+
+from rdkit.ML.Data import DataUtils, SplitData
+from rdkit.TestRunner import redirect_stdout
 
 
 def load_tests(loader, tests, ignore):

@@ -13,6 +13,7 @@ import sys
 import time
 
 import numpy
+
 import rdkit.DistanceGeometry as DG
 from rdkit import Chem
 from rdkit import RDLogger as logging

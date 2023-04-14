@@ -1,7 +1,8 @@
 # Run this with:
 #  python setup.py install --install-lib=.
+from distutils.core import Extension, setup
+
 from RDBuild import *
-from distutils.core import setup, Extension
 
 setup(
   name="SPtrTestModule", version="1.0", ext_modules=[

@@ -30,13 +30,15 @@
 #
 # Created by Greg Landrum, Nov 2008
 import copy
+
 """ Implementation of the BRICS algorithm from Degen et al. ChemMedChem *3* 1503-7 (2008)
 
 """
-import sys
 import re
-from rdkit import RDRandom as random
+import sys
+
 from rdkit import Chem
+from rdkit import RDRandom as random
 from rdkit.Chem import rdChemReactions as Reactions
 
 # These are the definitions that will be applied to fragment molecules:

@@ -23,8 +23,10 @@ Other compatibility notes:
 
 """
 
-import numpy
 import pickle
+
+import numpy
+
 from rdkit.ML.Data import DataUtils
 
 

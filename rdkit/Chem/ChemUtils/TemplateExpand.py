@@ -8,12 +8,11 @@ from rdkit import RDLogger as logging
 
 logger = logging.logger()
 logger.setLevel(logging.INFO)
-from rdkit import Chem
-from rdkit.Chem import Crippen
-from rdkit.Chem import AllChem
-from rdkit.Chem.ChemUtils.AlignDepict import AlignDepict
-
 import sys
+
+from rdkit import Chem
+from rdkit.Chem import AllChem, Crippen
+from rdkit.Chem.ChemUtils.AlignDepict import AlignDepict
 
 _version = "0.8.0"
 _greet = "This is TemplateExpand version %s" % _version

@@ -1,4 +1,5 @@
 import argparse
+
 from rdkit import Chem
 from rdkit.Chem.rdmolfiles import SmilesWriter
 

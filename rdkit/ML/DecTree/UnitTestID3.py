@@ -4,12 +4,12 @@
 """ unit tests for the ID3 implementation """
 
 import io
+import pickle
 import unittest
 
 from rdkit import RDConfig
 from rdkit.ML.Data import MLData
 from rdkit.ML.DecTree import ID3
-import pickle
 
 
 class ID3TestCase(unittest.TestCase):

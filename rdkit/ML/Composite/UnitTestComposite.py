@@ -6,12 +6,13 @@
 """ unit testing code for composite models
 
 """
-import unittest
 import io
 import pickle
+import unittest
+
+from rdkit import RDConfig
 from rdkit.ML.Composite import Composite
 from rdkit.ML.DecTree.DecTree import DecTreeNode as Node
-from rdkit import RDConfig
 
 
 class TestCase(unittest.TestCase):

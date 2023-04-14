@@ -32,11 +32,13 @@ Greg Landrum (Landrum@RationalDiscovery.com) 29 Octover, 2002
 
 """
 
-from rdkit.sping import pid
+import copy
+from math import *
+
 from qt import *
 from qtcanvas import *
-from math import *
-import copy
+
+from rdkit.sping import pid
 
 
 def _ColorToQt(color):
@@ -385,6 +387,7 @@ def dashtest(canvas):
 
 if __name__ == '__main__':
   import sys
+
   from rdkit.sping.pid import *
   app = QApplication(sys.argv)
   w = QCanvasView()

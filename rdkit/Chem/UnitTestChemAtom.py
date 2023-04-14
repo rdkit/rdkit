@@ -12,6 +12,7 @@
 
 """
 import unittest
+
 from rdkit import Chem
 
 

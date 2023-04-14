@@ -53,16 +53,13 @@ Progress Reports:
 
 import os
 import sys
-import time
 import tempfile
+import time
 from io import StringIO
+from math import ceil, cos, pi, sin, tan
 from types import *
-from math import sin, cos, tan, pi, ceil
 
-from . import pdfutils
-from . import pdfdoc
-from . import pdfmetrics
-from . import pdfgeom
+from . import pdfdoc, pdfgeom, pdfmetrics, pdfutils
 
 
 class PDFError(ValueError):

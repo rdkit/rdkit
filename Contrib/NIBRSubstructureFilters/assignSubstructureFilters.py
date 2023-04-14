@@ -1,14 +1,13 @@
-import pandas as pd
 import argparse
-import numpy as np
 import operator
-from collections import Counter, defaultdict, namedtuple
 import sys
+from collections import Counter, defaultdict, namedtuple
+
+import numpy as np
+import pandas as pd
 
 from rdkit import Chem
-from rdkit.Chem import FilterCatalog
-from rdkit.Chem import rdMolDescriptors
-from rdkit.Chem import RDConfig
+from rdkit.Chem import FilterCatalog, RDConfig, rdMolDescriptors
 
 FilterMatch = namedtuple(
   'FilterMatch',

@@ -48,23 +48,23 @@ _description = """
     - Property names are not case sensitive in the database.
 
  """
-import os
 import argparse
-import sys, time
+import os
+import sys
+import time
 
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
-
 from rdkit.RDLogger import logger
 
 logger = logger()
 import zlib
-from rdkit import Chem
 
-from rdkit.Chem.MolDb.FingerprintUtils import supportedSimilarityMethods, BuildSigFactory, DepickleFP, LayeredOptions
+from rdkit import Chem, DataStructs
 from rdkit.Chem.MolDb import FingerprintUtils
-
-from rdkit import DataStructs
+from rdkit.Chem.MolDb.FingerprintUtils import (BuildSigFactory, DepickleFP,
+                                               LayeredOptions,
+                                               supportedSimilarityMethods)
 
 
 def _molFromPkl(pkl):

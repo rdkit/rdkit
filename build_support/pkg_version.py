@@ -1,7 +1,9 @@
 from __future__ import print_function
+
 import os
 import re
 from datetime import datetime
+
 from setuptools import setup
 
 pkg_version = ''

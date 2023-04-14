@@ -5,12 +5,15 @@
 #     @@  All Rights Reserved  @@
 #
 
-from rdkit import RDConfig
-import os, sys, copy
-import unittest
+import copy
 import math
-from rdkit import Chem
-from rdkit.Chem import rdMolAlign, rdMolTransforms, rdMolDescriptors, rdDistGeom, ChemicalForceFields
+import os
+import sys
+import unittest
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import (ChemicalForceFields, rdDistGeom, rdMolAlign,
+                        rdMolDescriptors, rdMolTransforms)
 
 
 def lstFeq(l1, l2, tol=1.e-4):

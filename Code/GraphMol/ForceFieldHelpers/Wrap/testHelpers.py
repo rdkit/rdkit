@@ -1,9 +1,10 @@
-from rdkit import Chem
-from rdkit.Chem import ChemicalForceFields, rdDistGeom
-from rdkit import RDConfig
-import unittest
 import os
+import unittest
+
 import numpy
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import ChemicalForceFields, rdDistGeom
 
 
 def feq(v1, v2, tol2=1e-4):

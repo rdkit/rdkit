@@ -9,9 +9,10 @@ files don't have that section and for now this program can't handle them without
 by hand.
 """
 
-from BeautifulSoup import *
 import os
 import re
+
+from BeautifulSoup import *
 
 
 def list_class_files(dir):

@@ -29,18 +29,18 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import unittest
-import os, sys, copy
-
+import copy
+import itertools
+import os
 import pickle
+import sys
+import time
+import unittest
 
-from rdkit import rdBase
-from rdkit import Chem
-from rdkit.Chem import AllChem, rdChemReactions
-from rdkit import Geometry
-from rdkit import RDConfig
-import itertools, time
 import numpy as np
+
+from rdkit import Chem, Geometry, RDConfig, rdBase
+from rdkit.Chem import AllChem, rdChemReactions
 
 
 def log(s):

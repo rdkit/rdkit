@@ -14,9 +14,8 @@
 import os
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem.Pharm2D import Gobbi_Pharm2D, Generate
+from rdkit import Chem, RDConfig
+from rdkit.Chem.Pharm2D import Generate, Gobbi_Pharm2D
 
 
 class TestCase(unittest.TestCase):
@@ -133,8 +132,8 @@ class TestCase(unittest.TestCase):
     self.assertEqual(sig1, sig2)
 
   def testOrderBug2(self):
-    from rdkit.Chem import Randomize
     from rdkit import DataStructs
+    from rdkit.Chem import Randomize
     probes = ['Oc1nc(Oc2ncccc2)ccc1']
     for smi in probes:
       m1 = Chem.MolFromSmiles(smi)

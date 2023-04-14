@@ -3,9 +3,10 @@ Created on 26 Oct 2016
 
 @author: peter
 '''
-import unittest
 import doctest
-from rdkit.utils import fileutils, chemutils, listutils
+import unittest
+
+from rdkit.utils import chemutils, fileutils, listutils
 
 
 def load_tests(loader, tests, ignore):

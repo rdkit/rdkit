@@ -30,10 +30,11 @@
 #
 # Created by Jameed Hussain, September 2012
 
-import sys
 import re
-from rdkit import Chem
+import sys
 from optparse import OptionParser
+
+from rdkit import Chem
 
 
 def heavy_atom_count(smi):

@@ -17,6 +17,7 @@
 
 """
 import itertools
+
 try:
   # his is available in Python 3.8: https://docs.python.org/3/library/math.html
   from math import comb
@@ -497,8 +498,8 @@ def OrderTriangle(featIndices, dists):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

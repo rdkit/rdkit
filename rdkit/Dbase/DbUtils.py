@@ -15,11 +15,10 @@
 """
 
 import sys
-
-from rdkit.Dbase import DbInfo
-from rdkit.Dbase import DbModule
-from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
 from io import StringIO
+
+from rdkit.Dbase import DbInfo, DbModule
+from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
 
 
 def _take(fromL, what):
@@ -457,8 +456,9 @@ if __name__ == '__main__':  # pragma: nocover
   sio.write('1.1,4,5\n')
   sio.write('4,foo,6\n')
   sio.seek(0)
-  from rdkit import RDConfig
   import os
+
+  from rdkit import RDConfig
   dirLoc = os.path.join(RDConfig.RDCodeDir, 'Dbase', 'TEST.GDB')
 
   TextFileToDatabase(dirLoc, 'fromtext', sio)

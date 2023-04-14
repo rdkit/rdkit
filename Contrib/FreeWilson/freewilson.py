@@ -132,22 +132,22 @@ input structures
 
 ```
 """
-from rdkit.Chem import rdRGroupDecomposition as rgd
-from rdkit.Chem import molzip, Descriptors
-from rdkit import rdBase
-from rdkit import Chem
+import csv
+import itertools
+import logging
+import math
+import re
+import sys
+from collections import defaultdict, namedtuple
+from typing import Generator, List
+
 from sklearn.linear_model import Ridge
 from sklearn.metrics import r2_score
-from collections import defaultdict, namedtuple
 from tqdm import tqdm
-import itertools
-import math
-import sys
-from typing import List
-import logging
-import csv
-import re
-from typing import Generator
+
+from rdkit import Chem, rdBase
+from rdkit.Chem import Descriptors, molzip
+from rdkit.Chem import rdRGroupDecomposition as rgd
 
 logger = logging.getLogger("freewilson")
 

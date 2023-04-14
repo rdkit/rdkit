@@ -34,19 +34,18 @@
 it is intended to be shallow but broad.
 """
 
-import doctest, unittest, os
+import doctest
+import os
 import pickle
+import unittest
+
 from rdkit import RDConfig
 from rdkit.RDLogger import logger
 
 logger = logger()
-from rdkit import Chem
-from rdkit import rdBase
-from rdkit.Chem import rdfiltercatalog
-from rdkit.Chem import FilterCatalog, rdMolDescriptors
-from rdkit.Chem.FilterCatalog import FilterCatalogParams
-from rdkit.Chem.FilterCatalog import FilterMatchOps
-from rdkit import DataStructs
+from rdkit import Chem, DataStructs, rdBase
+from rdkit.Chem import FilterCatalog, rdfiltercatalog, rdMolDescriptors
+from rdkit.Chem.FilterCatalog import FilterCatalogParams, FilterMatchOps
 
 
 def load_tests(loader, tests, ignore):

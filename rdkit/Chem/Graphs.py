@@ -13,10 +13,11 @@ In theory much of the functionality in here should be migrating into the
 C/C++ codebase.
 
 """
-import numpy
-from rdkit import Chem
-from rdkit import DataStructs
 import types
+
+import numpy
+
+from rdkit import Chem, DataStructs
 
 
 def CharacteristicPolynomial(mol, mat=None):

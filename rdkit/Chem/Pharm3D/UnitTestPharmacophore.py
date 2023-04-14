@@ -10,10 +10,8 @@
 import os
 import unittest
 
-from rdkit import Chem
-from rdkit import Geometry
-from rdkit import RDConfig
-from rdkit.Chem import ChemicalFeatures, AllChem
+from rdkit import Chem, Geometry, RDConfig
+from rdkit.Chem import AllChem, ChemicalFeatures
 from rdkit.Chem.Pharm3D import Pharmacophore
 
 

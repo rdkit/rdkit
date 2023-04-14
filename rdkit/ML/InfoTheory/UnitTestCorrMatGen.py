@@ -1,8 +1,9 @@
-from rdkit.ML.InfoTheory import rdInfoTheory
-from rdkit.ML.Data import DataUtils
-from rdkit import DataStructs
 import unittest
+
+from rdkit import DataStructs
 from rdkit import RDRandom as random
+from rdkit.ML.Data import DataUtils
+from rdkit.ML.InfoTheory import rdInfoTheory
 
 try:
   from rdkit.ML.InfoTheory import BitClusterer

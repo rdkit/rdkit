@@ -6,6 +6,7 @@
 #  of the RDKit source tree.
 #
 import collections
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 

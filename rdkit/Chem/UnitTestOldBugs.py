@@ -14,10 +14,11 @@ The bugs were in the OELib code, so these are maybe no longer
 relevant... but tests are tests
 
 """
-from rdkit import RDConfig
-import unittest, os
+import os
 import pickle
-from rdkit import Chem
+import unittest
+
+from rdkit import Chem, RDConfig
 from rdkit.Chem import AllChem
 
 

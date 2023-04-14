@@ -110,6 +110,7 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 """
 
 import os
+import pickle
 import sys
 
 import numpy
@@ -119,7 +120,6 @@ from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
 from rdkit.ML.Data import DataUtils, SplitData
-import pickle
 
 try:
   from PIL import Image, ImageDraw

@@ -8,9 +8,9 @@
 #  of the RDKit source tree.
 #
 import sys
-from rdkit import Chem
-
 import warnings
+
+from rdkit import Chem
 
 warnings.warn(
   "The FastSDMolSupplier class has been deprecated, please use Chem.SDMolSupplier instead",

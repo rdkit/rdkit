@@ -13,8 +13,8 @@ Composite building
 
 """
 from rdkit import RDConfig
-from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.Dbase import DbModule
+from rdkit.Dbase.DbConnection import DbConnect
 
 
 def SetDefaults(runDetails):

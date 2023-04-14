@@ -11,7 +11,8 @@ import unittest
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from rdkit.Chem.Subshape import SubshapeBuilder, SubshapeAligner, SubshapeObjects
+from rdkit.Chem.Subshape import (SubshapeAligner, SubshapeBuilder,
+                                 SubshapeObjects)
 
 debug = False
 if not debug:

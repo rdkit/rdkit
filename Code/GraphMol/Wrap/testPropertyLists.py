@@ -2,10 +2,10 @@
 #  Copyright (C) 2019  Greg Landrum
 #         All Rights Reserved
 #
-from rdkit import RDConfig, rdBase
-from rdkit import Chem
-from io import BytesIO
 import unittest
+from io import BytesIO
+
+from rdkit import Chem, RDConfig, rdBase
 
 
 class TestCase(unittest.TestCase):

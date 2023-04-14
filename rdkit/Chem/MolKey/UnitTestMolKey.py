@@ -6,11 +6,12 @@
 #  of the RDKit source tree.
 #
 import doctest
+import io
 import unittest
 
 from rdkit.Chem import inchi
 from rdkit.TestRunner import redirect_stderr
-import io
+
 if inchi.INCHI_AVAILABLE:
   from rdkit.Chem.MolKey.InchiInfo import InchiInfo
 

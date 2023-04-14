@@ -36,7 +36,10 @@ Some nomenclature:
         for reactant in rgroup.sidechhains:
             print(reactant.name)
 """
-import random, operator, itertools, math
+import itertools
+import math
+import operator
+import random
 from functools import reduce
 
 

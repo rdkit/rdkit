@@ -1,9 +1,8 @@
-from rdkit import DataStructs
-from rdkit import RDConfig
-from rdkit import Chem
-from rdkit.Chem import ChemicalFeatures, rdDistGeom, AllChem
-from rdkit import Geometry
-import unittest, os
+import os
+import unittest
+
+from rdkit import Chem, DataStructs, Geometry, RDConfig
+from rdkit.Chem import AllChem, ChemicalFeatures, rdDistGeom
 
 
 def lstFeq(l1, l2, tol=1.e-4):

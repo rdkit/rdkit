@@ -9,11 +9,11 @@
 
 import random
 import unittest
+from io import StringIO
 
 from rdkit.ML.Neural import Network, Trainers
 from rdkit.ML.Neural.CrossValidate import CrossValidate, CrossValidationDriver
 from rdkit.TestRunner import redirect_stdout
-from io import StringIO
 
 
 class TrainerTestCase(unittest.TestCase):

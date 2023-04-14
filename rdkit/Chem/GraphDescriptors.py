@@ -14,12 +14,12 @@
 
 """
 
-from rdkit import Chem
-from rdkit.Chem import Graphs
-from rdkit.Chem import rdchem
-from rdkit.Chem import rdMolDescriptors
-import numpy
 import math
+
+import numpy
+
+from rdkit import Chem
+from rdkit.Chem import Graphs, rdchem, rdMolDescriptors
 from rdkit.ML.InfoTheory import entropy
 
 ptable = Chem.GetPeriodicTable()

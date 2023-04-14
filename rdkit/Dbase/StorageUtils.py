@@ -291,10 +291,10 @@ def _test():  # pragma: nocover
 
 
 if __name__ == '__main__':  # pragma: nocover
+  import os
+  import shutil
   import sys
   import tempfile
-  import shutil
-  import os
   if RDConfig.useSqlLite:
     tmpf, tempName = tempfile.mkstemp(suffix='sqlt')
     tempDbName = tempName

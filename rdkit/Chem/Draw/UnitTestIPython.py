@@ -10,11 +10,14 @@
 """ unit testing code for IPython/Jupyter integration
 """
 import unittest
+
 from rdkit import Chem
 from rdkit.Chem import Draw
+
 try:
-  from rdkit.Chem.Draw import IPythonConsole, rdMolDraw2D
   from IPython.core.display import SVG
+
+  from rdkit.Chem.Draw import IPythonConsole, rdMolDraw2D
 except ImportError:
   IPythonConsole = None
 

@@ -12,10 +12,10 @@
 """
 
 import os
+import pickle
 import unittest
 
 from rdkit.DataStructs import cDataStructs
-import pickle
 
 klass = cDataStructs.SparseBitVect
 

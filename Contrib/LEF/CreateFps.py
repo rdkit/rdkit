@@ -30,10 +30,12 @@
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
 
+import pickle
+import sys
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.AtomPairs import Pairs, Torsions
-import sys, pickle
 
 # maxPathLength is the maximum path length in atoms
 # maxPathLength=6 corresponds to F-FP-5

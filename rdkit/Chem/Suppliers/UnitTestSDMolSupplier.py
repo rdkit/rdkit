@@ -15,8 +15,7 @@ import os
 import tempfile
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 
 
 class TestCase(unittest.TestCase):

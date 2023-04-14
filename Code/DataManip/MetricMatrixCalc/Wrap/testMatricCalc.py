@@ -1,9 +1,10 @@
-from rdkit import RDConfig
-import unittest
-from rdkit.DataManip.Metric import rdMetricMatrixCalc as rdmmc
-import numpy
 import random
-from rdkit import DataStructs
+import unittest
+
+import numpy
+
+from rdkit import DataStructs, RDConfig
+from rdkit.DataManip.Metric import rdMetricMatrixCalc as rdmmc
 
 
 def feq(v1, v2, tol2=1e-4):

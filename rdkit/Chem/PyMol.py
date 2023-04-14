@@ -11,8 +11,11 @@
 """ uses pymol to interact with molecules
 
 """
+import os
+import sys
+import tempfile
+
 from rdkit import Chem
-import os, tempfile, sys
 
 # Python3 compatibility
 try:

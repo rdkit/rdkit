@@ -4,8 +4,10 @@
 
 # unit testing code for the composite model COM server
 
-from rdkit import RDConfig
 import unittest
+
+from rdkit import RDConfig
+
 try:
   from win32com.client import Dispatch
 except ImportError:

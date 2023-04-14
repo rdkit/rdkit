@@ -29,11 +29,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import copy
+import os
+import sys
 import unittest
-import os, sys, copy
 
-from rdkit.Chem import rdFreeSASA
 from rdkit import Chem
+from rdkit.Chem import rdFreeSASA
 
 expected = [[0, 1, "Polar", 1.64], [1, 0, "Apolar", 1.88], [2, 0, "Apolar", 1.61],
             [3, 1, "Polar", 1.42], [4, 0, "Apolar", 1.88], [5, 0, "Apolar", 1.88],

@@ -11,8 +11,8 @@
 import unittest
 
 from rdkit.Chem.FeatMaps import FeatMapParser, FeatMapUtils
-from rdkit.Geometry import Point3D
 from rdkit.Chem.FeatMaps.FeatMapUtils import MergeMetric
+from rdkit.Geometry import Point3D
 
 
 def feq(n1, n2, tol=1e-4):

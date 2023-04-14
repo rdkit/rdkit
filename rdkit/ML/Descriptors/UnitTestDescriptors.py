@@ -5,10 +5,10 @@
 
 """
 import unittest
+from io import StringIO
 
 from rdkit.ML.Descriptors import CompoundDescriptors
 from rdkit.TestRunner import redirect_stdout
-from io import StringIO
 
 
 class TestCase(unittest.TestCase):

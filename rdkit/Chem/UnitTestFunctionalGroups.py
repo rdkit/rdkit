@@ -34,8 +34,7 @@
 import os.path
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import FunctionalGroups
 
 

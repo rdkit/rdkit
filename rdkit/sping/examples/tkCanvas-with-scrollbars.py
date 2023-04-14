@@ -1,6 +1,6 @@
-from Tkinter import *
-from sping.TK import TKCanvas
 from sping import colors
+from sping.TK import TKCanvas
+from Tkinter import *
 
 # This example program creates a scrolling canvas with sping.TK
 # how to tie scrollbars and canvases together. The mechanism

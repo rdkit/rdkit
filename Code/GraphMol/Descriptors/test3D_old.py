@@ -1,12 +1,9 @@
-from rdkit import Chem
-from rdkit import rdBase
-
-from rdkit.Chem import rdMolDescriptors as rdMD
-from rdkit.Chem import AllChem
-from rdkit.Chem.EState import EStateIndices
-from rdkit.Chem.EState import AtomTypes
-
 import time
+
+from rdkit import Chem, rdBase
+from rdkit.Chem import AllChem
+from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit.Chem.EState import AtomTypes, EStateIndices
 
 print rdBase.rdkitVersion
 print rdBase.boostVersion

@@ -4,15 +4,13 @@
 #
 #  @@ All Rights Reserved @@
 #
-import os
 import io
-import sys
+import os
+import pickle
 import unittest
 
-from rdkit import RDConfig
-#import pickle
-import pickle
 from rdkit import DataStructs as ds
+from rdkit import RDConfig
 
 
 class TestCase(unittest.TestCase):

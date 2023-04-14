@@ -1,9 +1,9 @@
 # pdfutils.py - everything to do with images, streams,
 # compression, and some constants
 
+import glob
 import os
 from io import StringIO
-import glob
 
 LINEEND = '\015\012'
 
@@ -16,8 +16,9 @@ LINEEND = '\015\012'
 ##########################################################
 def cacheImageFile(filename):
   "Processes the image as if for encoding, saves to a file ending in AHX"
-  from PIL import Image
   import zlib
+
+  from PIL import Image
   img1 = Image.open(filename)
   img = img1.convert('RGB')
   imgwidth, imgheight = img.size

@@ -199,6 +199,7 @@ a QDAT file.
 
 """
 
+import pickle
 import sys
 import time
 
@@ -206,12 +207,10 @@ import numpy
 
 from rdkit import DataStructs
 from rdkit.Dbase import DbModule
-from rdkit.ML import CompositeRun
-from rdkit.ML import ScreenComposite
-from rdkit.ML.Composite import Composite, BayesComposite
+from rdkit.ML import CompositeRun, ScreenComposite
+from rdkit.ML.Composite import BayesComposite, Composite
 from rdkit.ML.Data import DataUtils, SplitData
 from rdkit.utils import listutils
-import pickle
 
 # # from ML.SVM import SVMClassificationModel as SVM
 _runDetails = CompositeRun.CompositeRun()
@@ -522,8 +521,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
                    silent=not _verbose)
 
   elif details.useSigTrees:
-    from rdkit.ML.DecTree import CrossValidate
-    from rdkit.ML.DecTree import BuildSigTree
+    from rdkit.ML.DecTree import BuildSigTree, CrossValidate
     builder = BuildSigTree.SigTreeBuilder
     driver = CrossValidate.CrossValidationDriver
     nPossibleVals = data.GetNPossibleVals()
@@ -551,8 +549,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
                    silent=not _verbose)
 
   elif details.useKNN:
-    from rdkit.ML.KNN import CrossValidate
-    from rdkit.ML.KNN import DistFunctions
+    from rdkit.ML.KNN import CrossValidate, DistFunctions
 
     driver = CrossValidate.CrossValidationDriver
     dfunc = ''

@@ -33,10 +33,9 @@
 import os
 import re
 import weakref
-
-from rdkit import Chem
-from rdkit import RDConfig
 from io import StringIO
+
+from rdkit import Chem, RDConfig
 
 
 class FGHierarchyNode(object):

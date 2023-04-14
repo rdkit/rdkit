@@ -1,7 +1,8 @@
-from rdkit import RDConfig
-import os, sys
+import os
+import sys
 import unittest
-from rdkit import Chem
+
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdMolHash
 
 

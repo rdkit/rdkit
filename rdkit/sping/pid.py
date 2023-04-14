@@ -326,7 +326,7 @@ class Canvas:
     if steps < 5:
       steps = 5
 
-    from math import sin, cos, pi
+    from math import cos, pi, sin
 
     pointlist = []
     step = float(extent) / steps

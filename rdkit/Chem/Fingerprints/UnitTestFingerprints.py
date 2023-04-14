@@ -12,8 +12,7 @@
 """
 import unittest
 
-from rdkit import Chem
-from rdkit import DataStructs
+from rdkit import Chem, DataStructs
 from rdkit.Chem.Fingerprints import FingerprintMols
 
 

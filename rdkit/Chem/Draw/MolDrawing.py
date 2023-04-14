@@ -8,11 +8,13 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Chem
-import numpy
-import math
 import copy
 import functools
+import math
+
+import numpy
+
+from rdkit import Chem
 
 
 def cmp(t1, t2):

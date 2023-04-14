@@ -1,7 +1,9 @@
-from rdkit import Chem
-from rdkit import RDConfig
-import time, sys, gzip
+import gzip
 import pickle
+import sys
+import time
+
+from rdkit import Chem, RDConfig
 from rdkit.RDLogger import logger
 
 logger = logger()

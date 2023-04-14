@@ -1,9 +1,10 @@
-from rdkit import DataStructs
-from rdkit import RDConfig
-import unittest
 import pickle
 import random
+import unittest
+
 import numpy
+
+from rdkit import DataStructs, RDConfig
 
 
 def feq(a, b, tol=1e-4):

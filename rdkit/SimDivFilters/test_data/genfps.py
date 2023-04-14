@@ -1,8 +1,8 @@
-from rdkit import Chem
-from rdkit import RDConfig
+import pickle
+
+from rdkit import Chem, RDConfig
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
-import pickle
 
 if RDConfig.usePgSQL:
   dbName = "::RDTests"

@@ -1,9 +1,11 @@
+import copy
+import pickle
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.PyMol import MolViewer
-from rdkit.Chem.Subshape import SubshapeBuilder, SubshapeObjects, SubshapeAligner
-import pickle
-import copy
+from rdkit.Chem.Subshape import (SubshapeAligner, SubshapeBuilder,
+                                 SubshapeObjects)
 
 m1 = Chem.MolFromMolFile('test_data/square1.mol')
 m2 = Chem.MolFromMolFile('test_data/square2.mol')
@@ -39,7 +41,9 @@ algs = a.GetSubshapeAlignments(None, ns1, m1, s1, b, pruneStats=pruneStats)
 print(len(algs))
 print(pruneStats)
 
-import os, tempfile
+import os
+import tempfile
+
 from rdkit import Geometry
 
 fName = tempfile.NamedTemporaryFile(suffix='.grd', delete=False).name

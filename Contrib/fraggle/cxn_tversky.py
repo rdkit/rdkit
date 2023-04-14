@@ -32,15 +32,14 @@
 #
 # Created by Jameed Hussain, July 2013
 
-import sys
-import re
 import array
+import re
+import sys
 
-from chemaxon.util import MolHandler
+from chemaxon.descriptors import (CFParameters, ChemicalFingerprint,
+                                  SimilarityCalculatorFactory)
 from chemaxon.struc import Molecule
-from chemaxon.descriptors import ChemicalFingerprint
-from chemaxon.descriptors import CFParameters
-from chemaxon.descriptors import SimilarityCalculatorFactory
+from chemaxon.util import MolHandler
 
 
 def desalt(mol):

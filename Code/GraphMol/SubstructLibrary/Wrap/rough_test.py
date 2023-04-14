@@ -34,19 +34,22 @@
 it is intended to be shallow but broad.
 """
 
-import doctest, unittest, os, sys
-
-from rdkit import rdBase
+import doctest
 import logging
-from rdkit import RDConfig, RDLogger
+import os
+import sys
+import unittest
+
+from rdkit import RDConfig, RDLogger, rdBase
 from rdkit.RDLogger import logger
 
 logger = logger()
-from rdkit import Chem
-from rdkit.Chem import rdSubstructLibrary
-import time
 import pickle
 import tempfile
+import time
+
+from rdkit import Chem
+from rdkit.Chem import rdSubstructLibrary
 
 
 def load_tests(loader, tests, ignore):
@@ -397,7 +400,7 @@ class TestCase(unittest.TestCase):
         slib2.InitFromStream(file)
         self.assertEqual(len(slib), len(slib2))
 
-    from io import StringIO, BytesIO
+    from io import BytesIO, StringIO
     s = StringIO()
     slib.ToStream(s)
 

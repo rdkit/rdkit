@@ -4,15 +4,13 @@
 """ unit testing code for cross validation """
 
 import os
-import unittest
-
-from rdkit import RDConfig
-from rdkit import RDRandom
-from rdkit.ML.DecTree import CrossValidate
-from rdkit.ML.DecTree import randomtest
-from rdkit.TestRunner import redirect_stdout
-from io import BytesIO, StringIO
 import pickle
+import unittest
+from io import BytesIO, StringIO
+
+from rdkit import RDConfig, RDRandom
+from rdkit.ML.DecTree import CrossValidate, randomtest
+from rdkit.TestRunner import redirect_stdout
 
 
 class XValTestCase(unittest.TestCase):

@@ -1,18 +1,16 @@
-import unittest
-import os
 import copy
 import math
+import os
+import pickle
+import unittest
+
 import numpy
 
-import pickle
-
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import rdDistGeom, ChemicalForceFields, rdMolAlign
 import rdkit.DistanceGeometry as DG
-from rdkit import RDConfig, rdBase
-from rdkit.Geometry import rdGeometry as geom
+from rdkit import Chem, RDConfig, rdBase
+from rdkit.Chem import AllChem, ChemicalForceFields, rdDistGeom, rdMolAlign
 from rdkit.Geometry import ComputeSignedDihedralAngle
+from rdkit.Geometry import rdGeometry as geom
 from rdkit.RDLogger import logger
 
 logger = logger()

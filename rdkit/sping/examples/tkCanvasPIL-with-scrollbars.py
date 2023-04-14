@@ -1,6 +1,6 @@
-from Tkinter import *
-from sping.TK import TKCanvas, TKCanvasPIL
 from sping import colors
+from sping.TK import TKCanvas, TKCanvasPIL
+from Tkinter import *
 
 # This example program creates a scrolling canvas using TKCanvasPIL as the basis
 # The PIL-based canvas may be saved to an image file.

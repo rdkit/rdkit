@@ -1,9 +1,10 @@
-import os, sys, unittest, doctest
+import doctest
 import gzip
-from rdkit import RDConfig, rdBase
-from rdkit import Chem
-from rdkit import __version__
+import os
 import sys
+import unittest
+
+from rdkit import Chem, RDConfig, __version__, rdBase
 
 
 class TestCase(unittest.TestCase):

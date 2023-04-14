@@ -5,6 +5,8 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 
+from collections import namedtuple
+
 #
 #
 # Richard hall 2017
@@ -13,7 +15,6 @@
 # refine output function
 # astex_ifg: identify functional groups a la Ertl, J. Cheminform (2017) 9:36
 from rdkit import Chem
-from collections import namedtuple
 
 
 def merge(mol, marked, aset):

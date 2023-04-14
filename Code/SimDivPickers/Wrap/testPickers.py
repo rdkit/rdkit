@@ -1,10 +1,12 @@
-from rdkit import RDConfig
-import unittest, os
-from rdkit.SimDivFilters import rdSimDivPickers
-from rdkit.DataManip.Metric import rdMetricMatrixCalc as rdmmc
-from rdkit import DataStructs
-import numpy
+import os
 import random
+import unittest
+
+import numpy
+
+from rdkit import DataStructs, RDConfig
+from rdkit.DataManip.Metric import rdMetricMatrixCalc as rdmmc
+from rdkit.SimDivFilters import rdSimDivPickers
 
 
 class TestCase(unittest.TestCase):

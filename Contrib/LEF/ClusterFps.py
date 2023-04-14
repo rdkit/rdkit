@@ -30,9 +30,11 @@
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
 
-from rdkit.ML.Cluster import Butina
+import pickle
+import sys
+
 from rdkit import DataStructs
-import sys, pickle
+from rdkit.ML.Cluster import Butina
 
 # sims is the list of similarity thresholds used to generate clusters
 sims = [.9, .8, .7, .6]

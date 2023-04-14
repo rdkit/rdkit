@@ -5,13 +5,13 @@
 
 """
 import contextlib
+import pickle
 import random
 import unittest
+from io import StringIO
 
 from rdkit import RDConfig
-from rdkit.ML.Data import MLData, DataUtils
-from io import StringIO
-import pickle
+from rdkit.ML.Data import DataUtils, MLData
 
 
 class TestCase(unittest.TestCase):

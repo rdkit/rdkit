@@ -24,8 +24,8 @@ The fingerprints can be accessed through the following functions:
 from rdkit import DataStructs
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.AtomPairs import Utils
-
-from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint, GetHashedAtomPairFingerprint
+from rdkit.Chem.rdMolDescriptors import (GetAtomPairFingerprint,
+                                         GetHashedAtomPairFingerprint)
 
 GetAtomPairFingerprintAsIntVect = rdMolDescriptors.GetAtomPairFingerprint
 
@@ -155,8 +155,8 @@ def GetAtomPairFingerprintAsBitVect(mol):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

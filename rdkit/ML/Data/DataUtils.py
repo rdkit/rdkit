@@ -51,14 +51,14 @@
 """
 
 import csv
-from rdkit import RDRandom as random
+import pickle
 import re
 
 import numpy
 
+from rdkit import RDRandom as random
 from rdkit.DataStructs import BitUtils
 from rdkit.ML.Data import MLData
-import pickle
 from rdkit.utils import fileutils
 
 
@@ -668,8 +668,8 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

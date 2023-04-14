@@ -1,11 +1,11 @@
 # Run this with:
 #  python setup.py install --install-lib=.
 
-from distutils.core import setup, Extension
-import RDConfig
-
 # force the use of g++ please
 from distutils import sysconfig
+from distutils.core import Extension, setup
+
+import RDConfig
 
 save_init_posix = sysconfig._init_posix
 

@@ -11,6 +11,7 @@ import os
 import re
 
 from aggdraw import Brush, Draw, Font, Pen
+
 from rdkit import RDConfig
 from rdkit.Chem.Draw.canvasbase import CanvasBase
 

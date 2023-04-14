@@ -9,12 +9,11 @@
 #
 import io
 import os
+import pickle
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem import FragmentCatalog, BuildFragmentCatalog
-import pickle
+from rdkit import Chem, RDConfig
+from rdkit.Chem import BuildFragmentCatalog, FragmentCatalog
 
 
 def feq(n1, n2, tol=1e-4):

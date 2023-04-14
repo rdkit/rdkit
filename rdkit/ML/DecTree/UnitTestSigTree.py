@@ -6,6 +6,7 @@
 import gzip
 import os
 import unittest
+from io import StringIO
 
 from rdkit import RDConfig
 from rdkit.DataStructs import ExplicitBitVect
@@ -14,7 +15,6 @@ from rdkit.ML import InfoTheory
 from rdkit.ML.DecTree.BuildSigTree import BuildSigTree, _GenerateRandomEnsemble
 from rdkit.ML.DecTree.SigTree import SigTreeNode
 from rdkit.TestRunner import redirect_stdout
-from io import StringIO
 
 
 class TestCase(unittest.TestCase):

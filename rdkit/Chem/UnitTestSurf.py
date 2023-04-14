@@ -11,12 +11,11 @@
 unit testing code for calculations in rdkit.Chem.MolSurf
 """
 
-from collections import namedtuple
 import os.path
 import unittest
+from collections import namedtuple
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import MolSurf
 
 doLong = False

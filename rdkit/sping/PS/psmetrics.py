@@ -2,8 +2,7 @@
 # Christopher Lee  clee@users.sourceforge.net
 # based upon pdfmetrics.py by Andy Robinson
 
-from . import fontinfo
-from . import latin1MetricsCache
+from . import fontinfo, latin1MetricsCache
 
 ##############################################################
 #

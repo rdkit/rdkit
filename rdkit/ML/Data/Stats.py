@@ -6,8 +6,9 @@
 """ various statistical operations on data
 
 """
-import numpy
 import math
+
+import numpy
 
 
 def StandardizeMatrix(mat):

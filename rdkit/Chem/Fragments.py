@@ -14,8 +14,8 @@ No user-servicable parts inside.  ;-)
 
 """
 import os
-from rdkit import RDConfig
-from rdkit import Chem
+
+from rdkit import Chem, RDConfig
 
 defaultPatternFileName = os.path.join(RDConfig.RDDataDir, 'FragmentDescriptors.csv')
 

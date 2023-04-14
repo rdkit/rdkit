@@ -1,10 +1,11 @@
-from contextlib import contextmanager
 import sys
 import unittest
+from contextlib import contextmanager
+from io import StringIO
 
 from rdkit import Chem
-from rdkit.Chem.ChemUtils.AlignDepict import initParser, processArgs, AlignDepict
-from io import StringIO
+from rdkit.Chem.ChemUtils.AlignDepict import (AlignDepict, initParser,
+                                              processArgs)
 
 
 class TestCase(unittest.TestCase):

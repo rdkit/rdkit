@@ -5,13 +5,13 @@
 
 import copy
 import os
+import pickle
 import unittest
+from io import StringIO
 
 from rdkit import RDConfig
 from rdkit.ML.DecTree import Tree
 from rdkit.TestRunner import redirect_stdout
-from io import StringIO
-import pickle
 
 
 class TreeTestCase(unittest.TestCase):

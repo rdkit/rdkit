@@ -9,14 +9,14 @@
 #  of the RDKit source tree.
 #
 
-import unittest
 import doctest
-import os
 import gzip
+import os
 import pickle
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem.AtomPairs import Pairs, Torsions, Utils, Sheridan
+import unittest
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem.AtomPairs import Pairs, Sheridan, Torsions, Utils
 
 
 def load_tests(loader, tests, ignore):

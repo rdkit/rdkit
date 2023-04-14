@@ -2,17 +2,16 @@
 # Copyright (C) 2018 Susan H. Leung
 #         All Rights Reserved
 #
-from rdkit import RDConfig
+import math
 import os
 import sys
-import math
-from datetime import datetime, timedelta
 import unittest
-from rdkit import DataStructs
-from rdkit import Chem
-from rdkit.Geometry import rdGeometry as geom
-from rdkit.Chem.rdchem import Atom
+from datetime import datetime, timedelta
+
+from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Chem.MolStandardize import rdMolStandardize
+from rdkit.Chem.rdchem import Atom
+from rdkit.Geometry import rdGeometry as geom
 
 
 class TestCase(unittest.TestCase):

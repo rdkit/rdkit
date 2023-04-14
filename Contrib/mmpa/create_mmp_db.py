@@ -30,12 +30,13 @@
 #
 # Created by Jameed Hussain, July 2013
 
-import sys
-import re
 import os
-import subprocess
+import re
 import sqlite3
+import subprocess
+import sys
 from optparse import OptionParser
+
 from rdkit import Chem
 
 

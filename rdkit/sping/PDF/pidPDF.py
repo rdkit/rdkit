@@ -13,18 +13,13 @@ self.pdf which offers numerous lower-level drawing routines.
 # except drawFigure, which doesn't behave like PostScript
 # paths so I left it unchanged.
 
-# standard python library modules
-from . import pdfmetrics
-import glob
 import os
-import types
-from math import sin, cos, pi, ceil
+from math import cos, pi, sin
 
-# app specific
 from rdkit.sping import pagesizes
 from rdkit.sping.pid import *
-from . import pdfgen
-from . import pdfgeom
+
+from . import pdfgen, pdfgeom, pdfmetrics
 
 # edit this is the setting offends you, or set it in the constructor
 DEFAULT_PAGE_SIZE = pagesizes.A4

@@ -15,6 +15,7 @@ validation values are from the paper (JCICS _35_ 1039-1045 (1995))
 """
 
 import unittest
+
 from rdkit import Chem
 from rdkit.Chem.EState import AtomTypes
 

@@ -7,14 +7,16 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from collections import abc  # this won't work in python2, but we don't support that any more
+from collections import \
+    abc  # this won't work in python2, but we don't support that any more
 
-from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
-from rdkit.Chem import rdPartialCharges, rdMolDescriptors
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
-from rdkit.Chem.EState.EState import (MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex,
-                                      MinAbsEStateIndex)
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
+from rdkit.Chem import rdPartialCharges
+from rdkit.Chem.EState.EState import (MaxAbsEStateIndex, MaxEStateIndex,
+                                      MinAbsEStateIndex, MinEStateIndex)
 from rdkit.Chem.QED import qed
 
 
@@ -28,7 +30,8 @@ _descList = []
 
 def _setupDescriptors(namespace):
   global _descList, descList
-  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen, Descriptors3D
+  from rdkit.Chem import (Crippen, Descriptors3D, Fragments, GraphDescriptors,
+                          Lipinski, MolSurf)
   from rdkit.Chem.EState import EState_VSA
   _descList.clear()
 
@@ -303,8 +306,8 @@ def CalcMolDescriptors(mol, missingVal=None, silent=True):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

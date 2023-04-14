@@ -15,6 +15,7 @@ _usage = """
 _welcomeMessage = "This is ShowFeats version %s" % (_version)
 
 import math
+
 #set up the logger:
 from rdkit import RDLogger as logging
 
@@ -238,10 +239,12 @@ def ShowMolFeats(mol, factory, viewer, radius=0.5, confId=-1, showOnly=True, nam
       print(f'# {aidText}', file=featMapFile)
 
 
+import os
 # --- ----  --- ----  --- ----  --- ----  --- ----  --- ----
-import sys, os
-from rdkit import RDConfig
+import sys
 from optparse import OptionParser
+
+from rdkit import RDConfig
 
 parser = OptionParser(_usage, version='%prog ' + _version)
 

@@ -11,7 +11,9 @@ Replaced numpy.oldnumeric with numpy methods - Jan 2015, PGedeck
 """
 #pylint: disable=E1101,C0111,R0904
 import unittest
+
 import numpy as np
+
 from rdkit import DistanceGeometry as DG
 
 

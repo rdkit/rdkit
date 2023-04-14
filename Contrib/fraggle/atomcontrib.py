@@ -31,10 +31,11 @@
 # Created by Jameed Hussain, May 2013
 
 import sys
-from optparse import OptionParser
-from rdkit import Chem
-from rdkit import DataStructs
 from collections import defaultdict
+from optparse import OptionParser
+
+from rdkit import Chem, DataStructs
+from rdkit.Chem.Fraggle import FraggleSim
 
 #input format
 #query_substructs,query_smiles,SMILES,ID,Tversky_sim
@@ -44,7 +45,6 @@ from collections import defaultdict
 #feed to atomcontrib function to return generalised_SMILES
 #use Tanimoto to compare generalised_SMILES with query smiles to give fraggle similarity
 
-from rdkit.Chem.Fraggle import FraggleSim
 
 parser = OptionParser(
   description="Program to post-process Tversky search results as part of Fraggle", epilog=

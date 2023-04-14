@@ -1,6 +1,6 @@
-from rdkit import RDConfig
 import unittest
-from rdkit import Chem
+
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdMMPA
 
 

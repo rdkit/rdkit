@@ -18,6 +18,7 @@ import unittest
 from io import StringIO
 
 import numpy
+
 from rdkit import Chem
 from rdkit.Chem.EState import Fingerprinter
 

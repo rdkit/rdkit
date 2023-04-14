@@ -5,8 +5,9 @@
 import random
 import unittest
 
-from rdkit import RDConfig, Chem
-from rdkit.Chem.Suppliers.DbMolSupplier import ForwardDbMolSupplier, RandomAccessDbMolSupplier
+from rdkit import Chem, RDConfig
+from rdkit.Chem.Suppliers.DbMolSupplier import (ForwardDbMolSupplier,
+                                                RandomAccessDbMolSupplier)
 from rdkit.Chem.Suppliers.MolSupplier import MolSupplier
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
