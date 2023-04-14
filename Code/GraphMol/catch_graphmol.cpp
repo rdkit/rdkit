@@ -3106,18 +3106,20 @@ M  END
     REQUIRE(mol);
     bool explicitOnly = false;
     bool addCoords = true;
-    RDKit::ROMol * m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    RDKit::ROMol *m = MolOps::addHs(*mol, explicitOnly, addCoords);
     REQUIRE(m->getNumAtoms() == 5);
     const auto &conf = m->getConformer();
     // Hydrogen will always be in the last position
     const RDGeom::Point3D HPos = conf.getAtomPos(4);
-    // Ensure the hydrogen is placed on the same side of the carbon as it was originally. 
+    // Ensure the hydrogen is placed on the same side of the carbon as it was
+    // originally.
     const RDGeom::Point3D targetPos = RDGeom::Point3D(-.5384, 2.3132, 0.9096);
     const auto distToTarget = HPos - targetPos;
     CHECK(distToTarget.lengthSq() < 0.1);
   }
 
-  SECTION("Counterclockwise") {  // Chiral Tag (CCW) Different from CIPCode (R) due to different ordering of atoms
+  SECTION("Counterclockwise") {  // Chiral Tag (CCW) Different from CIPCode (R)
+                                 // due to different ordering of atoms
     std::string mb = R"CTAB(testmol
   CT1066645023
 
@@ -3137,12 +3139,13 @@ M  END
     REQUIRE(mol);
     bool explicitOnly = false;
     bool addCoords = true;
-    RDKit::ROMol * m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    RDKit::ROMol *m = MolOps::addHs(*mol, explicitOnly, addCoords);
     REQUIRE(m->getNumAtoms() == 5);
     const auto &conf = m->getConformer();
     // Hydrogen will always be in the last position
     const RDGeom::Point3D HPos = conf.getAtomPos(4);
-    // Ensure the hydrogen is placed on the same side of the carbon as it was originally.
+    // Ensure the hydrogen is placed on the same side of the carbon as it was
+    // originally.
     const RDGeom::Point3D targetPos = RDGeom::Point3D(-.5384, 2.3132, 0.9096);
     const auto distToTarget = HPos - targetPos;
     CHECK(distToTarget.lengthSq() < 0.1);

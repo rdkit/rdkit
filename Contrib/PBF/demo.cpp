@@ -19,57 +19,55 @@
 
 #include "PBFRDKit.h"
 
-void calc(){
+void calc() {
   std::string fname = "testData/egfr.sdf";
-  RDKit::SDMolSupplier reader(fname,true,false);
-  
-  while(!reader.atEnd()){
-    RDKit::ROMol *m=reader.next();
-    if(!m) continue;
+  RDKit::SDMolSupplier reader(fname, true, false);
+
+  while (!reader.atEnd()) {
+    RDKit::ROMol *m = reader.next();
+    if (!m) continue;
     std::string nm;
-    m->getProp("_Name",nm);
-    double dpbf=PBFRD(*m);
-    std::cout<<nm<<" "<<dpbf<<std::endl;
+    m->getProp("_Name", nm);
+    double dpbf = PBFRD(*m);
+    std::cout << nm << " " << dpbf << std::endl;
     delete m;
   }
 }
 
-void test(){
+void test() {
   std::string fname = "testData/egfr.sdf";
-  RDKit::SDMolSupplier reader(fname,true,false);
+  RDKit::SDMolSupplier reader(fname, true, false);
   std::ifstream instrm("testData/egfr.out");
-  int nDone=0;
-  while(!reader.atEnd()){
-    RDKit::ROMol *m=reader.next();
-    if(!m) continue;
+  int nDone = 0;
+  while (!reader.atEnd()) {
+    RDKit::ROMol *m = reader.next();
+    if (!m) continue;
     std::string nm;
-    m->getProp("_Name",nm);
-    double dpbf=PBFRD(*m);
+    m->getProp("_Name", nm);
+    double dpbf = PBFRD(*m);
 
     std::string inm;
     double ref;
-    instrm>>inm;
-    instrm>>ref;
-    if(inm!=nm){
-      std::cerr<<"name mismatch: "<<inm<<" "<<nm<<std::endl;
+    instrm >> inm;
+    instrm >> ref;
+    if (inm != nm) {
+      std::cerr << "name mismatch: " << inm << " " << nm << std::endl;
       continue;
     }
-    if(fabs(ref-dpbf)>.001){
-      std::cerr<<"value mismatch: "<<inm<<" "<<ref<<" "<<dpbf<<std::endl;
-    }      
+    if (fabs(ref - dpbf) > .001) {
+      std::cerr << "value mismatch: " << inm << " " << ref << " " << dpbf
+                << std::endl;
+    }
     delete m;
     ++nDone;
   }
 }
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   RDLog::InitLogs();
-  //calc();
+  // calc();
   test();
-  //for(unsigned int i=0;i<100;++i){
-  //calc();
-  //}
-  
+  // for(unsigned int i=0;i<100;++i){
+  // calc();
+  // }
 }

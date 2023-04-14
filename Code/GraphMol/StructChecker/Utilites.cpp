@@ -128,7 +128,8 @@ std::string LogNeighbourhood(
     else
       oss << "("
           << "?" << (int)std::get<1>(nbr) << "?" << std::get<0>(nbr);
-    if (std::get<2>(nbr)) oss << (std::get<2>(nbr) > 0 ? "+" : "") << std::get<2>(nbr);
+    if (std::get<2>(nbr))
+      oss << (std::get<2>(nbr) > 0 ? "+" : "") << std::get<2>(nbr);
 
     if (std::get<3>(nbr)) oss << std::get<3>(nbr);
     oss << ")";

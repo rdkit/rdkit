@@ -643,8 +643,9 @@ TEST_CASE("github #6050: stereogroups not combined") {
   }
 }
 
-TEST_CASE("github #6225: removes enhanced stereo if doIsomericSmiles is false") {
-  { // Gets rid of chiral centers
+TEST_CASE(
+    "github #6225: removes enhanced stereo if doIsomericSmiles is false") {
+  {  // Gets rid of chiral centers
     std::string smiles = "O[C@H](Br)[C@H](F)C |&1:1,3|";
     ROMol *m = SmilesToMol(smiles);
     SmilesWriteParams params;

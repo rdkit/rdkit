@@ -37,12 +37,13 @@ class CoordinateTemplates {
 
   bool hasTemplateOfSize(unsigned int atom_count) {
     if (m_templates.find(atom_count) != m_templates.end()) {
-        return true;
+      return true;
     }
     return false;
   }
 
-  const std::vector<std::shared_ptr<RDKit::ROMol>>& getMatchingTemplates(unsigned int atom_count) {
+  const std::vector<std::shared_ptr<RDKit::ROMol>>& getMatchingTemplates(
+      unsigned int atom_count) {
     return m_templates[atom_count];
   }
 
@@ -50,13 +51,13 @@ class CoordinateTemplates {
   CoordinateTemplates() {
     // load templates into m_templates map by atom count
     for (const auto& smiles : TEMPLATE_SMILES) {
-        std::shared_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol(smiles));
-        m_templates[mol->getNumAtoms()].push_back(mol);
+      std::shared_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol(smiles));
+      m_templates[mol->getNumAtoms()].push_back(mol);
     }
   }
 
   CoordinateTemplates(const CoordinateTemplates&) = delete;
-  CoordinateTemplates& operator= (const CoordinateTemplates&) = delete;
+  CoordinateTemplates& operator=(const CoordinateTemplates&) = delete;
   ~CoordinateTemplates() {
     for (auto& [atom_cout, romols] : m_templates) {
       romols.clear();
@@ -64,5 +65,6 @@ class CoordinateTemplates {
     m_templates.clear();
   }
 
-  std::unordered_map<unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>> m_templates;
+  std::unordered_map<unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>>
+      m_templates;
 };

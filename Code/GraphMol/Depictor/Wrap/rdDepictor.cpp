@@ -35,8 +35,7 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
                              unsigned int nFlipsPerSample = 3,
                              unsigned int nSamples = 100, int sampleSeed = 100,
                              bool permuteDeg4Nodes = false,
-                             double bondLength = -1.0,
-                             bool forceRDKit = false,
+                             double bondLength = -1.0, bool forceRDKit = false,
                              bool useRingTemplates = false) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
@@ -54,9 +53,9 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
     RDDepict::BOND_LEN = bondLength;
   }
   unsigned int res;
-  res = RDDepict::compute2DCoords(mol, &cMap, canonOrient, clearConfs,
-                                  nFlipsPerSample, nSamples, sampleSeed,
-                                  permuteDeg4Nodes, forceRDKit, useRingTemplates);
+  res = RDDepict::compute2DCoords(
+      mol, &cMap, canonOrient, clearConfs, nFlipsPerSample, nSamples,
+      sampleSeed, permuteDeg4Nodes, forceRDKit, useRingTemplates);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
