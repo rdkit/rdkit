@@ -721,21 +721,21 @@ M  END)""")
             with self.assertRaises(ValueError):
                 rdDepictor.SetRingSystemTemplates(tmp_file.name)
 
-        with tempfile.NamedTemporaryFile() as tmp_file:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
             # not a ring system
             tmp_file.write(b"C |(-0.5537,-3.1595)|")
             tmp_file.seek(0)
             with self.assertRaises(ValueError):
                 rdDepictor.SetRingSystemTemplates(tmp_file.name)
 
-        with tempfile.NamedTemporaryFile() as tmp_file:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
             # no coordinates
             tmp_file.write(b"C1CCCCC1")
             tmp_file.seek(0)
             with self.assertRaises(ValueError):
                 rdDepictor.SetRingSystemTemplates(tmp_file.name)
 
-        with tempfile.NamedTemporaryFile() as tmp_file:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
             # bridged ring system
             tmp_file.write(b"c1ccccc1-c1ccccc1")
             tmp_file.seek(0)
