@@ -1953,6 +1953,26 @@ M  END\n";
   allow_non_tetrahedral_chirality(orig_setting);
 }
 
+void test_query_colour() {
+  printf("--------------------------\n");
+  printf("  test_queryColour\n");
+  char smarts[] = "c1ccc2nc([*:1])nc([*:2])c2c1";
+  char *pkl;
+  size_t pkl_size;
+  pkl = get_qmol(smarts, &pkl_size, "");
+  assert(pkl);
+  assert(pkl_size > 0);
+  char *svg = get_svg(pkl, pkl_size, "{\"width\":350,\"height\":300}");
+  assert(strstr(svg, "#7F7F7F"));
+  assert(strstr(svg, "</svg>"));
+  free(svg);
+  svg = get_svg(pkl, pkl_size,
+                "{\"width\":350,\"height\":300,\"queryColour\":[0.0,0.0,0.0]}");
+  assert(!strstr(svg, "#7F7F7F"));
+  assert(strstr(svg, "</svg>"));
+  free(svg);
+  free(pkl);
+}
 
 int main() {
   enable_logging();
@@ -1977,5 +1997,6 @@ int main() {
   test_removehs();
   test_use_legacy_stereo();
   test_allow_non_tetrahedral_chirality();
+  test_query_colour();
   return 0;
 }
