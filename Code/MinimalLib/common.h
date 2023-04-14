@@ -881,13 +881,9 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
     std::unique_ptr<ROMol> molHs;
     ROMol *prbMol = &mol;
     if (allowRGroups) {
-      allowRGroups = false;
-      for (const auto templateAtom : templateMol.atoms()) {
-        if (templateAtom->getAtomicNum() == 0 && templateAtom->getDegree() == 1) {
-          allowRGroups = true;
-          break;
-        }
-      }
+      auto atoms = templateMol.atoms();
+      allowRGroups = std::any_of(atoms.begin(), atoms.end(),
+                                 isAtomTerminalRGroupOrQueryHydrogen);
     }
     if (allowRGroups) {
       molHs.reset(MolOps::addHs(mol));
@@ -906,8 +902,7 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
           for (const auto &pair : match) {
             const auto templateAtom = templateMol.getAtomWithIdx(pair.first);
             const auto prbAtom = prbMol->getAtomWithIdx(pair.second);
-            bool isRGroup = templateAtom->getAtomicNum() == 0 && templateAtom->getDegree() == 1;
-            if (isRGroup) {
+            if (isAtomTerminalRGroupOrQueryHydrogen(templateAtom)) {
               if (prbAtom->getAtomicNum() == 1) {
                 continue;
               }

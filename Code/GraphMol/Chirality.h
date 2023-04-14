@@ -161,6 +161,10 @@ RDKIT_GRAPHMOL_EXPORT StereoInfo getStereoInfo(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool bondAffectsAtomChirality(const Bond *bond,
                                                     const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT unsigned int getAtomNonzeroDegree(const Atom *atom);
+
+RDKIT_GRAPHMOL_EXPORT bool has_protium_neighbor(const ROMol &mol,
+                                                const Atom *atom);
+
 }  // namespace detail
 /// @endcond
 
