@@ -14,11 +14,11 @@ class ROMol;
 namespace Descriptors {
 const std::string TSEIVersion = "1.0.0";
 
-//! calculates MQN descriptors
+//! calculates TSEI descriptors
 /*!
   Chenzhong Cao and Li Liu
   "Topological steric effect index and its application"
-  CJ Chem Inf Comput Sci 44(2), 678-687, 2004.
+  J Chem Inf Comput Sci 44(2), 678-687, 2004.
 
 
   \param mol        the molecule of interest
