@@ -20,11 +20,11 @@ std::vector<double> calcTSEI(const ROMol& mol, bool force) {
   auto nAtoms = mol.getNumAtoms();
   auto table = RDKit::PeriodicTable::getTable();
 
-  for (auto i = 0; i < nAtoms; ++i) {
+  for (auto a1Idx = 0; a1Idx < nAtoms; ++a1Idx) {
     auto val = 0.0;
-    auto iR = table->getRcovalent(mol.getAtomWithIdx(i)->getAtomicNum());
+    auto iR = table->getRcovalent(mol.getAtomWithIdx(a1Idx)->getAtomicNum());
     for (auto j = 0; j < nAtoms; ++j) {
-      if (pathMat[i * nAtoms + j] == -1) {
+      if (pathMat[a1Idx * nAtoms + j] == -1) {
         continue;
       }
       auto distance = 0.0;
@@ -34,7 +34,7 @@ std::vector<double> calcTSEI(const ROMol& mol, bool force) {
         // for every step on the path add twice the covalent radius
         distance +=
             2 * (table->getRcovalent(mol.getAtomWithIdx(k)->getAtomicNum()));
-        k = pathMat[i * nAtoms + k];
+        k = pathMat[a1Idx * nAtoms + k];
       }
       distance = distance - iR - jR;  // correct for the endpoints
       val += pow(jR, 3) / pow(distance, 3);
