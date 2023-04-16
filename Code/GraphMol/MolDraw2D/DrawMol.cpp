@@ -1638,7 +1638,7 @@ void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
   const Point2D &at2_cds = atCds_[endAt->getIdx()];
   auto midp = (at2_cds + at1_cds) / 2.;
   auto tdash = shortDashes;
-  DrawColour queryColour{0.5, 0.5, 0.5};
+  const DrawColour &queryColour = drawOptions_.queryColour;
 
   bool drawGenericQuery = false;
   int at1Idx = begAt->getIdx();

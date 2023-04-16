@@ -79,8 +79,8 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
   bool doesRGroupMatchHydrogen(const std::pair<int, int> &pair) const {
     const auto queryAtom = d_query.getAtomWithIdx(pair.first);
     const auto molAtom = d_mol.getAtomWithIdx(pair.second);
-    return (queryAtom->getAtomicNum() == 0 && queryAtom->getDegree() == 1 &&
-            molAtom->getAtomicNum() == 1);
+    return (molAtom->getAtomicNum() == 1 &&
+            isAtomTerminalRGroupOrQueryHydrogen(queryAtom));
   }
   double computeScore(const RDKit::MatchVectType &match) const {
     double penalty = 0.0;
@@ -217,7 +217,16 @@ std::vector<MatchVectType> sortMatchesByDegreeOfCoreSubstitution(
   return matchScorer.sortMatchesByDegreeOfCoreSubstitution();
 }
 
+bool isAtomTerminalRGroupOrQueryHydrogen(const Atom *atom) {
+  return atom->getDegree() == 1 &&
+         (atom->getAtomicNum() == 0 ||
+          (atom->hasQuery() &&
+           describeQuery(atom).find("AtomAtomicNum 1 = val") !=
+               std::string::npos));
+}
+
 #define PT_OPT_GET(opt) params.opt = pt.get(#opt, params.opt)
+#define PT_OPT_PUT(opt) pt.put(#opt, params.opt);
 
 void updateSubstructMatchParamsFromJSON(SubstructMatchParameters &params,
                                         const std::string &json) {
@@ -236,6 +245,23 @@ void updateSubstructMatchParamsFromJSON(SubstructMatchParameters &params,
   PT_OPT_GET(uniquify);
   PT_OPT_GET(maxMatches);
   PT_OPT_GET(numThreads);
+}
+
+std::string substructMatchParamsToJSON(const SubstructMatchParameters &params) {
+  boost::property_tree::ptree pt;
+
+  PT_OPT_PUT(useChirality);
+  PT_OPT_PUT(useEnhancedStereo);
+  PT_OPT_PUT(aromaticMatchesConjugated);
+  PT_OPT_PUT(useQueryQueryMatches);
+  PT_OPT_PUT(recursionPossible);
+  PT_OPT_PUT(uniquify);
+  PT_OPT_PUT(maxMatches);
+  PT_OPT_PUT(numThreads);
+
+  std::stringstream ss;
+  boost::property_tree::json_parser::write_json(ss, pt);
+  return ss.str();
 }
 
 }  // namespace RDKit

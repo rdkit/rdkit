@@ -795,6 +795,24 @@ M  END''')
     sz2 = d2d.GetMolSize(m)
     self.assertEqual(sz, sz2)
 
+  def testQueryColour(self):
+    m = Chem.MolFromSmarts("c1ccc2nc([*:1])nc([*:2])c2c1")
+    self.assertIsNotNone(m)
+    # Check that default queryColour is #7F7F7F.
+    d2d = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    text = d2d.GetDrawingText()
+    self.assertTrue("#7F7F7F" in text)
+
+    # Check that queryColour can be set to black.
+    query_colour = (0.0, 0.0, 0.0)
+    d2d = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+    d2d.drawOptions().setQueryColour(query_colour)
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    text = d2d.GetDrawingText()
+    self.assertTrue("#7F7F7F" not in text)
 
 if __name__ == "__main__":
   unittest.main()

@@ -291,7 +291,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github6170.svg", 865612473U},
     {"test_getMolSize.svg", 3574937936U},
     {"test_github6200_1.svg", 1827224658U},
-    {"test_github6200_2.svg", 661919921U}};
+    {"test_github6200_2.svg", 661919921U},
+    {"test_queryColour_1.svg", 3758375489U},
+    {"test_queryColour_2.svg", 2426598062U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -7562,6 +7564,43 @@ TEST_CASE(
         " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
     // there are 2 arcs on atom-2, for a 2 colour highlight.
     testArcs(text, atom2, 2, 2.15);
+    check_file_hash(nameBase + "_2.svg");
+  }
+}
+
+TEST_CASE("queryColour can be set to a non-default value") {
+  std::string nameBase = "test_queryColour";
+  auto m = "c1ccc2nc([*:1])nc([*:2])c2c1"_smarts;
+  REQUIRE(m);
+
+  {
+    // Check that default queryColour is #7F7F7F.
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::string svgName = nameBase + "_1.svg";
+    std::ofstream outs(svgName);
+    outs << text;
+    outs.flush();
+    outs.close();
+    CHECK(text.find("#7F7F7F") != std::string::npos);
+    check_file_hash(nameBase + "_1.svg");
+  }
+  {
+    // Check that queryColour can be set to black.
+    DrawColour queryColour(0.0, 0.0, 0.0);
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().queryColour = queryColour;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::string svgName = nameBase + "_2.svg";
+    std::ofstream outs(svgName);
+    outs << text;
+    outs.flush();
+    outs.close();
+    CHECK(text.find("#7F7F7F") == std::string::npos);
     check_file_hash(nameBase + "_2.svg");
   }
 }

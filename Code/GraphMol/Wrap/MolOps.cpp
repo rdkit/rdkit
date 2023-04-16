@@ -961,8 +961,6 @@ struct molops_wrapper {
     python::enum_<MolOps::SanitizeFlags>("SanitizeFlags")
         .value("SANITIZE_NONE", MolOps::SANITIZE_NONE)
         .value("SANITIZE_CLEANUP", MolOps::SANITIZE_CLEANUP)
-        .value("SANITIZE_CLEANUP_ORGANOMETALLICS",
-               MolOps::SANITIZE_CLEANUP_ORGANOMETALLICS)
         .value("SANITIZE_PROPERTIES", MolOps::SANITIZE_PROPERTIES)
         .value("SANITIZE_SYMMRINGS", MolOps::SANITIZE_SYMMRINGS)
         .value("SANITIZE_KEKULIZE", MolOps::SANITIZE_KEKULIZE)
@@ -1590,14 +1588,14 @@ to the terminal dummy atoms.\n\
     docString =
         "cleans up certain common bad functionalities in the organometallic molecule\n\
 \n\
-  ARGUMENTS:\n\
+  Note that this function is experimental and may either change in behavior\n\
+  or be replaced with something else in future releases.\n\
 \n\
-    - mol: the molecule to use\n\
-\n\
-  NOTES:\n\
-\n\
-    - The molecule is modified in place.\n\
-\n";
+        ARGUMENTS :\n\
+\n - mol : the molecule to use\n\
+\n NOTES :\n\
+\n - The molecule is modified in place.\n\
+\n ";
     python::def("CleanupOrganometallics", cleanUpOrganometallicsMol,
                 (python::arg("mol")), docString.c_str());
 
@@ -2884,6 +2882,27 @@ A note on the flags controlling which atoms/bonds are modified:
                 Chirality::getUseLegacyStereoPerception,
                 "returns whether or not the legacy stereo perception code is "
                 "being used");
+
+    python::def(
+        "TranslateChiralFlagToStereoGroups", translateChiralFlagToStereoGroups,
+        (python::arg("mol"),
+         python::arg("zeroFlagGroupType") = StereoGroupType::STEREO_AND),
+        R"DOC(Generate enhanced stereo groups based on the status of the chiral flag property.
+
+  Arguments:
+   - mol: molecule to be modified
+   - zeroFlagGroupType: how to handle non-grouped stereo centers when the
+          chiral flag is set to zero
+
+  If the chiral flag is set to a value of 1 then all specified tetrahedral
+  chiral centers which are not already in StereoGroups will be added to an
+  ABS StereoGroup.
+
+  If the chiral flag is set to a value of 0 then all specified tetrahedral
+  chiral centers will be added to a StereoGroup of the type zeroFlagGroupType
+
+  If there is no chiral flag set (i.e. the property is not present), the
+  molecule will not be modified.)DOC");
   }
 };
 }  // namespace RDKit
