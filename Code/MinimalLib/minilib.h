@@ -99,9 +99,7 @@ class JSMol {
     return generate_aligned_coords(templateMol, "{}");
   }
   bool is_valid() const { return d_mol.get() != nullptr; }
-  bool has_coords() const {
-    return d_mol.get() != nullptr && d_mol->getNumConformers() != 0;
-  }
+  int has_coords() const;
 
   std::string get_stereo_tags() const;
   std::string get_aromatic_form() const;
