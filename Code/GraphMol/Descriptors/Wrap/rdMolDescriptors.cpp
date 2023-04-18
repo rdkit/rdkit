@@ -1058,7 +1058,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_ConnectivityInvariants_version") =
       RDKit::MorganFingerprints::morganConnectivityInvariantVersion;
 
-  python::class_<RDKit::NAMS::NAMSMolInfo, boost::noncopyable>(MSMolInfo
+  python::class_<RDKit::NAMS::NAMSMolInfo, boost::noncopyable>(
       "NAMSMolInfo", "A pre-processed molecular representation for the NAMS similarity algorithm");
   docString = "Returns a NAMS MolInfo object (precomputed 'fingerprint') for a molecule";
   python::def(

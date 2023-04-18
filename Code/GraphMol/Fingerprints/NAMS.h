@@ -15,6 +15,9 @@
 #ifndef __RD_NAMS_H__
 #define __RD_NAMS_H__
 
+#include <vector>
+#include <string>
+
 namespace RDKit {
 class ROMol;
 namespace NAMS {
@@ -25,7 +28,21 @@ namespace NAMS {
   and is only used by the other NAMS functionalities
 */
 class RDKIT_FINGERPRINTS_EXPORT NAMSMolInfo {
+public:
+  std::string smiles; // Needed? 
+  int natoms=0; // Needed?
+  int nbonds=0; // Needed?
+  double molwt=0; // Needed?
+  // nabas by (numb1, nrings1, chir1, numb2, nrings2, chir12, inring, arom, order, dbcistrans);
+  std::vector< std::vector< int > > abas;
+  // natoms by (??)
+  std::vector< std::vector< int > > mat_aba_typs;
+  // natoms by (??)
+  std::vector< std::vector< int > > mat_levels;
 
+  //! Primarily for debugging purposes.
+  //! Dump data in NAMS database format (more or less)
+  std::string dump(int cid=1) const; // For debugging.
 };
 
 //! returns a NAMS MolInfo object for a molecule
