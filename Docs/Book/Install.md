@@ -88,37 +88,73 @@ introduced in more recent macOS versions.
 
 The following commands will create a development environment for Linux x86_64 and Python 3.
 
-Start by downloading the latest anaconda installer from [Anaconda](https://www.anaconda.com/download/#linux) and install it. Then, install the required packages:
+First, install conda [as described previously](#how-to-get-conda), create a new conda environment and activate it:
 
-```
-bash Anaconda3-5.2.0-x86_64.sh
-conda install -y cmake cairo pillow eigen pkg-config
-conda install -y boost-cpp boost py-boost
-```
-
-Numpy and matplotlib are already part of the base installation of anaconda. Due to the latest boost libraries being currently built with a GLIBC version higher than the default in anaconda, we need to update to a more recent version:
-
-```
-conda install -y gxx_linux-64
+```sh
+conda create -n my-rdkit-env PYTHON=3
+conda activate my-rdkit-env
 ```
 
-At this point, you should be able to clone the RDKit repository to the desired build location, and start the build. Please consider that it is necessary to indicate the path to the numpy headers for RDKit to find them, since anaconda hides them inside the numpy package:
+Install the required packages:
 
+```sh
+conda install -y cmake cairo pillow eigen pkg-config \
+                 numpy matplotlib gxx_linux-64 \
+                 boost-cpp boost==1.67.0 py-boost 
 ```
+
+Clone the repository to the desired build location:
+
+```sh
 git clone https://github.com/rdkit/rdkit.git
 cd rdkit
-mkdir build && cd build
-cmake -DPy_ENABLE_SHARED=1 \
-  -DRDK_INSTALL_INTREE=ON \
-  -DRDK_INSTALL_STATIC_LIBS=OFF \
-  -DRDK_BUILD_CPP_TESTS=ON \
-  -DPYTHON_NUMPY_INCLUDE_PATH="$(python -c 'import numpy ; print(numpy.get_include())')" \
-  -DBOOST_ROOT="$CONDA_PREFIX" \
-  ..
 ```
 
-And finally, `make`, `make install` and `ctest`
+Make sure that RDKit paths are added / removed everytime the conda environment is activated / deactivated:
 
+```sh
+# create conda activation script
+mkdir -p ${CONDA_PREFIX}/etc/conda/activate.d
+echo '#!/bin/bash'"
+
+# backup variables
+export RDBASE_PRE_RDKIT=\${RDBASE}
+export LD_LIBRARY_PATH_PRE_RDKIT=\${LD_LIBRARY_PATH}
+export PYTHONPATH_PRE_RDKIT=\${PYTHONPATH}
+
+# add rdkit directories to path variables
+export RDBASE=$PWD
+export LD_LIBRARY_PATH=\${LD_LIBRARY_PATH}:\${RDBASE}/lib/
+export PYTHONPATH=\${PYTHONPATH}:\${RDBASE}
+" > ${CONDA_PREFIX}/etc/conda/activate.d/rdkit.sh
+
+# create conda deactivation script
+mkdir -p ${CONDA_PREFIX}/etc/conda/deactivate.d
+echo '#!/bin/bash'"
+
+# reset variables
+export RDBASE=\${RDBASE_PRE_RDKIT}
+export LD_LIBRARY_PATH=\${LD_LIBRARY_PATH_PRE_RDKIT}
+export PYTHONPATH=\${PYTHONPATH_PRE_RDKIT}
+
+unset RDBASE_PRE_RDKIT
+unset LD_LIBRARY_PATH_PRE_RDKIT
+unset PYTHONPATH_PRE_RDKIT
+" > ${CONDA_PREFIX}/etc/conda/deactivate.d/rdkit.sh
+
+# run the activation script manually this time
+source ${CONDA_PREFIX}/etc/conda/activate.d/rdkit.sh
+```
+
+Build and test the project:
+
+```sh
+mkdir build && cd build
+cmake ..
+make
+make install
+ctest
+```
 
 ### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
 
