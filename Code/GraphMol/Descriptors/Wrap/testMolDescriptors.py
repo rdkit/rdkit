@@ -257,6 +257,19 @@ class TestCase(unittest.TestCase):
     fp1 = rdMD.GetMorganFingerprint(mol, 2, bitInfo=info2)
     self.assertEqual(len(info2), 14)
 
+  def testNAMS(self):
+    print("%"*120) # FOR TESTING PURPOSES
+    mol1 = Chem.MolFromSmiles('NCCc1c[nH]c2ccccc12')
+    mol2 = Chem.MolFromSmiles('CN(C)CCc1c[nH]c2ccccc12')
+
+    nmi1 = rdMD.GetNAMSMolInfo(mol1)
+    nmi2 = rdMD.GetNAMSMolInfo(mol2)
+
+    similarity = rdMD.GetNAMSSimilarity(nmi1, nmi2)
+
+    self.assertEqual(similarity, 125.619)
+    print("%"*120) # FOR TESTING PURPOSES
+
   def testCrippen(self):
     mol = Chem.MolFromSmiles("n1ccccc1CO")
     contribs = rdMD._CalcCrippenContribs(mol)
