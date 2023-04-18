@@ -267,7 +267,10 @@ class TestCase(unittest.TestCase):
 
     similarity = rdMD.GetNAMSSimilarity(nmi1, nmi2)
 
-    self.assertEqual(similarity, 125.619)
+    self.assertEqual(similarity, 0.7758)
+    self.assertEqual(rdMD.GetNAMSSimilarity(nmi2, nmi1), similarity)
+
+    self.assertEqual(rdMD.GetNAMSSimilarity(nmi1, nmi1), 1.0)
     print("%"*120) # FOR TESTING PURPOSES
 
   def testCrippen(self):

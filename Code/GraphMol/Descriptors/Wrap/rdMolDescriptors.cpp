@@ -20,6 +20,7 @@
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
+#include <GraphMol/Fingerprints/NAMS.h>
 #include <DataStructs/BitVects.h>
 
 #include <GraphMol/Descriptors/USRDescriptor.h>
@@ -1056,6 +1057,20 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
   python::scope().attr("_ConnectivityInvariants_version") =
       RDKit::MorganFingerprints::morganConnectivityInvariantVersion;
+
+  python::class_<RDKit::NAMS::NAMSMolInfo, boost::noncopyable>(MSMolInfo
+      "NAMSMolInfo", "A pre-processed molecular representation for the NAMS similarity algorithm");
+  docString = "Returns a NAMS MolInfo object (precomputed 'fingerprint') for a molecule";
+  python::def(
+      "GetNAMSMolInfo", RDKit::NAMS::getNAMSMolInfo,
+      (python::arg("mol")),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
+  docString = "Return the NAMS Similarity for two NAMS MolInfo objects.";
+  python::def(
+      "GetNAMSSimilarity", RDKit::NAMS::getNAMSSimilarity,
+      (python::arg("molinfo1"),python::arg("molinfo2")),
+      docString.c_str());
 
   docString = "Returns feature invariants (FCFP-like) for a molecule.";
   python::def("GetFeatureInvariants", GetFeatureInvariants,
