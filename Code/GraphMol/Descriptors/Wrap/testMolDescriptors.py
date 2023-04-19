@@ -259,18 +259,21 @@ class TestCase(unittest.TestCase):
 
   def testNAMS(self):
     print("%"*120) # FOR TESTING PURPOSES
-    mol1 = Chem.MolFromSmiles('NCCc1c[nH]c2ccccc12')
-    mol2 = Chem.MolFromSmiles('CN(C)CCc1c[nH]c2ccccc12')
+    smiles = [ 'c1ccccc1', 'Cc1ccccc1O', 'NCCc1c[nH]c2ccccc12', 'CN(C)CCc1c[nH]c2ccccc12']
+    mols = [ Chem.MolFromSmiles(s) for s in smiles ]
+    mis = [ rdMD.GetNAMSMolInfo(m) for m in mols ]
 
-    nmi1 = rdMD.GetNAMSMolInfo(mol1)
-    nmi2 = rdMD.GetNAMSMolInfo(mol2)
 
-    similarity = rdMD.GetNAMSSimilarity(nmi1, nmi2)
+    params = rdMD.NAMSParameters();
 
-    self.assertEqual(similarity, 0.7758)
-    self.assertEqual(rdMD.GetNAMSSimilarity(nmi2, nmi1), similarity)
+    #self.assertEqual(rdMD.GetNAMSSimilarity(mis[0], mis[0]), 1.0) # Self comparison yields 1.0
 
-    self.assertEqual(rdMD.GetNAMSSimilarity(nmi1, nmi1), 1.0)
+    sim1 = rdMD.GetNAMSSimilarity( mis[0], mis[1], params );
+    self.assertEqual(sim1, 0.5759)
+    self.assertEqual(rdMD.GetNAMSSimilarity(mis[1], mis[0], params), sim1) # Order doesn't matter
+
+    self.assertEqual(rdMD.GetNAMSSimilarity(mis[2], mis[3], params), 0.7758)
+
     print("%"*120) # FOR TESTING PURPOSES
 
   def testCrippen(self):

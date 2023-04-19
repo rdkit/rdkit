@@ -1058,6 +1058,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_ConnectivityInvariants_version") =
       RDKit::MorganFingerprints::morganConnectivityInvariantVersion;
 
+  python::class_<RDKit::NAMS::NAMSParameters, boost::noncopyable>(
+      "NAMSParameters", "Parameters for the NAMS similarity algorithm" );
   python::class_<RDKit::NAMS::NAMSMolInfo, boost::noncopyable>(
       "NAMSMolInfo", "A pre-processed molecular representation for the NAMS similarity algorithm",
       python::init<RDKit::ROMol>());
@@ -1070,7 +1072,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString = "Return the NAMS Similarity for two NAMS MolInfo objects.";
   python::def(
       "GetNAMSSimilarity", RDKit::NAMS::getNAMSSimilarity,
-      (python::arg("molinfo1"),python::arg("molinfo2")),
+      (python::arg("molinfo1"),python::arg("molinfo2"),python::arg("params")),
       docString.c_str());
 
   docString = "Returns feature invariants (FCFP-like) for a molecule.";

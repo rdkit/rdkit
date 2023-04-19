@@ -22,6 +22,37 @@ namespace RDKit {
 class ROMol;
 namespace NAMS {
 
+struct NAMSParameters {
+
+  NAMSParameters() = default;
+  ~NAMSParameters();
+
+  float BS_ALPHA = 0.9f;
+  float ANRINGS_FAC = 0.8f;	//  #number of rings an atom belongs to
+  float ACHIR_FAC = 0.95f;	//  #chiral atom
+  float DBSTEREO_FAC = 0.95f;	//  #double bond stereo
+  float BRING_FAC = 0.9f;	//  #bond in ring
+  float BAROM_FAC = 0.9f;	//  #bond aromaticity
+  float BORDER_FAC = 0.9f;	//  #bond order
+  float PEN = 1.0f;
+  int ADM = 3;
+  //int *LU_ELEMS = LU_ELEMS_DEFAAULT;		// a lookup table for discovering the indices of the elements from the matrix from the atomic numbers
+  //float **ELEMS_DISTS;
+
+  static constexpr int MAX_LEVELS = 128;
+
+  float ELEMS_DISTS(int ele1, int ele2) const;
+
+  // These are non-owning raw pointers (do not attempt to delete/free).
+  const int* getBondLevelsMatrix() const;
+
+private:
+  void calcBondLevelsMatrix() const;
+
+  mutable int * blev_mat = nullptr;
+  mutable float blev_alpha = 0; // The BS_ALPHA alpha level the blev_mat is calculated for.
+};
+
 /*!
   Not exposed to Python, this is an internal implementation detail of the NAMSMolInfo type
 */
@@ -30,11 +61,11 @@ struct BondInfoType {
   BondInfoType(const ROMol &mol, unsigned int at1, unsigned int at2, bool do_isomerism = false);
 
   int ele1=0, ele2=0;
-  unsigned int nring1=0, nring2=0;
-  int chr1=0, chr2=0;
-  bool ringbond=false, aromatic=false;
+  int nrings1=0, nrings2=0; // Needs to be int due to subtraction
+  int chir1=0, chir2=0;
+  bool inring=false, aromatic=false;
   double order=0;
-  int dbstero12=0;
+  int dbcistrans=0;
 
   bool operator<( const BondInfoType & r ) const;
 };
@@ -47,6 +78,10 @@ struct BondInfoType {
 class RDKIT_FINGERPRINTS_EXPORT NAMSMolInfo {
 public:
   NAMSMolInfo(const ROMol &mol);
+
+  unsigned int natoms() const;
+  unsigned int nbonds() const;
+  unsigned int naba_types() const;
 
   std::string smiles; // Needed?
   double molwt=99.9; // Needed?
@@ -83,7 +118,7 @@ RDKIT_FINGERPRINTS_EXPORT NAMSMolInfo * getNAMSMolInfo(const ROMol &mol);
 
   \return the similarity between the two molecules (on a scale between 0-1)
 */
-RDKIT_FINGERPRINTS_EXPORT double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2);
+RDKIT_FINGERPRINTS_EXPORT double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params);
 
 } // namespace NAMS
 } // namespace RDKit
