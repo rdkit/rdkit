@@ -263,16 +263,15 @@ class TestCase(unittest.TestCase):
     mols = [ Chem.MolFromSmiles(s) for s in smiles ]
     mis = [ rdMD.GetNAMSMolInfo(m) for m in mols ]
 
-
     params = rdMD.NAMSParameters();
 
     #self.assertEqual(rdMD.GetNAMSSimilarity(mis[0], mis[0]), 1.0) # Self comparison yields 1.0
 
     sim1 = rdMD.GetNAMSSimilarity( mis[0], mis[1], params );
-    self.assertEqual(sim1, 0.5759)
+    self.assertEqual(round(sim1,4), 0.5759)
     self.assertEqual(rdMD.GetNAMSSimilarity(mis[1], mis[0], params), sim1) # Order doesn't matter
 
-    self.assertEqual(rdMD.GetNAMSSimilarity(mis[2], mis[3], params), 0.7758)
+    self.assertEqual(round(rdMD.GetNAMSSimilarity(mis[2], mis[3], params),4), 0.7758)
 
     print("%"*120) # FOR TESTING PURPOSES
 

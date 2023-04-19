@@ -19,6 +19,7 @@
 // (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
 
 #include <GraphMol/Fingerprints/NAMS.h>
+#include <GraphMol/Fingerprints/hungarian.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/MolOps.h>
@@ -534,7 +535,99 @@ int calcSelfSimilarity(const NAMSMolInfo & mi, const NAMSParameters & parms)
   return bscore;
 }
 
+// from nams-docker/nams/nams.cpp:calcAtomMatchingMatrix(), with minimal tweaks
+int *calcAtomMatchingMatrix(const NAMSMolInfo & mi1, const NAMSMolInfo & mi2, const NAMSParameters & parms, int *aba_match_scores)
+{
+  //this is a critical function. It will compare all atoms on mol1 to all atoms of mol2 and create a score for each match
+  //mat will hold the scores
+  int*  mat=(int*)malloc(mi1.natoms()*mi2.natoms()*sizeof(int));
 
+  int c=0, bscore;
+  for(unsigned int i=0; i<mi1.natoms();i++) {
+    //VERY VERY IMPORTANT! WHEN WEIGTHING THE ATOMS IMPORTANCE THIS IS WHERE WE SHOULD ACCOUNT FOR THEM
+    for(unsigned int j=0; j < mi2.natoms(); j++) {
+      bscore = matchBonds(i, j, mi1, mi2, aba_match_scores, parms);
+      //the penalties stuff
+      bscore -= (int)(parms.PEN*abs(int(mi1.nbonds())-int(mi2.nbonds()))*100.0);
+      mat[c]=bscore;
+      c++;
+      //printf("%5.2f ", bscore/10000.0f);
+    }
+    //puts("");
+  }
+  return mat;
+}
+
+// from nams-docker/nams/nams.cpp:nams_runner(), with minimal tweaks
+int nams_runner(const NAMSMolInfo & mi1, const NAMSMolInfo & mi2, const NAMSParameters & parms, bool M, bool A, float *wts)
+{
+  //Here is the backbone of it all. 2 molecules to be compared
+  //d) the atom matching matrix (M)
+  //e) the alignment produced (A)
+
+  int  *aba_match_scores; //the scores for each aba_bond match between 2 molecules
+  int  *atom_matrix;
+  int  v, final_score=0;
+  hungarian_problem_t p;
+
+  aba_match_scores = getAbaBondsCompMatrix(mi1, mi2, parms);
+
+  //for(int i=0; i<mi->naba_types; i++) {
+  //  for(int j=0; j<mi->naba_types; j++) printf("%6d ", aba_match_scores[mi->naba_types*i+ j]);
+  //  puts("");
+  //}
+
+  atom_matrix=calcAtomMatchingMatrix(mi1, mi2, parms, aba_match_scores);
+  //puts("");
+
+
+  int** m = array_to_matrix(atom_matrix, mi1.natoms(), mi2.natoms()); //THIS is where the weights will strike in!
+  if(wts) {
+    for(unsigned int row=0; row<mi1.natoms(); row++) {
+      for(unsigned int col=0; col<mi2.natoms(); col++) {
+        if(m[row][col]>0) m[row][col]=(int)(powf(m[row][col]/10000.0f, wts[row])*10000);
+        else m[row][col] = 0;
+      }
+    }
+  }
+
+  /*int matrix_size =*/ hungarian_init(&p, m , mi1.natoms(), mi2.natoms(), HUNGARIAN_MODE_MAXIMIZE_UTIL) ;
+
+  //here it is!!!
+  hungarian_solve(&p);
+  //this is just for writing
+  if(M) {
+    puts("Atom matching matrix");
+    printf("    ");
+    for(unsigned int j =0; j<mi2.natoms(); j++) printf("%6d ", j+1);
+    puts("");
+    for(unsigned int i =0; i<mi1.natoms(); i++) {
+      printf("%3d ", i+1);
+      for(unsigned int j =0; j<mi2.natoms(); j++) {
+        printf("%6.2f ", atom_matrix[i*mi2.natoms()+j]/10000.0f);
+      }
+      puts("");
+    }
+  }
+  //this is where the actual result is calculated
+  if(A) puts("Atom matching and scores");
+  for (unsigned int row = 0; row < mi1.natoms(); row++) {
+    unsigned int col=p.my_assig[row];
+    if(col<mi2.natoms() && row < mi1.natoms()) {
+      //v=atom_matrix[row*mi2->natoms+col]; // /10000.0f;
+      v=m[row][col];
+      if(A) printf("%3d %3d -> %5.2f\n", row+1, col+1,  v/10000.0f);
+      final_score+=v;
+      //printf("\t%d %d -> %d\n", row, col , v);
+    }
+  }
+  //printf("Matching Score: %7.3f\n", final_score);
+  hungarian_free(&p);
+  free_array_to_matrix(m, mi1.natoms());
+  free(atom_matrix);
+  free(aba_match_scores);
+  return final_score;
+}
 
 double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params) {
   // For debugging right now
@@ -545,15 +638,16 @@ double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molin
 
   bool M=false;
   bool A=false;
+  float *wts = nullptr;
 
   float ss1 = calcSelfSimilarity(molinfo1, params)/10000.0f;
   float ss2 = calcSelfSimilarity(molinfo2, params)/10000.0f;
   std::cerr << "--%%----------------------------------\n";
   std::cout << "SELF SIM " << molinfo1.smiles << " " << ss1 << '\n';
   std::cout << "SELF SIM " << molinfo2.smiles << " " << ss2 << '\n';
-//  float sim = nams_runner(molinfo1, molinfo2, parms, M, A, wts)/10000.0f;
-//  float jaccard = sim / ( ss1 + ss2 - sim );
-//  return jaccard;
+  float sim = nams_runner(molinfo1, molinfo2, params, M, A, wts)/10000.0f;
+  float jaccard = sim / ( ss1 + ss2 - sim );
+  return jaccard;
 
   return 0;
 }
