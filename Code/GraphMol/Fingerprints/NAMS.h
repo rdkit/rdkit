@@ -120,6 +120,9 @@ RDKIT_FINGERPRINTS_EXPORT NAMSMolInfo * getNAMSMolInfo(const ROMol &mol);
 */
 RDKIT_FINGERPRINTS_EXPORT double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params);
 
+//! Exposed primarily for testing. Integer result is 10000x the float result
+RDKIT_FINGERPRINTS_EXPORT int calcSelfSimilarity(const NAMSMolInfo & mi, const NAMSParameters & parms);
+
 } // namespace NAMS
 } // namespace RDKit
 #endif

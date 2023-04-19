@@ -35,6 +35,9 @@ rdkit_catch_test(fpTestCatch catch_tests.cpp LINK_LIBRARIES Fingerprints FilePar
 
 rdkit_catch_test(fpGenTestCatch fpgen_catch_tests.cpp LINK_LIBRARIES Fingerprints FileParsers)
 
+rdkit_test(testNAMS testNAMS.cpp LINK_LIBRARIES 
+           Fingerprints FileParsers )
+
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
