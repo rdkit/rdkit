@@ -58,9 +58,6 @@ class HashLayer(enum.Enum):
     :cvar SGROUP_DATA: canonicalization of all SGroups data present
     :cvar TAUTOMER_HASH: SMILES-like representation for a generic tautomer form
     :cvar NO_STEREO_TAUTOMER_HASH: the above tautomer hash lacking all stereo
-    :cvar TAUTOMER_V2_HASH: SMILES-like representation for a generic tautomer form, v2
-    :cvar NO_STEREO_TAUTOMER_V2_HASH: the v2 tautomer hash lacking all stereo
-
     """
   CANONICAL_SMILES = enum.auto()
   ESCAPE = enum.auto()
