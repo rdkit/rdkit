@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <string>
+#include <chrono>
 
 using namespace RDKit;
 using namespace RDKit::NAMS;
@@ -129,6 +130,8 @@ void testNAMSCrossSimiliarity() {
     mols.push_back( ROMOL_SPTR(SmilesToMol(smi)) );
   }
 
+  auto fullstart = std::chrono::high_resolution_clock::now();
+
   std::vector< NAMSMolInfo > molinfos;
   for ( ROMOL_SPTR const & mol: mols ) {
     molinfos.emplace_back( *mol ); // Rely on constructor that takes a ROMol object
@@ -136,6 +139,9 @@ void testNAMSCrossSimiliarity() {
 
   NAMSParameters params;
 
+  auto start = std::chrono::high_resolution_clock::now();
+
+  int count = 0;
   for ( unsigned int ii=0; ii< mols.size(); ++ii ) {
     for ( unsigned int jj=ii+1; jj <mols.size(); ++jj ) {
       unsigned int offset( jj-ii-1 );
@@ -143,8 +149,13 @@ void testNAMSCrossSimiliarity() {
       float sim = nams_runner(molinfos[ii], molinfos[jj], params)/10000.0f;
       //BOOST_LOG(rdErrorLog) << "For " << molinfos[ii].smiles << " against " << molinfos[jj].smiles << " found similarity " << sim << " expected " << CROSSSIM[ii][offset] << '\n';
       TEST_ASSERT ( sim < CROSSSIM[ii][offset] + 0.001 && sim > CROSSSIM[ii][offset] - 0.001 );
+      ++count;
     }
   }
+
+  auto stop = std::chrono::high_resolution_clock::now();
+  BOOST_LOG(rdErrorLog) << "Calculated similarity of " << count << " pairings in " << std::chrono::duration<double>(stop - start).count() << " seconds\n";
+  BOOST_LOG(rdErrorLog) << "    Including generating " << molinfos.size() << " data objects it took " << std::chrono::duration<double>(stop - fullstart).count() << " seconds\n";
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
