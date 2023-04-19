@@ -69,8 +69,6 @@ class HashLayer(enum.Enum):
   NO_STEREO_TAUTOMER_HASH = enum.auto()
   SGROUP_DATA = enum.auto()
   TAUTOMER_HASH = enum.auto()
-  TAUTOMER_V2_HASH = enum.auto()
-  NO_STEREO_TAUTOMER_V2_HASH = enum.auto()
 
 
 @enum.unique
@@ -93,26 +91,12 @@ class HashScheme(enum.Enum):
     HashLayer.NO_STEREO_TAUTOMER_HASH,
     HashLayer.SGROUP_DATA,
   )
-  STEREO_INSENSITIVE_LAYERS_V2 = (
-    HashLayer.ESCAPE,
-    HashLayer.FORMULA,
-    HashLayer.NO_STEREO_SMILES,
-    HashLayer.NO_STEREO_TAUTOMER_V2_HASH,
-    HashLayer.SGROUP_DATA,
-  )
   TAUTOMER_INSENSITIVE_LAYERS = (
     HashLayer.ESCAPE,
     HashLayer.FORMULA,
     HashLayer.NO_STEREO_TAUTOMER_HASH,
     HashLayer.SGROUP_DATA,
     HashLayer.TAUTOMER_HASH,
-  )
-  TAUTOMER_INSENSITIVE_LAYERS_V2 = (
-    HashLayer.ESCAPE,
-    HashLayer.FORMULA,
-    HashLayer.NO_STEREO_TAUTOMER_HASH,
-    HashLayer.SGROUP_DATA,
-    HashLayer.TAUTOMER_V2_HASH,
   )
 
 
@@ -156,13 +140,6 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   ps = Chem.SmilesWriteParams()
   cxsmiles = Chem.MolToCXSmiles(mol, ps, cxflag)
 
-  if not enable_tautomer_hash_v2:
-    tautomer_layer = HashLayer.TAUTOMER_HASH
-    no_stereo_tautomer_layer = HashLayer.NO_STEREO_TAUTOMER_HASH
-  else:
-    tautomer_layer = HashLayer.TAUTOMER_V2_HASH
-    no_stereo_tautomer_layer = HashLayer.NO_STEREO_TAUTOMER_V2_HASH
-
   tautomer_hash = GetStereoTautomerHash(mol, cxflag=cxflag,
                                         enable_tautomer_hash_v2=enable_tautomer_hash_v2)
 
@@ -176,9 +153,9 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
     HashLayer.ESCAPE: escape or "",
     HashLayer.FORMULA: formula,
     HashLayer.NO_STEREO_SMILES: no_stereo_smiles,
-    no_stereo_tautomer_layer: no_stereo_tautomer_hash,
+    HashLayer.NO_STEREO_TAUTOMER_HASH: no_stereo_tautomer_hash,
     HashLayer.SGROUP_DATA: sgroup_data,
-    tautomer_layer: tautomer_hash,
+    HashLayer.TAUTOMER_HASH: tautomer_hash,
   }
 
 
