@@ -35,6 +35,9 @@ package org.RDKit;
 
 import static org.junit.Assert.*;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.BufferedReader;
 import java.util.Arrays;
 
 import org.junit.Test;
@@ -496,7 +499,8 @@ public class Chemv2Tests extends GraphMolTest {
     }
 
     @Test
-    public void testStrictParsing() {
+    public void testStrictParsingAndLogging() {
+        RDKFuncs.InitLogs();
         String badMolBlock = "\n" +
             "  MJ201100                      \n" +
             "\n" +
@@ -528,11 +532,23 @@ public class Chemv2Tests extends GraphMolTest {
         assertTrue(exceptionThrown);
         assertFalse(molIsValid);
         exceptionThrown = false;
+        BufferedReader reader = null;
         try {
+            String filename = "java_warning_log.txt";
+            RDKFuncs.getRdWarningLog().SetTee(filename);
             mol = RWMol.MolFromMolBlock(badMolBlock, true, true, false);
+            reader = new BufferedReader(new FileReader(filename));
+            String line = reader.readLine();
+            assertTrue(line != null);
+            assertTrue(line.contains("SGroup SAP line too short"));
         } catch(Exception e) {
             exceptionThrown = true;
         } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {}
+            }
             if (mol != null) {
                 molIsValid = true;
                 mol.delete();

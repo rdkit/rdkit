@@ -13,7 +13,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 endif()
 
 rdkit_library(Depictor
-              RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp
+              RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp Templates.cpp
               LINK_LIBRARIES ${RDK_COORDGEN_LIBS} SubstructMatch MolTransforms GraphMol RDGeneral)
 target_compile_definitions(Depictor PRIVATE RDKIT_DEPICTOR_BUILD)
 

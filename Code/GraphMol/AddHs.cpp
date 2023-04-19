@@ -214,7 +214,7 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
         RDGeom::Point3D nbr1Pos = (*cfi)->getAtomPos(nbr1->getIdx());
         // get a normalized vector pointing away from the neighbor:
         nbr1Vect = nbr1Pos - otherPos;
-        if (fabs(nbr1Vect.lengthSq()) < 1e-4) {
+        if (nbr1Vect.lengthSq() < 1e-4) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
           (*cfi)->setAtomPos(idx, otherPos);
@@ -304,8 +304,7 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
         otherPos = (*cfi)->getAtomPos(otherIdx);
         nbr1Vect = otherPos - (*cfi)->getAtomPos(nbr1->getIdx());
         nbr2Vect = otherPos - (*cfi)->getAtomPos(nbr2->getIdx());
-        if (fabs(nbr1Vect.lengthSq()) < 1e-4 ||
-            fabs(nbr2Vect.lengthSq()) < 1e-4) {
+        if (nbr1Vect.lengthSq() < 1e-4 || nbr2Vect.lengthSq() < 1e-4) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
           (*cfi)->setAtomPos(idx, otherPos);
@@ -360,51 +359,33 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
       // --------------------------------------------------------------------------
       boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(otherAtom);
 
-      if (otherAtom->hasProp(common_properties::_CIPCode)) {
-        // if the central atom is chiral, we'll order the neighbors
-        // by CIP rank:
-        std::vector<std::pair<unsigned int, int>> nbrs;
-        while (nbrIdx != endNbrs) {
-          if (*nbrIdx != idx) {
-            const Atom *tAtom = mol.getAtomWithIdx(*nbrIdx);
-            unsigned int cip = 0;
-            tAtom->getPropIfPresent<unsigned int>(common_properties::_CIPRank,
-                                                  cip);
-            nbrs.emplace_back(cip, rdcast<int>(*nbrIdx));
+      // We're using chiral tag for checking chirality, so we just take the
+      // initial order
+      while (nbrIdx != endNbrs) {
+        if (*nbrIdx != idx) {
+          if (!nbr1) {
+            nbr1 = mol.getAtomWithIdx(*nbrIdx);
+          } else if (!nbr2) {
+            nbr2 = mol.getAtomWithIdx(*nbrIdx);
+          } else {
+            nbr3 = mol.getAtomWithIdx(*nbrIdx);
           }
-          ++nbrIdx;
         }
-        std::sort(nbrs.begin(), nbrs.end());
-        nbr1 = mol.getAtomWithIdx(nbrs[0].second);
-        nbr2 = mol.getAtomWithIdx(nbrs[1].second);
-        nbr3 = mol.getAtomWithIdx(nbrs[2].second);
-      } else {
-        // central atom isn't chiral, so the neighbor ordering isn't important:
-        while (nbrIdx != endNbrs) {
-          if (*nbrIdx != idx) {
-            if (!nbr1) {
-              nbr1 = mol.getAtomWithIdx(*nbrIdx);
-            } else if (!nbr2) {
-              nbr2 = mol.getAtomWithIdx(*nbrIdx);
-            } else {
-              nbr3 = mol.getAtomWithIdx(*nbrIdx);
-            }
-          }
-          ++nbrIdx;
-        }
+        ++nbrIdx;
       }
+
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
       TEST_ASSERT(nbr3);
+
       for (auto cfi = mol.beginConformers(); cfi != mol.endConformers();
            ++cfi) {
         otherPos = (*cfi)->getAtomPos(otherIdx);
         nbr1Vect = otherPos - (*cfi)->getAtomPos(nbr1->getIdx());
         nbr2Vect = otherPos - (*cfi)->getAtomPos(nbr2->getIdx());
         nbr3Vect = otherPos - (*cfi)->getAtomPos(nbr3->getIdx());
-        if (fabs(nbr1Vect.lengthSq()) < 1e-4 ||
-            fabs(nbr2Vect.lengthSq()) < 1e-4 ||
-            fabs(nbr3Vect.lengthSq()) < 1e-4) {
+        if (nbr1Vect.lengthSq() < 1e-4 || nbr2Vect.lengthSq() < 1e-4 ||
+            nbr3Vect.lengthSq() < 1e-4) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
           (*cfi)->setAtomPos(idx, otherPos);
@@ -433,9 +414,13 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
               RDGeom::Point3D v2 = nbr1Vect - nbr3Vect;
               RDGeom::Point3D v3 = nbr2Vect - nbr3Vect;
               double vol = v1.dotProduct(v2.crossProduct(v3));
-              // FIX: this is almost certainly wrong and should use the chiral
-              // tag
-              if ((cipCode == "S" && vol < 0) || (cipCode == "R" && vol > 0)) {
+
+              if ((otherAtom->getChiralTag() ==
+                       Atom::ChiralType::CHI_TETRAHEDRAL_CCW &&
+                   vol < 0) ||
+                  (otherAtom->getChiralTag() ==
+                       Atom::ChiralType::CHI_TETRAHEDRAL_CW &&
+                   vol > 0)) {
                 dirVect *= -1;
               }
             }
@@ -463,6 +448,7 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
             dirVect = pickBisector(nbr3Vect, nbr1Vect, nbr2Vect);
           }
         }
+
         dirVect.normalize();
         atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
         (*cfi)->setAtomPos(idx, atomPos);
@@ -1072,8 +1058,8 @@ bool isQueryH(const Atom *atom) {
     }
   }
 
-  if (atom->getDegree() != 1) {
-    // only degree 1
+  if (!(atom->getDegree() <= 1)) {
+    // bonded and unbonded H atoms will continue rest will be returned
     return false;
   }
 

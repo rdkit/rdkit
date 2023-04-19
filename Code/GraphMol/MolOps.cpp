@@ -391,12 +391,6 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
     cleanUp(mol);
   }
 
-  operationThatFailed = SANITIZE_CLEANUP_ORGANOMETALLICS;
-  if (sanitizeOps & operationThatFailed) {
-    // clean up things like nitro groups
-    cleanUpOrganometallics(mol);
-  }
-
   // update computed properties on atoms and bonds:
   operationThatFailed = SANITIZE_PROPERTIES;
   if (sanitizeOps & operationThatFailed) {

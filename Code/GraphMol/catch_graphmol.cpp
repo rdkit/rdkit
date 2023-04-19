@@ -2957,7 +2957,12 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
       {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
        "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
   for (size_t i = 0; i < test_vals.size(); ++i) {
-    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first, ps));
+    // MolOps::cleanUp(*m);
+    MolOps::cleanUpOrganometallics(*m);
+    MolOps::sanitizeMol(*m);
     TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
   }
 }
@@ -2999,6 +3004,42 @@ TEST_CASE("github #4642: Enhanced Stereo is lost when using GetMolFrags") {
           Atom::ChiralType::CHI_UNSPECIFIED);
     CHECK(frags[1]->getAtomWithIdx(4)->getChiralTag() !=
           Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+}
+
+TEST_CASE("Github #6119: No warning when merging explicit H query atoms with no bonds", "[bug][molops]"){
+  SECTION("Zero degree AtomOr Query"){
+    std::unique_ptr<RWMol> m{SmartsToMol("[#6,#1]")};
+    REQUIRE(m);
+    std::stringstream ss;
+    rdWarningLog->SetTee(ss);
+    MolOps::mergeQueryHs(*m);
+    rdWarningLog->ClearTee();
+    TEST_ASSERT(ss.str().find("WARNING: merging explicit H queries involved in ORs is not supported. "
+                              "This query will not be merged") !=
+                              std::string::npos);
+  }
+  SECTION("One degree AtomOr Query"){
+    std::unique_ptr<RWMol> m{SmartsToMol("C[#6,#1]")};
+    REQUIRE(m);
+    std::stringstream ss;
+    rdWarningLog->SetTee(ss);
+    MolOps::mergeQueryHs(*m);
+    rdWarningLog->ClearTee();
+    TEST_ASSERT(ss.str().find("WARNING: merging explicit H queries involved in ORs is not supported. "
+                              "This query will not be merged") !=
+                              std::string::npos);
+  }
+  SECTION("Atoms that are not H"){
+    std::unique_ptr<RWMol> m{SmartsToMol("C[#6,#7]")};
+    REQUIRE(m);
+    std::stringstream ss;
+    rdWarningLog->SetTee(ss);
+    MolOps::mergeQueryHs(*m);
+    rdWarningLog->ClearTee();
+    TEST_ASSERT(ss.str().find("WARNING: merging explicit H queries involved in ORs is not supported. "
+                              "This query will not be merged") ==
+                              std::string::npos);
   }
 }
 
@@ -3078,4 +3119,68 @@ M  END
   CHECK(bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
                                sprop));
   CHECK(std::string("(5 4 5 2 3 1)") == sprop);
+}
+
+TEST_CASE("github #6237: Correctly placing hydrogens based on Chiral Tag") {
+  SECTION("Clockwise") {  // Chiral Tag (CW) Agrees with CIPCode ('R')
+    std::string mb = R"CTAB(testmol
+  CT1066645023
+
+  5  4  0  0  1  0  0  0  0  0999 V2000
+    0.0021   -0.0041    0.0020 Br  0  0  0  0  0  0  0  0  0  0  0  0
+    1.6669    2.5858    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7012    2.4252   -1.1206 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0246    1.9617    0.0128 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5348    2.3132    0.9096 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0  0  0  0
+  2  4  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+M  END
+    )CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    bool explicitOnly = false;
+    bool addCoords = true;
+    RDKit::ROMol * m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    REQUIRE(m->getNumAtoms() == 5);
+    const auto &conf = m->getConformer();
+    // Hydrogen will always be in the last position
+    const RDGeom::Point3D HPos = conf.getAtomPos(4);
+    // Ensure the hydrogen is placed on the same side of the carbon as it was originally. 
+    const RDGeom::Point3D targetPos = RDGeom::Point3D(-.5384, 2.3132, 0.9096);
+    const auto distToTarget = HPos - targetPos;
+    CHECK(distToTarget.lengthSq() < 0.1);
+  }
+
+  SECTION("Counterclockwise") {  // Chiral Tag (CCW) Different from CIPCode (R) due to different ordering of atoms
+    std::string mb = R"CTAB(testmol
+  CT1066645023
+
+  5  4  0  0  1  0  0  0  0  0999 V2000
+    1.6669    2.5858    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    0.0021   -0.0041    0.0020 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5348    2.3132    0.9096 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0246    1.9617    0.0128 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7012    2.4252   -1.1206 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0  0  0  0
+  2  4  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    bool explicitOnly = false;
+    bool addCoords = true;
+    RDKit::ROMol * m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    REQUIRE(m->getNumAtoms() == 5);
+    const auto &conf = m->getConformer();
+    // Hydrogen will always be in the last position
+    const RDGeom::Point3D HPos = conf.getAtomPos(4);
+    // Ensure the hydrogen is placed on the same side of the carbon as it was originally.
+    const RDGeom::Point3D targetPos = RDGeom::Point3D(-.5384, 2.3132, 0.9096);
+    const auto distToTarget = HPos - targetPos;
+    CHECK(distToTarget.lengthSq() < 0.1);
+  }
 }
