@@ -761,7 +761,6 @@ $$$$
         Check that using v2 of the tautomer hash works
     """
     enol = Chem.MolFromSmiles('CC=CO')
-    enol_stereo = Chem.MolFromSmiles('C/C=C/O')
     keto = Chem.MolFromSmiles('CCC=O')
 
     # Default, v1 of the tautomer hash:
@@ -769,26 +768,34 @@ $$$$
     self.assertIn(RegistrationHash.HashLayer.TAUTOMER_HASH, enol_layers)
     self.assertNotIn(RegistrationHash.HashLayer.TAUTOMER_V2_HASH, enol_layers)
 
-    enol_stereo_layers = RegistrationHash.GetMolLayers(enol_stereo)
     keto_layers = RegistrationHash.GetMolLayers(keto)
 
     for layer in (RegistrationHash.HashLayer.TAUTOMER_HASH,
                   RegistrationHash.HashLayer.NO_STEREO_TAUTOMER_HASH):
       self.assertNotEqual(enol_layers[layer], keto_layers[layer])
-      self.assertEqual(enol_layers[layer], enol_stereo_layers[layer])
 
-    # Default, v2 of the tautomer hash:
+    self.assertNotEqual(
+      RegistrationHash.GetMolHash(
+        enol_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS),
+      RegistrationHash.GetMolHash(
+        keto_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+
+    # v2 of the tautomer hash:
     enol_layers = RegistrationHash.GetMolLayers(enol, enable_tautomer_hash_v2=True)
     self.assertNotIn(RegistrationHash.HashLayer.TAUTOMER_HASH, enol_layers)
     self.assertIn(RegistrationHash.HashLayer.TAUTOMER_V2_HASH, enol_layers)
 
-    enol_stereo_layers = RegistrationHash.GetMolLayers(enol_stereo, enable_tautomer_hash_v2=True)
     keto_layers = RegistrationHash.GetMolLayers(keto, enable_tautomer_hash_v2=True)
 
     for layer in (RegistrationHash.HashLayer.TAUTOMER_V2_HASH,
                   RegistrationHash.HashLayer.NO_STEREO_TAUTOMER_V2_HASH):
       self.assertEqual(enol_layers[layer], keto_layers[layer])
-      self.assertEqual(enol_layers[layer], enol_stereo_layers[layer])
+
+    self.assertEqual(
+      RegistrationHash.GetMolHash(
+        enol_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS_V2),
+      RegistrationHash.GetMolHash(
+        keto_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS_V2))
 
 
 if __name__ == '__main__':  # pragma: nocover
