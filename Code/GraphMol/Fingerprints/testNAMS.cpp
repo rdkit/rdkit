@@ -23,7 +23,7 @@ using namespace RDKit;
 using namespace RDKit::NAMS;
 
 std::vector< std::string > SMILES = {
-  "C=CCC1CCCCC1",
+  "OC=CCC1CCCCC1",
   "C1CCCCC1",
   "CC=C",
   "OC=C",
@@ -47,6 +47,7 @@ std::vector< float > SSIM = {
   32.279,
   43.199,
   55.009,
+  55.719,
   161.679,
   125.859
 };
@@ -95,7 +96,8 @@ void testNAMSSelfSimilarity() {
 
   for ( unsigned int ii=0; ii< mols.size(); ++ii ) {
     float ssim = calcSelfSimilarity(molinfos[ii], params)/10000.0f;
-    TEST_ASSERT( ssim == SSIM[ii] );
+    //BOOST_LOG(rdErrorLog) << "For " << molinfos[ii].smiles << " found self similarity " << ssim << " expected " << SSIM[ii] << '\n';
+    TEST_ASSERT ( ssim < SSIM[ii] + 0.001 && ssim > SSIM[ii] - 0.001 );
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;

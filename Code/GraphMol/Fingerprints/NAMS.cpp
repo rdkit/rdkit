@@ -142,6 +142,7 @@ NAMSParameters::calcBondLevelsMatrix() const {
   //this is a very important function and for efficiency should be computed only ONCE and the results stored in one array
   //the idea is that we should compute the floating point stuf once and only once
   // to make everything really fast, the striangular matrix will be symmetrical
+  float alpha = this->BS_ALPHA;
   int *mat=(int *)malloc(sizeof(int)*MAX_LEVELS*MAX_LEVELS);
   int v, mx;
   for(int i=0; i<MAX_LEVELS-1; i++) {
@@ -149,9 +150,9 @@ NAMSParameters::calcBondLevelsMatrix() const {
       //v=(int)(100*1.0f/powf((abs(i-j)+j+1.0f), parms->BS_ALPHA));
       //modified at 20/11/2017
       mx=i;
-      if(this->BS_ALPHA>0.0f) {
+      if(alpha>0.0f) {
         if(j>mx) mx=j;
-        v=(int)(100.0*powf(this->BS_ALPHA, (float)(mx+abs(i-j))));
+        v=(int)(100.0*powf(alpha, (float)(mx+abs(i-j))));
       }else {
         if(i==j) v=100; else v=0;
       }
@@ -159,6 +160,9 @@ NAMSParameters::calcBondLevelsMatrix() const {
       mat[j*MAX_LEVELS+i] = v;
     }
   }
+
+  blev_mat = mat;
+  blev_alpha = alpha;
 }
 
 /*!
