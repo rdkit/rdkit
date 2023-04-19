@@ -53,6 +53,14 @@ private:
   mutable float blev_alpha = 0; // The BS_ALPHA alpha level the blev_mat is calculated for.
 };
 
+struct NAMSResult {
+  double self_similarity1 = 0, self_similarity2 = 0;
+  double similarity = 0;
+  double jaccard = 0;
+  std::vector< int > mapping1to2;
+  std::vector< double > atom_scores;
+};
+
 /*!
   Not exposed to Python, this is an internal implementation detail of the NAMSMolInfo type
 */
@@ -115,16 +123,31 @@ RDKIT_FINGERPRINTS_EXPORT NAMSMolInfo * getNAMSMolInfo(const ROMol &mol);
 
   \param molinfo1:   one of the molinfos to use
   \param molinfo2:   one of the molinfos to use
+  \param params:     The NAMSParameters object to control how to run the calculation
 
   \return the similarity between the two molecules (on a scale between 0-1)
 */
 RDKIT_FINGERPRINTS_EXPORT double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params);
 
-//! Exposed primarily for testing. Integer result is 10000x the float result
-int calcSelfSimilarity(const NAMSMolInfo & mi, const NAMSParameters & parms);
+//! returns the NAMS similarity result between two molecules (encoded in NAMS MolInfo objects)
+/*!
+  The NAMS algorithm is described by Teixeira & Falcao (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
 
-//! Exposed primarily for testing. Integer result is 10000x the float result
-int nams_runner(const NAMSMolInfo & mi1, const NAMSMolInfo & mi2, const NAMSParameters & parms, bool M = false, bool A = false, float *wts = nullptr);
+  The similarity score should be invariant to the order of molecule listing.
+
+  \param molinfo1:   one of the molinfos to use
+  \param molinfo2:   one of the molinfos to use
+  \param params:     The NAMSParameters object to control how to run the calculation
+
+  \return a NAMSResult object which contains detailed information about the similarity calculation.
+*/
+RDKIT_FINGERPRINTS_EXPORT NAMSResult getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params);
+
+//! Exposed primarily for testing.
+double calcSelfSimilarity(const NAMSMolInfo & mi, const NAMSParameters & parms);
+
+////! Exposed primarily for testing. Integer result is 10000x the float result
+//int nams_runner(const NAMSMolInfo & mi1, const NAMSMolInfo & mi2, const NAMSParameters & parms, bool M = false, bool A = false, float *wts = nullptr);
 
 } // namespace NAMS
 } // namespace RDKit

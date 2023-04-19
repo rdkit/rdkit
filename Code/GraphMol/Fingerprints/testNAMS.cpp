@@ -34,8 +34,8 @@ std::vector< std::string > SMILES = {
   "Cc1ccccc1",
   "CCc1ccccc1",
   "Cc1ccccc1O",
-  "CN(C)CCc1c[nH]c2ccccc12",
-  "NCCc1c[nH]c2ccccc12"
+  "CN(CCc1c[nH]c2c1cccc2)C", // The canonicalized order from NAMS
+  "NCCc1c[nH]c2c1cccc2" // The canonicalized order from NAMS
 };
 
 // Reference values computed by the official NAMS code (https://github.com/aofalcao/nams-docker/)
@@ -112,7 +112,7 @@ void testNAMSSelfSimilarity() {
   NAMSParameters params;
 
   for ( unsigned int ii=0; ii< mols.size(); ++ii ) {
-    float ssim = calcSelfSimilarity(molinfos[ii], params)/10000.0f;
+    double ssim = calcSelfSimilarity(molinfos[ii], params);
     //BOOST_LOG(rdErrorLog) << "For " << molinfos[ii].smiles << " found self similarity " << ssim << " expected " << SSIM[ii] << '\n';
     TEST_ASSERT ( ssim < SSIM[ii] + 0.001 && ssim > SSIM[ii] - 0.001 );
   }
@@ -146,9 +146,9 @@ void testNAMSCrossSimiliarity() {
     for ( unsigned int jj=ii+1; jj <mols.size(); ++jj ) {
       unsigned int offset( jj-ii-1 );
 
-      float sim = nams_runner(molinfos[ii], molinfos[jj], params)/10000.0f;
-      //BOOST_LOG(rdErrorLog) << "For " << molinfos[ii].smiles << " against " << molinfos[jj].smiles << " found similarity " << sim << " expected " << CROSSSIM[ii][offset] << '\n';
-      TEST_ASSERT ( sim < CROSSSIM[ii][offset] + 0.001 && sim > CROSSSIM[ii][offset] - 0.001 );
+      NAMSResult result = getNAMSResult(molinfos[ii], molinfos[jj], params);
+      //BOOST_LOG(rdErrorLog) << "For " << molinfos[ii].smiles << " against " << molinfos[jj].smiles << " found similarity " << result.similarity << " expected " << CROSSSIM[ii][offset] << '\n';
+      TEST_ASSERT ( result.similarity < CROSSSIM[ii][offset] + 0.001 && result.similarity > CROSSSIM[ii][offset] - 0.001 );
       ++count;
     }
   }
@@ -156,6 +156,88 @@ void testNAMSCrossSimiliarity() {
   auto stop = std::chrono::high_resolution_clock::now();
   BOOST_LOG(rdErrorLog) << "Calculated similarity of " << count << " pairings in " << std::chrono::duration<double>(stop - start).count() << " seconds\n";
   BOOST_LOG(rdErrorLog) << "    Including generating " << molinfos.size() << " data objects it took " << std::chrono::duration<double>(stop - fullstart).count() << " seconds\n";
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+template< typename T >
+std::string print_vector( const std::vector< T > & vec ) {
+  std::stringstream ss;
+  ss << "[ ";
+  for ( auto const & entry: vec ) {
+    ss << entry << ", ";
+  }
+  ss << ']';
+  return ss.str();
+}
+
+void compare_vectors( const std::vector< int > & test, const std::vector< int > & ref, const std::string & tag ) {
+  if ( test.size() != ref.size() ) {
+    BOOST_LOG(rdErrorLog) << "For " << tag << " vector size of " << test.size() << " doesn't match reference size of " << ref.size() << "\n";
+    BOOST_LOG(rdErrorLog) << '\t' << print_vector( test ) << '\n';
+    BOOST_LOG(rdErrorLog) << '\t' << print_vector( ref ) << '\n';
+  }
+  TEST_ASSERT( test.size() == ref.size() );
+  for ( unsigned int ii=0; ii < test.size(); ++ii ) {
+    if ( test[ii] != ref[ii] ) {
+      BOOST_LOG(rdErrorLog) << "For " << tag << " vector element " << ii << " does not match" << "\n";
+      BOOST_LOG(rdErrorLog) << '\t' << print_vector( test ) << '\n';
+      BOOST_LOG(rdErrorLog) << '\t' << print_vector( ref ) << '\n';
+      TEST_ASSERT( test[ii] == ref[ii] );
+    }
+  }
+}
+
+void compare_vectors( const std::vector< double > & test, const std::vector< double > & ref, const std::string & tag, double delta = 0.01 ) {
+  if ( test.size() != ref.size() ) {
+    BOOST_LOG(rdErrorLog) << "For " << tag << " vector size of " << test.size() << " doesn't match reference size of " << ref.size() << "\n";
+    BOOST_LOG(rdErrorLog) << '\t' << print_vector( test ) << '\n';
+    BOOST_LOG(rdErrorLog) << '\t' << print_vector( ref ) << '\n';
+  }
+  TEST_ASSERT( test.size() == ref.size() );
+  for ( unsigned int ii=0; ii < test.size(); ++ii ) {
+    if ( test[ii] < ref[ii] - delta || test[ii] > ref[ii] + delta ) {
+      BOOST_LOG(rdErrorLog) << "For " << tag << " vector element " << ii << " does not match" << "\n";
+      BOOST_LOG(rdErrorLog) << '\t' << print_vector( test ) << '\n';
+      BOOST_LOG(rdErrorLog) << '\t' << print_vector( ref ) << '\n';
+      TEST_ASSERT( test[ii] > ref[ii] - delta && test[ii] < ref[ii] + delta );
+    }
+  }
+}
+
+void testNAMSPairing() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test NAMS pairing calculation"
+                        << std::endl;
+
+  ROMOL_SPTR mol1( SmilesToMol(SMILES[0]) );
+  ROMOL_SPTR mol11( SmilesToMol(SMILES[10]) );
+  ROMOL_SPTR mol12( SmilesToMol(SMILES[11]) );
+
+  NAMSMolInfo mi1( *mol1 );
+  NAMSMolInfo mi11( *mol11 );
+  NAMSMolInfo mi12( *mol12 );
+
+  NAMSParameters params;
+
+  NAMSResult result1_11 = getNAMSResult(mi1, mi11, params);
+  NAMSResult result11_1 = getNAMSResult(mi11, mi1, params);
+  NAMSResult result11_12 = getNAMSResult(mi11, mi12, params);
+
+  std::vector< int > ref_map1_11 = {1, 2, 3, 5, 4, 10, 9, 12, 7, 8};
+  std::vector< int > ref_map11_1 = {-1, 0, 1, 2, 4, 3, -1, 8, 5, 6, 9, -1, 7, -1};
+  std::vector< int > ref_map11_12 = {-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, -1};
+  std::vector< double > ref_scores1_11 = {4.24, 4.71, 5.23, 4.89, 5.79, 5.29, 5.68, 5.26, 5.38, 5.86};
+  std::vector< double > ref_scores11_1 = {0, 4.24, 4.71, 5.23, 5.79, 4.89, 0, 5.38, 5.86, 5.68, 5.29, 0, 5.26, 0};
+  std::vector< double > ref_scores11_12 = {0, 8.89, 9.76, 10.51, 11.18, 10.66, 10.66, 11.11, 11.35, 10.74, 10.21, 10.02, 10.53, 0 };
+
+  compare_vectors( ref_map1_11, result1_11.mapping1to2, "Cmpd 1 to 11 map" );
+  compare_vectors( ref_map11_1, result11_1.mapping1to2, "Cmpd 11 to 1 map" );
+  compare_vectors( ref_map11_12, result11_12.mapping1to2, "Cmpd 11 to 12 map" );
+
+  compare_vectors( ref_scores1_11, result1_11.atom_scores, "Cmpd 1 to 11 scores", 0.01 );
+  compare_vectors( ref_scores11_1, result11_1.atom_scores, "Cmpd 11 to 1 scores", 0.01 );
+  compare_vectors( ref_scores11_12, result11_12.atom_scores, "Cmpd 11 to 12 scores", 0.01 );
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -168,6 +250,7 @@ int main(int argc, char *argv[]) {
   testNAMSMolInfo();
   testNAMSSelfSimilarity();
   testNAMSCrossSimiliarity();
+  testNAMSPairing();
 
   return 0;
 }
