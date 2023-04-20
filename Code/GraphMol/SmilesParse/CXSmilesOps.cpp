@@ -39,13 +39,14 @@ std::map<std::string, std::string> sgroupTypemap = {
     {"alt", "COP"}, {"ran", "COP"}, {"blk", "COP"}};
 
 template <typename Q>
-void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
+void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx,
+              bool keepLabel = true) {
   PRECONDITION(qry, "bad query");
   auto *qa = new QueryAtom(0);
   qa->setQuery(qry);
   qa->setNoImplicit(true);
   mol.replaceAtom(idx, qa);
-  if (symbol != "") {
+  if (keepLabel && symbol != "") {
     mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
                                      symbol);
   }
@@ -64,9 +65,9 @@ void processCXSmilesLabels(RWMol &mol) {
         are "unspecified end groups" for polymers */
         addquery(makeAtomNullQuery(), symb, mol, atom->getIdx());
       } else if (symb == "Q_e") {
-        addquery(makeQAtomQuery(), symb, mol, atom->getIdx());
+        addquery(makeQAtomQuery(), symb, mol, atom->getIdx(), false);
       } else if (symb == "QH_p") {
-        addquery(makeQHAtomQuery(), symb, mol, atom->getIdx());
+        addquery(makeQHAtomQuery(), symb, mol, atom->getIdx(), false);
       } else if (symb == "AH_p") {  // this seems wrong...
         /* According to the MARVIN Sketch, AH is "any atom, including H" -
         this would be "*" in SMILES - and "A" is "any atom except H".
@@ -75,15 +76,15 @@ void processCXSmilesLabels(RWMol &mol) {
         this is a Marvin internal thing and just parse it as they describe it.
         This means that "*" in the SMILES itself needs to be treated
         differently, which we do below. */
-        addquery(makeAHAtomQuery(), symb, mol, atom->getIdx());
+        addquery(makeAHAtomQuery(), symb, mol, atom->getIdx(), false);
       } else if (symb == "X_p") {
-        addquery(makeXAtomQuery(), symb, mol, atom->getIdx());
+        addquery(makeXAtomQuery(), symb, mol, atom->getIdx(), false);
       } else if (symb == "XH_p") {
-        addquery(makeXHAtomQuery(), symb, mol, atom->getIdx());
+        addquery(makeXHAtomQuery(), symb, mol, atom->getIdx(), false);
       } else if (symb == "M_p") {
-        addquery(makeMAtomQuery(), symb, mol, atom->getIdx());
+        addquery(makeMAtomQuery(), symb, mol, atom->getIdx(), false);
       } else if (symb == "MH_p") {
-        addquery(makeMHAtomQuery(), symb, mol, atom->getIdx());
+        addquery(makeMHAtomQuery(), symb, mol, atom->getIdx(), false);
       } else if (std::find(pseudoatoms_p.begin(), pseudoatoms_p.end(), symb) !=
                  pseudoatoms_p.end()) {
         // strip off the "_p":

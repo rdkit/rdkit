@@ -108,13 +108,13 @@ TEST_CASE("reading Atom Labels") {
     ROMol *m = SmilesToMol(smiles, params);
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 3);
-    CHECK(m->getAtomWithIdx(0)->getProp<std::string>(
-              common_properties::atomLabel) == "Q_e");
-    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
-              common_properties::atomLabel) == "QH_p");
+    CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
     CHECK(!m->getAtomWithIdx(2)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(m->getAtomWithIdx(0)->getQuery()->getTypeLabel() == "Q");
     CHECK(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(m->getAtomWithIdx(1)->getQuery()->getTypeLabel() == "QH");
     CHECK(!m->getAtomWithIdx(2)->hasQuery());
 
     delete m;
@@ -126,14 +126,14 @@ TEST_CASE("reading Atom Labels") {
     ROMol *m = SmilesToMol(smiles, params);
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 2);
-    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
-              common_properties::atomLabel) == "AH_p");
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
     CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(0)->hasQuery());
     CHECK(m->getAtomWithIdx(0)->getQuery()->getDescription() ==
           "AtomAtomicNum");
     CHECK(m->getAtomWithIdx(1)->hasQuery());
     CHECK(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomNull");
+    CHECK(m->getAtomWithIdx(1)->getQuery()->getTypeLabel() == "AH");
 
     delete m;
   }
@@ -145,14 +145,14 @@ TEST_CASE("reading Atom Labels") {
     ROMol *m = SmilesToMol(smiles, params);
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 2);
-    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
-              common_properties::atomLabel) == "XH_p");
     CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(0)->hasQuery());
     CHECK(m->getAtomWithIdx(0)->getQuery()->getDescription() ==
           "AtomAtomicNum");
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(1)->hasQuery());
     CHECK(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomOr");
+    CHECK(m->getAtomWithIdx(1)->getQuery()->getTypeLabel() == "XH");
 
     delete m;
   }
@@ -163,14 +163,14 @@ TEST_CASE("reading Atom Labels") {
     ROMol *m = SmilesToMol(smiles, params);
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 2);
-    CHECK(m->getAtomWithIdx(0)->getProp<std::string>(
-              common_properties::atomLabel) == "MH_p");
-    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
-              common_properties::atomLabel) == "M_p");
+    CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(0)->hasQuery());
     CHECK(m->getAtomWithIdx(0)->getQuery()->getDescription() == "AtomOr");
+    CHECK(m->getAtomWithIdx(0)->getQuery()->getTypeLabel() == "MH");
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(1)->hasQuery());
     CHECK(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomOr");
+    CHECK(m->getAtomWithIdx(1)->getQuery()->getTypeLabel() == "M");
 
     delete m;
   }
@@ -643,8 +643,9 @@ TEST_CASE("github #6050: stereogroups not combined") {
   }
 }
 
-TEST_CASE("github #6225: removes enhanced stereo if doIsomericSmiles is false") {
-  { // Gets rid of chiral centers
+TEST_CASE(
+    "github #6225: removes enhanced stereo if doIsomericSmiles is false") {
+  {  // Gets rid of chiral centers
     std::string smiles = "O[C@H](Br)[C@H](F)C |&1:1,3|";
     ROMol *m = SmilesToMol(smiles);
     SmilesWriteParams params;
@@ -663,5 +664,16 @@ TEST_CASE("github #6225: removes enhanced stereo if doIsomericSmiles is false") 
     REQUIRE(m);
     CHECK(MolToCXSmiles(*m, params) == "C1=CCCCCCCCC1");
     delete m;
+  }
+}
+
+TEST_CASE("atom labels should be not be on atoms with recognized query types") {
+  SECTION("basics") {
+    auto m = "*C1=CC(*)=CC=C1 |$foo;;;;X_p;;;$|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(4)->hasQuery());
+    CHECK(!m->getAtomWithIdx(4)->hasProp("atomLabel"));
+    CHECK(m->getAtomWithIdx(0)->hasProp("atomLabel"));
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("atomLabel") == "foo");
   }
 }
