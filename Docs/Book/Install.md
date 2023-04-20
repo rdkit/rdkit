@@ -119,6 +119,12 @@ cmake -DPy_ENABLE_SHARED=1 \
 
 And finally, `make`, `make install` and `ctest`
 
+The `ctest` build requires that the installation path (the root of the source tree with RDK_INSTALL_INTREE=ON as above) be set in the RDBASE environment variable, and that the location of the installed Python files and shared library files to use for the tests be properly specified. This can be done by setting environment variables for the ctest run as follows:
+
+```
+RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH ctest
+```
+
 
 ### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
 

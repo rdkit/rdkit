@@ -9,6 +9,8 @@ import sys
 import unittest
 
 import numpy as np
+import tempfile
+
 from rdkit import Chem
 from rdkit import Geometry
 from rdkit import RDConfig
@@ -616,90 +618,155 @@ M  END)""")
             self.assertAlmostEqual(actual_position.x, expected_position.x)
             self.assertAlmostEqual(actual_position.y, actual_position.y)
 
-
-
-
     def testUseMultipleTemplates(self):
-        prefer_coordgen_status = rdDepictor.GetPreferCoordGen()
-        rdDepictor.SetPreferCoordGen(False)
+        with rdDepictor.UsingCoordGen(False):
+            # templates that will be linked together
+            template1 = Chem.MolFromSmiles("C1=CCCC2CCCCC2CCCCC2CCCC(CCCCCCC1)C2 |(-0.04,3.43,;-0.04,1.93,;-1.34,1.18,;-2.64,1.93,;-3.94,1.18,;-5.24,1.93,;-6.54,1.18,;-6.54,-0.32,;-5.24,-1.07,;-3.94,-0.32,;-2.64,-1.07,;-2.64,-2.57,;-1.34,-3.32,;-0.04,-2.57,;1.26,-3.32,;1.26,-4.82,;2.56,-5.56,;3.86,-4.82,;3.86,-3.32,;5.16,-2.57,;5.16,-1.07,;3.86,-0.32,;3.86,1.18,;2.56,1.93,;2.56,3.43,;1.26,4.18,;2.56,-2.57,)|")
+            template2 = Chem.MolFromSmiles("C1CCC2C(C1)C1CCN2NN1 |(-2.94,-0.77,;-2.94,0.77,;-1.6,1.54,;-0.27,0.77,;-0.27,-0.77,;-1.6,-1.54,;1.06,-1.54,;2.4,-0.77,;2.4,0.77,;1.06,1.54,;1.33,0.51,;1.33,-0.51,)|")
+            template3 = Chem.MolFromSmiles("C1C2CC3CC1CC3C2 |(-7.01,3.13,;-7.71,4.35,;-7.01,5.56,;-5.61,5.56,;-4.91,4.35,;-5.61,3.13,;-4.28,3.57,;-4.28,5.13,;-6.34,4.05,)|")
 
-        # templates that will be linked together
-        template1 = Chem.MolFromSmiles("C1=CCCC2CCCCC2CCCCC2CCCC(CCCCCCC1)C2 |(-0.04,3.43,;-0.04,1.93,;-1.34,1.18,;-2.64,1.93,;-3.94,1.18,;-5.24,1.93,;-6.54,1.18,;-6.54,-0.32,;-5.24,-1.07,;-3.94,-0.32,;-2.64,-1.07,;-2.64,-2.57,;-1.34,-3.32,;-0.04,-2.57,;1.26,-3.32,;1.26,-4.82,;2.56,-5.56,;3.86,-4.82,;3.86,-3.32,;5.16,-2.57,;5.16,-1.07,;3.86,-0.32,;3.86,1.18,;2.56,1.93,;2.56,3.43,;1.26,4.18,;2.56,-2.57,)|")
-        template2 = Chem.MolFromSmiles("C1CCC2C(C1)C1CCN2NN1 |(-2.94,-0.77,;-2.94,0.77,;-1.6,1.54,;-0.27,0.77,;-0.27,-0.77,;-1.6,-1.54,;1.06,-1.54,;2.4,-0.77,;2.4,0.77,;1.06,1.54,;1.33,0.51,;1.33,-0.51,)|")
-        template3 = Chem.MolFromSmiles("C1C2CC3CC1CC3C2 |(-7.01,3.13,;-7.71,4.35,;-7.01,5.56,;-5.61,5.56,;-4.91,4.35,;-5.61,3.13,;-4.28,3.57,;-4.28,5.13,;-6.34,4.05,)|")
+            # example with 2 templates linked together
+            two_linked_templates = Chem.MolFromSmiles("NC(CCC1CCC2C(C1)C1CCN2NN1)CC(=O)CCC1=CCCC2CCCCC2CCCCC2CCCC(CCCCCCC1)C2")
+            rdDepictor.Compute2DCoords(two_linked_templates,useRingTemplates=False)
+            assert not self.molMatchesTemplate(two_linked_templates, template1)
+            assert not self.molMatchesTemplate(two_linked_templates, template2)
 
-        # example with 2 templates linked together
-        two_linked_templates = Chem.MolFromSmiles("NC(CCC1CCC2C(C1)C1CCN2NN1)CC(=O)CCC1=CCCC2CCCCC2CCCCC2CCCC(CCCCCCC1)C2")
-        rdDepictor.Compute2DCoords(two_linked_templates,useRingTemplates=False)
-        assert not self.molMatchesTemplate(two_linked_templates, template1)
-        assert not self.molMatchesTemplate(two_linked_templates, template2)
+            rdDepictor.Compute2DCoords(two_linked_templates,useRingTemplates=True)
+            assert self.molMatchesTemplate(two_linked_templates, template1)
+            assert self.molMatchesTemplate(two_linked_templates, template2)
 
-        rdDepictor.Compute2DCoords(two_linked_templates,useRingTemplates=True)
-        assert self.molMatchesTemplate(two_linked_templates, template1)
-        assert self.molMatchesTemplate(two_linked_templates, template2)
+            # example with 3 templates linked together
+            three_linked_templates = Chem.MolFromSmiles("NC(CCC1CCC2C(C1)C1CC(CCC(=O)CC(N)CC~C3C4CC5CC3CC5C4)N2NN1)CC(=O)CCC1=CCCC2CCCCC2CCCCC2CCCC(CCCCCCC1)C2")
+            rdDepictor.Compute2DCoords(three_linked_templates,useRingTemplates=False)
+            assert not self.molMatchesTemplate(three_linked_templates, template1)
+            assert not self.molMatchesTemplate(three_linked_templates, template2)
+            assert not self.molMatchesTemplate(three_linked_templates, template3)
 
-        # example with 3 templates linked together
-        three_linked_templates = Chem.MolFromSmiles("NC(CCC1CCC2C(C1)C1CC(CCC(=O)CC(N)CC~C3C4CC5CC3CC5C4)N2NN1)CC(=O)CCC1=CCCC2CCCCC2CCCCC2CCCC(CCCCCCC1)C2")
-        rdDepictor.Compute2DCoords(three_linked_templates,useRingTemplates=False)
-        assert not self.molMatchesTemplate(three_linked_templates, template1)
-        assert not self.molMatchesTemplate(three_linked_templates, template2)
-        assert not self.molMatchesTemplate(three_linked_templates, template3)
-
-        rdDepictor.Compute2DCoords(three_linked_templates,useRingTemplates=True)
-        assert self.molMatchesTemplate(three_linked_templates, template1)
-        assert self.molMatchesTemplate(three_linked_templates, template2)
-        assert self.molMatchesTemplate(three_linked_templates, template3)
-
-        rdDepictor.SetPreferCoordGen(prefer_coordgen_status)
+            rdDepictor.Compute2DCoords(three_linked_templates,useRingTemplates=True)
+            assert self.molMatchesTemplate(three_linked_templates, template1)
+            assert self.molMatchesTemplate(three_linked_templates, template2)
+            assert self.molMatchesTemplate(three_linked_templates, template3)
 
 
     def testUseTemplateAndCoordMap(self):
-        prefer_coordgen_status = rdDepictor.GetPreferCoordGen()
-        rdDepictor.SetPreferCoordGen(False)
-        template1 = Chem.MolFromSmiles("C1=CCCC2CCCCC2CCCCC2CCCC(CCCCCCC1)C2 |(-0.04,3.43,;-0.04,1.93,;-1.34,1.18,;-2.64,1.93,;-3.94,1.18,;-5.24,1.93,;-6.54,1.18,;-6.54,-0.32,;-5.24,-1.07,;-3.94,-0.32,;-2.64,-1.07,;-2.64,-2.57,;-1.34,-3.32,;-0.04,-2.57,;1.26,-3.32,;1.26,-4.82,;2.56,-5.56,;3.86,-4.82,;3.86,-3.32,;5.16,-2.57,;5.16,-1.07,;3.86,-0.32,;3.86,1.18,;2.56,1.93,;2.56,3.43,;1.26,4.18,;2.56,-2.57,)|")
-        template2 = Chem.MolFromSmiles("C1CCC2C(C1)C1CCN2NN1 |(-2.94,-0.77,;-2.94,0.77,;-1.6,1.54,;-0.27,0.77,;-0.27,-0.77,;-1.6,-1.54,;1.06,-1.54,;2.4,-0.77,;2.4,0.77,;1.06,1.54,;1.33,0.51,;1.33,-0.51,)|")
-        two_linked_templates = Chem.MolFromSmiles("NC(CCC1CCC2C(C1)C1CCN2NN1)CC(=O)CCC1=CCCC2CCCCC2CCCCC2CCCC(CCCCCCC1)C2")
+        with rdDepictor.UsingCoordGen(False):
+            template1 = Chem.MolFromSmiles("C1=CCCC2CCCCC2CCCCC2CCCC(CCCCCCC1)C2 |(-0.04,3.43,;-0.04,1.93,;-1.34,1.18,;-2.64,1.93,;-3.94,1.18,;-5.24,1.93,;-6.54,1.18,;-6.54,-0.32,;-5.24,-1.07,;-3.94,-0.32,;-2.64,-1.07,;-2.64,-2.57,;-1.34,-3.32,;-0.04,-2.57,;1.26,-3.32,;1.26,-4.82,;2.56,-5.56,;3.86,-4.82,;3.86,-3.32,;5.16,-2.57,;5.16,-1.07,;3.86,-0.32,;3.86,1.18,;2.56,1.93,;2.56,3.43,;1.26,4.18,;2.56,-2.57,)|")
+            template2 = Chem.MolFromSmiles("C1CCC2C(C1)C1CCN2NN1 |(-2.94,-0.77,;-2.94,0.77,;-1.6,1.54,;-0.27,0.77,;-0.27,-0.77,;-1.6,-1.54,;1.06,-1.54,;2.4,-0.77,;2.4,0.77,;1.06,1.54,;1.33,0.51,;1.33,-0.51,)|")
+            two_linked_templates = Chem.MolFromSmiles("NC(CCC1CCC2C(C1)C1CCN2NN1)CC(=O)CCC1=CCCC2CCCCC2CCCCC2CCCC(CCCCCCC1)C2")
 
-        # when a coord map doesn't contain any part of a ring system, ring system
-        # templates should still be adhered to
-        linker_coord_map = {
-            16: Geometry.Point2D(1.5, 0),
-            17: Geometry.Point2D(1.5, 1.5),
-            19: Geometry.Point2D(0, 1.5)
-        }
-        rdDepictor.Compute2DCoords(two_linked_templates, coordMap=linker_coord_map, useRingTemplates=True)
-        self.assertMolMatchesCoordMap(two_linked_templates, linker_coord_map)
-        assert self.molMatchesTemplate(two_linked_templates, template1)
-        assert self.molMatchesTemplate(two_linked_templates, template2)
+            # when a coord map doesn't contain any part of a ring system, ring system
+            # templates should still be adhered to
+            linker_coord_map = {
+                16: Geometry.Point2D(1.5, 0),
+                17: Geometry.Point2D(1.5, 1.5),
+                19: Geometry.Point2D(0, 1.5)
+            }
+            rdDepictor.Compute2DCoords(two_linked_templates, coordMap=linker_coord_map, useRingTemplates=True)
+            self.assertMolMatchesCoordMap(two_linked_templates, linker_coord_map)
+            assert self.molMatchesTemplate(two_linked_templates, template1)
+            assert self.molMatchesTemplate(two_linked_templates, template2)
 
 
-        # when a coord map contains a partial ring system, ring system templates
-        # should not be used because they could be distorted by the user-provided
-        # templates
-        ring_system_coord_map = {
-            31: Geometry.Point2D(1.5, 0),
-            32: Geometry.Point2D(1.5, 1.5),
-            33: Geometry.Point2D(0, 1.5)
-        }
-        rdDepictor.Compute2DCoords(two_linked_templates, coordMap=ring_system_coord_map, useRingTemplates=True)
-        self.assertMolMatchesCoordMap(two_linked_templates, ring_system_coord_map)
-        # atoms 10, 11, and 13 are in this template so the ring template should not be used
-        assert not self.molMatchesTemplate(two_linked_templates, template1)
-        assert self.molMatchesTemplate(two_linked_templates, template2)
+            # when a coord map contains a partial ring system, ring system templates
+            # should not be used because they could be distorted by the user-provided
+            # templates
+            ring_system_coord_map = {
+                31: Geometry.Point2D(1.5, 0),
+                32: Geometry.Point2D(1.5, 1.5),
+                33: Geometry.Point2D(0, 1.5)
+            }
+            rdDepictor.Compute2DCoords(two_linked_templates, coordMap=ring_system_coord_map, useRingTemplates=True)
+            self.assertMolMatchesCoordMap(two_linked_templates, ring_system_coord_map)
+            # atoms 10, 11, and 13 are in this template so the ring template should not be used
+            assert not self.molMatchesTemplate(two_linked_templates, template1)
+            assert self.molMatchesTemplate(two_linked_templates, template2)
 
-        # when a coord map contains a single atom, even if it is a part of a ring
-        # system, ring system templates should be used and the coord map should be
-        # followed
-        single_atom_coord_map = {
-            10: Geometry.Point2D(0, 0)
-        }
-        rdDepictor.Compute2DCoords(two_linked_templates, coordMap=single_atom_coord_map, useRingTemplates=True)
-        self.assertMolMatchesCoordMap(two_linked_templates, single_atom_coord_map)
-        assert self.molMatchesTemplate(two_linked_templates, template1)
-        assert self.molMatchesTemplate(two_linked_templates, template2)
+            # when a coord map contains a single atom, even if it is a part of a ring
+            # system, ring system templates should be used and the coord map should be
+            # followed
+            single_atom_coord_map = {
+                10: Geometry.Point2D(0, 0)
+            }
+            rdDepictor.Compute2DCoords(two_linked_templates, coordMap=single_atom_coord_map, useRingTemplates=True)
+            self.assertMolMatchesCoordMap(two_linked_templates, single_atom_coord_map)
+            assert self.molMatchesTemplate(two_linked_templates, template1)
+            assert self.molMatchesTemplate(two_linked_templates, template2)
 
-        rdDepictor.SetPreferCoordGen(prefer_coordgen_status)
 
+    def testSetRingSystemTemplates(self):
+        with rdDepictor.UsingCoordGen(False):
+            mol = Chem.MolFromSmiles("C1CC2CCOC3OC4CCC(C1)C23OO4")
+            default_template = Chem.MolFromSmiles("C1CC2CCOC3OC4CCC(C1)C23OO4 |(3.53,-1.22,;3.53,0.3,;2.21,1.06,;2.21,2.59,;0.89,3.35,;-0.43,2.59,;-0.43,1.06,;-1.9,0.65,;-2.47,-0.76,;-1.71,-2.08,;-0.2,-2.29,;0.89,-1.22,;2.21,-1.99,;0.89,0.3,;0.12,-0.83,;-1.19,-1.25,)|")
+            user_provided_template = Chem.MolFromSmiles("C1CC2CCOC3OC4CCC(C1)C23OO4 |(-0.5537,-3.1595,;-1.6057,-2.003,;-1.4262,-0.4072,;-2.9804,0.0271,;-3.5191,1.502,;-2.2028,2.3562,;-0.6818,1.8511,;1.0592,1.4391,;2.6123,1.8366,;3.5191,0.5341,;2.6067,-0.7521,;1.0061,-0.773,;0.7888,-2.3546,;-0.0405,0.5251,;0.4049,2.3,;1.7604,3.1594,)|")
+
+            # default templates are loaded automatically
+            rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
+            assert self.molMatchesTemplate(mol, default_template)
+
+            # set to user-provided template, this will delete default templates
+            fpath = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Depictor', 'test_data', 'ring_system_templates.smi')
+            rdDepictor.SetRingSystemTemplates(fpath)
+            rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
+            assert self.molMatchesTemplate(mol, user_provided_template)
+
+            # set back to default ring system templates
+            rdDepictor.LoadDefaultRingSystemTemplates()
+            rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
+            assert self.molMatchesTemplate(mol, default_template)
+
+    def testSetBadRingSystemTemplates(self):
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            tmp_file.write(b"invalidsmiles")
+            tmp_file.seek(0)
+            with self.assertRaises(ValueError):
+                rdDepictor.SetRingSystemTemplates(tmp_file.name)
+
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            # not a ring system
+            tmp_file.write(b"C |(-0.5537,-3.1595)|")
+            tmp_file.seek(0)
+            with self.assertRaises(ValueError):
+                rdDepictor.SetRingSystemTemplates(tmp_file.name)
+
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            # no coordinates
+            tmp_file.write(b"C1CCCCC1")
+            tmp_file.seek(0)
+            with self.assertRaises(ValueError):
+                rdDepictor.SetRingSystemTemplates(tmp_file.name)
+
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            # bridged ring system
+            tmp_file.write(b"c1ccccc1-c1ccccc1")
+            tmp_file.seek(0)
+            with self.assertRaises(ValueError):
+                rdDepictor.SetRingSystemTemplates(tmp_file.name)
+
+        # set back to default ring system templates
+        rdDepictor.LoadDefaultRingSystemTemplates()
+
+    def testAddRingSystemTemplates(self):
+        with rdDepictor.UsingCoordGen(False):
+            # this is what is in the default ring system templates
+            mol = Chem.MolFromSmiles("C1CCCN2CCCC(CC1)C2")
+            default_template = Chem.MolFromSmiles("C1CCCN2CCCC(CC1)C2 |(2.64,1.53,;3.1,0.11,;2.52,-1.28,;1.17,-1.94,;-0.28,-1.57,;-1.7,-2.03,;-2.82,-1.03,;-2.51,0.44,;-1.08,0.9,;-0.13,2.06,;1.35,2.31,;0.03,-0.1,)|")
+            new_template_smi = "C1CCCN2CCCC(CC1)C2 |(3.2585,-0.7733,;3.2585,0.7733,;2.225,1.9568,;0.6347,2.17,;-0.8068,1.4216,;-2.4372,1.3464,;-3.2585,0,;-2.4372,-1.3464,;-0.8068,-1.4216,;0.6347,-2.17,;2.225,-1.9569,;-0.6701,0,)|"
+            new_template = Chem.MolFromSmiles(new_template_smi)
+
+            rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
+            assert self.molMatchesTemplate(mol, default_template)
+
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+                tmp_file.write(new_template_smi.encode('utf-8'))
+                tmp_file.seek(0)
+                rdDepictor.AddRingSystemTemplates(tmp_file.name)
+
+            # now the new template should be used
+            rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
+            assert self.molMatchesTemplate(mol, new_template)
+
+        # set back to default ring system templates
+        rdDepictor.LoadDefaultRingSystemTemplates()
 
 if __name__ == '__main__':
     unittest.main()

@@ -643,6 +643,9 @@ extern "C" short has_coords(char *mol_pkl, size_t mol_pkl_sz) {
   if (mol_pkl && mol_pkl_sz) {
     auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
     res = (mol.getNumConformers() > 0);
+    if (res) {
+      res = mol.getConformer().is3D() ? 3 : 2;
+    }
   }
   return res;
 }
