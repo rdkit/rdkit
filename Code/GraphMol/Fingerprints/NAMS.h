@@ -139,9 +139,10 @@ RDKIT_FINGERPRINTS_EXPORT double getNAMSSimilarity(const NAMSMolInfo & molinfo1,
   \param molinfo2:   one of the molinfos to use
   \param params:     The NAMSParameters object to control how to run the calculation
 
-  \return a NAMSResult object which contains detailed information about the similarity calculation.
+  \return a pointer to the NAMSResult object which contains detailed information about the similarity calculation.
+  The client is responsible for calling delete on this.
 */
-RDKIT_FINGERPRINTS_EXPORT NAMSResult getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params);
+RDKIT_FINGERPRINTS_EXPORT NAMSResult * getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params);
 
 //! Exposed primarily for testing.
 double calcSelfSimilarity(const NAMSMolInfo & mi, const NAMSParameters & parms);

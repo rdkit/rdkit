@@ -632,20 +632,20 @@ void nams_runner(const NAMSMolInfo & mi1, const NAMSMolInfo & mi2, const NAMSPar
   result.similarity = final_score/10000.0d;
 }
 
-NAMSResult getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params) {
-  NAMSResult result;
+NAMSResult * getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params) {
+  NAMSResult * result = new NAMSResult;
 
-  result.self_similarity1 = calcSelfSimilarity(molinfo1, params)/10000.0d;
-  result.self_similarity2 = calcSelfSimilarity(molinfo2, params)/10000.0d;
-  nams_runner(molinfo1, molinfo2, params, result, nullptr);
-  result.jaccard = result.similarity / ( result.self_similarity1 + result.self_similarity2 - result.similarity );
+  result->self_similarity1 = calcSelfSimilarity(molinfo1, params);
+  result->self_similarity2 = calcSelfSimilarity(molinfo2, params);
+  nams_runner(molinfo1, molinfo2, params, *result, nullptr);
+  result->jaccard = result->similarity / ( result->self_similarity1 + result->self_similarity2 - result->similarity );
 
   return result;
 }
 
 double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params) {
-  NAMSResult result = getNAMSResult(molinfo1, molinfo2, params);
-  return result.jaccard;
+  std::unique_ptr< NAMSResult > result( getNAMSResult(molinfo1, molinfo2, params) );
+  return result->jaccard;
 }
 
 

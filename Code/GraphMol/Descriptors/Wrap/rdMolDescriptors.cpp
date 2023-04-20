@@ -1058,8 +1058,22 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_ConnectivityInvariants_version") =
       RDKit::MorganFingerprints::morganConnectivityInvariantVersion;
 
+  docString = "Returns feature invariants (FCFP-like) for a molecule.";
+  python::def("GetFeatureInvariants", GetFeatureInvariants,
+              (python::arg("mol")), docString.c_str());
+  python::scope().attr("_FeatureInvariants_version") =
+      RDKit::MorganFingerprints::morganFeatureInvariantVersion;
+
   python::class_<RDKit::NAMS::NAMSParameters, boost::noncopyable>(
       "NAMSParameters", "Parameters for the NAMS similarity algorithm" );
+  python::class_<RDKit::NAMS::NAMSResult, boost::noncopyable>(
+      "NAMSResult", "Result for the NAMS similarity comparison" )
+      .def_readonly("self_similarity1", &RDKit::NAMS::NAMSResult::self_similarity1)
+      .def_readonly("self_similarity2", &RDKit::NAMS::NAMSResult::self_similarity2)
+      .def_readonly("similarity", &RDKit::NAMS::NAMSResult::similarity)
+      .def_readonly("jaccard", &RDKit::NAMS::NAMSResult::jaccard)
+      .def_readonly("mapping1to2", &RDKit::NAMS::NAMSResult::mapping1to2)
+      .def_readonly("atom_scores", &RDKit::NAMS::NAMSResult::atom_scores);
   python::class_<RDKit::NAMS::NAMSMolInfo, boost::noncopyable>(
       "NAMSMolInfo", "A pre-processed molecular representation for the NAMS similarity algorithm",
       python::init<RDKit::ROMol>());
@@ -1074,12 +1088,12 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "GetNAMSSimilarity", RDKit::NAMS::getNAMSSimilarity,
       (python::arg("molinfo1"),python::arg("molinfo2"),python::arg("params")),
       docString.c_str());
-
-  docString = "Returns feature invariants (FCFP-like) for a molecule.";
-  python::def("GetFeatureInvariants", GetFeatureInvariants,
-              (python::arg("mol")), docString.c_str());
-  python::scope().attr("_FeatureInvariants_version") =
-      RDKit::MorganFingerprints::morganFeatureInvariantVersion;
+  docString = "Return the NAMS Similarity result object for two NAMS MolInfo objects.";
+  python::def(
+      "GetNAMSResult", RDKit::NAMS::getNAMSResult,
+      (python::arg("molinfo1"),python::arg("molinfo2"),python::arg("params")),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
 
   // USR descriptor
   docString = "Returns a USR descriptor for one conformer of a molecule";

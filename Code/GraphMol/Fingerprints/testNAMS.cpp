@@ -146,9 +146,9 @@ void testNAMSCrossSimiliarity() {
     for ( unsigned int jj=ii+1; jj <mols.size(); ++jj ) {
       unsigned int offset( jj-ii-1 );
 
-      NAMSResult result = getNAMSResult(molinfos[ii], molinfos[jj], params);
-      //BOOST_LOG(rdErrorLog) << "For " << molinfos[ii].smiles << " against " << molinfos[jj].smiles << " found similarity " << result.similarity << " expected " << CROSSSIM[ii][offset] << '\n';
-      TEST_ASSERT ( result.similarity < CROSSSIM[ii][offset] + 0.001 && result.similarity > CROSSSIM[ii][offset] - 0.001 );
+      std::unique_ptr< NAMSResult > result( getNAMSResult(molinfos[ii], molinfos[jj], params) );
+      //BOOST_LOG(rdErrorLog) << "For " << molinfos[ii].smiles << " against " << molinfos[jj].smiles << " found similarity " << result->similarity << " expected " << CROSSSIM[ii][offset] << '\n';
+      TEST_ASSERT ( result->similarity < CROSSSIM[ii][offset] + 0.001 && result->similarity > CROSSSIM[ii][offset] - 0.001 );
       ++count;
     }
   }
@@ -220,9 +220,9 @@ void testNAMSPairing() {
 
   NAMSParameters params;
 
-  NAMSResult result1_11 = getNAMSResult(mi1, mi11, params);
-  NAMSResult result11_1 = getNAMSResult(mi11, mi1, params);
-  NAMSResult result11_12 = getNAMSResult(mi11, mi12, params);
+  std::unique_ptr< NAMSResult > result1_11( getNAMSResult(mi1, mi11, params) );
+  std::unique_ptr< NAMSResult > result11_1( getNAMSResult(mi11, mi1, params) );
+  std::unique_ptr< NAMSResult > result11_12( getNAMSResult(mi11, mi12, params) );
 
   std::vector< int > ref_map1_11 = {1, 2, 3, 5, 4, 10, 9, 12, 7, 8};
   std::vector< int > ref_map11_1 = {-1, 0, 1, 2, 4, 3, -1, 8, 5, 6, 9, -1, 7, -1};
@@ -231,13 +231,13 @@ void testNAMSPairing() {
   std::vector< double > ref_scores11_1 = {0, 4.24, 4.71, 5.23, 5.79, 4.89, 0, 5.38, 5.86, 5.68, 5.29, 0, 5.26, 0};
   std::vector< double > ref_scores11_12 = {0, 8.89, 9.76, 10.51, 11.18, 10.66, 10.66, 11.11, 11.35, 10.74, 10.21, 10.02, 10.53, 0 };
 
-  compare_vectors( ref_map1_11, result1_11.mapping1to2, "Cmpd 1 to 11 map" );
-  compare_vectors( ref_map11_1, result11_1.mapping1to2, "Cmpd 11 to 1 map" );
-  compare_vectors( ref_map11_12, result11_12.mapping1to2, "Cmpd 11 to 12 map" );
+  compare_vectors( ref_map1_11, result1_11->mapping1to2, "Cmpd 1 to 11 map" );
+  compare_vectors( ref_map11_1, result11_1->mapping1to2, "Cmpd 11 to 1 map" );
+  compare_vectors( ref_map11_12, result11_12->mapping1to2, "Cmpd 11 to 12 map" );
 
-  compare_vectors( ref_scores1_11, result1_11.atom_scores, "Cmpd 1 to 11 scores", 0.01 );
-  compare_vectors( ref_scores11_1, result11_1.atom_scores, "Cmpd 11 to 1 scores", 0.01 );
-  compare_vectors( ref_scores11_12, result11_12.atom_scores, "Cmpd 11 to 12 scores", 0.01 );
+  compare_vectors( ref_scores1_11, result1_11->atom_scores, "Cmpd 1 to 11 scores", 0.01 );
+  compare_vectors( ref_scores11_1, result11_1->atom_scores, "Cmpd 11 to 1 scores", 0.01 );
+  compare_vectors( ref_scores11_12, result11_12->atom_scores, "Cmpd 11 to 12 scores", 0.01 );
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
