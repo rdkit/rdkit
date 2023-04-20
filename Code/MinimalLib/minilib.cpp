@@ -587,6 +587,13 @@ std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
                                              details.c_str());
 }
 
+int JSMol::has_coords() const {
+  if (!d_mol || !d_mol->getNumConformers()) {
+    return 0;
+  }
+  return (d_mol->getConformer().is3D() ? 3 : 2);
+}
+
 double JSMol::normalize_depiction(int canonicalize, double scaleFactor) {
   if (!d_mol || !d_mol->getNumConformers()) {
     return -1.;

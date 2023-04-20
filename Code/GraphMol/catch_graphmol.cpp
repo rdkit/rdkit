@@ -3007,6 +3007,42 @@ TEST_CASE("github #4642: Enhanced Stereo is lost when using GetMolFrags") {
   }
 }
 
+TEST_CASE("Github #6119: No warning when merging explicit H query atoms with no bonds", "[bug][molops]"){
+  SECTION("Zero degree AtomOr Query"){
+    std::unique_ptr<RWMol> m{SmartsToMol("[#6,#1]")};
+    REQUIRE(m);
+    std::stringstream ss;
+    rdWarningLog->SetTee(ss);
+    MolOps::mergeQueryHs(*m);
+    rdWarningLog->ClearTee();
+    TEST_ASSERT(ss.str().find("WARNING: merging explicit H queries involved in ORs is not supported. "
+                              "This query will not be merged") !=
+                              std::string::npos);
+  }
+  SECTION("One degree AtomOr Query"){
+    std::unique_ptr<RWMol> m{SmartsToMol("C[#6,#1]")};
+    REQUIRE(m);
+    std::stringstream ss;
+    rdWarningLog->SetTee(ss);
+    MolOps::mergeQueryHs(*m);
+    rdWarningLog->ClearTee();
+    TEST_ASSERT(ss.str().find("WARNING: merging explicit H queries involved in ORs is not supported. "
+                              "This query will not be merged") !=
+                              std::string::npos);
+  }
+  SECTION("Atoms that are not H"){
+    std::unique_ptr<RWMol> m{SmartsToMol("C[#6,#7]")};
+    REQUIRE(m);
+    std::stringstream ss;
+    rdWarningLog->SetTee(ss);
+    MolOps::mergeQueryHs(*m);
+    rdWarningLog->ClearTee();
+    TEST_ASSERT(ss.str().find("WARNING: merging explicit H queries involved in ORs is not supported. "
+                              "This query will not be merged") ==
+                              std::string::npos);
+  }
+}
+
 TEST_CASE("Remove atom updates bond ENDPTS prop") {
   auto m = R"CTAB(ferrocene-ish
      RDKit          2D
