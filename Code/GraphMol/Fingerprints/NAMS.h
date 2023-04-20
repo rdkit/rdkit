@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 // This file implements the non-contiguous atom molecular structural similarity (NAMS)
-// method of Teixeira & Falcao (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
+// method of Teixeira & Falcao (http://dx.doi.org/10.1021/ci400324u)
 // for an RDKit context
 
 #include <RDGeneral/export.h>

@@ -16,7 +16,7 @@
 // Please cite the authors in any work or product based on this material:
 //
 // AL Teixeira, AO Falcao. 2013. A non-contiguous atom matching structural similarity function. J. Chem. Inf. Model. DOI: 10.1021/ci400324u.
-// (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
+// (http://dx.doi.org/10.1021/ci400324u)
 
 #include <GraphMol/Fingerprints/NAMS.h>
 #include <GraphMol/Fingerprints/hungarian.h>
