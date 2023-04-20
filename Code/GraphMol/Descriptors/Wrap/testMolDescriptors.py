@@ -258,15 +258,14 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(info2), 14)
 
   def testNAMS(self):
-    print("%"*120) # FOR TESTING PURPOSES
-    smiles = [ 'c1ccccc1', 'Cc1ccccc1O', 'NCCc1c[nH]c2ccccc12', 'CN(Cl)CCc1c[nH]c2ccccc12', 'c(c[nH]1)(CCN(C)Cl)c(cc2)c1cc2']
+    smiles = [ 'c1ccccc1', 'Cc1ccccc1O', 'NCCc1c[nH]c2ccccc12', 'CN(Cl)CCc1c[nH]c2ccccc12', 'c(c[nH]1)(CCN(C)Cl)c(cc2)c1cc2', 'c1ccc(O)c(C)c1']
     mols = [ Chem.MolFromSmiles(s) for s in smiles ]
     mis = [ rdMD.GetNAMSMolInfo(m) for m in mols ]
 
     params = rdMD.NAMSParameters()
 
     self.assertEqual(rdMD.GetNAMSSimilarity(mis[3], mis[3], params), 1.0) # Self comparison yields 1.0
-    #self.assertEqual(rdMD.GetNAMSSimilarity(mis[3], mis[4], params), 1.0) # Even if we reorder atoms
+    self.assertEqual(rdMD.GetNAMSSimilarity(mis[1], mis[5], params), 1.0) # Even if we reorder atoms
 
     sim1 = rdMD.GetNAMSSimilarity( mis[0], mis[1], params )
     self.assertAlmostEqual(sim1, 0.5759, places=4)
@@ -278,18 +277,16 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(nams_result23.similarity, 125.619, places=3)
     self.assertAlmostEqual(nams_result23.jaccard, 0.7758, places=4)
 
+    nams_result15 = rdMD.GetNAMSResult( mis[1], mis[5], params )
+    self.assertAlmostEqual(nams_result15.similarity, 55.719, places=3)
+    score_reference = [6.62, 7.27, 7.07, 6.90, 6.90, 7.07, 7.27, 6.62 ]
+    self.assertEqual( len(nams_result15.atom_scores), len(score_reference) )
+    for ii in range(len(score_reference)):
+        self.assertAlmostEqual( nams_result15.atom_scores[ii], score_reference[ii], places=2, msg="Atom Score place " + str(ii) )
+
     nams_result34 = rdMD.GetNAMSResult( mis[3], mis[4], params )
-    #self.assertAlmostEqual(nams_result34.similarity, 161.679, places=3)
     self.assertEqual(list(nams_result34.mapping1to2), [6, 5, 7, 4, 3, 0, 1, 2, 11, 12, 13, 10, 9, 8 ] )
 
-    #score_reference = [9.90, 10.91, 9.90, 11.56, 12.13, 12.64, 11.98, 11.86, 12.31, 11.61, 10.98, 11.29, 11.94, 12.67 ]
-    #print( "Atom score reference", score_reference )
-    #print( "Atom score actual", list(nams_result34.atom_scores) )
-    #self.assertEqual( len(nams_result34.atom_scores), len(score_reference) )
-    #for ii in range(len(score_reference)):
-    #    self.assertAlmostEqual( nams_result34.atom_scores[ii], score_reference[ii], places=2, msg="Atom Score place " + str(ii) )
-
-    print("%"*120) # FOR TESTING PURPOSES
 
   def testCrippen(self):
     mol = Chem.MolFromSmiles("n1ccccc1CO")
