@@ -930,9 +930,11 @@ M  END\n",
   assert(set_3d_coords(&mpkl, &mpkl_size, "") > 0);
   char *cxsmi3 = get_cxsmiles(mpkl, mpkl_size, NULL);
   assert(set_3d_coords(&mpkl, &mpkl_size, "{\"randomSeed\":123}") > 0);
+  assert(has_coords(mpkl, mpkl_size) == 3);
   assert(set_3d_coords(&mpkl, &mpkl_size,
                        "{\"randomSeed\":123,\"coordMap\":{\"3\":[0,0,0],\"4\":["
                        "0,0,1.5],\"5\":[0,1.5,1.5]}}") > 0);
+  assert(has_coords(mpkl, mpkl_size) == 3);
   cxsmi = get_cxsmiles(mpkl, mpkl_size, NULL);
   // since we have coords there's something there:
   assert(strstr(cxsmi, "|"));
@@ -1114,7 +1116,7 @@ M  END\n",
     assert(!strcmp(match_json, "{\"atoms\":[11,10,7,8,9,6],\"bonds\":[10,18,7,8,9,6]}"));
     free(match_json);
     // coordinates should be present as alignment has taken place anyway
-    assert(has_coords(mpkl_smi, mpkl_smi_size));
+    assert(has_coords(mpkl_smi, mpkl_smi_size) == 2);
     free(mpkl_smi);
 
     mpkl2_size = mpkl_size;
@@ -1164,14 +1166,14 @@ M  END\n",
     memcpy(mpkl2, mpkl_smi, mpkl2_size);
     assert(!has_coords(mpkl2, mpkl2_size));
     set_2d_coords(&mpkl2, &mpkl2_size);
-    assert(has_coords(mpkl2, mpkl2_size));
+    assert(has_coords(mpkl2, mpkl2_size) == 2);
     mpkl2_molblock_before = get_molblock(mpkl2, mpkl2_size, "");
     // This should fail
     assert(!set_2d_coords_aligned(
         &mpkl2, &mpkl2_size, tpkl, tpkl_size, details, &match_json));
     assert(!match_json);
     // coordinates should be unchanged since alignment has not taken place
-    assert(has_coords(mpkl2, mpkl2_size));
+    assert(has_coords(mpkl2, mpkl2_size) == 2);
     mpkl2_molblock_after = get_molblock(mpkl2, mpkl2_size, "");
     assert(!strcmp(mpkl2_molblock_before, mpkl2_molblock_after));
     free(mpkl2_molblock_after);
@@ -1184,7 +1186,7 @@ M  END\n",
     assert(!strcmp(match_json, "{}"));
     free(match_json);
     // coordinates should have changed since coordinate generation has taken place anyway using CoordGen
-    assert(has_coords(mpkl2, mpkl2_size));
+    assert(has_coords(mpkl2, mpkl2_size) == 2);
     mpkl2_molblock_after = get_molblock(mpkl2, mpkl2_size, "");
     assert(strcmp(mpkl2_molblock_before, mpkl2_molblock_after));
     free(mpkl2_molblock_before);
@@ -1197,7 +1199,7 @@ M  END\n",
     assert(!strcmp(match_json, "{}"));
     free(match_json);
     // coordinates should be present since coordinate generation has taken place anyway using CoordGen
-    assert(has_coords(mpkl_smi, mpkl_smi_size));
+    assert(has_coords(mpkl_smi, mpkl_smi_size) == 2);
     free(mpkl_smi);
 
     memset(details, 0, 200);

@@ -19,6 +19,7 @@
 #include <RDGeneral/FileParseException.h>
 #include "RDDepictor.h"
 #include "DepictUtils.h"
+#include "Templates.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -1540,6 +1541,37 @@ M  END
   }
 }
 
+void testValidRingSystemTemplates() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Test that ring system templates are valid "
+      << std::endl;
+  constexpr double RDKIT_BOND_LEN = 1.5;
+  for (auto& smiles : TEMPLATE_SMILES) {
+    ROMol* mol = SmilesToMol(smiles);
+    RDDepict::CoordinateTemplates::assertValidTemplate(*mol, smiles);
+
+    // also check whether the bonds in the template are the correct length
+    double avg_length = 0.0;
+    const Conformer& conf = mol->getConformer();
+    for (auto& bond : mol->bonds()) {
+      auto bond_length = (conf.getAtomPos(bond->getBeginAtomIdx()) -
+                          conf.getAtomPos(bond->getEndAtomIdx()))
+                             .length();
+      avg_length += bond_length;
+    }
+    avg_length /= mol->getNumBonds();
+
+    // this is a loose tolerance, since some complicated ring systems may have
+    // odd bond lengths
+    bool valid_length = RDKit::feq(avg_length, RDKIT_BOND_LEN, 0.1);
+    if (!valid_length) {
+      BOOST_LOG(rdWarningLog) << "Template has invalid average bond "
+                            << "length of " << avg_length << ": " << smiles << std::endl;
+    }
+    TEST_ASSERT(valid_length);
+  }
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -1743,6 +1775,7 @@ int main() {
   testGenerate2DDepictionRefPatternMatchVect();
   testGenerate2DDepictionAllowRGroups();
   testNormalizeStraighten();
+  testValidRingSystemTemplates();
 
   return (0);
 }
