@@ -45,6 +45,9 @@ struct NAMSParameters {
   // These are non-owning raw pointers (do not attempt to delete/free).
   const int* getBondLevelsMatrix() const;
 
+  //! Get a default NAMSParameters object;
+  static const NAMSParameters & getDefault();
+
 private:
   void calcBondLevelsMatrix() const;
 
@@ -53,9 +56,9 @@ private:
 };
 
 struct NAMSResult {
-  double self_similarity1 = 0, self_similarity2 = 0;
-  double similarity = 0;
-  double jaccard = 0;
+  double self_similarity1 = -1, self_similarity2 = -1;
+  double similarity = -1;
+  double jaccard = -1;
   std::vector< int > mapping1to2;
   std::vector< double > atom_scores;
 };
@@ -97,7 +100,7 @@ public:
   // natoms by bond by level number
   std::vector< std::vector< int > > mat_levels;
 
-  double self_similarity = 0;
+  double self_similarity = -1;
 };
 
 //! returns a NAMS MolInfo object for a molecule
@@ -125,6 +128,34 @@ RDKIT_FINGERPRINTS_EXPORT NAMSMolInfo * getNAMSMolInfo(const ROMol &mol, const N
 //! returns the NAMS similarity between two molecules (encoded in NAMS MolInfo objects)
 /*!
   The NAMS algorithm is described by Teixeira & Falcao (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
+  Default parameters will be used
+
+  The similarity score should be invariant to the order of molecule listing.
+
+  \param molinfo1:   one of the molinfos to use
+  \param molinfo2:   one of the molinfos to use
+
+  \return the similarity between the two molecules (on a scale between 0-1)
+*/
+RDKIT_FINGERPRINTS_EXPORT double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2);
+
+//! returns the NAMS similarity between two molecules (encoded in NAMS MolInfo objects)
+/*!
+  The NAMS algorithm is described by Teixeira & Falcao (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
+
+  The similarity score should be invariant to the order of molecule listing.
+
+  \param molinfo1:   one of the molinfos to use
+  \param molinfo2:   one of the molinfos to use
+
+  \return the similarity between the two molecules (on a scale between 0-1)
+*/
+RDKIT_FINGERPRINTS_EXPORT double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params);
+
+//! returns the NAMS similarity result between two molecules (encoded in NAMS MolInfo objects)
+/*!
+  The NAMS algorithm is described by Teixeira & Falcao (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
+  Default parameters will be used
 
   The similarity score should be invariant to the order of molecule listing.
 
@@ -132,9 +163,10 @@ RDKIT_FINGERPRINTS_EXPORT NAMSMolInfo * getNAMSMolInfo(const ROMol &mol, const N
   \param molinfo2:   one of the molinfos to use
   \param params:     The NAMSParameters object to control how to run the calculation
 
-  \return the similarity between the two molecules (on a scale between 0-1)
+  \return a pointer to the NAMSResult object which contains detailed information about the similarity calculation.
+  The client is responsible for calling delete on this.
 */
-RDKIT_FINGERPRINTS_EXPORT double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params);
+RDKIT_FINGERPRINTS_EXPORT NAMSResult * getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2);
 
 //! returns the NAMS similarity result between two molecules (encoded in NAMS MolInfo objects)
 /*!

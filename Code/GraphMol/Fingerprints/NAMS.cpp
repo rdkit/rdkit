@@ -106,6 +106,12 @@ NAMSParameters::~NAMSParameters() {
   free(blev_mat);
 }
 
+const NAMSParameters &
+NAMSParameters::getDefault() {
+  static NAMSParameters params; // Local static, so will be construct-on-first use
+  return params;
+}
+
 float
 NAMSParameters::ELEMS_DISTS(int ele1, int ele2) const {
   int a1 = LU_ELEMS_DEFAULT[ele1];
@@ -608,15 +614,19 @@ void nams_runner(const NAMSMolInfo & mi1, const NAMSMolInfo & mi2, const NAMSPar
   result.similarity = final_score/10000.0d;
 }
 
+NAMSResult * getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2) {
+  return getNAMSResult(molinfo1, molinfo2, NAMSParameters::getDefault());
+}
+
 NAMSResult * getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params) {
   NAMSResult * result = new NAMSResult;
 
-  if ( molinfo1.self_similarity != 0 ) {
+  if ( molinfo1.self_similarity != -1 ) {
     result->self_similarity1 = molinfo1.self_similarity;
   } else {
     result->self_similarity1 = calcSelfSimilarity(molinfo1, params);
   }
-  if ( molinfo2.self_similarity != 0 ) {
+  if ( molinfo2.self_similarity != -1 ) {
     result->self_similarity2 = molinfo2.self_similarity;
   } else {
     result->self_similarity2 = calcSelfSimilarity(molinfo2, params);
@@ -625,6 +635,11 @@ NAMSResult * getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & mol
   result->jaccard = result->similarity / ( result->self_similarity1 + result->self_similarity2 - result->similarity );
 
   return result;
+}
+
+double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2) {
+  std::unique_ptr< NAMSResult > result( getNAMSResult(molinfo1, molinfo2, NAMSParameters::getDefault()) );
+  return result->jaccard;
 }
 
 double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params) {

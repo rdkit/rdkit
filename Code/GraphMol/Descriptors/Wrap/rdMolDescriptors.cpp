@@ -1086,8 +1086,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::class_<RDKit::NAMS::NAMSMolInfo, boost::noncopyable>(
       "NAMSMolInfo", "A pre-processed molecular representation for the NAMS (Noncontiguous Atom Matching Structural Similarity) algorithm",
       python::init<RDKit::ROMol>())
-      .def_readonly("self_similarity", &RDKit::NAMS::NAMSMolInfo::self_similarity, "The self-similarity metric for the molecule.");
-  docString = "Returns a MolInfo object (precomputed 'fingerprint'), for the NAMS (Noncontiguous Atom Matching Structural Similarity) algorithm.";
+      .def_readonly("self_similarity", &RDKit::NAMS::NAMSMolInfo::self_similarity, "The self-similarity metric for the molecule. Will be -1 if not computed yet");
+  docString = "Returns a MolInfo object (precomputed 'fingerprint'), for the NAMS (Noncontiguous Atom Matching Structural Similarity) algorithm.\nPassing a NAMSParameter will pre-compute self-similarity.";
   python::def(
       "GetNAMSMolInfo", static_cast<RDKit::NAMS::NAMSMolInfo *(*)(const RDKit::ROMol &mol)>(&RDKit::NAMS::getNAMSMolInfo),
       (python::arg("mol")),
@@ -1098,14 +1098,23 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       (python::arg("mol"), python::arg("params")),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
-  docString = "Return the NAMS (Noncontiguous Atom Matching Structural Similarity) similarity for two NAMSMolInfo objects, on a scale of 0.0 (no match) to 1.0 (best match) \nTeixeira & Falcao (http://dx.doi.org/10.1021/ci400324u)";
+  docString = "Return the NAMS (Noncontiguous Atom Matching Structural Similarity) similarity for two NAMSMolInfo objects, on a scale of 0.0 (no match) to 1.0 (best match) \nTeixeira & Falcao (http://dx.doi.org/10.1021/ci400324u)\nOmitting the NAMSParameters object will use default parameters.";
   python::def(
-      "GetNAMSSimilarity", RDKit::NAMS::getNAMSSimilarity,
+      "GetNAMSSimilarity", static_cast<double(*)(const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSMolInfo &)>(&RDKit::NAMS::getNAMSSimilarity),
+      (python::arg("molinfo1"),python::arg("molinfo2")),
+      docString.c_str());
+  python::def(
+      "GetNAMSSimilarity", static_cast<double(*)(const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSParameters & parms)>(&RDKit::NAMS::getNAMSSimilarity),
       (python::arg("molinfo1"),python::arg("molinfo2"),python::arg("params")),
       docString.c_str());
-  docString = "Return a more detailed NAMS (Noncontiguous Atom Matching Structural Similarity) result object for two NAMSMolInfo objects.\nTeixeira & Falcao (http://dx.doi.org/10.1021/ci400324u)";
+  docString = "Return a more detailed NAMS (Noncontiguous Atom Matching Structural Similarity) result object for two NAMSMolInfo objects.\nTeixeira & Falcao (http://dx.doi.org/10.1021/ci400324u)\nOmitting the NAMSParameters object will use default parameters.";
   python::def(
-      "GetNAMSResult", RDKit::NAMS::getNAMSResult,
+      "GetNAMSResult", static_cast<RDKit::NAMS::NAMSResult *(*)(const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSMolInfo &)>(&RDKit::NAMS::getNAMSResult),
+      (python::arg("molinfo1"),python::arg("molinfo2")),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "GetNAMSResult", static_cast<RDKit::NAMS::NAMSResult *(*)(const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSParameters & parms)>(&RDKit::NAMS::getNAMSResult),
       (python::arg("molinfo1"),python::arg("molinfo2"),python::arg("params")),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
