@@ -147,28 +147,53 @@ RDKIT_FINGERPRINTS_EXPORT double getNAMSSimilarity(const NAMSMolInfo & molinfo1,
 
   \param molinfo1:   one of the molinfos to use
   \param molinfo2:   one of the molinfos to use
+  \param params:     The NAMSParameters object to control how to run the calculation
 
   \return the similarity between the two molecules (on a scale between 0-1)
 */
 RDKIT_FINGERPRINTS_EXPORT double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params);
 
-//! returns the NAMS similarity result between two molecules (encoded in NAMS MolInfo objects)
+
+//! returns the NAMS atom mapping between two molecules (encoded in NAMS MolInfo objects)
 /*!
   The NAMS algorithm is described by Teixeira & Falcao (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
   Default parameters will be used
 
-  The similarity score should be invariant to the order of molecule listing.
+  \param molinfo1:  the reference structure (as NAMSMolInfo)
+  \param molinfo2:  the other structure (as NAMSMolInfo)
+
+  \return A vector indexed by atom numbers of the reference structure, listing the corresponding atom number of the other structure
+  Atoms not mapped will be set to -1
+*/
+RDKIT_FINGERPRINTS_EXPORT std::vector< int > getNAMSMapping(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2);
+
+//! returns the NAMS atom mapping between two molecules (encoded in NAMS MolInfo objects)
+/*!
+  The NAMS algorithm is described by Teixeira & Falcao (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
+
+  \param molinfo1:  the reference structure (as NAMSMolInfo)
+  \param molinfo2:  the other structure (as NAMSMolInfo)
+  \param params:     The NAMSParameters object to control how to run the calculation
+
+  \return A vector indexed by atom numbers of the reference structure, listing the corresponding atom number of the other structure
+  Atoms not mapped will be set to -1
+*/
+RDKIT_FINGERPRINTS_EXPORT std::vector< int > getNAMSMapping(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params);
+
+//! returns the NAMS algorithm result between two molecules (encoded in NAMS MolInfo objects)
+/*!
+  The NAMS algorithm is described by Teixeira & Falcao (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
+  Default parameters will be used
 
   \param molinfo1:   one of the molinfos to use
   \param molinfo2:   one of the molinfos to use
-  \param params:     The NAMSParameters object to control how to run the calculation
 
   \return a pointer to the NAMSResult object which contains detailed information about the similarity calculation.
   The client is responsible for calling delete on this.
 */
 RDKIT_FINGERPRINTS_EXPORT NAMSResult * getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2);
 
-//! returns the NAMS similarity result between two molecules (encoded in NAMS MolInfo objects)
+//! returns the NAMS algorithm result between two molecules (encoded in NAMS MolInfo objects)
 /*!
   The NAMS algorithm is described by Teixeira & Falcao (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
 

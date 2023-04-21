@@ -260,9 +260,11 @@ class TestCase(unittest.TestCase):
   def testNAMS(self):
     smiles = [ 'c1ccccc1', 'Cc1ccccc1O', 'NCCc1c[nH]c2ccccc12', 'CN(Cl)CCc1c[nH]c2ccccc12', 'c(c[nH]1)(CCN(C)Cl)c(cc2)c1cc2', 'c1ccc(O)c(C)c1']
     mols = [ Chem.MolFromSmiles(s) for s in smiles ]
-    mis = [ rdMD.GetNAMSMolInfo(m) for m in mols ]
 
     params = rdMD.NAMSParameters()
+
+    mis = [ rdMD.GetNAMSMolInfo(m,params) for m in mols ]
+
 
     self.assertEqual(rdMD.GetNAMSSimilarity(mis[3], mis[3], params), 1.0) # Self comparison yields 1.0
     self.assertEqual(rdMD.GetNAMSSimilarity(mis[1], mis[5], params), 1.0) # Even if we reorder atoms
@@ -274,8 +276,8 @@ class TestCase(unittest.TestCase):
     nams_result23 = rdMD.GetNAMSResult( mis[2], mis[3], params )
     self.assertAlmostEqual(nams_result23.self_similarity1, 125.859, places=3)
     self.assertAlmostEqual(nams_result23.self_similarity2, 161.679, places=3)
-    self.assertEqual(nams_result23.self_similarity1, mis[2].similarity)
-    self.assertEqual(nams_result23.self_similarity2, mis[3].similarity)
+    self.assertEqual(nams_result23.self_similarity1, mis[2].self_similarity)
+    self.assertEqual(nams_result23.self_similarity2, mis[3].self_similarity)
     self.assertAlmostEqual(nams_result23.similarity, 125.619, places=3)
     self.assertAlmostEqual(nams_result23.jaccard, 0.7758, places=4)
 
@@ -286,8 +288,8 @@ class TestCase(unittest.TestCase):
     for ii in range(len(score_reference)):
         self.assertAlmostEqual( nams_result15.atom_scores[ii], score_reference[ii], places=2, msg="Atom Score place " + str(ii) )
 
-    nams_result34 = rdMD.GetNAMSResult( mis[3], mis[4], params )
-    self.assertEqual(list(nams_result34.mapping1to2), [6, 5, 7, 4, 3, 0, 1, 2, 11, 12, 13, 10, 9, 8 ] )
+    mapping34 = rdMD.GetNAMSMapping( mis[3], mis[4], params )
+    self.assertEqual(list(mapping34), [6, 5, 7, 4, 3, 0, 1, 2, 11, 12, 13, 10, 9, 8 ] )
 
 
   def testCrippen(self):

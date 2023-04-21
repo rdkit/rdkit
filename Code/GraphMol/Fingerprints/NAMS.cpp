@@ -647,6 +647,15 @@ double getNAMSSimilarity(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molin
   return result->jaccard;
 }
 
+std::vector< int > getNAMSMapping(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2) {
+  std::unique_ptr< NAMSResult > result( getNAMSResult(molinfo1, molinfo2, NAMSParameters::getDefault()) );
+  return result->mapping1to2;
+}
+
+std::vector< int > getNAMSMapping(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params) {
+  std::unique_ptr< NAMSResult > result( getNAMSResult(molinfo1, molinfo2, params) );
+  return result->mapping1to2;
+}
 
 } // namespace NAMS
 } // namespace RDKit
