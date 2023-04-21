@@ -27,6 +27,7 @@ struct NAMSParameters {
   NAMSParameters() = default;
   ~NAMSParameters();
 
+  // bool include_chirality = false; // Should we include the chirality in matching?
   float BS_ALPHA = 0.9f;
   float ANRINGS_FAC = 0.8f;	//  #number of rings an atom belongs to
   float ACHIR_FAC = 0.95f;	//  #chiral atom
@@ -36,8 +37,6 @@ struct NAMSParameters {
   float BORDER_FAC = 0.9f;	//  #bond order
   float PEN = 1.0f;
   int ADM = 3;
-  //int *LU_ELEMS = LU_ELEMS_DEFAAULT;		// a lookup table for discovering the indices of the elements from the matrix from the atomic numbers
-  //float **ELEMS_DISTS;
 
   static constexpr int MAX_LEVELS = 128;
 
@@ -85,23 +84,20 @@ struct BondInfoType {
 */
 class RDKIT_FINGERPRINTS_EXPORT NAMSMolInfo {
 public:
-  NAMSMolInfo(const ROMol &mol);
+  NAMSMolInfo(const ROMol &mol, bool include_chirality=false);
+  NAMSMolInfo(const ROMol &mol, const NAMSParameters & parms);
 
   unsigned int natoms() const;
   unsigned int nbonds() const;
   unsigned int naba_types() const;
 
-  std::string smiles; // Needed?
-  double molwt=99.9; // Needed?
   std::vector< BondInfoType > aba_types;
   // natoms by bond by aba_type index
   std::vector< std::vector< unsigned int > > mat_aba_types;
   // natoms by bond by level number
   std::vector< std::vector< int > > mat_levels;
 
-  //! Primarily for debugging purposes.
-  //! Dump data in NAMS database format (more or less)
-  std::string dump(int cid=1) const; // For debugging.
+  double self_similarity = 0;
 };
 
 //! returns a NAMS MolInfo object for a molecule
@@ -114,6 +110,17 @@ public:
   responsible for calling delete on this.
 */
 RDKIT_FINGERPRINTS_EXPORT NAMSMolInfo * getNAMSMolInfo(const ROMol &mol);
+
+//! returns a NAMS MolInfo object for a molecule
+/*!
+  The NAMS algorithm is described by Teixeira & Falcao (https://pubs.acs.org/doi/abs/10.1021/ci400324u)
+
+  \param mol:    the molecule to be fingerprinted
+
+  \return a pointer to the molinfo object. The client is
+  responsible for calling delete on this.
+*/
+RDKIT_FINGERPRINTS_EXPORT NAMSMolInfo * getNAMSMolInfo(const ROMol &mol, const NAMSParameters & parms);
 
 //! returns the NAMS similarity between two molecules (encoded in NAMS MolInfo objects)
 /*!
@@ -143,12 +150,6 @@ RDKIT_FINGERPRINTS_EXPORT double getNAMSSimilarity(const NAMSMolInfo & molinfo1,
   The client is responsible for calling delete on this.
 */
 RDKIT_FINGERPRINTS_EXPORT NAMSResult * getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params);
-
-//! Exposed primarily for testing.
-double calcSelfSimilarity(const NAMSMolInfo & mi, const NAMSParameters & parms);
-
-////! Exposed primarily for testing. Integer result is 10000x the float result
-//int nams_runner(const NAMSMolInfo & mi1, const NAMSMolInfo & mi2, const NAMSParameters & parms, bool M = false, bool A = false, float *wts = nullptr);
 
 } // namespace NAMS
 } // namespace RDKit

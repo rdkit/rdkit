@@ -274,6 +274,8 @@ class TestCase(unittest.TestCase):
     nams_result23 = rdMD.GetNAMSResult( mis[2], mis[3], params )
     self.assertAlmostEqual(nams_result23.self_similarity1, 125.859, places=3)
     self.assertAlmostEqual(nams_result23.self_similarity2, 161.679, places=3)
+    self.assertEqual(nams_result23.self_similarity1, mis[2].similarity)
+    self.assertEqual(nams_result23.self_similarity2, mis[3].similarity)
     self.assertAlmostEqual(nams_result23.similarity, 125.619, places=3)
     self.assertAlmostEqual(nams_result23.jaccard, 0.7758, places=4)
 

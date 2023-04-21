@@ -24,9 +24,6 @@
 #include <GraphMol/Atom.h>
 #include <GraphMol/MolOps.h>
 
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-//#include <GraphMol/Descriptors/MolDescriptors.h>
-
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -282,11 +279,9 @@ get_connection_matrix(const ROMol &mol, bool do_isomerism = false) {
   return connection_matrix;
 }
 
-NAMSMolInfo::NAMSMolInfo(const ROMol &mol) {
-  smiles = MolToSmiles( mol );
-//  molwt = Descriptors::calcAMW(mol);
+NAMSMolInfo::NAMSMolInfo(const ROMol &mol, bool include_chirality) {
 
-  std::vector< std::vector< std::vector< BondInfo > > > connection_matrix = get_connection_matrix(mol);
+  std::vector< std::vector< std::vector< BondInfo > > > connection_matrix = get_connection_matrix(mol, include_chirality);
   // From nams-docker/makenamsdb/recoder.py:Recoder::export_mol_info()
 
   unsigned int natoms = connection_matrix.size();
@@ -315,7 +310,15 @@ NAMSMolInfo::NAMSMolInfo(const ROMol &mol) {
   for ( auto const & entry: aba_type_index ) {
     aba_types[ entry.second ] = entry.first;
   }
+}
 
+//! Forward def
+double calcSelfSimilarity(const NAMSMolInfo & mi, const NAMSParameters & parms);
+
+NAMSMolInfo::NAMSMolInfo(const ROMol &mol, const NAMSParameters & parms):
+  NAMSMolInfo(mol)
+{
+  this->self_similarity = calcSelfSimilarity(*this, parms);
 }
 
 unsigned int
@@ -343,39 +346,12 @@ std::ostream & operator<<( std::ostream & os, BondInfoType const & type ) {
   return os;
 }
 
-// This should dump information to cout in approx
-std::string
-NAMSMolInfo::dump(int cid) const {
-  std::stringstream ss;
-
-  unsigned int nbonds = 0;
-  if ( ! mat_aba_types.empty() ) {
-    nbonds = mat_aba_types[0].size();
-  }
-
-  ss << cid << ' ' << int(molwt*10) << ' ' << smiles << '\n';
-  ss << natoms() << ' ' << nbonds << ' ' << aba_types.size() << '\n';
-  for ( auto const & type: aba_types ) {
-    ss << type;
-  }
-  for ( auto const & bond: mat_aba_types ) {
-    for ( unsigned int x: bond ) {
-      ss << x << ' ';
-    }
-    ss << '\n';
-  }
-  for ( auto const & bond: mat_levels ) {
-    for ( unsigned int x: bond ) {
-      ss << x << ' ';
-    }
-    ss << '\n';
-  }
-
-  return ss.str();
-}
-
 NAMSMolInfo * getNAMSMolInfo(const ROMol &mol) {
   return new NAMSMolInfo(mol);
+}
+
+NAMSMolInfo * getNAMSMolInfo(const ROMol &mol, const NAMSParameters & params) {
+  return new NAMSMolInfo(mol,params);
 }
 
 // from nams-docker/nams/nams.cpp:compare_aba_bonds(), with minimal tweaks
@@ -635,8 +611,16 @@ void nams_runner(const NAMSMolInfo & mi1, const NAMSMolInfo & mi2, const NAMSPar
 NAMSResult * getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2, const NAMSParameters & params) {
   NAMSResult * result = new NAMSResult;
 
-  result->self_similarity1 = calcSelfSimilarity(molinfo1, params);
-  result->self_similarity2 = calcSelfSimilarity(molinfo2, params);
+  if ( molinfo1.self_similarity != 0 ) {
+    result->self_similarity1 = molinfo1.self_similarity;
+  } else {
+    result->self_similarity1 = calcSelfSimilarity(molinfo1, params);
+  }
+  if ( molinfo2.self_similarity != 0 ) {
+    result->self_similarity2 = molinfo2.self_similarity;
+  } else {
+    result->self_similarity2 = calcSelfSimilarity(molinfo2, params);
+  }
   nams_runner(molinfo1, molinfo2, params, *result, nullptr);
   result->jaccard = result->similarity / ( result->self_similarity1 + result->self_similarity2 - result->similarity );
 

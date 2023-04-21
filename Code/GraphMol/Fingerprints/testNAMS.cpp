@@ -69,31 +69,6 @@ const std::vector< std::vector< float > > CROSSSIM = {
   { 125.619 }
 };
 
-void testNAMSMolInfo() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Test NAMS MolInfo loading"
-                        << std::endl;
-
-  std::vector< ROMOL_SPTR > mols;
-  for ( std::string const & smi: SMILES ) {
-    mols.push_back( ROMOL_SPTR(SmilesToMol(smi)) );
-  }
-
-  std::vector< NAMSMolInfo > molinfos;
-  for ( ROMOL_SPTR const & mol: mols ) {
-    molinfos.emplace_back( *mol ); // Rely on constructor that takes a ROMol object
-  }
-
-  // We're mainly testing that things don't crash/segfault,
-  // but we can also check that we've got all the atoms.
-
-  for ( unsigned int ii=0; ii< mols.size(); ++ii ) {
-    TEST_ASSERT( molinfos[ii].natoms() == mols[ii]->getNumAtoms() );
-  }
-
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
-}
-
 void testNAMSSelfSimilarity() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Test NAMS self similarity"
@@ -104,16 +79,16 @@ void testNAMSSelfSimilarity() {
     mols.push_back( ROMOL_SPTR(SmilesToMol(smi)) );
   }
 
-  std::vector< NAMSMolInfo > molinfos;
-  for ( ROMOL_SPTR const & mol: mols ) {
-    molinfos.emplace_back( *mol ); // Rely on constructor that takes a ROMol object
-  }
-
   NAMSParameters params;
 
-  for ( unsigned int ii=0; ii< mols.size(); ++ii ) {
-    double ssim = calcSelfSimilarity(molinfos[ii], params);
-    //BOOST_LOG(rdErrorLog) << "For " << molinfos[ii].smiles << " found self similarity " << ssim << " expected " << SSIM[ii] << '\n';
+  std::vector< NAMSMolInfo > molinfos;
+  for ( ROMOL_SPTR const & mol: mols ) {
+    molinfos.emplace_back( *mol, params );
+  }
+
+
+  for ( unsigned int ii=0; ii< molinfos.size(); ++ii ) {
+    double ssim = molinfos[ii].self_similarity;
     TEST_ASSERT ( ssim < SSIM[ii] + 0.001 && ssim > SSIM[ii] - 0.001 );
   }
 
@@ -247,7 +222,6 @@ int main(int argc, char *argv[]) {
   (void)argv;
 
   RDLog::InitLogs();
-  testNAMSMolInfo();
   testNAMSSelfSimilarity();
   testNAMSCrossSimiliarity();
   testNAMSPairing();
