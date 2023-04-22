@@ -106,6 +106,11 @@
 using namespace std;
 using namespace RDKit;
 
+constexpr unsigned int pickleWhat =
+    PicklerOps::PropertyPickleOptions::AtomProps |
+    PicklerOps::PropertyPickleOptions::BondProps |
+    PicklerOps::PropertyPickleOptions::PrivateProps;
+
 class ByteA : public std::string {
  public:
   ByteA() : string(){};
@@ -173,7 +178,7 @@ extern "C" Mol *deconstructROMol(CROMol data) {
   ByteA b;
 
   try {
-    MolPickler::pickleMol(mol, b);
+    MolPickler::pickleMol(mol, b, pickleWhat);
   } catch (MolPicklerException &e) {
     elog(ERROR, "pickleMol: %s", e.what());
   } catch (...) {
@@ -477,7 +482,7 @@ extern "C" char *makeMolBlob(CROMol data, int *len) {
   auto *mol = (ROMol *)data;
   StringData.clear();
   try {
-    MolPickler::pickleMol(*mol, StringData);
+    MolPickler::pickleMol(*mol, StringData, pickleWhat);
   } catch (...) {
     elog(ERROR, "makeMolBlob: Unknown exception");
   }
@@ -584,7 +589,8 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
-extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality, bool useMatchers) {
+extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality,
+                            bool useMatchers) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
   RDKit::SubstructMatchParameters params;
@@ -603,7 +609,7 @@ extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality, bool useMatch
     params.useGenericMatchers = true;
   }
 
-    auto matchVect = RDKit::SubstructMatch(*im, *am, params);
+  auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
 
