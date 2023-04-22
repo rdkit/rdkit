@@ -10,6 +10,7 @@
 #include "catch.hpp"
 #include <RDGeneral/test.h>
 #include <string>
+#include <vector>
 #include <GraphMol/RDKitBase.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
@@ -112,6 +113,8 @@ TEST_CASE("reading Atom Labels") {
               common_properties::atomLabel) == "Q_e");
     CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
               common_properties::atomLabel) == "QH_p");
+    CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::dummyLabel));
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::dummyLabel));
     CHECK(!m->getAtomWithIdx(2)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(0)->hasQuery());
     CHECK(m->getAtomWithIdx(1)->hasQuery());
@@ -643,8 +646,9 @@ TEST_CASE("github #6050: stereogroups not combined") {
   }
 }
 
-TEST_CASE("github #6225: removes enhanced stereo if doIsomericSmiles is false") {
-  { // Gets rid of chiral centers
+TEST_CASE(
+    "github #6225: removes enhanced stereo if doIsomericSmiles is false") {
+  {  // Gets rid of chiral centers
     std::string smiles = "O[C@H](Br)[C@H](F)C |&1:1,3|";
     ROMol *m = SmilesToMol(smiles);
     SmilesWriteParams params;
@@ -663,5 +667,20 @@ TEST_CASE("github #6225: removes enhanced stereo if doIsomericSmiles is false") 
     REQUIRE(m);
     CHECK(MolToCXSmiles(*m, params) == "C1=CCCCCCCCC1");
     delete m;
+  }
+}
+
+TEST_CASE(
+    "Github #6309: CXSMILES: atom with labels should not also have dummyLabel property set") {
+  SECTION("as-reported") {
+    std::vector<std::string> data = {"F* |$;foo_p$|", "F* |$;HAR_p$|"};
+    for (const auto &smi : data) {
+      INFO(smi);
+      std::unique_ptr<RWMol> m{SmilesToMol(smi)};
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+      CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::dummyLabel));
+      CHECK(MolToCXSmiles(*m).find("atomProp") == std::string::npos);
+    }
   }
 }
