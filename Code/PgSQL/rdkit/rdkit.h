@@ -40,6 +40,11 @@ extern "C" {
 
 #include <postgres.h>
 
+#define RDKIT_FREE_IF_COPY_P(ptrsrc, ptrori)                   \
+  do {                                                         \
+    if ((Pointer)(ptrsrc) != (Pointer)(ptrori)) pfree(ptrsrc); \
+  } while (0)
+
 typedef bytea Mol;
 
 #define DatumGetMolP(x) ((Mol *)PG_DETOAST_DATUM(x))
