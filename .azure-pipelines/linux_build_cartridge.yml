@@ -5,7 +5,7 @@ steps:
     sudo apt-get remove postgresql postgresql-common postgresql-client-common
     sudo apt purge postgresql-14 postgresql-client-14
     sudo apt purge postgresql postgresql-common postgresql-client-common
-    sudo apt-get install -y libboost-all-dev postgresql-common postgresql-12 postgresql-server-dev-12 libpq-dev-12
+    sudo apt-get install -y libboost-all-dev postgresql-common postgresql-12 postgresql-server-dev-12
     echo "add postgres user"
     sudo -u postgres createuser -s `whoami`
   displayName: Setup build environment
@@ -27,7 +27,10 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_PGSQL=ON \
-    -DPostgreSQL_CONFIG=/usr/bin/pg_config
+    -DPostgreSQL_CONFIG=/usr/bin/pg_config \
+    -DPostgreSQL_INCLUDE_DIR=`/usr/bin/pg_config --includedir` \
+    -DPostgreSQL_TYPE_INCLUDE_DIR=`/usr/bin/pg_config --includedir-server` \
+    -DPostgreSQL_LIBRARY_DIR=`/usr/bin/pg_config --libdir`
   displayName: Configure build (Run CMake)
 - bash: |
     cd build
