@@ -5,7 +5,7 @@ steps:
     sudo apt-get remove postgresql postgresql-common postgresql-client-common
     sudo apt purge postgresql-14 postgresql-client-14
     sudo apt purge postgresql postgresql-common postgresql-client-common
-    sudo apt-get install -y libboost-all-dev postgresql-common postgresql-12 postgresql-client-12 postgresql-server-dev-12
+    sudo apt-get install -y libboost-all-dev postgresql-common-12 postgresql-12 postgresql-server-dev-12
     echo "add postgres user"
     sudo -u postgres createuser -s `whoami`
   displayName: Setup build environment
