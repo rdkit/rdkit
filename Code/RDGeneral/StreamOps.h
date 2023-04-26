@@ -18,6 +18,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <unordered_set>
 #include <boost/cstdint.hpp>
 #include <boost/predef.h>
 
@@ -480,19 +481,23 @@ inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair,
   return true;
 }
 
-inline bool streamWriteProps(std::ostream &ss, const RDProps &props,
-                             bool savePrivate = false,
-                             bool saveComputed = false,
-                             const CustomPropHandlerVec &handlers = {}) {
+inline bool streamWriteProps(
+    std::ostream &ss, const RDProps &props, bool savePrivate = false,
+    bool saveComputed = false, const CustomPropHandlerVec &handlers = {},
+    const std::unordered_set<std::string> &ignore = {}) {
   STR_VECT propsToSave = props.getPropList(savePrivate, saveComputed);
-  std::set<std::string> propnames(propsToSave.begin(), propsToSave.end());
+  std::unordered_set<std::string> propnames;
+  for (const auto &pn : propsToSave) {
+    if (ignore.empty() || ignore.find(pn) == ignore.end()) {
+      propnames.insert(pn);
+    }
+  }
 
   const Dict &dict = props.getDict();
   unsigned int count = 0;
-  for (Dict::DataType::const_iterator it = dict.getData().begin();
-       it != dict.getData().end(); ++it) {
-    if (propnames.find(it->key) != propnames.end()) {
-      if (isSerializable(*it, handlers)) {
+  for (const auto &elem : dict.getData()) {
+    if (propnames.find(elem.key) != propnames.end()) {
+      if (isSerializable(elem, handlers)) {
         count++;
       }
     }
@@ -501,13 +506,12 @@ inline bool streamWriteProps(std::ostream &ss, const RDProps &props,
   streamWrite(ss, count);  // packed int?
 
   unsigned int writtenCount = 0;
-  for (Dict::DataType::const_iterator it = dict.getData().begin();
-       it != dict.getData().end(); ++it) {
-    if (propnames.find(it->key) != propnames.end()) {
-      if (isSerializable(*it, handlers)) {
+  for (const auto &elem : dict.getData()) {
+    if (propnames.find(elem.key) != propnames.end()) {
+      if (isSerializable(elem, handlers)) {
         // note - not all properties are serializable, this may be
         //  a null op
-        if (streamWriteProp(ss, *it, handlers)) {
+        if (streamWriteProp(ss, elem, handlers)) {
           writtenCount++;
         }
       }
