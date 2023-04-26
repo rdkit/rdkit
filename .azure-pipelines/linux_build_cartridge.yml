@@ -28,9 +28,9 @@ steps:
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_PGSQL=ON \
     -DPostgreSQL_CONFIG=/usr/bin/pg_config \
-    -DPostgreSQL_INCLUDE_DIR=`/usr/bin/pg_config --includedir` \
-    -DPostgreSQL_TYPE_INCLUDE_DIR=`/usr/bin/pg_config --includedir-server` \
-    -DPostgreSQL_LIBRARY_DIR=`/usr/bin/pg_config --libdir`
+    -DPostgreSQL_INCLUDE_DIR=/usr/include/postgresql/12 \
+    -DPostgreSQL_TYPE_INCLUDE_DIR=/usr/include/postgresql/12/server \
+    -DPostgreSQL_LIBRARY=/usr/lib/postgresql/12/lib/libpq.so
   displayName: Configure build (Run CMake)
 - bash: |
     cd build
