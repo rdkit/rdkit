@@ -97,6 +97,9 @@ M  END)CTAB"_ctab;
                               PicklerOps::PropertyPickleOptions::PrivateProps);
 
     CHECK(pkl.size() > basepkl.size());
+    // make sure the property names aren't in the pickle
+    CHECK(pkl.find(common_properties::_MolFileBondType) == std::string::npos);
+    CHECK(pkl.find(common_properties::_MolFileBondCfg) == std::string::npos);
     // std::cerr << "!!!! " << pkl.size() << " " << basepkl.size() << std::endl;
 
     RWMol mol2(pkl);
@@ -151,7 +154,6 @@ M  END
                               PicklerOps::PropertyPickleOptions::PrivateProps);
 
     CHECK(pkl.size() > basepkl.size());
-    std::cerr << "!!!! " << pkl.size() << " " << basepkl.size() << std::endl;
 
     RWMol mol2(pkl);
     CHECK(mol2.getAtomWithIdx(0)->getProp<int>(common_properties::molParity) ==

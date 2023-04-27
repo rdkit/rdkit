@@ -31,6 +31,7 @@
 
 using std::int32_t;
 using std::uint32_t;
+
 namespace RDKit {
 
 const int32_t MolPickler::versionMajor = 14;
@@ -158,26 +159,50 @@ bool pickleExplicitProperties(
   return !ps.empty();
 }
 
-std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {
-    {common_properties::molStereoCare, 0x1},
-    {common_properties::molParity, 0x2},
-    {common_properties::molInversionFlag, 0x4},
-    {common_properties::_ChiralityPossible, 0x8},
+// you're going to scratch your head and wonder why on earth this is using a
+// class instead of a set of globals. This is a workaround for some very strange
+// problem with globals and the cartridge
+class PropTracker {
+ public:
+  // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
+  // to update the pickle format.
+  const std::vector<std::pair<std::string, std::uint16_t>> explicitBondProps = {
+      {RDKit::common_properties::_MolFileBondType, 0x1},
+      {RDKit::common_properties::_MolFileBondStereo, 0x2},
+      {RDKit::common_properties::_MolFileBondCfg, 0x4},
+      {RDKit::common_properties::_MolFileBondQuery, 0x8},
+      {RDKit::common_properties::molStereoCare, 0x10},
+  };
+  // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
+  // to update the pickle format.
+  const std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {
+      {common_properties::molStereoCare, 0x1},
+      {common_properties::molParity, 0x2},
+      {common_properties::molInversionFlag, 0x4},
+      {common_properties::_ChiralityPossible, 0x8},
 
-};
-std::vector<std::string> ignoreAtomProps = {
-    common_properties::molAtomMapNumber,
-    common_properties::dummyLabel,
+  };
+  const std::vector<std::string> ignoreAtomProps = {
+      common_properties::molAtomMapNumber,
+      common_properties::dummyLabel,
+  };
+  std::unordered_set<std::string> ignoreBondProps;
+  PropTracker() {
+    for (const auto &pr : explicitBondProps) {
+      ignoreBondProps.insert(pr.first);
+    }
+  };
 };
 
 bool pickleAtomProperties(std::ostream &ss, const RDProps &props,
                           unsigned int pickleFlags) {
+  const static PropTracker aprops;
   static std::unordered_set<std::string> ignoreProps;
   if (ignoreProps.empty()) {
-    for (const auto &pr : explicitAtomProps) {
+    for (const auto &pr : aprops.explicitAtomProps) {
       ignoreProps.insert(pr.first);
     }
-    for (const auto &pn : ignoreAtomProps) {
+    for (const auto &pn : aprops.ignoreAtomProps) {
       ignoreProps.insert(pn);
     }
   }
@@ -185,16 +210,19 @@ bool pickleAtomProperties(std::ostream &ss, const RDProps &props,
   if (!pickleFlags) {
     return false;
   }
+
   bool res = streamWriteProps<std::uint16_t>(
       ss, props, pickleFlags & PicklerOps::PrivateProps,
       pickleFlags & PicklerOps::ComputedProps,
       MolPickler::getCustomPropHandlers(), ignoreProps);
 
-  res |= pickleExplicitProperties<std::int16_t>(ss, props, explicitAtomProps);
+  res |= pickleExplicitProperties<std::int16_t>(ss, props,
+                                                aprops.explicitAtomProps);
   return res;
 }
 
 void unpickleAtomProperties(std::istream &ss, RDProps &props, int version) {
+  const static PropTracker aprops;
   if (version >= 14000) {
     streamReadProps<std::uint16_t>(ss, props,
                                    MolPickler::getCustomPropHandlers(), false);
@@ -203,39 +231,26 @@ void unpickleAtomProperties(std::istream &ss, RDProps &props, int version) {
                                   MolPickler::getCustomPropHandlers(), false);
   }
   unpickleExplicitProperties<std::int16_t, int>(ss, props, version,
-                                                explicitAtomProps);
+                                                aprops.explicitAtomProps);
 }
-
-std::vector<std::pair<std::string, std::uint16_t>> explicitBondProps = {
-    {common_properties::_MolFileBondType, 0x1},
-    {common_properties::_MolFileBondStereo, 0x2},
-    {common_properties::_MolFileBondCfg, 0x4},
-    {common_properties::_MolFileBondQuery, 0x8},
-    {common_properties::molStereoCare, 0x10},
-
-};
 
 bool pickleBondProperties(std::ostream &ss, const RDProps &props,
                           unsigned int pickleFlags) {
-  static std::unordered_set<std::string> ignoreProps;
-  if (ignoreProps.empty()) {
-    for (const auto &pr : explicitBondProps) {
-      ignoreProps.insert(pr.first);
-    }
-  }
+  const static PropTracker bprops;
   if (!pickleFlags) {
     return false;
   }
   bool res = streamWriteProps<std::uint16_t>(
       ss, props, pickleFlags & PicklerOps::PrivateProps,
       pickleFlags & PicklerOps::ComputedProps,
-      MolPickler::getCustomPropHandlers(), ignoreProps);
-
-  res |= pickleExplicitProperties<std::int8_t>(ss, props, explicitBondProps);
+      MolPickler::getCustomPropHandlers(), bprops.ignoreBondProps);
+  res |= pickleExplicitProperties<std::int8_t>(ss, props,
+                                               bprops.explicitBondProps);
   return res;
 }
 
 void unpickleBondProperties(std::istream &ss, RDProps &props, int version) {
+  const static PropTracker bprops;
   if (version >= 14000) {
     streamReadProps<std::uint16_t>(ss, props,
                                    MolPickler::getCustomPropHandlers(), false);
@@ -244,7 +259,7 @@ void unpickleBondProperties(std::istream &ss, RDProps &props, int version) {
                                   MolPickler::getCustomPropHandlers(), false);
   }
   unpickleExplicitProperties<std::int8_t, int>(ss, props, version,
-                                               explicitBondProps);
+                                               bprops.explicitBondProps);
 }
 
 }  // namespace
