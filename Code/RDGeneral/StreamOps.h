@@ -624,15 +624,19 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair,
 
 template <typename COUNT_TYPE = unsigned int>
 inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
-                                    const CustomPropHandlerVec &handlers = {}) {
+                                    const CustomPropHandlerVec &handlers = {},
+                                    bool reset = true) {
   COUNT_TYPE count;
   streamRead(ss, count);
 
   Dict &dict = props.getDict();
-  dict.reset();  // Clear data before repopulating
-  dict.getData().resize(count);
+  if (reset) {
+    dict.reset();  // Clear data before repopulating
+  }
+  auto startSz = dict.getData().size();
+  dict.getData().resize(startSz + count);
   for (unsigned index = 0; index < count; ++index) {
-    CHECK_INVARIANT(streamReadProp(ss, dict.getData()[index],
+    CHECK_INVARIANT(streamReadProp(ss, dict.getData()[startSz + index],
                                    dict.getNonPODStatus(), handlers),
                     "Corrupted property serialization detected");
   }

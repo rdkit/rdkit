@@ -107,4 +107,65 @@ M  END)CTAB"_ctab;
     CHECK(mol2.getBondWithIdx(2)->getProp<unsigned int>(
               common_properties::_MolFileBondCfg) == 1);
   }
+  SECTION("atoms") {
+    auto mol = R"CTAB(
+  Mrv2211 04272306392D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.375 3.125 0 0 CFG=2
+M  V30 2 C -6.0413 3.895 0 0
+M  V30 3 O -8.7087 3.895 0 0
+M  V30 4 F -7.375 1.585 0 0
+M  V30 5 Cl -6.1532 2.1875 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 1 4
+M  V30 3 1 1 2 CFG=1
+M  V30 4 1 1 5 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    std::string basepkl;
+    MolPickler::pickleMol(*mol, basepkl);
+
+    CHECK(mol->getAtomWithIdx(0)->getProp<int>(common_properties::molParity) ==
+          2);
+    CHECK(mol->getAtomWithIdx(0)->getProp<int>(
+              common_properties::_ChiralityPossible) == 1);
+    mol->getAtomWithIdx(0)->setProp(common_properties::_CIPCode,
+                                    std::string("S"));
+    mol->getAtomWithIdx(1)->setProp(common_properties::molAtomMapNumber, 1);
+    mol->getAtomWithIdx(2)->setAtomMapNum(2);
+    mol->getAtomWithIdx(3)->setProp(common_properties::dummyLabel,
+                                    std::string("foo"));
+
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl,
+                          PicklerOps::PropertyPickleOptions::AtomProps |
+                              PicklerOps::PropertyPickleOptions::PrivateProps);
+
+    CHECK(pkl.size() > basepkl.size());
+    std::cerr << "!!!! " << pkl.size() << " " << basepkl.size() << std::endl;
+
+    RWMol mol2(pkl);
+    CHECK(mol2.getAtomWithIdx(0)->getProp<int>(common_properties::molParity) ==
+          2);
+    CHECK(mol2.getAtomWithIdx(0)->getProp<int>(
+              common_properties::_ChiralityPossible) == 1);
+    CHECK(mol2.getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::_CIPCode) == "S");
+
+    CHECK(mol2.getAtomWithIdx(1)->getProp<int>(
+              common_properties::molAtomMapNumber) == 1);
+    CHECK(mol2.getAtomWithIdx(2)->getProp<int>(
+              common_properties::molAtomMapNumber) == 2);
+    CHECK(mol2.getAtomWithIdx(3)->getProp<std::string>(
+              common_properties::dummyLabel) == "foo");
+  }
 }

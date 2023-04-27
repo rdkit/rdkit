@@ -162,10 +162,13 @@ std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {
     {common_properties::molStereoCare, 0x1},
     {common_properties::molParity, 0x2},
     {common_properties::molInversionFlag, 0x4},
+    {common_properties::_ChiralityPossible, 0x8},
+
 };
-std::vector<std::string> ignoreAtomProps =
-    {  // common_properties::molAtomMapNumber,
-        common_properties::dummyLabel};
+std::vector<std::string> ignoreAtomProps = {
+    common_properties::molAtomMapNumber,
+    common_properties::dummyLabel,
+};
 
 bool pickleAtomProperties(std::ostream &ss, const RDProps &props,
                           unsigned int pickleFlags) {
@@ -173,6 +176,9 @@ bool pickleAtomProperties(std::ostream &ss, const RDProps &props,
   if (ignoreProps.empty()) {
     for (const auto &pr : explicitAtomProps) {
       ignoreProps.insert(pr.first);
+    }
+    for (const auto &pn : ignoreAtomProps) {
+      ignoreProps.insert(pn);
     }
   }
 
@@ -191,10 +197,10 @@ bool pickleAtomProperties(std::ostream &ss, const RDProps &props,
 void unpickleAtomProperties(std::istream &ss, RDProps &props, int version) {
   if (version >= 14000) {
     streamReadProps<std::uint16_t>(ss, props,
-                                   MolPickler::getCustomPropHandlers());
+                                   MolPickler::getCustomPropHandlers(), false);
   } else {
     streamReadProps<unsigned int>(ss, props,
-                                  MolPickler::getCustomPropHandlers());
+                                  MolPickler::getCustomPropHandlers(), false);
   }
   unpickleExplicitProperties<std::int16_t, int>(ss, props, version,
                                                 explicitAtomProps);
@@ -232,10 +238,10 @@ bool pickleBondProperties(std::ostream &ss, const RDProps &props,
 void unpickleBondProperties(std::istream &ss, RDProps &props, int version) {
   if (version >= 14000) {
     streamReadProps<std::uint16_t>(ss, props,
-                                   MolPickler::getCustomPropHandlers());
+                                   MolPickler::getCustomPropHandlers(), false);
   } else {
     streamReadProps<unsigned int>(ss, props,
-                                  MolPickler::getCustomPropHandlers());
+                                  MolPickler::getCustomPropHandlers(), false);
   }
   unpickleExplicitProperties<std::int8_t, int>(ss, props, version,
                                                explicitBondProps);
