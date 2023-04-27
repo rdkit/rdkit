@@ -481,6 +481,7 @@ inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair,
   return true;
 }
 
+template <typename COUNT_TYPE = unsigned int>
 inline bool streamWriteProps(
     std::ostream &ss, const RDProps &props, bool savePrivate = false,
     bool saveComputed = false, const CustomPropHandlerVec &handlers = {},
@@ -494,7 +495,7 @@ inline bool streamWriteProps(
   }
 
   const Dict &dict = props.getDict();
-  unsigned int count = 0;
+  COUNT_TYPE count = 0;
   for (const auto &elem : dict.getData()) {
     if (propnames.find(elem.key) != propnames.end()) {
       if (isSerializable(elem, handlers)) {
@@ -502,10 +503,12 @@ inline bool streamWriteProps(
       }
     }
   }
-
   streamWrite(ss, count);  // packed int?
+  if (!count) {
+    return false;
+  }
 
-  unsigned int writtenCount = 0;
+  COUNT_TYPE writtenCount = 0;
   for (const auto &elem : dict.getData()) {
     if (propnames.find(elem.key) != propnames.end()) {
       if (isSerializable(elem, handlers)) {
@@ -619,9 +622,10 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair,
   return true;
 }
 
+template <typename COUNT_TYPE = unsigned int>
 inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
                                     const CustomPropHandlerVec &handlers = {}) {
-  unsigned int count;
+  COUNT_TYPE count;
   streamRead(ss, count);
 
   Dict &dict = props.getDict();
@@ -633,7 +637,7 @@ inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
                     "Corrupted property serialization detected");
   }
 
-  return count;
+  return static_cast<unsigned int>(count);
 }
 
 }  // namespace RDKit

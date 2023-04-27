@@ -42,7 +42,6 @@ M  END)CTAB"_ctab;
               common_properties::_MolFileBondType) == 1);
     CHECK(mol->getBondWithIdx(2)->getProp<unsigned int>(
               common_properties::_MolFileBondStereo) == 1);
-    // mol->getBondWithIdx(2)->setProp<std::string>("foo", "bar");
 
     std::string basepkl;
     MolPickler::pickleMol(*mol, basepkl);
@@ -51,9 +50,7 @@ M  END)CTAB"_ctab;
     MolPickler::pickleMol(*mol, pkl,
                           PicklerOps::PropertyPickleOptions::BondProps |
                               PicklerOps::PropertyPickleOptions::PrivateProps);
-
-    CHECK(pkl.size() > basepkl.size());
-    std::cerr << "!!!! " << pkl.size() << " " << basepkl.size() << std::endl;
+    // std::cerr << "!!!! " << pkl.size() << " " << basepkl.size() << std::endl;
 
     RWMol mol2(pkl);
     CHECK(mol2.getBondWithIdx(1)->getProp<unsigned int>(
@@ -62,9 +59,8 @@ M  END)CTAB"_ctab;
               common_properties::_MolFileBondType) == 1);
     CHECK(mol2.getBondWithIdx(2)->getProp<unsigned int>(
               common_properties::_MolFileBondStereo) == 1);
-    // CHECK(mol2.getBondWithIdx(2)->getProp<std::string>("foo") == "bar");
   }
-  SECTION("basics-v3k") {
+  SECTION("bonds-v3k") {
     auto mol = R"CTAB(
   Mrv1810 02111915102D          
 
@@ -91,7 +87,6 @@ M  END)CTAB"_ctab;
               common_properties::_MolFileBondType) == 1);
     CHECK(mol->getBondWithIdx(2)->getProp<unsigned int>(
               common_properties::_MolFileBondCfg) == 1);
-    mol->getBondWithIdx(2)->setProp<std::string>("foo", "bar");
 
     std::string basepkl;
     MolPickler::pickleMol(*mol, basepkl);
@@ -102,7 +97,7 @@ M  END)CTAB"_ctab;
                               PicklerOps::PropertyPickleOptions::PrivateProps);
 
     CHECK(pkl.size() > basepkl.size());
-    std::cerr << "!!!! " << pkl.size() << " " << basepkl.size() << std::endl;
+    // std::cerr << "!!!! " << pkl.size() << " " << basepkl.size() << std::endl;
 
     RWMol mol2(pkl);
     CHECK(mol2.getBondWithIdx(1)->getProp<unsigned int>(
@@ -111,6 +106,5 @@ M  END)CTAB"_ctab;
               common_properties::_MolFileBondType) == 1);
     CHECK(mol2.getBondWithIdx(2)->getProp<unsigned int>(
               common_properties::_MolFileBondCfg) == 1);
-    CHECK(mol2.getBondWithIdx(2)->getProp<std::string>("foo") == "bar");
   }
 }

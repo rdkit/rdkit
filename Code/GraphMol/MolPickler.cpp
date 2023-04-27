@@ -112,9 +112,10 @@ void MolPickler::_pickleProperties(std::ostream &ss, const RDProps &props,
     return;
   }
 
-  streamWriteProps(ss, props, pickleFlags & PicklerOps::PrivateProps,
-                   pickleFlags & PicklerOps::ComputedProps,
-                   MolPickler::getCustomPropHandlers());
+  streamWriteProps<std::uint16_t>(ss, props,
+                                  pickleFlags & PicklerOps::PrivateProps,
+                                  pickleFlags & PicklerOps::ComputedProps,
+                                  MolPickler::getCustomPropHandlers());
 }
 
 namespace {
@@ -137,7 +138,7 @@ void unpickleExplicitProperties(
 }
 
 template <typename SAVEAS>
-void pickleExplicitProperties(
+bool pickleExplicitProperties(
     std::ostream &ss, const RDProps &props,
     const std::vector<std::pair<std::string, std::uint16_t>> &explicitProps) {
   std::uint8_t bprops = 0;
@@ -154,12 +155,19 @@ void pickleExplicitProperties(
   for (auto v : ps) {
     streamWrite(ss, v);
   }
+  return !ps.empty();
 }
 
-std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {};
-std::vector<std::string> ignoreAtomProps = {"_CIPRank", "__computedProps"};
+std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {
+    {common_properties::molStereoCare, 0x1},
+    {common_properties::molParity, 0x2},
+    {common_properties::molInversionFlag, 0x4},
+};
+std::vector<std::string> ignoreAtomProps =
+    {  // common_properties::molAtomMapNumber,
+        common_properties::dummyLabel};
 
-void pickleAtomProperties(std::ostream &ss, const RDProps &props,
+bool pickleAtomProperties(std::ostream &ss, const RDProps &props,
                           unsigned int pickleFlags) {
   static std::unordered_set<std::string> ignoreProps;
   if (ignoreProps.empty()) {
@@ -169,17 +177,25 @@ void pickleAtomProperties(std::ostream &ss, const RDProps &props,
   }
 
   if (!pickleFlags) {
-    return;
+    return false;
   }
-  streamWriteProps(ss, props, pickleFlags & PicklerOps::PrivateProps,
-                   pickleFlags & PicklerOps::ComputedProps,
-                   MolPickler::getCustomPropHandlers(), ignoreProps);
+  bool res = streamWriteProps<std::uint16_t>(
+      ss, props, pickleFlags & PicklerOps::PrivateProps,
+      pickleFlags & PicklerOps::ComputedProps,
+      MolPickler::getCustomPropHandlers(), ignoreProps);
 
-  pickleExplicitProperties<std::int16_t>(ss, props, explicitAtomProps);
+  res |= pickleExplicitProperties<std::int16_t>(ss, props, explicitAtomProps);
+  return res;
 }
 
 void unpickleAtomProperties(std::istream &ss, RDProps &props, int version) {
-  streamReadProps(ss, props, MolPickler::getCustomPropHandlers());
+  if (version >= 14000) {
+    streamReadProps<std::uint16_t>(ss, props,
+                                   MolPickler::getCustomPropHandlers());
+  } else {
+    streamReadProps<unsigned int>(ss, props,
+                                  MolPickler::getCustomPropHandlers());
+  }
   unpickleExplicitProperties<std::int16_t, int>(ss, props, version,
                                                 explicitAtomProps);
 }
@@ -188,9 +204,12 @@ std::vector<std::pair<std::string, std::uint16_t>> explicitBondProps = {
     {common_properties::_MolFileBondType, 0x1},
     {common_properties::_MolFileBondStereo, 0x2},
     {common_properties::_MolFileBondCfg, 0x4},
+    {common_properties::_MolFileBondQuery, 0x8},
+    {common_properties::molStereoCare, 0x10},
+
 };
 
-void pickleBondProperties(std::ostream &ss, const RDProps &props,
+bool pickleBondProperties(std::ostream &ss, const RDProps &props,
                           unsigned int pickleFlags) {
   static std::unordered_set<std::string> ignoreProps;
   if (ignoreProps.empty()) {
@@ -199,17 +218,25 @@ void pickleBondProperties(std::ostream &ss, const RDProps &props,
     }
   }
   if (!pickleFlags) {
-    return;
+    return false;
   }
-  streamWriteProps(ss, props, pickleFlags & PicklerOps::PrivateProps,
-                   pickleFlags & PicklerOps::ComputedProps,
-                   MolPickler::getCustomPropHandlers(), ignoreProps);
+  bool res = streamWriteProps<std::uint16_t>(
+      ss, props, pickleFlags & PicklerOps::PrivateProps,
+      pickleFlags & PicklerOps::ComputedProps,
+      MolPickler::getCustomPropHandlers(), ignoreProps);
 
-  pickleExplicitProperties<std::int8_t>(ss, props, explicitBondProps);
+  res |= pickleExplicitProperties<std::int8_t>(ss, props, explicitBondProps);
+  return res;
 }
 
 void unpickleBondProperties(std::istream &ss, RDProps &props, int version) {
-  streamReadProps(ss, props, MolPickler::getCustomPropHandlers());
+  if (version >= 14000) {
+    streamReadProps<std::uint16_t>(ss, props,
+                                   MolPickler::getCustomPropHandlers());
+  } else {
+    streamReadProps<unsigned int>(ss, props,
+                                  MolPickler::getCustomPropHandlers());
+  }
   unpickleExplicitProperties<std::int8_t, int>(ss, props, version,
                                                explicitBondProps);
 }
@@ -1115,33 +1142,40 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   }
 
   if (propertyFlags & PicklerOps::MolProps) {
-    streamWrite(ss, BEGINPROPS);
     std::stringstream tss;
     _pickleProperties(tss, *mol, propertyFlags);
-    write_sstream_to_stream(ss, tss);
-    streamWrite(ss, ENDPROPS);
+    if (!tss.str().empty()) {
+      streamWrite(ss, BEGINPROPS);
+      write_sstream_to_stream(ss, tss);
+      streamWrite(ss, ENDPROPS);
+    }
   }
 
   if (propertyFlags & PicklerOps::AtomProps) {
-    streamWrite(ss, BEGINATOMPROPS);
     std::stringstream tss;
+    bool anyWritten = false;
     for (const auto atom : mol->atoms()) {
-      pickleAtomProperties(tss, *atom, propertyFlags);
+      anyWritten |= pickleAtomProperties(tss, *atom, propertyFlags);
     }
-    write_sstream_to_stream(ss, tss);
-    streamWrite(ss, ENDPROPS);
+    if (anyWritten) {
+      streamWrite(ss, BEGINATOMPROPS);
+      write_sstream_to_stream(ss, tss);
+      streamWrite(ss, ENDPROPS);
+    }
   }
 
   if (propertyFlags & PicklerOps::BondProps) {
-    streamWrite(ss, BEGINBONDPROPS);
     std::stringstream tss;
+    bool anyWritten = false;
     for (const auto bond : mol->bonds()) {
-      pickleBondProperties(tss, *bond, propertyFlags);
+      anyWritten |= pickleBondProperties(tss, *bond, propertyFlags);
     }
-    write_sstream_to_stream(ss, tss);
-    streamWrite(ss, ENDPROPS);
+    if (anyWritten) {
+      streamWrite(ss, BEGINBONDPROPS);
+      write_sstream_to_stream(ss, tss);
+      streamWrite(ss, ENDPROPS);
+    }
   }
-
   streamWrite(ss, ENDMOL);
 }
 
@@ -1282,7 +1316,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
           ss.seekg(blkSize, std::ios_base::cur);
         } else {
           for (auto cid : cids) {
-            _unpickleProperties(ss, mol->getConformer(cid));
+            _unpickleProperties(ss, mol->getConformer(cid), version);
           }
         }
         streamRead(ss, tag, version);
@@ -1299,7 +1333,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
       if (version >= 13000 && !(propertyFlags & PicklerOps::MolProps)) {
         ss.seekg(blkSize, std::ios_base::cur);
       } else {
-        _unpickleProperties(ss, *mol);
+        _unpickleProperties(ss, *mol, version);
       }
       streamRead(ss, tag, version);
     } else if (tag == BEGINATOMPROPS) {
@@ -2081,7 +2115,7 @@ void MolPickler::_pickleSubstanceGroup(std::ostream &ss,
                                        std::map<int, int> &bondIdxMap) {
   T tmpT;
 
-  streamWriteProps(ss, sgroup);
+  streamWriteProps<std::uint16_t>(ss, sgroup);
 
   const auto &atoms = sgroup.getAtoms();
   streamWrite(ss, static_cast<T>(atoms.size()));
@@ -2173,7 +2207,13 @@ SubstanceGroup MolPickler::_getSubstanceGroupFromPickle(std::istream &ss,
   SubstanceGroup sgroup(mol, "");
 
   // Read RDProps, overriding ID, TYPE and COMPNO
-  streamReadProps(ss, sgroup, MolPickler::getCustomPropHandlers());
+  if (version >= 14000) {
+    streamReadProps<std::uint16_t>(ss, sgroup,
+                                   MolPickler::getCustomPropHandlers());
+  } else {
+    streamReadProps<unsigned int>(ss, sgroup,
+                                  MolPickler::getCustomPropHandlers());
+  }
 
   streamRead(ss, numItems, version);
   for (int i = 0; i < numItems; ++i) {
@@ -2290,8 +2330,15 @@ void MolPickler::_depickleStereo(std::istream &ss, ROMol *mol, int version) {
 }
 
 //! unpickle standard properties
-void MolPickler::_unpickleProperties(std::istream &ss, RDProps &props) {
-  streamReadProps(ss, props, MolPickler::getCustomPropHandlers());
+void MolPickler::_unpickleProperties(std::istream &ss, RDProps &props,
+                                     int version) {
+  if (version >= 14000) {
+    streamReadProps<std::uint16_t>(ss, props,
+                                   MolPickler::getCustomPropHandlers());
+  } else {
+    streamReadProps<unsigned int>(ss, props,
+                                  MolPickler::getCustomPropHandlers());
+  }
 }
 
 //--------------------------------------
