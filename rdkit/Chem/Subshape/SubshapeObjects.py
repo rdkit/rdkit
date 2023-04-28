@@ -67,6 +67,7 @@ def DisplaySubshapeSkeleton(viewer, shape, name, color=(1, 0, 1), colorByOrder=F
 def DisplaySubshape(viewer, shape, name, showSkelPts=True, color=(1, 0, 1)):
   import os
   import tempfile
+
   from rdkit import Geometry
   fName = tempfile.NamedTemporaryFile(suffix='.grd', delete=False).name
   Geometry.WriteGridToFile(shape.grid, fName)

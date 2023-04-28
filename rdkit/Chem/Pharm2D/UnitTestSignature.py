@@ -73,11 +73,13 @@ class TestCase(unittest.TestCase):
     self.factory.SetBins(((0, 2), (2, 4), (4, 8)))
     self.factory.Init()
     self.assertEqual(self.factory.GetSigSize(), 990)
-    probes = [((0, 0, 0), (1, 3, 1), 54),
-              ((0, 0, 0), (3, 1, 1), 54),
-              ((0, 0, 0), (1, 1, 3), 54),
-              ((0, 0, 0), (1, 3, 3), 57),
-              ((0, 0, 1), (1, 3, 1), 75), ]
+    probes = [
+      ((0, 0, 0), (1, 3, 1), 54),
+      ((0, 0, 0), (3, 1, 1), 54),
+      ((0, 0, 0), (1, 1, 3), 54),
+      ((0, 0, 0), (1, 3, 3), 57),
+      ((0, 0, 1), (1, 3, 1), 75),
+    ]
     for patts, dists, ans in probes:
       idx = self.factory.GetBitIdx(patts, dists)
       self.assertEqual(idx, ans)
@@ -92,11 +94,13 @@ class TestCase(unittest.TestCase):
     sig = self.factory.GetSignature()
     self.assertEqual(len(sig), 885)
 
-    probes = [((0, 0, 0), (1, 3, 1), 52),
-              ((0, 0, 0), (1, 1, 3), 52),
-              ((0, 0, 0), (3, 1, 1), 52),
-              ((0, 0, 0), (1, 3, 3), 55),
-              ((0, 0, 1), (1, 3, 1), 71), ]
+    probes = [
+      ((0, 0, 0), (1, 3, 1), 52),
+      ((0, 0, 0), (1, 1, 3), 52),
+      ((0, 0, 0), (3, 1, 1), 52),
+      ((0, 0, 0), (1, 3, 3), 55),
+      ((0, 0, 1), (1, 3, 1), 71),
+    ]
     for patts, dists, ans in probes:
       idx = self.factory.GetBitIdx(patts, dists)
       self.assertEqual(idx, ans)
@@ -214,17 +218,19 @@ class TestCase(unittest.TestCase):
     from rdkit.Chem import Pharm2D
     factory = Pharm2D.DefaultSigFactory()
     self.assertEqual(factory.GetNumBins(), 7)
-    
+
     # Generate._verbose=True
     mol = Chem.MolFromSmiles('OCCC(=O)')
     sig = Generate.Gen2DFingerprint(mol, factory)
     self.assertEqual(len(sig), 19355)
-    self.assertEqual(tuple(sig.GetOnBits()), (2,
-                                              16,
-                                              21,
-                                              84,
-                                              1274,
-                                              4361, ))
+    self.assertEqual(tuple(sig.GetOnBits()), (
+      2,
+      16,
+      21,
+      84,
+      1274,
+      4361,
+    ))
     nPts, combo, scaffold, labels, dMat = factory._GetBitSummaryData(21)
     self.assertEqual(nPts, 2)
     self.assertEqual(labels, ['Acceptor', 'Hydrophobe'])
@@ -249,10 +255,11 @@ class TestCase(unittest.TestCase):
     self.assertEqual(list(dMat[0]), [0, 2, 0])
     self.assertEqual(list(dMat[1]), [2, 0, 0])
     self.assertEqual(list(dMat[2]), [0, 0, 0])
-    self.assertEqual(
-      factory.GetBitDescription(4361), 'Acceptor Donor Hydrophobe |0 2 0|2 0 0|0 0 0|')
+    self.assertEqual(factory.GetBitDescription(4361),
+                     'Acceptor Donor Hydrophobe |0 2 0|2 0 0|0 0 0|')
 
     self.assertRaises(NotImplementedError, factory.GetBitDescriptionAsText, 21)
+
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

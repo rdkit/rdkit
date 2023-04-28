@@ -3,11 +3,12 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys, os.path
-from rdkit import RDConfig
-from rdkit.VLib.Supply import SupplyNode
-from rdkit import Chem
+import os.path
+import sys
+
+from rdkit import Chem, RDConfig
 from rdkit.Chem.Suppliers import DbMolSupplier
+from rdkit.VLib.Supply import SupplyNode
 
 
 class DbMolSupplyNode(SupplyNode):
@@ -63,7 +64,8 @@ def GetNode(dbName, tableName):
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
+  import doctest
+  import sys
   return doctest.testmod(sys.modules["__main__"])
 
 

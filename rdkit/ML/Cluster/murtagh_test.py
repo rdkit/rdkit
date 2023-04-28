@@ -1,5 +1,3 @@
-
-
 import numpy
 
 from rdkit.ML.Cluster import Murtagh

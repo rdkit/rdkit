@@ -8,13 +8,11 @@
 #  of the RDKit source tree.
 #
 
-
 import argparse
-import re
 import os
+import re
 
-from rdkit import Chem
-from rdkit import RDLogger
+from rdkit import Chem, RDLogger
 from rdkit.Chem import ChemicalFeatures
 
 logger = RDLogger.logger()

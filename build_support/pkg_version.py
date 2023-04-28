@@ -1,7 +1,9 @@
 from __future__ import print_function
+
 import os
 import re
 from datetime import datetime
+
 from setuptools import setup
 
 pkg_version = ''
@@ -16,20 +18,17 @@ if (not have_src_dir):
   raise OSError('Could not find SRC_DIR, got: ' + str(src_dir))
 # parse root CMakeLists.txt and Code/cmake/Modules/RDKitUtils.cmake
 root_cmakelists_path = os.path.join(src_dir, 'CMakeLists.txt')
-rdkitutils_path = os.path.join(src_dir, 'Code', 'cmake',
-  'Modules', 'RDKitUtils.cmake')
+rdkitutils_path = os.path.join(src_dir, 'Code', 'cmake', 'Modules', 'RDKitUtils.cmake')
 
 var_dict = {}
 for file in (root_cmakelists_path, rdkitutils_path):
   with open(file, 'rt') as hnd:
     # vars we want to read
-    var_set = set(['RDKit_Year', 'RDKit_Month', 'RDKit_Revision',
-      'RDKit_ABI', 'RDKit_RELEASENAME'])
+    var_set = set(['RDKit_Year', 'RDKit_Month', 'RDKit_Revision', 'RDKit_ABI', 'RDKit_RELEASENAME'])
     line = hnd.readline()
     while (line):
       # is this an uncommented set command?
-      m = re.match(r'^\s*set\s*\((\w+)\s*\"(.*)\"\s*\)',
-        line, re.IGNORECASE)
+      m = re.match(r'^\s*set\s*\((\w+)\s*\"(.*)\"\s*\)', line, re.IGNORECASE)
       # if it is
       if (m is not None):
         # extract the var name
@@ -66,7 +65,7 @@ if (rdkitVersion is not None):
     pkg_version = rdkitVersion
 else:
   # if extracting rdkitVersion somehow failed, use the date
-    pkg_version = d
+  pkg_version = d
 
 print('rdkitVersion:', pkg_version)
-setup(rdkitVersion = pkg_version)
+setup(rdkitVersion=pkg_version)

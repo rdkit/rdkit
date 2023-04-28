@@ -4,13 +4,16 @@
 #
 #  @@ All Rights Reserved @@
 #
-import os, sys
 import io
-import unittest
+import os
 import pickle
-from rdkit import RDConfig
-from rdkit import DataStructs as ds
 import random
+import sys
+import unittest
+
+from rdkit import DataStructs as ds
+from rdkit import RDConfig
+
 
 def feq(v1, v2, tol=1e-4):
   return abs(v1 - v2) < tol
@@ -213,7 +216,7 @@ class TestCase(unittest.TestCase):
       self.assertTrue(feq(bulkDs[i], taniDs[i]))
 
   def test7ToList(self):
-    l = [0]*2048
+    l = [0] * 2048
     nbits = 2048
     bv = ds.IntSparseIntVect(nbits)
     for j in range(nbits):
@@ -225,6 +228,7 @@ class TestCase(unittest.TestCase):
     l3 = bv.ToList()
     self.assertEqual(l, l2)
     self.assertEqual(l, l3)
+
 
 if __name__ == '__main__':
   unittest.main()

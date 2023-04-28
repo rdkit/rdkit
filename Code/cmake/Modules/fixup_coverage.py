@@ -4,7 +4,9 @@ It replaces the paths with the ones from the source tree
 n.b. if a file with the same name (i.e. sln.yy) is found twice
  in the source tree, this will break"""
 
-import os, sys
+import os
+import sys
+
 source_dir, info_file = sys.argv[1:3]
 print(source_dir, info_file)
 

@@ -2,9 +2,13 @@
 #  Copyright (C) 2003  Rational Discovery LLC
 #   All Rights Reserved
 #
-from rdkit import RDConfig
-import sys, os, tempfile
+import os
+import sys
+import tempfile
+
 from PIL import Image
+
+from rdkit import RDConfig
 
 
 def SmilesToGif(smiles, fileNames, size=(200, 200), cmd=None, dblSize=0, frame=0):

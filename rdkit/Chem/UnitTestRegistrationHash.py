@@ -8,7 +8,6 @@ are actually the same.
 import unittest
 
 from rdkit import Chem
-
 from rdkit.Chem import RegistrationHash
 from rdkit.Chem.RegistrationHash import HashLayer
 
@@ -792,7 +791,6 @@ $$$$
         enol_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS),
       RegistrationHash.GetMolHash(
         keto_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
-
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

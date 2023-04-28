@@ -30,20 +30,20 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import unittest
-import os, sys, copy
-
+import copy
+import os
 import pickle
-
-from rdkit import rdBase
-from rdkit import Chem
-from rdkit.Chem.rdRGroupDecomposition import (RGroupDecompose, RGroupDecomposition,
-                                              RGroupDecompositionParameters, RGroupLabels,
-                                              RGroupCoreAlignment)
+import sys
+import unittest
 from collections import OrderedDict
 
 # the RGD code can generate a lot of warnings. disable them
-from rdkit import RDLogger
+from rdkit import Chem, RDLogger, rdBase
+from rdkit.Chem.rdRGroupDecomposition import (RGroupCoreAlignment,
+                                              RGroupDecompose,
+                                              RGroupDecomposition,
+                                              RGroupDecompositionParameters,
+                                              RGroupLabels)
 
 RDLogger.DisableLog("rdApp.warning")
 

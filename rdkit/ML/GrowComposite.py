@@ -93,18 +93,16 @@
 
 """
 
-
+import pickle
 import sys
 import time
 
 import numpy
 
 from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.ML import CompositeRun
-from rdkit.ML import ScreenComposite, BuildComposite
+from rdkit.ML import BuildComposite, CompositeRun, ScreenComposite
 from rdkit.ML.Composite import AdjustComposite
 from rdkit.ML.Data import DataUtils, SplitData
-import pickle
 
 _runDetails = CompositeRun.CompositeRun()
 
@@ -251,8 +249,8 @@ def GrowIt(details, composite, progressCallback=None, saveIt=1, setDescNames=0, 
   if details.detailedRes:
     if _verbose:
       message('\nEntire data set:')
-    resTup = ScreenComposite.ShowVoteResults(
-      range(data.GetNPts()), data, composite, nPossibleVals[-1], details.threshold)
+    resTup = ScreenComposite.ShowVoteResults(range(data.GetNPts()), data, composite,
+                                             nPossibleVals[-1], details.threshold)
     nGood, nBad, _, avgGood, avgBad, _, voteTab = resTup
     nPts = len(namedExamples)
     nClass = nGood + nBad
@@ -420,15 +418,16 @@ def ParseArgs(runDetails):
 
   """
   import getopt
-  args, extra = getopt.getopt(sys.argv[1:], 'P:o:n:p:b:sf:F:v:hlgd:rSTt:Q:q:DVG:L:C:N:',
-                              ['inNote=',
-                               'outNote=',
-                               'balTable=',
-                               'balWeight=',
-                               'balCnt=',
-                               'balH',
-                               'balT',
-                               'balDb=', ])
+  args, extra = getopt.getopt(sys.argv[1:], 'P:o:n:p:b:sf:F:v:hlgd:rSTt:Q:q:DVG:L:C:N:', [
+    'inNote=',
+    'outNote=',
+    'balTable=',
+    'balWeight=',
+    'balCnt=',
+    'balH',
+    'balT',
+    'balDb=',
+  ])
   runDetails.inNote = ''
   runDetails.composFileName = ''
   runDetails.balTable = ''

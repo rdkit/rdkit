@@ -44,8 +44,6 @@ Here's the general flow of things:
 
 """
 
-
-
 # The wildcard import is required to make functions available for the eval statement
 from math import *
 
@@ -224,6 +222,7 @@ def MAX(strArg, composList, atomDict):
     tStr = strArg.replace('DEADBEEF', atom)
     accum.append(eval(tStr))
   return max(accum)
+
 
 # ------------------
 #  string replacement routines
@@ -437,9 +436,11 @@ def _exampleCode():  # pragma: nocover
   pDict = {'d1': 100., 'd2': 200.}
   compos = [('Fe', 1), ('Pt', 1)]
 
-  cExprs = ["SUM($1)", "SUM($1)+SUM($2)", "SUM($1)+SUM($1)", "MEAN($1)", "DEV($2)", "MAX($1)",
-            "MIN($1)/MAX($1)", "MIN($2)", "SUM($1)/$a", "sqrt($a+$b)", "SUM((3.*$1)/($2))",
-            'HAS($3,"def")', 'HAS($3,"xyz")', "foo"]
+  cExprs = [
+    "SUM($1)", "SUM($1)+SUM($2)", "SUM($1)+SUM($1)", "MEAN($1)", "DEV($2)", "MAX($1)",
+    "MIN($1)/MAX($1)", "MIN($2)", "SUM($1)/$a", "sqrt($a+$b)", "SUM((3.*$1)/($2))", 'HAS($3,"def")',
+    'HAS($3,"xyz")', "foo"
+  ]
 
   for cExpr in cExprs:
     argVect = piece1 + [cExpr]

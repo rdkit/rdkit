@@ -12,12 +12,12 @@
 
 """
 
+import doctest
 import os
 import shutil
 import tempfile
 import traceback
 import unittest
-import doctest
 
 from rdkit import RDConfig
 from rdkit.Dbase import StorageUtils

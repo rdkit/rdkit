@@ -12,7 +12,9 @@
 
 """
 
-import os, sys
+import os
+import sys
+
 if 'RDBASE' in os.environ:
   RDBaseDir = os.environ['RDBASE']
   RDCodeDir = os.path.join(RDBaseDir, 'rdkit')
@@ -23,8 +25,8 @@ if 'RDBASE' in os.environ:
   RDProjDir = os.path.join(RDBaseDir, 'Projects')
   RDContribDir = os.path.join(RDBaseDir, 'Contrib')
 else:
-  from rdkit.RDPaths import *
   import rdkit.RDPaths
+  from rdkit.RDPaths import *
   os.environ['RDBASE'] = rdkit.RDPaths._share
 
 rpcTestPort = 8423
