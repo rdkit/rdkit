@@ -496,9 +496,10 @@ struct filtercat_wrapper {
           .value("CHEMBL_BMS", FilterCatalogParams::CHEMBL_BMS)
           .value("CHEMBL_SureChEMBL", FilterCatalogParams::CHEMBL_SureChEMBL)
           .value("CHEMBL_MLSMR", FilterCatalogParams::CHEMBL_MLSMR)
-    	  .value("CHEMBL_Inpharmatica", FilterCatalogParams::CHEMBL_Inpharmatica)
+          .value("CHEMBL_Inpharmatica",
+                 FilterCatalogParams::CHEMBL_Inpharmatica)
           .value("CHEMBL_LINT", FilterCatalogParams::CHEMBL_LINT)
-          .value("CHEMBL", FilterCatalogParams::CHEMBL)		 
+          .value("CHEMBL", FilterCatalogParams::CHEMBL)
           .value("ALL", FilterCatalogParams::ALL);
     }
 

@@ -64,9 +64,7 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
   }
 
   //! Sets a filename to tee the output to.
-  void SetTee(const std::string &filename) {
-    return SetTee(filename.c_str());
-  }
+  void SetTee(const std::string &filename) { return SetTee(filename.c_str()); }
 
   //! Remove our tee if it's set.
   void ClearTee() {

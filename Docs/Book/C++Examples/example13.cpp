@@ -13,18 +13,17 @@
 
 using namespace RDKit;
 
-int main( int argc , char **argv ) {
-
-  std::string file_root = getenv( "RDBASE" );
+int main(int argc, char **argv) {
+  std::string file_root = getenv("RDBASE");
   file_root += "/Docs/Book";
 
   std::string sdf_file = file_root + "/data/cdk2.sdf";
-  std::shared_ptr<ROMol> mol1( MolFileToMol( sdf_file ) );
-  RDDepict::compute2DCoords( *mol1 );
+  std::shared_ptr<ROMol> mol1(MolFileToMol(sdf_file));
+  RDDepict::compute2DCoords(*mol1);
   std::string svg_file = file_root + "/data/cdk_mol1.svg";
-  std::ofstream outs( svg_file.c_str() );
+  std::ofstream outs(svg_file.c_str());
   MolDraw2DSVG svg_drawer(300, 300, outs);
-  svg_drawer.drawMolecule( *mol1 );
+  svg_drawer.drawMolecule(*mol1);
   svg_drawer.finishDrawing();
   outs.close();
 
@@ -33,15 +32,15 @@ int main( int argc , char **argv ) {
   cairo_drawer.drawMolecule(*mol1);
   cairo_drawer.finishDrawing();
   std::string png_file = file_root + "/data/cdk_mol1.png";
-  cairo_drawer.writeDrawingText( png_file );
- #endif
+  cairo_drawer.writeDrawingText(png_file);
+#endif
 
   // drawing multiple molecules to a grid
   {
     std::string base_smi("c1ccccc1");
     std::vector<std::string> extras = {"F", "Cl", "Br", "OC", "C(=O)O"};
     std::vector<ROMol *> mols;
-    for(auto extra: extras) {
+    for (auto extra : extras) {
       mols.push_back(SmilesToMol(base_smi + extra));
     }
     MolDraw2DSVG drawer(750, 400, 250, 200);
@@ -51,8 +50,8 @@ int main( int argc , char **argv ) {
     grids << drawer.getDrawingText();
     grids.flush();
     grids.close();
-    
-    for(auto mol: mols) {
+
+    for (auto mol : mols) {
       delete mol;
     }
   }
@@ -72,5 +71,4 @@ int main( int argc , char **argv ) {
     outs << text;
     outs.flush();
   }
-
 }

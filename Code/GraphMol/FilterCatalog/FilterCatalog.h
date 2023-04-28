@@ -59,7 +59,8 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogParams
     CHEMBL_MLSMR = (1u << 11),
     CHEMBL_Inpharmatica = (1u << 12),
     CHEMBL_LINT = (1u << 13),
-    CHEMBL = CHEMBL_Glaxo | CHEMBL_Dundee | CHEMBL_BMS | CHEMBL_SureChEMBL | CHEMBL_MLSMR | CHEMBL_Inpharmatica | CHEMBL_LINT,
+    CHEMBL = CHEMBL_Glaxo | CHEMBL_Dundee | CHEMBL_BMS | CHEMBL_SureChEMBL |
+             CHEMBL_MLSMR | CHEMBL_Inpharmatica | CHEMBL_LINT,
 
     ALL = PAINS | BRENK | NIH | ZINC | CHEMBL
   };

@@ -1546,14 +1546,14 @@ void testValidRingSystemTemplates() {
       << "-----------------------\n Test that ring system templates are valid "
       << std::endl;
   constexpr double RDKIT_BOND_LEN = 1.5;
-  for (auto& smiles : TEMPLATE_SMILES) {
-    ROMol* mol = SmilesToMol(smiles);
+  for (auto &smiles : TEMPLATE_SMILES) {
+    ROMol *mol = SmilesToMol(smiles);
     RDDepict::CoordinateTemplates::assertValidTemplate(*mol, smiles);
 
     // also check whether the bonds in the template are the correct length
     double avg_length = 0.0;
-    const Conformer& conf = mol->getConformer();
-    for (auto& bond : mol->bonds()) {
+    const Conformer &conf = mol->getConformer();
+    for (auto &bond : mol->bonds()) {
       auto bond_length = (conf.getAtomPos(bond->getBeginAtomIdx()) -
                           conf.getAtomPos(bond->getEndAtomIdx()))
                              .length();
@@ -1565,8 +1565,9 @@ void testValidRingSystemTemplates() {
     // odd bond lengths
     bool valid_length = RDKit::feq(avg_length, RDKIT_BOND_LEN, 0.1);
     if (!valid_length) {
-      BOOST_LOG(rdWarningLog) << "Template has invalid average bond "
-                            << "length of " << avg_length << ": " << smiles << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "Template has invalid average bond "
+          << "length of " << avg_length << ": " << smiles << std::endl;
     }
     TEST_ASSERT(valid_length);
   }

@@ -126,7 +126,6 @@ Datum mol_substruct_query(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(MolSubstruct(i, a, false, true));
 }
 
-
 PGDLLEXPORT Datum mol_substruct_chiral(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_substruct_chiral);
 Datum mol_substruct_chiral(PG_FUNCTION_ARGS) {

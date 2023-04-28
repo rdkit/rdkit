@@ -361,7 +361,7 @@ inline bool rdvalue_is(RDValue_cast_t v) {
   if (v.getTag() == tag) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -369,8 +369,7 @@ template <>
 inline bool rdvalue_is<boost::any>(RDValue_cast_t v) {
   // If we are explicitly looking for a boost::any
   //  then just check the top level tag
-  const short tag =
-      RDTypeTag::GetTag<boost::any>();
+  const short tag = RDTypeTag::GetTag<boost::any>();
   return v.getTag() == tag;
 }
 /////////////////////////////////////////////////////////////////////////////////////

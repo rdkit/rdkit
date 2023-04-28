@@ -53,7 +53,8 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
     res.addConformer(newConf, false);
   }
 }
-void copyStereoGroups(const std::map<const Atom *, Atom*> &molAtomMap, const ROMol &mol, RWMol &newMol) {
+void copyStereoGroups(const std::map<const Atom *, Atom *> &molAtomMap,
+                      const ROMol &mol, RWMol &newMol) {
   // Copy over any stereo groups that lie in the new molecule
   if (!mol.getStereoGroups().empty()) {
     std::vector<StereoGroup> newStereoGroups;
