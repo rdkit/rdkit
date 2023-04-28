@@ -13,7 +13,6 @@
 
 from rdkit.Chem import rdMolDescriptors
 
-
 if hasattr(rdMolDescriptors, 'CalcPMI1'):
   PMI1 = lambda *x, **y: rdMolDescriptors.CalcPMI1(*x, **y)
   PMI1.version = rdMolDescriptors._CalcPMI1_version

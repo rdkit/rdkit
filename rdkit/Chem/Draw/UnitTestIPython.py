@@ -10,11 +10,14 @@
 """ unit testing code for IPython/Jupyter integration
 """
 import unittest
+
 from rdkit import Chem
 from rdkit.Chem import Draw
+
 try:
-  from rdkit.Chem.Draw import IPythonConsole, rdMolDraw2D
   from IPython.core.display import SVG
+
+  from rdkit.Chem.Draw import IPythonConsole, rdMolDraw2D
 except ImportError:
   IPythonConsole = None
 
@@ -83,7 +86,7 @@ class TestCase(unittest.TestCase):
     self.assertNotIn('computedprop', html)
 
     for i in range(10):
-      m.SetIntProp(f'prop-{i}',i)
+      m.SetIntProp(f'prop-{i}', i)
     IPythonConsole.ipython_showProperties = True
     IPythonConsole.ipython_maxProperties = 5
     html = m._repr_html_()
@@ -102,8 +105,6 @@ class TestCase(unittest.TestCase):
     self.assertIn('publicprop', html)
     self.assertIn('prop-1', html)
     self.assertNotIn('prop-8', html)
-
-
 
 
 if __name__ == '__main__':

@@ -5,12 +5,15 @@
 #     @@  All Rights Reserved  @@
 #
 
-from rdkit import RDConfig
-import os, sys, copy
-import unittest
+import copy
 import math
-from rdkit import Chem
-from rdkit.Chem import rdMolAlign, rdMolTransforms, rdMolDescriptors, rdDistGeom, ChemicalForceFields
+import os
+import sys
+import unittest
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import (ChemicalForceFields, rdDistGeom, rdMolAlign,
+                        rdMolDescriptors, rdMolTransforms)
 
 
 def lstFeq(l1, l2, tol=1.e-4):
@@ -490,19 +493,23 @@ class TestCase(unittest.TestCase):
 
     params = Chem.SmilesParserParams()
     params.removeHs = False
-    scaffold = Chem.MolFromSmiles("N1C([H])([H])C([H])([H])C([H])([H])[N+]([H])([H])C([H])([H])C1([H])[H]", params)
+    scaffold = Chem.MolFromSmiles(
+      "N1C([H])([H])C([H])([H])C([H])([H])[N+]([H])([H])C([H])([H])C1([H])[H]", params)
     scaffoldMatch = ref.GetSubstructMatch(scaffold)
     scaffoldIndicesBitSet = [0] * ref.GetNumAtoms()
     for idx in scaffoldMatch:
       scaffoldIndicesBitSet[idx] = 1
-    matches = tuple(tuple(enumerate(match)) for match in ref.GetSubstructMatches(prb, uniquify=False))
+    matches = tuple(
+      tuple(enumerate(match)) for match in ref.GetSubstructMatches(prb, uniquify=False))
     self.assertGreater(len(matches), 0)
-    matchesPruned = tuple(tuple(filter(lambda tup: scaffoldIndicesBitSet[tup[1]], match)) for match in matches)
+    matchesPruned = tuple(
+      tuple(filter(lambda tup: scaffoldIndicesBitSet[tup[1]], match)) for match in matches)
     rmsdInPlace = rdMolAlign.CalcRMS(prbCopy2, ref, map=matchesPruned)
     self.assertAlmostEqual(rmsdInPlace, 2.5672, 3)
     rmsd = rdMolAlign.GetBestRMS(prb, ref, map=matchesPruned)
     self.assertAlmostEqual(rmsd, 1.14329, 3)
-    rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(prbCopy2, ref, map=matchesPruned);
+    rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(
+      prbCopy2, ref, map=matchesPruned)
     self.assertEqual(str(type(bestTrans)), "<class 'numpy.ndarray'>")
     self.assertAlmostEqual(rmsd, rmsdCopy, 3)
     self.assertEqual(len(bestMatch), len(scaffoldMatch))
@@ -511,7 +518,8 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(rmsdInPlace, 17.7959, 3)
     rmsd = rdMolAlign.GetBestRMS(prb, ref, map=matches, weights=weights)
     self.assertAlmostEqual(rmsd, 10.9681, 3)
-    rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(prbCopy3, ref, map=matches, weights=weights)
+    rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(
+      prbCopy3, ref, map=matches, weights=weights)
     self.assertAlmostEqual(rmsd, rmsdCopy, 3)
     self.assertEqual(len(bestMatch), ref.GetNumAtoms())
     self.assertTrue(all(len(tup) == 2 for tup in bestMatch))

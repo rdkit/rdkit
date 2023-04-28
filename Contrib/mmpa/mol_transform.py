@@ -30,9 +30,10 @@
 #
 # Created by Jameed Hussain, July 2013
 
-import sys
 import re
+import sys
 from optparse import OptionParser
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 

@@ -7,12 +7,12 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 
-from rdkit import RDConfig
-from rdkit import Chem
-from rdkit.Chem import rdDetermineBonds
-import unittest
-import os
 import glob
+import os
+import unittest
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import rdDetermineBonds
 
 
 class TestCase(unittest.TestCase):

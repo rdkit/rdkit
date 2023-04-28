@@ -52,7 +52,8 @@ RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
 //! \overload
 RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
     const RDKit::ROMol &mol, CrystalFFDetails &details,
-    std::vector<std::tuple<unsigned int, std::vector<unsigned int>, const ExpTorsionAngle *>> &torsionBonds,
+    std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                           const ExpTorsionAngle *>> &torsionBonds,
     bool useExpTorsions = false, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = false, bool useBasicKnowledge = false,
     unsigned int version = 1, bool verbose = false);

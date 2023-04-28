@@ -2,19 +2,19 @@
 #
 #  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior
 #       written permission.
 #
@@ -32,12 +32,12 @@
 #
 # Created by Greg Landrum, September 2006
 #
-from rdkit import Chem
-from rdkit.Chem import rdSLNParse
-from rdkit import Geometry
-from rdkit import RDConfig
+import os
+import sys
 import unittest
-import os, sys
+
+from rdkit import Chem, Geometry, RDConfig
+from rdkit.Chem import rdSLNParse
 
 
 class TestCase(unittest.TestCase):

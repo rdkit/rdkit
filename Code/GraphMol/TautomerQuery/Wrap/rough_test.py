@@ -12,11 +12,12 @@
 Rough in that only basic functionality is evaluated.
 """
 
-from rdkit import Chem, DataStructs
-from rdkit.Chem import rdTautomerQuery
-from unittest import TestCase, main
 import os
 import pickle
+from unittest import TestCase, main
+
+from rdkit import Chem, DataStructs
+from rdkit.Chem import rdTautomerQuery
 
 
 class TautomerQueryTestCase(TestCase):

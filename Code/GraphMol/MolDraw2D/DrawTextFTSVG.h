@@ -25,7 +25,6 @@ namespace MolDraw2D_detail {
 
 // ****************************************************************************
 class DrawTextFTSVG : public DrawTextFT {
-
  public:
   DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
                 const std::string &font_file, std::ostream &oss,

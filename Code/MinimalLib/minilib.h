@@ -25,13 +25,9 @@ class JSMol {
   std::string get_smarts() const;
   std::string get_cxsmarts() const;
   std::string get_molblock(const std::string &details) const;
-  std::string get_molblock() const {
-    return get_molblock("{}");
-  }
+  std::string get_molblock() const { return get_molblock("{}"); }
   std::string get_v3Kmolblock(const std::string &details) const;
-  std::string get_v3Kmolblock() const {
-    return get_v3Kmolblock("{}");
-  }
+  std::string get_v3Kmolblock() const { return get_v3Kmolblock("{}"); }
   std::string get_pickle() const;
   std::string get_inchi() const;
   std::string get_json() const;
@@ -99,9 +95,7 @@ class JSMol {
     return generate_aligned_coords(templateMol, "{}");
   }
   bool is_valid() const { return d_mol.get() != nullptr; }
-  bool has_coords() const {
-    return d_mol.get() != nullptr && d_mol->getNumConformers() != 0;
-  }
+  int has_coords() const;
 
   std::string get_stereo_tags() const;
   std::string get_aromatic_form() const;

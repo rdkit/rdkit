@@ -8,13 +8,14 @@
 #  of the RDKit source tree.
 #
 
+import math
+
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
-import math
 
 
 def ExplainAtomCode(code, branchSubtract=0, includeChirality=False):
-    """
+  """
 
     **Arguments**:
 
@@ -74,38 +75,38 @@ def ExplainAtomCode(code, branchSubtract=0, includeChirality=False):
     ('C', 3, 0, 'S')
 
     """
-    typeMask = (1 << rdMolDescriptors.AtomPairsParameters.numTypeBits) - 1
-    branchMask = (1 << rdMolDescriptors.AtomPairsParameters.numBranchBits) - 1
-    piMask = (1 << rdMolDescriptors.AtomPairsParameters.numPiBits) - 1
-    chiMask = (1 << rdMolDescriptors.AtomPairsParameters.numChiralBits) - 1
+  typeMask = (1 << rdMolDescriptors.AtomPairsParameters.numTypeBits) - 1
+  branchMask = (1 << rdMolDescriptors.AtomPairsParameters.numBranchBits) - 1
+  piMask = (1 << rdMolDescriptors.AtomPairsParameters.numPiBits) - 1
+  chiMask = (1 << rdMolDescriptors.AtomPairsParameters.numChiralBits) - 1
 
-    nBranch = int(code & branchMask)
-    code = code >> rdMolDescriptors.AtomPairsParameters.numBranchBits
+  nBranch = int(code & branchMask)
+  code = code >> rdMolDescriptors.AtomPairsParameters.numBranchBits
 
-    nPi = int(code & piMask)
-    code = code >> rdMolDescriptors.AtomPairsParameters.numPiBits
+  nPi = int(code & piMask)
+  code = code >> rdMolDescriptors.AtomPairsParameters.numPiBits
 
-    typeIdx = int(code & typeMask)
-    if typeIdx < len(rdMolDescriptors.AtomPairsParameters.atomTypes):
-        atomNum = rdMolDescriptors.AtomPairsParameters.atomTypes[typeIdx]
-        atomSymbol = Chem.GetPeriodicTable().GetElementSymbol(atomNum)
-    else:
-        atomSymbol = 'X'
+  typeIdx = int(code & typeMask)
+  if typeIdx < len(rdMolDescriptors.AtomPairsParameters.atomTypes):
+    atomNum = rdMolDescriptors.AtomPairsParameters.atomTypes[typeIdx]
+    atomSymbol = Chem.GetPeriodicTable().GetElementSymbol(atomNum)
+  else:
+    atomSymbol = 'X'
 
-    if not includeChirality:
-        return (atomSymbol, nBranch, nPi)
-    
-    code = code >> rdMolDescriptors.AtomPairsParameters.numTypeBits
-    chiDict = {0: '', 1: 'R', 2: 'S'}
-    chiCode = int(code & chiMask)
-    return (atomSymbol, nBranch, nPi, chiDict[chiCode])
+  if not includeChirality:
+    return (atomSymbol, nBranch, nPi)
+
+  code = code >> rdMolDescriptors.AtomPairsParameters.numTypeBits
+  chiDict = {0: '', 1: 'R', 2: 'S'}
+  chiCode = int(code & chiMask)
+  return (atomSymbol, nBranch, nPi, chiDict[chiCode])
 
 
 GetAtomCode = rdMolDescriptors.GetAtomPairAtomCode
 
 
 def NumPiElectrons(atom):
-    """ Returns the number of electrons an atom is using for pi bonding
+  """ Returns the number of electrons an atom is using for pi bonding
 
     >>> m = Chem.MolFromSmiles('C=C')
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
@@ -145,21 +146,21 @@ def NumPiElectrons(atom):
 
     """
 
-    res = 0
-    if atom.GetIsAromatic():
-        res = 1
-    elif atom.GetHybridization() != Chem.HybridizationType.SP3:
-        # the number of pi electrons is just the number of
-        # unsaturations (valence - degree):
-        res = atom.GetExplicitValence() - atom.GetNumExplicitHs()
-        if res < atom.GetDegree():
-            raise ValueError("explicit valence exceeds atom degree")
-        res -= atom.GetDegree()
-    return res
+  res = 0
+  if atom.GetIsAromatic():
+    res = 1
+  elif atom.GetHybridization() != Chem.HybridizationType.SP3:
+    # the number of pi electrons is just the number of
+    # unsaturations (valence - degree):
+    res = atom.GetExplicitValence() - atom.GetNumExplicitHs()
+    if res < atom.GetDegree():
+      raise ValueError("explicit valence exceeds atom degree")
+    res -= atom.GetDegree()
+  return res
 
 
 def BitsInCommon(v1, v2):
-    """ Returns the number of bits in common between two vectors
+  """ Returns the number of bits in common between two vectors
 
     **Arguments**:
 
@@ -182,22 +183,22 @@ def BitsInCommon(v1, v2):
     3
 
     """
-    res = 0
-    v2Pos = 0
-    nV2 = len(v2)
-    for val in v1:
-        while v2Pos < nV2 and v2[v2Pos] < val:
-            v2Pos += 1
-        if v2Pos >= nV2:
-            break
-        if v2[v2Pos] == val:
-            res += 1
-            v2Pos += 1
-    return res
+  res = 0
+  v2Pos = 0
+  nV2 = len(v2)
+  for val in v1:
+    while v2Pos < nV2 and v2[v2Pos] < val:
+      v2Pos += 1
+    if v2Pos >= nV2:
+      break
+    if v2[v2Pos] == val:
+      res += 1
+      v2Pos += 1
+  return res
 
 
 def DiceSimilarity(v1, v2, bounds=None):
-    """ Implements the DICE similarity metric.
+  """ Implements the DICE similarity metric.
      This is the recommended metric in both the Topological torsions
      and Atom pairs papers.
 
@@ -248,20 +249,20 @@ def DiceSimilarity(v1, v2, bounds=None):
     0.0
 
     """
-    denom = 1.0 * (len(v1) + len(v2))
-    if not denom:
-        res = 0.0
+  denom = 1.0 * (len(v1) + len(v2))
+  if not denom:
+    res = 0.0
+  else:
+    if bounds and (min(len(v1), len(v2)) / denom) < bounds:
+      numer = 0.0
     else:
-        if bounds and (min(len(v1), len(v2)) / denom) < bounds:
-            numer = 0.0
-        else:
-            numer = 2.0 * BitsInCommon(v1, v2)
-        res = numer / denom
-    return res
+      numer = 2.0 * BitsInCommon(v1, v2)
+    res = numer / denom
+  return res
 
 
 def Dot(v1, v2):
-    """ Returns the Dot product between two vectors:
+  """ Returns the Dot product between two vectors:
 
     **Arguments**:
 
@@ -290,35 +291,35 @@ def Dot(v1, v2):
     0
 
     """
-    res = 0
-    nV1 = len(v1)
-    nV2 = len(v2)
-    i = 0
-    j = 0
-    while i < nV1:
-        v1Val = v1[i]
-        v1Count = 1
-        i += 1
-        while i < nV1 and v1[i] == v1Val:
-            v1Count += 1
-            i += 1
-        while j < nV2 and v2[j] < v1Val:
-            j += 1
-        if j < nV2 and v2[j] == v1Val:
-            v2Count = 1
-            j += 1
-            while j < nV2 and v2[j] == v1Val:
-                v2Count += 1
-                j += 1
-            commonCount = min(v1Count, v2Count)
-            res += commonCount * commonCount
-        elif j >= nV2:
-            break
-    return res
+  res = 0
+  nV1 = len(v1)
+  nV2 = len(v2)
+  i = 0
+  j = 0
+  while i < nV1:
+    v1Val = v1[i]
+    v1Count = 1
+    i += 1
+    while i < nV1 and v1[i] == v1Val:
+      v1Count += 1
+      i += 1
+    while j < nV2 and v2[j] < v1Val:
+      j += 1
+    if j < nV2 and v2[j] == v1Val:
+      v2Count = 1
+      j += 1
+      while j < nV2 and v2[j] == v1Val:
+        v2Count += 1
+        j += 1
+      commonCount = min(v1Count, v2Count)
+      res += commonCount * commonCount
+    elif j >= nV2:
+      break
+  return res
 
 
 def CosineSimilarity(v1, v2):
-    """ Implements the Cosine similarity metric.
+  """ Implements the Cosine similarity metric.
      This is the recommended metric in the LaSSI paper
 
     **Arguments**:
@@ -343,15 +344,15 @@ def CosineSimilarity(v1, v2):
     0.000
 
     """
-    d1 = Dot(v1, v1)
-    d2 = Dot(v2, v2)
-    denom = math.sqrt(d1 * d2)
-    if not denom:
-        res = 0.0
-    else:
-        numer = Dot(v1, v2)
-        res = numer / denom
-    return res
+  d1 = Dot(v1, v1)
+  d2 = Dot(v2, v2)
+  denom = math.sqrt(d1 * d2)
+  if not denom:
+    res = 0.0
+  else:
+    numer = Dot(v1, v2)
+    res = numer / denom
+  return res
 
 
 # ------------------------------------
@@ -359,11 +360,11 @@ def CosineSimilarity(v1, v2):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
-    import doctest
-    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-    sys.exit(failed)
+  import doctest
+  import sys
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+  sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-    _runDoctests()
+  _runDoctests()

@@ -7,7 +7,7 @@ from rdkit.VLib.Node import VLibNode
 
 
 class TransformNode(VLibNode):
-    """ base class for nodes which filter their input
+  """ base class for nodes which filter their input
 
     Assumptions:
 
@@ -47,24 +47,24 @@ class TransformNode(VLibNode):
 
     """
 
-    def __init__(self, func=None, **kwargs):
-        VLibNode.__init__(self, **kwargs)
-        self._func = func
+  def __init__(self, func=None, **kwargs):
+    VLibNode.__init__(self, **kwargs)
+    self._func = func
 
-    def next(self):
-        parent = self.GetParents()[0]
-        args = []
-        try:
-            for parent in self.GetParents():
-                args.append(parent.next())
-        except StopIteration:
-            raise StopIteration
-        args = tuple(args)
-        if self._func is not None:
-            res = self._func(*args)
-        else:
-            res = args
-        return res
+  def next(self):
+    parent = self.GetParents()[0]
+    args = []
+    try:
+      for parent in self.GetParents():
+        args.append(parent.next())
+    except StopIteration:
+      raise StopIteration
+    args = tuple(args)
+    if self._func is not None:
+      res = self._func(*args)
+    else:
+      res = args
+    return res
 
 
 TransformNode.__next__ = TransformNode.next
@@ -75,11 +75,11 @@ TransformNode.__next__ = TransformNode.next
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
-    import doctest
-    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-    sys.exit(failed)
+  import doctest
+  import sys
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+  sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-    _runDoctests()
+  _runDoctests()

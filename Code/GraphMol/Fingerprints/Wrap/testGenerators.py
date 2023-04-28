@@ -1,7 +1,9 @@
+import unittest
+
+import numpy as np
+
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
-import numpy as np
-import unittest
 
 
 class TestCase(unittest.TestCase):
@@ -339,6 +341,7 @@ class TestCase(unittest.TestCase):
     fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)
+
 
 if __name__ == '__main__':
   unittest.main()

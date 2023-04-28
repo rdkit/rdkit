@@ -35,8 +35,7 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
                              unsigned int nFlipsPerSample = 3,
                              unsigned int nSamples = 100, int sampleSeed = 100,
                              bool permuteDeg4Nodes = false,
-                             double bondLength = -1.0,
-                             bool forceRDKit = false,
+                             double bondLength = -1.0, bool forceRDKit = false,
                              bool useRingTemplates = false) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
@@ -54,9 +53,9 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
     RDDepict::BOND_LEN = bondLength;
   }
   unsigned int res;
-  res = RDDepict::compute2DCoords(mol, &cMap, canonOrient, clearConfs,
-                                  nFlipsPerSample, nSamples, sampleSeed,
-                                  permuteDeg4Nodes, forceRDKit, useRingTemplates);
+  res = RDDepict::compute2DCoords(
+      mol, &cMap, canonOrient, clearConfs, nFlipsPerSample, nSamples,
+      sampleSeed, permuteDeg4Nodes, forceRDKit, useRingTemplates);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
@@ -209,6 +208,27 @@ BOOST_PYTHON_MODULE(rdDepictor) {
               "Has no effect (CoordGen support not enabled)"
 #endif
   );
+  python::def(
+      "SetRingSystemTemplates", RDDepict::setRingSystemTemplates,
+      (python::arg("templatePath")),
+      "Loads the ring system templates from the specified file to be "
+      "used in 2D coordinate generation. Each template must be a single "
+      "line in the file represented using CXSMILES, and the structure should "
+      "be a single ring system. Throws a DepictException if any templates "
+      "are invalid.");
+  python::def(
+      "AddRingSystemTemplates", RDDepict::addRingSystemTemplates,
+      (python::arg("templatePath")),
+      "Adds the ring system templates from the specified file to be "
+      "used in 2D coordinate generation. If there are duplicates, the most "
+      "recently added template will be used. Each template must be a single "
+      "line in the file represented using CXSMILES, and the structure should "
+      "be a single ring system. Throws a DepictException if any templates "
+      "are invalid.");
+  python::def(
+      "LoadDefaultRingSystemTemplates",
+      RDDepict::loadDefaultRingSystemTemplates,
+      "Loads the default ring system templates and removes existing ones, if present.");
   python::def(
       "GetPreferCoordGen", getPreferCoordGen,
 #ifdef RDK_BUILD_COORDGEN_SUPPORT

@@ -7,7 +7,6 @@ and evaluation of individual models
 
 """
 
-
 from rdkit.ML.Data import SplitData
 from rdkit.ML.KNN import DistFunctions
 from rdkit.ML.KNN.KNNClassificationModel import KNNClassificationModel

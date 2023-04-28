@@ -1,10 +1,11 @@
 # $Id$
 #
-from rdkit import Chem
-from rdkit.Chem import rdReducedGraphs as rdRG
-from rdkit import RDConfig
-import numpy
 import unittest
+
+import numpy
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import rdReducedGraphs as rdRG
 
 
 class TestCase(unittest.TestCase):
@@ -55,7 +56,7 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('OCCc1ccccc1')
     mrg = rdRG.GenerateMolExtendedReducedGraph(m)
     erg_types = [tuple(atom.GetPropsAsDict().get('_ErGAtomTypes')) for atom in mrg.GetAtoms()]
-    self.assertEqual(erg_types, [(0, 1), (), (), (), (5,)])
+    self.assertEqual(erg_types, [(0, 1), (), (), (), (5, )])
 
 
 if __name__ == '__main__':

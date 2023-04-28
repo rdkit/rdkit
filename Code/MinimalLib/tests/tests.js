@@ -823,12 +823,38 @@ M  END
 
 function test_has_coords() {
     var mol = RDKitModule.get_mol('CC');
+    console.log(`1) test_has_coords`);
     assert(!mol.has_coords());
     var mol2 = RDKitModule.get_mol(mol.get_new_coords());
-    assert(mol2.has_coords());
+    assert(mol2.has_coords() === 2);
     assert(!mol.has_coords());
     mol.set_new_coords();
-    assert(mol.has_coords());
+    assert(mol.has_coords() === 2);
+    var mol3 = RDKitModule.get_mol(`
+     RDKit          3D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+   -0.5909   -0.6086    0.0018 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2459    0.8185   -0.0936 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8271   -0.1760    0.1017 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1425   -0.9648    0.9113 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8767   -1.2011   -0.8967 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5849    1.4596    0.7584 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2393    1.3618   -1.0674 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4853   -0.4161   -0.7761 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3678   -0.2732    1.0608 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  1  1  0
+  1  4  1  0
+  1  5  1  0
+  2  6  1  0
+  2  7  1  0
+  3  8  1  0
+  3  9  1  0
+M  END
+`);
+assert(mol3.has_coords() === 3);
 }
 
 function test_kekulize() {

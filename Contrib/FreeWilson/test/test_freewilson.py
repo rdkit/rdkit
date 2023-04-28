@@ -1,7 +1,12 @@
-import freewilson as fw
-from rdkit import rdBase, Chem
-import csv, os, io
+import csv
+import io
 import logging
+import os
+
+import freewilson as fw
+
+from rdkit import Chem, rdBase
+
 PATH = os.path.join(os.path.dirname(fw.__file__), 'data')
 assert os.path.exists(PATH), PATH
 
