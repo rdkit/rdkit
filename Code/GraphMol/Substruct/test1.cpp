@@ -1928,9 +1928,9 @@ void testMostSubstitutedCoreMatch() {
 
 void testLongRing() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Test substructure matching with a pathological case "
-                        << "for symmetric SSSR"
-                        << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "Test substructure matching with a pathological case "
+      << "for symmetric SSSR" << std::endl;
   std::string mol_smiles = "c12ccc(CCCCCCCc5ccc(C2)cc5)cc1";
   std::string query_smiles = "c1cc2ccc1CCCCCCCc1ccc(cc1)C2";
   ROMol *mol = SmilesToMol(mol_smiles);
@@ -1939,10 +1939,8 @@ void testLongRing() {
   MatchVectType match1;
   MatchVectType match2;
   SubstructMatchParameters params;
-  TEST_ASSERT(
-    SubstructMatch(*mol, *query, match1));
-  TEST_ASSERT(
-    SubstructMatch(*query, *mol, match2));
+  TEST_ASSERT(SubstructMatch(*mol, *query, match1));
+  TEST_ASSERT(SubstructMatch(*query, *mol, match2));
   delete query;
   delete mol;
 }

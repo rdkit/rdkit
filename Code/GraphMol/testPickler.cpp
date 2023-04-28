@@ -857,7 +857,7 @@ void testGithubIssue6036() {
   m->setProp("shared_array", sptr);
   std::string pkl;
   MolPickler::pickleMol(*m, pkl, PicklerOps::AllProps);
-  std::unique_ptr<RWMol> roundTripped(new RWMol(pkl));  
+  std::unique_ptr<RWMol> roundTripped(new RWMol(pkl));
 }
 
 void testIssue3496759() {

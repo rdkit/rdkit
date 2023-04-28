@@ -119,7 +119,7 @@ enum StruChkResult {
   bad_set = BAD_SET,
   transformed_set = TRANSFORMED_SET,
 };
-}
+}  // namespace
 
 BOOST_PYTHON_MODULE(pyAvalonTools) {
   python::scope().attr("__doc__") =
@@ -157,7 +157,7 @@ MDL mol data is assumed.";
   docString = "returns the Avalon fingerprint for an RDKit molecule";
   python::def("GetAvalonFP",
               (ExplicitBitVect * (*)(const RDKit::ROMol &, unsigned int, bool,
-                                     bool, unsigned int))getAvalonFP,
+                                     bool, unsigned int)) getAvalonFP,
               (python::arg("mol"), python::arg("nBits") = 512,
                python::arg("isQuery") = false, python::arg("resetVect") = false,
                python::arg("bitFlags") = AvalonTools::avalonSimilarityBits),
@@ -169,7 +169,7 @@ If the isSmiles argument is true, the data is assumed to be SMILES, otherwise\n\
 MDL mol data is assumed.";
   python::def("GetAvalonFP",
               (ExplicitBitVect * (*)(const std::string &, bool, unsigned int,
-                                     bool, bool, unsigned int))getAvalonFP,
+                                     bool, bool, unsigned int)) getAvalonFP,
               (python::arg("molData"), python::arg("isSmiles"),
                python::arg("nBits") = 512, python::arg("isQuery") = false,
                python::arg("resetVect") = false,
@@ -201,9 +201,10 @@ MDL mol data is assumed.";
               docString.c_str());
 
   docString = "returns the Avalon count fingerprint for an RDKit molecule";
-  python::def("GetAvalonCountFP", (RDKit::SparseIntVect<boost::uint32_t> *
-                                   (*)(const RDKit::ROMol &, unsigned int, bool,
-                                       unsigned int))getAvalonCountFP,
+  python::def("GetAvalonCountFP",
+              (RDKit::SparseIntVect<boost::uint32_t> *
+               (*)(const RDKit::ROMol &, unsigned int, bool, unsigned int))
+                  getAvalonCountFP,
               (python::arg("mol"), python::arg("nBits") = 512,
                python::arg("isQuery") = false,
                python::arg("bitFlags") = AvalonTools::avalonSimilarityBits),
@@ -213,9 +214,10 @@ MDL mol data is assumed.";
       "returns the Avalon count fingerprint for some molecule data.\n\
 If the isSmiles argument is true, the data is assumed to be SMILES, otherwise\n\
 MDL mol data is assumed.";
-  python::def("GetAvalonCountFP", (RDKit::SparseIntVect<boost::uint32_t> *
-                                   (*)(const std::string &, bool, unsigned int,
-                                       bool, unsigned int))getAvalonCountFP,
+  python::def("GetAvalonCountFP",
+              (RDKit::SparseIntVect<boost::uint32_t> *
+               (*)(const std::string &, bool, unsigned int, bool, unsigned int))
+                  getAvalonCountFP,
               (python::arg("molData"), python::arg("isSmiles"),
                python::arg("nBits") = 512, python::arg("isQuery") = false,
                python::arg("bitFlags") = AvalonTools::avalonSimilarityBits),
@@ -280,7 +282,7 @@ the return tuple.";
 
   python::def("GetCheckMolLog", AvalonTools::getCheckMolLog,
               "Returns the Struchk log for the last molecules processed.");
-  
+
   python::scope().attr("avalonSSSBits") = AvalonTools::avalonSSSBits;
   python::scope().attr("avalonSimilarityBits") =
       AvalonTools::avalonSimilarityBits;

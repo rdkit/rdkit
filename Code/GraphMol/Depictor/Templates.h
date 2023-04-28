@@ -38,12 +38,13 @@ class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
 
   bool hasTemplateOfSize(unsigned int atomCount) {
     if (m_templates.find(atomCount) != m_templates.end()) {
-        return true;
+      return true;
     }
     return false;
   }
 
-  const std::vector<std::shared_ptr<RDKit::ROMol>>& getMatchingTemplates(unsigned int atomCount) {
+  const std::vector<std::shared_ptr<RDKit::ROMol>>& getMatchingTemplates(
+      unsigned int atomCount) {
     return m_templates[atomCount];
   }
 
@@ -68,17 +69,15 @@ class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
     clearTemplates();
     // load default templates into m_templates map by atom count
     for (const auto& smiles : TEMPLATE_SMILES) {
-        std::shared_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol(smiles));
-        m_templates[mol->getNumAtoms()].push_back(mol);
+      std::shared_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol(smiles));
+      m_templates[mol->getNumAtoms()].push_back(mol);
     }
   }
 
  private:
-  CoordinateTemplates() {
-    loadDefaultTemplates();
-  }
+  CoordinateTemplates() { loadDefaultTemplates(); }
   CoordinateTemplates(const CoordinateTemplates&) = delete;
-  CoordinateTemplates& operator= (const CoordinateTemplates&) = delete;
+  CoordinateTemplates& operator=(const CoordinateTemplates&) = delete;
 
   void clearTemplates() {
     for (auto& [atom_cout, romols] : m_templates) {
@@ -87,12 +86,14 @@ class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
     m_templates.clear();
   }
 
-  ~CoordinateTemplates() {
-    clearTemplates();
-  }
+  ~CoordinateTemplates() { clearTemplates(); }
 
-  void loadTemplatesFromPath(const std::string& templatePath, std::unordered_map<unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>>& templates);
+  void loadTemplatesFromPath(
+      const std::string& templatePath,
+      std::unordered_map<
+          unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>>& templates);
 
-  std::unordered_map<unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>> m_templates;
+  std::unordered_map<unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>>
+      m_templates;
 };
-} // namespace RDDepict
+}  // namespace RDDepict

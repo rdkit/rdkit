@@ -54,10 +54,9 @@ class HashLayer(enum.Enum):
     :cvar ESCAPE: arbitrary other information to be incorporated
     :cvar FORMULA: a simple molecular formula for the molecule
     :cvar NO_STEREO_SMILES: RDKit canonical SMILES with all stereo removed
-    :cvar NO_STEREO_TAUTOMER_HASH: the above tautomer hash lacking all stereo
     :cvar SGROUP_DATA: canonicalization of all SGroups data present
     :cvar TAUTOMER_HASH: SMILES-like representation for a generic tautomer form
-
+    :cvar NO_STEREO_TAUTOMER_HASH: the above tautomer hash lacking all stereo
     """
   CANONICAL_SMILES = enum.auto()
   ESCAPE = enum.auto()
@@ -108,12 +107,14 @@ def GetMolHash(all_layers, hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> s
 
   h = hashlib.sha1()
   for layer in hash_scheme.value:
-    h.update(all_layers[layer].encode())
+    if layer in all_layers:
+      h.update(all_layers[layer].encode())
   return h.hexdigest()
 
 
 def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[Iterable] = None,
-                 escape: Optional[str] = None, cxflag=DEFAULT_CXFLAG) -> set(HashLayer):
+                 escape: Optional[str] = None, cxflag=DEFAULT_CXFLAG,
+                 enable_tautomer_hash_v2=False) -> set(HashLayer):
   """
     Generate layers of data about that could be used to identify a molecule
 
@@ -121,6 +122,7 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
     :param data_field_names: optional sequence of names of SGroup DAT fields which
        will be included in the hash.
     :param escape: optional field which can contain arbitrary information
+    :param enable_tautomer_hash_v2: use v2 of the tautomer hash
     :return: dictionary of HashLayer enum to calculated hash
     """
   # Work on a copy with all non-stereogenic Hydrogens removed
@@ -134,11 +136,13 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   ps = Chem.SmilesWriteParams()
   cxsmiles = Chem.MolToCXSmiles(mol, ps, cxflag)
 
-  tautomer_hash = GetStereoTautomerHash(mol, cxflag=cxflag)
+  tautomer_hash = GetStereoTautomerHash(mol, cxflag=cxflag,
+                                        enable_tautomer_hash_v2=enable_tautomer_hash_v2)
 
   sgroup_data = _CanonicalizeSGroups(mol, dataFieldNames=data_field_names)
 
-  no_stereo_tautomer_hash, no_stereo_smiles = GetNoStereoLayers(mol)
+  no_stereo_tautomer_hash, no_stereo_smiles = GetNoStereoLayers(
+    mol, enable_tautomer_hash_v2=enable_tautomer_hash_v2)
 
   return {
     HashLayer.CANONICAL_SMILES: cxsmiles,
@@ -169,7 +173,7 @@ def _RemoveUnnecessaryHs(rdk_mol, preserve_stereogenic_hs=False):
   return edited_mol
 
 
-def GetStereoTautomerHash(molecule, cxflag=DEFAULT_CXFLAG):
+def GetStereoTautomerHash(molecule, cxflag=DEFAULT_CXFLAG, enable_tautomer_hash_v2=False):
   if molecule.GetNumAtoms() == 0:
     return EMPTY_MOL_TAUTOMER_HASH
 
@@ -181,18 +185,28 @@ def GetStereoTautomerHash(molecule, cxflag=DEFAULT_CXFLAG):
   # setting useCxSmiles param value to always include enhanced stereo info
   useCxSmiles = True
   cx_flags_to_skip = Chem.CXSmilesFields.CX_ALL ^ cxflag
-  hash_with_cxExtensions = rdMolHash.MolHash(no_h_mol, rdMolHash.HashFunction.HetAtomTautomer,
-                                             useCxSmiles, cx_flags_to_skip)
+  if enable_tautomer_hash_v2:
+    hash_func = rdMolHash.HashFunction.HetAtomTautomerv2
+  else:
+    hash_func = rdMolHash.HashFunction.HetAtomTautomer
+
+  hash_with_cxExtensions = rdMolHash.MolHash(no_h_mol, hash_func, useCxSmiles, cx_flags_to_skip)
 
   return hash_with_cxExtensions
 
 
-def GetNoStereoLayers(mol):
+def GetNoStereoLayers(mol, enable_tautomer_hash_v2=False):
   # SHARED-7909: Strip all Hs, including stereogenic ones.
   no_stereo_mol = _RemoveUnnecessaryHs(mol)
   no_stereo_mol.UpdatePropertyCache(False)
   Chem.rdmolops.RemoveStereochemistry(no_stereo_mol)
-  no_stereo_tautomer_hash = rdMolHash.MolHash(no_stereo_mol, rdMolHash.HashFunction.HetAtomTautomer)
+
+  if enable_tautomer_hash_v2:
+    hash_func = rdMolHash.HashFunction.HetAtomTautomerv2
+  else:
+    hash_func = rdMolHash.HashFunction.HetAtomTautomer
+  no_stereo_tautomer_hash = rdMolHash.MolHash(no_stereo_mol, hash_func)
+
   no_stereo_smiles = rdMolHash.MolHash(no_stereo_mol, rdMolHash.HashFunction.CanonicalSmiles)
   return (no_stereo_tautomer_hash, no_stereo_smiles)
 

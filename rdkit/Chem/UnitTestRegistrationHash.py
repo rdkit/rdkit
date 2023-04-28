@@ -755,6 +755,42 @@ $$$$
     # this shouldn't throw an exception
     RegistrationHash.GetMolLayers(mol)
 
+  def test_tautomer_v2_hash(self):
+    """
+        Check that using v2 of the tautomer hash works
+    """
+    enol = Chem.MolFromSmiles('CC=CO')
+    keto = Chem.MolFromSmiles('CCC=O')
+
+    # Default, v1 of the tautomer hash:
+    enol_layers = RegistrationHash.GetMolLayers(enol)
+    keto_layers = RegistrationHash.GetMolLayers(keto)
+
+    for layer in (RegistrationHash.HashLayer.TAUTOMER_HASH,
+                  RegistrationHash.HashLayer.NO_STEREO_TAUTOMER_HASH):
+      self.assertNotEqual(enol_layers[layer], keto_layers[layer])
+
+    self.assertNotEqual(
+      RegistrationHash.GetMolHash(
+        enol_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS),
+      RegistrationHash.GetMolHash(
+        keto_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+
+    # v2 of the tautomer hash:
+    enol_layers = RegistrationHash.GetMolLayers(enol, enable_tautomer_hash_v2=True)
+    self.assertIn(RegistrationHash.HashLayer.TAUTOMER_HASH, enol_layers)
+
+    keto_layers = RegistrationHash.GetMolLayers(keto, enable_tautomer_hash_v2=True)
+
+    for layer in (RegistrationHash.HashLayer.TAUTOMER_HASH,
+                  RegistrationHash.HashLayer.NO_STEREO_TAUTOMER_HASH):
+      self.assertEqual(enol_layers[layer], keto_layers[layer])
+
+    self.assertEqual(
+      RegistrationHash.GetMolHash(
+        enol_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS),
+      RegistrationHash.GetMolHash(
+        keto_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

@@ -14,7 +14,6 @@
 
 using namespace RDKit;
 
-
 TEST_CASE("Determine Connectivity") {
   SECTION("Van der Waals") {
     unsigned int numTests = 39;

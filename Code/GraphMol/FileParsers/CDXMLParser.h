@@ -31,10 +31,9 @@ class RWMol;
  *                     is only done if the molecule is sanitized
  * correctness of the contents.
  */
-RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
-			       std::istream &inStream,
-			       bool sanitize = true,
-			       bool removeHs = true);
+RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>>
+CDXMLDataStreamToMols(std::istream &inStream, bool sanitize = true,
+                      bool removeHs = true);
 //! \brief construct molecules from a CDXML file
 //! Note that the CDXML format is large and complex, the RDKit doesn't support
 //!  full functionality, just the base ones required for molecule and
@@ -48,9 +47,7 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMo
  * correctness of the contents.
  */
 RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLFileToMols(
-			       const std::string &filename,
-			       bool sanitize = true,
-			       bool removeHs = true);
+    const std::string &filename, bool sanitize = true, bool removeHs = true);
 
 //! \brief construct molecules from a CDXML file
 //! Note that the CDXML format is large and complex, the RDKit doesn't support
@@ -65,9 +62,7 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLFileToMols(
  * correctness of the contents.
  */
 RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
-			       const std::string &cdxml,
-			       bool sanitize = true,
-			       bool removeHs = true);
+    const std::string &cdxml, bool sanitize = true, bool removeHs = true);
 
-}
-#endif // _RD_CDXML_FILEPARSERS_H
+}  // namespace RDKit
+#endif  // _RD_CDXML_FILEPARSERS_H

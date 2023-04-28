@@ -584,7 +584,8 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
-extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality, bool useMatchers) {
+extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality,
+                            bool useMatchers) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
   RDKit::SubstructMatchParameters params;
@@ -603,7 +604,7 @@ extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality, bool useMatch
     params.useGenericMatchers = true;
   }
 
-    auto matchVect = RDKit::SubstructMatch(*im, *am, params);
+  auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
 
@@ -2092,6 +2093,8 @@ extern "C" char *computeNMMolHash(CROMol data, const char *which) {
     func = RDKit::MolHash::HashFunction::Mesomer;
   } else if (!strcmp(which, "HetAtomTautomer")) {
     func = RDKit::MolHash::HashFunction::HetAtomTautomer;
+  } else if (!strcmp(which, "HetAtomTautomerv2")) {
+    func = RDKit::MolHash::HashFunction::HetAtomTautomerv2;
   } else if (!strcmp(which, "HetAtomProtomer")) {
     func = RDKit::MolHash::HashFunction::HetAtomProtomer;
   } else if (!strcmp(which, "RedoxPair")) {

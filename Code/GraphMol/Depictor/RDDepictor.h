@@ -42,27 +42,30 @@ class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
 //! \brief Set the path to the file containing the ring system templates
 /*!
 
-  \param templatePath the file path to a file containing the ring system templates.
-      Each template must be a single line in the file represented using CXSMILES,
-      and the structure should be a single ring system.
+  \param templatePath the file path to a file containing the ring system
+  templates. Each template must be a single line in the file represented using
+  CXSMILES, and the structure should be a single ring system.
 
   \throws DepictException if any of the templates are invalid
 */
-void RDKIT_DEPICTOR_EXPORT setRingSystemTemplates(const std::string templatePath);
+void RDKIT_DEPICTOR_EXPORT
+setRingSystemTemplates(const std::string templatePath);
 
 //! \brief Add ring system templates to be used in 2D coordinater generation.
 /// If there are duplicates, the most recently added template will be used.
 /*!
 
-  \param templatePath the file path to a file containing the ring system templates.
-      Each template must be a single line in the file represented using CXSMILES,
-      and the structure should be a single ring system.
+  \param templatePath the file path to a file containing the ring system
+  templates. Each template must be a single line in the file represented using
+  CXSMILES, and the structure should be a single ring system.
 
   \throws DepictException if any of the templates are invalid
 */
-void RDKIT_DEPICTOR_EXPORT addRingSystemTemplates(const std::string templatePath);
+void RDKIT_DEPICTOR_EXPORT
+addRingSystemTemplates(const std::string templatePath);
 
-//! \brief Load default ring system templates to be used in 2D coordinate generation
+//! \brief Load default ring system templates to be used in 2D coordinate
+//! generation
 void RDKIT_DEPICTOR_EXPORT loadDefaultRingSystemTemplates();
 
 struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
@@ -71,20 +74,20 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
                 //!< locations.  This is the container the user needs to
                 //!< fill if he/she wants to specify coordinates for a portion
                 //!< of the molecule, defaults to 0
-  bool canonOrient = false; //!< canonicalize the orientation so that the long
-                            //!< axes align with the x-axis etc.
-  bool clearConfs = true; //!< clear all existing conformations on the molecule
-                          //!< before adding the 2D coordinates instead of
-                          //!< simply adding to the list
-  unsigned int nFlipsPerSample = 0; //!< the number of rotatable bonds that are
-                                    //!< flipped at random for each sample
-  unsigned int nSamples = 0; //!< the number of samples
-  int sampleSeed = 0; //!< seed for the random sampling process
+  bool canonOrient = false;  //!< canonicalize the orientation so that the long
+                             //!< axes align with the x-axis etc.
+  bool clearConfs = true;  //!< clear all existing conformations on the molecule
+                           //!< before adding the 2D coordinates instead of
+                           //!< simply adding to the list
+  unsigned int nFlipsPerSample = 0;  //!< the number of rotatable bonds that are
+                                     //!< flipped at random for each sample
+  unsigned int nSamples = 0;         //!< the number of samples
+  int sampleSeed = 0;                //!< seed for the random sampling process
   bool permuteDeg4Nodes = false;  //!< try permuting the drawing order of bonds
                                   //!< around atoms with four neighbors in order
                                   //!< to improve the depiction
-  bool forceRDKit = false;  //!< use RDKit to generate coordinates even if
-                            //!< preferCoordGen is set to true
+  bool forceRDKit = false;        //!< use RDKit to generate coordinates even if
+                                  //!< preferCoordGen is set to true
   bool useRingTemplates = false;  //!< whether to use ring system templates for
                                   //!< generating initial coordinates
 
@@ -103,7 +106,7 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
 
 */
 RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
-    RDKit::ROMol &mol, const Compute2DCoordParameters& params);
+    RDKit::ROMol &mol, const Compute2DCoordParameters &params);
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule
 /*!

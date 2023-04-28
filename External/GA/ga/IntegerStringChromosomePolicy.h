@@ -18,36 +18,33 @@
 namespace GapeGa {
 
 class GA_EXPORT IntegerStringChromosomePolicy {
-public:
-	IntegerStringChromosomePolicy(GarethUtil::RandomUtil & rng_, int s);
-	virtual ~IntegerStringChromosomePolicy();
+ public:
+  IntegerStringChromosomePolicy(GarethUtil::RandomUtil& rng_, int s);
+  virtual ~IntegerStringChromosomePolicy();
 
-	int mutate(int pos, int currentValue) const;
-	int initialize(int pos) const;
-	bool isAllowSwitch() {
-		return false;
-	}
+  int mutate(int pos, int currentValue) const;
+  int initialize(int pos) const;
+  bool isAllowSwitch() { return false; }
 
-	void setMax(int max);
-	void setMax(int pos, int max);
-	void setAllowNulls(bool allow);
-	void setAllowNulls(int pos, bool allow);
+  void setMax(int max);
+  void setMax(int pos, int max);
+  void setAllowNulls(bool allow);
+  void setAllowNulls(int pos, bool allow);
 
-	int getSize() const {
-		return size;
-	}
+  int getSize() const { return size; }
 
-private:
-	GarethUtil::RandomUtil & rng;
-	const int size;
-	IntegerStringChromosomePolicy(const IntegerStringChromosomePolicy& orig) = delete;
-	IntegerStringChromosomePolicy & operator =(
-			const IntegerStringChromosomePolicy & other) = delete;
+ private:
+  GarethUtil::RandomUtil& rng;
+  const int size;
+  IntegerStringChromosomePolicy(const IntegerStringChromosomePolicy& orig) =
+      delete;
+  IntegerStringChromosomePolicy& operator=(
+      const IntegerStringChromosomePolicy& other) = delete;
 
-	int * const maxs;
-	bool * const allowNulls;
+  int* const maxs;
+  bool* const allowNulls;
 };
 
-}
+}  // namespace GapeGa
 
 #endif /* INTEGERSTRINGCHROMOSOMEPOLICY_H_ */

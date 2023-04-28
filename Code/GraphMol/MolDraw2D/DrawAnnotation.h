@@ -53,8 +53,8 @@ class DrawAnnotation {
 
   std::string text_;
   TextAlignType align_;
-  std::string class_;    // for SVG output, most likely
-  double fontScale_;  // fontScale to use
+  std::string class_;  // for SVG output, most likely
+  double fontScale_;   // fontScale to use
   DrawText &textDrawer_;
   Point2D pos_ = Point2D(0.0, 0.0);
   DrawColour colour_ = DrawColour(0.0, 0.0, 0.0, 0.0);
