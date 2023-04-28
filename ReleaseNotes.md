@@ -420,8 +420,7 @@ Riccardo Vianello, Franz Waibl, Rachel Walker, Patrick Walters,
   - Updated README for cartridge installation into conda PostgreSQL
  (github pull #6236 from ptosco)
   - Add a function to translate the MDL chiral flag into enhanced stereo groups
- (github issu
- e #6241 from ricrogz)
+ (github issue #6241 from ricrogz)
   - Add support for generic matching in the PgSQL cartridge
  (github pull #6269 from bjonnh-work)
   - allowOptionalAttachments should also include terminal query atoms matching hydrogen
