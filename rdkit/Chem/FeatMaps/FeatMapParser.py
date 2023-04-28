@@ -8,9 +8,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Geometry
-from rdkit.Chem.FeatMaps import FeatMaps, FeatMapPoint
 import re
+
+from rdkit import Geometry
+from rdkit.Chem.FeatMaps import FeatMapPoint, FeatMaps
+
 """
 
 ScoreMode=All
@@ -171,7 +173,7 @@ class FeatMapParser(object):
           p.featDirs.append(self._parsePoint(value))
         else:
           raise FeatMapParseError(f'FeatPoint option {name} not recognized on line {self._lineNum}')
-        
+
       feats.append(p)
       l = self._NextLine()
     return feats

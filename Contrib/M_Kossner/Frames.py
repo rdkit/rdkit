@@ -3,23 +3,24 @@
 
 #	Jan 2011	(markus kossner)	Cleaned up the code, added some documentation
 #	somewhere around Aug 2008	(markus kossner)	created
-#    
+#
 #    This script extracts the molecular framework for a database of molecules.
-#    You can use two modes (hard coded): 
+#    You can use two modes (hard coded):
 #    - Scaff:	The molecular frame is extracted
 #    - RedScaff:	All linking chains between rings are deleted. The rings are directly connected.
-#    
-#    You can comment in/out the code snippets indicated by the comments 
+#
+#    You can comment in/out the code snippets indicated by the comments
 #    to force each atom of the frame to be a Carbon.
-#    
+#
 #    Usage: Frames.py <database.sdf>
-#    Output: 
+#    Output:
 #    - sd files containing all molecules belonging to one frame (1.sdf, 2.sdf etc)
 #    - frames.smi containing the (canonical) smiles and count of occurrence
 #
 
+import os
+import sys
 
-import os, sys
 from Chem import AllChem as Chem
 
 
@@ -68,7 +69,7 @@ def GetFrame(mol, mode='Scaff'):
   #print 'PosConnectors:'
   #print PosConnectors
   Framework = [x for x in RingAtoms]
-  #Start a list of pathways which we will have to walk 
+  #Start a list of pathways which we will have to walk
   #print 'Path atoms:'
   #print Paths
   Linkers = []
@@ -165,7 +166,9 @@ if __name__ == '__main__':
     if cansmiles in FrameDict:
       FrameDict[cansmiles].append(mol)
     else:
-      FrameDict[cansmiles] = [mol, ]
+      FrameDict[cansmiles] = [
+        mol,
+      ]
 
   counter = 0
   w = open('frames.smi', 'w')

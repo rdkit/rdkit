@@ -44,9 +44,10 @@ Greg Landrum (greglandrum@earthlink.net) 3/10/2000
 
 """
 
-from rdkit.sping.pid import *
-from rdkit.sping.PDF import pdfmetrics  # for font info
 from math import *
+
+from rdkit.sping.PDF import pdfmetrics  # for font info
+from rdkit.sping.pid import *
 
 #SVG_HEADER = """<?xml version="1.0" encoding="iso-8859-1"?>
 #<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN"
@@ -694,8 +695,8 @@ def dashtest():
 
   canvas.drawEllipse(130, 30, 200, 100, fillColor=yellow, edgeWidth=4, dash=(3, 3))
 
-  canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4, dash=(3,
-                                                                                               3))
+  canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4,
+                 dash=(3, 3))
 
   canvas.defaultLineWidth = 4
   canvas.drawRoundRect(30, 30, 100, 100, fillColor=blue, edgeColor=maroon, dash=(3, 3))

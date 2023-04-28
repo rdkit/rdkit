@@ -13,13 +13,11 @@
 
 """
 
-
 import os
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem import Lipinski, rdMolDescriptors, Crippen
+from rdkit import Chem, RDConfig
+from rdkit.Chem import Crippen, Lipinski, rdMolDescriptors
 
 NonStrict = "NUM_ROTATABLEBONDS_O"
 Strict = "NUM_ROTATABLEBONDS"

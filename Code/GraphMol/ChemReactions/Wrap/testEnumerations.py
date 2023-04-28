@@ -1,18 +1,18 @@
 #  Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written
 #       permission.
 #
@@ -29,111 +29,111 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
-import unittest
-import os,sys, copy
-
+import copy
+import itertools
+import os
 import pickle
+import sys
+import time
+import unittest
 
-from rdkit import rdBase
-from rdkit import Chem
-from rdkit.Chem import AllChem,rdChemReactions
-from rdkit import Geometry
-from rdkit import RDConfig
-import itertools, time
 import numpy as np
+
+from rdkit import Chem, Geometry, RDConfig, rdBase
+from rdkit.Chem import AllChem, rdChemReactions
+
 
 def log(s):
   rdBase.LogErrorMsg("== " + s)
 
-class TestCase(unittest.TestCase) :
+
+class TestCase(unittest.TestCase):
+
   def setUp(self):
-    self.dataDir = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','ChemReactions','testData')
+    self.dataDir = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ChemReactions', 'testData')
 
   def testCartesianProduct(self):
     log("testCartesianProduct")
     rxn = rdChemReactions.ChemicalReaction()
-    rgroups = [[Chem.MolFromSmiles("C")]*10,
-               [Chem.MolFromSmiles("N")]*5,
-               [Chem.MolFromSmiles("O")]*6]
+    rgroups = [[Chem.MolFromSmiles("C")] * 10, [Chem.MolFromSmiles("N")] * 5,
+               [Chem.MolFromSmiles("O")] * 6]
 
     cartProd = rdChemReactions.CartesianProductStrategy()
     cartProd.Initialize(rxn, rgroups)
-    self.assertEquals(cartProd.GetNumPermutations(), 10*5*6)
+    self.assertEquals(cartProd.GetNumPermutations(), 10 * 5 * 6)
     groups = []
     count = 0
-    print (cartProd.__bool__())
+    print(cartProd.__bool__())
     while cartProd:
       groups.append(tuple(cartProd.next()))
+
+
 #      count += 1
 #      assert count <= cartProd.GetNumPermutations()
-    self.assertEquals(len(groups), 10*5*6)
+    self.assertEquals(len(groups), 10 * 5 * 6)
     # see if we are equal to the Python implementation
-    g = list(itertools.product( list(range(10)), list(range(5)), list(range(6)) ))
+    g = list(itertools.product(list(range(10)), list(range(5)), list(range(6))))
     self.assertEquals(set(g), set(groups))
     copy.copy(cartProd)
-    
+
   def testRandomSample(self):
     log("testRandomSample")
-    rgroups = [[Chem.MolFromSmiles("C")]*10,
-               [Chem.MolFromSmiles("N")]*5,
-               [Chem.MolFromSmiles("O")]*6]
+    rgroups = [[Chem.MolFromSmiles("C")] * 10, [Chem.MolFromSmiles("N")] * 5,
+               [Chem.MolFromSmiles("O")] * 6]
     rxn = rdChemReactions.ChemicalReaction()
 
     randProd = rdChemReactions.RandomSampleStrategy()
     randProd.Initialize(rxn, rgroups)
-    self.assertEquals(randProd.GetNumPermutations(), 10*5*6)
+    self.assertEquals(randProd.GetNumPermutations(), 10 * 5 * 6)
     groups = []
-    for i in range(10*5*6):
+    for i in range(10 * 5 * 6):
       groups.append(tuple(randProd.next()))
-    print( len(set(groups)), "out of", 10*5*6 )
+    print(len(set(groups)), "out of", 10 * 5 * 6)
 
     randProd = rdChemReactions.RandomSampleStrategy()
     randProd.Initialize(rxn, rgroups)
-    self.assertEquals(randProd.GetNumPermutations(), 10*5*6)
+    self.assertEquals(randProd.GetNumPermutations(), 10 * 5 * 6)
     groups = []
     for i in range(10):
       groups.append(tuple(randProd.next()))
 
     for i in range(3):
-      print( i, len(set([g[i] for g in groups])), "out of", [10,5,6][i] )
+      print(i, len(set([g[i] for g in groups])), "out of", [10, 5, 6][i])
     copy.copy(randProd)
-    
+
   def testRandomSampleAllBBs(self):
     log("testRandomSampleAllBBs")
     rxn = rdChemReactions.ChemicalReaction()
-    rgroups = [[Chem.MolFromSmiles("C")]*10,
-               [Chem.MolFromSmiles("N")]*5,
-               [Chem.MolFromSmiles("O")]*6]
+    rgroups = [[Chem.MolFromSmiles("C")] * 10, [Chem.MolFromSmiles("N")] * 5,
+               [Chem.MolFromSmiles("O")] * 6]
 
     randProd = rdChemReactions.RandomSampleAllBBsStrategy()
     randProd.Initialize(rxn, rgroups)
-    self.assertEquals(randProd.GetNumPermutations(), 10*5*6)
+    self.assertEquals(randProd.GetNumPermutations(), 10 * 5 * 6)
     groups = []
-    for i in range(10*5*6):
+    for i in range(10 * 5 * 6):
       groups.append(tuple(randProd.next()))
 
-    print( len(set(groups)), "out of", 10*5*6 )
+    print(len(set(groups)), "out of", 10 * 5 * 6)
 
     randProd = rdChemReactions.RandomSampleAllBBsStrategy()
     randProd.Initialize(rxn, rgroups)
-    self.assertEquals(randProd.GetNumPermutations(), 10*5*6)
+    self.assertEquals(randProd.GetNumPermutations(), 10 * 5 * 6)
     groups = []
     for i in range(10):
       groups.append(tuple(randProd.next()))
 
     for i in range(3):
-      print( i, len(set([g[i] for g in groups])), "out of", [10,5,6][i] )
-      self.assertEquals(len(set([g[i] for g in groups])), [10,5,6][i])
+      print(i, len(set([g[i] for g in groups])), "out of", [10, 5, 6][i])
+      self.assertEquals(len(set([g[i] for g in groups])), [10, 5, 6][i])
     copy.copy(randProd)
-    
+
   def testTimings(self):
     log("testTimings")
     rxn = rdChemReactions.ChemicalReaction()
 
-    rgroups = [[Chem.MolFromSmiles("C")]*17000,
-               [Chem.MolFromSmiles("N")]*50000,
-               [Chem.MolFromSmiles("O")]*4000]
+    rgroups = [[Chem.MolFromSmiles("C")] * 17000, [Chem.MolFromSmiles("N")] * 50000,
+               [Chem.MolFromSmiles("O")] * 4000]
     cartProd = rdChemReactions.CartesianProductStrategy()
     randProd = rdChemReactions.RandomSampleStrategy()
     randAllBBs = rdChemReactions.RandomSampleAllBBsStrategy()
@@ -143,21 +143,20 @@ class TestCase(unittest.TestCase) :
       t1 = time.time()
       r.Skip(num)
       t2 = time.time()
-      print("%s Skipped %s in %s seconds"%(r, num, t2-t1))
+      print("%s Skipped %s in %s seconds" % (r, num, t2 - t1))
 
   def testEvenPairsSampling(self):
     rxn = rdChemReactions.ChemicalReaction()
-    
-    rgroups = [[Chem.MolFromSmiles("C")]*10,
-               [Chem.MolFromSmiles("N")]*10,
-               [Chem.MolFromSmiles("O")]*10]
+
+    rgroups = [[Chem.MolFromSmiles("C")] * 10, [Chem.MolFromSmiles("N")] * 10,
+               [Chem.MolFromSmiles("O")] * 10]
 
     rxn = rdChemReactions.ChemicalReaction()
     count = 0
     pairs01 = {}
     pairs12 = {}
     pairs02 = {}
-    
+
     strategy = rdChemReactions.EvenSamplePairsStrategy()
     strategy.Initialize(rxn, rgroups)
     # try 100 samples
@@ -194,9 +193,9 @@ class TestCase(unittest.TestCase) :
       count += 1
 
     # each pair should be used roughly 10 times
-    self.assertTrue( 9 <= np.median(list(pairs01.values())) <= 11)
-    self.assertTrue( 9 <= np.median(list(pairs02.values())) <= 11)
-    self.assertTrue( 9 <= np.median(list(pairs12.values())) <= 11)
+    self.assertTrue(9 <= np.median(list(pairs01.values())) <= 11)
+    self.assertTrue(9 <= np.median(list(pairs02.values())) <= 11)
+    self.assertTrue(9 <= np.median(list(pairs12.values())) <= 11)
 
     # now try 500
     pairs01 = {}
@@ -215,25 +214,24 @@ class TestCase(unittest.TestCase) :
       pairs02[p01] = pairs02.get(p02, 0) + 1
       count += 1
 
-    # each pair should be used roughly 5 times      
-    self.assertTrue( 4 <= np.median(list(pairs01.values())) <= 6)
-    self.assertTrue( 4 <= np.median(list(pairs02.values())) <= 6)
-    self.assertTrue( 4 <= np.median(list(pairs12.values())) <= 6)
-    
-    
+    # each pair should be used roughly 5 times
+    self.assertTrue(4 <= np.median(list(pairs01.values())) <= 6)
+    self.assertTrue(4 <= np.median(list(pairs02.values())) <= 6)
+    self.assertTrue(4 <= np.median(list(pairs12.values())) <= 6)
+
     self.assertTrue("PAIRSTAT" in strategy.Stats())
 
   def testEnumerateLibrary(self):
     log("testEnumerateLibrary")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
-    reagents = [
-      [Chem.MolFromSmiles('C=CCN=C=S'), Chem.MolFromSmiles('CC=CCN=C=S')],
-      [Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
-       Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
-       Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
-     ]
-    ]
+    reagents = [[Chem.MolFromSmiles('C=CCN=C=S'),
+                 Chem.MolFromSmiles('CC=CCN=C=S')],
+                [
+                  Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
+                  Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
+                  Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
+                ]]
 
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents)
     self.assertTrue(enumerator)
@@ -246,13 +244,12 @@ class TestCase(unittest.TestCase) :
     for i in range(len(bbs)):
       for j in range(len(bbs[i])):
         self.assertTrue(Chem.MolToSmiles(reagents[i][j]) == Chem.MolToSmiles(bbs[i][j]))
-    
-    smiresults = ['C=CCNC(=S)NCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCc1ncc(Cl)cc1Br',
-                  'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCCc1ncc(Cl)cc1Br',
-                  'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
+
+    smiresults = [
+      'C=CCNC(=S)NCc1ncc(Cl)cc1Br', 'CC=CCNC(=S)NCc1ncc(Cl)cc1Br', 'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
+      'CC=CCNC(=S)NCCc1ncc(Cl)cc1Br', 'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
+      'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br'
+    ]
     results = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
 
     enumerators = [enumerator]
@@ -262,25 +259,26 @@ class TestCase(unittest.TestCase) :
       pickle = enumerator.Serialize()
       enumerator2 = rdChemReactions.EnumerateLibrary()
       enumerator2.InitFromString(pickle)
-      
+
       # make sure old pickles work
       enumerator3 = rdChemReactions.EnumerateLibrary()
-      enumerator3.InitFromString(open(os.path.join(self.dataDir, "enumeration.pickle"), 'rb').read())
-    
+      enumerator3.InitFromString(
+        open(os.path.join(self.dataDir, "enumeration.pickle"), 'rb').read())
+
       print("==", enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
       self.assertEquals(enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
       enumerators.append(enumerator2)
       enumerators.append(enumerator3)
 
     # check for fully sampled and deterministic ordering in final index values
-    expected_positions = [[0, 0],[1, 0],[0, 1],[1, 1],[0, 2],[1, 2]]
-    
+    expected_positions = [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2], [1, 2]]
+
     out = []
     for en in enumerators:
       i = 0
       positions = []
       for i, prods in enumerate(en):
-        positions.append( list(en.GetPosition()) )
+        positions.append(list(en.GetPosition()))
         for mols in prods:
           self.assertEquals(len(mols), 1)
           smi = Chem.MolToSmiles(mols[0])
@@ -293,8 +291,8 @@ class TestCase(unittest.TestCase) :
           pickle_at_2 = enumerator.Serialize()
       self.assertEquals(i, 5)
       self.assertEquals(positions, expected_positions)
-      
-    if rdChemReactions.EnumerateLibraryCanSerialize():      
+
+    if rdChemReactions.EnumerateLibraryCanSerialize():
       # see if we can restore the enumeration from the middle
       out3 = []
       enumerator3 = rdChemReactions.EnumerateLibrary()
@@ -315,28 +313,27 @@ class TestCase(unittest.TestCase) :
         self.assertEquals(mols[0], results[i])
       i += 1
     self.assertEquals(i, 6)
-      
+
   def testRandomEnumerateLibrary(self):
     log("testRandomEnumerateLibrary")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
-    reagents = [
-      [Chem.MolFromSmiles('C=CCN=C=S'), Chem.MolFromSmiles('CC=CCN=C=S')],
-      [Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
-       Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
-       Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
-     ]
-    ]
+    reagents = [[Chem.MolFromSmiles('C=CCN=C=S'),
+                 Chem.MolFromSmiles('CC=CCN=C=S')],
+                [
+                  Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
+                  Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
+                  Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
+                ]]
 
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
                                                   rdChemReactions.RandomSampleStrategy())
     self.assertTrue(enumerator)
-    smiresults = ['C=CCNC(=S)NCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCc1ncc(Cl)cc1Br',
-                  'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCCc1ncc(Cl)cc1Br',
-                  'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
+    smiresults = [
+      'C=CCNC(=S)NCc1ncc(Cl)cc1Br', 'CC=CCNC(=S)NCc1ncc(Cl)cc1Br', 'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
+      'CC=CCNC(=S)NCCc1ncc(Cl)cc1Br', 'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
+      'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br'
+    ]
     results = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
 
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
@@ -348,13 +345,13 @@ class TestCase(unittest.TestCase) :
       count += 1
       if count > 100000:
         print("Unable to find enumerate set with 100,000 random samples!", file=sys.stderr)
-        self.assertEquals(res,set(results))
+        self.assertEquals(res, set(results))
 
       prod = iteren.next()
       for mols in prod:
         smi1 = Chem.MolToSmiles(mols[0])
         res.add(smi1)
-        
+
     if rdChemReactions.EnumerateLibraryCanSerialize():
       enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
                                                     rdChemReactions.RandomSampleStrategy())
@@ -373,10 +370,10 @@ class TestCase(unittest.TestCase) :
         prods2 = iteren2.next()
         self.assertEquals(len(prods1), len(prods2))
         for mols1, mols2 in zip(prods1, prods2):
-            self.assertEquals(len(mols1), 1)
-            smi1 = Chem.MolToSmiles(mols1[0])
-            self.assertEquals(smi1, Chem.MolToSmiles(mols2[0]))
-            outsmiles.append(smi1)
+          self.assertEquals(len(mols1), 1)
+          smi1 = Chem.MolToSmiles(mols1[0])
+          self.assertEquals(smi1, Chem.MolToSmiles(mols2[0]))
+          outsmiles.append(smi1)
 
         if i == 1:
           pickle_at_2 = enumerator.Serialize()
@@ -389,24 +386,24 @@ class TestCase(unittest.TestCase) :
       for i in range(8):
         prods3 = iteren3.next()
         for mols3 in prods3:
-            self.assertEquals(len(mols3), 1)
-            smi1 = Chem.MolToSmiles(mols3[0])
-            self.assertEquals(smi1, Chem.MolToSmiles(mols3[0]))
-            outsmiles2.append(smi1)
+          self.assertEquals(len(mols3), 1)
+          smi1 = Chem.MolToSmiles(mols3[0])
+          self.assertEquals(smi1, Chem.MolToSmiles(mols3[0]))
+          outsmiles2.append(smi1)
 
       self.assertEquals(outsmiles2, outsmiles[2:])
-    
+
   def testRandomEnumerateAllBBsLibrary(self):
     log("testRandomEnumerateAllBBsLibrary")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
-    reagents = [
-      [Chem.MolFromSmiles('C=CCN=C=S'), Chem.MolFromSmiles('CC=CCN=C=S')],
-      [Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
-       Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
-       Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
-     ]
-    ]
+    reagents = [[Chem.MolFromSmiles('C=CCN=C=S'),
+                 Chem.MolFromSmiles('CC=CCN=C=S')],
+                [
+                  Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
+                  Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
+                  Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
+                ]]
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
                                                   rdChemReactions.RandomSampleAllBBsStrategy())
     self.assertTrue(enumerator)
@@ -415,38 +412,37 @@ class TestCase(unittest.TestCase) :
     strategy = iter(enumerator)
     r1 = set()
     r2 = set()
-    strategy.next()    
+    strategy.next()
     groups = strategy.GetPosition()
     print("**", list(groups), file=sys.stderr)
     r1.add(groups[0])
     r2.add(groups[1])
     strategy.next()
     groups = strategy.GetPosition()
-    print("**", list(groups),file=sys.stderr)
+    print("**", list(groups), file=sys.stderr)
     r1.add(groups[0])
     r2.add(groups[1])
-    self.assertEquals(r1, set([0,1])) # two bbs at reagent one all sampled at one iteration
+    self.assertEquals(r1, set([0, 1]))  # two bbs at reagent one all sampled at one iteration
     strategy.next()
     groups = strategy.GetPosition()
-    print("**", list(groups),file=sys.stderr)
+    print("**", list(groups), file=sys.stderr)
     r1.add(groups[0])
     r2.add(groups[1])
-    self.assertEquals(r2, set([0,1,2])) # three bbs at reagent one all sampled in three iterations
-    
-    smiresults = ['C=CCNC(=S)NCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCc1ncc(Cl)cc1Br',
-                  'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCCc1ncc(Cl)cc1Br',
-                  'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
-    results = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
+    self.assertEquals(r2, set([0, 1,
+                               2]))  # three bbs at reagent one all sampled in three iterations
 
+    smiresults = [
+      'C=CCNC(=S)NCc1ncc(Cl)cc1Br', 'CC=CCNC(=S)NCc1ncc(Cl)cc1Br', 'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
+      'CC=CCNC(=S)NCCc1ncc(Cl)cc1Br', 'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
+      'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br'
+    ]
+    results = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
 
     if rdChemReactions.EnumerateLibraryCanSerialize():
       enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
                                                     rdChemReactions.RandomSampleAllBBsStrategy())
       self.assertTrue(enumerator)
-      
+
       pickle = enumerator.Serialize()
       enumerator2 = rdChemReactions.EnumerateLibrary()
       enumerator2.InitFromString(pickle)
@@ -461,10 +457,10 @@ class TestCase(unittest.TestCase) :
         prods2 = iteren2.next()
         self.assertEquals(len(prods1), len(prods2))
         for mols1, mols2 in zip(prods1, prods2):
-            self.assertEquals(len(mols1), 1)
-            smi1 = Chem.MolToSmiles(mols1[0])
-            self.assertEquals(smi1, Chem.MolToSmiles(mols2[0]))
-            outsmiles.append(smi1)
+          self.assertEquals(len(mols1), 1)
+          smi1 = Chem.MolToSmiles(mols1[0])
+          self.assertEquals(smi1, Chem.MolToSmiles(mols2[0]))
+          outsmiles.append(smi1)
 
         if i == 1:
           pickle_at_2 = enumerator.Serialize()
@@ -479,32 +475,33 @@ class TestCase(unittest.TestCase) :
       for i in range(8):
         prods3 = iteren3.next()
         for mols3 in prods3:
-            self.assertEquals(len(mols3), 1)
-            smi1 = Chem.MolToSmiles(mols3[0])
-            self.assertEquals(smi1, Chem.MolToSmiles(mols3[0]))
-            outsmiles2.append(smi1)
+          self.assertEquals(len(mols3), 1)
+          smi1 = Chem.MolToSmiles(mols3[0])
+          self.assertEquals(smi1, Chem.MolToSmiles(mols3[0]))
+          outsmiles2.append(smi1)
 
       self.assertEquals(outsmiles2, outsmiles[2:])
 
-            
   def testRGroupState(self):
     if not rdChemReactions.EnumerateLibraryCanSerialize():
-      print("-- Skipping testRGroupState, serialization of EnumerateLibrary not enabled", file=sys.stderr)
+      print("-- Skipping testRGroupState, serialization of EnumerateLibrary not enabled",
+            file=sys.stderr)
       return
-    
+
     log("testRGroupState")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
-    reagents = [
-      [Chem.MolFromSmiles('C=CCN=C=S'), Chem.MolFromSmiles('CC=CCN=C=S')],
-      [Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
-       Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
-       Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
-     ]
-    ]
+    reagents = [[Chem.MolFromSmiles('C=CCN=C=S'),
+                 Chem.MolFromSmiles('CC=CCN=C=S')],
+                [
+                  Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
+                  Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
+                  Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
+                ]]
 
     def tostr(l):
       return [[str(x) for x in v] for v in l]
+
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents)
     state = enumerator.GetState()
     p = enumerator.nextSmiles()
@@ -515,7 +512,7 @@ class TestCase(unittest.TestCase) :
 
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
                                                   rdChemReactions.RandomSampleStrategy())
-    
+
     state = enumerator.GetState()
     p = enumerator.nextSmiles()
     p2 = enumerator.nextSmiles()
@@ -532,43 +529,42 @@ class TestCase(unittest.TestCase) :
     self.assertEquals(tostr(enumerator.nextSmiles()), tostr(p))
     self.assertEquals(tostr(enumerator.nextSmiles()), tostr(p2))
 
-
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents)
-    smiresults = ['C=CCNC(=S)NCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCc1ncc(Cl)cc1Br',
-                  'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCCc1ncc(Cl)cc1Br',
-                  'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
-                  'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
+    smiresults = [
+      'C=CCNC(=S)NCc1ncc(Cl)cc1Br', 'CC=CCNC(=S)NCc1ncc(Cl)cc1Br', 'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
+      'CC=CCNC(=S)NCCc1ncc(Cl)cc1Br', 'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
+      'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br'
+    ]
     smiresults = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
     enumerator.GetEnumerator().Skip(10)
     enumerator.ResetState()
 
-    results  = []
+    results = []
     for result in enumerator:
       for prodSet in result:
         for mol in prodSet:
-          results.append( Chem.MolToSmiles(mol) )
+          results.append(Chem.MolToSmiles(mol))
 
     self.assertEquals(results, smiresults)
 
   def testRemovingBadMatches(self):
     log("testRemoveBadMatches")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
-    
+
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
     # invert matches so nothing matches
     reagents = [
-      [Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
-       Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
-       Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
-     ],
-
-      [Chem.MolFromSmiles('C=CCN=C=S'),
-       Chem.MolFromSmiles('CC=CCN=C=S'),
-       Chem.MolFromSmiles('CCC'),
-       Chem.MolFromSmiles('CCCCC'),
-     ],
+      [
+        Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
+        Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
+        Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
+      ],
+      [
+        Chem.MolFromSmiles('C=CCN=C=S'),
+        Chem.MolFromSmiles('CC=CCN=C=S'),
+        Chem.MolFromSmiles('CCC'),
+        Chem.MolFromSmiles('CCCCC'),
+      ],
     ]
 
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents)
@@ -579,25 +575,28 @@ class TestCase(unittest.TestCase) :
 
     rxn = AllChem.ReactionFromRxnBlock(rxndata)
     bbs = []
-    r1 = [ Chem.MolFromSmiles("CCNCC"),
-           Chem.MolFromSmiles("NCC"),
-           ]
-    r2 = [ Chem.MolFromSmiles("ClC1CCCC1"),
-           Chem.MolFromSmiles("ClC1CCCC1Cl"),
-           ]
-    r3 = [ Chem.MolFromSmiles("CCNCC"),
-           Chem.MolFromSmiles("NCC"),
-           ]
+    r1 = [
+      Chem.MolFromSmiles("CCNCC"),
+      Chem.MolFromSmiles("NCC"),
+    ]
+    r2 = [
+      Chem.MolFromSmiles("ClC1CCCC1"),
+      Chem.MolFromSmiles("ClC1CCCC1Cl"),
+    ]
+    r3 = [
+      Chem.MolFromSmiles("CCNCC"),
+      Chem.MolFromSmiles("NCC"),
+    ]
     bbs = [r1, r2, r3]
 
     # nothing matches!
-    for i,reagent in enumerate(rxn.GetReactants()):
+    for i, reagent in enumerate(rxn.GetReactants()):
       for bb in bbs[i]:
         self.assertFalse(bb.HasSubstructMatch(reagent))
 
     # everything matches - yay sanitization!
     rdChemReactions.SanitizeRxn(rxn)
-    for i,reagent in enumerate(rxn.GetReactants()):
+    for i, reagent in enumerate(rxn.GetReactants()):
       for bb in bbs[i]:
         self.assertTrue(bb.HasSubstructMatch(reagent))
 
@@ -609,9 +608,9 @@ class TestCase(unittest.TestCase) :
     #####################################################################################
     # Match only at rgroups (ChemDraw style)
     rxn = AllChem.ReactionFromRxnBlock(rxndata)
-    expected_matches = [[False,True], [True,True],[False, True] ]
+    expected_matches = [[False, True], [True, True], [False, True]]
     rdChemReactions.SanitizeRxn(rxn, params=rdChemReactions.GetChemDrawRxnAdjustParams())
-    for i,(reagent, expected) in enumerate(zip(rxn.GetReactants(), expected_matches)):
+    for i, (reagent, expected) in enumerate(zip(rxn.GetReactants(), expected_matches)):
       match = [bb.HasSubstructMatch(reagent) for reagent in bbs[i]]
       self.assertTrue(match, expected)
 
@@ -621,10 +620,9 @@ class TestCase(unittest.TestCase) :
     self.assertTrue(len(en.GetReagents()[1]) == 2)
     self.assertTrue(len(en.GetReagents()[2]) == 1)
 
-
     #####################################################################################
     # now set the removal options ot only make one product per reagent set
-    rxn = AllChem.ReactionFromRxnBlock(rxndata)      
+    rxn = AllChem.ReactionFromRxnBlock(rxndata)
     rdChemReactions.SanitizeRxn(rxn)
 
     opts = rdChemReactions.EnumerationParams()
@@ -638,9 +636,7 @@ class TestCase(unittest.TestCase) :
     # now set the removal options ot only make one product per reagent set
     #  but wt
     rxn = AllChem.ReactionFromRxnBlock(rxndata)
-    rdChemReactions.SanitizeRxn(rxn,
-                                params=rdChemReactions.GetChemDrawRxnAdjustParams())      
-
+    rdChemReactions.SanitizeRxn(rxn, params=rdChemReactions.GetChemDrawRxnAdjustParams())
 
     opts = rdChemReactions.EnumerationParams()
     opts.reagentMaxMatchCount = 1
@@ -648,7 +644,6 @@ class TestCase(unittest.TestCase) :
     self.assertTrue(len(en.GetReagents()[0]) == 1)
     self.assertTrue(len(en.GetReagents()[1]) == 1)
     self.assertTrue(len(en.GetReagents()[2]) == 1)
-    
 
 if __name__ == '__main__':
   unittest.main()

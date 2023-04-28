@@ -246,11 +246,11 @@ except ImportError:
 import copy
 import itertools
 import re
-import weakref
-from heapq import heappush, heappop, heapify
-from itertools import chain, combinations
-from collections import defaultdict, Counter, namedtuple
 import time
+import weakref
+from collections import Counter, defaultdict, namedtuple
+from heapq import heapify, heappop, heappush
+from itertools import chain, combinations
 
 ### A place to set global options
 # (Is this really useful?)
@@ -265,6 +265,7 @@ class Default(object):
   matchValences = False
   ringMatchesRingOnly = False
   completeRingsOnly = False
+
 
 ####### Atom type and bond type information #####
 
@@ -305,6 +306,7 @@ def atom_typer_any(atoms):
 def atom_typer_elements(atoms):
   return [_atom_smarts_no_aromaticity[atom.GetAtomicNum()] for atom in atoms]
 
+
 # Match atom by isotope number. This depends on the RDKit version
 if hasattr(Chem.Atom, "GetIsotope"):
 
@@ -344,6 +346,7 @@ else:
   # Match any bond
 def bond_typer_any(bonds):
   return ["~"] * len(bonds)
+
 
 # Match bonds based on bond type, including aromaticity
 
@@ -453,8 +456,8 @@ def assign_isotopes_from_class_tag(mol, atom_class_tag):
   fields = atom_classes.split()
   if len(fields) != mol.GetNumAtoms():
     raise ValueError(
-      "Mismatch between the number of atoms (#%d) and the number of atom classes (%d)" % (
-        mol.GetNumAtoms(), len(fields)))
+      "Mismatch between the number of atoms (#%d) and the number of atom classes (%d)" %
+      (mol.GetNumAtoms(), len(fields)))
   new_isotopes = []
   for field in fields:
     if not field.isdigit():
@@ -468,6 +471,7 @@ def assign_isotopes_from_class_tag(mol, atom_class_tag):
   save_isotopes(mol, get_isotopes(mol))
   save_atom_classes(mol, new_isotopes)
   set_isotopes(mol, new_isotopes)
+
 
 ### Different ways of storing atom/bond information about the input structures ###
 
@@ -527,6 +531,7 @@ class FragmentedTypedMolecule(object):
     # List of canonical bondtype strings
     self.canonical_bondtypes = canonical_bondtypes
 
+
 # A FragmentedTypedMolecule can contain multiple fragments. Once I've
 # picked the FragmentedTypedMolecule to use for enumeration, I extract
 # each of the fragments as the basis for an EnumerationMolecule.
@@ -543,6 +548,7 @@ class TypedFragment(object):
     self.bond_smarts_types = bond_smarts_types
     self.canonical_bondtypes = canonical_bondtypes
 
+
 # The two possible bond types are
 #    atom1_smarts + bond smarts + atom2_smarts
 #    atom2_smarts + bond smarts + atom1_smarts
@@ -558,6 +564,7 @@ def get_canonical_bondtypes(rdmol, bonds, atom_smarts_types, bond_smarts_types):
       atom1_smarts, atom2_smarts = atom2_smarts, atom1_smarts
     canonical_bondtypes.append("[%s]%s[%s]" % (atom1_smarts, bond_smarts, atom2_smarts))
   return canonical_bondtypes
+
 
 # Create a TypedMolecule using the element-based typing scheme
 
@@ -611,6 +618,7 @@ def get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences=Default.matc
   return TypedMolecule(rdmol, atoms, bonds, atom_smarts_types, bond_smarts_types,
                        canonical_bondtypes)
 
+
 # Create a TypedMolecule using the user-defined atom classes (Not implemented!)
 
 
@@ -661,6 +669,7 @@ def _check_atom_classes(molno, num_atoms, atom_classes):
       raise ValueError("mols[%d]: atom_class elements must be in the range 1 <= value < 1000" %
                        (molno, ))
 
+
 #############################################
 
 # This section deals with finding the canonical bondtype counts and
@@ -673,9 +682,11 @@ def _check_atom_classes(molno, num_atoms, atom_classes):
 # prune. But so far I don't have a test set which drives the need for
 # that.
 
+
 # Return a dictionary mapping iterator item to occurrence count
 def get_counts(it):
   return dict(Counter(it))
+
 
 # Merge two count dictionaries, returning the smallest count for any
 # entry which is in both.
@@ -696,6 +707,7 @@ def get_canonical_bondtype_counts(typed_mols):
       overall_counts[k].append(v)
   return overall_counts
 
+
 # If I know which bondtypes exist in all of the structures, I can
 # remove all bonds which aren't in all structures. RDKit's Molecule
 # class doesn't let me edit in-place, so I end up making a new one
@@ -714,8 +726,9 @@ def remove_unknown_bondtypes(typed_mol, supported_canonical_bondtypes):
   orig_bonds = []
   new_bond_smarts_types = []
   new_canonical_bondtypes = []
-  for bond, bond_smarts, canonical_bondtype in zip(
-      typed_mol.rdmol_bonds, typed_mol.bond_smarts_types, typed_mol.canonical_bondtypes):
+  for bond, bond_smarts, canonical_bondtype in zip(typed_mol.rdmol_bonds,
+                                                   typed_mol.bond_smarts_types,
+                                                   typed_mol.canonical_bondtypes):
     if canonical_bondtype in supported_canonical_bondtypes:
       orig_bonds.append(bond)
       new_bond_smarts_types.append(bond_smarts)
@@ -726,6 +739,7 @@ def remove_unknown_bondtypes(typed_mol, supported_canonical_bondtypes):
   return FragmentedTypedMolecule(new_mol, list(new_mol.GetAtoms()), typed_mol.rdmol_atoms,
                                  orig_bonds, typed_mol.atom_smarts_types, new_bond_smarts_types,
                                  new_canonical_bondtypes)
+
 
 # The molecule at this point has been (potentially) fragmented by
 # removing bonds with unsupported bond types. The MCS cannot contain
@@ -748,10 +762,11 @@ def find_upper_fragment_size_limits(rdmol, atoms):
       # XXX Why is there no 'atom.GetNumBonds()'?
       # Ichiru Take: len(atoms[atom_index].GetBonds()) would be more efficient but I don't know the input type.
       twice_num_bonds += len(atoms[atom_index].GetBonds())
-       
+
     max_twice_num_bonds = max(max_twice_num_bonds, twice_num_bonds)
 
   return max_num_atoms, max_twice_num_bonds // 2
+
 
 ####### Convert the selected TypedMolecule into an EnumerationMolecule
 
@@ -805,9 +820,10 @@ def get_typed_fragment(typed_mol, atom_indices):
   orig_bonds = []
   bond_smarts_types = []
   new_canonical_bondtypes = []
-  for bond, orig_bond, bond_smarts, canonical_bondtype in zip(
-      rdmol.GetBonds(), typed_mol.orig_bonds, typed_mol.bond_smarts_types,
-      typed_mol.canonical_bondtypes):
+  for bond, orig_bond, bond_smarts, canonical_bondtype in zip(rdmol.GetBonds(),
+                                                              typed_mol.orig_bonds,
+                                                              typed_mol.bond_smarts_types,
+                                                              typed_mol.canonical_bondtypes):
     begin_atom_idx = bond.GetBeginAtomIdx()
     end_atom_idx = bond.GetEndAtomIdx()
     count = (begin_atom_idx in atom_map) + (end_atom_idx in atom_map)
@@ -869,6 +885,7 @@ def fragmented_mol_to_enumeration_mols(typed_mol, minNumAtoms=2):
   fragments.sort(key=lambda fragment: len(fragment.atoms), reverse=True)
   return fragments
 
+
 ####### Canonical SMARTS generation using Weininger, Weininger, and Weininger's CANGEN
 
 # CANGEN "combines two separate algorithms, CANON and GENES.  The
@@ -915,6 +932,7 @@ def _get_nth_prime(n):
     current_size += 1
   return _primes[n]
 
+
 # Prime it with more values then will likely occur
 _get_nth_prime(1000)
 
@@ -946,10 +964,11 @@ class CangenNode(object):
     self.rank = 0
     self.outgoing_edges = []
 
+
 # The outgoing edge information is used to generate the SMARTS output
 # The index numbers are offsets in the subgraph, not in the original molecule
-OutgoingEdge = namedtuple(
-  "OutgoingEdge", "from_atom_index bond_index bond_smarts other_node_idx other_node")
+OutgoingEdge = namedtuple("OutgoingEdge",
+                          "from_atom_index bond_index bond_smarts other_node_idx other_node")
 
 
 # Convert a Subgraph of a given EnumerationMolecule into a list of
@@ -1165,6 +1184,7 @@ def get_closure_label(bond_smarts, closure):
     return bond_smarts + str(closure)
   return bond_smarts + f"%{closure:02d}"
 
+
 # Precompute the initial closure heap. *Overall* performance went from 0.73 to 0.64 seconds!
 _available_closures = list(range(1, 101))
 heapify(_available_closures)
@@ -1302,6 +1322,7 @@ def make_canonical_smarts(subgraph, enumeration_mol, atom_assignment):
   #canon(cangen_nodes)
   return generate_smarts(cangen_nodes)
 
+
 ## def make_semicanonical_smarts(subgraph, enumeration_mol, atom_assignment):
 ##     cangen_nodes = get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, True)
 ##     # There's still some order because of the canonical bond typing, but it isn't perfect
@@ -1316,6 +1337,7 @@ def make_arbitrary_smarts(subgraph, enumeration_mol, atom_assignment):
   for i, node in enumerate(cangen_nodes):
     node.value = i
   return generate_smarts(cangen_nodes)
+
 
 ############## Subgraph enumeration ##################
 
@@ -1401,6 +1423,7 @@ def find_extensions(atom_indices, visited_bond_indices, directed_edges):
 
   # I don't think I need the list()
   return list(internal_bonds), external_edges
+
 
 # Given the 2-element tuple (internal_bonds, external_edges),
 # construct all of the ways to combine them to generate a new subgraph
@@ -1510,6 +1533,7 @@ def find_extension_size(enumeration_mol, known_atoms, exclude_bonds, directed_ed
 
       #print "==>", num_remaining_atoms, num_remaining_bonds
   return num_remaining_atoms, num_remaining_bonds
+
 
 # Check if a SMARTS is in all targets.
 # Uses a dictionary-style API, but please only use matcher[smarts]
@@ -1651,6 +1675,7 @@ def prune_maximize_atoms(subgraph, mol, num_remaining_atoms, num_remaining_bonds
 
   return False
 
+
 ##### Callback handlers for storing the "best" information #####x
 
 
@@ -1723,6 +1748,7 @@ class SingleBestBonds(_SingleBest):
     if num_subgraph_bonds == sizes[1] and num_subgraph_atoms <= sizes[0]:
       return sizes
     return self._new_best(num_subgraph_atoms, num_subgraph_bonds, smarts)
+
 
 ### Check if there are any ring atoms; used in --complete-rings-only
 
@@ -2009,9 +2035,10 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
 
       if new_internal_bonds or new_external_edges:
         # Rank so the subgraph with the highest number of bonds comes first
-        heappush(seeds, (-len(new_subgraph.bond_indices), tiebreaker(), new_subgraph,
-                         new_visited_bond_indices, new_internal_bonds, new_external_edges, mol,
-                         directed_edges))
+        heappush(
+          seeds,
+          (-len(new_subgraph.bond_indices), tiebreaker(), new_subgraph, new_visited_bond_indices,
+           new_internal_bonds, new_external_edges, mol, directed_edges))
 
   return True
 
@@ -2122,6 +2149,7 @@ def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None,
     return MCSResult(-1, -1, None, result.completed)
   return result
 
+
 ########## Main driver for the MCS code
 
 
@@ -2137,10 +2165,10 @@ class Timer(object):
 def _update_times(timer, times):
   if times is None:
     return
-  for (dest, start, end) in (
-    ("fragment", "start fmcs", "end fragment"), ("select", "end fragment", "end select"),
-    ("enumerate", "end select", "end fmcs"), ("best_found", "start fmcs", "new best"),
-    ("mcs", "start fmcs", "end fmcs")):
+  for (dest, start,
+       end) in (("fragment", "start fmcs", "end fragment"),
+                ("select", "end fragment", "end select"), ("enumerate", "end select", "end fmcs"),
+                ("best_found", "start fmcs", "new best"), ("mcs", "start fmcs", "end fmcs")):
     try:
       diff = timer.mark_times[end] - timer.mark_times[start]
     except KeyError:
@@ -2165,19 +2193,21 @@ def _get_threshold_count(num_mols, threshold):
   return threshold_count
 
 
-def fmcs(mols,
-         minNumAtoms=2,
-         maximize=Default.maximize,
-         atomCompare=Default.atomCompare,
-         bondCompare=Default.bondCompare,
-         threshold=1.0,
-         matchValences=Default.matchValences,
-         ringMatchesRingOnly=False,
-         completeRingsOnly=False,
-         timeout=Default.timeout,
-         times=None,
-         verbose=False,
-         verboseDelay=1.0, ):
+def fmcs(
+  mols,
+  minNumAtoms=2,
+  maximize=Default.maximize,
+  atomCompare=Default.atomCompare,
+  bondCompare=Default.bondCompare,
+  threshold=1.0,
+  matchValences=Default.matchValences,
+  ringMatchesRingOnly=False,
+  completeRingsOnly=False,
+  timeout=Default.timeout,
+  times=None,
+  verbose=False,
+  verboseDelay=1.0,
+):
 
   timer = Timer()
   timer.mark("start fmcs")
@@ -2218,8 +2248,9 @@ def fmcs(mols,
       # Keep track of the counts while building the subgraph.
       # The subgraph can never have more types of a given count.
 
-  fragmented_mols = [remove_unknown_bondtypes(typed_mol, bondtype_counts)
-                     for typed_mol in typed_mols]
+  fragmented_mols = [
+    remove_unknown_bondtypes(typed_mol, bondtype_counts) for typed_mol in typed_mols
+  ]
   timer.mark("end fragment")
 
   sizes = []
@@ -2274,6 +2305,7 @@ def fmcs(mols,
   timer.mark("end fmcs")
   _update_times(timer, times)
   return mcs_result
+
 
 ######### Helper functions to generate structure/fragment output given an MCS match
 
@@ -2502,9 +2534,10 @@ def main(args=None):
     epilog="For more details on these options, see https://bitbucket.org/dalke/fmcs/")
   parser.add_argument("filename", nargs=1, help="SDF or SMILES file")
 
-  parser.add_argument("--maximize", choices=["atoms", "bonds"], default=Default.maximize,
-                      help="Maximize the number of 'atoms' or 'bonds' in the MCS. (Default: %s)" %
-                      (Default.maximize, ))
+  parser.add_argument(
+    "--maximize", choices=["atoms", "bonds"], default=Default.maximize,
+    help="Maximize the number of 'atoms' or 'bonds' in the MCS. (Default: %s)" %
+    (Default.maximize, ))
   parser.add_argument("--min-num-atoms", type=parse_num_atoms, default=2, metavar="INT",
                       help="Minimimum number of atoms in the MCS (Default: 2)")
 
@@ -2523,18 +2556,19 @@ def main(args=None):
     "(Default: types)")
 
   parser.add_argument(
-    "--atom-compare", choices=["any", "elements", "isotopes"], default=None, help=(
-      "Specify the atom comparison method. With 'any', every atom matches every "
-      "other atom. With 'elements', atoms match only if they contain the same element. "
-      "With 'isotopes', atoms match only if they have the same isotope number; element "
-      "information is ignored so [5C] and [5P] are identical. This can be used to "
-      "implement user-defined atom typing. "
-      "(Default: elements)"))
+    "--atom-compare", choices=["any", "elements", "isotopes"], default=None,
+    help=("Specify the atom comparison method. With 'any', every atom matches every "
+          "other atom. With 'elements', atoms match only if they contain the same element. "
+          "With 'isotopes', atoms match only if they have the same isotope number; element "
+          "information is ignored so [5C] and [5P] are identical. This can be used to "
+          "implement user-defined atom typing. "
+          "(Default: elements)"))
 
-  parser.add_argument("--bond-compare", choices=["any", "bondtypes"], default="bondtypes", help=(
-    "Specify the bond comparison method. With 'any', every bond matches every "
-    "other bond. With 'bondtypes', bonds are the same only if their bond types "
-    "are the same. (Default: bondtypes)"))
+  parser.add_argument(
+    "--bond-compare", choices=["any", "bondtypes"], default="bondtypes",
+    help=("Specify the bond comparison method. With 'any', every bond matches every "
+          "other bond. With 'bondtypes', bonds are the same only if their bond types "
+          "are the same. (Default: bondtypes)"))
 
   parser.add_argument(
     "--threshold", default="1.0", type=parse_threshold,
@@ -2571,16 +2605,17 @@ def main(args=None):
     help="Select a subset of the input records to process. Example: 1-10,13,20,50- "
     "(Default: '1-', which selects all structures)")
 
-  parser.add_argument("--timeout", type=parse_timeout, metavar="SECONDS", default=Default.timeout,
-                      help="Report the best solution after running for at most 'timeout' seconds. "
-                      "Use 'none' for no timeout. (Default: %s)" % (Default.timeoutString, ))
+  parser.add_argument(
+    "--timeout", type=parse_timeout, metavar="SECONDS", default=Default.timeout,
+    help="Report the best solution after running for at most 'timeout' seconds. "
+    "Use 'none' for no timeout. (Default: %s)" % (Default.timeoutString, ))
 
   parser.add_argument("--output", "-o", metavar="FILENAME",
                       help="Write the results to FILENAME (Default: use stdout)")
 
   parser.add_argument(
-    "--output-format", choices=["smarts", "fragment-smiles", "fragment-sdf", "complete-sdf"],
-    default="smarts",
+    "--output-format", choices=["smarts", "fragment-smiles", "fragment-sdf",
+                                "complete-sdf"], default="smarts",
     help="'smarts' writes the SMARTS pattern including the atom and bond criteria. "
     "'fragment-smiles' writes a matching fragment as a SMILES string. "
     "'fragment-sdf' writes a matching fragment as a SD file; see --save-atom-class for "
@@ -2605,10 +2640,11 @@ def main(args=None):
     "space separated integers, like '1 9 8'. (The fragment count will not be larger than "
     "1 until fmcs supports disconnected MCSes.)")
 
-  parser.add_argument("--save-atom-indices-tag", metavar="TAG",
-                      help="If atom classes are specified and the output format is 'complete-sdf' "
-                      "then save the MCS fragment atom indices to the tag TAG, in MCS order. "
-                      "(Default: mcs-atom-indices)")
+  parser.add_argument(
+    "--save-atom-indices-tag", metavar="TAG",
+    help="If atom classes are specified and the output format is 'complete-sdf' "
+    "then save the MCS fragment atom indices to the tag TAG, in MCS order. "
+    "(Default: mcs-atom-indices)")
 
   parser.add_argument(
     "--save-smarts-tag", metavar="TAG",
@@ -2671,8 +2707,8 @@ def main(args=None):
         args.save_atom_class_tag = atom_class_tag
 
   if args.output_format == "complete-sdf":
-    if (args.save_atom_indices_tag is None and args.save_counts_tag is None and
-        args.save_smiles_tag is None and args.save_smarts_tag is None):
+    if (args.save_atom_indices_tag is None and args.save_counts_tag is None
+        and args.save_smiles_tag is None and args.save_smarts_tag is None):
       parser.error("Using --output-format complete-sdf is useless without at least one "
                    "of --save-atom-indices-tag, --save-smarts-tag, --save-smiles-tag, "
                    "or --save-counts-tag")
@@ -2710,20 +2746,22 @@ def main(args=None):
   if len(structures) < 2:
     raise SystemExit("Input file %r must contain at least two structures" % (filename, ))
 
-  mcs = fmcs(structures,
-             minNumAtoms=args.minNumAtoms,
-             maximize=args.maximize,
-             atomCompare=args.atomCompare,
-             bondCompare=args.bondCompare,
-             threshold=args.threshold,
-             #matchValences = args.matchValences,
-             matchValences=False,  # Do I really want to support this?
-             ringMatchesRingOnly=args.ringMatchesRingOnly,
-             completeRingsOnly=args.completeRingsOnly,
-             timeout=args.timeout,
-             times=times,
-             verbose=args.verbosity > 1,
-             verboseDelay=1.0, )
+  mcs = fmcs(
+    structures,
+    minNumAtoms=args.minNumAtoms,
+    maximize=args.maximize,
+    atomCompare=args.atomCompare,
+    bondCompare=args.bondCompare,
+    threshold=args.threshold,
+    #matchValences = args.matchValences,
+    matchValences=False,  # Do I really want to support this?
+    ringMatchesRingOnly=args.ringMatchesRingOnly,
+    completeRingsOnly=args.completeRingsOnly,
+    timeout=args.timeout,
+    times=times,
+    verbose=args.verbosity > 1,
+    verboseDelay=1.0,
+  )
 
   msg_format = "Total time %(total).2f seconds: load %(load).2f fragment %(fragment).2f select %(select).2f enumerate %(enumerate).2f"
   times["total"] = times["mcs"] + times["load"]
@@ -2746,8 +2784,8 @@ def main(args=None):
         status = "(complete search)"
       else:
         status = "(timed out)"
-      outfile.write("%s %d atoms %d bonds %s\n" % (mcs.smarts, mcs.num_atoms, mcs.num_bonds,
-                                                   status))
+      outfile.write("%s %d atoms %d bonds %s\n" %
+                    (mcs.smarts, mcs.num_atoms, mcs.num_bonds, status))
 
   else:
     if mcs.smarts is None:

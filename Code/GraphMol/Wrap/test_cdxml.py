@@ -20,9 +20,11 @@ from io import StringIO
 
 from rdkit import Chem
 
+
 class TestCase(unittest.TestCase):
+
   def test_cdxml(self):
-    cdxml="""<?xml version="1.0" encoding="UTF-8" ?>
+    cdxml = """<?xml version="1.0" encoding="UTF-8" ?>
         <!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
         <CDXML
          CreationProgram="ChemDraw JS 2.0.0.9"
@@ -277,8 +279,9 @@ class TestCase(unittest.TestCase):
         /></fragment></page></CDXML>"""
     mols = Chem.MolsFromCDXML(cdxml)
     self.assertEqual(len(mols), 1)
-    self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1");
-    
+    self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

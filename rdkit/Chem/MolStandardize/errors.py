@@ -11,17 +11,17 @@ This module contains exceptions that are raised by MolVS.
 
 
 class MolVSError(Exception):
-    pass
+  pass
 
 
 class StandardizeError(MolVSError):
-    pass
+  pass
 
 
 class ValidateError(MolVSError):
-    pass
+  pass
 
 
 class StopValidateError(ValidateError):
-    """Called by Validations to stop any further validations from being performed."""
-    pass
+  """Called by Validations to stop any further validations from being performed."""
+  pass

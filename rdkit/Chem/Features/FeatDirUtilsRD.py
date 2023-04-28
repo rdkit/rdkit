@@ -11,6 +11,7 @@
 import math
 
 import numpy
+
 from rdkit import Chem, Geometry
 
 # BIG NOTE: we are going assume atom IDs starting from 0 instead of 1
@@ -21,10 +22,9 @@ from rdkit import Chem, Geometry
 
 
 def cross(v1, v2):
-  return numpy.array([v1[1] * v2[2] - v1[2] * v2[1], 
-                      -v1[0] * v2[2] + v1[2] * v2[0],
-                      v1[0] * v2[1] - v1[1] * v2[0]], 
-                     dtype=numpy.float64)
+  return numpy.array(
+    [v1[1] * v2[2] - v1[2] * v2[1], -v1[0] * v2[2] + v1[2] * v2[0], v1[0] * v2[1] - v1[1] * v2[0]],
+    dtype=numpy.float64)
 
 
 def findNeighbors(atomId, adjMat):
@@ -93,19 +93,19 @@ def ArbAxisRotation(theta, ax, pt):
          [t * X * Y - s * Z, t * Y * Y + c, t * Y * Z + s * X],
          [t * X * Z + s * Y, t * Y * Z - s * X, t * Z * Z + c]]
   mat = numpy.array(mat, dtype=numpy.float64)
-  
+
   if isinstance(pt, Geometry.Point3D):
     pt = numpy.array((pt.x, pt.y, pt.z))
     tmp = numpy.dot(mat, pt)
     return Geometry.Point3D(tmp[0], tmp[1], tmp[2])
-  
+
   if isinstance(pt, list) or isinstance(pt, tuple):
     res = []
     for p in pt:
       tmp = numpy.dot(mat, numpy.array((p.x, p.y, p.z)))
       res.append(Geometry.Point3D(tmp[0], tmp[1], tmp[2]))
     return res
-  
+
   return None
 
 
@@ -156,8 +156,11 @@ def GetAcceptor2FeatVects(conf, featAtoms, scale=1.5):
     bv1 += cpt
     bv2 = ArbAxisRotation(-54.5, rotAxis, bvec)
     bv2 += cpt
-    return ((cpt, bv1), (cpt, bv2), ), 'linear'
-  
+    return (
+      (cpt, bv1),
+      (cpt, bv2),
+    ), 'linear'
+
   bvec += cpt
   return ((cpt, bvec), ), 'linear'
 
@@ -245,14 +248,14 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5):
   # find the two atoms that are neighbors of this atoms
   nbrs = list(mol.GetAtomWithIdx(aid).GetNeighbors())
   assert len(nbrs) >= 2
-  
+
   hydrogens = []
   heavy = []
   for nbr in nbrs:
     if nbr.GetAtomicNum() == 1:
       hydrogens.append(nbr)
     else:
-      heavy.append(nbr) 
+      heavy.append(nbr)
 
   if len(nbrs) == 2:
     # there should be no hydrogens in this case
@@ -278,12 +281,15 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5):
     if _checkPlanarity(conf, cpt, nbrs, tol=1.0e-2):
       # only the hydrogen atom direction needs to be used
       return ((cpt, bvec), ), 'linear'
-    
+
     # we have a non-planar configuration - we will assume sp3 and compute a second direction vector
     ovec = _findAvgVec(conf, cpt, heavy)
     ovec *= (-1.0 * scale)
     ovec += cpt
-    return ((cpt, bvec), (cpt, ovec), ), 'linear'
+    return (
+      (cpt, bvec),
+      (cpt, ovec),
+    ), 'linear'
 
   if len(nbrs) >= 4:
     # in this case we should have two or more hydrogens we will simple use there directions
@@ -297,7 +303,7 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5):
       bvec += cpt
       res.append((cpt, bvec))
     return tuple(res), 'linear'
-  
+
   return None
 
 
@@ -378,7 +384,7 @@ def GetAcceptor1FeatVects(conf, featAtoms, scale=1.5):
     v1 *= (-1.0 * scale)
     v1 += cpt
     return ((cpt, v1), ), 'cone'
-  
+
   # ok in this case we will assume that
   # heavy atom is sp2 hybridized and the direction vectors (two of them)
   # are in the same plane, we will find this plane by looking for one
@@ -404,4 +410,7 @@ def GetAcceptor1FeatVects(conf, featAtoms, scale=1.5):
   bv2.Normalize()
   bv2 *= scale
   bv2 += cpt
-  return ((cpt, bv1), (cpt, bv2), ), 'linear'
+  return (
+    (cpt, bv1),
+    (cpt, bv2),
+  ), 'linear'
