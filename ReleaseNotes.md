@@ -18,8 +18,11 @@ Riccardo Vianello, Franz Waibl, Rachel Walker, Patrick Walters,
 'dangthatsright', 'mihalyszabo88', 'Deltaus', 'radchenkods',
 'josh-collaborationspharma', 'jkh', 'yamasakih'
 
-
 ## Highlights
+- The 2D coordinate generation can now optionally use templates when working with complex ring systems. We will continue to improve this functionality in future releases.
+- There's now a single function which allows you to calculate all available 2D descriptors for a molecule: Descriptors.CalcMolDescriptors() 
+- Support for working with organometallic molecules has improved: drawings of these structures are now better and there's new code for switching back and forth between dative and multi-center views of the bonding in systems like ferrocene.
+- The fingerprint generator code has been improved and expanded with the idea of allowing user to switch entirely to the new code for the supported fingerprint types: Morgan, RDKit, topological torsion, and atom pairs.
 
 ## Backwards incompatible changes
 
