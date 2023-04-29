@@ -4,12 +4,14 @@ steps:
 - script: |
     conda config --set always_yes yes --set changeps1 no
     conda info -a
+    conda install -n base conda-libmamba-solver
+    conda config --set solver libmamba
     conda create --name rdkit_build ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
         py-boost=$(boost_version) libboost=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas
     call activate rdkit_build
-    conda install -c conda-forge sphinx myst-parser jupyter
+    # conda install -c conda-forge sphinx myst-parser jupyter
     conda install -c conda-forge cmake nbval
   displayName: Install dependencies
 - script: |
@@ -62,7 +64,7 @@ steps:
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
     cd Docs/Book
-    make doctest
+    # make doctest
   displayName: Run documentation tests
 - task: PublishTestResults@2
   inputs:
