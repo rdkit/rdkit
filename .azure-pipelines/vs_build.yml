@@ -12,8 +12,6 @@ steps:
         numpy matplotlib cairo pillow eigen pandas
     call activate rdkit_build
     conda install -c conda-forge cmake nbval
-    conda install -c conda-forge sphinx myst-parser jupyter
-    conda list
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=
@@ -62,6 +60,7 @@ steps:
   displayName: Run tests
 - script: |
     call activate rdkit_build
+    conda install -c conda-forge sphinx myst-parser jupyter
     set RDBASE=%cd%
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
