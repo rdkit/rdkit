@@ -11,8 +11,8 @@ steps:
         py-boost=$(boost_version) libboost=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas
     call activate rdkit_build
-    conda install -c conda-forge sphinx myst-parser 
     conda install -c conda-forge cmake nbval
+    conda install -c conda-forge sphinx myst-parser jupyter
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=
