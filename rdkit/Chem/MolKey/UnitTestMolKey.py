@@ -6,11 +6,12 @@
 #  of the RDKit source tree.
 #
 import doctest
+import io
 import unittest
 
 from rdkit.Chem import inchi
 from rdkit.TestRunner import redirect_stderr
-import io
+
 if inchi.INCHI_AVAILABLE:
   from rdkit.Chem.MolKey.InchiInfo import InchiInfo
 
@@ -68,15 +69,16 @@ class TestMolKey(unittest.TestCase):
       self.assertIn(k, errors)
 
   def test_get_chiral_identification_string(self):
-    cases = [((0, 0), 'S_ACHIR'),  # No stereo centers
-             ((0, 1), 'R_ONE'),  # One undefined stereo centers
-             ((0, 2), 'S_UNKN'),  # More than one undefined stereo centers
-             ((0, 3), 'S_UNKN'),  # More than one undefined stereo centers
-             ((1, 0), 'S_ABS'),  # Fully defined stereo center
-             ((2, 0), 'S_ABS'),  # Fully defined stereo centers
-             ((1, 1), 'S_PART'),  # Partially defined stereo centers
-             ((2, 1), 'S_PART'),  # Partially defined stereo centers
-             ]
+    cases = [
+      ((0, 0), 'S_ACHIR'),  # No stereo centers
+      ((0, 1), 'R_ONE'),  # One undefined stereo centers
+      ((0, 2), 'S_UNKN'),  # More than one undefined stereo centers
+      ((0, 3), 'S_UNKN'),  # More than one undefined stereo centers
+      ((1, 0), 'S_ABS'),  # Fully defined stereo center
+      ((2, 0), 'S_ABS'),  # Fully defined stereo centers
+      ((1, 1), 'S_PART'),  # Partially defined stereo centers
+      ((2, 1), 'S_PART'),  # Partially defined stereo centers
+    ]
     for (nDefined, nUndefined), expected in cases:
       self.assertEqual(MolKey._get_chiral_identification_string(nDefined, nUndefined), expected)
 

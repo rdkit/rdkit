@@ -38,10 +38,18 @@ class VisOpts(object):
   yOffset = 20
   lineColor = piddle.Color(0, 0, 0)
   hideColor = piddle.Color(.8, .8, .8)
-  terminalColors = [piddle.Color(1, 0, 0), piddle.Color(0, 0, 1), piddle.Color(1, 1, 0),
-                    piddle.Color(0, .5, .5), piddle.Color(0, .8, 0), piddle.Color(.5, .5, .5),
-                    piddle.Color(.8, .3, .3), piddle.Color(.3, .3, .8), piddle.Color(.8, .8, .3),
-                    piddle.Color(.3, .8, .8)]
+  terminalColors = [
+    piddle.Color(1, 0, 0),
+    piddle.Color(0, 0, 1),
+    piddle.Color(1, 1, 0),
+    piddle.Color(0, .5, .5),
+    piddle.Color(0, .8, 0),
+    piddle.Color(.5, .5, .5),
+    piddle.Color(.8, .3, .3),
+    piddle.Color(.3, .3, .8),
+    piddle.Color(.8, .8, .3),
+    piddle.Color(.3, .8, .8)
+  ]
   lineWidth = 2
   hideWidth = 1.1
   nodeRad = 15
@@ -253,6 +261,8 @@ def _DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showInd
     else:
       v = float(pt.GetMetric())
     pt._drawPos = (VisOpts.xOffset + i * xSpace, size[1] - (v * ySpace + VisOpts.yOffset))
+
+
 #     if not stopAtCentroids or not hasattr(pt, '_isCentroid'):
 #       allNodes.remove(pt)  # allNodes not defined
 
@@ -317,8 +327,8 @@ def _DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showInd
   if showIndices and not stopAtCentroids:
     for pt in pts:
       txt = str(pt.GetIndex())
-      canvas.drawString(
-        str(pt.GetIndex()), pt._drawPos[0] - canvas.stringWidth(txt) / 2, pt._drawPos[1])
+      canvas.drawString(str(pt.GetIndex()), pt._drawPos[0] - canvas.stringWidth(txt) / 2,
+                        pt._drawPos[1])
 
 
 def ClusterToPDF(cluster, fileName, size=(300, 300), ptColors=[], lineWidth=None, showIndices=0,

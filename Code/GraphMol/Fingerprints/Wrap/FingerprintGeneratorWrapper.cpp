@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/Wrap.h>
 #include <iostream>
 #include <string>
 #include <boost/python.hpp>

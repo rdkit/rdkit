@@ -1,4 +1,5 @@
 import sys
+
 from rdkit import TestRunner
 
 tests = [

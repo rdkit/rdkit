@@ -11,7 +11,9 @@ Replaced numpy.oldnumeric with numpy methods - Jan 2015, PGedeck
 """
 #pylint: disable=E1101,C0111,R0904
 import unittest
+
 import numpy as np
+
 from rdkit import DistanceGeometry as DG
 
 
@@ -74,8 +76,9 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(d1, 1.0, 2e-3))
     d2 = np.dot(v2, v2)
     self.assertTrue(feq(d2, 1.0, 2e-3))
-    arr = np.array([[0.0, 1.0, 1.0, 1.01], [1.0, 0.0, 1.0, 1.0], [1.0, 1.0, 0.0, 1.0],
-                    [0.99, 1.0, 1.0, 0.0]], float)
+    arr = np.array(
+      [[0.0, 1.0, 1.0, 1.01], [1.0, 0.0, 1.0, 1.0], [1.0, 1.0, 0.0, 1.0], [0.99, 1.0, 1.0, 0.0]],
+      float)
     self.assertTrue(DG.DoTriangleSmoothing(arr))
     coords = DG.EmbedBoundsMatrix(arr)
     v1 = coords[0] - coords[1]
@@ -89,10 +92,12 @@ class TestCase(unittest.TestCase):
     # this test is currently (rev:4769) passing on windows and
     # failing on linux.  It's kind of dependent on fp precision, so
     # it's probably ok to ditch it.
-    arr = np.array([[0.0, 1.0, 1.0, 1.0],
-                    [1.0, 0.0, 1.0, 1.0],
-                    [1.0, 1.0, 0.0, 1.0],
-                    [1.0, 1.0, 1.0, 0.0], ], float)
+    arr = np.array([
+      [0.0, 1.0, 1.0, 1.0],
+      [1.0, 0.0, 1.0, 1.0],
+      [1.0, 1.0, 0.0, 1.0],
+      [1.0, 1.0, 1.0, 0.0],
+    ], float)
     self.assertTrue(DG.DoTriangleSmoothing(arr))
     coords = DG.EmbedBoundsMatrix(arr, randomSeed=100)
     v1 = coords[0] - coords[1]

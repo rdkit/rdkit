@@ -7,7 +7,7 @@ It should have no dependencies beyond the Python library.
 So far, just Robert Kern's bezierArc.
 
 """
-from math import sin, cos, pi, ceil
+from math import ceil, cos, pi, sin
 
 
 def bezierArc(x1, y1, x2, y2, startAng=0, extent=90):

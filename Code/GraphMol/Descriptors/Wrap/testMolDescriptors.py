@@ -1,15 +1,14 @@
 # $Id$
 #
 
-from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors as rdMD, Descriptors
-from rdkit.Chem import AllChem
-from rdkit import DataStructs
-from rdkit import RDConfig
-from rdkit.Geometry import rdGeometry as rdG
 import unittest
 from os import environ
 from pathlib import Path
+
+from rdkit import Chem, DataStructs, RDConfig
+from rdkit.Chem import AllChem, Descriptors
+from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit.Geometry import rdGeometry as rdG
 
 haveBCUT = hasattr(rdMD, 'BCUT2D')
 

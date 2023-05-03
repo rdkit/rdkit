@@ -204,7 +204,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       1.0};  // color to be used for the symbols and arrows in reactions
   DrawColour annotationColour{0.0, 0.0, 0.0,
                               1.0};  // color to be used for annotations
-  double bondLineWidth = 2.0;   // default line width when drawing bonds
+  double bondLineWidth = 2.0;        // default line width when drawing bonds
   bool scaleBondWidth = false;  // whether to apply scale() to the bond width
   bool scaleHighlightBondWidth = true;   // likewise with bond highlights.
   int highlightBondWidthMultiplier = 8;  // what to multiply standard bond width
@@ -287,10 +287,10 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                   // DrawMolecules, forces them to use the same
                                   // scale.  Default is true.
   bool useComplexQueryAtomSymbols =
-      true;   // replace any atom, any hetero, any halo queries
-              // with complex query symbols A, Q, X, M, optionally followed
-              // by H if hydrogen is included (except for AH, which stays *).
-              // Default is true.
+      true;  // replace any atom, any hetero, any halo queries
+             // with complex query symbols A, Q, X, M, optionally followed
+             // by H if hydrogen is included (except for AH, which stays *).
+             // Default is true.
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(

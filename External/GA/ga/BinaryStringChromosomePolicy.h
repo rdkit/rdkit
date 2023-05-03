@@ -9,7 +9,7 @@
 //
 
 #ifndef BINARYSTRINGCHROMOSOMEPOLICY_H
-#define	BINARYSTRINGCHROMOSOMEPOLICY_H
+#define BINARYSTRINGCHROMOSOMEPOLICY_H
 
 #include "../util/export.h"
 #include "../util/RandomUtil.h"
@@ -17,21 +17,21 @@
 namespace GapeGa {
 
 class GA_EXPORT BinaryStringChromosomePolicy {
-public:
-    BinaryStringChromosomePolicy(GarethUtil::RandomUtil & rng_);
-    virtual ~BinaryStringChromosomePolicy();
-    
-    bool mutate(int pos, bool currentValue) const;
-    bool initialize(int pos) const;
-    bool isAllowSwitch() {return false;}
-private:
-    GarethUtil::RandomUtil & rng;
-    BinaryStringChromosomePolicy(const BinaryStringChromosomePolicy& orig);
-    BinaryStringChromosomePolicy & operator=(const BinaryStringChromosomePolicy & other);
+ public:
+  BinaryStringChromosomePolicy(GarethUtil::RandomUtil& rng_);
+  virtual ~BinaryStringChromosomePolicy();
+
+  bool mutate(int pos, bool currentValue) const;
+  bool initialize(int pos) const;
+  bool isAllowSwitch() { return false; }
+
+ private:
+  GarethUtil::RandomUtil& rng;
+  BinaryStringChromosomePolicy(const BinaryStringChromosomePolicy& orig);
+  BinaryStringChromosomePolicy& operator=(
+      const BinaryStringChromosomePolicy& other);
 };
 
-}
+}  // namespace GapeGa
 
-
-#endif	/* BINARYSTRINGCHROMOSOMEPOLICY_H */
-
+#endif /* BINARYSTRINGCHROMOSOMEPOLICY_H */

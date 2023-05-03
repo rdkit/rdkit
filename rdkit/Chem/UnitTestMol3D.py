@@ -1,13 +1,13 @@
 """unit testing code for 3D stuff
 
 """
-from rdkit import RDConfig
-import unittest, os
-import sys
+import os
 import random
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import TorsionFingerprints
+import sys
+import unittest
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import AllChem, TorsionFingerprints
 
 
 class TestCase(unittest.TestCase):

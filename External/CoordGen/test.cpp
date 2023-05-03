@@ -112,7 +112,9 @@ void test1() {
   {
     SmilesParserParams params;
     params.removeHs = false;
-    ROMol* m = SmilesToMol("[H]C([H])=C1C#C/C2=C(/C#C/C3=C(\\C#CC2=C([H])[H])C(=C([H])[H])C#CCC(=C=O)C#C3)C(=C([H])[H])C#CC(=O)C1=C([H])[H]", params);
+    ROMol* m = SmilesToMol(
+        "[H]C([H])=C1C#C/C2=C(/C#C/C3=C(\\C#CC2=C([H])[H])C(=C([H])[H])C#CCC(=C=O)C#C3)C(=C([H])[H])C#CC(=O)C1=C([H])[H]",
+        params);
     TEST_ASSERT(m);
     m->setProp("_Name", "github 4845 - nan coordinates but no crash");
 

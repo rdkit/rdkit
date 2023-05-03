@@ -44,7 +44,6 @@ std::ostream &operator<<(std::ostream &oss, const TextDrawType &tdt);
 // This is an implementation class, not intended to be used by the great
 // unwashed. If you want to draw a string used MolDraw2D::drawString().
 class RDKIT_MOLDRAW2D_EXPORT DrawText {
-
  public:
   virtual ~DrawText() = 0;
 

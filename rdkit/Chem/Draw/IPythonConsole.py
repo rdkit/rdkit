@@ -8,15 +8,18 @@
 #  of the RDKit source tree.
 #
 import base64
-import html
 import copy
+import html
 import warnings
 from io import BytesIO
+
 import IPython
 from IPython.display import HTML, SVG
+
 from rdkit import Chem
 from rdkit.Chem import Draw, rdchem, rdChemReactions
 from rdkit.Chem.Draw import rdMolDraw2D
+
 from . import InteractiveRenderer
 
 if IPython.release.version < '0.11':
@@ -121,8 +124,8 @@ def _toHTML(mol):
     content = InteractiveRenderer.generateHTMLBody(mol, molSize, legend=nm, useSVG=ipython_useSVG)
   else:
     if not ipython_useSVG:
-      png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True,
-                           kekulize=kekulizeStructures, drawOptions=drawOptions)
+      png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, kekulize=kekulizeStructures,
+                           drawOptions=drawOptions)
       png = base64.b64encode(png)
       content = f'<image src="data:image/png;base64,{png.decode()}">'
     else:

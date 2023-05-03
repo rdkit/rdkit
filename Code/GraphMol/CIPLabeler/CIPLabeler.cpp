@@ -163,19 +163,18 @@ void label(std::vector<std::unique_ptr<Configuration>> &configs) {
   }
 }
 
-thread_local unsigned int remainingCallCount=0;
+thread_local unsigned int remainingCallCount = 0;
 
 }  // namespace
 
 void assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
-                     const boost::dynamic_bitset<> &bonds, unsigned int maxRecursiveIterations) {
-
+                     const boost::dynamic_bitset<> &bonds,
+                     unsigned int maxRecursiveIterations) {
   if (maxRecursiveIterations != 0) {
-    remainingCallCount  = maxRecursiveIterations;
+    remainingCallCount = maxRecursiveIterations;
   } else {
     remainingCallCount = UINT_MAX;  // really big - will never be hit
   }
-  
 
   CIPMol cipmol{mol};
   auto configs = findConfigs(cipmol, atoms, bonds);
@@ -192,13 +191,10 @@ void assignCIPLabels(ROMol &mol, unsigned int maxRecursiveIterations) {
 
 }  // namespace CIPLabeler
 
-namespace CIPLabeler_detail
-{
-  
+namespace CIPLabeler_detail {
 
-bool decrementRemainingCallCountAndCheck()
-{
-  return (--CIPLabeler::remainingCallCount) >0 ;
+bool decrementRemainingCallCountAndCheck() {
+  return (--CIPLabeler::remainingCallCount) > 0;
 }
 
 }  // namespace CIPLabeler_detail

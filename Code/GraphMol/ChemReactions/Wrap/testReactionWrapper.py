@@ -29,18 +29,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import importlib.util
-import unittest
 import doctest
+import importlib.util
 import os
-import sys
 import pickle
+import sys
+import unittest
 
-from rdkit import rdBase
-from rdkit import Chem
+from rdkit import Chem, Geometry, RDConfig, rdBase
 from rdkit.Chem import AllChem, rdChemReactions
-from rdkit import Geometry
-from rdkit import RDConfig
 from rdkit.Chem.SimpleEnum import Enumerator
 
 

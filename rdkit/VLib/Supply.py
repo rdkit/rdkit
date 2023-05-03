@@ -7,7 +7,7 @@ from rdkit.VLib.Node import VLibNode
 
 
 class SupplyNode(VLibNode):
-    """ base class for nodes which supply things
+  """ base class for nodes which supply things
 
     Assumptions:
       1) no parents
@@ -34,28 +34,28 @@ class SupplyNode(VLibNode):
 
     """
 
-    def __init__(self, contents=None, **kwargs):
-        VLibNode.__init__(self, **kwargs)
-        if contents is not None:
-            self._contents = contents
-        else:
-            self._contents = []
-        self._pos = 0
+  def __init__(self, contents=None, **kwargs):
+    VLibNode.__init__(self, **kwargs)
+    if contents is not None:
+      self._contents = contents
+    else:
+      self._contents = []
+    self._pos = 0
 
-    def reset(self):
-        VLibNode.reset(self)
-        self._pos = 0
+  def reset(self):
+    VLibNode.reset(self)
+    self._pos = 0
 
-    def next(self):
-        if self._pos == len(self._contents):
-            raise StopIteration
+  def next(self):
+    if self._pos == len(self._contents):
+      raise StopIteration
 
-        res = self._contents[self._pos]
-        self._pos += 1
-        return res
+    res = self._contents[self._pos]
+    self._pos += 1
+    return res
 
-    def AddParent(self, parent, notify=1):
-        raise ValueError('SupplyNodes do not have parents')
+  def AddParent(self, parent, notify=1):
+    raise ValueError('SupplyNodes do not have parents')
 
 
 SupplyNode.__next__ = SupplyNode.next
@@ -66,11 +66,11 @@ SupplyNode.__next__ = SupplyNode.next
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
-    import doctest
-    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-    sys.exit(failed)
+  import doctest
+  import sys
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+  sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-    _runDoctests()
+  _runDoctests()

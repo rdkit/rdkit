@@ -14,12 +14,12 @@
 
 """
 
-from rdkit import Chem
-from rdkit.Chem import Graphs
-from rdkit.Chem import rdchem
-from rdkit.Chem import rdMolDescriptors
-import numpy
 import math
+
+import numpy
+
+from rdkit import Chem
+from rdkit.Chem import Graphs, rdchem, rdMolDescriptors
 from rdkit.ML.InfoTheory import entropy
 
 ptable = Chem.GetPeriodicTable()
@@ -57,17 +57,21 @@ def _GetCountDict(arr):
     res[v] = res.get(v, 0) + 1
   return res
 
+
 # WARNING: this data should probably go somewhere else...
-hallKierAlphas = {'Br': [None, None, 0.48],
-                  'C': [-0.22, -0.13, 0.0],
-                  'Cl': [None, None, 0.29],
-                  'F': [None, None, -0.07],
-                  'H': [0.0, 0.0, 0.0],
-                  'I': [None, None, 0.73],
-                  'N': [-0.29, -0.2, -0.04],
-                  'O': [None, -0.2, -0.04],
-                  'P': [None, 0.3, 0.43],
-                  'S': [None, 0.22, 0.35]}
+hallKierAlphas = {
+  'Br': [None, None, 0.48],
+  'C': [-0.22, -0.13, 0.0],
+  'Cl': [None, None, 0.29],
+  'F': [None, None, -0.07],
+  'H': [0.0, 0.0, 0.0],
+  'I': [None, None, 0.73],
+  'N': [-0.29, -0.2, -0.04],
+  'O': [None, -0.2, -0.04],
+  'P': [None, 0.3, 0.43],
+  'S': [None, 0.22, 0.35]
+}
+
 
 def _pyHallKierAlpha(m):
   """ calculate the Hall-Kier alpha value for a molecule
@@ -97,6 +101,8 @@ def _pyHallKierAlpha(m):
     # print(atom.GetIdx(), atom.GetSymbol(), alpha)
     alphaSum += alpha
   return alphaSum
+
+
 # HallKierAlpha.version="1.0.2"
 
 
@@ -130,6 +136,7 @@ def Ipc(mol, avg=False, dMat=None, forceDMat=False):
 
 Ipc.version = "1.0.0"
 
+
 def AvgIpc(mol, dMat=None, forceDMat=False):
   """This returns the average information content of the coefficients of the characteristic
     polynomial of the adjacency matrix of a hydrogen-suppressed graph of a molecule.
@@ -137,7 +144,8 @@ def AvgIpc(mol, dMat=None, forceDMat=False):
     From Eq 7 of D. Bonchev & N. Trinajstic, J. Chem. Phys. vol 67, 4517-4533 (1977)
 
   """
-  return Ipc(mol,avg=True,dMat=dMat,forceDMat=forceDMat)
+  return Ipc(mol, avg=True, dMat=dMat, forceDMat=forceDMat)
+
 
 AvgIpc.version = "1.0.0"
 
@@ -157,6 +165,8 @@ def _pyKappa1(mol):
   else:
     kappa = 0.0
   return kappa
+
+
 # Kappa1.version="1.0.0"
 
 
@@ -175,6 +185,8 @@ def _pyKappa2(mol):
   else:
     kappa = 0
   return kappa
+
+
 # Kappa2.version="1.0.0"
 
 
@@ -196,6 +208,8 @@ def _pyKappa3(mol):
   else:
     kappa = 0
   return kappa
+
+
 # Kappa3.version="1.0.0"
 
 HallKierAlpha = lambda x: rdMolDescriptors.CalcHallKierAlpha(x)
@@ -302,8 +316,8 @@ def _pyChiNv_(mol, order=2):
   size 3.
 
   """
-  deltas = numpy.array(
-    [(1. / numpy.sqrt(hkd) if hkd != 0.0 else 0.0) for hkd in _hkDeltas(mol, skipHs=0)])
+  deltas = numpy.array([(1. / numpy.sqrt(hkd) if hkd != 0.0 else 0.0)
+                        for hkd in _hkDeltas(mol, skipHs=0)])
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
     accum += numpy.prod(deltas[numpy.array(path)])
@@ -564,8 +578,8 @@ def _CalculateEntropies(connectionDict, atomTypeDict, numAtoms):
   """
   connectionList = list(connectionDict.values())
   totConnections = sum(connectionList)
-  connectionIE = totConnections * (
-    entropy.InfoEntropy(numpy.array(connectionList)) + math.log(totConnections) / _log2val)
+  connectionIE = totConnections * (entropy.InfoEntropy(numpy.array(connectionList)) +
+                                   math.log(totConnections) / _log2val)
   atomTypeList = list(atomTypeDict.values())
   atomTypeIE = numAtoms * entropy.InfoEntropy(numpy.array(atomTypeList))
   return atomTypeIE + connectionIE

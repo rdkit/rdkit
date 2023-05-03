@@ -107,7 +107,9 @@ class TestCase(unittest.TestCase):
   def testUniquifyCombinations(self):
     combos = [[1, 2, 3], [3, 2, 1]]
     # Last equivalent combination is returned
-    self.assertEqual(Utils.UniquifyCombinations(combos), [(3, 2, 1), ])
+    self.assertEqual(Utils.UniquifyCombinations(combos), [
+      (3, 2, 1),
+    ])
 
     combos = [[1], [1], [2]]
     # Last equivalent combination is returned

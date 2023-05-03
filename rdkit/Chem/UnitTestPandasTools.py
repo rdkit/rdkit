@@ -1,13 +1,16 @@
-from rdkit import RDConfig, rdBase, Chem
-from io import StringIO, BytesIO
-from rdkit.Chem import PandasTools
-import numpy
-import unittest
-import tempfile
-import shutil
-import os
-import gzip
 import doctest
+import gzip
+import os
+import shutil
+import tempfile
+import unittest
+from io import BytesIO, StringIO
+
+import numpy
+
+from rdkit import Chem, RDConfig, rdBase
+from rdkit.Chem import PandasTools
+
 if (getattr(doctest, 'ELLIPSIS_MARKER')):
   doctest.ELLIPSIS_MARKER = '*...*'
 
@@ -20,7 +23,8 @@ except ImportError:
 PandasTools.UninstallPandasTools()
 
 
-@unittest.skipIf( (not hasattr(PandasTools, 'pd')) or PandasTools.pd is None, 'Pandas not installed, skipping')
+@unittest.skipIf((not hasattr(PandasTools, 'pd')) or PandasTools.pd is None,
+                 'Pandas not installed, skipping')
 class TestPandasTools(unittest.TestCase):
 
   def __init__(self, methodName='runTest'):
@@ -31,8 +35,8 @@ class TestPandasTools(unittest.TestCase):
     # We only need to initialize the dataframe once, but we defer to actual running of the tests,
     # as getTestFrame() needs pandas installed, and __init__() is run even in the absence of pandas.
     if self.df is None:
-        self.df = getTestFrame()
-        self.df.index.name = 'IndexName'
+      self.df = getTestFrame()
+      self.df.index.name = 'IndexName'
 
   def setUp(self):
     self.initialize_dataframe()
@@ -211,7 +215,8 @@ class TestPandasTools(unittest.TestCase):
                      ['F[*:2]', 'Cl[*:2]', 'O[*:2]', 'F[*:2]', 'F[*:2]'])
 
 
-@unittest.skipIf( (not hasattr(PandasTools, 'pd')) or PandasTools.pd is None, 'Pandas not installed, skipping')
+@unittest.skipIf((not hasattr(PandasTools, 'pd')) or PandasTools.pd is None,
+                 'Pandas not installed, skipping')
 class TestLoadSDF(unittest.TestCase):
   gz_filename = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'pandas_load.sdf.gz')
 
@@ -274,7 +279,8 @@ class TestLoadSDF(unittest.TestCase):
     self.assertEqual(set(df.columns), set("ID prop1 prop2 prop3".split()))
 
 
-@unittest.skipIf( (not hasattr(PandasTools, 'pd')) or PandasTools.pd is None, 'Pandas not installed, skipping')
+@unittest.skipIf((not hasattr(PandasTools, 'pd')) or PandasTools.pd is None,
+                 'Pandas not installed, skipping')
 class TestWriteSDF(unittest.TestCase):
 
   def setUp(self):

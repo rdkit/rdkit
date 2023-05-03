@@ -81,9 +81,8 @@ wxWindows Python language bindings into a GUI window.
 # -  Support printing & generation of Postscript output (just because it is
 #    easy to do).
 
-from wxPython.wx import *
-
 from pidWxDc import PiddleWxDc
+from wxPython.wx import *
 
 __version__ = "1.0"
 __date__ = "February 6, 2000"
@@ -210,6 +209,7 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
     self.click.SetSize(wxSize(100, field.height))
 
     self.sizeChanged = false
+
 
 ############################################################################
 

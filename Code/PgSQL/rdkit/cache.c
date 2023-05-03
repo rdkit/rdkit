@@ -2,19 +2,19 @@
 //
 //  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
-// met: 
+// met:
 //
-//     * Redistributions of source code must retain the above copyright 
+//     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
 //     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following 
-//       disclaimer in the documentation and/or other materials provided 
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-//       nor the names of its contributors may be used to endorse or promote 
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+//       nor the names of its contributors may be used to endorse or promote
 //       products derived from this software without specific prior written
 //       permission.
 //
@@ -37,22 +37,17 @@
 #include "rdkit.h"
 #include "cache.h"
 
-#define MAGICKNUMBER  0xBEEC0DED
+#define MAGICKNUMBER 0xBEEC0DED
 /*
  * Deconstructed values cache
  */
 
-typedef enum EntryKind {
-  MolKind,
-  BfpKind,
-  SfpKind,
-  ReactionKind
-} EntryKind;
+typedef enum EntryKind { MolKind, BfpKind, SfpKind, ReactionKind } EntryKind;
 
 typedef struct ValueCacheEntry {
   Datum toastedValue;
   EntryKind kind;
-  
+
   union {
     struct {
       Mol *value;
@@ -75,7 +70,7 @@ typedef struct ValueCacheEntry {
       CChemicalReaction rxn;
     } reaction;
   } detoasted;
-  
+
   struct ValueCacheEntry *prev;
   struct ValueCacheEntry *next;
 } ValueCacheEntry;
@@ -93,35 +88,31 @@ typedef struct ValueCache {
 
 /*********** Managing LRU **********/
 /* move the most recently used value to the head */
-static void 
-moveFirst(ValueCache *ac, ValueCacheEntry *entry)
-{
+static void moveFirst(ValueCache *ac, ValueCacheEntry *entry) {
   /*
    * unlink the entry from the list
    */
-  Assert( entry != ac->head );
-  
-  if ( entry == ac->tail ) {
-    Assert( entry->next == NULL );
+  Assert(entry != ac->head);
+
+  if (entry == ac->tail) {
+    Assert(entry->next == NULL);
     ac->tail = entry->prev;
-    if ( ac->tail ) {
+    if (ac->tail) {
       ac->tail->next = NULL;
+    } else {
+      ac->head = NULL;
     }
-    else {
-        ac->head = NULL;
-    }
-  }
-  else {
+  } else {
     entry->prev->next = entry->next;
     entry->next->prev = entry->prev;
   }
 
   /*
-   * reinstall into head 
+   * reinstall into head
    */
 
-  Assert( ac->head != NULL );
-  Assert( ac->tail != NULL );
+  Assert(ac->head != NULL);
+  Assert(ac->tail != NULL);
 
   entry->next = ac->head;
   entry->prev = NULL;
@@ -129,19 +120,17 @@ moveFirst(ValueCache *ac, ValueCacheEntry *entry)
   ac->head = entry;
 }
 
-#define DATUMSIZE(d)    VARSIZE_ANY(DatumGetPointer(d)) 
+#define DATUMSIZE(d) VARSIZE_ANY(DatumGetPointer(d))
 
-/* 
+/*
  * define a comparison operator for the cached values.
  * generally applied to the toasted data, to verify the
  * equality of two values and to keep the cached entries
  * sorted (see cmpEntries below).
  */
-static int
-cmpDatum(Datum a, Datum b)
-{
-  int32   la = DATUMSIZE(a);
-  int32   lb = DATUMSIZE(b);
+static int cmpDatum(Datum a, Datum b) {
+  int32 la = DATUMSIZE(a);
+  int32 lb = DATUMSIZE(b);
 
   if (la == lb) {
     return memcmp(DatumGetPointer(a), DatumGetPointer(b), la);
@@ -155,58 +144,56 @@ cmpDatum(Datum a, Datum b)
  * cache is destroyed or if the entry is reused for a new
  * value)
  */
-static void
-cleanupData(ValueCacheEntry *entry)
-{
+static void cleanupData(ValueCacheEntry *entry) {
   pfree(DatumGetPointer(entry->toastedValue));
-  
-  switch(entry->kind) {
-  case MolKind:
-    if (entry->detoasted.mol.value) {
-      pfree(entry->detoasted.mol.value);
-    }
-    if (entry->detoasted.mol.mol) {
-      freeCROMol(entry->detoasted.mol.mol);
-    }
-    if (entry->detoasted.mol.sign) {
-      pfree(entry->detoasted.mol.sign);
-    }  
-    break;
-  case BfpKind:
-    if (entry->detoasted.bfp.value) {
-      pfree(entry->detoasted.bfp.value);
-    }
-    if (entry->detoasted.bfp.fp) {
-      freeCBfp(entry->detoasted.bfp.fp);
-    }
-    if (entry->detoasted.bfp.sign) {
-      pfree(entry->detoasted.bfp.sign);
-    }  
-    break;
-  case SfpKind:
-    if (entry->detoasted.sfp.value) {
-      pfree(entry->detoasted.sfp.value);
-    }
-    if (entry->detoasted.sfp.fp) {
-      freeCSfp(entry->detoasted.sfp.fp);
-    }
-    if (entry->detoasted.sfp.sign) {
-      pfree(entry->detoasted.sfp.sign);
-    }  
-    break;
-  case ReactionKind:
-    if (entry->detoasted.reaction.value) {
-      pfree(entry->detoasted.reaction.value);
-    }
-    if (entry->detoasted.reaction.rxn) {
-      freeChemReaction(entry->detoasted.reaction.rxn);
-    }
-    if (entry->detoasted.reaction.sign) {
-      pfree(entry->detoasted.reaction.sign);
-    }  
-    break;
-  default:
-    elog(ERROR, "Unknown kind: %d", entry->kind);
+
+  switch (entry->kind) {
+    case MolKind:
+      if (entry->detoasted.mol.value) {
+        pfree(entry->detoasted.mol.value);
+      }
+      if (entry->detoasted.mol.mol) {
+        freeCROMol(entry->detoasted.mol.mol);
+      }
+      if (entry->detoasted.mol.sign) {
+        pfree(entry->detoasted.mol.sign);
+      }
+      break;
+    case BfpKind:
+      if (entry->detoasted.bfp.value) {
+        pfree(entry->detoasted.bfp.value);
+      }
+      if (entry->detoasted.bfp.fp) {
+        freeCBfp(entry->detoasted.bfp.fp);
+      }
+      if (entry->detoasted.bfp.sign) {
+        pfree(entry->detoasted.bfp.sign);
+      }
+      break;
+    case SfpKind:
+      if (entry->detoasted.sfp.value) {
+        pfree(entry->detoasted.sfp.value);
+      }
+      if (entry->detoasted.sfp.fp) {
+        freeCSfp(entry->detoasted.sfp.fp);
+      }
+      if (entry->detoasted.sfp.sign) {
+        pfree(entry->detoasted.sfp.sign);
+      }
+      break;
+    case ReactionKind:
+      if (entry->detoasted.reaction.value) {
+        pfree(entry->detoasted.reaction.value);
+      }
+      if (entry->detoasted.reaction.rxn) {
+        freeChemReaction(entry->detoasted.reaction.rxn);
+      }
+      if (entry->detoasted.reaction.sign) {
+        pfree(entry->detoasted.reaction.sign);
+      }
+      break;
+    default:
+      elog(ERROR, "Unknown kind: %d", entry->kind);
   }
 
   /* this function is called both when the memory context
@@ -220,21 +207,18 @@ cleanupData(ValueCacheEntry *entry)
 }
 
 /* assign a cache entry with the input toasted value and data kind */
-static void
-makeEntry(ValueCache *ac, ValueCacheEntry *entry, Datum value, EntryKind kind)
-{
+static void makeEntry(ValueCache *ac, ValueCacheEntry *entry, Datum value,
+                      EntryKind kind) {
   entry->toastedValue = (Datum)MemoryContextAlloc(ac->ctx, DATUMSIZE(value));
   entry->kind = kind;
   memcpy(DatumGetPointer(entry->toastedValue), DatumGetPointer(value),
-	 DATUMSIZE(value));
+         DATUMSIZE(value));
 }
 
 /* a comparison operator to sort the entries in ValueCache */
-static int
-cmpEntry(const void *a, const void *b)
-{
-  return cmpDatum((*(ValueCacheEntry**)a)->toastedValue,
-		  (*(ValueCacheEntry**)b)->toastedValue); 
+static int cmpEntry(const void *a, const void *b) {
+  return cmpDatum((*(ValueCacheEntry **)a)->toastedValue,
+                  (*(ValueCacheEntry **)b)->toastedValue);
 }
 
 /*********** Managing cache structure **********/
@@ -252,9 +236,7 @@ static CacheHolder *holder = NULL;
  * automatically called on a CacheHolder when the associated
  * memory context is reset or destroyed.
  */
-static void
-cleanupRDKitCache(void * ptr)
-{
+static void cleanupRDKitCache(void *ptr) {
   CacheHolder *h = holder, *p = NULL;
   CacheHolder *holder_arg = (CacheHolder *)ptr;
   bool removed = false;
@@ -262,8 +244,7 @@ cleanupRDKitCache(void * ptr)
   /* cleanup the cached data */
   if (holder_arg->cache->magickNumber != MAGICKNUMBER) {
     elog(WARNING, "Something wrong in cleanupRDKitCache");
-  }
-  else {
+  } else {
     int i;
 
     for (i = 0; i < holder_arg->cache->nentries; i++) {
@@ -285,8 +266,7 @@ cleanupRDKitCache(void * ptr)
       Assert(h == holder);
       holder = h->next;
       h = holder;
-    }
-    else {
+    } else {
       p->next = h->next;
       h = p->next;
     }
@@ -301,15 +281,13 @@ cleanupRDKitCache(void * ptr)
   }
 }
 
-static ValueCache*
-createCache(void *cache, struct MemoryContextData * ctx) 
-{
+static ValueCache *createCache(void *cache, struct MemoryContextData *ctx) {
   ValueCache *ac;
   CacheHolder *newholder;
   MemoryContextCallback *ctxcb;
 
   if (cache != NULL) {
-    ac = (ValueCache*)cache;
+    ac = (ValueCache *)cache;
     if (ac->magickNumber != MAGICKNUMBER || ac->ctx != ctx) {
       elog(ERROR, "We can't use our approach with cache :(");
     }
@@ -322,7 +300,7 @@ createCache(void *cache, struct MemoryContextData * ctx)
   while (newholder) {
     if (newholder->ctx == ctx) {
       /* Note: this reassigns the passed cache argument */
-      cache = (void*)newholder->cache;
+      cache = (void *)newholder->cache;
       break;
     }
     newholder = newholder->next;
@@ -335,10 +313,10 @@ createCache(void *cache, struct MemoryContextData * ctx)
     cache = MemoryContextAllocZero(ctx, sizeof(ValueCache));
 
     /* init cache */
-    ac = (ValueCache*) cache;
+    ac = (ValueCache *)cache;
     ac->magickNumber = MAGICKNUMBER;
     ac->ctx = ctx;
-    
+
     newholder = MemoryContextAllocZero(ctx, sizeof(CacheHolder));
 
     /* init holder */
@@ -359,7 +337,7 @@ createCache(void *cache, struct MemoryContextData * ctx)
     MemoryContextRegisterResetCallback(ctx, ctxcb);
   }
 
-  return (ValueCache*)cache;
+  return (ValueCache *)cache;
 }
 
 /*********** SEARCHING **********/
@@ -371,175 +349,169 @@ createCache(void *cache, struct MemoryContextData * ctx)
  *      f, fp, val
  */
 
-static void
-fetchData(ValueCache *ac, ValueCacheEntry *entry,
-          void **detoasted, void **internal, void **sign)
-{
-  MemoryContext   old;
-  void * _tmp;
-        
-  switch(entry->kind) {
-  case MolKind:
-    if (detoasted) {
-      if (entry->detoasted.mol.value == NULL) {
-        Mol *detoastedMol;
+static void fetchData(ValueCache *ac, ValueCacheEntry *entry, void **detoasted,
+                      void **internal, void **sign) {
+  MemoryContext old;
+  void *_tmp;
 
-        detoastedMol = DatumGetMolP(entry->toastedValue);
-        entry->detoasted.mol.value
-          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedMol));
-        memcpy(entry->detoasted.mol.value, detoastedMol, VARSIZE(detoastedMol));
-      }
-      *detoasted = entry->detoasted.mol.value;
-    }
+  switch (entry->kind) {
+    case MolKind:
+      if (detoasted) {
+        if (entry->detoasted.mol.value == NULL) {
+          Mol *detoastedMol;
 
-    if (internal) {
-      if (entry->detoasted.mol.mol == NULL) {
-        fetchData(ac, entry, &_tmp, NULL, NULL);
-        entry->detoasted.mol.mol = constructROMol(entry->detoasted.mol.value);
+          detoastedMol = DatumGetMolP(entry->toastedValue);
+          entry->detoasted.mol.value =
+              MemoryContextAlloc(ac->ctx, VARSIZE(detoastedMol));
+          memcpy(entry->detoasted.mol.value, detoastedMol,
+                 VARSIZE(detoastedMol));
+        }
+        *detoasted = entry->detoasted.mol.value;
       }
-      *internal = entry->detoasted.mol.mol;
-    }
 
-    if (sign) {
-      if (entry->detoasted.mol.sign == NULL) {
-        fetchData(ac, entry, NULL, &_tmp, NULL);
-        old = MemoryContextSwitchTo( ac->ctx );
-        entry->detoasted.mol.sign = makeMolSignature(entry->detoasted.mol.mol);
-        MemoryContextSwitchTo(old);
+      if (internal) {
+        if (entry->detoasted.mol.mol == NULL) {
+          fetchData(ac, entry, &_tmp, NULL, NULL);
+          entry->detoasted.mol.mol = constructROMol(entry->detoasted.mol.value);
+        }
+        *internal = entry->detoasted.mol.mol;
       }
-      *sign = entry->detoasted.mol.sign;
-    }
-    break;
-  case BfpKind:
-    if (detoasted) {
-      if (entry->detoasted.bfp.value == NULL) {
-        Bfp *detoastedFP;
 
-        detoastedFP = DatumGetBfpP(entry->toastedValue);
-        entry->detoasted.bfp.value
-          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedFP));
-        memcpy(entry->detoasted.bfp.value, detoastedFP, VARSIZE(detoastedFP));
+      if (sign) {
+        if (entry->detoasted.mol.sign == NULL) {
+          fetchData(ac, entry, NULL, &_tmp, NULL);
+          old = MemoryContextSwitchTo(ac->ctx);
+          entry->detoasted.mol.sign =
+              makeMolSignature(entry->detoasted.mol.mol);
+          MemoryContextSwitchTo(old);
+        }
+        *sign = entry->detoasted.mol.sign;
       }
-      *detoasted = entry->detoasted.bfp.value;
-    }
+      break;
+    case BfpKind:
+      if (detoasted) {
+        if (entry->detoasted.bfp.value == NULL) {
+          Bfp *detoastedFP;
 
-    if (internal) {
-      if (entry->detoasted.bfp.fp == NULL) {
-        fetchData(ac, entry, &_tmp, NULL, NULL);
-        entry->detoasted.bfp.fp
-          = constructCBfp(entry->detoasted.bfp.value);
+          detoastedFP = DatumGetBfpP(entry->toastedValue);
+          entry->detoasted.bfp.value =
+              MemoryContextAlloc(ac->ctx, VARSIZE(detoastedFP));
+          memcpy(entry->detoasted.bfp.value, detoastedFP, VARSIZE(detoastedFP));
+        }
+        *detoasted = entry->detoasted.bfp.value;
       }
-      *internal = entry->detoasted.bfp.fp;
-    }
 
-    if (sign) {
-      if (entry->detoasted.bfp.sign == NULL) {
-        fetchData(ac, entry, NULL, &_tmp, NULL);
-        old = MemoryContextSwitchTo( ac->ctx );
-        entry->detoasted.bfp.sign
-          = makeBfpSignature(entry->detoasted.bfp.fp);
-        MemoryContextSwitchTo(old);
+      if (internal) {
+        if (entry->detoasted.bfp.fp == NULL) {
+          fetchData(ac, entry, &_tmp, NULL, NULL);
+          entry->detoasted.bfp.fp = constructCBfp(entry->detoasted.bfp.value);
+        }
+        *internal = entry->detoasted.bfp.fp;
       }
-      *sign = entry->detoasted.bfp.sign;
-    }
-    break;
-  case SfpKind:
-    if (detoasted) { 
-      if (entry->detoasted.sfp.value == NULL) {
-        Sfp *detoastedFP;
 
-        detoastedFP = DatumGetSfpP(entry->toastedValue);
-        entry->detoasted.sfp.value
-          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedFP));
-        memcpy(entry->detoasted.sfp.value, detoastedFP, VARSIZE(detoastedFP));
+      if (sign) {
+        if (entry->detoasted.bfp.sign == NULL) {
+          fetchData(ac, entry, NULL, &_tmp, NULL);
+          old = MemoryContextSwitchTo(ac->ctx);
+          entry->detoasted.bfp.sign = makeBfpSignature(entry->detoasted.bfp.fp);
+          MemoryContextSwitchTo(old);
+        }
+        *sign = entry->detoasted.bfp.sign;
       }
-      *detoasted = entry->detoasted.sfp.value;
-    }
+      break;
+    case SfpKind:
+      if (detoasted) {
+        if (entry->detoasted.sfp.value == NULL) {
+          Sfp *detoastedFP;
 
-    if (internal) {
-      if (entry->detoasted.sfp.fp == NULL) {
-        fetchData(ac, entry, &_tmp, NULL, NULL);
-        entry->detoasted.sfp.fp
-          = constructCSfp(entry->detoasted.sfp.value);
+          detoastedFP = DatumGetSfpP(entry->toastedValue);
+          entry->detoasted.sfp.value =
+              MemoryContextAlloc(ac->ctx, VARSIZE(detoastedFP));
+          memcpy(entry->detoasted.sfp.value, detoastedFP, VARSIZE(detoastedFP));
+        }
+        *detoasted = entry->detoasted.sfp.value;
       }
-      *internal = entry->detoasted.sfp.fp;
-    }
 
-    if (sign) {
-      if (entry->detoasted.sfp.sign == NULL) {
-        fetchData(ac, entry, NULL, &_tmp, NULL);
-        old = MemoryContextSwitchTo( ac->ctx );
-        entry->detoasted.sfp.sign
-          = makeSfpSignature(entry->detoasted.sfp.fp, NUMBITS);
-        MemoryContextSwitchTo(old);
+      if (internal) {
+        if (entry->detoasted.sfp.fp == NULL) {
+          fetchData(ac, entry, &_tmp, NULL, NULL);
+          entry->detoasted.sfp.fp = constructCSfp(entry->detoasted.sfp.value);
+        }
+        *internal = entry->detoasted.sfp.fp;
       }
-      *sign = entry->detoasted.sfp.sign;
-    }
-    break;
-  case ReactionKind:
-    if (detoasted) {
-      if (entry->detoasted.reaction.value == NULL) {
-        Reaction *detoastedRxn;
 
-        detoastedRxn = DatumGetReactionP(entry->toastedValue);
-        entry->detoasted.reaction.value
-          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedRxn));
-        memcpy(entry->detoasted.reaction.value, detoastedRxn,
-                VARSIZE(detoastedRxn));
+      if (sign) {
+        if (entry->detoasted.sfp.sign == NULL) {
+          fetchData(ac, entry, NULL, &_tmp, NULL);
+          old = MemoryContextSwitchTo(ac->ctx);
+          entry->detoasted.sfp.sign =
+              makeSfpSignature(entry->detoasted.sfp.fp, NUMBITS);
+          MemoryContextSwitchTo(old);
+        }
+        *sign = entry->detoasted.sfp.sign;
       }
-      *detoasted = entry->detoasted.reaction.value;
-    }
-    
-    if (internal) {
-      if (entry->detoasted.reaction.rxn == NULL) {
-        fetchData(ac, entry, &_tmp, NULL, NULL);
-        entry->detoasted.reaction.rxn
-          = constructChemReact(entry->detoasted.reaction.value);
+      break;
+    case ReactionKind:
+      if (detoasted) {
+        if (entry->detoasted.reaction.value == NULL) {
+          Reaction *detoastedRxn;
+
+          detoastedRxn = DatumGetReactionP(entry->toastedValue);
+          entry->detoasted.reaction.value =
+              MemoryContextAlloc(ac->ctx, VARSIZE(detoastedRxn));
+          memcpy(entry->detoasted.reaction.value, detoastedRxn,
+                 VARSIZE(detoastedRxn));
+        }
+        *detoasted = entry->detoasted.reaction.value;
       }
-      *internal = entry->detoasted.reaction.rxn;
-    }
-    
-    if (sign) {
-      if (entry->detoasted.reaction.sign == NULL) {
-        fetchData(ac, entry, NULL, &_tmp, NULL);
-        old = MemoryContextSwitchTo( ac->ctx );
-        entry->detoasted.reaction.sign
-          = makeReactionSign(entry->detoasted.reaction.rxn);
-        MemoryContextSwitchTo(old);
+
+      if (internal) {
+        if (entry->detoasted.reaction.rxn == NULL) {
+          fetchData(ac, entry, &_tmp, NULL, NULL);
+          entry->detoasted.reaction.rxn =
+              constructChemReact(entry->detoasted.reaction.value);
+        }
+        *internal = entry->detoasted.reaction.rxn;
       }
-      *sign = entry->detoasted.reaction.sign;
-    }
-    break;
-  default:
-    elog(ERROR, "Unknown kind: %d", entry->kind);
+
+      if (sign) {
+        if (entry->detoasted.reaction.sign == NULL) {
+          fetchData(ac, entry, NULL, &_tmp, NULL);
+          old = MemoryContextSwitchTo(ac->ctx);
+          entry->detoasted.reaction.sign =
+              makeReactionSign(entry->detoasted.reaction.rxn);
+          MemoryContextSwitchTo(old);
+        }
+        *sign = entry->detoasted.reaction.sign;
+      }
+      break;
+    default:
+      elog(ERROR, "Unknown kind: %d", entry->kind);
   }
 }
 
-static void*
-SearchValueCache(void *cache, struct MemoryContextData * ctx, 
-		 /*  in: */ Datum a, EntryKind kind, 
-		 /* out: */ void **detoasted, void **internal, void **sign)
-{
+static void *SearchValueCache(void *cache, struct MemoryContextData *ctx,
+                              /*  in: */ Datum a, EntryKind kind,
+                              /* out: */ void **detoasted, void **internal,
+                              void **sign) {
   ValueCache *ac = createCache(cache, ctx);
   ValueCacheEntry *entry;
 
   /*
-   * Fast check of most recently used value 
+   * Fast check of most recently used value
    */
   if (ac->head && cmpDatum(ac->head->toastedValue, a) == 0) {
-    Assert( ac->head->kind == kind );
+    Assert(ac->head->kind == kind);
     fetchData(ac, ac->head, detoasted, internal, sign);
     return cache;
   }
 
   /*
-   * If the cache is empty, insert (and then return) the new value 
+   * If the cache is empty, insert (and then return) the new value
    */
   if (ac->head == NULL) {
-    ac->entries[0]
-      = ac->head
-      = ac->tail
-      = MemoryContextAllocZero(ac->ctx, sizeof(ValueCacheEntry));
+    ac->entries[0] = ac->head = ac->tail =
+        MemoryContextAllocZero(ac->ctx, sizeof(ValueCacheEntry));
     ac->nentries = 1;
     makeEntry(ac, ac->head, a, kind);
     fetchData(ac, ac->head, detoasted, internal, sign);
@@ -547,62 +519,58 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
   }
 
   /*
-   * Do a binary search across the cached entries 
+   * Do a binary search across the cached entries
    */
   do {
     ValueCacheEntry **StopLow = ac->entries;
     ValueCacheEntry **StopHigh = ac->entries + ac->nentries;
     ValueCacheEntry **StopMiddle;
     int cmp;
-    
+
     while (StopLow < StopHigh) {
       StopMiddle = StopLow + ((StopHigh - StopLow) >> 1);
       entry = *StopMiddle;
-      cmp = cmpDatum(entry->toastedValue, a); 
-      
+      cmp = cmpDatum(entry->toastedValue, a);
+
       if (cmp == 0) {
         /*
          * If the value is found, move it to the head position
          * and return it
          */
         moveFirst(ac, entry);
-        Assert( ac->head->kind == kind );
+        Assert(ac->head->kind == kind);
         fetchData(ac, ac->head, detoasted, internal, sign);
         return cache;
-      }
-      else if (cmp < 0) {
+      } else if (cmp < 0) {
         StopLow = StopMiddle + 1;
-      }
-      else {
+      } else {
         StopHigh = StopMiddle;
       }
     }
-  } while(0);
+  } while (0);
 
   /*
-   * Not found 
+   * Not found
    */
 
   if (ac->nentries < NENTRIES) {
     /*
      * If the cache is not full, insert the new value in the head position
      */
-    entry
-      = ac->entries[ac->nentries]
-      = MemoryContextAllocZero(ac->ctx, sizeof(ValueCacheEntry));
+    entry = ac->entries[ac->nentries] =
+        MemoryContextAllocZero(ac->ctx, sizeof(ValueCacheEntry));
 
     /* install first */
     entry->next = ac->head;
     entry->prev = NULL;
     ac->head->prev = entry;
     ac->head = entry;
-    
-    ac->nentries ++;
-    
+
+    ac->nentries++;
+
     makeEntry(ac, ac->head, a, kind);
     fetchData(ac, ac->head, detoasted, internal, sign);
-  } 
-  else {
+  } else {
     /*
      * If the cache is full, clear the least recently used value (in tail
      * position) and reuse the entry to place the new value in the head
@@ -618,42 +586,35 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
    * this allows applying a binary search if the value is not found in
    * the head position.
    */
-  qsort(ac->entries, ac->nentries, sizeof(ValueCacheEntry*), cmpEntry);   
+  qsort(ac->entries, ac->nentries, sizeof(ValueCacheEntry *), cmpEntry);
   return cache;
 }
 
-void* 
-searchMolCache(void *cache, struct MemoryContextData * ctx, Datum a, 
-               Mol **m, CROMol *mol, bytea ** val)
-{
-  return  SearchValueCache(cache, ctx, 
-                           /*  in: */ a, MolKind, 
-                           /* out: */ (void**)m, (void**)mol, (void**)val);
+void *searchMolCache(void *cache, struct MemoryContextData *ctx, Datum a,
+                     Mol **m, CROMol *mol, bytea **val) {
+  return SearchValueCache(cache, ctx,
+                          /*  in: */ a, MolKind,
+                          /* out: */ (void **)m, (void **)mol, (void **)val);
 }
 
-void* 
-searchBfpCache(void *cache, struct MemoryContextData * ctx, Datum a, 
-	       Bfp **f, CBfp *fp, BfpSignature **val)
-{
-  return  SearchValueCache(cache, ctx, 
-                           /*  in: */ a, BfpKind, 
-                           /* out: */ (void**)f, (void**)fp, (void**)val);
+void *searchBfpCache(void *cache, struct MemoryContextData *ctx, Datum a,
+                     Bfp **f, CBfp *fp, BfpSignature **val) {
+  return SearchValueCache(cache, ctx,
+                          /*  in: */ a, BfpKind,
+                          /* out: */ (void **)f, (void **)fp, (void **)val);
 }
 
-void* 
-searchSfpCache(void *cache, struct MemoryContextData * ctx, Datum a, 
-	       Sfp **f, CSfp *fp, bytea **val)
-{
-  return  SearchValueCache(cache, ctx, 
-                           /*  in: */ a, SfpKind, 
-                           /* out: */ (void**)f, (void**)fp, (void**)val);
+void *searchSfpCache(void *cache, struct MemoryContextData *ctx, Datum a,
+                     Sfp **f, CSfp *fp, bytea **val) {
+  return SearchValueCache(cache, ctx,
+                          /*  in: */ a, SfpKind,
+                          /* out: */ (void **)f, (void **)fp, (void **)val);
 }
 
-void* 
-searchReactionCache(void *cache, struct MemoryContextData * ctx, Datum a, 
-		    Reaction **rxn, CChemicalReaction *crxn, bytea ** val)
-{
-  return  SearchValueCache(cache, ctx, 
-                           /*  in: */ a, ReactionKind, 
-                           /* out: */ (void**)rxn, (void**)crxn, (void**)val);
+void *searchReactionCache(void *cache, struct MemoryContextData *ctx, Datum a,
+                          Reaction **rxn, CChemicalReaction *crxn,
+                          bytea **val) {
+  return SearchValueCache(cache, ctx,
+                          /*  in: */ a, ReactionKind,
+                          /* out: */ (void **)rxn, (void **)crxn, (void **)val);
 }

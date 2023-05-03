@@ -24,6 +24,7 @@ Then everything will work ...
 """
 
 import sys
+
 import __builtin__
 
 #save the import-Method (either McMillan's import or Python's)

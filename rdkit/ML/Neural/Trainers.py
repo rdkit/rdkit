@@ -9,7 +9,6 @@
 
 """
 
-
 import numpy
 
 
@@ -170,6 +169,7 @@ class BackProp(Trainer):
 
       if newErr <= errTol:
         converged = 1
+
 
 #      if cycle % 10 == 0 and not silent:
       if not silent:

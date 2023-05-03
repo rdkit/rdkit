@@ -16,21 +16,20 @@ piddlePDF calls pdfgen and offers a high-level interface.
 
 import os
 import sys
-import time
 import tempfile
+import time
+from math import ceil, cos, pi, sin
 from types import *
-from math import sin, cos, pi, ceil
 
 try:
   import zlib
 except ImportError:
   print("zlib not available, page compression not available")
 
+from . import pdfmetrics, pdfutils
 from .pdfgeom import bezierArc
-
-from . import pdfutils
 from .pdfutils import LINEEND  # this constant needed in both
-from . import pdfmetrics
+
 ##############################################################
 #
 #            Constants and declarations
@@ -282,6 +281,7 @@ def testOutputGrabber():
   gr.close()
   print('Data...', data)
 
+
 ##############################################################
 #
 #            PDF Object Hierarchy
@@ -320,9 +320,8 @@ class PDFCatalog(PDFObject):
   "requires RefPages and RefOutlines set"
 
   def __init__(self):
-    self.template = LINEEND.join([
-      '<<', '/Type /Catalog', '/Pages %d 0 R', '/Outlines %d 0 R', '>>'
-    ])
+    self.template = LINEEND.join(
+      ['<<', '/Type /Catalog', '/Pages %d 0 R', '/Outlines %d 0 R', '>>'])
 
   def save(self, file):
     file.write(self.template % (self.RefPages, self.RefOutlines) + LINEEND)
@@ -347,7 +346,7 @@ class PDFInfo(PDFObject):
         "<</Title (%s)", "/Author (%s)", "/CreationDate (D:%s)", "/Producer (PDFgen)",
         "/Subject (%s)", ">>"
       ]) % (pdfutils._escape(self.title), pdfutils._escape(self.author), self.datestr,
-                     pdfutils._escape(self.subject)) + LINEEND)
+            pdfutils._escape(self.subject)) + LINEEND)
 
 
 class PDFOutline(PDFObject):

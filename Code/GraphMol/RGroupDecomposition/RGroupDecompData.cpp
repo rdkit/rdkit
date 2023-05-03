@@ -616,8 +616,8 @@ double RGroupDecompData::score(
   return NAN;
 }
 
-RGroupDecompositionProcessResult RGroupDecompData::process(
-    bool pruneMatches, bool finalize) {
+RGroupDecompositionProcessResult RGroupDecompData::process(bool pruneMatches,
+                                                           bool finalize) {
   if (matches.empty()) {
     return RGroupDecompositionProcessResult(false, -1);
   }

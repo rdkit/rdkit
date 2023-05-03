@@ -37,10 +37,12 @@ piddlePS - a PostScript backend for the PIDDLE drawing module
 #  DSC: plan uses flags for keeping track of BeginX/EndX pairs.
 #            convention: use flag _inXFlag
 
-from rdkit.sping.pid import *
-from io import StringIO
-from . import psmetrics  # for font info
 import math
+from io import StringIO
+
+from rdkit.sping.pid import *
+
+from . import psmetrics  # for font info
 
 
 class PostScriptLevelException(ValueError):
@@ -52,46 +54,52 @@ linesep = '\n'
 
 # This is actually a mapping between legal font names and PSFontMapXXX keys
 # note: all piddle font names are lower-cased before running against this mapping)
-PiddleLegalFonts = {"helvetica": "helvetica",  # note: keys are lowercased
-                    "times": "times",
-                    "courier": "courier",
-                    "serif": "times",
-                    "sansserif": "helvetica",
-                    "monospaced": "courier",
-                    "symbol": "symbol"}  # Could add more...
+PiddleLegalFonts = {
+  "helvetica": "helvetica",  # note: keys are lowercased
+  "times": "times",
+  "courier": "courier",
+  "serif": "times",
+  "sansserif": "helvetica",
+  "monospaced": "courier",
+  "symbol": "symbol"
+}  # Could add more...
 
 Roman = "Roman"
 Bold = "Bold"
 Italic = "Italic"
 
 # This is starting to look like a class
-PSFontMapStdEnc = {("helvetica", Roman): "Helvetica-Roman",
-                   ("helvetica", Bold): "Helvetica-Bold",
-                   ("helvetica", Italic): "Helvetica-Oblique",
-                   ("times", Roman): "Times-Roman",
-                   ("times", Bold): "Times-Bold",
-                   ("times", Italic): "Times-Italic",
-                   ("courier", Roman): "Courier-Roman",
-                   ("courier", Bold): "Courier-Bold",
-                   ("courier", Italic): "Courier-Oblique",
-                   ("symbol", Roman): "Symbol",
-                   ("symbol", Bold): "Symbol",
-                   ("symbol", Italic): "Symbol",
-                   "EncodingName": 'StandardEncoding'}
+PSFontMapStdEnc = {
+  ("helvetica", Roman): "Helvetica-Roman",
+  ("helvetica", Bold): "Helvetica-Bold",
+  ("helvetica", Italic): "Helvetica-Oblique",
+  ("times", Roman): "Times-Roman",
+  ("times", Bold): "Times-Bold",
+  ("times", Italic): "Times-Italic",
+  ("courier", Roman): "Courier-Roman",
+  ("courier", Bold): "Courier-Bold",
+  ("courier", Italic): "Courier-Oblique",
+  ("symbol", Roman): "Symbol",
+  ("symbol", Bold): "Symbol",
+  ("symbol", Italic): "Symbol",
+  "EncodingName": 'StandardEncoding'
+}
 
-PSFontMapLatin1Enc = {("helvetica", Roman): "Helvetica-Roman-ISOLatin1",
-                      ("helvetica", Bold): "Helvetica-Bold-ISOLatin1",
-                      ("helvetica", Italic): "Helvetica-Oblique-ISOLatin1",
-                      ("times", Roman): "Times-Roman-ISOLatin1",
-                      ("times", Bold): "Times-Bold-ISOLatin1",
-                      ("times", Italic): "Times-Italic-ISOLatin1",
-                      ("courier", Roman): "Courier-Roman-ISOLatin1",
-                      ("courier", Bold): "Courier-Bold-ISOLatin1",
-                      ("courier", Italic): "Courier-Oblique-ISOLatin1",
-                      ("symbol", Roman): "Symbol",
-                      ("symbol", Bold): "Symbol",
-                      ("symbol", Italic): "Symbol",
-                      "EncodingName": 'Latin1Encoding'}
+PSFontMapLatin1Enc = {
+  ("helvetica", Roman): "Helvetica-Roman-ISOLatin1",
+  ("helvetica", Bold): "Helvetica-Bold-ISOLatin1",
+  ("helvetica", Italic): "Helvetica-Oblique-ISOLatin1",
+  ("times", Roman): "Times-Roman-ISOLatin1",
+  ("times", Bold): "Times-Bold-ISOLatin1",
+  ("times", Italic): "Times-Italic-ISOLatin1",
+  ("courier", Roman): "Courier-Roman-ISOLatin1",
+  ("courier", Bold): "Courier-Bold-ISOLatin1",
+  ("courier", Italic): "Courier-Oblique-ISOLatin1",
+  ("symbol", Roman): "Symbol",
+  ("symbol", Bold): "Symbol",
+  ("symbol", Italic): "Symbol",
+  "EncodingName": 'Latin1Encoding'
+}
 
 ###############################################################
 
@@ -209,6 +217,7 @@ class EpsDSC(PsDSC):
   def documentHeader(self):
     return "%!PS-Adobe-3.0 EPSF-3.0"
 
+
 ##########################################################################
 
 
@@ -281,9 +290,11 @@ class PSCanvas(Canvas):
     # are these procedures??? check this chris
 
     # Now create Latin1ISO font encodings for non-symbol fonts (need to add pdf fonts too)
-    shapes = {"Helvetica": ["Roman", "Bold", "Oblique"],
-              "Times": ["Roman", "Bold", "Italic"],
-              "Courier": ["Roman", "Bold", "Oblique"]}
+    shapes = {
+      "Helvetica": ["Roman", "Bold", "Oblique"],
+      "Times": ["Roman", "Bold", "Italic"],
+      "Courier": ["Roman", "Bold", "Oblique"]
+    }
     fntnames = []
 
     for basename in ['Helvetica', 'Times', 'Courier']:
@@ -579,8 +590,11 @@ translate
       swidth = self.stringWidth(s, self._currentFont)
       ypos = (0.5 * self.fontDescent(self._currentFont))
       thickness = 0.08 * self._currentFont.size  # relate to font.descent?
-      self.code.extend(['%s setlinewidth' % thickness, '0 %s neg rmoveto' % (ypos),
-                        '%s 0 rlineto stroke' % -swidth])
+      self.code.extend([
+        '%s setlinewidth' % thickness,
+        '0 %s neg rmoveto' % (ypos),
+        '%s 0 rlineto stroke' % -swidth
+      ])
 
   def _drawStringOneLine(self, s, x, y, font=None, color=None, angle=0, **kwargs):
     # PRE: assumes that coordinate system has already been set for rotated strings
@@ -592,8 +606,11 @@ translate
       swidth = self.stringWidth(s, self._currentFont)
       dy = (0.5 * self.fontDescent(self._currentFont))
       thickness = 0.08 * self._currentFont.size  # relate to font.descent?
-      self.code.extend(['%s setlinewidth' % thickness, '%f %f neg moveto' % (x, dy + y),
-                        '%f 0 rlineto stroke' % swidth])
+      self.code.extend([
+        '%s setlinewidth' % thickness,
+        '%f %f neg moveto' % (x, dy + y),
+        '%f 0 rlineto stroke' % swidth
+      ])
 
   def drawString(self, s, x, y, font=None, color=None, angle=0, **kwargs):
     """drawString(self, s, x, y, font=None, color=None, angle=0)
@@ -705,8 +722,8 @@ translate
 
     if self._currentColor != transparent:
       # move current point to start of arc, note negative angle because y increases down
-      self.code.append('%s %s neg moveto' % (cx + rx * math.cos(-startAng),
-                                             cy + ry * math.sin(-startAng)))
+      self.code.append('%s %s neg moveto' %
+                       (cx + rx * math.cos(-startAng), cy + ry * math.sin(-startAng)))
       self.code.append(codeline + ' stroke')
 
   def _genArcCode(self, x1, y1, x2, y2, startAng, extent):
@@ -946,9 +963,10 @@ translate
     if imNumComponents == 3:
       self.code.append('/Decode [0 1 0 1 0 1]  %% decode color values normally')
 
-    self.code.extend(['/ImageMatrix [%s 0 0 %s 0 %s]' % (imwidth, -imheight, imheight),
-                      '/DataSource currentfile /ASCIIHexDecode filter', '>> % End image dictionary',
-                      'image'])
+    self.code.extend([
+      '/ImageMatrix [%s 0 0 %s 0 %s]' % (imwidth, -imheight, imheight),
+      '/DataSource currentfile /ASCIIHexDecode filter', '>> % End image dictionary', 'image'
+    ])
     # after image operator just need to dump image dat to file as hexstring
     rawimage = myimage.tobytes()
     assert len(rawimage) == imwidth * imheight, 'Wrong amount of data for image'

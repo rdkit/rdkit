@@ -1,4 +1,4 @@
-# Release_2023.03.1b1
+# Release_2023.03.1
 (Changes relative to Release_2022.09.1)
 
 ## Acknowledgements
@@ -18,8 +18,11 @@ Riccardo Vianello, Franz Waibl, Rachel Walker, Patrick Walters,
 'dangthatsright', 'mihalyszabo88', 'Deltaus', 'radchenkods',
 'josh-collaborationspharma', 'jkh', 'yamasakih'
 
-
 ## Highlights
+- The 2D coordinate generation can now optionally use templates when working with complex ring systems. We will continue to improve this functionality in future releases.
+- There's now a single function which allows you to calculate all available 2D descriptors for a molecule: Descriptors.CalcMolDescriptors() 
+- Support for working with organometallic molecules has improved: drawings of these structures are now better and there's new code for switching back and forth between dative and multi-center views of the bonding in systems like ferrocene.
+- The fingerprint generator code has been improved and expanded with the idea of allowing user to switch entirely to the new code for the supported fingerprint types: Morgan, RDKit, topological torsion, and atom pairs.
 
 ## Backwards incompatible changes
 
@@ -236,7 +239,9 @@ Riccardo Vianello, Franz Waibl, Rachel Walker, Patrick Walters,
  (github issue #6111 from DavidACosgrove)
   - Drawing in ACS1996 mode throws ValueError: Bad Conformer Id if molecule has no coords
  (github issue #6112 from DavidACosgrove)
-  - DetermineBonds fails for single H atom
+  - Single atom or queries with hydrogens shouldn't trigger warning in mergeQueryHs
+ (github issue #6119 from bp-kelley)
+   - DetermineBonds fails for single H atom
  (github issue #6121 from gncs)
   - MinimalLib: avoid that assignStereochemistry() fails when removeHs=true
  (github pull #6134 from ptosco)
@@ -278,6 +283,11 @@ Riccardo Vianello, Franz Waibl, Rachel Walker, Patrick Walters,
  (github pull #6272 from greglandrum)
   - compile-time error with GCC 12.2.1 on Fedora 36
  (github issue #6274 from rvianello)
+  - Fix UnitTestPandasTools for running without pandas installed.
+ (github pull #6299 from roccomoretti)
+  - Aromatic dashes look bad
+ (github pull #6303 from greglandrum)
+
 
 ## Cleanup work:
   - Do deprecations for the 2023.03 release
@@ -292,10 +302,15 @@ Riccardo Vianello, Franz Waibl, Rachel Walker, Patrick Walters,
  (github pull #6081 from bjonnh-work)
   - Remove spurious full stops from warnings.
  (github pull #6124 from DavidACosgrove)
+  - Reformat Python code for 2023.03 release
+ (github pull #6294 from ricrogz)
+  - Reformat C/C++ code ahead of 2023.03 release
+ (github pull #6295 from ricrogz)
+
 
 ## New Features and Enhancements:
   - mol V3000: multicenter dative bond
-  (github issue #5121 from marcostenta)
+ (github issue #5121 from marcostenta)
   - add molecular filter examples
  (github pull #5647 from RPirie96)
    - Use templates in RDKit coordinate generation
@@ -412,6 +427,12 @@ Riccardo Vianello, Franz Waibl, Rachel Walker, Patrick Walters,
  (github pull #6280 from ptosco)
   - Exposed queryColour in MolDrawOptions
  (github pull #6282 from ptosco)
+  - Add a new tautomer mol hash
+ (github pull #6289 from glandrum)
+  - has_coords() now reports whether coords are 2D or 3D if present
+ (github pull #6297 from ptosco)
+ - Improve the installation/testing instructions. 
+ (github pull #6298 from roccomoretti)
 
 ## Code removed in this release:
 - The `SmilesParserParams` option `useLegacyStereo` has been removed. Please use

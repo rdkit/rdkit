@@ -41,8 +41,8 @@ OutputType TopologicalTorsionEnvGenerator<OutputType>::getResultSize() const {
 
 std::string TopologicalTorsionArguments::infoString() const {
   return "TopologicalTorsionArguments torsionAtomCount=" +
-             std::to_string(d_torsionAtomCount) + " onlyShortestPaths="
-         + std::to_string(df_onlyShortestPaths);
+         std::to_string(d_torsionAtomCount) +
+         " onlyShortestPaths=" + std::to_string(df_onlyShortestPaths);
 };
 
 template <typename OutputType>
