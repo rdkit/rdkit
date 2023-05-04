@@ -1245,8 +1245,8 @@ void testAtomListLineWithOtherQueries() {
   4  1  1  0  0  0  8
 M  CHG  2   1   1   4  -1
 M  SUB  1   4   1
-M  ALS   2  2 F O   S
-M  ALS   4  2 F O   S
+M  ALS   2  2 F O   S   
+M  ALS   4  2 F O   S   
 M  END
 )MOL",
                                          R"MOL(
@@ -1261,8 +1261,8 @@ M  END
   1  3  1  0  0  0  2
   4  1  1  0  0  0  8
 M  CHG  2   1   1   4  -1
-M  ALS   2  2 F O   S
-M  ALS   4  2 F O   S
+M  ALS   2  2 F O   S   
+M  ALS   4  2 F O   S   
 M  SUB  1   4   1
 M  END
   )MOL"};
@@ -1577,7 +1577,6 @@ void testGithub1843() {
 void testHasValenceViolation() {
   BOOST_LOG(rdInfoLog) << " ----------> Testing Atom::hasValenceViolation()"
                        << std::endl;
-
   auto to_mol = [](const auto &smiles) {
     int debugParse = 0;
     bool sanitize = false;
@@ -1593,17 +1592,19 @@ void testHasValenceViolation() {
            "C(C)(C)(C)C",
            "S(C)(C)(C)(C)(C)C",
            "O(C)C",
-           "[H+]",
            "[H-]",
+           "[H+] |^2:0|",  // same as [H-]
            "[HH]",
+           "[H-2]",  // behaves like Li, which allows any valence
            "[He]",
            "[C][C] |^5:0,1|",
            "[H][Si] |^5:1|",
+           "[H][Na]([H])([H])[H]",  // Na allows any valence
            "[CH3+]",
            "[CH3-]",
            "[NH4+]",
            "[Na][H]",
-           "*",              // dummy atom
+           "*",              // dummy atom, which also accounts for wildcards
            "*C |$_AP1;$|]",  // attachment point
            "[*] |$_R1$|",    // rgroup
            "[Og][Og]([Og])([Og])([Og])([Og])([Og])[Og]",
@@ -1622,11 +1623,12 @@ void testHasValenceViolation() {
            "S(C)(C)(C)(C)(C)(C)C",
            "[C](C)(C)(C)C |^1:0|",  //  pentavalent due to unpaired electron
            "O(C)=C",
-           "[He+2]",  // isolobal lookup = 0
-           "[H+2]",   // isolobal lookup = -1
+           "[H+]",  // proton
            "[H]",
-           "[H-2]",
+           "[H+] |^1:0|",  // same as [H]
+           "[H+2]",
            "[He+]",
+           "[He+2]",
            "[He][He]",
        }) {
     auto mol = to_mol(smiles);
@@ -1636,8 +1638,12 @@ void testHasValenceViolation() {
 
   // Queries never have valence errors
   for (const auto &smarts : {
-           "C(C)(C)(C)(C)C",      // query atoms when read as SMARTS
+           "[#6]",                // query atom when read as SMARTS
            "[#8](-,=[#6])=[#6]",  // S/D query bond present
+           "[!#6&!#1]",           // Q query atom
+           "[#6,#7,#8]",          // allowed list
+           "[!#6&!#7&!#8]",       // disallowed list
+           "[#6&R]",              // advanced query features
        }) {
     auto mol = RDKit::SmartsToMol(smarts);
     for (auto atom : mol->atoms()) {

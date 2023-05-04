@@ -622,43 +622,36 @@ double Atom::getMass() const {
 }
 
 bool Atom::hasValenceViolation() const {
-  // Ignore query atoms or atoms attached to query bonds
-  auto bonds = getOwningMol().atomBonds(this);
-  auto query = [](auto b) { return b->hasQuery(); };
-  if (hasQuery() || std::any_of(bonds.begin(), bonds.end(), query)) {
-    return false;
-  }
+  auto any_of = [](auto &vec, const auto &pred) {
+    return std::any_of(vec.begin(), vec.end(), pred);
+  };
 
+  // Ignore dummy atoms, query atoms, or atoms attached to query bonds
   auto atomic_number = getAtomicNum();
-  auto charge = getFormalCharge();
-
-  if (atomic_number == 0) {
-    return false;  // ignore dummy atoms
-  }
-  if (atomic_number == 1 && charge == 1) {
-    return false;  // proton has a valid valence
+  auto bonds = getOwningMol().atomBonds(this);
+  auto is_query = [](auto b) { return b->hasQuery(); };
+  if (atomic_number == 0 || hasQuery() || any_of(bonds, is_query)) {
+    return false;
   }
 
   // Account for charge via the isolobal analogy by modifying the atomic
-  // number used to lookup allowed valences
-  auto isolobal_number = std::min(atomic_number - charge, 118);
-  if (isolobal_number < 1) {
-    return true;  // no such element to lookup
-  }
-
-  // No error if any valence is permitted
-  const auto *table = RDKit::PeriodicTable::getTable();
-  if (table->getDefaultValence(isolobal_number) == -1) {
-    return false;
-  }
-
-  // Because the lookup accounted for charge, we can ignore that contribution
+  // number used to look up allowed valences
+  auto valence_lookup = atomic_number - getFormalCharge();
+  // Because the look up accounted for charge, we can ignore that contribution
   // to the current valence; however, still account for unpaired electrons
-  auto current_valence = getTotalValence() + getNumRadicalElectrons();
+  int current_valence = getTotalValence() + getNumRadicalElectrons();
+  // If no such element to look up, reset to the original atomic number
+  // and modify the current valence to account for charge
+  if (valence_lookup < 1 || valence_lookup > HEAVIEST_ELEMENT_NUMBER) {
+    valence_lookup = atomic_number;
+    current_valence -= getFormalCharge();
+  }
 
-  auto allowed_valence = table->getValenceList(isolobal_number);
-  return std::find(allowed_valence.begin(), allowed_valence.end(),
-                   current_valence) == allowed_valence.end();
+  // -1 indicates that any valence is permitted
+  const auto *table = RDKit::PeriodicTable::getTable();
+  auto allowed_valence_list = table->getValenceList(valence_lookup);
+  auto is_allowed = [&](auto x) { return x == -1 || x == current_valence; };
+  return !any_of(allowed_valence_list, is_allowed);
 }
 
 void Atom::setQuery(Atom::QUERYATOM_QUERY *) {
