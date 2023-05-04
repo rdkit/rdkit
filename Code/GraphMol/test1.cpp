@@ -1611,7 +1611,7 @@ void testHasValenceViolation() {
        }) {
     auto mol = to_mol(smiles);
     for (auto atom : mol->atoms()) {
-      BOOST_TEST(!has_valence_violation(atom), smiles);
+      BOOST_TEST(!atom->hasValenceViolation(), smiles);
     }
   }
 
@@ -1631,7 +1631,7 @@ void testHasValenceViolation() {
        }) {
     auto mol = to_mol(smiles);
     auto atom = mol->getAtomWithIdx(0);
-    BOOST_TEST(has_valence_violation(atom), smiles);
+    BOOST_TEST(atom->hasValenceViolation(), smiles);
   }
 
   // Queries never have valence errors
@@ -1641,7 +1641,7 @@ void testHasValenceViolation() {
        }) {
     auto mol = RDKit::SmartsToMol(smarts);
     for (auto atom : mol->atoms()) {
-      BOOST_TEST(!has_valence_violation(atom));
+      BOOST_TEST(!atom->hasValenceViolation());
     }
   }
 }

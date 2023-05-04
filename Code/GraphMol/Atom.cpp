@@ -623,14 +623,14 @@ double Atom::getMass() const {
 
 bool Atom::hasValenceViolation() const {
   // Ignore query atoms or atoms attached to query bonds
-  auto bonds = m_atom->getOwningMol().atomBonds(m_atom);
+  auto bonds = getOwningMol().atomBonds(this);
   auto query = [](auto b) { return b->hasQuery(); };
-  if (m_atom->hasQuery() || std::any_of(bonds.begin(), bonds.end(), query)) {
+  if (hasQuery() || std::any_of(bonds.begin(), bonds.end(), query)) {
     return false;
   }
 
-  auto atomic_number = m_atom->getAtomicNum();
-  auto charge = m_atom->getFormalCharge();
+  auto atomic_number = getAtomicNum();
+  auto charge = getFormalCharge();
 
   if (atomic_number == 0) {
     return false;  // ignore dummy atoms
@@ -654,8 +654,7 @@ bool Atom::hasValenceViolation() const {
 
   // Because the lookup accounted for charge, we can ignore that contribution
   // to the current valence; however, still account for unpaired electrons
-  auto current_valence =
-      m_atom->getTotalValence() + m_atom->getNumRadicalElectrons();
+  auto current_valence = getTotalValence() + getNumRadicalElectrons();
 
   auto allowed_valence = table->getValenceList(isolobal_number);
   return std::find(allowed_valence.begin(), allowed_valence.end(),
