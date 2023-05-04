@@ -6885,7 +6885,7 @@ CAS<~>
 
   def testHasValenceViolation(self):
     mol = Chem.MolFromSmiles('C(C)(C)(C)(C)C', sanitize=False)
-    m.UpdatePropertyCache(strict=False)
+    mol.UpdatePropertyCache(strict=False)
     self.assertTrue(any(a.HasValenceViolation() for a in mol.GetAtoms()))
 
   def testgithub4992(self):
