@@ -1582,7 +1582,7 @@ void testHasValenceViolation() {
     int debugParse = 0;
     bool sanitize = false;
     auto mol = RDKit::SmilesToMol(smiles, debugParse, sanitize);
-    BOOST_REQUIRE(mol != nullptr);
+    TEST_ASSERT(mol != nullptr);
     mol->updatePropertyCache(false);
     return mol;
   };
@@ -1611,7 +1611,7 @@ void testHasValenceViolation() {
        }) {
     auto mol = to_mol(smiles);
     for (auto atom : mol->atoms()) {
-      BOOST_TEST(!atom->hasValenceViolation(), smiles);
+      TEST_ASSERT(!atom->hasValenceViolation());
     }
   }
 
@@ -1631,7 +1631,7 @@ void testHasValenceViolation() {
        }) {
     auto mol = to_mol(smiles);
     auto atom = mol->getAtomWithIdx(0);
-    BOOST_TEST(atom->hasValenceViolation(), smiles);
+    TEST_ASSERT(atom->hasValenceViolation());
   }
 
   // Queries never have valence errors
@@ -1641,7 +1641,7 @@ void testHasValenceViolation() {
        }) {
     auto mol = RDKit::SmartsToMol(smarts);
     for (auto atom : mol->atoms()) {
-      BOOST_TEST(!atom->hasValenceViolation());
+      TEST_ASSERT(!atom->hasValenceViolation());
     }
   }
 }
