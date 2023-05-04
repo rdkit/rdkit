@@ -642,7 +642,7 @@ bool Atom::hasValenceViolation() const {
   int current_valence = getTotalValence() + getNumRadicalElectrons();
   // If no such element to look up, reset to the original atomic number
   // and modify the current valence to account for charge
-  if (valence_lookup < 1 || valence_lookup > HEAVIEST_ELEMENT_NUMBER) {
+  if (valence_lookup < 1 || valence_lookup > 118) {
     valence_lookup = atomic_number;
     current_valence -= getFormalCharge();
   }
