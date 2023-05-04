@@ -202,6 +202,13 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   */
   int getImplicitValence() const;
 
+  //! returns whether the atom has a valency violation or not
+  /*!
+    <b>Notes:</b>
+      - requires an owning molecule
+  */
+  bool hasValenceViolation() const;
+
   //! returns the number of radical electrons for this Atom
   /*!
     <b>Notes:</b>

@@ -1245,8 +1245,8 @@ void testAtomListLineWithOtherQueries() {
   4  1  1  0  0  0  8
 M  CHG  2   1   1   4  -1
 M  SUB  1   4   1
-M  ALS   2  2 F O   S   
-M  ALS   4  2 F O   S   
+M  ALS   2  2 F O   S
+M  ALS   4  2 F O   S
 M  END
 )MOL",
                                          R"MOL(
@@ -1261,8 +1261,8 @@ M  END
   1  3  1  0  0  0  2
   4  1  1  0  0  0  8
 M  CHG  2   1   1   4  -1
-M  ALS   2  2 F O   S   
-M  ALS   4  2 F O   S   
+M  ALS   2  2 F O   S
+M  ALS   4  2 F O   S
 M  SUB  1   4   1
 M  END
   )MOL"};
@@ -1572,6 +1572,78 @@ void testGithub1843() {
   MolOps::sanitizeMol(*m);
   delete m;
   BOOST_LOG(rdErrorLog) << "Finished" << std::endl;
+}
+
+void testHasValenceViolation() {
+  BOOST_LOG(rdInfoLog) << " ----------> Testing Atom::hasValenceViolation()"
+                       << std::endl;
+
+  auto to_mol = [](const auto &smiles) {
+    int debugParse = 0;
+    bool sanitize = false;
+    auto mol = RDKit::SmilesToMol(smiles, debugParse, sanitize);
+    BOOST_REQUIRE(mol != nullptr);
+    mol->updatePropertyCache(false);
+    return mol;
+  };
+
+  //  All valid atoms
+  for (const auto &smiles : {
+           "C",
+           "C(C)(C)(C)C",
+           "S(C)(C)(C)(C)(C)C",
+           "O(C)C",
+           "[H+]",
+           "[H-]",
+           "[HH]",
+           "[He]",
+           "[C][C] |^5:0,1|",
+           "[H][Si] |^5:1|",
+           "[CH3+]",
+           "[CH3-]",
+           "[NH4+]",
+           "[Na][H]",
+           "*",              // dummy atom
+           "*C |$_AP1;$|]",  // attachment point
+           "[*] |$_R1$|",    // rgroup
+           "[Og][Og]([Og])([Og])([Og])([Og])([Og])[Og]",
+           "[Lv+4]",
+       }) {
+    auto mol = to_mol(smiles);
+    for (auto atom : mol->atoms()) {
+      BOOST_TEST(!has_valence_violation(atom), smiles);
+    }
+  }
+
+  // First atom has a valence error!
+  for (const auto &smiles : {
+           "[C+5]",
+           "C(C)(C)(C)(C)C",
+           "S(C)(C)(C)(C)(C)(C)C",
+           "[C](C)(C)(C)C |^1:0|",  //  pentavalent due to unpaired electron
+           "O(C)=C",
+           "[He+2]",  // isolobal lookup = 0
+           "[H+2]",   // isolobal lookup = -1
+           "[H]",
+           "[H-2]",
+           "[He+]",
+           "[He][He]",
+       }) {
+    auto mol = to_mol(smiles);
+    auto atom = mol->getAtomWithIdx(0);
+    BOOST_TEST(has_valence_violation(atom), smiles);
+  }
+
+  // Queries never have valence errors
+  for (const auto &smarts : {
+           "C(C)(C)(C)(C)C",      // query atoms when read as SMARTS
+           "[#8](-,=[#6])=[#6]",  // S/D query bond present
+       }) {
+    auto mol = RDKit::SmartsToMol(smarts);
+    for (auto atom : mol->atoms()) {
+      BOOST_TEST(!has_valence_violation(atom));
+    }
+  }
 }
 
 // -------------------------------------------------------------------

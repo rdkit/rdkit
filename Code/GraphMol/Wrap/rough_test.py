@@ -6883,6 +6883,10 @@ CAS<~>
       self.assertTrue(bond.GetIsAromatic())
       self.assertEqual(bond.GetBondType(), Chem.BondType.AROMATIC)
 
+  def testHasValenceViolation(self):
+    mol = Chem.MolFromSmiles('C(C)(C)(C)(C)C', sanitize=False)
+    self.assertTrue(any(a.HasValenceViolation() for a in mol.GetAtoms()))
+
   def testgithub4992(self):
     if not hasattr(Chem, "Chem.MultithreadedSDMolSupplier"):
       return

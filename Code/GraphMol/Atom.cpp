@@ -621,6 +621,47 @@ double Atom::getMass() const {
   }
 }
 
+bool Atom::hasValenceViolation() const {
+  // Ignore query atoms or atoms attached to query bonds
+  auto bonds = m_atom->getOwningMol().atomBonds(m_atom);
+  auto query = [](auto b) { return b->hasQuery(); };
+  if (m_atom->hasQuery() || std::any_of(bonds.begin(), bonds.end(), query)) {
+    return false;
+  }
+
+  auto atomic_number = m_atom->getAtomicNum();
+  auto charge = m_atom->getFormalCharge();
+
+  if (atomic_number == 0) {
+    return false;  // ignore dummy atoms
+  }
+  if (atomic_number == 1 && charge == 1) {
+    return false;  // proton has a valid valence
+  }
+
+  // Account for charge via the isolobal analogy by modifying the atomic
+  // number used to lookup allowed valences
+  auto isolobal_number = std::min(atomic_number - charge, 118);
+  if (isolobal_number < 1) {
+    return true;  // no such element to lookup
+  }
+
+  // No error if any valence is permitted
+  const auto *table = RDKit::PeriodicTable::getTable();
+  if (table->getDefaultValence(isolobal_number) == -1) {
+    return false;
+  }
+
+  // Because the lookup accounted for charge, we can ignore that contribution
+  // to the current valence; however, still account for unpaired electrons
+  auto current_valence =
+      m_atom->getTotalValence() + m_atom->getNumRadicalElectrons();
+
+  auto allowed_valence = table->getValenceList(isolobal_number);
+  return std::find(allowed_valence.begin(), allowed_valence.end(),
+                   current_valence) == allowed_valence.end();
+}
+
 void Atom::setQuery(Atom::QUERYATOM_QUERY *) {
   //  Atoms don't have complex queries so this has to fail
   PRECONDITION(0, "plain atoms have no Query");
