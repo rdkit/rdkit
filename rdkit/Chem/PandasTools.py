@@ -543,7 +543,7 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300), formats=N
       if col_idx in molCol_indices:
         image_data = BytesIO()
         m = row[col]
-        img = Draw.MolToImage(m if isinstance(m, Chem.Mol) else Chem.Mol(), size=size)
+        img = Draw.MolToImage(m if isinstance(m, Chem.Mol) else Chem.Mol(), size=size, options=drawOptions)
         img.save(image_data, format='PNG')
         worksheet.insert_image(row_idx_actual, col_idx, "f", {'image_data': image_data})
         worksheet.set_column(col_idx, col_idx,
