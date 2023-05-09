@@ -77,7 +77,7 @@ bool AddToDict(const U &ob, boost::python::dict &dict, const std::string &key) {
 
 template <class T>
 boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
-                                   bool includeComputed, bool autoConvert=True) {
+                                   bool includeComputed, bool autoConvert=true) {
   boost::python::dict dict;
   auto &rd_dict = obj.getDict();
   auto &data = rd_dict.getData();

@@ -263,7 +263,8 @@ struct sgroup_wrap {
              "SubstanceGroup.\n\n")
         .def("GetPropsAsDict", GetPropsAsDict<SubstanceGroup>,
              (python::arg("self"), python::arg("includePrivate") = true,
-              python::arg("includeComputed") = true),
+              python::arg("includeComputed") = true,
+	      python::arg("autoConvert") = true),
              "Returns a dictionary of the properties set on the "
              "SubstanceGroup.\n"
              " n.b. some properties cannot be converted to python types.\n")

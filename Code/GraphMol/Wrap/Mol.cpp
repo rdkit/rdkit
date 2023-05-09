@@ -759,7 +759,8 @@ struct mol_wrapper {
 
         .def("GetPropsAsDict", GetPropsAsDict<ROMol>,
              (python::arg("self"), python::arg("includePrivate") = false,
-              python::arg("includeComputed") = false),
+              python::arg("includeComputed") = false,
+	      python::arg("autoConvert") = true),
              "Returns a dictionary populated with the molecules properties.\n"
              " n.b. Some properties are not able to be converted to python "
              "types.\n\n"
