@@ -62,9 +62,22 @@ inline const char *GetTypeName<bool>() {
   return "a True or False value";
 }
 
+template <class T, class U>
+bool AddToDict(const U &ob, boost::python::dict &dict, const std::string &key) {
+  T res;
+  try {
+    if (ob.getPropIfPresent(key, res)) {
+      dict[key] = res;
+    }
+  } catch (boost::bad_any_cast &) {
+    return false;
+  }
+  return true;
+}
+
 template <class T>
 boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
-                                   bool includeComputed) {
+                                   bool includeComputed, bool autoConvert=True) {
   boost::python::dict dict;
   auto &rd_dict = obj.getDict();
   auto &data = rd_dict.getData();
@@ -83,6 +96,11 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
 	dict[rdvalue.key] = from_rdvalue<double>(rdvalue.val);
 	break;
       case RDTypeTag::StringTag:
+	if (autoConvert) {
+	  // Auto convert strings to ints and double if possible
+	  if(AddToDict<int>(obj, dict, rdvalue.key)) break;
+	  else if(AddToDict<double>(obj, dict, rdvalue.key)) break;
+	} 
 	dict[rdvalue.key] = from_rdvalue<std::string>(rdvalue.val);
 	break;
       case RDTypeTag::FloatTag:
