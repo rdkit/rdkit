@@ -35,6 +35,7 @@
 #include <RDBoost/pyint_api.h>
 #include <RDBoost/Wrap.h>
 #include <RDGeneral/Dict.h>
+#include <algorithm>
 
 namespace RDKit {
 
@@ -61,57 +62,64 @@ inline const char *GetTypeName<bool>() {
   return "a True or False value";
 }
 
-template <class T, class U>
-bool AddToDict(const U &ob, boost::python::dict &dict, const std::string &key) {
-  T res;
-  try {
-    if (ob.getPropIfPresent(key, res)) {
-      dict[key] = res;
-    }
-  } catch (boost::bad_any_cast &) {
-    return false;
-  }
-  return true;
-}
-
 template <class T>
 boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
                                    bool includeComputed) {
   boost::python::dict dict;
-  // precedence double, int, unsigned, std::vector<double>,
-  // std::vector<int>, std::vector<unsigned>, string
+  auto &rd_dict = obj.getDict();
+  auto &data = rd_dict.getData();
+  
   STR_VECT keys = obj.getPropList(includePrivate, includeComputed);
-  for (size_t i = 0; i < keys.size(); ++i) {
-    if (AddToDict<int>(obj, dict, keys[i])) {
+  for (auto &rdvalue: data) {
+    if (std::find(keys.begin(), keys.end(), rdvalue.key) == keys.end())
       continue;
-    }
-    if (AddToDict<unsigned int>(obj, dict, keys[i])) {
-      continue;
-    }
-    if (AddToDict<bool>(obj, dict, keys[i])) {
-      continue;
-    }
-    if (AddToDict<double>(obj, dict, keys[i])) {
-      continue;
-    }
-    if (AddToDict<std::vector<int>>(obj, dict, keys[i])) {
-      continue;
-    }
-    if (AddToDict<std::vector<unsigned int>>(obj, dict, keys[i])) {
-      continue;
-    }
-    if (AddToDict<std::vector<double>>(obj, dict, keys[i])) {
-      continue;
-    }
-    if (AddToDict<std::vector<std::string>>(obj, dict, keys[i])) {
-      continue;
-    }
-    if (AddToDict<std::string>(obj, dict, keys[i])) {
-      continue;
+    try {
+      const auto tag = rdvalue.val.getTag();
+      switch(tag) {
+      case RDTypeTag::IntTag:
+	dict[rdvalue.key] = from_rdvalue<int>(rdvalue.val);
+	break;
+      case RDTypeTag::DoubleTag:
+	dict[rdvalue.key] = from_rdvalue<double>(rdvalue.val);
+	break;
+      case RDTypeTag::StringTag:
+	dict[rdvalue.key] = from_rdvalue<std::string>(rdvalue.val);
+	break;
+      case RDTypeTag::FloatTag:
+	dict[rdvalue.key] = from_rdvalue<float>(rdvalue.val);
+	break;
+      case RDTypeTag::BoolTag:
+	dict[rdvalue.key] = from_rdvalue<bool>(rdvalue.val);
+	break;
+      case RDTypeTag::UnsignedIntTag:
+	dict[rdvalue.key] = from_rdvalue<unsigned int>(rdvalue.val);
+	break;
+      case RDTypeTag::AnyTag:
+	// we skip these for now
+	break;
+      case RDTypeTag::VecDoubleTag:
+	dict[rdvalue.key] = from_rdvalue<std::vector<double>>(rdvalue.val);
+	break;
+      case RDTypeTag::VecFloatTag:
+	dict[rdvalue.key] = from_rdvalue<std::vector<float>>(rdvalue.val);
+	break;
+      case RDTypeTag::VecIntTag:
+	dict[rdvalue.key] = from_rdvalue<std::vector<int>>(rdvalue.val);
+	break;
+      case RDTypeTag::VecUnsignedIntTag:
+	dict[rdvalue.key] = from_rdvalue<std::vector<unsigned int>>(rdvalue.val);
+	break;
+      case RDTypeTag::VecStringTag:
+	dict[rdvalue.key] = from_rdvalue<std::vector<std::string>>(rdvalue.val);
+	break;
+      }
+    } catch (boost::bad_any_cast &) {
     }
   }
   return dict;
 }
+  
+
 
 template <class RDOb, class T>
 T GetProp(RDOb *ob, const char *key) {
