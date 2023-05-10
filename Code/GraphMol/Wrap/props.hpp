@@ -98,8 +98,11 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
       case RDTypeTag::StringTag:
 	if (autoConvert) {
 	  // Auto convert strings to ints and double if possible
-	  if(AddToDict<int>(obj, dict, rdvalue.key)) break;
-	  else if(AddToDict<double>(obj, dict, rdvalue.key)) break;
+	  if(AddToDict<int>(obj, dict, rdvalue.key)) {
+	    break;
+	  } else if(AddToDict<double>(obj, dict, rdvalue.key)) { 
+	    break;
+	  }
 	} 
 	dict[rdvalue.key] = from_rdvalue<std::string>(rdvalue.val);
 	break;
