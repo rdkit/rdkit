@@ -7,7 +7,7 @@ endif()
 
 find_package(PythonInterp)
 if (PYTHONINTERP_FOUND)
-  if(${PYTHON_VERSION_STRING} VERSION_GREATER "2.6" )
+  if(DEFINED ${PYTHON_VERSION_STRING} AND ${PYTHON_VERSION_STRING} VERSION_GREATER "2.6" )
         message("== Updating Filters.cpp from pains file")
         execute_process(
           COMMAND
