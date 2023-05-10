@@ -1512,3 +1512,49 @@ M  END'));
        0
 (1 row)
 
+-- atom and bond properties are preserved by pickling
+select mol_to_cxsmiles(mol_from_smiles('F* |$;HAR_p$|'));
+ mol_to_cxsmiles 
+-----------------
+ *F |$HAR_p;$|
+(1 row)
+
+select mol_to_cxsmiles(mol_from_smiles('F* |$;foo_p$|'));
+ mol_to_cxsmiles 
+-----------------
+ *F |$foo_p;$|
+(1 row)
+
+select mol_to_cxsmiles(mol_from_ctab('
+  Mrv2211 04222307322D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.6667 -8.5 0 0
+M  V30 2 C 3.0003 -7.73 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2 CFG=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+'));
+ mol_to_cxsmiles 
+-----------------
+ CC |w:0.0|
+(1 row)
+
+select 'Fc1ccccc1'::mol@>>mol_adjust_query_properties('F* |$;HAR_p$|'::mol);
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'Fc1ncccc1'::mol@>>mol_adjust_query_properties('F* |$;HAR_p$|'::mol);
+ ?column? 
+----------
+ t
+(1 row)
+
