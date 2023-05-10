@@ -38,6 +38,7 @@
 #include <Geometry/point.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
 
 const int ci_LOCAL_INF = static_cast<int>(1e8);
@@ -183,6 +184,59 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
   }
 }
 
+bool isMetal(const Atom *atom) {
+  // This is the list of not metal atoms from QueryOps.cpp
+  static const std::set<int> notMetals{0,  1,  2,  5,  6,  7,  8,  9,
+                                       10, 14, 15, 16, 17, 18, 33, 34,
+                                       35, 36, 52, 53, 54, 85, 86};
+  return (notMetals.find(atom->getAtomicNum()) == notMetals.end());
+}
+
+bool isHypervalentNonMetal(Atom *atom) {
+  if (isMetal(atom)) {
+    return false;
+  }
+  auto ev = atom->calcExplicitValence(false);
+  // Check the explicit valence of the non-metal against the allowed
+  // valences of the atom, adjusted by its formal charge.  This means that
+  // N+ is treated the same as C, O+ the same as N.  This allows for,
+  // for example, c1cccc[n+]1-[Fe] to be acceptable and not turned into
+  // c1cccc[n+]1->[Fe].  After all, c1cccc[n+]1-C is ok.  Although this is
+  // a poor example because c1ccccn1->[Fe] appears to be the normal
+  // way that pyridine complexes with transition metals.  Heme b in
+  // CHEBI:26355 is an example of when this is required.
+  int effAtomicNum = atom->getAtomicNum() - atom->getFormalCharge();
+  if (effAtomicNum <= 0) {
+    return false;
+  }
+  // atom is a non-metal, so if its atomic number is > 2, it should
+  // obey the octet rule (2*ev <= 8).  If it doesn't, don't set the bond to
+  // dative, so the molecule is later flagged as having bad valence.
+  // [CH4]-[Na] being a case in point, line 1800 of
+  // FileParsers/file_parsers_catch.cpp.
+  const auto &otherValens =
+      PeriodicTable::getTable()->getValenceList(effAtomicNum);
+  if (otherValens.back() > 0 && ev > otherValens.back() && ev <= 4) {
+    return true;
+  }
+
+  return false;
+}
+
+int numDativeBonds(const Atom *atom) {
+  int numDatives = 0;
+  auto &mol = atom->getOwningMol();
+  for (auto bond : mol.atomBonds(atom)) {
+    if (bond->getBondType() == Bond::BondType::DATIVE ||
+        bond->getBondType() == Bond::BondType::DATIVEONE ||
+        bond->getBondType() == Bond::BondType::DATIVEL ||
+        bond->getBondType() == Bond::BondType::DATIVER) {
+      ++numDatives;
+    }
+  }
+  return numDatives;
+}
+
 void metalBondCleanup(RWMol &mol, Atom *atom) {
   PRECONDITION(atom, "bad atom in metalBondCleanup");
   // The IUPAC recommendation for ligand->metal coordination bonds is that they
@@ -190,55 +244,44 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
   // heme b.  If the valence of a non-metal atom is above the maximum in the
   // RDKit model, and there are single bonds from it to metal
   // change those bonds to atom->metal dative.
+  // If the atom is bonded to more than 1 metal atom, choose the one
+  // with the fewer dative bonds incident on it, with the canonical
+  // rank of the atoms as a tie-breaker.
 
-  auto isMetal = [](const Atom *a) -> bool {
-    // This is the list of not metal atoms from QueryOps.cpp
-    static const std::set<int> notMetals{0,  1,  2,  5,  6,  7,  8,  9,
-                                         10, 14, 15, 16, 17, 18, 33, 34,
-                                         35, 36, 52, 53, 54, 85, 86};
-    return (notMetals.find(a->getAtomicNum()) == notMetals.end());
-  };
   auto noDative = [](const Atom *a) -> bool {
     static const std::set<int> noD{1, 2, 9, 10};
     return (noD.find(a->getAtomicNum()) != noD.end());
   };
-  if (!isMetal(atom)) {
-    return;
-  }
-  const auto &valens =
-      PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
-  if (valens.back() != -1) {
-    // the atom can only have specific valences, so leave it.
-    return;
-  }
-  for (auto bond : mol.atomBonds(atom)) {
-    auto otherAtom = bond->getOtherAtom(atom);
-    if (!isMetal(otherAtom) && !noDative(otherAtom)) {
-      auto ev = otherAtom->calcExplicitValence(false);
-      // Check the explicit valence of the non-metal against the allowed
-      // valences of the atom, adjusted by its formal charge.  This means that
-      // N+ is treated the same as C, O+ the same as N.  This allows for,
-      // for example, c1cccc[n+]1-[Fe] to be acceptable and not turned into
-      // c1cccc[n+]1->[Fe].  After all, c1cccc[n+]1-C is ok.  Although this is
-      // a poor example because c1ccccn1->[Fe] appears to be the normal
-      // way that pyridine complexes with transition metals.  Heme b in
-      // CHEBI:26355 is an example of when this is required.
-      int effAtomicNum =
-          otherAtom->getAtomicNum() - otherAtom->getFormalCharge();
-      if (effAtomicNum <= 0) {
-        continue;
+
+  std::vector<unsigned int> ranks(mol.getNumAtoms());
+  RDKit::Canon::rankMolAtoms(mol, ranks, true, true, true);
+
+  if (isHypervalentNonMetal(atom) && !noDative(atom)) {
+    std::vector<Atom *> metals;
+    // see if there are any metals bonded to it by a single bond
+    for (auto bond : mol.atomBonds(atom)) {
+      if (bond->getBondType() == Bond::BondType::SINGLE &&
+          isMetal(bond->getOtherAtom(atom))) {
+        metals.push_back(bond->getOtherAtom(atom));
       }
-      // otherAtom is a non-metal, so if its atomic number is > 2, it should
-      // obey the octet rule (2*ev <= 8).  If it doesn't, don't set the bond to
-      // dative, so the molecule is later flagged as having bad valence.
-      // [CH4]-[Na] being a case in point, line 1800 of
-      // FileParsers/file_parsers_catch.cpp.
-      const auto &otherValens =
-          PeriodicTable::getTable()->getValenceList(effAtomicNum);
-      if (otherValens.back() > 0 && ev > otherValens.back() && ev <= 4) {
+    }
+    if (!metals.empty()) {
+      std::sort(metals.begin(), metals.end(),
+                [&](const Atom *a1, const Atom *a2) -> bool {
+                  int nda1 = numDativeBonds(a1);
+                  int nda2 = numDativeBonds(a2);
+                  if (nda1 == nda2) {
+                    return ranks[a1->getIdx()] > ranks[a2->getIdx()];
+                  } else {
+                    return nda1 < nda2;
+                  }
+                });
+      auto bond =
+          mol.getBondBetweenAtoms(atom->getIdx(), metals.front()->getIdx());
+      if (bond) {
         bond->setBondType(RDKit::Bond::BondType::DATIVE);
-        bond->setBeginAtom(otherAtom);
-        bond->setEndAtom(atom);
+        bond->setBeginAtom(atom);
+        bond->setEndAtom(metals.front());
       }
     }
   }
@@ -452,6 +495,12 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   operationThatFailed = SANITIZE_ADJUSTHS;
   if (sanitizeOps & operationThatFailed) {
     adjustHs(mol);
+  }
+
+  // fix things like non-metal to metal bonds that should be dative.
+  operationThatFailed = SANITIZE_CLEANUP_ORGANOMETALLICS;
+  if (sanitizeOps & operationThatFailed) {
+    cleanUpOrganometallics(mol);
   }
 
   // now that everything has been cleaned up, go through and check/update the

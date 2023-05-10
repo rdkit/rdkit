@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <limits>
 #include <fstream>
+#include <random>
 #include <boost/format.hpp>
 
 #include <GraphMol/RDKitBase.h>
@@ -2946,7 +2947,7 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
   // Change heme coordination from single bond to dative.
   // Test mols are CHEBI:26355, CHEBI:60344, CHEBI:17627.  26355 should be
   // changed (Github 6019) the other two should not be.
-  // 4th mol is one that gave other problems during testing.
+  // Counting from 1, 4th mol is one that gave other problems during testing.
   std::vector<std::pair<std::string, std::string>> test_vals{
       {"CC1=C(CCC(O)=O)C2=[N]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N]5[Fe]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
        "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"},
@@ -2964,6 +2965,34 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
     MolOps::cleanUpOrganometallics(*m);
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
+  }
+}
+
+TEST_CASE(
+    "cleanUpOrganometallics should produce canonical output.  cf PR6292") {
+  std::string smi = "F[Pd](Cl)(Cl1)Cl[Pd]1(Cl)Cl";
+  std::string canon_smi = "F[Pd]1(Cl)<-Cl[Pd](Cl)(Cl)<-Cl1";
+
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  RWMOL_SPTR m(RDKit::SmilesToMol(smi, ps));
+  MolOps::cleanUpOrganometallics(*m);
+  MolOps::sanitizeMol(*m);
+  TEST_ASSERT(MolToSmiles(*m) == canon_smi);
+
+  // scramble the order and check
+  std::vector<unsigned int> atomInds(m->getNumAtoms(), 0);
+  std::iota(atomInds.begin(), atomInds.end(), 0);
+  std::random_device rd;
+  std::mt19937 g(rd());
+  for (int i = 0; i < 100; ++i) {
+    std::unique_ptr<ROMol> mol(RDKit::SmilesToMol(smi, ps));
+    std::shuffle(atomInds.begin(), atomInds.end(), g);
+    std::unique_ptr<ROMol> randmol(MolOps::renumberAtoms(*mol, atomInds));
+    std::unique_ptr<RWMol> rwrandmol(new RWMol(*randmol));
+    MolOps::cleanUpOrganometallics(*rwrandmol);
+    MolOps::sanitizeMol(*rwrandmol);
+    TEST_ASSERT(MolToSmiles(*rwrandmol) == canon_smi);
   }
 }
 
