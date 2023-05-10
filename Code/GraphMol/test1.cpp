@@ -1638,12 +1638,12 @@ void testHasValenceViolation() {
 
   // Queries never have valence errors
   for (const auto &smarts : {
-           "[#6]",                // query atom when read as SMARTS
-           "[#8](-,=[#6])=[#6]",  // S/D query bond present
-           "[!#6&!#1]",           // Q query atom
-           "[#6,#7,#8]",          // allowed list
-           "[!#6&!#7&!#8]",       // disallowed list
-           "[#6&R]",              // advanced query features
+           "[#6](C)(C)(C)(C)C",          // query pentavalent carbon
+           "[#8](-,=[#6])=[#6]",         // S/D query bond present
+           "[!#6&!#1](-[#6])=[#6]",      // Q query atom
+           "[#6,#7,#8](-[#6])=[#6]",     // allowed list
+           "[!#6&!#7&!#8](-[#6])=[#6]",  // disallowed list
+           "[#6&R](-[#6])=[#6]",         // advanced query features
        }) {
     auto mol = RDKit::SmartsToMol(smarts);
     for (auto atom : mol->atoms()) {

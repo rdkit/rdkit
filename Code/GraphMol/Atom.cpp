@@ -622,36 +622,38 @@ double Atom::getMass() const {
 }
 
 bool Atom::hasValenceViolation() const {
-  auto any_of = [](auto &vec, const auto &pred) {
-    return std::any_of(vec.begin(), vec.end(), pred);
-  };
-
   // Ignore dummy atoms, query atoms, or atoms attached to query bonds
   auto atomic_number = getAtomicNum();
   auto bonds = getOwningMol().atomBonds(this);
   auto is_query = [](auto b) { return b->hasQuery(); };
-  if (atomic_number == 0 || hasQuery() || any_of(bonds, is_query)) {
+  if (atomic_number == 0 || hasQuery() ||
+      std::any_of(bonds.begin(), bonds.end(), is_query)) {
     return false;
   }
 
   // Account for charge via the isolobal analogy by modifying the atomic
   // number used to look up allowed valences
-  auto valence_lookup = atomic_number - getFormalCharge();
+  atomic_number -= getFormalCharge();
   // Because the look up accounted for charge, we can ignore that contribution
   // to the current valence; however, still account for unpaired electrons
   int current_valence = getTotalValence() + getNumRadicalElectrons();
-  // If no such element to look up, reset to the original atomic number
-  // and modify the current valence to account for charge
-  if (valence_lookup < 1 || valence_lookup > 118) {
-    valence_lookup = atomic_number;
+  // If the isolobal analogy breaks down, instead look up allowed valences
+  // using the original atomic number and check against a current valence of
+  // (total_valence - charge + unpaired_electrons); we don't do this by
+  // default because the isolobal analogy is more robust with respect to the
+  // RDKit's enumerated allowed valences
+  if (atomic_number < 1 || atomic_number > HEAVIEST_ELEMENT_NUMBER) {
+    atomic_number = getAtomicNum();
     current_valence -= getFormalCharge();
   }
 
-  // -1 indicates that any valence is permitted
   const auto *table = RDKit::PeriodicTable::getTable();
-  auto allowed_valence_list = table->getValenceList(valence_lookup);
-  auto is_allowed = [&](auto x) { return x == -1 || x == current_valence; };
-  return !any_of(allowed_valence_list, is_allowed);
+  auto allowed_valence_list = table->getValenceList(atomic_number);
+  if (allowed_valence_list.back() == -1) {
+    return false;  // -1 indicates that any valence is permitted
+  }
+  return std::find(allowed_valence_list.begin(), allowed_valence_list.end(),
+                   current_valence) == allowed_valence_list.end();
 }
 
 void Atom::setQuery(Atom::QUERYATOM_QUERY *) {
