@@ -1609,6 +1609,7 @@ void testHasValenceViolation() {
            "[*] |$_R1$|",    // rgroup
            "[Og][Og]([Og])([Og])([Og])([Og])([Og])[Og]",
            "[Lv+4]",
+           "[Lv-4]",
        }) {
     auto mol = to_mol(smiles);
     for (auto atom : mol->atoms()) {

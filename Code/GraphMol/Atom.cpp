@@ -642,7 +642,7 @@ bool Atom::hasValenceViolation() const {
   // (total_valence - charge + unpaired_electrons); we don't do this by
   // default because the isolobal analogy is more robust with respect to the
   // RDKit's enumerated allowed valences
-  if (atomic_number < 1 || atomic_number > HEAVIEST_ELEMENT_NUMBER) {
+  if (atomic_number < 1 || atomic_number > 118) {
     atomic_number = getAtomicNum();
     current_valence -= getFormalCharge();
   }
