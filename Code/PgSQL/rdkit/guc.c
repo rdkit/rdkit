@@ -77,10 +77,6 @@ static int rdkit_reaction_difference_fp_type = REACTION_DIFFERENCE_FP_TYPE;
 static int rdkit_difference_FP_weight_agents = REACTION_DFP_WEIGHT_AGENTS;
 static int rdkit_difference_FP_weight_nonagents = REACTION_DFP_WEIGHT_NONAGENTS;
 
-#if PG_VERSION_NUM < 90100
-#error The earliest supported postgresql version is 9.1
-#endif
-
 static void initRDKitGUC() {
   if (rdkit_guc_inited) return;
 
