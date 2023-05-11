@@ -2742,6 +2742,7 @@ must be the core",
   - ADJUST_IGNORERINGS: ring atoms/bonds will be ignored
   - ADJUST_IGNOREDUMMIES: dummy atoms will be ignored
   - ADJUST_IGNORENONDUMMIES: non-dummy atoms will be ignored
+  - ADJUST_IGNOREMAPPED: mapped atoms will be ignored
   - ADJUST_IGNOREALL: everything will be ignored
 )DOC";
     python::enum_<MolOps::AdjustQueryWhichFlags>("AdjustQueryWhichFlags")
@@ -2750,6 +2751,7 @@ must be the core",
         .value("ADJUST_IGNORERINGS", MolOps::ADJUST_IGNORERINGS)
         .value("ADJUST_IGNOREDUMMIES", MolOps::ADJUST_IGNOREDUMMIES)
         .value("ADJUST_IGNORENONDUMMIES", MolOps::ADJUST_IGNORENONDUMMIES)
+        .value("ADJUST_IGNOREMAPPED", MolOps::ADJUST_IGNOREMAPPED)
         .value("ADJUST_IGNOREALL", MolOps::ADJUST_IGNOREALL)
         .export_values();
 
