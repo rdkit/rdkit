@@ -217,7 +217,7 @@ struct conformer_wrapper {
         .def("GetPropsAsDict", GetPropsAsDict<Conformer>,
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false,
-	      python::arg("autoConvert") = true),
+	      python::arg("autoConvertStrings") = true),
              "Returns a dictionary populated with the conformer's properties.\n"
              " n.b. Some properties are not able to be converted to python "
              "types.\n\n"

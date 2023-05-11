@@ -282,7 +282,7 @@ struct bond_wrapper {
         .def("GetPropsAsDict", GetPropsAsDict<Bond>,
              (python::arg("self"), python::arg("includePrivate") = true,
               python::arg("includeComputed") = true,
-	      python::arg("autoConvert") = true),
+	      python::arg("autoConvertStrings") = true),
              "Returns a dictionary of the properties set on the Bond.\n"
              " n.b. some properties cannot be converted to python types.\n")
 

@@ -77,7 +77,7 @@ bool AddToDict(const U &ob, boost::python::dict &dict, const std::string &key) {
 
 template <class T>
 boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
-                                   bool includeComputed, bool autoConvert=true) {
+                                   bool includeComputed, bool autoConvertStrings=true) {
   boost::python::dict dict;
   auto &rd_dict = obj.getDict();
   auto &data = rd_dict.getData();
@@ -96,7 +96,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
 	dict[rdvalue.key] = from_rdvalue<double>(rdvalue.val);
 	break;
       case RDTypeTag::StringTag:
-	if (autoConvert) {
+	if (autoConvertStrings) {
 	  // Auto convert strings to ints and double if possible
 	  if(AddToDict<int>(obj, dict, rdvalue.key)) {
 	    break;
@@ -133,8 +133,16 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
       case RDTypeTag::VecStringTag:
 	dict[rdvalue.key] = from_rdvalue<std::vector<std::string>>(rdvalue.val);
 	break;
+      case RDTypeTag::EmptyTag:
+	dict[rdvalue.key] = boost::python::object();
+	break;
+      default:
+	UNDER_CONSTRUCTION("Unhandled property type encountered for property: " + rdvalue.key);
       }
     } catch (boost::bad_any_cast &) {
+      // C++ datatypes can really be anything, this just captures mislabelled data, it really
+      // shouldn't happen
+      UNDER_CONSTRUCTION("Unhandled type conversion occured for property: " + rdvalue.key);
     }
   }
   return dict;
