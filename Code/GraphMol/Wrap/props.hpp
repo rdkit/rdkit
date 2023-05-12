@@ -137,13 +137,13 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
 	dict[rdvalue.key] = boost::python::object();
 	break;
       default:
-	st::string message = std::string("Unhandled property type encountered for property: ") + rdvalue.key;
+	std::string message = std::string("Unhandled property type encountered for property: ") + rdvalue.key;
 	UNDER_CONSTRUCTION(message.c_str());
       }
     } catch (boost::bad_any_cast &) {
       // C++ datatypes can really be anything, this just captures mislabelled data, it really
       // shouldn't happen
-      st::string message = std::string("Unhandled type conversion occured for property: ") + rdvalue.key;
+      std::string message = std::string("Unhandled type conversion occured for property: ") + rdvalue.key;
       UNDER_CONSTRUCTION(message.c_str());
     }
   }
