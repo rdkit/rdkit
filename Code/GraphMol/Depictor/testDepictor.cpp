@@ -25,10 +25,12 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/Conformer.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
 #include <RDGeneral/utils.h>
 #include <cstdlib>
+#include <cmath>
 
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
@@ -1538,6 +1540,38 @@ M  END
     auto res = RDDepict::normalizeDepiction(*zeroCoordBenzene);
     TEST_ASSERT(res < 0.);
     TEST_ASSERT(MolToMolBlock(*zeroCoordBenzene) == zeroCoordCTab);
+  }
+  {
+    // cyclopentadiene which is already straight should not be biased
+    // towards a 30-degree angle rotate since it has no bonds
+    // whose angle with the X axis is multiple of 60 degrees
+    std::string cpSittingOnHorizontalBondCTab = R"RES(
+  MJ201100                      
+
+  5  5  0  0  0  0  0  0  0  0999 V2000
+   -2.3660    0.3892    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0334   -0.0957    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7785   -0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9535   -0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6986   -0.0957    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  5  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+M  END
+)RES";
+    std::unique_ptr<RWMol> cpSittingOnHorizontalBond(MolBlockToMol(cpSittingOnHorizontalBondCTab));
+    std::unique_ptr<RWMol> cpSittingOnHorizontalBondCopy(new RWMol(*cpSittingOnHorizontalBond));
+    RDDepict::straightenDepiction(*cpSittingOnHorizontalBond);
+    TEST_ASSERT(MolAlign::CalcRMS(*cpSittingOnHorizontalBond, *cpSittingOnHorizontalBondCopy) < 1.e-3);
+    RDGeom::Transform3D trans;
+    // rotate by 90 degrees
+    trans.SetRotation(0.5 * M_PI, RDGeom::Z_Axis);
+    MolTransforms::transformConformer(cpSittingOnHorizontalBond->getConformer(), trans);
+    cpSittingOnHorizontalBondCopy.reset(new RWMol(*cpSittingOnHorizontalBond));
+    RDDepict::straightenDepiction(*cpSittingOnHorizontalBond);
+    TEST_ASSERT(MolAlign::CalcRMS(*cpSittingOnHorizontalBond, *cpSittingOnHorizontalBondCopy) < 1.e-3);
   }
 }
 
