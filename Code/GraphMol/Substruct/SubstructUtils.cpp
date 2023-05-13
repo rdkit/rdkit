@@ -42,13 +42,12 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
         d_minIdx(-1),
         d_isSorted(false) {
     PRECONDITION(!matches.empty(), "matches must not be empty");
-    for (unsigned int i = 0; i < d_mol.getNumAtoms(); ++i) {
-      d_sumIndices += static_cast<double>(i);
-    }
+    auto na = d_mol.getNumAtoms();
+    d_sumIndices = static_cast<double>(na * (na + 1) / 2);
     unsigned int i = 0;
     d_matchIdxVsScore.reserve(d_matches.size());
     for (const auto &match : d_matches) {
-      d_matchIdxVsScore.emplace_back(std::make_pair(i++, computeScore(match)));
+      d_matchIdxVsScore.emplace_back(i++, computeScore(match));
     }
   }
   const RDKit::MatchVectType &getMostSubstitutedCoreMatch() {

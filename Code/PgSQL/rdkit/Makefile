@@ -61,30 +61,8 @@ PG_CONFIG  = pg_config
 MODULE_big = rdkit
 OBJS       = rdkit_io.o mol_op.o bfp_op.o sfp_op.o rxn_op.o rdkit_gist.o bfp_gist.o bfp_gin.o low_gist.o guc.o cache.o adapter.o bitstring.o
 PGXS       := $(shell $(PG_CONFIG) --pgxs)
-PG95 = $(shell $(PG_CONFIG) --version | grep -qE " 9\.[1-4]" && echo no || echo yes)
-PG92 = $(shell $(PG_CONFIG) --version | grep -qE " 9\.[1-2]" && echo yes || echo no)
 
 all: $(EXTENSION)--$(EXTVERSION).sql
-
-ifeq ($(PG95),yes)
-$(EXTENSION)--$(EXTVERSION).sql: $(EXTENSION).sql.in
-	sed -e's/@RDKIT_PG_BFP_GIST_FETCH@/FUNCTION    9   gbfp_fetch (internal),/;' \
--e's/@RDKIT_GIN_BFP_TRICONSISTENT@/FUNCTION    6   gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal),/' \
- $< > $@
-	cp $< $@
-else
-ifeq ($(PG92),no)
-$(EXTENSION)--$(EXTVERSION).sql: $(EXTENSION).sql.in
-	sed -e's/@RDKIT_PG_BFP_GIST_FETCH@//;' \
--e's/@RDKIT_GIN_BFP_TRICONSISTENT@/FUNCTION    6   gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal),/' \
-$< > $@
-else
-$(EXTENSION)--$(EXTVERSION).sql: $(EXTENSION).sql.in
-	sed -e's/@RDKIT_PG_BFP_GIST_FETCH@//;' \
--e's/@RDKIT_GIN_BFP_TRICONSISTENT@//;' \
-$< > $@
-endif
-endif
 
 REGRESS    = rdkit-91 props btree molgist bfpgist-91 bfpgin sfpgist slfpgist fps reaction ${INCHIREGRESS} ${AVALONREGRESS}
 DATA = $(EXTENSION)--$(EXTVERSION).sql

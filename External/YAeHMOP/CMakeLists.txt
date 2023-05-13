@@ -9,8 +9,8 @@ if(NOT DEFINED YAEHMOP_DIR)
 endif()
 
 if(NOT EXISTS "${YAEHMOP_DIR}/tightbind/bind.h")
-    set(RELEASE_NO "2022.09.1")
-    set(MD5 "2d5ee5b6b130529544565240597c602a")
+    set(RELEASE_NO "2023.03.1")
+    set(MD5 "e6450f13e02c54d024233b993c3c7ff6")
     downloadAndCheckMD5("https://github.com/greglandrum/yaehmop/archive/refs/tags/v${RELEASE_NO}.tar.gz"
           "${CMAKE_CURRENT_SOURCE_DIR}/yaehmop-${RELEASE_NO}.tar.gz" ${MD5})
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
