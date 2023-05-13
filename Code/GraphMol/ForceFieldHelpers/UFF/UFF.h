@@ -37,7 +37,7 @@ namespace UFF {
      first: 0 if the optimization converged, 1 if more iterations are required.
      second: the energy
 */
-std::pair<int, double> UFFOptimizeMolecule(
+inline std::pair<int, double> UFFOptimizeMolecule(
     ROMol &mol, int maxIters = 1000, double vdwThresh = 10.0, int confId = -1,
     bool ignoreInterfragInteractions = true) {
   ForceFields::ForceField *ff = UFF::constructForceField(
@@ -67,7 +67,7 @@ std::pair<int, double> UFFOptimizeMolecule(
                                      fragments
 
 */
-void UFFOptimizeMoleculeConfs(ROMol &mol,
+inline void UFFOptimizeMoleculeConfs(ROMol &mol,
                               std::vector<std::pair<int, double>> &res,
                               int numThreads = 1, int maxIters = 1000,
                               double vdwThresh = 10.0,
