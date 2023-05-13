@@ -1518,7 +1518,7 @@ M  END)RES"_ctab;
     TEST_ASSERT(RDKit::feq(bond4_11Conf2.y, bond4_11Conf3.y, 1.e-3));
   }
   {
-    std::string zeroCoordCTab = R"RES(
+    auto zeroCoordCTab = R"RES(
      RDKit          2D
 
   6  6  0  0  0  0  0  0  0  0999 V2000
@@ -1545,7 +1545,7 @@ M  END
     // cyclopentadiene which is already straight should not be biased
     // towards a 30-degree angle rotate since it has no bonds
     // whose angle with the X axis is multiple of 60 degrees
-    std::string cpSittingOnHorizontalBondCTab = R"RES(
+    auto cpSittingOnHorizontalBondCTab = R"RES(
   MJ201100                      
 
   5  5  0  0  0  0  0  0  0  0999 V2000
