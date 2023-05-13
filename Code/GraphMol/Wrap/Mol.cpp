@@ -182,6 +182,7 @@ void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
                                  python::object func) {
   ps.extraFinalCheck = pyobjFunctor(func);
 }
+
 }  // namespace
 
 class ReadWriteMol : public RWMol {
@@ -677,10 +678,12 @@ struct mol_wrapper {
              "assigned.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to check for (a string).\n")
-        .def("GetProp", GetProp<ROMol, std::string>,
+        .def("GetProp", GetPyProp<ROMol>,
+	     (python::arg("self"), python::arg("key"), python::arg("autoConvert")=false),
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
+             "    - autoConvert: if True attempt to convert the property into a python object\n\n"
              "  RETURNS: a string\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
@@ -900,6 +903,8 @@ struct mol_wrapper {
         // enable pickle support
         .def_pickle(mol_pickle_suite());
   };
+
 };
+
 }  // namespace RDKit
 void wrap_mol() { RDKit::mol_wrapper::wrap(); }

@@ -151,9 +151,8 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
 }
   
 
-
 template <class RDOb, class T>
-T GetProp(RDOb *ob, const char *key) {
+T GetProp(const RDOb *ob, const char *key) {
   T res;
   try {
     if (!ob->getPropIfPresent(key, res)) {
@@ -170,6 +169,93 @@ T GetProp(RDOb *ob, const char *key) {
   return res;
 }
 
+template <class RDOb>
+python::object autoConvertString(const RDOb *ob, const std::string &key) {
+  int ivalue;
+  double dvalue;
+  std::string svalue;
+  
+  if(ob->getPropIfPresent(key, ivalue))
+    return python::object(ivalue);
+  else if (ob->getPropIfPresent(key, dvalue))
+    return python::object(dvalue);
+  else if (ob->getPropIfPresent(key, svalue))
+    return python::object(svalue);
+
+  return python::object();
+}
+template <class RDOb>
+python::object GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
+  if (!autoConvert) {
+    return python::object(GetProp<RDOb, std::string>(obj, key.c_str()));
+  } else {
+    auto &data = obj->getDict().getData();
+    for(auto &rdvalue: data) {
+      if (rdvalue.key == key) {
+	try {
+	  const auto tag = rdvalue.val.getTag();
+	  switch(tag) {
+	  case RDTypeTag::IntTag:
+	    return python::object(from_rdvalue<int>(rdvalue.val));
+
+	  case RDTypeTag::DoubleTag:
+	    return python::object(from_rdvalue<double>(rdvalue.val));
+
+	  case RDTypeTag::StringTag:
+	    if (autoConvert) {
+	      return autoConvertString(obj, rdvalue.key);
+	    }
+	    return python::object(from_rdvalue<std::string>(rdvalue.val));
+
+	  case RDTypeTag::FloatTag:
+	    return python::object(from_rdvalue<float>(rdvalue.val));
+	    break;
+	  case RDTypeTag::BoolTag:
+	    return python::object(from_rdvalue<bool>(rdvalue.val));
+	    break;
+	  case RDTypeTag::UnsignedIntTag:
+	    return python::object(from_rdvalue<unsigned int>(rdvalue.val));
+	    break;
+	  case RDTypeTag::AnyTag:
+	    // we skip these for now
+	    break;
+	  case RDTypeTag::VecDoubleTag:
+	    return python::object(from_rdvalue<std::vector<double>>(rdvalue.val));
+	    break;
+	  case RDTypeTag::VecFloatTag:
+	    return python::object(from_rdvalue<std::vector<float>>(rdvalue.val));
+	    break;
+	  case RDTypeTag::VecIntTag:
+	    return python::object(from_rdvalue<std::vector<int>>(rdvalue.val));
+	    break;
+	  case RDTypeTag::VecUnsignedIntTag:
+	    return python::object(from_rdvalue<std::vector<unsigned int>>(rdvalue.val));
+	    break;
+	  case RDTypeTag::VecStringTag:
+	    return python::object(from_rdvalue<std::vector<std::string>>(rdvalue.val));
+	    break;
+	  case RDTypeTag::EmptyTag:
+	    return boost::python::object();
+	    break;
+	  default:
+	    std::string message = std::string("Unhandled property type encountered for property: ") + rdvalue.key;
+	    UNDER_CONSTRUCTION(message.c_str());
+	    return boost::python::object();
+	  }
+	} catch (boost::bad_any_cast &) {
+	  // C++ datatypes can really be anything, this just captures mislabelled data, it really
+	  // shouldn't happen
+	  std::string message = std::string("Unhandled type conversion occured for property: ") + rdvalue.key;
+	  UNDER_CONSTRUCTION(message.c_str());
+	  return boost::python::object();
+	}
+      }
+    }
+  }
+  PyErr_SetString(PyExc_KeyError, key.c_str());
+  throw python::error_already_set();
+}
+  
 template <class RDOb>
 int MolHasProp(const RDOb &mol, const char *key) {
   int res = mol.hasProp(key);

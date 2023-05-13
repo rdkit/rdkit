@@ -187,16 +187,16 @@ struct bond_wrapper {
              "  ARGUMENTS:\n"
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (a string).\n\n")
-
-        .def("GetProp", GetProp<Bond, std::string>,
+        .def("GetProp", GetPyProp<Bond>,
+	     (python::arg("self"), python::arg("key"), python::arg("autoConvert")=false),
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
+             "    - autoConvert: if True attempt to convert the property into a python object\n\n"
              "  RETURNS: a string\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-
         .def("SetIntProp", BondSetProp<int>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
              "Sets a bond property\n\n"
