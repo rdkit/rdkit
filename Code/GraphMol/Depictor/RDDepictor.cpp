@@ -815,12 +815,16 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
   if (allowOptionalAttachments) {
     std::unique_ptr<RDKit::ROMol> molHs(RDKit::MolOps::addHs(mol));
     CHECK_INVARIANT(molHs, "addHs returned a nullptr");
-    auto matches = SubstructMatch(*molHs, query);
+    auto queryParams = RDKit::MolOps::AdjustQueryParameters::noAdjustments();
+    queryParams.adjustSingleBondsToDegreeOneNeighbors = true;
+    queryParams.adjustSingleBondsBetweenAromaticAtoms = true;
+    std::unique_ptr<RDKit::ROMol> queryAdj(RDKit::MolOps::adjustQueryProperties(query, &queryParams));
+    auto matches = SubstructMatch(*molHs, *queryAdj);
     if (matches.empty()) {
       allowOptionalAttachments = false;
     } else {
       for (const auto &pair :
-           getMostSubstitutedCoreMatch(*molHs, query, matches)) {
+           getMostSubstitutedCoreMatch(*molHs, *queryAdj, matches)) {
         if (molHs->getAtomWithIdx(pair.second)->getAtomicNum() != 1 &&
             refMatch.at(pair.first) >= 0) {
           matchVect.push_back(pair);

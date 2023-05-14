@@ -236,3 +236,86 @@ TEST_CASE("dative bonds and rings") {
   auto v2 = conf.getAtomPos(1) - conf.getAtomPos(8);
   CHECK_THAT(v1.length(), Catch::Matchers::WithinAbs(v2.length(), 0.01));
 }
+
+TEST_CASE("vicinal R groups can match an aromatic ring") {
+  auto benzene = R"CTAB(
+  MJ201100                      
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0263   -0.3133    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4553    0.5116    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7408   -0.7258    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7408   -1.5509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4553   -1.9633    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1698   -1.5509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1698   -0.7258    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4553   -0.3133    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  3  1  1  0  0  0  0
+  8  2  1  0  0  0  0
+  4  3  2  0  0  0  0
+  5  4  1  0  0  0  0
+  6  5  2  0  0  0  0
+  7  6  1  0  0  0  0
+  8  3  1  0  0  0  0
+  8  7  2  0  0  0  0
+M  RGP  2   1   2   2   1
+M  END)CTAB"_ctab;
+  REQUIRE(benzene);
+  auto biphenyl = R"CTAB(
+  MJ201100                      
+
+ 14 15  0  0  0  0  0  0  0  0999 V2000
+   -0.6027    2.4098    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3171    1.9973    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3171    1.1722    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6027    0.7597    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1117    1.1722    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1117    1.9973    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6027   -0.0652    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3171   -0.4777    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3171   -1.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6028   -1.7153    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1117   -1.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1117   -0.4777    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0316    0.7597    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0316   -0.0652    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  4  7  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  2  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+  7  8  2  0  0  0  0
+ 12  7  1  0  0  0  0
+  3 13  1  0  0  0  0
+  8 14  1  0  0  0  0
+M  RGP  2  13   1  14   2
+M  END)CTAB"_ctab;
+  REQUIRE(biphenyl);
+  SECTION("R groups on benzene match quinoxaline") {
+    auto quinoxaline = "c1ccc2nccnc2c1"_smiles;
+    REQUIRE(quinoxaline);
+    auto match = RDDepict::generateDepictionMatching2DStructure(
+      *quinoxaline, *benzene, -1, nullptr, false, false, true);
+    CHECK(match.size() == 8);
+  }
+  SECTION("R groups on benzene match tetralin") {
+    auto tetralin = "c1cccc2CCCCc12"_smiles;
+    REQUIRE(tetralin);
+    auto match = RDDepict::generateDepictionMatching2DStructure(
+      *tetralin, *benzene, -1, nullptr, false, false, true);
+    CHECK(match.size() == 8);
+  }
+  SECTION("R groups on biphenyl match phenantridine") {
+    auto phenantridine = "c1cccc2ncc3ccccc3c12"_smiles;
+    REQUIRE(phenantridine);
+    auto match = RDDepict::generateDepictionMatching2DStructure(
+      *phenantridine, *biphenyl, -1, nullptr, false, false, true);
+    CHECK(match.size() == 14);
+  }
+}
