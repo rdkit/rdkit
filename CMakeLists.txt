@@ -27,7 +27,7 @@ option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the
 option(RDK_BUILD_PGSQL "build the PostgreSQL cartridge" OFF )
 option(RDK_BUILD_RPATH_SUPPORT "build shared libraries using rpath" OFF)
 option(RDK_PGSQL_STATIC "statically link rdkit libraries into the PostgreSQL cartridge" ON )
-option(RDK_PGSQL_BFP_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL bfp gist index" ON )
+option(RDK_PGSQL_BFP_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL bfp gist index" OFF )
 option(RDK_PGSQL_MOL_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL mol gist index" ON )
 option(RDK_PGSQL_QMOL_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL qmol gist index" ON )
 option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
