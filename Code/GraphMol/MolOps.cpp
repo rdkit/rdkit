@@ -234,7 +234,8 @@ int numDativeBonds(const Atom *atom) {
   return numDatives;
 }
 
-void metalBondCleanup(RWMol &mol, Atom *atom) {
+void metalBondCleanup(RWMol &mol, Atom *atom,
+                      const std::vector<unsigned int> &ranks) {
   PRECONDITION(atom, "bad atom in metalBondCleanup");
   // The IUPAC recommendation for ligand->metal coordination bonds is that they
   // be single.  This upsets the RDKit valence model, as seen in CHEBI:26355,
@@ -249,9 +250,6 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
     static const std::set<int> noD{1, 2, 9, 10};
     return (noD.find(a->getAtomicNum()) != noD.end());
   };
-
-  std::vector<unsigned int> ranks(mol.getNumAtoms());
-  RDKit::Canon::rankMolAtoms(mol, ranks);
 
   if (isHypervalentNonMetal(atom) && !noDative(atom)) {
     std::vector<Atom *> metals;
@@ -304,8 +302,19 @@ void cleanUp(RWMol &mol) {
 }
 
 void cleanUpOrganometallics(RWMol &mol) {
-  for (auto atom : mol.atoms()) {
-    metalBondCleanup(mol, atom);
+  std::vector<unsigned int> ranks(mol.getNumAtoms());
+  RDKit::Canon::rankMolAtoms(mol, ranks);
+  std::vector<std::pair<int, int>> atom_ranks;
+  for (size_t i = 0; i < ranks.size(); ++i) {
+    atom_ranks.push_back(std::make_pair(i, ranks[i]));
+  }
+  std::sort(atom_ranks.begin(), atom_ranks.end(),
+            [](const std::pair<int, int> &p1, std::pair<int, int> &p2) -> bool {
+              return p1.second < p2.second;
+            });
+  for (auto ar : atom_ranks) {
+    auto atom = mol.getAtomWithIdx(ar.first);
+    metalBondCleanup(mol, atom, ranks);
   }
 }
 
