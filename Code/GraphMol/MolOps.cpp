@@ -185,11 +185,8 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
 }
 
 bool isMetal(const Atom *atom) {
-  // This is the list of not metal atoms from QueryOps.cpp
-  static const std::set<int> notMetals{0,  1,  2,  5,  6,  7,  8,  9,
-                                       10, 14, 15, 16, 17, 18, 33, 34,
-                                       35, 36, 52, 53, 54, 85, 86};
-  return (notMetals.find(atom->getAtomicNum()) == notMetals.end());
+  static const std::unique_ptr<ATOM_OR_QUERY> q(makeMAtomQuery());
+  return q->Match(atom);
 }
 
 bool isHypervalentNonMetal(Atom *atom) {
@@ -254,7 +251,7 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
   };
 
   std::vector<unsigned int> ranks(mol.getNumAtoms());
-  RDKit::Canon::rankMolAtoms(mol, ranks, true, true, true);
+  RDKit::Canon::rankMolAtoms(mol, ranks);
 
   if (isHypervalentNonMetal(atom) && !noDative(atom)) {
     std::vector<Atom *> metals;
