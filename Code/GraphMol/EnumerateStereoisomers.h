@@ -21,7 +21,7 @@
 
 namespace RDKit {
 
-    class StereoEnumerationOptions {
+    struct StereoEnumerationOptions {
         public:
             bool try_embedding, only_unassigned, only_stereo_groups, unique;
             unsigned int max_isomers, rand;
