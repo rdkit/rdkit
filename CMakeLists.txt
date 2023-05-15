@@ -323,7 +323,9 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       # Determine correct installation directory for Python bindings
       execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_path('platlib'))"
+        ${PYTHON_EXECUTABLE} -c "import sys; import sysconfig; \
+          schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
+          print(sysconfig.get_path('platlib', vars={'platbase': '${CMAKE_INSTALL_PREFIX}'}))"
         OUTPUT_VARIABLE PYTHON_INSTDIR
         OUTPUT_STRIP_TRAILING_WHITESPACE
       )
