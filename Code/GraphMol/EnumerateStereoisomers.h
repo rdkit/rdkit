@@ -29,7 +29,6 @@ namespace RDKit {
                 bool try_embedding=false, bool only_unassigned=true,
                 bool only_stereo_groups=false, bool unique=true,
                 unsigned int max_isomers=1024, unsigned int rand=0);
-            ~StereoEnumerationOptions() {};
     };
 
     class _Flipper {
