@@ -791,34 +791,56 @@ M  END
 }
 
 function test_straighten_depiction() {
-    var mol1 = RDKitModule.get_mol(`
-  MJ201900
+    var benzeneHoriz = RDKitModule.get_mol(`
+  MJ201100                      
 
-  2  1  0  0  0  0  0  0  0  0999 V2000
-   -0.3904    2.1535    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.1049    1.7410    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  2  1  1  0  0  0  0
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.0785    1.6073    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9035    1.6073    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3160    0.8928    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9036    0.1783    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0786    0.1783    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3339    0.8929    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
 M  END
 `);
-    var mol2 = RDKitModule.get_mol(`
-  MJ201900
+    var benzeneVert = RDKitModule.get_mol(`
+  MJ201100                      
 
-  2  1  0  0  0  0  0  0  0  0999 V2000
-    0.1899    1.9526    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.5245    1.5401    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  2  1  1  0  0  0  0
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    0.2234    1.3054    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4910    1.7178    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2055    1.3053    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2056    0.4803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4911    0.0678    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2234    0.4804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
 M  END
 `);
-    mol1.normalize_depiction();
-    mol1Copy1 = RDKitModule.get_mol_copy(mol1)
-    mol1Copy2 = RDKitModule.get_mol_copy(mol1)
-    mol1.straighten_depiction();
-    mol2.normalize_depiction();
-    mol2.straighten_depiction();
-    assert(mol1.get_molblock() === mol2.get_molblock());
-    mol1Copy1.straighten_depiction(true);
-    assert(mol1Copy1.get_molblock() !== mol2.get_molblock());
-    assert(mol1Copy1.get_molblock() === mol1Copy2.get_molblock());
+    var benzeneHorizCopy = RDKitModule.get_mol_copy(benzeneHoriz);
+    var benzeneVertCopy = RDKitModule.get_mol_copy(benzeneVert);
+    benzeneHoriz.straighten_depiction();
+    benzeneVert.straighten_depiction();
+    assert(benzeneHoriz.get_molblock() !== benzeneHorizCopy.get_molblock());
+    assert(benzeneVert.get_molblock() === benzeneVertCopy.get_molblock());
+    benzeneHoriz = benzeneHorizCopy;
+    benzeneVert = benzeneVertCopy;
+    benzeneHorizCopy = RDKitModule.get_mol_copy(benzeneHoriz);
+    benzeneVertCopy = RDKitModule.get_mol_copy(benzeneVert);
+    benzeneHoriz.straighten_depiction(true);
+    benzeneVert.straighten_depiction(true);
+    assert(benzeneHoriz.get_molblock() === benzeneHorizCopy.get_molblock());
+    assert(benzeneVert.get_molblock() === benzeneVertCopy.get_molblock());
 }
 
 function test_has_coords() {
