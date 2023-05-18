@@ -1664,6 +1664,10 @@ CREATE OR REPLACE FUNCTION gmol_same(bytea, bytea, internal)
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION gmol_sortsupport(internal)
+    RETURNS void
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT;
 
 -- Support functions for bfp gist
 
@@ -1711,6 +1715,11 @@ CREATE OR REPLACE FUNCTION gbfp_fetch(internal)
     RETURNS internal
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION gbfp_sortsupport(internal)
+    RETURNS void
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT;
 
 -- Support functions for sfp gist
 
@@ -1793,6 +1802,7 @@ AS
     FUNCTION    5   gmol_penalty (internal, internal, internal),
     FUNCTION    6   gmol_picksplit (internal, internal),
     FUNCTION    7   gmol_same (bytea, bytea, internal),
+    @RDKIT_PG_MOL_GIST_SORTSUPPORT@
 STORAGE         bytea;
 
 CREATE OPERATOR CLASS gist_qmol_ops
@@ -1810,6 +1820,7 @@ AS
     FUNCTION    5   gmol_penalty (internal, internal, internal),
     FUNCTION    6   gmol_picksplit (internal, internal),
     FUNCTION    7   gmol_same (bytea, bytea, internal),
+    @RDKIT_PG_QMOL_GIST_SORTSUPPORT@
 STORAGE         bytea;
 
 CREATE OPERATOR CLASS gist_bfp_ops
@@ -1828,6 +1839,7 @@ AS
     FUNCTION    7   gbfp_same (internal, internal, internal),
     FUNCTION    8   (bfp, bfp) gbfp_distance(internal, bytea, smallint, oid),
     FUNCTION    9   gbfp_fetch (internal),
+    @RDKIT_PG_BFP_GIST_SORTSUPPORT@
 STORAGE         bytea;
 
 CREATE OPERATOR CLASS gist_sfp_ops
