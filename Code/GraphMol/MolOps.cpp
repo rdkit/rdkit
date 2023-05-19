@@ -234,6 +234,12 @@ int numDativeBonds(const Atom *atom) {
   return numDatives;
 }
 
+// Returns true if the atom shouldn't do dative bonds.
+bool noDative(const Atom *a) {
+  static const std::set<int> noD{1, 2, 9, 10};
+  return (noD.find(a->getAtomicNum()) != noD.end());
+};
+
 void metalBondCleanup(RWMol &mol, Atom *atom,
                       const std::vector<unsigned int> &ranks) {
   PRECONDITION(atom, "bad atom in metalBondCleanup");
@@ -245,12 +251,6 @@ void metalBondCleanup(RWMol &mol, Atom *atom,
   // If the atom is bonded to more than 1 metal atom, choose the one
   // with the fewer dative bonds incident on it, with the canonical
   // rank of the atoms as a tie-breaker.
-
-  auto noDative = [](const Atom *a) -> bool {
-    static const std::set<int> noD{1, 2, 9, 10};
-    return (noD.find(a->getAtomicNum()) != noD.end());
-  };
-
   if (isHypervalentNonMetal(atom) && !noDative(atom)) {
     std::vector<Atom *> metals;
     // see if there are any metals bonded to it by a single bond
@@ -302,6 +302,31 @@ void cleanUp(RWMol &mol) {
 }
 
 void cleanUpOrganometallics(RWMol &mol) {
+  // At present all this does is look for single bonds between
+  // non-metals and metals where the non-metal exceeds one of
+  // its normal valence states, and replaces that bond with
+  // a dative one from the non-metal to the metal.
+  bool needsFixing = false;
+  for (const auto atom : mol.atoms()) {
+    if (isHypervalentNonMetal(atom) && !noDative(atom)) {
+      // see if there are any metals bonded to it by a single bond
+      for (auto bond : mol.atomBonds(atom)) {
+        if (bond->getBondType() == Bond::BondType::SINGLE &&
+            isMetal(bond->getOtherAtom(atom))) {
+          needsFixing = true;
+          break;
+        }
+      }
+    }
+    if (needsFixing) {
+      break;
+    }
+  }
+  if (!needsFixing) {
+    return;
+  }
+
+  // First see if anything needs doing
   std::vector<unsigned int> ranks(mol.getNumAtoms());
   RDKit::Canon::rankMolAtoms(mol, ranks);
   std::vector<std::pair<int, int>> atom_ranks;
