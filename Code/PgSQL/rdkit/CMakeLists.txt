@@ -137,7 +137,7 @@ if(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
   set(pgRDKitLibList "${pgRDKitLibList}MolInterchange;")
 endif(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 set(pgRDKitLibList "${pgRDKitLibList}"
-    "TautomerQuery;MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
+    "MolEnumerator;TautomerQuery;MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
     "FileParsers;SmilesParse;Fingerprints;Subgraphs;Descriptors;"
     "PartialCharges;SubstructMatch;GraphMol;EigenSolvers;DataStructs;Depictor;"
     "RDGeometryLib;RDGeneral")

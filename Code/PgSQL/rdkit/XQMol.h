@@ -48,9 +48,10 @@ std::string pickle(const ExtendedQueryMol &xqm) {
   if (std::holds_alternative<std::unique_ptr<RWMol>>(xqm)) {
     streamWrite(ss, ExtendedQueryMolTypes::XQM_MOL);
     MolPickler::pickleMol(*std::get<std::unique_ptr<RWMol>>(xqm), pkl);
+#ifdef RDK_USE_BOOST_SERIALIZATION
   } else if (std::holds_alternative<std::unique_ptr<MolBundle>>(xqm)) {
     streamWrite(ss, ExtendedQueryMolTypes::XQM_BUNDLE);
-#ifdef RDK_USE_BOOST_SERIALIZATION
+    pkl = std::get<std::unique_ptr<MolBundle>>(xqm)->serialize();
   } else if (std::holds_alternative<std::unique_ptr<TautomerQuery>>(xqm)) {
     streamWrite(ss, ExtendedQueryMolTypes::XQM_TAUTOMERQUERY);
     pkl = std::get<std::unique_ptr<TautomerQuery>>(xqm)->serialize();
@@ -82,16 +83,19 @@ ExtendedQueryMol *depickle(const std::string &pickle) {
   unsigned char readType;
   streamRead(ss, readType);
   std::string pkl;
+  streamRead(ss, pkl, 0);
   switch (readType) {
     case ExtendedQueryMolTypes::XQM_MOL:
-      streamRead(ss, pkl, 0);
-      res = new ExtendedQueryMol(std::make_unique<RWMol>(pickle));
-      break;
-    case ExtendedQueryMolTypes::XQM_BUNDLE:
+      res = new ExtendedQueryMol(std::make_unique<RWMol>(pkl));
       break;
 #ifdef RDK_USE_BOOST_SERIALIZATION
+    case ExtendedQueryMolTypes::XQM_BUNDLE:
+      res = new ExtendedQueryMol(std::make_unique<MolBundle>(pkl));
+      elog(WARNING, "depickle bndl %ld",
+           std::get<std::unique_ptr<MolBundle>>(*res)->size());
+
+      break;
     case ExtendedQueryMolTypes::XQM_TAUTOMERQUERY:
-      streamRead(ss, pkl, 0);
       res = new ExtendedQueryMol(std::make_unique<TautomerQuery>(pkl));
       break;
 #endif
@@ -106,9 +110,9 @@ std::string to_text(const ExtendedQueryMol &xqm) {
 
   if (std::holds_alternative<std::unique_ptr<RWMol>>(xqm)) {
     pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_MOL);
+#ifdef RDK_USE_BOOST_SERIALIZATION
   } else if (std::holds_alternative<std::unique_ptr<MolBundle>>(xqm)) {
     pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_BUNDLE);
-#ifdef RDK_USE_BOOST_SERIALIZATION
   } else if (std::holds_alternative<std::unique_ptr<TautomerQuery>>(xqm)) {
     pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_TAUTOMERQUERY);
 #endif

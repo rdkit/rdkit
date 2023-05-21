@@ -71,6 +71,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+#include <GraphMol/MolEnumerator/MolEnumerator.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/integer_traits.hpp>
@@ -2401,6 +2402,26 @@ extern "C" CXQMol MolToTautomerQuery(CROMol m) {
     elog(ERROR, "MolToTautomerQuery: %s", e.what());
     xqm = nullptr;
   } catch (...) {
+    elog(ERROR, "MolToTautomerQuery: unknown failure type");
+    xqm = nullptr;
+  }
+  return (CXQMol)xqm;
+}
+
+extern "C" CXQMol MolEnumerateQuery(CROMol m) {
+  const ROMol *im = (ROMol *)m;
+  if (!im) {
+    return nullptr;
+  }
+  ExtendedQueryMol *xqm = nullptr;
+  try {
+    xqm = new ExtendedQueryMol(std::unique_ptr<MolBundle>(
+        new MolBundle(MolEnumerator::enumerate(*im))));
+    elog(WARNING, "create bndl %ld",
+         std::get<std::unique_ptr<MolBundle>>(*xqm)->size());
+
+  } catch (...) {
+    elog(ERROR, "MolEnumerateQuery: unknown failure type");
     xqm = nullptr;
   }
   return (CXQMol)xqm;
@@ -2434,11 +2455,13 @@ extern "C" int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality,
     res = RDKit::SubstructMatch(*im, *std::get<std::unique_ptr<RWMol>>(*xqm),
                                 params)
               .size();
+#ifdef RDK_USE_BOOST_SERIALIZATION
   } else if (std::holds_alternative<std::unique_ptr<MolBundle>>(*xqm)) {
+    elog(WARNING, "bndl %ld",
+         std::get<std::unique_ptr<MolBundle>>(*xqm)->size());
     res = RDKit::SubstructMatch(
               *im, *std::get<std::unique_ptr<MolBundle>>(*xqm), params)
               .size();
-#ifdef RDK_USE_BOOST_SERIALIZATION
   } else if (std::holds_alternative<std::unique_ptr<TautomerQuery>>(*xqm)) {
     res = std::get<std::unique_ptr<TautomerQuery>>(*xqm)
               ->substructOf(*im, params)
