@@ -42,7 +42,7 @@
  * Deconstructed values cache
  */
 
-typedef enum EntryKind { MolKind, BfpKind, SfpKind, ReactionKind } EntryKind;
+typedef enum EntryKind { MolKind, BfpKind, SfpKind, ReactionKind, XQMolKind } EntryKind;
 
 typedef struct ValueCacheEntry {
   Datum toastedValue;
@@ -54,6 +54,11 @@ typedef struct ValueCacheEntry {
       bytea *sign;
       CROMol mol;
     } mol;
+    struct {
+      XQMol *value;
+      bytea *sign;
+      CXQMol mol;
+    } xqmol;
     struct {
       Bfp *value;
       BfpSignature *sign;
@@ -157,6 +162,17 @@ static void cleanupData(ValueCacheEntry *entry) {
       }
       if (entry->detoasted.mol.sign) {
         pfree(entry->detoasted.mol.sign);
+      }
+      break;
+    case XQMolKind:
+      if (entry->detoasted.xqmol.value) {
+        pfree(entry->detoasted.xqmol.value);
+      }
+      if (entry->detoasted.xqmol.mol) {
+        freeCXQMol(entry->detoasted.xqmol.mol);
+      }
+      if (entry->detoasted.xqmol.sign) {
+        pfree(entry->detoasted.xqmol.sign);
       }
       break;
     case BfpKind:
@@ -388,6 +404,41 @@ static void fetchData(ValueCache *ac, ValueCacheEntry *entry, void **detoasted,
         *sign = entry->detoasted.mol.sign;
       }
       break;
+    case XQMolKind:
+      if (detoasted) {
+        if (entry->detoasted.xqmol.value == NULL) {
+          XQMol *detoastedMol;
+
+          detoastedMol = DatumGetXQMolP(entry->toastedValue);
+          entry->detoasted.xqmol.value =
+              MemoryContextAlloc(ac->ctx, VARSIZE(detoastedMol));
+          memcpy(entry->detoasted.xqmol.value, detoastedMol,
+                 VARSIZE(detoastedMol));
+        }
+        *detoasted = entry->detoasted.xqmol.value;
+      }
+
+      if (internal) {
+        if (entry->detoasted.xqmol.mol == NULL) {
+          fetchData(ac, entry, &_tmp, NULL, NULL);
+          entry->detoasted.mol.mol = constructXQMol(entry->detoasted.xqmol.value);
+        }
+        *internal = entry->detoasted.xqmol.mol;
+      }
+
+      if (sign) {
+        // we aren't indexing  XQMols at the moment
+
+        // if (entry->detoasted.xqmol.sign == NULL) {
+        //   fetchData(ac, entry, NULL, &_tmp, NULL);
+        //   old = MemoryContextSwitchTo(ac->ctx);
+        //   entry->detoasted.xqmol.sign =
+        //       makeMolSignature(entry->detoasted.xqmol.mol);
+        //   MemoryContextSwitchTo(old);
+        // }
+        // *sign = entry->detoasted.xqmol.sign;
+      }
+      break;
     case BfpKind:
       if (detoasted) {
         if (entry->detoasted.bfp.value == NULL) {
@@ -594,6 +645,13 @@ void *searchMolCache(void *cache, struct MemoryContextData *ctx, Datum a,
                      Mol **m, CROMol *mol, bytea **val) {
   return SearchValueCache(cache, ctx,
                           /*  in: */ a, MolKind,
+                          /* out: */ (void **)m, (void **)mol, (void **)val);
+}
+
+void *searchXQMolCache(void *cache, struct MemoryContextData *ctx, Datum a,
+                     XQMol **m, CXQMol *mol, bytea **val) {
+  return SearchValueCache(cache, ctx,
+                          /*  in: */ a, XQMolKind,
                           /* out: */ (void **)m, (void **)mol, (void **)val);
 }
 

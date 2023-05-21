@@ -55,6 +55,13 @@ typedef bytea Mol;
 #define PG_GETARG_MOL_P_COPY(x) DatumGetMolPCopy(PG_GETARG_DATUM(x))
 #define PG_RETURN_MOL_P(x) PG_RETURN_DATUM(MolPGetDatum(x))
 
+#define DatumGetXQMolP(x) ((XQMol *)PG_DETOAST_DATUM(x))
+#define DatumGetXQMolPCopy(x) ((XQMol *)PG_DETOAST_DATUM_COPY(x))
+#define XQMolPGetDatum(x) (PointerGetDatum(x))
+#define PG_GETARG_XQMOL_P(x) DatumGetXQMolP(PG_GETARG_DATUM(x))
+#define PG_GETARG_XQMOL_P_COPY(x) DatumGetXQMolPCopy(PG_GETARG_DATUM(x))
+#define PG_RETURN_XQMOL_P(x) PG_RETURN_DATUM(XQMolPGetDatum(x))
+
 typedef bytea Bfp;
 
 typedef struct {
@@ -183,6 +190,20 @@ CROMol MolMurckoScaffold(CROMol i);
 CROMol MolAdjustQueryProperties(CROMol m, const char *params);
 char *MolGetSVG(CROMol i, unsigned int w, unsigned int h, const char *legend,
                 const char *params);
+
+/* XQMols */
+typedef bytea XQMol;
+typedef void *CXQMol;
+void freeCXQMol(CXQMol data);
+
+CXQMol constructXQMol(XQMol *data);
+XQMol *deconstructXQMol(CXQMol data);
+
+CXQMol parseXQMolBlob(char *data, int len);
+char *makeXQMolBlob(CXQMol data, int *len);
+CXQMol parseXQMolText(char *data);
+char *makeXQMolText(CXQMol data, int *len);
+CXQMol MolToTautomerQuery(CROMol m);
 
 /* ExplicitBitVect */
 typedef void *CBfp;

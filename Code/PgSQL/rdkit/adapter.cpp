@@ -103,6 +103,7 @@
 #include "guc.h"
 #include "bitstring.h"
 
+#include "XQMol.h"
 using namespace std;
 using namespace RDKit;
 
@@ -2250,4 +2251,142 @@ extern "C" char *findMCS(void *vmols, char *params) {
   delete molecules;
   // elog(WARNING, "findMCS(): molecules deleted. FINISHED.");
   return strdup(mcs.c_str());
+}
+
+extern "C" char *makeXQMolBlob(CXQMol data, int *len) {
+  StringData.clear();
+  auto *xqm = (ExtendedQueryMol *)data;
+  try {
+    StringData = pickle(*xqm);
+  } catch (...) {
+    elog(ERROR, "makeXQMolBlob: Unknown exception");
+  }
+
+  *len = StringData.size();
+  return (char *)StringData.data();
+}
+extern "C" CXQMol parseXQMolBlob(char *data, int len) {
+  ExtendedQueryMol *mol = nullptr;
+
+  try {
+    string binStr(data, len);
+    mol = depickle(binStr);
+  } catch (...) {
+    ereport(
+        ERROR,
+        (errcode(ERRCODE_DATA_EXCEPTION),
+         errmsg("problem generating extended query molecule from blob data")));
+  }
+  if (mol == nullptr) {
+    ereport(ERROR, (errcode(ERRCODE_DATA_EXCEPTION),
+                    errmsg("blob data could not be parsed")));
+  }
+
+  return (CXQMol)mol;
+}
+
+extern "C" char *makeXQMolText(CXQMol data, int *len) {
+  auto *mol = (ExtendedQueryMol *)data;
+
+  try {
+    StringData = to_text(*mol);
+  } catch (...) {
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
+             errmsg("makeXQMolText: problems converting molecule to text")));
+    StringData = "";
+  }
+
+  *len = StringData.size();
+  return (char *)StringData.c_str();
+}
+
+extern "C" CXQMol parseXQMolText(char *data) {
+  // RWMol *mol = nullptr;
+
+  // try {
+  //   if (!asSmarts) {
+  //     if (!asQuery) {
+  //       SmilesParserParams ps;
+  //       ps.sanitize = sanitize;
+  //       mol = SmilesToMol(data, ps);
+  //       if (mol && !sanitize) {
+  //         mol->updatePropertyCache(false);
+  //         unsigned int failedOp;
+  //         unsigned int ops = MolOps::SANITIZE_ALL ^
+  //                            MolOps::SANITIZE_PROPERTIES ^
+  //                            MolOps::SANITIZE_KEKULIZE;
+  //         MolOps::sanitizeMol(*mol, failedOp, ops);
+  //       }
+  //     } else {
+  //       mol = SmilesToMol(data, 0, false);
+  //       if (mol != nullptr) {
+  //         mol->updatePropertyCache(false);
+  //         MolOps::setAromaticity(*mol);
+  //         MolOps::mergeQueryHs(*mol);
+  //       }
+  //     }
+  //   } else {
+  //     mol = SmartsToMol(data, 0, false);
+  //   }
+  // } catch (...) {
+  //   mol = nullptr;
+  // }
+  // if (mol == nullptr) {
+  //   if (warnOnFail) {
+  //     ereport(WARNING,
+  //             (errcode(ERRCODE_WARNING),
+  //              errmsg("could not create molecule from SMILES '%s'", data)));
+  //   } else {
+  //     ereport(ERROR,
+  //             (errcode(ERRCODE_DATA_EXCEPTION),
+  //              errmsg("could not create molecule from SMILES '%s'", data)));
+  //   }
+  // }
+
+  return (CXQMol) nullptr;
+}
+
+extern "C" CXQMol constructXQMol(XQMol *data) {
+  ExtendedQueryMol *mol = nullptr;
+
+  ByteA b(data);
+  try {
+    mol = depickle(b);
+  } catch (MolPicklerException &e) {
+    elog(ERROR, "constructXQMol: %s", e.what());
+  } catch (ValueErrorException &e) {
+    elog(ERROR, "constructXQMol Value Error: %s", e.what());
+  } catch (...) {
+    elog(ERROR, "constructXQMol: Unknown exception");
+  }
+
+  return (CXQMol)mol;
+}
+
+extern "C" XQMol *deconstructXQMol(CXQMol data) {
+  auto *mol = (ExtendedQueryMol *)data;
+  ByteA b;
+
+  try {
+    b = pickle(*mol);
+  } catch (MolPicklerException &e) {
+    elog(ERROR, "deconstructXQMol: %s", e.what());
+  } catch (...) {
+    elog(ERROR, "deconstructXQMol: Unknown exception");
+  }
+
+  return (XQMol *)b.toByteA();
+}
+
+extern "C" void freeCXQMol(CXQMol data) {
+  auto *mol = (ExtendedQueryMol *)data;
+  delete mol;
+}
+
+extern "C" CXQMol MolToTautomerQuery(CROMol m) {
+  const ROMol *im = (ROMol *)m;
+  ExtendedQueryMol *xqm = new ExtendedQueryMol(
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*im)));
+  return (CXQMol)xqm;
 }

@@ -67,6 +67,9 @@ struct MemoryContextData; /* forward declaration to prevent conflicts with C++
 void *searchMolCache(void *cache, struct MemoryContextData *ctx, Datum a,
                      Mol **m, CROMol *mol, bytea **sign);
 
+void *searchXQMolCache(void *cache, struct MemoryContextData *ctx, Datum a,
+                     XQMol **m, CXQMol *mol, bytea **sign);
+
 void *searchBfpCache(void *cache, struct MemoryContextData *ctx, Datum a,
                      Bfp **f, CBfp *fp, BfpSignature **sign);
 

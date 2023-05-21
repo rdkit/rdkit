@@ -78,6 +78,46 @@ CREATE TYPE qmol (
 
 CREATE CAST (mol as qmol) WITHOUT FUNCTION;
 
+
+-- xqmol type
+
+CREATE TYPE xqmol;
+
+CREATE OR REPLACE FUNCTION xqmol_in(cstring)
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_out(xqmol)
+RETURNS cstring
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_recv(internal)
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_send(xqmol)
+RETURNS bytea
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE TYPE xqmol (
+        INTERNALLENGTH = VARIABLE,
+        INPUT = xqmol_in,
+        OUTPUT = xqmol_out,
+        RECEIVE = xqmol_recv,
+        SEND = xqmol_send,
+        STORAGE = extended
+);
+
+
+
 -- bfp type
 
 CREATE TYPE bfp;
@@ -772,6 +812,18 @@ CREATE OR REPLACE FUNCTION mol_nm_hash(mol, cstring default 'AnonymousGraph')
     LANGUAGE C STRICT IMMUTABLE;
 
 
+-- extended query operations
+CREATE OR REPLACE FUNCTION mol_to_tautomerquery(mol)
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+
+
+
+
+
 -- bfp integer descriptors
 
 CREATE OR REPLACE FUNCTION size(bfp)
@@ -1267,6 +1319,7 @@ CREATE OPERATOR @= (
     RESTRICT = eqsel,
     JOIN = eqjoinsel
 );
+
 
 -- bfp comparison
 

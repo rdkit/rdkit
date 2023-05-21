@@ -397,6 +397,77 @@ Datum qmol_out(PG_FUNCTION_ARGS) {
   PG_RETURN_CSTRING(pnstrdup(str, len));
 }
 
+
+/* xqmols */
+PGDLLEXPORT Datum xqmol_in(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(xqmol_in);
+Datum xqmol_in(PG_FUNCTION_ARGS) {
+  char *data = PG_GETARG_CSTRING(0);
+  CXQMol mol;
+  XQMol *res;
+
+  mol = parseXQMolText(data);
+  if (!mol) {
+    ereport(ERROR, (errcode(ERRCODE_DATA_EXCEPTION),
+                    errmsg("could not construct extended query molecule")));
+  }
+  res = deconstructXQMol(mol);
+  freeCXQMol(mol);
+
+  PG_RETURN_XQMOL_P(res);
+}
+
+PGDLLEXPORT Datum xqmol_recv(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(xqmol_recv);
+Datum xqmol_recv(PG_FUNCTION_ARGS) {
+  bytea *data = PG_GETARG_BYTEA_P(0);
+  int len = VARSIZE(data) - VARHDRSZ;
+  CXQMol mol;
+  XQMol *res;
+  mol = parseXQMolBlob(VARDATA(data), len);
+  res = deconstructXQMol(mol);
+  freeCXQMol(mol);
+
+  PG_FREE_IF_COPY(data, 0);
+
+  PG_RETURN_XQMOL_P(res);
+}
+
+PGDLLEXPORT Datum xqmol_out(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(xqmol_out);
+Datum xqmol_out(PG_FUNCTION_ARGS) {
+  CXQMol mol;
+  char *str;
+  int len;
+
+  fcinfo->flinfo->fn_extra =
+      searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
+  str = makeXQMolText(mol, &len);
+
+  PG_RETURN_CSTRING(pnstrdup(str, len));
+}
+
+PGDLLEXPORT Datum xqmol_send(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(xqmol_send);
+Datum xqmol_send(PG_FUNCTION_ARGS) {
+  CXQMol mol;
+  bytea *res;
+  char *str;
+  int len;
+
+  fcinfo->flinfo->fn_extra =
+      searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
+  str = makeXQMolBlob(mol, &len);
+  res = (bytea *)palloc(len + VARHDRSZ);
+  SET_VARSIZE(res, len + VARHDRSZ);
+  memcpy(VARDATA(res), str, len);
+  PG_RETURN_BYTEA_P(res);
+}
+
+
+
 PGDLLEXPORT Datum bfp_in(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(bfp_in);
 Datum bfp_in(PG_FUNCTION_ARGS) {
