@@ -107,6 +107,10 @@
 using namespace std;
 using namespace RDKit;
 
+constexpr unsigned int pickleWhat =
+    PicklerOps::PropertyPickleOptions::MolProps |
+    PicklerOps::PropertyPickleOptions::PrivateProps;
+
 class ByteA : public std::string {
  public:
   ByteA() : string(){};
@@ -174,7 +178,7 @@ extern "C" Mol *deconstructROMol(CROMol data) {
   ByteA b;
 
   try {
-    MolPickler::pickleMol(mol, b);
+    MolPickler::pickleMol(mol, b, pickleWhat);
   } catch (MolPicklerException &e) {
     elog(ERROR, "pickleMol: %s", e.what());
   } catch (...) {
@@ -478,7 +482,7 @@ extern "C" char *makeMolBlob(CROMol data, int *len) {
   auto *mol = (ROMol *)data;
   StringData.clear();
   try {
-    MolPickler::pickleMol(*mol, StringData);
+    MolPickler::pickleMol(*mol, StringData, pickleWhat);
   } catch (...) {
     elog(ERROR, "makeMolBlob: Unknown exception");
   }

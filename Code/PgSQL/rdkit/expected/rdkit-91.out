@@ -479,7 +479,7 @@ select mol_to_ctab(mol_from_ctab('chiral1.mol
 M  END', true));
                               mol_to_ctab                              
 -----------------------------------------------------------------------
-                                                                      +
+ chiral1.mol                                                          +
       RDKit          2D                                               +
                                                                       +
    5  4  0  0  0  0  0  0  0  0999 V2000                              +
