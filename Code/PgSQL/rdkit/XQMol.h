@@ -105,6 +105,71 @@ ExtendedQueryMol *depickle(const std::string &pickle) {
   return res;
 }
 
+bool has_query_feature(const ROMol &mol) {
+  for (const auto atom : mol.atoms()) {
+    if (atom->hasQuery()) {
+      return true;
+    }
+  }
+  for (const auto bond : mol.bonds()) {
+    if (bond->hasQuery()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void to_pt(boost::property_tree::ptree &pt, const MolBundle &bndl) {
+  {
+    boost::property_tree::ptree children;
+    for (const auto &mol : bndl.getMols()) {
+      boost::property_tree::ptree elem;
+      if (has_query_feature(*mol)) {
+        elem.put_value(MolToCXSmarts(*mol));
+      } else {
+        elem.put_value(MolToCXSmiles(*mol));
+      }
+      children.push_back({"", elem});
+    }
+    pt.add_child("mols", children);
+  }
+}
+void to_pt(boost::property_tree::ptree &pt, const TautomerQuery &tq) {
+  {
+    boost::property_tree::ptree children;
+    for (const auto &taut : tq.getTautomers()) {
+      boost::property_tree::ptree elem;
+      if (has_query_feature(*taut)) {
+        elem.put_value(MolToCXSmarts(*taut));
+      } else {
+        elem.put_value(MolToCXSmiles(*taut));
+      }
+
+      children.push_back({"", elem});
+    }
+    pt.add_child("tautomers", children);
+  }
+  {
+    boost::property_tree::ptree children;
+    for (const auto idx : tq.getModifiedAtoms()) {
+      boost::property_tree::ptree elem;
+      elem.put_value(idx);
+      children.push_back({"", elem});
+    }
+    pt.add_child("modifiedAtoms", children);
+  }
+  {
+    boost::property_tree::ptree children;
+    for (const auto idx : tq.getModifiedBonds()) {
+      boost::property_tree::ptree elem;
+      elem.put_value(idx);
+      children.push_back({"", elem});
+    }
+    pt.add_child("modifiedBonds", children);
+  }
+  pt.put("template", MolToCXSmarts(tq.getTemplateMolecule()));
+}
+
 std::string to_text(const ExtendedQueryMol &xqm) {
   boost::property_tree::ptree pt;
 
@@ -113,8 +178,10 @@ std::string to_text(const ExtendedQueryMol &xqm) {
 #ifdef RDK_USE_BOOST_SERIALIZATION
   } else if (std::holds_alternative<std::unique_ptr<MolBundle>>(xqm)) {
     pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_BUNDLE);
+    to_pt(pt, *std::get<std::unique_ptr<MolBundle>>(xqm));
   } else if (std::holds_alternative<std::unique_ptr<TautomerQuery>>(xqm)) {
     pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_TAUTOMERQUERY);
+    to_pt(pt, *std::get<std::unique_ptr<TautomerQuery>>(xqm));
 #endif
   } else {
     throw ValueErrorException("unrecognized type in ExtendedQueryMol");
