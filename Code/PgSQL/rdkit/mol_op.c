@@ -217,6 +217,24 @@ Datum mol_substruct_count_chiral(PG_FUNCTION_ARGS) {
   PG_RETURN_INT32(MolSubstructCount(i, a, uniquify, true));
 }
 
+PGDLLEXPORT Datum mol_xq_substruct(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_xq_substruct);
+Datum mol_xq_substruct(PG_FUNCTION_ARGS) {
+  CROMol i;
+  CXQMol a;
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
+
+  PG_RETURN_BOOL(XQMolSubstruct(i, a, false, false));
+}
+
+
+
 #define MOLDESCR(name, func, ret)                                         \
   PGDLLEXPORT Datum mol_##name(PG_FUNCTION_ARGS);                         \
   PG_FUNCTION_INFO_V1(mol_##name);                                        \
@@ -418,6 +436,7 @@ Datum mol_to_tautomerquery(PG_FUNCTION_ARGS) {
   Assert(mol != 0);
 
   CXQMol xqm = MolToTautomerQuery(mol);
+
   if (!xqm) {
     PG_RETURN_NULL();
   }

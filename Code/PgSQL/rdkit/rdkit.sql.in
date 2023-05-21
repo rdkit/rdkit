@@ -1204,6 +1204,23 @@ CREATE OPERATOR <<@ (
 );
 
 
+CREATE OR REPLACE FUNCTION substruct(mol, xqmol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_substruct'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @> (
+	LEFTARG = mol,
+	RIGHTARG = xqmol,
+	PROCEDURE = substruct(mol, xqmol),
+	COMMUTATOR = '<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+
+
+
 -- mol comparison
 
 CREATE OR REPLACE FUNCTION mol_cmp(mol,mol)

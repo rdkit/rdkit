@@ -2386,7 +2386,62 @@ extern "C" void freeCXQMol(CXQMol data) {
 
 extern "C" CXQMol MolToTautomerQuery(CROMol m) {
   const ROMol *im = (ROMol *)m;
-  ExtendedQueryMol *xqm = new ExtendedQueryMol(
-      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*im)));
+  if (!im) {
+    return nullptr;
+  }
+  ExtendedQueryMol *xqm = nullptr;
+  try {
+    xqm = new ExtendedQueryMol(
+        std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*im)));
+  } catch (MolSanitizeException &e) {
+    elog(ERROR, "MolToTautomerQuery: %s", e.what());
+    xqm = nullptr;
+  } catch (...) {
+    xqm = nullptr;
+  }
   return (CXQMol)xqm;
+}
+
+extern "C" int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality,
+                              bool useMatchers) {
+  auto *im = (ROMol *)i;
+  auto *xqm = (ExtendedQueryMol *)a;
+  if (!im || !xqm) {
+    return 0;
+  }
+  RDKit::SubstructMatchParameters params;
+  if (useChirality) {
+    params.useChirality = true;
+    params.useEnhancedStereo = true;
+  } else {
+    params.useChirality = getDoChiralSSS();
+    params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  }
+  params.useQueryQueryMatches = true;
+  params.maxMatches = 1;
+
+  // if (useMatchers) {
+  //   GenericGroups::setGenericQueriesFromProperties(*am);
+  //   params.useGenericMatchers = true;
+  // }
+  int res = 0;
+
+  if (std::holds_alternative<std::unique_ptr<RWMol>>(*xqm)) {
+    res = RDKit::SubstructMatch(*im, *std::get<std::unique_ptr<RWMol>>(*xqm),
+                                params)
+              .size();
+  } else if (std::holds_alternative<std::unique_ptr<MolBundle>>(*xqm)) {
+    res = RDKit::SubstructMatch(
+              *im, *std::get<std::unique_ptr<MolBundle>>(*xqm), params)
+              .size();
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  } else if (std::holds_alternative<std::unique_ptr<TautomerQuery>>(*xqm)) {
+    res = std::get<std::unique_ptr<TautomerQuery>>(*xqm)
+              ->substructOf(*im, params)
+              .size();
+#endif
+  } else {
+    throw ValueErrorException("unrecognized type in ExtendedQueryMol");
+  }
+  return res;
 }

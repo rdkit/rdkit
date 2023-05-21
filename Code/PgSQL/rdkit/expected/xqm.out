@@ -1,0 +1,25 @@
+select 'Cc1[nH]nc(F)c1'::mol @> mol_to_tautomerquery('Cc1n[nH]c(F)c1'::mol);
+ ?column? 
+----------
+ t
+(1 row)
+
+select substruct('Cc1[nH]nc(F)c1'::mol,mol_to_tautomerquery('Cc1n[nH]c(F)c1'::mol));
+ substruct 
+-----------
+ t
+(1 row)
+
+select substruct('Cc1[nH]nc(F)c1'::mol,mol_to_tautomerquery('Cc1n[nH]c(F)n1'::mol));
+ substruct 
+-----------
+ f
+(1 row)
+
+-- error handling
+select mol_to_tautomerquery('C1'::mol);
+ERROR:  could not create molecule from SMILES 'C1'
+LINE 1: select mol_to_tautomerquery('C1'::mol);
+                                    ^
+select mol_to_tautomerquery('c1cc1'::mol);
+ERROR:  MolToTautomerQuery: Can't kekulize mol.  Unkekulized atoms: 0 1 2

@@ -205,6 +205,8 @@ CXQMol parseXQMolText(char *data);
 char *makeXQMolText(CXQMol data, int *len);
 CXQMol MolToTautomerQuery(CROMol m);
 
+int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality, bool useMatchers);
+
 /* ExplicitBitVect */
 typedef void *CBfp;
 void freeCBfp(CBfp data);
