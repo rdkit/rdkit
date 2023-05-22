@@ -233,6 +233,21 @@ Datum mol_xq_substruct(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(XQMolSubstruct(i, a, false, false));
 }
 
+PGDLLEXPORT Datum mol_xq_rsubstruct(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_xq_rsubstruct);
+Datum mol_xq_rsubstruct(PG_FUNCTION_ARGS) {
+  CROMol i;
+  CXQMol a;
+
+  fcinfo->flinfo->fn_extra =
+      searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &a, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &i, NULL);
+
+  PG_RETURN_BOOL(XQMolSubstruct(i, a, false, false));
+}
 
 
 #define MOLDESCR(name, func, ret)                                         \

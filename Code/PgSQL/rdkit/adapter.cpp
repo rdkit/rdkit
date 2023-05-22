@@ -2417,9 +2417,6 @@ extern "C" CXQMol MolEnumerateQuery(CROMol m) {
   try {
     xqm = new ExtendedQueryMol(std::unique_ptr<MolBundle>(
         new MolBundle(MolEnumerator::enumerate(*im))));
-    elog(WARNING, "create bndl %ld",
-         std::get<std::unique_ptr<MolBundle>>(*xqm)->size());
-
   } catch (...) {
     elog(ERROR, "MolEnumerateQuery: unknown failure type");
     xqm = nullptr;
@@ -2457,8 +2454,6 @@ extern "C" int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality,
               .size();
 #ifdef RDK_USE_BOOST_SERIALIZATION
   } else if (std::holds_alternative<std::unique_ptr<MolBundle>>(*xqm)) {
-    elog(WARNING, "bndl %ld",
-         std::get<std::unique_ptr<MolBundle>>(*xqm)->size());
     res = RDKit::SubstructMatch(
               *im, *std::get<std::unique_ptr<MolBundle>>(*xqm), params)
               .size();

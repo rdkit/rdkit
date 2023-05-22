@@ -1223,6 +1223,19 @@ CREATE OPERATOR @> (
 	RESTRICT = contsel,
 	JOIN = contjoinsel
 );
+CREATE OR REPLACE FUNCTION rsubstruct(xqmol, mol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_rsubstruct'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR <@ (
+	LEFTARG = xqmol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct(xqmol, mol),
+	COMMUTATOR = '@>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
 
 
 
@@ -1870,6 +1883,8 @@ AS
     OPERATOR    4   <@ (mol, mol),
     OPERATOR    3   @> (mol, qmol),
     OPERATOR    4   <@ (qmol, mol),
+    OPERATOR	3   @> (mol, xqmol),
+    OPERATOR    4   <@ (xqmol, mol),
     OPERATOR    6   @= (mol, mol),
     FUNCTION    1   gmol_consistent (bytea, internal, int4),
     FUNCTION    2   gmol_union (bytea, internal),
