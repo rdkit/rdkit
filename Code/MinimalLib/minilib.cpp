@@ -647,8 +647,7 @@ JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
     : d_sslib(new SubstructLibrary(
           boost::shared_ptr<CachedTrustedSmilesMolHolder>(
               new CachedTrustedSmilesMolHolder()),
-          boost::shared_ptr<PatternHolder>(new PatternHolder()))),
-      d_num_bits(num_bits) {
+          boost::shared_ptr<PatternHolder>(new PatternHolder(num_bits)))) {
   d_molHolder = dynamic_cast<CachedTrustedSmilesMolHolder *>(
       d_sslib->getMolHolder().get());
   d_fpHolder = dynamic_cast<PatternHolder *>(d_sslib->getFpHolder().get());
@@ -660,13 +659,14 @@ int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
     return -1;
   }
   mol->updatePropertyCache();
-  auto fp = PatternFingerprintMol(*mol, d_num_bits);
+  MolOps::fastFindRings(*mol);
+  auto fp = d_fpHolder->makeFingerprint(*mol);
   if (!fp) {
     return -1;
   }
-  d_fpHolder->addFingerprint(fp);
-  auto ret = d_molHolder->addSmiles(smi);
-  return ret;
+  auto fpIdx = d_fpHolder->addFingerprint(fp);
+  auto smiIdx = d_molHolder->addSmiles(smi);
+  return (fpIdx == smiIdx ? fpIdx : -1);
 }
 
 inline int JSSubstructLibrary::add_mol_helper(const ROMol &mol) {
@@ -714,7 +714,7 @@ std::string JSSubstructLibrary::get_matches(const JSMol &q, bool useChirality,
 unsigned int JSSubstructLibrary::count_matches(const JSMol &q,
                                                bool useChirality,
                                                int numThreads) const {
-  return d_sslib->countMatches(*q.d_mol, true, useChirality, false, 1);
+  return d_sslib->countMatches(*q.d_mol, true, useChirality, false, numThreads);
 }
 
 std::string get_inchikey_for_inchi(const std::string &input) {

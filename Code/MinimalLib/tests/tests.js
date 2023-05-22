@@ -335,20 +335,30 @@ function test_substruct_library(done) {
     var sslib = new RDKitModule.SubstructLibrary();
     // var t0 = performance.now()
     // console.log('Started adding trusted SMILES');
+    var matches = [];
+    var query = RDKitModule.get_qmol('C1CCCCN1');
+    var i = 0;
     smiReader.on('line', (smi) => {
         sslib.add_trusted_smiles(smi);
+        var mol = RDKitModule.get_mol(smi);
+        var res = JSON.parse(mol.get_substruct_match(query));
+        if (res.atoms) {
+            matches.push(i);
+        }
+        ++i;
+        mol.delete();
     });
     smiReader.on('close', () => {
-        var query = RDKitModule.get_qmol("N");
         // var t1 = performance.now();
         // console.log('Finished adding trusted SMILES took ' + (t1 - t0) / 1000 + ' seconds');
-        assert.equal(sslib.count_matches(query), 52);
-        assert.equal(sslib.get_matches(query), JSON.stringify([
-            12,13,19,22,24,30,31,32,35,36,39,41,43,44,55,56,58,64,72,80,
-            85,95,96,101,105,113,124,127,128,131,143,150,151,185,201,202,
-            203,214,215,223,232,234,238,240,241,246,258,261,263,265,266,284
+        assert.equal(sslib.count_matches(query, false), 7);
+        var sslibMatches = sslib.get_matches(query);
+        assert.equal(sslibMatches, JSON.stringify([
+            39, 64, 80, 127, 128, 234, 240
         ]));
+        assert.equal(sslibMatches, JSON.stringify(matches));
         done.test_substruct_library = true;
+        query.delete();
     });
 }
 

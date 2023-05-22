@@ -551,6 +551,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<unsigned int(const JSMol &, bool, int) const>(
                     &JSSubstructLibrary::count_matches))
       .function("count_matches",
+                select_overload<unsigned int(const JSMol &, bool) const>(
+                    &JSSubstructLibrary::count_matches))
+      .function("count_matches",
                 select_overload<unsigned int(const JSMol &) const>(
                     &JSSubstructLibrary::count_matches));
 

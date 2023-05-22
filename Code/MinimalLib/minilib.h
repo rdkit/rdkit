@@ -196,6 +196,9 @@ class JSSubstructLibrary {
   }
   unsigned int count_matches(const JSMol &q, bool useChirality,
                              int numThreads) const;
+  unsigned int count_matches(const JSMol &q, bool useChirality) const {
+    return count_matches(q, useChirality, d_defaultNumThreads);
+  }
   unsigned int count_matches(const JSMol &q) const {
     return count_matches(q, d_defaultUseChirality, d_defaultNumThreads);
   }
