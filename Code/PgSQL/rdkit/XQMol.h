@@ -91,9 +91,6 @@ ExtendedQueryMol *depickle(const std::string &pickle) {
 #ifdef RDK_USE_BOOST_SERIALIZATION
     case ExtendedQueryMolTypes::XQM_BUNDLE:
       res = new ExtendedQueryMol(std::make_unique<MolBundle>(pkl));
-      elog(WARNING, "depickle bndl %ld",
-           std::get<std::unique_ptr<MolBundle>>(*res)->size());
-
       break;
     case ExtendedQueryMolTypes::XQM_TAUTOMERQUERY:
       res = new ExtendedQueryMol(std::make_unique<TautomerQuery>(pkl));
