@@ -332,12 +332,19 @@ function test_substruct_library(done) {
     var smiReader = readline.createInterface({
         input: fs.createReadStream(__dirname + '/../../GraphMol/test_data/compounds.smi')
     });
+    var query = RDKitModule.get_qmol('C1CCCCN1');
+    var nonExistingQuery = RDKitModule.get_mol('O=C(O)C(c1ccc(cc1)CCN4CCC(c2nc3ccccc3n2CCOCC)CC4)(C)C');
     var sslib = new RDKitModule.SubstructLibrary();
+    assert.equal(sslib.count_matches(query), 0);
+    assert.equal(sslib.get_matches(query), JSON.stringify([]));
+    assert.equal(sslib.get_matches_as_uint32array(query).length, 0);
     // var t0 = performance.now()
     // console.log('Started adding trusted SMILES');
     var matches = [];
-    var query = RDKitModule.get_qmol('C1CCCCN1');
+    var expectedMatches = [39, 64, 80, 127, 128, 234, 240];
     var i = 0;
+    var patternFpArray = [];
+    var trustedSmiArray = []
     smiReader.on('line', (smi) => {
         sslib.add_trusted_smiles(smi);
         var mol = RDKitModule.get_mol(smi);
@@ -351,14 +358,58 @@ function test_substruct_library(done) {
     smiReader.on('close', () => {
         // var t1 = performance.now();
         // console.log('Finished adding trusted SMILES took ' + (t1 - t0) / 1000 + ' seconds');
-        assert.equal(sslib.count_matches(query, false), 7);
-        var sslibMatches = sslib.get_matches(query);
-        assert.equal(sslibMatches, JSON.stringify([
-            39, 64, 80, 127, 128, 234, 240
-        ]));
-        assert.equal(sslibMatches, JSON.stringify(matches));
+        for (var i = 0; i < sslib.size(); ++i) {
+            trustedSmiArray.push(sslib.get_trusted_smiles(i));
+            var fp = sslib.get_pattern_fp_as_uint8array(i);
+            patternFpArray.push(fp);
+        }
+        assert.equal(trustedSmiArray.length, sslib.size());
+        assert.equal(patternFpArray.length, sslib.size());
+        assert.equal(trustedSmiArray.length, patternFpArray.length);
+        var sslib2 = new RDKitModule.SubstructLibrary();
+        for (var i = 0; i < sslib.size(); ++i) {
+            sslib2.add_trusted_smiles_and_pattern_fp(trustedSmiArray[i], patternFpArray[i]);
+        }
+        assert.equal(sslib.size(), sslib2.size());
+            {
+            assert.equal(sslib.count_matches(query, false), 7);
+            var sslibMatches = sslib.get_matches(query);
+            assert.equal(sslibMatches, JSON.stringify(expectedMatches));
+            var sslibMatchesUInt32Array = sslib.get_matches_as_uint32array(query);
+            assert.equal(sslibMatchesUInt32Array.length, expectedMatches.length);
+            for (var i = 0; i < expectedMatches.length; ++i) {
+                assert.equal(sslibMatchesUInt32Array[i], expectedMatches[i]);
+            }
+        }
+        {
+            assert.equal(sslib.count_matches(nonExistingQuery, false), 0);
+            var sslibMatches = sslib.get_matches(nonExistingQuery);
+            assert.equal(sslibMatches, JSON.stringify([]));
+            var sslibMatchesUInt32Array = sslib.get_matches_as_uint32array(nonExistingQuery);
+            assert.equal(sslibMatchesUInt32Array.length, 0);
+        }
+        {
+            assert.equal(sslib2.count_matches(query, false), 7);
+            var sslib2Matches = sslib2.get_matches(query);
+            assert.equal(sslib2Matches, JSON.stringify(expectedMatches));
+            var sslib2MatchesUInt32Array = sslib2.get_matches_as_uint32array(query);
+            assert.equal(sslib2MatchesUInt32Array.length, expectedMatches.length);
+            for (var i = 0; i < expectedMatches.length; ++i) {
+                assert.equal(sslib2MatchesUInt32Array[i], expectedMatches[i]);
+            }
+        }
+        {
+            assert.equal(sslib2.count_matches(nonExistingQuery, false), 0);
+            var sslib2Matches = sslib2.get_matches(nonExistingQuery);
+            assert.equal(sslib2Matches, JSON.stringify([]));
+            var sslib2MatchesUInt32Array = sslib2.get_matches_as_uint32array(nonExistingQuery);
+            assert.equal(sslib2MatchesUInt32Array.length, 0);
+        }
         done.test_substruct_library = true;
         query.delete();
+        nonExistingQuery.delete();
+        sslib.delete();
+        sslib2.delete();
     });
 }
 
