@@ -37,6 +37,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
   MolDraw2DCairo(int width, int height, int panelWidth = -1,
                  int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(nullptr) {
+    if (width > 0 && height > 0) {
+      initDrawing();
+      needs_init_ = false;
+    }
     initTextDrawer(noFreetype);
     df_noFreetype = noFreetype;
   }
