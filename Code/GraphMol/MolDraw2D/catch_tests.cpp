@@ -293,7 +293,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github6200_1.svg", 1827224658U},
     {"test_github6200_2.svg", 661919921U},
     {"test_queryColour_1.svg", 3758375489U},
-    {"test_queryColour_2.svg", 2426598062U}};
+    {"test_queryColour_2.svg", 2426598062U},
+    {"github6336_1.svg", 612606818U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -323,7 +324,8 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testGithub4238_1.png", 458925131U},
     {"github5383_1.png", 2963331215U},
     {"acs1996_1.png", 2674458798U},
-    {"acs1996_2.png", 83755168U}};
+    {"acs1996_2.png", 83755168U},
+    {"github6336_1.png", 2958833204U}};
 
 std::hash_result_t hash_file(const std::string &filename) {
   std::ifstream ifs(filename, std::ios_base::binary);
@@ -7602,5 +7604,35 @@ TEST_CASE("queryColour can be set to a non-default value") {
     outs.close();
     CHECK(text.find("#7F7F7F") == std::string::npos);
     check_file_hash(nameBase + "_2.svg");
+  }
+}
+
+TEST_CASE(
+    "Github #6336: calling drawing commands before drawing a molecule with MolDraw2DCairo") {
+  std::string nameBase = "github6336";
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  SECTION("cairo") {
+    MolDraw2DCairo drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.setColour(DrawColour(1, 0, 1));
+    drawer.drawRect(Point2D(10, 10), Point2D(150, 150), true);
+    drawer.setColour(DrawColour(0, 1, 1));
+    drawer.drawLine(Point2D(150, 150), Point2D(250, 299), true);
+    drawer.finishDrawing();
+    drawer.writeDrawingText(nameBase + "_1.png");
+    check_file_hash(nameBase + "_1.png");
+  }
+#endif
+  SECTION("SVG") {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.setColour(DrawColour(1, 0, 1));
+    drawer.drawRect(Point2D(10, 10), Point2D(150, 150), true);
+    drawer.setColour(DrawColour(0, 1, 1));
+    drawer.drawLine(Point2D(150, 150), Point2D(250, 299), true);
+    drawer.finishDrawing();
+    std::ofstream outs(nameBase + "_1.svg");
+    outs << drawer.getDrawingText();
+    outs.flush();
+    outs.close();
+    check_file_hash(nameBase + "_1.svg");
   }
 }
