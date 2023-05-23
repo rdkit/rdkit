@@ -883,6 +883,20 @@ void test_clean_up_on_kekulization_error() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub6172() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing github #6172: bogus bond type when parsing InChI"
+      << std::endl;
+
+  {
+    std::string inchi =
+        "InChI=1S/2C18H36N3OP.2CH3.2ClH.Sn/c2*22-23(19-16-10-4-1-5-11-16,20-17-12-6-2-7-13-17)21-18-14-8-3-9-15-18;;;;;/h2*16-18H,1-15H2,(H3,19,20,21,22);2*1H3;2*1H;/q;;2*-1;;;+4/p-2";
+    ExtraInchiReturnValues tmp;
+    std::unique_ptr<ROMol> m{InchiToMol(inchi, tmp)};
+    TEST_ASSERT(!m);
+  }
+}
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -905,4 +919,5 @@ int main() {
   testGithub3365();
   testGithub3645();
   test_clean_up_on_kekulization_error();
+  testGithub6172();
 }
