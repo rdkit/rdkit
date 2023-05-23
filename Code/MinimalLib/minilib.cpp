@@ -670,7 +670,8 @@ int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
   return (fpIdx == smiIdx ? fpIdx : -1);
 }
 
-int JSSubstructLibrary::add_trusted_smiles_and_pattern_fp(const std::string &smi, const std::string &patternFp) {
+int JSSubstructLibrary::add_trusted_smiles_and_pattern_fp(
+    const std::string &smi, const std::string &patternFp) {
   auto bitVect = new ExplicitBitVect(patternFp);
   if (!bitVect) {
     return -1;
@@ -715,8 +716,8 @@ std::string JSSubstructLibrary::get_matches(const JSMol &q, bool useChirality,
   if (!d_sslib->size()) {
     return "[]";
   }
-  auto indices = d_sslib->getMatches(
-      *q.d_mol, true, useChirality, false, numThreads, maxResults);
+  auto indices = d_sslib->getMatches(*q.d_mol, true, useChirality, false,
+                                     numThreads, maxResults);
   rj::Document doc;
   doc.SetArray();
   auto &alloc = doc.GetAllocator();
@@ -733,7 +734,9 @@ std::string JSSubstructLibrary::get_matches(const JSMol &q, bool useChirality,
 unsigned int JSSubstructLibrary::count_matches(const JSMol &q,
                                                bool useChirality,
                                                int numThreads) const {
-  return d_sslib->size() ? d_sslib->countMatches(*q.d_mol, true, useChirality, false, numThreads) : 0;
+  return d_sslib->size() ? d_sslib->countMatches(*q.d_mol, true, useChirality,
+                                                 false, numThreads)
+                         : 0;
 }
 
 std::string get_inchikey_for_inchi(const std::string &input) {

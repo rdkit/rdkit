@@ -183,7 +183,8 @@ class JSSubstructLibrary {
   int add_mol(const JSMol &m);
   int add_smiles(const std::string &smi);
   int add_trusted_smiles(const std::string &smi);
-  int add_trusted_smiles_and_pattern_fp(const std::string &smi, const std::string &patternFp);
+  int add_trusted_smiles_and_pattern_fp(const std::string &smi,
+                                        const std::string &patternFp);
   std::string get_trusted_smiles(unsigned int i) const;
   std::string get_pattern_fp(unsigned int i) const;
   JSMol *get_mol(unsigned int i);
@@ -205,9 +206,7 @@ class JSSubstructLibrary {
   unsigned int count_matches(const JSMol &q) const {
     return count_matches(q, d_defaultUseChirality, d_defaultNumThreads);
   }
-  unsigned int size() const {
-    return d_sslib->size();
-  }
+  unsigned int size() const { return d_sslib->size(); }
 
   std::unique_ptr<RDKit::SubstructLibrary> d_sslib;
   RDKit::CachedTrustedSmilesMolHolder *d_molHolder;

@@ -185,7 +185,8 @@ emscripten::val binary_string_to_uint8array(const std::string &pkl) {
   return res;
 }
 
-emscripten::val uint_vector_to_uint32array(const std::vector<unsigned int> &vec) {
+emscripten::val uint_vector_to_uint32array(
+    const std::vector<unsigned int> &vec) {
   auto res = emscripten::val::global("Uint32Array").new_(vec.size());
   if (!vec.empty()) {
     emscripten::val view(emscripten::typed_memory_view(
@@ -320,29 +321,39 @@ emscripten::val get_frags_helper(JSMol &self) {
   return get_frags_helper(self, "{}");
 }
 
-int add_trusted_smiles_and_pattern_fp_helper(JSSubstructLibrary &self, const std::string &smi,
-                                  const emscripten::val &patternFpAsUInt8Array) {
-  return self.add_trusted_smiles_and_pattern_fp(smi, patternFpAsUInt8Array.as<std::string>());
+int add_trusted_smiles_and_pattern_fp_helper(
+    JSSubstructLibrary &self, const std::string &smi,
+    const emscripten::val &patternFpAsUInt8Array) {
+  return self.add_trusted_smiles_and_pattern_fp(
+      smi, patternFpAsUInt8Array.as<std::string>());
 }
 
-emscripten::val get_pattern_fp_as_uint8array_from_sslib(const JSSubstructLibrary &self, unsigned int i) {
+emscripten::val get_pattern_fp_as_uint8array_from_sslib(
+    const JSSubstructLibrary &self, unsigned int i) {
   return binary_string_to_uint8array(self.get_pattern_fp(i));
 }
 
-emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self, const JSMol &q, bool useChirality,
-                                            int numThreads,
-                                            int maxResults) {
-  auto indices = self.d_sslib->size() ? self.d_sslib->getMatches(
-      *q.d_mol, true, useChirality, false, numThreads, maxResults) : std::vector<unsigned int>();
+emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self,
+                                           const JSMol &q, bool useChirality,
+                                           int numThreads, int maxResults) {
+  auto indices = self.d_sslib->size()
+                     ? self.d_sslib->getMatches(*q.d_mol, true, useChirality,
+                                                false, numThreads, maxResults)
+                     : std::vector<unsigned int>();
   return uint_vector_to_uint32array(indices);
 }
 
-emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self, const JSMol &q, int maxResults) {
-    return get_matches_as_uint32array(self, q, self.d_defaultUseChirality, self.d_defaultNumThreads, maxResults);
+emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self,
+                                           const JSMol &q, int maxResults) {
+  return get_matches_as_uint32array(self, q, self.d_defaultUseChirality,
+                                    self.d_defaultNumThreads, maxResults);
 }
 
-emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self, const JSMol &q) {
-    return get_matches_as_uint32array(self, q, self.d_defaultUseChirality, self.d_defaultNumThreads, self.d_defaultMaxResults);
+emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self,
+                                           const JSMol &q) {
+  return get_matches_as_uint32array(self, q, self.d_defaultUseChirality,
+                                    self.d_defaultNumThreads,
+                                    self.d_defaultMaxResults);
 }
 
 #ifdef RDK_BUILD_AVALON_SUPPORT
@@ -573,18 +584,25 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("add_trusted_smiles", &JSSubstructLibrary::add_trusted_smiles)
       .function("get_trusted_smiles", &JSSubstructLibrary::get_trusted_smiles)
 #ifdef __EMSCRIPTEN__
-      .function("add_trusted_smiles_and_pattern_fp", select_overload<int(JSSubstructLibrary &, const std::string &, const emscripten::val &)>(
-              add_trusted_smiles_and_pattern_fp_helper))
-      .function("get_pattern_fp_as_uint8array", select_overload<emscripten::val(const JSSubstructLibrary &, unsigned int)>(
-              get_pattern_fp_as_uint8array_from_sslib))
+      .function("add_trusted_smiles_and_pattern_fp",
+                select_overload<int(JSSubstructLibrary &, const std::string &,
+                                    const emscripten::val &)>(
+                    add_trusted_smiles_and_pattern_fp_helper))
+      .function("get_pattern_fp_as_uint8array",
+                select_overload<emscripten::val(const JSSubstructLibrary &,
+                                                unsigned int)>(
+                    get_pattern_fp_as_uint8array_from_sslib))
       .function("get_matches_as_uint32array",
-          select_overload<emscripten::val(const JSSubstructLibrary &, const JSMol &, bool, int, int)>(
-              get_matches_as_uint32array))
-      .function("get_matches_as_uint32array",
-                select_overload<emscripten::val(const JSSubstructLibrary &, const JSMol &, int)>(
+                select_overload<emscripten::val(const JSSubstructLibrary &,
+                                                const JSMol &, bool, int, int)>(
                     get_matches_as_uint32array))
       .function("get_matches_as_uint32array",
-                select_overload<emscripten::val(const JSSubstructLibrary &, const JSMol &)>(
+                select_overload<emscripten::val(const JSSubstructLibrary &,
+                                                const JSMol &, int)>(
+                    get_matches_as_uint32array))
+      .function("get_matches_as_uint32array",
+                select_overload<emscripten::val(const JSSubstructLibrary &,
+                                                const JSMol &)>(
                     get_matches_as_uint32array))
 #endif
       .function("get_mol", &JSSubstructLibrary::get_mol, allow_raw_pointers())
