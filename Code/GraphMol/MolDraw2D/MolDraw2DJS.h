@@ -37,6 +37,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DJS : public MolDraw2D {
       : MolDraw2D(width, height, panelWidth, panelHeight), d_context(context) {
     PRECONDITION(width > 0, "bad width");
     PRECONDITION(height > 0, "bad height");
+    initDrawing();
+    needs_init_ = false;
     initTextDrawer(noFreetype);
   }
   MolDraw2DJS(const MolDraw2DJS &) = delete;
