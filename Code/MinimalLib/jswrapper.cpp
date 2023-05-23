@@ -522,6 +522,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("draw_to_canvas_with_highlights",
                 &draw_rxn_to_canvas_with_highlights)
 #endif
+      .function("is_valid", &JSReaction::is_valid)
       .function("get_svg",
                 select_overload<std::string() const>(&JSReaction::get_svg))
       .function("get_svg", select_overload<std::string(int, int) const>(

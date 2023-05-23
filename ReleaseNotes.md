@@ -6,6 +6,12 @@
 ## Highlights
 
 ## Backwards incompatible changes
+All methods returning `JSMol` and `JSReaction` objects now return a `nullptr`
+(`null` in JS) when faling to generate a valid object, while previously
+they were returning objects whose `is_valid()` method would return `false`.
+The new implementation avoids the overhead of having to call `delete()`
+on invalid objects and was approved in a [public discussion on the `rdkit-js`
+GitHub repository](https://github.com/rdkit/rdkit-js/discussions/336)
 
 ## Bug Fixes:
 
@@ -16,7 +22,8 @@
 ## Code removed in this release:
 
 ## Deprecated code (to be removed in a future release):
-
+JSMol::is_valid() and JSReaction::is_valid() are now deprecated and always
+return true, as invalid `JSMol` and `JSReaction` cannot exist anymore.
 
 # Release_2023.03.1
 (Changes relative to Release_2022.09.1)
