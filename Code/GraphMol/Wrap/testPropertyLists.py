@@ -119,7 +119,7 @@ $$$$"""
       conf.SetAtomPosition(i, (0., 0., 0.))
     m.AddConformer(conf)
     
-    Chem.TestSetProps(m)
+    Chem._TestSetProps(m)
     default_expected = {'bool': True, 'uint': 4294967295, 'double': 3.14159, 'svint': [0, 1, 2, -2], 'svuint': [0, 1, 2, 4294967294], 'svdouble': [0.0, 1.0, 2.0], 'svstring': ['The', 'RDKit']}
 
     def check(ob, prefix):

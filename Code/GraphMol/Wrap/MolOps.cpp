@@ -2953,7 +2953,7 @@ A note on the flags controlling which atoms/bonds are modified:
   If there is no chiral flag set (i.e. the property is not present), the
   molecule will not be modified.)DOC");
 
-    python::def("TestSetProps", testSetProps,
+    python::def("_TestSetProps", testSetProps,
 		python::arg("mol"));
     
   }
