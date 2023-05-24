@@ -37,7 +37,7 @@ using ExtendedQueryMol =
                  std::unique_ptr<TautomerQuery>>;
 
 namespace detail {
-constexpr std::uint16_t recognition = 0xfeed;
+constexpr std::uint16_t recognition = 0xbe73;
 constexpr std::uint16_t version = 1000;
 }  // namespace detail
 std::string pickle(const ExtendedQueryMol &xqm) {

@@ -1883,8 +1883,6 @@ AS
     OPERATOR    4   <@ (mol, mol),
     OPERATOR    3   @> (mol, qmol),
     OPERATOR    4   <@ (qmol, mol),
-    OPERATOR	3   @> (mol, xqmol),
-    OPERATOR    4   <@ (xqmol, mol),
     OPERATOR    6   @= (mol, mol),
     FUNCTION    1   gmol_consistent (bytea, internal, int4),
     FUNCTION    2   gmol_union (bytea, internal),
