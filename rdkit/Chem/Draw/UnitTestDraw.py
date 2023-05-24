@@ -263,6 +263,8 @@ class TestCase(unittest.TestCase):
               # Test that 1D list items are not lists
               self.assertFalse(isinstance(item, list))
 
+      # Other three matrices (legends; atom and bond highlighting) need not be supplied;
+      #   only test each if it's supplied
       if legends_matrix is not None:
           for r, row in enumerate(legends_matrix):
               for c, item in enumerate(row):
