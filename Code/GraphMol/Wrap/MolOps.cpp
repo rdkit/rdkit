@@ -970,6 +970,8 @@ struct molops_wrapper {
         .value("SANITIZE_SETHYBRIDIZATION", MolOps::SANITIZE_SETHYBRIDIZATION)
         .value("SANITIZE_CLEANUPCHIRALITY", MolOps::SANITIZE_CLEANUPCHIRALITY)
         .value("SANITIZE_ADJUSTHS", MolOps::SANITIZE_ADJUSTHS)
+        .value("SANITIZE_CLEANUP_ORGANOMETALLICS",
+               MolOps::SANITIZE_CLEANUP_ORGANOMETALLICS)
         .value("SANITIZE_ALL", MolOps::SANITIZE_ALL)
         .export_values();
     ;
