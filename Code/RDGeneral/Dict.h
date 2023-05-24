@@ -76,9 +76,9 @@ class RDKIT_RDGENERAL_EXPORT Dict {
       for (size_t i = 0; i < other._data.size(); ++i) {
         const Pair &pair = other._data[i];
         Pair *target = nullptr;
-        for (size_t i = 0; i < _data.size(); ++i) {
-          if (_data[i].key == pair.key) {
-            target = &_data[i];
+        for (size_t j = 0; j < _data.size(); ++j) {
+          if (_data[j].key == pair.key) {
+            target = &_data[j];
             break;
           }
         }
