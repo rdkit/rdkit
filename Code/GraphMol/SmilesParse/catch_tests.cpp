@@ -692,6 +692,10 @@ TEST_CASE(
     "[smarts][bug]") {
   auto m = "C* |$;M_p$|"_smiles;
   REQUIRE(m);
+  CHECK(m->getAtomWithIdx(1)->hasQuery());
+  CHECK(!m->getAtomWithIdx(1)->hasProp("atomLabel"));
+  CHECK(isCTABQueryAtom(*m->getAtomWithIdx(1)));
+
   SECTION("smarts writing") {
     auto smarts = MolToSmarts(*m);
     // this will change if/when the definition of the query changes, just have

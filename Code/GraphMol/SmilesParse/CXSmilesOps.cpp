@@ -1863,6 +1863,8 @@ std::string get_atomlabel_block(const ROMol &mol,
       res += quote_string(lbl + "_p");
     } else if (atom->getPropIfPresent(common_properties::atomLabel, lbl)) {
       res += quote_string(lbl);
+    } else if (atom->hasQuery() && isCTABQueryAtom(*atom)) {
+      res += atom->getQuery()->getTypeLabel() + "_p";
     }
   }
   // if we didn't find anything return an empty string
@@ -1957,9 +1959,9 @@ std::string get_coords_block(const ROMol &mol,
 
 std::string get_atom_props_block(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
-  std::vector<std::string> skip = {common_properties::atomLabel,
-                                   common_properties::molFileValue,
-                                   common_properties::molParity};
+  std::vector<std::string> skip = {
+      common_properties::atomLabel, common_properties::molFileValue,
+      common_properties::molParity, common_properties::dummyLabel};
   std::string res = "";
   unsigned int which = 0;
   for (auto idx : atomOrder) {
@@ -2197,7 +2199,7 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     const auto at = mol.getAtomWithIdx(idx);
     if (at->hasProp(common_properties::atomLabel) ||
         at->hasProp(common_properties::_QueryAtomGenericLabel) ||
-        at->hasProp(common_properties::dummyLabel)) {
+        at->hasProp(common_properties::dummyLabel) || isCTABQueryAtom(*at)) {
       needLabels = true;
     }
     if (at->hasProp(common_properties::molFileValue)) {

@@ -11,6 +11,7 @@
 #include <RDGeneral/test.h>
 #include <string>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryOps.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
 #include "SmartsWrite.h"
@@ -669,11 +670,34 @@ TEST_CASE(
 
 TEST_CASE("atom labels should be not be on atoms with recognized query types") {
   SECTION("basics") {
-    auto m = "*C1=CC(*)=CC=C1 |$foo;;;;X_p;;;$|"_smiles;
+    auto m = "*C1=CC(*)=CC=C1* |$foo;;;;X_p;;;;M_p$|"_smiles;
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(4)->hasQuery());
     CHECK(!m->getAtomWithIdx(4)->hasProp("atomLabel"));
+    CHECK(isCTABQueryAtom(*m->getAtomWithIdx(4)));
+    CHECK(m->getAtomWithIdx(8)->hasQuery());
+    CHECK(!m->getAtomWithIdx(8)->hasProp("atomLabel"));
+    CHECK(isCTABQueryAtom(*m->getAtomWithIdx(8)));
     CHECK(m->getAtomWithIdx(0)->hasProp("atomLabel"));
     CHECK(m->getAtomWithIdx(0)->getProp<std::string>("atomLabel") == "foo");
+    CHECK(!isCTABQueryAtom(*m->getAtomWithIdx(0)));
+
+    // we do still want to write those out to CXSMILES:
+    auto cxsmi = MolToCXSmiles(*m);
+    CHECK(cxsmi == "*c1ccc(*)c(*)c1 |$X_p;;;;;M_p;;foo;$|");
+  }
+  SECTION("just query atoms") {
+    auto m = "CC1=CC(*)=CC=C1* |$;;;;X_p;;;;M_p$|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(4)->hasQuery());
+    CHECK(!m->getAtomWithIdx(4)->hasProp("atomLabel"));
+    CHECK(isCTABQueryAtom(*m->getAtomWithIdx(4)));
+    CHECK(m->getAtomWithIdx(8)->hasQuery());
+    CHECK(!m->getAtomWithIdx(8)->hasProp("atomLabel"));
+    CHECK(isCTABQueryAtom(*m->getAtomWithIdx(8)));
+
+    // we do still want to write those out to CXSMILES:
+    auto cxsmi = MolToCXSmiles(*m);
+    CHECK(cxsmi == "*c1ccc(*)c(C)c1 |$X_p;;;;;M_p;;;$|");
   }
 }
