@@ -420,6 +420,21 @@ ATOM_EQUALS_QUERY *makeAtomIsBridgeheadQuery() {
   return res;
 }
 
+const std::vector<std::string> ctabQueryTypes{
+    "Q", "QH", "A", "AH", "X", "XH", "M", "MH",
+};
+bool isCTABQueryAtom(const Atom &at) {
+  if (!at.hasQuery()) {
+    return false;
+  }
+  auto lbl = at.getQuery()->getTypeLabel();
+  if (lbl.empty() || std::find(ctabQueryTypes.begin(), ctabQueryTypes.end(),
+                               lbl) == ctabQueryTypes.end()) {
+    return false;
+  }
+  return true;
+};
+
 ATOM_OR_QUERY *makeQAtomQuery() {
   auto *res = new ATOM_OR_QUERY;
   res->setDescription("AtomOr");

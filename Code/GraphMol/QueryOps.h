@@ -577,6 +577,10 @@ T *makeAtomRingBondCountQuery(int what, const std::string &descr) {
 //! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what);
 
+//! returns whether or not a given query atom is a standard CTAB query atom
+//!  like X, Q, QH, etc.
+RDKIT_GRAPHMOL_EXPORT bool isCTABQueryAtom(const Atom &at);
+
 //! returns a Query for matching generic A atoms (heavy atoms)
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAAtomQuery();
 //! returns a Query for matching generic AH atoms (any atom)
