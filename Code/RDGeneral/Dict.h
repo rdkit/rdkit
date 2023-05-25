@@ -73,23 +73,22 @@ class RDKIT_RDGENERAL_EXPORT Dict {
       if (other._hasNonPodData) {
         _hasNonPodData = true;
       }
-      for (size_t i = 0; i < other._data.size(); ++i) {
-        const Pair &pair = other._data[i];
+      for (const auto &opair : other._data) {
         Pair *target = nullptr;
-        for (size_t i = 0; i < _data.size(); ++i) {
-          if (_data[i].key == pair.key) {
-            target = &_data[i];
+        for (auto &dpair : _data) {
+          if (dpair.key == opair.key) {
+            target = &dpair;
             break;
           }
         }
 
         if (!target) {
           // need to create blank entry and copy
-          _data.push_back(Pair(pair.key));
-          copy_rdvalue(_data.back().val, pair.val);
+          _data.push_back(Pair(opair.key));
+          copy_rdvalue(_data.back().val, opair.val);
         } else {
           // just copy
-          copy_rdvalue(target->val, pair.val);
+          copy_rdvalue(target->val, opair.val);
         }
       }
     }
