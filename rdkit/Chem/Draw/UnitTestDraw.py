@@ -356,7 +356,6 @@ class TestCase(unittest.TestCase):
     kwargs_value = Draw.rdMolDraw2D.MolDrawOptions()
     kwargs_value.addAtomIndices = True
 
-    # test_num = 0
     for (legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix) in self.param_sets:
       for useSVG in (True, False):
         for returnPNG in (True, False):
