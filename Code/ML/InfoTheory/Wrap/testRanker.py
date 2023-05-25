@@ -1,13 +1,12 @@
-import unittest
-import numpy
-import os
 import io
-
+import os
 import pickle
+import unittest
 
-from rdkit import RDConfig, RDRandom
+import numpy
+
+from rdkit import DataStructs, RDConfig, RDRandom
 from rdkit.ML.InfoTheory import rdInfoTheory as rdit
-from rdkit import DataStructs
 
 
 def feq(a, b, tol=1e-4):

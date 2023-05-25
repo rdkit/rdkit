@@ -1,10 +1,9 @@
-
-from Tkinter import *
-from sping.TK import TKCanvas, TKCanvasPIL
 from sping import colors
+from sping.TK import TKCanvas, TKCanvasPIL
+from Tkinter import *
 
 # This example program creates a scrolling canvas using TKCanvasPIL as the basis
-# The PIL-based canvas may be saved to an image file.  
+# The PIL-based canvas may be saved to an image file.
 # based on the demo included with python 1.5.2 source under Demo/tkinter/matt/tkcanvas-with-scrollbars.py
 
 
@@ -30,7 +29,7 @@ class Test(Frame):
     spacer = Frame(self, height="0.25i")
     spacer.pack(side=BOTTOM)
 
-    # notice that the scroll region (600 x 600) is larger than 
+    # notice that the scroll region (600 x 600) is larger than
     # displayed size of the widget (400 x 400)
 
     self.tkpil = TKCanvasPIL(name="SpingTKCanvas", size=(600, 600), master=self,
@@ -48,7 +47,7 @@ class Test(Frame):
     self.draw.scrollX['command'] = self.draw.xview
     self.draw.scrollY['command'] = self.draw.yview
 
-    # draw something into the  canvas Note that the first square 
+    # draw something into the  canvas Note that the first square
     # is visible, but you need to scroll to see the other ones.
 
     self.tkpil.drawRect(10, 10, 100, 100, edgeColor=colors.blue, fillColor=colors.green)

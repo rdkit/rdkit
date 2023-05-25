@@ -19,7 +19,6 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
-
 #include "CIPLabeler.h"
 #include "Digraph.h"
 #include "rules/Pairlist.h"
@@ -558,7 +557,7 @@ TEST_CASE("GitHub Issue #5142", "[bug][accurateCIP]") {
 }
 
 TEST_CASE("CIP timeout test", "[accurateCIP]") {
-std::string molBlock = R"(
+  std::string molBlock = R"(
   Mrv2117 11112217353D          
 
  40 50  0  0  0  0            999 V2000
@@ -655,12 +654,15 @@ std::string molBlock = R"(
 M  END
 
   )";
-  
-  auto mol = std::unique_ptr<RDKit::RWMol>(MolBlockToMol(molBlock,true, false));
+
+  auto mol =
+      std::unique_ptr<RDKit::RWMol>(MolBlockToMol(molBlock, true, false));
   REQUIRE(mol);
-  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000), CIPLabeler::MaxIterationsExceeded);
+  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
+                  CIPLabeler::MaxIterationsExceeded);
 
   // try a second call to test that the timer is reset
 
-  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000), CIPLabeler::MaxIterationsExceeded);
+  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
+                  CIPLabeler::MaxIterationsExceeded);
 }

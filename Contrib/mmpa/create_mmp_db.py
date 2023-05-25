@@ -30,12 +30,13 @@
 #
 # Created by Jameed Hussain, July 2013
 
-import sys
-import re
 import os
-import subprocess
+import re
 import sqlite3
+import subprocess
+import sys
 from optparse import OptionParser
+
 from rdkit import Chem
 
 
@@ -117,10 +118,12 @@ parser.add_option(
 parser.add_option(
   '-m', '--maxsize', action='store', dest='maxsize', type='int',
   help="Maximum size of change (in heavy atoms) that is stored in the database. DEFAULT=15. \t\
-                  Note: Any MMPs that involve a change greater than this value will not be stored in the database and hence not be identified in the searching.")
+                  Note: Any MMPs that involve a change greater than this value will not be stored in the database and hence not be identified in the searching."
+)
 parser.add_option(
-  '-s', '--smarts', default=False, action='store_true', dest='sma',
-  help='Build SMARTS db so can perform SMARTS searching against db. Note: Will make the build process somewhat slower.')
+  '-s', '--smarts', default=False, action='store_true', dest='sma', help=
+  'Build SMARTS db so can perform SMARTS searching against db. Note: Will make the build process somewhat slower.'
+)
 #parse the command line options
 (options, args) = parser.parse_args()
 

@@ -199,7 +199,7 @@ a QDAT file.
 
 """
 
-
+import pickle
 import sys
 import time
 
@@ -207,12 +207,10 @@ import numpy
 
 from rdkit import DataStructs
 from rdkit.Dbase import DbModule
-from rdkit.ML import CompositeRun
-from rdkit.ML import ScreenComposite
-from rdkit.ML.Composite import Composite, BayesComposite
+from rdkit.ML import CompositeRun, ScreenComposite
+from rdkit.ML.Composite import BayesComposite, Composite
 from rdkit.ML.Data import DataUtils, SplitData
 from rdkit.utils import listutils
-import pickle
 
 # # from ML.SVM import SVMClassificationModel as SVM
 _runDetails = CompositeRun.CompositeRun()
@@ -280,8 +278,8 @@ def GetCommandLine(details):
   if details.filterFrac != 0.0:
     args.append('-F %.3f -v %d' % (details.filterFrac, details.filterVal))
   if details.modelFilterFrac != 0.0:
-    args.append('--modelFiltFrac=%.3f --modelFiltVal=%d' % (details.modelFilterFrac,
-                                                            details.modelFilterVal))
+    args.append('--modelFiltFrac=%.3f --modelFiltVal=%d' %
+                (details.modelFilterFrac, details.modelFilterVal))
   if details.splitRun:
     args.append('-s -f %.3f' % (details.splitFrac))
   if details.shuffleActivities:
@@ -400,8 +398,8 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
 
   namedExamples = data.GetNamedData()
   if details.splitRun == 1:
-    trainIdx, testIdx = SplitData.SplitIndices(
-      len(namedExamples), details.splitFrac, silent=not _verbose)
+    trainIdx, testIdx = SplitData.SplitIndices(len(namedExamples), details.splitFrac,
+                                               silent=not _verbose)
 
     trainExamples = [namedExamples[x] for x in trainIdx]
     testExamples = [namedExamples[x] for x in testIdx]
@@ -512,18 +510,18 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     nPossibleVals = data.GetNPossibleVals()
     if details.activityBounds:
       nPossibleVals[-1] = len(details.activityBounds) + 1
-    composite.Grow(
-      trainExamples, attrs, nPossibleVals=[0] + nPossibleVals, buildDriver=driver, pruner=pruner,
-      nTries=details.nModels, pruneIt=details.pruneIt, lessGreedy=details.lessGreedy,
-      needsQuantization=0, treeBuilder=builder, nQuantBounds=details.qBounds,
-      startAt=details.startAt, maxDepth=details.limitDepth, progressCallback=progressCallback,
-      holdOutFrac=details.internalHoldoutFrac, replacementSelection=details.replacementSelection,
-      recycleVars=details.recycleVars, randomDescriptors=details.randomDescriptors,
-      silent=not _verbose)
+    composite.Grow(trainExamples, attrs, nPossibleVals=[0] + nPossibleVals, buildDriver=driver,
+                   pruner=pruner, nTries=details.nModels, pruneIt=details.pruneIt,
+                   lessGreedy=details.lessGreedy, needsQuantization=0, treeBuilder=builder,
+                   nQuantBounds=details.qBounds, startAt=details.startAt,
+                   maxDepth=details.limitDepth, progressCallback=progressCallback,
+                   holdOutFrac=details.internalHoldoutFrac,
+                   replacementSelection=details.replacementSelection,
+                   recycleVars=details.recycleVars, randomDescriptors=details.randomDescriptors,
+                   silent=not _verbose)
 
   elif details.useSigTrees:
-    from rdkit.ML.DecTree import CrossValidate
-    from rdkit.ML.DecTree import BuildSigTree
+    from rdkit.ML.DecTree import BuildSigTree, CrossValidate
     builder = BuildSigTree.SigTreeBuilder
     driver = CrossValidate.CrossValidationDriver
     nPossibleVals = data.GetNPossibleVals()
@@ -541,17 +539,17 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
       allowCollections = details.allowCollections
     else:
       allowCollections = False
-    composite.Grow(
-      trainExamples, attrs, nPossibleVals=[0] + nPossibleVals, buildDriver=driver,
-      nTries=details.nModels, needsQuantization=0, treeBuilder=builder, maxDepth=details.limitDepth,
-      progressCallback=progressCallback, holdOutFrac=details.internalHoldoutFrac,
-      replacementSelection=details.replacementSelection, recycleVars=details.recycleVars,
-      randomDescriptors=details.randomDescriptors, biasList=biasList, useCMIM=useCMIM,
-      allowCollection=allowCollections, silent=not _verbose)
+    composite.Grow(trainExamples, attrs, nPossibleVals=[0] + nPossibleVals, buildDriver=driver,
+                   nTries=details.nModels, needsQuantization=0, treeBuilder=builder,
+                   maxDepth=details.limitDepth, progressCallback=progressCallback,
+                   holdOutFrac=details.internalHoldoutFrac,
+                   replacementSelection=details.replacementSelection,
+                   recycleVars=details.recycleVars, randomDescriptors=details.randomDescriptors,
+                   biasList=biasList, useCMIM=useCMIM, allowCollection=allowCollections,
+                   silent=not _verbose)
 
   elif details.useKNN:
-    from rdkit.ML.KNN import CrossValidate
-    from rdkit.ML.KNN import DistFunctions
+    from rdkit.ML.KNN import CrossValidate, DistFunctions
 
     driver = CrossValidate.CrossValidationDriver
     dfunc = ''
@@ -643,20 +641,20 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     if details.splitRun:
       message('Testing all hold-out examples')
       wrong = testall(composite, testExamples, badExamples)
-      message('%d examples (%% %5.2f) were misclassified' % (len(wrong), 100. * float(len(wrong)) /
-                                                             float(len(testExamples))))
+      message('%d examples (%% %5.2f) were misclassified' %
+              (len(wrong), 100. * float(len(wrong)) / float(len(testExamples))))
       _runDetails.holdout_error = float(len(wrong)) / len(testExamples)
     else:
       message('Testing all examples')
       wrong = testall(composite, namedExamples, badExamples)
-      message('%d examples (%% %5.2f) were misclassified' % (len(wrong), 100. * float(len(wrong)) /
-                                                             float(len(namedExamples))))
+      message('%d examples (%% %5.2f) were misclassified' %
+              (len(wrong), 100. * float(len(wrong)) / float(len(namedExamples))))
       _runDetails.overall_error = float(len(wrong)) / len(namedExamples)
 
   if details.detailedRes:
     message('\nEntire data set:')
-    resTup = ScreenComposite.ShowVoteResults(
-      range(data.GetNPts()), data, composite, nPossibleVals[-1], details.threshold)
+    resTup = ScreenComposite.ShowVoteResults(range(data.GetNPts()), data, composite,
+                                             nPossibleVals[-1], details.threshold)
     nGood, nBad, nSkip, avgGood, avgBad, avgSkip, voteTab = resTup
     nPts = len(namedExamples)
     nClass = nGood + nBad
@@ -670,8 +668,8 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
 
     if details.splitRun:
       message('\nHold-out data:')
-      resTup = ScreenComposite.ShowVoteResults(
-        range(len(testExamples)), testExamples, composite, nPossibleVals[-1], details.threshold)
+      resTup = ScreenComposite.ShowVoteResults(range(len(testExamples)), testExamples, composite,
+                                               nPossibleVals[-1], details.threshold)
       nGood, nBad, nSkip, avgGood, avgBad, avgSkip, voteTab = resTup
       nPts = len(testExamples)
       nClass = nGood + nBad
@@ -743,11 +741,12 @@ def RunIt(details, progressCallback=None, saveIt=1, setDescNames=0):
     details.tableName = fName
     data = details.GetDataSet()
   else:
-    data = DataUtils.DBToQuantData(details.dbName,  # Function no longer defined
-                                   fName,
-                                   quantName=details.qTableName,
-                                   user=details.dbUser,
-                                   password=details.dbPassword)
+    data = DataUtils.DBToQuantData(
+      details.dbName,  # Function no longer defined
+      fName,
+      quantName=details.qTableName,
+      user=details.dbUser,
+      password=details.dbPassword)
 
   composite = RunOnData(details, data, progressCallback=progressCallback, saveIt=saveIt,
                         setDescNames=setDescNames)
@@ -803,30 +802,32 @@ def ParseArgs(runDetails):
   args, extra = getopt.getopt(
     sys.argv[1:],
     'P:o:n:p:b:sf:F:v:hlgd:rSTt:BQ:q:DVG:N:L:',
-    ['nRuns=',
-     'prune',
-     'profile',
-     'seed=',
-     'noScreen',
-     'modelFiltFrac=',
-     'modelFiltVal=',
-     'recycle',
-     'randomDescriptors=',
-     'doKnn',
-     'knnK=',
-     'knnTanimoto',
-     'knnEuclid',
-     'doSigTree',
-     'allowCollections',
-     'doNaiveBayes',
-     'mEstimateVal=',
-     'doSigBayes',
+    [
+      'nRuns=',
+      'prune',
+      'profile',
+      'seed=',
+      'noScreen',
+      'modelFiltFrac=',
+      'modelFiltVal=',
+      'recycle',
+      'randomDescriptors=',
+      'doKnn',
+      'knnK=',
+      'knnTanimoto',
+      'knnEuclid',
+      'doSigTree',
+      'allowCollections',
+      'doNaiveBayes',
+      'mEstimateVal=',
+      'doSigBayes',
 
-     # #                               'doSVM','svmKernel=','svmType=','svmGamma=',
-     # #                               'svmCost=','svmWeights=','svmDegree=',
-     # #                               'svmCoeff=','svmEps=','svmNu=','svmCache=',
-     # #                               'svmShrink','svmDataType=',
-     'replacementSelection', ])
+      # #                               'doSVM','svmKernel=','svmType=','svmGamma=',
+      # #                               'svmCost=','svmWeights=','svmDegree=',
+      # #                               'svmCoeff=','svmEps=','svmNu=','svmCache=',
+      # #                               'svmShrink','svmDataType=',
+      'replacementSelection',
+    ])
   runDetails.profileIt = 0
   for arg, val in args:
     if arg == '-n':
@@ -937,6 +938,7 @@ def ParseArgs(runDetails):
       runDetails.useTrees = 0
     elif arg == '--mEstimateVal':
       runDetails.mEstimateVal = float(val)
+
 
 # #     elif arg == '--doSVM':
 # #       runDetails.useSVM=1

@@ -1,27 +1,30 @@
 # coding=utf-8
 # Copyright (c) 2014 Merck KGaA
 
-import os, re, gzip, json, requests, sys, optparse, csv
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import SDWriter
-from rdkit.Chem import Descriptors
-from rdkit.ML.Descriptors import MoleculeDescriptors
-from scipy import interp
-from scipy import stats
-from sklearn import cross_validation
-from sklearn.ensemble import RandomForestClassifier
-from sklearn import metrics
-from sklearn.cross_validation import train_test_split
-from sklearn.metrics import roc_curve, auc
-from sklearn.metrics import precision_score, recall_score
-from sklearn import preprocessing
-import pickle
-from pickle import Unpickler
-import numpy as np
+import csv
+import gzip
+import json
 import math
+import optparse
+import os
+import pickle
+import re
+import sys
+from pickle import Unpickler
+
+import numpy as np
+import requests
 from pylab import *
-from sklearn.metrics import make_scorer
+from scipy import interp, stats
+from sklearn import cross_validation, metrics, preprocessing
+from sklearn.cross_validation import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (auc, make_scorer, precision_score, recall_score,
+                             roc_curve)
+
+from rdkit import Chem
+from rdkit.Chem import AllChem, Descriptors, SDWriter
+from rdkit.ML.Descriptors import MoleculeDescriptors
 
 kappa_template = '''\
 %(kind)s Kappa Coefficient
@@ -227,6 +230,7 @@ SAS Manual
       elif wt == 'toeplitz':
         #assume toeplitz structure
         from scipy.linalg import toeplitz
+
         #weights = toeplitz(np.arange(table.shape[0]))
         weights = toeplitz(weights)
       else:
@@ -375,8 +379,8 @@ class p_con:
     self.request_data["chembl_id"] = self.target_data['target']['chemblId']
     #        print self.target_data
     self.bioactivity_data = requests.get(
-      "https://www.ebi.ac.uk/chemblws/targets/{}/bioactivities.json".format(self.target_data[
-        'target']['chemblId']), proxies=self.proxy).json()
+      "https://www.ebi.ac.uk/chemblws/targets/{}/bioactivities.json".format(
+        self.target_data['target']['chemblId']), proxies=self.proxy).json()
 
     ic50_skip = 0
     ki_skip = 0
@@ -388,8 +392,10 @@ class p_con:
     i = 0
     x = len(self.bioactivity_data['bioactivities'])
 
-    for bioactivity in [record for record in self.bioactivity_data['bioactivities']
-                        if looks_like_number(record['value'])]:
+    for bioactivity in [
+        record for record in self.bioactivity_data['bioactivities']
+        if looks_like_number(record['value'])
+    ]:
 
       if i % 100 == 0:
         sys.stdout.write('\r' + str(i) + '/' + str(x) + ' >          <\b\b\b\b\b\b\b\b\b\b\b')
@@ -413,8 +419,9 @@ class p_con:
       else:
         continue
 
-      self.cmpd_data = requests.get("https://www.ebi.ac.uk/chemblws/compounds/{}.json".format(
-        bioactivity['ingredient_cmpd_chemblid']), proxies=self.proxy).json()
+      self.cmpd_data = requests.get(
+        "https://www.ebi.ac.uk/chemblws/compounds/{}.json".format(
+          bioactivity['ingredient_cmpd_chemblid']), proxies=self.proxy).json()
 
       my_smiles = self.cmpd_data['compound']['smiles']
       bioactivity['Smiles'] = my_smiles
@@ -559,16 +566,17 @@ class p_con:
   def step_5_remove_descriptors(self):
     """remove list of Properties from each compound (hardcoded)
         which would corrupt process of creating Prediction-Models"""
-    sd_tags = ['activity__comment', 'alogp', 'assay__chemblid', 'assay__description', 'assay__type',
-               'bioactivity__type', 'activity_comment', 'assay_chemblid', 'assay_description',
-               'assay_type', 'bioactivity_type', 'cansmirdkit', 'ingredient__cmpd__chemblid',
-               'ingredient_cmpd_chemblid', 'knownDrug', 'medChemFriendly', 'molecularFormula',
-               'name__in__reference', 'name_in_reference', 'numRo5Violations', 'operator',
-               'organism', 'parent__cmpd__chemblid', 'parent_cmpd_chemblid', 'passesRuleOfThree',
-               'preferredCompoundName', 'reference', 'rotatableBonds', 'smiles', 'Smiles',
-               'stdInChiKey', 'synonyms', 'target__chemblid', 'target_chemblid',
-               'target__confidence', 'target__name', 'target_confidence', 'target_name', 'units',
-               'value_avg', 'value_stddev'] + ['value']
+    sd_tags = [
+      'activity__comment', 'alogp', 'assay__chemblid', 'assay__description', 'assay__type',
+      'bioactivity__type', 'activity_comment', 'assay_chemblid', 'assay_description', 'assay_type',
+      'bioactivity_type', 'cansmirdkit', 'ingredient__cmpd__chemblid', 'ingredient_cmpd_chemblid',
+      'knownDrug', 'medChemFriendly', 'molecularFormula', 'name__in__reference',
+      'name_in_reference', 'numRo5Violations', 'operator', 'organism', 'parent__cmpd__chemblid',
+      'parent_cmpd_chemblid', 'passesRuleOfThree', 'preferredCompoundName', 'reference',
+      'rotatableBonds', 'smiles', 'Smiles', 'stdInChiKey', 'synonyms', 'target__chemblid',
+      'target_chemblid', 'target__confidence', 'target__name', 'target_confidence', 'target_name',
+      'units', 'value_avg', 'value_stddev'
+    ] + ['value']
     result = []
 
     for mol in self.sd_entries:
@@ -595,8 +603,10 @@ class p_con:
     """train models according to trafficlight using sklearn.ensamble.RandomForestClassifier
         self.model contains up to 10 models afterwards, use save_model_info(type) to create csv or html
         containing data for each model"""
-    title_line = ["#", "accuracy", "MCC", "precision", "recall", "f1", "auc", "kappa", "prevalence",
-                  "bias", "pickel-File"]
+    title_line = [
+      "#", "accuracy", "MCC", "precision", "recall", "f1", "auc", "kappa", "prevalence", "bias",
+      "pickel-File"
+    ]
     self.csv_text = [title_line]
 
     TL_list = []
@@ -712,15 +722,19 @@ class p_con:
         print(conf_matrix2)
 
       result_string_cut = [
-        randomseedcounter, str(accuracy_CV) + "_" + str(accuracy_std_CV),
-        str(MCC_CV) + "_" + str(MCC_std_CV), str(precision_CV) + "_" + str(precision_std_CV),
-        str(recall_CV) + "_" + str(recall_std_CV), str(f1_CV) + "_" + str(f1_std_CV),
-        str(auc_CV) + "_" + str(auc_std_CV), str(kappa) + "_" + str(kappa_stdev), kappa_prevalence,
-        kappa_bias, "model_file.pkl"
+        randomseedcounter,
+        str(accuracy_CV) + "_" + str(accuracy_std_CV),
+        str(MCC_CV) + "_" + str(MCC_std_CV),
+        str(precision_CV) + "_" + str(precision_std_CV),
+        str(recall_CV) + "_" + str(recall_std_CV),
+        str(f1_CV) + "_" + str(f1_std_CV),
+        str(auc_CV) + "_" + str(auc_std_CV),
+        str(kappa) + "_" + str(kappa_stdev), kappa_prevalence, kappa_bias, "model_file.pkl"
       ]
 
       self.model.append(clf_RF)
       self.csv_text.append(result_string_cut)
+
 
 #            except Exception as e:
 #                print "got %d models" % len(self.model)

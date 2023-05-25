@@ -8,8 +8,8 @@ voting on a data set
 
 """
 
-from PIL import Image, ImageDraw
 import numpy
+from PIL import Image, ImageDraw
 
 
 def CollectVotes(composite, data, badOnly):
@@ -174,9 +174,10 @@ def Usage():
 
 
 if __name__ == '__main__':
-  import sys
   import getopt
   import pickle
+  import sys
+
   from rdkit.ML.Data import DataUtils
 
   args, extra = getopt.getopt(sys.argv[1:], 'o:bthx:y:d:')

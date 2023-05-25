@@ -1,9 +1,10 @@
-from rdkit import DataStructs
-from rdkit import RDConfig
-import unittest
 import pickle
 import random
+import unittest
+
 import numpy
+
+from rdkit import DataStructs, RDConfig
 
 
 def feq(a, b, tol=1e-4):
@@ -109,15 +110,15 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(bv) == 4)
     self.assertTrue(list(bv.GetOnBits()) == [0, 2])
 
-  def _bulkTest(self,bvs):
-    for metric in 'Tanimoto','Dice','AllBit','OnBit','RogotGoldberg':
-      bulk = getattr(DataStructs,f'Bulk{metric}Similarity')
-      single = getattr(DataStructs,f'{metric}Similarity')
-    sims = bulk(bvs[0],bvs)
+  def _bulkTest(self, bvs):
+    for metric in 'Tanimoto', 'Dice', 'AllBit', 'OnBit', 'RogotGoldberg':
+      bulk = getattr(DataStructs, f'Bulk{metric}Similarity')
+      single = getattr(DataStructs, f'{metric}Similarity')
+    sims = bulk(bvs[0], bvs)
     for i in range(len(bvs)):
-      sim = single(bvs[0],bvs[i])
-      self.assertEqual(sim,sims[i])
-      self.assertEqual(sim, single(bvs[0],bvs[i].ToBinary()))
+      sim = single(bvs[0], bvs[i])
+      self.assertEqual(sim, sims[i])
+      self.assertEqual(sim, single(bvs[0], bvs[i].ToBinary()))
     dists = bulk(bvs[0], bvs, returnDistance=True)
     for i in range(len(bvs)):
       dist = single(bvs[0], bvs[i], returnDistance=True)
@@ -172,7 +173,6 @@ class TestCase(unittest.TestCase):
       bvs[bvi] = bv
     self._bulkTest(bvs)
 
-
   def test7FPS(self):
     bv = DataStructs.ExplicitBitVect(32)
     bv.SetBit(0)
@@ -206,7 +206,7 @@ class TestCase(unittest.TestCase):
 
   def test9ToNumpy(self):
     import numpy
-    for typ in (DataStructs.ExplicitBitVect,):
+    for typ in (DataStructs.ExplicitBitVect, ):
       bv = typ(32)
       bv.SetBit(0)
       bv.SetBit(1)
@@ -218,9 +218,8 @@ class TestCase(unittest.TestCase):
       for i in range(bv.GetNumBits()):
         self.assertEqual(bv[i], arr[i])
 
-    for typ in (DataStructs.IntSparseIntVect,
-            DataStructs.LongSparseIntVect, DataStructs.UIntSparseIntVect,
-            DataStructs.ULongSparseIntVect):
+    for typ in (DataStructs.IntSparseIntVect, DataStructs.LongSparseIntVect,
+                DataStructs.UIntSparseIntVect, DataStructs.ULongSparseIntVect):
       iv = typ(32)
       iv[0] = 1
       iv[1] = 1
@@ -243,31 +242,32 @@ class TestCase(unittest.TestCase):
       bvs.append(bv)
     qs = bvs[:10]
     db = bvs[10:]
-    for metric in ['Tanimoto','Cosine', 'Kulczynski', 'Dice', 'Sokal',
-                   'McConnaughey', 'Asymmetric', 'BraunBlanquet', 'Russel',
-                   'RogotGoldberg']:
-      bulkSim = getattr(DataStructs,f'Bulk{metric}Similarity')
-      nbrSim = getattr(DataStructs,f'{metric}SimilarityNeighbors')
+    for metric in [
+        'Tanimoto', 'Cosine', 'Kulczynski', 'Dice', 'Sokal', 'McConnaughey', 'Asymmetric',
+        'BraunBlanquet', 'Russel', 'RogotGoldberg'
+    ]:
+      bulkSim = getattr(DataStructs, f'Bulk{metric}Similarity')
+      nbrSim = getattr(DataStructs, f'{metric}SimilarityNeighbors')
       tgts = []
       for q in qs:
-        sims = bulkSim(q,db)
+        sims = bulkSim(q, db)
         sim, idx = max((sim, -idx) for idx, sim in enumerate(sims))
-        tgts.append((-idx,sim))
-      nbrs = nbrSim(qs,db)
-      self.assertEqual(tgts,nbrs)
+        tgts.append((-idx, sim))
+      nbrs = nbrSim(qs, db)
+      self.assertEqual(tgts, nbrs)
 
   def test12ToList(self):
     nbits = 2048
     for cls in [DataStructs.ExplicitBitVect, DataStructs.SparseBitVect]:
       bv = cls(nbits)
-      l = [0]*2048
+      l = [0] * 2048
 
       # test no bits set
       l2 = list(bv)
       l3 = bv.ToList()
       self.assertEqual(l, l2)
       self.assertEqual(l, l3)
-      
+
       for j in range(nbits):
         x = random.randrange(0, nbits)
         l[x] = 1
@@ -288,7 +288,7 @@ class TestCase(unittest.TestCase):
 
       bv2 = cls(nbits)
       bv2.FromBase64(bv.ToBase64())
-      self.assertEqual(bv,bv2)
+      self.assertEqual(bv, bv2)
 
   def test14NegativeIndices(self):
     nbits = 2048
@@ -298,13 +298,13 @@ class TestCase(unittest.TestCase):
       for j in range(nbits):
         x = random.randrange(0, nbits)
         bv.SetBit(x)
-        bv2[-(nbits-x)]=1
+        bv2[-(nbits - x)] = 1
 
-      self.assertEqual(bv,bv2)
+      self.assertEqual(bv, bv2)
       for j in range(nbits):
-        self.assertEqual(bv[j],bv[-(nbits-j)])
+        self.assertEqual(bv[j], bv[-(nbits - j)])
       with self.assertRaises(IndexError):
-        bv[-(nbits+1)]
+        bv[-(nbits + 1)]
       with self.assertRaises(IndexError):
         bv2[-(nbits + 1)] = 1
 

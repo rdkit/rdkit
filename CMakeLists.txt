@@ -27,6 +27,9 @@ option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the
 option(RDK_BUILD_PGSQL "build the PostgreSQL cartridge" OFF )
 option(RDK_BUILD_RPATH_SUPPORT "build shared libraries using rpath" OFF)
 option(RDK_PGSQL_STATIC "statically link rdkit libraries into the PostgreSQL cartridge" ON )
+option(RDK_PGSQL_BFP_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL bfp gist index" OFF )
+option(RDK_PGSQL_MOL_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL mol gist index" ON )
+option(RDK_PGSQL_QMOL_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL qmol gist index" ON )
 option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_DLLS_MSVC "install the rdkit DLLs when using MSVC" OFF)
@@ -129,9 +132,9 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 #-------
 # Config variables:
 set(RDKit_Year "2023")
-set(RDKit_Month "03")
+set(RDKit_Month "09")
 set(RDKit_Revision "1")
-set(RDKit_RevisionModifier "b1")
+set(RDKit_RevisionModifier "pre")
 set(RDKit_ABI "1")
 
 # we need an integer version of the month later, so remove the zero padding
@@ -279,7 +282,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   # determine linkage of python
   execute_process(
       COMMAND
-      ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
+      ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
       OUTPUT_VARIABLE Py_ENABLE_SHARED
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
@@ -321,10 +324,11 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   else(RDK_INSTALL_INTREE)
     if (NOT PYTHON_INSTDIR)
       # Determine correct installation directory for Python bindings
-      # From http://plplot.svn.sourceforge.net/viewvc/plplot/trunk/cmake/modules/python.cmake?revision=11014
       execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "from __future__ import print_function; from distutils import sysconfig; print(sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_PREFIX}'))"
+        ${PYTHON_EXECUTABLE} -c "import sys; import sysconfig; \
+          schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
+          print(sysconfig.get_path('platlib', schema, vars={'platbase': '${CMAKE_INSTALL_PREFIX}'}))"
         OUTPUT_VARIABLE PYTHON_INSTDIR
         OUTPUT_STRIP_TRAILING_WHITESPACE
       )
@@ -361,7 +365,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     # We strip off the first word though (which will be the compiler name).
     execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
+        ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
         OUTPUT_VARIABLE PYTHON_LDSHARED
         OUTPUT_STRIP_TRAILING_WHITESPACE
      )

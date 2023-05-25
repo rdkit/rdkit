@@ -18,7 +18,6 @@ namespace RDKit {
 
 class ROMol;
 
-
 namespace CIPLabeler_detail {
 RDKIT_CIPLABELER_EXPORT bool decrementRemainingCallCountAndCheck();
 }
@@ -33,13 +32,13 @@ namespace CIPLabeler {
   If that maximum value is exceeded, the following error is thrown
 */
 
-class RDKIT_CIPLABELER_EXPORT MaxIterationsExceeded : public std::runtime_error {
+class RDKIT_CIPLABELER_EXPORT MaxIterationsExceeded
+    : public std::runtime_error {
  public:
   explicit MaxIterationsExceeded()
-      : std::runtime_error("Max Iterations Exceeded in CIP label calculation"){};
+      : std::runtime_error(
+            "Max Iterations Exceeded in CIP label calculation"){};
 };
-
-
 
 /**
  * Calculate Stereochemical labels based on an accurate implementation
@@ -61,7 +60,8 @@ class RDKIT_CIPLABELER_EXPORT MaxIterationsExceeded : public std::runtime_error 
  *   \note Labels will be stored under the common_properties::_CIPCode
  *          property of the relevant atoms/bonds.
  */
-RDKIT_CIPLABELER_EXPORT void assignCIPLabels(ROMol &mol, unsigned int maxRecursiveIterations = 0);
+RDKIT_CIPLABELER_EXPORT void assignCIPLabels(
+    ROMol &mol, unsigned int maxRecursiveIterations = 0);
 
 /**
  * Overload that allows selecting which atoms and/or bonds will be labeled.
@@ -80,7 +80,7 @@ RDKIT_CIPLABELER_EXPORT void assignCIPLabels(ROMol &mol, unsigned int maxRecursi
  */
 RDKIT_CIPLABELER_EXPORT void assignCIPLabels(
     ROMol &mol, const boost::dynamic_bitset<> &atoms,
-    const boost::dynamic_bitset<> &bonds, 
+    const boost::dynamic_bitset<> &bonds,
     unsigned int maxRecursiveIterations = 0);
 
 }  // namespace CIPLabeler

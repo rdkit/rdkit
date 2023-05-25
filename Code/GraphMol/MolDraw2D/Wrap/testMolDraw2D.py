@@ -1,13 +1,13 @@
-from rdkit import RDConfig
-import unittest
 import random
 import re
+import unittest
 from os import environ
-from rdkit import Chem
-from rdkit.Chem import Draw, AllChem, rdDepictor
-from rdkit.Chem.Draw import rdMolDraw2D
-from rdkit import Geometry
+
 import numpy as np
+
+from rdkit import Chem, Geometry, RDConfig
+from rdkit.Chem import AllChem, Draw, rdDepictor
+from rdkit.Chem.Draw import rdMolDraw2D
 
 
 class TestCase(unittest.TestCase):
@@ -813,6 +813,7 @@ M  END''')
     d2d.FinishDrawing()
     text = d2d.GetDrawingText()
     self.assertTrue("#7F7F7F" not in text)
+
 
 if __name__ == "__main__":
   unittest.main()

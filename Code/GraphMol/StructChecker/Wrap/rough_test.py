@@ -30,11 +30,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import unittest
 
 from rdkit import Chem
 from rdkit.Chem import rdStructChecker
-
-import unittest
 
 data = """310929550
   -OEChem-07211613022D

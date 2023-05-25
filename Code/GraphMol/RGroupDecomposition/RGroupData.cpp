@@ -17,9 +17,8 @@
 
 namespace RDKit {
 
-
 void RGroupData::add(boost::shared_ptr<ROMol> newMol,
-         const std::vector<int> &rlabel_attachments) {
+                     const std::vector<int> &rlabel_attachments) {
   // some fragments can be add multiple times if they are cyclic
   for (auto &mol : mols) {
     if (newMol.get() == mol.get()) {
@@ -110,8 +109,7 @@ bool RGroupData::isMolHydrogen(ROMol &mol) {
     auto atom = *atIt;
     if (atom->getAtomicNum() > 1) {
       return false;
-    } else if (atom->getAtomicNum() == 0 &&
-               !atom->hasProp(SIDECHAIN_RLABELS)) {
+    } else if (atom->getAtomicNum() == 0 && !atom->hasProp(SIDECHAIN_RLABELS)) {
       return false;
     }
   }

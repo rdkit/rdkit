@@ -1,7 +1,8 @@
-import sys
-from rdkit import Chem
-import threading
 import multiprocessing
+import sys
+import threading
+
+from rdkit import Chem
 
 # this just tests some threading stuff to ensure it doesn't crash with python
 #  releasing the GIL smarts are recursive...
@@ -10,39 +11,39 @@ ref_mol = Chem.MolFromMolBlock(ref_sdf)
 
 core_smarts = '[#6]-!@[#6]-!@[#8]-!@[#6]:1:[#6](-!@[#6]#!@[#7]):[#6](-!@[#7]):[#6]:[#6](-!@[#7]-!@[#6](-!@[#6]-!@[#6]:2:[#6]:[#6]:[#6]:[#6]:[#6]:2)=!@[#8]):[#7]:1'
 if ref_mol is None:
-    raise ValueError('Bad ref structure')
+  raise ValueError('Bad ref structure')
 core_mol = Chem.MolFromSmarts(core_smarts)
 if core_mol is None:
-    raise ValueError('Bad core structure')
+  raise ValueError('Bad core structure')
 
 expected = {}
 
 
 def runner(func, args):
-    if args:
-        res = getattr(ref_mol, func)(args)
-    else:
-        res = getattr(ref_mol, func)()
-    if func in expected:
-        assert res == expected[func], "Got %r expected %r" % (ers, expected[func])
-    return res
+  if args:
+    res = getattr(ref_mol, func)(args)
+  else:
+    res = getattr(ref_mol, func)()
+  if func in expected:
+    assert res == expected[func], "Got %r expected %r" % (ers, expected[func])
+  return res
 
 
 funcs = ["GetSubstructMatch", "GetSubstructMatches", "HasSubstructMatch"]
 
 # get the expected results from the non-thread version
 for func in funcs:
-    expected[func] = runner(func, core_mol)
+  expected[func] = runner(func, core_mol)
 
 nthreads = int(multiprocessing.cpu_count() * 100 / 4)  # 100 threads per cpu
 threads = []
 for i in range(0, nthreads):
-    for func in funcs:
-        t = threading.Thread(target=runner, args=(func, core_mol))
-        t.start()
-        threads.append(t)
-    t = threading.Thread(target=runner, args=("ToBinary", None))
+  for func in funcs:
+    t = threading.Thread(target=runner, args=(func, core_mol))
     t.start()
     threads.append(t)
+  t = threading.Thread(target=runner, args=("ToBinary", None))
+  t.start()
+  threads.append(t)
 for t in threads:
-    t.join()
+  t.join()

@@ -11,19 +11,16 @@
 
 """
 
+import doctest
 import io
 import os.path
+import pickle
 import unittest
-import doctest
 
 import numpy as np
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem import AllChem
-from rdkit.Chem import Descriptors
-from rdkit.Chem import Lipinski
-from rdkit.Chem import rdMolDescriptors
-import pickle
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import AllChem, Descriptors, Lipinski, rdMolDescriptors
 
 
 def load_tests(loader, tests, ignore):
@@ -203,7 +200,8 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('CCCO')
     descs = Descriptors.CalcMolDescriptors(mol)
     self.assertTrue('MolLogP' in descs)
-    self.assertEqual(descs['NumHDonors'],1)
-  
+    self.assertEqual(descs['NumHDonors'], 1)
+
+
 if __name__ == '__main__':
   unittest.main()

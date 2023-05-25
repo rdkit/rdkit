@@ -8,7 +8,7 @@ from rdkit.VLib.Supply import SupplyNode
 
 
 class SmilesSupplyNode(SupplyNode):
-    """ Smiles supplier
+  """ Smiles supplier
 
     Sample Usage:
       >>> import os
@@ -36,25 +36,25 @@ class SmilesSupplyNode(SupplyNode):
 
     """
 
-    def __init__(self, fileName, delim="\t", nameColumn=1, smilesColumn=0, titleLine=0, **kwargs):
-        SupplyNode.__init__(self, **kwargs)
-        self._fileName = fileName
-        self._supplier = Chem.SmilesMolSupplier(self._fileName, delimiter=delim,
-                                                smilesColumn=smilesColumn, nameColumn=nameColumn,
-                                                titleLine=titleLine)
+  def __init__(self, fileName, delim="\t", nameColumn=1, smilesColumn=0, titleLine=0, **kwargs):
+    SupplyNode.__init__(self, **kwargs)
+    self._fileName = fileName
+    self._supplier = Chem.SmilesMolSupplier(self._fileName, delimiter=delim,
+                                            smilesColumn=smilesColumn, nameColumn=nameColumn,
+                                            titleLine=titleLine)
 
-    def reset(self):
-        SupplyNode.reset(self)
-        self._supplier.reset()
+  def reset(self):
+    SupplyNode.reset(self)
+    self._supplier.reset()
 
-    def next(self):
+  def next(self):
+    """
+
         """
-
-        """
-        r = None
-        while not r:
-            r = next(self._supplier)
-        return r
+    r = None
+    while not r:
+      r = next(self._supplier)
+    return r
 
 
 SmilesSupplyNode.__next__ = SmilesSupplyNode.next
@@ -65,11 +65,11 @@ SmilesSupplyNode.__next__ = SmilesSupplyNode.next
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import doctest
-    import sys
-    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-    sys.exit(failed)
+  import doctest
+  import sys
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+  sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-    _runDoctests()
+  _runDoctests()

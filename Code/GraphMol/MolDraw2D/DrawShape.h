@@ -25,7 +25,7 @@ namespace RDKit {
 class MolDraw2D;
 const DashPattern noDash;
 const DashPattern dots{2.0, 6.0};
-const DashPattern dashes{6, 0, 6.0};
+const DashPattern dashes{6.0, 4.0};
 const DashPattern shortDashes{2.0, 2.0};
 
 namespace MolDraw2D_detail {

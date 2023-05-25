@@ -12,18 +12,17 @@
  see Chem/index.html in the doc tree for documentation
 
 """
-from rdkit import rdBase
-from rdkit import RDConfig
-
-from rdkit import DataStructs
-from rdkit.Geometry import rdGeometry
+from rdkit import DataStructs, RDConfig, rdBase
 from rdkit.Chem import rdchem
+from rdkit.Geometry import rdGeometry
+
 _HasSubstructMatchStr = rdchem._HasSubstructMatchStr
+from rdkit.Chem.inchi import *
 from rdkit.Chem.rdchem import *
+from rdkit.Chem.rdCIPLabeler import *
 from rdkit.Chem.rdmolfiles import *
 from rdkit.Chem.rdmolops import *
-from rdkit.Chem.rdCIPLabeler import *
-from rdkit.Chem.inchi import *
+
 try:
   # This is an optional component of the build
   from rdkit.Chem.rdMolInterchange import *
@@ -169,7 +168,8 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
+  import doctest
+  import sys
   return doctest.testmod(sys.modules["__main__"])
 
 

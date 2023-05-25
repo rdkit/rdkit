@@ -1,19 +1,19 @@
 #
 #  Copyright (c) 2011, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -33,8 +33,9 @@ INCHI_AVAILABLE = True
 
 import logging
 
-from rdkit.Chem import rdinchi
 from rdkit import RDLogger
+from rdkit.Chem import rdinchi
+
 logger = RDLogger.logger()
 
 logLevelToLogFunctionLookup = {
@@ -122,6 +123,7 @@ def MolToInchiAndAuxInfo(mol, options="", logLevel=None, treatWarningAsError=Fal
     raise InchiReadWriteError(inchi, aux, message)
   return inchi, aux
 
+
 def MolBlockToInchiAndAuxInfo(molblock, options="", logLevel=None, treatWarningAsError=False):
   """Returns the standard InChI string and InChI auxInfo for a mol block
 
@@ -154,6 +156,7 @@ def MolBlockToInchiAndAuxInfo(molblock, options="", logLevel=None, treatWarningA
     raise InchiReadWriteError(inchi, aux, message)
   return inchi, aux
 
+
 def MolToInchi(mol, options="", logLevel=None, treatWarningAsError=False):
   """Returns the standard InChI string for a molecule
 
@@ -182,6 +185,7 @@ def MolToInchi(mol, options="", logLevel=None, treatWarningAsError=False):
     raise InchiReadWriteError(inchi, message)
   return inchi
 
+
 def MolBlockToInchi(molblock, options="", logLevel=None, treatWarningAsError=False):
   """Returns the standard InChI string for a mol block
 
@@ -204,11 +208,12 @@ def MolBlockToInchi(molblock, options="", logLevel=None, treatWarningAsError=Fal
 
   try:
     inchi, aux = MolBlockToInchiAndAuxInfo(molblock, options, logLevel=logLevel,
-                                      treatWarningAsError=treatWarningAsError)
+                                           treatWarningAsError=treatWarningAsError)
   except InchiReadWriteError as inst:
     inchi, aux, message = inst.args
     raise InchiReadWriteError(inchi, message)
   return inchi
+
 
 def InchiToInchiKey(inchi):
   """Return the InChI key for the given InChI string. Return None on error"""
@@ -218,17 +223,17 @@ def InchiToInchiKey(inchi):
   else:
     return None
 
+
 def MolToInchiKey(mol, options=""):
   """Returns the standard InChI key for a molecule
 
     Returns:
     the standard InChI key returned by InChI API for the input molecule
     """
-  return rdinchi.MolToInchiKey(mol,options)
+  return rdinchi.MolToInchiKey(mol, options)
 
 
-
-
-
-__all__ = ['MolToInchiAndAuxInfo', 'MolToInchi', 'MolBlockToInchiAndAuxInfo', 'MolBlockToInchi', 'MolFromInchi', 'InchiReadWriteError',
-           'InchiToInchiKey', 'MolToInchiKey', 'INCHI_AVAILABLE']
+__all__ = [
+  'MolToInchiAndAuxInfo', 'MolToInchi', 'MolBlockToInchiAndAuxInfo', 'MolBlockToInchi',
+  'MolFromInchi', 'InchiReadWriteError', 'InchiToInchiKey', 'MolToInchiKey', 'INCHI_AVAILABLE'
+]
