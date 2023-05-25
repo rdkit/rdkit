@@ -60,31 +60,15 @@ void processCXSmilesLabels(RWMol &mol) {
   for (auto atom : mol.atoms()) {
     std::string symb = "";
     if (atom->getPropIfPresent(common_properties::atomLabel, symb)) {
-      if (symb == "star_e") {
+      std::string_view choppedSymb(symb.c_str(),
+                                   symb.size() > 2 ? symb.size() - 2 : 0);
+      if (std::find(ctabQueries.begin(), ctabQueries.end(), choppedSymb) !=
+          ctabQueries.end()) {
+        addquery(makeCTABQuery(choppedSymb), symb, mol, atom->getIdx(), false);
+      } else if (symb == "star_e") {
         /* according to the MDL spec, these match anything, but in MARVIN they
         are "unspecified end groups" for polymers */
         addquery(makeAtomNullQuery(), symb, mol, atom->getIdx());
-      } else if (symb == "Q_e") {
-        addquery(makeQAtomQuery(), symb, mol, atom->getIdx(), false);
-      } else if (symb == "QH_p") {
-        addquery(makeQHAtomQuery(), symb, mol, atom->getIdx(), false);
-      } else if (symb == "AH_p") {  // this seems wrong...
-        /* According to the MARVIN Sketch, AH is "any atom, including H" -
-        this would be "*" in SMILES - and "A" is "any atom except H".
-        The CXSMILES docs say that "A" can be represented normally in SMILES
-        and that "AH" needs to be written out as AH_p. I'm going to assume that
-        this is a Marvin internal thing and just parse it as they describe it.
-        This means that "*" in the SMILES itself needs to be treated
-        differently, which we do below. */
-        addquery(makeAHAtomQuery(), symb, mol, atom->getIdx(), false);
-      } else if (symb == "X_p") {
-        addquery(makeXAtomQuery(), symb, mol, atom->getIdx(), false);
-      } else if (symb == "XH_p") {
-        addquery(makeXHAtomQuery(), symb, mol, atom->getIdx(), false);
-      } else if (symb == "M_p") {
-        addquery(makeMAtomQuery(), symb, mol, atom->getIdx(), false);
-      } else if (symb == "MH_p") {
-        addquery(makeMHAtomQuery(), symb, mol, atom->getIdx(), false);
       } else if (std::find(pseudoatoms_p.begin(), pseudoatoms_p.end(), symb) !=
                  pseudoatoms_p.end()) {
         // strip off the "_p":

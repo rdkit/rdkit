@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "QueryOps.h"
+#include <unordered_map>
 #include <algorithm>
 #include <RDGeneral/types.h>
 #include <GraphMol/QueryAtom.h>
@@ -420,20 +421,42 @@ ATOM_EQUALS_QUERY *makeAtomIsBridgeheadQuery() {
   return res;
 }
 
-const std::vector<std::string> ctabQueryTypes{
-    "Q", "QH", "A", "AH", "X", "XH", "M", "MH",
-};
+const std::vector<std::string> ctabQueries = {"Q", "QH", "A", "AH",
+                                              "X", "XH", "M", "MH"};
+
 bool isCTABQueryAtom(const Atom &at) {
   if (!at.hasQuery()) {
     return false;
   }
   auto lbl = at.getQuery()->getTypeLabel();
-  if (lbl.empty() || std::find(ctabQueryTypes.begin(), ctabQueryTypes.end(),
-                               lbl) == ctabQueryTypes.end()) {
+  if (lbl.empty() || std::find(ctabQueries.begin(), ctabQueries.end(), lbl) ==
+                         ctabQueries.end()) {
     return false;
   }
   return true;
-};
+}
+
+ATOM_NULL_QUERY *makeCTABQuery(const std::string_view &queryName) {
+  if (queryName == "Q") {
+    return makeQAtomQuery();
+  } else if (queryName == "QH") {
+    return makeQHAtomQuery();
+  } else if (queryName == "A") {
+    return makeAAtomQuery();
+  } else if (queryName == "AH") {
+    return makeAHAtomQuery();
+  } else if (queryName == "X") {
+    return makeXAtomQuery();
+  } else if (queryName == "XH") {
+    return makeXHAtomQuery();
+  } else if (queryName == "M") {
+    return makeMAtomQuery();
+  } else if (queryName == "MH") {
+    return makeMHAtomQuery();
+  }
+  POSTCONDITION(0, "bad queryName passed to makeCTABQuery");
+  return nullptr;
+}
 
 ATOM_OR_QUERY *makeQAtomQuery() {
   auto *res = new ATOM_OR_QUERY;

@@ -1351,34 +1351,6 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
               text.substr(7, text.length() - 7));
 }
 
-// We support the same special atom queries that we can read from
-// CXSMILES
-const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
-                                                 "X", "XH", "M", "MH"};
-void convertComplexNameToQuery(Atom *query, std::string_view symb) {
-  if (symb == "Q") {
-    query->setQuery(makeQAtomQuery());
-  } else if (symb == "QH") {
-    query->setQuery(makeQHAtomQuery());
-  } else if (symb == "A") {
-    query->setQuery(makeAAtomQuery());
-  } else if (symb == "AH") {
-    query->setQuery(makeAHAtomQuery());
-  } else if (symb == "X") {
-    query->setQuery(makeXAtomQuery());
-  } else if (symb == "XH") {
-    query->setQuery(makeXHAtomQuery());
-  } else if (symb == "M") {
-    query->setQuery(makeMAtomQuery());
-  } else if (symb == "MH") {
-    query->setQuery(makeMHAtomQuery());
-  } else {
-    // we control what this function gets called with, so we should never land
-    // here
-    ASSERT_INVARIANT(0, "bad complex query symbol");
-  }
-}
-
 namespace {
 void setRGPProps(const std::string_view symb, Atom *res) {
   PRECONDITION(res, "bad atom pointer");
@@ -1463,9 +1435,8 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
     }
   }
   auto *res = new Atom;
-  bool isComplexQueryName =
-      std::find(complexQueries.begin(), complexQueries.end(), symb) !=
-      complexQueries.end();
+  bool isComplexQueryName = std::find(ctabQueries.begin(), ctabQueries.end(),
+                                      symb) != ctabQueries.end();
   if (isComplexQueryName || symb == "L" || symb == "*" || symb == "LP" ||
       symb == "R" || symb == "R#" ||
       (symb[0] == 'R' && symb >= "R0" && symb <= "R99")) {
@@ -1475,7 +1446,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
         // according to the MDL spec, these match anything
         query->setQuery(makeAtomNullQuery());
       } else if (isComplexQueryName) {
-        convertComplexNameToQuery(query, symb);
+        query->setQuery(makeCTABQuery(symb));
       }
       delete res;
       res = query;
@@ -2140,9 +2111,8 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
     // it's a normal CTAB atom symbol:
     // NOTE: "R" and "R0"-"R99" are not in the v3K CTAB spec, but we're going to
     // support them anyway
-    bool isComplexQueryName =
-        std::find(complexQueries.begin(), complexQueries.end(), token) !=
-        complexQueries.end();
+    bool isComplexQueryName = std::find(ctabQueries.begin(), ctabQueries.end(),
+                                        token) != ctabQueries.end();
     if (isComplexQueryName || token == "R" ||
         (token[0] == 'R' && token >= "R0" && token <= "R99") || token == "R#" ||
         token == "*") {
@@ -2152,7 +2122,7 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
           // according to the MDL spec, these match anything
           res->setQuery(makeAtomNullQuery());
         } else if (isComplexQueryName) {
-          convertComplexNameToQuery(res, token);
+          res->setQuery(makeCTABQuery(token));
         }
         // queries have no implicit Hs:
         res->setNoImplicit(true);
