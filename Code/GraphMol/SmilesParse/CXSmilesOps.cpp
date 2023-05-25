@@ -39,13 +39,14 @@ std::map<std::string, std::string> sgroupTypemap = {
     {"alt", "COP"}, {"ran", "COP"}, {"blk", "COP"}};
 
 template <typename Q>
-void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
+void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx,
+              bool keepLabel = true) {
   PRECONDITION(qry, "bad query");
   auto *qa = new QueryAtom(0);
   qa->setQuery(qry);
   qa->setNoImplicit(true);
   mol.replaceAtom(idx, qa);
-  if (symbol != "") {
+  if (keepLabel && symbol != "") {
     mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
                                      symbol);
   }
@@ -59,31 +60,15 @@ void processCXSmilesLabels(RWMol &mol) {
   for (auto atom : mol.atoms()) {
     std::string symb = "";
     if (atom->getPropIfPresent(common_properties::atomLabel, symb)) {
-      if (symb == "star_e") {
+      std::string_view choppedSymb(symb.c_str(),
+                                   symb.size() > 2 ? symb.size() - 2 : 0);
+      if (std::find(ctabQueries.begin(), ctabQueries.end(), choppedSymb) !=
+          ctabQueries.end()) {
+        addquery(makeCTABQuery(choppedSymb), symb, mol, atom->getIdx(), false);
+      } else if (symb == "star_e") {
         /* according to the MDL spec, these match anything, but in MARVIN they
         are "unspecified end groups" for polymers */
         addquery(makeAtomNullQuery(), symb, mol, atom->getIdx());
-      } else if (symb == "Q_e") {
-        addquery(makeQAtomQuery(), symb, mol, atom->getIdx());
-      } else if (symb == "QH_p") {
-        addquery(makeQHAtomQuery(), symb, mol, atom->getIdx());
-      } else if (symb == "AH_p") {  // this seems wrong...
-        /* According to the MARVIN Sketch, AH is "any atom, including H" -
-        this would be "*" in SMILES - and "A" is "any atom except H".
-        The CXSMILES docs say that "A" can be represented normally in SMILES
-        and that "AH" needs to be written out as AH_p. I'm going to assume that
-        this is a Marvin internal thing and just parse it as they describe it.
-        This means that "*" in the SMILES itself needs to be treated
-        differently, which we do below. */
-        addquery(makeAHAtomQuery(), symb, mol, atom->getIdx());
-      } else if (symb == "X_p") {
-        addquery(makeXAtomQuery(), symb, mol, atom->getIdx());
-      } else if (symb == "XH_p") {
-        addquery(makeXHAtomQuery(), symb, mol, atom->getIdx());
-      } else if (symb == "M_p") {
-        addquery(makeMAtomQuery(), symb, mol, atom->getIdx());
-      } else if (symb == "MH_p") {
-        addquery(makeMHAtomQuery(), symb, mol, atom->getIdx());
       } else if (std::find(pseudoatoms_p.begin(), pseudoatoms_p.end(), symb) !=
                  pseudoatoms_p.end()) {
         // strip off the "_p":
@@ -1862,6 +1847,8 @@ std::string get_atomlabel_block(const ROMol &mol,
       res += quote_string(lbl + "_p");
     } else if (atom->getPropIfPresent(common_properties::atomLabel, lbl)) {
       res += quote_string(lbl);
+    } else if (atom->hasQuery() && isCTABQueryAtom(*atom)) {
+      res += atom->getQuery()->getTypeLabel() + "_p";
     }
   }
   // if we didn't find anything return an empty string
@@ -1956,9 +1943,9 @@ std::string get_coords_block(const ROMol &mol,
 
 std::string get_atom_props_block(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
-  std::vector<std::string> skip = {common_properties::atomLabel,
-                                   common_properties::molFileValue,
-                                   common_properties::molParity};
+  std::vector<std::string> skip = {
+      common_properties::atomLabel, common_properties::molFileValue,
+      common_properties::molParity, common_properties::dummyLabel};
   std::string res = "";
   unsigned int which = 0;
   for (auto idx : atomOrder) {
@@ -2196,7 +2183,7 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     const auto at = mol.getAtomWithIdx(idx);
     if (at->hasProp(common_properties::atomLabel) ||
         at->hasProp(common_properties::_QueryAtomGenericLabel) ||
-        at->hasProp(common_properties::dummyLabel)) {
+        at->hasProp(common_properties::dummyLabel) || isCTABQueryAtom(*at)) {
       needLabels = true;
     }
     if (at->hasProp(common_properties::molFileValue)) {

@@ -393,50 +393,34 @@ const std::string AtomGetMolFileSymbol(
     res = atom->getSymbol();
   } else {
     if (!atom->hasProp(common_properties::dummyLabel)) {
-      if (atom->hasQuery() &&
-          (atom->getQuery()->getTypeLabel() == "A" ||
-           (atom->getQuery()->getNegation() &&
-            atom->getQuery()->getDescription() == "AtomAtomicNum" &&
-            static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())->getVal() ==
-                1))) {
+      if (atom->hasQuery() && isCTABQueryAtom(*atom)) {
+        res = atom->getQuery()->getTypeLabel();
+        queryListAtoms.set(atom->getIdx());
+      } else if (atom->hasQuery() &&
+
+                 (atom->getQuery()->getNegation() &&
+                  atom->getQuery()->getDescription() == "AtomAtomicNum" &&
+                  static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())
+                          ->getVal() == 1)) {
         res = "A";
         queryListAtoms.set(atom->getIdx());
       } else if (atom->hasQuery() &&
-                 (atom->getQuery()->getTypeLabel() == "Q" ||
-                  (atom->getQuery()->getNegation() &&
-                   atom->getQuery()->getDescription() == "AtomOr" &&
-                   atom->getQuery()->endChildren() -
-                           atom->getQuery()->beginChildren() ==
-                       2 &&
-                   (*atom->getQuery()->beginChildren())->getDescription() ==
-                       "AtomAtomicNum" &&
-                   static_cast<ATOM_EQUALS_QUERY *>(
-                       (*atom->getQuery()->beginChildren()).get())
-                           ->getVal() == 6 &&
-                   (*++(atom->getQuery()->beginChildren()))->getDescription() ==
-                       "AtomAtomicNum" &&
-                   static_cast<ATOM_EQUALS_QUERY *>(
-                       (*++(atom->getQuery()->beginChildren())).get())
-                           ->getVal() == 1))) {
+                 (atom->getQuery()->getNegation() &&
+                  atom->getQuery()->getDescription() == "AtomOr" &&
+                  atom->getQuery()->endChildren() -
+                          atom->getQuery()->beginChildren() ==
+                      2 &&
+                  (*atom->getQuery()->beginChildren())->getDescription() ==
+                      "AtomAtomicNum" &&
+                  static_cast<ATOM_EQUALS_QUERY *>(
+                      (*atom->getQuery()->beginChildren()).get())
+                          ->getVal() == 6 &&
+                  (*++(atom->getQuery()->beginChildren()))->getDescription() ==
+                      "AtomAtomicNum" &&
+                  static_cast<ATOM_EQUALS_QUERY *>(
+                      (*++(atom->getQuery()->beginChildren())).get())
+                          ->getVal() == 1)) {
         res = "Q";
-        queryListAtoms.set(atom->getIdx());
-      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "X") {
-        res = "X";
-        queryListAtoms.set(atom->getIdx());
-      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "M") {
-        res = "M";
-        queryListAtoms.set(atom->getIdx());
-      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "AH") {
-        res = "AH";
-        queryListAtoms.set(atom->getIdx());
-      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "QH") {
-        res = "QH";
-        queryListAtoms.set(atom->getIdx());
-      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "XH") {
-        res = "XH";
-        queryListAtoms.set(atom->getIdx());
-      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "MH") {
-        res = "MH";
         queryListAtoms.set(atom->getIdx());
       } else if (hasComplexQuery(atom)) {
         if (isAtomListQuery(atom)) {

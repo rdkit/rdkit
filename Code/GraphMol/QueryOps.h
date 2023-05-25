@@ -594,6 +594,14 @@ RDKIT_GRAPHMOL_EXPORT ATOM_OR_QUERY *makeMAtomQuery();
 //! returns a Query for matching generic MH atoms (metals or H)
 RDKIT_GRAPHMOL_EXPORT ATOM_OR_QUERY *makeMHAtomQuery();
 
+//! CTAB query types
+RDKIT_GRAPHMOL_EXPORT extern const std::vector<std::string> ctabQueries;
+//! returns whether or not a given query atom is a standard CTAB query atom
+//!  like X, Q, QH, etc.
+RDKIT_GRAPHMOL_EXPORT bool isCTABQueryAtom(const Atom &at);
+RDKIT_GRAPHMOL_EXPORT ATOM_NULL_QUERY *makeCTABQuery(
+    const std::string_view &queryName);
+
 //! returns a Query for matching atoms that have ring bonds
 template <class T>
 T *makeAtomHasRingBondQuery(const std::string &descr) {

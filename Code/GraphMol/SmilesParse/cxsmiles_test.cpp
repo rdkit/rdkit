@@ -11,6 +11,7 @@
 #include <RDGeneral/test.h>
 #include <string>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryOps.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
 #include "SmartsWrite.h"
@@ -108,13 +109,13 @@ TEST_CASE("reading Atom Labels") {
     ROMol *m = SmilesToMol(smiles, params);
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 3);
-    CHECK(m->getAtomWithIdx(0)->getProp<std::string>(
-              common_properties::atomLabel) == "Q_e");
-    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
-              common_properties::atomLabel) == "QH_p");
+    CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
     CHECK(!m->getAtomWithIdx(2)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(m->getAtomWithIdx(0)->getQuery()->getTypeLabel() == "Q");
     CHECK(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(m->getAtomWithIdx(1)->getQuery()->getTypeLabel() == "QH");
     CHECK(!m->getAtomWithIdx(2)->hasQuery());
 
     delete m;
@@ -126,14 +127,14 @@ TEST_CASE("reading Atom Labels") {
     ROMol *m = SmilesToMol(smiles, params);
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 2);
-    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
-              common_properties::atomLabel) == "AH_p");
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
     CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(0)->hasQuery());
     CHECK(m->getAtomWithIdx(0)->getQuery()->getDescription() ==
           "AtomAtomicNum");
     CHECK(m->getAtomWithIdx(1)->hasQuery());
     CHECK(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomNull");
+    CHECK(m->getAtomWithIdx(1)->getQuery()->getTypeLabel() == "AH");
 
     delete m;
   }
@@ -145,14 +146,14 @@ TEST_CASE("reading Atom Labels") {
     ROMol *m = SmilesToMol(smiles, params);
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 2);
-    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
-              common_properties::atomLabel) == "XH_p");
     CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(0)->hasQuery());
     CHECK(m->getAtomWithIdx(0)->getQuery()->getDescription() ==
           "AtomAtomicNum");
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(1)->hasQuery());
     CHECK(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomOr");
+    CHECK(m->getAtomWithIdx(1)->getQuery()->getTypeLabel() == "XH");
 
     delete m;
   }
@@ -163,14 +164,14 @@ TEST_CASE("reading Atom Labels") {
     ROMol *m = SmilesToMol(smiles, params);
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 2);
-    CHECK(m->getAtomWithIdx(0)->getProp<std::string>(
-              common_properties::atomLabel) == "MH_p");
-    CHECK(m->getAtomWithIdx(1)->getProp<std::string>(
-              common_properties::atomLabel) == "M_p");
+    CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(0)->hasQuery());
     CHECK(m->getAtomWithIdx(0)->getQuery()->getDescription() == "AtomOr");
+    CHECK(m->getAtomWithIdx(0)->getQuery()->getTypeLabel() == "MH");
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
     CHECK(m->getAtomWithIdx(1)->hasQuery());
     CHECK(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomOr");
+    CHECK(m->getAtomWithIdx(1)->getQuery()->getTypeLabel() == "M");
 
     delete m;
   }
@@ -664,5 +665,39 @@ TEST_CASE(
     REQUIRE(m);
     CHECK(MolToCXSmiles(*m, params) == "C1=CCCCCCCCC1");
     delete m;
+  }
+}
+
+TEST_CASE("atom labels should be not be on atoms with recognized query types") {
+  SECTION("basics") {
+    auto m = "*C1=CC(*)=CC=C1* |$foo;;;;X_p;;;;M_p$|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(4)->hasQuery());
+    CHECK(!m->getAtomWithIdx(4)->hasProp("atomLabel"));
+    CHECK(isCTABQueryAtom(*m->getAtomWithIdx(4)));
+    CHECK(m->getAtomWithIdx(8)->hasQuery());
+    CHECK(!m->getAtomWithIdx(8)->hasProp("atomLabel"));
+    CHECK(isCTABQueryAtom(*m->getAtomWithIdx(8)));
+    CHECK(m->getAtomWithIdx(0)->hasProp("atomLabel"));
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("atomLabel") == "foo");
+    CHECK(!isCTABQueryAtom(*m->getAtomWithIdx(0)));
+
+    // we do still want to write those out to CXSMILES:
+    auto cxsmi = MolToCXSmiles(*m);
+    CHECK(cxsmi == "*c1ccc(*)c(*)c1 |$X_p;;;;;M_p;;foo;$|");
+  }
+  SECTION("just query atoms") {
+    auto m = "CC1=CC(*)=CC=C1* |$;;;;X_p;;;;M_p$|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(4)->hasQuery());
+    CHECK(!m->getAtomWithIdx(4)->hasProp("atomLabel"));
+    CHECK(isCTABQueryAtom(*m->getAtomWithIdx(4)));
+    CHECK(m->getAtomWithIdx(8)->hasQuery());
+    CHECK(!m->getAtomWithIdx(8)->hasProp("atomLabel"));
+    CHECK(isCTABQueryAtom(*m->getAtomWithIdx(8)));
+
+    // we do still want to write those out to CXSMILES:
+    auto cxsmi = MolToCXSmiles(*m);
+    CHECK(cxsmi == "*c1ccc(*)c(C)c1 |$X_p;;;;;M_p;;;$|");
   }
 }
