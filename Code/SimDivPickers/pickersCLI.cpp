@@ -40,7 +40,9 @@ static unsigned int LoadDatabase(FILE *fp) {
   unsigned int result = 0;
 
   while (fgets(buffer, 327666, fp)) {
-    if (buffer[0] == '#' || buffer[0] == ' ' || buffer[0] == '\t') continue;
+    if (buffer[0] == '#' || buffer[0] == ' ' || buffer[0] == '\t') {
+      continue;
+    }
     char *ptr = buffer;
     while (*ptr && *ptr != ' ' && *ptr != '\t') ptr++;
     if (*ptr) {
@@ -79,12 +81,15 @@ static unsigned int LoadDatabase(FILE *fp) {
 static unsigned int LoadDatabase(const char *fname) {
   if (fname && strcmp(fname, "-")) {
     FILE *fp = fopen(fname, "rb");
-    if (!fp) return 0;
+    if (!fp) {
+      return 0;
+    }
     unsigned int result = LoadDatabase(fp);
     fclose(fp);
     return result;
-  } else
+  } else {
     return LoadDatabase(stdin);
+  }
 }
 
 #ifdef UNUSED
@@ -93,15 +98,18 @@ static void GenerateFingerprints() {
   unsigned int size = (unsigned int)(count * sizeof(void *));
   fps = (ExplicitBitVect **)malloc(size);
 
-  for (unsigned int i = 0; i < count; i++)
+  for (unsigned int i = 0; i < count; i++) {
     fps[i] =
         RDKit::MorganFingerprints::getFingerprintAsBitVect(*mols[i], 2, 2048);
+  }
   fprintf(stderr, "%u Fingerprints\n", count);
 }
 
 static void DestroyFingerprints() {
   unsigned int count = (unsigned int)mols.size();
-  for (unsigned int i = 0; i < count; i++) delete fps[i];
+  for (unsigned int i = 0; i < count; i++) {
+    delete fps[i];
+  }
   free(fps);
 }
 #endif
@@ -121,17 +129,21 @@ static void ProcessCommandLine(int argc, char *argv[]) {
     if (ptr[0] == '-' && ptr[1]) {
       if (ptr[1] >= '0' && ptr[1] <= '9') {
         newpicks = atoi(ptr + 1);
-      } else
+      } else {
         DisplayUsage();
+      }
     } else if (!poolname) {
       poolname = ptr;
     } else if (!pickname) {
       pickname = ptr;
-    } else
+    } else {
       DisplayUsage();
+    }
   }
 
-  if (!poolname) DisplayUsage();
+  if (!poolname) {
+    DisplayUsage();
+  }
 }
 
 double MyDist(int i, int j) {
@@ -159,10 +171,13 @@ int main(int argc, char *argv[]) {
     elapsed = (end.tv_sec + 0.000001 * end.tv_usec) -
               (beg.tv_sec + 0.000001 * beg.tv_usec);
     fprintf(stderr, "Elapsed time: %g secs\n", elapsed);
-  } else
+  } else {
     picksize = 0;
+  }
   poolsize = origsize + picksize;
-  if (newpicks == 0) newpicks = origsize;
+  if (newpicks == 0) {
+    newpicks = origsize;
+  }
 
 #ifdef UNUSED
   gettimeofday(&beg, (struct timezone *)0);
@@ -176,8 +191,9 @@ int main(int argc, char *argv[]) {
   RDKit::INT_VECT firstPicks;
   if (picksize) {
     firstPicks.reserve(picksize);
-    for (unsigned int i = 0; i < picksize; i++)
+    for (unsigned int i = 0; i < picksize; i++) {
       firstPicks.push_back((int)(i + origsize));
+    }
   }
 
   //  RDPickers::MaxMinPicker mmpicker;
@@ -199,8 +215,9 @@ int main(int argc, char *argv[]) {
 
   unsigned int count = (unsigned int)iv.size();
 #if 0
-  for (unsigned int j=0; j<count; j++)
+  for (unsigned int j=0; j<count; j++) {
     printf("%d\n",iv[j]);
+  }
 #endif
   for (unsigned int i = 0; i < std::min(iv.size(), (size_t)10); ++i) {
     for (unsigned int j = 0; j < i; ++j) {

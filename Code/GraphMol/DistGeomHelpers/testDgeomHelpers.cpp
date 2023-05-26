@@ -734,9 +734,13 @@ void testIssue276() {
 #if 0
   for(unsigned int i=0;i<nat;i++){
     for(unsigned int j=0;j<nat;j++){
-      if(i<j) std::cout << bm->getUpperBound(i,j) << " ";
-      else if(i>j) std::cout << bm->getLowerBound(i,j) << " ";
-      else std::cout << "0.00000" << " ";
+      if (i < j) {
+        std::cout << bm->getUpperBound(i, j) << " ";
+      } else if (i > j) {
+        std::cout << bm->getLowerBound(i, j) << " ";
+      } else {
+        std::cout << "0.00000" << " ";
+      }
     }
     std::cout << std::endl;
   }

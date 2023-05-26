@@ -382,15 +382,17 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   }
 #if 0
   std::cerr << "  1:" << bond1->getIdx() << " ";
-  if (obond1)
+  if (obond1) {
     std::cerr << obond1->getIdx() << std::endl;
-  else
+  } else {
     std::cerr << "N/A" << std::endl;
+  }
   std::cerr << "  2:" << bond2->getIdx() << " ";
-  if (obond2)
+  if (obond2) {
     std::cerr << obond2->getIdx() << std::endl;
-  else
+  } else {
     std::cerr << "N/A" << std::endl;
+  }
   std::cerr << "**********************\n";
   std::cerr << "**********************\n";
   std::cerr << "**********************\n";
