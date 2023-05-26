@@ -55,7 +55,9 @@ void MultithreadedMolSupplier::close() {
     }
   } else {
     // destroy all objects in the output queue
-    if(d_outputQueue) d_outputQueue->clear();
+    if (d_outputQueue) {
+      d_outputQueue->clear();
+    }
   }
   
   // close external streams if any
