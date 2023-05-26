@@ -2131,9 +2131,10 @@ std::string get_bond_config_block(
 
               for (unsigned int bondAtomIndex = 0; bondAtomIndex < 2;
                    ++bondAtomIndex) {
-                if (atomAndBondVecs[bondAtomIndex].first == firstAtom)
+                if (atomAndBondVecs[bondAtomIndex].first == firstAtom) {
                   continue;  // swapped atoms on the side where the wedge bond
                              // is does NOT change the wedge bond
+                }
                 if (atomAndBondVecs[bondAtomIndex].second.size() == 2) {
                   unsigned int firstOtherAtomIdx =
                       atomAndBondVecs[bondAtomIndex]

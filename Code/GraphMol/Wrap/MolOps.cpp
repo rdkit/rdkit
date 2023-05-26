@@ -1139,8 +1139,9 @@ ROMol *copyMolSubsetHelper3(const ROMol &mol,
 			    python::object path,
 			    const SubsetOptions &options = SubsetOptions()) {
   auto pathvect = pythonObjectToVect<unsigned int>(path);
-  if (!pathvect.get())
+  if (!pathvect.get()) {
     pathvect = std::make_unique<std::vector<unsigned int>>();
+  }
   return copyMolSubset(mol, *pathvect, options).release();
 }
 
@@ -1149,8 +1150,9 @@ ROMol *copyMolSubsetHelper4(const ROMol &mol,
 			    SubsetInfo &selectionInfo,
 			    const SubsetOptions &options = SubsetOptions()) {
   auto pathvect = pythonObjectToVect<unsigned int>(path);
-  if (!pathvect.get())
+  if (!pathvect.get()) {
     pathvect = std::make_unique<std::vector<unsigned int>>();
+  }
   return copyMolSubset(mol, *pathvect, selectionInfo, options).release();
 }
 
