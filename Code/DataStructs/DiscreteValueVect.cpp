@@ -167,9 +167,10 @@ std::string DiscreteValueVect::toString() const {
 
 #if defined(BOOST_BIG_ENDIAN)
   std::uint32_t *td = new std::uint32_t[d_numInts];
-  for (unsigned int i = 0; i < d_numInts; ++i)
+  for (unsigned int i = 0; i < d_numInts; ++i) {
     td[i] = EndianSwapBytes<HOST_ENDIAN_ORDER, LITTLE_ENDIAN_ORDER>(
         d_data.get()[i]);
+  }
   ss.write((const char *)td, d_numInts * sizeof(tInt));
   delete[] td;
 #else
@@ -208,8 +209,9 @@ void DiscreteValueVect::initFromText(const char *pkl, const unsigned int len) {
 
 #if defined(BOOST_BIG_ENDIAN)
   std::uint32_t *td = new std::uint32_t[d_numInts];
-  for (unsigned int i = 0; i < d_numInts; ++i)
+  for (unsigned int i = 0; i < d_numInts; ++i) {
     td[i] = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(data[i]);
+  }
   d_data.reset(td);
   delete[] data;
 #else
