@@ -25,7 +25,7 @@ namespace MolDraw2D_detail {
 class RDKIT_MOLDRAW2D_EXPORT DrawTextNotFT : public DrawText {
  public:
   DrawTextNotFT(double max_fnt_sz, double min_fnt_sz);
-  virtual ~DrawTextNotFT();
+  ~DrawTextNotFT() override;
 
   void alignString(
       TextAlignType align, const std::vector<TextDrawType> &draw_modes,
