@@ -48,9 +48,11 @@ extern "C" {
 #endif
 #endif
 
-#define RDKIT_FREE_IF_COPY_P(ptrsrc, ptrori)                   \
-  do {                                                         \
-    if ((Pointer)(ptrsrc) != (Pointer)(ptrori)) pfree(ptrsrc); \
+#define RDKIT_FREE_IF_COPY_P(ptrsrc, ptrori)      \
+  do {                                            \
+    if ((Pointer)(ptrsrc) != (Pointer)(ptrori)) { \
+      pfree(ptrsrc);                              \
+    }                                             \
   } while (0)
 
 typedef bytea Mol;
