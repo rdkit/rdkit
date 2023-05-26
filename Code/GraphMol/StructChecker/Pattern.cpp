@@ -33,9 +33,10 @@ static void verboseAtom(const ROMol &mol, int atom_idx,
     const Atom &a = *mol.getAtomWithIdx(j);
     snprintf(nstr + strlen(nstr), sizeof(nstr) - strlen(nstr), ", %s",
              a.getSymbol().c_str());
-    if (0 != a.getFormalCharge())
+    if (0 != a.getFormalCharge()) {
       snprintf(nstr + strlen(nstr), sizeof(nstr) - strlen(nstr), "%+d",
                a.getFormalCharge());
+    }
   }
   BOOST_LOG(rdInfoLog) << "* CheckAtom idx=" << atom_idx << ", "
                        << mol.getAtomWithIdx(atom_idx)->getSymbol()
@@ -76,12 +77,16 @@ AABondType convertBondType(RDKit::Bond::BondType rdbt) {
  */
 bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l,
                    bool use_charge) {
-  if (l.BondType != ANY_BOND && !isBondTypeMatch(b, l.BondType)) return false;
-  if (l.Radical != ANY_RADICAL && a.getNumRadicalElectrons() != l.Radical)
+  if (l.BondType != ANY_BOND && !isBondTypeMatch(b, l.BondType)) {
     return false;
+  }
+  if (l.Radical != ANY_RADICAL && a.getNumRadicalElectrons() != l.Radical) {
+    return false;
+  }
   if ((l.Charge != ANY_CHARGE || use_charge) && l.Charge != ANY_CHARGE &&
-      a.getFormalCharge() != l.Charge)
+      a.getFormalCharge() != l.Charge) {
     return false;
+  }
   return (AtomSymbolMatch(a.getSymbol(), l.AtomSymbol));
 }
 
@@ -193,7 +198,7 @@ bool TransformAugmentedAtoms(
         for (size_t k = 0; k < neighbours[j].size(); k++) {
           const Atom *nbrAtom = mol.getAtomWithIdx(neighbours[j][k].AtomIdx);
           const Bond *nbrBond = mol.getBondWithIdx(neighbours[j][k].BondIdx);
-          for (size_t l = 0; l < aa1.Ligands.size(); l++)
+          for (size_t l = 0; l < aa1.Ligands.size(); l++) {
             if (!visited[l]) {
               const Ligand &ligand = aa1.Ligands[l];
               if ((0 == ligand.SubstitutionCount ||
@@ -215,44 +220,55 @@ bool TransformAugmentedAtoms(
                 break;
               }
             }
+          }
         }
-        if (matched != neighbours[j].size())
+        if (matched != neighbours[j].size()) {
           continue;  // go to next molecule's atom
+        }
 
         // Replace Augmented Atom. TransformAA()
-        if (verbose)
+        if (verbose) {
           BOOST_LOG(rdInfoLog)
               << "Replace " << LogNeighbourhood(mol, j, neighbours_d)
               << " with AAPair i=" << i << " " << aapair[i].first.AtomSymbol
               << " -> " << aapair[i].second.AtomSymbol << "\n";
+        }
         // change central atom
         Atom *a = mol.getAtomWithIdx(j);
-        if (aa1.AtomSymbol != aa2.AtomSymbol)
+        if (aa1.AtomSymbol != aa2.AtomSymbol) {
           applyAtomSymbolList(mol, aa2.AtomSymbol, a);
-        if (a->getFormalCharge() != aa2.Charge) a->setFormalCharge(aa2.Charge);
-        if (a->getNumRadicalElectrons() != aa2.Radical)
+        }
+        if (a->getFormalCharge() != aa2.Charge) {
+          a->setFormalCharge(aa2.Charge);
+        }
+        if (a->getNumRadicalElectrons() != aa2.Radical) {
           a->setNumRadicalElectrons(aa2.Radical);
+        }
         // change ligand atoms and their bonds with central atom
         for (size_t l = 0; l < aa2.Ligands.size(); l++) {
           Atom *al = mol.getAtomWithIdx(match_a[l]);
           const Ligand &ligand = aa2.Ligands[l];
           {
             // AVALON pattern.c:154
-            if (aa1.Ligands[l].AtomSymbol != ligand.AtomSymbol)
+            if (aa1.Ligands[l].AtomSymbol != ligand.AtomSymbol) {
               applyAtomSymbolList(mol, ligand.AtomSymbol, al);
+            }
             //            }
           }
-          if (al->getFormalCharge() != ligand.Charge)
+          if (al->getFormalCharge() != ligand.Charge) {
             al->setFormalCharge(ligand.Charge);
-          if (al->getNumRadicalElectrons() != ligand.Radical)
+          }
+          if (al->getNumRadicalElectrons() != ligand.Radical) {
             al->setNumRadicalElectrons(ligand.Radical);
+          }
 
-          if (BT_NONE == ligand.BondType)  // remove bond
+          if (BT_NONE == ligand.BondType) {  // remove bond
             bondsToRemove.push_back(
                 std::pair<unsigned, unsigned>(j, neighbours[j][l].AtomIdx));
-          else if (aa1.Ligands[l].BondType != ligand.BondType)
+          } else if (aa1.Ligands[l].BondType != ligand.BondType) {
             mol.getBondWithIdx(match_b[l])
                 ->setBondType(convertBondType(ligand.BondType));
+          }
         }
         transformed = true;
       }
@@ -260,7 +276,9 @@ bool TransformAugmentedAtoms(
   }
   // remove bonds marked to delete // BT_NONE
   if (!bondsToRemove.empty()) {
-    for (auto &i : bondsToRemove) mol.removeBond(i.first, i.second);
+    for (auto &i : bondsToRemove) {
+      mol.removeBond(i.first, i.second);
+    }
   }
   return transformed;
 }
@@ -273,29 +291,30 @@ bool isBondTypeMatch(const RDKit::Bond &b, AABondType lbt) {
   RDKit::Bond::BondType bt = b.getBondType();
   bool aromatic = b.getIsAromatic();
 
-  if (ANY_BOND == lbt)
+  if (ANY_BOND == lbt) {
     return true;
-  else if (lbt == AROMATIC)
+  } else if (lbt == AROMATIC) {
     return aromatic || bt == RDKit::Bond::AROMATIC ||
            bt == RDKit::Bond::ONEANDAHALF || bt == RDKit::Bond::TWOANDAHALF ||
            bt == RDKit::Bond::THREEANDAHALF;
-  else if (lbt == SINGLE_AROMATIC)
+  } else if (lbt == SINGLE_AROMATIC) {
     return (bt == RDKit::Bond::ONEANDAHALF ||
             (aromatic && bt == RDKit::Bond::SINGLE));
-  else if (lbt == DOUBLE_AROMATIC)
+  } else if (lbt == DOUBLE_AROMATIC) {
     return (bt == RDKit::Bond::TWOANDAHALF ||
             (aromatic && bt == RDKit::Bond::DOUBLE));
-  else if (lbt == SINGLE)
+  } else if (lbt == SINGLE) {
     return (bt == RDKit::Bond::SINGLE || bt == RDKit::Bond::ONEANDAHALF ||
             bt == RDKit::Bond::AROMATIC || aromatic);
-  else if (lbt == DOUBLE)
+  } else if (lbt == DOUBLE) {
     return (bt == RDKit::Bond::DOUBLE || bt == RDKit::Bond::TWOANDAHALF ||
             bt == RDKit::Bond::AROMATIC || aromatic);
-  else if (lbt == TRIPLE)
+  } else if (lbt == TRIPLE) {
     return (bt == RDKit::Bond::TRIPLE || bt == RDKit::Bond::THREEANDAHALF ||
             bt == RDKit::Bond::AROMATIC);
-  else
+  } else {
     return false;
+  }
 }
 
 static bool RecMatchNeigh(std::vector<Neighbourhood> &matched_pairs,
@@ -307,7 +326,9 @@ static bool RecMatchNeigh(std::vector<Neighbourhood> &matched_pairs,
     visited[i] = true;
     std::vector<unsigned> &pairs = matched_pairs[i].Atoms;
     for (unsigned int pair : pairs) {
-      if (used[pair]) continue;
+      if (used[pair]) {
+        continue;
+      }
       used[pair] = true;
       if (RecMatchNeigh(matched_pairs, visited, used)) {
         return true;
@@ -316,10 +337,16 @@ static bool RecMatchNeigh(std::vector<Neighbourhood> &matched_pairs,
     }
     visited[i] = false;
   }
-  for (auto &&j : visited)
-    if (!j) return false;
-  for (auto &&j : used)
-    if (!j) return false;
+  for (auto &&j : visited) {
+    if (!j) {
+      return false;
+    }
+  }
+  for (auto &&j : used) {
+    if (!j) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -343,16 +370,23 @@ bool RecMatch(const ROMol &mol, unsigned atomIdx, const AugmentedAtom &aa,
       const Ligand &au_ligand = aa.Ligands[j];
 
       if (au_ligand.Charge != ANY_CHARGE &&
-          atom.getFormalCharge() != au_ligand.Charge)
+          atom.getFormalCharge() != au_ligand.Charge) {
         continue;
+      }
       if (au_ligand.Radical != ANY_RADICAL &&
-          atom.getNumRadicalElectrons() != au_ligand.Radical)
+          atom.getNumRadicalElectrons() != au_ligand.Radical) {
         continue;
+      }
       if (au_ligand.SubstitutionCount != 0 &&
-          nbp[nbph.Atoms[i]].Atoms.size() != au_ligand.SubstitutionCount)
+          nbp[nbph.Atoms[i]].Atoms.size() != au_ligand.SubstitutionCount) {
         continue;
-      if (!isBondTypeMatch(bond, au_ligand.BondType)) continue;
-      if (!AtomSymbolMatch(atom.getSymbol(), au_ligand.AtomSymbol)) continue;
+      }
+      if (!isBondTypeMatch(bond, au_ligand.BondType)) {
+        continue;
+      }
+      if (!AtomSymbolMatch(atom.getSymbol(), au_ligand.AtomSymbol)) {
+        continue;
+      }
       // found matched item:
       found = true;
       matched_pairs[i].Atoms.push_back(j);
@@ -365,12 +399,17 @@ bool RecMatch(const ROMol &mol, unsigned atomIdx, const AugmentedAtom &aa,
   std::vector<bool> visited(nbph.Atoms.size());
   std::vector<bool> used(aa.Ligands.size());
 
-  for (auto &&j : visited) j = false;
-  for (auto &&j : used) j = false;
+  for (auto &&j : visited) {
+    j = false;
+  }
+  for (auto &&j : used) {
+    j = false;
+  }
 
   if (RecMatchNeigh(matched_pairs, visited, used)) {
-    if (verbose)
+    if (verbose) {
       BOOST_LOG(rdInfoLog) << "RecMatch ret TRUE " << aa.ShortName << "\n";
+    }
     return true;
   }
   //  if (verbose)
@@ -481,9 +520,15 @@ static void RingState(const ROMol &mol, std::vector<unsigned> &atom_status,
                       std::vector<unsigned> &bond_status) {
   atom_status.resize(mol.getNumAtoms());
   bond_status.resize(mol.getNumBonds());
-  for (unsigned int &i : atom_status) i = 0;
-  for (unsigned int &i : bond_status) i = 0;
-  if (mol.getNumBonds() == 0) return;
+  for (unsigned int &i : atom_status) {
+    i = 0;
+  }
+  for (unsigned int &i : bond_status) {
+    i = 0;
+  }
+  if (mol.getNumBonds() == 0) {
+    return;
+  }
   // for each bond compute amount of rings that contains the bond
   const RDKit::RingInfo &ringInfo = *mol.getRingInfo();
   const VECT_INT_VECT &bondRings = ringInfo.bondRings();
@@ -492,12 +537,13 @@ static void RingState(const ROMol &mol, std::vector<unsigned> &atom_status,
       bond_status[i]++;
     }
   }
-  for (unsigned i = 0; i < bond_status.size(); i++)
+  for (unsigned i = 0; i < bond_status.size(); i++) {
     if (bond_status[i] > 0) {
       const Bond &bond = *mol.getBondWithIdx(i);
       atom_status[bond.getBeginAtomIdx()]++;
       atom_status[bond.getEndAtomIdx()]++;
     }
+  }
 }
 
 /*
@@ -507,7 +553,9 @@ static void RingState(const ROMol &mol, std::vector<unsigned> &atom_status,
  */
 bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
                 bool verbose) {
-  if (good_atoms.empty()) return true;
+  if (good_atoms.empty()) {
+    return true;
+  }
   std::vector<Neighbourhood> neighbours(mol.getNumAtoms());
   std::vector<unsigned> atom_status(mol.getNumAtoms());
   std::vector<unsigned> bond_status(mol.getNumBonds());
@@ -540,19 +588,21 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
       if (good_atoms[j].Topology == RING && 0 == atom_status[i]) {
         // DEBUG:
         if (verbose &&  // j >= 12 && j <= 21 &&
-            mol.getAtomWithIdx(i)->getAtomicNum() == 6)  // 'C'
+            mol.getAtomWithIdx(i)->getAtomicNum() == 6) {  // 'C'
           BOOST_LOG(rdInfoLog) << "UNMATCHED ring state RING of atom idx=" << i
                                << " " << mol.getAtomWithIdx(i)->getSymbol()
                                << " status=" << atom_status[i] << "\n";
+        }
         continue;
       }
       if (good_atoms[j].Topology == CHAIN && 0 != atom_status[i]) {
         // DEBUG:
         if (verbose &&  // j >= 12 && j <= 21 &&
-            mol.getAtomWithIdx(i)->getAtomicNum() == 6)  // 'C'
+            mol.getAtomWithIdx(i)->getAtomicNum() == 6) {  // 'C'
           BOOST_LOG(rdInfoLog) << "UNMATCHED ring state CHAIN of atom idx=" << i
                                << " " << mol.getAtomWithIdx(i)->getSymbol()
                                << " status=" << atom_status[i] << "\n";
+        }
         continue;
       }
 
@@ -582,12 +632,13 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
       //        BOOST_LOG(rdInfoLog) << "AAMatch i=" << i << " j=" << j
       //                             << " ret FALSE\n";
     }
-    if (verbose && nmatch == prevn)  // UNMATCHED atom
+    if (verbose && nmatch == prevn) {  // UNMATCHED atom
       BOOST_LOG(rdInfoLog) << "UNMATCHED atom idx=" << i << " "
                            << mol.getAtomWithIdx(i)->getSymbol()
                            << " status=" << atom_status[i]
                            << " nmatch=" << nmatch << std::endl
                            << LogNeighbourhood(mol, i, neighbours) << std::endl;
+    }
 
     if (verbose && j == good_atoms.size()) {  // failed this atom .. log it
       BOOST_LOG(rdWarningLog)
