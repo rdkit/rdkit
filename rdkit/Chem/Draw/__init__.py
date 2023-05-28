@@ -576,7 +576,6 @@ def _MolsNestedToLinear(mols_matrix, legends_matrix = None, highlightAtomLists_m
   """Converts a nested data structure (where each data substructure represents a row in mol grid image)
   to a linear one, padding rows as needed so all rows are the length of the longest row"""
   # Check that each item in nested lists is a list
-
   def check_elements_are_lists(nested_list, nested_list_name=""):
       for mol_row in nested_list:
           if not isinstance(mol_row, list):
@@ -655,8 +654,8 @@ def _MolsNestedToLinear(mols_matrix, legends_matrix = None, highlightAtomLists_m
 
   # Pad matrices so they're rectangular (same length for each sublist),
   #   then convert to 1D lists
-  null_mol = Chem.MolFromSmiles("")
-  mols_matrix_padded = pad_matrix(mols_matrix, molsPerRow, null_mol)
+  # Pad using None for molecule for empty cells
+  mols_matrix_padded = pad_matrix(mols_matrix, molsPerRow, None)
   mols = flatten_twoD_list(mols_matrix_padded)
 
   if legends_matrix is not None:
@@ -684,7 +683,8 @@ def MolsMatrixToGridImage(mols_matrix, subImgSize=(200, 200), legends_matrix = N
   """Creates a mol grid image from a nested data structure (where each data substructure represents a row),
   padding rows as needed so all rows are the length of the longest row"""
   mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsNestedToLinear(mols_matrix,
-  legends_matrix = None, highlightAtomLists_matrix = None, highlightBondLists_matrix = None)
+  legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix)
+  
   return MolsToGridImage(mols, molsPerRow, subImgSize, legends, highlightAtomLists, highlightBondLists, **kwargs)
 
 def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, highlightAtomLists=None,

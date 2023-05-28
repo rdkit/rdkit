@@ -54,9 +54,16 @@ class TestCase(unittest.TestCase):
     nbonds = mol.GetNumBonds()
 
     # Set up matrix with oligomer count for the molecules
+    # Should produce this grid:
+    # NC(C)C(=O)
+    #                                NC(C)C(=O)NC(C)C(=O)
+    # NC(C)C(=O)NC(C)C(=O)NC(C)C(=O)                      NC(C)C(=O)NC(C)C(=O)NC(C)C(=O)NC(C)C(=O)
     repeats = [[1], [0, 2], [3, 0, 4]]
-    self.mols_matrix = [[Chem.MolFromSmiles(s * count) for count in row] for row in repeats]
-
+    
+    # Create molecule if there are 1 or more oligomers;
+    # otherwise, use None for molecule because drawing is distorted if use Chem.MolFromSmiles("")
+    self.mols_matrix = [[Chem.MolFromSmiles(s * count) if count else None for count in row] for row in repeats]
+            
     self.legends_matrix = [[str(count) + " unit(s)" for count in row] for row in repeats]
 
     def ith_item_list(nunits, items_per_unit, i=0):
@@ -359,13 +366,11 @@ class TestCase(unittest.TestCase):
     for (legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix) in self.param_sets:
       for useSVG in (True, False):
         for returnPNG in (True, False):
-          # legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix = param_set
           dwg_subImgSize_nokwargs = Draw.MolsMatrixToGridImage(self.mols_matrix, subImgSize, legends_matrix=legends_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix, highlightBondLists_matrix=highlightBondLists_matrix, useSVG=useSVG, returnPNG=returnPNG)
           dwg_subImgSize_kwargs = Draw.MolsMatrixToGridImage(self.mols_matrix, subImgSize, legends_matrix=legends_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix, highlightBondLists_matrix=highlightBondLists_matrix, useSVG=useSVG, returnPNG=returnPNG, drawOptions=kwargs_value)
           dwg_nosubImgSize_nokwargs = Draw.MolsMatrixToGridImage(self.mols_matrix, legends_matrix=legends_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix, highlightBondLists_matrix=highlightBondLists_matrix, useSVG=useSVG, returnPNG=returnPNG)
           dwg_nosubImgSize_kwargs = Draw.MolsMatrixToGridImage(self.mols_matrix, legends_matrix=legends_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix, highlightBondLists_matrix=highlightBondLists_matrix, useSVG=useSVG, returnPNG=returnPNG, drawOptions=kwargs_value)
-
-
+    
   def testDrawMorgan(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
