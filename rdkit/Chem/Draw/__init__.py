@@ -574,7 +574,36 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
 def _MolsNestedToLinear(mols_matrix, legends_matrix = None, highlightAtomLists_matrix = None,
                         highlightBondLists_matrix = None):
   """Converts a nested data structure (where each data substructure represents a row in mol grid image)
-  to a linear one, padding rows as needed so all rows are the length of the longest row"""
+  to a linear one, padding rows as needed so all rows are the length of the longest row
+        ARGUMENTS:
+
+        - mols_matrix: A two-deep nested data structure of RDKit molecules to draw, for example list of lists of RDKit molecules
+
+        - legends_matrix: A two-deep nested data structure of strings to label molecules with, for example list of lists of strings (default None)
+
+        - highlightAtomLists_matrix: A three-deep nested data structure of integers of atoms to highlight, for example list of lists of lists of integers (default None)
+
+        - highlightBondLists_matrix: A three-deep nested data structure of integers of bonds to highlight, for example list of lists of lists of integers (default None)
+
+      NOTE:
+
+            This private function does the heavy processing for MolsMatrixToGridImage
+
+      RETURNS:
+
+        Tuple of flattened (by one layer) data structures that MolsToGridImage accepts as input:
+        
+        - mols: A non-nested data structure of RDKit molecules to draw, for example list of RDKit molecules
+
+        - molsPerRow: The number of molecules per row (integer), equal to the longest row in mols_matrix
+
+        - legends: A non-nested data structure of strings to label molecules with, for example list of strings
+
+        - highlightAtomLists: A two-deep nested data structure of integers of atoms to highlight, for example list of lists of integers
+
+        - highlightBondLists: A two-deep nested data structure of integers of bonds to highlight, for example list of lists of integers
+
+  """
   # Check that each item in nested lists is a list
   def check_elements_are_lists(nested_list, nested_list_name=""):
       for mol_row in nested_list:
@@ -681,7 +710,74 @@ def _MolsNestedToLinear(mols_matrix, legends_matrix = None, highlightAtomLists_m
 def MolsMatrixToGridImage(mols_matrix, subImgSize=(200, 200), legends_matrix = None, 
                           highlightAtomLists_matrix = None, highlightBondLists_matrix = None, useSVG=False, returnPNG=False, **kwargs):
   """Creates a mol grid image from a nested data structure (where each data substructure represents a row),
-  padding rows as needed so all rows are the length of the longest row"""
+  padding rows as needed so all rows are the length of the longest row
+          ARGUMENTS:
+
+        - mols_matrix: A two-deep nested data structure of RDKit molecules to draw, for example list of lists of RDKit molecules
+
+        - subImgSize: The size of a cell in the drawing; passed through to MolsToGridImage (default (200, 200))
+
+        - legends_matrix: A two-deep nested data structure of strings to label molecules with, for example list of lists of strings (default None)
+
+        - highlightAtomLists_matrix: A three-deep nested data structure of integers of atoms to highlight, for example list of lists of lists of integers (default None)
+
+        - highlightBondLists_matrix: A three-deep nested data structure of integers of bonds to highlight, for example list of lists of lists of integers (default None)
+
+        - useSVG: Whether to return an SVG (if true) or PNG (if false); passed through to MolsToGridImage (default false)
+
+        - returnPNG: Whether to return a PNG file (if true) or a PIL object for a PNG image file (if false); has no effect if useSVG is true; passed through to MolsToGridImage (default false)
+
+        - kwargs: Any other keyword arguments are passed to MolsToGridImage
+
+      NOTE:
+
+            This function nests data structures one additional level beyond the analogouse function MolsToGridImage
+            (where the molecules and legends are non-nested lists, and the highlight parameters are two-deep nested lists) 
+
+      RETURNS:
+
+        A grid of molecular images in one of these formats:
+        
+        - useSVG=False and returnPNG=False (default): A PIL object for a PNG image file
+
+        - useSVG=False and returnPNG=True: A PNG file 
+
+        - useSVG=True: An SVG string
+
+      EXAMPLES:
+
+        from rdkit import Chem
+        from rdkit.Chem.Draw import MolsMatrixToGridImage, rdMolDraw2D
+        salt = Chem.MolFromSmiles("[Na][Cl]")
+        mols_matrix = [[salt, salt], [salt, None, salt]]
+
+        # Minimal example: Only mols_matrix is supplied,
+        # result will be a drawing containing (where each row contains molecules):
+        # Cl-Na Cl-Na
+        # Cl-Na          Cl-Na
+        img = MolsMatrixToGridImage(mols_matrix)
+        img.save("MolsMatrixToGridImage_minimal.png")
+        # img is a PIL object for a PNG image file like:
+        # <PIL.PngImagePlugin.PngImageFile image mode=RGB size=600x200 at 0x1648CC390>
+        # Drawing will be saved as PNG file MolsMatrixToGridImage_minimal.png
+
+        # Exhaustive example: All parameters are supplied,
+        # result will be a drawing containing (where each row of molecules is followed by a row of legends):
+        # 1 Cl-Na 0                          1 Cl-Na 0
+        # no highlighting                bond highlighted         
+        # 1 Cl-Na 0                                                                   1 Cl-Na 0
+        # sodium highlighted                                                  chloride and bond highlighted
+        legends_matrix = [["no highlighting", "bond highlighted"], ["sodium highlighted", "", "chloride and bond highlighted"]]
+        highlightAtomLists_matrix = [[[],[]], [[0], None, [1]]]
+        highlightBondLists_matrix = [[[],[0]], [[], None, [0]]]
+
+        dopts = rdMolDraw2D.MolDrawOptions()
+        dopts.addAtomIndices = True
+
+        img_file = MolsMatrixToGridImage(mols_matrix=mols_matrix, subImgSize=(300, 400), legends_matrix=legends_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix, highlightBondLists_matrix=highlightBondLists_matrix, useSVG=False, returnPNG=True, drawOptions=dopts)
+        img_file.save("MolsMatrixToGridImage_exhaustive.png")
+        # Drawing will be saved as PNG file MolsMatrixToGridImage_exhaustive.png
+  """
   mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsNestedToLinear(mols_matrix,
   legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix)
   
