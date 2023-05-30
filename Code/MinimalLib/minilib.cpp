@@ -397,18 +397,32 @@ std::string JSMol::get_stereo_tags() const {
   return buffer.GetString();
 }
 
+void JSMol::set_aromatic_form() {
+  assert(d_mol);
+
+  d_mol->updatePropertyCache();
+  MolOps::setAromaticity(*d_mol);
+}
+
 std::string JSMol::get_aromatic_form() const {
   if (!d_mol) {
     return "";
   }
 
   RWMol molCopy(*d_mol);
+  molCopy.updatePropertyCache();
   MolOps::setAromaticity(molCopy);
 
   bool includeStereo = true;
   int confId = -1;
   bool kekulize = false;
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
+}
+
+void JSMol::set_kekule_form() {
+  assert(d_mol);
+
+  MolOps::Kekulize(*d_mol);
 }
 
 std::string JSMol::get_kekule_form() const {

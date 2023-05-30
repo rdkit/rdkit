@@ -284,6 +284,62 @@ function test_get_aromatic_kekule_form() {
     molblock = mol.get_aromatic_form();
     assert (molblock.match(aromRegExp).length === 6);
     assert (molblock.match(kekRegExp) === null);
+    mol.delete();
+    mol = RDKitModule.get_qmol(`
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.6473    0.8696    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6473   -0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  4  0  0  0  0
+  5  6  4  0  0  0  0
+  6  1  4  0  0  0  0
+M  END
+`);
+    molblock = mol.get_aromatic_form();
+    assert (molblock.match(aromRegExp).length === 6);
+    assert (molblock.match(kekRegExp) === null);
+    molblock = mol.get_kekule_form();
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
+    mol.delete();
+    mol = RDKitModule.get_qmol(`
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.6473    0.8696    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6473   -0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+M  END
+`);
+    molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
+    mol.set_aromatic_form();
+    molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
+    assert (molblock.match(aromRegExp).length === 6);
+    assert (molblock.match(kekRegExp) === null);
+    mol.set_kekule_form();
+    molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
+    mol.delete();
 }
 
 function test_sketcher_services() {
