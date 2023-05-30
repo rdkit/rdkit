@@ -514,7 +514,7 @@ double calcSelfSimilarity(const NAMSMolInfo & mi, const NAMSParameters & parms)
   }
   free(mat);
   free(aba_match_scores);
-  return bscore/10000.0d;
+  return bscore/10000.0;
 }
 
 // from nams-docker/nams/nams.cpp:calcAtomMatchingMatrix(), with minimal tweaks
@@ -601,7 +601,7 @@ void nams_runner(const NAMSMolInfo & mi1, const NAMSMolInfo & mi2, const NAMSPar
     if(col<mi2.natoms() && row < mi1.natoms()) {
       v=m[row][col];
       result.mapping1to2[row] = col;
-      result.atom_scores[row] = v/10000.0d;
+      result.atom_scores[row] = v/10000.0;
       final_score+=v;
     }
   }
@@ -611,7 +611,7 @@ void nams_runner(const NAMSMolInfo & mi1, const NAMSMolInfo & mi2, const NAMSPar
   free(atom_matrix);
   free(aba_match_scores);
 
-  result.similarity = final_score/10000.0d;
+  result.similarity = final_score/10000.0;
 }
 
 NAMSResult * getNAMSResult(const NAMSMolInfo & molinfo1, const NAMSMolInfo & molinfo2) {
