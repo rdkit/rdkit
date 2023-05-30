@@ -33,6 +33,7 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <Geometry/Transform3D.h>
 #include <DataStructs/BitOps.h>
+#include <DataStructs/ExplicitBitVect.h>
 
 #include <INCHI-API/inchi.h>
 
@@ -592,8 +593,7 @@ JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
     : d_sslib(new SubstructLibrary(
           boost::shared_ptr<CachedTrustedSmilesMolHolder>(
               new CachedTrustedSmilesMolHolder()),
-          boost::shared_ptr<PatternHolder>(new PatternHolder()))),
-      d_num_bits(num_bits) {
+          boost::shared_ptr<PatternHolder>(new PatternHolder(num_bits)))) {
   d_molHolder = dynamic_cast<CachedTrustedSmilesMolHolder *>(
       d_sslib->getMolHolder().get());
   d_fpHolder = dynamic_cast<PatternHolder *>(d_sslib->getFpHolder().get());
@@ -605,13 +605,33 @@ int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
     return -1;
   }
   mol->updatePropertyCache();
-  auto fp = PatternFingerprintMol(*mol, d_num_bits);
+  MolOps::fastFindRings(*mol);
+  auto fp = d_fpHolder->makeFingerprint(*mol);
   if (!fp) {
     return -1;
   }
-  d_fpHolder->addFingerprint(fp);
-  auto ret = d_molHolder->addSmiles(smi);
-  return ret;
+  auto fpIdx = d_fpHolder->addFingerprint(fp);
+  auto smiIdx = d_molHolder->addSmiles(smi);
+  return (fpIdx == smiIdx ? fpIdx : -1);
+}
+
+int JSSubstructLibrary::add_trusted_smiles_and_pattern_fp(
+    const std::string &smi, const std::string &patternFp) {
+  auto bitVect = new ExplicitBitVect(patternFp);
+  if (!bitVect) {
+    return -1;
+  }
+  auto fpIdx = d_fpHolder->addFingerprint(bitVect);
+  auto smiIdx = d_molHolder->addSmiles(smi);
+  return (fpIdx == smiIdx ? fpIdx : -1);
+}
+
+std::string JSSubstructLibrary::get_trusted_smiles(unsigned int i) const {
+  return d_molHolder->getMols().at(i);
+}
+
+std::string JSSubstructLibrary::get_pattern_fp(unsigned int i) const {
+  return d_fpHolder->getFingerprints().at(i)->toString();
 }
 
 inline int JSSubstructLibrary::add_mol_helper(const ROMol &mol) {
@@ -642,8 +662,8 @@ std::string JSSubstructLibrary::get_matches(const JSMol &q, bool useChirality,
   if (!d_sslib->size()) {
     return "[]";
   }
-  std::vector<unsigned int> indices = d_sslib->getMatches(
-      *q.d_mol, true, useChirality, false, numThreads, maxResults);
+  auto indices = d_sslib->getMatches(*q.d_mol, true, useChirality, false,
+                                     numThreads, maxResults);
   rj::Document doc;
   doc.SetArray();
   auto &alloc = doc.GetAllocator();
@@ -660,7 +680,9 @@ std::string JSSubstructLibrary::get_matches(const JSMol &q, bool useChirality,
 unsigned int JSSubstructLibrary::count_matches(const JSMol &q,
                                                bool useChirality,
                                                int numThreads) const {
-  return d_sslib->countMatches(*q.d_mol, true, useChirality, false, 1);
+  return d_sslib->size() ? d_sslib->countMatches(*q.d_mol, true, useChirality,
+                                                 false, numThreads)
+                         : 0;
 }
 
 std::string get_inchikey_for_inchi(const std::string &input) {
