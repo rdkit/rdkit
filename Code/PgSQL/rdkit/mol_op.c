@@ -461,6 +461,28 @@ Datum mol_to_tautomerquery(PG_FUNCTION_ARGS) {
   PG_RETURN_MOL_P(res);
 }
 
+PGDLLEXPORT Datum xqmol_to_tautomerquery(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(xqmol_to_tautomerquery);
+Datum xqmol_to_tautomerquery(PG_FUNCTION_ARGS) {
+  CXQMol xqmol;
+  fcinfo->flinfo->fn_extra =
+      searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &xqmol, NULL);
+  Assert(mol != 0);
+
+  CXQMol xqm = XQMolToTautomerQuery(xqmol);
+
+  if (!xqm) {
+    PG_RETURN_NULL();
+  }
+
+  XQMol *res = deconstructXQMol(xqm);
+  freeCXQMol(xqm);
+
+  PG_RETURN_MOL_P(res);
+}
+
+
 PGDLLEXPORT Datum mol_enumeratequery(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_enumeratequery);
 Datum mol_enumeratequery(PG_FUNCTION_ARGS) {

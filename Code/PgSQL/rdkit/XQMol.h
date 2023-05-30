@@ -29,16 +29,19 @@
 namespace RDKit {
 enum ExtendedQueryMolTypes : unsigned char {
   XQM_MOL = 1,
-  XQM_BUNDLE = 2,
-  XQM_TAUTOMERQUERY = 3
+  XQM_MOLBUNDLE = 2,
+  XQM_TAUTOMERQUERY = 3,
+  XQM_TAUTOMERBUNDLE = 4
 };
 using ExtendedQueryMol =
     std::variant<std::unique_ptr<RWMol>, std::unique_ptr<MolBundle>,
-                 std::unique_ptr<TautomerQuery>>;
+                 std::unique_ptr<TautomerQuery>,
+                 std::vector<std::unique_ptr<TautomerQuery>>>;
 
 namespace detail {
 constexpr std::uint16_t recognition = 0xbe73;
 constexpr std::uint16_t version = 1000;
+
 }  // namespace detail
 std::string pickle(const ExtendedQueryMol &xqm) {
   std::stringstream ss(std::ios_base::binary | std::ios_base::out);
@@ -50,18 +53,47 @@ std::string pickle(const ExtendedQueryMol &xqm) {
     MolPickler::pickleMol(*std::get<std::unique_ptr<RWMol>>(xqm), pkl);
 #ifdef RDK_USE_BOOST_SERIALIZATION
   } else if (std::holds_alternative<std::unique_ptr<MolBundle>>(xqm)) {
-    streamWrite(ss, ExtendedQueryMolTypes::XQM_BUNDLE);
+    streamWrite(ss, ExtendedQueryMolTypes::XQM_MOLBUNDLE);
     pkl = std::get<std::unique_ptr<MolBundle>>(xqm)->serialize();
   } else if (std::holds_alternative<std::unique_ptr<TautomerQuery>>(xqm)) {
     streamWrite(ss, ExtendedQueryMolTypes::XQM_TAUTOMERQUERY);
     pkl = std::get<std::unique_ptr<TautomerQuery>>(xqm)->serialize();
+  } else if (std::holds_alternative<
+                 std::vector<std::unique_ptr<TautomerQuery>>>(xqm)) {
+    streamWrite(ss, ExtendedQueryMolTypes::XQM_TAUTOMERBUNDLE);
+    const auto &itm =
+        std::get<std::vector<std::unique_ptr<TautomerQuery>>>(xqm);
+    std::uint16_t nTauts = itm.size();
+    streamWrite(ss, nTauts);
+    for (const auto &taut : itm) {
+      streamWrite(ss, taut->serialize());
+    }
 #endif
   } else {
     throw ValueErrorException("unrecognized type in ExtendedQueryMol");
   }
-  streamWrite(ss, pkl);
+  if (!pkl.empty()) {
+    streamWrite(ss, pkl);
+  }
   return ss.str();
 }
+
+namespace {
+
+std::vector<std::unique_ptr<TautomerQuery>> readTautomerQueries(
+    std::stringstream &ss) {
+  std::vector<std::unique_ptr<TautomerQuery>> res;
+  std::uint16_t nTauts = 0;
+  streamRead(ss, nTauts);
+
+  for (auto i = 0u; i < nTauts; ++i) {
+    std::string pkl;
+    streamRead(ss, pkl, 0);
+    res.emplace_back(std::make_unique<TautomerQuery>(pkl));
+  }
+  return res;
+}
+}  // namespace
 
 ExtendedQueryMol *depickle(const std::string &pickle) {
   ExtendedQueryMol *res = nullptr;
@@ -83,18 +115,23 @@ ExtendedQueryMol *depickle(const std::string &pickle) {
   unsigned char readType;
   streamRead(ss, readType);
   std::string pkl;
-  streamRead(ss, pkl, 0);
   switch (readType) {
     case ExtendedQueryMolTypes::XQM_MOL:
+      streamRead(ss, pkl, 0);
       res = new ExtendedQueryMol(std::make_unique<RWMol>(pkl));
       break;
 #ifdef RDK_USE_BOOST_SERIALIZATION
-    case ExtendedQueryMolTypes::XQM_BUNDLE:
+    case ExtendedQueryMolTypes::XQM_MOLBUNDLE:
+      streamRead(ss, pkl, 0);
       res = new ExtendedQueryMol(std::make_unique<MolBundle>(pkl));
       break;
     case ExtendedQueryMolTypes::XQM_TAUTOMERQUERY:
+      streamRead(ss, pkl, 0);
       res = new ExtendedQueryMol(std::make_unique<TautomerQuery>(pkl));
       break;
+    case ExtendedQueryMolTypes::XQM_TAUTOMERBUNDLE: {
+      res = new ExtendedQueryMol(std::move(readTautomerQueries(ss)));
+    } break;
 #endif
     default:
       throw ValueErrorException("unknown type in pickle");
@@ -167,6 +204,18 @@ void to_pt(boost::property_tree::ptree &pt, const TautomerQuery &tq) {
   pt.put("template", MolToCXSmarts(tq.getTemplateMolecule()));
 }
 
+void to_pt(boost::property_tree::ptree &pt,
+           const std::vector<std::unique_ptr<TautomerQuery>> &tautQueries) {
+  {
+    boost::property_tree::ptree children;
+    for (const auto &tq : tautQueries) {
+      boost::property_tree::ptree elem;
+      to_pt(elem, *tq);
+      children.push_back({"", elem});
+    }
+    pt.add_child("tautomerQueries", children);
+  }
+}
 std::string to_text(const ExtendedQueryMol &xqm) {
   boost::property_tree::ptree pt;
 
@@ -174,11 +223,18 @@ std::string to_text(const ExtendedQueryMol &xqm) {
     pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_MOL);
 #ifdef RDK_USE_BOOST_SERIALIZATION
   } else if (std::holds_alternative<std::unique_ptr<MolBundle>>(xqm)) {
-    pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_BUNDLE);
+    pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_MOLBUNDLE);
     to_pt(pt, *std::get<std::unique_ptr<MolBundle>>(xqm));
   } else if (std::holds_alternative<std::unique_ptr<TautomerQuery>>(xqm)) {
     pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_TAUTOMERQUERY);
     to_pt(pt, *std::get<std::unique_ptr<TautomerQuery>>(xqm));
+  } else if (std::holds_alternative<
+                 std::vector<std::unique_ptr<TautomerQuery>>>(xqm)) {
+    pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_TAUTOMERBUNDLE);
+    const auto &itm =
+        std::get<std::vector<std::unique_ptr<TautomerQuery>>>(xqm);
+    pt.put("num_entries", itm.size());
+    to_pt(pt, itm);
 #endif
   } else {
     throw ValueErrorException("unrecognized type in ExtendedQueryMol");

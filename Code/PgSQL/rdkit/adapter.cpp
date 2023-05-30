@@ -2424,6 +2424,32 @@ extern "C" CXQMol MolEnumerateQuery(CROMol m) {
   return (CXQMol)xqm;
 }
 
+extern "C" CXQMol XQMolToTautomerQuery(CXQMol xqm) {
+  auto *ixqm = (ExtendedQueryMol *)xqm;
+  if (!ixqm) {
+    return nullptr;
+  }
+
+  ExtendedQueryMol *res = nullptr;
+  if (std::holds_alternative<std::unique_ptr<RWMol>>(*ixqm)) {
+    std::unique_ptr<TautomerQuery> ptr{
+        TautomerQuery::fromMol(*std::get<std::unique_ptr<RWMol>>(*ixqm))};
+    res = new ExtendedQueryMol(std::move(ptr));
+  } else if (std::holds_alternative<std::unique_ptr<MolBundle>>(*ixqm)) {
+    const auto &itm = std::get<std::unique_ptr<MolBundle>>(*ixqm);
+    std::vector<std::unique_ptr<TautomerQuery>> vect;
+    for (const auto &mol : itm->getMols()) {
+      vect.emplace_back(TautomerQuery::fromMol(*mol));
+    }
+    res = new ExtendedQueryMol(std::move(vect));
+  } else {
+    elog(ERROR, "XQMolToTautomerQuery only supports enumerated molecules");
+    res = nullptr;
+  }
+
+  return (CXQMol)res;
+}
+
 extern "C" int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality,
                               bool useMatchers) {
   auto *im = (ROMol *)i;
@@ -2461,6 +2487,17 @@ extern "C" int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality,
     res = std::get<std::unique_ptr<TautomerQuery>>(*xqm)
               ->substructOf(*im, params)
               .size();
+  } else if (std::holds_alternative<
+                 std::vector<std::unique_ptr<TautomerQuery>>>(*xqm)) {
+    const auto &vect =
+        std::get<std::vector<std::unique_ptr<TautomerQuery>>>(*xqm);
+    for (const auto &tq : vect) {
+      auto count = tq->substructOf(*im, params).size();
+      if (count) {
+        res = count;
+        break;
+      }
+    }
 #endif
   } else {
     throw ValueErrorException("unrecognized type in ExtendedQueryMol");
