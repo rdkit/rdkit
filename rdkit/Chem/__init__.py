@@ -42,6 +42,24 @@ else:
   rdCoordGen.SetDefaultTemplateFileDir(templDir)
 
 
+# Github Issue #6208: boost::python iterators are slower than they should
+# (cause is that boost::python throws exceptions as actual C++ exceptions)
+def _GetAtoms(mol):
+  """Returns a read-only sequence containing all of the molecule's Atoms."""
+  return (mol.GetAtomWithIdx(i) for i in range(mol.GetNumAtoms()))
+
+
+def _GetBonds(mol):
+  """Returns a read-only sequence containing all of the molecule's Bonds."""
+  return (mol.GetBondWithIdx(i) for i in range(mol.GetNumBonds()))
+
+
+rdchem.Mol.GetAtoms = _GetAtoms
+rdchem.Mol.GetBonds = _GetBonds
+del _GetAtoms
+del _GetBonds
+
+
 def QuickSmartsMatch(smi, sma, unique=True, display=False):
   m = MolFromSmiles(smi)
   p = MolFromSmarts(sma)
