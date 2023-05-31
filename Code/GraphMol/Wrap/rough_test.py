@@ -6872,6 +6872,8 @@ CAS<~>
     self.assertEqual(
       Chem.MolToCXSmiles(m, ps, (Chem.CXSmilesFields.CX_ALL ^ Chem.CXSmilesFields.CX_LINKNODES)),
       "C1(O)CCC(F)C1")
+    self.assertTrue(hasattr(Chem.CXSmilesFields, 'CX_BOND_CFG'))
+    self.assertTrue(hasattr(Chem.CXSmilesFields, 'CX_ALL_BUT_COORDS'))
 
   def testKekulizeIfPossible(self):
     m = Chem.MolFromSmiles('c1cccn1', sanitize=False)
