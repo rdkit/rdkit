@@ -44,20 +44,72 @@ else:
 
 # Github Issue #6208: boost::python iterators are slower than they should
 # (cause is that boost::python throws exceptions as actual C++ exceptions)
-def _GetAtoms(mol):
-  """Returns a read-only sequence containing all of the molecule's Atoms."""
-  return (mol.GetAtomWithIdx(i) for i in range(mol.GetNumAtoms()))
+class _GetAtomsIterator:
+
+  def __init__(self, mol):
+    self._mol = mol
+    self._pos = 0
+    self._size = mol.GetNumAtoms()
+
+  def __len__(self):
+    if self._mol.GetNumAtoms() != self._size:
+      raise RuntimeError('size changed during iteration')
+    return self._size
+
+  def __getitem__(self, i):
+    if i < 0 or i >= len(self):
+      raise IndexError('index out of range')
+    return self._mol.GetAtomWithIdx(i)
+
+  def __next__(self):
+    if self._pos >= len(self):
+      raise StopIteration
+
+    ret = self[self._pos]
+    self._pos += 1
+    return ret
+
+  def __iter__(self):
+    for i in range(0, len(self)):
+      self._pos = i
+      yield self[i]
+    self._pos = self._size
 
 
-def _GetBonds(mol):
-  """Returns a read-only sequence containing all of the molecule's Bonds."""
-  return (mol.GetBondWithIdx(i) for i in range(mol.GetNumBonds()))
+class _GetBondsIterator:
+
+  def __init__(self, mol):
+    self._mol = mol
+    self._pos = 0
+    self._size = mol.GetNumBonds()
+
+  def __len__(self):
+    if self._mol.GetNumBonds() != self._size:
+      raise RuntimeError('size changed during iteration')
+    return self._size
+
+  def __getitem__(self, i):
+    if i < 0 or i >= len(self):
+      raise IndexError('index out of range')
+    return self._mol.GetBondWithIdx(i)
+
+  def __next__(self):
+    if self._pos >= len(self):
+      raise StopIteration
+
+    ret = self[self._pos]
+    self._pos += 1
+    return ret
+
+  def __iter__(self):
+    start = self._pos
+    for i in range(start, len(self)):
+      self._pos = i
+      yield self[i]
 
 
-rdchem.Mol.GetAtoms = _GetAtoms
-rdchem.Mol.GetBonds = _GetBonds
-del _GetAtoms
-del _GetBonds
+rdchem.Mol.GetAtoms = lambda m: _GetAtomsIterator(m)
+rdchem.Mol.GetBonds = lambda m: _GetBondsIterator(m)
 
 
 def QuickSmartsMatch(smi, sma, unique=True, display=False):
