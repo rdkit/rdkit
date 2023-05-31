@@ -631,6 +631,8 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
     for (auto &i : allAtomOrdering) {
       flattenedAtomOrdering.insert(flattenedAtomOrdering.end(), i.begin(),
                                    i.end());
+    }
+    for (auto &i : allBondOrdering) {
       flattenedBondOrdering.insert(flattenedBondOrdering.end(), i.begin(),
                                    i.end());
     }
