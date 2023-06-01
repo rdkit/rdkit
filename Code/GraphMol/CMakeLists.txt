@@ -125,6 +125,7 @@ add_subdirectory(MolStandardize)
 add_subdirectory(ScaffoldNetwork)
 add_subdirectory(MolEnumerator)
 add_subdirectory(Abbreviations)
+add_subdirectory(GeneralizedSubstruct)
 
 
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol
