@@ -20,12 +20,12 @@
 #include <boost/core/noncopyable.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolBundle.h>
+#include <GraphMol/TautomerQuery/TautomerQuery.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 namespace RDKit {
-class RWMol;
-class MolBundle;
-class TautomerQuery;
 
 struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol
     : private boost::noncopyable {

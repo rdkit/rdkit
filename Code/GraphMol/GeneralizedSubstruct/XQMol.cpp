@@ -9,7 +9,6 @@
 //
 //
 
-#include "XQMol.h"
 #include <cstdint>
 #include <variant>
 #include <sstream>
@@ -27,6 +26,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include "XQMol.h"
 
 namespace RDKit {
 
