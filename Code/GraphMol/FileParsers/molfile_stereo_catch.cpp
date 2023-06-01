@@ -179,3 +179,47 @@ M  END
     CHECK(sgs[0].getAtoms()[1]->getIdx() == 5);
   }
 }
+
+TEST_CASE("github #6310: crossed ring bonds not written to mol blocks") {
+  SECTION("as reported") {
+    std::vector<std::string> smileses = {"C1C=CCCCCCCCCC1", "C1C=CCCCCC1"};
+
+    for (const auto &smiles : smileses) {
+      auto m = std::unique_ptr<RWMol>(SmilesToMol(smiles));
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getBondType() == Bond::BondType::DOUBLE);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+      auto mb = MolToV3KMolBlock(*m);
+      CHECK(mb.find("CFG=2") != std::string::npos);
+
+      mb = MolToMolBlock(*m);
+      CHECK(mb.find("2  3  2  3") != std::string::npos);
+
+      // make sure we also write the crossed bond when it's explicitly crossed
+      m->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
+      mb = MolToV3KMolBlock(*m);
+      CHECK(mb.find("CFG=2") != std::string::npos);
+
+      mb = MolToMolBlock(*m);
+      CHECK(mb.find("2  3  2  3") != std::string::npos);
+    }
+  }
+  SECTION("don't cross bonds in small rings") {
+    auto m = "C1C=CCCCC1"_smiles;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(1)->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") == std::string::npos);
+
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("2  3  2  3") == std::string::npos);
+
+    m->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
+    mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") != std::string::npos);
+
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("2  3  2  3") != std::string::npos);
+  }
+}
