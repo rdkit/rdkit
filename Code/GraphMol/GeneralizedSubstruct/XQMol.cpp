@@ -60,7 +60,7 @@ std::string ExtendedQueryMol::toBinary() const {
     }
 #endif
   } else {
-    throw ValueErrorException("unrecognized type in ExtendedQueryMol");
+    UNDER_CONSTRUCTION("unrecognized type in ExtendedQueryMol");
   }
   if (!pkl.empty()) {
     streamWrite(ss, pkl);
@@ -127,7 +127,7 @@ void ExtendedQueryMol::initFromBinary(const std::string &pickle) {
       break;
 #endif
     default:
-      throw ValueErrorException("unknown type in pickle");
+      UNDER_CONSTRUCTION("unrecognized type in ExtendedQueryMol");
   }
 }
 
@@ -238,11 +238,44 @@ std::string ExtendedQueryMol::toJSON() const {
     to_pt(pt, itm);
 #endif
   } else {
-    throw ValueErrorException("unrecognized type in ExtendedQueryMol");
+    UNDER_CONSTRUCTION("unrecognized type in ExtendedQueryMol");
   }
 
   std::stringstream ss;
   boost::property_tree::json_parser::write_json(ss, pt);
   return ss.str();
+}
+
+std::vector<MatchVectType> SubstructMatch(
+    const ROMol &mol, const ExtendedQueryMol &query,
+    const SubstructMatchParameters &params) {
+  std::vector<MatchVectType> res;
+  if (std::holds_alternative<ExtendedQueryMol::RWMol_T>(query.xqmol)) {
+    res = RDKit::SubstructMatch(
+        mol, *std::get<ExtendedQueryMol::RWMol_T>(query.xqmol), params);
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  } else if (std::holds_alternative<ExtendedQueryMol::MolBundle_T>(
+                 query.xqmol)) {
+    res = RDKit::SubstructMatch(
+        mol, *std::get<ExtendedQueryMol::MolBundle_T>(query.xqmol), params);
+  } else if (std::holds_alternative<ExtendedQueryMol::TautomerQuery_T>(
+                 query.xqmol)) {
+    res = std::get<ExtendedQueryMol::TautomerQuery_T>(query.xqmol)
+              ->substructOf(mol, params);
+  } else if (std::holds_alternative<ExtendedQueryMol::TautomerBundle_T>(
+                 query.xqmol)) {
+    const auto &vect =
+        std::get<ExtendedQueryMol::TautomerBundle_T>(query.xqmol);
+    for (const auto &tq : *vect) {
+      res = tq->substructOf(mol, params);
+      if (!res.empty()) {
+        break;
+      }
+    }
+#endif
+  } else {
+    UNDER_CONSTRUCTION("unrecognized type in ExtendedQueryMol");
+  }
+  return res;
 }
 }  // namespace RDKit

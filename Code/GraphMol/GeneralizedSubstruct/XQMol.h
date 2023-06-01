@@ -20,6 +20,8 @@
 #include <boost/core/noncopyable.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#include <GraphMol/Substruct/SubstructMatch.h>
+
 namespace RDKit {
 class RWMol;
 class MolBundle;
@@ -58,6 +60,18 @@ struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol
   std::string toBinary() const;
   std::string toJSON() const;
 };
+
+RDKIT_GENERALIZEDSUBSTRUCT_EXPORT std::vector<MatchVectType> SubstructMatch(
+    const ROMol &mol, const ExtendedQueryMol &query,
+    const SubstructMatchParameters &params = SubstructMatchParameters());
+
+inline bool hasSubstructMatch(
+    const ROMol &mol, const ExtendedQueryMol &query,
+    const SubstructMatchParameters &params = SubstructMatchParameters()) {
+  SubstructMatchParameters lparams = params;
+  lparams.maxMatches = 1;
+  return !SubstructMatch(mol, query, lparams).empty();
+}
 
 }  // namespace RDKit
 #endif
