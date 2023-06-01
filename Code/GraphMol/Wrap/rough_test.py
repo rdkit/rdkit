@@ -5040,6 +5040,12 @@ M  END
         b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
                               useChirality=False)[0]), 8)
 
+    if Chem.MolBundleCanSerialize():
+      for b2 in (pickle.loads(pickle.dumps(b)), Chem.MolBundle(b.ToBinary())):
+        self.assertEqual(len(b2), len(b))
+        for m, m2 in zip(b, b2):
+          self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(m2))
+
   def testMolBundles2(self):
     b = Chem.MolBundle()
     smis = ('Fc1c(Cl)cccc1', 'Fc1cc(Cl)ccc1', 'Fc1ccc(Cl)cc1')
