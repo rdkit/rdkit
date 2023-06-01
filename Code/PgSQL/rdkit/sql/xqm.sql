@@ -22,6 +22,11 @@ select 'COOOc1[nH]ncc1'@>xqmol_to_tautomerquery(mol_enumeratequery('COC1=NNC=C1 
 select 'COOOOc1[nH]ncc1'@>xqmol_to_tautomerquery(mol_enumeratequery('COC1=NNC=C1 |LN:1:1.3|'::mol));
 
 
--- error handling
+-- edge cases and error handling
 select mol_to_tautomerquery('C1'::mol);
 select mol_to_tautomerquery('c1cc1'::mol);
+select mol_enumeratequery('COC1=NNC=C1'::mol);
+select 'CCOC1=NNC=C1'::mol@>mol_enumeratequery('COC1=NNC=C1'::mol);
+select mol_to_tautomerquery('CCCC'::mol);
+select 'CCCCOC'::mol@>mol_to_tautomerquery('CCCC'::mol);
+

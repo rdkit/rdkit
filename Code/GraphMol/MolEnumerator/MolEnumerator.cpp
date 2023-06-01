@@ -66,9 +66,6 @@ void removeOrigIndices(ROMol &mol) {
 
 MolBundle enumerate(const ROMol &mol,
                     const std::vector<MolEnumeratorParams> &paramLists) {
-  if (paramLists.empty()) {
-    return MolBundle();
-  }
   std::unique_ptr<MolBundle> accum{new MolBundle()};
   boost::shared_ptr<ROMol> molCpy{new ROMol(mol)};
   detail::preserveOrigIndices(*molCpy);

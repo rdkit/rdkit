@@ -2415,8 +2415,12 @@ extern "C" CXQMol MolEnumerateQuery(CROMol m) {
   }
   ExtendedQueryMol *xqm = nullptr;
   try {
-    xqm = new ExtendedQueryMol(std::unique_ptr<MolBundle>(
-        new MolBundle(MolEnumerator::enumerate(*im))));
+    std::unique_ptr<MolBundle> tbndl{
+        new MolBundle(MolEnumerator::enumerate(*im))};
+    if (!tbndl->size()) {
+      tbndl->addMol(boost::shared_ptr<ROMol>(new ROMol(*im)));
+    }
+    xqm = new ExtendedQueryMol(std::move(tbndl));
   } catch (...) {
     elog(ERROR, "MolEnumerateQuery: unknown failure type");
     xqm = nullptr;

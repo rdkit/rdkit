@@ -185,10 +185,49 @@ select 'COOOOc1[nH]ncc1'@>xqmol_to_tautomerquery(mol_enumeratequery('COC1=NNC=C1
  f
 (1 row)
 
--- error handling
+-- edge cases and error handling
 select mol_to_tautomerquery('C1'::mol);
 ERROR:  could not create molecule from SMILES 'C1'
 LINE 1: select mol_to_tautomerquery('C1'::mol);
                                     ^
 select mol_to_tautomerquery('c1cc1'::mol);
 ERROR:  MolToTautomerQuery: Can't kekulize mol.  Unkekulized atoms: 0 1 2
+select mol_enumeratequery('COC1=NNC=C1'::mol);
+   mol_enumeratequery   
+------------------------
+ {                     +
+     "xqm_type": "2",  +
+     "mols": [         +
+         "COc1cc[nH]n1"+
+     ]                 +
+ }                     +
+ 
+(1 row)
+
+select 'CCOC1=NNC=C1'::mol@>mol_enumeratequery('COC1=NNC=C1'::mol);
+ ?column? 
+----------
+ t
+(1 row)
+
+select mol_to_tautomerquery('CCCC'::mol);
+         mol_to_tautomerquery          
+---------------------------------------
+ {                                    +
+     "xqm_type": "3",                 +
+     "tautomers": [                   +
+         "CCCC"                       +
+     ],                               +
+     "modifiedAtoms": "",             +
+     "modifiedBonds": "",             +
+     "template": "[#6]-[#6]-[#6]-[#6]"+
+ }                                    +
+ 
+(1 row)
+
+select 'CCCCOC'::mol@>mol_to_tautomerquery('CCCC'::mol);
+ ?column? 
+----------
+ t
+(1 row)
+
