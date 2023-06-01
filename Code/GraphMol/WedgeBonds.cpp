@@ -201,7 +201,7 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   if (neighborBondAngles.size() == 3) {
     // three coordinated
     auto angleIt = neighborBondAngles.begin();
-    ++angleIt;  // the first is the 0 (or reference bond - we will ignoire
+    ++angleIt;  // the first is the 0 (or reference bond - we will ignore
                 // that
     double angle1 = (*angleIt);
     ++angleIt;
@@ -471,6 +471,9 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
     }
   }
   if (params->wedgeTwoBondsIfPossible) {
+    // This should probably check whether the existing wedge
+    // is in agreement with the chiral tag on the atom.
+
     for (const auto atom : mol.atoms()) {
       if (atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
           atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {

@@ -3475,12 +3475,15 @@ M  END
 
         auto bond = cp.getBondBetweenAtoms(1, wedgedAtomIdx);
         if (bond->getEndAtomIdx() == 1) {
-          // One of the bonds is reversed, make sure the chiral atom is always
-          // at the start so that the wedge is valid!
+          // One of the bonds in the input is reversed, make sure the chiral
+          // atom is always at the start so that the wedge is valid!
           auto tmp = bond->getBeginAtomIdx();
           bond->setBeginAtomIdx(bond->getEndAtomIdx());
           bond->setEndAtomIdx(tmp);
         }
+
+        // This probably disagrees with the chirality in some of the test cases,
+        // but that's not relevant for this test
         bond->setBondDir(Bond::BondDir::BEGINWEDGE);
 
         Chirality::wedgeMolBonds(cp, nullptr, &ps);
