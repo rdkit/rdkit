@@ -44,22 +44,28 @@ else:
 
 # Github Issue #6208: boost::python iterators are slower than they should
 # (cause is that boost::python throws exceptions as actual C++ exceptions)
-class _GetAtomsIterator:
+class _GetRDKitObjIterator:
+
+  def _sizeCalc(self):
+    raise NotImplementedError()
+
+  def _getRDKitItem(self, i):
+    raise NotImplementedError()
 
   def __init__(self, mol):
     self._mol = mol
     self._pos = 0
-    self._size = mol.GetNumAtoms()
+    self._size = self._sizeCalc()
 
   def __len__(self):
-    if self._mol.GetNumAtoms() != self._size:
+    if self._sizeCalc() != self._size:
       raise RuntimeError('size changed during iteration')
     return self._size
 
   def __getitem__(self, i):
     if i < 0 or i >= len(self):
       raise IndexError('index out of range')
-    return self._mol.GetAtomWithIdx(i)
+    return self._getRDKitItem(i)
 
   def __next__(self):
     if self._pos >= len(self):
@@ -76,36 +82,22 @@ class _GetAtomsIterator:
     self._pos = self._size
 
 
-class _GetBondsIterator:
+class _GetAtomsIterator(_GetRDKitObjIterator):
 
-  def __init__(self, mol):
-    self._mol = mol
-    self._pos = 0
-    self._size = mol.GetNumBonds()
+  def _sizeCalc(self):
+    return self._mol.GetNumAtoms()
 
-  def __len__(self):
-    if self._mol.GetNumBonds() != self._size:
-      raise RuntimeError('size changed during iteration')
-    return self._size
+  def _getRDKitItem(self, i):
+    return self._mol.GetAtomWithIdx(i)
 
-  def __getitem__(self, i):
-    if i < 0 or i >= len(self):
-      raise IndexError('index out of range')
+
+class _GetBondsIterator(_GetRDKitObjIterator):
+
+  def _sizeCalc(self):
+    return self._mol.GetNumBonds()
+
+  def _getRDKitItem(self, i):
     return self._mol.GetBondWithIdx(i)
-
-  def __next__(self):
-    if self._pos >= len(self):
-      raise StopIteration
-
-    ret = self[self._pos]
-    self._pos += 1
-    return ret
-
-  def __iter__(self):
-    start = self._pos
-    for i in range(start, len(self)):
-      self._pos = i
-      yield self[i]
 
 
 rdchem.Mol.GetAtoms = lambda m: _GetAtomsIterator(m)
