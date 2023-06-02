@@ -135,3 +135,16 @@ TEST_CASE("createExtendedQueryMol") {
     CHECK(SubstructMatch(*"COOCc1[nH]nc(F)c1"_smiles, xqm).size() == 1);
   }
 }
+
+TEST_CASE("test SRUs") {
+  SECTION("basics") {
+    auto mol = "FCN(CC)-* |Sg:n:2,5:1-2:ht|"_smiles;
+    REQUIRE(mol);
+    auto xqm = createExtendedQueryMol(*mol);
+    CHECK(std::holds_alternative<ExtendedQueryMol::MolBundle_T>(xqm.xqmol));
+    // as of v2023.03.1 the SRU enumerator ignores repeat counts, so
+    // we won't test limits here.
+    CHECK(SubstructMatch(*"FCN(C)CC"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"FCN(O)N(C)CC"_smiles, xqm).size() == 1);
+  }
+}
