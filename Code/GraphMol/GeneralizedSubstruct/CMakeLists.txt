@@ -1,7 +1,7 @@
 
 rdkit_library(GeneralizedSubstruct 
               XQMol.cpp
-              LINK_LIBRARIES TautomerQuery SubstructMatch SmilesParse GraphMol) 
+              LINK_LIBRARIES MolEnumerator TautomerQuery SubstructMatch SmilesParse GraphMol) 
 target_compile_definitions(GeneralizedSubstruct PRIVATE RDKIT_GENERALIZEDSUBSTRUCT_BUILD)
 
 rdkit_headers(XQMol.h DEST GraphMol/GeneralizedSubstruct)
