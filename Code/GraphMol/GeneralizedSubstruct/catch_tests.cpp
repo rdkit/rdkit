@@ -28,9 +28,14 @@ TEST_CASE("molecule basics") {
   auto mol = "Cc1n[nH]c(F)c1"_smarts;
   REQUIRE(mol);
   ExtendedQueryMol xqm = std::make_unique<RWMol>(*mol);
-  SECTION("substructure matching") {
-    CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, xqm).empty());
+  SECTION("substructure matching and serialization") {
+    ExtendedQueryMol xqm2(xqm.toBinary());
+    for (const auto xq : {&xqm, &xqm2}) {
+      CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq).empty());
+      CHECK(hasSubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq));
+      CHECK(!hasSubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq));
+    }
   }
 }
 
@@ -39,10 +44,13 @@ TEST_CASE("tautomer basics") {
   REQUIRE(mol);
   ExtendedQueryMol xqm =
       std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
-  SECTION("substructure matching") {
-    CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, xqm).empty());
+  SECTION("substructure matching and serialization") {
+    ExtendedQueryMol xqm2(xqm.toBinary());
+    for (const auto xq : {&xqm, &xqm2}) {
+      CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, *xq).empty());
+    }
   }
 }
 
@@ -59,12 +67,15 @@ TEST_CASE("tautomer bundle basics") {
   ExtendedQueryMol xqm =
       std::make_unique<std::vector<std::unique_ptr<TautomerQuery>>>(
           std::move(tbndl));
-  SECTION("substructure matching") {
-    CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"CCc1[nH]ncc1F"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"CCc1n[nH]cc1F"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, xqm).empty());
+  SECTION("substructure matching and serialization") {
+    ExtendedQueryMol xqm2(xqm.toBinary());
+    for (const auto xq : {&xqm, &xqm2}) {
+      CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"CCc1[nH]ncc1F"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"CCc1n[nH]cc1F"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, *xq).empty());
+    }
   }
 }
 
@@ -73,10 +84,13 @@ TEST_CASE("enumeration basics") {
   REQUIRE(mol);
   ExtendedQueryMol xqm =
       std::make_unique<MolBundle>(MolEnumerator::enumerate(*mol));
-  SECTION("substructure matching") {
-    CHECK(SubstructMatch(*"COCC"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"COOCC"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"COOOCC"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"COOOOCC"_smiles, xqm).empty());
+  SECTION("substructure matching and serialization") {
+    ExtendedQueryMol xqm2(xqm.toBinary());
+    for (const auto xq : {&xqm, &xqm2}) {
+      CHECK(SubstructMatch(*"COCC"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"COOCC"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"COOOCC"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"COOOOCC"_smiles, *xq).empty());
+    }
   }
 }
