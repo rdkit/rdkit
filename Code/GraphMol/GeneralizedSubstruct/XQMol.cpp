@@ -21,6 +21,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
+#include <GraphMol/MolEnumerator/MolEnumerator.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
@@ -278,4 +279,51 @@ std::vector<MatchVectType> SubstructMatch(
   }
   return res;
 }
+
+ExtendedQueryMol createExtendedQueryMol(const RWMol &mol) {
+  auto bndl = MolEnumerator::enumerate(mol);
+  if (bndl.empty()) {
+    // nothing enumerated
+    auto tq = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(mol));
+    if (tq->getTautomers().size() == 1) {
+      // no tautomers, return just the mol
+      return {std::make_unique<RWMol>(mol)};
+    } else {
+      // return the tautomers
+      return {std::move(tq)};
+    }
+    bndl.addMol(boost::shared_ptr<ROMol>(new ROMol(mol)));
+  }
+
+  if (bndl.size() == 1) {
+    auto tq =
+        std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*bndl.getMol(0)));
+    if (tq->getTautomers().size() == 1) {
+      // no tautomers, just one molecule, return the molecule:
+      return {std::make_unique<RWMol>(*bndl.getMol(0))};
+    } else {
+      // return the tautomers
+      return {std::move(tq)};
+    }
+  } else {
+    bool hadTautomers = false;
+    auto tautomerBundle =
+        std::make_unique<std::vector<std::unique_ptr<TautomerQuery>>>(0);
+    for (const auto &bmol : bndl.getMols()) {
+      auto tq = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*bmol));
+      if (tq->getTautomers().size() > 1) {
+        hadTautomers = true;
+      }
+      tautomerBundle->emplace_back(std::move(tq));
+    }
+    if (!hadTautomers) {
+      // no tautomers, just return the bundle
+      return {std::make_unique<MolBundle>(bndl)};
+    } else {
+      // return the tautomer bundle
+      return {std::move(tautomerBundle)};
+    }
+  }
+}
+
 }  // namespace RDKit

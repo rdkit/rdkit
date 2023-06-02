@@ -94,3 +94,44 @@ TEST_CASE("enumeration basics") {
     }
   }
 }
+
+TEST_CASE("createExtendedQueryMol") {
+  SECTION("RWMol") {
+    auto mol = "COCC"_smiles;
+    REQUIRE(mol);
+    auto xqm = createExtendedQueryMol(*mol);
+    CHECK(std::holds_alternative<ExtendedQueryMol::RWMol_T>(xqm.xqmol));
+    CHECK(SubstructMatch(*"COCC"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"COOCC"_smiles, xqm).empty());
+  }
+  SECTION("MolBundle") {
+    auto mol = "COCC |LN:1:1.3|"_smiles;
+    REQUIRE(mol);
+    auto xqm = createExtendedQueryMol(*mol);
+    CHECK(std::holds_alternative<ExtendedQueryMol::MolBundle_T>(xqm.xqmol));
+    CHECK(SubstructMatch(*"COCC"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"COOCC"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"COOOCC"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"COOOOCC"_smiles, xqm).empty());
+  }
+  SECTION("TautomerQuery") {
+    auto mol1 = "Cc1n[nH]c(F)c1"_smiles;
+    REQUIRE(mol1);
+    auto xqm = createExtendedQueryMol(*mol1);
+    CHECK(std::holds_alternative<ExtendedQueryMol::TautomerQuery_T>(xqm.xqmol));
+    CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, xqm).empty());
+  }
+  SECTION("TautomerBundle") {
+    auto mol1 = "COCc1n[nH]c(F)c1 |LN:1:1.3|"_smiles;
+    REQUIRE(mol1);
+    auto xqm = createExtendedQueryMol(*mol1);
+    CHECK(
+        std::holds_alternative<ExtendedQueryMol::TautomerBundle_T>(xqm.xqmol));
+    CHECK(SubstructMatch(*"COCc1n[nH]c(F)c1"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"COOCc1n[nH]c(F)c1"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"COCc1[nH]nc(F)c1"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"COOCc1[nH]nc(F)c1"_smiles, xqm).size() == 1);
+  }
+}
