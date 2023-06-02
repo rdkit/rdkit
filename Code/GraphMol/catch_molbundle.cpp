@@ -25,6 +25,7 @@ TEST_CASE("MolBundle serialization") {
     MolBundle bundle;
     bundle.addMol(ROMOL_SPTR(SmilesToMol("CCC")));
     bundle.addMol(ROMOL_SPTR(SmilesToMol("CCN")));
+    CHECK(!bundle.empty());
     auto pkl = bundle.serialize();
     MolBundle nbundle(pkl);
     REQUIRE(bundle.size() == nbundle.size());
@@ -34,6 +35,7 @@ TEST_CASE("MolBundle serialization") {
   }
   SECTION("empty") {
     MolBundle bundle;
+    CHECK(bundle.empty());
     auto pkl = bundle.serialize();
     MolBundle nbundle(pkl);
     REQUIRE(bundle.size() == nbundle.size());

@@ -78,6 +78,9 @@ class MolBundle : public RDProps {
   }
   //! returns the number of molecules from the bundle
   virtual size_t size() const { return d_mols.size(); }
+  //! returns whether or not the bundle is empty
+  virtual bool empty() const { return d_mols.empty(); }
+
   //! returns a particular molecule in the bundle
   virtual const boost::shared_ptr<ROMol> getMol(size_t idx) const {
     if (idx >= d_mols.size()) {
