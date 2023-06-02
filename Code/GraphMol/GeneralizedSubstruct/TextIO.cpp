@@ -241,19 +241,16 @@ RWMol *pt_to_mol(bpt::ptree &pt) {
   }
 }
 
-ExtendedQueryMol::RWMol_T from_pt_rwm(bpt::ptree &pt) {
+template <typename T>
+T from_pt(bpt::ptree &) {}
+
+template <>
+ExtendedQueryMol::RWMol_T from_pt(bpt::ptree &pt) {
   return ExtendedQueryMol::RWMol_T(pt_to_mol(pt.get_child("mol")));
 }
 
-ExtendedQueryMol::MolBundle_T from_pt_mb(bpt::ptree &pt) {
-  auto res = ExtendedQueryMol::MolBundle_T(new MolBundle);
-  for (auto &child : pt.get_child("mols")) {
-    res->addMol(ROMOL_SPTR(pt_to_mol(child.second)));
-  }
-  return res;
-}
-
-ExtendedQueryMol::TautomerQuery_T from_pt_tq(bpt::ptree &pt) {
+template <>
+ExtendedQueryMol::TautomerQuery_T from_pt(bpt::ptree &pt) {
   std::vector<ROMOL_SPTR> tautomers;
   for (auto &child : pt.get_child("tautomers")) {
     tautomers.push_back(ROMOL_SPTR(pt_to_mol(child.second)));
@@ -277,11 +274,21 @@ ExtendedQueryMol::TautomerQuery_T from_pt_tq(bpt::ptree &pt) {
   return res;
 }
 
-ExtendedQueryMol::TautomerBundle_T from_pt_tb(bpt::ptree &pt) {
+template <>
+ExtendedQueryMol::MolBundle_T from_pt(bpt::ptree &pt) {
+  auto res = ExtendedQueryMol::MolBundle_T(new MolBundle);
+  for (auto &child : pt.get_child("mols")) {
+    res->addMol(ROMOL_SPTR(pt_to_mol(child.second)));
+  }
+  return res;
+}
+
+template <>
+ExtendedQueryMol::TautomerBundle_T from_pt(bpt::ptree &pt) {
   ExtendedQueryMol::TautomerBundle_T res{
       new std::vector<std::unique_ptr<TautomerQuery>>()};
   for (auto &child : pt.get_child("tautomerQueries")) {
-    res->emplace_back(from_pt_tq(child.second));
+    res->emplace_back(from_pt<ExtendedQueryMol::TautomerQuery_T>(child.second));
   }
   return res;
 }
@@ -290,23 +297,22 @@ ExtendedQueryMol::TautomerBundle_T from_pt_tb(bpt::ptree &pt) {
 void ExtendedQueryMol::initFromJSON(const std::string &json) {
   std::istringstream ss;
   ss.str(json);
-  //   std::cerr << "JSON: \n" << json << std::endl;
   try {
     bpt::ptree pt;
     bpt::read_json(ss, pt);
     auto xqmType = pt.get<unsigned char>("xqm_type");
     switch (xqmType) {
       case ExtendedQueryMol::ExtendedQueryMolTypes::XQM_MOL:
-        xqmol = from_pt_rwm(pt);
+        xqmol = from_pt<ExtendedQueryMol::RWMol_T>(pt);
         break;
       case ExtendedQueryMol::ExtendedQueryMolTypes::XQM_MOLBUNDLE:
-        xqmol = from_pt_mb(pt);
+        xqmol = from_pt<ExtendedQueryMol::MolBundle_T>(pt);
         break;
       case ExtendedQueryMol::ExtendedQueryMolTypes::XQM_TAUTOMERQUERY:
-        xqmol = from_pt_tq(pt);
+        xqmol = from_pt<ExtendedQueryMol::TautomerQuery_T>(pt);
         break;
       case ExtendedQueryMol::ExtendedQueryMolTypes::XQM_TAUTOMERBUNDLE:
-        xqmol = from_pt_tb(pt);
+        xqmol = from_pt<ExtendedQueryMol::TautomerBundle_T>(pt);
         break;
       default:
         UNDER_CONSTRUCTION("unrecognized type in JSON");
