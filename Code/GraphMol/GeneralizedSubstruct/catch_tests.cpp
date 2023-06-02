@@ -24,6 +24,16 @@
 
 using namespace RDKit;
 
+TEST_CASE("molecule basics") {
+  auto mol = "Cc1n[nH]c(F)c1"_smarts;
+  REQUIRE(mol);
+  ExtendedQueryMol xqm = std::make_unique<RWMol>(*mol);
+  SECTION("substructure matching") {
+    CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, xqm).empty());
+  }
+}
+
 TEST_CASE("tautomer basics") {
   auto mol = "Cc1n[nH]c(F)c1"_smiles;
   REQUIRE(mol);
@@ -32,6 +42,28 @@ TEST_CASE("tautomer basics") {
   SECTION("substructure matching") {
     CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, xqm).size() == 1);
     CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, xqm).empty());
+  }
+}
+
+TEST_CASE("tautomer bundle basics") {
+  auto mol1 = "Cc1n[nH]c(F)c1"_smiles;
+  REQUIRE(mol1);
+  auto mol2 = "Cc1n[nH]cc1F"_smiles;
+  REQUIRE(mol2);
+  std::vector<std::unique_ptr<TautomerQuery>> tbndl;
+  tbndl.emplace_back(
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol1)));
+  tbndl.emplace_back(
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol2)));
+  ExtendedQueryMol xqm =
+      std::make_unique<std::vector<std::unique_ptr<TautomerQuery>>>(
+          std::move(tbndl));
+  SECTION("substructure matching") {
+    CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"CCc1[nH]ncc1F"_smiles, xqm).size() == 1);
+    CHECK(SubstructMatch(*"CCc1n[nH]cc1F"_smiles, xqm).size() == 1);
     CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, xqm).empty());
   }
 }
