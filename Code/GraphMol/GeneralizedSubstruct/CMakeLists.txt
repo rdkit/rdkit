@@ -1,6 +1,6 @@
 
 rdkit_library(GeneralizedSubstruct 
-              XQMol.cpp
+              XQMol.cpp TextIO.cpp
               LINK_LIBRARIES MolEnumerator TautomerQuery SubstructMatch SmilesParse GraphMol) 
 target_compile_definitions(GeneralizedSubstruct PRIVATE RDKIT_GENERALIZEDSUBSTRUCT_BUILD)
 
