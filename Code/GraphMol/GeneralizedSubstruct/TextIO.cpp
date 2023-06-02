@@ -21,12 +21,15 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
+#include <DataStructs/base64.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include "XQMol.h"
+
+namespace bpt = boost::property_tree;
 
 namespace RDKit {
 
@@ -85,10 +88,6 @@ ExtendedQueryMol::TautomerBundle_T readTautomerQueries(std::stringstream &ss) {
 }
 }  // namespace
 
-void ExtendedQueryMol::initFromJSON(const std::string &) {
-  UNDER_CONSTRUCTION("not yet implemented");
-}
-
 void ExtendedQueryMol::initFromBinary(const std::string &pickle) {
   std::stringstream ss(std::ios_base::binary | std::ios_base::in |
                        std::ios_base::out);
@@ -146,76 +145,183 @@ bool has_query_feature(const ROMol &mol) {
   return false;
 }
 
-void to_pt(boost::property_tree::ptree &pt, const MolBundle &bndl) {
+void add_mol_to_elem(bpt::ptree &elem, const ROMol &mol) {
+  std::string pkl;
+  MolPickler::pickleMol(mol, pkl);
+  std::unique_ptr<char> b64(Base64Encode(pkl.c_str(), pkl.length()));
+  elem.put("pkl", b64.get());
+  if (has_query_feature(mol)) {
+    elem.put("smarts", MolToCXSmarts(mol));
+  } else {
+    elem.put("smiles", MolToCXSmiles(mol));
+  }
+}
+
+void to_pt(bpt::ptree &pt, const ROMol &mol) {
+  bpt::ptree elem;
+  add_mol_to_elem(elem, mol);
+  pt.add_child("mol", elem);
+}
+
+void to_pt(bpt::ptree &pt, const MolBundle &bndl) {
   {
-    boost::property_tree::ptree children;
+    bpt::ptree children;
     for (const auto &mol : bndl.getMols()) {
-      boost::property_tree::ptree elem;
-      if (has_query_feature(*mol)) {
-        elem.put_value(MolToCXSmarts(*mol));
-      } else {
-        elem.put_value(MolToCXSmiles(*mol));
-      }
+      bpt::ptree elem;
+      RWMol mcp(*mol);
+      mcp.clearComputedProps();
+      add_mol_to_elem(elem, mcp);
       children.push_back({"", elem});
     }
     pt.add_child("mols", children);
   }
 }
-void to_pt(boost::property_tree::ptree &pt, const TautomerQuery &tq) {
+void to_pt(bpt::ptree &pt, const TautomerQuery &tq) {
   {
-    boost::property_tree::ptree children;
+    bpt::ptree children;
     for (const auto &taut : tq.getTautomers()) {
-      boost::property_tree::ptree elem;
-      if (has_query_feature(*taut)) {
-        elem.put_value(MolToCXSmarts(*taut));
-      } else {
-        elem.put_value(MolToCXSmiles(*taut));
-      }
-
+      bpt::ptree elem;
+      add_mol_to_elem(elem, *taut);
       children.push_back({"", elem});
     }
     pt.add_child("tautomers", children);
   }
   {
-    boost::property_tree::ptree children;
+    bpt::ptree elem;
+    add_mol_to_elem(elem, tq.getTemplateMolecule());
+    pt.add_child("template", elem);
+  }
+  {
+    bpt::ptree children;
     for (const auto idx : tq.getModifiedAtoms()) {
-      boost::property_tree::ptree elem;
+      bpt::ptree elem;
       elem.put_value(idx);
       children.push_back({"", elem});
     }
     pt.add_child("modifiedAtoms", children);
   }
   {
-    boost::property_tree::ptree children;
+    bpt::ptree children;
     for (const auto idx : tq.getModifiedBonds()) {
-      boost::property_tree::ptree elem;
+      bpt::ptree elem;
       elem.put_value(idx);
       children.push_back({"", elem});
     }
     pt.add_child("modifiedBonds", children);
   }
-  pt.put("template", MolToCXSmarts(tq.getTemplateMolecule()));
 }
 
-void to_pt(boost::property_tree::ptree &pt,
+void to_pt(bpt::ptree &pt,
            const ExtendedQueryMol::TautomerBundle_T &tautQueries) {
   {
-    boost::property_tree::ptree children;
+    bpt::ptree children;
     for (const auto &tq : *tautQueries) {
-      boost::property_tree::ptree elem;
+      bpt::ptree elem;
       to_pt(elem, *tq);
       children.push_back({"", elem});
     }
     pt.add_child("tautomerQueries", children);
   }
 }
+
+RWMol *pt_to_mol(bpt::ptree &pt) {
+  auto b64pkl = pt.get<std::string>("pkl", "");
+  if (!b64pkl.empty()) {
+    unsigned int len;
+    std::unique_ptr<char> cpkl(Base64Decode(b64pkl.c_str(), &len));
+    std::string pkl(cpkl.get(), len);
+    return new RWMol(pkl);
+  }
+  auto smi = pt.get<std::string>("smiles", "");
+  if (!smi.empty()) {
+    return SmilesToMol(smi);
+  } else {
+    auto sma = pt.get<std::string>("smarts");
+    return SmartsToMol(sma);
+  }
+}
+
+ExtendedQueryMol::RWMol_T from_pt_rwm(bpt::ptree &pt) {
+  return ExtendedQueryMol::RWMol_T(pt_to_mol(pt.get_child("mol")));
+}
+
+ExtendedQueryMol::MolBundle_T from_pt_mb(bpt::ptree &pt) {
+  auto res = ExtendedQueryMol::MolBundle_T(new MolBundle);
+  for (auto &child : pt.get_child("mols")) {
+    res->addMol(ROMOL_SPTR(pt_to_mol(child.second)));
+  }
+  return res;
+}
+
+ExtendedQueryMol::TautomerQuery_T from_pt_tq(bpt::ptree &pt) {
+  std::vector<ROMOL_SPTR> tautomers;
+  for (auto &child : pt.get_child("tautomers")) {
+    tautomers.push_back(ROMOL_SPTR(pt_to_mol(child.second)));
+  }
+
+  ROMol *templ = pt_to_mol(pt.get_child("template"));
+  templ->updatePropertyCache(false);
+
+  std::vector<size_t> modifiedAtoms;
+  for (auto &child : pt.get_child("modifiedAtoms")) {
+    modifiedAtoms.push_back(child.second.get<size_t>(""));
+  }
+
+  std::vector<size_t> modifiedBonds;
+  for (auto &child : pt.get_child("modifiedBonds")) {
+    modifiedBonds.push_back(child.second.get<size_t>(""));
+  }
+
+  auto res = ExtendedQueryMol::TautomerQuery_T(
+      new TautomerQuery(tautomers, templ, modifiedAtoms, modifiedBonds));
+  return res;
+}
+
+ExtendedQueryMol::TautomerBundle_T from_pt_tb(bpt::ptree &pt) {
+  ExtendedQueryMol::TautomerBundle_T res{
+      new std::vector<std::unique_ptr<TautomerQuery>>()};
+  for (auto &child : pt.get_child("tautomerQueries")) {
+    res->emplace_back(from_pt_tq(child.second));
+  }
+  return res;
+}
 }  // namespace
 
+void ExtendedQueryMol::initFromJSON(const std::string &json) {
+  std::istringstream ss;
+  ss.str(json);
+  //   std::cerr << "JSON: \n" << json << std::endl;
+  try {
+    bpt::ptree pt;
+    bpt::read_json(ss, pt);
+    auto xqmType = pt.get<unsigned char>("xqm_type");
+    switch (xqmType) {
+      case ExtendedQueryMol::ExtendedQueryMolTypes::XQM_MOL:
+        xqmol = from_pt_rwm(pt);
+        break;
+      case ExtendedQueryMol::ExtendedQueryMolTypes::XQM_MOLBUNDLE:
+        xqmol = from_pt_mb(pt);
+        break;
+      case ExtendedQueryMol::ExtendedQueryMolTypes::XQM_TAUTOMERQUERY:
+        xqmol = from_pt_tq(pt);
+        break;
+      case ExtendedQueryMol::ExtendedQueryMolTypes::XQM_TAUTOMERBUNDLE:
+        xqmol = from_pt_tb(pt);
+        break;
+      default:
+        UNDER_CONSTRUCTION("unrecognized type in JSON");
+    }
+  } catch (const bpt::ptree_error &) {
+    throw ValueErrorException("problems parsing JSON");
+  }
+}
+
 std::string ExtendedQueryMol::toJSON() const {
-  boost::property_tree::ptree pt;
+  bpt::ptree pt;
 
   if (std::holds_alternative<RWMol_T>(xqmol)) {
     pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_MOL);
+    to_pt(pt, *std::get<RWMol_T>(xqmol));
 #ifdef RDK_USE_BOOST_SERIALIZATION
   } else if (std::holds_alternative<MolBundle_T>(xqmol)) {
     pt.put("xqm_type", (int)ExtendedQueryMolTypes::XQM_MOLBUNDLE);
@@ -234,7 +340,7 @@ std::string ExtendedQueryMol::toJSON() const {
   }
 
   std::stringstream ss;
-  boost::property_tree::json_parser::write_json(ss, pt);
+  bpt::json_parser::write_json(ss, pt);
   return ss.str();
 }
 

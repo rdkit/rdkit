@@ -18,6 +18,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/GeneralizedSubstruct/XQMol.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
 #include <GraphMol/MolEnumerator/MolEnumerator.h>
@@ -30,11 +31,30 @@ TEST_CASE("molecule basics") {
   ExtendedQueryMol xqm = std::make_unique<RWMol>(*mol);
   SECTION("substructure matching and serialization") {
     ExtendedQueryMol xqm2(xqm.toBinary());
-    for (const auto xq : {&xqm, &xqm2}) {
+    ExtendedQueryMol xqm3(xqm.toJSON(), true);
+    for (const auto xq : {&xqm, &xqm2, &xqm3}) {
       CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq).empty());
       CHECK(hasSubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq));
       CHECK(!hasSubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq));
+    }
+  }
+}
+
+TEST_CASE("enumeration basics") {
+  auto mol = "COCC |LN:1:1.3|"_smiles;
+  REQUIRE(mol);
+  ExtendedQueryMol xqm =
+      std::make_unique<MolBundle>(MolEnumerator::enumerate(*mol));
+  SECTION("substructure matching and serialization") {
+    ExtendedQueryMol xqm2(xqm.toBinary());
+    ExtendedQueryMol xqm3(xqm.toJSON(), true);
+
+    for (const auto xq : {&xqm, &xqm2, &xqm3}) {
+      CHECK(SubstructMatch(*"COCC"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"COOCC"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"COOOCC"_smiles, *xq).size() == 1);
+      CHECK(SubstructMatch(*"COOOOCC"_smiles, *xq).empty());
     }
   }
 }
@@ -44,9 +64,13 @@ TEST_CASE("tautomer basics") {
   REQUIRE(mol);
   ExtendedQueryMol xqm =
       std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  const TautomerQuery &otq =
+      *std::get<ExtendedQueryMol::TautomerQuery_T>(xqm.xqmol);
+
   SECTION("substructure matching and serialization") {
     ExtendedQueryMol xqm2(xqm.toBinary());
-    for (const auto xq : {&xqm, &xqm2}) {
+    ExtendedQueryMol xqm3(xqm.toJSON(), true);
+    for (const auto xq : {&xqm, &xqm2, &xqm3}) {
       CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, *xq).empty());
@@ -69,28 +93,13 @@ TEST_CASE("tautomer bundle basics") {
           std::move(tbndl));
   SECTION("substructure matching and serialization") {
     ExtendedQueryMol xqm2(xqm.toBinary());
-    for (const auto xq : {&xqm, &xqm2}) {
+    ExtendedQueryMol xqm3(xqm.toJSON(), true);
+    for (const auto xq : {&xqm, &xqm2, &xqm3}) {
       CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"CCc1[nH]ncc1F"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"CCc1n[nH]cc1F"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, *xq).empty());
-    }
-  }
-}
-
-TEST_CASE("enumeration basics") {
-  auto mol = "COCC |LN:1:1.3|"_smiles;
-  REQUIRE(mol);
-  ExtendedQueryMol xqm =
-      std::make_unique<MolBundle>(MolEnumerator::enumerate(*mol));
-  SECTION("substructure matching and serialization") {
-    ExtendedQueryMol xqm2(xqm.toBinary());
-    for (const auto xq : {&xqm, &xqm2}) {
-      CHECK(SubstructMatch(*"COCC"_smiles, *xq).size() == 1);
-      CHECK(SubstructMatch(*"COOCC"_smiles, *xq).size() == 1);
-      CHECK(SubstructMatch(*"COOOCC"_smiles, *xq).size() == 1);
-      CHECK(SubstructMatch(*"COOOOCC"_smiles, *xq).empty());
     }
   }
 }
