@@ -20,6 +20,7 @@
 #include "XQMol.h"
 
 namespace RDKit {
+namespace GeneralizedSubstruct {
 
 ExtendedQueryMol::ExtendedQueryMol(const std::string &text, bool isJSON) {
   if (!isJSON) {
@@ -107,5 +108,5 @@ ExtendedQueryMol createExtendedQueryMol(const RWMol &mol) {
     }
   }
 }
-
+}  // namespace GeneralizedSubstruct
 }  // namespace RDKit

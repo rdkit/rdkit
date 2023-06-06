@@ -32,7 +32,7 @@
 namespace bpt = boost::property_tree;
 
 namespace RDKit {
-
+namespace GeneralizedSubstruct {
 namespace detail {
 constexpr std::uint16_t recognition = 0xbe73;
 constexpr std::uint16_t version = 1000;
@@ -349,5 +349,5 @@ std::string ExtendedQueryMol::toJSON() const {
   bpt::json_parser::write_json(ss, pt);
   return ss.str();
 }
-
+}  // namespace GeneralizeSubstruct
 }  // namespace RDKit

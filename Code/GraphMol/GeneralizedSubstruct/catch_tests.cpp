@@ -24,6 +24,7 @@
 #include <GraphMol/MolEnumerator/MolEnumerator.h>
 
 using namespace RDKit;
+using namespace RDKit::GeneralizedSubstruct;
 
 TEST_CASE("molecule basics") {
   auto mol = "Cc1n[nH]c(F)c1"_smarts;

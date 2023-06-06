@@ -7,3 +7,7 @@ target_compile_definitions(GeneralizedSubstruct PRIVATE RDKIT_GENERALIZEDSUBSTRU
 rdkit_headers(XQMol.h DEST GraphMol/GeneralizedSubstruct)
 
 rdkit_catch_test(generalizedSubstructCatch catch_tests.cpp LINK_LIBRARIES FileParsers GeneralizedSubstruct)
+
+if (RDK_BUILD_PYTHON_WRAPPERS)
+    add_subdirectory(Wrap)
+endif ()
