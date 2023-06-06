@@ -66,6 +66,8 @@ void removeOrigIndices(ROMol &mol) {
 
 namespace {
 void clearReactionProps(ROMol &mol) {
+  bool includeRings = false;
+  mol.clearComputedProps(includeRings);
   for (auto atom : mol.atoms()) {
     atom->clearProp(common_properties::reactantAtomIdx);
     atom->clearProp("was_dummy");
