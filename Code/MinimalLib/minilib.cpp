@@ -397,7 +397,7 @@ std::string JSMol::get_stereo_tags() const {
   return buffer.GetString();
 }
 
-void JSMol::set_aromatic_form() {
+void JSMol::convert_to_aromatic_form() {
   assert(d_mol);
 
   d_mol->updatePropertyCache();
@@ -419,7 +419,7 @@ std::string JSMol::get_aromatic_form() const {
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
 }
 
-void JSMol::set_kekule_form() {
+void JSMol::convert_to_kekule_form() {
   assert(d_mol);
 
   MolOps::Kekulize(*d_mol);

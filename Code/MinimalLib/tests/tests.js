@@ -331,11 +331,11 @@ M  END
     molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
     assert (molblock.match(aromRegExp) === null);
     assert (molblock.match(kekRegExp).length === 6);
-    mol.set_aromatic_form();
+    mol.convert_to_aromatic_form();
     molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
     assert (molblock.match(aromRegExp).length === 6);
     assert (molblock.match(kekRegExp) === null);
-    mol.set_kekule_form();
+    mol.convert_to_kekule_form();
     molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
     assert (molblock.match(aromRegExp) === null);
     assert (molblock.match(kekRegExp).length === 6);
