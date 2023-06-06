@@ -367,7 +367,7 @@ function test_substruct_library(done) {
                     var fp = sslib.get_pattern_fp_as_uint8array(i);
                     patternFpArray.push(fp);
                 } catch (e) {
-                    // this is expected to fails when numBits === 0
+                    // this is expected to fail when numBits === 0
                     excRaised = true;
                 }
                 assert((excRaised && numBits === 0) || (!excRaised && numBits !== 0));

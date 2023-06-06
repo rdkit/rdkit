@@ -46,6 +46,8 @@ namespace rj = rapidjson;
 using namespace RDKit;
 
 namespace {
+static const char *NO_SUPPORT_FOR_PATTERN_FPS = "This SubstructLibrary was built without support for pattern fps";
+
 std::string mappingToJsonArray(const ROMol &mol) {
   std::vector<unsigned int> atomMapping;
   std::vector<unsigned int> bondMapping;
@@ -682,7 +684,9 @@ int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
 
 int JSSubstructLibrary::add_trusted_smiles_and_pattern_fp(
     const std::string &smi, const std::string &patternFp) {
-  PRECONDITION(d_fpHolder, "d_fpHolder != nullptr");
+  if (!d_fpHolder) {
+    throw ValueErrorException(NO_SUPPORT_FOR_PATTERN_FPS);
+  }
   auto bitVect = new ExplicitBitVect(patternFp);
   if (!bitVect) {
     return -1;
@@ -698,7 +702,9 @@ std::string JSSubstructLibrary::get_trusted_smiles(unsigned int i) const {
 }
 
 std::string JSSubstructLibrary::get_pattern_fp(unsigned int i) const {
-  PRECONDITION(d_fpHolder, "d_fpHolder != nullptr");
+  if (!d_fpHolder) {
+    throw ValueErrorException(NO_SUPPORT_FOR_PATTERN_FPS);
+  }
   return d_fpHolder->getFingerprints().at(i)->toString();
 }
 
