@@ -24,7 +24,12 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#endif
+#ifdef RDK_BUILD_MINIMAL_LIB_MCS
+#include <GraphMol/FMCS/FMCS.h>
+#endif
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/MolInterchange/MolInterchange.h>
@@ -627,6 +632,17 @@ std::pair<JSMolIterator *, std::string> JSMol::get_frags(
       MinimalLib::get_mol_frags_mappings(frags, fragsMolAtomMapping));
 }
 
+unsigned int JSMol::get_num_atoms(bool heavyOnly) const {
+  assert(d_mol);
+  return heavyOnly ? d_mol->getNumHeavyAtoms() : d_mol->getNumAtoms();
+}
+
+unsigned int JSMol::get_num_bonds() const {
+  assert(d_mol);
+  return d_mol->getNumBonds();
+}
+
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 std::string JSReaction::get_svg(int w, int h) const {
   if (!d_rxn) {
     return "";
@@ -643,7 +659,46 @@ std::string JSReaction::get_svg_with_highlights(
   int h = d_defaultHeight;
   return MinimalLib::rxn_to_svg(*d_rxn, w, h, details);
 }
+#endif
 
+JSMol *JSMolIterator::next() {
+  return (d_idx < d_mols.size()
+              ? new JSMol(new RDKit::RWMol(*d_mols.at(d_idx++)))
+              : nullptr);
+}
+
+JSMol *JSMolIterator::at(size_t idx) const {
+  return (idx < d_mols.size() ? new JSMol(new RDKit::RWMol(*d_mols.at(idx)))
+                              : nullptr);
+}
+
+JSMol *JSMolIterator::pop(size_t idx) {
+  JSMol *res = nullptr;
+  if (idx < d_mols.size()) {
+    res = new JSMol(new RDKit::RWMol(*d_mols.at(idx)));
+    d_mols.erase(d_mols.begin() + idx);
+    if (d_idx > idx) {
+      --d_idx;
+    }
+  }
+  return res;
+}
+
+size_t JSMolIterator::append(const JSMol &mol) {
+  d_mols.emplace_back(new ROMol(*mol.d_mol));
+  return d_mols.size();
+}
+
+size_t JSMolIterator::insert(size_t idx, const JSMol &mol) {
+  size_t res = 0;
+  if (idx < d_mols.size()) {
+    d_mols.emplace(d_mols.begin() + idx, new ROMol(*mol.d_mol));
+    res = d_mols.size();
+  }
+  return res;
+}
+
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
     : d_sslib(new SubstructLibrary(
           boost::shared_ptr<CachedTrustedSmilesMolHolder>(
@@ -738,6 +793,7 @@ unsigned int JSSubstructLibrary::count_matches(const JSMol &q,
                                                  false, numThreads)
                          : 0;
 }
+#endif
 
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
@@ -772,10 +828,12 @@ JSMol *get_qmol(const std::string &input) {
   return new JSMol(mol);
 }
 
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 JSReaction *get_rxn(const std::string &input, const std::string &details_json) {
   auto rxn = MinimalLib::rxn_from_input(input, details_json);
   return new JSReaction(rxn);
 }
+#endif
 
 std::string version() { return std::string(rdkitVersion); }
 
@@ -796,3 +854,28 @@ bool allow_non_tetrahedral_chirality(bool value) {
   Chirality::setAllowNontetrahedralChirality(value);
   return was;
 }
+
+#ifdef RDK_BUILD_MINIMAL_LIB_MCS
+namespace {
+MCSResult getMcsResult(const JSMolIterator &molIterator,
+               const std::string &details_json) {
+  MCSParameters p;
+  if (!details_json.empty()) {
+    parseMCSParametersJSON(details_json.c_str(), &p);
+  }
+  return RDKit::findMCS(molIterator.mols(), &p);
+}
+} // namespace
+
+std::string get_mcs_as_smarts(const JSMolIterator &molIterator,
+               const std::string &details_json) {
+  auto res = getMcsResult(molIterator, details_json);
+  return res.SmartsString;
+}
+
+JSMol *get_mcs_as_mol(const JSMolIterator &molIterator,
+               const std::string &details_json) {
+  auto res = getMcsResult(molIterator, details_json);
+  return new JSMol(new RWMol(*res.QueryMol));
+}
+#endif

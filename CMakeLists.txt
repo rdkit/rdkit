@@ -66,6 +66,9 @@ option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindin
 option(RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS "build the minimal RDKit JS wrapper such that it supports legacy browsers" OFF)
 option(RDK_BUILD_CFFI_LIB "build the CFFI wrapper (for use in other programming languges)" OFF)
 option(RDK_BUILD_FUZZ_TARGETS "build the fuzz targets" OFF)
+option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" ON )
+option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
+option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 
 set(RDK_BOOST_VERSION "1.58.0")
 

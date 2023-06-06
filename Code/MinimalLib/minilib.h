@@ -135,6 +135,9 @@ class JSMol {
   std::pair<JSMolIterator *, std::string> get_frags() {
     return get_frags("{}");
   }
+  unsigned int get_num_atoms(bool heavyOnly) const;
+  unsigned int get_num_atoms() const { return get_num_atoms(false); };
+  unsigned int get_num_bonds() const;
 
   std::unique_ptr<RDKit::RWMol> d_mol;
   static constexpr int d_defaultWidth = 250;
@@ -145,20 +148,23 @@ class JSMolIterator {
  public:
   JSMolIterator(const std::vector<RDKit::ROMOL_SPTR> &mols)
       : d_mols(mols), d_idx(0){};
-  JSMol *next() {
-    return (d_idx < d_mols.size()
-                ? new JSMol(new RDKit::RWMol(*d_mols.at(d_idx++)))
-                : nullptr);
-  }
+  JSMolIterator() : d_idx(0){};
+  JSMol *next();
+  size_t append(const JSMol &mol);
+  size_t insert(size_t idx, const JSMol &mol);
+  JSMol *at(size_t idx) const;
+  JSMol *pop(size_t idx);
   void reset() { d_idx = 0; }
-  bool at_end() { return d_idx == d_mols.size(); }
-  size_t size() { return d_mols.size(); }
+  bool at_end() const { return d_idx == d_mols.size(); }
+  size_t size() const { return d_mols.size(); }
+  const std::vector<RDKit::ROMOL_SPTR> &mols() const { return d_mols; }
 
  private:
   std::vector<RDKit::ROMOL_SPTR> d_mols;
   size_t d_idx;
 };
 
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 class JSReaction {
  public:
   JSReaction() : d_rxn(nullptr) {}
@@ -175,7 +181,9 @@ class JSReaction {
   static constexpr int d_defaultWidth = 800;
   static constexpr int d_defaultHeight = 200;
 };
+#endif
 
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 class JSSubstructLibrary {
  public:
   JSSubstructLibrary(unsigned int num_bits);
@@ -220,14 +228,21 @@ class JSSubstructLibrary {
  private:
   inline int add_mol_helper(const RDKit::ROMol &mol);
 };
+#endif
 
 std::string get_inchikey_for_inchi(const std::string &input);
 JSMol *get_mol(const std::string &input, const std::string &details_json);
 JSMol *get_mol_from_pickle(const std::string &pkl);
 JSMol *get_mol_copy(const JSMol &other);
 JSMol *get_qmol(const std::string &input);
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 JSReaction *get_rxn(const std::string &input, const std::string &details_json);
+#endif
 std::string version();
 void prefer_coordgen(bool prefer);
 bool use_legacy_stereo_perception(bool value);
 bool allow_non_tetrahedral_chirality(bool value);
+#ifdef RDK_BUILD_MINIMAL_LIB_MCS
+std::string get_mcs_as_smarts(const JSMolIterator &mols, const std::string &details_json);
+JSMol *get_mcs_as_mol(const JSMolIterator &mols, const std::string &details_json);
+#endif
