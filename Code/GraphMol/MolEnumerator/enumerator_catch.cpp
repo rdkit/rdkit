@@ -1634,3 +1634,20 @@ TEST_CASE(
     CHECK(MolToSmarts(*bundle[1]) == "O-[C&X4]-[C&X4]-[C&H3]");
   }
 }
+
+TEST_CASE(
+    "Github #6432: MolEnumerate should clear the reaction properties on its results") {
+  SECTION("basics") {
+    auto m = "COC |LN:1:1.3|"_smarts;
+    REQUIRE(m);
+    auto bundle = MolEnumerator::enumerate(*m);
+    CHECK(bundle.size() == 3);
+    auto q0 = bundle[0];
+    REQUIRE(q0);
+    for (const auto atom : q0->atoms()) {
+      CHECK(!atom->hasProp(common_properties::reactantAtomIdx));
+      CHECK(!atom->hasProp(common_properties::reactionMapNum));
+      CHECK(!atom->hasProp("was_dummy"));
+    }
+  }
+}
