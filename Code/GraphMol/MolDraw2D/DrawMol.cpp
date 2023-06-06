@@ -150,10 +150,12 @@ void DrawMol::createDrawObjects() {
 
 // ****************************************************************************
 void DrawMol::finishCreateDrawObjects() {
-  // the legend needs the final scale to get the fonts the correct size.
+  // the legend and mol notes need the final scale to get the fonts the
+  // correct size.
   extractLegend();
   changeToDrawCoords();
   // these need the draw coords.
+  extractMolNotes();
   extractCloseContacts();
   drawingInitialised_ = true;
 }
@@ -208,7 +210,6 @@ void DrawMol::extractAll(double scale) {
   extractRegions();
   extractHighlights(scale);
   extractAttachments();
-  extractMolNotes();
   extractAtomNotes();
   extractBondNotes();
   extractRadicals();
@@ -383,11 +384,41 @@ void DrawMol::extractMolNotes() {
 
   if (!note.empty()) {
     // molecule annotations use a full-size font, hence the 1 below.
-    DrawAnnotation *annot = new DrawAnnotation(
-        note, TextAlignType::START, "note", 1, Point2D(0.0, 0.0),
-        drawOptions_.annotationColour, textDrawer_);
-    calcMolNotePosition(atCds_, *annot);
-    annotations_.emplace_back(annot);
+    DrawAnnotation tmp(note, TextAlignType::START, "note", 1, Point2D(0.0, 0.0),
+                       drawOptions_.annotationColour, textDrawer_);
+    double height, width;
+    tmp.getDimensions(width, height);
+    // Try all 4 corners until there's no clash with the underlying molecule.
+    // Even though alignment is START, the DrawAnnotation puts the middle
+    // of the first char at the location, so that needs to be adjusted for.
+    std::vector<Point2D> locs = {
+        {width_ - width, height},
+        {0.0 + tmp.rects_[0]->width_ / 2.0, height},
+        {0.0 + tmp.rects_[0]->width_ / 2.0, double(drawHeight_ - height)},
+        {width_ - width, double(drawHeight_ - height)},
+    };
+    bool didIt = false;
+    for (int i = 0; i < 3; ++i) {
+      locs[i].x += xOffset_;
+      locs[i].y += yOffset_;
+      DrawAnnotation *annot =
+          new DrawAnnotation(note, TextAlignType::START, "note", 1.0, locs[i],
+                             drawOptions_.annotationColour, textDrawer_);
+      // Put it into the legends_, because it's already in draw coords, so
+      // shouldn't be treated by changeToDrawCoords.
+      if (!doesNoteClash(*annot)) {
+        legends_.emplace_back(annot);
+        didIt = true;
+        break;
+      }
+    }
+    if (!didIt) {
+      // There was nowhere to put it that didn't clash, so live with it.
+      DrawAnnotation *annot =
+          new DrawAnnotation(note, TextAlignType::START, "note", 1.0, locs[0],
+                             drawOptions_.annotationColour, textDrawer_);
+      legends_.emplace_back(annot);
+    }
   }
 }
 
@@ -2375,33 +2406,10 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
 }
 
 // ****************************************************************************
-void DrawMol::calcMolNotePosition(const std::vector<Point2D> atCds,
-                                  DrawAnnotation &annot) const {
-  Point2D centroid{0., 0.};
-  double minY = std::numeric_limits<double>::max();
-  double maxX = std::numeric_limits<double>::lowest();
-  for (const auto &pt : atCds) {
-    centroid += pt;
-    maxX = std::max(pt.x, maxX);
-    minY = std::min(pt.y, minY);
-  }
-  centroid /= atCds.size();
-  // because we've inverted the Y coord, we need to use -minY, not +maxY.
-  Point2D vect{maxX, -minY};
-  vect.x -= centroid.x;
-  vect.y += centroid.y;
-  auto loc = centroid + vect * 0.9;
-  loc = centroid;
-  loc.x += vect.x * 0.9;
-  loc.y -= vect.y * 0.9;
-  annot.pos_ = loc;
-}
-
-// ****************************************************************************
 int DrawMol::doesNoteClash(const DrawAnnotation &annot) const {
   // note that this will return a clash if annot is in annotations_.
   // It's intended only to be used when finding where to put the
-  // annotation, so annot should only  be added to annotations_ once
+  // annotation, so annot should only be added to annotations_ once
   // its position has been determined.
   for (auto &rect : annot.rects_) {
     Point2D otrans = rect->trans_;
