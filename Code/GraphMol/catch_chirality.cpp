@@ -80,7 +80,7 @@ class AllowNontetrahedralChiralityFixture : private TestFixtureTemplate {
             &RDKit::Chirality::setAllowNontetrahedralChirality) {}
 };
 
-unsigned cound_wedged_bonds(const ROMol &mol) {
+unsigned count_wedged_bonds(const ROMol &mol) {
   unsigned nWedged = 0;
   for (const auto bond : mol.bonds()) {
     if (bond->getBondDir() != Bond::BondDir::NONE) {
@@ -3455,14 +3455,12 @@ M  END
 
       Chirality::wedgeMolBonds(cp, nullptr, &ps);
 
-      REQUIRE(cound_wedged_bonds(cp) == 2);
+      REQUIRE(count_wedged_bonds(cp) == 2);
 
       CHECK(cp.getBondBetweenAtoms(1, 3)->getBondDir() != Bond::BondDir::NONE);
       CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() != Bond::BondDir::NONE);
       CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() !=
             cp.getBondBetweenAtoms(1, 3)->getBondDir());
-      CHECK(cp.getBondBetweenAtoms(1, 0)->getBondDir() == Bond::BondDir::NONE);
-      CHECK(cp.getBondBetweenAtoms(1, 2)->getBondDir() == Bond::BondDir::NONE);
     }
     {
       // What if the first wedged bond is not our preferred one?
@@ -3471,7 +3469,7 @@ M  END
         INFO("wedgedAtomIdx: " << wedgedAtomIdx);
 
         RWMol cp(*mol);
-        REQUIRE(cound_wedged_bonds(cp) == 0);
+        REQUIRE(count_wedged_bonds(cp) == 0);
 
         auto bond = cp.getBondBetweenAtoms(1, wedgedAtomIdx);
         if (bond->getEndAtomIdx() == 1) {
@@ -3488,7 +3486,7 @@ M  END
 
         Chirality::wedgeMolBonds(cp, nullptr, &ps);
 
-        CHECK(cound_wedged_bonds(cp) == 2);
+        CHECK(count_wedged_bonds(cp) == 2);
       }
     }
   }
