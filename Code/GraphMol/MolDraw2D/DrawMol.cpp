@@ -2808,7 +2808,7 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
       std::swap(l1s, l2s);
     }
     if ((Bond::EITHERDOUBLE == bond.getBondDir()) ||
-        (Bond::STEREOANY == bond.getStereo())) {
+        (Bond::BondStereo::STEREOANY == bond.getStereo())) {
       // crossed bond
       std::swap(l1s, l2s);
     }

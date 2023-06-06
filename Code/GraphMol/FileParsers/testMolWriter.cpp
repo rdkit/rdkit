@@ -20,6 +20,8 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
+#include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
@@ -1529,6 +1531,30 @@ void testMolFileWriterDativeBonds() {
   }
 }
 
+void testMarkUnspecifiedStereoAsUnknown() {
+  // Issue 6398 - double bonds with directionality specified on
+  // a single end are not marked as unknown.
+  BOOST_LOG(rdInfoLog) << "testing mark unspecified stereo as unknown"
+                       << std::endl;
+  std::vector<std::unique_ptr<ROMol>> mols;
+  mols.emplace_back("C/C=C/C=CC(F)Cl"_smiles);
+  mols.emplace_back("C/C=C\\C=C\\C(F)Cl"_smiles);
+  mols.emplace_back("C/C=C\\C=CC(F)Cl"_smiles);
+  mols.emplace_back("C\\C=C/C=C\\C(F)Cl"_smiles);
+  mols.emplace_back("CC=CC=CC(F)Cl"_smiles);
+  std::vector<Bond::BondStereo> expTypes = {
+      Bond::BondStereo::STEREONONE, Bond::BondStereo::STEREOE,
+      Bond::BondStereo::STEREONONE, Bond::BondStereo::STEREOZ,
+      Bond::BondStereo::STEREOANY};
+  for (size_t i = 0; i < mols.size(); ++i) {
+    const bool canonOrient = true;
+    RDDepict::compute2DCoords(*mols[i], nullptr, canonOrient);
+    RDKit::markUnspecifiedStereoAsUnknown(*mols[i]);
+    auto b = mols[i]->getBondWithIdx(3);
+    TEST_ASSERT(expTypes[i] == b->getStereo());
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1675,4 +1701,8 @@ int main() {
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
   testMolFileWriterDativeBonds();
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  testMarkUnspecifiedStereoAsUnknown();
+  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
 }
