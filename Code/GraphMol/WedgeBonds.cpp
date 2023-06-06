@@ -201,7 +201,7 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   if (neighborBondAngles.size() == 3) {
     // three coordinated
     auto angleIt = neighborBondAngles.begin();
-    ++angleIt;  // the first is the 0 (or reference bond - we will ignoire
+    ++angleIt;  // the first is the 0 (or reference bond - we will ignore
                 // that
     double angle1 = (*angleIt);
     ++angleIt;
@@ -453,8 +453,7 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
   auto wedgeBonds = pickBondsToWedge(mol, params);
 
   // loop over the bonds we need to wedge:
-  for (auto wbIter = wedgeBonds.begin(); wbIter != wedgeBonds.end(); ++wbIter) {
-    auto [wbi, waid] = *wbIter;
+  for (const auto &[wbi, waid] : wedgeBonds) {
     auto bond = mol.getBondWithIdx(wbi);
     auto dir = detail::determineBondWedgeState(bond, waid, conf);
     if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
@@ -469,8 +468,30 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
         bond->setBeginAtomIdx(bond->getEndAtomIdx());
         bond->setEndAtomIdx(tmp);
       }
-      if (params->wedgeTwoBondsIfPossible) {
-        addSecondWedgeAroundAtom(mol, bond, conf);
+    }
+  }
+  if (params->wedgeTwoBondsIfPossible) {
+    // This should probably check whether the existing wedge
+    // is in agreement with the chiral tag on the atom.
+
+    for (const auto atom : mol.atoms()) {
+      if (atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+          atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
+        continue;
+      }
+      unsigned numWedged = 0;
+      Bond *wedgedBond = nullptr;
+      for (const auto bond : mol.atomBonds(atom)) {
+        if (bond->getBeginAtom() == atom &&
+            bond->getBondType() == Bond::SINGLE &&
+            (bond->getBondDir() == Bond::BEGINWEDGE ||
+             bond->getBondDir() == Bond::BEGINDASH)) {
+          ++numWedged;
+          wedgedBond = bond;
+        }
+      }
+      if (numWedged == 1) {
+        addSecondWedgeAroundAtom(mol, wedgedBond, conf);
       }
     }
   }
