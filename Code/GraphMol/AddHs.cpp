@@ -136,7 +136,7 @@ std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
   return isoMap;
 }
 
-bool is_atom_n_pyrrol_like(const ROMol &mol, const Atom *atom) {
+bool may_need_extra_H(const ROMol &mol, const Atom *atom) {
   unsigned single_bonds = 0;
   unsigned aromatic_bonds = 0;
   for (auto bond : mol.atomBonds(atom)) {
@@ -674,7 +674,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       const INT_VECT &defaultVs =
           PeriodicTable::getTable()->getValenceList(heavyAtomNum);
       if (((heavyAtomNum == 7 || heavyAtomNum == 15 ||
-            is_atom_n_pyrrol_like(mol, heavyAtom)) &&
+            may_need_extra_H(mol, heavyAtom)) &&
            heavyAtom->getIsAromatic()) ||
           (std::find(defaultVs.begin() + 1, defaultVs.end(),
                      heavyAtom->getTotalValence()) != defaultVs.end())) {
