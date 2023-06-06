@@ -60,6 +60,25 @@ TEST_CASE("enumeration basics") {
   }
 }
 
+TEST_CASE("result counts") {
+  auto mol = "COC |LN:1:1.3|"_smiles;
+  REQUIRE(mol);
+  ExtendedQueryMol xqm =
+      std::make_unique<MolBundle>(MolEnumerator::enumerate(*mol));
+  SECTION("substructure matching and serialization") {
+    ExtendedQueryMol xqm2(xqm.toBinary());
+    ExtendedQueryMol xqm3(xqm.toJSON(), true);
+    SubstructMatchParameters ps;
+    ps.uniquify = false;
+    for (const auto xq : {&xqm, &xqm2, &xqm3}) {
+      CHECK(SubstructMatch(*"COCC"_smiles, *xq, ps).size() == 2);
+      CHECK(SubstructMatch(*"COOCC"_smiles, *xq, ps).size() == 2);
+      CHECK(SubstructMatch(*"COOOCC"_smiles, *xq, ps).size() == 2);
+      CHECK(SubstructMatch(*"COOOOCC"_smiles, *xq, ps).empty());
+    }
+  }
+}
+
 TEST_CASE("tautomer basics") {
   auto mol = "Cc1n[nH]c(F)c1"_smiles;
   REQUIRE(mol);

@@ -19,17 +19,42 @@ class TestCase(unittest.TestCase):
   def test1CreationAndSubstruct(self):
     m = Chem.MolFromSmiles('COCc1n[nH]c(F)c1 |LN:1:1.3|')
     xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
-    matches = rdGeneralizedSubstruct.MolGetXQMSubstructMatches(
-      Chem.MolFromSmiles('COOCc1n[nH]c(F)c1'), xqm)
+
+    mol = Chem.MolFromSmiles('COOCc1n[nH]c(F)c1')
+    matches = rdGeneralizedSubstruct.MolGetSubstructMatches(mol, xqm)
     self.assertEqual(len(matches), 1)
     self.assertEqual(tuple(matches[0]), (0, 1, 2, 3, 4, 5, 9, 6, 7, 8))
 
-    match = rdGeneralizedSubstruct.MolGetXQMSubstructMatch(Chem.MolFromSmiles('COOCc1n[nH]c(F)c1'),
-                                                           xqm)
+    match = rdGeneralizedSubstruct.MolGetSubstructMatch(mol, xqm)
     self.assertEqual(tuple(match), (0, 1, 2, 3, 4, 5, 9, 6, 7, 8))
 
-    #     CHECK(SubstructMatch(*"FCN(C)CC"_smiles, xqm).size() == 1);
-    # CHECK(SubstructMatch(*"FCN(O)N(C)CC"_smiles, xqm).size() == 1);
+    self.assertTrue(rdGeneralizedSubstruct.MolHasSubstructMatch(mol, xqm))
+
+  def test2Params(self):
+    m = Chem.MolFromSmiles('COCc1n[nH]c(F)c1[C@H](F)Cl |LN:1:1.3|')
+    xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
+
+    mol1 = Chem.MolFromSmiles('COOCc1n[nH]c(F)c1[C@H](F)Cl')
+    mol2 = Chem.MolFromSmiles('COOCc1n[nH]c(F)c1[C@@H](F)Cl')
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol1, xqm)), 1)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol2, xqm)), 1)
+
+    params = Chem.SubstructMatchParameters()
+    params.useChirality = True
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol1, xqm, params)), 1)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol2, xqm, params)), 0)
+
+  def test3MultipleResults(self):
+    m = Chem.MolFromSmiles('COC |LN:1:1.3|')
+    xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
+
+    mol1 = Chem.MolFromSmiles('COOCC')
+    mol2 = Chem.MolFromSmiles('COCC')
+
+    params = Chem.SubstructMatchParameters()
+    params.uniquify = False
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol1, xqm, params)), 2)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol2, xqm, params)), 2)
 
 
 if __name__ == '__main__':  # pragma: nocover

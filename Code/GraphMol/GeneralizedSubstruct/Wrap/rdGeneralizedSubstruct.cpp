@@ -86,29 +86,20 @@ BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
       .def("ToJSON", &ExtendedQueryMol::toJSON);
 
   python::def(
-      "MolHasXQMSubstructMatch", &hasSubstructHelper,
+      "MolHasSubstructMatch", &hasSubstructHelper,
       (python::arg("mol"), python::arg("query"),
        python::arg("params") = python::object()),
       "determines whether or not a molecule is a match to a generalized substructure query");
   python::def(
-      "MolGetXQMSubstructMatch", &getSubstructHelper,
+      "MolGetSubstructMatch", &getSubstructHelper,
       (python::arg("mol"), python::arg("query"),
        python::arg("params") = python::object()),
       "returns first match (if any) of a molecule to a generalized substructure query");
   python::def(
-      "MolGetXQMSubstructMatches", &getSubstructsHelper,
+      "MolGetSubstructMatches", &getSubstructsHelper,
       (python::arg("mol"), python::arg("query"),
        python::arg("params") = python::object()),
       "returns all matches (if any) of a molecule to a generalized substructure query");
-
-  /*
-  RDKIT_GENERALIZEDSUBSTRUCT_EXPORT std::vector<MatchVectType>
-  SubstructMatch( const ROMol &mol, const ExtendedQueryMol &query, const
-  SubstructMatchParameters &params = SubstructMatchParameters());
-
-  inline bool hasSubstructMatch(
-
-  */
 
   python::def(
       "CreateExtendedQueryMol", createExtendedQueryMolHelper,
