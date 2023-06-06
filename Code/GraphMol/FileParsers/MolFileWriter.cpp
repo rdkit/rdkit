@@ -830,7 +830,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
             // FIX: this is the fix for github #2649, but we will need to change
             // it once we start handling allenes properly
 
-            if (checkNeighbors(bond, bond->getBeginAtom()) &&
+            if (checkNeighbors(bond, bond->getBeginAtom()) ||
                 checkNeighbors(bond, bond->getEndAtom())) {
               dirCode = 3;
             }

@@ -1543,8 +1543,8 @@ void testMarkUnspecifiedStereoAsUnknown() {
   mols.emplace_back("C\\C=C/C=C\\C(F)Cl"_smiles);
   mols.emplace_back("CC=CC=CC(F)Cl"_smiles);
   std::vector<Bond::BondStereo> expTypes = {
-      Bond::BondStereo::STEREONONE, Bond::BondStereo::STEREOE,
-      Bond::BondStereo::STEREONONE, Bond::BondStereo::STEREOZ,
+      Bond::BondStereo::STEREOANY, Bond::BondStereo::STEREOE,
+      Bond::BondStereo::STEREOANY, Bond::BondStereo::STEREOZ,
       Bond::BondStereo::STEREOANY};
   for (size_t i = 0; i < mols.size(); ++i) {
     const bool canonOrient = true;
