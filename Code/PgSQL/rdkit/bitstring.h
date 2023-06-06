@@ -57,6 +57,8 @@ void bitstringSimpleSubset(int length, uint8 *bstr, int sub_weight,
 void bitstringRandomSubset(int length, int weight, uint8 *bstr, int sub_weight,
                            uint8 *sub_bstr);
 
+int bitstringGrayCmp(int length, uint8 *bstr1, uint8 *bstr2);
+
 #ifdef __cplusplus
 } /* extern "C" { */
 #endif

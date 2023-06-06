@@ -17,6 +17,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SubstanceGroup.h>
+#include <GraphMol/Chirality.h>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
@@ -799,21 +800,24 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
     // as "any", this was sf.net issue 2963522.
     // two caveats to this:
     // 1) if it's a ring bond, we'll only put the "any"
-    //    in the mol block if the user specifically asked for it.
-    //    Constantly seeing crossed bonds in rings, though maybe
-    //    technically correct, is irritating.
+    //    in the mol block if the ring size is >=
+    //    Chirality::minRingSizeForDoubleBondStereo.
+    ///   Constantly seeing crossed
+    //    bonds in rings, though maybe technically correct, is irritating.
     // 2) if it's a terminal bond (where there's no chance of
     //    stereochemistry anyway), we also skip the any.
     //    this was sf.net issue 3009756
     if (bond->getStereo() <= Bond::STEREOANY) {
       if (bond->getStereo() == Bond::STEREOANY) {
         dirCode = 3;
-      } else if (!(bond->getOwningMol().getRingInfo()->numBondRings(
-                     bond->getIdx())) &&
-                 bond->getBeginAtom()->getDegree() > 1 &&
-                 bond->getEndAtom()->getDegree() > 1) {
+      } else if (bond->getBeginAtom()->getDegree() > 1 &&
+                 bond->getEndAtom()->getDegree() > 1 &&
+                 (!queryIsBondInRing(bond) ||
+                  static_cast<unsigned int>(queryBondMinRingSize(bond)) >=
+                      Chirality::minRingSizeForDoubleBondStereo)) {
         // we don't know that it's explicitly unspecified (covered above with
         // the ==STEREOANY check)
+
         // look to see if one of the atoms has a bond with direction set
         if (bond->getBondDir() == Bond::EITHERDOUBLE) {
           dirCode = 3;

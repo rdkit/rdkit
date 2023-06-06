@@ -1351,14 +1351,21 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
           bondRegister.insert(std::make_pair(i, nbr));
           Bond* bond = nullptr;
           // bond type
-          if (inchiAtom->bond_type[b] <= INCHI_BOND_TYPE_TRIPLE) {
+          if ((unsigned int)inchiAtom->bond_type[b] <= INCHI_BOND_TYPE_TRIPLE) {
             bond = new Bond((Bond::BondType)inchiAtom->bond_type[b]);
-          } else {
+          } else if ((unsigned int)inchiAtom->bond_type[b] ==
+                     INCHI_BOND_TYPE_ALTERN) {
             BOOST_LOG(rdWarningLog)
                 << "receive ALTERN bond type which should be avoided. "
                 << "This is treated as aromatic." << std::endl;
             bond = new Bond(Bond::AROMATIC);
             bond->setIsAromatic(true);
+          } else {
+            BOOST_LOG(rdErrorLog) << "illegal bond type ("
+                                  << (unsigned int)inchiAtom->bond_type[b]
+                                  << ") in InChI" << std::endl;
+            delete m;
+            return nullptr;
           }
           // bond ends
           bond->setBeginAtomIdx(indexToAtomIndexMapping[i]);

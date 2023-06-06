@@ -42,7 +42,7 @@ namespace MMFF {
   more iterations are required.
      second: the energy
 */
-std::pair<int, double> MMFFOptimizeMolecule(
+inline std::pair<int, double> MMFFOptimizeMolecule(
     ROMol &mol, int maxIters = 1000, std::string mmffVariant = "MMFF94",
     double nonBondedThresh = 10.0, int confId = -1,
     bool ignoreInterfragInteractions = true) {
@@ -79,7 +79,7 @@ std::pair<int, double> MMFFOptimizeMolecule(
                                      fragments
 
 */
-void MMFFOptimizeMoleculeConfs(ROMol &mol,
+inline void MMFFOptimizeMoleculeConfs(ROMol &mol,
                                std::vector<std::pair<int, double>> &res,
                                int numThreads = 1, int maxIters = 1000,
                                std::string mmffVariant = "MMFF94",

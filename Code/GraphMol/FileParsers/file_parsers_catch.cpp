@@ -5447,6 +5447,126 @@ M  END
   }
 }
 
+TEST_CASE(
+    "Github #6395: Mol Unsaturated Query Not Parsed Correctly") {
+  SECTION("as reported") {
+    auto m = R"CTAB(
+MOESketch           2D                              
+
+  5  5  0  0  1  0            999 V2000
+   13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   14.0120    1.4152    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.5120    1.4227    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9683    2.8516    0.0000 N   0  0  0  0  0  0  0  0  0  2  0  0
+   14.7504    3.7272    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+  1  2  8  0  0  0  4
+  2  3  8  0  0  0  0
+  3  4  8  0  0  0  4
+  4  5  8  0  0  0  9
+  5  1  1  0  0  0  0
+M  SUB  4   1   2   2   2   3   2   4   2
+M  UNS  4   2   1   3   1   4   1   5   1
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+  }
+  SECTION("test that queries exist for only nonzero unsaturated values") {
+    auto m = R"CTAB(
+MOESketch           2D                              
+
+  5  5  0  0  1  0            999 V2000
+   13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   14.0120    1.4152    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.5120    1.4227    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9683    2.8516    0.0000 N   0  0  0  0  0  0  0  0  0  2  0  0
+   14.7504    3.7272    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+  1  2  8  0  0  0  4
+  2  3  8  0  0  0  0
+  3  4  8  0  0  0  4
+  4  5  8  0  0  0  9
+  5  1  1  0  0  0  0
+M  UNS  4   2   1   3   0   4   1   5   0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(2)->hasQuery());
+    REQUIRE(m->getAtomWithIdx(3)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(4)->hasQuery());
+  }
+  SECTION("test that isotope properties parse correctly") {
+    auto m = R"CTAB(
+MOESketch           2D                              
+
+  5  5  0  0  1  0            999 V2000
+   13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   14.0120    1.4152    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.5120    1.4227    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9683    2.8516    0.0000 N   0  0  0  0  0  0  0  0  0  2  0  0
+   14.7504    3.7272    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+  1  2  8  0  0  0  4
+  2  3  8  0  0  0  0
+  3  4  8  0  0  0  4
+  4  5  8  0  0  0  9
+  5  1  1  0  0  0  0
+M  ISO  3   2  15   3  -1   5  14
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->getIsotope() == 15);
+    REQUIRE(m->getAtomWithIdx(2)->getIsotope() == 0);
+    REQUIRE(m->getAtomWithIdx(4)->getIsotope() == 14);
+  }
+  SECTION("test that substitution properties parse correctly") {
+    auto m = R"CTAB(
+MOESketch           2D                              
+
+  5  5  0  0  1  0            999 V2000
+   13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   14.0120    1.4152    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.5120    1.4227    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9683    2.8516    0.0000 N   0  0  0  0  0  0  0  0  0  2  0  0
+   14.7504    3.7272    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+  1  2  8  0  0  0  4
+  2  3  8  0  0  0  0
+  3  4  8  0  0  0  4
+  4  5  8  0  0  0  9
+  5  1  1  0  0  0  0
+M  SUB  4   2   1   3   0   4  -1   5   0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(2)->hasQuery());
+    REQUIRE(m->getAtomWithIdx(3)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(4)->hasQuery());
+  }
+  SECTION("test that ring bond count properties parse correctly") {
+    auto m = R"CTAB(
+MOESketch           2D                              
+
+  5  5  0  0  1  0            999 V2000
+   13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   14.0120    1.4152    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.5120    1.4227    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9683    2.8516    0.0000 N   0  0  0  0  0  0  0  0  0  2  0  0
+   14.7504    3.7272    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+  1  2  8  0  0  0  4
+  2  3  8  0  0  0  0
+  3  4  8  0  0  0  4
+  4  5  8  0  0  0  9
+  5  1  1  0  0  0  0
+M  RBC  4   2   1   3   0   4  -1   5   0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(2)->hasQuery());
+    REQUIRE(m->getAtomWithIdx(3)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(4)->hasQuery());
+  }
+}
+
 TEST_CASE("Github #3246: O.co2 types around P not correctly handled") {
   SECTION("as reported") {
     std::string mol2 = R"MOL2(#       Name: temp

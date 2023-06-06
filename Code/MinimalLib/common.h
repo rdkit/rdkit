@@ -869,6 +869,7 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
   MatchVectType match;
   int confId = -1;
   std::unique_ptr<Conformer> origConformer;
+  std::unique_ptr<ROMol> templateMolAdj;
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   bool oprefer = RDDepict::preferCoordGen;
   RDDepict::preferCoordGen = useCoordGen;
@@ -890,10 +891,17 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
     if (allowRGroups) {
       molHs.reset(MolOps::addHs(mol));
       prbMol = molHs.get();
+      auto queryParams = RDKit::MolOps::AdjustQueryParameters::noAdjustments();
+      queryParams.adjustSingleBondsToDegreeOneNeighbors = true;
+      queryParams.adjustSingleBondsBetweenAromaticAtoms = true;
+      templateMolAdj.reset(
+          RDKit::MolOps::adjustQueryProperties(templateMol, &queryParams));
     }
-    if (SubstructMatch(*prbMol, templateMol, matches, false)) {
+    const ROMol &templateMolRef =
+        templateMolAdj ? *templateMolAdj : templateMol;
+    if (SubstructMatch(*prbMol, templateMolRef, matches, false)) {
       if (allowRGroups) {
-        matches = sortMatchesByDegreeOfCoreSubstitution(*prbMol, templateMol,
+        matches = sortMatchesByDegreeOfCoreSubstitution(*prbMol, templateMolRef,
                                                         matches);
         int maxMatchedHeavies = -1;
         std::vector<MatchVectType> prunedMatches;
@@ -903,7 +911,7 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
           MatchVectType prunedMatch;
           prunedMatch.reserve(match.size());
           for (const auto &pair : match) {
-            const auto templateAtom = templateMol.getAtomWithIdx(pair.first);
+            const auto templateAtom = templateMolRef.getAtomWithIdx(pair.first);
             const auto prbAtom = prbMol->getAtomWithIdx(pair.second);
             if (isAtomTerminalRGroupOrQueryHydrogen(templateAtom)) {
               if (prbAtom->getAtomicNum() == 1) {
@@ -930,7 +938,7 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
         RDDepict::compute2DCoords(mol);
       }
       RDGeom::Transform3D trans;
-      MolAlign::getBestAlignmentTransform(mol, templateMol, trans, match,
+      MolAlign::getBestAlignmentTransform(mol, templateMolRef, trans, match,
                                           confId, confId, matches, MAX_MATCHES);
       std::for_each(match.begin(), match.end(),
                     [](auto &pair) { std::swap(pair.first, pair.second); });

@@ -2921,7 +2921,7 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
     const Atom *thirdAtom = nullptr;
     for (auto i = 1u; i < at1->getDegree(); ++i) {
       thirdAtom = otherNeighbor(at1, at2, i, *drawMol_);
-      if (!areBondsParallel(atCds_[at1->getIdx()], atCds_[at2->getIdx()],
+      if (thirdAtom && !areBondsParallel(atCds_[at1->getIdx()], atCds_[at2->getIdx()],
                             atCds_[at1->getIdx()],
                             atCds_[thirdAtom->getIdx()])) {
         return thirdAtom;

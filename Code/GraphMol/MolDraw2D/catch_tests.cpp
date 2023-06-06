@@ -294,6 +294,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github6200_2.svg", 661919921U},
     {"test_queryColour_1.svg", 3758375489U},
     {"test_queryColour_2.svg", 2426598062U},
+    {"github6336_1.svg", 612606818U},
+    {"github6416.svg", 3045235864U},
     {"test_github6397_1.svg", 1825590478U},
     {"test_github6397_2.svg", 3407468353U},
     {"test_github6397_3.svg", 3170656352U},
@@ -328,7 +330,8 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testGithub4238_1.png", 458925131U},
     {"github5383_1.png", 2963331215U},
     {"acs1996_1.png", 2674458798U},
-    {"acs1996_2.png", 83755168U}};
+    {"acs1996_2.png", 83755168U},
+    {"github6336_1.png", 2958833204U}};
 
 std::hash_result_t hash_file(const std::string &filename) {
   std::ifstream ifs(filename, std::ios_base::binary);
@@ -7608,6 +7611,134 @@ TEST_CASE("queryColour can be set to a non-default value") {
     CHECK(text.find("#7F7F7F") == std::string::npos);
     check_file_hash(nameBase + "_2.svg");
   }
+}
+
+TEST_CASE(
+    "Github #6336: calling drawing commands before drawing a molecule with MolDraw2DCairo") {
+  std::string nameBase = "github6336";
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  SECTION("cairo") {
+    MolDraw2DCairo drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.setColour(DrawColour(1, 0, 1));
+    drawer.drawRect(Point2D(10, 10), Point2D(150, 150), true);
+    drawer.setColour(DrawColour(0, 1, 1));
+    drawer.drawLine(Point2D(150, 150), Point2D(250, 299), true);
+    drawer.finishDrawing();
+    drawer.writeDrawingText(nameBase + "_1.png");
+    check_file_hash(nameBase + "_1.png");
+  }
+#endif
+  SECTION("SVG") {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.setColour(DrawColour(1, 0, 1));
+    drawer.drawRect(Point2D(10, 10), Point2D(150, 150), true);
+    drawer.setColour(DrawColour(0, 1, 1));
+    drawer.drawLine(Point2D(150, 150), Point2D(250, 299), true);
+    drawer.finishDrawing();
+    std::ofstream outs(nameBase + "_1.svg");
+    outs << drawer.getDrawingText();
+    outs.flush();
+    outs.close();
+    check_file_hash(nameBase + "_1.svg");
+  }
+}
+
+TEST_CASE(
+    "Github #6416: crash with colinear atoms") {
+  std::string name = "github6416.svg";
+  auto m = R"CTAB(168010013
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 35 36 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 F 11.000000 -1.318000 0.000000 0
+M  V30 2 F 12.000000 -2.318000 0.000000 0
+M  V30 3 F 11.000000 -3.318000 0.000000 0
+M  V30 4 O 6.207100 2.719200 0.000000 0
+M  V30 5 O 6.500000 0.280000 0.000000 0
+M  V30 6 O 6.500000 -1.452000 0.000000 0
+M  V30 7 N 8.000000 -0.586000 0.000000 0
+M  V30 8 C 3.500000 2.012100 0.000000 0
+M  V30 9 C 4.000000 1.146000 0.000000 0
+M  V30 10 C 2.500000 2.012100 0.000000 0
+M  V30 11 C 5.500000 2.012100 0.000000 0
+M  V30 12 C 4.000000 2.878100 0.000000 0
+M  V30 13 C 2.000000 1.146000 0.000000 0
+M  V30 14 C 5.000000 1.146000 0.000000 0
+M  V30 15 C 5.000000 2.878100 0.000000 0
+M  V30 16 C 4.500000 2.012100 0.000000 0
+M  V30 17 C 3.000000 1.146000 0.000000 0
+M  V30 18 C 5.500000 0.280000 0.000000 0
+M  V30 19 C 2.500000 0.280000 0.000000 0
+M  V30 20 C 6.465900 1.753200 0.000000 0
+M  V30 21 C 5.000000 -0.586000 0.000000 0
+M  V30 22 C 2.500000 -1.452000 0.000000 0
+M  V30 23 C 3.500000 -1.452000 0.000000 0
+M  V30 24 C 2.000000 -0.586000 0.000000 0
+M  V30 25 C 4.000000 -0.586000 0.000000 0
+M  V30 26 C 3.500000 0.280000 0.000000 0
+M  V30 27 C 3.000000 -0.586000 0.000000 0
+M  V30 28 C 7.000000 -0.586000 0.000000 0
+M  V30 29 C 8.500000 -1.452000 0.000000 0
+M  V30 30 C 9.500000 -1.452000 0.000000 0
+M  V30 31 C 8.000000 -2.318000 0.000000 0
+M  V30 32 C 10.000000 -2.318000 0.000000 0
+M  V30 33 C 8.500000 -3.184100 0.000000 0
+M  V30 34 C 9.500000 -3.184100 0.000000 0
+M  V30 35 C 11.000000 -2.318000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 35
+M  V30 2 1 2 35
+M  V30 3 1 3 35
+M  V30 4 1 4 11
+M  V30 5 1 5 18
+M  V30 6 1 5 28
+M  V30 7 2 6 28
+M  V30 8 1 7 28
+M  V30 9 1 7 29
+M  V30 10 1 8 9
+M  V30 11 1 8 10
+M  V30 12 1 8 12
+M  V30 13 1 9 16
+M  V30 14 1 9 17
+M  V30 15 1 10 13
+M  V30 16 1 11 14
+M  V30 17 1 11 15
+M  V30 18 1 11 20
+M  V30 19 2 12 15 CFG=2
+M  V30 20 1 13 19
+M  V30 21 1 14 18
+M  V30 22 1 18 21
+M  V30 23 2 19 24 CFG=2
+M  V30 24 1 19 26
+M  V30 25 2 21 25 CFG=2
+M  V30 26 1 22 23
+M  V30 27 1 22 24
+M  V30 28 1 23 25
+M  V30 29 1 25 27
+M  V30 30 2 29 30
+M  V30 31 1 29 31
+M  V30 32 1 30 32
+M  V30 33 2 31 33
+M  V30 34 2 32 34
+M  V30 35 1 32 35
+M  V30 36 1 33 34
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  MolDraw2DSVG drawer(300, 300, -1, -1);
+  drawer.drawMolecule(*m);
+  drawer.finishDrawing();
+  std::ofstream outs(name);
+  outs << drawer.getDrawingText();
+  outs.flush();
+  outs.close();
+  check_file_hash(name);
 }
 
 TEST_CASE("Github 6397 - chiral tag overlapping atom label") {

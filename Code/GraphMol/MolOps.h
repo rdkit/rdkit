@@ -336,8 +336,8 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   std::uint32_t adjustRingCountFlags =
       ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS;
 
-  bool makeDummiesQueries = true; /**< convert dummy atoms without isotope
-                                labels to any-atom queries */
+  bool makeDummiesQueries = true;  /**< convert dummy atoms without isotope
+                                 labels to any-atom queries */
 
   bool aromatizeIfPossible = true; /**< perceive and set aromaticity */
 
@@ -441,6 +441,7 @@ typedef enum {
   SANITIZE_SETHYBRIDIZATION = 0x80,
   SANITIZE_CLEANUPCHIRALITY = 0x100,
   SANITIZE_ADJUSTHS = 0x200,
+  SANITIZE_CLEANUP_ORGANOMETALLICS = 0x400,
   SANITIZE_ALL = 0xFFFFFFF
 } SanitizeFlags;
 

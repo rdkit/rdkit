@@ -11,22 +11,22 @@
 #include <RDBoost/python.h>
 #include <string>
 
+#include "props.hpp"
 #include "rdchem.h"
 #include "seqs.hpp"
-#include "props.hpp"
 #include "substructmethods.h"
 
 // ours
-#include <RDBoost/pyint_api.h>
-#include <RDBoost/Wrap.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/QueryOps.h>
-#include <GraphMol/MolPickler.h>
 #include <GraphMol/MolBundle.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
-#include <boost/python/iterator.hpp>
-#include <boost/python/copy_non_const_reference.hpp>
+#include <GraphMol/MolPickler.h>
+#include <GraphMol/QueryOps.h>
+#include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+#include <RDBoost/Wrap.h>
+#include <RDBoost/pyint_api.h>
+#include <boost/python/copy_non_const_reference.hpp>
+#include <boost/python/iterator.hpp>
 
 namespace python = boost::python;
 
@@ -117,11 +117,6 @@ void MolDebug(const ROMol &mol, bool useStdout) {
 }
 
 // FIX: we should eventually figure out how to do iterators properly
-AtomIterSeq *MolGetAtoms(const ROMOL_SPTR &mol) {
-  AtomIterSeq *res = new AtomIterSeq(mol, mol->beginAtoms(), mol->endAtoms(),
-                                     AtomCountFunctor(mol));
-  return res;
-}
 QueryAtomIterSeq *MolGetAromaticAtoms(const ROMOL_SPTR &mol) {
   auto *qa = new QueryAtom();
   qa->setQuery(makeAtomAromaticQuery());
@@ -137,16 +132,6 @@ QueryAtomIterSeq *MolGetQueryAtoms(const ROMOL_SPTR &mol, QueryAtom *qa) {
   return res;
 }
 
-// AtomIterSeq *MolGetHeteros(ROMol *mol){
-//  AtomIterSeq *res = new AtomIterSeq(mol->beginHeteros(),
-//                                     mol->endHeteros());
-//  return res;
-//}
-BondIterSeq *MolGetBonds(const ROMOL_SPTR &mol) {
-  BondIterSeq *res = new BondIterSeq(mol, mol->beginBonds(), mol->endBonds(),
-                                     BondCountFunctor(mol));
-  return res;
-}
 ConformerIterSeq *GetMolConformers(const ROMOL_SPTR &mol) {
   ConformerIterSeq *res =
       new ConformerIterSeq(mol, mol->beginConformers(), mol->endConformers(),
@@ -182,6 +167,7 @@ void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
                                  python::object func) {
   ps.extraFinalCheck = pyobjFunctor(func);
 }
+
 }  // namespace
 
 class ReadWriteMol : public RWMol {
@@ -677,14 +663,18 @@ struct mol_wrapper {
              "assigned.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to check for (a string).\n")
-        .def("GetProp", GetProp<ROMol, std::string>,
-             "Returns the value of the property.\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to return (a string).\n\n"
-             "  RETURNS: a string\n\n"
-             "  NOTE:\n"
-             "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+        .def(
+            "GetProp", GetPyProp<ROMol>,
+            (python::arg("self"), python::arg("key"),
+             python::arg("autoConvert") = false),
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
+            "  RETURNS: a string\n\n"
+            "  NOTE:\n"
+            "    - If the property has not been set, a KeyError exception "
+            "will be raised.\n")
         .def("GetDoubleProp", GetProp<ROMol, double>,
              "Returns the double value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -759,7 +749,8 @@ struct mol_wrapper {
 
         .def("GetPropsAsDict", GetPropsAsDict<ROMol>,
              (python::arg("self"), python::arg("includePrivate") = false,
-              python::arg("includeComputed") = false),
+              python::arg("includeComputed") = false,
+              python::arg("autoConvertStrings") = true),
              "Returns a dictionary populated with the molecules properties.\n"
              " n.b. Some properties are not able to be converted to python "
              "types.\n\n"
@@ -772,12 +763,6 @@ struct mol_wrapper {
              "                      Defaults to False.\n\n"
              "  RETURNS: a dictionary\n")
 
-        .def("GetAtoms", MolGetAtoms,
-             python::return_value_policy<
-                 python::manage_new_object,
-                 python::with_custodian_and_ward_postcall<0, 1>>(),
-             "Returns a read-only sequence containing all of the molecule's "
-             "Atoms.\n")
         .def("GetAromaticAtoms", MolGetAromaticAtoms,
              python::return_value_policy<
                  python::manage_new_object,
@@ -790,13 +775,6 @@ struct mol_wrapper {
                  python::with_custodian_and_ward_postcall<0, 1>>(),
              "Returns a read-only sequence containing all of the atoms in a "
              "molecule that match the query atom.\n")
-
-        .def("GetBonds", MolGetBonds,
-             python::return_value_policy<
-                 python::manage_new_object,
-                 python::with_custodian_and_ward_postcall<0, 1>>(),
-             "Returns a read-only sequence containing all of the molecule's "
-             "Bonds.\n")
 
         // enable pickle support
         .def_pickle(mol_pickle_suite())
@@ -900,5 +878,6 @@ struct mol_wrapper {
         .def_pickle(mol_pickle_suite());
   };
 };
+
 }  // namespace RDKit
 void wrap_mol() { RDKit::mol_wrapper::wrap(); }

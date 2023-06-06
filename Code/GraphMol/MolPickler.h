@@ -286,7 +286,8 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void _pickleProperties(std::ostream &ss, const RDProps &props,
                                 unsigned int pickleFlags);
   //! unpickle standard properties
-  static void _unpickleProperties(std::istream &ss, RDProps &props);
+  static void _unpickleProperties(std::istream &ss, RDProps &props,
+                                  int version);
 
   //! backwards compatibility
   static void _pickleV1(const ROMol *mol, std::ostream &ss);
