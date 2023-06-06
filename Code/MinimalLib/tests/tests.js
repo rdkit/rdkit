@@ -1979,10 +1979,8 @@ function test_is_valid_deprecated() {
     var mol = RDKitModule.get_mol('C');
     assert(mol !== null);
     assert(mol.is_valid());
-    assert(mol.is_valid());
     var rxn = RDKitModule.get_rxn('C>>N');
     assert(rxn !== null);
-    assert(rxn.is_valid());
     assert(rxn.is_valid());
 }
 

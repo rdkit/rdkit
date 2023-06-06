@@ -18,7 +18,7 @@ class JSMolIterator;
 
 class JSMol {
  public:
-  JSMol() : d_mol(new RDKit::RWMol()) { assert(d_mol); }
+  JSMol() : d_mol(new RDKit::RWMol()) {}
   JSMol(RDKit::RWMol *mol) : d_mol(mol) { assert(d_mol); }
   std::string get_smiles() const;
   std::string get_cxsmiles() const;
@@ -164,7 +164,7 @@ class JSMolIterator {
 
 class JSReaction {
  public:
-  JSReaction() : d_rxn(new RDKit::ChemicalReaction()) { assert(d_rxn); }
+  JSReaction() : d_rxn(new RDKit::ChemicalReaction()) {}
   JSReaction(RDKit::ChemicalReaction *rxn) : d_rxn(rxn) { assert(d_rxn); }
   [
       [deprecated("please check the get_rxn return value for non-nullness "

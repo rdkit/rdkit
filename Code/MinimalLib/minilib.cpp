@@ -541,12 +541,6 @@ void JSMol::straighten_depiction(bool minimizeRotation) {
 }
 
 bool JSMol::is_valid() const {
-  static bool warningIssued = false;
-  if (!warningIssued) {
-    warningIssued = true;
-    std::cerr << "JSMol::is_valid() is deprecated and always returns true"
-              << std::endl;
-  }
   return true;
 }
 
@@ -580,12 +574,6 @@ std::string JSReaction::get_svg_with_highlights(
 }
 
 bool JSReaction::is_valid() const {
-  static bool warningIssued = false;
-  if (!warningIssued) {
-    warningIssued = true;
-    std::cerr << "JSReaction::is_valid() is deprecated and always returns true"
-              << std::endl;
-  }
   return true;
 }
 
