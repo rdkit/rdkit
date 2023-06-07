@@ -46,6 +46,8 @@ namespace rj = rapidjson;
 using namespace RDKit;
 
 namespace {
+static const char *NO_SUPPORT_FOR_PATTERN_FPS = "This SubstructLibrary was built without support for pattern fps";
+
 std::string mappingToJsonArray(const ROMol &mol) {
   std::vector<unsigned int> atomMapping;
   std::vector<unsigned int> bondMapping;
@@ -339,16 +341,30 @@ std::string JSMol::get_stereo_tags() const {
   return buffer.GetString();
 }
 
+void JSMol::convert_to_aromatic_form() {
+  assert(d_mol);
+
+  d_mol->updatePropertyCache();
+  MolOps::setAromaticity(*d_mol);
+}
+
 std::string JSMol::get_aromatic_form() const {
   assert(d_mol);
 
   RWMol molCopy(*d_mol);
+  molCopy.updatePropertyCache();
   MolOps::setAromaticity(molCopy);
 
   bool includeStereo = true;
   int confId = -1;
   bool kekulize = false;
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
+}
+
+void JSMol::convert_to_kekule_form() {
+  assert(d_mol);
+
+  MolOps::Kekulize(*d_mol);
 }
 
 std::string JSMol::get_kekule_form() const {
@@ -577,14 +593,18 @@ bool JSReaction::is_valid() const {
   return true;
 }
 
-JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
-    : d_sslib(new SubstructLibrary(
-          boost::shared_ptr<CachedTrustedSmilesMolHolder>(
-              new CachedTrustedSmilesMolHolder()),
-          boost::shared_ptr<PatternHolder>(new PatternHolder(num_bits)))) {
-  d_molHolder = dynamic_cast<CachedTrustedSmilesMolHolder *>(
-      d_sslib->getMolHolder().get());
-  d_fpHolder = dynamic_cast<PatternHolder *>(d_sslib->getFpHolder().get());
+JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits) :
+  d_fpHolder(nullptr) {
+  boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolderSptr(new CachedTrustedSmilesMolHolder());
+  boost::shared_ptr<PatternHolder> fpHolderSptr;
+  d_molHolder = molHolderSptr.get();
+  if (num_bits) {
+    fpHolderSptr.reset(new PatternHolder(num_bits));
+    d_fpHolder = fpHolderSptr.get();
+    d_sslib.reset(new SubstructLibrary(molHolderSptr, fpHolderSptr));
+  } else {
+    d_sslib.reset(new SubstructLibrary(molHolderSptr));
+  }
 }
 
 int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
@@ -594,24 +614,34 @@ int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
   }
   mol->updatePropertyCache();
   MolOps::fastFindRings(*mol);
-  auto fp = d_fpHolder->makeFingerprint(*mol);
-  if (!fp) {
-    return -1;
+  int smiIdx;
+  if (d_fpHolder) {
+    auto fp = d_fpHolder->makeFingerprint(*mol);
+    if (!fp) {
+      return -1;
+    }
+    int fpIdx = d_fpHolder->addFingerprint(fp);
+    smiIdx = d_molHolder->addSmiles(smi);
+    CHECK_INVARIANT(fpIdx == smiIdx, "");
+  } else {
+    smiIdx = d_molHolder->addSmiles(smi);
   }
-  auto fpIdx = d_fpHolder->addFingerprint(fp);
-  auto smiIdx = d_molHolder->addSmiles(smi);
-  return (fpIdx == smiIdx ? fpIdx : -1);
+  return smiIdx;
 }
 
 int JSSubstructLibrary::add_trusted_smiles_and_pattern_fp(
     const std::string &smi, const std::string &patternFp) {
+  if (!d_fpHolder) {
+    throw ValueErrorException(NO_SUPPORT_FOR_PATTERN_FPS);
+  }
   auto bitVect = new ExplicitBitVect(patternFp);
   if (!bitVect) {
     return -1;
   }
-  auto fpIdx = d_fpHolder->addFingerprint(bitVect);
-  auto smiIdx = d_molHolder->addSmiles(smi);
-  return (fpIdx == smiIdx ? fpIdx : -1);
+  int fpIdx = d_fpHolder->addFingerprint(bitVect);
+  int smiIdx = d_molHolder->addSmiles(smi);
+  CHECK_INVARIANT(fpIdx == smiIdx, "");
+  return smiIdx;
 }
 
 std::string JSSubstructLibrary::get_trusted_smiles(unsigned int i) const {
@@ -619,6 +649,9 @@ std::string JSSubstructLibrary::get_trusted_smiles(unsigned int i) const {
 }
 
 std::string JSSubstructLibrary::get_pattern_fp(unsigned int i) const {
+  if (!d_fpHolder) {
+    throw ValueErrorException(NO_SUPPORT_FOR_PATTERN_FPS);
+  }
   return d_fpHolder->getFingerprints().at(i)->toString();
 }
 
@@ -640,8 +673,7 @@ int JSSubstructLibrary::add_smiles(const std::string &smi) {
 }
 
 JSMol *JSSubstructLibrary::get_mol(unsigned int i) {
-  auto mol = new RWMol(*d_sslib->getMol(i));
-  return mol ? new JSMol(mol) : nullptr;
+  return new JSMol(new RWMol(*d_sslib->getMol(i)));
 }
 
 std::string JSSubstructLibrary::get_matches(const JSMol &q, bool useChirality,
@@ -678,8 +710,7 @@ std::string get_inchikey_for_inchi(const std::string &input) {
 }
 
 JSMol *get_mol_copy(const JSMol &other) {
-  auto mol = new RWMol(*other.d_mol);
-  return mol ? new JSMol(mol) : nullptr;
+  return new JSMol(new RWMol(*other.d_mol));
 }
 
 JSMol *get_mol(const std::string &input, const std::string &details_json) {
