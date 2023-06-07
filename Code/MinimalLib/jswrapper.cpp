@@ -521,7 +521,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       // functionality primarily useful in ketcher
       .function("get_stereo_tags", &JSMol::get_stereo_tags)
       .function("get_aromatic_form", &JSMol::get_aromatic_form)
+      .function("convert_to_aromatic_form", &JSMol::convert_to_aromatic_form)
       .function("get_kekule_form", &JSMol::get_kekule_form)
+      .function("convert_to_kekule_form", &JSMol::convert_to_kekule_form)
       .function("set_new_coords",
                 select_overload<bool()>(&JSMol::set_new_coords))
       .function("get_new_coords",

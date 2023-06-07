@@ -284,6 +284,62 @@ function test_get_aromatic_kekule_form() {
     molblock = mol.get_aromatic_form();
     assert (molblock.match(aromRegExp).length === 6);
     assert (molblock.match(kekRegExp) === null);
+    mol.delete();
+    mol = RDKitModule.get_qmol(`
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.6473    0.8696    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6473   -0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  4  0  0  0  0
+  5  6  4  0  0  0  0
+  6  1  4  0  0  0  0
+M  END
+`);
+    molblock = mol.get_aromatic_form();
+    assert (molblock.match(aromRegExp).length === 6);
+    assert (molblock.match(kekRegExp) === null);
+    molblock = mol.get_kekule_form();
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
+    mol.delete();
+    mol = RDKitModule.get_qmol(`
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.6473    0.8696    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6473   -0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+M  END
+`);
+    molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
+    mol.convert_to_aromatic_form();
+    molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
+    assert (molblock.match(aromRegExp).length === 6);
+    assert (molblock.match(kekRegExp) === null);
+    mol.convert_to_kekule_form();
+    molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
+    mol.delete();
 }
 
 function test_sketcher_services() {
@@ -329,87 +385,101 @@ function test_abbreviations() {
 
 function test_substruct_library(done) {
     done.test_substruct_library = false;
-    var smiReader = readline.createInterface({
-        input: fs.createReadStream(__dirname + '/../../GraphMol/test_data/compounds.smi')
-    });
     var query = RDKitModule.get_qmol('C1CCCCN1');
     var nonExistingQuery = RDKitModule.get_mol('O=C(O)C(c1ccc(cc1)CCN4CCC(c2nc3ccccc3n2CCOCC)CC4)(C)C');
-    var sslib = new RDKitModule.SubstructLibrary();
-    assert.equal(sslib.count_matches(query), 0);
-    assert.equal(sslib.get_matches(query), JSON.stringify([]));
-    assert.equal(sslib.get_matches_as_uint32array(query).length, 0);
-    // var t0 = performance.now()
-    // console.log('Started adding trusted SMILES');
-    var matches = [];
-    var expectedMatches = [39, 64, 80, 127, 128, 234, 240];
-    var i = 0;
+    const numBitOptions = [-1, 0];
     var patternFpArray = [];
-    var trustedSmiArray = []
-    smiReader.on('line', (smi) => {
-        sslib.add_trusted_smiles(smi);
-        var mol = RDKitModule.get_mol(smi);
-        var res = JSON.parse(mol.get_substruct_match(query));
-        if (res.atoms) {
-            matches.push(i);
-        }
-        ++i;
-        mol.delete();
-    });
-    smiReader.on('close', () => {
-        // var t1 = performance.now();
-        // console.log('Finished adding trusted SMILES took ' + (t1 - t0) / 1000 + ' seconds');
-        for (var i = 0; i < sslib.size(); ++i) {
-            trustedSmiArray.push(sslib.get_trusted_smiles(i));
-            var fp = sslib.get_pattern_fp_as_uint8array(i);
-            patternFpArray.push(fp);
-        }
-        assert.equal(trustedSmiArray.length, sslib.size());
-        assert.equal(patternFpArray.length, sslib.size());
-        assert.equal(trustedSmiArray.length, patternFpArray.length);
-        var sslib2 = new RDKitModule.SubstructLibrary();
-        for (var i = 0; i < sslib.size(); ++i) {
-            sslib2.add_trusted_smiles_and_pattern_fp(trustedSmiArray[i], patternFpArray[i]);
-        }
-        assert.equal(sslib.size(), sslib2.size());
+    numBitOptions.forEach((numBits, optIdx) => {
+        var smiReader = readline.createInterface({
+            input: fs.createReadStream(__dirname + '/../../GraphMol/test_data/compounds.smi')
+        });
+        var sslib = numBits < 0 ? new RDKitModule.SubstructLibrary() : new RDKitModule.SubstructLibrary(numBits);
+        assert.equal(sslib.count_matches(query), 0);
+        assert.equal(sslib.get_matches(query), JSON.stringify([]));
+        assert.equal(sslib.get_matches_as_uint32array(query).length, 0);
+        // var t0 = performance.now()
+        // console.log('Started adding trusted SMILES');
+        var matches = [];
+        var expectedMatches = [39, 64, 80, 127, 128, 234, 240];
+        var i = 0;
+        var trustedSmiArray = []
+        smiReader.on('line', (smi) => {
+            sslib.add_trusted_smiles(smi);
+            var mol = RDKitModule.get_mol(smi);
+            var res = JSON.parse(mol.get_substruct_match(query));
+            if (res.atoms) {
+                matches.push(i);
+            }
+            ++i;
+            mol.delete();
+        });
+        smiReader.on('close', () => {
+            // var t1 = performance.now();
+            // console.log('Finished adding trusted SMILES took ' + (t1 - t0) / 1000 + ' seconds');
+            for (var i = 0; i < sslib.size(); ++i) {
+                trustedSmiArray.push(sslib.get_trusted_smiles(i));
+                let excRaised = false;
+                try {
+                    var fp = sslib.get_pattern_fp_as_uint8array(i);
+                    patternFpArray.push(fp);
+                } catch (e) {
+                    // this is expected to fail when numBits === 0
+                    excRaised = true;
+                }
+                assert((excRaised && numBits === 0) || (!excRaised && numBits !== 0));
+            }
+            assert.equal(trustedSmiArray.length, sslib.size());
+            assert.equal(patternFpArray.length, sslib.size());
+            assert.equal(trustedSmiArray.length, patternFpArray.length);
+            var sslib2 = new RDKitModule.SubstructLibrary();
+            for (var i = 0; i < sslib.size(); ++i) {
+                sslib2.add_trusted_smiles_and_pattern_fp(trustedSmiArray[i], patternFpArray[i]);
+            }
+            assert.equal(sslib.size(), sslib2.size());
             {
-            assert.equal(sslib.count_matches(query, false), 7);
-            var sslibMatches = sslib.get_matches(query);
-            assert.equal(sslibMatches, JSON.stringify(expectedMatches));
-            var sslibMatchesUInt32Array = sslib.get_matches_as_uint32array(query);
-            assert.equal(sslibMatchesUInt32Array.length, expectedMatches.length);
-            for (var i = 0; i < expectedMatches.length; ++i) {
-                assert.equal(sslibMatchesUInt32Array[i], expectedMatches[i]);
+                assert.equal(sslib.count_matches(query, false), 7);
+                var sslibMatches = sslib.get_matches(query);
+                assert.equal(sslibMatches, JSON.stringify(expectedMatches));
+                assert.equal(sslibMatches, JSON.stringify(matches));
+                var sslibMatchesUInt32Array = sslib.get_matches_as_uint32array(query);
+                assert.equal(sslibMatchesUInt32Array.length, expectedMatches.length);
+                for (var i = 0; i < expectedMatches.length; ++i) {
+                    assert.equal(sslibMatchesUInt32Array[i], expectedMatches[i]);
+                }
             }
-        }
-        {
-            assert.equal(sslib.count_matches(nonExistingQuery, false), 0);
-            var sslibMatches = sslib.get_matches(nonExistingQuery);
-            assert.equal(sslibMatches, JSON.stringify([]));
-            var sslibMatchesUInt32Array = sslib.get_matches_as_uint32array(nonExistingQuery);
-            assert.equal(sslibMatchesUInt32Array.length, 0);
-        }
-        {
-            assert.equal(sslib2.count_matches(query, false), 7);
-            var sslib2Matches = sslib2.get_matches(query);
-            assert.equal(sslib2Matches, JSON.stringify(expectedMatches));
-            var sslib2MatchesUInt32Array = sslib2.get_matches_as_uint32array(query);
-            assert.equal(sslib2MatchesUInt32Array.length, expectedMatches.length);
-            for (var i = 0; i < expectedMatches.length; ++i) {
-                assert.equal(sslib2MatchesUInt32Array[i], expectedMatches[i]);
+            {
+                assert.equal(sslib.count_matches(nonExistingQuery, false), 0);
+                var sslibMatches = sslib.get_matches(nonExistingQuery);
+                assert.equal(sslibMatches, JSON.stringify([]));
+                var sslibMatchesUInt32Array = sslib.get_matches_as_uint32array(nonExistingQuery);
+                assert.equal(sslibMatchesUInt32Array.length, 0);
             }
-        }
-        {
-            assert.equal(sslib2.count_matches(nonExistingQuery, false), 0);
-            var sslib2Matches = sslib2.get_matches(nonExistingQuery);
-            assert.equal(sslib2Matches, JSON.stringify([]));
-            var sslib2MatchesUInt32Array = sslib2.get_matches_as_uint32array(nonExistingQuery);
-            assert.equal(sslib2MatchesUInt32Array.length, 0);
-        }
-        done.test_substruct_library = true;
-        query.delete();
-        nonExistingQuery.delete();
-        sslib.delete();
-        sslib2.delete();
+            {
+                assert.equal(sslib2.count_matches(query, false), 7);
+                var sslib2Matches = sslib2.get_matches(query);
+                assert.equal(sslib2Matches, JSON.stringify(expectedMatches));
+                assert.equal(sslib2Matches, JSON.stringify(matches));
+                var sslib2MatchesUInt32Array = sslib2.get_matches_as_uint32array(query);
+                assert.equal(sslib2MatchesUInt32Array.length, expectedMatches.length);
+                for (var i = 0; i < expectedMatches.length; ++i) {
+                    assert.equal(sslib2MatchesUInt32Array[i], expectedMatches[i]);
+                }
+            }
+            {
+                assert.equal(sslib2.count_matches(nonExistingQuery, false), 0);
+                var sslib2Matches = sslib2.get_matches(nonExistingQuery);
+                assert.equal(sslib2Matches, JSON.stringify([]));
+                var sslib2MatchesUInt32Array = sslib2.get_matches_as_uint32array(nonExistingQuery);
+                assert.equal(sslib2MatchesUInt32Array.length, 0);
+            }
+            sslib.delete();
+            sslib2.delete();
+            if (optIdx === numBitOptions.length - 1) {
+                done.test_substruct_library = true;
+                query.delete();
+                nonExistingQuery.delete();
+            }
+        });
     });
 }
 

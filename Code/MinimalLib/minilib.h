@@ -99,7 +99,9 @@ class JSMol {
 
   std::string get_stereo_tags() const;
   std::string get_aromatic_form() const;
+  void convert_to_aromatic_form();
   std::string get_kekule_form() const;
+  void convert_to_kekule_form();
   bool set_new_coords(bool useCoordGen);
   bool set_new_coords() { return set_new_coords(false); }
   std::string get_new_coords(bool useCoordGen) const;
