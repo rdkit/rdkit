@@ -15,7 +15,10 @@ import tempfile
 import unittest
 
 from rdkit import Chem
-from rdkit.Chem import AllChem, Draw, rdDepictor, rdMolDescriptors
+from rdkit.Chem import AllChem
+from rdkit.Chem import Draw
+from rdkit.Chem import rdDepictor
+from rdkit.Chem import rdMolDescriptors
 
 try:
   from rdkit.Chem.Draw import IPythonConsole
