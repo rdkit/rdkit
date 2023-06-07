@@ -24,6 +24,14 @@
 
 namespace RDKit {
 
+namespace {
+struct cmpCStr {
+   bool operator()(const char *a, const char *b) const {
+    return std::strcmp(a, b) < 0;
+  }
+};
+} // namespace
+
 void MCSParameters::setMCSAtomTyperFromEnum(AtomComparator atomComp) {
   switch (atomComp) {
     case AtomCompareAny:
@@ -45,7 +53,7 @@ void MCSParameters::setMCSAtomTyperFromEnum(AtomComparator atomComp) {
 
 void MCSParameters::setMCSAtomTyperFromConstChar(const char* atomComp) {
   PRECONDITION(atomComp, "atomComp must not be NULL");
-  static const std::map<const char*, AtomComparator> atomCompStringToEnum = {
+  static const std::map<const char*, AtomComparator, cmpCStr> atomCompStringToEnum = {
       {"Any", AtomCompareAny},
       {"Elements", AtomCompareElements},
       {"Isotopes", AtomCompareIsotopes},
@@ -75,7 +83,7 @@ void MCSParameters::setMCSBondTyperFromEnum(BondComparator bondComp) {
 
 void MCSParameters::setMCSBondTyperFromConstChar(const char* bondComp) {
   PRECONDITION(bondComp, "bondComp must not be NULL");
-  static const std::map<const char*, BondComparator> bondCompStringToEnum = {
+  static const std::map<const char*, BondComparator, cmpCStr> bondCompStringToEnum = {
       {"Any", BondCompareAny},
       {"Order", BondCompareOrder},
       {"OrderExact", BondCompareOrderExact}};

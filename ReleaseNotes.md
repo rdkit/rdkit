@@ -6,12 +6,21 @@
 ## Highlights
 
 ## Backwards incompatible changes
-All methods returning `JSMol` and `JSReaction` objects now return a `nullptr`
-(`null` in JS) when faling to generate a valid object, while previously
-they were returning objects whose `is_valid()` method would return `false`.
-The new implementation avoids the overhead of having to call `delete()`
-on invalid objects and was approved in a [public discussion on the `rdkit-js`
-GitHub repository](https://github.com/rdkit/rdkit-js/discussions/336)
+- All methods returning `JSMol` and `JSReaction` objects now return a
+`nullptr` (`null` in JS) when faling to generate a valid object, while
+previously they were returning objects whose `is_valid()` method would
+return `false`. The new implementation avoids the overhead of having to
+call `delete()` on invalid objects and was approved in a
+[public discussion on the `rdkit-js` GitHub repository](
+  https://github.com/rdkit/rdkit-js/discussions/336)
+- In JS MinimalLib, `MolIterator` was renamed to `MolList`: since now it
+includes `at()`, `append()`, `insert()` and `pop()` methods, `MolIterator`
+felt inappropriate. This change should have minimal impact on existing
+JS code since so far there was no constructor for this class.
+The only place where JS code needs to be updated is when parsing the return
+value of `JSMol::get_frags()`: the return value consists of an object with
+two keys, `molIterator` and `mappings`. The `molIterator` key has now
+been renamed to `molList`.
 
 ## Bug Fixes:
 

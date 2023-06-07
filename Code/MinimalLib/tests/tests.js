@@ -1769,17 +1769,17 @@ function test_get_frags() {
             frags: [0,0,0,0,0,0,1,1,1,1,2,2,2,2,2],
             fragsMolAtomMapping: [[0,1,2,3,4,5],[6,7,8,9],[10,11,12,13,14]],
         };
-        var { molIterator, mappings } = mol.get_frags();
-        assert(molIterator.size() === 3);
+        var { molList, mappings } = mol.get_frags();
+        assert(molList.size() === 3);
         assert(JSON.stringify(JSON.parse(mappings)) === JSON.stringify(expectedMappings));
         var i = 0;
-        while (!molIterator.at_end()) {
-            var mol = molIterator.next();
+        while (!molList.at_end()) {
+            var mol = molList.next();
             assert(mol.get_smiles() === expectedFragSmiles[i++]);
             mol.delete();
         }
-        assert(!molIterator.next());
-        molIterator.delete();
+        assert(!molList.next());
+        molList.delete();
     }
     {
         var mol = RDKitModule.get_mol("N(C)(C)(C)C.c1ccc1", JSON.stringify({sanitize: false}));
@@ -1790,16 +1790,16 @@ function test_get_frags() {
             exceptionThrown = true;
         }
         assert(exceptionThrown);
-        var { molIterator, mappings } = mol.get_frags(JSON.stringify({sanitizeFrags: false}));
-        assert(molIterator.size() === 2);
+        var { molList, mappings } = mol.get_frags(JSON.stringify({sanitizeFrags: false}));
+        assert(molList.size() === 2);
         var i = 0;
-        while (!molIterator.at_end()) {
-            var mol = molIterator.next();
+        while (!molList.at_end()) {
+            var mol = molList.next();
             assert(mol.get_smiles() === expectedFragSmilesNonSanitized[i++]);
             mol.delete();
         }
-        assert(!molIterator.next());
-        molIterator.delete();
+        assert(!molList.next());
+        molList.delete();
     }
 }
 
@@ -2057,6 +2057,270 @@ function test_is_valid_deprecated() {
     assert(rxn === null);
 }
 
+function molListFromSmiArray(smiArray) {
+    const molList = new RDKitModule.MolList();
+    assert(molList);
+    smiArray.forEach((smiName) => {
+        const [smi, name] = smiName.split(' ');
+        let mol;
+        try {
+            mol = RDKitModule.get_mol(smi);
+            assert(mol);
+            molList.append(mol);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+    });
+    return molList;
+}
+
+function test_mol_list() {
+    const smiArray = [ 'C1CC1', 'C1CCCC1' ];
+    let molList;
+    let mol;
+    try {
+        molList = molListFromSmiArray(smiArray);
+        assert(molList);
+        assert.equal(molList.size(), 2);
+        assert(!molList.at_end());
+        try {
+            mol = molList.next();
+            assert(mol);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        try {
+            mol = molList.next();
+            assert(mol);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        mol = molList.next();
+        assert(!mol);
+        assert(molList.at_end());
+        try {
+            mol = molList.at(0);
+            assert.equal(mol.get_num_atoms(), 3);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        try {
+            mol = molList.at(1);
+            assert.equal(mol.get_num_atoms(), 5);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        assert(molList.at_end());
+        try {
+            mol = RDKitModule.get_mol('C1CCC1');
+            assert(mol);
+            molList.insert(1, mol);
+            assert.equal(molList.size(), 3);
+            assert(!molList.at_end());
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        molList.reset();
+        assert(!molList.at_end());
+        try {
+            mol = molList.at(1);
+            assert.equal(mol.get_num_atoms(), 4);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        try {
+            mol = molList.pop(0);
+            assert.equal(mol.get_num_atoms(), 3);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        assert.equal(molList.size(), 2);
+        let i = 0;
+        while (!molList.at_end()) {
+            try {
+                mol = molList.next();
+            } finally {
+                if (mol) {
+                    ++i;
+                    mol.delete();
+                }
+            }
+        }
+        assert.equal(i, 2);
+        assert(molList.at_end());
+        try {
+            mol = molList.pop(0);
+            assert.equal(mol.get_num_atoms(), 4);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        assert.equal(molList.size(), 1);
+        assert(molList.at_end());
+        try {
+            mol = molList.pop(0);
+            assert.equal(mol.get_num_atoms(), 5);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        assert.equal(molList.size(), 0);
+        assert(molList.at_end());
+        assert(!molList.pop(0));
+        try {
+            mol = RDKitModule.get_mol('C1CCCCC1');
+            assert(mol);
+            molList.append(mol);
+            assert.equal(molList.size(), 1);
+            assert(!molList.at_end());
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        assert(!molList.at(1));
+        try {
+            mol = molList.at(0);
+            assert(mol);
+            assert(mol.get_num_atoms(), 6);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+    } finally {
+        if (molList) {
+            molList.delete();
+        }
+    }
+}
+
+function test_mcs() {
+    {
+        const smiArray = [
+            "COc1cc2nc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)ccc3)oc2cc1  CHEMBL1479679",
+            "COc1cc2nc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)c(C)cc3)oc2cc1  CHEMBL1333382",
+            "Cc1cc2oc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)ccc3)nc2cc1  CHEMBL1437584",
+            "COc1c(NC(=O)CSc2ccc(Cl)cc2)cc(-c2nc3ccccc3o2)cc1  CHEMBL1601350",
+            "Cc1cc2nc(-c3cccc(NC(=O)CSc4ccc(Cl)cc4)c3)oc2cc1C  CHEMBL1398008",
+            "Cc1cc2oc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)c(C)cc3)nc2cc1  CHEMBL1612903",
+            "COc1cc2nc(-c3cc(NC(=O)Cc4ccc(Cl)cc4)c(C)cc3)oc2cc1  CHEMBL1316483",
+            "Cc1c(NC(=O)CSc2ccc(Cl)cc2)cccc1-c1nc2cc(Cl)ccc2o1  CHEMBL1568754",
+            "COc1ccc2oc(-c3ccc(C)c(NC(=O)COc4cc(C)cc(C)c4)c3)nc2c1  CHEMBL1436972",
+            "Cc1ccc(SCC(=O)Nc2cc(-c3nc4cc(C)ccc4o3)c(O)cc2)cc1  CHEMBL1611932",
+        ];
+        let molList;
+        let mcsSmarts;
+        try {
+            molList = molListFromSmiArray(smiArray);
+            let mcsMol;
+            try {
+                mcsMol = RDKitModule.get_mcs_as_mol(molList);
+                assert(mcsMol);
+                assert.equal(mcsMol.get_smarts(), '[#6]1:[#6]:[#6]2:[#8]:[#6](:[#7]:[#6]:2:[#6]:[#6]:1)-[#6]1:[#6]:[#6](-[#7]-[#6](=[#8])-[#6]):[#6]:[#6]:[#6]:1');
+                mcsSmarts = RDKitModule.get_mcs_as_smarts(molList);
+            } finally {
+                if (mcsMol) {
+                    mcsMol.delete();
+                }
+            }
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcsSmarts);
+        assert.equal(mcsSmarts, '[#6]1:[#6]:[#6]2:[#8]:[#6](:[#7]:[#6]:2:[#6]:[#6]:1)-[#6]1:[#6]:[#6](-[#7]-[#6](=[#8])-[#6]):[#6]:[#6]:[#6]:1');
+    }
+    {
+        const smiArray = ["C1CC1N2CC2", "C1CC1N"];
+        let molList;
+        try {
+            molList = molListFromSmiArray(smiArray);
+            let mcsMol;
+            try {
+                mcsMol = RDKitModule.get_mcs_as_mol(molList);
+                assert(mcsMol);
+                assert.equal(mcsMol.get_num_atoms(), 4);
+                assert.equal(mcsMol.get_num_bonds(), 4);
+            } finally {
+                if (mcsMol) {
+                    mcsMol.delete();
+                }
+            }
+            try {
+                mcsMol = RDKitModule.get_mcs_as_mol(molList, JSON.stringify({ RingMatchesRingOnly: true }));
+                assert(mcsMol);
+                assert.equal(mcsMol.get_num_atoms(), 3);
+                assert.equal(mcsMol.get_num_bonds(), 3);
+            } finally {
+                if (mcsMol) {
+                    mcsMol.delete();
+                }
+            }
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+    }
+    {
+        const smiArray = ["NC1CCCCC1", "Cc1ccccc1", "Cc1cnccc1", "CC1CCCCN1"];
+        let molList;
+        const res = new Set();
+        try {
+            molList = molListFromSmiArray(smiArray);
+            ["Elements", "Any"].forEach((AtomCompare) => {
+                ["Order", "OrderExact"].forEach((BondCompare) => {
+                    const details = {
+                        AtomCompare,
+                        BondCompare
+                    };
+                    let mcsSmarts;
+                    mcsSmarts = RDKitModule.get_mcs_as_smarts(molList, JSON.stringify(details));
+                    assert(mcsSmarts);
+                    res.add(mcsSmarts);
+                });
+            });
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(res.size === 4);
+    }
+}
+
+function test_get_num_atoms_bonds() {
+    var mol = RDKitModule.get_mol('CCCC');
+    var molH = RDKitModule.get_mol_copy(mol);
+    molH.add_hs_in_place();
+    assert.equal(mol.get_num_atoms(), molH.get_num_atoms(true));
+    assert.equal(mol.get_num_atoms(), 4);
+    assert.equal(molH.get_num_atoms(), 14);
+    assert.equal(molH.get_num_atoms(false), 14);
+    assert.equal(mol.get_num_bonds(), 3);
+    assert.equal(molH.get_num_bonds(), 13);
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -2078,11 +2342,13 @@ initRDKitModule().then(function(instance) {
     test_sketcher_services();
     test_sketcher_services2();
     test_abbreviations();
-    test_substruct_library(done);
-    test_substruct_library_merge_hs();
-    test_substruct_library_empty_mols();
-    test_substruct_library_empty_lib();
-    test_substruct_library_empty_query();
+    if (RDKitModule.SubstructLibrary) {
+        test_substruct_library(done);
+        test_substruct_library_merge_hs();
+        test_substruct_library_empty_mols();
+        test_substruct_library_empty_lib();
+        test_substruct_library_empty_query();
+    }
     test_generate_aligned_coords();
     test_isotope_labels();
     test_generate_aligned_coords_allow_rgroups();
@@ -2098,7 +2364,9 @@ initRDKitModule().then(function(instance) {
     test_normalize_depiction();
     test_straighten_depiction();
     test_flexicanvas();
-    test_rxn_drawing();
+    if (RDKitModule.get_rxn)  {
+        test_rxn_drawing();
+    }
     test_legacy_stereochem();
     test_allow_non_tetrahedral_chirality();
     test_prop();
@@ -2112,6 +2380,11 @@ initRDKitModule().then(function(instance) {
     test_query_colour();
     test_alignment_r_groups_aromatic_ring();
     test_is_valid_deprecated();
+    test_mol_list();
+    test_get_num_atoms_bonds();
+    if (RDKitModule.get_mcs_as_mol)  {
+        test_mcs();
+    }
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

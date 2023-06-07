@@ -24,7 +24,12 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#endif
+#ifdef RDK_BUILD_MINIMAL_LIB_MCS
+#include <GraphMol/FMCS/FMCS.h>
+#endif
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/MolInterchange/MolInterchange.h>
@@ -560,7 +565,7 @@ bool JSMol::is_valid() const {
   return true;
 }
 
-std::pair<JSMolIterator *, std::string> JSMol::get_frags(
+std::pair<JSMolList *, std::string> JSMol::get_frags(
     const std::string &details_json) {
   assert(d_mol);
   std::vector<int> frags;
@@ -572,10 +577,21 @@ std::pair<JSMolIterator *, std::string> JSMol::get_frags(
   auto molFrags = MolOps::getMolFrags(*d_mol, sanitizeFrags, &frags,
                                       &fragsMolAtomMapping, copyConformers);
   return std::make_pair(
-      new JSMolIterator(molFrags),
+      new JSMolList(molFrags),
       MinimalLib::get_mol_frags_mappings(frags, fragsMolAtomMapping));
 }
 
+unsigned int JSMol::get_num_atoms(bool heavyOnly) const {
+  assert(d_mol);
+  return heavyOnly ? d_mol->getNumHeavyAtoms() : d_mol->getNumAtoms();
+}
+
+unsigned int JSMol::get_num_bonds() const {
+  assert(d_mol);
+  return d_mol->getNumBonds();
+}
+
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 std::string JSReaction::get_svg(int w, int h) const {
   assert(d_rxn);
   return MinimalLib::rxn_to_svg(*d_rxn, w, h);
@@ -592,7 +608,46 @@ std::string JSReaction::get_svg_with_highlights(
 bool JSReaction::is_valid() const {
   return true;
 }
+#endif
 
+JSMol *JSMolList::next() {
+  return (d_idx < d_mols.size()
+              ? new JSMol(new RDKit::RWMol(*d_mols.at(d_idx++)))
+              : nullptr);
+}
+
+JSMol *JSMolList::at(size_t idx) const {
+  return (idx < d_mols.size() ? new JSMol(new RDKit::RWMol(*d_mols.at(idx)))
+                              : nullptr);
+}
+
+JSMol *JSMolList::pop(size_t idx) {
+  JSMol *res = nullptr;
+  if (idx < d_mols.size()) {
+    res = new JSMol(new RDKit::RWMol(*d_mols.at(idx)));
+    d_mols.erase(d_mols.begin() + idx);
+    if (d_idx > idx) {
+      --d_idx;
+    }
+  }
+  return res;
+}
+
+size_t JSMolList::append(const JSMol &mol) {
+  d_mols.emplace_back(new ROMol(*mol.d_mol));
+  return d_mols.size();
+}
+
+size_t JSMolList::insert(size_t idx, const JSMol &mol) {
+  size_t res = 0;
+  if (idx < d_mols.size()) {
+    d_mols.emplace(d_mols.begin() + idx, new ROMol(*mol.d_mol));
+    res = d_mols.size();
+  }
+  return res;
+}
+
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits) :
   d_fpHolder(nullptr) {
   boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolderSptr(new CachedTrustedSmilesMolHolder());
@@ -704,6 +759,7 @@ unsigned int JSSubstructLibrary::count_matches(const JSMol &q,
                                                  false, numThreads)
                          : 0;
 }
+#endif
 
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
@@ -737,10 +793,12 @@ JSMol *get_qmol(const std::string &input) {
   return mol ? new JSMol(mol) : nullptr;
 }
 
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 JSReaction *get_rxn(const std::string &input, const std::string &details_json) {
   auto rxn = MinimalLib::rxn_from_input(input, details_json);
   return rxn ? new JSReaction(rxn) : nullptr;
 }
+#endif
 
 std::string version() { return std::string(rdkitVersion); }
 
@@ -761,3 +819,28 @@ bool allow_non_tetrahedral_chirality(bool value) {
   Chirality::setAllowNontetrahedralChirality(value);
   return was;
 }
+
+#ifdef RDK_BUILD_MINIMAL_LIB_MCS
+namespace {
+MCSResult getMcsResult(const JSMolList &molList,
+               const std::string &details_json) {
+  MCSParameters p;
+  if (!details_json.empty()) {
+    parseMCSParametersJSON(details_json.c_str(), &p);
+  }
+  return RDKit::findMCS(molList.mols(), &p);
+}
+} // namespace
+
+std::string get_mcs_as_smarts(const JSMolList &molList,
+               const std::string &details_json) {
+  auto res = getMcsResult(molList, details_json);
+  return res.SmartsString;
+}
+
+JSMol *get_mcs_as_mol(const JSMolList &molList,
+               const std::string &details_json) {
+  auto res = getMcsResult(molList, details_json);
+  return new JSMol(new RWMol(*res.QueryMol));
+}
+#endif
