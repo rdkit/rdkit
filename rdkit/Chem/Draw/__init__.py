@@ -578,34 +578,6 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
                         highlightBondListsMatrix = None):
   """Converts a nested data structure (where each data substructure represents a row in mol grid image)
   to a linear one, padding rows as needed so all rows are the length of the longest row
-        ARGUMENTS:
-
-        - molsMatrix: A two-deep nested data structure of RDKit molecules to draw, for example list of lists of RDKit molecules
-
-        - legendsMatrix: A two-deep nested data structure of strings to label molecules with, for example list of lists of strings (default None)
-
-        - highlightAtomListsMatrix: A three-deep nested data structure of integers of atoms to highlight, for example list of lists of lists of integers (default None)
-
-        - highlightBondListsMatrix: A three-deep nested data structure of integers of bonds to highlight, for example list of lists of lists of integers (default None)
-
-      NOTE:
-
-            This private function does the heavy processing for MolsMatrixToGridImage
-
-      RETURNS:
-
-        Tuple of flattened (by one layer) data structures that MolsToGridImage accepts as input:
-        
-        - mols: A non-nested data structure of RDKit molecules to draw, for example list of RDKit molecules
-
-        - molsPerRow: The number of molecules per row (integer), equal to the longest row in molsMatrix
-
-        - legends: A non-nested data structure of strings to label molecules with, for example list of strings
-
-        - highlightAtomLists: A two-deep nested data structure of integers of atoms to highlight, for example list of lists of integers
-
-        - highlightBondLists: A two-deep nested data structure of integers of bonds to highlight, for example list of lists of integers
-
   """
   # Check that each item in nested lists is a list
   def CheckElementsAreLists(nestedList, nestedListName=""):
@@ -666,10 +638,7 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
             err += f"while its length in highlightBondListsMatrix is {len(row)}."
             raise ValueError(err)
 
-  def longestRow(matrix):
-      return max(len(row) for row in matrix)
-
-  molsPerRow = longestRow(molsMatrix)
+  molsPerRow = max(len(row) for row in molsMatrix)
 
   def padList(inputList, lengthShouldBe, padWith=""):
       length = len(inputList)
