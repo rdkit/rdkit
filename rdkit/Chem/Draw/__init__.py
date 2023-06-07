@@ -579,17 +579,17 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
   """Converts a nested data structure (where each data substructure represents a row in mol grid image)
   to a linear one, padding rows as needed so all rows are the length of the longest row
   """
-  # Check that each item in nested lists is a list
+  # Check that each element in nested iterable is a iterable
   def CheckElementsAreLists(nestedList, nestedListName=""):
-      for molRow in nestedList:
-          if not isinstance(molRow, list):
-              err = f"Each element in nested list {nestedListName} must be a list."
+      for element in nestedList:
+          if not all([hasattr(element, '__iter__'), hasattr(element, '__len__')]):
+              err = f"Each element in nested iterable {nestedListName} must be an iterable."
               raise ValueError(err)
 
   CheckElementsAreLists(molsMatrix, "molsMatrix")
 
   # Check that other matrices (if provided) are same length,
-  #   and each element (sub-list) is the same length, as molsMatrix
+  #   and each element (sub-iterable) is the same length, as molsMatrix
 
   nMolsRows = len(molsMatrix)
 
@@ -598,12 +598,12 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
     nLegendsRows = len(legendsMatrix)
     if nLegendsRows != nMolsRows:
         err = f"If legendsMatrix is provided it must be the same length (have the same number "
-        err += f"of sub-lists) as molsMatrix, {nMolsRows}; its length is {nLegendsRows}."
+        err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nLegendsRows}."
         raise ValueError(err)
     for rowIndex, row in enumerate(legendsMatrix):
         if len(row) != len(molsMatrix[rowIndex]):
-            err = f"If legendsMatrix is provided each of its sub-lists must be the same length "
-            err += f"as the corresponding sub-list of molsMatrix. For sub-list of index "
+            err = f"If legendsMatrix is provided each of its sub-iterables must be the same length "
+            err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
             err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
             err += f"while its length in legendsMatrix is {len(row)}."
             raise ValueError(err)
@@ -613,12 +613,12 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
     nHighlightAtomListsRows = len(highlightAtomListsMatrix)
     if nHighlightAtomListsRows != nMolsRows:
         err = f"If highlightAtomListsMatrix is provided it must be the same length (have the same number "
-        err += f"of sub-lists) as molsMatrix, {nMolsRows}; its length is {nHighlightAtomListsRows}."
+        err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nHighlightAtomListsRows}."
         raise ValueError(err)
     for rowIndex, row in enumerate(highlightAtomListsMatrix):
         if len(row) != len(molsMatrix[rowIndex]):
-            err = f"If highlightAtomListsMatrix is provided each of its sub-lists must be the same length "
-            err += f"as the corresponding sub-list of molsMatrix. For sub-list of index "
+            err = f"If highlightAtomListsMatrix is provided each of its sub-iterables must be the same length "
+            err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
             err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
             err += f"while its length in highlightAtomListsMatrix is {len(row)}."
             raise ValueError(err)
@@ -628,12 +628,12 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
     nHighlightBondListsRows = len(highlightBondListsMatrix)
     if nHighlightBondListsRows != nMolsRows:
         err = f"If highlightBondListsMatrix is provided it must be the same length (have the same number "
-        err += f"of sub-lists) as molsMatrix, {nMolsRows}; its length is {nHighlightBondListsRows}."
+        err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nHighlightBondListsRows}."
         raise ValueError(err)
     for rowIndex, row in enumerate(highlightBondListsMatrix):
         if len(row) != len(molsMatrix[rowIndex]):
-            err = f"If highlightBondListsMatrix is provided each of its sub-lists must be the same length "
-            err += f"as the corresponding sub-list of molsMatrix. For sub-list of index "
+            err = f"If highlightBondListsMatrix is provided each of its sub-iterables must be the same length "
+            err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
             err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
             err += f"while its length in highlightBondListsMatrix is {len(row)}."
             raise ValueError(err)
@@ -686,23 +686,23 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix = Non
           ARGUMENTS:
 
         - molsMatrix: A two-deep nested data structure of RDKit molecules to draw,
-         for example list of lists of RDKit molecules
+         iterable of iterables (for example list of lists) of RDKit molecules
 
         - subImgSize: The size of a cell in the drawing; passed through to MolsToGridImage (default (200, 200))
 
         - legendsMatrix: A two-deep nested data structure of strings to label molecules with,
-         for example list of lists of strings (default None)
+         iterable of iterables (for example list of lists) of strings (default None)
 
         - highlightAtomListsMatrix: A three-deep nested data structure of integers of atoms to highlight,
-         for example list of lists of lists of integers (default None)
+         iterable of iterables (for example list of lists) of integers (default None)
 
         - highlightBondListsMatrix: A three-deep nested data structure of integers of bonds to highlight,
-         for example list of lists of lists of integers (default None)
+         iterable of iterables (for example list of lists) of integers (default None)
 
         - useSVG: Whether to return an SVG (if true) or PNG (if false);
          passed through to MolsToGridImage (default false)
 
-        - returnPNG: Whether to return a PNG file (if true) or a PIL object for a PNG image file (if false);
+        - returnPNG: Whether to return PNG data (if true) or a PIL object for a PNG image file (if false);
          has no effect if useSVG is true; passed through to MolsToGridImage (default false)
 
         - kwargs: Any other keyword arguments are passed to MolsToGridImage
@@ -729,7 +729,7 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix = Non
         
         - useSVG=False and returnPNG=False (default): A PIL object for a PNG image file
 
-        - useSVG=False and returnPNG=True: A PNG file 
+        - useSVG=False and returnPNG=True: PNG data
 
         - useSVG=True: An SVG string
 
