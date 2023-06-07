@@ -107,6 +107,7 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
   return "";
 }
 
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 std::string draw_rxn_to_canvas_with_offset(JSReaction &self,
                                            emscripten::val canvas, int offsetx,
                                            int offsety, int width, int height) {
@@ -172,10 +173,21 @@ std::string draw_rxn_to_canvas_with_highlights(JSReaction &self,
                         : &highlightColorsReactants);
   return "";
 }
+#endif
 
 JSMol *get_mol_no_details(const std::string &input) {
   return get_mol(input, std::string());
 }
+
+#ifdef RDK_BUILD_MINIMAL_LIB_MCS
+JSMol *get_mcs_as_mol_no_details(const JSMolList &mols) {
+  return get_mcs_as_mol(mols, std::string());
+}
+
+std::string get_mcs_as_smarts_no_details(const JSMolList &mols) {
+  return get_mcs_as_smarts(mols, std::string());
+}
+#endif
 
 emscripten::val binary_string_to_uint8array(const std::string &pkl) {
   emscripten::val view(emscripten::typed_memory_view(
@@ -204,9 +216,11 @@ JSMol *get_mol_from_uint8array(const emscripten::val &pklAsUInt8Array) {
   return get_mol_from_pickle(pklAsUInt8Array.as<std::string>());
 }
 
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 JSReaction *get_rxn_no_details(const std::string &input) {
   return get_rxn(input, std::string());
 }
+#endif
 
 std::string generate_aligned_coords_helper(JSMol &self,
                                            const JSMol &templateMol,
@@ -312,7 +326,7 @@ emscripten::val get_frags_helper(JSMol &self, const std::string &details) {
   auto res = self.get_frags(details);
   auto obj = emscripten::val::object();
   auto molArray = emscripten::val::object();
-  obj.set("molIterator", res.first);
+  obj.set("molList", res.first);
   obj.set("mappings", res.second);
   return obj;
 }
@@ -321,6 +335,7 @@ emscripten::val get_frags_helper(JSMol &self) {
   return get_frags_helper(self, "{}");
 }
 
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 int add_trusted_smiles_and_pattern_fp_helper(
     JSSubstructLibrary &self, const std::string &smi,
     const emscripten::val &patternFpAsUInt8Array) {
@@ -355,6 +370,7 @@ emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self,
                                     self.d_defaultNumThreads,
                                     self.d_defaultMaxResults);
 }
+#endif
 
 #ifdef RDK_BUILD_AVALON_SUPPORT
 emscripten::val get_avalon_fp_as_uint8array(const JSMol &self,
@@ -555,14 +571,26 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("straighten_depiction",
                 select_overload<void()>(&JSMol::straighten_depiction))
       .function("straighten_depiction",
-                select_overload<void(bool)>(&JSMol::straighten_depiction));
+                select_overload<void(bool)>(&JSMol::straighten_depiction))
+      .function("get_num_atoms", select_overload<unsigned int(bool) const>(
+                                     &JSMol::get_num_atoms))
+      .function("get_num_atoms",
+                select_overload<unsigned int() const>(&JSMol::get_num_atoms))
+      .function("get_num_bonds", &JSMol::get_num_bonds)
+  ;
 
-  class_<JSMolIterator>("MolIterator")
-      .function("next", &JSMolIterator::next, allow_raw_pointers())
-      .function("reset", &JSMolIterator::reset)
-      .function("at_end", &JSMolIterator::at_end)
-      .function("size", &JSMolIterator::size);
+  class_<JSMolList>("MolList")
+      .constructor<>()
+      .function("append", &JSMolList::append)
+      .function("insert", &JSMolList::insert)
+      .function("at", &JSMolList::at, allow_raw_pointers())
+      .function("pop", &JSMolList::pop, allow_raw_pointers())
+      .function("next", &JSMolList::next, allow_raw_pointers())
+      .function("reset", &JSMolList::reset)
+      .function("at_end", &JSMolList::at_end)
+      .function("size", &JSMolList::size);
 
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
   class_<JSReaction>("Reaction")
 #ifdef __EMSCRIPTEN__
       .function("draw_to_canvas_with_offset", &draw_rxn_to_canvas_with_offset)
@@ -577,7 +605,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
 
       .function("get_svg_with_highlights",
                 &JSReaction::get_svg_with_highlights);
+#endif
 
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
   class_<JSSubstructLibrary>("SubstructLibrary")
       .constructor<>()
       .constructor<unsigned int>()
@@ -627,7 +657,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("count_matches",
                 select_overload<unsigned int(const JSMol &) const>(
                     &JSSubstructLibrary::count_matches))
-      .function("size", &JSSubstructLibrary::size);
+      .function("size", &JSSubstructLibrary::size)
+#endif
+;
 
   function("version", &version);
   function("prefer_coordgen", &prefer_coordgen);
@@ -640,6 +672,14 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
            allow_raw_pointers());
   function("get_mol_copy", &get_mol_copy, allow_raw_pointers());
   function("get_qmol", &get_qmol, allow_raw_pointers());
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
   function("get_rxn", &get_rxn, allow_raw_pointers());
   function("get_rxn", &get_rxn_no_details, allow_raw_pointers());
+#endif
+#ifdef RDK_BUILD_MINIMAL_LIB_MCS
+  function("get_mcs_as_mol", &get_mcs_as_mol, allow_raw_pointers());
+  function("get_mcs_as_mol", &get_mcs_as_mol_no_details, allow_raw_pointers());
+  function("get_mcs_as_smarts", &get_mcs_as_smarts);
+  function("get_mcs_as_smarts", &get_mcs_as_smarts_no_details);
+#endif
 }
