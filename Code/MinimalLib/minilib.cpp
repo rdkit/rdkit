@@ -630,7 +630,7 @@ void JSMol::straighten_depiction(bool minimizeRotation) {
   RDDepict::straightenDepiction(*d_mol, -1, minimizeRotation);
 }
 
-std::pair<JSMolIterator *, std::string> JSMol::get_frags(
+std::pair<JSMolList *, std::string> JSMol::get_frags(
     const std::string &details_json) {
   if (!d_mol) {
     return std::make_pair(nullptr, "");
@@ -644,7 +644,7 @@ std::pair<JSMolIterator *, std::string> JSMol::get_frags(
   auto molFrags = MolOps::getMolFrags(*d_mol, sanitizeFrags, &frags,
                                       &fragsMolAtomMapping, copyConformers);
   return std::make_pair(
-      new JSMolIterator(molFrags),
+      new JSMolList(molFrags),
       MinimalLib::get_mol_frags_mappings(frags, fragsMolAtomMapping));
 }
 
@@ -677,18 +677,18 @@ std::string JSReaction::get_svg_with_highlights(
 }
 #endif
 
-JSMol *JSMolIterator::next() {
+JSMol *JSMolList::next() {
   return (d_idx < d_mols.size()
               ? new JSMol(new RDKit::RWMol(*d_mols.at(d_idx++)))
               : nullptr);
 }
 
-JSMol *JSMolIterator::at(size_t idx) const {
+JSMol *JSMolList::at(size_t idx) const {
   return (idx < d_mols.size() ? new JSMol(new RDKit::RWMol(*d_mols.at(idx)))
                               : nullptr);
 }
 
-JSMol *JSMolIterator::pop(size_t idx) {
+JSMol *JSMolList::pop(size_t idx) {
   JSMol *res = nullptr;
   if (idx < d_mols.size()) {
     res = new JSMol(new RDKit::RWMol(*d_mols.at(idx)));
@@ -700,12 +700,12 @@ JSMol *JSMolIterator::pop(size_t idx) {
   return res;
 }
 
-size_t JSMolIterator::append(const JSMol &mol) {
+size_t JSMolList::append(const JSMol &mol) {
   d_mols.emplace_back(new ROMol(*mol.d_mol));
   return d_mols.size();
 }
 
-size_t JSMolIterator::insert(size_t idx, const JSMol &mol) {
+size_t JSMolList::insert(size_t idx, const JSMol &mol) {
   size_t res = 0;
   if (idx < d_mols.size()) {
     d_mols.emplace(d_mols.begin() + idx, new ROMol(*mol.d_mol));
@@ -890,25 +890,25 @@ bool allow_non_tetrahedral_chirality(bool value) {
 
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
 namespace {
-MCSResult getMcsResult(const JSMolIterator &molIterator,
+MCSResult getMcsResult(const JSMolList &molList,
                const std::string &details_json) {
   MCSParameters p;
   if (!details_json.empty()) {
     parseMCSParametersJSON(details_json.c_str(), &p);
   }
-  return RDKit::findMCS(molIterator.mols(), &p);
+  return RDKit::findMCS(molList.mols(), &p);
 }
 } // namespace
 
-std::string get_mcs_as_smarts(const JSMolIterator &molIterator,
+std::string get_mcs_as_smarts(const JSMolList &molList,
                const std::string &details_json) {
-  auto res = getMcsResult(molIterator, details_json);
+  auto res = getMcsResult(molList, details_json);
   return res.SmartsString;
 }
 
-JSMol *get_mcs_as_mol(const JSMolIterator &molIterator,
+JSMol *get_mcs_as_mol(const JSMolList &molList,
                const std::string &details_json) {
-  auto res = getMcsResult(molIterator, details_json);
+  auto res = getMcsResult(molList, details_json);
   return new JSMol(new RWMol(*res.QueryMol));
 }
 #endif

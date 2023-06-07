@@ -14,7 +14,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 
-class JSMolIterator;
+class JSMolList;
 
 class JSMol {
  public:
@@ -132,9 +132,9 @@ class JSMol {
   double normalize_depiction() { return normalize_depiction(1, -1.); }
   void straighten_depiction(bool minimizeRotation);
   void straighten_depiction() { straighten_depiction(false); }
-  std::pair<JSMolIterator *, std::string> get_frags(
+  std::pair<JSMolList *, std::string> get_frags(
       const std::string &details_json);
-  std::pair<JSMolIterator *, std::string> get_frags() {
+  std::pair<JSMolList *, std::string> get_frags() {
     return get_frags("{}");
   }
   unsigned int get_num_atoms(bool heavyOnly) const;
@@ -146,11 +146,11 @@ class JSMol {
   static constexpr int d_defaultHeight = 200;
 };
 
-class JSMolIterator {
+class JSMolList {
  public:
-  JSMolIterator(const std::vector<RDKit::ROMOL_SPTR> &mols)
+  JSMolList(const std::vector<RDKit::ROMOL_SPTR> &mols)
       : d_mols(mols), d_idx(0){};
-  JSMolIterator() : d_idx(0){};
+  JSMolList() : d_idx(0){};
   JSMol *next();
   size_t append(const JSMol &mol);
   size_t insert(size_t idx, const JSMol &mol);
@@ -245,6 +245,6 @@ void prefer_coordgen(bool prefer);
 bool use_legacy_stereo_perception(bool value);
 bool allow_non_tetrahedral_chirality(bool value);
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
-std::string get_mcs_as_smarts(const JSMolIterator &mols, const std::string &details_json);
-JSMol *get_mcs_as_mol(const JSMolIterator &mols, const std::string &details_json);
+std::string get_mcs_as_smarts(const JSMolList &mols, const std::string &details_json);
+JSMol *get_mcs_as_mol(const JSMolList &mols, const std::string &details_json);
 #endif

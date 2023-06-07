@@ -1769,17 +1769,17 @@ function test_get_frags() {
             frags: [0,0,0,0,0,0,1,1,1,1,2,2,2,2,2],
             fragsMolAtomMapping: [[0,1,2,3,4,5],[6,7,8,9],[10,11,12,13,14]],
         };
-        var { molIterator, mappings } = mol.get_frags();
-        assert(molIterator.size() === 3);
+        var { molList, mappings } = mol.get_frags();
+        assert(molList.size() === 3);
         assert(JSON.stringify(JSON.parse(mappings)) === JSON.stringify(expectedMappings));
         var i = 0;
-        while (!molIterator.at_end()) {
-            var mol = molIterator.next();
+        while (!molList.at_end()) {
+            var mol = molList.next();
             assert(mol.get_smiles() === expectedFragSmiles[i++]);
             mol.delete();
         }
-        assert(!molIterator.next());
-        molIterator.delete();
+        assert(!molList.next());
+        molList.delete();
     }
     {
         var mol = RDKitModule.get_mol("N(C)(C)(C)C.c1ccc1", JSON.stringify({sanitize: false}));
@@ -1790,16 +1790,16 @@ function test_get_frags() {
             exceptionThrown = true;
         }
         assert(exceptionThrown);
-        var { molIterator, mappings } = mol.get_frags(JSON.stringify({sanitizeFrags: false}));
-        assert(molIterator.size() === 2);
+        var { molList, mappings } = mol.get_frags(JSON.stringify({sanitizeFrags: false}));
+        assert(molList.size() === 2);
         var i = 0;
-        while (!molIterator.at_end()) {
-            var mol = molIterator.next();
+        while (!molList.at_end()) {
+            var mol = molList.next();
             assert(mol.get_smiles() === expectedFragSmilesNonSanitized[i++]);
             mol.delete();
         }
-        assert(!molIterator.next());
-        molIterator.delete();
+        assert(!molList.next());
+        molList.delete();
     }
 }
 
@@ -2046,35 +2046,35 @@ M  END`);
 }
 
 function molIteratorFromSmiArray(smiArray) {
-    const molIterator = new RDKitModule.MolIterator();
-    assert(molIterator);
+    const molList = new RDKitModule.MolList();
+    assert(molList);
     smiArray.forEach((smiName) => {
         const [smi, name] = smiName.split(' ');
         let mol;
         try {
             mol = RDKitModule.get_mol(smi);
             assert(mol);
-            molIterator.append(mol);
+            molList.append(mol);
         } finally {
             if (mol) {
                 mol.delete();
             }
         }
     });
-    return molIterator;
+    return molList;
 }
 
 function test_mol_iterator() {
     const smiArray = [ 'C1CC1', 'C1CCCC1' ];
-    let molIterator;
+    let molList;
     let mol;
     try {
-        molIterator = molIteratorFromSmiArray(smiArray);
-        assert(molIterator);
-        assert.equal(molIterator.size(), 2);
-        assert(!molIterator.at_end());
+        molList = molIteratorFromSmiArray(smiArray);
+        assert(molList);
+        assert.equal(molList.size(), 2);
+        assert(!molList.at_end());
         try {
-            mol = molIterator.next();
+            mol = molList.next();
             assert(mol);
         } finally {
             if (mol) {
@@ -2082,18 +2082,18 @@ function test_mol_iterator() {
             }
         }
         try {
-            mol = molIterator.next();
+            mol = molList.next();
             assert(mol);
         } finally {
             if (mol) {
                 mol.delete();
             }
         }
-        mol = molIterator.next();
+        mol = molList.next();
         assert(!mol);
-        assert(molIterator.at_end());
+        assert(molList.at_end());
         try {
-            mol = molIterator.at(0);
+            mol = molList.at(0);
             assert.equal(mol.get_num_atoms(), 3);
         } finally {
             if (mol) {
@@ -2101,29 +2101,29 @@ function test_mol_iterator() {
             }
         }
         try {
-            mol = molIterator.at(1);
+            mol = molList.at(1);
             assert.equal(mol.get_num_atoms(), 5);
         } finally {
             if (mol) {
                 mol.delete();
             }
         }
-        assert(molIterator.at_end());
+        assert(molList.at_end());
         try {
             mol = RDKitModule.get_mol('C1CCC1');
             assert(mol);
-            molIterator.insert(1, mol);
-            assert.equal(molIterator.size(), 3);
-            assert(!molIterator.at_end());
+            molList.insert(1, mol);
+            assert.equal(molList.size(), 3);
+            assert(!molList.at_end());
         } finally {
             if (mol) {
                 mol.delete();
             }
         }
-        molIterator.reset();
-        assert(!molIterator.at_end());
+        molList.reset();
+        assert(!molList.at_end());
         try {
-            mol = molIterator.at(1);
+            mol = molList.at(1);
             assert.equal(mol.get_num_atoms(), 4);
         } finally {
             if (mol) {
@@ -2131,18 +2131,18 @@ function test_mol_iterator() {
             }
         }
         try {
-            mol = molIterator.pop(0);
+            mol = molList.pop(0);
             assert.equal(mol.get_num_atoms(), 3);
         } finally {
             if (mol) {
                 mol.delete();
             }
         }
-        assert.equal(molIterator.size(), 2);
+        assert.equal(molList.size(), 2);
         let i = 0;
-        while (!molIterator.at_end()) {
+        while (!molList.at_end()) {
             try {
-                mol = molIterator.next();
+                mol = molList.next();
             } finally {
                 if (mol) {
                     ++i;
@@ -2151,42 +2151,42 @@ function test_mol_iterator() {
             }
         }
         assert.equal(i, 2);
-        assert(molIterator.at_end());
+        assert(molList.at_end());
         try {
-            mol = molIterator.pop(0);
+            mol = molList.pop(0);
             assert.equal(mol.get_num_atoms(), 4);
         } finally {
             if (mol) {
                 mol.delete();
             }
         }
-        assert.equal(molIterator.size(), 1);
-        assert(molIterator.at_end());
+        assert.equal(molList.size(), 1);
+        assert(molList.at_end());
         try {
-            mol = molIterator.pop(0);
+            mol = molList.pop(0);
             assert.equal(mol.get_num_atoms(), 5);
         } finally {
             if (mol) {
                 mol.delete();
             }
         }
-        assert.equal(molIterator.size(), 0);
-        assert(molIterator.at_end());
-        assert(!molIterator.pop(0));
+        assert.equal(molList.size(), 0);
+        assert(molList.at_end());
+        assert(!molList.pop(0));
         try {
             mol = RDKitModule.get_mol('C1CCCCC1');
             assert(mol);
-            molIterator.append(mol);
-            assert.equal(molIterator.size(), 1);
-            assert(!molIterator.at_end());
+            molList.append(mol);
+            assert.equal(molList.size(), 1);
+            assert(!molList.at_end());
         } finally {
             if (mol) {
                 mol.delete();
             }
         }
-        assert(!molIterator.at(1));
+        assert(!molList.at(1));
         try {
-            mol = molIterator.at(0);
+            mol = molList.at(0);
             assert(mol);
             assert(mol.get_num_atoms(), 6);
         } finally {
@@ -2195,8 +2195,8 @@ function test_mol_iterator() {
             }
         }
     } finally {
-        if (molIterator) {
-            molIterator.delete();
+        if (molList) {
+            molList.delete();
         }
     }
 }
@@ -2215,24 +2215,24 @@ function test_mcs() {
             "COc1ccc2oc(-c3ccc(C)c(NC(=O)COc4cc(C)cc(C)c4)c3)nc2c1  CHEMBL1436972",
             "Cc1ccc(SCC(=O)Nc2cc(-c3nc4cc(C)ccc4o3)c(O)cc2)cc1  CHEMBL1611932",
         ];
-        let molIterator;
+        let molList;
         let mcsSmarts;
         try {
-            molIterator = molIteratorFromSmiArray(smiArray);
+            molList = molIteratorFromSmiArray(smiArray);
             let mcsMol;
             try {
-                mcsMol = RDKitModule.get_mcs_as_mol(molIterator);
+                mcsMol = RDKitModule.get_mcs_as_mol(molList);
                 assert(mcsMol);
                 assert.equal(mcsMol.get_smarts(), '[#6]1:[#6]:[#6]2:[#8]:[#6](:[#7]:[#6]:2:[#6]:[#6]:1)-[#6]1:[#6]:[#6](-[#7]-[#6](=[#8])-[#6]):[#6]:[#6]:[#6]:1');
-                mcsSmarts = RDKitModule.get_mcs_as_smarts(molIterator);
+                mcsSmarts = RDKitModule.get_mcs_as_smarts(molList);
             } finally {
                 if (mcsMol) {
                     mcsMol.delete();
                 }
             }
         } finally {
-            if (molIterator) {
-                molIterator.delete();
+            if (molList) {
+                molList.delete();
             }
         }
         assert(mcsSmarts);
@@ -2240,12 +2240,12 @@ function test_mcs() {
     }
     {
         const smiArray = ["C1CC1N2CC2", "C1CC1N"];
-        let molIterator;
+        let molList;
         try {
-            molIterator = molIteratorFromSmiArray(smiArray);
+            molList = molIteratorFromSmiArray(smiArray);
             let mcsMol;
             try {
-                mcsMol = RDKitModule.get_mcs_as_mol(molIterator);
+                mcsMol = RDKitModule.get_mcs_as_mol(molList);
                 assert(mcsMol);
                 assert.equal(mcsMol.get_num_atoms(), 4);
                 assert.equal(mcsMol.get_num_bonds(), 4);
@@ -2255,7 +2255,7 @@ function test_mcs() {
                 }
             }
             try {
-                mcsMol = RDKitModule.get_mcs_as_mol(molIterator, JSON.stringify({ RingMatchesRingOnly: true }));
+                mcsMol = RDKitModule.get_mcs_as_mol(molList, JSON.stringify({ RingMatchesRingOnly: true }));
                 assert(mcsMol);
                 assert.equal(mcsMol.get_num_atoms(), 3);
                 assert.equal(mcsMol.get_num_bonds(), 3);
@@ -2265,17 +2265,17 @@ function test_mcs() {
                 }
             }
         } finally {
-            if (molIterator) {
-                molIterator.delete();
+            if (molList) {
+                molList.delete();
             }
         }
     }
     {
         const smiArray = ["NC1CCCCC1", "Cc1ccccc1", "Cc1cnccc1", "CC1CCCCN1"];
-        let molIterator;
+        let molList;
         const res = new Set();
         try {
-            molIterator = molIteratorFromSmiArray(smiArray);
+            molList = molIteratorFromSmiArray(smiArray);
             ["Elements", "Any"].forEach((AtomCompare) => {
                 ["Order", "OrderExact"].forEach((BondCompare) => {
                     const details = {
@@ -2283,14 +2283,14 @@ function test_mcs() {
                         BondCompare
                     };
                     let mcsSmarts;
-                    mcsSmarts = RDKitModule.get_mcs_as_smarts(molIterator, JSON.stringify(details));
+                    mcsSmarts = RDKitModule.get_mcs_as_smarts(molList, JSON.stringify(details));
                     assert(mcsSmarts);
                     res.add(mcsSmarts);
                 });
             });
         } finally {
-            if (molIterator) {
-                molIterator.delete();
+            if (molList) {
+                molList.delete();
             }
         }
         assert(res.size === 4);

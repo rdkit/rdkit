@@ -180,11 +180,11 @@ JSMol *get_mol_no_details(const std::string &input) {
 }
 
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
-JSMol *get_mcs_as_mol_no_details(const JSMolIterator &mols) {
+JSMol *get_mcs_as_mol_no_details(const JSMolList &mols) {
   return get_mcs_as_mol(mols, std::string());
 }
 
-std::string get_mcs_as_smarts_no_details(const JSMolIterator &mols) {
+std::string get_mcs_as_smarts_no_details(const JSMolList &mols) {
   return get_mcs_as_smarts(mols, std::string());
 }
 #endif
@@ -326,7 +326,7 @@ emscripten::val get_frags_helper(JSMol &self, const std::string &details) {
   auto res = self.get_frags(details);
   auto obj = emscripten::val::object();
   auto molArray = emscripten::val::object();
-  obj.set("molIterator", res.first);
+  obj.set("molList", res.first);
   obj.set("mappings", res.second);
   return obj;
 }
@@ -579,16 +579,16 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_num_bonds", &JSMol::get_num_bonds)
   ;
 
-  class_<JSMolIterator>("MolIterator")
+  class_<JSMolList>("MolList")
       .constructor<>()
-      .function("append", &JSMolIterator::append)
-      .function("insert", &JSMolIterator::insert)
-      .function("at", &JSMolIterator::at, allow_raw_pointers())
-      .function("pop", &JSMolIterator::pop, allow_raw_pointers())
-      .function("next", &JSMolIterator::next, allow_raw_pointers())
-      .function("reset", &JSMolIterator::reset)
-      .function("at_end", &JSMolIterator::at_end)
-      .function("size", &JSMolIterator::size);
+      .function("append", &JSMolList::append)
+      .function("insert", &JSMolList::insert)
+      .function("at", &JSMolList::at, allow_raw_pointers())
+      .function("pop", &JSMolList::pop, allow_raw_pointers())
+      .function("next", &JSMolList::next, allow_raw_pointers())
+      .function("reset", &JSMolList::reset)
+      .function("at_end", &JSMolList::at_end)
+      .function("size", &JSMolList::size);
 
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
   class_<JSReaction>("Reaction")
