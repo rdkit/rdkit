@@ -15,10 +15,13 @@ from io import BytesIO
 
 import numpy
 
-from rdkit import Chem, RDConfig, rdBase
+from rdkit import Chem
+from rdkit import RDConfig
+from rdkit import rdBase
 from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
-from rdkit.Chem.Draw.MolDrawing import DrawingOptions, MolDrawing
+from rdkit.Chem.Draw.MolDrawing import DrawingOptions
+from rdkit.Chem.Draw.MolDrawing import MolDrawing
 from rdkit.Chem.Draw.rdMolDraw2D import *
 
 
@@ -571,19 +574,19 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
   return res
 
 
-def _MolsNestedToLinear(mols_matrix, legends_matrix = None, highlightAtomLists_matrix = None,
-                        highlightBondLists_matrix = None):
+def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatrix = None,
+                        highlightBondListsMatrix = None):
   """Converts a nested data structure (where each data substructure represents a row in mol grid image)
   to a linear one, padding rows as needed so all rows are the length of the longest row
         ARGUMENTS:
 
-        - mols_matrix: A two-deep nested data structure of RDKit molecules to draw, for example list of lists of RDKit molecules
+        - molsMatrix: A two-deep nested data structure of RDKit molecules to draw, for example list of lists of RDKit molecules
 
-        - legends_matrix: A two-deep nested data structure of strings to label molecules with, for example list of lists of strings (default None)
+        - legendsMatrix: A two-deep nested data structure of strings to label molecules with, for example list of lists of strings (default None)
 
-        - highlightAtomLists_matrix: A three-deep nested data structure of integers of atoms to highlight, for example list of lists of lists of integers (default None)
+        - highlightAtomListsMatrix: A three-deep nested data structure of integers of atoms to highlight, for example list of lists of lists of integers (default None)
 
-        - highlightBondLists_matrix: A three-deep nested data structure of integers of bonds to highlight, for example list of lists of lists of integers (default None)
+        - highlightBondListsMatrix: A three-deep nested data structure of integers of bonds to highlight, for example list of lists of lists of integers (default None)
 
       NOTE:
 
@@ -595,7 +598,7 @@ def _MolsNestedToLinear(mols_matrix, legends_matrix = None, highlightAtomLists_m
         
         - mols: A non-nested data structure of RDKit molecules to draw, for example list of RDKit molecules
 
-        - molsPerRow: The number of molecules per row (integer), equal to the longest row in mols_matrix
+        - molsPerRow: The number of molecules per row (integer), equal to the longest row in molsMatrix
 
         - legends: A non-nested data structure of strings to label molecules with, for example list of strings
 
@@ -605,126 +608,126 @@ def _MolsNestedToLinear(mols_matrix, legends_matrix = None, highlightAtomLists_m
 
   """
   # Check that each item in nested lists is a list
-  def check_elements_are_lists(nested_list, nested_list_name=""):
-      for mol_row in nested_list:
-          if not isinstance(mol_row, list):
-              err = f"Each element in nested list {nested_list_name} must be a list."
+  def CheckElementsAreLists(nestedList, nestedListName=""):
+      for molRow in nestedList:
+          if not isinstance(molRow, list):
+              err = f"Each element in nested list {nestedListName} must be a list."
               raise ValueError(err)
 
-  check_elements_are_lists(mols_matrix, "mols_matrix")
+  CheckElementsAreLists(molsMatrix, "molsMatrix")
 
   # Check that other matrices (if provided) are same length,
-  #   and each element (sub-list) is the same length, as mols_matrix
+  #   and each element (sub-list) is the same length, as molsMatrix
 
-  n_mols_rows = len(mols_matrix)
+  nMolsRows = len(molsMatrix)
 
-  if legends_matrix is not None:
-    check_elements_are_lists(legends_matrix, "legends_matrix")
-    n_legends_rows = len(legends_matrix)
-    if n_legends_rows != n_mols_rows:
-        err = f"If legends_matrix is provided it must be the same length (have the same number "
-        err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_legends_rows}."
+  if legendsMatrix is not None:
+    CheckElementsAreLists(legendsMatrix, "legendsMatrix")
+    nLegendsRows = len(legendsMatrix)
+    if nLegendsRows != nMolsRows:
+        err = f"If legendsMatrix is provided it must be the same length (have the same number "
+        err += f"of sub-lists) as molsMatrix, {nMolsRows}; its length is {nLegendsRows}."
         raise ValueError(err)
-    for row_index, row in enumerate(legends_matrix):
-        if len(row) != len(mols_matrix[row_index]):
-            err = f"If legends_matrix is provided each of its sub-lists must be the same length "
-            err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
-            err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
-            err += f"while its length in legends_matrix is {len(row)}."
+    for rowIndex, row in enumerate(legendsMatrix):
+        if len(row) != len(molsMatrix[rowIndex]):
+            err = f"If legendsMatrix is provided each of its sub-lists must be the same length "
+            err += f"as the corresponding sub-list of molsMatrix. For sub-list of index "
+            err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
+            err += f"while its length in legendsMatrix is {len(row)}."
             raise ValueError(err)
 
-  if highlightAtomLists_matrix is not None:
-    check_elements_are_lists(highlightAtomLists_matrix, "highlightAtomLists_matrix")
-    n_highlightAtomLists_rows = len(highlightAtomLists_matrix)
-    if n_highlightAtomLists_rows != n_mols_rows:
-        err = f"If highlightAtomLists_matrix is provided it must be the same length (have the same number "
-        err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_highlightAtomLists_rows}."
+  if highlightAtomListsMatrix is not None:
+    CheckElementsAreLists(highlightAtomListsMatrix, "highlightAtomListsMatrix")
+    nHighlightAtomListsRows = len(highlightAtomListsMatrix)
+    if nHighlightAtomListsRows != nMolsRows:
+        err = f"If highlightAtomListsMatrix is provided it must be the same length (have the same number "
+        err += f"of sub-lists) as molsMatrix, {nMolsRows}; its length is {nHighlightAtomListsRows}."
         raise ValueError(err)
-    for row_index, row in enumerate(highlightAtomLists_matrix):
-        if len(row) != len(mols_matrix[row_index]):
-            err = f"If highlightAtomLists_matrix is provided each of its sub-lists must be the same length "
-            err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
-            err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
-            err += f"while its length in highlightAtomLists_matrix is {len(row)}."
+    for rowIndex, row in enumerate(highlightAtomListsMatrix):
+        if len(row) != len(molsMatrix[rowIndex]):
+            err = f"If highlightAtomListsMatrix is provided each of its sub-lists must be the same length "
+            err += f"as the corresponding sub-list of molsMatrix. For sub-list of index "
+            err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
+            err += f"while its length in highlightAtomListsMatrix is {len(row)}."
             raise ValueError(err)
 
-  if highlightBondLists_matrix is not None:
-    check_elements_are_lists(highlightBondLists_matrix, "highlightBondLists_matrix")
-    n_highlightBondLists_rows = len(highlightBondLists_matrix)
-    if n_highlightBondLists_rows != n_mols_rows:
-        err = f"If highlightBondLists_matrix is provided it must be the same length (have the same number "
-        err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_highlightBondLists_rows}."
+  if highlightBondListsMatrix is not None:
+    CheckElementsAreLists(highlightBondListsMatrix, "highlightBondListsMatrix")
+    nHighlightBondListsRows = len(highlightBondListsMatrix)
+    if nHighlightBondListsRows != nMolsRows:
+        err = f"If highlightBondListsMatrix is provided it must be the same length (have the same number "
+        err += f"of sub-lists) as molsMatrix, {nMolsRows}; its length is {nHighlightBondListsRows}."
         raise ValueError(err)
-    for row_index, row in enumerate(highlightBondLists_matrix):
-        if len(row) != len(mols_matrix[row_index]):
-            err = f"If highlightBondLists_matrix is provided each of its sub-lists must be the same length "
-            err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
-            err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
-            err += f"while its length in highlightBondLists_matrix is {len(row)}."
+    for rowIndex, row in enumerate(highlightBondListsMatrix):
+        if len(row) != len(molsMatrix[rowIndex]):
+            err = f"If highlightBondListsMatrix is provided each of its sub-lists must be the same length "
+            err += f"as the corresponding sub-list of molsMatrix. For sub-list of index "
+            err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
+            err += f"while its length in highlightBondListsMatrix is {len(row)}."
             raise ValueError(err)
 
-  def longest_row(matrix):
+  def longestRow(matrix):
       return max(len(row) for row in matrix)
 
-  molsPerRow = longest_row(mols_matrix)
+  molsPerRow = longestRow(molsMatrix)
 
-  def pad_list(input_list, length_should_be, pad_with=""):
-      length = len(input_list)
-      padding_count = length_should_be - length
-      padded_list = input_list + [pad_with] * padding_count
-      return padded_list
+  def padList(inputList, lengthShouldBe, padWith=""):
+      length = len(inputList)
+      paddingCount = lengthShouldBe - length
+      paddedList = inputList + [padWith] * paddingCount
+      return paddedList
 
-  def pad_matrix(input_matrix, row_length, pad_with=""):
-      padded_matrix = [pad_list(row, row_length, pad_with) for row in input_matrix]
-      return padded_matrix
+  def padMatrix(inputMatrix, rowLength, padWith=""):
+      paddedMatrix = [padList(row, rowLength, padWith) for row in inputMatrix]
+      return paddedMatrix
 
-  def flatten_twoD_list(twoD_list: list) -> list:
-      return [item for sublist in twoD_list for item in sublist]
+  def flattenTwoDList(twoDList):
+      return [item for sublist in twoDList for item in sublist]
 
   # Pad matrices so they're rectangular (same length for each sublist),
   #   then convert to 1D lists
   # Pad using None for molecule for empty cells
-  mols_matrix_padded = pad_matrix(mols_matrix, molsPerRow, None)
-  mols = flatten_twoD_list(mols_matrix_padded)
+  molsMatrixPadded = padMatrix(molsMatrix, molsPerRow, None)
+  mols = flattenTwoDList(molsMatrixPadded)
 
-  if legends_matrix is not None:
-      legends_matrix_padded = pad_matrix(legends_matrix, molsPerRow, "")
-      legends = flatten_twoD_list(legends_matrix_padded)
+  if legendsMatrix is not None:
+      legendsMatrixPadded = padMatrix(legendsMatrix, molsPerRow, "")
+      legends = flattenTwoDList(legendsMatrixPadded)
   else:
     legends = None
 
-  if highlightAtomLists_matrix is not None:
-      highlightAtomLists_padded = pad_matrix(highlightAtomLists_matrix, molsPerRow, [])
-      highlightAtomLists = flatten_twoD_list(highlightAtomLists_padded)
+  if highlightAtomListsMatrix is not None:
+      highlightAtomListsPadded = padMatrix(highlightAtomListsMatrix, molsPerRow, [])
+      highlightAtomLists = flattenTwoDList(highlightAtomListsPadded)
   else:
     highlightAtomLists = None
 
-  if highlightBondLists_matrix is not None:
-      highlightBondLists_padded = pad_matrix(highlightBondLists_matrix, molsPerRow, [])
-      highlightBondLists = flatten_twoD_list(highlightBondLists_padded)
+  if highlightBondListsMatrix is not None:
+      highlightBondListsPadded = padMatrix(highlightBondListsMatrix, molsPerRow, [])
+      highlightBondLists = flattenTwoDList(highlightBondListsPadded)
   else:
     highlightBondLists = None
 
   return mols, molsPerRow, legends, highlightAtomLists, highlightBondLists
 
-def MolsMatrixToGridImage(mols_matrix, subImgSize=(200, 200), legends_matrix = None, 
-                          highlightAtomLists_matrix = None, highlightBondLists_matrix = None, useSVG=False, returnPNG=False, **kwargs):
+def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix = None, 
+                          highlightAtomListsMatrix = None, highlightBondListsMatrix = None, useSVG=False, returnPNG=False, **kwargs):
   """Creates a mol grid image from a nested data structure (where each data substructure represents a row),
   padding rows as needed so all rows are the length of the longest row
           ARGUMENTS:
 
-        - mols_matrix: A two-deep nested data structure of RDKit molecules to draw,
+        - molsMatrix: A two-deep nested data structure of RDKit molecules to draw,
          for example list of lists of RDKit molecules
 
         - subImgSize: The size of a cell in the drawing; passed through to MolsToGridImage (default (200, 200))
 
-        - legends_matrix: A two-deep nested data structure of strings to label molecules with,
+        - legendsMatrix: A two-deep nested data structure of strings to label molecules with,
          for example list of lists of strings (default None)
 
-        - highlightAtomLists_matrix: A three-deep nested data structure of integers of atoms to highlight,
+        - highlightAtomListsMatrix: A three-deep nested data structure of integers of atoms to highlight,
          for example list of lists of lists of integers (default None)
 
-        - highlightBondLists_matrix: A three-deep nested data structure of integers of bonds to highlight,
+        - highlightBondListsMatrix: A three-deep nested data structure of integers of bonds to highlight,
          for example list of lists of lists of integers (default None)
 
         - useSVG: Whether to return an SVG (if true) or PNG (if false);
@@ -737,7 +740,7 @@ def MolsMatrixToGridImage(mols_matrix, subImgSize=(200, 200), legends_matrix = N
 
       NOTES:
 
-            To include a blank cell in the middle of a row, supply None for that entry in mols_matrix.
+            To include a blank cell in the middle of a row, supply None for that entry in molsMatrix.
             You do not need to do that for empty cells at the end of a row; 
             this function will automatically pad rows so that all rows are the same length.
             
@@ -766,17 +769,17 @@ def MolsMatrixToGridImage(mols_matrix, subImgSize=(200, 200), legends_matrix = N
         from rdkit import Chem
         from rdkit.Chem.Draw import MolsMatrixToGridImage, rdMolDraw2D
         FCl = Chem.MolFromSmiles("FCl")
-        mols_matrix = [[FCl, FCl], [FCl, None, FCl]]
+        molsMatrix = [[FCl, FCl], [FCl, None, FCl]]
 
-        # Minimal example: Only mols_matrix is supplied,
+        # Minimal example: Only molsMatrix is supplied,
         # result will be a drawing containing (where each row contains molecules):
         # F-Cl    F-Cl
         # F-Cl            F-Cl
-        img = MolsMatrixToGridImage(mols_matrix)
-        img.save("MolsMatrixToGridImage_minimal.png")
+        img = MolsMatrixToGridImage(molsMatrix)
+        img.save("MolsMatrixToGridImageMinimal.png")
         # img is a PIL object for a PNG image file like:
         # <PIL.PngImagePlugin.PngImageFile image mode=RGB size=600x200 at 0x1648CC390>
-        # Drawing will be saved as PNG file MolsMatrixToGridImage_minimal.png
+        # Drawing will be saved as PNG file MolsMatrixToGridImageMinimal.png
 
         # Exhaustive example: All parameters are supplied,
         # result will be a drawing containing (where each row of molecules is followed by a row of legends):
@@ -784,22 +787,22 @@ def MolsMatrixToGridImage(mols_matrix, subImgSize=(200, 200), legends_matrix = N
         # no highlighting       bond highlighted         
         # 1 F-Cl 0                                  1 F-Cl 0
         # sodium highlighted                        chloride and bond highlighted
-        legends_matrix = [["no highlighting", "bond highlighted"], 
+        legendsMatrix = [["no highlighting", "bond highlighted"], 
         ["F highlighted", "", "Cl and bond highlighted"]]
-        highlightAtomLists_matrix = [[[],[]], [[0], None, [1]]]
-        highlightBondLists_matrix = [[[],[0]], [[], None, [0]]]
+        highlightAtomListsMatrix = [[[],[]], [[0], None, [1]]]
+        highlightBondListsMatrix = [[[],[0]], [[], None, [0]]]
 
         dopts = rdMolDraw2D.MolDrawOptions()
         dopts.addAtomIndices = True
 
-        img_file = MolsMatrixToGridImage(mols_matrix=mols_matrix, subImgSize=(300, 400), 
-        legends_matrix=legends_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix, 
-        highlightBondLists_matrix=highlightBondLists_matrix, useSVG=False, returnPNG=True, drawOptions=dopts)
-        img_file.save("MolsMatrixToGridImage_exhaustive.png")
-        # Drawing will be saved as PNG file MolsMatrixToGridImage_exhaustive.png
+        imgFile = MolsMatrixToGridImage(molsMatrix=molsMatrix, subImgSize=(300, 400), 
+        legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, 
+        highlightBondListsMatrix=highlightBondListsMatrix, useSVG=False, returnPNG=True, drawOptions=dopts)
+        imgFile.save("MolsMatrixToGridImageExhaustive.png")
+        # Drawing will be saved as PNG file MolsMatrixToGridImageExhaustive.png
   """
-  mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsNestedToLinear(mols_matrix,
-  legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix)
+  mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsNestedToLinear(molsMatrix,
+  legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix)
   
   return MolsToGridImage(mols, molsPerRow, subImgSize, legends, highlightAtomLists, highlightBondLists, **kwargs)
 
