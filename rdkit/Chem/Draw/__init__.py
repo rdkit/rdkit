@@ -771,7 +771,7 @@ def MolsMatrixToGridImage(mols_matrix, subImgSize=(200, 200), legends_matrix = N
         # Minimal example: Only mols_matrix is supplied,
         # result will be a drawing containing (where each row contains molecules):
         # F-Cl    F-Cl
-        # F-Cl             F-Cl
+        # F-Cl            F-Cl
         img = MolsMatrixToGridImage(mols_matrix)
         img.save("MolsMatrixToGridImage_minimal.png")
         # img is a PIL object for a PNG image file like:
@@ -780,10 +780,10 @@ def MolsMatrixToGridImage(mols_matrix, subImgSize=(200, 200), legends_matrix = N
 
         # Exhaustive example: All parameters are supplied,
         # result will be a drawing containing (where each row of molecules is followed by a row of legends):
-        # 1 F-Cl 0             1 F-Cl 0
+        # 1 F-Cl 0              1 F-Cl 0
         # no highlighting       bond highlighted         
-        # 1 F-Cl 0                                1 F-Cl 0
-        # sodium highlighted                       chloride and bond highlighted
+        # 1 F-Cl 0                                  1 F-Cl 0
+        # sodium highlighted                        chloride and bond highlighted
         legends_matrix = [["no highlighting", "bond highlighted"], 
         ["F highlighted", "", "Cl and bond highlighted"]]
         highlightAtomLists_matrix = [[[],[]], [[0], None, [1]]]
