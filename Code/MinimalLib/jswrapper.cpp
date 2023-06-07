@@ -232,19 +232,6 @@ std::string generate_aligned_coords_helper(JSMol &self,
   return self.generate_aligned_coords(templateMol, param.as<std::string>());
 }
 
-std::string parse_morgan_fp_param(unsigned int radius, unsigned int fplen,
-                                  const std::string &funcName) {
-  static std::unordered_set<std::string> deprecationMsgShown;
-  if (deprecationMsgShown.find(funcName) == deprecationMsgShown.end()) {
-    deprecationMsgShown.insert(funcName);
-    std::cerr << funcName << "(radius, fplen) is deprecated, use " << funcName
-              << "(details) instead" << std::endl;
-  }
-  std::stringstream ss;
-  ss << "{\"radius\":" << radius << ",\"nBits\":" << fplen << "}";
-  return ss.str();
-}
-
 emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
                                             const std::string &details) {
   auto fp = self.get_morgan_fp_as_binary_text(details);
@@ -257,14 +244,12 @@ emscripten::val get_morgan_fp_as_uint8array(const JSMol &self) {
 
 std::string parse_pattern_fp_param(const emscripten::val &param,
                                    const std::string &funcName) {
-  static std::unordered_set<std::string> deprecationMsgShown;
   std::string details;
   if (param.typeOf().as<std::string>() == "string") {
     details = param.as<std::string>();
   } else {
     throw std::runtime_error(
-        (funcName + "get_pattern_fp expects a JSON string as parameter")
-            .c_str());
+        (funcName + " expects a JSON string as parameter").c_str());
   }
   return details;
 }
@@ -325,7 +310,6 @@ emscripten::val get_maccs_fp_as_uint8array(const JSMol &self) {
 emscripten::val get_frags_helper(JSMol &self, const std::string &details) {
   auto res = self.get_frags(details);
   auto obj = emscripten::val::object();
-  auto molArray = emscripten::val::object();
   obj.set("molList", res.first);
   obj.set("mappings", res.second);
   return obj;
@@ -490,7 +474,6 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_morgan_fp",
                 select_overload<std::string(const std::string &) const>(
                     &JSMol::get_morgan_fp))
-      // DEPRECATED
       .function("get_pattern_fp",
                 select_overload<std::string() const>(&JSMol::get_pattern_fp))
       .function("get_topological_torsion_fp",
