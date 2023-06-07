@@ -79,17 +79,17 @@ class TestCase(unittest.TestCase):
     self.highlightBondLists_matrix = [[ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats]
 
     # Parametrize tests: In addition to supplying mols_matrix, supply 0-3 other matrices
-    # col labels: legends_matrix,       highlightAtomLists_matrix,      highlightBondLists_matrix      
-    #             Zero other matrices: 1 parameter set
-    self.param_sets = [(None,                None,                           None                          ), 
+    # col labels: legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix      
+    # Zero other matrices: 1 parameter set
+    self.param_sets = [(None, None, None), 
                   # One other matrix: 3 parameter sets
-                  (self.legends_matrix, None,                           None                          ),
-                  (None,                self.highlightAtomLists_matrix, None                          ),
-                  (None,                None,                           self.highlightBondLists_matrix),
+                  (self.legends_matrix, None, None),
+                  (None, self.highlightAtomLists_matrix, None),
+                  (None, None, self.highlightBondLists_matrix),
                   # Two other matrices: 3 parameter sets
-                  (self.legends_matrix, self.highlightAtomLists_matrix, None                          ),
-                  (self.legends_matrix, None,                           self.highlightBondLists_matrix),
-                  (None,                self.highlightAtomLists_matrix, self.highlightBondLists_matrix),
+                  (self.legends_matrix, self.highlightAtomLists_matrix, None),
+                  (self.legends_matrix, None, self.highlightBondLists_matrix),
+                  (None, self.highlightAtomLists_matrix, self.highlightBondLists_matrix),
                   # All three other matrices: 1 parameter set
                   (self.legends_matrix, self.highlightAtomLists_matrix, self.highlightBondLists_matrix),
                   ]
@@ -359,13 +359,14 @@ class TestCase(unittest.TestCase):
 
 
   def testMolsMatrixToGridImage(self):
-    # Tests are that running Draw.MolsMatrixToGridImage doesn't give an error
-    # Parametrize tests: In addition to supplying mols_matrix, supply 0-3 other matrices
     subImgSize = (200, 200)
 
     kwargs_value = Draw.rdMolDraw2D.MolDrawOptions()
     kwargs_value.addAtomIndices = True
 
+    # Tests are that running Draw.MolsMatrixToGridImage doesn't give an error
+    # with any combination of parameters supplied (or not)
+    # by parametrizing tests: In addition to supplying mols_matrix, supply 0-3 other matrices
     for (legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix) in self.param_sets:
       for useSVG in (True, False):
         for returnPNG in (True, False):
