@@ -40,12 +40,12 @@ function test_basics() {
     var bmol = null;
     try {
         bmol = RDKitModule.get_mol("c1ccccc");
-        assert.equal(bmol.is_valid(),0);
+        assert(bmol === null);
     } catch {
         assert(bmol === null);
     }
     var mol = RDKitModule.get_mol("c1ccccc1O");
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
     assert.equal(mol.get_smiles(),"Oc1ccccc1");
     assert.equal(mol.get_inchi(),"InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
     assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi()),"ISWSIDIOOBJBQZ-UHFFFAOYSA-N");
@@ -53,13 +53,13 @@ function test_basics() {
     var mb = mol.get_molblock();
     assert(mb.search("M  END")>0);
     var mol2 = RDKitModule.get_mol(mb);
-    assert.equal(mol2.is_valid(),1);
+    assert(mol2 !== null);
     assert.equal(mol2.get_smiles(),"Oc1ccccc1");
 
     var mjson = mol.get_json();
     assert(mjson.search("rdkitjson")>0);
     var mol3 = RDKitModule.get_mol(mjson);
-    assert.equal(mol3.is_valid(),1);
+    assert(mol3 !== null);
     assert.equal(mol3.get_smiles(),"Oc1ccccc1");
 
     var descrs = JSON.parse(mol.get_descriptors());
@@ -190,7 +190,7 @@ function test_basics() {
     assert(svg.search("svg")>0);
 
     var qmol = RDKitModule.get_qmol("Oc(c)c");
-    assert.equal(qmol.is_valid(),1);
+    assert(qmol !== null);
     var match = mol.get_substruct_match(qmol);
     var pmatch = JSON.parse(match);
     assert.equal(pmatch.atoms.length,4);
@@ -233,11 +233,11 @@ M  SBL   1  1   7
 M  SAP   1  1   8
 M  END`;
     var mol = RDKitModule.get_mol(molblock);
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
     var mb = mol.get_molblock();
     assert.equal(mb.includes("M  SAP   1  1   8   6"), true);
     var qmol = RDKitModule.get_qmol(molblock);
-    assert.equal(qmol.is_valid(),1);
+    assert(qmol !== null);
     var qmb = qmol.get_molblock();
     assert.equal(qmb.includes("M  SAP   1  1   8   6"), true);
 }
@@ -268,7 +268,7 @@ function test_molblock_rgp() {
 M  RGP  2   1   2   9   1
 M  END`;
     var mol = RDKitModule.get_mol(molblock);
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
 }
 
 function test_get_aromatic_kekule_form() {
@@ -344,20 +344,20 @@ M  END
 
 function test_sketcher_services() {
     var mol = RDKitModule.get_mol("C[C@](F)(Cl)/C=C/C(F)Br");
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
     var tags = mol.get_stereo_tags();
     assert.equal(tags,'{"CIP_atoms":[[1,"(S)"],[6,"(?)"]],"CIP_bonds":[[4,5,"(E)"]]}');
 }
 
 function test_sketcher_services2() {
     var mol = RDKitModule.get_mol("c1ccccc1");
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
     var molb = mol.add_hs();
     assert(molb.search(" H ")>0);
     assert.equal((molb.match(/ H /g) || []).length,6);
 
     var mol2 = RDKitModule.get_mol(molb);
-    assert.equal(mol2.is_valid(),1);
+    assert(mol2 !== null);
     var molb2 = mol2.get_molblock();
     assert(molb2.search(" H ")>0);
     assert.equal((molb2.match(/ H /g) || []).length,6);
@@ -368,7 +368,7 @@ function test_sketcher_services2() {
 
 function test_abbreviations() {
     var bmol = RDKitModule.get_mol("C1CC(C(F)(F)F)C1");
-    assert.equal(bmol.is_valid(),1);
+    assert(bmol !== null);
     var mapping = bmol.condense_abbreviations();
     assert.equal(mapping, JSON.stringify({
         atoms: [0, 1, 2, 3, 4, 5, 6, 7],
@@ -553,7 +553,7 @@ function test_generate_aligned_coords() {
 
 function test_isotope_labels() {
     var mol = RDKitModule.get_mol("[1*]c1cc([2*])c([3*])c[14c]1");
-    assert.equal(mol.is_valid(), 1);
+    assert(mol !== null);
 
     var textIsoDummyIso = mol.get_svg_with_highlights(JSON.stringify({}));
     var nLinesIsoDummyIso = textIsoDummyIso.split("\n").length;
@@ -821,13 +821,13 @@ function test_get_mol_no_kekulize() {
     var molIsValid = true;
     try {
         mol = RDKitModule.get_mol("c");
-        molIsValid = mol.is_valid();
+        molIsValid = (mol !== null);
     } catch (e) {
         molIsValid = false;
     }
     assert(!molIsValid);
     mol = RDKitModule.get_mol("c", JSON.stringify({kekulize: false}));
-    assert(mol.is_valid());
+    assert(mol !== null);
 }
 
 function test_get_smarts() {
@@ -854,7 +854,7 @@ function test_get_smarts() {
 M  RGP  2   7   1   8   2
 M  END
 `);
-    assert(mol.is_valid());
+    assert(mol !== null);
     smarts = mol.get_smarts();
     assert(smarts == "[#6]1:[#6]:[#6]:[#6]:[#6](:[#6]:1-&!@*)-&!@*");
 }
@@ -883,7 +883,7 @@ function test_get_cxsmarts() {
 M  RGP  2   7   1   8   2
 M  END
 `);
-    assert(mol.is_valid());
+    assert(mol !== null);
     cxsmarts = mol.get_cxsmarts();
     assert(cxsmarts == "[#6]1:[#6]:[#6]:[#6]:[#6](:[#6]:1-&!@*)-&!@* |" +
         "(-1.0491,1.5839,;-1.7635,1.1714,;-1.7635,0.3463,;-1.0491,-0.0661,;" +
@@ -1014,12 +1014,12 @@ function test_kekulize() {
     var mol = null;
     try {
         mol = RDKitModule.get_mol(badAromaticSmiles);
-        assert(!mol.is_valid());
+        assert(mol === null);
     } catch {
         assert(mol === null);
     }
     mol = RDKitModule.get_mol(badAromaticSmiles, JSON.stringify({ kekulize: false }));
-    assert(mol.is_valid());
+    assert(mol !== null);
 }
 
 function test_sanitize() {
@@ -1027,29 +1027,29 @@ function test_sanitize() {
     var mol = null;
     try {
         mol = RDKitModule.get_mol(badValenceSmiles);
-        assert(!mol.is_valid());
+        assert(mol === null);
     } catch {
         assert(mol === null);
     }
     try {
         mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ kekulize: false }));
-        assert(!mol.is_valid());
+        assert(mol === null);
     } catch {
         assert(mol === null);
     }
     mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ sanitize: false }));
-    assert(mol.is_valid());
+    assert(mol !== null);
 }
 
 function test_removehs() {
     const badValenceSmiles = 'N1C=CC(=O)c2ccc(N(C)(C)(C)(C)C)cc12';
     mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ sanitize: false, removeHs: false }));
-    assert(mol.is_valid());
+    assert(mol !== null);
 }
 
 function test_flexicanvas() {
     var mol = RDKitModule.get_mol("CCCC");
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
 
     var svg = mol.get_svg(-1,-1);
     assert(svg.search("svg")>0);
@@ -1160,12 +1160,12 @@ function test_legacy_stereochem() {
     try {
         origSetting = RDKitModule.use_legacy_stereo_perception(true);
         var mol = RDKitModule.get_mol("O[C@@]1(C)C/C(/C1)=C(/C)\\CC");
-        assert.equal(mol.is_valid(),1);
+        assert(mol !== null);
         assert.equal(mol.get_smiles(),"CCC(C)=C1CC(C)(O)C1");
 
         RDKitModule.use_legacy_stereo_perception(false);
         mol = RDKitModule.get_mol("O[C@@]1(C)C/C(/C1)=C(/C)\\CC");
-        assert.equal(mol.is_valid(),1);
+        assert(mol !== null);
         assert.equal(mol.get_smiles(),"CC/C(C)=C1\\C[C@](C)(O)C1");
     } finally {
         RDKitModule.use_legacy_stereo_perception(origSetting);
@@ -1192,11 +1192,11 @@ M  END
     try {
         origSetting = RDKitModule.allow_non_tetrahedral_chirality(true);
         var mol = RDKitModule.get_mol(ctab);
-        assert.equal(mol.is_valid(),1);
+        assert(mol !== null);
         assert.equal(mol.get_smiles(), "F[Pt@SP3](F)(Cl)Cl");
         RDKitModule.allow_non_tetrahedral_chirality(false);
         var mol = RDKitModule.get_mol(ctab);
-        assert.equal(mol.is_valid(),1);
+        assert(mol !== null);
         assert.equal(mol.get_smiles(), "F[Pt](F)(Cl)Cl");
     } finally {
         RDKitModule.allow_non_tetrahedral_chirality(origSetting);
@@ -1971,7 +1971,7 @@ function test_alignment_r_groups_aromatic_ring() {
     var scaffold;
     try {
         mol = RDKitModule.get_mol('c1ccc2nccnc2c1');
-        assert(mol && mol.is_valid());
+        assert(mol !== null);
         scaffold = RDKitModule.get_mol(`
   MJ201100                      
 
@@ -1994,7 +1994,7 @@ function test_alignment_r_groups_aromatic_ring() {
   8  7  2  0  0  0  0
 M  RGP  2   1   2   2   1
 M  END`);
-        assert(scaffold && scaffold.is_valid());
+        assert(scaffold !== null);
         var res = mol.generate_aligned_coords(scaffold, JSON.stringify({useCoordGen: true, allowRGroups: true}));
         assert(res);
         assert.equal(JSON.parse(res).atoms.length, 8);
@@ -2045,7 +2045,19 @@ M  END`);
     }
 }
 
-function molIteratorFromSmiArray(smiArray) {
+function test_is_valid_deprecated() {
+    var mol = RDKitModule.get_mol('C');
+    assert(mol !== null);
+    assert(mol.is_valid());
+    var mol = RDKitModule.get_mol('CN(C)(C)C');
+    assert(mol === null);
+    var rxn = RDKitModule.get_rxn('C>>N');
+    assert(rxn !== null);
+    var rxn = RDKitModule.get_rxn('Z>>C');
+    assert(rxn === null);
+}
+
+function molListFromSmiArray(smiArray) {
     const molList = new RDKitModule.MolList();
     assert(molList);
     smiArray.forEach((smiName) => {
@@ -2064,12 +2076,12 @@ function molIteratorFromSmiArray(smiArray) {
     return molList;
 }
 
-function test_mol_iterator() {
+function test_mol_list() {
     const smiArray = [ 'C1CC1', 'C1CCCC1' ];
     let molList;
     let mol;
     try {
-        molList = molIteratorFromSmiArray(smiArray);
+        molList = molListFromSmiArray(smiArray);
         assert(molList);
         assert.equal(molList.size(), 2);
         assert(!molList.at_end());
@@ -2218,7 +2230,7 @@ function test_mcs() {
         let molList;
         let mcsSmarts;
         try {
-            molList = molIteratorFromSmiArray(smiArray);
+            molList = molListFromSmiArray(smiArray);
             let mcsMol;
             try {
                 mcsMol = RDKitModule.get_mcs_as_mol(molList);
@@ -2242,7 +2254,7 @@ function test_mcs() {
         const smiArray = ["C1CC1N2CC2", "C1CC1N"];
         let molList;
         try {
-            molList = molIteratorFromSmiArray(smiArray);
+            molList = molListFromSmiArray(smiArray);
             let mcsMol;
             try {
                 mcsMol = RDKitModule.get_mcs_as_mol(molList);
@@ -2275,7 +2287,7 @@ function test_mcs() {
         let molList;
         const res = new Set();
         try {
-            molList = molIteratorFromSmiArray(smiArray);
+            molList = molListFromSmiArray(smiArray);
             ["Elements", "Any"].forEach((AtomCompare) => {
                 ["Order", "OrderExact"].forEach((BondCompare) => {
                     const details = {
@@ -2367,7 +2379,8 @@ initRDKitModule().then(function(instance) {
     test_hs_in_place();
     test_query_colour();
     test_alignment_r_groups_aromatic_ring();
-    test_mol_iterator();
+    test_is_valid_deprecated();
+    test_mol_list();
     test_get_num_atoms_bonds();
     if (RDKitModule.get_mcs_as_mol)  {
         test_mcs();

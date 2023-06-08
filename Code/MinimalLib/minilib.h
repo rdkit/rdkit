@@ -18,8 +18,8 @@ class JSMolList;
 
 class JSMol {
  public:
-  JSMol() : d_mol(nullptr) {}
-  JSMol(RDKit::RWMol *mol) : d_mol(mol) {}
+  JSMol() : d_mol(new RDKit::RWMol()) {}
+  JSMol(RDKit::RWMol *mol) : d_mol(mol) { assert(d_mol); }
   std::string get_smiles() const;
   std::string get_cxsmiles() const;
   std::string get_smarts() const;
@@ -94,7 +94,10 @@ class JSMol {
   std::string generate_aligned_coords(const JSMol &templateMol) {
     return generate_aligned_coords(templateMol, "{}");
   }
-  bool is_valid() const { return d_mol.get() != nullptr; }
+  [[deprecated(
+      "please check the get_mol/get_qmol return value for non-nullness "
+      "instead")]] bool
+  is_valid() const;
   int has_coords() const;
 
   std::string get_stereo_tags() const;
@@ -169,9 +172,12 @@ class JSMolList {
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
 class JSReaction {
  public:
-  JSReaction() : d_rxn(nullptr) {}
-  JSReaction(RDKit::ChemicalReaction *rxn) : d_rxn(rxn) {}
-  bool is_valid() const { return d_rxn.get() != nullptr; }
+  JSReaction() : d_rxn(new RDKit::ChemicalReaction()) {}
+  JSReaction(RDKit::ChemicalReaction *rxn) : d_rxn(rxn) { assert(d_rxn); }
+  [
+      [deprecated("please check the get_rxn return value for non-nullness "
+                  "instead")]] bool
+  is_valid() const;
 
   std::string get_svg(int width, int height) const;
   std::string get_svg() const {

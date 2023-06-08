@@ -83,39 +83,27 @@ std::string mappingToJsonArray(const ROMol &mol) {
 }  // end of anonymous namespace
 
 std::string JSMol::get_smiles() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   return MolToSmiles(*d_mol);
 }
 std::string JSMol::get_cxsmiles() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   return MolToCXSmiles(*d_mol);
 }
 std::string JSMol::get_smarts() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   return MolToSmarts(*d_mol);
 }
 std::string JSMol::get_cxsmarts() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   return MolToCXSmarts(*d_mol);
 }
 std::string JSMol::get_svg(int w, int h) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   return MinimalLib::mol_to_svg(*d_mol, w, h);
 }
 std::string JSMol::get_svg_with_highlights(const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
 
   int w = d_defaultWidth;
   int h = d_defaultHeight;
@@ -123,35 +111,25 @@ std::string JSMol::get_svg_with_highlights(const std::string &details) const {
 }
 
 std::string JSMol::get_inchi() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   ExtraInchiReturnValues rv;
   return MolToInchi(*d_mol, rv);
 }
 std::string JSMol::get_molblock(const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   return MinimalLib::molblock_helper(*d_mol, details.c_str(), false);
 }
 std::string JSMol::get_v3Kmolblock(const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   return MinimalLib::molblock_helper(*d_mol, details.c_str(), true);
 }
 std::string JSMol::get_json() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   return MolInterchange::MolToJSONData(*d_mol);
 }
 
 std::string JSMol::get_pickle() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   std::string pickle;
   MolPickler::pickleMol(*d_mol, pickle,
                         PicklerOps::AllProps ^ PicklerOps::ComputedProps);
@@ -159,10 +137,8 @@ std::string JSMol::get_pickle() const {
 }
 
 std::string JSMol::get_substruct_match(const JSMol &q) const {
+  assert(d_mol && q.d_mol);
   std::string res = "{}";
-  if (!d_mol || !q.d_mol) {
-    return res;
-  }
 
   MatchVectType match;
   if (SubstructMatch(*d_mol, *(q.d_mol), match)) {
@@ -180,9 +156,7 @@ std::string JSMol::get_substruct_match(const JSMol &q) const {
 
 std::string JSMol::get_substruct_matches(const JSMol &q) const {
   std::string res = "{}";
-  if (!d_mol || !q.d_mol) {
-    return res;
-  }
+  assert(d_mol && q.d_mol);
 
   auto matches = SubstructMatch(*d_mol, (*q.d_mol));
   if (!matches.empty()) {
@@ -205,16 +179,12 @@ std::string JSMol::get_substruct_matches(const JSMol &q) const {
 }
 
 std::string JSMol::get_descriptors() const {
-  if (!d_mol) {
-    return "{}";
-  }
+  assert(d_mol);
   return MinimalLib::get_descriptors(*d_mol);
 }
 
 std::string JSMol::get_morgan_fp(const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::morgan_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
   return res;
@@ -222,18 +192,14 @@ std::string JSMol::get_morgan_fp(const std::string &details) const {
 
 std::string JSMol::get_morgan_fp_as_binary_text(
     const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::morgan_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
   return res;
 }
 
 std::string JSMol::get_pattern_fp(const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::pattern_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
   return res;
@@ -241,9 +207,7 @@ std::string JSMol::get_pattern_fp(const std::string &details) const {
 
 std::string JSMol::get_pattern_fp_as_binary_text(
     const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::pattern_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
   return res;
@@ -251,9 +215,7 @@ std::string JSMol::get_pattern_fp_as_binary_text(
 
 std::string JSMol::get_topological_torsion_fp(
     const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp =
       MinimalLib::topological_torsion_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
@@ -262,9 +224,7 @@ std::string JSMol::get_topological_torsion_fp(
 
 std::string JSMol::get_topological_torsion_fp_as_binary_text(
     const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp =
       MinimalLib::topological_torsion_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
@@ -272,9 +232,7 @@ std::string JSMol::get_topological_torsion_fp_as_binary_text(
 }
 
 std::string JSMol::get_rdkit_fp(const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::rdkit_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
   return res;
@@ -282,18 +240,14 @@ std::string JSMol::get_rdkit_fp(const std::string &details) const {
 
 std::string JSMol::get_rdkit_fp_as_binary_text(
     const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::rdkit_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
   return res;
 }
 
 std::string JSMol::get_atom_pair_fp(const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::atom_pair_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
   return res;
@@ -301,27 +255,21 @@ std::string JSMol::get_atom_pair_fp(const std::string &details) const {
 
 std::string JSMol::get_atom_pair_fp_as_binary_text(
     const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::atom_pair_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
   return res;
 }
 
 std::string JSMol::get_maccs_fp() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::maccs_fp_as_bitvect(*d_mol);
   std::string res = BitVectToText(*fp);
   return res;
 }
 
 std::string JSMol::get_maccs_fp_as_binary_text() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::maccs_fp_as_bitvect(*d_mol);
   std::string res = BitVectToBinaryText(*fp);
   return res;
@@ -329,18 +277,14 @@ std::string JSMol::get_maccs_fp_as_binary_text() const {
 
 #ifdef RDK_BUILD_AVALON_SUPPORT
 std::string get_avalon_fp(const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::avalon_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
   return res;
 }
 
 std::string get_avalon_fp_as_binary_text(const std::string &details) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   auto fp = MinimalLib::avalon_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
   return res;
@@ -348,9 +292,7 @@ std::string get_avalon_fp_as_binary_text(const std::string &details) const {
 #endif
 
 std::string JSMol::get_stereo_tags() const {
-  if (!d_mol) {
-    return "{}";
-  }
+  assert(d_mol);
   rj::Document doc;
   doc.SetObject();
 
@@ -412,9 +354,7 @@ void JSMol::convert_to_aromatic_form() {
 }
 
 std::string JSMol::get_aromatic_form() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
 
   RWMol molCopy(*d_mol);
   molCopy.updatePropertyCache();
@@ -433,9 +373,7 @@ void JSMol::convert_to_kekule_form() {
 }
 
 std::string JSMol::get_kekule_form() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
 
   RWMol molCopy(*d_mol);
   MolOps::Kekulize(molCopy);
@@ -447,9 +385,7 @@ std::string JSMol::get_kekule_form() const {
 }
 
 bool JSMol::set_new_coords(bool useCoordGen) {
-  if (!d_mol) {
-    return false;
-  }
+  assert(d_mol);
 
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   bool oprefer = RDDepict::preferCoordGen;
@@ -464,9 +400,7 @@ bool JSMol::set_new_coords(bool useCoordGen) {
 }
 
 std::string JSMol::get_new_coords(bool useCoordGen) const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
 
   RWMol molCopy(*d_mol);
 
@@ -483,32 +417,35 @@ std::string JSMol::get_new_coords(bool useCoordGen) const {
 }
 
 bool JSMol::has_prop(const std::string &key) const {
-  if (!d_mol) return false;
+  assert(d_mol);
   return d_mol->hasProp(key);
 }
 
 std::vector<std::string> JSMol::get_prop_list(bool includePrivate,
                                               bool includeComputed) const {
-  if (!d_mol) return std::vector<std::string>();
+  assert(d_mol);
   return d_mol->getPropList(includePrivate, includeComputed);
 }
 
 bool JSMol::set_prop(const std::string &key, const std::string &val,
                      bool computed) {
-  if (!d_mol) return false;
+  assert(d_mol);
   d_mol->setProp(key, val, computed);
   return true;
 }
 
 std::string JSMol::get_prop(const std::string &key) const {
-  if (!d_mol || !d_mol->hasProp(key)) return "";
+  assert(d_mol);
+  if (!d_mol->hasProp(key)) {
+    return "";
+  }
   std::string val;
   d_mol->getProp(key, val);
   return val;
 }
 
 bool JSMol::clear_prop(const std::string &key) {
-  if (!d_mol) return false;
+  assert(d_mol);
   bool res = d_mol->hasProp(key);
   if (res) {
     d_mol->clearProp(key);
@@ -517,9 +454,7 @@ bool JSMol::clear_prop(const std::string &key) {
 }
 
 std::string JSMol::remove_hs() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
 
   RWMol molCopy(*d_mol);
   MolOps::removeAllHs(molCopy);
@@ -531,9 +466,7 @@ std::string JSMol::remove_hs() const {
 }
 
 bool JSMol::remove_hs_in_place() {
-  if (!d_mol) {
-    return false;
-  }
+  assert(d_mol);
 
   MolOps::removeAllHs(*d_mol);
   MolOps::assignStereochemistry(*d_mol, true, true);
@@ -541,9 +474,7 @@ bool JSMol::remove_hs_in_place() {
 }
 
 std::string JSMol::add_hs() const {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
 
   RWMol molCopy(*d_mol);
   MolOps::addHs(molCopy);
@@ -555,9 +486,7 @@ std::string JSMol::add_hs() const {
 }
 
 bool JSMol::add_hs_in_place() {
-  if (!d_mol) {
-    return false;
-  }
+  assert(d_mol);
 
   bool addCoords = (d_mol->getNumConformers() > 0);
   MolOps::addHs(*d_mol, false, addCoords);
@@ -566,9 +495,7 @@ bool JSMol::add_hs_in_place() {
 }
 
 std::string JSMol::condense_abbreviations(double maxCoverage, bool useLinkers) {
-  if (!d_mol) {
-    return "";
-  }
+  assert(d_mol);
   if (!useLinkers) {
     Abbreviations::condenseMolAbbreviations(
         *d_mol, Abbreviations::Utils::getDefaultAbbreviations(), maxCoverage);
@@ -602,7 +529,8 @@ std::string JSMol::condense_abbreviations_from_defs(
 
 std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
                                            const std::string &details) {
-  if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers()) {
+  assert(d_mol && templateMol.d_mol);
+  if (!templateMol.d_mol->getNumConformers()) {
     return "";
   }
   return MinimalLib::generate_aligned_coords(*d_mol, *templateMol.d_mol,
@@ -610,31 +538,36 @@ std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
 }
 
 int JSMol::has_coords() const {
-  if (!d_mol || !d_mol->getNumConformers()) {
+  assert(d_mol);
+  if (!d_mol->getNumConformers()) {
     return 0;
   }
   return (d_mol->getConformer().is3D() ? 3 : 2);
 }
 
 double JSMol::normalize_depiction(int canonicalize, double scaleFactor) {
-  if (!d_mol || !d_mol->getNumConformers()) {
+  assert(d_mol);
+  if (!d_mol->getNumConformers()) {
     return -1.;
   }
   return RDDepict::normalizeDepiction(*d_mol, -1, canonicalize, scaleFactor);
 }
 
 void JSMol::straighten_depiction(bool minimizeRotation) {
-  if (!d_mol || !d_mol->getNumConformers()) {
+  assert(d_mol);
+  if (!d_mol->getNumConformers()) {
     return;
   }
   RDDepict::straightenDepiction(*d_mol, -1, minimizeRotation);
 }
 
+bool JSMol::is_valid() const {
+  return true;
+}
+
 std::pair<JSMolList *, std::string> JSMol::get_frags(
     const std::string &details_json) {
-  if (!d_mol) {
-    return std::make_pair(nullptr, "");
-  }
+  assert(d_mol);
   std::vector<int> frags;
   std::vector<std::vector<int>> fragsMolAtomMapping;
   bool sanitizeFrags = true;
@@ -660,20 +593,20 @@ unsigned int JSMol::get_num_bonds() const {
 
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
 std::string JSReaction::get_svg(int w, int h) const {
-  if (!d_rxn) {
-    return "";
-  }
+  assert(d_rxn);
   return MinimalLib::rxn_to_svg(*d_rxn, w, h);
 }
 std::string JSReaction::get_svg_with_highlights(
     const std::string &details) const {
-  if (!d_rxn) {
-    return "";
-  }
+  assert(d_rxn);
 
   int w = d_defaultWidth;
   int h = d_defaultHeight;
   return MinimalLib::rxn_to_svg(*d_rxn, w, h, details);
+}
+
+bool JSReaction::is_valid() const {
+  return true;
 }
 #endif
 
@@ -833,13 +766,12 @@ std::string get_inchikey_for_inchi(const std::string &input) {
 }
 
 JSMol *get_mol_copy(const JSMol &other) {
-  auto mol = new RWMol(*other.d_mol);
-  return new JSMol(mol);
+  return new JSMol(new RWMol(*other.d_mol));
 }
 
 JSMol *get_mol(const std::string &input, const std::string &details_json) {
   auto mol = MinimalLib::mol_from_input(input, details_json);
-  return new JSMol(mol);
+  return mol ? new JSMol(mol) : nullptr;
 }
 
 JSMol *get_mol_from_pickle(const std::string &pkl) {
@@ -853,18 +785,18 @@ JSMol *get_mol_from_pickle(const std::string &pkl) {
       mol = nullptr;
     }
   }
-  return new JSMol(mol);
+  return mol ? new JSMol(mol) : nullptr;
 }
 
 JSMol *get_qmol(const std::string &input) {
   auto mol = MinimalLib::qmol_from_input(input);
-  return new JSMol(mol);
+  return mol ? new JSMol(mol) : nullptr;
 }
 
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
 JSReaction *get_rxn(const std::string &input, const std::string &details_json) {
   auto rxn = MinimalLib::rxn_from_input(input, details_json);
-  return new JSReaction(rxn);
+  return rxn ? new JSReaction(rxn) : nullptr;
 }
 #endif
 
