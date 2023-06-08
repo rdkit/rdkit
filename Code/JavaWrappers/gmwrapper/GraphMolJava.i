@@ -170,6 +170,7 @@ typedef unsigned long long int	uintmax_t;
 // Conformer seems to need to come before ROMol
 %include "../Conformer.i"
 %include "../Dict.i"
+%include "../RDLogger.i"
 %include "../RDProps.i"
 %include "../StereoGroup.i"
 %include "../ROMol.i"

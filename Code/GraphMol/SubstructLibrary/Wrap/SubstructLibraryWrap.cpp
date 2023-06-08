@@ -168,8 +168,8 @@ class SubstructLibraryWrap {
                             bool useQueryQueryMatches = false,
                             int numThreads = -1) const {
     NOGIL h;
-    return countMatches(query, startIdx, endIdx, recursionPossible,
-                        useChirality, useQueryQueryMatches, numThreads);
+    return ss.countMatches(query, startIdx, endIdx, recursionPossible,
+                           useChirality, useQueryQueryMatches, numThreads);
   };
 
   unsigned int countMatches(const ROMol &query, unsigned int startIdx,
@@ -426,7 +426,7 @@ python::object SubstructLibrary_Serialize(const SubstructLibraryWrap &cat) {
   return retval;
 }
 
-struct substructlibrary_pickle_suite : python::pickle_suite {
+struct substructlibrary_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const SubstructLibraryWrap &self) {
     std::string res;
     if (!SubstructLibraryCanSerialize()) {

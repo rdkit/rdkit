@@ -9,8 +9,10 @@
 #  of the RDKit source tree.
 #
 
-from rdkit.rdBase import EnableLog, DisableLog, AttachFileToLog, LogMessage
-import sys, traceback
+import sys
+import traceback
+
+from rdkit.rdBase import AttachFileToLog, DisableLog, EnableLog, LogMessage
 
 _levels = ['rdApp.debug', 'rdApp.info', 'rdApp.warning', 'rdApp.error']
 DEBUG = 0

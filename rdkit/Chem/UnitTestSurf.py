@@ -11,13 +11,11 @@
 unit testing code for calculations in rdkit.Chem.MolSurf
 """
 
-
-from collections import namedtuple
 import os.path
 import unittest
+from collections import namedtuple
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import MolSurf
 
 doLong = False
@@ -193,8 +191,8 @@ class TestCase_python(unittest.TestCase):
   def test_pySlogP_VSA_(self):
     for data in TestCase.readNCI_200():
       molPy = Chem.MolFromSmiles(data.smiles)
-      for calcC, calcPy in zip(
-          MolSurf.SlogP_VSA_(data.mol), MolSurf.pySlogP_VSA_(molPy, force=False)):
+      for calcC, calcPy in zip(MolSurf.SlogP_VSA_(data.mol),
+                               MolSurf.pySlogP_VSA_(molPy, force=False)):
         self.assertAlmostEqual(calcC, calcPy)
 
   def test_pySMR_VSA_(self):

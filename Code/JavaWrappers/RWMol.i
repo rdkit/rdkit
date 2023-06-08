@@ -48,6 +48,20 @@
 %ignore RDKit::RWMol::addAtom(Atom *atom,bool updateLabel,bool takeOwnership);
 %ignore RDKit::RWMol::addBond(Bond *bond,bool takeOwnership);
 
+%newobject RDKit::SmilesToMol;
+%newobject RDKit::SmartsToMol;
+%newobject RDKit::MolBlockToMol;
+%newobject RDKit::MolFileToMol;
+%newobject RDKit::MolFromMolFile;
+%newobject RDKit::MolFromTPLFIle;
+%newobject RDKit::MolFromMol2File;
+%newobject RDKit::MolFromMol2Block;
+%newobject RDKit::MolFromPDBBlock;
+%newobject RDKit::MolFromPDBFile;
+%newobject RDKit::MolFromSequence;
+%newobject RDKit::MolFromFasta;
+
+
 %shared_ptr(RDKit::RWMol)
 %include "enums.swg"
 #if swifjava
@@ -154,19 +168,37 @@ static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXMLFile(const std::string &text,
 }
 
 
-  /* Methods from MolFileStereoChem.h */
-  void DetectAtomStereoChemistry(const RDKit::Conformer *conf) {
-	RDKit::DetectAtomStereoChemistry(*($self), conf);
-  };
+/* Methods from MolFileStereoChem.h */
+void DetectAtomStereoChemistry(const RDKit::Conformer *conf) {
+  RDKit::DetectAtomStereoChemistry(*($self), conf);
+}
+void DetectBondStereoChemistry(const RDKit::Conformer *conf) {
+  RDKit::DetectBondStereoChemistry(*($self), conf);
+}
+void ClearSingleBondDirFlags() {
+ RDKit::ClearSingleBondDirFlags(*($self));
+};
+void reapplyMolBlockWedging() {
+  RDKit::reapplyMolBlockWedging(*($self));
+}
+void clearMolBlockWedgingInfo() {
+  RDKit::clearMolBlockWedgingInfo(*($self));
+}
+void invertMolBlockWedgingInfo() {
+  RDKit::invertMolBlockWedgingInfo(*($self));
+}
+void markUnspecifiedStereoAsUnknown(int confId) {
+  RDKit::markUnspecifiedStereoAsUnknown(*($self), confId);
+}
 
-   /* From Kekulize.cpp, MolOps.h */
-    void Kekulize(bool markAtomsBonds=true, unsigned int maxBackTracks=100) {
-	RDKit::MolOps::Kekulize(*($self), markAtomsBonds, maxBackTracks);
-   }
+/* From Kekulize.cpp, MolOps.h */
+void Kekulize(bool markAtomsBonds=true, unsigned int maxBackTracks=100) {
+  RDKit::MolOps::Kekulize(*($self), markAtomsBonds, maxBackTracks);
+}
 
-  /* MolOps.h */
-  void sanitizeMol() {
-	RDKit::MolOps::sanitizeMol(*($self));
-  }
+/* MolOps.h */
+void sanitizeMol() {
+  RDKit::MolOps::sanitizeMol(*($self));
+}
 
 }

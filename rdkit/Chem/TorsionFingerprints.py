@@ -9,13 +9,11 @@
     According to a paper from Schulz-Gasch et al., JCIM, 52, 1499-1512 (2012).
 
 """
-from rdkit import rdBase
-from rdkit import RDConfig
-from rdkit import Geometry
-from rdkit import Chem
-from rdkit.Chem import rdchem
-from rdkit.Chem import rdMolDescriptors
-import math, os
+import math
+import os
+
+from rdkit import Chem, Geometry, RDConfig, rdBase
+from rdkit.Chem import rdchem, rdMolDescriptors
 
 
 def _doMatch(inv, atoms):
@@ -272,7 +270,10 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2, ignoreColinearBonds
     # get the torsions
     tmp = []
     num = len(r)
-    maxdev = 180.0 * math.exp(-0.025 * (num - 14) * (num - 14))
+    if 14 <= num:
+      maxdev = 180.0
+    else:
+      maxdev = 180.0 * math.exp(-0.025 * (num - 14) * (num - 14))
     for i in range(len(r)):
       tmp.append((r[i], r[(i + 1) % num], r[(i + 2) % num], r[(i + 3) % num]))
     tors_list_rings.append((tmp, maxdev))
@@ -346,6 +347,7 @@ def _findCentralBond(mol, distmat):
       Return: atom indices of the two most central atoms (in order)
   """
   from numpy import std
+
   # get the most central atom = atom with the least STD of shortest distances
   stds = []
   for i in range(mol.GetNumAtoms()):
@@ -614,8 +616,9 @@ def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, 
   tfd = CalculateTFD(torsion1, torsion2, weights=weights)
   return tfd
 
+
 def GetBestTFDBetweenMolecules(mol1, mol2, confId1=-1, useWeights=True, maxDev='equal',
-                           symmRadius=2, ignoreColinearBonds=True):
+                               symmRadius=2, ignoreColinearBonds=True):
   """ Wrapper to calculate the best TFD between a single conformer of mol1 and all the conformers of mol2
       Important: The two molecules must be isomorphic
 
@@ -653,9 +656,8 @@ def GetBestTFDBetweenMolecules(mol1, mol2, confId1=-1, useWeights=True, maxDev='
     # second molecule
     torsion2 = CalculateTorsionAngles(mol2, tl, tlr, confId=conf.GetId())
     tfd = CalculateTFD(torsion1, torsion2, weights=weights)
-    best = min(best,tfd)
+    best = min(best, tfd)
   return best
-
 
 
 def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):

@@ -16,28 +16,26 @@ from collections import namedtuple
 
 import numpy
 
-from rdkit import DataStructs
-from rdkit import ForceField
-from rdkit import RDConfig
-from rdkit import rdBase
+from rdkit import DataStructs, ForceField, RDConfig, rdBase
 from rdkit.Chem import *
 from rdkit.Chem.ChemicalFeatures import *
+from rdkit.Chem.EnumerateStereoisomers import (EnumerateStereoisomers,
+                                               StereoEnumerationOptions)
 from rdkit.Chem.rdChemReactions import *
 from rdkit.Chem.rdDepictor import *
 from rdkit.Chem.rdDistGeom import *
+from rdkit.Chem.rdFingerprintGenerator import *
 from rdkit.Chem.rdForceFieldHelpers import *
 from rdkit.Chem.rdMolAlign import *
 from rdkit.Chem.rdMolDescriptors import *
+from rdkit.Chem.rdMolEnumerator import *
 from rdkit.Chem.rdMolTransforms import *
 from rdkit.Chem.rdPartialCharges import *
+from rdkit.Chem.rdqueries import *
 from rdkit.Chem.rdReducedGraphs import *
 from rdkit.Chem.rdShapeHelpers import *
-from rdkit.Chem.rdqueries import *
-from rdkit.Chem.rdMolEnumerator import *
-from rdkit.Chem.rdFingerprintGenerator import *
 from rdkit.Geometry import rdGeometry
 from rdkit.RDLogger import logger
-from rdkit.Chem.EnumerateStereoisomers import StereoEnumerationOptions, EnumerateStereoisomers
 
 try:
   from rdkit.Chem.rdSLNParse import *
@@ -445,8 +443,8 @@ def AssignBondOrdersFromTemplate(refmol, mol):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

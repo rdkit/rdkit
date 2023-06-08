@@ -14,6 +14,8 @@
 #include "Metal.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ROMol.h>
@@ -32,6 +34,12 @@ void testCleanup() {
     RWMOL_SPTR m = "CCC(=O)O[Na]"_smiles;
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "CCC(=O)[O-].[Na+]");
+  }
+  {
+    // Github 5997
+    auto m = "CC(=O)O[Mg]OC(=O)C"_smiles;
+    auto res(MolStandardize::cleanup(*m, params));
+    TEST_ASSERT(MolToSmiles(*res) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
   }
 
   // Test metal ion is untouched during standardize.
@@ -53,8 +61,8 @@ void testCleanup() {
     RWMOL_SPTR m = "C[Hg]C"_smiles;
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "C[Hg]C")
-    BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
   }
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testStandardizeSm() {
@@ -108,6 +116,13 @@ void testMetalDisconnector() {
 
   MolStandardize::MetalDisconnector md;
   unsigned int failedOp;
+  {
+    auto m(SmilesToMol("[O-]C(=O)C.[Mg+2][O-]C(=O)C", 0, false));
+    MolOps::sanitizeMol(*m, failedOp, MolOps::SANITIZE_CLEANUP);
+    TEST_ASSERT(m);
+    md.disconnect(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
+  }
 
   // testing overloaded function
   {
@@ -132,13 +147,20 @@ void testMetalDisconnector() {
   }
 
   {
+    RWMOL_SPTR m("C1(CCCCC1)[Zn]Br"_smiles);
+    TEST_ASSERT(m);
+    md.disconnect(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "[Br-].[CH-]1CCCCC1.[Zn+2]");
+  }
+
+  {
     RWMOL_SPTR m("Br[Mg]c1ccccc1CCC(=O)O[Na]"_smiles);
     TEST_ASSERT(m);
     md.disconnect(*m);
     TEST_ASSERT(MolToSmiles(*m) == "O=C([O-])CCc1ccccc1[Mg]Br.[Na+]");
   }
 
-  // test input own metal_non, metal_nof
+  // test input own dp_metal_non, dp_metal_nof
   // missing out Na
   {
     MolStandardize::MetalDisconnector md2;
@@ -180,6 +202,14 @@ void testMetalDisconnector() {
     TEST_ASSERT(m);
     md.disconnect(*m);
     TEST_ASSERT(MolToSmiles(*m) == "CC(=O)[O-].[Na+]");
+  }
+  // make sure that -1 as a valence is dealt with (Github 5997)
+  {
+    RWMOL_SPTR m(SmilesToMol("[O-]C(=O)C.[Mg+2][O-]C(=O)C", 0, false));
+    MolOps::sanitizeMol(*m, failedOp, MolOps::SANITIZE_CLEANUP);
+    TEST_ASSERT(m);
+    md.disconnect(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
   }
 
   // test that badly specified dative bonds are perceived as such
@@ -1425,9 +1455,89 @@ Positively charged tetravalent B	[B;v4;+1:1]>>[*;-1:1])DATA";
     std::unique_ptr<ROMol> refmol(SmilesToMol(pair.second));
     auto refsmi = MolToSmiles(*refmol);
     auto prodsmi = MolToSmiles(static_cast<const ROMol &>(*rwmol));
+
     TEST_ASSERT(prodsmi == refsmi);
   }
   BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
+}
+
+void testOrganometallics() {
+  BOOST_LOG(rdDebugLog)
+      << "-----------------------\n test organometallic disconnections"
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  std::string test_dir = rdbase + "/Code/GraphMol/MolStandardize/test_data";
+  std::vector<std::pair<std::string, std::string>> test_files = {
+      {"CPLX_0001.mol",
+       R"(O=C([O-])CN(CCN(CC(=O)[O-])CC(=O)[O-])CC(=O)[O-].[Mg+2].[Na+].[Na+])"},
+      {"CPLX_0002.mol",
+       R"(O=C([O-])CN(CCN(CC(=O)[O-])CC(=O)[O-])CC(=O)[O-].[Fe+2].[Na+].[Na+])"},
+      {"MOL_00001.mol",
+       R"([Pd].c1ccc(P(c2ccccc2)c2ccccc2)cc1.c1ccc(P(c2ccccc2)c2ccccc2)cc1.c1ccc(P(c2ccccc2)c2ccccc2)cc1.c1ccc(P(c2ccccc2)c2ccccc2)cc1)"},
+      {"MOL_00002.mol",
+       R"(ClCCl.[Cl-].[Cl-].[Fe+2].[Pd+2].c1ccc(P(c2ccccc2)[c-]2cccc2)cc1.c1ccc(P(c2ccccc2)[c-]2cccc2)cc1)"},
+      {"MOL_00003.mol",
+       R"([Cl-].[Cl-].[Fe+2].[Pd+2].c1ccc(P(c2ccccc2)[c-]2cccc2)cc1.c1ccc(P(c2ccccc2)[c-]2cccc2)cc1)"},
+      {"MOL_00004.mol",
+       R"(CC(C)c1cc(C(C)C)c(-c2ccccc2P(C2CCCCC2)C2CCCCC2)c(C(C)C)c1.Nc1ccccc1-c1[c-]cccc1.[Cl-].[Pd+2])"},
+      {"MOL_00005.mol",
+       R"(CCCCP(C12CC3CC(CC(C3)C1)C2)C12CC3CC(CC(C3)C1)C2.CS(=O)(=O)[O-].Nc1ccccc1-c1[c-]cccc1.[Pd+2])"},
+      {"MOL_00006.mol",
+       R"(CCCCP(C12CC3CC(CC(C3)C1)C2)C12CC3CC(CC(C3)C1)C2.CS(=O)(=O)[O-].Nc1ccccc1-c1[c-]cccc1.[Pd+2])"},
+      {"MOL_00007.mol",
+       R"(CC(C)c1cc(C(C)C)c(-c2ccccc2P(C2CCCCC2)C2CCCCC2)c(C(C)C)c1.CS(=O)(=O)[O-].Nc1ccccc1-c1[c-]cccc1.[Pd+2])"},
+      {"MOL_00008.mol",
+       R"(CC(C)(C)P([c-]1cccc1)C(C)(C)C.CC(C)(C)P([c-]1cccc1)C(C)(C)C.[Cl-].[Cl-].[Fe+2].[Pd+2])"},
+      {"MOL_00009.mol",
+       R"(CN(C)c1ccc(P(C(C)(C)C)C(C)(C)C)cc1.CN(C)c1ccc(P(C(C)(C)C)C(C)(C)C)cc1.[Cl-].[Cl-].[Pd+2])"},
+      {"MOL_00010.mol",
+       R"(Cc1cc(C(c2ccccc2)c2ccccc2)c(-n2[c-][n+](-c3c(C(c4ccccc4)c4ccccc4)cc(C)cc3C(c3ccccc3)c3ccccc3)cc2)c(C(c2ccccc2)c2ccccc2)c1.[CH2-]/C=C/c1ccccc1.[Cl-].[Pd+2])"},
+      {"MOL_00011.mol",
+       R"([Cl-].[Cl-].[Ni+2].c1ccc(P(CCCP(c2ccccc2)c2ccccc2)c2ccccc2)cc1)"},
+      {"MOL_00012.mol", R"(C1=C\CC/C=C\CC/1.CC1=C(C)C(=O)C(C)=C(C)C1=O.[Ni])"},
+      {"MOL_00013.mol", R"(CN(C)CCN(C)C.Cc1[c-]cccc1.[Cl-].[Ni+2])"},
+      {"MOL_00014.mol",
+       R"(Cc1cc(C)cc(/C=C/c2cc(C)cc(C)c2)c1.Cc1cc(C)cc(/C=C/c2cc(C)cc(C)c2)c1.Cc1cc(C)cc(/C=C/c2cc(C)cc(C)c2)c1.[Ni])"},
+      {"MOL_00015.mol",
+       R"(CC(C)(C)c1ccc(/C=C/c2ccc(C(C)(C)C)cc2)cc1.CC(C)(C)c1ccc(/C=C/c2ccc(C(C)(C)C)cc2)cc1.CC(C)(C)c1ccc(/C=C/c2ccc(C(C)(C)C)cc2)cc1.[Ni])"},
+      {"diethylzinc.mol", R"([CH2-]CC.[CH2-]CC.[Zn+2])"},
+      {"edta_case.mol",
+       R"(O=C([O-])CN(CCN(CC(=O)[O-])CC(=O)[O-])CC(=O)[O-].[Mg+2].[Na+].[Na+])"},
+      {"ferrocene.mol", R"([Fe+2].c1cc[cH-]c1.c1cc[cH-]c1)"},
+      {"ferrocene_1.mol", R"(C[c-]1cccc1.C[c-]1cccc1.[Fe+2])"},
+      {"grignard_1.mol", R"([CH3-].[Cl-].[Mg+2])"},
+      {"grignard_2.mol", R"([Cl-].[Mg+2].[c-]1ccccc1)"},
+      {"lithium_1.mol", R"([CH3-].[Li+])"},
+      {"lithium_2.mol", R"([Li+].[c-]1ccccc1)"},
+      {"phenylzincbromide.mol", R"([Br-].[Zn+2].[c-]1ccccc1)"},
+      {"ruthenium.mol",
+       R"([Cl-].[Cl-].[Cl-].[Cl-].[Ru+2].[Ru+2].c1ccccc1.c1ccccc1)"},
+      {"sodium_1.mol", R"([Na+].c1cc[cH-]c1)"},
+      {"sodium_2.mol",
+       R"(CN(C)CCN(C)CCN(C)C.CN(C)CCN(C)CCN(C)C.[Na+].[Na+].[c-]1ccccc1.[c-]1ccccc1)"},
+      {"weirdzinc_1.mol",
+       R"([Zn+2].[Zn+2].[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1)"},
+      {"weirdzinc_2.mol",
+       R"([Cu+].[Cu+].[Zn+2].[Zn+2].[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1)"}};
+  for (auto &test_file : test_files) {
+    std::string full_file = test_dir + "/" + test_file.first;
+    bool takeOwnership = true;
+    SDMolSupplier mol_supplier(full_file, takeOwnership);
+    std::unique_ptr<ROMol> m(mol_supplier.next());
+    std::unique_ptr<ROMol> dm(MolStandardize::disconnectOrganometallics(*m));
+    //    std::cout << test_file.first << " got : " << MolToSmiles(*dm)
+    //              << " expected : " << test_file.second << std::endl;
+    TEST_ASSERT(MolToSmiles(*dm) == test_file.second);
+    std::unique_ptr<RWMol> em(new RWMol(*m));
+    MolStandardize::disconnectOrganometallics(*em);
+    TEST_ASSERT(MolToSmiles(*em) == test_file.second);
+  }
+  {
+    auto m("[CH2-](->[K+])c1ccccc1"_smiles);
+    TEST_ASSERT(m);
+    MolStandardize::disconnectOrganometallics(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "[CH2-]c1ccccc1.[K+]");
+  }
 }
 
 int main() {
@@ -1440,6 +1550,7 @@ int main() {
   testNormalizeMultiFrags();
   testCharge();
   testMetalDisconnectorLigandExpo();
-  //	testEnumerateTautomerSmiles();
+  testEnumerateTautomerSmiles();
+  testOrganometallics();
   return 0;
 }

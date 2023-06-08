@@ -11,10 +11,13 @@
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Descriptors/ConnectivityDescriptors.h>
+#include <GraphMol/Descriptors/OxidationNumbers.h>
 #include <GraphMol/Descriptors/PMI.h>
 
 using namespace RDKit;
@@ -227,5 +230,321 @@ TEST_CASE(
     m1->getBondBetweenAtoms(4, 5)->setBondType(Bond::BondType::AROMATIC);
     CHECK(Descriptors::calcNumRotatableBonds(
               *m1, Descriptors::NumRotatableBondsOptions::StrictLinkages) == 3);
+  }
+}
+
+TEST_CASE("TPSA caching ignores options") {
+  SECTION("with force") {
+    auto m = "OCCS"_smiles;
+    REQUIRE(m);
+    bool force = true;
+    double tv1 = Descriptors::calcTPSA(*m, force, false);
+    double tv2 = Descriptors::calcTPSA(*m, force, true);
+    CHECK(tv2 > tv1);
+  }
+  SECTION("no force") {
+    auto m = "OCCS"_smiles;
+    REQUIRE(m);
+    bool force = false;
+    double tv1 = Descriptors::calcTPSA(*m, force, false);
+    double tv2 = Descriptors::calcTPSA(*m, force, true);
+    CHECK(tv2 > tv1);
+  }
+}
+
+TEST_CASE("Oxidation numbers") {
+  std::string rdbase = std::getenv("RDBASE");
+  SECTION("simple tests") {
+    {
+      std::vector<std::string> smis{"CO", "C=O", "C(=O)O", "S(=O)(=O)(O)O"};
+      std::vector<std::vector<int>> expected{
+          {-2, -2}, {0, -2}, {2, -2, -2}, {6, -2, -2, -2, -2}};
+      for (auto i = 0u; i < smis.size(); ++i) {
+        std::unique_ptr<RWMol> mol(RDKit::SmilesToMol(smis[i]));
+        Descriptors::calcOxidationNumbers(*mol);
+        for (const auto &a : mol->atoms()) {
+          CHECK(a->getProp<int>(common_properties::OxidationNumber) ==
+                expected[i][a->getIdx()]);
+        }
+      }
+    }
+  }
+  SECTION("organometallics tests") {
+    {
+      std::string file1 =
+          rdbase + "/Code/GraphMol/MolStandardize/test_data/ferrocene.mol";
+      std::vector<int> expected{-2, -1, -1, -1, -1, -2, -1,
+                                -1, -1, -1, 2,  0,  0};
+      bool takeOwnership = true;
+      SDMolSupplier mol_supplier(file1, takeOwnership);
+      std::unique_ptr<ROMol> m1(mol_supplier.next());
+      REQUIRE(m1);
+      Descriptors::calcOxidationNumbers(*m1);
+      for (const auto &a : m1->atoms()) {
+        CHECK(a->getProp<int>(common_properties::OxidationNumber) ==
+              expected[a->getIdx()]);
+      }
+    }
+    {
+      std::string file2 =
+          rdbase + "/Code/GraphMol/MolStandardize/test_data/MOL_00002.mol";
+      bool takeOwnership = true;
+      SDMolSupplier mol_supplier(file2, takeOwnership);
+      std::unique_ptr<ROMol> m1(mol_supplier.next());
+      REQUIRE(m1);
+      RWMol m2(*m1);
+      RDKit::MolOps::Kekulize(m2);
+      std::vector<unsigned int> ats{0, 5, 10, 13, 14, 19, 20, 21, 42, 43, 44};
+      std::vector<int> expected{-2, -2, 2, 3, 3, 2, -1, -1, -1, 0, -1};
+      Descriptors::calcOxidationNumbers(m2);
+      for (unsigned int i = 0; i < ats.size(); ++i) {
+        auto a = m2.getAtomWithIdx(ats[i]);
+        CHECK(a->getProp<int>(common_properties::OxidationNumber) ==
+              expected[i]);
+      }
+    }
+    {
+      std::string file3 =
+          rdbase + "/Code/GraphMol/MolStandardize/test_data/MOL_00104.mol";
+      bool takeOwnership = true;
+      SDMolSupplier mol_supplier(file3, takeOwnership);
+      std::unique_ptr<ROMol> m1(mol_supplier.next());
+      REQUIRE(m1);
+      RWMol m2(*m1);
+      RDKit::MolOps::Kekulize(m2);
+      std::vector<int> expected{-3, -1, -2, 0, 2, -3, -1, -2, 0, -1, -1, 2};
+      Descriptors::calcOxidationNumbers(m2);
+      for (auto &a : m2.atoms()) {
+        CHECK(a->getProp<int>(common_properties::OxidationNumber) ==
+              expected[a->getIdx()]);
+      }
+      RDKit::MolOps::hapticBondsToDative(m2);
+      Descriptors::calcOxidationNumbers(m2);
+      std::vector<int> expectedNoDummies{-3, -1, -2, 2, -3, -1, -2, -1, -1, 2};
+      for (auto &a : m2.atoms()) {
+        CHECK(a->getProp<int>(common_properties::OxidationNumber) ==
+              expectedNoDummies[a->getIdx()]);
+      }
+    }
+  }
+  SECTION("Syngenta tests") {
+    // These are from
+    // https://github.com/syngenta/linchemin/blob/main/tests/cheminfo/test_functions.py#L385
+    // and thus subject to the MIT license at
+    //
+    // https://github.com/syngenta/linchemin/blob/f44fda38e856eaa876483c94284ee6788d2c27f4/LICENSE
+    std::vector<std::tuple<std::string, std::string, std::map<int, int>>>
+        test_set{
+            {"A-001",
+             "O=S(=O)(O)O",
+             {{0, -2}, {1, 6}, {2, -2}, {3, -2}, {4, -2}}},
+            {"A-002",
+             "NS(=O)(=O)O",
+             {{0, -3}, {1, 6}, {2, -2}, {3, -2}, {4, -2}}},
+            {"A-003",
+             "NS(=O)(=O)c1ccccc1",
+             {{0, -3},
+              {1, 4},
+              {2, -2},
+              {3, -2},
+              {4, 1},
+              {5, -1},
+              {6, -1},
+              {7, -1},
+              {8, -1},
+              {9, -1}}},
+            {"A-004",
+             "O=S(=O)(O)c1ccccc1",
+             {{0, -2},
+              {1, 4},
+              {2, -2},
+              {3, -2},
+              {4, 1},
+              {5, -1},
+              {6, -1},
+              {7, -1},
+              {8, -1},
+              {9, -1}}},
+            {"A-005",
+             "O=S(=O)(Cl)c1ccccc1",
+             {{0, -2},
+              {1, 4},
+              {2, -2},
+              {3, -1},
+              {4, 1},
+              {5, -1},
+              {6, -1},
+              {7, -1},
+              {8, -1},
+              {9, -1}}},
+            {"A-006", "S", {{0, -2}}},
+            {"A-007", "CSC", {{0, -2}, {1, -2}, {2, -2}}},
+            {"A-008", "CS(C)=O", {{0, -2}, {1, 0}, {2, -2}, {3, -2}}},
+            {"A-009",
+             "CS(C)(=O)=O",
+             {{0, -2}, {1, 2}, {2, -2}, {3, -2}, {4, -2}}},
+            {"A-010",
+             "COS(=O)(=O)OC",
+             {{0, -2}, {1, -2}, {2, 6}, {3, -2}, {4, -2}, {5, -2}, {6, -2}}},
+            {"A-011",
+             "COP(=O)(OC)OC",
+             {{0, -2},
+              {1, -2},
+              {2, 5},
+              {3, -2},
+              {4, -2},
+              {5, -2},
+              {6, -2},
+              {7, -2}}},
+            {"A-012",
+             "COP(OC)OC",
+             {{0, -2}, {1, -2}, {2, 3}, {3, -2}, {4, -2}, {5, -2}, {6, -2}}},
+            {"A-013",
+             "COP(=O)(C#N)OC",
+             {{0, -2},
+              {1, -2},
+              {2, 5},
+              {3, -2},
+              {4, 2},
+              {5, -3},
+              {6, -2},
+              {7, -2}}},
+            {"A-014",
+             "CCP(=O)(CC)CC",
+             {{0, -3},
+              {1, -3},
+              {2, 5},
+              {3, -2},
+              {4, -3},
+              {5, -3},
+              {6, -3},
+              {7, -3}}},
+            {"A-015",
+             "CCP(CC)CC",
+             {{0, -3}, {1, -3}, {2, 3}, {3, -3}, {4, -3}, {5, -3}, {6, -3}}},
+            {"A-016",
+             "CC[P+](CC)(CC)CC",
+             {{0, -3},
+              {1, -3},
+              {2, 5},
+              {3, -3},
+              {4, -3},
+              {5, -3},
+              {6, -3},
+              {7, -3},
+              {8, -3}}},
+            {"A-017",
+             "c1ccncc1",
+             {{0, -1}, {1, -1}, {2, 1}, {3, -3}, {4, 0}, {5, -1}}},
+            {"A-018",
+             "C[n+]1ccccc1",
+             {{0, -2}, {1, -3}, {2, 1}, {3, -1}, {4, -1}, {5, -1}, {6, 0}}},
+            {"A-019",
+             "[O-][n+]1ccccc1",
+             {{0, -2}, {1, -1}, {2, 1}, {3, -1}, {4, -1}, {5, -1}, {6, 0}}},
+            {"A-020",
+             "C[C-](C)[n+]1ccccc1",
+             {{0, -3},
+              {1, 0},
+              {2, -3},
+              {3, -3},
+              {4, 1},
+              {5, -1},
+              {6, -1},
+              {7, -1},
+              {8, 0}}},
+            {"A-021",
+             "C1CCNCC1",
+             {{0, -2}, {1, -2}, {2, -1}, {3, -3}, {4, -1}, {5, -2}}},
+            {"A-022",
+             "[O]N1CCCCC1",
+             {{0, -1}, {1, -1}, {2, -1}, {3, -2}, {4, -2}, {5, -2}, {6, -1}}},
+            {"A-023", "N", {{0, -3}}},
+            {"A-024", "CN(C)C", {{0, -2}, {1, -3}, {2, -2}, {3, -2}}},
+            {"A-025", "NO", {{0, -1}, {1, -2}}},
+            {"A-026", "[NH4+]", {{0, -3}}},
+            {"A-027",
+             "C[N+](C)(C)C",
+             {{0, -2}, {1, -3}, {2, -2}, {3, -2}, {4, -2}}},
+            {"A-028",
+             "C[N+](C)(C)[O-]",
+             {{0, -2}, {1, -1}, {2, -2}, {3, -2}, {4, -2}}},
+            {"A-029", "[SiH4]", {{0, 4}}},
+            {"A-030",
+             "C[Si](C)(C)C",
+             {{0, -4}, {1, 4}, {2, -4}, {3, -4}, {4, -4}}},
+            {"A-031",
+             "C[Si](C)(C)Cl",
+             {{0, -4}, {1, 4}, {2, -4}, {3, -4}, {4, -1}}},
+            {"A-032",
+             "C[Si](C)(C)O",
+             {{0, -4}, {1, 4}, {2, -4}, {3, -4}, {4, -2}}},
+            {"A-033", "C", {{0, -4}}},
+            {"A-034", "CO", {{0, -2}, {1, -2}}},
+            {"A-035", "C=O", {{0, 0}, {1, -2}}},
+            {"A-036", "O=CO", {{0, -2}, {1, 2}, {2, -2}}},
+            {"A-037", "O=C(O)O", {{0, -2}, {1, 4}, {2, -2}, {3, -2}}},
+            {"A-038", "O=C=O", {{0, -2}, {1, 4}, {2, -2}}},
+            {"A-039", "[C-]#[O+]", {{0, 2}, {1, -2}}},
+            {"A-041", "CI", {{0, -2}, {1, -1}}},
+            {"A-042", "ICI", {{0, -1}, {1, 0}, {2, -1}}},
+            {"A-043", "IC(I)I", {{0, -1}, {1, 2}, {2, -1}, {3, -1}}},
+            {"A-044",
+             "IC(I)(I)I",
+             {{0, -1}, {1, 4}, {2, -1}, {3, -1}, {4, -1}}},
+            {"A-045",
+             "FC(F)(F)I",
+             {{0, -1}, {1, 4}, {2, -1}, {3, -1}, {4, -1}}},
+            {"A-046", "II", {{0, 0}, {1, 0}}},
+            {"A-047", "ClI", {{0, -1}, {1, 1}}},
+            {"A-048",
+             "[O-][I+3]([O-])([O-])[O-]",
+             {{0, -2}, {1, 7}, {2, -2}, {3, -2}, {4, -2}}},
+            {"A-049",
+             "[O-][I+2]([O-])[O-]",
+             {{0, -2}, {1, 5}, {2, -2}, {3, -2}}},
+            {"A-050",
+             "O=[I+]([O-])c1ccccc1",
+             {{0, -2},
+              {1, 3},
+              {2, -2},
+              {3, 1},
+              {4, -1},
+              {5, -1},
+              {6, -1},
+              {7, -1},
+              {8, -1}}},
+            {"A-051",
+             "Ic1ccccc1",
+             {{0, -1}, {1, 1}, {2, -1}, {3, -1}, {4, -1}, {5, -1}, {6, -1}}},
+            {"A-052",
+             "CC(=O)OI1(OC(C)=O)(OC(C)=O)OC(=O)c2ccccc21",
+             {{0, -3},  {1, 3},   {2, -2},  {3, -2},  {4, 3},  {5, -2},
+              {6, 3},   {7, -3},  {8, -2},  {9, -2},  {10, 3}, {11, -3},
+              {12, -2}, {13, -2}, {14, 3},  {15, -2}, {16, 0}, {17, -1},
+              {18, -1}, {19, -1}, {20, -1}, {21, 1}}},
+            {"A-053", "[Cl-]", {{0, -1}}},
+            {"A-054", "ClCl", {{0, 0}, {1, 0}}},
+            {"A-055", "[O-]Cl", {{0, -2}, {1, 1}}},
+            {"A-056", "[O-][Cl+][O-]", {{0, -2}, {1, 3}, {2, -2}}},
+            {"A-057",
+             "[O-][Cl+2]([O-])[O-]",
+             {{0, -2}, {1, 5}, {2, -2}, {3, -2}}},
+            {"A-58",
+             "[O-][Cl+3]([O-])([O-])[O-]",
+             {{0, -2}, {1, 7}, {2, -2}, {3, -2}, {4, -2}}}};
+
+    for (const auto &test : test_set) {
+      //      std::cout << "checking " << std::get<0>(test) << " : "
+      //                << std::get<1>(test) << std::endl;
+      std::unique_ptr<RWMol> mol(RDKit::SmilesToMol(std::get<1>(test)));
+      RDKit::MolOps::Kekulize(*mol);
+      Descriptors::calcOxidationNumbers(*mol);
+      for (const auto &expected : std::get<2>(test)) {
+        auto atom = mol->getAtomWithIdx(expected.first);
+        CHECK(atom->getProp<int>(common_properties::OxidationNumber) ==
+              expected.second);
+      }
+    }
   }
 }

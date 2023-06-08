@@ -8,14 +8,16 @@
 it's intended to be shallow, but broad
 
 """
-import unittest, os
+import os
 import pickle
+import unittest
+
 from rdkit import RDConfig
 from rdkit.RDLogger import logger
+
 logger = logger()
-from rdkit import Chem
+from rdkit import Chem, DataStructs
 from rdkit.Chem import FragmentCatalog
-from rdkit import DataStructs
 
 
 class TestCase(unittest.TestCase):

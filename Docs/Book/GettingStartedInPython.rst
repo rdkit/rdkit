@@ -23,8 +23,8 @@ do something that doesn't appear to be documented please contribute by writing
 it up for this document. Contributing to the documentation is a great service
 both to the RDKit community and to your future self.
 
-Reading and Writing Molecules
-*****************************
+Reading, Drawing, and Writing Molecules
+***************************************
 
 Reading single molecules
 ========================
@@ -64,9 +64,18 @@ or None on failure:
 
 .. doctest::
 
-  >>> m = Chem.MolFromMolFile('data/invalid.mol')
-  >>> m is None
+  >>> m_invalid = Chem.MolFromMolFile('data/invalid.mol')
+  >>> m_invalid is None
   True
+
+An :py:class:`rdkit.Chem.rdchem.Mol` object can be displayed graphically using :py:func:`rdkit.Chem.Draw.MolToImage`:
+
+.. doctest::
+
+  >>> from rdkit.Chem import Draw
+  >>> img = Draw.MolToImage(m)
+
+.. image:: images/Cc1ccccc1.png
 
 An attempt is made to provide sensible error messages:
 
@@ -807,7 +816,7 @@ This can be used to reconstruct molecules using the Chem.Mol constructor:
   >>> Chem.MolToSmiles(m2)
   'c1ccncc1'
   >>> len(binStr)
-  127
+  130
 
 Note that this is smaller than the pickle:
 
@@ -3532,6 +3541,98 @@ These are adapted from the definitions in Gobbi, A. & Poppinger, D. “Genetic o
 | Acidic   | ``[$([C,S](=[O,S,P])-[O;H1,-1])]``                                                                                                                                     |
 +----------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
+Filtering Molecular Datasets
+*****************************
+Several sets of rules exist for estimating the likelihood of a molecule exhibiting drug-like behaviour. It's worth noting that these are rules of thumb, and that many examples of approved small molecule drugs exist that disobey these rules. 
+
+Lipinski Rule of 5
+==================
+Lipinski's "Rule of 5" [#lipinski]_ was introduced to estimate the oral bioavailability of molecules. Poor absorption is likely if the molecule violates more than one of the following conditions: 
+
+* Molecular Weight <= 500 Da
+* No. Hydrogen Bond Donors <= 10
+* No. Hydrogen Bond Acceptors <= 5
+* LogP <= 5
+
+.. doctest::
+
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem import Descriptors
+  >>> mol = Chem.MolFromSmiles('CC(=O)Nc1ccc(O)cc1')  # e.g. Paracetamol
+  
+  # Ro5 descriptors
+  >>> MW = Descriptors.MolWt(mol)
+  >>> HBA = Descriptors.NOCount(mol)
+  >>> HBD = Descriptors.NHOHCount(mol)
+  >>> LogP = Descriptors.MolLogP(mol)
+  >>> conditions = [MW <= 500, HBA <= 10, HBD <= 5, LogP <= 5]
+  >>> pass_ro5 = conditions.count(True) >= 3
+  >>> print(pass_ro5)
+  True
+  
+Filtering Unwanted Substructures
+================================
+Pan Assay Interference Compounds (or PAINS) [#pains]_ are molecules that display non-specific binding, leading to unwanted side effects and false-positives in virtual screening. Common PAINS motifs include toxoflavin, isothiazolones, hydroxyphenyl hydrazones, curcumin, phenolsulfonamides, rhodanines, enones, quinones, and catechols. 
+
+The Brenk filter [#brenk]_ removes molecules containing substructures with undesirable pharmacokinetics or toxicity. These include sulfates and phosphates that contribute to unfavourable pharmacokinetics, nitro groups which are mutagenic and 2-halopyridines and thiols which are both reactive.
+
+The NIH filter [#jadhav]_, [#doveston]_ defined a list of functional groups with undesirable properties. These are split into those with reactive functionalities (including Michael acceptors, aldehydes, epoxides, alkyl halides, metals, 2-halo pyridines, phosphorus nitrogen bonds, α-chloroketones and β-lactams) and medicinal chemistry exclusions (including oximes, crown ethers, hydrazines, flavanoids, polyphenols, primary halide sulfates and multiple nitro groups).
+
+.. doctest::
+
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem.FilterCatalog import FilterCatalog, FilterCatalogParams
+  
+  >>> mol = Chem.MolFromSmiles('CC1=C(C=C(C=C1)N2C(=O)C(=C(N2)C)N=NC3=CC=CC(=C3O)C4=CC(=CC=C4)C(=O)O)C')  # e.g. Eltrombopag
+  
+  # PAINS flag
+  >>> params_pains = FilterCatalogParams()
+  >>> params_pains.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_A)
+  True
+  >>> catalog_pains = FilterCatalog(params_pains)
+  >>> flag = catalog_pains.HasMatch(mol)  # Checks if there is a matching PAINS
+  >>> print("PAINs: ", flag)
+  PAINs:  True
+
+  # Brenk Flag
+  >>> params_unwanted = FilterCatalogParams()
+  >>> params_unwanted.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
+  True
+  >>> catalog_unwanted = FilterCatalog(params_unwanted)
+  >>> flag = catalog_unwanted.HasMatch(mol)  # Checks if there is a matching unwanted substructure
+  >>> print("Brenk: ", flag)
+  Brenk:  True
+
+  # NIH Flag
+  >>> params_nih = FilterCatalogParams()
+  >>> params_nih.AddCatalog(FilterCatalogParams.FilterCatalogs.NIH)
+  True
+  >>> catalog_nih = FilterCatalog(params_nih)
+  >>> flag = catalog_nih.HasMatch(mol)  # Checks if there is a matching NIH
+  >>> print("NIH: ", flag)
+  NIH:  True
+
+All of the available filters can also be considered at once. Additional information such as the class and description of the unwanted substructures can be obtained using the FilterCatalogEntry object:
+
+.. doctest::
+  
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem.FilterCatalog import FilterCatalog, FilterCatalogParams
+  
+  >>> mol = Chem.MolFromSmiles('CC1=C(C=C(C=C1)N2C(=O)C(=C(N2)C)N=NC3=CC=CC(=C3O)C4=CC(=CC=C4)C(=O)O)C')  # e.g. Eltrombopag
+
+  # ALL Filters
+  >>> params_all = FilterCatalogParams()
+  >>> params_all.AddCatalog(FilterCatalogParams.FilterCatalogs.ALL)
+  True
+  >>> catalog_all = FilterCatalog(params_all)
+
+  >>> print([entry.GetProp('FilterSet') for entry in catalog_all.GetMatches(mol)])
+  ['PAINS_A', 'Brenk', 'NIH', 'ChEMBL23_Dundee', 'ChEMBL23_BMS', 'ChEMBL23_MLSMR', 'ChEMBL23_Inpharmatica', 'ChEMBL23_LINT']
+  >>> print([entry.GetDescription() for entry in catalog_all.GetMatches(mol)])
+  ['azo_A(324)', 'diazo_group', 'azo_aryl', 'diazo group', 'azo_aryl', 'Azo', 'Filter5_azo', 'acyclic N-,=N and not N bound to carbonyl or sulfone']
+  
+  
 .. rubric:: Footnotes
 
 .. [#blaney] Blaney, J. M.; Dixon, J. S. "Distance Geometry in Molecular Modeling".  *Reviews in Computational Chemistry*; VCH: New York, 1994.
@@ -3552,8 +3653,11 @@ These are adapted from the definitions in Gobbi, A. & Poppinger, D. “Genetic o
 .. [#mmffs] Halgren, T. A. "MMFF VI. MMFF94s option for energy minimization studies." *J. Comp. Chem.* **20**:720–9 (1999).
 .. [#riniker] Riniker, S.; Landrum, G. A. "Similarity Maps - A Visualization Strategy for Molecular Fingerprints and Machine-Learning Methods" *J. Cheminf.* **5**:43 (2013).
 .. [#riniker2] Riniker, S.; Landrum, G. A. "Better Informed Distance Geometry: Using What We Know To Improve Conformation Generation" *J. Chem. Inf. Comp. Sci.* **55**:2562-74 (2015)
-
-
+.. [#lipinski] Lipinski, C. A.; Lombardo, F.; Dominy, B. W.; Feeney, P. J. "Experimental and Computational Approaches to Estimate Solubility and Permeability in Drug Discovery and Development Settings" *Adv. Drug Deliv. Rev.* **23**:3–25 (1997)
+.. [#pains] Baell, J. B.; Holloway, G. A. "New Substructure Filters for Removal of Pan Assay Interference Compounds (PAINS) from Screening Libraries and for Their Exclusion in Bioassays" *J. Med. Chem.* **53**:2719–2740 (2010)
+.. [#brenk] Brenk, R.; Schipani, A.; James, D.; Krasowski, A.; Gilbert, I. H.; Frearson, J.; Wyatt, P. G. "Lessons Learnt from Assembling Screening Libraries for Drug Discovery for Neglected Diseases." *ChemMedChem* **3**:435–444 (2008)
+.. [#jadhav] Jadhav, A.; Ferreira, R. S.; Klumpp, C.; Mott, B. T.; Austin, C. P.; Inglese, J.; Thomas, C. J.; Maloney, D. J.; Shoichet, B. K.; Simeonov, A. "Quantitative Analyses of Aggregation, Autofluorescence, and Reactivity Artifacts in a Screen for Inhibitors of a Thiol Protease." *J. Med. Chem.* **53**:37–51 (2010)
+.. [#doveston] Doveston, R. G.; Tosatti, P.; Dow, M.; Foley, D. J.; Li, H. Y.; Campbell, A. J.; House, D.; Churcher, I.; Marsden, S. P.; Nelson, A. "A Unified Lead-Oriented Synthesis of over Fifty Molecular Scaffolds." *Org. Biomol. Chem.* **13**:859–865. (2014)
 
 
 License

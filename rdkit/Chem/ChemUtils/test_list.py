@@ -6,6 +6,7 @@ longTests = []
 
 if __name__ == '__main__':
   import sys
+
   from rdkit import TestRunner
   doLong = 0
   if '-l' in sys.argv:

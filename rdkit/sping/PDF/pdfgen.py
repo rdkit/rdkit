@@ -53,20 +53,18 @@ Progress Reports:
 
 import os
 import sys
-import time
 import tempfile
+import time
 from io import StringIO
+from math import ceil, cos, pi, sin, tan
 from types import *
-from math import sin, cos, tan, pi, ceil
 
-from . import pdfutils
-from . import pdfdoc
-from . import pdfmetrics
-from . import pdfgeom
+from . import pdfdoc, pdfgeom, pdfmetrics, pdfutils
 
 
 class PDFError(ValueError):
   pass
+
 
 # Robert Kern
 # Constants for closing paths.
@@ -79,15 +77,16 @@ FILL_NON_ZERO = 1
 #this is used by path-closing routines.
 #map stroke, fill, fillmode -> operator
 # fillmode: 1 = non-Zero (obviously), 0 = evenOdd
-PATH_OPS = {(0, 0, FILL_EVEN_ODD): 'n',  #no op
-            (0, 0, FILL_NON_ZERO): 'n',  #no op
-            (1, 0, FILL_EVEN_ODD): 'S',  #stroke only
-            (1, 0, FILL_NON_ZERO): 'S',  #stroke only
-            (0, 1, FILL_EVEN_ODD): 'f*',  #Fill only
-            (0, 1, FILL_NON_ZERO): 'f',  #Fill only
-            (1, 1, FILL_EVEN_ODD): 'B*',  #Stroke and Fill
-            (1, 1, FILL_NON_ZERO): 'B',  #Stroke and Fill
-            }
+PATH_OPS = {
+  (0, 0, FILL_EVEN_ODD): 'n',  #no op
+  (0, 0, FILL_NON_ZERO): 'n',  #no op
+  (1, 0, FILL_EVEN_ODD): 'S',  #stroke only
+  (1, 0, FILL_NON_ZERO): 'S',  #stroke only
+  (0, 1, FILL_EVEN_ODD): 'f*',  #Fill only
+  (0, 1, FILL_NON_ZERO): 'f',  #Fill only
+  (1, 1, FILL_EVEN_ODD): 'B*',  #Stroke and Fill
+  (1, 1, FILL_NON_ZERO): 'B',  #Stroke and Fill
+}
 
 close = 'h'
 newpath = 'n'
@@ -352,8 +351,8 @@ class Canvas:
     #--------now the shape drawing methods-----------------------
   def rect(self, x, y, width, height, stroke=1, fill=0):
     "draws a rectangle"
-    self._code.append('n %0.4f %0.4f %0.4f %0.4f re ' % (x, y, width, height) + PATH_OPS[
-      stroke, fill, self._fillMode])
+    self._code.append('n %0.4f %0.4f %0.4f %0.4f re ' % (x, y, width, height) +
+                      PATH_OPS[stroke, fill, self._fillMode])
 
   def ellipse(self, x1, y1, x2, y2, stroke=1, fill=0):
     """Uses bezierArc, which conveniently handles 360 degrees -
@@ -786,8 +785,8 @@ class Canvas:
       self._pageTransitionString = ''
       return
 
-    self._pageTransitionString = (
-      ('/Trans <</D %d /S /%s ' % (duration, effectname)) + ' '.join(args) + ' >>')
+    self._pageTransitionString = (('/Trans <</D %d /S /%s ' % (duration, effectname)) +
+                                  ' '.join(args) + ' >>')
 
 
 class PDFPathObject:

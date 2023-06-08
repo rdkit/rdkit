@@ -1,13 +1,13 @@
 """unit testing code for 3D stuff
 
 """
-from rdkit import RDConfig
-import unittest, os
-import sys
+import os
 import random
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import TorsionFingerprints
+import sys
+import unittest
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import AllChem, TorsionFingerprints
 
 
 class TestCase(unittest.TestCase):
@@ -101,9 +101,8 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(tfd, 0.0691, 4)
 
     # exactly equivalent to the above since the mols each only have one conformer
-    tfd = TorsionFingerprints.GetBestTFDBetweenMolecules(mol2,mol)
-    self.assertAlmostEqual(tfd,0.0691,4)
-
+    tfd = TorsionFingerprints.GetBestTFDBetweenMolecules(mol2, mol)
+    self.assertAlmostEqual(tfd, 0.0691, 4)
 
     mol.AddConformer(mol2.GetConformer(), assignId=True)
     mol.AddConformer(mol2.GetConformer(), assignId=True)
@@ -114,9 +113,8 @@ class TestCase(unittest.TestCase):
     tfdmat = TorsionFingerprints.GetTFDMatrix(mol)
     self.assertEqual(len(tfdmat), 3)
 
-    tfd = TorsionFingerprints.GetBestTFDBetweenMolecules(mol2,mol)
-    self.assertAlmostEqual(tfd,0,4)
-
+    tfd = TorsionFingerprints.GetBestTFDBetweenMolecules(mol2, mol)
+    self.assertAlmostEqual(tfd, 0, 4)
 
   def testTorsionFingerprintsAtomReordering(self):
     # we use the xray structure from the paper (JCIM, 52, 1499, 2012): 1DWD
@@ -164,6 +162,12 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('S(F)(F)(F)(F)(Cl)c1ccccc1')
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
     self.assertEqual(len(tors_list), 1)
+
+  def testTorsionAngleLeargerThan14(self):
+    # incorrect value from more than 15-membered ring
+    mol = Chem.MolFromSmiles('C1' + 'C' * 13 + 'C1')
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
+    self.assertAlmostEqual(tors_list_rings[-1][1], 180.0, 4)
 
   def assertBondStereoRoundTrips(self, fname):
     path = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', fname)
@@ -392,6 +396,9 @@ class TestCase(unittest.TestCase):
     # switches the centers linked by an "OR", but not the absolute group
     self.assertEqual(smiles, {r'C[C@H]([C@@H](C)F)[C@@H](C)Br', r'C[C@@H]([C@H](C)F)[C@@H](C)Br'})
 
+    # we need the SMILES without the influence of the stereo groups:
+    mol = Chem.RWMol(mol)
+    mol.SetStereoGroups([])
     original_smiles = Chem.MolToSmiles(mol)
     self.assertIn(original_smiles, smiles)
 
@@ -406,6 +413,7 @@ class TestCase(unittest.TestCase):
 
     opts = AllChem.StereoEnumerationOptions(onlyUnassigned=False, unique=False)
     smiles = [Chem.MolToSmiles(m) for m in AllChem.EnumerateStereoisomers(mol, opts)]
+    print('!!!!', smiles)
     self.assertEqual(len(smiles), len(set(smiles)))
     self.assertEqual(len(smiles), 2**3)
 
@@ -460,6 +468,13 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles(smiles)
     opts = AllChem.StereoEnumerationOptions(tryEmbedding=True, maxIsomers=2)
     self.assertEqual(len(list(AllChem.EnumerateStereoisomers(mol, options=opts))), 2)
+
+  def testGithub6045(self):
+    mol = Chem.MolFromSmiles('O[C@H](Br)[C@H](F)C |&1:1,3|')
+    prods = list(AllChem.EnumerateStereoisomers(mol))
+    self.assertEqual(len(prods), 2)
+    for prod in prods:
+      self.assertEqual(len(prod.GetStereoGroups()), 0)
 
 
 if __name__ == '__main__':

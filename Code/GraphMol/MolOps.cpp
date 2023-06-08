@@ -1,6 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
-//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (C) 2001-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +13,7 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 #include <GraphMol/PeriodicTable.h>
+#include <GraphMol/RDKitQueries.h>
 
 #include <vector>
 #include <algorithm>
@@ -34,7 +34,12 @@
 
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/tokenizer.hpp>
+#include <Geometry/point.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/new_canon.h>
+#include <GraphMol/FileParsers/MolSGroupParsing.h>
 
 const int ci_LOCAL_INF = static_cast<int>(1e8);
 
@@ -178,6 +183,104 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
     }
   }
 }
+
+bool isMetal(const Atom *atom) {
+  static const std::unique_ptr<ATOM_OR_QUERY> q(makeMAtomQuery());
+  return q->Match(atom);
+}
+
+bool isHypervalentNonMetal(Atom *atom) {
+  if (isMetal(atom)) {
+    return false;
+  }
+  auto ev = atom->calcExplicitValence(false);
+  // Check the explicit valence of the non-metal against the allowed
+  // valences of the atom, adjusted by its formal charge.  This means that
+  // N+ is treated the same as C, O+ the same as N.  This allows for,
+  // for example, c1cccc[n+]1-[Fe] to be acceptable and not turned into
+  // c1cccc[n+]1->[Fe].  After all, c1cccc[n+]1-C is ok.  Although this is
+  // a poor example because c1ccccn1->[Fe] appears to be the normal
+  // way that pyridine complexes with transition metals.  Heme b in
+  // CHEBI:26355 is an example of when this is required.
+  int effAtomicNum = atom->getAtomicNum() - atom->getFormalCharge();
+  if (effAtomicNum <= 0) {
+    return false;
+  }
+  // atom is a non-metal, so if its atomic number is > 2, it should
+  // obey the octet rule (2*ev <= 8).  If it doesn't, don't set the bond to
+  // dative, so the molecule is later flagged as having bad valence.
+  // [CH4]-[Na] being a case in point, line 1800 of
+  // FileParsers/file_parsers_catch.cpp.
+  const auto &otherValens =
+      PeriodicTable::getTable()->getValenceList(effAtomicNum);
+  if (otherValens.back() > 0 && ev > otherValens.back() && ev <= 4) {
+    return true;
+  }
+
+  return false;
+}
+
+int numDativeBonds(const Atom *atom) {
+  int numDatives = 0;
+  auto &mol = atom->getOwningMol();
+  for (auto bond : mol.atomBonds(atom)) {
+    if (bond->getBondType() == Bond::BondType::DATIVE ||
+        bond->getBondType() == Bond::BondType::DATIVEONE ||
+        bond->getBondType() == Bond::BondType::DATIVEL ||
+        bond->getBondType() == Bond::BondType::DATIVER) {
+      ++numDatives;
+    }
+  }
+  return numDatives;
+}
+
+// Returns true if the atom shouldn't do dative bonds.
+bool noDative(const Atom *a) {
+  static const std::set<int> noD{1, 2, 9, 10};
+  return (noD.find(a->getAtomicNum()) != noD.end());
+};
+
+void metalBondCleanup(RWMol &mol, Atom *atom,
+                      const std::vector<unsigned int> &ranks) {
+  PRECONDITION(atom, "bad atom in metalBondCleanup");
+  // The IUPAC recommendation for ligand->metal coordination bonds is that they
+  // be single.  This upsets the RDKit valence model, as seen in CHEBI:26355,
+  // heme b.  If the valence of a non-metal atom is above the maximum in the
+  // RDKit model, and there are single bonds from it to metal
+  // change those bonds to atom->metal dative.
+  // If the atom is bonded to more than 1 metal atom, choose the one
+  // with the fewer dative bonds incident on it, with the canonical
+  // rank of the atoms as a tie-breaker.
+  if (isHypervalentNonMetal(atom) && !noDative(atom)) {
+    std::vector<Atom *> metals;
+    // see if there are any metals bonded to it by a single bond
+    for (auto bond : mol.atomBonds(atom)) {
+      if (bond->getBondType() == Bond::BondType::SINGLE &&
+          isMetal(bond->getOtherAtom(atom))) {
+        metals.push_back(bond->getOtherAtom(atom));
+      }
+    }
+    if (!metals.empty()) {
+      std::sort(metals.begin(), metals.end(),
+                [&](const Atom *a1, const Atom *a2) -> bool {
+                  int nda1 = numDativeBonds(a1);
+                  int nda2 = numDativeBonds(a2);
+                  if (nda1 == nda2) {
+                    return ranks[a1->getIdx()] > ranks[a2->getIdx()];
+                  } else {
+                    return nda1 < nda2;
+                  }
+                });
+      auto bond =
+          mol.getBondBetweenAtoms(atom->getIdx(), metals.front()->getIdx());
+      if (bond) {
+        bond->setBondType(RDKit::Bond::BondType::DATIVE);
+        bond->setBeginAtom(atom);
+        bond->setEndAtom(metals.front());
+      }
+    }
+  }
+}
 }  // namespace
 
 void cleanUp(RWMol &mol) {
@@ -195,6 +298,48 @@ void cleanUp(RWMol &mol) {
         halogenCleanup(mol, atom);
         break;
     }
+  }
+}
+
+void cleanUpOrganometallics(RWMol &mol) {
+  // At present all this does is look for single bonds between
+  // non-metals and metals where the non-metal exceeds one of
+  // its normal valence states, and replaces that bond with
+  // a dative one from the non-metal to the metal.
+  bool needsFixing = false;
+  for (const auto atom : mol.atoms()) {
+    if (isHypervalentNonMetal(atom) && !noDative(atom)) {
+      // see if there are any metals bonded to it by a single bond
+      for (auto bond : mol.atomBonds(atom)) {
+        if (bond->getBondType() == Bond::BondType::SINGLE &&
+            isMetal(bond->getOtherAtom(atom))) {
+          needsFixing = true;
+          break;
+        }
+      }
+    }
+    if (needsFixing) {
+      break;
+    }
+  }
+  if (!needsFixing) {
+    return;
+  }
+
+  // First see if anything needs doing
+  std::vector<unsigned int> ranks(mol.getNumAtoms());
+  RDKit::Canon::rankMolAtoms(mol, ranks);
+  std::vector<std::pair<int, int>> atom_ranks;
+  for (size_t i = 0; i < ranks.size(); ++i) {
+    atom_ranks.push_back(std::make_pair(i, ranks[i]));
+  }
+  std::sort(atom_ranks.begin(), atom_ranks.end(),
+            [](const std::pair<int, int> &p1, std::pair<int, int> &p2) -> bool {
+              return p1.second < p2.second;
+            });
+  for (auto ar : atom_ranks) {
+    auto atom = mol.getAtomWithIdx(ar.first);
+    metalBondCleanup(mol, atom, ranks);
   }
 }
 
@@ -381,6 +526,12 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   operationThatFailed = SANITIZE_ADJUSTHS;
   if (sanitizeOps & operationThatFailed) {
     adjustHs(mol);
+  }
+
+  // fix things like non-metal to metal bonds that should be dative.
+  operationThatFailed = SANITIZE_CLEANUP_ORGANOMETALLICS;
+  if (sanitizeOps & operationThatFailed) {
+    cleanUpOrganometallics(mol);
   }
 
   // now that everything has been cleaned up, go through and check/update the
@@ -592,6 +743,27 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         (*fragsMolAtomMapping).push_back((*mci).second);
       }
     }
+    // copy stereoGroups (if present)
+    if (!mol.getStereoGroups().empty()) {
+      for (unsigned int frag = 0; frag < nFrags; ++frag) {
+        auto re = res[frag];
+        std::vector<StereoGroup> fragsgs;
+        for (auto &sg : mol.getStereoGroups()) {
+          std::vector<Atom *> sgats;
+          for (auto sga : sg.getAtoms()) {
+            if ((*mapping)[sga->getIdx()] == static_cast<int>(frag)) {
+              sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
+            }
+          }
+          if (!sgats.empty()) {
+            fragsgs.push_back(StereoGroup(sg.getGroupType(), sgats));
+          }
+        }
+        if (!fragsgs.empty()) {
+          re->setStereoGroups(std::move(fragsgs));
+        }
+      }
+    }
   }
 
   if (sanitizeFrags) {
@@ -793,5 +965,188 @@ unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
   }
   return numPropAtoms;
 }
+
+ROMol *hapticBondsToDative(const ROMol &mol) {
+  auto *res = new RWMol(mol);
+  hapticBondsToDative(*res);
+  return static_cast<ROMol *>(res);
+}
+
+void hapticBondsToDative(RWMol &mol) {
+  std::vector<unsigned int> dummiesToGo;
+  std::vector<std::pair<unsigned int, unsigned int>> bondsToAdd;
+  mol.beginBatchEdit();
+  for (const auto &bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::BondType::DATIVE) {
+      auto oats = details::hapticBondEndpoints(bond);
+      if (oats.empty()) {
+        continue;
+      }
+      Atom *dummy = nullptr;
+      Atom *metal = nullptr;
+      if (bond->getBeginAtom()->getAtomicNum() == 0) {
+        dummy = bond->getBeginAtom();
+        metal = bond->getEndAtom();
+      } else if (bond->getEndAtom()->getAtomicNum() == 0) {
+        metal = bond->getBeginAtom();
+        dummy = bond->getEndAtom();
+      }
+      if (dummy == nullptr) {
+        continue;
+      }
+      for (auto oat : oats) {
+        auto atom = mol.getAtomWithIdx(oat);
+        if (atom) {
+          mol.addBond(atom, metal, Bond::DATIVE);
+        }
+      }
+      mol.removeAtom(dummy);
+    }
+  }
+  mol.commitBatchEdit();
+}
+
+ROMol *dativeBondsToHaptic(const ROMol &mol) {
+  auto *res = new RWMol(mol);
+  dativeBondsToHaptic(*res);
+  return static_cast<ROMol *>(res);
+}
+
+namespace {
+// return sets of contiguous atoms of more than 1 atom that are in
+// allAts.
+std::vector<std::vector<unsigned int>> contiguousAtoms(
+    const ROMol &mol, const std::vector<unsigned int> &allAts) {
+  std::vector<std::vector<unsigned int>> contigAts;
+  std::vector<char> doneAts(mol.getNumAtoms(), 0);
+  std::vector<char> inAllAts(mol.getNumAtoms(), 0);
+  for (auto a : allAts) {
+    inAllAts[a] = 1;
+  }
+  for (size_t i = 0; i < allAts.size(); ++i) {
+    if (doneAts[allAts[i]]) {
+      continue;
+    }
+    contigAts.push_back(std::vector<unsigned int>());
+    std::list<const Atom *> toDo{mol.getAtomWithIdx(allAts[i])};
+    while (!toDo.empty()) {
+      auto nextAt = toDo.front();
+      toDo.pop_front();
+      if (!doneAts[nextAt->getIdx()]) {
+        doneAts[nextAt->getIdx()] = 1;
+        contigAts.back().push_back(nextAt->getIdx());
+      }
+      for (const auto &nbri :
+           boost::make_iterator_range(mol.getAtomNeighbors(nextAt))) {
+        if (inAllAts[nbri] && !doneAts[nbri]) {
+          toDo.push_back(mol.getAtomWithIdx(nbri));
+        }
+      }
+    }
+    if (contigAts.back().size() < 2) {
+      contigAts.pop_back();
+    }
+  }
+  return contigAts;
+}
+
+// add to the molecule a dummy atom centred on the
+// atoms passed in, with a dative bond from it to the metal atom.
+void addHapticBond(RWMol &mol, unsigned int metalIdx,
+                   std::vector<unsigned int> hapticAtoms) {
+  // So there is a * in the V3000 file as the symbol for the atom.
+  auto dummyAt = new QueryAtom(0);
+  dummyAt->setQuery(makeAtomNullQuery());
+
+  unsigned int dummyIdx = mol.addAtom(dummyAt);
+  for (auto i = 0u; i < mol.getNumConformers(); ++i) {
+    auto &conf = mol.getConformer(i);
+    RDGeom::Point3D dummyPos;
+    for (auto ha : hapticAtoms) {
+      auto haPos = conf.getAtomPos(ha);
+      dummyPos += haPos;
+    }
+    dummyPos /= hapticAtoms.size();
+    conf.setAtomPos(dummyIdx, dummyPos);
+  }
+  unsigned int numbonds = mol.addBond(dummyIdx, metalIdx, Bond::DATIVE);
+  auto bond = mol.getBondWithIdx(numbonds - 1);
+
+  // Get the atom numbers for the end points.  First number is the
+  // count, the rest count from 1.
+  std::ostringstream oss;
+  oss << "(" << hapticAtoms.size() << " ";
+  for (auto ha : hapticAtoms) {
+    oss << ha + 1 << " ";
+  }
+  std::string endpts{oss.str()};
+  if (endpts.back() == ' ') {
+    endpts = endpts.substr(0, endpts.length() - 1);
+  }
+  endpts += ")";
+  bond->setProp(common_properties::_MolFileBondEndPts, endpts);
+  bond->setProp<std::string>(common_properties::_MolFileBondAttach, "ALL");
+}
+}  // namespace
+
+void dativeBondsToHaptic(RWMol &mol) {
+  // First collect all the atoms that have a dative bond to them.
+  // Assume that the ones of interest will have a metal as their
+  // end atoms.
+  std::map<unsigned int, std::vector<unsigned int>> dativeAtoms;
+  for (const auto &b : mol.bonds()) {
+    if (b->getBondType() == Bond::DATIVE) {
+      auto ins = dativeAtoms.find(b->getEndAtomIdx());
+      if (ins == dativeAtoms.end()) {
+        dativeAtoms.insert(
+            std::make_pair(b->getEndAtomIdx(),
+                           std::vector<unsigned int>{b->getBeginAtomIdx()}));
+      } else {
+        ins->second.push_back(b->getBeginAtomIdx());
+      }
+    }
+  }
+
+  mol.beginBatchEdit();
+  for (auto &dativeSet : dativeAtoms) {
+    // Find the sets of contiguous atoms in the dativeAtoms lists.  Each one
+    // will be the EndPts of a haptic bond going to the metal atom that is
+    // dativeSet.first.
+    auto contigAtoms = contiguousAtoms(mol, dativeSet.second);
+    for (const auto &ca : contigAtoms) {
+      addHapticBond(mol, dativeSet.first, ca);
+      for (auto cat : ca) {
+        mol.removeBond(dativeSet.first, cat);
+      }
+    }
+  }
+  mol.commitBatchEdit();
+}
+
+namespace details {
+std::vector<int> hapticBondEndpoints(const Bond *bond) {
+  // This would ideally use ParseV3000Array but I'm buggered if I can get
+  // the linker to find it.  The issue, I think, is that it's in the
+  // FileParsers library which is built after GraphMol so not available
+  // to link in.  It can't be built first because it needs GraphMol.
+  //      std::vector<unsigned int> oats =
+  //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
+  // Returns the atom indices i.e. subtracts 1 from the numbers in the prop.
+  std::vector<int> oats;
+  std::string endpts;
+  if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts)) {
+    if ('(' == endpts.front() && ')' == endpts.back()) {
+      endpts = endpts.substr(1, endpts.length() - 2);
+      boost::char_separator<char> sep(" ");
+      boost::tokenizer<boost::char_separator<char>> tokens(endpts, sep);
+      auto beg = tokens.begin();
+      ++beg;
+      std::transform(beg, tokens.end(), std::back_inserter(oats),
+                     [](const std::string &a) { return std::stod(a) - 1; });
+    }
+  }
+  return oats;
+}
+}  // end of namespace details
 };  // end of namespace MolOps
 };  // end of namespace RDKit

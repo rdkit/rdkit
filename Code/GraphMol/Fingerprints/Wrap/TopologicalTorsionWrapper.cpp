@@ -44,6 +44,18 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionFPGenerator(
 
 void exportTopologicalTorsion() {
   // Topological torsion fingerprint does not support 32 bit output yet
+  python::class_<TopologicalTorsion::TopologicalTorsionArguments,
+                 python::bases<FingerprintArguments>, boost::noncopyable>(
+      "TopologicalTorsionFingerprintOptions", python::no_init)
+      .def_readwrite(
+          "torsionAtomCount",
+          &TopologicalTorsion::TopologicalTorsionArguments::d_torsionAtomCount,
+          "number of atoms to be included in the paths")
+      .def_readwrite(
+          "onlyShortestPaths",
+          &TopologicalTorsion::TopologicalTorsionArguments::
+              df_onlyShortestPaths,
+          "whether or not to only include paths which are the shortest path between the start and end atoms");
 
   python::def(
       "GetTopologicalTorsionGenerator",

@@ -91,8 +91,8 @@ def delete_bonds(mol, bonds, ftype, hac):
 
   # should be able to get away without sanitising mol as the valencies should be okay
   # do not do a full sanitization, but do find rings and calculate valences:
-  Chem.SanitizeMol(modifiedMol, Chem.SanitizeFlags.SANITIZE_PROPERTIES |
-                   Chem.SanitizeFlags.SANITIZE_SYMMRINGS)
+  Chem.SanitizeMol(modifiedMol,
+                   Chem.SanitizeFlags.SANITIZE_PROPERTIES | Chem.SanitizeFlags.SANITIZE_SYMMRINGS)
 
   fragments = Chem.GetMolFrags(modifiedMol, asMols=True, sanitizeFrags=False)
   return select_fragments(fragments, ftype, hac)
@@ -305,8 +305,8 @@ def atomContrib(subs, mol, tverskyThresh=0.8):
         # pMol.GetAtomWithIdx(idx).SetAtomicNum(6)
 
     try:
-      Chem.SanitizeMol(pMol, sanitizeOps=Chem.SANITIZE_ALL ^ Chem.SANITIZE_KEKULIZE ^
-                       Chem.SANITIZE_SETAROMATICITY)
+      Chem.SanitizeMol(
+        pMol, sanitizeOps=Chem.SANITIZE_ALL ^ Chem.SANITIZE_KEKULIZE ^ Chem.SANITIZE_SETAROMATICITY)
     except Exception:
       sys.stderr.write(f"Can't parse smiles: {Chem.MolToSmiles(pMol)}\n")
       pMol = Chem.Mol(mol)

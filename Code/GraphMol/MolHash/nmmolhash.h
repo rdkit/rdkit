@@ -39,11 +39,15 @@ enum class HashFunction {
   NetCharge = 14,
   SmallWorldIndexBR = 15,
   SmallWorldIndexBRL = 16,
-  ArthorSubstructureOrder = 17
+  ArthorSubstructureOrder = 17,
+  HetAtomTautomerv2 =
+      18,  //! Note that this is under active development and the results may
+           //! change from one release to the next.
 };
 
 RDKIT_MOLHASH_EXPORT std::string MolHash(RWMol *mol, HashFunction func,
-                                         bool useCXSmiles = false);
+                                         bool useCXSmiles = false,
+                                         unsigned cxFlagsToSkip = 0);
 
 enum class StripType {
   AtomStereo = 1,

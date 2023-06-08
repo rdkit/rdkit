@@ -28,8 +28,9 @@ namespace detail {
 
 bool isAtomPotentialNontetrahedralCenter(const Atom *atom) {
   PRECONDITION(atom, "atom is null");
-  auto tnzdegree =
-      Chirality::detail::getAtomNonzeroDegree(atom) + atom->getTotalNumHs();
+  auto nzdegree = Chirality::detail::getAtomNonzeroDegree(atom);
+  auto impHDegree = atom->getTotalNumHs();
+  auto tnzdegree = nzdegree + impHDegree;
   auto anum = atom->getAtomicNum();
   if (tnzdegree > 6 || tnzdegree < 2 || (anum < 12 && anum != 4)) {
     return false;
@@ -59,8 +60,8 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
     if (nzDegree == 4) {
       // chirality is always possible with 4 nbrs
       return true;
-    } else if (nzDegree == 1) {
-      // chirality is never possible with 1 nbr
+    } else if (nzDegree <= 1) {
+      // chirality is never possible with 0 or 1 nbr
       return false;
     } else if (nzDegree < 3 &&
                (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
@@ -76,6 +77,10 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
     } else if (nzDegree == 3) {
       // three-coordinate with a single H we'll accept automatically:
       if (atom->getTotalNumHs() == 1) {
+        if (detail::has_protium_neighbor(mol, atom)) {
+          // more than one H is never stereogenic
+          return false;
+        }
         return true;
       } else {
         // otherwise we default to not being a legal center
@@ -106,9 +111,15 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
   }
 }
 
-bool isAtomPotentialStereoAtom(const Atom *atom) {
+bool isAtomPotentialStereoAtom(const Atom *atom,
+                               bool allowNontetrahehdralStereo) {
   return isAtomPotentialTetrahedralCenter(atom) ||
-         isAtomPotentialNontetrahedralCenter(atom);
+         (allowNontetrahehdralStereo &&
+          isAtomPotentialNontetrahedralCenter(atom));
+}
+
+bool isAtomPotentialStereoAtom(const Atom *atom) {
+  return isAtomPotentialStereoAtom(atom, getAllowNontetrahedralChirality());
 }
 
 StereoInfo getStereoInfo(const Bond *bond) {
@@ -268,7 +279,8 @@ StereoInfo getStereoInfo(const Atom *atom) {
         default:
           UNDER_CONSTRUCTION("unrecognized chiral flag");
       }
-    } else if (isAtomPotentialNontetrahedralCenter(atom)) {
+    } else if (getAllowNontetrahedralChirality() &&
+               isAtomPotentialNontetrahedralCenter(atom)) {
       if (stereo == Atom::CHI_UNSPECIFIED) {
         switch (atom->getTotalDegree()) {
           case 4:
@@ -452,10 +464,11 @@ void initAtomInfo(ROMol &mol, bool flagPossible, bool cleanIt,
                   boost::dynamic_bitset<> &knownAtoms,
                   std::vector<std::string> &atomSymbols,
                   boost::dynamic_bitset<> &possibleAtoms) {
+  bool allowNontetrahedralStereo = getAllowNontetrahedralChirality();
   for (const auto atom : mol.atoms()) {
     auto aidx = atom->getIdx();
     atomSymbols[aidx] = getAtomCompareSymbol(*atom);
-    if (detail::isAtomPotentialStereoAtom(atom)) {
+    if (detail::isAtomPotentialStereoAtom(atom, allowNontetrahedralStereo)) {
       auto sinfo = detail::getStereoInfo(atom);
       switch (sinfo.specified) {
         case Chirality::StereoSpecified::Unknown:
@@ -832,10 +845,10 @@ bool updateBonds(ROMol &mol, const std::vector<unsigned int> &aranks,
   return needAnotherRound;
 }
 
-void cleanMolStereo(ROMol &mol, boost::dynamic_bitset<> &fixedAtoms,
-                    boost::dynamic_bitset<> &knownAtoms,
-                    boost::dynamic_bitset<> &fixedBonds,
-                    boost::dynamic_bitset<> &knownBonds) {
+void cleanMolStereo(ROMol &mol, const boost::dynamic_bitset<> &fixedAtoms,
+                    const boost::dynamic_bitset<> &knownAtoms,
+                    const boost::dynamic_bitset<> &fixedBonds,
+                    const boost::dynamic_bitset<> &knownBonds) {
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     if (!fixedAtoms[i] && knownAtoms[i]) {
       switch (mol.getAtomWithIdx(i)->getChiralTag()) {
@@ -857,9 +870,11 @@ void cleanMolStereo(ROMol &mol, boost::dynamic_bitset<> &fixedAtoms,
     }
   }
   for (auto i = 0u; i < mol.getNumBonds(); ++i) {
+    auto bond = mol.getBondWithIdx(i);
     if (!fixedBonds[i] && knownBonds[i]) {
-      // FIX only does known double bonds
-      mol.getBondWithIdx(i)->setStereo(Bond::BondStereo::STEREONONE);
+      bond->setStereo(Bond::BondStereo::STEREONONE);
+      bond->setBondDir(Bond::BondDir::NONE);
+      bond->getStereoAtoms().clear();
     }
   }
 }

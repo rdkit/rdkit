@@ -24,7 +24,12 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#endif
+#ifdef RDK_BUILD_MINIMAL_LIB_MCS
+#include <GraphMol/FMCS/FMCS.h>
+#endif
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/MolInterchange/MolInterchange.h>
@@ -33,6 +38,7 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <Geometry/Transform3D.h>
 #include <DataStructs/BitOps.h>
+#include <DataStructs/ExplicitBitVect.h>
 
 #include <INCHI-API/inchi.h>
 
@@ -45,6 +51,8 @@ namespace rj = rapidjson;
 using namespace RDKit;
 
 namespace {
+static const char *NO_SUPPORT_FOR_PATTERN_FPS = "This SubstructLibrary was built without support for pattern fps";
+
 std::string mappingToJsonArray(const ROMol &mol) {
   std::vector<unsigned int> atomMapping;
   std::vector<unsigned int> bondMapping;
@@ -396,18 +404,32 @@ std::string JSMol::get_stereo_tags() const {
   return buffer.GetString();
 }
 
+void JSMol::convert_to_aromatic_form() {
+  assert(d_mol);
+
+  d_mol->updatePropertyCache();
+  MolOps::setAromaticity(*d_mol);
+}
+
 std::string JSMol::get_aromatic_form() const {
   if (!d_mol) {
     return "";
   }
 
   RWMol molCopy(*d_mol);
+  molCopy.updatePropertyCache();
   MolOps::setAromaticity(molCopy);
 
   bool includeStereo = true;
   int confId = -1;
   bool kekulize = false;
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
+}
+
+void JSMol::convert_to_kekule_form() {
+  assert(d_mol);
+
+  MolOps::Kekulize(*d_mol);
 }
 
 std::string JSMol::get_kekule_form() const {
@@ -485,6 +507,15 @@ std::string JSMol::get_prop(const std::string &key) const {
   return val;
 }
 
+bool JSMol::clear_prop(const std::string &key) {
+  if (!d_mol) return false;
+  bool res = d_mol->hasProp(key);
+  if (res) {
+    d_mol->clearProp(key);
+  }
+  return res;
+}
+
 std::string JSMol::remove_hs() const {
   if (!d_mol) {
     return "";
@@ -499,6 +530,16 @@ std::string JSMol::remove_hs() const {
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
 }
 
+bool JSMol::remove_hs_in_place() {
+  if (!d_mol) {
+    return false;
+  }
+
+  MolOps::removeAllHs(*d_mol);
+  MolOps::assignStereochemistry(*d_mol, true, true);
+  return true;
+}
+
 std::string JSMol::add_hs() const {
   if (!d_mol) {
     return "";
@@ -511,6 +552,17 @@ std::string JSMol::add_hs() const {
   int confId = -1;
   bool kekulize = true;
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
+}
+
+bool JSMol::add_hs_in_place() {
+  if (!d_mol) {
+    return false;
+  }
+
+  bool addCoords = (d_mol->getNumConformers() > 0);
+  MolOps::addHs(*d_mol, false, addCoords);
+  MolOps::assignStereochemistry(*d_mol, true, true);
+  return true;
 }
 
 std::string JSMol::condense_abbreviations(double maxCoverage, bool useLinkers) {
@@ -557,6 +609,13 @@ std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
                                              details.c_str());
 }
 
+int JSMol::has_coords() const {
+  if (!d_mol || !d_mol->getNumConformers()) {
+    return 0;
+  }
+  return (d_mol->getConformer().is3D() ? 3 : 2);
+}
+
 double JSMol::normalize_depiction(int canonicalize, double scaleFactor) {
   if (!d_mol || !d_mol->getNumConformers()) {
     return -1.;
@@ -571,7 +630,7 @@ void JSMol::straighten_depiction(bool minimizeRotation) {
   RDDepict::straightenDepiction(*d_mol, -1, minimizeRotation);
 }
 
-std::pair<JSMolIterator *, std::string> JSMol::get_frags(
+std::pair<JSMolList *, std::string> JSMol::get_frags(
     const std::string &details_json) {
   if (!d_mol) {
     return std::make_pair(nullptr, "");
@@ -585,10 +644,21 @@ std::pair<JSMolIterator *, std::string> JSMol::get_frags(
   auto molFrags = MolOps::getMolFrags(*d_mol, sanitizeFrags, &frags,
                                       &fragsMolAtomMapping, copyConformers);
   return std::make_pair(
-      new JSMolIterator(molFrags),
+      new JSMolList(molFrags),
       MinimalLib::get_mol_frags_mappings(frags, fragsMolAtomMapping));
 }
 
+unsigned int JSMol::get_num_atoms(bool heavyOnly) const {
+  assert(d_mol);
+  return heavyOnly ? d_mol->getNumHeavyAtoms() : d_mol->getNumAtoms();
+}
+
+unsigned int JSMol::get_num_bonds() const {
+  assert(d_mol);
+  return d_mol->getNumBonds();
+}
+
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 std::string JSReaction::get_svg(int w, int h) const {
   if (!d_rxn) {
     return "";
@@ -605,16 +675,58 @@ std::string JSReaction::get_svg_with_highlights(
   int h = d_defaultHeight;
   return MinimalLib::rxn_to_svg(*d_rxn, w, h, details);
 }
+#endif
 
-JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
-    : d_sslib(new SubstructLibrary(
-          boost::shared_ptr<CachedTrustedSmilesMolHolder>(
-              new CachedTrustedSmilesMolHolder()),
-          boost::shared_ptr<PatternHolder>(new PatternHolder()))),
-      d_num_bits(num_bits) {
-  d_molHolder = dynamic_cast<CachedTrustedSmilesMolHolder *>(
-      d_sslib->getMolHolder().get());
-  d_fpHolder = dynamic_cast<PatternHolder *>(d_sslib->getFpHolder().get());
+JSMol *JSMolList::next() {
+  return (d_idx < d_mols.size()
+              ? new JSMol(new RDKit::RWMol(*d_mols.at(d_idx++)))
+              : nullptr);
+}
+
+JSMol *JSMolList::at(size_t idx) const {
+  return (idx < d_mols.size() ? new JSMol(new RDKit::RWMol(*d_mols.at(idx)))
+                              : nullptr);
+}
+
+JSMol *JSMolList::pop(size_t idx) {
+  JSMol *res = nullptr;
+  if (idx < d_mols.size()) {
+    res = new JSMol(new RDKit::RWMol(*d_mols.at(idx)));
+    d_mols.erase(d_mols.begin() + idx);
+    if (d_idx > idx) {
+      --d_idx;
+    }
+  }
+  return res;
+}
+
+size_t JSMolList::append(const JSMol &mol) {
+  d_mols.emplace_back(new ROMol(*mol.d_mol));
+  return d_mols.size();
+}
+
+size_t JSMolList::insert(size_t idx, const JSMol &mol) {
+  size_t res = 0;
+  if (idx < d_mols.size()) {
+    d_mols.emplace(d_mols.begin() + idx, new ROMol(*mol.d_mol));
+    res = d_mols.size();
+  }
+  return res;
+}
+
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
+JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits) :
+  d_fpHolder(nullptr) {
+  boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolderSptr(new CachedTrustedSmilesMolHolder());
+  boost::shared_ptr<PatternHolder> fpHolderSptr;
+  d_molHolder = molHolderSptr.get();
+  if (num_bits) {
+    fpHolderSptr.reset(new PatternHolder(num_bits));
+    d_fpHolder = fpHolderSptr.get();
+    d_sslib.reset(new SubstructLibrary(molHolderSptr, fpHolderSptr));
+  } else {
+    d_sslib.reset(new SubstructLibrary(molHolderSptr));
+  }
 }
 
 int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
@@ -623,13 +735,46 @@ int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
     return -1;
   }
   mol->updatePropertyCache();
-  auto fp = PatternFingerprintMol(*mol, d_num_bits);
-  if (!fp) {
+  MolOps::fastFindRings(*mol);
+  int smiIdx;
+  if (d_fpHolder) {
+    auto fp = d_fpHolder->makeFingerprint(*mol);
+    if (!fp) {
+      return -1;
+    }
+    int fpIdx = d_fpHolder->addFingerprint(fp);
+    smiIdx = d_molHolder->addSmiles(smi);
+    CHECK_INVARIANT(fpIdx == smiIdx, "");
+  } else {
+    smiIdx = d_molHolder->addSmiles(smi);
+  }
+  return smiIdx;
+}
+
+int JSSubstructLibrary::add_trusted_smiles_and_pattern_fp(
+    const std::string &smi, const std::string &patternFp) {
+  if (!d_fpHolder) {
+    throw ValueErrorException(NO_SUPPORT_FOR_PATTERN_FPS);
+  }
+  auto bitVect = new ExplicitBitVect(patternFp);
+  if (!bitVect) {
     return -1;
   }
-  d_fpHolder->addFingerprint(fp);
-  auto ret = d_molHolder->addSmiles(smi);
-  return ret;
+  int fpIdx = d_fpHolder->addFingerprint(bitVect);
+  int smiIdx = d_molHolder->addSmiles(smi);
+  CHECK_INVARIANT(fpIdx == smiIdx, "");
+  return smiIdx;
+}
+
+std::string JSSubstructLibrary::get_trusted_smiles(unsigned int i) const {
+  return d_molHolder->getMols().at(i);
+}
+
+std::string JSSubstructLibrary::get_pattern_fp(unsigned int i) const {
+  if (!d_fpHolder) {
+    throw ValueErrorException(NO_SUPPORT_FOR_PATTERN_FPS);
+  }
+  return d_fpHolder->getFingerprints().at(i)->toString();
 }
 
 inline int JSSubstructLibrary::add_mol_helper(const ROMol &mol) {
@@ -659,8 +804,8 @@ std::string JSSubstructLibrary::get_matches(const JSMol &q, bool useChirality,
   if (!d_sslib->size()) {
     return "[]";
   }
-  std::vector<unsigned int> indices = d_sslib->getMatches(
-      *q.d_mol, true, useChirality, false, numThreads, maxResults);
+  auto indices = d_sslib->getMatches(*q.d_mol, true, useChirality, false,
+                                     numThreads, maxResults);
   rj::Document doc;
   doc.SetArray();
   auto &alloc = doc.GetAllocator();
@@ -677,8 +822,11 @@ std::string JSSubstructLibrary::get_matches(const JSMol &q, bool useChirality,
 unsigned int JSSubstructLibrary::count_matches(const JSMol &q,
                                                bool useChirality,
                                                int numThreads) const {
-  return d_sslib->countMatches(*q.d_mol, true, useChirality, false, 1);
+  return d_sslib->size() ? d_sslib->countMatches(*q.d_mol, true, useChirality,
+                                                 false, numThreads)
+                         : 0;
 }
+#endif
 
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
@@ -713,10 +861,12 @@ JSMol *get_qmol(const std::string &input) {
   return new JSMol(mol);
 }
 
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 JSReaction *get_rxn(const std::string &input, const std::string &details_json) {
   auto rxn = MinimalLib::rxn_from_input(input, details_json);
   return new JSReaction(rxn);
 }
+#endif
 
 std::string version() { return std::string(rdkitVersion); }
 
@@ -726,6 +876,39 @@ void prefer_coordgen(bool useCoordGen) {
 #endif
 }
 
-void use_legacy_stereo_perception(bool value) {
+bool use_legacy_stereo_perception(bool value) {
+  bool was = Chirality::getUseLegacyStereoPerception();
   Chirality::setUseLegacyStereoPerception(value);
+  return was;
 }
+
+bool allow_non_tetrahedral_chirality(bool value) {
+  bool was = Chirality::getAllowNontetrahedralChirality();
+  Chirality::setAllowNontetrahedralChirality(value);
+  return was;
+}
+
+#ifdef RDK_BUILD_MINIMAL_LIB_MCS
+namespace {
+MCSResult getMcsResult(const JSMolList &molList,
+               const std::string &details_json) {
+  MCSParameters p;
+  if (!details_json.empty()) {
+    parseMCSParametersJSON(details_json.c_str(), &p);
+  }
+  return RDKit::findMCS(molList.mols(), &p);
+}
+} // namespace
+
+std::string get_mcs_as_smarts(const JSMolList &molList,
+               const std::string &details_json) {
+  auto res = getMcsResult(molList, details_json);
+  return res.SmartsString;
+}
+
+JSMol *get_mcs_as_mol(const JSMolList &molList,
+               const std::string &details_json) {
+  auto res = getMcsResult(molList, details_json);
+  return new JSMol(new RWMol(*res.QueryMol));
+}
+#endif

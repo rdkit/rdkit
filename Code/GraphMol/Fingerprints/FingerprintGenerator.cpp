@@ -88,6 +88,26 @@ FingerprintGenerator<OutputType>::~FingerprintGenerator() {
   }
 }
 
+namespace {
+void reinitAdditionalOutput(AdditionalOutput &ao, size_t numAtoms) {
+  if (ao.atomCounts) {
+    ao.atomCounts->resize(numAtoms);
+    std::fill(ao.atomCounts->begin(), ao.atomCounts->end(), 0);
+  }
+  if (ao.atomToBits) {
+    ao.atomToBits->resize(numAtoms);
+    std::fill(ao.atomToBits->begin(), ao.atomToBits->end(),
+              std::vector<std::uint64_t>());
+  }
+  if (ao.bitInfoMap) {
+    ao.bitInfoMap->clear();
+  }
+  if (ao.bitPaths) {
+    ao.bitPaths->clear();
+  }
+}
+}  // namespace
+
 template FingerprintGenerator<std::uint32_t>::~FingerprintGenerator();
 
 template FingerprintGenerator<std::uint64_t>::~FingerprintGenerator();
@@ -125,50 +145,36 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
   }
 
   if (args.additionalOutput) {
-    if (args.additionalOutput->atomCounts) {
-      args.additionalOutput->atomCounts->resize(lmol->getNumAtoms());
-      std::fill(args.additionalOutput->atomCounts->begin(),
-                args.additionalOutput->atomCounts->end(), 0);
-    }
-    if (args.additionalOutput->atomToBits) {
-      args.additionalOutput->atomToBits->resize(lmol->getNumAtoms());
-      std::fill(args.additionalOutput->atomToBits->begin(),
-                args.additionalOutput->atomToBits->end(),
-                std::vector<std::uint64_t>());
-    }
-    if (args.additionalOutput->bitInfoMap) {
-      args.additionalOutput->bitInfoMap->clear();
-    }
-    if (args.additionalOutput->bitPaths) {
-      args.additionalOutput->bitPaths->clear();
-    }
+    reinitAdditionalOutput(*args.additionalOutput, mol.getNumAtoms());
   }
+
   bool hashResults = false;
   if (fpSize != 0) {
     hashResults = true;
   }
 
-  std::vector<std::uint32_t> *atomInvariants = nullptr;
+  std::unique_ptr<std::vector<std::uint32_t>> atomInvariants = nullptr;
   if (args.customAtomInvariants) {
-    atomInvariants = new std::vector<std::uint32_t>(*args.customAtomInvariants);
+    atomInvariants.reset(
+        new std::vector<std::uint32_t>(*args.customAtomInvariants));
   } else if (dp_atomInvariantsGenerator) {
-    atomInvariants = dp_atomInvariantsGenerator->getAtomInvariants(mol);
+    atomInvariants.reset(dp_atomInvariantsGenerator->getAtomInvariants(mol));
   }
 
-  std::vector<std::uint32_t> *bondInvariants = nullptr;
+  std::unique_ptr<std::vector<std::uint32_t>> bondInvariants = nullptr;
   if (args.customBondInvariants) {
-    bondInvariants = new std::vector<std::uint32_t>(*args.customBondInvariants);
+    bondInvariants.reset(
+        new std::vector<std::uint32_t>(*args.customBondInvariants));
   } else if (dp_bondInvariantsGenerator) {
-    bondInvariants = dp_bondInvariantsGenerator->getBondInvariants(mol);
+    bondInvariants.reset(dp_bondInvariantsGenerator->getBondInvariants(mol));
   }
 
   // create all atom environments that will generate the bit-ids that will make
   // up the fingerprint
-  std::vector<AtomEnvironment<OutputType> *> atomEnvironments =
-      dp_atomEnvironmentGenerator->getEnvironments(
-          *lmol, dp_fingerprintArguments, args.fromAtoms, args.ignoreAtoms,
-          args.confId, args.additionalOutput, atomInvariants, bondInvariants,
-          hashResults);
+  auto atomEnvironments = dp_atomEnvironmentGenerator->getEnvironments(
+      *lmol, dp_fingerprintArguments, args.fromAtoms, args.ignoreAtoms,
+      args.confId, args.additionalOutput, atomInvariants.get(),
+      bondInvariants.get(), hashResults);
 
   // allocate the result
   auto res = std::make_unique<SparseIntVect<OutputType>>(
@@ -204,9 +210,9 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
   // iterate over every atom environment and generate bit-ids that will make up
   // the fingerprint
   for (const auto env : atomEnvironments) {
-    OutputType seed =
-        env->getBitId(dp_fingerprintArguments, atomInvariants, bondInvariants,
-                      args.additionalOutput, hashResults, fpSize);
+    OutputType seed = env->getBitId(dp_fingerprintArguments,
+                                    atomInvariants.get(), bondInvariants.get(),
+                                    args.additionalOutput, hashResults, fpSize);
 
     auto bitId = seed;
     if (fpSize != 0) {
@@ -235,11 +241,65 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
     delete env;
   }
 
-  delete atomInvariants;
-  delete bondInvariants;
-
   return res;
 }
+namespace {
+template <typename OutputType>
+void duplicateAdditionalOutputBit(AdditionalOutput &oldAO,
+                                  AdditionalOutput &newAO, OutputType origBitId,
+                                  OutputType newBitId) {
+  PRECONDITION(!((oldAO.bitInfoMap != nullptr) ^ (newAO.bitInfoMap != nullptr)),
+               "bitInfoMap not allocated");
+  PRECONDITION(!((oldAO.atomToBits != nullptr) ^ (newAO.atomToBits != nullptr)),
+               "atomToBits not allocated");
+  PRECONDITION(!((oldAO.bitPaths != nullptr) ^ (newAO.bitPaths != nullptr)),
+               "bitPaths not allocated");
+
+  // we don't need to do anything with atomCounts
+
+  if (oldAO.atomToBits) {
+    if (newAO.atomToBits->empty()) {
+      newAO.atomToBits->resize(oldAO.atomToBits->size());
+    }
+    for (unsigned int i = 0; i < oldAO.atomToBits->size(); ++i) {
+      const auto &nv = oldAO.atomToBits->at(i);
+      if (std::find(nv.begin(), nv.end(), origBitId) != nv.end()) {
+        newAO.atomToBits->at(i).push_back(newBitId);
+      }
+    }
+  }
+  if (oldAO.bitInfoMap) {
+    const auto v = oldAO.bitInfoMap->find(origBitId);
+    if (v != oldAO.bitInfoMap->end()) {
+      (*newAO.bitInfoMap)[newBitId] = v->second;
+    }
+  }
+  if (oldAO.bitPaths) {
+    const auto v = oldAO.bitPaths->find(origBitId);
+    if (v != oldAO.bitPaths->end()) {
+      (*newAO.bitPaths)[newBitId] = v->second;
+    }
+  }
+}
+
+void setupTempAdditionalOutput(RDKit::FingerprintFuncArguments &args,
+                               AdditionalOutput &countSimulationOutput,
+                               size_t numAtoms) {
+  if (args.additionalOutput->atomToBits) {
+    countSimulationOutput.allocateAtomToBits();
+  }
+  if (args.additionalOutput->atomCounts) {
+    countSimulationOutput.allocateAtomCounts();
+  }
+  if (args.additionalOutput->bitInfoMap) {
+    countSimulationOutput.allocateBitInfoMap();
+  }
+  if (args.additionalOutput->bitPaths) {
+    countSimulationOutput.allocateBitPaths();
+  }
+  reinitAdditionalOutput(*args.additionalOutput, numAtoms);
+}
+}  // namespace
 
 template <typename OutputType>
 std::unique_ptr<SparseIntVect<OutputType>>
@@ -268,6 +328,14 @@ FingerprintGenerator<OutputType>::getSparseFingerprint(
     effectiveSize /= dp_fingerprintArguments->d_countBounds.size();
   }
 
+  AdditionalOutput countSimulationOutput;
+  AdditionalOutput *origAO = nullptr;
+  if (dp_fingerprintArguments->df_countSimulation && args.additionalOutput) {
+    setupTempAdditionalOutput(args, countSimulationOutput, mol.getNumAtoms());
+    origAO = args.additionalOutput;
+    args.additionalOutput = &countSimulationOutput;
+  }
+
   auto tempResult = getFingerprintHelper(mol, args, effectiveSize);
 
   auto result = std::make_unique<SparseBitVect>(resultSize);
@@ -281,12 +349,24 @@ FingerprintGenerator<OutputType>::getSparseFingerprint(
         // that bit
         const auto &bounds_count = dp_fingerprintArguments->d_countBounds;
         if (val.second >= static_cast<int>(bounds_count[i])) {
-          result->setBit(val.first * bounds_count.size() + i);
+          OutputType nBitId = val.first * bounds_count.size() + i;
+          result->setBit(nBitId);
+          if (args.additionalOutput) {
+            duplicateAdditionalOutputBit(*args.additionalOutput, *origAO,
+                                         static_cast<OutputType>(val.first),
+                                         nBitId);
+          }
         }
       }
     } else {
       result->setBit(val.first);
     }
+  }
+  if (origAO) {
+    if (origAO->atomCounts) {
+      *origAO->atomCounts = *countSimulationOutput.atomCounts;
+    }
+    args.additionalOutput = origAO;
   }
 
   return result;
@@ -314,9 +394,17 @@ FingerprintGenerator<OutputType>::getFingerprint(
     const ROMol &mol, FingerprintFuncArguments &args) const {
   std::uint32_t effectiveSize = dp_fingerprintArguments->d_fpSize;
   if (dp_fingerprintArguments->df_countSimulation) {
-    // effective size needs to be smaller than result size to compansate for
+    // effective size needs to be smaller than result size to compensate for
     // count simulation
     effectiveSize /= dp_fingerprintArguments->d_countBounds.size();
+  }
+
+  AdditionalOutput countSimulationOutput;
+  AdditionalOutput *origAO = nullptr;
+  if (dp_fingerprintArguments->df_countSimulation && args.additionalOutput) {
+    setupTempAdditionalOutput(args, countSimulationOutput, mol.getNumAtoms());
+    origAO = args.additionalOutput;
+    args.additionalOutput = &countSimulationOutput;
   }
   auto tempResult = getFingerprintHelper(mol, args, effectiveSize);
 
@@ -326,12 +414,18 @@ FingerprintGenerator<OutputType>::getFingerprint(
     if (dp_fingerprintArguments->df_countSimulation) {
       for (unsigned int i = 0;
            i < dp_fingerprintArguments->d_countBounds.size(); ++i) {
-        // for every bound in the d_countBounds in dp_fingerprintArguments, set
-        // a bit if the occurrence count is equal or higher than the bound for
-        // that bit
+        // for every bound in the d_countBounds in dp_fingerprintArguments,
+        // set a bit if the occurrence count is equal or higher than the bound
+        // for that bit
         const auto &bounds_count = dp_fingerprintArguments->d_countBounds;
         if (val.second >= static_cast<int>(bounds_count[i])) {
-          result->setBit(val.first * bounds_count.size() + i);
+          OutputType nBitId = val.first * bounds_count.size() + i;
+          result->setBit(nBitId);
+          if (args.additionalOutput) {
+            duplicateAdditionalOutputBit(*args.additionalOutput, *origAO,
+                                         static_cast<OutputType>(val.first),
+                                         nBitId);
+          }
         }
       }
     } else {
@@ -339,8 +433,15 @@ FingerprintGenerator<OutputType>::getFingerprint(
     }
   }
 
+  if (origAO) {
+    if (origAO->atomCounts) {
+      *origAO->atomCounts = *countSimulationOutput.atomCounts;
+    }
+    args.additionalOutput = origAO;
+  }
+
   return result;
-}
+}  // namespace RDKit
 
 template RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<SparseIntVect<std::uint32_t>>
 FingerprintGenerator<std::uint32_t>::getSparseCountFingerprint(

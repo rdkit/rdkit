@@ -1,13 +1,13 @@
-from rdkit import RDConfig
-import unittest
 import random
 import re
+import unittest
 from os import environ
-from rdkit import Chem
-from rdkit.Chem import Draw, AllChem, rdDepictor
-from rdkit.Chem.Draw import rdMolDraw2D
-from rdkit import Geometry
+
 import numpy as np
+
+from rdkit import Chem, Geometry, RDConfig
+from rdkit.Chem import AllChem, Draw, rdDepictor
+from rdkit.Chem.Draw import rdMolDraw2D
 
 
 class TestCase(unittest.TestCase):
@@ -782,6 +782,37 @@ M  END''')
       rdMolDraw2D.DrawMoleculeACS1996(drawer, m)
       drawer.FinishDrawing()
       drawer.WriteDrawingText('testACSMode_1.png')
+
+  def testMolSize(self):
+    m = Chem.MolFromSmiles("CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+]")
+    AllChem.Compute2DCoords(m)
+    rdMolDraw2D.PrepareMolForDrawing(m)
+    d2d = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+    d2d.DrawMolecule(m)
+    sz = d2d.Width(), d2d.Height()
+
+    d2d = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+    sz2 = d2d.GetMolSize(m)
+    self.assertEqual(sz, sz2)
+
+  def testQueryColour(self):
+    m = Chem.MolFromSmarts("c1ccc2nc([*:1])nc([*:2])c2c1")
+    self.assertIsNotNone(m)
+    # Check that default queryColour is #7F7F7F.
+    d2d = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    text = d2d.GetDrawingText()
+    self.assertTrue("#7F7F7F" in text)
+
+    # Check that queryColour can be set to black.
+    query_colour = (0.0, 0.0, 0.0)
+    d2d = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+    d2d.drawOptions().setQueryColour(query_colour)
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    text = d2d.GetDrawingText()
+    self.assertTrue("#7F7F7F" not in text)
 
 
 if __name__ == "__main__":

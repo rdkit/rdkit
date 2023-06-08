@@ -1,29 +1,34 @@
 # must be run from this directory
 
-import csv, os, sys
+import csv
+import os
+import sys
+
 py3 = sys.version_info[0] == 3
 
-pains_a = ['ene_six_het_A(483)', 'hzone_phenol_A(479)', 'anil_di_alk_A(478)', 'indol_3yl_alk(461)',
-           'quinone_A(370)', 'azo_A(324)', 'imine_one_A(321)', 'mannich_A(296)',
-           'anil_di_alk_B(251)', 'anil_di_alk_C(246)', 'ene_rhod_A(235)', 'hzone_phenol_B(215)',
-           'ene_five_het_A(201)', 'anil_di_alk_D(198)', 'imine_one_isatin(189)',
-           'anil_di_alk_E(186)']
+pains_a = [
+  'ene_six_het_A(483)', 'hzone_phenol_A(479)', 'anil_di_alk_A(478)', 'indol_3yl_alk(461)',
+  'quinone_A(370)', 'azo_A(324)', 'imine_one_A(321)', 'mannich_A(296)', 'anil_di_alk_B(251)',
+  'anil_di_alk_C(246)', 'ene_rhod_A(235)', 'hzone_phenol_B(215)', 'ene_five_het_A(201)',
+  'anil_di_alk_D(198)', 'imine_one_isatin(189)', 'anil_di_alk_E(186)'
+]
 
-pains_b = ['thiaz_ene_A(128)', 'pyrrole_A(118)', 'catechol_A(92)', 'ene_five_het_B(90)',
-           'imine_one_fives(89)', 'ene_five_het_C(85)', 'hzone_pipzn(79)', 'keto_keto_beta_A(68)',
-           'hzone_pyrrol(64)', 'ene_one_ene_A(57)', 'cyano_ene_amine_A(56)', 'ene_five_one_A(55)',
-           'cyano_pyridone_A(54)', 'anil_alk_ene(51)', 'amino_acridine_A(46)', 'ene_five_het_D(46)',
-           'thiophene_amino_Aa(45)', 'ene_five_het_E(44)', 'sulfonamide_A(43)', 'thio_ketone(43)',
-           'sulfonamide_B(41)', 'anil_no_alk(40)', 'thiophene_amino_Ab(40)',
-           'het_pyridiniums_A(39)', 'anthranil_one_A(38)', 'cyano_imine_A(37)',
-           'diazox_sulfon_A(36)', 'hzone_anil_di_alk(35)', 'rhod_sat_A(33)', 'hzone_enamin(30)',
-           'pyrrole_B(29)', 'thiophene_hydroxy(28)', 'cyano_pyridone_B(27)', 'imine_one_sixes(27)',
-           'dyes5A(27)', 'naphth_amino_A(25)', 'naphth_amino_B(25)', 'ene_one_ester(24)',
-           'thio_dibenzo(23)', 'cyano_cyano_A(23)', 'hzone_acyl_naphthol(22)', 'het_65_A(21)',
-           'imidazole_A(19)', 'ene_cyano_A(19)', 'anthranil_acid_A(19)', 'dyes3A(19)',
-           'dhp_bis_amino_CN(19)', 'het_6_tetrazine(18)', 'ene_one_hal(17)', 'cyano_imine_B(17)',
-           'thiaz_ene_B(17)', 'ene_rhod_B(16)', 'thio_carbonate_A(15)', 'anil_di_alk_furan_A(15)',
-           'ene_five_het_F(15)']
+pains_b = [
+  'thiaz_ene_A(128)', 'pyrrole_A(118)', 'catechol_A(92)', 'ene_five_het_B(90)',
+  'imine_one_fives(89)', 'ene_five_het_C(85)', 'hzone_pipzn(79)', 'keto_keto_beta_A(68)',
+  'hzone_pyrrol(64)', 'ene_one_ene_A(57)', 'cyano_ene_amine_A(56)', 'ene_five_one_A(55)',
+  'cyano_pyridone_A(54)', 'anil_alk_ene(51)', 'amino_acridine_A(46)', 'ene_five_het_D(46)',
+  'thiophene_amino_Aa(45)', 'ene_five_het_E(44)', 'sulfonamide_A(43)', 'thio_ketone(43)',
+  'sulfonamide_B(41)', 'anil_no_alk(40)', 'thiophene_amino_Ab(40)', 'het_pyridiniums_A(39)',
+  'anthranil_one_A(38)', 'cyano_imine_A(37)', 'diazox_sulfon_A(36)', 'hzone_anil_di_alk(35)',
+  'rhod_sat_A(33)', 'hzone_enamin(30)', 'pyrrole_B(29)', 'thiophene_hydroxy(28)',
+  'cyano_pyridone_B(27)', 'imine_one_sixes(27)', 'dyes5A(27)', 'naphth_amino_A(25)',
+  'naphth_amino_B(25)', 'ene_one_ester(24)', 'thio_dibenzo(23)', 'cyano_cyano_A(23)',
+  'hzone_acyl_naphthol(22)', 'het_65_A(21)', 'imidazole_A(19)', 'ene_cyano_A(19)',
+  'anthranil_acid_A(19)', 'dyes3A(19)', 'dhp_bis_amino_CN(19)', 'het_6_tetrazine(18)',
+  'ene_one_hal(17)', 'cyano_imine_B(17)', 'thiaz_ene_B(17)', 'ene_rhod_B(16)',
+  'thio_carbonate_A(15)', 'anil_di_alk_furan_A(15)', 'ene_five_het_F(15)'
+]
 
 pains_c = [
   'anil_di_alk_F(14)', 'hzone_anil(14)', 'het_5_pyrazole_OH(14)', 'het_thio_666_A(13)',
@@ -122,12 +127,11 @@ pains_c = [
 
 DIRNAME = os.path.join(os.path.dirname(sys.argv[0]))
 PAINS_CSV = os.path.join(DIRNAME, "..", "..", "..", "Data", "Pains", "wehi_pains.csv")
-FILTER_IN = os.path.join(DIRNAME, "Filters.cpp.in")
 PAINS_A_FILENAME = os.path.join(DIRNAME, "pains_a.in")
 PAINS_B_FILENAME = os.path.join(DIRNAME, "pains_b.in")
 PAINS_C_FILENAME = os.path.join(DIRNAME, "pains_c.in")
 
-for fn in (PAINS_CSV, FILTER_IN, PAINS_A_FILENAME, PAINS_B_FILENAME, PAINS_B_FILENAME):
+for fn in (PAINS_CSV, PAINS_A_FILENAME, PAINS_B_FILENAME, PAINS_B_FILENAME):
   if not os.path.exists(fn):
     raise IOError("Could not find necessary file: %s", fn)
 
@@ -172,6 +176,7 @@ def write_pains(filename, data):
   if t != data:
     if py3:
       import io
+
       # newline = don't convert to windows style
       with io.open(filename, 'w', newline='') as f:
         f.write(data)
@@ -179,6 +184,7 @@ def write_pains(filename, data):
       # wb = means don't convert newline to windows style
       with open(filename, 'wb') as f:
         f.write(data)
+
 
 write_pains(PAINS_A_FILENAME, PAINS_A)
 write_pains(PAINS_B_FILENAME, PAINS_B)

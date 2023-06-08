@@ -7,11 +7,11 @@
 
 """
 
+import pickle
 
 import numpy
 
 from rdkit.ML.DecTree import CrossValidate, PruneTree
-import pickle
 
 
 class Forest(object):

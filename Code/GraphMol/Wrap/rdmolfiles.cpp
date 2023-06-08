@@ -18,6 +18,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/new_canon.h>
+#include <GraphMol/Canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -657,6 +658,10 @@ python::dict MetadataFromPNGString(python::object png) {
   return translateMetadata(metadata);
 }
 
+void CanonicalizeEnhancedStereo(ROMol &mol) {
+  Canon::canonicalizeEnhancedStereo(mol);
+}
+
 }  // namespace RDKit
 
 // MolSupplier stuff
@@ -676,6 +681,9 @@ void wrap_smiwriter();
 void wrap_sdwriter();
 void wrap_tdtwriter();
 void wrap_pdbwriter();
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+void wrap_maewriter();
+#endif
 
 // MultithreadedMolSupplier stuff
 void wrap_multiSmiSupplier();
@@ -1400,7 +1408,10 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
              RDKit::SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO)
       .value("CX_SGROUPS", RDKit::SmilesWrite::CXSmilesFields::CX_SGROUPS)
       .value("CX_POLYMER", RDKit::SmilesWrite::CXSmilesFields::CX_POLYMER)
-      .value("CX_ALL", RDKit::SmilesWrite::CXSmilesFields::CX_ALL);
+      .value("CX_BOND_CFG", RDKit::SmilesWrite::CXSmilesFields::CX_BOND_CFG)
+      .value("CX_ALL", RDKit::SmilesWrite::CXSmilesFields::CX_ALL)
+      .value("CX_ALL_BUT_COORDS",
+             RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
 
   python::def(
       "MolToCXSmiles",
@@ -1879,9 +1890,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
    >>> mol = MolFromSmiles('C1NCN1.C1NCN1')\n\
    >>> list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False))\n\
-   [0,1,0,1,-1,-1,-1,-1]\n\
+   [4,6,4,6,-1,-1,-1,-1]\n\
    >>> list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False))\n\
-   [-1,-1,-1,-1,0,1,0,1]\n\
+   [-1,-1,-1,-1,4,6,4,6]\n\
 \n\
   ARGUMENTS:\n\
 \n\
@@ -1907,6 +1918,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("breakTies") = true, python::arg("includeChirality") = true,
        python::arg("includeIsotopes") = true),
       docString.c_str());
+
+  python::def("CanonicalizeEnhancedStereo", CanonicalizeEnhancedStereo,
+              (python::arg("mol")));
 
   python::def(
       "CreateAtomIntPropertyList", FileParserUtils::createAtomIntPropertyList,
@@ -2145,6 +2159,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   wrap_sdwriter();
   wrap_tdtwriter();
   wrap_pdbwriter();
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+  wrap_maewriter();
+#endif
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
   /********************************************************

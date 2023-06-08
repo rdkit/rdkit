@@ -12,7 +12,8 @@
 
 #include <algorithm>
 #include <limits>
-
+#include <fstream>
+#include <random>
 #include <boost/format.hpp>
 
 #include <GraphMol/RDKitBase.h>
@@ -21,6 +22,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -1969,6 +1971,14 @@ TEST_CASE("bridgehead queries", "[query]") {
       }
     }
   }
+  SECTION("Github #6049") {
+    auto m = "C1C=CC=C2CCCCC3CC(C3)N21"_smiles;
+    REQUIRE(m);
+    CHECK(!queryIsAtomBridgehead(m->getAtomWithIdx(13)));
+    CHECK(!queryIsAtomBridgehead(m->getAtomWithIdx(4)));
+    CHECK(queryIsAtomBridgehead(m->getAtomWithIdx(11)));
+    CHECK(queryIsAtomBridgehead(m->getAtomWithIdx(9)));
+  }
 }
 
 TEST_CASE("replaceAtom/Bond should not screw up bookmarks", "[RWMol]") {
@@ -2017,7 +2027,7 @@ TEST_CASE("github #4071: StereoGroups not preserved by RenumberAtoms()",
             mol->getStereoGroups()[i].getGroupType());
     }
     CHECK(MolToCXSmiles(*nmol) ==
-          "C[C@H]([C@@H](C)[C@@H](C)O)[C@@H](C)O |o1:7,&1:1,&2:2,&3:4|");
+          "C[C@H](O)[C@H](C)[C@H](C)[C@H](C)O |o1:1,&1:3,&2:5,&3:7|");
   }
 }
 
@@ -2910,5 +2920,473 @@ TEST_CASE("Stop caching ring finding results") {
     CHECK(m->getRingInfo()->numRings() == 3);
     MolOps::fastFindRings(*m);
     CHECK(m->getRingInfo()->numRings() == 2);
+  }
+}
+
+TEST_CASE("molecules with more than 255 rings produce a bad pickle") {
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+  bool sanitize = false;
+  std::unique_ptr<RWMol> mol(
+      MolFileToMol(pathName + "mol_with_pickle_error.mol", sanitize));
+  REQUIRE(mol);
+  mol->updatePropertyCache(false);
+  unsigned int opThatFailed = 0;
+  MolOps::sanitizeMol(*mol, opThatFailed,
+                      MolOps::SanitizeFlags::SANITIZE_ALL ^
+                          MolOps::SanitizeFlags::SANITIZE_PROPERTIES ^
+                          MolOps::SANITIZE_KEKULIZE);
+  CHECK(mol->getRingInfo()->numRings() > 300);
+  std::string pkl;
+  MolPickler::pickleMol(*mol, pkl);
+  RWMol nMol(pkl);
+  CHECK(nMol.getRingInfo()->numRings() == mol->getRingInfo()->numRings());
+}
+
+TEST_CASE("molecules with single bond to metal atom use dative instead") {
+  // Change heme coordination from single bond to dative.
+  // Test mols are CHEBI:26355, CHEBI:60344, CHEBI:17627.  26355 should be
+  // changed (Github 6019) the other two should not be.
+  // Counting from 1, 4th mol is one that gave other problems during testing.
+  std::vector<std::pair<std::string, std::string>> test_vals{
+      {"CC1=C(CCC(O)=O)C2=[N]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N]5[Fe]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"},
+      {"CC1=C(CCC([O-])=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC([O-])=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25"},
+      {"CC1=C(CCC(O)=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)O)c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)O)=CC1=[N+]25"},
+      {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
+       "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
+  for (size_t i = 0; i < test_vals.size(); ++i) {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first, ps));
+    // MolOps::cleanUp(*m);
+    MolOps::cleanUpOrganometallics(*m);
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
+  }
+}
+
+TEST_CASE(
+    "cleanUpOrganometallics should produce canonical output.  cf PR6292") {
+  std::vector<std::pair<std::string, std::string>> test_vals{
+      {"F[Pd](Cl)(Cl1)Cl[Pd]1(Cl)Cl", "F[Pd]1(Cl)<-Cl[Pd](Cl)(Cl)<-Cl1"},
+      {"F[Pt]1(F)[35Cl][Pt]([Cl]1)(F)Br", "F[Pt]1(Br)<-Cl[Pt](F)(F)<-[35Cl]1"},
+  };
+
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  for (size_t j = 0; j < test_vals.size(); ++j) {
+    std::string &smi = test_vals[j].first;
+    std::string &canon_smi = test_vals[j].second;
+    RWMOL_SPTR m(RDKit::SmilesToMol(smi, ps));
+    MolOps::cleanUpOrganometallics(*m);
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(MolToSmiles(*m) == canon_smi);
+
+    // scramble the order and check
+    std::vector<unsigned int> atomInds(m->getNumAtoms(), 0);
+    std::iota(atomInds.begin(), atomInds.end(), 0);
+    std::random_device rd;
+    std::mt19937 g(rd());
+    for (int i = 0; i < 100; ++i) {
+      std::unique_ptr<ROMol> mol(RDKit::SmilesToMol(smi, ps));
+      std::shuffle(atomInds.begin(), atomInds.end(), g);
+      std::unique_ptr<ROMol> randmol(MolOps::renumberAtoms(*mol, atomInds));
+      std::unique_ptr<RWMol> rwrandmol(new RWMol(*randmol));
+      MolOps::cleanUpOrganometallics(*rwrandmol);
+      MolOps::sanitizeMol(*rwrandmol);
+      TEST_ASSERT(MolToSmiles(*rwrandmol) == canon_smi);
+    }
+  }
+}
+
+TEST_CASE("github #6100: bonds to dummy atoms considered as dative") {
+  SECTION("as reported") {
+    auto m = "C[O](C)*"_smiles;
+    REQUIRE(!m);
+  }
+}
+
+TEST_CASE("github #4642: Enhanced Stereo is lost when using GetMolFrags") {
+  SECTION("as reported") {
+    auto m = "CCCC.C[C@H](F)C[C@H](O)Cl |o1:5,o2:8|"_smiles;
+    REQUIRE(m);
+    auto frags = MolOps::getMolFrags(*m);
+    REQUIRE(frags.size() == 2);
+    CHECK(frags[0]->getStereoGroups().empty());
+    CHECK(frags[1]->getStereoGroups().size() == 2);
+  }
+  SECTION("each fragment has groups") {
+    auto m = "CC[C@@H](C)O.C[C@H](F)C[C@H](O)Cl |o1:6,o2:9,o3:2|"_smiles;
+    REQUIRE(m);
+    auto frags = MolOps::getMolFrags(*m);
+    REQUIRE(frags.size() == 2);
+    CHECK(frags[0]->getStereoGroups().size() == 1);
+    CHECK(frags[1]->getStereoGroups().size() == 2);
+  }
+  SECTION("group split between fragments") {
+    auto m = "CC[C@@H](C)O.C[C@H](F)C[C@H](O)Cl |o1:2,6,o2:9|"_smiles;
+    REQUIRE(m);
+    auto frags = MolOps::getMolFrags(*m);
+    REQUIRE(frags.size() == 2);
+    CHECK(frags[0]->getStereoGroups().size() == 1);
+    CHECK(frags[1]->getStereoGroups().size() == 2);
+    CHECK(frags[0]->getAtomWithIdx(2)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(frags[1]->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(frags[1]->getAtomWithIdx(4)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+}
+
+TEST_CASE(
+    "Github #6119: No warning when merging explicit H query atoms with no bonds",
+    "[bug][molops]") {
+  SECTION("Zero degree AtomOr Query") {
+    std::unique_ptr<RWMol> m{SmartsToMol("[#6,#1]")};
+    REQUIRE(m);
+    std::stringstream ss;
+    rdWarningLog->SetTee(ss);
+    MolOps::mergeQueryHs(*m);
+    rdWarningLog->ClearTee();
+    TEST_ASSERT(
+        ss.str().find(
+            "WARNING: merging explicit H queries involved in ORs is not supported. "
+            "This query will not be merged") != std::string::npos);
+  }
+  SECTION("One degree AtomOr Query") {
+    std::unique_ptr<RWMol> m{SmartsToMol("C[#6,#1]")};
+    REQUIRE(m);
+    std::stringstream ss;
+    rdWarningLog->SetTee(ss);
+    MolOps::mergeQueryHs(*m);
+    rdWarningLog->ClearTee();
+    TEST_ASSERT(
+        ss.str().find(
+            "WARNING: merging explicit H queries involved in ORs is not supported. "
+            "This query will not be merged") != std::string::npos);
+  }
+  SECTION("Atoms that are not H") {
+    std::unique_ptr<RWMol> m{SmartsToMol("C[#6,#7]")};
+    REQUIRE(m);
+    std::stringstream ss;
+    rdWarningLog->SetTee(ss);
+    MolOps::mergeQueryHs(*m);
+    rdWarningLog->ClearTee();
+    TEST_ASSERT(
+        ss.str().find(
+            "WARNING: merging explicit H queries involved in ORs is not supported. "
+            "This query will not be merged") == std::string::npos);
+  }
+}
+
+TEST_CASE("Remove atom updates bond ENDPTS prop") {
+  auto m = R"CTAB(ferrocene-ish
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 15 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.619616 1.206807 0.000000 0 CHG=-1
+M  V30 2 C 0.211483 1.768553 0.000000 0
+M  V30 3 C -1.283936 1.861329 0.000000 0
+M  V30 4 C -1.796429 1.358429 0.000000 0
+M  V30 5 C -0.634726 0.966480 0.000000 0
+M  V30 6 C 0.654379 -1.415344 0.000000 0 CHG=-1
+M  V30 7 C 0.249886 -0.858607 0.000000 0
+M  V30 8 C -1.232145 -0.766661 0.000000 0
+M  V30 9 C -1.740121 -1.265073 0.000000 0
+M  V30 10 C -0.580425 -1.662922 0.000000 0
+M  V30 11 C 1.759743 0.755930 0.000000 0
+M  V30 12 C 1.796429 -1.861329 0.000000 0
+M  V30 13 Fe -0.554442 0.032137 0.000000 0 VAL=2
+M  V30 14 * -0.601210 1.478619 0.000000 0
+M  V30 15 * -0.537835 -1.172363 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 5
+M  V30 2 2 4 5
+M  V30 3 1 4 3
+M  V30 4 2 2 3
+M  V30 5 1 1 2
+M  V30 6 1 6 10
+M  V30 7 2 9 10
+M  V30 8 1 9 8
+M  V30 9 2 7 8
+M  V30 10 1 6 7
+M  V30 11 1 1 11
+M  V30 12 1 6 12
+M  V30 13 9 14 13 ENDPTS=(5 1 2 3 4 5) ATTACH=ANY
+M  V30 14 9 15 13 ENDPTS=(5 9 10 7 8 6) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  std::string sprop;
+  auto bond = m->getBondWithIdx(12U);
+  CHECK(bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                               sprop));
+  CHECK(std::string("(5 1 2 3 4 5)") == sprop);
+  m->removeAtom(2U);
+  bond = m->getBondWithIdx(10U);
+  CHECK(bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                               sprop));
+  CHECK(std::string("(4 1 2 3 4)") == sprop);
+  m->removeAtom(0U);
+  m->removeAtom(0U);
+  m->removeAtom(0U);
+  m->removeAtom(0U);
+  CHECK(!bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                                sprop));
+  CHECK(!bond->getPropIfPresent(RDKit::common_properties::_MolFileBondAttach,
+                                sprop));
+  // the original bond should now have index 6
+  CHECK(bond->getIdx() == 6);
+
+  // the other dative bond is now attached to different atom indices
+  bond = m->getBondWithIdx(7U);
+  CHECK(bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                               sprop));
+  CHECK(std::string("(5 4 5 2 3 1)") == sprop);
+  // remove atom 5 (6 in the file - the final methyl off the first
+  // methyl-cyclopentadiene ring
+  m->removeAtom(5U);
+  CHECK(bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                               sprop));
+  CHECK(std::string("(5 4 5 2 3 1)") == sprop);
+}
+
+TEST_CASE("github #6237: Correctly placing hydrogens based on Chiral Tag") {
+  SECTION("Clockwise") {  // Chiral Tag (CW) Agrees with CIPCode ('R')
+    std::string mb = R"CTAB(testmol
+  CT1066645023
+
+  5  4  0  0  1  0  0  0  0  0999 V2000
+    0.0021   -0.0041    0.0020 Br  0  0  0  0  0  0  0  0  0  0  0  0
+    1.6669    2.5858    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7012    2.4252   -1.1206 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0246    1.9617    0.0128 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5348    2.3132    0.9096 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0  0  0  0
+  2  4  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+M  END
+    )CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    bool explicitOnly = false;
+    bool addCoords = true;
+    RDKit::ROMol *m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    REQUIRE(m->getNumAtoms() == 5);
+    const auto &conf = m->getConformer();
+    // Hydrogen will always be in the last position
+    const RDGeom::Point3D HPos = conf.getAtomPos(4);
+    // Ensure the hydrogen is placed on the same side of the carbon as it was
+    // originally.
+    const RDGeom::Point3D targetPos = RDGeom::Point3D(-.5384, 2.3132, 0.9096);
+    const auto distToTarget = HPos - targetPos;
+    CHECK(distToTarget.lengthSq() < 0.1);
+  }
+
+  SECTION("Counterclockwise") {  // Chiral Tag (CCW) Different from CIPCode (R)
+                                 // due to different ordering of atoms
+    std::string mb = R"CTAB(testmol
+  CT1066645023
+
+  5  4  0  0  1  0  0  0  0  0999 V2000
+    1.6669    2.5858    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    0.0021   -0.0041    0.0020 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5348    2.3132    0.9096 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0246    1.9617    0.0128 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7012    2.4252   -1.1206 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0  0  0  0
+  2  4  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    bool explicitOnly = false;
+    bool addCoords = true;
+    RDKit::ROMol *m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    REQUIRE(m->getNumAtoms() == 5);
+    const auto &conf = m->getConformer();
+    // Hydrogen will always be in the last position
+    const RDGeom::Point3D HPos = conf.getAtomPos(4);
+    // Ensure the hydrogen is placed on the same side of the carbon as it was
+    // originally.
+    const RDGeom::Point3D targetPos = RDGeom::Point3D(-.5384, 2.3132, 0.9096);
+    const auto distToTarget = HPos - targetPos;
+    CHECK(distToTarget.lengthSq() < 0.1);
+  }
+}
+
+TEST_CASE(
+    "GitHub Issue #6437 Removing Hs on a pyrrol-like structure throws kekulization error",
+    "[bug][molops][removeHs]") {
+  auto run_test = [](const std::string &mb,
+                     const std::string &reference_smiles) {
+    bool sanitize = true;  // aromatization is key in triggering the issue
+    bool removeHs = false;
+    std::unique_ptr<RWMol> mol(MolBlockToMol(mb, sanitize, removeHs));
+
+    REQUIRE(mol);
+
+    MolOps::removeHs(*mol);
+
+    REQUIRE_NOTHROW(MolOps::Kekulize(*mol));
+
+    MolOps::sanitizeMol(*mol);
+    auto smiles = MolToSmiles(*mol);
+    CHECK(smiles == reference_smiles);
+
+    REQUIRE_NOTHROW(mol.reset(SmilesToMol(smiles)));
+  };
+
+  SECTION("original issue") {
+    const std::string mb = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 21 23 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -2.860897 0.790642 -0.873026 0 CHG=-1
+M  V30 2 C -2.892815 1.449062 0.345481 0
+M  V30 3 N -1.696600 1.269967 0.996982 0 CHG=1
+M  V30 4 C -0.879551 0.492797 0.203823 0
+M  V30 5 C -1.573299 0.166246 -0.987870 0
+M  V30 6 C 0.442583 0.044533 0.450671 0
+M  V30 7 C 1.074625 -0.756491 -0.540699 0
+M  V30 8 C 0.374093 -1.078083 -1.728707 0
+M  V30 9 C -0.929617 -0.625959 -1.953003 0
+M  V30 10 C 2.393185 -1.188970 -0.266871 0
+M  V30 11 N 3.077189 -0.890802 0.863186 0
+M  V30 12 C 2.450112 -0.125881 1.790360 0
+M  V30 13 C 1.151414 0.363643 1.640805 0
+M  V30 14 H -3.670927 0.767620 -1.587024 0
+M  V30 15 H -3.671872 2.035677 0.809804 0
+M  V30 16 H 0.862037 -1.686990 -2.476160 0
+M  V30 17 H -1.436100 -0.889168 -2.869956 0
+M  V30 18 H 2.914471 -1.799551 -0.989817 0
+M  V30 19 H 3.016681 0.097751 2.682259 0
+M  V30 20 H 0.694206 0.970092 2.408942 0
+M  V30 21 H -1.498216 1.663637 1.905533 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 2 3 2
+M  V30 3 1 4 3
+M  V30 4 1 5 1
+M  V30 5 2 5 4
+M  V30 6 1 6 4
+M  V30 7 2 7 6
+M  V30 8 1 8 7
+M  V30 9 1 9 5
+M  V30 10 2 9 8
+M  V30 11 1 10 7
+M  V30 12 2 11 10
+M  V30 13 1 12 11
+M  V30 14 1 13 6
+M  V30 15 2 13 12
+M  V30 16 1 14 1
+M  V30 17 1 15 2
+M  V30 18 1 16 8
+M  V30 19 1 17 9
+M  V30 20 1 18 10
+M  V30 21 1 19 12
+M  V30 22 1 20 13
+M  V30 23 1 21 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+
+    const std::string reference_smiles = "c1cc2c(ccc3[cH-]c[nH+]c32)cn1";
+    run_test(mb, reference_smiles);
+  }
+
+  SECTION("pyrrole") {
+    const std::string mb = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 3.080550 -0.830350 2.955935 0
+M  V30 2 C 1.665136 -0.838141 2.947220 0
+M  V30 3 C 1.247504 0.474081 2.948961 0
+M  V30 4 N 2.361202 1.272855 2.958419 0
+M  V30 5 C 3.483658 0.486391 2.962730 0
+M  V30 6 H 2.355611 2.284759 2.961704 0
+M  V30 7 H 1.020283 -1.707337 2.940409 0
+M  V30 8 H 0.256169 0.906820 2.944294 0
+M  V30 9 H 3.734967 -1.692394 2.957125 0
+M  V30 10 H 4.470152 0.930015 2.970242 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 2 3 2
+M  V30 3 1 4 3
+M  V30 4 2 5 1
+M  V30 5 1 5 4
+M  V30 6 1 6 4
+M  V30 7 1 7 2
+M  V30 8 1 8 3
+M  V30 9 1 9 1
+M  V30 10 1 10 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+    const std::string reference_smiles = "c1cc[nH]c1";
+    run_test(mb, reference_smiles);
+  }
+
+  SECTION("pseudo-pyrrole") {
+    const std::string mb = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 3.080550 -0.830350 2.955935 0
+M  V30 2 C 1.665136 -0.838141 2.947220 0
+M  V30 3 C 1.247504 0.474081 2.948961 0
+M  V30 4 C 2.361202 1.272855 2.958419 0 CHG=-1
+M  V30 5 C 3.483658 0.486391 2.962730 0
+M  V30 6 H 2.355611 2.284759 2.961704 0
+M  V30 7 H 1.020283 -1.707337 2.940409 0
+M  V30 8 H 0.256169 0.906820 2.944294 0
+M  V30 9 H 3.734967 -1.692394 2.957125 0
+M  V30 10 H 4.470152 0.930015 2.970242 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 2 3 2
+M  V30 3 1 4 3
+M  V30 4 2 5 1
+M  V30 5 1 5 4
+M  V30 6 1 6 4
+M  V30 7 1 7 2
+M  V30 8 1 8 3
+M  V30 9 1 9 1
+M  V30 10 1 10 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+
+    const std::string reference_smiles = "c1cc[cH-]c1";
+    run_test(mb, reference_smiles);
   }
 }

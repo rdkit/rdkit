@@ -9,9 +9,10 @@
   _SigTreeNode_ is derived from _DecTree.DecTreeNode_
 
 """
-from rdkit.ML.DecTree import DecTree
-from rdkit.DataStructs.VectCollection import VectCollection
 import copy
+
+from rdkit.DataStructs.VectCollection import VectCollection
+from rdkit.ML.DecTree import DecTree
 
 
 class SigTreeNode(DecTree.DecTreeNode):

@@ -11,9 +11,12 @@
 """ uses DSViewer to interact with molecules
 
 """
-from rdkit import Chem
+import os
+import tempfile
+
 from win32com.client import Dispatch
-import tempfile, os
+
+from rdkit import Chem
 
 _nextDisplayId = 1
 
@@ -324,7 +327,7 @@ class MolViewer(object):
       self.doc.DoCommand('UnSelectAll')
       tmp = self.doc.DoCommand('SetProperty object RD_Visual=%d;object id="*":select=on' % o.id)
       tmp = self.doc.DoCommand('SelectByRadius inside %f atom' % distance)
-      # that selects all atoms in the radius, now we need to make sure 
+      # that selects all atoms in the radius, now we need to make sure
       #  only atoms in _inObj_ are selected:
       for obj in self.displayables.values():
         if obj.id != p.id:

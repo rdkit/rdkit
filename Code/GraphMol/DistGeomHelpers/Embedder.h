@@ -22,6 +22,19 @@
 namespace RDKit {
 namespace DGeomHelpers {
 
+enum EmbedFailureCauses {
+  INITIAL_COORDS = 0,
+  FIRST_MINIMIZATION = 1,
+  CHECK_TETRAHEDRAL_CENTERS = 2,
+  CHECK_CHIRAL_CENTERS = 3,
+  MINIMIZE_FOURTH_DIMENSION = 4,
+  ETK_MINIMIZATION = 5,
+  FINAL_CHIRAL_BOUNDS = 6,
+  FINAL_CENTER_IN_VOLUME = 7,
+  LINEAR_DOUBLE_BOND = 8,
+  BAD_DOUBLE_BOND_STEREO = 9,
+};
+
 //! Parameter object for controlling embedding
 /*!
   numConfs       Number of conformations to be generated
@@ -96,8 +109,9 @@ namespace DGeomHelpers {
                           NOTE that for reasons of computational efficiency,
                           setting this will also set onlyHeavyAtomsForRMS to
                           true.
-
-
+  trackFailures    keep track of which checks during the embedding process fail
+  failures         if trackFailures is true, this is used to track the number
+                   of times each embedding check fails
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -129,6 +143,9 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool forceTransAmides{true};
   bool useSymmetryForPruning{true};
   double boundsMatForceScaling{1.0};
+  bool trackFailures{false};
+  std::vector<unsigned int> failures;
+
   EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,
@@ -178,11 +195,11 @@ RDKIT_DISTGEOMHELPERS_EXPORT void updateEmbedParametersFromJSON(
     EmbedParameters &params, const std::string &json);
 
 //! Embed multiple conformations for a molecule
-RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(
-    ROMol &mol, INT_VECT &res, unsigned int numConfs,
-    const EmbedParameters &params);
+RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(ROMol &mol, INT_VECT &res,
+                                                     unsigned int numConfs,
+                                                     EmbedParameters &params);
 inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
-                                   const EmbedParameters &params) {
+                                   EmbedParameters &params) {
   INT_VECT res;
   EmbedMultipleConfs(mol, res, numConfs, params);
   return res;
@@ -190,7 +207,7 @@ inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
 
 //! Compute an embedding (in 3D) for the specified molecule using Distance
 /// Geometry
-inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
+inline int EmbedMolecule(ROMol &mol, EmbedParameters &params) {
   INT_VECT confIds;
   EmbedMultipleConfs(mol, confIds, 1, params);
 

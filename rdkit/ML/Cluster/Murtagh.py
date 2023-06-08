@@ -13,11 +13,12 @@
 import numpy
 
 from rdkit.ML.Cluster import Clusters
+
 try:
-    from rdkit.ML.Cluster.Clustering import MurtaghCluster, MurtaghDistCluster
+  from rdkit.ML.Cluster.Clustering import MurtaghCluster, MurtaghDistCluster
 except ImportError:
-    MurtaghCluster = None
-    MurtaghDistCluster = None
+  MurtaghCluster = None
+  MurtaghDistCluster = None
 
 # constants to select the clustering algorithm
 WARDS = 1
@@ -41,44 +42,44 @@ methods = [
 
 
 def _LookupDist(dists, i, j, n):
-    """ *Internal Use Only*
+  """ *Internal Use Only*
 
      returns the distance between points i and j in the symmetric
      distance matrix _dists_
 
     """
-    if i == j:
-        return 0.0
-    if i > j:
-        i, j = j, i
-    return dists[j * (j - 1) // 2 + i]
+  if i == j:
+    return 0.0
+  if i > j:
+    i, j = j, i
+  return dists[j * (j - 1) // 2 + i]
 
 
 def _ToClusters(data, nPts, ia, ib, crit, isDistData=0):
-    """ *Internal Use Only*
+  """ *Internal Use Only*
 
       Converts the results of the Murtagh clustering code into
       a cluster tree, which is returned in a single-entry list
 
     """
-    cs = [None] * nPts
-    for i in range(nPts):
-        cs[i] = Clusters.Cluster(metric=0.0, data=i, index=(i + 1))
+  cs = [None] * nPts
+  for i in range(nPts):
+    cs[i] = Clusters.Cluster(metric=0.0, data=i, index=(i + 1))
 
-    nClus = len(ia) - 1
-    for i in range(nClus):
-        idx1 = ia[i] - 1
-        idx2 = ib[i] - 1
-        c1 = cs[idx1]
-        c2 = cs[idx2]
-        newClust = Clusters.Cluster(metric=crit[i], children=[c1, c2], index=nPts + i + 1)
-        cs[idx1] = newClust
+  nClus = len(ia) - 1
+  for i in range(nClus):
+    idx1 = ia[i] - 1
+    idx2 = ib[i] - 1
+    c1 = cs[idx1]
+    c2 = cs[idx2]
+    newClust = Clusters.Cluster(metric=crit[i], children=[c1, c2], index=nPts + i + 1)
+    cs[idx1] = newClust
 
-    return [newClust]
+  return [newClust]
 
 
 def ClusterData(data, nPts, method, isDistData=0):
-    """  clusters the data points passed in and returns the cluster tree
+  """  clusters the data points passed in and returns the cluster tree
 
       **Arguments**
 
@@ -102,12 +103,12 @@ def ClusterData(data, nPts, method, isDistData=0):
 
         - a single entry list with the cluster tree
     """
-    data = numpy.array(data)
-    if not isDistData:
-        sz = data.shape[1]
-        ia, ib, crit = MurtaghCluster(data, nPts, sz, method)
-    else:
-        ia, ib, crit = MurtaghDistCluster(data, nPts, method)
-    c = _ToClusters(data, nPts, ia, ib, crit, isDistData=isDistData)
+  data = numpy.array(data)
+  if not isDistData:
+    sz = data.shape[1]
+    ia, ib, crit = MurtaghCluster(data, nPts, sz, method)
+  else:
+    ia, ib, crit = MurtaghDistCluster(data, nPts, method)
+  c = _ToClusters(data, nPts, ia, ib, crit, isDistData=isDistData)
 
-    return c
+  return c

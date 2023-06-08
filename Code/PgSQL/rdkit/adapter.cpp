@@ -56,6 +56,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/GenericGroups/GenericGroups.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
@@ -559,6 +560,7 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   params.useChirality = useChirality;
   params.useEnhancedStereo = useEnhancedStereo;
   params.maxMatches = 1;
+  params.useQueryQueryMatches = true;  // <- this was part of github #6002
   auto mv1 = RDKit::SubstructMatch(*im, *am, params);
   auto mv2 = RDKit::SubstructMatch(*am, *im, params);
   bool ss1 = mv1.size() != 0;
@@ -582,7 +584,8 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
-extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality) {
+extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality,
+                            bool useMatchers) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
   RDKit::SubstructMatchParameters params;
@@ -593,7 +596,14 @@ extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality) {
     params.useChirality = getDoChiralSSS();
     params.useEnhancedStereo = getDoEnhancedStereoSSS();
   }
+  params.useQueryQueryMatches = true;
   params.maxMatches = 1;
+
+  if (useMatchers) {
+    GenericGroups::setGenericQueriesFromProperties(*am);
+    params.useGenericMatchers = true;
+  }
+
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
@@ -611,6 +621,7 @@ extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify,
     params.useEnhancedStereo = getDoEnhancedStereoSSS();
   }
   params.uniquify = uniquify;
+  params.useQueryQueryMatches = true;
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
@@ -2082,6 +2093,8 @@ extern "C" char *computeNMMolHash(CROMol data, const char *which) {
     func = RDKit::MolHash::HashFunction::Mesomer;
   } else if (!strcmp(which, "HetAtomTautomer")) {
     func = RDKit::MolHash::HashFunction::HetAtomTautomer;
+  } else if (!strcmp(which, "HetAtomTautomerv2")) {
+    func = RDKit::MolHash::HashFunction::HetAtomTautomerv2;
   } else if (!strcmp(which, "HetAtomProtomer")) {
     func = RDKit::MolHash::HashFunction::HetAtomProtomer;
   } else if (!strcmp(which, "RedoxPair")) {

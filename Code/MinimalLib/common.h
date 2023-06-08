@@ -55,7 +55,7 @@
 
 #ifndef _MSC_VER
 // shutoff some warnings from rapidjson
-#if !defined(__clang__) and defined(__GNUC__)
+#if !defined(__clang__) && defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wclass-memaccess"
 #endif
@@ -64,7 +64,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #ifndef _MSC_VER
-#if !defined(__clang__) and defined(__GNUC__)
+#if !defined(__clang__) && defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 #endif
@@ -147,6 +147,8 @@ RWMol *mol_from_input(const std::string &input,
           sanitizeOps ^= MolOps::SANITIZE_KEKULIZE;
         }
         MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
+      } else {
+        res->updatePropertyCache(false);
       }
       MolOps::assignStereochemistry(*res, true, true, true);
       if (mergeQueryHs) {
@@ -451,7 +453,8 @@ std::string process_rxn_details(
   return "";
 }
 
-std::string molblock_helper(RWMol &mol, const char *details_json, bool forceV3000) {
+std::string molblock_helper(RWMol &mol, const char *details_json,
+                            bool forceV3000) {
   bool includeStereo = true;
   bool kekulize = true;
   bool useMolBlockWedging = false;
@@ -604,6 +607,17 @@ std::unique_ptr<RWMol> standardize_func(T &mol, const std::string &details_json,
     MolStandardize::updateCleanupParamsFromJSON(ps, details_json);
   }
   return std::unique_ptr<RWMol>(static_cast<RWMol *>(func(mol, ps)));
+}
+
+bool invertWedgingIfMolHasFlipped(ROMol &mol,
+                                  const RDGeom::Transform3D &trans) {
+  constexpr double FLIP_THRESHOLD = -0.99;
+  auto zRot = trans.getVal(2, 2);
+  bool shouldFlip = zRot < FLIP_THRESHOLD;
+  if (shouldFlip) {
+    invertMolBlockWedgingInfo(mol);
+  }
+  return shouldFlip;
 }
 }  // namespace
 
@@ -820,6 +834,15 @@ std::unique_ptr<ExplicitBitVect> avalon_fp_as_bitvect(
 }
 #endif
 
+// If alignOnly is set to true in details_json, original molblock wedging
+// information is preserved, and inverted if needed (in case the rigid-body
+// alignment required a flip around the Z axis).
+// If alignOnly is set to false in details_json or not specified, original
+// molblock wedging information is preserved if it only involves the invariant
+// core whose coordinates never change, and is cleared in case coordinates were
+// changed. If acceptFailure is set to true and no substructure match is found,
+// coordinates will be recomputed from scratch, hence molblock wedging
+// information will be cleared.
 std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
                                     const char *details_json) {
   std::string res;
@@ -827,6 +850,8 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
     return res;
   }
   constexpr int MAX_MATCHES = 1000;
+  constexpr double RMSD_THRESHOLD = 1.e-2;
+  constexpr double MSD_THRESHOLD = RMSD_THRESHOLD * RMSD_THRESHOLD;
   bool useCoordGen = false;
   bool allowRGroups = false;
   bool acceptFailure = true;
@@ -844,6 +869,7 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
   MatchVectType match;
   int confId = -1;
   std::unique_ptr<Conformer> origConformer;
+  std::unique_ptr<ROMol> templateMolAdj;
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   bool oprefer = RDDepict::preferCoordGen;
   RDDepict::preferCoordGen = useCoordGen;
@@ -854,26 +880,29 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
     origConformer.reset(new Conformer(mol.getConformer()));
   }
   if (alignOnly) {
-    RDGeom::Transform3D trans;
     std::vector<MatchVectType> matches;
     std::unique_ptr<ROMol> molHs;
     ROMol *prbMol = &mol;
     if (allowRGroups) {
-      allowRGroups = false;
-      for (const auto templateAtom : templateMol.atoms()) {
-        if (templateAtom->getAtomicNum() == 0 && templateAtom->getDegree() == 1) {
-          allowRGroups = true;
-          break;
-        }
-      }
+      auto atoms = templateMol.atoms();
+      allowRGroups = std::any_of(atoms.begin(), atoms.end(),
+                                 isAtomTerminalRGroupOrQueryHydrogen);
     }
     if (allowRGroups) {
       molHs.reset(MolOps::addHs(mol));
       prbMol = molHs.get();
+      auto queryParams = RDKit::MolOps::AdjustQueryParameters::noAdjustments();
+      queryParams.adjustSingleBondsToDegreeOneNeighbors = true;
+      queryParams.adjustSingleBondsBetweenAromaticAtoms = true;
+      templateMolAdj.reset(
+          RDKit::MolOps::adjustQueryProperties(templateMol, &queryParams));
     }
-    if (SubstructMatch(*prbMol, templateMol, matches, false)) {
+    const ROMol &templateMolRef =
+        templateMolAdj ? *templateMolAdj : templateMol;
+    if (SubstructMatch(*prbMol, templateMolRef, matches, false)) {
       if (allowRGroups) {
-        matches = sortMatchesByDegreeOfCoreSubstitution(*prbMol, templateMol, matches);
+        matches = sortMatchesByDegreeOfCoreSubstitution(*prbMol, templateMolRef,
+                                                        matches);
         int maxMatchedHeavies = -1;
         std::vector<MatchVectType> prunedMatches;
         prunedMatches.reserve(matches.size());
@@ -882,15 +911,15 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
           MatchVectType prunedMatch;
           prunedMatch.reserve(match.size());
           for (const auto &pair : match) {
-            const auto templateAtom = templateMol.getAtomWithIdx(pair.first);
+            const auto templateAtom = templateMolRef.getAtomWithIdx(pair.first);
             const auto prbAtom = prbMol->getAtomWithIdx(pair.second);
-            bool isRGroup = templateAtom->getAtomicNum() == 0 && templateAtom->getDegree() == 1;
-            if (isRGroup && prbAtom->getAtomicNum() > 1) {
-              prunedMatch.push_back(std::move(pair));
+            if (isAtomTerminalRGroupOrQueryHydrogen(templateAtom)) {
+              if (prbAtom->getAtomicNum() == 1) {
+                continue;
+              }
               ++nMatchedHeavies;
-            } else if (!isRGroup) {
-              prunedMatch.push_back(std::move(pair));
             }
+            prunedMatch.push_back(std::move(pair));
           }
           if (nMatchedHeavies < maxMatchedHeavies) {
             break;
@@ -908,23 +937,94 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
       if (!mol.getNumConformers()) {
         RDDepict::compute2DCoords(mol);
       }
-      MolAlign::getBestAlignmentTransform(mol, templateMol, trans, match,
+      RDGeom::Transform3D trans;
+      MolAlign::getBestAlignmentTransform(mol, templateMolRef, trans, match,
                                           confId, confId, matches, MAX_MATCHES);
       std::for_each(match.begin(), match.end(),
                     [](auto &pair) { std::swap(pair.first, pair.second); });
       MolTransforms::transformConformer(mol.getConformer(), trans);
+      invertWedgingIfMolHasFlipped(mol, trans);
     } else if (acceptFailure) {
       RDDepict::compute2DCoords(mol);
+      clearMolBlockWedgingInfo(mol);
     }
   } else {
-    const RDKit::ROMol *refPattern = nullptr;
+    const ROMol *refPattern = nullptr;
     // always accept failure in the original call because
     // we detect it afterwards and, in case, restore the
     // original conformation
     const bool acceptOrigFailure = true;
+    std::unique_ptr<ROMol> molOrig;
+    if (mol.getNumConformers()) {
+      molOrig.reset(new ROMol(mol));
+    }
     match = RDDepict::generateDepictionMatching2DStructure(
         mol, templateMol, confId, refPattern, acceptOrigFailure, false,
         allowRGroups);
+    // we need to clear the existing wedging information if:
+    // 1. there is no match and we accept failure; this means that
+    //    we rebuild coordinates from scratch, hence pre-existing
+    //    wedging info is not valid anymore
+    // 2. there is a match
+    // 3. the original molecule has no coordinates to start with
+    //    (in that case it should already have no wedging info either, anyway)
+    // If there is no match and we do not accept failure, we keep
+    // existing coordinates and hence also keep the wedging info
+    bool shouldNeverClearWedgingInfo = match.empty() && !acceptFailure;
+    bool shouldClearWedgingInfo = (match.empty() && acceptFailure) || !molOrig;
+    if (!shouldNeverClearWedgingInfo) {
+      if (!shouldClearWedgingInfo) {
+        std::set<unsigned int> molMatchIndices;
+        std::transform(match.begin(), match.end(),
+                       std::inserter(molMatchIndices, molMatchIndices.begin()),
+                       [](const auto &pair) { return pair.second; });
+        // if any of the bonds that have wedging information from the molblock
+        // has at least one atom which is not part of the scaffold, we cannot
+        // preserve wedging information
+        auto molBonds = mol.bonds();
+        shouldClearWedgingInfo = std::any_of(
+            molBonds.begin(), molBonds.end(), [&molMatchIndices](const auto b) {
+              return ((b->hasProp(common_properties::_MolFileBondStereo) ||
+                       b->hasProp(common_properties::_MolFileBondCfg)) &&
+                      (!molMatchIndices.count(b->getBeginAtomIdx()) ||
+                       !molMatchIndices.count(b->getEndAtomIdx())));
+            });
+      }
+      if (!shouldClearWedgingInfo) {
+        // check that scaffold coordinates have not changed, which may
+        // happen when using CoordGen
+        const auto &molPos = mol.getConformer().getPositions();
+        const auto &templatePos = templateMol.getConformer().getPositions();
+        shouldClearWedgingInfo = std::any_of(
+            match.begin(), match.end(),
+            [&molPos, &templatePos, MSD_THRESHOLD](const auto &pair) {
+              return (molPos.at(pair.second) - templatePos.at(pair.first))
+                         .lengthSq() > MSD_THRESHOLD;
+            });
+      }
+      // final check: we still might need to invert wedging if the molecule
+      // has flipped to match the scaffold
+      if (!shouldClearWedgingInfo) {
+        RDGeom::Transform3D trans;
+        MatchVectType identityMatch(match.size());
+        std::transform(match.begin(), match.end(), identityMatch.begin(),
+                       [](const auto &pair) {
+                         return std::make_pair(pair.second, pair.second);
+                       });
+        auto rmsd = MolAlign::getAlignmentTransform(
+            *molOrig, mol, trans, confId, confId, &identityMatch);
+        // this should not happen as we checked that previously, but we are
+        // notoriously paranoid
+        if (rmsd > RMSD_THRESHOLD) {
+          shouldClearWedgingInfo = true;
+        } else {
+          invertWedgingIfMolHasFlipped(mol, trans);
+        }
+      }
+    }
+    if (shouldClearWedgingInfo) {
+      clearMolBlockWedgingInfo(mol);
+    }
   }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = oprefer;

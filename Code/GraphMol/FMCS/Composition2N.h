@@ -40,13 +40,13 @@ class Composition2N {  // generator of 2^N-1 possible bit combinations
     BitSet bits = getBitSet();
     unsigned n = 0;
     while (0 == (bits & 1uLL) &&
-           ++n < sizeof(bits) * 8) {      // find lowest bitwise 1
-      bits >>= 1u;                        // shift all zero lower bits
+           ++n < sizeof(bits) * 8) {  // find lowest bitwise 1
+      bits >>= 1u;                    // shift all zero lower bits
     }
     if (0 != (bits & 1uLL)) {
       bits >>= 1u;  // shift first set bit too
     }
-    return 0 == bits;                     // remained bits except lowest 1
+    return 0 == bits;  // remained bits except lowest 1
   }
   // unused:        bool nonZero() {return 0!=getBitSet();}
   bool isSet(unsigned bit) const { return 0 != (getBitSet() & (1uLL << bit)); }

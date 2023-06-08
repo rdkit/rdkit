@@ -121,9 +121,10 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
 
 def _exampleCode():
   import os
+
   from rdkit import RDConfig
   from rdkit.Chem import ChemicalFeatures
-  from rdkit.Chem.Pharm2D import SigFactory, Generate
+  from rdkit.Chem.Pharm2D import Generate, SigFactory
 
   fdefFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'Pharm2D', 'test_data', 'BaseFeatures.fdef')
   featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)

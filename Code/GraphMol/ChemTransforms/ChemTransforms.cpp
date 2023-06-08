@@ -31,6 +31,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+
 namespace RDKit {
 namespace details {
 void updateSubMolConfs(const ROMol &mol, RWMol &res,
@@ -52,6 +53,27 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
     res.addConformer(newConf, false);
   }
 }
+void copyStereoGroups(const std::map<const Atom *, Atom *> &molAtomMap,
+                      const ROMol &mol, RWMol &newMol) {
+  // Copy over any stereo groups that lie in the new molecule
+  if (!mol.getStereoGroups().empty()) {
+    std::vector<StereoGroup> newStereoGroups;
+    for (auto &stereoGroup : mol.getStereoGroups()) {
+      std::vector<Atom *> newStereoAtoms;
+      for (const auto stereoGroupAtom : stereoGroup.getAtoms()) {
+        if (auto found = molAtomMap.find(stereoGroupAtom);
+            found != molAtomMap.end()) {
+          newStereoAtoms.push_back(found->second);
+        }
+      }
+      if (!newStereoAtoms.empty()) {
+        newStereoGroups.emplace_back(stereoGroup.getGroupType(),
+                                     newStereoAtoms);
+      }
+    }
+    newMol.setStereoGroups(std::move(newStereoGroups));
+  }
+}
 }  // namespace details
 
 namespace {
@@ -62,10 +84,10 @@ struct SideChainMapping {
 
   SideChainMapping(int molIndex)
       : molIndex(molIndex), coreIndex(-1), useMatch(false) {}
+
   SideChainMapping(int molIndex, int coreIndex, bool useMatch)
       : molIndex(molIndex), coreIndex(coreIndex), useMatch(useMatch) {}
 };
-
 }  // namespace
 
 ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
@@ -488,6 +510,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   auto *newMol = new RWMol(mol);
   std::vector<Atom *> keepList;
   std::map<Atom *, int> dummyAtomMap;
+  std::map<const Atom *, Atom *> molAtomMap;
 
   // go through the matches in query order, not target molecule
   //  order
@@ -516,6 +539,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       Atom *sidechainAtom = newMol->getAtomWithIdx(mappingInfo.molIndex);
       // we're keeping the sidechain atoms:
       keepList.push_back(sidechainAtom);
+      molAtomMap[mol.getAtomWithIdx(mappingInfo.molIndex)] = sidechainAtom;
 
       // loop over our neighbors and see if any are in the match:
       std::list<unsigned int> nbrList;
@@ -700,24 +724,26 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
                                       endAtom->getIdx());
       }
     }
-
-    // make a guess at the position of the dummy atoms showing the attachment
-    // point:
-    for (auto citer = mol.beginConformers(); citer != mol.endConformers();
-         ++citer) {
-      Conformer &newConf = newMol->getConformer((*citer)->getId());
-      for (auto iter = dummyAtomMap.begin(); iter != dummyAtomMap.end();
-           ++iter) {
-        newConf.setAtomPos(iter->first->getIdx(),
-                           (*citer)->getAtomPos(iter->second));
-      }
-    }
-
-    // clear computed props and do basic updates on
-    // the resulting molecule, but allow unhappiness:
-    newMol->clearComputedProps(true);
-    newMol->updatePropertyCache(false);
   }
+
+  // make a guess at the position of the dummy atoms showing the attachment
+  // point:
+  for (auto citer = mol.beginConformers(); citer != mol.endConformers();
+       ++citer) {
+    Conformer &newConf = newMol->getConformer((*citer)->getId());
+    for (auto iter = dummyAtomMap.begin(); iter != dummyAtomMap.end(); ++iter) {
+      newConf.setAtomPos(iter->first->getIdx(),
+                         (*citer)->getAtomPos(iter->second));
+    }
+  }
+
+  // copy over stereo groups
+  details::copyStereoGroups(molAtomMap, mol, *newMol);
+
+  // clear computed props and do basic updates on
+  // the resulting molecule, but allow unhappiness:
+  newMol->clearComputedProps(true);
+  newMol->updatePropertyCache(false);
 
   return static_cast<ROMol *>(newMol);
 }
@@ -971,6 +997,7 @@ void parseQueryDefFile(std::istream *inStream,
     queryDefs[qname] = msptr;
   }
 }
+
 void parseQueryDefFile(const std::string &filename,
                        std::map<std::string, ROMOL_SPTR> &queryDefs,
                        bool standardize, const std::string &delimiter,
@@ -985,6 +1012,7 @@ void parseQueryDefFile(const std::string &filename,
   parseQueryDefFile(&inStream, queryDefs, standardize, delimiter, comment,
                     nameColumn, smartsColumn);
 }
+
 void parseQueryDefText(const std::string &queryDefText,
                        std::map<std::string, ROMOL_SPTR> &queryDefs,
                        bool standardize, const std::string &delimiter,

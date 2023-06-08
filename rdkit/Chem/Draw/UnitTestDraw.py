@@ -15,10 +15,7 @@ import tempfile
 import unittest
 
 from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import Draw
-from rdkit.Chem import rdDepictor
-from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import AllChem, Draw, rdDepictor, rdMolDescriptors
 
 try:
   from rdkit.Chem.Draw import IPythonConsole
@@ -447,10 +444,10 @@ class TestCase(unittest.TestCase):
     patt = re.compile(re_str)
     self.assertEqual(len(patt.findall(svg1)), 2)
     self.assertEqual(len(patt.findall(svg2)), 0)
-    
+
     pathlib.Path('testGithub_3762_1.svg').unlink()
     pathlib.Path('testGithub_3762_2.svg').unlink()
-    
+
   def testGithub5863(self):
     smiles = "C[C@]12C[C@H](O)[C@H]3[C@@H](CCC4=CC(=O)C=C[C@@]43C)[C@@H]1CC[C@]2(O)C(=O)CO"
     mol = Chem.MolFromSmiles(smiles)

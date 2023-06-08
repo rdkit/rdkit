@@ -3,14 +3,13 @@
 #
 """ unit tests for the ID3 implementation """
 
-
 import io
+import pickle
 import unittest
 
 from rdkit import RDConfig
 from rdkit.ML.Data import MLData
 from rdkit.ML.DecTree import ID3
-import pickle
 
 
 class ID3TestCase(unittest.TestCase):
@@ -63,25 +62,19 @@ class ID3TestCase(unittest.TestCase):
   def testClassify(self):
     # " testing basic tree classification "
     self._setupBasicTree()
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[0]), self.examples[0][-1],
-      'BasicExample 0 misclassified')
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[1]), self.examples[1][-1],
-      'BasicExample 1 misclassified')
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[6]), self.examples[6][-1],
-      'BasicExample 6 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[0]), self.examples[0][-1],
+                     'BasicExample 0 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[1]), self.examples[1][-1],
+                     'BasicExample 1 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[6]), self.examples[6][-1],
+                     'BasicExample 6 misclassified')
     self._setupMultiTree()
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[0]), self.examples[0][-1],
-      'MultiExample 0 misclassified')
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[1]), self.examples[1][-1],
-      'MultiExample 1 misclassified')
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[6]), self.examples[6][-1],
-      'MultiExample 6 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[0]), self.examples[0][-1],
+                     'MultiExample 0 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[1]), self.examples[1][-1],
+                     'MultiExample 1 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[6]), self.examples[6][-1],
+                     'MultiExample 6 misclassified')
 
   # ------------- force python in the ID3 code
   def _setupPyBasicTree(self):
@@ -136,25 +129,19 @@ class ID3TestCase(unittest.TestCase):
   def testPyClassify(self):
     # " testing tree classification (python entropy code) "
     self._setupPyBasicTree()
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[0]), self.examples[0][-1],
-      'BasicExample 0 misclassified')
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[1]), self.examples[1][-1],
-      'BasicExample 1 misclassified')
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[6]), self.examples[6][-1],
-      'BasicExample 6 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[0]), self.examples[0][-1],
+                     'BasicExample 0 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[1]), self.examples[1][-1],
+                     'BasicExample 1 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[6]), self.examples[6][-1],
+                     'BasicExample 6 misclassified')
     self._setupMultiTree()
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[0]), self.examples[0][-1],
-      'MultiExample 0 misclassified')
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[1]), self.examples[1][-1],
-      'MultiExample 1 misclassified')
-    self.assertEqual(
-      self.t1.ClassifyExample(self.examples[6]), self.examples[6][-1],
-      'MultiExample 6 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[0]), self.examples[0][-1],
+                     'MultiExample 0 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[1]), self.examples[1][-1],
+                     'MultiExample 1 misclassified')
+    self.assertEqual(self.t1.ClassifyExample(self.examples[6]), self.examples[6][-1],
+                     'MultiExample 6 misclassified')
 
 
 if __name__ == '__main__':  # pragma: nocover

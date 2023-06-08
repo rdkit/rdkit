@@ -9,10 +9,10 @@ files don't have that section and for now this program can't handle them without
 by hand.
 """
 
-
-from BeautifulSoup import *
 import os
 import re
+
+from BeautifulSoup import *
 
 
 def list_class_files(dir):
@@ -306,8 +306,8 @@ Notes:
 
 '''
 _renote = re.compile(r'^\w*(Notes?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
-_reparam = re.compile(r'^\w*(Param(?:eter)?s?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I |
-                                                                                  re.DOTALL))
+_reparam = re.compile(r'^\w*(Param(?:eter)?s?[:]?)(?:.*?$)(.*?)((^\w)|\Z)',
+                      flags=(re.M | re.I | re.DOTALL))
 _rereturn = re.compile(r'^\w*(Returns[:])(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 _rereturn2 = re.compile(r'^\w*(Returns)\s+(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 _reusage = re.compile(r'^\w*(Usage[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))

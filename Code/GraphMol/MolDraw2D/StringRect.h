@@ -28,9 +28,9 @@ struct StringRect {
   double y_shift_;  // shift the whole thing in y by this. For multi-line text.
   double width_, height_;  // of the glyph itself, not the character cell
   double rect_corr_;  // because if we move a char one way, we need to move the
-                           // rectangle the other.
+                      // rectangle the other.
   int clash_score_;   // rough measure of how badly it clashed with other things
-                           // lower is better, 0 is no clash.
+                      // lower is better, 0 is no clash.
 
   StringRect()
       : trans_(0.0, 0.0),

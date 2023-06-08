@@ -2,9 +2,9 @@ steps:
 - bash: |
     sudo apt-get update
     sudo apt-get remove postgresql-14 postgresql-client-14
-    sudo apt-get remove postgresql postgresql-common postgresql-client-common
+    sudo apt-get remove postgresql postgresql-common postgresql-client-common libpq5
     sudo apt purge postgresql-14 postgresql-client-14
-    sudo apt purge postgresql postgresql-common postgresql-client-common
+    sudo apt purge postgresql postgresql-common postgresql-client-common libpq5
     sudo apt-get install -y libboost-all-dev postgresql-common postgresql-12 postgresql-server-dev-12
     echo "add postgres user"
     sudo -u postgres createuser -s `whoami`

@@ -101,14 +101,22 @@ RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSBondTypes(
     std::vector<FragmenterBondType> &defs);
 }  // namespace MolFragmenter
 
-// n.b. AtomProperty must resolve to an unsigned integer value on an atom property
-enum class MolzipLabel { AtomMapNumber, Isotope, FragmentOnBonds, AtomType, AtomProperty };
+// n.b. AtomProperty must resolve to an unsigned integer value on an atom
+// property
+enum class MolzipLabel {
+  AtomMapNumber,
+  Isotope,
+  FragmentOnBonds,
+  AtomType,
+  AtomProperty
+};
 
 struct RDKIT_CHEMTRANSFORMS_EXPORT MolzipParams {
   MolzipLabel label = MolzipLabel::AtomMapNumber;
   std::vector<std::string> atomSymbols;
   std::string atomProperty;
-  bool enforceValenceRules=true;
+  bool enforceValenceRules = true;
+  bool generateCoordinates = false;
 };
 
 RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
@@ -118,5 +126,21 @@ RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
 RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
     const ROMol &a, const MolzipParams &params = MolzipParams());
 
+//! \brief Creates a molecule from an R group decomposition
+/*!
+ *
+ * @param decomposition - A list of molecules that comprises an R group
+ * decomposition.  The core must be the first molecule in the list. If
+ * generateCoordinates is set in the parameters then aligned depiction
+ * coordinates will be set on the returned molecule and the input decomposition
+ *
+ * optional:
+ * @param params - molzip parameters
+ *
+ * @return the zipped molecule
+ */
+RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
+    std::vector<ROMOL_SPTR> &decomposition,
+    const MolzipParams &params = MolzipParams());
 }  // namespace RDKit
 #endif

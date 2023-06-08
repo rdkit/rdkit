@@ -24,7 +24,7 @@
 #include <map>
 #include <list>
 
-//#define VERBOSE_CANON 1
+// #define VERBOSE_CANON 1
 
 namespace RDKit {
 
@@ -366,6 +366,10 @@ std::string FragmentSmilesConstruct(
   }
   std::list<unsigned int> ringClosuresToErase;
 
+  if (params.canonical && params.doIsomericSmiles) {
+    Canon::canonicalizeEnhancedStereo(mol, &ranks);
+  }
+
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
                               bondsInPlay, bondSymbols, params.doIsomericSmiles,
                               params.doRandom);
@@ -627,6 +631,8 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
     for (auto &i : allAtomOrdering) {
       flattenedAtomOrdering.insert(flattenedAtomOrdering.end(), i.begin(),
                                    i.end());
+    }
+    for (auto &i : allBondOrdering) {
       flattenedBondOrdering.insert(flattenedBondOrdering.end(), i.begin(),
                                    i.end());
     }
@@ -648,6 +654,11 @@ std::string MolToCXSmiles(const ROMol &mol, const SmilesWriteParams &params,
                           std::uint32_t flags) {
   auto res = MolToSmiles(mol, params);
   if (!res.empty()) {
+    if (!params.doIsomericSmiles) {
+      flags &= ~(SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO |
+                 SmilesWrite::CXSmilesFields::CX_BOND_CFG);
+    }
+
     auto cxext = SmilesWrite::getCXExtensions(mol, flags);
     if (!cxext.empty()) {
       res += " " + cxext;

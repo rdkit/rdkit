@@ -2,19 +2,19 @@
 #
 #  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -54,108 +54,116 @@ _description = """
 """
 import argparse
 
-from rdkit import RDConfig
-from rdkit import Chem
-from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.Dbase import DbModule
-from rdkit.RDLogger import logger
+from rdkit import Chem, RDConfig
 from rdkit.Chem.MolDb import Loader
+from rdkit.Dbase import DbModule
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.RDLogger import logger
 
 logger = logger()
-import sys, os
 import io
+import os
 import pickle
-from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory, LayeredOptions
+import sys
+
 from rdkit.Chem.MolDb import FingerprintUtils
+from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory, LayeredOptions
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----
 
+
 def initParser():
-  """ Initialize the command line parser """ 
+  """ Initialize the command line parser """
   parser = argparse.ArgumentParser(usage='CreateDB [optional arguments] <filename>',
                                    description=_description,
                                    formatter_class=argparse.RawDescriptionHelpFormatter)
 
   parser.add_argument('filename', nargs='?', help='File containg molecules to load into database')
   parser.add_argument('--version', action='version', version='%(prog)s ' + _version)
-  
+
   parser.add_argument('--outDir', '--dbDir', default='', help='name of the output directory')
   parser.add_argument('--molDbName', default='Compounds.sqlt', help='name of the molecule database')
   parser.add_argument('--molIdName', default='compound_id', help='name of the database key column')
   parser.add_argument('--regName', default='molecules', help='name of the molecular registry table')
-  parser.add_argument('--pairDbName', default='AtomPairs.sqlt', help='name of the atom pairs database')
+  parser.add_argument('--pairDbName', default='AtomPairs.sqlt',
+                      help='name of the atom pairs database')
   parser.add_argument('--pairTableName', default='atompairs', help='name of the atom pairs table')
   parser.add_argument('--fpDbName', default='Fingerprints.sqlt',
-                    help='name of the 2D fingerprints database')
+                      help='name of the 2D fingerprints database')
   parser.add_argument('--fpTableName', default='rdkitfps', help='name of the 2D fingerprints table')
   parser.add_argument('--layeredTableName', default='layeredfps',
-                    help='name of the layered fingerprints table')
+                      help='name of the layered fingerprints table')
   parser.add_argument('--descrDbName', default='Descriptors.sqlt',
-                    help='name of the descriptor database')
-  parser.add_argument('--descrTableName', default='descriptors_v1', help='name of the descriptor table')
-  parser.add_argument('--descriptorCalcFilename', default=os.path.join(RDConfig.RDBaseDir, 'Projects',
-                                                                     'DbCLI', 'moe_like.dsc'),
-                    help='name of the file containing the descriptor calculator')
-  parser.add_argument('--errFilename', default='loadErrors.txt',
-                    help='name of the file to contain information about molecules that fail to load')
-  parser.add_argument('--noPairs', default=True, dest='doPairs', action='store_false',
-                    help='skip calculating atom pairs')
-  parser.add_argument('--noFingerprints', default=True, dest='doFingerprints', action='store_false',
-                    help='skip calculating 2D fingerprints')
-  parser.add_argument('--noLayeredFps', default=True, dest='doLayered', action='store_false',
-                    help='skip calculating layered fingerprints')
-  parser.add_argument('--noDescriptors', default=True, dest='doDescriptors', action='store_false',
-                    help='skip calculating descriptors')
-  parser.add_argument('--noProps', default=False, dest='skipProps', action='store_true',
-                    help="don't include molecular properties in the database")
-  parser.add_argument('--noSmiles', default=False, dest='skipSmiles', action='store_true',
-                    help="don't include SMILES in the database (can make loading somewhat faster)")
-  parser.add_argument('--maxRowsCached', default=-1,
-                    help="maximum number of rows to cache before doing a database commit")
-  
-  parser.add_argument('--silent', default=False, action='store_true',
-                    help='do not provide status messages')
-  
-  parser.add_argument('--molFormat', default='', choices=('smiles', 'sdf', ''),
-                    help='specify the format of the input file')
+                      help='name of the descriptor database')
+  parser.add_argument('--descrTableName', default='descriptors_v1',
+                      help='name of the descriptor table')
+  parser.add_argument('--descriptorCalcFilename',
+                      default=os.path.join(RDConfig.RDBaseDir, 'Projects', 'DbCLI', 'moe_like.dsc'),
+                      help='name of the file containing the descriptor calculator')
   parser.add_argument(
-    '--nameProp', default='_Name',
-    help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
+    '--errFilename', default='loadErrors.txt',
+    help='name of the file to contain information about molecules that fail to load')
+  parser.add_argument('--noPairs', default=True, dest='doPairs', action='store_false',
+                      help='skip calculating atom pairs')
+  parser.add_argument('--noFingerprints', default=True, dest='doFingerprints', action='store_false',
+                      help='skip calculating 2D fingerprints')
+  parser.add_argument('--noLayeredFps', default=True, dest='doLayered', action='store_false',
+                      help='skip calculating layered fingerprints')
+  parser.add_argument('--noDescriptors', default=True, dest='doDescriptors', action='store_false',
+                      help='skip calculating descriptors')
+  parser.add_argument('--noProps', default=False, dest='skipProps', action='store_true',
+                      help="don't include molecular properties in the database")
+  parser.add_argument(
+    '--noSmiles', default=False, dest='skipSmiles', action='store_true',
+    help="don't include SMILES in the database (can make loading somewhat faster)")
+  parser.add_argument('--maxRowsCached', default=-1,
+                      help="maximum number of rows to cache before doing a database commit")
+
+  parser.add_argument('--silent', default=False, action='store_true',
+                      help='do not provide status messages')
+
+  parser.add_argument('--molFormat', default='', choices=('smiles', 'sdf', ''),
+                      help='specify the format of the input file')
+  parser.add_argument(
+    '--nameProp', default='_Name', help=
+    'specify the SD property to be used for the molecule names. Default is to use the mol block name'
+  )
   parser.add_argument(
     '--missingPropertyVal', default='N/A',
     help='value to insert in the database if a property value is missing. Default is %(default)s.')
   parser.add_argument('--addProps', default=False, action='store_true',
-                    help='add computed properties to the output')
+                      help='add computed properties to the output')
   parser.add_argument('--noExtras', default=False, action='store_true',
-                    help='skip all non-molecule databases')
-  parser.add_argument('--skipLoad', '--skipMols', action="store_false", dest='loadMols', default=True,
-                    help='skip the molecule loading (assumes mol db already exists)')
+                      help='skip all non-molecule databases')
+  parser.add_argument('--skipLoad', '--skipMols', action="store_false", dest='loadMols',
+                      default=True,
+                      help='skip the molecule loading (assumes mol db already exists)')
   parser.add_argument('--updateDb', '--update', default=False, action='store_true',
-                    help='add to an existing database')
+                      help='add to an existing database')
   parser.add_argument('--doPharm2D', default=False, action='store_true',
-                    help='skip calculating Pharm2D fingerprints')
+                      help='skip calculating Pharm2D fingerprints')
   parser.add_argument('--pharm2DTableName', default='pharm2dfps',
-                    help='name of the Pharm2D fingerprints table')
-  parser.add_argument('--fdefFile', '--fdef',
-                    default=os.path.join(RDConfig.RDDataDir, 'Novartis1.fdef'),
-                    help='provide the name of the fdef file to use for 2d pharmacophores')
+                      help='name of the Pharm2D fingerprints table')
+  parser.add_argument('--fdefFile', '--fdef', default=os.path.join(RDConfig.RDDataDir,
+                                                                   'Novartis1.fdef'),
+                      help='provide the name of the fdef file to use for 2d pharmacophores')
   parser.add_argument('--doGobbi2D', default=False, action='store_true',
-                    help='skip calculating Gobbi 2D fingerprints')
+                      help='skip calculating Gobbi 2D fingerprints')
   parser.add_argument('--gobbi2DTableName', default='gobbi2dfps',
-                    help='name of the Gobbi 2D fingerprints table')
-  
+                      help='name of the Gobbi 2D fingerprints table')
+
   parser.add_argument('--noMorganFps', '--noCircularFps', default=True, dest='doMorganFps',
-                    action='store_false', help='skip calculating Morgan (circular) fingerprints')
+                      action='store_false', help='skip calculating Morgan (circular) fingerprints')
   parser.add_argument('--morganFpTableName', default='morganfps',
-                    help='name of the Morgan fingerprints table')
-  
+                      help='name of the Morgan fingerprints table')
+
   parser.add_argument('--delimiter', '--delim', default=' ', help='the delimiter in the input file')
   parser.add_argument('--titleLine', default=False, action='store_true',
-                    help='the input file contains a title line')
+                      help='the input file contains a title line')
   parser.add_argument('--smilesColumn', '--smilesCol', default=0, type=int,
-                    help='the column index with smiles')
+                      help='the column index with smiles')
   parser.add_argument('--nameColumn', '--nameCol', default=1, type=int,
-                    help='the column index with mol names')
+                      help='the column index with mol names')
   return parser
 
 
@@ -202,9 +210,10 @@ def CreateDb(options, dataFilename='', supplier=None):
       if options.molFormat == 'smiles':
         if options.delimiter == '\\t':
           options.delimiter = '\t'
-        supplier = Chem.SmilesMolSupplier(
-          dataFilename, titleLine=options.titleLine, delimiter=options.delimiter,
-          smilesColumn=options.smilesColumn, nameColumn=options.nameColumn)
+        supplier = Chem.SmilesMolSupplier(dataFilename, titleLine=options.titleLine,
+                                          delimiter=options.delimiter,
+                                          smilesColumn=options.smilesColumn,
+                                          nameColumn=options.nameColumn)
       else:
         supplier = Chem.SDMolSupplier(dataFilename)
     if not options.silent:
@@ -212,10 +221,9 @@ def CreateDb(options, dataFilename='', supplier=None):
     Loader.LoadDb(supplier, os.path.join(options.outDir, options.molDbName), errorsTo=errFile,
                   regName=options.regName, nameCol=options.molIdName, skipProps=options.skipProps,
                   defaultVal=options.missingPropertyVal, addComputedProps=options.addProps,
-                  uniqNames=True, skipSmiles=options.skipSmiles,
-                  maxRowsCached=int(options.maxRowsCached), silent=options.silent,
-                  nameProp=options.nameProp, lazySupplier=int(options.maxRowsCached) > 0,
-                  startAnew=not options.updateDb)
+                  uniqNames=True, skipSmiles=options.skipSmiles, maxRowsCached=int(
+                    options.maxRowsCached), silent=options.silent, nameProp=options.nameProp,
+                  lazySupplier=int(options.maxRowsCached) > 0, startAnew=not options.updateDb)
 
   if options.doPairs:
     pairConn = DbConnect(os.path.join(options.outDir, options.pairDbName))
@@ -256,8 +264,8 @@ def CreateDb(options, dataFilename='', supplier=None):
       layeredQs = ','.join('?' * LayeredOptions.nWords)
       colDefs = ','.join(['Col_%d integer' % (x + 1) for x in range(LayeredOptions.nWords)])
       fpCurs.execute(
-        'create table %s (guid integer not null primary key,%s varchar not null unique,%s)' % (
-          options.layeredTableName, options.molIdName, colDefs))
+        'create table %s (guid integer not null primary key,%s varchar not null unique,%s)' %
+        (options.layeredTableName, options.molIdName, colDefs))
 
     if options.doPharm2D:
       fpCurs.execute(

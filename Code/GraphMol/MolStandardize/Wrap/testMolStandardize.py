@@ -2,17 +2,16 @@
 # Copyright (C) 2018 Susan H. Leung
 #         All Rights Reserved
 #
-from rdkit import RDConfig
+import math
 import os
 import sys
-import math
-from datetime import datetime, timedelta
 import unittest
-from rdkit import DataStructs
-from rdkit import Chem
-from rdkit.Geometry import rdGeometry as geom
-from rdkit.Chem.rdchem import Atom
+from datetime import datetime, timedelta
+
+from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Chem.MolStandardize import rdMolStandardize
+from rdkit.Chem.rdchem import Atom
+from rdkit.Geometry import rdGeometry as geom
 
 
 class TestCase(unittest.TestCase):
@@ -84,6 +83,38 @@ class TestCase(unittest.TestCase):
     mol2 = Chem.MolFromSmiles("CCC(=O)O[Na]")
     nm2 = md.Disconnect(mol2)
     self.assertEqual(Chem.MolToSmiles(nm2), "CCC(=O)O[Na]")
+
+    # Split with organometallics disconnector, two ways.
+    rufile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
+                          'ruthenium.mol')
+    rumol = Chem.MolFromMolFile(rufile)
+    disrumol = rdMolStandardize.DisconnectOrganometallics(rumol)
+    self.assertEqual(Chem.MolToSmiles(disrumol),
+                     "[Cl-].[Cl-].[Cl-].[Cl-].[Ru+2].[Ru+2].c1ccccc1.c1ccccc1")
+
+    opts = rdMolStandardize.MetalDisconnectorOptions()
+    opts.splitGrignards = True
+    opts.splitAromaticC = True
+    opts.adjustCharges = False
+    opts.removeHapticDummies = True
+    def_opts = rdMolStandardize.MetalDisconnectorOptions()
+    self.assertNotEqual(def_opts.splitGrignards, opts.splitGrignards)
+    self.assertNotEqual(def_opts.splitAromaticC, opts.splitAromaticC)
+    self.assertNotEqual(def_opts.adjustCharges, opts.adjustCharges)
+    self.assertNotEqual(def_opts.removeHapticDummies, opts.removeHapticDummies)
+
+    md = rdMolStandardize.MetalDisconnector(opts)
+
+    grigfile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
+                            'grignard_2.mol')
+    grigmol = Chem.MolFromMolFile(grigfile)
+    disgrigmol = md.Disconnect(grigmol)
+    self.assertEqual(Chem.MolToSmiles(disgrigmol), "[Cl-].[Mg+2].[c-]1ccccc1")
+
+    # and passing in the options explicitly
+    disrumol = rdMolStandardize.DisconnectOrganometallics(rumol, opts)
+    self.assertEqual(Chem.MolToSmiles(disrumol),
+                     "[Cl-].[Cl-].[Cl-].[Cl-].[Ru+2].[Ru+2].c1ccccc1.c1ccccc1")
 
   def test6Charge(self):
     mol = Chem.MolFromSmiles("C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O")

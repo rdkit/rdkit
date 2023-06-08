@@ -138,6 +138,7 @@ struct CXXAtomIterator {
       ++pos;
       return *this;
     }
+    bool operator==(const CXXAtomIter &it) const { return pos == it.pos; }
     bool operator!=(const CXXAtomIter &it) const { return pos != it.pos; }
   };
 
@@ -180,6 +181,7 @@ struct CXXBondIterator {
       ++pos;
       return *this;
     }
+    bool operator==(const CXXBondIter &it) const { return pos == it.pos; }
     bool operator!=(const CXXBondIter &it) const { return pos != it.pos; }
   };
 

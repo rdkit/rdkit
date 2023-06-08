@@ -524,6 +524,12 @@ void DrawShapeDashedWedge::buildLines() {
   double dashSep = 2.5 + lineWidth_;
   double centralLen = (at1Cds_ - midend).length();
   unsigned int nDashes = rdcast<unsigned int>(std::round(centralLen / dashSep));
+  // There should be at least 3 dashes so we can see which way the wedge
+  // is going (Github6041b).
+  unsigned int numDashesNeeded = oneLessDash_ ? 4 : 3;
+  if (nDashes < numDashesNeeded) {
+    nDashes = numDashesNeeded;
+  }
   if (!nDashes) {
     points_.push_back(end1Cds_);
     points_.push_back(end2Cds_);
@@ -668,6 +674,10 @@ DrawShapeArc::DrawShapeArc(const std::vector<Point2D> points, double ang1,
 
 // ****************************************************************************
 void DrawShapeArc::myDraw(MolDraw2D &drawer) const {
+  if (fill_) {
+    drawer.setLineWidth(1);
+    drawer.drawOptions().scaleBondWidth = false;
+  }
   double start_ang = ang1_ > ang2_ ? ang1_ - 360.0 : ang1_;
   drawer.drawArc(points_[0], points_[1].x, points_[1].y, start_ang, ang2_,
                  true);
