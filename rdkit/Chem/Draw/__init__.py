@@ -577,22 +577,12 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
   """Converts a nested data structure (where each data substructure represents a row in mol grid image)
   to a linear one, padding rows as needed so all rows are the length of the longest row
   """
-  # Check that each element in nested iterable is a iterable
-  def CheckElementsAreLists(nestedList, nestedListName=""):
-      for element in nestedList:
-          if not all([hasattr(element, '__iter__'), hasattr(element, '__len__')]):
-              err = f"Each element in nested iterable {nestedListName} must be an iterable."
-              raise ValueError(err)
-
-  CheckElementsAreLists(molsMatrix, "molsMatrix")
-
   # Check that other matrices (if provided) are same length,
   #   and each element (sub-iterable) is the same length, as molsMatrix
 
   nMolsRows = len(molsMatrix)
 
   if legendsMatrix is not None:
-    CheckElementsAreLists(legendsMatrix, "legendsMatrix")
     nLegendsRows = len(legendsMatrix)
     if nLegendsRows != nMolsRows:
         err = f"If legendsMatrix is provided it must be the same length (have the same number "
@@ -607,7 +597,6 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
             raise ValueError(err)
 
   if highlightAtomListsMatrix is not None:
-    CheckElementsAreLists(highlightAtomListsMatrix, "highlightAtomListsMatrix")
     nHighlightAtomListsRows = len(highlightAtomListsMatrix)
     if nHighlightAtomListsRows != nMolsRows:
         err = f"If highlightAtomListsMatrix is provided it must be the same length (have the same number "
@@ -622,7 +611,6 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
             raise ValueError(err)
 
   if highlightBondListsMatrix is not None:
-    CheckElementsAreLists(highlightBondListsMatrix, "highlightBondListsMatrix")
     nHighlightBondListsRows = len(highlightBondListsMatrix)
     if nHighlightBondListsRows != nMolsRows:
         err = f"If highlightBondListsMatrix is provided it must be the same length (have the same number "
