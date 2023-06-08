@@ -15,7 +15,10 @@ import tempfile
 import unittest
 
 from rdkit import Chem
-from rdkit.Chem import AllChem, Draw, rdDepictor, rdMolDescriptors
+from rdkit.Chem import AllChem
+from rdkit.Chem import Draw
+from rdkit.Chem import rdDepictor
+from rdkit.Chem import rdMolDescriptors
 
 try:
   from rdkit.Chem.Draw import IPythonConsole
@@ -66,14 +69,14 @@ class TestCase(unittest.TestCase):
             
     self.legendsMatrix = [[str(count) + " unit(s)" for count in row] for row in repeats]
 
-    def ith_item_list(nunits, items_per_unit, i=0):
-        return [((n * items_per_unit) + i) for n in range(nunits)]
+    def ithItemList(nunits, itemsPerUnit, i=0):
+        return [((n * itemsPerUnit) + i) for n in range(nunits)]
 
-    self.highlightAtomListsMatrix = [[ith_item_list(count, natoms, 0) for count in row] for row in repeats]
+    self.highlightAtomListsMatrix = [[ithItemList(count, natoms, 0) for count in row] for row in repeats]
 
     # Another bond is created when molecule is oligomerized, so to keep the bond type consistent,
     #   make items per unit one more than the number of bonds
-    self.highlightBondListsMatrix = [[ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats]
+    self.highlightBondListsMatrix = [[ithItemList(count, nbonds + 1, 1) for count in row] for row in repeats]
 
     # Parametrize tests: In addition to supplying molsMatrix, supply 0-3 other matrices
     # col labels: legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix      
@@ -358,8 +361,8 @@ class TestCase(unittest.TestCase):
   def testMolsMatrixToGridImage(self):
     subImgSize = (200, 200)
 
-    kwargs_value = Draw.rdMolDraw2D.MolDrawOptions()
-    kwargs_value.addAtomIndices = True
+    kwargsValue = Draw.rdMolDraw2D.MolDrawOptions()
+    kwargsValue.addAtomIndices = True
 
     # Tests are that running Draw.MolsMatrixToGridImage doesn't give an error
     # with any combination of parameters supplied (or not)
@@ -368,9 +371,9 @@ class TestCase(unittest.TestCase):
       for useSVG in (True, False):
         for returnPNG in (True, False):
           dwgSubImgSizeNokwargs = Draw.MolsMatrixToGridImage(self.molsMatrix, subImgSize, legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG)
-          dwgSubImgSizeKwargs = Draw.MolsMatrixToGridImage(self.molsMatrix, subImgSize, legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG, drawOptions=kwargs_value)
+          dwgSubImgSizeKwargs = Draw.MolsMatrixToGridImage(self.molsMatrix, subImgSize, legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG, drawOptions=kwargsValue)
           dwgNosubImgSizeNokwargs = Draw.MolsMatrixToGridImage(self.molsMatrix, legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG)
-          dwgNosubImgSizeKwargs = Draw.MolsMatrixToGridImage(self.molsMatrix, legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG, drawOptions=kwargs_value)
+          dwgNosubImgSizeKwargs = Draw.MolsMatrixToGridImage(self.molsMatrix, legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG, drawOptions=kwargsValue)
     
   def testDrawMorgan(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
@@ -444,10 +447,10 @@ class TestCase(unittest.TestCase):
     patt = re.compile(re_str)
     self.assertEqual(len(patt.findall(svg1)), 2)
     self.assertEqual(len(patt.findall(svg2)), 0)
-
+    
     pathlib.Path('testGithub_3762_1.svg').unlink()
     pathlib.Path('testGithub_3762_2.svg').unlink()
-
+    
   def testGithub5863(self):
     smiles = "C[C@]12C[C@H](O)[C@H]3[C@@H](CCC4=CC(=O)C=C[C@@]43C)[C@@H]1CC[C@]2(O)C(=O)CO"
     mol = Chem.MolFromSmiles(smiles)
