@@ -749,11 +749,11 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix = Non
         dopts = rdMolDraw2D.MolDrawOptions()
         dopts.addAtomIndices = True
 
-        imgFile = MolsMatrixToGridImage(molsMatrix=molsMatrix, subImgSize=(300, 400), 
+        img_binary = MolsMatrixToGridImage(molsMatrix=molsMatrix, subImgSize=(300, 400), 
         legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, 
         highlightBondListsMatrix=highlightBondListsMatrix, useSVG=False, returnPNG=True, drawOptions=dopts)
-        imgFile.save("MolsMatrixToGridImageExhaustive.png")
-        # Drawing will be saved as PNG file MolsMatrixToGridImageExhaustive.png
+        print(img_binary[:20])
+        # Prints a binary string: b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x03\x84'
   """
   mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsNestedToLinear(molsMatrix,
   legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix)
