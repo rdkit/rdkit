@@ -24,6 +24,7 @@
 #include <GraphMol/MolEnumerator/MolEnumerator.h>
 
 using namespace RDKit;
+using namespace RDKit::GeneralizedSubstruct;
 
 TEST_CASE("molecule basics") {
   auto mol = "Cc1n[nH]c(F)c1"_smarts;
@@ -55,6 +56,25 @@ TEST_CASE("enumeration basics") {
       CHECK(SubstructMatch(*"COOCC"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"COOOCC"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"COOOOCC"_smiles, *xq).empty());
+    }
+  }
+}
+
+TEST_CASE("result counts") {
+  auto mol = "COC |LN:1:1.3|"_smiles;
+  REQUIRE(mol);
+  ExtendedQueryMol xqm =
+      std::make_unique<MolBundle>(MolEnumerator::enumerate(*mol));
+  SECTION("substructure matching and serialization") {
+    ExtendedQueryMol xqm2(xqm.toBinary());
+    ExtendedQueryMol xqm3(xqm.toJSON(), true);
+    SubstructMatchParameters ps;
+    ps.uniquify = false;
+    for (const auto xq : {&xqm, &xqm2, &xqm3}) {
+      CHECK(SubstructMatch(*"COCC"_smiles, *xq, ps).size() == 2);
+      CHECK(SubstructMatch(*"COOCC"_smiles, *xq, ps).size() == 2);
+      CHECK(SubstructMatch(*"COOOCC"_smiles, *xq, ps).size() == 2);
+      CHECK(SubstructMatch(*"COOOOCC"_smiles, *xq, ps).empty());
     }
   }
 }

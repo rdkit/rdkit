@@ -26,7 +26,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 namespace RDKit {
-
+namespace GeneralizedSubstruct {
 struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol
     : private boost::noncopyable {
   enum ExtendedQueryMolTypes : unsigned char {
@@ -75,6 +75,6 @@ inline bool hasSubstructMatch(
   lparams.maxMatches = 1;
   return !SubstructMatch(mol, query, lparams).empty();
 }
-
+}  // namespace GeneralizedSubstruct
 }  // namespace RDKit
 #endif
