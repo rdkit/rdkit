@@ -103,6 +103,21 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
 };
 }  // namespace detail
 
+bool propertyCompat(const RDProps *r1, const RDProps *r2,
+                    const std::vector<std::string>& properties) {
+  for (const auto &prop : properties) {
+    if (r1->hasProp(prop) && r2->hasProp(prop)) {
+      if (r1->getProp<std::string>(prop) != r2->getProp<std::string>(prop)) {
+        return false;
+      }
+    } else if (r1->hasProp(prop) || r2->hasProp(prop)) {
+      // only one has the property
+      return false;
+    }
+  }
+  return true;
+}
+
 bool atomCompat(const Atom *a1, const Atom *a2,
                 const SubstructMatchParameters &ps) {
   PRECONDITION(a1, "bad atom");
@@ -116,6 +131,10 @@ bool atomCompat(const Atom *a1, const Atom *a2,
   } else {
     res = a1->Match(a2);
   }
+  if (res) {
+    res = propertyCompat(a1, a2, ps.atomProperties);
+  }
+
   return res;
 }
 
@@ -162,6 +181,9 @@ bool bondCompat(const Bond *b1, const Bond *b2,
         !b1->getEndAtom()->Match(b2->getEndAtom())) {
       res = false;
     }
+  }
+  if (res) {
+    res = propertyCompat(b1, b2, ps.bondProperties);
   }
   // std::cerr << "\t\tbondCompat: " << b1->getIdx() << "-" << b2->getIdx() <<
   // ":"

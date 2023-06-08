@@ -132,6 +132,70 @@ TEST_CASE("substructure parameters", "[substruct]") {
       CHECK(match.size() == 2);
     }
   }
+
+  SECTION("atom properties") {
+    std::vector<matchCase> examples;
+    examples.push_back(
+        std::make_tuple(std::string("CCCCCCCCC"),std::string("CCC"), 7));
+    examples.push_back(
+        std::make_tuple(std::string("CCCCCCCCC |atomProp:0.test_prop.1|"),
+                        std::string("CCC |atomProp:0.test_prop.1|"), 1));
+    examples.push_back(
+        std::make_tuple(std::string("CCCCCCCCC |atomProp:0.test_prop.1|"),
+                        std::string("CCC"), 6));
+    examples.push_back(
+        std::make_tuple(std::string("CCCCCCCCC"),
+                        std::string("CCC |atomProp:0.test_prop.1|"), 0));
+    examples.push_back(
+        std::make_tuple(std::string("CCCCCCCCC |atomProp:0.test_prop.1|"),
+                        std::string("CCC |atomProp:0.test_prop.2|"), 0));
+    SubstructMatchParameters ps;
+    ps.atomProperties = {"test_prop"};
+    for (const auto &example : examples) {
+      std::unique_ptr<RWMol> m1(SmilesToMol(std::get<0>(example)));
+      REQUIRE(m1);
+      std::unique_ptr<RWMol> m2(SmilesToMol(std::get<1>(example)));
+      REQUIRE(m2);
+      CHECK(SubstructMatch(*m1, *m2, ps).size() == std::get<2>(example));
+    }
+  }
+
+  SECTION("bond properties") {
+    std::unique_ptr<RWMol> m(SmilesToMol("CCCCCCCCC"));
+    std::unique_ptr<RWMol> m_with_prop(SmilesToMol("CCCCCCCCC"));
+    m_with_prop->getBondWithIdx(0)->setProp("test_prop", "1");
+
+    std::unique_ptr<RWMol> q(SmilesToMol("CCC"));
+    std::unique_ptr<RWMol> q_with_prop(SmilesToMol("CCC"));
+    std::unique_ptr<RWMol> q_with_prop2(SmilesToMol("CCC"));
+    q_with_prop->getBondWithIdx(0)->setProp("test_prop", "1");
+    q_with_prop2->getBondWithIdx(0)->setProp("test_prop", "2");
+
+    SubstructMatchParameters ps;
+    ps.bondProperties = {"test_prop"};
+    CHECK(SubstructMatch(*m, *q, ps).size() == 7);
+    CHECK(SubstructMatch(*m_with_prop, *q_with_prop, ps).size() == 1);
+    CHECK(SubstructMatch(*m_with_prop, *q_with_prop2, ps).size() == 0);
+    CHECK(SubstructMatch(*m_with_prop, *q, ps).size() == 6);
+    CHECK(SubstructMatch(*m, *q_with_prop, ps).size() == 0);
+
+    // now check with bond and atom properties
+    m_with_prop->getAtomWithIdx(0)->setProp("test_prop", "1");
+    q_with_prop->getAtomWithIdx(0)->setProp("test_prop", "1");
+
+    ps.atomProperties = {"test_prop"};
+    CHECK(SubstructMatch(*m_with_prop, *q_with_prop, ps).size() == 1);
+    CHECK(SubstructMatch(*m_with_prop, *q_with_prop2, ps).size() == 0);
+    CHECK(SubstructMatch(*m_with_prop, *q, ps).size() == 6);
+    CHECK(SubstructMatch(*m, *q_with_prop, ps).size() == 0);
+
+    // Currently, a property set as an int will match to a property
+    // set as a different type if they cast to the same value
+    // TODO: Ensure property types are the same in substructure matching
+    q_with_prop->getBondWithIdx(0)->clearProp("test_prop");
+    q_with_prop->getBondWithIdx(0)->setProp<int>("test_prop", 1);
+    CHECK(SubstructMatch(*m_with_prop, *q_with_prop, ps).size() == 1);
+  }
 }
 
 namespace {
