@@ -571,6 +571,18 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
 
   return res
 
+def _padList(inputList, lengthShouldBe, padWith=""):
+  length = len(inputList)
+  paddingCount = lengthShouldBe - length
+  paddedList = inputList + [padWith] * paddingCount
+  return paddedList
+
+def _padMatrix(inputMatrix, rowLength, padWith=""):
+  paddedMatrix = [_padList(row, rowLength, padWith) for row in inputMatrix]
+  return paddedMatrix
+
+def _flattenTwoDList(twoDList):
+  return [item for sublist in twoDList for item in sublist]
 
 def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatrix = None,
                         highlightBondListsMatrix = None):
@@ -626,40 +638,27 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
 
   molsPerRow = max(len(row) for row in molsMatrix)
 
-  def padList(inputList, lengthShouldBe, padWith=""):
-      length = len(inputList)
-      paddingCount = lengthShouldBe - length
-      paddedList = inputList + [padWith] * paddingCount
-      return paddedList
-
-  def padMatrix(inputMatrix, rowLength, padWith=""):
-      paddedMatrix = [padList(row, rowLength, padWith) for row in inputMatrix]
-      return paddedMatrix
-
-  def flattenTwoDList(twoDList):
-      return [item for sublist in twoDList for item in sublist]
-
   # Pad matrices so they're rectangular (same length for each sublist),
   #   then convert to 1D lists
   # Pad using None for molecule for empty cells
-  molsMatrixPadded = padMatrix(molsMatrix, molsPerRow, None)
-  mols = flattenTwoDList(molsMatrixPadded)
+  molsMatrixPadded = _padMatrix(molsMatrix, molsPerRow, None)
+  mols = _flattenTwoDList(molsMatrixPadded)
 
   if legendsMatrix is not None:
-      legendsMatrixPadded = padMatrix(legendsMatrix, molsPerRow, "")
-      legends = flattenTwoDList(legendsMatrixPadded)
+      legendsMatrixPadded = _padMatrix(legendsMatrix, molsPerRow, "")
+      legends = _flattenTwoDList(legendsMatrixPadded)
   else:
     legends = None
 
   if highlightAtomListsMatrix is not None:
-      highlightAtomListsPadded = padMatrix(highlightAtomListsMatrix, molsPerRow, [])
-      highlightAtomLists = flattenTwoDList(highlightAtomListsPadded)
+      highlightAtomListsPadded = _padMatrix(highlightAtomListsMatrix, molsPerRow, [])
+      highlightAtomLists = _flattenTwoDList(highlightAtomListsPadded)
   else:
     highlightAtomLists = None
 
   if highlightBondListsMatrix is not None:
-      highlightBondListsPadded = padMatrix(highlightBondListsMatrix, molsPerRow, [])
-      highlightBondLists = flattenTwoDList(highlightBondListsPadded)
+      highlightBondListsPadded = _padMatrix(highlightBondListsMatrix, molsPerRow, [])
+      highlightBondLists = _flattenTwoDList(highlightBondListsPadded)
   else:
     highlightBondLists = None
 

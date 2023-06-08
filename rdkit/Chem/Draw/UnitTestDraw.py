@@ -320,7 +320,7 @@ class TestCase(unittest.TestCase):
     highlightAtomListsNotNested = self.highlightAtomListsMatrix[0]
     highlightBondListsNotNested = self.highlightBondListsMatrix[0]
 
-    with self.assertRaises(ValueError):
+    with self.assertRaises(TypeError):
       Draw._MolsNestedToLinear(molsNotNested)
 
     with self.assertRaises(ValueError):
