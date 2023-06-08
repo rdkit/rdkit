@@ -59,7 +59,7 @@ PyObject *getSubstructsHelper(const ROMol &mol, const ExtendedQueryMol &query,
   }
 
   PyObject *res = PyTuple_New(matches.size());
-  for (int idx = 0; idx < matches.size(); idx++) {
+  for (auto idx = 0u; idx < matches.size(); idx++) {
     PyTuple_SetItem(res, idx, convertMatches(matches[idx]));
   }
   return res;
