@@ -882,31 +882,32 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       unsigned int order[4] = {0, 1, 2, 3};
       double prefactor = 1;
       if (refIdx == 3) {
-        const auto crossp =
-            bondVects[order[1]].crossProduct(bondVects[order[3]]);
-        vol = crossp.dotProduct(bondVects[order[0]]);
+        std::swap(order[2], order[3]);
+        // const auto crossp =
+        //     bondVects[order[1]].crossProduct(bondVects[order[3]]);
+        // vol = crossp.dotProduct(bondVects[order[0]]);
         prefactor *= -1;
-      } else {
-        const auto crossp1 =
-            bondVects[order[1]].crossProduct(bondVects[order[2]]);
-        vol = crossp1.dotProduct(bondVects[order[0]]);
-        const auto dotp1 = bondVects[order[1]].dotProduct(bondVects[order[2]]);
-        const auto crossp2 =
-            bondVects[order[1]].crossProduct(bondVects[order[3]]);
-        const auto dotp2 = bondVects[order[1]].dotProduct(bondVects[order[3]]);
-        auto vol2 = crossp2.dotProduct(bondVects[order[0]]);
-        // std::cerr << bondVects[0] << std::endl;
-        // std::cerr << bondVects[1] << std::endl;
-        // std::cerr << bondVects[2] << std::endl;
-        // std::cerr << bondVects[3] << std::endl;
-        // std::cerr << "------------" << std::endl;
-        // std::cerr << crossp1 << " " << dotp1 << std::endl;
-        // std::cerr << crossp2 << " " << dotp2 << std::endl;
-        // std::cerr << " !!! " << vol << " " << vol2 << std::endl;
-        if (vol * vol2 > 0 && dotp1 < dotp2) {
-          prefactor *= -1;
-        }
       }
+      const auto crossp1 =
+          bondVects[order[1]].crossProduct(bondVects[order[2]]);
+      vol = crossp1.dotProduct(bondVects[order[0]]);
+      const auto dotp1 = bondVects[order[1]].dotProduct(bondVects[order[2]]);
+      const auto crossp2 =
+          bondVects[order[1]].crossProduct(bondVects[order[3]]);
+      const auto dotp2 = bondVects[order[1]].dotProduct(bondVects[order[3]]);
+      auto vol2 = crossp2.dotProduct(bondVects[order[0]]);
+      // std::cerr << bondVects[0] << std::endl;
+      // std::cerr << bondVects[1] << std::endl;
+      // std::cerr << bondVects[2] << std::endl;
+      // std::cerr << bondVects[3] << std::endl;
+      // std::cerr << "------------" << std::endl;
+      // std::cerr << crossp1 << " " << dotp1 << std::endl;
+      // std::cerr << crossp2 << " " << dotp2 << std::endl;
+      // std::cerr << " !!! " << vol << " " << vol2 << std::endl;
+      if (vol * vol2 > 0 && dotp1 < dotp2) {
+        prefactor *= -1;
+      }
+
       vol *= prefactor;
     }
     if (vol > volumeTolerance) {
