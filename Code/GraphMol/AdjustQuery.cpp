@@ -14,6 +14,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
+#include <GraphMol/GenericGroups/GenericGroups.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
@@ -301,6 +302,9 @@ void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
   p.adjustSingleBondsBetweenAromaticAtoms =
       pt.get("adjustSingleBondsBetweenAromaticAtoms",
              p.adjustSingleBondsBetweenAromaticAtoms);
+  p.setGenericQueryFromProperties =
+      pt.get("setGenericQueryFromProperties",
+             p.setGenericQueryFromProperties);
 
   std::string which;
   which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
@@ -525,6 +529,9 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     for (auto atom : mol.atoms()) {
       atom->clearProp(conjugatedOrAromatic);
     }
+  }
+  if (params.setGenericQueryFromProperties) {
+      GenericGroups::setGenericQueriesFromProperties(mol);
   }
 }
 }  // namespace MolOps

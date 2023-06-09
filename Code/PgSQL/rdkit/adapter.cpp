@@ -106,6 +106,13 @@
 using namespace std;
 using namespace RDKit;
 
+constexpr unsigned int pickleForQuery =
+        PicklerOps::PropertyPickleOptions::AtomProps |
+        PicklerOps::PropertyPickleOptions::BondProps |
+        PicklerOps::PropertyPickleOptions::PrivateProps |
+        PicklerOps::PropertyPickleOptions::QueryAtomData;
+constexpr unsigned int pickleDefault = PicklerOps::PropertyPickleOptions::NoProps;
+        
 class ByteA : public std::string {
  public:
   ByteA() : string(){};
@@ -168,12 +175,12 @@ extern "C" CROMol constructROMol(Mol *data) {
   return (CROMol)mol;
 }
 
-extern "C" Mol *deconstructROMol(CROMol data) {
+Mol *deconstructROMolWithProps(CROMol data, unsigned int properties) {
   auto *mol = (ROMol *)data;
   ByteA b;
 
   try {
-    MolPickler::pickleMol(mol, b);
+    MolPickler::pickleMol(mol, b, properties);
   } catch (MolPicklerException &e) {
     elog(ERROR, "pickleMol: %s", e.what());
   } catch (...) {
@@ -182,6 +189,15 @@ extern "C" Mol *deconstructROMol(CROMol data) {
 
   return (Mol *)b.toByteA();
 }
+
+extern "C" Mol *deconstructROMol(CROMol data) {
+  return deconstructROMolWithProps(data, pickleDefault);
+}
+
+extern "C" Mol *deconstructROMolWithQueryProperties(CROMol data) {
+  return deconstructROMolWithProps(data, pickleForQuery);
+}
+
 
 extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
                                bool asQuery, bool sanitize) {
@@ -597,12 +613,9 @@ extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality,
     params.useEnhancedStereo = getDoEnhancedStereoSSS();
   }
   params.useQueryQueryMatches = true;
-  params.maxMatches = 1;
 
-  if (useMatchers) {
-    GenericGroups::setGenericQueriesFromProperties(*am);
-    params.useGenericMatchers = true;
-  }
+  params.useGenericMatchers = useMatchers;
+  params.maxMatches = 1;
 
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());

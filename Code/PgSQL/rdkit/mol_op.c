@@ -381,7 +381,7 @@ Datum mol_adjust_query_properties(PG_FUNCTION_ARGS) {
   if (!adj) {
     PG_RETURN_NULL();
   }
-  Mol *res = deconstructROMol(adj);
+  Mol *res = deconstructROMolWithQueryProperties(adj);
   freeCROMol(adj);
 
   PG_RETURN_MOL_P(res);
