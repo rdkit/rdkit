@@ -2297,6 +2297,7 @@ void testGithub87() {
     std::string fName = rdbase + "/Code/GraphMol/test_data/github87.mol";
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
+    m->debugMol(std::cerr);
     TEST_ASSERT(m->getNumAtoms() == 5);
     TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     WedgeMolBonds(*m, &m->getConformer());

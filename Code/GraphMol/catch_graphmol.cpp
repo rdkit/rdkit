@@ -2630,6 +2630,7 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
   REQUIRE(m1);
+  m1->debugMol(std::cerr);
   CHECK(m1->getStereoGroups().size() == 2);
   m1->setProp("foo", 1u);
   SECTION("molecule move") {
