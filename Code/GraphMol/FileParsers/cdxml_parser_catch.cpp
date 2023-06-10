@@ -597,6 +597,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
+      INFO(i);
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
@@ -632,6 +633,7 @@ TEST_CASE("CDXML") {
         "[C]"};
     int i = 0;
     for (auto &mol : mols) {
+      INFO(i);
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
@@ -669,6 +671,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
+      INFO(i);
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }

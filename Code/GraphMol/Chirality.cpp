@@ -901,12 +901,12 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     if (nNbrs == 3) {
       bool conflict = false;
       if (bondVects[order[1]].z * bondVects[order[0]].z < -1e-4 &&
-          abs(bondVects[order[2]].z) < 1e-4) {
+          fabs(bondVects[order[2]].z) < 1e-4) {
         conflict = bondVects[order[2]].crossProduct(bondVects[order[0]]).z *
                        bondVects[order[2]].crossProduct(bondVects[order[1]]).z <
                    -1e-4;
       } else if (bondVects[order[2]].z * bondVects[order[0]].z < -1e-4 &&
-                 abs(bondVects[order[1]].z) < 1e-4) {
+                 fabs(bondVects[order[1]].z) < 1e-4) {
         conflict = bondVects[order[1]].crossProduct(bondVects[order[0]]).z *
                        bondVects[order[1]].crossProduct(bondVects[order[2]]).z <
                    -1e-4;
@@ -921,6 +921,27 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     }
 
     const auto crossp1 = bondVects[order[1]].crossProduct(bondVects[order[2]]);
+    // catch linear arrangements
+    if (crossp1.lengthSq() < 1e-4) {
+      // nothing we can do if there are only three neighbors
+      if (nNbrs == 3) {
+        BOOST_LOG(rdWarningLog)
+            << "Warning: ambiguous stereochemistry - linear bond arrangement - at atom "
+            << bond->getBeginAtomIdx() << " ignored" << std::endl;
+        return std::nullopt;
+      }
+      // if the bond on the other side is flat, wedge it the same way as bond 0:
+      if (fabs(bondVects[order[3]].z) < 1e-4) {
+        bondVects[order[3]].z = bondVects[order[0]].z;
+      } else if (bondVects[order[3]].z * bondVects[order[0]].z < -1e-4) {
+        // it points opposite to bond 0... this is ambiguous (technically it's
+        // square planar)
+        BOOST_LOG(rdWarningLog)
+            << "Warning: ambiguous stereochemistry - square planar wedging - at atom "
+            << bond->getBeginAtomIdx() << " ignored" << std::endl;
+        return std::nullopt;
+      }
+    }
     vol = crossp1.dotProduct(bondVects[order[0]]);
     if (nNbrs == 4) {
       const auto dotp1 = bondVects[order[1]].dotProduct(bondVects[order[2]]);
@@ -936,7 +957,16 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       // std::cerr << crossp1 << " " << dotp1 << std::endl;
       // std::cerr << crossp2 << " " << dotp2 << std::endl;
       // std::cerr << " !!! " << vol << " " << vol2 << std::endl;
-      if (vol * vol2 > 0 && dotp1 < dotp2) {
+      if (fabs(vol) < 1e-4) {
+        if (fabs(vol2) < 1e-4) {
+          BOOST_LOG(rdWarningLog)
+              << "Warning: ambiguous stereochemistry - no volume - at atom "
+              << bond->getBeginAtomIdx() << " ignored" << std::endl;
+          return std::nullopt;
+        }
+        vol = vol2;
+        prefactor *= -1;
+      } else if (vol * vol2 > 0 && dotp1 < dotp2) {
         prefactor *= -1;
       }
     }
