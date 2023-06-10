@@ -873,19 +873,21 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   //
   //----------------------------------------------------------
   if (allSingle || atom->getAtomicNum() == 15 || atom->getAtomicNum() == 16) {
-    // make sure we get the "3D" bond
     double vol;
+    unsigned int order[4] = {0, 1, 2, 3};
+    double prefactor = 1;
     if (nNbrs == 3) {
-      const auto crossp1 = bondVects[1].crossProduct(bondVects[2]);
-      vol = crossp1.dotProduct(bondVects[0]);
+      if (refIdx != 0) {
+        std::swap(order[0], order[refIdx]);
+        prefactor *= -1;
+      }
+      const auto crossp1 =
+          bondVects[order[1]].crossProduct(bondVects[order[2]]);
+      vol = crossp1.dotProduct(bondVects[order[0]]);
     } else if (nNbrs == 4) {
-      unsigned int order[4] = {0, 1, 2, 3};
-      double prefactor = 1;
-      if (refIdx == 3) {
-        std::swap(order[2], order[3]);
-        // const auto crossp =
-        //     bondVects[order[1]].crossProduct(bondVects[order[3]]);
-        // vol = crossp.dotProduct(bondVects[order[0]]);
+      if (refIdx != 0) {
+        // bring the wedged bond to the front so that we always consider it
+        std::swap(order[0], order[refIdx]);
         prefactor *= -1;
       }
       const auto crossp1 =
@@ -907,9 +909,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       if (vol * vol2 > 0 && dotp1 < dotp2) {
         prefactor *= -1;
       }
-
-      vol *= prefactor;
     }
+    vol *= prefactor;
     if (vol > volumeTolerance) {
       res = Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
     } else if (vol < volumeTolerance) {
