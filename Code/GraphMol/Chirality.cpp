@@ -876,23 +876,14 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     double vol;
     unsigned int order[4] = {0, 1, 2, 3};
     double prefactor = 1;
-    if (nNbrs == 3) {
-      if (refIdx != 0) {
-        std::swap(order[0], order[refIdx]);
-        prefactor *= -1;
-      }
-      const auto crossp1 =
-          bondVects[order[1]].crossProduct(bondVects[order[2]]);
-      vol = crossp1.dotProduct(bondVects[order[0]]);
-    } else if (nNbrs == 4) {
-      if (refIdx != 0) {
-        // bring the wedged bond to the front so that we always consider it
-        std::swap(order[0], order[refIdx]);
-        prefactor *= -1;
-      }
-      const auto crossp1 =
-          bondVects[order[1]].crossProduct(bondVects[order[2]]);
-      vol = crossp1.dotProduct(bondVects[order[0]]);
+    if (refIdx != 0) {
+      // bring the wedged bond to the front so that we always consider it
+      std::swap(order[0], order[refIdx]);
+      prefactor *= -1;
+    }
+    const auto crossp1 = bondVects[order[1]].crossProduct(bondVects[order[2]]);
+    vol = crossp1.dotProduct(bondVects[order[0]]);
+    if (nNbrs == 4) {
       const auto dotp1 = bondVects[order[1]].dotProduct(bondVects[order[2]]);
       const auto crossp2 =
           bondVects[order[1]].crossProduct(bondVects[order[3]]);
