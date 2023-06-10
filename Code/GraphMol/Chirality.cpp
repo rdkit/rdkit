@@ -832,9 +832,11 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       // theoretically we could confirm that this is a single bond,
       // but it's not impossible that at some point in the future we
       // could allow wedged multiple bonds for things like atropisomers
-      if (nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE) {
+      if (nbrBond->getBeginAtomIdx() == atom->getIdx() &&
+          nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE) {
         tmpPt.z = pseudo3DOffset;
-      } else if (nbrBond->getBondDir() == Bond::BondDir::BEGINDASH) {
+      } else if (nbrBond->getBeginAtomIdx() == atom->getIdx() &&
+                 nbrBond->getBondDir() == Bond::BondDir::BEGINDASH) {
         tmpPt.z = -pseudo3DOffset;
       } else {
         tmpPt.z = 0;
@@ -881,6 +883,43 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       std::swap(order[0], order[refIdx]);
       prefactor *= -1;
     }
+
+    // three-coordinate special cases where chirality cannot be determined
+    //
+    //  Case 1:
+    //  this one is never allowed with different directions for the bonds to 1
+    //  and 2
+    //     0   2
+    //      \ /
+    //       C
+    //       *
+    //       1
+    //   This is ST-1.2.10 in the IUPAC guidelines
+    //
+    //  Case 2: all bonds are wedged in the same direction
+
+    if (nNbrs == 3) {
+      bool conflict = false;
+      if (bondVects[order[1]].z * bondVects[order[0]].z < -1e-4 &&
+          abs(bondVects[order[2]].z) < 1e-4) {
+        conflict = bondVects[order[2]].crossProduct(bondVects[order[0]]).z *
+                       bondVects[order[2]].crossProduct(bondVects[order[1]]).z <
+                   -1e-4;
+      } else if (bondVects[order[2]].z * bondVects[order[0]].z < -1e-4 &&
+                 abs(bondVects[order[1]].z) < 1e-4) {
+        conflict = bondVects[order[1]].crossProduct(bondVects[order[0]]).z *
+                       bondVects[order[1]].crossProduct(bondVects[order[2]]).z <
+                   -1e-4;
+      }
+      if (conflict) {
+        BOOST_LOG(rdWarningLog)
+            << "Warning: conflicting stereochemistry at atom "
+            << bond->getBeginAtomIdx() << " ignored"
+            << " by rule 1a." << std::endl;
+        return std::nullopt;
+      }
+    }
+
     const auto crossp1 = bondVects[order[1]].crossProduct(bondVects[order[2]]);
     vol = crossp1.dotProduct(bondVects[order[0]]);
     if (nNbrs == 4) {

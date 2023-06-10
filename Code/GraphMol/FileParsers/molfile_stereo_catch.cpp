@@ -409,7 +409,8 @@ M  END)CTAB"_ctab;
     std::string fName = rdbase + "/Code/GraphMol/test_data/github87.mol";
     std::unique_ptr<RWMol> m{MolFileToMol(fName)};
     REQUIRE(m);
-    CHECK(m->getAtomWithIdx(0)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+    CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
   }
 
   SECTION("narrow angle") {
@@ -436,6 +437,33 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
     REQUIRE(m);
-    CHECK(m->getAtomWithIdx(0)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+    CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+  SECTION("track bond starting points") {
+    auto m = R"CTAB(blah
+     RDKit          2D
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -3.1960  -20.3395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1960  -19.5114    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1921  -21.7775    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7763  -21.0619    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0577  -21.4777    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0179  -20.3565    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3411  -20.6109    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  4  1  6
+  1  6  1  0
+  1  7  1  0
+  4  3  1  1
+  4  5  1  0
+  4  7  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
   }
 }
