@@ -26,7 +26,12 @@ bool hasSubstructHelper(const ROMol &mol, const ExtendedQueryMol &query,
   if (iparams) {
     params = *iparams;
   }
-  return hasSubstructMatch(mol, query, params);
+  bool res;
+  {
+    NOGIL gil;
+    res = hasSubstructMatch(mol, query, params);
+  }
+  return res;
 }
 
 PyObject *getSubstructHelper(const ROMol &mol, const ExtendedQueryMol &query,
@@ -76,7 +81,8 @@ BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
       "Module containing functions for generalized substructure searching";
 
   python::class_<ExtendedQueryMol, boost::noncopyable>(
-      "ExtendedQueryMol", "Extended query molecule",
+      "ExtendedQueryMol",
+      "Extended query molecule for use in generalized substructure searching.",
       python::init<const std::string &, bool>(
           (python::args("text"), python::args("isJSON") = false),
           "constructor from either a binary string (from ToBinary()) or a JSON string."))
