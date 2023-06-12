@@ -92,18 +92,15 @@ struct wrap_maewriter {
             "Sets the atom and mol properties to be written to the output file\n\n"
             "  ARGUMENTS:\n\n"
             "    - props: a list or tuple of atom and mol property names\n\n")
-        .def(
-            "write",
-            (void(LocalMaeWriter::*)(const ROMol &, const std::string &, int)) &
-                LocalMaeWriter::write,
-            (python::arg("self"), python::arg("mol"),
-             python::arg("heavyAtomColor") = defaultMaeHeavyAtomColor,
-             python::arg("confId") = defaultConfId),
-            "Writes a molecule to the output file.\n\n"
-            "  ARGUMENTS:\n\n"
-            "    - mol: the Mol to be written\n"
-            "    - heavyAtomColor: (optional) color which heavy atoms will have in Maestro\n"
-            "    - confId: (optional) ID of the conformation to write\n\n")
+        .def("write",
+             (void(LocalMaeWriter::*)(const ROMol &, int)) &
+                 LocalMaeWriter::write,
+             (python::arg("self"), python::arg("mol"),
+              python::arg("confId") = defaultConfId),
+             "Writes a molecule to the output file.\n\n"
+             "  ARGUMENTS:\n\n"
+             "    - mol: the Mol to be written\n"
+             "    - confId: (optional) ID of the conformation to write\n\n")
 
         .def("flush", &LocalMaeWriter::flush,
              "Flushes the output file (forces the disk file to be "
@@ -114,9 +111,7 @@ struct wrap_maewriter {
         .def("NumMols", &LocalMaeWriter::numMols,
              "Returns the number of molecules written so far.\n\n")
         .def("GetText", &LocalMaeWriter::getText,
-             (python::arg("mol"),
-              python::arg("heavyAtomColor") = defaultMaeHeavyAtomColor,
-              python::arg("confId") = -1,
+             (python::arg("mol"), python::arg("confId") = -1,
               python::arg("props_list") = std::vector<std::string>()),
              "returns the Maestro ct block text for a molecule")
         .staticmethod("GetText");

@@ -7119,8 +7119,6 @@ CAS<~>
 
     self.assertIn(f' m_atom[{mol.GetNumAtoms()}] {{', maefile)
 
-    self.assertEqual(maefile.count("A0A0A0"), 6)  # 6 grey-colored heavy atoms
-
     self.assertTrue(f' m_bond[{mol.GetNumBonds()}] {{', maefile)
 
   @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not built with MAEParser support")
@@ -7159,12 +7157,10 @@ CAS<~>
     b.SetProp(str_dummy_prop, strProp)
     b.SetProp(ignored_prop, ignored_prop)
 
-    heavyAtomColor = "767676"
-
     osio = StringIO()
     with Chem.MaeWriter(osio) as w:
       w.SetProps(exported_props)
-      w.write(mol, heavyAtomColor=heavyAtomColor)
+      w.write(mol)
 
     maestr = osio.getvalue()
 
@@ -7199,7 +7195,6 @@ CAS<~>
         break
     self.assertIn(str(realProp), line)
     self.assertIn(strProp, line)
-    self.assertIn(heavyAtomColor, line)
 
     # bond properties
     self.assertIn(bond_prop, maestr[bondBlockStart:])
@@ -7241,12 +7236,10 @@ CAS<~>
     mol.SetProp(dummy_prop, dummy_prop)
     mol.SetProp(another_dummy_prop, another_dummy_prop)
 
-    heavyAtomColor = "767676"
-
     osio = StringIO()
     with Chem.MaeWriter(osio) as w:
       w.SetProps([dummy_prop])
-      w.write(mol, heavyAtomColor=heavyAtomColor)
+      w.write(mol)
 
     iomae = osio.getvalue()
 
@@ -7256,7 +7249,7 @@ CAS<~>
     self.assertIn(dummy_prop, iomae)
     self.assertNotIn(another_dummy_prop, iomae)
 
-    mae = Chem.MaeWriter.GetText(mol, heavyAtomColor, -1, [dummy_prop])
+    mae = Chem.MaeWriter.GetText(mol, -1, [dummy_prop])
 
     self.assertEqual(mae, iomae[ctBlockStart:])
 

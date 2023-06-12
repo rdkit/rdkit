@@ -5447,8 +5447,7 @@ M  END
   }
 }
 
-TEST_CASE(
-    "Github #6395: Mol Unsaturated Query Not Parsed Correctly") {
+TEST_CASE("Github #6395: Mol Unsaturated Query Not Parsed Correctly") {
   SECTION("as reported") {
     auto m = R"CTAB(
 MOESketch           2D                              
@@ -5918,7 +5917,6 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(atomBlock.find("r_m_z_coord") != std::string::npos);
     CHECK(atomBlock.find("i_m_atomic_number") != std::string::npos);
     CHECK(atomBlock.find("i_m_formal_charge") != std::string::npos);
-    CHECK(atomBlock.find("s_m_color_rgb") != std::string::npos);
 
     CHECK(atomBlock.find("b_rdk_atom_bool_prop") != std::string::npos);
     CHECK(atomBlock.find("i_rdk_atom_int_prop") != std::string::npos);
@@ -5952,8 +5950,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
 
     w.setProps(keptProps);
 
-    std::string heavyAtomColor = "131313";
-    w.write(*mol, heavyAtomColor);
+    w.write(*mol);
     w.flush();
 
     auto mae = oss->str();
@@ -5991,7 +5988,6 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(atomBlock.find("r_m_z_coord") != std::string::npos);
     CHECK(atomBlock.find("i_m_atomic_number") != std::string::npos);
     CHECK(atomBlock.find("i_m_formal_charge") != std::string::npos);
-    CHECK(atomBlock.find("s_m_color_rgb") != std::string::npos);
 
     CHECK(atomBlock.find("i_rdk_atom_int_prop") != std::string::npos);
 
@@ -6010,14 +6006,20 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(bondBlock.find("i_rdk_bond_int_prop") == std::string::npos);
     CHECK(bondBlock.find("s_rdk_bond_string_prop") == std::string::npos);
 
-    size_t pos = 0;
-    unsigned atom_color_count = 0;
-    while (pos < std::string::npos) {
-      pos = atomBlock.find(heavyAtomColor, pos + 1);
-      atom_color_count += (pos != std::string::npos);
-    }
+    // The "i_rdk_atom_int_prop" prop should only be set on the first atom,
+    // and unset on the other five
+    auto count_occurrences = [&atomBlock](const char *needle) {
+      size_t pos = 0;
+      unsigned counter = 0;
+      while (pos < std::string::npos) {
+        pos = atomBlock.find(needle, pos + 1);
+        counter += (pos != std::string::npos);
+      }
+      return counter;
+    };
 
-    CHECK(atom_color_count == mol->getNumAtoms());
+    CHECK(count_occurrences(" 42") == 1);
+    CHECK(count_occurrences(" <>") == 5);
   }
 
   SECTION("Check roundtrip") {
@@ -6147,9 +6149,8 @@ TEST_CASE("GitHub issue #6153: MaeMolSupplier requires bond block",
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
-    1 -2.542857 2.171429 0.000000 6 0 A0A0A0
+    1 -2.542857 2.171429 0.000000 6 0
     :::
   }
 })MAE";
@@ -6190,7 +6191,6 @@ TEST_CASE("GitHub issue #6153: MaeMolSupplier requires bond block",
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
     :::
   }
@@ -6213,9 +6213,8 @@ TEST_CASE("GitHub issue #6153: MaeMolSupplier requires bond block",
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
-    1 -2.542857 2.171429 0.000000 6 0 A0A0A0
+    1 -2.542857 2.171429 0.000000 6 0
     :::
   }
 }
@@ -6231,7 +6230,6 @@ f_m_ct {
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
     :::
   }
