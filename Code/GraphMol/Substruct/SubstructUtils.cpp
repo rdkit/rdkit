@@ -135,7 +135,7 @@ bool atomCompat(const Atom *a1, const Atom *a2,
   } else {
     res = a1->Match(a2);
   }
-  if (res) {
+  if (res && !ps.atomProperties.empty()) {
     res = propertyCompat(a1, a2, ps.atomProperties);
   }
 
