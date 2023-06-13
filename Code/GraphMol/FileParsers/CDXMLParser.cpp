@@ -14,12 +14,14 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/BadFileException.h>
 #include <fstream>
 #include <sstream>
 #include "MolFileStereochem.h"
 #include <RDGeneral/FileParseException.h>
+#include <limits>
 
 using boost::property_tree::ptree;
 namespace RDKit {
@@ -116,6 +118,17 @@ std::vector<T> to_vec(const std::string &s) {
   return n;
 }
 
+void scaleBonds(const ROMol &mol, Conformer &conf, float targetBondLength) {
+    double avg_bond_length = 0.0;
+    for(auto &bond: mol.bonds()) {
+        avg_bond_length += MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(), bond->getEndAtomIdx());
+    }
+    avg_bond_length/=mol.getNumBonds();
+    double scale = 1.5/avg_bond_length;
+    for(auto &pos:conf.getPositions()) {
+        pos *= scale;
+    }
+}
 bool parse_fragment(RWMol &mol, ptree &frag,
                     std::map<unsigned int, Atom *> &ids, int &missing_frag_id,
                     int external_attachment = -1) {
@@ -396,14 +409,25 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   if (!skip_fragment) {
     for (auto &bond : bonds) {
       unsigned int bond_idx;
-      if (bond.display == "WedgeEnd" || bond.display == "WedgedHashEnd") {
-        // here The "END" of the bond is really our Beginning.
-        // swap atom direction
-        bond_idx = mol.addBond(ids[bond.end]->getIdx(),
-                               ids[bond.start]->getIdx(), bond.getBondType()) -
-                   1;
-      } else {
-        bond_idx = mol.addBond(ids[bond.start]->getIdx(),
+        bool swap = false;
+        auto orig = bond.display;
+        if (bond.display == "WedgeEnd") {
+            swap = true;
+            bond.display = "WedgeBegin";
+        }
+        if (bond.display == "WedgedHashEnd") {
+            swap = true;
+            bond.display = "WedgedHashBegin";
+        }
+        
+        if (swap) {
+            // here The "END" of the bond is really our Beginning.
+            // swap atom direction
+            bond_idx = mol.addBond(ids[bond.end]->getIdx(),
+                                   ids[bond.start]->getIdx(), bond.getBondType()) -
+            1;
+        } else {
+            bond_idx = mol.addBond(ids[bond.start]->getIdx(),
                                ids[bond.end]->getIdx(), bond.getBondType()) -
                    1;
       }
@@ -417,11 +441,10 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       // More confusion
       // RDKit/MolFile Wedge (up)  == CDXML WedgedHash
       // RDKit//MolFile WedgedHash (down) == CDXML Wedge
-      if (bond.display == "WedgeEnd" || bond.display == "WedgeBegin") {
-        bnd->setBondDir(Bond::BondDir::BEGINDASH);
-      } else if (bond.display == "WedgedHashBegin" ||
-                 bond.display == "WedgedHashEnd") {
+      if (bond.display == "WedgeBegin") {
         bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
+      } else if (bond.display == "WedgedHashBegin") {
+        bnd->setBondDir(Bond::BondDir::BEGINDASH);
       } else if (bond.display == "Wavy") {
         switch (bond.getBondType()) {
           case Bond::BondType::SINGLE:
@@ -538,6 +561,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
               RWMol *res = mols.back().get();
               auto conf = std::make_unique<Conformer>(res->getNumAtoms());
               conf->set3D(false);
+
               bool hasConf = false;
               for (auto &atm : res->atoms()) {
                 if (atm->hasProp(CDX_ATOM_POS)) {
@@ -546,17 +570,17 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                       atm->getProp<std::vector<double>>(CDX_ATOM_POS);
 
                   RDGeom::Point3D p;
-                  if (coord.size() == 2) {
-                    p.x = coord[0];
-                    p.y = -1 * coord[1];  // CDXML uses an inverted coordinate
-                                          // system, so we need to reverse that
-                    p.z = 0.0;
+                  if (coord.size() >=2) {
+                        p.x = coord[0];
+                        p.y = -coord[1];
                   }
                   conf->setAtomPos(atm->getIdx(), p);
                   atm->clearProp(CDX_ATOM_POS);
                 }
               }
+                            
               if (hasConf) {
+                scaleBonds(*res, *conf, 1.5);
                 auto confidx = res->addConformer(conf.release());
                 DetectAtomStereoChemistry(*res, &res->getConformer(confidx));
               }

@@ -13,12 +13,19 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
 
 using namespace RDKit;
+std::string canon(const std::string &smi) {
+    auto *m = SmilesToMol(smi);
+    auto res = MolToSmiles(*m);
+    delete m;
+    return res;
+}
 
 TEST_CASE("CDXML") {
   std::string cdxmlbase =
@@ -490,7 +497,7 @@ TEST_CASE("CDXML") {
         "[B]",
         "*",
         "[C]",
-        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
+        "Cc1ccc2n1[C@@H]1[C@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
         "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
         "Cc1ccc2ccc(=O)ccn12",
         "Cc1cccn1[C@H](C)C=O",
@@ -715,6 +722,27 @@ TEST_CASE("CDXML") {
         CHECK(MolToSmiles(*mol) == expected[i++]);
       }
     }
+    
+    { // The above, but broken out for easier testing
+      std::vector<std::string> filenames = {
+	"stereo1.cdxml", "stereo2.cdxml",
+	"stereo3.cdxml", "stereo4.cdxml"};
+      std::vector<std::string> expected = {
+	"C[C@H](I)[C@@H](N)O",
+	"C[C@@H](I)[C@H](N)O",
+	"C[C@@H](Cl)[C@H](N)O",
+	"C[C@H](Br)[C@@H](N)O"
+      };
+      
+      for(int i=0; i<filenames.size();++i) {
+	auto fname = cdxmlbase + filenames[i];
+	auto mols = CDXMLFileToMols(fname);
+	CHECK(mols.size() == 1);
+	auto &m = *mols.back();
+	CHECK(MolToSmiles(m) == canon(expected[i]));
+      }
+    }
+    
     {
       auto fname = cdxmlbase + "wavy.cdxml";
       std::vector<std::string> expected = {"Cc1cccc(C)c1NC(=O)N=C1CCCN1C",
