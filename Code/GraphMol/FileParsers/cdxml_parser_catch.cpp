@@ -21,10 +21,18 @@
 
 using namespace RDKit;
 std::string canon(const std::string &smi) {
-    auto *m = SmilesToMol(smi);
-    auto res = MolToSmiles(*m);
-    delete m;
-    return res;
+  auto *m = SmilesToMol(smi);
+  auto res = MolToSmiles(*m);
+  delete m;
+  return res;
+}
+
+void check_smiles(const RWMol &m, const std::string &expected) {
+  CHECK(MolToSmiles(m) == expected);
+  //  std::cout << "*********" << std::endl;
+  //  std::cout << MolToMolBlock(m) << std::endl;
+  std::unique_ptr<RWMol> mol(MolBlockToMol(MolToMolBlock(m)));
+  CHECK(MolToSmiles(*mol) == expected);
 }
 
 TEST_CASE("CDXML") {
@@ -639,6 +647,8 @@ TEST_CASE("CDXML") {
         "[C]"};
     int i = 0;
     for (auto &mol : mols) {
+      INFO(i);
+      check_smiles(*mol, expected[i]);
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
@@ -649,6 +659,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
+      check_smiles(*mol, expected[i]);
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
@@ -659,6 +670,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
+      check_smiles(*mol, expected[i]);
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
@@ -676,6 +688,8 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
+      INFO(i);
+      check_smiles(*mol, expected[i]);
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
@@ -695,6 +709,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
+      check_smiles(*mol, expected[i]);
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
@@ -716,30 +731,28 @@ TEST_CASE("CDXML") {
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
+        check_smiles(*mol, expected[i]);
         CHECK(MolToSmiles(*mol) == expected[i++]);
       }
     }
-    
-    { // The above, but broken out for easier testing
-      std::vector<std::string> filenames = {
-	"stereo1.cdxml", "stereo2.cdxml",
-	"stereo3.cdxml", "stereo4.cdxml"};
+
+    {  // The above, but broken out for easier testing
+      std::vector<std::string> filenames = {"stereo1.cdxml", "stereo2.cdxml",
+                                            "stereo3.cdxml", "stereo4.cdxml"};
       std::vector<std::string> expected = {
-	"C[C@H](I)[C@@H](N)O",
-	"C[C@@H](I)[C@H](N)O",
-	"C[C@@H](Cl)[C@H](N)O",
-	"C[C@H](Br)[C@@H](N)O"
-      };
-      
-      for(int i=0; i<filenames.size();++i) {
-	auto fname = cdxmlbase + filenames[i];
-	auto mols = CDXMLFileToMols(fname);
-	CHECK(mols.size() == 1);
-	auto &m = *mols.back();
-	CHECK(MolToSmiles(m) == canon(expected[i]));
+          "C[C@H](I)[C@@H](N)O", "C[C@@H](I)[C@H](N)O", "C[C@@H](Cl)[C@H](N)O",
+          "C[C@H](Br)[C@@H](N)O"};
+
+      for (int i = 0; i < filenames.size(); ++i) {
+        auto fname = cdxmlbase + filenames[i];
+        auto mols = CDXMLFileToMols(fname);
+        CHECK(mols.size() == 1);
+        auto &m = *mols.back();
+        CHECK(MolToSmiles(m) == canon(expected[i]));
+        check_smiles(m, expected[i]);
       }
     }
-    
+
     {
       auto fname = cdxmlbase + "wavy.cdxml";
       std::vector<std::string> expected = {"Cc1cccc(C)c1NC(=O)N=C1CCCN1C",
@@ -752,6 +765,7 @@ TEST_CASE("CDXML") {
           CHECK(mol->getBondWithIdx(11)->getStereo() ==
                 Bond::BondStereo::STEREOANY);
         }
+        check_smiles(*mol, expected[i]);
         CHECK(MolToSmiles(*mol) == expected[i++]);
       }
     }
@@ -765,6 +779,7 @@ TEST_CASE("CDXML") {
         CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
         CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
         CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
+        check_smiles(*mol, expected[i]);
         CHECK(MolToSmiles(*mol) == expected[i++]);
       }
     }
