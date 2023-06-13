@@ -21,6 +21,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -62,7 +63,8 @@ struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol
 };
 
 RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol
-createExtendedQueryMol(const RWMol &mol);
+createExtendedQueryMol(const RWMol &mol, bool adjustQueryProperties = false,
+                       MolOps::AdjustQueryParameters params = {});
 
 RDKIT_GENERALIZEDSUBSTRUCT_EXPORT std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ExtendedQueryMol &query,

@@ -177,3 +177,78 @@ TEST_CASE("test SRUs") {
     CHECK(SubstructMatch(*"FCN(O)N(C)CC"_smiles, xqm).size() == 1);
   }
 }
+
+// there's some redundancy in testing with what's above, but duplicating tests
+// isn't a terrible thing
+TEST_CASE("adjustQueryProperties") {
+  SECTION("RWMol") {
+    auto mol = "COC1CC1"_smiles;
+    REQUIRE(mol);
+    auto xqm1 = createExtendedQueryMol(*mol);
+    auto xqm2 = createExtendedQueryMol(*mol, true);
+    MolOps::AdjustQueryParameters aqps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    aqps.makeAtomsGeneric = true;
+    auto xqm3 = createExtendedQueryMol(*mol, true, aqps);
+    CHECK(std::holds_alternative<ExtendedQueryMol::RWMol_T>(xqm1.xqmol));
+    CHECK(std::holds_alternative<ExtendedQueryMol::RWMol_T>(xqm2.xqmol));
+    CHECK(std::holds_alternative<ExtendedQueryMol::RWMol_T>(xqm3.xqmol));
+    CHECK(SubstructMatch(*"COC1CC1"_smiles, xqm1).size() == 1);
+    CHECK(SubstructMatch(*"COC1CC1"_smiles, xqm2).size() == 1);
+    CHECK(SubstructMatch(*"COC1CC1"_smiles, xqm3).size() == 1);
+    CHECK(SubstructMatch(*"COC1C(C)C1"_smiles, xqm1).size() == 1);
+    CHECK(SubstructMatch(*"COC1C(C)C1"_smiles, xqm2).empty());
+    CHECK(SubstructMatch(*"COC1C(C)C1"_smiles, xqm3).size() == 1);
+    CHECK(SubstructMatch(*"COC1OC1"_smiles, xqm1).empty());
+    CHECK(SubstructMatch(*"COC1OC1"_smiles, xqm2).empty());
+    CHECK(SubstructMatch(*"COC1OC1"_smiles, xqm3).size() == 1);
+  }
+  SECTION("MolBundle") {
+    auto mol = "COCC |LN:1:1.3|"_smiles;
+    REQUIRE(mol);
+    auto xqm1 = createExtendedQueryMol(*mol);
+    MolOps::AdjustQueryParameters aqps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    aqps.makeBondsGeneric = true;
+    auto xqm2 = createExtendedQueryMol(*mol, true, aqps);
+    CHECK(std::holds_alternative<ExtendedQueryMol::MolBundle_T>(xqm1.xqmol));
+    CHECK(std::holds_alternative<ExtendedQueryMol::MolBundle_T>(xqm2.xqmol));
+    CHECK(SubstructMatch(*"COC=C"_smiles, xqm1).empty());
+    CHECK(SubstructMatch(*"COOC=C"_smiles, xqm1).empty());
+    CHECK(SubstructMatch(*"COC=C"_smiles, xqm2).size() == 1);
+    CHECK(SubstructMatch(*"COOC=C"_smiles, xqm2).size() == 1);
+  }
+  SECTION("TautomerQuery") {
+    auto mol1 = "Cc1n[nH]cc1"_smiles;
+    REQUIRE(mol1);
+    auto xqm1 = createExtendedQueryMol(*mol1);
+    auto xqm2 = createExtendedQueryMol(*mol1, true);
+
+    CHECK(
+        std::holds_alternative<ExtendedQueryMol::TautomerQuery_T>(xqm1.xqmol));
+    CHECK(
+        std::holds_alternative<ExtendedQueryMol::TautomerQuery_T>(xqm2.xqmol));
+    CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, xqm1).size() == 1);
+    CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, xqm2).size() == 1);
+    CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, xqm1).size() == 1);
+    CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, xqm1).size() == 1);
+    CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, xqm2).empty());
+    CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, xqm2).empty());
+  }
+  SECTION("TautomerBundle") {
+    auto mol1 = "COCc1n[nH]cc1 |LN:1:1.3|"_smiles;
+    REQUIRE(mol1);
+    auto xqm1 = createExtendedQueryMol(*mol1);
+    auto xqm2 = createExtendedQueryMol(*mol1, true);
+    CHECK(
+        std::holds_alternative<ExtendedQueryMol::TautomerBundle_T>(xqm1.xqmol));
+    CHECK(SubstructMatch(*"COCc1n[nH]cc1"_smiles, xqm1).size() == 1);
+    CHECK(SubstructMatch(*"COOCc1[nH]ncc1"_smiles, xqm1).size() == 1);
+    CHECK(SubstructMatch(*"COCc1n[nH]cc1"_smiles, xqm2).size() == 1);
+    CHECK(SubstructMatch(*"COOCc1[nH]ncc1"_smiles, xqm2).size() == 1);
+    CHECK(SubstructMatch(*"COCc1n[nH]c(F)c1"_smiles, xqm1).size() == 1);
+    CHECK(SubstructMatch(*"COOCc1[nH]nc(F)c1"_smiles, xqm1).size() == 1);
+    CHECK(SubstructMatch(*"COCc1n[nH]c(F)c1"_smiles, xqm2).empty());
+    CHECK(SubstructMatch(*"COOCc1[nH]nc(F)c1"_smiles, xqm2).empty());
+  }
+}

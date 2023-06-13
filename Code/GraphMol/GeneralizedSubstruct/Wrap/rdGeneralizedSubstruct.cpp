@@ -70,8 +70,15 @@ PyObject *getSubstructsHelper(const ROMol &mol, const ExtendedQueryMol &query,
   return res;
 }
 
-ExtendedQueryMol *createExtendedQueryMolHelper(const ROMol &mol) {
-  return new ExtendedQueryMol(std::move(createExtendedQueryMol(mol)));
+ExtendedQueryMol *createExtendedQueryMolHelper(
+    const ROMol &mol, bool adjustQueryProperties,
+    MolOps::AdjustQueryParameters *ps) {
+  MolOps::AdjustQueryParameters defaults;
+  if (!ps) {
+    ps = &defaults;
+  }
+  return new ExtendedQueryMol(
+      std::move(createExtendedQueryMol(mol, adjustQueryProperties, *ps)));
 }
 
 }  // namespace
@@ -109,7 +116,8 @@ BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
 
   python::def(
       "CreateExtendedQueryMol", createExtendedQueryMolHelper,
-      (python::arg("mol")),
+      (python::arg("mol"), python::arg("adjustQueryProperties") = false,
+       python::arg("adjustQueryParameters") = python::object()),
       python::return_value_policy<python::manage_new_object>(),
       R"DOC(Converts a molecule into an extended query molecule for generalized substructure searching. 
   This includes enumerating link nodes, varaible attachment points, SRUs, and constructing TautomerQueries)DOC");
