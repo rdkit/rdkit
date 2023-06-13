@@ -186,7 +186,7 @@ bool bondCompat(const Bond *b1, const Bond *b2,
       res = false;
     }
   }
-  if (res) {
+  if (res && !ps.bondProperties.empty()) {
     res = propertyCompat(b1, b2, ps.bondProperties);
   }
   // std::cerr << "\t\tbondCompat: " << b1->getIdx() << "-" << b2->getIdx() <<
