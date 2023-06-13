@@ -21,7 +21,6 @@
 #include <sstream>
 #include "MolFileStereochem.h"
 #include <RDGeneral/FileParseException.h>
-#include <limits>
 
 using boost::property_tree::ptree;
 namespace RDKit {
@@ -118,16 +117,24 @@ std::vector<T> to_vec(const std::string &s) {
   return n;
 }
 
-void scaleBonds(const ROMol &mol, Conformer &conf, float targetBondLength) {
-    double avg_bond_length = 0.0;
+void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength, double bondLength) {
+  double avg_bond_length = 0.0;
+  if(bondLength == -1) {
+    // If we don't have a bond length for any reason, just scale the avgerage bond length
     for(auto &bond: mol.bonds()) {
-        avg_bond_length += MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(), bond->getEndAtomIdx());
+      avg_bond_length += MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(), bond->getEndAtomIdx());
     }
     avg_bond_length/=mol.getNumBonds();
+  } else {
+    avg_bond_length = bondLength;
+  }
+  
+  if(avg_bond_length > 0) {
     double scale = 1.5/avg_bond_length;
     for(auto &pos:conf.getPositions()) {
-        pos *= scale;
+      pos *= scale;
     }
+  }
 }
 bool parse_fragment(RWMol &mol, ptree &frag,
                     std::map<unsigned int, Atom *> &ids, int &missing_frag_id,
@@ -438,9 +445,6 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         ids[bond.start]->setIsAromatic(true);
       }
       bnd->setProp("CDX_BOND_ID", bond.bond_id);
-      // More confusion
-      // RDKit/MolFile Wedge (up)  == CDXML WedgedHash
-      // RDKit//MolFile WedgedHash (down) == CDXML Wedge
       if (bond.display == "WedgeBegin") {
         bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
       } else if (bond.display == "WedgedHashBegin") {
@@ -530,6 +534,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
   int missing_frag_id = -1;
   for (auto &cdxml : pt) {
     if (cdxml.first == "CDXML") {
+      double bondLength = cdxml.second.get<double>("<xmlattr>.BondLength");
       for (auto &node : cdxml.second) {
         if (node.first == "page") {
           for (auto &frag : node.second) {
@@ -564,25 +569,26 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
 
               bool hasConf = false;
               for (auto &atm : res->atoms()) {
+		RDGeom::Point3D p{0.0,0.0,0.0};
+
                 if (atm->hasProp(CDX_ATOM_POS)) {
                   hasConf = true;
                   const std::vector<double> coord =
                       atm->getProp<std::vector<double>>(CDX_ATOM_POS);
 
-                  RDGeom::Point3D p;
 		  if (coord.size() == 2) {
                     p.x = coord[0];
                     p.y = -1 * coord[1];  // CDXML uses an inverted coordinate
                                           // system, so we need to reverse that
                     p.z = 0.0;
                   }
-                  conf->setAtomPos(atm->getIdx(), p);
-                  atm->clearProp(CDX_ATOM_POS);
-                }
+		}
+		conf->setAtomPos(atm->getIdx(), p);
+		atm->clearProp(CDX_ATOM_POS);
               }
                             
               if (hasConf) {
-                scaleBonds(*res, *conf, 1.5);
+                scaleBonds(*res, *conf, 1.5, bondLength);
                 auto confidx = res->addConformer(conf.release());
                 DetectAtomStereoChemistry(*res, &res->getConformer(confidx));
               }
