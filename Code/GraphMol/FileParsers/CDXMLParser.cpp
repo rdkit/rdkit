@@ -570,9 +570,11 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                       atm->getProp<std::vector<double>>(CDX_ATOM_POS);
 
                   RDGeom::Point3D p;
-                  if (coord.size() >=2) {
-                        p.x = coord[0];
-                        p.y = -coord[1];
+		  if (coord.size() == 2) {
+                    p.x = coord[0];
+                    p.y = -1 * coord[1];  // CDXML uses an inverted coordinate
+                                          // system, so we need to reverse that
+                    p.z = 0.0;
                   }
                   conf->setAtomPos(atm->getIdx(), p);
                   atm->clearProp(CDX_ATOM_POS);
