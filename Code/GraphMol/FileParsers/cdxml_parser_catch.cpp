@@ -505,7 +505,7 @@ TEST_CASE("CDXML") {
         "[B]",
         "*",
         "[C]",
-        "Cc1ccc2n1[C@@H]1[C@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
+        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",  // this is wrong, but the structure is drawn incorrectly. There's a test below which fixes this
         "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
         "Cc1ccc2ccc(=O)ccn12",
         "Cc1cccn1[C@H](C)C=O",
@@ -737,7 +737,7 @@ TEST_CASE("CDXML") {
           "C[C@H](I)[C@@H](N)O", "C[C@@H](I)[C@H](N)O", "C[C@@H](Cl)[C@H](N)O",
           "C[C@H](Br)[C@@H](N)O"};
 
-      for (int i = 0; i < filenames.size(); ++i) {
+      for (auto i = 0u; i < filenames.size(); ++i) {
         auto fname = cdxmlbase + filenames[i];
         auto mols = CDXMLFileToMols(fname);
         CHECK(mols.size() == 1);
@@ -796,5 +796,18 @@ TEST_CASE("CDXML") {
       auto mols = CDXMLFileToMols(fname);
       CHECK(mols.size() == 0);
     }
+  }
+}
+
+TEST_CASE("bad stereo in a natural product") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("case 1") {
+    auto fname = cdxmlbase + "stereo5.cdxml";
+    auto mols = CDXMLFileToMols(fname);
+    REQUIRE(mols.size() == 1);
+    CHECK(
+        MolToSmiles(*mols[0]) ==
+        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C");
   }
 }
