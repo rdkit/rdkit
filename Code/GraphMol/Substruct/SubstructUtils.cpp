@@ -105,10 +105,13 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
 
 bool propertyCompat(const RDProps *r1, const RDProps *r2,
                     const std::vector<std::string>& properties) {
-  std::string prop1;
-  std::string prop2;
+  PRECONDITION(r1,"bad RDProps");
+  PRECONDITION(r2,"bad RDProps");
+  
   for (const auto &prop : properties) {
+    std::string prop1;
     bool hasprop1 = r1->getPropIfPresent<std::string>(prop, prop1);
+    std::string prop2;
     bool hasprop2 = r2->getPropIfPresent<std::string>(prop, prop2);
     if (hasprop1 && hasprop2) {
         if (prop1 != prop2) {
