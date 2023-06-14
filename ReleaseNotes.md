@@ -6,6 +6,8 @@
 ## Highlights
 
 ## Backwards incompatible changes
+- The CDXML parser now returns mols with reasonable coordinates and in
+the same coordinate axes as the other RDKit file parsers. 
 - All methods returning `JSMol` and `JSReaction` objects now return a
 `nullptr` (`null` in JS) when faling to generate a valid object, while
 previously they were returning objects whose `is_valid()` method would
