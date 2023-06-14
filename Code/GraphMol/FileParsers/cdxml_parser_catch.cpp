@@ -27,7 +27,7 @@ std::string canon(const std::string &smi) {
   return res;
 }
 
-void check_smiles(const RWMol &m, const std::string &expected) {
+void check_smiles_and_roundtrip(const RWMol &m, const std::string &expected) {
   CHECK(MolToSmiles(m) == expected);
   //  std::cout << "*********" << std::endl;
   //  std::cout << MolToMolBlock(m) << std::endl;
@@ -648,8 +648,7 @@ TEST_CASE("CDXML") {
     int i = 0;
     for (auto &mol : mols) {
       INFO(i);
-      check_smiles(*mol, expected[i]);
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+      check_smiles_and_roundtrip(*mol, expected[i++]);
     }
   }
   SECTION("protecting group") {
@@ -659,8 +658,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
-      check_smiles(*mol, expected[i]);
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+      check_smiles_and_roundtrip(*mol, expected[i++]);
     }
   }
   SECTION("protecting group 2") {
@@ -670,8 +668,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
-      check_smiles(*mol, expected[i]);
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+      check_smiles_and_roundtrip(*mol, expected[i++]);
     }
   }
 
@@ -689,8 +686,7 @@ TEST_CASE("CDXML") {
     int i = 0;
     for (auto &mol : mols) {
       INFO(i);
-      check_smiles(*mol, expected[i]);
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+      check_smiles_and_roundtrip(*mol, expected[i++]);
     }
   }
 
@@ -709,8 +705,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
-      check_smiles(*mol, expected[i]);
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+      check_smiles_and_roundtrip(*mol, expected[i++]);
     }
   }
   SECTION("Malformed") {
@@ -731,8 +726,7 @@ TEST_CASE("CDXML") {
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
-        check_smiles(*mol, expected[i]);
-        CHECK(MolToSmiles(*mol) == expected[i++]);
+        check_smiles_and_roundtrip(*mol, expected[i++]);
       }
     }
 
@@ -748,8 +742,7 @@ TEST_CASE("CDXML") {
         auto mols = CDXMLFileToMols(fname);
         CHECK(mols.size() == 1);
         auto &m = *mols.back();
-        CHECK(MolToSmiles(m) == canon(expected[i]));
-        check_smiles(m, expected[i]);
+        check_smiles_and_roundtrip(m, expected[i]);
       }
     }
 
@@ -765,8 +758,7 @@ TEST_CASE("CDXML") {
           CHECK(mol->getBondWithIdx(11)->getStereo() ==
                 Bond::BondStereo::STEREOANY);
         }
-        check_smiles(*mol, expected[i]);
-        CHECK(MolToSmiles(*mol) == expected[i++]);
+        check_smiles_and_roundtrip(*mol, expected[i++]);
       }
     }
     {
@@ -779,8 +771,7 @@ TEST_CASE("CDXML") {
         CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
         CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
         CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
-        check_smiles(*mol, expected[i]);
-        CHECK(MolToSmiles(*mol) == expected[i++]);
+        check_smiles_and_roundtrip(*mol, expected[i++]);
       }
     }
   }

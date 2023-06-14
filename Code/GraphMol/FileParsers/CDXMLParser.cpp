@@ -14,7 +14,6 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
-#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/BadFileException.h>
 #include <fstream>
@@ -120,12 +119,13 @@ std::vector<T> to_vec(const std::string &s) {
 void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength,
                 double bondLength) {
   double avg_bond_length = 0.0;
-  if (bondLength == -1) {
+  if (bondLength < 0) {
     // If we don't have a bond length for any reason, just scale the avgerage
     // bond length
     for (auto &bond : mol.bonds()) {
-      avg_bond_length += MolTransforms::getBondLength(
-          conf, bond->getBeginAtomIdx(), bond->getEndAtomIdx());
+      avg_bond_length += (conf.getAtomPos(bond->getBeginAtomIdx()) -
+                          conf.getAtomPos(bond->getEndAtomIdx()))
+                             .length();
     }
     avg_bond_length /= mol.getNumBonds();
   } else {
@@ -420,7 +420,6 @@ bool parse_fragment(RWMol &mol, ptree &frag,
     for (auto &bond : bonds) {
       unsigned int bond_idx;
       bool swap = false;
-      auto orig = bond.display;
       if (bond.display == "WedgeEnd") {
         swap = true;
         bond.display = "WedgeBegin";
