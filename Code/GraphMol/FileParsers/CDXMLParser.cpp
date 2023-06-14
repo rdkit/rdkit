@@ -14,7 +14,6 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
-#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/BadFileException.h>
 #include <fstream>
@@ -117,21 +116,25 @@ std::vector<T> to_vec(const std::string &s) {
   return n;
 }
 
-void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength, double bondLength) {
+void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength,
+                double bondLength) {
   double avg_bond_length = 0.0;
-  if(bondLength == -1) {
-    // If we don't have a bond length for any reason, just scale the avgerage bond length
-    for(auto &bond: mol.bonds()) {
-      avg_bond_length += MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(), bond->getEndAtomIdx());
+  if (bondLength < 0) {
+    // If we don't have a bond length for any reason, just scale the avgerage
+    // bond length
+    for (auto &bond : mol.bonds()) {
+      avg_bond_length += (conf.getAtomPos(bond->getBeginAtomIdx()) -
+                          conf.getAtomPos(bond->getEndAtomIdx()))
+                             .length();
     }
-    avg_bond_length/=mol.getNumBonds();
+    avg_bond_length /= mol.getNumBonds();
   } else {
     avg_bond_length = bondLength;
   }
-  
-  if(avg_bond_length > 0) {
-    double scale = 1.5/avg_bond_length;
-    for(auto &pos:conf.getPositions()) {
+
+  if (avg_bond_length > 0) {
+    double scale = 1.5 / avg_bond_length;
+    for (auto &pos : conf.getPositions()) {
       pos *= scale;
     }
   }
@@ -416,25 +419,24 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   if (!skip_fragment) {
     for (auto &bond : bonds) {
       unsigned int bond_idx;
-        bool swap = false;
-        auto orig = bond.display;
-        if (bond.display == "WedgeEnd") {
-            swap = true;
-            bond.display = "WedgeBegin";
-        }
-        if (bond.display == "WedgedHashEnd") {
-            swap = true;
-            bond.display = "WedgedHashBegin";
-        }
-        
-        if (swap) {
-            // here The "END" of the bond is really our Beginning.
-            // swap atom direction
-            bond_idx = mol.addBond(ids[bond.end]->getIdx(),
-                                   ids[bond.start]->getIdx(), bond.getBondType()) -
-            1;
-        } else {
-            bond_idx = mol.addBond(ids[bond.start]->getIdx(),
+      bool swap = false;
+      if (bond.display == "WedgeEnd") {
+        swap = true;
+        bond.display = "WedgeBegin";
+      }
+      if (bond.display == "WedgedHashEnd") {
+        swap = true;
+        bond.display = "WedgedHashBegin";
+      }
+
+      if (swap) {
+        // here The "END" of the bond is really our Beginning.
+        // swap atom direction
+        bond_idx = mol.addBond(ids[bond.end]->getIdx(),
+                               ids[bond.start]->getIdx(), bond.getBondType()) -
+                   1;
+      } else {
+        bond_idx = mol.addBond(ids[bond.start]->getIdx(),
                                ids[bond.end]->getIdx(), bond.getBondType()) -
                    1;
       }
@@ -569,24 +571,24 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
 
               bool hasConf = false;
               for (auto &atm : res->atoms()) {
-		RDGeom::Point3D p{0.0,0.0,0.0};
+                RDGeom::Point3D p{0.0, 0.0, 0.0};
 
                 if (atm->hasProp(CDX_ATOM_POS)) {
                   hasConf = true;
                   const std::vector<double> coord =
                       atm->getProp<std::vector<double>>(CDX_ATOM_POS);
 
-		  if (coord.size() == 2) {
+                  if (coord.size() == 2) {
                     p.x = coord[0];
                     p.y = -1 * coord[1];  // CDXML uses an inverted coordinate
                                           // system, so we need to reverse that
                     p.z = 0.0;
                   }
-		}
-		conf->setAtomPos(atm->getIdx(), p);
-		atm->clearProp(CDX_ATOM_POS);
+                }
+                conf->setAtomPos(atm->getIdx(), p);
+                atm->clearProp(CDX_ATOM_POS);
               }
-                            
+
               if (hasConf) {
                 scaleBonds(*res, *conf, 1.5, bondLength);
                 auto confidx = res->addConformer(conf.release());
