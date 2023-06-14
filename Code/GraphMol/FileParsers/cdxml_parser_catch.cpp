@@ -811,3 +811,34 @@ TEST_CASE("bad stereo in a natural product") {
         "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C");
   }
 }
+
+TEST_CASE("Github #6262: preserve bond wedging") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("case 1") {
+    auto fname = cdxmlbase + "stereo6.cdxml";
+    auto mols = CDXMLFileToMols(fname);
+    REQUIRE(mols.size() == 1);
+    {
+      REQUIRE(mols[0]->getBondBetweenAtoms(2, 5));
+      unsigned int cfg = 0;
+      CHECK(mols[0]->getBondBetweenAtoms(2, 5)->getPropIfPresent(
+          common_properties::_MolFileBondCfg, cfg));
+      CHECK(cfg == 1);
+    }
+    {
+      REQUIRE(mols[0]->getBondBetweenAtoms(1, 4));
+      unsigned int cfg = 0;
+      CHECK(mols[0]->getBondBetweenAtoms(1, 4)->getPropIfPresent(
+          common_properties::_MolFileBondCfg, cfg));
+      CHECK(cfg == 3);
+    }
+    {
+      REQUIRE(mols[0]->getBondBetweenAtoms(3, 8));
+      unsigned int cfg = 0;
+      CHECK(mols[0]->getBondBetweenAtoms(3, 8)->getPropIfPresent(
+          common_properties::_MolFileBondCfg, cfg));
+      CHECK(cfg == 2);
+    }
+  }
+}

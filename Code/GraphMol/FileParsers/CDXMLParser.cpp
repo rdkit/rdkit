@@ -449,12 +449,15 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       bnd->setProp("CDX_BOND_ID", bond.bond_id);
       if (bond.display == "WedgeBegin") {
         bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
+        bnd->setProp(common_properties::_MolFileBondCfg, 1);
       } else if (bond.display == "WedgedHashBegin") {
         bnd->setBondDir(Bond::BondDir::BEGINDASH);
+        bnd->setProp(common_properties::_MolFileBondCfg, 3);
       } else if (bond.display == "Wavy") {
         switch (bond.getBondType()) {
           case Bond::BondType::SINGLE:
             bnd->setBondDir(Bond::BondDir::UNKNOWN);
+            bnd->setProp(common_properties::_MolFileBondCfg, 2);
             break;
           case Bond::BondType::DOUBLE:
             bnd->setBondDir(Bond::BondDir::EITHERDOUBLE);
