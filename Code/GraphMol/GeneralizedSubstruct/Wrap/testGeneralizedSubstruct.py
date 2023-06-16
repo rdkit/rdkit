@@ -73,6 +73,32 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol2, xqm2)), 0)
     self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol2, xqm3)), 1)
 
+  def test5ControlSteps(self):
+    m = Chem.MolFromSmiles('COCC1OC(N)=N1 |LN:1:1.3|')
+    xqm1 = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
+    xqm2 = rdGeneralizedSubstruct.CreateExtendedQueryMol(m, doEnumeration=False)
+    xqm3 = rdGeneralizedSubstruct.CreateExtendedQueryMol(m, doTautomers=False)
+    xqm4 = rdGeneralizedSubstruct.CreateExtendedQueryMol(m, doEnumeration=False, doTautomers=False)
+
+    mol1 = Chem.MolFromSmiles('COCC1OC(N)=N1')
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol1, xqm1)), 1)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol1, xqm2)), 1)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol1, xqm3)), 1)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol1, xqm4)), 1)
+
+    mol2 = Chem.MolFromSmiles('COCC1OC(=N)N1')
+    self.assertEqual(len(mol2.GetSubstructMatches(m)), 0)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol2, xqm1)), 1)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol2, xqm2)), 1)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol2, xqm3)), 0)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol2, xqm4)), 0)
+
+    mol3 = Chem.MolFromSmiles('COOCC1OC(N)=N1')
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol3, xqm1)), 1)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol3, xqm2)), 0)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol3, xqm3)), 1)
+    self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol3, xqm4)), 0)
+
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

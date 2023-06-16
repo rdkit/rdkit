@@ -62,14 +62,39 @@ struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol
   std::string toJSON() const;
 };
 
-RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol
-createExtendedQueryMol(const RWMol &mol, bool adjustQueryProperties = false,
-                       MolOps::AdjustQueryParameters params = {});
+//! Creates an ExtendedQueryMol from the input molecule
+/*!
+  This takes a query molecule and, conceptually, performs the following steps to
+  produce an ExtendedQueryMol:
 
+    1. Enumerates features like Link Nodes and SRUs
+    2. Converts everything into TautomerQueries
+    3. Runs adjustQueryProperties()
+
+  Each step is optional
+
+    \param mol the molecule to start with
+    \param doEnumeration  enumerate features like Link Nodes and SRUs
+    \param doTautomers generate TautomerQueries
+    \param adjustQueryProperties call adjustQueryProperties on each of the
+       results
+    \param params  AdjustQueryParameters object controlling the operation of
+       adjustQueryProperties
+
+    \return The new ExtendedQueryMol
+
+*/
+RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol createExtendedQueryMol(
+    const RWMol &mol, bool doEnumeration = true, bool doTautomers = true,
+    bool adjustQueryProperties = false,
+    MolOps::AdjustQueryParameters params = {});
+
+//! does a substructure search with an ExtendedQueryMol
 RDKIT_GENERALIZEDSUBSTRUCT_EXPORT std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ExtendedQueryMol &query,
     const SubstructMatchParameters &params = SubstructMatchParameters());
 
+//! checks if a molecule has a match to an ExtendedQueryMol
 inline bool hasSubstructMatch(
     const ROMol &mol, const ExtendedQueryMol &query,
     const SubstructMatchParameters &params = SubstructMatchParameters()) {

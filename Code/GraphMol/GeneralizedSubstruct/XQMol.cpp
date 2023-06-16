@@ -63,28 +63,16 @@ std::vector<MatchVectType> SubstructMatch(
   return res;
 }
 
-ExtendedQueryMol createExtendedQueryMol(const RWMol &mol,
+ExtendedQueryMol createExtendedQueryMol(const RWMol &mol, bool doEnumeration,
+                                        bool doTautomers,
                                         bool adjustQueryProperties,
                                         MolOps::AdjustQueryParameters params) {
-  auto bndl = MolEnumerator::enumerate(mol);
+  MolBundle bndl;
+  if (doEnumeration) {
+    bndl = MolEnumerator::enumerate(mol);
+  }
   if (bndl.empty()) {
-    const ROMol *lmol = nullptr;
-    std::unique_ptr<ROMol> holder;
-    if (adjustQueryProperties) {
-      holder.reset(MolOps::adjustQueryProperties(mol, &params));
-      lmol = holder.get();
-    } else {
-      lmol = &mol;
-    }
-    // nothing enumerated
-    auto tq = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*lmol));
-    if (tq->getTautomers().size() == 1) {
-      // no tautomers, return just the mol
-      return {std::make_unique<RWMol>(*lmol)};
-    } else {
-      // return the tautomers
-      return {std::move(tq)};
-    }
+    // nothing enumerated, just add the input molecule
     bndl.addMol(boost::shared_ptr<ROMol>(new ROMol(mol)));
   }
 
@@ -97,13 +85,17 @@ ExtendedQueryMol createExtendedQueryMol(const RWMol &mol,
     } else {
       lmol = bndl.getMol(0).get();
     }
-    auto tq = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*lmol));
-    if (tq->getTautomers().size() == 1) {
-      // no tautomers, just one molecule, return the molecule:
-      return {std::make_unique<RWMol>(*lmol)};
+    if (doTautomers) {
+      auto tq = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*lmol));
+      if (tq->getTautomers().size() == 1) {
+        // no tautomers, just one molecule, return the molecule:
+        return {std::make_unique<RWMol>(*lmol)};
+      } else {
+        // return the tautomers
+        return {std::move(tq)};
+      }
     } else {
-      // return the tautomers
-      return {std::move(tq)};
+      return {std::make_unique<RWMol>(*lmol)};
     }
   } else {
     MolBundle lbndl;
@@ -119,12 +111,14 @@ ExtendedQueryMol createExtendedQueryMol(const RWMol &mol,
     bool hadTautomers = false;
     auto tautomerBundle =
         std::make_unique<std::vector<std::unique_ptr<TautomerQuery>>>(0);
-    for (const auto &bmol : lbndl.getMols()) {
-      auto tq = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*bmol));
-      if (tq->getTautomers().size() > 1) {
-        hadTautomers = true;
+    if (doTautomers) {
+      for (const auto &bmol : lbndl.getMols()) {
+        auto tq = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*bmol));
+        if (tq->getTautomers().size() > 1) {
+          hadTautomers = true;
+        }
+        tautomerBundle->emplace_back(std::move(tq));
       }
-      tautomerBundle->emplace_back(std::move(tq));
     }
     if (!hadTautomers) {
       // no tautomers, just return the bundle

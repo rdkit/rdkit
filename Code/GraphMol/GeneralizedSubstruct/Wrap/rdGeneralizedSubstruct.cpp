@@ -71,14 +71,14 @@ PyObject *getSubstructsHelper(const ROMol &mol, const ExtendedQueryMol &query,
 }
 
 ExtendedQueryMol *createExtendedQueryMolHelper(
-    const ROMol &mol, bool adjustQueryProperties,
-    MolOps::AdjustQueryParameters *ps) {
+    const ROMol &mol, bool doEnumeration, bool doTautomers,
+    bool adjustQueryProperties, MolOps::AdjustQueryParameters *ps) {
   MolOps::AdjustQueryParameters defaults;
   if (!ps) {
     ps = &defaults;
   }
-  return new ExtendedQueryMol(
-      std::move(createExtendedQueryMol(mol, adjustQueryProperties, *ps)));
+  return new ExtendedQueryMol(std::move(createExtendedQueryMol(
+      mol, doEnumeration, doTautomers, adjustQueryProperties, *ps)));
 }
 
 }  // namespace
@@ -114,11 +114,21 @@ BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
        python::arg("params") = python::object()),
       "returns all matches (if any) of a molecule to a generalized substructure query");
 
-  python::def(
-      "CreateExtendedQueryMol", createExtendedQueryMolHelper,
-      (python::arg("mol"), python::arg("adjustQueryProperties") = false,
-       python::arg("adjustQueryParameters") = python::object()),
-      python::return_value_policy<python::manage_new_object>(),
-      R"DOC(Converts a molecule into an extended query molecule for generalized substructure searching. 
-  This includes enumerating link nodes, varaible attachment points, SRUs, and constructing TautomerQueries)DOC");
+  python::def("CreateExtendedQueryMol", createExtendedQueryMolHelper,
+              (python::arg("mol"), python::arg("doEnumeration") = true,
+               python::arg("doTautomers") = true,
+               python::arg("adjustQueryProperties") = false,
+               python::arg("adjustQueryParameters") = python::object()),
+              python::return_value_policy<python::manage_new_object>(),
+              R"DOC(Creates an ExtendedQueryMol from the input molecule
+
+  This takes a query molecule and, conceptually, performs the following steps to
+  produce an ExtendedQueryMol:
+
+    1. Enumerates features like Link Nodes and SRUs
+    2. Converts everything into TautomerQueries
+    3. Runs adjustQueryProperties()
+
+  Each step is optional
+)DOC");
 }
