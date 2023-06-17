@@ -6,6 +6,65 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
+David Cosgrove, Andrew Dalke, Eloy Félix, Gareth Jones, Juuso Lehtivarjo, Vedran
+Miletić, Timothy Ngotiaoco, Ernst-Georg Schmid, Ricardo Rodriguez-Schmidt, Paolo
+Tosco, Riccardo Vianello, Maciej Wójcikowski, wangyingxie, teltim, lhyuen
+
+## Bug Fixes:
+  - PF6- still can not get Bad Conformer Id after the #510 issue fix 
+ (github #5145 from wangyingxie)
+  - Crash when parsing InChI
+ (github #6172 from eloyfelix)
+  - generateDepictionMatching2DStructure: bonds to R groups should be generic when matching
+ (github #6306 from ptosco)
+  - MolToSmiles(canonical=False) creates the wrong _smilesBondOutputOrder property
+ (github #6315 from adalke)
+  - MolToMolBlock ignores unspecified information for double bonds in rings
+ (github #6316 from mwojcikowski)
+  - bump yaehmop version
+ (github #6330 from greglandrum)
+  - rdMolDraw2D.MolDraw2DCairo produces Pre-condition Violation: no draw context when SetColour, DrawRect or DrawLine was called.
+ (github #6336 from lhyuen)
+  - Added cstdint include
+ (github #6338 from vedranmiletic)
+  - remove the dependency from python distutils in the top CMakeLists.txt file
+ (github #6339 from rvianello)
+  - take drawOptions into account when exporting structure to xlsx format
+ (github #6341 from ptosco)
+  - Fix swig memory leak
+ (github #6346 from jones-gareth)
+  - Add inlines to ForceFieldHelpers header functions
+ (github #6356 from JLVarjo)
+  - Bug relating to this PF6- still can not get Bad Conformer Id
+ (github #6365 from teltim)
+  - straightenDepiction should not consider 0-degree rotations as multiples of 60
+ (github #6367 from ptosco)
+  - expose two missing EmbedFailureCauses tags to python
+ (github #6372 from greglandrum)
+  - Molfile Unsaturation Query Not Parsed Correctly
+ (github #6395 from timothyngo)
+  - MolDraw2D: chiral tag overlapping atom label
+ (github #6397 from greglandrum)
+  - expose some missing CXSmiles flags to python
+ (github #6415 from greglandrum)
+  - V3000 structure segfaults when converting to SVG
+ (github #6416 from ergo70)
+  - WedgeMolBonds won't wedge/dash a 2nd bond when input already has a wedge/dash around the same chiral atom
+ (github #6423 from ricrogz)
+  - MolEnumerate should clear the reaction properties on its results
+ (github #6432 from greglandrum)
+  - Removing Hs on a pyrrol-like structure throws kekulization error
+ (github #6437 from ricrogz)
+
+
+# Release_2023.03.1
+(Changes relative to Release_2022.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
 Michael Banck, Christopher Von Bargen, Jason Biggs, Jonathan Bisson, Jacob
 Bloom, shang chien, David Cosgrove, Iren Azra Azra Coskun, Andrew Dalke, Eloy
 Félix, Peter Gedeck, Desmond Gilmour, Mosè Giordano, Emanuele Guidotti, Tad
