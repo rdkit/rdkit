@@ -38,6 +38,8 @@ const std::string CDX_ATOM_ID("_CDX_ATOM_ID");
 const std::string CDX_BOND_ID("_CDX_BOND_ID");
 const std::string CDX_BOND_ORDERING("CDXML_BOND_ORDERING");
 
+const double RDKIT_DEPICT_BONDLENGTH = 1.5;
+
 struct BondInfo {
   int bond_id = -1;
   int start = -1;
@@ -593,7 +595,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
               }
 
               if (hasConf) {
-                scaleBonds(*res, *conf, 1.5, bondLength);
+                scaleBonds(*res, *conf, RDKIT_DEPICT_BONDLENGTH, bondLength);
                 auto confidx = res->addConformer(conf.release());
                 DetectAtomStereoChemistry(*res, &res->getConformer(confidx));
               }
