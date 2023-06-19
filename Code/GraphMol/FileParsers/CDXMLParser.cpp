@@ -133,7 +133,7 @@ void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength,
   }
 
   if (avg_bond_length > 0) {
-    double scale = 1.5 / avg_bond_length;
+    double scale = targetBondLength / avg_bond_length;
     for (auto &pos : conf.getPositions()) {
       pos *= scale;
     }
