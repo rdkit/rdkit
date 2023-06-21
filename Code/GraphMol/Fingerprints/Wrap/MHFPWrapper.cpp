@@ -128,6 +128,8 @@ VectExplicitBitVect EncodeSECFPMolsBulk(
                               min_radius, length);
 }
 
+BOOST_PYTHON_FUNCTION_OVERLOADS(FromStringArrayOverloads, FromStringArray, 2, 2)
+BOOST_PYTHON_FUNCTION_OVERLOADS(FromArrayOverloads, FromArray, 2, 2)
 BOOST_PYTHON_FUNCTION_OVERLOADS(CreateShinglingFromSmilesOverloads,
                                 CreateShinglingFromSmiles, 2, 7)
 BOOST_PYTHON_FUNCTION_OVERLOADS(CreateShinglingFromMolOverloads,
@@ -151,12 +153,14 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
   python::class_<MHFPEncoder>(
       "MHFPEncoder",
       python::init<python::optional<unsigned int, unsigned int>>())
-      .def("FromStringArray", &FromStringArray,
-           ((python::arg("vec")),
-            "Creates a MHFP vector from a list of arbitrary strings."))
-      .def("FromArray", &FromArray,
-           ((python::arg("vec")),
-            "Creates a MHFP vector from a list of unsigned integers."))
+      .def("FromStringArray", FromStringArray,
+           FromStringArrayOverloads(
+               (python::arg("vec")),
+               "Creates a MHFP vector from a list of arbitrary strings."))
+      .def("FromArray", FromArray,
+           FromArrayOverloads(
+               (python::arg("vec")),
+               "Creates a MHFP vector from a list of unsigned integers."))
       .def("CreateShinglingFromSmiles", CreateShinglingFromSmiles,
            CreateShinglingFromSmilesOverloads(
                (python::arg("smiles"), python::arg("radius") = 3,
