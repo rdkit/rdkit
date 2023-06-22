@@ -58,10 +58,10 @@ void MCSParameters::setMCSAtomTyperFromConstChar(const char* atomComp) {
       {"Elements", AtomCompareElements},
       {"Isotopes", AtomCompareIsotopes},
       {"AnyHeavy", AtomCompareAnyHeavyAtom}};
-  try {
-    setMCSAtomTyperFromEnum(atomCompStringToEnum.at(atomComp));
-  } catch (const std::out_of_range&) {
-    // we accept "def" as a no-op
+  const auto it = atomCompStringToEnum.find(atomComp);
+  // we accept "def" as a no-op
+  if (it != atomCompStringToEnum.end()) {
+    setMCSAtomTyperFromEnum(it->second);
   }
 }
 
@@ -87,10 +87,10 @@ void MCSParameters::setMCSBondTyperFromConstChar(const char* bondComp) {
       {"Any", BondCompareAny},
       {"Order", BondCompareOrder},
       {"OrderExact", BondCompareOrderExact}};
-  try {
-    setMCSBondTyperFromEnum(bondCompStringToEnum.at(bondComp));
-  } catch (const std::out_of_range&) {
-    // we accept "def" as a no-op
+  const auto it = bondCompStringToEnum.find(bondComp);
+  // we accept "def" as a no-op
+  if (it != bondCompStringToEnum.end()) {
+    setMCSBondTyperFromEnum(it->second);
   }
 }
 
