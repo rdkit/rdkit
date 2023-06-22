@@ -42,6 +42,7 @@ TEST_CASE("Property list conversion", "[atom_list_properties]") {
     CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo1") == 6);
     CHECK(m->getAtomWithIdx(2)->getProp<std::int64_t>("foo2") == 9);
     CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo3") == 1);
+    CHECK(m->getAtomWithIdx(1)->getProp<std::string>("foo3") == "1");
   }
   SECTION("basics: dprops") {
     auto m = "COC"_smiles;
