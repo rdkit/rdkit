@@ -20,6 +20,7 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -2419,5 +2420,83 @@ TEST_CASE("smilesSymbol in SMARTS", "[smarts][smilesSymbol]") {
     REQUIRE(m);
     m->getAtomWithIdx(0)->setProp(common_properties::smilesSymbol, "Xa");
     CHECK(MolToSmarts(*m) == "[Xa;C,N,O]C");
+  }
+}
+
+TEST_CASE("ensure unused features are not used") {
+  SECTION("isotopes") {
+    auto mol1 = "FOCN[15F]"_smiles;
+    REQUIRE(mol1);
+    auto mol2 = "[15F]OCNF"_smiles;
+    REQUIRE(mol2);
+    std::vector<unsigned int> ranks;
+    SmilesWriteParams ps;
+    ps.doIsomericSmiles = true;
+    auto smiles = MolToSmiles(*mol1, ps);
+    CHECK(smiles == "FOCN[15F]");
+    smiles = MolToSmiles(*mol2, ps);
+    CHECK(smiles == "FNCO[15F]");
+
+    ps.doIsomericSmiles = false;
+    smiles = MolToSmiles(*mol1, ps);
+    CHECK(smiles == "FNCOF");
+    smiles = MolToSmiles(*mol2, ps);
+    CHECK(smiles == "FNCOF");
+  }
+
+  SECTION("chirality") {
+    auto mol1 = "FC(Cl)OCN[C@H](F)Cl"_smiles;
+    REQUIRE(mol1);
+    auto mol2 = "FC(Cl)NCO[C@H](F)Cl"_smiles;
+    REQUIRE(mol2);
+    std::vector<unsigned int> ranks;
+    SmilesWriteParams ps;
+    ps.doIsomericSmiles = true;
+    auto smiles = MolToSmiles(*mol1, ps);
+    CHECK(smiles == "FC(Cl)OCN[C@H](F)Cl");
+    smiles = MolToSmiles(*mol2, ps);
+    CHECK(smiles == "FC(Cl)NCO[C@H](F)Cl");
+
+    ps.doIsomericSmiles = false;
+    smiles = MolToSmiles(*mol1, ps);
+    CHECK(smiles == "FC(Cl)NCOC(F)Cl");
+    smiles = MolToSmiles(*mol2, ps);
+    CHECK(smiles == "FC(Cl)NCOC(F)Cl");
+  }
+
+  SECTION("enhanced stereo") {
+    // if we aren't doing CXSMILES then the enhanced stereo shouldn't enter into
+    // consideration in canonicalization
+    auto mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
+    REQUIRE(mol1);
+    auto mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
+    REQUIRE(mol2);
+    std::vector<unsigned int> ranks;
+    SmilesWriteParams ps;
+    ps.doIsomericSmiles = true;
+    auto smiles = MolToSmiles(*mol1, ps);
+    CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl");
+    smiles = MolToSmiles(*mol2, ps);
+    CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl");
+
+    smiles = MolToCXSmiles(*mol1, ps);
+    CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|");
+    smiles = MolToCXSmiles(*mol2, ps);
+    CHECK(smiles == "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|");
+
+    ps.doIsomericSmiles = false;
+    smiles = MolToSmiles(*mol1, ps);
+    CHECK(smiles == "FC(Cl)NCOC(F)Cl");
+    smiles = MolToSmiles(*mol2, ps);
+    CHECK(smiles == "FC(Cl)NCOC(F)Cl");
+  }
+
+  SECTION("problematic cases") {
+    auto mol1 =
+        "[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,11,o2:5,7|"_smiles;
+    REQUIRE(mol1);
+    Canon::canonicalizeEnhancedStereo(*mol1);
+    auto smiles = MolToSmiles(*mol1);
+    CHECK(smiles == "C[C@H]1C[CH]CC(C[C@@H](C)[C@@H](C)O)C1");
   }
 }
