@@ -247,6 +247,16 @@ RWMol *reionize(const RWMol *mol, const CleanupParameters &params) {
   return static_cast<RWMol *>(reionizer->reionize(*mol));
 }
 
+void normalizeInPlace(RWMol &mol, const CleanupParameters &params) {
+  std::unique_ptr<Normalizer> normalizer{normalizerFromParams(params)};
+  normalizer->normalizeInPlace(mol);
+}
+
+void reionizeInPlace(RWMol &mol, const CleanupParameters &params) {
+  std::unique_ptr<Reionizer> reionizer{reionizerFromParams(params)};
+  reionizer->reionizeInPlace(mol);
+}
+
 RWMol *removeFragments(const RWMol *mol, const CleanupParameters &params) {
   PRECONDITION(mol, "bad molecule");
   std::unique_ptr<FragmentRemover> remover{fragmentRemoverFromParams(params)};

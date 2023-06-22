@@ -1038,3 +1038,51 @@ TEST_CASE("Github 5784: kekulization error when enumerating tautomers") {
     REQUIRE(res);
   }
 }
+
+TEST_CASE("in place operations") {
+  SECTION("reionizer") {
+    MolStandardize::Reionizer reion;
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    reion.reionizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=C([O-])c1cccc(O)c1");
+  }
+  SECTION("reionize") {
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    MolStandardize::reionizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=C([O-])c1cccc(O)c1");
+  }
+  SECTION("uncharge") {
+    MolStandardize::Uncharger unchg;
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    unchg.unchargeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=C(O)c1cccc(O)c1");
+  }
+  SECTION("normalizer") {
+    MolStandardize::Normalizer nrml;
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("O=N(=O)-CC-N(=O)=O", ps)};
+    REQUIRE(m);
+    nrml.normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=[N+]([O-])CC[N+](=O)[O-]");
+    m.reset(SmilesToMol("OCCN", ps));
+    REQUIRE(m);
+    nrml.normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "NCCO");
+  }
+  SECTION("normalize") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("O=N(=O)-CC-N(=O)=O", ps)};
+    REQUIRE(m);
+    MolStandardize::normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=[N+]([O-])CC[N+](=O)[O-]");
+    m.reset(SmilesToMol("OCCN", ps));
+    REQUIRE(m);
+    MolStandardize::normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "NCCO");
+  }
+}

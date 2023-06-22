@@ -114,6 +114,11 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *reionize(
     const RWMol *mol,
     const CleanupParameters &params = defaultCleanupParameters);
 
+RDKIT_MOLSTANDARDIZE_EXPORT void normalizeInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
+RDKIT_MOLSTANDARDIZE_EXPORT void reionizeInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
+
 //! Works the same as FragmentRemover().remove(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *removeFragments(
     const RWMol *mol,
