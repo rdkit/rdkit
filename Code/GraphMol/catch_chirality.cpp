@@ -216,8 +216,8 @@ TEST_CASE("isBondPotentialStereoBond", "[unittest]") {
       REQUIRE(mol);
       CHECK(
           Chirality::detail::isBondPotentialStereoBond(mol->getBondWithIdx(1)));
-      CHECK(!Chirality::detail::isBondPotentialStereoBond(
-          mol->getBondWithIdx(3)));
+      CHECK(
+          Chirality::detail::isBondPotentialStereoBond(mol->getBondWithIdx(3)));
     }
     {
       SmilesParserParams ps;
@@ -3603,4 +3603,27 @@ TEST_CASE(
 
   auto sinfo = Chirality::detail::getStereoInfo(at);
   CHECK(sinfo.type == Chirality::StereoType::Atom_Tetrahedral);
+}
+
+TEST_CASE("double bonded N with H should be stereogenic", "[bug][stereo]") {
+  SECTION("assign stereo") {
+    // Parametrize test to run under legacy and new stereo perception
+    const auto legacy_stereo = GENERATE(true, false);
+    INFO("Legacy stereo perception == " << legacy_stereo)
+
+    UseLegacyStereoPerceptionFixture reset_stereo_perception;
+    Chirality::setUseLegacyStereoPerception(legacy_stereo);
+    auto m = "[H]/N=C/F"_smiles;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(1)->getStereo() != Bond::BondStereo::STEREONONE);
+  }
+  SECTION("find potential stereo") {
+    auto m = "[H]/N=C/F"_smiles;
+    REQUIRE(m);
+    CHECK(Chirality::detail::isBondPotentialStereoBond(m->getBondWithIdx(1)));
+    bool cleanIt = false;
+    bool flagPossible = true;
+    auto si = Chirality::findPotentialStereo(*m, cleanIt, flagPossible);
+    CHECK(si.size() == 1);
+  }
 }
