@@ -2464,6 +2464,26 @@ TEST_CASE("ensure unused features are not used") {
     CHECK(smiles == "FC(Cl)NCOC(F)Cl");
   }
 
+  SECTION("ring stereo") {
+    auto mol1 = "CC1CCC(CC1)NO[C@@H]1CC[C@H](C)CC1"_smiles;
+    REQUIRE(mol1);
+    auto mol2 = "CC1CCC(CC1)ON[C@@H]1CC[C@H](C)CC1"_smiles;
+    REQUIRE(mol2);
+    std::vector<unsigned int> ranks;
+    SmilesWriteParams ps;
+    ps.doIsomericSmiles = true;
+    auto smiles = MolToSmiles(*mol1, ps);
+    CHECK(smiles == "CC1CCC(NO[C@H]2CC[C@@H](C)CC2)CC1");
+    smiles = MolToSmiles(*mol2, ps);
+    CHECK(smiles == "CC1CCC(ON[C@H]2CC[C@@H](C)CC2)CC1");
+
+    ps.doIsomericSmiles = false;
+    smiles = MolToSmiles(*mol1, ps);
+    CHECK(smiles == "CC1CCC(NOC2CCC(C)CC2)CC1");
+    smiles = MolToSmiles(*mol2, ps);
+    CHECK(smiles == "CC1CCC(NOC2CCC(C)CC2)CC1");
+  }
+
   SECTION("enhanced stereo") {
     // if we aren't doing CXSMILES then the enhanced stereo shouldn't enter into
     // consideration in canonicalization
