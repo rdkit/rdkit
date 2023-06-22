@@ -234,11 +234,17 @@ inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
       try {
         res = boost::any_cast<std::string>(rdvalue_cast<boost::any &>(val));
       } catch (const boost::bad_any_cast &) {
-        if (rdvalue_cast<boost::any &>(val).type() == typeid(long)) {
+        auto &rdtype = rdvalue_cast<boost::any &>(val).type();
+        if (rdtype == typeid(long)) {
           res = boost::lexical_cast<std::string>(
               boost::any_cast<long>(rdvalue_cast<boost::any &>(val)));
-        } else if (rdvalue_cast<boost::any &>(val).type() ==
-                   typeid(unsigned long)) {
+        } else if (rdtype == typeid(int64_t)) {
+            res = boost::lexical_cast<std::string>(
+                boost::any_cast<int64_t>(rdvalue_cast<boost::any &>(val)));
+        } else if (rdtype == typeid(uint64_t)) {
+            res = boost::lexical_cast<std::string>(
+                boost::any_cast<uint64_t>(rdvalue_cast<boost::any &>(val)));
+        } else if (rdtype == typeid(unsigned long)) {
           res = boost::lexical_cast<std::string>(
               boost::any_cast<unsigned long>(rdvalue_cast<boost::any &>(val)));
         } else {
