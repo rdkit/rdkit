@@ -125,6 +125,7 @@ add_subdirectory(MolStandardize)
 add_subdirectory(ScaffoldNetwork)
 add_subdirectory(MolEnumerator)
 add_subdirectory(Abbreviations)
+add_subdirectory(GeneralizedSubstruct)
 
 
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol
@@ -190,5 +191,8 @@ rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp
 rdkit_catch_test(queryTestsCatch catch_queries.cpp
         LINK_LIBRARIES SmilesParse GraphMol)
 
+rdkit_catch_test(molbundleTestsCatch catch_molbundle.cpp
+        LINK_LIBRARIES SmilesParse GraphMol)
+        
 rdkit_catch_test(pickleTestsCatch catch_pickles.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
