@@ -815,12 +815,16 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
   if (allowOptionalAttachments) {
     std::unique_ptr<RDKit::ROMol> molHs(RDKit::MolOps::addHs(mol));
     CHECK_INVARIANT(molHs, "addHs returned a nullptr");
-    auto matches = SubstructMatch(*molHs, query);
+    auto queryParams = RDKit::MolOps::AdjustQueryParameters::noAdjustments();
+    queryParams.adjustSingleBondsToDegreeOneNeighbors = true;
+    queryParams.adjustSingleBondsBetweenAromaticAtoms = true;
+    std::unique_ptr<RDKit::ROMol> queryAdj(RDKit::MolOps::adjustQueryProperties(query, &queryParams));
+    auto matches = SubstructMatch(*molHs, *queryAdj);
     if (matches.empty()) {
       allowOptionalAttachments = false;
     } else {
       for (const auto &pair :
-           getMostSubstitutedCoreMatch(*molHs, query, matches)) {
+           getMostSubstitutedCoreMatch(*molHs, *queryAdj, matches)) {
         if (molHs->getAtomWithIdx(pair.second)->getAtomicNum() != 1 &&
             refMatch.at(pair.first) >= 0) {
           matchVect.push_back(pair);
@@ -966,8 +970,12 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
   if (!minimizeRotation) {
     unsigned int count60vs30[2] = {0, 0};
     for (auto theta : minRotationBin.thetaValues) {
-      theta += d_thetaMin;
-      auto idx = static_cast<unsigned int>((fabs(theta) + 0.5) / INCR_DEG) % 2;
+      auto absTheta = fabs(theta + d_thetaMin);
+      // Do not count 0 as multiple of 60 degrees
+      if (absTheta < ALMOST_ZERO) {
+        continue;
+      }
+      auto idx = static_cast<unsigned int>((absTheta + 0.5) / INCR_DEG) % 2;
       CHECK_INVARIANT(idx < 2, "");
       ++count60vs30[idx];
     }

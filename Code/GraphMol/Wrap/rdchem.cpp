@@ -9,10 +9,10 @@
 //  of the RDKit source tree.
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdchem_array_API
-#include <RDBoost/Wrap.h>
 #include "rdchem.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SanitException.h>
+#include <RDBoost/Wrap.h>
 #include <RDBoost/import_array.h>
 
 #include <sstream>
@@ -168,21 +168,6 @@ BOOST_PYTHON_MODULE(rdchem) {
   //  Utility Classes
   //
   //*********************************************
-  python::class_<AtomIterSeq>(
-      "_ROAtomSeq",
-      "Read-only sequence of atoms, not constructible from Python.",
-      python::no_init)
-      .def("__iter__", &AtomIterSeq::__iter__,
-           python::return_internal_reference<
-               1, python::with_custodian_and_ward_postcall<0, 1>>())
-      .def("__next__", &AtomIterSeq::next,
-           python::return_internal_reference<
-               1, python::with_custodian_and_ward_postcall<0, 1>>())
-
-      .def("__len__", &AtomIterSeq::len)
-      .def("__getitem__", &AtomIterSeq::get_item,
-           python::return_internal_reference<
-               1, python::with_custodian_and_ward_postcall<0, 1>>());
   python::class_<QueryAtomIterSeq>("_ROQAtomSeq",
                                    "Read-only sequence of atoms matching a "
                                    "query, not constructible from Python.",
@@ -195,20 +180,6 @@ BOOST_PYTHON_MODULE(rdchem) {
                1, python::with_custodian_and_ward_postcall<0, 1>>())
       .def("__len__", &QueryAtomIterSeq::len)
       .def("__getitem__", &QueryAtomIterSeq::get_item,
-           python::return_internal_reference<
-               1, python::with_custodian_and_ward_postcall<0, 1>>());
-  python::class_<BondIterSeq>(
-      "_ROBondSeq",
-      "Read-only sequence of bonds, not constructible from Python.",
-      python::no_init)
-      .def("__iter__", &BondIterSeq::__iter__,
-           python::return_internal_reference<
-               1, python::with_custodian_and_ward_postcall<0, 1>>())
-      .def("__next__", &BondIterSeq::next,
-           python::return_internal_reference<
-               1, python::with_custodian_and_ward_postcall<0, 1>>())
-      .def("__len__", &BondIterSeq::len)
-      .def("__getitem__", &BondIterSeq::get_item,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1>>());
   python::class_<ConformerIterSeq>(

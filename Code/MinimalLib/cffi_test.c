@@ -2037,6 +2037,93 @@ void test_query_colour() {
   free(pkl);
 }
 
+void test_alignment_r_groups_aromatic_ring() {
+  printf("--------------------------\n");
+  printf("  test_alignment_r_groups_aromatic_ring\n");
+  char *mpkl;
+  size_t mpkl_size;
+  char *tpkl;
+  size_t tpkl_size;
+  char *match_json = NULL;
+  mpkl = get_mol("c1ccc2nccnc2c1", &mpkl_size, "");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  tpkl = get_mol(
+      "\n\
+  MJ201100                      \n\
+\n\
+  8  8  0  0  0  0  0  0  0  0999 V2000\n\
+   -1.0263   -0.3133    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.4553    0.5116    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.7408   -0.7258    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.7408   -1.5509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.4553   -1.9633    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.1698   -1.5509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.1698   -0.7258    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.4553   -0.3133    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  3  1  1  0  0  0  0\n\
+  8  2  1  0  0  0  0\n\
+  4  3  2  0  0  0  0\n\
+  5  4  1  0  0  0  0\n\
+  6  5  2  0  0  0  0\n\
+  7  6  1  0  0  0  0\n\
+  8  3  1  0  0  0  0\n\
+  8  7  2  0  0  0  0\n\
+M  RGP  2   1   2   2   1\n\
+M  END\n",
+      &tpkl_size, "");
+  assert(tpkl);
+  assert(tpkl_size > 0);
+  assert(set_2d_coords_aligned(
+      &mpkl, &mpkl_size, tpkl, tpkl_size,
+      "{\"acceptFailure\":false,\"allowRGroups\":true}", &match_json));
+  assert(match_json);
+  assert(!strcmp(match_json,
+                 "{\"atoms\":[4,7,3,2,1,0,9,8],\"bonds\":[3,7,2,1,0,9,10,8]}"));
+  free(match_json);
+  free(mpkl);
+  mpkl = get_mol(
+      "\n\
+  MJ201100                      \n\
+\n\
+ 10 11  0  0  0  0  0  0  0  0999 V2000\n\
+    3.6937    2.5671    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.8687    2.5671    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.4561    1.8526    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.8687    1.1382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.6937    1.1381    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.1062    1.8526    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.9313    1.8527    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    5.3438    2.5671    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.9313    3.2816    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.1062    3.2816    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  5  6  1  0  0  0  0\n\
+  4  5  2  0  0  0  0\n\
+  3  4  1  0  0  0  0\n\
+  2  3  2  0  0  0  0\n\
+  1  6  2  0  0  0  0\n\
+  1  2  1  0  0  0  0\n\
+  8  9  1  0  0  0  0\n\
+  9 10  2  0  0  0  0\n\
+ 10  1  1  0  0  0  0\n\
+  7  8  2  0  0  0  0\n\
+  6  7  1  0  0  0  0\n\
+M  END\n",
+      &mpkl_size, "");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  assert(set_2d_coords_aligned(
+      &mpkl, &mpkl_size, tpkl, tpkl_size,
+      "{\"acceptFailure\":false,\"allowRGroups\":true,\"alignOnly\":true}",
+      &match_json));
+  assert(match_json);
+  assert(!strcmp(match_json,
+                 "{\"atoms\":[6,9,5,4,3,2,1,0],\"bonds\":[10,8,0,1,2,3,4,5]}"));
+  free(match_json);
+  free(mpkl);
+  free(tpkl);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -2061,5 +2148,6 @@ int main() {
   test_use_legacy_stereo();
   test_allow_non_tetrahedral_chirality();
   test_query_colour();
+  test_alignment_r_groups_aromatic_ring();
   return 0;
 }

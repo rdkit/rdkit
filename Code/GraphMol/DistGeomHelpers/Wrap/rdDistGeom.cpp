@@ -423,6 +423,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
              RDKit::DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS)
       .value("FINAL_CENTER_IN_VOLUME",
              RDKit::DGeomHelpers::EmbedFailureCauses::FINAL_CENTER_IN_VOLUME)
+      .value("LINEAR_DOUBLE_BOND",
+             RDKit::DGeomHelpers::EmbedFailureCauses::LINEAR_DOUBLE_BOND)
+      .value("BAD_DOUBLE_BOND_STEREO",
+             RDKit::DGeomHelpers::EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO)
       .export_values();
 
   python::class_<RDKit::DGeomHelpers::EmbedParameters, boost::noncopyable>(

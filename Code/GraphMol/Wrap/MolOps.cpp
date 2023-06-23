@@ -955,6 +955,55 @@ ROMol *molzipHelper(python::object &pmols, const MolzipParams &p) {
   return molzip(*mols, p).release();
 }
 
+// we can really only set some of these types from C++ which means
+//  we need a helper function for testing that we can read them
+//  correctly.  
+void _testSetProps(RDProps &props, const std::string &prefix) {
+    props.setProp<bool>(prefix + "bool", true);
+    props.setProp<unsigned int>(prefix + "uint", -1);
+    props.setProp<double>(prefix + "double", 3.14159);
+    
+    std::vector<int> svint;
+    svint.push_back(0);
+    svint.push_back(1);
+    svint.push_back(2);
+    svint.push_back(-2);
+    
+    props.setProp<std::vector<int>>(prefix + "svint", svint);
+    
+    std::vector<unsigned int> svuint;
+    svuint.push_back(0);
+    svuint.push_back(1);
+    svuint.push_back(2);
+    svuint.push_back(-2);
+    
+    props.setProp<std::vector<unsigned int>>(prefix + "svuint", svuint);
+    
+    std::vector<double> svdouble;
+    svdouble.push_back(0.);
+    svdouble.push_back(1.);
+    svdouble.push_back(2.);
+    props.setProp<std::vector<double>>(prefix + "svdouble", svdouble);
+    
+    std::vector<std::string> svstring;
+    svstring.push_back("The");
+    svstring.push_back("RDKit");
+    
+    props.setProp<std::vector<std::string>>(prefix + "svstring", svstring);
+}
+
+void testSetProps(ROMol &mol) {
+  _testSetProps(mol, "mol_");
+  for(auto &atom: mol.atoms()) {
+    _testSetProps(*atom, std::string("atom_") + std::to_string(atom->getIdx()));
+  }
+  for(auto &bond: mol.bonds()) {
+    _testSetProps(*bond, std::string("bond_") + std::to_string(bond->getIdx()));
+  }
+  for (int conf_idx = 0; conf_idx < mol.getNumConformers(); ++conf_idx) {
+    _testSetProps(mol.getConformer(conf_idx), "conf_" + std::to_string(conf_idx));
+  }
+}
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -970,6 +1019,8 @@ struct molops_wrapper {
         .value("SANITIZE_SETHYBRIDIZATION", MolOps::SANITIZE_SETHYBRIDIZATION)
         .value("SANITIZE_CLEANUPCHIRALITY", MolOps::SANITIZE_CLEANUPCHIRALITY)
         .value("SANITIZE_ADJUSTHS", MolOps::SANITIZE_ADJUSTHS)
+        .value("SANITIZE_CLEANUP_ORGANOMETALLICS",
+               MolOps::SANITIZE_CLEANUP_ORGANOMETALLICS)
         .value("SANITIZE_ALL", MolOps::SANITIZE_ALL)
         .export_values();
     ;
@@ -2742,6 +2793,7 @@ must be the core",
   - ADJUST_IGNORERINGS: ring atoms/bonds will be ignored
   - ADJUST_IGNOREDUMMIES: dummy atoms will be ignored
   - ADJUST_IGNORENONDUMMIES: non-dummy atoms will be ignored
+  - ADJUST_IGNOREMAPPED: mapped atoms will be ignored
   - ADJUST_IGNOREALL: everything will be ignored
 )DOC";
     python::enum_<MolOps::AdjustQueryWhichFlags>("AdjustQueryWhichFlags")
@@ -2750,6 +2802,7 @@ must be the core",
         .value("ADJUST_IGNORERINGS", MolOps::ADJUST_IGNORERINGS)
         .value("ADJUST_IGNOREDUMMIES", MolOps::ADJUST_IGNOREDUMMIES)
         .value("ADJUST_IGNORENONDUMMIES", MolOps::ADJUST_IGNORENONDUMMIES)
+        .value("ADJUST_IGNOREMAPPED", MolOps::ADJUST_IGNOREMAPPED)
         .value("ADJUST_IGNOREALL", MolOps::ADJUST_IGNOREALL)
         .export_values();
 
@@ -2903,6 +2956,10 @@ A note on the flags controlling which atoms/bonds are modified:
 
   If there is no chiral flag set (i.e. the property is not present), the
   molecule will not be modified.)DOC");
+
+    python::def("_TestSetProps", testSetProps,
+		python::arg("mol"));
+    
   }
 };
 }  // namespace RDKit

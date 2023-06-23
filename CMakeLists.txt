@@ -27,6 +27,9 @@ option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the
 option(RDK_BUILD_PGSQL "build the PostgreSQL cartridge" OFF )
 option(RDK_BUILD_RPATH_SUPPORT "build shared libraries using rpath" OFF)
 option(RDK_PGSQL_STATIC "statically link rdkit libraries into the PostgreSQL cartridge" ON )
+option(RDK_PGSQL_BFP_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL bfp gist index" OFF )
+option(RDK_PGSQL_MOL_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL mol gist index" ON )
+option(RDK_PGSQL_QMOL_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL qmol gist index" ON )
 option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_DLLS_MSVC "install the rdkit DLLs when using MSVC" OFF)
@@ -63,6 +66,9 @@ option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindin
 option(RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS "build the minimal RDKit JS wrapper such that it supports legacy browsers" OFF)
 option(RDK_BUILD_CFFI_LIB "build the CFFI wrapper (for use in other programming languges)" OFF)
 option(RDK_BUILD_FUZZ_TARGETS "build the fuzz targets" OFF)
+option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" ON )
+option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
+option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 
 set(RDK_BOOST_VERSION "1.58.0")
 
@@ -323,7 +329,9 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       # Determine correct installation directory for Python bindings
       execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_path('platlib'))"
+        ${PYTHON_EXECUTABLE} -c "import sys; import sysconfig; \
+          schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
+          print(sysconfig.get_path('platlib', schema, vars={'platbase': '${CMAKE_INSTALL_PREFIX}'}))"
         OUTPUT_VARIABLE PYTHON_INSTDIR
         OUTPUT_STRIP_TRAILING_WHITESPACE
       )

@@ -709,3 +709,19 @@ TEST_CASE("Github #5883: confgen failing for chiral N in a three ring") {
     CHECK(cid >= 0);
   }
 }
+
+TEST_CASE("Github #6365: cannot generate conformers for PF6- or SF6") {
+  SECTION("basics") {
+    std::vector<std::string> smileses = {"S(F)(F)(F)(F)(F)F",
+                                         "[P-](F)(F)(F)(F)(F)F"};
+    for (const auto &smi : smileses) {
+      std::unique_ptr<RWMol> mol{SmilesToMol(smi)};
+      REQUIRE(mol);
+      DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+      ps.randomSeed = 42;
+      ps.useRandomCoords = true;
+      auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+      CHECK(cid >= 0);
+    }
+  }
+}
