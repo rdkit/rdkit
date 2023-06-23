@@ -979,8 +979,35 @@ TEST_CASE("one-component reactions") {
       CHECK_THROWS_AS(rxn->runReactant(*mol), ChemicalReactionException);
     }
   }
+  SECTION("toggling removing unmapped atoms") {
+    auto rxn = "CC[N:1]>>[N:1]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    {
+      auto mol = "CCN.Cl"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "N");
+    }
+    {
+      auto mol = "CCN.Cl"_smiles;
+      REQUIRE(mol);
+      bool removeUnmatchedAtoms = false;
+      CHECK(rxn->runReactant(*mol, removeUnmatchedAtoms));
+      CHECK(mol->getNumAtoms() == 2);
+      CHECK(MolToSmiles(*mol) == "Cl.N");
+    }
+    {  // extra atoms connected to the matching part should not be removed
+      auto mol = "CCCN.Cl"_smiles;
+      REQUIRE(mol);
+      bool removeUnmatchedAtoms = false;
+      CHECK(rxn->runReactant(*mol, removeUnmatchedAtoms));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "C.Cl.N");
+    }
+  }
 }
-
 TEST_CASE("Github #4759 Reaction parser fails when CX extensions are present") {
   std::string sma = "[C:1]Br.[C:2]O>>[C:2][C:1] |$Aryl;;;;;Aryl$|";
   SECTION("SMARTS") {
