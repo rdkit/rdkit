@@ -958,6 +958,28 @@ chlorine	[Cl]
     nm = rdMolStandardize.RemoveFragments(m)
     self.assertEqual(Chem.MolToSmiles(nm), "CC")
 
+  def test22StandardizeInPlace(self):
+    m = Chem.MolFromSmiles("O=N(=O)-C(O[Fe])C(C(=O)O)C-N(=O)=O")
+    rdMolStandardize.CleanupInPlace(m)
+    self.assertEqual(Chem.MolToSmiles(m),"O=C([O-])C(C[N+](=O)[O-])C(O)[N+](=O)[O-].[Fe+]")
+
+    m = Chem.MolFromSmiles('[F-].[Cl-].[Br-].CC')
+    rdMolStandardize.RemoveFragmentsInPlace(m)
+    self.assertEqual(Chem.MolToSmiles(m), "CC")
+
+    m = Chem.MolFromSmiles('C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O')
+    rdMolStandardize.ReionizeInPlace(m)
+    self.assertEqual(Chem.MolToSmiles(m), "O=S(O)c1ccc(S(=O)(=O)[O-])cc1")
+
+    m = Chem.MolFromSmiles('CCO[Fe]')
+    rdMolStandardize.DisconnectOrganometallicsInPlace(m)
+    self.assertEqual(Chem.MolToSmiles(m), "CCO.[Fe]")
+
+    m = Chem.MolFromSmiles(r"C[N+](C)=C\C=C\[O-]")
+    rdMolStandardize.NormalizeInPlace(m)
+    self.assertEqual(Chem.MolToSmiles(m), "CN(C)C=CC=O")
+
+
 
 if __name__ == "__main__":
   unittest.main()
