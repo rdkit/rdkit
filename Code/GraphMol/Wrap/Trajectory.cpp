@@ -108,12 +108,12 @@ struct Trajectory_wrapper {
         .def("Clear", &Trajectory::clear, (python::arg("self")),
              "removes all Snapshots from the Trajectory\n")
         .def("AddConformersToMol", &Trajectory::addConformersToMol,
-             (python::arg("self"), python::arg("mol"), python::arg("from") = -1,
-              python::arg("to") = -1),
+             (python::arg("self"), python::arg("mol"), python::arg("fromCid") = -1,
+              python::arg("toCid") = -1),
              "adds conformations from the Trajectory to mol\n"
-             "from is the first Snapshot that will be added as a Conformer; "
+             "fromCid is the first Snapshot that will be added as a Conformer; "
              "defaults to -1 (first available)\n"
-             "to is the last Snapshot that will be added as a Conformer; "
+             "toCid is the last Snapshot that will be added as a Conformer; "
              "defaults to -1 (all)\n");
 
     python::class_<Snapshot>(
