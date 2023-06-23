@@ -1544,3 +1544,15 @@ TEST_CASE("Github #6211: substructmatchparams for chemical reactions") {
 
   }
 }
+
+TEST_CASE("problematic in-place example from MolStandardize") {
+  SECTION("basics"){
+    RWMOL_SPTR m = "[nH]1ccc(=[N+](C)C)cc1"_smiles;
+    REQUIRE(m);
+    auto rxn = "[n;+0!H0:1]:[a:2]:[a:3]:[c:4]=[N!$(*[O-]),O;+1H0:5]>>[n+1:1]:[*:2]:[*:3]:[*:4]-[*+0:5]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    rxn->runReactant(*m);
+    CHECK(MolToSmiles(*m)=="CN(C)c1cc[nH+]cc1");
+  }
+}
