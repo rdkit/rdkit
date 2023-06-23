@@ -128,8 +128,6 @@ VectExplicitBitVect EncodeSECFPMolsBulk(
                               min_radius, length);
 }
 
-BOOST_PYTHON_FUNCTION_OVERLOADS(FromStringArrayOverloads, FromStringArray, 2, 2)
-BOOST_PYTHON_FUNCTION_OVERLOADS(FromArrayOverloads, FromArray, 2, 2)
 BOOST_PYTHON_FUNCTION_OVERLOADS(CreateShinglingFromSmilesOverloads,
                                 CreateShinglingFromSmiles, 2, 7)
 BOOST_PYTHON_FUNCTION_OVERLOADS(CreateShinglingFromMolOverloads,
