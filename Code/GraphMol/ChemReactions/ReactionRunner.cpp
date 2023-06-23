@@ -1581,7 +1581,8 @@ bool updateAtomsModifiedByReaction(
     const auto pAtom =
         productTemplate->getAtomWithIdx(productAtomMap.at(pr.first));
     const auto atom = reactant.getAtomWithIdx(match[pr.second].second);
-    if (rAtom->getAtomicNum() != pAtom->getAtomicNum()) {
+    if (rAtom->getAtomicNum() != pAtom->getAtomicNum() &&
+        (pAtom->getAtomicNum() || !pAtom->hasQuery())) {
       atom->setAtomicNum(pAtom->getAtomicNum());
       molModified = true;
     }
@@ -1724,14 +1725,6 @@ bool updateBondsModifiedByReaction(
         reactant.removeBond(atom->getIdx(), match[nbr->getIdx()].second);
         molModified = true;
       }
-    }
-
-    if (rAtom->getAtomicNum() != pAtom->getAtomicNum()) {
-      atom->setAtomicNum(pAtom->getAtomicNum());
-      molModified = true;
-    }
-    if (ReactionRunnerUtils::updatePropsFromImplicitProps(pAtom, atom)) {
-      molModified = true;
     }
   }
   return molModified;
