@@ -44,6 +44,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentRemover {
   FragmentRemover &operator=(FragmentRemover const &) = delete;
 
   ROMol *remove(const ROMol &mol);
+  void removeInPlace(RWMol &mol);
 
  private:
   // Setting leave_last to True will ensure at least one fragment

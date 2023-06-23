@@ -122,21 +122,19 @@ void updateCleanupParamsFromJSON(CleanupParameters &params,
 }
 
 RWMol *cleanup(const RWMol *mol, const CleanupParameters &params) {
-  RWMol m(*mol);
-  MolOps::removeHs(m);
-
+  auto nmol = new RWMol(*mol);
+  cleanupInPlace(*nmol, params);
+  return nmol;
+}
+void cleanupInPlace(RWMol &mol, const CleanupParameters &params) {
+  MolOps::removeHs(mol);
   MolStandardize::MetalDisconnector md;
-  md.disconnect(m);
-  RWMOL_SPTR normalized(MolStandardize::normalize(&m, params));
-  RWMol *reionized = MolStandardize::reionize(normalized.get(), params);
+  md.disconnectInPlace(mol);
+  MolStandardize::normalizeInPlace(mol, params);
+  MolStandardize::reionizeInPlace(mol, params);
   bool cleanIt = true;
   bool force = true;
-  MolOps::assignStereochemistry(*reionized, cleanIt, force);
-
-  // update properties of reionized using m.
-  reionized->updateProps(m);
-
-  return reionized;
+  MolOps::assignStereochemistry(mol, cleanIt, force);
 }
 
 RWMol *tautomerParent(const RWMol &mol, const CleanupParameters &params,
@@ -261,6 +259,11 @@ RWMol *removeFragments(const RWMol *mol, const CleanupParameters &params) {
   PRECONDITION(mol, "bad molecule");
   std::unique_ptr<FragmentRemover> remover{fragmentRemoverFromParams(params)};
   return static_cast<RWMol *>(remover->remove(*mol));
+}
+
+void removeFragmentsInPlace(RWMol &mol, const CleanupParameters &params) {
+  std::unique_ptr<FragmentRemover> remover{fragmentRemoverFromParams(params)};
+  remover->removeInPlace(mol);
 }
 
 RWMol *canonicalTautomer(const RWMol *mol, const CleanupParameters &params) {

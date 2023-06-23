@@ -120,7 +120,8 @@ void Normalizer::normalizeInPlace(RWMol &mol) {
     bool loop_break = false;
     // Iterate through Normalization transforms and apply each in order
     for (auto &transform : transforms) {
-      if (transform->runReactant(mol)) {
+      constexpr bool removeUnmatchedAtoms = false;
+      if (transform->runReactant(mol, removeUnmatchedAtoms)) {
         BOOST_LOG(rdInfoLog)
             << "Rule applied: "
             << transform->getProp<std::string>(common_properties::_Name)
