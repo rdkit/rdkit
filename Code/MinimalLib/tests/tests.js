@@ -2049,12 +2049,26 @@ function test_is_valid_deprecated() {
     var mol = RDKitModule.get_mol('C');
     assert(mol !== null);
     assert(mol.is_valid());
-    var mol = RDKitModule.get_mol('CN(C)(C)C');
+    var mol;
+    try {
+        mol = RDKitModule.get_mol('CN(C)(C)C');
+    } catch (e) {
+        // in case MinimalLib was built without exception support
+        mol = null;
+    }
     assert(mol === null);
-    var rxn = RDKitModule.get_rxn('C>>N');
-    assert(rxn !== null);
-    var rxn = RDKitModule.get_rxn('Z>>C');
-    assert(rxn === null);
+    if (RDKitModule.get_rxn)  {
+        var rxn;
+        rxn = RDKitModule.get_rxn('C>>N');
+        assert(rxn !== null);
+        try {
+            rxn = RDKitModule.get_rxn('Z>>C');
+        } catch (e) {
+            // in case MinimalLib was built without exception support
+            rxn = null;
+        }
+        assert(rxn === null);
+    }
 }
 
 function molListFromSmiArray(smiArray) {
