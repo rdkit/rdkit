@@ -21,13 +21,13 @@ _ignore = object()
 
 class MCSTestCase(unittest.TestCase):
 
-  def assert_search(self, smiles, numAtoms, numBonds, smarts=_ignore, verbose=False, **kwargs):
+  def assertTruesearch(self, smiles, numAtoms, numBonds, smarts=_ignore, verbose=False, **kwargs):
     result = rdFMCS.FindMCS(smiles, **kwargs)
     if verbose:
       print("RESULT: ", result.smartsString)
-    self.assert_result(result, canceled=False, numAtoms=numAtoms, numBonds=numBonds, smarts=smarts)
+    self.assertTrueresult(result, canceled=False, numAtoms=numAtoms, numBonds=numBonds, smarts=smarts)
 
-  def assert_result(self, result, canceled=_ignore, numAtoms=_ignore, numBonds=_ignore,
+  def assertTrueresult(self, result, canceled=_ignore, numAtoms=_ignore, numBonds=_ignore,
                     smarts=_ignore):
     if canceled is not _ignore:
       self.assertEqual(result.canceled, canceled)
@@ -46,10 +46,10 @@ CO methanol""")
 # class TestMinAtoms(MCSTestCase):
 #
 #   def test_min_atoms_2(self):
-#     self.assert_search(simple_mols, 2, 1, minNumAtoms=2)
+#     self.assertTruesearch(simple_mols, 2, 1, minNumAtoms=2)
 #
 #   def test_min_atoms_3(self):
-#     self.assert_search(simple_mols, -1, -1, smarts=None, minNumAtoms=3)
+#     self.assertTruesearch(simple_mols, -1, -1, smarts=None, minNumAtoms=3)
 #
 #   def test_min_atoms_1(self):
 #     try:
@@ -70,14 +70,14 @@ class TextMaximize(MCSTestCase):
   # C12CCC1CC2SCCCCCCC 2-rings-and-chain-with-S
   def test_maximize_default(self):
     # default maximizes the number of bonds
-    self.assert_search(maximize_mols, 6, 7)
+    self.assertTruesearch(maximize_mols, 6, 7)
 
   def _test_maximize_atoms(self):
     # FIX: This fails to maximize the number of atoms
-    self.assert_search(maximize_mols, 7, 6, maximizeBonds=False)
+    self.assertTruesearch(maximize_mols, 7, 6, maximizeBonds=False)
 
   def test_maximize_bonds(self):
-    self.assert_search(maximize_mols, 6, 7, maximizeBonds=True)
+    self.assertTruesearch(maximize_mols, 6, 7, maximizeBonds=True)
 
 
 atomtype_mols = load_smiles("""
@@ -91,28 +91,28 @@ class TestAtomTypes(MCSTestCase):
   #   c1ccccc1O
   #   CCCCCCOn1cccc1
   def test_atom_compare_default(self):
-    self.assert_search(atomtype_mols, 4, 3, smarts='[#6](:[#6]:[#6]):[#6]',
+    self.assertTruesearch(atomtype_mols, 4, 3, smarts='[#6](:[#6]:[#6]):[#6]',
                        bondCompare=rdFMCS.BondCompare.CompareOrderExact)
 
   def test_atom_compare_elements(self):
-    self.assert_search(atomtype_mols, 4, 3, smarts='[#6](:[#6]:[#6]):[#6]',
+    self.assertTruesearch(atomtype_mols, 4, 3, smarts='[#6](:[#6]:[#6]):[#6]',
                        atomCompare=rdFMCS.AtomCompare.CompareElements,
                        bondCompare=rdFMCS.BondCompare.CompareOrderExact)
 
   def test_atom_compare_any(self):
     # Note: bond aromaticities must still match!
     # 'cccccO' matches 'ccccnO'
-    self.assert_search(atomtype_mols, 6, 5, atomCompare=rdFMCS.AtomCompare.CompareAny,
+    self.assertTruesearch(atomtype_mols, 6, 5, atomCompare=rdFMCS.AtomCompare.CompareAny,
                        bondCompare=rdFMCS.BondCompare.CompareOrderExact)
 
   def test_atom_compare_any_bond_compare_any(self):
     # Linear chain of 7 atoms
-    self.assert_search(atomtype_mols, 7, 6, atomCompare=rdFMCS.AtomCompare.CompareAny,
+    self.assertTruesearch(atomtype_mols, 7, 6, atomCompare=rdFMCS.AtomCompare.CompareAny,
                        bondCompare=rdFMCS.BondCompare.CompareAny)
 
   def test_bond_compare_any(self):
     # Linear chain of 7 atoms
-    self.assert_search(atomtype_mols, 7, 6, bondCompare=rdFMCS.BondCompare.CompareAny)
+    self.assertTruesearch(atomtype_mols, 7, 6, bondCompare=rdFMCS.BondCompare.CompareAny)
 
 
 isotope_mols = load_smiles("""
@@ -126,15 +126,15 @@ class TestIsotopes(MCSTestCase):
   # C1CPCC[4C]1[2C][2C][1C][3C] C2213
   def test_without_isotope(self):
     # The entire system, except the N/P in the ring
-    self.assert_search(isotope_mols, numAtoms=9, numBonds=8)
+    self.assertTruesearch(isotope_mols, numAtoms=9, numBonds=8)
 
   def test_isotopes(self):
     # 5 atoms of class '0' in the ring
-    self.assert_search(isotope_mols, 5, 4, atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
+    self.assertTruesearch(isotope_mols, 5, 4, atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
 
   def test_isotope_complete_ring_only(self):
     # the 122 in the chain
-    self.assert_search(isotope_mols, 3, 2, atomCompare=rdFMCS.AtomCompare.CompareIsotopes,
+    self.assertTruesearch(isotope_mols, 3, 2, atomCompare=rdFMCS.AtomCompare.CompareIsotopes,
                        completeRingsOnly=True)
 
 
@@ -148,23 +148,23 @@ class TestBondTypes(MCSTestCase):
   # C1CCCCC1OC#CC#CC#CC#CC#CC
   # c1ccccc1ONCCCCCCCCCC second
   def test_bond_compare_default(self):
-    self.assert_search(bondtype_mols, 7, 7)
+    self.assertTruesearch(bondtype_mols, 7, 7)
 
   def test_bond_compare_bondtypes(self):
     # Match the 'CCCCCC' part of the first ring, with the second's tail
-    self.assert_search(bondtype_mols, 6, 5, bondCompare=rdFMCS.BondCompare.CompareOrderExact)
+    self.assertTruesearch(bondtype_mols, 6, 5, bondCompare=rdFMCS.BondCompare.CompareOrderExact)
 
   def test_bond_compare_any(self):
     # the CC#CC chain matches the CCCC tail
-    self.assert_search(bondtype_mols, 10, 9, bondCompare=rdFMCS.BondCompare.CompareAny)
+    self.assertTruesearch(bondtype_mols, 10, 9, bondCompare=rdFMCS.BondCompare.CompareAny)
 
   def test_atom_compare_elements_bond_compare_any(self):
-    self.assert_search(bondtype_mols, 10, 9, atomCompare=rdFMCS.AtomCompare.CompareElements,
+    self.assertTruesearch(bondtype_mols, 10, 9, atomCompare=rdFMCS.AtomCompare.CompareElements,
                        bondCompare=rdFMCS.BondCompare.CompareAny)
 
   def test_atom_compare_any_bond_compare_any(self):
     # complete match!
-    self.assert_search(bondtype_mols, 18, 18, atomCompare=rdFMCS.AtomCompare.CompareAny,
+    self.assertTruesearch(bondtype_mols, 18, 18, atomCompare=rdFMCS.AtomCompare.CompareAny,
                        bondCompare=rdFMCS.BondCompare.CompareAny)
 
 
@@ -178,17 +178,17 @@ class TestValences(MCSTestCase):
 
   def test_valence_compare_default(self):
     # match 'CCCCCCCC'
-    self.assert_search(valence_mols, 8, 7)
+    self.assertTruesearch(valence_mols, 8, 7)
 
   def _test_valence_compare_valence(self):
     # FIX: matchValence isn't used?
     # match 'CCCC'
-    self.assert_search(valence_mols, 4, 3, matchValences=True)
+    self.assertTruesearch(valence_mols, 4, 3, matchValences=True)
 
   def _test_valence_compare_valence(self):
     # FIX: matchValence isn't used?
     # match 'CCCCN' to '[CH-]CCCC' (but in reverse)
-    self.assert_search(valence_mols, 5, 4, matchValences=True,
+    self.assertTruesearch(valence_mols, 5, 4, matchValences=True,
                        atomCompare=rdFMCS.AtomCompare.CompareAny)
 
 
@@ -217,47 +217,47 @@ class TestRingMatchesRingOnly(MCSTestCase):
   # C12CCCC(O2)CCCC1 6-and-7-bridge-rings-with-O
   def test_default(self):
     # Should match 'CCCCC'
-    self.assert_search(ring_mols, 5, 4)
+    self.assertTruesearch(ring_mols, 5, 4)
 
   def test_ring_only(self):
     # Should match "CCC"
-    self.assert_search(ring_mols, 3, 2, ringMatchesRingOnly=True)
+    self.assertTruesearch(ring_mols, 3, 2, ringMatchesRingOnly=True)
 
   def test_ring_only_select_1_2(self):
     # Should match "C1CCCCCN1"
-    self.assert_search(SELECT(ring_mols, 1, 2), 6, 6, ringMatchesRingOnly=True)
+    self.assertTruesearch(SELECT(ring_mols, 1, 2), 6, 6, ringMatchesRingOnly=True)
 
   def test_ring_only_select_1_3(self):
     # Should match "C1CCCCCCN1"
-    self.assert_search(SELECT(ring_mols, 1, 3), 7, 7, ringMatchesRingOnly=True)
+    self.assertTruesearch(SELECT(ring_mols, 1, 3), 7, 7, ringMatchesRingOnly=True)
 
   def test_ring_only_select_1_4(self):
     # Should match "C1CCCCCCCC1"
-    self.assert_search(SELECT(ring_mols, 1, 4), 9, 9, ringMatchesRingOnly=True)
+    self.assertTruesearch(SELECT(ring_mols, 1, 4), 9, 9, ringMatchesRingOnly=True)
 
   def test_select_1_5(self):
     # Should match "NCCCCCC"
-    self.assert_search(SELECT(ring_mols, 1, 5), 8, 7, ringMatchesRingOnly=False)
+    self.assertTruesearch(SELECT(ring_mols, 1, 5), 8, 7, ringMatchesRingOnly=False)
 
   def test_ring_only_select_1_5(self):
     # Should match "CCCCCC"
-    self.assert_search(SELECT(ring_mols, 1, 5), 7, 6, ringMatchesRingOnly=True)
+    self.assertTruesearch(SELECT(ring_mols, 1, 5), 7, 6, ringMatchesRingOnly=True)
 
   def test_select_1_6(self):
     # Should match "CCCCCCCCC" by breaking one of the 3-carbon ring bonds
-    self.assert_search(SELECT(ring_mols, 1, 6), 9, 8)
+    self.assertTruesearch(SELECT(ring_mols, 1, 6), 9, 8)
 
   def test_ring_only_select_1_6(self):
     # Should match "CCC" from the three atom ring
-    self.assert_search(SELECT(ring_mols, 1, 6), 3, 2, ringMatchesRingOnly=True)
+    self.assertTruesearch(SELECT(ring_mols, 1, 6), 3, 2, ringMatchesRingOnly=True)
 
   def test_ring_only_select_1_7(self):
     # Should match the outer ring "C1CCCCCCCC1"
-    self.assert_search(SELECT(ring_mols, 1, 7), 9, 9)
+    self.assertTruesearch(SELECT(ring_mols, 1, 7), 9, 9)
 
   def test_ring_only_select_1_7_any_atoms(self):
     # Should match everything
-    self.assert_search(SELECT(ring_mols, 1, 7), 10, 11, ringMatchesRingOnly=True,
+    self.assertTruesearch(SELECT(ring_mols, 1, 7), 10, 11, ringMatchesRingOnly=True,
                        atomCompare=rdFMCS.AtomCompare.CompareAny)
 
 
@@ -271,38 +271,38 @@ class TestCompleteRingsOnly(MCSTestCase):
   # C12CCCC(O2)CCCC1 6-and-7-bridge-rings-with-O
   def test_ring_only(self):
     # No match: "CCC" is not in a ring
-    self.assert_search(ring_mols, 0, 0, completeRingsOnly=True)
+    self.assertTruesearch(ring_mols, 0, 0, completeRingsOnly=True)
 
   def test_ring_only_select_1_2(self):
     # Should match "C1CCCCCN1"
-    self.assert_search(SELECT(ring_mols, 1, 2), 6, 6, completeRingsOnly=True)
+    self.assertTruesearch(SELECT(ring_mols, 1, 2), 6, 6, completeRingsOnly=True)
 
   def test_ring_only_select_1_3(self):
     # Should match "C1CCCCCCN1"
-    self.assert_search(SELECT(ring_mols, 1, 3), 7, 7, completeRingsOnly=True)
+    self.assertTruesearch(SELECT(ring_mols, 1, 3), 7, 7, completeRingsOnly=True)
 
   def _test_ring_only_select_1_4(self):
     # FIX: This does not match and should
     # Should match "C1CCCCCCCC1"
-    self.assert_search(SELECT(ring_mols, 1, 4), 9, 9, completeRingsOnly=True)
+    self.assertTruesearch(SELECT(ring_mols, 1, 4), 9, 9, completeRingsOnly=True)
 
   def test_ring_only_select_1_5(self):
     # No match: "CCCCCC" is not in a ring
-    self.assert_search(SELECT(ring_mols, 1, 5), 0, 0, completeRingsOnly=True)
+    self.assertTruesearch(SELECT(ring_mols, 1, 5), 0, 0, completeRingsOnly=True)
 
   def _test_ring_only_select_1_7(self):
     # FIX: This does not match and should
     # Should match the outer ring "C1CCCCCCCC1"
-    self.assert_search(SELECT(ring_mols, 1, 7), 9, 9, completeRingsOnly=True)
+    self.assertTruesearch(SELECT(ring_mols, 1, 7), 9, 9, completeRingsOnly=True)
 
   def test_ring_only_select_1_7_any_atoms(self):
     # Should match everything
-    self.assert_search(SELECT(ring_mols, 1, 7), 10, 11, completeRingsOnly=True,
+    self.assertTruesearch(SELECT(ring_mols, 1, 7), 10, 11, completeRingsOnly=True,
                        atomCompare=rdFMCS.AtomCompare.CompareAny)
 
   def test_ring_to_nonring_bond(self):
     # Should allow the cO in phenol to match the CO in the other structure
-    self.assert_search(atomtype_mols, 2, 1, completeRingsOnly=True)
+    self.assertTruesearch(atomtype_mols, 2, 1, completeRingsOnly=True)
 
 
 lengthy_mols = [Chem.MolFromSmiles("Nc1ccccc1" * 20), Chem.MolFromSmiles("Nc1ccccccccc1" * 20)]
@@ -314,7 +314,7 @@ class TestTimeout(MCSTestCase):
   def test_timeout(self):
     t1 = time.time()
     result = rdFMCS.FindMCS(lengthy_mols, timeout=1)
-    self.assert_result(result, canceled=True)
+    self.assertTrueresult(result, canceled=True)
     self.assertTrue(result.numAtoms > 1)
     self.assertTrue(result.numBonds >= result.numAtoms - 1, (result.numAtoms, result.numBonds))
     t2 = time.time()

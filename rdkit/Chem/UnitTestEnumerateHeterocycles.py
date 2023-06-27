@@ -33,7 +33,7 @@ def check_smiles(smiles):
   return mol
 
 
-def assert_valid_change(orig_can_smi, smiles):
+def assertTruevalid_change(orig_can_smi, smiles):
   orig_mol = Chem.MolFromSmiles(orig_can_smi)
   assert orig_can_smi != smiles, "%s != %s" % (orig_can_smi, smiles)
   msg = "%s produced %s" % (orig_can_smi, smiles)
@@ -130,7 +130,7 @@ class TestCase(unittest.TestCase):
           for newmol in rxn.RunReactants((mol, )):
             newmol = newmol[0]
             isosmi = Chem.MolToSmiles(newmol, isomericSmiles=True)
-            assert_valid_change(orig_can_smi, isosmi)
+            assertTruevalid_change(orig_can_smi, isosmi)
 
   def test_apply_every_rule_to_every_fragment(self):
     fieldnames = ['SMILES', 'MUTATED', 'REACTION', 'DESCRIPTION']
@@ -151,7 +151,7 @@ class TestCase(unittest.TestCase):
 
       for src, rxn in zip(GetHeterocycleReactionSmarts(), GetHeterocycleReactions()):
         for smiles in get_unique_products(rxn, rdkit_mol):
-          assert_valid_change(orig_can_smi, smiles)
+          assertTruevalid_change(orig_can_smi, smiles)
           row = {
             'SMILES': orig_can_smi,
             'MUTATED': smiles,
@@ -261,7 +261,7 @@ class TestCase(unittest.TestCase):
         for smiles in get_unique_products(rxn, rdkit_mol):
           total_generated += 1
           changed = True
-          assert_valid_change(orig_can_smi, smiles)
+          assertTruevalid_change(orig_can_smi, smiles)
           if smiles in uniq_fragments:
             continue
           uniq_fragments.add(smiles)

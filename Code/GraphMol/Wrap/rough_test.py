@@ -2152,15 +2152,15 @@ CAS<~>
     self.assertFalse(ri.IsBondInRingOfSize(1, 3))
     self.assertFalse(ri.IsBondInRingOfSize(2, 3))
     if hasattr(Chem, 'FindRingFamilies'):
-      self.assertEquals(ri.AtomRingFamilies(), ())
+      self.assertEqual(ri.AtomRingFamilies(), ())
     if hasattr(Chem, 'FindRingFamilies'):
-      self.assertEquals(ri.BondRingFamilies(), ())
+      self.assertEqual(ri.BondRingFamilies(), ())
 
     smi = 'C1CC2C1C2'
     m = Chem.MolFromSmiles(smi)
     ri = m.GetRingInfo()
     self.assertTrue(ri)
-    self.assertEquals(ri.NumRings(), 2)
+    self.assertEqual(ri.NumRings(), 2)
     self.assertFalse(ri.IsAtomInRingOfSize(0, 3))
     self.assertTrue(ri.IsAtomInRingOfSize(0, 4))
     self.assertFalse(ri.IsBondInRingOfSize(0, 3))
@@ -2198,9 +2198,9 @@ CAS<~>
       Chem.FindRingFamilies(m)
       ri = m.GetRingInfo()
       self.assertTrue(ri.AreRingFamiliesInitialized())
-      self.assertEquals(ri.NumRingFamilies(), 2)
-      self.assertEquals(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
-      self.assertEquals(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
+      self.assertEqual(ri.NumRingFamilies(), 2)
+      self.assertEqual(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
+      self.assertEqual(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
 
   def test46ReplaceCore(self):
     """ test the ReplaceCore functionality
@@ -3366,15 +3366,15 @@ CAS<~>
     m = None
     a = None
 
-    def assert_is_valid_atom(a):
+    def assertTrueis_valid_atom(a):
       new_m = Chem.RWMol()
       new_m.AddAtom(a)
       # This will not match if the owning mol is unset for a_copy,
       # or if there has been a clean up.
       self.assertEqual(new_m.GetAtomWithIdx(0).GetIdx(), 0)
 
-    assert_is_valid_atom(a_copy1)
-    assert_is_valid_atom(a_copy2)
+    assertTrueis_valid_atom(a_copy1)
+    assertTrueis_valid_atom(a_copy2)
 
   def test85MolCopying(self):
     m = Chem.MolFromSmiles('C1CC1[C@H](F)Cl')
