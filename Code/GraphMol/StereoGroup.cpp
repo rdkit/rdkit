@@ -5,11 +5,12 @@
 
 namespace RDKit {
 
-StereoGroup::StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms)
-    : d_grouptype(grouptype), d_atoms(atoms) {}
+StereoGroup::StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms,
+                         unsigned id)
+    : d_grouptype(grouptype), d_atoms(atoms), d_id{id} {}
 StereoGroup::StereoGroup(StereoGroupType grouptype,
-                         const std::vector<Atom *> &atoms)
-    : d_grouptype(grouptype), d_atoms(std::move(atoms)) {}
+                         const std::vector<Atom *> &atoms, unsigned id)
+    : d_grouptype(grouptype), d_atoms(std::move(atoms)), d_id{id} {}
 
 StereoGroupType StereoGroup::getGroupType() const { return d_grouptype; }
 
