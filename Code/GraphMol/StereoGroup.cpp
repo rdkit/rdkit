@@ -47,13 +47,14 @@ std::ostream &operator<<(std::ostream &target, const RDKit::StereoGroup &stg) {
       target << "ABS";
       break;
     case RDKit::StereoGroupType::STEREO_OR:
-      target << "OR";
+      target << "OR ";
       break;
     case RDKit::StereoGroupType::STEREO_AND:
       target << "AND";
       break;
   }
-  target << " Atoms: { ";
+  target << " id: " << stg.getId();
+  target << " atoms: { ";
   for (auto atom : stg.getAtoms()) {
     target << atom->getIdx() << ' ';
   }

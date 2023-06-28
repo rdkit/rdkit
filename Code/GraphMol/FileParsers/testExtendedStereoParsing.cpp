@@ -42,9 +42,11 @@ void testOr() {
   TEST_ASSERT(stereo_groups.size() == 2);
   TEST_ASSERT(stereo_groups[0].getGroupType() ==
               RDKit::StereoGroupType::STEREO_ABSOLUTE);
+  TEST_ASSERT(stereo_groups[0].getId() == 0u);
   TEST_ASSERT(stereo_groups[0].getAtoms().size() == 1u);
   TEST_ASSERT(stereo_groups[1].getGroupType() ==
               RDKit::StereoGroupType::STEREO_OR);
+  TEST_ASSERT(stereo_groups[1].getId() == 1u);
   TEST_ASSERT(stereo_groups[1].getAtoms().size() == 2u);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -62,8 +64,10 @@ void testAnd() {
   TEST_ASSERT(stereo_groups.size() == 2);
   TEST_ASSERT(stereo_groups[0].getGroupType() ==
               RDKit::StereoGroupType::STEREO_ABSOLUTE);
+  TEST_ASSERT(stereo_groups[0].getId() == 0u);
   TEST_ASSERT(stereo_groups[1].getGroupType() ==
               RDKit::StereoGroupType::STEREO_AND);
+  TEST_ASSERT(stereo_groups[1].getId() == 1u);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
