@@ -81,6 +81,11 @@ RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtom(
 RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtoms(
     const std::vector<Atom*>& atoms, std::vector<StereoGroup>& groups);
 
+//! Assign Group IDs to all AND and OR StereoGroups in the vector that don't
+//! already have one. The IDs are assigned based on the order of the groups.
+RDKIT_GRAPHMOL_EXPORT void assignStereoGroupIds(
+    std::vector<StereoGroup>& groups);
+
 }  // namespace RDKit
 
 //! allows StereoGroup objects to be dumped to streams

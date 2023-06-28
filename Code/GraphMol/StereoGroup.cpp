@@ -1,9 +1,43 @@
 #include <algorithm>
 #include <utility>
+#include <vector>
+
+#include <boost/dynamic_bitset.hpp>
+
 #include "StereoGroup.h"
 #include "Atom.h"
 
 namespace RDKit {
+
+namespace {
+void checkAndStoreId(boost::dynamic_bitset<> &ids, StereoGroup &sg) {
+  const auto groupId = sg.getId();
+  if (groupId == 0) {
+    return;
+  } else if (groupId >= ids.size()) {
+    ids.resize(groupId + 1);
+  }
+  if (ids[groupId]) {
+    // This is likely to happen in reactions if two reactants have groups with
+    // the same ids. In this case we just reset the id of one of them so that it
+    // is reassigned later.
+    sg.setId(0);
+  } else {
+    ids[groupId] = true;
+  }
+};
+
+void updateId(const boost::dynamic_bitset<> &ids, unsigned &nextId,
+              StereoGroup &sg) {
+  if (sg.getId() == 0) {
+    ++nextId;
+    while (nextId < ids.size() && ids[nextId]) {
+      ++nextId;
+    }
+    sg.setId(nextId);
+  }
+};
+}  // namespace
 
 StereoGroup::StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms,
                          unsigned id)
@@ -38,6 +72,33 @@ void removeGroupsWithAtoms(const std::vector<Atom *> &atoms,
   };
   groups.erase(std::remove_if(groups.begin(), groups.end(), containsAnyAtom),
                groups.end());
+}
+
+void assignStereoGroupIds(std::vector<StereoGroup> &groups) {
+  if (groups.empty()) {
+    return;
+  }
+
+  boost::dynamic_bitset<> andIds;
+  boost::dynamic_bitset<> orIds;
+
+  for (auto &sg : groups) {
+    if (sg.getGroupType() == StereoGroupType::STEREO_AND) {
+      checkAndStoreId(andIds, sg);
+    } else if (sg.getGroupType() == StereoGroupType::STEREO_OR) {
+      checkAndStoreId(orIds, sg);
+    }
+  }
+
+  unsigned andId = 0;
+  unsigned orId = 0;
+  for (auto &sg : groups) {
+    if (sg.getGroupType() == StereoGroupType::STEREO_AND) {
+      updateId(andIds, andId, sg);
+    } else if (sg.getGroupType() == StereoGroupType::STEREO_OR) {
+      updateId(andIds, orId, sg);
+    }
+  }
 }
 
 }  // namespace RDKit
