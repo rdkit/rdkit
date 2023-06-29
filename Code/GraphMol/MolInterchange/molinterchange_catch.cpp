@@ -332,3 +332,94 @@ TEST_CASE("do not crash with null molecules") {
     CHECK_THROWS_AS(MolInterchange::MolsToJSONData(mols), ValueErrorException);
   }
 }
+
+TEST_CASE("Stereo Group ID preservation: parse/write from/to json",
+          "[StereoGroup][json]") {
+  std::string json;
+
+  auto run_checks = [](ROMol &m) {
+    const auto &groups = m.getStereoGroups();
+    REQUIRE(groups.size() == 3);
+
+    auto g = groups[0];
+    CHECK(g.getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+    CHECK(g.getId() == 8);
+    CHECK(g.getAtoms() ==
+          std::vector<Atom *>{m.getAtomWithIdx(3), m.getAtomWithIdx(5)});
+
+    g = groups[1];
+    CHECK(g.getGroupType() == RDKit::StereoGroupType::STEREO_OR);
+    CHECK(g.getId() == 1);
+    CHECK(g.getAtoms() == std::vector<Atom *>{m.getAtomWithIdx(7)});
+
+    g = groups[2];
+    CHECK(g.getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+    CHECK(g.getId() == 7);
+    CHECK(g.getAtoms() == std::vector<Atom *>{m.getAtomWithIdx(1)});
+  };
+
+  {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 9 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 C 1.299038 0.750000 0.000000 0
+M  V30 3 O 1.299038 2.250000 0.000000 0
+M  V30 4 C 2.598076 -0.000000 0.000000 0
+M  V30 5 C 3.897114 0.750000 0.000000 0
+M  V30 6 C 2.598076 -1.500000 0.000000 0
+M  V30 7 C 3.897114 -2.250000 0.000000 0
+M  V30 8 C 1.299038 -2.250000 0.000000 0
+M  V30 9 C 1.299038 -3.750000 0.000000 0
+M  V30 10 O 0.000000 -1.500000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 4 5 CFG=3
+M  V30 5 1 4 6
+M  V30 6 1 6 7 CFG=1
+M  V30 7 1 6 8
+M  V30 8 1 8 9 CFG=1
+M  V30 9 1 8 10
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STERAC8 ATOMS=(2 4 6)
+M  V30 MDLV30/STEREL1 ATOMS=(1 8)
+M  V30 MDLV30/STERAC7 ATOMS=(1 2)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+
+    // Parse
+    const auto &groups = mol->getStereoGroups();
+    REQUIRE(groups.size() == 3);
+
+    INFO("Reference mol");
+    run_checks(*mol);
+
+    json = MolInterchange::MolToJSONData(*mol);
+
+    REQUIRE(!json.empty());
+    CHECK(json.find("\"stereoGroups\":["
+                    "{\"type\":\"and\",\"id\":8,\"atoms\":[3,5]},"
+                    "{\"type\":\"or\",\"id\":1,\"atoms\":[7]},"
+                    "{\"type\":\"and\",\"id\":7,\"atoms\":[1]}"
+                    "]") != std::string::npos);
+  }
+
+  auto mols = MolInterchange::JSONDataToMols(json);
+  REQUIRE(mols.size() == 1);
+
+  INFO("roundtripped mol");
+  auto &mol2 = *mols[0];
+
+  run_checks(mol2);
+}
