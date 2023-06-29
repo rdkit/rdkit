@@ -7,6 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <tuple>
+
 #include "RDGeneral/test.h"
 #include "catch.hpp"
 #include <RDGeneral/Invariant.h>
@@ -429,13 +431,37 @@ TEST_CASE("CDXML") {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1"};
     std::vector<std::string> expected_cx = {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |&1:3,&2:8,12|"};
+    std::vector<std::vector<
+        std::tuple<StereoGroupType, unsigned, std::vector<unsigned>>>>
+        expected_stereo_groups = {{{StereoGroupType::STEREO_AND, 1, {3, 7}},
+                                   {StereoGroupType::STEREO_AND, 2, {2}}}};
+
     auto mols = CDXMLFileToMols(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
       mol.get()->clearConformers();
       CHECK(MolToSmiles(*mol) == expected[i]);
-      CHECK(MolToCXSmiles(*mol) == expected_cx[i++]);
+      CHECK(MolToCXSmiles(*mol) == expected_cx[i]);
+
+      const auto &expected_stgs = expected_stereo_groups[i];
+      const auto &stgs = mol->getStereoGroups();
+      CHECK(stgs.size() == expected_stgs.size());
+
+      for (unsigned j = 0; j < stgs.size(); ++j) {
+        const auto &ref = expected_stgs[j];
+        const auto &stg = stgs[j];
+        CHECK(stg.getGroupType() == std::get<0>(ref));
+        CHECK(stg.getId() == std::get<1>(ref));
+
+        const auto &stg_atoms = stg.getAtoms();
+        std::vector<unsigned> ref_atoms(stg_atoms.size());
+        std::transform(stg_atoms.begin(), stg_atoms.end(), ref_atoms.begin(),
+                       [](const Atom *a) { return a->getIdx(); });
+        CHECK(ref_atoms == std::get<2>(ref));
+      }
+
+      ++i;
     }
   }
   SECTION("Enhanced Stereo 2") {
