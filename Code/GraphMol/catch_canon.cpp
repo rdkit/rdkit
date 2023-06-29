@@ -347,4 +347,16 @@ TEST_CASE("more enhanced stereo canonicalization") {
 
     CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
   }
+  SECTION("case 3") {
+    auto m1 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"_smiles;
+    REQUIRE(m1);
+    auto m2 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
+    REQUIRE(m2);
+    Canon::canonicalizeEnhancedStereo(*m1);
+    Canon::canonicalizeEnhancedStereo(*m2);
+
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+  }
 }

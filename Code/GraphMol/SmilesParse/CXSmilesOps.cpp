@@ -1540,16 +1540,20 @@ std::vector<unsigned> getSortedMappedIndexes(
 
 std::pair<std::vector<StereoGroup>, std::vector<std::vector<unsigned>>>
 getIndexeSortedGroups(const std::vector<StereoGroup> &groups,
-                      const std::vector<unsigned int> &revOrder) {
+                      const std::vector<unsigned int> &revOrder,
+                      bool resetIds) {
   using StGrpIdxPair = std::pair<StereoGroup, std::vector<unsigned>>;
 
   std::vector<StGrpIdxPair> sortingGroups;
   sortingGroups.reserve(groups.size());
 
-  for (const auto &sg : groups) {
+  for (auto sg : groups) {
     const auto atomIndexes = getSortedMappedIndexes(sg.getAtoms(), revOrder);
     if (!atomIndexes.empty()) {
-      sortingGroups.emplace_back(sg, atomIndexes);
+      if (resetIds) {
+        sg.setId(0);
+      }
+      sortingGroups.emplace_back(std::move(sg), atomIndexes);
     }
   }
 
@@ -1576,7 +1580,7 @@ getIndexeSortedGroups(const std::vector<StereoGroup> &groups,
     sgs.push_back(std::move(p.first));
     sgAtomIdxs.push_back(std::move(p.second));
   }
-  return {std::move(sgs), std::move(sgAtomIdxs)};
+  return {sgs, sgAtomIdxs};
 }
 
 std::string quote_string(const std::string &txt) {
@@ -1598,7 +1602,8 @@ std::string quote_atomprop_string(const std::string &txt) {
 }
 
 std::string get_enhanced_stereo_block(
-    const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
+    const ROMol &mol, const std::vector<unsigned int> &atomOrder,
+    bool reassignIds) {
   if (mol.getStereoGroups().empty()) {
     return "";
   }
@@ -1610,7 +1615,7 @@ std::string get_enhanced_stereo_block(
   }
 
   auto [groups, groupsAtoms] =
-      getIndexeSortedGroups(mol.getStereoGroups(), revOrder);
+      getIndexeSortedGroups(mol.getStereoGroups(), revOrder, reassignIds);
 
   assignStereoGroupIds(groups);
 
@@ -2208,7 +2213,8 @@ void appendToCXExtension(const std::string &addition, std::string &base) {
 }
 
 }  // namespace
-std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
+std::string getCXExtensions(const ROMol &mol, std::uint32_t flags,
+                            bool reassignStereoGroupIds) {
   std::string res = "|";
   // we will need atom and bond orderings. Get them now:
   const std::vector<unsigned int> &atomOrder =
@@ -2283,7 +2289,8 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     appendToCXExtension(linknodeblock, res);
   }
   if (flags & SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO) {
-    const auto stereoblock = get_enhanced_stereo_block(mol, atomOrder);
+    const auto stereoblock =
+        get_enhanced_stereo_block(mol, atomOrder, reassignStereoGroupIds);
     appendToCXExtension(stereoblock, res);
   }
   if (flags & SmilesWrite::CXSmilesFields::CX_SGROUPS) {

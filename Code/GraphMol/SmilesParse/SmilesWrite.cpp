@@ -659,7 +659,10 @@ std::string MolToCXSmiles(const ROMol &mol, const SmilesWriteParams &params,
                  SmilesWrite::CXSmilesFields::CX_BOND_CFG);
     }
 
-    auto cxext = SmilesWrite::getCXExtensions(mol, flags);
+    // Only reassign stereo group IDs if we are generating canonical smiles
+    // and the reassignment was requested.
+    bool reassignStGrpIds = params.canonical && params.reassignStereoGroupIds;
+    auto cxext = SmilesWrite::getCXExtensions(mol, flags, reassignStGrpIds);
     if (!cxext.empty()) {
       res += " " + cxext;
     }
@@ -866,7 +869,9 @@ std::string MolFragmentToCXSmiles(const ROMol &mol,
                                   const std::vector<std::string> *bondSymbols) {
   auto res = MolFragmentToSmiles(mol, params, atomsToUse, bondsToUse,
                                  atomSymbols, bondSymbols);
-  auto cxext = SmilesWrite::getCXExtensions(mol);
+  auto flags = SmilesWrite::CXSmilesFields::CX_ALL;
+  auto cxext =
+      SmilesWrite::getCXExtensions(mol, flags, params.reassignStereoGroupIds);
   if (!cxext.empty()) {
     res += " " + cxext;
   }

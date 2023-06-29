@@ -322,12 +322,12 @@ struct cxsmilesfrag_gen {
 };
 
 template <typename F>
-std::string MolFragmentToSmilesHelper1(const ROMol &mol,
-                                       const SmilesWriteParams &params,
-                                       python::object atomsToUse,
-                                       python::object bondsToUse,
-                                       python::object atomSymbols,
-                                       python::object bondSymbols) {
+std::string MolFragmentToSmilesParamsHelper(const ROMol &mol,
+                                            const SmilesWriteParams &params,
+                                            python::object atomsToUse,
+                                            python::object bondsToUse,
+                                            python::object atomSymbols,
+                                            python::object bondSymbols) {
   auto avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
@@ -351,8 +351,7 @@ std::string MolFragmentToSmilesHelper1(const ROMol &mol,
   return res;
 }
 
-template <typename F>
-std::string MolFragmentToSmilesHelper2(
+std::string MolFragmentToSmilesArgsHelper(
     const ROMol &mol, python::object atomsToUse, python::object bondsToUse,
     python::object atomSymbols, python::object bondSymbols,
     bool doIsomericSmiles, bool doKekule, int rootedAtAtom, bool canonical,
@@ -364,9 +363,27 @@ std::string MolFragmentToSmilesHelper2(
   ps.canonical = canonical;
   ps.allBondsExplicit = allBondsExplicit;
   ps.allHsExplicit = allHsExplicit;
-  return MolFragmentToSmilesHelper1<F>(mol, ps, atomsToUse, bondsToUse,
-                                       atomSymbols, bondSymbols);
+  return MolFragmentToSmilesParamsHelper<smilesfrag_gen>(
+      mol, ps, atomsToUse, bondsToUse, atomSymbols, bondSymbols);
 }
+
+std::string MolFragmentToCXSmilesArgsHelper(
+    const ROMol &mol, python::object atomsToUse, python::object bondsToUse,
+    python::object atomSymbols, python::object bondSymbols,
+    bool doIsomericSmiles, bool doKekule, int rootedAtAtom, bool canonical,
+    bool allBondsExplicit, bool allHsExplicit, bool reassignStereoGroupIds) {
+  SmilesWriteParams ps;
+  ps.doIsomericSmiles = doIsomericSmiles;
+  ps.doKekule = doKekule;
+  ps.rootedAtAtom = rootedAtAtom;
+  ps.canonical = canonical;
+  ps.allBondsExplicit = allBondsExplicit;
+  ps.allHsExplicit = allHsExplicit;
+  ps.reassignStereoGroupIds = reassignStereoGroupIds;
+  return MolFragmentToSmilesParamsHelper<cxsmilesfrag_gen>(
+      mol, ps, atomsToUse, bondsToUse, atomSymbols, bondSymbols);
+}
+
 std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
                                              bool breakTies = true,
                                              bool includeChirality = true,
@@ -1287,7 +1304,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
           "randomize the output order. The resulting SMILES is not canonical")
       .def_readwrite("rootedAtAtom", &RDKit::SmilesWriteParams::rootedAtAtom,
                      "make sure the SMILES starts at the specified atom. The "
-                     "resulting SMILES is not canonical");
+                     "resulting SMILES is not canonical")
+      .def_readwrite("reassignStereoGroupIds",
+                     &RDKit::SmilesWriteParams::reassignStereoGroupIds,
+                     "whether to reassign AND/OR StereoGroups to be canonical. "
+                     "This option is only used for CX Smiles.");
 
   python::def("MolToSmiles",
               (std::string(*)(const ROMol &,
@@ -1346,7 +1367,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     a string\n\
 \n";
-  python::def("MolFragmentToSmiles", MolFragmentToSmilesHelper1<smilesfrag_gen>,
+  python::def("MolFragmentToSmiles",
+              MolFragmentToSmilesParamsHelper<smilesfrag_gen>,
               (python::arg("mol"), python::arg("params"),
                python::arg("atomsToUse"), python::arg("bondsToUse") = 0,
                python::arg("atomSymbols") = 0, python::arg("bondSymbols") = 0),
@@ -1377,15 +1399,13 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       in the output SMILES. Defaults to false.\n\
     - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
       in the output SMILES. Defaults to false.\n\
-    - doRandom: (optional) if true, randomized the DFS transversal graph,\n\
-      so we can generate random smiles. Defaults to false.\n\
 \n\
   RETURNS:\n\
 \n\
     a string\n\
 \n";
   python::def(
-      "MolFragmentToSmiles", MolFragmentToSmilesHelper2<smilesfrag_gen>,
+      "MolFragmentToSmiles", MolFragmentToSmilesArgsHelper,
       (python::arg("mol"), python::arg("atomsToUse"),
        python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
        python::arg("bondSymbols") = 0, python::arg("isomericSmiles") = true,
@@ -1438,6 +1458,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       in the output SMILES. Defaults to false.\n\
     - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
       in the output SMILES. Defaults to false.\n\
+    - reassignStereoGroupIds : (optional) the Ids of AND/OR StereoGroups.\n\
+      will be reset and canonicalized.\n\
 \n\
   RETURNS:\n\
 \n\
@@ -1445,12 +1467,13 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def(
       "MolToCXSmiles",
-      (std::string(*)(const ROMol &, bool, bool, int, bool, bool, bool,
+      (std::string(*)(const ROMol &, bool, bool, int, bool, bool, bool, bool,
                       bool))RDKit::MolToCXSmiles,
       (python::arg("mol"), python::arg("isomericSmiles") = true,
        python::arg("kekuleSmiles") = false, python::arg("rootedAtAtom") = -1,
        python::arg("canonical") = true, python::arg("allBondsExplicit") = false,
-       python::arg("allHsExplicit") = false, python::arg("doRandom") = false),
+       python::arg("allHsExplicit") = false, python::arg("doRandom") = false,
+       python::arg("reassignStereoGroupIds") = true),
       docString.c_str());
 
   docString =
@@ -1473,7 +1496,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a string\n\
 \n";
   python::def("MolFragmentToCXSmiles",
-              MolFragmentToSmilesHelper1<cxsmilesfrag_gen>,
+              MolFragmentToSmilesParamsHelper<cxsmilesfrag_gen>,
               (python::arg("mol"), python::arg("params"),
                python::arg("atomsToUse"), python::arg("bondsToUse") = 0,
                python::arg("atomSymbols") = 0, python::arg("bondSymbols") = 0),
@@ -1503,21 +1526,22 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       in the output SMILES. Defaults to false.\n\
     - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
       in the output SMILES. Defaults to false.\n\
-    - doRandom: (optional) if true, randomized the DFS transversal graph,\n\
-      so we can generate random smiles. Defaults to false.\n\
+    - reassignStereoGroupIds : (optional) the Ids of AND/OR StereoGroups.\n\
+      will be reset and canonicalized.\n\
 \n\
   RETURNS:\n\
 \n\
     a string\n\
 \n";
   python::def(
-      "MolFragmentToCXSmiles", MolFragmentToSmilesHelper2<cxsmilesfrag_gen>,
+      "MolFragmentToCXSmiles", MolFragmentToCXSmilesArgsHelper,
       (python::arg("mol"), python::arg("atomsToUse"),
        python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
        python::arg("bondSymbols") = 0, python::arg("isomericSmiles") = true,
        python::arg("kekuleSmiles") = false, python::arg("rootedAtAtom") = -1,
        python::arg("canonical") = true, python::arg("allBondsExplicit") = false,
-       python::arg("allHsExplicit") = false),
+       python::arg("allHsExplicit") = false,
+       python::arg("reassignStereoGroupIds") = true),
       docString.c_str());
 
   docString =
@@ -1920,7 +1944,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       docString.c_str());
 
   python::def("CanonicalizeEnhancedStereo", CanonicalizeEnhancedStereo,
-              (python::arg("mol")));
+              (python::arg("mol")),
+              "Canonicalize Enhanded Stereo information.\n"
+              "Note that this will reset the group id of AND/OR groups.");
 
   python::def(
       "CreateAtomIntPropertyList", FileParserUtils::createAtomIntPropertyList,

@@ -2421,3 +2421,34 @@ TEST_CASE("smilesSymbol in SMARTS", "[smarts][smilesSymbol]") {
     CHECK(MolToSmarts(*m) == "[Xa;C,N,O]C");
   }
 }
+
+TEST_CASE("Stereo Group ID canonicalization", "[cxsmiles][StereoGroup]") {
+  auto m1 = "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"_smiles;
+  auto m2 = "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
+  REQUIRE(m1);
+  REQUIRE(m2);
+
+  SECTION("default canonicalization") {
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+  }
+  SECTION("disable Stereo Group canonicalization") {
+    auto ps = SmilesWriteParams();
+    ps.reassignStereoGroupIds = false;
+
+    auto cx1 = MolToCXSmiles(*m1, ps);
+    auto cx2 = MolToCXSmiles(*m2, ps);
+    CHECK(cx1 != cx2);
+    CHECK(cx1.find("&7:") != std::string::npos);
+    CHECK(cx1.find("&8:") != std::string::npos);
+  }
+  SECTION("disable all canonicalization") {
+    auto ps = SmilesWriteParams();
+    ps.canonical = false;
+
+    auto cx1 = MolToCXSmiles(*m1, ps);
+    auto cx2 = MolToCXSmiles(*m2, ps);
+    CHECK(cx1 != cx2);
+    CHECK(cx1.find("&7:") != std::string::npos);
+    CHECK(cx1.find("&8:") != std::string::npos);
+  }
+}

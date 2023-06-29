@@ -127,6 +127,7 @@ RDKIT_GRAPHMOL_EXPORT bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
 
 //! Canonicalizes the atom stereo labels in enhanced stereo groups
 /*!
+  Note that this will also reset AND/OR StereoGroup labels.
 
   For example, after calling this function the chiral centers in the
   molecules `C[C@H](F)Cl |&1:1|` and `C[C@@H](F)Cl |&1:1|` will have the same
