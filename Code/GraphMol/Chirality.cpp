@@ -1846,7 +1846,7 @@ void cleanupStereoGroups(ROMol &mol) {
     if (keep) {
       newsgs.push_back(sg);
     } else if (!okatoms.empty()) {
-      newsgs.emplace_back(sg.getGroupType(), std::move(okatoms));
+      newsgs.emplace_back(sg.getGroupType(), std::move(okatoms), sg.getId());
     }
   }
   mol.setStereoGroups(std::move(newsgs));
