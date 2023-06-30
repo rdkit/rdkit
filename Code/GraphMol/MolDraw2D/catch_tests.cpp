@@ -1249,7 +1249,7 @@ TEST_CASE(
     CHECK(txt == "abs (S)");
     CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
                                                  txt));
-    CHECK(txt == "and4");
+    CHECK(txt == "and2");
   }
   SECTION("including CIP with relative stereo") {
     ROMol m2(*m1);
@@ -1262,7 +1262,7 @@ TEST_CASE(
     CHECK(txt == "abs (S)");
     CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
                                                  txt));
-    CHECK(txt == "and4 (R)");
+    CHECK(txt == "and2 (R)");
   }
   SECTION("new CIP labels") {
     ROMol m2(*m1);
@@ -7643,8 +7643,7 @@ TEST_CASE(
   }
 }
 
-TEST_CASE(
-    "Github #6416: crash with colinear atoms") {
+TEST_CASE("Github #6416: crash with colinear atoms") {
   std::string name = "github6416.svg";
   auto m = R"CTAB(168010013
      RDKit          2D
