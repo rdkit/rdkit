@@ -29,15 +29,37 @@ RDKIT_SMILESPARSE_EXPORT void AddFragToMol(
     RDKit::RWMol *mol, RDKit::RWMol *frag,
     RDKit::Bond::BondType bondOrder = RDKit::Bond::UNSPECIFIED,
     RDKit::Bond::BondDir bondDir = RDKit::Bond::NONE);
-RDKIT_SMILESPARSE_EXPORT RDKit::Bond::BondType GetUnspecifiedBondType(
+//! Deprecated, please use the form without RWMol* instead
+[
+    [deprecated("please use the form without RWMol* instead")]
+] RDKIT_SMILESPARSE_EXPORT RDKit::Bond::BondType GetUnspecifiedBondType(
     const RDKit::RWMol *mol, const RDKit::Atom *atom1,
     const RDKit::Atom *atom2);
-RDKIT_SMILESPARSE_EXPORT void CheckChiralitySpecifications(RDKit::RWMol *mol,
+RDKIT_SMILESPARSE_EXPORT RDKit::Bond::BondType GetUnspecifiedBondType(
+    const RDKit::Atom *atom1, const RDKit::Atom *atom2);
+//! Deprecated, please use the form returning an error message instead
+[
+    [deprecated("please use the form returning an error message instead")]
+] RDKIT_SMILESPARSE_EXPORT void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict);
+RDKIT_SMILESPARSE_EXPORT std::string CheckChiralitySpecifications(RDKit::RWMol &mol,
                                                            bool strict);
-RDKIT_SMILESPARSE_EXPORT void CloseMolRings(RDKit::RWMol *mol,
+//! Deprecated, please use the form returning an error message instead
+[
+    [deprecated("please use the form returning an error message instead")]
+] RDKIT_SMILESPARSE_EXPORT void CloseMolRings(RDKit::RWMol *mol,
                                             bool toleratePartials);
-RDKIT_SMILESPARSE_EXPORT void SetUnspecifiedBondTypes(RDKit::RWMol *mol);
-RDKIT_SMILESPARSE_EXPORT void AdjustAtomChiralityFlags(RDKit::RWMol *mol);
+RDKIT_SMILESPARSE_EXPORT std::string CloseMolRings(RDKit::RWMol &mol,
+                                            bool toleratePartials);
+//! Deprecated, please use the form taking a RWMol& instead
+[
+    [deprecated("please use the form taking a RWMol& instead")]
+] RDKIT_SMILESPARSE_EXPORT void SetUnspecifiedBondTypes(RDKit::RWMol *mol);
+RDKIT_SMILESPARSE_EXPORT void SetUnspecifiedBondTypes(RDKit::RWMol &mol);
+//! Deprecated, please use the form taking a RWMol& instead
+[
+    [deprecated("please use the form taking a RWMol& instead")]
+] RDKIT_SMILESPARSE_EXPORT void AdjustAtomChiralityFlags(RDKit::RWMol *mol);
+RDKIT_SMILESPARSE_EXPORT void AdjustAtomChiralityFlags(RDKit::RWMol &mol);
 RDKIT_SMILESPARSE_EXPORT void CleanupAfterParsing(RDKit::RWMol *mol);
 RDKIT_SMILESPARSE_EXPORT void parseCXExtensions(
     RDKit::RWMol &mol, const std::string &extText,

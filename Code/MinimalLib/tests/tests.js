@@ -2335,6 +2335,51 @@ function test_get_num_atoms_bonds() {
     assert.equal(molH.get_num_bonds(), 13);
 }
 
+function test_leak() {
+    for (let i = 0; i < 500; ++i) {
+        let mol;
+        try {
+            mol = RDKitModule.get_mol('CODE-123456')
+        } catch (e) {
+        } finally {
+            assert(!mol || !mol.is_valid());
+            mol?.delete();
+        }
+    }
+}
+
+function test_leak_ctab() {
+    const molBlock = `
+    RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    3.5115    2.4569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0385    3.8613    0.0000 %   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8658    4.7965    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6139    3.9701    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0130    2.5242    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0777    1.3515    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0
+  2  3  4  0
+  3  4  4  0
+  4  5  4  0
+  5  6  4  0
+  6  1  4  0
+M  END
+`;
+
+    for (let i = 0; i < 1000; ++i) {
+        let mol;
+        try {
+            mol = RDKitModule.get_mol(molBlock);
+        } catch (e) {
+        } finally {
+            assert(!mol || !mol.is_valid());
+            mol?.delete();
+        }
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -2392,6 +2437,8 @@ initRDKitModule().then(function(instance) {
     test_get_frags();
     test_hs_in_place();
     test_query_colour();
+    test_leak();
+    test_leak_ctab();
     test_alignment_r_groups_aromatic_ring();
     test_is_valid_deprecated();
     test_mol_list();

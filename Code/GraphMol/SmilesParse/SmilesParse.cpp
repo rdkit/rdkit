@@ -55,110 +55,167 @@ extern int yysmarts_debug;
 namespace RDKit {
 namespace {
 
-int smarts_parse_helper(const std::string &inp,
-                        std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
+class AbstractParser {
+ public:
+  virtual ~AbstractParser() {
+    for (auto molPtr : d_molVect) {
+      if (molPtr) {
+        // Clean-up the bond bookmarks when not calling CloseMolRings
+        SmilesParseOps::CleanupAfterParseError(molPtr);
+        delete molPtr;
+      }
+    }
+  }
+  virtual int yyParse(const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::list<unsigned int> *branchPoints, int& start_token) = 0;
+  virtual size_t setupString(const std::string &text) = 0;
+
+  RWMol *toMol(const std::string &inp, const std::string &origInp) {
+    RWMol *res = nullptr;
+    // empty strings produce empty molecules:
+    if (inp.empty()) {
+      return new RWMol();
+    }
+    auto start_tok = static_cast<int>(START_MOL);
+    Atom *atom = nullptr;
+    Bond *bond = nullptr;
+    auto errorMsg = parse(inp, atom, bond, start_tok);
+    if (errorMsg.empty() && !d_molVect.empty() && d_molVect[0]) {
+      res = d_molVect[0];
+      errorMsg = SmilesParseOps::CloseMolRings(*res, false);
+      if (errorMsg.empty()) {
+        errorMsg = SmilesParseOps::CheckChiralitySpecifications(*res, true);
+      }
+      if (errorMsg.empty()) {
+        SmilesParseOps::SetUnspecifiedBondTypes(*res);
+        SmilesParseOps::AdjustAtomChiralityFlags(*res);
+        // No sense leaving this bookmark intact:
+        if (res->hasAtomBookmark(ci_RIGHTMOST_ATOM)) {
+          res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
+        }
+      }
+    }
+    if (errorMsg.empty()) {
+      d_molVect[0] = nullptr;  // NOTE: to avoid leaks on failures, this should
+                               // occur last in this if.
+    } else {
+      logErrorMsg(errorMsg, origInp);
+      res = nullptr;
+    }
+    return res;
+  }
+
+  Atom *toAtom(const std::string &inp) {
+    // empty strings produce nullptr:
+    if (inp.empty()) {
+      return nullptr;
+    }
+    Atom *res = nullptr;
+    auto start_tok = static_cast<int>(START_ATOM);
+    Bond *bond = nullptr;
+    auto errorMsg = parse(inp, res, bond, start_tok);
+    if (!errorMsg.empty()) {
+      logErrorMsg(errorMsg, inp);
+      res = nullptr;
+    }
+    return res;
+  }
+
+  Bond *toBond(const std::string &inp) {
+    // empty strings produce nullptr:
+    if (inp.empty()) {
+      return nullptr;
+    }
+    Bond *res = nullptr;
+    auto start_tok = static_cast<int>(START_BOND);
+    Atom *atom = nullptr;
+    auto errorMsg = parse(inp, atom, res, start_tok);
+    if (!errorMsg.empty()) {
+      logErrorMsg(errorMsg, inp);
+      res = nullptr;
+    }
+    return res;
+  }
+
+ protected:
+  void *d_scanner;
+  std::vector<RDKit::RWMol *> d_molVect;
+
+ private:
+  virtual const char *parserName() const = 0;
+  void logErrorMsg(const std::string &errorMsg, const std::string &origInp) {
+    BOOST_LOG(rdErrorLog) << parserName() << " Parse Error: " << errorMsg
+                          << " for input: '" << origInp << "'" << std::endl;
+  }
+  std::string parse(const std::string &inp, Atom *&atom,
                         Bond *&bond, int start_tok) {
-  std::list<unsigned int> branchPoints;
-  void *scanner;
-  int res = 1;  // initialize with fail code
+    std::list<unsigned int> branchPoints;
+    std::stringstream errorMsg;
+    int res = 1;  // initialize with fail code
 
-  TEST_ASSERT(!yysmarts_lex_init(&scanner));
-  try {
-    size_t ltrim = setup_smarts_string(inp, scanner);
-    unsigned numAtomsParsed = 0;
-    unsigned numBondsParsed = 0;
-    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, atom, bond,
-                         numAtomsParsed, numBondsParsed, &branchPoints, scanner,
-                         start_tok);
-  } catch (...) {
-    yysmarts_lex_destroy(scanner);
-    throw;
+    try {
+      size_t ltrim = setupString(inp);
+      unsigned int numAtomsParsed = 0;
+      unsigned int numBondsParsed = 0;
+      res = yyParse(inp.c_str() + ltrim, &d_molVect, atom, bond, numAtomsParsed, numBondsParsed, &branchPoints, start_tok);
+    } catch (...) {
+    }
+
+    if (res == 1) {
+      errorMsg << "Failed parsing " << parserName() << " '" << inp << "'";
+    }
+
+    if (!branchPoints.empty()) {
+      errorMsg << (res == 1 ? "\n" : "") << "extra open parentheses";
+    }
+    return errorMsg.str();
   }
-  yysmarts_lex_destroy(scanner);
+};
 
-  if (res == 1) {
-    std::stringstream errout;
-    errout << "Failed parsing SMARTS '" << inp << "'";
-    throw SmilesParseException(errout.str());
+class SmilesParser : public AbstractParser {
+ public:
+  SmilesParser() {
+    TEST_ASSERT(!yysmiles_lex_init(&d_scanner));
   }
-  if (!branchPoints.empty()) {
-    throw SmilesParseException("extra open parentheses");
+  ~SmilesParser() {
+    if (d_scanner) {
+      yysmiles_lex_destroy(d_scanner);
+    }
   }
-
-  return res;
-}
-int smarts_bond_parse(const std::string &inp, Bond *&bond) {
-  auto start_tok = static_cast<int>(START_BOND);
-  std::vector<RWMol *> molVect;
-  Atom *atom = nullptr;
-  return smarts_parse_helper(inp, molVect, atom, bond, start_tok);
-}
-
-int smarts_atom_parse(const std::string &inp, Atom *&atom) {
-  auto start_tok = static_cast<int>(START_ATOM);
-  std::vector<RWMol *> molVect;
-  Bond *bond = nullptr;
-  return smarts_parse_helper(inp, molVect, atom, bond, start_tok);
-}
-
-int smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
-  auto start_tok = static_cast<int>(START_MOL);
-  Atom *atom = nullptr;
-  Bond *bond = nullptr;
-  return smarts_parse_helper(inp, molVect, atom, bond, start_tok);
-}
-
-int smiles_parse_helper(const std::string &inp,
-                        std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
-                        Bond *&bond, int start_tok) {
-  std::list<unsigned int> branchPoints;
-  void *scanner;
-  int res = 1;  // initialize with fail code
-  unsigned numAtomsParsed = 0;
-  unsigned numBondsParsed = 0;
-  TEST_ASSERT(!yysmiles_lex_init(&scanner));
-  try {
-    size_t ltrim = setup_smiles_string(inp, scanner);
-    res = yysmiles_parse(inp.c_str() + ltrim, &molVect, atom, bond,
-                         numAtomsParsed, numBondsParsed, &branchPoints, scanner,
-                         start_tok);
-  } catch (...) {
-    yysmiles_lex_destroy(scanner);
-    throw;
+ private:
+  inline int yyParse(const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::list<unsigned int> *branchPoints, int& start_token) {
+    return yysmiles_parse(input, molList, lastAtom, lastBond, numAtomsParsed, numBondsParsed, branchPoints, d_scanner, start_token);
   }
-  yysmiles_lex_destroy(scanner);
-
-  if (res == 1) {
-    std::stringstream errout;
-    errout << "Failed parsing SMILES '" << inp << "'";
-    throw SmilesParseException(errout.str());
+  inline size_t setupString(const std::string &text) {
+    return setup_smiles_string(text, d_scanner);
   }
+  const char *parserName() const {
+    static const char *name = "SMILES";
+    return name;
+  };
+};
 
-  if (!branchPoints.empty()) {
-    throw SmilesParseException("extra open parentheses");
+class SmartsParser : public AbstractParser {
+ public:
+  SmartsParser() {
+    TEST_ASSERT(!yysmarts_lex_init(&d_scanner));
   }
-  return res;
-}
-
-int smiles_bond_parse(const std::string &inp, Bond *&bond) {
-  auto start_tok = static_cast<int>(START_BOND);
-  std::vector<RWMol *> molVect;
-  Atom *atom = nullptr;
-  return smiles_parse_helper(inp, molVect, atom, bond, start_tok);
-}
-int smiles_atom_parse(const std::string &inp, Atom *&atom) {
-  auto start_tok = static_cast<int>(START_ATOM);
-  std::vector<RWMol *> molVect;
-  Bond *bond = nullptr;
-  return smiles_parse_helper(inp, molVect, atom, bond, start_tok);
-}
-
-int smiles_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
-  auto start_tok = static_cast<int>(START_MOL);
-  Atom *atom = nullptr;
-  Bond *bond = nullptr;
-  return smiles_parse_helper(inp, molVect, atom, bond, start_tok);
-}
+  ~SmartsParser() {
+    if (d_scanner) {
+      yysmarts_lex_destroy(d_scanner);
+    }
+  }
+ private:
+  inline int yyParse(const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::list<unsigned int> *branchPoints, int& start_token) {
+    return yysmarts_parse(input, molList, lastAtom, lastBond, numAtomsParsed, numBondsParsed, branchPoints, d_scanner, start_token);
+  }
+  inline size_t setupString(const std::string &text) {
+    return setup_smarts_string(text, d_scanner);
+  }
+  const char *parserName() const {
+    static const char *name = "SMARTS";
+    return name;
+  };
+};
 
 typedef enum { BASE = 0, BRANCH, RECURSE } SmaState;
 
@@ -218,90 +275,6 @@ std::string labelRecursivePatterns(const std::string &sma) {
 }
 }  // namespace
 
-RWMol *toMol(const std::string &inp,
-             int func(const std::string &, std::vector<RDKit::RWMol *> &),
-             const std::string &origInp) {
-  // empty strings produce empty molecules:
-  if (inp.empty()) {
-    return new RWMol();
-  }
-  RWMol *res = nullptr;
-  std::vector<RDKit::RWMol *> molVect;
-  try {
-    func(inp, molVect);
-    if (!molVect.empty()) {
-      res = molVect[0];
-      SmilesParseOps::CloseMolRings(res, false);
-      SmilesParseOps::CheckChiralitySpecifications(res, true);
-      SmilesParseOps::SetUnspecifiedBondTypes(res);
-      SmilesParseOps::AdjustAtomChiralityFlags(res);
-      // No sense leaving this bookmark intact:
-      if (res->hasAtomBookmark(ci_RIGHTMOST_ATOM)) {
-        res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
-      }
-      molVect[0] = nullptr;  // NOTE: to avoid leaks on failures, this should
-                             // occur last in this if.
-    }
-  } catch (SmilesParseException &e) {
-    std::string nm = "SMILES";
-    if (func == smarts_parse) {
-      nm = "SMARTS";
-    }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
-                          << " for input: '" << origInp << "'" << std::endl;
-    res = nullptr;
-  }
-  for (auto *molPtr : molVect) {
-    if (molPtr) {
-      // Clean-up the bond bookmarks when not calling CloseMolRings
-      SmilesParseOps::CleanupAfterParseError(molPtr);
-      delete molPtr;
-    }
-  }
-
-  return res;
-}
-
-Atom *toAtom(const std::string &inp, int func(const std::string &, Atom *&)) {
-  // empty strings produce empty molecules:
-  if (inp.empty()) {
-    return nullptr;
-  }
-  Atom *res = nullptr;
-  try {
-    func(inp, res);
-  } catch (SmilesParseException &e) {
-    std::string nm = "SMILES";
-    if (func != smiles_atom_parse) {
-      nm = "SMARTS";
-    }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
-                          << " for input: '" << inp << "'" << std::endl;
-    res = nullptr;
-  }
-  return res;
-}
-
-Bond *toBond(const std::string &inp, int func(const std::string &, Bond *&)) {
-  // empty strings produce empty molecules:
-  if (inp.empty()) {
-    return nullptr;
-  }
-  Bond *res = nullptr;
-  try {
-    func(inp, res);
-  } catch (SmilesParseException &e) {
-    std::string nm = "SMILES";
-    if (func != smiles_bond_parse) {
-      nm = "SMARTS";
-    }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
-                          << " for input: '" << inp << "'" << std::endl;
-    res = nullptr;
-  }
-  return res;
-}
-
 namespace {
 // despite the name: works for both SMILES and SMARTS
 template <typename T>
@@ -348,17 +321,15 @@ void preprocessSmiles(const std::string &smiles, const T &params,
 Atom *SmilesToAtom(const std::string &smiles) {
   yysmiles_debug = false;
 
-  Atom *res = nullptr;
-  res = toAtom(smiles, smiles_atom_parse);
-  return res;
+  SmilesParser smilesParser;
+  return smilesParser.toAtom(smiles);
 };
 
 Bond *SmilesToBond(const std::string &smiles) {
   yysmiles_debug = false;
 
-  Bond *res = nullptr;
-  res = toBond(smiles, smiles_bond_parse);
-  return res;
+  SmilesParser smilesParser;
+  return smilesParser.toBond(smiles);
 };
 
 namespace {
@@ -411,7 +382,8 @@ RWMol *SmilesToMol(const std::string &smiles,
   // strip any leading/trailing whitespace:
   // boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
   RWMol *res = nullptr;
-  res = toMol(lsmiles, smiles_parse, lsmiles);
+  SmilesParser smilesParser;
+  res = smilesParser.toMol(lsmiles, lsmiles);
   handleCXPartAndName(res, params, cxPart, name);
   if (res && (params.sanitize || params.removeHs)) {
     if (res->hasProp(SmilesParseOps::detail::_needsDetectAtomStereo)) {
@@ -474,20 +446,18 @@ RWMol *SmilesToMol(const std::string &smiles,
   return res;
 };
 
-Atom *SmartsToAtom(const std::string &smiles) {
+Atom *SmartsToAtom(const std::string &smarts) {
   yysmarts_debug = false;
 
-  Atom *res = nullptr;
-  res = toAtom(smiles, smarts_atom_parse);
-  return res;
+  SmartsParser smartsParser;
+  return smartsParser.toAtom(smarts);
 };
 
-Bond *SmartsToBond(const std::string &smiles) {
+Bond *SmartsToBond(const std::string &smarts) {
   yysmarts_debug = false;
 
-  Bond *res = nullptr;
-  res = toBond(smiles, smarts_bond_parse);
-  return res;
+  SmartsParser smartsParser;
+  return smartsParser.toBond(smarts);
 };
 
 RWMol *SmartsToMol(const std::string &smarts,
@@ -504,7 +474,8 @@ RWMol *SmartsToMol(const std::string &smarts,
   preprocessSmiles(smarts, params, lsmarts, name, cxPart);
 
   RWMol *res = nullptr;
-  res = toMol(labelRecursivePatterns(lsmarts), smarts_parse, lsmarts);
+  SmartsParser smartsParser;
+  res = smartsParser.toMol(labelRecursivePatterns(lsmarts), lsmarts);
   handleCXPartAndName(res, params, cxPart, name);
   if (res) {
     if (params.mergeHs) {

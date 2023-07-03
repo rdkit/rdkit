@@ -4382,6 +4382,28 @@ void testGithub3967() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testLeak2() {
+  int i = 0;
+  Mol *mol;
+  std::string smi;
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing a leak with invalid mol" << std::endl;
+
+  smi = "CODE-123456";
+  boost::logging::disable_logs("rdApp.error");
+  for (i = 0; i < 1000; i++) {
+    mol = SmilesToMol(smi, 0, 1);
+    if (!(i % 100)) {
+      BOOST_LOG(rdInfoLog) << i << std::endl;
+    }
+
+    delete mol;
+  }
+  boost::logging::enable_logs("rdApp.error");
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4461,6 +4483,7 @@ int main(int argc, char *argv[]) {
   testGithub1028();
   testGithub3139();
   testGithub3967();
-#endif
   testOSSFuzzFailures();
+#endif
+  testLeak2();
 }
