@@ -1592,24 +1592,23 @@ void testHasValenceViolation() {
            "C(C)(C)(C)C",
            "S(C)(C)(C)(C)(C)C",
            "O(C)C",
+           "[H+]",  // proton
            "[H-]",
-           "[H+] |^2:0|",  // same as [H-]
            "[HH]",
-           "[H-2]",  // behaves like Li, which allows any valence
            "[He]",
+           "[He+2]",
            "[C][C] |^5:0,1|",
            "[H][Si] |^5:1|",
-           "[H][Na]([H])([H])[H]",  // Na allows any valence
            "[CH3+]",
            "[CH3-]",
            "[NH4+]",
            "[Na][H]",
+           "[H][Mg][H]",
            "*",              // dummy atom, which also accounts for wildcards
            "*C |$_AP1;$|]",  // attachment point
            "[*] |$_R1$|",    // rgroup
            "[Og][Og]([Og])([Og])([Og])([Og])([Og])[Og]",
            "[Lv+4]",
-           "[Lv-4]",
        }) {
     auto mol = to_mol(smiles);
     for (auto atom : mol->atoms()) {
@@ -1622,15 +1621,24 @@ void testHasValenceViolation() {
            "[C+5]",
            "C(C)(C)(C)(C)C",
            "S(C)(C)(C)(C)(C)(C)C",
+           "[C+](C)(C)(C)C",
+           "[C-](C)(C)(C)C",
            "[C](C)(C)(C)C |^1:0|",  //  pentavalent due to unpaired electron
            "O(C)=C",
-           "[H+]",  // proton
            "[H]",
            "[H+] |^1:0|",  // same as [H]
+           "[H+] |^2:0|",  // non-physical radical count
            "[H+2]",
+           "[H-2]",
            "[He+]",
-           "[He+2]",
            "[He][He]",
+           "[Na]",
+           "[Na]([H])[H]",
+           "[Mg]",
+           "[Mg][H]",
+           "[O-3]",
+           "[F-2]",
+           "[Lv-4]",
        }) {
     auto mol = to_mol(smiles);
     auto atom = mol->getAtomWithIdx(0);

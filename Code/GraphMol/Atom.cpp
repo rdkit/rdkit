@@ -634,24 +634,26 @@ bool Atom::hasValenceViolation() const {
   // Account for charge via the isolobal analogy by modifying the atomic
   // number used to look up allowed valences
   atomic_number -= getFormalCharge();
-  // Because the look up accounted for charge, we can ignore that contribution
+  // Because the lookup accounted for charge, we can ignore that contribution
   // to the current valence; however, still account for unpaired electrons
   int current_valence = getTotalValence() + getNumRadicalElectrons();
-  // If the isolobal analogy breaks down, instead look up allowed valences
-  // using the original atomic number and check against a current valence of
-  // (total_valence - charge + unpaired_electrons); we don't do this by
-  // default because the isolobal analogy is more robust with respect to the
-  // RDKit's enumerated allowed valences
+
+  // Special case proton, which is permissible
+  if (atomic_number == 0 && current_valence == 0) {
+    return false;
+  }
+
+  // If the isolobal analogy breaks down, assume an error
   if (atomic_number < 1 || atomic_number > 118) {
-    atomic_number = getAtomicNum();
-    current_valence -= getFormalCharge();
+    return true;
   }
 
   const auto *table = RDKit::PeriodicTable::getTable();
   auto allowed_valence_list = table->getValenceList(atomic_number);
-  if (allowed_valence_list.back() == -1) {
-    return false;  // -1 indicates that any valence is permitted
+  if (allowed_valence_list == std::vector<int>({-1})) {
+    return false;  // only -1 indicates that any valence is permitted
   }
+
   return std::find(allowed_valence_list.begin(), allowed_valence_list.end(),
                    current_valence) == allowed_valence_list.end();
 }
