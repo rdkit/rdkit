@@ -2440,12 +2440,15 @@ initRDKitModule().then(function(instance) {
     test_leak();
     test_leak_ctab();
     test_alignment_r_groups_aromatic_ring();
+<<<<<<< HEAD
     test_is_valid_deprecated();
     test_mol_list();
     test_get_num_atoms_bonds();
     if (RDKitModule.get_mcs_as_mol)  {
         test_mcs();
     }
+=======
+>>>>>>> 3089599aea89e890cf186bedf8b8e52ad67ca233
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
