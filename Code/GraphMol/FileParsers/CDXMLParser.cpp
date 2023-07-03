@@ -38,7 +38,7 @@ const std::string CDX_ATOM_ID("_CDX_ATOM_ID");
 const std::string CDX_BOND_ID("_CDX_BOND_ID");
 const std::string CDX_BOND_ORDERING("CDXML_BOND_ORDERING");
 
-const double RDKIT_DEPICT_BONDLENGTH = 1.5;
+constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
 
 struct BondInfo {
   int bond_id = -1;
