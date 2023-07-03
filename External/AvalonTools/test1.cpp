@@ -554,6 +554,73 @@ void testBigMoleculeNoNewlineInInitString() {
   TEST_ASSERT(errs == 0);
 }
 
+void testCrashOnCtabMisalignment() {
+  BOOST_LOG(rdInfoLog) << "testing crash on CTAB bond table misalignment"
+                       << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Data/struchk/";
+  std::stringstream struchk_init;
+  struchk_init << "-ta " << pathName << "checkfgs.trn\n"
+               << "-tm\n"
+                  "-or\n"
+                  "-ca "
+               << pathName << "checkfgs.chk\n"
+               << "-cc\n"
+                  "-cl 3\n"
+                  "-cs\n"
+                  "-cn 999";
+  int errs = AvalonTools::initCheckMol(struchk_init.str());
+  TEST_ASSERT(!errs);
+  std::string ctab = R"CTAB(
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+ 1  2  1  0
+  2  3  1  0
+M  END
+)CTAB";
+  auto res = AvalonTools::checkMolString(ctab, false);
+  AvalonTools::closeCheckMolFiles();
+  TEST_ASSERT(!res.second);
+  TEST_ASSERT(res.first.find("  1  2  1  0  0  0  0") != std::string::npos);
+}
+
+void testCrashOnBondAtomIdxOutOfBounds() {
+  BOOST_LOG(rdInfoLog) << "testing crash on CTAB bond table atom idx out of bounds"
+                       << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Data/struchk/";
+  std::stringstream struchk_init;
+  struchk_init << "-ta " << pathName << "checkfgs.trn\n"
+               << "-tm\n"
+                  "-or\n"
+                  "-ca "
+               << pathName << "checkfgs.chk\n"
+               << "-cc\n"
+                  "-cl 3\n"
+                  "-cs\n"
+                  "-cn 999";
+  int errs = AvalonTools::initCheckMol(struchk_init.str());
+  TEST_ASSERT(!errs);
+  std::string ctab = R"CTAB(
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+ 10 20  1  0
+  2  3  1  0
+M  END
+)CTAB";
+  auto res = AvalonTools::checkMolString(ctab, false);
+  AvalonTools::closeCheckMolFiles();
+  TEST_ASSERT(res.second);
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -575,6 +642,8 @@ int main() {
   testGithub4330();
   testNoAtomCTAB();
   testBigMoleculeNoNewlineInInitString();
+  testCrashOnCtabMisalignment();
+  testCrashOnBondAtomIdxOutOfBounds();
 
   return 0;
 }
