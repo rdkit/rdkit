@@ -18,6 +18,7 @@
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
 
 using namespace RDKit;
 
@@ -221,5 +222,335 @@ TEST_CASE("github #6310: crossed ring bonds not written to mol blocks") {
 
     mb = MolToMolBlock(*m);
     CHECK(mb.find("2  3  2  3") != std::string::npos);
+  }
+}
+
+void testStereoExample(const std::string &mb, unsigned int aidx,
+                       Atom::ChiralType expected,
+                       const std::string &expectedCIP) {
+  INFO(mb);
+  std::unique_ptr<RWMol> m(MolBlockToMol(mb));
+  REQUIRE(m);
+  CHECK(m->getAtomWithIdx(aidx)->getChiralTag() == expected);
+  CIPLabeler::assignCIPLabels(*m);
+  std::string CIP = "";
+  CHECK(m->getAtomWithIdx(aidx)->getPropIfPresent(common_properties::_CIPCode,
+                                                  CIP));
+  CHECK(CIP == expectedCIP);
+}
+
+TEST_CASE("IUPAC recommendations") {
+#if 1
+  SECTION("simple examples") {
+    std::vector<std::string> mbs = {
+        R"CTAB(
+  Mrv2211 06082308462D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.875 5.3333 0 0
+M  V30 2 C -6.5413 6.1033 0 0
+M  V30 3 O -5.2076 5.3333 0 0
+M  V30 4 F -7.3292 7.3957 0 0
+M  V30 5 Cl -5.4654 7.2052 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 CFG=1
+M  V30 4 1 2 5 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+        R"CTAB(
+  Mrv2211 06082309052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.875 5.3333 0 0
+M  V30 2 C -6.5413 6.1033 0 0 CFG=2
+M  V30 3 O -5.2076 5.3333 0 0
+M  V30 4 F -6.5413 8 0 0
+M  V30 5 Cl -5.4654 7.2052 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 CFG=1
+M  V30 4 1 2 5 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+        R"CTAB(
+  Mrv2211 06082309052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.875 5.3333 0 0
+M  V30 2 C -6.5413 6.1033 0 0 CFG=2
+M  V30 3 O -5.2076 5.3333 0 0
+M  V30 4 F -4.9369 6.9639 0 0
+M  V30 5 Cl -6.5413 7.9602 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 CFG=1
+M  V30 4 1 2 5 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+        R"CTAB(IUPAC does not like this one
+  Mrv2211 06082309142D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.875 5.3333 0 0
+M  V30 2 C -6.5413 6.1033 0 0
+M  V30 3 O -5.2076 5.3333 0 0
+M  V30 4 F -6.5413 4.2897 0 0
+M  V30 5 Cl -6.5413 7.9602 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 CFG=1
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+        R"CTAB(IUPAC does not like this one2
+  Mrv2211 06082309142D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.875 5.3333 0 0
+M  V30 2 C -6.5413 6.1033 0 0
+M  V30 3 O -5.2076 5.3333 0 0
+M  V30 4 F -6.5413 4.2897 0 0
+M  V30 5 Cl -6.5413 7.9602 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 
+M  V30 4 1 2 5 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+    };
+    for (const auto &mb : mbs) {
+      testStereoExample(mb, 1, Atom::ChiralType::CHI_TETRAHEDRAL_CCW, "S");
+      if (mb.find("CFG=3") != std::string::npos &&
+          mb.find("CFG=1") != std::string::npos) {
+        std::string cp = mb;
+        testStereoExample(cp.replace(mb.find("CFG=1"), 5, "     "), 1,
+                          Atom::ChiralType::CHI_TETRAHEDRAL_CCW, "S");
+        cp = mb;
+        testStereoExample(cp.replace(mb.find("CFG=3"), 5, "     "), 1,
+                          Atom::ChiralType::CHI_TETRAHEDRAL_CCW, "S");
+      }
+    }
+  }
+  SECTION("three coordinate") {
+    auto m = R"CTAB(
+  Mrv2108 01192209042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.31 4.001 0 0
+M  V30 2 C 1.54 2.6674 0 0 CFG=2
+M  V30 3 O -0 2.6674 0 0
+M  V30 4 C 2.31 1.3337 0 0 CFG=1
+M  V30 5 F 3.85 1.3337 0 0
+M  V30 6 C 1.54 0 0 0 CFG=2
+M  V30 7 C 2.31 -1.3337 0 0
+M  V30 8 O 0 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3 CFG=3
+M  V30 3 1 4 2
+M  V30 4 1 4 5 CFG=1
+M  V30 5 1 4 6
+M  V30 6 1 6 7
+M  V30 7 1 6 8 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    CHECK(m->getAtomWithIdx(5)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+#endif
+  SECTION("this came up") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase + "/Code/GraphMol/test_data/github87.mol";
+    std::unique_ptr<RWMol> m{MolFileToMol(fName)};
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+
+  SECTION("narrow angle") {
+    auto m = R"CTAB(
+  Mrv2211 06092305312D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.4875 5.1589 0 0
+M  V30 2 C -1.5412 6.698 0 0
+M  V30 3 F -2.2685 4.0178 0 0
+M  V30 4 Br -0.7027 4.0359 0 0
+M  V30 5 Cl -1.4337 3.6198 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2 CFG=1
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+  SECTION("track bond starting points") {
+    auto m = R"CTAB(blah
+     RDKit          2D
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -3.1960  -20.3395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1960  -19.5114    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1921  -21.7775    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7763  -21.0619    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0577  -21.4777    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0179  -20.3565    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3411  -20.6109    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  4  1  6
+  1  6  1  0
+  1  7  1  0
+  4  3  1  1
+  4  5  1  0
+  4  7  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("linear arrangements") {
+    {
+      auto m = R"CTAB(
+  Mrv2211 06102314502D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 O 9.0665 0.9156 0 0
+M  V30 2 N 9.6304 4.5593 0 0
+M  V30 3 C 8.2965 2.2493 0 0 MASS=14
+M  V30 4 C 6.9628 1.4792 0 0
+M  V30 5 C 9.6304 3.0193 0 0
+M  V30 6 H 7.8191 3.0761 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 3 1 CFG=1
+M  V30 2 1 2 5
+M  V30 3 1 3 4
+M  V30 4 1 3 5
+M  V30 5 1 3 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+    {
+      auto m = R"CTAB(opposing stereo
+  Mrv2211 06102314502D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 O 9.0665 0.9156 0 0
+M  V30 2 N 9.6304 4.5593 0 0
+M  V30 3 C 8.2965 2.2493 0 0 MASS=14
+M  V30 4 C 6.9628 1.4792 0 0
+M  V30 5 C 9.6304 3.0193 0 0
+M  V30 6 H 7.8191 3.0761 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 3 1 CFG=1
+M  V30 2 1 2 5
+M  V30 3 1 3 4
+M  V30 4 1 3 5
+M  V30 5 1 3 6 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    {
+      auto m = R"CTAB(
+  Mrv2211 06102314502D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 O 9.0665 0.9156 0 0
+M  V30 2 N 9.6304 4.5593 0 0
+M  V30 3 C 8.2965 2.2493 0 0 MASS=14
+M  V30 4 C 6.9628 1.4792 0 0
+M  V30 5 C 9.6304 3.0193 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 3 1 CFG=1
+M  V30 2 1 2 5
+M  V30 3 1 3 4
+M  V30 4 1 3 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
   }
 }

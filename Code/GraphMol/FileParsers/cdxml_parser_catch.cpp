@@ -505,7 +505,7 @@ TEST_CASE("CDXML") {
         "[B]",
         "*",
         "[C]",
-        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",  // this is wrong, but the structure is drawn incorrectly. There's a test below which fixes this
+        "Cc1ccc2n1[C@@H]1[C@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",  // this is may or may not be correct, but the structure is drawn incorrectly. There's a test below which fixes this
         "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
         "Cc1ccc2ccc(=O)ccn12",
         "Cc1cccn1[C@H](C)C=O",
@@ -612,6 +612,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
+      INFO(i);
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
