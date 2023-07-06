@@ -405,7 +405,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   ROMol &operator=(const ROMol &) =
       delete;  // disable assignment, RWMol's support assignment
 
-  virtual ~ROMol() { destroy(); }
+  ~ROMol() override { destroy(); }
 
   //! @}
   //! \name Atoms
