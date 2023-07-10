@@ -295,7 +295,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_queryColour_1.svg", 3758375489U},
     {"test_queryColour_2.svg", 2426598062U},
     {"github6336_1.svg", 612606818U},
-    {"github6416.svg", 3045235864U}};
+    {"github6416.svg", 3045235864U},
+    {"test_github6400_1.svg", 2792561051U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -706,9 +707,13 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_1.svg");
 
-    CHECK(text.find("d='M 122.5,88.4 L 85.6,88.4' "
-                    "style='fill:none;fill-rule:evenodd;stroke:#0000FF") !=
-          std::string::npos);
+    std::regex d1(
+        "<path class='bond-0 atom-0 atom-1' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
+    auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(122.3, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(88.5, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(85.7, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(88.5, 0.1));
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -723,9 +728,13 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_2.svg");
 
-    CHECK(text.find("-8' d='M 101.1,77.2 L 95.8,84.5' "
-                    "style='fill:none;fill-rule:evenodd;stroke:#0000FF;") !=
-          std::string::npos);
+    std::regex d1(
+        "<path class='bond-7 atom-7 atom-8' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
+    auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(100.9, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(77.5, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(95.8, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(84.7, 0.1));
   }
   SECTION("test colours") {
     // the dative bonds point the wrong way, but the point is to test
@@ -742,11 +751,13 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_3.svg");
 
-    CHECK(
-        text.find(
-            "<path class='bond-2 atom-3 atom-4' d='M 50.4,140.6 L 77.9,149.5' "
-            "style='fill:none;fill-rule:evenodd;stroke:#0000FF;") !=
-        std::string::npos);
+    std::regex d1(
+        "<path class='bond-2 atom-3 atom-4' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
+    auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(50.9, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(140.2, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(78.1, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(149.0, 0.1));
   }
   SECTION("dative series") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -1048,7 +1059,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_2.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 5);
+      CHECK(tkns.size() == 4);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -1351,9 +1362,9 @@ TEST_CASE("including legend in drawing results in offset drawing later",
     check_file_hash("testLegendsAndDrawing-1.svg");
 
     // make sure the polygon starts at a bond
-    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 316.7,135.0") !=
+    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 315.3,136.5") !=
           std::string::npos);
-    CHECK(text.find("<path d='M 316.7,135.0") != std::string::npos);
+    CHECK(text.find("<path d='M 311.8,142.6") != std::string::npos);
   }
 }
 
@@ -4034,7 +4045,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(20.4).margin(0.1));
+    CHECK(drawer.fontSize() == Approx(20.25).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2b.svg");
     outs << text;
@@ -4578,7 +4589,7 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_1.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='34.5' y='195.0' class='legend' "
+      CHECK(text.find("<text x='34.5' y='190.0' class='legend' "
                       "style='font-size:16px;") != std::string::npos);
       check_file_hash("testVariableLegend_1.svg");
     }
@@ -4593,7 +4604,7 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_2.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='1.6' y='195.0' class='legend' "
+      CHECK(text.find("<text x='2.8' y='190.0' class='legend' "
                       "style='font-size:31px;") != std::string::npos);
       check_file_hash("testVariableLegend_2.svg");
     }
@@ -4607,8 +4618,8 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_3.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='84.7' y='195.0' class='legend' "
-                      "style='font-size:6px;") != std::string::npos);
+      CHECK(text.find("<text x='72.4' y='190.0' class='legend' "
+                      "style='font-size:11px;") != std::string::npos);
       check_file_hash("testVariableLegend_3.svg");
     }
   }
@@ -4665,7 +4676,7 @@ TEST_CASE("Github 5185 - don't draw atom indices between double bond") {
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // the 2nd note
-      CHECK(text.find("<path class='note' d='M 93.4 129.9") !=
+      CHECK(text.find("<path class='note' d='M 94.4 129.6") !=
             std::string::npos);
       check_file_hash("testGithub_5185.svg");
 #else
@@ -5568,18 +5579,25 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   REQUIRE(wavyMatch.size() == 1);
 
   std::regex regex2(
-      "class='bond-4 atom-4 atom-5' d='M 118\\..*,135\\..* L "
-      "68\\..*,107\\..*'");
-  std::smatch cross1Match;
-  REQUIRE(std::regex_search(text, cross1Match, regex2));
-  REQUIRE(cross1Match.size() == 1);
+      "class='bond-4 atom-4 atom-5' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L "
+      "(\\d+\\.\\d+),(\\d+\\.\\d+)'");
 
-  std::regex regex3(
-      "class='bond-4 atom-4 atom-5' d='M 117\\..*,145\\..* L "
-      "74\\..*,100\\..*'");
-  std::smatch cross2Match;
-  REQUIRE(std::regex_search(text, cross2Match, regex3));
-  REQUIRE(cross1Match.size() == 1);
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), regex2),
+                    std::sregex_iterator()));
+  REQUIRE(match_count == 2);
+
+  // Check that the 2 bonds aren't parallel
+  auto cross1Match = std::sregex_iterator(text.begin(), text.end(), regex2);
+  Point2D point1{stod((*cross1Match)[1]), stod((*cross1Match)[2])};
+  Point2D point2{stod((*cross1Match)[3]), stod((*cross1Match)[4])};
+  auto vec1 = point1.directionVector(point2);
+
+  ++cross1Match;
+  Point2D point3{stod((*cross1Match)[1]), stod((*cross1Match)[2])};
+  Point2D point4{stod((*cross1Match)[3]), stod((*cross1Match)[4])};
+  auto vec2 = point3.directionVector(point4);
+  REQUIRE(vec1.dotProduct(vec2) != Approx(1.0).margin(1.0e-4));
 
   check_file_hash("test_unspec_stereo.svg");
 }
@@ -6281,19 +6299,19 @@ TEST_CASE("Github5947: Ellipse extremes not calculated correctly.") {
       std::distance(std::sregex_iterator(text.begin(), text.end(), r1),
                     std::sregex_iterator()));
   REQUIRE(match_count == 6);
-  // all the ellipses should have a radius of roughly 28.8
+  // all the ellipses should have a radius of roughly 72.0
   auto match_begin = std::sregex_iterator(text.begin(), text.end(), r1);
   auto match_end = std::sregex_iterator();
   for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
     std::smatch match = *i;
-    REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(72.7, 0.1));
-    REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(72.7, 0.1));
+    REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(72.0, 0.1));
+    REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(72.0, 0.1));
   }
 
   // check that the first ellipse is in the right place
   std::regex r2("<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'");
   auto ell1 = *std::sregex_iterator(text.begin(), text.end(), r2);
-  REQUIRE_THAT(stod(ell1[1]), Catch::Matchers::WithinAbs(309.1, 0.1));
+  REQUIRE_THAT(stod(ell1[1]), Catch::Matchers::WithinAbs(308.0, 0.1));
   REQUIRE_THAT(stod(ell1[2]), Catch::Matchers::WithinAbs(200.0, 0.1));
   check_file_hash(nameBase + ".svg");
 }
@@ -6363,8 +6381,8 @@ M  END
     auto match_end = std::sregex_iterator();
     for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
       std::smatch match = *i;
-      REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(25.2, 0.1));
-      REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(25.2, 0.1));
+      REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(25.0, 0.1));
+      REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(25.0, 0.1));
     }
     check_file_hash(nameBase + ".svg");
   }
@@ -6760,7 +6778,8 @@ M  END
     }
     auto vec1 = points[0].directionVector(points[1]);
     auto vec2 = points[2].directionVector(points[3]);
-    REQUIRE(fabs(1.0 - vec1.dotProduct(vec2)) < 1.0e-4);
+    REQUIRE_THAT(vec1.dotProduct(vec2),
+                 Catch::Matchers::WithinAbs(1.0, 2.0e-4));
     check_file_hash(nameBase + "_2.svg");
   }
 }
@@ -7530,7 +7549,7 @@ TEST_CASE(
           "class='atom-17' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
           " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
       // there are 3 arcs on atom-17, for a 3 colour highlight.
-      testArcs(text, atom17, 3, 0.9);
+      testArcs(text, atom17, 3, 0.85);
     }
     check_file_hash(nameBase + "_1.svg");
   }
@@ -7638,8 +7657,7 @@ TEST_CASE(
   }
 }
 
-TEST_CASE(
-    "Github #6416: crash with colinear atoms") {
+TEST_CASE("Github #6416: crash with colinear atoms") {
   std::string name = "github6416.svg";
   auto m = R"CTAB(168010013
      RDKit          2D
@@ -7734,4 +7752,25 @@ M  END
   outs.flush();
   outs.close();
   check_file_hash(name);
+}
+
+TEST_CASE("Github #6400: extra padding, no legend apparent") {
+  std::string nameBase = "test_github6400";
+  auto m = "CCCOC"_smiles;
+  REQUIRE(m);
+  MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().padding = 0.2;
+  drawer.drawMolecule(*m, "Legendary Big Padding");
+  drawer.finishDrawing();
+  std::ofstream outs(nameBase + "_1.svg");
+  auto text = drawer.getDrawingText();
+  // The original bug manifested itself with a font size of 0 for the
+  // legend.  Fixed, it comes out at 16.
+  REQUIRE(text.find("font-size:0px") == std::string::npos);
+  REQUIRE(text.find("font-size:16px") != std::string::npos);
+
+  outs << text;
+  outs.flush();
+  outs.close();
+  check_file_hash(nameBase + "_1.svg");
 }
