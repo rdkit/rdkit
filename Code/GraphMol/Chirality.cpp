@@ -1486,8 +1486,7 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
   // find the double bonds:
   for (auto dblBond : mol.bonds()) {
     if (dblBond->getBondType() == Bond::BondType::DOUBLE) {
-      if (dblBond->getStereo() != Bond::BondStereo::STEREONONE &&
-          dblBond->getStereo() != Bond::BondStereo::STEREOANY) {
+      if (dblBond->getStereo() != Bond::BondStereo::STEREONONE ) {
         continue;
       }
       if (!ranks.size()) {
