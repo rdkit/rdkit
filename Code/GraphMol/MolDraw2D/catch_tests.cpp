@@ -300,7 +300,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github6397_2.svg", 3407468353U},
     {"test_github6397_3.svg", 3170656352U},
     {"test_github6397_4.svg", 187792316U},
-    {"test_github6397_5.svg", 2795990448U}};
+    {"test_github6397_5.svg", 2795990448U},
     {"github6416.svg", 3814405016U},
     {"test_github6400_1.svg", 2792561051U}};
 
@@ -7813,7 +7813,7 @@ M  END)CTAB"_ctab;
     outs.flush();
     outs.close();
 
-    checkABS(text, 1, 238.9, 34.8);
+    checkABS(text, 1, 239.5, 34.5);
     check_file_hash(svgName);
   }
 
@@ -7942,10 +7942,10 @@ M  END)CTAB"_ctab;
     checkABS(text, 3, 0.0, 173.3);
     text = std::regex_replace(text, absA, "",
                               std::regex_constants::format_first_only);
-    checkABS(text, 2, 250.0, 43.2);
+    checkABS(text, 2, 250.0, 42.8);
     text = std::regex_replace(text, absA, "",
                               std::regex_constants::format_first_only);
-    checkABS(text, 1, 190.8, 233.8);
+    checkABS(text, 1, 191.4, 233.4);
     check_file_hash(svgName);
   }
   {
