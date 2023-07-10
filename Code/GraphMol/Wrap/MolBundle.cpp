@@ -20,6 +20,34 @@
 #include "substructmethods.h"
 namespace python = boost::python;
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
+struct molbundle_pickle_suite : rdkit_pickle_suite {
+  static python::tuple getinitargs(const RDKit::MolBundle &self) {
+    auto res = self.serialize();
+    return python::make_tuple(python::object(python::handle<>(
+        PyBytes_FromStringAndSize(res.c_str(), res.length()))));
+  };
+};
+
+python::object BundleToBinary(const RDKit::MolBundle &self) {
+  auto res = self.serialize();
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
+
+#else
+struct molbundle_pickle_suite : rdkit_pickle_suite {
+  static python::tuple getinitargs(const RDKit::MolBundle &self) {
+    throw_runtime_error("Pickling of MolBundle instances is not enabled");
+  };
+};
+
+python::object BundleToBinary(const RDKit::MolBundle &self) {
+  throw_runtime_error("Pickling of MolBundle instances is not enabled");
+}
+#endif
+
 namespace RDKit {
 
 std::string molBundleClassDoc =
@@ -29,6 +57,11 @@ struct molbundle_wrap {
   static void wrap() {
     python::class_<MolBundle, boost::noncopyable>(
         "MolBundle", molBundleClassDoc.c_str(), python::init<>())
+        .def(python::init<const std::string &>(python::args("pklString")))
+        .def_pickle(molbundle_pickle_suite())
+        .def("ToBinary", BundleToBinary,
+             "Returns a binary string representation of the MolBundle.\n")
+
         .def("__getitem__", &MolBundle::getMol)
         .def("__len__", &MolBundle::size)
         .def("AddMol", &MolBundle::addMol)
@@ -292,6 +325,10 @@ struct molbundle_wrap {
 \n";
     python::class_<FixedMolSizeMolBundle, python::bases<MolBundle>>(
         "FixedMolSizeMolBundle", molBundleClassDoc.c_str(), python::init<>());
+
+    python::def("MolBundleCanSerialize", MolBundleCanSerialize,
+                "Returns True if the MolBundle is serializable "
+                "(requires boost serialization");
   };
 };
 }  // namespace RDKit

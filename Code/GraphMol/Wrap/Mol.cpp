@@ -331,6 +331,12 @@ struct mol_wrapper {
             "0 selects the number of concurrent threads supported by the"
             "hardware. negative values are added to the number of concurrent"
             "threads supported by the hardware.")
+        .def_readwrite(
+            "atomProperties", &RDKit::SubstructMatchParameters::atomProperties,
+            "atom properties that must be equivalent in order to match.")
+        .def_readwrite(
+            "bondProperties", &RDKit::SubstructMatchParameters::bondProperties,
+            "bond properties that must be equivalent in order to match.")
         .def("setExtraFinalCheck", setSubstructMatchFinalCheck,
              python::with_custodian_and_ward<1, 2>(),
              R"DOC(allows you to provide a function that will be called

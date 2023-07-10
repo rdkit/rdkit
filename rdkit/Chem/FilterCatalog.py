@@ -44,7 +44,7 @@ class FilterMatcher(PythonFilterMatcher):
                               self.__class__.__name__)
 
   def GetMatches(self, mol, matchVect):
-    """GetMatches(mol, matchVect) -> returns True if the filter matches
+    """Return True if the filter matches the molecule
         (By default, this calls HasMatch and does not modify matchVect)
         
         matchVect is a vector of FilterMatch's which hold the matching

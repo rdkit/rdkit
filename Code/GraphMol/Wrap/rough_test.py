@@ -5040,6 +5040,12 @@ M  END
         b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
                               useChirality=False)[0]), 8)
 
+    if Chem.MolBundleCanSerialize():
+      for b2 in (pickle.loads(pickle.dumps(b)), Chem.MolBundle(b.ToBinary())):
+        self.assertEqual(len(b2), len(b))
+        for m, m2 in zip(b, b2):
+          self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(m2))
+
   def testMolBundles2(self):
     b = Chem.MolBundle()
     smis = ('Fc1c(Cl)cccc1', 'Fc1cc(Cl)ccc1', 'Fc1ccc(Cl)cc1')
@@ -5605,6 +5611,46 @@ M  END
     self.assertEqual(b.GetSubstructMatches(b, ps), ((0, 1, 2, 3, 4), ))
     self.assertEqual(b.GetSubstructMatches(b2, ps), ())
     self.assertEqual(b2.GetSubstructMatches(b, ps), ())
+
+  def testSubstructMatchAtomProperties(self):
+    m = Chem.MolFromSmiles("CCCCCCCCC")
+    query = Chem.MolFromSmiles("CCC")
+    m.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    query.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    ps = Chem.SubstructMatchParameters()
+    ps.atomProperties = ["test_prop"]
+
+    self.assertEqual(len(m.GetSubstructMatches(query)), 7)
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+    # more than one property works as well
+    m.GetAtomWithIdx(1).SetProp("test_prop2", "1")
+    query.GetAtomWithIdx(1).SetProp("test_prop2", "1")
+    ps.atomProperties = ["test_prop", "test_prop2"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+  def testSubstructMatchBondProperties(self):
+    m = Chem.MolFromSmiles("CCCCCCCCC")
+    query = Chem.MolFromSmiles("CCC")
+    m.GetBondWithIdx(0).SetProp("test_prop", "1")
+    query.GetBondWithIdx(0).SetProp("test_prop", "1")
+    ps = Chem.SubstructMatchParameters()
+    ps.bondProperties = ["test_prop"]
+
+    self.assertEqual(len(m.GetSubstructMatches(query)), 7)
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+    # more than one property works as well
+    m.GetBondWithIdx(1).SetProp("test_prop2", "1")
+    query.GetBondWithIdx(1).SetProp("test_prop2", "1")
+    ps.bondProperties = ["test_prop", "test_prop2"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+    # atom and bond properties work together
+    m.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    query.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    ps.atomProperties = ["test_prop"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
 
   def testGithub2285(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',

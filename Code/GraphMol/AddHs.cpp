@@ -136,6 +136,22 @@ std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
   return isoMap;
 }
 
+bool may_need_extra_H(const ROMol &mol, const Atom *atom) {
+  unsigned single_bonds = 0;
+  unsigned aromatic_bonds = 0;
+  for (auto bond : mol.atomBonds(atom)) {
+    if (bond->getBondType() == Bond::SINGLE) {
+      ++single_bonds;
+    } else if (bond->getBondType() == Bond::AROMATIC) {
+      ++aromatic_bonds;
+    } else {
+      return false;
+    }
+  }
+  return single_bonds == 1 && aromatic_bonds == 2 &&
+         atom->getTotalValence() == 3;
+}
+
 }  // end of unnamed namespace
 
 namespace MolOps {
@@ -657,7 +673,8 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       // explicit count, even if the H itself isn't marked as explicit
       const INT_VECT &defaultVs =
           PeriodicTable::getTable()->getValenceList(heavyAtomNum);
-      if (((heavyAtomNum == 7 || heavyAtomNum == 15) &&
+      if (((heavyAtomNum == 7 || heavyAtomNum == 15 ||
+            may_need_extra_H(mol, heavyAtom)) &&
            heavyAtom->getIsAromatic()) ||
           (std::find(defaultVs.begin() + 1, defaultVs.end(),
                      heavyAtom->getTotalValence()) != defaultVs.end())) {

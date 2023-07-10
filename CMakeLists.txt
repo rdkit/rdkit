@@ -66,6 +66,9 @@ option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindin
 option(RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS "build the minimal RDKit JS wrapper such that it supports legacy browsers" OFF)
 option(RDK_BUILD_CFFI_LIB "build the CFFI wrapper (for use in other programming languges)" OFF)
 option(RDK_BUILD_FUZZ_TARGETS "build the fuzz targets" OFF)
+option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" ON )
+option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
+option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 
 set(RDK_BOOST_VERSION "1.58.0")
 
@@ -219,8 +222,11 @@ if(RDK_BUILD_XYZ2MOL_SUPPORT)
     include_directories(${RDKit_ExternalDir})
 endif()
 
-
-
+# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
+# detect it.
+string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
+# Detect emcc
+string(REGEX MATCH "Emscripten" CMAKE_COMPILER_IS_EMCC "${CMAKE_SYSTEM_NAME}")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_32BIT_BUILD")
@@ -231,6 +237,12 @@ endif()
 if(MINGW)
   target_compile_definitions(rdkit_base INTERFACE "-DBOOST_SYSTEM_NO_DEPRECATED")
 endif(MINGW)
+if (CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_EMCC)
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 15)
+    target_compile_definitions(rdkit_base INTERFACE -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_NO_CXX98_FUNCTION_BASE -D_HAS_AUTO_PTR_ETC=0)
+    target_compile_options(rdkit_base INTERFACE -Wno-deprecated-builtins -Wno-deprecated-non-prototype -Wno-unused-parameter)
+  endif()
+endif()
 
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)
@@ -327,8 +339,9 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       execute_process(
         COMMAND
         ${PYTHON_EXECUTABLE} -c "import sys; import sysconfig; \
+          base_key = 'base' if sys.platform == 'win32' else 'platbase'; \
           schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
-          print(sysconfig.get_path('platlib', schema, vars={'platbase': '${CMAKE_INSTALL_PREFIX}'}))"
+          print(sysconfig.get_path('platlib', schema, vars={base_key: '${CMAKE_INSTALL_PREFIX}'}))"
         OUTPUT_VARIABLE PYTHON_INSTDIR
         OUTPUT_STRIP_TRAILING_WHITESPACE
       )
@@ -391,10 +404,6 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost ${RDK_BOOST_VERSION} REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
-
-# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
-# detect it.
-string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
 find_package(Eigen3)
 if(RDK_BUILD_DESCRIPTORS3D)

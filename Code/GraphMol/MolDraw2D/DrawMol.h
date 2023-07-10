@@ -178,8 +178,6 @@ class DrawMol {
   void calcAnnotationPosition(const Atom *atom, DrawAnnotation &annot) const;
   void calcAnnotationPosition(const Bond *bond, DrawAnnotation &annot) const;
   double getNoteStartAngle(const Atom *atom) const;
-  void calcMolNotePosition(const std::vector<Point2D> atCds,
-                           DrawAnnotation &annot) const;
   // see if the note will clash with anything else drawn on the molecule.
   // Returns 0 if no clash, 1-4 if there is a clash, denoting what clashed.
   int doesNoteClash(const DrawAnnotation &annot) const;
