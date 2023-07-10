@@ -1151,11 +1151,11 @@ void test6() {
     // start of bond-0
 #if DO_TEST_ASSERT
     TEST_ASSERT(
-        txt.find("<path class='bond-0 atom-0 atom-1' d='M 270.1,148.0") !=
+        txt.find("<path class='bond-0 atom-0 atom-1' d='M 268.9,148.0") !=
         std::string::npos);
     // start of first radical spot
     TEST_ASSERT(
-        txt.find("<path class='atom-0' d='M 284.1,152.0 L 284.1,152.2") !=
+        txt.find("<path class='atom-0' d='M 282.9,152.0 L 282.9,152.2") !=
         std::string::npos);
 #endif
     check_file_hash(nameBase + ".svg");
@@ -1177,10 +1177,10 @@ void test6() {
 #if DO_TEST_ASSERT
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     TEST_ASSERT(
-        txt.find("<path class='bond-0 atom-0 atom-1' d='M 187.5,118.0") !=
+        txt.find("<path class='bond-0 atom-0 atom-1' d='M 186.8,118.4") !=
         std::string::npos);
     // start of first radical spot
-    TEST_ASSERT(txt.find("<path class='atom-1' d='M 43.1,190.8 L 43.1,190.9") !=
+    TEST_ASSERT(txt.find("<path class='atom-1' d='M 43.8,190.3 L 43.8,190.4") !=
                 std::string::npos);
 #else
     TEST_ASSERT(
@@ -1495,10 +1495,10 @@ void testGithub781() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // start of C
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 36.2 194.0") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 37.4 193.5") !=
                 std::string::npos);
     // start of l
-    TEST_ASSERT(txt.find("<path class='atom-3' d='M 45.3 77.6") !=
+    TEST_ASSERT(txt.find("<path class='atom-3' d='M 46.4 78.1") !=
                 std::string::npos);
 #endif
 #else
@@ -1987,8 +1987,8 @@ M  END";
 #if DO_TEST_ASSERT
     TEST_ASSERT(
         text.find(
-            "<path class='bond-0 atom-1 atom-0' d='M 74.0,85.5 L 24.4,119.4 "
-            "L 19.9,111.6 Z' style='fill:#000000;") != std::string::npos);
+            "<path class='bond-0 atom-1 atom-0' d='M 74.3,85.7 L 25.1,119.2 "
+            "L 20.7,111.5 Z' style='fill:#000000;") != std::string::npos);
 #endif
 #else
     TEST_ASSERT(text.find("<path class='bond-1 atom-2 atom-4' d='M 125.6,110.7 "
@@ -2047,8 +2047,8 @@ M  END";
     outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-    TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 103.4,117.5"
-                          " L 71.9,98.4 L 76.7,94.9 Z' style='fill:#000000;") !=
+    TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 103.4,117.3"
+                          " L 72.1,98.5 L 77.0,95.0 Z' style='fill:#000000;") !=
                 std::string::npos);
 #endif
 #else
@@ -2620,8 +2620,8 @@ void test13JSONConfig() {
 #if DO_TEST_ASSERT
     // we'll just have to assume that this pink is for the legend
     TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 121.1,8.2"
-                          " L 164.6,83.6'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 121.1,10.0"
+                          " L 164.2,84.6'") != std::string::npos);
 #endif
 #else
     TEST_ASSERT(text.find("sans-serif;text-anchor:start;fill:#FF7FFF") !=
@@ -2646,8 +2646,8 @@ void test13JSONConfig() {
 #if DO_TEST_ASSERT
     // we'll just have to assume that this pink is for the legend
     TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 121.1,8.2"
-                          " L 164.6,83.6'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 121.1,10.0"
+                          " L 164.2,84.6'") != std::string::npos);
 #endif
 #else
     TEST_ASSERT(text.find("sans-serif;text-anchor:start;fill:#FF7FFF") !=
@@ -3181,7 +3181,7 @@ M  END
 #if DO_TEST_ASSERT
       // where it starts drawing the N is a poor surrogate for checking
       // the font size, but all we have.
-      TEST_ASSERT(text.find("<path class='atom-4' d='M 256.5 204.0") !=
+      TEST_ASSERT(text.find("<path class='atom-4' d='M 255.3 203.3") !=
                   std::string::npos);
 #endif
 #else
@@ -3202,7 +3202,7 @@ M  END
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
       // where it starts drawing the N
-      TEST_ASSERT(text.find("<path class='atom-4' d='M 252.7 199.4") !=
+      TEST_ASSERT(text.find("<path class='atom-4' d='M 251.6 198.9") !=
                   std::string::npos);
 #endif
 #else
@@ -3224,7 +3224,7 @@ M  END
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
       // where it starts drawing the N
-      TEST_ASSERT(text.find("<path class='atom-4' d='M 262.3 211.1") !=
+      TEST_ASSERT(text.find("<path class='atom-4' d='M 261.1 210.4") !=
                   std::string::npos);
 #endif
 #else
@@ -3250,7 +3250,7 @@ M  END
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-8' d='M 166.8 92.6") !=
+      TEST_ASSERT(text.find("<path class='atom-8' d='M 166.1 92.7") !=
                   std::string::npos);
 #endif
 #else
@@ -3283,7 +3283,7 @@ void test18FixedScales() {
 #if DO_TEST_ASSERT
       // where it starts drawing the l is a poor surrogate for checking
       // the font size, but all we have.
-      TEST_ASSERT(text.find("<path class='atom-0' d='M 262.0 135.8") !=
+      TEST_ASSERT(text.find("<path class='atom-0' d='M 260.9 137.3") !=
                   std::string::npos);
 #endif
 #else
@@ -3305,7 +3305,7 @@ void test18FixedScales() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
       // where it starts drawing the l.
-      TEST_ASSERT(text.find("<path class='atom-0' d='M 179.3 135.2") !=
+      TEST_ASSERT(text.find("<path class='atom-0' d='M 176.4 136.7") !=
                   std::string::npos);
 #endif
 #else
@@ -3332,7 +3332,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 72.1 176.7") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 74.1 170.0") !=
                   std::string::npos);
 #endif
 #else
@@ -3353,7 +3353,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 104.0 155.3") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 104.0 156.8") !=
                   std::string::npos);
 #endif
 #else
@@ -3373,7 +3373,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 73.3 168.9") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 74.1 170.0") !=
                   std::string::npos);
 #endif
 #else
@@ -3397,7 +3397,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 71.1 166.6") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 71.9 167.7") !=
                   std::string::npos);
 #endif
 #else
@@ -3419,7 +3419,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 74.2 169.9") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 75.0 171.0") !=
                   std::string::npos);
 #endif
 #else
@@ -3450,7 +3450,7 @@ void test19RotateDrawing() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-0' d='M 262.0 150.8") !=
+      TEST_ASSERT(text.find("<path class='atom-0' d='M 260.9 150.8") !=
                   std::string::npos);
 #endif
 #else
@@ -3471,7 +3471,7 @@ void test19RotateDrawing() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-0' d='M 140.6 273.8") !=
+      TEST_ASSERT(text.find("<path class='atom-0' d='M 140.7 272.5") !=
                   std::string::npos);
 #endif
 #else
@@ -3515,10 +3515,10 @@ M  END)molb";
     outs.flush();
     outs.close();
 #if DO_TEST_ASSERT
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 69.7,99.9 L"
-                          " 130.3,77.0'") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M 69.7,112.0"
-                          " L 9.1,77.0'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 70.0,100.8 L"
+                          " 130.0,78.2'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M 70.0,112.8"
+                          " L 10.0,78.2'") != std::string::npos);
 #endif
     check_file_hash("testGithub2063_1.svg");
   }
@@ -3549,10 +3549,10 @@ M  END)molb";
     outs.flush();
     outs.close();
 #if DO_TEST_ASSERT
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 69.7,99.9"
-                          " L 130.3,77.0'") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M 69.7,112.0 "
-                          "L 9.1,77.0'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 70.0,100.8"
+                          " L 130.0,78.2'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M 70.0,112.8 "
+                          "L 10.0,78.2'") != std::string::npos);
 #endif
     check_file_hash("testGithub2063_2.svg");
   }
@@ -3729,9 +3729,9 @@ void testGithub2931() {
       // it's an ellipse, so different radii
       TEST_ASSERT(fabs(stod(match[1]) - 243) <
                   1);  // significant variability with freetype version here
-      TEST_ASSERT(fabs(stod(match[2]) - 348.7) < 0.2);
-      TEST_ASSERT(fabs(stod(match[3]) - 12.2) < 0.2);
-      TEST_ASSERT(fabs(stod(match[4]) - 12.5) < 0.2);
+      TEST_ASSERT(fabs(stod(match[2]) - 350.2) < 0.2);
+      TEST_ASSERT(fabs(stod(match[3]) - 12.0) < 0.2);
+      TEST_ASSERT(fabs(stod(match[4]) - 12.4) < 0.2);
 #endif
 #else
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
@@ -3765,10 +3765,10 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       // it's a circle
-      TEST_ASSERT(fabs(stod(match[1]) - 243.8) < 0.1);
-      TEST_ASSERT(fabs(stod(match[2]) - 348.7) < 0.1);
-      TEST_ASSERT(fabs(stod(match[3]) - 12.3) < 0.1);
-      TEST_ASSERT(fabs(stod(match[4]) - 12.3) < 0.1);
+      TEST_ASSERT(fabs(stod(match[1]) - 243.9) < 0.1);
+      TEST_ASSERT(fabs(stod(match[2]) - 350.0) < 0.1);
+      TEST_ASSERT(fabs(stod(match[3]) - 12.2) < 0.1);
+      TEST_ASSERT(fabs(stod(match[4]) - 12.2) < 0.1);
 #endif
 #else
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
@@ -3826,7 +3826,7 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='246.7' cy='340.2' rx='11.7' ry='11.7'"
+          text.find("<ellipse cx='246.7' cy='341.6' rx='11.6' ry='11.6'"
                     " class='atom-6'  style='fill:none;stroke:#00FF00;") !=
           std::string::npos);
 #endif
@@ -3860,7 +3860,7 @@ void testGithub3112() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // this is the b (4th character)
-    TEST_ASSERT(text.find("<path class='legend' d='M 130.1 184.1") !=
+    TEST_ASSERT(text.find("<path class='legend' d='M 134.6 185.3") !=
                 std::string::npos);
 #endif
 #else
@@ -3886,7 +3886,7 @@ void testGithub3112() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // this is the b on the 2nd line.
-    TEST_ASSERT(text.find("<path class='legend' d='M 121.0 190.2") !=
+    TEST_ASSERT(text.find("<path class='legend' d='M 119.7 184.3") !=
                 std::string::npos);
 #endif
 #else
@@ -3914,7 +3914,7 @@ void testGithub3112() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // The first letter, N.
-    TEST_ASSERT(text.find("<path class='legend' d='M 1.0 186.7") !=
+    TEST_ASSERT(text.find("<path class='legend' d='M 12.9 182.6") !=
                 std::string::npos);
 #endif
 #else
@@ -3942,7 +3942,7 @@ void testGithub3112() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // The first letter, N
-    TEST_ASSERT(text.find("<path class='legend' d='M 71.2 180.4") !=
+    TEST_ASSERT(text.find("<path class='legend' d='M 59.9 172.5") !=
                 std::string::npos);
 #endif
 #else
@@ -3999,7 +3999,7 @@ void test20Annotate() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // first note (atom 0)
-    TEST_ASSERT(text.find("<path class='note' d='M 49.9 121.0") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 51.9 122.3") !=
                 std::string::npos);
 #endif
 #else
@@ -4038,7 +4038,7 @@ void test20Annotate() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // last note
-    TEST_ASSERT(text.find("<path class='note' d='M 274.0 236.2") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 273.9 236.3") !=
                 std::string::npos);
 #endif
 #else
@@ -4079,7 +4079,7 @@ void test20Annotate() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // first note
-    TEST_ASSERT(text.find("<path class='note' d='M 156.5 177.1") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 157.4 177.9") !=
                 std::string::npos);
 #endif
 #else
@@ -4117,7 +4117,7 @@ void test20Annotate() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // first note (atom 0)
-    TEST_ASSERT(text.find("<path class='note' d='M 19.9 48.4") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 20.7 48.9") !=
                 std::string::npos);
 #endif
 #else
@@ -4552,7 +4552,7 @@ void testGithub4156() {
     outs.close();
     // this is the start of the radical spot.
     regex qry(
-        "<path class='atom-1' d='M 22.[0-9]*,75.[0-9]* L 22.[0-9]*,75.[0-9]*");
+        "<path class='atom-1' d='M 23.[0-9]*,76.[0-9]* L 23.[0-9]*,76.[0-9]*");
 #if DO_TEST_ASSERT
     TEST_ASSERT(regex_search(text, qry));
 #endif
@@ -4572,8 +4572,8 @@ void testGithub4156() {
     outs.close();
     // this is the start of the radical spot.
     regex qry(
-        "<path class='atom-1' d='M 272.[0-9]*,75.[0-9]* L "
-        "272.[0-9]*,75.[0-9]*");
+        "<path class='atom-1' d='M 273.[0-9]*,76.[0-9]* L "
+        "273.[0-9]*,76.[0-9]*");
 #if DO_TEST_ASSERT
     TEST_ASSERT(regex_search(text, qry));
 #endif
