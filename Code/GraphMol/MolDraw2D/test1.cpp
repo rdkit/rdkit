@@ -1184,7 +1184,7 @@ void test6() {
                 std::string::npos);
 #else
     TEST_ASSERT(
-        txt.find("<path class='bond-0 atom-0 atom-1' d='M 187.2,117.4") !=
+        txt.find("<path class='bond-0 atom-0 atom-1' d='M 186.5,117.8") !=
         std::string::npos);
     // start of first radical spot
 
@@ -1991,8 +1991,8 @@ M  END";
             "L 20.7,111.5 Z' style='fill:#000000;") != std::string::npos);
 #endif
 #else
-    TEST_ASSERT(text.find("<path class='bond-1 atom-2 atom-4' d='M 125.6,110.7 "
-                          "L 174.4,77.4 L 178.9,85.1 Z' style='fill:#000000") !=
+    TEST_ASSERT(text.find("<path class='bond-1 atom-2 atom-4' d='M 125.3,110.6 "
+                          "L 173.7,77.6 L 178.1,85.2 Z' style='fill:#000000") !=
                 std::string::npos);
 #endif
     check_file_hash("test983_1.svg");
@@ -2052,8 +2052,8 @@ M  END";
                 std::string::npos);
 #endif
 #else
-    TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 105.1,114.8 "
-                          "L 73.8,95.9 L 78.6,92.4 Z' style='fill:#000000;") !=
+    TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 105.0,114.6 "
+                          "L 74.0,95.9 L 78.8,92.5 Z' style='fill:#000000;") !=
                 std::string::npos);
 #endif
     check_file_hash("test983_2.svg");
@@ -2111,7 +2111,7 @@ void testDeuteriumTritium() {
 #endif
 #else
       // a bit kludgy, but...
-      if (line.find("<text x='246.6' y='152.6' class='atom-1' "
+      if (line.find("<text x='245.5' y='152.6' class='atom-1' "
                     "style='font-size:26px;font-style:normal;font-weight:"
                     "normal;fill-opacity:1;stroke:none;font-family:sans-serif;"
                     "text-anchor:start;fill:#000000' >2</text>") !=
@@ -2161,7 +2161,7 @@ void testDeuteriumTritium() {
       }
 #endif
 #else
-      if (line.find("<text x='246.6' y='152.6' class='atom-1' "
+      if (line.find("<text x='245.5' y='152.6' class='atom-1' "
                     "style='font-size:26px;font-style:normal;font-weight:"
                     "normal;fill-opacity:1;stroke:none;font-family:sans-serif;"
                     "text-anchor:start;fill:#000000' >3</text>") !=
@@ -2626,8 +2626,8 @@ void test13JSONConfig() {
 #else
     TEST_ASSERT(text.find("sans-serif;text-anchor:start;fill:#FF7FFF") !=
                 std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 119.8,8.2"
-                          " L 162.1,81.5'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 119.8,10.0"
+                          " L 161.7,82.6'") != std::string::npos);
 #endif
     // these days the bond line width scales with the rest of the
     // drawing, and at this size this comes out as 5px.
@@ -2652,8 +2652,10 @@ void test13JSONConfig() {
 #else
     TEST_ASSERT(text.find("sans-serif;text-anchor:start;fill:#FF7FFF") !=
                 std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 119.8,8.2"
-                          " L 162.1,81.5'") != std::string::npos);
+    TEST_ASSERT(
+        text.find(
+            "<path class='bond-0 atom-0 atom-1' d='M 119.8,10.0 L 161.7,82.6'") !=
+        std::string::npos);
 #endif
     // these days the bond line width scales with the rest of the
     // drawing, and at this size this comes out as 5px.
@@ -3206,7 +3208,7 @@ M  END
                   std::string::npos);
 #endif
 #else
-      TEST_ASSERT(text.find("font-size:53px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:52px") != std::string::npos);
 #endif
       check_file_hash(nameBase + "2.svg");
     }
@@ -3309,7 +3311,7 @@ void test18FixedScales() {
                   std::string::npos);
 #endif
 #else
-      TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:8px") != std::string::npos);
 #endif
       check_file_hash(nameBase + "2.svg");
     }
@@ -3336,7 +3338,7 @@ void test18FixedScales() {
                   std::string::npos);
 #endif
 #else
-      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
 #endif
       check_file_hash(nameBase + "3.svg");
     }
@@ -3377,7 +3379,7 @@ void test18FixedScales() {
                   std::string::npos);
 #endif
 #else
-      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
 #endif
       check_file_hash(nameBase + "5.svg");
     }
@@ -3454,7 +3456,7 @@ void test19RotateDrawing() {
                   std::string::npos);
 #endif
 #else
-      TEST_ASSERT(text.find("<text x='256.8' y='166.9' class='atom-0'") !=
+      TEST_ASSERT(text.find("<text x='255.8' y='166.7' class='atom-0'") !=
                   std::string::npos);
 #endif
       check_file_hash(nameBase + "1.svg");
@@ -3475,7 +3477,7 @@ void test19RotateDrawing() {
                   std::string::npos);
 #endif
 #else
-      TEST_ASSERT(text.find("<text x='139.8' y='286.4' class='atom-0'") !=
+      TEST_ASSERT(text.find("<text x='139.9' y='285.0' class='atom-0'") !=
                   std::string::npos);
 #endif
       check_file_hash(nameBase + "2.svg");
@@ -3736,10 +3738,10 @@ void testGithub2931() {
 #else
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
-      TEST_ASSERT(fabs(stod(match[1]) - 243.3) < 0.1);
-      TEST_ASSERT(fabs(stod(match[2]) - 348.1) < 0.1);
-      TEST_ASSERT(fabs(stod(match[3]) - 9.8) < 0.1);
-      TEST_ASSERT(fabs(stod(match[4]) - 11.1) < 0.1);
+      TEST_ASSERT(fabs(stod(match[1]) - 243.4) < 0.1);
+      TEST_ASSERT(fabs(stod(match[2]) - 349.3) < 0.1);
+      TEST_ASSERT(fabs(stod(match[3]) - 9.7) < 0.1);
+      TEST_ASSERT(fabs(stod(match[4]) - 11.0) < 0.1);
 #endif
       check_file_hash("testGithub2931_1.svg");
     }
@@ -3774,9 +3776,9 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(fabs(stod(match[1]) - 243.9) < 0.1);
-      TEST_ASSERT(fabs(stod(match[2]) - 346.4) < 0.1);
-      TEST_ASSERT(fabs(stod(match[3]) - 12.2) < 0.1);
-      TEST_ASSERT(fabs(stod(match[4]) - 12.2) < 0.1);
+      TEST_ASSERT(fabs(stod(match[2]) - 347.7) < 0.1);
+      TEST_ASSERT(fabs(stod(match[3]) - 12.1) < 0.1);
+      TEST_ASSERT(fabs(stod(match[4]) - 12.1) < 0.1);
 #endif
       check_file_hash("testGithub2931_2.svg");
     }
@@ -3834,7 +3836,7 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='247.7' cy='292.7' rx='11.7' ry='11.7' "
+          text.find("<ellipse cx='247.8' cy='294.5' rx='11.6' ry='11.6' "
                     "class='atom-5'  style='fill:none;stroke:#00FF00") !=
           std::string::npos);
 #endif
@@ -3864,8 +3866,8 @@ void testGithub3112() {
                 std::string::npos);
 #endif
 #else
-    TEST_ASSERT(text.find("<text x='121.0' y='195.0' class='legend' "
-                          "style='font-size:15px;font-style:normal;font-weight:"
+    TEST_ASSERT(text.find("<text x='120.5' y='190.0' class='legend' "
+                          "style='font-size:16px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >b</text>") !=
                 std::string::npos);
@@ -3890,8 +3892,8 @@ void testGithub3112() {
                 std::string::npos);
 #endif
 #else
-    TEST_ASSERT(text.find("<text x='113.8' y='195.0' class='legend' "
-                          "style='font-size:9px;font-style:normal;font-weight:"
+    TEST_ASSERT(text.find("<text x='111.1' y='190.0' class='legend' "
+                          "style='font-size:11px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >b</text>") !=
                 std::string::npos);
@@ -3918,8 +3920,8 @@ void testGithub3112() {
                 std::string::npos);
 #endif
 #else
-    TEST_ASSERT(text.find("<text x='-2.5' y='195.0' class='legend' "
-                          "style='font-size:10px;font-style:normal;font-weight:"
+    TEST_ASSERT(text.find("<text x='9.7' y='190.0' class='legend' "
+                          "style='font-size:9px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >N</text>") !=
                 std::string::npos);
@@ -3946,8 +3948,8 @@ void testGithub3112() {
                 std::string::npos);
 #endif
 #else
-    TEST_ASSERT(text.find("<text x='68.9' y='187.5' class='legend' "
-                          "style='font-size:9px;font-style:normal;font-weight:"
+    TEST_ASSERT(text.find("<text x='57.2' y='181.0' class='legend' "
+                          "style='font-size:11px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >N</text>") !=
                 std::string::npos);
@@ -4004,7 +4006,7 @@ void test20Annotate() {
 #endif
 #else
     // first one of atom note 11
-    TEST_ASSERT(text.find("<text x='394.3' y='215.2' class='note' "
+    TEST_ASSERT(text.find("<text x='392.8' y='215.5' class='note' "
                           "style='font-size:11px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >1</text>") !=
@@ -4043,7 +4045,7 @@ void test20Annotate() {
 #endif
 #else
     // this is the (E)
-    TEST_ASSERT(text.find("<text x='260.5' y='231.8' class='note' "
+    TEST_ASSERT(text.find("<text x='260.3' y='232.0' class='note' "
                           "style='font-size:20px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >E</text>") !=
@@ -4084,7 +4086,7 @@ void test20Annotate() {
 #endif
 #else
     // f of foolish
-    TEST_ASSERT(text.find("<text x='145.3' y='181.8' class='note' "
+    TEST_ASSERT(text.find("<text x='146.4' y='182.4' class='note' "
                           "style='font-size:12px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >f</text>") !=
@@ -4122,7 +4124,7 @@ void test20Annotate() {
 #endif
 #else
     // first one of atom note 11
-    TEST_ASSERT(text.find("<text x='157.7' y='86.1' class='note' "
+    TEST_ASSERT(text.find("<text x='157.1' y='86.2' class='note' "
                           "style='font-size:4px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >1</text>") !=
