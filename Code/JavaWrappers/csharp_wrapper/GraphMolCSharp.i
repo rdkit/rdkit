@@ -237,6 +237,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../SubstructLibrary.i"
 %include "../ScaffoldNetwork.i"
 %include "../TautomerQuery.i"
+%include "../MolEnumerator.i"
 %include "../SubstanceGroup.i"
 %include "../MolHash.i"
 %include "../Abbreviations.i"
