@@ -1603,8 +1603,7 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
   // find the double bonds:
   for (auto dblBond : mol.bonds()) {
     if (dblBond->getBondType() == Bond::BondType::DOUBLE) {
-      if (dblBond->getStereo() != Bond::BondStereo::STEREONONE &&
-          dblBond->getStereo() != Bond::BondStereo::STEREOANY) {
+      if (dblBond->getStereo() != Bond::BondStereo::STEREONONE) {
         continue;
       }
       if (!ranks.size()) {
@@ -2962,6 +2961,8 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
   }
 }
 
+constexpr const char *isStereoAny = "_isStereoAny";
+
 void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
   // used to store the number of single bonds a given
   // single bond is adjacent to
@@ -2987,57 +2988,52 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
 
   for (auto bond : mol.bonds()) {
     if (isBondCandidateForStereo(bond)) {
-      const Atom *a1 = bond->getBeginAtom();
-      const Atom *a2 = bond->getEndAtom();
-
-      for (const auto nbrBond : mol.atomBonds(a1)) {
-        if (nbrBond->getBondType() == Bond::SINGLE ||
-            nbrBond->getBondType() == Bond::AROMATIC) {
-          singleBondCounts[nbrBond->getIdx()] += 1;
-          auto nbrDir = nbrBond->getBondDir();
-          if (nbrDir == Bond::BondDir::NONE ||
-              nbrDir == Bond::BondDir::ENDDOWNRIGHT ||
-              nbrDir == Bond::BondDir::ENDUPRIGHT) {
-            needsDir[nbrBond->getIdx()] = 1;
+      bool isCandidate = true;
+      for (const auto bondAtom : {bond->getBeginAtom(), bond->getEndAtom()}) {
+        for (const auto nbrBond : mol.atomBonds(bondAtom)) {
+          if (nbrBond->getBondType() == Bond::SINGLE ||
+              nbrBond->getBondType() == Bond::AROMATIC) {
+            singleBondCounts[nbrBond->getIdx()] += 1;
+            auto nbrDir = nbrBond->getBondDir();
+            int hasUnknownStereo = 0;
+            if (nbrBond->getBeginAtom() == bondAtom &&
+                nbrDir == Bond::BondDir::UNKNOWN &&
+                nbrBond->getPropIfPresent(common_properties::_UnknownStereo,
+                                          hasUnknownStereo) &&
+                hasUnknownStereo) {
+              // if there's a wiggly bond starting here, then we're not a
+              // candidate for stereo
+              isCandidate = false;
+            } else {
+              if (nbrDir == Bond::BondDir::NONE ||
+                  nbrDir == Bond::BondDir::ENDDOWNRIGHT ||
+                  nbrDir == Bond::BondDir::ENDUPRIGHT) {
+                needsDir[nbrBond->getIdx()] = 1;
+              }
+              needsDir[bond->getIdx()] = 1;
+              dblBondNbrs[bond->getIdx()].push_back(nbrBond->getIdx());
+              // the search may seem inefficient, but these vectors are going to
+              // be at most 2 long (with very few exceptions). It's just not
+              // worth using a different data structure
+              if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
+                            singleBondNbrs[nbrBond->getIdx()].end(),
+                            bond->getIdx()) ==
+                  singleBondNbrs[nbrBond->getIdx()].end()) {
+                singleBondNbrs[nbrBond->getIdx()].push_back(bond->getIdx());
+              }
+            }
           }
-          needsDir[bond->getIdx()] = 1;
-          dblBondNbrs[bond->getIdx()].push_back(nbrBond->getIdx());
-          // the search may seem inefficient, but these vectors are going to
-          // be at most 2 long (with very few exceptions). It's just not worth
-          // using a different data structure
-          if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
-                        singleBondNbrs[nbrBond->getIdx()].end(),
-                        bond->getIdx()) ==
-              singleBondNbrs[nbrBond->getIdx()].end()) {
-            singleBondNbrs[nbrBond->getIdx()].push_back(bond->getIdx());
-          }
-        }
-      }
-      for (const auto nbrBond : mol.atomBonds(a2)) {
-        if (nbrBond->getBondType() == Bond::SINGLE ||
-            nbrBond->getBondType() == Bond::AROMATIC) {
-          singleBondCounts[nbrBond->getIdx()] += 1;
-          auto nbrDir = nbrBond->getBondDir();
-          if (nbrDir == Bond::BondDir::NONE ||
-              nbrDir == Bond::BondDir::ENDDOWNRIGHT ||
-              nbrDir == Bond::BondDir::ENDUPRIGHT) {
-            needsDir[nbrBond->getIdx()] = 1;
-          }
-          needsDir[bond->getIdx()] = 1;
-          dblBondNbrs[bond->getIdx()].push_back(nbrBond->getIdx());
-
-          // the search may seem inefficient, but these vectors are going to
-          // be at most 2 long (with very few exceptions). It's just not worth
-          // using a different data structure
-          if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
-                        singleBondNbrs[nbrBond->getIdx()].end(),
-                        bond->getIdx()) ==
-              singleBondNbrs[nbrBond->getIdx()].end()) {
-            singleBondNbrs[nbrBond->getIdx()].push_back(bond->getIdx());
+          if (!isCandidate) {
+            break;
           }
         }
+        if (!isCandidate) {
+          break;
+        }
       }
-      bondsInPlay.push_back(bond);
+      if (isCandidate) {
+        bondsInPlay.push_back(bond);
+      }
     }
   }
 
@@ -3085,6 +3081,12 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
   }
   const Conformer &conf = mol.getConformer(confId);
   setDoubleBondNeighborDirections(mol, &conf);
+  for (auto bond : mol.bonds()) {
+    if (bond->hasProp(isStereoAny)) {
+      bond->setStereo(Bond::BondStereo::STEREOANY);
+      bond->clearProp(isStereoAny);
+    }
+  }
 }
 
 void clearSingleBondDirFlags(ROMol &mol) {
