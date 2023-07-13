@@ -348,3 +348,54 @@ TEST_CASE("more enhanced stereo canonicalization") {
     CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
   }
 }
+
+TEST_CASE("ensure unused features are not used") {
+  SECTION("isotopes") {
+    auto mol = "[13CH3]OC"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    bool includeChirality = true;
+    bool includeIsotopes = true;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[0] != ranks[2]);
+
+    includeIsotopes = false;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[0] == ranks[2]);
+  }
+  SECTION("chirality") {
+    auto mol = "F[C@H](Cl)OC(F)Cl"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    bool includeChirality = true;
+    bool includeIsotopes = true;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] != ranks[4]);
+
+    includeChirality = false;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] == ranks[4]);
+  }
+  SECTION("chirality and stereogroups") {
+    auto mol = "F[C@H](Cl)O[C@H](F)Cl |o1:1|"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    bool includeChirality = true;
+    bool includeIsotopes = true;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] != ranks[4]);
+
+    includeChirality = false;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] == ranks[4]);
+  }
+}

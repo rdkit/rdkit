@@ -241,7 +241,7 @@ TEST_CASE("MolHash with CX extensions", "[molhash]") {
       auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomer);
       CHECK(
           hsh ==
-          "C[C@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@@H](C)[C@H](C)[O]_3_0");
+          "C[C@H]([C@@H](C)[O])[C@@H](C)CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1_3_0");
     }
     {
       RWMol cp(*mol);
