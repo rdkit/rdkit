@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
         libboost=$(boost_version) ^
-        eigen
+        cairo eigen
     call activate rdkit_build
     conda install -c conda-forge cmake
   displayName: Install dependencies
