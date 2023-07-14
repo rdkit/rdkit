@@ -47,22 +47,22 @@ class TestCase(unittest.TestCase):
 
   def test1Basics(self):
     m1 = rdSLNParse.MolFromSLN('CH3CH3')
-    self.failUnless(m1)
-    self.failUnless(m1.GetNumAtoms() == 2)
+    self.assertTrue(m1)
+    self.assertTrue(m1.GetNumAtoms() == 2)
 
     m1 = rdSLNParse.MolFromSLN('C[1]H:CH:CH:CH:CH:CH:@1')
-    self.failUnless(m1)
-    self.failUnless(m1.GetNumAtoms() == 6)
+    self.assertTrue(m1)
+    self.assertTrue(m1.GetNumAtoms() == 6)
 
   def test2Queries(self):
     patt = rdSLNParse.MolFromQuerySLN('C[HC=2]~O')
-    self.failUnless(patt)
-    self.failUnless(patt.GetNumAtoms() == 2)
+    self.assertTrue(patt)
+    self.assertTrue(patt.GetNumAtoms() == 2)
 
     m = Chem.MolFromSmiles('COCC=O')
-    self.failUnless(m.HasSubstructMatch(patt))
+    self.assertTrue(m.HasSubstructMatch(patt))
     ms = m.GetSubstructMatches(patt)
-    self.failUnless(len(ms) == 1)
+    self.assertTrue(len(ms) == 1)
 
 
 if __name__ == '__main__':
