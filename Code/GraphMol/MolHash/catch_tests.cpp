@@ -704,3 +704,29 @@ M  END
     }
   }
 }
+
+TEST_CASE("GitHub Issue #6505") {
+  const auto m = "CCCCCC[NH3+] |SgD:6:lambda max:230:=:nm::|"_smiles;
+  REQUIRE(m);
+  REQUIRE(getSubstanceGroups(*m).size() == 1);
+
+  const auto use_cx_smiles = true;
+
+  SECTION("Do not skip any CX flags") {
+    const auto cx_to_skip = SmilesWrite::CXSmilesFields::CX_NONE;
+    const auto hsh1 =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2,
+                         use_cx_smiles, cx_to_skip);
+    CHECK(
+        hsh1 ==
+        "[CH3]-[CH2]-[CH2]-[CH2]-[CH2]-[CH2]-[NH3+]_0_0 |SgD:6:lambda max:230:=:nm::|");
+  }
+
+  SECTION("Strip all CX flags") {
+    const auto cx_to_skip = SmilesWrite::CXSmilesFields::CX_ALL;
+    const auto hsh2 =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2,
+                         use_cx_smiles, cx_to_skip);
+    CHECK(hsh2 == "[CH3]-[CH2]-[CH2]-[CH2]-[CH2]-[CH2]-[NH3+]_0_0");
+  }
+}

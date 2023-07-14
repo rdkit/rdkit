@@ -1193,7 +1193,7 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles,
       result = TautomerHash(mol, false, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::HetAtomTautomerv2:
-      result = TautomerHashv2(mol, false, useCXSmiles);
+      result = TautomerHashv2(mol, false, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::HetAtomProtomer:
       result = TautomerHash(mol, true, useCXSmiles, cxFlagsToSkip);
