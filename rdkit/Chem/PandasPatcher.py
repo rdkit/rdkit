@@ -35,6 +35,14 @@ for to_html_class_name in ("DataFrameRenderer", "DataFrameFormatter"):
 if to_html_class is None:
   log.warning("Failed to find the pandas to_html method to patch")
   raise AttributeError
+dataframeformatter_class = None
+orig_get_formatter = None
+if (hasattr(pandas_formats.format, "DataFrameFormatter")
+    and hasattr(pandas_formats.format.DataFrameFormatter, "_get_formatter")):
+  dataframeformatter_class = pandas_formats.format.DataFrameFormatter
+  orig_get_formatter = getattr(dataframeformatter_class, "_get_formatter")
+if orig_get_formatter is None:
+  log.warning("Failed to find the pandas _get_formatter() function to patch")
 orig_get_adjustment = None
 for get_adjustment_name in ("get_adjustment", "_get_adjustment"):
   if hasattr(pandas_formats.format, get_adjustment_name):
@@ -181,6 +189,21 @@ def patched_to_html(self, *args, **kwargs):
     fmt.formatters = orig_formatters
 
 
+def patched_get_formatter(self, i, *args, **kwargs):
+  if (isinstance(self.formatters, dict) and isinstance(i, int)
+      and i not in self.columns and hasattr(self, "tr_col_num")
+      and i >= self.tr_col_num):
+      max_cols = 0
+      if hasattr(self, "max_cols_fitted"):
+        max_cols = self.max_cols_fitted
+      elif hasattr(self, "max_cols_adj"):
+        max_cols = self.max_cols_adj
+      n_trunc_cols = len(self.columns) - max_cols
+      if n_trunc_cols > 0:
+        i += n_trunc_cols
+  return orig_get_formatter(self, i, *args, **kwargs)
+
+
 def patched_write_cell(self, s, *args, **kwargs):
   """ Disable escaping of HTML in order to render img / svg tags """
   styleTags = f"text-align: {molJustify};"
@@ -234,6 +257,8 @@ def patchPandas():
     setattr(html_formatter_class, "_write_cell", patched_write_cell)
   if getattr(pandas_formats.format, get_adjustment_name) != patched_get_adjustment:
     setattr(pandas_formats.format, get_adjustment_name, patched_get_adjustment)
+  if (orig_get_formatter and getattr(dataframeformatter_class, "_get_formatter") != patched_get_formatter):
+    setattr(dataframeformatter_class, "_get_formatter", patched_get_formatter)
 
 
 def unpatchPandas():
@@ -243,3 +268,5 @@ def unpatchPandas():
     setattr(html_formatter_class, "_write_cell", orig_write_cell)
   if orig_get_adjustment:
     setattr(pandas_formats.format, get_adjustment_name, orig_get_adjustment)
+  if orig_get_formatter:
+    setattr(dataframeformatter_class, "_get_formatter", orig_get_formatter)
