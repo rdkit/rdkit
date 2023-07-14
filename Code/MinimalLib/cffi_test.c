@@ -2124,6 +2124,46 @@ M  END\n",
   free(tpkl);
 }
 
+void test_partial_sanitization() {
+  printf("--------------------------\n");
+  printf("  test_partial_sanitization\n");
+  char *mpkl;
+  char *fp;
+  size_t mpkl_size;
+  const char *mfp_json = "{\"radius\":2,\"nBits\":32}";
+  const char *otherfp_json = "{\"nBits\":32}";
+  mpkl = get_mol("C1CCC2CCCC2C1", &mpkl_size, "{\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false}");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  fp = get_morgan_fp(mpkl, mpkl_size, mfp_json);
+  assert(fp);
+  assert(strlen(fp) == 32);
+  free(fp);
+  free(mpkl);
+  mpkl = get_mol("C1CCC2CCCC2C1", &mpkl_size, "{\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false,\"fastFindRings\":false}");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  fp = get_morgan_fp(mpkl, mpkl_size, mfp_json);
+  assert(!fp);
+  fp = get_rdkit_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+  fp = get_pattern_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+  fp = get_atom_pair_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+  fp = get_maccs_fp(mpkl, mpkl_size);
+  assert(!fp);
+#ifdef RDK_BUILD_AVALON_SUPPORT
+  fp = get_avalon_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+#endif
+  free(mpkl);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -2149,5 +2189,6 @@ int main() {
   test_allow_non_tetrahedral_chirality();
   test_query_colour();
   test_alignment_r_groups_aromatic_ring();
+  test_partial_sanitization();
   return 0;
 }
