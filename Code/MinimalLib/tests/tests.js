@@ -2335,6 +2335,73 @@ function test_get_num_atoms_bonds() {
     assert.equal(molH.get_num_bonds(), 13);
 }
 
+function test_sanitize_no_kekulize_no_setaromaticity() {
+    var molblock1 = `
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END`;
+    var molblock2 = `
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
+M  END`;
+    var mol1 = RDKitModule.get_mol(molblock1, JSON.stringify({kekulize: false, setAromaticity: false}));
+    var mol2 = RDKitModule.get_mol(molblock2, JSON.stringify({kekulize: false, setAromaticity: false}));
+    assert.notEqual(mol1.get_molblock(), mol2.get_molblock());
+    mol1.delete();
+    mol2.delete();
+    mol1 = RDKitModule.get_mol(molblock1);
+    mol2 = RDKitModule.get_mol(molblock2);
+    assert.equal(mol1.get_molblock(), mol2.get_molblock());
+    mol1.delete();
+    mol2.delete();
+}
+
+function test_partial_sanitization() {
+    var mol1 = RDKitModule.get_mol('C1CCC2CCCC2C1', JSON.stringify({
+        sanitize: false, removeHs: false, assignStereo: false,
+    }));
+    var fp1 = mol1.get_morgan_fp(JSON.stringify({radius: 2, nBits: 32}));
+    assert.equal(fp1, '00001001010101000000100000110010');
+    mol1.delete();
+    var mol2 = RDKitModule.get_mol('C1CCC2CCCC2C1', JSON.stringify({
+        sanitize: false, removeHs: false, assignStereo: false, fastFindRings: false
+    }));
+    var exceptionThrown = false;
+    try {
+        mol2.get_morgan_fp(JSON.stringify({radius: 2, nBits: 32}));
+    } catch (e) {
+        exceptionThrown = true;
+    }
+    assert(exceptionThrown);
+    mol2.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -2399,6 +2466,8 @@ initRDKitModule().then(function(instance) {
     if (RDKitModule.get_mcs_as_mol)  {
         test_mcs();
     }
+    test_sanitize_no_kekulize_no_setaromaticity();
+    test_partial_sanitization();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

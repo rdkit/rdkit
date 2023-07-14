@@ -462,22 +462,22 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"O[*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"[H][*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }
@@ -496,22 +496,22 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"O[*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"[H][*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }
@@ -537,7 +537,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
@@ -565,7 +565,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
@@ -580,7 +580,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
     "R2":"[H][*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }

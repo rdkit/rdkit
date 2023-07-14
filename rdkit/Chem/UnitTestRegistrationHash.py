@@ -12,7 +12,7 @@ from rdkit.Chem import RegistrationHash
 from rdkit.Chem.RegistrationHash import HashLayer
 
 
-def hash_sdf(molblock: str, escape=None, data_field_names=None):
+def hash_sdf(molblock: str, escape=None, data_field_names=None, enable_tautomer_hash_v2=False):
   """
     Gets the layers of the SDF, and generates the hash based on only the layers passed in
 
@@ -24,7 +24,8 @@ def hash_sdf(molblock: str, escape=None, data_field_names=None):
     :return: A dict with the hash & the layers
     """
   mol = Chem.MolFromMolBlock(molblock)
-  return RegistrationHash.GetMolLayers(mol, escape=escape, data_field_names=data_field_names)
+  return RegistrationHash.GetMolLayers(mol, escape=escape, data_field_names=data_field_names,
+                                       enable_tautomer_hash_v2=enable_tautomer_hash_v2)
 
 
 class CanonicalizerTest(unittest.TestCase):
@@ -218,8 +219,21 @@ M  END
       HashLayer.TAUTOMER_HASH: 'CCCCCCC_0_0'
     }
 
+    expected_layers_v2 = {
+      HashLayer.CANONICAL_SMILES: 'CCCCCCC',
+      HashLayer.ESCAPE: '',
+      HashLayer.FORMULA: 'C7H16',
+      HashLayer.NO_STEREO_SMILES: 'CCCCCCC',
+      HashLayer.NO_STEREO_TAUTOMER_HASH: '[CH3]-[CH2]-[CH2]-[CH2]-[CH2]-[CH2]-[CH3]_0_0',
+      HashLayer.SGROUP_DATA: '[]',
+      HashLayer.TAUTOMER_HASH: '[CH3]-[CH2]-[CH2]-[CH2]-[CH2]-[CH2]-[CH3]_0_0'
+    }
+
     layers = hash_sdf(structure)
     self.assertEqual(layers, expected_layers)
+
+    layers_v2 = hash_sdf(structure, enable_tautomer_hash_v2=True)
+    self.assertEqual(layers_v2, expected_layers_v2)
 
   def test_stereo_imine_hash(self):
     stereo_mol = Chem.MolFromSmiles(r'[H]\N=C\C', sanitize=False)
@@ -791,6 +805,7 @@ $$$$
         enol_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS),
       RegistrationHash.GetMolHash(
         keto_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

@@ -663,7 +663,10 @@ JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits) :
 }
 
 int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
-  std::unique_ptr<RWMol> mol(SmilesToMol(smi, 0, false));
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  ps.removeHs = false;
+  std::unique_ptr<RWMol> mol(SmilesToMol(smi, ps));
   if (!mol) {
     return -1;
   }

@@ -99,6 +99,9 @@ RWMol *mol_from_input(const std::string &input,
   bool kekulize = true;
   bool removeHs = true;
   bool mergeQueryHs = false;
+  bool setAromaticity = true;
+  bool fastFindRings = true;
+  bool assignStereo = true;
   RWMol *res = nullptr;
   boost::property_tree::ptree pt;
   if (!details_json.empty()) {
@@ -109,6 +112,9 @@ RWMol *mol_from_input(const std::string &input,
     LPT_OPT_GET(kekulize);
     LPT_OPT_GET(removeHs);
     LPT_OPT_GET(mergeQueryHs);
+    LPT_OPT_GET(setAromaticity);
+    LPT_OPT_GET(fastFindRings);
+    LPT_OPT_GET(assignStereo);
   }
   try {
     if (input.find("M  END") != std::string::npos) {
@@ -146,11 +152,19 @@ RWMol *mol_from_input(const std::string &input,
         if (!kekulize) {
           sanitizeOps ^= MolOps::SANITIZE_KEKULIZE;
         }
+        if (!setAromaticity) {
+          sanitizeOps ^= MolOps::SANITIZE_SETAROMATICITY;
+        }
         MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
       } else {
         res->updatePropertyCache(false);
+        if (fastFindRings) {
+          MolOps::fastFindRings(*res);
+        }
       }
-      MolOps::assignStereochemistry(*res, true, true, true);
+      if (assignStereo) {
+        MolOps::assignStereochemistry(*res, true, true, true);
+      }
       if (mergeQueryHs) {
         MolOps::mergeQueryHs(*res);
       }
