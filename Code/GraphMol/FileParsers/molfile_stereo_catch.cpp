@@ -223,3 +223,14 @@ TEST_CASE("github #6310: crossed ring bonds not written to mol blocks") {
     CHECK(mb.find("2  3  2  3") != std::string::npos);
   }
 }
+
+TEST_CASE(
+    "GitHub Issue #6502: MolToMolBlock writes \"either\" stereo for double bonds "
+    "which shouldn't be stereo.",
+    "[bug][molblock][stereo]") {
+  auto m = "CP1(O)=NP(C)(O)=NP(C)(O)=NP(C)(O)=N1"_smiles;
+  REQUIRE(m);
+
+  auto mb = MolToV3KMolBlock(*m);
+  CHECK(mb.find("CFG=2") == std::string::npos);
+}
