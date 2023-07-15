@@ -52,8 +52,10 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
  public:
   StereoGroup() {}
   // Takes control of atoms if possible.
-  StereoGroup(StereoGroupType grouptype, std::vector<Atom*>&& atoms);
-  StereoGroup(StereoGroupType grouptype, const std::vector<Atom*>& atoms);
+  StereoGroup(StereoGroupType grouptype, std::vector<Atom*>&& atoms,
+              unsigned readId = 0);
+  StereoGroup(StereoGroupType grouptype, const std::vector<Atom*>& atoms,
+              unsigned readId = 0);
   StereoGroup(const StereoGroup& other) = default;
   StereoGroup& operator=(const StereoGroup& other) = default;
   StereoGroup(StereoGroup&& other) = default;
