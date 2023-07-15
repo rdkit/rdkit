@@ -67,8 +67,8 @@ void copyStereoGroups(const std::map<const Atom *, Atom *> &molAtomMap,
         }
       }
       if (!newStereoAtoms.empty()) {
-        newStereoGroups.emplace_back(stereoGroup.getGroupType(),
-                                     newStereoAtoms);
+        newStereoGroups.emplace_back(stereoGroup.getGroupType(), newStereoAtoms,
+                                     stereoGroup.getReadId());
       }
     }
     newMol.setStereoGroups(std::move(newStereoGroups));
