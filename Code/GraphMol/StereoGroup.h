@@ -44,8 +44,13 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
   StereoGroupType d_grouptype{StereoGroupType::STEREO_ABSOLUTE};
   std::vector<Atom*> d_atoms;
 
+  // The group ID for AND/OR groups (it has no meaning in ABS groups).
+  // 0 means no group ID is defined.
+  unsigned d_readId = 0u;
+  unsigned d_writeId = 0u;
+
  public:
-  StereoGroup() : d_atoms(0u) {}
+  StereoGroup() {}
   // Takes control of atoms if possible.
   StereoGroup(StereoGroupType grouptype, std::vector<Atom*>&& atoms);
   StereoGroup(StereoGroupType grouptype, const std::vector<Atom*>& atoms);
@@ -56,6 +61,11 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
 
   StereoGroupType getGroupType() const;
   const std::vector<Atom*>& getAtoms() const;
+
+  unsigned getReadId() const { return d_readId; }
+  unsigned getWriteId() const { return d_writeId; }
+  void setWriteId(unsigned id) { d_writeId = id; }
+
   // Seems odd to have to define these, but otherwise the SWIG wrappers
   // won't build
   bool operator==(const StereoGroup& other) const {

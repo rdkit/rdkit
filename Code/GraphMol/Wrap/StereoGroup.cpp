@@ -65,7 +65,16 @@ struct stereogroup_wrap {
         .def("GetGroupType", &StereoGroup::getGroupType,
              "Returns the StereoGroupType.\n")
         .def("GetAtoms", getAtomsHelper,
-             "access the atoms in the StereoGroup.\n");
+             "access the atoms in the StereoGroup.\n")
+        .def("GetReadId", &StereoGroup::getReadId,
+             "return the StereoGroup's original ID.\n"
+             "Note that the ID only makes sense for AND/OR groups.\n")
+        .def("GetWriteId", &StereoGroup::getReadId,
+             "return the StereoGroup's ID that will be exported.\n"
+             "Note that the ID only makes sense for AND/OR groups.\n")
+        .def("SetWriteId", &StereoGroup::setWriteId,
+             "return the StereoGroup's ID that will be exported.\n"
+             "Note that the ID only makes sense for AND/OR groups.\n");
 
     python::def("CreateStereoGroup", &createStereoGroup,
                 "creates a StereoGroup associated with a molecule from a list "

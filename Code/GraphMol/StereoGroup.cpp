@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <utility>
+
 #include "StereoGroup.h"
 #include "Atom.h"
 
@@ -47,13 +48,15 @@ std::ostream &operator<<(std::ostream &target, const RDKit::StereoGroup &stg) {
       target << "ABS";
       break;
     case RDKit::StereoGroupType::STEREO_OR:
-      target << "OR";
+      target << "OR ";
       break;
     case RDKit::StereoGroupType::STEREO_AND:
       target << "AND";
       break;
   }
-  target << " Atoms: { ";
+  target << " rId: " << stg.getReadId();
+  target << " wRd: " << stg.getWriteId();
+  target << " atoms: { ";
   for (auto atom : stg.getAtoms()) {
     target << atom->getIdx() << ' ';
   }
