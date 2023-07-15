@@ -1,10 +1,46 @@
 #include <algorithm>
 #include <utility>
+#include <vector>
+
+#include <boost/dynamic_bitset.hpp>
 
 #include "StereoGroup.h"
 #include "Atom.h"
+#include "ROMol.h"
 
 namespace RDKit {
+
+namespace {
+void storeIdsInUse(boost::dynamic_bitset<> &ids, StereoGroup &sg) {
+  const auto groupId = sg.getWriteId();
+  if (groupId == 0) {
+    return;
+  } else if (groupId >= ids.size()) {
+    ids.resize(groupId + 1);
+  }
+  if (ids[groupId]) {
+    // This id is duplicate, let's reset it so we can reassign it later
+    BOOST_LOG(rdWarningLog)
+        << "StereoGroup ID " << groupId
+        << " is used by more than one group, and will be reassined"
+        << std::endl;
+    sg.setWriteId(0);
+  } else {
+    ids[groupId] = true;
+  }
+};
+
+void assignMissingIds(const boost::dynamic_bitset<> &ids, unsigned &nextId,
+                      StereoGroup &sg) {
+  if (sg.getWriteId() == 0) {
+    ++nextId;
+    while (nextId < ids.size() && ids[nextId]) {
+      ++nextId;
+    }
+    sg.setWriteId(nextId);
+  }
+};
+}  // namespace
 
 StereoGroup::StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms,
                          unsigned readId)
@@ -39,6 +75,41 @@ void removeGroupsWithAtoms(const std::vector<Atom *> &atoms,
   };
   groups.erase(std::remove_if(groups.begin(), groups.end(), containsAnyAtom),
                groups.end());
+}
+
+void assignStereoGroupIds(std::vector<StereoGroup> &groups) {
+  if (groups.empty()) {
+    return;
+  }
+
+  boost::dynamic_bitset<> andIds;
+  boost::dynamic_bitset<> orIds;
+
+  for (auto &sg : groups) {
+    if (sg.getGroupType() == StereoGroupType::STEREO_AND) {
+      storeIdsInUse(andIds, sg);
+    } else if (sg.getGroupType() == StereoGroupType::STEREO_OR) {
+      storeIdsInUse(orIds, sg);
+    }
+  }
+
+  unsigned andId = 0;
+  unsigned orId = 0;
+  for (auto &sg : groups) {
+    if (sg.getGroupType() == StereoGroupType::STEREO_AND) {
+      assignMissingIds(andIds, andId, sg);
+    } else if (sg.getGroupType() == StereoGroupType::STEREO_OR) {
+      assignMissingIds(andIds, orId, sg);
+    }
+  }
+}
+
+void forwardStereoGroupIds(ROMol &mol) {
+  auto stgs = mol.getStereoGroups();
+  for (auto &stg : stgs) {
+    stg.setWriteId(stg.getReadId());
+  }
+  mol.setStereoGroups(stgs);
 }
 
 }  // namespace RDKit

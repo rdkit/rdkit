@@ -23,6 +23,7 @@
 
 namespace RDKit {
 class Atom;
+class ROMol;
 
 // OR means that it is known to be one or the other, but not both
 // AND means that it is known to be a mix.
@@ -81,6 +82,14 @@ RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtom(
     const Atom* atom, std::vector<StereoGroup>& groups);
 RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtoms(
     const std::vector<Atom*>& atoms, std::vector<StereoGroup>& groups);
+
+//! Assign Group output IDs to all AND and OR StereoGroups in the vector
+//! that don't already have one. The IDs are assigned based on the order
+//! of the groups.
+RDKIT_GRAPHMOL_EXPORT void assignStereoGroupIds(
+    std::vector<StereoGroup>& groups);
+
+RDKIT_GRAPHMOL_EXPORT void forwardStereoGroupIds(ROMol& mol);
 
 }  // namespace RDKit
 

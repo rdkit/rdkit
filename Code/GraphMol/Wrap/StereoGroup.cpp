@@ -84,6 +84,10 @@ struct stereogroup_wrap {
                 python::return_value_policy<
                     python::manage_new_object,
                     python::with_custodian_and_ward_postcall<0, 2>>());
+
+    python::def(
+        "ForwardStereoGroupIds", &RDKit::forwardStereoGroupIds,
+        "Forward the original Stereo Group IDs when exporting the Mol.");
   }
 };
 }  // namespace RDKit
