@@ -1194,6 +1194,7 @@ void DrawMol::shrinkToFit(bool withPadding) {
   Point2D corr((newWidth - width_) / 2, (newHeight - height_) / 2);
   transformAll(&corr, nullptr, nullptr);
   width_ = newWidth;
+  drawWidth_ = width_ * (1 - 2 * drawOptions_.padding);
   height_ = newHeight;
   if (!legend_.empty()) {
     partitionForLegend();
@@ -1202,6 +1203,7 @@ void DrawMol::shrinkToFit(bool withPadding) {
   } else {
     legendHeight_ = 0;
     molHeight_ = height_;
+    drawHeight_ = height_ * (1 - 2 * drawOptions_.padding);
   }
 }
 
