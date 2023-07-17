@@ -56,9 +56,9 @@ jobs:
   pool:
     vmImage: windows-2019
   variables:
-    boost_version: 1.67.0
+    boost_version: 1.71.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
-    python_name: python37
+    python_name: python38
   steps:
   - template: .azure-pipelines/vs_build_dll.yml
 - job: Ubuntu_x64_java

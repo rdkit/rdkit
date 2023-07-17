@@ -810,11 +810,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
     if (bond->getStereo() <= Bond::STEREOANY) {
       if (bond->getStereo() == Bond::STEREOANY) {
         dirCode = 3;
-      } else if (bond->getBeginAtom()->getDegree() > 1 &&
-                 bond->getEndAtom()->getDegree() > 1 &&
-                 (!queryIsBondInRing(bond) ||
-                  static_cast<unsigned int>(queryBondMinRingSize(bond)) >=
-                      Chirality::minRingSizeForDoubleBondStereo)) {
+      } else if (Chirality::detail::isBondPotentialStereoBond(bond)) {
         // we don't know that it's explicitly unspecified (covered above with
         // the ==STEREOANY check)
 
