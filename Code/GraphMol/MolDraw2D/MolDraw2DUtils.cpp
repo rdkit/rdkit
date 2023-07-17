@@ -374,6 +374,9 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
       maxP.y = std::max(loc.y, maxP.y);
     }
     Point2D dims = maxP - minP;
+    // Here, the drawOptions().padding is just used to extend the grid
+    // beyond the molecule.  The actual padding round the image is added
+    // later.
     minP.x -= drawer.drawOptions().padding * dims.x;
     minP.y -= drawer.drawOptions().padding * dims.y;
     maxP.x += drawer.drawOptions().padding * dims.x;

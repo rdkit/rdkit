@@ -567,8 +567,8 @@ const std::vector<Point2D> &MolDraw2D::atomCoords() const {
 }
 
 // ****************************************************************************
-const std::vector<std::pair<std::string, MolDraw2D_detail::OrientType>>
-    &MolDraw2D::atomSyms() const {
+const std::vector<std::pair<std::string, MolDraw2D_detail::OrientType>> &
+MolDraw2D::atomSyms() const {
   PRECONDITION(activeMolIdx_ >= 0, "no index");
   return drawMols_[activeMolIdx_]->atomSyms_;
 }
@@ -676,7 +676,10 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   y_range *= 1 + 2 * drawOptions().padding;
   y_max = y_min + y_range;
 
-  scale_ = std::min(double(width) / x_range, double(height) / y_range);
+  double drawWidth = width * (1 - 2 * drawOptions().padding);
+  double drawHeight = height * (1 - 2 * drawOptions().padding);
+
+  scale_ = std::min(double(drawWidth) / x_range, double(drawHeight) / y_range);
   // Absent any other information, we'll have to go with fontScale_ the
   // same as scale_.
   if (!setFontScale) {
@@ -696,6 +699,11 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   Point2D trans, scale, toCentre;
   drawMol->getDrawTransformers(trans, scale, toCentre);
   globalDrawTrans_.reset(drawMol);
+  // the padding is now a no-go area around the image, so it is applied
+  // as an offset before each drawing move.  It needs to be taken off
+  // here to compensate.
+  globalDrawTrans_->xOffset_ -= width * drawOptions().padding;
+  globalDrawTrans_->yOffset_ -= height * drawOptions().padding;
 }
 
 // ****************************************************************************

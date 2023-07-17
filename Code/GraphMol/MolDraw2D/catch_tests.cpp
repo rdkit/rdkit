@@ -4870,6 +4870,27 @@ TEST_CASE("GitHub #5383: cairo error when using similarity maps", "") {
     outs.flush();
     check_file_hash("github5383_1.svg");
   }
+  SECTION("svg basics") {
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().padding = 0.0;
+
+    drawer.clearDrawing();
+    std::vector<double> levels;
+    MolDraw2DUtils::contourAndDrawGaussians(
+        drawer, cents, weights, widths, 10, levels,
+        MolDraw2DUtils::ContourParams(), m1.get());
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("width='250px' height='250px' viewBox='0 0 250 250'>") !=
+          std::string::npos);
+    std::ofstream outs("github5383_2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("github5383_2.svg");
+  }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
   SECTION("cairo basics") {
     MolDraw2DCairo drawer(250, 250, -1, -1, NO_FREETYPE);
@@ -7968,6 +7989,7 @@ M  END)CTAB"_ctab;
     check_file_hash(svgName);
   }
 }
+
 TEST_CASE("Github #6400: extra padding, no legend apparent") {
   std::string nameBase = "test_github6400";
   auto m = "CCCOC"_smiles;
