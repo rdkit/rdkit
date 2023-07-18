@@ -87,6 +87,7 @@ add_subdirectory(MolDraw2D)
 add_subdirectory(FMCS)
 add_subdirectory(MolHash)
 add_subdirectory(MMPA)
+add_subdirectory(RascalMCES)
 
 add_subdirectory(CIPLabeler)
 add_subdirectory(Deprotect)
@@ -193,6 +194,6 @@ rdkit_catch_test(queryTestsCatch catch_queries.cpp
 
 rdkit_catch_test(molbundleTestsCatch catch_molbundle.cpp
         LINK_LIBRARIES SmilesParse GraphMol)
-        
+
 rdkit_catch_test(pickleTestsCatch catch_pickles.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
