@@ -43,10 +43,10 @@ RascalResult::RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
     mol1AdjMatrix = &adjMatrix1;
   }
 
-  extract_clique(clique, vtx_pairs, swapped, d_bondMatches);
-  match_clique_atoms(*mol1AdjMatrix);
+  extractClique(clique, vtx_pairs, swapped, d_bondMatches);
+  matchCliqueAtoms(*mol1AdjMatrix);
   if (d_maxFragSep != -1) {
-    apply_max_frag_sep();
+    applyMaxFragSep();
   }
 }
 
@@ -79,8 +79,8 @@ RascalResult &RascalResult::operator=(const RascalResult &other) {
   return *this;
 }
 
-void RascalResult::largest_frag_only() {
-  std::unique_ptr<RDKit::ROMol> mol1_frags(make_mol_frags(1));
+void RascalResult::largestFragOnly() {
+  std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
   // getMolFrags() returns boost::shared_ptr.  Ho-hum.
   auto frags = RDKit::MolOps::getMolFrags(*mol1_frags, false);
   if (frags.size() < 2) {
@@ -125,10 +125,10 @@ void RascalResult::largest_frag_only() {
 }
 
 double RascalResult::similarity() const {
-  return johnson_similarity(d_bondMatches, *d_mol1, *d_mol2);
+  return johnsonSimilarity(d_bondMatches, *d_mol1, *d_mol2);
 }
 
-std::string RascalResult::create_smarts_string() const {
+std::string RascalResult::createSmartsString() const {
   std::unique_ptr<RDKit::RWMol> smartsMol(new RDKit::RWMol);
   std::map<int, unsigned int> atomMap;
   for (const auto &am : d_atomMatches) {
@@ -170,7 +170,7 @@ std::string RascalResult::create_smarts_string() const {
     smartsMol->addBond(&b, false);
   }
   std::string smt = RDKit::MolToSmarts(*smartsMol, true);
-  clean_smarts(smt);
+  cleanSmarts(smt);
   return smt;
 }
 
@@ -191,8 +191,8 @@ int common_atom_in_bonds(const RDKit::Bond *bond1, const RDKit::Bond *bond2) {
 }
 }  // namespace
 
-void RascalResult::match_clique_atoms(
-    const std::vector<std::vector<int>> &mol1AdjMatrix) {
+void RascalResult::matchCliqueAtoms(
+    const std::vector<std::vector<int>> &mol1_adj_matrix) {
   if (d_bondMatches.empty()) {
     return;
   }
@@ -212,7 +212,7 @@ void RascalResult::match_clique_atoms(
     auto bond2_1 = d_mol2->getBondWithIdx(pair1.second);
     for (size_t j = i + 1; j < d_bondMatches.size(); ++j) {
       const auto &pair2 = d_bondMatches[j];
-      if (mol1AdjMatrix[pair1.first][pair2.first]) {
+      if (mol1_adj_matrix[pair1.first][pair2.first]) {
         // the 2 bonds are incident on the same atom, so the 2 atoms must match
         auto bond1_2 = d_mol1->getBondWithIdx(pair2.first);
         auto bond2_2 = d_mol2->getBondWithIdx(pair2.second);
@@ -279,8 +279,8 @@ void RascalResult::match_clique_atoms(
   }
 }
 
-void RascalResult::apply_max_frag_sep() {
-  std::unique_ptr<RDKit::ROMol> mol1_frags(make_mol_frags(1));
+void RascalResult::applyMaxFragSep() {
+  std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
   auto frags1 = RDKit::MolOps::getMolFrags(*mol1_frags, false);
   if (frags1.size() < 2) {
     return;
@@ -302,7 +302,7 @@ void RascalResult::apply_max_frag_sep() {
     return minDist;
   };
 
-  std::unique_ptr<RDKit::ROMol> mol2Frags(make_mol_frags(2));
+  std::unique_ptr<RDKit::ROMol> mol2Frags(makeMolFrags(2));
   auto frags2 = RDKit::MolOps::getMolFrags(*mol2Frags, false);
   // These arrays must not be deleted - they are cached in the molecule and
   // deleted when it is. The distance matrix will be re-calculated in case
@@ -376,7 +376,7 @@ void RascalResult::apply_max_frag_sep() {
 
 // Return a molecule with the clique in it.  Each atom will have the property
 // ORIG_INDEX giving its index in the original molecule.
-RDKit::ROMol *RascalResult::make_mol_frags(int molNum) const {
+RDKit::ROMol *RascalResult::makeMolFrags(int molNum) const {
   std::shared_ptr<RDKit::ROMol> theMol;
   if (molNum == 1) {
     theMol = d_mol1;
@@ -424,7 +424,7 @@ RDKit::ROMol *RascalResult::make_mol_frags(int molNum) const {
 
 // Calculate a score for how many bonds in the clique don't match
 // cyclic/non-cyclic
-int RascalResult::calc_ring_non_ring_score() const {
+int RascalResult::calcRingNonRingScore() const {
   int score = 0;
   for (const auto &bm : d_bondMatches) {
     auto nbr1 = d_mol1->getRingInfo()->numBondRings(bm.first);
@@ -441,7 +441,7 @@ int RascalResult::calc_ring_non_ring_score() const {
 // atoms for the clique in mol2.  The atom scores are made up of H count and
 // summed for the molecule. Its so that, for example, an OH in mol1 that could
 // match an OH or OMe matches the OH for preference.
-int RascalResult::calc_atom_match_score() const {
+int RascalResult::calcAtomMatchScore() const {
   int score = 0;
   for (const auto &am : d_atomMatches) {
     int num_h_1 = d_mol1->getAtomWithIdx(am.first)->getTotalNumHs();
@@ -451,7 +451,7 @@ int RascalResult::calc_atom_match_score() const {
   return score;
 }
 
-int RascalResult::calc_max_delta_atom_atom_dist_score() const {
+int RascalResult::calcMaxDeltaAtomAtomDistScore() const {
   // Possibly this could be improved, to be the total of the minimum distances
   // between each fragment.
   if (d_atomMatches.empty()) {
@@ -485,8 +485,8 @@ int RascalResult::calc_max_delta_atom_atom_dist_score() const {
   return score;
 }
 
-int RascalResult::calc_largest_frag_size() const {
-  std::unique_ptr<RDKit::ROMol> mol1_frags(make_mol_frags(1));
+int RascalResult::calcLargestFragSize() const {
+  std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
   std::vector<int> mapping;
   auto numFrags = RDKit::MolOps::getMolFrags(*mol1_frags, mapping);
   int lfs = -1;
@@ -499,95 +499,92 @@ int RascalResult::calc_largest_frag_size() const {
   return lfs;
 }
 
-int RascalResult::num_frags() const {
+int RascalResult::numFrags() const {
   if (d_numFrags == -1) {
-    std::unique_ptr<RDKit::ROMol> mol1_frags(make_mol_frags(1));
+    std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
     std::vector<int> mol1_frag_mapping;
     d_numFrags = RDKit::MolOps::getMolFrags(*mol1_frags, mol1_frag_mapping);
   }
   return d_numFrags;
 }
 
-int RascalResult::ring_non_ring_bond_score() const {
+int RascalResult::ringNonRingBondScore() const {
   if (d_ringNonRingBondScore == -1) {
-    d_ringNonRingBondScore = calc_ring_non_ring_score();
+    d_ringNonRingBondScore = calcRingNonRingScore();
   }
   return d_ringNonRingBondScore;
 }
 
-int RascalResult::atom_match_score() const {
+int RascalResult::atomMatchScore() const {
   if (d_atomMatchScore == -1) {
-    d_atomMatchScore = calc_atom_match_score();
+    d_atomMatchScore = calcAtomMatchScore();
   }
   return d_atomMatchScore;
 }
 
-int RascalResult::max_delta_atom_atom_dist() const {
+int RascalResult::maxDeltaAtomAtomDist() const {
   if (d_maxDeltaAtomAtomDist == -1) {
-    d_maxDeltaAtomAtomDist = calc_max_delta_atom_atom_dist_score();
+    d_maxDeltaAtomAtomDist = calcMaxDeltaAtomAtomDistScore();
   }
   return d_maxDeltaAtomAtomDist;
 }
 
-int RascalResult::largest_frag_size() const {
+int RascalResult::largestFragSize() const {
   if (d_largestFragSize == -1) {
-    d_largestFragSize = calc_largest_frag_size();
+    d_largestFragSize = calcLargestFragSize();
   }
   return d_largestFragSize;
 }
 
 std::string RascalResult::smarts() const {
   if (d_smarts.empty()) {
-    d_smarts = create_smarts_string();
+    d_smarts = createSmartsString();
   }
   return d_smarts;
 }
 
 bool resultSort(const RascalResult &res1, const RascalResult &res2) {
-  if (res1.bond_matches().size() == res2.bond_matches().size()) {
-    if (res1.num_frags() == res2.num_frags()) {
-      if (res1.ring_non_ring_bond_score() == res2.ring_non_ring_bond_score()) {
-        if (res1.atom_match_score() == res2.atom_match_score()) {
-          if (res1.max_delta_atom_atom_dist() ==
-              res2.max_delta_atom_atom_dist()) {
-            return res1.largest_frag_size() > res2.largest_frag_size();
+  if (res1.bondMatches().size() == res2.bondMatches().size()) {
+    if (res1.numFrags() == res2.numFrags()) {
+      if (res1.ringNonRingBondScore() == res2.ringNonRingBondScore()) {
+        if (res1.atomMatchScore() == res2.atomMatchScore()) {
+          if (res1.maxDeltaAtomAtomDist() == res2.maxDeltaAtomAtomDist()) {
+            return res1.largestFragSize() > res2.largestFragSize();
           } else {
-            return res1.max_delta_atom_atom_dist() <
-                   res2.max_delta_atom_atom_dist();
+            return res1.maxDeltaAtomAtomDist() < res2.maxDeltaAtomAtomDist();
           }
         } else {
-          return res1.atom_match_score() < res2.atom_match_score();
+          return res1.atomMatchScore() < res2.atomMatchScore();
         }
       } else {
-        return res1.ring_non_ring_bond_score() <
-               res2.ring_non_ring_bond_score();
+        return res1.ringNonRingBondScore() < res2.ringNonRingBondScore();
       }
     } else {
-      return res1.num_frags() < res2.num_frags();
+      return res1.numFrags() < res2.numFrags();
     }
   } else {
-    return res1.bond_matches().size() > res2.bond_matches().size();
+    return res1.bondMatches().size() > res2.bondMatches().size();
   }
 }
 
-void extract_clique(const std::vector<unsigned int> &clique,
-                    const std::vector<std::pair<int, int>> &vtx_pairs,
-                    bool swapped,
-                    std::vector<std::pair<int, int>> &bond_matches) {
-  bond_matches.clear();
+void extractClique(const std::vector<unsigned int> &clique,
+                   const std::vector<std::pair<int, int>> &vtxPairs,
+                   bool swapped,
+                   std::vector<std::pair<int, int>> &bondMatches) {
+  bondMatches.clear();
   for (auto mem : clique) {
     if (swapped) {
-      bond_matches.push_back(
-          std::make_pair(vtx_pairs[mem].second, vtx_pairs[mem].first));
+      bondMatches.push_back(
+          std::make_pair(vtxPairs[mem].second, vtxPairs[mem].first));
     } else {
-      bond_matches.push_back(
-          std::make_pair(vtx_pairs[mem].first, vtx_pairs[mem].second));
+      bondMatches.push_back(
+          std::make_pair(vtxPairs[mem].first, vtxPairs[mem].second));
     }
   }
-  std::sort(bond_matches.begin(), bond_matches.end());
+  std::sort(bondMatches.begin(), bondMatches.end());
 }
 
-void clean_smarts(std::string &smarts) {
+void cleanSmarts(std::string &smarts) {
   const static std::vector<std::pair<std::regex, std::string>> repls{
       {std::regex(R"(\[#6&A\])"), "C"},
       {std::regex(R"(\[#6&a\])"), "c"},
@@ -619,42 +616,42 @@ void clean_smarts(std::string &smarts) {
   }
 }
 
-void print_bond_matches(const RascalResult &res, std::ostream &os) {
-  os << "Bond 1 matches : " << res.bond_matches().size() << " : [";
-  for (const auto &bm : res.bond_matches()) {
+void printBondMatches(const RascalResult &res, std::ostream &os) {
+  os << "Bond 1 matches : " << res.bondMatches().size() << " : [";
+  for (const auto &bm : res.bondMatches()) {
     os << bm.first << ",";
   }
   os << "]" << std::endl;
-  os << "Bond 2 matches : " << res.bond_matches().size() << " : [";
-  for (const auto &bm : res.bond_matches()) {
+  os << "Bond 2 matches : " << res.bondMatches().size() << " : [";
+  for (const auto &bm : res.bondMatches()) {
     os << bm.second << ",";
   }
   os << "]" << std::endl;
 }
 
-void print_atom_matches(const RascalResult &res, std::ostream &os) {
-  os << "Atom 1 matches : " << res.atom_matches().size() << " : [";
-  for (const auto &am : res.atom_matches()) {
+void printAtomMatches(const RascalResult &res, std::ostream &os) {
+  os << "Atom 1 matches : " << res.atomMatches().size() << " : [";
+  for (const auto &am : res.atomMatches()) {
     os << am.first << ",";
   }
   os << "]" << std::endl;
-  os << "Atom 2 matches : " << res.atom_matches().size() << " : [";
-  for (const auto &am : res.atom_matches()) {
+  os << "Atom 2 matches : " << res.atomMatches().size() << " : [";
+  for (const auto &am : res.atomMatches()) {
     os << am.second << ",";
   }
   os << "]" << std::endl;
 }
 
-double johnson_similarity(const std::vector<std::pair<int, int>> &bond_matches,
-                          const RDKit::ROMol &mol1, const RDKit::ROMol &mol2) {
+double johnsonSimilarity(const std::vector<std::pair<int, int>> &bondMatches,
+                         const RDKit::ROMol &mol1, const RDKit::ROMol &mol2) {
   std::set<unsigned int> atsInMces;
-  for (const auto &bm : bond_matches) {
+  for (const auto &bm : bondMatches) {
     const auto bond1 = mol1.getBondWithIdx(bm.first);
     atsInMces.insert(bond1->getBeginAtomIdx());
     atsInMces.insert(bond1->getEndAtomIdx());
   }
-  double num = (bond_matches.size() + atsInMces.size()) *
-               (bond_matches.size() + atsInMces.size());
+  double num = (bondMatches.size() + atsInMces.size()) *
+               (bondMatches.size() + atsInMces.size());
   double denom = (mol1.getNumAtoms() + mol1.getNumBonds()) *
                  (mol2.getNumAtoms() + mol2.getNumBonds());
   return num / denom;

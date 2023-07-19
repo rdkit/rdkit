@@ -30,14 +30,14 @@ python::list convertVecPairInt(const std::vector<std::pair<int, int>> &vec) {
 }
 
 python::list bondMatches(const RDKit::RascalMCES::RascalResult &res) {
-  return convertVecPairInt(res.bond_matches());
+  return convertVecPairInt(res.bondMatches());
 }
 python::list atomMatches(const RDKit::RascalMCES::RascalResult &res) {
-  return convertVecPairInt(res.atom_matches());
+  return convertVecPairInt(res.atomMatches());
 }
 
 void largestFragmentOnly(RDKit::RascalMCES::RascalResult &res) {
-  res.largest_frag_only();
+  res.largestFragOnly();
 }
 
 struct RascalResult_wrapper {
@@ -55,10 +55,10 @@ struct RascalResult_wrapper {
                       &RDKit::RascalMCES::RascalResult::similarity,
                       "Johnson similarity between 2 molecules.")
         .def_readonly("numFragments",
-                      &RDKit::RascalMCES::RascalResult::num_frags,
+                      &RDKit::RascalMCES::RascalResult::numFrags,
                       "Number of fragments in MCES.")
         .def_readonly("largestFragmentSize",
-                      &RDKit::RascalMCES::RascalResult::largest_frag_size,
+                      &RDKit::RascalMCES::RascalResult::largestFragSize,
                       "Number of bonds in largest fragment.")
         .def_readonly("timedOut", &RDKit::RascalMCES::RascalResult::timedout,
                       "Whether it timed out.");
@@ -70,7 +70,7 @@ namespace RDKit {
 
 python::list findMCESWrapper(const ROMol &mol1, const ROMol &mol2,
                              RascalMCES::RascalOptions opts) {
-  auto results = RascalMCES::rascal_mces(mol1, mol2, opts);
+  auto results = RascalMCES::rascalMces(mol1, mol2, opts);
   python::list pyres;
   for (auto &res : results) {
     pyres.append(res);

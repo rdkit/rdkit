@@ -29,21 +29,19 @@ double tier_1_sim(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                   std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
                   std::map<int, std::vector<std::pair<int, int>>> &degSeqs2);
 
-double tier_2_sim(
-    const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
-    const std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
-    const std::map<int, std::vector<std::pair<int, int>>> &degSeqs2,
-    const std::vector<unsigned int> &bondLabels1,
-    const std::vector<unsigned int> &bondLabels2);
+double tier2Sim(const ROMol &mol1, const ROMol &mol2,
+                const std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
+                const std::map<int, std::vector<std::pair<int, int>>> &degSeqs2,
+                const std::vector<unsigned int> &bondLabels1,
+                const std::vector<unsigned int> &bondLabels2);
 
 void get_bond_labels(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                      const RascalOptions &opts,
                      std::vector<unsigned int> &bondLabels1,
                      std::vector<unsigned int> &bondLabels2);
 
-std::vector<RascalResult> rascal_mces(const RDKit::ROMol &mol1,
-                                      const RDKit::ROMol &mol2,
-                                      RascalOptions opts);
+std::vector<RascalResult> rascalMces(const ROMol &mol1, const ROMol &mol2,
+                                     RascalOptions opts);
 
 }  // namespace RascalMCES
 }  // namespace RDKit
@@ -70,7 +68,7 @@ void check_expected_bonds(
     const RascalResult &res,
     const std::vector<std::vector<std::pair<int, int>>> &exp_bond_matches) {
   auto found_it = std::find(exp_bond_matches.begin(), exp_bond_matches.end(),
-                            res.bond_matches());
+                            res.bondMatches());
   REQUIRE(found_it != exp_bond_matches.end());
 }
 
@@ -88,15 +86,15 @@ TEST_CASE("Very small test", "[basics]") {
   std::vector<unsigned int> bondLabels1, bondLabels2;
   get_bond_labels(*m1, *m2, opts, bondLabels1, bondLabels2);
   auto tier2_sim =
-      tier_2_sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
+      tier2Sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
   REQUIRE_THAT(tier2_sim, Catch::Matchers::WithinAbs(0.7901, 0.0001));
 
-  auto res = rascal_mces(*m1, *m2, opts);
+  auto res = rascalMces(*m1, *m2, opts);
 
   REQUIRE(res.size() == 1);
-  REQUIRE(res.front().bond_matches().size() == 3);
+  REQUIRE(res.front().bondMatches().size() == 3);
   std::vector<std::pair<int, int>> exp_bond_matches{{1, 2}, {2, 1}, {3, 0}};
-  REQUIRE(exp_bond_matches == res.front().bond_matches());
+  REQUIRE(exp_bond_matches == res.front().bondMatches());
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.6049, 0.0001));
 
@@ -117,15 +115,15 @@ TEST_CASE("Juglone vs Scopoletin test", "[basics]") {
   std::vector<unsigned int> bondLabels1, bondLabels2;
   get_bond_labels(*m1, *m2, opts, bondLabels1, bondLabels2);
   auto tier2_sim =
-      tier_2_sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
+      tier2Sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
   REQUIRE_THAT(tier2_sim, Catch::Matchers::WithinAbs(0.5632, 0.0001));
 
   // Note that this differs from the paper, because RDKit thinks both
   // rings in scopoletin are aromatic.
   opts.similarityThreshold = 0.5;
-  auto res = rascal_mces(*m1, *m2, opts);
+  auto res = rascalMces(*m1, *m2, opts);
   REQUIRE(res.size() == 1);
-  REQUIRE(res.front().bond_matches().size() == 8);
+  REQUIRE(res.front().bondMatches().size() == 8);
   // symmetry means there is more than one solution.  Re-factoring may
   // produce different, equivalent, results.
   std::vector<std::vector<std::pair<int, int>>> exp_bond_matches;
@@ -159,13 +157,13 @@ TEST_CASE("Methadone vs mepiridine test", "[basics]") {
   RascalOptions opts;
   get_bond_labels(*m1, *m2, opts, bondLabels1, bondLabels2);
   auto tier2_sim =
-      tier_2_sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
+      tier2Sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
   REQUIRE_THAT(tier2_sim, Catch::Matchers::WithinAbs(0.6262, 0.0001));
 
   opts.similarityThreshold = 0.6;
-  auto res = rascal_mces(*m1, *m2, opts);
+  auto res = rascalMces(*m1, *m2, opts);
   REQUIRE(res.size() == 1);
-  REQUIRE(res.front().bond_matches().size() == 16);
+  REQUIRE(res.front().bondMatches().size() == 16);
   std::vector<std::vector<std::pair<int, int>>> exp_bond_matches;
   // doing this with a full initialiser confuses the auto-formatter in a
   // very unsavoury way.
@@ -235,9 +233,9 @@ TEST_CASE("testosterone vs estradiol", "[basics]") {
 
   RascalOptions opts;
   opts.similarityThreshold = 0.6;
-  auto res = rascal_mces(*m1, *m2, opts);
+  auto res = rascalMces(*m1, *m2, opts);
   REQUIRE(res.size() == 1);
-  REQUIRE(res.front().bond_matches().size() == 16);
+  REQUIRE(res.front().bondMatches().size() == 16);
   std::vector<std::vector<std::pair<int, int>>> exp_bond_matches;
   exp_bond_matches.push_back({{0, 0},
                               {1, 1},
@@ -258,7 +256,7 @@ TEST_CASE("testosterone vs estradiol", "[basics]") {
   std::sort(exp_bond_matches.begin(), exp_bond_matches.end());
   bool matched = false;
   for (const auto &ebm : exp_bond_matches) {
-    if (ebm == res.front().bond_matches()) {
+    if (ebm == res.front().bondMatches()) {
       matched = true;
       break;
     }
@@ -284,13 +282,13 @@ TEST_CASE("Symmetrical esters test", "[basics]") {
   RascalOptions opts;
   get_bond_labels(*m1, *m2, opts, bondLabels1, bondLabels2);
   auto tier2_sim =
-      tier_2_sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
+      tier2Sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
   REQUIRE_THAT(tier2_sim, Catch::Matchers::WithinAbs(0.9701, 0.0001));
 
   opts.similarityThreshold = 0.7;
-  auto res = rascal_mces(*m1, *m2, opts);
+  auto res = rascalMces(*m1, *m2, opts);
   REQUIRE(res.size() == 1);
-  REQUIRE(res.front().bond_matches().size() == 32);
+  REQUIRE(res.front().bondMatches().size() == 32);
   std::vector<std::vector<std::pair<int, int>>> exp_bond_matches;
   exp_bond_matches.push_back(
       {{0, 0},   {1, 1},   {2, 2},   {3, 3},   {4, 4},   {5, 5},   {6, 6},
@@ -357,7 +355,7 @@ TEST_CASE("dyphylline similarities") {
   opts.similarityThreshold = 0.3;
   for (size_t i = 0; i < 6; ++i) {
     auto m = mols[i];
-    auto res = rascal_mces(*dyphylline, *std::get<0>(m), opts);
+    auto res = rascalMces(*dyphylline, *std::get<0>(m), opts);
     std::cout << std::get<1>(m) << " : " << RDKit::MolToSmiles(*std::get<0>(m))
               << " : " << res.front().similarity() << std::endl;
     REQUIRE_THAT(res.front().similarity(),
@@ -375,7 +373,7 @@ TEST_CASE("compare chirality") {
   REQUIRE(m3);
   RascalOptions opts;
   {
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
     REQUIRE(res.front().smarts() == "OC(-C)-Cl");
     check_smarts_ok(*m1, *m2, res.front());
@@ -383,21 +381,21 @@ TEST_CASE("compare chirality") {
   opts.exactChirality = true;
   opts.similarityThreshold = 0.3;
   {
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.empty());
   }
   {
-    auto res = rascal_mces(*m2, *m3, opts);
+    auto res = rascalMces(*m2, *m3, opts);
     REQUIRE(res.empty());
   }
   {
-    auto res = rascal_mces(*m2, *m2, opts);
+    auto res = rascalMces(*m2, *m2, opts);
     REQUIRE(res.size() == 1);
     REQUIRE(res.front().smarts() == "O-[#6@&A](-C)-Cl");
     check_smarts_ok(*m2, *m2, res.front());
   }
   {
-    auto res = rascal_mces(*m3, *m3, opts);
+    auto res = rascalMces(*m3, *m3, opts);
     REQUIRE(res.size() == 1);
     REQUIRE(res.front().smarts() == "O-[#6@@&A](-C)-Cl");
     check_smarts_ok(*m3, *m3, res.front());
@@ -418,9 +416,9 @@ TEST_CASE("delta-y exchange", "[basics]") {
     auto m2 = "CC(C)(C)C"_smiles;
     REQUIRE(m2);
 
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bond_matches().size() == 3);
+    REQUIRE(res.front().bondMatches().size() == 3);
     std::vector<std::vector<std::pair<int, int>>> exp_bond_matches;
     exp_bond_matches.push_back({{0, 1}, {1, 3}, {3, 0}});
     exp_bond_matches.push_back({{0, 2}, {1, 3}, {3, 1}});
@@ -439,9 +437,9 @@ TEST_CASE("delta-y exchange", "[basics]") {
     auto m2 = "C1CCCCC1(C)(C)"_smiles;
     REQUIRE(m2);
 
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bond_matches().size() == 8);
+    REQUIRE(res.front().bondMatches().size() == 8);
     std::vector<std::vector<std::pair<int, int>>> exp_bond_matches;
     exp_bond_matches.push_back(
         {{0, 3}, {1, 2}, {2, 1}, {3, 0}, {4, 7}, {5, 6}, {7, 4}, {8, 5}});
@@ -467,15 +465,15 @@ TEST_CASE("bad aromatics 1") {
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
     opts.completeAromaticRings = true;
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bond_matches().size() == std::get<2>(test));
+    REQUIRE(res.front().bondMatches().size() == std::get<2>(test));
     check_smarts_ok(*m1, *m2, res.front());
 
     opts.completeAromaticRings = false;
-    res = rascal_mces(*m1, *m2, opts);
+    res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bond_matches().size() == std::get<3>(test));
+    REQUIRE(res.front().bondMatches().size() == std::get<3>(test));
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
@@ -491,25 +489,25 @@ TEST_CASE("timeout") {
   {
     RascalOptions opts;
     opts.timeout = 10;
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bond_matches().size() >= 39);
+    REQUIRE(res.front().bondMatches().size() >= 39);
     check_smarts_ok(*m1, *m2, res.front());
   }
   {
     RascalOptions opts;
     opts.timeout = 70;
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bond_matches().size() >= 44);
+    REQUIRE(res.front().bondMatches().size() >= 44);
     check_smarts_ok(*m1, *m2, res.front());
   }
   {
     RascalOptions opts;
     opts.timeout = 120;
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bond_matches().size() >= 44);
+    REQUIRE(res.front().bondMatches().size() >= 44);
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
@@ -528,17 +526,17 @@ TEST_CASE("single fragment") {
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
     opts.singleLargestFrag = false;
-    auto res = rascal_mces(*m1, *m2, opts);
-    REQUIRE(res.front().num_frags() == 2);
+    auto res = rascalMces(*m1, *m2, opts);
+    REQUIRE(res.front().numFrags() == 2);
     std::cout << res.front().smarts() << std::endl;
-    REQUIRE(res.front().bond_matches().size() == std::get<2>(test));
+    REQUIRE(res.front().bondMatches().size() == std::get<2>(test));
     check_smarts_ok(*m1, *m2, res.front());
 
     opts.singleLargestFrag = true;
-    res = rascal_mces(*m1, *m2, opts);
-    REQUIRE(res.front().num_frags() == 1);
+    res = rascalMces(*m1, *m2, opts);
+    REQUIRE(res.front().numFrags() == 1);
     std::cout << res.front().smarts() << std::endl;
-    REQUIRE(res.front().bond_matches().size() == std::get<3>(test));
+    REQUIRE(res.front().bondMatches().size() == std::get<3>(test));
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
@@ -556,15 +554,15 @@ TEST_CASE("minimum fragment sizes") {
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
     opts.minFragSize = 1;
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bond_matches().size() == std::get<2>(test));
+    REQUIRE(res.front().bondMatches().size() == std::get<2>(test));
     check_smarts_ok(*m1, *m2, res.front());
 
     opts.minFragSize = 3;
-    res = rascal_mces(*m1, *m2, opts);
+    res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bond_matches().size() == std::get<3>(test));
+    REQUIRE(res.front().bondMatches().size() == std::get<3>(test));
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
@@ -584,17 +582,17 @@ TEST_CASE("maximum fragment separation") {
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
     {
       opts.maxFragSeparation = -1;
-      auto res = rascal_mces(*m1, *m2, opts);
+      auto res = rascalMces(*m1, *m2, opts);
       REQUIRE(res.size() == 1);
-      REQUIRE(res.front().bond_matches().size() == std::get<2>(test));
+      REQUIRE(res.front().bondMatches().size() == std::get<2>(test));
       check_smarts_ok(*m1, *m2, res.front());
     }
     {
       opts.maxFragSeparation = 3;
       opts.timeout = 300;
-      auto res = rascal_mces(*m1, *m2, opts);
+      auto res = rascalMces(*m1, *m2, opts);
       REQUIRE(res.size() == 1);
-      REQUIRE(res.front().bond_matches().size() == std::get<3>(test));
+      REQUIRE(res.front().bondMatches().size() == std::get<3>(test));
       check_smarts_ok(*m1, *m2, res.front());
     }
   }
@@ -611,9 +609,9 @@ TEST_CASE("ring matches ring", "[basics]") {
   RascalOptions opts;
   opts.similarityThreshold = 0.6;
   opts.ringMatchesRingOnly = true;
-  auto res = rascal_mces(*m1, *m2, opts);
+  auto res = rascalMces(*m1, *m2, opts);
   REQUIRE(res.size() == 1);
-  REQUIRE(res.front().bond_matches().size() == 11);
+  REQUIRE(res.front().bondMatches().size() == 11);
   std::vector<std::vector<std::pair<int, int>>> exp_bond_matches;
   // doing this with a full initialiser confuses the auto-formatter in a
   // very unsavoury way.
@@ -646,9 +644,9 @@ TEST_CASE("ring matches ring", "[basics]") {
 
   // This reduces it to the single largest fragment.
   opts.minFragSize = 3;
-  res = rascal_mces(*m1, *m2, opts);
+  res = rascalMces(*m1, *m2, opts);
   REQUIRE(res.size() == 1);
-  REQUIRE(res.front().bond_matches().size() == 9);
+  REQUIRE(res.front().bondMatches().size() == 9);
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.1863, 0.0001));
   REQUIRE(res.front().smarts() == "C(-C=O)-c1ccccc1");
@@ -695,18 +693,18 @@ TEST_CASE("multiple cliques returned") {
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
 
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == std::get<2>(test));
-    REQUIRE(res.front().bond_matches().size() == std::get<3>(test));
-    REQUIRE(res.front().bond_matches() == std::get<4>(test));
+    REQUIRE(res.front().bondMatches().size() == std::get<3>(test));
+    REQUIRE(res.front().bondMatches() == std::get<4>(test));
     check_smarts_ok(*m1, *m2, res.front());
 
     opts.allBestMCESs = false;
-    res = rascal_mces(*m1, *m2, opts);
+    res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
     // The clique won't necessarily be the best-scoring one, but it should be
     // the same size.
-    REQUIRE(res.front().bond_matches().size() == std::get<4>(test).size());
+    REQUIRE(res.front().bondMatches().size() == std::get<4>(test).size());
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
@@ -748,9 +746,9 @@ TEST_CASE("benchmarks") {
       std::shuffle(atom2Inds.begin(), atom2Inds.end(), g);
       std::unique_ptr<ROMol> randmol2(MolOps::renumberAtoms(*m2, atom2Inds));
 
-      auto res = rascal_mces(*randmol1, *randmol2, opts);
+      auto res = rascalMces(*randmol1, *randmol2, opts);
       REQUIRE(res.size() == 1);
-      REQUIRE(std::get<5>(test) == res.front().bond_matches().size());
+      REQUIRE(std::get<5>(test) == res.front().bondMatches().size());
       check_smarts_ok(*randmol1, *randmol2, res.front());
     }
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -779,10 +777,10 @@ TEST_CASE("FMCS test1Basics") {
 
   RascalOptions opts;
   opts.similarityThreshold = 0.6;
-  auto res = rascal_mces(*m1, *m2, opts);
+  auto res = rascalMces(*m1, *m2, opts);
 
   REQUIRE(res.size() == 1);
-  REQUIRE(res.front().bond_matches().size() == 7);
+  REQUIRE(res.front().bondMatches().size() == 7);
   REQUIRE(res.front().smarts() == "CC1CCCCC1");
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.6806, 0.0001));
@@ -808,13 +806,13 @@ TEST_CASE("FMCS test32") {
   auto t1 = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < mols.size() - 1; ++i) {
     for (size_t j = i + 1; j < mols.size(); ++j) {
-      auto res = rascal_mces(*mols[i], *mols[j], opts);
+      auto res = rascalMces(*mols[i], *mols[j], opts);
       check_smarts_ok(*mols[i], *mols[j], res.front());
-      std::cout << "Atoms : " << res.front().atom_matches().size()
-                << "  Bonds : " << res.front().bond_matches().size()
+      std::cout << "Atoms : " << res.front().atomMatches().size()
+                << "  Bonds : " << res.front().bondMatches().size()
                 << "  SMARTS : " << res.front().smarts() << std::endl;
-      REQUIRE(res.front().atom_matches().size() >= 31);
-      REQUIRE(res.front().bond_matches().size() >= 33);
+      REQUIRE(res.front().atomMatches().size() >= 31);
+      REQUIRE(res.front().bondMatches().size() >= 33);
     }
   }
   auto t2 = std::chrono::high_resolution_clock::now();
@@ -849,18 +847,18 @@ TEST_CASE("FMCS test190") {
   int min_i, min_j;
   for (size_t i = 0; i < mols.size() - 1; ++i) {
     for (size_t j = i + 1; j < mols.size(); ++j) {
-      auto res = rascal_mces(*mols[i], *mols[j], opts);
+      auto res = rascalMces(*mols[i], *mols[j], opts);
       check_smarts_ok(*mols[i], *mols[j], res.front());
-      std::cout << "Atoms : " << res.front().atom_matches().size()
-                << "  Bonds : " << res.front().bond_matches().size()
+      std::cout << "Atoms : " << res.front().atomMatches().size()
+                << "  Bonds : " << res.front().bondMatches().size()
                 << "  SMARTS : " << res.front().smarts() << std::endl;
-      REQUIRE(res.front().atom_matches().size() >= 19);
-      REQUIRE(res.front().bond_matches().size() >= 21);
-      if (res.front().atom_matches().size() < min_atoms) {
-        min_atoms = res.front().atom_matches().size();
+      REQUIRE(res.front().atomMatches().size() >= 19);
+      REQUIRE(res.front().bondMatches().size() >= 21);
+      if (res.front().atomMatches().size() < min_atoms) {
+        min_atoms = res.front().atomMatches().size();
       }
-      if (res.front().bond_matches().size() < min_bonds) {
-        min_bonds = res.front().bond_matches().size();
+      if (res.front().bondMatches().size() < min_bonds) {
+        min_bonds = res.front().bondMatches().size();
         min_smarts = res.front().smarts();
         min_i = i;
         min_j = j;
@@ -893,12 +891,12 @@ TEST_CASE("FMCS nasty adamantane pair") {
   opts.timeout = -1;
 
   auto start_time = std::chrono::high_resolution_clock::now();
-  auto res = rascal_mces(*m1, *m2, opts);
+  auto res = rascalMces(*m1, *m2, opts);
   auto finish_time = std::chrono::high_resolution_clock::now();
   std::cout << "number of results : " << res.size() << std::endl;
   std::cout << res.front().smarts() << std::endl;
   REQUIRE(res.size() == 1);
-  REQUIRE(res.front().bond_matches().size() == 36);
+  REQUIRE(res.front().bondMatches().size() == 36);
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.9202, 0.0001));
   check_smarts_ok(*m1, *m2, res.front());
@@ -908,11 +906,11 @@ TEST_CASE("FMCS nasty adamantane pair") {
                      .count();
   REQUIRE(runtime < 5);
 
-  res.front().largest_frag_only();
+  res.front().largestFragOnly();
   check_smarts_ok(*m1, *m2, res.front());
   std::cout << res.front().smarts() << std::endl;
-  print_bond_matches(res.front(), std::cout);
-  print_atom_matches(res.front(), std::cout);
+  printBondMatches(res.front(), std::cout);
+  printAtomMatches(res.front(), std::cout);
 }
 
 TEST_CASE("FMCS test3 adamantane non-adamantane") {
@@ -928,12 +926,12 @@ TEST_CASE("FMCS test3 adamantane non-adamantane") {
 
   {
     auto start_time = std::chrono::high_resolution_clock::now();
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     auto finish_time = std::chrono::high_resolution_clock::now();
     std::cout << "number of results : " << res.size() << std::endl;
     std::cout << res.front().smarts() << std::endl;
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bond_matches().size() == 18);
+    REQUIRE(res.front().bondMatches().size() == 18);
     REQUIRE(res.front().smarts() == "c1cc(-N):ccc1CC(=O)-NCCCCCCC");
     REQUIRE_THAT(res.front().similarity(),
                  Catch::Matchers::WithinAbs(0.4215, 0.0001));
@@ -948,12 +946,12 @@ TEST_CASE("FMCS test3 adamantane non-adamantane") {
   opts.ringMatchesRingOnly = true;
   {
     auto start_time = std::chrono::high_resolution_clock::now();
-    auto res = rascal_mces(*m1, *m2, opts);
+    auto res = rascalMces(*m1, *m2, opts);
     auto finish_time = std::chrono::high_resolution_clock::now();
     std::cout << "number of results : " << res.size() << std::endl;
     std::cout << res.front().smarts() << std::endl;
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bond_matches().size() == 17);
+    REQUIRE(res.front().bondMatches().size() == 17);
     std::vector<std::string> equiv_smarts{"c1cc(-N):ccc1CC(=O)-N.C(-CCC)-CCC",
                                           "c1cc(-N):ccc1CC(=O)-N.C(-CC)-CCCC"};
     check_smarts_found(res.front(), equiv_smarts);
@@ -996,21 +994,21 @@ TEST_CASE("FMCS test3") {
                 << mols[i]->getProp<std::string>("_Name") << ") vs " << j
                 << " (" << mols[i]->getProp<std::string>("_Name") << ")"
                 << std::endl;
-      auto res = rascal_mces(*mols[i], *mols[j], opts);
+      auto res = rascalMces(*mols[i], *mols[j], opts);
       if (res.empty()) {
         std::cout << "No results for " << i << " vs " << j << std::endl;
         continue;
       }
       check_smarts_ok(*mols[i], *mols[j], res.front());
       std::cout << i << " vs " << j
-                << " Atoms : " << res.front().atom_matches().size()
-                << "  Bonds : " << res.front().bond_matches().size()
+                << " Atoms : " << res.front().atomMatches().size()
+                << "  Bonds : " << res.front().bondMatches().size()
                 << "  SMARTS : " << res.front().smarts() << std::endl;
-      if (res.front().atom_matches().size() < min_atoms) {
-        min_atoms = res.front().atom_matches().size();
+      if (res.front().atomMatches().size() < min_atoms) {
+        min_atoms = res.front().atomMatches().size();
       }
-      if (res.front().bond_matches().size() < min_bonds) {
-        min_bonds = res.front().bond_matches().size();
+      if (res.front().bondMatches().size() < min_bonds) {
+        min_bonds = res.front().bondMatches().size();
         min_smarts = res.front().smarts();
         min_i = i;
         min_j = j;

@@ -45,30 +45,26 @@ class RascalResult {
 
   // Cut the result down to the single largest fragment.  This is
   // irrecoverably destructive.
-  void largest_frag_only();
+  void largestFragOnly();
 
   std::shared_ptr<RDKit::ROMol> mol1() const { return d_mol1; };
 
   std::shared_ptr<RDKit::ROMol> mol2() const { return d_mol2; };
 
-  std::vector<std::pair<int, int>> bond_matches() const {
-    return d_bondMatches;
-  }
+  std::vector<std::pair<int, int>> bondMatches() const { return d_bondMatches; }
 
-  std::vector<std::pair<int, int>> atom_matches() const {
-    return d_atomMatches;
-  }
+  std::vector<std::pair<int, int>> atomMatches() const { return d_atomMatches; }
 
-  int num_frags() const;
+  int numFrags() const;
 
-  int ring_non_ring_bond_score() const;
+  int ringNonRingBondScore() const;
 
-  int atom_match_score() const;
+  int atomMatchScore() const;
 
-  int max_delta_atom_atom_dist() const;
+  int maxDeltaAtomAtomDist() const;
 
   // returns number of atoms for largest fragment.
-  int largest_frag_size() const;
+  int largestFragSize() const;
 
   std::string smarts() const;
 
@@ -94,49 +90,54 @@ class RascalResult {
   mutable int d_maxDeltaAtomAtomDist{-1};
   mutable int d_largestFragSize{-1};
 
-  std::string create_smarts_string() const;
+  std::string createSmartsString() const;
 
-  void match_clique_atoms(const std::vector<std::vector<int>> &mol1_adj_matrix);
+  void matchCliqueAtoms(const std::vector<std::vector<int>> &mol1_adj_matrix);
 
   // If the clique involves a fragment that is more than d_maxFragSep from
   // any other frag in either molecule, discard the smaller frag.
-  void apply_max_frag_sep();
+  void applyMaxFragSep();
 
   // Make the fragments for either mol1 or mol2.  If molNum is not 1 or 2,
   // returns nullptr.
-  RDKit::ROMol *make_mol_frags(int molNum) const;
+  RDKit::ROMol *makeMolFrags(int molNum) const;
 
-  int calc_ring_non_ring_score() const;
+  int calcRingNonRingScore() const;
 
-  int calc_atom_match_score() const;
+  int calcAtomMatchScore() const;
 
-  int calc_largest_frag_size() const;
+  int calcLargestFragSize() const;
 
   // If there are multiple fragments, can be helpful as a tie-breaker.  It's the
   // maximum difference between through-bond distances between matching atoms in
   // the 2 molecules.
-  int calc_max_delta_atom_atom_dist_score() const;
+  int calcMaxDeltaAtomAtomDistScore() const;
 };
 
 bool resultSort(const RascalResult &res1, const RascalResult &res2);
 
-void extract_clique(const std::vector<unsigned int> &clique,
-                    const std::vector<std::pair<int, int>> &vtx_pairs,
-                    bool swapped,
-                    std::vector<std::pair<int, int>> &bond_matches);
+void extractClique(const std::vector<unsigned int> &clique,
+                   const std::vector<std::pair<int, int>> &vtxPairs,
+                   bool swapped, std::vector<std::pair<int, int>> &bondMatches);
 
 // do some simple cleaning of the SMARTS, to make it more user-friendly.
-void clean_smarts(std::string &smarts);
+void cleanSmarts(std::string &smarts);
 
 // Primarily for debugging, these write out the corresponding bonds/atoms
 // in Python list format, for ease of cut/paste into a highlighted image
 // creation.
-void print_bond_matches(const RascalResult &res, std::ostream &os);
+void printBondMatches(const RascalResult &res, std::ostream &os);
 
-void print_atom_matches(const RascalResult &res, std::ostream &os);
+void printAtomMatches(const RascalResult &res, std::ostream &os);
 
-double johnson_similarity(const std::vector<std::pair<int, int>> &bond_matches,
-                          const RDKit::ROMol &mol1, const RDKit::ROMol &mol2);
+// Calculate the Johnson similarity between the two molecules using the given
+// bondMatches.  It's the fraction of the 2 molecules that are in common,
+// somewhat akin to the tanimoto - the square of the number of atoms plus
+// number of bonds in the MCES divided by the product of the sums of the number
+// of atoms and bonds in the 2 molecules.
+// It has nothing to do with lying UK politicians.
+double johnsonSimilarity(const std::vector<std::pair<int, int>> &bondMatches,
+                         const RDKit::ROMol &mol1, const RDKit::ROMol &mol2);
 
 }  // namespace RascalMCES
 }  // namespace RDKit

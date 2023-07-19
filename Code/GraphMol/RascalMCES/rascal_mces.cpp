@@ -232,12 +232,12 @@ int calc_cost(const std::vector<unsigned int> &atomiBLs,
 
 // assign the costs of matching each atom in atomDegrees1 to each atom in
 // atomDegrees2.
-void assign_costs(const std::vector<std::pair<int, int>> &atomDegrees1,
-                  const std::vector<std::pair<int, int>> &atomDegrees2,
-                  const std::vector<unsigned int> &bondLabels1,
-                  const std::vector<unsigned int> &bondLabels2,
-                  const ROMol &mol1, const ROMol &mol2,
-                  std::vector<std::vector<int>> &costsMat) {
+void assignCosts(const std::vector<std::pair<int, int>> &atomDegrees1,
+                 const std::vector<std::pair<int, int>> &atomDegrees2,
+                 const std::vector<unsigned int> &bondLabels1,
+                 const std::vector<unsigned int> &bondLabels2,
+                 const ROMol &mol1, const ROMol &mol2,
+                 std::vector<std::vector<int>> &costsMat) {
   //    std::cout << "assign costs" << std::endl;
   std::vector<unsigned int> atomiBLs, atomjBLs, uniqAtomiBLs;
   for (auto i = 0u; i < atomDegrees1.size(); ++i) {
@@ -259,15 +259,15 @@ void assign_costs(const std::vector<std::pair<int, int>> &atomDegrees1,
 
 // Return the assignment score for the best match of the atoms and bonds in mol1
 // to the atoms and bonds in mol2.
-int get_assignment_score(const std::vector<std::pair<int, int>> &atomDegrees1,
-                         const std::vector<std::pair<int, int>> &atomDegrees2,
-                         const std::vector<unsigned int> &bondLabels1,
-                         const std::vector<unsigned int> &bondLabels2,
-                         const ROMol &mol1, const ROMol &mol2) {
+int getAssignmentScore(const std::vector<std::pair<int, int>> &atomDegrees1,
+                       const std::vector<std::pair<int, int>> &atomDegrees2,
+                       const std::vector<unsigned int> &bondLabels1,
+                       const std::vector<unsigned int> &bondLabels2,
+                       const ROMol &mol1, const ROMol &mol2) {
   std::vector<std::vector<int>> costsMat(
       atomDegrees1.size(), std::vector<int>(atomDegrees2.size(), 9999));
-  assign_costs(atomDegrees1, atomDegrees2, bondLabels1, bondLabels2, mol1, mol2,
-               costsMat);
+  assignCosts(atomDegrees1, atomDegrees2, bondLabels1, bondLabels2, mol1, mol2,
+              costsMat);
   std::vector<size_t> a(std::min(atomDegrees1.size(), atomDegrees2.size()),
                         99999999);
   std::vector<size_t> b(std::min(atomDegrees1.size(), atomDegrees2.size()),
@@ -285,20 +285,19 @@ int get_assignment_score(const std::vector<std::pair<int, int>> &atomDegrees1,
 }
 
 // Calculate the tier 2 similarity between the 2 mols.
-double tier_2_sim(
-    const ROMol &mol1, const ROMol &mol2,
-    const std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
-    const std::map<int, std::vector<std::pair<int, int>>> &degSeqs2,
-    const std::vector<unsigned int> &bondLabels1,
-    const std::vector<unsigned int> &bondLabels2) {
+double tier2Sim(const ROMol &mol1, const ROMol &mol2,
+                const std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
+                const std::map<int, std::vector<std::pair<int, int>>> &degSeqs2,
+                const std::vector<unsigned int> &bondLabels1,
+                const std::vector<unsigned int> &bondLabels2) {
   int vg1g2 = 0;
   int eg1g2 = 0;
   for (const auto &it1 : degSeqs1) {
     const auto &seq2 = degSeqs2.find(it1.first);
     if (seq2 != degSeqs2.end()) {
       vg1g2 += std::min(it1.second.size(), seq2->second.size());
-      eg1g2 += get_assignment_score(it1.second, seq2->second, bondLabels1,
-                                    bondLabels2, mol1, mol2);
+      eg1g2 += getAssignmentScore(it1.second, seq2->second, bondLabels1,
+                                  bondLabels2, mol1, mol2);
     }
   }
   eg1g2 /= 2;
@@ -312,8 +311,7 @@ double tier_2_sim(
 // row/column is a bond, with a connection between 2 bonds if they share an
 // atom.  The adjacency matrix is 0 for no bond, the atomic number of the
 // connecting atom otherwise.
-void make_line_graph(const ROMol &mol,
-                     std::vector<std::vector<int>> &adjMatrix) {
+void makeLineGraph(const ROMol &mol, std::vector<std::vector<int>> &adjMatrix) {
   adjMatrix = std::vector<std::vector<int>>(
       mol.getNumBonds(), std::vector<int>(mol.getNumBonds(), 0));
   for (const auto &a : mol.atoms()) {
@@ -327,13 +325,13 @@ void make_line_graph(const ROMol &mol,
   }
 }
 
-// make sure that mol1_bond in mol1 and mol2_bond in mol2 are, if aromatic in at
-// least one ring that is the same.
-bool check_aromatic_rings(const ROMol &mol1,
-                          std::vector<std::string> &mol1RingSmiles,
-                          int mol1BondIdx, const ROMol &mol2,
-                          std::vector<std::string> &mol2RingSmiles,
-                          int mol2BondIdx) {
+// make sure that mol1_bond in mol1 and mol2_bond in mol2 are, if aromatic, in
+// at least one ring that is the same.
+bool checkAromaticRings(const ROMol &mol1,
+                        std::vector<std::string> &mol1RingSmiles,
+                        int mol1BondIdx, const ROMol &mol2,
+                        std::vector<std::string> &mol2RingSmiles,
+                        int mol2BondIdx) {
   auto mol1Bond = mol1.getBondWithIdx(mol1BondIdx);
   auto mol2Bond = mol2.getBondWithIdx(mol2BondIdx);
   if (!mol1Bond->getIsAromatic() || !mol2Bond->getIsAromatic()) {
@@ -363,9 +361,9 @@ bool check_aromatic_rings(const ROMol &mol1,
 // Extract the rings from the given molecule, both as mol objects and SMILES
 // strings. The mol objects will have the original bond indices stored in the
 // property ORIG_INDEX.
-void extract_rings(const ROMol &mol,
-                   std::vector<std::unique_ptr<ROMol>> &molRings,
-                   std::vector<std::string> &molRingSmiles) {
+void extractRings(const ROMol &mol,
+                  std::vector<std::unique_ptr<ROMol>> &molRings,
+                  std::vector<std::string> &molRingSmiles) {
   auto molBondRings = mol.getRingInfo()->bondRings();
   for (size_t i = 0u; i < molBondRings.size(); ++i) {
     std::unique_ptr<RWMol> ringMol(new RWMol(mol));
@@ -395,8 +393,8 @@ void extract_rings(const ROMol &mol,
   }
 }
 
-bool check_ring_matches_ring(const ROMol &mol1, int mol1BondIdx,
-                             const ROMol &mol2, int mol2BondIdx) {
+bool checkRingMatchesRing(const ROMol &mol1, int mol1BondIdx, const ROMol &mol2,
+                          int mol2BondIdx) {
   if (mol1.getRingInfo()->numBondRings(mol1BondIdx) &&
       !mol2.getRingInfo()->numBondRings(mol2BondIdx)) {
     return false;
@@ -409,22 +407,22 @@ bool check_ring_matches_ring(const ROMol &mol1, int mol1BondIdx,
 }
 
 // Make the set of pairs of vertices, where they're a pair if the labels match.
-void build_pairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
-                 const ROMol &mol2, const std::vector<unsigned int> &vtxLabels2,
-                 RascalOptions opts,
-                 std::vector<std::pair<int, int>> &vtx_pairs) {
-  std::vector<std::string> mol1_ring_smiles, mol2_ring_smiles;
-  std::vector<std::unique_ptr<ROMol>> mol1_rings, mol2_rings;
+void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
+                const ROMol &mol2, const std::vector<unsigned int> &vtxLabels2,
+                RascalOptions opts,
+                std::vector<std::pair<int, int>> &vtxPairs) {
+  std::vector<std::string> mol1RingSmiles, mol2RingSmiles;
+  std::vector<std::unique_ptr<ROMol>> mol1Rings, mol2Rings;
   // For these purposes, it is correct that n1cccc1 and [nH]1cccc1 match - the
   // former would be from an N-substituted pyrrole, the latter from a plain one.
   static const std::regex reg(R"(\[([np])H\])");
   if (opts.completeAromaticRings) {
-    extract_rings(mol1, mol1_rings, mol1_ring_smiles);
-    for (auto &mrs : mol1_ring_smiles) {
+    extractRings(mol1, mol1Rings, mol1RingSmiles);
+    for (auto &mrs : mol1RingSmiles) {
       mrs = std::regex_replace(mrs, reg, "$1");
     }
-    extract_rings(mol2, mol2_rings, mol2_ring_smiles);
-    for (auto &mrs : mol1_ring_smiles) {
+    extractRings(mol2, mol2Rings, mol2RingSmiles);
+    for (auto &mrs : mol1RingSmiles) {
       mrs = std::regex_replace(mrs, reg, "$1");
     }
   }
@@ -433,15 +431,15 @@ void build_pairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
     for (auto j = 0u; j < vtxLabels2.size(); ++j) {
       if (vtxLabels1[i] == vtxLabels2[j]) {
         if (opts.completeAromaticRings &&
-            !check_aromatic_rings(mol1, mol1_ring_smiles, i, mol2,
-                                  mol2_ring_smiles, j)) {
+            !checkAromaticRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles,
+                                j)) {
           continue;
         }
         if (opts.ringMatchesRingOnly &&
-            !check_ring_matches_ring(mol1, i, mol2, j)) {
+            !checkRingMatchesRing(mol1, i, mol2, j)) {
           continue;
         }
-        vtx_pairs.push_back(std::make_pair(i, j));
+        vtxPairs.push_back(std::make_pair(i, j));
       }
     }
   }
@@ -452,18 +450,18 @@ void build_pairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
 // second, whose labels match.  Two vertices are connected in the modular
 // product if either the 2 matching vertices in the 2 input vertices are
 // connected by edges with the same label, or neither is connected.
-void make_modular_product(const ROMol &mol1,
-                          const std::vector<std::vector<int>> &adjMatrix1,
-                          const std::vector<unsigned int> &vtxLabels1,
-                          const std::vector<std::vector<int>> &distMatrix1,
-                          const ROMol &mol2,
-                          const std::vector<std::vector<int>> &adjMatrix2,
-                          const std::vector<unsigned int> &vtxLabels2,
-                          const std::vector<std::vector<int>> &distMatrix2,
-                          RascalOptions opts,
-                          std::vector<std::pair<int, int>> &vtxPairs,
-                          std::vector<std::vector<char>> &modProd) {
-  build_pairs(mol1, vtxLabels1, mol2, vtxLabels2, opts, vtxPairs);
+void makeModularProduct(const ROMol &mol1,
+                        const std::vector<std::vector<int>> &adjMatrix1,
+                        const std::vector<unsigned int> &vtxLabels1,
+                        const std::vector<std::vector<int>> &distMatrix1,
+                        const ROMol &mol2,
+                        const std::vector<std::vector<int>> &adjMatrix2,
+                        const std::vector<unsigned int> &vtxLabels2,
+                        const std::vector<std::vector<int>> &distMatrix2,
+                        RascalOptions opts,
+                        std::vector<std::pair<int, int>> &vtxPairs,
+                        std::vector<std::vector<char>> &modProd) {
+  buildPairs(mol1, vtxLabels1, mol2, vtxLabels2, opts, vtxPairs);
   if (vtxPairs.empty()) {
     // There was nothing in common at all.  But, what was the screening doing?
     modProd.clear();
@@ -496,7 +494,7 @@ void make_modular_product(const ROMol &mol1,
 
 // Calculate the lower bound on the size of the MCES.  This requires that mol1
 // has more atoms than mol2 which is not checked.  Returns a minimum of 1.
-int calc_lower_bound(const ROMol &mol1, const ROMol &mol2, double simThresh) {
+int calcLowerBound(const ROMol &mol1, const ROMol &mol2, double simThresh) {
   std::set<int> mol1Atnos, mol2Atnos;
   for (const auto &a : mol1.atoms()) {
     mol1Atnos.insert(a->getAtomicNum());
@@ -520,9 +518,9 @@ int calc_lower_bound(const ROMol &mol1, const ROMol &mol2, double simThresh) {
   return ilb;
 }
 
-void print_clique(const std::vector<unsigned int> &clique,
-                  const std::vector<std::pair<int, int>> &vtxPairs,
-                  bool swapped, std::ostream &os) {
+void printClique(const std::vector<unsigned int> &clique,
+                 const std::vector<std::pair<int, int>> &vtxPairs, bool swapped,
+                 std::ostream &os) {
   os << "Clique : " << clique.size() << " :";
   for (auto mem : clique) {
     os << " " << mem;
@@ -558,9 +556,9 @@ void print_clique(const std::vector<unsigned int> &clique,
 
 // if the clique involves a delta-y exchange, returns true.  Should only be
 // called if it's a possibility.
-bool delta_y_in_clique(const std::vector<unsigned int> &clique,
-                       const ROMol &mol1, const ROMol &mol2,
-                       const std::vector<std::pair<int, int>> &vtxPairs) {
+bool deltaYInClique(const std::vector<unsigned int> &clique, const ROMol &mol1,
+                    const ROMol &mol2,
+                    const std::vector<std::pair<int, int>> &vtxPairs) {
   if (clique.size() < 3) {
     // there must be 3 bonds for a delta-y exchange, obs.
     return false;
@@ -594,10 +592,10 @@ bool delta_y_in_clique(const std::vector<unsigned int> &clique,
 
 // Return a molecule with the clique in it.  Each atom will have the property
 // ORIG_INDEX giving its index in the original molecule.
-RWMol *make_clique_frags(const ROMol &mol,
-                         const std::vector<unsigned int> &clique,
-                         const std::vector<std::pair<int, int>> &vtxPairs,
-                         int pairNum) {
+RWMol *makeCliqueFrags(const ROMol &mol,
+                       const std::vector<unsigned int> &clique,
+                       const std::vector<std::pair<int, int>> &vtxPairs,
+                       int pairNum) {
   auto *mol_frags = new RWMol(mol);
   std::vector<char> aInClique(mol.getNumAtoms(), 0);
   std::vector<char> bInClique(mol.getNumBonds(), 0);
@@ -630,8 +628,8 @@ RWMol *make_clique_frags(const ROMol &mol,
 }
 
 // Calculate the shortest bond distance between the 2 fragments in the molecule.
-int min_frag_separation(const ROMol &mol, const ROMol &molFrags,
-                        std::vector<int> &fragMapping, int frag1, int frag2) {
+int minFragSeparation(const ROMol &mol, const ROMol &molFrags,
+                      std::vector<int> &fragMapping, int frag1, int frag2) {
   auto extractFragAtoms = [&](int frag_num, std::vector<int> &frag_atoms) {
     for (size_t i = 0u; i < fragMapping.size(); ++i) {
       if (fragMapping[i] == frag_num) {
@@ -657,9 +655,9 @@ int min_frag_separation(const ROMol &mol, const ROMol &molFrags,
 }
 
 // Assess the clique in terms of opts, returning true if it satisfies them all
-bool clique_ok(const std::vector<unsigned int> clique,
-               const RascalOptions &opts, const ROMol &mol1, const ROMol &mol2,
-               const std::vector<std::pair<int, int>> &vtxPairs) {
+bool cliqueOk(const std::vector<unsigned int> clique, const RascalOptions &opts,
+              const ROMol &mol1, const ROMol &mol2,
+              const std::vector<std::pair<int, int>> &vtxPairs) {
   std::unique_ptr<RWMol> mol1Frags, mol2Frags;
   std::vector<int> mol1FragMapping, mol2FragMapping;
   int numMol1Frags = 0, numMol2Frags = 0;
@@ -668,8 +666,8 @@ bool clique_ok(const std::vector<unsigned int> clique,
     if (mol1Frags) {
       return;
     }
-    mol1Frags.reset(make_clique_frags(mol1, clique, vtxPairs, 1));
-    mol2Frags.reset(make_clique_frags(mol2, clique, vtxPairs, 2));
+    mol1Frags.reset(makeCliqueFrags(mol1, clique, vtxPairs, 1));
+    mol2Frags.reset(makeCliqueFrags(mol2, clique, vtxPairs, 2));
     numMol1Frags = MolOps::getMolFrags(*mol1Frags, mol1FragMapping);
     numMol2Frags = MolOps::getMolFrags(*mol2Frags, mol2FragMapping);
   };
@@ -690,33 +688,33 @@ bool clique_ok(const std::vector<unsigned int> clique,
 }
 
 // If this clique warrants it, update maxCliques.
-void update_max_clique(const std::vector<unsigned int> &clique, bool deltaYPoss,
-                       const RascalOptions &opts, const ROMol &mol1,
-                       const ROMol &mol2,
-                       const std::vector<std::pair<int, int>> &vtxPairs,
-                       std::vector<std::vector<unsigned int>> &maxCliques,
-                       int &lower_bound) {
+void updateMaxClique(const std::vector<unsigned int> &clique, bool deltaYPoss,
+                     const RascalOptions &opts, const ROMol &mol1,
+                     const ROMol &mol2,
+                     const std::vector<std::pair<int, int>> &vtxPairs,
+                     std::vector<std::vector<unsigned int>> &maxCliques,
+                     int &lower_bound) {
   if (!maxCliques.empty() && clique.size() < maxCliques.front().size()) {
     return;
   }
   bool didDeltaY =
-      !deltaYPoss ? false : delta_y_in_clique(clique, mol1, mol2, vtxPairs);
+      !deltaYPoss ? false : deltaYInClique(clique, mol1, mol2, vtxPairs);
   if (!didDeltaY) {
     if (maxCliques.empty()) {
-      if (clique_ok(clique, opts, mol1, mol2, vtxPairs)) {
+      if (cliqueOk(clique, opts, mol1, mol2, vtxPairs)) {
         maxCliques.push_back((clique));
       }
     } else {
       bool goodClique = false, didCliqueOk = false;
       if (clique.size() > maxCliques.front().size()) {
-        goodClique = clique_ok(clique, opts, mol1, mol2, vtxPairs);
+        goodClique = cliqueOk(clique, opts, mol1, mol2, vtxPairs);
         didCliqueOk = true;
         if (goodClique) {
           maxCliques.clear();
         }
       }
       if (!didCliqueOk) {
-        goodClique = clique_ok(clique, opts, mol1, mol2, vtxPairs);
+        goodClique = cliqueOk(clique, opts, mol1, mol2, vtxPairs);
       }
       if (goodClique &&
           (maxCliques.empty() || clique.size() == maxCliques.front().size())) {
@@ -730,7 +728,7 @@ void update_max_clique(const std::vector<unsigned int> &clique, bool deltaYPoss,
 }
 
 // If the current time is beyond the timeout limit, throws a TimedOutException.
-void check_timeout(
+void checkTimeout(
     std::chrono::time_point<std::chrono::high_resolution_clock> &startTime,
     const RascalOptions &opts, const std::vector<unsigned int> &clique,
     std::vector<std::vector<unsigned int>> &maxCliques,
@@ -760,10 +758,11 @@ void check_timeout(
   }
 }
 
-bool equivalent_root_already_done(
-    unsigned int rootVtx, const std::vector<std::pair<int, int>> &vtxPairs,
-    const std::vector<int> &equivBonds1, const std::vector<int> &equivBonds2,
-    std::set<std::pair<int, int>> &rootClasses) {
+bool equivalentRootAlreadyDone(unsigned int rootVtx,
+                               const std::vector<std::pair<int, int>> &vtxPairs,
+                               const std::vector<int> &equivBonds1,
+                               const std::vector<int> &equivBonds2,
+                               std::set<std::pair<int, int>> &rootClasses) {
   std::pair<int, int> newClasses{equivBonds1[vtxPairs[rootVtx].first],
                                  equivBonds2[vtxPairs[rootVtx].second]};
   if (newClasses.first == -1) {
@@ -779,7 +778,7 @@ bool equivalent_root_already_done(
 
 // There are some simple substructures for which equivalent bond pruning isn't
 // allowed.
-bool check_equivalents_allowed(const ROMol &mol) {
+bool checkEquivalentsAllowed(const ROMol &mol) {
   const static std::vector<ROMol *> notStructs{
       SmartsToMol("*~*"), SmartsToMol("*~*1~*~*~1"),
       SmartsToMol("*12~*~*~2~*~1"), SmartsToMol("*14~*(~*~2~3~4)~*~2~*~3~1")};
@@ -807,12 +806,12 @@ void explore_partitions(
   std::set<std::pair<int, int>> rootClasses;
   bool canDoEquivs = false;
   if (opts.doEquivBondPruning) {
-    canDoEquivs = check_equivalents_allowed(*starter.d_mol1) &&
-                  check_equivalents_allowed(*starter.d_mol2);
+    canDoEquivs = checkEquivalentsAllowed(*starter.d_mol1) &&
+                  checkEquivalentsAllowed(*starter.d_mol2);
   }
   while (!parts.empty()) {
     if (opts.timeout != -1) {
-      check_timeout(startTime, opts, clique, maxCliques, numSteps);
+      checkTimeout(startTime, opts, clique, maxCliques, numSteps);
     }
     auto part = parts.back();
     bool goDeeper = false;
@@ -837,17 +836,16 @@ void explore_partitions(
           std::shared_ptr<PartitionSet> nextPart(new PartitionSet(*part));
           clique.push_back(nextPart->pop_last_vertex());
           if (clique.size() == 1 && canDoEquivs &&
-              equivalent_root_already_done(
-                  clique.front(), starter.d_vtxPairs, starter.d_equivBonds1,
-                  starter.d_equivBonds2, rootClasses)) {
+              equivalentRootAlreadyDone(clique.front(), starter.d_vtxPairs,
+                                        starter.d_equivBonds1,
+                                        starter.d_equivBonds2, rootClasses)) {
             clique.pop_back();
             backtrack = true;
           } else {
             nextPart->prune_vertices(clique.back());
-            update_max_clique(clique, starter.d_deltaYPoss, opts,
-                              *starter.d_mol1, *starter.d_mol2,
-                              starter.d_vtxPairs, maxCliques,
-                              starter.d_lowerBound);
+            updateMaxClique(clique, starter.d_deltaYPoss, opts, *starter.d_mol1,
+                            *starter.d_mol2, starter.d_vtxPairs, maxCliques,
+                            starter.d_lowerBound);
             parts.push_back(nextPart);
           }
         } else {
@@ -878,7 +876,7 @@ void explore_partitions(
   }
 }
 
-bool delta_y_exchange_possible(const ROMol &mol1, const ROMol &mol2) {
+bool deltaYExchangePossible(const ROMol &mol1, const ROMol &mol2) {
   // A Delta-y exchange is an incorrect match when a cyclopropyl ring (the
   // delta) is matched to a C(C)(C) group (the y) because they both have
   // isomorphic line graphs.  This checks to see if that's something we need to
@@ -892,7 +890,7 @@ bool delta_y_exchange_possible(const ROMol &mol1, const ROMol &mol2) {
           SubstructMatch(mol1, *y, dontCare));
 }
 
-void find_equivalent_bonds(const ROMol &mol, std::vector<int> &equivBonds) {
+void findEquivalentBonds(const ROMol &mol, std::vector<int> &equivBonds) {
   equivBonds = std::vector<int>(mol.getNumBonds(), -1);
   std::vector<unsigned int> ranks(mol.getNumAtoms());
   bool breakTies = false;
@@ -923,8 +921,8 @@ void find_equivalent_bonds(const ROMol &mol, std::vector<int> &equivBonds) {
 
 // Use the Floyd-Warshall algorithm to compute the distance matrix from the
 // adjacency matrix.
-void calc_dist_matrix(const std::vector<std::vector<int>> &adjMatrix,
-                      std::vector<std::vector<int>> &distMatrix) {
+void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
+                    std::vector<std::vector<int>> &distMatrix) {
   distMatrix = std::vector<std::vector<int>>(
       adjMatrix.size(),
       std::vector<int>(adjMatrix.size(), adjMatrix.size() + 1));
@@ -948,9 +946,8 @@ void calc_dist_matrix(const std::vector<std::vector<int>> &adjMatrix,
   }
 }
 
-RascalStartPoint make_initial_partition_set(const ROMol *mol1,
-                                            const ROMol *mol2,
-                                            const RascalOptions &opts) {
+RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
+                                         const RascalOptions &opts) {
   RascalStartPoint starter;
   if (mol1->getNumAtoms() <= mol2->getNumAtoms()) {
     starter.d_swapped = false;
@@ -970,46 +967,46 @@ RascalStartPoint make_initial_partition_set(const ROMol *mol1,
   std::vector<unsigned int> bondLabels1, bondLabels2;
   get_bond_labels(*starter.d_mol1, *starter.d_mol2, opts, bondLabels1,
                   bondLabels2);
-  starter.d_tier2Sim = tier_2_sim(*starter.d_mol1, *starter.d_mol2, degSeqs1,
-                                  degSeqs2, bondLabels1, bondLabels2);
+  starter.d_tier2Sim = tier2Sim(*starter.d_mol1, *starter.d_mol2, degSeqs1,
+                                degSeqs2, bondLabels1, bondLabels2);
   if (starter.d_tier2Sim < opts.similarityThreshold) {
     return starter;
   }
 
   // Get the line graphs for the two molecules as adjacency matrices.
-  make_line_graph(*starter.d_mol1, starter.d_adjMatrix1);
-  make_line_graph(*starter.d_mol2, starter.d_adjMatrix2);
+  makeLineGraph(*starter.d_mol1, starter.d_adjMatrix1);
+  makeLineGraph(*starter.d_mol2, starter.d_adjMatrix2);
 
   std::vector<std::vector<int>> dist_mat1, dist_mat2;
   if (opts.maxFragSeparation > -1) {
-    calc_dist_matrix(starter.d_adjMatrix1, dist_mat1);
-    calc_dist_matrix(starter.d_adjMatrix2, dist_mat2);
+    calcDistMatrix(starter.d_adjMatrix1, dist_mat1);
+    calcDistMatrix(starter.d_adjMatrix2, dist_mat2);
   }
 
   // pairs are vertices in the 2 line graphs that are the same type.
   // mod_prod is the modular product/correspondence graph of the two
   // line graphs.
-  make_modular_product(*starter.d_mol1, starter.d_adjMatrix1, bondLabels1,
-                       dist_mat1, *starter.d_mol2, starter.d_adjMatrix2,
-                       bondLabels2, dist_mat2, opts, starter.d_vtxPairs,
-                       starter.d_modProd);
+  makeModularProduct(*starter.d_mol1, starter.d_adjMatrix1, bondLabels1,
+                     dist_mat1, *starter.d_mol2, starter.d_adjMatrix2,
+                     bondLabels2, dist_mat2, opts, starter.d_vtxPairs,
+                     starter.d_modProd);
   if (starter.d_vtxPairs.empty()) {
     return starter;
   }
-  starter.d_lowerBound = calc_lower_bound(*starter.d_mol1, *starter.d_mol2,
-                                          opts.similarityThreshold);
+  starter.d_lowerBound = calcLowerBound(*starter.d_mol1, *starter.d_mol2,
+                                        opts.similarityThreshold);
 
   starter.d_partSet.reset(new PartitionSet(starter.d_modProd,
                                            starter.d_vtxPairs, bondLabels1,
                                            bondLabels2, starter.d_lowerBound));
   starter.d_deltaYPoss =
-      delta_y_exchange_possible(*starter.d_mol1, *starter.d_mol2);
+      deltaYExchangePossible(*starter.d_mol1, *starter.d_mol2);
 
   if (opts.doEquivBondPruning) {
     // if equiv_bonds1[i] and equiv_bonds1[j] are equal, the bonds are
     // equivalent.
-    find_equivalent_bonds(*starter.d_mol1, starter.d_equivBonds1);
-    find_equivalent_bonds(*starter.d_mol2, starter.d_equivBonds2);
+    findEquivalentBonds(*starter.d_mol1, starter.d_equivBonds1);
+    findEquivalentBonds(*starter.d_mol2, starter.d_equivBonds2);
   } else {
     starter.d_equivBonds1 = std::vector<int>(starter.d_mol1->getNumBonds(), -1);
     starter.d_equivBonds2 = std::vector<int>(starter.d_mol2->getNumBonds(), -1);
@@ -1018,8 +1015,8 @@ RascalStartPoint make_initial_partition_set(const ROMol *mol1,
   return starter;
 }
 
-std::vector<RascalResult> find_mces(RascalStartPoint &starter,
-                                    RascalOptions opts) {
+std::vector<RascalResult> findMces(RascalStartPoint &starter,
+                                   RascalOptions opts) {
   // opts.singleLargestFrag requires opts.allBestMCESs
   bool orig_allBestMCESs = opts.allBestMCESs;
   if (opts.singleLargestFrag) {
@@ -1049,7 +1046,7 @@ std::vector<RascalResult> find_mces(RascalStartPoint &starter,
         starter.d_adjMatrix2, c, starter.d_vtxPairs, timed_out,
         starter.d_swapped, opts.exactChirality, opts.maxFragSeparation));
     if (opts.singleLargestFrag) {
-      results.back().largest_frag_only();
+      results.back().largestFragOnly();
     }
   }
   std::sort(results.begin(), results.end(), resultSort);
@@ -1058,9 +1055,9 @@ std::vector<RascalResult> find_mces(RascalStartPoint &starter,
 
 // calculate the RASCAL MCES between the 2 molecules, provided it is within the
 // similarity threshold given.
-std::vector<RascalResult> rascal_mces(const ROMol &mol1, const ROMol &mol2,
-                                      RascalOptions opts) {
-  auto starter = make_initial_partition_set(&mol1, &mol2, opts);
+std::vector<RascalResult> rascalMces(const ROMol &mol1, const ROMol &mol2,
+                                     RascalOptions opts) {
+  auto starter = makeInitialPartitionSet(&mol1, &mol2, opts);
   //  std::cout << "tier 1 and 2 similarities : " << starter.d_tier1Sim << " and
   //  "
   //            << starter.d_tier2Sim << std::endl;
@@ -1073,7 +1070,7 @@ std::vector<RascalResult> rascal_mces(const ROMol &mol1, const ROMol &mol2,
   //  "
   //            << starter.d_tier2Sim << std::endl;
 
-  auto results = find_mces(starter, opts);
+  auto results = findMces(starter, opts);
   if (!opts.allBestMCESs && results.size() > 1) {
     results.erase(results.begin() + 1, results.end());
   }
