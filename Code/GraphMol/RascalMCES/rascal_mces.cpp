@@ -24,10 +24,9 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/types.h>
 
-#include "MultiMolRascalResult.h"
-#include "PartitionSet.h"
-#include "RascalResult.h"
-#include "RascalOptions.h"
+#include <GraphMol/RascalMCES/PartitionSet.h>
+#include <GraphMol/RascalMCES/RascalOptions.h>
+#include <GraphMol/RascalMCES/RascalResult.h>
 
 namespace RDKit {
 namespace RascalMCES {
@@ -73,10 +72,10 @@ struct RascalStartPoint {
   // Some parts require mol2 to be the larger molecule.  This records if they
   // have been swapped with respect to the input molecules.
   bool d_swapped{false};
-  // Copies of the input molecules, swapped if necessary, so that d_mol1 is
-  // always the smaller molecule.
-  std::shared_ptr<ROMol> d_mol1;
-  std::shared_ptr<ROMol> d_mol2;
+  // Pointers the input molecules, swapped if necessary, so that d_mol1 is
+  // always the smaller molecule.  These should never be deleted.
+  const ROMol *d_mol1;
+  const ROMol *d_mol2;
 
   std::vector<std::vector<int>> d_adjMatrix1, d_adjMatrix2;
   std::vector<std::pair<int, int>> d_vtxPairs;
@@ -471,8 +470,6 @@ void make_modular_product(const ROMol &mol1,
     return;
   }
 
-  std::cout << "Number of vertex pairs in modular product : " << vtxPairs.size()
-            << std::endl;
   modProd = std::vector<std::vector<char>>(
       vtxPairs.size(), std::vector<char>(vtxPairs.size(), 0));
   for (auto i = 0u; i < vtxPairs.size() - 1; ++i) {
@@ -951,8 +948,8 @@ void calc_dist_matrix(const std::vector<std::vector<int>> &adjMatrix,
   }
 }
 
-RascalStartPoint make_initial_partition_set(const std::shared_ptr<ROMol> &mol1,
-                                            const std::shared_ptr<ROMol> &mol2,
+RascalStartPoint make_initial_partition_set(const ROMol *mol1,
+                                            const ROMol *mol2,
                                             const RascalOptions &opts) {
   RascalStartPoint starter;
   if (mol1->getNumAtoms() <= mol2->getNumAtoms()) {
@@ -1038,7 +1035,6 @@ std::vector<RascalResult> find_mces(RascalStartPoint &starter,
     auto run_time = std::chrono::duration_cast<std::chrono::milliseconds>(
                         curr_time - start_time)
                         .count();
-    std::cout << "Run time : " << run_time << " milliseconds." << std::endl;
   } catch (TimedOutException &e) {
     std::cout << e.what() << std::endl;
     maxCliques = e.d_cliques;
@@ -1046,7 +1042,6 @@ std::vector<RascalResult> find_mces(RascalStartPoint &starter,
   }
   opts.allBestMCESs = orig_allBestMCESs;
 
-  std::cout << "Number of raw results : " << maxCliques.size() << std::endl;
   std::vector<RascalResult> results;
   for (const auto &c : maxCliques) {
     results.push_back(RascalResult(
@@ -1065,150 +1060,24 @@ std::vector<RascalResult> find_mces(RascalStartPoint &starter,
 // similarity threshold given.
 std::vector<RascalResult> rascal_mces(const ROMol &mol1, const ROMol &mol2,
                                       RascalOptions opts) {
-  std::shared_ptr<ROMol> mol1Cp(new ROMol(mol1));
-  std::shared_ptr<ROMol> mol2Cp(new ROMol(mol2));
-  auto starter = make_initial_partition_set(mol1Cp, mol2Cp, opts);
-  std::cout << "tier 1 and 2 similarities : " << starter.d_tier1Sim << " and "
-            << starter.d_tier2Sim << std::endl;
+  auto starter = make_initial_partition_set(&mol1, &mol2, opts);
+  //  std::cout << "tier 1 and 2 similarities : " << starter.d_tier1Sim << " and
+  //  "
+  //            << starter.d_tier2Sim << std::endl;
   if (!starter.d_partSet) {
     return std::vector<RascalResult>();
   }
-  std::cout << "clique size bounds : " << starter.d_lowerBound << " to "
-            << starter.d_partSet->upper_bound() << std::endl;
-  std::cout << "tier 1 and 2 similarities : " << starter.d_tier1Sim << " and "
-            << starter.d_tier2Sim << std::endl;
+  //  std::cout << "clique size bounds : " << starter.d_lowerBound << " to "
+  //            << starter.d_partSet->upper_bound() << std::endl;
+  //  std::cout << "tier 1 and 2 similarities : " << starter.d_tier1Sim << " and
+  //  "
+  //            << starter.d_tier2Sim << std::endl;
 
   auto results = find_mces(starter, opts);
-  for (const auto &res : results) {
-    std::cout << res.smarts() << " : " << res.num_frags() << " "
-              << res.ring_non_ring_bond_score() << " "
-              << res.max_delta_atom_atom_dist() << " " << res.atom_match_score()
-              << " " << res.largest_frag_size() << " " << res.similarity()
-              << std::endl;
-    print_bond_matches(res, std::cout);
-    print_atom_matches(res, std::cout);
-  }
   if (!opts.allBestMCESs && results.size() > 1) {
     results.erase(results.begin() + 1, results.end());
   }
   return results;
-}
-
-// Put together the initial start points for the MCES for all pairs of
-// molecules.  searchOrder will be returned in the order the pairs should be
-// searched, doing smallest potential cliques first.  The two molecules in the
-// searchOrder will always be smallest first.
-void make_initial_partition_sets(
-    const std::vector<std::shared_ptr<ROMol>> &mols, RascalOptions opts,
-    std::vector<std::vector<std::shared_ptr<RascalStartPoint>>> &startPoints,
-    std::vector<std::tuple<int, size_t, size_t>> &searchOrder) {
-  for (size_t i = 0; i < mols.size(); ++i) {
-    startPoints.push_back(std::vector<std::shared_ptr<RascalStartPoint>>(
-        mols.size(), std::shared_ptr<RascalStartPoint>()));
-  }
-  // At this point we want all data, so no screening by tier1_sim and tier2_sim.
-  opts.similarityThreshold = 0.0;
-  for (size_t i = 0; i < mols.size() - 1; ++i) {
-    for (size_t j = i + 1; j < mols.size(); ++j) {
-      auto starter = make_initial_partition_set(mols[i], mols[j], opts);
-      startPoints[i][j].reset(new RascalStartPoint(starter));
-      startPoints[j][i] = startPoints[i][j];
-      if (startPoints[i][j]->d_partSet) {
-        double bondFrac = double(startPoints[i][j]->d_partSet->upper_bound()) /
-                          startPoints[i][j]->d_mol1->getNumBonds();
-        if (bondFrac >= opts.fractionSmallestMolBonds) {
-          if (mols[i]->getNumBonds() < mols[j]->getNumBonds()) {
-            searchOrder.push_back(
-                {startPoints[i][j]->d_partSet->upper_bound(), i, j});
-          } else {
-            searchOrder.push_back(
-                {startPoints[i][j]->d_partSet->upper_bound(), j, i});
-          }
-        }
-        std::cout << i << " vs " << j
-                  << " lower bound = " << startPoints[i][j]->d_lowerBound
-                  << "  upper bound = "
-                  << startPoints[i][j]->d_partSet->upper_bound()
-                  << " bond frac : " << bondFrac << std::endl;
-      } else {
-        std::cout << i << " vs " << j
-                  << " lower bound = " << startPoints[i][j]->d_lowerBound
-                  << "  tier1_sim = " << startPoints[i][j]->d_tier1Sim
-                  << "  tier2_sim : " << startPoints[i][j]->d_tier2Sim
-                  << std::endl;
-      }
-    };
-  }
-  std::sort(searchOrder.begin(), searchOrder.end(),
-            [&](const std::tuple<int, size_t, size_t> &so1,
-                const std::tuple<int, size_t, size_t> &so2) -> bool {
-              return std::get<0>(so1) < std::get<0>(so2);
-            });
-}
-
-std::vector<std::shared_ptr<ROMol>> get_matches_to_mces(
-    RascalResult &result, const std::vector<std::shared_ptr<ROMol>> &mols) {
-  std::vector<std::shared_ptr<ROMol>> hits;
-  auto query = SmartsToMol(result.smarts());
-  MatchVectType dontCare;
-  for (const auto &mol : mols) {
-    if (SubstructMatch(*mol, *query, dontCare)) {
-      hits.push_back(mol);
-    }
-  }
-  return hits;
-}
-
-// Find one or more MCESs between the given molecules.  Returns all results that
-// have at least opts.fractionWithMCES of the input set in the MCES, and also
-// all MCESs returned must include at least opts.fractionSmallestMolBonds bonds
-// for the smallest molecule in the set.
-std::vector<MultiMolRascalResult> rascal_mces(
-    const std::vector<std::shared_ptr<ROMol>> &mols, RascalOptions opts) {
-  if (mols.size() < 2) {
-    return std::vector<MultiMolRascalResult>();
-  }
-  std::vector<std::vector<std::shared_ptr<RascalStartPoint>>> startPoints;
-  std::vector<std::tuple<int, size_t, size_t>> searchOrder;
-  make_initial_partition_sets(mols, opts, startPoints, searchOrder);
-  std::vector<MultiMolRascalResult> finalResults;
-  for (auto &so : searchOrder) {
-    auto moli = std::get<1>(so);
-    auto molj = std::get<2>(so);
-    std::cout << std::endl
-              << "NEXT PAIR : " << std::get<0>(so) << " : " << moli << " vs "
-              << molj << " : " << startPoints[moli][molj]->d_tier2Sim << " : "
-              << mols[moli]->getProp<std::string>("_Name") << " vs "
-              << mols[molj]->getProp<std::string>("_Name") << std::endl;
-    auto &startPoint = *startPoints[std::get<1>(so)][std::get<2>(so)];
-    opts.similarityThreshold = startPoint.d_tier2Sim - 0.05;
-    auto results = find_mces(startPoint, opts);
-    //        results.front().largest_frag_only();
-    std::cout << "SMARTS : " << results.front().smarts() << std::endl;
-    double actFrac = double(results.front().bond_matches().size()) /
-                     startPoint.d_mol1->getNumBonds();
-    std::cout << " fraction of bonds : " << actFrac << " : "
-              << results.front().bond_matches().size() << std::endl;
-    if (actFrac >= opts.fractionSmallestMolBonds) {
-      auto matchedMols = get_matches_to_mces(results.front(), mols);
-      double matchFrac = double(matchedMols.size()) / mols.size();
-      std::cout << "IN " << matchFrac << " of the mols " << matchedMols.size()
-                << std::endl;
-      if (matchFrac >= opts.fractionWithMCES) {
-        finalResults.push_back(
-            {results.front().smarts(), results.front().atom_matches().size(),
-             results.front().bond_matches().size(), matchedMols});
-        if (!opts.allBestMultiMCESs) {
-          break;
-        }
-      }
-    }
-  }
-  std::cout << "Number of MCESs found : " << finalResults.size() << std::endl;
-  for (const auto &res : finalResults) {
-    std::cout << res.d_smarts << " : " << res.d_mols.size() << std::endl;
-  }
-  return finalResults;
 }
 
 }  // namespace RascalMCES

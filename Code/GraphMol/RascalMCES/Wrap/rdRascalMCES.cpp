@@ -101,7 +101,7 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
                      &RDKit::RascalMCES::RascalOptions::exactChirality,
                      "If True (default), chirality of atoms must match.")
       .def_readwrite(
-          "singleLargestFrag",
+          "singleLargestFragment",
           &RDKit::RascalMCES::RascalOptions::singleLargestFrag,
           "If False (default), multiple fragments may be returned for MCES.  If True,"
           "only the single largest component of the MCES will be reported.")
@@ -116,20 +116,8 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
           "allBestMCESs", &RDKit::RascalMCES::RascalOptions::allBestMCESs,
           "If True, reports all MCESs found of the same maximum size.  Default False means just report the first found.")
       .def_readwrite(
-          "allBestMultiMCEs",
-          &RDKit::RascalMCES::RascalOptions::allBestMultiMCESs,
-          "If True, reports all multi-molecule MCESs found that fit the other criteria.  If False (default) just returns the first found.")
-      .def_readwrite(
           "timeout", &RDKit::RascalMCES::RascalOptions::timeout,
-          "Maximum time (in seconds) to spend on an individual MCESs determination.  Default 60, -1 means no limit.")
-      .def_readwrite(
-          "fractionWithMCES",
-          &RDKit::RascalMCES::RascalOptions::fractionWithMCES,
-          "When doing multi-molecule MCES, fraction of the input set that must have the MCES for it to be reported.  Default = 1.0.")
-      .def_readwrite(
-          "fractionSmallesMolBonds",
-          &RDKit::RascalMCES::RascalOptions::fractionSmallestMolBonds,
-          "When doing multi-molecule MCES, the fraction of the number of bonds of the smaller molecule in a pair that must in the MCES.  To try and avoid 'regression to benzene'.");
+          "Maximum time (in seconds) to spend on an individual MCESs determination.  Default 60, -1 means no limit.");
 
   docString =
       "Find one or more MCESs between the 2 molecules given.  Returns a list of RascalResult objects.";

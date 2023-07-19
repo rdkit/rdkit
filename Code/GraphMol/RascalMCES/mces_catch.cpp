@@ -20,9 +20,8 @@
 #define CATCH_CONFIG_MAIN
 #include "../../../External/catch/catch/single_include/catch2/catch.hpp"
 
-#include "MultiMolRascalResult.h"
-#include "RascalOptions.h"
-#include "RascalResult.h"
+#include <GraphMol/RascalMCES/RascalOptions.h>
+#include <GraphMol/RascalMCES/RascalResult.h>
 
 namespace RDKit {
 namespace RascalMCES {
@@ -46,8 +45,6 @@ std::vector<RascalResult> rascal_mces(const RDKit::ROMol &mol1,
                                       const RDKit::ROMol &mol2,
                                       RascalOptions opts);
 
-std::vector<MultiMolRascalResult> rascal_mces(
-    const std::vector<std::shared_ptr<RDKit::ROMol>> &mols, RascalOptions opts);
 }  // namespace RascalMCES
 }  // namespace RDKit
 
@@ -844,7 +841,7 @@ TEST_CASE("FMCS test190") {
       {"Cc1ccc(SCC(=O)Nc2cc(-c3nc4cc(C)ccc4o3)c(O)cc2)cc1  CHEMBL1611932"_smiles},
   };
   RascalOptions opts;
-  opts.singleLargestFrag = true;
+  opts.singleLargestFrag = false;
   auto t1 = std::chrono::high_resolution_clock::now();
   int min_atoms = std::numeric_limits<int>::max();
   int min_bonds = std::numeric_limits<int>::max();
@@ -902,18 +899,17 @@ TEST_CASE("FMCS nasty adamantane pair") {
   std::cout << res.front().smarts() << std::endl;
   REQUIRE(res.size() == 1);
   REQUIRE(res.front().bond_matches().size() == 36);
-  //    REQUIRE(res.front().smarts() ==
-  //    "CN(-C)-c1ccc(-CC(=O)-N):cc1.CCCCCCCCCCNC12CC3CC(-C1)-CC(-C2)-C3");
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.9202, 0.0001));
-
   check_smarts_ok(*m1, *m2, res.front());
+
   auto runtime = std::chrono::duration_cast<std::chrono::milliseconds>(
                      start_time - finish_time)
                      .count();
-  REQUIRE(runtime < 150000);
+  REQUIRE(runtime < 5);
 
   res.front().largest_frag_only();
+  check_smarts_ok(*m1, *m2, res.front());
   std::cout << res.front().smarts() << std::endl;
   print_bond_matches(res.front(), std::cout);
   print_atom_matches(res.front(), std::cout);
@@ -941,12 +937,13 @@ TEST_CASE("FMCS test3 adamantane non-adamantane") {
     REQUIRE(res.front().smarts() == "c1cc(-N):ccc1CC(=O)-NCCCCCCC");
     REQUIRE_THAT(res.front().similarity(),
                  Catch::Matchers::WithinAbs(0.4215, 0.0001));
+    check_smarts_ok(*m1, *m2, res.front());
 
     check_smarts_ok(*m1, *m2, res.front());
     auto runtime = std::chrono::duration_cast<std::chrono::milliseconds>(
                        start_time - finish_time)
                        .count();
-    REQUIRE(runtime < 30);
+    REQUIRE(runtime < 5);
   }
   opts.ringMatchesRingOnly = true;
   {
@@ -967,7 +964,7 @@ TEST_CASE("FMCS test3 adamantane non-adamantane") {
     auto runtime = std::chrono::duration_cast<std::chrono::milliseconds>(
                        start_time - finish_time)
                        .count();
-    REQUIRE(runtime < 30);
+    REQUIRE(runtime < 5);
   }
 }
 
@@ -1024,34 +1021,6 @@ TEST_CASE("FMCS test3") {
             << " bonds." << std::endl;
   std::cout << "SMARTS with least bonds : " << min_smarts << " for pair "
             << min_i << " and " << min_j << std::endl;
-  auto t2 = std::chrono::high_resolution_clock::now();
-  auto dur =
-      std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-  std::cout << "Total time : " << dur << " ms" << std::endl;
-  std::cout << "Average time : " << dur / (mols.size() * (mols.size() - 1) / 2)
-            << " ms" << std::endl;
-}
-
-TEST_CASE("FMCS test3 full set") {
-  std::vector<std::shared_ptr<RDKit::ROMol>> mols{
-      {"CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934"_smiles},
-      {"CN(C)c1ccc(CC(=O)NCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL152361"_smiles},
-      {"CN(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336"_smiles},
-      {"CN(C)c1ccc(CC(=O)NCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157429"_smiles},
-      {"CN(C)c1ccc(CC(=O)NCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL357551"_smiles},
-      {"CN(C)c1ccc(CC(=O)NCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL421974"_smiles},
-      {"CN(C)c1ccc(CC(NCCCCCC(NO)=O)=O)cc1 CHEMBL484488"_smiles},
-      {"CC(C)Cc1ccc(C(C)C(=O)NC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL564780"_smiles},
-      {"c1cc([N+]([O-])=O)ccc1CC(=O)NC1CCCCCC1 CHEMBL1553142"_smiles},
-      {"CC1(C)NC(C)(C)CC(NC(=O)Cc2ccccc2)C1 CHEMBL1703640"_smiles},
-  };
-  RascalOptions opts;
-  opts.fractionWithMCES = 0.5;
-  opts.allBestMultiMCESs = true;
-  auto t1 = std::chrono::high_resolution_clock::now();
-
-  auto results = rascal_mces(mols, opts);
-
   auto t2 = std::chrono::high_resolution_clock::now();
   auto dur =
       std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();

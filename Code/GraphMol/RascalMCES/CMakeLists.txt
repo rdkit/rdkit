@@ -5,7 +5,7 @@ rdkit_library(RascalMCES
         LINK_LIBRARIES SmilesParse FileParsers ChemTransforms SubstructMatch GraphMol)
 target_compile_definitions(RascalMCES PRIVATE RDKIT_RASCAL_MCES_BUILD)
 
-rdkit_headers(rascal_mces.h PartitionSet.h RascalOptions.h RascalResult.h MultiMolRascalResult.h
+rdkit_headers(rascal_mces.h PartitionSet.h RascalOptions.h RascalResult.h
         DEST GraphMol/RascalMCES)
 
 rdkit_test(testRascalMCES mces_catch.cpp LINK_LIBRARIES RascalMCES)
