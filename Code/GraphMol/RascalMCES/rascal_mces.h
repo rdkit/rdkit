@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #ifndef RDKIT_RASCAL_MCES_H
 #define RDKIT_RASCAL_MCES_H
 
@@ -22,8 +23,8 @@ class RascalOptions;
 class RascalResult;
 
 // Find one or more MCESs between the two molecules.
-std::vector<RascalResult> rascalMces(const ROMol &mol1, const ROMol &mol2,
-                                     RascalOptions opts);
+RDKIT_RASCALMCES_EXPORT std::vector<RascalResult> rascalMces(
+    const ROMol &mol1, const ROMol &mol2, RascalOptions opts);
 
 }  // namespace RascalMCES
 }  // namespace RDKit

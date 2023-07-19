@@ -1,4 +1,4 @@
-remove_definitions(-DRDKIT_RascalMCES_BUILD)
+remove_definitions(-DRDKIT_RASCAL_MCES_BUILD)
 
 rdkit_python_extension(rdRascalMCES
         rdRascalMCES.cpp
