@@ -27,9 +27,9 @@ RascalResult::RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                            const std::vector<std::vector<int>> &adjMatrix2,
                            const std::vector<unsigned int> &clique,
                            const std::vector<std::pair<int, int>> &vtx_pairs,
-                           bool timed_out, bool swapped, bool chiralSmarts,
+                           bool timedOut, bool swapped, bool chiralSmarts,
                            int maxFragSep)
-    : d_timedOut(timed_out),
+    : d_timedOut(timedOut),
       d_chiralSmarts(chiralSmarts),
       d_maxFragSep(maxFragSep) {
   const std::vector<std::vector<int>> *mol1AdjMatrix;

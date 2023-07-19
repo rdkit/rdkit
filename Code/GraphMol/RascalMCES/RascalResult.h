@@ -27,11 +27,11 @@ namespace RascalMCES {
 class RascalResult {
  public:
   RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
-               const std::vector<std::vector<int>> &adj_matrix1,
-               const std::vector<std::vector<int>> &adj_matrix2,
+               const std::vector<std::vector<int>> &adjMatrix1,
+               const std::vector<std::vector<int>> &adjMatrix2,
                const std::vector<unsigned int> &clique,
-               const std::vector<std::pair<int, int>> &vtx_pairs,
-               bool timed_out, bool swapped, bool chiralSmarts, int minFragSep);
+               const std::vector<std::pair<int, int>> &vtx_pairs, bool timedOut,
+               bool swapped, bool chiralSmarts, int minFragSep);
 
   RascalResult(const RascalResult &other);
 

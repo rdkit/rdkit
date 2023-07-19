@@ -33,21 +33,10 @@ struct RascalOptions {
   bool allBestMCESs =
       false; /* If true, all MCESs are returned, in order of diminishing score.
                 This is likely to result in higher run times. */
-  bool allBestMultiMCESs =
-      false; /* If true, all multi-molecule MCESs are returned, in order of
-                diminishing size and number of molecules containing it.
-                This is likely to result in higher run times. */
   int timeout = 60;  // max run time, in seconds. -1 means no max.
   bool doEquivBondPruning =
       false;         /* This might make the code run a bit faster in some
                         circumstances, but on average it is very marginal. */
-  double fractionWithMCES = 1.0; /* The fraction of the input set that must
-                                    contain the MCESs returned. For case where
-                                    more than 2 molecules in input set. */
-  double fractionSmallestMolBonds =
-      0.5; /* For multi-molecule input sets, the MCES is only
-              returned if the smallest molecule in the set has
-              at least this fraction of its bonds in the global MCES. */
 };
 }  // namespace RascalMCES
 }  // namespace RDKit
