@@ -378,7 +378,9 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
                 atoms to SINGLE|AROMATIC */
       
   bool setGenericQueryFromProperties =
-      false; /**< sets the generic queries from atom properties */
+      false; /**< sets the generic queries from atom properties
+                 it will only be used by GenericGroups::adjustQueryPropertiesWithGenericGroups
+                 and ignored by MolOps::adjustQueryProperties */
   
   //! \brief returns an AdjustQueryParameters object with all adjustments
   //! disabled

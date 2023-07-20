@@ -15,7 +15,6 @@ rdkit_library(GraphMol
         Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
         new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
         NontetrahedralStereo.cpp WedgeBonds.cpp
-        GenericGroups/GenericGroups.cpp
         SHARED
         LINK_LIBRARIES RDGeometryLib RDGeneral ${RDKit_SERIALIZATION_LIBS})
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)

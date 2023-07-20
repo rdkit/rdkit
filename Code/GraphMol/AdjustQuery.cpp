@@ -14,7 +14,6 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
-#include <GraphMol/GenericGroups/GenericGroups.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
@@ -529,9 +528,6 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     for (auto atom : mol.atoms()) {
       atom->clearProp(conjugatedOrAromatic);
     }
-  }
-  if (params.setGenericQueryFromProperties) {
-      GenericGroups::setGenericQueriesFromProperties(mol);
   }
 }
 }  // namespace MolOps

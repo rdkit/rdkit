@@ -804,7 +804,7 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
            "adjustQueryProperties: Invalid argument \'params\' ignored");
     }
   }
-  ROMol *mol = MolOps::adjustQueryProperties(*im, &p);
+  ROMol *mol = GenericGroups::adjustQueryPropertiesWithGenericGroups(*im, &p);
   return (CROMol)mol;
 }
 
