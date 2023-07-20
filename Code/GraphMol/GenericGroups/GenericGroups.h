@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum
+//  Copyright (C) 2021-2023 Greg Landrum and RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
+#include <GraphMol/RWMol.h>
+#include <GraphMol/MolOps.h>
 #ifndef RD_GENERICGROUPS_H
 #define RD_GENERICGROUPS_H
 
