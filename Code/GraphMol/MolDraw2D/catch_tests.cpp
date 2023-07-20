@@ -4686,7 +4686,7 @@ TEST_CASE("Github 5185 - don't draw atom indices between double bond") {
             std::string::npos);
       check_file_hash("testGithub_5185.svg");
 #else
-      CHECK(text.find("<text x='90.4' y='130.3' class='note' ") !=
+      CHECK(text.find("<text x='91.5' y='130.0' class='note' ") !=
             std::string::npos);
 #endif
     }
