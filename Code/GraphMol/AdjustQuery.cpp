@@ -346,6 +346,7 @@ ROMol *adjustQueryProperties(const ROMol &mol,
   }
   return static_cast<ROMol *>(res);
 }
+
 void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
   AdjustQueryParameters params;
   if (inParams) {

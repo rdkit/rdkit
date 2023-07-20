@@ -278,9 +278,9 @@ const static std::map<
 };
 
 // This is an extension of adjustQueryProperties from GraphMol that allows the search of generic groups 
-RDKIT_GENERICGROUPS_EXPORT void adjustQueryPropertiesWithGenericGroups(
-    RWMol &mol, 
-    const AdjustQueryParameters *inParams);
+RDKIT_GENERICGROUPS_EXPORT ROMol *adjustQueryPropertiesWithGenericGroups(
+    const ROMol &mol,
+    const MolOps::AdjustQueryParameters *inParams);
 
 //! returns false if any of the molecule's generic atoms are not satisfied in
 /// the current match
