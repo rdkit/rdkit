@@ -425,7 +425,7 @@ bool genericAtomMatcher(const ROMol &mol, const ROMol &query,
 void adjustQueryPropertiesWithGenericGroups(
         RWMol &mol,
         const AdjustQueryParameters *inParams) {
-  adjustQueryProperties(mol, inParams);
+  RDKit::MolOps::adjustQueryProperties(mol, inParams);
   if (inParams.setGenericQueryFromProperties) {
     GenericGroups::setGenericQueriesFromProperties(mol);
   }
