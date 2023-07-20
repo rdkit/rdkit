@@ -861,7 +861,7 @@ ROMol *adjustQueryPropertiesHelper(const ROMol &mol, python::object pyparams) {
   if (pyparams != python::object()) {
     params = python::extract<MolOps::AdjustQueryParameters>(pyparams);
   }
-  return MolOps::adjustQueryProperties(mol, &params);
+  return GenericGroups::adjustQueryPropertiesWithGenericGroups(mol, &params);
 }
 
 python::tuple detectChemistryProblemsHelper(const ROMol &mol,
