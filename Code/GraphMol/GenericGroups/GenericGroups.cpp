@@ -426,7 +426,7 @@ void adjustQueryPropertiesWithGenericGroups(
         RWMol &mol,
         const AdjustQueryParameters *inParams) {
   adjustQueryProperties(mol, inParams);
-  if (params.setGenericQueryFromProperties) {
+  if (inParams.setGenericQueryFromProperties) {
     GenericGroups::setGenericQueriesFromProperties(mol);
   }
 }
