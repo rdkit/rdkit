@@ -3708,4 +3708,175 @@ M  END
     }
   }
 }
+
+TEST_CASE("t-shaped chirality cases") {
+  SECTION("ChEMBL example") {
+    {
+      auto m = R"CTAB(CHEMBL3183068
+     RDKit          2D
+
+ 10 10  0  0  1  0  0  0  0  0999 V2000
+    1.7309    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1502   -0.7167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4334   -1.1252    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4334   -1.9494    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7167   -0.7167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8669   -0.2974    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7167   -2.3687    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.1360    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.9602    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5836   -0.7060    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  6
+  2  3  1  0
+  2  6  1  0
+  3  4  2  0
+  3  5  1  0
+  4  7  1  0
+  5  8  2  0
+  6 10  1  0
+  7  9  2  0
+  8  9  1  0
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+  }
+  SECTION("three-coordinate") {
+    {
+      auto m = R"CTAB(
+  Mrv2211 07202306442D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N 11.8331 -3.2011 0 0
+M  V30 2 C 12.6158 -4.5389 0 0 CFG=2
+M  V30 3 O 11.2777 -5.3015 0 0
+M  V30 4 C 13.9536 -3.7562 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=3
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+    {
+      auto m = R"CTAB(
+  Mrv2211 07202306442D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N 11.8331 -3.2011 0 0
+M  V30 2 C 12.6158 -4.5389 0 0 CFG=2
+M  V30 3 O 11.2777 -5.3015 0 0
+M  V30 4 C 13.9536 -3.7562 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3  CFG=1
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+  }
+
+  SECTION("four-coordinate") {
+    {
+      auto m = R"CTAB(
+  Mrv2211 07202306492D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N -3.3332 0.9919 0 0
+M  V30 2 C -2.5555 -0.3373 0 0
+M  V30 3 O -3.885 -1.095 0 0
+M  V30 4 C -1.2263 0.4404 0 0
+M  V30 5 F -1.7854 -1.6709 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=3
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+    {
+      auto m = R"CTAB(
+  Mrv2211 07202306492D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N -3.3332 0.9919 0 0
+M  V30 2 C -2.5555 -0.3373 0 0
+M  V30 3 O -3.885 -1.095 0 0
+M  V30 4 C -1.2263 0.4404 0 0
+M  V30 5 F -1.7854 -1.6709 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+    {
+      auto m = R"CTAB(
+  Mrv2211 07202306492D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N -3.3332 0.9919 0 0
+M  V30 2 C -2.5555 -0.3373 0 0
+M  V30 3 O -3.885 -1.095 0 0
+M  V30 4 C -1.2263 0.4404 0 0
+M  V30 5 F -1.7854 -1.6709 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3 CFG=1
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+  }
 }

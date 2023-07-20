@@ -453,7 +453,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   PRECONDITION(bondDir == Bond::BEGINWEDGE || bondDir == Bond::BEGINDASH,
                "bad bond direction");
   constexpr double coordZeroTol = 1e-4;
-  constexpr double zeroTol = 1e-2;
+  constexpr double zeroTol = 1e-3;
 
   // NOTE that according to the CT file spec, wedging assigns chirality
   // to the atom at the point of the wedge, (atom 1 in the bond).
@@ -482,8 +482,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   //----------------------------------------------------------
   bool hSeen = false;
 
-  INT_LIST neighborBondIndices;
-  neighborBondIndices.push_back(bond->getIdx());
+  INT_VECT neighborBondIndices;
   if (is_regular_h(*bondAtom)) {
     hSeen = true;
   }
@@ -503,11 +502,11 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       // but it's not impossible that at some point in the future we
       // could allow wedged multiple bonds for things like atropisomers
       if (nbrBond->getBeginAtomIdx() == atom->getIdx() &&
-          nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE) {
-        tmpPt.z = pseudo3DOffset;
-      } else if (nbrBond->getBeginAtomIdx() == atom->getIdx() &&
-                 nbrBond->getBondDir() == Bond::BondDir::BEGINDASH) {
-        tmpPt.z = -pseudo3DOffset;
+          (nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
+           nbrBond->getBondDir() == Bond::BondDir::BEGINDASH)) {
+        tmpPt.z = nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE
+                      ? pseudo3DOffset
+                      : -pseudo3DOffset;
       } else {
         tmpPt.z = 0;
       }
@@ -560,6 +559,33 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       // bring the wedged bond to the front so that we always consider it
       std::swap(order[0], order[refIdx]);
       prefactor *= -1;
+    }
+
+    // check for the case that bonds 1 and 2 are co-linear but 1 and 0 are
+    // not:
+    if (bondVects[order[1]].crossProduct(bondVects[order[2]]).lengthSq() <
+            zeroTol &&
+        bondVects[order[1]].crossProduct(bondVects[order[0]]).lengthSq() >
+            zeroTol) {
+      bondVects[order[1]].z = bondVects[order[0]].z * -1;
+      // bondVects[order[1]].normalize();  // maybe not strictly necessary
+    }
+
+    // check for opposing bonds with opposite wedging
+    for (auto i = 0u; i < nNbrs; ++i) {
+      for (auto j = i + 1; j < nNbrs; ++j) {
+        if (bondVects[order[i]].z * bondVects[order[j]].z < -zeroTol) {
+          auto cp =
+              bondVects[order[i]].crossProduct(bondVects[order[j]]).lengthSq();
+          if (cp < 0.01) {
+            BOOST_LOG(rdWarningLog)
+                << "Warning: opposing bonds " << neighborBondIndices[order[i]]
+                << " and " << neighborBondIndices[order[j]]
+                << "have opposite wedging. Stereo ignored." << std::endl;
+            return std::nullopt;
+          }
+        }
+      }
     }
 
     // three-coordinate special cases where chirality cannot be determined
