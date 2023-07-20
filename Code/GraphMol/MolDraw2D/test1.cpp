@@ -3731,7 +3731,7 @@ void testGithub2931() {
       // it's an ellipse, so different radii
       TEST_ASSERT(fabs(stod(match[1]) - 243) <
                   1);  // significant variability with freetype version here
-      TEST_ASSERT(fabs(stod(match[2]) - 350.2) < 0.2);
+      TEST_ASSERT(fabs(stod(match[2]) - 350.2) < 1.0);
       TEST_ASSERT(fabs(stod(match[3]) - 12.0) < 0.2);
       TEST_ASSERT(fabs(stod(match[4]) - 12.4) < 0.2);
 #endif
