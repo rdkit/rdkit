@@ -23,7 +23,7 @@ class RascalOptions;
 class RascalResult;
 
 // Find one or more MCESs between the two molecules.
-RDKIT_RASCALMCES_EXPORT std::vector<RascalResult> rascalMces(
+RDKIT_RASCAL_MCES_EXPORT std::vector<RascalResult> rascalMces(
     const ROMol &mol1, const ROMol &mol2, RascalOptions opts);
 
 }  // namespace RascalMCES
