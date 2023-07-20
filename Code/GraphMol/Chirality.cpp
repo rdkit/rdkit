@@ -452,7 +452,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   auto bondDir = bond->getBondDir();
   PRECONDITION(bondDir == Bond::BEGINWEDGE || bondDir == Bond::BEGINDASH,
                "bad bond direction");
-  constexpr double zeroTol = 1e-4;
+  constexpr double coordZeroTol = 1e-4;
+  constexpr double zeroTol = 1e-2;
 
   // NOTE that according to the CT file spec, wedging assigns chirality
   // to the atom at the point of the wedge, (atom 1 in the bond).
@@ -515,6 +516,14 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     if (nbrBond->getBondType() != Bond::SINGLE) {
       allSingle = false;
     }
+    // check for overly short bonds
+    if ((centerLoc - tmpPt).lengthSq() < zeroTol) {
+      BOOST_LOG(rdWarningLog)
+          << "Warning: zero-length (or near zero-length) bond "
+          << nbrBond->getIdx() << " connected to chiral center. Stereo ignored."
+          << std::endl;
+      return std::nullopt;
+    }
     bondVects.push_back(centerLoc.directionVector(tmpPt));
     if (is_regular_h(*oAtom)) {
       hSeen = true;
@@ -569,16 +578,17 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
 
     if (nNbrs == 3) {
       bool conflict = false;
-      if (bondVects[order[1]].z * bondVects[order[0]].z < -zeroTol &&
-          fabs(bondVects[order[2]].z) < zeroTol) {
+      if (bondVects[order[1]].z * bondVects[order[0]].z < -coordZeroTol &&
+          fabs(bondVects[order[2]].z) < coordZeroTol) {
         conflict = bondVects[order[2]].crossProduct(bondVects[order[0]]).z *
                        bondVects[order[2]].crossProduct(bondVects[order[1]]).z <
                    -1e-4;
-      } else if (bondVects[order[2]].z * bondVects[order[0]].z < -zeroTol &&
-                 fabs(bondVects[order[1]].z) < zeroTol) {
+      } else if (bondVects[order[2]].z * bondVects[order[0]].z <
+                     -coordZeroTol &&
+                 fabs(bondVects[order[1]].z) < coordZeroTol) {
         conflict = bondVects[order[1]].crossProduct(bondVects[order[0]]).z *
                        bondVects[order[1]].crossProduct(bondVects[order[2]]).z <
-                   -zeroTol;
+                   -coordZeroTol;
       }
       if (conflict) {
         BOOST_LOG(rdWarningLog)
@@ -600,9 +610,10 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
         return std::nullopt;
       }
       // if the bond on the other side is flat, wedge it the same way as bond 0:
-      if (fabs(bondVects[order[3]].z) < zeroTol) {
+      if (fabs(bondVects[order[3]].z) < coordZeroTol) {
         bondVects[order[3]].z = bondVects[order[0]].z;
-      } else if (bondVects[order[3]].z * bondVects[order[0]].z < -zeroTol) {
+      } else if (bondVects[order[3]].z * bondVects[order[0]].z <
+                 -coordZeroTol) {
         // it points opposite to bond 0... this is ambiguous (technically it's
         // square planar)
         BOOST_LOG(rdWarningLog)

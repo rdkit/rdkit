@@ -3627,3 +3627,85 @@ TEST_CASE("double bonded N with H should be stereogenic", "[bug][stereo]") {
     CHECK(si.size() == 1);
   }
 }
+
+TEST_CASE("zero bond-length chirality cases") {
+  SECTION("basics") {
+    {
+      auto m = R"CTAB(derived from CHEMBL3183068
+  Mrv2211 07202306222D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N 3.231 0 0 0
+M  V30 2 C 4.0137 -1.3378 0 0
+M  V30 3 C 2.6757 -2.1004 0 0
+M  V30 4 C 2.6757 -3.6389 0 0
+M  V30 5 C 1.3378 -1.3378 0 0
+M  V30 6 C 5.4672 -0.99 0 0
+M  V30 7 C 1.3378 -4.4216 0 0
+M  V30 8 C 0 -2.1205 0 0
+M  V30 9 C 0 -3.659 0 0
+M  V30 10 F 4.0137 -1.3378 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=3
+M  V30 2 1 2 3
+M  V30 3 1 2 6
+M  V30 4 1 2 10
+M  V30 5 2 3 4
+M  V30 6 1 3 5
+M  V30 7 1 4 7
+M  V30 8 2 5 8
+M  V30 9 2 7 9
+M  V30 10 1 8 9
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    {
+      auto m = R"CTAB(derived from CHEMBL3183068
+  Mrv2211 07202306222D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N 3.231 0 0 0
+M  V30 2 C 4.0137 -1.3378 0 0
+M  V30 3 C 2.6757 -2.1004 0 0
+M  V30 4 C 2.6757 -3.6389 0 0
+M  V30 5 C 1.3378 -1.3378 0 0
+M  V30 6 C 4.0137 -1.3378 0 0
+M  V30 7 C 1.3378 -4.4216 0 0
+M  V30 8 C 0 -2.1205 0 0
+M  V30 9 C 0 -3.659 0 0
+M  V30 10 F 4.5135 -2.6451 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=3
+M  V30 2 1 2 3
+M  V30 3 1 2 6
+M  V30 4 1 2 10
+M  V30 5 2 3 4
+M  V30 6 1 3 5
+M  V30 7 1 4 7
+M  V30 8 2 5 8
+M  V30 9 2 7 9
+M  V30 10 1 8 9
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+}
+}
