@@ -31,7 +31,8 @@ class RascalResult {
                const std::vector<std::vector<int>> &adjMatrix2,
                const std::vector<unsigned int> &clique,
                const std::vector<std::pair<int, int>> &vtx_pairs, bool timedOut,
-               bool swapped, bool chiralSmarts, int minFragSep);
+               bool swapped, bool chiralSmarts, bool ringMatchesRingOnly,
+               int minFragSep);
 
   RascalResult(const RascalResult &other);
 
@@ -81,6 +82,7 @@ class RascalResult {
   mutable std::string d_smarts;
   bool d_timedOut{false};
   bool d_chiralSmarts{false};
+  bool d_ringMatchesRingOnly{false};
   int d_maxFragSep{-1};
 
   // These are used for sorting the results.

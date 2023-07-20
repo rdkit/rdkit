@@ -1041,10 +1041,11 @@ std::vector<RascalResult> findMces(RascalStartPoint &starter,
 
   std::vector<RascalResult> results;
   for (const auto &c : maxCliques) {
-    results.push_back(RascalResult(
-        *starter.d_mol1, *starter.d_mol2, starter.d_adjMatrix1,
-        starter.d_adjMatrix2, c, starter.d_vtxPairs, timed_out,
-        starter.d_swapped, opts.exactChirality, opts.maxFragSeparation));
+    results.push_back(
+        RascalResult(*starter.d_mol1, *starter.d_mol2, starter.d_adjMatrix1,
+                     starter.d_adjMatrix2, c, starter.d_vtxPairs, timed_out,
+                     starter.d_swapped, opts.exactChirality,
+                     opts.ringMatchesRingOnly, opts.maxFragSeparation));
     if (opts.singleLargestFrag) {
       results.back().largestFragOnly();
     }
@@ -1058,17 +1059,9 @@ std::vector<RascalResult> findMces(RascalStartPoint &starter,
 std::vector<RascalResult> rascalMces(const ROMol &mol1, const ROMol &mol2,
                                      RascalOptions opts) {
   auto starter = makeInitialPartitionSet(&mol1, &mol2, opts);
-  //  std::cout << "tier 1 and 2 similarities : " << starter.d_tier1Sim << " and
-  //  "
-  //            << starter.d_tier2Sim << std::endl;
   if (!starter.d_partSet) {
     return std::vector<RascalResult>();
   }
-  //  std::cout << "clique size bounds : " << starter.d_lowerBound << " to "
-  //            << starter.d_partSet->upper_bound() << std::endl;
-  //  std::cout << "tier 1 and 2 similarities : " << starter.d_tier1Sim << " and
-  //  "
-  //            << starter.d_tier2Sim << std::endl;
 
   auto results = findMces(starter, opts);
   if (!opts.allBestMCESs && results.size() > 1) {

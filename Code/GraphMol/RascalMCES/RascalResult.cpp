@@ -28,9 +28,10 @@ RascalResult::RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                            const std::vector<unsigned int> &clique,
                            const std::vector<std::pair<int, int>> &vtx_pairs,
                            bool timedOut, bool swapped, bool chiralSmarts,
-                           int maxFragSep)
+                           bool ringMatchesRingOnly, int maxFragSep)
     : d_timedOut(timedOut),
       d_chiralSmarts(chiralSmarts),
+      d_ringMatchesRingOnly(ringMatchesRingOnly),
       d_maxFragSep(maxFragSep) {
   const std::vector<std::vector<int>> *mol1AdjMatrix;
   if (swapped) {
@@ -131,6 +132,8 @@ double RascalResult::similarity() const {
 std::string RascalResult::createSmartsString() const {
   std::unique_ptr<RDKit::RWMol> smartsMol(new RDKit::RWMol);
   std::map<int, unsigned int> atomMap;
+  auto mol1Rings = d_mol1->getRingInfo();
+  auto mol2Rings = d_mol2->getRingInfo();
   for (const auto &am : d_atomMatches) {
     RDKit::QueryAtom a;
     auto mol1Atom = d_mol1->getAtomWithIdx(am.first);
@@ -152,6 +155,15 @@ std::string RascalResult::createSmartsString() const {
       a.expandQuery(RDKit::makeAtomAliphaticQuery(), Queries::COMPOSITE_AND,
                     true);
     }
+    if (d_ringMatchesRingOnly && !mol1Atom->getIsAromatic() &&
+        !mol2Atom->getIsAromatic() &&
+        mol1Rings->numAtomRings(mol1Atom->getIdx()) &&
+        mol2Rings->numAtomRings(mol2Atom->getIdx())) {
+      std::cout << mol1Atom->getIdx() << " : " << mol1Atom->getAtomicNum()
+                << " : " << mol1Rings->numAtomRings(mol1Atom->getIdx())
+                << std::endl;
+      a.expandQuery(RDKit::makeAtomInRingQuery(), Queries::COMPOSITE_AND, true);
+    }
     auto ai = smartsMol->addAtom(&a);
     atomMap.insert(std::make_pair(am.first, ai));
   }
@@ -166,6 +178,13 @@ std::string RascalResult::createSmartsString() const {
     if (mol1Bond->getBondType() != mol2Bond->getBondType()) {
       b.expandQuery(makeBondOrderEqualsQuery(mol2Bond->getBondType()),
                     Queries::COMPOSITE_OR);
+    }
+    if (d_ringMatchesRingOnly && !mol1Bond->getIsAromatic() &&
+        !mol2Bond->getIsAromatic() &&
+        mol1Rings->numBondRings(mol1Bond->getIdx()) &&
+        mol2Rings->numBondRings(mol2Bond->getIdx())) {
+      b.expandQuery(RDKit::makeBondIsInRingQuery(), Queries::COMPOSITE_AND,
+                    true);
     }
     smartsMol->addBond(&b, false);
   }
@@ -587,10 +606,13 @@ void extractClique(const std::vector<unsigned int> &clique,
 void cleanSmarts(std::string &smarts) {
   const static std::vector<std::pair<std::regex, std::string>> repls{
       {std::regex(R"(\[#6&A\])"), "C"},
+      {std::regex(R"(\[#6&A&R\])"), "[C&R]"},
       {std::regex(R"(\[#6&a\])"), "c"},
       {std::regex(R"(\[#7&A\])"), "N"},
+      {std::regex(R"(\[#7&A&R\])"), "[N&R]"},
       {std::regex(R"(\[#7&a\])"), "n"},
       {std::regex(R"(\[#8&A\])"), "O"},
+      {std::regex(R"(\[#8&A&R\])"), "[O&R]"},
       {std::regex(R"(\[#8&a\])"), "o"},
       {std::regex(R"(\[#9&A\])"), "F"},
       {std::regex(R"(\[#16&A\])"), "S"},
