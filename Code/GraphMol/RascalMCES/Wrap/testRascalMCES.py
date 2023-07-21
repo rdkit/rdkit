@@ -88,3 +88,18 @@ class TestCase(unittest.TestCase):
         self.assertEqual(len(results), 1)
         
 
+    def test5(self):
+        # Check exposure of mol1() and mol2() in RascalResults.
+        smi1 = "c1ccccc1C(C(=O)CC)(c1ccccc1)CC(C)N(C)C"
+        mol1 = Chem.MolFromSmiles(smi1)
+        smi2 = "c1ccccc1C1(CCN(C)CC1)C(=O)OCC"
+        mol2 = Chem.MolFromSmiles(smi2)
+        opts = rdRascalMCES.RascalOptions()
+        opts.similarityThreshold = 0.6
+        results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+        self.assertEqual(len(results), 1)
+        outmol1 = results[0].mol1()
+        self.assertEqual(Chem.MolToSmiles(outmol1), 'CCC(=O)C(CC(C)N(C)C)(c1ccccc1)c1ccccc1')
+        outmol2 = results[0].mol2()
+        self.assertEqual(Chem.MolToSmiles(outmol2), 'CCOC(=O)C1(c2ccccc2)CCN(C)CC1')
+        
