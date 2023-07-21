@@ -1605,7 +1605,7 @@ It returns a list of RascalResult objects.  Each RascalResult contains the 2 mol
 the result pertains to, the SMARTS string of the MCES, the lists of atoms and bonds in the
 two molecules that match, the Johnson similarity between the 2 molecules, the number of
 fragments in the MCES, the number of atoms in the largest fragment and whether the run
-timed out or not.  There is also the method largestFragmentOnly(), which cuts a the MCES
+timed out or not.  There is also the method largestFragmentOnly(), which cuts the MCES
 down to the largest single fragment.  This is a non-reversible change, so if you want both
 results, take a copy first.
 
@@ -1654,13 +1654,13 @@ by passing an optional RascalOptions object:
 
 In this case, the upper bound on the similarity score is below the default threshold
 of 0.7, so no results are returned.  Setting the threshold to 0.5 produces the second
-result although, as can be seen, the final similarity it substantially below the
+result although, as can be seen, the final similarity is substantially below the
 threshold.  This example also shows a disadvantage of the MCES method, which is that
 it can produce small fragments in the MCES which are rarely helpful.  The option
 minFragSize can be used to over-ride the default value of -1, which means no minimum
 size.
 
-Like FindMCS, there is ringMatchesRingOnly option, and also there's
+Like FindMCS, there is a ringMatchesRingOnly option, and also there's
 completeAromaticRings, which is True by defualt, and means that MCESs won't be returned
 with partial aromatic rings matching:
 
@@ -1682,9 +1682,9 @@ with partial aromatic rings matching:
 
 This result looks a bit odd, with a single aromatic carbon in the first SMARTS
 string.  This is a consequence of the fact that the MCES works on matching bonds.
-A better representation might be C1CCC[$(C-c)]1.  When the completeAromaticRings
-option is set to False, a larger MCES is found, with just the pyridine nitrogen
-atom not matching the corresponding phenyl carbon atom.
+A better, atom-centric, representation might be C1CCC[$(C-c)]1.  When the
+completeAromaticRings option is set to False, a larger MCES is found, with just
+the pyridine nitrogen atom not matching the corresponding phenyl carbon atom.
 
 
 Fingerprinting and Molecular Similarity
