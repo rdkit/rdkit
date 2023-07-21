@@ -514,7 +514,7 @@ Here's a partial list of the features that are supported:
   - enhanced stereochemistry (V3000 only)
   - Sgroups: Sgroups are read and written, but interpretation of their contents is still very much
     a work in progress
-  - Dative bonds in V2000 (type 9), despite them not being part of the standard, we see them in the wild
+  - Dative bonds in V2000 (type 9), despite them not being part of the standard, we support them because they frequently show up in real-world data
 
 Ring Finding and SSSR
 =====================
