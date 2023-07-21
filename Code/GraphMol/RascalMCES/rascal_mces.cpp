@@ -7,6 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+// This file contains the driving functions for the determination of
+// the Maximum Common Edge Substructure (MCES) between 2 molecules.
+// It uses the RASCAL algorithm of John Raymond:
+// RASCAL: Calculation of Graph Similarity using Maximum Common
+// Edge Subgraphs, John W. Raymond, Eleanor J. Gardiner, Peter Willett
+// 'The Computer Journal', 45, 631-644 (2002).
+// https://eprints.whiterose.ac.uk/3568/1/willets3.pdf
 
 #include <chrono>
 #include <iostream>

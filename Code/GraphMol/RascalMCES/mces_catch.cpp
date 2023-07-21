@@ -24,6 +24,12 @@
 #include <GraphMol/RascalMCES/RascalOptions.h>
 #include <GraphMol/RascalMCES/RascalResult.h>
 
+// 'The paper' referenced below is :
+// RASCAL: Calculation of Graph Similarity using Maximum Common
+// Edge Subgraphs, John W. Raymond, Eleanor J. Gardiner, Peter Willett
+// 'The Computer Journal', 45, 631-644 (2002).
+// https://eprints.whiterose.ac.uk/3568/1/willets3.pdf
+
 namespace RDKit {
 namespace RascalMCES {
 double tier_1_sim(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
