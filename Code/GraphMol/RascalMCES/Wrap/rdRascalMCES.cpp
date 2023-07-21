@@ -42,15 +42,31 @@ void largestFragmentOnly(RDKit::RascalMCES::RascalResult &res) {
 
 struct RascalResult_wrapper {
   static void wrap() {
+    std::string docString =
+        "Used to return RASCAL MCES results."
+        ""
+        " smartsString : the SMARTS defining the MCES"
+        " bondMatches(): "
+        " atomMatches(): likewise for the atoms"
+        " largestFragmentOnly(): function that cuts the result down to the single"
+        "                        largest fragment.  This cannot be reversed."
+        " similarity: the Johnson similarity between the two molecules"
+        " numFragments: the number of fragments in the MCES"
+        " largestFragmentSize: the number of bonds in the largest fragment"
+        " timedOut: whether the MCES determination timed out"
+        "";
     python::class_<RDKit::RascalMCES::RascalResult>(
-        "RascalResult", "Used to return RASCAL MCES results.", python::no_init)
+        "RascalResult", docString.c_str(), python::no_init)
         .def_readonly("smartsString", &RDKit::RascalMCES::RascalResult::smarts,
                       "SMARTS string defining the MCES.")
-        .def("bondMatches", &bondMatches, "Bonds that matched in 2 molecules.")
-        .def("atomMatches", &atomMatches, "Atoms that matched in 2 molecules.")
+        .def("bondMatches", &bondMatches,
+             "A function returning a list of list "
+             "of tuples, each inner list containing the matching bonds in the "
+             "MCES as tuples of bond indices from mol1 and mol2")
+        .def("atomMatches", &atomMatches, "Likewise for atoms.")
         .def(
             "largestFragmentOnly", &largestFragmentOnly,
-            "Cuts the MCES down to the single largest frag.  This cannot be undone.")
+            "Function that cuts the MCES down to the single largest frag.  This cannot be undone.")
         .def_readonly("similarity",
                       &RDKit::RascalMCES::RascalResult::similarity,
                       "Johnson similarity between 2 molecules.")
@@ -124,8 +140,12 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
           "Maximum time (in seconds) to spend on an individual MCESs determination.  Default 60, -1 means no limit.");
 
   docString =
-      "Find one or more MCESs between the 2 molecules given.  Returns a list of RascalResult objects.";
-
+      "Find one or more MCESs between the 2 molecules given.  Returns a list of "
+      "RascalResult objects."
+      "- mol1"
+      "- mol2 The two molecules for which to find the MCES"
+      "- opts Optional RascalOptions object changing the default run mode."
+      "";
   python::def("FindMCES", &RDKit::findMCESWrapper,
               (python::arg("mol1"), python::arg("mol2"),
                python::arg("opts") = python::object()),

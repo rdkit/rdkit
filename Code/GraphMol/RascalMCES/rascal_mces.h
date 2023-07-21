@@ -22,7 +22,16 @@ namespace RascalMCES {
 
 class RascalResult;
 
-// Find one or more MCESs between the two molecules.
+// Find one or more MCESs between the two molecules.  The MCES is the
+// Maximum Common Edge Substructure, and is the largest set of bonds
+// common to the 2 molecules.
+/*!
+ *
+ * @param mol1 : first molecule
+ * @param mol2 : second molecule for MCES determination.
+ * @param opts : (optional) set of options controlling the MCES determination
+ * @return : vector of RascalResult objects.
+ */
 RDKIT_RASCAL_MCES_EXPORT std::vector<RascalResult> rascalMces(
     const ROMol &mol1, const ROMol &mol2, RascalOptions opts = RascalOptions());
 
