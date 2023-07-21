@@ -1417,8 +1417,38 @@ or into a generic framework:
 Maximum Common Substructure
 ***************************
 
-The FindMCS function find a maximum common substructure (MCS) of two
-or more molecules:
+There are 2 methods for finding maximum common substructures.  The first, FindMCS,
+finds a single fragment maximum common substructure (MCS) of two or more molecules:
+The second, RascalMCES, finds the maximum common edge substructure (MCES) between two
+molecules and can return a multi-fragment MCES.  The difference is demonstrated with the
+following pair of molecules:
+
++-------------------------------------+
+| .. image:: images/mcs_example_1.png |
++-------------------------------------+
+| .. image:: images/mcs_example_2.png |
++-------------------------------------+
+
+FMCS gives this maximum common substructure:
+
++-------------------------------------+
+| .. image:: images/mcs_example_3.png |
++-------------------------------------+
+| .. image:: images/mcs_example_4.png |
++-------------------------------------+
+
+Whereas RascalMCES gives:
+
++-------------------------------------+
+| .. image:: images/mcs_example_5.png |
++-------------------------------------+
+| .. image:: images/mcs_example_6.png |
++-------------------------------------+
+
+FindMCS
+=======
+
+FindMCS operates on 2 or more molecules:
 
 .. doctest::
 
@@ -1554,6 +1584,107 @@ return the best match found in that time. If timeout is reached then the
   True
 
 (The MCS after 50 seconds contained 511 atoms.)
+
+RascalMCES
+==========
+
+RascalMCES can only work on 2 molecules at a time:
+
+.. doctest::
+
+  >>> from rdkit.Chem import rdRascalMCES
+  >>> mol1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
+  >>> mol2 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL152361")
+  >>> res = rdRascalMCES.FindMCES(mol1, mol2)
+  >>> res[0].bondMatches()
+  [(0, 1), (1, 0), (2, 2), (3, 30), (4, 29), (5, 28), (6, 6), (7, 7), (8, 8), (9, 9), (10, 10), (11, 11), (12, 12), (13, 13), (14, 14), (15, 15), (20, 17), (21, 18), (22, 19), (23, 20), (24, 21), (25, 22), (26, 23), (27, 24), (28, 25), (29, 26), (30, 27), (31, 5), (32, 4), (33, 3), (34, 31), (35, 32), (36, 33)]
+  >>> res[0].smartsString
+  'CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1.CNC12CC3CC(-C1)-CC(-C2)-C3'
+
+It returns a list of RascalResult objects.  Each RascalResult contains the 2 molecules that
+the result pertains to, the SMARTS string of the MCES, the lists of atoms and bonds in the
+two molecules that match, the Johnson similarity between the 2 molecules, the number of
+fragments in the MCES, the number of atoms in the largest fragment and whether the run
+timed out or not.  There is also the method largestFragmentOnly(), which cuts a the MCES
+down to the largest single fragment.  This is a non-reversible change, so if you want both
+results, take a copy first.
+
+The MCES differs from a conventional MCS in that it is the maximum common substructure based
+on bonds rather than atoms.  Often the result is the same, but not always.
+
+The Johnson similarity is akin to a Tanimoto similarity, but expressed in terms of the
+atoms and bonds in the MCES.  It is the square of the sum of the number of atoms and bonds
+in the MCES divided by the product of the sums of the numbers of atoms and bonds in the
+2 input molecules.  It has values between 0.0 (no MCES between the molecules) and 1.0 (the
+molecules are identical).  A key source of efficiency in the RASCAL algorithm is a fast and
+correct prediction of a maximum value for the Johnson similarity between 2 molecules and
+hence the maximum size of the MCES.  The first step in the algorithm is then a screening,
+whereby the full MCES determination is not performed if the predicted similarity is less
+than some desired threshold.  The final similarity between the 2 molecules may be less
+than the threshold, but it will never be higher than the predicted upper bound.  RASCAL
+stems from RApid Similarity CALulation.
+
+The default settings for RascalMCES are good for general use, but they may be altered
+by passing an optional RascalOptions object:
+
+.. doctest::
+
+  >>> mol1 = Chem.MolFromSmiles('Oc1cccc2C(=O)C=CC(=O)c12')
+  >>> mol2 = Chem.MolFromSmiles('O1C(=O)C=Cc2cc(OC)c(O)cc12')
+  >>> results = rdRascalMCES.FindMCES(mol1, mol2)
+  >>> len(results)
+  0
+  >>> opts = rdRascalMCES.RascalOptions()
+  >>> opts.similarityThreshold = 0.5
+  >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+  >>> len(results)
+  1
+  >>> f'{results[0].similarity:.2f}'
+  0.37
+  >>> results[0].smartsString
+  Oc1ccccc1.[#6]=O
+  >>> opts.minFragSize = 3
+  >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+  >>> len(results)
+  1
+  >>> f'{results[0].similarity:.2f}'
+  0.25
+  >>> results[0].smartsString
+  Oc1ccccc1
+
+In this case, the upper bound on the similarity score is below the default threshold
+of 0.7, so no results are returned.  Setting the threshold to 0.5 produces the second
+result although, as can be seen, the final similarity it substantially below the
+threshold.  This example also shows a disadvantage of the MCES method, which is that
+it can produce small fragments in the MCES which are rarely helpful.  The option
+minFragSize can be used to over-ride the default value of -1, which means no minimum
+size.
+
+Like FindMCS, there is ringMatchesRingOnly option, and also there's
+completeAromaticRings, which is True by defualt, and means that MCESs won't be returned
+with partial aromatic rings matching:
+
+.. doctest::
+
+  >>> mol1 = Chem.MolFromSmiles('C1CCCC1c1ccncc1')
+  >>> mol2 = Chem.MolFromSmiles('C1CCCC1c1ccccc1')
+  >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+  >>> f'{results[0].similarity:.2f}'
+  0.27
+  >>> results[0].smartsString
+  C1CCCC1-c
+  >>> opts.completeAromaticRings = False
+  >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+  >>> f'{results[0].similarity:.2f}'
+  0.76
+  >>> results[0].smartsString
+  C1CCCC1-c(:cc):cc
+
+This result looks a bit odd, with a single aromatic carbon in the first SMARTS
+string.  This is a consequence of the fact that the MCES works on matching bonds.
+A better representation might be C1CCC[$(C-c)]1.  When the completeAromaticRings
+option is set to False, a larger MCES is found, with just the pyridine nitrogen
+atom not matching the corresponding phenyl carbon atom.
 
 
 Fingerprinting and Molecular Similarity
