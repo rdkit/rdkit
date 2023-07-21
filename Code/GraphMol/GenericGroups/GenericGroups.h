@@ -554,8 +554,8 @@ RDKIT_GENERICGROUPS_EXPORT bool TAtomMatcher(const ROMol &mol, const Atom &atom,
 
 */
 
-bool HplusAtomMatcher(const ROMol &mol, const Atom &atom,
-                      boost::dynamic_bitset<> ignore);
+RDKIT_GENERICGROUPS_EXPORT bool HplusAtomMatcher(const ROMol &mol, const Atom &atom,
+                                                 boost::dynamic_bitset<> ignore);
 
 //! Matches Pol -  polymer bead
 /*!
