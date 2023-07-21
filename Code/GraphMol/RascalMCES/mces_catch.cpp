@@ -532,16 +532,15 @@ TEST_CASE("single fragment") {
   for (auto &test : tests) {
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
-    opts.singleLargestFrag = false;
     auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.front().numFrags() == 2);
     REQUIRE(res.front().bondMatches().size() == std::get<2>(test));
     check_smarts_ok(*m1, *m2, res.front());
 
-    opts.singleLargestFrag = true;
-    res = rascalMces(*m1, *m2, opts);
+    res.front().largestFragOnly();
     REQUIRE(res.front().numFrags() == 1);
     REQUIRE(res.front().bondMatches().size() == std::get<3>(test));
+    REQUIRE(res.front().largestFragSize() == res.front().atomMatches().size());
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
@@ -884,7 +883,6 @@ TEST_CASE("FMCS test190") {
       {"Cc1ccc(SCC(=O)Nc2cc(-c3nc4cc(C)ccc4o3)c(O)cc2)cc1  CHEMBL1611932"_smiles},
   };
   RascalOptions opts;
-  opts.singleLargestFrag = false;
   std::vector<std::tuple<int, int, std::string>> exp_res{
       {29, 32, "COc1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
       {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},

@@ -1016,12 +1016,7 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
 }
 
 std::vector<RascalResult> findMces(RascalStartPoint &starter,
-                                   RascalOptions opts) {
-  // opts.singleLargestFrag requires opts.allBestMCESs
-  bool orig_allBestMCESs = opts.allBestMCESs;
-  if (opts.singleLargestFrag) {
-    opts.allBestMCESs = true;
-  }
+                                   const RascalOptions &opts) {
   std::vector<unsigned int> clique;
   std::vector<std::vector<unsigned int>> maxCliques;
   auto start_time = std::chrono::high_resolution_clock::now();
@@ -1037,8 +1032,6 @@ std::vector<RascalResult> findMces(RascalStartPoint &starter,
     maxCliques = e.d_cliques;
     timed_out = true;
   }
-  opts.allBestMCESs = orig_allBestMCESs;
-
   std::vector<RascalResult> results;
   for (const auto &c : maxCliques) {
     results.push_back(
@@ -1046,9 +1039,6 @@ std::vector<RascalResult> findMces(RascalStartPoint &starter,
                      starter.d_adjMatrix2, c, starter.d_vtxPairs, timed_out,
                      starter.d_swapped, opts.exactChirality,
                      opts.ringMatchesRingOnly, opts.maxFragSeparation));
-    if (opts.singleLargestFrag) {
-      results.back().largestFragOnly();
-    }
   }
   std::sort(results.begin(), results.end(), resultSort);
   return results;
@@ -1057,7 +1047,7 @@ std::vector<RascalResult> findMces(RascalStartPoint &starter,
 // calculate the RASCAL MCES between the 2 molecules, provided it is within the
 // similarity threshold given.
 std::vector<RascalResult> rascalMces(const ROMol &mol1, const ROMol &mol2,
-                                     RascalOptions opts) {
+                                     const RascalOptions &opts) {
   auto starter = makeInitialPartitionSet(&mol1, &mol2, opts);
   if (!starter.d_partSet) {
     return std::vector<RascalResult>();

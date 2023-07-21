@@ -42,19 +42,7 @@ void largestFragmentOnly(RDKit::RascalMCES::RascalResult &res) {
 
 struct RascalResult_wrapper {
   static void wrap() {
-    std::string docString =
-        "Used to return RASCAL MCES results."
-        ""
-        " smartsString : the SMARTS defining the MCES"
-        " bondMatches(): "
-        " atomMatches(): likewise for the atoms"
-        " largestFragmentOnly(): function that cuts the result down to the single"
-        "                        largest fragment.  This cannot be reversed."
-        " similarity: the Johnson similarity between the two molecules"
-        " numFragments: the number of fragments in the MCES"
-        " largestFragmentSize: the number of bonds in the largest fragment"
-        " timedOut: whether the MCES determination timed out"
-        "";
+    std::string docString = "Used to return RASCAL MCES results.";
     python::class_<RDKit::RascalMCES::RascalResult>(
         "RascalResult", docString.c_str(), python::no_init)
         .def_readonly("smartsString", &RDKit::RascalMCES::RascalResult::smarts,
@@ -75,7 +63,7 @@ struct RascalResult_wrapper {
                       "Number of fragments in MCES.")
         .def_readonly("largestFragmentSize",
                       &RDKit::RascalMCES::RascalResult::largestFragSize,
-                      "Number of bonds in largest fragment.")
+                      "Number of atoms in largest fragment.")
         .def_readonly("timedOut", &RDKit::RascalMCES::RascalResult::timedout,
                       "Whether it timed out.");
   }
@@ -120,11 +108,6 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
       .def_readwrite("exactChirality",
                      &RDKit::RascalMCES::RascalOptions::exactChirality,
                      "If True (default), chirality of atoms must match.")
-      .def_readwrite(
-          "singleLargestFragment",
-          &RDKit::RascalMCES::RascalOptions::singleLargestFrag,
-          "If False (default), multiple fragments may be returned for MCES.  If True,"
-          "only the single largest component of the MCES will be reported.")
       .def_readwrite(
           "minFragSize", &RDKit::RascalMCES::RascalOptions::minFragSize,
           "Imposes a minimum on the number of bonds in a fragment that may be part of the MCES.  Default -1 means no minimum.")

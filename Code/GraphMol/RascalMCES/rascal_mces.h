@@ -33,7 +33,8 @@ class RascalResult;
  * @return : vector of RascalResult objects.
  */
 RDKIT_RASCAL_MCES_EXPORT std::vector<RascalResult> rascalMces(
-    const ROMol &mol1, const ROMol &mol2, RascalOptions opts = RascalOptions());
+    const ROMol &mol1, const ROMol &mol2,
+    const RascalOptions &opts = RascalOptions());
 
 }  // namespace RascalMCES
 }  // namespace RDKit

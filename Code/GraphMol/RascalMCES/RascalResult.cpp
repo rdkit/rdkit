@@ -123,6 +123,7 @@ void RascalResult::largestFragOnly() {
     }
   }
   d_bondMatches = new_bond_matches;
+  d_numFrags = 1;
 }
 
 double RascalResult::similarity() const {

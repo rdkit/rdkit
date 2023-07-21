@@ -23,11 +23,8 @@ struct RascalOptions {
   bool ringMatchesRingOnly =
       false;  // if true, ring bonds won't match non-ring bonds
   bool exactChirality = false;  // if true, R must match R and S match S.
-  bool singleLargestFrag =
-      false; /* if true, only return a single fragment for the MCES. Default
-                is to produce multiple matching fragments if necessary. */
   int minFragSize =
-      -1;    /* minimum number of atoms in any fragment - -1 means no minimum */
+      -1; /* minimum number of atoms in any fragment - -1 means no minimum */
   int maxFragSeparation = -1; /* biggest through-bond distance that bonds can
                                match. -1 means no limit. */
   bool allBestMCESs =
