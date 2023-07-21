@@ -85,6 +85,69 @@ Normalizer::Normalizer(
 // destructor
 Normalizer::~Normalizer() { delete d_tcat; }
 
+void Normalizer::normalizeInPlace(RWMol &mol) {
+  BOOST_LOG(rdInfoLog) << "Running Normalizer\n";
+  PRECONDITION(this->d_tcat, "");
+  const TransformCatalogParams *tparams = this->d_tcat->getCatalogParams();
+  PRECONDITION(tparams, "no transform parameters");
+
+  if (!mol.getNumAtoms()) {
+    return;
+  }
+
+  const std::vector<std::shared_ptr<ChemicalReaction>> &transforms =
+      tparams->getTransformations();
+
+  // initialize the transforms and make sure that they are compatible with the
+  // restrictions on in-place reactions
+  for (auto &transform : transforms) {
+    if (!transform->isInitialized()) {
+      transform->initReactantMatchers();
+    }
+    if (transform->getNumProductTemplates() != 1 ||
+        transform->getNumReactantTemplates() != 1 ||
+        transform->getProducts()[0]->getNumAtoms() >
+            transform->getReactants()[0]->getNumAtoms()) {
+      throw ValueErrorException(
+          "normalizeInPlace can only be used with transforms which have a single reactant and single product. The number of atoms in the product cannot be larger than the number of atoms in the reactant.");
+    }
+  }
+  // we might want ring info
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
+  for (unsigned int i = 0; i < MAX_RESTARTS; ++i) {
+    bool loop_break = false;
+    // Iterate through Normalization transforms and apply each in order
+    for (auto &transform : transforms) {
+      constexpr bool removeUnmatchedAtoms = false;
+      if (transform->runReactant(mol, removeUnmatchedAtoms)) {
+        BOOST_LOG(rdInfoLog)
+            << "Rule applied: "
+            << transform->getProp<std::string>(common_properties::_Name)
+            << "\n";
+        constexpr unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^
+                                             MolOps::SANITIZE_CLEANUP ^
+                                             MolOps::SANITIZE_PROPERTIES;
+        unsigned int failed;
+        try {
+          MolOps::sanitizeMol(mol, failed, sanitizeOps);
+        } catch (MolSanitizeException &) {
+          BOOST_LOG(rdInfoLog) << "FAILED sanitizeMol.\n";
+        }
+        loop_break = true;
+        break;
+      }
+    }
+    // For loop finishes normally, all applicable transforms have been applied
+    if (!loop_break) {
+      return;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Gave up normalization after " << MAX_RESTARTS
+                       << " restarts.\n";
+}
+
 ROMol *Normalizer::normalize(const ROMol &mol) {
   BOOST_LOG(rdInfoLog) << "Running Normalizer\n";
   PRECONDITION(this->d_tcat, "");

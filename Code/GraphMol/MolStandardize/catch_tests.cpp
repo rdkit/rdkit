@@ -1038,3 +1038,79 @@ TEST_CASE("Github 5784: kekulization error when enumerating tautomers") {
     REQUIRE(res);
   }
 }
+
+TEST_CASE("in place operations") {
+  SECTION("reionizer") {
+    MolStandardize::Reionizer reion;
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    reion.reionizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=C([O-])c1cccc(O)c1");
+  }
+  SECTION("reionize") {
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    MolStandardize::reionizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=C([O-])c1cccc(O)c1");
+  }
+  SECTION("uncharge") {
+    MolStandardize::Uncharger unchg;
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    unchg.unchargeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=C(O)c1cccc(O)c1");
+  }
+  SECTION("normalizer") {
+    MolStandardize::Normalizer nrml;
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("O=N(=O)-CC-N(=O)=O", ps)};
+    REQUIRE(m);
+    nrml.normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=[N+]([O-])CC[N+](=O)[O-]");
+    m.reset(SmilesToMol("OCCN", ps));
+    REQUIRE(m);
+    nrml.normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "NCCO");
+  }
+  SECTION("normalize") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("O=N(=O)-CC-N(=O)=O", ps)};
+    REQUIRE(m);
+    MolStandardize::normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=[N+]([O-])CC[N+](=O)[O-]");
+    m.reset(SmilesToMol("OCCN", ps));
+    REQUIRE(m);
+    MolStandardize::normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "NCCO");
+  }
+  SECTION("FragmentRemover") {
+    auto m = "CCCC.Cl.[Na]"_smiles;
+    REQUIRE(m);
+    MolStandardize::FragmentRemover fragremover;
+    RWMol cp1(*m);
+    fragremover.removeInPlace(cp1);
+    CHECK(MolToSmiles(cp1) == "CCCC");
+    RWMol cp2(*m);
+    MolStandardize::removeFragmentsInPlace(cp2);
+    CHECK(MolToSmiles(cp2) == "CCCC");
+  }
+  SECTION("cleanup") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    // silly ugly example which ensures disconnection, normalization, and
+    // reionization
+    std::unique_ptr<RWMol> m{
+        SmilesToMol("O=N(=O)-C(O[Fe])C(C(=O)O)C-N(=O)=O", ps)};
+    REQUIRE(m);
+    MolStandardize::cleanupInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=C([O-])C(C[N+](=O)[O-])C(O)[N+](=O)[O-].[Fe+]");
+  }
+  SECTION("disconnect organometallics") {
+    auto m("[CH2-](->[K+])c1ccccc1"_smiles);
+    TEST_ASSERT(m);
+    MolStandardize::disconnectOrganometallicsInPlace(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "[CH2-]c1ccccc1.[K+]");
+  }
+}
