@@ -114,7 +114,7 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
                      "If True (default), chirality of atoms must match.")
       .def_readwrite(
           "minFragSize", &RDKit::RascalMCES::RascalOptions::minFragSize,
-          "Imposes a minimum on the number of bonds in a fragment that may be part of the MCES.  Default -1 means no minimum.")
+          "Imposes a minimum on the number of atoms in a fragment that may be part of the MCES.  Default -1 means no minimum.")
       .def_readwrite(
           "maxFragSeparation",
           &RDKit::RascalMCES::RascalOptions::maxFragSeparation,
