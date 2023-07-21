@@ -14,17 +14,17 @@
 
 #include <vector>
 
+#include <GraphMol/RascalMCES/RascalOptions.h>
 namespace RDKit {
 class ROMol;
 
 namespace RascalMCES {
 
-class RascalOptions;
 class RascalResult;
 
 // Find one or more MCESs between the two molecules.
 RDKIT_RASCAL_MCES_EXPORT std::vector<RascalResult> rascalMces(
-    const ROMol &mol1, const ROMol &mol2, RascalOptions opts);
+    const ROMol &mol1, const ROMol &mol2, RascalOptions opts = RascalOptions());
 
 }  // namespace RascalMCES
 }  // namespace RDKit

@@ -69,7 +69,11 @@ struct RascalResult_wrapper {
 namespace RDKit {
 
 python::list findMCESWrapper(const ROMol &mol1, const ROMol &mol2,
-                             RascalMCES::RascalOptions opts) {
+                             python::object py_opts) {
+  RascalMCES::RascalOptions opts;
+  if (!py_opts.is_none()) {
+    opts = python::extract<RascalMCES::RascalOptions>(py_opts);
+  }
   auto results = RascalMCES::rascalMces(mol1, mol2, opts);
   python::list pyres;
   for (auto &res : results) {
@@ -123,7 +127,8 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
       "Find one or more MCESs between the 2 molecules given.  Returns a list of RascalResult objects.";
 
   python::def("FindMCES", &RDKit::findMCESWrapper,
-              (python::arg("mol1"), python::arg("mol2"), python::arg("opts")),
+              (python::arg("mol1"), python::arg("mol2"),
+               python::arg("opts") = python::object()),
               docString.c_str());
 }
 

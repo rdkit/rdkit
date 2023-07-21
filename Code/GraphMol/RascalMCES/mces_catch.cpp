@@ -20,6 +20,7 @@
 #define CATCH_CONFIG_MAIN
 #include "../../../External/catch/catch/single_include/catch2/catch.hpp"
 
+#include <GraphMol/RascalMCES/rascal_mces.h>
 #include <GraphMol/RascalMCES/RascalOptions.h>
 #include <GraphMol/RascalMCES/RascalResult.h>
 
@@ -39,10 +40,6 @@ void get_bond_labels(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                      const RascalOptions &opts,
                      std::vector<unsigned int> &bondLabels1,
                      std::vector<unsigned int> &bondLabels2);
-
-std::vector<RascalResult> rascalMces(const ROMol &mol1, const ROMol &mol2,
-                                     RascalOptions opts);
-
 }  // namespace RascalMCES
 }  // namespace RDKit
 
@@ -90,6 +87,24 @@ TEST_CASE("Very small test", "[basics]") {
   REQUIRE_THAT(tier2_sim, Catch::Matchers::WithinAbs(0.7901, 0.0001));
 
   auto res = rascalMces(*m1, *m2, opts);
+
+  REQUIRE(res.size() == 1);
+  REQUIRE(res.front().bondMatches().size() == 3);
+  std::vector<std::pair<int, int>> exp_bond_matches{{1, 2}, {2, 1}, {3, 0}};
+  REQUIRE(exp_bond_matches == res.front().bondMatches());
+  REQUIRE_THAT(res.front().similarity(),
+               Catch::Matchers::WithinAbs(0.6049, 0.0001));
+
+  check_smarts_ok(*m1, *m2, res.front());
+}
+
+TEST_CASE("Default options", "[basics]") {
+  auto m1 = "OCC(=O)N"_smiles;
+  REQUIRE(m1);
+  auto m2 = "NC(=O)C=O"_smiles;
+  REQUIRE(m2);
+
+  auto res = rascalMces(*m1, *m2);
 
   REQUIRE(res.size() == 1);
   REQUIRE(res.front().bondMatches().size() == 3);
@@ -223,9 +238,6 @@ TEST_CASE("Methadone vs mepiridine test", "[basics]") {
 }
 
 TEST_CASE("testosterone vs estradiol", "[basics]") {
-  // A delta-y exchange causes a false match, which in this
-  // case will have the cyclopropyl ring matching part of the
-  // t-butyl, a 3-bond match.
   auto m1 = "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C"_smiles;
   REQUIRE(m1);
   auto m2 = "CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O"_smiles;
@@ -334,7 +346,6 @@ TEST_CASE("Symmetrical esters test", "[basics]") {
 
 TEST_CASE("dyphylline similarities") {
   auto dyphylline = "OCC(O)CN1C=NC2=C1C(=O)N(C)C(=O)N(C)2"_smiles;
-  std::cout << "dyphylline : " << RDKit::MolToSmiles(*dyphylline) << std::endl;
   // The paper has the similarity scores as 0.78, 0.57, 0.51, 0.63 and 0.35
   // respectively. This implementation makes Viagra 0.11 because of the default
   // completeAromaticRings. Without that, it comes to 0.26.  The 0.63 for
@@ -356,8 +367,6 @@ TEST_CASE("dyphylline similarities") {
   for (size_t i = 0; i < 6; ++i) {
     auto m = mols[i];
     auto res = rascalMces(*dyphylline, *std::get<0>(m), opts);
-    std::cout << std::get<1>(m) << " : " << RDKit::MolToSmiles(*std::get<0>(m))
-              << " : " << res.front().similarity() << std::endl;
     REQUIRE_THAT(res.front().similarity(),
                  Catch::Matchers::WithinAbs(std::get<2>(m), 0.01));
     check_smarts_ok(*dyphylline, *std::get<0>(m), res.front());
@@ -403,8 +412,6 @@ TEST_CASE("compare chirality") {
 }
 
 TEST_CASE("delta-y exchange", "[basics]") {
-  // If we ever go for equivalent vertex pruning, these tests
-  // will fail unless the pruning is done very carefully.
   RascalOptions opts;
   opts.similarityThreshold = 0.1;
   {
@@ -528,14 +535,12 @@ TEST_CASE("single fragment") {
     opts.singleLargestFrag = false;
     auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.front().numFrags() == 2);
-    std::cout << res.front().smarts() << std::endl;
     REQUIRE(res.front().bondMatches().size() == std::get<2>(test));
     check_smarts_ok(*m1, *m2, res.front());
 
     opts.singleLargestFrag = true;
     res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.front().numFrags() == 1);
-    std::cout << res.front().smarts() << std::endl;
     REQUIRE(res.front().bondMatches().size() == std::get<3>(test));
     check_smarts_ok(*m1, *m2, res.front());
   }
@@ -577,7 +582,6 @@ TEST_CASE("maximum fragment separation") {
   };
   opts.similarityThreshold = 0.5;
   for (auto &test : tests) {
-    std::cout << std::get<0>(test) << " vs " << std::get<1>(test) << std::endl;
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
     {
@@ -614,7 +618,7 @@ TEST_CASE("ring matches ring", "[basics]") {
   REQUIRE(res.front().bondMatches().size() == 11);
   std::vector<std::vector<std::pair<int, int>>> exp_bond_matches;
   // doing this with a full initialiser confuses the auto-formatter in a
-  // very unsavoury way.
+  // very unsightly way.
   exp_bond_matches.push_back({{0, 0},
                               {1, 1},
                               {2, 2},
@@ -758,11 +762,12 @@ TEST_CASE("benchmarks") {
   }
 
   // Make sure we haven't slowed it down a lot.
-  for (size_t i = 0; i < tests.size(); ++i) {
-    std::cout << "TIMING : " << std::get<0>(tests[i]) << " took " << timings[i]
-              << " milliseconds on average of " << std::get<4>(tests[i])
-              << " runs\n";
-  }
+  //  for (size_t i = 0; i < tests.size(); ++i) {
+  //    std::cout << "TIMING : " << std::get<0>(tests[i]) << " took " <<
+  //    timings[i]
+  //              << " milliseconds on average of " << std::get<4>(tests[i])
+  //              << " runs\n";
+  //  }
   for (size_t i = 0; i < tests.size(); ++i) {
     REQUIRE(timings[i] < std::get<6>(tests[i]));
   }
@@ -788,8 +793,6 @@ TEST_CASE("FMCS test1Basics") {
   check_smarts_ok(*m1, *m2, res.front());
 }
 
-#if 1
-
 TEST_CASE("FMCS test32") {
   std::vector<std::shared_ptr<RDKit::ROMol>> mols{
       {"O=C(Nc1cc(S(N2CCOCC2)(=O)=O)ccc1N1CCOCC1)C=Cc1ccc(Cl)cc1 CHEMBL1515359"_smiles},
@@ -803,27 +806,69 @@ TEST_CASE("FMCS test32") {
       {"N#CC(=Cc1ccccc1)C(=O)Nc1cc(S(N2CCOCC2)(=O)=O)ccc1N1CCCC1 CHEMBL1500793"_smiles},
       {"C(=Cc1ccc2c(c1)OCO2)C(Nc1cc(S(=O)(=O)N2CCOCC2)ccc1N1CCOCC1)=O CHEMBL1334715"_smiles}};
   RascalOptions opts;
-  auto t1 = std::chrono::high_resolution_clock::now();
+  std::vector<std::tuple<int, int, std::string>> exp_res{
+      {32, 35, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCOCC1)-C=Cc1ccccc1"},
+      {32, 35, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCOCC1)-C=Cc1ccccc1"},
+      {31, 33, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC)-C=Cc1ccccc1"},
+      {31, 33, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC)-C=Cc1ccccc1"},
+      {31, 33, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC)-C=Cc1ccccc1"},
+      {31, 33, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC)-C=Cc1ccccc1"},
+      {32, 35, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCOCC1)-C=Cc1ccccc1"},
+      {31, 33, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC)-C=Cc1ccccc1"},
+      {32, 35, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCOCC1)-C=Cc1ccccc1"},
+      {32, 35, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2)=O):cc1"},
+      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
+      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
+      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
+      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
+      {32, 35, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2)=O):cc1"},
+      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
+      {32, 35, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2)=O):cc1"},
+      {31, 33, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):cc1"},
+      {31, 33, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):cc1"},
+      {31, 33, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):cc1"},
+      {32, 34,
+       "Cc1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):cc1"},
+      {32, 35, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2):cc1"},
+      {31, 33, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):cc1"},
+      {32, 35, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2):cc1"},
+      {31, 34, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCCC2)=O):cc1"},
+      {31, 34, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCCC2)=O):cc1"},
+      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
+      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
+      {31, 34, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCCC2)=O):cc1"},
+      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
+      {32, 34,
+       "O=C(-C=C)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCCC1.c1ccc(-F):cc1"},
+      {31, 33, "O=C(-C=Cc1ccccc1)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC"},
+      {31, 33, "O=C(-C=Cc1ccccc1)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC"},
+      {31, 34, "O=C(-C=Cc1ccccc1)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCCC1"},
+      {31, 33, "O=C(-C=Cc1ccccc1)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC"},
+      {31, 33,
+       "c1cccc(-C=CC(=O)-Nc2c(-N(-CC)-CC):ccc(-S(-N3CCOCC3)(=O)=O):c2):c1"},
+      {31, 33,
+       "c1cccc(-C=CC(=O)-Nc2c(-N(-CC)-CC):ccc(-S(-N3CCOCC3)(=O)=O):c2):c1"},
+      {31, 34,
+       "c1cccc(-C=CC(=O)-Nc2c(-N3CCCC3):ccc(-S(-N3CCOCC3)(=O)=O):c2):c1"},
+      {31, 33,
+       "c1cccc(-C=CC(=O)-Nc2c(-N(-CC)-CC):ccc(-S(-N3CCOCC3)(=O)=O):c2):c1"},
+      {31, 33, "CCN(-c1ccc(-S(-N2CCOCC2)(=O)=O):cc1NC(=O)-C=Cc1ccccc1)-CC"},
+      {31, 33, "CCN(-c1ccc(-S(-N2CCOCC2)(=O)=O):cc1NC(=O)-C=Cc1ccccc1)-CC"},
+      {31, 33, "CCN(-c1ccc(-S(-N2CCOCC2)(=O)=O):cc1NC(=O)-C=Cc1ccccc1)-CC"},
+      {31, 33, "c1cc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):ccc1"},
+      {32, 35, "c1cc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2):ccc1"},
+      {31, 33, "C(=Cc1ccccc1)-C(=O)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC"}};
+  size_t k = 0;
   for (size_t i = 0; i < mols.size() - 1; ++i) {
-    for (size_t j = i + 1; j < mols.size(); ++j) {
+    for (size_t j = i + 1; j < mols.size(); ++j, ++k) {
       auto res = rascalMces(*mols[i], *mols[j], opts);
       check_smarts_ok(*mols[i], *mols[j], res.front());
-      std::cout << "Atoms : " << res.front().atomMatches().size()
-                << "  Bonds : " << res.front().bondMatches().size()
-                << "  SMARTS : " << res.front().smarts() << std::endl;
-      REQUIRE(res.front().atomMatches().size() >= 31);
-      REQUIRE(res.front().bondMatches().size() >= 33);
+      REQUIRE(res.front().atomMatches().size() == std::get<0>(exp_res[k]));
+      REQUIRE(res.front().bondMatches().size() == std::get<1>(exp_res[k]));
+      REQUIRE(res.front().smarts() == std::get<2>(exp_res[k]));
     }
   }
-  auto t2 = std::chrono::high_resolution_clock::now();
-  std::cout
-      << "Total time : "
-      << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
-      << " ms" << std::endl;
 }
-
-#endif
-#if 1
 
 TEST_CASE("FMCS test190") {
   std::vector<std::shared_ptr<RDKit::ROMol>> mols{
@@ -840,133 +885,63 @@ TEST_CASE("FMCS test190") {
   };
   RascalOptions opts;
   opts.singleLargestFrag = false;
-  auto t1 = std::chrono::high_resolution_clock::now();
-  int min_atoms = std::numeric_limits<int>::max();
-  int min_bonds = std::numeric_limits<int>::max();
-  std::string min_smarts = "";
-  int min_i, min_j;
+  std::vector<std::tuple<int, int, std::string>> exp_res{
+      {29, 32, "COc1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
+      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
+      {29, 31, "CO.c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
+      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
+      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
+      {28, 30, "COc1cc2nc(-c3cc(-NC(=O)-C):ccc3):oc2cc1.c1ccc(-Cl):cc1"},
+      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
+      {27, 29, "COc1cc2nc(-c3cc(-NC(=O)-C):ccc3):oc2cc1.c1ccccc1"},
+      {26, 29, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccccc4):ccc3):oc2cc1"},
+      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
+      {29, 31, "CO.c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
+      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
+      {28, 31, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):c(-C):cc3):oc2cc1"},
+      {29, 31, "COc1cc2nc(-c3cc(-NC(=O)-C):c(-C):cc3):oc2cc1.c1ccc(-Cl):cc1"},
+      {28, 30, "c1cc2ncoc2cc1.c1cc(-NC(=O)-CSc2ccc(-Cl):cc2):c(-C):cc1"},
+      {28, 30, "COc1cc2nc(-c3cc(-NC(=O)-C):c(-C):cc3):oc2cc1.c1ccccc1"},
+      {26, 29, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccccc4):ccc3):oc2cc1"},
+      {27, 30, "c1cc2oc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):nc2cc1"},
+      {28, 31, "Cc1cc2oc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):nc2cc1"},
+      {28, 31, "Cc1cc2oc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):nc2cc1"},
+      {26, 28, "c1cc2oc(-c3cc(-NC(=O)-C):ccc3):nc2cc1.c1ccc(-Cl):cc1"},
+      {27, 30, "c1cc2oc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):nc2cc1"},
+      {25, 27, "c1cc2oc(-c3cc(-NC(=O)-C):ccc3):nc2cc1.c1ccccc1"},
+      {26, 29, "c1cc2oc(-c3cc(-NC(=O)-CSc4ccccc4):ccc3):nc2cc1"},
+      {27, 30, "c1c(-NC(=O)-CSc2ccc(-Cl):cc2):cc(-c2nc3ccccc3o2):cc1"},
+      {27, 30, "c1c(-NC(=O)-CSc2ccc(-Cl):cc2):cc(-c2nc3ccccc3o2):cc1"},
+      {28, 29, "CO.c1c(-NC(=O)-C):cc(-c2nc3ccccc3o2):cc1.c1ccc(-Cl):cc1"},
+      {27, 30, "c1c(-NC(=O)-CSc2ccc(-Cl):cc2):cc(-c2nc3ccccc3o2):cc1"},
+      {27, 28, "CO.c1c(-NC(=O)-C):cc(-c2nc3ccccc3o2):cc1.c1ccccc1"},
+      {26, 29, "c1c(-NC(=O)-CSc2ccccc2):cc(-c2nc3ccccc3o2):cc1"},
+      {28, 31, "c1cc2nc(-c3cccc(-NC(=O)-CSc4ccc(-Cl):cc4):c3):oc2cc1C"},
+      {26, 28, "c1cc2nc(-c3cccc(-NC(=O)-C):c3):oc2cc1.c1ccc(-Cl):cc1"},
+      {27, 30, "c1cc2nc(-c3cccc(-NC(=O)-CSc4ccc(-Cl):cc4):c3):oc2cc1"},
+      {25, 27, "c1cc2nc(-c3cccc(-NC(=O)-C):c3):oc2cc1.c1ccccc1"},
+      {27, 30, "Cc1cc2nc(-c3cccc(-NC(=O)-CSc4ccccc4):c3):oc2cc1"},
+      {27, 29, "c1cc2oc(-c3cc(-NC(=O)-C):c(-C):cc3):nc2cc1.c1ccc(-Cl):cc1"},
+      {28, 30, "c1cc2ocnc2cc1.c1cc(-NC(=O)-CSc2ccc(-Cl):cc2):c(-C):cc1"},
+      {26, 28, "c1cc2oc(-c3cc(-NC(=O)-C):c(-C):cc3):nc2cc1.c1ccccc1"},
+      {26, 29, "c1cc2oc(-c3cc(-NC(=O)-CSc4ccccc4):ccc3):nc2cc1"},
+      {26, 28, "c1cc2nc(-c3cc(-NC(=O)-C):ccc3):oc2cc1.c1ccc(-Cl):cc1"},
+      {28, 30, "COc1cc2nc(-c3cc(-NC(=O)-C):c(-C):cc3):oc2cc1.c1ccccc1"},
+      {25, 27, "c1cc2nc(-c3cc(-NC(=O)-C):ccc3):oc2cc1.c1ccccc1"},
+      {25, 27, "c1c(-NC(=O)-C):cccc1-c1nc2ccccc2o1.c1ccccc1"},
+      {26, 29, "c1c(-NC(=O)-CSc2ccccc2):cccc1-c1nc2ccccc2o1"},
+      {26, 28, "c1ccc2oc(-c3cccc(-NC(=O)-C):c3):nc2c1.c1cc(-C):ccc1"}};
+  size_t k = 0;
   for (size_t i = 0; i < mols.size() - 1; ++i) {
-    for (size_t j = i + 1; j < mols.size(); ++j) {
+    for (size_t j = i + 1; j < mols.size(); ++j, ++k) {
       auto res = rascalMces(*mols[i], *mols[j], opts);
       check_smarts_ok(*mols[i], *mols[j], res.front());
-      std::cout << "Atoms : " << res.front().atomMatches().size()
-                << "  Bonds : " << res.front().bondMatches().size()
-                << "  SMARTS : " << res.front().smarts() << std::endl;
-      REQUIRE(res.front().atomMatches().size() >= 19);
-      REQUIRE(res.front().bondMatches().size() >= 21);
-      if (res.front().atomMatches().size() < min_atoms) {
-        min_atoms = res.front().atomMatches().size();
-      }
-      if (res.front().bondMatches().size() < min_bonds) {
-        min_bonds = res.front().bondMatches().size();
-        min_smarts = res.front().smarts();
-        min_i = i;
-        min_j = j;
-      }
+      REQUIRE(res.front().atomMatches().size() == std::get<0>(exp_res[k]));
+      REQUIRE(res.front().bondMatches().size() == std::get<1>(exp_res[k]));
+      REQUIRE(res.front().smarts() == std::get<2>(exp_res[k]));
     }
   }
-  std::cout << "Smallest MCES : " << min_atoms << " atoms and " << min_bonds
-            << " bonds." << std::endl;
-  std::cout << "SMARTS with least bonds : " << min_smarts << " for pair "
-            << min_i << " and " << min_j << std::endl;
-  auto t2 = std::chrono::high_resolution_clock::now();
-  auto dur =
-      std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-  std::cout << "Total time : " << dur << " ms" << std::endl;
-  std::cout << "Average time : " << dur / (mols.size() * (mols.size() - 1) / 2)
-            << " ms" << std::endl;
 }
-
-#endif
-
-TEST_CASE("FMCS nasty adamantane pair") {
-  auto m1 =
-      "CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934"_smiles;
-  REQUIRE(m1);
-  auto m2 =
-      "CN(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336"_smiles;
-  REQUIRE(m2);
-
-  RascalOptions opts;
-  opts.timeout = -1;
-
-  auto start_time = std::chrono::high_resolution_clock::now();
-  auto res = rascalMces(*m1, *m2, opts);
-  auto finish_time = std::chrono::high_resolution_clock::now();
-  std::cout << "number of results : " << res.size() << std::endl;
-  std::cout << res.front().smarts() << std::endl;
-  REQUIRE(res.size() == 1);
-  REQUIRE(res.front().bondMatches().size() == 36);
-  REQUIRE_THAT(res.front().similarity(),
-               Catch::Matchers::WithinAbs(0.9202, 0.0001));
-  check_smarts_ok(*m1, *m2, res.front());
-
-  auto runtime = std::chrono::duration_cast<std::chrono::milliseconds>(
-                     start_time - finish_time)
-                     .count();
-  REQUIRE(runtime < 5);
-
-  res.front().largestFragOnly();
-  check_smarts_ok(*m1, *m2, res.front());
-  std::cout << res.front().smarts() << std::endl;
-  printBondMatches(res.front(), std::cout);
-  printAtomMatches(res.front(), std::cout);
-}
-
-TEST_CASE("FMCS test3 adamantane non-adamantane") {
-  auto m1 = "c1cc([N+]([O-])=O)ccc1CC(=O)NC1CCCCCC1 CHEMBL1553142"_smiles;
-  REQUIRE(m1);
-  auto m2 =
-      "CN(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336"_smiles;
-  REQUIRE(m2);
-
-  RascalOptions opts;
-  opts.timeout = -1;
-  opts.similarityThreshold = 0.4;
-
-  {
-    auto start_time = std::chrono::high_resolution_clock::now();
-    auto res = rascalMces(*m1, *m2, opts);
-    auto finish_time = std::chrono::high_resolution_clock::now();
-    std::cout << "number of results : " << res.size() << std::endl;
-    std::cout << res.front().smarts() << std::endl;
-    REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bondMatches().size() == 18);
-    REQUIRE(res.front().smarts() == "c1cc(-N):ccc1CC(=O)-NCCCCCCC");
-    REQUIRE_THAT(res.front().similarity(),
-                 Catch::Matchers::WithinAbs(0.4215, 0.0001));
-    check_smarts_ok(*m1, *m2, res.front());
-
-    check_smarts_ok(*m1, *m2, res.front());
-    auto runtime = std::chrono::duration_cast<std::chrono::milliseconds>(
-                       start_time - finish_time)
-                       .count();
-    REQUIRE(runtime < 5);
-  }
-  opts.ringMatchesRingOnly = true;
-  {
-    auto start_time = std::chrono::high_resolution_clock::now();
-    auto res = rascalMces(*m1, *m2, opts);
-    auto finish_time = std::chrono::high_resolution_clock::now();
-    std::cout << "number of results : " << res.size() << std::endl;
-    std::cout << res.front().smarts() << std::endl;
-    REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bondMatches().size() == 17);
-    std::vector<std::string> equiv_smarts{"c1cc(-N):ccc1CC(=O)-N.C(-CCC)-CCC",
-                                          "c1cc(-N):ccc1CC(=O)-N.C(-CC)-CCCC"};
-    check_smarts_found(res.front(), equiv_smarts);
-    REQUIRE_THAT(res.front().similarity(),
-                 Catch::Matchers::WithinAbs(0.3984, 0.0001));
-
-    check_smarts_ok(*m1, *m2, res.front());
-    auto runtime = std::chrono::duration_cast<std::chrono::milliseconds>(
-                       start_time - finish_time)
-                       .count();
-    REQUIRE(runtime < 5);
-  }
-}
-
-#if 1
 
 TEST_CASE("FMCS test3") {
   std::vector<std::shared_ptr<RDKit::ROMol>> mols{
@@ -982,118 +957,67 @@ TEST_CASE("FMCS test3") {
       {"CC1(C)NC(C)(C)CC(NC(=O)Cc2ccccc2)C1 CHEMBL1703640"_smiles},
   };
   RascalOptions opts;
-  auto t1 = std::chrono::high_resolution_clock::now();
-  int min_atoms = std::numeric_limits<int>::max();
-  int min_bonds = std::numeric_limits<int>::max();
-  std::string min_smarts = "";
-  int min_i, min_j;
+  opts.similarityThreshold = 0.1;
+  std::vector<std::tuple<int, int, std::string>> exp_res{
+      {31, 33, "CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {34, 36,
+       "CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {33, 35,
+       "CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {32, 34, "CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {34, 36,
+       "CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {19, 19, "CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"},
+      {24, 25, "c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1ccc(-CC(=O)-NCCCCCCC):cc1"},
+      {19, 18, "c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+      {31, 33, "CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {31, 33, "CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {31, 33, "CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {31, 33, "CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {19, 19, "CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"},
+      {24, 25, "c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1ccc(-CC(=O)-NCCCCCCC):cc1"},
+      {19, 18, "c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+      {33, 35,
+       "CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {32, 34, "CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {35, 37,
+       "CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {19, 19, "CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"},
+      {24, 25, "c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1ccc(-CC(=O)-NCCCCCCC):cc1"},
+      {19, 18, "c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+      {32, 34, "CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {33, 35,
+       "CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {19, 19, "CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"},
+      {24, 25, "c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1ccc(-CC(=O)-NCCCCCCC):cc1"},
+      {19, 18, "c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+      {32, 34, "CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {19, 19, "CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"},
+      {24, 25, "c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1ccc(-CC(=O)-NCCCCCCC):cc1"},
+      {19, 18, "c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+      {19, 19, "CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"},
+      {24, 25, "c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1ccc(-CC(=O)-NCCCCCCC):cc1"},
+      {19, 18, "c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+      {16, 16, "c1ccc(-CC(-NCCCCCC)=O):cc1"},
+      {18, 17, "c1ccc(-CC(-NCCCCCC)=O):cc1.NO"},
+      {17, 16, "c1ccc(-CC(-NCCCC)=O):cc1.CCN"},
+      {17, 17, "c1ccc(-CC(=O)-NC(-CCCC)-CC):cc1"},
+      {18, 18, "c1ccc(-CC(=O)-NC(-CC(-C)-C)-CCC):cc1"},
+      {17, 17, "c1ccccc1CC(=O)-NC(-CCC)-CCC"}};
+  size_t k = 0;
   for (size_t i = 0; i < mols.size() - 1; ++i) {
-    for (size_t j = i + 1; j < mols.size(); ++j) {
-      std::cout << std::endl
-                << "Doing " << i << " ("
-                << mols[i]->getProp<std::string>("_Name") << ") vs " << j
-                << " (" << mols[i]->getProp<std::string>("_Name") << ")"
-                << std::endl;
+    for (size_t j = i + 1; j < mols.size(); ++j, ++k) {
       auto res = rascalMces(*mols[i], *mols[j], opts);
-      if (res.empty()) {
-        std::cout << "No results for " << i << " vs " << j << std::endl;
-        continue;
-      }
       check_smarts_ok(*mols[i], *mols[j], res.front());
-      std::cout << i << " vs " << j
-                << " Atoms : " << res.front().atomMatches().size()
-                << "  Bonds : " << res.front().bondMatches().size()
-                << "  SMARTS : " << res.front().smarts() << std::endl;
-      if (res.front().atomMatches().size() < min_atoms) {
-        min_atoms = res.front().atomMatches().size();
-      }
-      if (res.front().bondMatches().size() < min_bonds) {
-        min_bonds = res.front().bondMatches().size();
-        min_smarts = res.front().smarts();
-        min_i = i;
-        min_j = j;
-      }
+      REQUIRE(res.front().atomMatches().size() == std::get<0>(exp_res[k]));
+      REQUIRE(res.front().bondMatches().size() == std::get<1>(exp_res[k]));
+      REQUIRE(res.front().smarts() == std::get<2>(exp_res[k]));
     }
   }
-  std::cout << "Smallest MCES : " << min_atoms << " atoms and " << min_bonds
-            << " bonds." << std::endl;
-  std::cout << "SMARTS with least bonds : " << min_smarts << " for pair "
-            << min_i << " and " << min_j << std::endl;
-  auto t2 = std::chrono::high_resolution_clock::now();
-  auto dur =
-      std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-  std::cout << "Total time : " << dur << " ms" << std::endl;
-  std::cout << "Average time : " << dur / (mols.size() * (mols.size() - 1) / 2)
-            << " ms" << std::endl;
 }
-
-#endif
-
-#if 0
-TEST_CASE("FMCS test330") {
-    std::vector<std::shared_ptr<RDKit::ROMol>> mols{
-            {"CCC(C)C(NC(=O)C(NC(C(CCC(O)=O)NC(=O)C(NC(=O)C(NC(C(CC(O)=O)NC(C(CC(C)C)"
-             "NC(C(Cc1ccccc1)NC(CN)=O)=O)=O)=O)C(C)CC)C(C)CC)=O)CCCCN)C(NC(C)C(NC("
-             "CCCCN)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O)=O)=O CHEMBL1240742"_smiles},
-            {"CCC(C)C(NC(=O)C(NC(C(CCCCN)NC(=O)C(NC(=O)C(NC(C(CC(O)=O)NC(C(Cc1ccccc1)"
-             "NC(C(CC(C)C)NC(CN)=O)=O)=O)=O)C(C)CC)C(C)CC)=O)CCCCN)C(NC(C)C(NC(CCC(O)="
-             "O)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O)=O)=O CHEMBL1240736"_smiles},
-            {"CCC(C)C(NC(CN)=O)C(NC(C(NC(CC(O)=O)C(NC(C(NC(C)C(NC(CCCCN)C(NC(C(NC(CC("
-             "C)C)C(NC(Cc1ccccc1)C(NC(CCC(O)=O)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)="
-             "O)=O)=O)=O)=O)CCCCN)=O)=O)=O)C(C)CC)=O)=O)C(C)CC)=O CHEMBL1240738"_smiles},
-            {"CCC(C)C(NC(CN)=O)C(NC(Cc1ccccc1)C(NC(CC(O)=O)C(NC(CCCCN)C(NC(CC(C)C)C("
-             "NC(C)C(NC(CCCCN)C(NC(CCC(O)=O)C(NC(C(NC(CO)C(NC(C(NC(Cc1c[nH]c2c1cccc2)"
-             "C(O)=O)=O)C(C)CC)=O)=O)C(C)CC)=O)=O)=O)=O)=O)=O)=O)=O CHEMBL1240740"_smiles},
-            {"CCC(C)C(NC(CN)=O)C(NC(Cc1c[nH]c2c1cccc2)C(NC(CO)C(NC(CC(O)=O)C(NC(CC(C)"
-             "C)C(NC(C)C(NC(CCC(O)=O)C(NC(C(NC(C(NC(CCCCN)C(NC(CCCCN)C(NC(Cc1ccccc1)C("
-             "O)=O)=O)=O)=O)C(C)CC)=O)C(C)CC)=O)=O)=O)=O)=O)=O)=O CHEMBL1240741"_smiles},
-            {"CCC(C)C(NC(=O)C(NC(=O)C(CCCCN)NC(C(CC(C)C)NC(C(Cc1c[nH]c2c1cccc2)NC(CN)="
-             "O)=O)=O)CCCCN)C(NC(CCC(O)=O)C(NC(CO)C(=O)NC(C(NC(C(NC(CC(O)=O)C(NC(C)C("
-             "NC(Cc1ccccc1)C(O)=O)=O)=O)=O)C(C)CC)=O)C(C)CC)=O)=O CHEMBL1240743"_smiles},
-            {"CCC(C)C(NC(C(CCC(O)=O)NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)="
-             "O)=O)=O)=O)C(NC(Cc1c[nH]c2ccccc12)C(O)=O)=O CHEMBL431874"_smiles},
-            {"CCC(C)C(NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)C(NC("
-             "CCC(O)=O)C(NC(Cc1c[nH]c2ccccc12)C(O)=O)=O)=O CHEMBL262166"_smiles},
-            {"CCC(C)C(NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)C(NC("
-             "CCCCN)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O CHEMBL313122"_smiles},
-            {"CCC(C)C(NC(C(CCCCN)NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)="
-             "O)=O)=O)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O CHEMBL314239"_smiles},
-    };
-    RascalOptions opts;
-    auto t1 = std::chrono::high_resolution_clock::now();
-    int min_atoms = std::numeric_limits<int>::max();
-    int min_bonds = std::numeric_limits<int>::max();
-    std::string min_smarts = "";
-    int min_i, min_j;
-    for (size_t i = 0; i < mols.size() - 1; ++i) {
-        for (size_t j = i + 1; j < mols.size(); ++j) {
-            std::cout << "Doing " << i << " vs " << j << std::endl;
-            auto res = rascal_mces(*mols[i], *mols[j], opts);
-            if (res.empty()) {
-                std::cout << "No results for " << i << " vs " << j << std::endl;
-                continue;
-            }
-            check_smarts_ok(*mols[i], *mols[j], res.front());
-            std::cout << i << " vs " << j << " Atoms : " << res.front().atom_matches().size()
-                      << "  Bonds : " << res.front().bond_matches().size()
-                      << "  SMARTS : " << res.front().smarts()
-                      << std::endl;
-            if (res.front().atom_matches().size() < min_atoms) {
-                min_atoms = res.front().atom_matches().size();
-            }
-            if (res.front().bond_matches().size() < min_bonds) {
-                min_bonds = res.front().bond_matches().size();
-                min_smarts = res.front().smarts();
-                min_i = i;
-                min_j = j;
-            }
-        }
-    }
-    std::cout << "Smallest MCES : " << min_atoms << " atoms and " << min_bonds << " bonds." << std::endl;
-    std::cout << "SMARTS with least bonds : " << min_smarts << " for pair " << min_i << " and " << min_j << std::endl;
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    std::cout << "Total time : " << dur << " ms" << std::endl;
-    std::cout << "Average time : " << dur / (mols.size() * (mols.size() - 1) / 2) << " ms" << std::endl;
-}
-#endif
