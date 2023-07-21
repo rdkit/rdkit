@@ -150,7 +150,8 @@ PyObject *RunReactant(ChemicalReaction *self, T reactant,
   return res;
 }
 
-bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant) {
+bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant,
+                        bool removeUnmatchedAtoms) {
   auto react = static_cast<RWMol *>(reactant);
   bool res = false;
   {
@@ -158,7 +159,7 @@ bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant) {
     if (!self->isInitialized()) {
       self->initReactantMatchers();
     }
-    res = self->runReactant(*react);
+    res = self->runReactant(*react, removeUnmatchedAtoms);
   }
   return res;
 }
@@ -566,7 +567,8 @@ Sample Usage:
                RDKit::RunReactant,
            "apply the reaction to a single reactant")
       .def("RunReactantInPlace", RDKit::RunReactantInPlace,
-           (python::arg("self"), python::arg("reactant")),
+           (python::arg("self"), python::arg("reactant"),
+            python::arg("removeUnmatchedAtoms") = true),
            "apply the reaction to a single reactant in place. The reactant "
            "itself is modified. This can only be used for single reactant - "
            "single product reactions.")

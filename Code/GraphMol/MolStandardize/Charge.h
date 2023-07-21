@@ -85,6 +85,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Reionizer {
 
   //! Enforce charges on certain atoms, then perform competitive reionization.
   ROMol *reionize(const ROMol &mol);
+  //! Enforce charges on certain atoms, then perform competitive reionization,
+  //! modifies molecule in place
+  void reionizeInPlace(RWMol &mol);
 
  private:
   AcidBaseCatalog *d_abcat;
@@ -131,6 +134,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
   ~Uncharger();
 
   ROMol *uncharge(const ROMol &mol);
+  void unchargeInPlace(RWMol &mol);
 
  private:
   bool df_canonicalOrdering = true;

@@ -57,12 +57,13 @@ std::vector<MOL_SPTR_VECT> ChemicalReaction::runReactant(
   return run_Reactant(*this, reactant, reactionTemplateIdx);
 }
 
-bool ChemicalReaction::runReactant(RWMol &reactant) const {
+bool ChemicalReaction::runReactant(RWMol &reactant,
+                                   bool removeUnmatchedAtoms) const {
   if (getReactants().size() != 1 || getProducts().size() != 1) {
     throw ChemicalReactionException(
         "Only single reactant - single product reactions can be run in place.");
   }
-  return run_Reactant(*this, reactant);
+  return run_Reactant(*this, reactant, removeUnmatchedAtoms);
 }
 
 ChemicalReaction::ChemicalReaction(const std::string &pickle) {

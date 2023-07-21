@@ -33,8 +33,9 @@ been renamed to `molList`.
 ## Code removed in this release:
 
 ## Deprecated code (to be removed in a future release):
-JSMol::is_valid() and JSReaction::is_valid() are now deprecated and always
+- JSMol::is_valid() and JSReaction::is_valid() are now deprecated and always
 return true, as invalid `JSMol` and `JSReaction` cannot exist anymore.
+- The python implementations of MolStandardize will be removed in the next release. Please use the implementation in `rdkit.Chem.MolStandardize.rdMolStandardize` instead.
 
 # Release_2023.03.1
 (Changes relative to Release_2022.09.1)

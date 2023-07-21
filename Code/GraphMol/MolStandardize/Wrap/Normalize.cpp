@@ -22,6 +22,10 @@ ROMol *normalizeHelper(MolStandardize::Normalizer &self, const ROMol &mol) {
   return self.normalize(mol);
 }
 
+void normalizeInPlaceHelper(MolStandardize::Normalizer &self, ROMol &mol) {
+  self.normalizeInPlace(static_cast<RWMol &>(mol));
+}
+
 MolStandardize::Normalizer *normalizerFromDataAndParams(
     const std::string &data, const MolStandardize::CleanupParameters &params) {
   std::istringstream sstr(data);
@@ -44,7 +48,10 @@ struct normalize_wrapper {
             python::args("normalizeFilename", "maxRestarts")))
         .def("normalize", &normalizeHelper,
              (python::arg("self"), python::arg("mol")), "",
-             python::return_value_policy<python::manage_new_object>());
+             python::return_value_policy<python::manage_new_object>())
+        .def("normalizeInPlace", &normalizeInPlaceHelper,
+             (python::arg("self"), python::arg("mol")),
+             "modifies the input molecule");
     python::def(
         "NormalizerFromData", &normalizerFromDataAndParams,
         (python::arg("paramData"), python::arg("params")),

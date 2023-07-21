@@ -122,38 +122,31 @@ void updateCleanupParamsFromJSON(CleanupParameters &params,
 }
 
 RWMol *cleanup(const RWMol *mol, const CleanupParameters &params) {
-  RWMol m(*mol);
-  MolOps::removeHs(m);
-
+  auto nmol = new RWMol(*mol);
+  cleanupInPlace(*nmol, params);
+  return nmol;
+}
+void cleanupInPlace(RWMol &mol, const CleanupParameters &params) {
+  MolOps::removeHs(mol);
   MolStandardize::MetalDisconnector md;
-  md.disconnect(m);
-  RWMOL_SPTR normalized(MolStandardize::normalize(&m, params));
-  RWMol *reionized = MolStandardize::reionize(normalized.get(), params);
+  md.disconnectInPlace(mol);
+  MolStandardize::normalizeInPlace(mol, params);
+  MolStandardize::reionizeInPlace(mol, params);
   bool cleanIt = true;
   bool force = true;
-  MolOps::assignStereochemistry(*reionized, cleanIt, force);
-
-  // update properties of reionized using m.
-  reionized->updateProps(m);
-
-  return reionized;
+  MolOps::assignStereochemistry(mol, cleanIt, force);
 }
 
 RWMol *tautomerParent(const RWMol &mol, const CleanupParameters &params,
                       bool skip_standardize) {
-  const RWMol *cleaned = nullptr;
-  std::unique_ptr<RWMol> cleanedHolder;
-
+  std::unique_ptr<RWMol> res{new RWMol(mol)};
   if (!skip_standardize) {
-    cleanedHolder.reset(cleanup(mol, params));
-    cleaned = cleanedHolder.get();
-  } else {
-    cleaned = &mol;
+    cleanupInPlace(*res, params);
   }
 
-  std::unique_ptr<RWMol> ct{canonicalTautomer(cleaned, params)};
-
-  return cleanup(ct.get(), params);
+  std::unique_ptr<RWMol> ct{canonicalTautomer(res.get(), params)};
+  cleanupInPlace(*ct, params);
+  return ct.release();
 }
 
 // Return the fragment parent of a given molecule.
@@ -161,27 +154,19 @@ RWMol *tautomerParent(const RWMol &mol, const CleanupParameters &params,
 //
 RWMol *fragmentParent(const RWMol &mol, const CleanupParameters &params,
                       bool skip_standardize) {
-  const RWMol *cleaned = nullptr;
-  std::unique_ptr<RWMol> cleanedHolder;
-
+  std::unique_ptr<RWMol> res{new RWMol(mol)};
   if (!skip_standardize) {
-    cleanedHolder.reset(cleanup(mol, params));
-    cleaned = cleanedHolder.get();
-  } else {
-    cleaned = &mol;
+    cleanupInPlace(*res, params);
   }
-
   LargestFragmentChooser lfragchooser(params.preferOrganic);
-  return static_cast<RWMol *>(lfragchooser.choose(*cleaned));
+  return static_cast<RWMol *>(lfragchooser.choose(*res));
 }
 
 RWMol *stereoParent(const RWMol &mol, const CleanupParameters &params,
                     bool skip_standardize) {
-  RWMol *res;
+  RWMol *res = new RWMol(mol);
   if (!skip_standardize) {
-    res = cleanup(mol, params);
-  } else {
-    res = new RWMol(mol);
+    cleanupInPlace(*res, params);
   }
 
   MolOps::removeStereochemistry(*res);
@@ -190,11 +175,9 @@ RWMol *stereoParent(const RWMol &mol, const CleanupParameters &params,
 
 RWMol *isotopeParent(const RWMol &mol, const CleanupParameters &params,
                      bool skip_standardize) {
-  RWMol *res;
+  RWMol *res = new RWMol(mol);
   if (!skip_standardize) {
-    res = cleanup(mol, params);
-  } else {
-    res = new RWMol(mol);
+    cleanupInPlace(*res, params);
   }
 
   for (auto atom : res->atoms()) {
@@ -208,15 +191,13 @@ RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
   // Return the charge parent of a given molecule.
   // The charge parent is the uncharged version of the fragment parent.
 
-  RWMOL_SPTR fragparent(fragmentParent(mol, params, skip_standardize));
-
-  // if fragment...
-  ROMol nm(*fragparent);
+  std::unique_ptr<RWMol> fragparent{
+      fragmentParent(mol, params, skip_standardize)};
 
   Uncharger uncharger(params.doCanonical);
-  ROMOL_SPTR uncharged(uncharger.uncharge(nm));
-  RWMol *omol = cleanup(static_cast<RWMol *>(uncharged.get()), params);
-  return omol;
+  uncharger.unchargeInPlace(*fragparent);
+  cleanupInPlace(*fragparent, params);
+  return fragparent.release();
 }
 
 RWMol *superParent(const RWMol &mol, const CleanupParameters &params,
@@ -247,10 +228,25 @@ RWMol *reionize(const RWMol *mol, const CleanupParameters &params) {
   return static_cast<RWMol *>(reionizer->reionize(*mol));
 }
 
+void normalizeInPlace(RWMol &mol, const CleanupParameters &params) {
+  std::unique_ptr<Normalizer> normalizer{normalizerFromParams(params)};
+  normalizer->normalizeInPlace(mol);
+}
+
+void reionizeInPlace(RWMol &mol, const CleanupParameters &params) {
+  std::unique_ptr<Reionizer> reionizer{reionizerFromParams(params)};
+  reionizer->reionizeInPlace(mol);
+}
+
 RWMol *removeFragments(const RWMol *mol, const CleanupParameters &params) {
   PRECONDITION(mol, "bad molecule");
   std::unique_ptr<FragmentRemover> remover{fragmentRemoverFromParams(params)};
   return static_cast<RWMol *>(remover->remove(*mol));
+}
+
+void removeFragmentsInPlace(RWMol &mol, const CleanupParameters &params) {
+  std::unique_ptr<FragmentRemover> remover{fragmentRemoverFromParams(params)};
+  remover->removeInPlace(mol);
 }
 
 RWMol *canonicalTautomer(const RWMol *mol, const CleanupParameters &params) {
@@ -260,22 +256,21 @@ RWMol *canonicalTautomer(const RWMol *mol, const CleanupParameters &params) {
 }
 
 std::string standardizeSmiles(const std::string &smiles) {
-  RWMOL_SPTR mol(SmilesToMol(smiles, 0, false));
+  std::unique_ptr<RWMol> mol{SmilesToMol(smiles, 0, false)};
   if (!mol) {
     std::string message =
         "SMILES Parse Error: syntax error for input: " + smiles;
     throw ValueErrorException(message);
   }
 
-  CleanupParameters params;
-  RWMOL_SPTR cleaned(cleanup(*mol, params));
-  return MolToSmiles(*cleaned);
+  cleanupInPlace(*mol);
+  return MolToSmiles(*mol);
 }
 
 std::vector<std::string> enumerateTautomerSmiles(
     const std::string &smiles, const CleanupParameters &params) {
   std::unique_ptr<RWMol> mol(SmilesToMol(smiles, 0, false));
-  mol.reset(cleanup(mol.get(), params));
+  cleanupInPlace(*mol, params);
   MolOps::sanitizeMol(*mol);
 
   TautomerEnumerator te(params);
