@@ -655,10 +655,18 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
           bondVects[order[1]].crossProduct(bondVects[order[3]]);
       const auto dotp2 = bondVects[order[1]].dotProduct(bondVects[order[3]]);
       auto vol2 = crossp2.dotProduct(bondVects[order[0]]);
-      // std::cerr << bondVects[0] << std::endl;
-      // std::cerr << bondVects[1] << std::endl;
-      // std::cerr << bondVects[2] << std::endl;
-      // std::cerr << bondVects[3] << std::endl;
+      // std::cerr << neighborBondIndices[order[0]] << " " <<
+      // bondVects[order[0]]
+      //           << std::endl;
+      // std::cerr << neighborBondIndices[order[1]] << " " <<
+      // bondVects[order[1]]
+      //           << std::endl;
+      // std::cerr << neighborBondIndices[order[2]] << " " <<
+      // bondVects[order[2]]
+      //           << std::endl;
+      // std::cerr << neighborBondIndices[order[3]] << " " <<
+      // bondVects[order[3]]
+      //           << std::endl;
       // std::cerr << "------------" << std::endl;
       // std::cerr << crossp1 << " " << dotp1 << std::endl;
       // std::cerr << crossp2 << " " << dotp2 << std::endl;
@@ -673,13 +681,25 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
         vol = vol2;
         prefactor *= -1;
       } else if (vol * vol2 > 0 && dotp1 < dotp2) {
+        // both volumes give the same answer, but in the second case the cross
+        // product is between two bonds with a better dot product
+        vol = vol2;
         prefactor *= -1;
+      } else if (fabs(vol) < volumeTolerance && fabs(vol2) > volumeTolerance) {
+        // if the first volume is too small, but the second isn't, take the
+        // second
+        if (vol * vol2 < 0) {
+          prefactor *= -1;
+        }
+        vol = vol2;
       }
     }
     vol *= prefactor;
+    // std::cerr << " final " << vol << std::endl;
+
     if (vol > volumeTolerance) {
       res = Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
-    } else if (vol < volumeTolerance) {
+    } else if (vol < -volumeTolerance) {
       res = Atom::ChiralType::CHI_TETRAHEDRAL_CW;
     } else {
       return std::nullopt;
