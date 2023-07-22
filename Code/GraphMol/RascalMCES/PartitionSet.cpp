@@ -193,6 +193,12 @@ void PartitionSet::add_vertex(unsigned int vtxNum) {
 }
 
 void PartitionSet::sort_partitions() {
+  // When sorting lists with duplicate values, the order of the
+  // duplicates isn't defined.  Different compilers do it differently.
+  // This can affect the results in the case where more than 1 MCES is
+  // possible, because the partition orders and hence the search tree
+  // traversal will be different.  The results should be equivalent,
+  // though.
   std::sort(d_parts.begin(), d_parts.end(),
             [](const std::vector<unsigned int> &v1,
                const std::vector<unsigned int> &v2) {

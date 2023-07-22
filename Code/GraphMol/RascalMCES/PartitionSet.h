@@ -22,9 +22,12 @@ class PartitionSet {
  public:
   // Make a partition set from the modular product and the labels
   // of the vertices from the first graph.  Each element in vtxPairs
-  // has a row/column in modProd.  Since there will only
-  // be a 1 in the modProd if the labels of the vertices match,
-  // only 1 set of labels is needed.
+  // has a row/column in modProd.  The partitions are sorted
+  // into descending order of sizes. Because that uses std::sort,
+  // the final order may differ from compiler to compiler, because
+  // the standard doesn't define what should happen in the case of
+  // duplicate values.  It is quite common to have partitions of the
+  // same size.
   PartitionSet(const std::vector<std::vector<char>> &modProd,
                const std::vector<std::pair<int, int>> &vtxPairs,
                const std::vector<unsigned int> &vtx1Labels,
