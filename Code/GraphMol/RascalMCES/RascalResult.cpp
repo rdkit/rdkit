@@ -91,7 +91,7 @@ void RascalResult::largestFragOnly() {
   d_smarts = "";
 
   auto largestFrag = frags.front();
-  int largestSize = 0;
+  unsigned int largestSize = 0;
   for (auto &frag : frags) {
     if (frag->getNumAtoms() > largestSize) {
       largestSize = frag->getNumAtoms();
