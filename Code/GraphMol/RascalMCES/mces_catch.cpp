@@ -236,6 +236,23 @@ TEST_CASE("Methadone vs mepiridine test", "[basics]") {
                               {20, 10},
                               {21, 9},
                               {23, 4}});
+  exp_bond_matches.push_back({{5,6},
+{6,12},
+{7,13},
+{9,16},
+{10,5},
+{11,17},
+{12,0},
+{13,1},
+{14,2},
+{15,3},
+{16,18},
+{17,11},
+{19,10},
+{20,8},
+{21,9},
+{23,4}});
+  REQUIRE(res.front().smarts() == "[#6]-C(-C=O)(-c1ccccc1)-CCN(-C)-C.CC");
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.6262, 0.0001));
@@ -344,6 +361,39 @@ TEST_CASE("Symmetrical esters test", "[basics]") {
        {14, 14}, {17, 16}, {18, 17}, {19, 18}, {20, 19}, {21, 32}, {22, 30},
        {23, 28}, {24, 29}, {25, 27}, {26, 25}, {27, 26}, {28, 24}, {29, 22},
        {30, 23}, {31, 21}, {32, 10}, {33, 20}});
+  exp_bond_matches.push_back({{0,30},
+{1,28},
+{2,29},
+{3,27},
+{4,25},
+{5,26},
+{6,24},
+{7,22},
+{8,23},
+{9,21},
+{10,20},
+{11,19},
+{12,18},
+{13,17},
+{14,16},
+{17,14},
+{18,13},
+{19,12},
+{20,11},
+{21,10},
+{22,9},
+{23,7},
+{24,8},
+{25,6},
+{26,4},
+{27,5},
+{28,3},
+{29,1},
+{30,2},
+{31,0},
+{32,32},
+{33,31}});
+  REQUIRE(res.front().smarts() == "c1c(-OC):c(-OC):c(-OC):cc1C(=O)-OC.COC(=O)-c1cc(-OC):c(-OC):c(-OC):c1");
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.9405, 0.0001));
@@ -373,6 +423,7 @@ TEST_CASE("dyphylline similarities") {
   for (size_t i = 0; i < 6; ++i) {
     auto m = mols[i];
     auto res = rascalMces(*dyphylline, *std::get<0>(m), opts);
+    REQUIRE(res.size() == 1);
     REQUIRE_THAT(res.front().similarity(),
                  Catch::Matchers::WithinAbs(std::get<2>(m), 0.01));
     check_smarts_ok(*dyphylline, *std::get<0>(m), res.front());
@@ -646,6 +697,7 @@ TEST_CASE("ring matches ring", "[basics]") {
                               {17, 16},
                               {21, 9},
                               {23, 17}});
+
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.3312, 0.0001));
