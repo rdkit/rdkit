@@ -497,7 +497,8 @@ void makeModularProduct(const ROMol &mol1,
 
 // Calculate the lower bound on the size of the MCES.  This requires that mol1
 // has more atoms than mol2 which is not checked.  Returns a minimum of 1.
-unsigned int calcLowerBound(const ROMol &mol1, const ROMol &mol2, double simThresh) {
+unsigned int calcLowerBound(const ROMol &mol1, const ROMol &mol2,
+                            double simThresh) {
   std::set<int> mol1Atnos, mol2Atnos;
   for (const auto &a : mol1.atoms()) {
     mol1Atnos.insert(a->getAtomicNum());
