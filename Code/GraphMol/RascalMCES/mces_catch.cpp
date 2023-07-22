@@ -466,7 +466,7 @@ TEST_CASE("delta-y exchange", "[basics]") {
 }
 
 TEST_CASE("bad aromatics 1") {
-  std::vector<std::tuple<std::string, std::string, int, int>> tests = {
+  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>> tests = {
       {"c1ccccc1C(=O)c1ccncc1", "c1ccccc1C(=O)c1ccccc1", 9, 13},
       {"c1ccccc1C(=O)c1cc[nH]c1", "c1ccccc1C(=O)c1cnccc1", 9, 13},
       {"c1ccccc1C(=O)c1ccncc1", "c1ccccc1C(=O)c1cnccc1", 14, 14},
@@ -527,7 +527,7 @@ TEST_CASE("timeout") {
 
 TEST_CASE("single fragment") {
   RascalOptions opts;
-  std::vector<std::tuple<std::string, std::string, int, int>> tests = {
+  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>> tests = {
       {"c1cnccc1CCc1ncccc1", "c1cnccc1CCCCCCc1ncccc1", 14, 8},
       {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCc1ccccc1", 21,
        15},
@@ -554,7 +554,7 @@ TEST_CASE("single fragment") {
 TEST_CASE("minimum fragment sizes") {
   RascalOptions opts;
 
-  std::vector<std::tuple<std::string, std::string, int, int>> tests = {
+  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>> tests = {
       {"Oc1cccc2C(=O)C=CC(=O)c12", "O1C(=O)C=Cc2cc(OC)c(O)cc12", 8, 7},
       {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCc1ccccc1", 21,
        21},
@@ -580,7 +580,7 @@ TEST_CASE("minimum fragment sizes") {
 TEST_CASE("maximum fragment separation") {
   RascalOptions opts;
 
-  std::vector<std::tuple<std::string, std::string, int, int>> tests = {
+  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>> tests = {
       {"c1ccccc1CCc1ccccc1", "c1ccccc1CCCCCCCCc1ccccc1", 14, 9},
       {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCCCc1ccccc1", 21,
        16},
@@ -663,7 +663,7 @@ TEST_CASE("ring matches ring", "[basics]") {
 }
 
 TEST_CASE("multiple cliques returned") {
-  std::vector<std::tuple<std::string, std::string, int, int,
+  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int,
                          std::vector<std::pair<int, int>>>>
       tests = {
           {"Oc1cccc2C(=O)C=CC(=O)c12",
@@ -723,7 +723,7 @@ TEST_CASE("benchmarks") {
   // random ordering of the input molecules i.e. the results aren't input order
   // dependent.
   std::vector<
-      std::tuple<std::string, std::string, std::string, double, int, int, int>>
+      std::tuple<std::string, std::string, std::string, double, int, unsigned int, int>>
       tests = {{"juglone", "Oc1cccc2C(=O)C=CC(=O)c12",
                 "O1C(=O)C=Cc2cc(OC)c(O)cc12", 0.5, 100, 8, 10},
                {"methadone", "c1ccccc1C(C(=O)CC)(c1ccccc1)CC(C)N(C)C",
@@ -811,7 +811,7 @@ TEST_CASE("FMCS test32") {
       {"N#CC(=Cc1ccccc1)C(=O)Nc1cc(S(N2CCOCC2)(=O)=O)ccc1N1CCCC1 CHEMBL1500793"_smiles},
       {"C(=Cc1ccc2c(c1)OCO2)C(Nc1cc(S(=O)(=O)N2CCOCC2)ccc1N1CCOCC1)=O CHEMBL1334715"_smiles}};
   RascalOptions opts;
-  std::vector<std::tuple<int, int, std::string>> exp_res{
+  std::vector<std::tuple<unsigned int, unsigned int, std::string>> exp_res{
       {32, 35, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCOCC1)-C=Cc1ccccc1"},
       {32, 35, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCOCC1)-C=Cc1ccccc1"},
       {31, 33, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC)-C=Cc1ccccc1"},
@@ -889,7 +889,7 @@ TEST_CASE("FMCS test190") {
       {"Cc1ccc(SCC(=O)Nc2cc(-c3nc4cc(C)ccc4o3)c(O)cc2)cc1  CHEMBL1611932"_smiles},
   };
   RascalOptions opts;
-  std::vector<std::tuple<int, int, std::string>> exp_res{
+  std::vector<std::tuple<unsigned int, unsigned int, std::string>> exp_res{
       {29, 32, "COc1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
       {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
       {29, 31, "CO.c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
@@ -962,7 +962,7 @@ TEST_CASE("FMCS test3") {
   };
   RascalOptions opts;
   opts.similarityThreshold = 0.1;
-  std::vector<std::tuple<int, int, std::string>> exp_res{
+  std::vector<std::tuple<unsigned int, unsigned int, std::string>> exp_res{
       {31, 33, "CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
       {34, 36,
        "CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},

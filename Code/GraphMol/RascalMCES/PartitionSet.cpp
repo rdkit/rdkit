@@ -8,8 +8,10 @@
 //  of the RDKit source tree.
 //
 
+#include <algorithm>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
 
 #include "PartitionSet.h"
@@ -21,7 +23,7 @@ PartitionSet::PartitionSet(const std::vector<std::vector<char>> &modProd,
                            const std::vector<std::pair<int, int>> &vtxPairs,
                            const std::vector<unsigned int> &vtx1Labels,
                            const std::vector<unsigned int> &vtx2Labels,
-                           int lowerBound)
+                           unsigned int lowerBound)
     : d_ModProd(new std::vector<std::vector<char>>(modProd)),
       d_VtxPairs(new std::vector<std::pair<int, int>>(vtxPairs)),
       d_vtx1Labels(new std::vector<unsigned int>(vtx1Labels)),

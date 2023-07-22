@@ -84,13 +84,16 @@ static int augmenting_path(size_t nc, std::vector<int> &cost,
 
   std::fill(SR.begin(), SR.end(), false);
   std::fill(SC.begin(), SC.end(), false);
-  std::fill(shortestPathCosts.begin(), shortestPathCosts.end(), INFINITY);
+  std::fill(shortestPathCosts.begin(), shortestPathCosts.end(), std::numeric_limits<double>::max());
 
   // find shortest augmenting path
   int sink = -1;
   while (sink == -1) {
+    // Clearly this will produce an overflow and set index to a large integer.  It is
+    // how the original code did it, and I assume whoever wrote it knew what they were
+    // doing.	  
     size_t index = -1;
-    double lowest = INFINITY;
+    double lowest = std::numeric_limits<double>::max();
     SR[i] = true;
 
     for (size_t it = 0; it < num_remaining; it++) {
@@ -106,19 +109,19 @@ static int augmenting_path(size_t nc, std::vector<int> &cost,
       // gives us a new sink node. This is particularly important for
       // integer cost matrices with small co-efficients.
       if (shortestPathCosts[j] < lowest ||
-          (shortestPathCosts[j] == lowest && row4col[j] == -1)) {
+          (shortestPathCosts[j] == lowest && row4col[j] == static_cast<size_t>(-1))) {
         lowest = shortestPathCosts[j];
         index = it;
       }
     }
 
     minVal = lowest;
-    if (minVal == INFINITY) {  // infeasible cost matrix
+    if (minVal == std::numeric_limits<double>::max()) {  // infeasible cost matrix
       return -1;
     }
 
     size_t j = remaining[index];
-    if (row4col[j] == -1) {
+    if (row4col[j] == static_cast<size_t>(-1)) {
       sink = j;
     } else {
       i = row4col[j];

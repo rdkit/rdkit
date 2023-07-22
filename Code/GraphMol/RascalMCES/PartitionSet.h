@@ -28,7 +28,7 @@ class PartitionSet {
   PartitionSet(const std::vector<std::vector<char>> &modProd,
                const std::vector<std::pair<int, int>> &vtxPairs,
                const std::vector<unsigned int> &vtx1Labels,
-               const std::vector<unsigned int> &vtx2Labels, int lowerBound);
+               const std::vector<unsigned int> &vtx2Labels, unsigned int lowerBound);
 
   bool is_empty() const { return d_parts.empty(); }
 

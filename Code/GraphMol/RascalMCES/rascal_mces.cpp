@@ -72,7 +72,7 @@ struct RascalStartPoint {
   double d_tier2Sim{-1.0};
   // The lower bound on the maximum clique size.  Depends, amongst other things,
   // on opts.similarityThreshold.
-  int d_lowerBound{0};
+  unsigned int d_lowerBound{0};
   // a Delta-Y exchange requires extra treatment.  They're rare, though.
   bool d_deltaYPoss{false};
 
@@ -130,7 +130,7 @@ double tier_1_sim(const ROMol &mol1, const ROMol &mol2,
     if (seq2 != degSeqs2.end()) {
       vg1g2 += std::min(it1.second.size(), seq2->second.size());
       auto numToDo = std::min(it1.second.size(), seq2->second.size());
-      for (auto i = 0; i < numToDo; ++i) {
+      for (auto i = 0U; i < numToDo; ++i) {
         eg1g2 += std::min(it1.second[i].first, seq2->second[i].first);
       }
     }
@@ -139,8 +139,6 @@ double tier_1_sim(const ROMol &mol1, const ROMol &mol2,
   double sim = double((vg1g2 + eg1g2) * (vg1g2 + eg1g2)) /
                double((mol1.getNumAtoms() + mol1.getNumBonds()) *
                       (mol2.getNumAtoms() + mol2.getNumBonds()));
-  // std::cout << "vg1g2 : " << vg1g2 << " and eg1g2 : " << eg1g2 << " gives
-  // tier 1 sim = " << sim << std::endl;
   return sim;
 }
 
@@ -181,8 +179,6 @@ void get_bond_labels(const ROMol &mol, const RascalOptions &opts,
                                 std::to_string(b->getBondType()) +
                                 atomLabels[b->getBeginAtomIdx()];
     }
-    //        std::cout << b->getIdx() << " : " << bondLabels[b->getIdx()] <<
-    //        std::endl;
   }
 }
 
@@ -501,7 +497,7 @@ void makeModularProduct(const ROMol &mol1,
 
 // Calculate the lower bound on the size of the MCES.  This requires that mol1
 // has more atoms than mol2 which is not checked.  Returns a minimum of 1.
-int calcLowerBound(const ROMol &mol1, const ROMol &mol2, double simThresh) {
+unsigned int calcLowerBound(const ROMol &mol1, const ROMol &mol2, double simThresh) {
   std::set<int> mol1Atnos, mol2Atnos;
   for (const auto &a : mol1.atoms()) {
     mol1Atnos.insert(a->getAtomicNum());
@@ -518,7 +514,7 @@ int calcLowerBound(const ROMol &mol1, const ROMol &mol2, double simThresh) {
   double lb = sqrt((mol1.getNumAtoms() + mol1.getNumBonds()) *
                    (mol2.getNumAtoms() + mol2.getNumBonds()));
   lb = lb * simThresh - mol1.getNumAtoms() + deltaVg1;
-  int ilb = int(lb);
+  unsigned int ilb(lb);
   if (ilb < 1) {
     ilb = 1;
   }
@@ -700,7 +696,7 @@ void updateMaxClique(const std::vector<unsigned int> &clique, bool deltaYPoss,
                      const ROMol &mol2,
                      const std::vector<std::pair<int, int>> &vtxPairs,
                      std::vector<std::vector<unsigned int>> &maxCliques,
-                     int &lower_bound) {
+                     unsigned int &lowerBound) {
   if (!maxCliques.empty() && clique.size() < maxCliques.front().size()) {
     return;
   }
@@ -728,8 +724,8 @@ void updateMaxClique(const std::vector<unsigned int> &clique, bool deltaYPoss,
         maxCliques.push_back(clique);
       }
     }
-    if (!maxCliques.empty() && maxCliques.front().size() > lower_bound) {
-      lower_bound = maxCliques.front().size();
+    if (!maxCliques.empty() && maxCliques.front().size() > lowerBound) {
+      lowerBound = maxCliques.front().size();
     }
   }
 }
@@ -789,7 +785,7 @@ bool checkEquivalentsAllowed(const ROMol &mol) {
   const static std::vector<ROMol *> notStructs{
       SmartsToMol("*~*"), SmartsToMol("*~*1~*~*~1"),
       SmartsToMol("*12~*~*~2~*~1"), SmartsToMol("*14~*(~*~2~3~4)~*~2~*~3~1")};
-  const static std::vector<std::pair<int, int>> notStats{
+  const static std::vector<std::pair<unsigned int, unsigned int>> notStats{
       {2, 1}, {4, 4}, {4, 5}, {5, 8}};
   MatchVectType dontCare;
   for (size_t i = 0; i < notStructs.size(); ++i) {
@@ -1030,10 +1026,6 @@ std::vector<RascalResult> findMces(RascalStartPoint &starter,
   bool timed_out = false;
   try {
     explore_partitions(starter, start_time, opts, maxCliques);
-    auto curr_time = std::chrono::high_resolution_clock::now();
-    auto run_time = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        curr_time - start_time)
-                        .count();
   } catch (TimedOutException &e) {
     std::cout << e.what() << std::endl;
     maxCliques = e.d_cliques;
