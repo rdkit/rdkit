@@ -466,11 +466,12 @@ TEST_CASE("delta-y exchange", "[basics]") {
 }
 
 TEST_CASE("bad aromatics 1") {
-  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>> tests = {
-      {"c1ccccc1C(=O)c1ccncc1", "c1ccccc1C(=O)c1ccccc1", 9, 13},
-      {"c1ccccc1C(=O)c1cc[nH]c1", "c1ccccc1C(=O)c1cnccc1", 9, 13},
-      {"c1ccccc1C(=O)c1ccncc1", "c1ccccc1C(=O)c1cnccc1", 14, 14},
-      {"c1ccccc1C(=O)c1ccc2cnccc2c1", "c1ccccc1C(=O)c1cnccc1", 14, 14}};
+  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>>
+      tests = {
+          {"c1ccccc1C(=O)c1ccncc1", "c1ccccc1C(=O)c1ccccc1", 9, 13},
+          {"c1ccccc1C(=O)c1cc[nH]c1", "c1ccccc1C(=O)c1cnccc1", 9, 13},
+          {"c1ccccc1C(=O)c1ccncc1", "c1ccccc1C(=O)c1cnccc1", 14, 14},
+          {"c1ccccc1C(=O)c1ccc2cnccc2c1", "c1ccccc1C(=O)c1cnccc1", 14, 14}};
 
   RascalOptions opts;
   opts.similarityThreshold = 0.7;
@@ -527,13 +528,14 @@ TEST_CASE("timeout") {
 
 TEST_CASE("single fragment") {
   RascalOptions opts;
-  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>> tests = {
-      {"c1cnccc1CCc1ncccc1", "c1cnccc1CCCCCCc1ncccc1", 14, 8},
-      {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCc1ccccc1", 21,
-       15},
-      {"Cc1cc2nc(-c3cccc(NC(=O)CSc4ccc(Cl)cc4)c3)oc2cc1C  CHEMBL1398008",
-       "COc1ccc2oc(-c3ccc(C)c(NC(=O)COc4cc(C)cc(C)c4)c3)nc2c1  CHEMBL1436972",
-       27, 21}};
+  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>>
+      tests = {
+          {"c1cnccc1CCc1ncccc1", "c1cnccc1CCCCCCc1ncccc1", 14, 8},
+          {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCc1ccccc1",
+           21, 15},
+          {"Cc1cc2nc(-c3cccc(NC(=O)CSc4ccc(Cl)cc4)c3)oc2cc1C  CHEMBL1398008",
+           "COc1ccc2oc(-c3ccc(C)c(NC(=O)COc4cc(C)cc(C)c4)c3)nc2c1  CHEMBL1436972",
+           27, 21}};
   opts.similarityThreshold = 0.7;
   for (auto &test : tests) {
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
@@ -554,11 +556,12 @@ TEST_CASE("single fragment") {
 TEST_CASE("minimum fragment sizes") {
   RascalOptions opts;
 
-  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>> tests = {
-      {"Oc1cccc2C(=O)C=CC(=O)c12", "O1C(=O)C=Cc2cc(OC)c(O)cc12", 8, 7},
-      {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCc1ccccc1", 21,
-       21},
-  };
+  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>>
+      tests = {
+          {"Oc1cccc2C(=O)C=CC(=O)c12", "O1C(=O)C=Cc2cc(OC)c(O)cc12", 8, 7},
+          {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCc1ccccc1",
+           21, 21},
+      };
   opts.similarityThreshold = 0.5;
   for (auto &test : tests) {
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
@@ -580,11 +583,12 @@ TEST_CASE("minimum fragment sizes") {
 TEST_CASE("maximum fragment separation") {
   RascalOptions opts;
 
-  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>> tests = {
-      {"c1ccccc1CCc1ccccc1", "c1ccccc1CCCCCCCCc1ccccc1", 14, 9},
-      {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCCCc1ccccc1", 21,
-       16},
-  };
+  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>>
+      tests = {
+          {"c1ccccc1CCc1ccccc1", "c1ccccc1CCCCCCCCc1ccccc1", 14, 9},
+          {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCCCc1ccccc1",
+           21, 16},
+      };
   opts.similarityThreshold = 0.5;
   for (auto &test : tests) {
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
@@ -722,8 +726,8 @@ TEST_CASE("benchmarks") {
   // As well as timings, this also tests that the same result is produced from
   // random ordering of the input molecules i.e. the results aren't input order
   // dependent.
-  std::vector<
-      std::tuple<std::string, std::string, std::string, double, int, unsigned int, int>>
+  std::vector<std::tuple<std::string, std::string, std::string, double, int,
+                         unsigned int, int>>
       tests = {{"juglone", "Oc1cccc2C(=O)C=CC(=O)c12",
                 "O1C(=O)C=Cc2cc(OC)c(O)cc12", 0.5, 100, 8, 10},
                {"methadone", "c1ccccc1C(C(=O)CC)(c1ccccc1)CC(C)N(C)C",
