@@ -515,6 +515,7 @@ unsigned int calcLowerBound(const ROMol &mol1, const ROMol &mol2,
   double lb = sqrt((mol1.getNumAtoms() + mol1.getNumBonds()) *
                    (mol2.getNumAtoms() + mol2.getNumBonds()));
   lb = lb * simThresh - mol1.getNumAtoms() + deltaVg1;
+  lb = lb < 0 ? 0 : lb;
   unsigned int ilb(lb);
   if (ilb < 1) {
     ilb = 1;
@@ -1052,7 +1053,6 @@ std::vector<RascalResult> rascalMces(const ROMol &mol1, const ROMol &mol2,
   if (!starter.d_partSet) {
     return std::vector<RascalResult>();
   }
-
   auto results = findMces(starter, opts);
   if (!opts.allBestMCESs && results.size() > 1) {
     results.erase(results.begin() + 1, results.end());
