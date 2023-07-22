@@ -107,12 +107,13 @@ using namespace std;
 using namespace RDKit;
 
 constexpr unsigned int pickleForQuery =
-        PicklerOps::PropertyPickleOptions::AtomProps |
-        PicklerOps::PropertyPickleOptions::BondProps |
-        PicklerOps::PropertyPickleOptions::PrivateProps |
-        PicklerOps::PropertyPickleOptions::QueryAtomData;
-constexpr unsigned int pickleDefault = PicklerOps::PropertyPickleOptions::NoProps;
-        
+    PicklerOps::PropertyPickleOptions::AtomProps |
+    PicklerOps::PropertyPickleOptions::BondProps |
+    PicklerOps::PropertyPickleOptions::PrivateProps |
+    PicklerOps::PropertyPickleOptions::QueryAtomData;
+constexpr unsigned int pickleDefault =
+    PicklerOps::PropertyPickleOptions::NoProps;
+
 class ByteA : public std::string {
  public:
   ByteA() : string(){};
@@ -197,7 +198,6 @@ extern "C" Mol *deconstructROMol(CROMol data) {
 extern "C" Mol *deconstructROMolWithQueryProperties(CROMol data) {
   return deconstructROMolWithProps(data, pickleForQuery);
 }
-
 
 extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
                                bool asQuery, bool sanitize) {
@@ -793,6 +793,7 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
 
   MolOps::AdjustQueryParameters p;
 
+  bool includeGenericGroups = false;
   if (params && strlen(params)) {
     std::string pstring(params);
     try {
@@ -803,8 +804,20 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
       elog(WARNING,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
     }
+    std::istringstream ss;
+    ss.str(params);
+
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    includeGenericGroups = pt.get("setGenericQueryFromProperties", false);
   }
-  ROMol *mol = GenericGroups::adjustQueryPropertiesWithGenericGroups(*im, &p);
+
+  ROMol *mol = nullptr;
+  if (includeGenericGroups) {
+    mol = GenericGroups::adjustQueryPropertiesWithGenericGroups(*im, &p);
+  } else {
+    mol = MolOps::adjustQueryProperties(*im, &p);
+  }
   return (CROMol)mol;
 }
 
