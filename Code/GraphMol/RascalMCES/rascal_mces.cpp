@@ -1031,8 +1031,12 @@ std::vector<RascalResult> findMces(RascalStartPoint &starter,
   std::vector<std::vector<unsigned int>> maxCliques;
   auto start_time = std::chrono::high_resolution_clock::now();
   bool timed_out = false;
+  RascalOptions tmpOpts{opts};
+  if (opts.singleLargestFrag) {
+    tmpOpts.allBestMCESs = true;
+  }
   try {
-    explore_partitions(starter, start_time, opts, maxCliques);
+    explore_partitions(starter, start_time, tmpOpts, maxCliques);
   } catch (TimedOutException &e) {
     std::cout << e.what() << std::endl;
     maxCliques = e.d_cliques;
