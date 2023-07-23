@@ -511,7 +511,7 @@ int RascalResult::calcLargestFragSize() const {
   std::vector<int> mapping;
   auto numFrags = RDKit::MolOps::getMolFrags(*mol1_frags, mapping);
   int lfs = -1;
-  for (int i = 0; i < numFrags; ++i) {
+  for (unsigned int i = 0; i < numFrags; ++i) {
     auto fragSize = std::count(mapping.begin(), mapping.end(), i);
     if (fragSize > lfs) {
       lfs = fragSize;
