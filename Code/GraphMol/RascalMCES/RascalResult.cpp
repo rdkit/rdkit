@@ -28,7 +28,8 @@ RascalResult::RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                            const std::vector<unsigned int> &clique,
                            const std::vector<std::pair<int, int>> &vtx_pairs,
                            bool timedOut, bool swapped, bool chiralSmarts,
-                           bool ringMatchesRingOnly, int maxFragSep)
+                           bool ringMatchesRingOnly, bool singleLargestFrag,
+                           int maxFragSep)
     : d_timedOut(timedOut),
       d_chiralSmarts(chiralSmarts),
       d_ringMatchesRingOnly(ringMatchesRingOnly),
@@ -48,6 +49,9 @@ RascalResult::RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
   matchCliqueAtoms(*mol1AdjMatrix);
   if (d_maxFragSep != -1) {
     applyMaxFragSep();
+  }
+  if (singleLargestFrag) {
+    largestFragOnly();
   }
 }
 
@@ -160,9 +164,6 @@ std::string RascalResult::createSmartsString() const {
         !mol2Atom->getIsAromatic() &&
         mol1Rings->numAtomRings(mol1Atom->getIdx()) &&
         mol2Rings->numAtomRings(mol2Atom->getIdx())) {
-      std::cout << mol1Atom->getIdx() << " : " << mol1Atom->getAtomicNum()
-                << " : " << mol1Rings->numAtomRings(mol1Atom->getIdx())
-                << std::endl;
       a.expandQuery(RDKit::makeAtomInRingQuery(), Queries::COMPOSITE_AND, true);
     }
     auto ai = smartsMol->addAtom(&a);

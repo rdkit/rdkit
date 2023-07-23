@@ -236,22 +236,22 @@ TEST_CASE("Methadone vs mepiridine test", "[basics]") {
                               {20, 10},
                               {21, 9},
                               {23, 4}});
-  exp_bond_matches.push_back({{5,6},
-{6,12},
-{7,13},
-{9,16},
-{10,5},
-{11,17},
-{12,0},
-{13,1},
-{14,2},
-{15,3},
-{16,18},
-{17,11},
-{19,10},
-{20,8},
-{21,9},
-{23,4}});
+  exp_bond_matches.push_back({{5, 6},
+                              {6, 12},
+                              {7, 13},
+                              {9, 16},
+                              {10, 5},
+                              {11, 17},
+                              {12, 0},
+                              {13, 1},
+                              {14, 2},
+                              {15, 3},
+                              {16, 18},
+                              {17, 11},
+                              {19, 10},
+                              {20, 8},
+                              {21, 9},
+                              {23, 4}});
   REQUIRE(res.front().smarts() == "[#6]-C(-C=O)(-c1ccccc1)-CCN(-C)-C.CC");
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().similarity(),
@@ -361,39 +361,15 @@ TEST_CASE("Symmetrical esters test", "[basics]") {
        {14, 14}, {17, 16}, {18, 17}, {19, 18}, {20, 19}, {21, 32}, {22, 30},
        {23, 28}, {24, 29}, {25, 27}, {26, 25}, {27, 26}, {28, 24}, {29, 22},
        {30, 23}, {31, 21}, {32, 10}, {33, 20}});
-  exp_bond_matches.push_back({{0,30},
-{1,28},
-{2,29},
-{3,27},
-{4,25},
-{5,26},
-{6,24},
-{7,22},
-{8,23},
-{9,21},
-{10,20},
-{11,19},
-{12,18},
-{13,17},
-{14,16},
-{17,14},
-{18,13},
-{19,12},
-{20,11},
-{21,10},
-{22,9},
-{23,7},
-{24,8},
-{25,6},
-{26,4},
-{27,5},
-{28,3},
-{29,1},
-{30,2},
-{31,0},
-{32,32},
-{33,31}});
-  REQUIRE(res.front().smarts() == "c1c(-OC):c(-OC):c(-OC):cc1C(=O)-OC.COC(=O)-c1cc(-OC):c(-OC):c(-OC):c1");
+  exp_bond_matches.push_back(
+      {{0, 30},  {1, 28},  {2, 29},  {3, 27},  {4, 25},  {5, 26},  {6, 24},
+       {7, 22},  {8, 23},  {9, 21},  {10, 20}, {11, 19}, {12, 18}, {13, 17},
+       {14, 16}, {17, 14}, {18, 13}, {19, 12}, {20, 11}, {21, 10}, {22, 9},
+       {23, 7},  {24, 8},  {25, 6},  {26, 4},  {27, 5},  {28, 3},  {29, 1},
+       {30, 2},  {31, 0},  {32, 32}, {33, 31}});
+  REQUIRE(
+      res.front().smarts() ==
+      "c1c(-OC):c(-OC):c(-OC):cc1C(=O)-OC.COC(=O)-c1cc(-OC):c(-OC):c(-OC):c1");
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.9405, 0.0001));
@@ -581,22 +557,25 @@ TEST_CASE("single fragment") {
   RascalOptions opts;
   std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>>
       tests = {
-          {"c1cnccc1CCc1ncccc1", "c1cnccc1CCCCCCc1ncccc1", 14, 8},
+          {"C1CC1CCC1NC1", "C1CC1CCCCC1NC1", 8, 6},
+          {"c1cnccc1CCc1ncccc1", "c1cnccc1CCCCCCc1ncccc1", 14, 9},
           {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCc1ccccc1",
-           21, 15},
+           21, 16},
           {"Cc1cc2nc(-c3cccc(NC(=O)CSc4ccc(Cl)cc4)c3)oc2cc1C  CHEMBL1398008",
            "COc1ccc2oc(-c3ccc(C)c(NC(=O)COc4cc(C)cc(C)c4)c3)nc2c1  CHEMBL1436972",
            27, 21}};
   opts.similarityThreshold = 0.7;
   for (auto &test : tests) {
+    opts.ringMatchesRingOnly = true;
+    opts.singleLargestFrag = false;
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
     auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.front().numFrags() == 2);
     REQUIRE(res.front().bondMatches().size() == std::get<2>(test));
     check_smarts_ok(*m1, *m2, res.front());
-
-    res.front().largestFragOnly();
+    opts.singleLargestFrag = true;
+    res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.front().numFrags() == 1);
     REQUIRE(res.front().bondMatches().size() == std::get<3>(test));
     REQUIRE(res.front().largestFragSize() == res.front().atomMatches().size());

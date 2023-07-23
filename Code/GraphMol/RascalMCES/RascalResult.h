@@ -32,7 +32,7 @@ class RascalResult {
                const std::vector<unsigned int> &clique,
                const std::vector<std::pair<int, int>> &vtx_pairs, bool timedOut,
                bool swapped, bool chiralSmarts, bool ringMatchesRingOnly,
-               int minFragSep);
+               bool singleLargestFrag, int minFragSep);
 
   RascalResult(const RascalResult &other);
 

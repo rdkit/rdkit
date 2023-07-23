@@ -487,6 +487,11 @@ void makeModularProduct(const ROMol &mol1,
           distsOk = false;
         }
       }
+      if (opts.singleLargestFrag &&
+          distMatrix1[vtxPairs[i].first][vtxPairs[j].first] !=
+              distMatrix2[vtxPairs[i].second][vtxPairs[j].second]) {
+        distsOk = false;
+      }
       if (distsOk && adjMatrix1[vtxPairs[i].first][vtxPairs[j].first] ==
                          adjMatrix2[vtxPairs[i].second][vtxPairs[j].second]) {
         modProd[i][j] = modProd[j][i] = 1;
@@ -926,6 +931,7 @@ void findEquivalentBonds(const ROMol &mol, std::vector<int> &equivBonds) {
 
 // Use the Floyd-Warshall algorithm to compute the distance matrix from the
 // adjacency matrix.
+// Adapted from https://en.wikipedia.org/wiki/Floyd–Warshall_algorithm
 void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
                     std::vector<std::vector<int>> &distMatrix) {
   distMatrix = std::vector<std::vector<int>>(
@@ -933,16 +939,15 @@ void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
       std::vector<int>(adjMatrix.size(), adjMatrix.size() + 1));
   for (size_t i = 0u; i < adjMatrix.size(); ++i) {
     distMatrix[i][i] = 0;
-    for (size_t j = 0; j < adjMatrix.size(); ++j) {
-      if (adjMatrix[i][j]) {
+    for (size_t j = 0u; j < adjMatrix.size(); ++j) {
+      if (i != j && adjMatrix[i][j]) {
         distMatrix[i][j] = 1;
-        distMatrix[j][i] = 1;
       }
     }
   }
-  for (size_t i = 0u; i < adjMatrix.size(); ++i) {
-    for (size_t j = 0u; j < adjMatrix.size(); ++j) {
-      for (size_t k = 0u; k < adjMatrix.size(); ++k) {
+  for (size_t k = 0u; k < adjMatrix.size(); ++k) {
+    for (size_t i = 0u; i < adjMatrix.size(); ++i) {
+      for (size_t j = 0u; j < adjMatrix.size(); ++j) {
         if (distMatrix[i][j] > distMatrix[i][k] + distMatrix[k][j]) {
           distMatrix[i][j] = distMatrix[i][k] + distMatrix[k][j];
         }
@@ -982,18 +987,18 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
   makeLineGraph(*starter.d_mol1, starter.d_adjMatrix1);
   makeLineGraph(*starter.d_mol2, starter.d_adjMatrix2);
 
-  std::vector<std::vector<int>> dist_mat1, dist_mat2;
-  if (opts.maxFragSeparation > -1) {
-    calcDistMatrix(starter.d_adjMatrix1, dist_mat1);
-    calcDistMatrix(starter.d_adjMatrix2, dist_mat2);
+  std::vector<std::vector<int>> distMat1, distMat2;
+  if (opts.maxFragSeparation > -1 || opts.singleLargestFrag) {
+    calcDistMatrix(starter.d_adjMatrix1, distMat1);
+    calcDistMatrix(starter.d_adjMatrix2, distMat2);
   }
 
   // pairs are vertices in the 2 line graphs that are the same type.
   // mod_prod is the modular product/correspondence graph of the two
   // line graphs.
   makeModularProduct(*starter.d_mol1, starter.d_adjMatrix1, bondLabels1,
-                     dist_mat1, *starter.d_mol2, starter.d_adjMatrix2,
-                     bondLabels2, dist_mat2, opts, starter.d_vtxPairs,
+                     distMat1, *starter.d_mol2, starter.d_adjMatrix2,
+                     bondLabels2, distMat2, opts, starter.d_vtxPairs,
                      starter.d_modProd);
   if (starter.d_vtxPairs.empty()) {
     return starter;
@@ -1035,11 +1040,11 @@ std::vector<RascalResult> findMces(RascalStartPoint &starter,
   }
   std::vector<RascalResult> results;
   for (const auto &c : maxCliques) {
-    results.push_back(
-        RascalResult(*starter.d_mol1, *starter.d_mol2, starter.d_adjMatrix1,
-                     starter.d_adjMatrix2, c, starter.d_vtxPairs, timed_out,
-                     starter.d_swapped, opts.exactChirality,
-                     opts.ringMatchesRingOnly, opts.maxFragSeparation));
+    results.push_back(RascalResult(
+        *starter.d_mol1, *starter.d_mol2, starter.d_adjMatrix1,
+        starter.d_adjMatrix2, c, starter.d_vtxPairs, timed_out,
+        starter.d_swapped, opts.exactChirality, opts.ringMatchesRingOnly,
+        opts.singleLargestFrag, opts.maxFragSeparation));
   }
   std::sort(results.begin(), results.end(), resultSort);
   return results;
