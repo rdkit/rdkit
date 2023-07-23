@@ -1596,10 +1596,10 @@ RascalMCES can only work on 2 molecules at a time:
   >>> mol1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
   >>> mol2 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL152361")
   >>> res = rdRascalMCES.FindMCES(mol1, mol2)
-  >>> res[0].bondMatches()
-  [(0, 1), (1, 0), (2, 2), (3, 30), (4, 29), (5, 28), (6, 6), (7, 7), (8, 8), (9, 9), (10, 10), (11, 11), (12, 12), (13, 13), (14, 14), (15, 15), (20, 17), (21, 18), (22, 19), (23, 20), (24, 21), (25, 22), (26, 23), (27, 24), (28, 25), (29, 26), (30, 27), (31, 5), (32, 4), (33, 3), (34, 31), (35, 32), (36, 33)]
   >>> res[0].smartsString
   'CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1.CNC12CC3CC(-C1)-CC(-C2)-C3'
+  >>> len(res[0].bondMatches())
+  33
 
 It returns a list of RascalResult objects.  Each RascalResult contains the 2 molecules that
 the result pertains to, the SMARTS string of the MCES, the lists of atoms and bonds in the
@@ -1608,6 +1608,20 @@ fragments in the MCES, the number of atoms in the largest fragment and whether t
 timed out or not.  There is also the method largestFragmentOnly(), which cuts the MCES
 down to the largest single fragment.  This is a non-reversible change, so if you want both
 results, take a copy first.
+
+The values returned from atomMatches() and bondMatches() may vary on different systems for the
+same molecules.  This is almost certainly due to symmetry in the molecules.  By default,
+the MCES algorithm returns the first result it finds of maximum size.  Because of symmetry,
+there may be other equivalent solutions with the same number of atoms and bonds, but with
+different equivalent bonds matched to each other.  If you want to see all MCESs of maximum
+size, you can use the option allBestMCESs = True.  This will increase the run time.  If
+you're interested, the reason that different systems (Linux and MacOS, for example) may
+give different equivalent answers when run on the same molecules is because the C++
+function std::sort is used in the algorithm to determine the order in which the search
+tree is traversed.  The C++ standard doesn't specify how the std::sort has to deal with
+equal values, so each compiler developer is free to deal with it differently.  In the
+RASCAL algorithm, there are often equal values in the list that is sorted, and so the
+search tree order varies from compiler to compiler.
 
 The MCES differs from a conventional MCS in that it is the maximum common substructure based
 on bonds rather than atoms.  Often the result is the same, but not always.
@@ -1640,17 +1654,17 @@ by passing an optional RascalOptions object:
   >>> len(results)
   1
   >>> f'{results[0].similarity:.2f}'
-  0.37
+  '0.37'
   >>> results[0].smartsString
-  Oc1ccccc1.[#6]=O
+  'Oc1ccccc1.[#6]=O'
   >>> opts.minFragSize = 3
   >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
   >>> len(results)
   1
   >>> f'{results[0].similarity:.2f}'
-  0.25
+  '0.25'
   >>> results[0].smartsString
-  Oc1ccccc1
+  'Oc1ccccc1'
 
 In this case, the upper bound on the similarity score is below the default threshold
 of 0.7, so no results are returned.  Setting the threshold to 0.5 produces the second
@@ -1670,15 +1684,15 @@ with partial aromatic rings matching:
   >>> mol2 = Chem.MolFromSmiles('C1CCCC1c1ccccc1')
   >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
   >>> f'{results[0].similarity:.2f}'
-  0.27
+  '0.27'
   >>> results[0].smartsString
-  C1CCCC1-c
+  'C1CCCC1-c'
   >>> opts.completeAromaticRings = False
   >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
   >>> f'{results[0].similarity:.2f}'
-  0.76
+  '0.76'
   >>> results[0].smartsString
-  C1CCCC1-c(:cc):cc
+  'C1CCCC1-c(:cc):cc'
 
 This result looks a bit odd, with a single aromatic carbon in the first SMARTS
 string.  This is a consequence of the fact that the MCES works on matching bonds.
