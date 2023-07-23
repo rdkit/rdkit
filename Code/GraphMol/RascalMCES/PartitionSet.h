@@ -34,27 +34,25 @@ class PartitionSet {
                const std::vector<unsigned int> &vtx2Labels,
                unsigned int lowerBound);
 
-  bool is_empty() const { return d_parts.empty(); }
+  bool isEmpty() const { return d_parts.empty(); }
 
-  size_t num_parts() const { return d_parts.size(); }
+  size_t numParts() const { return d_parts.size(); }
 
   // Compute the upper bound on the clique that can be extracted from
   // the current partition.
-  int upper_bound();
+  int upperBound();
 
-  void print_partitions(std::ostream &os) const;
-
-  // return the value of the last element of the last partition, or
-  // numeric_limits<unsigned int>::max() if empty.
-  unsigned int last_vertex() const;
+  // Print the partitions to os.  Very useful for debugging, but not
+  // used otherwise.
+  void printPartitions(std::ostream &os) const;
 
   // removes the last element of the last partition and returns
   // its value. Throws a runtime_error if empty.
-  unsigned int pop_last_vertex();
+  unsigned int popLastVertex();
 
   // remove from the partitions any vertex not connected to the given
   // vertex
-  void prune_vertices(unsigned int vtx_num);
+  void pruneVertices(unsigned int vtx_num);
 
  private:
   std::shared_ptr<const std::vector<std::vector<char>>> d_ModProd;
@@ -67,13 +65,13 @@ class PartitionSet {
   // counts of the number of times the d_vtx[12]_labels appear in the partitions
   std::vector<int> d_vtx1TypeCounts, d_vtx2TypeCounts;
 
-  void add_vertex(unsigned int vtxNum);
+  void addVertex(unsigned int vtxNum);
 
-  void sort_partitions();
+  void sortPartitions();
 
-  void calc_vtx_type_counts();
+  void calcVtxTypeCounts();
 
-  void decrement_vertex_counts(int vtxNum);
+  void decrementVertexCounts(int vtxNum);
 };
 }  // namespace RascalMCES
 }  // namespace RDKit

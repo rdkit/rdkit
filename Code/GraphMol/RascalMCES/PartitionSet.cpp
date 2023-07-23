@@ -57,7 +57,7 @@ PartitionSet::PartitionSet(const std::vector<std::vector<char>> &modProd,
   // speed compared with other things tried.  I think it is what Raymond
   // means when he says "Perform an initial partitioning of the vertices...
   // using the labeled edge projection procedure."
-  sort_partitions();
+  sortPartitions();
   // Now reassign vertices from above Pex to below it if possible.
   // This also improves the speed of finding a large clique early.
   // A vertex is moved to a partition where it isn't connected to a vertex
@@ -94,13 +94,13 @@ PartitionSet::PartitionSet(const std::vector<std::vector<char>> &modProd,
                 d_parts.end());
   // Sort again, to make sure the large partitions are dealt with as late as
   // possible.
-  sort_partitions();
+  sortPartitions();
 
   // Get the info together for the upper bound calculation.
-  calc_vtx_type_counts();
+  calcVtxTypeCounts();
 }
 
-int PartitionSet::upper_bound() {
+int PartitionSet::upperBound() {
   int upperBound = 0;
   for (size_t i = 0; i < d_vtx1TypeCounts.size(); ++i) {
     upperBound += std::min(d_vtx1TypeCounts[i], d_vtx2TypeCounts[i]);
@@ -108,7 +108,7 @@ int PartitionSet::upper_bound() {
   return upperBound;
 }
 
-void PartitionSet::print_partitions(std::ostream &os) const {
+void PartitionSet::printPartitions(std::ostream &os) const {
   for (size_t i = 0; i < d_parts.size(); ++i) {
     os << i << " :: " << d_parts[i].size() << " ::";
     for (auto &mem : d_parts[i]) {
@@ -129,14 +129,7 @@ void PartitionSet::print_partitions(std::ostream &os) const {
   os << std::endl;
 }
 
-unsigned int PartitionSet::last_vertex() const {
-  if (d_parts.empty()) {
-    return std::numeric_limits<unsigned int>::max();
-  }
-  return d_parts.back().back();
-}
-
-unsigned int PartitionSet::pop_last_vertex() {
+unsigned int PartitionSet::popLastVertex() {
   if (d_parts.empty()) {
     throw std::runtime_error("PartitionSet set is empty.");
   }
@@ -145,16 +138,16 @@ unsigned int PartitionSet::pop_last_vertex() {
   if (d_parts.back().empty()) {
     d_parts.pop_back();
   }
-  decrement_vertex_counts(ret_val);
+  decrementVertexCounts(ret_val);
   return ret_val;
 }
 
-void PartitionSet::prune_vertices(unsigned int vtx_num) {
+void PartitionSet::pruneVertices(unsigned int vtx_num) {
   for (auto &part : d_parts) {
     size_t i = 0;
     while (i < part.size()) {
       if (!(*d_ModProd)[part[i]][vtx_num]) {
-        decrement_vertex_counts(part[i]);
+        decrementVertexCounts(part[i]);
         part[i] = part.back();
         part.pop_back();
       } else {
@@ -167,10 +160,10 @@ void PartitionSet::prune_vertices(unsigned int vtx_num) {
                                  return v.empty();
                                }),
                 d_parts.end());
-  sort_partitions();
+  sortPartitions();
 }
 
-void PartitionSet::add_vertex(unsigned int vtxNum) {
+void PartitionSet::addVertex(unsigned int vtxNum) {
   // add vtxNum to the first partition where it isn't connected in
   // d_ModProd to any of the existing members.  Puts it in a new
   // partition if necessary.
@@ -192,7 +185,7 @@ void PartitionSet::add_vertex(unsigned int vtxNum) {
   d_parts.push_back(std::vector<unsigned int>(1, vtxNum));
 }
 
-void PartitionSet::sort_partitions() {
+void PartitionSet::sortPartitions() {
   // When sorting lists with duplicate values, the order of the
   // duplicates isn't defined.  Different compilers do it differently.
   // This can affect the results in the case where more than 1 MCES is
@@ -206,7 +199,7 @@ void PartitionSet::sort_partitions() {
             });
 }
 
-void PartitionSet::calc_vtx_type_counts() {
+void PartitionSet::calcVtxTypeCounts() {
   auto doIt = [](unsigned int maxLabel, const std::vector<int> &vtxCounts,
                  const std::vector<unsigned int> &vtxLabels,
                  std::vector<int> &vtxTypeCounts) -> void {
@@ -226,7 +219,7 @@ void PartitionSet::calc_vtx_type_counts() {
   doIt(max_label, d_vtx2Counts, *d_vtx2Labels, d_vtx2TypeCounts);
 }
 
-void PartitionSet::decrement_vertex_counts(int vtxNum) {
+void PartitionSet::decrementVertexCounts(int vtxNum) {
   --d_vtx1Counts[(*d_VtxPairs)[vtxNum].first];
   if (!d_vtx1Counts[(*d_VtxPairs)[vtxNum].first]) {
     --d_vtx1TypeCounts[(*d_vtx1Labels)[(*d_VtxPairs)[vtxNum].first]];

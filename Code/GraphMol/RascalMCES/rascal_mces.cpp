@@ -822,24 +822,24 @@ void explore_partitions(
     bool goDeeper = false;
     bool backtrack = false;
     if (opts.allBestMCESs) {
-      if (clique.size() + part->num_parts() < starter.d_lowerBound) {
+      if (clique.size() + part->numParts() < starter.d_lowerBound) {
         backtrack = true;
       }
     } else {
-      if (clique.size() + part->num_parts() <= starter.d_lowerBound) {
+      if (clique.size() + part->numParts() <= starter.d_lowerBound) {
         backtrack = true;
       }
     }
     if (!backtrack) {
       if (opts.allBestMCESs) {
-        goDeeper = clique.size() + part->upper_bound() >= starter.d_lowerBound;
+        goDeeper = clique.size() + part->upperBound() >= starter.d_lowerBound;
       } else {
-        goDeeper = clique.size() + part->upper_bound() > starter.d_lowerBound;
+        goDeeper = clique.size() + part->upperBound() > starter.d_lowerBound;
       }
       if (goDeeper) {
-        if (!part->is_empty()) {
+        if (!part->isEmpty()) {
           std::shared_ptr<PartitionSet> nextPart(new PartitionSet(*part));
-          clique.push_back(nextPart->pop_last_vertex());
+          clique.push_back(nextPart->popLastVertex());
           if (clique.size() == 1 && canDoEquivs &&
               equivalentRootAlreadyDone(clique.front(), starter.d_vtxPairs,
                                         starter.d_equivBonds1,
@@ -847,7 +847,7 @@ void explore_partitions(
             clique.pop_back();
             backtrack = true;
           } else {
-            nextPart->prune_vertices(clique.back());
+            nextPart->pruneVertices(clique.back());
             updateMaxClique(clique, starter.d_deltaYPoss, opts, *starter.d_mol1,
                             *starter.d_mol2, starter.d_vtxPairs, maxCliques,
                             starter.d_lowerBound);
@@ -860,16 +860,16 @@ void explore_partitions(
         backtrack = true;
       }
     }
-    if (backtrack || (!parts.empty() && parts.back()->is_empty())) {
+    if (backtrack || (!parts.empty() && parts.back()->isEmpty())) {
       while (!parts.empty()) {
-        if (parts.back()->is_empty()) {
+        if (parts.back()->isEmpty()) {
           parts.pop_back();
           if (!clique.empty()) {
             clique.pop_back();
           }
         } else {
-          parts.back()->pop_last_vertex();
-          if (!parts.back()->is_empty()) {
+          parts.back()->popLastVertex();
+          if (!parts.back()->isEmpty()) {
             break;
           }
         }
