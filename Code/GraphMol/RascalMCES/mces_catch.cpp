@@ -566,19 +566,16 @@ TEST_CASE("single fragment") {
            27, 21}};
   opts.similarityThreshold = 0.7;
   for (auto &test : tests) {
-	  std::cout << "doing " << std::get<0>(test) << " vs " << std::get<1>(test) << std::endl;
     opts.ringMatchesRingOnly = true;
     opts.singleLargestFrag = false;
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
     auto res = rascalMces(*m1, *m2, opts);
-    std::cout << "smarts 1 : " << res.front().smarts() << std::endl;
     REQUIRE(res.front().numFrags() == 2);
     REQUIRE(res.front().bondMatches().size() == std::get<2>(test));
     check_smarts_ok(*m1, *m2, res.front());
     opts.singleLargestFrag = true;
     res = rascalMces(*m1, *m2, opts);
-    std::cout << "smarts 2 : " << res.front().smarts() << std::endl;
     REQUIRE(res.front().numFrags() == 1);
     REQUIRE(res.front().bondMatches().size() == std::get<3>(test));
     REQUIRE(res.front().largestFragSize() == res.front().atomMatches().size());
@@ -694,8 +691,6 @@ TEST_CASE("ring matches ring", "[basics]") {
                               {17, 16},
                               {21, 9},
                               {23, 4}});
-  std::cout << res.front().smarts() << std::endl;
-  printBondMatches(res.front(), std::cout);
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.3312, 0.0001));
@@ -989,9 +984,7 @@ TEST_CASE("FMCS test190") {
   size_t k = 0;
   for (size_t i = 0; i < mols.size() - 1; ++i) {
     for (size_t j = i + 1; j < mols.size(); ++j, ++k) {
-	     std::cout << "doing " << k << " : " << RDKit::MolToSmiles(*mols[i]) << " vs " << RDKit::MolToSmiles(*mols[j]) << " : " << std::get<0>(exp_res[k]) << " : " << std::get<1>(exp_res[k]) << std::endl;
       auto res = rascalMces(*mols[i], *mols[j], opts);
-      std::cout << res.front().smarts() << " : " << res.front().atomMatches().size() << " : " << res.front().bondMatches().size() << std::endl;
       check_smarts_ok(*mols[i], *mols[j], res.front());
       REQUIRE(res.front().atomMatches().size() == std::get<0>(exp_res[k]));
       REQUIRE(res.front().bondMatches().size() == std::get<1>(exp_res[k]));
@@ -1037,9 +1030,10 @@ TEST_CASE("FMCS test3") {
           {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
           {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
           {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
-			   {"c1ccc(-CC(=O)-N):cc1.NC(-C)-CCCC(-C)-C"}
-			   }},
+          {19,
+           18,
+           {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+            {"c1ccc(-CC(=O)-N):cc1.NC(-C)(-C)-CCCCC"}}},
           {31,
            33,
            {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
@@ -1055,64 +1049,82 @@ TEST_CASE("FMCS test3") {
           {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
           {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
           {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
-			   {"c1ccc(-CC(=O)-N):cc1.NC(-C)-CCCC(-C)-C"}}},
+          {19,
+           18,
+           {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+            {"c1ccc(-CC(=O)-N):cc1.NC(-C)-CCCC(-C)-C"}}},
           {33,
            35,
            {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
           {32,
            34,
            {{"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
-	   {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.CNC12CC3CC(-C1)-CC(-C2)-C3"}}},
+            {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.CNC12CC3CC(-C1)-CC(-C2)-C3"}}},
           {35,
            37,
            {{"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
-	   {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCCC):cc1.CNC12CC3CC(-C1)-CC(-C2)-C3"}}},
+            {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCCC):cc1.CNC12CC3CC(-C1)-CC(-C2)-C3"}}},
           {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
           {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
           {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
-			   {"c1ccc(-CC(=O)-N):cc1.NC(-C)-CCCC(-C)-C"}}},
+          {19,
+           18,
+           {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+            {"c1ccc(-CC(=O)-N):cc1.NC(-C)-CCCC(-C)-C"}}},
           {32,
            34,
            {{"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
-		   {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.CNC12CC3CC(-C1)-CC(-C2)-C3"}}},
+            {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.CNC12CC3CC(-C1)-CC(-C2)-C3"}}},
           {33,
            35,
            {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
           {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
           {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
           {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
-			   {"c1ccc(-CC(=O)-N):cc1.NC(-C)-CCCC(-C)-C"}}},
+          {19,
+           18,
+           {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+            {"c1ccc(-CC(=O)-N):cc1.NC(-C)-CCCC(-C)-C"},
+            {"c1ccc(-CC(=O)-N):cc1.NC(-CCCC(-C)-C)-C"}}},
           {32,
            34,
-	   {{"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
-		   {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.CNC12CC3CC(-C1)-CC(-C2)-C3"}}},
+           {{"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+            {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.CNC12CC3CC(-C1)-CC(-C2)-C3"}}},
           {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
           {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
           {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
-			   {"c1ccc(-CC(=O)-N):cc1.NC(-CCCCC)(-C)-C"}}},
+          {19,
+           18,
+           {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+            {"c1ccc(-CC(=O)-N):cc1.NC(-CCCCC)(-C)-C"},
+            {"c1ccc(-CC(=O)-N):cc1.NC(-CCCC(-C)-C)-C"}}},
           {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
           {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
           {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
-      		    {"c1ccc(-CC(=O)-N):cc1.NC(-CCCCC)(-C)-C"}}},
+          {19,
+           18,
+           {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"},
+            {"c1ccc(-CC(=O)-N):cc1.NC(-CCCCC)(-C)-C"},
+            {"c1ccc(-CC(=O)-N):cc1.NC(-CCCC(-C)-C)-C"},
+            {"c1ccc(-CC(=O)-N):cc1.NC(-C)-CCCC(-C)-C"}}},
           {16, 16, {"c1ccc(-CC(-NCCCCCC)=O):cc1"}},
-          {17, 17, {{"c1ccc(-CC(=O)-N):cc1.NC(-CCCCC)(-C)-C"},
-			   {"Nc1ccc(-CC(-NCCCCCC)=O):cc1"}}},
+          {17,
+           17,
+           {{"c1ccc(-CC(=O)-N):cc1.NC(-CCCCC)(-C)-C"},
+            {"Nc1ccc(-CC(-NCCCCCC)=O):cc1"},
+            {"c1ccc(-CC(=O)-NC(-CCCCC)-C):cc1"}}},
           {17, 16, {"c1ccc(-CC(-NCCCC)=O):cc1.CCN"}},
-          {17, 17, {{"c1ccc(-CC(=O)-NC(-CCCC)-CC):cc1"},
-			   {"c1ccc(-CC(=O)-NC(-CCC)-CCC):cc1"}}},
+          {17,
+           17,
+           {{"c1ccc(-CC(=O)-NC(-CCCC)-CC):cc1"},
+            {"c1ccc(-CC(=O)-NC(-CCC)-CCC):cc1"},
+            {"c1ccc(-CC(=O)-NC(-CCCCC)-C):cc1"}}},
           {18, 18, {"c1ccc(-CC(=O)-NC(-CC(-C)-C)-CCC):cc1"}},
           {17, 17, {"c1ccccc1CC(=O)-NC(-CCC)-CCC"}}};
   size_t k = 0;
   for (size_t i = 0; i < mols.size() - 1; ++i) {
     for (size_t j = i + 1; j < mols.size(); ++j, ++k) {
-	    std::cout << "doing " << k << " : " << RDKit::MolToSmiles(*mols[i]) << " vs " << RDKit::MolToSmiles(*mols[j]) << " : " << std::get<0>(exp_res[k]) << " : " << std::get<1>(exp_res[k]) << std::endl;
       auto res = rascalMces(*mols[i], *mols[j], opts);
-      std::cout << res.front().smarts() << " : " << res.front().atomMatches().size() << " : " << res.front().bondMatches().size() << std::endl;
       check_smarts_ok(*mols[i], *mols[j], res.front());
       REQUIRE(res.front().atomMatches().size() == std::get<0>(exp_res[k]));
       REQUIRE(res.front().bondMatches().size() == std::get<1>(exp_res[k]));
