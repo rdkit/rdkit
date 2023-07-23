@@ -2803,8 +2803,9 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
       if (atomLabels_[at1->getIdx()] && atomLabels_[at2->getIdx()]) {
         doubleBondTerminal(at1, at2, offset, l1s, l1f, l2s, l2f);
         offset /= 2.0;
+      } else {
+        bondNonRing(bond, offset, l2s, l2f);
       }
-      bondNonRing(bond, offset, l2s, l2f);
     }
 
     // Occasionally, as seen in Github6170, a bad geometry about a bond can
@@ -2921,7 +2922,8 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
     const Atom *thirdAtom = nullptr;
     for (auto i = 1u; i < at1->getDegree(); ++i) {
       thirdAtom = otherNeighbor(at1, at2, i, *drawMol_);
-      if (thirdAtom && !areBondsParallel(atCds_[at1->getIdx()], atCds_[at2->getIdx()],
+      if (thirdAtom &&
+          !areBondsParallel(atCds_[at1->getIdx()], atCds_[at2->getIdx()],
                             atCds_[at1->getIdx()],
                             atCds_[thirdAtom->getIdx()])) {
         return thirdAtom;
@@ -2964,7 +2966,6 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
     }
     l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(), begAt->getIdx(),
                         offset, endTrunc);
-
   } else if (begAt->getDegree() > 2 && endAt->getDegree() == 2) {
     thirdAtom = otherNeighbor(begAt, endAt, 0, *drawMol_);
     fourthAtom = otherNeighbor(endAt, begAt, 0, *drawMol_);
