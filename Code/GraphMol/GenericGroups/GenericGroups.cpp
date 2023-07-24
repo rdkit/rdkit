@@ -423,14 +423,11 @@ bool genericAtomMatcher(const ROMol &mol, const ROMol &query,
 }
 
 ROMol *adjustQueryPropertiesWithGenericGroups(
-        const ROMol &mol,
-        const MolOps::AdjustQueryParameters *inParams) {
+    const ROMol &mol, const MolOps::AdjustQueryParameters *inParams) {
   auto *res = new RWMol(mol);
   try {
     adjustQueryProperties(*res, inParams);
-    if (inParams->setGenericQueryFromProperties) {
-      GenericGroups::setGenericQueriesFromProperties(*res);
-    }
+    GenericGroups::setGenericQueriesFromProperties(*res);
   } catch (MolSanitizeException &se) {
     delete res;
     throw se;

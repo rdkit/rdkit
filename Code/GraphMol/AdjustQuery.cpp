@@ -301,9 +301,6 @@ void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
   p.adjustSingleBondsBetweenAromaticAtoms =
       pt.get("adjustSingleBondsBetweenAromaticAtoms",
              p.adjustSingleBondsBetweenAromaticAtoms);
-  p.setGenericQueryFromProperties =
-      pt.get("setGenericQueryFromProperties",
-             p.setGenericQueryFromProperties);
 
   std::string which;
   which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
