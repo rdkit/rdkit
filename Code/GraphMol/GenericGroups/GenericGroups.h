@@ -518,70 +518,6 @@ RDKIT_GENERICGROUPS_EXPORT bool NoCarbonRingAtomMatcher(
 RDKIT_GENERICGROUPS_EXPORT bool NoCarbonRingHAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
-// the following few are not really groups, but special cases of atoms: D, T,
-// H+, Pol, R
-
-//! Matches D - deuterium - an H atom with a mass of 2
-/*!
-
-  Note: this is Reaxys query type D
-
-  Conditions:
-    - H atom with a mass of 2
-
-*/
-RDKIT_GENERICGROUPS_EXPORT bool DAtomMatcher(const ROMol &mol, const Atom &atom,
-                                             boost::dynamic_bitset<> ignore);
-
-//! Matches T - tririum - an H atom with a mass of 3
-/*!
-
-  Note: this is Reaxys query type T
-
-  Conditions:
-    - H atom with a mass of 2
-
-*/
-RDKIT_GENERICGROUPS_EXPORT bool TAtomMatcher(const ROMol &mol, const Atom &atom,
-                                             boost::dynamic_bitset<> ignore);
-//! Matches H+ an H atom with a charge of 1
-/*!
-
-  Note: this is Reaxys query type H
-
-  Conditions:
-    - H atom with as charge of 1
-
-*/
-
-RDKIT_GENERICGROUPS_EXPORT bool HplusAtomMatcher(const ROMol &mol, const Atom &atom,
-                                                 boost::dynamic_bitset<> ignore);
-
-//! Matches Pol -  polymer bead
-/*!
-
-  Note: the atom has a atomLabel of "Pol"
-
-  Conditions:
-    - the atom has a atomLabel of "Pol"
-
-*/
-RDKIT_GENERICGROUPS_EXPORT bool PolAtomMatcher(const ROMol &mol,
-                                               const Atom &atom,
-                                               boost::dynamic_bitset<> ignore);
-
-//! Matches R - any side chain
-/*!
-
-  Note: the atom has a atomLabel of "R"
-
-  Conditions:
-    - the atom has a atomLabel of "R"
-
-*/
-RDKIT_GENERICGROUPS_EXPORT bool RAtomMatcher(const ROMol &mol, const Atom &atom,
-                                             boost::dynamic_bitset<> ignore);
-
 }  // namespace Matchers
 const static std::map<
     std::string,
@@ -654,12 +590,7 @@ const static std::map<
         {"NoCarbonRing", Matchers::NoCarbonRingAtomMatcher},
         {"CXX", Matchers::NoCarbonRingAtomMatcher},
         {"NoCarbonRingH", Matchers::NoCarbonRingHAtomMatcher},
-        {"CXH", Matchers::NoCarbonRingHAtomMatcher},
-        {"D", Matchers::DAtomMatcher},
-        {"T", Matchers::TAtomMatcher},
-        {"H+", Matchers::HplusAtomMatcher},
-        {"Pol", Matchers::PolAtomMatcher},
-        {"R", Matchers::RAtomMatcher},
+        {"CXH", Matchers::NoCarbonRingHAtomMatcher}
 };
 
 //! returns false if any of the molecule's generic atoms are not satisfied in
