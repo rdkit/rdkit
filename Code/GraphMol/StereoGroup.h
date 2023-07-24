@@ -89,6 +89,8 @@ RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtoms(
 RDKIT_GRAPHMOL_EXPORT void assignStereoGroupIds(
     std::vector<StereoGroup>& groups);
 
+//! Copy StereoGroup "read" IDs to "write" IDs so that they will be preserved
+//! when the mol is exported.
 RDKIT_GRAPHMOL_EXPORT void forwardStereoGroupIds(ROMol& mol);
 
 }  // namespace RDKit

@@ -1540,7 +1540,7 @@ std::vector<unsigned> getSortedMappedIndexes(
 
 std::pair<std::vector<StereoGroup>, std::vector<std::vector<unsigned>>>
 getSortedStereoGroupsAndIndices(const std::vector<StereoGroup> &groups,
-                      const std::vector<unsigned int> &revOrder) {
+                                const std::vector<unsigned int> &revOrder) {
   using StGrpIdxPair = std::pair<StereoGroup, std::vector<unsigned>>;
 
   std::vector<StGrpIdxPair> sortingGroups;
@@ -1610,7 +1610,7 @@ std::string get_enhanced_stereo_block(
   }
 
   auto [groups, groupsAtoms] =
-      getIndexeSortedGroups(mol.getStereoGroups(), revOrder);
+      getSortedStereoGroupsAndIndices(mol.getStereoGroups(), revOrder);
 
   assignStereoGroupIds(groups);
 
@@ -1626,6 +1626,7 @@ std::string get_enhanced_stereo_block(
         break;
       case StereoGroupType::STEREO_AND:
         res << "&" << sgItr->getWriteId() << ":";
+        break;
     }
 
     for (const auto &aid : *grpAtomsItr) {
