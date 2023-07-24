@@ -1339,7 +1339,7 @@ void canonicalizeEnhancedStereo(ROMol &mol,
 
     // note that we do not forward the Group Ids: this is intentional, so that
     // the Ids are reassigned based on the canonicalized order.
-    newSgs.emplace_back(sg.getGroupType(), std::move(sgAtoms));
+    newSgs.emplace_back(sg.getGroupType(), std::move(sgAtoms), 0u);
     refAtom->setProp("_stereoGroup", newSgs.size() - 1, true);
   }
   mol.setStereoGroups(newSgs);
