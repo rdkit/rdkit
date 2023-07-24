@@ -1539,7 +1539,7 @@ std::vector<unsigned> getSortedMappedIndexes(
 }
 
 std::pair<std::vector<StereoGroup>, std::vector<std::vector<unsigned>>>
-getIndexeSortedGroups(const std::vector<StereoGroup> &groups,
+getSortedStereoGroupsAndIndices(const std::vector<StereoGroup> &groups,
                       const std::vector<unsigned int> &revOrder) {
   using StGrpIdxPair = std::pair<StereoGroup, std::vector<unsigned>>;
 
