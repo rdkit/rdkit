@@ -1438,7 +1438,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       in the output SMILES. Defaults to false.\n\
     - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
       in the output SMILES. Defaults to false.\n\
-    - doRandom: (optional) if true, randomized the DFS transversal graph,\n\
+    - doRandom: (optional) if true, randomized the trasversal of the molecule graph,\n\
       so we can generate random smiles. Defaults to false.\n\
 \n\
   RETURNS:\n\
