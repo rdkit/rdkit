@@ -3,8 +3,9 @@ rdkit_python_extension(rdChemReactions
                        Enumerate.cpp
                        rdChemReactions.cpp
                        DEST Chem
-                       LINK_LIBRARIES
-ChemReactions )
+                       LINK_LIBRARIES 
+                       MarvinParser
+                       ChemReactions )
 
 add_pytest(pyChemReactions
          ${CMAKE_CURRENT_SOURCE_DIR}/testReactionWrapper.py)

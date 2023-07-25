@@ -1,0 +1,47 @@
+<cml xmlns="http://www.chemaxon.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.chemaxon.com http://www.chemaxon.com/marvin/schema/mrvSchema_20_20_0.xsd">
+    <MDocument>
+        <MChemicalStruct>
+            <reaction>
+                <reactantList>
+                    <molecule molID="m1">
+                        <atomArray>
+                            <atom id="a1" elementType="N"/>
+                            <atom id="a2" elementType="N"/>
+                        </atomArray>
+                        <bondArray>
+                            <bond id="b1" atomRefs2="a1 a2" order="3"/>
+                        </bondArray>
+                    </molecule>
+                    <molecule molID="m2">
+                        <atomArray>
+                            <atom id="a3" elementType="Cl"/>
+                        </atomArray>
+                        <bondArray></bondArray>
+                    </molecule>
+                </reactantList>
+                <agentList></agentList>
+                <productList>
+                    <molecule molID="m3">
+                        <atomArray>
+                            <atom id="a4" elementType="C"/>
+                            <atom id="a5" elementType="C"/>
+                            <atom id="a6" elementType="C"/>
+                            <atom id="a7" elementType="C"/>
+                            <atom id="a8" elementType="C"/>
+                            <atom id="a9" elementType="C"/>
+                        </atomArray>
+                        <bondArray>
+                            <bond id="b2" atomRefs2="a4 a5" order="2"/>
+                            <bond id="b3" atomRefs2="a5 a6" order="1"/>
+                            <bond id="b4" atomRefs2="a6 a7" order="2"/>
+                            <bond id="b5" atomRefs2="a7 a8" order="1"/>
+                            <bond id="b6" atomRefs2="a8 a9" order="2"/>
+                            <bond id="b7" atomRefs2="a9 a4" order="1"/>
+                        </bondArray>
+                    </molecule>
+                </productList>
+				<arrow type="DEFAULT" x1="13.523735639155097" y1="-8.719015988287936" x2="19.773744189202844" y2="-8.719015988287936"/>
+            </reaction>
+        </MChemicalStruct>
+    </MDocument>
+</cml>
