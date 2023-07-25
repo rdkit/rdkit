@@ -132,6 +132,9 @@ void printBondMatches(const RascalResult &res, std::ostream &os);
 
 void printAtomMatches(const RascalResult &res, std::ostream &os);
 
+// This prints out the scores in the order they are used in resultSort.
+void printScores(const RascalResult &res, std::ostream &os);
+
 // Calculate the Johnson similarity between the two molecules using the given
 // bondMatches.  It's the fraction of the 2 molecules that are in common,
 // somewhat akin to the tanimoto - the square of the number of atoms plus

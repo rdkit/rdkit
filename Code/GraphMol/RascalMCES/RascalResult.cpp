@@ -567,18 +567,22 @@ std::string RascalResult::smarts() const {
 bool resultSort(const RascalResult &res1, const RascalResult &res2) {
   if (res1.bondMatches().size() == res2.bondMatches().size()) {
     if (res1.numFrags() == res2.numFrags()) {
-      if (res1.ringNonRingBondScore() == res2.ringNonRingBondScore()) {
-        if (res1.atomMatchScore() == res2.atomMatchScore()) {
-          if (res1.maxDeltaAtomAtomDist() == res2.maxDeltaAtomAtomDist()) {
-            return res1.largestFragSize() > res2.largestFragSize();
+      if (res1.largestFragSize() == res2.largestFragSize()) {
+        if (res1.ringNonRingBondScore() == res2.ringNonRingBondScore()) {
+          if (res1.atomMatchScore() == res2.atomMatchScore()) {
+            if (res1.maxDeltaAtomAtomDist() == res2.maxDeltaAtomAtomDist()) {
+              return res1.smarts() < res2.smarts();
+            } else {
+              return res1.maxDeltaAtomAtomDist() < res2.maxDeltaAtomAtomDist();
+            }
           } else {
-            return res1.maxDeltaAtomAtomDist() < res2.maxDeltaAtomAtomDist();
+            return res1.atomMatchScore() < res2.atomMatchScore();
           }
         } else {
-          return res1.atomMatchScore() < res2.atomMatchScore();
+          return res1.ringNonRingBondScore() < res2.ringNonRingBondScore();
         }
       } else {
-        return res1.ringNonRingBondScore() < res2.ringNonRingBondScore();
+        return res1.largestFragSize() > res2.largestFragSize();
       }
     } else {
       return res1.numFrags() < res2.numFrags();
@@ -664,6 +668,13 @@ void printAtomMatches(const RascalResult &res, std::ostream &os) {
     os << am.second << ",";
   }
   os << "]" << std::endl;
+}
+
+void printScores(const RascalResult &res, std::ostream &os) {
+  os << res.bondMatches().size() << " : " << res.numFrags() << " : "
+     << res.largestFragSize() << " : " << res.ringNonRingBondScore() << " : "
+     << res.atomMatchScore() << " : " << res.maxDeltaAtomAtomDist() << " : "
+     << res.smarts() << std::endl;
 }
 
 double johnsonSimilarity(const std::vector<std::pair<int, int>> &bondMatches,
