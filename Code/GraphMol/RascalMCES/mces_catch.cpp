@@ -814,7 +814,7 @@ TEST_CASE("benchmarks") {
                 "c1c(OC)c(OC)c(OC)cc1C(=O)OCCOC(=O)c1cc(OC)c(OC)c(OC)c1", 0.7,
                 100, 32, 50},
                {"testosterone", "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C",
-                "CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O", 0.6, 100, 16, 40}};
+                "CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O", 0.6, 100, 16, 50}};
   std::vector<double> timings;
   std::random_device rd;
   std::mt19937 g(rd());
