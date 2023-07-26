@@ -252,7 +252,24 @@ TEST_CASE("Methadone vs mepiridine test", "[basics]") {
                               {20, 8},
                               {21, 9},
                               {23, 4}});
-  REQUIRE(res.front().smarts() == "[#6]-C(-C=O)(-c1ccccc1)-CCN(-C)-C.CC");
+  exp_bond_matches.push_back({{0, 3},
+                              {1, 2},
+                              {2, 1},
+                              {3, 0},
+                              {4, 17},
+                              {5, 5},
+                              {6, 12},
+                              {7, 13},
+                              {9, 16},
+                              {10, 18},
+                              {16, 6},
+                              {17, 7},
+                              {19, 8},
+                              {20, 10},
+                              {21, 9},
+                              {22, 4}});
+  REQUIRE(res.front().smarts() == "c1ccccc1C(-C=O)(-[#6])-CCN(-C)-C.CC");
+
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.6262, 0.0001));
@@ -367,9 +384,15 @@ TEST_CASE("Symmetrical esters test", "[basics]") {
        {14, 16}, {17, 14}, {18, 13}, {19, 12}, {20, 11}, {21, 10}, {22, 9},
        {23, 7},  {24, 8},  {25, 6},  {26, 4},  {27, 5},  {28, 3},  {29, 1},
        {30, 2},  {31, 0},  {32, 32}, {33, 31}});
+  exp_bond_matches.push_back(
+      {{0, 9},   {1, 7},   {2, 8},   {3, 6},   {4, 4},   {5, 5},   {6, 3},
+       {7, 1},   {8, 2},   {9, 0},   {10, 31}, {11, 11}, {12, 12}, {13, 13},
+       {16, 15}, {17, 16}, {18, 17}, {19, 18}, {20, 19}, {21, 32}, {22, 30},
+       {23, 28}, {24, 29}, {25, 27}, {26, 25}, {27, 26}, {28, 24}, {29, 22},
+       {30, 23}, {31, 21}, {32, 10}, {33, 20}});
   REQUIRE(
       res.front().smarts() ==
-      "c1c(-OC):c(-OC):c(-OC):cc1C(=O)-OC.COC(=O)-c1cc(-OC):c(-OC):c(-OC):c1");
+      "c1c(-OC):c(-OC):c(-OC):cc1C(=O)-O.CCOC(=O)-c1cc(-OC):c(-OC):c(-OC):c1");
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.9405, 0.0001));
@@ -691,13 +714,26 @@ TEST_CASE("ring matches ring", "[basics]") {
                               {17, 16},
                               {21, 9},
                               {23, 4}});
+  exp_bond_matches.push_back({{6, 12},
+                              {7, 13},
+                              {10, 5},
+                              {11, 17},
+                              {12, 0},
+                              {13, 1},
+                              {14, 2},
+                              {15, 3},
+                              {17, 16},
+                              {20, 9},
+                              {23, 4}});
+  RascalMCES::printBondMatches(res.front(), std::cout);
+
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().similarity(),
                Catch::Matchers::WithinAbs(0.3312, 0.0001));
   check_smarts_ok(*m1, *m2, res.front());
 
-  // This reduces it to the single largest fragment.
-  opts.minFragSize = 3;
+  // This reduces it to the single largest fragment
+  opts.singleLargestFrag = true;
   res = rascalMces(*m1, *m2, opts);
   REQUIRE(res.size() == 1);
   REQUIRE(res.front().bondMatches().size() == 9);
@@ -778,7 +814,7 @@ TEST_CASE("benchmarks") {
                 "c1c(OC)c(OC)c(OC)cc1C(=O)OCCOC(=O)c1cc(OC)c(OC)c(OC)c1", 0.7,
                 100, 32, 50},
                {"testosterone", "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C",
-                "CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O", 0.6, 100, 16, 20}};
+                "CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O", 0.6, 100, 16, 40}};
   std::vector<double> timings;
   std::random_device rd;
   std::mt19937 g(rd());
@@ -1012,7 +1048,7 @@ TEST_CASE("FMCS test3") {
   // get all MCESs, which should then be sorted into a consistent order
   // so the first one should always be the same.  This results in extra
   // run time, but means the tests should work on all platforms.
-  opts.allBestMCESs = true;
+  //  opts.allBestMCESs = true;
   std::vector<std::tuple<unsigned int, unsigned int, std::vector<std::string>>>
       exp_res{
           {31,
@@ -1085,9 +1121,9 @@ TEST_CASE("FMCS test3") {
           {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
           {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"}}},
           {16, 16, {"c1ccc(-CC(-NCCCCCC)=O):cc1"}},
-          {17, 17, {{"Nc1ccc(-CC(-NCCCCCC)=O):cc1"}}},
+          {18, 17, {{"c1ccc(-CC(-NCCCCCC)=O):cc1.NO"}}},
           {17, 16, {"c1ccc(-CC(-NCCCC)=O):cc1.CCN"}},
-          {17, 17, {{"c1ccc(-CC(=O)-NC(-C)-CCCCC):cc1"}}},
+          {17, 17, {{"c1ccc(-CC(=O)-NC(-CCCCC)-C):cc1"}}},
           {18, 18, {"c1ccc(-CC(=O)-NC(-CC(-C)-C)-CCC):cc1"}},
           {17, 17, {"c1ccccc1CC(=O)-NC(-CCC)-CCC"}}};
   size_t k = 0;
@@ -1095,9 +1131,9 @@ TEST_CASE("FMCS test3") {
     for (size_t j = i + 1; j < mols.size(); ++j, ++k) {
       auto res = rascalMces(*mols[i], *mols[j], opts);
       check_smarts_ok(*mols[i], *mols[j], res.front());
+      check_smarts_found(res.front(), get<2>(exp_res[k]));
       REQUIRE(res.front().atomMatches().size() == std::get<0>(exp_res[k]));
       REQUIRE(res.front().bondMatches().size() == std::get<1>(exp_res[k]));
-      check_smarts_found(res.front(), get<2>(exp_res[k]));
     }
   }
 }

@@ -163,39 +163,24 @@ void PartitionSet::pruneVertices(unsigned int vtx_num) {
   sortPartitions();
 }
 
-void PartitionSet::addVertex(unsigned int vtxNum) {
-  // add vtxNum to the first partition where it isn't connected in
-  // d_ModProd to any of the existing members.  Puts it in a new
-  // partition if necessary.
-  d_vtx1Counts[(*d_VtxPairs)[vtxNum].first]++;
-  d_vtx2Counts[(*d_VtxPairs)[vtxNum].second]++;
-  for (auto &part : d_parts) {
-    bool conn = false;
-    for (auto &mem : part) {
-      if ((*d_ModProd)[mem][vtxNum]) {
-        conn = true;
-        break;
-      }
-    }
-    if (!conn) {
-      part.push_back(vtxNum);
-      return;
-    }
-  }
-  d_parts.push_back(std::vector<unsigned int>(1, vtxNum));
-}
-
 void PartitionSet::sortPartitions() {
   // When sorting lists with duplicate values, the order of the
   // duplicates isn't defined.  Different compilers do it differently.
   // This can affect the results in the case where more than 1 MCES is
   // possible, because the partition orders and hence the search tree
   // traversal will be different.  The results should be equivalent,
-  // though.
+  // though.  To make things consistent, the sort is done with a
+  // tie-breaker on the first value in vectors of the same size.  It
+  // doesn't slow things down very much on average, and it makes things
+  // tidier.
   std::sort(d_parts.begin(), d_parts.end(),
             [](const std::vector<unsigned int> &v1,
                const std::vector<unsigned int> &v2) {
-              return v1.size() > v2.size();
+              if (v1.size() == v2.size() && !v1.empty()) {
+                return v1.front() < v2.front();
+              } else {
+                return v1.size() > v2.size();
+              }
             });
 }
 

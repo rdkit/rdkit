@@ -65,8 +65,6 @@ class PartitionSet {
   // counts of the number of times the d_vtx[12]_labels appear in the partitions
   std::vector<int> d_vtx1TypeCounts, d_vtx2TypeCounts;
 
-  void addVertex(unsigned int vtxNum);
-
   void sortPartitions();
 
   void calcVtxTypeCounts();
