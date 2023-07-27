@@ -49,9 +49,9 @@ void arcPoints(const Point2D &cds1, const Point2D &cds2,
 }
 
 void addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP) {
-  const auto &sgs = mol.getStereoGroups();
+  auto sgs = mol.getStereoGroups();
+  assignStereoGroupIds(sgs);
   std::vector<unsigned int> doneAts(mol.getNumAtoms(), 0);
-  unsigned int grpid = 1;
   for (const auto &sg : sgs) {
     for (const auto atom : sg.getAtoms()) {
       if (doneAts[atom->getIdx()]) {
@@ -72,10 +72,10 @@ void addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP) {
           lab = "abs";
           break;
         case StereoGroupType::STEREO_OR:
-          lab = (boost::format("or%d") % grpid).str();
+          lab = (boost::format("or%d") % sg.getWriteId()).str();
           break;
         case StereoGroupType::STEREO_AND:
-          lab = (boost::format("and%d") % grpid).str();
+          lab = (boost::format("and%d") % sg.getWriteId()).str();
           break;
         default:
           break;
@@ -87,9 +87,6 @@ void addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP) {
         }
         atom->setProp(common_properties::atomNote, lab);
       }
-    }
-    if (sg.getGroupType() != StereoGroupType::STEREO_ABSOLUTE) {
-      ++grpid;
     }
   }
   for (auto atom : mol.atoms()) {

@@ -107,8 +107,7 @@ ROMol *renumberAtoms(const ROMol &mol,
       for (const auto aptr : osg.getAtoms()) {
         ats.push_back(res->getAtomWithIdx(revOrder[aptr->getIdx()]));
       }
-      StereoGroup nsg(osg.getGroupType(), ats);
-      nsgs.push_back(nsg);
+      nsgs.emplace_back(osg.getGroupType(), ats, osg.getReadId());
     }
     res->setStereoGroups(std::move(nsgs));
   }
