@@ -840,7 +840,9 @@ class TestCase(unittest.TestCase):
     smi = Chem.MolToSmiles(query)
     self.assertEqual(smi, 'c1ccccc1')
     smi = Chem.MolToSmarts(query)
-    self.assertEqual(smi, '[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1', smi)
+    self.assertEqual(smi, '[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1')
+    smi = Chem.MolToSmarts(query, rootedAtAtom=5)
+    self.assertEqual(smi, '[#6,#7,#15]1:[#6]:[#6]:[#6]:[#6]:[#6]:1')
 
     query = Chem.MolFromMolFile(fileN, sanitize=False)
     smi = Chem.MolToSmiles(query)
@@ -848,6 +850,8 @@ class TestCase(unittest.TestCase):
     query.UpdatePropertyCache()
     smi = Chem.MolToSmarts(query)
     self.assertEqual(smi, '[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1')
+    smi = Chem.MolToSmarts(query, rootedAtAtom=3)
+    self.assertEqual(smi, '[#6]1=[#6]-[#6]=[#6]-[#6,#7,#15]=[#6]-1')
     smi = "C1=CC=CC=C1"
     mol = Chem.MolFromSmiles(smi, 0)
     self.assertTrue(mol.HasSubstructMatch(query))
