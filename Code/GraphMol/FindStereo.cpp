@@ -128,7 +128,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
   const auto beginAtom = bond->getBeginAtom();
   const auto endAtom = bond->getEndAtom();
   if (bond->getBondType() == Bond::BondType::DOUBLE) {
-    if (beginAtom->getDegree() < 2 || endAtom->getDegree() < 2 ||
+    if (beginAtom->getDegree() < 1 || endAtom->getDegree() < 1 ||
         beginAtom->getDegree() > 3 || endAtom->getDegree() > 3) {
       throw ValueErrorException("invalid atom degree in getStereoInfo(bond)");
     }
@@ -139,30 +139,30 @@ StereoInfo getStereoInfo(const Bond *bond) {
 
     bool seenSquiggleBond = false;
     const auto &mol = bond->getOwningMol();
-    for (const auto nbr : mol.atomBonds(beginAtom)) {
-      if (nbr->getIdx() != bond->getIdx()) {
-        if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
-          seenSquiggleBond = true;
+
+    if (beginAtom->getDegree() == 1 || endAtom->getDegree() == 1) {
+      seenSquiggleBond = true;
+    }
+
+    auto explore_bond_end = [&mol, &bond, &sinfo,
+                             &seenSquiggleBond](const Atom *atom) {
+      for (const auto nbr : mol.atomBonds(atom)) {
+        if (nbr->getIdx() != bond->getIdx()) {
+          if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
+            seenSquiggleBond = true;
+          }
+          sinfo.controllingAtoms.push_back(
+              nbr->getOtherAtomIdx(atom->getIdx()));
         }
-        sinfo.controllingAtoms.push_back(
-            nbr->getOtherAtomIdx(beginAtom->getIdx()));
       }
-    }
-    if (beginAtom->getDegree() == 2) {
-      sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
-    }
-    for (const auto nbr : mol.atomBonds(endAtom)) {
-      if (nbr->getIdx() != bond->getIdx()) {
-        if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
-          seenSquiggleBond = true;
-        }
-        sinfo.controllingAtoms.push_back(
-            nbr->getOtherAtomIdx(endAtom->getIdx()));
+
+      for (unsigned i = atom->getDegree(); i < 3; ++i) {
+        sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
       }
-    }
-    if (endAtom->getDegree() == 2) {
-      sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
-    }
+    };
+
+    explore_bond_end(beginAtom);
+    explore_bond_end(endAtom);
 
     if (!seenSquiggleBond) {
       // check to see if either the begin or end atoms has the _UnknownStereo
