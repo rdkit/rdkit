@@ -1597,7 +1597,7 @@ RascalMCES can only work on 2 molecules at a time:
   >>> mol2 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL152361")
   >>> res = rdRascalMCES.FindMCES(mol1, mol2)
   >>> res[0].smartsString
-  'CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1.CNC12CC3CC(-C1)-CC(-C2)-C3'
+  'CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3'
   >>> len(res[0].bondMatches())
   33
 
@@ -1609,19 +1609,19 @@ timed out or not.  There is also the method largestFragmentOnly(), which cuts th
 down to the largest single fragment.  This is a non-reversible change, so if you want both
 results, take a copy first.
 
-The values returned from atomMatches() and bondMatches() may vary on different systems for the
-same molecules.  This is almost certainly due to symmetry in the molecules.  By default,
-the MCES algorithm returns the first result it finds of maximum size.  Because of symmetry,
-there may be other equivalent solutions with the same number of atoms and bonds, but with
-different equivalent bonds matched to each other.  If you want to see all MCESs of maximum
-size, you can use the option allBestMCESs = True.  This will increase the run time.  If
-you're interested, the reason that different systems (Linux and MacOS, for example) may
-give different equivalent answers when run on the same molecules is because the C++
-function std::sort is used in the algorithm to determine the order in which the search
-tree is traversed.  The C++ standard doesn't specify how the std::sort has to deal with
-equal values, so each compiler developer is free to deal with it differently.  In the
-RASCAL algorithm, there are often equal values in the list that is sorted, and so the
-search tree order varies from compiler to compiler.
+By default, the MCES algorithm returns the first result it finds of maximum size.  Because of
+symmetry, there may be other equivalent solutions with the same number of atoms and bonds,
+but with different equivalent bonds matched to each other.  If you want to see all MCESs of
+maximum size, you can use the option allBestMCESs = True.  This will increase the run time,
+partly because more branches in the search tree must be examined, but mostly because sorting
+the multiple results is quite time-consuming.  The results are returned in a consistent order
+sorted by number of bond matches, then number of fragments (fewer first), then largest
+fragment size and so on.  Some of these aren't trivial to compute.  The adamantane example
+above is particularly extreme because not only is there extensive symmetry about the
+adamantane end and 2-fold symmetry at the phenyl end but also several points of breaking the
+matching alkyl chain all of which give rise to valid MCESs of the same size.  In this case,
+sorting into a consistent order takes significantly longer than determining the MCESs in the
+first place.
 
 The MCES differs from a conventional MCS in that it is the maximum common substructure based
 on bonds rather than atoms.  Often the result is the same, but not always.
@@ -1694,7 +1694,7 @@ with partial aromatic rings matching:
   >>> results[0].smartsString
   'C1CCCC1-c(:cc):cc'
 
-This result looks a bit odd, with a single aromatic carbon in the first SMARTS
+This result may look a bit odd, with a single aromatic carbon in the first SMARTS
 string.  This is a consequence of the fact that the MCES works on matching bonds.
 A better, atom-centric, representation might be C1CCC[$(C-c)]1.  When the
 completeAromaticRings option is set to False, a larger MCES is found, with just
