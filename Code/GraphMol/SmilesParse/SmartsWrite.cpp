@@ -633,10 +633,6 @@ std::string FragmentSmartsConstruct(
     std::vector<unsigned int> &atomOrdering,
     std::vector<unsigned int> &bondOrdering,
     const boost::dynamic_bitset<> *bondsInPlay) {
-  Canon::MolStack molStack;
-  molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
-  std::stringstream res;
-
   // this is dirty trick get around the fact that canonicalizeFragment
   // thinks we already called findSSSR - to do some atom ranking
   // but for smarts we are going to ignore that part. We will artificially
@@ -650,12 +646,16 @@ std::string FragmentSmartsConstruct(
   // For Smarts, we avoid reordering of chiral atoms in canonicalizeFragment.
   bool doRandom = false;
   bool doChiralInversions = false;
+  Canon::MolStack molStack;
+  molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
                               bondsInPlay, nullptr, doIsomericSmiles, doRandom,
                               doChiralInversions);
 
   // now clear the "SSSR" property
   mol.getRingInfo()->reset();
+
+  std::stringstream res;
   for (auto &msCI : molStack) {
     switch (msCI.type) {
       case Canon::MOL_STACK_ATOM: {
@@ -816,15 +816,25 @@ std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
     if (rootedAtAtom > -1 && colors[rootedAtAtom] == Canon::WHITE_NODE) {
       nextAtomIdx = rootedAtAtom;
     } else {
-      for (const auto atom : mol.atoms()) {
-        if (colors[atom->getIdx()] == Canon::WHITE_NODE &&
-            atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW &&
-            atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW) {
-          nextAtomIdx = atom->getIdx();
-          break;
+      // Try to find a non-chiral atom we have not processed yet.
+      // If we can't find non-chiral atom, use the chiral atom with
+      // the lowest rank (we are guaranteed to find an unprocessed atom).
+      unsigned nextRank = nAtoms + 1;
+      for (auto atom : mol.atoms()) {
+        if (colors[atom->getIdx()] == Canon::WHITE_NODE) {
+          if (atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW &&
+              atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW) {
+            nextAtomIdx = atom->getIdx();
+            break;
+          }
+          if (ranks[atom->getIdx()] < nextRank) {
+            nextRank = ranks[atom->getIdx()];
+            nextAtomIdx = atom->getIdx();
+          }
         }
       }
     }
+
     subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks,
                                      doIsomericSmiles, atomOrdering,
                                      bondOrdering, bondsInPlay);
