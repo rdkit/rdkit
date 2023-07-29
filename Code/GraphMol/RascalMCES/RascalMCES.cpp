@@ -31,9 +31,11 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/types.h>
 
+#include <GraphMol/RascalMCES/RascalMCES.h>
 #include <GraphMol/RascalMCES/PartitionSet.h>
 #include <GraphMol/RascalMCES/RascalOptions.h>
 #include <GraphMol/RascalMCES/RascalResult.h>
+#include <GraphMol/RascalMCES/RascalDetails.h>
 
 namespace RDKit {
 namespace RascalMCES {
@@ -117,31 +119,6 @@ void sorted_degree_seqs(
   }
 }
 
-// calculate the tier 1 similarity between the 2 mols.
-double tier_1_sim(const ROMol &mol1, const ROMol &mol2,
-                  std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
-                  std::map<int, std::vector<std::pair<int, int>>> &degSeqs2) {
-  sorted_degree_seqs(mol1, degSeqs1);
-  sorted_degree_seqs(mol2, degSeqs2);
-  int vg1g2 = 0;
-  int eg1g2 = 0;
-  for (const auto &it1 : degSeqs1) {
-    const auto &seq2 = degSeqs2.find(it1.first);
-    if (seq2 != degSeqs2.end()) {
-      vg1g2 += std::min(it1.second.size(), seq2->second.size());
-      auto numToDo = std::min(it1.second.size(), seq2->second.size());
-      for (auto i = 0U; i < numToDo; ++i) {
-        eg1g2 += std::min(it1.second[i].first, seq2->second[i].first);
-      }
-    }
-  }
-  eg1g2 /= 2;
-  double sim = double((vg1g2 + eg1g2) * (vg1g2 + eg1g2)) /
-               double((mol1.getNumAtoms() + mol1.getNumBonds()) *
-                      (mol2.getNumAtoms() + mol2.getNumBonds()));
-  return sim;
-}
-
 // Make labels for the atoms - by default the atomic symbol.
 // If includeChirality and the atom is chiral, adds (R) or (S).
 void get_atom_labels(const ROMol &mol, const RascalOptions &opts,
@@ -159,61 +136,6 @@ void get_atom_labels(const ROMol &mol, const RascalOptions &opts,
     }
     atomLabels[a->getIdx()] = label;
   }
-}
-
-// For each bond in the molecule, encode it with its type and the labels of the
-// two end atoms, returning the results as strings.
-// Note that the molecule should not be in kekulized form.
-void get_bond_labels(const ROMol &mol, const RascalOptions &opts,
-                     std::vector<std::string> &bondLabels) {
-  std::vector<std::string> atomLabels;
-  get_atom_labels(mol, opts, atomLabels);
-  bondLabels = std::vector<std::string>(mol.getNumBonds(), "");
-  for (const auto &b : mol.bonds()) {
-    if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
-      bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] +
-                                std::to_string(b->getBondType()) +
-                                atomLabels[b->getEndAtomIdx()];
-    } else {
-      bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] +
-                                std::to_string(b->getBondType()) +
-                                atomLabels[b->getBeginAtomIdx()];
-    }
-  }
-}
-
-// Fills bondLabels[12] with a small integer denoting the type of the bond and
-// the types of the atoms at each end.  Both molecules need to be done at the
-// same time so that the labels are consistent across both.
-void get_bond_labels(const ROMol &mol1, const ROMol &mol2,
-                     const RascalOptions &opts,
-                     std::vector<unsigned int> &bondLabels1,
-                     std::vector<unsigned int> &bondLabels2) {
-  std::vector<std::string> tmpBondLabels1, tmpBondLabels2;
-
-  get_bond_labels(mol1, opts, tmpBondLabels1);
-  get_bond_labels(mol2, opts, tmpBondLabels2);
-
-  // convert the bond labels, which are currently encoding the atoms and
-  // bond type to a small set of sequential integers for ease of use later.
-  // This results in loss of information, but that information is not currently
-  // used anywhere.
-  std::set<std::string> allLabels;
-  for (auto bl : tmpBondLabels1) {
-    allLabels.insert(bl);
-  }
-  for (auto bl : tmpBondLabels2) {
-    allLabels.insert(bl);
-  }
-  auto recodeBondLabels = [&](std::vector<std::string> &strBondLabels,
-                              std::vector<unsigned int> &bondLabels) {
-    for (auto &bl : strBondLabels) {
-      auto it = allLabels.find(bl);
-      bondLabels.push_back(std::distance(allLabels.begin(), it));
-    }
-  };
-  recodeBondLabels(tmpBondLabels1, bondLabels1);
-  recodeBondLabels(tmpBondLabels2, bondLabels2);
 }
 
 int calc_cost(const std::vector<unsigned int> &atomiBLs,
@@ -287,6 +209,31 @@ int getAssignmentScore(const std::vector<std::pair<int, int>> &atomDegrees1,
   return totalCost;
 }
 
+namespace details {
+// calculate the tier 1 similarity between the 2 mols.
+double tier1Sim(const ROMol &mol1, const ROMol &mol2,
+                std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
+                std::map<int, std::vector<std::pair<int, int>>> &degSeqs2) {
+  sorted_degree_seqs(mol1, degSeqs1);
+  sorted_degree_seqs(mol2, degSeqs2);
+  int vg1g2 = 0;
+  int eg1g2 = 0;
+  for (const auto &it1 : degSeqs1) {
+    const auto &seq2 = degSeqs2.find(it1.first);
+    if (seq2 != degSeqs2.end()) {
+      vg1g2 += std::min(it1.second.size(), seq2->second.size());
+      auto numToDo = std::min(it1.second.size(), seq2->second.size());
+      for (auto i = 0U; i < numToDo; ++i) {
+        eg1g2 += std::min(it1.second[i].first, seq2->second[i].first);
+      }
+    }
+  }
+  eg1g2 /= 2;
+  double sim = double((vg1g2 + eg1g2) * (vg1g2 + eg1g2)) /
+               double((mol1.getNumAtoms() + mol1.getNumBonds()) *
+                      (mol2.getNumAtoms() + mol2.getNumBonds()));
+  return sim;
+}
 // Calculate the tier 2 similarity between the 2 mols.
 double tier2Sim(const ROMol &mol1, const ROMol &mol2,
                 const std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
@@ -309,6 +256,61 @@ double tier2Sim(const ROMol &mol1, const ROMol &mol2,
                       (mol2.getNumAtoms() + mol2.getNumBonds()));
   return sim;
 }
+// For each bond in the molecule, encode it with its type and the labels of the
+// two end atoms, returning the results as strings.
+// Note that the molecule should not be in kekulized form.
+void getBondLabels(const ROMol &mol, const RascalOptions &opts,
+                   std::vector<std::string> &bondLabels) {
+  std::vector<std::string> atomLabels;
+  get_atom_labels(mol, opts, atomLabels);
+  bondLabels = std::vector<std::string>(mol.getNumBonds(), "");
+  for (const auto &b : mol.bonds()) {
+    if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
+      bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] +
+                                std::to_string(b->getBondType()) +
+                                atomLabels[b->getEndAtomIdx()];
+    } else {
+      bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] +
+                                std::to_string(b->getBondType()) +
+                                atomLabels[b->getBeginAtomIdx()];
+    }
+  }
+}
+
+// Fills bondLabels[12] with a small integer denoting the type of the bond and
+// the types of the atoms at each end.  Both molecules need to be done at the
+// same time so that the labels are consistent across both.
+void getBondLabels(const ROMol &mol1, const ROMol &mol2,
+                   const RascalOptions &opts,
+                   std::vector<unsigned int> &bondLabels1,
+                   std::vector<unsigned int> &bondLabels2) {
+  std::vector<std::string> tmpBondLabels1, tmpBondLabels2;
+
+  getBondLabels(mol1, opts, tmpBondLabels1);
+  getBondLabels(mol2, opts, tmpBondLabels2);
+
+  // convert the bond labels, which are currently encoding the atoms and
+  // bond type to a small set of sequential integers for ease of use later.
+  // This results in loss of information, but that information is not currently
+  // used anywhere.
+  std::set<std::string> allLabels;
+  for (auto bl : tmpBondLabels1) {
+    allLabels.insert(bl);
+  }
+  for (auto bl : tmpBondLabels2) {
+    allLabels.insert(bl);
+  }
+  auto recodeBondLabels = [&](std::vector<std::string> &strBondLabels,
+                              std::vector<unsigned int> &bondLabels) {
+    for (auto &bl : strBondLabels) {
+      auto it = allLabels.find(bl);
+      bondLabels.push_back(std::distance(allLabels.begin(), it));
+    }
+  };
+  recodeBondLabels(tmpBondLabels1, bondLabels1);
+  recodeBondLabels(tmpBondLabels2, bondLabels2);
+}
+}  // namespace details
 
 // make the line graph for the molecule, as an adjacency matrix.  Each
 // row/column is a bond, with a connection between 2 bonds if they share an
@@ -970,15 +972,16 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
   }
   std::map<int, std::vector<std::pair<int, int>>> degSeqs1, degSeqs2;
   starter.d_tier1Sim =
-      tier_1_sim(*starter.d_mol1, *starter.d_mol2, degSeqs1, degSeqs2);
+      details::tier1Sim(*starter.d_mol1, *starter.d_mol2, degSeqs1, degSeqs2);
   if (starter.d_tier1Sim < opts.similarityThreshold) {
     return starter;
   }
   std::vector<unsigned int> bondLabels1, bondLabels2;
-  get_bond_labels(*starter.d_mol1, *starter.d_mol2, opts, bondLabels1,
-                  bondLabels2);
-  starter.d_tier2Sim = tier2Sim(*starter.d_mol1, *starter.d_mol2, degSeqs1,
-                                degSeqs2, bondLabels1, bondLabels2);
+  details::getBondLabels(*starter.d_mol1, *starter.d_mol2, opts, bondLabels1,
+                         bondLabels2);
+  starter.d_tier2Sim =
+      details::tier2Sim(*starter.d_mol1, *starter.d_mol2, degSeqs1, degSeqs2,
+                        bondLabels1, bondLabels2);
   if (starter.d_tier2Sim < opts.similarityThreshold) {
     return starter;
   }

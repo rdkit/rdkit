@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 
 #ifndef RASCALOPTIONS_H
 #define RASCALOPTIONS_H
@@ -15,7 +16,7 @@ namespace RDKit {
 
 namespace RascalMCES {
 
-struct RascalOptions {
+struct RDKIT_RASCALMCES_EXPORT RascalOptions {
   double similarityThreshold =
       0.7;    // if calculated below this, no MCES will be evaluated.
   bool completeAromaticRings =

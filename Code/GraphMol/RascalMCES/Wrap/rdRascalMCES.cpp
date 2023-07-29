@@ -12,7 +12,7 @@
 #include <RDBoost/Wrap.h>
 
 #include <GraphMol/ROMol.h>
-#include <GraphMol/RascalMCES/rascal_mces.h>
+#include <GraphMol/RascalMCES/RascalMCES.h>
 #include <GraphMol/RascalMCES/RascalOptions.h>
 #include <GraphMol/RascalMCES/RascalResult.h>
 

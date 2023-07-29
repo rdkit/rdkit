@@ -12,6 +12,7 @@
 // correspond between the molecules, and also a SMARTS pattern
 // defining the MCES.
 //
+#include <RDGeneral/export.h>
 
 #ifndef RASCALRESULT_H
 #define RASCALRESULT_H
@@ -24,7 +25,7 @@ namespace RDKit {
 
 namespace RascalMCES {
 
-class RascalResult {
+class RDKIT_RASCALMCES_EXPORT RascalResult {
  public:
   RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                const std::vector<std::vector<int>> &adjMatrix1,
@@ -116,24 +117,29 @@ class RascalResult {
   int calcMaxDeltaAtomAtomDistScore() const;
 };
 
-bool resultSort(const RascalResult &res1, const RascalResult &res2);
+RDKIT_RASCALMCES_EXPORT bool resultSort(const RascalResult &res1,
+                                        const RascalResult &res2);
 
-void extractClique(const std::vector<unsigned int> &clique,
-                   const std::vector<std::pair<int, int>> &vtxPairs,
-                   bool swapped, std::vector<std::pair<int, int>> &bondMatches);
+RDKIT_RASCALMCES_EXPORT void extractClique(
+    const std::vector<unsigned int> &clique,
+    const std::vector<std::pair<int, int>> &vtxPairs, bool swapped,
+    std::vector<std::pair<int, int>> &bondMatches);
 
 // do some simple cleaning of the SMARTS, to make it more user-friendly.
-void cleanSmarts(std::string &smarts);
+RDKIT_RASCALMCES_EXPORT void cleanSmarts(std::string &smarts);
 
 // Primarily for debugging, these write out the corresponding bonds/atoms
 // in Python list format, for ease of cut/paste into a highlighted image
 // creation.
-void printBondMatches(const RascalResult &res, std::ostream &os);
+RDKIT_RASCALMCES_EXPORT void printBondMatches(const RascalResult &res,
+                                              std::ostream &os);
 
-void printAtomMatches(const RascalResult &res, std::ostream &os);
+RDKIT_RASCALMCES_EXPORT void printAtomMatches(const RascalResult &res,
+                                              std::ostream &os);
 
 // This prints out the scores in the order they are used in resultSort.
-void printScores(const RascalResult &res, std::ostream &os);
+RDKIT_RASCALMCES_EXPORT void printScores(const RascalResult &res,
+                                         std::ostream &os);
 
 // Calculate the Johnson similarity between the two molecules using the given
 // bondMatches.  It's the fraction of the 2 molecules that are in common,
@@ -141,8 +147,9 @@ void printScores(const RascalResult &res, std::ostream &os);
 // number of bonds in the MCES divided by the product of the sums of the number
 // of atoms and bonds in the 2 molecules.
 // It has nothing to do with lying UK politicians.
-double johnsonSimilarity(const std::vector<std::pair<int, int>> &bondMatches,
-                         const RDKit::ROMol &mol1, const RDKit::ROMol &mol2);
+RDKIT_RASCALMCES_EXPORT double johnsonSimilarity(
+    const std::vector<std::pair<int, int>> &bondMatches,
+    const RDKit::ROMol &mol1, const RDKit::ROMol &mol2);
 
 }  // namespace RascalMCES
 }  // namespace RDKit
