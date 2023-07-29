@@ -15,12 +15,11 @@
 #include <vector>
 
 #include <GraphMol/RascalMCES/RascalOptions.h>
+#include <GraphMol/RascalMCES/RascalResult.h>
 namespace RDKit {
 class ROMol;
 
 namespace RascalMCES {
-
-class RascalResult;
 
 // Find one or more MCESs between the two molecules.  The MCES is the
 // Maximum Common Edge Substructure, and is the largest set of bonds

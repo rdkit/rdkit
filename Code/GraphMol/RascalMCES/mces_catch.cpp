@@ -20,9 +20,10 @@
 #define CATCH_CONFIG_MAIN
 #include "../../../External/catch/catch/single_include/catch2/catch.hpp"
 
-#include <GraphMol/RascalMCES/rascal_mces.h>
+#include <GraphMol/RascalMCES/RascalMCES.h>
 #include <GraphMol/RascalMCES/RascalOptions.h>
 #include <GraphMol/RascalMCES/RascalResult.h>
+#include <GraphMol/RascalMCES/RascalDetails.h>
 
 // 'The paper' referenced below is :
 // RASCAL: Calculation of Graph Similarity using Maximum Common
@@ -30,27 +31,9 @@
 // 'The Computer Journal', 45, 631-644 (2002).
 // https://eprints.whiterose.ac.uk/3568/1/willets3.pdf
 
-namespace RDKit {
-namespace RascalMCES {
-double tier_1_sim(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
-                  std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
-                  std::map<int, std::vector<std::pair<int, int>>> &degSeqs2);
-
-double tier2Sim(const ROMol &mol1, const ROMol &mol2,
-                const std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
-                const std::map<int, std::vector<std::pair<int, int>>> &degSeqs2,
-                const std::vector<unsigned int> &bondLabels1,
-                const std::vector<unsigned int> &bondLabels2);
-
-void get_bond_labels(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
-                     const RascalOptions &opts,
-                     std::vector<unsigned int> &bondLabels1,
-                     std::vector<unsigned int> &bondLabels2);
-}  // namespace RascalMCES
-}  // namespace RDKit
-
 using namespace RDKit;
 using namespace RDKit::RascalMCES;
+using namespace RDKit::RascalMCES::details;
 
 void check_smarts_ok(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                      const RascalResult &res) {
@@ -83,11 +66,11 @@ TEST_CASE("Very small test", "[basics]") {
 
   RascalOptions opts;
   std::map<int, std::vector<std::pair<int, int>>> degSeqs1, degSeqs2;
-  auto tier1_sim = tier_1_sim(*m1, *m2, degSeqs1, degSeqs2);
+  auto tier1_sim = tier1Sim(*m1, *m2, degSeqs1, degSeqs2);
   REQUIRE_THAT(tier1_sim, Catch::Matchers::WithinAbs(1.0000, 0.0001));
 
   std::vector<unsigned int> bondLabels1, bondLabels2;
-  get_bond_labels(*m1, *m2, opts, bondLabels1, bondLabels2);
+  getBondLabels(*m1, *m2, opts, bondLabels1, bondLabels2);
   auto tier2_sim =
       tier2Sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
   REQUIRE_THAT(tier2_sim, Catch::Matchers::WithinAbs(0.7901, 0.0001));
@@ -129,12 +112,12 @@ TEST_CASE("Juglone vs Scopoletin test", "[basics]") {
   REQUIRE(m2);
 
   std::map<int, std::vector<std::pair<int, int>>> degSeqs1, degSeqs2;
-  auto tier1_sim = tier_1_sim(*m1, *m2, degSeqs1, degSeqs2);
+  auto tier1_sim = tier1Sim(*m1, *m2, degSeqs1, degSeqs2);
   REQUIRE_THAT(tier1_sim, Catch::Matchers::WithinAbs(0.8633, 0.0001));
 
   RascalOptions opts;
   std::vector<unsigned int> bondLabels1, bondLabels2;
-  get_bond_labels(*m1, *m2, opts, bondLabels1, bondLabels2);
+  getBondLabels(*m1, *m2, opts, bondLabels1, bondLabels2);
   auto tier2_sim =
       tier2Sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
   REQUIRE_THAT(tier2_sim, Catch::Matchers::WithinAbs(0.5632, 0.0001));
@@ -171,12 +154,12 @@ TEST_CASE("Methadone vs mepiridine test", "[basics]") {
 
   // It's a general requirement that the first mol is smaller than the second.
   std::map<int, std::vector<std::pair<int, int>>> degSeqs1, degSeqs2;
-  auto tier1_sim = tier_1_sim(*m1, *m2, degSeqs1, degSeqs2);
+  auto tier1_sim = tier1Sim(*m1, *m2, degSeqs1, degSeqs2);
   REQUIRE_THAT(tier1_sim, Catch::Matchers::WithinAbs(0.7044, 0.0001));
 
   std::vector<unsigned int> bondLabels1, bondLabels2;
   RascalOptions opts;
-  get_bond_labels(*m1, *m2, opts, bondLabels1, bondLabels2);
+  getBondLabels(*m1, *m2, opts, bondLabels1, bondLabels2);
   auto tier2_sim =
       tier2Sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
   REQUIRE_THAT(tier2_sim, Catch::Matchers::WithinAbs(0.6262, 0.0001));
@@ -327,12 +310,12 @@ TEST_CASE("Symmetrical esters test", "[basics]") {
 
   // It's a general requirement that the first mol is smaller than the second.
   std::map<int, std::vector<std::pair<int, int>>> degSeqs1, degSeqs2;
-  auto tier1_sim = tier_1_sim(*m1, *m2, degSeqs1, degSeqs2);
+  auto tier1_sim = tier1Sim(*m1, *m2, degSeqs1, degSeqs2);
   REQUIRE_THAT(tier1_sim, Catch::Matchers::WithinAbs(0.9701, 0.0001));
 
   std::vector<unsigned int> bondLabels1, bondLabels2;
   RascalOptions opts;
-  get_bond_labels(*m1, *m2, opts, bondLabels1, bondLabels2);
+  getBondLabels(*m1, *m2, opts, bondLabels1, bondLabels2);
   auto tier2_sim =
       tier2Sim(*m1, *m2, degSeqs1, degSeqs2, bondLabels1, bondLabels2);
   REQUIRE_THAT(tier2_sim, Catch::Matchers::WithinAbs(0.9701, 0.0001));
