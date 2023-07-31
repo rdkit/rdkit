@@ -310,7 +310,7 @@ void runMolTest(const std::string groupToTest,
   std::string queryString = getMolQuery(groupToTest, supGroupFlag);
   auto query =
       std::unique_ptr<RWMol>(MolBlockToMol(queryString, false, false, false));
-  runTest(&*query, tests);
+  runTest(query.get(), tests);
 }
 
 void runTest(const std::string groupToTest,
