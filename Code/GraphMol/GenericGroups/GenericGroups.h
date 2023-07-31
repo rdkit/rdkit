@@ -75,7 +75,7 @@ RDKIT_GENERICGROUPS_EXPORT bool GroupStarAtomMatcher(
 //! Matches any group as a side chain that has a ring closure or just an H atom
 /*!
 
-  Note: this is Reaxys query type GH and matches any sidechains
+  Note: this is Reaxys query type GH* and matches any sidechains
 
   Conditions:
     - at least one ring closure
