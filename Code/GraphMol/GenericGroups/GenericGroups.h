@@ -37,7 +37,7 @@ namespace Matchers {
 //! Matches any group as a side chains
 /*!
 
-  Note: this is Reaxys query type G and matches any sidechains
+  Note: this is Reaxys query type G and matches any sidechain
 
   Conditions:
     - at least one non-hydrogen atom is in the sidechain
