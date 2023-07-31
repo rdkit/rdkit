@@ -72,7 +72,7 @@ RDKIT_GENERICGROUPS_EXPORT bool GroupHAtomMatcher(
 RDKIT_GENERICGROUPS_EXPORT bool GroupStarAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
-//! Matches any group as a side chains that has a ring closure or just an H atom
+//! Matches any group as a side chain that has a ring closure or just an H atom
 /*!
 
   Note: this is Reaxys query type GH and matches any sidechains
