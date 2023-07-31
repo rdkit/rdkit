@@ -34,7 +34,7 @@ namespace GenericGroups {
 
 namespace Matchers {
 
-//! Matches any group as a side chains
+//! Matches any group as a side chain
 /*!
 
   Note: this is Reaxys query type G and matches any sidechain
