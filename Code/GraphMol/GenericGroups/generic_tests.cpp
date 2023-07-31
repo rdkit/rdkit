@@ -301,7 +301,7 @@ void runCxsmilesTest(const std::string groupToTest,
                      std::vector<std::pair<std::string, unsigned>> &tests) {
   std::string queryString = getCXSmilesQuery(groupToTest);
   auto query = std::unique_ptr<RWMol>(SmartsToMol(queryString));
-  runTest(&*query, tests);
+  runTest(query.get(), tests);
 }
 
 void runMolTest(const std::string groupToTest,
