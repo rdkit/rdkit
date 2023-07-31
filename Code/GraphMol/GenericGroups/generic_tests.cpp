@@ -658,4 +658,10 @@ M  END)CTAB"_ctab;
   matchVect = SubstructMatch(*t, *m, params_match);
   TEST_ASSERT(matchVect.size() == 0);
   delete m;
+
+  m = new RWMol(*query);
+  GenericGroups::adjustQueryPropertiesWithGenericGroups(*m);
+  matchVect = SubstructMatch(*t, *m, params_match);
+  TEST_ASSERT(matchVect.size() == 0);
+  delete m;
 }
