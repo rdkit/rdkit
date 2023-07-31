@@ -58,7 +58,7 @@ RDKIT_GENERICGROUPS_EXPORT bool GroupAtomMatcher(
 RDKIT_GENERICGROUPS_EXPORT bool GroupHAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
-//! Matches any group as a side chains
+//! Matches any group as a side chain
 /*!
 
   Note: this is Reaxys query type G and matches any sidechain that has a ring
