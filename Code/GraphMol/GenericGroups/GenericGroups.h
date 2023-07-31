@@ -49,7 +49,7 @@ RDKIT_GENERICGROUPS_EXPORT bool GroupAtomMatcher(
 //! Matches any group as a side chain including just an H atom
 /*!
 
-  Note: this is Reaxys query type GH and matches any sidechains
+  Note: this is Reaxys query type GH and matches any sidechain
 
   Conditions:
     - none
