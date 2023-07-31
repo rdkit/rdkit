@@ -427,7 +427,7 @@ void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
       mrs = std::regex_replace(mrs, reg, "$1");
     }
     extractRings(mol2, mol2Rings, mol2RingSmiles);
-    for (auto &mrs : mol1RingSmiles) {
+    for (auto &mrs : mol2RingSmiles) {
       mrs = std::regex_replace(mrs, reg, "$1");
     }
   }

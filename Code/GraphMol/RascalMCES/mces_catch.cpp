@@ -398,7 +398,7 @@ TEST_CASE("dyphylline similarities") {
        0.48},
       {"CCCN1C(=O)NC(=O)C2N=CNC1=2"_smiles, "enprofylline", 0.73},
       {"CN1CCN(CC1)S(=O)(=O)c1ccc(OCC)c(c1)C1=NC(=O)C2N(C)N=C(CCC)C(N1)=2"_smiles,
-       "viagra", 0.11},
+       "viagra", 0.19},
       {"OCCN(C)C1=NC2N(C)C(=O)N(C)C(=O)C(N1C)=2"_smiles, "cafaminol", 0.80}};
   RascalOptions opts;
   opts.similarityThreshold = 0.3;
@@ -1119,4 +1119,17 @@ TEST_CASE("FMCS test3") {
       REQUIRE(res.front().bondMatches().size() == std::get<1>(exp_res[k]));
     }
   }
+}
+
+TEST_CASE("Zinc pair", "[basics]") {
+  // These missed the pyrazole ring at one point, giving the SMARTS
+  // NC(=O)-Nc1cccc2c1C(=O)-cc-2.c-c
+  auto m1 = "NC(=O)Nc1cccc2c1C(=O)c1c-2n[nH]c1-c1cccs1 ZINC03814477"_smiles;
+  REQUIRE(m1);
+  auto m2 =
+      "COc1ccc(-c2[nH]nc3c2C(=O)c2c(NC(N)=O)cccc2-3)cc1 ZINC00023904"_smiles;
+  REQUIRE(m2);
+
+  auto res = rascalMces(*m1, *m2);
+  REQUIRE(res.front().smarts() == "NC(=O)-Nc1cccc2c1C(=O)-c1c-2:nnc1-c");
 }
