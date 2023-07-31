@@ -59,6 +59,7 @@ RascalResult::RascalResult(const RascalResult &other)
     : d_bondMatches(other.d_bondMatches),
       d_atomMatches(other.d_atomMatches),
       d_smarts(other.d_smarts),
+      d_timedOut(other.d_timedOut),
       d_numFrags(other.d_numFrags),
       d_ringNonRingBondScore(other.d_ringNonRingBondScore),
       d_atomMatchScore(other.d_atomMatchScore),
@@ -74,6 +75,8 @@ RascalResult &RascalResult::operator=(const RascalResult &other) {
   }
   d_bondMatches = other.d_bondMatches;
   d_atomMatches = other.d_atomMatches;
+  d_smarts = other.d_smarts;
+  d_timedOut = other.d_timedOut;
   d_numFrags = other.d_numFrags;
   d_ringNonRingBondScore = other.d_ringNonRingBondScore;
   d_atomMatchScore = other.d_atomMatchScore;
