@@ -46,7 +46,7 @@ namespace Matchers {
 RDKIT_GENERICGROUPS_EXPORT bool GroupAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
-//! Matches any group as a side chains including just an H atom
+//! Matches any group as a side chain including just an H atom
 /*!
 
   Note: this is Reaxys query type GH and matches any sidechains
