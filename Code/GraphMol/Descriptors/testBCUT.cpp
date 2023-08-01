@@ -96,8 +96,21 @@ void test2() {
   }
 }
 
+void test3() {
+    BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdErrorLog) << "    Test empty molecule BCUT." << std::endl;
+    RWMol m;
+    try {
+      std::vector<double> bcuts = Descriptors::BCUT2D(m);
+      TEST_ASSERT(0); // should throw an exception
+    } catch (...) {
+      
+    }
+    
+}
 int main() {
   RDLog::InitLogs();
   test1();
   test2();
+  test3();
 }

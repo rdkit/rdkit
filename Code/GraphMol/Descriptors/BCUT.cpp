@@ -80,6 +80,8 @@ std::pair<double, double> BCUT2D(std::unique_ptr<Eigen::MatrixXd> &burden,
 std::pair<double, double> BCUT2D(const ROMol &m,
                                  const std::vector<double> &atom_props) {
   unsigned int num_atoms = m.getNumAtoms();
+  PRECONDITION(num_atoms > 0,
+	       "BCUT2D requires at least one atom");
   PRECONDITION(atom_props.size() == num_atoms,
                "Number of atom props not equal to number of atoms");
 
@@ -101,10 +103,13 @@ std::pair<double, double> BCUT2D(const ROMol &m,
 }
 
 std::vector<double> BCUT2D(const ROMol &m) {
+  unsigned int num_atoms = m.getNumAtoms();
+  PRECONDITION(num_atoms > 0,
+	       "BCUT2D requires at least one atom");
+
   std::unique_ptr<ROMol> mol(MolOps::removeHs(m));
   std::vector<double> masses;
   std::vector<double> charges;
-  unsigned int num_atoms = mol->getNumAtoms();
   masses.reserve(num_atoms);
   charges.reserve(num_atoms);
 
