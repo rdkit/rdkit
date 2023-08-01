@@ -70,75 +70,140 @@ namespace RDKit {
 */
 class MarvinCMLReader {
  public:
-  RWMol *mol;
-  ChemicalReaction *rxn;
-
-  MarvinCMLReader() : mol(nullptr), rxn(nullptr){};
+  MarvinCMLReader(){};
 
   ~MarvinCMLReader(){};
 
-  // this routine does the work of parsing.  It returns either an RWMol * or a
-  // ChemicalStructure *
-  //  either way it is cast to a void *
+  RWMol *parseMolecule(boost::property_tree::ptree molTree,
+                       bool sanitize = false, bool removeHs = false) {
+    MarvinMol *marvinMol = nullptr;
+    RWMol *mol = nullptr;
+    boost::property_tree::ptree molSection;
 
-  void *parse(std::istream &is, bool &isReaction, bool sanitize = false,
-              bool removeHs = false) {
-    // Create empty property tree object
-    using boost::property_tree::ptree;
-    ptree tree;
-
-    // Parse the XML into the property tree.
-
-    read_xml(is, tree);
-
-    // find a molecule or a reaction
-
-    bool molFlag = false;
     boost::property_tree::ptree molOrRxn;
-    try {
-      molOrRxn = tree.get_child("cml.MDocument.MChemicalStruct.molecule");
-      molFlag = true;
-    } catch (const std::exception &e) {
-      // do nothing
-    }
-
-    if (molFlag) {
-      mol = (RWMol *)parseMolecule(molOrRxn, sanitize, removeHs);
-      isReaction = false;
-      return (void *)mol;
-    }
 
     try {
-      molOrRxn = tree.get_child("cml.MDocument.MChemicalStruct.reaction");
+      molSection = molTree.get_child("cml.MDocument.MChemicalStruct.molecule");
     } catch (const std::exception &e) {
-      // check for sparse marvin data - no reaction nor molecule parts
-      // just return an empty RWMol *
-
       try {
-        molOrRxn = tree.get_child("cml.MDocument.MChemicalStruct");
+        molSection = molTree.get_child("cml.MDocument");
         return new RWMol();
       } catch (const std::exception &e) {
         try {
-          molOrRxn = tree.get_child("cml.MDocument");
+          molSection = molTree.get_child("cml");
           return new RWMol();
         } catch (const std::exception &e) {
-          try {
-            molOrRxn = tree.get_child("cml");
-            return new RWMol();
-          } catch (const std::exception &e) {
-            throw FileParseException(
-                "Expected \"molecule\" or \"reaction\" in MRV file");
-          }
+          throw FileParseException("Expected \"molecule\" in MRV file");
         }
       }
     }
 
-    rxn = parseReaction(molOrRxn, tree.get_child("cml.MDocument"), sanitize,
-                        removeHs);
-    isReaction = true;
-    return (void *)rxn;
+    try {
+      marvinMol = (MarvinMol *)parseMarvinMolecule(molSection);
+      // marvinMol->convertFromSuperAtoms();
+      // marvinMol->processMulticenterSgroups();
+      // marvinMol->expandMultipleSgroups();
+      marvinMol->prepSgroupsForRDKit();
+
+      mol = parseMolecule(marvinMol, sanitize, removeHs);
+
+      delete marvinMol;
+
+      return mol;
+    } catch (const std::exception &e) {
+      delete mol;
+
+      delete marvinMol;
+
+      throw;
+    }
   }
 
+  ChemicalReaction *parseReaction(boost::property_tree::ptree rxnTree,
+                                  boost::property_tree::ptree documentTree,
+                                  bool sanitize = false,
+                                  bool removeHs = false) {
+    ChemicalReaction *rxn = nullptr;
+    MarvinReaction *marvinReaction = nullptr;
+    RWMol *mol = nullptr;
+
+    try {
+      rxn = new ChemicalReaction();
+      rxnTree = rxnTree.get_child("cml.MDocument.MChemicalStruct.reaction");
+      marvinReaction = parseMarvinReaction(rxnTree, documentTree);
+      marvinReaction->prepSgroupsForRDKit();
+
+      // get each reactant
+
+      std::vector<MarvinMol *>::iterator molIter;
+      for (molIter = marvinReaction->reactants.begin();
+           molIter != marvinReaction->reactants.end(); ++molIter) {
+        mol = parseMolecule((*molIter), sanitize, removeHs);
+
+        auto *roMol = new ROMol(*mol);
+        delete mol;
+
+        rxn->addReactantTemplate(ROMOL_SPTR(roMol));  // roMol  now owned by
+                                                      // rxn;
+      }
+
+      // get each agent
+
+      for (molIter = marvinReaction->agents.begin();
+           molIter != marvinReaction->agents.end(); ++molIter) {
+        mol = parseMolecule((*molIter), sanitize, removeHs);
+
+        auto *roMol = new ROMol(*mol);
+        delete mol;
+
+        rxn->addAgentTemplate(ROMOL_SPTR(roMol));  // roMol  now owned by rxn;
+      }
+
+      // get each product
+
+      for (molIter = marvinReaction->products.begin();
+           molIter != marvinReaction->products.end(); ++molIter) {
+        mol = parseMolecule((*molIter), sanitize, removeHs);
+
+        auto *roMol = new ROMol(*mol);
+        delete mol;
+
+        rxn->addProductTemplate(ROMOL_SPTR(roMol));  // roMol  now owned by rxn;
+      }
+
+      // convert atoms to queries:
+      for (auto iter = rxn->beginReactantTemplates();
+           iter != rxn->endReactantTemplates(); ++iter) {
+        // to write the mol block, we need ring information:
+
+        for (ROMol::AtomIterator atomIt = (*iter)->beginAtoms();
+             atomIt != (*iter)->endAtoms(); ++atomIt) {
+          QueryOps::replaceAtomWithQueryAtom((RWMol *)iter->get(), (*atomIt));
+        }
+      }
+      for (auto iter = rxn->beginProductTemplates();
+           iter != rxn->endProductTemplates(); ++iter) {
+        // to write the mol block, we need ring information:
+        for (ROMol::AtomIterator atomIt = (*iter)->beginAtoms();
+             atomIt != (*iter)->endAtoms(); ++atomIt) {
+          QueryOps::replaceAtomWithQueryAtom((RWMol *)iter->get(), (*atomIt));
+        }
+      }
+
+      // RXN-based reactions do not have implicit properties
+      // rxn->setImplicitPropertiesFlag(false);
+
+      delete marvinReaction;
+      return rxn;
+    } catch (const std::exception &e) {
+      delete marvinReaction;
+      delete rxn;
+
+      throw;
+    }
+  }
+
+ private:
   bool getCleanDouble(std::string strToParse, double &outDouble) {
     if (boost::algorithm::trim_copy(strToParse) !=
         strToParse) {  // should be no white space
@@ -867,31 +932,6 @@ class MarvinCMLReader {
       for (auto &stereoGroup : stereoGroups) {
         delete stereoGroup;
       }
-
-      throw;
-    }
-  }
-
-  RWMol *parseMolecule(boost::property_tree::ptree molTree,
-                       bool sanitize = false, bool removeHs = false) {
-    MarvinMol *marvinMol = nullptr;
-
-    try {
-      marvinMol = (MarvinMol *)parseMarvinMolecule(molTree);
-      // marvinMol->convertFromSuperAtoms();
-      // marvinMol->processMulticenterSgroups();
-      // marvinMol->expandMultipleSgroups();
-      marvinMol->prepSgroupsForRDKit();
-
-      RWMol *mol = parseMolecule(marvinMol, sanitize, removeHs);
-
-      delete marvinMol;
-
-      return mol;
-    } catch (const std::exception &e) {
-      delete mol;
-
-      delete marvinMol;
 
       throw;
     }
@@ -1940,90 +1980,6 @@ class MarvinCMLReader {
     }
   };
 
-  ChemicalReaction *parseReaction(boost::property_tree::ptree rxnTree,
-                                  boost::property_tree::ptree documentTree,
-                                  bool sanitize = false,
-                                  bool removeHs = false) {
-    ChemicalReaction *rxn = nullptr;
-    MarvinReaction *marvinReaction = nullptr;
-    RWMol *mol = nullptr;
-
-    try {
-      rxn = new ChemicalReaction();
-
-      marvinReaction = parseMarvinReaction(rxnTree, documentTree);
-      marvinReaction->prepSgroupsForRDKit();
-
-      // get each reactant
-
-      std::vector<MarvinMol *>::iterator molIter;
-      for (molIter = marvinReaction->reactants.begin();
-           molIter != marvinReaction->reactants.end(); ++molIter) {
-        mol = parseMolecule((*molIter), sanitize, removeHs);
-
-        auto *roMol = new ROMol(*mol);
-        delete mol;
-
-        rxn->addReactantTemplate(ROMOL_SPTR(roMol));  // roMol  now owned by
-                                                      // rxn;
-      }
-
-      // get each agent
-
-      for (molIter = marvinReaction->agents.begin();
-           molIter != marvinReaction->agents.end(); ++molIter) {
-        mol = parseMolecule((*molIter), sanitize, removeHs);
-
-        auto *roMol = new ROMol(*mol);
-        delete mol;
-
-        rxn->addAgentTemplate(ROMOL_SPTR(roMol));  // roMol  now owned by rxn;
-      }
-
-      // get each product
-
-      for (molIter = marvinReaction->products.begin();
-           molIter != marvinReaction->products.end(); ++molIter) {
-        mol = parseMolecule((*molIter), sanitize, removeHs);
-
-        auto *roMol = new ROMol(*mol);
-        delete mol;
-
-        rxn->addProductTemplate(ROMOL_SPTR(roMol));  // roMol  now owned by rxn;
-      }
-
-      // convert atoms to queries:
-      for (auto iter = rxn->beginReactantTemplates();
-           iter != rxn->endReactantTemplates(); ++iter) {
-        // to write the mol block, we need ring information:
-
-        for (ROMol::AtomIterator atomIt = (*iter)->beginAtoms();
-             atomIt != (*iter)->endAtoms(); ++atomIt) {
-          QueryOps::replaceAtomWithQueryAtom((RWMol *)iter->get(), (*atomIt));
-        }
-      }
-      for (auto iter = rxn->beginProductTemplates();
-           iter != rxn->endProductTemplates(); ++iter) {
-        // to write the mol block, we need ring information:
-        for (ROMol::AtomIterator atomIt = (*iter)->beginAtoms();
-             atomIt != (*iter)->endAtoms(); ++atomIt) {
-          QueryOps::replaceAtomWithQueryAtom((RWMol *)iter->get(), (*atomIt));
-        }
-      }
-
-      // RXN-based reactions do not have implicit properties
-      // rxn->setImplicitPropertiesFlag(false);
-
-      delete marvinReaction;
-      return rxn;
-    } catch (const std::exception &e) {
-      delete marvinReaction;
-      delete rxn;
-
-      throw;
-    }
-  }
-
   MarvinReaction *parseMarvinReaction(
       boost::property_tree::ptree rxnTree,
       boost::property_tree::ptree documentTree) {
@@ -2214,28 +2170,37 @@ class MarvinCMLReader {
 //
 //------------------------------------------------
 
-void *MrvDataStreamParser(std::istream *inStream, bool &isReaction,
-                          bool sanitize, bool removeHs) {
+bool MrvDataStreamIsReaction(std::istream &inStream) {
   PRECONDITION(inStream, "no stream");
-  MarvinCMLReader marvinCML;
 
-  return marvinCML.parse(*inStream, isReaction, sanitize, removeHs);
+  using boost::property_tree::ptree;
+  ptree tree;
+
+  // Parse the XML into the property tree.
+
+  read_xml(inStream, tree);
+
+  // see if the reaction header is present
+  try {
+    auto rxn = tree.get_child("cml.MDocument.MChemicalStruct.reaction");
+  } catch (const std::exception &e) {
+    return false;
+  }
+
+  return true;
 }
 
-void *MrvDataStreamParser(std::istream &inStream, bool &isReaction,
-                          bool sanitize, bool removeHs) {
-  return MrvDataStreamParser(&inStream, isReaction, sanitize, removeHs);
+bool MrvDataStreamIsReaction(std::istream *inStream) {
+  return MrvDataStreamIsReaction(*inStream);
 }
 //------------------------------------------------
 //
 //  Read a molecule from a string
 //
 //------------------------------------------------
-void *MrvBlockParser(const std::string &molmrvText, bool &isReaction,
-                     bool sanitize, bool removeHs) {
+bool MrvBlockIsReaction(const std::string &molmrvText) {
   std::istringstream inStream(molmrvText);
-  // unsigned int line = 0;
-  return MrvDataStreamParser(inStream, isReaction, sanitize, removeHs);
+  return MrvDataStreamIsReaction(inStream);
 }
 
 //------------------------------------------------
@@ -2243,19 +2208,17 @@ void *MrvBlockParser(const std::string &molmrvText, bool &isReaction,
 //  Read a RWMOL from a file
 //
 //------------------------------------------------
-void *MrvFileParser(const std::string &fName, bool &isReaction, bool sanitize,
-                    bool removeHs) {
+bool MrvFileIsReaction(const std::string &fName) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  void *res = nullptr;
   if (!inStream.eof()) {
-    res = MrvDataStreamParser(inStream, isReaction, sanitize, removeHs);
+    return MrvDataStreamIsReaction(inStream);
   }
-  return res;
+  return false;
 }
 
 //------------------------------------------------
@@ -2265,16 +2228,15 @@ void *MrvFileParser(const std::string &fName, bool &isReaction, bool sanitize,
 //------------------------------------------------
 RWMol *MrvMolDataStreamParser(std::istream *inStream, bool sanitize,
                               bool removeHs) {
-  void *res = nullptr;
+  using boost::property_tree::ptree;
+  ptree tree;
 
-  bool isReaction = false;
-  res = MrvDataStreamParser(inStream, isReaction, sanitize, removeHs);
-  if (isReaction) {
-    delete (ChemicalReaction *)res;
-    throw FileParseException("The file parsed as a reaction, not a molecule");
-  }
+  // Parse the XML into the property tree.
 
-  return (RWMol *)res;
+  read_xml(*inStream, tree);
+
+  MarvinCMLReader reader;
+  return reader.parseMolecule(tree, sanitize, removeHs);
 }
 //------------------------------------------------
 //
@@ -2323,16 +2285,16 @@ RWMol *MrvMolFileParser(const std::string &fName, bool sanitize,
 //------------------------------------------------
 ChemicalReaction *MrvRxnDataStreamParser(std::istream *inStream, bool sanitize,
                                          bool removeHs) {
-  void *res = nullptr;
+  using boost::property_tree::ptree;
+  ptree tree;
 
-  bool isReaction = false;
-  res = MrvDataStreamParser(inStream, isReaction, sanitize, removeHs);
-  if (!isReaction) {
-    delete (RWMol *)res;
-    throw FileParseException("The file parsed as a molecule, not a reaction");
-  }
+  // Parse the XML into the property tree.
 
-  return (ChemicalReaction *)res;
+  read_xml(*inStream, tree);
+
+  MarvinCMLReader reader;
+  return reader.parseReaction(tree, tree.get_child("cml.MDocument"), sanitize,
+                              removeHs);
 }
 
 //------------------------------------------------

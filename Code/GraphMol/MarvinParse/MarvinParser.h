@@ -19,23 +19,11 @@
 
 namespace RDKit {
 
-RDKIT_FILEPARSERS_EXPORT void *MrvFileParser(const std::string &fname,
-                                             bool &isReaction,
-                                             bool sanitize = false,
-                                             bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT void *MrvDataStreamParser(std::istream *inStream,
-                                                   bool &isReaction,
-                                                   bool sanitize,
-                                                   bool removeHs);
+RDKIT_FILEPARSERS_EXPORT bool MrvFileIsReaction(const std::string &fname);
+RDKIT_FILEPARSERS_EXPORT bool MrvDataStreamIsReaction(std::istream *inStream);
 
-RDKIT_FILEPARSERS_EXPORT void *MrvDataStreamParser(std::istream &inStream,
-                                                   bool &isReaction,
-                                                   bool sanitize = false,
-                                                   bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT void *MrvBlockParser(const std::string &molmrvText,
-                                              bool &isReaction,
-                                              bool sanitize = false,
-                                              bool removeHs = false);
+RDKIT_FILEPARSERS_EXPORT bool MrvDataStreamIsReaction(std::istream &inStream);
+RDKIT_FILEPARSERS_EXPORT bool MrvBlockIsReaction(const std::string &molmrvText);
 
 RDKIT_FILEPARSERS_EXPORT RWMol *MrvMolDataStreamParser(std::istream *inStream,
                                                        bool sanitize = false,
