@@ -26,31 +26,42 @@ jobs:
             repository: ${{ env.tpl_repo }}
             ref: main
             path: molecular_templates
-      - name: Check for header changes
-        id: header-check
+      - name: Commit and push changes
+        id: push_changes
         run: |
             cp -f molecular_templates/${{ env.tpl_hdr }} ${{ env.rdk_hdr }}
-            header_changed=$(git diff --name-only ${{ env.rdk_hdr }} | wc -l)
-            echo "header_changed=${header_changed}" >> ${GITHUB_OUTPUT}
-            templates_sha=$(cd molecular_templates && git rev-parse --short HEAD)
-            echo "templates_sha=${templates_sha}" >> ${GITHUB_OUTPUT}
-      - name: Commit the new header file to RDKit branch
-        if: ${{ steps.header-check.outputs.header_changed == '1' && success() }}
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-            repository: rdkit
-            branch: ${{ format('templates_update_{0}', steps.header-check.outputs.pr_branch) }}
-            create_branch: true
-            commit_message: "[bot] Update molecular templates header"
-            file_pattern: ${{ env.rdk_hdr }}
+            if ! git diff --quiet --exit-code ${{ env.rdk_hdr }}; then
+                git config user.name "github-actions[bot]"
+                git config user.email "github-actions[bot]@users.noreply.github.com"
+
+                templates_sha=$(cd molecular_templates && git rev-parse --short HEAD)
+                pr_branch=templates_update_${templates_sha}
+                git checkout -b ${pr_branch}
+
+                git add ${{ env.rdk_hdr }}
+
+                coauthor=$(cd molecular_templates && git log -1 --pretty=format:'%an <%ae>')
+
+                > commitmsg
+                echo -e "[bot] Update molecular templates header\n\n" >> commitmsg
+                echo -e "> Co-authored-by: ${coauthor}\n" >> commitmsg
+
+                git commit -F commitmsg
+
+                git push origin ${pr_branch}
+
+                echo "header_changed=1" >> ${GITHUB_OUTPUT}
+            fi
+            echo "pr_branch=${pr_branch}" >> ${GITHUB_OUTPUT}
       - name: pull-request-action
+        if: ${{ steps.push_changes.outputs.header_changed == '1' }}
         uses: vsoch/pull-request-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PULL_REQUEST_FROM_BRANCH: ${{ format('templates_update_{0}', steps.header-check.outputs.pr_branch) }}
+          PULL_REQUEST_FROM_BRANCH: ${{ steps.push_changes.outputs.pr_branch }}
           PULL_REQUEST_BRANCH: "master"
           PULL_REQUEST_BODY: ${{ format('Automated Pull Request to update molecular templates for
-             coordinate generation to header in commit {0} \#{1}', env.tpl_repo,
-            steps.header-check.outputs.pr_branch) }}
+             coordinate generation to header in commit {0} in https://github.com/{1}',
+            steps.push_changes.outputs.templates_sha, env.tpl_repo) }}
           PULL_REQUEST_TITLE: "[bot] Update molecular templates header file"
           MAINTAINER_CANT_MODIFY: "true"
