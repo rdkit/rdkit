@@ -298,9 +298,17 @@ void runTest(RWMol *query,
 }
 
 void runCxsmilesTest(const std::string groupToTest,
-                     std::vector<std::pair<std::string, unsigned>> &tests) {
-  std::string queryString = getCXSmilesQuery(groupToTest);
-  auto query = std::unique_ptr<RWMol>(SmartsToMol(queryString));
+                     std::vector<std::pair<std::string, unsigned>> &tests,
+                     bool manualInsertOfGroupFlag = false) {
+  std::unique_ptr<RWMol> query;
+  if (!manualInsertOfGroupFlag) {
+    std::string queryString = getCXSmilesQuery(groupToTest);
+    query = std::unique_ptr<RWMol>(SmartsToMol(queryString));
+  } else {
+    query = std::unique_ptr<RWMol>(SmartsToMol("*C=O |$;;$|"));
+    query->getAtomWithIdx(0)->setProp(RDKit::common_properties::atomLabel,
+                                      groupToTest);
+  }
   runTest(&*query, tests);
 }
 
@@ -315,7 +323,8 @@ void runMolTest(const std::string groupToTest,
 
 void runTest(const std::string groupToTest,
              std::vector<std::pair<std::string, unsigned>> &tests) {
-  runCxsmilesTest(groupToTest, tests);
+  runCxsmilesTest(groupToTest, tests, false);
+  runCxsmilesTest(groupToTest, tests, true);
   runMolTest(groupToTest, tests, true);
   if (groupToTest.size() <= 3) {
     runMolTest(groupToTest, tests, false);
@@ -579,7 +588,8 @@ TEST_CASE("cycloalkenyl or H", "[substructure][generics]") {
         {"O=Cc1ccccc1", 1},
         {"O=CC1CC=CCC1", 1},
         {"O=CC1CC2CCC1CC2", 0},
-        {"O=CC1CC2CCC1C=C2", 0},  // <- one of the SSSR rings doesn't match
+        {"O=CC1CC2CCC1C=C2", 0},  // <- one of the SSSR
+                                  // rings doesn't match
         {"O=CC1CC2C=CC1NC2", 0},
         {"O=CC1CCCC2=C1CCCC2", 1},
         {"O=CC1CC=CC2C1C=CC1CCC=CC21", 1},
