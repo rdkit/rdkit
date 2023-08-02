@@ -62,7 +62,6 @@ jobs:
           PULL_REQUEST_FROM_BRANCH: ${{ steps.push_changes.outputs.pr_branch }}
           PULL_REQUEST_BRANCH: "master"
           PULL_REQUEST_BODY: ${{ format('Automated Pull Request to update molecular templates for
-             coordinate generation to header in https://github.com/{0}/commit/{1}', env.tpl_repo,
+             coordinate generation to header in https://github.com/{0}/commit/{1})', env.tpl_repo,
             steps.push_changes.outputs.templates_sha) }}
           PULL_REQUEST_TITLE: "[bot] Update molecular templates header file"
-          MAINTAINER_CANT_MODIFY: "true"
