@@ -309,7 +309,7 @@ void runCxsmilesTest(const std::string groupToTest,
     query->getAtomWithIdx(0)->setProp(RDKit::common_properties::atomLabel,
                                       groupToTest);
   }
-  runTest(&*query, tests);
+  runTest(query.get(), tests);
 }
 
 void runMolTest(const std::string groupToTest,
@@ -318,7 +318,7 @@ void runMolTest(const std::string groupToTest,
   std::string queryString = getMolQuery(groupToTest, supGroupFlag);
   auto query =
       std::unique_ptr<RWMol>(MolBlockToMol(queryString, false, false, false));
-  runTest(&*query, tests);
+  runTest(query.get(), tests);
 }
 
 void runTest(const std::string groupToTest,

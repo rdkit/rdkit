@@ -1581,12 +1581,6 @@ Here are the supported groups and a brief description of what they mean:
   GroupH (GH)               any group (including H atom)
   Group* (G*)               any group with a ring closure
   GroupH* (GH*)             any group with a ring closure or an H atom
-  Deuterium (D)             a deuterium atom 
-  Tritium (T)               a tritium atom 
-  Deuterium (D)             a deuterium atom 
-  Proton (H+)               a proton with a +1 charge
-  Polymer Bead (Pol)        a polymer bead
-  R (R)                     a pseudo atom - matches any group
  ========================   =========
  
 For more detailed descriptions, look at the documentation for the C++ file GenericGroups.h

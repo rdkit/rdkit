@@ -34,10 +34,10 @@ namespace GenericGroups {
 
 namespace Matchers {
 
-//! Matches any group as a side chains
+//! Matches any group as a side chain
 /*!
 
-  Note: this is Reaxys query type G and matches any sidechains
+  Note: this is Reaxys query type G and matches any sidechain
 
   Conditions:
     - at least one non-hydrogen atom is in the sidechain
@@ -46,10 +46,10 @@ namespace Matchers {
 RDKIT_GENERICGROUPS_EXPORT bool GroupAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
-//! Matches any group as a side chains including just an H atom
+//! Matches any group as a side chain including just an H atom
 /*!
 
-  Note: this is Reaxys query type GH and matches any sidechains
+  Note: this is Reaxys query type GH and matches any sidechain
 
   Conditions:
     - none
@@ -58,10 +58,10 @@ RDKIT_GENERICGROUPS_EXPORT bool GroupAtomMatcher(
 RDKIT_GENERICGROUPS_EXPORT bool GroupHAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
-//! Matches any group as a side chains
+//! Matches any group as a side chain
 /*!
 
-  Note: this is Reaxys query type G and matches any sidechain that has a ring
+  Note: this is Reaxys query type G* and matches any sidechain that has a ring
   closure
 
   Conditions:
@@ -72,10 +72,10 @@ RDKIT_GENERICGROUPS_EXPORT bool GroupHAtomMatcher(
 RDKIT_GENERICGROUPS_EXPORT bool GroupStarAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
-//! Matches any group as a side chains that has a ring closure or just an H atom
+//! Matches any group as a side chain that has a ring closure or just an H atom
 /*!
 
-  Note: this is Reaxys query type GH and matches any sidechains
+  Note: this is Reaxys query type GH* and matches any sidechains
 
   Conditions:
     - at least one ring closure
