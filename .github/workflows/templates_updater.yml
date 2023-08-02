@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 env:
-  tpl_repo: 'ricrogz/molecular_templates'
+  tpl_repo: 'rdkit/molecular_templates'
   tpl_hdr: 'template_smiles.h'
   rdk_hdr: 'Code/GraphMol/Depictor/TemplateSmiles.h'
 
@@ -32,7 +32,7 @@ jobs:
             cp -f molecular_templates/${{ env.tpl_hdr }} ${{ env.rdk_hdr }}
             if ! git diff --quiet --exit-code ${{ env.rdk_hdr }}; then
                 git config user.name "github-actions[bot]"
-                git config user.email "github-actions[bot]@users.noreply.github.com"
+                git config user.email "github-actions[bot]@noreply.github.com"
 
                 templates_sha=$(cd molecular_templates && git rev-parse --short HEAD)
                 pr_branch=templates_update_${templates_sha}
@@ -44,7 +44,7 @@ jobs:
 
                 > commitmsg
                 echo -e "[bot] Update molecular templates header\n\n" >> commitmsg
-                echo -e "> Co-authored-by: ${coauthor}\n" >> commitmsg
+                echo -e "Co-authored-by: ${coauthor}\n" >> commitmsg
 
                 git commit -F commitmsg
 
