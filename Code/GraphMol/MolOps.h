@@ -336,8 +336,8 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   std::uint32_t adjustRingCountFlags =
       ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS;
 
-  bool makeDummiesQueries = true;  /**< convert dummy atoms without isotope
-                                 labels to any-atom queries */
+  bool makeDummiesQueries = true; /**< convert dummy atoms without isotope
+                                labels to any-atom queries */
 
   bool aromatizeIfPossible = true; /**< perceive and set aromaticity */
 
@@ -376,6 +376,7 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   bool adjustSingleBondsBetweenAromaticAtoms =
       false; /**<  sets non-ring single bonds between two aromatic or conjugated
                 atoms to SINGLE|AROMATIC */
+
   //! \brief returns an AdjustQueryParameters object with all adjustments
   //! disabled
   static AdjustQueryParameters noAdjustments() {
