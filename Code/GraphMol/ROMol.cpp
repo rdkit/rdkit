@@ -114,7 +114,9 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     for (auto &&otherAtom : otherGroup.getAtoms()) {
       atoms.push_back(getAtomWithIdx(otherAtom->getIdx()));
     }
-    d_stereo_groups.emplace_back(otherGroup.getGroupType(), std::move(atoms));
+    d_stereo_groups.emplace_back(otherGroup.getGroupType(), std::move(atoms),
+                                 otherGroup.getReadId());
+    d_stereo_groups.back().setWriteId(otherGroup.getWriteId());
   }
 
   if (other.dp_delAtoms) {

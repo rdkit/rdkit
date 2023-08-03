@@ -478,8 +478,13 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   if (!sgroups.empty()) {
     std::vector<StereoGroup> stereo_groups;
     for (auto &sgroup : sgroups) {
-      stereo_groups.emplace_back(
-          StereoGroup(sgroup.second.grouptype, sgroup.second.atoms));
+      unsigned gId = 0;
+      if (sgroup.second.grouptype != StereoGroupType::STEREO_ABSOLUTE &&
+          sgroup.second.sgroup > 0) {
+        gId = sgroup.second.sgroup;
+      }
+      stereo_groups.emplace_back(sgroup.second.grouptype, sgroup.second.atoms,
+                                 gId);
     }
     mol.setStereoGroups(std::move(stereo_groups));
   }

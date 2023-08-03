@@ -1279,7 +1279,8 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
       }
     }
     if (!atoms.empty()) {
-      new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms));
+      new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms),
+                                     sg.getReadId());
     }
   }
 

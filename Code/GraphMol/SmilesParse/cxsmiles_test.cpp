@@ -707,3 +707,26 @@ TEST_CASE(
     CHECK(order == std::vector<unsigned int>{2, 0, 1, 3});
   }
 }
+
+TEST_CASE("StereoGroup id forwarding", "[StereoGroup][cxsmiles]") {
+  auto m = "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&7:3,o1:7,&8:1,&9:5|"_smiles;
+  REQUIRE(m);
+  CHECK(m->getStereoGroups().size() == 4);
+
+  SECTION("ids reassigned by default") {
+    const auto smi_out = MolToCXSmiles(*m);
+    CHECK(smi_out.find("&1") != std::string::npos);
+    CHECK(smi_out.find("&2") != std::string::npos);
+    CHECK(smi_out.find("&3") != std::string::npos);
+    CHECK(smi_out.find("o1") != std::string::npos);
+  }
+
+  SECTION("forward input ids") {
+    forwardStereoGroupIds(*m);
+    const auto smi_out = MolToCXSmiles(*m);
+    CHECK(smi_out.find("&7") != std::string::npos);
+    CHECK(smi_out.find("&8") != std::string::npos);
+    CHECK(smi_out.find("&9") != std::string::npos);
+    CHECK(smi_out.find("o1") != std::string::npos);
+  }
+}

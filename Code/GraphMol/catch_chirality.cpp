@@ -3627,3 +3627,31 @@ TEST_CASE("double bonded N with H should be stereogenic", "[bug][stereo]") {
     CHECK(si.size() == 1);
   }
 }
+
+TEST_CASE("Issue in GitHub #6473", "[bug][stereo]") {
+  constexpr const char *mb = R"CTAB(
+     RDKit          2D
+
+  6  5  0  0  0  0  0  0  0  0999 V2000
+    2.0443    0.2759    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7038    2.5963    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3828    2.5961    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0444    1.8228    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6359    1.8229    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3827   -0.4985    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0
+  4  2  1  0
+  4  3  2  0
+  2  5  1  0
+  6  1  1  0
+M  END)CTAB";
+
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+
+  auto use_legacy_stereo = GENERATE(true, false);
+  CAPTURE(use_legacy_stereo);
+  Chirality::setUseLegacyStereoPerception(use_legacy_stereo);
+
+  std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+  REQUIRE(mol);
+}

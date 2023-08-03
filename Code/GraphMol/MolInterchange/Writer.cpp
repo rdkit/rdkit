@@ -296,6 +296,11 @@ void addStereoGroup(const StereoGroup &sg, rj::Value &rjSG, rj::Document &doc) {
     throw ValueErrorException("unrecognized StereoGroup type");
   }
   addStringVal(rjSG, "type", inv_stereoGrouplookup.at(sg.getGroupType()), doc);
+
+  if (sg.getGroupType() != StereoGroupType::STEREO_ABSOLUTE) {
+    addIntVal(rjSG, "id", sg.getWriteId(), doc);
+  }
+
   rj::Value rjAtoms(rj::kArrayType);
   for (const auto atm : sg.getAtoms()) {
     rj::Value v1(static_cast<int>(atm->getIdx()));
