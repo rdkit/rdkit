@@ -427,7 +427,7 @@ void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
       mrs = std::regex_replace(mrs, reg, "$1");
     }
     extractRings(mol2, mol2Rings, mol2RingSmiles);
-    for (auto &mrs : mol1RingSmiles) {
+    for (auto &mrs : mol2RingSmiles) {
       mrs = std::regex_replace(mrs, reg, "$1");
     }
   }
@@ -1047,11 +1047,12 @@ std::vector<RascalResult> findMces(RascalStartPoint &starter,
   }
   std::vector<RascalResult> results;
   for (const auto &c : maxCliques) {
-    results.push_back(RascalResult(
-        *starter.d_mol1, *starter.d_mol2, starter.d_adjMatrix1,
-        starter.d_adjMatrix2, c, starter.d_vtxPairs, timed_out,
-        starter.d_swapped, opts.exactChirality, opts.ringMatchesRingOnly,
-        opts.singleLargestFrag, opts.maxFragSeparation));
+    results.push_back(
+        RascalResult(*starter.d_mol1, *starter.d_mol2, starter.d_adjMatrix1,
+                     starter.d_adjMatrix2, c, starter.d_vtxPairs, timed_out,
+                     starter.d_swapped, starter.d_tier1Sim, starter.d_tier2Sim,
+                     opts.exactChirality, opts.ringMatchesRingOnly,
+                     opts.singleLargestFrag, opts.maxFragSeparation));
   }
   std::sort(results.begin(), results.end(), resultSort);
   return results;
@@ -1063,7 +1064,12 @@ std::vector<RascalResult> rascalMces(const ROMol &mol1, const ROMol &mol2,
                                      const RascalOptions &opts) {
   auto starter = makeInitialPartitionSet(&mol1, &mol2, opts);
   if (!starter.d_partSet) {
-    return std::vector<RascalResult>();
+    if (opts.returnEmptyMCES) {
+      return std::vector<RascalResult>(
+          1, RascalResult(starter.d_tier1Sim, starter.d_tier2Sim));
+    } else {
+      return std::vector<RascalResult>();
+    }
   }
   auto results = findMces(starter, opts);
   if (!opts.allBestMCESs && results.size() > 1) {

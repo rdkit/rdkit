@@ -32,8 +32,12 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
                const std::vector<std::vector<int>> &adjMatrix2,
                const std::vector<unsigned int> &clique,
                const std::vector<std::pair<int, int>> &vtx_pairs, bool timedOut,
-               bool swapped, bool chiralSmarts, bool ringMatchesRingOnly,
+               bool swapped, double tier1Sim, double tier2Sim,
+               bool chiralSmarts, bool ringMatchesRingOnly,
                bool singleLargestFrag, int minFragSep);
+  // For when the tier[12]Sim didn't hit the threshold, but it
+  // might be of interest what the estimates of similarity were.
+  RascalResult(double tier1Sim, double tier2Sim);
 
   RascalResult(const RascalResult &other);
 
@@ -69,19 +73,24 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
   int largestFragSize() const;
 
   std::string smarts() const;
-
+  const std::shared_ptr<ROMol> mcesMol() const;
   bool timedout() const { return d_timedOut; };
 
+  double tier1Sim() const { return d_tier1Sim; }
+  double tier2Sim() const { return d_tier2Sim; }
   double similarity() const;
 
  private:
-  std::shared_ptr<RDKit::ROMol> d_mol1;
-  std::shared_ptr<RDKit::ROMol> d_mol2;
+  std::shared_ptr<ROMol> d_mol1;
+  std::shared_ptr<ROMol> d_mol2;
+  mutable std::shared_ptr<ROMol> d_mcesMol;
   std::vector<std::pair<int, int>> d_bondMatches;
   std::vector<std::pair<int, int>> d_atomMatches;
 
   mutable std::string d_smarts;
   bool d_timedOut{false};
+  double d_tier1Sim;
+  double d_tier2Sim;
   bool d_chiralSmarts{false};
   bool d_ringMatchesRingOnly{false};
   int d_maxFragSep{-1};
@@ -149,6 +158,7 @@ RDKIT_RASCALMCES_EXPORT void printScores(const RascalResult &res,
 // It has nothing to do with lying UK politicians.
 RDKIT_RASCALMCES_EXPORT double johnsonSimilarity(
     const std::vector<std::pair<int, int>> &bondMatches,
+    const std::vector<std::pair<int, int>> &atomMatches,
     const RDKit::ROMol &mol1, const RDKit::ROMol &mol2);
 
 }  // namespace RascalMCES
