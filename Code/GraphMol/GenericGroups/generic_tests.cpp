@@ -745,3 +745,39 @@ TEST_CASE("group with ring or H", "[substructure][generics]") {
     runTest("GH*", tests);
   }
 }
+
+TEST_CASE("from mol blocks using atom labels") {
+  SECTION("basics") {
+    auto qry = R"CTAB(
+  Mrv2211 08032317212D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.5833 1.9167 0 0
+M  V30 2 ARY -5.2497 2.6867 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(qry);
+
+    SubstructMatchParameters ps;
+    ps.useGenericMatchers = true;
+    auto m1 = "CC"_smiles;
+    REQUIRE(m1);
+    auto m2 = "Cc1ccccc1"_smiles;
+    REQUIRE(m2);
+
+    CHECK(SubstructMatch(*m1, *qry, ps).empty());
+    CHECK(SubstructMatch(*m2, *qry, ps).empty());
+
+    GenericGroups::setGenericQueriesFromProperties(*qry, true);
+    CHECK(SubstructMatch(*m1, *qry, ps).empty());
+    CHECK(SubstructMatch(*m2, *qry, ps).size() == 1);
+  }
+}

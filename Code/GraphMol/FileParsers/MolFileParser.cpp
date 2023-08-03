@@ -1493,7 +1493,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
   } else if (GenericGroups::genericMatchers.find(symb) !=
              GenericGroups::genericMatchers.end()) {
     res = new QueryAtom(0);
-    res->setQuery(makeAtomNullQuery());
     res->setProp(common_properties::atomLabel, std::string(symb));
   } else {
     if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
@@ -2175,7 +2174,6 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
     } else if (GenericGroups::genericMatchers.find(std::string(token)) !=
                GenericGroups::genericMatchers.end()) {
       res = new QueryAtom(0);
-      res->setQuery(makeAtomNullQuery());
       res->setProp(common_properties::atomLabel, std::string(token));
     } else {
       std::string tcopy(token);
