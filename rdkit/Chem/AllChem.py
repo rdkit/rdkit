@@ -283,6 +283,7 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
     >>> mol = AllChem.MolFromSmiles("c1nn(Cc2ccccc2)cc1-c3ccccc3")
 
     Now do the constrained embedding
+  
     >>> mol = AllChem.ConstrainedEmbed(mol, template)
 
     Demonstrate that the positions are nearly the same with template:
