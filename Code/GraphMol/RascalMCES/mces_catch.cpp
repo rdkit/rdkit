@@ -385,7 +385,7 @@ TEST_CASE("Symmetrical esters test", "[basics]") {
 TEST_CASE("dyphylline similarities") {
   auto dyphylline = "OCC(O)CN1C=NC2=C1C(=O)N(C)C(=O)N(C)2"_smiles;
   // The paper has the similarity scores as 0.78, 0.57, 0.51, 0.63 and 0.35
-  // respectively. This implementation makes Viagra 0.11 because of the default
+  // respectively. This implementation makes Viagra 0.19 because of the default
   // completeAromaticRings. Without that, it comes to 0.26.  The 0.63 for
   // enprofylline could be a typo, as this gets 0.73.  The 0.51 for captogon is
   // a mystery - with 15 atoms and 16 bonds in the MCES, 0.48 is correct.  To
@@ -398,7 +398,7 @@ TEST_CASE("dyphylline similarities") {
        0.48},
       {"CCCN1C(=O)NC(=O)C2N=CNC1=2"_smiles, "enprofylline", 0.73},
       {"CN1CCN(CC1)S(=O)(=O)c1ccc(OCC)c(c1)C1=NC(=O)C2N(C)N=C(CCC)C(N1)=2"_smiles,
-       "viagra", 0.11},
+       "viagra", 0.19},
       {"OCCN(C)C1=NC2N(C)C(=O)N(C)C(=O)C(N1C)=2"_smiles, "cafaminol", 0.80}};
   RascalOptions opts;
   opts.similarityThreshold = 0.3;
@@ -431,6 +431,11 @@ TEST_CASE("compare chirality") {
   {
     auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.empty());
+    opts.returnEmptyMCES = true;
+    res = rascalMces(*m1, *m2, opts);
+    REQUIRE(res.size() == 1);
+    REQUIRE(res.front().bondMatches().empty());
+    opts.returnEmptyMCES = false;
   }
   {
     auto res = rascalMces(*m2, *m3, opts);
