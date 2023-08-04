@@ -228,7 +228,7 @@ Datum mol_xq_substruct(PG_FUNCTION_ARGS) {
                      PG_GETARG_DATUM(0), NULL, &i, NULL);
   fcinfo->flinfo->fn_extra =
       searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
-                     PG_GETARG_DATUM(1), NULL, &a, NULL);
+                       PG_GETARG_DATUM(1), NULL, &a, NULL);
 
   PG_RETURN_BOOL(XQMolSubstruct(i, a, false, false));
 }
@@ -241,14 +241,13 @@ Datum mol_xq_rsubstruct(PG_FUNCTION_ARGS) {
 
   fcinfo->flinfo->fn_extra =
       searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
-                     PG_GETARG_DATUM(0), NULL, &a, NULL);
+                       PG_GETARG_DATUM(0), NULL, &a, NULL);
   fcinfo->flinfo->fn_extra =
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &i, NULL);
 
   PG_RETURN_BOOL(XQMolSubstruct(i, a, false, false));
 }
-
 
 #define MOLDESCR(name, func, ret)                                         \
   PGDLLEXPORT Datum mol_##name(PG_FUNCTION_ARGS);                         \
@@ -440,7 +439,6 @@ Datum mol_to_svg(PG_FUNCTION_ARGS) {
   PG_RETURN_CSTRING(res);
 }
 
-
 PGDLLEXPORT Datum mol_to_tautomerquery(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_to_tautomerquery);
 Datum mol_to_tautomerquery(PG_FUNCTION_ARGS) {
@@ -467,8 +465,8 @@ Datum xqmol_to_tautomerquery(PG_FUNCTION_ARGS) {
   CXQMol xqmol;
   fcinfo->flinfo->fn_extra =
       searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
-                     PG_GETARG_DATUM(0), NULL, &xqmol, NULL);
-  Assert(mol != 0);
+                       PG_GETARG_DATUM(0), NULL, &xqmol, NULL);
+  Assert(xqmol != 0);
 
   CXQMol xqm = XQMolToTautomerQuery(xqmol);
 
@@ -481,7 +479,6 @@ Datum xqmol_to_tautomerquery(PG_FUNCTION_ARGS) {
 
   PG_RETURN_MOL_P(res);
 }
-
 
 PGDLLEXPORT Datum mol_enumeratequery(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_enumeratequery);
