@@ -2152,15 +2152,15 @@ CAS<~>
     self.assertFalse(ri.IsBondInRingOfSize(1, 3))
     self.assertFalse(ri.IsBondInRingOfSize(2, 3))
     if hasattr(Chem, 'FindRingFamilies'):
-      self.assertEquals(ri.AtomRingFamilies(), ())
+      self.assertEqual(ri.AtomRingFamilies(), ())
     if hasattr(Chem, 'FindRingFamilies'):
-      self.assertEquals(ri.BondRingFamilies(), ())
+      self.assertEqual(ri.BondRingFamilies(), ())
 
     smi = 'C1CC2C1C2'
     m = Chem.MolFromSmiles(smi)
     ri = m.GetRingInfo()
     self.assertTrue(ri)
-    self.assertEquals(ri.NumRings(), 2)
+    self.assertEqual(ri.NumRings(), 2)
     self.assertFalse(ri.IsAtomInRingOfSize(0, 3))
     self.assertTrue(ri.IsAtomInRingOfSize(0, 4))
     self.assertFalse(ri.IsBondInRingOfSize(0, 3))
@@ -2198,9 +2198,9 @@ CAS<~>
       Chem.FindRingFamilies(m)
       ri = m.GetRingInfo()
       self.assertTrue(ri.AreRingFamiliesInitialized())
-      self.assertEquals(ri.NumRingFamilies(), 2)
-      self.assertEquals(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
-      self.assertEquals(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
+      self.assertEqual(ri.NumRingFamilies(), 2)
+      self.assertEqual(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
+      self.assertEqual(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
 
   def test46ReplaceCore(self):
     """ test the ReplaceCore functionality
@@ -5612,6 +5612,46 @@ M  END
     self.assertEqual(b.GetSubstructMatches(b2, ps), ())
     self.assertEqual(b2.GetSubstructMatches(b, ps), ())
 
+  def testSubstructMatchAtomProperties(self):
+    m = Chem.MolFromSmiles("CCCCCCCCC")
+    query = Chem.MolFromSmiles("CCC")
+    m.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    query.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    ps = Chem.SubstructMatchParameters()
+    ps.atomProperties = ["test_prop"]
+
+    self.assertEqual(len(m.GetSubstructMatches(query)), 7)
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+    # more than one property works as well
+    m.GetAtomWithIdx(1).SetProp("test_prop2", "1")
+    query.GetAtomWithIdx(1).SetProp("test_prop2", "1")
+    ps.atomProperties = ["test_prop", "test_prop2"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+  def testSubstructMatchBondProperties(self):
+    m = Chem.MolFromSmiles("CCCCCCCCC")
+    query = Chem.MolFromSmiles("CCC")
+    m.GetBondWithIdx(0).SetProp("test_prop", "1")
+    query.GetBondWithIdx(0).SetProp("test_prop", "1")
+    ps = Chem.SubstructMatchParameters()
+    ps.bondProperties = ["test_prop"]
+
+    self.assertEqual(len(m.GetSubstructMatches(query)), 7)
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+    # more than one property works as well
+    m.GetBondWithIdx(1).SetProp("test_prop2", "1")
+    query.GetBondWithIdx(1).SetProp("test_prop2", "1")
+    ps.bondProperties = ["test_prop", "test_prop2"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+    # atom and bond properties work together
+    m.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    query.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    ps.atomProperties = ["test_prop"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
   def testGithub2285(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'github2285.sdf')
@@ -7079,8 +7119,6 @@ CAS<~>
 
     self.assertIn(f' m_atom[{mol.GetNumAtoms()}] {{', maefile)
 
-    self.assertEqual(maefile.count("A0A0A0"), 6)  # 6 grey-colored heavy atoms
-
     self.assertTrue(f' m_bond[{mol.GetNumBonds()}] {{', maefile)
 
   @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not built with MAEParser support")
@@ -7119,12 +7157,10 @@ CAS<~>
     b.SetProp(str_dummy_prop, strProp)
     b.SetProp(ignored_prop, ignored_prop)
 
-    heavyAtomColor = "767676"
-
     osio = StringIO()
     with Chem.MaeWriter(osio) as w:
       w.SetProps(exported_props)
-      w.write(mol, heavyAtomColor=heavyAtomColor)
+      w.write(mol)
 
     maestr = osio.getvalue()
 
@@ -7159,7 +7195,6 @@ CAS<~>
         break
     self.assertIn(str(realProp), line)
     self.assertIn(strProp, line)
-    self.assertIn(heavyAtomColor, line)
 
     # bond properties
     self.assertIn(bond_prop, maestr[bondBlockStart:])
@@ -7201,12 +7236,10 @@ CAS<~>
     mol.SetProp(dummy_prop, dummy_prop)
     mol.SetProp(another_dummy_prop, another_dummy_prop)
 
-    heavyAtomColor = "767676"
-
     osio = StringIO()
     with Chem.MaeWriter(osio) as w:
       w.SetProps([dummy_prop])
-      w.write(mol, heavyAtomColor=heavyAtomColor)
+      w.write(mol)
 
     iomae = osio.getvalue()
 
@@ -7216,7 +7249,7 @@ CAS<~>
     self.assertIn(dummy_prop, iomae)
     self.assertNotIn(another_dummy_prop, iomae)
 
-    mae = Chem.MaeWriter.GetText(mol, heavyAtomColor, -1, [dummy_prop])
+    mae = Chem.MaeWriter.GetText(mol, -1, [dummy_prop])
 
     self.assertEqual(mae, iomae[ctBlockStart:])
 

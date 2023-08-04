@@ -1043,6 +1043,8 @@ void testJSONParameters() {
         ", \"MatchFusedRings\": true"
         ", \"MatchFusedRingsStrict\": true"
         ", \"InitialSeed\": \"CNC\""
+        ", \"AtomCompare\": \"Isotopes\""
+        ", \"BondCompare\": \"OrderExact\""
         "}";
     parseMCSParametersJSON(json, &pj);
     TEST_ASSERT(!pj.MaximizeBonds && pj.Threshold == 0.7 && pj.Timeout == 3 &&
@@ -1055,6 +1057,8 @@ void testJSONParameters() {
                 pj.BondCompareParameters.CompleteRingsOnly &&
                 pj.BondCompareParameters.MatchFusedRings &&
                 pj.BondCompareParameters.MatchFusedRingsStrict &&
+                pj.AtomTyper == MCSAtomCompareIsotopes &&
+                pj.BondTyper == MCSBondCompareOrderExact &&
                 0 == strcmp(pj.InitialSeed.c_str(), "CNC"));
   }
   {

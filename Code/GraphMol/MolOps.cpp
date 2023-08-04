@@ -756,7 +756,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
             }
           }
           if (!sgats.empty()) {
-            fragsgs.push_back(StereoGroup(sg.getGroupType(), sgats));
+            fragsgs.emplace_back(sg.getGroupType(), sgats, sg.getReadId());
           }
         }
         if (!fragsgs.empty()) {

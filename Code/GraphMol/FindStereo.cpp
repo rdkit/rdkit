@@ -128,7 +128,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
   const auto beginAtom = bond->getBeginAtom();
   const auto endAtom = bond->getEndAtom();
   if (bond->getBondType() == Bond::BondType::DOUBLE) {
-    if (beginAtom->getDegree() < 2 || endAtom->getDegree() < 2 ||
+    if (beginAtom->getDegree() < 1 || endAtom->getDegree() < 1 ||
         beginAtom->getDegree() > 3 || endAtom->getDegree() > 3) {
       throw ValueErrorException("invalid atom degree in getStereoInfo(bond)");
     }
@@ -139,30 +139,30 @@ StereoInfo getStereoInfo(const Bond *bond) {
 
     bool seenSquiggleBond = false;
     const auto &mol = bond->getOwningMol();
-    for (const auto nbr : mol.atomBonds(beginAtom)) {
-      if (nbr->getIdx() != bond->getIdx()) {
-        if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
-          seenSquiggleBond = true;
+
+    if (beginAtom->getDegree() == 1 || endAtom->getDegree() == 1) {
+      seenSquiggleBond = true;
+    }
+
+    auto explore_bond_end = [&mol, &bond, &sinfo,
+                             &seenSquiggleBond](const Atom *atom) {
+      for (const auto nbr : mol.atomBonds(atom)) {
+        if (nbr->getIdx() != bond->getIdx()) {
+          if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
+            seenSquiggleBond = true;
+          }
+          sinfo.controllingAtoms.push_back(
+              nbr->getOtherAtomIdx(atom->getIdx()));
         }
-        sinfo.controllingAtoms.push_back(
-            nbr->getOtherAtomIdx(beginAtom->getIdx()));
       }
-    }
-    if (beginAtom->getDegree() == 2) {
-      sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
-    }
-    for (const auto nbr : mol.atomBonds(endAtom)) {
-      if (nbr->getIdx() != bond->getIdx()) {
-        if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
-          seenSquiggleBond = true;
-        }
-        sinfo.controllingAtoms.push_back(
-            nbr->getOtherAtomIdx(endAtom->getIdx()));
+
+      for (unsigned i = atom->getDegree(); i < 3; ++i) {
+        sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
       }
-    }
-    if (endAtom->getDegree() == 2) {
-      sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
-    }
+    };
+
+    explore_bond_end(beginAtom);
+    explore_bond_end(endAtom);
 
     if (!seenSquiggleBond) {
       // check to see if either the begin or end atoms has the _UnknownStereo
@@ -334,20 +334,17 @@ bool isBondPotentialStereoBond(const Bond *bond) {
   }
 
   // at the moment the condition for being a potential stereo bond is that
-  // each of the beginning and end neighbors must have at least 2 heavy atom
-  // neighbors i.e. C/C=N/[H] is not a possible stereo bond but no more than 3
-  // total neighbors.
+  // each of the beginning and end neighbors must have at least 2 explicit
+  // neighbors but no more than 3 total neighbors.
   // if it's a ring bond, the smallest ring it's in must have at least 8
   // members
   //  (this is common with InChI)
   const auto beginAtom = bond->getBeginAtom();
-  auto begHeavyDegree =
-      beginAtom->getTotalDegree() - beginAtom->getTotalNumHs(true);
+  auto begDegree = beginAtom->getTotalDegree();
   const auto endAtom = bond->getEndAtom();
-  auto endHeavyDegree =
-      endAtom->getTotalDegree() - endAtom->getTotalNumHs(true);
-  if (begHeavyDegree > 1 && beginAtom->getDegree() < 4 && endHeavyDegree > 1 &&
-      endAtom->getDegree() < 4) {
+  auto endDegree = endAtom->getTotalDegree();
+  if (begDegree > 1 && begDegree < 4 && endDegree > 1 && endDegree < 4 &&
+      beginAtom->getTotalNumHs(true) < 2 && endAtom->getTotalNumHs(true) < 2) {
     // check rings
     const auto ri = bond->getOwningMol().getRingInfo();
     for (const auto &bring : ri->bondRings()) {

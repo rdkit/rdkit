@@ -80,6 +80,16 @@ class AllowNontetrahedralChiralityFixture : private TestFixtureTemplate {
             &RDKit::Chirality::setAllowNontetrahedralChirality) {}
 };
 
+unsigned count_wedged_bonds(const ROMol &mol) {
+  unsigned nWedged = 0;
+  for (const auto bond : mol.bonds()) {
+    if (bond->getBondDir() != Bond::BondDir::NONE) {
+      ++nWedged;
+    }
+  }
+  return nWedged;
+}
+
 TEST_CASE("bond StereoInfo", "[unittest]") {
   SECTION("basics") {
     {
@@ -206,8 +216,8 @@ TEST_CASE("isBondPotentialStereoBond", "[unittest]") {
       REQUIRE(mol);
       CHECK(
           Chirality::detail::isBondPotentialStereoBond(mol->getBondWithIdx(1)));
-      CHECK(!Chirality::detail::isBondPotentialStereoBond(
-          mol->getBondWithIdx(3)));
+      CHECK(
+          Chirality::detail::isBondPotentialStereoBond(mol->getBondWithIdx(3)));
     }
     {
       SmilesParserParams ps;
@@ -3411,6 +3421,10 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 5);
+
+    Chirality::BondWedgingParameters ps;
+    ps.wedgeTwoBondsIfPossible = true;
+
     {
       RWMol cp(*mol);
       Chirality::wedgeMolBonds(cp);
@@ -3421,8 +3435,6 @@ M  END
     }
     {
       RWMol cp(*mol);
-      Chirality::BondWedgingParameters ps;
-      ps.wedgeTwoBondsIfPossible = true;
       Chirality::wedgeMolBonds(cp, nullptr, &ps);
       CHECK(cp.getBondBetweenAtoms(1, 3)->getBondDir() != Bond::BondDir::NONE);
       CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() != Bond::BondDir::NONE);
@@ -3430,6 +3442,52 @@ M  END
             cp.getBondBetweenAtoms(1, 3)->getBondDir());
       CHECK(cp.getBondBetweenAtoms(1, 0)->getBondDir() == Bond::BondDir::NONE);
       CHECK(cp.getBondBetweenAtoms(1, 2)->getBondDir() == Bond::BondDir::NONE);
+    }
+    {
+      // Wedge a second bond after we already wedged a first one
+
+      RWMol cp(*mol);
+      Chirality::wedgeMolBonds(cp);
+      CHECK(cp.getBondBetweenAtoms(1, 3)->getBondDir() != Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 0)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 2)->getBondDir() == Bond::BondDir::NONE);
+
+      Chirality::wedgeMolBonds(cp, nullptr, &ps);
+
+      REQUIRE(count_wedged_bonds(cp) == 2);
+
+      CHECK(cp.getBondBetweenAtoms(1, 3)->getBondDir() != Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() != Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() !=
+            cp.getBondBetweenAtoms(1, 3)->getBondDir());
+    }
+    {
+      // What if the first wedged bond is not our preferred one?
+
+      for (auto wedgedAtomIdx : {0, 2, 4}) {
+        INFO("wedgedAtomIdx: " << wedgedAtomIdx);
+
+        RWMol cp(*mol);
+        REQUIRE(count_wedged_bonds(cp) == 0);
+
+        auto bond = cp.getBondBetweenAtoms(1, wedgedAtomIdx);
+        if (bond->getEndAtomIdx() == 1) {
+          // One of the bonds in the input is reversed, make sure the chiral
+          // atom is always at the start so that the wedge is valid!
+          auto tmp = bond->getBeginAtomIdx();
+          bond->setBeginAtomIdx(bond->getEndAtomIdx());
+          bond->setEndAtomIdx(tmp);
+        }
+
+        // This probably disagrees with the chirality in some of the test cases,
+        // but that's not relevant for this test
+        bond->setBondDir(Bond::BondDir::BEGINWEDGE);
+
+        Chirality::wedgeMolBonds(cp, nullptr, &ps);
+
+        CHECK(count_wedged_bonds(cp) == 2);
+      }
     }
   }
   SECTION(
@@ -3545,4 +3603,55 @@ TEST_CASE(
 
   auto sinfo = Chirality::detail::getStereoInfo(at);
   CHECK(sinfo.type == Chirality::StereoType::Atom_Tetrahedral);
+}
+
+TEST_CASE("double bonded N with H should be stereogenic", "[bug][stereo]") {
+  SECTION("assign stereo") {
+    // Parametrize test to run under legacy and new stereo perception
+    const auto legacy_stereo = GENERATE(true, false);
+    INFO("Legacy stereo perception == " << legacy_stereo)
+
+    UseLegacyStereoPerceptionFixture reset_stereo_perception;
+    Chirality::setUseLegacyStereoPerception(legacy_stereo);
+    auto m = "[H]/N=C/F"_smiles;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(1)->getStereo() != Bond::BondStereo::STEREONONE);
+  }
+  SECTION("find potential stereo") {
+    auto m = "[H]/N=C/F"_smiles;
+    REQUIRE(m);
+    CHECK(Chirality::detail::isBondPotentialStereoBond(m->getBondWithIdx(1)));
+    bool cleanIt = false;
+    bool flagPossible = true;
+    auto si = Chirality::findPotentialStereo(*m, cleanIt, flagPossible);
+    CHECK(si.size() == 1);
+  }
+}
+
+TEST_CASE("Issue in GitHub #6473", "[bug][stereo]") {
+  constexpr const char *mb = R"CTAB(
+     RDKit          2D
+
+  6  5  0  0  0  0  0  0  0  0999 V2000
+    2.0443    0.2759    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7038    2.5963    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3828    2.5961    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0444    1.8228    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6359    1.8229    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3827   -0.4985    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0
+  4  2  1  0
+  4  3  2  0
+  2  5  1  0
+  6  1  1  0
+M  END)CTAB";
+
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+
+  auto use_legacy_stereo = GENERATE(true, false);
+  CAPTURE(use_legacy_stereo);
+  Chirality::setUseLegacyStereoPerception(use_legacy_stereo);
+
+  std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+  REQUIRE(mol);
 }

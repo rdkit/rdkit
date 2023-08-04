@@ -8,6 +8,10 @@ Resonance (mesomeric) transformations.
 :copyright: Copyright 2016 by Matt Swain.
 :license: MIT, see LICENSE file for more details.
 """
+from warnings import warn
+
+warn(f'The module {__name__} is deprecated and will be removed in the next release.',
+     DeprecationWarning, stacklevel=2)
 
 import logging
 

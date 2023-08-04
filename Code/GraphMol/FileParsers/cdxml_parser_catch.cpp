@@ -13,12 +13,27 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
 
 using namespace RDKit;
+std::string canon(const std::string &smi) {
+  auto *m = SmilesToMol(smi);
+  auto res = MolToSmiles(*m);
+  delete m;
+  return res;
+}
+
+void check_smiles_and_roundtrip(const RWMol &m, const std::string &expected) {
+  CHECK(MolToSmiles(m) == expected);
+  //  std::cout << "*********" << std::endl;
+  //  std::cout << MolToMolBlock(m) << std::endl;
+  std::unique_ptr<RWMol> mol(MolBlockToMol(MolToMolBlock(m)));
+  CHECK(MolToSmiles(*mol) == expected);
+}
 
 TEST_CASE("CDXML") {
   std::string cdxmlbase =
@@ -411,7 +426,7 @@ TEST_CASE("CDXML") {
   SECTION("Enhanced Stereo") {
     auto fname = cdxmlbase + "beta-cypermethrin.cdxml";
     std::vector<std::string> expected = {
-        "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1"};
+        "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
     std::vector<std::string> expected_cx = {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |&1:3,&2:8,12|"};
     auto mols = CDXMLFileToMols(fname);
@@ -426,7 +441,7 @@ TEST_CASE("CDXML") {
   SECTION("Enhanced Stereo 2") {
     auto fname = cdxmlbase + "beta-cypermethrin-or-abs.cdxml";
     std::vector<std::string> expected = {
-        "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1"};
+        "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
     std::vector<std::string> expected_cx = {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |o1:8,12|"};
     auto mols = CDXMLFileToMols(fname);
@@ -490,7 +505,7 @@ TEST_CASE("CDXML") {
         "[B]",
         "*",
         "[C]",
-        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
+        "Cc1ccc2n1[C@@H]1[C@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",  // this is may or may not be correct, but the structure is drawn incorrectly. There's a test below which fixes this
         "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
         "Cc1ccc2ccc(=O)ccn12",
         "Cc1cccn1[C@H](C)C=O",
@@ -597,6 +612,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
+      INFO(i);
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
@@ -632,7 +648,8 @@ TEST_CASE("CDXML") {
         "[C]"};
     int i = 0;
     for (auto &mol : mols) {
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+      INFO(i);
+      check_smiles_and_roundtrip(*mol, expected[i++]);
     }
   }
   SECTION("protecting group") {
@@ -642,7 +659,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+      check_smiles_and_roundtrip(*mol, expected[i++]);
     }
   }
   SECTION("protecting group 2") {
@@ -652,7 +669,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+      check_smiles_and_roundtrip(*mol, expected[i++]);
     }
   }
 
@@ -669,7 +686,8 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+      INFO(i);
+      check_smiles_and_roundtrip(*mol, expected[i++]);
     }
   }
 
@@ -688,7 +706,7 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+      check_smiles_and_roundtrip(*mol, expected[i++]);
     }
   }
   SECTION("Malformed") {
@@ -709,9 +727,26 @@ TEST_CASE("CDXML") {
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
-        CHECK(MolToSmiles(*mol) == expected[i++]);
+        check_smiles_and_roundtrip(*mol, expected[i++]);
       }
     }
+
+    {  // The above, but broken out for easier testing
+      std::vector<std::string> filenames = {"stereo1.cdxml", "stereo2.cdxml",
+                                            "stereo3.cdxml", "stereo4.cdxml"};
+      std::vector<std::string> expected = {
+          "C[C@H](I)[C@@H](N)O", "C[C@@H](I)[C@H](N)O", "C[C@@H](Cl)[C@H](N)O",
+          "C[C@H](Br)[C@@H](N)O"};
+
+      for (auto i = 0u; i < filenames.size(); ++i) {
+        auto fname = cdxmlbase + filenames[i];
+        auto mols = CDXMLFileToMols(fname);
+        CHECK(mols.size() == 1);
+        auto &m = *mols.back();
+        check_smiles_and_roundtrip(m, expected[i]);
+      }
+    }
+
     {
       auto fname = cdxmlbase + "wavy.cdxml";
       std::vector<std::string> expected = {"Cc1cccc(C)c1NC(=O)N=C1CCCN1C",
@@ -724,7 +759,7 @@ TEST_CASE("CDXML") {
           CHECK(mol->getBondWithIdx(11)->getStereo() ==
                 Bond::BondStereo::STEREOANY);
         }
-        CHECK(MolToSmiles(*mol) == expected[i++]);
+        check_smiles_and_roundtrip(*mol, expected[i++]);
       }
     }
     {
@@ -737,7 +772,7 @@ TEST_CASE("CDXML") {
         CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
         CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
         CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
-        CHECK(MolToSmiles(*mol) == expected[i++]);
+        check_smiles_and_roundtrip(*mol, expected[i++]);
       }
     }
   }
@@ -761,6 +796,50 @@ TEST_CASE("CDXML") {
       auto fname = cdxmlbase + "bad-bondorder2.cdxml";
       auto mols = CDXMLFileToMols(fname);
       CHECK(mols.size() == 0);
+    }
+  }
+}
+
+TEST_CASE("bad stereo in a natural product") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("case 1") {
+    auto fname = cdxmlbase + "stereo5.cdxml";
+    auto mols = CDXMLFileToMols(fname);
+    REQUIRE(mols.size() == 1);
+    CHECK(
+        MolToSmiles(*mols[0]) ==
+        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C");
+  }
+}
+
+TEST_CASE("Github #6262: preserve bond wedging") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("case 1") {
+    auto fname = cdxmlbase + "stereo6.cdxml";
+    auto mols = CDXMLFileToMols(fname);
+    REQUIRE(mols.size() == 1);
+    {
+      REQUIRE(mols[0]->getBondBetweenAtoms(2, 5));
+      unsigned int cfg = 0;
+      CHECK(mols[0]->getBondBetweenAtoms(2, 5)->getPropIfPresent(
+          common_properties::_MolFileBondCfg, cfg));
+      CHECK(cfg == 1);
+    }
+    {
+      REQUIRE(mols[0]->getBondBetweenAtoms(1, 4));
+      unsigned int cfg = 0;
+      CHECK(mols[0]->getBondBetweenAtoms(1, 4)->getPropIfPresent(
+          common_properties::_MolFileBondCfg, cfg));
+      CHECK(cfg == 3);
+    }
+    {
+      REQUIRE(mols[0]->getBondBetweenAtoms(3, 8));
+      unsigned int cfg = 0;
+      CHECK(mols[0]->getBondBetweenAtoms(3, 8)->getPropIfPresent(
+          common_properties::_MolFileBondCfg, cfg));
+      CHECK(cfg == 2);
     }
   }
 }

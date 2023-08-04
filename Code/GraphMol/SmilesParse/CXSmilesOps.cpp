@@ -1355,24 +1355,24 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
   if (!atoms.empty()) {
     // we need to do a bit of work to check whether or not we've already seen
     // this particular StereoGroup (was Github #6050)
-    group_id = 10 * group_id + static_cast<unsigned int>(group_type);
+    const auto group_hash =
+        10 * group_id + static_cast<unsigned int>(group_type);
     std::vector<unsigned int> sgTracker;
     mol.getPropIfPresent(cxsgTracker, sgTracker);
     std::vector<StereoGroup> mol_stereo_groups(mol.getStereoGroups());
     TEST_ASSERT(mol_stereo_groups.size() == sgTracker.size());
 
-    auto iter = std::find(sgTracker.begin(), sgTracker.end(), group_id);
+    auto iter = std::find(sgTracker.begin(), sgTracker.end(), group_hash);
     if (iter != sgTracker.end()) {
       auto index = iter - sgTracker.begin();
       auto gAtoms = mol_stereo_groups[index].getAtoms();
       gAtoms.insert(gAtoms.end(), atoms.begin(), atoms.end());
       mol_stereo_groups[index] = StereoGroup(
-          mol_stereo_groups[index].getGroupType(), std::move(gAtoms));
+          mol_stereo_groups[index].getGroupType(), std::move(gAtoms), group_id);
     } else {
       // not seen this before, create a new stereogroup
-      mol_stereo_groups.emplace_back(group_type, std::move(atoms));
-      sgTracker.resize(mol_stereo_groups.size());
-      sgTracker.back() = group_id;
+      mol_stereo_groups.emplace_back(group_type, std::move(atoms), group_id);
+      sgTracker.push_back(group_hash);
       mol.setProp(cxsgTracker, sgTracker);
     }
 
@@ -1525,6 +1525,60 @@ void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
 namespace RDKit {
 namespace SmilesWrite {
 namespace {
+
+std::vector<unsigned> getSortedMappedIndexes(
+    const std::vector<Atom *> &atoms, const std::vector<unsigned> &revOrder) {
+  std::vector<unsigned> res;
+  res.reserve(atoms.size());
+  for (auto atom : atoms) {
+    auto idx = atom->getIdx();
+    res.push_back(revOrder[idx]);
+  }
+  std::sort(res.begin(), res.end());
+  return res;
+}
+
+std::pair<std::vector<StereoGroup>, std::vector<std::vector<unsigned>>>
+getSortedStereoGroupsAndIndices(const std::vector<StereoGroup> &groups,
+                                const std::vector<unsigned int> &revOrder) {
+  using StGrpIdxPair = std::pair<StereoGroup, std::vector<unsigned>>;
+
+  std::vector<StGrpIdxPair> sortingGroups;
+  sortingGroups.reserve(groups.size());
+
+  for (const auto &sg : groups) {
+    const auto atomIndexes = getSortedMappedIndexes(sg.getAtoms(), revOrder);
+    if (!atomIndexes.empty()) {
+      sortingGroups.emplace_back(sg, atomIndexes);
+    }
+  }
+
+  // sort by 1) StereoGroup type; 2) StereoGroup id; 3) atom indexes
+  std::sort(sortingGroups.begin(), sortingGroups.end(),
+            [](const StGrpIdxPair &a, const StGrpIdxPair &b) {
+              const auto &[sgA, idxsA] = a;
+              const auto &[sgB, idxsB] = b;
+              if (sgA.getGroupType() == sgB.getGroupType()) {
+                if (sgA.getWriteId() == sgB.getWriteId()) {
+                  return idxsA < idxsB;
+                }
+                return sgA.getWriteId() < sgB.getWriteId();
+              }
+              return sgA.getGroupType() < sgB.getGroupType();
+            });
+
+  std::vector<StereoGroup> sgs;
+  std::vector<std::vector<unsigned>> sgAtomIdxs;
+  sgs.reserve(sortingGroups.size());
+  sgAtomIdxs.reserve(sortingGroups.size());
+
+  for (auto &&p : sortingGroups) {
+    sgs.push_back(std::move(p.first));
+    sgAtomIdxs.push_back(std::move(p.second));
+  }
+  return {std::move(sgs), std::move(sgAtomIdxs)};
+}
+
 std::string quote_string(const std::string &txt) {
   // FIX
   return txt;
@@ -1554,58 +1608,32 @@ std::string get_enhanced_stereo_block(
   for (unsigned i = 0; i < atomOrder.size(); ++i) {
     revOrder[atomOrder[i]] = i;
   }
-  std::vector<unsigned int> absAts;
-  std::vector<std::vector<unsigned int>> orGps;
-  std::vector<std::vector<unsigned int>> andGps;
 
-  // we want this to be canonical (future proofing)
-  for (const auto &sg : mol.getStereoGroups()) {
-    std::vector<unsigned int> aids;
-    aids.reserve(sg.getAtoms().size());
-    for (const auto at : sg.getAtoms()) {
-      aids.push_back(revOrder[at->getIdx()]);
-    }
-    switch (sg.getGroupType()) {
+  auto [groups, groupsAtoms] =
+      getSortedStereoGroupsAndIndices(mol.getStereoGroups(), revOrder);
+
+  assignStereoGroupIds(groups);
+
+  auto grpAtomsItr = groupsAtoms.begin();
+  for (auto sgItr = groups.begin(); sgItr != groups.end();
+       ++sgItr, ++grpAtomsItr) {
+    switch (sgItr->getGroupType()) {
       case StereoGroupType::STEREO_ABSOLUTE:
-        absAts.insert(absAts.end(), aids.begin(), aids.end());
+        res << "a:";
         break;
       case StereoGroupType::STEREO_OR:
-        std::sort(aids.begin(), aids.end());
-        orGps.push_back(aids);
+        res << "o" << sgItr->getWriteId() << ":";
         break;
       case StereoGroupType::STEREO_AND:
-        std::sort(aids.begin(), aids.end());
-        andGps.push_back(aids);
+        res << "&" << sgItr->getWriteId() << ":";
         break;
     }
-  }
-  if (!absAts.empty()) {
-    res << "a:";
-    std::sort(absAts.begin(), absAts.end());
-    for (auto aid : absAts) {
+
+    for (const auto &aid : *grpAtomsItr) {
       res << aid << ",";
     }
   }
-  if (!orGps.empty()) {
-    std::sort(orGps.begin(), orGps.end());
-    unsigned int gIdx = 1;
-    for (const auto &gp : orGps) {
-      res << "o" << gIdx++ << ":";
-      for (auto aid : gp) {
-        res << aid << ",";
-      }
-    }
-  }
-  if (!andGps.empty()) {
-    std::sort(andGps.begin(), andGps.end());
-    unsigned int gIdx = 1;
-    for (const auto &gp : andGps) {
-      res << "&" << gIdx++ << ":";
-      for (auto aid : gp) {
-        res << aid << ",";
-      }
-    }
-  }
+
   std::string resStr = res.str();
   if (!resStr.empty() && resStr.back() == ',') {
     resStr.pop_back();

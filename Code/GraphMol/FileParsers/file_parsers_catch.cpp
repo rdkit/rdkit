@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <string_view>
 #include <streambuf>
 
@@ -5447,8 +5448,7 @@ M  END
   }
 }
 
-TEST_CASE(
-    "Github #6395: Mol Unsaturated Query Not Parsed Correctly") {
+TEST_CASE("Github #6395: Mol Unsaturated Query Not Parsed Correctly") {
   SECTION("as reported") {
     auto m = R"CTAB(
 MOESketch           2D                              
@@ -5918,7 +5918,6 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(atomBlock.find("r_m_z_coord") != std::string::npos);
     CHECK(atomBlock.find("i_m_atomic_number") != std::string::npos);
     CHECK(atomBlock.find("i_m_formal_charge") != std::string::npos);
-    CHECK(atomBlock.find("s_m_color_rgb") != std::string::npos);
 
     CHECK(atomBlock.find("b_rdk_atom_bool_prop") != std::string::npos);
     CHECK(atomBlock.find("i_rdk_atom_int_prop") != std::string::npos);
@@ -5934,6 +5933,68 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(bondBlock.find("i_rdk_bond_int_prop") != std::string::npos);
     CHECK(bondBlock.find("r_rdk_bond_real_prop") != std::string::npos);
     CHECK(bondBlock.find("s_rdk_bond_string_prop") != std::string::npos);
+  }
+
+  SECTION("Check bond ends indices order") {
+    // in the bonds block, 'from' index must be lower than 'to' index
+
+    // As usual, the writer takes ownership of the stream
+    auto oss = new std::stringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+
+    std::string line;
+    while (std::getline(*oss, line) &&
+           line.find("m_bond[6]") == std::string::npos) {
+      // Discard data until we reach the bond block
+    }
+
+    unsigned from_pos = -1;  // offset comment
+    unsigned to_pos = -1;    // offset comment
+    bool from_seen = false;
+    bool to_seen = false;
+
+    while (std::getline(*oss, line) && line.find(":::") == std::string::npos) {
+      // Skip lines (comment, property names, separator)
+      // until we reach the actual data.
+      // Also, find position of 'to' and 'from' indices in the property list
+      if (!from_seen) {
+        ++from_pos;
+        if (line.find("i_m_from") != std::string::npos) {
+          from_seen = true;
+        }
+      }
+      if (!to_seen) {
+        ++to_pos;
+        if (line.find("i_m_to") != std::string::npos) {
+          to_seen = true;
+        }
+      }
+    }
+    REQUIRE(from_pos > 0);
+    REQUIRE(to_pos > 0);
+
+    int from = -1;
+    int to = -1;
+    std::string prop;
+    unsigned tokens = 1 + std::max(from_pos, to_pos);
+    for (unsigned i = 0; i < mol->getNumAtoms(); ++i) {
+      std::getline(*oss, line);
+      std::stringstream ss(line);
+      for (unsigned j = 0; j < tokens; ++j) {
+        if (j == from_pos) {
+          ss >> from;
+        } else if (j == to_pos) {
+          ss >> to;
+        } else {
+          ss >> prop;
+        }
+      }
+      REQUIRE(from != -1);
+      REQUIRE(to != -1);
+      CHECK(from < to);
+    }
   }
 
   SECTION("Check Property filtering") {
@@ -5952,8 +6013,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
 
     w.setProps(keptProps);
 
-    std::string heavyAtomColor = "131313";
-    w.write(*mol, heavyAtomColor);
+    w.write(*mol);
     w.flush();
 
     auto mae = oss->str();
@@ -5991,7 +6051,6 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(atomBlock.find("r_m_z_coord") != std::string::npos);
     CHECK(atomBlock.find("i_m_atomic_number") != std::string::npos);
     CHECK(atomBlock.find("i_m_formal_charge") != std::string::npos);
-    CHECK(atomBlock.find("s_m_color_rgb") != std::string::npos);
 
     CHECK(atomBlock.find("i_rdk_atom_int_prop") != std::string::npos);
 
@@ -6010,14 +6069,20 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(bondBlock.find("i_rdk_bond_int_prop") == std::string::npos);
     CHECK(bondBlock.find("s_rdk_bond_string_prop") == std::string::npos);
 
-    size_t pos = 0;
-    unsigned atom_color_count = 0;
-    while (pos < std::string::npos) {
-      pos = atomBlock.find(heavyAtomColor, pos + 1);
-      atom_color_count += (pos != std::string::npos);
-    }
+    // The "i_rdk_atom_int_prop" prop should only be set on the first atom,
+    // and unset on the other five
+    auto count_occurrences = [&atomBlock](const char *needle) {
+      size_t pos = 0;
+      unsigned counter = 0;
+      while (pos < std::string::npos) {
+        pos = atomBlock.find(needle, pos + 1);
+        counter += (pos != std::string::npos);
+      }
+      return counter;
+    };
 
-    CHECK(atom_color_count == mol->getNumAtoms());
+    CHECK(count_occurrences(" 42") == 1);
+    CHECK(count_occurrences(" <>") == 5);
   }
 
   SECTION("Check roundtrip") {
@@ -6049,6 +6114,75 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
       }
     }
     // Maeparser does not parse bond properties, so don't check them.
+  }
+  SECTION("Check reverse roundtrip") {
+    constexpr std::string_view maeBlock = R"MAE(f_m_ct {
+  s_m_title
+  :::
+  ""
+  m_atom[1] {
+    # First column is Index #
+    r_m_x_coord
+    r_m_y_coord
+    r_m_z_coord
+    i_m_atomic_number
+    i_m_formal_charge
+    :::
+    1 -2.542857 2.171429 0.000000 6 0
+    :::
+  }
+})MAE";
+
+    auto iss = new std::istringstream(maeBlock.data());
+    MaeMolSupplier r(iss);
+
+    std::unique_ptr<ROMol> mol(r.next());
+    REQUIRE(mol);
+
+    // The writer always takes ownership of the stream!
+    auto oss = new std::stringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+
+    std::string line;
+    while (std::getline(*oss, line) && line != "f_m_ct {") {
+      // Skip ahead to the ct block
+    }
+
+    // The only ct level should be the title
+    std::getline(*oss, line);
+    CHECK(line.find("s_m_title") != std::string::npos);
+
+    // End block marker
+    std::getline(*oss, line);
+    CHECK(line.find(":::") != std::string::npos);
+
+    while (std::getline(*oss, line) &&
+           line.find("m_atom[1]") == std::string::npos) {
+      // Skip ahead to the atom block
+    }
+
+    // Only the atom properties in the initial mae block should be present
+    std::getline(*oss, line);  // Chomp the comment line
+    CAPTURE(line);
+    REQUIRE(line.find("# First column is Index #") != std::string::npos);
+    std::getline(*oss, line);
+
+    CAPTURE(line);
+    CHECK(line.find("r_m_x_coord") != std::string::npos);
+    std::getline(*oss, line);
+    CHECK(line.find("r_m_y_coord") != std::string::npos);
+    std::getline(*oss, line);
+    CHECK(line.find("r_m_z_coord") != std::string::npos);
+    std::getline(*oss, line);
+    CHECK(line.find("i_m_atomic_number") != std::string::npos);
+    std::getline(*oss, line);
+    CHECK(line.find("i_m_formal_charge") != std::string::npos);
+
+    // End block marker
+    std::getline(*oss, line);
+    CHECK(line.find(":::") != std::string::npos);
   }
 
   SECTION("getText()") {
@@ -6147,9 +6281,8 @@ TEST_CASE("GitHub issue #6153: MaeMolSupplier requires bond block",
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
-    1 -2.542857 2.171429 0.000000 6 0 A0A0A0
+    1 -2.542857 2.171429 0.000000 6 0
     :::
   }
 })MAE";
@@ -6190,7 +6323,6 @@ TEST_CASE("GitHub issue #6153: MaeMolSupplier requires bond block",
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
     :::
   }
@@ -6213,9 +6345,8 @@ TEST_CASE("GitHub issue #6153: MaeMolSupplier requires bond block",
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
-    1 -2.542857 2.171429 0.000000 6 0 A0A0A0
+    1 -2.542857 2.171429 0.000000 6 0
     :::
   }
 }
@@ -6231,7 +6362,6 @@ f_m_ct {
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
     :::
   }
@@ -6246,6 +6376,62 @@ f_m_ct {
     CHECK(mol->getNumAtoms() == 1);
 
     CHECK_THROWS_AS(supplier.next(), FileParseException);
+  }
+}
+TEST_CASE("Chained bond stereo and wiggly bonds") {
+  SECTION("github6434") {
+    std::string molblock = R"CTAB(
+  Mrv2004 07102311132D
+
+ 10  9  0  0  0  0            999 V2000
+   -4.7714   -0.0130    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.4839   -0.4255    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.2152   -0.0130    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.9277   -0.4255    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.4839   -1.2693    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.2152    0.8120    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5007    1.2245    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.9277    1.2433    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.6422    0.8308    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.9192    2.0683    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+  3  2  2  0  0  0  0
+  2  5  1  4  0  0  0
+  4  3  1  0  0  0  0
+  6  3  1  0  0  0  0
+  8  6  2  0  0  0  0
+  6  7  1  4  0  0  0
+  8  9  1  4  0  0  0
+  8 10  1  0  0  0  0
+M  END
+  )CTAB";
+    std::unique_ptr<RWMol> m;
+    m.reset(MolBlockToMol(molblock));
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 8);
+  }
+}
+
+TEST_CASE("StereoGroup id forwarding", "[StereoGroup][ctab]") {
+  auto m = "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&7:3,o1:7,&8:1,&9:5|"_smiles;
+  REQUIRE(m);
+  CHECK(m->getStereoGroups().size() == 4);
+
+  SECTION("ids reassigned by default") {
+    const auto mb_out = MolToMolBlock(*m);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC1") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC2") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC3") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STEREL1") != std::string::npos);
+  }
+
+  SECTION("forward input ids") {
+    forwardStereoGroupIds(*m);
+    const auto mb_out = MolToMolBlock(*m);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC7") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC8") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC9") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STEREL1") != std::string::npos);
   }
 }
 

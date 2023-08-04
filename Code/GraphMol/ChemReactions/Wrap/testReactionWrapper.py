@@ -509,34 +509,34 @@ M  END
   def test19RemoveUnmappedMoleculesToAgents(self):
     rxn = rdChemReactions.ReactionFromSmarts(
       "[C:1]=[O:2].[N:3].C(=O)O>[OH2].[Na].[Cl]>[N:3]~[C:1]=[O:2]")
-    self.failUnless(rxn)
+    self.assertTrue(rxn)
     rxn.Initialize()
-    self.failUnless(rxn.GetNumReactantTemplates() == 3)
-    self.failUnless(rxn.GetNumProductTemplates() == 1)
-    self.failUnless(rxn.GetNumAgentTemplates() == 3)
+    self.assertTrue(rxn.GetNumReactantTemplates() == 3)
+    self.assertTrue(rxn.GetNumProductTemplates() == 1)
+    self.assertTrue(rxn.GetNumAgentTemplates() == 3)
 
     rxn.RemoveUnmappedReactantTemplates()
     rxn.RemoveUnmappedProductTemplates()
 
-    self.failUnless(rxn.GetNumReactantTemplates() == 2)
-    self.failUnless(rxn.GetNumProductTemplates() == 1)
-    self.failUnless(rxn.GetNumAgentTemplates() == 4)
+    self.assertTrue(rxn.GetNumReactantTemplates() == 2)
+    self.assertTrue(rxn.GetNumProductTemplates() == 1)
+    self.assertTrue(rxn.GetNumAgentTemplates() == 4)
 
     rxn = rdChemReactions.ReactionFromSmarts("[C:1]=[O:2].[N:3].C(=O)O>>[N:3]~[C:1]=[O:2].[OH2]")
-    self.failUnless(rxn)
+    self.assertTrue(rxn)
     rxn.Initialize()
-    self.failUnless(rxn.GetNumReactantTemplates() == 3)
-    self.failUnless(rxn.GetNumProductTemplates() == 2)
-    self.failUnless(rxn.GetNumAgentTemplates() == 0)
+    self.assertTrue(rxn.GetNumReactantTemplates() == 3)
+    self.assertTrue(rxn.GetNumProductTemplates() == 2)
+    self.assertTrue(rxn.GetNumAgentTemplates() == 0)
 
     agentList = []
     rxn.RemoveUnmappedReactantTemplates(moveToAgentTemplates=False, targetList=agentList)
     rxn.RemoveUnmappedProductTemplates(targetList=agentList)
 
-    self.failUnless(rxn.GetNumReactantTemplates() == 2)
-    self.failUnless(rxn.GetNumProductTemplates() == 1)
-    self.failUnless(rxn.GetNumAgentTemplates() == 1)
-    self.failUnless(len(agentList) == 2)
+    self.assertTrue(rxn.GetNumReactantTemplates() == 2)
+    self.assertTrue(rxn.GetNumProductTemplates() == 1)
+    self.assertTrue(rxn.GetNumAgentTemplates() == 1)
+    self.assertTrue(len(agentList) == 2)
 
   def test20CheckCopyConstructedReactionAtomProps(self):
     RLABEL = "_MolFileRLabel"
@@ -552,7 +552,7 @@ M  END
     for atom in rxn2.GetReactantTemplate(0).GetAtoms():
       if atom.HasProp(RLABEL):
         res2.append((atom.GetIdx(), atom.GetProp(RLABEL)))
-    self.assertEquals(res, res2)
+    self.assertEqual(res, res2)
 
     # currently ToBinary does not save atom props
     # rxn2 = rdChemReactions.ChemicalReaction(rxn.ToBinary())
@@ -562,17 +562,17 @@ M  END
     amine_rxn = '$RXN\n\n      ISIS     090220091541\n\n  2  1\n$MOL\n\n  -ISIS-  09020915412D\n\n  3  2  0  0  0  0  0  0  0  0999 V2000\n   -2.9083   -0.4708    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   -2.3995   -0.1771    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   -2.4042    0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0  0  0  0\n  2  3  2  0  0  0  0\nV    2 aldehyde\nM  RGP  1   1   1\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    2.8375   -0.2500    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n    3.3463    0.0438    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0  0  0  0\nV    2 amine\nM  RGP  1   1   2\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n   13.3088    0.9436    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   13.8206    1.2321    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   13.3028    0.3561    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n   12.7911    0.0676    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n  1  3  1  0  0  0  0\n  1  2  1  0  0  0  0\n  3  4  1  0  0  0  0\nM  RGP  2   2   1   4   2\nM  END\n'
     rxn = rdChemReactions.ReactionFromRxnBlock(amine_rxn)
     reactants = rxn.GetReactants()
-    self.assertEquals(len(reactants), rxn.GetNumReactantTemplates())
+    self.assertEqual(len(reactants), rxn.GetNumReactantTemplates())
     products = rxn.GetProducts()
-    self.assertEquals(len(products), rxn.GetNumProductTemplates())
+    self.assertEqual(len(products), rxn.GetNumProductTemplates())
     agents = rxn.GetAgents()
-    self.assertEquals(len(agents), rxn.GetNumAgentTemplates())
+    self.assertEqual(len(agents), rxn.GetNumAgentTemplates())
 
     for i in range(rxn.GetNumReactantTemplates()):
       p = rxn.GetReactantTemplate(i)
       mb1 = Chem.MolToMolBlock(p)
       mb2 = Chem.MolToMolBlock(reactants[i])
-      self.assertEquals(mb1, mb2)
+      self.assertEqual(mb1, mb2)
 
   def test22RunSingleReactant(self):
     # from
@@ -627,10 +627,10 @@ M  END
           sidechains.sort()
 
       if addDummy:
-        self.assertEquals(result, expected_result)
-        self.assertEquals(sidechains, sidechains_expected_result)
+        self.assertEqual(result, expected_result)
+        self.assertEqual(sidechains, sidechains_expected_result)
       else:
-        self.assertEquals(sidechains_nodummy, sidechains_nodummy_expected_result)
+        self.assertEqual(sidechains_nodummy, sidechains_nodummy_expected_result)
 
     expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("NCNCc1ncc(Cl)cc1Br"))]
     expected_result.sort()
@@ -649,8 +649,8 @@ M  END
           Chem.MolToSmiles(rdChemReactions.ReduceProductToSideChains(mol), isomericSmiles=True))
 
     result.sort()
-    self.assertEquals(result, expected_result)
-    self.assertEquals(sidechains, sidechains_expected_result)
+    self.assertEqual(result, expected_result)
+    self.assertEqual(sidechains, sidechains_expected_result)
 
     self.assertFalse(rxn.RunReactant(reagents[0], 1))
     self.assertFalse(rxn.RunReactant(reagents[1], 0))
@@ -668,7 +668,7 @@ M  END
           Chem.MolToSmiles(rdChemReactions.ReduceProductToSideChains(mol), isomericSmiles=True))
         sidechain = rdChemReactions.ReduceProductToSideChains(mol, addDummyAtoms=False)
 
-    self.assertEquals(sidechains, sidechains_expected_result)
+    self.assertEqual(sidechains, sidechains_expected_result)
 
   def test23CheckNonProduct(self):
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
@@ -685,7 +685,7 @@ M  END
     rxn = rdChemReactions.ReactionFromRxnFile(testFile)
     rxn.Initialize()
     res = rdChemReactions.PreprocessReaction(rxn)
-    self.assertEquals(res,
+    self.assertEqual(res,
                       (0, 0, 2, 1, (((0, 'halogen.bromine.aromatic'), ), ((1, 'boronicacid'), ))))
 
   def testProperties(self):
@@ -696,7 +696,7 @@ M  END
     rxn.SetIntProp("intprop", 3)
     self.assertTrue(rxn.HasProp("fooprop"))
     self.assertTrue(rxn.HasProp("intprop"))
-    self.assertEquals(rxn.GetIntProp("intprop"), 3)
+    self.assertEqual(rxn.GetIntProp("intprop"), 3)
     nrxn = rdChemReactions.ChemicalReaction(rxn.ToBinary())
     self.assertFalse(nrxn.HasProp("fooprop"))
     nrxn = rdChemReactions.ChemicalReaction(rxn.ToBinary(Chem.PropertyPickleOptions.AllProps))
@@ -704,7 +704,7 @@ M  END
     nrxn.ClearComputedProps()
     self.assertFalse(nrxn.HasProp("fooprop"))
     self.assertTrue(nrxn.HasProp("intprop"))
-    self.assertEquals(nrxn.GetIntProp("intprop"), 3)
+    self.assertEqual(nrxn.GetIntProp("intprop"), 3)
 
   def testRoundTripException(self):
     smarts = '[C:1]([C@:3]1([OH:24])[CH2:8][CH2:7][C@H:6]2[C@H:9]3[C@H:19]([C@@H:20]([F:22])[CH2:21][C@:4]12[CH3:5])[C@:17]1([CH3:18])[C:12](=[CH:13][C:14](=[O:23])[CH2:15][CH2:16]1)[CH:11]=[CH:10]3)#[CH:2].C(Cl)CCl.ClC1C=CC=C(C(OO)=[O:37])C=1.C(O)(C)(C)C>C(OCC)(=O)C>[C:1]([C@:3]1([OH:24])[CH2:8][CH2:7][C@H:6]2[C@H:9]3[C@H:19]([C@@H:20]([F:22])[CH2:21][C@:4]12[CH3:5])[C@:17]1([CH3:18])[C:12](=[CH:13][C:14](=[O:23])[CH2:15][CH2:16]1)[C@H:11]1[O:37][C@@H:10]31)#[CH:2]'
@@ -733,7 +733,7 @@ M  END
   def test_PNGMetadata(self):
     fname = os.path.join(self.dataDir, 'reaction1.smarts.png')
     rxn = rdChemReactions.ReactionFromPNGFile(fname)
-    self.failIf(rxn is None)
+    self.assertFalse(rxn is None)
     self.assertEqual(rxn.GetNumReactantTemplates(), 2)
     self.assertEqual(rxn.GetNumProductTemplates(), 1)
 
@@ -743,7 +743,7 @@ M  END
     npng2 = rdChemReactions.ReactionMetadataToPNGString(rxn, png)
     self.assertEqual(npng1, npng2)
     nrxn = rdChemReactions.ReactionFromPNGString(npng2)
-    self.failIf(nrxn is None)
+    self.assertFalse(nrxn is None)
     self.assertEqual(nrxn.GetNumReactantTemplates(), 2)
     self.assertEqual(nrxn.GetNumProductTemplates(), 1)
     opts = [
@@ -775,7 +775,7 @@ M  END
     for opt in opts:
       npng = rdChemReactions.ReactionMetadataToPNGString(rxn, png, **opt)
       nrxn = rdChemReactions.ReactionFromPNGString(npng)
-      self.failIf(nrxn is None)
+      self.assertFalse(nrxn is None)
       self.assertEqual(nrxn.GetNumReactantTemplates(), 2)
       self.assertEqual(nrxn.GetNumProductTemplates(), 1)
 
@@ -1031,6 +1031,20 @@ M  END
     self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
     self.assertFalse(rxn.RunReactantInPlace(reactant))
     self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
+    
+    rxn = rdChemReactions.ReactionFromSmarts('CC[N:1]>>[N:1]')
+    self.assertIsNotNone(rxn)
+    reactant = Chem.MolFromSmiles('CCCN.Cl')
+    self.assertTrue(rxn.RunReactantInPlace(reactant))
+    Chem.SanitizeMol(reactant)
+    self.assertEqual(Chem.MolToSmiles(reactant), 'N')
+
+    reactant = Chem.MolFromSmiles('CCCN.Cl')
+    self.assertTrue(rxn.RunReactantInPlace(reactant,removeUnmatchedAtoms=False))
+    Chem.SanitizeMol(reactant)
+    self.assertEqual(Chem.MolToSmiles(reactant), 'C.Cl.N')
+
+
 
   def testGithub4651(self):
     mol_sulfonylchloride = Chem.MolFromSmiles("Nc1c(CCCSNCC)cc(cc1)S(=O)(=O)Cl")

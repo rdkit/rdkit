@@ -1340,9 +1340,9 @@ select mol_to_smarts(mol_adjust_query_properties('*c1ncc(*)cc1'::qmol));
 
 -- CXSmiles
 SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
-        mol_to_smiles         
-------------------------------
- C[C@H](F)[C@@H](C)[C@H](C)Br
+         mol_to_smiles         
+-------------------------------
+ C[C@@H]([C@H](C)F)[C@@H](C)Br
 (1 row)
 
 SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));

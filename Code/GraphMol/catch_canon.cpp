@@ -347,4 +347,123 @@ TEST_CASE("more enhanced stereo canonicalization") {
 
     CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
   }
+  SECTION("case 3") {
+    auto m1 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"_smiles;
+    REQUIRE(m1);
+    auto m2 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
+    REQUIRE(m2);
+    Canon::canonicalizeEnhancedStereo(*m1);
+    Canon::canonicalizeEnhancedStereo(*m2);
+
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+  }
+  SECTION("case 4") {
+    auto m1 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"_smiles;
+    REQUIRE(m1);
+    auto m2 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
+    REQUIRE(m2);
+
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+  }
+  SECTION("case 5") {
+    auto m1 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"_smiles;
+    REQUIRE(m1);
+    auto m2 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
+    REQUIRE(m2);
+
+    forwardStereoGroupIds(*m1);
+    forwardStereoGroupIds(*m2);
+
+    auto cx1 = MolToCXSmiles(*m1);
+    auto cx2 = MolToCXSmiles(*m2);
+    CHECK(cx1 != cx2);
+    CHECK(cx1.find("&7:") != std::string::npos);
+    CHECK(cx1.find("&8:") != std::string::npos);
+    CHECK(cx2.find("&2:") != std::string::npos);
+    CHECK(cx2.find("&3:") != std::string::npos);
+  }
+  SECTION("case 6") {
+    auto m1 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"_smiles;
+    REQUIRE(m1);
+    auto m2 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
+    REQUIRE(m2);
+
+    forwardStereoGroupIds(*m1);
+    forwardStereoGroupIds(*m2);
+
+    // Canonicalization resets the Stereo Group IDs
+    Canon::canonicalizeEnhancedStereo(*m1);
+    Canon::canonicalizeEnhancedStereo(*m2);
+
+    auto cx1 = MolToCXSmiles(*m1);
+    auto cx2 = MolToCXSmiles(*m2);
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+
+    // "read" ids are also reset!
+    forwardStereoGroupIds(*m1);
+    forwardStereoGroupIds(*m2);
+
+    cx1 = MolToCXSmiles(*m1);
+    cx2 = MolToCXSmiles(*m2);
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+  }
+}
+
+TEST_CASE("ensure unused features are not used") {
+  SECTION("isotopes") {
+    auto mol = "[13CH3]OC"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    bool includeChirality = true;
+    bool includeIsotopes = true;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[0] != ranks[2]);
+
+    includeIsotopes = false;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[0] == ranks[2]);
+  }
+  SECTION("chirality") {
+    auto mol = "F[C@H](Cl)OC(F)Cl"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    bool includeChirality = true;
+    bool includeIsotopes = true;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] != ranks[4]);
+
+    includeChirality = false;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] == ranks[4]);
+  }
+  SECTION("chirality and stereogroups") {
+    auto mol = "F[C@H](Cl)O[C@H](F)Cl |o1:1|"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    bool includeChirality = true;
+    bool includeIsotopes = true;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] != ranks[4]);
+
+    includeChirality = false;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] == ranks[4]);
+  }
 }

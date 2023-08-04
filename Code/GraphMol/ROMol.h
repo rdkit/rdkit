@@ -835,7 +835,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     atom
                          instead of copying it.
 
-    \return the new number of atoms
+    \return the index of the new atom
   */
   unsigned int addAtom(Atom *atom, bool updateLabel = true,
                        bool takeOwnership = false);
