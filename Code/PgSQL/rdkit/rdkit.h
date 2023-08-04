@@ -203,9 +203,8 @@ CXQMol parseXQMolBlob(char *data, int len);
 char *makeXQMolBlob(CXQMol data, int *len);
 CXQMol parseXQMolText(char *data);
 char *makeXQMolText(CXQMol data, int *len);
-CXQMol MolToTautomerQuery(CROMol m);
-CXQMol MolEnumerateQuery(CROMol m);
-CXQMol XQMolToTautomerQuery(CXQMol m);
+CXQMol MolToXQMol(CROMol m, bool doEnumeration, bool doTautomers,
+                  bool adjustQueryProperties, const char *params);
 
 int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality, bool useMatchers);
 

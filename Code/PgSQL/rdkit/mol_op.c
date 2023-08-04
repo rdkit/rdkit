@@ -439,57 +439,22 @@ Datum mol_to_svg(PG_FUNCTION_ARGS) {
   PG_RETURN_CSTRING(res);
 }
 
-PGDLLEXPORT Datum mol_to_tautomerquery(PG_FUNCTION_ARGS);
-PG_FUNCTION_INFO_V1(mol_to_tautomerquery);
-Datum mol_to_tautomerquery(PG_FUNCTION_ARGS) {
+PGDLLEXPORT Datum mol_to_xqmol(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_to_xqmol);
+Datum mol_to_xqmol(PG_FUNCTION_ARGS) {
   CROMol mol;
   fcinfo->flinfo->fn_extra =
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
   Assert(mol != 0);
 
-  CXQMol xqm = MolToTautomerQuery(mol);
+  bool doEnumeration = PG_GETARG_BOOL(1);
+  bool doTautomers = PG_GETARG_BOOL(2);
+  bool adjustQueryProperties = PG_GETARG_BOOL(3);
+  char *params = PG_GETARG_CSTRING(4);
 
-  if (!xqm) {
-    PG_RETURN_NULL();
-  }
-  XQMol *res = deconstructXQMol(xqm);
-  freeCXQMol(xqm);
-
-  PG_RETURN_MOL_P(res);
-}
-
-PGDLLEXPORT Datum xqmol_to_tautomerquery(PG_FUNCTION_ARGS);
-PG_FUNCTION_INFO_V1(xqmol_to_tautomerquery);
-Datum xqmol_to_tautomerquery(PG_FUNCTION_ARGS) {
-  CXQMol xqmol;
-  fcinfo->flinfo->fn_extra =
-      searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
-                       PG_GETARG_DATUM(0), NULL, &xqmol, NULL);
-  Assert(xqmol != 0);
-
-  CXQMol xqm = XQMolToTautomerQuery(xqmol);
-
-  if (!xqm) {
-    PG_RETURN_NULL();
-  }
-
-  XQMol *res = deconstructXQMol(xqm);
-  freeCXQMol(xqm);
-
-  PG_RETURN_MOL_P(res);
-}
-
-PGDLLEXPORT Datum mol_enumeratequery(PG_FUNCTION_ARGS);
-PG_FUNCTION_INFO_V1(mol_enumeratequery);
-Datum mol_enumeratequery(PG_FUNCTION_ARGS) {
-  CROMol mol;
-  fcinfo->flinfo->fn_extra =
-      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
-                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
-  Assert(mol != 0);
-
-  CXQMol xqm = MolEnumerateQuery(mol);
+  CXQMol xqm = MolToXQMol(mol, doEnumeration, doTautomers,
+                          adjustQueryProperties, params);
 
   if (!xqm) {
     PG_RETURN_NULL();

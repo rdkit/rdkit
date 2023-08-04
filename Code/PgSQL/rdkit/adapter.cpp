@@ -104,9 +104,10 @@
 #include "guc.h"
 #include "bitstring.h"
 
-#include "XQMol.h"
+#include <GraphMol/GeneralizedSubstruct/XQMol.h>
 using namespace std;
 using namespace RDKit;
+using RDKit::GeneralizedSubstruct::ExtendedQueryMol;
 
 constexpr unsigned int pickleWhat =
     PicklerOps::PropertyPickleOptions::MolProps |
@@ -2262,7 +2263,7 @@ extern "C" char *makeXQMolBlob(CXQMol data, int *len) {
   StringData.clear();
   auto *xqm = (ExtendedQueryMol *)data;
   try {
-    StringData = pickle(*xqm);
+    StringData = xqm->toBinary();
   } catch (...) {
     elog(ERROR, "makeXQMolBlob: Unknown exception");
   }
@@ -2275,7 +2276,7 @@ extern "C" CXQMol parseXQMolBlob(char *data, int len) {
 
   try {
     string binStr(data, len);
-    mol = depickle(binStr);
+    mol = new ExtendedQueryMol(binStr, false);
   } catch (...) {
     ereport(
         ERROR,
@@ -2294,7 +2295,7 @@ extern "C" char *makeXQMolText(CXQMol data, int *len) {
   auto *mol = (ExtendedQueryMol *)data;
 
   try {
-    StringData = to_text(*mol);
+    StringData = mol->toJSON();
   } catch (...) {
     ereport(WARNING,
             (errcode(ERRCODE_WARNING),
@@ -2307,49 +2308,23 @@ extern "C" char *makeXQMolText(CXQMol data, int *len) {
 }
 
 extern "C" CXQMol parseXQMolText(char *data) {
-  // RWMol *mol = nullptr;
+  ExtendedQueryMol *mol = nullptr;
 
-  // try {
-  //   if (!asSmarts) {
-  //     if (!asQuery) {
-  //       SmilesParserParams ps;
-  //       ps.sanitize = sanitize;
-  //       mol = SmilesToMol(data, ps);
-  //       if (mol && !sanitize) {
-  //         mol->updatePropertyCache(false);
-  //         unsigned int failedOp;
-  //         unsigned int ops = MolOps::SANITIZE_ALL ^
-  //                            MolOps::SANITIZE_PROPERTIES ^
-  //                            MolOps::SANITIZE_KEKULIZE;
-  //         MolOps::sanitizeMol(*mol, failedOp, ops);
-  //       }
-  //     } else {
-  //       mol = SmilesToMol(data, 0, false);
-  //       if (mol != nullptr) {
-  //         mol->updatePropertyCache(false);
-  //         MolOps::setAromaticity(*mol);
-  //         MolOps::mergeQueryHs(*mol);
-  //       }
-  //     }
-  //   } else {
-  //     mol = SmartsToMol(data, 0, false);
-  //   }
-  // } catch (...) {
-  //   mol = nullptr;
-  // }
-  // if (mol == nullptr) {
-  //   if (warnOnFail) {
-  //     ereport(WARNING,
-  //             (errcode(ERRCODE_WARNING),
-  //              errmsg("could not create molecule from SMILES '%s'", data)));
-  //   } else {
-  //     ereport(ERROR,
-  //             (errcode(ERRCODE_DATA_EXCEPTION),
-  //              errmsg("could not create molecule from SMILES '%s'", data)));
-  //   }
-  // }
+  try {
+    string json(data);
+    mol = new ExtendedQueryMol(json, true);
+  } catch (...) {
+    ereport(
+        ERROR,
+        (errcode(ERRCODE_DATA_EXCEPTION),
+         errmsg("problem generating extended query molecule from text data")));
+  }
+  if (mol == nullptr) {
+    ereport(ERROR, (errcode(ERRCODE_DATA_EXCEPTION),
+                    errmsg("text data could not be parsed")));
+  }
 
-  return (CXQMol) nullptr;
+  return (CXQMol)mol;
 }
 
 extern "C" CXQMol constructXQMol(XQMol *data) {
@@ -2357,7 +2332,7 @@ extern "C" CXQMol constructXQMol(XQMol *data) {
 
   ByteA b(data);
   try {
-    mol = depickle(b);
+    mol = new ExtendedQueryMol(b, false);
   } catch (MolPicklerException &e) {
     elog(ERROR, "constructXQMol: %s", e.what());
   } catch (ValueErrorException &e) {
@@ -2374,7 +2349,7 @@ extern "C" XQMol *deconstructXQMol(CXQMol data) {
   ByteA b;
 
   try {
-    b = pickle(*mol);
+    b = mol->toBinary();
   } catch (MolPicklerException &e) {
     elog(ERROR, "deconstructXQMol: %s", e.what());
   } catch (...) {
@@ -2389,15 +2364,31 @@ extern "C" void freeCXQMol(CXQMol data) {
   delete mol;
 }
 
-extern "C" CXQMol MolToTautomerQuery(CROMol m) {
+extern "C" CXQMol MolToXQMol(CROMol m, bool doEnumeration, bool doTautomers,
+                             bool adjustQueryProperties, const char *params) {
   const ROMol *im = (ROMol *)m;
   if (!im) {
     return nullptr;
   }
+
+  MolOps::AdjustQueryParameters p;
+
+  if (params && strlen(params)) {
+    std::string pstring(params);
+    try {
+      MolOps::parseAdjustQueryParametersFromJSON(p, pstring);
+    } catch (const ValueErrorException &e) {
+      elog(ERROR, "MolAdjustQueryProperties: %s", e.what());
+    } catch (...) {
+      elog(WARNING,
+           "adjustQueryProperties: Invalid argument \'params\' ignored");
+    }
+  }
+
   ExtendedQueryMol *xqm = nullptr;
   try {
-    xqm = new ExtendedQueryMol(
-        std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*im)));
+    xqm = new ExtendedQueryMol(GeneralizedSubstruct::createExtendedQueryMol(
+        *im, doEnumeration, doTautomers, adjustQueryProperties, p));
   } catch (MolSanitizeException &e) {
     elog(ERROR, "MolToTautomerQuery: %s", e.what());
     xqm = nullptr;
@@ -2406,52 +2397,6 @@ extern "C" CXQMol MolToTautomerQuery(CROMol m) {
     xqm = nullptr;
   }
   return (CXQMol)xqm;
-}
-
-extern "C" CXQMol MolEnumerateQuery(CROMol m) {
-  const ROMol *im = (ROMol *)m;
-  if (!im) {
-    return nullptr;
-  }
-  ExtendedQueryMol *xqm = nullptr;
-  try {
-    std::unique_ptr<MolBundle> tbndl{
-        new MolBundle(MolEnumerator::enumerate(*im))};
-    if (!tbndl->size()) {
-      tbndl->addMol(boost::shared_ptr<ROMol>(new ROMol(*im)));
-    }
-    xqm = new ExtendedQueryMol(std::move(tbndl));
-  } catch (...) {
-    elog(ERROR, "MolEnumerateQuery: unknown failure type");
-    xqm = nullptr;
-  }
-  return (CXQMol)xqm;
-}
-
-extern "C" CXQMol XQMolToTautomerQuery(CXQMol xqm) {
-  auto *ixqm = (ExtendedQueryMol *)xqm;
-  if (!ixqm) {
-    return nullptr;
-  }
-
-  ExtendedQueryMol *res = nullptr;
-  if (std::holds_alternative<std::unique_ptr<RWMol>>(*ixqm)) {
-    std::unique_ptr<TautomerQuery> ptr{
-        TautomerQuery::fromMol(*std::get<std::unique_ptr<RWMol>>(*ixqm))};
-    res = new ExtendedQueryMol(std::move(ptr));
-  } else if (std::holds_alternative<std::unique_ptr<MolBundle>>(*ixqm)) {
-    const auto &itm = std::get<std::unique_ptr<MolBundle>>(*ixqm);
-    std::vector<std::unique_ptr<TautomerQuery>> vect;
-    for (const auto &mol : itm->getMols()) {
-      vect.emplace_back(TautomerQuery::fromMol(*mol));
-    }
-    res = new ExtendedQueryMol(std::move(vect));
-  } else {
-    elog(ERROR, "XQMolToTautomerQuery only supports enumerated molecules");
-    res = nullptr;
-  }
-
-  return (CXQMol)res;
 }
 
 extern "C" int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality,
@@ -2476,35 +2421,6 @@ extern "C" int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality,
   //   GenericGroups::setGenericQueriesFromProperties(*am);
   //   params.useGenericMatchers = true;
   // }
-  int res = 0;
-
-  if (std::holds_alternative<std::unique_ptr<RWMol>>(*xqm)) {
-    res = RDKit::SubstructMatch(*im, *std::get<std::unique_ptr<RWMol>>(*xqm),
-                                params)
-              .size();
-#ifdef RDK_USE_BOOST_SERIALIZATION
-  } else if (std::holds_alternative<std::unique_ptr<MolBundle>>(*xqm)) {
-    res = RDKit::SubstructMatch(
-              *im, *std::get<std::unique_ptr<MolBundle>>(*xqm), params)
-              .size();
-  } else if (std::holds_alternative<std::unique_ptr<TautomerQuery>>(*xqm)) {
-    res = std::get<std::unique_ptr<TautomerQuery>>(*xqm)
-              ->substructOf(*im, params)
-              .size();
-  } else if (std::holds_alternative<
-                 std::vector<std::unique_ptr<TautomerQuery>>>(*xqm)) {
-    const auto &vect =
-        std::get<std::vector<std::unique_ptr<TautomerQuery>>>(*xqm);
-    for (const auto &tq : vect) {
-      auto count = tq->substructOf(*im, params).size();
-      if (count) {
-        res = count;
-        break;
-      }
-    }
-#endif
-  } else {
-    throw ValueErrorException("unrecognized type in ExtendedQueryMol");
-  }
+  int res = GeneralizedSubstruct::SubstructMatch(*im, *xqm, params).size();
   return res;
 }
