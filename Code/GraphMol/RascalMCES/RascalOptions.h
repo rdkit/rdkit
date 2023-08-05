@@ -36,8 +36,14 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
                 This is likely to result in higher run times. */
   int timeout = 60;  // max run time, in seconds. -1 means no max.
   bool doEquivBondPruning =
-      false;         /* This might make the code run a bit faster in some
-                        circumstances, but on average it is very marginal. */
+      false; /* This might make the code run a bit faster in some
+                circumstances, but on average it is very marginal. */
+  bool returnEmptyMCES = false; /* if true, if the similarity thresholds aren't
+                                   matched still return a RascalResult with the
+                                   tier1 and tier2 sims filled in. */
+  int maxBondMatchPairs = 1000; /* Too many matching bond (vertex) pairs can
+                                   cause it to run out of memory.  This is a
+                                   reasonable default for my Mac. */
 };
 }  // namespace RascalMCES
 }  // namespace RDKit
