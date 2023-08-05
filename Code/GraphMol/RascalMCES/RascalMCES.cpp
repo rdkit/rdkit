@@ -43,8 +43,8 @@ namespace RascalMCES {
 class TimedOutException : public std::exception {
  public:
   TimedOutException(long long int run_time,
-                    std::vector<std::vector<unsigned int>> &best_cliques)
-      : d_cliques(best_cliques) {
+                    std::vector<std::vector<unsigned int>> &bestCliques)
+      : d_cliques(bestCliques) {
     d_message = "Timed out after " + std::to_string(run_time) + " second";
     if (run_time == 1) {
       d_message += ".";
@@ -472,7 +472,12 @@ void makeModularProduct(const ROMol &mol1,
     modProd.clear();
     return;
   }
-
+  if (vtxPairs.size() > opts.maxBondMatchPairs) {
+    std::cerr << "Too many matching bond pairs (" << vtxPairs.size()
+              << ") so can't continue." << std::endl;
+    modProd.clear();
+    return;
+  }
   modProd = std::vector<std::vector<char>>(
       vtxPairs.size(), std::vector<char>(vtxPairs.size(), 0));
   for (auto i = 0u; i < vtxPairs.size() - 1; ++i) {
@@ -1003,7 +1008,7 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
                      distMat1, *starter.d_mol2, starter.d_adjMatrix2,
                      bondLabels2, distMat2, opts, starter.d_vtxPairs,
                      starter.d_modProd);
-  if (starter.d_vtxPairs.empty()) {
+  if (starter.d_modProd.empty()) {
     return starter;
   }
   starter.d_lowerBound = calcLowerBound(*starter.d_mol1, *starter.d_mol2,
