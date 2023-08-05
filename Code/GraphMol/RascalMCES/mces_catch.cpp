@@ -536,6 +536,7 @@ TEST_CASE("timeout") {
   {
     RascalOptions opts;
     opts.timeout = 10;
+    opts.maxBondMatchPairs = 2000;
     auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
     REQUIRE(res.front().bondMatches().size() >= 39);
@@ -544,6 +545,7 @@ TEST_CASE("timeout") {
   {
     RascalOptions opts;
     opts.timeout = 70;
+    opts.maxBondMatchPairs = 2000;
     auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
     REQUIRE(res.front().bondMatches().size() >= 44);
@@ -552,6 +554,7 @@ TEST_CASE("timeout") {
   {
     RascalOptions opts;
     opts.timeout = 120;
+    opts.maxBondMatchPairs = 2000;
     auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
     REQUIRE(res.front().bondMatches().size() >= 44);
