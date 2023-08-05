@@ -35,6 +35,9 @@ RDKIT_RASCALMCES_EXPORT std::vector<RascalResult> rascalMces(
     const ROMol &mol1, const ROMol &mol2,
     const RascalOptions &opts = RascalOptions());
 
+RDKIT_RASCALMCES_EXPORT std::vector<std::vector<std::shared_ptr<ROMol>>>
+rascalCluster(const std::vector<std::shared_ptr<ROMol>> &mols,
+              const RascalOptions &opts = RascalOptions());
 }  // namespace RascalMCES
 }  // namespace RDKit
 #endif  // RDKIT_RASCAL_MCES_H
