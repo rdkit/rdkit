@@ -1729,7 +1729,7 @@ Molecule Hash Strings
 
 .. image:: images/RDKitCB_21_im5.png
 
-Contiguous Rotable Bonds
+Contiguous Rotatable Bonds
 =========================
 
 | **Author:** Paulo Tosco

@@ -109,7 +109,13 @@ using namespace std;
 using namespace RDKit;
 using RDKit::GeneralizedSubstruct::ExtendedQueryMol;
 
-constexpr unsigned int pickleWhat =
+constexpr unsigned int pickleForQuery =
+    PicklerOps::PropertyPickleOptions::MolProps |
+    PicklerOps::PropertyPickleOptions::AtomProps |
+    PicklerOps::PropertyPickleOptions::BondProps |
+    PicklerOps::PropertyPickleOptions::PrivateProps |
+    PicklerOps::PropertyPickleOptions::QueryAtomData;
+constexpr unsigned int pickleDefault =
     PicklerOps::PropertyPickleOptions::MolProps |
     PicklerOps::PropertyPickleOptions::PrivateProps;
 
@@ -175,12 +181,12 @@ extern "C" CROMol constructROMol(Mol *data) {
   return (CROMol)mol;
 }
 
-extern "C" Mol *deconstructROMol(CROMol data) {
+Mol *deconstructROMolWithProps(CROMol data, unsigned int properties) {
   auto *mol = (ROMol *)data;
   ByteA b;
 
   try {
-    MolPickler::pickleMol(mol, b, pickleWhat);
+    MolPickler::pickleMol(mol, b, properties);
   } catch (MolPicklerException &e) {
     elog(ERROR, "pickleMol: %s", e.what());
   } catch (...) {
@@ -188,6 +194,14 @@ extern "C" Mol *deconstructROMol(CROMol data) {
   }
 
   return (Mol *)b.toByteA();
+}
+
+extern "C" Mol *deconstructROMol(CROMol data) {
+  return deconstructROMolWithProps(data, pickleDefault);
+}
+
+extern "C" Mol *deconstructROMolWithQueryProperties(CROMol data) {
+  return deconstructROMolWithProps(data, pickleForQuery);
 }
 
 extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
@@ -484,7 +498,7 @@ extern "C" char *makeMolBlob(CROMol data, int *len) {
   auto *mol = (ROMol *)data;
   StringData.clear();
   try {
-    MolPickler::pickleMol(*mol, StringData, pickleWhat);
+    MolPickler::pickleMol(*mol, StringData, pickleDefault);
   } catch (...) {
     elog(ERROR, "makeMolBlob: Unknown exception");
   }
@@ -604,12 +618,9 @@ extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality,
     params.useEnhancedStereo = getDoEnhancedStereoSSS();
   }
   params.useQueryQueryMatches = true;
-  params.maxMatches = 1;
 
-  if (useMatchers) {
-    GenericGroups::setGenericQueriesFromProperties(*am);
-    params.useGenericMatchers = true;
-  }
+  params.useGenericMatchers = useMatchers;
+  params.maxMatches = 1;
 
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
@@ -787,6 +798,7 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
 
   MolOps::AdjustQueryParameters p;
 
+  bool includeGenericGroups = false;
   if (params && strlen(params)) {
     std::string pstring(params);
     try {
@@ -797,8 +809,20 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
       elog(WARNING,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
     }
+    std::istringstream ss;
+    ss.str(params);
+
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    includeGenericGroups = pt.get("setGenericQueryFromProperties", false);
   }
-  ROMol *mol = MolOps::adjustQueryProperties(*im, &p);
+
+  ROMol *mol = nullptr;
+  if (includeGenericGroups) {
+    mol = GenericGroups::adjustQueryPropertiesWithGenericGroups(*im, &p);
+  } else {
+    mol = MolOps::adjustQueryProperties(*im, &p);
+  }
   return (CROMol)mol;
 }
 

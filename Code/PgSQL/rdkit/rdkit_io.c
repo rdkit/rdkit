@@ -52,7 +52,7 @@ Datum mol_in(PG_FUNCTION_ARGS) {
     ereport(ERROR, (errcode(ERRCODE_DATA_EXCEPTION),
                     errmsg("could not construct molecule")));
   }
-  res = deconstructROMol(mol);
+  res = deconstructROMolWithQueryProperties(mol);
   freeCROMol(mol);
 
   PG_RETURN_MOL_P(res);
@@ -66,7 +66,7 @@ Datum mol_recv(PG_FUNCTION_ARGS) {
   CROMol mol;
   Mol *res;
   mol = parseMolBlob(VARDATA(data), len);
-  res = deconstructROMol(mol);
+  res = deconstructROMolWithQueryProperties(mol);
   freeCROMol(mol);
 
   PG_FREE_IF_COPY(data, 0);
@@ -171,7 +171,7 @@ Datum mol_from_smiles(PG_FUNCTION_ARGS) {
   if (!mol) {
     PG_RETURN_NULL();
   }
-  res = deconstructROMol(mol);
+  res = deconstructROMolWithQueryProperties(mol);
   freeCROMol(mol);
 
   PG_RETURN_MOL_P(res);

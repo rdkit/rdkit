@@ -338,6 +338,7 @@ The options available are:
 - **makeBondsGenericFlags** (default: false) : controls which bonds are made generic
 - **makeAtomsGeneric** (default: false) : convert atoms into any-atom queries
 - **makeAtomsGenericFlags** (default: false) : controls which atoms are made generic
+- **setGenericQueryFromProperties** (default: false) : controls if generic groups can be queried
 
 The various `Flags` arguments mentioned above, which control where particular options are applied,
 are constructed by combining operations from the list below with the `|` character.
@@ -730,7 +731,7 @@ These pickles can then be converted into molecules:
 
 ## License
 
-This document is copyright (C) 2013-2021 by Greg Landrum
+This document is copyright (C) 2013-2023 by Greg Landrum and other RDKit contributors.
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
