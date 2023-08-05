@@ -1512,3 +1512,10 @@ M  END'));
        0
 (1 row)
 
+-- mol properties being properly serialized
+select 'COC1=NNC=C1 |LN:1:1.3|'::mol;
+           mol           
+-------------------------
+ COc1cc[nH]n1 |LN:1:1.3|
+(1 row)
+

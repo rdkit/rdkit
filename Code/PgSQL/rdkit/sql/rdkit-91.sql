@@ -520,3 +520,6 @@ M  END'),mol_from_ctab('
   2  4  2  0  0  0  0
   2  5  6  0  0  0  0
 M  END'));
+
+-- mol properties being properly serialized
+select 'COC1=NNC=C1 |LN:1:1.3|'::mol;
