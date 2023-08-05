@@ -90,6 +90,33 @@ python::list findMCESWrapper(const ROMol &mol1, const ROMol &mol2,
   return pyres;
 }
 
+python::list rascalClusterWrapper(python::object mols, python::object py_opts) {
+  RascalMCES::RascalOptions opts;
+  if (!py_opts.is_none()) {
+    opts = python::extract<RascalMCES::RascalOptions>(py_opts);
+  }
+  std::vector<std::shared_ptr<ROMol>> cmols;
+  unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
+  cmols.resize(nElems);
+  for (unsigned int i = 0; i < nElems; ++i) {
+    if (!mols[i]) {
+      throw_value_error("molecule is None");
+    }
+    cmols[i] = python::extract<std::shared_ptr<ROMol>>(mols[i]);
+  }
+
+  auto clusters = RascalMCES::rascalCluster(cmols, opts);
+  python::list pyres;
+  for (auto &clus : clusters) {
+    python::list mols;
+    for (auto &m : clus) {
+      mols.append(m);
+    }
+    pyres.append(mols);
+  }
+  return pyres;
+}
+
 BOOST_PYTHON_MODULE(rdRascalMCES) {
   python::scope().attr("__doc__") =
       "Module containing implementation of RASCAL Maximum Common Edge Substructure algorithm.";
@@ -136,6 +163,16 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
   python::def("FindMCES", &RDKit::findMCESWrapper,
               (python::arg("mol1"), python::arg("mol2"),
                python::arg("opts") = python::object()),
+              docString.c_str());
+  docString =
+      "Use the RASCAL MCES similarity metric to do fuzzy clustering.  Returns a list of lists "
+      "of molecule objects, each inner list being a cluster.  The last cluster is all the "
+      "molecules that didn't fit into another cluster (the singletons)."
+      "- mols List of molecules to be clustered"
+      "- opts Optional RascalOptions object changing the default run mode."
+      "";
+  python::def("RascalCluster", &RDKit::rascalClusterWrapper,
+              (python::arg("mols"), python::arg("opts") = python::object()),
               docString.c_str());
 }
 
