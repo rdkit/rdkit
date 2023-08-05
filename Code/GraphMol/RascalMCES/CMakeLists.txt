@@ -1,6 +1,6 @@
 
 rdkit_library(RascalMCES
-        RascalMCES.cpp lap_a_la_scipy.cpp
+        RascalMCES.cpp RascalCluster.cpp lap_a_la_scipy.cpp
         PartitionSet.cpp RascalResult.cpp
         LINK_LIBRARIES SmilesParse FileParsers ChemTransforms SubstructMatch GraphMol)
 target_compile_definitions(RascalMCES PRIVATE RDKIT_RASCALMCES_BUILD)
@@ -9,6 +9,7 @@ rdkit_headers(RascalMCES.h RascalOptions.h RascalResult.h
         DEST GraphMol/RascalMCES)
 
 rdkit_test(testRascalMCES mces_catch.cpp LINK_LIBRARIES RascalMCES)
+rdkit_test(testRascalCluster mces_cluster_catch.cpp LINK_LIBRARIES RascalMCES)
 
 if (RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
