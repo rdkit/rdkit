@@ -635,11 +635,6 @@ const std::shared_ptr<ROMol> RascalResult::mcesMol() const {
     return d_mcesMol;
   }
 
-  std::cout << "making MCES mol from " << MolToSmiles(*d_mol1) << std::endl;
-  for (const auto &bm : d_bondMatches) {
-    std::cout << bm.first << " ";
-  }
-  std::cout << std::endl;
   std::set<int> mol1Bonds;
   for (const auto &bm : d_bondMatches) {
     mol1Bonds.insert(bm.first);
@@ -789,12 +784,6 @@ void printScores(const RascalResult &res, std::ostream &os) {
 double johnsonSimilarity(const std::vector<std::pair<int, int>> &bondMatches,
                          const std::vector<std::pair<int, int>> &atomMatches,
                          const RDKit::ROMol &mol1, const RDKit::ROMol &mol2) {
-  //  std::set<unsigned int> atsInMces;
-  //  for (const auto &bm : bondMatches) {
-  //    const auto bond1 = mol1.getBondWithIdx(bm.first);
-  //    atsInMces.insert(bond1->getBeginAtomIdx());
-  //    atsInMces.insert(bond1->getEndAtomIdx());
-  //  }
   double num = (bondMatches.size() + atomMatches.size()) *
                (bondMatches.size() + atomMatches.size());
   double denom = (mol1.getNumAtoms() + mol1.getNumBonds()) *
