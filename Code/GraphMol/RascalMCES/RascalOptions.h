@@ -18,9 +18,9 @@ namespace RascalMCES {
 
 struct RDKIT_RASCALMCES_EXPORT RascalOptions {
   double similarityThreshold =
-      0.7;    // if calculated below this, no MCES will be evaluated.
+      0.7;  // if calculated below this, no MCES will be evaluated.
   bool completeAromaticRings =
-      true;   // if true, partial aromatic rings won't be returned
+      true;  // if true, partial aromatic rings won't be returned
   bool ringMatchesRingOnly =
       false;  // if true, ring bonds won't match non-ring bonds
   bool exactChirality = false;  // if true, R must match R and S match S.
@@ -28,7 +28,7 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
       false; /* if true, only return a single fragment for the MCES. Default
                 is to produce multiple matching fragments if necessary. */
   int minFragSize =
-      -1;    /* minimum number of atoms in any fragment - -1 means no minimum */
+      -1; /* minimum number of atoms in any fragment - -1 means no minimum */
   int maxFragSeparation = -1; /* biggest through-bond distance that bonds can
                                match. -1 means no limit. */
   bool allBestMCESs =
@@ -38,9 +38,6 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
   bool doEquivBondPruning =
       false; /* This might make the code run a bit faster in some
                 circumstances, but on average it is very marginal. */
-  bool returnEmptyMCES = false; /* if true, if the similarity thresholds aren't
-                                   matched still return a RascalResult with the
-                                   tier1 and tier2 sims filled in. */
   int maxBondMatchPairs = 1000; /* Too many matching bond (vertex) pairs can
                                    cause it to run out of memory.  This is a
                                    reasonable default for my Mac. */
