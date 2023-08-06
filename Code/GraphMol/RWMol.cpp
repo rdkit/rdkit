@@ -158,10 +158,12 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool,
   for (auto &group : d_stereo_groups) {
     auto atoms = group.getAtoms();
     auto aiter = std::find(atoms.begin(), atoms.end(), orig_p);
-    if (aiter != atoms.end()) {
+    while (aiter != atoms.end()) {
       *aiter = atom_p;
-      group = StereoGroup(group.getGroupType(), std::move(atoms));
+      ++aiter;
+      aiter = std::find(aiter, atoms.end(), orig_p);
     }
+    group = StereoGroup(group.getGroupType(), std::move(atoms));
   }
 };
 
