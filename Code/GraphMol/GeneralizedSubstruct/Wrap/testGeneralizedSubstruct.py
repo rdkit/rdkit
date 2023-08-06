@@ -99,6 +99,19 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol3, xqm3)), 1)
     self.assertEqual(len(rdGeneralizedSubstruct.MolGetSubstructMatches(mol3, xqm4)), 0)
 
+  def test6Serialization(self):
+    m = Chem.MolFromSmiles('COCc1n[nH]c(F)c1 |LN:1:1.3|')
+    xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
+
+    mol = Chem.MolFromSmiles('COOCc1n[nH]c(F)c1')
+    matches = rdGeneralizedSubstruct.MolGetSubstructMatches(mol, xqm)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(tuple(matches[0]), (0, 1, 2, 3, 4, 5, 9, 6, 7, 8))
+
+    xqm2 = rdGeneralizedSubstruct.ExtendedQueryMol(xqm.ToBinary())
+    matches = rdGeneralizedSubstruct.MolGetSubstructMatches(mol, xqm2)
+    self.assertEqual(len(matches), 1)
+
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()
