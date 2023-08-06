@@ -1,7 +1,7 @@
 if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
     set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
 else()
-    message("== Making SubstructLibrary without boost Serialization support")
+    message("== Making TautomerQuery without boost Serialization support")
     set(RDKit_SERIALIZATION_LIBS )
 endif()
 

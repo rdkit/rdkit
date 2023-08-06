@@ -12,6 +12,7 @@
 #include "GraphMol/SmilesParse/SmilesWrite.h"
 #include "GraphMol/ChemTransforms/ChemTransforms.h"
 #include "GraphMol/Substruct/SubstructUtils.h"
+#include "GraphMol/TautomerQuery/TautomerQuery.h"
 
 namespace RDKit {
 namespace {
@@ -815,5 +816,14 @@ int RCore::matchingIndexToCoreIndex(int matchingIndex) const {
   CHECK_INVARIANT(atom->hasProp(RLABEL_CORE_INDEX),
                   "Matched atom missing core index");
   return atom->getProp<int>(RLABEL_CORE_INDEX);
+}
+
+// Create tautomer query for the matching mol on demand and cache for performance
+std::shared_ptr<TautomerQuery> RCore::getMatchingTautomerQuery() {
+  if (matchingTautomerQuery == nullptr) {
+    std::shared_ptr<TautomerQuery> tautomerQuery(TautomerQuery::fromMol(*matchingMol));
+    matchingTautomerQuery = tautomerQuery;
+  }
+  return matchingTautomerQuery;
 }
 }  // namespace RDKit

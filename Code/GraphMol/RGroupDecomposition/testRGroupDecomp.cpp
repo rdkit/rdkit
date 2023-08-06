@@ -3808,6 +3808,42 @@ M  END
               StereoGroupType::STEREO_OR);
 }
 
+void testTautomerCore() {
+  
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test that tautomeric cores behave properly"
+      << std::endl;
+
+  const auto core1 = "Oc1ccccn1"_smiles;
+  const auto core2 = "O=C1NC=CC=C1"_smiles;
+  const auto mol1 = "Cc1cnc(O)cc1Cl"_smiles;
+  const auto mol2 = "CC1=CNC(=O)C=C1F"_smiles;
+
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  params.allowMultipleRGroupsOnUnlabelled = true;
+  params.onlyMatchAtRGroups = false;
+  params.allowTautomerCore = true;
+
+  RGroupDecomposition decomp1(*core1, params);
+  const auto add11 = decomp1.add(*mol1);
+  std::cerr << "Add11 " << add11 << std::endl;
+  TEST_ASSERT(add11 == 0);
+  const auto add12 = decomp1.add(*mol2);
+  std::cerr << "Add12 " << add12 << std::endl;
+  TEST_ASSERT(add12 == 1);
+
+  RGroupDecomposition decomp2(*core2, params);
+  const auto add21 = decomp2.add(*mol1);
+  std::cerr << "Add21 " << add21 << std::endl;
+  TEST_ASSERT(add21 == 0);
+  const auto add22 = decomp2.add(*mol2);
+  std::cerr << "Add22 " << add22 << std::endl;
+  TEST_ASSERT(add22 == 1);
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -3816,6 +3852,7 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
+  testTautomerCore();
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
