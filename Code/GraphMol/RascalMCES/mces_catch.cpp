@@ -1128,3 +1128,16 @@ TEST_CASE("FMCS test3") {
     }
   }
 }
+
+TEST_CASE("Zinc pair", "[basics]") {
+  // These missed the pyrazole ring at one point, giving the SMARTS
+  // NC(=O)-Nc1cccc2c1C(=O)-cc-2.c-c
+  auto m1 = "NC(=O)Nc1cccc2c1C(=O)c1c-2n[nH]c1-c1cccs1 ZINC03814477"_smiles;
+  REQUIRE(m1);
+  auto m2 =
+      "COc1ccc(-c2[nH]nc3c2C(=O)c2c(NC(N)=O)cccc2-3)cc1 ZINC00023904"_smiles;
+  REQUIRE(m2);
+
+  auto res = rascalMces(*m1, *m2);
+  REQUIRE(res.front().smarts() == "NC(=O)-Nc1cccc2c1C(=O)-c1c-2:nnc1-c");
+}

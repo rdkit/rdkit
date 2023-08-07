@@ -101,7 +101,7 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
       << "Time to create proximity graph : "
       << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
       << " ms." << std::endl;
-#if 0
+#if 1
   for (size_t i = 0; i < proxGraph.size(); ++i) {
     std::cout << std::setw(2) << i << " : ";
     for (size_t j = 0; j < proxGraph.size(); ++j) {
@@ -118,8 +118,10 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
   return proxGraph;
 }
 
-// Split the proximity graph into its disconnected components.
-std::vector<std::vector<std::vector<ClusNode>>> disconnectProximityGraphs(
+// Split the proximity graph into its disconnected components,
+// returning vectors of the molecule numbers of the disconnected
+// graphs.
+std::vector<std::vector<unsigned int>> disconnectProximityGraphs(
     std::vector<std::vector<ClusNode>> &proxGraph) {
 #if 0
   for (size_t i = 0; i < proxGraph.size(); ++i) {
@@ -135,7 +137,7 @@ std::vector<std::vector<std::vector<ClusNode>>> disconnectProximityGraphs(
     std::cout << std::endl;
   }
 #endif
-  std::vector<std::vector<std::vector<ClusNode>>> proxGraphs;
+  std::vector<std::vector<unsigned int>> subGraphs;
   std::vector<bool> done(proxGraph.size(), false);
   auto nextStart = std::find(done.begin(), done.end(), false);
   while (nextStart != done.end()) {
@@ -156,28 +158,18 @@ std::vector<std::vector<std::vector<ClusNode>>> disconnectProximityGraphs(
         }
       }
     }
-#if 0
-nodes.sort();
+    nodes.sort();
+#if 1
     std::cout << "Next split : ";
     for (auto it : nodes) {
       std::cout << it << ",";
     }
     std::cout << std::endl;
 #endif
-    std::vector<std::vector<ClusNode>> subProxGraph =
-        std::vector<std::vector<ClusNode>>(
-            nodes.size(), std::vector<ClusNode>(nodes.size(), ClusNode()));
-    unsigned int i = 0;
-    for (auto it = nodes.begin(); it != nodes.end(); ++it, ++i) {
-      unsigned int j = 0;
-      for (auto jt = nodes.begin(); jt != nodes.end(); ++jt, ++j) {
-        subProxGraph[i][j] = proxGraph[*it][*jt];
-      }
-    }
-    proxGraphs.push_back(subProxGraph);
+    subGraphs.push_back(std::vector(nodes.begin(), nodes.end()));
     nextStart = std::find(done.begin(), done.end(), false);
   }
-  return proxGraphs;
+  return subGraphs;
 }
 
 // Calculate G_{ij} for the molecule.  p is the number of bonds that
@@ -196,9 +188,9 @@ double g_ij(const std::shared_ptr<ROMol> &mol, double a, double b, int p) {
   return g;
 }
 
-std::vector<std::vector<ClusNode>> makeSubClusters(
+std::vector<std::vector<unsigned int>> makeSubClusters(
     const std::vector<ClusNode> &nbors) {
-  std::vector<std::vector<ClusNode>> subClusters;
+  std::vector<std::vector<unsigned int>> subClusters;
 
   // These numbers are suggested in the paper.  They'll be options
   // at some point.
@@ -213,7 +205,8 @@ std::vector<std::vector<ClusNode>> makeSubClusters(
   }
 
   while (!tmpNbors.empty()) {
-    subClusters.push_back(std::vector<ClusNode>{*tmpNbors.front()});
+    subClusters.push_back(std::vector<unsigned int>{
+        tmpNbors.front()->d_mol1Num, tmpNbors.front()->d_mol2Num});
     auto m1 = tmpNbors.front()->d_res->mcesMol();
     auto g12 = g_ij(m1, a, b, p);
     for (size_t i = 1; i < tmpNbors.size(); ++i) {
@@ -226,34 +219,39 @@ std::vector<std::vector<ClusNode>> makeSubClusters(
       }
       auto res = results.front();
       auto g_12_13 = g_ij(res.mcesMol(), a, b, p);
-      auto smi = MolToSmiles(*res.mcesMol());
       double sim = g_12_13 / std::min(g12, g13);
-      if (g_12_13 > simCutoff) {
-        subClusters.back().push_back(*tmpNbors[i]);
+      if (sim > simCutoff) {
+        subClusters.back().push_back(tmpNbors[i]->d_mol2Num);
+        subClusters.back().push_back(tmpNbors[i]->d_mol1Num);
         tmpNbors[i] = nullptr;
       }
     }
     tmpNbors.front() = nullptr;
     tmpNbors.erase(std::remove(tmpNbors.begin(), tmpNbors.end(), nullptr),
                    tmpNbors.end());
+    std::sort(subClusters.back().begin(), subClusters.back().end());
+    subClusters.back().erase(
+        std::unique(subClusters.back().begin(), subClusters.back().end()),
+        subClusters.back().end());
   }
   return subClusters;
 }
 
-std::vector<std::vector<ClusNode>> formInitialClusters(
+std::vector<std::vector<unsigned int>> formInitialClusters(
+    const std::vector<unsigned int> &subGraph,
     const std::vector<std::vector<ClusNode>> &proxGraph) {
-  std::vector<std::vector<ClusNode>> clusters;
-  if (proxGraph.size() < 2) {
+  std::vector<std::vector<unsigned int>> clusters;
+  if (subGraph.size() < 2) {
     return clusters;
   }
-  for (size_t i = 0; i < proxGraph.size(); ++i) {
+  for (auto i : subGraph) {
     std::vector<ClusNode> nbors;
-#if 0
+#if 1
     std::cout << "Next : " << std::setw(2) << i << " : ";
 #endif
-    for (size_t j = 0; j < proxGraph.size(); ++j) {
+    for (auto j : subGraph) {
       if (proxGraph[i][j].d_res) {
-#if 0
+#if 1
         std::cout << "(" << std::setw(2) << proxGraph[i][j].d_mol1Num << ","
                   << std::setw(2) << proxGraph[i][j].d_mol2Num << ") "
                   << std::fixed << std::setprecision(2) << proxGraph[i][j].d_sim
@@ -261,19 +259,19 @@ std::vector<std::vector<ClusNode>> formInitialClusters(
 #endif
         nbors.push_back(proxGraph[i][j]);
       } else {
-#if 0
+#if 1
         std::cout << "(  ,  )      ";
 #endif
       }
     }
-#if 0
+#if 1
     std::cout << std::endl;
 #endif
     std::sort(nbors.begin(), nbors.end(),
               [](const ClusNode &c1, const ClusNode &c2) -> bool {
                 return c1.d_sim > c2.d_sim;
               });
-#if 0
+#if 1
     std::cout << "Nbor env : ";
     for (const auto &c : nbors) {
       std::cout << "(" << std::setw(2) << c.d_mol1Num << "," << std::setw(2)
@@ -288,33 +286,36 @@ std::vector<std::vector<ClusNode>> formInitialClusters(
     }
   }
 
+  std::cout << "Initial clusters" << std::endl;
+  for (const auto &c : clusters) {
+    for (auto m : c) {
+      std::cout << m << " ";
+    }
+    std::cout << std::endl;
+  }
+  std::sort(clusters.begin(), clusters.end(),
+            [](const std::vector<unsigned int> &c1,
+               const std::vector<unsigned int> &c2) -> bool {
+              if (c1.size() == c2.size()) {
+                return c1.front() < c2.front();
+              } else {
+                return c1.size() > c2.size();
+              }
+            });
+  clusters.erase(std::unique(clusters.begin(), clusters.end()), clusters.end());
   return clusters;
 }
 
-std::vector<std::vector<int>> mergeClusters(
-    const std::vector<std::vector<ClusNode>> &clusters) {
-  std::vector<std::vector<int>> outClusters;
+std::vector<std::vector<unsigned int>> mergeClusters(
+    const std::vector<std::vector<unsigned int>> &clusters) {
+  std::vector<std::vector<unsigned int>> outClusters(clusters);
   const double simCutoff =
       0.6;  // This is S_b in the paper.  It'll be an option at some point
 
-  for (const auto &clus : clusters) {
-    std::vector<int> tmpClus;
-    for (const auto &cn : clus) {
-      tmpClus.push_back(cn.d_mol1Num);
-      tmpClus.push_back(cn.d_mol2Num);
-    }
-    std::sort(tmpClus.begin(), tmpClus.end());
-    tmpClus.erase(std::unique(tmpClus.begin(), tmpClus.end()), tmpClus.end());
-    outClusters.push_back(tmpClus);
-  }
   if (outClusters.size() < 2) {
     return outClusters;
   }
-  std::sort(outClusters.begin(), outClusters.end(),
-            [](const std::vector<int> &c1, const std::vector<int> &c2) -> bool {
-              return c1.size() > c2.size();
-            });
-#if 0
+#if 1
   std::cout << "Merging " << outClusters.size() << " clusters" << std::endl;
   for (size_t i = 0; i < outClusters.size(); ++i) {
     std::cout << i << " :: ";
@@ -335,7 +336,7 @@ std::vector<std::vector<int>> mergeClusters(
           double(inCommon.size()) / std::min(double(outClusters[i].size()),
                                              double(outClusters[j].size()));
       if (s > simCutoff) {
-#if 0
+#if 1
         std::cout << "Merging " << i << " and " << j << " with "
                   << inCommon.size() << " in common : " << s << std::endl;
 #endif
@@ -348,24 +349,27 @@ std::vector<std::vector<int>> mergeClusters(
             outClusters[i].end());
       }
     }
-    outClusters.erase(std::remove_if(outClusters.begin(), outClusters.end(),
-                                     [](const std::vector<int> &c) -> bool {
-                                       return c.empty();
-                                     }),
-                      outClusters.end());
+    outClusters.erase(
+        std::remove_if(outClusters.begin(), outClusters.end(),
+                       [](const std::vector<unsigned int> &c) -> bool {
+                         return c.empty();
+                       }),
+        outClusters.end());
   }
   std::sort(outClusters.begin(), outClusters.end(),
-            [](const std::vector<int> &c1, const std::vector<int> &c2) -> bool {
+            [](const std::vector<unsigned int> &c1,
+               const std::vector<unsigned int> &c2) -> bool {
               return c1.size() > c2.size();
             });
   return outClusters;
 }
 
-std::vector<std::vector<int>> makeClusters(
-    const std::vector<std::vector<std::vector<ClusNode>>> &proxGraphs) {
-  std::vector<std::vector<int>> clusters;
-  for (const auto &pg : proxGraphs) {
-    auto theseClusters = formInitialClusters(pg);
+std::vector<std::vector<unsigned int>> makeClusters(
+    const std::vector<std::vector<unsigned int>> &subGraphs,
+    const std::vector<std::vector<ClusNode>> &proxGraph) {
+  std::vector<std::vector<unsigned int>> clusters;
+  for (const auto &sg : subGraphs) {
+    auto theseClusters = formInitialClusters(sg, proxGraph);
     auto mergedClusters = mergeClusters(theseClusters);
     clusters.insert(clusters.end(), mergedClusters.begin(),
                     mergedClusters.end());
@@ -373,9 +377,9 @@ std::vector<std::vector<int>> makeClusters(
   return clusters;
 }
 
-std::vector<int> collectSingletons(
+std::vector<unsigned int> collectSingletons(
     const std::vector<std::vector<ClusNode>> &proxGraph) {
-  std::vector<int> singletons;
+  std::vector<unsigned int> singletons;
   for (size_t i = 0; i < proxGraph.size(); ++i) {
     bool single = true;
     for (const auto &cn : proxGraph[i]) {
@@ -402,9 +406,9 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> rascalCluster(
     const std::vector<std::shared_ptr<ROMol>> &mols,
     const RascalOptions &opts) {
   auto proxGraph = buildProximityGraph(mols, opts);
-  auto proxGraphs = disconnectProximityGraphs(proxGraph);
-  std::cout << "Number of sub graphs : " << proxGraphs.size() << std::endl;
-  auto clusters = makeClusters(proxGraphs);
+  auto subGraphs = disconnectProximityGraphs(proxGraph);
+  std::cout << "Number of sub graphs : " << subGraphs.size() << std::endl;
+  auto clusters = makeClusters(subGraphs, proxGraph);
   auto singletons = collectSingletons(proxGraph);
   clusters.push_back(singletons);
   std::vector<std::vector<std::shared_ptr<ROMol>>> molClusters;
