@@ -111,36 +111,68 @@ RascalResult &RascalResult::operator=(const RascalResult &other) {
   return *this;
 }
 
-void RascalResult::largestFragOnly() {
-  if (!d_mol1 || !d_mol2) {
-    return;
-  }
+void RascalResult::largestFragOnly() { largestFragsOnly(1); }
+
+void RascalResult::largestFragsOnly(int numFrags) {
   std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
   // getMolFrags() returns boost::shared_ptr.  Ho-hum.
   auto frags = RDKit::MolOps::getMolFrags(*mol1_frags, false);
-  if (frags.size() < 2) {
+  if (numFrags < 1 || frags.size() < numFrags) {
     return;
   }
-  // Force the re-creation of the SMARTS next time it's needed.
-  d_smarts = "";
+  std::sort(frags.begin(), frags.end(),
+            [](const boost::shared_ptr<ROMol> &f1,
+               const boost::shared_ptr<ROMol> &f2) -> bool {
+              return f1->getNumAtoms() > f2->getNumAtoms();
+            });
+  frags.erase(frags.begin() + numFrags, frags.end());
+  rebuildFromFrags(frags);
+}
 
-  auto largestFrag = frags.front();
-  unsigned int largestSize = 0;
+void RascalResult::trimSmallFrags(int minFragSize) {
+  std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
+  // getMolFrags() returns boost::shared_ptr.  Ho-hum.
+  auto frags = RDKit::MolOps::getMolFrags(*mol1_frags, false);
   for (auto &frag : frags) {
-    if (frag->getNumAtoms() > largestSize) {
-      largestSize = frag->getNumAtoms();
-      largestFrag = frag;
+    if (frag->getNumAtoms() < minFragSize) {
+      frag.reset();
     }
   }
+  frags.erase(std::remove_if(
+                  frags.begin(), frags.end(),
+                  [](const boost::shared_ptr<ROMol> &f) -> bool { return !f; }),
+              frags.end());
+  rebuildFromFrags(frags);
+}
+
+double RascalResult::similarity() const {
+  if (!d_mol1 || !d_mol2) {
+    return 0.0;
+  }
+  return johnsonSimilarity(d_bondMatches, d_atomMatches, *d_mol1, *d_mol2);
+}
+
+void RascalResult::rebuildFromFrags(
+    const std::vector<boost::shared_ptr<ROMol>> &frags) {
+  // Force the re-creation of the SMARTS and other properties next time
+  // they-re needed.
+  d_smarts = "";
+  d_maxFragSep = -1;
+  d_ringNonRingBondScore = -1;
+  d_maxDeltaAtomAtomDist = -1;
+  d_largestFragSize = -1;
+
   std::set<int> fragAtoms, fragBonds;
-  for (auto atom : largestFrag->atoms()) {
-    if (atom->hasProp("ORIG_INDEX")) {
-      fragAtoms.insert(atom->getProp<int>("ORIG_INDEX"));
+  for (const auto &f : frags) {
+    for (auto atom : f->atoms()) {
+      if (atom->hasProp("ORIG_INDEX")) {
+        fragAtoms.insert(atom->getProp<int>("ORIG_INDEX"));
+      }
     }
-  }
-  for (auto bond : largestFrag->bonds()) {
-    if (bond->hasProp("ORIG_INDEX")) {
-      fragBonds.insert(bond->getProp<int>("ORIG_INDEX"));
+    for (auto bond : f->bonds()) {
+      if (bond->hasProp("ORIG_INDEX")) {
+        fragBonds.insert(bond->getProp<int>("ORIG_INDEX"));
+      }
     }
   }
   std::vector<std::pair<int, int>> newAtomMatches;
@@ -157,14 +189,8 @@ void RascalResult::largestFragOnly() {
     }
   }
   d_bondMatches = new_bond_matches;
-  d_numFrags = 1;
-}
-
-double RascalResult::similarity() const {
-  if (!d_mol1 || !d_mol2) {
-    return 0.0;
-  }
-  return johnsonSimilarity(d_bondMatches, d_atomMatches, *d_mol1, *d_mol2);
+  d_numFrags = frags.size();
+  d_largestFragSize = frags.front()->getNumAtoms();
 }
 
 std::string RascalResult::createSmartsString() const {

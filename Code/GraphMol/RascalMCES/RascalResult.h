@@ -52,6 +52,8 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
   // Cut the result down to the single largest fragment.  This is
   // irrecoverably destructive.
   void largestFragOnly();
+  void largestFragsOnly(int numFrags = 2);
+  void trimSmallFrags(int minFragSize = 3);
 
   std::shared_ptr<RDKit::ROMol> mol1() const { return d_mol1; };
 
@@ -101,6 +103,10 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
   mutable int d_atomMatchScore{-1};
   mutable int d_maxDeltaAtomAtomDist{-1};
   mutable int d_largestFragSize{-1};
+
+  // Assuming the frags are all part of the original MCES, just cut it
+  // down to what's in the frags.
+  void rebuildFromFrags(const std::vector<boost::shared_ptr<ROMol>> &frags);
 
   std::string createSmartsString() const;
 

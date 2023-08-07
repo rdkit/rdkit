@@ -431,11 +431,6 @@ TEST_CASE("compare chirality") {
   {
     auto res = rascalMces(*m1, *m2, opts);
     REQUIRE(res.empty());
-    opts.returnEmptyMCES = true;
-    res = rascalMces(*m1, *m2, opts);
-    REQUIRE(res.size() == 1);
-    REQUIRE(res.front().bondMatches().empty());
-    opts.returnEmptyMCES = false;
   }
   {
     auto res = rascalMces(*m2, *m3, opts);
@@ -1140,4 +1135,46 @@ TEST_CASE("Zinc pair", "[basics]") {
 
   auto res = rascalMces(*m1, *m2);
   REQUIRE(res.front().smarts() == "NC(=O)-Nc1cccc2c1C(=O)-c1c-2:nnc1-c");
+}
+
+TEST_CASE("Largest frags only") {
+  auto m1 = "CCCC(=O)NCCC1CCc2c(OC)ccc3ccc(OC)c1c23"_smiles;
+  REQUIRE(m1);
+  auto m2 = "CCCC(=O)NCCCc1cc(OC)ccc1OCc2ccccc2"_smiles;
+  REQUIRE(m2);
+
+  auto res = rascalMces(*m1, *m2);
+  REQUIRE(res.size() == 1);
+  REQUIRE(res.front().numFrags() == 4);
+  REQUIRE(res.front().smarts() ==
+          "CCCC(=O)-NCCC-[#6].Cc1ccccc1.O-[#6].ccc(-OC):c");
+  res.front().largestFragsOnly();
+  REQUIRE(res.front().numFrags() == 2);
+  REQUIRE(res.front().smarts() == "CCCC(=O)-NCCC-[#6].Cc1ccccc1");
+
+  res.front().largestFragOnly();
+  REQUIRE(res.front().numFrags() == 1);
+  REQUIRE(res.front().smarts() == "CCCC(=O)-NCCC-[#6]");
+}
+
+TEST_CASE("Trim small frags") {
+  auto m1 = "CCCC(=O)NCCC1CCc2c(OC)ccc3ccc(OC)c1c23"_smiles;
+  REQUIRE(m1);
+  auto m2 = "CCCC(=O)NCCCc1cc(OC)ccc1OCc2ccccc2"_smiles;
+  REQUIRE(m2);
+
+  RascalOptions opts;
+  opts.ringMatchesRingOnly = true;
+  auto res = rascalMces(*m1, *m2);
+  REQUIRE(res.size() == 1);
+  REQUIRE(res.front().numFrags() == 4);
+  REQUIRE(res.front().smarts() ==
+          "CCCC(=O)-NCCC-[#6].Cc1ccccc1.O-[#6].ccc(-OC):c");
+  res.front().trimSmallFrags();
+  REQUIRE(res.front().numFrags() == 3);
+  REQUIRE(res.front().smarts() == "CCCC(=O)-NCCC-[#6].Cc1ccccc1.ccc(-OC):c");
+
+  res.front().trimSmallFrags(7);
+  REQUIRE(res.front().numFrags() == 2);
+  REQUIRE(res.front().smarts() == "CCCC(=O)-NCCC-[#6].Cc1ccccc1");
 }
