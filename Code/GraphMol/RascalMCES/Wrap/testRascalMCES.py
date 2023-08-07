@@ -103,3 +103,6 @@ class TestCase(unittest.TestCase):
         outmol2 = results[0].mol2()
         self.assertEqual(Chem.MolToSmiles(outmol2), 'CCOC(=O)C1(c2ccccc2)CCN(C)CC1')
         
+
+if __name__ == "__main__":
+  unittest.main()
