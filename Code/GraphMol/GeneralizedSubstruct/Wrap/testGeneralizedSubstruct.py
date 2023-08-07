@@ -112,6 +112,39 @@ class TestCase(unittest.TestCase):
     matches = rdGeneralizedSubstruct.MolGetSubstructMatches(mol, xqm2)
     self.assertEqual(len(matches), 1)
 
+  def test7GenericMatchers(self):
+    m = Chem.MolFromSmiles('COC1=NNC(*)=C1 |$;;;;;;AEL_p;$,LN:1:1.3|')
+    qps = Chem.AdjustQueryParameters.NoAdjustments()
+    qps.makeDummiesQueries = True
+    m = Chem.AdjustQueryProperties(m,qps)
+    Chem.SetGenericQueriesFromProperties(m)
+    ps = Chem.SubstructMatchParameters()
+    ps.useGenericMatchers = True;
+
+    mol1 = Chem.MolFromSmiles('COC1=NNC(C=C)=C1')
+    mol2 = Chem.MolFromSmiles('COC1=NNC(CC)=C1')
+    mol3 = Chem.MolFromSmiles('COOC1=NNC(C=C)=C1')
+    mol4 = Chem.MolFromSmiles('COOC1=NNC(CC)=C1')
+
+    self.assertTrue(mol1.HasSubstructMatch(m,ps))
+    self.assertFalse(mol2.HasSubstructMatch(m,ps))
+    self.assertFalse(mol3.HasSubstructMatch(m,ps))
+    self.assertFalse(mol4.HasSubstructMatch(m,ps))
+    
+    xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
+    self.assertTrue(rdGeneralizedSubstruct.MolHasSubstructMatch(mol1, xqm, ps))
+    self.assertFalse(rdGeneralizedSubstruct.MolHasSubstructMatch(mol2, xqm, ps))
+    self.assertTrue(rdGeneralizedSubstruct.MolHasSubstructMatch(mol3, xqm, ps))
+    self.assertFalse(rdGeneralizedSubstruct.MolHasSubstructMatch(mol4, xqm, ps))
+
+    xqm2 = rdGeneralizedSubstruct.ExtendedQueryMol(xqm.ToBinary())
+    self.assertTrue(rdGeneralizedSubstruct.MolHasSubstructMatch(mol1, xqm2, ps))
+    self.assertFalse(rdGeneralizedSubstruct.MolHasSubstructMatch(mol2, xqm2, ps))
+    self.assertTrue(rdGeneralizedSubstruct.MolHasSubstructMatch(mol3, xqm2, ps))
+    self.assertFalse(rdGeneralizedSubstruct.MolHasSubstructMatch(mol4, xqm2, ps))
+
+
+
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()
