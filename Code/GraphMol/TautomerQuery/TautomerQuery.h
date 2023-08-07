@@ -122,12 +122,12 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
     std::vector<std::string> pkls;
     for (const auto &taut : d_tautomers) {
       std::string pkl;
-      MolPickler::pickleMol(*taut, pkl);
+      MolPickler::pickleMol(*taut, pkl, PicklerOps::AllProps);
       pkls.push_back(pkl);
     }
     ar << pkls;
     std::string molpkl;
-    MolPickler::pickleMol(*d_templateMolecule, molpkl);
+    MolPickler::pickleMol(*d_templateMolecule, molpkl, PicklerOps::AllProps);
     ar << molpkl;
     ar << d_modifiedAtoms;
     ar << d_modifiedBonds;
