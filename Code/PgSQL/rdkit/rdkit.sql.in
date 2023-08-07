@@ -1228,6 +1228,35 @@ CREATE OPERATOR <@ (
 	JOIN = contjoinsel
 );
 
+CREATE OR REPLACE FUNCTION substruct_query(mol, xqmol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_substruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @>> (
+	LEFTARG = mol,
+	RIGHTARG = xqmol,
+	PROCEDURE = substruct_query(mol, xqmol),
+	COMMUTATOR = '<<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+
+CREATE OR REPLACE FUNCTION rsubstruct_query(xqmol, mol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_rsubstruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR <<@ (
+	LEFTARG = xqmol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct_query(xqmol, mol),
+	COMMUTATOR = '@>>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
 
 
 

@@ -2440,11 +2440,8 @@ extern "C" int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality,
   }
   params.useQueryQueryMatches = true;
   params.maxMatches = 1;
+  params.useGenericMatchers = useMatchers;
 
-  // if (useMatchers) {
-  //   GenericGroups::setGenericQueriesFromProperties(*am);
-  //   params.useGenericMatchers = true;
-  // }
   int res = GeneralizedSubstruct::SubstructMatch(*im, *xqm, params).size();
   return res;
 }
