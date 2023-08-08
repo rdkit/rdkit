@@ -824,7 +824,8 @@ std::shared_ptr<TautomerQuery> RCore::getMatchingTautomerQuery() {
     try {
       // Enumerate tautomers from a sanitized copy of the matching molecule
       const auto copy = new RWMol(*matchingMol);
-      MolOps::sanitizeMol(*copy);
+      // MolOps::sanitizeMol(*copy);
+      copy->updatePropertyCache(false);
       std::shared_ptr<TautomerQuery> tautomerQuery(
           TautomerQuery::fromMol(*copy));
       matchingTautomerQuery = tautomerQuery;
