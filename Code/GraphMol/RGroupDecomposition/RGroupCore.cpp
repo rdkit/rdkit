@@ -820,10 +820,20 @@ int RCore::matchingIndexToCoreIndex(int matchingIndex) const {
 
 // Create tautomer query for the matching mol on demand and cache for performance
 std::shared_ptr<TautomerQuery> RCore::getMatchingTautomerQuery() {
-  if (matchingTautomerQuery == nullptr) {
-    std::shared_ptr<TautomerQuery> tautomerQuery(TautomerQuery::fromMol(*matchingMol));
-    matchingTautomerQuery = tautomerQuery;
+  if (!checkedForTautomerQuery) {
+    try {
+      const auto copy = new RWMol(*matchingMol);
+      MolOps::sanitizeMol(*copy);
+      std::shared_ptr<TautomerQuery> tautomerQuery(
+          TautomerQuery::fromMol(*copy));
+      matchingTautomerQuery = tautomerQuery;
+      delete copy;
+    } catch (const MolSanitizeException &) {
+      matchingTautomerQuery = nullptr;
+    }
+    checkedForTautomerQuery = true;
   }
   return matchingTautomerQuery;
 }
+
 }  // namespace RDKit

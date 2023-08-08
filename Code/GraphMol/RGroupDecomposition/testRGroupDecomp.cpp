@@ -3842,6 +3842,42 @@ void testTautomerCore() {
   const auto add22 = decomp2.add(*mol2);
   std::cerr << "Add22 " << add22 << std::endl;
   TEST_ASSERT(add22 == 1);
+
+  auto core3 = R"CTAB("
+  Mrv2008 08072313382D          
+
+  9  9  0  0  0  0            999 V2000
+    5.9823    5.0875    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.9823    4.2625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    3.8500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5534    4.2625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5534    5.0875    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    5.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    6.3250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    6.6968    3.8500    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    3.0250    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  2  0  0  0  0
+  1  6  1  0  0  0  0
+  2  8  1  0  0  0  0
+  3  9  1  0  0  0  0
+M  RGP  2   8   1   9   2
+M  END
+)CTAB"_ctab;
+  auto smiles = MolToSmiles(*core3);
+  RGroupDecomposition decomp3(*core3, params);
+  const auto add31 = decomp3.add(*mol1);
+  std::cerr << "Add31 " << add31 << std::endl;
+  TEST_ASSERT(add31 == 0);
+  const auto add32 = decomp3.add(*mol2);
+  std::cerr << "Add32 " << add32 << std::endl;
+  TEST_ASSERT(add32 == 1);
+
+
 }
 
 int main() {

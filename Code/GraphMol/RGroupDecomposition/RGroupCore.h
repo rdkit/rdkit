@@ -91,6 +91,7 @@ struct RCore {
   // An atom index map of terminal R groups to their heavy atom neighbor
   std::map<int, int> terminalRGroupAtomToNeighbor;
   // TautomerQuery for matching
+  bool checkedForTautomerQuery = false;
   std::shared_ptr<TautomerQuery> matchingTautomerQuery = nullptr;
 
   void replaceCoreAtom(RWMol &mol, Atom &atom, const Atom &other) const;

@@ -259,7 +259,11 @@ struct rgroupdecomp_wrapper {
         "    - removeHydrogensPostMatch: remove all hydrogens from the output "
         "molecules\n"
         "    - allowNonTerminalRGroups: allow labelled Rgroups of degree 2 or "
-        "more\n";
+        "more\n"
+        "    - allowTautomerCore: match all tautomers or a core against each "
+        "input structure\n"
+        "    -allowMultipleRGroupsOnUnlabelled: permit more that one rgroup to "
+        "be attached to an unlabelled core atom";
     python::class_<RDKit::RGroupDecompositionParameters>(
         "RGroupDecompositionParameters", docString.c_str(),
         python::init<>("Constructor, takes no arguments"))
@@ -309,6 +313,9 @@ struct rgroupdecomp_wrapper {
         .def_readwrite("allowMultipleRGroupsOnUnlabelled",
                        &RDKit::RGroupDecompositionParameters::
                            allowMultipleRGroupsOnUnlabelled)
+        .def_readwrite("allowTautomerCore",
+                       &RDKit::RGroupDecompositionParameters::
+                           allowTautomerCore)
         .def_readonly(
             "substructMatchParams",
             &RDKit::RGroupDecompositionParameters::substructmatchParams);
