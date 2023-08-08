@@ -822,6 +822,7 @@ int RCore::matchingIndexToCoreIndex(int matchingIndex) const {
 std::shared_ptr<TautomerQuery> RCore::getMatchingTautomerQuery() {
   if (!checkedForTautomerQuery) {
     try {
+      // Enumerate tautomers from a sanitized copy of the matching molecule
       const auto copy = new RWMol(*matchingMol);
       MolOps::sanitizeMol(*copy);
       std::shared_ptr<TautomerQuery> tautomerQuery(

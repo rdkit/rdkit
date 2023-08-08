@@ -3809,12 +3809,10 @@ M  END
 }
 
 void testTautomerCore() {
-  
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog)
-      << "Test that tautomeric cores behave properly"
-      << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test that tautomeric cores behave properly"
+                       << std::endl;
 
   const auto core1 = "Oc1ccccn1"_smiles;
   const auto core2 = "O=C1NC=CC=C1"_smiles;
@@ -3827,21 +3825,40 @@ void testTautomerCore() {
   params.onlyMatchAtRGroups = false;
   params.allowTautomerCore = true;
 
+  const char *expected1[] = {
+      "Core:Oc1cc([*:2])c([*:1])cn1 R1:C[*:1] R2:Cl[*:2]",
+      "Core:O=c1cc([*:2])c([*:1])c[nH]1 R1:C[*:1] R2:F[*:2]"};
+  const char *expected2[] = {
+      "Core:Oc1cc([*:1])c([*:2])cn1 R1:Cl[*:1] R2:C[*:2]",
+      "Core:O=c1cc([*:1])c([*:2])c[nH]1 R1:F[*:1] R2:C[*:2]"};
+
   RGroupDecomposition decomp1(*core1, params);
   const auto add11 = decomp1.add(*mol1);
-  std::cerr << "Add11 " << add11 << std::endl;
   TEST_ASSERT(add11 == 0);
   const auto add12 = decomp1.add(*mol2);
-  std::cerr << "Add12 " << add12 << std::endl;
   TEST_ASSERT(add12 == 1);
+  decomp1.process();
+  auto rows = decomp1.getRGroupsAsRows();
+  int i = 0;
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+       ++it, ++i) {
+    TEST_ASSERT(i < 2);
+    CHECK_RGROUP(it, expected1[i]);
+  }
 
   RGroupDecomposition decomp2(*core2, params);
   const auto add21 = decomp2.add(*mol1);
-  std::cerr << "Add21 " << add21 << std::endl;
   TEST_ASSERT(add21 == 0);
   const auto add22 = decomp2.add(*mol2);
-  std::cerr << "Add22 " << add22 << std::endl;
   TEST_ASSERT(add22 == 1);
+  decomp2.process();
+  rows = decomp2.getRGroupsAsRows();
+  i = 0;
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+       ++it, ++i) {
+    TEST_ASSERT(i < 2);
+    CHECK_RGROUP(it, expected2[i]);
+  }
 
   auto core3 = R"CTAB("
   Mrv2008 08072313382D          
@@ -3871,13 +3888,17 @@ M  END
   auto smiles = MolToSmiles(*core3);
   RGroupDecomposition decomp3(*core3, params);
   const auto add31 = decomp3.add(*mol1);
-  std::cerr << "Add31 " << add31 << std::endl;
   TEST_ASSERT(add31 == 0);
   const auto add32 = decomp3.add(*mol2);
-  std::cerr << "Add32 " << add32 << std::endl;
   TEST_ASSERT(add32 == 1);
-
-
+  decomp3.process();
+  rows = decomp3.getRGroupsAsRows();
+  i = 0;
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+       ++it, ++i) {
+    TEST_ASSERT(i < 2);
+    CHECK_RGROUP(it, expected2[i]);
+  }
 }
 
 int main() {
