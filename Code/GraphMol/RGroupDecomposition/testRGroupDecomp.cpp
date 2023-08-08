@@ -3811,7 +3811,7 @@ M  END
 void testTautomerCore() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test that tautomeric cores behave properly"
+  BOOST_LOG(rdInfoLog) << "Test that cores handled as tautomers behave properly"
                        << std::endl;
 
   const auto core1 = "Oc1ccccn1"_smiles;
