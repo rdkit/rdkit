@@ -824,6 +824,8 @@ std::shared_ptr<TautomerQuery> RCore::getMatchingTautomerQuery() {
     try {
       // Enumerate tautomers from a sanitized copy of the matching molecule
       const auto copy = new RWMol(*matchingMol);
+      // If the core has had rgroup labels removed when creating the matching mol
+      // then we need to update properties.  Should a full sanitization be done?
       // MolOps::sanitizeMol(*copy);
       copy->updatePropertyCache(false);
       std::shared_ptr<TautomerQuery> tautomerQuery(
