@@ -39,6 +39,24 @@ TEST_CASE("Small test", "[basics]") {
   }
   std::cout << "Read " << mols.size() << " mols" << std::endl;
   RDKit::RascalMCES::RascalOptions opts;
+  //  opts.similarityThreshold = 0.7;
+  RDKit::RascalMCES::rascalCluster(mols, opts);
+}
+
+TEST_CASE("BLSets subset", "[basics]") {
+  std::string fName = getenv("RDBASE");
+  fName += "/Code/GraphMol/RascalMCES/test_cluster1.smi";
+  RDKit::SmilesMolSupplier suppl(fName, "\t", 1, 0, false);
+  std::vector<std::shared_ptr<RDKit::ROMol>> mols;
+  while (!suppl.atEnd()) {
+    std::shared_ptr<RDKit::ROMol> mol(suppl.next());
+    if (!mol) {
+      continue;
+    }
+    mols.push_back(mol);
+  }
+  std::cout << "Read " << mols.size() << " mols" << std::endl;
+  RDKit::RascalMCES::RascalOptions opts;
   opts.similarityThreshold = 0.7;
   RDKit::RascalMCES::rascalCluster(mols, opts);
 }
