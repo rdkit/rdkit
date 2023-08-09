@@ -703,6 +703,12 @@ void setGenericQueriesFromProperties(ROMol &mol, bool useAtomLabels,
       if (!atom->getPropIfPresent(common_properties::atomLabel, label)) {
         continue;
       }
+      // special case for generic groups from mol blocks:
+      if (atom->hasQuery() && !atom->getAtomicNum() &&
+          atom->getQuery()->getDescription() == "AtomAtomicNum" &&
+          !atom->getQuery()->getNegation()) {
+        atom->setQuery(makeAtomNullQuery());
+      }
       // pseudoatom labels from CXSMILES end with "_p"... strip that if
       // present
       if (label.size() > 4 && label.compare(label.size() - 2, 2, "_p") == 0) {

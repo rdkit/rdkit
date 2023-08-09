@@ -203,7 +203,7 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   // M  V30 MDLV30/STEREL1 ATOMS=(1 12)
   // M  V30 MDLV30/STERAC1 ATOMS=(1 12)
   const regex stereo_label(
-      R"regex(MDLV30/STE(...)[0-9]* +ATOMS=\(([0-9]+) +(.*)\) *)regex");
+      R"regex(MDLV30/STE(...)([0-9]*) +ATOMS=\(([0-9]+) +(.*)\) *)regex");
 
   smatch match;
   std::vector<StereoGroup> groups;
@@ -215,13 +215,16 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
     // If this line in the collection is part of a stereo group
     if (regex_match(tempStr, match, stereo_label)) {
       StereoGroupType grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
+      unsigned groupid = 0;
 
       if (match[1] == "ABS") {
         grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
       } else if (match[1] == "REL") {
         grouptype = RDKit::StereoGroupType::STEREO_OR;
+        groupid = FileParserUtils::toUnsigned(match[2], true);
       } else if (match[1] == "RAC") {
         grouptype = RDKit::StereoGroupType::STEREO_AND;
+        groupid = FileParserUtils::toUnsigned(match[2], true);
       } else {
         std::ostringstream errout;
         errout << "Unrecognized stereogroup type : '" << tempStr << "' on line"
@@ -229,16 +232,16 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
         throw FileParseException(errout.str());
       }
 
-      const unsigned int count = FileParserUtils::toUnsigned(match[2], true);
+      const unsigned int count = FileParserUtils::toUnsigned(match[3], true);
       std::vector<Atom *> atoms;
-      std::stringstream ss(match[3]);
+      std::stringstream ss(match[4]);
       unsigned int index;
       for (size_t i = 0; i < count; ++i) {
         ss >> index;
         // atoms are 1 indexed in molfiles
         atoms.push_back(mol->getAtomWithIdx(index - 1));
       }
-      groups.emplace_back(grouptype, std::move(atoms));
+      groups.emplace_back(grouptype, std::move(atoms), groupid);
     } else {
       // skip collection types we don't know how to read. Only one documented
       // is MDLV30/HILITE
@@ -541,15 +544,15 @@ void ParseSubstitutionCountLine(RWMol *mol, const std::string &text,
           break;
         case 6:
           BOOST_LOG(rdWarningLog) << " atom degree query with value 6 found. "
-                                      "This will not match degree >6. The MDL "
-                                      "spec says it should.  line: "
+                                     "This will not match degree >6. The MDL "
+                                     "spec says it should.  line: "
                                   << line;
           q->setVal(6);
           break;
         default:
           std::ostringstream errout;
           errout << "Value " << count
-                  << " is not supported as a degree query. line: " << line;
+                 << " is not supported as a degree query. line: " << line;
           throw FileParseException(errout.str());
       }
       if (!atom->hasQuery()) {
@@ -603,10 +606,10 @@ void ParseUnsaturationLine(RWMol *mol, const std::string &text,
       } else {
         std::ostringstream errout;
         errout << "Value " << count
-                << " is not supported as an unsaturation "
+               << " is not supported as an unsaturation "
                   "query (only 0 and 1 are allowed). "
                   "line: "
-                << line;
+               << line;
         throw FileParseException(errout.str());
       }
     } catch (boost::bad_lexical_cast &) {
@@ -672,8 +675,8 @@ void ParseRingBondCountLine(RWMol *mol, const std::string &text,
         default:
           std::ostringstream errout;
           errout << "Value " << count
-                  << " is not supported as a ring-bond count query. line: "
-                  << line;
+                 << " is not supported as a ring-bond count query. line: "
+                 << line;
           throw FileParseException(errout.str());
       }
       if (!atom->hasQuery()) {
@@ -1493,7 +1496,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
   } else if (GenericGroups::genericMatchers.find(symb) !=
              GenericGroups::genericMatchers.end()) {
     res = new QueryAtom(0);
-    res->setQuery(makeAtomNullQuery());
     res->setProp(common_properties::atomLabel, std::string(symb));
   } else {
     if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
@@ -2175,7 +2177,6 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
     } else if (GenericGroups::genericMatchers.find(std::string(token)) !=
                GenericGroups::genericMatchers.end()) {
       res = new QueryAtom(0);
-      res->setQuery(makeAtomNullQuery());
       res->setProp(common_properties::atomLabel, std::string(token));
     } else {
       std::string tcopy(token);
