@@ -78,6 +78,8 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
         if (res.front().bondMatches().empty()) {
           cn.d_sim = 0.0;
         } else {
+          res.front().trimSmallFrags();
+          res.front().largestFragsOnly(2);
           cn.d_sim = res.front().similarity();
           if (cn.d_sim >= opts.similarityThreshold) {
             cn.d_res =
@@ -251,7 +253,7 @@ std::vector<std::vector<unsigned int>> formInitialClusters(
 #endif
     for (auto j : subGraph) {
       if (proxGraph[i][j].d_res) {
-#if 1
+#if 0
         std::cout << "(" << std::setw(2) << proxGraph[i][j].d_mol1Num << ","
                   << std::setw(2) << proxGraph[i][j].d_mol2Num << ") "
                   << std::fixed << std::setprecision(2) << proxGraph[i][j].d_sim
@@ -259,12 +261,12 @@ std::vector<std::vector<unsigned int>> formInitialClusters(
 #endif
         nbors.push_back(proxGraph[i][j]);
       } else {
-#if 1
+#if 0
         std::cout << "(  ,  )      ";
 #endif
       }
     }
-#if 1
+#if 0
     std::cout << std::endl;
 #endif
     std::sort(nbors.begin(), nbors.end(),
@@ -356,14 +358,45 @@ std::vector<std::vector<unsigned int>> mergeClusters(
                        }),
         outClusters.end());
   }
-  std::sort(outClusters.begin(), outClusters.end(),
-            [](const std::vector<unsigned int> &c1,
-               const std::vector<unsigned int> &c2) -> bool {
-              return c1.size() > c2.size();
-            });
+
   return outClusters;
 }
 
+void sortClusterMembersByMeanSim(
+    const std::vector<std::vector<ClusNode>> &proxGraph,
+    std::vector<std::vector<unsigned int>> &clusters) {
+  std::cout << "Sort cluster members" << std::endl;
+  for (auto &clus : clusters) {
+    std::vector<std::pair<unsigned int, double>> clusSims;
+    for (unsigned int i = 0U; i < clus.size(); ++i) {
+      double totSim = 0.0;
+      for (unsigned int j = 0U; j < clus.size(); ++j) {
+        if (i != j) {
+          totSim += proxGraph[clus[i]][clus[j]].d_sim;
+        }
+      }
+      clusSims.push_back({clus[i], totSim / (clus.size() - 1)});
+    }
+    std::sort(clusSims.begin(), clusSims.end(),
+              [](const std::pair<unsigned int, double> &p1,
+                 const std::pair<unsigned int, double> &p2) -> bool {
+                return p1.second > p2.second;
+              });
+    for (auto &cs : clusSims) {
+      std::cout << "(" << cs.first << "," << cs.second << ") ";
+    }
+    std::cout << std::endl;
+    std::transform(
+        clusSims.begin(), clusSims.end(), clus.begin(),
+        [](const std::pair<unsigned int, double> &p) -> unsigned int {
+          return p.first;
+        });
+    for (auto &cs : clus) {
+      std::cout << cs << " ";
+    }
+    std::cout << std::endl;
+  }
+}
 std::vector<std::vector<unsigned int>> makeClusters(
     const std::vector<std::vector<unsigned int>> &subGraphs,
     const std::vector<std::vector<ClusNode>> &proxGraph) {
@@ -374,6 +407,11 @@ std::vector<std::vector<unsigned int>> makeClusters(
     clusters.insert(clusters.end(), mergedClusters.begin(),
                     mergedClusters.end());
   }
+  std::sort(clusters.begin(), clusters.end(),
+            [](const std::vector<unsigned int> &c1,
+               const std::vector<unsigned int> &c2) -> bool {
+              return c1.size() > c2.size();
+            });
   return clusters;
 }
 
@@ -411,6 +449,7 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> rascalCluster(
   auto clusters = makeClusters(subGraphs, proxGraph);
   auto singletons = collectSingletons(proxGraph);
   clusters.push_back(singletons);
+  sortClusterMembersByMeanSim(proxGraph, clusters);
   std::vector<std::vector<std::shared_ptr<ROMol>>> molClusters;
   for (const auto &clus : clusters) {
     molClusters.push_back(std::vector<std::shared_ptr<ROMol>>());
