@@ -304,6 +304,12 @@ void ParseOldAtomList(RWMol *mol, const std::string_view &text,
   int nQueries;
   try {
     nQueries = FileParserUtils::toInt(text.substr(9, 1));
+  } catch (const std::out_of_range &) {
+    delete q;
+    std::ostringstream errout;
+    errout << "Cannot convert position 9 of '" << text << "' to int on line "
+           << line;
+    throw FileParseException(errout.str());
   } catch (boost::bad_lexical_cast &) {
     delete q;
     std::ostringstream errout;
@@ -318,6 +324,12 @@ void ParseOldAtomList(RWMol *mol, const std::string_view &text,
     int atNum;
     try {
       atNum = FileParserUtils::toInt(text.substr(pos, 3));
+    } catch (const std::out_of_range &) {
+      delete q;
+      std::ostringstream errout;
+      errout << "Cannot convert position " << pos << " of '" << text
+             << "' to int on line " << line;
+      throw FileParseException(errout.str());
     } catch (boost::bad_lexical_cast &) {
       delete q;
       std::ostringstream errout;
