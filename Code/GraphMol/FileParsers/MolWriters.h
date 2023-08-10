@@ -395,7 +395,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeWriter : public MolWriter {
                              const STR_VECT &propNames = STR_VECT());
 
   //! \brief write a new molecule to the file.
-  void write(const ROMol &mol, int confId = defaultConfId);
+  void write(const ROMol &mol, int confId = defaultConfId) override;
 
   //! \brief flush the ostream
   void flush() override;
