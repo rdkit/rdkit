@@ -39,6 +39,14 @@ extern "C" {
 #endif
 
 #include <postgres.h>
+#ifdef PG_VERSION_NUM
+#if PG_VERSION_NUM >= 160000
+#include <varatt.h>
+#ifndef Abs
+#define Abs(x)  ((x) >= 0 ? (x) : -(x))
+#endif
+#endif
+#endif
 
 #define RDKIT_FREE_IF_COPY_P(ptrsrc, ptrori)                   \
   do {                                                         \
