@@ -26,6 +26,8 @@
 #include <GraphMol/SubstanceGroup.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
+#include <GraphMol/GenericGroups/GenericGroups.h>
+#include <GraphMol/QueryOps.h>
 
 #include <fstream>
 #include <RDGeneral/FileParseException.h>
@@ -1367,34 +1369,6 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
               text.substr(7, text.length() - 7));
 }
 
-// We support the same special atom queries that we can read from
-// CXSMILES
-const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
-                                                 "X", "XH", "M", "MH"};
-void convertComplexNameToQuery(Atom *query, std::string_view symb) {
-  if (symb == "Q") {
-    query->setQuery(makeQAtomQuery());
-  } else if (symb == "QH") {
-    query->setQuery(makeQHAtomQuery());
-  } else if (symb == "A") {
-    query->setQuery(makeAAtomQuery());
-  } else if (symb == "AH") {
-    query->setQuery(makeAHAtomQuery());
-  } else if (symb == "X") {
-    query->setQuery(makeXAtomQuery());
-  } else if (symb == "XH") {
-    query->setQuery(makeXHAtomQuery());
-  } else if (symb == "M") {
-    query->setQuery(makeMAtomQuery());
-  } else if (symb == "MH") {
-    query->setQuery(makeMHAtomQuery());
-  } else {
-    // we control what this function gets called with, so we should never land
-    // here
-    ASSERT_INVARIANT(0, "bad complex query symbol");
-  }
-}
-
 namespace {
 void setRGPProps(const std::string_view symb, Atom *res) {
   PRECONDITION(res, "bad atom pointer");
@@ -1531,6 +1505,10 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
   } else if (symb == "Pol" || symb == "Mod") {
     res->setAtomicNum(0);
     res->setProp(common_properties::dummyLabel, symb);
+  } else if (GenericGroups::genericMatchers.find(symb) !=
+             GenericGroups::genericMatchers.end()) {
+    res = new QueryAtom(0);
+    res->setProp(common_properties::atomLabel, std::string(symb));
   } else {
     if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
       symb[1] = static_cast<char>(tolower(symb[1]));
@@ -2208,6 +2186,10 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
     } else if (token == "Pol" || token == "Mod") {
       res = new Atom(0);
       res->setProp(common_properties::dummyLabel, std::string(token));
+    } else if (GenericGroups::genericMatchers.find(std::string(token)) !=
+               GenericGroups::genericMatchers.end()) {
+      res = new QueryAtom(0);
+      res->setProp(common_properties::atomLabel, std::string(token));
     } else {
       std::string tcopy(token);
       if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z') {
@@ -2279,9 +2261,8 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
     } else if (prop == "MASS") {
       // the documentation for V3000 CTABs says that this should contain the
       // "absolute atomic weight" (whatever that means).
-      // Online examples seem to have integer (isotope) values and Marvin won't
-      // even read something that has a float.
-      // We'll go with the int
+      // Online examples seem to have integer (isotope) values and Marvin
+      // won't even read something that has a float. We'll go with the int
       int v;
       double dv;
       try {
@@ -2752,8 +2733,8 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
     mol->addBond(bond, true);
     mol->setBondBookmark(bond, bondIdx);
 
-    // set the stereoCare property on the bond if it's not set already and both
-    // the beginning and end atoms have it set:
+    // set the stereoCare property on the bond if it's not set already and
+    // both the beginning and end atoms have it set:
     int care1 = 0;
     int care2 = 0;
     if (!bond->hasProp(common_properties::molStereoCare) &&
