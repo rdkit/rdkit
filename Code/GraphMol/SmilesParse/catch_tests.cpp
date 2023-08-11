@@ -2545,11 +2545,11 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     auto qmol1 = getSmartsRootedAtAtom(*mol1, root_idx);
     auto qmol2 = getSmartsRootedAtAtom(*mol2, root_idx);
 
-    CHECK(SubstructMatch(*qmol1, *mol1, sssparams).size() == 1);
-    CHECK(SubstructMatch(*qmol2, *mol2, sssparams).size() == 1);
-    CHECK(SubstructMatch(*qmol1, *mol2, sssparams).size() ==
+    CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
           !sssparams.useChirality);
-    CHECK(SubstructMatch(*qmol2, *mol1, sssparams).size() ==
+    CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
           !sssparams.useChirality);
   }
 
@@ -2566,11 +2566,11 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     auto qmol1 = getSmartsRootedAtAtom(*mol1, root_idx);
     auto qmol2 = getSmartsRootedAtAtom(*mol2, root_idx);
 
-    CHECK(SubstructMatch(*qmol1, *mol1, sssparams).size() == 1);
-    CHECK(SubstructMatch(*qmol2, *mol2, sssparams).size() == 1);
-    CHECK(SubstructMatch(*qmol1, *mol2, sssparams).size() ==
+    CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
           !sssparams.useChirality);
-    CHECK(SubstructMatch(*qmol2, *mol1, sssparams).size() ==
+    CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
           !sssparams.useChirality);
   }
 
@@ -2587,11 +2587,11 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     auto qmol1 = getSmartsRootedAtAtom(*mol1, root_idx);
     auto qmol2 = getSmartsRootedAtAtom(*mol2, root_idx);
 
-    CHECK(SubstructMatch(*qmol1, *mol1, sssparams).size() == 1);
-    CHECK(SubstructMatch(*qmol2, *mol2, sssparams).size() == 1);
-    CHECK(SubstructMatch(*qmol1, *mol2, sssparams).size() ==
+    CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
           !sssparams.useChirality);
-    CHECK(SubstructMatch(*qmol2, *mol1, sssparams).size() ==
+    CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
           !sssparams.useChirality);
   }
 
@@ -2608,11 +2608,11 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     auto qmol1 = getSmartsRootedAtAtom(*mol1, root_idx);
     auto qmol2 = getSmartsRootedAtAtom(*mol2, root_idx);
 
-    CHECK(SubstructMatch(*qmol1, *mol1, sssparams).size() == 1);
-    CHECK(SubstructMatch(*qmol2, *mol2, sssparams).size() == 1);
-    CHECK(SubstructMatch(*qmol1, *mol2, sssparams).size() ==
+    CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
           !sssparams.useChirality);
-    CHECK(SubstructMatch(*qmol2, *mol1, sssparams).size() ==
+    CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
           !sssparams.useChirality);
   }
 }
