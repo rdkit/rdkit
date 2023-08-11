@@ -39,8 +39,12 @@ TEST_CASE("Small test", "[basics]") {
   }
   std::cout << "Read " << mols.size() << " mols" << std::endl;
   RDKit::RascalMCES::RascalOptions opts;
-  //  opts.similarityThreshold = 0.7;
-  RDKit::RascalMCES::rascalCluster(mols, opts);
+  auto clusters = RDKit::RascalMCES::rascalCluster(mols, opts);
+  REQUIRE(clusters.size() == 8);
+  std::vector<size_t> expSizes{7, 7, 6, 2, 2, 2, 2, 20};
+  for (size_t i = 0; i < 8; ++i) {
+    REQUIRE(clusters[i].size() == expSizes[i]);
+  }
 }
 
 TEST_CASE("BLSets subset", "[basics]") {
@@ -57,8 +61,12 @@ TEST_CASE("BLSets subset", "[basics]") {
   }
   std::cout << "Read " << mols.size() << " mols" << std::endl;
   RDKit::RascalMCES::RascalOptions opts;
-  opts.similarityThreshold = 0.7;
-  RDKit::RascalMCES::rascalCluster(mols, opts);
+  auto clusters = RDKit::RascalMCES::rascalCluster(mols, opts);
+  REQUIRE(clusters.size() == 12);
+  std::vector<size_t> expSizes{8, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 21};
+  for (size_t i = 0; i < 12; ++i) {
+    REQUIRE(clusters[i].size() == expSizes[i]);
+  }
 }
 
 TEST_CASE("Medium test", "[basics]") {

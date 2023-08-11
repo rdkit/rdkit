@@ -21,8 +21,10 @@
 #include <iomanip>
 #include <iterator>
 #include <list>
+#include <thread>
 #include <vector>
 
+#include <RDGeneral/RDThreads.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -39,6 +41,37 @@ struct ClusNode {
   unsigned int d_mol1Num, d_mol2Num;
 };
 
+ClusNode calcMolMolSimilarity(
+    const std::tuple<size_t, size_t,
+                     const std::vector<std::shared_ptr<ROMol>> *,
+                     const RascalOptions *> &toDo) {
+  auto i = std::get<0>(toDo);
+  auto j = std::get<1>(toDo);
+  auto mols = std::get<2>(toDo);
+  auto opts = std::get<3>(toDo);
+  auto res = rascalMces(*(*mols)[i], *(*mols)[j], *opts);
+  ClusNode cn;
+  cn.d_mol1Num = i;
+  cn.d_mol2Num = j;
+  if (res.empty()) {
+    // tier1Sim and tier2Sim were above the threshold, but no MCES
+    // was found.
+    cn.d_sim = 0.0;
+  } else {
+    if (res.front().bondMatches().empty()) {
+      cn.d_sim = 0.0;
+    } else {
+      res.front().trimSmallFrags();
+      res.front().largestFragsOnly(2);
+      cn.d_sim = res.front().similarity();
+      if (cn.d_sim >= opts->similarityThreshold) {
+        cn.d_res = std::shared_ptr<RascalResult>(new RascalResult(res.front()));
+      }
+    }
+  }
+  return cn;
+}
+
 std::vector<std::vector<ClusNode>> buildProximityGraph(
     const std::vector<std::shared_ptr<ROMol>> &mols,
     const RascalOptions &opts) {
@@ -49,60 +82,67 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
   std::vector<std::vector<ClusNode>> proxGraph =
       std::vector<std::vector<ClusNode>>(
           mols.size(), std::vector<ClusNode>(mols.size(), ClusNode()));
+  std::vector<
+      std::tuple<size_t, size_t, const std::vector<std::shared_ptr<ROMol>> *,
+                 const RascalOptions *>>
+      toDo;
+
   for (size_t i = 0; i < mols.size() - 1; ++i) {
-    if (mols.size() > 100) {
-      std::cout << i << " : ";
-    }
     for (size_t j = i + 1; j < mols.size(); ++j) {
-      if (j && !(j % 100)) {
-        std::cout << "." << std::flush;
-      }
-      auto res = rascalMces(*mols[i], *mols[j], opts);
-      ClusNode cn;
-      cn.d_mol1Num = i;
-      cn.d_mol2Num = j;
-      if (res.empty()) {
-        // tier1Sim and tier2Sim were above the threshold, but no MCES
-        // was found.
-        cn.d_sim = 0.0;
-      } else {
-        std::cout << i << " vs " << j << " :: " << MolToSmiles(*mols[i])
-                  << " vs " << MolToSmiles(*mols[j])
-                  << " :: " << mols[i]->getNumAtoms() << " and "
-                  << mols[j]->getNumAtoms() << std::endl;
-        if (res.front().timedout()) {
-          std::cout << i << " vs " << j << " :: " << MolToSmiles(*mols[i])
-                    << " vs " << MolToSmiles(*mols[j]) << " timed out"
-                    << std::endl;
-        }
-        if (res.front().bondMatches().empty()) {
-          cn.d_sim = 0.0;
-        } else {
-          res.front().trimSmallFrags();
-          res.front().largestFragsOnly(2);
-          cn.d_sim = res.front().similarity();
-          if (cn.d_sim >= opts.similarityThreshold) {
-            cn.d_res =
-                std::shared_ptr<RascalResult>(new RascalResult(res.front()));
-          }
-        }
-      }
-      proxGraph[i][j] = proxGraph[j][i] = cn;
+      toDo.push_back({i, j, &mols, &opts});
     }
-    if (mols.size() > 100) {
-      auto t2 = std::chrono::high_resolution_clock::now();
-      std::cout << " : "
-                << std::chrono::duration_cast<std::chrono::milliseconds>(t2 -
-                                                                         t1)
-                       .count()
-                << std::endl;
+  }
+
+  auto buildProxGraphPart =
+      [](const std::vector<std::tuple<
+             size_t, size_t, const std::vector<std::shared_ptr<ROMol>> *,
+             const RascalOptions *>> &toDo,
+         std::vector<ClusNode> &molSims, size_t start, size_t finish) -> void {
+    if (start > toDo.size()) {
+      return;
     }
+    if (finish > toDo.size()) {
+      finish = toDo.size();
+    }
+    std::transform(toDo.begin() + start, toDo.begin() + finish,
+                   molSims.begin() + start, calcMolMolSimilarity);
+  };
+
+  std::vector<ClusNode> molSims(toDo.size());
+#if RDK_BUILD_THREADSAFE_SSS
+  auto numThreads = getNumThreadsToUse(-1);
+  std::cout << numThreads << " threads to use.\n";
+  size_t eachThread = 1 + (toDo.size() / numThreads);
+  size_t start = 0;
+  std::vector<std::thread> threads;
+  for (int i = 0; i < numThreads; ++i, start += eachThread) {
+    std::cout << "Thread " << i << " : " << start << " to "
+              << start + eachThread << std::endl;
+    threads.push_back(std::thread(buildProxGraphPart, std::ref(toDo),
+                                  std::ref(molSims), start,
+                                  start + eachThread));
+  }
+  for (auto &t : threads) {
+    t.join();
+  }
+#else
+  std::transform(toDo.begin(), toDo.end(), molSims.begin(),
+                 calcMolMolSimilarity);
+#endif
+  for (const auto &cn : molSims) {
+    if (cn.d_res && cn.d_res->timedout()) {
+      std::cout << cn.d_mol1Num << " : " << cn.d_mol2Num << " : " << cn.d_sim
+                << " timed out" << std::endl;
+    }
+    proxGraph[cn.d_mol1Num][cn.d_mol2Num] =
+        proxGraph[cn.d_mol2Num][cn.d_mol1Num] = cn;
   }
   auto t2 = std::chrono::high_resolution_clock::now();
   std::cout
       << "Time to create proximity graph : "
       << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
       << " ms." << std::endl;
+
 #if 1
   for (size_t i = 0; i < proxGraph.size(); ++i) {
     std::cout << std::setw(2) << i << " : ";
