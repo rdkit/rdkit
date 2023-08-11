@@ -123,10 +123,9 @@ PyObject *RunReactants(ChemicalReaction *self, T reactants,
   return res;
 }
 
-template <typename T>
-PyObject *RunReactant(ChemicalReaction *self, T reactant,
+PyObject *RunReactant(ChemicalReaction *self, python::object reactant,
                       unsigned int reactionIdx) {
-  ROMOL_SPTR react = python::extract<ROMOL_SPTR>(reactant);
+  auto react = python::extract<ROMOL_SPTR>(reactant);
 
   std::vector<MOL_SPTR_VECT> mols;
 
@@ -562,9 +561,7 @@ Sample Usage:
            "the products as a tuple of tuples.  If maxProducts is not zero,"
            " stop the reaction when maxProducts have been generated "
            "[default=1000]")
-      .def("RunReactant",
-           (PyObject * (*)(RDKit::ChemicalReaction *, python::object, unsigned))
-               RDKit::RunReactant,
+      .def("RunReactant", RDKit::RunReactant,
            "apply the reaction to a single reactant")
       .def("RunReactantInPlace", RDKit::RunReactantInPlace,
            (python::arg("self"), python::arg("reactant"),

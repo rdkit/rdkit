@@ -65,7 +65,7 @@ void test1() {
   bool ok = false;
   try {
     readAmberTrajectory(fName, coords, mol->getNumAtoms());
-  } catch (ValueErrorException &e) {
+  } catch (ValueErrorException &) {
     ok = true;
   }
   TEST_ASSERT(ok);
@@ -74,7 +74,7 @@ void test1() {
   ok = false;
   try {
     readAmberTrajectory(fName, coords, mol->getNumAtoms());
-  } catch (ValueErrorException &e) {
+  } catch (ValueErrorException &) {
     // std::cout << e.what() << std::endl;
     ok = true;
   }

@@ -1009,7 +1009,7 @@ void testSetProps(ROMol &mol) {
   for (auto &bond : mol.bonds()) {
     _testSetProps(*bond, std::string("bond_") + std::to_string(bond->getIdx()));
   }
-  for (int conf_idx = 0; conf_idx < mol.getNumConformers(); ++conf_idx) {
+  for (unsigned conf_idx = 0; conf_idx < mol.getNumConformers(); ++conf_idx) {
     _testSetProps(mol.getConformer(conf_idx),
                   "conf_" + std::to_string(conf_idx));
   }
