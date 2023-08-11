@@ -278,7 +278,7 @@ int ForceField::minimize(unsigned int snapshotFreq,
 
   unsigned int numIters = 0;
   unsigned int dim = this->d_numPoints * d_dimension;
-  double finalForce;
+  double finalForce = 0.0;
   auto *points = new double[dim];
 
   this->scatter(points);

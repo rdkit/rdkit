@@ -1845,7 +1845,8 @@ void cleanupStereoGroups(ROMol &mol) {
     if (keep) {
       newsgs.push_back(sg);
     } else if (!okatoms.empty()) {
-      newsgs.emplace_back(sg.getGroupType(), std::move(okatoms));
+      newsgs.emplace_back(sg.getGroupType(), std::move(okatoms),
+                          sg.getReadId());
     }
   }
   mol.setStereoGroups(std::move(newsgs));
@@ -2633,19 +2634,19 @@ static bool assignNontetrahedralChiralTypeFrom3D(ROMol &mol,
           atom->setChiralTag(Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
           res = true;
           if (pair[0] == 2) {
-            perm = VOLTEST(0, 2, 3) ? 7 : 8;  // a b
+            perm = VOLTEST(0, 2, 3) ? 7 : 8;    // a b
           } else if (pair[0] == 3) {
-            perm = VOLTEST(0, 1, 3) ? 5 : 6;  // a c
+            perm = VOLTEST(0, 1, 3) ? 5 : 6;    // a c
           } else if (pair[0] == 4) {
-            perm = VOLTEST(0, 1, 2) ? 3 : 4;  // a d
+            perm = VOLTEST(0, 1, 2) ? 3 : 4;    // a d
           } else if (pair[0] == 5) {
-            perm = VOLTEST(0, 1, 2) ? 1 : 2;  // a e
+            perm = VOLTEST(0, 1, 2) ? 1 : 2;    // a e
           } else if (pair[1] == 3) {
             perm = VOLTEST(1, 0, 3) ? 13 : 14;  // b c
           } else if (pair[1] == 4) {
             perm = VOLTEST(1, 0, 2) ? 10 : 12;  // b d
           } else if (pair[1] == 5) {
-            perm = VOLTEST(1, 0, 2) ? 9 : 11;  // b e
+            perm = VOLTEST(1, 0, 2) ? 9 : 11;   // b e
           } else if (pair[2] == 4) {
             perm = VOLTEST(2, 0, 1) ? 16 : 19;  // c d
           } else if (pair[2] == 5) {

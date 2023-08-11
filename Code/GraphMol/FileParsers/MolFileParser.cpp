@@ -26,6 +26,8 @@
 #include <GraphMol/SubstanceGroup.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
+#include <GraphMol/GenericGroups/GenericGroups.h>
+#include <GraphMol/QueryOps.h>
 
 #include <fstream>
 #include <RDGeneral/FileParseException.h>
@@ -201,7 +203,7 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   // M  V30 MDLV30/STEREL1 ATOMS=(1 12)
   // M  V30 MDLV30/STERAC1 ATOMS=(1 12)
   const regex stereo_label(
-      R"regex(MDLV30/STE(...)[0-9]* +ATOMS=\(([0-9]+) +(.*)\) *)regex");
+      R"regex(MDLV30/STE(...)([0-9]*) +ATOMS=\(([0-9]+) +(.*)\) *)regex");
 
   smatch match;
   std::vector<StereoGroup> groups;
@@ -213,13 +215,16 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
     // If this line in the collection is part of a stereo group
     if (regex_match(tempStr, match, stereo_label)) {
       StereoGroupType grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
+      unsigned groupid = 0;
 
       if (match[1] == "ABS") {
         grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
       } else if (match[1] == "REL") {
         grouptype = RDKit::StereoGroupType::STEREO_OR;
+        groupid = FileParserUtils::toUnsigned(match[2], true);
       } else if (match[1] == "RAC") {
         grouptype = RDKit::StereoGroupType::STEREO_AND;
+        groupid = FileParserUtils::toUnsigned(match[2], true);
       } else {
         std::ostringstream errout;
         errout << "Unrecognized stereogroup type : '" << tempStr << "' on line"
@@ -227,16 +232,16 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
         throw FileParseException(errout.str());
       }
 
-      const unsigned int count = FileParserUtils::toUnsigned(match[2], true);
+      const unsigned int count = FileParserUtils::toUnsigned(match[3], true);
       std::vector<Atom *> atoms;
-      std::stringstream ss(match[3]);
+      std::stringstream ss(match[4]);
       unsigned int index;
       for (size_t i = 0; i < count; ++i) {
         ss >> index;
         // atoms are 1 indexed in molfiles
         atoms.push_back(mol->getAtomWithIdx(index - 1));
       }
-      groups.emplace_back(grouptype, std::move(atoms));
+      groups.emplace_back(grouptype, std::move(atoms), groupid);
     } else {
       // skip collection types we don't know how to read. Only one documented
       // is MDLV30/HILITE
@@ -299,6 +304,12 @@ void ParseOldAtomList(RWMol *mol, const std::string_view &text,
   int nQueries;
   try {
     nQueries = FileParserUtils::toInt(text.substr(9, 1));
+  } catch (const std::out_of_range &) {
+    delete q;
+    std::ostringstream errout;
+    errout << "Cannot convert position 9 of '" << text << "' to int on line "
+           << line;
+    throw FileParseException(errout.str());
   } catch (boost::bad_lexical_cast &) {
     delete q;
     std::ostringstream errout;
@@ -313,6 +324,12 @@ void ParseOldAtomList(RWMol *mol, const std::string_view &text,
     int atNum;
     try {
       atNum = FileParserUtils::toInt(text.substr(pos, 3));
+    } catch (const std::out_of_range &) {
+      delete q;
+      std::ostringstream errout;
+      errout << "Cannot convert position " << pos << " of '" << text
+             << "' to int on line " << line;
+      throw FileParseException(errout.str());
     } catch (boost::bad_lexical_cast &) {
       delete q;
       std::ostringstream errout;
@@ -539,15 +556,15 @@ void ParseSubstitutionCountLine(RWMol *mol, const std::string &text,
           break;
         case 6:
           BOOST_LOG(rdWarningLog) << " atom degree query with value 6 found. "
-                                      "This will not match degree >6. The MDL "
-                                      "spec says it should.  line: "
+                                     "This will not match degree >6. The MDL "
+                                     "spec says it should.  line: "
                                   << line;
           q->setVal(6);
           break;
         default:
           std::ostringstream errout;
           errout << "Value " << count
-                  << " is not supported as a degree query. line: " << line;
+                 << " is not supported as a degree query. line: " << line;
           throw FileParseException(errout.str());
       }
       if (!atom->hasQuery()) {
@@ -601,10 +618,10 @@ void ParseUnsaturationLine(RWMol *mol, const std::string &text,
       } else {
         std::ostringstream errout;
         errout << "Value " << count
-                << " is not supported as an unsaturation "
+               << " is not supported as an unsaturation "
                   "query (only 0 and 1 are allowed). "
                   "line: "
-                << line;
+               << line;
         throw FileParseException(errout.str());
       }
     } catch (boost::bad_lexical_cast &) {
@@ -670,8 +687,8 @@ void ParseRingBondCountLine(RWMol *mol, const std::string &text,
         default:
           std::ostringstream errout;
           errout << "Value " << count
-                  << " is not supported as a ring-bond count query. line: "
-                  << line;
+                 << " is not supported as a ring-bond count query. line: "
+                 << line;
           throw FileParseException(errout.str());
       }
       if (!atom->hasQuery()) {
@@ -1352,34 +1369,6 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
               text.substr(7, text.length() - 7));
 }
 
-// We support the same special atom queries that we can read from
-// CXSMILES
-const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
-                                                 "X", "XH", "M", "MH"};
-void convertComplexNameToQuery(Atom *query, std::string_view symb) {
-  if (symb == "Q") {
-    query->setQuery(makeQAtomQuery());
-  } else if (symb == "QH") {
-    query->setQuery(makeQHAtomQuery());
-  } else if (symb == "A") {
-    query->setQuery(makeAAtomQuery());
-  } else if (symb == "AH") {
-    query->setQuery(makeAHAtomQuery());
-  } else if (symb == "X") {
-    query->setQuery(makeXAtomQuery());
-  } else if (symb == "XH") {
-    query->setQuery(makeXHAtomQuery());
-  } else if (symb == "M") {
-    query->setQuery(makeMAtomQuery());
-  } else if (symb == "MH") {
-    query->setQuery(makeMHAtomQuery());
-  } else {
-    // we control what this function gets called with, so we should never land
-    // here
-    ASSERT_INVARIANT(0, "bad complex query symbol");
-  }
-}
-
 namespace {
 void setRGPProps(const std::string_view symb, Atom *res) {
   PRECONDITION(res, "bad atom pointer");
@@ -1516,6 +1505,10 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
   } else if (symb == "Pol" || symb == "Mod") {
     res->setAtomicNum(0);
     res->setProp(common_properties::dummyLabel, symb);
+  } else if (GenericGroups::genericMatchers.find(symb) !=
+             GenericGroups::genericMatchers.end()) {
+    res = new QueryAtom(0);
+    res->setProp(common_properties::atomLabel, std::string(symb));
   } else {
     if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
       symb[1] = static_cast<char>(tolower(symb[1]));
@@ -2193,6 +2186,10 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
     } else if (token == "Pol" || token == "Mod") {
       res = new Atom(0);
       res->setProp(common_properties::dummyLabel, std::string(token));
+    } else if (GenericGroups::genericMatchers.find(std::string(token)) !=
+               GenericGroups::genericMatchers.end()) {
+      res = new QueryAtom(0);
+      res->setProp(common_properties::atomLabel, std::string(token));
     } else {
       std::string tcopy(token);
       if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z') {
@@ -2264,9 +2261,8 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
     } else if (prop == "MASS") {
       // the documentation for V3000 CTABs says that this should contain the
       // "absolute atomic weight" (whatever that means).
-      // Online examples seem to have integer (isotope) values and Marvin won't
-      // even read something that has a float.
-      // We'll go with the int
+      // Online examples seem to have integer (isotope) values and Marvin
+      // won't even read something that has a float. We'll go with the int
       int v;
       double dv;
       try {
@@ -2737,8 +2733,8 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
     mol->addBond(bond, true);
     mol->setBondBookmark(bond, bondIdx);
 
-    // set the stereoCare property on the bond if it's not set already and both
-    // the beginning and end atoms have it set:
+    // set the stereoCare property on the bond if it's not set already and
+    // both the beginning and end atoms have it set:
     int care1 = 0;
     int care2 = 0;
     if (!bond->hasProp(common_properties::molStereoCare) &&

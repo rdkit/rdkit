@@ -35,7 +35,7 @@ using std::uint32_t;
 namespace RDKit {
 
 const int32_t MolPickler::versionMajor = 14;
-const int32_t MolPickler::versionMinor = 0;
+const int32_t MolPickler::versionMinor = 1;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -2305,12 +2305,16 @@ SubstanceGroup MolPickler::_getSubstanceGroupFromPickle(std::istream &ss,
 
 template <typename T>
 void MolPickler::_pickleStereo(std::ostream &ss,
-                               const std::vector<StereoGroup> &groups,
+                               std::vector<StereoGroup> groups,
                                std::map<int, int> &atomIdxMap) {
   T tmpT = static_cast<T>(groups.size());
   streamWrite(ss, tmpT);
+  assignStereoGroupIds(groups);
   for (auto &&group : groups) {
     streamWrite(ss, static_cast<T>(group.getGroupType()));
+    if (group.getGroupType() != StereoGroupType::STEREO_ABSOLUTE) {
+      streamWrite(ss, static_cast<T>(group.getWriteId()));
+    }
     auto &atoms = group.getAtoms();
     streamWrite(ss, static_cast<T>(atoms.size()));
     for (auto &&atom : atoms) {
@@ -2333,6 +2337,12 @@ void MolPickler::_depickleStereo(std::istream &ss, ROMol *mol, int version) {
       streamRead(ss, tmpT, version);
       const auto groupType = static_cast<RDKit::StereoGroupType>(tmpT);
 
+      unsigned gId = 0;
+      if (version >= 14010 && groupType != StereoGroupType::STEREO_ABSOLUTE) {
+        streamRead(ss, tmpT, version);
+        gId = static_cast<unsigned>(tmpT);
+      }
+
       streamRead(ss, tmpT, version);
       const auto numAtoms = static_cast<unsigned>(tmpT);
 
@@ -2343,7 +2353,7 @@ void MolPickler::_depickleStereo(std::istream &ss, ROMol *mol, int version) {
         atoms.push_back(mol->getAtomWithIdx(tmpT));
       }
 
-      groups.emplace_back(groupType, std::move(atoms));
+      groups.emplace_back(groupType, std::move(atoms), gId);
     }
 
     mol->setStereoGroups(std::move(groups));
