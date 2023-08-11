@@ -76,11 +76,8 @@ class MarvinCMLReader {
 
   RWMol *parseMolecule(boost::property_tree::ptree molTree,
                        bool sanitize = false, bool removeHs = false) {
-    MarvinMol *marvinMol = nullptr;
     RWMol *mol = nullptr;
     boost::property_tree::ptree molSection;
-
-    boost::property_tree::ptree molOrRxn;
 
     try {
       molSection = molTree.get_child("cml.MDocument.MChemicalStruct.molecule");
@@ -99,22 +96,16 @@ class MarvinCMLReader {
     }
 
     try {
-      marvinMol = (MarvinMol *)parseMarvinMolecule(molSection);
-      // marvinMol->convertFromSuperAtoms();
-      // marvinMol->processMulticenterSgroups();
-      // marvinMol->expandMultipleSgroups();
+      std::unique_ptr<MarvinMol> marvinMol{
+          (MarvinMol *)parseMarvinMolecule(molSection)};
+
       marvinMol->prepSgroupsForRDKit();
 
-      mol = parseMolecule(marvinMol, sanitize, removeHs);
+      mol = parseMolecule(marvinMol.get(), sanitize, removeHs);
 
-      delete marvinMol;
-
-      return mol;
+       return mol;
     } catch (const std::exception &e) {
       delete mol;
-
-      delete marvinMol;
-
       throw;
     }
   }
@@ -123,84 +114,44 @@ class MarvinCMLReader {
                                   boost::property_tree::ptree documentTree,
                                   bool sanitize = false,
                                   bool removeHs = false) {
-    ChemicalReaction *rxn = nullptr;
-    MarvinReaction *marvinReaction = nullptr;
-    RWMol *mol = nullptr;
+    std::unique_ptr<ChemicalReaction> rxn{new ChemicalReaction()};
+    rxnTree = rxnTree.get_child("cml.MDocument.MChemicalStruct.reaction");
+    std::unique_ptr<MarvinReaction> marvinReaction{
+        parseMarvinReaction(rxnTree, documentTree)};
+    marvinReaction->prepSgroupsForRDKit();
 
-    try {
-      rxn = new ChemicalReaction();
-      rxnTree = rxnTree.get_child("cml.MDocument.MChemicalStruct.reaction");
-      marvinReaction = parseMarvinReaction(rxnTree, documentTree);
-      marvinReaction->prepSgroupsForRDKit();
-
-      // get each reactant
-
-      std::vector<MarvinMol *>::iterator molIter;
-      for (molIter = marvinReaction->reactants.begin();
-           molIter != marvinReaction->reactants.end(); ++molIter) {
-        mol = parseMolecule((*molIter), sanitize, removeHs);
-
-        auto *roMol = new ROMol(*mol);
-        delete mol;
-
-        rxn->addReactantTemplate(ROMOL_SPTR(roMol));  // roMol  now owned by
-                                                      // rxn;
-      }
-
-      // get each agent
-
-      for (molIter = marvinReaction->agents.begin();
-           molIter != marvinReaction->agents.end(); ++molIter) {
-        mol = parseMolecule((*molIter), sanitize, removeHs);
-
-        auto *roMol = new ROMol(*mol);
-        delete mol;
-
-        rxn->addAgentTemplate(ROMOL_SPTR(roMol));  // roMol  now owned by rxn;
-      }
-
-      // get each product
-
-      for (molIter = marvinReaction->products.begin();
-           molIter != marvinReaction->products.end(); ++molIter) {
-        mol = parseMolecule((*molIter), sanitize, removeHs);
-
-        auto *roMol = new ROMol(*mol);
-        delete mol;
-
-        rxn->addProductTemplate(ROMOL_SPTR(roMol));  // roMol  now owned by rxn;
-      }
-
-      // convert atoms to queries:
-      for (auto iter = rxn->beginReactantTemplates();
-           iter != rxn->endReactantTemplates(); ++iter) {
-        // to write the mol block, we need ring information:
-
-        for (ROMol::AtomIterator atomIt = (*iter)->beginAtoms();
-             atomIt != (*iter)->endAtoms(); ++atomIt) {
-          QueryOps::replaceAtomWithQueryAtom((RWMol *)iter->get(), (*atomIt));
-        }
-      }
-      for (auto iter = rxn->beginProductTemplates();
-           iter != rxn->endProductTemplates(); ++iter) {
-        // to write the mol block, we need ring information:
-        for (ROMol::AtomIterator atomIt = (*iter)->beginAtoms();
-             atomIt != (*iter)->endAtoms(); ++atomIt) {
-          QueryOps::replaceAtomWithQueryAtom((RWMol *)iter->get(), (*atomIt));
-        }
-      }
-
-      // RXN-based reactions do not have implicit properties
-      // rxn->setImplicitPropertiesFlag(false);
-
-      delete marvinReaction;
-      return rxn;
-    } catch (const std::exception &e) {
-      delete marvinReaction;
-      delete rxn;
-
-      throw;
+    // get each reactant
+    for (auto mol : marvinReaction->reactants) {
+      rxn->addReactantTemplate(
+          ROMOL_SPTR(parseMolecule(mol, sanitize, removeHs)));
     }
+
+    // get each agent
+    for (auto mol : marvinReaction->agents) {
+      rxn->addAgentTemplate(ROMOL_SPTR(parseMolecule(mol, sanitize, removeHs)));
+    }
+
+    // get each product
+    for (auto mol : marvinReaction->products) {
+      rxn->addProductTemplate(
+          ROMOL_SPTR(parseMolecule(mol, sanitize, removeHs)));
+    }
+
+    // convert atoms to queries:
+    for (auto mol : rxn->getReactants()) {
+      for (auto atom : mol->atoms()) {
+        QueryOps::replaceAtomWithQueryAtom(static_cast<RWMol *>(mol.get()),
+                                           atom);
+      }
+    }
+    for (auto mol : rxn->getProducts()) {
+      for (auto atom : mol->atoms()) {
+        QueryOps::replaceAtomWithQueryAtom(static_cast<RWMol *>(mol.get()),
+                                           atom);
+      }
+    }
+
+    return rxn.release();
   }
 
  private:

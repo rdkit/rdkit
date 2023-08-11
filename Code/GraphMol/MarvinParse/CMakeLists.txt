@@ -30,12 +30,6 @@ endif()
 ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
 endif(RDK_USE_BOOST_IOSTREAMS)
 
-if(RDK_USE_BOOST_REGEX)
-  add_definitions(-DRDKIT_USE_BOOST_REGEX)
-  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS regex REQUIRED)
-  set(regex_lib Boost::regex)
-endif()
-
 rdkit_library(MarvinParser
               MarvinParser.cpp
               MarvinWriter.cpp
@@ -45,7 +39,6 @@ rdkit_library(MarvinParser
 target_compile_definitions(MarvinParser PRIVATE RDKIT_MARVINPARSER_BUILD)
 
 rdkit_headers(MarvinParser.h
-              MarvinDefs.h
               DEST GraphMol/MarvinParser)
 
 rdkit_test(testMrvToMol testMrvToMol.cpp

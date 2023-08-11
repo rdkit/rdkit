@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
+
 #ifndef RD_MARVINPARSER_H
 #define RD_MARVINPARSER_H
 

@@ -372,9 +372,6 @@ RDKIT_FILEPARSERS_EXPORT RWMol *RDKitSVGToMol(std::istream *instream,
                                               bool sanitize = true,
                                               bool removeHs = true);
 
-
-RDKIT_FILEPARSERS_EXPORT void *MrvFileParser(const std::string &fname);
-
 inline std::unique_ptr<RDKit::RWMol> operator"" _ctab(const char *text,
                                                       size_t len) {
   std::string data(text, len);
