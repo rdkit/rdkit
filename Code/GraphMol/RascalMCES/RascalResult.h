@@ -33,8 +33,8 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
                const std::vector<unsigned int> &clique,
                const std::vector<std::pair<int, int>> &vtx_pairs, bool timedOut,
                bool swapped, double tier1Sim, double tier2Sim,
-               bool chiralSmarts, bool ringMatchesRingOnly,
-               bool singleLargestFrag, int minFragSep);
+               bool ringMatchesRingOnly, bool singleLargestFrag,
+               int minFragSep);
   // For when the tier[12]Sim didn't hit the threshold, but it
   // might be of interest what the estimates of similarity were.
   RascalResult(double tier1Sim, double tier2Sim);
@@ -93,7 +93,6 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
   bool d_timedOut{false};
   double d_tier1Sim;
   double d_tier2Sim;
-  bool d_chiralSmarts{false};
   bool d_ringMatchesRingOnly{false};
   int d_maxFragSep{-1};
 

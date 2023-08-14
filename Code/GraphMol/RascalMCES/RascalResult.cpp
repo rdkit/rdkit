@@ -30,13 +30,11 @@ RascalResult::RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                            const std::vector<unsigned int> &clique,
                            const std::vector<std::pair<int, int>> &vtx_pairs,
                            bool timedOut, bool swapped, double tier1Sim,
-                           double tier2Sim, bool chiralSmarts,
-                           bool ringMatchesRingOnly, bool singleLargestFrag,
-                           int maxFragSep)
+                           double tier2Sim, bool ringMatchesRingOnly,
+                           bool singleLargestFrag, int maxFragSep)
     : d_timedOut(timedOut),
       d_tier1Sim(tier1Sim),
       d_tier2Sim(tier2Sim),
-      d_chiralSmarts(chiralSmarts),
       d_ringMatchesRingOnly(ringMatchesRingOnly),
       d_maxFragSep(maxFragSep) {
   const std::vector<std::vector<int>> *mol1AdjMatrix;
@@ -205,11 +203,6 @@ std::string RascalResult::createSmartsString() const {
     RDKit::QueryAtom a;
     auto mol1Atom = d_mol1->getAtomWithIdx(am.first);
     a.setQuery(RDKit::makeAtomNumQuery(mol1Atom->getAtomicNum()));
-    if (d_chiralSmarts) {
-      // mol1Atom and mol2Atom should have the same chiral tag as they wouldn't
-      // have matched in the first place otherwise.
-      a.setChiralTag(mol1Atom->getChiralTag());
-    }
     auto mol2Atom = d_mol2->getAtomWithIdx(am.second);
     if (mol1Atom->getAtomicNum() != mol2Atom->getAtomicNum()) {
       a.expandQuery(RDKit::makeAtomNumQuery(mol2Atom->getAtomicNum()),

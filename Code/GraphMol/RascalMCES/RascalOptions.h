@@ -23,7 +23,6 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
       true;  // if true, partial aromatic rings won't be returned
   bool ringMatchesRingOnly =
       false;  // if true, ring bonds won't match non-ring bonds
-  bool exactChirality = false;  // if true, R must match R and S match S.
   bool singleLargestFrag =
       false; /* if true, only return a single fragment for the MCES. Default
                 is to produce multiple matching fragments if necessary. */

@@ -120,20 +120,11 @@ void sorted_degree_seqs(
 }
 
 // Make labels for the atoms - by default the atomic symbol.
-// If includeChirality and the atom is chiral, adds (R) or (S).
 void get_atom_labels(const ROMol &mol, const RascalOptions &opts,
                      std::vector<std::string> &atomLabels) {
   atomLabels = std::vector<std::string>(mol.getNumAtoms(), "");
-  std::string cip;
   for (const auto &a : mol.atoms()) {
     std::string label = a->getSymbol();
-    if (opts.exactChirality) {
-      cip = "";
-      a->getPropIfPresent(common_properties::_CIPCode, cip);
-      if (!cip.empty()) {
-        label += "(" + cip + ")";
-      }
-    }
     atomLabels[a->getIdx()] = label;
   }
 }
@@ -1056,8 +1047,8 @@ std::vector<RascalResult> findMces(RascalStartPoint &starter,
         RascalResult(*starter.d_mol1, *starter.d_mol2, starter.d_adjMatrix1,
                      starter.d_adjMatrix2, c, starter.d_vtxPairs, timed_out,
                      starter.d_swapped, starter.d_tier1Sim, starter.d_tier2Sim,
-                     opts.exactChirality, opts.ringMatchesRingOnly,
-                     opts.singleLargestFrag, opts.maxFragSeparation));
+                     opts.ringMatchesRingOnly, opts.singleLargestFrag,
+                     opts.maxFragSeparation));
   }
   std::sort(results.begin(), results.end(), resultSort);
   return results;
