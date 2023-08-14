@@ -29,26 +29,23 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/RascalMCES/RascalClusterOptions.h>
+#include <GraphMol/RascalMCES/RascalDetails.h>
 #include <GraphMol/RascalMCES/RascalMCES.h>
 #include <GraphMol/RascalMCES/RascalResult.h>
 
 namespace RDKit {
 namespace RascalMCES {
-
-struct ClusNode {
-  std::shared_ptr<RascalResult> d_res;
-  double d_sim;
-  unsigned int d_mol1Num, d_mol2Num;
-};
-
+namespace details {
 ClusNode calcMolMolSimilarity(
-    const std::tuple<size_t, size_t,
-                     const std::vector<std::shared_ptr<ROMol>> *,
-                     const RascalOptions *> &toDo) {
+    const std::tuple<
+        size_t, size_t, const std::vector<std::shared_ptr<ROMol>> *,
+        const RascalOptions *, const RascalClusterOptions *> &toDo) {
   auto i = std::get<0>(toDo);
   auto j = std::get<1>(toDo);
   auto mols = std::get<2>(toDo);
   auto opts = std::get<3>(toDo);
+  auto clusOpts = std::get<4>(toDo);
   auto res = rascalMces(*(*mols)[i], *(*mols)[j], *opts);
   ClusNode cn;
   cn.d_mol1Num = i;
@@ -62,7 +59,7 @@ ClusNode calcMolMolSimilarity(
       cn.d_sim = 0.0;
     } else {
       res.front().trimSmallFrags();
-      res.front().largestFragsOnly(2);
+      res.front().largestFragsOnly(clusOpts->maxNumFrags);
       cn.d_sim = res.front().similarity();
       if (cn.d_sim >= opts->similarityThreshold) {
         cn.d_res = std::shared_ptr<RascalResult>(new RascalResult(res.front()));
@@ -74,7 +71,7 @@ ClusNode calcMolMolSimilarity(
 
 std::vector<std::vector<ClusNode>> buildProximityGraph(
     const std::vector<std::shared_ptr<ROMol>> &mols,
-    const RascalOptions &opts) {
+    const RascalClusterOptions &clusOpts) {
   if (mols.size() < 2) {
     return std::vector<std::vector<ClusNode>>();
   }
@@ -84,19 +81,21 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
           mols.size(), std::vector<ClusNode>(mols.size(), ClusNode()));
   std::vector<
       std::tuple<size_t, size_t, const std::vector<std::shared_ptr<ROMol>> *,
-                 const RascalOptions *>>
+                 const RascalOptions *, const RascalClusterOptions *>>
       toDo;
 
+  RascalOptions opts;
+  opts.similarityThreshold = clusOpts.similarityCutoff;
   for (size_t i = 0; i < mols.size() - 1; ++i) {
     for (size_t j = i + 1; j < mols.size(); ++j) {
-      toDo.push_back({i, j, &mols, &opts});
+      toDo.push_back({i, j, &mols, &opts, &clusOpts});
     }
   }
 
   auto buildProxGraphPart =
       [](const std::vector<std::tuple<
              size_t, size_t, const std::vector<std::shared_ptr<ROMol>> *,
-             const RascalOptions *>> &toDo,
+             const RascalOptions *, const RascalClusterOptions *>> &toDo,
          std::vector<ClusNode> &molSims, size_t start, size_t finish) -> void {
     if (start > toDo.size()) {
       return;
@@ -111,13 +110,10 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
   std::vector<ClusNode> molSims(toDo.size());
 #if RDK_BUILD_THREADSAFE_SSS
   auto numThreads = getNumThreadsToUse(-1);
-  std::cout << numThreads << " threads to use.\n";
   size_t eachThread = 1 + (toDo.size() / numThreads);
   size_t start = 0;
   std::vector<std::thread> threads;
   for (int i = 0; i < numThreads; ++i, start += eachThread) {
-    std::cout << "Thread " << i << " : " << start << " to "
-              << start + eachThread << std::endl;
     threads.push_back(std::thread(buildProxGraphPart, std::ref(toDo),
                                   std::ref(molSims), start,
                                   start + eachThread));
@@ -130,20 +126,17 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
                  calcMolMolSimilarity);
 #endif
   for (const auto &cn : molSims) {
-    if (cn.d_res && cn.d_res->timedout()) {
-      std::cout << cn.d_mol1Num << " : " << cn.d_mol2Num << " : " << cn.d_sim
-                << " timed out" << std::endl;
-    }
     proxGraph[cn.d_mol1Num][cn.d_mol2Num] =
         proxGraph[cn.d_mol2Num][cn.d_mol1Num] = cn;
   }
+#if 0
   auto t2 = std::chrono::high_resolution_clock::now();
   std::cout
       << "Time to create proximity graph : "
       << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
       << " ms." << std::endl;
-
-#if 1
+#endif
+#if 0
   for (size_t i = 0; i < proxGraph.size(); ++i) {
     std::cout << std::setw(2) << i << " : ";
     for (size_t j = 0; j < proxGraph.size(); ++j) {
@@ -201,7 +194,7 @@ std::vector<std::vector<unsigned int>> disconnectProximityGraphs(
       }
     }
     nodes.sort();
-#if 1
+#if 0
     std::cout << "Next split : ";
     for (auto it : nodes) {
       std::cout << it << ",";
@@ -231,15 +224,8 @@ double g_ij(const std::shared_ptr<ROMol> &mol, double a, double b, int p) {
 }
 
 std::vector<std::vector<unsigned int>> makeSubClusters(
-    const std::vector<ClusNode> &nbors) {
+    const std::vector<ClusNode> &nbors, const RascalClusterOptions &clusOpts) {
   std::vector<std::vector<unsigned int>> subClusters;
-
-  // These numbers are suggested in the paper.  They'll be options
-  // at some point.
-  const double a = 0.05;
-  const double b = 2.0;
-  const int p = 3;
-  const double simCutoff = 0.9;  // this is S_a in the paper.
 
   std::vector<const ClusNode *> tmpNbors;
   for (const auto &n : nbors) {
@@ -250,19 +236,20 @@ std::vector<std::vector<unsigned int>> makeSubClusters(
     subClusters.push_back(std::vector<unsigned int>{
         tmpNbors.front()->d_mol1Num, tmpNbors.front()->d_mol2Num});
     auto m1 = tmpNbors.front()->d_res->mcesMol();
-    auto g12 = g_ij(m1, a, b, p);
+    auto g12 = g_ij(m1, clusOpts.a, clusOpts.b, clusOpts.minFragSize);
     for (size_t i = 1; i < tmpNbors.size(); ++i) {
       auto m2 = tmpNbors[i]->d_res->mcesMol();
-      auto g13 = g_ij(m2, a, b, p);
+      auto g13 = g_ij(m2, clusOpts.a, clusOpts.b, clusOpts.minFragSize);
 
       auto results = RDKit::RascalMCES::rascalMces(*m1, *m2);
       if (results.empty() || results.front().bondMatches().empty()) {
         continue;
       }
       auto res = results.front();
-      auto g_12_13 = g_ij(res.mcesMol(), a, b, p);
+      auto g_12_13 =
+          g_ij(res.mcesMol(), clusOpts.a, clusOpts.b, clusOpts.minFragSize);
       double sim = g_12_13 / std::min(g12, g13);
-      if (sim > simCutoff) {
+      if (sim > clusOpts.S_a) {
         subClusters.back().push_back(tmpNbors[i]->d_mol2Num);
         subClusters.back().push_back(tmpNbors[i]->d_mol1Num);
         tmpNbors[i] = nullptr;
@@ -281,14 +268,15 @@ std::vector<std::vector<unsigned int>> makeSubClusters(
 
 std::vector<std::vector<unsigned int>> formInitialClusters(
     const std::vector<unsigned int> &subGraph,
-    const std::vector<std::vector<ClusNode>> &proxGraph) {
+    const std::vector<std::vector<ClusNode>> &proxGraph,
+    const RascalClusterOptions &clusOpts) {
   std::vector<std::vector<unsigned int>> clusters;
   if (subGraph.size() < 2) {
     return clusters;
   }
   for (auto i : subGraph) {
     std::vector<ClusNode> nbors;
-#if 1
+#if 0
     std::cout << "Next : " << std::setw(2) << i << " : ";
 #endif
     for (auto j : subGraph) {
@@ -313,7 +301,7 @@ std::vector<std::vector<unsigned int>> formInitialClusters(
               [](const ClusNode &c1, const ClusNode &c2) -> bool {
                 return c1.d_sim > c2.d_sim;
               });
-#if 1
+#if 0
     std::cout << "Nbor env : ";
     for (const auto &c : nbors) {
       std::cout << "(" << std::setw(2) << c.d_mol1Num << "," << std::setw(2)
@@ -323,11 +311,12 @@ std::vector<std::vector<unsigned int>> formInitialClusters(
     std::cout << std::endl;
 #endif
     if (!nbors.empty()) {
-      auto subClusters = makeSubClusters(nbors);
+      auto subClusters = makeSubClusters(nbors, clusOpts);
       clusters.insert(clusters.end(), subClusters.begin(), subClusters.end());
     }
   }
 
+#if 0
   std::cout << "Initial clusters" << std::endl;
   for (const auto &c : clusters) {
     for (auto m : c) {
@@ -335,6 +324,7 @@ std::vector<std::vector<unsigned int>> formInitialClusters(
     }
     std::cout << std::endl;
   }
+#endif
   std::sort(clusters.begin(), clusters.end(),
             [](const std::vector<unsigned int> &c1,
                const std::vector<unsigned int> &c2) -> bool {
@@ -349,15 +339,14 @@ std::vector<std::vector<unsigned int>> formInitialClusters(
 }
 
 std::vector<std::vector<unsigned int>> mergeClusters(
-    const std::vector<std::vector<unsigned int>> &clusters) {
+    const std::vector<std::vector<unsigned int>> &clusters,
+    const RascalClusterOptions &clusOpts) {
   std::vector<std::vector<unsigned int>> outClusters(clusters);
-  const double simCutoff =
-      0.6;  // This is S_b in the paper.  It'll be an option at some point
 
   if (outClusters.size() < 2) {
     return outClusters;
   }
-#if 1
+#if 0
   std::cout << "Merging " << outClusters.size() << " clusters" << std::endl;
   for (size_t i = 0; i < outClusters.size(); ++i) {
     std::cout << i << " :: ";
@@ -377,8 +366,8 @@ std::vector<std::vector<unsigned int>> mergeClusters(
       double s =
           double(inCommon.size()) / std::min(double(outClusters[i].size()),
                                              double(outClusters[j].size()));
-      if (s > simCutoff) {
-#if 1
+      if (s > clusOpts.S_b) {
+#if 0
         std::cout << "Merging " << i << " and " << j << " with "
                   << inCommon.size() << " in common : " << s << std::endl;
 #endif
@@ -405,7 +394,6 @@ std::vector<std::vector<unsigned int>> mergeClusters(
 void sortClusterMembersByMeanSim(
     const std::vector<std::vector<ClusNode>> &proxGraph,
     std::vector<std::vector<unsigned int>> &clusters) {
-  std::cout << "Sort cluster members" << std::endl;
   for (auto &clus : clusters) {
     std::vector<std::pair<unsigned int, double>> clusSims;
     for (unsigned int i = 0U; i < clus.size(); ++i) {
@@ -422,28 +410,34 @@ void sortClusterMembersByMeanSim(
                  const std::pair<unsigned int, double> &p2) -> bool {
                 return p1.second > p2.second;
               });
+#if 0
     for (auto &cs : clusSims) {
       std::cout << "(" << cs.first << "," << cs.second << ") ";
     }
     std::cout << std::endl;
+#endif
     std::transform(
         clusSims.begin(), clusSims.end(), clus.begin(),
         [](const std::pair<unsigned int, double> &p) -> unsigned int {
           return p.first;
         });
+#if 0
     for (auto &cs : clus) {
       std::cout << cs << " ";
     }
     std::cout << std::endl;
+#endif
   }
 }
+
 std::vector<std::vector<unsigned int>> makeClusters(
     const std::vector<std::vector<unsigned int>> &subGraphs,
-    const std::vector<std::vector<ClusNode>> &proxGraph) {
+    const std::vector<std::vector<ClusNode>> &proxGraph,
+    const RascalClusterOptions &clusOpts) {
   std::vector<std::vector<unsigned int>> clusters;
   for (const auto &sg : subGraphs) {
-    auto theseClusters = formInitialClusters(sg, proxGraph);
-    auto mergedClusters = mergeClusters(theseClusters);
+    auto theseClusters = formInitialClusters(sg, proxGraph, clusOpts);
+    auto mergedClusters = mergeClusters(theseClusters, clusOpts);
     clusters.insert(clusters.end(), mergedClusters.begin(),
                     mergedClusters.end());
   }
@@ -479,17 +473,17 @@ std::vector<unsigned int> collectSingletons(
 #endif
   return singletons;
 }
+}  // namespace details
 
 std::vector<std::vector<std::shared_ptr<ROMol>>> rascalCluster(
     const std::vector<std::shared_ptr<ROMol>> &mols,
-    const RascalOptions &opts) {
-  auto proxGraph = buildProximityGraph(mols, opts);
-  auto subGraphs = disconnectProximityGraphs(proxGraph);
-  std::cout << "Number of sub graphs : " << subGraphs.size() << std::endl;
-  auto clusters = makeClusters(subGraphs, proxGraph);
-  auto singletons = collectSingletons(proxGraph);
+    const RascalClusterOptions &clusOpts) {
+  auto proxGraph = details::buildProximityGraph(mols, clusOpts);
+  auto subGraphs = details::disconnectProximityGraphs(proxGraph);
+  auto clusters = details::makeClusters(subGraphs, proxGraph, clusOpts);
+  auto singletons = details::collectSingletons(proxGraph);
   clusters.push_back(singletons);
-  sortClusterMembersByMeanSim(proxGraph, clusters);
+  details::sortClusterMembersByMeanSim(proxGraph, clusters);
   std::vector<std::vector<std::shared_ptr<ROMol>>> molClusters;
   for (const auto &clus : clusters) {
     molClusters.push_back(std::vector<std::shared_ptr<ROMol>>());
@@ -509,5 +503,6 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> rascalCluster(
 #endif
   return molClusters;
 }
+
 }  // namespace RascalMCES
 }  // namespace RDKit

@@ -13,6 +13,7 @@
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RascalMCES/RascalMCES.h>
+#include <GraphMol/RascalMCES/RascalClusterOptions.h>
 #include <GraphMol/RascalMCES/RascalOptions.h>
 #include <GraphMol/RascalMCES/RascalResult.h>
 
@@ -90,11 +91,7 @@ python::list findMCESWrapper(const ROMol &mol1, const ROMol &mol2,
   return pyres;
 }
 
-python::list rascalClusterWrapper(python::object mols, python::object py_opts) {
-  RascalMCES::RascalOptions opts;
-  if (!py_opts.is_none()) {
-    opts = python::extract<RascalMCES::RascalOptions>(py_opts);
-  }
+std::vector<std::shared_ptr<ROMol>> extractMols(python::object mols) {
   std::vector<std::shared_ptr<ROMol>> cmols;
   unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
   cmols.resize(nElems);
@@ -104,8 +101,11 @@ python::list rascalClusterWrapper(python::object mols, python::object py_opts) {
     }
     cmols[i] = python::extract<std::shared_ptr<ROMol>>(mols[i]);
   }
+  return cmols;
+}
 
-  auto clusters = RascalMCES::rascalCluster(cmols, opts);
+python::list packOutputMols(
+    const std::vector<std::vector<std::shared_ptr<ROMol>>> &clusters) {
   python::list pyres;
   for (auto &clus : clusters) {
     python::list mols;
@@ -115,6 +115,27 @@ python::list rascalClusterWrapper(python::object mols, python::object py_opts) {
     pyres.append(mols);
   }
   return pyres;
+}
+
+python::list rascalClusterWrapper(python::object mols, python::object py_opts) {
+  RascalMCES::RascalClusterOptions opts;
+  if (!py_opts.is_none()) {
+    opts = python::extract<RascalMCES::RascalClusterOptions>(py_opts);
+  }
+  auto cmols = extractMols(mols);
+  auto clusters = RascalMCES::rascalCluster(cmols, opts);
+  return packOutputMols(clusters);
+}
+
+python::list rascalButinaClusterWrapper(python::object mols,
+                                        python::object py_opts) {
+  RascalMCES::RascalClusterOptions opts;
+  if (!py_opts.is_none()) {
+    opts = python::extract<RascalMCES::RascalClusterOptions>(py_opts);
+  }
+  auto cmols = extractMols(mols);
+  auto clusters = RascalMCES::rascalButinaCluster(cmols, opts);
+  return packOutputMols(clusters);
 }
 
 BOOST_PYTHON_MODULE(rdRascalMCES) {
@@ -166,12 +187,23 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
               docString.c_str());
   docString =
       "Use the RASCAL MCES similarity metric to do fuzzy clustering.  Returns a list of lists "
-      "of molecule objects, each inner list being a cluster.  The last cluster is all the "
+      "of molecules, each inner list being a cluster.  The last cluster is all the "
       "molecules that didn't fit into another cluster (the singletons)."
       "- mols List of molecules to be clustered"
       "- opts Optional RascalOptions object changing the default run mode."
       "";
   python::def("RascalCluster", &RDKit::rascalClusterWrapper,
+              (python::arg("mols"), python::arg("opts") = python::object()),
+              docString.c_str());
+  docString =
+      "Use the RASCAL MCES similarity metric to do Butina clustering"
+      " (Butina JCICS 39 747-750 (1999)).  Returns a list of lists of molecules,"
+      " each inner list being a cluster.  The last cluster is all the"
+      " molecules that didn't fit into another cluster (the singletons)."
+      "- mols List of molecules to be clustered"
+      "- opts Optional RascalOptions object changing the default run mode."
+      "";
+  python::def("RascalButinaCluster", &RDKit::rascalButinaClusterWrapper,
               (python::arg("mols"), python::arg("opts") = python::object()),
               docString.c_str());
 }

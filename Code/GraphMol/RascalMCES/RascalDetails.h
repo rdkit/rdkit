@@ -22,6 +22,13 @@ class ROMol;
 namespace RascalMCES {
 
 namespace details {
+
+struct ClusNode {
+  std::shared_ptr<RascalResult> d_res;
+  double d_sim;
+  unsigned int d_mol1Num, d_mol2Num;
+};
+
 RDKIT_RASCALMCES_EXPORT double tier1Sim(
     const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
     std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
@@ -38,6 +45,10 @@ RDKIT_RASCALMCES_EXPORT void getBondLabels(
     const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
     const RascalOptions &opts, std::vector<unsigned int> &bondLabels1,
     std::vector<unsigned int> &bondLabels2);
+
+std::vector<std::vector<ClusNode>> buildProximityGraph(
+    const std::vector<std::shared_ptr<ROMol>> &mols,
+    const RascalClusterOptions &clusOpts);
 }  // namespace details
 
 }  // namespace RascalMCES

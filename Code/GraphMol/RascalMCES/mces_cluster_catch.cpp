@@ -21,9 +21,8 @@
 #include "../../../External/catch/catch/single_include/catch2/catch.hpp"
 
 #include <GraphMol/RascalMCES/RascalMCES.h>
-#include <GraphMol/RascalMCES/RascalOptions.h>
+#include <GraphMol/RascalMCES/RascalClusterOptions.h>
 #include <GraphMol/RascalMCES/RascalResult.h>
-#include <GraphMol/RascalMCES/RascalDetails.h>
 
 TEST_CASE("Small test", "[basics]") {
   std::string fName = getenv("RDBASE");
@@ -37,9 +36,8 @@ TEST_CASE("Small test", "[basics]") {
     }
     mols.push_back(mol);
   }
-  std::cout << "Read " << mols.size() << " mols" << std::endl;
-  RDKit::RascalMCES::RascalOptions opts;
-  auto clusters = RDKit::RascalMCES::rascalCluster(mols, opts);
+  RDKit::RascalMCES::RascalClusterOptions clusOpts;
+  auto clusters = RDKit::RascalMCES::rascalCluster(mols, clusOpts);
   REQUIRE(clusters.size() == 8);
   std::vector<size_t> expSizes{7, 7, 6, 2, 2, 2, 2, 20};
   for (size_t i = 0; i < 8; ++i) {
@@ -49,7 +47,7 @@ TEST_CASE("Small test", "[basics]") {
 
 TEST_CASE("BLSets subset", "[basics]") {
   std::string fName = getenv("RDBASE");
-  fName += "/Code/GraphMol/RascalMCES/test_cluster1.smi";
+  fName += "/Code/GraphMol/RascalMCES/data/test_cluster1.smi";
   RDKit::SmilesMolSupplier suppl(fName, "\t", 1, 0, false);
   std::vector<std::shared_ptr<RDKit::ROMol>> mols;
   while (!suppl.atEnd()) {
@@ -59,9 +57,7 @@ TEST_CASE("BLSets subset", "[basics]") {
     }
     mols.push_back(mol);
   }
-  std::cout << "Read " << mols.size() << " mols" << std::endl;
-  RDKit::RascalMCES::RascalOptions opts;
-  auto clusters = RDKit::RascalMCES::rascalCluster(mols, opts);
+  auto clusters = RDKit::RascalMCES::rascalCluster(mols);
   REQUIRE(clusters.size() == 12);
   std::vector<size_t> expSizes{8, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 21};
   for (size_t i = 0; i < 12; ++i) {
@@ -69,9 +65,9 @@ TEST_CASE("BLSets subset", "[basics]") {
   }
 }
 
-TEST_CASE("Medium test", "[basics]") {
+TEST_CASE("ChEMBL 1907596") {
   std::string fName = getenv("RDBASE");
-  fName += "/Code/GraphMol/RascalMCES/BLSets_selected_actives_0.05.smi";
+  fName += "/Code/GraphMol/RascalMCES/data/chembl_1907596.smi";
   std::cout << fName << std::endl;
   RDKit::SmilesMolSupplier suppl(fName, "\t", 1, 0, false);
   std::vector<std::shared_ptr<RDKit::ROMol>> mols;
@@ -82,15 +78,21 @@ TEST_CASE("Medium test", "[basics]") {
     }
     mols.push_back(mol);
   }
-  std::cout << "Read " << mols.size() << " mols" << std::endl;
-  RDKit::RascalMCES::RascalOptions opts;
-  opts.similarityThreshold = 0.7;
-  RDKit::RascalMCES::rascalCluster(mols, opts);
+  RDKit::RascalMCES::RascalClusterOptions clusOpts;
+  clusOpts.similarityCutoff = 0.7;
+  auto clusters = RDKit::RascalMCES::rascalCluster(mols, clusOpts);
+  REQUIRE(clusters.size() == 21);
+  std::vector<size_t> expSizes{342, 71, 64, 33, 23, 11, 10, 6, 6, 5, 5,
+                               4,   3,  3,  3,  3,  3,  2,  2, 2, 14};
+  for (size_t i = 0; i < 21; ++i) {
+    REQUIRE(clusters[i].size() == expSizes[i]);
+  }
 }
 
-TEST_CASE("Monster test", "[basics]") {
-  std::string fName = "/Users/david/Projects/Moonshot/activity_data.csv";
-  RDKit::SmilesMolSupplier suppl(fName, ",", 0, 1, true);
+TEST_CASE("Small Butina test", "[basics]") {
+  std::string fName = getenv("RDBASE");
+  fName += "/Contrib/Fastcluster/cdk2.smi";
+  RDKit::SmilesMolSupplier suppl(fName, "\t", 1, 0, false);
   std::vector<std::shared_ptr<RDKit::ROMol>> mols;
   while (!suppl.atEnd()) {
     std::shared_ptr<RDKit::ROMol> mol(suppl.next());
@@ -99,8 +101,17 @@ TEST_CASE("Monster test", "[basics]") {
     }
     mols.push_back(mol);
   }
-  std::cout << "Read " << mols.size() << " mols" << std::endl;
-  RDKit::RascalMCES::RascalOptions opts;
-  opts.similarityThreshold = 0.7;
-  RDKit::RascalMCES::rascalCluster(mols, opts);
+  RDKit::RascalMCES::RascalClusterOptions clusOpts;
+  auto clusters = RDKit::RascalMCES::rascalButinaCluster(mols, clusOpts);
+  int numMols = 0;
+  for (const auto &cl : clusters) {
+    numMols += cl.size();
+  }
+  REQUIRE(numMols == mols.size());
+  REQUIRE(clusters.size() == 29);
+  std::vector<size_t> expSizes{6, 6, 6, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  for (size_t i = 0; i < 29; ++i) {
+    REQUIRE(clusters[i].size() == expSizes[i]);
+  }
 }
