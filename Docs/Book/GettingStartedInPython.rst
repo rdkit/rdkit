@@ -1675,7 +1675,7 @@ minFragSize can be used to over-ride the default value of -1, which means no min
 size.
 
 Like FindMCS, there is a ringMatchesRingOnly option, and also there's
-completeAromaticRings, which is True by defualt, and means that MCESs won't be returned
+completeAromaticRings, which is True by default, and means that MCESs won't be returned
 with partial aromatic rings matching:
 
 .. doctest::
@@ -1699,6 +1699,20 @@ string.  This is a consequence of the fact that the MCES works on matching bonds
 A better, atom-centric, representation might be C1CCC[$(C-c)]1.  When the
 completeAromaticRings option is set to False, a larger MCES is found, with just
 the pyridine nitrogen atom not matching the corresponding phenyl carbon atom.
+
+Clustering with Rascal
+======================
+
+There are 2 clustering methods available using the Johnson metric.  The first,
+RascalCluster, is a fuzzy method described in 'A Line Graph Algorithm for
+Clustering Chemical Structures Based on Common Substructural Cores', JW Raymond,
+PW Willett
+(https://match.pmf.kg.ac.rs/electronic_versions/Match48/match48_197-207.pdf also
+available at https://eprints.whiterose.ac.uk/77598/).
+The second, RascalButinaCluster, uses the Butina sphere-exclusion algorithm
+(Butina JCICS 39 747-750 (1999)).  Because of the time-consuming nature of the MCES
+determination, these clustering methods can be slow to run, so are best used
+on small sets (no more than a few hundred molecules) of small molecules.
 
 
 Fingerprinting and Molecular Similarity
