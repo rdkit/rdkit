@@ -76,6 +76,12 @@ FragmentRemover::FragmentRemover(std::istream &fragmentStream, bool leave_last,
 FragmentRemover::~FragmentRemover() { delete d_fcat; };
 
 ROMol *FragmentRemover::remove(const ROMol &mol) {
+  auto molcp = new RWMol(mol);
+  removeInPlace(*molcp);
+  return static_cast<ROMol *>(molcp);
+}
+
+void FragmentRemover::removeInPlace(RWMol &mol) {
   BOOST_LOG(rdInfoLog) << "Running FragmentRemover\n";
   PRECONDITION(this->d_fcat, "");
   const FragmentCatalogParams *fparams = this->d_fcat->getCatalogParams();
@@ -126,9 +132,14 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
     if (this->SKIP_IF_ALL_MATCH) {
       BOOST_LOG(rdInfoLog)
           << "All fragments matched; original molecule returned." << std::endl;
-      return new ROMol(mol);
+    } else {
+      mol.beginBatchEdit();
+      for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
+        mol.removeAtom(i);
+      }
+      mol.commitBatchEdit();
     }
-    return new ROMol();
+    return;
   }
 
   boost::dynamic_bitset<> atomsToRemove(mol.getNumAtoms());
@@ -141,15 +152,13 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
     }
   }
   // remove the atoms that need to go
-  auto *removed = new RWMol(mol);
-  removed->beginBatchEdit();
+  mol.beginBatchEdit();
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     if (atomsToRemove[i]) {
-      removed->removeAtom(i);
+      mol.removeAtom(i);
     }
   }
-  removed->commitBatchEdit();
-  return static_cast<ROMol *>(removed);
+  mol.commitBatchEdit();
 }
 
 bool isOrganic(const ROMol &frag) {

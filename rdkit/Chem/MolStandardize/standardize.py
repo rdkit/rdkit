@@ -10,6 +10,10 @@ standardization tasks.
 :copyright: Copyright 2016 by Matt Swain.
 :license: MIT, see LICENSE file for more details.
 """
+from warnings import warn
+
+warn(f'The module {__name__} is deprecated and will be removed in the next release.',
+     DeprecationWarning, stacklevel=2)
 
 import copy
 import logging
@@ -20,8 +24,8 @@ from .charge import ACID_BASE_PAIRS, CHARGE_CORRECTIONS, Reionizer, Uncharger
 from .fragment import PREFER_ORGANIC, FragmentRemover, LargestFragmentChooser
 from .metal import MetalDisconnector
 from .normalize import MAX_RESTARTS, NORMALIZATIONS, Normalizer
-from .tautomer import (MAX_TAUTOMERS, TAUTOMER_SCORES, TAUTOMER_TRANSFORMS,
-                       TautomerCanonicalizer, TautomerEnumerator)
+from .tautomer import (MAX_TAUTOMERS, TAUTOMER_SCORES, TAUTOMER_TRANSFORMS, TautomerCanonicalizer,
+                       TautomerEnumerator)
 from .utils import memoized_property
 
 log = logging.getLogger(__name__)
@@ -59,6 +63,9 @@ class Standardizer(object):
         :param max_tautomers: The maximum number of tautomers to enumerate (default 1000).
         :param prefer_organic: Whether to prioritize organic fragments when choosing fragment parent (default False).
         """
+    warn(
+      f'The class {self.__class__.__name__} is deprecated and will be removed in the next release.',
+      DeprecationWarning, stacklevel=2)
     log.debug('Initializing Standardizer')
     self.normalizations = normalizations
     self.acid_base_pairs = acid_base_pairs
@@ -297,6 +304,8 @@ def standardize_smiles(smiles):
     :returns: The SMILES for the standardized molecule.
     :rtype: string.
     """
+  warn(f'The function standardize_smiles is deprecated and will be removed in the next release.',
+       DeprecationWarning, stacklevel=2)
   # Skip sanitize as standardize does this anyway
   mol = Chem.MolFromSmiles(smiles, sanitize=False)
   mol = Standardizer().standardize(mol)
@@ -310,6 +319,9 @@ def enumerate_tautomers_smiles(smiles):
     :returns: A set containing SMILES strings for every possible tautomer.
     :rtype: set of strings.
     """
+  warn(
+    f'The function enumerate_tautomers_smiles is deprecated and will be removed in the next release.',
+    DeprecationWarning, stacklevel=2)
   # Skip sanitize as standardize does this anyway
   mol = Chem.MolFromSmiles(smiles, sanitize=False)
   mol = Standardizer().standardize(mol)
@@ -328,6 +340,10 @@ def canonicalize_tautomer_smiles(smiles):
     :returns: The SMILES for the standardize canonical tautomer.
     :rtype: string.
     """
+  warn(
+    f'The function canonicalize_tautomer_smiles is deprecated and will be removed in the next release.',
+    DeprecationWarning, stacklevel=2)
+
   # Skip sanitize as standardize does this anyway
   mol = Chem.MolFromSmiles(smiles, sanitize=False)
   mol = Standardizer().standardize(mol)

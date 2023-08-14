@@ -65,6 +65,8 @@ class MolBundle : public RDProps {
   MolBundle(const std::string &pkl) { initFromString(pkl); }
   virtual ~MolBundle() {}
 
+  MolBundle &operator=(const MolBundle &other) = default;
+
   //! returns our molecules
   virtual const std::vector<boost::shared_ptr<ROMol>> &getMols() const {
     return d_mols;

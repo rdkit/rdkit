@@ -5328,7 +5328,7 @@ M  V30 BEGIN CTAB
 M  V30 COUNTS 2 1 0 0 0
 M  V30 BEGIN ATOM
 M  V30 1 C 0.5 6.0833 0 0
-M  V30 2 ARY 1.8337 6.8533 0 0
+M  V30 2 QQQ 1.8337 6.8533 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
@@ -5353,7 +5353,7 @@ M  END
 
   2  1  0  0  0  0            999 V2000
    -1.5625    1.6071    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.8480    2.0196    0.0000 ARY 0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8480    2.0196    0.0000 QQQ 0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0  0  0  0
 M  END
       )CTAB";
@@ -6379,8 +6379,8 @@ f_m_ct {
   }
 }
 TEST_CASE("Chained bond stereo and wiggly bonds") {
-    SECTION("github6434") {
-        std::string molblock = R"CTAB(
+  SECTION("github6434") {
+    std::string molblock = R"CTAB(
   Mrv2004 07102311132D
 
  10  9  0  0  0  0            999 V2000
@@ -6405,11 +6405,34 @@ TEST_CASE("Chained bond stereo and wiggly bonds") {
   8 10  1  0  0  0  0
 M  END
   )CTAB";
-        std::unique_ptr<RWMol> m;
-        m.reset(MolBlockToMol(molblock));
-        REQUIRE(m);
-        CHECK(m->getNumAtoms() == 8);
+    std::unique_ptr<RWMol> m;
+    m.reset(MolBlockToMol(molblock));
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 8);
+  }
 }
+
+TEST_CASE("StereoGroup id forwarding", "[StereoGroup][ctab]") {
+  auto m = "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&7:3,o1:7,&8:1,&9:5|"_smiles;
+  REQUIRE(m);
+  CHECK(m->getStereoGroups().size() == 4);
+
+  SECTION("ids reassigned by default") {
+    const auto mb_out = MolToMolBlock(*m);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC1") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC2") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC3") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STEREL1") != std::string::npos);
+  }
+
+  SECTION("forward input ids") {
+    forwardStereoGroupIds(*m);
+    const auto mb_out = MolToMolBlock(*m);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC7") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC8") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC9") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STEREL1") != std::string::npos);
+  }
 }
 
 #endif

@@ -84,8 +84,6 @@ TEST_CASE("tautomer basics") {
   REQUIRE(mol);
   ExtendedQueryMol xqm =
       std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
-  const TautomerQuery &otq =
-      *std::get<ExtendedQueryMol::TautomerQuery_T>(xqm.xqmol);
 
   SECTION("substructure matching and serialization") {
     ExtendedQueryMol xqm2(xqm.toBinary());

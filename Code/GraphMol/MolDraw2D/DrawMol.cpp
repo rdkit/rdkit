@@ -1622,6 +1622,14 @@ void DrawMol::extractLegend() {
 void DrawMol::makeStandardBond(Bond *bond, double doubleBondOffset) {
   int begAt = bond->getBeginAtomIdx();
   int endAt = bond->getEndAtomIdx();
+  // If the 2 atoms are on top of each other, don't do anything.  We can
+  // end up with NaN for points in the shapes for things like chiral atoms
+  // (issue 6569).
+  const Point2D &at1_cds = atCds_[begAt];
+  const Point2D &at2_cds = atCds_[endAt];
+  if ((at1_cds - at2_cds).lengthSq() < 0.0001) {
+    return;
+  }
   std::pair<DrawColour, DrawColour> cols = getBondColours(bond);
 
   auto bt = bond->getBondType();
@@ -1658,6 +1666,15 @@ void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
 
   auto begAt = bond->getBeginAtom();
   auto endAt = bond->getEndAtom();
+  const Point2D &at1_cds = atCds_[begAt->getIdx()];
+  const Point2D &at2_cds = atCds_[endAt->getIdx()];
+  // If the 2 atoms are on top of each other, don't do anything.  We can
+  // end up with NaN for points in the shapes for things like chiral atoms
+  // (issue 6569).
+  if ((at1_cds - at2_cds).lengthSq() < 0.0001) {
+    return;
+  }
+
   Point2D end1, end2;
   adjustBondEndsForLabels(begAt->getIdx(), endAt->getIdx(), end1, end2);
   Point2D sat1 = atCds_[begAt->getIdx()];
@@ -1665,8 +1682,6 @@ void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
   atCds_[begAt->getIdx()] = end1;
   atCds_[endAt->getIdx()] = end2;
 
-  const Point2D &at1_cds = atCds_[begAt->getIdx()];
-  const Point2D &at2_cds = atCds_[endAt->getIdx()];
   auto midp = (at2_cds + at1_cds) / 2.;
   auto tdash = shortDashes;
   const DrawColour &queryColour = drawOptions_.queryColour;
@@ -2303,7 +2318,14 @@ void DrawMol::calcAnnotationPosition(const Bond *bond,
                                      DrawAnnotation &annot) const {
   PRECONDITION(bond, "no bond");
   Point2D const &at1_cds = atCds_[bond->getBeginAtomIdx()];
-  Point2D const &at2_cds = atCds_[bond->getEndAtomIdx()];
+  Point2D at2_cds = atCds_[bond->getEndAtomIdx()];
+  // If the atoms are on top of each other, perp comes out as NaN which
+  // has very deleterious effects.  Issue 6569.  Move at2 by a small
+  // amount in an arbitrary direction.
+  if ((at1_cds - at2_cds).lengthSq() < 0.0001) {
+    at2_cds.x += 0.1;
+    at2_cds.y += 0.1;
+  }
   Point2D perp = calcPerpendicular(at1_cds, at2_cds);
   Point2D bond_vec = at1_cds.directionVector(at2_cds);
   double bond_len = (at1_cds - at2_cds).length();
@@ -2346,10 +2368,18 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
   if (atom->getDegree() == 0) {
     return M_PI / 2.0;
   }
-  Point2D at_cds = atCds_[atom->getIdx()];
+  const Point2D &at_cds = atCds_[atom->getIdx()];
   std::vector<Point2D> bond_vecs;
   for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
-    Point2D bond_vec = at_cds.directionVector(atCds_[nbr]);
+    // If the nbr has the same coords as atom, bond_vec comes out as NaN, NaN
+    // (issue 6559), so use a short arbitrary vector instead.
+    Point2D bond_vec;
+    if ((at_cds - atCds_[nbr]).lengthSq() < 0.0001) {
+      bond_vec.x = 0.1;
+      bond_vec.y = 0.1;
+    } else {
+      bond_vec = at_cds.directionVector(atCds_[nbr]);
+    }
     bond_vec.normalize();
     bond_vecs.push_back(bond_vec);
   }
@@ -2803,8 +2833,9 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
       if (atomLabels_[at1->getIdx()] && atomLabels_[at2->getIdx()]) {
         doubleBondTerminal(at1, at2, offset, l1s, l1f, l2s, l2f);
         offset /= 2.0;
+      } else {
+        bondNonRing(bond, offset, l2s, l2f);
       }
-      bondNonRing(bond, offset, l2s, l2f);
     }
 
     // Occasionally, as seen in Github6170, a bad geometry about a bond can
@@ -2921,7 +2952,8 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
     const Atom *thirdAtom = nullptr;
     for (auto i = 1u; i < at1->getDegree(); ++i) {
       thirdAtom = otherNeighbor(at1, at2, i, *drawMol_);
-      if (thirdAtom && !areBondsParallel(atCds_[at1->getIdx()], atCds_[at2->getIdx()],
+      if (thirdAtom &&
+          !areBondsParallel(atCds_[at1->getIdx()], atCds_[at2->getIdx()],
                             atCds_[at1->getIdx()],
                             atCds_[thirdAtom->getIdx()])) {
         return thirdAtom;
@@ -2964,7 +2996,6 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
     }
     l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(), begAt->getIdx(),
                         offset, endTrunc);
-
   } else if (begAt->getDegree() > 2 && endAt->getDegree() == 2) {
     thirdAtom = otherNeighbor(begAt, endAt, 0, *drawMol_);
     fourthAtom = otherNeighbor(endAt, begAt, 0, *drawMol_);

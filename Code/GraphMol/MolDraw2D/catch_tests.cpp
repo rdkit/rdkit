@@ -300,7 +300,11 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github6397_2.svg", 3407468353U},
     {"test_github6397_3.svg", 3170656352U},
     {"test_github6397_4.svg", 187792316U},
-    {"test_github6397_5.svg", 2795990448U}};
+    {"test_github6397_5.svg", 2795990448U},
+    {"github6504_1.svg", 1429448598U},
+    {"github6504_2.svg", 2871662880U},
+    {"github6569_1.svg", 116573839U},
+    {"github6569_2.svg", 2367779037U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -1249,7 +1253,7 @@ TEST_CASE(
     CHECK(txt == "abs (S)");
     CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
                                                  txt));
-    CHECK(txt == "and4");
+    CHECK(txt == "and2");
   }
   SECTION("including CIP with relative stereo") {
     ROMol m2(*m1);
@@ -1262,7 +1266,7 @@ TEST_CASE(
     CHECK(txt == "abs (S)");
     CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
                                                  txt));
-    CHECK(txt == "and4 (R)");
+    CHECK(txt == "and2 (R)");
   }
   SECTION("new CIP labels") {
     ROMol m2(*m1);
@@ -7643,8 +7647,7 @@ TEST_CASE(
   }
 }
 
-TEST_CASE(
-    "Github #6416: crash with colinear atoms") {
+TEST_CASE("Github #6416: crash with colinear atoms") {
   std::string name = "github6416.svg";
   auto m = R"CTAB(168010013
      RDKit          2D
@@ -7947,5 +7950,156 @@ M  END)CTAB"_ctab;
     outs.flush();
     outs.close();
     check_file_hash(svgName);
+  }
+}
+
+TEST_CASE("Github #6504: double bonds not drawn correctly for sulfoximines") {
+  std::string baseName = "github6504";
+  auto m1 = R"CTAB(
+     RDKit          2D
+
+  7  6  0  0  0  0  0  0  0  0999 V2000
+   -3.3489   -2.7067    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0093   -3.4808    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6698   -2.7067    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6696   -3.4792    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6698   -1.1601    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6696   -0.3864    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6698   -4.2536    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  2  0
+  3  5  1  0
+  5  6  1  0
+  3  7  1  1
+M  END
+)CTAB"_ctab;
+  // The bug report showed different manifestations of the problem
+  // using the given coords and those generated from scratch.
+  REQUIRE(m1);
+  std::unique_ptr<RDKit::ROMol> m2(new RDKit::ROMol(*m1));
+  RDDepict::compute2DCoords(*m2);
+
+  // The test, in both cases, is that the 2 ends of the lines
+  // making bond 1 are separated by a small distance.  It's a two
+  // colour line, so the relevant points are 0,4 and 3,7.
+  auto checkEndSep = [](const std::string &text) {
+    std::regex bond5(
+        "'bond-1 atom-1 atom-2' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 4);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond5);
+    auto match_end = std::sregex_iterator();
+    std::vector<Point2D> points;
+    for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+      std::smatch match = *i;
+      points.push_back(Point2D(stod(match[1]), stod(match[2])));
+      points.push_back(Point2D(stod(match[3]), stod(match[4])));
+    }
+    auto d1 = (points[0] - points[4]).length();
+    auto d2 = (points[3] - points[7]).length();
+    // the distances should be > 10 and roughly equal.  They are
+    // 12 and 14 pixels apart in the two molecules.
+    REQUIRE(d1 > 10.0);
+    REQUIRE(d2 > 10.0);
+    REQUIRE_THAT(fabs(d1 - d2), Catch::Matchers::WithinAbs(0.0, 0.1));
+  };
+
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::ofstream outs(baseName + "_1.svg");
+    std::string text = drawer.getDrawingText();
+    outs << text;
+    outs.flush();
+    outs.close();
+    checkEndSep(text);
+    check_file_hash(baseName + "_1.svg");
+  }
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m2);
+    drawer.finishDrawing();
+    std::ofstream outs(baseName + "_2.svg");
+    std::string text = drawer.getDrawingText();
+    outs << text;
+    outs.flush();
+    outs.close();
+    checkEndSep(text);
+    check_file_hash(baseName + "_2.svg");
+  }
+}
+
+TEST_CASE("Github #6569: placement of bond labels bad when atoms overlap") {
+  std::string baseName = "github6569";
+  auto m = R"CTAB(CHEMBL3612237
+     RDKit          2D
+
+ 14 15  0  0  0  0  0  0  0  0999 V2000
+   -0.6828   -1.6239    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090    0.5905    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007   -1.6239    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090   -2.3805    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    1.3471    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    1.3471    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090    2.0668    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6319    1.4849    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5072    2.6784    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7280    0.9964    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  6  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  4  7  1  0
+  2  8  1  0
+  8  9  1  0
+  7  9  1  0
+  3 10  1  1
+ 10 11  1  0
+ 10 12  2  0
+  2 13  1  1
+  4 14  1  1
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::ofstream outs(baseName + "_1.svg");
+    std::string text = drawer.getDrawingText();
+    outs << text;
+    outs.flush();
+    outs.close();
+    // All the coords came out as nan in the buggy version
+    REQUIRE(text.find("nan") == std::string::npos);
+    check_file_hash(baseName + "_1.svg");
+  }
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1);
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::ofstream outs(baseName + "_2.svg");
+    std::string text = drawer.getDrawingText();
+    outs << text;
+    outs.flush();
+    outs.close();
+    // All the coords came out as nan in the buggy version
+    REQUIRE(text.find("nan") == std::string::npos);
+    check_file_hash(baseName + "_2.svg");
   }
 }
