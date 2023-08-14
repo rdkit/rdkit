@@ -157,9 +157,6 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
       .def_readwrite("ringMatchesRingOnly",
                      &RDKit::RascalMCES::RascalOptions::ringMatchesRingOnly,
                      "If True (default), ring bonds won't match ring bonds.")
-      .def_readwrite("exactChirality",
-                     &RDKit::RascalMCES::RascalOptions::exactChirality,
-                     "If True (default), chirality of atoms must match.")
       .def_readwrite(
           "minFragSize", &RDKit::RascalMCES::RascalOptions::minFragSize,
           "Imposes a minimum on the number of atoms in a fragment that may be part of the MCES.  Default -1 means no minimum.")

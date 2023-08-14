@@ -412,44 +412,6 @@ TEST_CASE("dyphylline similarities") {
   }
 }
 
-TEST_CASE("compare chirality") {
-  auto m1 = "OC(C)Cl"_smiles;
-  REQUIRE(m1);
-  auto m2 = "O[C@H](C)Cl"_smiles;
-  REQUIRE(m2);
-  auto m3 = "O[C@@H](C)Cl"_smiles;
-  REQUIRE(m3);
-  RascalOptions opts;
-  {
-    auto res = rascalMces(*m1, *m2, opts);
-    REQUIRE(res.size() == 1);
-    REQUIRE(res.front().smarts() == "OC(-C)-Cl");
-    check_smarts_ok(*m1, *m2, res.front());
-  }
-  opts.exactChirality = true;
-  opts.similarityThreshold = 0.3;
-  {
-    auto res = rascalMces(*m1, *m2, opts);
-    REQUIRE(res.empty());
-  }
-  {
-    auto res = rascalMces(*m2, *m3, opts);
-    REQUIRE(res.empty());
-  }
-  {
-    auto res = rascalMces(*m2, *m2, opts);
-    REQUIRE(res.size() == 1);
-    REQUIRE(res.front().smarts() == "O-[#6@&A](-C)-Cl");
-    check_smarts_ok(*m2, *m2, res.front());
-  }
-  {
-    auto res = rascalMces(*m3, *m3, opts);
-    REQUIRE(res.size() == 1);
-    REQUIRE(res.front().smarts() == "O-[#6@@&A](-C)-Cl");
-    check_smarts_ok(*m3, *m3, res.front());
-  }
-}
-
 TEST_CASE("delta-y exchange", "[basics]") {
   RascalOptions opts;
   opts.similarityThreshold = 0.1;
