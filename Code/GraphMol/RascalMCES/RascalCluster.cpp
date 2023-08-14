@@ -75,7 +75,6 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
   if (mols.size() < 2) {
     return std::vector<std::vector<ClusNode>>();
   }
-  auto t1 = std::chrono::high_resolution_clock::now();
   std::vector<std::vector<ClusNode>> proxGraph =
       std::vector<std::vector<ClusNode>>(
           mols.size(), std::vector<ClusNode>(mols.size(), ClusNode()));
@@ -129,27 +128,6 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
     proxGraph[cn.d_mol1Num][cn.d_mol2Num] =
         proxGraph[cn.d_mol2Num][cn.d_mol1Num] = cn;
   }
-#if 0
-  auto t2 = std::chrono::high_resolution_clock::now();
-  std::cout
-      << "Time to create proximity graph : "
-      << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
-      << " ms." << std::endl;
-#endif
-#if 0
-  for (size_t i = 0; i < proxGraph.size(); ++i) {
-    std::cout << std::setw(2) << i << " : ";
-    for (size_t j = 0; j < proxGraph.size(); ++j) {
-      if (proxGraph[i][j].d_res) {
-        std::cout << std::fixed << std::setprecision(2) << proxGraph[i][j].d_sim
-                  << " ";
-      } else {
-        std::cout << "0.00 ";
-      }
-    }
-    std::cout << std::endl;
-  }
-#endif
   return proxGraph;
 }
 
@@ -158,20 +136,6 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
 // graphs.
 std::vector<std::vector<unsigned int>> disconnectProximityGraphs(
     std::vector<std::vector<ClusNode>> &proxGraph) {
-#if 0
-  for (size_t i = 0; i < proxGraph.size(); ++i) {
-    std::cout << std::setw(2) << i << " : ";
-    for (size_t j = 0; j < proxGraph.size(); ++j) {
-      if (proxGraph[i][j].d_res) {
-        std::cout << std::fixed << std::setprecision(2) << proxGraph[i][j].d_sim
-                  << " ";
-      } else {
-        std::cout << "0.00 ";
-      }
-    }
-    std::cout << std::endl;
-  }
-#endif
   std::vector<std::vector<unsigned int>> subGraphs;
   std::vector<bool> done(proxGraph.size(), false);
   auto nextStart = std::find(done.begin(), done.end(), false);
@@ -194,13 +158,6 @@ std::vector<std::vector<unsigned int>> disconnectProximityGraphs(
       }
     }
     nodes.sort();
-#if 0
-    std::cout << "Next split : ";
-    for (auto it : nodes) {
-      std::cout << it << ",";
-    }
-    std::cout << std::endl;
-#endif
     subGraphs.push_back(std::vector(nodes.begin(), nodes.end()));
     nextStart = std::find(done.begin(), done.end(), false);
   }
@@ -276,55 +233,21 @@ std::vector<std::vector<unsigned int>> formInitialClusters(
   }
   for (auto i : subGraph) {
     std::vector<ClusNode> nbors;
-#if 0
-    std::cout << "Next : " << std::setw(2) << i << " : ";
-#endif
     for (auto j : subGraph) {
       if (proxGraph[i][j].d_res) {
-#if 0
-        std::cout << "(" << std::setw(2) << proxGraph[i][j].d_mol1Num << ","
-                  << std::setw(2) << proxGraph[i][j].d_mol2Num << ") "
-                  << std::fixed << std::setprecision(2) << proxGraph[i][j].d_sim
-                  << " ";
-#endif
         nbors.push_back(proxGraph[i][j]);
       } else {
-#if 0
-        std::cout << "(  ,  )      ";
-#endif
       }
     }
-#if 0
-    std::cout << std::endl;
-#endif
     std::sort(nbors.begin(), nbors.end(),
               [](const ClusNode &c1, const ClusNode &c2) -> bool {
                 return c1.d_sim > c2.d_sim;
               });
-#if 0
-    std::cout << "Nbor env : ";
-    for (const auto &c : nbors) {
-      std::cout << "(" << std::setw(2) << c.d_mol1Num << "," << std::setw(2)
-                << c.d_mol2Num << ") " << std::fixed << std::setprecision(2)
-                << c.d_sim << " ";
-    }
-    std::cout << std::endl;
-#endif
     if (!nbors.empty()) {
       auto subClusters = makeSubClusters(nbors, clusOpts);
       clusters.insert(clusters.end(), subClusters.begin(), subClusters.end());
     }
   }
-
-#if 0
-  std::cout << "Initial clusters" << std::endl;
-  for (const auto &c : clusters) {
-    for (auto m : c) {
-      std::cout << m << " ";
-    }
-    std::cout << std::endl;
-  }
-#endif
   std::sort(clusters.begin(), clusters.end(),
             [](const std::vector<unsigned int> &c1,
                const std::vector<unsigned int> &c2) -> bool {
@@ -346,16 +269,6 @@ std::vector<std::vector<unsigned int>> mergeClusters(
   if (outClusters.size() < 2) {
     return outClusters;
   }
-#if 0
-  std::cout << "Merging " << outClusters.size() << " clusters" << std::endl;
-  for (size_t i = 0; i < outClusters.size(); ++i) {
-    std::cout << i << " :: ";
-    for (const auto &m : outClusters[i]) {
-      std::cout << m << " ";
-    }
-    std::cout << std::endl;
-  }
-#endif
 
   for (size_t i = 0; i < outClusters.size() - 1; ++i) {
     for (size_t j = i + 1; j < outClusters.size(); ++j) {
@@ -367,10 +280,6 @@ std::vector<std::vector<unsigned int>> mergeClusters(
           double(inCommon.size()) / std::min(double(outClusters[i].size()),
                                              double(outClusters[j].size()));
       if (s > clusOpts.S_b) {
-#if 0
-        std::cout << "Merging " << i << " and " << j << " with "
-                  << inCommon.size() << " in common : " << s << std::endl;
-#endif
         outClusters[i].insert(outClusters[i].end(), outClusters[j].begin(),
                               outClusters[j].end());
         outClusters[j].clear();
@@ -410,23 +319,11 @@ void sortClusterMembersByMeanSim(
                  const std::pair<unsigned int, double> &p2) -> bool {
                 return p1.second > p2.second;
               });
-#if 0
-    for (auto &cs : clusSims) {
-      std::cout << "(" << cs.first << "," << cs.second << ") ";
-    }
-    std::cout << std::endl;
-#endif
     std::transform(
         clusSims.begin(), clusSims.end(), clus.begin(),
         [](const std::pair<unsigned int, double> &p) -> unsigned int {
           return p.first;
         });
-#if 0
-    for (auto &cs : clus) {
-      std::cout << cs << " ";
-    }
-    std::cout << std::endl;
-#endif
   }
 }
 
@@ -464,13 +361,6 @@ std::vector<unsigned int> collectSingletons(
       singletons.push_back(i);
     }
   }
-#if 0
-  std::cout << "singletons : ";
-  for (auto s : singletons) {
-    std::cout << s << ",";
-  }
-  std::cout << std::endl;
-#endif
   return singletons;
 }
 }  // namespace details
@@ -491,16 +381,6 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> rascalCluster(
       molClusters.back().push_back(mols[m]);
     }
   }
-#if 0
-  std::cout << "Final number of clusters : " << molClusters.size() << std::endl;
-  for (const auto &c : molClusters) {
-    std::cout << "[";
-    for (const auto &m : c) {
-      std::cout << "'" << m->getProp<std::string>("_Name") << "',";
-    }
-    std::cout << "]" << std::endl;
-  }
-#endif
   return molClusters;
 }
 
