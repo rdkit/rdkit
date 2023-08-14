@@ -29,7 +29,6 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <RDGeneral/types.h>
 
 #include <GraphMol/RascalMCES/RascalMCES.h>
 #include <GraphMol/RascalMCES/PartitionSet.h>

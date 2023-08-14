@@ -42,4 +42,4 @@ struct RDKIT_RASCALMCES_EXPORT RascalClusterOptions {
 };
 }  // namespace RascalMCES
 }  // namespace RDKit
-#endif  // RDKIT_RASCALCLUSTEROPTIONS_H
+#endif  // RASCALCLUSTEROPTIONS_H

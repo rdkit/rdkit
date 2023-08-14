@@ -17,8 +17,6 @@
 // of a set of molecules.
 
 #include <algorithm>
-#include <chrono>
-#include <iomanip>
 #include <iterator>
 #include <list>
 #include <thread>
@@ -27,8 +25,6 @@
 #include <RDGeneral/RDThreads.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RascalMCES/RascalClusterOptions.h>
 #include <GraphMol/RascalMCES/RascalDetails.h>
 #include <GraphMol/RascalMCES/RascalMCES.h>
@@ -112,7 +108,7 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
   size_t eachThread = 1 + (toDo.size() / numThreads);
   size_t start = 0;
   std::vector<std::thread> threads;
-  for (int i = 0; i < numThreads; ++i, start += eachThread) {
+  for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
     threads.push_back(std::thread(buildProxGraphPart, std::ref(toDo),
                                   std::ref(molSims), start,
                                   start + eachThread));
@@ -170,7 +166,7 @@ double g_ij(const std::shared_ptr<ROMol> &mol, double a, double b, int p) {
   auto molFrags = MolOps::getMolFrags(*mol, false);
   int numBigFrags = 0;
   for (const auto &mf : molFrags) {
-    if (mf->getNumBonds() > p) {
+    if (static_cast<int>(mf->getNumBonds()) > p) {
       ++numBigFrags;
     }
   }

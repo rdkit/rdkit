@@ -132,7 +132,7 @@ void RascalResult::trimSmallFrags(int minFragSize) {
   // getMolFrags() returns boost::shared_ptr.  Ho-hum.
   auto frags = RDKit::MolOps::getMolFrags(*mol1_frags, false);
   for (auto &frag : frags) {
-    if (frag->getNumAtoms() < minFragSize) {
+    if (static_cast<int>(frag->getNumAtoms()) < minFragSize) {
       frag.reset();
     }
   }
