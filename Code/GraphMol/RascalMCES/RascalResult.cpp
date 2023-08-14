@@ -190,7 +190,7 @@ void RascalResult::rebuildFromFrags(
   }
   d_bondMatches = new_bond_matches;
   d_numFrags = frags.size();
-  d_largestFragSize = frags.front()->getNumAtoms();
+  d_largestFragSize = frags.empty() ? 0 : frags.front()->getNumAtoms();
 }
 
 std::string RascalResult::createSmartsString() const {
