@@ -2390,7 +2390,7 @@ extern "C" void freeCXQMol(CXQMol data) {
 
 extern "C" CXQMol MolToXQMol(CROMol m, bool doEnumeration, bool doTautomers,
                              bool adjustQueryProperties, const char *params) {
-  const ROMol *im = (ROMol *)m;
+  auto *im = (const ROMol *)m;
   if (!im) {
     return nullptr;
   }
