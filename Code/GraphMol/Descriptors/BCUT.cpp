@@ -66,8 +66,9 @@ std::unique_ptr<Eigen::MatrixXd> make_burden(const ROMol &m) {
 
 std::pair<double, double> BCUT2D(std::unique_ptr<Eigen::MatrixXd> &burden,
                                  const std::vector<double> &atom_props) {
-  if(atom_props.size() == 0)
-      return std::pair<double,double>(0.0,0.0);
+  if(atom_props.size() == 0) {
+    return std::pair<double,double>(0.0,0.0);
+  }
 
   for (unsigned int i = 0; i < atom_props.size(); ++i) {
     (*burden)(i, i) = atom_props[i];
