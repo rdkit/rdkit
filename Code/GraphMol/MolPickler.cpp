@@ -1821,7 +1821,14 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
         // the test for tmpChar below seems redundant, but on at least
         // the POWER8 architecture it seems that chars may be unsigned
         // by default.
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
         if ((tmpChar < 0 || tmpChar > 127) && version > 9000) {
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
           streamRead(ss, tmpInt, version);
         } else {
           tmpInt = tmpChar;
