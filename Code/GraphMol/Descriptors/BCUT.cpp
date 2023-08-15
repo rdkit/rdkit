@@ -66,6 +66,9 @@ std::unique_ptr<Eigen::MatrixXd> make_burden(const ROMol &m) {
 
 std::pair<double, double> BCUT2D(std::unique_ptr<Eigen::MatrixXd> &burden,
                                  const std::vector<double> &atom_props) {
+  if(atom_props.size() == 0)
+      return std::pair<double,double>(0.0,0.0);
+
   for (unsigned int i = 0; i < atom_props.size(); ++i) {
     (*burden)(i, i) = atom_props[i];
   }
@@ -80,8 +83,6 @@ std::pair<double, double> BCUT2D(std::unique_ptr<Eigen::MatrixXd> &burden,
 std::pair<double, double> BCUT2D(const ROMol &m,
                                  const std::vector<double> &atom_props) {
   unsigned int num_atoms = m.getNumAtoms();
-  PRECONDITION(num_atoms > 0,
-	       "BCUT2D requires at least one atom");
   PRECONDITION(atom_props.size() == num_atoms,
                "Number of atom props not equal to number of atoms");
 
@@ -104,8 +105,9 @@ std::pair<double, double> BCUT2D(const ROMol &m,
 
 std::vector<double> BCUT2D(const ROMol &m) {
   unsigned int num_atoms = m.getNumAtoms();
-  PRECONDITION(num_atoms > 0,
-	       "BCUT2D requires at least one atom");
+  if(num_atoms == 0) {
+        return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  }
 
   std::unique_ptr<ROMol> mol(MolOps::removeHs(m));
   std::vector<double> masses;
