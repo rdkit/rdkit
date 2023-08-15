@@ -2316,6 +2316,7 @@ extern "C" CXQMol parseXQMolBlob(char *data, int len) {
 }
 
 extern "C" char *makeXQMolText(CXQMol data, int *len) {
+  PRECONDITION(len, “empty len pointer”);
   auto *mol = (ExtendedQueryMol *)data;
 
   try {
