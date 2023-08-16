@@ -43,25 +43,28 @@ RDKIT_RASCALMCES_EXPORT std::vector<RascalResult> rascalMces(
 // https://match.pmf.kg.ac.rs/electronic_versions/Match48/match48_197-207.pdf
 // https://eprints.whiterose.ac.uk/77598/
 // This is a fuzzy clustering algorithm, so a molecule may appear in more than
-// one cluster.
+// one cluster.  The final cluster is all the molecules that didn't fit into
+// another cluster (the singletons).
 /*!
  *
  * @param mols : molecules to cluster
  * @param clusOpts : (optional) cluster options
- * @return clusters as vector of vectors of molecules
+ * @return clusters as vector of vectors of unsigned ints - indices into the
+ *         input mols vector
  */
-RDKIT_RASCALMCES_EXPORT std::vector<std::vector<std::shared_ptr<ROMol>>>
-rascalCluster(const std::vector<std::shared_ptr<ROMol>> &mols,
-              const RascalClusterOptions &clusOpts = RascalClusterOptions());
+RDKIT_RASCALMCES_EXPORT std::vector<std::vector<unsigned int>> rascalCluster(
+    const std::vector<std::shared_ptr<ROMol>> &mols,
+    const RascalClusterOptions &clusOpts = RascalClusterOptions());
 // Cluster the molecules using the Johnson similarity from rascalMces and
 // the Butina algorithm.  Butina JCICS 39 747-750 (1999).
 /*!
  *
  * @param mols : molecules to cluster
  * @param clusOpts : (optional) cluster options
- * @return clusters as vector of vectors of molecules
+ * @return clusters as vector of vectors of unsigned ints - indices into the
+ *         input mols vector
  */
-RDKIT_RASCALMCES_EXPORT std::vector<std::vector<std::shared_ptr<ROMol>>>
+RDKIT_RASCALMCES_EXPORT std::vector<std::vector<unsigned int>>
 rascalButinaCluster(
     const std::vector<std::shared_ptr<ROMol>> &mols,
     const RascalClusterOptions &clusOpts = RascalClusterOptions());

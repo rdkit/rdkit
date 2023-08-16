@@ -17,8 +17,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
-#define CATCH_CONFIG_MAIN
-#include "../../../External/catch/catch/single_include/catch2/catch.hpp"
+#include "catch.hpp"
 
 #include <GraphMol/RascalMCES/RascalMCES.h>
 #include <GraphMol/RascalMCES/RascalClusterOptions.h>

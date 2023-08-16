@@ -31,10 +31,10 @@ python::list convertVecPairInt(const std::vector<std::pair<int, int>> &vec) {
 }
 
 python::list bondMatches(const RDKit::RascalMCES::RascalResult &res) {
-  return convertVecPairInt(res.bondMatches());
+  return convertVecPairInt(res.getBondMatches());
 }
 python::list atomMatches(const RDKit::RascalMCES::RascalResult &res) {
-  return convertVecPairInt(res.atomMatches());
+  return convertVecPairInt(res.getAtomMatches());
 }
 
 void largestFragmentOnly(RDKit::RascalMCES::RascalResult &res) {
@@ -46,7 +46,8 @@ struct RascalResult_wrapper {
     std::string docString = "Used to return RASCAL MCES results.";
     python::class_<RDKit::RascalMCES::RascalResult>(
         "RascalResult", docString.c_str(), python::no_init)
-        .def_readonly("smartsString", &RDKit::RascalMCES::RascalResult::smarts,
+        .def_readonly("smartsString",
+                      &RDKit::RascalMCES::RascalResult::getSmarts,
                       "SMARTS string defining the MCES.")
         .def("bondMatches", &bondMatches,
              "A function returning a list of list "
@@ -56,20 +57,20 @@ struct RascalResult_wrapper {
         .def(
             "largestFragmentOnly", &largestFragmentOnly,
             "Function that cuts the MCES down to the single largest frag.  This cannot be undone.")
-        .def("mol1", &RDKit::RascalMCES::RascalResult::mol1,
+        .def("mol1", &RDKit::RascalMCES::RascalResult::getMol1,
              "First molecule in the MCES.")
-        .def("mol2", &RDKit::RascalMCES::RascalResult::mol2,
+        .def("mol2", &RDKit::RascalMCES::RascalResult::getMol2,
              "Second molecule in the MCES.")
         .def_readonly("similarity",
-                      &RDKit::RascalMCES::RascalResult::similarity,
+                      &RDKit::RascalMCES::RascalResult::getSimilarity,
                       "Johnson similarity between 2 molecules.")
         .def_readonly("numFragments",
-                      &RDKit::RascalMCES::RascalResult::numFrags,
+                      &RDKit::RascalMCES::RascalResult::getNumFrags,
                       "Number of fragments in MCES.")
         .def_readonly("largestFragmentSize",
-                      &RDKit::RascalMCES::RascalResult::largestFragSize,
+                      &RDKit::RascalMCES::RascalResult::getLargestFragSize,
                       "Number of atoms in largest fragment.")
-        .def_readonly("timedOut", &RDKit::RascalMCES::RascalResult::timedout,
+        .def_readonly("timedOut", &RDKit::RascalMCES::RascalResult::getTimedOut,
                       "Whether it timed out.");
   }
 };
@@ -105,7 +106,7 @@ std::vector<std::shared_ptr<ROMol>> extractMols(python::object mols) {
 }
 
 python::list packOutputMols(
-    const std::vector<std::vector<std::shared_ptr<ROMol>>> &clusters) {
+    const std::vector<std::vector<unsigned int>> &clusters) {
   python::list pyres;
   for (auto &clus : clusters) {
     python::list mols;

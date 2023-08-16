@@ -51,12 +51,12 @@ ClusNode calcMolMolSimilarity(
     // was found.
     cn.d_sim = 0.0;
   } else {
-    if (res.front().bondMatches().empty()) {
+    if (res.front().getBondMatches().empty()) {
       cn.d_sim = 0.0;
     } else {
       res.front().trimSmallFrags();
       res.front().largestFragsOnly(clusOpts->maxNumFrags);
-      cn.d_sim = res.front().similarity();
+      cn.d_sim = res.front().getSimilarity();
       if (cn.d_sim >= opts->similarityThreshold) {
         cn.d_res = std::shared_ptr<RascalResult>(new RascalResult(res.front()));
       }
@@ -162,11 +162,12 @@ std::vector<std::vector<unsigned int>> disconnectProximityGraphs(
 
 // Calculate G_{ij} for the molecule.  p is the number of bonds that
 // a fragment must exceed for it to be counted in the formula.
-double g_ij(const std::shared_ptr<ROMol> &mol, double a, double b, int p) {
+double g_ij(const std::shared_ptr<ROMol> &mol, double a, double b,
+            unsigned int p) {
   auto molFrags = MolOps::getMolFrags(*mol, false);
   int numBigFrags = 0;
   for (const auto &mf : molFrags) {
-    if (static_cast<int>(mf->getNumBonds()) > p) {
+    if (mf->getNumBonds() > p) {
       ++numBigFrags;
     }
   }
@@ -188,20 +189,20 @@ std::vector<std::vector<unsigned int>> makeSubClusters(
   while (!tmpNbors.empty()) {
     subClusters.push_back(std::vector<unsigned int>{
         tmpNbors.front()->d_mol1Num, tmpNbors.front()->d_mol2Num});
-    auto m1 = tmpNbors.front()->d_res->mcesMol();
-    auto g12 = g_ij(m1, clusOpts.a, clusOpts.b, clusOpts.minFragSize);
+    auto m1 = tmpNbors.front()->d_res->getMcesMol();
+    auto g_12 = g_ij(m1, clusOpts.a, clusOpts.b, clusOpts.minFragSize);
     for (size_t i = 1; i < tmpNbors.size(); ++i) {
-      auto m2 = tmpNbors[i]->d_res->mcesMol();
-      auto g13 = g_ij(m2, clusOpts.a, clusOpts.b, clusOpts.minFragSize);
+      auto m2 = tmpNbors[i]->d_res->getMcesMol();
+      auto g_13 = g_ij(m2, clusOpts.a, clusOpts.b, clusOpts.minFragSize);
 
       auto results = RDKit::RascalMCES::rascalMces(*m1, *m2);
-      if (results.empty() || results.front().bondMatches().empty()) {
+      if (results.empty() || results.front().getBondMatches().empty()) {
         continue;
       }
       auto res = results.front();
       auto g_12_13 =
-          g_ij(res.mcesMol(), clusOpts.a, clusOpts.b, clusOpts.minFragSize);
-      double sim = g_12_13 / std::min(g12, g13);
+          g_ij(res.getMcesMol(), clusOpts.a, clusOpts.b, clusOpts.minFragSize);
+      double sim = g_12_13 / std::min(g_12, g_13);
       if (sim > clusOpts.S_a) {
         subClusters.back().push_back(tmpNbors[i]->d_mol2Num);
         subClusters.back().push_back(tmpNbors[i]->d_mol1Num);
@@ -361,7 +362,7 @@ std::vector<unsigned int> collectSingletons(
 }
 }  // namespace details
 
-std::vector<std::vector<std::shared_ptr<ROMol>>> rascalCluster(
+std::vector<std::vector<unsigned int>> rascalCluster(
     const std::vector<std::shared_ptr<ROMol>> &mols,
     const RascalClusterOptions &clusOpts) {
   auto proxGraph = details::buildProximityGraph(mols, clusOpts);
@@ -370,14 +371,7 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> rascalCluster(
   auto singletons = details::collectSingletons(proxGraph);
   clusters.push_back(singletons);
   details::sortClusterMembersByMeanSim(proxGraph, clusters);
-  std::vector<std::vector<std::shared_ptr<ROMol>>> molClusters;
-  for (const auto &clus : clusters) {
-    molClusters.push_back(std::vector<std::shared_ptr<ROMol>>());
-    for (const auto m : clus) {
-      molClusters.back().push_back(mols[m]);
-    }
-  }
-  return molClusters;
+  return clusters;
 }
 
 }  // namespace RascalMCES

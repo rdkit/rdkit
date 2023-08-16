@@ -8,8 +8,8 @@ target_compile_definitions(RascalMCES PRIVATE RDKIT_RASCALMCES_BUILD)
 rdkit_headers(RascalMCES.h RascalOptions.h RascalClusterOptions.h RascalResult.h
         DEST GraphMol/RascalMCES)
 
-rdkit_test(testRascalMCES mces_catch.cpp LINK_LIBRARIES RascalMCES)
-rdkit_test(testRascalCluster mces_cluster_catch.cpp LINK_LIBRARIES RascalMCES)
+rdkit_catch_test(testRascalMCES mces_catch.cpp LINK_LIBRARIES RascalMCES)
+rdkit_catch_test(testRascalCluster mces_cluster_catch.cpp LINK_LIBRARIES RascalMCES)
 
 if (RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)

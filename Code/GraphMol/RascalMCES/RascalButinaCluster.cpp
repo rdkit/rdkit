@@ -18,6 +18,7 @@
 #include <set>
 
 #include <GraphMol/ROMol.h>
+#include <GraphMol/RascalMCES/RascalMCES.h>
 #include <GraphMol/RascalMCES/RascalClusterOptions.h>
 #include <GraphMol/RascalMCES/RascalDetails.h>
 
@@ -105,22 +106,13 @@ std::vector<std::vector<unsigned int>> formClusters(
 }
 
 }  // namespace details
-std::vector<std::vector<std::shared_ptr<ROMol>>> rascalButinaCluster(
+std::vector<std::vector<unsigned int>> rascalButinaCluster(
     const std::vector<std::shared_ptr<ROMol>> &mols,
     const RascalClusterOptions &clusOpts) {
   auto proxGraph = details::buildProximityGraph(mols, clusOpts);
   auto nborLists = details::buildNborLists(proxGraph);
   auto clusters = details::formClusters(nborLists);
-  std::vector<std::vector<std::shared_ptr<ROMol>>> molClusters;
-  molClusters.reserve(clusters.size());
-  for (const auto &cl : clusters) {
-    molClusters.push_back(std::vector<std::shared_ptr<ROMol>>());
-    molClusters.back().reserve(cl.size());
-    for (auto cm : cl) {
-      molClusters.back().push_back(mols[cm]);
-    }
-  }
-  return molClusters;
+  return clusters;
 }
 }  // namespace RascalMCES
 }  // namespace RDKit

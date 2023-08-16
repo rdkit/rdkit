@@ -28,17 +28,18 @@ struct RDKIT_RASCALMCES_EXPORT RascalClusterOptions {
                                     least this similarity. */
   double a = 0.05; /* penalty score for each unconnected component in MCES */
   double b = 2.0;  /* weight of matched bonds over matched atoms */
-  int minFragSize = 3; /* minimum number of atoms in a fragment for it to
-                          be included in the MCES.  Also p in the paper. */
+  unsigned int minFragSize =
+      3;            /* minimum number of atoms in a fragment for it to
+                       be included in the MCES.  Also p in the paper. */
   double S_a = 0.9; /* two pairs of molecules are included in the same cluster
                        if the similarity between their MCESs is greater than
                        this */
   double S_b = 0.6; /* two clusters are merged if fraction of molecules they
                        have in common is greater than this */
-  int maxNumFrags = 2; /* The maximum number of fragments in any MCES.
-                          Otherwise the MCES can be a lot of small fragments
-                          scattered across the molecule - it tries too hard
-                          to find a match, sometimes */
+  unsigned int maxNumFrags = 2; /* The maximum number of fragments in any MCES.
+                                   Otherwise the MCES can be a lot of small
+                                   fragments scattered across the molecule - it
+                                   tries too hard to find a match, sometimes */
 };
 }  // namespace RascalMCES
 }  // namespace RDKit

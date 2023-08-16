@@ -52,35 +52,39 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
   // Cut the result down to the single largest fragment.  This is
   // irrecoverably destructive.
   void largestFragOnly();
-  void largestFragsOnly(int numFrags = 2);
-  void trimSmallFrags(int minFragSize = 3);
+  void largestFragsOnly(unsigned int numFrags = 2);
+  void trimSmallFrags(unsigned int minFragSize = 3);
 
-  std::shared_ptr<RDKit::ROMol> mol1() const { return d_mol1; };
+  std::shared_ptr<RDKit::ROMol> getMol1() const { return d_mol1; };
 
-  std::shared_ptr<RDKit::ROMol> mol2() const { return d_mol2; };
+  std::shared_ptr<RDKit::ROMol> getMol2() const { return d_mol2; };
 
-  std::vector<std::pair<int, int>> bondMatches() const { return d_bondMatches; }
+  std::vector<std::pair<int, int>> getBondMatches() const {
+    return d_bondMatches;
+  }
 
-  std::vector<std::pair<int, int>> atomMatches() const { return d_atomMatches; }
+  std::vector<std::pair<int, int>> getAtomMatches() const {
+    return d_atomMatches;
+  }
 
-  int numFrags() const;
+  int getNumFrags() const;
 
-  int ringNonRingBondScore() const;
+  int getRingNonRingBondScore() const;
 
-  int atomMatchScore() const;
+  int getAtomMatchScore() const;
 
-  int maxDeltaAtomAtomDist() const;
+  int getMaxDeltaAtomAtomDist() const;
 
   // returns number of atoms for largest fragment.
-  int largestFragSize() const;
+  int getLargestFragSize() const;
 
-  std::string smarts() const;
-  const std::shared_ptr<ROMol> mcesMol() const;
-  bool timedout() const { return d_timedOut; };
+  std::string getSmarts() const;
+  const std::shared_ptr<ROMol> getMcesMol() const;
+  bool getTimedOut() const { return d_timedOut; };
 
-  double tier1Sim() const { return d_tier1Sim; }
-  double tier2Sim() const { return d_tier2Sim; }
-  double similarity() const;
+  double getTier1Sim() const { return d_tier1Sim; }
+  double getTier2Sim() const { return d_tier2Sim; }
+  double getSimilarity() const;
 
  private:
   std::shared_ptr<ROMol> d_mol1;
