@@ -18,6 +18,8 @@
 
 namespace RDKit {
 namespace Descriptors {
+const int NUM_BCUTS = 8;
+
 // diagonal elements are a property (atomic num, charge, etc)
 // off diagonal are 1/sqrt(bond_order)
 //  Original burden matrix was .1, .2, .3, .15 for single,double,triple or
@@ -66,7 +68,7 @@ std::unique_ptr<Eigen::MatrixXd> make_burden(const ROMol &m) {
 
 std::pair<double, double> BCUT2D(std::unique_ptr<Eigen::MatrixXd> &burden,
                                  const std::vector<double> &atom_props) {
-  if(atom_props.size() == 0) {
+  if(atom_props.empty()) {
     return std::pair<double,double>(0.0,0.0);
   }
 
@@ -107,7 +109,7 @@ std::pair<double, double> BCUT2D(const ROMol &m,
 std::vector<double> BCUT2D(const ROMol &m) {
   unsigned int num_atoms = m.getNumAtoms();
   if(num_atoms == 0) {
-        return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+      return std::vector<double>(NUM_BCUTS, 0.0);
   }
 
   std::unique_ptr<ROMol> mol(MolOps::removeHs(m));
