@@ -142,6 +142,13 @@ bool isClosingRingBond(Bond *bond) {
   return beginIdx > endIdx && beginIdx - endIdx > 1 &&
          bond->hasProp(common_properties::_TraversalRingClosureBond);
 }
+
+bool canHaveDirection(const Bond *bond) {
+  PRECONDITION(bond, "bad bond");
+  Bond::BondType bondType = bond->getBondType();
+  return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC);
+}
+
 }  // namespace
 // FIX: this may only be of interest from the SmilesWriter, should we
 // move it there?
@@ -185,53 +192,39 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   // find the lowest visit order bonds from each end and determine
   // if anything is already constraining our choice of directions:
   bool dir1Set = false, dir2Set = false;
-  for (const auto &bndItr :
-       boost::make_iterator_range(mol.getAtomBonds(atom1))) {
-    auto bond = mol[bndItr];
-    if (bond != dblBond) {
+
+  auto findNeighborBonds = [&mol, &dblBond, &bondDirCounts, &bondVisitOrders,
+                            &firstVisitOrder](
+                               auto atom, auto &firstNeighborBond,
+                               auto &secondNeighborBond, auto &dirSet) {
+    for (const auto bond : mol.atomBonds(atom)) {
+      if (bond == dblBond || !canHaveDirection(bond)) {
+        continue;
+      }
+
       auto bondIdx = bond->getIdx();
       if (bondDirCounts[bondIdx] > 0) {
-        dir1Set = true;
+        dirSet = true;
       }
-      if (!firstFromAtom1 || bondVisitOrders[bondIdx] < firstVisitOrder) {
-        if (firstFromAtom1) {
-          secondFromAtom1 = firstFromAtom1;
+      if (!firstNeighborBond || bondVisitOrders[bondIdx] < firstVisitOrder) {
+        if (firstNeighborBond) {
+          secondNeighborBond = firstNeighborBond;
         }
-        firstFromAtom1 = bond;
+        firstNeighborBond = bond;
         firstVisitOrder = bondVisitOrders[bondIdx];
       } else {
-        secondFromAtom1 = bond;
+        secondNeighborBond = bond;
       }
     }
-  }
+  };
+
+  findNeighborBonds(atom1, firstFromAtom1, secondFromAtom1, dir1Set);
   firstVisitOrder = mol.getNumBonds() + 1;
-  for (const auto &bndItr :
-       boost::make_iterator_range(mol.getAtomBonds(atom2))) {
-    auto bond = mol[bndItr];
-    if (bond != dblBond) {
-      auto bondIdx = bond->getIdx();
-      if (bondDirCounts[bondIdx] > 0) {
-        dir2Set = true;
-      }
-      if (!firstFromAtom2 || bondVisitOrders[bondIdx] < firstVisitOrder) {
-        if (firstFromAtom2) {
-          secondFromAtom2 = firstFromAtom2;
-        }
-        firstFromAtom2 = bond;
-        firstVisitOrder = bondVisitOrders[bondIdx];
-      } else {
-        secondFromAtom2 = bond;
-      }
-    }
-  }
+  findNeighborBonds(atom2, firstFromAtom2, secondFromAtom2, dir2Set);
 
   // make sure we found everything we need to find:
   CHECK_INVARIANT(firstFromAtom1, "could not find atom1");
   CHECK_INVARIANT(firstFromAtom2, "could not find atom2");
-  CHECK_INVARIANT(atom1->getDegree() == 2 || secondFromAtom1,
-                  "inconsistency at atom1");
-  CHECK_INVARIANT(atom2->getDegree() == 2 || secondFromAtom2,
-                  "inconsistency at atom2");
 
   bool setFromBond1 = true;
   Bond::BondDir atom1Dir = Bond::NONE;
@@ -429,7 +422,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   // Check if there are other bonds from atoms 1 and 2 that need
   // to have their directionalities set:
   ///
-  if (atom1->getDegree() == 3) {
+  if (atom1->getDegree() == 3 && secondFromAtom1) {
     if (!bondDirCounts[secondFromAtom1->getIdx()]) {
       // This bond (the second bond from the starting atom of the double bond)
       // is a special case.  It's going to appear in a branch in the smiles:
@@ -461,7 +454,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
     atomDirCounts[atom1->getIdx()] += 1;
   }
 
-  if (atom2->getDegree() == 3) {
+  if (atom2->getDegree() == 3 && secondFromAtom2) {
     if (!bondDirCounts[secondFromAtom2->getIdx()]) {
       // Here we set the bond direction to be opposite the other one (since
       // both come after the atom connected to the double bond).
@@ -899,12 +892,6 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
   dfsBuildStack(mol, atomIdx, inBondIdx, colors, cycles, ranks, cyclesAvailable,
                 molStack, atomOrders, bondVisitOrders, atomRingClosures,
                 atomTraversalBondOrder, bondsInPlay, bondSymbols, doRandom);
-}
-
-bool canHaveDirection(const Bond *bond) {
-  PRECONDITION(bond, "bad bond");
-  Bond::BondType bondType = bond->getBondType();
-  return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC);
 }
 
 void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
