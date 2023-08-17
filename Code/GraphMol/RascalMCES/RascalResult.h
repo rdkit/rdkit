@@ -63,15 +63,31 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
     return d_atomMatches;
   }
 
+  // The following 5 functions are used in resultCompare to rank
+  // 2 MCES of the same size for the same pair of molecules.
+  // returns the number of contiguous fragments in the MCES.
   int getNumFrags() const;
 
+  // returns how many bonds in the clique don't match
+  // cyclic/non-cyclic i.e. count as a matche in the MCES but
+  // are ring bonds in one of the molecules and not in the other.
   int getRingNonRingBondScore() const;
 
+  // returns a score for how well the atoms in the clique from mol1 match the
+  // atoms for the clique in mol2.  Currently, the atom scores are the
+  // difference in H count for matching atoms, and summed for the molecule. Its
+  // so that, for example, an OH in mol1 that could match an OH or OMe matches
+  // the OH for preference.
   int getAtomMatchScore() const;
 
+  // returns a score for the maximum difference in through-bond distance for
+  // pairs of matching atoms in the 2 molecules.  An MCES where 2 atoms
+  // are far apart in one molecule and the corresponding atoms are close
+  // together in the other will get a high score by this measure.
   int getMaxDeltaAtomAtomDist() const;
 
-  // returns number of atoms for largest fragment.
+  // returns the number of atoms in the largest contiguous fragment
+  // in the MCES.
   int getLargestFragSize() const;
 
   std::string getSmarts() const;
@@ -131,8 +147,8 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
   int calcMaxDeltaAtomAtomDistScore() const;
 };
 
-RDKIT_RASCALMCES_EXPORT bool resultSort(const RascalResult &res1,
-                                        const RascalResult &res2);
+RDKIT_RASCALMCES_EXPORT bool resultCompare(const RascalResult &res1,
+                                           const RascalResult &res2);
 
 RDKIT_RASCALMCES_EXPORT void extractClique(
     const std::vector<unsigned int> &clique,
@@ -151,7 +167,7 @@ RDKIT_RASCALMCES_EXPORT void printBondMatches(const RascalResult &res,
 RDKIT_RASCALMCES_EXPORT void printAtomMatches(const RascalResult &res,
                                               std::ostream &os);
 
-// This prints out the scores in the order they are used in resultSort.
+// This prints out the scores in the order they are used in resultCompare.
 RDKIT_RASCALMCES_EXPORT void printScores(const RascalResult &res,
                                          std::ostream &os);
 

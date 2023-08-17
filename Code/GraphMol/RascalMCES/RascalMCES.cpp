@@ -1049,7 +1049,7 @@ std::vector<RascalResult> findMces(RascalStartPoint &starter,
                      opts.ringMatchesRingOnly, opts.singleLargestFrag,
                      opts.maxFragSeparation));
   }
-  std::sort(results.begin(), results.end(), resultSort);
+  std::sort(results.begin(), results.end(), resultCompare);
   return results;
 }
 

@@ -687,7 +687,7 @@ const std::shared_ptr<ROMol> RascalResult::getMcesMol() const {
   return d_mcesMol;
 }
 
-bool resultSort(const RascalResult &res1, const RascalResult &res2) {
+bool resultCompare(const RascalResult &res1, const RascalResult &res2) {
   if (res1.getBondMatches().size() == res2.getBondMatches().size()) {
     if (res1.getNumFrags() == res2.getNumFrags()) {
       if (res1.getLargestFragSize() == res2.getLargestFragSize()) {
