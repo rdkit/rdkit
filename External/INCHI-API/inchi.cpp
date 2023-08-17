@@ -1423,13 +1423,12 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
       }
 
       // basic topological structure is ready. calculate valence
-      for (unsigned int i = 0; i < m->getNumAtoms(); i++) {
-        m->getAtomWithIdx(i)->calcImplicitValence(false);
-      }
+      m->updatePropertyCache(false);
 
       // 0Dstereo
+      INT_PAIR_VECT eBondPairs;
+      INT_PAIR_VECT zBondPairs;
       unsigned int numStereo0D = inchiOutput.num_stereo0D;
-      INT_PAIR_VECT zBondPairs, eBondPairs;
       if (numStereo0D) {
         // calculate CIPCode as they might be used
         UINT_VECT ranks;
@@ -1445,16 +1444,14 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
               break;
             case INCHI_StereoType_DoubleBond: {
               // find the bond
-              unsigned int left, right;
-              int leftNbr, originalLeftNbr, rightNbr, originalRightNbr,
-                  extraLeftNbr, extraRightNbr;
-              left = indexToAtomIndexMapping[stereo0DPtr->neighbor[1]];
-              right = indexToAtomIndexMapping[stereo0DPtr->neighbor[2]];
-              originalLeftNbr =
+              unsigned left = indexToAtomIndexMapping[stereo0DPtr->neighbor[1]];
+              unsigned right =
+                  indexToAtomIndexMapping[stereo0DPtr->neighbor[2]];
+              int originalLeftNbr =
                   indexToAtomIndexMapping[stereo0DPtr->neighbor[0]];
-              originalRightNbr =
+              int originalRightNbr =
                   indexToAtomIndexMapping[stereo0DPtr->neighbor[3]];
-              leftNbr = extraLeftNbr = rightNbr = extraRightNbr = -1;
+
               Bond* bond = m->getBondBetweenAtoms(left, right);
               if (!bond) {
                 // Likely to be allene stereochemistry, which we don't handle.
@@ -1465,52 +1462,46 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
                 continue;
               }
               // also find neighboring atoms. Note we cannot use what InChI
-              // returned
-              // in stereo0DPtr->neighbor as there can be hydrogen in it, which
-              // is
-              // later removed and is therefore not reliable. Plus, InChI seems
-              // to
-              // use lower CIPRank-neighbors rather than higher-CIPRank ones
-              // (hence
-              // the use of hydrogen neighbor). However, if the neighbors we
-              // selected differ from what are in stereo0DPtr->neighbor, we
-              // might
-              // also need to switch E and Z
-              ROMol::ADJ_ITER begin, end;
-              boost::tie(begin, end) =
-                  m->getAtomNeighbors(m->getAtomWithIdx(left));
-              int cip = -1, _cip;
-              while (begin != end) {
-                if (*begin != right) {
-                  if ((_cip = ranks[*begin]) > cip) {
-                    if (leftNbr >= 0) {
-                      extraLeftNbr = leftNbr;
+              // returned in stereo0DPtr->neighbor as there can be hydrogen in
+              // it, which is later removed and is therefore not reliable. Plus,
+              // InChI seems to use lower CIPRank-neighbors rather than
+              // higher-CIPRank ones (hence the use of hydrogen neighbor).
+              // However, if the neighbors we selected differ from what are in
+              // stereo0DPtr->neighbor, we might also need to switch E and Z
+
+              auto findNbrAtoms = [&m, &ranks](unsigned ref) {
+                int nbr = -1;
+                int extraNbr = -1;
+                int cip = -1;
+                int _cip = -1;
+                for (auto bond : m->atomBonds(m->getAtomWithIdx(ref))) {
+                  if (bond->getBondType() != Bond::SINGLE &&
+                      bond->getBondType() != Bond::AROMATIC) {
+                    continue;
+                  }
+                  auto atom = bond->getOtherAtomIdx(ref);
+                  if ((_cip = ranks[atom]) > cip) {
+                    if (nbr >= 0) {
+                      extraNbr = nbr;
                     }
-                    leftNbr = *begin;
+                    nbr = atom;
                     cip = _cip;
                   } else {
-                    extraLeftNbr = *begin;
+                    extraNbr = atom;
                   }
                 }
-                begin++;
+                return std::make_pair(nbr, extraNbr);
+              };
+              auto [leftNbr, extraLeftNbr] = findNbrAtoms(left);
+              auto [rightNbr, extraRightNbr] = findNbrAtoms(right);
+
+              if (leftNbr < 0 || rightNbr < 0) {
+                BOOST_LOG(rdWarningLog)
+                    << "Ignoring stereochemistry on double-bond without appropriate neighbors"
+                    << std::endl;
+                continue;
               }
-              boost::tie(begin, end) =
-                  m->getAtomNeighbors(m->getAtomWithIdx(right));
-              cip = -1;
-              while (begin != end) {
-                if (*begin != left) {
-                  if ((_cip = ranks[*begin]) > cip) {
-                    if (rightNbr >= 0) {
-                      extraRightNbr = rightNbr;
-                    }
-                    rightNbr = *begin;
-                    cip = _cip;
-                  } else {
-                    extraRightNbr = *begin;
-                  }
-                }
-                begin++;
-              }
+
               bool switchEZ = false;
               if ((originalLeftNbr == leftNbr &&
                    originalRightNbr != rightNbr) ||
@@ -1526,46 +1517,33 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
                 parity = INCHI_PARITY_ODD;
               }
 
-              Bond* leftBond = m->getBondBetweenAtoms(left, leftNbr);
-              Bond* rightBond = m->getBondBetweenAtoms(right, rightNbr);
-              if (extraLeftNbr >= 0) {
-                int modifier =
-                    -1;  // modifier to track whether bond is reversed
-                if (leftBond->getBeginAtomIdx() != left) {
-                  modifier *= -1;
+              auto findBondPairs = [&m, &zBondPairs, &eBondPairs](
+                                       unsigned ref, int nbr, int extraNbr) {
+                auto bond = m->getBondBetweenAtoms(ref, nbr);
+                if (extraNbr >= 0) {
+                  // modifier to track whether bond is reversed
+                  int modifier = -1;
+                  if (bond->getBeginAtomIdx() != ref) {
+                    modifier *= -1;
+                  }
+                  auto extraBond = m->getBondBetweenAtoms(ref, extraNbr);
+                  if (extraBond->getBeginAtomIdx() != ref) {
+                    modifier *= -1;
+                  }
+                  if (modifier == 1) {
+                    zBondPairs.push_back(
+                        std::make_pair(bond->getIdx(), extraBond->getIdx()));
+                  } else {
+                    eBondPairs.push_back(
+                        std::make_pair(bond->getIdx(), extraBond->getIdx()));
+                  }
                 }
-                Bond* extraLeftBond =
-                    m->getBondBetweenAtoms(left, extraLeftNbr);
-                if (extraLeftBond->getBeginAtomIdx() != left) {
-                  modifier *= -1;
-                }
-                if (modifier == 1) {
-                  zBondPairs.push_back(std::make_pair(leftBond->getIdx(),
-                                                      extraLeftBond->getIdx()));
-                } else {
-                  eBondPairs.push_back(std::make_pair(leftBond->getIdx(),
-                                                      extraLeftBond->getIdx()));
-                }
-              }
-              if (extraRightNbr >= 0) {
-                int modifier =
-                    -1;  // modifier to track whether bond is reversed
-                Bond* extraRightBond =
-                    m->getBondBetweenAtoms(right, extraRightNbr);
-                if (rightBond->getBeginAtomIdx() != right) {
-                  modifier *= -1;
-                }
-                if (extraRightBond->getBeginAtomIdx() != right) {
-                  modifier *= -1;
-                }
-                if (modifier == 1) {
-                  zBondPairs.push_back(std::make_pair(
-                      rightBond->getIdx(), extraRightBond->getIdx()));
-                } else {
-                  eBondPairs.push_back(std::make_pair(
-                      rightBond->getIdx(), extraRightBond->getIdx()));
-                }
-              }
+                return bond;
+              };
+
+              auto leftBond = findBondPairs(left, leftNbr, extraLeftNbr);
+              auto rightBond = findBondPairs(right, rightNbr, extraRightNbr);
+
               int modifier = -1;  // modifier to track whether bond is reversed
               if (leftBond->getBeginAtomIdx() != left) {
                 modifier *= -1;
