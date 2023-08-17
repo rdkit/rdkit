@@ -1,3 +1,73 @@
+# Release_2023.03.3
+(Changes relative to Release_2023.03.2)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+David Cosgrove, Eloy Félix, Gareth Jones, Eisuke Kawashima, Brian Kelley, Dan
+Nealschneider, Ricardo Rodriguez-Schmidt, Paolo Tosco, Riccardo Vianello, Rachel
+Walker, thomp-j, 
+
+## Backwards incompatible changes
+- The CDXML parser now returns mols with reasonable coordinates and in
+the same coordinate axes as the other RDKit file parsers. 
+
+## Bug Fixes:
+  - refactor(python): replace deprecated unittest methods
+ (github #6304 from e-kwsm)
+  - RDKit hangs indefinitely when parsing not so big molblock
+ (github #6434 from eloyfelix)
+  - Molecules from CDXML Parser have inverted, unrealistic atomic coordinates
+ (github #6461 from greglandrum)
+  - CDXML Parser does not preserve information about bond wedging
+ (github #6462 from greglandrum)
+  - boost::bad_any_cast error when calling getProp<string> on properties set by applyMolListPropsToAtoms<int64_t>
+ (github #6465 from rachelnwalker)
+  - Allow systems like C/C=N/[H] to be stereogenic with the new chirality code
+ (github #6473 from greglandrum)
+  - Fix RWMol::addAtom docstring
+ (github #6477 from d-b-w)
+  - Fix a few broken docstrings
+ (github #6480 from ptosco)
+  - pin numpy to 1.24.3
+ (github #6483 from bp-kelley)
+  - CMAKE_INSTALL_PREFIX not honored for Python files installation on Windows
+ (github #6485 from ricrogz)
+  - Fixed tests that weren't being run in testDepictor.py
+ (github #6486 from rachelnwalker)
+  - Fixes rdkit-js/issues/347
+ (github #6490 from ptosco)
+  - Make sure that molecules are shown as images by PandasTools also when DataFrames are truncated horizontally
+ (github #6496 from ptosco)
+  - fixes #6499
+ (github #6500 from ptosco)
+  - MolToMolBlock writes "either" stereo for double bonds which shouldn't be stereo
+ (github #6502 from ricrogz)
+  - Double bonds are not correctly drawn on sulfoximines
+ (github #6504 from ptosco)
+  - RegistrationHash.GetMolLayers() with v2 tautomer hash does not filter CX extensions
+ (github #6505 from ricrogz)
+  - Drop the s_m_color_rgb property from MaeWriter
+ (github #6511 from ricrogz)
+  - update avalontools version to incorporate bug fixes
+ (github #6513 from ptosco)
+  - update windows DLL CI build config
+ (github #6535 from greglandrum)
+  - Add MolEnumerator to C#
+ (github #6542 from jones-gareth)
+  - MolDraw2D: placement of bond or atom labels gets confused when atoms overlap
+ (github #6569 from greglandrum)
+  - Fix vulnerabilities found by fuzzer.
+ (github #6579 from thomp-j)
+  - allow building the cartridge against PostgreSQL 16
+ (github #6580 from ptosco)
+  - Add newline to ConstrainedEmbed docstring.
+ (github #6596 from DavidACosgrove)
+  - Avoid leaking memory in case exceptions are thrown while generating FPs
+ (github #6630 from ptosco)
+
 # Release_2023.03.2
 (Changes relative to Release_2023.03.1)
 
