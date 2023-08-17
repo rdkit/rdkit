@@ -42,9 +42,7 @@ class PartitionSet {
   // the current partition.
   int upperBound();
 
-  // Print the partitions to os.  Very useful for debugging, but not
-  // used otherwise.
-  void printPartitions(std::ostream &os) const;
+  friend std::ostream &operator<<(std::ostream &os, const PartitionSet &pt);
 
   // removes the last element of the last partition and returns
   // its value. Throws a runtime_error if empty.

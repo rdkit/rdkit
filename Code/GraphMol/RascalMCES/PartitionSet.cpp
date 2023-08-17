@@ -108,27 +108,6 @@ int PartitionSet::upperBound() {
   return upperBound;
 }
 
-void PartitionSet::printPartitions(std::ostream &os) const {
-  for (size_t i = 0; i < d_parts.size(); ++i) {
-    os << i << " :: " << d_parts[i].size() << " ::";
-    for (auto &mem : d_parts[i]) {
-      os << " " << mem << " (" << (*d_VtxPairs)[mem].first << ","
-         << (*d_VtxPairs)[mem].second << ")";
-    }
-    os << std::endl;
-  }
-  os << "vtx1_counts :";
-  for (auto vc : d_vtx1Counts) {
-    os << " " << vc;
-  }
-  os << std::endl;
-  os << "vtx2_counts :";
-  for (auto vc : d_vtx2Counts) {
-    os << " " << vc;
-  }
-  os << std::endl;
-}
-
 unsigned int PartitionSet::popLastVertex() {
   if (d_parts.empty()) {
     throw std::runtime_error("PartitionSet set is empty.");
@@ -213,6 +192,28 @@ void PartitionSet::decrementVertexCounts(int vtxNum) {
   if (!d_vtx2Counts[(*d_VtxPairs)[vtxNum].second]) {
     --d_vtx2TypeCounts[(*d_vtx2Labels)[(*d_VtxPairs)[vtxNum].second]];
   }
+}
+
+std::ostream &operator<<(std::ostream &os, const PartitionSet &pt) {
+  for (size_t i = 0; i < pt.d_parts.size(); ++i) {
+    os << i << " :: " << pt.d_parts[i].size() << " ::";
+    for (auto &mem : pt.d_parts[i]) {
+      os << " " << mem << " (" << (*pt.d_VtxPairs)[mem].first << ","
+         << (*pt.d_VtxPairs)[mem].second << ")";
+    }
+    os << std::endl;
+  }
+  os << "vtx1_counts :";
+  for (auto vc : pt.d_vtx1Counts) {
+    os << " " << vc;
+  }
+  os << std::endl;
+  os << "vtx2_counts :";
+  for (auto vc : pt.d_vtx2Counts) {
+    os << " " << vc;
+  }
+  os << std::endl;
+  return os;
 }
 
 }  // namespace RascalMCES
