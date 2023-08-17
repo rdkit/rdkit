@@ -18,7 +18,7 @@
 
 namespace RDKit {
 namespace Descriptors {
-const int NUM_BCUTS = 8;
+constexpr int NUM_BCUTS = 8;
 
 // diagonal elements are a property (atomic num, charge, etc)
 // off diagonal are 1/sqrt(bond_order)
