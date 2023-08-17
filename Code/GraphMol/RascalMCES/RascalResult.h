@@ -55,10 +55,6 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
   void largestFragsOnly(unsigned int numFrags = 2);
   void trimSmallFrags(unsigned int minFragSize = 3);
 
-  std::shared_ptr<RDKit::ROMol> getMol1() const { return d_mol1; };
-
-  std::shared_ptr<RDKit::ROMol> getMol2() const { return d_mol2; };
-
   std::vector<std::pair<int, int>> getBondMatches() const {
     return d_bondMatches;
   }

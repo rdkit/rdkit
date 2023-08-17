@@ -203,7 +203,7 @@ std::vector<std::vector<unsigned int>> makeSubClusters(
       auto g_12_13 =
           g_ij(res.getMcesMol(), clusOpts.a, clusOpts.b, clusOpts.minFragSize);
       double sim = g_12_13 / std::min(g_12, g_13);
-      if (sim > clusOpts.S_a) {
+      if (sim > clusOpts.minIntraClusterSim) {
         subClusters.back().push_back(tmpNbors[i]->d_mol2Num);
         subClusters.back().push_back(tmpNbors[i]->d_mol1Num);
         tmpNbors[i] = nullptr;
@@ -276,7 +276,7 @@ std::vector<std::vector<unsigned int>> mergeClusters(
       double s =
           double(inCommon.size()) / std::min(double(outClusters[i].size()),
                                              double(outClusters[j].size()));
-      if (s > clusOpts.S_b) {
+      if (s > clusOpts.clusterMergeSim) {
         outClusters[i].insert(outClusters[i].end(), outClusters[j].begin(),
                               outClusters[j].end());
         outClusters[j].clear();

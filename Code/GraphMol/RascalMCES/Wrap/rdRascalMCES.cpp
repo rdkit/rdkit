@@ -57,10 +57,6 @@ struct RascalResult_wrapper {
         .def(
             "largestFragmentOnly", &largestFragmentOnly,
             "Function that cuts the MCES down to the single largest frag.  This cannot be undone.")
-        .def("mol1", &RDKit::RascalMCES::RascalResult::getMol1,
-             "First molecule in the MCES.")
-        .def("mol2", &RDKit::RascalMCES::RascalResult::getMol2,
-             "Second molecule in the MCES.")
         .def_readonly("similarity",
                       &RDKit::RascalMCES::RascalResult::getSimilarity,
                       "Johnson similarity between 2 molecules.")
