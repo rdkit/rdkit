@@ -8103,3 +8103,104 @@ M  END
     check_file_hash(baseName + "_2.svg");
   }
 }
+
+TEST_CASE("Lasso highlights") {
+  std::string baseName = "lasso_highlights_";
+  auto get_all_hit_atoms = [](ROMol &mol,
+                              const std::string &smt) -> std::vector<int> {
+    std::vector<int> hit_atoms;
+    RWMol *query = SmartsToMol(smt);
+    std::vector<MatchVectType> hits_vect;
+    SubstructMatch(mol, *query, hits_vect);
+    for (size_t i = 0; i < hits_vect.size(); ++i) {
+      for (size_t j = 0; j < hits_vect[i].size(); ++j) {
+        hit_atoms.push_back(hits_vect[i][j].second);
+      }
+    }
+    delete query;
+    return hit_atoms;
+  };
+  auto update_colour_map = [](const std::vector<int> &ats, DrawColour col,
+                              std::map<int, std::vector<DrawColour>> &ha_map) {
+    for (auto h : ats) {
+      auto ex = ha_map.find(h);
+      if (ex == ha_map.end()) {
+        std::vector<DrawColour> cvec(1, col);
+        ha_map.insert(make_pair(h, cvec));
+      } else {
+        if (ex->second.end() ==
+            find(ex->second.begin(), ex->second.end(), col)) {
+          ex->second.push_back(col);
+        }
+      }
+    }
+  };
+
+  {
+    std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
+    RDDepict::compute2DCoords(*m);
+
+    std::vector<std::string> smarts = {"CONN", "N#CC~CO", "C=CON", "CONNCN"};
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+
+    for (size_t i = 0; i < smarts.size(); ++i) {
+      std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
+      update_colour_map(hit_atoms, colours[i], ha_map);
+    }
+    std::map<int, double> h_rads;
+    std::map<int, int> h_lw_mult;
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MolDrawOptions::MultiColourHighlightStyle::LASSO;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMoleculeWithHighlights(*m, "Lasso 1", ha_map, hb_map, h_rads,
+                                      h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "1.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash(baseName + "1.svg");
+  }
+#if 1
+  {
+    // The non-overlapping atom sets should have radii the same size.
+    std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
+    RDDepict::compute2DCoords(*m);
+
+    std::vector<std::string> smarts = {"CONN", "COC[OH]", "N#CC~CO"};
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+
+    for (size_t i = 0; i < smarts.size(); ++i) {
+      std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
+      update_colour_map(hit_atoms, colours[i], ha_map);
+    }
+    std::map<int, double> h_rads;
+    std::map<int, int> h_lw_mult;
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MolDrawOptions::MultiColourHighlightStyle::LASSO;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMoleculeWithHighlights(*m, "Lasso 2", ha_map, hb_map, h_rads,
+                                      h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "2.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash(baseName + "2.svg");
+  }
+#endif
+}
