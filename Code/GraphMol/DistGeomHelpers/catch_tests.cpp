@@ -725,3 +725,25 @@ TEST_CASE("Github #6365: cannot generate conformers for PF6- or SF6") {
     }
   }
 }
+
+TEST_CASE("Sequential random seeds") {
+  SECTION("basics") {
+    auto mol = "CCCCCCCCCCCC"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+
+    RWMol mol2(*mol);
+
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.enableSequentialRandomSeeds = true;
+    ps.useRandomCoords = true;
+    ps.randomSeed = 0xf00d;
+    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
+    CHECK(cids.size() == 10);
+    ps.randomSeed = 0xf00d + 5;
+    auto cids2 = DGeomHelpers::EmbedMultipleConfs(mol2, 5, ps);
+    CHECK(cids2.size() == 5);
+
+    compareConfs(mol.get(), &mol2, 5, 0);
+  }
+}

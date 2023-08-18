@@ -112,6 +112,8 @@ enum EmbedFailureCauses {
   trackFailures    keep track of which checks during the embedding process fail
   failures         if trackFailures is true, this is used to track the number
                    of times each embedding check fails
+  enableSequentialRandomSeeds    handle the random number seeds so that
+                                 conformer generation can be restarted
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -145,6 +147,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   double boundsMatForceScaling{1.0};
   bool trackFailures{false};
   std::vector<unsigned int> failures;
+  bool enableSequentialRandomSeeds{false};
 
   EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
   EmbedParameters(
