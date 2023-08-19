@@ -2284,7 +2284,7 @@ extern "C" char *findMCS(void *vmols, char *params) {
 }
 
 extern "C" char *makeXQMolBlob(CXQMol data, int *len) {
-  PRECONDITION(len, “empty len pointer”);
+  PRECONDITION(len, "empty len pointer");
   StringData.clear();
   auto *xqm = (ExtendedQueryMol *)data;
   try {
@@ -2317,7 +2317,7 @@ extern "C" CXQMol parseXQMolBlob(char *data, int len) {
 }
 
 extern "C" char *makeXQMolText(CXQMol data, int *len) {
-  PRECONDITION(len, “empty len pointer”);
+  PRECONDITION(len, "empty len pointer");
   auto *mol = (ExtendedQueryMol *)data;
 
   try {
