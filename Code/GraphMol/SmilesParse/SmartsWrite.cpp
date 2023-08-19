@@ -1002,7 +1002,7 @@ std::string MolFragmentToSmarts(const ROMol &mol,
     colors[idx] = Canon::WHITE_NODE;
   }
 
-  unsigned rootedAtAtom = -1;
+  int rootedAtAtom = -1;
   return molToSmarts(mol, doIsomericSmarts, std::move(colors),
                      bondsInPlay.get(), rootedAtAtom);
 }
