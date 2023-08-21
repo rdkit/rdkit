@@ -1656,7 +1656,7 @@ by passing an optional RascalOptions object:
   >>> f'{results[0].similarity:.2f}'
   '0.37'
   >>> results[0].smartsString
-  'Oc1ccccc1.[#6]=O'
+  'Oc1:c:c:c:c:c:1.[#6]=O'
   >>> opts.minFragSize = 3
   >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
   >>> len(results)
@@ -1664,7 +1664,7 @@ by passing an optional RascalOptions object:
   >>> f'{results[0].similarity:.2f}'
   '0.25'
   >>> results[0].smartsString
-  'Oc1ccccc1'
+  'Oc1:c:c:c:c:c:1.[#6]=O'
 
 In this case, the upper bound on the similarity score is below the default threshold
 of 0.7, so no results are returned.  Setting the threshold to 0.5 produces the second
@@ -1692,7 +1692,7 @@ with partial aromatic rings matching:
   >>> f'{results[0].similarity:.2f}'
   '0.76'
   >>> results[0].smartsString
-  'C1CCCC1-c(:cc):cc'
+  'C1CCCC1-c(:c:c):c:c'
 
 This result may look a bit odd, with a single aromatic carbon in the first SMARTS
 string.  This is a consequence of the fact that the MCES works on matching bonds.
