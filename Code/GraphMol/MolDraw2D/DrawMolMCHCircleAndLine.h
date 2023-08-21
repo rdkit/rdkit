@@ -1,3 +1,14 @@
+//
+//  Copyright (C) 2023 David Cosgrove and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+// This is the original multi-coloured highlighting code, which is done
+// by multi-coloured arcs and bars.
 
 #ifndef DRAWMOLMCHCIRCLEANDLINE_H
 #define DRAWMOLMCHCIRCLEANDLINE_H
