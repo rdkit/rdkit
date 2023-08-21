@@ -2520,3 +2520,99 @@ TEST_CASE("ensure unused features are not used") {
     CHECK(smiles == "C[C@H]1C[CH]CC(C[C@@H](C)[C@@H](C)O)C1");
   }
 }
+
+std::unique_ptr<ROMol> getSmartsRootedAtAtom(const ROMol &mol, int root_idx) {
+  bool doIsomericSmarts = true;
+  auto smarts = MolToSmarts(mol, doIsomericSmarts, root_idx);
+  return std::unique_ptr<ROMol>{SmartsToMol(smarts)};
+}
+
+TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
+  SubstructMatchParameters sssparams;
+  sssparams.useChirality = GENERATE(false, true);
+  CAPTURE(sssparams.useChirality);
+
+  SECTION("fully substituted chiral center in linear mol") {
+    auto mol1 = "C[C@](O)(F)CCCl"_smiles;
+    auto mol2 = "C[C@](F)(O)CCCl"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    REQUIRE(mol1->getNumAtoms() == 7);
+    REQUIRE(mol2->getNumAtoms() == 7);
+
+    auto root_idx = GENERATE(range(-1, 6));
+    CAPTURE(root_idx);
+    auto qmol1 = getSmartsRootedAtAtom(*mol1, root_idx);
+    auto qmol2 = getSmartsRootedAtAtom(*mol2, root_idx);
+
+    CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
+          !sssparams.useChirality);
+    CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
+          !sssparams.useChirality);
+  }
+
+  SECTION("chiral center w/ implicit H in linear mol") {
+    auto mol1 = "C[C@H](F)CCCl"_smiles;
+    auto mol2 = "C[C@@H](F)CCCl"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    REQUIRE(mol1->getNumAtoms() == 6);
+    REQUIRE(mol2->getNumAtoms() == 6);
+
+    auto root_idx = GENERATE(range(-1, 5));
+    CAPTURE(root_idx);
+    auto qmol1 = getSmartsRootedAtAtom(*mol1, root_idx);
+    auto qmol2 = getSmartsRootedAtAtom(*mol2, root_idx);
+
+    CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
+          !sssparams.useChirality);
+    CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
+          !sssparams.useChirality);
+  }
+
+  SECTION("fully substituted, asymmetric chiral atoms (2) in ring") {
+    auto mol1 = "C[C@](F)1CC[C@](N)(F)CC1"_smiles;
+    auto mol2 = "F[C@](C)1CC[C@](N)(F)CC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    REQUIRE(mol1->getNumAtoms() == 10);
+    REQUIRE(mol2->getNumAtoms() == 10);
+
+    auto root_idx = GENERATE(range(-1, 9));
+    CAPTURE(root_idx);
+    auto qmol1 = getSmartsRootedAtAtom(*mol1, root_idx);
+    auto qmol2 = getSmartsRootedAtAtom(*mol2, root_idx);
+
+    CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
+          !sssparams.useChirality);
+    CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
+          !sssparams.useChirality);
+  }
+
+  SECTION("partially substituted, asymmetric chiral atoms (2) in ring") {
+    auto mol1 = "C[C@H]1CC[C@@H](N)CC1"_smiles;
+    auto mol2 = "C[C@H]1CC[C@H](N)CC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    REQUIRE(mol1->getNumAtoms() == 8);
+    REQUIRE(mol2->getNumAtoms() == 8);
+
+    auto root_idx = GENERATE(range(-1, 7));
+    CAPTURE(root_idx);
+    auto qmol1 = getSmartsRootedAtAtom(*mol1, root_idx);
+    auto qmol2 = getSmartsRootedAtAtom(*mol2, root_idx);
+
+    CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
+    CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
+          !sssparams.useChirality);
+    CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
+          !sssparams.useChirality);
+  }
+}

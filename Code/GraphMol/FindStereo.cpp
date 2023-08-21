@@ -770,6 +770,20 @@ bool updateBonds(ROMol &mol, const std::vector<unsigned int> &aranks,
       auto sinfo = detail::getStereoInfo(bond);
       ASSERT_INVARIANT(sinfo.controllingAtoms.size() == 4,
                        "bad controlling atoms size");
+
+      if ((sinfo.controllingAtoms[0] == Chirality::StereoInfo::NOATOM &&
+           sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM) ||
+          (sinfo.controllingAtoms[2] == Chirality::StereoInfo::NOATOM &&
+           sinfo.controllingAtoms[3] == Chirality::StereoInfo::NOATOM)) {
+        // we have a bond with no neighbors on one side, which means it must
+        // have a single implicit H on that side. Since the H is implicit,
+        // there is no way to know whether it is cis or trans.
+        ASSERT_INVARIANT(
+            sinfo.specified == StereoSpecified::Unknown,
+            "stereo bond without neighbors can only be unspecified");
+        fixedBonds.set(bidx);
+      }
+
       if (fixedBonds[bidx]) {
         sinfos.push_back(std::move(sinfo));
       } else {

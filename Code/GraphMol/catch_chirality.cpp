@@ -3655,3 +3655,23 @@ M  END)CTAB";
   std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
   REQUIRE(mol);
 }
+
+TEST_CASE("GitHub Issue #6640", "[bug][stereo]") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+  Chirality::setUseLegacyStereoPerception(false);
+
+  auto p = SmilesParserParams();
+  p.sanitize = false;
+  p.removeHs = false;
+  std::string smiles{"NC1=NC(=N)N=C(N)C1C"};
+  std::unique_ptr<RWMol> mol(SmilesToMol(smiles, p));
+  REQUIRE(mol);
+
+  MolOps::removeHs(*mol);
+
+  auto cleanIt = true;
+  auto force = true;
+  auto flagPossibleStereoCenters = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force,
+                                flagPossibleStereoCenters);
+}

@@ -1233,31 +1233,36 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
         "random seed must either be positive, zero, or negative one");
     int new_seed = params->randomSeed;
     if (new_seed > -1) {
-      if (!multiplication_overflows_(rdcast<int>(ci + 1), params->randomSeed)) {
-        // old method of computing a new seed
-        new_seed = (ci + 1) * params->randomSeed;
+      if (params->enableSequentialRandomSeeds) {
+        new_seed += ci + 1;
       } else {
-        // If the above simple multiplication will overflow, use a
-        // cheap and easy way to hash the conformer index and seed
-        // together: for N'ary numerical system, where N is the
-        // maximum possible value of the pair of numbers. The
-        // following will generate unique integers:
-        // hash(a, b) = a + b * N
-        auto big_seed = rdcast<size_t>(params->randomSeed);
-        size_t max_val = std::max(ci + 1, big_seed);
-        size_t big_num = big_seed + max_val * (ci + 1);
-        // only grab the first 31 bits xor'd with the next 31 bits to
-        // make sure its positive, careful, the 'ULL' is important
-        // here, 0x7fffffff is the 'int' type because of C default
-        // number semantics and that we definitely don't want!
-        const size_t positive_int_mask = 0x7fffffffULL;
-        size_t folded_num = (big_num & positive_int_mask) ^ (big_num >> 31ULL);
-        new_seed = rdcast<int>(folded_num & positive_int_mask);
+        if (!multiplication_overflows_(rdcast<int>(ci + 1),
+                                       params->randomSeed)) {
+          // old method of computing a new seed
+          new_seed = (ci + 1) * params->randomSeed;
+        } else {
+          // If the above simple multiplication will overflow, use a
+          // cheap and easy way to hash the conformer index and seed
+          // together: for N'ary numerical system, where N is the
+          // maximum possible value of the pair of numbers. The
+          // following will generate unique integers:
+          // hash(a, b) = a + b * N
+          auto big_seed = rdcast<size_t>(params->randomSeed);
+          size_t max_val = std::max(ci + 1, big_seed);
+          size_t big_num = big_seed + max_val * (ci + 1);
+          // only grab the first 31 bits xor'd with the next 31 bits to
+          // make sure its positive, careful, the 'ULL' is important
+          // here, 0x7fffffff is the 'int' type because of C default
+          // number semantics and that we definitely don't want!
+          const size_t positive_int_mask = 0x7fffffffULL;
+          size_t folded_num =
+              (big_num & positive_int_mask) ^ (big_num >> 31ULL);
+          new_seed = rdcast<int>(folded_num & positive_int_mask);
+        }
       }
     }
     CHECK_INVARIANT(new_seed >= -1,
                     "Something went wrong calculating a new seed");
-
     bool gotCoords =
         EmbeddingOps::embedPoints(&positions, *eargs, *params, new_seed);
 
