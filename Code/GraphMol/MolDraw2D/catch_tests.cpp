@@ -304,7 +304,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"github6504_1.svg", 1429448598U},
     {"github6504_2.svg", 2871662880U},
     {"github6569_1.svg", 116573839U},
-    {"github6569_2.svg", 2367779037U}};
+    {"github6569_2.svg", 2367779037U},
+    {"lasso_highlights_1.svg", 1716626818U},
+    {"lasso_highlights_2.svg", 1928517049U},
+    {"lasso_highlights_3.svg", 1651981358U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -8135,7 +8138,7 @@ TEST_CASE("Lasso highlights") {
       }
     }
   };
-
+#if 1
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
@@ -8157,7 +8160,6 @@ TEST_CASE("Lasso highlights") {
     MolDraw2DSVG drawer(500, 500);
     drawer.drawOptions().multiColourHighlightStyle =
         RDKit::MolDrawOptions::MultiColourHighlightStyle::LASSO;
-    drawer.drawOptions().addAtomIndices = true;
     drawer.drawMoleculeWithHighlights(*m, "Lasso 1", ha_map, hb_map, h_rads,
                                       h_lw_mult);
     drawer.finishDrawing();
@@ -8168,6 +8170,7 @@ TEST_CASE("Lasso highlights") {
     outs.close();
     check_file_hash(baseName + "1.svg");
   }
+#endif
 #if 1
   {
     // The non-overlapping atom sets should have radii the same size.
@@ -8176,6 +8179,41 @@ TEST_CASE("Lasso highlights") {
     RDDepict::compute2DCoords(*m);
 
     std::vector<std::string> smarts = {"CONN", "COC[OH]", "N#CC~CO"};
+    std::vector<DrawColour> colours = {DrawColour(1.0, 0.0, 0.0),
+                                       DrawColour(0.0, 1.0, 0.0),
+                                       DrawColour(0.0, 0.0, 1.0)};
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+
+    for (size_t i = 0; i < smarts.size(); ++i) {
+      std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
+      update_colour_map(hit_atoms, colours[i], ha_map);
+    }
+    std::map<int, double> h_rads;
+    std::map<int, int> h_lw_mult;
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MolDrawOptions::MultiColourHighlightStyle::LASSO;
+    drawer.drawMoleculeWithHighlights(*m, "Lasso 2", ha_map, hb_map, h_rads,
+                                      h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "2.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash(baseName + "2.svg");
+  }
+#endif
+#if 1
+  {
+    // Another example.
+    std::string smiles = "c1ccncc1c1ccc(C2CCC2)cc1";
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
+    RDDepict::compute2DCoords(*m);
+
+    std::vector<std::string> smarts = {"a1aaaaa1a1aaaaa1", "c1ccccn1",
+                                       "c1ccccc1", "C1CCC1"};
     std::vector<DrawColour> colours = {
         DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
         DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
@@ -8191,16 +8229,15 @@ TEST_CASE("Lasso highlights") {
     MolDraw2DSVG drawer(500, 500);
     drawer.drawOptions().multiColourHighlightStyle =
         RDKit::MolDrawOptions::MultiColourHighlightStyle::LASSO;
-    drawer.drawOptions().addAtomIndices = true;
-    drawer.drawMoleculeWithHighlights(*m, "Lasso 2", ha_map, hb_map, h_rads,
+    drawer.drawMoleculeWithHighlights(*m, "Lasso 3", ha_map, hb_map, h_rads,
                                       h_lw_mult);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs(baseName + "2.svg");
+    std::ofstream outs(baseName + "3.svg");
     outs << text;
     outs.flush();
     outs.close();
-    check_file_hash(baseName + "2.svg");
+    check_file_hash(baseName + "3.svg");
   }
 #endif
 }

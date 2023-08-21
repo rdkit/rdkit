@@ -1,4 +1,11 @@
-
+//
+//  Copyright (C) 2023 David Cosgrove and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 
 #ifndef DRAWMOLMCHLASSO_H
 #define DRAWMOLMCHLASSO_H
@@ -49,7 +56,8 @@ class DrawMolMCHLasso : public DrawMolMCH {
   // turn mcHighlightAtomMap_ into a mapping of vectors of atoms of a particular
   // colour, indexed by the colour.
   void extractAtomColourLists(std::vector<DrawColour> &colours,
-                              std::vector<std::vector<int>> &colourAtoms) const;
+                              std::vector<std::vector<int>> &colourAtoms,
+                              std::vector<std::vector<int>> &colourLists) const;
   void drawLasso(size_t colNum, const DrawColour &col,
                  const std::vector<int> &colAtoms);
   void extractAtomArcs(size_t colNum, const DrawColour &col,

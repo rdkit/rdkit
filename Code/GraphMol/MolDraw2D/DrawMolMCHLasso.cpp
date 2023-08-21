@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021-2022 David Cosgrove and other RDKit contributors
+//  Copyright (C) 2023 David Cosgrove and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,13 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// Original author: David Cosgrove (CozChemIx Limited)
-//
 // This is based on a suggestion and code from Christian Feldmann.
 // It was discussion #4607.  His Python implementation (which I haven't
 // followed to any great extent) is at
 // https://github.com/c-feldmann/lassohighlight
 
+#include <algorithm>
 #include <list>
 #include <vector>
 
@@ -43,19 +42,23 @@ void DrawMolMCHLasso::extractHighlights(double scale) { extractMCHighlights(); }
 void DrawMolMCHLasso::extractMCHighlights() {
   std::vector<DrawColour> colours;
   std::vector<std::vector<int>> colourAtoms;
-  extractAtomColourLists(colours, colourAtoms);
-  for (size_t i = 0U; i < colours.size(); ++i) {
-    //    if (i != 2) {
-    //      continue;
-    //    }
-    drawLasso(i, colours[i], colourAtoms[i]);
+  std::vector<std::vector<int>> colourLists;
+  extractAtomColourLists(colours, colourAtoms, colourLists);
+  for (const auto &colourList : colourLists) {
+    for (size_t i = 0U; i < colourList.size(); ++i) {
+      drawLasso(i, colours[colourList[i]], colourAtoms[colourList[i]]);
+    }
   }
 }
 
 // ****************************************************************************
+// Get the atoms to lasso in the given colours.  Split the lists up into
+// different sets that overlap.  That way, we won't have a single lasso
+// that is larger than ones in a different set that doesn't overlap with it.
 void DrawMolMCHLasso::extractAtomColourLists(
     std::vector<DrawColour> &colours,
-    std::vector<std::vector<int>> &colourAtoms) const {
+    std::vector<std::vector<int>> &colourAtoms,
+    std::vector<std::vector<int>> &colourLists) const {
   for (const auto &cm : mcHighlightAtomMap_) {
     for (const auto &col : cm.second) {
       auto cpos = std::find(colours.begin(), colours.end(), col);
@@ -66,6 +69,52 @@ void DrawMolMCHLasso::extractAtomColourLists(
         colourAtoms[std::distance(colours.begin(), cpos)].push_back(cm.first);
       }
     }
+  }
+  for (size_t i = 0U; i < colourAtoms.size(); ++i) {
+    colourLists.push_back(std::vector<int>(1, i));
+  }
+  if (colourLists.size() < 2) {
+    return;
+  }
+  // This is pretty inefficient, but the lists should all be small.  It doesn't
+  // seem worth doing anything more sophisticated.
+  auto listsIntersect =
+      [](const std::vector<int> &v1, const std::vector<int> &v2,
+         const std::vector<std::vector<int>> &colourAtoms) -> bool {
+    for (auto &mv1 : v1) {
+      for (auto ca : colourAtoms[mv1]) {
+        for (auto &mv2 : v2) {
+          if (std::find(colourAtoms[mv2].begin(), colourAtoms[mv2].end(), ca) !=
+              colourAtoms[mv2].end()) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+  bool didSomething = true;
+  while (didSomething && colourLists.size() > 1) {
+    didSomething = false;
+    for (size_t i = 0U; i < colourLists.size() - 1; ++i) {
+      for (size_t j = i + 1; j < colourLists.size(); ++j) {
+        if (listsIntersect(colourLists[i], colourLists[j], colourAtoms)) {
+          colourLists[i].insert(colourLists[i].end(), colourLists[j].begin(),
+                                colourLists[j].end());
+          colourLists[j].clear();
+          didSomething = true;
+          break;
+        }
+      }
+      if (didSomething) {
+        break;
+      }
+    }
+    colourLists.erase(std::remove_if(colourLists.begin(), colourLists.end(),
+                                     [](const std::vector<int> &v) -> bool {
+                                       return v.empty();
+                                     }),
+                      colourLists.end());
   }
 }
 
@@ -150,8 +199,6 @@ Point2D *adjustLineEnd(const DrawShapeArc &arc, DrawShapeSimpleLine &line) {
     adjEnd = &line.points_[0];
     fixEnd = &line.points_[1];
   }
-  std::cout << "adjEnd distance : " << (arc.points_[0] - *adjEnd).lengthSq()
-            << " vs " << arc.points_[1].x * arc.points_[1].x << std::endl;
   if (fabs((arc.points_[0] - *adjEnd).lengthSq() -
            arc.points_[1].x * arc.points_[1].x) < 1.0e-4) {
     return nullptr;
@@ -161,7 +208,12 @@ Point2D *adjustLineEnd(const DrawShapeArc &arc, DrawShapeSimpleLine &line) {
   return adjEnd;
 }
 }  // namespace
+
 // ****************************************************************************
+// Take the initial circles and lines, and:
+// 1.trim the lines back to the circles they intersect
+// 2.make a new set of arcs that go between the pairs of lines, cutting
+// out the part that is inside each pair.
 void DrawMolMCHLasso::fixArcsAndLines(
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
@@ -170,19 +222,14 @@ void DrawMolMCHLasso::fixArcsAndLines(
   std::vector<std::unique_ptr<DrawShapeArc>> newArcs;
   std::list<double> lineEndAngles;
   for (auto &arc : arcs) {
-    //    if (arc->atom1_ != 10 && arc->atom1_ != 12) {
-    //      continue;
-    //    }
     lineEndAngles.clear();
+    // find 2 lines that intersect with this arc.  The arc should not
+    // be drawn between them.
     for (auto &line1 : lines) {
       if (arc->atom1_ == line1->atom1_ || arc->atom1_ == line1->atom2_) {
-        // find the other line
         for (auto &line2 : lines) {
           if (line1 != line2 && line1->atom1_ == line2->atom1_ &&
               line1->atom2_ == line2->atom2_) {
-            std::cout << "arc at " << arc->atom1_ << " and lines between "
-                      << line1->atom1_ << " and " << line1->atom2_ << " : "
-                      << arc->ang1_ << " to " << arc->ang2_ << std::endl;
             auto adjEnd1 = adjustLineEnd(*arc, *line1);
             double ang1, ang2;
             Point2D rad1, rad2;
@@ -199,74 +246,26 @@ void DrawMolMCHLasso::fixArcsAndLines(
             } else {
               continue;
             }
+            // make sure they're going round in the same direction
             auto crossZ = rad1.x * rad2.y - rad1.y * rad2.x;
-            std::cout << "crossZ : " << crossZ << std::endl;
-            auto mid = (*adjEnd1 + *adjEnd2) / 2.0;
-            auto rad = arc->points_[0].directionVector(mid);
-            auto ang3 = 360.0 - rad.signedAngleTo(index) * 180.0 / M_PI;
-            std::cout << ang1 << " : " << ang3 << " : " << ang2 << std::endl;
             if (crossZ > 0.0) {
-              std::cout << "swapping 1 and 2" << std::endl;
               std::swap(ang1, ang2);
             }
-            //            auto insPos = lineEndAngles.begin();
-            //            while (insPos != lineEndAngles.end() && *insPos <
-            //            ang1) {
-            //              ++insPos;
-            //            }
-            //            lineEndAngles.insert(insPos, ang1);
-            //            lineEndAngles.insert(insPos, ang2);
             lineEndAngles.push_back(ang2);
             lineEndAngles.push_back(ang1);
-#if 0
-              std::cout << "centre : " << arc->points_[0]
-                        << " to adjEnd1 : " << *adjEnd1 << " and : " << *adjEnd2
-                        << std::endl;
-              auto rad1 = arc->points_[0].directionVector(*adjEnd1);
-              auto ang1 = 360.0 - rad1.signedAngleTo(index) * 180.0 / M_PI;
-              auto rad2 = arc->points_[0].directionVector(*adjEnd2);
-              auto ang2 = 360.0 - rad2.signedAngleTo(index) * 180.0 / M_PI;
-              if (ang1 > ang2) {
-                std::swap(ang1, ang2);
-              }
-              std::cout << "angles : " << ang1 << " and " << ang2 << std::endl;
-              if (ang1 < arc->ang1_ || ang1 > arc->ang2_ || ang2 < arc->ang1_ ||
-                  ang2 > arc->ang2_) {
-                std::cout << "skipping" << std::endl;
-                continue;
-              }
-              DrawShapeArc *newArc =
-                  new DrawShapeArc(arc->points_, ang2, arc->ang2_,
-                                   arc->lineWidth_, arc->scaleLineWidth_,
-                                   arc->lineColour_, arc->fill_, arc->atom1_);
-              newArcs.emplace_back(newArc);
-              arc->ang2_ = ang1;
-              std::cout << "angles now " << arc->ang1_ << " to " << arc->ang2_
-                        << " and " << newArc->ang1_ << " to " << newArc->ang2_
-                        << std::endl;
-#endif
           }
         }
       }
     }
-    std::cout << "Angles :";
-    for (auto a : lineEndAngles) {
-      std::cout << " " << a;
-    }
-    std::cout << std::endl;
+    // Move the front angle to the back, so the list is now the bits to draw,
+    // not the bits to skip.
     lineEndAngles.push_back(lineEndAngles.front());
     lineEndAngles.pop_front();
-    std::cout << "Fiddled Angles :";
-    for (auto a : lineEndAngles) {
-      std::cout << " " << a;
-    }
-    std::cout << std::endl;
     for (auto ang = lineEndAngles.begin(); ang != lineEndAngles.end();) {
       DrawShapeArc *newArc = new DrawShapeArc(
           arc->points_, *ang++, *ang++, arc->lineWidth_, arc->scaleLineWidth_,
           arc->lineColour_, arc->fill_, arc->atom1_);
       newArcs.emplace_back(newArc);
-      //      break;
     }
   }
   arcs.clear();
