@@ -1597,7 +1597,7 @@ RascalMCES can only work on 2 molecules at a time:
   >>> mol2 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL152361")
   >>> res = rdRascalMCES.FindMCES(mol1, mol2)
   >>> res[0].smartsString
-  'CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3'
+  'CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3'
   >>> len(res[0].bondMatches())
   33
 
@@ -1664,7 +1664,7 @@ by passing an optional RascalOptions object:
   >>> f'{results[0].similarity:.2f}'
   '0.25'
   >>> results[0].smartsString
-  'Oc1:c:c:c:c:c:1.[#6]=O'
+  'Oc1:c:c:c:c:c:1'
 
 In this case, the upper bound on the similarity score is below the default threshold
 of 0.7, so no results are returned.  Setting the threshold to 0.5 produces the second
