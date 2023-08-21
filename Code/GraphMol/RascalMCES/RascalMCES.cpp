@@ -23,6 +23,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include <boost/dynamic_bitset.hpp>
+
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/new_canon.h>
@@ -501,16 +503,22 @@ void makeModularProduct(const ROMol &mol1,
 // has more atoms than mol2 which is not checked.  Returns a minimum of 1.
 unsigned int calcLowerBound(const ROMol &mol1, const ROMol &mol2,
                             double simThresh) {
-  std::set<int> mol1Atnos, mol2Atnos;
+  // We'll assume that the periodic table doesn't go above this in the
+  // foreseeable future.
+  std::vector<int> mol1Atnos;
+  boost::dynamic_bitset<> mol2Atnos(200);
   for (const auto &a : mol1.atoms()) {
-    mol1Atnos.insert(a->getAtomicNum());
+    mol1Atnos.push_back(a->getAtomicNum());
   }
+  std::sort(mol1Atnos.begin(), mol1Atnos.end());
+  mol1Atnos.erase(std::unique(mol1Atnos.begin(), mol1Atnos.end()),
+                  mol1Atnos.end());
   for (const auto &a : mol2.atoms()) {
-    mol2Atnos.insert(a->getAtomicNum());
+    mol2Atnos.set(a->getAtomicNum());
   }
   int deltaVg1 = 0;
   for (auto mol1_atno : mol1Atnos) {
-    if (mol2Atnos.find(mol1_atno) == mol2Atnos.end()) {
+    if (!mol2Atnos[mol1_atno]) {
       ++deltaVg1;
     }
   }
