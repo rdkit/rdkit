@@ -1030,7 +1030,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
                           const UINT_VECT &ranks, MolStack &molStack,
                           const boost::dynamic_bitset<> *bondsInPlay,
                           const std::vector<std::string> *bondSymbols,
-                          bool doIsomericSmiles, bool doRandom) {
+                          bool doIsomericSmiles, bool doRandom,
+                          bool doChiralInversions) {
   PRECONDITION(colors.size() >= mol.getNumAtoms(), "vector too small");
   PRECONDITION(ranks.size() >= mol.getNumAtoms(), "vector too small");
   PRECONDITION(!bondsInPlay || bondsInPlay->size() >= mol.getNumBonds(),
@@ -1088,15 +1089,16 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
         if (atom->hasProp(common_properties::_brokenChirality)) {
           continue;
         }
-        const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
-        int perm = 0;
-        if (Chirality::hasNonTetrahedralStereo(atom)) {
-          atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
-        }
 
         // Check if the atom can be chiral, and if chirality needs inversion
+        const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
         if (trueOrder.size() >= 3) {
           int nSwaps = 0;
+          int perm = 0;
+          if (Chirality::hasNonTetrahedralStereo(atom)) {
+            atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
+          }
+
           // We have to make sure that trueOrder contains all the
           // bonds, even if they won't be written to the SMILES
           if (trueOrder.size() < atom->getDegree()) {
@@ -1122,7 +1124,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
             }
           }
           // FIX: handle this case for non-tet stereo too
-          if (chiralAtomNeedsTagInversion(
+          if (doChiralInversions &&
+              chiralAtomNeedsTagInversion(
                   mol, atom,
                   molStack.begin()->obj.atom->getIdx() == atom->getIdx(),
                   atomRingClosures[atom->getIdx()].size())) {

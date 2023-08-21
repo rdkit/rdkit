@@ -611,7 +611,7 @@ bool CyclicHAtomMatcher(const ROMol &mol, const Atom &atom,
   return CyclicAtomMatcher(mol, atom, ignore);
 }
 
-bool DAtomMatcher(const ROMol &mol, const Atom &atom,
+bool DAtomMatcher(const ROMol &, const Atom &atom,
                   boost::dynamic_bitset<> ignore) {
   if (atom.getAtomicNum() == 1 && atom.getIsotope() == 2) {
     ignore.set(atom.getIdx());
@@ -620,7 +620,7 @@ bool DAtomMatcher(const ROMol &mol, const Atom &atom,
   return false;
 }
 
-bool TAtomMatcher(const ROMol &mol, const Atom &atom,
+bool TAtomMatcher(const ROMol &, const Atom &atom,
                   boost::dynamic_bitset<> ignore) {
   if (atom.getAtomicNum() == 1 && atom.getIsotope() == 3) {
     ignore.set(atom.getIdx());
@@ -629,7 +629,7 @@ bool TAtomMatcher(const ROMol &mol, const Atom &atom,
   return false;
 }
 
-bool HplusAtomMatcher(const ROMol &mol, const Atom &atom,
+bool HplusAtomMatcher(const ROMol &, const Atom &atom,
                       boost::dynamic_bitset<> ignore) {
   if (atom.getAtomicNum() == 1 && atom.getFormalCharge() == 1) {
     ignore.set(atom.getIdx());
@@ -638,7 +638,7 @@ bool HplusAtomMatcher(const ROMol &mol, const Atom &atom,
   return false;
 }
 
-bool PolAtomMatcher(const ROMol &mol, const Atom &atom,
+bool PolAtomMatcher(const ROMol &, const Atom &atom,
                     boost::dynamic_bitset<> ignore) {
   std::string label;
   if (atom.getPropIfPresent(common_properties::atomLabel, label) &&
