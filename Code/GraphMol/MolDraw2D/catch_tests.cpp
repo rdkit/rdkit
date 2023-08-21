@@ -8159,7 +8159,7 @@ TEST_CASE("Lasso highlights") {
     std::map<int, int> h_lw_mult;
     MolDraw2DSVG drawer(500, 500);
     drawer.drawOptions().multiColourHighlightStyle =
-        RDKit::MolDrawOptions::MultiColourHighlightStyle::LASSO;
+        RDKit::MultiColourHighlightStyle::LASSO;
     drawer.drawMoleculeWithHighlights(*m, "Lasso 1", ha_map, hb_map, h_rads,
                                       h_lw_mult);
     drawer.finishDrawing();
@@ -8193,7 +8193,7 @@ TEST_CASE("Lasso highlights") {
     std::map<int, int> h_lw_mult;
     MolDraw2DSVG drawer(500, 500);
     drawer.drawOptions().multiColourHighlightStyle =
-        RDKit::MolDrawOptions::MultiColourHighlightStyle::LASSO;
+        RDKit::MultiColourHighlightStyle::LASSO;
     drawer.drawMoleculeWithHighlights(*m, "Lasso 2", ha_map, hb_map, h_rads,
                                       h_lw_mult);
     drawer.finishDrawing();
@@ -8228,7 +8228,7 @@ TEST_CASE("Lasso highlights") {
     std::map<int, int> h_lw_mult;
     MolDraw2DSVG drawer(500, 500);
     drawer.drawOptions().multiColourHighlightStyle =
-        RDKit::MolDrawOptions::MultiColourHighlightStyle::LASSO;
+        RDKit::MultiColourHighlightStyle::LASSO;
     drawer.drawMoleculeWithHighlights(*m, "Lasso 3", ha_map, hb_map, h_rads,
                                       h_lw_mult);
     drawer.finishDrawing();

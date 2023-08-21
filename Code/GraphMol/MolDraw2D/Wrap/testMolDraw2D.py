@@ -566,7 +566,7 @@ M  END
         if COLS[col_num] not in cols[el]:
           cols[el].append(COLS[col_num])
 
-    def do_a_picture(smi, smarts, label):
+    def do_a_picture(smi, smarts, label, lasso=None):
 
       rdDepictor.SetPreferCoordGen(False)
       mol = Chem.MolFromSmiles(smi)
@@ -587,6 +587,8 @@ M  END
 
       d = rdMolDraw2D.MolDraw2DSVG(500, 500)
       d.drawOptions().fillHighlights = False
+      if lasso is not None:
+        d.drawOptions().multiColourHighlightStyle = Draw.MultiColourHighlightStyle.Lasso
       d.DrawMoleculeWithHighlights(mol, label, acols, bcols, h_rads, h_lw_mult, -1)
 
       d.FinishDrawing()
@@ -600,6 +602,10 @@ M  END
       txt.find("ellipse cx='244.253' cy='386.518'"
                " rx='11.9872' ry='12.8346'"
                " style='fill:none;stroke:#00FF00'"), -1)
+    txt = do_a_picture(smi, smarts, 'pyTest4', lasso="NotNone")
+    # the lasso mode puts paths, not ellipses.
+    self.assertGreater(txt.find("<path class='atom-5'"), -1)
+    self.assertEqual(txt.find("ellipse"), -1)
 
     # test for no-longer-mysterious OSX crash.
     smi = 'c1ccccc1Cl'

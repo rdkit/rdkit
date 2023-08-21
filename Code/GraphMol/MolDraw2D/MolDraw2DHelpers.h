@@ -143,8 +143,9 @@ inline void assignBWPalette(ColourPalette &palette) {
   palette[-1] = DrawColour(0, 0, 0);
 };
 
+enum class MultiColourHighlightStyle { CIRCLEANDLINE, LASSO };
+
 struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
-  enum class MultiColourHighlightStyle : unsigned char { CIRCLEANDLINE, LASSO };
   bool atomLabelDeuteriumTritium =
       false;  // toggles replacing 2H with D and 3H with T
   bool dummiesAreAttachments = false;  // draws "breaks" at dummy atoms

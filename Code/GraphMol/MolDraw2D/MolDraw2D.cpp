@@ -149,13 +149,13 @@ void MolDraw2D::drawMoleculeWithHighlights(
   setupTextDrawer();
   MolDraw2D_detail::DrawMol *dm = nullptr;
   switch (drawOptions().multiColourHighlightStyle) {
-    case MolDrawOptions::MultiColourHighlightStyle::CIRCLEANDLINE:
+    case MultiColourHighlightStyle::CIRCLEANDLINE:
       dm = new MolDraw2D_detail::DrawMolMCHCircleAndLine(
           mol, legend, panelWidth(), panelHeight(), drawOptions(),
           *text_drawer_, highlight_atom_map, highlight_bond_map,
           highlight_radii, highlight_linewidth_multipliers, confId);
       break;
-    case MolDrawOptions::MultiColourHighlightStyle::LASSO:
+    case MultiColourHighlightStyle::LASSO:
       dm = new MolDraw2D_detail::DrawMolMCHLasso(
           mol, legend, panelWidth(), panelHeight(), drawOptions(),
           *text_drawer_, highlight_atom_map, highlight_bond_map,
