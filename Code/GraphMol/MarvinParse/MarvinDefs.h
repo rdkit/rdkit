@@ -8,11 +8,17 @@
 //  of the RDKit source tree.
 //
 
+//  This software is based on the Chemaxon documentation for the MRV format:P
+// https://docs.chemaxon.com/display/docs/marvin-documents-mrv.md
+// and this implmentation is tested against the parsing and generation in the
+// Marvin JS sketcher: https://marvinjs-demo.chemaxon.com/latest/demo.html
+
 #ifndef RD_MARVINDEFS_H
 #define RD_MARVINDEFS_H
 
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSGroupParsing.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
@@ -25,7 +31,7 @@
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-#include <float.h> // Needed for DBL_MAX on Clang
+#include <float.h>  // Needed for DBL_MAX on Clang
 
 using boost::property_tree::ptree;
 
@@ -136,6 +142,7 @@ class MarvinAtom {
 
   MarvinAtom();
   MarvinAtom(const MarvinAtom &atomToCopy, std::string newId);
+  ~MarvinAtom() {}
 
   bool operator==(const MarvinAtom &rhs) const;
 
@@ -195,8 +202,8 @@ class MarvinRectangle {
   MarvinRectangle(double left, double right, double top, double bottom);
   MarvinRectangle(const RDGeom::Point3D &upperLeftInit,
                   const RDGeom::Point3D &lowerRightInit);
-  MarvinRectangle(const std::vector<MarvinAtom *> atoms);
-  MarvinRectangle(const std::vector<MarvinRectangle> rects);
+  MarvinRectangle(const std::vector<MarvinAtom *> &atoms);
+  MarvinRectangle(const std::vector<MarvinRectangle> &rects);
 
   void extend(const MarvinRectangle &otherRectangle);
 
@@ -212,13 +219,50 @@ class MarvinRectangle {
                                           MarvinRectangle &r2);
 };
 
+template <typename T>
+typename std::vector<std::unique_ptr<T>>::iterator findUniquePtr(
+    std::vector<std ::unique_ptr<T>> &vector, T *itemToFind) {
+  auto foundUniqIter = find_if(vector.begin(), vector.end(),
+                               [itemToFind](std::unique_ptr<T> &uniquePtr) {
+                                 return uniquePtr.get() == itemToFind;
+                               });
+
+  if (foundUniqIter == vector.end()) {
+    throw FileParseException("Unexpected error - item to find not found");
+  }
+
+  return foundUniqIter;
+}
+
+template <typename T>
+void eraseUniquePtr(std::vector<std ::unique_ptr<T>> &vector, T *itemToErase) {
+  // auto removeUniqIter = find_if(vector.begin(), vector.end(),
+  //                               [itemToErase](std::unique_ptr<T> &uniquePtr)
+  //                               {
+  //                                 return uniquePtr.get() == itemToErase;
+  //
+
+  auto removeUniqIter = findUniquePtr<T>(vector, itemToErase);
+
+  if (removeUniqIter == vector.end()) {
+    throw FileParseException("Unexpected error - item to remove not found");
+  }
+
+  vector.erase(removeUniqIter);
+}
+
 class MarvinMolBase {
  public:
   std::string molID;
   std::string id;  // used in all sGroups
+
+  // these atoms and bonds are only owned by this mol if it is a MarvinMol or
+  // MarvinSuperatomSgroup all other derived classes have atoms that are owned
+  // by the actual parent, and are references
   std::vector<MarvinAtom *> atoms;
   std::vector<MarvinBond *> bonds;
-  std::vector<MarvinMolBase *> sgroups;
+
+  std::vector<std::unique_ptr<MarvinMolBase>> sgroups;
   MarvinMolBase *parent;
 
   virtual std::string role() const = 0;
@@ -228,6 +272,16 @@ class MarvinMolBase {
   void addSgroupsToPtree(ptree &pt) const;
 
   virtual MarvinMolBase *copyMol(std::string idAppend) const = 0;
+  void pushOwnedAtom(MarvinAtom *atom);
+  void pushOwnedBond(MarvinBond *bond);
+
+  virtual void pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atom);
+  virtual void pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bond);
+
+  virtual void removeOwnedAtom(MarvinAtom *atom);
+  virtual void removeOwnedBond(MarvinBond *bond);
+  virtual void moveOwnedAtom(MarvinAtom *atom, MarvinMolBase *moveToMol);
+  virtual void moveOwnedBond(MarvinBond *bond, MarvinMolBase *moveToMol);
 
   int getExplicitValence(const MarvinAtom &marvinAtom) const;
 
@@ -252,20 +306,40 @@ class MarvinMolBase {
       ,
       int &bondCount  // starting and ending bond count
       ,
-      int &sgCount);  // starting and ending sq count
-
- private:
-  void cleanUpNumberingMolsAtomsBonds(
-      int &molCount  // this is the starting mol count, and receives the ending
-                     // mol count - THis is used when
-                     // MarvinMol->convertToSuperAtaoms is called multiple times
-                     // from a RXN
+      int &sgCount  // starting and ending sq count
       ,
-      int &atomCount  // starting and ending atom count
+      std::map<std::string, std::string>
+          &sgMap  // map from old sg number to new sg number
       ,
-      int &bondCount);  // starting and ending bond count
+      std::map<std::string, std::string>
+          &atomMap  // map from old atom number to new atom number
+      ,
+      std::map<std::string, std::string>
+          &bondMap  // map from old bond number to new bond number
+  );
 
-  void cleanUpSgNumbering(int &sgCount);
+  // the following is vitual because some dirived classes need to do more than
+  // just call the base class.  Currently, only MarvinSuperatomSgroup does this
+ public:
+  virtual void cleanUpNumberingMolsAtomsBonds(
+      int &molCount,  // this is the starting mol count, and receives the ending
+                      // mol count - THis is used when
+                      // MarvinMol->convertToSuperAtaoms is called multiple
+                      // times from a RXN
+      int &atomCount,  // starting and ending atom count
+      int &bondCount,  // starting and ending bond count
+      std::map<std::string, std::string> &sgMap,
+      std::map<std::string, std::string> &atomMap,
+      std::map<std::string, std::string> &bondMap);
+
+  void cleanUpSgNumbering(int &sgCount,
+                          std::map<std::string, std::string> &sgMap);
+
+  // the following is vitual because some dirived classes need to do more than
+  // just call the base class.  Currently, only MarvinSuperatomSgroup does this
+
+  virtual IsSgroupInAtomSetResult isSgroupInSetOfAtoms(
+      std::vector<MarvinAtom *> &setOfAtoms) const;
 
  public:
   static bool atomRefInAtoms(MarvinAtom *a, std::string b);
@@ -279,16 +353,19 @@ class MarvinMolBase {
   void prepSgroupsForRDKit();
   void processSgroupsFromRDKit();
 
-  bool isPassiveRoleForExpansion() const;
-  bool isPassiveRoleForContraction() const;
-
-  IsSgroupInAtomSetResult isSgroupInSetOfAtoms(
-      std::vector<MarvinAtom *> &setOfAtoms) const;
+  virtual bool isPassiveRoleForExpansion() const;
+  virtual bool isPassiveRoleForContraction() const;
+  virtual void processSpecialSgroups();
+  virtual void parseMoleculeSpecific(RDKit::RWMol *mol,
+                                     std::unique_ptr<SubstanceGroup> &sgroup,
+                                     int sequenceId);
 
   bool has2dCoords() const;
   bool has3dCoords() const;
   bool hasCoords() const;
   void removeCoords();
+
+  void parseAtomsAndBonds(ptree &molTree);
 };
 
 class MarvinSruCoModSgroup : public MarvinMolBase {
@@ -297,6 +374,8 @@ class MarvinSruCoModSgroup : public MarvinMolBase {
                          // MarvinModificationSgroup
  public:
   MarvinSruCoModSgroup(std::string type, MarvinMolBase *parent);
+  MarvinSruCoModSgroup(MarvinMolBase *parent, std::string role, ptree &molTree);
+
   MarvinMolBase *copyMol(std::string idAppendage) const override;
 
   std::string title;
@@ -308,11 +387,16 @@ class MarvinSruCoModSgroup : public MarvinMolBase {
 
   std::string role() const override;
   bool hasAtomBondBlocks() const override;
+  void parseMoleculeSpecific(RDKit::RWMol *mol,
+                             std::unique_ptr<SubstanceGroup> &sgroup,
+                             int sequenceId) override;
 };
 
 class MarvinDataSgroup : public MarvinMolBase {
  public:
   MarvinDataSgroup(MarvinMolBase *parent);
+  MarvinDataSgroup(MarvinMolBase *parent, ptree &molTree);
+
   MarvinMolBase *copyMol(std::string idAppendage) const override;
 
   std::string context;
@@ -331,6 +415,9 @@ class MarvinDataSgroup : public MarvinMolBase {
 
   std::string role() const override;
   bool hasAtomBondBlocks() const override;
+  void parseMoleculeSpecific(RDKit::RWMol *mol,
+                             std::unique_ptr<SubstanceGroup> &sgroup,
+                             int sequenceId) override;
 };
 
 class MarvinSuperatomSgroupExpanded : public MarvinMolBase {
@@ -338,6 +425,8 @@ class MarvinSuperatomSgroupExpanded : public MarvinMolBase {
   std::string title;
 
   MarvinSuperatomSgroupExpanded(MarvinMolBase *parent);
+  MarvinSuperatomSgroupExpanded(MarvinMolBase *parent, ptree &molTree);
+
   MarvinMolBase *copyMol(std::string idAppendage) const override;
 
   ~MarvinSuperatomSgroupExpanded() override;
@@ -349,11 +438,18 @@ class MarvinSuperatomSgroupExpanded : public MarvinMolBase {
 
   std::string role() const override;
   bool hasAtomBondBlocks() const override;
+  bool isPassiveRoleForContraction() const override;
+
+  void parseMoleculeSpecific(RDKit::RWMol *mol,
+                             std::unique_ptr<SubstanceGroup> &sgroup,
+                             int sequenceId) override;
 };
 
 class MarvinMultipleSgroup : public MarvinMolBase {
  public:
   MarvinMultipleSgroup(MarvinMolBase *parent);
+  MarvinMultipleSgroup(MarvinMolBase *parent, ptree &molTree);
+
   MarvinMolBase *copyMol(std::string idAppendage) const override;
 
   std::string title;
@@ -373,13 +469,22 @@ class MarvinMultipleSgroup : public MarvinMolBase {
 
   std::string role() const override;
   bool hasAtomBondBlocks() const override;
+  bool isPassiveRoleForExpansion() const override;
+  bool isPassiveRoleForContraction() const override;
+  void processSpecialSgroups() override;
+
+  void parseMoleculeSpecific(RDKit::RWMol *mol,
+                             std::unique_ptr<SubstanceGroup> &sgroup,
+                             int sequenceId) override;
 };
 
 class MarvinMulticenterSgroup : public MarvinMolBase {
   // <molecule molID="m2" id="sg1" role="MulticenterSgroup" atomRefs="a2 a6 a5
-  // a4 a3" center="a18"/>
+  // a4 a3" center="a18"/>sgroup->
  public:
   MarvinMulticenterSgroup(MarvinMolBase *parent);
+  MarvinMulticenterSgroup(MarvinMolBase *parent, ptree &molTree);
+
   MarvinMolBase *copyMol(std::string idAppendage) const override;
 
   void processOneMulticenterSgroup();
@@ -390,6 +495,10 @@ class MarvinMulticenterSgroup : public MarvinMolBase {
   MarvinAtom *center;
   std::string role() const override;
   bool hasAtomBondBlocks() const override;
+  void processSpecialSgroups() override;
+  void parseMoleculeSpecific(RDKit::RWMol *mol,
+                             std::unique_ptr<SubstanceGroup> &sgroup,
+                             int sequenceId) override;
 };
 
 class MarvinGenericSgroup : public MarvinMolBase {
@@ -397,6 +506,8 @@ class MarvinGenericSgroup : public MarvinMolBase {
   // a6 a7 a8 a9 a13 a10 a11 a12" charge="onAtoms"/></molecule>
  public:
   MarvinGenericSgroup(MarvinMolBase *parent);
+  MarvinGenericSgroup(MarvinMolBase *parent, ptree &molTree);
+
   MarvinMolBase *copyMol(std::string idAppendage) const override;
 
   std::string charge;  // onAtoms or onBrackets
@@ -405,6 +516,9 @@ class MarvinGenericSgroup : public MarvinMolBase {
 
   std::string role() const override;
   bool hasAtomBondBlocks() const override;
+  void parseMoleculeSpecific(RDKit::RWMol *mol,
+                             std::unique_ptr<SubstanceGroup> &sgroup,
+                             int sequenceId) override;
 };
 
 class MarvinMonomerSgroup : public MarvinMolBase {
@@ -413,6 +527,8 @@ class MarvinMonomerSgroup : public MarvinMolBase {
   // </molecule>
  public:
   MarvinMonomerSgroup(MarvinMolBase *parent);
+  MarvinMonomerSgroup(MarvinMolBase *parent, ptree &molTree);
+
   MarvinMolBase *copyMol(std::string idAppendage) const override;
 
   std::string title;
@@ -422,14 +538,29 @@ class MarvinMonomerSgroup : public MarvinMolBase {
 
   std::string role() const override;
   bool hasAtomBondBlocks() const override;
+  void parseMoleculeSpecific(RDKit::RWMol *mol,
+                             std::unique_ptr<SubstanceGroup> &sgroup,
+                             int sequenceId) override;
 };
 
 class MarvinSuperatomSgroup : public MarvinMolBase {
  public:
   std::string title;
-  std::vector<MarvinAttachmentPoint *> attachmentPoints;
+  std::vector<std::unique_ptr<MarvinAttachmentPoint>> attachmentPoints;
+  std::vector<std::unique_ptr<MarvinAtom>> ownedAtoms;
+  std::vector<std::unique_ptr<MarvinBond>> ownedBonds;
+
+  void pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atom) override;
+  void pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bond) override;
+
+  void removeOwnedAtom(MarvinAtom *atom) override;
+  void removeOwnedBond(MarvinBond *bond) override;
+  void moveOwnedAtom(MarvinAtom *atom, MarvinMolBase *moveToMol) override;
+  void moveOwnedBond(MarvinBond *bond, MarvinMolBase *moveToMol) override;
 
   MarvinSuperatomSgroup(MarvinMolBase *parent);
+  MarvinSuperatomSgroup(MarvinMolBase *parent, ptree &molTree);
+
   MarvinMolBase *copyMol(std::string idAppendage) const override;
 
   ~MarvinSuperatomSgroup() override;
@@ -438,20 +569,51 @@ class MarvinSuperatomSgroup : public MarvinMolBase {
 
   std::string role() const override;
   bool hasAtomBondBlocks() const override;
+  bool isPassiveRoleForExpansion() const override;
 
   std::string toString() const override;
   ptree toPtree() const override;
+
+  void cleanUpNumberingMolsAtomsBonds(
+      int &molCount,  // this is the starting mol count, and receives the ending
+                      // mol count - THis is used when
+                      // MarvinMol->convertToSuperAtaoms is called multiple
+                      // times from a RXN
+      int &atomCount,  // starting and ending atom count
+      int &bondCount,  // starting and ending bond count
+      std::map<std::string, std::string> &sgMap,
+      std::map<std::string, std::string> &atomMap,
+      std::map<std::string, std::string> &bondMap) override;
+
+  IsSgroupInAtomSetResult isSgroupInSetOfAtoms(
+      std::vector<MarvinAtom *> &setOfAtoms) const override;
+
+  void processSpecialSgroups() override;
 };
 
 class MarvinMol : public MarvinMolBase {
  public:
   MarvinMol();
+  MarvinMol(ptree &molTree);
+
   MarvinMolBase *copyMol(std::string idAppendage) const override;
 
   ~MarvinMol() override;
 
+  std::vector<std::unique_ptr<MarvinAtom>> ownedAtoms;
+  std::vector<std::unique_ptr<MarvinBond>> ownedBonds;
+
+  void pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atom) override;
+  void pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bond) override;
+
+  void removeOwnedAtom(MarvinAtom *atom) override;
+  void removeOwnedBond(MarvinBond *bond) override;
+  void moveOwnedAtom(MarvinAtom *atom, MarvinMolBase *moveToMol) override;
+  void moveOwnedBond(MarvinBond *bond, MarvinMolBase *moveToMol) override;
+
   std::string role() const override;
   bool hasAtomBondBlocks() const override;
+  bool isPassiveRoleForContraction() const override;
 
   std::string toString() const override;
   ptree toPtree() const override;
@@ -462,13 +624,13 @@ class MarvinMol : public MarvinMolBase {
 
 class MarvinReaction {
  public:
-  std::vector<MarvinMol *> reactants;
-  std::vector<MarvinMol *> agents;
-  std::vector<MarvinMol *> products;
+  std::vector<std::unique_ptr<MarvinMol>> reactants;
+  std::vector<std::unique_ptr<MarvinMol>> agents;
+  std::vector<std::unique_ptr<MarvinMol>> products;
 
   MarvinArrow arrow;
-  std::vector<MarvinPlus *> pluses;
-  std::vector<MarvinCondition *> conditions;
+  std::vector<std::unique_ptr<MarvinPlus>> pluses;
+  std::vector<std::unique_ptr<MarvinCondition>> conditions;
 
   ~MarvinReaction();
 
@@ -486,6 +648,9 @@ class MarvinStereoGroup {
 
   MarvinStereoGroup(StereoGroupType grouptypeInit, int groupNumberInit);
 };
+
+bool getCleanDouble(std::string strToParse, double &outDouble);
+bool getCleanInt(std::string strToParse, int &outInt);
 }  // namespace RDKit
 
 #endif  // RD_MARVINDEFS_H

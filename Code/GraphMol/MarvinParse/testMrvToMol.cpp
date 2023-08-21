@@ -96,7 +96,7 @@ void testSmilesToMarvin(const SmilesTest *smilesTest) {
   class LocalVars  // protect against mem leak on error
   {
    public:
-    RWMol *smilesMol;
+    RWMol *smilesMol = nullptr;
 
     LocalVars(){};
 
@@ -122,13 +122,6 @@ void testSmilesToMarvin(const SmilesTest *smilesTest) {
 
       std::string smilesOut = MolToSmiles(*localVars.smilesMol, ps);
 
-      // code to generate the expected files
-
-      // {
-      //   std::ofstream out;
-      //   out.open(fName + ".NEW.smi");
-      //   out << smilesOut;
-      // }
       std::stringstream expectedMolStr;
       std::ifstream in;
       in.open(expectedMrvName);
@@ -145,21 +138,11 @@ void testSmilesToMarvin(const SmilesTest *smilesTest) {
         outMolStr = MolToMolBlock(*localVars.smilesMol, true, 0, true, true);
       } catch (const RDKit::KekulizeException &e) {
         outMolStr = "";
-      } catch (...) {
-        throw;  // re-trhow the error if not a kekule error
       }
       if (outMolStr == "") {
         outMolStr = MolToMolBlock(*localVars.smilesMol, true, 0, false,
                                   true);  // try without kekule'ing
       }
-
-      // code to create the expected files for new or changed tests
-
-      // {
-      //   std::ofstream out;
-      //   out.open(fName + ".NEW.sdf");
-      //   out << outMolStr;
-      // }
 
       std::stringstream expectedMolStr;
       std::ifstream in;
@@ -178,19 +161,13 @@ void testSmilesToMarvin(const SmilesTest *smilesTest) {
       } catch (const RDKit::KekulizeException &e) {
         outMolStr = "";
       } catch (...) {
-        throw;  // re-trhow the error if not a kekule error
+        throw;  // re-throw the error if not a kekule error
       }
       if (outMolStr == "") {
         outMolStr = MolToMrvBlock(*localVars.smilesMol, true, -1, false,
                                   false);  // try without kekule'ing
       }
 
-      // code to generate the expected files
-      // {
-      //   std::ofstream out;
-      //   out.open(fName + ".NEW.mrv");
-      //   out << outMolStr;
-      // }
       std::stringstream expectedMolStr;
       std::ifstream in;
       in.open(expectedMrvName);
@@ -215,13 +192,7 @@ RWMol *GetMol(const MolTest *molTest) {
   std::string fName =
       rdbase + "/Code/GraphMol/MarvinParse/test_data/" + molTest->fileName;
 
-  bool sanitize;
-  int tryCount;
-  for (tryCount = 0, sanitize = true; tryCount < 2;
-       ++tryCount,
-      sanitize =
-           false)  // try with sanitize on - if it fails try with sanitize off
-  {
+  for (bool sanitize : {true, false}) {
     try {
       return MrvMolFileParser(fName, sanitize, false);
     } catch (const std::exception &e) {
@@ -237,13 +208,7 @@ ChemicalReaction *GetReaction(const RxnTest *rxnTest) {
   std::string fName =
       rdbase + "/Code/GraphMol/MarvinParse/test_data/" + rxnTest->fileName;
 
-  bool sanitize;
-  int tryCount;
-  for (tryCount = 0, sanitize = true; tryCount < 2;
-       ++tryCount,
-      sanitize =
-           false)  // try with sanitize on - if it fails try with sanitize off
-  {
+  for (bool sanitize : {true, false}) {
     try {
       return MrvRxnFileParser(fName, sanitize, false);
     } catch (const std::exception &e) {
@@ -292,21 +257,11 @@ void testMarvinMol(const MolTest *molTest) {
         outMolStr = MolToMolBlock(*localVars.mol, true, 0, true, true);
       } catch (const RDKit::KekulizeException &e) {
         outMolStr = "";
-      } catch (...) {
-        throw;  // re-trhow the error if not a kekule error
       }
       if (outMolStr == "") {
         outMolStr = MolToMolBlock(*localVars.mol, true, 0, false,
                                   true);  // try without kekule'ing
       }
-
-      // code to create the expected files for new or changed tests
-
-      //{
-      //    std::ofstream out;
-      //   out.open(fName + ".NEW.sdf");
-      // out << outMolStr;
-      // }
 
       std::stringstream expectedMolStr;
       std::ifstream in;
@@ -325,20 +280,11 @@ void testMarvinMol(const MolTest *molTest) {
         outMolStr = MolToMrvBlock(*localVars.mol, true, -1, true, false);
       } catch (const RDKit::KekulizeException &e) {
         outMolStr = "";
-      } catch (...) {
-        throw;  // re-trhow the error if not a kekule error
       }
       if (outMolStr == "") {
         outMolStr = MolToMrvBlock(*localVars.mol, true, -1, false,
                                   false);  // try without kekule'ing
       }
-      // code to create the expected files for new or changed tests
-
-      // {
-      //   std::ofstream out;
-      //   out.open(fName + ".NEW.mrv");
-      //   out << outMolStr;
-      // }
 
       std::stringstream expectedMolStr;
       std::ifstream in;
@@ -438,14 +384,6 @@ void testMarvinRxn(const RxnTest *rxnTest) {
       std::string outMolStr =
           ChemicalReactionToRxnBlock(*localVars.rxn, false, true);
 
-      //  code to create the expected files for new or changed tests
-
-      // {
-      //   std::ofstream out;
-      //   out.open(fName + ".NEW.rxn");
-      //   out << outMolStr;
-      // }
-
       std::string expectedRxnName = fName + ".expected.rxn";
 
       std::stringstream expectedMolStr;
@@ -459,14 +397,6 @@ void testMarvinRxn(const RxnTest *rxnTest) {
 
     {
       std::string outMolStr = ChemicalReactionToMrvBlock(*localVars.rxn, false);
-
-      //  code to create the expected files for new or changed tests
-
-      //{
-      //   std::ofstream out;
-      //   out.open(fName + ".NEW.mrv");
-      //   out << outMolStr;
-      // }
 
       std::string expectedRxnName = fName + ".expected.mrv";
       std::stringstream expectedMolStr;
@@ -523,20 +453,10 @@ void testMolFiles(const MolTest *molFileTest) {
         outMolStr = MolToMolBlock(*localVars.mol, true, 0, true, true);
       } catch (const RDKit::KekulizeException &e) {
         outMolStr = "";
-      } catch (...) {
-        throw;  // re-trhow the error if not a kekule error
       }
       if (outMolStr == "") {
         outMolStr = MolToMolBlock(*localVars.mol, true, 0, false,
                                   true);  // try without kekule'ing
-      }
-
-      // code to create the expected files for new or changed tests
-
-      {
-        std::ofstream out;
-        out.open(fName + ".NEW.sdf");
-        out << outMolStr;
       }
 
       std::stringstream expectedMolStr;
@@ -558,20 +478,11 @@ void testMolFiles(const MolTest *molFileTest) {
         outMolStr = MolToMrvBlock(*localVars.mol, true, -1, true, false);
       } catch (const RDKit::KekulizeException &e) {
         outMolStr = "";
-      } catch (...) {
-        throw;  // re-trhow the error if not a kekule error
       }
       if (outMolStr == "") {
         // try without kekule'ing
         outMolStr = MolToMrvBlock(*localVars.mol, true, -1, false, false);
       }
-      // code to create the expected files for new or changed tests
-
-      // {
-      //   std::ofstream out;
-      //   out.open(fName + ".NEW.mrv");
-      //   out << outMolStr;
-      // }
 
       std::stringstream expectedMolStr;
       std::ifstream in;
