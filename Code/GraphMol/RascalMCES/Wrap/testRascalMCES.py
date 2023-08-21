@@ -52,7 +52,7 @@ class TestCase(unittest.TestCase):
 
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)
     self.assertEqual(len(results), 1)
-    self.assertEqual(results[0].smartsString, 'c1ccccc1')
+    self.assertEqual(results[0].smartsString, 'c1:c:c:c:c:c:1')
     self.assertEqual(len(results[0].bondMatches()), 6)
     self.assertEqual(len(results[0].atomMatches()), 6)
 
@@ -65,9 +65,9 @@ class TestCase(unittest.TestCase):
     results = rdRascalMCES.FindMCES(ad1, ad2, opts)
     self.assertEqual(len(results), 1)
     self.assertEqual(results[0].smartsString,
-                     'N(-C)-c1ccc(-CC(=O)-NCCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3')
+                     'N(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3')
     results[0].largestFragmentOnly()
-    self.assertEqual(results[0].smartsString, 'N(-C)-c1ccc(-CC(=O)-NCCCCCCCCCC):cc1')
+    self.assertEqual(results[0].smartsString, 'N(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCCCC):c:c:1')
 
   def test3(self):
     # Test not specifying options
@@ -76,7 +76,7 @@ class TestCase(unittest.TestCase):
 
     results = rdRascalMCES.FindMCES(mol1, mol2)
     self.assertEqual(len(results), 1)
-    self.assertEqual(results[0].smartsString, 'c1ccccc1')
+    self.assertEqual(results[0].smartsString, 'c1:c:c:c:c:c:1')
     self.assertEqual(len(results[0].bondMatches()), 6)
     self.assertEqual(len(results[0].atomMatches()), 6)
 
