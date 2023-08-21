@@ -21,6 +21,8 @@ class ROMol;
 
 namespace RascalMCES {
 
+class RascalClusterOptions;
+
 namespace details {
 
 struct ClusNode {
@@ -49,6 +51,42 @@ RDKIT_RASCALMCES_EXPORT void getBondLabels(
 std::vector<std::vector<ClusNode>> buildProximityGraph(
     const std::vector<std::shared_ptr<ROMol>> &mols,
     const RascalClusterOptions &clusOpts);
+
+RDKIT_RASCALMCES_EXPORT bool resultCompare(const RascalResult &res1,
+                                           const RascalResult &res2);
+
+RDKIT_RASCALMCES_EXPORT void extractClique(
+    const std::vector<unsigned int> &clique,
+    const std::vector<std::pair<int, int>> &vtxPairs, bool swapped,
+    std::vector<std::pair<int, int>> &bondMatches);
+
+// do some simple cleaning of the SMARTS, to make it more user-friendly.
+RDKIT_RASCALMCES_EXPORT void cleanSmarts(std::string &smarts);
+
+// Primarily for debugging, these write out the corresponding bonds/atoms
+// in Python list format, for ease of cut/paste into a highlighted image
+// creation.
+RDKIT_RASCALMCES_EXPORT void printBondMatches(const RascalResult &res,
+                                              std::ostream &os);
+
+RDKIT_RASCALMCES_EXPORT void printAtomMatches(const RascalResult &res,
+                                              std::ostream &os);
+
+// This prints out the scores in the order they are used in resultCompare.
+RDKIT_RASCALMCES_EXPORT void printScores(const RascalResult &res,
+                                         std::ostream &os);
+
+// Calculate the Johnson similarity between the two molecules using the given
+// bondMatches.  It's the fraction of the 2 molecules that are in common,
+// somewhat akin to the tanimoto - the square of the number of atoms plus
+// number of bonds in the MCES divided by the product of the sums of the number
+// of atoms and bonds in the 2 molecules.
+// It has nothing to do with lying UK politicians.
+RDKIT_RASCALMCES_EXPORT double johnsonSimilarity(
+    const std::vector<std::pair<int, int>> &bondMatches,
+    const std::vector<std::pair<int, int>> &atomMatches,
+    const RDKit::ROMol &mol1, const RDKit::ROMol &mol2);
+
 }  // namespace details
 
 }  // namespace RascalMCES

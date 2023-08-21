@@ -250,7 +250,8 @@ TEST_CASE("Methadone vs mepiridine test", "[basics]") {
                               {20, 10},
                               {21, 9},
                               {22, 4}});
-  REQUIRE(res.front().getSmarts() == "c1ccccc1C(-C=O)(-[#6])-CCN(-C)-C.CC");
+  REQUIRE(res.front().getSmarts() ==
+          "c1:c:c:c:c:c:1-C(-C=O)(-[#6])-CCN(-C)-C.CC");
 
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().getSimilarity(),
@@ -374,7 +375,7 @@ TEST_CASE("Symmetrical esters test", "[basics]") {
        {30, 23}, {31, 21}, {32, 10}, {33, 20}});
   REQUIRE(
       res.front().getSmarts() ==
-      "c1c(-OC):c(-OC):c(-OC):cc1C(=O)-O.CCOC(=O)-c1cc(-OC):c(-OC):c(-OC):c1");
+      "c1:c(-OC):c(-OC):c(-OC):c:c:1-C(=O)-O.CCOC(=O)-c1:c:c(-OC):c(-OC):c(-OC):c:1");
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().getSimilarity(),
                Catch::Matchers::WithinAbs(0.9405, 0.0001));
@@ -673,7 +674,6 @@ TEST_CASE("ring matches ring", "[basics]") {
                               {17, 16},
                               {20, 9},
                               {23, 4}});
-  RascalMCES::printBondMatches(res.front(), std::cout);
 
   check_expected_bonds(res.front(), exp_bond_matches);
   REQUIRE_THAT(res.front().getSimilarity(),
@@ -687,7 +687,7 @@ TEST_CASE("ring matches ring", "[basics]") {
   REQUIRE(res.front().getBondMatches().size() == 9);
   REQUIRE_THAT(res.front().getSimilarity(),
                Catch::Matchers::WithinAbs(0.1863, 0.0001));
-  REQUIRE(res.front().getSmarts() == "C(-C=O)-c1ccccc1");
+  REQUIRE(res.front().getSmarts() == "C(-C=O)-c1:c:c:c:c:c:1");
   check_smarts_ok(*m1, *m2, res.front());
 }
 
@@ -841,57 +841,96 @@ TEST_CASE("FMCS test32") {
       {"C(=Cc1ccc2c(c1)OCO2)C(Nc1cc(S(=O)(=O)N2CCOCC2)ccc1N1CCOCC1)=O CHEMBL1334715"_smiles}};
   RascalOptions opts;
   std::vector<std::tuple<unsigned int, unsigned int, std::string>> exp_res{
-      {32, 35, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCOCC1)-C=Cc1ccccc1"},
-      {32, 35, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCOCC1)-C=Cc1ccccc1"},
-      {31, 33, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC)-C=Cc1ccccc1"},
-      {31, 33, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC)-C=Cc1ccccc1"},
-      {31, 33, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC)-C=Cc1ccccc1"},
-      {31, 33, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC)-C=Cc1ccccc1"},
-      {32, 35, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCOCC1)-C=Cc1ccccc1"},
-      {31, 33, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC)-C=Cc1ccccc1"},
-      {32, 35, "O=C(-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCOCC1)-C=Cc1ccccc1"},
-      {32, 35, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2)=O):cc1"},
-      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
-      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
-      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
-      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
-      {32, 35, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2)=O):cc1"},
-      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
-      {32, 35, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2)=O):cc1"},
-      {31, 33, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):cc1"},
-      {31, 33, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):cc1"},
-      {31, 33, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):cc1"},
-      {32, 34,
-       "Cc1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):cc1"},
-      {32, 35, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2):cc1"},
-      {31, 33, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):cc1"},
-      {32, 35, "c1ccc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2):cc1"},
-      {31, 34, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCCC2)=O):cc1"},
-      {31, 34, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCCC2)=O):cc1"},
-      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
-      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
-      {31, 34, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCCC2)=O):cc1"},
-      {31, 33, "c1ccc(-C=CC(-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC)=O):cc1"},
-      {32, 34,
-       "O=C(-C=C)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCCC1.c1ccc(-F):cc1"},
-      {31, 33, "O=C(-C=Cc1ccccc1)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC"},
-      {31, 33, "O=C(-C=Cc1ccccc1)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC"},
-      {31, 34, "O=C(-C=Cc1ccccc1)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N1CCCC1"},
-      {31, 33, "O=C(-C=Cc1ccccc1)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC"},
+      {32, 35,
+       "O=C(-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N1CCOCC1)-C=Cc1:c:c:c:c:c:1"},
+      {32, 35,
+       "O=C(-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N1CCOCC1)-C=Cc1:c:c:c:c:c:1"},
       {31, 33,
-       "c1cccc(-C=CC(=O)-Nc2c(-N(-CC)-CC):ccc(-S(-N3CCOCC3)(=O)=O):c2):c1"},
+       "O=C(-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N(-CC)-CC)-C=Cc1:c:c:c:c:c:1"},
       {31, 33,
-       "c1cccc(-C=CC(=O)-Nc2c(-N(-CC)-CC):ccc(-S(-N3CCOCC3)(=O)=O):c2):c1"},
+       "O=C(-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N(-CC)-CC)-C=Cc1:c:c:c:c:c:1"},
+      {31, 33,
+       "O=C(-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N(-CC)-CC)-C=Cc1:c:c:c:c:c:1"},
+      {31, 33,
+       "O=C(-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N(-CC)-CC)-C=Cc1:c:c:c:c:c:1"},
+      {32, 35,
+       "O=C(-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N1CCOCC1)-C=Cc1:c:c:c:c:c:1"},
+      {31, 33,
+       "O=C(-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N(-CC)-CC)-C=Cc1:c:c:c:c:c:1"},
+      {32, 35,
+       "O=C(-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N1CCOCC1)-C=Cc1:c:c:c:c:c:1"},
+      {32, 35,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N2CCOCC2)=O):c:c:1"},
+      {31, 33,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC)=O):c:c:1"},
+      {31, 33,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC)=O):c:c:1"},
+      {31, 33,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC)=O):c:c:1"},
+      {31, 33,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC)=O):c:c:1"},
+      {32, 35,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N2CCOCC2)=O):c:c:1"},
+      {31, 33,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC)=O):c:c:1"},
+      {32, 35,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N2CCOCC2)=O):c:c:1"},
+      {31, 33,
+       "c1:c:c:c(-C=CC(=O)-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC):c:c:1"},
+      {31, 33,
+       "c1:c:c:c(-C=CC(=O)-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC):c:c:1"},
+      {31, 33,
+       "c1:c:c:c(-C=CC(=O)-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC):c:c:1"},
+      {32, 34,
+       "Cc1:c:c:c(-C=CC(=O)-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC):c:c:1"},
+      {32, 35,
+       "c1:c:c:c(-C=CC(=O)-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N2CCOCC2):c:c:1"},
+      {31, 33,
+       "c1:c:c:c(-C=CC(=O)-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC):c:c:1"},
+      {32, 35,
+       "c1:c:c:c(-C=CC(=O)-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N2CCOCC2):c:c:1"},
       {31, 34,
-       "c1cccc(-C=CC(=O)-Nc2c(-N3CCCC3):ccc(-S(-N3CCOCC3)(=O)=O):c2):c1"},
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N2CCCC2)=O):c:c:1"},
+      {31, 34,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N2CCCC2)=O):c:c:1"},
       {31, 33,
-       "c1cccc(-C=CC(=O)-Nc2c(-N(-CC)-CC):ccc(-S(-N3CCOCC3)(=O)=O):c2):c1"},
-      {31, 33, "CCN(-c1ccc(-S(-N2CCOCC2)(=O)=O):cc1NC(=O)-C=Cc1ccccc1)-CC"},
-      {31, 33, "CCN(-c1ccc(-S(-N2CCOCC2)(=O)=O):cc1NC(=O)-C=Cc1ccccc1)-CC"},
-      {31, 33, "CCN(-c1ccc(-S(-N2CCOCC2)(=O)=O):cc1NC(=O)-C=Cc1ccccc1)-CC"},
-      {31, 33, "c1cc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N(-CC)-CC):ccc1"},
-      {32, 35, "c1cc(-C=CC(=O)-Nc2cc(-S(-N3CCOCC3)(=O)=O):ccc2N2CCOCC2):ccc1"},
-      {31, 33, "C(=Cc1ccccc1)-C(=O)-Nc1cc(-S(-N2CCOCC2)(=O)=O):ccc1N(-CC)-CC"}};
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC)=O):c:c:1"},
+      {31, 33,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC)=O):c:c:1"},
+      {31, 34,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N2CCCC2)=O):c:c:1"},
+      {31, 33,
+       "c1:c:c:c(-C=CC(-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC)=O):c:c:1"},
+      {32, 34,
+       "O=C(-C=C)-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N1CCCC1.c1:c:c:c(-F):c:c:1"},
+      {31, 33,
+       "O=C(-C=Cc1:c:c:c:c:c:1)-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N(-CC)-CC"},
+      {31, 33,
+       "O=C(-C=Cc1:c:c:c:c:c:1)-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N(-CC)-CC"},
+      {31, 34,
+       "O=C(-C=Cc1:c:c:c:c:c:1)-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N1CCCC1"},
+      {31, 33,
+       "O=C(-C=Cc1:c:c:c:c:c:1)-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N(-CC)-CC"},
+      {31, 33,
+       "c1:c:c:c:c(-C=CC(=O)-Nc2:c(-N(-CC)-CC):c:c:c(-S(-N3CCOCC3)(=O)=O):c:2):c:1"},
+      {31, 33,
+       "c1:c:c:c:c(-C=CC(=O)-Nc2:c(-N(-CC)-CC):c:c:c(-S(-N3CCOCC3)(=O)=O):c:2):c:1"},
+      {31, 34,
+       "c1:c:c:c:c(-C=CC(=O)-Nc2:c(-N3CCCC3):c:c:c(-S(-N3CCOCC3)(=O)=O):c:2):c:1"},
+      {31, 33,
+       "c1:c:c:c:c(-C=CC(=O)-Nc2:c(-N(-CC)-CC):c:c:c(-S(-N3CCOCC3)(=O)=O):c:2):c:1"},
+      {31, 33,
+       "CCN(-c1:c:c:c(-S(-N2CCOCC2)(=O)=O):c:c:1-NC(=O)-C=Cc1:c:c:c:c:c:1)-CC"},
+      {31, 33,
+       "CCN(-c1:c:c:c(-S(-N2CCOCC2)(=O)=O):c:c:1-NC(=O)-C=Cc1:c:c:c:c:c:1)-CC"},
+      {31, 33,
+       "CCN(-c1:c:c:c(-S(-N2CCOCC2)(=O)=O):c:c:1-NC(=O)-C=Cc1:c:c:c:c:c:1)-CC"},
+      {31, 33,
+       "c1:c:c(-C=CC(=O)-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N(-CC)-CC):c:c:c:1"},
+      {32, 35,
+       "c1:c:c(-C=CC(=O)-Nc2:c:c(-S(-N3CCOCC3)(=O)=O):c:c:c:2-N2CCOCC2):c:c:c:1"},
+      {31, 33,
+       "C(=Cc1:c:c:c:c:c:1)-C(=O)-Nc1:c:c(-S(-N2CCOCC2)(=O)=O):c:c:c:1-N(-CC)-CC"}};
   size_t k = 0;
   for (size_t i = 0; i < mols.size() - 1; ++i) {
     for (size_t j = i + 1; j < mols.size(); ++j, ++k) {
@@ -920,51 +959,96 @@ TEST_CASE("FMCS test190") {
   RascalOptions opts;
   opts.allBestMCESs = true;
   std::vector<std::tuple<unsigned int, unsigned int, std::string>> exp_res{
-      {29, 32, "COc1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
-      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
-      {29, 31, "CO.c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
-      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
-      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
-      {28, 30, "COc1cc2nc(-c3cc(-NC(=O)-C):ccc3):oc2cc1.c1ccc(-Cl):cc1"},
-      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
-      {27, 29, "COc1cc2nc(-c3cc(-NC(=O)-C):ccc3):oc2cc1.c1ccccc1"},
-      {26, 29, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccccc4):ccc3):oc2cc1"},
-      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
-      {29, 31, "CO.c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
-      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
-      {28, 31, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):c(-C):cc3):oc2cc1"},
-      {29, 31, "COc1cc2nc(-c3cc(-NC(=O)-C):c(-C):cc3):oc2cc1.c1ccc(-Cl):cc1"},
-      {27, 30, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):oc2cc1"},
-      {28, 30, "COc1cc2nc(-c3cc(-NC(=O)-C):c(-C):cc3):oc2cc1.c1ccccc1"},
-      {26, 29, "c1cc2nc(-c3cc(-NC(=O)-CSc4ccccc4):ccc3):oc2cc1"},
-      {27, 30, "c1cc2oc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):nc2cc1"},
-      {28, 31, "Cc1cc2oc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):nc2cc1"},
-      {28, 31, "Cc1cc2oc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):nc2cc1"},
-      {26, 28, "c1cc2oc(-c3cc(-NC(=O)-C):ccc3):nc2cc1.c1ccc(-Cl):cc1"},
-      {27, 30, "c1cc2oc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):nc2cc1"},
-      {25, 27, "c1cc2oc(-c3cc(-NC(=O)-C):ccc3):nc2cc1.c1ccccc1"},
-      {26, 29, "c1cc2oc(-c3cc(-NC(=O)-CSc4ccccc4):ccc3):nc2cc1"},
-      {27, 30, "c1c(-NC(=O)-CSc2ccc(-Cl):cc2):cc(-c2nc3ccccc3o2):cc1"},
-      {27, 30, "c1c(-NC(=O)-CSc2ccc(-Cl):cc2):cc(-c2nc3ccccc3o2):cc1"},
-      {28, 29, "CO.c1c(-NC(=O)-C):cc(-c2nc3ccccc3o2):cc1.c1ccc(-Cl):cc1"},
-      {27, 30, "c1c(-NC(=O)-CSc2ccc(-Cl):cc2):cc(-c2nc3ccccc3o2):cc1"},
-      {27, 28, "CO.c1c(-NC(=O)-C):cc(-c2nc3ccccc3o2):cc1.c1ccccc1"},
-      {26, 29, "c1c(-NC(=O)-CSc2ccccc2):cc(-c2nc3ccccc3o2):cc1"},
-      {28, 31, "c1cc2nc(-c3cccc(-NC(=O)-CSc4ccc(-Cl):cc4):c3):oc2cc1C"},
-      {26, 28, "c1cc2nc(-c3cccc(-NC(=O)-C):c3):oc2cc1.c1ccc(-Cl):cc1"},
-      {27, 30, "c1cc2nc(-c3cccc(-NC(=O)-CSc4ccc(-Cl):cc4):c3):oc2cc1"},
-      {25, 27, "c1cc2nc(-c3cccc(-NC(=O)-C):c3):oc2cc1.c1ccccc1"},
-      {27, 30, "Cc1cc2nc(-c3cccc(-NC(=O)-CSc4ccccc4):c3):oc2cc1"},
-      {27, 29, "c1cc2oc(-c3cc(-NC(=O)-C):c(-C):cc3):nc2cc1.c1ccc(-Cl):cc1"},
-      {27, 30, "c1cc2oc(-c3cc(-NC(=O)-CSc4ccc(-Cl):cc4):ccc3):nc2cc1"},
-      {26, 28, "c1cc2oc(-c3cc(-NC(=O)-C):c(-C):cc3):nc2cc1.c1ccccc1"},
-      {26, 29, "c1cc2oc(-c3cc(-NC(=O)-CSc4ccccc4):ccc3):nc2cc1"},
-      {26, 28, "c1cc2nc(-c3cc(-NC(=O)-C):ccc3):oc2cc1.c1ccc(-Cl):cc1"},
-      {28, 30, "COc1cc2nc(-c3cc(-NC(=O)-C):c(-C):cc3):oc2cc1.c1ccccc1"},
-      {25, 27, "c1cc2nc(-c3cc(-NC(=O)-C):ccc3):oc2cc1.c1ccccc1"},
-      {25, 27, "c1c(-NC(=O)-C):cccc1-c1nc2ccccc2o1.c1ccccc1"},
-      {26, 29, "c1c(-NC(=O)-CSc2ccccc2):cccc1-c1nc2ccccc2o1"},
-      {26, 28, "c1ccc2oc(-c3cccc(-NC(=O)-C):c3):nc2c1.c1cc(-C):ccc1"}};
+      {29, 32,
+       "COc1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {27, 30,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {29, 31,
+       "CO.c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {27, 30,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {27, 30,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {28, 30,
+       "COc1:c:c2:n:c(-c3:c:c(-NC(=O)-C):c:c:c:3):o:c:2:c:c:1.c1:c:c:c(-Cl):c:c:1"},
+      {27, 30,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {27, 29,
+       "COc1:c:c2:n:c(-c3:c:c(-NC(=O)-C):c:c:c:3):o:c:2:c:c:1.c1:c:c:c:c:c:1"},
+      {26, 29,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c:c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {27, 30,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {29, 31,
+       "CO.c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {27, 30,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {28, 31,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c(-C):c:c:3):o:c:2:c:c:1"},
+      {29, 31,
+       "COc1:c:c2:n:c(-c3:c:c(-NC(=O)-C):c(-C):c:c:3):o:c:2:c:c:1.c1:c:c:c(-Cl):c:c:1"},
+      {27, 30,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {28, 30,
+       "COc1:c:c2:n:c(-c3:c:c(-NC(=O)-C):c(-C):c:c:3):o:c:2:c:c:1.c1:c:c:c:c:c:1"},
+      {26, 29,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-CSc4:c:c:c:c:c:4):c:c:c:3):o:c:2:c:c:1"},
+      {27, 30,
+       "c1:c:c2:o:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):n:c:2:c:c:1"},
+      {28, 31,
+       "Cc1:c:c2:o:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):n:c:2:c:c:1"},
+      {28, 31,
+       "Cc1:c:c2:o:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):n:c:2:c:c:1"},
+      {26, 28,
+       "c1:c:c2:o:c(-c3:c:c(-NC(=O)-C):c:c:c:3):n:c:2:c:c:1.c1:c:c:c(-Cl):c:c:1"},
+      {27, 30,
+       "c1:c:c2:o:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):n:c:2:c:c:1"},
+      {25, 27,
+       "c1:c:c2:o:c(-c3:c:c(-NC(=O)-C):c:c:c:3):n:c:2:c:c:1.c1:c:c:c:c:c:1"},
+      {26, 29,
+       "c1:c:c2:o:c(-c3:c:c(-NC(=O)-CSc4:c:c:c:c:c:4):c:c:c:3):n:c:2:c:c:1"},
+      {27, 30,
+       "c1:c(-NC(=O)-CSc2:c:c:c(-Cl):c:c:2):c:c(-c2:n:c3:c:c:c:c:c:3:o:2):c:c:1"},
+      {27, 30,
+       "c1:c(-NC(=O)-CSc2:c:c:c(-Cl):c:c:2):c:c(-c2:n:c3:c:c:c:c:c:3:o:2):c:c:1"},
+      {28, 29,
+       "CO.c1:c(-NC(=O)-C):c:c(-c2:n:c3:c:c:c:c:c:3:o:2):c:c:1.c1:c:c:c(-Cl):c:c:1"},
+      {27, 30,
+       "c1:c(-NC(=O)-CSc2:c:c:c(-Cl):c:c:2):c:c(-c2:n:c3:c:c:c:c:c:3:o:2):c:c:1"},
+      {27, 28,
+       "CO.c1:c(-NC(=O)-C):c:c(-c2:n:c3:c:c:c:c:c:3:o:2):c:c:1.c1:c:c:c:c:c:1"},
+      {26, 29,
+       "c1:c(-NC(=O)-CSc2:c:c:c:c:c:2):c:c(-c2:n:c3:c:c:c:c:c:3:o:2):c:c:1"},
+      {28, 31,
+       "c1:c:c2:n:c(-c3:c:c:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:3):o:c:2:c:c:1-C"},
+      {26, 28,
+       "c1:c:c2:n:c(-c3:c:c:c:c(-NC(=O)-C):c:3):o:c:2:c:c:1.c1:c:c:c(-Cl):c:c:1"},
+      {27, 30,
+       "c1:c:c2:n:c(-c3:c:c:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:3):o:c:2:c:c:1"},
+      {25, 27,
+       "c1:c:c2:n:c(-c3:c:c:c:c(-NC(=O)-C):c:3):o:c:2:c:c:1.c1:c:c:c:c:c:1"},
+      {27, 30,
+       "Cc1:c:c2:n:c(-c3:c:c:c:c(-NC(=O)-CSc4:c:c:c:c:c:4):c:3):o:c:2:c:c:1"},
+      {27, 29,
+       "c1:c:c2:o:c(-c3:c:c(-NC(=O)-C):c(-C):c:c:3):n:c:2:c:c:1.c1:c:c:c(-Cl):c:c:1"},
+      {27, 30,
+       "c1:c:c2:o:c(-c3:c:c(-NC(=O)-CSc4:c:c:c(-Cl):c:c:4):c:c:c:3):n:c:2:c:c:1"},
+      {26, 28,
+       "c1:c:c2:o:c(-c3:c:c(-NC(=O)-C):c(-C):c:c:3):n:c:2:c:c:1.c1:c:c:c:c:c:1"},
+      {26, 29,
+       "c1:c:c2:o:c(-c3:c:c(-NC(=O)-CSc4:c:c:c:c:c:4):c:c:c:3):n:c:2:c:c:1"},
+      {26, 28,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-C):c:c:c:3):o:c:2:c:c:1.c1:c:c:c(-Cl):c:c:1"},
+      {28, 30,
+       "COc1:c:c2:n:c(-c3:c:c(-NC(=O)-C):c(-C):c:c:3):o:c:2:c:c:1.c1:c:c:c:c:c:1"},
+      {25, 27,
+       "c1:c:c2:n:c(-c3:c:c(-NC(=O)-C):c:c:c:3):o:c:2:c:c:1.c1:c:c:c:c:c:1"},
+      {25, 27,
+       "c1:c(-NC(=O)-C):c:c:c:c:1-c1:n:c2:c:c:c:c:c:2:o:1.c1:c:c:c:c:c:1"},
+      {26, 29,
+       "c1:c(-NC(=O)-CSc2:c:c:c:c:c:2):c:c:c:c:1-c1:n:c2:c:c:c:c:c:2:o:1"},
+      {26, 28,
+       "c1:c:c:c2:o:c(-c3:c:c:c:c(-NC(=O)-C):c:3):n:c:2:c:1.c1:c:c(-C):c:c:c:1"}};
   size_t k = 0;
   for (size_t i = 0; i < mols.size() - 1; ++i) {
     for (size_t j = i + 1; j < mols.size(); ++j, ++k) {
@@ -997,91 +1081,75 @@ TEST_CASE("FMCS test3") {
   // so the first one should always be the same.  This results in extra
   // run time, but means the tests should work on all platforms.
   //  opts.allBestMCESs = true;
-  std::vector<std::tuple<unsigned int, unsigned int, std::vector<std::string>>>
-      exp_res{
-          {31,
-           33,
-           {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {34,
-           36,
-           {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {33,
-           35,
-           {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {32,
-           34,
-           {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {34,
-           36,
-           {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
-          {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"}}},
-          {31,
-           33,
-           {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {31,
-           33,
-           {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {31,
-           33,
-           {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {31,
-           33,
-           {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
-          {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"}}},
-          {33,
-           35,
-           {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {32,
-           34,
-           {{"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}}},
-          {35,
-           37,
-           {{"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}}},
-          {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
-          {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"}}},
-          {32,
-           34,
-           {{"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}}},
-          {33,
-           35,
-           {"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
-          {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"}}},
-          {32,
-           34,
-           {{"CN(-C)-c1ccc(-CC(=O)-NCCCCCCCC):cc1.NC12CC3CC(-C1)-CC(-C2)-C3"}}},
-          {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
-          {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"}}},
-          {19, 19, {"CN(-C)-c1ccc(-CC(=O)-NCCCCCC):cc1"}},
-          {24, 25, {"c1ccc(-C):cc1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"}},
-          {18, 18, {"Nc1ccc(-CC(=O)-NCCCCCCC):cc1"}},
-          {19, 18, {{"c1ccc(-CC(=O)-NCCCC):cc1.NC(-C)(-C)-C"}}},
-          {16, 16, {"c1ccc(-CC(-NCCCCCC)=O):cc1"}},
-          {18, 17, {{"c1ccc(-CC(-NCCCCCC)=O):cc1.NO"}}},
-          {17, 16, {"c1ccc(-CC(-NCCCC)=O):cc1.CCN"}},
-          {17, 17, {{"c1ccc(-CC(=O)-NC(-CCCCC)-C):cc1"}}},
-          {18, 18, {"c1ccc(-CC(=O)-NC(-CC(-C)-C)-CCC):cc1"}},
-          {17, 17, {"c1ccccc1CC(=O)-NC(-CCC)-CCC"}}};
+  std::vector<std::tuple<unsigned int, unsigned int, std::string>> exp_res{
+      {31, 33,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {34, 36,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {33, 35,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {32, 34,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {34, 36,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {19, 19, "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCC):c:c:1"},
+      {24, 25, "c1:c:c:c(-C):c:c:1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1"},
+      {19, 18, "c1:c:c:c(-CC(=O)-NCCCC):c:c:1.NC(-C)(-C)-C"},
+      {31, 33,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {31, 33,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {31, 33,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {31, 33,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {19, 19, "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCC):c:c:1"},
+      {24, 25, "c1:c:c:c(-C):c:c:1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1"},
+      {19, 18, "c1:c:c:c(-CC(=O)-NCCCC):c:c:1.NC(-C)(-C)-C"},
+      {33, 35,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {32, 34,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {35, 37,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {19, 19, "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCC):c:c:1"},
+      {24, 25, "c1:c:c:c(-C):c:c:1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1"},
+      {19, 18, "c1:c:c:c(-CC(=O)-NCCCC):c:c:1.NC(-C)(-C)-C"},
+      {32, 34,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {33, 35,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {19, 19, "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCC):c:c:1"},
+      {24, 25, "c1:c:c:c(-C):c:c:1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1"},
+      {19, 18, "c1:c:c:c(-CC(=O)-NCCCC):c:c:1.NC(-C)(-C)-C"},
+      {32, 34,
+       "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3"},
+      {19, 19, "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCC):c:c:1"},
+      {24, 25, "c1:c:c:c(-C):c:c:1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1"},
+      {19, 18, "c1:c:c:c(-CC(=O)-NCCCC):c:c:1.NC(-C)(-C)-C"},
+      {19, 19, "CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCC):c:c:1"},
+      {24, 25, "c1:c:c:c(-C):c:c:1.CCC.CCCNC12CC3CC(-C1)-CC(-C2)-C3"},
+      {18, 18, "Nc1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1"},
+      {19, 18, "c1:c:c:c(-CC(=O)-NCCCC):c:c:1.NC(-C)(-C)-C"},
+      {16, 16, "c1:c:c:c(-CC(-NCCCCCC)=O):c:c:1"},
+      {18, 17, "c1:c:c:c(-CC(-NCCCCCC)=O):c:c:1.NO"},
+      {17, 16, "c1:c:c:c(-CC(-NCCCC)=O):c:c:1.CCN"},
+      {17, 17, "c1:c:c:c(-CC(=O)-NC(-CCCCC)-C):c:c:1"},
+      {18, 18, "c1:c:c:c(-CC(=O)-NC(-CC(-C)-C)-CCC):c:c:1"},
+      {17, 17, "c1:c:c:c:c:c:1-CC(=O)-NC(-CCC)-CCC"}};
   size_t k = 0;
   for (size_t i = 0; i < mols.size() - 1; ++i) {
     for (size_t j = i + 1; j < mols.size(); ++j, ++k) {
       auto res = rascalMces(*mols[i], *mols[j], opts);
       check_smarts_ok(*mols[i], *mols[j], res.front());
-      check_smarts_found(res.front(), get<2>(exp_res[k]));
       REQUIRE(res.front().getAtomMatches().size() == std::get<0>(exp_res[k]));
       REQUIRE(res.front().getBondMatches().size() == std::get<1>(exp_res[k]));
+      REQUIRE(res.front().getSmarts() == std::get<2>(exp_res[k]));
     }
   }
 }
@@ -1096,7 +1164,8 @@ TEST_CASE("Zinc pair", "[basics]") {
   REQUIRE(m2);
 
   auto res = rascalMces(*m1, *m2);
-  REQUIRE(res.front().getSmarts() == "NC(=O)-Nc1cccc2c1C(=O)-c1c-2:nnc1-c");
+  REQUIRE(res.front().getSmarts() ==
+          "NC(=O)-Nc1:c:c:c:c2:c:1-C(=O)-c1:c-2:n:n:c:1-c");
 }
 
 TEST_CASE("Largest frags only") {
@@ -1109,10 +1178,10 @@ TEST_CASE("Largest frags only") {
   REQUIRE(res.size() == 1);
   REQUIRE(res.front().getNumFrags() == 4);
   REQUIRE(res.front().getSmarts() ==
-          "CCCC(=O)-NCCC-[#6].Cc1ccccc1.O-[#6].ccc(-OC):c");
+          "CCCC(=O)-NCCC-[#6].Cc1:c:c:c:c:c:1.O-[#6].c:c:c(-OC):c");
   res.front().largestFragsOnly();
   REQUIRE(res.front().getNumFrags() == 2);
-  REQUIRE(res.front().getSmarts() == "CCCC(=O)-NCCC-[#6].Cc1ccccc1");
+  REQUIRE(res.front().getSmarts() == "CCCC(=O)-NCCC-[#6].Cc1:c:c:c:c:c:1");
 
   res.front().largestFragOnly();
   REQUIRE(res.front().getNumFrags() == 1);
@@ -1131,12 +1200,13 @@ TEST_CASE("Trim small frags") {
   REQUIRE(res.size() == 1);
   REQUIRE(res.front().getNumFrags() == 4);
   REQUIRE(res.front().getSmarts() ==
-          "CCCC(=O)-NCCC-[#6].Cc1ccccc1.O-[#6].ccc(-OC):c");
+          "CCCC(=O)-NCCC-[#6].Cc1:c:c:c:c:c:1.O-[#6].c:c:c(-OC):c");
   res.front().trimSmallFrags();
   REQUIRE(res.front().getNumFrags() == 3);
-  REQUIRE(res.front().getSmarts() == "CCCC(=O)-NCCC-[#6].Cc1ccccc1.ccc(-OC):c");
+  REQUIRE(res.front().getSmarts() ==
+          "CCCC(=O)-NCCC-[#6].Cc1:c:c:c:c:c:1.c:c:c(-OC):c");
 
   res.front().trimSmallFrags(7);
   REQUIRE(res.front().getNumFrags() == 2);
-  REQUIRE(res.front().getSmarts() == "CCCC(=O)-NCCC-[#6].Cc1ccccc1");
+  REQUIRE(res.front().getSmarts() == "CCCC(=O)-NCCC-[#6].Cc1:c:c:c:c:c:1");
 }

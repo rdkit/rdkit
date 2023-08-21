@@ -11,6 +11,8 @@
 #include <regex>
 #include <set>
 
+#include <boost/dynamic_bitset.hpp>
+
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
@@ -18,7 +20,8 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
-#include "RascalResult.h"
+#include <GraphMol/RascalMCES/RascalDetails.h>
+#include <GraphMol/RascalMCES/RascalResult.h>
 
 namespace RDKit {
 
@@ -48,7 +51,7 @@ RascalResult::RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
     mol1AdjMatrix = &adjMatrix1;
   }
 
-  extractClique(clique, vtx_pairs, swapped, d_bondMatches);
+  details::extractClique(clique, vtx_pairs, swapped, d_bondMatches);
   matchCliqueAtoms(*mol1AdjMatrix);
   if (d_maxFragSep != -1) {
     applyMaxFragSep();
@@ -131,14 +134,10 @@ void RascalResult::trimSmallFrags(unsigned int minFragSize) {
   std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
   // getMolFrags() returns boost::shared_ptr.  Ho-hum.
   auto frags = RDKit::MolOps::getMolFrags(*mol1_frags, false);
-  for (auto &frag : frags) {
-    if (frag->getNumAtoms() < minFragSize) {
-      frag.reset();
-    }
-  }
-  frags.erase(std::remove_if(
-                  frags.begin(), frags.end(),
-                  [](const boost::shared_ptr<ROMol> &f) -> bool { return !f; }),
+  frags.erase(std::remove_if(frags.begin(), frags.end(),
+                             [&](const boost::shared_ptr<ROMol> &f) -> bool {
+                               return f->getNumAtoms() < minFragSize;
+                             }),
               frags.end());
   rebuildFromFrags(frags);
 }
@@ -147,7 +146,8 @@ double RascalResult::getSimilarity() const {
   if (!d_mol1 || !d_mol2) {
     return 0.0;
   }
-  return johnsonSimilarity(d_bondMatches, d_atomMatches, *d_mol1, *d_mol2);
+  return details::johnsonSimilarity(d_bondMatches, d_atomMatches, *d_mol1,
+                                    *d_mol2);
 }
 
 void RascalResult::rebuildFromFrags(
@@ -160,29 +160,35 @@ void RascalResult::rebuildFromFrags(
   d_maxDeltaAtomAtomDist = -1;
   d_largestFragSize = -1;
 
-  std::set<int> fragAtoms, fragBonds;
+  // for now, this is always called after fragmenting d_mol1, but just for
+  // safety, protect against the frags coming from d_mol2 in some future
+  // use.
+  boost::dynamic_bitset<> fragAtoms(
+      std::max(d_mol1->getNumAtoms(), d_mol2->getNumAtoms()));
+  boost::dynamic_bitset<> fragBonds(
+      std::max(d_mol1->getNumBonds(), d_mol2->getNumBonds()));
   for (const auto &f : frags) {
     for (auto atom : f->atoms()) {
       if (atom->hasProp("ORIG_INDEX")) {
-        fragAtoms.insert(atom->getProp<int>("ORIG_INDEX"));
+        fragAtoms.set(atom->getProp<int>("ORIG_INDEX"));
       }
     }
     for (auto bond : f->bonds()) {
       if (bond->hasProp("ORIG_INDEX")) {
-        fragBonds.insert(bond->getProp<int>("ORIG_INDEX"));
+        fragBonds.set(bond->getProp<int>("ORIG_INDEX"));
       }
     }
   }
   std::vector<std::pair<int, int>> newAtomMatches;
   for (const auto &am : d_atomMatches) {
-    if (fragAtoms.find(am.first) != fragAtoms.end()) {
+    if (fragAtoms[am.first]) {
       newAtomMatches.push_back(am);
     }
   }
   d_atomMatches = newAtomMatches;
   std::vector<std::pair<int, int>> new_bond_matches;
   for (const auto &bm : d_bondMatches) {
-    if (fragBonds.find(bm.first) != fragBonds.end()) {
+    if (fragBonds[bm.first]) {
       new_bond_matches.push_back(bm);
     }
   }
@@ -195,7 +201,7 @@ std::string RascalResult::createSmartsString() const {
   if (!d_mol1 || !d_mol2) {
     return "";
   }
-  std::unique_ptr<RDKit::RWMol> smartsMol(new RDKit::RWMol);
+  RWMol smartsMol;
   std::map<int, unsigned int> atomMap;
   auto mol1Rings = d_mol1->getRingInfo();
   auto mol2Rings = d_mol2->getRingInfo();
@@ -221,7 +227,7 @@ std::string RascalResult::createSmartsString() const {
         mol2Rings->numAtomRings(mol2Atom->getIdx())) {
       a.expandQuery(RDKit::makeAtomInRingQuery(), Queries::COMPOSITE_AND, true);
     }
-    auto ai = smartsMol->addAtom(&a);
+    auto ai = smartsMol.addAtom(&a);
     atomMap.insert(std::make_pair(am.first, ai));
   }
 
@@ -243,10 +249,10 @@ std::string RascalResult::createSmartsString() const {
       b.expandQuery(RDKit::makeBondIsInRingQuery(), Queries::COMPOSITE_AND,
                     true);
     }
-    smartsMol->addBond(&b, false);
+    smartsMol.addBond(&b, false);
   }
-  std::string smt = RDKit::MolToSmarts(*smartsMol, true);
-  cleanSmarts(smt);
+  std::string smt = RDKit::MolToSmarts(smartsMol, true);
+  details::cleanSmarts(smt);
   return smt;
 }
 
@@ -310,8 +316,7 @@ void RascalResult::matchCliqueAtoms(
   if (std::count(mol1Matches.begin(), mol1Matches.end(), -2)) {
     // Any -2 entries in mol1Matches are down to isolated bonds, which are a bit
     // tricky.
-    for (size_t i = 0; i < d_bondMatches.size(); ++i) {
-      const auto &pair1 = d_bondMatches[i];
+    for (const auto &pair1 : d_bondMatches) {
       auto bond1_1 = d_mol1->getBondWithIdx(pair1.first);
       if (mol1Matches[bond1_1->getBeginAtomIdx()] == -2 &&
           mol1Matches[bond1_1->getEndAtomIdx()] == -2) {
@@ -415,11 +420,11 @@ void RascalResult::applyMaxFragSep() {
   if (deletedFrag) {
     // rebuild the d_bondMatches
     std::vector<std::pair<int, int>> new_bond_matches;
-    for (size_t i = 0; i < frags1.size(); ++i) {
-      if (!frags1[i]) {
+    for (auto &frag : frags1) {
+      if (!frag) {
         continue;
       }
-      for (auto b : frags1[i]->bonds()) {
+      for (auto b : frag->bonds()) {
         int b_idx = b->getProp<int>("ORIG_INDEX");
         for (auto &bm : d_bondMatches) {
           if (b_idx == bm.first) {
@@ -432,11 +437,11 @@ void RascalResult::applyMaxFragSep() {
     d_bondMatches = new_bond_matches;
     // and the d_atomMatches
     std::vector<std::pair<int, int>> new_atom_matches;
-    for (size_t i = 0; i < frags1.size(); ++i) {
-      if (!frags1[i]) {
+    for (auto &frag : frags1) {
+      if (!frag) {
         continue;
       }
-      for (auto a : frags1[i]->atoms()) {
+      for (auto a : frag->atoms()) {
         int a_idx = a->getProp<int>("ORIG_INDEX");
         for (auto &am : d_atomMatches) {
           if (a_idx == am.first) {
@@ -577,12 +582,10 @@ int RascalResult::calcLargestFragSize() const {
   std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
   std::vector<int> mapping;
   auto numFrags = RDKit::MolOps::getMolFrags(*mol1_frags, mapping);
-  int lfs = -1;
-  for (unsigned int i = 0; i < numFrags; ++i) {
+  auto lfs = std::count(mapping.begin(), mapping.end(), 0);
+  for (unsigned int i = 1; i < numFrags; ++i) {
     auto fragSize = std::count(mapping.begin(), mapping.end(), i);
-    if (fragSize > lfs) {
-      lfs = fragSize;
-    }
+    lfs = std::max(lfs, fragSize);
   }
   return lfs;
 }
@@ -654,68 +657,68 @@ const std::shared_ptr<ROMol> RascalResult::getMcesMol() const {
     return d_mcesMol;
   }
 
-  std::set<int> mol1Bonds;
+  boost::dynamic_bitset<> mol1Bonds(d_mol1->getNumBonds());
   for (const auto &bm : d_bondMatches) {
-    mol1Bonds.insert(bm.first);
+    mol1Bonds.set(bm.first);
   }
-  std::set<int> mol1Atoms;
+  boost::dynamic_bitset<> mol1Atoms(d_mol1->getNumAtoms());
   for (const auto &am : d_atomMatches) {
-    mol1Atoms.insert(am.first);
+    mol1Atoms.set(am.first);
   }
-  RWMol tmpMol(*d_mol1);
-  MolOps::KekulizeIfPossible(tmpMol);
-  tmpMol.beginBatchEdit();
-  for (auto &bond : tmpMol.bonds()) {
-    if (mol1Bonds.find(bond->getIdx()) == mol1Bonds.end()) {
+  std::shared_ptr<RWMol> tmpMol(new RWMol(*d_mol1));
+  MolOps::KekulizeIfPossible(*tmpMol);
+  tmpMol->beginBatchEdit();
+  for (auto &bond : tmpMol->bonds()) {
+    if (!mol1Bonds[bond->getIdx()]) {
       auto bo = bond->getBondType();
-      bond->getBeginAtom()->setNumExplicitHs(
-          bond->getBeginAtom()->getNumExplicitHs() + bo);
-      bond->getEndAtom()->setNumExplicitHs(
-          bond->getEndAtom()->getNumExplicitHs() + bo);
-      tmpMol.removeBond(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
+      if (bond->getBeginAtom()->getNoImplicit() ||
+          (bond->getBeginAtom()->getIsAromatic() &&
+           bond->getBeginAtom()->getAtomicNum() != 6)) {
+        bond->getBeginAtom()->setNumExplicitHs(
+            bond->getBeginAtom()->getNumExplicitHs() + bo);
+      }
+      if (bond->getEndAtom()->getNoImplicit() ||
+          (bond->getEndAtom()->getIsAromatic() &&
+           bond->getEndAtom()->getAtomicNum() != 6)) {
+        bond->getEndAtom()->setNumExplicitHs(
+            bond->getEndAtom()->getNumExplicitHs() + bo);
+      }
+      tmpMol->removeBond(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
     }
   }
-  for (auto atom : tmpMol.atoms()) {
-    if (mol1Atoms.find(atom->getIdx()) == mol1Atoms.end()) {
-      tmpMol.removeAtom(atom);
+  for (auto atom : tmpMol->atoms()) {
+    if (!mol1Atoms[atom->getIdx()]) {
+      tmpMol->removeAtom(atom);
     }
   }
-  tmpMol.commitBatchEdit();
-  MolOps::removeHs(tmpMol);
-  MolOps::sanitizeMol(tmpMol);
-  d_mcesMol.reset(new ROMol(tmpMol));
+  tmpMol->commitBatchEdit();
+  MolOps::removeHs(*tmpMol);
+  MolOps::sanitizeMol(*tmpMol);
+  d_mcesMol = tmpMol;
   return d_mcesMol;
 }
 
+namespace details {
 bool resultCompare(const RascalResult &res1, const RascalResult &res2) {
-  if (res1.getBondMatches().size() == res2.getBondMatches().size()) {
-    if (res1.getNumFrags() == res2.getNumFrags()) {
-      if (res1.getLargestFragSize() == res2.getLargestFragSize()) {
-        if (res1.getRingNonRingBondScore() == res2.getRingNonRingBondScore()) {
-          if (res1.getAtomMatchScore() == res2.getAtomMatchScore()) {
-            if (res1.getMaxDeltaAtomAtomDist() ==
-                res2.getMaxDeltaAtomAtomDist()) {
-              return res1.getSmarts() < res2.getSmarts();
-            } else {
-              return res1.getMaxDeltaAtomAtomDist() <
-                     res2.getMaxDeltaAtomAtomDist();
-            }
-          } else {
-            return res1.getAtomMatchScore() < res2.getAtomMatchScore();
-          }
-        } else {
-          return res1.getRingNonRingBondScore() <
-                 res2.getRingNonRingBondScore();
-        }
-      } else {
-        return res1.getLargestFragSize() > res2.getLargestFragSize();
-      }
-    } else {
-      return res1.getNumFrags() < res2.getNumFrags();
-    }
-  } else {
+  if (res1.getBondMatches().size() != res2.getBondMatches().size()) {
     return res1.getBondMatches().size() > res2.getBondMatches().size();
   }
+  if (res1.getNumFrags() != res2.getNumFrags()) {
+    return res1.getNumFrags() < res2.getNumFrags();
+  }
+  if (res1.getLargestFragSize() != res2.getLargestFragSize()) {
+    return res1.getLargestFragSize() > res2.getLargestFragSize();
+  }
+  if (res1.getRingNonRingBondScore() != res2.getRingNonRingBondScore()) {
+    return res1.getRingNonRingBondScore() < res2.getRingNonRingBondScore();
+  }
+  if (res1.getAtomMatchScore() != res2.getAtomMatchScore()) {
+    return res1.getAtomMatchScore() < res2.getAtomMatchScore();
+  }
+  if (res1.getMaxDeltaAtomAtomDist() != res2.getMaxDeltaAtomAtomDist()) {
+    return res1.getMaxDeltaAtomAtomDist() < res2.getMaxDeltaAtomAtomDist();
+  }
+  return res1.getSmarts() < res2.getSmarts();
 }
 
 void extractClique(const std::vector<unsigned int> &clique,
@@ -725,11 +728,9 @@ void extractClique(const std::vector<unsigned int> &clique,
   bondMatches.clear();
   for (auto mem : clique) {
     if (swapped) {
-      bondMatches.push_back(
-          std::make_pair(vtxPairs[mem].second, vtxPairs[mem].first));
+      bondMatches.emplace_back(vtxPairs[mem].second, vtxPairs[mem].first);
     } else {
-      bondMatches.push_back(
-          std::make_pair(vtxPairs[mem].first, vtxPairs[mem].second));
+      bondMatches.push_back(vtxPairs[mem]);
     }
   }
   std::sort(bondMatches.begin(), bondMatches.end());
@@ -752,20 +753,16 @@ void cleanSmarts(std::string &smarts) {
       {std::regex(R"(\[#17&A\])"), "Cl"},
       {std::regex(R"(\[#35&A\])"), "Br"},
       {std::regex(R"(\[#53&A\])"), "I"},
-      {std::regex(R"(([cnops][1-9]*):([cnops]))"), "$1$2"},
-      {std::regex(R"(([cnops]):([1-9]))"), "$1$2"},
       {std::regex(R"(([A-Z])-([cnops]))"), "$1$2"},
       {std::regex(R"(([cnops][1-9]*)-([A-Z]))"), "$1$2"},
       {std::regex(R"(([A-Z][1-9]*)-([A-Z]))"), "$1$2"},
       {std::regex(R"(([A-Z])-([1-9]))"), "$1$2"}};
   // Sometimes it needs more than 1 pass through
-  for (int i = 0; i < 10; ++i) {
-    std::string start_smt = smarts;
-    for (const auto &repl : repls) {
-      smarts = std::regex_replace(smarts, std::get<0>(repl), std::get<1>(repl));
-    }
-    if (start_smt == smarts) {
-      break;
+  std::string start_smt = "";
+  while (start_smt != smarts) {
+    start_smt = smarts;
+    for (auto [patt, repl] : repls) {
+      smarts = std::regex_replace(smarts, patt, repl);
     }
   }
 }
@@ -812,6 +809,7 @@ double johnsonSimilarity(const std::vector<std::pair<int, int>> &bondMatches,
                  (mol2.getNumAtoms() + mol2.getNumBonds());
   return num / denom;
 }
+}  // namespace details
 
 }  // namespace RascalMCES
 }  // namespace RDKit

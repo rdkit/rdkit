@@ -233,7 +233,6 @@ std::vector<std::vector<unsigned int>> formInitialClusters(
     for (auto j : subGraph) {
       if (proxGraph[i][j].d_res) {
         nbors.push_back(proxGraph[i][j]);
-      } else {
       }
     }
     std::sort(nbors.begin(), nbors.end(),
