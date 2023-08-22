@@ -564,9 +564,9 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     // check for the case that bonds 1 and 2 are co-linear but 1 and 0 are
     // not:
     if (bondVects[order[1]].crossProduct(bondVects[order[2]]).lengthSq() <
-            zeroTol &&
+            10*zeroTol &&
         bondVects[order[1]].crossProduct(bondVects[order[0]]).lengthSq() >
-            zeroTol) {
+            10*zeroTol) {
       bondVects[order[1]].z = bondVects[order[0]].z * -1;
       // bondVects[order[1]].normalize();  // maybe not strictly necessary
     }
@@ -622,6 +622,30 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
             << bond->getBeginAtomIdx() << " ignored"
             << " by rule 1a." << std::endl;
         return std::nullopt;
+      }
+    }
+
+    {
+      auto cp01 = bondVects[order[0]].crossProduct(bondVects[order[1]]);
+      auto cp02 = bondVects[order[0]].crossProduct(bondVects[order[2]]);
+      if(cp01.z < cp02.z) {
+        std::swap(order[1],order[2]);
+        prefactor *= -1;
+      }
+      if(nNbrs>3){
+        auto cp01 = bondVects[order[0]].crossProduct(bondVects[order[1]]);
+        auto cp02 = bondVects[order[0]].crossProduct(bondVects[order[2]]);
+        auto cp03 = bondVects[order[0]].crossProduct(bondVects[order[3]]);
+        if(cp01.z < cp03.z) {
+          auto tmp = order[2];
+          order[2] = order[1];
+          order[1] = order[3];
+          order[3] = tmp;
+          // no prefactor change since this is two swaps
+        } else if(cp02.z < cp03.z) {
+          std::swap(order[2],order[3]);
+          prefactor *= -1;
+        }
       }
     }
 
