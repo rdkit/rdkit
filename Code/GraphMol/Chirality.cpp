@@ -680,7 +680,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
           bondVects[order[1]].crossProduct(bondVects[order[3]]);
       const auto dotp2 = bondVects[order[1]].dotProduct(bondVects[order[3]]);
       auto vol2 = crossp2.dotProduct(bondVects[order[0]]);
-#if 0
+#if 1
       std::cerr << neighborBondIndices[order[0]] << " " <<
       bondVects[order[0]]
                 << std::endl;
