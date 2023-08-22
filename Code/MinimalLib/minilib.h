@@ -169,6 +169,23 @@ class JSMolList {
   size_t d_idx;
 };
 
+namespace RDKit {
+namespace MinimalLib {
+struct LogHandle;
+}
+}  // namespace RDKit
+
+class JSLog {
+ public:
+  JSLog(RDKit::MinimalLib::LogHandle *logHandle);
+  ~JSLog();
+  std::string get_buffer() const;
+  void clear_buffer() const;
+
+ private:
+  RDKit::MinimalLib::LogHandle *d_logHandle;
+};
+
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
 class JSReaction {
  public:
@@ -250,6 +267,10 @@ std::string version();
 void prefer_coordgen(bool prefer);
 bool use_legacy_stereo_perception(bool value);
 bool allow_non_tetrahedral_chirality(bool value);
+void enable_logging();
+void disable_logging();
+JSLog *set_log_tee(const std::string &log_name);
+JSLog *set_log_capture(const std::string &log_name);
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
 std::string get_mcs_as_smarts(const JSMolList &mols, const std::string &details_json);
 JSMol *get_mcs_as_mol(const JSMolList &mols, const std::string &details_json);
