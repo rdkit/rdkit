@@ -148,6 +148,10 @@ void DrawMolMCHLasso::extractAtomArcs(
   xradius += xradius * colNum * 0.5;
   Point2D radii(xradius, xradius);
   for (auto ca : colAtoms) {
+    if (ca < 0 || ca >= drawMol_->getNumAtoms()) {
+      // there's an error in the colour map
+      continue;
+    }
     std::vector<Point2D> pts{atCds_[ca], radii};
     DrawShapeArc *ell = new DrawShapeArc(
         pts, 0.0, 360.0, drawOptions_.bondLineWidth, true, col, false, ca);
@@ -165,9 +169,29 @@ void DrawMolMCHLasso::extractBondLines(
   xradius += xradius * colNum;
   if (colAtoms.size() > 1) {
     for (size_t i = 0U; i < colAtoms.size() - 1; ++i) {
+      if (colAtoms[i] < 0 || colAtoms[i] >= drawMol_->getNumAtoms()) {
+        // there's an error in the colour map.
+        continue;
+      }
       for (size_t j = i + 1; j < colAtoms.size(); ++j) {
+        if (colAtoms[j] < 0 || colAtoms[j] >= drawMol_->getNumAtoms()) {
+          // there's an error in the colour map.
+          continue;
+        }
         auto bond = drawMol_->getBondBetweenAtoms(colAtoms[i], colAtoms[j]);
         if (bond) {
+          const DrawColour *colToUse = &col;
+          if (!mcHighlightBondMap_.empty()) {
+            const auto it = mcHighlightBondMap_.find(bond->getIdx());
+            if (it == mcHighlightBondMap_.end()) {
+              continue;
+            }
+            if (it->second.size() < colNum) {
+              colToUse = &it->second[colNum];
+            } else if (!it->second.empty()) {
+              colToUse = &it->second[colNum % it->second.size()];
+            }
+          }
           auto at1_cds = atCds_[colAtoms[i]];
           auto at2_cds = atCds_[colAtoms[j]];
           auto perp = calcPerpendicular(at1_cds, at2_cds);
@@ -178,7 +202,7 @@ void DrawMolMCHLasso::extractBondLines(
             std::vector<Point2D> pts{p1, p2};
             DrawShapeSimpleLine *pl = new DrawShapeSimpleLine(
                 pts, drawOptions_.bondLineWidth, drawOptions_.scaleBondWidth,
-                col, colAtoms[i], colAtoms[j], bond->getIdx(), noDash);
+                *colToUse, colAtoms[i], colAtoms[j], bond->getIdx(), noDash);
             lines.emplace_back(pl);
           }
         }

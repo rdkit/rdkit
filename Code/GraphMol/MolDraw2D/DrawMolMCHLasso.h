@@ -31,12 +31,18 @@ class DrawMolMCHLasso : public DrawMolMCH {
  \param textDrawer     : a DrawText object from the owning MolDraw2D
  \param highlight_atom_map : indexed on atom idx, the colours to be used to
  highlight atoms.  Not all atoms need to be mentioned.
- \param highlight_bond_map : ignored in this molecule representation.
- \param highlightRadii : ignored in this molecule representation[.
- \param highlight_linewidth_multipliers : map from bondId -> int, to change
- the thickness of the lines used for the highlighting.
- \param confId         : (optional) conformer ID to be used for atomic
- coordinates
+ \param highlight_bond_map : If this is empty, then the lassos will be between
+                             all bonded atoms in the highlight_atom_map, in
+                             the appropriate colours.  If it is given, the lasso
+                             will be in more than one part if there is a bond
+                             between 2 highlighted atoms that isn't in the
+                             highlight_bond_map.  The colours in
+                             highlight_bond_map will be used for the lines
+                             between the atoms.
+ \param highlightRadii : ignored in this molecule representation.
+ \param highlight_linewidth_multipliers : ignored in this molecule
+ representation. \param confId         : (optional) conformer ID to be used for
+ atomic coordinates
  */
   DrawMolMCHLasso(
       const ROMol &mol, const std::string &legend, int width, int height,
