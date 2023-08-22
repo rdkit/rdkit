@@ -220,9 +220,11 @@ void DrawMolMCHLasso::fixArcsAndLines(
   static const Point2D index{1.0, 0.0};
 
   std::vector<std::unique_ptr<DrawShapeArc>> newArcs;
-  std::list<double> lineEndAngles;
+  std::vector<std::pair<double, double>> lineEndAngles;
+  std::list<double> singleLineEndAngles;
   for (auto &arc : arcs) {
     lineEndAngles.clear();
+    singleLineEndAngles.clear();
     // find 2 lines that intersect with this arc.  The arc should not
     // be drawn between them.
     for (auto &line1 : lines) {
@@ -251,17 +253,23 @@ void DrawMolMCHLasso::fixArcsAndLines(
             if (crossZ > 0.0) {
               std::swap(ang1, ang2);
             }
-            lineEndAngles.push_back(ang2);
-            lineEndAngles.push_back(ang1);
+            lineEndAngles.push_back(std::pair{ang2, ang1});
           }
         }
       }
     }
+    // make sure they go round in ascending order.
+    std::sort(lineEndAngles.begin(), lineEndAngles.end());
     // Move the front angle to the back, so the list is now the bits to draw,
     // not the bits to skip.
-    lineEndAngles.push_back(lineEndAngles.front());
-    lineEndAngles.pop_front();
-    for (auto ang = lineEndAngles.begin(); ang != lineEndAngles.end();) {
+    for (const auto &lea : lineEndAngles) {
+      singleLineEndAngles.push_back(lea.first);
+      singleLineEndAngles.push_back(lea.second);
+    }
+    singleLineEndAngles.push_back(singleLineEndAngles.front());
+    singleLineEndAngles.pop_front();
+    for (auto ang = singleLineEndAngles.begin();
+         ang != singleLineEndAngles.end();) {
       DrawShapeArc *newArc = new DrawShapeArc(
           arc->points_, *ang++, *ang++, arc->lineWidth_, arc->scaleLineWidth_,
           arc->lineColour_, arc->fill_, arc->atom1_);
