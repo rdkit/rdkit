@@ -236,12 +236,6 @@ typename std::vector<std::unique_ptr<T>>::iterator findUniquePtr(
 
 template <typename T>
 void eraseUniquePtr(std::vector<std ::unique_ptr<T>> &vector, T *itemToErase) {
-  // auto removeUniqIter = find_if(vector.begin(), vector.end(),
-  //                               [itemToErase](std::unique_ptr<T> &uniquePtr)
-  //                               {
-  //                                 return uniquePtr.get() == itemToErase;
-  //
-
   auto removeUniqIter = findUniquePtr<T>(vector, itemToErase);
 
   if (removeUniqIter == vector.end()) {
@@ -272,16 +266,14 @@ class MarvinMolBase {
   void addSgroupsToPtree(ptree &pt) const;
 
   virtual MarvinMolBase *copyMol(std::string idAppend) const = 0;
-  void pushOwnedAtom(MarvinAtom *atom);
-  void pushOwnedBond(MarvinBond *bond);
+  virtual void pushOwnedAtom(MarvinAtom *atom);
+  virtual void pushOwnedBond(MarvinBond *bond);
 
   virtual void pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atom);
   virtual void pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bond);
 
   virtual void removeOwnedAtom(MarvinAtom *atom);
   virtual void removeOwnedBond(MarvinBond *bond);
-  virtual void moveOwnedAtom(MarvinAtom *atom, MarvinMolBase *moveToMol);
-  virtual void moveOwnedBond(MarvinBond *bond, MarvinMolBase *moveToMol);
 
   int getExplicitValence(const MarvinAtom &marvinAtom) const;
 
@@ -550,14 +542,6 @@ class MarvinSuperatomSgroup : public MarvinMolBase {
   std::vector<std::unique_ptr<MarvinAtom>> ownedAtoms;
   std::vector<std::unique_ptr<MarvinBond>> ownedBonds;
 
-  void pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atom) override;
-  void pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bond) override;
-
-  void removeOwnedAtom(MarvinAtom *atom) override;
-  void removeOwnedBond(MarvinBond *bond) override;
-  void moveOwnedAtom(MarvinAtom *atom, MarvinMolBase *moveToMol) override;
-  void moveOwnedBond(MarvinBond *bond, MarvinMolBase *moveToMol) override;
-
   MarvinSuperatomSgroup(MarvinMolBase *parent);
   MarvinSuperatomSgroup(MarvinMolBase *parent, ptree &molTree);
 
@@ -603,13 +587,14 @@ class MarvinMol : public MarvinMolBase {
   std::vector<std::unique_ptr<MarvinAtom>> ownedAtoms;
   std::vector<std::unique_ptr<MarvinBond>> ownedBonds;
 
+  virtual void pushOwnedAtom(MarvinAtom *atom) override;
+  virtual void pushOwnedBond(MarvinBond *bond) override;
+
   void pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atom) override;
   void pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bond) override;
 
   void removeOwnedAtom(MarvinAtom *atom) override;
   void removeOwnedBond(MarvinBond *bond) override;
-  void moveOwnedAtom(MarvinAtom *atom, MarvinMolBase *moveToMol) override;
-  void moveOwnedBond(MarvinBond *bond, MarvinMolBase *moveToMol) override;
 
   std::string role() const override;
   bool hasAtomBondBlocks() const override;

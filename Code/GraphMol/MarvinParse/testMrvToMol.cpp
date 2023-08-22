@@ -87,6 +87,14 @@ class SmilesTest {
   bool isRxnTest() const { return false; }
 };
 
+std::string GetExpectedValue(std::string expectedFileName) {
+  std::stringstream expectedMolStr;
+  std::ifstream in;
+  in.open(expectedFileName);
+  expectedMolStr << in.rdbuf();
+  return expectedMolStr.str();
+}
+
 void testSmilesToMarvin(const SmilesTest *smilesTest) {
   BOOST_LOG(rdInfoLog) << "testing smiles to marin " << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -122,13 +130,7 @@ void testSmilesToMarvin(const SmilesTest *smilesTest) {
 
       std::string smilesOut = MolToSmiles(*localVars.smilesMol, ps);
 
-      std::stringstream expectedMolStr;
-      std::ifstream in;
-      in.open(expectedMrvName);
-      expectedMolStr << in.rdbuf();
-      std::string expectedStr = expectedMolStr.str();
-
-      TEST_ASSERT(expectedStr == smilesOut);
+      TEST_ASSERT(GetExpectedValue(expectedMrvName) == smilesOut);
     }
 
     {
@@ -144,13 +146,7 @@ void testSmilesToMarvin(const SmilesTest *smilesTest) {
                                   true);  // try without kekule'ing
       }
 
-      std::stringstream expectedMolStr;
-      std::ifstream in;
-      in.open(expectedMrvName);
-      expectedMolStr << in.rdbuf();
-      std::string expectedStr = expectedMolStr.str();
-
-      TEST_ASSERT(expectedStr == outMolStr);
+      TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
     }
     {
       std::string mrvBlock;
@@ -168,13 +164,7 @@ void testSmilesToMarvin(const SmilesTest *smilesTest) {
                                   false);  // try without kekule'ing
       }
 
-      std::stringstream expectedMolStr;
-      std::ifstream in;
-      in.open(expectedMrvName);
-      expectedMolStr << in.rdbuf();
-      std::string expectedStr = expectedMolStr.str();
-
-      TEST_ASSERT(expectedStr == outMolStr);
+      TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
     }
     BOOST_LOG(rdInfoLog) << "done" << std::endl;
   } catch (const std::exception &e) {
@@ -263,13 +253,7 @@ void testMarvinMol(const MolTest *molTest) {
                                   true);  // try without kekule'ing
       }
 
-      std::stringstream expectedMolStr;
-      std::ifstream in;
-      in.open(expectedMrvName);
-      expectedMolStr << in.rdbuf();
-      std::string expectedStr = expectedMolStr.str();
-
-      TEST_ASSERT(expectedStr == outMolStr);
+      TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
     }
 
     {
@@ -286,13 +270,7 @@ void testMarvinMol(const MolTest *molTest) {
                                   false);  // try without kekule'ing
       }
 
-      std::stringstream expectedMolStr;
-      std::ifstream in;
-      in.open(expectedMrvName);
-      expectedMolStr << in.rdbuf();
-      std::string expectedStr = expectedMolStr.str();
-
-      TEST_ASSERT(expectedStr == outMolStr);
+      TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
 
       BOOST_LOG(rdInfoLog) << "done" << std::endl;
     }
@@ -386,26 +364,15 @@ void testMarvinRxn(const RxnTest *rxnTest) {
 
       std::string expectedRxnName = fName + ".expected.rxn";
 
-      std::stringstream expectedMolStr;
-      std::ifstream in;
-      in.open(expectedRxnName);
-      expectedMolStr << in.rdbuf();
-      std::string expectedStr = expectedMolStr.str();
-
-      TEST_ASSERT(expectedStr == outMolStr);
+      TEST_ASSERT(GetExpectedValue(expectedRxnName) == outMolStr);
     }
 
     {
       std::string outMolStr = ChemicalReactionToMrvBlock(*localVars.rxn, false);
 
       std::string expectedRxnName = fName + ".expected.mrv";
-      std::stringstream expectedMolStr;
-      std::ifstream in;
-      in.open(expectedRxnName);
-      expectedMolStr << in.rdbuf();
-      std::string expectedStr = expectedMolStr.str();
 
-      TEST_ASSERT(expectedStr == outMolStr);
+      TEST_ASSERT(GetExpectedValue(expectedRxnName) == outMolStr);
     }
     BOOST_LOG(rdInfoLog) << "done" << std::endl;
     BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -459,15 +426,7 @@ void testMolFiles(const MolTest *molFileTest) {
                                   true);  // try without kekule'ing
       }
 
-      std::stringstream expectedMolStr;
-      std::ifstream in;
-      in.open(expectedMrvName);
-      expectedMolStr << in.rdbuf();
-      std::string expectedStr = expectedMolStr.str();
-      if (expectedStr != outMolStr) {
-        std::cerr << "ERROR: " << fName << " failed" << std::endl;
-      }
-      TEST_ASSERT(expectedStr == outMolStr);
+      TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
     }
 
     {
@@ -484,13 +443,7 @@ void testMolFiles(const MolTest *molFileTest) {
         outMolStr = MolToMrvBlock(*localVars.mol, true, -1, false, false);
       }
 
-      std::stringstream expectedMolStr;
-      std::ifstream in;
-      in.open(expectedMrvName);
-      expectedMolStr << in.rdbuf();
-      std::string expectedStr = expectedMolStr.str();
-
-      TEST_ASSERT(expectedStr == outMolStr);
+      TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
     }
 
     BOOST_LOG(rdInfoLog) << "done" << std::endl;

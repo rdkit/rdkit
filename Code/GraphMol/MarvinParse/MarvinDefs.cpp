@@ -175,9 +175,8 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
         if (isotopeStr != "") {
           if (!getCleanInt(isotopeStr, mrvAtom->isotope) ||
               mrvAtom->isotope <= 0) {
-            std::ostringstream err;
-            err << "The value for isotope must be a positive number in MRV file";
-            throw FileParseException(err.str());
+            throw FileParseException(
+                "The value for isotope must be a positive number in MRV file");
           }
         } else {
           mrvAtom->isotope = 0;
@@ -188,9 +187,8 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
         if (valenceStr != "") {
           if (!getCleanInt(valenceStr, mrvAtom->mrvValence) ||
               mrvAtom->mrvValence < 0) {
-            std::ostringstream err;
-            err << "The value for mrvValence must be a positive number in MRV file";
-            throw FileParseException(err.str());
+            throw FileParseException(
+                "The value for mrvValence must be a positive number in MRV file");
           }
         } else {
           mrvAtom->mrvValence = -1;
@@ -201,9 +199,8 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
         if (hCountStr != "") {
           if (!getCleanInt(hCountStr, mrvAtom->hydrogenCount) ||
               mrvAtom->hydrogenCount < 0) {
-            std::ostringstream err;
-            err << "The value for hydrogenCount must be a non-negative number in MRV file";
-            throw FileParseException(err.str());
+            throw FileParseException(
+                "The value for hydrogenCount must be a non-negative number in MRV file");
           }
         } else {
           mrvAtom->hydrogenCount = -1;
@@ -571,9 +568,8 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
             if (mrvBond->bondStereo.convention != "") {
               bondStereoDeclCount++;
               if (mrvBond->bondStereo.convention != "MDL") {
-                std::ostringstream err;
-                err << "Expected MDL as value for the bond convention attribute";
-                throw FileParseException(err.str());
+                throw FileParseException(
+                    "Expected MDL as value for the bond convention attribute");
               }
               mrvBond->bondStereo.conventionValue =
                   ww.second.get<std::string>("<xmlattr>.conventionValue", "");
@@ -993,9 +989,8 @@ const std::string MarvinBond::getBondType() const {
       throw FileParseException(err.str());
     }
   } else {
-    std::ostringstream err;
-    err << "bond must have one of:  order, queryType, or convention in MRV File ";
-    throw FileParseException(err.str());
+    throw FileParseException(
+        "bond must have one of:  order, queryType, or convention in MRV File ");
   }
 }
 
@@ -1105,26 +1100,22 @@ void MarvinMolBase::pushOwnedBond(MarvinBond *bond) {
 }
 
 void MarvinMolBase::pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atom) {
-  throw std::runtime_error("unexpeced error");
+  PRECONDITION(this->parent, "only sgroups should call the base class version");
+  this->parent->pushOwnedAtomUniqPtr(std::move(atom));
 }
 void MarvinMolBase::pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bond) {
-  throw std::runtime_error("unexpeced error");
+  PRECONDITION(this->parent, "only sgroups should call the base class version");
+  this->parent->pushOwnedBondUniqPtr(std::move(bond));
 }
 
 void MarvinMolBase::removeOwnedAtom(MarvinAtom *atom) {
-  throw std::runtime_error("unexpeced error");
+  PRECONDITION(this->parent, "only sgroups should call the base class version");
+  this->parent->removeOwnedAtom(atom);
 }
 
 void MarvinMolBase::removeOwnedBond(MarvinBond *bond) {
-  throw std::runtime_error("unexpeced error");
-}
-
-void MarvinMolBase::moveOwnedAtom(MarvinAtom *atom, MarvinMolBase *moveToMol) {
-  throw std::runtime_error("unexpeced error");
-}
-
-void MarvinMolBase::moveOwnedBond(MarvinBond *bond, MarvinMolBase *moveToMol) {
-  throw std::runtime_error("unexpeced error");
+  PRECONDITION(this->parent, "only sgroups should call the base class version");
+  this->parent->removeOwnedBond(bond);
 }
 
 int MarvinMolBase::getBondIndex(std::string id) const {
@@ -2249,52 +2240,11 @@ MarvinSuperatomSgroup::MarvinSuperatomSgroup(MarvinMolBase *parentInit,
 
 MarvinSuperatomSgroup::~MarvinSuperatomSgroup() {
   this->attachmentPoints.clear();
-  this->ownedAtoms.clear();
-  this->ownedBonds.clear();
 }
 
 std::string MarvinSuperatomSgroup::role() const { return "SuperatomSgroup"; }
 
 bool MarvinSuperatomSgroup::hasAtomBondBlocks() const { return true; }
-
-void MarvinSuperatomSgroup::pushOwnedAtomUniqPtr(
-    std::unique_ptr<MarvinAtom> atomUniqPtr) {
-  ownedAtoms.push_back(std::move(atomUniqPtr));
-}
-void MarvinSuperatomSgroup::pushOwnedBondUniqPtr(
-    std::unique_ptr<MarvinBond> bondUniqPtr) {
-  ownedBonds.push_back(std::move(bondUniqPtr));
-}
-
-void MarvinSuperatomSgroup::removeOwnedAtom(MarvinAtom *atom) {
-  PRECONDITION(atom != nullptr, "atom cannot be null");
-  eraseUniquePtr<MarvinAtom>(ownedAtoms, atom);
-}
-
-void MarvinSuperatomSgroup::removeOwnedBond(MarvinBond *bond) {
-  PRECONDITION(bond != nullptr, "bond cannot be null");
-  eraseUniquePtr<MarvinBond>(ownedBonds, bond);
-}
-
-void MarvinSuperatomSgroup::moveOwnedAtom(MarvinAtom *atom,
-                                          MarvinMolBase *moveToMol) {
-  PRECONDITION(atom != nullptr, "atom cannot be null");
-  PRECONDITION(moveToMol != nullptr, "moveToMol cannot be null");
-
-  auto uniqPtrIter = findUniquePtr(ownedAtoms, atom);
-  moveToMol->pushOwnedAtomUniqPtr(std::move(*uniqPtrIter));
-  ownedAtoms.erase(uniqPtrIter);
-}
-
-void MarvinSuperatomSgroup::moveOwnedBond(MarvinBond *bond,
-                                          MarvinMolBase *moveToMol) {
-  PRECONDITION(bond != nullptr, "bond cannot be null");
-  PRECONDITION(moveToMol != nullptr, "moveToMol cannot be null");
-
-  auto uniqPtrIter = findUniquePtr(ownedBonds, bond);
-  moveToMol->pushOwnedBondUniqPtr(std::move(*uniqPtrIter));
-  ownedBonds.erase(uniqPtrIter);
-}
 
 MarvinMolBase *MarvinSuperatomSgroup::copyMol(std::string idAppendage) const {
   throw FileParseException("Internal error:  copying a SuperatomSgroup");
@@ -2368,6 +2318,16 @@ std::string MarvinMol::role() const { return "MarvinMol"; }
 
 bool MarvinMol::hasAtomBondBlocks() const { return true; }
 
+void MarvinMol::pushOwnedAtom(MarvinAtom *atom) {
+  PRECONDITION(atom, "bad atom");
+  pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom>(atom));
+}
+
+void MarvinMol::pushOwnedBond(MarvinBond *bond) {
+  PRECONDITION(bond, "bad bond");
+  pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond>(bond));
+}
+
 void MarvinMol::pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atomUniqPtr) {
   ownedAtoms.push_back(std::move(atomUniqPtr));
 }
@@ -2383,24 +2343,6 @@ void MarvinMol::removeOwnedAtom(MarvinAtom *atom) {
 void MarvinMol::removeOwnedBond(MarvinBond *bond) {
   PRECONDITION(bond != nullptr, "bond cannot be null");
   eraseUniquePtr<MarvinBond>(ownedBonds, bond);
-}
-
-void MarvinMol::moveOwnedAtom(MarvinAtom *atom, MarvinMolBase *moveToMol) {
-  PRECONDITION(atom != nullptr, "atom cannot be null");
-  PRECONDITION(moveToMol != nullptr, "moveToMol cannot be null");
-
-  auto uniqPtrIter = findUniquePtr(ownedAtoms, atom);
-  moveToMol->pushOwnedAtomUniqPtr(std::move(*uniqPtrIter));
-  ownedAtoms.erase(uniqPtrIter);
-}
-
-void MarvinMol::moveOwnedBond(MarvinBond *bond, MarvinMolBase *moveToMol) {
-  PRECONDITION(bond != nullptr, "bond cannot be null");
-  PRECONDITION(moveToMol != nullptr, "moveToMol cannot be null");
-
-  auto uniqPtrIter = findUniquePtr(ownedBonds, bond);
-  moveToMol->pushOwnedBondUniqPtr(std::move(*uniqPtrIter));
-  ownedBonds.erase(uniqPtrIter);
 }
 
 bool MarvinMolBase::atomRefInAtoms(MarvinAtom *a, std::string b) {
@@ -3170,7 +3112,7 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
       }
     }
 
-    actualParent->removeOwnedAtom(dummyAtomPtr);
+    removeOwnedAtom(dummyAtomPtr);
 
     // add the atoms and bonds from the super group to the parent
 
@@ -3192,12 +3134,10 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
 
       // remove the sgroupRef from the atom if it has one
       (subAtomPtr)->sgroupAttachmentPoint = "";
-      this->moveOwnedAtom(subAtomPtr, actualParent);
     }
 
     for (auto &bond : this->bonds) {
       actualParent->bonds.push_back(bond);
-      this->moveOwnedBond(bond, actualParent);
     }
 
     // process the attachment points - fix the bond that was made wrong by
@@ -3308,7 +3248,7 @@ void MarvinMulticenterSgroup::processOneMulticenterSgroup() {
       }
     }
 
-    actualParent->removeOwnedAtom(centerPtr);
+    removeOwnedAtom(centerPtr);
   }
 
   // erase the multicenter group from its parent
@@ -3480,7 +3420,6 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
   for (auto atom : this->atoms) {
     atom->sgroupRef = "";
     marvinSuperatomSgroup->atoms.push_back(atom);
-    actualParent->moveOwnedAtom(atom, marvinSuperatomSgroup);
 
     for (auto thisParent = this->parent;;
          thisParent = thisParent->parent)  // do all parents and grandparents
@@ -3566,8 +3505,6 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
 
   for (auto bond : marvinSuperatomSgroup->bonds) {
     int index = actualParent->getBondIndex(bond->id);
-    actualParent->moveOwnedBond(*(actualParent->bonds.begin() + index),
-                                marvinSuperatomSgroup);
     actualParent->bonds.erase(actualParent->bonds.begin() + index);
   }
 
@@ -3870,7 +3807,7 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
       }
     }
 
-    actualParent->removeOwnedAtom(atomPtr);
+    removeOwnedAtom(atomPtr);
   }
 
   atomsToDelete.clear();
