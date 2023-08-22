@@ -581,7 +581,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
             BOOST_LOG(rdWarningLog)
                 << "Warning: opposing bonds " << neighborBondIndices[order[i]]
                 << " and " << neighborBondIndices[order[j]]
-                << "have opposite wedging. Stereo ignored." << std::endl;
+                << " have opposite wedging. Stereo ignored." << std::endl;
             return std::nullopt;
           }
         }
@@ -627,15 +627,16 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
 
     const auto crossp1 = bondVects[order[1]].crossProduct(bondVects[order[2]]);
     // catch linear arrangements
-    if (crossp1.lengthSq() < zeroTol) {
+    if (nNbrs==3){
+      if(crossp1.lengthSq() < zeroTol) {
       // nothing we can do if there are only three neighbors
-      if (nNbrs == 3) {
         BOOST_LOG(rdWarningLog)
             << "Warning: ambiguous stereochemistry - linear bond arrangement - at atom "
-            << bond->getBeginAtomIdx() << " ignored" << std::endl;
+            << bond->getBeginAtomIdx() << " (len="<<crossp1.lengthSq()<<") ignored" << std::endl;
         return std::nullopt;
       }
-      // if the bond on the other side is flat, wedge it the same way as bond 0:
+    } else if (crossp1.lengthSq() < 10*zeroTol){
+        // if the bond on the other side is flat, wedge it the same way as bond 0:
       if (fabs(bondVects[order[3]].z) < coordZeroTol) {
         bondVects[order[3]].z = bondVects[order[0]].z;
       } else if (bondVects[order[3]].z * bondVects[order[0]].z <
@@ -655,22 +656,24 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
           bondVects[order[1]].crossProduct(bondVects[order[3]]);
       const auto dotp2 = bondVects[order[1]].dotProduct(bondVects[order[3]]);
       auto vol2 = crossp2.dotProduct(bondVects[order[0]]);
-      // std::cerr << neighborBondIndices[order[0]] << " " <<
-      // bondVects[order[0]]
-      //           << std::endl;
-      // std::cerr << neighborBondIndices[order[1]] << " " <<
-      // bondVects[order[1]]
-      //           << std::endl;
-      // std::cerr << neighborBondIndices[order[2]] << " " <<
-      // bondVects[order[2]]
-      //           << std::endl;
-      // std::cerr << neighborBondIndices[order[3]] << " " <<
-      // bondVects[order[3]]
-      //           << std::endl;
-      // std::cerr << "------------" << std::endl;
-      // std::cerr << crossp1 << " " << dotp1 << std::endl;
-      // std::cerr << crossp2 << " " << dotp2 << std::endl;
-      // std::cerr << " !!! " << vol << " " << vol2 << std::endl;
+#if 0
+      std::cerr << neighborBondIndices[order[0]] << " " <<
+      bondVects[order[0]]
+                << std::endl;
+      std::cerr << neighborBondIndices[order[1]] << " " <<
+      bondVects[order[1]]
+                << std::endl;
+      std::cerr << neighborBondIndices[order[2]] << " " <<
+      bondVects[order[2]]
+                << std::endl;
+      std::cerr << neighborBondIndices[order[3]] << " " <<
+      bondVects[order[3]]
+                << std::endl;
+      std::cerr << "------------" << std::endl;
+      std::cerr << crossp1 << " l2=" << crossp1.lengthSq()<<" " << std::endl;
+      std::cerr << crossp2 << " l2=" << crossp2.lengthSq()<< " " << dotp2 << std::endl;
+      std::cerr << " !!! " << vol << " " << vol2 << std::endl;
+#endif
       if (fabs(vol) < zeroTol) {
         if (fabs(vol2) < zeroTol) {
           BOOST_LOG(rdWarningLog)
