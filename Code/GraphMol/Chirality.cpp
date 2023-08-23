@@ -680,7 +680,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
           bondVects[order[1]].crossProduct(bondVects[order[3]]);
       const auto dotp2 = bondVects[order[1]].dotProduct(bondVects[order[3]]);
       auto vol2 = crossp2.dotProduct(bondVects[order[0]]);
-#if 1
+#if 0
       std::cerr << neighborBondIndices[order[0]] << " " <<
       bondVects[order[0]]
                 << std::endl;
@@ -707,7 +707,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
         }
         vol = vol2;
         prefactor *= -1;
-      } else if (vol * vol2 > 0 && dotp1 < dotp2) {
+      } else if (vol * vol2 > 0 && fabs(vol2) > volumeTolerance && dotp1 < dotp2) {
         // both volumes give the same answer, but in the second case the cross
         // product is between two bonds with a better dot product
         vol = vol2;
