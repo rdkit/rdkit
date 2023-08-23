@@ -186,7 +186,7 @@ void DrawMolMCHLasso::extractBondLines(
             if (it == mcHighlightBondMap_.end()) {
               continue;
             }
-            if (it->second.size() < colNum) {
+            if (colNum < it->second.size()) {
               colToUse = &it->second[colNum];
             } else if (!it->second.empty()) {
               colToUse = &it->second[colNum % it->second.size()];
