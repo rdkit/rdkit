@@ -22,6 +22,7 @@
 #include <GraphMol/GeneralizedSubstruct/XQMol.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
 #include <GraphMol/MolEnumerator/MolEnumerator.h>
+#include <GraphMol/GenericGroups/GenericGroups.h>
 
 using namespace RDKit;
 using namespace RDKit::GeneralizedSubstruct;
@@ -281,5 +282,36 @@ TEST_CASE("controlling which steps are applied") {
   {
     auto xqm = createExtendedQueryMol(*mol1, false, false);
     CHECK(std::holds_alternative<ExtendedQueryMol::RWMol_T>(xqm.xqmol));
+  }
+}
+
+TEST_CASE("interaction with generic groups") {
+  // setup a molecule with a generic query:
+  auto baseQ = "COC1=NNC(*)=C1 |$;;;;;;AEL_p;$,LN:1:1.3|"_smiles;
+  REQUIRE(baseQ);
+  auto aqps = MolOps::AdjustQueryParameters::noAdjustments();
+  aqps.makeDummiesQueries = true;
+  MolOps::adjustQueryProperties(*baseQ, &aqps);
+  GenericGroups::setGenericQueriesFromProperties(*baseQ);
+  CHECK(baseQ->getAtomWithIdx(6)->hasProp(
+      common_properties::_QueryAtomGenericLabel));
+
+  auto xqm = createExtendedQueryMol(*baseQ);
+  CHECK(std::holds_alternative<ExtendedQueryMol::TautomerBundle_T>(xqm.xqmol));
+  const auto &tquery = std::get<ExtendedQueryMol::TautomerBundle_T>(xqm.xqmol);
+  CHECK(tquery->at(0)->getTautomers()[0]->getAtomWithIdx(7)->hasProp(
+      common_properties::_QueryAtomGenericLabel));
+  CHECK(tquery->at(0)->getTautomers()[1]->getAtomWithIdx(7)->hasProp(
+      common_properties::_QueryAtomGenericLabel));
+  SECTION("serialization") {
+    ExtendedQueryMol xqm2(xqm.toBinary());
+    CHECK(
+        std::holds_alternative<ExtendedQueryMol::TautomerBundle_T>(xqm2.xqmol));
+    const auto &tquery =
+        std::get<ExtendedQueryMol::TautomerBundle_T>(xqm2.xqmol);
+    CHECK(tquery->at(0)->getTautomers()[0]->getAtomWithIdx(7)->hasProp(
+        common_properties::_QueryAtomGenericLabel));
+    CHECK(tquery->at(0)->getTautomers()[1]->getAtomWithIdx(7)->hasProp(
+        common_properties::_QueryAtomGenericLabel));
   }
 }
