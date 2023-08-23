@@ -588,7 +588,11 @@ M  END
       d = rdMolDraw2D.MolDraw2DSVG(500, 500)
       d.drawOptions().fillHighlights = False
       if lasso is not None:
-        d.drawOptions().multiColourHighlightStyle = Draw.MultiColourHighlightStyle.Lasso
+        if lasso == "Direct":
+          d.drawOptions().multiColourHighlightStyle = Draw.MultiColourHighlightStyle.Lasso
+        elif lasso == "ViaJSON":
+          print('json lasso')
+          Draw.UpdateDrawerParamsFromJSON(d, '{"multiColourHighlightStyle": "Lasso"}')
       d.DrawMoleculeWithHighlights(mol, label, acols, bcols, h_rads, h_lw_mult, -1)
 
       d.FinishDrawing()
@@ -602,7 +606,12 @@ M  END
       txt.find("ellipse cx='244.253' cy='386.518'"
                " rx='11.9872' ry='12.8346'"
                " style='fill:none;stroke:#00FF00'"), -1)
-    txt = do_a_picture(smi, smarts, 'pyTest4', lasso="NotNone")
+    txt = do_a_picture(smi, smarts, 'pyTest4', lasso="Direct")
+    # the lasso mode puts paths, not ellipses.
+    self.assertGreater(txt.find("<path class='atom-5'"), -1)
+    self.assertEqual(txt.find("ellipse"), -1)
+
+    txt = do_a_picture(smi, smarts, 'pyTest4', lasso="ViaJSON")
     # the lasso mode puts paths, not ellipses.
     self.assertGreater(txt.find("<path class='atom-5'"), -1)
     self.assertEqual(txt.find("ellipse"), -1)

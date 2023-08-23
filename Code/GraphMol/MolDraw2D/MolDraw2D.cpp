@@ -161,12 +161,6 @@ void MolDraw2D::drawMoleculeWithHighlights(
           *text_drawer_, highlight_atom_map, highlight_bond_map,
           highlight_radii, highlight_linewidth_multipliers, confId);
       break;
-    default:
-      dm = new MolDraw2D_detail::DrawMolMCHCircleAndLine(
-          mol, legend, panelWidth(), panelHeight(), drawOptions(),
-          *text_drawer_, highlight_atom_map, highlight_bond_map,
-          highlight_radii, highlight_linewidth_multipliers, confId);
-      break;
   }
   drawMols_.emplace_back(dm);
   drawMols_.back()->createDrawObjects();
@@ -585,8 +579,8 @@ const std::vector<Point2D> &MolDraw2D::atomCoords() const {
 }
 
 // ****************************************************************************
-const std::vector<std::pair<std::string, MolDraw2D_detail::OrientType>> &
-MolDraw2D::atomSyms() const {
+const std::vector<std::pair<std::string, MolDraw2D_detail::OrientType>>
+    &MolDraw2D::atomSyms() const {
   PRECONDITION(activeMolIdx_ >= 0, "no index");
   return drawMols_[activeMolIdx_]->atomSyms_;
 }

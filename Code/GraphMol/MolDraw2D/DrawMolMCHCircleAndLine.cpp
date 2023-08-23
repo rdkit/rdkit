@@ -10,6 +10,8 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
+#include <unordered_set>
+
 #include <GraphMol/RWMol.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/DrawMolMCHCircleAndLine.h>
@@ -164,14 +166,18 @@ void DrawMolMCHCircleAndLine::makeAtomHighlights(
       auto arc_start = 270.0;
       for (size_t i = 0; i < ha.second.size(); ++i) {
         auto arc_stop = arc_start + arc_size;
-        arc_stop = arc_stop >= 360.0 ? arc_stop - 360.0 : arc_stop;
+        if (arc_stop >= 360.0) {
+          arc_stop -= 360.0;
+        }
         std::vector<Point2D> pts{centre, Point2D(xradius, yradius)};
         DrawShape *arc = new DrawShapeArc(
             pts, arc_start, arc_stop, lineWidth, true, ha.second[i],
             drawOptions_.fillHighlights, ha.first);
         atomHighlights.emplace_back(arc);
         arc_start += arc_size;
-        arc_start = arc_start >= 360.0 ? arc_start - 360.0 : arc_start;
+        if (arc_start >= 360.0) {
+          arc_start -= 360.0;
+        }
       }
     }
   }
@@ -220,7 +226,11 @@ void DrawMolMCHCircleAndLine::calcSymbolEllipse(unsigned int atomIdx,
 void DrawMolMCHCircleAndLine::fixHighlightJoinProblems(
     std::vector<std::unique_ptr<DrawShape>> &atomHighlights,
     std::vector<std::unique_ptr<DrawShape>> &bondHighlights) {
-  std::vector<unsigned int> fettledAtoms;
+  // Sometimes, the bond highlights went outside the atom highlight ellipse
+  // they were supposed to be intersecting.  This could occur particularly when
+  // the atom highlights were circles rather than ellipses.  This code detects
+  // these cases and makes the atom highlight radius larger.
+  std::unordered_set<unsigned int> fettledAtoms;
   for (unsigned int i = 0; i < atomHighlights.size(); ++i) {
     auto &atomHL = atomHighlights[i];
     for (auto &bondHL : bondHighlights) {
@@ -234,7 +244,7 @@ void DrawMolMCHCircleAndLine::fixHighlightJoinProblems(
             atomHL->points_[0], atomHL->points_[1].x, atomHL->points_[1].y, 0.0,
             360.0, 0.0, bondHL->points_[0], bondHL->points_[p2]);
         if (!ins) {
-          fettledAtoms.push_back(i);
+          fettledAtoms.insert(i);
           while (!ins) {
             double dist1 = (atomHL->points_[0] - bondHL->points_[0]).length();
             double dist2 = (atomHL->points_[0] - bondHL->points_[p2]).length();
@@ -246,10 +256,17 @@ void DrawMolMCHCircleAndLine::fixHighlightJoinProblems(
             if (dist2 < 1.0e-4) {
               dist2 = maxrad;
             }
+            // This scales the radii of the ellipse by 1.25 times the
+            // ratio of the shorter distance of the bond highlight ends
+            // from the atom and the larger radius of the ellipse.  It's
+            // to make sure the ellipse is definitely wide enough that the
+            // bond highlight intersects it.
             double upscaler = 1.25 * std::min(dist1, dist2) / maxrad;
+            // We certainly don't want to make the ellipse smaller.
             if (upscaler <= 1.0) {
               upscaler = 1.1;
             }
+            // For radii of the ellipse are in points_[1].
             atomHL->points_[1] *= upscaler;
             ins = doesLineIntersectArc(atomHL->points_[0], atomHL->points_[1].x,
                                        atomHL->points_[1].y, 0.0, 360, 0.0,
@@ -259,12 +276,9 @@ void DrawMolMCHCircleAndLine::fixHighlightJoinProblems(
       }
     }
   }
-  std::sort(fettledAtoms.begin(), fettledAtoms.end());
-  fettledAtoms.erase(std::unique(fettledAtoms.begin(), fettledAtoms.end()),
-                     fettledAtoms.end());
-  for (unsigned int i = 0; i < fettledAtoms.size(); ++i) {
+  for (auto fa : fettledAtoms) {
     // now adjust all the other bond highlights that end on this atom
-    auto &atomHL = atomHighlights[fettledAtoms[i]];
+    auto &atomHL = atomHighlights[fa];
     for (auto &bondHL : bondHighlights) {
       if (atomHL->atom1_ == bondHL->atom1_ ||
           atomHL->atom1_ == bondHL->atom2_) {
