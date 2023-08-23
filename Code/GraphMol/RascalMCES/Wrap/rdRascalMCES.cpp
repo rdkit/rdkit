@@ -80,7 +80,7 @@ python::list findMCESWrapper(const ROMol &mol1, const ROMol &mol2,
   if (!py_opts.is_none()) {
     opts = python::extract<RascalMCES::RascalOptions>(py_opts);
   }
-  auto results = RascalMCES::rascalMces(mol1, mol2, opts);
+  auto results = RascalMCES::rascalMCES(mol1, mol2, opts);
   python::list pyres;
   for (auto &res : results) {
     pyres.append(res);

@@ -32,11 +32,11 @@ namespace RascalMCES {
  * @param opts : (optional) set of options controlling the MCES determination
  * @return : vector of RascalResult objects.
  */
-RDKIT_RASCALMCES_EXPORT std::vector<RascalResult> rascalMces(
+RDKIT_RASCALMCES_EXPORT std::vector<RascalResult> rascalMCES(
     const ROMol &mol1, const ROMol &mol2,
     const RascalOptions &opts = RascalOptions());
 
-// Cluster the molecules using the Johnson similarity from rascalMces
+// Cluster the molecules using the Johnson similarity from rascalMCES
 // and the algorithm of
 // 'A Line Graph Algorithm for Clustering Chemical Structures Based
 // on Common Substructural Cores', JW Raymond, PW Willett.
@@ -55,7 +55,7 @@ RDKIT_RASCALMCES_EXPORT std::vector<RascalResult> rascalMces(
 RDKIT_RASCALMCES_EXPORT std::vector<std::vector<unsigned int>> rascalCluster(
     const std::vector<std::shared_ptr<ROMol>> &mols,
     const RascalClusterOptions &clusOpts = RascalClusterOptions());
-// Cluster the molecules using the Johnson similarity from rascalMces and
+// Cluster the molecules using the Johnson similarity from rascalMCES and
 // the Butina algorithm.  Butina JCICS 39 747-750 (1999).
 /*!
  *

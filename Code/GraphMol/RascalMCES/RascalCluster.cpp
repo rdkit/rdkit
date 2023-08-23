@@ -42,7 +42,7 @@ ClusNode calcMolMolSimilarity(
   auto mols = std::get<2>(toDo);
   auto opts = std::get<3>(toDo);
   auto clusOpts = std::get<4>(toDo);
-  auto res = rascalMces(*(*mols)[i], *(*mols)[j], *opts);
+  auto res = rascalMCES(*(*mols)[i], *(*mols)[j], *opts);
   ClusNode cn;
   cn.d_mol1Num = i;
   cn.d_mol2Num = j;
@@ -195,7 +195,7 @@ std::vector<std::vector<unsigned int>> makeSubClusters(
       auto m2 = tmpNbors[i]->d_res->getMcesMol();
       auto g_13 = g_ij(m2, clusOpts.a, clusOpts.b, clusOpts.minFragSize);
 
-      auto results = RDKit::RascalMCES::rascalMces(*m1, *m2);
+      auto results = RDKit::RascalMCES::rascalMCES(*m1, *m2);
       if (results.empty() || results.front().getBondMatches().empty()) {
         continue;
       }
