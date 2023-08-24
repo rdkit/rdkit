@@ -3808,6 +3808,72 @@ M  END
               StereoGroupType::STEREO_OR);
 }
 
+void testEnumeratedCore() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that enumerated cores behave properly"
+                       << std::endl;
+  
+  auto core = R"CTAB(
+  Mrv2008 08242317002D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 8 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.4167 11.04 0 0
+M  V30 2 C -5.7503 10.27 0 0
+M  V30 3 C -5.7503 8.6883 0 0
+M  V30 4 C -4.4167 7.9183 0 0
+M  V30 5 C -3.083 8.6883 0 0
+M  V30 6 C -3.083 10.2283 0 0
+M  V30 7 * -5.0835 10.655 0 0
+M  V30 8 F -5.0835 12.965 0 0
+M  V30 9 * -3.083 9.4583 0 0
+M  V30 10 Cl -1.928 11.4589 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 7 8 ENDPTS=(2 1 2) ATTACH=ANY
+M  V30 8 1 9 10 ENDPTS=(2 5 6) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+
+  auto mol1 = "CC1=CC=C(F)C(Cl)=C1"_smiles;
+  auto mol2 = "CCC1=C(F)C=CC(Cl)=C1"_smiles;
+
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  params.allowMultipleRGroupsOnUnlabelled = true;
+  params.onlyMatchAtRGroups = false;
+  params.doEnumeration = true;
+
+  const char *expected[] = {
+      "Core:Fc1ccc([*:2])cc1Cl R2:C[*:2]",
+      "Core:Fc1ccc(Cl)cc1[*:1] R1:CC[*:1]"};
+
+  RGroupDecomposition decomp(*core, params);
+  const auto add11 = decomp.add(*mol1);
+  TEST_ASSERT(add11 == 0);
+  const auto add12 = decomp.add(*mol2);
+  TEST_ASSERT(add12 == 1);
+  decomp.process();
+  auto rows = decomp.getRGroupsAsRows();
+  int i = 0;
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+       ++it, ++i) {
+    TEST_ASSERT(i < 2);
+    CHECK_RGROUP(it, expected[i]);
+  }
+}
+
 void testTautomerCore() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
@@ -3909,6 +3975,7 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
+  testEnumeratedCore();
   testTautomerCore();
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
@@ -3964,6 +4031,7 @@ int main() {
   testRGroupCoordinatesAddedToCore();
   testStereoGroupsPreserved();
   testTautomerCore();
+  testEnumeratedCore();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
