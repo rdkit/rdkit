@@ -1533,7 +1533,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a string\n\
 \n";
   python::def("MolToSmarts", RDKit::MolToSmarts,
-              (python::arg("mol"), python::arg("isomericSmiles") = true),
+              (python::arg("mol"), python::arg("isomericSmiles") = true,
+               python::arg("rootedAtAtom") = -1),
               docString.c_str());
 
   docString =

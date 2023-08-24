@@ -69,7 +69,7 @@ struct stereogroup_wrap {
         .def("GetReadId", &StereoGroup::getReadId,
              "return the StereoGroup's original ID.\n"
              "Note that the ID only makes sense for AND/OR groups.\n")
-        .def("GetWriteId", &StereoGroup::getReadId,
+        .def("GetWriteId", &StereoGroup::getWriteId,
              "return the StereoGroup's ID that will be exported.\n"
              "Note that the ID only makes sense for AND/OR groups.\n")
         .def("SetWriteId", &StereoGroup::setWriteId,

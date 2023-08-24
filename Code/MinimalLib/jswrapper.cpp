@@ -642,7 +642,11 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                     &JSSubstructLibrary::count_matches))
       .function("size", &JSSubstructLibrary::size)
 #endif
-;
+      ;
+
+  class_<JSLog>("Log")
+      .function("get_buffer", &JSLog::get_buffer)
+      .function("clear_buffer", &JSLog::clear_buffer);
 
   function("version", &version);
   function("prefer_coordgen", &prefer_coordgen);
@@ -655,6 +659,10 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
            allow_raw_pointers());
   function("get_mol_copy", &get_mol_copy, allow_raw_pointers());
   function("get_qmol", &get_qmol, allow_raw_pointers());
+  function("enable_logging", &enable_logging);
+  function("disable_logging", &disable_logging);
+  function("set_log_capture", &set_log_capture, allow_raw_pointers());
+  function("set_log_tee", &set_log_tee, allow_raw_pointers());
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
   function("get_rxn", &get_rxn, allow_raw_pointers());
   function("get_rxn", &get_rxn_no_details, allow_raw_pointers());

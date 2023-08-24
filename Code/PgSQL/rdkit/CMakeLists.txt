@@ -137,7 +137,7 @@ if(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
   set(pgRDKitLibList "${pgRDKitLibList}MolInterchange;")
 endif(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 set(pgRDKitLibList "${pgRDKitLibList}"
-    "MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
+    "GeneralizedSubstruct;MolEnumerator;TautomerQuery;MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
     "FileParsers;SmilesParse;Fingerprints;Subgraphs;Descriptors;"
     "PartialCharges;SubstructMatch;GraphMol;EigenSolvers;DataStructs;Depictor;"
     "RDGeometryLib;RDGeneral")
@@ -230,7 +230,7 @@ endif()
 set(testPgSQLBody "cd \"${PG_CURRENT_BINARY_DIR}\"\n"
     "\"${PGREGRESS_BINARY}\" --inputdir=sql "
     "${PGREGRESS_BINDIR_SWITCH} rdkit-91 "
-    "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction fmcs query"
+    "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction fmcs query xqm"
     " ${avalonRegress} ${inchiRegress} ${jsonRegress}\n")
 file(STRINGS ${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control
     PG_EXTVERSION LIMIT_COUNT 1 REGEX default_version)

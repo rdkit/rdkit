@@ -840,7 +840,9 @@ class TestCase(unittest.TestCase):
     smi = Chem.MolToSmiles(query)
     self.assertEqual(smi, 'c1ccccc1')
     smi = Chem.MolToSmarts(query)
-    self.assertEqual(smi, '[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1', smi)
+    self.assertEqual(smi, '[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1')
+    smi = Chem.MolToSmarts(query, rootedAtAtom=5)
+    self.assertEqual(smi, '[#6,#7,#15]1:[#6]:[#6]:[#6]:[#6]:[#6]:1')
 
     query = Chem.MolFromMolFile(fileN, sanitize=False)
     smi = Chem.MolToSmiles(query)
@@ -848,6 +850,8 @@ class TestCase(unittest.TestCase):
     query.UpdatePropertyCache()
     smi = Chem.MolToSmarts(query)
     self.assertEqual(smi, '[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1')
+    smi = Chem.MolToSmarts(query, rootedAtAtom=3)
+    self.assertEqual(smi, '[#6]1=[#6]-[#6]=[#6]-[#6,#7,#15]=[#6]-1')
     smi = "C1=CC=CC=C1"
     mol = Chem.MolFromSmiles(smi, 0)
     self.assertTrue(mol.HasSubstructMatch(query))
@@ -5558,6 +5562,43 @@ M  END
     self.assertEqual(m.GetSubstructMatches(p1, ps), ((0, 1, 2, 3, 4), ))
     self.assertEqual(m.GetSubstructMatches(p2, ps), ())
     self.assertEqual(m.GetSubstructMatches(p3, ps), ((0, 1, 2, 3, 4), ))
+
+  def testForwardEnhancedStereoGroupIds(self):
+    m = Chem.MolFromSmiles('C[C@H](O)Cl |o5:1|')
+    self.assertIsNotNone(m)
+
+    # StereoGroup id is read, but not forwarded to "write id"
+    stgs = m.GetStereoGroups()
+    self.assertEqual(len(stgs), 1)
+    self.assertEqual(stgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    self.assertEqual(stgs[0].GetReadId(), 5)
+    self.assertEqual(stgs[0].GetWriteId(), 0)
+
+    self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o1:1|')
+
+    stgs[0].SetWriteId(7)
+    self.assertEqual(stgs[0].GetWriteId(), 7)
+    self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o7:1|')
+
+    # ids are forwarded to copies of the mol
+    m2 = Chem.RWMol(m)
+    self.assertIsNotNone(m2)
+
+    stgs2 = m2.GetStereoGroups()
+    self.assertEqual(len(stgs), 1)
+    self.assertEqual(stgs2[0].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    self.assertEqual(stgs2[0].GetReadId(), 5)
+    self.assertEqual(stgs2[0].GetWriteId(), 7)
+
+    self.assertEqual(Chem.MolToCXSmiles(m2), 'C[C@H](O)Cl |o7:1|')
+
+    # Forwardings the ids overrides the WriteId
+    Chem.ForwardStereoGroupIds(m)
+    self.assertEqual(stgs[0].GetWriteId(), 5)
+    self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o5:1|')
+
+    # the copy mol is not affected
+    self.assertEqual(stgs2[0].GetWriteId(), 7)
 
   def testSubstructParametersBundles(self):
     b = Chem.MolBundle()

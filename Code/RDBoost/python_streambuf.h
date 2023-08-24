@@ -24,7 +24,6 @@
 #include <boost/utility/typed_in_place_factory.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-//#include <tbxx/error_utils.hpp>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/Exceptions.h>
 
@@ -459,7 +458,7 @@ class streambuf : public std::basic_streambuf<char> {
 
   boost::optional<off_type> seekoff_without_calling_python(
       off_type off, std::ios_base::seekdir way, std::ios_base::openmode which) {
-    boost::optional<off_type> const failure;
+    boost::optional<off_type> const failure = off_type(-1);
 
     // Buffer range and current position
     off_type buf_begin, buf_end, buf_cur, upper_bound;
