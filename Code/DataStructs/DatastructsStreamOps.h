@@ -58,7 +58,7 @@ class DataStructsExplicitBitVecPropHandler : public CustomPropHandler {
           rdvalue_cast<const ExplicitBitVect &>(value).toString();
       streamWrite(ss, output);
       return true;
-    } catch (boost::bad_any_cast &) {
+    } catch (std::bad_any_cast &) {
       return false;
     }
   }

@@ -34,7 +34,7 @@
 
 #include <cstdint>
 #include <cassert>
-#include <boost/any.hpp>
+#include <any>
 #include "Invariant.h"
 #include <iostream>
 #include <iomanip>
@@ -159,7 +159,7 @@ inline boost::uint64_t GetTag<std::vector<std::string>>() {
   return VecStringTag;
 }
 template <>
-inline boost::uint64_t GetTag<boost::any>() {
+inline boost::uint64_t GetTag<std::any>() {
   return AnyTag;
 }
 }  // namespace RDTypeTag
@@ -207,25 +207,25 @@ struct RDValue {
         (static_cast<boost::uint64_t>(number) & ApplyMask) | RDTypeTag::BoolTag;
   }
 
-  inline RDValue(boost::any *pointer) {
+  inline RDValue(std::any *pointer) {
     // ensure that the pointer really is only 48 bit
     assert((reinterpret_cast<boost::uint64_t>(pointer) & RDTypeTag::AnyTag) ==
            0);
     otherBits = reinterpret_cast<boost::uint64_t>(pointer) | RDTypeTag::AnyTag;
   }
 
-  inline RDValue(const boost::any &any) {
+  inline RDValue(const std::any &any) {
     // ensure that the pointer really is only 48 bit
-    boost::any *pointer = new boost::any(any);
+    std::any *pointer = new std::any(any);
     assert((reinterpret_cast<boost::uint64_t>(pointer) & RDTypeTag::AnyTag) ==
            0);
     otherBits = reinterpret_cast<boost::uint64_t>(pointer) | RDTypeTag::AnyTag;
   }
 
-  // Unknown types are stored as boost::any
+  // Unknown types are stored as std::any
   template <class T>
   inline RDValue(const T &v) {
-    boost::any *pointer = new boost::any(v);
+    std::any *pointer = new std::any(v);
     assert((reinterpret_cast<boost::uint64_t>(pointer) & RDTypeTag::AnyTag) ==
            0);
     otherBits = reinterpret_cast<boost::uint64_t>(pointer) | RDTypeTag::AnyTag;
@@ -321,7 +321,7 @@ struct RDValue {
         delete ptrCast<std::vector<std::string>>();
         break;
       case RDTypeTag::AnyTag:
-        delete ptrCast<boost::any>();
+        delete ptrCast<std::any>();
         break;
       default:
         break;
@@ -358,7 +358,7 @@ inline void copy_rdvalue(RDValue &dest, const RDValue &src) {
       dest = RDValue(*src.ptrCast<std::vector<std::string>>());
       break;
     case RDTypeTag::AnyTag:
-      dest = RDValue(*src.ptrCast<boost::any>());
+      dest = RDValue(*src.ptrCast<std::any>());
       break;
     default:
       dest = src;
@@ -429,17 +429,17 @@ inline T rdvalue_cast(RDValue_cast_t v) {
         boost::is_floating_point<
             typename boost::remove_reference<T>::type>::value))));
 
-  if (rdvalue_is<boost::any>(v)) {
-    return boost::any_cast<T>(*v.ptrCast<boost::any>());
+  if (rdvalue_is<std::any>(v)) {
+    return std::any_cast<T>(*v.ptrCast<std::any>());
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 // POD casts
 template <>
 inline double rdvalue_cast<double>(RDValue_cast_t v) {
   if (rdvalue_is<double>(v)) return v.doubleBits;
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
@@ -449,7 +449,7 @@ inline float rdvalue_cast<float>(RDValue_cast_t v) {
     memcpy(&f, ((char *)&v.otherBits), sizeof(float));
     return f;
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 // n.b. with const expressions, could use ~RDTagTypes::GetTag<T>()
@@ -458,20 +458,20 @@ template <>
 inline int rdvalue_cast<int>(RDValue_cast_t v) {
   if (rdvalue_is<int>(v))
     return static_cast<int32_t>(v.otherBits & ~RDTypeTag::IntTag);
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 template <>
 inline unsigned int rdvalue_cast<unsigned int>(RDValue_cast_t v) {
   if (rdvalue_is<unsigned int>(v))
     return static_cast<uint32_t>(v.otherBits & ~RDTypeTag::UnsignedIntTag);
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
 inline bool rdvalue_cast<bool>(RDValue_cast_t v) {
   if (rdvalue_is<bool>(v))
     return static_cast<bool>(v.otherBits & ~RDTypeTag::BoolTag);
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 }  // namespace RDKit
