@@ -71,6 +71,22 @@ void markConjAtomBonds(Atom *at) {
   }
 }
 
+int countAtomStartsDativeBond(const Atom *at) {
+  // counts number of dative bonds starting from Atom
+  PRECONDITION(at, "bad atom");
+  long count = 0;
+  auto &mol = at->getOwningMol();
+  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(at))) {
+    auto bnd = mol[nbri];
+    if (bnd->getBondType() == 17) {
+      if (bnd->getBeginAtom() == at) {
+        count += 1;
+      }
+    }
+  }
+  return count;
+}
+
 int numBondsPlusLonePairs(Atom *at) {
   PRECONDITION(at, "bad atom");
   int deg = at->getTotalDegree();
@@ -96,9 +112,25 @@ int numBondsPlusLonePairs(Atom *at) {
     // about radicals:
     int numRadicals = at->getNumRadicalElectrons();
     int numLonePairs = (numFreeElectrons - numRadicals) / 2;
+    // correct for electrons in dative bond
+    int ndative = countAtomStartsDativeBond(at);
+    assert(ndative <= (numLonePairs + 2 * numRadicals));
+    for (int i = 1; i <= ndative; ++i) {
+      if (numRadicals >= 2) {
+        numRadicals -= 2;
+      } else {
+        numLonePairs -= 1;
+      }
+    }
     return deg + numLonePairs + numRadicals;
   } else {
     int numLonePairs = numFreeElectrons / 2;
+    // correct for electrons in dative bond
+    assert(ndative <= (numLonePairs + 2 * numRadicals));
+    int ndative = countAtomStartsDativeBond(at);
+    for (int i = 1; i <= ndative; ++i) {
+      numLonePairs -= 1;
+    }
     return deg + numLonePairs;
   }
 }
