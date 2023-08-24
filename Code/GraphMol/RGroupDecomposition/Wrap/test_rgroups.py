@@ -686,7 +686,7 @@ M  END
     mol2 = Chem.MolFromSmiles('CC1=CNC(=O)C=C1F')
 
     params = RGroupDecompositionParameters()
-    params.allowTautomerCore = True
+    params.doTautomers = True
     rgd = RGroupDecomposition(core, params)
     self.assertEqual(rgd.Add(mol1), 0)
     self.assertEqual(rgd.Add(mol2), 1)

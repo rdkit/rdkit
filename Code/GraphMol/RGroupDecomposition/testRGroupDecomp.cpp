@@ -3823,7 +3823,7 @@ void testTautomerCore() {
   params.matchingStrategy = GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = true;
   params.onlyMatchAtRGroups = false;
-  params.allowTautomerCore = true;
+  params.doTautomers = true;
 
   const char *expected1[] = {
       "Core:Oc1cc([*:2])c([*:1])cn1 R1:C[*:1] R2:Cl[*:2]",

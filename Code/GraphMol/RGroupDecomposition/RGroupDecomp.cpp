@@ -127,7 +127,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       // match the reduced representation:
       std::vector<MatchVectType> baseMatches;
       bool useNormalMatch = true;
-      if (params().allowTautomerCore) {
+      if (params().doTautomers) {
         auto tautomerQuery = core.second.getMatchingTautomerQuery();
         if (tautomerQuery != nullptr) {
           // query atom indices from the tautomer query are the same as the

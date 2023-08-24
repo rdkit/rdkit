@@ -46,7 +46,7 @@ M  END";
                 removeHydrogensPostMatch = true,
                 removeAllHydrogenRGroups = true,
                 allowMultipleRGroupsOnUnlabelled = true,
-                allowTautomerCore = true
+                doTautomers = true
             };
 
             var cores = new ROMol_Vect();
