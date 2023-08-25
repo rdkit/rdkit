@@ -25,7 +25,8 @@ jobs:
   variables:
     python: python=3.11
     boost_version: 1.80.0
-    compiler: gxx_linux-64
+    cc: gcc-10
+    cxx: g++-10
     number_of_cores: nproc
     python_name: python311
   steps:
@@ -71,6 +72,8 @@ jobs:
     boost_version: 1.67.0
     number_of_cores: nproc
     python_name: python37
+    cc: gcc-10
+    cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build_java.yml
 - job: macOS_x64_java
@@ -104,6 +107,8 @@ jobs:
     boost_version: 1.71.0
     number_of_cores: nproc
     python_name: python38
+    cc: gcc-10
+    cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build_limitexternal.yml
 
