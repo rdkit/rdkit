@@ -184,7 +184,7 @@ RWMol *GetMol(const MolTest *molTest) {
 
   for (bool sanitize : {true, false}) {
     try {
-      return MrvMolFileParser(fName, sanitize, false);
+      return MrvFileToMol(fName, sanitize, false);
     } catch (const std::exception &e) {
       std::cerr << e.what() << '\n';
     }
@@ -200,7 +200,7 @@ ChemicalReaction *GetReaction(const RxnTest *rxnTest) {
 
   for (bool sanitize : {true, false}) {
     try {
-      return MrvRxnFileParser(fName, sanitize, false);
+      return MrvRxnFileToChemicalReaction(fName, sanitize, false);
     } catch (const std::exception &e) {
       std::cerr << e.what() << '\n';
     }

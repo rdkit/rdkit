@@ -45,20 +45,6 @@
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
-#ifdef RDKIT_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::regex_match;
-using boost::smatch;
-// using boost::algorithm>;
-
-#else
-#include <regex>
-using std::regex;
-using std::regex_match;
-using std::smatch;
-#endif
-
 using namespace RDKit::SGroupParsing;
 
 namespace RDKit {
@@ -996,8 +982,8 @@ bool MrvFileIsReaction(const std::string &fName) {
 //  Read a RWMol from a stream
 //
 //------------------------------------------------
-RWMol *MrvMolDataStreamParser(std::istream *inStream, bool sanitize,
-                              bool removeHs) {
+RWMol *MrvDataStreamToMol(std::istream *inStream, bool sanitize,
+                          bool removeHs) {
   PRECONDITION(inStream, "no stream");
 
   using boost::property_tree::ptree;
@@ -1015,19 +1001,19 @@ RWMol *MrvMolDataStreamParser(std::istream *inStream, bool sanitize,
 //  Read a RWMol from a stream reference
 //
 //------------------------------------------------
-RWMol *MrvMolDataStreamParser(std::istream &inStream, bool sanitize,
-                              bool removeHs) {
-  return MrvMolDataStreamParser(&inStream, sanitize, removeHs);
+RWMol *MrvDataStreamToMol(std::istream &inStream, bool sanitize,
+                          bool removeHs) {
+  return MrvDataStreamToMol(&inStream, sanitize, removeHs);
 }
 //------------------------------------------------
 //
 //  Read a RWMol from a string
 //
 //------------------------------------------------
-RWMol *MrvMolStringParser(const std::string &molmrvText, bool sanitize,
-                          bool removeHs) {
+RWMol *MrvStringToMol(const std::string &molmrvText, bool sanitize,
+                      bool removeHs) {
   std::istringstream inStream(molmrvText);
-  return MrvMolDataStreamParser(inStream, sanitize, removeHs);
+  return MrvDataStreamToMol(inStream, sanitize, removeHs);
 }
 
 //------------------------------------------------
@@ -1035,8 +1021,7 @@ RWMol *MrvMolStringParser(const std::string &molmrvText, bool sanitize,
 //  Read an RWMol from a file
 //
 //------------------------------------------------
-RWMol *MrvMolFileParser(const std::string &fName, bool sanitize,
-                        bool removeHs) {
+RWMol *MrvFileToMol(const std::string &fName, bool sanitize, bool removeHs) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
@@ -1045,7 +1030,7 @@ RWMol *MrvMolFileParser(const std::string &fName, bool sanitize,
   }
   RWMol *res = nullptr;
   if (!inStream.eof()) {
-    res = MrvMolDataStreamParser(inStream, sanitize, removeHs);
+    res = MrvDataStreamToMol(inStream, sanitize, removeHs);
   }
   return res;
 }
@@ -1055,8 +1040,9 @@ RWMol *MrvMolFileParser(const std::string &fName, bool sanitize,
 //  Read a ChemicalReaction from a stream
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnDataStreamParser(std::istream *inStream, bool sanitize,
-                                         bool removeHs) {
+ChemicalReaction *MrvDataStreamToChemicalReaction(std::istream *inStream,
+                                                  bool sanitize,
+                                                  bool removeHs) {
   PRECONDITION(inStream, "no stream");
 
   using boost::property_tree::ptree;
@@ -1076,19 +1062,20 @@ ChemicalReaction *MrvRxnDataStreamParser(std::istream *inStream, bool sanitize,
 //  Read a ChemicalReaction from a stream reference
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnDataStreamParser(std::istream &inStream, bool sanitize,
-                                         bool removeHs) {
-  return MrvRxnDataStreamParser(&inStream, sanitize, removeHs);
+ChemicalReaction *MrvDataStreamToChemicalReaction(std::istream &inStream,
+                                                  bool sanitize,
+                                                  bool removeHs) {
+  return MrvDataStreamToChemicalReaction(&inStream, sanitize, removeHs);
 }
 //------------------------------------------------
 //
 //  Read a ChemicalReaction from a string
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnStringParser(const std::string &molmrvText,
-                                     bool sanitize, bool removeHs) {
+ChemicalReaction *MrvStringToChemicalReaction(const std::string &molmrvText,
+                                              bool sanitize, bool removeHs) {
   std::istringstream inStream(molmrvText);
-  return MrvRxnDataStreamParser(inStream, sanitize, removeHs);
+  return MrvDataStreamToChemicalReaction(inStream, sanitize, removeHs);
 }
 
 //------------------------------------------------
@@ -1096,15 +1083,16 @@ ChemicalReaction *MrvRxnStringParser(const std::string &molmrvText,
 //  Read a ChemicalReaction from a file
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnFileParser(const std::string &fName, bool sanitize,
-                                   bool removeHs) {
+ChemicalReaction *MrvRxnFileToChemicalReaction(const std::string &fName,
+                                               bool sanitize, bool removeHs) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  ChemicalReaction *res = MrvRxnDataStreamParser(inStream, sanitize, removeHs);
+  ChemicalReaction *res =
+      MrvDataStreamToChemicalReaction(inStream, sanitize, removeHs);
   return res;
 }
 }  // namespace RDKit
