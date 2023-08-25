@@ -5,8 +5,6 @@ steps:
     sudo apt-get install -y libboost-all-dev libfreetype-dev libeigen3-dev
   displayName: Setup build environment
 - bash: |
-    export CXX=/usr/bin/g++
-    export CC=/usr/bin/gcc
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
