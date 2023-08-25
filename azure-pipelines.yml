@@ -25,6 +25,7 @@ jobs:
   variables:
     python: python=3.11
     boost_version: 1.80.0
+    compiler: gxx_linux-64
     cc: gcc-10
     cxx: g++-10
     number_of_cores: nproc
@@ -72,6 +73,7 @@ jobs:
     boost_version: 1.67.0
     number_of_cores: nproc
     python_name: python37
+    compiler: gxx_linux-64
     cc: gcc-10
     cxx: g++-10
   steps:
@@ -96,6 +98,9 @@ jobs:
   variables:
     boost_version: 1.69.0
     number_of_cores: nproc
+    compiler: gxx_linux-64
+    cc: gcc-10
+    cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build_cartridge.yml
 - job: Ubuntu_x64_limitexternaldependencies
@@ -107,6 +112,7 @@ jobs:
     boost_version: 1.71.0
     number_of_cores: nproc
     python_name: python38
+    compiler: gxx_linux-64
     cc: gcc-10
     cxx: g++-10
   steps:
