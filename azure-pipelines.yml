@@ -33,7 +33,7 @@ jobs:
   steps:
   - template: .azure-pipelines/linux_build_py311.yml
 - job: macOS_x64
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
   pool:
     vmImage: macos-latest
   variables:
