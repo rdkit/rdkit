@@ -37,6 +37,10 @@ matches.
 - In MCS Verbose statistics, `SingleBondExcluded` was renamed to
 `IndividualBondExcluded` to avoid confusion, since single bond has a
 different meaning in chemistry.
+- The error messages from failed type conversions in calls to `GetProp()` now
+differ slightly between compilers. Instead of always including "boost::bad_any
+cast", they now need to be matched with the regex `[B,b]ad any[\ ,_]cast`
+
 ## Bug Fixes:
 
 ## Cleanup work:
