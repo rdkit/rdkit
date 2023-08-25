@@ -14,7 +14,7 @@ jobs:
     compiler: gxx_linux-64
     number_of_cores: nproc
     python_name: python38
-    cc: g++-10
+    cc: gcc-10
     cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build.yml
