@@ -4556,35 +4556,35 @@ $$$$
     m = Chem.MolFromSmiles("CC")
     errors = {
       "int":
-      "key `foo` exists but does not result in an integer value reason: bad any_cast",
+      r"key `foo` exists but does not result in an integer value reason: [B,b]ad any[\ ,_]cast",
       "uint overflow":
       "key `foo` exists but does not result in an unsigned integer value reason: bad numeric conversion: negative overflow",
       "int overflow":
       "key `foo` exists but does not result in an integer value reason: bad numeric conversion: positive overflow",
       "double":
-      "key `foo` exists but does not result in a double value reason: bad any_cast",
+      r"key `foo` exists but does not result in a double value reason: [B,b]ad any[\ ,_]cast",
       "bool":
-      "key `foo` exists but does not result in a True or False value reason: bad any_cast"
+      r"key `foo` exists but does not result in a True or False value reason: [B,b]ad any[\ ,_]cast"
     }
 
     for ob in [m, list(m.GetAtoms())[0], list(m.GetBonds())[0]]:
       ob.SetDoubleProp("foo", 2.0)
       with self.assertRaises(ValueError) as e:
         ob.GetBoolProp("foo")
-      self.assertEqual(str(e.exception), errors["bool"])
+      self.assertRegex(str(e.exception), errors["bool"])
 
       with self.assertRaises(ValueError) as e:
         ob.GetIntProp("foo")
-      self.assertEqual(str(e.exception), errors["int"])
+      self.assertRegex(str(e.exception), errors["int"])
 
       ob.SetBoolProp("foo", True)
       with self.assertRaises(ValueError) as e:
         ob.GetDoubleProp("foo")
-      self.assertEqual(str(e.exception), errors["double"])
+      self.assertRegex(str(e.exception), errors["double"])
 
       with self.assertRaises(ValueError) as e:
         ob.GetIntProp("foo")
-      self.assertEqual(str(e.exception), errors["int"])
+      self.assertRegex(str(e.exception), errors["int"])
 
       ob.SetIntProp("foo", -1)
       with self.assertRaises(ValueError) as e:
