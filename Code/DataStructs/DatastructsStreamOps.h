@@ -33,7 +33,7 @@
 #include <RDGeneral/StreamOps.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <typeinfo>
-#include <boost/any.hpp>
+#include <any>
 
 namespace RDKit {
 class DataStructsExplicitBitVecPropHandler : public CustomPropHandler {
