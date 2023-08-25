@@ -153,6 +153,13 @@ RDKIT_RDKITCFFI_EXPORT void disable_logging();
 RDKIT_RDKITCFFI_EXPORT short use_legacy_stereo_perception(short value);
 RDKIT_RDKITCFFI_EXPORT short allow_non_tetrahedral_chirality(short value);
 
+// logging
+RDKIT_RDKITCFFI_EXPORT void *set_log_tee(const char *log_name);
+RDKIT_RDKITCFFI_EXPORT void *set_log_capture(const char *log_name);
+RDKIT_RDKITCFFI_EXPORT short destroy_log_handle(void **log_handle);
+RDKIT_RDKITCFFI_EXPORT char *get_log_buffer(void *log_handle);
+RDKIT_RDKITCFFI_EXPORT short clear_log_buffer(void *log_handle);
+
 #ifdef __cplusplus
 }
 #endif

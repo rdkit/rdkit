@@ -68,3 +68,99 @@ AS
     @RDKIT_PG_BFP_GIST_FETCH@
     @RDKIT_PG_BFP_GIST_SORTSUPPORT@
 STORAGE         bytea;
+
+CREATE TYPE xqmol;
+
+CREATE OR REPLACE FUNCTION xqmol_in(cstring)
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_out(xqmol)
+RETURNS cstring
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_recv(internal)
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_send(xqmol)
+RETURNS bytea
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE TYPE xqmol (
+        INTERNALLENGTH = VARIABLE,
+        INPUT = xqmol_in,
+        OUTPUT = xqmol_out,
+        RECEIVE = xqmol_recv,
+        SEND = xqmol_send,
+        STORAGE = extended
+);
+
+CREATE OR REPLACE FUNCTION mol_to_xqmol(mol)
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct(mol, xqmol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_substruct'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @> (
+	LEFTARG = mol,
+	RIGHTARG = xqmol,
+	PROCEDURE = substruct(mol, xqmol),
+	COMMUTATOR = '<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+CREATE OR REPLACE FUNCTION rsubstruct(xqmol, mol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_rsubstruct'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR <@ (
+	LEFTARG = xqmol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct(xqmol, mol),
+	COMMUTATOR = '@>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION substruct_query(mol, xqmol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_substruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @>> (
+	LEFTARG = mol,
+	RIGHTARG = xqmol,
+	PROCEDURE = substruct_query(mol, xqmol),
+	COMMUTATOR = '<<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION rsubstruct_query(xqmol, mol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_rsubstruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR <<@ (
+	LEFTARG = xqmol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct_query(xqmol, mol),
+	COMMUTATOR = '@>>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
