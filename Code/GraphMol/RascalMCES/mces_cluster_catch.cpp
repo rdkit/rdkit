@@ -114,3 +114,39 @@ TEST_CASE("Small Butina test", "[basics]") {
     REQUIRE(clusters[i].size() == expSizes[i]);
   }
 }
+
+TEST_CASE("Small test, smaller number of threads", "[basics]") {
+  // I'm not sure how to test whether this has had the desired effect,
+  // but at least we'll know that it runs ok.
+  std::string fName = getenv("RDBASE");
+  fName += "/Contrib/Fastcluster/cdk2.smi";
+  RDKit::SmilesMolSupplier suppl(fName, "\t", 1, 0, false);
+  std::vector<std::shared_ptr<RDKit::ROMol>> mols;
+  while (!suppl.atEnd()) {
+    std::shared_ptr<RDKit::ROMol> mol(suppl.next());
+    if (!mol) {
+      continue;
+    }
+    mols.push_back(mol);
+  }
+  {
+    RDKit::RascalMCES::RascalClusterOptions clusOpts;
+    clusOpts.numThreads = 2;
+    auto clusters = RDKit::RascalMCES::rascalCluster(mols, clusOpts);
+    REQUIRE(clusters.size() == 8);
+    std::vector<size_t> expSizes{7, 7, 6, 2, 2, 2, 2, 20};
+    for (size_t i = 0; i < 8; ++i) {
+      REQUIRE(clusters[i].size() == expSizes[i]);
+    }
+  }
+  {
+    RDKit::RascalMCES::RascalClusterOptions clusOpts;
+    clusOpts.numThreads = -2;
+    auto clusters = RDKit::RascalMCES::rascalCluster(mols, clusOpts);
+    REQUIRE(clusters.size() == 8);
+    std::vector<size_t> expSizes{7, 7, 6, 2, 2, 2, 2, 20};
+    for (size_t i = 0; i < 8; ++i) {
+      REQUIRE(clusters[i].size() == expSizes[i]);
+    }
+  }
+}

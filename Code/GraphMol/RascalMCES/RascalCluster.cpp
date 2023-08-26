@@ -104,17 +104,22 @@ std::vector<std::vector<ClusNode>> buildProximityGraph(
 
   std::vector<ClusNode> molSims(toDo.size());
 #if RDK_BUILD_THREADSAFE_SSS
-  auto numThreads = getNumThreadsToUse(-1);
-  size_t eachThread = 1 + (toDo.size() / numThreads);
-  size_t start = 0;
-  std::vector<std::thread> threads;
-  for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
-    threads.push_back(std::thread(buildProxGraphPart, std::ref(toDo),
-                                  std::ref(molSims), start,
-                                  start + eachThread));
-  }
-  for (auto &t : threads) {
-    t.join();
+  auto numThreads = getNumThreadsToUse(clusOpts.numThreads);
+  if (numThreads > 1) {
+    size_t eachThread = 1 + (toDo.size() / numThreads);
+    size_t start = 0;
+    std::vector<std::thread> threads;
+    for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
+      threads.push_back(std::thread(buildProxGraphPart, std::ref(toDo),
+                                    std::ref(molSims), start,
+                                    start + eachThread));
+    }
+    for (auto &t : threads) {
+      t.join();
+    }
+  } else {
+    std::transform(toDo.begin(), toDo.end(), molSims.begin(),
+                   calcMolMolSimilarity);
   }
 #else
   std::transform(toDo.begin(), toDo.end(), molSims.begin(),

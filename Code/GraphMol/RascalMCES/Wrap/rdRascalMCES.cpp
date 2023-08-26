@@ -80,7 +80,11 @@ python::list findMCESWrapper(const ROMol &mol1, const ROMol &mol2,
   if (!py_opts.is_none()) {
     opts = python::extract<RascalMCES::RascalOptions>(py_opts);
   }
-  auto results = RascalMCES::rascalMCES(mol1, mol2, opts);
+  std::vector<RDKit::RascalMCES::RascalResult> results;
+  {
+    NOGIL gil;
+    results = RascalMCES::rascalMCES(mol1, mol2, opts);
+  }
   python::list pyres;
   for (auto &res : results) {
     pyres.append(res);
@@ -120,7 +124,11 @@ python::list rascalClusterWrapper(python::object mols, python::object py_opts) {
     opts = python::extract<RascalMCES::RascalClusterOptions>(py_opts);
   }
   auto cmols = extractMols(mols);
-  auto clusters = RascalMCES::rascalCluster(cmols, opts);
+  std::vector<RDKit::UINT_VECT> clusters;
+  {
+    NOGIL gil;
+    clusters = RascalMCES::rascalCluster(cmols, opts);
+  }
   return packOutputMols(clusters);
 }
 
@@ -131,7 +139,11 @@ python::list rascalButinaClusterWrapper(python::object mols,
     opts = python::extract<RascalMCES::RascalClusterOptions>(py_opts);
   }
   auto cmols = extractMols(mols);
-  auto clusters = RascalMCES::rascalButinaCluster(cmols, opts);
+  std::vector<RDKit::UINT_VECT> clusters;
+  {
+    NOGIL gil;
+    clusters = RascalMCES::rascalButinaCluster(cmols, opts);
+  }
   return packOutputMols(clusters);
 }
 

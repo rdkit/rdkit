@@ -42,6 +42,11 @@ struct RDKIT_RASCALMCES_EXPORT RascalClusterOptions {
                                    Otherwise the MCES can be a lot of small
                                    fragments scattered across the molecule - it
                                    tries too hard to find a match, sometimes */
+  int numThreads = -1; /* The number of threads to use.  If > 0, will use that
+                          number.  If <= 0, will use the number of hardware
+                          threads plus this number.  So if the number of
+                          hardware threads is 8, and numThreads is -1, it will
+                          use 7 threads. */
 };
 }  // namespace RascalMCES
 }  // namespace RDKit
