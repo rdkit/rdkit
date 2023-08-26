@@ -201,7 +201,7 @@ void DrawMolMCHLasso::extractBondLines(
           auto atCdsI = atCds_[colAtoms[i]];
           auto atCdsJ = atCds_[colAtoms[j]];
           auto perp = calcPerpendicular(atCdsI, atCdsJ);
-          for (auto m : {1.0, -1.0}) {
+          for (auto m : {-1.0, +1.0}) {
             auto p1 = atCdsI + perp * dispI * m;
             auto p2 = atCdsJ + perp * dispJ * m;
             // if the mid point of the line is inside one of the circles
@@ -274,34 +274,29 @@ void calcAnglesFromXAxis(Point2D &centre, Point2D &end1, Point2D &end2,
 void DrawMolMCHLasso::fixArcsAndLines(
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
-  static const Point2D index{1.0, 0.0};
   std::vector<std::unique_ptr<DrawShapeArc>> newArcs;
   std::vector<std::pair<double, double>> lineEndAngles;
   std::list<double> singleLineEndAngles;
   for (auto &arc : arcs) {
     lineEndAngles.clear();
     singleLineEndAngles.clear();
-    // find 2 lines that intersect with this arc.  The arc should not
-    // be drawn between them.
-    for (auto &line1 : lines) {
+    // The lines are arranged in pairs, and always in the same order within
+    // the pair (-ve disp, then +ve disp).
+    for (size_t i = 0; i < lines.size(); i += 2) {
+      auto &line1 = lines[i];
       if (arc->atom1_ == line1->atom1_ || arc->atom1_ == line1->atom2_) {
-        for (auto &line2 : lines) {
-          if (line1 != line2 && line1->atom1_ == line2->atom1_ &&
-              line1->atom2_ == line2->atom2_) {
-            auto adjEnd1 = adjustLineEnd(*arc, *line1);
-            if (!adjEnd1) {
-              continue;
-            }
-            auto adjEnd2 = adjustLineEnd(*arc, *line2);
-            if (!adjEnd2) {
-              continue;
-            }
-            double ang1, ang2;
-            calcAnglesFromXAxis(arc->points_[0], *adjEnd1, *adjEnd2, ang1,
-                                ang2);
-            lineEndAngles.push_back(std::pair{ang2, ang1});
-          }
+        auto &line2 = lines[i + 1];
+        auto adjEnd1 = adjustLineEnd(*arc, *line1);
+        if (!adjEnd1) {
+          continue;
         }
+        auto adjEnd2 = adjustLineEnd(*arc, *line2);
+        if (!adjEnd2) {
+          continue;
+        }
+        double ang1, ang2;
+        calcAnglesFromXAxis(arc->points_[0], *adjEnd1, *adjEnd2, ang1, ang2);
+        lineEndAngles.push_back(std::pair{ang2, ang1});
       }
     }
     if (lineEndAngles.empty()) {
@@ -335,6 +330,14 @@ void DrawMolMCHLasso::fixArcsAndLines(
             lineEndAngles[i + 1].first = std::numeric_limits<double>::max();
             lineEndAngles[i + 1].second = std::numeric_limits<double>::max();
           }
+        }
+        // Also do the last and the first, where the overlap is only when
+        // it's crossed over 360 again in transformed angles.
+        if (lineEndAngles.back().first > lineEndAngles.back().second &&
+            lineEndAngles.back().second > lineEndAngles.front().first) {
+          lineEndAngles.back().second = lineEndAngles.front().second;
+          lineEndAngles.front().first = std::numeric_limits<double>::max();
+          lineEndAngles.front().second = std::numeric_limits<double>::max();
         }
       }
       // undo the transformation that started the angles at 0.

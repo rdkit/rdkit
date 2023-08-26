@@ -8113,13 +8113,13 @@ M  END
 }
 
 TEST_CASE("Lasso highlights") {
-#define RUN_1 0
-#define RUN_2 0
+#define RUN_1 1
+#define RUN_2 1
 #define RUN_3 1
-#define RUN_4_5 0
-#define RUN_6 0
-#define RUN_7 0
-#define RUN_8 0
+#define RUN_4_5 1
+#define RUN_6 1
+#define RUN_7 1
+#define RUN_8 1
   std::string baseName = "lasso_highlights_";
   auto get_all_hit_atoms = [](ROMol &mol,
                               const std::string &smt) -> std::vector<int> {
@@ -8257,6 +8257,7 @@ TEST_CASE("Lasso highlights") {
     MolDraw2DSVG drawer(500, 500);
     drawer.drawOptions().multiColourHighlightStyle =
         RDKit::MultiColourHighlightStyle::LASSO;
+    drawer.drawOptions().addAtomIndices = true;
     drawer.drawMoleculeWithHighlights(*m, "Lasso 3", ha_map, hb_map, h_rads,
                                       h_lw_mult);
     drawer.finishDrawing();
