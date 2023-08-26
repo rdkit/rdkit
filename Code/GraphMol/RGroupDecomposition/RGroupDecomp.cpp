@@ -126,16 +126,17 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
       // match the reduced representation:
       std::vector<MatchVectType> baseMatches;
-      bool useNormalMatch = true;
       if (params().doTautomers) {
-        auto tautomerQuery = core.second.getMatchingTautomerQuery();
-        if (tautomerQuery != nullptr) {
+        if (auto tautomerQuery = core.second.getMatchingTautomerQuery();
+            tautomerQuery != nullptr) {
           // query atom indices from the tautomer query are the same as the
           // template matching molecule
           baseMatches = tautomerQuery->substructOf(mol, sssparams);
-          useNormalMatch = false;
+        } else {
+          baseMatches =
+              SubstructMatch(mol, *core.second.matchingMol, sssparams);
         }
-      } else if (useNormalMatch) {
+      } else {
         baseMatches = SubstructMatch(mol, *core.second.matchingMol, sssparams);
       }
       
