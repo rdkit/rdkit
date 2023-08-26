@@ -799,9 +799,14 @@ bool hasSubstructMatch(const ROMol &mol, const ROMol &query) {
 // There are some simple substructures for which equivalent bond pruning isn't
 // allowed.
 bool checkEquivalentsAllowed(const ROMol &mol) {
-  const static std::vector<ROMol *> notStructs{
-      SmartsToMol("*~*"), SmartsToMol("*~*1~*~*~1"),
-      SmartsToMol("*12~*~*~2~*~1"), SmartsToMol("*14~*(~*~2~3~4)~*~2~*~3~1")};
+  const static std::vector<std::string> notSmarts{
+      "*~*", "*~*1~*~*~1", "*12~*~*~2~*~1", "*14~*(~*~2~3~4)~*~2~*~3~1"};
+  static std::vector<std::unique_ptr<ROMol>> notStructs;
+  if (notStructs.empty()) {
+    for (const auto smt : notSmarts) {
+      notStructs.emplace_back(SmartsToMol(smt));
+    }
+  }
   const static std::vector<std::pair<unsigned int, unsigned int>> notStats{
       {2, 1}, {4, 4}, {4, 5}, {5, 8}};
   for (size_t i = 0; i < notStructs.size(); ++i) {
