@@ -19,12 +19,12 @@
 namespace RDKit {
 
 namespace RascalMCES {
-PartitionSet::PartitionSet(const std::vector<std::vector<char>> &modProd,
+PartitionSet::PartitionSet(const std::vector<boost::dynamic_bitset<>> &modProd,
                            const std::vector<std::pair<int, int>> &vtxPairs,
                            const std::vector<unsigned int> &vtx1Labels,
                            const std::vector<unsigned int> &vtx2Labels,
                            unsigned int lowerBound)
-    : d_ModProd(new std::vector<std::vector<char>>(modProd)),
+    : d_ModProd(new std::vector<boost::dynamic_bitset<>>(modProd)),
       d_VtxPairs(new std::vector<std::pair<int, int>>(vtxPairs)),
       d_vtx1Labels(new std::vector<unsigned int>(vtx1Labels)),
       d_vtx2Labels(new std::vector<unsigned int>(vtx2Labels)) {

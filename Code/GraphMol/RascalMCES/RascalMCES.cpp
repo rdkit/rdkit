@@ -90,7 +90,7 @@ struct RascalStartPoint {
 
   std::vector<std::vector<int>> d_adjMatrix1, d_adjMatrix2;
   std::vector<std::pair<int, int>> d_vtxPairs;
-  std::vector<std::vector<char>> d_modProd;
+  std::vector<boost::dynamic_bitset<>> d_modProd;
 
   // We might need to know which bonds are symmetrical equivalent.
   std::vector<int> d_equivBonds1, d_equivBonds2;
@@ -453,7 +453,7 @@ void makeModularProduct(const ROMol &mol1,
                         const std::vector<std::vector<int>> &distMatrix2,
                         const RascalOptions &opts,
                         std::vector<std::pair<int, int>> &vtxPairs,
-                        std::vector<std::vector<char>> &modProd) {
+                        std::vector<boost::dynamic_bitset<>> &modProd) {
   buildPairs(mol1, vtxLabels1, mol2, vtxLabels2, opts, vtxPairs);
   if (vtxPairs.empty()) {
     // There was nothing in common at all.  But, what was the screening doing?
@@ -466,8 +466,8 @@ void makeModularProduct(const ROMol &mol1,
     modProd.clear();
     return;
   }
-  modProd = std::vector<std::vector<char>>(
-      vtxPairs.size(), std::vector<char>(vtxPairs.size(), 0));
+  modProd = std::vector<boost::dynamic_bitset<>>(
+      vtxPairs.size(), boost::dynamic_bitset<>(vtxPairs.size()));
   for (auto i = 0u; i < vtxPairs.size() - 1; ++i) {
     for (auto j = i + 1; j < vtxPairs.size(); ++j) {
       if (vtxPairs[i].first == vtxPairs[j].first ||
@@ -1007,7 +1007,7 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
   }
 
   // pairs are vertices in the 2 line graphs that are the same type.
-  // mod_prod is the modular product/correspondence graph of the two
+  // d_modProd is the modular product/correspondence graph of the two
   // line graphs.
   makeModularProduct(*starter.d_mol1, starter.d_adjMatrix1, bondLabels1,
                      distMat1, *starter.d_mol2, starter.d_adjMatrix2,

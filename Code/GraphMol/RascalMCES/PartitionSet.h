@@ -14,6 +14,8 @@
 #include <map>
 #include <vector>
 
+#include <boost/dynamic_bitset.hpp>
+
 namespace RDKit {
 
 namespace RascalMCES {
@@ -23,12 +25,8 @@ class PartitionSet {
   // Make a partition set from the modular product and the labels
   // of the vertices from the first graph.  Each element in vtxPairs
   // has a row/column in modProd.  The partitions are sorted
-  // into descending order of sizes. Because that uses std::sort,
-  // the final order may differ from compiler to compiler, because
-  // the standard doesn't define what should happen in the case of
-  // duplicate values.  It is quite common to have partitions of the
-  // same size.
-  PartitionSet(const std::vector<std::vector<char>> &modProd,
+  // into descending order of sizes.
+  PartitionSet(const std::vector<boost::dynamic_bitset<>> &modProd,
                const std::vector<std::pair<int, int>> &vtxPairs,
                const std::vector<unsigned int> &vtx1Labels,
                const std::vector<unsigned int> &vtx2Labels,
@@ -53,7 +51,7 @@ class PartitionSet {
   void pruneVertices(unsigned int vtx_num);
 
  private:
-  std::shared_ptr<const std::vector<std::vector<char>>> d_ModProd;
+  std::shared_ptr<const std::vector<boost::dynamic_bitset<>>> d_ModProd;
   std::shared_ptr<const std::vector<std::pair<int, int>>> d_VtxPairs;
   std::shared_ptr<const std::vector<unsigned int>> d_vtx1Labels;
   std::shared_ptr<const std::vector<unsigned int>> d_vtx2Labels;
