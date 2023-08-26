@@ -10,8 +10,6 @@
 
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/StringRect.h>
-#include <GraphMol/Conformer.h>
-#include <GraphMol/SubstanceGroup.h>
 
 #include <cmath>
 #ifndef M_PI

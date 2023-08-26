@@ -311,7 +311,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"lasso_highlights_4.svg", 4007672019U},
     {"lasso_highlights_5.svg", 1352840689U},
     {"lasso_highlights_6.svg", 655261841U},
-    {"lasso_highlights_7.svg", 2361648485U}};
+    {"lasso_highlights_7.svg", 2361648485U},
+    {"lasso_highlights_8.svg", 664373222U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -8112,6 +8113,13 @@ M  END
 }
 
 TEST_CASE("Lasso highlights") {
+#define RUN_1 0
+#define RUN_2 0
+#define RUN_3 1
+#define RUN_4_5 0
+#define RUN_6 0
+#define RUN_7 0
+#define RUN_8 0
   std::string baseName = "lasso_highlights_";
   auto get_all_hit_atoms = [](ROMol &mol,
                               const std::string &smt) -> std::vector<int> {
@@ -8159,7 +8167,7 @@ TEST_CASE("Lasso highlights") {
   };
   std::map<int, double> h_rads;
   std::map<int, int> h_lw_mult;
-#if 1
+#if RUN_1
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
@@ -8179,6 +8187,7 @@ TEST_CASE("Lasso highlights") {
     MolDraw2DSVG drawer(500, 500);
     drawer.drawOptions().multiColourHighlightStyle =
         RDKit::MultiColourHighlightStyle::LASSO;
+    drawer.drawOptions().addAtomIndices = true;
     drawer.drawMoleculeWithHighlights(*m, "Lasso 1", ha_map, hb_map, h_rads,
                                       h_lw_mult);
     drawer.finishDrawing();
@@ -8190,7 +8199,7 @@ TEST_CASE("Lasso highlights") {
     check_file_hash(baseName + "1.svg");
   }
 #endif
-#if 1
+#if RUN_2
   {
     // The non-overlapping atom sets should have radii the same size.
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
@@ -8224,7 +8233,7 @@ TEST_CASE("Lasso highlights") {
     check_file_hash(baseName + "2.svg");
   }
 #endif
-#if 1
+#if RUN_3
   {
     // Another example.
     std::string smiles = "c1ccncc1c1ccc(C2CCC2)cc1";
@@ -8259,7 +8268,7 @@ TEST_CASE("Lasso highlights") {
     check_file_hash(baseName + "3.svg");
   }
 #endif
-#if 1
+#if RUN_4_5
   {
     // Showing use of highlight_bond_map
     std::string smiles = "c1ccccc1c1ccccc1";
@@ -8325,7 +8334,7 @@ TEST_CASE("Lasso highlights") {
     }
   }
 #endif
-#if 1
+#if RUN_6
   // multiple bond colours as well
   {
     std::string smiles = "c1ccccc1c1ccccc1";
@@ -8360,7 +8369,7 @@ TEST_CASE("Lasso highlights") {
     check_file_hash(baseName + "6.svg");
   }
 #endif
-#if 1
+#if RUN_7
   {
     // Same as 1 but with highlighted bonds as well.
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
@@ -8392,6 +8401,89 @@ TEST_CASE("Lasso highlights") {
     outs.flush();
     outs.close();
     check_file_hash(baseName + "7.svg");
+  }
+#endif
+#if RUN_8
+  {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 19 19 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.745421 0.232979 0.000000 0
+M  V30 2 O 1.879821 -0.268021 0.000000 0
+M  V30 3 C 1.013221 0.231179 0.000000 0
+M  V30 4 O 1.012421 1.231179 0.000000 0
+M  V30 5 C 0.147621 -0.269821 0.000000 0
+M  V30 6 C -0.110179 -1.236021 0.000000 0
+M  V30 7 O 0.390821 -2.101621 0.000000 0
+M  V30 8 C 1.390821 -2.100621 0.000000 0
+M  V30 9 F 1.889821 -1.234221 0.000000 0
+M  V30 10 Cl 1.891621 -2.966221 0.000000 0
+M  V30 11 C -1.076379 -0.978021 0.000000 0
+M  V30 12 C -1.941979 -1.479021 0.000000 0
+M  V30 13 N -2.807579 -1.980021 0.000000 0
+M  V30 14 C -0.818579 -0.011821 0.000000 0
+M  V30 15 O -1.319379 0.853779 0.000000 0
+M  V30 16 N -0.820379 1.720379 0.000000 0
+M  V30 17 N -1.321379 2.585779 0.000000 0
+M  V30 18 C -0.822379 3.452379 0.000000 0
+M  V30 19 N -1.323379 4.317779 0.000000 0 CHG=1 VAL=4
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4 CFG=3
+M  V30 4 1 3 5
+M  V30 5 2 5 6
+M  V30 6 1 6 7
+M  V30 7 1 7 8
+M  V30 8 1 8 9 CFG=3
+M  V30 9 1 8 10
+M  V30 10 1 6 11
+M  V30 11 1 11 12
+M  V30 12 3 12 13
+M  V30 13 2 11 14
+M  V30 14 1 14 15
+M  V30 15 1 15 16
+M  V30 16 1 16 17
+M  V30 17 1 17 18
+M  V30 18 1 18 19
+M  V30 19 1 14 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    std::vector<std::string> smarts = {"CONN", "N#CC~CO", "C=CON", "CONNCN"};
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+    for (size_t i = 0; i < smarts.size(); ++i) {
+      std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
+      update_colour_map(hit_atoms, colours[i], ha_map);
+    }
+    std::map<int, double> h_rads;
+    for (auto [idx, val] : ha_map) {
+      h_rads[idx] = 0.4;
+    }
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().fillHighlights = false;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    drawer.drawMoleculeWithHighlights(*m, "Lasso 8", ha_map, hb_map, h_rads,
+                                      h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "8.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash(baseName + "8.svg");
   }
 #endif
 }

@@ -129,6 +129,7 @@ void DrawMolMCHLasso::drawLasso(size_t colNum, const RDKit::DrawColour &col,
   std::vector<std::unique_ptr<DrawShapeSimpleLine>> lines;
   extractBondLines(colNum, col, colAtoms, lines);
   fixArcsAndLines(arcs, lines);
+  fixIntersectingLines(arcs, lines);
 
   for (auto &it : arcs) {
     highlights_.push_back(std::move(it));
@@ -144,14 +145,14 @@ void DrawMolMCHLasso::extractAtomArcs(
     const std::vector<int> &colAtoms,
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const {
   double xradius, yradius;
-  getAtomRadius(colAtoms.front(), xradius, yradius);
-  xradius += xradius * colNum * 0.5;
-  Point2D radii(xradius, xradius);
   for (auto ca : colAtoms) {
     if (ca < 0 || ca >= drawMol_->getNumAtoms()) {
       // there's an error in the colour map
       continue;
     }
+    getAtomRadius(ca, xradius, yradius);
+    xradius += xradius * colNum * 0.5;
+    Point2D radii(xradius, xradius);
     std::vector<Point2D> pts{atCds_[ca], radii};
     DrawShapeArc *ell = new DrawShapeArc(
         pts, 0.0, 360.0, drawOptions_.bondLineWidth, true, col, false, ca);
@@ -164,20 +165,25 @@ void DrawMolMCHLasso::extractBondLines(
     size_t colNum, const RDKit::DrawColour &col,
     const std::vector<int> &colAtoms,
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
-  double xradius, yradius;
-  getAtomRadius(colAtoms.front(), xradius, yradius);
-  xradius += xradius * colNum;
   if (colAtoms.size() > 1) {
     for (size_t i = 0U; i < colAtoms.size() - 1; ++i) {
       if (colAtoms[i] < 0 || colAtoms[i] >= drawMol_->getNumAtoms()) {
         // there's an error in the colour map.
         continue;
       }
+      double xradiusI, yradiusI;
+      getAtomRadius(colAtoms[i], xradiusI, yradiusI);
+      xradiusI += xradiusI * colNum * 0.5;
+      auto dispI = xradiusI * 0.75;
       for (size_t j = i + 1; j < colAtoms.size(); ++j) {
         if (colAtoms[j] < 0 || colAtoms[j] >= drawMol_->getNumAtoms()) {
           // there's an error in the colour map.
           continue;
         }
+        double xradiusJ, yradiusJ;
+        getAtomRadius(colAtoms[j], xradiusJ, yradiusJ);
+        xradiusJ += xradiusJ * colNum * 0.5;
+        auto dispJ = xradiusJ * 0.75;
         auto bond = drawMol_->getBondBetweenAtoms(colAtoms[i], colAtoms[j]);
         if (bond) {
           const DrawColour *colToUse = &col;
@@ -192,17 +198,26 @@ void DrawMolMCHLasso::extractBondLines(
               colToUse = &it->second[colNum % it->second.size()];
             }
           }
-          auto at1_cds = atCds_[colAtoms[i]];
-          auto at2_cds = atCds_[colAtoms[j]];
-          auto perp = calcPerpendicular(at1_cds, at2_cds);
-          auto disp = xradius / 2;
+          auto atCdsI = atCds_[colAtoms[i]];
+          auto atCdsJ = atCds_[colAtoms[j]];
+          auto perp = calcPerpendicular(atCdsI, atCdsJ);
           for (auto m : {1.0, -1.0}) {
-            Point2D p1 = at1_cds + perp * disp * m;
-            Point2D p2 = at2_cds + perp * disp * m;
-            std::vector<Point2D> pts{p1, p2};
+            auto p1 = atCdsI + perp * dispI * m;
+            auto p2 = atCdsJ + perp * dispJ * m;
+            // if the mid point of the line is inside one of the circles
+            // then it gets messy because it's then intersecting arcs to deal
+            // with.  To duck the problem completely, push the line out to just
+            // less than the radii of the circles (just less, so that they still
+            // intersect rather than hitting on the tangent)
+            auto mid = (p1 + p2) / 2.0;
+            if ((atCdsI - mid).lengthSq() < xradiusI * xradiusI) {
+              p1 = atCdsI + perp * xradiusI * 0.99 * m;
+              p2 = atCdsJ + perp * xradiusJ * 0.99 * m;
+            }
             DrawShapeSimpleLine *pl = new DrawShapeSimpleLine(
-                pts, drawOptions_.bondLineWidth, drawOptions_.scaleBondWidth,
-                *colToUse, colAtoms[i], colAtoms[j], bond->getIdx(), noDash);
+                {p1, p2}, drawOptions_.bondLineWidth,
+                drawOptions_.scaleBondWidth, *colToUse, colAtoms[i],
+                colAtoms[j], bond->getIdx(), noDash);
             lines.emplace_back(pl);
           }
         }
@@ -231,6 +246,24 @@ Point2D *adjustLineEnd(const DrawShapeArc &arc, DrawShapeSimpleLine &line) {
                           *fixEnd, *adjEnd);
   return adjEnd;
 }
+
+// Calculate the angles of the 2 points  around the centre, measured from the
+// X axis, guaranteeing a consistent rotation around the z axis i.e. always
+// clockwise or always anti-clockwise.
+void calcAnglesFromXAxis(Point2D &centre, Point2D &end1, Point2D &end2,
+                         double &ang1, double &ang2) {
+  static const Point2D index{1.0, 0.0};
+  Point2D rad1, rad2;
+  rad1 = centre.directionVector(end1);
+  ang1 = 360.0 - rad1.signedAngleTo(index) * 180.0 / M_PI;
+  rad2 = centre.directionVector(end2);
+  ang2 = 360.0 - rad2.signedAngleTo(index) * 180.0 / M_PI;
+  // make sure they're going round in the same direction
+  auto crossZ = rad1.x * rad2.y - rad1.y * rad2.x;
+  if (crossZ > 0.0) {
+    std::swap(ang1, ang2);
+  }
+}
 }  // namespace
 
 // ****************************************************************************
@@ -242,7 +275,6 @@ void DrawMolMCHLasso::fixArcsAndLines(
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
   static const Point2D index{1.0, 0.0};
-
   std::vector<std::unique_ptr<DrawShapeArc>> newArcs;
   std::vector<std::pair<double, double>> lineEndAngles;
   std::list<double> singleLineEndAngles;
@@ -257,47 +289,80 @@ void DrawMolMCHLasso::fixArcsAndLines(
           if (line1 != line2 && line1->atom1_ == line2->atom1_ &&
               line1->atom2_ == line2->atom2_) {
             auto adjEnd1 = adjustLineEnd(*arc, *line1);
-            double ang1, ang2;
-            Point2D rad1, rad2;
-            if (adjEnd1) {
-              rad1 = arc->points_[0].directionVector(*adjEnd1);
-              ang1 = 360.0 - rad1.signedAngleTo(index) * 180.0 / M_PI;
-            } else {
+            if (!adjEnd1) {
               continue;
             }
             auto adjEnd2 = adjustLineEnd(*arc, *line2);
-            if (adjEnd2) {
-              rad2 = arc->points_[0].directionVector(*adjEnd2);
-              ang2 = 360.0 - rad2.signedAngleTo(index) * 180.0 / M_PI;
-            } else {
+            if (!adjEnd2) {
               continue;
             }
-            // make sure they're going round in the same direction
-            auto crossZ = rad1.x * rad2.y - rad1.y * rad2.x;
-            if (crossZ > 0.0) {
-              std::swap(ang1, ang2);
-            }
+            double ang1, ang2;
+            calcAnglesFromXAxis(arc->points_[0], *adjEnd1, *adjEnd2, ang1,
+                                ang2);
             lineEndAngles.push_back(std::pair{ang2, ang1});
           }
         }
       }
     }
-    // make sure they go round in ascending order.
-    std::sort(lineEndAngles.begin(), lineEndAngles.end());
-    // Move the front angle to the back, so the list is now the bits to draw,
-    // not the bits to skip.
-    for (const auto &lea : lineEndAngles) {
-      singleLineEndAngles.push_back(lea.first);
-      singleLineEndAngles.push_back(lea.second);
-    }
-    singleLineEndAngles.push_back(singleLineEndAngles.front());
-    singleLineEndAngles.pop_front();
-    for (auto ang = singleLineEndAngles.begin();
-         ang != singleLineEndAngles.end();) {
-      DrawShapeArc *newArc = new DrawShapeArc(
-          arc->points_, *ang++, *ang++, arc->lineWidth_, arc->scaleLineWidth_,
-          arc->lineColour_, arc->fill_, arc->atom1_);
-      newArcs.emplace_back(newArc);
+    if (lineEndAngles.empty()) {
+      newArcs.emplace_back(std::move(arc));
+    } else {
+      // check for the end of one going beyond the start of the next.
+      // It's easiest if the first angle is 0, so there's no need to worry
+      // about going from 360 to 0 on a full rotation.
+      double transform = 0.0;
+      if (lineEndAngles.size() > 1) {
+        std::sort(lineEndAngles.begin(), lineEndAngles.end());
+        transform = lineEndAngles.front().first;
+        for (auto &ap : lineEndAngles) {
+          ap.first -= transform;
+          if (ap.first < 0) {
+            ap.first += 360.0;
+          }
+          ap.second -= transform;
+          if (ap.second < 0) {
+            ap.second += 360.0;
+          }
+        }
+        for (size_t i = 0; i < lineEndAngles.size() - 1; ++i) {
+          if (lineEndAngles[i].first == std::numeric_limits<double>::max()) {
+            continue;
+          }
+          // If an arc ends after the start of the next one, merge them to
+          // have one from the start of the first to the end of the second.
+          if (lineEndAngles[i].second > lineEndAngles[i + 1].first) {
+            lineEndAngles[i].second = lineEndAngles[i + 1].second;
+            lineEndAngles[i + 1].first = std::numeric_limits<double>::max();
+            lineEndAngles[i + 1].second = std::numeric_limits<double>::max();
+          }
+        }
+      }
+      // undo the transformation that started the angles at 0.
+      for (const auto &lea : lineEndAngles) {
+        if (lea.first != std::numeric_limits<double>::max()) {
+          double ang = lea.first + transform;
+          if (ang > 360.0) {
+            ang -= 360.0;
+          }
+          singleLineEndAngles.push_back(ang);
+          ang = lea.second + transform;
+          if (ang > 360.0) {
+            ang -= 360.0;
+          }
+          singleLineEndAngles.push_back(ang);
+        }
+      }
+      // Move the front angle to the back, so the list is now the bits to draw,
+      // not the bits to skip
+      singleLineEndAngles.push_back(singleLineEndAngles.front());
+      singleLineEndAngles.pop_front();
+      for (auto ang = singleLineEndAngles.begin();
+           ang != singleLineEndAngles.end();) {
+        DrawShapeArc *newArc = new DrawShapeArc(
+            arc->points_, *ang++, *ang++, arc->lineWidth_, arc->scaleLineWidth_,
+            arc->lineColour_, arc->fill_, arc->atom1_);
+        newArcs.emplace_back(newArc);
+      }
     }
   }
   arcs.clear();
@@ -305,5 +370,56 @@ void DrawMolMCHLasso::fixArcsAndLines(
     arcs.push_back(std::move(it));
   }
 }
+
+void DrawMolMCHLasso::fixIntersectingLines(
+    const std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
+    std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
+  // Sometimes, particularly if the lines have been pushed out further
+  // than normal because the circles were too large and overlapped a lot,
+  // two lines can intersect, as they extend into a neighbouring circle.
+
+  boost::dynamic_bitset<> intersectingEnds(drawMol_->getNumAtoms());
+  for (auto &line1 : lines) {
+    for (auto &line2 : lines) {
+      if (line1 == line2 || line1->atom1_ > line2->atom1_) {
+        continue;
+      }
+      Point2D ip;
+      if (doLinesIntersect(line1->points_[0], line1->points_[1],
+                           line2->points_[0], line2->points_[1], &ip)) {
+        // for each line, the end that's inside one of the 3 arcs is the one
+        // that has to move
+        intersectingEnds.set(line1->atom1_);
+        intersectingEnds.set(line1->atom2_);
+        intersectingEnds.set(line2->atom1_);
+        intersectingEnds.set(line2->atom2_);
+        for (const auto &arc : arcs) {
+          if (intersectingEnds[arc->atom1_]) {
+            // The points are 0.99 of arc radius from the centre of the
+            // arc.
+            auto radsq = arc->points_[1].x * arc->points_[1].x * 0.98;
+            if ((arc->points_[0] - line1->points_[0]).lengthSq() < radsq) {
+              line1->points_[0] = ip;
+            }
+            if ((arc->points_[0] - line1->points_[1]).lengthSq() < radsq) {
+              line1->points_[1] = ip;
+            }
+            if ((arc->points_[0] - line2->points_[0]).lengthSq() < radsq) {
+              line2->points_[0] = ip;
+            }
+            if ((arc->points_[0] - line2->points_[1]).lengthSq() < radsq) {
+              line2->points_[1] = ip;
+            }
+          }
+        }
+        intersectingEnds.reset(line1->atom1_);
+        intersectingEnds.reset(line1->atom2_);
+        intersectingEnds.reset(line2->atom1_);
+        intersectingEnds.reset(line2->atom2_);
+      }
+    }
+  }
+}
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
