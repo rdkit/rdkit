@@ -305,14 +305,13 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"github6504_2.svg", 2871662880U},
     {"github6569_1.svg", 116573839U},
     {"github6569_2.svg", 2367779037U},
-    {"lasso_highlights_1.svg", 3099258135U},
-    {"lasso_highlights_2.svg", 3507027443U},
-    {"lasso_highlights_3.svg", 4198858241U},
-    {"lasso_highlights_4.svg", 4007672019U},
-    {"lasso_highlights_5.svg", 1352840689U},
-    {"lasso_highlights_6.svg", 655261841U},
-    {"lasso_highlights_7.svg", 2361648485U},
-    {"lasso_highlights_8.svg", 664373222U}};
+    {"lasso_highlights_1.svg", 1024307046U},
+    {"lasso_highlights_2.svg", 637616295U},
+    {"lasso_highlights_3.svg", 2318220475U},
+    {"lasso_highlights_4.svg", 235663789U},
+    {"lasso_highlights_5.svg", 2913683946U},
+    {"lasso_highlights_6.svg", 1087545472U},
+    {"lasso_highlights_7.svg", 3119874886U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -8113,11 +8112,11 @@ M  END
 }
 
 TEST_CASE("Lasso highlights") {
-#define RUN_1 0
-#define RUN_2 0
-#define RUN_3 0
-#define RUN_4_5 0
-#define RUN_6 0
+#define RUN_1 1
+#define RUN_2 1
+#define RUN_3 1
+#define RUN_4_5 1
+#define RUN_6 1
 #define RUN_7 1
   std::string baseName = "lasso_highlights_";
   auto get_all_hit_atoms = [](ROMol &mol,

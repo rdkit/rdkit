@@ -134,6 +134,7 @@ void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
   fixArcsAndLines(arcs, lines);
   fixIntersectingLines(arcs, lines);
   fixIntersectingArcsAndLines(arcs, lines);
+  fixProtrudingLines(lines);
 
   for (auto &it : arcs) {
     highlights_.push_back(std::move(it));
@@ -422,6 +423,7 @@ void DrawMolMCHLasso::fixIntersectingLines(
     }
   }
 }
+
 void DrawMolMCHLasso::fixIntersectingArcsAndLines(
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
@@ -474,6 +476,36 @@ void DrawMolMCHLasso::fixIntersectingArcsAndLines(
           arc->ang2_ = tang2;
           // and finally, move the end of the line
           adjustLineEnd(*arc, *line);
+        }
+      }
+    }
+  }
+}
+
+void DrawMolMCHLasso::fixProtrudingLines(
+    std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
+  // lasso_highlight_7.svg also had the problem where two lines didn't
+  // intersect, but one protruded beyond the end of the other inside the lasso.
+  for (auto &line1 : lines) {
+    for (auto &line2 : lines) {
+      auto d1_0 = (line1->points_[0] - line2->points_[0]).length();
+      auto d2_0 = (line2->points_[0] - line1->points_[1]).length();
+      auto l_0 = (line1->points_[0] - line1->points_[1]).length();
+      if (fabs(d1_0 + d2_0 - l_0) < 1.0e-4) {
+        if (d1_0 < d2_0) {
+          line1->points_[0] = line2->points_[0];
+        } else {
+          line1->points_[1] = line2->points_[0];
+        }
+      }
+      auto d1_1 = (line1->points_[0] - line2->points_[1]).length();
+      auto d2_1 = (line2->points_[1] - line1->points_[1]).length();
+      auto l_1 = (line1->points_[0] - line1->points_[1]).length();
+      if (fabs(d1_1 + d2_1 - l_1) < 1.0e-4) {
+        if (d1_1 < d2_1) {
+          line1->points_[0] = line2->points_[1];
+        } else {
+          line1->points_[1] = line2->points_[1];
         }
       }
     }
