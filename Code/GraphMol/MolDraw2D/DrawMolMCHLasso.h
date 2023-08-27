@@ -37,8 +37,9 @@ class DrawMolMCHLasso : public DrawMolMCH {
                              will be in more than one part if there is a bond
                              between 2 highlighted atoms that isn't in the
                              highlight_bond_map.  The colours in
-                             highlight_bond_map will be used for the lines
-                             between the atoms.
+                             highlight_bond_map will be NOT used for the lines
+                             between the atoms - the lasso will be one colour,
+                             taken from the atoms.
  \param highlightRadii : ignored in this molecule representation.
  \param highlight_linewidth_multipliers : ignored in this molecule
  representation. \param confId         : (optional) conformer ID to be used for
@@ -64,13 +65,13 @@ class DrawMolMCHLasso : public DrawMolMCH {
   void extractAtomColourLists(std::vector<DrawColour> &colours,
                               std::vector<std::vector<int>> &colourAtoms,
                               std::vector<std::vector<int>> &colourLists) const;
-  void drawLasso(size_t colNum, const DrawColour &col,
+  void drawLasso(size_t lassoNum, const DrawColour &col,
                  const std::vector<int> &colAtoms);
-  void extractAtomArcs(size_t colNum, const DrawColour &col,
+  void extractAtomArcs(size_t lassoNum, const DrawColour &col,
                        const std::vector<int> &colAtoms,
                        std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const;
   void extractBondLines(
-      size_t colNum, const DrawColour &col, const std::vector<int> &colAtoms,
+      size_t lassoNum, const DrawColour &col, const std::vector<int> &colAtoms,
       std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
   void fixArcsAndLines(
       std::vector<std::unique_ptr<DrawShapeArc>> &arcs,

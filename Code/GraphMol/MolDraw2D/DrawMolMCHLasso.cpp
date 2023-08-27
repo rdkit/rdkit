@@ -60,6 +60,13 @@ void DrawMolMCHLasso::extractAtomColourLists(
     std::vector<std::vector<int>> &colourAtoms,
     std::vector<std::vector<int>> &colourLists) const {
   for (const auto &cm : mcHighlightAtomMap_) {
+    std::cout << cm.first << " : ";
+    for (const auto &col : cm.second) {
+      std::cout << "(" << col.r << "," << col.g << "," << col.b << ") ";
+    }
+    std::cout << std::endl;
+  }
+  for (const auto &cm : mcHighlightAtomMap_) {
     for (const auto &col : cm.second) {
       auto cpos = std::find(colours.begin(), colours.end(), col);
       if (cpos == colours.end()) {
@@ -119,15 +126,18 @@ void DrawMolMCHLasso::extractAtomColourLists(
 }
 
 // ****************************************************************************
-void DrawMolMCHLasso::drawLasso(size_t colNum, const RDKit::DrawColour &col,
+void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
                                 const std::vector<int> &colAtoms) {
+  // Extract the arcs and lines for the given atoms in the given colour.
+  // lassoNum is the number of the lasso being done, and hence dictates
+  // the radii of the arcs and the displacements of the lines.
   if (colAtoms.empty()) {
     return;
   }
   std::vector<std::unique_ptr<DrawShapeArc>> arcs;
-  extractAtomArcs(colNum, col, colAtoms, arcs);
+  extractAtomArcs(lassoNum, col, colAtoms, arcs);
   std::vector<std::unique_ptr<DrawShapeSimpleLine>> lines;
-  extractBondLines(colNum, col, colAtoms, lines);
+  extractBondLines(lassoNum, col, colAtoms, lines);
   fixArcsAndLines(arcs, lines);
   fixIntersectingLines(arcs, lines);
 
@@ -141,7 +151,7 @@ void DrawMolMCHLasso::drawLasso(size_t colNum, const RDKit::DrawColour &col,
 
 // ****************************************************************************
 void DrawMolMCHLasso::extractAtomArcs(
-    size_t colNum, const RDKit::DrawColour &col,
+    size_t lassoNum, const RDKit::DrawColour &col,
     const std::vector<int> &colAtoms,
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const {
   double xradius, yradius;
@@ -151,7 +161,7 @@ void DrawMolMCHLasso::extractAtomArcs(
       continue;
     }
     getAtomRadius(ca, xradius, yradius);
-    xradius += xradius * colNum * 0.5;
+    xradius += xradius * lassoNum * 0.5;
     Point2D radii(xradius, xradius);
     std::vector<Point2D> pts{atCds_[ca], radii};
     DrawShapeArc *ell = new DrawShapeArc(
@@ -162,7 +172,7 @@ void DrawMolMCHLasso::extractAtomArcs(
 
 // ****************************************************************************
 void DrawMolMCHLasso::extractBondLines(
-    size_t colNum, const RDKit::DrawColour &col,
+    size_t lassoNum, const RDKit::DrawColour &col,
     const std::vector<int> &colAtoms,
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
   if (colAtoms.size() > 1) {
@@ -173,7 +183,7 @@ void DrawMolMCHLasso::extractBondLines(
       }
       double xradiusI, yradiusI;
       getAtomRadius(colAtoms[i], xradiusI, yradiusI);
-      xradiusI += xradiusI * colNum * 0.5;
+      xradiusI += xradiusI * lassoNum * 0.5;
       auto dispI = xradiusI * 0.75;
       for (size_t j = i + 1; j < colAtoms.size(); ++j) {
         if (colAtoms[j] < 0 || colAtoms[j] >= drawMol_->getNumAtoms()) {
@@ -182,20 +192,15 @@ void DrawMolMCHLasso::extractBondLines(
         }
         double xradiusJ, yradiusJ;
         getAtomRadius(colAtoms[j], xradiusJ, yradiusJ);
-        xradiusJ += xradiusJ * colNum * 0.5;
+        xradiusJ += xradiusJ * lassoNum * 0.5;
         auto dispJ = xradiusJ * 0.75;
         auto bond = drawMol_->getBondBetweenAtoms(colAtoms[i], colAtoms[j]);
         if (bond) {
           const DrawColour *colToUse = &col;
           if (!mcHighlightBondMap_.empty()) {
-            const auto it = mcHighlightBondMap_.find(bond->getIdx());
-            if (it == mcHighlightBondMap_.end()) {
+            auto bndIt = mcHighlightBondMap_.find(bond->getIdx());
+            if (bndIt == mcHighlightBondMap_.end()) {
               continue;
-            }
-            if (colNum < it->second.size()) {
-              colToUse = &it->second[colNum];
-            } else if (!it->second.empty()) {
-              colToUse = &it->second[colNum % it->second.size()];
             }
           }
           auto atCdsI = atCds_[colAtoms[i]];
@@ -216,8 +221,8 @@ void DrawMolMCHLasso::extractBondLines(
             }
             DrawShapeSimpleLine *pl = new DrawShapeSimpleLine(
                 {p1, p2}, drawOptions_.bondLineWidth,
-                drawOptions_.scaleBondWidth, *colToUse, colAtoms[i],
-                colAtoms[j], bond->getIdx(), noDash);
+                drawOptions_.scaleBondWidth, col, colAtoms[i], colAtoms[j],
+                bond->getIdx(), noDash);
             lines.emplace_back(pl);
           }
         }

@@ -8118,8 +8118,6 @@ TEST_CASE("Lasso highlights") {
 #define RUN_3 1
 #define RUN_4_5 1
 #define RUN_6 1
-#define RUN_7 1
-#define RUN_8 1
   std::string baseName = "lasso_highlights_";
   auto get_all_hit_atoms = [](ROMol &mol,
                               const std::string &smt) -> std::vector<int> {
@@ -8271,7 +8269,8 @@ TEST_CASE("Lasso highlights") {
 #endif
 #if RUN_4_5
   {
-    // Showing use of highlight_bond_map
+    // Showing use of highlight_bond_map to control which bonds are drawn.
+    // Bond highlight colours are ignored.
     std::string smiles = "c1ccccc1c1ccccc1";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
     RDDepict::compute2DCoords(*m);
@@ -8304,7 +8303,7 @@ TEST_CASE("Lasso highlights") {
       check_file_hash(baseName + "4.svg");
     }
     // Set up the bond highlights for everything but the bi-phenyl bond,
-    // colouring the bonds green.
+    // colouring the bonds green although the colour will be ignored.
     for (int i = 0; i < 13; ++i) {
       if (i != 5) {
         hb_map.insert(std::pair{
@@ -8325,8 +8324,8 @@ TEST_CASE("Lasso highlights") {
       outs << text;
       outs.flush();
       outs.close();
-      // There should not be any green lines for bond 5.
-      std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#00FF00;");
+      // There should not be any red lines for bond 5.
+      std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
       std::ptrdiff_t const match_count(
           std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
                         std::sregex_iterator()));
@@ -8336,76 +8335,8 @@ TEST_CASE("Lasso highlights") {
   }
 #endif
 #if RUN_6
-  // multiple bond colours as well
   {
-    std::string smiles = "c1ccccc1c1ccccc1";
-    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
-    RDDepict::compute2DCoords(*m);
-    std::map<int, std::vector<DrawColour>> ha_map;
-    std::map<int, std::vector<DrawColour>> hb_map;
-    for (int i = 0; i < 12; ++i) {
-      ha_map.insert(
-          std::pair{i, std::vector<DrawColour>(1, DrawColour(1.0, 0.0, 0.0))});
-      ha_map[i].push_back(DrawColour(0.0, 0.0, 1.0));
-    }
-    for (int i = 0; i < 13; ++i) {
-      if (i != 5) {
-        hb_map.insert(std::pair{
-            i, std::vector<DrawColour>(1, DrawColour(0.0, 0.0, 1.0))});
-        hb_map[i].push_back(DrawColour(1.0, 0.0, 0.0));
-      }
-    }
-
-    MolDraw2DSVG drawer(500, 500);
-    drawer.drawOptions().multiColourHighlightStyle =
-        RDKit::MultiColourHighlightStyle::LASSO;
-    drawer.drawMoleculeWithHighlights(*m, "Lasso 6", ha_map, hb_map, h_rads,
-                                      h_lw_mult);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs(baseName + "6.svg");
-    outs << text;
-    outs.flush();
-    outs.close();
-    check_file_hash(baseName + "6.svg");
-  }
-#endif
-#if RUN_7
-  {
-    // Same as 1 but with highlighted bonds as well.
-    std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
-    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
-    RDDepict::compute2DCoords(*m);
-
-    std::vector<std::string> smarts = {"CONN", "N#CC~CO", "C=CON", "CONNCN"};
-    std::vector<DrawColour> colours = {
-        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
-        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
-    std::map<int, std::vector<DrawColour>> ha_map;
-    std::map<int, std::vector<DrawColour>> hb_map;
-
-    for (size_t i = 0; i < smarts.size(); ++i) {
-      std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
-      update_colour_map(hit_atoms, colours[i], ha_map);
-      std::vector<int> hit_bonds = get_all_hit_bonds(*m, hit_atoms);
-      update_colour_map(hit_bonds, colours[i], hb_map);
-    }
-    MolDraw2DSVG drawer(500, 500);
-    drawer.drawOptions().multiColourHighlightStyle =
-        RDKit::MultiColourHighlightStyle::LASSO;
-    drawer.drawMoleculeWithHighlights(*m, "Lasso 7", ha_map, hb_map, h_rads,
-                                      h_lw_mult);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs(baseName + "7.svg");
-    outs << text;
-    outs.flush();
-    outs.close();
-    check_file_hash(baseName + "7.svg");
-  }
-#endif
-#if RUN_8
-  {
+    // Bug with large radii lassos.
     auto m = R"CTAB(
      RDKit          2D
 
@@ -8480,11 +8411,11 @@ M  END)CTAB"_ctab;
                                       h_lw_mult);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs(baseName + "8.svg");
+    std::ofstream outs(baseName + "6.svg");
     outs << text;
     outs.flush();
     outs.close();
-    check_file_hash(baseName + "8.svg");
+    check_file_hash(baseName + "6.svg");
   }
 #endif
 }
