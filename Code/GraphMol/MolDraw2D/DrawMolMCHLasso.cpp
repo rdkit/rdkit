@@ -60,13 +60,6 @@ void DrawMolMCHLasso::extractAtomColourLists(
     std::vector<std::vector<int>> &colourAtoms,
     std::vector<std::vector<int>> &colourLists) const {
   for (const auto &cm : mcHighlightAtomMap_) {
-    std::cout << cm.first << " : ";
-    for (const auto &col : cm.second) {
-      std::cout << "(" << col.r << "," << col.g << "," << col.b << ") ";
-    }
-    std::cout << std::endl;
-  }
-  for (const auto &cm : mcHighlightAtomMap_) {
     for (const auto &col : cm.second) {
       auto cpos = std::find(colours.begin(), colours.end(), col);
       if (cpos == colours.end()) {
@@ -140,6 +133,7 @@ void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
   extractBondLines(lassoNum, col, colAtoms, lines);
   fixArcsAndLines(arcs, lines);
   fixIntersectingLines(arcs, lines);
+  fixIntersectingArcsAndLines(arcs, lines);
 
   for (auto &it : arcs) {
     highlights_.push_back(std::move(it));
@@ -428,6 +422,62 @@ void DrawMolMCHLasso::fixIntersectingLines(
     }
   }
 }
-
+void DrawMolMCHLasso::fixIntersectingArcsAndLines(
+    std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
+    std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
+  // Occasionally, a line will intersect with an arc that it is not
+  // directly associated with.  lasso_highlights_7.svg in the catch_test.cpp
+  // being an example.
+  for (auto &arc : arcs) {
+    // The points are 0.99 of arc radius from the centre of the
+    // arc.
+    auto radsq = arc->points_[1].x * arc->points_[1].x * 0.98;
+    for (auto &line : lines) {
+      if ((arc->points_[0] - line->points_[0]).lengthSq() < radsq ||
+          (arc->points_[0] - line->points_[1]).lengthSq() < radsq) {
+        // make a temporary copy of the line because adjustLineEnd moves
+        // the points_ in the line, which may be premature if line doesn't
+        // intersect this line.
+        DrawShapeSimpleLine tmpLine(line->points_, line->atom1_, line->atom2_);
+        auto adjEnd1 = adjustLineEnd(*arc, tmpLine);
+        if (!adjEnd1) {
+          continue;
+        }
+        double ang1, ang2;
+        // lazy reuse of existing function.
+        calcAnglesFromXAxis(arc->points_[0], *adjEnd1, *adjEnd1, ang1, ang2);
+        double tang1 = 0;
+        double tang2 = arc->ang2_ - arc->ang1_;
+        if (tang2 < 0.0) {
+          tang2 += 360.0;
+        }
+        double tang3 = ang1 - arc->ang1_;
+        if (tang3 < 0.0) {
+          tang3 += 360.0;
+        }
+        if (tang3 > tang1 && tang3 < tang2) {
+          // truncate the end that's nearest the intersection
+          if (tang3 - tang1 > tang2 - tang3) {
+            tang2 = tang3 + arc->ang1_;
+            tang1 += arc->ang1_;
+          } else {
+            tang1 = tang3 + arc->ang1_;
+            tang2 += arc->ang1_;
+          }
+          if (tang1 > 360.0) {
+            tang1 -= 360.0;
+          }
+          if (tang2 > 360.0) {
+            tang2 -= 360.0;
+          }
+          arc->ang1_ = tang1;
+          arc->ang2_ = tang2;
+          // and finally, move the end of the line
+          adjustLineEnd(*arc, *line);
+        }
+      }
+    }
+  }
+}
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit

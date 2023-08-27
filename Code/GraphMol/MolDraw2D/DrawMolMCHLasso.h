@@ -79,6 +79,9 @@ class DrawMolMCHLasso : public DrawMolMCH {
   void fixIntersectingLines(
       const std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
       std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
+  void fixIntersectingArcsAndLines(
+      std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
+      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
 };
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
