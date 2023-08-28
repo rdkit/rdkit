@@ -3763,6 +3763,44 @@ TEST_CASE("t-shaped chirality cases") {
       auto m = R"CTAB(CHEMBL3183068
      RDKit          2D
 
+ 11 11  0  0  1  0  0  0  0  0999 V2000
+    1.7309    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1502   -0.7167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4334   -1.1252    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4334   -1.9494    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7167   -0.7167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8669   -0.2974    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7167   -2.3687    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.1360    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.9602    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5836   -0.7060    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5694   -1.4334    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  6
+  2  3  1  0
+  2  6  1  0
+  2 11  1  0
+  3  4  2  0
+  3  5  1  0
+  4  7  1  0
+  5  8  2  0
+  6 10  1  0
+  7  9  2  0
+  8  9  1  0
+M  END
+> <chembl_id>
+CHEMBL3183068
+
+> <chembl_pref_name>
+None
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+    {
+      auto m = R"CTAB(CHEMBL3183068 (with an H removed)
+     RDKit          2D
+
  10 10  0  0  1  0  0  0  0  0999 V2000
     1.7309    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
     2.1502   -0.7167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3788,7 +3826,7 @@ M  END
 )CTAB"_ctab;
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
-            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+            Atom::ChiralType::CHI_UNSPECIFIED);
     }
   }
   SECTION("three-coordinate") {
@@ -3815,7 +3853,7 @@ M  END
 )CTAB"_ctab;
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
-            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+            Atom::ChiralType::CHI_UNSPECIFIED);
     }
     {
       auto m = R"CTAB(
@@ -4154,7 +4192,6 @@ M  END)CTAB"_ctab;
           Atom::ChiralType::CHI_UNSPECIFIED);
   }
 
-
   SECTION("derived from CHEMBL123021") {
     auto m = R"CTAB(CHEMBL123021
      RDKit          2D
@@ -4299,8 +4336,4 @@ M  END)CTAB"_ctab;
     CHECK(m->getAtomWithIdx(15)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CW);
   }
-
-
-
-
 }

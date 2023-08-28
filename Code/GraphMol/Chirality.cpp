@@ -563,7 +563,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
 
     // check for the case that bonds 1 and 2 are co-linear but 1 and 0 are
     // not:
-    if (bondVects[order[1]].crossProduct(bondVects[order[2]]).lengthSq() <
+    if (nNbrs>3 && bondVects[order[1]].crossProduct(bondVects[order[2]]).lengthSq() <
             10*zeroTol &&
         bondVects[order[1]].crossProduct(bondVects[order[0]]).lengthSq() >
             10*zeroTol) {

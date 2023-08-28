@@ -555,8 +555,8 @@ M  END)CTAB"_ctab;
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
     {
-      // here we deviate from the IUPAC recommendations since the stereo can be
-      // uniquely assigned
+      // IUPAC (ST-1.2.12) says this one is wrong. It definitely requires making
+      // an assumption about where the H is.
       auto m = R"CTAB(three-coordinate, T shaped, wedge in the middle
   Mrv2211 06102314502D          
 
@@ -582,7 +582,7 @@ M  END
 
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
-            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+            Atom::ChiralType::CHI_UNSPECIFIED);
     }
   }
 }
