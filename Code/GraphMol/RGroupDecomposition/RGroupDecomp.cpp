@@ -127,12 +127,15 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       // match the reduced representation:
       std::vector<MatchVectType> baseMatches;
       if (params().doTautomers) {
+        // Here we are attempting to enumerate tautomers of the core
         if (auto tautomerQuery = core.second.getMatchingTautomerQuery();
             tautomerQuery != nullptr) {
           // query atom indices from the tautomer query are the same as the
           // template matching molecule
           baseMatches = tautomerQuery->substructOf(mol, sssparams);
         } else {
+          // However, if it is not possible to Kekulize the core, we revert back
+          // to the non-tautomer matching.
           baseMatches =
               SubstructMatch(mol, *core.second.matchingMol, sssparams);
         }
