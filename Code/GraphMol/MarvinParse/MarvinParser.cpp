@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2022-2023 Tad Hurst, Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,14 +19,6 @@
 #include <iomanip>
 #include <cfloat>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
-#include <RDGeneral/BoostEndInclude.h>
-
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
@@ -44,20 +36,6 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
-
-#ifdef RDKIT_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::regex_match;
-using boost::smatch;
-// using boost::algorithm>;
-
-#else
-#include <regex>
-using std::regex;
-using std::regex_match;
-using std::smatch;
-#endif
 
 using namespace RDKit::SGroupParsing;
 
@@ -182,7 +160,6 @@ class MarvinCMLReader {
         if (marvinAtom->mrvAlias != "") {
           query->setProp(common_properties::molFileAlias, marvinAtom->mrvAlias);
         }
-        query->setIsotope(marvinAtom->rgroupRef);
         query->setQuery(makeAtomNullQuery());
       }
 
@@ -353,7 +330,7 @@ class MarvinCMLReader {
         if (!getCleanInt(marvinBond->bondStereo.conventionValue,
                          mdlStereoVal)) {
           throw FileParseException(
-              "MDL Convention Value must be one of; 1, 3, 4, 6");
+              "MDL Convention Value must be one of: 1, 3, 4, 6");
         }
         switch (mdlStereoVal) {
           case 1:
@@ -368,12 +345,17 @@ class MarvinCMLReader {
           case 4:  // "either" single bond
             bondDir = Bond::UNKNOWN;
             break;
+          default:
+            throw FileParseException(
+                "MDL Convention Value must be one of: 1, 3, 4, 6");
         }
       } else if (marvinBond->bondStereo.dictRef != "") {
         if (marvinBond->bondStereo.dictRef == "cml:W") {
           bondDir = Bond::BEGINWEDGE;
         } else if (marvinBond->bondStereo.dictRef == "cml:H") {
           bondDir = Bond::BEGINDASH;
+        } else {
+          throw FileParseException("dictRef must be one of: cml:W or cml:H");
         }
       } else {
         // nothing to do, no stereo information
@@ -445,23 +427,15 @@ class MarvinCMLReader {
     }
   }
 
-  // see if the MarviMol has any coordinates
-
-  bool hasCoords(MarvinMol *marvinMol) {
-    for (auto atomPtr : marvinMol->atoms) {
-      if (atomPtr->x2 != DBL_MAX && atomPtr->y2 != DBL_MAX) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  RWMol *parseMolecule(MarvinMol *marvinMol, bool sanitize = false,
+   RWMol *parseMolecule(MarvinMol *marvinMol, bool sanitize = false,
                        bool removeHs = false) {
     PRECONDITION(marvinMol, "no molecule");
     std::vector<MarvinStereoGroup *> stereoGroups;
+    std::unique_ptr<Conformer> confPtr;
     Conformer *conf = nullptr;
+    std::unique_ptr<Conformer> conf3dPtr;
+    Conformer *conf3d = nullptr;
+
     RWMol *mol = nullptr;
 
     try {
@@ -471,9 +445,15 @@ class MarvinCMLReader {
 
       // set the atoms
 
-      if (hasCoords(marvinMol)) {
+      if (marvinMol->hasAny2dCoords()) {
         conf = new Conformer(marvinMol->atoms.size());
-        conf->set3D(false);
+        confPtr = std::unique_ptr<Conformer>(conf);
+        confPtr->set3D(false);
+      }
+      if (marvinMol->hasAny3dCoords()) {
+        conf3d = new Conformer(marvinMol->atoms.size());
+        conf3dPtr = std::unique_ptr<Conformer>(conf3d);
+        conf3d->set3D(true);
       }
 
       for (auto atomPtr : marvinMol->atoms) {
@@ -492,6 +472,22 @@ class MarvinCMLReader {
           pos.z = 0.0;
 
           conf->setAtomPos(aid, pos);
+        }
+
+        if (conf3d != nullptr) {
+          RDGeom::Point3D pos;
+          if (atomPtr->x3 != DBL_MAX && atomPtr->y3 != DBL_MAX &&
+              atomPtr->z3 != DBL_MAX) {
+            pos.x = atomPtr->x3;
+            pos.y = atomPtr->y3;
+            pos.z = atomPtr->z3;
+          } else {
+            pos.x = 0.0;
+            pos.y = 0.0;
+            pos.z = 0.0;
+          }
+
+          conf3d->setAtomPos(aid, pos);
         }
 
         // also collect the stereo groups here
@@ -547,7 +543,12 @@ class MarvinCMLReader {
 
       if (conf != nullptr) {
         mol->addConformer(conf, true);
-        conf = nullptr;  // conf now owned by mol
+        confPtr.release();
+      }
+
+      if (conf3d != nullptr) {
+        mol->addConformer(conf3d, true);
+        conf3dPtr.release();
       }
 
       // set the bonds
@@ -660,8 +661,6 @@ class MarvinCMLReader {
 
     catch (const std::exception &e) {
       delete mol;
-
-      delete conf;
 
       for (auto &stereoGroup : stereoGroups) {
         delete stereoGroup;
@@ -996,8 +995,8 @@ bool MrvFileIsReaction(const std::string &fName) {
 //  Read a RWMol from a stream
 //
 //------------------------------------------------
-RWMol *MrvMolDataStreamParser(std::istream *inStream, bool sanitize,
-                              bool removeHs) {
+RWMol *MrvDataStreamToMol(std::istream *inStream, bool sanitize,
+                          bool removeHs) {
   PRECONDITION(inStream, "no stream");
 
   using boost::property_tree::ptree;
@@ -1015,19 +1014,19 @@ RWMol *MrvMolDataStreamParser(std::istream *inStream, bool sanitize,
 //  Read a RWMol from a stream reference
 //
 //------------------------------------------------
-RWMol *MrvMolDataStreamParser(std::istream &inStream, bool sanitize,
-                              bool removeHs) {
-  return MrvMolDataStreamParser(&inStream, sanitize, removeHs);
+RWMol *MrvDataStreamToMol(std::istream &inStream, bool sanitize,
+                          bool removeHs) {
+  return MrvDataStreamToMol(&inStream, sanitize, removeHs);
 }
 //------------------------------------------------
 //
 //  Read a RWMol from a string
 //
 //------------------------------------------------
-RWMol *MrvMolStringParser(const std::string &molmrvText, bool sanitize,
-                          bool removeHs) {
+RWMol *MrvBlockToMol(const std::string &molmrvText, bool sanitize,
+                     bool removeHs) {
   std::istringstream inStream(molmrvText);
-  return MrvMolDataStreamParser(inStream, sanitize, removeHs);
+  return MrvDataStreamToMol(inStream, sanitize, removeHs);
 }
 
 //------------------------------------------------
@@ -1035,8 +1034,7 @@ RWMol *MrvMolStringParser(const std::string &molmrvText, bool sanitize,
 //  Read an RWMol from a file
 //
 //------------------------------------------------
-RWMol *MrvMolFileParser(const std::string &fName, bool sanitize,
-                        bool removeHs) {
+RWMol *MrvFileToMol(const std::string &fName, bool sanitize, bool removeHs) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
@@ -1045,7 +1043,7 @@ RWMol *MrvMolFileParser(const std::string &fName, bool sanitize,
   }
   RWMol *res = nullptr;
   if (!inStream.eof()) {
-    res = MrvMolDataStreamParser(inStream, sanitize, removeHs);
+    res = MrvDataStreamToMol(inStream, sanitize, removeHs);
   }
   return res;
 }
@@ -1055,8 +1053,9 @@ RWMol *MrvMolFileParser(const std::string &fName, bool sanitize,
 //  Read a ChemicalReaction from a stream
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnDataStreamParser(std::istream *inStream, bool sanitize,
-                                         bool removeHs) {
+ChemicalReaction *MrvRxnDataStreamToChemicalReaction(std::istream *inStream,
+                                                     bool sanitize,
+                                                     bool removeHs) {
   PRECONDITION(inStream, "no stream");
 
   using boost::property_tree::ptree;
@@ -1076,19 +1075,20 @@ ChemicalReaction *MrvRxnDataStreamParser(std::istream *inStream, bool sanitize,
 //  Read a ChemicalReaction from a stream reference
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnDataStreamParser(std::istream &inStream, bool sanitize,
-                                         bool removeHs) {
-  return MrvRxnDataStreamParser(&inStream, sanitize, removeHs);
+ChemicalReaction *MrvRxnDataStreamToChemicalReaction(std::istream &inStream,
+                                                     bool sanitize,
+                                                     bool removeHs) {
+  return MrvRxnDataStreamToChemicalReaction(&inStream, sanitize, removeHs);
 }
 //------------------------------------------------
 //
 //  Read a ChemicalReaction from a string
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnStringParser(const std::string &molmrvText,
-                                     bool sanitize, bool removeHs) {
+ChemicalReaction *MrvRxnBlockToChemicalReaction(const std::string &molmrvText,
+                                                bool sanitize, bool removeHs) {
   std::istringstream inStream(molmrvText);
-  return MrvRxnDataStreamParser(inStream, sanitize, removeHs);
+  return MrvRxnDataStreamToChemicalReaction(inStream, sanitize, removeHs);
 }
 
 //------------------------------------------------
@@ -1096,15 +1096,16 @@ ChemicalReaction *MrvRxnStringParser(const std::string &molmrvText,
 //  Read a ChemicalReaction from a file
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnFileParser(const std::string &fName, bool sanitize,
-                                   bool removeHs) {
+ChemicalReaction *MrvRxnFileToChemicalReaction(const std::string &fName,
+                                               bool sanitize, bool removeHs) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  ChemicalReaction *res = MrvRxnDataStreamParser(inStream, sanitize, removeHs);
+  ChemicalReaction *res =
+      MrvRxnDataStreamToChemicalReaction(inStream, sanitize, removeHs);
   return res;
 }
 }  // namespace RDKit

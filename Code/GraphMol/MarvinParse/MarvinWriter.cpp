@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2022-2023 Tad Hurst, Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -24,22 +24,11 @@
 #include <RDGeneral/LocaleSwitcher.h>
 #include <RDGeneral/Invariant.h>
 
-#include <boost/format.hpp>
-#include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/GenericGroups/GenericGroups.h>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
-#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSGroupWriting.h>
@@ -486,13 +475,14 @@ class MarvinCMLWriter {
 
     MarvinMol *marvinMol = nullptr;
     const Conformer *conf = nullptr;
+    const Conformer *conf3d = nullptr;
     int tempMolCount = 0, tempAtomCount = 0, tempBondCount = 0, tempSgCount = 0;
     try {
       marvinMol = new MarvinMol();
 
       marvinMol->molID = 'm' + std::to_string(++tempMolCount);
 
-      // get a 2D conformer
+      // get a conformer
 
       int confCount = mol->getNumConformers();
       if (confCount > 0) {
@@ -500,15 +490,25 @@ class MarvinCMLWriter {
           Conformer *testConf = &mol->getConformer(confId);
           if (!testConf->is3D()) {
             conf = testConf;
+          } else {
+            conf3d = testConf;
           }
         }
 
-        if (conf == nullptr) {
+        if (conf == nullptr && conf3d == nullptr) {
           for (unsigned int confId = 0; confId < mol->getNumConformers();
                ++confId) {
             Conformer *testConf = &mol->getConformer(confId);
             if (!testConf->is3D()) {
-              conf = testConf;
+              if (conf == nullptr) {  // only take the first 2d conf
+                conf = testConf;
+              }
+            } else {
+              if (conf3d == nullptr) {  // only take the first 3d conf
+                conf3d = testConf;
+              }
+            }
+            if (conf != nullptr && conf3d != nullptr) {
               break;
             }
           }
@@ -573,7 +573,18 @@ class MarvinCMLWriter {
           marvinAtom->y2 = DBL_MAX;
         }
 
-        // atom maps for rxns
+        if (conf3d != nullptr) {
+          const RDGeom::Point3D pos = conf3d->getAtomPos(atom->getIdx());
+          marvinAtom->x3 = pos.x;
+          marvinAtom->y3 = pos.y;
+          marvinAtom->z3 = pos.z;
+        } else {
+          marvinAtom->x3 = DBL_MAX;
+          marvinAtom->y3 = DBL_MAX;
+          marvinAtom->z3 = DBL_MAX;
+        }
+
+        //  atom maps for rxns
       }
 
       INT_MAP_INT wedgeBonds = pickBondsToWedge(*mol);

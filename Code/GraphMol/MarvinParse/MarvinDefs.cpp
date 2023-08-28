@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2022-2023 Tad Hurst, Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -142,6 +142,20 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
              !getCleanDouble(y2, mrvAtom->y2))) {
           throw FileParseException(
               "The values x2 and y2 must be large floats in MRV file");
+        }
+
+        std::string x3 = v.second.get<std::string>("<xmlattr>.x3", "");
+        std::string y3 = v.second.get<std::string>("<xmlattr>.y3", "");
+        std::string z3 = v.second.get<std::string>("<xmlattr>.z3", "");
+
+        // x3, y3, and z3 are doubles
+
+        if (x3 != "" && y3 != "" && z3 != "" &&
+            (!getCleanDouble(x3, mrvAtom->x3) ||
+             !getCleanDouble(y3, mrvAtom->y3) ||
+             !getCleanDouble(z3, mrvAtom->z3))) {
+          throw FileParseException(
+              "The values x3, y3,  and z2 must be large floats in MRV file");
         }
 
         std::string formalCharge =
@@ -1201,7 +1215,27 @@ bool MarvinMolBase::has3dCoords() const {
   return true;
 }
 
-bool MarvinMolBase::hasCoords() const { return has3dCoords() || has3dCoords(); }
+bool MarvinMolBase::hasAny2dCoords() const {
+  for (auto atom : atoms) {
+    if (atom->x2 != DBL_MAX && atom->y2 != DBL_MAX) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool MarvinMolBase::hasAny3dCoords() const {
+  for (auto atom : atoms) {
+    if (atom->x3 != DBL_MAX && atom->y3 != DBL_MAX && atom->z3 != DBL_MAX) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool MarvinMolBase::hasCoords() const { return has2dCoords() || has3dCoords(); }
 
 void MarvinMolBase::removeCoords() {
   for (auto atom : atoms) {
@@ -4181,8 +4215,8 @@ MarvinRectangle::MarvinRectangle(const std::vector<MarvinAtom *> &atoms) {
   for (auto atom : atoms) {
     upperLeft.x = std::min(upperLeft.x, atom->x2);
     lowerRight.x = std::max(lowerRight.x, atom->x2);
-    upperLeft.x = std::max(upperLeft.x, atom->x2);
-    lowerRight.x = std::min(lowerRight.x, atom->x2);
+    upperLeft.y = std::max(upperLeft.y, atom->y2);
+    lowerRight.y = std::min(lowerRight.y, atom->y2);
   }
 }
 

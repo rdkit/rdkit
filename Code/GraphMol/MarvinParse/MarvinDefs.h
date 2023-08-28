@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2022-2023 Tad Hurst, Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -23,12 +23,11 @@
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <float.h>  // Needed for DBL_MAX on Clang
@@ -354,6 +353,8 @@ class MarvinMolBase {
 
   bool has2dCoords() const;
   bool has3dCoords() const;
+  bool hasAny3dCoords() const;
+  bool hasAny2dCoords() const;
   bool hasCoords() const;
   void removeCoords();
 

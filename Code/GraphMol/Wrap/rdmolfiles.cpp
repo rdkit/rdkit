@@ -155,41 +155,28 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMrvFile(const char *molFilename, bool sanitize, bool removeHs)
-{
+ROMol *MolFromMrvFile(const char *molFilename, bool sanitize, bool removeHs) {
   RWMol *newM = nullptr;
-  try
-  {
-    newM = MrvMolFileParser(molFilename, sanitize, removeHs);
-  }
-  catch (RDKit::BadFileException &e)
-  {
+  try {
+    newM = MrvFileToMol(molFilename, sanitize, removeHs);
+  } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
-  }
-  catch (RDKit::FileParseException &e)
-  {
+  } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
-  }
-  catch (...)
-  {
+  } catch (...) {
   }
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMrvBlock(python::object imolBlock, bool sanitize, bool removeHs)
-{
+ROMol *MolFromMrvBlock(python::object imolBlock, bool sanitize, bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   RWMol *newM = nullptr;
-  try
-  {
-    newM = MrvMolDataStreamParser(inStream, sanitize, removeHs);
-  }
-  catch (RDKit::FileParseException &e)
-  {
+  try {
+    newM = MrvDataStreamToMol(inStream, sanitize, removeHs);
+  } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
-  } catch (...)
-  {
+  } catch (...) {
   }
   return static_cast<ROMol *>(newM);
 }
@@ -845,7 +832,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
 
-docString =
+  docString =
       "Construct a molecule from a Marvin (Mrv) file.\n\n\
   ARGUMENTS:\n\
 \n\
@@ -862,12 +849,11 @@ docString =
 \n\
     a Mol object, None on failure.\n\
 \n";
-  python::def(
-      "MolFromMrvFile", RDKit::MolFromMrvFile,
-      (python::arg("molFileName"), python::arg("sanitize") = true,
-       python::arg("removeHs") = true),
-      docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());
+  python::def("MolFromMrvFile", RDKit::MolFromMrvFile,
+              (python::arg("molFileName"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 
   docString =
       "Construct a molecule from a Marvin (mrv) block.\n\n\
@@ -886,12 +872,11 @@ docString =
 \n\
     a Mol object, None on failure.\n\
 \n";
-  python::def(
-      "MolFromMrvBlock", RDKit::MolFromMrvBlock,
-      (python::arg("mrvBlock"), python::arg("sanitize") = true,
-       python::arg("removeHs") = true),
-      docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());
+  python::def("MolFromMrvBlock", RDKit::MolFromMrvBlock,
+              (python::arg("mrvBlock"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 
   docString =
       "Construct a molecule from an XYZ file.\n\n\
@@ -1191,13 +1176,11 @@ docString =
 \n\
     a string\n\
 \n";
-  python::def(
-      "MolToMrvFile", RDKit::MolToMrvFile,
-      (python::arg("mol"), python::arg("filename"),
-       python::arg("includeStereo") = true, python::arg("confId") = -1,
-       python::arg("kekulize") = true),
-      docString.c_str());
-
+  python::def("MolToMrvFile", RDKit::MolToMrvFile,
+              (python::arg("mol"), python::arg("filename"),
+               python::arg("includeStereo") = true, python::arg("confId") = -1,
+               python::arg("kekulize") = true),
+              docString.c_str());
 
   docString =
       "Writes a CML block for a molecule\n\

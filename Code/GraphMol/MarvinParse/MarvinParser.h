@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2022-2023 Tad Hurst, Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -27,27 +27,27 @@ RDKIT_FILEPARSERS_EXPORT bool MrvDataStreamIsReaction(std::istream *inStream);
 RDKIT_FILEPARSERS_EXPORT bool MrvDataStreamIsReaction(std::istream &inStream);
 RDKIT_FILEPARSERS_EXPORT bool MrvBlockIsReaction(const std::string &molmrvText);
 
-RDKIT_FILEPARSERS_EXPORT RWMol *MrvMolDataStreamParser(std::istream *inStream,
-                                                       bool sanitize = false,
-                                                       bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT RWMol *MrvMolDataStreamParser(std::istream &inStream,
-                                                       bool sanitize = false,
-                                                       bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT RWMol *MrvMolStringParser(
-    const std::string &molmrvText, bool sanitize = false,
-    bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT RWMol *MrvMolFileParser(const std::string &fName,
-                                                 bool sanitize = false,
-                                                 bool removeHs = false);
+RDKIT_FILEPARSERS_EXPORT RWMol *MrvDataStreamToMol(std::istream *inStream,
+                                                   bool sanitize = false,
+                                                   bool removeHs = false);
+RDKIT_FILEPARSERS_EXPORT RWMol *MrvDataStreamToMol(std::istream &inStream,
+                                                   bool sanitize = false,
+                                                   bool removeHs = false);
+RDKIT_FILEPARSERS_EXPORT RWMol *MrvBlockToMol(const std::string &molmrvText,
+                                              bool sanitize = false,
+                                              bool removeHs = false);
+RDKIT_FILEPARSERS_EXPORT RWMol *MrvFileToMol(const std::string &fName,
+                                             bool sanitize = false,
+                                             bool removeHs = false);
 
-RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnDataStreamParser(
+RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnDataStreamToChemicalReaction(
     std::istream *inStream, bool sanitize = false, bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnDataStreamParser(
+RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnDataStreamToChemicalReaction(
     std::istream &inStream, bool sanitize = false, bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnStringParser(
+RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnBlockToChemicalReaction(
     const std::string &molmrvText, bool sanitize = false,
     bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnFileParser(
+RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnFileToChemicalReaction(
     const std::string &fName, bool sanitize = false, bool removeHs = false);
 
 RDKIT_FILEPARSERS_EXPORT void MolToMrvFile(const ROMol &mol,
