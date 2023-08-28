@@ -75,7 +75,7 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   ExecStatistics VerboseStatistics;
 #endif
 
-  MaximumCommonSubgraph(const MCSParameters& params);
+  MaximumCommonSubgraph(const MCSParameters* params);
   ~MaximumCommonSubgraph() { clear(); }
   MCSResult find(const std::vector<ROMOL_SPTR>& mols);
   const ROMol& getQueryMolecule() const { return *QueryMolecule; }
