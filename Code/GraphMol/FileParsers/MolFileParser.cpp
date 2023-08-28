@@ -3242,21 +3242,31 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
     }
   }
 
+  // now that atom stereochem has been perceived, the wedging
+  // information is no longer needed, so we clear
+  // single bond dir flags:
+  MolOps::clearSingleBondDirFlags(*res);
+
   if (sanitize) {
     try {
       if (removeHs) {
+        // Bond stereo detection must happen before H removal, or
+        // else we might be removing stereogenic H atoms in double
+        // bonds (e.g. imines). But before we run stereo detection,
+        // we need to run mol cleanup so don't have trouble with
+        // e.g. nitro groups. Sadly, this a;; means we will find
+        // run both cleanup and ring finding twice (a fast find
+        // rings in bond stereo detection, and another in
+        // sanitization's SSSR symmetrization).
+        unsigned int failedOp = 0;
+        MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
+        MolOps::detectBondStereochemistry(*res);
         MolOps::removeHs(*res, false, false);
       } else {
         MolOps::sanitizeMol(*res);
+        MolOps::detectBondStereochemistry(*res);
       }
-      // now that atom stereochem has been perceived, the wedging
-      // information is no longer needed, so we clear
-      // single bond dir flags:
-      MolOps::clearSingleBondDirFlags(*res);
 
-      // unlike DetectAtomStereoChemistry we call detectBondStereochemistry
-      // here after sanitization because we need the ring information:
-      MolOps::detectBondStereochemistry(*res);
     } catch (...) {
       delete res;
       res = nullptr;
@@ -3264,12 +3274,6 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
     }
     MolOps::assignStereochemistry(*res, true, true, true);
   } else {
-    // we still need to do something about double bond stereochemistry
-    // (was github issue 337)
-    // now that atom stereochem has been perceived, the wedging
-    // information is no longer needed, so we clear
-    // single bond dir flags:
-    ClearSingleBondDirFlags(*res);
     MolOps::detectBondStereochemistry(*res);
   }
 
