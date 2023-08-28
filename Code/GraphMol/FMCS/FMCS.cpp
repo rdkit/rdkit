@@ -156,7 +156,7 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols,
   if (nullptr == params) {
     params = &p;
   }
-  RDKit::FMCS::MaximumCommonSubgraph fmcs(params);
+  RDKit::FMCS::MaximumCommonSubgraph fmcs(*params);
   return fmcs.find(mols);
 }
 
@@ -993,7 +993,7 @@ bool FinalChiralityCheckFunction_1(const short unsigned int c1[],
 }
 
 namespace detail {
-MCSParametersInternal::MCSParametersInternal(const MCSParameters* params)
+MCSParametersInternal::MCSParametersInternal(const MCSParameters& params)
     : MCSParameters(params) {
   UserFinalMatchChecker = FinalMatchChecker;
   FinalMatchChecker = FinalMatchCheckFunction;

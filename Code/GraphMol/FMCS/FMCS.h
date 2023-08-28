@@ -146,12 +146,10 @@ RDKIT_FMCS_EXPORT bool MCSProgressCallbackTimeout(const MCSProgressData& stat,
 
 struct RDKIT_FMCS_EXPORT MCSParameters {
   MCSParameters() {}
-  MCSParameters(const MCSParameters* other) : MCSParameters() {
-    if (other) {
-      *this = *other;
-    }
-  }
+  MCSParameters(const MCSParameters& other) = default;
+  MCSParameters& operator=(const MCSParameters& other) = default;
   virtual ~MCSParameters() {}
+
   bool StoreAll = false;
   bool MaximizeBonds = true;
   double Threshold = 1.0;    // match all molecules
@@ -184,7 +182,7 @@ namespace detail {
 struct MCSParametersInternal : public MCSParameters {
   MCSParametersInternal() {}
   ~MCSParametersInternal() {}
-  MCSParametersInternal(const MCSParameters* params);
+  MCSParametersInternal(const MCSParameters& params);
   MCSFinalMatchCheckFunction UserFinalMatchChecker = nullptr;
 };
 }  // end namespace detail

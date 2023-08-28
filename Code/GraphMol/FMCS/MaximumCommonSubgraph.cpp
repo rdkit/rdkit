@@ -34,7 +34,7 @@ struct LabelDefinition {
       : ItemIndex(i), Value(value) {}
 };
 
-MaximumCommonSubgraph::MaximumCommonSubgraph(const MCSParameters* params) {
+MaximumCommonSubgraph::MaximumCommonSubgraph(const MCSParameters& params) {
   Parameters = detail::MCSParametersInternal(params);
   if (!Parameters.ProgressCallback) {
     Parameters.ProgressCallback = MCSProgressCallbackTimeout;
@@ -910,13 +910,12 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   // molecule as a query
   std::stable_sort(Molecules.begin(), Molecules.end(), molPtr_NumBondLess);
   size_t startIdx = 0;
-  size_t endIdx = Molecules.size() - ThresholdCount;  
+  size_t endIdx = Molecules.size() - ThresholdCount;
   while (startIdx < endIdx && !Molecules.at(startIdx)->getNumAtoms()) {
     ++startIdx;
   }
   bool areSeedsEmpty = false;
-  for (size_t i = startIdx;
-       i < endIdx && !areSeedsEmpty && !res.Canceled;
+  for (size_t i = startIdx; i < endIdx && !areSeedsEmpty && !res.Canceled;
        ++i) {
     init(startIdx);
     if (Targets.empty()) {
