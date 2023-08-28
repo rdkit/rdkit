@@ -571,6 +571,80 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       // bondVects[order[1]].normalize();  // maybe not strictly necessary
     }
 
+    // order the bonds
+
+    auto needsSwap = [&zeroTol](const RDGeom::Point3D &cp01,
+                        const RDGeom::Point3D &cp02, double dp01,
+                        double dp02) -> bool {
+      if( fabs(dp01)-1 > -zeroTol ){
+        if(cp02.z<0) {
+          return true;
+        }
+        return false;
+      }
+      if( fabs(dp02)-1 > -zeroTol ){
+        if(cp01.z<0) {
+          return true;
+        }
+      }
+
+      if ((cp01.z * cp02.z) < -zeroTol) {
+        if (cp01.z < cp02.z) {
+          return true;
+        }
+        return false;
+      }
+      if(dp01*dp02 < -zeroTol){
+        if(dp01 < dp02) {
+          return true;
+        }
+        return false;
+      }
+      return fabs(dp01)>fabs(dp02);
+    };
+    // std::cerr<<"PRE "<<neighborBondIndices[order[0]]<<" "<<neighborBondIndices[order[1]]<<" "<<neighborBondIndices[order[2]]<<" "<<neighborBondIndices[order[3]]<<std::endl;
+
+    {
+      if (nNbrs == 3) {
+        auto cp01 = bondVects[order[0]].crossProduct(bondVects[order[1]]);
+        auto cp02 = bondVects[order[0]].crossProduct(bondVects[order[2]]);
+        auto dp01 = bondVects[order[0]].dotProduct(bondVects[order[1]]);
+        auto dp02 = bondVects[order[0]].dotProduct(bondVects[order[2]]);
+        if (needsSwap(cp01, cp02, dp01, dp02)) {
+          std::swap(order[1], order[2]);
+          prefactor *= -1;
+        }
+      } else if (nNbrs > 3) {
+        std::vector<std::tuple<double,double,unsigned>> orderedBonds(3);
+        // std::cerr<<"   PRE:"<<std::endl;
+        for(auto i=1u;i<4;++i){
+          auto cp0i = bondVects[order[0]].crossProduct(bondVects[order[i]]);
+          auto sgn = cp0i.z < -zeroTol ? -1 : 1;
+          auto dp0i = bondVects[order[0]].dotProduct(bondVects[order[i]]);
+          orderedBonds[i-1] = std::move(std::make_tuple(sgn,sgn*dp0i,order[i]));
+          // std::cerr<< "       " << i << ": "<< std::get<0>(orderedBonds[i-1])<<", "<< std::get<1>(orderedBonds[i-1])<<", "<< std::get<2>(orderedBonds[i-1])<<std::endl;
+        }
+        std::sort(orderedBonds.rbegin(),orderedBonds.rend());
+        // std::cerr<<"     POST: "<<std::get<2>(orderedBonds[0])<<" "<<std::get<2>(orderedBonds[1])<<" "<<std::get<2>(orderedBonds[2])<<std::endl;
+        auto nChanged=0;
+        for(auto i=1u;i<4;++i){
+          auto ni = std::get<2>(orderedBonds[i-1]);
+          if(order[i]!=ni){
+            // std::cerr<<"  MOVE "<<i<<" "<<order[i]<<" <- "<<ni<<std::endl;
+            order[i] = ni;
+            ++nChanged;
+          }
+        }
+        // std::cerr<< " nChanged: "<<nChanged<<std::endl;
+        if(nChanged==2){
+          // this is always an acyclic permiutation
+          prefactor *= -1;
+        }      
+      }
+    }
+
+    // std::cerr<<"ORDER "<<neighborBondIndices[order[0]]<<" "<<neighborBondIndices[order[1]]<<" "<<neighborBondIndices[order[2]]<<" "<<neighborBondIndices[order[3]]<<std::endl;
+
     // check for opposing bonds with opposite wedging
     for (auto i = 0u; i < nNbrs; ++i) {
       for (auto j = i + 1; j < nNbrs; ++j) {
@@ -578,6 +652,20 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
           auto cp =
               bondVects[order[i]].crossProduct(bondVects[order[j]]).lengthSq();
           if (cp < 0.01) {
+            // exception to our rejection of these structures: in some horrible
+            // pseudo-3D drawings of things like sugars the ring substituents
+            // are drawn 180 degrees apart and with opposite wedging. Let that
+            // one pass.
+            if (nNbrs == 4 &&
+                fabs(bondVects[order[i]].dotProduct(bondVects[order[j]]) + 1) <
+                    zeroTol) {
+              // this is allowed for neighboring bonds
+              if (j - i == 1 || (i == 0 && j == 3)) {
+                // std::cerr << " skip it " << std::endl;
+                bondVects[order[j]].z = 0.0;
+                continue;
+              }
+            }
             BOOST_LOG(rdWarningLog)
                 << "Warning: opposing bonds " << neighborBondIndices[order[i]]
                 << " and " << neighborBondIndices[order[j]]
@@ -623,31 +711,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
             << " by rule 1a." << std::endl;
         return std::nullopt;
       }
-    }
-
-    {
-      auto cp01 = bondVects[order[0]].crossProduct(bondVects[order[1]]);
-      auto cp02 = bondVects[order[0]].crossProduct(bondVects[order[2]]);
-      if(cp01.z < cp02.z) {
-        std::swap(order[1],order[2]);
-        prefactor *= -1;
-      }
-      if(nNbrs>3){
-        auto cp01 = bondVects[order[0]].crossProduct(bondVects[order[1]]);
-        auto cp02 = bondVects[order[0]].crossProduct(bondVects[order[2]]);
-        auto cp03 = bondVects[order[0]].crossProduct(bondVects[order[3]]);
-        if(cp01.z < cp03.z) {
-          auto tmp = order[2];
-          order[2] = order[1];
-          order[1] = order[3];
-          order[3] = tmp;
-          // no prefactor change since this is two swaps
-        } else if(cp02.z < cp03.z) {
-          std::swap(order[2],order[3]);
-          prefactor *= -1;
-        }
-      }
-    }
+    }    
 
     const auto crossp1 = bondVects[order[1]].crossProduct(bondVects[order[2]]);
     // catch linear arrangements
@@ -3154,11 +3218,9 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
         Atom::ChiralType code =
             Chirality::atomChiralTypeFromBondDirPseudo3D(mol, bond, &conf)
                 .value_or(Atom::ChiralType::CHI_UNSPECIFIED);
-        if (code != Atom::ChiralType::CHI_UNSPECIFIED) {
-          atomsSet.set(atom->getIdx());
+        atomsSet.set(atom->getIdx());
           //   std::cerr << "atom " << atom->getIdx() << " code " << code
           //             << " from bond " << bond->getIdx() << std::endl;
-        }
         atom->setChiralTag(code);
 
         // within the RD representation, if a three-coordinate atom

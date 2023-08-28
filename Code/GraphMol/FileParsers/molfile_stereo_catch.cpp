@@ -526,6 +526,7 @@ M  END
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
     {
+      // std::cerr<<"11111111111111"<<std::endl;
       auto m = R"CTAB(opposing stereo, order change
   Mrv2211 06102314502D          
 
