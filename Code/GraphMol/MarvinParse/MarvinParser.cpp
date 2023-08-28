@@ -762,8 +762,8 @@ class MarvinCMLReader {
 
       if (foundChild) {
         for (auto &v : childTree)
-          res->reactants.push_back(std::move(std::unique_ptr<MarvinMol>(
-              (MarvinMol *)parseMarvinMolecule(v.second))));
+          res->reactants.push_back(std::unique_ptr<MarvinMol>(
+              (MarvinMol *)parseMarvinMolecule(v.second)));
       }
 
       try {
@@ -774,8 +774,8 @@ class MarvinCMLReader {
       }
       if (foundChild) {
         for (auto &v : childTree)
-          res->agents.push_back(std::move(std::unique_ptr<MarvinMol>(
-              (MarvinMol *)parseMarvinMolecule(v.second))));
+          res->agents.push_back(std::unique_ptr<MarvinMol>(
+              (MarvinMol *)parseMarvinMolecule(v.second)));
       }
 
       try {
@@ -786,8 +786,8 @@ class MarvinCMLReader {
       }
       if (foundChild) {
         for (auto &v : childTree)
-          res->products.push_back(std::move(std::unique_ptr<MarvinMol>(
-              (MarvinMol *)parseMarvinMolecule(v.second))));
+          res->products.push_back(std::unique_ptr<MarvinMol>(
+              (MarvinMol *)parseMarvinMolecule(v.second)));
       }
 
       if (parseArrowPlusesAndConditions) {
@@ -813,8 +813,7 @@ class MarvinCMLReader {
             continue;
           }
           auto *marvinPlus = new MarvinPlus();
-          res->pluses.push_back(
-              std::move(std::unique_ptr<MarvinPlus>(marvinPlus)));
+          res->pluses.push_back(std::unique_ptr<MarvinPlus>(marvinPlus));
           marvinPlus->id = v.second.get<std::string>("<xmlattr>.id", "");
           int pointCount = 0;
           for (auto &v2 : v.second) {
@@ -876,7 +875,7 @@ class MarvinCMLReader {
 
           auto *marvinCondition = new MarvinCondition();
           res->conditions.push_back(
-              std::move(std::unique_ptr<MarvinCondition>(marvinCondition)));
+              std::unique_ptr<MarvinCondition>(marvinCondition));
           marvinCondition->id = v.second.get<std::string>("<xmlattr>.id", "");
           marvinCondition->halign =
               v.second.get<std::string>("<xmlattr>.halign", "");

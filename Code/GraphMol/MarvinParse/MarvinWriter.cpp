@@ -645,7 +645,7 @@ class MarvinCMLWriter {
       int orCount = 0;
       int andCount = 0;
 
-      for (const StereoGroup group : mol->getStereoGroups()) {
+      for (const StereoGroup &group : mol->getStereoGroups()) {
         std::string stereoGroupType;
 
         switch (group.getGroupType()) {
