@@ -37,8 +37,6 @@
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
-using namespace RDKit::SGroupParsing;
-
 namespace RDKit {
 
 /*
@@ -569,7 +567,8 @@ class MarvinCMLReader {
           atoms.push_back(mol->getAtomWithIdx(atomPtr));
         }
 
-        groups.emplace_back(groupPtr->groupType, std::move(atoms));
+        groups.emplace_back(groupPtr->groupType, std::move(atoms),
+                            groupPtr->groupNumber);
       }
       if (!groups.empty()) {
         mol->setStereoGroups(std::move(groups));
@@ -727,7 +726,7 @@ class MarvinCMLReader {
         }
       }
 
-      BOOST_FOREACH (boost::property_tree::ptree::value_type &v, molTree) {
+      for (auto &v : molTree) {
         if (v.first == "molecule") {
           MarvinMolBase *subMol =
               parseMarvinMolecule(v.second, (MarvinMol *)res);
@@ -745,7 +744,10 @@ class MarvinCMLReader {
 
   MarvinReaction *parseMarvinReaction(
       boost::property_tree::ptree rxnTree,
-      boost::property_tree::ptree documentTree) {
+      boost::property_tree::ptree documentTree,
+      bool parseArrowPlusesAndConditions =
+          false)  // Arrows etc are not used in RDKIT) {
+  {
     auto *res = new MarvinReaction();
 
     try {
@@ -759,7 +761,7 @@ class MarvinCMLReader {
       }
 
       if (foundChild) {
-        BOOST_FOREACH (boost::property_tree::ptree::value_type &v, childTree)
+        for (auto &v : childTree)
           res->reactants.push_back(std::move(std::unique_ptr<MarvinMol>(
               (MarvinMol *)parseMarvinMolecule(v.second))));
       }
@@ -771,7 +773,7 @@ class MarvinCMLReader {
         foundChild = false;
       }
       if (foundChild) {
-        BOOST_FOREACH (boost::property_tree::ptree::value_type &v, childTree)
+        for (auto &v : childTree)
           res->agents.push_back(std::move(std::unique_ptr<MarvinMol>(
               (MarvinMol *)parseMarvinMolecule(v.second))));
       }
@@ -783,145 +785,148 @@ class MarvinCMLReader {
         foundChild = false;
       }
       if (foundChild) {
-        BOOST_FOREACH (boost::property_tree::ptree::value_type &v, childTree)
+        for (auto &v : childTree)
           res->products.push_back(std::move(std::unique_ptr<MarvinMol>(
               (MarvinMol *)parseMarvinMolecule(v.second))));
       }
 
-      // <arrow type="DEFAULT" x1="-11.816189911577812" y1="-10.001443743444021"
-      // x2="-8.401759471454618" y2="-10.001443743444021"/>
-      boost::property_tree::ptree arrow = rxnTree.get_child("arrow");
-      res->arrow.type = arrow.get<std::string>("<xmlattr>.type", "");
-      if (!getCleanDouble(arrow.get<std::string>("<xmlattr>.x1", ""),
-                          res->arrow.x1) ||
-          !getCleanDouble(arrow.get<std::string>("<xmlattr>.y1", ""),
-                          res->arrow.y1) ||
-          !getCleanDouble(arrow.get<std::string>("<xmlattr>.x2", ""),
-                          res->arrow.x2) ||
-          !getCleanDouble(arrow.get<std::string>("<xmlattr>.y2", ""),
-                          res->arrow.y1)) {
-        throw FileParseException(
-            "Arrow coordinates must all be large floating point numbers in MRV file");
-      }
-
-      BOOST_FOREACH (boost::property_tree::ptree::value_type &v, documentTree) {
-        if (v.first != "MReactionSign") {
-          continue;
+      if (parseArrowPlusesAndConditions) {
+        // <arrow type="DEFAULT" x1="-11.816189911577812"
+        // y1="-10.001443743444021" x2="-8.401759471454618"
+        // y2="-10.001443743444021"/>
+        boost::property_tree::ptree arrow = rxnTree.get_child("arrow");
+        res->arrow.type = arrow.get<std::string>("<xmlattr>.type", "");
+        if (!getCleanDouble(arrow.get<std::string>("<xmlattr>.x1", ""),
+                            res->arrow.x1) ||
+            !getCleanDouble(arrow.get<std::string>("<xmlattr>.y1", ""),
+                            res->arrow.y1) ||
+            !getCleanDouble(arrow.get<std::string>("<xmlattr>.x2", ""),
+                            res->arrow.x2) ||
+            !getCleanDouble(arrow.get<std::string>("<xmlattr>.y2", ""),
+                            res->arrow.y1)) {
+          throw FileParseException(
+              "Arrow coordinates must all be large floating point numbers in MRV file");
         }
-        auto *marvinPlus = new MarvinPlus();
-        res->pluses.push_back(
-            std::move(std::unique_ptr<MarvinPlus>(marvinPlus)));
-        marvinPlus->id = v.second.get<std::string>("<xmlattr>.id", "");
-        int pointCount = 0;
-        BOOST_FOREACH (boost::property_tree::ptree::value_type &v2, v.second) {
-          if (v2.first == "MPoint") {
-            double x;
-            double y;
-            if (!getCleanDouble(v2.second.get<std::string>("<xmlattr>.x", ""),
-                                x) ||
-                !getCleanDouble(v2.second.get<std::string>("<xmlattr>.y", ""),
-                                y)) {
-              throw FileParseException(
-                  "Plus sign  coordinates must all be large floating point numbers in MRV file");
-            }
 
-            switch (pointCount) {
-              case 0:  //  first point - x1 and y1 are set
-                marvinPlus->x1 = x;
-                marvinPlus->y1 = y;
-                break;
-              case 1:  // x2 is set, y1 is checked
-                marvinPlus->x2 = x;
-                if (marvinPlus->y1 != y) {
-                  throw FileParseException(
-                      "Plus sign coordinate Y in 2nd MPoint must be the same as that from the 1st MPoint in MRV file");
-                }
-                break;
-              case 2:  // y2 is set, x2 is checked
-                marvinPlus->y2 = y;
-                if (marvinPlus->x2 != x) {
-                  throw FileParseException(
-                      "Plus sign coordinate X in 3rd MPoint must be the same as that from the 2nd MPoint in MRV file");
-                }
-                break;
-              case 3:  // x2 and y2 are checked
-                if (marvinPlus->x1 != x) {
-                  throw FileParseException(
-                      "Plus sign coordinate X in 4th MPoint must be the same as that from the 1st MPoint in MRV file");
-                }
-
-                if (marvinPlus->y2 != y) {
-                  throw FileParseException(
-                      "Plus sign coordinate Y in 4th MPoint must be the same as that from the 3rd MPoint in MRV file");
-                }
-                break;
-
-              default:
+        for (auto &v : documentTree) {
+          if (v.first != "MReactionSign") {
+            continue;
+          }
+          auto *marvinPlus = new MarvinPlus();
+          res->pluses.push_back(
+              std::move(std::unique_ptr<MarvinPlus>(marvinPlus)));
+          marvinPlus->id = v.second.get<std::string>("<xmlattr>.id", "");
+          int pointCount = 0;
+          for (auto &v2 : v.second) {
+            if (v2.first == "MPoint") {
+              double x;
+              double y;
+              if (!getCleanDouble(v2.second.get<std::string>("<xmlattr>.x", ""),
+                                  x) ||
+                  !getCleanDouble(v2.second.get<std::string>("<xmlattr>.y", ""),
+                                  y)) {
                 throw FileParseException(
-                    "Plus sign coordinate must have 4 MPoints in MRV file");
+                    "Plus sign  coordinates must all be large floating point numbers in MRV file");
+              }
+
+              switch (pointCount) {
+                case 0:  //  first point - x1 and y1 are set
+                  marvinPlus->x1 = x;
+                  marvinPlus->y1 = y;
+                  break;
+                case 1:  // x2 is set, y1 is checked
+                  marvinPlus->x2 = x;
+                  if (marvinPlus->y1 != y) {
+                    throw FileParseException(
+                        "Plus sign coordinate Y in 2nd MPoint must be the same as that from the 1st MPoint in MRV file");
+                  }
+                  break;
+                case 2:  // y2 is set, x2 is checked
+                  marvinPlus->y2 = y;
+                  if (marvinPlus->x2 != x) {
+                    throw FileParseException(
+                        "Plus sign coordinate X in 3rd MPoint must be the same as that from the 2nd MPoint in MRV file");
+                  }
+                  break;
+                case 3:  // x2 and y2 are checked
+                  if (marvinPlus->x1 != x) {
+                    throw FileParseException(
+                        "Plus sign coordinate X in 4th MPoint must be the same as that from the 1st MPoint in MRV file");
+                  }
+
+                  if (marvinPlus->y2 != y) {
+                    throw FileParseException(
+                        "Plus sign coordinate Y in 4th MPoint must be the same as that from the 3rd MPoint in MRV file");
+                  }
+                  break;
+
+                default:
+                  throw FileParseException(
+                      "Plus sign coordinate must have 4 MPoints in MRV file");
+              }
+              ++pointCount;
             }
-            ++pointCount;
           }
         }
-      }
 
-      BOOST_FOREACH (boost::property_tree::ptree::value_type &v, documentTree) {
-        if (v.first != "MTextBox") {
-          continue;
-        }
-
-        auto *marvinCondition = new MarvinCondition();
-        res->conditions.push_back(
-            std::move(std::unique_ptr<MarvinCondition>(marvinCondition)));
-        marvinCondition->id = v.second.get<std::string>("<xmlattr>.id", "");
-        marvinCondition->halign =
-            v.second.get<std::string>("<xmlattr>.halign", "");
-        marvinCondition->valign =
-            v.second.get<std::string>("<xmlattr>.valign", "");
-        double fontScale;
-        std::string fontScaleStr =
-            v.second.get<std::string>("<xmlattr>.fontScale", "");
-        if (fontScaleStr != "") {
-          if (!getCleanDouble(fontScaleStr, fontScale)) {
-            throw FileParseException(
-                "Condition font scale must be a positive integer in MRV file");
+        for (auto &v : documentTree) {
+          if (v.first != "MTextBox") {
+            continue;
           }
-        } else {
-          fontScale = 0.0;
-        }
-        marvinCondition->fontScale = fontScale;
 
-        marvinCondition->text = v.second.get<std::string>("Field", "");
-
-        int pointCount = 0;
-        BOOST_FOREACH (boost::property_tree::ptree::value_type &v2, v.second) {
-          if (v2.first == "MPoint") {
-            double x, y;
-            std::string xStr = v2.second.get<std::string>("<xmlattr>.x", "");
-            std::string yStr = v2.second.get<std::string>("<xmlattr>.y", "");
-            if (!getCleanDouble(xStr, x) || !getCleanDouble(yStr, y)) {
+          auto *marvinCondition = new MarvinCondition();
+          res->conditions.push_back(
+              std::move(std::unique_ptr<MarvinCondition>(marvinCondition)));
+          marvinCondition->id = v.second.get<std::string>("<xmlattr>.id", "");
+          marvinCondition->halign =
+              v.second.get<std::string>("<xmlattr>.halign", "");
+          marvinCondition->valign =
+              v.second.get<std::string>("<xmlattr>.valign", "");
+          double fontScale;
+          std::string fontScaleStr =
+              v.second.get<std::string>("<xmlattr>.fontScale", "");
+          if (fontScaleStr != "") {
+            if (!getCleanDouble(fontScaleStr, fontScale)) {
               throw FileParseException(
-                  "Condition coordinate must valid integers in MRV file");
+                  "Condition font scale must be a positive integer in MRV file");
             }
+          } else {
+            fontScale = 0.0;
+          }
+          marvinCondition->fontScale = fontScale;
 
-            switch (pointCount) {
-              case 0:  //  first point - x1 and y1 are set
-                marvinCondition->x = x;
-                marvinCondition->y = y;
-                break;
-              case 1:
-              case 2:
-              case 3:  // x and Y are checked - must be the same as point 1
-                break;
+          marvinCondition->text = v.second.get<std::string>("Field", "");
 
-              default:
+          int pointCount = 0;
+          for (auto &v2 : v.second) {
+            if (v2.first == "MPoint") {
+              double x, y;
+              std::string xStr = v2.second.get<std::string>("<xmlattr>.x", "");
+              std::string yStr = v2.second.get<std::string>("<xmlattr>.y", "");
+              if (!getCleanDouble(xStr, x) || !getCleanDouble(yStr, y)) {
                 throw FileParseException(
-                    "Condition defs must have 4 MPoints in MRV file");
+                    "Condition coordinate must valid integers in MRV file");
+              }
+
+              switch (pointCount) {
+                case 0:  //  first point - x1 and y1 are set
+                  marvinCondition->x = x;
+                  marvinCondition->y = y;
+                  break;
+                case 1:
+                case 2:
+                case 3:  // x and Y are checked - must be the same as point 1
+                  break;
+
+                default:
+                  throw FileParseException(
+                      "Condition defs must have 4 MPoints in MRV file");
+              }
+              ++pointCount;
             }
-            ++pointCount;
           }
         }
-      }
+      }  // end of if (parseArrowPlusesAndConditions)
 
       return res;
     } catch (const std::exception &e) {
@@ -941,7 +946,6 @@ class MarvinCMLReader {
 bool MrvDataStreamIsReaction(std::istream &inStream) {
   PRECONDITION(inStream, "no stream");
 
-  using boost::property_tree::ptree;
   ptree tree;
 
   // Parse the XML into the property tree.
@@ -999,7 +1003,7 @@ RWMol *MrvDataStreamToMol(std::istream *inStream, bool sanitize,
                           bool removeHs) {
   PRECONDITION(inStream, "no stream");
 
-  using boost::property_tree::ptree;
+  // boost::property_tree::ptree;
   ptree tree;
 
   // Parse the XML into the property tree.
@@ -1058,7 +1062,6 @@ ChemicalReaction *MrvDataStreamToChemicalReaction(std::istream *inStream,
                                                   bool removeHs) {
   PRECONDITION(inStream, "no stream");
 
-  using boost::property_tree::ptree;
   ptree tree;
 
   // Parse the XML into the property tree.

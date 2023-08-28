@@ -113,8 +113,7 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
     if (atomID == "UseLongForm") {
       // long form - each atom on a line
 
-      BOOST_FOREACH (boost::property_tree::ptree::value_type &v,
-                     molTree.get_child("atomArray")) {
+      for (auto &v : molTree.get_child("atomArray")) {
         if (v.first != "atom") {
           continue;
         }
@@ -476,8 +475,7 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
 
     auto bondArray = molTree.get_child_optional("bondArray");
     if (bondArray) {
-      BOOST_FOREACH (boost::property_tree::ptree::value_type &v,
-                     molTree.get_child("bondArray")) {
+      for (auto &v : molTree.get_child("bondArray")) {
         if (v.first != "bond") {
           continue;
         }
@@ -575,8 +573,7 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
 
         auto bondStereoItem = v.second.get_child_optional("bondStereo");
         if (bondStereoItem) {
-          BOOST_FOREACH (boost::property_tree::ptree::value_type &ww,
-                         v.second) {
+          for (auto &ww : v.second) {
             mrvBond->bondStereo.convention =
                 ww.second.get<std::string>("<xmlattr>.convention", "");
             if (mrvBond->bondStereo.convention != "") {
@@ -2221,8 +2218,7 @@ MarvinSuperatomSgroup::MarvinSuperatomSgroup(MarvinMolBase *parentInit,
   }
 
   if (found) {
-    BOOST_FOREACH (boost::property_tree::ptree::value_type &v,
-                   molTree.get_child("AttachmentPointArray")) {
+    for (auto &v : molTree.get_child("AttachmentPointArray")) {
       std::string bondId = v.second.get<std::string>("<xmlattr>.bond", "");
       if (bondId == "") {  // this can happen if the attachment point is
                            // not actually used - as in Amino acids that
