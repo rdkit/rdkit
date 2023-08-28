@@ -724,17 +724,18 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
         return std::nullopt;
       }
     } else if (crossp1.lengthSq() < 10*zeroTol){
-        // if the bond on the other side is flat, wedge it the same way as bond 0:
+        // if the other bond is flat:
       if (fabs(bondVects[order[3]].z) < coordZeroTol) {
-        bondVects[order[3]].z = bondVects[order[0]].z;
-      } else if (bondVects[order[3]].z * bondVects[order[0]].z <
-                 -coordZeroTol) {
-        // it points opposite to bond 0... this is ambiguous (technically it's
-        // square planar)
-        BOOST_LOG(rdWarningLog)
-            << "Warning: ambiguous stereochemistry - square planar wedging - at atom "
-            << bond->getBeginAtomIdx() << " ignored" << std::endl;
-        return std::nullopt;
+        // By construction this is a neighboring bond, so make it the opposite wedging from us.
+        bondVects[order[3]].z = -1*bondVects[order[0]].z;
+      // } else if (bondVects[order[3]].z * bondVects[order[0]].z <
+      //            -coordZeroTol) {
+      //   // it points opposite to bond 0... this is ambiguous (technically it's
+      //   // square planar)
+      //   BOOST_LOG(rdWarningLog)
+      //       << "Warning: ambiguous stereochemistry - square planar wedging - at atom "
+      //       << bond->getBeginAtomIdx() << " ignored" << std::endl;
+      //   return std::nullopt;
       }
     }
     vol = crossp1.dotProduct(bondVects[order[0]]);
