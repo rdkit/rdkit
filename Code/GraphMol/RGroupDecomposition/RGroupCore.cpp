@@ -819,6 +819,8 @@ int RCore::matchingIndexToCoreIndex(int matchingIndex) const {
 }
 
 // Create tautomer query for the matching mol on demand and cache for performance
+// If the tautomer query cannot be created (because we can't kekulize the query)
+// then nullptr will be returned and we revert to non-tautomer match
 std::shared_ptr<TautomerQuery> RCore::getMatchingTautomerQuery() {
   if (!checkedForTautomerQuery) {
     try {
