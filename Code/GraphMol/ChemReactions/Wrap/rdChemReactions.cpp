@@ -332,7 +332,7 @@ ChemicalReaction *ReactionFromMrvBlock(python::object imolBlock, bool sanitize,
   std::istringstream inStream(pyObjectToString(imolBlock));
   ChemicalReaction *newR = nullptr;
   try {
-    newR = MrvRxnDataStreamToChemicalReaction(inStream, sanitize, removeHs);
+    newR = MrvDataStreamToChemicalReaction(inStream, sanitize, removeHs);
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {

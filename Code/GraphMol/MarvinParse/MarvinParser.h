@@ -21,49 +21,50 @@
 
 namespace RDKit {
 
-RDKIT_FILEPARSERS_EXPORT bool MrvFileIsReaction(const std::string &fname);
-RDKIT_FILEPARSERS_EXPORT bool MrvDataStreamIsReaction(std::istream *inStream);
+RDKIT_MARVINPARSER_EXPORT bool MrvFileIsReaction(const std::string &fname);
+RDKIT_MARVINPARSER_EXPORT bool MrvDataStreamIsReaction(std::istream *inStream);
 
-RDKIT_FILEPARSERS_EXPORT bool MrvDataStreamIsReaction(std::istream &inStream);
-RDKIT_FILEPARSERS_EXPORT bool MrvBlockIsReaction(const std::string &molmrvText);
+RDKIT_MARVINPARSER_EXPORT bool MrvDataStreamIsReaction(std::istream &inStream);
+RDKIT_MARVINPARSER_EXPORT bool MrvBlockIsReaction(
+    const std::string &molmrvText);
 
-RDKIT_FILEPARSERS_EXPORT RWMol *MrvDataStreamToMol(std::istream *inStream,
-                                                   bool sanitize = false,
-                                                   bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT RWMol *MrvDataStreamToMol(std::istream &inStream,
-                                                   bool sanitize = false,
-                                                   bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT RWMol *MrvBlockToMol(const std::string &molmrvText,
+RDKIT_MARVINPARSER_EXPORT RWMol *MrvDataStreamToMol(std::istream *inStream,
+                                                    bool sanitize = false,
+                                                    bool removeHs = false);
+RDKIT_MARVINPARSER_EXPORT RWMol *MrvDataStreamToMol(std::istream &inStream,
+                                                    bool sanitize = false,
+                                                    bool removeHs = false);
+RDKIT_MARVINPARSER_EXPORT RWMol *MrvStringToMol(const std::string &molmrvText,
+                                                bool sanitize = false,
+                                                bool removeHs = false);
+RDKIT_MARVINPARSER_EXPORT RWMol *MrvFileToMol(const std::string &fName,
                                               bool sanitize = false,
                                               bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT RWMol *MrvFileToMol(const std::string &fName,
-                                             bool sanitize = false,
-                                             bool removeHs = false);
 
-RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnDataStreamToChemicalReaction(
+RDKIT_MARVINPARSER_EXPORT ChemicalReaction *MrvDataStreamToChemicalReaction(
     std::istream *inStream, bool sanitize = false, bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnDataStreamToChemicalReaction(
+RDKIT_MARVINPARSER_EXPORT ChemicalReaction *MrvDataStreamToChemicalReaction(
     std::istream &inStream, bool sanitize = false, bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnBlockToChemicalReaction(
+RDKIT_MARVINPARSER_EXPORT ChemicalReaction *MrvStringToChemicalReaction(
     const std::string &molmrvText, bool sanitize = false,
     bool removeHs = false);
-RDKIT_FILEPARSERS_EXPORT ChemicalReaction *MrvRxnFileToChemicalReaction(
+RDKIT_MARVINPARSER_EXPORT ChemicalReaction *MrvRxnFileToChemicalReaction(
     const std::string &fName, bool sanitize = false, bool removeHs = false);
 
-RDKIT_FILEPARSERS_EXPORT void MolToMrvFile(const ROMol &mol,
-                                           const std::string &fName,
-                                           bool includeStereo, int confId,
-                                           bool kekulize,
-                                           bool prettyPrint = false);
-RDKIT_FILEPARSERS_EXPORT std::string MolToMrvBlock(const ROMol &mol,
-                                                   bool includeStereo,
-                                                   int confId, bool kekulize,
-                                                   bool prettyPrint = false);
+RDKIT_MARVINPARSER_EXPORT void MolToMrvFile(const ROMol &mol,
+                                            const std::string &fName,
+                                            bool includeStereo, int confId,
+                                            bool kekulize,
+                                            bool prettyPrint = false);
+RDKIT_MARVINPARSER_EXPORT std::string MolToMrvBlock(const ROMol &mol,
+                                                    bool includeStereo,
+                                                    int confId, bool kekulize,
+                                                    bool prettyPrint = false);
 
-RDKIT_FILEPARSERS_EXPORT std::string ChemicalReactionToMrvBlock(
+RDKIT_MARVINPARSER_EXPORT std::string ChemicalReactionToMrvBlock(
     const ChemicalReaction &rxn, bool prettyPrint = false);
 
-RDKIT_FILEPARSERS_EXPORT void ChemicalReactionToMrvFile(
+RDKIT_MARVINPARSER_EXPORT void ChemicalReactionToMrvFile(
     const ChemicalReaction &rxn, const std::string &fName,
     bool prettyPrint = false);
 }  // namespace RDKit

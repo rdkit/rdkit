@@ -427,7 +427,7 @@ class MarvinCMLReader {
     }
   }
 
-   RWMol *parseMolecule(MarvinMol *marvinMol, bool sanitize = false,
+  RWMol *parseMolecule(MarvinMol *marvinMol, bool sanitize = false,
                        bool removeHs = false) {
     PRECONDITION(marvinMol, "no molecule");
     std::vector<MarvinStereoGroup *> stereoGroups;
@@ -1023,8 +1023,8 @@ RWMol *MrvDataStreamToMol(std::istream &inStream, bool sanitize,
 //  Read a RWMol from a string
 //
 //------------------------------------------------
-RWMol *MrvBlockToMol(const std::string &molmrvText, bool sanitize,
-                     bool removeHs) {
+RWMol *MrvStringToMol(const std::string &molmrvText, bool sanitize,
+                      bool removeHs) {
   std::istringstream inStream(molmrvText);
   return MrvDataStreamToMol(inStream, sanitize, removeHs);
 }
@@ -1053,9 +1053,9 @@ RWMol *MrvFileToMol(const std::string &fName, bool sanitize, bool removeHs) {
 //  Read a ChemicalReaction from a stream
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnDataStreamToChemicalReaction(std::istream *inStream,
-                                                     bool sanitize,
-                                                     bool removeHs) {
+ChemicalReaction *MrvDataStreamToChemicalReaction(std::istream *inStream,
+                                                  bool sanitize,
+                                                  bool removeHs) {
   PRECONDITION(inStream, "no stream");
 
   using boost::property_tree::ptree;
@@ -1075,20 +1075,20 @@ ChemicalReaction *MrvRxnDataStreamToChemicalReaction(std::istream *inStream,
 //  Read a ChemicalReaction from a stream reference
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnDataStreamToChemicalReaction(std::istream &inStream,
-                                                     bool sanitize,
-                                                     bool removeHs) {
-  return MrvRxnDataStreamToChemicalReaction(&inStream, sanitize, removeHs);
+ChemicalReaction *MrvDataStreamToChemicalReaction(std::istream &inStream,
+                                                  bool sanitize,
+                                                  bool removeHs) {
+  return MrvDataStreamToChemicalReaction(&inStream, sanitize, removeHs);
 }
 //------------------------------------------------
 //
 //  Read a ChemicalReaction from a string
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnBlockToChemicalReaction(const std::string &molmrvText,
-                                                bool sanitize, bool removeHs) {
+ChemicalReaction *MrvStringToChemicalReaction(const std::string &molmrvText,
+                                              bool sanitize, bool removeHs) {
   std::istringstream inStream(molmrvText);
-  return MrvRxnDataStreamToChemicalReaction(inStream, sanitize, removeHs);
+  return MrvDataStreamToChemicalReaction(inStream, sanitize, removeHs);
 }
 
 //------------------------------------------------
@@ -1105,7 +1105,7 @@ ChemicalReaction *MrvRxnFileToChemicalReaction(const std::string &fName,
     throw BadFileException(errout.str());
   }
   ChemicalReaction *res =
-      MrvRxnDataStreamToChemicalReaction(inStream, sanitize, removeHs);
+      MrvDataStreamToChemicalReaction(inStream, sanitize, removeHs);
   return res;
 }
 }  // namespace RDKit
