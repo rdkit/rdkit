@@ -16,9 +16,12 @@
 #include <numeric>
 #include <cmath>
 #include <unordered_map>
+
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/max_cardinality_matching.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>
     Graph;
