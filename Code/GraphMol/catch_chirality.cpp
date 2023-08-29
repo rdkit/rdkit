@@ -4438,4 +4438,49 @@ $$$$
           Atom::ChiralType::CHI_UNSPECIFIED);
     
   }
+  SECTION("bond atoms overlapping central atom at the end of wedge bonds") {
+    auto m = R"CTAB(CHEMBL3612237
+     RDKit          2D
+
+ 14 15  0  0  0  0  0  0  0  0999 V2000
+   -0.6828   -1.6239    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090    0.5905    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007   -1.6239    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090   -2.3805    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    1.3471    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    1.3471    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090    2.0668    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6319    1.4849    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5072    2.6784    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7280    0.9964    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    0.0000    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    0.0000    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  6  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  4  7  1  0
+  2  8  1  0
+  8  9  1  0
+  7  9  1  0
+  3 10  1  1
+ 10 11  1  0
+ 10 12  2  0
+  2 13  1  1
+  4 14  1  1
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    // if the bond is wedged, then we should have chirality even if the bonded atom
+    // overlaps the central atom
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(2)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
 }
