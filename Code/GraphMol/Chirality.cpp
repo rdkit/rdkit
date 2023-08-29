@@ -476,8 +476,10 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
 
   //----------------------------------------------------------
   //
-  //  collect coordinates and indices of neighbors and track whether or
+  //  collect indices and bond vectors of neighbors and track whether or
   //  not there's an H neighbor and if all bonds are single
+  // 
+  //  at the end of this process bond 0 is the input wedged bond
   //
   //----------------------------------------------------------
   bool hSeen = false;
@@ -547,7 +549,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   }
 
   //----------------------------------------------------------
-  //  Check for overlapping neighbors
+  //  Check for neighbor atoms which overlap
   //----------------------------------------------------------
   for (auto i = 0u; i < nNbrs; ++i) {
     for (auto j = 0u; j < i; ++j) {
@@ -589,8 +591,22 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       // anything
     }
 
-    // order the bonds
-
+    //----------------------------------------------------------
+    //
+    // order the bonds so that the rotation order is:
+    //   0 - 1 - 2        for three coordinate
+    // or 
+    //   0 - 1 - 2 - 3    for four coordinate
+    //
+    // this makes the rest of the code a lot simpler
+    //
+    //----------------------------------------------------------
+    
+    
+    // checks to see if the vectors 1 and 2 need to have their order 
+    //    relative to vector 0 swapped.
+    // we don't actually pass the vectors in, but use their cross products
+    // and dot products to vector 0 to figure out if they need to be swapped
     auto needsSwap = [&zeroTol](const RDGeom::Point3D &cp01,
                                 const RDGeom::Point3D &cp02, double dp01,
                                 double dp02) -> bool {
@@ -620,52 +636,44 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       }
       return fabs(dp01) > fabs(dp02);
     };
-    // std::cerr<<"PRE "<<neighborBondIndices[order[0]]<<"
-    // "<<neighborBondIndices[order[1]]<<" "<<neighborBondIndices[order[2]]<<"
-    // "<<neighborBondIndices[order[3]]<<std::endl;
 
-    {
-      if (nNbrs == 3) {
-        auto cp01 = bondVects[order[0]].crossProduct(bondVects[order[1]]);
-        auto cp02 = bondVects[order[0]].crossProduct(bondVects[order[2]]);
-        auto dp01 = bondVects[order[0]].dotProduct(bondVects[order[1]]);
-        auto dp02 = bondVects[order[0]].dotProduct(bondVects[order[2]]);
-        if (needsSwap(cp01, cp02, dp01, dp02)) {
-          std::swap(order[1], order[2]);
-          prefactor *= -1;
+    if (nNbrs == 3) {
+      // this case is simple, we either need to swap vectors 1 and 2 or we don't:
+      auto cp01 = bondVects[order[0]].crossProduct(bondVects[order[1]]);
+      auto cp02 = bondVects[order[0]].crossProduct(bondVects[order[2]]);
+      auto dp01 = bondVects[order[0]].dotProduct(bondVects[order[1]]);
+      auto dp02 = bondVects[order[0]].dotProduct(bondVects[order[2]]);
+      if (needsSwap(cp01, cp02, dp01, dp02)) {
+        std::swap(order[1], order[2]);
+        prefactor *= -1;
+      }
+    } else if (nNbrs > 3) {
+      // here there are more permutations. Rather than hand-coding all of them
+      // we'll just sort bonds 1, 2, and 3 based on their cross- and dot- products
+      // to bond 0
+      std::vector<std::tuple<double, double, unsigned>> orderedBonds(3);
+      for (auto i = 1u; i < 4; ++i) {
+        auto cp0i = bondVects[order[0]].crossProduct(bondVects[order[i]]);
+        auto sgn = cp0i.z < -zeroTol ? -1 : 1;
+        auto dp0i = bondVects[order[0]].dotProduct(bondVects[order[i]]);
+        orderedBonds[i - 1] =
+            std::move(std::make_tuple(sgn, sgn * dp0i, order[i]));
+      }
+      std::sort(orderedBonds.rbegin(), orderedBonds.rend());
+
+      // update the order array and figure out whether or not we've done a
+      // cyclic permutation
+      auto nChanged = 0;
+      for (auto i = 1u; i < 4; ++i) {
+        auto ni = std::get<2>(orderedBonds[i - 1]);
+        if (order[i] != ni) {
+          order[i] = ni;
+          ++nChanged;
         }
-      } else if (nNbrs > 3) {
-        std::vector<std::tuple<double, double, unsigned>> orderedBonds(3);
-        // std::cerr<<"   PRE:"<<std::endl;
-        for (auto i = 1u; i < 4; ++i) {
-          auto cp0i = bondVects[order[0]].crossProduct(bondVects[order[i]]);
-          auto sgn = cp0i.z < -zeroTol ? -1 : 1;
-          auto dp0i = bondVects[order[0]].dotProduct(bondVects[order[i]]);
-          orderedBonds[i - 1] =
-              std::move(std::make_tuple(sgn, sgn * dp0i, order[i]));
-          // std::cerr<< "       " << i << ": "<<
-          // std::get<0>(orderedBonds[i-1])<<", "<<
-          // std::get<1>(orderedBonds[i-1])<<", "<<
-          // std::get<2>(orderedBonds[i-1])<<std::endl;
-        }
-        std::sort(orderedBonds.rbegin(), orderedBonds.rend());
-        // std::cerr<<"     POST: "<<std::get<2>(orderedBonds[0])<<"
-        // "<<std::get<2>(orderedBonds[1])<<"
-        // "<<std::get<2>(orderedBonds[2])<<std::endl;
-        auto nChanged = 0;
-        for (auto i = 1u; i < 4; ++i) {
-          auto ni = std::get<2>(orderedBonds[i - 1]);
-          if (order[i] != ni) {
-            // std::cerr<<"  MOVE "<<i<<" "<<order[i]<<" <- "<<ni<<std::endl;
-            order[i] = ni;
-            ++nChanged;
-          }
-        }
-        // std::cerr<< " nChanged: "<<nChanged<<std::endl;
-        if (nChanged == 2) {
-          // this is always an acyclic permutation
-          prefactor *= -1;
-        }
+      }
+      if (nChanged == 2) {
+        // this is always an acyclic permutation
+        prefactor *= -1;
       }
     }
 
@@ -713,7 +721,6 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     //   This is ST-1.2.10 in the IUPAC guidelines
     //
     //  Case 2: all bonds are wedged in the same direction
-
     if (nNbrs == 3) {
       bool conflict = false;
       if (bondVects[order[1]].z * bondVects[order[0]].z < -coordZeroTol &&
@@ -743,11 +750,10 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     auto bv2 = bondVects[order[2]];
     bv2.z = 0;
     const auto crossp1 = bv1.crossProduct(bv2);
-    // std::cerr<<" CROSS: "<<crossp1<< " l2= "<<crossp1.lengthSq()<<std::endl;
     // catch linear arrangements
     if (nNbrs == 3) {
       if (crossp1.lengthSq() <5*zeroTol) {
-        // nothing we can do if there are only three neighbors
+        // nothing we can do in a linear arrangement if there are only three neighbors
         BOOST_LOG(rdWarningLog)
             << "Warning: ambiguous stereochemistry - linear bond arrangement - at atom "
             << atom->getIdx() << " ignored" << std::endl;
@@ -791,7 +797,10 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       std::cerr << crossp2 << " l2=" << crossp2.lengthSq()<< " " << dotp2 << std::endl;
       std::cerr << " !!! " << vol << " " << vol2 << std::endl;
 #endif
+
+      // detect the case where there's no chiral volume for the default evaluation
       if (fabs(vol) < zeroTol) {
+        // and check the other evaluation:
         if (fabs(vol2) < zeroTol) {
           BOOST_LOG(rdWarningLog)
               << "Warning: ambiguous stereochemistry - no chiral volume - at atom "
@@ -818,6 +827,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     vol *= prefactor;
     // std::cerr << " final " << vol << std::endl;
 
+    // at this point we can assign our atomic stereo based on the sign of the chiral volume
     if (vol > volumeTolerance) {
       res = Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
     } else if (vol < -volumeTolerance) {
