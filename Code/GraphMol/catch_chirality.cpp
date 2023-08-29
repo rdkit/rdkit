@@ -4096,6 +4096,41 @@ M  END
     CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
   }
+  SECTION("from chembl 4") {
+    auto m =
+        R"CTAB(derived from CHEMBL2373651. This was wrong in the RDKit implementation
+  Mrv2211 07212313282D
+            
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 O -7.4486 0.4751 0 0
+M  V30 2 C -6.1148 -0.2949 0 0
+M  V30 3 C -6.1148 1.2451 0 0
+M  V30 4 C -4.7811 -1.0649 0 0
+M  V30 5 C -4.7811 2.0151 0 0
+M  V30 6 H -6.1148 1.2451 0 0
+M  V30 7 H -6.1148 -0.2949 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 3 1
+M  V30 3 1 2 3
+M  V30 4 1 2 4
+M  V30 5 1 3 5
+M  V30 6 1 3 6 CFG=1
+M  V30 7 1 2 7 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
   SECTION("cut from CHEMBL4578507") {
     auto m = R"CTAB(
      RDKit          2D
