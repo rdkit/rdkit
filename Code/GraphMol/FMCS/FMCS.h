@@ -151,6 +151,8 @@ struct RDKIT_FMCS_EXPORT MCSParameters {
       *this = *other;
     }
   }
+  MCSParameters(const MCSParameters& other) = default;
+  MCSParameters& operator=(const MCSParameters& other) = default;
   virtual ~MCSParameters() {}
   bool StoreAll = false;
   bool MaximizeBonds = true;
