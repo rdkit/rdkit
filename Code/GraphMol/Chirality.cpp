@@ -711,7 +711,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
             << " by rule 1a." << std::endl;
         return std::nullopt;
       }
-    }    
+    }
+    // for the purposes of the cross products we ignore any pseudo-3D coordinates    
     auto bv1 = bondVects[order[1]];
     bv1.z = 0;
     auto bv2 = bondVects[order[2]];
@@ -736,9 +737,10 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     }
     vol = crossp1.dotProduct(bondVects[order[0]]);
     if (nNbrs == 4) {
+      const auto dotp1 = bondVects[order[1]].dotProduct(bondVects[order[2]]);
+    // for the purposes of the cross products we ignore any pseudo-3D coordinates    
       auto bv3 = bondVects[order[3]];
       bv3.z = 0;    
-      const auto dotp1 = bondVects[order[1]].dotProduct(bondVects[order[2]]);
       const auto crossp2 =
           bv1.crossProduct(bv3);
       const auto dotp2 = bondVects[order[1]].dotProduct(bondVects[order[3]]);
