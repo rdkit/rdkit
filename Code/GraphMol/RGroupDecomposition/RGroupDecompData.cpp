@@ -14,6 +14,7 @@
 #include "RGroupDecomp.h"
 #include "RGroupMatch.h"
 #include "RGroupGa.h"
+#include "GraphMol/MolEnumerator/MolEnumerator.h"
 
 // #define VERBOSE 1
 
@@ -22,7 +23,14 @@ namespace RDKit {
 RGroupDecompData::RGroupDecompData(const RWMol &inputCore,
                                    RGroupDecompositionParameters inputParams)
     : params(std::move(inputParams)) {
-  addCore(inputCore);
+  if (inputParams.doEnumeration) {
+    auto bundle = MolEnumerator::enumerate(inputCore);
+    for (auto c: bundle.getMols()) {
+      addCore(*c);
+    }
+  } else {
+    addCore(inputCore);
+  }
   prepareCores();
 }
 
@@ -30,7 +38,14 @@ RGroupDecompData::RGroupDecompData(const std::vector<ROMOL_SPTR> &inputCores,
                                    RGroupDecompositionParameters inputParams)
     : params(std::move(inputParams)) {
   for (const auto &core : inputCores) {
-    addCore(*core);
+    if (inputParams.doEnumeration) {
+      auto bundle = MolEnumerator::enumerate(*core);
+      for (auto c : bundle.getMols()) {
+        addCore(*c);
+      }
+    } else {
+      addCore(*core);
+    }
   }
   prepareCores();
 }
