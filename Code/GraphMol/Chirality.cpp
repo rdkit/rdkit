@@ -510,18 +510,19 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       } else {
         tmpPt.z = 0;
       }
+      // check for overly short bonds. Note that we're doing this check *after* adjusting the z coordinate.
+      //    We want to allow atoms to overlap in x-y space if they are connected via a wedged bond.
+      if ((centerLoc - tmpPt).lengthSq() < zeroTol) {
+        BOOST_LOG(rdWarningLog)
+            << "Warning: ambiguous stereochemistry - zero-length (or near zero-length) bond - at atom "
+            << atom->getIdx() << " ignored."
+            << std::endl;
+        return std::nullopt;
+      }
     }
     ++nbrIdx;
     if (nbrBond->getBondType() != Bond::SINGLE) {
       allSingle = false;
-    }
-    // check for overly short bonds
-    if ((centerLoc - tmpPt).lengthSq() < zeroTol) {
-      BOOST_LOG(rdWarningLog)
-          << "Warning: zero-length (or near zero-length) bond "
-          << nbrBond->getIdx() << " connected to chiral center. Stereo ignored."
-          << std::endl;
-      return std::nullopt;
     }
     bondVects.push_back(centerLoc.directionVector(tmpPt));
     if (is_regular_h(*oAtom)) {
@@ -552,8 +553,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     for (auto j = 0u; j < i; ++j) {
       if ((bondVects[i] - bondVects[j]).lengthSq() < zeroTol) {
         BOOST_LOG(rdWarningLog)
-            << "Warning: atom " << atom->getIdx()
-            << " has overlapping neighbors, stereochemistry ignored"
+            << "Warning: ambiguous stereochemistry - overlapping neighbors  - at atom " << atom->getIdx()
+            << " ignored"
             << std::endl;
         return std::nullopt;
       }
@@ -662,15 +663,13 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
         }
         // std::cerr<< " nChanged: "<<nChanged<<std::endl;
         if (nChanged == 2) {
-          // this is always an acyclic permiutation
+          // this is always an acyclic permutation
           prefactor *= -1;
         }
       }
     }
 
-    // std::cerr<<"ORDER "<<neighborBondIndices[order[0]]<<"
-    // "<<neighborBondIndices[order[1]]<<" "<<neighborBondIndices[order[2]]<<"
-    // "<<neighborBondIndices[order[3]]<<std::endl;
+    // std::cerr<<"ORDER "<<neighborBondIndices[order[0]]<<" "<<neighborBondIndices[order[1]]<<" "<<neighborBondIndices[order[2]]<<" "<<neighborBondIndices[order[3]]<<std::endl;
 
     // check for opposing bonds with opposite wedging
     for (auto i = 0u; i < nNbrs; ++i) {
@@ -694,9 +693,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
               }
             }
             BOOST_LOG(rdWarningLog)
-                << "Warning: opposing bonds " << neighborBondIndices[order[i]]
-                << " and " << neighborBondIndices[order[j]]
-                << " have opposite wedging. Stereo ignored." << std::endl;
+                << "Warning: ambiguous stereochemistry - opposing bonds have opposite wedging - at atom "<< atom->getIdx() <<" ignored." << std::endl;
             return std::nullopt;
           }
         }
@@ -733,9 +730,9 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       }
       if (conflict) {
         BOOST_LOG(rdWarningLog)
-            << "Warning: conflicting stereochemistry at atom "
-            << bond->getBeginAtomIdx() << " ignored"
-            << " by rule 1a." << std::endl;
+            << "Warning: conflicting stereochemistry - bond wedging contradiction - at atom "
+            << atom->getIdx() << " ignored"
+            << std::endl;
         return std::nullopt;
       }
     }
@@ -746,14 +743,14 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     auto bv2 = bondVects[order[2]];
     bv2.z = 0;
     const auto crossp1 = bv1.crossProduct(bv2);
+    // std::cerr<<" CROSS: "<<crossp1<< " l2= "<<crossp1.lengthSq()<<std::endl;
     // catch linear arrangements
     if (nNbrs == 3) {
-      if (crossp1.lengthSq() < zeroTol) {
+      if (crossp1.lengthSq() <5*zeroTol) {
         // nothing we can do if there are only three neighbors
         BOOST_LOG(rdWarningLog)
             << "Warning: ambiguous stereochemistry - linear bond arrangement - at atom "
-            << bond->getBeginAtomIdx() << " (len=" << crossp1.lengthSq()
-            << ") ignored" << std::endl;
+            << atom->getIdx() << " ignored" << std::endl;
         return std::nullopt;
       }
     } else if (crossp1.lengthSq() < 10 * zeroTol) {
@@ -798,7 +795,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
         if (fabs(vol2) < zeroTol) {
           BOOST_LOG(rdWarningLog)
               << "Warning: ambiguous stereochemistry - no chiral volume - at atom "
-              << bond->getBeginAtomIdx() << " ignored" << std::endl;
+              << atom->getIdx() << " ignored" << std::endl;
           return std::nullopt;
         }
         vol = vol2;
@@ -827,8 +824,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       res = Atom::ChiralType::CHI_TETRAHEDRAL_CW;
     } else {
       BOOST_LOG(rdWarningLog)
-          << "Warning: zero final chiral volume - at atom "
-          << bond->getBeginAtomIdx() << " ignored" << std::endl;
+          << "Warning: ambiguous stereochemistry - zero final chiral volume - at atom "
+          << atom->getIdx() << " ignored" << std::endl;
       return std::nullopt;
     }
   }
