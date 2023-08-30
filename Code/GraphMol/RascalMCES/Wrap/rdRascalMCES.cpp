@@ -203,6 +203,41 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
               (python::arg("mol1"), python::arg("mol2"),
                python::arg("opts") = python::object()),
               docString.c_str());
+
+  docString =
+      "RASCAL Cluster Options.  Most of these pertain to RascalCluster calculations.  Only similarityCutoff is used by RascalButinaCluster.";
+  python::class_<RDKit::RascalMCES::RascalClusterOptions, boost::noncopyable>(
+      "RascalClusterOptions", docString.c_str())
+      .def_readwrite(
+          "similarityCutoff",
+          &RDKit::RascalMCES::RascalClusterOptions::similarityCutoff,
+          "Similarity cutoff for molecules to be in the same cluster.  Between 0.0 and 1.0, default=0.7.")
+      .def_readwrite(
+          "minFragSize", &RDKit::RascalMCES::RascalClusterOptions::minFragSize,
+          "The minimum number of atoms in a fragment for it to be included in the MCES.  Default=3.")
+      .def_readwrite(
+          "maxNumFrags", &RDKit::RascalMCES::RascalClusterOptions::maxNumFrags,
+          "The maximum number of fragments allowed in the MCES for each pair of molecules. Default=2.  So that the MCES"
+          " isn't a lot of small fragments scattered around the molecules giving an inflated estimate of similarity.")
+      .def_readwrite(
+          "numThreads", &RDKit::RascalMCES::RascalClusterOptions::numThreads,
+          "Number of threads to use during clustering.  Default=-1 means all the hardware threads less one.")
+      .def_readwrite(
+          "a", &RDKit::RascalMCES::RascalClusterOptions::a,
+          "The penalty score for each unconnected component in the MCES. Default=0.05.")
+      .def_readwrite(
+          "b", &RDKit::RascalMCES::RascalClusterOptions::a,
+          "The weight of matched bonds over matched atoms. Default=2.")
+      .def_readwrite(
+          "minIntraClusterSim",
+          &RDKit::RascalMCES::RascalClusterOptions::minIntraClusterSim,
+          "Two pairs of molecules are included in the same cluster if the similarity between"
+          " their MCESs is greater than this.  Default=0.9.")
+      .def_readwrite(
+          "clusterMergeSim",
+          &RDKit::RascalMCES::RascalClusterOptions::clusterMergeSim,
+          "Two clusters are merged if the fraction of molecules they have in common is greater than this.  Default=0.6.");
+
   docString =
       "Use the RASCAL MCES similarity metric to do fuzzy clustering.  Returns a list of lists "
       "of molecules, each inner list being a cluster.  The last cluster is all the "

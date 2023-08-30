@@ -115,7 +115,6 @@ class TestCase(unittest.TestCase):
     opts.returnEmptyMCES = True
     results = rdRascalMCES.FindMCES(ad1, ad2, opts)
     self.assertEqual(len(results), 1)
-    print(results[0].tier1Sim, results[0].tier2Sim)
 
   def testRascalCluster(self):
     cdk2_file = Path(os.environ['RDBASE']) / 'Contrib' / 'Fastcluster' / 'cdk2.smi'
@@ -124,6 +123,13 @@ class TestCase(unittest.TestCase):
     clusters = rdRascalMCES.RascalCluster(mols)
     self.assertEqual(len(clusters), 8)
     expClusters = [7, 7, 6, 2, 2, 2, 2, 20]
+    for clus, expClusSize in zip(clusters, expClusters):
+      self.assertEqual(expClusSize, len(clus))
+
+    clusOpts = rdRascalMCES.RascalClusterOptions()
+    clusOpts.similarityCutoff = 0.6
+    clusters = rdRascalMCES.RascalCluster(mols, clusOpts)
+    expClusters = [9, 8, 6, 2, 2, 2, 2, 2, 2, 2, 11]
     for clus, expClusSize in zip(clusters, expClusters):
       self.assertEqual(expClusSize, len(clus))
 
