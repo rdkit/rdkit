@@ -542,7 +542,7 @@ TEST_CASE("single fragment") {
     res = rascalMCES(*m1, *m2, opts);
     REQUIRE(res.front().getNumFrags() == 1);
     REQUIRE(res.front().getBondMatches().size() == std::get<3>(test));
-    REQUIRE(static_cast<unsigned>(res.front().getLargestFragSize()) ==
+    REQUIRE(res.front().getLargestFragSize() ==
             res.front().getAtomMatches().size());
     check_smarts_ok(*m1, *m2, res.front());
   }
