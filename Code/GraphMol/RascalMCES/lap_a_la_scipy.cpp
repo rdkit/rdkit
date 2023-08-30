@@ -57,7 +57,7 @@ Author: PM Larsen
 namespace RDKit {
 namespace RascalMCES {
 template <typename T>
-std::vector<size_t> argsort_iter(const std::vector<T> &v) {
+std::vector<size_t> argsortIter(const std::vector<T> &v) {
   std::vector<size_t> index(v.size());
   std::iota(index.begin(), index.end(), 0);
   std::sort(index.begin(), index.end(),
@@ -65,18 +65,18 @@ std::vector<size_t> argsort_iter(const std::vector<T> &v) {
   return index;
 }
 
-static int augmenting_path(size_t nc, std::vector<int> &cost,
-                           std::vector<double> &u, std::vector<double> &v,
-                           std::vector<size_t> &path,
-                           std::vector<size_t> &row4col,
-                           std::vector<double> &shortestPathCosts, size_t i,
-                           std::vector<bool> &SR, std::vector<bool> &SC,
-                           std::vector<size_t> &remaining, double *p_minVal) {
+static int augmentingPath(size_t nc, std::vector<int> &cost,
+                          std::vector<double> &u, std::vector<double> &v,
+                          std::vector<size_t> &path,
+                          std::vector<size_t> &row4col,
+                          std::vector<double> &shortestPathCosts, size_t i,
+                          std::vector<bool> &SR, std::vector<bool> &SC,
+                          std::vector<size_t> &remaining, double *p_minVal) {
   double minVal = 0;
 
   // Crouse's pseudocode uses set complements to keep track of remaining
   // nodes.  Here we use a vector, as it is more efficient in C++.
-  size_t num_remaining = nc;
+  size_t numRemaining = nc;
   for (size_t it = 0; it < nc; it++) {
     // Filling this up in reverse order ensures that the solution of a
     // constant cost matrix is the identity matrix (c.f. #11602).
@@ -98,7 +98,7 @@ static int augmenting_path(size_t nc, std::vector<int> &cost,
     double lowest = std::numeric_limits<double>::max();
     SR[i] = true;
 
-    for (size_t it = 0; it < num_remaining; it++) {
+    for (size_t it = 0; it < numRemaining; it++) {
       size_t j = remaining[it];
 
       double r = minVal + cost[i * nc + j] - u[i] - v[j];
@@ -132,15 +132,15 @@ static int augmenting_path(size_t nc, std::vector<int> &cost,
     }
 
     SC[j] = true;
-    remaining[index] = remaining[--num_remaining];
+    remaining[index] = remaining[--numRemaining];
   }
 
   *p_minVal = minVal;
   return sink;
 }
 
-int lap_maximize(const std::vector<std::vector<int>> &costsMat,
-                 std::vector<size_t> &a, std::vector<size_t> &b) {
+int lapMaximize(const std::vector<std::vector<int>> &costsMat,
+                std::vector<size_t> &a, std::vector<size_t> &b) {
   if (costsMat.empty() || costsMat.front().empty()) {
     return 0;
   }
@@ -175,8 +175,8 @@ int lap_maximize(const std::vector<std::vector<int>> &costsMat,
   // iteratively build the solution
   for (size_t curRow = 0; curRow < nr; curRow++) {
     double minVal;
-    int sink = augmenting_path(nc, cost, u, v, path, row4col, shortestPathCosts,
-                               curRow, SR, SC, remaining, &minVal);
+    int sink = augmentingPath(nc, cost, u, v, path, row4col, shortestPathCosts,
+                              curRow, SR, SC, remaining, &minVal);
     if (sink < 0) {
       return -1;
     }
@@ -209,7 +209,7 @@ int lap_maximize(const std::vector<std::vector<int>> &costsMat,
 
   if (transpose) {
     size_t i = 0;
-    for (auto v : argsort_iter(col4row)) {
+    for (auto v : argsortIter(col4row)) {
       a[i] = col4row[v];
       b[i] = v;
       i++;
