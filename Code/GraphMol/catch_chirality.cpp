@@ -3496,7 +3496,7 @@ M  END
         "[H][C@@]12CC(=O)N1[C@@H](C(=O)O)C(C)(C)S2(=O)=O |(-2.78382,0.183015,;-1.38222,-0.351313,;-2.12923,-1.65207,;-0.828466,-2.39908,;-0.436905,-3.84707,;-0.0814577,-1.09832,;1.03095,-0.0920638,;2.49888,-0.400554,;2.96569,-1.82607,;3.50001,0.71647,;0.41769,1.27685,;1.8432,1.74365,;0.102447,2.74335,;-1.07373,1.11662,;-1.07718,2.61662,;-2.56587,1.26998,)|";
     SmilesParserParams spps;
     spps.removeHs = false;
-    auto m = SmilesToMol(smi, spps);
+    std::unique_ptr<RWMol> m{SmilesToMol(smi, spps)};
     REQUIRE(m);
     Chirality::BondWedgingParameters bwps;
     bwps.wedgeTwoBondsIfPossible = true;
@@ -3514,7 +3514,7 @@ M  END
         "[H][C@@]12CCCN1C(=O)CN1C(=O)[C@](C)(N)O[C@]12O |(-0.888297,0.626611,;-1.19852,-0.840959,;-1.94707,-2.14084,;-3.41464,-1.83061,;-3.5731,-0.339006,;-2.20347,0.272634,;-1.74154,1.69974,;-2.74648,2.81333,;-0.274666,2.01325,;0.730277,0.899655,;2.23028,0.901335,;3.11059,2.11585,;2.6954,-0.52473,;3.44685,-1.82293,;4.06503,0.0869091,;1.48286,-1.40777,;0.26835,-0.527448,;-0.0418744,-1.99502,)|";
     SmilesParserParams spps;
     spps.removeHs = false;
-    auto m = SmilesToMol(smi, spps);
+    std::unique_ptr<RWMol> m{SmilesToMol(smi, spps)};
     REQUIRE(m);
     Chirality::BondWedgingParameters bwps;
     bwps.wedgeTwoBondsIfPossible = true;
