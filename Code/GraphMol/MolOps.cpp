@@ -1058,7 +1058,9 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   auto dummyAt = new QueryAtom(0);
   dummyAt->setQuery(makeAtomNullQuery());
 
-  unsigned int dummyIdx = mol.addAtom(dummyAt);
+  bool updateLabel = true;
+  bool takeOwnwership = true;
+  unsigned int dummyIdx = mol.addAtom(dummyAt, updateLabel, takeOwnwership);
   for (auto i = 0u; i < mol.getNumConformers(); ++i) {
     auto &conf = mol.getConformer(i);
     RDGeom::Point3D dummyPos;
