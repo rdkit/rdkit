@@ -3182,7 +3182,7 @@ M  END
     REQUIRE(mol);
     bool explicitOnly = false;
     bool addCoords = true;
-    RDKit::ROMol *m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    std::unique_ptr<ROMol> m{MolOps::addHs(*mol, explicitOnly, addCoords)};
     REQUIRE(m->getNumAtoms() == 5);
     const auto &conf = m->getConformer();
     // Hydrogen will always be in the last position
@@ -3215,7 +3215,7 @@ M  END
     REQUIRE(mol);
     bool explicitOnly = false;
     bool addCoords = true;
-    RDKit::ROMol *m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    std::unique_ptr<ROMol> m{MolOps::addHs(*mol, explicitOnly, addCoords)};
     REQUIRE(m->getNumAtoms() == 5);
     const auto &conf = m->getConformer();
     // Hydrogen will always be in the last position
