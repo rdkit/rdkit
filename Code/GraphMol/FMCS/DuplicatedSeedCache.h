@@ -20,30 +20,28 @@ class DuplicatedSeedCache {
  public:
   typedef bool TValue;
   class TKey {
-    std::vector<unsigned> AtomIdx;  // sorted
-    std::vector<unsigned> BondIdx;  // sorted
+    std::vector<unsigned int> AtomIdx;  // sorted
+    std::vector<unsigned int> BondIdx;  // sorted
    public:
     size_t getNumAtoms() const { return AtomIdx.size(); }
     size_t getNumBonds() const { return BondIdx.size(); }
 
-    void addAtom(unsigned i) {
-      std::vector<unsigned>::iterator it =
-          std::lower_bound(AtomIdx.begin(), AtomIdx.end(), i);
+    void addAtom(unsigned int i) {
+      auto it = std::lower_bound(AtomIdx.begin(), AtomIdx.end(), i);
       AtomIdx.insert(it, i);
     }
-    void addBond(unsigned i) {
-      std::vector<unsigned>::iterator it =
-          std::lower_bound(BondIdx.begin(), BondIdx.end(), i);
+    void addBond(unsigned int i) {
+      auto it = std::lower_bound(BondIdx.begin(), BondIdx.end(), i);
       BondIdx.insert(it, i);
     }
 
     bool operator==(const TKey& right) const {  // opt.
       return AtomIdx.size() == right.AtomIdx.size() &&
              BondIdx.size() == right.BondIdx.size() &&
-             0 == memcmp(&AtomIdx[0], &right.AtomIdx[0],
-                         AtomIdx.size() * sizeof(unsigned)) &&
-             0 == memcmp(&BondIdx[0], &right.BondIdx[0],
-                         BondIdx.size() * sizeof(unsigned));
+             0 == std::memcmp(&AtomIdx[0], &right.AtomIdx[0],
+                              AtomIdx.size() * sizeof(unsigned int)) &&
+             0 == std::memcmp(&BondIdx[0], &right.BondIdx[0],
+                              BondIdx.size() * sizeof(unsigned int));
     }
 
     bool operator<(const TKey& right) const {
@@ -63,16 +61,16 @@ class DuplicatedSeedCache {
 
       // everything is equal -> perform straight comparison
       int diff;
-      diff = memcmp(&AtomIdx[0], &right.AtomIdx[0],
-                    AtomIdx.size() * sizeof(unsigned));
+      diff = std::memcmp(&AtomIdx[0], &right.AtomIdx[0],
+                         AtomIdx.size() * sizeof(unsigned int));
       if (diff < 0) {
         return true;
       }
       if (diff > 0) {
         return false;
       }
-      return memcmp(&BondIdx[0], &right.BondIdx[0],
-                    BondIdx.size() * sizeof(unsigned)) < 0;
+      return std::memcmp(&BondIdx[0], &right.BondIdx[0],
+                         BondIdx.size() * sizeof(unsigned int)) < 0;
     }
   };
 
@@ -92,7 +90,7 @@ class DuplicatedSeedCache {
       return false;  // fast check if key greater then max key in the cache
     }
 
-    std::map<TKey, TValue>::const_iterator entryit = Index.find(key);
+    const auto entryit = Index.find(key);
     if (Index.end() != entryit) {
       value = entryit->second;
     }

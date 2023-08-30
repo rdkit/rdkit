@@ -10,6 +10,10 @@ convenience function.
 :copyright: Copyright 2016 by Matt Swain.
 :license: MIT, see LICENSE file for more details.
 """
+from warnings import warn
+
+warn(f'The module {__name__} is deprecated and will be removed in the next release.',
+     DeprecationWarning, stacklevel=2)
 
 import logging
 import sys
@@ -68,6 +72,9 @@ class Validator(object):
         :param bool stdout: Whether to send log messages to standard output.
         :param bool raw: Whether to return raw :class:`~logging.LogRecord` objects instead of formatted log strings.
         """
+    warn(
+      f'The class {self.__class__.__name__} is deprecated and will be removed in the next release.',
+      DeprecationWarning, stacklevel=2)
     self.raw = raw
     # Set up logger and add default LogHandler
     self.log = logging.getLogger(type(self).__name__)
@@ -113,6 +120,9 @@ def validate_smiles(smiles):
     :rtype: list of strings.
     """
   # Skip sanitize as standardize does this anyway
+  warn(f'The function validate_smiles is deprecated and will be removed in the next release.',
+     DeprecationWarning, stacklevel=2)
+
   mol = Chem.MolFromSmiles(smiles)
   logs = Validator().validate(mol)
   return logs

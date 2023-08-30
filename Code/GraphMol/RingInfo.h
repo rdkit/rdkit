@@ -13,10 +13,13 @@
 
 #include <map>
 #include <vector>
-#ifdef RDK_USE_URF
 #include <RDGeneral/BoostStartInclude.h>
+#include <boost/dynamic_bitset.hpp>
+#ifdef RDK_USE_URF
 #include <boost/shared_ptr.hpp>
+#endif
 #include <RDGeneral/BoostEndInclude.h>
+#ifdef RDK_USE_URF
 #include <RingDecomposerLib.h>
 #endif
 
@@ -107,7 +110,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  INT_VECT atomMembers(unsigned int idx) const;
+  const INT_VECT &atomMembers(unsigned int idx) const;
 
   //! returns whether or not atoms with indices \c idx1 and \c idx2 belong to
   //! the same ring.
@@ -184,7 +187,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  INT_VECT bondMembers(unsigned int idx) const;
+  const INT_VECT &bondMembers(unsigned int idx) const;
 
   //! returns whether or not bonds with indices \c idx1 and \c idx2 belong to
   //! the same ring.
@@ -204,6 +207,45 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   bool areBondsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
                                 unsigned int size) const;
+
+  //! returns whether ring with index \c ringIdx is fused with other rings.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  bool isRingFused(unsigned int ringIdx);
+
+  //! returns whether rings with indices \c ring1Idx and \c ring2Idx have
+  //! at least one bond in common.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  bool areRingsFused(unsigned int ring1Idx, unsigned int ring2Idx);
+
+  //! returns the number of bonds shared with other rings in ring with index
+  //! \c ringIdx.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  unsigned int numFusedBonds(unsigned int ringIdx);
+
+  //! returns the number of rings which have at least one bond
+  //! in common with ring with index \c ringIdx.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  unsigned int numFusedRingNeighbors(unsigned int ringIdx);
+
+  //! returns the indices of rings which have at least one bond
+  //! in common with ring with index \c ringIdx.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  std::vector<unsigned int> fusedRingNeighbors(unsigned int ringIdx);
 
 #ifdef RDK_USE_URF
   //! adds a ring family to our data
@@ -259,10 +301,13 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
  private:
   //! pre-allocates some memory to save time later
   void preallocate(unsigned int numAtoms, unsigned int numBonds);
+  void initFusedRings();
   bool df_init{false};
   DataType d_atomMembers, d_bondMembers;
   VECT_INT_VECT d_atomRings, d_bondRings;
   VECT_INT_VECT d_atomRingFamilies, d_bondRingFamilies;
+  std::vector<boost::dynamic_bitset<>> d_fusedRings;
+  std::vector<unsigned int> d_numFusedBonds;
 
 #ifdef RDK_USE_URF
  public:

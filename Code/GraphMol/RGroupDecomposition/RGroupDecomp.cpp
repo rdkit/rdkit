@@ -43,6 +43,8 @@
 #include <utility>
 #include <vector>
 
+#include "GraphMol/TautomerQuery/TautomerQuery.h"
+
 // #define VERBOSE 1
 
 namespace RDKit {
@@ -114,7 +116,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   SubstructMatchParameters sssparams(params().substructmatchParams);
   sssparams.uniquify = false;
   sssparams.recursionPossible = true;
-  for (const auto &core : data->cores) {
+  for (auto &core : data->cores) {
     {
       // matching the core to the molecule is a two step process
       // First match to a reduced representation (the core minus terminal
@@ -123,8 +125,24 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       // 2 RGroup attachments (see https://github.com/rdkit/rdkit/pull/4002)
 
       // match the reduced representation:
-      std::vector<MatchVectType> baseMatches =
-          SubstructMatch(mol, *core.second.matchingMol, sssparams);
+      std::vector<MatchVectType> baseMatches;
+      if (params().doTautomers) {
+        // Here we are attempting to enumerate tautomers of the core
+        if (auto tautomerQuery = core.second.getMatchingTautomerQuery();
+            tautomerQuery != nullptr) {
+          // query atom indices from the tautomer query are the same as the
+          // template matching molecule
+          baseMatches = tautomerQuery->substructOf(mol, sssparams);
+        } else {
+          // However, if it is not possible to Kekulize the core, we revert back
+          // to the non-tautomer matching.
+          baseMatches =
+              SubstructMatch(mol, *core.second.matchingMol, sssparams);
+        }
+      } else {
+        baseMatches = SubstructMatch(mol, *core.second.matchingMol, sssparams);
+      }
+      
       tmatches.clear();
       for (const auto &baseMatch : baseMatches) {
         // Match the R Groups

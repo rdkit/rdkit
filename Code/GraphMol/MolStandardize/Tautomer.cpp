@@ -443,7 +443,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
                                     MolOps::SANITIZE_SETCONJUGATION |
                                     MolOps::SANITIZE_SETHYBRIDIZATION |
                                     MolOps::SANITIZE_ADJUSTHS);
-          } catch (const KekulizeException &ke) {
+          } catch (const KekulizeException &) {
             continue;
           }
 #ifdef VERBOSE_ENUMERATION

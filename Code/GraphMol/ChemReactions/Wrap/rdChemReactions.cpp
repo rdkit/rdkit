@@ -123,10 +123,9 @@ PyObject *RunReactants(ChemicalReaction *self, T reactants,
   return res;
 }
 
-template <typename T>
-PyObject *RunReactant(ChemicalReaction *self, T reactant,
+PyObject *RunReactant(ChemicalReaction *self, python::object reactant,
                       unsigned int reactionIdx) {
-  ROMOL_SPTR react = python::extract<ROMOL_SPTR>(reactant);
+  auto react = python::extract<ROMOL_SPTR>(reactant);
 
   std::vector<MOL_SPTR_VECT> mols;
 
@@ -150,7 +149,8 @@ PyObject *RunReactant(ChemicalReaction *self, T reactant,
   return res;
 }
 
-bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant) {
+bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant,
+                        bool removeUnmatchedAtoms) {
   auto react = static_cast<RWMol *>(reactant);
   bool res = false;
   {
@@ -158,7 +158,7 @@ bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant) {
     if (!self->isInitialized()) {
       self->initReactantMatchers();
     }
-    res = self->runReactant(*react);
+    res = self->runReactant(*react, removeUnmatchedAtoms);
   }
   return res;
 }
@@ -561,12 +561,11 @@ Sample Usage:
            "the products as a tuple of tuples.  If maxProducts is not zero,"
            " stop the reaction when maxProducts have been generated "
            "[default=1000]")
-      .def("RunReactant",
-           (PyObject * (*)(RDKit::ChemicalReaction *, python::object, unsigned))
-               RDKit::RunReactant,
+      .def("RunReactant", RDKit::RunReactant,
            "apply the reaction to a single reactant")
       .def("RunReactantInPlace", RDKit::RunReactantInPlace,
-           (python::arg("self"), python::arg("reactant")),
+           (python::arg("self"), python::arg("reactant"),
+            python::arg("removeUnmatchedAtoms") = true),
            "apply the reaction to a single reactant in place. The reactant "
            "itself is modified. This can only be used for single reactant - "
            "single product reactions.")

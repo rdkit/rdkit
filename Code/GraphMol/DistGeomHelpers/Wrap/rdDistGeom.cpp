@@ -526,7 +526,12 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "trackFailures", &RDKit::DGeomHelpers::EmbedParameters::trackFailures,
           "keep track of which checks during the embedding process fail")
       .def("GetFailureCounts", &RDKit::getFailureCounts,
-           "returns the counts of eacu");
+           "returns the counts of each failure type")
+      .def_readwrite(
+          "enableSequentialRandomSeeds",
+          &RDKit::DGeomHelpers::EmbedParameters::enableSequentialRandomSeeds,
+          "handle random number seeds so that conformer generation can be restarted");
+
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\

@@ -25,6 +25,9 @@ ROMol *reionizeHelper(MolStandardize::Reionizer &self, const ROMol &mol) {
   return self.reionize(mol);
 }
 
+void reionizeInPlaceHelper(MolStandardize::Reionizer &self, ROMol &mol) {
+  self.reionizeInPlace(static_cast<RWMol &>(mol));
+}
 MolStandardize::Reionizer *reionizerFromData(const std::string &data,
                                              python::object chargeCorrections) {
   std::istringstream sstr(data);
@@ -38,6 +41,10 @@ MolStandardize::Reionizer *reionizerFromData(const std::string &data,
         sstr, std::vector<MolStandardize::ChargeCorrection>());
   }
   return res;
+}
+
+void unchargeInPlaceHelper(MolStandardize::Uncharger &self, ROMol &mol) {
+  self.unchargeInPlace(static_cast<RWMol &>(mol));
 }
 
 }  // namespace
@@ -65,7 +72,10 @@ struct charge_wrapper {
                           std::vector<MolStandardize::ChargeCorrection>>())
         .def("reionize", &reionizeHelper,
              (python::arg("self"), python::arg("mol")), "",
-             python::return_value_policy<python::manage_new_object>());
+             python::return_value_policy<python::manage_new_object>())
+        .def("reionizeInPlace", reionizeInPlaceHelper,
+             (python::arg("self"), python::arg("mol")),
+             "modifies the input molecule");
 
     python::def("ReionizerFromData", &reionizerFromData,
                 (python::arg("paramData"),
@@ -78,7 +88,10 @@ struct charge_wrapper {
                                          python::arg("canonicalOrder") = true)))
         .def("uncharge", &MolStandardize::Uncharger::uncharge,
              (python::arg("self"), python::arg("mol")), "",
-             python::return_value_policy<python::manage_new_object>());
+             python::return_value_policy<python::manage_new_object>())
+        .def("unchargeInPlace", unchargeInPlaceHelper,
+             (python::arg("self"), python::arg("mol")),
+             "modifies the input molecule");
   }
 };
 

@@ -65,7 +65,7 @@ void getMORSEDesc(const double *DM, const ROMol &mol, const Conformer &conf,
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(32);
-  std::vector<double> R1(32);
+  std::vector<double> R1(224);
   std::vector<double> R2(32);
   std::vector<double> R3(32);
   std::vector<double> R4(32);
@@ -115,12 +115,12 @@ void getMORSEDesc(const double *DM, const ROMol &mol, const Conformer &conf,
     R7[i] = std::round(1000 * res7) / 1000;
   }
 
-  R1.insert(R1.end(), R2.begin(), R2.end());
-  R1.insert(R1.end(), R3.begin(), R3.end());
-  R1.insert(R1.end(), R4.begin(), R4.end());
-  R1.insert(R1.end(), R5.begin(), R5.end());
-  R1.insert(R1.end(), R6.begin(), R6.end());
-  R1.insert(R1.end(), R7.begin(), R7.end());
+  std::copy(R2.begin(), R2.end(), R1.begin() + 32);
+  std::copy(R3.begin(), R3.end(), R1.begin() + 64);
+  std::copy(R4.begin(), R4.end(), R1.begin() + 96);
+  std::copy(R5.begin(), R5.end(), R1.begin() + 128);
+  std::copy(R6.begin(), R6.end(), R1.begin() + 160);
+  std::copy(R7.begin(), R7.end(), R1.begin() + 192);
 
   res = R1;
 }
