@@ -1031,6 +1031,20 @@ M  END
     self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
     self.assertFalse(rxn.RunReactantInPlace(reactant))
     self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
+    
+    rxn = rdChemReactions.ReactionFromSmarts('CC[N:1]>>[N:1]')
+    self.assertIsNotNone(rxn)
+    reactant = Chem.MolFromSmiles('CCCN.Cl')
+    self.assertTrue(rxn.RunReactantInPlace(reactant))
+    Chem.SanitizeMol(reactant)
+    self.assertEqual(Chem.MolToSmiles(reactant), 'N')
+
+    reactant = Chem.MolFromSmiles('CCCN.Cl')
+    self.assertTrue(rxn.RunReactantInPlace(reactant,removeUnmatchedAtoms=False))
+    Chem.SanitizeMol(reactant)
+    self.assertEqual(Chem.MolToSmiles(reactant), 'C.Cl.N')
+
+
 
   def testGithub4651(self):
     mol_sulfonylchloride = Chem.MolFromSmiles("Nc1c(CCCSNCC)cc(cc1)S(=O)(=O)Cl")

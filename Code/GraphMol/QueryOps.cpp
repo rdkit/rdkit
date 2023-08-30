@@ -744,6 +744,30 @@ ATOM_NULL_QUERY *makeAtomNullQuery() {
   return res;
 }
 
+void convertComplexNameToQuery(Atom *query, std::string_view symb) {
+  if (symb == "Q") {
+    query->setQuery(makeQAtomQuery());
+  } else if (symb == "QH") {
+    query->setQuery(makeQHAtomQuery());
+  } else if (symb == "A") {
+    query->setQuery(makeAAtomQuery());
+  } else if (symb == "AH") {
+    query->setQuery(makeAHAtomQuery());
+  } else if (symb == "X") {
+    query->setQuery(makeXAtomQuery());
+  } else if (symb == "XH") {
+    query->setQuery(makeXHAtomQuery());
+  } else if (symb == "M") {
+    query->setQuery(makeMAtomQuery());
+  } else if (symb == "MH") {
+    query->setQuery(makeMHAtomQuery());
+  } else {
+    // we control what this function gets called with, so we should never land
+    // here
+    ASSERT_INVARIANT(0, "bad complex query symbol");
+  }
+}
+
 bool isComplexQuery(const Bond *b) {
   PRECONDITION(b, "bad bond");
   if (!b->hasQuery()) {

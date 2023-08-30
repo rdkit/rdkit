@@ -37,9 +37,9 @@ RDKIT_DESCRIPTORS_EXPORT double PMI1(const ROMol&, int confId = -1,
                                      bool force = false);
 const std::string PMI1Version = "1.0.0";
 //! second principal moment of inertia
-RDKIT_DESCRIPTORS_EXPORT RDKIT_DESCRIPTORS_EXPORT double PMI2(
-    const ROMol&, int confId = -1, bool useAtomicMasses = true,
-    bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double PMI2(const ROMol&, int confId = -1,
+                                     bool useAtomicMasses = true,
+                                     bool force = false);
 const std::string PMI2Version = "1.0.0";
 //! Third (largest) principal moment of inertia
 RDKIT_DESCRIPTORS_EXPORT double PMI3(const ROMol&, int confId = -1,

@@ -46,6 +46,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
+#include <RDGeneral/RDLog.h>
 
 #include <sstream>
 #include <RDGeneral/BoostStartInclude.h>
@@ -1104,6 +1105,150 @@ std::string get_mol_frags_mappings(
   doc.Accept(writer);
   return buffer.GetString();
 }
+
+struct LogHandle {
+ public:
+  LogHandle(const std::string &logName) : d_logName(logName) {
+    d_logNameToLoggers = std::map<std::string, LoggerStateVector>{
+        {"rdApp.debug", {LoggerState(rdDebugLog)}},
+        {"rdApp.info", {LoggerState(rdInfoLog)}},
+        {"rdApp.warning", {LoggerState(rdWarningLog)}},
+        {"rdApp.error", {LoggerState(rdErrorLog)}},
+        {"rdApp.*",
+         {LoggerState(rdDebugLog), LoggerState(rdInfoLog),
+          LoggerState(rdWarningLog), LoggerState(rdErrorLog)}}};
+  }
+  ~LogHandle() { close(); }
+  static void enableLogging() {
+    initLogsIfNeeded();
+    boost::logging::enable_logs("rdApp.*");
+  }
+  static void disableLogging() {
+    initLogsIfNeeded();
+    boost::logging::disable_logs("rdApp.*");
+  }
+  void clearBuffer() {
+    d_stream.str({});
+    d_stream.clear();
+  }
+  std::string getBuffer() {
+    d_stream.flush();
+    return d_stream.str();
+  }
+  static LogHandle *setLogTee(const char *logNameCStr) {
+    return setLogCommon(logNameCStr, true);
+  }
+  static LogHandle *setLogCapture(const char *logNameCStr) {
+    return setLogCommon(logNameCStr, false);
+  }
+
+ private:
+  struct LoggerState {
+   public:
+    LoggerState(RDLogger &logger) : d_logger(logger) {
+      if (d_logger) {
+        d_prevDest = d_logger->dp_dest;
+        d_prevWasEnabled = d_logger->df_enabled;
+      }
+    }
+    ~LoggerState() {
+      if (!d_prevDest) {
+        d_logger = nullptr;
+      } else {
+        if (d_logger->dp_dest) {
+          d_logger->dp_dest->flush();
+        }
+        d_logger->dp_dest = d_prevDest;
+        d_logger->df_enabled = d_prevWasEnabled;
+      }
+    }
+    const RDLogger &logger() const { return d_logger; }
+    std::ostream *stream() const { return d_logger->dp_dest; }
+    void setStream(std::ostream &ostream) {
+      if (!d_logger) {
+        d_logger = std::make_shared<boost::logging::rdLogger>(&ostream);
+      } else {
+        if (d_logger->dp_dest) {
+          d_logger->dp_dest->flush();
+        }
+        d_logger->dp_dest = &ostream;
+      }
+    }
+
+   private:
+    RDLogger &d_logger;
+    std::ostream *d_prevDest = nullptr;
+    bool d_prevWasEnabled = false;
+  };
+  typedef std::vector<LoggerState> LoggerStateVector;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  typedef std::atomic_bool LoggingFlag;
+#else
+  typedef bool LoggingFlag;
+#endif
+  bool open(bool setTee) {
+    d_haveTee = setTee;
+    auto loggerStates = getLoggerStates();
+    if (!loggerStates) {
+      return false;
+    }
+    clearBuffer();
+    if (d_haveTee) {
+      initLogsIfNeeded();
+    }
+    for (auto &loggerState : *loggerStates) {
+      if (d_haveTee) {
+        CHECK_INVARIANT(loggerState.logger(), "");
+        loggerState.logger()->SetTee(d_stream);
+      } else {
+        loggerState.setStream(d_stream);
+      }
+      loggerState.logger()->df_enabled = true;
+    }
+    return true;
+  }
+  void close() {
+    const auto loggerStates = getLoggerStates();
+    if (!loggerStates) {
+      return;
+    }
+    for (const auto &loggerState : *loggerStates) {
+      if (d_haveTee) {
+        CHECK_INVARIANT(loggerState.logger(), "");
+        loggerState.logger()->ClearTee();
+      }
+    }
+  }
+  static LogHandle *setLogCommon(const char *logNameCStr, bool setTee) {
+    const auto logName = std::string(logNameCStr);
+    std::unique_ptr<MinimalLib::LogHandle> log_handle(
+        new MinimalLib::LogHandle(logName));
+    return (log_handle->open(setTee) ? log_handle.release() : nullptr);
+  }
+  // init logs if not yet initialized; returns true
+  // if they were actually initialized, false if not
+  static bool initLogsIfNeeded() {
+    if (d_loggingNeedsInit) {
+      RDLog::InitLogs();
+      d_loggingNeedsInit = false;
+      return true;
+    }
+    return false;
+  }
+  // returns nullptr if no loggers can be found
+  LoggerStateVector *getLoggerStates() {
+    const auto it = d_logNameToLoggers.find(d_logName);
+    if (it == d_logNameToLoggers.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  }
+  bool d_haveTee;
+  std::map<std::string, LoggerStateVector> d_logNameToLoggers;
+  std::string d_logName;
+  std::stringstream d_stream;
+  static LoggingFlag d_loggingNeedsInit;
+};
 
 }  // namespace MinimalLib
 }  // namespace RDKit

@@ -9,22 +9,121 @@
 //
 #include <RDBoost/python.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/Wrap/substructmethods.h>
 #include <RDBoost/Wrap.h>
 #include <GraphMol/FMCS/FMCS.h>
-#include <GraphMol/FMCS/RingMatchTableSet.h>
 
 #define COMPARE_FUNC_NAME "__call__"
 #define CALLBACK_FUNC_NAME "__call__"
-// DEPRECATED: remove from here in release 2021.01
-#define COMPARE_DEPRECATED_FUNC_NAME "compare"
-#define CALLBACK_DEPRECATED_FUNC_NAME "callback"
-// DEPRECATED: remove until here in release 2021.01
 
 namespace python = boost::python;
 
 namespace RDKit {
 
-struct PyMCSAtomCompare : public boost::python::wrapper<PyMCSAtomCompare> {
+struct PyMCSWrapper : public boost::python::wrapper<PyMCSWrapper> {
+ public:
+  PyMCSWrapper() {}
+  PyMCSWrapper(PyObject *obj) {
+    PRECONDITION(obj, "PyObject* must not be NULL");
+    d_pyObject.reset(
+        new python::object(python::handle<>(python::borrowed(obj))));
+  }
+  virtual ~PyMCSWrapper() {}
+  virtual const char *subclassName() const {
+    throw std::invalid_argument(
+        "subclassName() must be overridden in the "
+        "derived class");
+  }
+  const python::object &pyObject() const { return *d_pyObject; }
+
+ protected:
+  void failedToExtractPyObject() const {
+    std::stringstream ss;
+    ss << "Failed to extract object from " << subclassName() << " subclass";
+    PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+    python::throw_error_already_set();
+  }
+  void errorNotOverridden() const {
+    std::stringstream ss;
+    ss << "The " COMPARE_FUNC_NAME "() method must be overridden in the rdFMCS."
+       << subclassName() << " subclass";
+    PyErr_SetString(PyExc_AttributeError, ss.str().c_str());
+    python::throw_error_already_set();
+  }
+  void errorNotDefined() const {
+    // should never happen as the method is virtual but not pure in the C++
+    // class
+    std::stringstream ss;
+    ss << "The " CALLBACK_FUNC_NAME
+          "() method must be defined "
+          "in the "
+       << subclassName() << " subclass";
+    PyErr_SetString(PyExc_AttributeError, ss.str().c_str());
+    python::throw_error_already_set();
+  }
+  void errorNotCallable() const {
+    std::stringstream ss;
+    ss << "The " COMPARE_FUNC_NAME " attribute in the " << subclassName()
+       << " subclass is not a callable method";
+    PyErr_SetString(PyExc_TypeError, ss.str().c_str());
+    python::throw_error_already_set();
+  }
+  virtual bool hasPythonOverride(const char *attrName) const {
+    auto obj = get_override(attrName);
+    return PyCallable_Check(obj.ptr());
+  }
+  void extractPyMCSWrapper() {
+    d_pyObjectExtractor.reset(new python::extract<PyMCSWrapper *>(*d_pyObject));
+    if (d_pyObjectExtractor->check()) {
+      PyObject *callable =
+          PyObject_GetAttrString(d_pyObject->ptr(), CALLBACK_FUNC_NAME);
+      if (!callable) {
+        errorNotDefined();
+      }
+      if (!PyCallable_Check(callable)) {
+        errorNotCallable();
+      }
+      if (!pyObjectExtract()->hasPythonOverride(CALLBACK_FUNC_NAME)) {
+        errorNotOverridden();
+      }
+    } else {
+      std::stringstream ss;
+      ss << "expected an instance of the rdFMCS." << subclassName()
+         << " subclass";
+      PyErr_SetString(PyExc_TypeError, ss.str().c_str());
+      python::throw_error_already_set();
+    }
+  }
+  PyMCSWrapper *pyObjectExtract() const { return (*d_pyObjectExtractor)(); }
+
+ private:
+  std::unique_ptr<python::object> d_pyObject;
+  std::unique_ptr<python::extract<PyMCSWrapper *>> d_pyObjectExtractor;
+};
+
+struct PyMCSAtomCompare : public PyMCSWrapper {
+ public:
+  PyMCSAtomCompare() {}
+  PyMCSAtomCompare(PyObject *obj) : PyMCSWrapper(obj) {}
+  ~PyMCSAtomCompare() {}
+  bool extractAtomComparator(AtomComparator &ac) {
+    bool res = false;
+    python::extract<AtomComparator> predefinedAtomComparator(pyObject());
+    if (predefinedAtomComparator.check()) {
+      ac = predefinedAtomComparator();
+      res = true;
+    } else {
+      extractPyMCSWrapper();
+    }
+    return res;
+  }
+  PyMCSAtomCompare *extractPyObject() const {
+    auto res = dynamic_cast<PyMCSAtomCompare *>(pyObjectExtract());
+    if (!res) {
+      failedToExtractPyObject();
+    }
+    return res;
+  }
   inline bool checkAtomRingMatch(const MCSAtomCompareParameters &p,
                                  const ROMol &mol1, unsigned int atom1,
                                  const ROMol &mol2, unsigned int atom2) const {
@@ -40,130 +139,97 @@ struct PyMCSAtomCompare : public boost::python::wrapper<PyMCSAtomCompare> {
                                  const ROMol &mol2, unsigned int atom2) const {
     return RDKit::checkAtomChirality(p, mol1, atom1, mol2, atom2);
   }
+  inline const char *subclassName() const { return "MCSAtomCompare"; }
   virtual bool operator()(const MCSAtomCompareParameters &, const ROMol &,
-                          unsigned int, const ROMol &, unsigned int) {
-    PyErr_SetString(PyExc_AttributeError,
-                    "The " COMPARE_FUNC_NAME
-                    "() method "
-                    "must be overridden in the rdFMCS.MCSAtomCompare subclass");
-    python::throw_error_already_set();
+                          unsigned int, const ROMol &, unsigned int) const {
+    errorNotOverridden();
     return false;
-  }
-  // DEPRECATED: remove the following compare() method in release 2021.01
-  virtual bool compare(const MCSAtomCompareParameters &, const ROMol &,
-                       unsigned int, const ROMol &, unsigned int) {
-    PyErr_SetString(PyExc_AttributeError,
-                    "The " COMPARE_DEPRECATED_FUNC_NAME
-                    "() method (DEPRECATED) "
-                    "must be overridden in the rdFMCS.MCSAtomCompare subclass");
-    python::throw_error_already_set();
-    return false;
-  }
-  bool hasPythonOverride(const char *attrName) {
-    auto obj = get_override(attrName);
-    return PyCallable_Check(obj.ptr());
   }
 };
 
-struct PyMCSBondCompare : public boost::python::wrapper<PyMCSBondCompare> {
+struct PyMCSBondCompare : public PyMCSWrapper {
+  PyMCSBondCompare() {}
+  PyMCSBondCompare(PyObject *obj) : PyMCSWrapper(obj) {}
+  ~PyMCSBondCompare() {}
+  bool extractBondComparator(BondComparator &bc) {
+    bool res = false;
+    python::extract<BondComparator> predefinedBondComparator(pyObject());
+    if (predefinedBondComparator.check()) {
+      bc = predefinedBondComparator();
+      res = true;
+    } else {
+      extractPyMCSWrapper();
+    }
+    return res;
+  }
+  PyMCSBondCompare *extractPyObject() const {
+    auto res = dynamic_cast<PyMCSBondCompare *>(pyObjectExtract());
+    if (!res) {
+      failedToExtractPyObject();
+    }
+    return res;
+  }
   inline bool checkBondStereo(const MCSBondCompareParameters &p,
                               const ROMol &mol1, unsigned int bond1,
                               const ROMol &mol2, unsigned int bond2) const {
     return RDKit::checkBondStereo(p, mol1, bond1, mol2, bond2);
   }
-  inline static void updateRingMatchTables(FMCS::RingMatchTableSet &rmt,
-                                           std::set<const ROMol *> &rmtMols,
-                                           const ROMol &mol1, const ROMol &mol2,
-                                           const MCSParameters &p) {
-    if (!rmtMols.count(&mol1)) {
-      rmt.init(&mol1);
-      rmt.computeRingMatchTable(&mol1, &mol1, p);
-      rmtMols.insert(&mol1);
-    }
-    if (!rmtMols.count(&mol2)) {
-      rmt.computeRingMatchTable(&mol1, &mol2, p);
-      rmt.addTargetBondRingsIndeces(&mol2);
-      rmtMols.insert(&mol2);
-    }
-  }
   inline bool checkBondRingMatch(const MCSBondCompareParameters &p,
                                  const ROMol &mol1, unsigned int bond1,
                                  const ROMol &mol2, unsigned int bond2) {
-    updateRingMatchTables(ringMatchTables, ringMatchTablesMols, mol1, mol2,
-                          *mcsParameters);
-    return RDKit::checkBondRingMatch(p, mol1, bond1, mol2, bond2,
-                                     &ringMatchTables);
+    return RDKit::checkBondRingMatch(p, mol1, bond1, mol2, bond2);
   }
-  bool hasPythonOverride(const char *attrName) {
-    auto obj = get_override(attrName);
-    return PyCallable_Check(obj.ptr());
-  }
+  inline const char *subclassName() const { return "MCSBondCompare"; }
   virtual bool operator()(const MCSBondCompareParameters &, const ROMol &,
-                          unsigned int, const ROMol &, unsigned int) {
-    PyErr_SetString(PyExc_AttributeError,
-                    "The " COMPARE_FUNC_NAME
-                    "() method "
-                    "must be overridden in the rdFMCS.MCSBondCompare subclass");
-    python::throw_error_already_set();
-    return false;
-  }
-  // DEPRECATED: remove the following compare() method in release 2021.01
-  virtual bool compare(const MCSBondCompareParameters &, const ROMol &,
-                       unsigned int, const ROMol &, unsigned int) {
-    PyErr_SetString(PyExc_AttributeError,
-                    "The " COMPARE_DEPRECATED_FUNC_NAME
-                    "() method (DEPRECATED) "
-                    "must be overridden in the rdFMCS.MCSBondCompare subclass");
-    python::throw_error_already_set();
+                          unsigned int, const ROMol &, unsigned int) const {
+    errorNotOverridden();
     return false;
   }
   const MCSParameters *mcsParameters;
-  std::set<const ROMol *> ringMatchTablesMols;
-  FMCS::RingMatchTableSet ringMatchTables;
 };
 
 struct PyAtomBondCompData {
-  std::string atomCompFuncName;
-  std::string bondCompFuncName;
   python::object pyAtomComp;
   python::object pyBondComp;
-  MCSBondCompareFunction standardBondTyperFunc;
+  MCSBondCompareFunction standardBondTyperFunc = nullptr;
 };
 
-struct PyCompareFunctionUserData {
+struct PyBaseUserData {
+  PyAtomBondCompData pyAtomBondCompData;
+};
+
+struct PyCompareFunctionUserData : public PyBaseUserData {
   const MCSParameters *mcsParameters;
-  std::set<const ROMol *> *ringMatchTablesMols;
-  FMCS::RingMatchTableSet *ringMatchTables;
-  PyAtomBondCompData pyAtomBondCompData;
 };
 
-struct PyProgressCallbackUserData {
+struct PyProgressCallbackUserData : public PyBaseUserData {
   const MCSProgressData *mcsProgressData;
-  std::string callbackFuncName;
   python::object pyMCSProgress;
-  PyAtomBondCompData pyAtomBondCompData;
 };
 
-struct PyMCSProgress : public boost::python::wrapper<PyMCSProgress> {
-  bool hasPythonOverride(const char *attrName) {
-    auto obj = get_override(attrName);
-    return PyCallable_Check(obj.ptr());
+struct PyMCSFinalMatchCheckFunctionUserData : public PyBaseUserData {
+  python::object pyMCSFinalMatchCheck;
+};
+
+struct PyMCSAcceptanceFunctionUserData : public PyBaseUserData {
+  python::object pyMCSAcceptance;
+};
+
+struct PyMCSProgress : public PyMCSWrapper {
+  PyMCSProgress() {}
+  PyMCSProgress(PyObject *obj) : PyMCSWrapper(obj) { extractPyMCSWrapper(); }
+  ~PyMCSProgress() {}
+  PyMCSProgress *extractPyObject() const {
+    auto res = dynamic_cast<PyMCSProgress *>(pyObjectExtract());
+    if (!res) {
+      failedToExtractPyObject();
+    }
+    return res;
   }
-  virtual bool operator()(const MCSProgressData &, const MCSParameters &) {
-    PyErr_SetString(PyExc_AttributeError,
-                    "The " CALLBACK_FUNC_NAME
-                    "() method "
-                    "must be overridden in the rdFMCS.MCSProgress subclass");
-    python::throw_error_already_set();
-    return false;
-  }
-  // DEPRECATED: remove the following callback() method in release 2021.01
-  virtual bool callback(const MCSProgressData &, const MCSParameters &) {
-    PyErr_SetString(PyExc_AttributeError,
-                    "The " CALLBACK_DEPRECATED_FUNC_NAME
-                    "() method "
-                    "must be overridden in the rdFMCS.MCSProgress subclass");
-    python::throw_error_already_set();
+  inline const char *subclassName() const { return "MCSProgress"; }
+  virtual bool operator()(const MCSProgressData &,
+                          const MCSParameters &) const {
+    errorNotOverridden();
     return false;
   }
 };
@@ -186,21 +252,69 @@ class PyMCSProgressData {
   std::unique_ptr<PyProgressCallbackUserData> pcud;
 };
 
-class PyMCSParameters {
+struct PyMCSFinalMatchCheck : public PyMCSWrapper {
+  PyMCSFinalMatchCheck() {}
+  PyMCSFinalMatchCheck(PyObject *obj) : PyMCSWrapper(obj) {
+    extractPyMCSWrapper();
+  }
+  ~PyMCSFinalMatchCheck() {}
+  PyMCSFinalMatchCheck *extractPyObject() const {
+    auto res = dynamic_cast<PyMCSFinalMatchCheck *>(pyObjectExtract());
+    if (!res) {
+      failedToExtractPyObject();
+    }
+    return res;
+  }
+  inline const char *subclassName() const { return "MCSFinalMatchCheck"; }
+  virtual bool operator()() const {
+    errorNotOverridden();
+    return false;
+  }
+};
+
+struct PyMCSAcceptance : public PyMCSWrapper {
+  PyMCSAcceptance() {}
+  PyMCSAcceptance(PyObject *obj) : PyMCSWrapper(obj) { extractPyMCSWrapper(); }
+  ~PyMCSAcceptance() {}
+  PyMCSAcceptance *extractPyObject() const {
+    auto res = dynamic_cast<PyMCSAcceptance *>(pyObjectExtract());
+    if (!res) {
+      failedToExtractPyObject();
+    }
+    return res;
+  }
+  virtual bool operator()() const {
+    errorNotOverridden();
+    return false;
+  }
+};
+
+class PyMCSParameters : public boost::noncopyable {
  public:
-  PyMCSParameters()
-      : p(new MCSParameters()),
-        cfud(new PyCompareFunctionUserData()),
-        pcud(new PyProgressCallbackUserData()) {
-    cfud->mcsParameters = p.get();
-    pcud->mcsProgressData = nullptr;
+  PyMCSParameters() : p(new MCSParameters()) {
+    cfud.mcsParameters = p.get();
+    pcud.mcsProgressData = nullptr;
+  }
+  PyMCSParameters(const MCSParameters &other) : PyMCSParameters() {
+    *p = other;
   }
   PyMCSParameters(const MCSParameters &other,
                   const PyProgressCallbackUserData &pcudOther)
-      : PyMCSParameters() {
-    *p = other;
-    pcud->pyMCSProgress = pcudOther.pyMCSProgress;
-    cfud->pyAtomBondCompData = pcudOther.pyAtomBondCompData;
+      : PyMCSParameters(other) {
+    pcud.pyMCSProgress = pcudOther.pyMCSProgress;
+    cfud.pyAtomBondCompData = pcudOther.pyAtomBondCompData;
+  }
+  PyMCSParameters(const MCSParameters &other,
+                  const PyMCSFinalMatchCheckFunctionUserData &fmudOther)
+      : PyMCSParameters(other) {
+    fmud.pyMCSFinalMatchCheck = fmudOther.pyMCSFinalMatchCheck;
+    cfud.pyAtomBondCompData = fmudOther.pyAtomBondCompData;
+  }
+  PyMCSParameters(const MCSParameters &other,
+                  const PyMCSAcceptanceFunctionUserData &afudOther)
+      : PyMCSParameters(other) {
+    afud.pyMCSAcceptance = afudOther.pyMCSAcceptance;
+    cfud.pyAtomBondCompData = afudOther.pyAtomBondCompData;
   }
   const MCSParameters *get() const { return p.get(); }
   bool getMaximizeBonds() const { return p->MaximizeBonds; }
@@ -225,97 +339,29 @@ class PyMCSParameters {
   }
   std::string getInitialSeed() const { return p->InitialSeed; }
   void setInitialSeed(const std::string &value) { p->InitialSeed = value; }
-  void errorNotDefined(const char *className, const char *funcName) {
-    // should never happen as the method is virtual but not pure in the C++
-    // class
-    std::stringstream ss;
-    ss << "The " << funcName
-       << "() method must be defined "
-          "in the "
-       << className << " subclass";
-    PyErr_SetString(PyExc_AttributeError, ss.str().c_str());
-    python::throw_error_already_set();
-  }
-  void errorNotCallable(const char *className, const char *funcName) {
-    std::stringstream ss;
-    ss << "The " << funcName << " attribute in the " << className
-       << " subclass is not a callable method";
-    PyErr_SetString(PyExc_TypeError, ss.str().c_str());
-    python::throw_error_already_set();
-  }
-  void errorNotOverridden(const char *className, const char *funcName) {
-    std::stringstream ss;
-    ss << "The " << funcName << " method must be overridden in the "
-       << className << " subclass";
-    PyErr_SetString(PyExc_TypeError, ss.str().c_str());
-    python::throw_error_already_set();
-  }
+  bool getStoreAll() const { return p->StoreAll; }
+  void setStoreAll(bool value) { p->StoreAll = value; }
   void setMCSAtomTyper(PyObject *atomComp) {
-    PRECONDITION(atomComp, "atomComp must not be NULL");
-    python::object atomCompObject(python::handle<>(python::borrowed(atomComp)));
-    python::extract<AtomComparator> extractAtomComparator(atomCompObject);
-    if (extractAtomComparator.check()) {
-      AtomComparator ac(extractAtomComparator());
+    PyMCSAtomCompare pyMCSAtomCompare(atomComp);
+    AtomComparator ac;
+    if (pyMCSAtomCompare.extractAtomComparator(ac)) {
       p->setMCSAtomTyperFromEnum(ac);
     } else {
-      python::extract<PyMCSAtomCompare *> extractPyMCSAtomCompare(
-          atomCompObject);
-      if (extractPyMCSAtomCompare.check()) {
-        PyObject *callable =
-            PyObject_GetAttrString(atomCompObject.ptr(), COMPARE_FUNC_NAME);
-        if (!callable) {
-          errorNotDefined(COMPARE_FUNC_NAME, "rdFMCS.MCSAtomCompare");
-        }
-        if (!PyCallable_Check(callable)) {
-          errorNotCallable(COMPARE_FUNC_NAME, "rdFMCS.MCSAtomCompare");
-        }
-        if (!extractPyMCSAtomCompare()->hasPythonOverride(COMPARE_FUNC_NAME)) {
-          // DEPRECATED: remove from here in release 2021.01
-          callable = PyObject_GetAttrString(atomCompObject.ptr(),
-                                            COMPARE_DEPRECATED_FUNC_NAME);
-          if (!callable) {
-            errorNotDefined(COMPARE_DEPRECATED_FUNC_NAME,
-                            "rdFMCS.MCSAtomCompare");
-          }
-          if (!PyCallable_Check(callable)) {
-            errorNotCallable(COMPARE_DEPRECATED_FUNC_NAME,
-                             "rdFMCS.MCSAtomCompare");
-          }
-          if (!extractPyMCSAtomCompare()->hasPythonOverride(
-                  COMPARE_DEPRECATED_FUNC_NAME)) {
-            errorNotOverridden(COMPARE_FUNC_NAME, "rdFMCS.MCSAtomCompare");
-          } else {
-            cfud->pyAtomBondCompData.atomCompFuncName =
-                COMPARE_DEPRECATED_FUNC_NAME;
-          }
-          // DEPRECATED: remove until here in release 2021.01
-          // uncomment the following line in release 2021.01
-          // errorNotOverridden(COMPARE_FUNC_NAME, "rdFMCS.MCSAtomCompare");
-        } else {
-          cfud->pyAtomBondCompData.atomCompFuncName = COMPARE_FUNC_NAME;
-        }
-        p->CompareFunctionsUserData = cfud.get();
-        p->AtomTyper = MCSAtomComparePyFunc;
-        cfud->pyAtomBondCompData.pyAtomComp = atomCompObject;
-        cfud->mcsParameters = p.get();
-      } else {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "expected an instance of a rdFMCS.MCSAtomCompare subclass "
-            "or a member of the AtomCompare class");
-        python::throw_error_already_set();
-      }
+      p->CompareFunctionsUserData = &cfud;
+      p->AtomTyper = MCSAtomComparePyFunc;
+      cfud.pyAtomBondCompData.pyAtomComp = pyMCSAtomCompare.pyObject();
+      cfud.mcsParameters = p.get();
     }
   }
-  python::object getMCSAtomTyper() {
+  python::object getMCSAtomTyper() const {
     static const std::map<RDKit::MCSAtomCompareFunction, RDKit::AtomComparator>
         atomTyperToComp = {
             {MCSAtomCompareAny, AtomCompareAny},
             {MCSAtomCompareElements, AtomCompareElements},
             {MCSAtomCompareIsotopes, AtomCompareIsotopes},
             {MCSAtomCompareAnyHeavyAtom, AtomCompareAnyHeavyAtom}};
-    if (!cfud->pyAtomBondCompData.pyAtomComp.is_none()) {
-      return cfud->pyAtomBondCompData.pyAtomComp;
+    if (!cfud.pyAtomBondCompData.pyAtomComp.is_none()) {
+      return cfud.pyAtomBondCompData.pyAtomComp;
     }
     python::object res;
     try {
@@ -327,73 +373,26 @@ class PyMCSParameters {
     return res;
   }
   void setMCSBondTyper(PyObject *bondComp) {
-    PRECONDITION(bondComp, "bondComp must not be NULL");
-    python::object bondCompObject(python::handle<>(python::borrowed(bondComp)));
-    python::extract<BondComparator> extractBondComparator(bondCompObject);
-    if (extractBondComparator.check()) {
-      BondComparator bc(extractBondComparator());
+    PyMCSBondCompare pyMCSBondCompare(bondComp);
+    BondComparator bc;
+    if (pyMCSBondCompare.extractBondComparator(bc)) {
       p->setMCSBondTyperFromEnum(bc);
     } else {
-      python::extract<PyMCSBondCompare *> extractPyMCSBondCompare(
-          bondCompObject);
-      if (extractPyMCSBondCompare.check()) {
-        PyObject *callable =
-            PyObject_GetAttrString(bondCompObject.ptr(), COMPARE_FUNC_NAME);
-        if (!callable) {
-          errorNotDefined(COMPARE_FUNC_NAME, "rdFMCS.MCSBondCompare");
-        }
-        if (!PyCallable_Check(callable)) {
-          errorNotCallable(COMPARE_FUNC_NAME, "rdFMCS.MCSBondCompare");
-        }
-        if (!extractPyMCSBondCompare()->hasPythonOverride(COMPARE_FUNC_NAME)) {
-          // DEPRECATED: remove from here in release 2021.01
-          callable = PyObject_GetAttrString(bondCompObject.ptr(),
-                                            COMPARE_DEPRECATED_FUNC_NAME);
-          if (!callable) {
-            errorNotDefined(COMPARE_DEPRECATED_FUNC_NAME,
-                            "rdFMCS.MCSBondCompare");
-          }
-          if (!PyCallable_Check(callable)) {
-            errorNotCallable(COMPARE_DEPRECATED_FUNC_NAME,
-                             "rdFMCS.MCSBondCompare");
-          }
-          if (!extractPyMCSBondCompare()->hasPythonOverride(
-                  COMPARE_DEPRECATED_FUNC_NAME)) {
-            errorNotOverridden(COMPARE_FUNC_NAME, "rdFMCS.MCSBondCompare");
-          } else {
-            cfud->pyAtomBondCompData.bondCompFuncName =
-                COMPARE_DEPRECATED_FUNC_NAME;
-          }
-          // DEPRECATED: remove until here in release 2021.01
-          // uncomment the following line in release 2021.01
-          // errorNotOverridden(COMPARE_FUNC_NAME, "rdFMCS.MCSBondCompare");
-        } else {
-          cfud->pyAtomBondCompData.bondCompFuncName = COMPARE_FUNC_NAME;
-        }
-        p->CompareFunctionsUserData = cfud.get();
-        p->BondTyper = MCSBondComparePyFunc;
-        cfud->pyAtomBondCompData.pyBondComp = bondCompObject;
-        PyMCSBondCompare *bc = extractPyMCSBondCompare();
-        bc->mcsParameters = p.get();
-        cfud->mcsParameters = p.get();
-        cfud->ringMatchTablesMols = &bc->ringMatchTablesMols;
-        cfud->ringMatchTables = &bc->ringMatchTables;
-      } else {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "expected an instance of a rdFMCS.MCSBondCompare subclass "
-            "or a member of the BondCompare class");
-        python::throw_error_already_set();
-      }
+      p->CompareFunctionsUserData = &cfud;
+      p->BondTyper = MCSBondComparePyFunc;
+      cfud.pyAtomBondCompData.pyBondComp = pyMCSBondCompare.pyObject();
+      auto bc = pyMCSBondCompare.extractPyObject();
+      bc->mcsParameters = p.get();
+      cfud.mcsParameters = p.get();
     }
   }
-  python::object getMCSBondTyper() {
+  python::object getMCSBondTyper() const {
     static const std::map<RDKit::MCSBondCompareFunction, RDKit::BondComparator>
         bondTyperToComp = {{MCSBondCompareAny, BondCompareAny},
                            {MCSBondCompareOrder, BondCompareOrder},
                            {MCSBondCompareOrderExact, BondCompareOrderExact}};
-    if (!cfud->pyAtomBondCompData.pyBondComp.is_none()) {
-      return cfud->pyAtomBondCompData.pyBondComp;
+    if (!cfud.pyAtomBondCompData.pyBondComp.is_none()) {
+      return cfud.pyAtomBondCompData.pyBondComp;
     }
     python::object res;
     try {
@@ -404,82 +403,44 @@ class PyMCSParameters {
     }
     return res;
   }
-  void setBondTyperWrapper() {
-    if (!cfud->pyAtomBondCompData.standardBondTyperFunc) {
-      cfud->pyAtomBondCompData.standardBondTyperFunc = p->BondTyper;
-      pcud->pyAtomBondCompData.standardBondTyperFunc = p->BondTyper;
-      btwParams = *p;
-      cfud->mcsParameters = &btwParams;
-      cfud->ringMatchTablesMols = &btwPyMCSBondCompare.ringMatchTablesMols;
-      cfud->ringMatchTables = &btwPyMCSBondCompare.ringMatchTables;
-      p->BondTyper = MCSBondComparePyFunc;
-    }
-  }
-  void unsetBondTyperWrapper() {
-    if (cfud->pyAtomBondCompData.standardBondTyperFunc) {
-      p->BondTyper = cfud->pyAtomBondCompData.standardBondTyperFunc;
-      cfud->pyAtomBondCompData.standardBondTyperFunc = nullptr;
-      pcud->pyAtomBondCompData.standardBondTyperFunc = nullptr;
-    }
-  }
   void setMCSProgressCallback(PyObject *progress) {
-    PRECONDITION(progress, "progress must not be NULL");
-    python::object progressObject(python::handle<>(python::borrowed(progress)));
-    python::extract<PyMCSProgress *> extractMCSProgress(progressObject);
-    if (extractMCSProgress.check()) {
-      PyObject *callable =
-          PyObject_GetAttrString(progressObject.ptr(), CALLBACK_FUNC_NAME);
-      if (!callable) {
-        errorNotDefined(CALLBACK_FUNC_NAME, "rdFMCS.MCSProgress");
-      }
-      if (!PyCallable_Check(callable)) {
-        errorNotCallable(CALLBACK_FUNC_NAME, "rdFMCS.MCSProgress");
-      }
-      if (!extractMCSProgress()->hasPythonOverride(CALLBACK_FUNC_NAME)) {
-        // DEPRECATED: remove from here in release 2021.01
-        callable = PyObject_GetAttrString(progressObject.ptr(),
-                                          CALLBACK_DEPRECATED_FUNC_NAME);
-        if (!callable) {
-          errorNotDefined(CALLBACK_DEPRECATED_FUNC_NAME, "rdFMCS.MCSProgress");
-        }
-        if (!PyCallable_Check(callable)) {
-          errorNotCallable(CALLBACK_DEPRECATED_FUNC_NAME, "rdFMCS.MCSProgress");
-        }
-        if (!extractMCSProgress()->hasPythonOverride(
-                CALLBACK_DEPRECATED_FUNC_NAME)) {
-          errorNotOverridden(CALLBACK_FUNC_NAME, "rdFMCS.MCSProgress");
-        } else {
-          pcud->callbackFuncName = CALLBACK_DEPRECATED_FUNC_NAME;
-        }
-        // DEPRECATED: remove until here in release 2021.01
-        // uncomment the following line in release 2021.01
-        // errorNotOverridden(COMPARE_FUNC_NAME, "rdFMCS.MCSAtomCompare");
-      } else {
-        pcud->callbackFuncName = CALLBACK_FUNC_NAME;
-      }
-      p->ProgressCallbackUserData = pcud.get();
-      p->ProgressCallback = MCSProgressCallbackPyFunc;
-      pcud->pyMCSProgress = progressObject;
-      pcud->pyAtomBondCompData = cfud->pyAtomBondCompData;
-    } else {
-      PyErr_SetString(PyExc_TypeError,
-                      "expected an instance of a rdFMCS.MCSProgress subclass");
-      python::throw_error_already_set();
-    }
+    PyMCSProgress pyMCSProgress(progress);
+    p->ProgressCallbackUserData = &pcud;
+    p->ProgressCallback = MCSProgressCallbackPyFunc;
+    pcud.pyMCSProgress = pyMCSProgress.pyObject();
+    pcud.pyAtomBondCompData = cfud.pyAtomBondCompData;
   }
   python::object getMCSProgressCallback() {
-    if (!pcud->pyMCSProgress.is_none()) {
-      return pcud->pyMCSProgress;
+    if (!pcud.pyMCSProgress.is_none()) {
+      return pcud.pyMCSProgress;
     }
     return python::object();
   }
-  void clearRingTableCache() {
-    if (cfud->ringMatchTablesMols) {
-      cfud->ringMatchTablesMols->clear();
+  void setFinalMatchCheck(PyObject *finalMatchCheck) {
+    PyMCSFinalMatchCheck pyMCSFinalMatchCheck(finalMatchCheck);
+    p->FinalMatchChecker = MCSFinalMatchCheckPyFunc;
+    p->FinalMatchCheckerUserData = &fmud;
+    fmud.pyMCSFinalMatchCheck = pyMCSFinalMatchCheck.pyObject();
+    fmud.pyAtomBondCompData = cfud.pyAtomBondCompData;
+  }
+  python::object getFinalMatchCheck() const {
+    if (!fmud.pyMCSFinalMatchCheck.is_none()) {
+      return fmud.pyMCSFinalMatchCheck;
     }
-    if (cfud->ringMatchTables) {
-      cfud->ringMatchTables->clear();
+    return python::object();
+  }
+  void setShouldAcceptMCS(PyObject *mcsAcceptance) {
+    PyMCSAcceptance pyMCSAcceptance(mcsAcceptance);
+    p->ShouldAcceptMCS = MCSAcceptancePyFunc;
+    p->ShouldAcceptMCSUserData = &afud;
+    afud.pyMCSAcceptance = pyMCSAcceptance.pyObject();
+    afud.pyAtomBondCompData = cfud.pyAtomBondCompData;
+  }
+  python::object getShouldAcceptMCS() const {
+    if (!afud.pyMCSAcceptance.is_none()) {
+      return afud.pyMCSAcceptance;
     }
+    return python::object();
   }
 
  private:
@@ -490,13 +451,13 @@ class PyMCSParameters {
     PRECONDITION(userData, "userData must not be NULL");
     PyCompareFunctionUserData *cfud =
         static_cast<PyCompareFunctionUserData *>(userData);
+    CHECK_INVARIANT(cfud, "");
     bool res = false;
     {
       PyGILStateHolder h;
       res = python::call_method<bool>(
-          cfud->pyAtomBondCompData.pyAtomComp.ptr(),
-          cfud->pyAtomBondCompData.atomCompFuncName.c_str(), boost::ref(p),
-          boost::ref(mol1), atom1, boost::ref(mol2), atom2);
+          cfud->pyAtomBondCompData.pyAtomComp.ptr(), COMPARE_FUNC_NAME,
+          boost::ref(p), boost::ref(mol1), atom1, boost::ref(mol2), atom2);
     }
     return res;
   }
@@ -507,21 +468,13 @@ class PyMCSParameters {
     PRECONDITION(userData, "userData must not be NULL");
     PyCompareFunctionUserData *cfud =
         static_cast<PyCompareFunctionUserData *>(userData);
+    CHECK_INVARIANT(cfud, "");
     bool res = false;
-    if ((p.RingMatchesRingOnly ||
-         cfud->mcsParameters->AtomCompareParameters.RingMatchesRingOnly) &&
-        cfud->pyAtomBondCompData.pyBondComp.is_none()) {
-      PyMCSBondCompare::updateRingMatchTables(*cfud->ringMatchTables,
-                                              *cfud->ringMatchTablesMols, mol1,
-                                              mol2, *cfud->mcsParameters);
-      res = cfud->pyAtomBondCompData.standardBondTyperFunc(
-          p, mol1, bond1, mol2, bond2, cfud->ringMatchTables);
-    } else {
+    {
       PyGILStateHolder h;
       res = python::call_method<bool>(
-          cfud->pyAtomBondCompData.pyBondComp.ptr(),
-          cfud->pyAtomBondCompData.bondCompFuncName.c_str(), boost::ref(p),
-          boost::ref(mol1), bond1, boost::ref(mol2), bond2);
+          cfud->pyAtomBondCompData.pyBondComp.ptr(), COMPARE_FUNC_NAME,
+          boost::ref(p), boost::ref(mol1), bond1, boost::ref(mol2), bond2);
     }
     return res;
   }
@@ -532,29 +485,100 @@ class PyMCSParameters {
     PyProgressCallbackUserData *pcud =
         static_cast<PyProgressCallbackUserData *>(userData);
     bool res = false;
+    CHECK_INVARIANT(pcud, "");
+    MCSParameters paramsCopy(params);
+    if (pcud->pyAtomBondCompData.standardBondTyperFunc) {
+      paramsCopy.BondTyper = pcud->pyAtomBondCompData.standardBondTyperFunc;
+    }
     {
-      MCSParameters paramsCopy(params);
-      if (pcud->pyAtomBondCompData.standardBondTyperFunc) {
-        paramsCopy.BondTyper = pcud->pyAtomBondCompData.standardBondTyperFunc;
-      }
+      PyGILStateHolder h;
       PyMCSParameters ps(paramsCopy, *pcud);
       PyMCSProgressData pd(stat);
-      PyGILStateHolder h;
       res = python::call_method<bool>(pcud->pyMCSProgress.ptr(),
-                                      pcud->callbackFuncName.c_str(),
-                                      boost::ref(pd), boost::ref(ps));
+                                      CALLBACK_FUNC_NAME, boost::ref(pd),
+                                      boost::ref(ps));
     }
     return res;
   }
-  PyMCSBondCompare btwPyMCSBondCompare;
-  MCSParameters btwParams;
+  static bool MCSFinalMatchCheckPyFunc(
+      const std::uint32_t c1[], const std::uint32_t c2[], const ROMol &mol1,
+      const FMCS::Graph &query, const ROMol &mol2, const FMCS::Graph &target,
+      const MCSParameters *params) {
+    PRECONDITION(params, "params must not be NULL");
+    PyMCSFinalMatchCheckFunctionUserData *fmud =
+        static_cast<PyMCSFinalMatchCheckFunctionUserData *>(
+            params->FinalMatchCheckerUserData);
+    CHECK_INVARIANT(fmud, "");
+    bool res = false;
+    {
+      PyGILStateHolder h;
+      PyMCSParameters ps(*params, *fmud);
+      auto numMcsAtoms = boost::num_vertices(query);
+      PyObject *pyAtomIdxMatch = PyTuple_New(numMcsAtoms);
+      for (unsigned int i = 0; i < numMcsAtoms; ++i) {
+        PyObject *pyPair = PyTuple_New(2);
+        PyTuple_SetItem(pyPair, 0,
+                        PyInt_FromLong(query[c1[boost::vertex(i, query)]]));
+        PyTuple_SetItem(pyPair, 1,
+                        PyInt_FromLong(target[c2[boost::vertex(i, query)]]));
+        PyTuple_SetItem(pyAtomIdxMatch, i, pyPair);
+      }
+      auto numMcsBonds = boost::num_edges(query);
+      auto queryBondIt = boost::edges(query).first;
+      PyObject *pyBondIdxMatch = PyTuple_New(numMcsBonds);
+      for (unsigned int i = 0; i < numMcsBonds; ++i, ++queryBondIt) {
+        const auto queryBond = mol1.getBondBetweenAtoms(
+            query[c1[boost::source(*queryBondIt, query)]],
+            query[c1[boost::target(*queryBondIt, query)]]);
+        CHECK_INVARIANT(queryBond, "");
+        const auto targetBond = mol2.getBondBetweenAtoms(
+            target[c2[boost::source(*queryBondIt, query)]],
+            target[c2[boost::target(*queryBondIt, query)]]);
+        CHECK_INVARIANT(targetBond, "");
+        PyObject *pyPair = PyTuple_New(2);
+        PyTuple_SetItem(pyPair, 0, PyInt_FromLong(queryBond->getIdx()));
+        PyTuple_SetItem(pyPair, 1, PyInt_FromLong(targetBond->getIdx()));
+        PyTuple_SetItem(pyBondIdxMatch, i, pyPair);
+      }
+      res = python::call_method<bool>(
+          fmud->pyMCSFinalMatchCheck.ptr(), CALLBACK_FUNC_NAME,
+          boost::ref(mol1), boost::ref(mol2), python::handle<>(pyAtomIdxMatch),
+          python::handle<>(pyBondIdxMatch), boost::ref(ps));
+    }
+    return res;
+  }
+  static bool MCSAcceptancePyFunc(
+      const ROMol &query, const ROMol &target,
+      const std::vector<std::pair<int, int>> &atomIdxMatch,
+      const std::vector<std::pair<int, int>> &bondIdxMatch,
+      const MCSParameters *params) {
+    PRECONDITION(params, "params must not be NULL");
+    PyMCSAcceptanceFunctionUserData *afud =
+        static_cast<PyMCSAcceptanceFunctionUserData *>(
+            params->ShouldAcceptMCSUserData);
+    CHECK_INVARIANT(afud, "");
+    bool res = false;
+    {
+      PyGILStateHolder h;
+      PyMCSParameters ps(*params, *afud);
+      auto pyAtomIdxMatch = convertMatchesToTupleOfPairs(atomIdxMatch);
+      auto pyBondIdxMatch = convertMatchesToTupleOfPairs(bondIdxMatch);
+      res = python::call_method<bool>(
+          afud->pyMCSAcceptance.ptr(), CALLBACK_FUNC_NAME, boost::ref(query),
+          boost::ref(target), python::handle<>(pyAtomIdxMatch),
+          python::handle<>(pyBondIdxMatch), boost::ref(ps));
+    }
+    return res;
+  }
   std::unique_ptr<MCSParameters> p;
-  std::unique_ptr<PyCompareFunctionUserData> cfud;
-  std::unique_ptr<PyProgressCallbackUserData> pcud;
+  PyCompareFunctionUserData cfud;
+  PyProgressCallbackUserData pcud;
+  PyMCSFinalMatchCheckFunctionUserData fmud;
+  PyMCSAcceptanceFunctionUserData afud;
 };
 
 MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
-                          double threshold, unsigned timeout, bool verbose,
+                          double threshold, unsigned int timeout, bool verbose,
                           bool matchValences, bool ringMatchesRingOnly,
                           bool completeRingsOnly, bool matchChiralTag,
                           AtomComparator atomComp, BondComparator bondComp,
@@ -605,30 +629,22 @@ MCSResult *FindMCSWrapper2(python::object mols, PyMCSParameters &pyMcsParams) {
   }
 
   MCSResult *res = nullptr;
-  pyMcsParams.clearRingTableCache();
-  python::extract<AtomComparator> extractAtomComparator(
-      pyMcsParams.getMCSAtomTyper());
-  python::extract<BondComparator> extractBondComparator(
-      pyMcsParams.getMCSBondTyper());
-  // if a custom Python AtomTyper was set but a custom Python BondTyper was not,
-  // we still need to call MCSBondComparePyFunc to correctly set up userData
-  // with RingMatchTables, and then call the standard C++ BondTyper (Github
-  // #3635)
-  if (!extractAtomComparator.check() && extractBondComparator.check() &&
-      (pyMcsParams.getBondCompareParameters().CompleteRingsOnly ||
-       pyMcsParams.getBondCompareParameters().RingMatchesRingOnly ||
-       pyMcsParams.getAtomCompareParameters().RingMatchesRingOnly)) {
-    pyMcsParams.setBondTyperWrapper();
-  }
   {
     NOGIL gil;
     res = new MCSResult(findMCS(ms, pyMcsParams.get()));
   }
-  pyMcsParams.unsetBondTyperWrapper();
   return res;
 }
 }  // namespace RDKit
 namespace {
+python::object degenerateSmartsQueryMolDictHelper(
+    const RDKit::MCSResult &self) {
+  python::dict res;
+  for (const auto &pair : self.DegenerateSmartsQueryMolDict) {
+    res[pair.first] = pair.second;
+  }
+  return std::move(res);
+}
 struct mcsresult_wrapper {
   static void wrap() {
     python::class_<RDKit::MCSResult>("MCSResult", "used to return MCS results",
@@ -642,7 +658,11 @@ struct mcsresult_wrapper {
         .def_readonly("smartsString", &RDKit::MCSResult::SmartsString,
                       "SMARTS string for the MCS")
         .def_readonly("canceled", &RDKit::MCSResult::Canceled,
-                      "if True, the MCS calculation did not finish");
+                      "if True, the MCS calculation did not finish")
+        .add_property(
+            "degenerateSmartsQueryMolDict", degenerateSmartsQueryMolDictHelper,
+            "Dictionary collecting all degenerate (SMARTS, queryMol) pairs "
+            "(empty if MCSParameters.StoreAll is False)");
   }
 };
 }  // namespace
@@ -725,21 +745,22 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                     &RDKit::PyMCSParameters::setMCSProgressCallback,
                     "progress callback class. Must be a "
                     "user-defined subclass of rdFMCS.Progress")
+      .add_property("FinalMatchChecker",
+                    &RDKit::PyMCSParameters::getFinalMatchCheck,
+                    &RDKit::PyMCSParameters::setFinalMatchCheck,
+                    "seed final match checker callback class. Must be a "
+                    "user-defined subclass of rdFMCS.MCSFinalMatchCheck")
+      .add_property("ShouldAcceptMCS",
+                    &RDKit::PyMCSParameters::getShouldAcceptMCS,
+                    &RDKit::PyMCSParameters::setShouldAcceptMCS,
+                    "MCS acceptance callback class. Must be a "
+                    "user-defined subclass of rdFMCS.MCSAcceptance")
       .add_property("InitialSeed", &RDKit::PyMCSParameters::getInitialSeed,
                     &RDKit::PyMCSParameters::setInitialSeed,
                     "SMILES string to be used as the seed of the MCS")
-      .def("SetAtomTyper", &RDKit::PyMCSParameters::setMCSAtomTyper,
-           (python::arg("self"), python::arg("comparator")),
-           "DEPRECATED: please use the AtomTyper property instead. "
-           "Sets the atom typer to be used. The argument must be one "
-           "of the members of the rdFMCS.MCSAtomCompare class or an "
-           "instance of a user-defined subclass of rdFMCS.MCSAtomCompare")
-      .def("SetBondTyper", &RDKit::PyMCSParameters::setMCSBondTyper,
-           (python::arg("self"), python::arg("comparator")),
-           "DEPRECATED: please use the BondTyper property instead. "
-           "Sets the bond typer to be used. The argument must be one "
-           "of the members of the rdFMCS.MCSBondCompare class or an "
-           "instance of a user-defined subclass of rdFMCS.MCSBondCompare");
+      .add_property("StoreAll", &RDKit::PyMCSParameters::getStoreAll,
+                    &RDKit::PyMCSParameters::setStoreAll,
+                    "toggles storage of degenerate MCSs");
 
   python::class_<RDKit::MCSAtomCompareParameters, boost::noncopyable>(
       "MCSAtomCompareParameters",
@@ -799,16 +820,7 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       .def(
           CALLBACK_FUNC_NAME, &RDKit::PyMCSProgress::operator(),
           (python::arg("self"), python::arg("stat"), python::arg("parameters")),
-          "override to implement a custom progress callback")
-      // DEPRECATED: remove from here in release 2021.01
-      .def(
-          CALLBACK_DEPRECATED_FUNC_NAME, &RDKit::PyMCSProgress::callback,
-          (python::arg("self"), python::arg("stat"), python::arg("parameters")),
-          "DEPRECATED: override " CALLBACK_FUNC_NAME
-          " instead.\n"
-          "override to implement a custom progress callback.\n")
-      // DEPRECATED: remove until here in release 2021.01
-      ;
+          "override to implement a custom progress callback");
 
   python::class_<RDKit::PyMCSProgressData, boost::noncopyable>(
       "MCSProgressData", "Information about the MCS progress")
@@ -842,14 +854,7 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       .def(COMPARE_FUNC_NAME, &RDKit::PyMCSAtomCompare::operator(),
            (python::arg("self"), python::arg("parameters"), python::arg("mol1"),
             python::arg("atom1"), python::arg("mol2"), python::arg("atom2")),
-           "override to implement custom atom comparison")
-      // DEPRECATED: remove from here in release 2020.03
-      .def(COMPARE_DEPRECATED_FUNC_NAME, &RDKit::PyMCSAtomCompare::compare,
-           (python::arg("self"), python::arg("parameters"), python::arg("mol1"),
-            python::arg("atom1"), python::arg("mol2"), python::arg("atom2")),
-           "override to implement custom atom comparison")
-      // DEPRECATED: remove until here in release 2020.03
-      ;
+           "override to implement custom atom comparison");
 
   python::class_<RDKit::PyMCSBondCompare, boost::noncopyable>(
       "MCSBondCompare",
@@ -869,14 +874,31 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       .def(COMPARE_FUNC_NAME, &RDKit::PyMCSBondCompare::operator(),
            (python::arg("self"), python::arg("parameters"), python::arg("mol1"),
             python::arg("bond1"), python::arg("mol2"), python::arg("bond2")),
-           "override to implement custom bond comparison")
-      // DEPRECATED: remove from here in release 2020.03
-      .def(COMPARE_DEPRECATED_FUNC_NAME, &RDKit::PyMCSBondCompare::compare,
-           (python::arg("self"), python::arg("parameters"), python::arg("mol1"),
-            python::arg("bond1"), python::arg("mol2"), python::arg("bond2")),
-           "override to implement custom bond comparison")
-      // DEPRECATED: remove until here in release 2020.03
-      ;
+           "override to implement custom bond comparison");
+
+  python::class_<RDKit::PyMCSFinalMatchCheck, boost::noncopyable>(
+      "MCSFinalMatchCheck",
+      "Base class. Subclass and override "
+      "MCSFinalMatchCheck." CALLBACK_FUNC_NAME
+      "() "
+      "to define a custom boolean callback function. "
+      "Returning True will cause the growing seed to be accepted, "
+      "False to be rejected")
+      .def(CALLBACK_FUNC_NAME, &RDKit::PyMCSFinalMatchCheck::operator(),
+           (python::arg("self")),
+           "override to implement a custom seed final match checker callback");
+
+  python::class_<RDKit::PyMCSAcceptance, boost::noncopyable>(
+      "MCSAcceptance",
+      "Base class. Subclass and override "
+      "MCSAcceptance." CALLBACK_FUNC_NAME
+      "() "
+      "to define a custom boolean callback function. "
+      "Returning True will cause the MCS candidate to be accepted, "
+      "False to be rejected")
+      .def(CALLBACK_FUNC_NAME, &RDKit::PyMCSAcceptance::operator(),
+           (python::arg("self")),
+           "override to implement a custom MCS acceptance callback");
 
   python::def("FindMCS", RDKit::FindMCSWrapper2,
               (python::arg("mols"), python::arg("parameters")),

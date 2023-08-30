@@ -594,6 +594,12 @@ RDKIT_GRAPHMOL_EXPORT ATOM_OR_QUERY *makeMAtomQuery();
 //! returns a Query for matching generic MH atoms (metals or H)
 RDKIT_GRAPHMOL_EXPORT ATOM_OR_QUERY *makeMHAtomQuery();
 
+// We support the same special atom queries that we can read from
+// CXSMILES
+const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
+                                                 "X", "XH", "M", "MH"};
+RDKIT_GRAPHMOL_EXPORT void convertComplexNameToQuery(Atom *query, std::string_view symb);
+
 //! returns a Query for matching atoms that have ring bonds
 template <class T>
 T *makeAtomHasRingBondQuery(const std::string &descr) {
@@ -887,7 +893,7 @@ class HasPropWithValueQuery
         res = Queries::queryCmp(atom_val, this->val, this->tolerance) == 0;
       } catch (KeyErrorException &) {
         res = false;
-      } catch (boost::bad_any_cast &) {
+      } catch (std::bad_any_cast &) {
         res = false;
       }
 #ifdef __GNUC__
@@ -953,7 +959,7 @@ class HasPropWithValueQuery<TargetPtr, std::string>
         res = atom_val == this->val;
       } catch (KeyErrorException &) {
         res = false;
-      } catch (boost::bad_any_cast &) {
+      } catch (std::bad_any_cast &) {
         res = false;
       }
 #ifdef __GNUC__
@@ -1022,7 +1028,7 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
         res = (1.0 - tani) <= tol;
       } catch (KeyErrorException &) {
         res = false;
-      } catch (boost::bad_any_cast &) {
+      } catch (std::bad_any_cast &) {
         res = false;
       }
 #ifdef __GNUC__

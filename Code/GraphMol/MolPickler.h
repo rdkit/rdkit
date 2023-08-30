@@ -239,8 +239,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
   //! do the actual work of pickling Stereo Group data
   template <typename T>
-  static void _pickleStereo(std::ostream &ss,
-                            const std::vector<StereoGroup> &groups,
+  static void _pickleStereo(std::ostream &ss, std::vector<StereoGroup> groups,
                             std::map<int, int> &atomIdxMap);
 
   //! do the actual work of pickling a Conformer

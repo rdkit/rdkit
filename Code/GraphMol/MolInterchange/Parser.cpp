@@ -237,6 +237,12 @@ void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
     }
     const auto typ =
         MolInterchange::stereoGrouplookup.at(sgVal["type"].GetString());
+
+    unsigned gId = 0;
+    if (typ != StereoGroupType::STEREO_ABSOLUTE && sgVal.HasMember("id")) {
+      gId = sgVal["id"].GetUint();
+    }
+
     const auto &aids = sgVal["atoms"].GetArray();
     std::vector<Atom *> atoms;
     for (const auto &aid : aids) {
@@ -244,7 +250,7 @@ void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
     }
 
     if (!atoms.empty()) {
-      molSGs.emplace_back(typ, std::move(atoms));
+      molSGs.emplace_back(typ, std::move(atoms), gId);
     }
   }
   mol->setStereoGroups(std::move(molSGs));

@@ -246,10 +246,12 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
     and where no atoms are added in the product.
 
      \param reactant The single reactant to use
+     \param removeUnmatchedAtoms toggles whether or not atoms from the reactant
+                             which do not match template atoms are removed.
 
      \return whether or not the reactant was actually modified
   */
-  bool runReactant(RWMol &reactant) const;
+  bool runReactant(RWMol &reactant, bool removeUnmatchedAtoms = true) const;
 
   const MOL_SPTR_VECT &getReactants() const {
     return this->m_reactantTemplates;

@@ -847,3 +847,31 @@ JSMol *get_mcs_as_mol(const JSMolList &molList,
   return new JSMol(new RWMol(*res.QueryMol));
 }
 #endif
+
+RDKit::MinimalLib::LogHandle::LoggingFlag
+    RDKit::MinimalLib::LogHandle::d_loggingNeedsInit = true;
+
+JSLog::JSLog(RDKit::MinimalLib::LogHandle *logHandle) : d_logHandle(logHandle) {
+  assert(d_logHandle);
+}
+
+JSLog::~JSLog() { delete d_logHandle; }
+
+std::string JSLog::get_buffer() const { return d_logHandle->getBuffer(); }
+
+void JSLog::clear_buffer() const { d_logHandle->clearBuffer(); }
+
+JSLog *set_log_tee(const std::string &log_name) {
+  auto logHandle = RDKit::MinimalLib::LogHandle::setLogTee(log_name.c_str());
+  return logHandle ? new JSLog(logHandle) : nullptr;
+}
+
+JSLog *set_log_capture(const std::string &log_name) {
+  auto logHandle =
+      RDKit::MinimalLib::LogHandle::setLogCapture(log_name.c_str());
+  return logHandle ? new JSLog(logHandle) : nullptr;
+}
+
+void enable_logging() { RDKit::MinimalLib::LogHandle::enableLogging(); }
+
+void disable_logging() { RDKit::MinimalLib::LogHandle::disableLogging(); }

@@ -14,6 +14,8 @@ jobs:
     compiler: gxx_linux-64
     number_of_cores: nproc
     python_name: python38
+    cc: gcc-10
+    cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build.yml
 - job: Ubuntu_x64_py311
@@ -24,12 +26,14 @@ jobs:
     python: python=3.11
     boost_version: 1.80.0
     compiler: gxx_linux-64
+    cc: gcc-10
+    cxx: g++-10
     number_of_cores: nproc
     python_name: python311
   steps:
   - template: .azure-pipelines/linux_build_py311.yml
 - job: macOS_x64
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
   pool:
     vmImage: macos-latest
   variables:
@@ -66,10 +70,12 @@ jobs:
   pool:
     vmImage: ubuntu-20.04
   variables:
-    compiler: gxx_linux-64=9.3.0
     boost_version: 1.67.0
     number_of_cores: nproc
     python_name: python37
+    compiler: gxx_linux-64
+    cc: gcc-10
+    cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build_java.yml
 - job: macOS_x64_java
@@ -92,6 +98,9 @@ jobs:
   variables:
     boost_version: 1.69.0
     number_of_cores: nproc
+    compiler: gxx_linux-64
+    cc: gcc-10
+    cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build_cartridge.yml
 - job: Ubuntu_x64_limitexternaldependencies
@@ -101,9 +110,11 @@ jobs:
   variables:
     python: python=3.8
     boost_version: 1.71.0
-    compiler: gxx_linux-64
     number_of_cores: nproc
     python_name: python38
+    compiler: gxx_linux-64
+    cc: gcc-10
+    cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build_limitexternal.yml
 
