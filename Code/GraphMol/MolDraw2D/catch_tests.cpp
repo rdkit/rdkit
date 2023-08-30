@@ -50,257 +50,258 @@ static const bool DELETE_WITH_GOOD_HASH = true;
 // These values are for a build with FreeType, so expect them all to be
 // wrong when building without.
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"testAtomTags_1.svg", 146691388U},
-    {"testAtomTags_2.svg", 3210393969U},
-    {"testAtomTags_3.svg", 2131854465U},
-    {"contourMol_1.svg", 3218870758U},
-    {"contourMol_2.svg", 2353351393U},
-    {"contourMol_3.svg", 3493070184U},
-    {"contourMol_4.svg", 764999893U},
-    {"testDativeBonds_1.svg", 555607912U},
-    {"testDativeBonds_2.svg", 2355686690U},
-    {"testDativeBonds_3.svg", 3944956974U},
-    {"testDativeBonds_2a.svg", 1026259021U},
-    {"testDativeBonds_2b.svg", 3842058701U},
-    {"testDativeBonds_2c.svg", 1000280203U},
-    {"testDativeBonds_2d.svg", 3605527201U},
-    {"testZeroOrderBonds_1.svg", 582365640U},
-    {"testFoundations_1.svg", 767448647U},
-    {"testFoundations_2.svg", 1248494165U},
-    {"testTest_1.svg", 1248494165U},
-    {"testKekulizationProblems_1.svg", 3747357148U},
-    {"testAtomBondIndices_1.svg", 3247225756U},
-    {"testAtomBondIndices_2.svg", 2812688864U},
-    {"testAtomBondIndices_3.svg", 3653054459U},
-    {"testAtomBondIndices_4.svg", 635195563U},
-    {"testAtomBondIndices_5.svg", 23594241U},
-    {"testAtomBondIndices_6.svg", 1127540948U},
-    {"testGithub3226_1.svg", 4099803989U},
-    {"testGithub3226_2.svg", 3134615187U},
-    {"testGithub3226_3.svg", 1488097417U},
-    {"testGithub3369_1.svg", 4165525787U},
-    {"testIncludeRadicals_1a.svg", 2528551797U},
-    {"testIncludeRadicals_1b.svg", 3075507489U},
-    {"testLegendsAndDrawing-1.svg", 1693176512U},
-    {"testGithub3577-1.svg", 3974438540U},
-    {"testHandDrawn-1.svg", 799391905U},
-    {"testHandDrawn-2.svg", 1696668329U},
-    {"testHandDrawn-3.svg", 3293983707U},
-    {"testHandDrawn-4.svg", 3348972281U},
-    {"testHandDrawn-5a.svg", 1171105985U},
-    {"testHandDrawn-5b.svg", 1165866976U},
-    {"testBrackets-1a.svg", 3257646535U},
-    {"testBrackets-1b.svg", 776088825U},
-    {"testBrackets-1c.svg", 3257646535U},
-    {"testBrackets-1d.svg", 776088825U},
-    {"testBrackets-1e.svg", 1202405256U},
-    {"testBrackets-2a.svg", 728321376U},
-    {"testBrackets-2b.svg", 1408188695U},
-    {"testBrackets-2c.svg", 728321376U},
-    {"testBrackets-2d.svg", 1408188695U},
-    {"testBrackets-3a.svg", 791450653U},
-    {"testBrackets-4a.svg", 769125635U},
-    {"testBrackets-4b.svg", 4066682338U},
-    {"testBrackets-5a.svg", 1388227932U},
-    {"testBrackets-5768.svg", 3070888879U},
-    {"testSGroupData-1a.svg", 1463366807U},
-    {"testSGroupData-1b.svg", 223883202U},
-    {"testSGroupData-2a.svg", 3547547260U},
-    {"testSGroupData-2b.svg", 2573013307U},
-    {"testSGroupData-3a.svg", 2220120573U},
-    {"testPositionVariation-1.svg", 444914699U},
-    {"testPositionVariation-1b.svg", 3646629289U},
-    {"testPositionVariation-2.svg", 624353208U},
-    {"testPositionVariation-3.svg", 3408717052U},
-    {"testPositionVariation-4.svg", 4125874052U},
-    {"testNoAtomLabels-1.svg", 2648234379U},
-    {"testNoAtomLabels-2.svg", 3213096674U},
-    {"testQueryBonds-1a.svg", 713354870U},
-    {"testQueryBonds-1b.svg", 2517713542U},
-    {"testQueryBonds-1c.svg", 3119135647U},
-    {"testQueryBonds-2.svg", 69341882U},
-    {"testLinkNodes-2-0.svg", 2952965907U},
-    {"testLinkNodes-2-30.svg", 4117540200U},
-    {"testLinkNodes-2-60.svg", 520576199U},
-    {"testLinkNodes-2-90.svg", 1403605120U},
-    {"testLinkNodes-2-120.svg", 3607355853U},
-    {"testLinkNodes-2-150.svg", 177350824U},
-    {"testLinkNodes-2-180.svg", 3809030739U},
-    {"testMolAnnotations-1.svg", 1091624544U},
-    {"testMolAnnotations-2a.svg", 2203886283U},
-    {"testMolAnnotations-2b.svg", 400443600U},
-    {"testMolAnnotations-2c.svg", 3954034822U},
-    {"testMolAnnotations-3a.svg", 1752047273U},
-    {"testMolAnnotations-3b.svg", 2068377089U},
-    {"testMolAnnotations-3c.svg", 4288169182U},
-    {"testMolAnnotations-3d.svg", 1514775509U},
-    {"testMolAnnotations-4a.svg", 569955128U},
-    {"testLinkNodes-1-0.svg", 2929724949U},
-    {"testLinkNodes-1-30.svg", 800625899U},
-    {"testLinkNodes-1-60.svg", 609508172U},
-    {"testLinkNodes-1-90.svg", 2665766032U},
-    {"testLinkNodes-1-120.svg", 992989277U},
-    {"testLinkNodes-1-150.svg", 1392691166U},
-    {"testLinkNodes-1-180.svg", 130695597U},
-    {"testGithub3744.svg", 2774492807U},
-    {"testAtomLists-1.svg", 2751373083U},
-    {"testAtomLists-2.svg", 385738799U},
-    {"testIsoDummyIso.svg", 1696129196U},
-    {"testNoIsoDummyIso.svg", 2004687512U},
-    {"testIsoNoDummyIso.svg", 2734544682U},
-    {"testNoIsoNoDummyIso.svg", 918094584U},
-    {"testDeuteriumTritium.svg", 2634768249U},
-    {"testHydrogenBonds1.svg", 4137715598U},
-    {"testHydrogenBonds2.svg", 2044702263U},
-    {"testGithub3912.1.svg", 3081580881U},
-    {"testGithub3912.2.svg", 1662866562U},
-    {"testGithub2976.svg", 971026582U},
-    {"testReactionCoords.svg", 4128536127U},
-    {"testAnnotationColors.svg", 445523422U},
-    {"testGithub4323_1.svg", 1993234598U},
-    {"testGithub4323_2.svg", 2933922429U},
-    {"testGithub4323_3.svg", 1773544359U},
-    {"testGithub4323_4.svg", 213795827U},
-    {"testGithub4238_1.svg", 629357140U},
-    {"testGithub4508_1.svg", 3784765069U},
-    {"testGithub4508_1b.svg", 3433942203U},
-    {"testGithub4508_2.svg", 326155865U},
-    {"testGithub4508_2b.svg", 662225995U},
-    {"testGithub4538.svg", 3198623323U},
-    {"testDarkMode.1.svg", 1977391752U},
-    {"testMonochrome.1.svg", 1776897420U},
-    {"testMonochrome.2.svg", 399259780U},
-    {"testAvalon.1.svg", 1614166818U},
-    {"testCDK.1.svg", 3108685638U},
-    {"testGithub4519_1.svg", 473230604U},
-    {"testGithub4519_2.svg", 2515716875U},
-    {"testGithub4519_3.svg", 1017109741U},
-    {"testGithub4519_4.svg", 645908829U},
-    {"testBaseFontSize.1a.svg", 3939288880U},
-    {"testBaseFontSize.1b.svg", 2617787443U},
-    {"testBaseFontSize.2a.svg", 1031690455U},
-    {"testBaseFontSize.2b.svg", 3440038194U},
-    {"testFlexiCanvas.1a.svg", 3145560884U},
-    {"testFlexiCanvas.1b.svg", 1140847713U},
-    {"testFlexiCanvas.1c.svg", 2832891200U},
-    {"testFlexiCanvas.1d.svg", 4220526884U},
-    {"testFlexiCanvas.2.svg", 1185770886U},
-    {"testSemiFlexiCanvas.1a.svg", 414967968U},
-    {"testSemiFlexiCanvas.1b.svg", 367831852U},
-    {"testSemiFlexiCanvas.1c.svg", 316673185U},
-    {"testFlexiCanvas.3.svg", 3822475112U},
-    {"testFlexiCanvas.4a.svg", 438150211U},
-    {"testFlexiCanvas.4b.svg", 2015277207U},
-    {"testFlexiCanvas.4c.svg", 3138663789U},
-    {"testFlexiCanvas.4d.svg", 1950746506U},
-    {"testFlexiCanvas.5a.svg", 1204456580U},
-    {"testFlexiCanvas.5b.svg", 4164471763U},
-    {"testFlexiCanvas.5c.svg", 2381227232U},
-    {"testFlexiCanvas.5d.svg", 2157866153U},
-    {"testFlexiCanvas.6a.svg", 4104973953U},
-    {"testFlexiCanvas.6b.svg", 2392263541U},
-    {"testFlexiCanvas.6c.svg", 4104973953U},
-    {"testFlexiCanvas.6d.svg", 4104973953U},
-    {"testFlexiCanvas.7a.svg", 918094125U},
-    {"testFlexiCanvas.7b.svg", 4094511140U},
-    {"testFlexiCanvas.7c.svg", 918094125U},
-    {"testFlexiCanvas.7d.svg", 918094125U},
-    {"testGithub4764.sz1.svg", 1112373450U},
-    {"testGithub4764.sz2.svg", 3676136052U},
-    {"testGithub4764.sz3.svg", 2565894452U},
-    {"testDrawArc1.svg", 4039810147U},
-    {"testMetalWedges.svg", 3278785383U},
-    {"testVariableLegend_1.svg", 3914441319U},
-    {"testVariableLegend_2.svg", 3458084009U},
-    {"testVariableLegend_3.svg", 1996551457U},
-    {"testGithub_5061.svg", 2698477851U},
-    {"testGithub_5185.svg", 2944445711U},
-    {"testGithub_5269_1.svg", 2884233026U},
-    {"testGithub_5269_2.svg", 2987891082U},
-    {"test_classes_wavy_bonds.svg", 1271445012U},
+    {"testAtomTags_1.svg", 3187798125U},
+    {"testAtomTags_2.svg", 822910240U},
+    {"testAtomTags_3.svg", 2244078420U},
+    {"contourMol_1.svg", 1854090324U},
+    {"contourMol_2.svg", 3666750661U},
+    {"contourMol_3.svg", 4287715238U},
+    {"contourMol_4.svg", 250853502U},
+    {"testDativeBonds_1.svg", 2877255976U},
+    {"testDativeBonds_2.svg", 2510476717U},
+    {"testDativeBonds_3.svg", 3256011686U},
+    {"testDativeBonds_2a.svg", 3936523099U},
+    {"testDativeBonds_2b.svg", 1652957675U},
+    {"testDativeBonds_2c.svg", 630355005U},
+    {"testDativeBonds_2d.svg", 2346072497U},
+    {"testZeroOrderBonds_1.svg", 3733430366U},
+    {"testFoundations_1.svg", 2350247048U},
+    {"testFoundations_2.svg", 15997352U},
+    {"testTest_1.svg", 15997352U},
+    {"testKekulizationProblems_1.svg", 3009056821U},
+    {"testAtomBondIndices_1.svg", 2702803018U},
+    {"testAtomBondIndices_2.svg", 1564350363U},
+    {"testAtomBondIndices_3.svg", 2316486733U},
+    {"testAtomBondIndices_4.svg", 1200363593U},
+    {"testAtomBondIndices_5.svg", 1502163147U},
+    {"testAtomBondIndices_6.svg", 1659568104U},
+    {"testGithub3226_1.svg", 831257877U},
+    {"testGithub3226_2.svg", 3517325227U},
+    {"testGithub3226_3.svg", 3609721552U},
+    {"testGithub3369_1.svg", 3091976328U},
+    {"testIncludeRadicals_1a.svg", 1829641340U},
+    {"testIncludeRadicals_1b.svg", 4184066907U},
+    {"testLegendsAndDrawing-1.svg", 3563802758U},
+    {"testGithub3577-1.svg", 1294276543U},
+    {"testHandDrawn-1.svg", 2253418236U},
+    {"testHandDrawn-2.svg", 4132716144U},
+    {"testHandDrawn-3.svg", 4199337510U},
+    {"testHandDrawn-4.svg", 4197407865U},
+    {"testHandDrawn-5a.svg", 3628607349U},
+    {"testHandDrawn-5b.svg", 2522138089U},
+    {"testBrackets-1a.svg", 4189399574U},
+    {"testBrackets-1b.svg", 3773894816U},
+    {"testBrackets-1c.svg", 4189399574U},
+    {"testBrackets-1d.svg", 3773894816U},
+    {"testBrackets-1e.svg", 2492125470U},
+    {"testBrackets-2a.svg", 1050851904U},
+    {"testBrackets-2b.svg", 776446765U},
+    {"testBrackets-2c.svg", 1050851904U},
+    {"testBrackets-2d.svg", 776446765U},
+    {"testBrackets-3a.svg", 1374944956U},
+    {"testBrackets-4a.svg", 3837821771U},
+    {"testBrackets-4b.svg", 1477006167U},
+    {"testBrackets-5a.svg", 3061667963U},
+    {"testBrackets-5768.svg", 2559120196U},
+    {"testSGroupData-1a.svg", 426096222U},
+    {"testSGroupData-1b.svg", 1688385103U},
+    {"testSGroupData-2a.svg", 195363059U},
+    {"testSGroupData-2b.svg", 942041938U},
+    {"testSGroupData-3a.svg", 2405789536U},
+    {"testPositionVariation-1.svg", 1347003808U},
+    {"testPositionVariation-1b.svg", 174339626U},
+    {"testPositionVariation-2.svg", 473948585U},
+    {"testPositionVariation-3.svg", 4039188982U},
+    {"testPositionVariation-4.svg", 3407574474U},
+    {"testNoAtomLabels-1.svg", 4255907058U},
+    {"testNoAtomLabels-2.svg", 3643749531U},
+    {"testQueryBonds-1a.svg", 1525751327U},
+    {"testQueryBonds-1b.svg", 3339941561U},
+    {"testQueryBonds-1c.svg", 375371096U},
+    {"testQueryBonds-2.svg", 3399320861U},
+    {"testLinkNodes-2-0.svg", 145749789U},
+    {"testLinkNodes-2-30.svg", 3203923109U},
+    {"testLinkNodes-2-60.svg", 2004079267U},
+    {"testLinkNodes-2-90.svg", 171994932U},
+    {"testLinkNodes-2-120.svg", 673333745U},
+    {"testLinkNodes-2-150.svg", 51965551U},
+    {"testLinkNodes-2-180.svg", 433020402U},
+    {"testMolAnnotations-1.svg", 1638024035U},
+    {"testMolAnnotations-2a.svg", 3029896996U},
+    {"testMolAnnotations-2b.svg", 3110016833U},
+    {"testMolAnnotations-2c.svg", 611992302U},
+    {"testMolAnnotations-3a.svg", 55379064U},
+    {"testMolAnnotations-3b.svg", 936144383U},
+    {"testMolAnnotations-3c.svg", 3983292921U},
+    {"testMolAnnotations-3d.svg", 748075045U},
+    {"testMolAnnotations-4a.svg", 3474490519U},
+    {"testLinkNodes-1-0.svg", 3845035394U},
+    {"testLinkNodes-1-30.svg", 3207457801U},
+    {"testLinkNodes-1-60.svg", 2620138210U},
+    {"testLinkNodes-1-90.svg", 1457485851U},
+    {"testLinkNodes-1-120.svg", 4267267665U},
+    {"testLinkNodes-1-150.svg", 574622776U},
+    {"testLinkNodes-1-180.svg", 2541146503U},
+    {"testGithub3744.svg", 387800653U},
+    {"testAtomLists-1.svg", 1887579391U},
+    {"testAtomLists-2.svg", 555139782U},
+    {"testIsoDummyIso.svg", 2405371137U},
+    {"testNoIsoDummyIso.svg", 748558214U},
+    {"testIsoNoDummyIso.svg", 3054263824U},
+    {"testNoIsoNoDummyIso.svg", 1185561148U},
+    {"testDeuteriumTritium.svg", 1867318569U},
+    {"testHydrogenBonds1.svg", 2605974904U},
+    {"testHydrogenBonds2.svg", 645414593U},
+    {"testGithub3912.1.svg", 2513727029U},
+    {"testGithub3912.2.svg", 3814673891U},
+    {"testGithub2976.svg", 2669316911U},
+    {"testReactionCoords.svg", 3830348196U},
+    {"testAnnotationColors.svg", 2216313312U},
+    {"testGithub4323_1.svg", 2536621192U},
+    {"testGithub4323_2.svg", 2120846759U},
+    {"testGithub4323_3.svg", 4156867630U},
+    {"testGithub4323_4.svg", 3824125601U},
+    {"testGithub4238_1.svg", 2621118499U},
+    {"testGithub4508_1.svg", 2047652713U},
+    {"testGithub4508_1b.svg", 2681019776U},
+    {"testGithub4508_2.svg", 1382076550U},
+    {"testGithub4508_2b.svg", 4005636724U},
+    {"testGithub4538.svg", 2797362550U},
+    {"testDarkMode.1.svg", 4157562958U},
+    {"testMonochrome.1.svg", 482290994U},
+    {"testMonochrome.2.svg", 2128285153U},
+    {"testAvalon.1.svg", 477303888U},
+    {"testCDK.1.svg", 1764612361U},
+    {"testGithub4519_1.svg", 736612670U},
+    {"testGithub4519_2.svg", 171503813U},
+    {"testGithub4519_3.svg", 3396792960U},
+    {"testGithub4519_4.svg", 3924693257U},
+    {"testBaseFontSize.1a.svg", 1295117205U},
+    {"testBaseFontSize.1b.svg", 3595811515U},
+    {"testBaseFontSize.2a.svg", 2958687877U},
+    {"testBaseFontSize.2b.svg", 1786972332U},
+    {"testFlexiCanvas.1a.svg", 2633733362U},
+    {"testFlexiCanvas.1b.svg", 1541095928U},
+    {"testFlexiCanvas.1c.svg", 3204351481U},
+    {"testFlexiCanvas.1d.svg", 1753089731U},
+    {"testFlexiCanvas.2.svg", 665664909U},
+    {"testSemiFlexiCanvas.1a.svg", 1541095928U},
+    {"testSemiFlexiCanvas.1b.svg", 3020732451U},
+    {"testSemiFlexiCanvas.1c.svg", 4178696811U},
+    {"testFlexiCanvas.3.svg", 2819587550U},
+    {"testFlexiCanvas.4a.svg", 1486952473U},
+    {"testFlexiCanvas.4b.svg", 1957607740U},
+    {"testFlexiCanvas.4c.svg", 3955371857U},
+    {"testFlexiCanvas.4d.svg", 1137945621U},
+    {"testFlexiCanvas.5a.svg", 3968863584U},
+    {"testFlexiCanvas.5b.svg", 649567318U},
+    {"testFlexiCanvas.5c.svg", 1826396133U},
+    {"testFlexiCanvas.5d.svg", 1730603480U},
+    {"testFlexiCanvas.6a.svg", 3085867303U},
+    {"testFlexiCanvas.6b.svg", 2819164642U},
+    {"testFlexiCanvas.6c.svg", 3085867303U},
+    {"testFlexiCanvas.6d.svg", 3085867303U},
+    {"testFlexiCanvas.7a.svg", 514767495U},
+    {"testFlexiCanvas.7b.svg", 4275125955U},
+    {"testFlexiCanvas.7c.svg", 514767495U},
+    {"testFlexiCanvas.7d.svg", 514767495U},
+    {"testGithub4764.sz1.svg", 3611125861U},
+    {"testGithub4764.sz2.svg", 1936114454U},
+    {"testGithub4764.sz3.svg", 2712214121U},
+    {"testDrawArc1.svg", 3279637525U},
+    {"testMetalWedges.svg", 2896721486U},
+    {"testVariableLegend_1.svg", 1817838365U},
+    {"testVariableLegend_2.svg", 1038247753U},
+    {"testVariableLegend_3.svg", 2073034956U},
+    {"testGithub_5061.svg", 83338095U},
+    {"testGithub_5185.svg", 3800073130U},
+    {"testGithub_5269_1.svg", 3886922298U},
+    {"testGithub_5269_2.svg", 2890052584U},
+    {"test_classes_wavy_bonds.svg", 1694809514U},
     {"testGithub_5383_1.svg", 1391972140U},
-    {"github5156_1.svg", 695855770U},
-    {"github5156_2.svg", 1130781980U},
-    {"github5156_3.svg", 3284451122U},
+    {"github5156_1.svg", 2145907703U},
+    {"github5156_2.svg", 4184795863U},
+    {"github5156_3.svg", 420595965U},
     {"test_molblock_wedges.svg", 1106580037U},
-    {"github5383_1.svg", 2353351393U},
-    {"acs1996_1.svg", 51426601U},
-    {"acs1996_2.svg", 833573044U},
-    {"acs1996_3.svg", 580751118U},
-    {"acs1996_4.svg", 1695920511U},
-    {"acs1996_5.svg", 2883542240U},
-    {"acs1996_6.svg", 1380727178U},
-    {"acs1996_7.svg", 2718384395U},
-    {"acs1996_8.svg", 939325262U},
-    {"acs1996_9.svg", 2607143500U},
-    {"acs1996_10.svg", 199499735U},
-    {"acs1996_11.svg", 2028939343U},
-    {"acs1996_12.svg", 2233727631U},
-    {"test_unspec_stereo.svg", 599119798U},
-    {"light_blue_h_no_label_1.svg", 3735371135U},
-    {"test_github_5534.svg", 574501211U},
-    {"bond_highlights_1.svg", 1426179967U},
-    {"bond_highlights_2.svg", 3654242474U},
-    {"bond_highlights_3.svg", 2068128924U},
-    {"bond_highlights_4.svg", 2068128924U},
-    {"bond_highlights_5.svg", 4115973245U},
-    {"bond_highlights_6.svg", 1566801788U},
-    {"bond_highlights_7.svg", 3347700584U},
-    {"bond_highlights_8.svg", 3826056528U},
-    {"bond_highlights_9.svg", 2915809284U},
-    {"testGithub5486_1.svg", 1149144091U},
-    {"testGithub5511_1.svg", 940106456U},
-    {"testGithub5511_2.svg", 1448975272U},
-    {"test_github5767.svg", 3153964439U},
-    {"test_github5704_1.svg", 2803704016U},
-    {"test_github5704_2.svg", 2000837483U},
-    {"test_github5704_3.svg", 2359820445U},
-    {"test_github5704_4.svg", 2033407805U},
-    {"test_github5943.svg", 1111951851U},
-    {"test_github5947.svg", 2858910387U},
-    {"test_github5767.svg", 3153964439U},
-    {"test_github5949.svg", 1324215728U},
-    {"test_github5974.svg", 394879876U},
-    {"test_github5963.svg", 582369551U},
-    {"test_github6025.svg", 1908346499U},
-    {"test_github5963.svg", 582369551U},
-    {"test_github6027_1.svg", 1864343362U},
-    {"test_github6027_2.svg", 330549720U},
-    {"test_complex_query_atoms_1.svg", 1569543436U},
-    {"test_complex_query_atoms_2.svg", 1958885073U},
-    {"test_complex_query_atoms_3.svg", 2485432018U},
-    {"test_complex_query_atoms_4.svg", 2485432018U},
-    {"test_complex_query_atoms_5.svg", 3301518551U},
-    {"test_complex_query_atoms_6.svg", 3415494504U},
-    {"test_complex_query_atoms_7.svg", 3857334874U},
-    {"test_complex_query_atoms_8.svg", 3355019842U},
-    {"test_complex_query_atoms_9.svg", 952404505U},
-    {"test_complex_query_atoms_10.svg", 2592662841U},
-    {"test_complex_query_atoms_11.svg", 3667326374U},
-    {"test_complex_query_atoms_12.svg", 582133495U},
-    {"test_complex_query_atoms_13.svg", 557287774U},
-    {"test_complex_query_atoms_14.svg", 3566661047U},
-    {"test_complex_query_atoms_15.svg", 4188921077U},
-    {"test_complex_query_atoms_16.svg", 1980695915U},
-    {"test_github6041b.svg", 3485054881U},
-    {"test_github6111_1.svg", 3458417163U},
-    {"test_github6112.svg", 908847383U},
-    {"test_github6160_1.svg", 3669327545U},
-    {"test_github6160_2.svg", 3704672111U},
-    {"test_github6160_3.svg", 2431440968U},
-    {"test_github6170.svg", 865612473U},
-    {"test_getMolSize.svg", 3574937936U},
-    {"test_github6200_1.svg", 1827224658U},
-    {"test_github6200_2.svg", 661919921U},
-    {"test_queryColour_1.svg", 3758375489U},
-    {"test_queryColour_2.svg", 2426598062U},
+    {"github5383_1.svg", 3666750661U},
+    {"acs1996_1.svg", 1111630317U},
+    {"acs1996_2.svg", 1521279517U},
+    {"acs1996_3.svg", 879041204U},
+    {"acs1996_4.svg", 1550424006U},
+    {"acs1996_5.svg", 1680320774U},
+    {"acs1996_6.svg", 3810124161U},
+    {"acs1996_7.svg", 1113821459U},
+    {"acs1996_8.svg", 2477908768U},
+    {"acs1996_9.svg", 3747924004U},
+    {"acs1996_10.svg", 2229333301U},
+    {"acs1996_11.svg", 4107969968U},
+    {"acs1996_12.svg", 2930884583U},
+    {"test_unspec_stereo.svg", 3923423666U},
+    {"light_blue_h_no_label_1.svg", 1615074554U},
+    {"test_github_5534.svg", 4139208597U},
+    {"bond_highlights_1.svg", 3940401825U},
+    {"bond_highlights_2.svg", 4196744632U},
+    {"bond_highlights_3.svg", 851066096U},
+    {"bond_highlights_4.svg", 851066096U},
+    {"bond_highlights_5.svg", 2352169547U},
+    {"bond_highlights_6.svg", 4191585723U},
+    {"bond_highlights_7.svg", 2160801877U},
+    {"bond_highlights_8.svg", 2956924065U},
+    {"bond_highlights_9.svg", 3999278931U},
+    {"testGithub5486_1.svg", 3146085634U},
+    {"testGithub5511_1.svg", 3975118836U},
+    {"testGithub5511_2.svg", 1730094503U},
+    {"test_github5767.svg", 3943519724U},
+    {"test_github5704_1.svg", 1676917819U},
+    {"test_github5704_2.svg", 2959183882U},
+    {"test_github5704_3.svg", 1303839406U},
+    {"test_github5704_4.svg", 578468407U},
+    {"test_github5943.svg", 1113511714U},
+    {"test_github5947.svg", 337972125U},
+    {"test_github5767.svg", 3943519724U},
+    {"test_github5949.svg", 420848566U},
+    {"test_github5974.svg", 1522014196U},
+    {"test_github5963.svg", 3467316956U},
+    {"test_github6025.svg", 2316385019U},
+    {"test_github5963.svg", 3467316956U},
+    {"test_github6027_1.svg", 1504848694U},
+    {"test_github6027_2.svg", 765638922U},
+    {"test_complex_query_atoms_1.svg", 1058348348U},
+    {"test_complex_query_atoms_2.svg", 3820627663U},
+    {"test_complex_query_atoms_3.svg", 2574610745U},
+    {"test_complex_query_atoms_4.svg", 2574610745U},
+    {"test_complex_query_atoms_5.svg", 2239402605U},
+    {"test_complex_query_atoms_6.svg", 2784917732U},
+    {"test_complex_query_atoms_7.svg", 4016570948U},
+    {"test_complex_query_atoms_8.svg", 1215989604U},
+    {"test_complex_query_atoms_9.svg", 774489308U},
+    {"test_complex_query_atoms_10.svg", 1888858967U},
+    {"test_complex_query_atoms_11.svg", 2202417832U},
+    {"test_complex_query_atoms_12.svg", 4094464645U},
+    {"test_complex_query_atoms_13.svg", 2082462146U},
+    {"test_complex_query_atoms_14.svg", 3306293765U},
+    {"test_complex_query_atoms_15.svg", 422354297U},
+    {"test_complex_query_atoms_16.svg", 1559600050U},
+    {"test_github6041b.svg", 444537337U},
+    {"test_github6111_1.svg", 57798875U},
+    {"test_github6112.svg", 3278777629U},
+    {"test_github6160_1.svg", 518073509U},
+    {"test_github6160_2.svg", 2491651948U},
+    {"test_github6160_3.svg", 2709442517U},
+    {"test_github6170.svg", 1561786551U},
+    {"test_getMolSize.svg", 1258513283U},
+    {"test_github6200_1.svg", 1044179149U},
+    {"test_github6200_2.svg", 2658818798U},
+    {"test_queryColour_1.svg", 778322651U},
+    {"test_queryColour_2.svg", 45913095U},
     {"github6336_1.svg", 612606818U},
-    {"github6416.svg", 3045235864U},
-    {"test_github6397_1.svg", 1825590478U},
-    {"test_github6397_2.svg", 3407468353U},
-    {"test_github6397_3.svg", 3170656352U},
-    {"test_github6397_4.svg", 187792316U},
-    {"test_github6397_5.svg", 2795990448U},
+    {"github6416.svg", 3814405016U},
+    {"test_github6397_1.svg", 4203615821U},
+    {"test_github6397_2.svg", 3422233570U},
+    {"test_github6397_3.svg", 3320683230U},
+    {"test_github6397_4.svg", 2960192928U},
+    {"test_github6397_5.svg", 1245534660U},
+    {"test_github6400_1.svg", 2792561051U},
     {"github6504_1.svg", 1429448598U},
     {"github6504_2.svg", 2871662880U},
     {"github6569_1.svg", 116573839U},
@@ -314,27 +315,27 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
 static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
-    {"testGithub3226_1.png", 284815097U},
-    {"testGithub3226_2.png", 2460913971U},
-    {"testGithub3226_3.png", 993799198U},
-    {"testPNGMetadata_1.png", 2022143293U},
-    {"testPNGMetadata_2.png", 3078435362U},
-    {"testHandDrawn-1.png", 1551605661U},
-    {"testHandDrawn-2.png", 2979412913U},
-    {"testHandDrawn-3.png", 1765396301U},
-    {"testHandDrawn-4.png", 2989933219U},
-    {"testHandDrawn-5.png", 1526220279U},
-    {"testGithub4323_1.png", 3711520691U},
-    {"testGithub4323_3.png", 2300228708U},
-    {"testFlexiCanvas.2a.png", 3618977786U},
-    {"testFlexiCanvas.2b.png", 2780757414U},
-    {"testGithub4764.sz1.png", 2320783268U},
-    {"testGithub4764.sz2.png", 3297570843U},
-    {"testGithub4764.sz3.png", 2178018272U},
-    {"testGithub4238_1.png", 458925131U},
-    {"github5383_1.png", 2963331215U},
-    {"acs1996_1.png", 2674458798U},
-    {"acs1996_2.png", 83755168U},
+    {"testGithub3226_1.png", 2350054896U},
+    {"testGithub3226_2.png", 606206725U},
+    {"testGithub3226_3.png", 2282880418U},
+    {"testPNGMetadata_1.png", 2423299691U},
+    {"testPNGMetadata_2.png", 2803353117U},
+    {"testHandDrawn-1.png", 698316547U},
+    {"testHandDrawn-2.png", 1605553248U},
+    {"testHandDrawn-3.png", 2881952238U},
+    {"testHandDrawn-4.png", 3431655453U},
+    {"testHandDrawn-5.png", 3439548169U},
+    {"testGithub4323_1.png", 3723958844U},
+    {"testGithub4323_3.png", 2185913679U},
+    {"testFlexiCanvas.2a.png", 3217758043U},
+    {"testFlexiCanvas.2b.png", 4070063910U},
+    {"testGithub4764.sz1.png", 98827714U},
+    {"testGithub4764.sz2.png", 89252465U},
+    {"testGithub4764.sz3.png", 148503574U},
+    {"testGithub4238_1.png", 3410617836U},
+    {"github5383_1.png", 992803933U},
+    {"acs1996_1.png", 2957839025U},
+    {"acs1996_2.png", 2664798808U},
     {"github6336_1.png", 2958833204U}};
 
 std::hash_result_t hash_file(const std::string &filename) {
@@ -715,9 +716,13 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_1.svg");
 
-    CHECK(text.find("d='M 122.5,88.4 L 85.6,88.4' "
-                    "style='fill:none;fill-rule:evenodd;stroke:#0000FF") !=
-          std::string::npos);
+    std::regex d1(
+        "<path class='bond-0 atom-0 atom-1' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
+    auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(122.3, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(88.5, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(85.7, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(88.5, 0.1));
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -732,9 +737,13 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_2.svg");
 
-    CHECK(text.find("-8' d='M 101.1,77.2 L 95.8,84.5' "
-                    "style='fill:none;fill-rule:evenodd;stroke:#0000FF;") !=
-          std::string::npos);
+    std::regex d1(
+        "<path class='bond-7 atom-7 atom-8' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
+    auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(100.9, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(77.5, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(95.8, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(84.7, 0.1));
   }
   SECTION("test colours") {
     // the dative bonds point the wrong way, but the point is to test
@@ -751,11 +760,13 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_3.svg");
 
-    CHECK(
-        text.find(
-            "<path class='bond-2 atom-3 atom-4' d='M 50.4,140.6 L 77.9,149.5' "
-            "style='fill:none;fill-rule:evenodd;stroke:#0000FF;") !=
-        std::string::npos);
+    std::regex d1(
+        "<path class='bond-2 atom-3 atom-4' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
+    auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(50.9, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(140.2, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(78.1, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(149.0, 0.1));
   }
   SECTION("dative series") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -1057,7 +1068,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_2.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 5);
+      CHECK(tkns.size() == 4);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -1360,9 +1371,9 @@ TEST_CASE("including legend in drawing results in offset drawing later",
     check_file_hash("testLegendsAndDrawing-1.svg");
 
     // make sure the polygon starts at a bond
-    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 316.7,135.0") !=
+    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 315.3,136.5") !=
           std::string::npos);
-    CHECK(text.find("<path d='M 316.7,135.0") != std::string::npos);
+    CHECK(text.find("<path d='M 311.8,142.6") != std::string::npos);
   }
 }
 
@@ -4043,7 +4054,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(20.4).margin(0.1));
+    CHECK(drawer.fontSize() == Approx(20.25).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2b.svg");
     outs << text;
@@ -4587,7 +4598,7 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_1.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='34.5' y='195.0' class='legend' "
+      CHECK(text.find("<text x='34.5' y='190.0' class='legend' "
                       "style='font-size:16px;") != std::string::npos);
       check_file_hash("testVariableLegend_1.svg");
     }
@@ -4602,7 +4613,7 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_2.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='1.6' y='195.0' class='legend' "
+      CHECK(text.find("<text x='2.8' y='190.0' class='legend' "
                       "style='font-size:31px;") != std::string::npos);
       check_file_hash("testVariableLegend_2.svg");
     }
@@ -4616,8 +4627,8 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_3.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='84.7' y='195.0' class='legend' "
-                      "style='font-size:6px;") != std::string::npos);
+      CHECK(text.find("<text x='72.4' y='190.0' class='legend' "
+                      "style='font-size:11px;") != std::string::npos);
       check_file_hash("testVariableLegend_3.svg");
     }
   }
@@ -4674,11 +4685,11 @@ TEST_CASE("Github 5185 - don't draw atom indices between double bond") {
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // the 2nd note
-      CHECK(text.find("<path class='note' d='M 93.4 129.9") !=
+      CHECK(text.find("<path class='note' d='M 94.4 129.6") !=
             std::string::npos);
       check_file_hash("testGithub_5185.svg");
 #else
-      CHECK(text.find("<text x='90.4' y='130.3' class='note' ") !=
+      CHECK(text.find("<text x='91.5' y='130.0' class='note' ") !=
             std::string::npos);
 #endif
     }
@@ -4861,6 +4872,27 @@ TEST_CASE("GitHub #5383: cairo error when using similarity maps", "") {
     outs << text;
     outs.flush();
     check_file_hash("github5383_1.svg");
+  }
+  SECTION("svg basics") {
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().padding = 0.0;
+
+    drawer.clearDrawing();
+    std::vector<double> levels;
+    MolDraw2DUtils::contourAndDrawGaussians(
+        drawer, cents, weights, widths, 10, levels,
+        MolDraw2DUtils::ContourParams(), m1.get());
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("width='250px' height='250px' viewBox='0 0 250 250'>") !=
+          std::string::npos);
+    std::ofstream outs("github5383_2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("github5383_2.svg");
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
   SECTION("cairo basics") {
@@ -5577,18 +5609,25 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   REQUIRE(wavyMatch.size() == 1);
 
   std::regex regex2(
-      "class='bond-4 atom-4 atom-5' d='M 118\\..*,135\\..* L "
-      "68\\..*,107\\..*'");
-  std::smatch cross1Match;
-  REQUIRE(std::regex_search(text, cross1Match, regex2));
-  REQUIRE(cross1Match.size() == 1);
+      "class='bond-4 atom-4 atom-5' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L "
+      "(\\d+\\.\\d+),(\\d+\\.\\d+)'");
 
-  std::regex regex3(
-      "class='bond-4 atom-4 atom-5' d='M 117\\..*,145\\..* L "
-      "74\\..*,100\\..*'");
-  std::smatch cross2Match;
-  REQUIRE(std::regex_search(text, cross2Match, regex3));
-  REQUIRE(cross1Match.size() == 1);
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), regex2),
+                    std::sregex_iterator()));
+  REQUIRE(match_count == 2);
+
+  // Check that the 2 bonds aren't parallel
+  auto cross1Match = std::sregex_iterator(text.begin(), text.end(), regex2);
+  Point2D point1{stod((*cross1Match)[1]), stod((*cross1Match)[2])};
+  Point2D point2{stod((*cross1Match)[3]), stod((*cross1Match)[4])};
+  auto vec1 = point1.directionVector(point2);
+
+  ++cross1Match;
+  Point2D point3{stod((*cross1Match)[1]), stod((*cross1Match)[2])};
+  Point2D point4{stod((*cross1Match)[3]), stod((*cross1Match)[4])};
+  auto vec2 = point3.directionVector(point4);
+  REQUIRE(vec1.dotProduct(vec2) != Approx(1.0).margin(1.0e-4));
 
   check_file_hash("test_unspec_stereo.svg");
 }
@@ -6290,19 +6329,19 @@ TEST_CASE("Github5947: Ellipse extremes not calculated correctly.") {
       std::distance(std::sregex_iterator(text.begin(), text.end(), r1),
                     std::sregex_iterator()));
   REQUIRE(match_count == 6);
-  // all the ellipses should have a radius of roughly 28.8
+  // all the ellipses should have a radius of roughly 72.0
   auto match_begin = std::sregex_iterator(text.begin(), text.end(), r1);
   auto match_end = std::sregex_iterator();
   for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
     std::smatch match = *i;
-    REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(72.7, 0.1));
-    REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(72.7, 0.1));
+    REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(72.0, 0.1));
+    REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(72.0, 0.1));
   }
 
   // check that the first ellipse is in the right place
   std::regex r2("<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'");
   auto ell1 = *std::sregex_iterator(text.begin(), text.end(), r2);
-  REQUIRE_THAT(stod(ell1[1]), Catch::Matchers::WithinAbs(309.1, 0.1));
+  REQUIRE_THAT(stod(ell1[1]), Catch::Matchers::WithinAbs(308.0, 0.1));
   REQUIRE_THAT(stod(ell1[2]), Catch::Matchers::WithinAbs(200.0, 0.1));
   check_file_hash(nameBase + ".svg");
 }
@@ -6372,8 +6411,8 @@ M  END
     auto match_end = std::sregex_iterator();
     for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
       std::smatch match = *i;
-      REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(25.2, 0.1));
-      REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(25.2, 0.1));
+      REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(25.0, 0.1));
+      REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(25.0, 0.1));
     }
     check_file_hash(nameBase + ".svg");
   }
@@ -6769,7 +6808,8 @@ M  END
     }
     auto vec1 = points[0].directionVector(points[1]);
     auto vec2 = points[2].directionVector(points[3]);
-    REQUIRE(fabs(1.0 - vec1.dotProduct(vec2)) < 1.0e-4);
+    REQUIRE_THAT(vec1.dotProduct(vec2),
+                 Catch::Matchers::WithinAbs(1.0, 2.0e-4));
     check_file_hash(nameBase + "_2.svg");
   }
 }
@@ -7539,7 +7579,7 @@ TEST_CASE(
           "class='atom-17' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
           " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
       // there are 3 arcs on atom-17, for a 3 colour highlight.
-      testArcs(text, atom17, 3, 0.9);
+      testArcs(text, atom17, 3, 0.85);
     }
     check_file_hash(nameBase + "_1.svg");
   }
@@ -7797,7 +7837,7 @@ M  END)CTAB"_ctab;
     outs.flush();
     outs.close();
 
-    checkABS(text, 1, 238.9, 34.8);
+    checkABS(text, 1, 239.5, 34.5);
     check_file_hash(svgName);
   }
 
@@ -7926,10 +7966,10 @@ M  END)CTAB"_ctab;
     checkABS(text, 3, 0.0, 173.3);
     text = std::regex_replace(text, absA, "",
                               std::regex_constants::format_first_only);
-    checkABS(text, 2, 250.0, 43.2);
+    checkABS(text, 2, 250.0, 42.8);
     text = std::regex_replace(text, absA, "",
                               std::regex_constants::format_first_only);
-    checkABS(text, 1, 190.8, 233.8);
+    checkABS(text, 1, 191.4, 233.4);
     check_file_hash(svgName);
   }
   {
@@ -7951,6 +7991,27 @@ M  END)CTAB"_ctab;
     outs.close();
     check_file_hash(svgName);
   }
+}
+
+TEST_CASE("Github #6400: extra padding, no legend apparent") {
+  std::string nameBase = "test_github6400";
+  auto m = "CCCOC"_smiles;
+  REQUIRE(m);
+  MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().padding = 0.2;
+  drawer.drawMolecule(*m, "Legendary Big Padding");
+  drawer.finishDrawing();
+  std::ofstream outs(nameBase + "_1.svg");
+  auto text = drawer.getDrawingText();
+  // The original bug manifested itself with a font size of 0 for the
+  // legend.  Fixed, it comes out at 16.
+  REQUIRE(text.find("font-size:0px") == std::string::npos);
+  REQUIRE(text.find("font-size:16px") != std::string::npos);
+
+  outs << text;
+  outs.flush();
+  outs.close();
+  check_file_hash(nameBase + "_1.svg");
 }
 
 TEST_CASE("Github #6504: double bonds not drawn correctly for sulfoximines") {

@@ -567,8 +567,8 @@ void test_flexicanvas() {
   assert(pkl_size > 0);
 
   char *svg = get_svg(pkl, pkl_size, "{\"width\":-1,\"height\":-1}");
-  assert(strstr(svg, "width='95px'"));
-  assert(strstr(svg, "height='21px'"));
+  assert(strstr(svg, "width='87px'"));
+  assert(strstr(svg, "height='19px'"));
   assert(strstr(svg, "</svg>"));
   free(svg);
 
@@ -2132,7 +2132,9 @@ void test_partial_sanitization() {
   size_t mpkl_size;
   const char *mfp_json = "{\"radius\":2,\"nBits\":32}";
   const char *otherfp_json = "{\"nBits\":32}";
-  mpkl = get_mol("C1CCC2CCCC2C1", &mpkl_size, "{\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false}");
+  mpkl =
+      get_mol("C1CCC2CCCC2C1", &mpkl_size,
+              "{\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false}");
   assert(mpkl);
   assert(mpkl_size > 0);
   fp = get_morgan_fp(mpkl, mpkl_size, mfp_json);
@@ -2140,7 +2142,9 @@ void test_partial_sanitization() {
   assert(strlen(fp) == 32);
   free(fp);
   free(mpkl);
-  mpkl = get_mol("C1CCC2CCCC2C1", &mpkl_size, "{\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false,\"fastFindRings\":false}");
+  mpkl = get_mol(
+      "C1CCC2CCCC2C1", &mpkl_size,
+      "{\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false,\"fastFindRings\":false}");
   assert(mpkl);
   assert(mpkl_size > 0);
   fp = get_morgan_fp(mpkl, mpkl_size, mfp_json);
