@@ -57,7 +57,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(results[0].atomMatches()), 6)
 
   def test2(self):
-    # Test single largest fragment extraction
+    # Test single largest fragment extraction from results
     ad1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
     ad2 = Chem.MolFromSmiles("N(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336")
 
@@ -91,6 +91,17 @@ class TestCase(unittest.TestCase):
     opts.similarityThreshold = 0.5
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)
     self.assertEqual(len(results), 1)
+
+  def test5(self):
+    # Test setting non-default option singleLargestFrag
+    ad1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
+    ad2 = Chem.MolFromSmiles("N(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336")
+
+    opts = rdRascalMCES.RascalOptions()
+    opts.singleLargestFrag = True
+    results = rdRascalMCES.FindMCES(ad1, ad2, opts)
+    self.assertEqual(len(results), 1)
+    self.assertEqual(results[0].smartsString, 'CCCCCCCCCCNC12CC3CC(-C1)-CC(-C2)-C3')
 
   def testRascalCluster(self):
     cdk2_file = Path(os.environ['RDBASE']) / 'Contrib' / 'Fastcluster' / 'cdk2.smi'

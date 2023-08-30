@@ -159,6 +159,9 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
           "similarityThreshold",
           &RDKit::RascalMCES::RascalOptions::similarityThreshold,
           "Threshold below which MCES won't be run.  Between 0.0 and 1.0, default=0.7.")
+      .def_readwrite("singleLargestFrag",
+                     &RDKit::RascalMCES::RascalOptions::singleLargestFrag,
+                     "Return the just single largest fragment of the MCES.")
       .def_readwrite(
           "completeAromaticRings",
           &RDKit::RascalMCES::RascalOptions::completeAromaticRings,
