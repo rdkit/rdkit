@@ -803,7 +803,7 @@ bool checkEquivalentsAllowed(const ROMol &mol) {
       "*~*", "*~*1~*~*~1", "*12~*~*~2~*~1", "*14~*(~*~2~3~4)~*~2~*~3~1"};
   static std::vector<std::unique_ptr<ROMol>> notStructs;
   if (notStructs.empty()) {
-    for (const auto smt : notSmarts) {
+    for (const auto &smt : notSmarts) {
       notStructs.emplace_back(SmartsToMol(smt));
     }
   }
