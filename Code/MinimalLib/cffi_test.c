@@ -2164,6 +2164,51 @@ void test_partial_sanitization() {
   free(mpkl);
 }
 
+void test_capture_logs() {
+  printf("--------------------------\n");
+  printf("  test_capture_logs\n");
+  char *mpkl;
+  char *log_buffer;
+  void *null_handle = NULL;
+  size_t mpkl_size;
+  void *log_handle;
+  typedef struct {
+    const char *type;
+    void *(*func)(const char *);
+  } capture_test;
+  capture_test tests[] = {{"tee", set_log_tee}, {"capture", set_log_capture}};
+  for (size_t i = 0; i < sizeof(tests) / sizeof(capture_test); ++i) {
+    printf("%d. %s\n", i + 1, tests[i].type);
+    log_handle = tests[i].func("dummy");
+    assert(!log_handle);
+    log_handle = tests[i].func("rdApp.*");
+    assert(log_handle);
+    assert(!get_log_buffer(null_handle));
+    log_buffer = get_log_buffer(log_handle);
+    assert(log_buffer);
+    assert(!strlen(log_buffer));
+    free(log_buffer);
+    mpkl = get_mol("CN(C)(C)C", &mpkl_size, "");
+    assert(!mpkl);
+    log_buffer = get_log_buffer(log_handle);
+    assert(log_buffer);
+    assert(strstr(
+        log_buffer,
+        "Explicit valence for atom # 1 N, 4, is greater than permitted"));
+    free(log_buffer);
+    assert(!clear_log_buffer(null_handle));
+    assert(clear_log_buffer(log_handle));
+    log_buffer = get_log_buffer(log_handle);
+    assert(log_buffer);
+    assert(!strlen(log_buffer));
+    free(log_buffer);
+    assert(!destroy_log_handle(null_handle));
+    assert(!destroy_log_handle(&null_handle));
+    assert(destroy_log_handle(&log_handle));
+    assert(!log_handle);
+  }
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -2190,5 +2235,6 @@ int main() {
   test_query_colour();
   test_alignment_r_groups_aromatic_ring();
   test_partial_sanitization();
+  test_capture_logs();
   return 0;
 }

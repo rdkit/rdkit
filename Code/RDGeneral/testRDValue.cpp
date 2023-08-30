@@ -11,7 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
-#include <boost/any.hpp>
+#include <any>
 
 using namespace RDKit;
 

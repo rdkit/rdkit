@@ -1428,7 +1428,7 @@ bool getAtomMapNumber(const Atom *atom, int &mapNum) {
   int tmpInt;
   try {
     atom->getProp(common_properties::molAtomMapNumber, tmpInt);
-  } catch (boost::bad_any_cast &) {
+  } catch (std::bad_any_cast &) {
     const std::string &tmpSVal =
         atom->getProp<std::string>(common_properties::molAtomMapNumber);
     try {

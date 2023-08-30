@@ -39,9 +39,9 @@
 
 #define SEED_GROW_DEEP  // fast and works much times faster (but it can depend
                         // on molecules)
-//#define EXCLUDE_WRONG_COMPOSITION   // fast but with a little effect, because
-// amount of external bonds usually is very small.
-// Exclude mismatched bonds combinations during seed growing (2^N-1 stage)
+// #define EXCLUDE_WRONG_COMPOSITION   // fast but with a little effect, because
+//  amount of external bonds usually is very small.
+//  Exclude mismatched bonds combinations during seed growing (2^N-1 stage)
 
 #define FAST_SUBSTRUCT_CACHE  // based on a hash of Morgan code
 #define DUP_SUBSTRUCT_CACHE   // based on list of query atoms and bonds. For
@@ -109,22 +109,22 @@ namespace FMCS {
 // compute statistics of really very very fast calls.
 // It a bit decrease overal performance, but might be interested for
 // investigation purpose (only)
-//#define VERBOSE_STATISTICS_FASTCALLS_ON
+// #define VERBOSE_STATISTICS_FASTCALLS_ON
 
 struct ExecStatistics {
-  unsigned TotalSteps{0}, MCSFoundStep{0};
+  unsigned int TotalSteps{0}, MCSFoundStep{0};
   unsigned long long MCSFoundTime;
-  unsigned InitialSeed{0}, MismatchedInitialSeed{0};
-  unsigned Seed{0}, RemainingSizeRejected{0};
-  unsigned SeedCheck{0}, SingleBondExcluded{0};
-  unsigned MatchCall{0}, MatchCallTrue{0};
-  unsigned FastMatchCall{0}, FastMatchCallTrue{0}, SlowMatchCallTrue{0};
-  unsigned ExactMatchCall{0}, ExactMatchCallTrue{0};  // hash cache
-  unsigned FindHashInCache{0}, HashKeyFoundInCache{0};
-  unsigned AtomCompareCalls{0}, BondCompareCalls{0};  // long long
-  unsigned AtomFunctorCalls{0}, BondFunctorCalls{0};  // long long
-  unsigned WrongCompositionRejected{0}, WrongCompositionDetected{0};
-  unsigned DupCacheFound{0}, DupCacheFoundMatch{0};
+  unsigned int InitialSeed{0}, MismatchedInitialSeed{0};
+  unsigned int Seed{0}, RemainingSizeRejected{0};
+  unsigned int SeedCheck{0}, IndividualBondExcluded{0};
+  unsigned int MatchCall{0}, MatchCallTrue{0};
+  unsigned int FastMatchCall{0}, FastMatchCallTrue{0}, SlowMatchCallTrue{0};
+  unsigned int ExactMatchCall{0}, ExactMatchCallTrue{0};  // hash cache
+  unsigned int FindHashInCache{0}, HashKeyFoundInCache{0};
+  unsigned int AtomCompareCalls{0}, BondCompareCalls{0};
+  unsigned int AtomFunctorCalls{0}, BondFunctorCalls{0};
+  unsigned int WrongCompositionRejected{0}, WrongCompositionDetected{0};
+  unsigned int DupCacheFound{0}, DupCacheFoundMatch{0};
 
   ExecStatistics() : MCSFoundTime(nanoClock()) {}
 };

@@ -479,7 +479,7 @@ select mol_to_ctab(mol_from_ctab('chiral1.mol
 M  END', true));
                               mol_to_ctab                              
 -----------------------------------------------------------------------
-                                                                      +
+ chiral1.mol                                                          +
       RDKit          2D                                               +
                                                                       +
    5  4  0  0  0  0  0  0  0  0999 V2000                              +
@@ -1510,5 +1510,12 @@ M  END'));
  mol_cmp 
 ---------
        0
+(1 row)
+
+-- mol properties being properly serialized
+select 'COC1=NNC=C1 |LN:1:1.3|'::mol;
+           mol           
+-------------------------
+ COc1cc[nH]n1 |LN:1:1.3|
 (1 row)
 
