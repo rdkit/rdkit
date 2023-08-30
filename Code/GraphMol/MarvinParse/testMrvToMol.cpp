@@ -224,7 +224,7 @@ class MrvTests {
 
     for (bool sanitize : {true, false}) {
       try {
-        return MrvRxnFileToChemicalReaction(fName, sanitize, false);
+        return MrvFileToChemicalReaction(fName, sanitize, false);
       } catch (const std::exception &e) {
         std::cerr << e.what() << '\n';
       }

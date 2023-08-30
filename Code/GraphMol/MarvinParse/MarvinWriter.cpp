@@ -468,7 +468,7 @@ class MarvinCMLWriter {
   }
 
   MarvinMol *MolToMarvinMol(RWMol *mol, int &molCount, int &atomCount,
-                            int &bondCount, int &sgCount, int confId = (-1)) {
+                            int &bondCount, int &sgCount, int confId = -1) {
     PRECONDITION(mol, "no molecule");
     // molCount is the starting and ending molCount - used when called from a
     // rxn
@@ -542,7 +542,7 @@ class MarvinCMLWriter {
             if (atom->getTotalDegree() == 0) {
               // Specify zero valence for elements/metals without neighbors
               // or hydrogens (degree 0) instead of writing them as radicals.
-              marvinAtom->mrvValence = (-1);
+              marvinAtom->mrvValence = -1;
             } else {
               // if there are explicit Hs , mark them in the atom
 
@@ -1202,7 +1202,7 @@ class MarvinCMLWriter {
   }
 
   MarvinReaction *ChemicalReactionToMarvinRxn(const ChemicalReaction *rxn,
-                                              int confId = (-1)) {
+                                              int confId = -1) {
     PRECONDITION(rxn, "bad reaction");
 
     MarvinReaction *marvinReaction = nullptr;

@@ -330,7 +330,7 @@ class MarvinMolBase {
   // just call the base class.  Currently, only MarvinSuperatomSgroup does this
 
   virtual IsSgroupInAtomSetResult isSgroupInSetOfAtoms(
-      std::vector<MarvinAtom *> &setOfAtoms) const;
+      const std::vector<MarvinAtom *> &setOfAtoms) const;
 
  public:
   static bool atomRefInAtoms(MarvinAtom *a, std::string b);
@@ -571,7 +571,7 @@ class MarvinSuperatomSgroup : public MarvinMolBase {
       std::map<std::string, std::string> &bondMap) override;
 
   IsSgroupInAtomSetResult isSgroupInSetOfAtoms(
-      std::vector<MarvinAtom *> &setOfAtoms) const override;
+      const std::vector<MarvinAtom *> &setOfAtoms) const override;
 
   void processSpecialSgroups() override;
 };
@@ -635,8 +635,8 @@ class MarvinStereoGroup {
   MarvinStereoGroup(StereoGroupType grouptypeInit, int groupNumberInit);
 };
 
-bool getCleanDouble(std::string strToParse, double &outDouble);
-bool getCleanInt(std::string strToParse, int &outInt);
+template <typename T>
+bool getCleanNumber(std::string strToParse, T &outInt);
 }  // namespace RDKit
 
 #endif  // RD_MARVINDEFS_H

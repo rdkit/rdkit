@@ -1,35 +1,4 @@
 
-
-if(RDK_USE_BOOST_IOSTREAMS)
-if(WIN32)
-  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
-  set (link_iostreams ${Boost_LIBRARIES})
-  if (NOT Boost_USE_STATIC_LIBS)
-     add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
-  endif()
-  find_package(ZLIB)
-  include_directories(${ZLIB_INCLUDE_DIRS})
-  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib)
-  if(Boost_zlib_FOUND)
-    set(zlib_lib Boost::zlib)
-  else()
-    set(zlib_lib ${ZLIB_LIBRARIES})
-  endif()
-
-
-else()
-  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
-  set (link_iostreams ${Boost_LIBRARIES})
-  if (NOT Boost_USE_STATIC_LIBS)
-     add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
-  endif()
-  find_package(ZLIB)
-  include_directories(${ZLIB_INCLUDE_DIRS})
-  set(zlib_lib ${ZLIB_LIBRARIES})
-endif()
-ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
-endif(RDK_USE_BOOST_IOSTREAMS)
-
 rdkit_library(MarvinParser
               MarvinParser.cpp
               MarvinWriter.cpp

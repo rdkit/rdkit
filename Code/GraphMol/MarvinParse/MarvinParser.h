@@ -34,9 +34,9 @@ RDKIT_MARVINPARSER_EXPORT RWMol *MrvDataStreamToMol(std::istream *inStream,
 RDKIT_MARVINPARSER_EXPORT RWMol *MrvDataStreamToMol(std::istream &inStream,
                                                     bool sanitize = false,
                                                     bool removeHs = false);
-RDKIT_MARVINPARSER_EXPORT RWMol *MrvStringToMol(const std::string &molmrvText,
-                                                bool sanitize = false,
-                                                bool removeHs = false);
+RDKIT_MARVINPARSER_EXPORT RWMol *MrvBlockToMol(const std::string &molmrvText,
+                                               bool sanitize = false,
+                                               bool removeHs = false);
 RDKIT_MARVINPARSER_EXPORT RWMol *MrvFileToMol(const std::string &fName,
                                               bool sanitize = false,
                                               bool removeHs = false);
@@ -45,10 +45,10 @@ RDKIT_MARVINPARSER_EXPORT ChemicalReaction *MrvDataStreamToChemicalReaction(
     std::istream *inStream, bool sanitize = false, bool removeHs = false);
 RDKIT_MARVINPARSER_EXPORT ChemicalReaction *MrvDataStreamToChemicalReaction(
     std::istream &inStream, bool sanitize = false, bool removeHs = false);
-RDKIT_MARVINPARSER_EXPORT ChemicalReaction *MrvStringToChemicalReaction(
+RDKIT_MARVINPARSER_EXPORT ChemicalReaction *MrvBlockToChemicalReaction(
     const std::string &molmrvText, bool sanitize = false,
     bool removeHs = false);
-RDKIT_MARVINPARSER_EXPORT ChemicalReaction *MrvRxnFileToChemicalReaction(
+RDKIT_MARVINPARSER_EXPORT ChemicalReaction *MrvFileToChemicalReaction(
     const std::string &fName, bool sanitize = false, bool removeHs = false);
 
 RDKIT_MARVINPARSER_EXPORT void MolToMrvFile(const ROMol &mol,

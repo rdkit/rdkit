@@ -325,8 +325,8 @@ class MarvinCMLReader {
           throw FileParseException(err.str());
         }
         int mdlStereoVal = 0;
-        if (!getCleanInt(marvinBond->bondStereo.conventionValue,
-                         mdlStereoVal)) {
+        if (!getCleanNumber(marvinBond->bondStereo.conventionValue,
+                            mdlStereoVal)) {
           throw FileParseException(
               "MDL Convention Value must be one of: 1, 3, 4, 6");
         }
@@ -405,19 +405,6 @@ class MarvinCMLReader {
         bond->setIsAromatic(true);
       }
 
-      // v2k has no way to set stereoCare on bonds, so set the property if both
-      // the beginning and end atoms have it set:
-      int care1 = 0;
-      int care2 = 0;
-      if (!bond->hasProp(common_properties::molStereoCare) &&
-          mol->getAtomWithIdx(bond->getBeginAtomIdx())
-              ->getPropIfPresent(common_properties::molStereoCare, care1) &&
-          mol->getAtomWithIdx(bond->getEndAtomIdx())
-              ->getPropIfPresent(common_properties::molStereoCare, care2)) {
-        if (care1 && care2) {
-          bond->setProp(common_properties::molStereoCare, 1);
-        }
-      }
       mol->addBond(bond, true);
     } catch (const std::exception &e) {
       delete bond;
@@ -502,13 +489,13 @@ class MarvinCMLReader {
             groupNumber = (-1);
           } else if (boost::starts_with(temp, "and")) {
             groupType = RDKit::StereoGroupType::STEREO_AND;
-            if (!getCleanInt(temp.substr(3), groupNumber)) {
+            if (!getCleanNumber(temp.substr(3), groupNumber)) {
               throw FileParseException(
                   "Group Number must be an integer in a stereo group AND# in a MRV file");
             }
           } else if (boost::starts_with(temp, "or")) {
             groupType = RDKit::StereoGroupType::STEREO_OR;
-            if (!getCleanInt(temp.substr(2), groupNumber)) {
+            if (!getCleanNumber(temp.substr(2), groupNumber)) {
               throw FileParseException(
                   "Group Number must be an integer in a stereo group OR# in a MRV file");
             }
@@ -796,13 +783,13 @@ class MarvinCMLReader {
         // y2="-10.001443743444021"/>
         boost::property_tree::ptree arrow = rxnTree.get_child("arrow");
         res->arrow.type = arrow.get<std::string>("<xmlattr>.type", "");
-        if (!getCleanDouble(arrow.get<std::string>("<xmlattr>.x1", ""),
+        if (!getCleanNumber(arrow.get<std::string>("<xmlattr>.x1", ""),
                             res->arrow.x1) ||
-            !getCleanDouble(arrow.get<std::string>("<xmlattr>.y1", ""),
+            !getCleanNumber(arrow.get<std::string>("<xmlattr>.y1", ""),
                             res->arrow.y1) ||
-            !getCleanDouble(arrow.get<std::string>("<xmlattr>.x2", ""),
+            !getCleanNumber(arrow.get<std::string>("<xmlattr>.x2", ""),
                             res->arrow.x2) ||
-            !getCleanDouble(arrow.get<std::string>("<xmlattr>.y2", ""),
+            !getCleanNumber(arrow.get<std::string>("<xmlattr>.y2", ""),
                             res->arrow.y1)) {
           throw FileParseException(
               "Arrow coordinates must all be large floating point numbers in MRV file");
@@ -820,9 +807,9 @@ class MarvinCMLReader {
             if (v2.first == "MPoint") {
               double x;
               double y;
-              if (!getCleanDouble(v2.second.get<std::string>("<xmlattr>.x", ""),
+              if (!getCleanNumber(v2.second.get<std::string>("<xmlattr>.x", ""),
                                   x) ||
-                  !getCleanDouble(v2.second.get<std::string>("<xmlattr>.y", ""),
+                  !getCleanNumber(v2.second.get<std::string>("<xmlattr>.y", ""),
                                   y)) {
                 throw FileParseException(
                     "Plus sign  coordinates must all be large floating point numbers in MRV file");
@@ -885,7 +872,7 @@ class MarvinCMLReader {
           std::string fontScaleStr =
               v.second.get<std::string>("<xmlattr>.fontScale", "");
           if (fontScaleStr != "") {
-            if (!getCleanDouble(fontScaleStr, fontScale)) {
+            if (!getCleanNumber(fontScaleStr, fontScale)) {
               throw FileParseException(
                   "Condition font scale must be a positive integer in MRV file");
             }
@@ -902,7 +889,7 @@ class MarvinCMLReader {
               double x, y;
               std::string xStr = v2.second.get<std::string>("<xmlattr>.x", "");
               std::string yStr = v2.second.get<std::string>("<xmlattr>.y", "");
-              if (!getCleanDouble(xStr, x) || !getCleanDouble(yStr, y)) {
+              if (!getCleanNumber(xStr, x) || !getCleanNumber(yStr, y)) {
                 throw FileParseException(
                     "Condition coordinate must valid integers in MRV file");
               }
@@ -965,21 +952,12 @@ bool MrvDataStreamIsReaction(std::istream *inStream) {
   PRECONDITION(inStream, "no stream");
   return MrvDataStreamIsReaction(*inStream);
 }
-//------------------------------------------------
-//
-//  Read a molecule from a string
-//
-//------------------------------------------------
+
 bool MrvBlockIsReaction(const std::string &molmrvText) {
   std::istringstream inStream(molmrvText);
   return MrvDataStreamIsReaction(inStream);
 }
 
-//------------------------------------------------
-//
-//  Read a RWMOL from a file
-//
-//------------------------------------------------
 bool MrvFileIsReaction(const std::string &fName) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
@@ -1002,7 +980,6 @@ RWMol *MrvDataStreamToMol(std::istream *inStream, bool sanitize,
                           bool removeHs) {
   PRECONDITION(inStream, "no stream");
 
-  // boost::property_tree::ptree;
   ptree tree;
 
   // Parse the XML into the property tree.
@@ -1026,8 +1003,8 @@ RWMol *MrvDataStreamToMol(std::istream &inStream, bool sanitize,
 //  Read a RWMol from a string
 //
 //------------------------------------------------
-RWMol *MrvStringToMol(const std::string &molmrvText, bool sanitize,
-                      bool removeHs) {
+RWMol *MrvBlockToMol(const std::string &molmrvText, bool sanitize,
+                     bool removeHs) {
   std::istringstream inStream(molmrvText);
   return MrvDataStreamToMol(inStream, sanitize, removeHs);
 }
@@ -1098,8 +1075,8 @@ ChemicalReaction *MrvStringToChemicalReaction(const std::string &molmrvText,
 //  Read a ChemicalReaction from a file
 //
 //------------------------------------------------
-ChemicalReaction *MrvRxnFileToChemicalReaction(const std::string &fName,
-                                               bool sanitize, bool removeHs) {
+ChemicalReaction *MrvFileToChemicalReaction(const std::string &fName,
+                                            bool sanitize, bool removeHs) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
