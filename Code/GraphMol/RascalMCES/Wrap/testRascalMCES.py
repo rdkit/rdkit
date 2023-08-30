@@ -103,6 +103,20 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(results), 1)
     self.assertEqual(results[0].smartsString, 'CCCCCCCCCCNC12CC3CC(-C1)-CC(-C2)-C3')
 
+  def test6(self):
+    # Test the threshold and examine the tier1 and tier2 similarities.
+    ad1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
+    ad2 = Chem.MolFromSmiles("N(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336")
+
+    opts = rdRascalMCES.RascalOptions()
+    opts.similarityThreshold = 0.95
+    results = rdRascalMCES.FindMCES(ad1, ad2, opts)
+    self.assertEqual(len(results), 0)
+    opts.returnEmptyMCES = True
+    results = rdRascalMCES.FindMCES(ad1, ad2, opts)
+    self.assertEqual(len(results), 1)
+    print(results[0].tier1Sim, results[0].tier2Sim)
+
   def testRascalCluster(self):
     cdk2_file = Path(os.environ['RDBASE']) / 'Contrib' / 'Fastcluster' / 'cdk2.smi'
     suppl = Chem.SmilesMolSupplier(str(cdk2_file), '\t', 1, 0, False)

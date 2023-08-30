@@ -66,6 +66,10 @@ struct RascalResult_wrapper {
         .def_readonly("largestFragmentSize",
                       &RDKit::RascalMCES::RascalResult::getLargestFragSize,
                       "Number of atoms in largest fragment.")
+        .def_readonly("tier1Sim", &RDKit::RascalMCES::RascalResult::getTier1Sim,
+                      "The tier 1 similarity estimate.")
+        .def_readonly("tier2Sim", &RDKit::RascalMCES::RascalResult::getTier2Sim,
+                      "The tier 2 similarity estimate.")
         .def_readonly("timedOut", &RDKit::RascalMCES::RascalResult::getTimedOut,
                       "Whether it timed out.");
   }
@@ -159,9 +163,10 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
           "similarityThreshold",
           &RDKit::RascalMCES::RascalOptions::similarityThreshold,
           "Threshold below which MCES won't be run.  Between 0.0 and 1.0, default=0.7.")
-      .def_readwrite("singleLargestFrag",
-                     &RDKit::RascalMCES::RascalOptions::singleLargestFrag,
-                     "Return the just single largest fragment of the MCES.")
+      .def_readwrite(
+          "singleLargestFrag",
+          &RDKit::RascalMCES::RascalOptions::singleLargestFrag,
+          "Return the just single largest fragment of the MCES.  This is equivalent to running with allBestMCEs=True, finding the result with the largest largestFragmentSize, and calling its largestFragmentOnly method.")
       .def_readwrite(
           "completeAromaticRings",
           &RDKit::RascalMCES::RascalOptions::completeAromaticRings,
@@ -179,6 +184,10 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
       .def_readwrite(
           "allBestMCESs", &RDKit::RascalMCES::RascalOptions::allBestMCESs,
           "If True, reports all MCESs found of the same maximum size.  Default False means just report the first found.")
+      .def_readwrite(
+          "returnEmptyMCES", &RDKit::RascalMCES::RascalOptions::returnEmptyMCES,
+          "If the estimated similarity between the 2 molecules doesn't meet the similarityThreshold, no results are returned.  If you want to know what the"
+          " estimates were, set this to True, and examine the tier1Sim and tier2Sim properties of the result then returned.")
       .def_readwrite(
           "timeout", &RDKit::RascalMCES::RascalOptions::timeout,
           "Maximum time (in seconds) to spend on an individual MCESs determination.  Default 60, -1 means no limit.");
