@@ -102,7 +102,7 @@ TEST_CASE("Small Butina test", "[basics]") {
   }
   RDKit::RascalMCES::RascalClusterOptions clusOpts;
   auto clusters = RDKit::RascalMCES::rascalButinaCluster(mols, clusOpts);
-  int numMols = 0;
+  unsigned numMols = 0;
   for (const auto &cl : clusters) {
     numMols += cl.size();
   }
