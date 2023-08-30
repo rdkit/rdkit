@@ -1384,7 +1384,6 @@ void lookupAtomicNumber(Atom *res, const std::string &symb,
     res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
   } catch (const Invar::Invariant &e) {
     if (strictParsing || symb.empty()) {
-      delete res;
       throw FileParseException(e.what());
     } else {
       res->setAtomicNum(0);
@@ -1452,7 +1451,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       throw FileParseException(errout.str());
     }
   }
-  auto *res = new Atom;
+  std::unique_ptr<Atom> res(new Atom);
   bool isComplexQueryName =
       std::find(complexQueries.begin(), complexQueries.end(), symb) !=
       complexQueries.end();
@@ -1467,8 +1466,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       } else if (isComplexQueryName) {
         convertComplexNameToQuery(query, symb);
       }
-      delete res;
-      res = query;
+      res.reset(query);
       // queries have no implicit Hs:
       res->setNoImplicit(true);
     } else {
@@ -1492,7 +1490,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
     if (symb[0] == 'R') {
       // we used to skip R# here because that really should be handled by an
       // RGP spec, but that turned out to not be permissive enough... <sigh>
-      setRGPProps(symb, res);
+      setRGPProps(symb, res.get());
     }
   } else if (symb == "D") {  // mol blocks support "D" and "T" as shorthand...
                              // handle that.
@@ -1507,13 +1505,13 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
     res->setProp(common_properties::dummyLabel, symb);
   } else if (GenericGroups::genericMatchers.find(symb) !=
              GenericGroups::genericMatchers.end()) {
-    res = new QueryAtom(0);
+    res.reset(new QueryAtom(0));
     res->setProp(common_properties::atomLabel, std::string(symb));
   } else {
     if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
       symb[1] = static_cast<char>(tolower(symb[1]));
     }
-    lookupAtomicNumber(res, symb, strictParsing);
+    lookupAtomicNumber(res.get(), symb, strictParsing);
   }
 
   // res->setPos(pX,pY,pZ);
@@ -1524,8 +1522,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
   if (hCount >= 1) {
     if (!res->hasQuery()) {
       auto qatom = new QueryAtom(*res);
-      delete res;
-      res = qatom;
+      res.reset(qatom);
     }
     res->setNoImplicit(true);
     if (hCount > 1) {
@@ -1561,7 +1558,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(39, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp(common_properties::molParity, parity);
@@ -1575,7 +1571,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(45, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp(common_properties::molStereoCare, stereoCare);
@@ -1588,7 +1583,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(48, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     if (totValence != 0) {
@@ -1604,7 +1598,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(54, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     if (rxnRole != 0) {
@@ -1620,7 +1613,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(57, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     if (rxnComponent != 0) {
@@ -1636,7 +1628,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(60, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp(common_properties::molAtomMapNumber, atomMapNumber);
@@ -1649,7 +1640,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(63, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp(common_properties::molInversionFlag, inversionFlag);
@@ -1662,12 +1652,11 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(66, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp("molExactChangeFlag", exactChangeFlag);
   }
-  return res;
+  return res.release();
 }
 
 Bond *ParseMolFileBondLine(const std::string_view text, unsigned int line) {
@@ -2097,7 +2086,7 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
     token = FileParserUtils::strip(token);
   }
 
-  Atom *res = nullptr;
+  std::unique_ptr<Atom> res;
   if (token[0] == '[') {
     // atom list:
     if (token.back() != ']') {
@@ -2123,7 +2112,7 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
 
       int atNum = PeriodicTable::getTable()->getAtomicNumber(atSymb);
       if (!res) {
-        res = new QueryAtom(atNum);
+        res.reset(new QueryAtom(atNum));
       } else {
         res->expandQuery(makeAtomNumQuery(atNum), Queries::COMPOSITE_OR, true);
       }
@@ -2145,17 +2134,17 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
         (token[0] == 'R' && token >= "R0" && token <= "R99") || token == "R#" ||
         token == "*") {
       if (isComplexQueryName || token == "*") {
-        res = new QueryAtom(0);
+        res.reset(new QueryAtom(0));
         if (token == "*") {
           // according to the MDL spec, these match anything
           res->setQuery(makeAtomNullQuery());
         } else if (isComplexQueryName) {
-          convertComplexNameToQuery(res, token);
+          convertComplexNameToQuery(res.get(), token);
         }
         // queries have no implicit Hs:
         res->setNoImplicit(true);
       } else {
-        res = new Atom(1);
+        res.reset(new Atom(1));
         res->setAtomicNum(0);
       }
       if (token[0] == 'R' && token >= "R0" && token <= "R99") {
@@ -2173,35 +2162,35 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
       if (token[0] == 'R') {
         // we used to skip R# here because that really should be handled by an
         // RGP spec, but that turned out to not be permissive enough... <sigh>
-        setRGPProps(token, res);
+        setRGPProps(token, res.get());
       }
     } else if (token == "D") {  // mol blocks support "D" and "T" as
                                 // shorthand... handle that.
-      res = new Atom(1);
+      res.reset(new Atom(1));
       res->setIsotope(2);
     } else if (token == "T") {  // mol blocks support "D" and "T" as
                                 // shorthand... handle that.
-      res = new Atom(1);
+      res.reset(new Atom(1));
       res->setIsotope(3);
     } else if (token == "Pol" || token == "Mod") {
-      res = new Atom(0);
+      res.reset(new Atom(0));
       res->setProp(common_properties::dummyLabel, std::string(token));
     } else if (GenericGroups::genericMatchers.find(std::string(token)) !=
                GenericGroups::genericMatchers.end()) {
-      res = new QueryAtom(0);
+      res.reset(new QueryAtom(0));
       res->setProp(common_properties::atomLabel, std::string(token));
     } else {
       std::string tcopy(token);
       if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z') {
         tcopy[1] = static_cast<char>(tolower(token[1]));
       }
-      res = new Atom(0);
-      lookupAtomicNumber(res, tcopy, strictParsing);
+      res.reset(new Atom(0));
+      lookupAtomicNumber(res.get(), tcopy, strictParsing);
     }
   }
 
   POSTCONDITION(res, "no atom built");
-  return res;
+  return res.release();
 }
 
 bool splitAssignToken(std::string_view token, std::string &prop,
