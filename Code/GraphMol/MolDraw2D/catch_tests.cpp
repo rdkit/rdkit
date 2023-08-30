@@ -8112,12 +8112,6 @@ M  END
 }
 
 TEST_CASE("Lasso highlights") {
-#define RUN_1 1
-#define RUN_2 1
-#define RUN_3 1
-#define RUN_4_5 1
-#define RUN_6 1
-#define RUN_7 1
   std::string baseName = "lasso_highlights_";
   auto get_all_hit_atoms = [](ROMol &mol,
                               const std::string &smt) -> std::vector<int> {
@@ -8165,7 +8159,6 @@ TEST_CASE("Lasso highlights") {
   };
   std::map<int, double> h_rads;
   std::map<int, int> h_lw_mult;
-#if RUN_1
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
@@ -8196,8 +8189,6 @@ TEST_CASE("Lasso highlights") {
     outs.close();
     check_file_hash(baseName + "1.svg");
   }
-#endif
-#if RUN_2
   {
     // The non-overlapping atom sets should have radii the same size.
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
@@ -8230,8 +8221,6 @@ TEST_CASE("Lasso highlights") {
     outs.close();
     check_file_hash(baseName + "2.svg");
   }
-#endif
-#if RUN_3
   {
     // Another example.
     std::string smiles = "c1ccncc1c1ccc(C2CCC2)cc1";
@@ -8266,8 +8255,6 @@ TEST_CASE("Lasso highlights") {
     outs.close();
     check_file_hash(baseName + "3.svg");
   }
-#endif
-#if RUN_4_5
   {
     // Showing use of highlight_bond_map to control which bonds are drawn.
     // Bond highlight colours are ignored.
@@ -8333,8 +8320,6 @@ TEST_CASE("Lasso highlights") {
       check_file_hash(baseName + "5.svg");
     }
   }
-#endif
-#if RUN_6
   {
     // Bug with large radii lassos.
     auto m = R"CTAB(
@@ -8417,8 +8402,6 @@ M  END)CTAB"_ctab;
     outs.close();
     check_file_hash(baseName + "6.svg");
   }
-#endif
-#if RUN_7
   {
     // Bug with different radii in lassos.
     auto m = R"CTAB(
@@ -8502,5 +8485,4 @@ M  END)CTAB"_ctab;
     outs.close();
     check_file_hash(baseName + "7.svg");
   }
-#endif
 }
