@@ -117,7 +117,7 @@ void sorted_degree_seqs(
 }
 
 // Make labels for the atoms - by default the atomic symbol.
-void get_atom_labels(const ROMol &mol, const RascalOptions &opts,
+void get_atom_labels(const ROMol &mol, const RascalOptions & /* opts */,
                      std::vector<std::string> &atomLabels) {
   atomLabels.resize(mol.getNumAtoms());
   for (const auto &a : mol.atoms()) {
