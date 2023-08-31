@@ -46,7 +46,7 @@ TEST_CASE("Conrec basics", "[conrec]") {
             val += 1 / r;
           }
         }
-        maxV = std::max(val, maxV);
+        maxV = std::max(std::min(val, 1000.), maxV);
         grid[ix * gridSz + iy] = val;
       }
     }
@@ -113,7 +113,7 @@ TEST_CASE("connectLineSegments", "[conrec]") {
             val += 1 / r;
           }
         }
-        maxV = std::max(val, maxV);
+        maxV = std::max(std::min(val, 1000.), maxV);
         grid[ix * gridSz + iy] = val;
       }
     }
@@ -127,6 +127,7 @@ TEST_CASE("connectLineSegments", "[conrec]") {
                     isoLevels, segs);
 
     auto contours = conrec::connectLineSegments(segs);
+    CHECK(contours.size() == 179);
 
     std::ofstream outs("./blah.contour.svg");
     outs << R"SVG(<?xml version='1.0' encoding='iso-8859-1'?>
@@ -161,6 +162,7 @@ width='300px' height='300px' >
 }
 
 TEST_CASE("super chunky", "[conrec]") {
+  // an example where you can really see any holes in the contours
   SECTION("basics") {
     std::vector<RDGeom::Point2D> pts = {{0., 0.}, {1., 0.}, {1., 1.}, {0., 1.}};
     const size_t gridSz = 5;

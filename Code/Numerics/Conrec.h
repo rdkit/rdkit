@@ -225,12 +225,12 @@ connectLineSegments(const std::vector<ConrecSegment> &segments,
                     double coordMultiplier = 1000,
                     double isoValMultiplier = 1e6) {
   std::vector<std::pair<std::vector<RDGeom::Point2D>, double>> res;
-  std::unordered_map<std::tuple<int, int, int>, std::list<size_t>, tplHash>
+  std::unordered_map<std::tuple<int, int, long>, std::list<size_t>, tplHash>
       endPointHashes;
 
   auto makePointKey = [&coordMultiplier, &isoValMultiplier](const auto &pt,
                                                             double isoVal) {
-    return std::make_tuple<int, int, int>(
+    return std::make_tuple<int, int, long>(
         std::lround(coordMultiplier * pt.x),
         std::lround(coordMultiplier * pt.y),
         std::lround(isoValMultiplier * isoVal));
