@@ -191,13 +191,12 @@ class MarvinBond {
 class MarvinRectangle {
  protected:
   RDGeom::Point3D center;
-  bool centerIsStale;
+  bool centerIsStale = true;
 
  public:
   RDGeom::Point3D upperLeft;
   RDGeom::Point3D lowerRight;
 
-  MarvinRectangle();
   MarvinRectangle(double left, double right, double top, double bottom);
   MarvinRectangle(const RDGeom::Point3D &upperLeftInit,
                   const RDGeom::Point3D &lowerRightInit);

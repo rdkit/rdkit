@@ -1394,6 +1394,21 @@ ptree MarvinSruCoModSgroup::toPtree() const {
   return out;
 }
 
+MarvinMolBase *getActualParent(const MarvinMolBase *child) {
+  PRECONDITION(child, "child cannot be null");
+  for (auto actualParent = child->parent;;
+       actualParent = actualParent->parent) {
+    TEST_ASSERT(actualParent);
+
+    if (actualParent->role() != "MultipleSgroup") {
+      return actualParent;
+      ;
+    }
+  }
+
+  TEST_ASSERT(false);  // should not be reachable
+}
+
 MarvinMolBase *MarvinSruCoModSgroup::copyMol(std::string idAppendage) const {
   auto outSgroup = new MarvinSruCoModSgroup(this->roleName, this->parent);
   this->parent->sgroups.push_back(
@@ -1404,10 +1419,7 @@ MarvinMolBase *MarvinSruCoModSgroup::copyMol(std::string idAppendage) const {
   outSgroup->connect = this->connect;
   outSgroup->correspondence = this->correspondence;
 
-  auto actualParent = this->parent;
-  while (actualParent->role() == "MultipleSgroup") {
-    actualParent = actualParent->parent;
-  }
+  auto actualParent = getActualParent(this);
 
   // the only time this is to be called is when a mutliple group above it is
   // being expanded and the new atoms and bonds have already been made
@@ -2111,10 +2123,7 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::copyMol(
   outSgroup->id = this->id + idAppendage;
   outSgroup->title = this->title;
 
-  auto actualParent = this->parent;
-  while (actualParent->role() == "MultipleSgroup") {
-    actualParent = actualParent->parent;
-  }
+  auto actualParent = getActualParent(this);
 
   // the only time this is to be called is when a mutliple group above it is
   // being expanded and the new atoms and bonds have already been made
@@ -2787,10 +2796,7 @@ void MarvinMultipleSgroup::expandOneMultipleSgroup() {
   // find the actual parent - multiple groups can be nested, so the atoms and
   // bonds of the lower one are really in the grandparent or higher)
 
-  MarvinMolBase *actualParent = this->parent;
-  while (actualParent->role() == "MultipleSgroup") {
-    actualParent = actualParent->parent;
-  }
+  auto actualParent = getActualParent(this);
 
   for (MarvinBond *bondPtr : actualParent->bonds) {
     bool atom1InSet = boost::algorithm::contains(
@@ -2991,10 +2997,7 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
     // find the actual parent - multiple groups can be nested, so the atoms
     // and bonds of the lower one are really in the grandparent or higher)
 
-    MarvinMolBase *actualParent = this->parent;
-    while (actualParent->role() == "MultipleSgroup") {
-      actualParent = actualParent->parent;
-    }
+    auto actualParent = getActualParent(this);
 
     //  remove and delete the dummy atom from the parent.
 
@@ -3224,10 +3227,7 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
 }
 
 void MarvinMulticenterSgroup::processOneMulticenterSgroup() {
-  MarvinMolBase *actualParent = this->parent;
-  while (actualParent->role() == "MultipleSgroup") {
-    actualParent = actualParent->parent;
-  }
+  auto actualParent = getActualParent(this);
 
   // delete the bonds to the dummy atom
   std::vector<MarvinBond *> orphanedBonds;  // list of bonds to delete
@@ -3362,6 +3362,9 @@ void MarvinMolBase::prepSgroupsForRDKit() {
       case SgroupBothInAndNotInAtomSet:
         throw FileParseException(
             "Child sGroup has atoms both in the parent and NOT in the parent");
+      default:
+        throw FileParseException(
+            "Unexpected error: unrecogized result from isSgroupInSetOfAtoms");
     }
   }
 
@@ -3403,11 +3406,7 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
   //  MarvinSuperatomSgroup structure
 
   PRECONDITION(this->parent, "invalid parent");
-  MarvinMolBase *actualParent = this->parent;
-
-  while (actualParent->role() == "MultipleSgroup") {
-    actualParent = actualParent->parent;
-  }
+  auto actualParent = getActualParent(this);
 
   // make a new sub mol
 
@@ -3678,10 +3677,7 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
   // find the actual parent - multiple groups can be nested, so the atoms and
   // bonds of the lower one are really in the grandparent or higher)
 
-  MarvinMolBase *actualParent = this->parent;
-  while (actualParent->role() == "MultipleSgroup") {
-    actualParent = actualParent->parent;
-  }
+  auto actualParent = getActualParent(this);
 
   // find the atoms to be deleted
 
@@ -4188,8 +4184,8 @@ ptree MarvinReaction::toPtree() const {
   out.put_child("cml.MDocument.MChemicalStruct.reaction.arrow",
                 arrow.toPtree());
 
-  for (auto &pluse : pluses) {
-    out.add_child("cml.MDocument.MReactionSign", pluse->toPtree());
+  for (auto &plus : pluses) {
+    out.add_child("cml.MDocument.MReactionSign", plus->toPtree());
   }
 
   for (auto &condition : conditions) {
@@ -4197,14 +4193,6 @@ ptree MarvinReaction::toPtree() const {
   }
 
   return out;
-}
-
-MarvinRectangle::MarvinRectangle() {
-  upperLeft.x = 0.0;
-  upperLeft.y = 0.0;
-  lowerRight.x = 0.0;
-  lowerRight.y = 0.0;
-  centerIsStale = true;
 }
 
 MarvinRectangle::MarvinRectangle(double left, double right, double top,

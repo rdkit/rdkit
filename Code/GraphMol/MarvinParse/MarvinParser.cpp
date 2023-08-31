@@ -120,6 +120,8 @@ class MarvinCMLReader {
       }
     }
 
+    marvinReaction->prepSgroupsForRDKit();
+
     return rxn.release();
   }
 
