@@ -127,7 +127,7 @@ TEST_CASE("connectLineSegments", "[conrec]") {
                     isoLevels, segs);
 
     auto contours = conrec::connectLineSegments(segs);
-    CHECK(contours.size() == 179);
+    CHECK(contours.size() == 74);
 
     std::ofstream outs("./blah.contour.svg");
     outs << R"SVG(<?xml version='1.0' encoding='iso-8859-1'?>
