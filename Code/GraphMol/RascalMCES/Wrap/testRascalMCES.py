@@ -57,7 +57,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(results[0].atomMatches()), 6)
 
   def test2(self):
-    # Test single largest fragment extraction
+    # Test single largest fragment extraction from results
     ad1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
     ad2 = Chem.MolFromSmiles("N(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336")
 
@@ -92,6 +92,30 @@ class TestCase(unittest.TestCase):
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)
     self.assertEqual(len(results), 1)
 
+  def test5(self):
+    # Test setting non-default option singleLargestFrag
+    ad1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
+    ad2 = Chem.MolFromSmiles("N(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336")
+
+    opts = rdRascalMCES.RascalOptions()
+    opts.singleLargestFrag = True
+    results = rdRascalMCES.FindMCES(ad1, ad2, opts)
+    self.assertEqual(len(results), 1)
+    self.assertEqual(results[0].smartsString, 'CCCCCCCCCCNC12CC3CC(-C1)-CC(-C2)-C3')
+
+  def test6(self):
+    # Test the threshold and examine the tier1 and tier2 similarities.
+    ad1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
+    ad2 = Chem.MolFromSmiles("N(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336")
+
+    opts = rdRascalMCES.RascalOptions()
+    opts.similarityThreshold = 0.95
+    results = rdRascalMCES.FindMCES(ad1, ad2, opts)
+    self.assertEqual(len(results), 0)
+    opts.returnEmptyMCES = True
+    results = rdRascalMCES.FindMCES(ad1, ad2, opts)
+    self.assertEqual(len(results), 1)
+
   def testRascalCluster(self):
     cdk2_file = Path(os.environ['RDBASE']) / 'Contrib' / 'Fastcluster' / 'cdk2.smi'
     suppl = Chem.SmilesMolSupplier(str(cdk2_file), '\t', 1, 0, False)
@@ -99,6 +123,13 @@ class TestCase(unittest.TestCase):
     clusters = rdRascalMCES.RascalCluster(mols)
     self.assertEqual(len(clusters), 8)
     expClusters = [7, 7, 6, 2, 2, 2, 2, 20]
+    for clus, expClusSize in zip(clusters, expClusters):
+      self.assertEqual(expClusSize, len(clus))
+
+    clusOpts = rdRascalMCES.RascalClusterOptions()
+    clusOpts.similarityCutoff = 0.6
+    clusters = rdRascalMCES.RascalCluster(mols, clusOpts)
+    expClusters = [9, 8, 6, 2, 2, 2, 2, 2, 2, 2, 11]
     for clus, expClusSize in zip(clusters, expClusters):
       self.assertEqual(expClusSize, len(clus))
 
