@@ -2263,8 +2263,8 @@ std::string MarvinSuperatomSgroup::role() const { return "SuperatomSgroup"; }
 
 bool MarvinSuperatomSgroup::hasAtomBondBlocks() const { return true; }
 
-MarvinMolBase *MarvinSuperatomSgroup::copyMol(std::string idAppendage) const {
-  throw FileParseException("Internal error:  copying a SuperatomSgroup");
+MarvinMolBase *MarvinSuperatomSgroup::copyMol(std::string) const {
+  PRECONDITION(0, "Internal error:  copying a SuperatomSgroup");
 }
 
 std::string MarvinSuperatomSgroup::toString() const {
@@ -2529,9 +2529,9 @@ bool MarvinSuperatomSgroupExpanded::isPassiveRoleForContraction() const {
 
 bool MarvinMultipleSgroup::isPassiveRoleForContraction() const { return false; }
 
-void MarvinMolBase::parseMoleculeSpecific(
-    RDKit::RWMol *mol, std::unique_ptr<SubstanceGroup> &sgroup,
-    int sequenceId) {
+void MarvinMolBase::parseMoleculeSpecific(RDKit::RWMol *mol,
+                                          std::unique_ptr<SubstanceGroup> &,
+                                          int) {
   PRECONDITION(mol != nullptr, "mol cannot be null");
   // default is nothing - most derived classes override this
 };
@@ -2666,17 +2666,13 @@ void MarvinDataSgroup::parseMoleculeSpecific(
 }
 
 void MarvinMulticenterSgroup::parseMoleculeSpecific(
-    RDKit::RWMol *mol, std::unique_ptr<SubstanceGroup> &sgroup,
-    int sequenceId) {
-  PRECONDITION(mol != nullptr, "mol cannot be null");
-
+    RDKit::RWMol *, std::unique_ptr<SubstanceGroup> &, int) {
   // the MultiCenter Sgroups
 
   // There is really no place to put these in RDKit.  We should have
   // removed these already
-
-  throw FileParseException(
-      "Internal error: a MarvinMulticenterSgroup had not been removed");
+  PRECONDITION(
+      0, "Internal error:   a MarvinMulticenterSgroup has not been removed");
 }
 
 // the Generic groups
@@ -3105,6 +3101,7 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
     }
 
     for (auto thisParent = parent;; thisParent = thisParent->parent) {
+      TEST_ASSERT(thisParent != nullptr);
       auto dummyInParent =
           find_if(thisParent->atoms.begin(), thisParent->atoms.end(),
                   [dummyAtomPtr](const MarvinAtom *arg) {
@@ -3138,6 +3135,7 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
 
     for (auto subAtomPtr : this->atoms) {
       for (auto thisParent = parent;; thisParent = thisParent->parent) {
+        TEST_ASSERT(thisParent != nullptr);
         thisParent->atoms.push_back(subAtomPtr);
 
         if (thisParent->role() == "MultipleSgroup") {
@@ -3256,6 +3254,7 @@ void MarvinMulticenterSgroup::processOneMulticenterSgroup() {
   {
     auto centerPtr = *centerIter;
     for (auto thisParent = parent;; thisParent = thisParent->parent) {
+      TEST_ASSERT(thisParent != nullptr);
       auto parentAtomIter = find(
           thisParent->atoms.begin(), thisParent->atoms.end(),
           centerPtr);  // get rid of the atoms pointer to the old dummy atom
@@ -3283,6 +3282,7 @@ void MarvinMulticenterSgroup::processOneMulticenterSgroup() {
   // erase the multicenter group from its parent
 
   for (auto thisParent = parent;; thisParent = thisParent->parent) {
+    TEST_ASSERT(thisParent != nullptr);
     auto sgrupIter =
         std::find_if(thisParent->sgroups.begin(), thisParent->sgroups.end(),
                      [this](std::unique_ptr<MarvinMolBase> &sgptr) {
@@ -3402,7 +3402,9 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
   //  Takes information from a MarvinSuperatomSgroupExpanded and converts the
   //  MarvinSuperatomSgroup structure
 
+  PRECONDITION(this->parent, "invalid parent");
   MarvinMolBase *actualParent = this->parent;
+
   while (actualParent->role() == "MultipleSgroup") {
     actualParent = actualParent->parent;
   }
@@ -3539,6 +3541,8 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
 
   for (auto bond : marvinSuperatomSgroup->bonds) {
     int index = actualParent->getBondIndex(bond->id);
+    TEST_ASSERT(index >= 0 &&
+                static_cast<unsigned int>(index) < actualParent->bonds.size());
     actualParent->bonds.erase(actualParent->bonds.begin() + index);
   }
 
@@ -3600,6 +3604,8 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
         sibling->atoms.push_back(dummyParentAtom);
         for (auto atomToRemove : marvinSuperatomSgroup->atoms) {
           int index = sibling->getAtomIndex(atomToRemove->id);
+          TEST_ASSERT(index >= 0 &&
+                      static_cast<unsigned int>(index) < sibling->atoms.size());
           sibling->atoms.erase(sibling->atoms.begin() + index);
         }
 
@@ -3808,7 +3814,9 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
         }
       }
     }
-
+    TEST_ASSERT(matchedOrphanBondIndex >= 0 &&
+                static_cast<unsigned int>(matchedOrphanBondIndex) <
+                    orphanedBonds.size());
     orphanedBonds.erase(orphanedBonds.begin() + matchedOrphanBondIndex);
   };
 
@@ -4019,8 +4027,8 @@ void MarvinMolBase::processSgroupsFromRDKit() {
   return;
 }
 
-MarvinMolBase *MarvinMol::copyMol(std::string idAppendage) const {
-  throw FileParseException("Internal error:  copying a MarvinMol");
+MarvinMolBase *MarvinMol::copyMol(std::string) const {
+  PRECONDITION(0, "Internal error:  copying a MarvinMol");
 }
 
 std::string MarvinMol::toString() const {

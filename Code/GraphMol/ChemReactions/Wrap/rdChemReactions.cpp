@@ -316,7 +316,7 @@ ChemicalReaction *ReactionFromMrvFile(const char *rxnFilename, bool sanitize,
                                       bool removeHs) {
   ChemicalReaction *newR = nullptr;
   try {
-    newR = MrvRxnFileToChemicalReaction(rxnFilename, sanitize, removeHs);
+    newR = MrvFileToChemicalReaction(rxnFilename, sanitize, removeHs);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
