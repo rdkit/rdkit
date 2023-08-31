@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2019-2023 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,7 +8,15 @@
 //  of the RDKit source tree.
 //
 #include <vector>
+#include <list>
+#include <unordered_map>
 #include <Geometry/point.h>
+#include <cmath>
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/dynamic_bitset.hpp>
+#include <boost/functional/hash.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace conrec {
 struct ConrecSegment {
@@ -200,4 +208,82 @@ inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
     }     /* i */
   }       /* j */
 }
+
+struct pairHash {
+  template <class T1, class T2>
+  std::size_t operator()(const std::pair<T1, T2> &p) const {
+    std::size_t res = 0;
+    boost::hash_combine(res, p.first);
+    boost::hash_combine(res, p.second);
+    return res;
+  }
+};
+
+inline std::vector<std::vector<RDGeom::Point2D>> connectLineSegments(
+    const std::vector<ConrecSegment> &segments, double coordMultiplier = 1000) {
+  std::vector<std::vector<RDGeom::Point2D>> res;
+  std::unordered_map<std::pair<int, int>, std::list<size_t>, pairHash>
+      endPointHashes;
+
+  auto makePointKey = [&coordMultiplier](const auto &pt) {
+    return std::make_pair<int, int>(std::lround(coordMultiplier * pt.x),
+                                    std::lround(coordMultiplier * pt.y));
+  };
+
+  // first hash all of the endpoints
+  for (auto i = 0u; i < segments.size(); ++i) {
+    const auto &seg = segments[i];
+    endPointHashes[makePointKey(seg.p1)].push_back(i);
+    endPointHashes[makePointKey(seg.p2)].push_back(i);
+  }
+
+  boost::dynamic_bitset<> segmentsDone(segments.size());
+  // a candidate end point hasn't been used already.
+  auto isCandidate = [&segmentsDone](const auto &pr) {
+    return !pr.second.empty() && !segmentsDone[pr.second.front()];
+  };
+  auto singlePoint =
+      std::find_if(endPointHashes.begin(), endPointHashes.end(), isCandidate);
+  while (singlePoint != endPointHashes.end()) {
+    auto segId = singlePoint->second.front();
+    auto currKey = singlePoint->first;
+    std::vector<RDGeom::Point2D> contour;
+    while (1) {
+      segmentsDone.set(segId, true);
+      // move onto the next segment
+      const auto seg = segments[segId];
+      auto k1 = makePointKey(seg.p1);
+      auto k2 = makePointKey(seg.p2);
+      std::pair<int, int> endPtKey;
+      if (k1 == currKey) {
+        contour.push_back(seg.p1);
+        endPtKey = k2;
+      } else if (k2 == currKey) {
+        contour.push_back(seg.p2);
+        endPtKey = k1;
+      }
+      // remove this segment from the two hash lists:
+      auto &segs1 = endPointHashes[currKey];
+      segs1.erase(std::find(segs1.begin(), segs1.end(), segId));
+
+      auto &segs = endPointHashes[endPtKey];
+      segs.erase(std::find(segs.begin(), segs.end(), segId));
+      if (segs.empty()) {
+        // we're at the end, push on the last point
+        if (k1 == currKey) {
+          contour.push_back(seg.p2);
+        } else if (k2 == currKey) {
+          contour.push_back(seg.p1);
+        }
+        break;
+      }
+      segId = segs.front();
+      currKey = endPtKey;
+    }
+    res.push_back(contour);
+    singlePoint = std::find_if(singlePoint, endPointHashes.end(), isCandidate);
+  }
+  return res;
+}
+
 }  // namespace conrec
