@@ -55,6 +55,8 @@ DrawMol::DrawMol(
       confId_(confId),
       width_(width),
       height_(height),
+      drawWidth_(width),
+      drawHeight_(height),
       scale_(1.0),
       fontScale_(1.0),
       xMin_(std::numeric_limits<double>::max() / 2.0),
@@ -97,6 +99,8 @@ DrawMol::DrawMol(int width, int height, const MolDrawOptions &drawOptions,
       confId_(-1),
       width_(width),
       height_(height),
+      drawWidth_(width),
+      drawHeight_(height),
       scale_(scale),
       fontScale_(fontscale),
       xMin_(xmin),
@@ -105,7 +109,7 @@ DrawMol::DrawMol(int width, int height, const MolDrawOptions &drawOptions,
       yMax_(ymax),
       xRange_(xmax - xmin),
       yRange_(ymax - ymin),
-      drawHeight_(height) {
+      molHeight_(height) {
   textDrawer_.setFontScale(fontScale_, true);
   // we reverse the y coords of everything, so do that here, too
   yMin_ *= -1;
@@ -914,15 +918,15 @@ void DrawMol::calculateScale() {
   if (width_ < 0 && height_ < 0) {
     width_ =
         drawOptions_.scalingFactor * xRange_ * (1 + 2 * drawOptions_.padding);
-    drawHeight_ =
+    molHeight_ =
         drawOptions_.scalingFactor * yRange_ * (1 + 2 * drawOptions_.padding);
   } else if (width_ < 0 && yRange_ > 1.0e-4) {
     newScale = double(height_) / yRange_;
     // if the molecule is very wide and short (e.g. HO-NH2) don't let the
     // bonds get too long.
     double mbl = meanBondLength_ * newScale;
-    if (mbl > drawHeight_ / 2) {
-      newScale *= (drawHeight_ / 2) / mbl;
+    if (mbl > molHeight_ / 2) {
+      newScale *= (molHeight_ / 2) / mbl;
     }
     width_ = newScale * xRange_;
   } else if (height_ < 0 && xRange_ > 1.0e-4) {
@@ -931,18 +935,21 @@ void DrawMol::calculateScale() {
     if (mbl > width_ / 2) {
       newScale *= (width_ / 2) / mbl;
     }
-    drawHeight_ = newScale * yRange_;
+    molHeight_ = newScale * yRange_;
   }
   if (height_ < 0) {
-    height_ = drawHeight_;
+    height_ = molHeight_;
     if (legend_.empty()) {
       legendHeight_ = 0;
     }
   }
+  drawWidth_ = width_ * (1 - 2 * drawOptions_.padding);
+  drawHeight_ = height_ * (1 - 2 * drawOptions_.padding);
+  partitionForLegend();
 
   if (xRange_ > 1e-4 || yRange_ > 1e-4) {
     newScale =
-        std::min(double(width_) / xRange_, double(drawHeight_) / yRange_);
+        std::min(double(drawWidth_) / xRange_, double(molHeight_) / yRange_);
     double fix_scale = newScale;
     // after all that, use the fixed scale unless it's too big, in which case
     // scale the drawing down to fit.
@@ -951,7 +958,7 @@ void DrawMol::calculateScale() {
       fix_scale = drawOptions_.fixedBondLength;
     }
     if (drawOptions_.fixedScale > 0.0) {
-      fix_scale = double(width_) * drawOptions_.fixedScale;
+      fix_scale = double(drawWidth_) * drawOptions_.fixedScale;
     }
     if (newScale > fix_scale) {
       newScale = fix_scale;
@@ -996,14 +1003,9 @@ void DrawMol::findExtremes() {
     xMin_ = yMin_ = -1.0;
     xMax_ = yMax_ = 1.0;
   }
-  // calculate the x and y spans with a 5% buffer
+  // Calculate the x and y spans.  Don't include the padding, as that's
+  // now taken into account with drawWidth_ and drawHeight_.
   xRange_ = xMax_ - xMin_;
-  xMin_ -= drawOptions_.padding * xRange_;
-  xMax_ += drawOptions_.padding * xRange_;
-  xRange_ = xMax_ - xMin_;
-  yRange_ = yMax_ - yMin_;
-  yMin_ -= drawOptions_.padding * yRange_;
-  yMax_ += drawOptions_.padding * yRange_;
   yRange_ = yMax_ - yMin_;
   if (xRange_ < 1e-4) {
     xRange_ = 2.0;
@@ -1035,6 +1037,7 @@ void DrawMol::draw(MolDraw2D &drawer) const {
   drawer.setScale(scale_);
   auto keepFontScale = textDrawer_.fontScale();
   textDrawer_.setFontScale(fontScale_, true);
+
   for (auto &ps : preShapes_) {
     ps->draw(drawer);
   }
@@ -1191,6 +1194,7 @@ void DrawMol::shrinkToFit(bool withPadding) {
   Point2D corr((newWidth - width_) / 2, (newHeight - height_) / 2);
   transformAll(&corr, nullptr, nullptr);
   width_ = newWidth;
+  drawWidth_ = width_ * (1 - 2 * drawOptions_.padding);
   height_ = newHeight;
   if (!legend_.empty()) {
     partitionForLegend();
@@ -1198,7 +1202,8 @@ void DrawMol::shrinkToFit(bool withPadding) {
     extractLegend();
   } else {
     legendHeight_ = 0;
-    drawHeight_ = height_;
+    molHeight_ = height_;
+    drawHeight_ = height_ * (1 - 2 * drawOptions_.padding);
   }
 }
 
@@ -1504,14 +1509,14 @@ void DrawMol::calcMeanBondLength() {
 // ****************************************************************************
 void DrawMol::partitionForLegend() {
   if (legend_.empty()) {
-    drawHeight_ = height_;
+    molHeight_ = drawHeight_;
     legendHeight_ = 0;
   } else {
-    if (height_ > 0) {
-      legendHeight_ = int(drawOptions_.legendFraction * float(height_));
-      drawHeight_ = height_ - legendHeight_;
+    if (!flexiCanvasY_) {
+      legendHeight_ = int(drawOptions_.legendFraction * float(drawHeight_));
+      molHeight_ = drawHeight_ - legendHeight_;
     } else {
-      drawHeight_ = height_;
+      molHeight_ = drawHeight_;
       // the legendHeight_ isn't needed for the flexiCanvas
     }
   }
@@ -1564,19 +1569,19 @@ void DrawMol::extractLegend() {
   double relFontScale = drawOptions_.legendFontSize / fsize;
   double total_width, total_height;
   calc_legend_height(legend_bits, relFontScale, total_width, total_height);
-  if (total_width >= width_) {
+  if (total_width >= drawWidth_) {
     if (!flexiCanvasX_) {
-      relFontScale *= double(width_) / total_width;
+      relFontScale *= double(drawWidth_) / total_width;
       calc_legend_height(legend_bits, relFontScale, total_width, total_height);
     } else {
-      width_ = total_width * (1 + drawOptions_.padding);
+      width_ = total_width * (1 + 2 * drawOptions_.padding);
+      drawWidth_ = total_width;
     }
   }
 
   if (!flexiCanvasY_) {
-    auto adjLegHt = height_ * drawOptions_.legendFraction;
+    auto adjLegHt = drawHeight_ * drawOptions_.legendFraction;
     // subtract off space for the padding.
-    adjLegHt -= 0.5 * drawOptions_.padding * height_;
     if (total_height > adjLegHt) {
       relFontScale *= double(adjLegHt) / total_height;
       calc_legend_height(legend_bits, relFontScale, total_width, total_height);
@@ -1586,11 +1591,13 @@ void DrawMol::extractLegend() {
     // and make it at least 2 pixels.
     double extra_padding = total_height * drawOptions_.padding;
     extra_padding = extra_padding < 2.0 ? 2.0 : extra_padding;
-    height_ += total_height + extra_padding;
+    legendHeight_ = total_height + extra_padding;
+    drawHeight_ += legendHeight_;
+    height_ += legendHeight_;
   }
 
-  Point2D loc(width_ / 2 + xOffset_,
-              height_ * (1 - 0.5 * drawOptions_.padding) + yOffset_);
+  Point2D loc(drawWidth_ / 2 + xOffset_ + width_ * drawOptions_.padding,
+              drawOptions_.padding * height_ + drawHeight_ + yOffset_);
   for (auto bit : legend_bits) {
     DrawAnnotation *da =
         new DrawAnnotation(bit, TextAlignType::MIDDLE, "legend", relFontScale,
@@ -2587,8 +2594,10 @@ void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
   trans = Point2D(-xMin_, -yMin_);
   scale = Point2D(scale_, scale_);
   Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
-  toCentre = Point2D((width_ - scaledRanges.x) / 2.0 + xOffset_,
-                     (drawHeight_ - scaledRanges.y) / 2.0 + yOffset_);
+  toCentre = Point2D((drawWidth_ - scaledRanges.x) / 2.0 + xOffset_ +
+                         width_ * drawOptions_.padding,
+                     (molHeight_ - scaledRanges.y) / 2.0 + yOffset_ +
+                         height_ * drawOptions_.padding);
 }
 
 // ****************************************************************************
