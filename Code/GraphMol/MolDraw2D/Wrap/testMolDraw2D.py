@@ -465,9 +465,9 @@ M  END
         d.DrawMolecule(dm)
         conf = dm.GetConformer()
         ps3 = (
-            conf.GetAtomPosition(0),
-            conf.GetAtomPosition(1),
-            conf.GetAtomPosition(3),
+          conf.GetAtomPosition(0),
+          conf.GetAtomPosition(1),
+          conf.GetAtomPosition(3),
         )
         ps = [Geometry.Point2D(p.x, p.y) for p in ps3]
         d.DrawPolygon(ps)
@@ -478,133 +478,148 @@ M  END
         d.FinishDrawing()
         txt = d.GetDrawingText()
         with open("extras_1.svg", "w+") as outf:
-            outf.write(txt)
+          outf.write(txt)
 
     def testSetDrawOptions(self):
-        m = Chem.MolFromSmiles('CCNC(=O)O')
-        d = rdMolDraw2D.MolDraw2DSVG(250, 200, -1, -1, True)
-        rdMolDraw2D.PrepareAndDrawMolecule(d, m)
-        d.FinishDrawing()
-        txt = d.GetDrawingText()
-        self.assertNotEqual(txt.find("fill:#0000FF' >N</text>"), -1)
-        self.assertEqual(txt.find("fill:#000000' >N</text>"), -1)
+      m = Chem.MolFromSmiles('CCNC(=O)O')
+      d = rdMolDraw2D.MolDraw2DSVG(250, 200, -1, -1, True)
+      rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+      d.FinishDrawing()
+      txt = d.GetDrawingText()
+      self.assertNotEqual(txt.find("fill:#0000FF' >N</text>"), -1)
+      self.assertEqual(txt.find("fill:#000000' >N</text>"), -1)
 
-        d = rdMolDraw2D.MolDraw2DSVG(250, 200, -1, -1, True)
-        do = rdMolDraw2D.MolDrawOptions()
-        do.useBWAtomPalette()
-        d.SetDrawOptions(do)
-        rdMolDraw2D.PrepareAndDrawMolecule(d, m)
-        d.FinishDrawing()
-        txt = d.GetDrawingText()
-        self.assertEqual(txt.find("fill:#0000FF' >N</text>"), -1)
-        self.assertNotEqual(txt.find("fill:#000000' >N</text>"), -1)
+      d = rdMolDraw2D.MolDraw2DSVG(250, 200, -1, -1, True)
+      do = rdMolDraw2D.MolDrawOptions()
+      do.useBWAtomPalette()
+      d.SetDrawOptions(do)
+      rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+      d.FinishDrawing()
+      txt = d.GetDrawingText()
+      self.assertEqual(txt.find("fill:#0000FF' >N</text>"), -1)
+      self.assertNotEqual(txt.find("fill:#000000' >N</text>"), -1)
 
     def testAlternativeFreetypeFont(self):
-        # this one, you have to look at the pictures
-        m = Chem.MolFromSmiles('S(=O)(=O)(O)c1c(Cl)c(Br)c(I)c(F)c(N)1')
-        d = rdMolDraw2D.MolDraw2DSVG(250, 200)
-        rdMolDraw2D.PrepareAndDrawMolecule(d, m)
-        d.FinishDrawing()
-        txt = d.GetDrawingText()
-        with open('test_ff.svg', 'w') as f:
-            f.write(txt)
+      # this one, you have to look at the pictures
+      m = Chem.MolFromSmiles('S(=O)(=O)(O)c1c(Cl)c(Br)c(I)c(F)c(N)1')
+      d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+      rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+      d.FinishDrawing()
+      txt = d.GetDrawingText()
+      with open('test_ff.svg', 'w') as f:
+        f.write(txt)
 
-        d = rdMolDraw2D.MolDraw2DSVG(250, 200)
-        do = rdMolDraw2D.MolDrawOptions()
-        rdbase = environ['RDBASE']
-        if rdbase:
-            do.fontFile = '{}/Code/GraphMol/MolDraw2D/Amadeus.ttf'.format(rdbase)
-            d.SetDrawOptions(do)
-            rdMolDraw2D.PrepareAndDrawMolecule(d, m)
-            d.FinishDrawing()
-            txt = d.GetDrawingText()
-            with open('test_aff.svg', 'w') as f:
-                f.write(txt)
-        else:
-            pass
-
-    def testExplicitMethyl(self):
-        m = Chem.MolFromSmiles('CC')
-        d = rdMolDraw2D.MolDraw2DSVG(250, 200)
-        rdMolDraw2D.PrepareAndDrawMolecule(d, m)
-        d.FinishDrawing()
-        txt = d.GetDrawingText()
-        self.assertEqual(txt.find("class='atom-"), -1)
-
-        d = rdMolDraw2D.MolDraw2DSVG(250, 200)
-        do = rdMolDraw2D.MolDrawOptions()
-        do.explicitMethyl = True
+      d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+      do = rdMolDraw2D.MolDrawOptions()
+      rdbase = environ['RDBASE']
+      if rdbase:
+        do.fontFile = '{}/Code/GraphMol/MolDraw2D/Amadeus.ttf'.format(rdbase)
         d.SetDrawOptions(do)
         rdMolDraw2D.PrepareAndDrawMolecule(d, m)
         d.FinishDrawing()
         txt = d.GetDrawingText()
-        self.assertNotEqual(txt.find("class='atom-"), -1)
+        with open('test_aff.svg', 'w') as f:
+          f.write(txt)
+      else:
+        pass
+
+    def testExplictMethyl(self):
+      m = Chem.MolFromSmiles('CC')
+      d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+      rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+      d.FinishDrawing()
+      txt = d.GetDrawingText()
+      self.assertEqual(txt.find("class='atom-"), -1)
+
+      d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+      do = rdMolDraw2D.MolDrawOptions()
+      do.explicitMethyl = True
+      d.SetDrawOptions(do)
+      rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+      d.FinishDrawing()
+      txt = d.GetDrawingText()
+      self.assertNotEqual(txt.find("class='atom-"), -1)
 
     def testDrawMoleculeWithHighlights(self):
-        COLS = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.55, 0.0)]
+      COLS = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.55, 0.0)]
 
-        def get_hit_atoms_and_bonds(mol, smt):
-            alist = []
-            blist = []
-            q = Chem.MolFromSmarts(smt)
-            for match in mol.GetSubstructMatches(q):
-                alist.extend(match)
+      def get_hit_atoms_and_bonds(mol, smt):
+        alist = []
+        blist = []
+        q = Chem.MolFromSmarts(smt)
+        for match in mol.GetSubstructMatches(q):
+          alist.extend(match)
 
-            for ha1 in alist:
-                for ha2 in alist:
-                    if ha1 > ha2:
-                        b = mol.GetBondBetweenAtoms(ha1, ha2)
-                        if b:
-                            blist.append(b.GetIdx())
+        for ha1 in alist:
+          for ha2 in alist:
+            if ha1 > ha2:
+              b = mol.GetBondBetweenAtoms(ha1, ha2)
+              if b:
+                blist.append(b.GetIdx())
 
-            return alist, blist
+        return alist, blist
 
-        def add_colours_to_map(els, cols, col_num):
-            for el in els:
-                if el not in cols:
-                    cols[el] = []
-                if COLS[col_num] not in cols[el]:
-                    cols[el].append(COLS[col_num])
+      def add_colours_to_map(els, cols, col_num):
+        for el in els:
+          if el not in cols:
+            cols[el] = []
+          if COLS[col_num] not in cols[el]:
+            cols[el].append(COLS[col_num])
 
-        def do_a_picture(smi, smarts, label):
+      def do_a_picture(smi, smarts, label, lasso=None):
 
-            rdDepictor.SetPreferCoordGen(False)
-            mol = Chem.MolFromSmiles(smi)
-            mol = Draw.PrepareMolForDrawing(mol)
+        rdDepictor.SetPreferCoordGen(False)
+        mol = Chem.MolFromSmiles(smi)
+        mol = Draw.PrepareMolForDrawing(mol)
 
-            acols = {}
-            bcols = {}
-            h_rads = {}
-            h_lw_mult = {}
+        acols = {}
+        bcols = {}
+        h_rads = {}
+        h_lw_mult = {}
 
-            for i, smt in enumerate(smarts):
-                alist, blist = get_hit_atoms_and_bonds(mol, smt)
-                h_rads[alist[0]] = 0.4
-                h_lw_mult[blist[0]] = 2
-                col = i % 4
-                add_colours_to_map(alist, acols, col)
-                add_colours_to_map(blist, bcols, col)
+        for i, smt in enumerate(smarts):
+          alist, blist = get_hit_atoms_and_bonds(mol, smt)
+          h_rads[alist[0]] = 0.4
+          h_lw_mult[blist[0]] = 2
+          col = i % 4
+          add_colours_to_map(alist, acols, col)
+          add_colours_to_map(blist, bcols, col)
 
-            d = rdMolDraw2D.MolDraw2DSVG(500, 500)
-            d.drawOptions().fillHighlights = False
-            d.DrawMoleculeWithHighlights(mol, label, acols, bcols, h_rads, h_lw_mult, -1)
+        d = rdMolDraw2D.MolDraw2DSVG(500, 500)
+        d.drawOptions().fillHighlights = False
+        if lasso is not None:
+          if lasso == "Direct":
+            d.drawOptions().multiColourHighlightStyle = Draw.MultiColourHighlightStyle.Lasso
+          elif lasso == "ViaJSON":
+            print('json lasso')
+            Draw.UpdateDrawerParamsFromJSON(d, '{"multiColourHighlightStyle": "Lasso"}')
+        d.DrawMoleculeWithHighlights(mol, label, acols, bcols, h_rads, h_lw_mult, -1)
 
-            d.FinishDrawing()
-            return d.GetDrawingText()
+        d.FinishDrawing()
+        return d.GetDrawingText()
 
-        smi = 'CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]'
-        smarts = ['CONN', 'N#CC~CO', 'C=CON', 'CONNCN']
-        txt = do_a_picture(smi, smarts, 'pyTest2')
-        self.assertGreater(txt.find('stroke:#FF8C00;stroke-width:8.0'), -1)
-        self.assertEqual(
-            txt.find("ellipse cx='244.253' cy='386.518'"
-                     " rx='11.9872' ry='12.8346'"
-                     " style='fill:none;stroke:#00FF00'"), -1)
+      smi = 'CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]'
+      smarts = ['CONN', 'N#CC~CO', 'C=CON', 'CONNCN']
+      txt = do_a_picture(smi, smarts, 'pyTest2')
+      self.assertGreater(txt.find('stroke:#FF8C00;stroke-width:8.0'), -1)
+      self.assertEqual(
+        txt.find("ellipse cx='244.253' cy='386.518'"
+                " rx='11.9872' ry='12.8346'"
+                " style='fill:none;stroke:#00FF00'"), -1)
+      txt = do_a_picture(smi, smarts, 'pyTest4', lasso="Direct")
+      # the lasso mode puts paths, not ellipses.
+      self.assertGreater(txt.find("<path class='atom-5'"), -1)
+      self.assertEqual(txt.find("ellipse"), -1)
 
-        # test for no-longer-mysterious OSX crash.
-        smi = 'c1ccccc1Cl'
-        smarts = []
-        do_a_picture(smi, smarts, 'pyTest3')
+      txt = do_a_picture(smi, smarts, 'pyTest4', lasso="ViaJSON")
+      # the lasso mode puts paths, not ellipses.
+      self.assertGreater(txt.find("<path class='atom-5'"), -1)
+      self.assertEqual(txt.find("ellipse"), -1)
+
+      # test for no-longer-mysterious OSX crash.
+      smi = 'c1ccccc1Cl'
+      smarts = []
+      do_a_picture(smi, smarts, 'pyTest3')
 
     @unittest.skipUnless(hasattr(Draw, 'MolDraw2DCairo'), 'Cairo support not enabled')
     def testPNGMetadata(self):

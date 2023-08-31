@@ -143,6 +143,8 @@ inline void assignBWPalette(ColourPalette &palette) {
   palette[-1] = DrawColour(0, 0, 0);
 };
 
+enum class MultiColourHighlightStyle { CIRCLEANDLINE, LASSO };
+
 struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomLabelDeuteriumTritium =
       false;  // toggles replacing 2H with D and 3H with T
@@ -241,6 +243,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomHighlightsAreCircles = false;  // forces atom highlights always to be
                                           // circles. Default (false) is to put
                                           // ellipses round longer labels.
+  MultiColourHighlightStyle multiColourHighlightStyle =
+      MultiColourHighlightStyle::CIRCLEANDLINE;
   bool centreMoleculesBeforeDrawing = false;  // moves the centre of the drawn
                                               // molecule to (0,0)
   bool explicitMethyl = false;  // draw terminal methyl and related as CH3
