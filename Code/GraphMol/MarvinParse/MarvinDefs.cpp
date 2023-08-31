@@ -3402,8 +3402,8 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
   //  Takes information from a MarvinSuperatomSgroupExpanded and converts the
   //  MarvinSuperatomSgroup structure
 
-  MarvinMolBase *actualParent = this->parent;
   PRECONDITION(this->parent, "invalid parent");
+  MarvinMolBase *actualParent = this->parent;
 
   while (actualParent->role() == "MultipleSgroup") {
     actualParent = actualParent->parent;
