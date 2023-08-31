@@ -539,8 +539,6 @@ class MarvinSuperatomSgroup : public MarvinMolBase {
  public:
   std::string title;
   std::vector<std::unique_ptr<MarvinAttachmentPoint>> attachmentPoints;
-  std::vector<std::unique_ptr<MarvinAtom>> ownedAtoms;
-  std::vector<std::unique_ptr<MarvinBond>> ownedBonds;
 
   MarvinSuperatomSgroup(MarvinMolBase *parent);
   MarvinSuperatomSgroup(MarvinMolBase *parent, ptree &molTree);
@@ -587,8 +585,8 @@ class MarvinMol : public MarvinMolBase {
   std::vector<std::unique_ptr<MarvinAtom>> ownedAtoms;
   std::vector<std::unique_ptr<MarvinBond>> ownedBonds;
 
-  virtual void pushOwnedAtom(MarvinAtom *atom) override;
-  virtual void pushOwnedBond(MarvinBond *bond) override;
+  void pushOwnedAtom(MarvinAtom *atom) override;
+  void pushOwnedBond(MarvinBond *bond) override;
 
   void pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atom) override;
   void pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bond) override;
