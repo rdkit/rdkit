@@ -95,6 +95,10 @@ struct ContourParams {
       {0.557, 0.004, 0.322, 0.5},
       {1, 1, 1, 0.5},
       {0.153, 0.392, 0.098, 0.5}};  // similarity map color scheme
+  bool drawAsLines =
+      true;  // draws the contours as continuous lines instead of line segments.
+  double coordScaleForQuantization = 1000.;
+  double isovalScaleForQuantization = 1e6;
 };
 
 //! Generates and draws contours for data on a grid

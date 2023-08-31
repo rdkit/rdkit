@@ -209,32 +209,38 @@ inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
   }       /* j */
 }
 
-struct pairHash {
-  template <class T1, class T2>
-  std::size_t operator()(const std::pair<T1, T2> &p) const {
+struct tplHash {
+  template <class T1, class T2, class T3>
+  std::size_t operator()(const std::tuple<T1, T2, T3> &p) const {
     std::size_t res = 0;
-    boost::hash_combine(res, p.first);
-    boost::hash_combine(res, p.second);
+    boost::hash_combine(res, std::get<0>(p));
+    boost::hash_combine(res, std::get<1>(p));
+    boost::hash_combine(res, std::get<2>(p));
     return res;
   }
 };
 
-inline std::vector<std::vector<RDGeom::Point2D>> connectLineSegments(
-    const std::vector<ConrecSegment> &segments, double coordMultiplier = 1000) {
-  std::vector<std::vector<RDGeom::Point2D>> res;
-  std::unordered_map<std::pair<int, int>, std::list<size_t>, pairHash>
+inline std::vector<std::pair<std::vector<RDGeom::Point2D>, double>>
+connectLineSegments(const std::vector<ConrecSegment> &segments,
+                    double coordMultiplier = 1000,
+                    double isoValMultiplier = 1e6) {
+  std::vector<std::pair<std::vector<RDGeom::Point2D>, double>> res;
+  std::unordered_map<std::tuple<int, int, int>, std::list<size_t>, tplHash>
       endPointHashes;
 
-  auto makePointKey = [&coordMultiplier](const auto &pt) {
-    return std::make_pair<int, int>(std::lround(coordMultiplier * pt.x),
-                                    std::lround(coordMultiplier * pt.y));
+  auto makePointKey = [&coordMultiplier, &isoValMultiplier](const auto &pt,
+                                                            double isoVal) {
+    return std::make_tuple<int, int, int>(
+        std::lround(coordMultiplier * pt.x),
+        std::lround(coordMultiplier * pt.y),
+        std::lround(isoValMultiplier * isoVal));
   };
 
   // first hash all of the endpoints
   for (auto i = 0u; i < segments.size(); ++i) {
     const auto &seg = segments[i];
-    endPointHashes[makePointKey(seg.p1)].push_back(i);
-    endPointHashes[makePointKey(seg.p2)].push_back(i);
+    endPointHashes[makePointKey(seg.p1, seg.isoVal)].push_back(i);
+    endPointHashes[makePointKey(seg.p2, seg.isoVal)].push_back(i);
   }
 
   boost::dynamic_bitset<> segmentsDone(segments.size());
@@ -247,17 +253,17 @@ inline std::vector<std::vector<RDGeom::Point2D>> connectLineSegments(
   while (singlePoint != endPointHashes.end()) {
     auto segId = singlePoint->second.front();
     auto currKey = singlePoint->first;
+    auto currVal = segments[segId].isoVal;
     std::vector<RDGeom::Point2D> contour;
     while (1) {
       segmentsDone.set(segId, true);
       // move onto the next segment
       const auto seg = segments[segId];
-      auto k1 = makePointKey(seg.p1);
-      auto k2 = makePointKey(seg.p2);
-      std::pair<int, int> endPtKey;
+      auto k1 = makePointKey(seg.p1, seg.isoVal);
+      auto k2 = makePointKey(seg.p2, seg.isoVal);
+      auto endPtKey = k2;
       if (k1 == currKey) {
         contour.push_back(seg.p1);
-        endPtKey = k2;
       } else if (k2 == currKey) {
         contour.push_back(seg.p2);
         endPtKey = k1;
@@ -280,7 +286,7 @@ inline std::vector<std::vector<RDGeom::Point2D>> connectLineSegments(
       segId = segs.front();
       currKey = endPtKey;
     }
-    res.push_back(contour);
+    res.push_back(std::make_pair(contour, currVal));
     singlePoint = std::find_if(singlePoint, endPointHashes.end(), isCandidate);
   }
   return res;

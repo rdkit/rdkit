@@ -139,7 +139,8 @@ width='300px' height='300px' >
 <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='300' height='300' x='0' y='0'> </rect>
 <!-- END OF HEADER -->
 )SVG";
-    for (const auto &contour : contours) {
+    for (const auto &pr : contours) {
+      auto [contour, val] = pr;
       REQUIRE(contour.size());
       outs << "<path d='M " << 40 * contour[0].x + 150 << ","
            << 40 * contour[0].y + 150;
@@ -236,7 +237,8 @@ width='300px' height='300px' >
 <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='300' height='300' x='0' y='0'> </rect>
 <!-- END OF HEADER -->
 )SVG";
-    for (const auto &contour : contours) {
+    for (const auto &pr : contours) {
+      auto [contour, val] = pr;
       REQUIRE(contour.size());
       outs2 << "<path d='M " << 40 * contour[0].x + 150 << ","
             << 40 * contour[0].y + 150;
