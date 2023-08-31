@@ -99,19 +99,8 @@ void MolDraw2DCairo::setColour(const DrawColour &col) {
   cairo_set_source_rgba(dp_cr, col.r, col.g, col.b, col.a);
 }
 
-// ****************************************************************************
-void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2,
-                              bool rawCoords) {
-  PRECONDITION(dp_cr, "no draw context");
-  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
-  Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
-
-  double width = getDrawLineWidth();
-  std::string dashString = "";
-
-  cairo_set_line_width(dp_cr, width);
-
-  const DashPattern &dashes = dash();
+namespace {
+void setDashes(cairo_t *dp_cr, const DashPattern &dashes) {
   if (dashes.size()) {
     auto *dd = new double[dashes.size()];
     std::copy(dashes.begin(), dashes.end(), dd);
@@ -120,6 +109,21 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2,
   } else {
     cairo_set_dash(dp_cr, nullptr, 0, 0);
   }
+}
+}  // namespace
+
+// ****************************************************************************
+void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2,
+                              bool rawCoords) {
+  PRECONDITION(dp_cr, "no draw context");
+  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
+  Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
+
+  double width = getDrawLineWidth();
+
+  cairo_set_line_width(dp_cr, width);
+
+  setDashes(dp_cr, dash());
 
   cairo_move_to(dp_cr, c1.x, c1.y);
   cairo_line_to(dp_cr, c2.x, c2.y);
@@ -171,7 +175,7 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds,
 
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
   cairo_set_line_join(dp_cr, CAIRO_LINE_JOIN_BEVEL);
-  cairo_set_dash(dp_cr, nullptr, 0, 0);
+  setDashes(dp_cr, dash());
   cairo_set_line_width(dp_cr, width);
 
   if (!cds.empty()) {
