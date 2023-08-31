@@ -36,7 +36,9 @@ DrawMolMCHLasso::DrawMolMCHLasso(
                  highlight_linewidth_multipliers, confId) {}
 
 // ****************************************************************************
-void DrawMolMCHLasso::extractHighlights(double scale) { extractMCHighlights(); }
+void DrawMolMCHLasso::extractHighlights(double /* scale  */) {
+  extractMCHighlights();
+}
 
 // ****************************************************************************
 void DrawMolMCHLasso::extractMCHighlights() {
@@ -151,7 +153,7 @@ void DrawMolMCHLasso::extractAtomArcs(
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const {
   double xradius, yradius;
   for (auto ca : colAtoms) {
-    if (ca < 0 || ca >= drawMol_->getNumAtoms()) {
+    if (ca < 0 || static_cast<unsigned int>(ca) >= drawMol_->getNumAtoms()) {
       // there's an error in the colour map
       continue;
     }
@@ -172,7 +174,8 @@ void DrawMolMCHLasso::extractBondLines(
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
   if (colAtoms.size() > 1) {
     for (size_t i = 0U; i < colAtoms.size() - 1; ++i) {
-      if (colAtoms[i] < 0 || colAtoms[i] >= drawMol_->getNumAtoms()) {
+      if (colAtoms[i] < 0 ||
+          static_cast<unsigned int>(colAtoms[i]) >= drawMol_->getNumAtoms()) {
         // there's an error in the colour map.
         continue;
       }
@@ -181,7 +184,8 @@ void DrawMolMCHLasso::extractBondLines(
       xradiusI += xradiusI * lassoNum * 0.5;
       auto dispI = xradiusI * 0.75;
       for (size_t j = i + 1; j < colAtoms.size(); ++j) {
-        if (colAtoms[j] < 0 || colAtoms[j] >= drawMol_->getNumAtoms()) {
+        if (colAtoms[j] < 0 ||
+            static_cast<unsigned int>(colAtoms[j]) >= drawMol_->getNumAtoms()) {
           // there's an error in the colour map.
           continue;
         }
@@ -191,7 +195,6 @@ void DrawMolMCHLasso::extractBondLines(
         auto dispJ = xradiusJ * 0.75;
         auto bond = drawMol_->getBondBetweenAtoms(colAtoms[i], colAtoms[j]);
         if (bond) {
-          const DrawColour *colToUse = &col;
           if (!mcHighlightBondMap_.empty()) {
             auto bndIt = mcHighlightBondMap_.find(bond->getIdx());
             if (bndIt == mcHighlightBondMap_.end()) {

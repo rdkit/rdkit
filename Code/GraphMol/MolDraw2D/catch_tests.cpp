@@ -8188,21 +8188,6 @@ TEST_CASE("Lasso highlights") {
     delete query;
     return hit_atoms;
   };
-  auto get_all_hit_bonds =
-      [](ROMol &mol, const std::vector<int> &hit_atoms) -> std::vector<int> {
-    std::vector<int> hit_bonds;
-    for (int i : hit_atoms) {
-      for (int j : hit_atoms) {
-        if (i > j) {
-          Bond *bnd = mol.getBondBetweenAtoms(i, j);
-          if (bnd) {
-            hit_bonds.push_back(bnd->getIdx());
-          }
-        }
-      }
-    }
-    return hit_bonds;
-  };
   auto update_colour_map = [](const std::vector<int> &ats, DrawColour col,
                               std::map<int, std::vector<DrawColour>> &ha_map) {
     for (auto h : ats) {
