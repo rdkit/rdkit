@@ -814,7 +814,7 @@ CREATE OR REPLACE FUNCTION mol_nm_hash(mol, cstring default 'AnonymousGraph')
 
 -- extended query operations
 CREATE OR REPLACE FUNCTION mol_to_xqmol(mol, bool default true, 
-                                        bool default true, bool default true,
+                                        bool default true, bool default false,
                                         cstring default '' )
 RETURNS xqmol
 PARALLEL SAFE
