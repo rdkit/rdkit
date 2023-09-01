@@ -7,23 +7,25 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <GraphMol/RDKitBase.h>
-#include <RDGeneral/Ranking.h>
-#include <GraphMol/new_canon.h>
-#include <GraphMol/QueryOps.h>
-#include <RDGeneral/types.h>
-#include <sstream>
-#include <set>
-#include <algorithm>
-#include <RDGeneral/utils.h>
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/RDLog.h>
-
-#include <boost/dynamic_bitset.hpp>
-#include <Geometry/point.h>
 #include "Chirality.h"
 
+#include <Geometry/point.h>
+#include <GraphMol/QueryOps.h>
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/new_canon.h>
+#include <RDGeneral/Invariant.h>
+#include <RDGeneral/RDLog.h>
+#include <RDGeneral/Ranking.h>
+#include <RDGeneral/types.h>
+#include <RDGeneral/utils.h>
+
+#include <boost/dynamic_bitset.hpp>
+
+#include <algorithm>
 #include <cstdlib>
+#include <optional>
+#include <set>
+#include <sstream>
 #include <utility>
 
 // #define VERBOSE_CANON 1
