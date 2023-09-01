@@ -3390,3 +3390,31 @@ M  END
     run_test(mb, reference_smiles);
   }
 }
+
+TEST_CASE(
+    "GitHub Issue #6681: ROMol move constructor and assignment do not update SubstanceGroup ownership",
+    "[bug]") {
+  auto m = "CCCCCC[NH3+] |SgD:6:lambda max:230:=:nm::|"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 7);
+  REQUIRE(getSubstanceGroups(*m).size() == 1);
+
+  SECTION("ROMol move constructor") {
+    ROMol mol(std::move(*m));
+    REQUIRE(mol.getNumAtoms() == 7);
+
+    auto sgs = getSubstanceGroups(mol);
+    REQUIRE(sgs.size() == 1);
+    CHECK(&sgs[0].getOwningMol() == &mol);
+  }
+
+  SECTION("ROMol move assignment") {
+    ROMol mol;
+    mol = std::move(*m);
+    REQUIRE(mol.getNumAtoms() == 7);
+
+    auto sgs = getSubstanceGroups(mol);
+    REQUIRE(sgs.size() == 1);
+    CHECK(&sgs[0].getOwningMol() == &mol);
+  }
+}
