@@ -1039,9 +1039,7 @@ class MarvinCMLWriter {
               PLUS_SPACE / 2.0;
         }
 
-        auto newMarvinPlus = new MarvinPlus();
-        rxn.pluses.push_back(
-            std::move(std::unique_ptr<MarvinPlus>(newMarvinPlus)));
+        auto &newMarvinPlus = rxn.pluses.emplace_back(new MarvinPlus);
 
         newMarvinPlus->id = "o" + std::to_string(++plusCount);
         newMarvinPlus->x1 = x;
@@ -1062,11 +1060,8 @@ class MarvinCMLWriter {
         auto rectCurr =
             MarvinRectangle(*rowPtr);  // composite rectangle for the row
 
+        auto &newMarvinPlus = rxn.pluses.emplace_back(new MarvinPlus);
         if (rectPrev.lowerRight.y - rectCurr.upperLeft.y > PLUS_SPACE) {
-          auto newMarvinPlus = new MarvinPlus();
-          rxn.pluses.push_back(
-              std::move(std::unique_ptr<MarvinPlus>(newMarvinPlus)));
-
           double x = (rectPrev.getCenter().x + rectCurr.getCenter().x) / 2;
           double y = (rectPrev.lowerRight.y + rectCurr.upperLeft.y) / 2;
           newMarvinPlus->id = "o" + std::to_string(++plusCount);
@@ -1076,10 +1071,6 @@ class MarvinCMLWriter {
           newMarvinPlus->y2 = y + (PLUS_SPACE);
         } else  // just put it in front of the current row
         {
-          auto newMarvinPlus = new MarvinPlus();
-          rxn.pluses.push_back(
-              std::move(std::unique_ptr<MarvinPlus>(newMarvinPlus)));
-
           double x = rowPtr->front().upperLeft.x;
           double y = rowPtr->front().getCenter().y;
           newMarvinPlus->id = "o" + std::to_string(++plusCount);
@@ -1209,23 +1200,20 @@ class MarvinCMLWriter {
     try {
       auto marvinReaction = new MarvinReaction();
       int molCount = 0, atomCount = 0, bondCount = 0, sgCount = 0;
-      for (auto mol : rxn->getReactants()) {
+      for (const auto &mol : rxn->getReactants()) {
         RWMol rwMol(*mol);
-        marvinReaction->reactants.push_back(
-            std::move(std::unique_ptr<MarvinMol>(MolToMarvinMol(
-                &rwMol, molCount, atomCount, bondCount, sgCount, confId))));
+        marvinReaction->reactants.emplace_back(MolToMarvinMol(
+            &rwMol, molCount, atomCount, bondCount, sgCount, confId));
       }
-      for (auto mol : rxn->getAgents()) {
+      for (const auto &mol : rxn->getAgents()) {
         RWMol rwMol(*mol);
-        marvinReaction->agents.push_back(
-            std::move(std::unique_ptr<MarvinMol>(MolToMarvinMol(
-                &rwMol, molCount, atomCount, bondCount, sgCount, confId))));
+        marvinReaction->agents.emplace_back(MolToMarvinMol(
+            &rwMol, molCount, atomCount, bondCount, sgCount, confId));
       }
-      for (auto mol : rxn->getProducts()) {
+      for (const auto &mol : rxn->getProducts()) {
         RWMol rwMol(*mol);
-        marvinReaction->products.push_back(
-            std::move(std::unique_ptr<MarvinMol>(MolToMarvinMol(
-                &rwMol, molCount, atomCount, bondCount, sgCount, confId))));
+        marvinReaction->products.emplace_back(MolToMarvinMol(
+            &rwMol, molCount, atomCount, bondCount, sgCount, confId));
       }
 
       // make up some pluses
