@@ -267,9 +267,6 @@ class MarvinMolBase {
   virtual void pushOwnedAtom(MarvinAtom *atom);
   virtual void pushOwnedBond(MarvinBond *bond);
 
-  virtual void pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atom);
-  virtual void pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bond);
-
   virtual void removeOwnedAtom(MarvinAtom *atom);
   virtual void removeOwnedBond(MarvinBond *bond);
 
@@ -587,9 +584,6 @@ class MarvinMol : public MarvinMolBase {
 
   void pushOwnedAtom(MarvinAtom *atom) override;
   void pushOwnedBond(MarvinBond *bond) override;
-
-  void pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atom) override;
-  void pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bond) override;
 
   void removeOwnedAtom(MarvinAtom *atom) override;
   void removeOwnedBond(MarvinBond *bond) override;

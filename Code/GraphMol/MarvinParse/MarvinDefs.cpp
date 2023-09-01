@@ -1089,22 +1089,13 @@ int MarvinMolBase::getAtomIndex(std::string id) const {
 }
 
 void MarvinMolBase::pushOwnedAtom(MarvinAtom *atom) {
-  PRECONDITION(atom, "bad atom");
-  pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom>(atom));
+  PRECONDITION(this->parent, "only sgroups should call the base class version");
+  this->parent->pushOwnedAtom(atom);
 }
 
 void MarvinMolBase::pushOwnedBond(MarvinBond *bond) {
-  PRECONDITION(bond, "bad bond");
-  pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond>(bond));
-}
-
-void MarvinMolBase::pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atom) {
   PRECONDITION(this->parent, "only sgroups should call the base class version");
-  this->parent->pushOwnedAtomUniqPtr(std::move(atom));
-}
-void MarvinMolBase::pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bond) {
-  PRECONDITION(this->parent, "only sgroups should call the base class version");
-  this->parent->pushOwnedBondUniqPtr(std::move(bond));
+  this->parent->pushOwnedBond(std::move(bond));
 }
 
 void MarvinMolBase::removeOwnedAtom(MarvinAtom *atom) {
@@ -2222,9 +2213,8 @@ MarvinSuperatomSgroup::MarvinSuperatomSgroup(MarvinMolBase *parentInit,
         continue;
       }
 
-      auto *marvinAttachmentPoint = new MarvinAttachmentPoint();
-      this->attachmentPoints.push_back(std::move(
-          std::unique_ptr<MarvinAttachmentPoint>(marvinAttachmentPoint)));
+      auto &marvinAttachmentPoint =
+          this->attachmentPoints.emplace_back(new MarvinAttachmentPoint);
 
       marvinAttachmentPoint->atom =
           v.second.get<std::string>("<xmlattr>.atom", "");
@@ -2346,19 +2336,12 @@ bool MarvinMol::hasAtomBondBlocks() const { return true; }
 
 void MarvinMol::pushOwnedAtom(MarvinAtom *atom) {
   PRECONDITION(atom, "bad atom");
-  pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom>(atom));
+  ownedAtoms.emplace_back(atom);
 }
 
 void MarvinMol::pushOwnedBond(MarvinBond *bond) {
   PRECONDITION(bond, "bad bond");
-  pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond>(bond));
-}
-
-void MarvinMol::pushOwnedAtomUniqPtr(std::unique_ptr<MarvinAtom> atomUniqPtr) {
-  ownedAtoms.push_back(std::move(atomUniqPtr));
-}
-void MarvinMol::pushOwnedBondUniqPtr(std::unique_ptr<MarvinBond> bondUniqPtr) {
-  ownedBonds.push_back(std::move(bondUniqPtr));
+  ownedBonds.emplace_back(bond);
 }
 
 void MarvinMol::removeOwnedAtom(MarvinAtom *atom) {
