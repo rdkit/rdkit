@@ -2691,7 +2691,6 @@ void MarvinMonomerSgroup::parseMoleculeSpecific(
   sgroup.reset(new SubstanceGroup(mol, typ));
   sgroup->setProp<unsigned int>("index", sequenceId);
 
-  std::vector<MarvinAtom *>::const_iterator atomIter;
   for (auto atomPtr : this->parent->atoms) {
     int atomIndex = this->getAtomIndex(atomPtr->id);
     sgroup->addAtomWithIdx(atomIndex);
@@ -3496,9 +3495,9 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
 
       // add an attachmentPoint structure
 
-      auto marvinAttachmentPoint = new MarvinAttachmentPoint();
-      marvinSuperatomSgroup->attachmentPoints.push_back(std::move(
-          std::unique_ptr<MarvinAttachmentPoint>(marvinAttachmentPoint)));
+      auto &marvinAttachmentPoint =
+          marvinSuperatomSgroup->attachmentPoints.emplace_back(
+              new MarvinAttachmentPoint);
       marvinAttachmentPoint->atom = atomPtr->id;
       marvinAttachmentPoint->bond = bond->id;
 
