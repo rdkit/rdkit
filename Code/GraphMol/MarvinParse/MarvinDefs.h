@@ -263,7 +263,7 @@ class MarvinMolBase {
   virtual ptree toPtree() const;
   void addSgroupsToPtree(ptree &pt) const;
 
-  virtual MarvinMolBase *copyMol(std::string idAppend) const = 0;
+  virtual MarvinMolBase *copyMol(const std::string &idAppend) const = 0;
   virtual void pushOwnedAtom(MarvinAtom *atom);
   virtual void pushOwnedBond(MarvinBond *bond);
 
@@ -286,7 +286,7 @@ class MarvinMolBase {
   void cleanUpNumbering(
       int &molCount  // this is the starting mol count, and receives the ending
                      // mol count - THis is used when
-                     // MarvinMol->convertToSuperAtaoms is called multiple times
+                     // MarvinMol->convertToSuperAtoms is called multiple times
                      // from a RXN
       ,
       int &atomCount  // starting and ending atom count
@@ -305,13 +305,13 @@ class MarvinMolBase {
           &bondMap  // map from old bond number to new bond number
   );
 
-  // the following is vitual because some dirived classes need to do more than
+  // the following is virtual because some derived classes need to do more than
   // just call the base class.  Currently, only MarvinSuperatomSgroup does this
  public:
   virtual void cleanUpNumberingMolsAtomsBonds(
       int &molCount,  // this is the starting mol count, and receives the ending
                       // mol count - THis is used when
-                      // MarvinMol->convertToSuperAtaoms is called multiple
+                      // MarvinMol->convertToSuperAtoms is called multiple
                       // times from a RXN
       int &atomCount,  // starting and ending atom count
       int &bondCount,  // starting and ending bond count
@@ -322,7 +322,7 @@ class MarvinMolBase {
   void cleanUpSgNumbering(int &sgCount,
                           std::map<std::string, std::string> &sgMap);
 
-  // the following is vitual because some dirived classes need to do more than
+  // the following is virtual because some derived classes need to do more than
   // just call the base class.  Currently, only MarvinSuperatomSgroup does this
 
   virtual IsSgroupInAtomSetResult isSgroupInSetOfAtoms(
@@ -365,7 +365,7 @@ class MarvinSruCoModSgroup : public MarvinMolBase {
   MarvinSruCoModSgroup(std::string type, MarvinMolBase *parent);
   MarvinSruCoModSgroup(MarvinMolBase *parent, std::string role, ptree &molTree);
 
-  MarvinMolBase *copyMol(std::string idAppendage) const override;
+  MarvinMolBase *copyMol(const std::string &idAppend) const override;
 
   std::string title;
   std::string connect;
@@ -386,7 +386,7 @@ class MarvinDataSgroup : public MarvinMolBase {
   MarvinDataSgroup(MarvinMolBase *parent);
   MarvinDataSgroup(MarvinMolBase *parent, ptree &molTree);
 
-  MarvinMolBase *copyMol(std::string idAppendage) const override;
+  MarvinMolBase *copyMol(const std::string &idAppend) const override;
 
   std::string context;
   std::string fieldName;
@@ -416,7 +416,7 @@ class MarvinSuperatomSgroupExpanded : public MarvinMolBase {
   MarvinSuperatomSgroupExpanded(MarvinMolBase *parent);
   MarvinSuperatomSgroupExpanded(MarvinMolBase *parent, ptree &molTree);
 
-  MarvinMolBase *copyMol(std::string idAppendage) const override;
+  MarvinMolBase *copyMol(const std::string &idAppend) const override;
 
   ~MarvinSuperatomSgroupExpanded() override;
 
@@ -439,7 +439,7 @@ class MarvinMultipleSgroup : public MarvinMolBase {
   MarvinMultipleSgroup(MarvinMolBase *parent);
   MarvinMultipleSgroup(MarvinMolBase *parent, ptree &molTree);
 
-  MarvinMolBase *copyMol(std::string idAppendage) const override;
+  MarvinMolBase *copyMol(const std::string &idAppend) const override;
 
   std::string title;
   bool isExpanded = false;
@@ -474,7 +474,7 @@ class MarvinMulticenterSgroup : public MarvinMolBase {
   MarvinMulticenterSgroup(MarvinMolBase *parent);
   MarvinMulticenterSgroup(MarvinMolBase *parent, ptree &molTree);
 
-  MarvinMolBase *copyMol(std::string idAppendage) const override;
+  MarvinMolBase *copyMol(const std::string &idAppend) const override;
 
   void processOneMulticenterSgroup();
 
@@ -497,7 +497,7 @@ class MarvinGenericSgroup : public MarvinMolBase {
   MarvinGenericSgroup(MarvinMolBase *parent);
   MarvinGenericSgroup(MarvinMolBase *parent, ptree &molTree);
 
-  MarvinMolBase *copyMol(std::string idAppendage) const override;
+  MarvinMolBase *copyMol(const std::string &idAppend) const override;
 
   std::string charge;  // onAtoms or onBrackets
   std::string toString() const override;
@@ -518,7 +518,7 @@ class MarvinMonomerSgroup : public MarvinMolBase {
   MarvinMonomerSgroup(MarvinMolBase *parent);
   MarvinMonomerSgroup(MarvinMolBase *parent, ptree &molTree);
 
-  MarvinMolBase *copyMol(std::string idAppendage) const override;
+  MarvinMolBase *copyMol(const std::string &idAppend) const override;
 
   std::string title;
   std::string charge;  // onAtoms or onBrackets
@@ -540,7 +540,7 @@ class MarvinSuperatomSgroup : public MarvinMolBase {
   MarvinSuperatomSgroup(MarvinMolBase *parent);
   MarvinSuperatomSgroup(MarvinMolBase *parent, ptree &molTree);
 
-  MarvinMolBase *copyMol(std::string idAppendage) const override;
+  MarvinMolBase *copyMol(const std::string &idAppend) const override;
 
   ~MarvinSuperatomSgroup() override;
 
@@ -556,7 +556,7 @@ class MarvinSuperatomSgroup : public MarvinMolBase {
   void cleanUpNumberingMolsAtomsBonds(
       int &molCount,  // this is the starting mol count, and receives the ending
                       // mol count - THis is used when
-                      // MarvinMol->convertToSuperAtaoms is called multiple
+                      // MarvinMol->convertToSuperAtoms is called multiple
                       // times from a RXN
       int &atomCount,  // starting and ending atom count
       int &bondCount,  // starting and ending bond count
@@ -575,7 +575,7 @@ class MarvinMol : public MarvinMolBase {
   MarvinMol();
   MarvinMol(ptree &molTree);
 
-  MarvinMolBase *copyMol(std::string idAppendage) const override;
+  MarvinMolBase *copyMol(const std::string &idAppend) const override;
 
   ~MarvinMol() override;
 

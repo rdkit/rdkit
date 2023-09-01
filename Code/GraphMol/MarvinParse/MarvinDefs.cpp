@@ -977,7 +977,7 @@ const std::string MarvinBond::getBondType() const {
       throw FileParseException(err.str());
     }
   } else if (tempOrder !=
-             "")  // if no query type not conventtion,  so check for order
+             "")  // if no query type not convention,  so check for order
   {
     if (tempOrder == "1" || tempOrder == "2" || tempOrder == "3" ||
         tempOrder == "A") {
@@ -1312,7 +1312,7 @@ MarvinSruCoModSgroup::MarvinSruCoModSgroup(MarvinMolBase *parentInit,
 
     if (atomPtr == nullptr) {
       throw FileParseException(
-          "AtomRef specification for an SRU, Coplomer, or Modification group definition was not found in any parent");
+          "AtomRef specification for an SRU, Copolymer, or Modification group definition was not found in any parent");
     }
     this->atoms.push_back(atomPtr);
   }
@@ -1353,7 +1353,7 @@ MarvinSruCoModSgroup::MarvinSruCoModSgroup(MarvinMolBase *parentInit,
 
       if (bondPtr == nullptr) {
         throw FileParseException(
-            "BondList specification for an SRU, Coplomer, or Modification group definition was not found in any parent");
+            "BondList specification for an SRU, Copolymer, or Modification group definition was not found in any parent");
       }
       this->bonds.push_back(bondPtr);
     }
@@ -1400,10 +1400,10 @@ MarvinMolBase *getActualParent(const MarvinMolBase *child) {
   TEST_ASSERT(false);  // should not be reachable
 }
 
-MarvinMolBase *MarvinSruCoModSgroup::copyMol(std::string idAppendage) const {
+MarvinMolBase *MarvinSruCoModSgroup::copyMol(
+    const std::string &idAppendage) const {
   auto outSgroup = new MarvinSruCoModSgroup(this->roleName, this->parent);
-  this->parent->sgroups.push_back(
-      std::move(std::unique_ptr<MarvinMolBase>(outSgroup)));
+  this->parent->sgroups.emplace_back(outSgroup);
 
   outSgroup->molID = this->molID + idAppendage;
   outSgroup->title = this->title;
@@ -1412,7 +1412,7 @@ MarvinMolBase *MarvinSruCoModSgroup::copyMol(std::string idAppendage) const {
 
   auto actualParent = getActualParent(this);
 
-  // the only time this is to be called is when a mutliple group above it is
+  // the only time this is to be called is when a multiple group above it is
   // being expanded and the new atoms and bonds have already been made
   //  here we just need to find them and add refs to the new multiple sgroup
 
@@ -1525,10 +1525,9 @@ MarvinDataSgroup::MarvinDataSgroup(MarvinMolBase *parentInit, ptree &molTree) {
   }
 }
 
-MarvinMolBase *MarvinDataSgroup::copyMol(std::string idAppendage) const {
+MarvinMolBase *MarvinDataSgroup::copyMol(const std::string &idAppendage) const {
   auto outSgroup = new MarvinDataSgroup(this->parent);
-  this->parent->sgroups.push_back(
-      std::move(std::unique_ptr<MarvinMolBase>(outSgroup)));
+  this->parent->sgroups.emplace_back(outSgroup);
 
   outSgroup->molID = this->molID + idAppendage;
   outSgroup->id = this->id + idAppendage;
@@ -1543,7 +1542,7 @@ MarvinMolBase *MarvinDataSgroup::copyMol(std::string idAppendage) const {
   outSgroup->x = this->x;
   outSgroup->y = this->y;
 
-  // the only time this is to be called is when a mutliple group above it is
+  // the only time this is to be called is when a multiple group above it is
   // being expanded and the new atoms and bonds have already been made
   //  here we just need to find them and add refs to the new multiple sgroup
 
@@ -1669,16 +1668,16 @@ std::string MarvinMultipleSgroup::role() const { return "MultipleSgroup"; }
 
 bool MarvinMultipleSgroup::hasAtomBondBlocks() const { return false; }
 
-MarvinMolBase *MarvinMultipleSgroup::copyMol(std::string idAppendage) const {
+MarvinMolBase *MarvinMultipleSgroup::copyMol(
+    const std::string &idAppendage) const {
   auto outSgroup = new MarvinMultipleSgroup(this->parent);
-  this->parent->sgroups.push_back(
-      std::move(std::unique_ptr<MarvinMolBase>(outSgroup)));
+  this->parent->sgroups.emplace_back(outSgroup);
 
   outSgroup->molID = this->molID + idAppendage;
   outSgroup->id = this->id + idAppendage;
   outSgroup->title = this->title;
 
-  // the only time this is to be called is when a mutliple group above it is
+  // the only time this is to be called is when a multiple group above it is
   // being expanded and the new atoms and bonds have already been made
   //  here we just need to find them and add refs to the new multiple sgroup
 
@@ -1800,15 +1799,15 @@ std::string MarvinMulticenterSgroup::role() const {
 
 bool MarvinMulticenterSgroup::hasAtomBondBlocks() const { return false; }
 
-MarvinMolBase *MarvinMulticenterSgroup::copyMol(std::string idAppendage) const {
+MarvinMolBase *MarvinMulticenterSgroup::copyMol(
+    const std::string &idAppendage) const {
   auto outSgroup = new MarvinMulticenterSgroup(this->parent);
-  this->parent->sgroups.push_back(
-      std::move(std::unique_ptr<MarvinMolBase>(outSgroup)));
+  this->parent->sgroups.emplace_back(outSgroup);
 
   outSgroup->molID = this->molID + idAppendage;
   outSgroup->id = this->id;
 
-  // the only time this is to be called is when a mutliple group above it is
+  // the only time this is to be called is when a multiple group above it is
   // being expanded and the new atoms and bonds have already been made
   //  here we just need to find them and add refs to the new multiple sgroup
 
@@ -1901,15 +1900,15 @@ std::string MarvinGenericSgroup::role() const { return "GenericSgroup"; }
 
 bool MarvinGenericSgroup::hasAtomBondBlocks() const { return false; }
 
-MarvinMolBase *MarvinGenericSgroup::copyMol(std::string idAppendage) const {
+MarvinMolBase *MarvinGenericSgroup::copyMol(
+    const std::string &idAppendage) const {
   auto outSgroup = new MarvinGenericSgroup(this->parent);
-  this->parent->sgroups.push_back(
-      std::move(std::unique_ptr<MarvinMolBase>(outSgroup)));
+  this->parent->sgroups.emplace_back(outSgroup);
 
   outSgroup->molID = this->molID + idAppendage;
   outSgroup->id = this->id + idAppendage;
 
-  // the only time this is to be called is when a mutliple group above it is
+  // the only time this is to be called is when a multiple group above it is
   // being expanded and the new atoms and bonds have already been made
   //  here we just need to find them and add refs to the new multiple sgroup
 
@@ -1999,17 +1998,17 @@ std::string MarvinMonomerSgroup::role() const { return "MonomerSgroup"; }
 
 bool MarvinMonomerSgroup::hasAtomBondBlocks() const { return false; }
 
-MarvinMolBase *MarvinMonomerSgroup::copyMol(std::string idAppendage) const {
+MarvinMolBase *MarvinMonomerSgroup::copyMol(
+    const std::string &idAppendage) const {
   auto outSgroup = new MarvinMonomerSgroup(this->parent);
-  this->parent->sgroups.push_back(
-      std::move(std::unique_ptr<MarvinMolBase>(outSgroup)));
+  this->parent->sgroups.emplace_back(outSgroup);
 
   outSgroup->molID = this->molID + idAppendage;
   outSgroup->id = this->id + idAppendage;
   outSgroup->title = this->title;
   outSgroup->charge = this->charge;
 
-  // the only time this is to be called is when a mutliple group above it is
+  // the only time this is to be called is when a multiple group above it is
   // being expanded and the new atoms and bonds have already been made
   //  here we just need to find them and add refs to the new multiple sgroup
 
@@ -2084,8 +2083,8 @@ MarvinSuperatomSgroupExpanded::MarvinSuperatomSgroupExpanded(
       }
       this->atoms.push_back(atomPtr);
     }
-  } else  // must have no atomRefs nor AtomAray - get the atoms from
-          // the parent block - the ones that referene this
+  } else  // must have no atomRefs nor AtomArray - get the atoms from
+          // the parent block - the ones that reference this
           // superSgroup
   {
     for (MarvinAtom *atom : parent->atoms) {
@@ -2105,10 +2104,9 @@ MarvinSuperatomSgroupExpanded::MarvinSuperatomSgroupExpanded(
 MarvinSuperatomSgroupExpanded::~MarvinSuperatomSgroupExpanded() {}
 
 MarvinMolBase *MarvinSuperatomSgroupExpanded::copyMol(
-    std::string idAppendage) const {
+    const std::string &idAppendage) const {
   auto outSgroup = new MarvinSuperatomSgroupExpanded(this->parent);
-  this->parent->sgroups.push_back(
-      std::move(std::unique_ptr<MarvinMolBase>(outSgroup)));
+  this->parent->sgroups.emplace_back(outSgroup);
 
   outSgroup->molID = this->molID + idAppendage;
   outSgroup->id = this->id + idAppendage;
@@ -2116,7 +2114,7 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::copyMol(
 
   auto actualParent = getActualParent(this);
 
-  // the only time this is to be called is when a mutliple group above it is
+  // the only time this is to be called is when a multiple group above it is
   // being expanded and the new atoms and bonds have already been made
   //  here we just need to find them and add refs to the new multiple sgroup
 
@@ -2262,7 +2260,7 @@ std::string MarvinSuperatomSgroup::role() const { return "SuperatomSgroup"; }
 
 bool MarvinSuperatomSgroup::hasAtomBondBlocks() const { return true; }
 
-MarvinMolBase *MarvinSuperatomSgroup::copyMol(std::string) const {
+MarvinMolBase *MarvinSuperatomSgroup::copyMol(const std::string &) const {
   PRECONDITION(0, "Internal error:  copying a SuperatomSgroup");
 }
 
@@ -2382,7 +2380,7 @@ void MarvinMolBase::cleanUpSgNumbering(
 void MarvinSuperatomSgroup::cleanUpNumberingMolsAtomsBonds(
     int &molCount,   // this is the starting mol count, and receives the ending
                      // mol count - THis is used when
-                     // MarvinMol->convertToSuperAtaoms is called multiple
+                     // MarvinMol->convertToSuperAtoms is called multiple
                      // times from a RXN
     int &atomCount,  // starting and ending atom count
     int &bondCount,  // starting and ending bond count
@@ -2405,7 +2403,7 @@ void MarvinSuperatomSgroup::cleanUpNumberingMolsAtomsBonds(
 void MarvinMolBase::cleanUpNumberingMolsAtomsBonds(
     int &molCount,   // this is the starting mol count, and receives the ending
                      // mol count - THis is used when
-                     // MarvinMol->convertToSuperAtaoms is called multiple
+                     // MarvinMol->convertToSuperAtoms is called multiple
                      // times from a RXN
     int &atomCount,  // starting and ending atom count
     int &bondCount,  // starting and ending bond count)
@@ -2452,7 +2450,7 @@ void MarvinMolBase::cleanUpNumberingMolsAtomsBonds(
 void MarvinMolBase::cleanUpNumbering(
     int &molCount  // this is the starting mol count, and receives the ending
                    // mol count - THis is used when
-                   // MarvinMol->convertToSuperAtaoms is called multiple times
+                   // MarvinMol->convertToSuperAtoms is called multiple times
                    // from a RXN
     ,
     int &atomCount  // starting and ending atom count
@@ -2534,8 +2532,7 @@ void MarvinSuperatomSgroupExpanded::parseMoleculeSpecific(
   PRECONDITION(mol != nullptr, "mol cannot be null");
 
   std::string typ = "SUP";
-  sgroup =
-      std::move(std::unique_ptr<SubstanceGroup>{new SubstanceGroup(mol, typ)});
+  sgroup.reset(new SubstanceGroup(mol, typ));
   sgroup->setProp<unsigned int>("index", sequenceId);
 
   for (auto atomPtr : this->atoms) {
@@ -2557,8 +2554,7 @@ void MarvinMultipleSgroup::parseMoleculeSpecific(
   // note: sequence continues counting from the loop above
 
   std::string typ = "MUL";
-  sgroup =
-      std::move(std::unique_ptr<SubstanceGroup>{new SubstanceGroup(mol, typ)});
+  sgroup.reset(new SubstanceGroup(mol, typ));
   sgroup->setProp<unsigned int>("index", sequenceId);
 
   for (auto atomPtr : this->atoms) {
@@ -2594,8 +2590,7 @@ void MarvinSruCoModSgroup::parseMoleculeSpecific(
         "Internal error: unrecognized role in a MarvinSruCoPolSgroup");
   }
 
-  sgroup =
-      std::move(std::unique_ptr<SubstanceGroup>{new SubstanceGroup(mol, typ)});
+  sgroup.reset(new SubstanceGroup(mol, typ));
   sgroup->setProp<unsigned int>("index", sequenceId);
 
   sgroup->setProp("CONNECT", this->connect);
@@ -2618,8 +2613,7 @@ void MarvinDataSgroup::parseMoleculeSpecific(
   // Now the data groups
 
   std::string typ = "DAT";
-  sgroup =
-      std::move(std::unique_ptr<SubstanceGroup>{new SubstanceGroup(mol, typ)});
+  sgroup.reset(new SubstanceGroup(mol, typ));
   sgroup->setProp<unsigned int>("index", sequenceId);
 
   for (auto atomPtr : this->atoms) {
@@ -2675,8 +2669,7 @@ void MarvinGenericSgroup::parseMoleculeSpecific(
   PRECONDITION(mol != nullptr, "mol cannot be null");
 
   std::string typ = "GEN";
-  sgroup =
-      std::move(std::unique_ptr<SubstanceGroup>{new SubstanceGroup(mol, typ)});
+  sgroup.reset(new SubstanceGroup(mol, typ));
   sgroup->setProp<unsigned int>("index", sequenceId);
 
   for (auto atomPtr : this->atoms) {
@@ -2695,8 +2688,7 @@ void MarvinMonomerSgroup::parseMoleculeSpecific(
   PRECONDITION(mol != nullptr, "mol cannot be null");
 
   std::string typ = "MON";
-  sgroup =
-      std::move(std::unique_ptr<SubstanceGroup>{new SubstanceGroup(mol, typ)});
+  sgroup.reset(new SubstanceGroup(mol, typ));
   sgroup->setProp<unsigned int>("index", sequenceId);
 
   std::vector<MarvinAtom *>::const_iterator atomIter;
@@ -2746,7 +2738,7 @@ void MarvinMultipleSgroup::expandOneMultipleSgroup() {
   //
   // In Marvin, the atoms of the group are indicated, and the "title" contains
   // the number of replicates In mol files, the atoms of the group are
-  // actually replicated in the atomBlock, and the MUL contructs indicates the
+  // actually replicated in the atomBlock, and the MUL constructs indicates the
   // list of ALL such atoms and the list of the original parent atoms from
   // which the others were replicated.  It also indicate the two bonds from
   // the group atoms to atoms NOT in the group (although these could be
@@ -2769,8 +2761,8 @@ void MarvinMultipleSgroup::expandOneMultipleSgroup() {
   // find the two bonds (or zero bonds) to atoms NOT in the group
 
   std::vector<std::string>
-      originalConnectorAtoms;     // the bonds inthe parent that were to outside
-                                  // atoms BEFORE replication
+      originalConnectorAtoms;  // the bonds in the parent that were to outside
+                               // atoms BEFORE replication
   std::string connectorAtoms[2];  // working atoms to connect the replicates
   std::string outsideConnectorAtom;
   std::vector<MarvinBond *> bondsInGroup;
@@ -2847,7 +2839,7 @@ void MarvinMultipleSgroup::expandOneMultipleSgroup() {
         copyAtom->sgroupRef = parentAtomPtr->sgroupRef + idAppendage;
       }
 
-      // copy atoms to all parents up to the actual parent (multipleSgrups in
+      // copy atoms to all parents up to the actual parent (multipleSgroups in
       // multipleSgroups)
 
       for (auto thisParent = this->parent;; thisParent = thisParent->parent) {
@@ -2946,16 +2938,16 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
   // In the contracted form, the MRV block can have one or more dummy atoms
   // with the super atom name in the main molecule, and a separate sub-mol
   // with the atoms and bonds of the superatom. It also can have one or more
-  // separate records called attachmentPoints that specifiy which atom(s) in
+  // separate records called attachmentPoints that specify which atom(s) in
   // the super atom sub-mol that replaces the dummy atom(s), and also a bond
   // pointer (in the parent mol).
   //
   // In the expanded form, all of the atoms are in the parent molecule, and
-  // the sub-mol only refers to them.  The attachement points refer to the
+  // the sub-mol only refers to them.  The attachment points refer to the
   // atoms in the parent mol. The MultipleSgroup and SruGroup seem very much
   // alike.   In both, all atoms are in the parent mol, and the sub-mol refers
   // to a group of atoms in that parent. The SruGroup specifies the name and
-  // also the connection informat (head-to-tail, head-head, and unspecified).
+  // also the connection information (head-to-tail, head-head, and unspecified).
   // The Multiple S-group specifies the report count for the group
   //
   // This routine deals with only the contracted form of the SuperatomSgroups,
@@ -2997,7 +2989,7 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
     // before we move or delete any atoms from the superatomSgroup,  Make sure
     // that the  sibling sgroups are handled if a sibling contains the dummy R
     // atom, then the atoms to be promoted from this sgroup should be member
-    // of the sibing too
+    // of the sibling too
 
     for (auto &sibling : parent->sgroups) {
       if (sibling.get() == this) {
@@ -3189,7 +3181,7 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
     this->atoms.clear();
     this->bonds.clear();
 
-    // promate any children sgroups
+    // promote any children sgroups
 
     for (auto &childSgroup : this->sgroups) {
       moveSgroup(childSgroup.get(), actualParent, false);
@@ -3281,7 +3273,7 @@ void MarvinMulticenterSgroup::processOneMulticenterSgroup() {
 
 void MarvinMolBase::prepSgroupsForRDKit() {
   // this routine recursively fixes the hierarchy of sgroups - some may NOT
-  // actaully belong underneath their parent and can be promnoted to the
+  // actually belong underneath their parent and can be promoted to the
   // grandparent
 
   // first fix all the children
@@ -3291,7 +3283,7 @@ void MarvinMolBase::prepSgroupsForRDKit() {
        !allDone;)  // until all at this level are done - but fixing one child
                    // can add sgroups to this level
   {
-    allDone = true;  // unitl it is not true in the loop below
+    allDone = true;  // until it is not true in the loop below
     for (auto &childSgroup : this->sgroups) {
       if (!boost::algorithm::contains(
               sgroupsMolIdsDone, std::vector<std::string>{childSgroup->molID},
@@ -3347,7 +3339,7 @@ void MarvinMolBase::prepSgroupsForRDKit() {
             "Child sGroup has atoms both in the parent and NOT in the parent");
       default:
         throw FileParseException(
-            "Unexpected error: unrecogized result from isSgroupInSetOfAtoms");
+            "Unexpected error: unrecognized result from isSgroupInSetOfAtoms");
     }
   }
 
@@ -3374,7 +3366,7 @@ void MarvinMultipleSgroup::processSpecialSgroups() {
 }
 
 MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
-  // the mol-style super atoms are significatnly different than the Marvin
+  // the mol-style super atoms are significantly different than the Marvin
   // super atoms.  The mol style has all atoms and bonds in the main mol, and
   // parameter lines that indicate the name of the super atom and the atom
   // indices affected.
@@ -3459,7 +3451,7 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
     }
 
     if (coordsExist)  // get the center of all atoms in the group - we might
-                      // use this if there are no attachement points
+                      // use this if there are no attachment points
     {
       centerOfGroup.x += atom->x2;
       centerOfGroup.y += atom->y2;
@@ -3502,7 +3494,7 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
 
       atomPtr->sgroupAttachmentPoint = std::to_string(++attachmentPointsAdded);
 
-      // add an attachentPoint structure
+      // add an attachmentPoint structure
 
       auto marvinAttachmentPoint = new MarvinAttachmentPoint();
       marvinSuperatomSgroup->attachmentPoints.push_back(std::move(
@@ -3581,7 +3573,7 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
 
     switch (isSgroupInSetOfAtomsResult) {
       case SgroupInAtomSet:
-        // remove the group atoms from the sibling and add the dumm atom
+        // remove the group atoms from the sibling and add the dummy atom
 
         sibling->atoms.push_back(dummyParentAtom);
         for (auto atomToRemove : marvinSuperatomSgroup->atoms) {
@@ -3760,7 +3752,7 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
 
     orphanedBondToFix->atomRefs2[1] =
         orphanedBonds[matchedOrphanBondIndex]
-            ->atomRefs2[0];  // [0] is the orpahened atom (still in the mol)
+            ->atomRefs2[0];  // [0] is the orphaned atom (still in the mol)
 
     // undelete the bond which has been fixed (really remove it from the list
     // of bonds to be delete)
@@ -3860,7 +3852,7 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
 
 IsSgroupInAtomSetResult MarvinMolBase::isSgroupInSetOfAtoms(
     const std::vector<MarvinAtom *> &setOfAtoms) const {
-  // superatom sgrups are different - it has an override for this call
+  // superatom sgroups are different - it has an override for this call
   // if not overridden,  types are in the group based on their atoms
 
   bool isInGroup = false;
@@ -3888,7 +3880,7 @@ IsSgroupInAtomSetResult MarvinMolBase::isSgroupInSetOfAtoms(
 
 IsSgroupInAtomSetResult MarvinSuperatomSgroup::isSgroupInSetOfAtoms(
     const std::vector<MarvinAtom *> &setOfAtoms) const {
-  // superatom sgrups are different - they are in the set if one of the
+  // superatom sgroups are different - they are in the set if one of the
   // condensed atom in the parent is in group
 
   auto dummyAtomIter = find_if(
@@ -3914,7 +3906,7 @@ void MarvinMolBase::processSgroupsFromRDKit() {
     return;  // passive mols are only leaves of the tree - nothing to do
   }
 
-  // see if any siblings should be chilren of this one
+  // see if any siblings should be children of this one
 
   MarvinMolBase *molToProcess =
       this;  // the processing MIGHT change the mol from one kind to another
@@ -3926,7 +3918,7 @@ void MarvinMolBase::processSgroupsFromRDKit() {
     for (bool allDone = false; !allDone;) {
       // until all at this level are done - but fixing one
       // child can add sgroups to this level
-      allDone = true;  // unitl it is not true in the loop below
+      allDone = true;  // until it is not true in the loop below
       for (auto &sibling : this->parent->sgroups) {
         if (boost::algorithm::contains(sgroupsMolIdsDone,
                                        std::vector<std::string>{sibling->molID},
@@ -3966,7 +3958,7 @@ void MarvinMolBase::processSgroupsFromRDKit() {
       } catch (FileParseException &e) {
         BOOST_LOG(rdErrorLog)
             << e.what() << std::endl
-            << "The Mutliple sgroup will be ignored" << std::endl;
+            << "The multiple sgroup will be ignored" << std::endl;
 
         auto sgroupIter = std::find_if(
             this->parent->sgroups.begin(), this->parent->sgroups.end(),
@@ -3982,20 +3974,20 @@ void MarvinMolBase::processSgroupsFromRDKit() {
 
   // now fix all this groups children
 
-  std::vector<std::string> chilrenSgroupsMolIdsDone;
+  std::vector<std::string> childrenSgroupsMolIdsDone;
   for (bool allDone = false;
        !allDone;)  // until all at this level are done - but fixing one child
                    // can add sgroups to this level
   {
-    allDone = true;  // unitl it is not true in the loop below
+    allDone = true;  // until it is not true in the loop below
     for (auto &childSgroup : molToProcess->sgroups) {
       if (boost::algorithm::contains(
-              chilrenSgroupsMolIdsDone,
+              childrenSgroupsMolIdsDone,
               std::vector<std::string>{childSgroup->molID}, molIDInSgroups)) {
         continue;  // this one is done, look at the next one
       }
 
-      chilrenSgroupsMolIdsDone.push_back(childSgroup->molID);
+      childrenSgroupsMolIdsDone.push_back(childSgroup->molID);
       childSgroup->processSgroupsFromRDKit();
       allDone = false;
       break;  // have to start the loop over - we might have changed the
@@ -4006,7 +3998,7 @@ void MarvinMolBase::processSgroupsFromRDKit() {
   return;
 }
 
-MarvinMolBase *MarvinMol::copyMol(std::string) const {
+MarvinMolBase *MarvinMol::copyMol(const std::string &) const {
   PRECONDITION(0, "Internal error:  copying a MarvinMol");
 }
 
