@@ -40,6 +40,7 @@
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/PreprocessRxn.h>
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
+#include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/Depictor/DepictUtils.h>
 #include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 
@@ -67,6 +68,15 @@ void rdChemicalReactionExceptionTranslator(
 }
 
 namespace RDKit {
+std::string pyObjectToString(python::object input) {
+  python::extract<std::string> ex(input);
+  if (ex.check()) {
+    return ex();
+  }
+  std::wstring ws = python::extract<std::wstring>(input);
+  return std::string(ws.begin(), ws.end());
+}
+
 python::object ReactionToBinaryWithProps(const ChemicalReaction &self,
                                          unsigned int props) {
   std::string res;
@@ -300,6 +310,34 @@ ChemicalReaction *ReactionFromSmarts(const char *smarts, python::dict replDict,
   ChemicalReaction *res;
   res = RxnSmartsToChemicalReaction(smarts, &replacements, useSmiles);
   return res;
+}
+
+ChemicalReaction *ReactionFromMrvFile(const char *rxnFilename, bool sanitize,
+                                      bool removeHs) {
+  ChemicalReaction *newR = nullptr;
+  try {
+    newR = MrvFileToChemicalReaction(rxnFilename, sanitize, removeHs);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return newR;
+}
+
+ChemicalReaction *ReactionFromMrvBlock(python::object imolBlock, bool sanitize,
+                                       bool removeHs) {
+  std::istringstream inStream(pyObjectToString(imolBlock));
+  ChemicalReaction *newR = nullptr;
+  try {
+    newR = MrvDataStreamToChemicalReaction(inStream, sanitize, removeHs);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return newR;
 }
 
 python::object GetReactingAtoms(const ChemicalReaction &self,
@@ -806,10 +844,29 @@ of the replacements argument.",
        python::arg("removeHs") = false, python::arg("strictParsing") = true),
       "construct a ChemicalReaction from a string in MDL rxn format",
       python::return_value_policy<python::manage_new_object>());
+
+  python::def("ReactionFromMrvFile", RDKit::ReactionFromMrvFile,
+              (python::arg("filename"), python::arg("sanitize") = false,
+               python::arg("removeHs") = false),
+              "construct a ChemicalReaction from an Marvin (mrv) rxn file",
+              python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ReactionFromMrvBlock", RDKit::ReactionFromMrvBlock,
+      (python::arg("rxnblock"), python::arg("sanitize") = false,
+       python::arg("removeHs") = false),
+      "construct a ChemicalReaction from a string in Marvin (mrv) format",
+      python::return_value_policy<python::manage_new_object>());
+
   python::def("ReactionToRxnBlock", RDKit::ChemicalReactionToRxnBlock,
               (python::arg("reaction"), python::arg("separateAgents") = false,
                python::arg("forceV3000") = false),
               "construct a string in MDL rxn format for a ChemicalReaction");
+
+  python::def(
+      "ReactionToMrvBlock", RDKit::ChemicalReactionToMrvBlock,
+      (python::arg("reaction")),
+      "construct a string in Marvin (MRV) rxn format for a ChemicalReaction");
+
   python::def(
       "ReactionToV3KRxnBlock", RDKit::ChemicalReactionToV3KRxnBlock,
       (python::arg("reaction"), python::arg("separateAgents") = false),

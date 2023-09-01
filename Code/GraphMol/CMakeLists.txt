@@ -58,6 +58,7 @@ rdkit_headers(Atom.h
 
 add_subdirectory(SmilesParse)
 add_subdirectory(Depictor)
+add_subdirectory(MarvinParse)
 add_subdirectory(FileParsers)
 add_subdirectory(Substruct)
 add_subdirectory(GenericGroups)
