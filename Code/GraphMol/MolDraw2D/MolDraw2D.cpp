@@ -298,7 +298,10 @@ void MolDraw2D::drawReaction(
     for (auto &dm : drawMols_) {
       height_ = std::max(height_, dm->height_);
     }
+    height_ += height_ * 2.0 * drawOptions().padding;
+    panel_height_ = height_;
   }
+
   std::vector<Point2D> offsets;
   Point2D arrowBeg, arrowEnd;
   calcReactionOffsets(reagents, products, agents, plusWidth, offsets, arrowBeg,
@@ -830,11 +833,14 @@ void MolDraw2D::getReactionDrawMols(
   std::map<int, DrawColour> atomColours;
   findReactionHighlights(rxn, highlightByReactant, highlightColorsReactants,
                          atomColours);
-  // reactants & products
-  makeReactionComponents(rxn.getReactants(), confIds, height(), atomColours,
-                         reagents, minScale, minFontScale);
-  makeReactionComponents(rxn.getProducts(), confIds, height(), atomColours,
+  // reactants & products.  At the end of these 2 calls, minScale and
+  // minFontScale will be the smallest scales used in any of the drawings.
+  makeReactionComponents(rxn.getReactants(), confIds, panelHeight(),
+                         atomColours, reagents, minScale, minFontScale);
+  makeReactionComponents(rxn.getProducts(), confIds, panelHeight(), atomColours,
                          products, minScale, minFontScale);
+  // Now scale everything to minScale, minFontScale, so all the elements
+  // are drawn to the same scale.
   for (auto &reagent : reagents) {
     reagent->setScale(minScale, minFontScale);
     reagent->shrinkToFit(false);
@@ -847,7 +853,7 @@ void MolDraw2D::getReactionDrawMols(
   plusWidth = minScale;
 
   // agents
-  int agentHeight = int(agentFrac * height_);
+  int agentHeight = int(agentFrac * panelHeight());
   minScale = std::numeric_limits<double>::max();
   makeReactionComponents(rxn.getAgents(), confIds, agentHeight, atomColours,
                          agents, minScale, minFontScale);
@@ -941,10 +947,15 @@ void MolDraw2D::makeReactionDrawMol(
   MolDraw2DUtils::prepareMolForDrawing(mol, kekulize, addChiralHs);
   // the height is fixed, but the width is allowed to be as large as the
   // height and molecule dimensions dictate.
+  // temporarily turn off padding to create the molecule - it will be handled
+  // for the whole picture.
+  auto padding = drawOptions().padding;
+  drawOptions().padding = 0.0;
   mols.emplace_back(new MolDraw2D_detail::DrawMol(
       mol, "", -1, molHeight, drawOptions(), *text_drawer_, &highlightAtoms,
       &highlightBonds, &highlightAtomMap, &highlightBondMap, nullptr, nullptr,
       supportsAnnotations(), confId, true));
+  drawOptions().padding = padding;
   mols.back()->createDrawObjects();
   drawMols_.push_back(mols.back());
   ++activeMolIdx_;
@@ -1002,11 +1013,11 @@ void MolDraw2D::calcReactionOffsets(
     width_ = reactionWidth(plusWidth);
   }
 
-  // The DrawMols are sized/scaled according to the height() which is all
+  // The DrawMols are sized/scaled according to the panelHeight() which is all
   // there is to go on initially, so they may be wider than the width() in
-  // total. If so, shrink them to fit.  Because the shrinkng imposes min and max
-  // font sizes, we may not get the smaller size we want first go, so iterate
-  // until we do or we give up.
+  // total. If so, shrink them to fit.  Because the shrinking imposes min and
+  // max font sizes, we may not get the smaller size we want first go, so
+  // iterate until we do or we give up.
   int totWidth = reactionWidth(plusWidth);
   for (int i = 0; i < 5; ++i) {
     auto maxWidthIt =
@@ -1054,7 +1065,8 @@ void MolDraw2D::calcReactionOffsets(
   // And finally work out where to put all the pieces, centring them.
   int xOffset = (width() - totWidth) / 2;
   for (size_t i = 0; i < reagents.size(); ++i) {
-    offsets.emplace_back(xOffset, (height() - reagents[i]->height_) / 2);
+    double hOffset = y_offset_ + (panelHeight() - reagents[i]->height_) / 2.0;
+    offsets.emplace_back(xOffset, hOffset);
     xOffset += reagents[i]->width_ + plusWidth;
   }
   if (reagents.empty()) {
@@ -1063,22 +1075,24 @@ void MolDraw2D::calcReactionOffsets(
     // only half a plusWidth to the arrow
     xOffset -= plusWidth / 2;
   }
-  arrowBeg.y = height() / 2;
+  arrowBeg.y = y_offset_ + panelHeight() / 2.0;
   arrowBeg.x = xOffset;
   if (agents.empty()) {
-    arrowEnd = Point2D(arrowBeg.x + arrowMult * plusWidth, height() / 2);
+    arrowEnd = Point2D(arrowBeg.x + arrowMult * plusWidth, arrowBeg.y);
   } else {
     xOffset += plusWidth / 2;
     for (size_t i = 0; i < agents.size(); ++i) {
-      offsets.emplace_back(xOffset, 0.45 * height() - agents[i]->height_);
+      offsets.emplace_back(
+          xOffset, y_offset_ + 0.45 * panelHeight() - agents[i]->height_);
       xOffset += agents[i]->width_ + plusWidth / 2;
     }
     // the overlap at the end of the arrow has already been added in the loop
-    arrowEnd = Point2D(xOffset, height() / 2);
+    arrowEnd = Point2D(xOffset, arrowBeg.y);
   }
   xOffset = arrowEnd.x + plusWidth / 2;
   for (size_t i = 0; i < products.size(); ++i) {
-    offsets.emplace_back(xOffset, (height() - products[i]->height_) / 2);
+    double hOffset = y_offset_ + (panelHeight() - products[i]->height_) / 2.0;
+    offsets.emplace_back(xOffset, hOffset);
     xOffset += products[i]->width_ + plusWidth;
   }
 }
@@ -1091,13 +1105,13 @@ int MolDraw2D::drawReactionPart(
     return initOffset;
   }
 
-  Point2D plusPos(0.0, height() / 2);
+  Point2D plusPos(0.0, y_offset_ + panelHeight() / 2.0);
   for (size_t i = 0; i < reactBit.size(); ++i) {
     ++activeMolIdx_;
     reactBit[i]->setOffsets(offsets[initOffset].x, offsets[initOffset].y);
     reactBit[i]->draw(*this);
 #if 0
-// this is convenient for debugging
+    // this is convenient for debugging
     setColour(DrawColour(0, 1.0, 1.0));
     drawLine(Point2D(offsets[initOffset].x + reactBit[i]->width_, 0),
              Point2D(offsets[initOffset].x + reactBit[i]->width_, height_),
@@ -1114,6 +1128,11 @@ int MolDraw2D::drawReactionPart(
              Point2D(offsets[initOffset].x + reactBit[i]->width_,
                      offsets[initOffset].y + reactBit[i]->height_),
              true);
+    setColour(DrawColour(0.0, 1.0, 0.0));
+    drawLine(
+        Point2D(offsets[initOffset].x, height() / 2.0),
+        Point2D(offsets[initOffset].x + reactBit[i]->width_, height() / 2.0),
+        true);
 #endif
     if (plusWidth && i < reactBit.size() - 1) {
       plusPos.x = (offsets[initOffset].x + reactBit[i]->width_ +

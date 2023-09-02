@@ -312,7 +312,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"lasso_highlights_4.svg", 235663789U},
     {"lasso_highlights_5.svg", 2913683946U},
     {"lasso_highlights_6.svg", 1087545472U},
-    {"lasso_highlights_7.svg", 3119874886U}};
+    {"lasso_highlights_7.svg", 3119874886U},
+    {"testGithub6685_1.svg", 2932185437U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -8531,4 +8532,157 @@ M  END)CTAB"_ctab;
     outs.close();
     check_file_hash(baseName + "7.svg");
   }
+}
+
+TEST_CASE("Github 6685 - flexicanvas cuts off bottom of reaction") {
+  const char *rxnBlock = R"RXN($RXN
+
+      Mrv1920  090120231611
+
+  3  1
+$MOL
+
+  Mrv1920 09012316112D
+
+  1  0  0  0  0  0            999 V2000
+  -12.3227   -0.2785    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 11 11  0  0  0  0            999 V2000
+   -6.0796   -0.5503    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -6.7352   -0.0493    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.6291    0.7688    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4967   -0.3666    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1522    0.1344    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.9137   -0.1829    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.5692    0.3181    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.3307    0.0008    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.4370   -0.8173    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.7813   -1.3182    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0199   -1.0009    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  2  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  4  0  0  0  0
+  7  8  4  0  0  0  0
+  8  9  4  0  0  0  0
+  9 10  4  0  0  0  0
+ 10 11  4  0  0  0  0
+ 11  6  4  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 10 10  0  0  0  0            999 V2000
+   -3.2982    1.9786    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4043    1.1605    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7488    0.6596    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9872    0.9767    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8547   -0.1585    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1992   -0.6594    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3055   -1.4777    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0669   -1.7949    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7225   -1.2939    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6163   -0.4759    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  3  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10  5  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 20 21  0  0  0  0            999 V2000
+    7.3862    1.9786    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.2800    1.1605    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.9356    0.6596    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6971    0.9768    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.8294   -0.1586    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.4850   -0.6595    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3789   -1.4777    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6173   -1.7950    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9619   -1.2939    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0679   -0.4758    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.4124    0.0252    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5186    0.8432    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6509   -0.2920    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9954    0.2089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2337   -0.1084    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5784    0.3926    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8166    0.0753    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7107   -0.7427    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3661   -1.2438    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1276   -0.9266    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  3  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+ 11 13  1  0  0  0  0
+ 13 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 16  4  0  0  0  0
+ 16 17  4  0  0  0  0
+ 17 18  4  0  0  0  0
+ 18 19  4  0  0  0  0
+ 19 20  4  0  0  0  0
+ 10  5  1  0  0  0  0
+ 20 15  4  0  0  0  0
+M  END)RXN";
+
+  std::string baseName = "testGithub6685_";
+  std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
+  MolDraw2DSVG drawer(-1, -1);
+  //  drawer.drawOptions().padding = 0.0;
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs((baseName + "1.svg").c_str());
+  outs << text;
+  outs.close();
+
+  // extract the height of the image
+  std::regex getHeight("width='(\\d+)px' height='(\\d+)px' viewBox=");
+  auto match_begin = std::sregex_iterator(text.begin(), text.end(), getHeight);
+  auto width = stod((*match_begin)[1]);
+  auto height = stod((*match_begin)[2]);
+  std::regex bond(
+      "<path class='bond-\\d+ atom-\\d+ atom-\\d+' d='M (\\d+.\\d+),(\\d+.\\d+) L (\\d+.\\d+),(\\d+.\\d+)' style=");
+  match_begin = std::sregex_iterator(text.begin(), text.end(), bond);
+  auto match_end = std::sregex_iterator();
+  for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+    std::smatch match = *i;
+    auto x1 = stod(match[1]);
+    auto y1 = stod(match[2]);
+    auto x2 = stod(match[3]);
+    auto y2 = stod(match[4]);
+    REQUIRE(x1 >= 0);
+    REQUIRE(x1 <= width);
+    REQUIRE((y1 >= 0 && y1 <= height));
+    REQUIRE(y1 <= height);
+    REQUIRE(x2 >= 0);
+    REQUIRE(x2 <= width);
+    REQUIRE(y2 >= 0);
+    REQUIRE(y2 <= height);
+  }
+  check_file_hash(baseName + "1.svg");
 }

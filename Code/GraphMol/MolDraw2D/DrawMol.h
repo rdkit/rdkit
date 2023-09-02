@@ -254,6 +254,10 @@ class DrawMol {
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
+  // For drawing reactions, padding needs to be 0 irrespective
+  // of what drawOptions_ does elsewhere, so it is copied from drawOptions_
+  // on construction, and is then immune to changes in the outer program.
+  double marginPadding_;
   std::vector<int> highlightAtoms_;
   std::vector<int> highlightBonds_;
   std::map<int, DrawColour> highlightAtomMap_;
