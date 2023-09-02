@@ -415,6 +415,7 @@ void DrawMol::extractMolNotes() {
         didIt = true;
         break;
       }
+      delete annot;
     }
     if (!didIt) {
       // There was nowhere to put it that didn't clash, so live with it.

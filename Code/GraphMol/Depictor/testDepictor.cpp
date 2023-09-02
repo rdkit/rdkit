@@ -1561,17 +1561,22 @@ M  END
   4  5  2  0  0  0  0
 M  END
 )RES";
-    std::unique_ptr<RWMol> cpSittingOnHorizontalBond(MolBlockToMol(cpSittingOnHorizontalBondCTab));
-    std::unique_ptr<RWMol> cpSittingOnHorizontalBondCopy(new RWMol(*cpSittingOnHorizontalBond));
+    std::unique_ptr<RWMol> cpSittingOnHorizontalBond(
+        MolBlockToMol(cpSittingOnHorizontalBondCTab));
+    std::unique_ptr<RWMol> cpSittingOnHorizontalBondCopy(
+        new RWMol(*cpSittingOnHorizontalBond));
     RDDepict::straightenDepiction(*cpSittingOnHorizontalBond);
-    TEST_ASSERT(MolAlign::CalcRMS(*cpSittingOnHorizontalBond, *cpSittingOnHorizontalBondCopy) < 1.e-3);
+    TEST_ASSERT(MolAlign::CalcRMS(*cpSittingOnHorizontalBond,
+                                  *cpSittingOnHorizontalBondCopy) < 1.e-3);
     RDGeom::Transform3D trans;
     // rotate by 90 degrees
     trans.SetRotation(0.5 * M_PI, RDGeom::Z_Axis);
-    MolTransforms::transformConformer(cpSittingOnHorizontalBond->getConformer(), trans);
+    MolTransforms::transformConformer(cpSittingOnHorizontalBond->getConformer(),
+                                      trans);
     cpSittingOnHorizontalBondCopy.reset(new RWMol(*cpSittingOnHorizontalBond));
     RDDepict::straightenDepiction(*cpSittingOnHorizontalBond);
-    TEST_ASSERT(MolAlign::CalcRMS(*cpSittingOnHorizontalBond, *cpSittingOnHorizontalBondCopy) < 1.e-3);
+    TEST_ASSERT(MolAlign::CalcRMS(*cpSittingOnHorizontalBond,
+                                  *cpSittingOnHorizontalBondCopy) < 1.e-3);
   }
 }
 
@@ -1581,7 +1586,7 @@ void testValidRingSystemTemplates() {
       << std::endl;
   constexpr double RDKIT_BOND_LEN = 1.5;
   for (auto &smiles : TEMPLATE_SMILES) {
-    ROMol *mol = SmilesToMol(smiles);
+    std::unique_ptr<ROMol> mol{SmilesToMol(smiles)};
     RDDepict::CoordinateTemplates::assertValidTemplate(*mol, smiles);
 
     // also check whether the bonds in the template are the correct length
