@@ -2599,7 +2599,11 @@ void testSlowCompleteRingsOnly() {
   p.BondCompareParameters.CompleteRingsOnly = true;
   p.AtomTyper = MCSAtomCompareAny;
   p.BondTyper = MCSBondCompareAny;
+#ifdef NDEBUG
   p.Timeout = 10;
+#else  // allow more time when building in debug mode
+  p.Timeout = 60;
+#endif
   auto mcs = findMCS(mols, &p);
 
   TEST_ASSERT(!mcs.Canceled);
@@ -2926,7 +2930,11 @@ void testGitHub3965() {
       "Nc1cc2cc(c1)C(=O)N[C@H](c1ccccc1)c1cccc(COCCNC2=O)c1"_smiles,
       "Nc1nc2cc(c1)C(=O)N[C@H](c1ccccc1)c1cccc(COCCNC2=O)c1"_smiles};
   MCSParameters p;
+#ifdef NDEBUG
   p.Timeout = 30;
+#else  // allow more time when building in debug mode
+  p.Timeout = 120;
+#endif
   p.BondCompareParameters.CompleteRingsOnly = true;
   auto mcs = findMCS(mols, &p);
 

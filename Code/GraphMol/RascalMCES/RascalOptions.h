@@ -40,9 +40,9 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
   bool returnEmptyMCES = false; /* if true, if the similarity thresholds aren't
                                    matched still return a RascalResult with the
                                    tier1 and tier2 sims filled in. */
-  int maxBondMatchPairs = 1000; /* Too many matching bond (vertex) pairs can
-                                   cause it to run out of memory.  This is a
-                                   reasonable default for my Mac. */
+  unsigned int maxBondMatchPairs = 1000; /* Too many matching bond (vertex)
+                                   pairs can cause it to run out of memory. This
+                                   is a reasonable default for my Mac. */
 };
 }  // namespace RascalMCES
 }  // namespace RDKit

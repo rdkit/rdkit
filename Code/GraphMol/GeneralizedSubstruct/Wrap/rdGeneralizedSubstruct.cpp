@@ -89,8 +89,8 @@ ExtendedQueryMol *createExtendedQueryMolHelper(
   if (!ps) {
     ps = &defaults;
   }
-  return new ExtendedQueryMol(std::move(createExtendedQueryMol(
-      mol, doEnumeration, doTautomers, adjustQueryProperties, *ps)));
+  return new ExtendedQueryMol(createExtendedQueryMol(
+      mol, doEnumeration, doTautomers, adjustQueryProperties, *ps));
 }
 
 }  // namespace

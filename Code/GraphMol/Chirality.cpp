@@ -7,23 +7,25 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <GraphMol/RDKitBase.h>
-#include <RDGeneral/Ranking.h>
-#include <GraphMol/new_canon.h>
-#include <GraphMol/QueryOps.h>
-#include <RDGeneral/types.h>
-#include <sstream>
-#include <set>
-#include <algorithm>
-#include <RDGeneral/utils.h>
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/RDLog.h>
-
-#include <boost/dynamic_bitset.hpp>
-#include <Geometry/point.h>
 #include "Chirality.h"
 
+#include <Geometry/point.h>
+#include <GraphMol/QueryOps.h>
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/new_canon.h>
+#include <RDGeneral/Invariant.h>
+#include <RDGeneral/RDLog.h>
+#include <RDGeneral/Ranking.h>
+#include <RDGeneral/types.h>
+#include <RDGeneral/utils.h>
+
+#include <boost/dynamic_bitset.hpp>
+
+#include <algorithm>
 #include <cstdlib>
+#include <optional>
+#include <set>
+#include <sstream>
 #include <utility>
 
 // #define VERBOSE_CANON 1
@@ -478,7 +480,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   //
   //  collect indices and bond vectors of neighbors and track whether or
   //  not there's an H neighbor and if all bonds are single
-  // 
+  //
   //  at the end of this process bond 0 is the input wedged bond
   //
   //----------------------------------------------------------
@@ -512,13 +514,14 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       } else {
         tmpPt.z = 0;
       }
-      // check for overly short bonds. Note that we're doing this check *after* adjusting the z coordinate.
-      //    We want to allow atoms to overlap in x-y space if they are connected via a wedged bond.
+      // check for overly short bonds. Note that we're doing this check *after*
+      // adjusting the z coordinate.
+      //    We want to allow atoms to overlap in x-y space if they are connected
+      //    via a wedged bond.
       if ((centerLoc - tmpPt).lengthSq() < zeroTol) {
         BOOST_LOG(rdWarningLog)
             << "Warning: ambiguous stereochemistry - zero-length (or near zero-length) bond - at atom "
-            << atom->getIdx() << " ignored."
-            << std::endl;
+            << atom->getIdx() << " ignored." << std::endl;
         return std::nullopt;
       }
     }
@@ -555,9 +558,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     for (auto j = 0u; j < i; ++j) {
       if ((bondVects[i] - bondVects[j]).lengthSq() < zeroTol) {
         BOOST_LOG(rdWarningLog)
-            << "Warning: ambiguous stereochemistry - overlapping neighbors  - at atom " << atom->getIdx()
-            << " ignored"
-            << std::endl;
+            << "Warning: ambiguous stereochemistry - overlapping neighbors  - at atom "
+            << atom->getIdx() << " ignored" << std::endl;
         return std::nullopt;
       }
     }
@@ -595,18 +597,24 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     //
     // order the bonds so that the rotation order is:
     //   0 - 1 - 2        for three coordinate
-    // or 
+    // or
     //   0 - 1 - 2 - 3    for four coordinate
     //
     // this makes the rest of the code a lot simpler
     //
     //----------------------------------------------------------
-    
-    
-    // checks to see if the vectors 1 and 2 need to have their order 
+
+    // checks to see if the vectors 1 and 2 need to have their order
     //    relative to vector 0 swapped.
     // we don't actually pass the vectors in, but use their cross products
     // and dot products to vector 0 to figure out if they need to be swapped
+#if defined(__clang__)
+// Clang apparently doesn't need to capture the constexpr zeroTol, and complains
+// about it being specified, but MSVC does need it, and removing it will break
+// the build
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-lambda-capture"
+#endif
     auto needsSwap = [&zeroTol](const RDGeom::Point3D &cp01,
                                 const RDGeom::Point3D &cp02, double dp01,
                                 double dp02) -> bool {
@@ -636,9 +644,13 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       }
       return fabs(dp01) > fabs(dp02);
     };
+#if defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
     if (nNbrs == 3) {
-      // this case is simple, we either need to swap vectors 1 and 2 or we don't:
+      // this case is simple, we either need to swap vectors 1 and 2 or we
+      // don't:
       auto cp01 = bondVects[order[0]].crossProduct(bondVects[order[1]]);
       auto cp02 = bondVects[order[0]].crossProduct(bondVects[order[2]]);
       auto dp01 = bondVects[order[0]].dotProduct(bondVects[order[1]]);
@@ -649,15 +661,14 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       }
     } else if (nNbrs > 3) {
       // here there are more permutations. Rather than hand-coding all of them
-      // we'll just sort bonds 1, 2, and 3 based on their cross- and dot- products
-      // to bond 0
+      // we'll just sort bonds 1, 2, and 3 based on their cross- and dot-
+      // products to bond 0
       std::vector<std::tuple<double, double, unsigned>> orderedBonds(3);
       for (auto i = 1u; i < 4; ++i) {
         auto cp0i = bondVects[order[0]].crossProduct(bondVects[order[i]]);
         auto sgn = cp0i.z < -zeroTol ? -1 : 1;
         auto dp0i = bondVects[order[0]].dotProduct(bondVects[order[i]]);
-        orderedBonds[i - 1] =
-            std::move(std::make_tuple(sgn, sgn * dp0i, order[i]));
+        orderedBonds[i - 1] = std::make_tuple(sgn, sgn * dp0i, order[i]);
       }
       std::sort(orderedBonds.rbegin(), orderedBonds.rend());
 
@@ -677,7 +688,9 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       }
     }
 
-    // std::cerr<<"ORDER "<<neighborBondIndices[order[0]]<<" "<<neighborBondIndices[order[1]]<<" "<<neighborBondIndices[order[2]]<<" "<<neighborBondIndices[order[3]]<<std::endl;
+    // std::cerr<<"ORDER "<<neighborBondIndices[order[0]]<<"
+    // "<<neighborBondIndices[order[1]]<<" "<<neighborBondIndices[order[2]]<<"
+    // "<<neighborBondIndices[order[3]]<<std::endl;
 
     // check for opposing bonds with opposite wedging
     for (auto i = 0u; i < nNbrs; ++i) {
@@ -701,7 +714,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
               }
             }
             BOOST_LOG(rdWarningLog)
-                << "Warning: ambiguous stereochemistry - opposing bonds have opposite wedging - at atom "<< atom->getIdx() <<" ignored." << std::endl;
+                << "Warning: ambiguous stereochemistry - opposing bonds have opposite wedging - at atom "
+                << atom->getIdx() << " ignored." << std::endl;
             return std::nullopt;
           }
         }
@@ -738,8 +752,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       if (conflict) {
         BOOST_LOG(rdWarningLog)
             << "Warning: conflicting stereochemistry - bond wedging contradiction - at atom "
-            << atom->getIdx() << " ignored"
-            << std::endl;
+            << atom->getIdx() << " ignored" << std::endl;
         return std::nullopt;
       }
     }
@@ -752,8 +765,9 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     const auto crossp1 = bv1.crossProduct(bv2);
     // catch linear arrangements
     if (nNbrs == 3) {
-      if (crossp1.lengthSq() <5*zeroTol) {
-        // nothing we can do in a linear arrangement if there are only three neighbors
+      if (crossp1.lengthSq() < 5 * zeroTol) {
+        // nothing we can do in a linear arrangement if there are only three
+        // neighbors
         BOOST_LOG(rdWarningLog)
             << "Warning: ambiguous stereochemistry - linear bond arrangement - at atom "
             << atom->getIdx() << " ignored" << std::endl;
@@ -798,7 +812,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       std::cerr << " !!! " << vol << " " << vol2 << std::endl;
 #endif
 
-      // detect the case where there's no chiral volume for the default evaluation
+      // detect the case where there's no chiral volume for the default
+      // evaluation
       if (fabs(vol) < zeroTol) {
         // and check the other evaluation:
         if (fabs(vol2) < zeroTol) {
@@ -827,7 +842,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     vol *= prefactor;
     // std::cerr << " final " << vol << std::endl;
 
-    // at this point we can assign our atomic stereo based on the sign of the chiral volume
+    // at this point we can assign our atomic stereo based on the sign of the
+    // chiral volume
     if (vol > volumeTolerance) {
       res = Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
     } else if (vol < -volumeTolerance) {

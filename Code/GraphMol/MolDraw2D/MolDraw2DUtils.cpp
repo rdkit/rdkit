@@ -164,7 +164,6 @@ void get_highlight_style_option(boost::property_tree::ptree *pt,
     return;
   }
   const auto &node = pt->get_child(pnm);
-  boost::property_tree::ptree::const_iterator itm = node.begin();
   auto styleStr = node.get_value<std::string>();
   if (styleStr == "Lasso") {
     mchs = MultiColourHighlightStyle::LASSO;
