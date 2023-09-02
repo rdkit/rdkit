@@ -37,7 +37,7 @@ void testCleanup() {
   }
   {
     // Github 5997
-    RWMOL_SPTR m = "CC(=O)O[Mg]OC(=O)C"_smiles;
+    auto m = "CC(=O)O[Mg]OC(=O)C"_smiles;
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
   }
