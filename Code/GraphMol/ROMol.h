@@ -361,6 +361,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     for (auto conf : d_confs) {
       conf->setOwningMol(this);
     }
+    for (auto &sg : d_sgroups) {
+      sg.setOwningMol(this);
+    }
     o.d_graph.clear();
     o.numBonds = 0;
     dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
@@ -396,6 +399,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     }
     for (auto conf : d_confs) {
       conf->setOwningMol(this);
+    }
+    for (auto &sg : d_sgroups) {
+      sg.setOwningMol(this);
     }
 
     o.d_graph.clear();
