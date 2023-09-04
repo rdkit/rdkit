@@ -405,23 +405,22 @@ void DrawMol::extractMolNotes() {
     for (int i = 0; i < 3; ++i) {
       locs[i].x += xOffset_;
       locs[i].y += yOffset_;
-      DrawAnnotation *annot =
+      std::unique_ptr<DrawAnnotation> annot(
           new DrawAnnotation(note, TextAlignType::START, "note", 1.0, locs[i],
-                             drawOptions_.annotationColour, textDrawer_);
+                             drawOptions_.annotationColour, textDrawer_));
       // Put it into the legends_, because it's already in draw coords, so
       // shouldn't be treated by changeToDrawCoords.
       if (!doesNoteClash(*annot)) {
-        legends_.emplace_back(annot);
+        legends_.push_back(std::move(annot));
         didIt = true;
         break;
       }
     }
     if (!didIt) {
       // There was nowhere to put it that didn't clash, so live with it.
-      DrawAnnotation *annot =
+      legends_.emplace_back(
           new DrawAnnotation(note, TextAlignType::START, "note", 1.0, locs[0],
-                             drawOptions_.annotationColour, textDrawer_);
-      legends_.emplace_back(annot);
+                             drawOptions_.annotationColour, textDrawer_));
     }
   }
 }
