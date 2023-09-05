@@ -6378,6 +6378,8 @@ f_m_ct {
     CHECK_THROWS_AS(supplier.next(), FileParseException);
   }
 }
+#endif
+
 TEST_CASE("Chained bond stereo and wiggly bonds") {
   SECTION("github6434") {
     std::string molblock = R"CTAB(
@@ -6435,4 +6437,28 @@ TEST_CASE("StereoGroup id forwarding", "[StereoGroup][ctab]") {
   }
 }
 
-#endif
+TEST_CASE(
+    "z coordinate tolerance in flat structures"
+    "[bug][molblock]") {
+  const auto mol = R"CTAB(
+     RDKit          2D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0010 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981   -0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    2.2500    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  2  3  1  0
+  2  4  1  0
+M  END
+)CTAB"_ctab;
+  REQUIRE(mol);
+  REQUIRE(mol->getNumConformers() == 1);
+
+  auto conf = mol->getConformer();
+  CHECK(!conf.is3D());
+
+  CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+        Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+}

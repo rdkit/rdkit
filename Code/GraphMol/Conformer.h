@@ -15,6 +15,7 @@
 #include <RDGeneral/types.h>
 #include <boost/smart_ptr.hpp>
 #include <RDGeneral/RDProps.h>
+#include <cmath>
 #include <limits>
 #include <utility>
 
