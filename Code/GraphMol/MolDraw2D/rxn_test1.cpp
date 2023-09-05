@@ -48,14 +48,14 @@ namespace {
 static const bool DELETE_WITH_GOOD_HASH = true;
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"rxn_test1_1.svg", 3715960520U},   {"rxn_test1_2.svg", 2731327635U},
-    {"rxn_test1_3.svg", 4251541089U},   {"rxn_test1_4.svg", 894428906U},
-    {"rxn_test1_5.svg", 2893616461U},   {"rxn_test1_6.svg", 265356954U},
-    {"rxn_test1_7.svg", 3724002141U},   {"rxn_test2_1.svg", 3733316613U},
-    {"rxn_test2_2_1.svg", 3927532854U}, {"rxn_test2_2_2.svg", 495518885U},
-    {"rxn_test2_2_3.svg", 1902440356U}, {"rxn_test2_2_4.svg", 4056434186U},
-    {"rxn_test3_1.svg", 4181923903U},   {"rxn_test4_1.svg", 260062823U},
-    {"rxn_test4_2.svg", 805294430U},
+    {"rxn_test1_1.svg", 2589551919U},   {"rxn_test1_2.svg", 3804495302U},
+    {"rxn_test1_3.svg", 1189364319U},   {"rxn_test1_4.svg", 2463751958U},
+    {"rxn_test1_5.svg", 175779836U},    {"rxn_test1_6.svg", 3054205245U},
+    {"rxn_test1_7.svg", 1370192540U},   {"rxn_test2_1.svg", 474145571U},
+    {"rxn_test2_2_1.svg", 2107028983U}, {"rxn_test2_2_2.svg", 1077929907U},
+    {"rxn_test2_2_3.svg", 2257818397U}, {"rxn_test2_2_4.svg", 1443117751U},
+    {"rxn_test3_1.svg", 1520134560U},   {"rxn_test4_1.svg", 593973152U},
+    {"rxn_test4_2.svg", 1252318674U},
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
@@ -81,14 +81,14 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
 static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
-    {"rxn_test1_1.png", 993564636U},    {"rxn_test1_2.png", 2947322454U},
-    {"rxn_test1_3.png", 160403864U},    {"rxn_test1_4.png", 1876432985U},
-    {"rxn_test1_5.png", 2635232516U},   {"rxn_test1_6.png", 1688349414U},
-    {"rxn_test1_7.png", 1189016447U},   {"rxn_test2_1.png", 1817644206U},
-    {"rxn_test2_2_1.png", 375261705U},  {"rxn_test2_2_2.png", 4036057423U},
-    {"rxn_test2_2_3.png", 3630739272U}, {"rxn_test2_2_4.png", 2524979860U},
-    {"rxn_test3_1.png", 1642909650U},   {"rxn_test4_1.png", 2945111567U},
-    {"rxn_test4_2.png", 711991856U},
+    {"rxn_test1_1.png", 2539900379U},   {"rxn_test1_2.png", 2569294936U},
+    {"rxn_test1_3.png", 3767116494U},   {"rxn_test1_4.png", 224834189U},
+    {"rxn_test1_5.png", 3507974379U},   {"rxn_test1_6.png", 1244123593U},
+    {"rxn_test1_7.png", 4177909945U},   {"rxn_test2_1.png", 4127672547U},
+    {"rxn_test2_2_1.png", 1963365840U}, {"rxn_test2_2_2.png", 1789122314U},
+    {"rxn_test2_2_3.png", 4055966817U}, {"rxn_test2_2_4.png", 2205391079U},
+    {"rxn_test3_1.png", 477100932U},    {"rxn_test4_1.png", 442626994U},
+    {"rxn_test4_2.png", 2628481728U},
 };
 
 std::hash_result_t hash_file(const std::string &filename) {
