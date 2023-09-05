@@ -2962,6 +2962,14 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
     RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
     TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
   }
+  // make sure we can call cleanupOrganometallics() on non-sanitized molecules
+  for (size_t i = 0; i < test_vals.size(); ++i) {
+    INFO(test_vals[i].first);
+    bool sanitize=false;
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first,0,sanitize));
+    MolOps::cleanUpOrganometallics(*m);
+    TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
+  }
 }
 
 TEST_CASE(

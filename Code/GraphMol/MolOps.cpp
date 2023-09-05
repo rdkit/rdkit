@@ -326,6 +326,7 @@ void cleanUpOrganometallics(RWMol &mol) {
     return;
   }
 
+  mol.updatePropertyCache(false);
   // First see if anything needs doing
   std::vector<unsigned int> ranks(mol.getNumAtoms());
   RDKit::Canon::rankMolAtoms(mol, ranks);
