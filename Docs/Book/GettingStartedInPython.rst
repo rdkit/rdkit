@@ -962,7 +962,7 @@ sequence numbers.
 
 .. doctest::
    
-   >>> mol = Chem.MolFromSmiles('Cl[C@H](F)NC\C=C\C')
+   >>> mol = Chem.MolFromSmiles(r'Cl[C@H](F)NC\C=C\C')
    >>> d = rdMolDraw2D.MolDraw2DCairo(250, 200) # or MolDraw2DSVG to get SVGs
    >>> mol.GetAtomWithIdx(2).SetProp('atomNote', 'foo')
    >>> mol.GetBondWithIdx(0).SetProp('bondNote', 'bar')
@@ -2727,10 +2727,12 @@ The molecules have not been sanitized, so it's a good idea to at least update th
   ...     prod.UpdatePropertyCache(strict=False)
   ...  
   >>> Chem.MolToSmiles(prods[0],True)
-  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccc3ncsc3c21'
+  '[H]/N=C(\\N)NC(=O)C(C)C'
   >>> Chem.MolToSmiles(prods[1],True)
-  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccccc21'
+  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccc3ncsc3c21'
   >>> Chem.MolToSmiles(prods[2],True)
+  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccccc21'
+  >>> Chem.MolToSmiles(prods[3],True)
   'CNC(=O)C(C)C'
 
 
