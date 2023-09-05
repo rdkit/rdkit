@@ -961,6 +961,50 @@ void MolDraw2D::makeReactionDrawMol(
   ++activeMolIdx_;
 }
 
+namespace {
+int reactionWidth(
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reagents,
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &products,
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
+    const MolDrawOptions &drawOptions, int arrowMult, int gapWidth) {
+  int totWidth = 0;
+  if (!reagents.empty()) {
+    for (auto &dm : reagents) {
+      totWidth += dm->width_;
+    }
+    totWidth += gapWidth * (reagents.size() - 1);
+  }
+  if (agents.empty()) {
+    totWidth += arrowMult * gapWidth;
+  } else {
+    // the agent doesn't start at front of arrow
+    for (auto &dm : agents) {
+      totWidth += dm->width_ + gapWidth;
+    }
+    totWidth += gapWidth * (agents.size() - 1) / 2;
+  }
+  totWidth += gapWidth;  // either side of arrow
+  if (!products.empty()) {
+    for (auto &dm : products) {
+      totWidth += dm->width_;
+    }
+    // we don't want a plus after the last product
+    totWidth += gapWidth * (products.size() - 1);
+  }
+  totWidth += 2.0 * drawOptions.padding * totWidth;
+  return totWidth;
+}
+
+void scaleDrawMols(std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &dms,
+                   double stretch) {
+  for (auto &dm : dms) {
+    dm->setScale(stretch * dm->getScale(), stretch * dm->getFontScale(), false);
+    dm->shrinkToFit(false);
+  }
+}
+
+}  // namespace
+
 // ****************************************************************************
 void MolDraw2D::calcReactionOffsets(
     std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reagents,
@@ -971,46 +1015,10 @@ void MolDraw2D::calcReactionOffsets(
   // calculate the total width of the drawing - it may need re-scaling if
   // it's too wide for the panel.
   const int arrowMult = 2;  // number of plusWidths for an empty arrow.
-  auto reactionWidth = [&](int gapWidth) -> int {
-    int totWidth = 0;
-    if (!reagents.empty()) {
-      for (auto &dm : reagents) {
-        totWidth += dm->width_;
-      }
-      totWidth += gapWidth * (reagents.size() - 1);
-    }
-    if (agents.empty()) {
-      totWidth += arrowMult * gapWidth;
-    } else {
-      // the agent doesn't start at front of arrow
-      for (auto &dm : agents) {
-        totWidth += dm->width_ + gapWidth;
-      }
-      totWidth += gapWidth * (agents.size() - 1) / 2;
-    }
-    totWidth += gapWidth;  // either side of arrow
-    if (!products.empty()) {
-      for (auto &dm : products) {
-        totWidth += dm->width_;
-      }
-      // we don't want a plus after the last product
-      totWidth += gapWidth * (products.size() - 1);
-    }
-    return totWidth;
-  };
-
-  auto scaleDrawMols =
-      [&](std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &dms,
-          double stretch) {
-        for (auto &dm : dms) {
-          dm->setScale(stretch * dm->getScale(), stretch * dm->getFontScale(),
-                       false);
-          dm->shrinkToFit(false);
-        }
-      };
 
   if (width_ == -1) {
-    width_ = reactionWidth(plusWidth);
+    width_ = reactionWidth(reagents, products, agents, drawOptions(), arrowMult,
+                           plusWidth);
   }
 
   // The DrawMols are sized/scaled according to the panelHeight() which is all
@@ -1018,7 +1026,8 @@ void MolDraw2D::calcReactionOffsets(
   // total. If so, shrink them to fit.  Because the shrinking imposes min and
   // max font sizes, we may not get the smaller size we want first go, so
   // iterate until we do or we give up.
-  int totWidth = reactionWidth(plusWidth);
+  int totWidth = reactionWidth(reagents, products, agents, drawOptions(),
+                               arrowMult, plusWidth);
   for (int i = 0; i < 5; ++i) {
     auto maxWidthIt =
         std::max_element(drawMols_.begin(), drawMols_.end(),
@@ -1029,7 +1038,8 @@ void MolDraw2D::calcReactionOffsets(
     plusWidth = (*maxWidthIt)->width_ / 4;
     plusWidth = plusWidth > width() / 20 ? width() / 20 : plusWidth;
     auto oldTotWidth = totWidth;
-    auto stretch = double(width_ * (1 - drawOptions().padding)) / totWidth;
+    auto stretch =
+        double(width_ * (1 - 2.0 * drawOptions().padding)) / totWidth;
     // If stretch < 1, we need to shrink the DrawMols to fit.  This isn't
     // necessary if we're just stretching them along the panel as they already
     // fit for height.
@@ -1040,7 +1050,8 @@ void MolDraw2D::calcReactionOffsets(
     } else {
       break;
     }
-    totWidth = reactionWidth(plusWidth);
+    totWidth = reactionWidth(reagents, products, agents, drawOptions(),
+                             arrowMult, plusWidth);
     if (fabs(totWidth - oldTotWidth) < 0.01 * width()) {
       break;
     }
@@ -1049,8 +1060,12 @@ void MolDraw2D::calcReactionOffsets(
   // make sure plusWidth remains 1A, in pixels.
   if (!reagents.empty()) {
     plusWidth = reagents.front()->scale_;
+    totWidth = reactionWidth(reagents, products, agents, drawOptions(),
+                             arrowMult, plusWidth);
   } else if (!products.empty()) {
     plusWidth = products.front()->scale_;
+    totWidth = reactionWidth(reagents, products, agents, drawOptions(),
+                             arrowMult, plusWidth);
   }
   // if there's space, we can afford make the extras a bit bigger.
   int numGaps = reagents.empty() ? 0 : reagents.size() - 1;
@@ -1060,9 +1075,10 @@ void MolDraw2D::calcReactionOffsets(
   if (width() - totWidth > numGaps * 5) {
     plusWidth += 5;
   }
-  totWidth = reactionWidth(plusWidth);
-
+  totWidth = reactionWidth(reagents, products, agents, drawOptions(), arrowMult,
+                           plusWidth);
   // And finally work out where to put all the pieces, centring them.
+  // The padding is already taken care of.
   int xOffset = (width() - totWidth) / 2;
   for (size_t i = 0; i < reagents.size(); ++i) {
     double hOffset = y_offset_ + (panelHeight() - reagents[i]->height_) / 2.0;
