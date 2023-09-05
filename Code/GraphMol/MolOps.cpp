@@ -465,6 +465,12 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
     cleanUp(mol);
   }
 
+  // fix things like non-metal to metal bonds that should be dative.
+  operationThatFailed = SANITIZE_CLEANUP_ORGANOMETALLICS;
+  if (sanitizeOps & operationThatFailed) {
+    cleanUpOrganometallics(mol);
+  }
+
   // update computed properties on atoms and bonds:
   operationThatFailed = SANITIZE_PROPERTIES;
   if (sanitizeOps & operationThatFailed) {
@@ -526,12 +532,6 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   operationThatFailed = SANITIZE_ADJUSTHS;
   if (sanitizeOps & operationThatFailed) {
     adjustHs(mol);
-  }
-
-  // fix things like non-metal to metal bonds that should be dative.
-  operationThatFailed = SANITIZE_CLEANUP_ORGANOMETALLICS;
-  if (sanitizeOps & operationThatFailed) {
-    cleanUpOrganometallics(mol);
   }
 
   // now that everything has been cleaned up, go through and check/update the
