@@ -170,8 +170,9 @@ typedef boost::shared_ptr<Conformer> CONFORMER_SPTR;
   \param conf  Conformer object to analyze
 */
 inline bool hasNonZeroZCoords(const Conformer &conf) {
+  constexpr double zeroTol = 1e-3;
   for (auto p : conf.getPositions()) {
-    if (p.z != 0.0) {
+    if (std::abs(p.z) > zeroTol) {
       return true;
     }
   }
