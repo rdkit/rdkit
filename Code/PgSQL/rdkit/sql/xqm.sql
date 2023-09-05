@@ -5,7 +5,7 @@ select mol_to_xqmol('COC1=NNC=C1 |LN:1:1.3|'::mol);
 select mol_to_xqmol('COC1=NNC=C1 |LN:1:1.3|'::mol, false);
 select mol_to_xqmol('COC1=NNC=C1 |LN:1:1.3|'::mol, true, false);
 select mol_to_xqmol('COC1=NNC=C1 |LN:1:1.3|'::mol, false, false);
-select mol_to_xqmol('COC1=NNC=C1 |LN:1:1.3|'::mol, false, false, false);
+select mol_to_xqmol('COC1=NNC=C1 |LN:1:1.3|'::mol, false, false, true);
 
 -- substructure searching
 select 'Cc1[nH]nc(F)c1'::mol @> mol_to_xqmol('Cc1n[nH]c(F)c1'::mol);
@@ -47,3 +47,6 @@ select 'COOC1=NNC(CC)=C1'::mol @>> mol_to_xqmol(mol_adjust_query_properties('COC
   '{"makeDummiesQueries":true, "setGenericQueryFromProperties": true}'));
 select 'COOC1=NNC(C=C)=C1'::mol @>> mol_to_xqmol(mol_adjust_query_properties('COC1=NNC(*)=C1 |$;;;;;;AEL_p;$,LN:1:1.3|'::mol,
   '{"makeDummiesQueries":true, "setGenericQueryFromProperties": true}'));
+
+-- problems we've encountered
+select 'CCOC(=O)c1cc2n(n1)C(C(=O)O)Nc1cc(Cl)ccc1-2'::mol @> mol_to_xqmol('COCc1n[nH]c(C)c1 |LN:1:1.3|'::mol);
