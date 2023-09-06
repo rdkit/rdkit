@@ -34,8 +34,8 @@ using std::uint32_t;
 
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 14;
-const int32_t MolPickler::versionMinor = 1;
+const int32_t MolPickler::versionMajor = 15;
+const int32_t MolPickler::versionMinor = 0;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -166,6 +166,7 @@ class PropTracker {
  public:
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
+  // the properties themselves are stored as std::int8_t
   const std::vector<std::pair<std::string, std::uint16_t>> explicitBondProps = {
       {RDKit::common_properties::_MolFileBondType, 0x1},
       {RDKit::common_properties::_MolFileBondStereo, 0x2},
@@ -175,6 +176,15 @@ class PropTracker {
   };
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
+  // the properties themselves are stored as std::string
+  const std::vector<std::pair<std::string, std::uint16_t>> extraBondProps = {
+      {RDKit::common_properties::_MolFileBondEndPts, 0x1},
+      {RDKit::common_properties::_MolFileBondAttach, 0x2},
+
+  };
+  // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
+  // to update the pickle format.
+  // the properties themselves are stored as std::int16_t
   const std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {
       {common_properties::molStereoCare, 0x1},
       {common_properties::molParity, 0x2},
@@ -189,6 +199,9 @@ class PropTracker {
   std::unordered_set<std::string> ignoreBondProps;
   PropTracker() {
     for (const auto &pr : explicitBondProps) {
+      ignoreBondProps.insert(pr.first);
+    }
+    for (const auto &pr : extraBondProps) {
       ignoreBondProps.insert(pr.first);
     }
   };
@@ -246,6 +259,9 @@ bool pickleBondProperties(std::ostream &ss, const RDProps &props,
       MolPickler::getCustomPropHandlers(), bprops.ignoreBondProps);
   res |= pickleExplicitProperties<std::int8_t>(ss, props,
                                                bprops.explicitBondProps);
+  res |=
+      pickleExplicitProperties<std::string>(ss, props, bprops.extraBondProps);
+
   return res;
 }
 
@@ -260,6 +276,8 @@ void unpickleBondProperties(std::istream &ss, RDProps &props, int version) {
   }
   unpickleExplicitProperties<std::int8_t, int>(ss, props, version,
                                                bprops.explicitBondProps);
+  unpickleExplicitProperties<std::string, std::string>(ss, props, version,
+                                                       bprops.extraBondProps);
 }
 
 }  // namespace
