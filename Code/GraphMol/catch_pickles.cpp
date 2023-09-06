@@ -199,24 +199,18 @@ M  END
     CHECK(mol->getBondWithIdx(2)->getProp<std::string>(
               common_properties::_MolFileBondEndPts) == "(3 1 2 3)");
 
-    std::string basepkl;
-    MolPickler::pickleMol(*mol, basepkl);
-
     std::string pkl;
-    MolPickler::pickleMol(*mol, pkl,
-                          PicklerOps::PropertyPickleOptions::BondProps |
-                              PicklerOps::PropertyPickleOptions::PrivateProps);
+    MolPickler::pickleMol(*mol, pkl);
 
-    CHECK(pkl.size() > basepkl.size());
     // make sure the property names aren't in the pickle
     CHECK(pkl.find(common_properties::_MolFileBondAttach) == std::string::npos);
     CHECK(pkl.find(common_properties::_MolFileBondEndPts) == std::string::npos);
     // std::cerr << "!!!! " << pkl.size() << " " << basepkl.size() << std::endl;
 
     RWMol mol2(pkl);
-    CHECK(mol->getBondWithIdx(2)->getProp<std::string>(
+    CHECK(mol2.getBondWithIdx(2)->getProp<std::string>(
               common_properties::_MolFileBondAttach) == "ANY");
-    CHECK(mol->getBondWithIdx(2)->getProp<std::string>(
+    CHECK(mol2.getBondWithIdx(2)->getProp<std::string>(
               common_properties::_MolFileBondEndPts) == "(3 1 2 3)");
   }
 }

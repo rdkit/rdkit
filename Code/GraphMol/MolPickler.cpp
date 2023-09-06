@@ -176,14 +176,6 @@ class PropTracker {
   };
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
-  // the properties themselves are stored as std::string
-  const std::vector<std::pair<std::string, std::uint16_t>> extraBondProps = {
-      {RDKit::common_properties::_MolFileBondEndPts, 0x1},
-      {RDKit::common_properties::_MolFileBondAttach, 0x2},
-
-  };
-  // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
-  // to update the pickle format.
   // the properties themselves are stored as std::int16_t
   const std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {
       {common_properties::molStereoCare, 0x1},
@@ -199,9 +191,6 @@ class PropTracker {
   std::unordered_set<std::string> ignoreBondProps;
   PropTracker() {
     for (const auto &pr : explicitBondProps) {
-      ignoreBondProps.insert(pr.first);
-    }
-    for (const auto &pr : extraBondProps) {
       ignoreBondProps.insert(pr.first);
     }
   };
@@ -259,9 +248,6 @@ bool pickleBondProperties(std::ostream &ss, const RDProps &props,
       MolPickler::getCustomPropHandlers(), bprops.ignoreBondProps);
   res |= pickleExplicitProperties<std::int8_t>(ss, props,
                                                bprops.explicitBondProps);
-  res |=
-      pickleExplicitProperties<std::string>(ss, props, bprops.extraBondProps);
-
   return res;
 }
 
@@ -276,8 +262,6 @@ void unpickleBondProperties(std::istream &ss, RDProps &props, int version) {
   }
   unpickleExplicitProperties<std::int8_t, int>(ss, props, version,
                                                bprops.explicitBondProps);
-  unpickleExplicitProperties<std::string, std::string>(ss, props, version,
-                                                       bprops.extraBondProps);
 }
 
 }  // namespace
@@ -1917,6 +1901,10 @@ void MolPickler::_pickleBond(std::ostream &ss, const Bond *bond,
   if (bond->getStereo() != Bond::STEREONONE) {
     flags |= 0x1 << 1;
   }
+  std::string endpts;
+  if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts)) {
+    flags |= 0x1;
+  }
   streamWrite(ss, flags);
 
   if (bond->getBondType() != Bond::SINGLE) {
@@ -1944,6 +1932,12 @@ void MolPickler::_pickleBond(std::ostream &ss, const Bond *bond,
     streamWrite(ss, BEGINQUERY);
     pickleQuery(ss, static_cast<const QueryBond *>(bond)->getQuery());
     streamWrite(ss, ENDQUERY);
+  }
+  if (!endpts.empty()) {
+    streamWrite(ss, endpts);
+    std::string attach = "ALL";
+    bond->getPropIfPresent(common_properties::_MolFileBondAttach, attach);
+    streamWrite(ss, attach);
   }
 }
 
@@ -2022,6 +2016,13 @@ Bond *MolPickler::_addBondFromPickle(std::istream &ss, ROMol *mol, int version,
         bond->setStereo(stereo);
       } else {
         bond->setStereo(Bond::STEREONONE);
+      }
+      if (flags & 0x1) {
+        std::string tmpStr;
+        streamRead(ss, tmpStr, version);
+        bond->setProp(common_properties::_MolFileBondEndPts, tmpStr);
+        streamRead(ss, tmpStr, version);
+        bond->setProp(common_properties::_MolFileBondAttach, tmpStr);
       }
     }
   }
