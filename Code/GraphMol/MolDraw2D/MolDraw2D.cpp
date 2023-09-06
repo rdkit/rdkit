@@ -835,7 +835,9 @@ void MolDraw2D::getReactionDrawMols(
                          atomColours);
   // reactants & products.  At the end of these 2 calls, minScale and
   // minFontScale will be the smallest scales used in any of the drawings.
-  double useHeight = panelHeight() * (1.0 - 2.0 * drawOptions().padding);
+  int useHeight = panelHeight() > 0
+                      ? panelHeight() * (1.0 - 2.0 * drawOptions().padding)
+                      : panelHeight();
   makeReactionComponents(rxn.getReactants(), confIds, useHeight, atomColours,
                          reagents, minScale, minFontScale);
   makeReactionComponents(rxn.getProducts(), confIds, useHeight, atomColours,
