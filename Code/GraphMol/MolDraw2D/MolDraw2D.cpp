@@ -835,9 +835,10 @@ void MolDraw2D::getReactionDrawMols(
                          atomColours);
   // reactants & products.  At the end of these 2 calls, minScale and
   // minFontScale will be the smallest scales used in any of the drawings.
-  makeReactionComponents(rxn.getReactants(), confIds, panelHeight(),
-                         atomColours, reagents, minScale, minFontScale);
-  makeReactionComponents(rxn.getProducts(), confIds, panelHeight(), atomColours,
+  double useHeight = panelHeight() * (1.0 - 2.0 * drawOptions().padding);
+  makeReactionComponents(rxn.getReactants(), confIds, useHeight, atomColours,
+                         reagents, minScale, minFontScale);
+  makeReactionComponents(rxn.getProducts(), confIds, useHeight, atomColours,
                          products, minScale, minFontScale);
   // Now scale everything to minScale, minFontScale, so all the elements
   // are drawn to the same scale.
@@ -853,7 +854,7 @@ void MolDraw2D::getReactionDrawMols(
   plusWidth = minScale;
 
   // agents
-  int agentHeight = int(agentFrac * panelHeight());
+  int agentHeight = int(agentFrac * useHeight);
   minScale = std::numeric_limits<double>::max();
   makeReactionComponents(rxn.getAgents(), confIds, agentHeight, atomColours,
                          agents, minScale, minFontScale);
