@@ -606,30 +606,32 @@ class MarvinCMLReader {
         }
       }
 
+      // now that atom stereochem has been perceived, the wedging
+      // information is no longer needed, so we clear
+      // single bond dir flags:
+      ClearSingleBondDirFlags(*mol);
+
       if (sanitize) {
         if (removeHs) {
+          // Bond stereo detection must happen before H removal, or
+          // else we might be removing stereogenic H atoms in double
+          // bonds (e.g. imines). But before we run stereo detection,
+          // we need to run mol cleanup so don't have trouble with
+          // e.g. nitro groups. Sadly, this a;; means we will find
+          // run both cleanup and ring finding twice (a fast find
+          // rings in bond stereo detection, and another in
+          // sanitization's SSSR symmetrization).
+          unsigned int failedOp = 0;
+          MolOps::sanitizeMol(*mol, failedOp, MolOps::SANITIZE_CLEANUP);
+          MolOps::detectBondStereochemistry(*mol);
           MolOps::removeHs(*mol, false, false);
         } else {
           MolOps::sanitizeMol(*mol);
+          MolOps::detectBondStereochemistry(*mol);
         }
-
-        // now that atom stereochem has been perceived, the wedging
-        // information is no longer needed, so we clear
-        // single bond dir flags:
-        ClearSingleBondDirFlags(*mol);
-
-        // unlike DetectAtomStereoChemistry we call detectBondStereochemistry
-        // here after sanitization because we need the ring information:
-        MolOps::detectBondStereochemistry(*mol);
 
         MolOps::assignStereochemistry(*mol, true, true, true);
       } else {
-        // we still need to do something about double bond stereochemistry
-        // (was github issue 337)
-        // now that atom stereochem has been perceived, the wedging
-        // information is no longer needed, so we clear
-        // single bond dir flags:
-        ClearSingleBondDirFlags(*mol);
         MolOps::detectBondStereochemistry(*mol);
       }
 
