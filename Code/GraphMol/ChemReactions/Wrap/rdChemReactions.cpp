@@ -857,6 +857,20 @@ of the replacements argument.",
       "construct a ChemicalReaction from a string in Marvin (mrv) format",
       python::return_value_policy<python::manage_new_object>());
 
+  python::def(
+      "ReactionFromMrvBlock", RDKit::ReactionFromMrvBlock,
+      (python::arg("rxnblock"), python::arg("sanitize") = false,
+       python::arg("removeHs") = false),
+      "construct a ChemicalReaction from a string in Marvin (mrv) format",
+      python::return_value_policy<python::manage_new_object>());
+
+  python::def("MrvFileIsReaction", RDKit::MrvFileIsReaction,
+              (python::arg("filename")),
+              "returns whether or not an MRV file contains reaction data");
+  python::def("MrvBlockIsReaction", RDKit::MrvBlockIsReaction,
+              (python::arg("mrvData")),
+              "returns whether or not an MRV block contains reaction data");
+
   python::def("ReactionToRxnBlock", RDKit::ChemicalReactionToRxnBlock,
               (python::arg("reaction"), python::arg("separateAgents") = false,
                python::arg("forceV3000") = false),

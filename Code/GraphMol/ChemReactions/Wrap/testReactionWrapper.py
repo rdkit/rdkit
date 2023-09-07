@@ -1116,6 +1116,20 @@ M  END
     rxn.GetSubstructParams().useChirality = True
     self.assertEqual(len(rxn.RunReactants((mol, ))), 0)
 
+  def testMrvBlockContainsReaction(self):
+    fn1 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','MarvinParse','test_data','aspirin.mrv')
+    with open(fn1,'r') as inf:
+      ind1 = inf.read()
+    fn2 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','MarvinParse','test_data','aspirineSynthesisWithAttributes.mrv')   
+    with open(fn2,'r') as inf:
+      ind2 = inf.read()
+
+    self.assertFalse(rdChemReactions.MrvFileIsReaction(fn1))
+    self.assertTrue(rdChemReactions.MrvFileIsReaction(fn2))
+
+
+    self.assertFalse(rdChemReactions.MrvBlockIsReaction(ind1))
+    self.assertTrue(rdChemReactions.MrvBlockIsReaction(ind2))
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)
