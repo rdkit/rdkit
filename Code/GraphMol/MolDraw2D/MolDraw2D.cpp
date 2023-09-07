@@ -982,11 +982,12 @@ int reactionWidth(
   } else {
     // the agent doesn't start at front of arrow
     for (auto &dm : agents) {
-      totWidth += dm->width_ + gapWidth;
+      totWidth += dm->width_ + gapWidth / 2;
     }
     totWidth += gapWidth * (agents.size() - 1) / 2;
   }
-  totWidth += gapWidth;  // either side of arrow
+  // add half a gap either side of the arrow
+  totWidth += gapWidth;
   if (!products.empty()) {
     for (auto &dm : products) {
       totWidth += dm->width_;
@@ -1081,19 +1082,21 @@ void MolDraw2D::calcReactionOffsets(
   totWidth = reactionWidth(reagents, products, agents, drawOptions(), arrowMult,
                            plusWidth);
   // And finally work out where to put all the pieces, centring them.
-  // The padding is already taken care of.
-  int xOffset = (width() - totWidth) / 2;
+  // The padding is already taken care of, so take it out.
+  int xOffset =
+      std::round((width() - totWidth / (1 + 2.0 * drawOptions().padding)) / 2);
   for (size_t i = 0; i < reagents.size(); ++i) {
     double hOffset = y_offset_ + (panelHeight() - reagents[i]->height_) / 2.0;
     offsets.emplace_back(xOffset, hOffset);
-    xOffset += reagents[i]->width_ + plusWidth;
+    xOffset += reagents[i]->width_;
+    if (i < reagents.size() - 1) {
+      xOffset += plusWidth;
+    }
   }
-  if (reagents.empty()) {
-    xOffset += plusWidth / 2;
-  } else {
-    // only half a plusWidth to the arrow
-    xOffset -= plusWidth / 2;
-  }
+
+  // only half a plusWidth to the arrow
+  xOffset += plusWidth / 2;
+
   arrowBeg.y = y_offset_ + panelHeight() / 2.0;
   arrowBeg.x = xOffset;
   if (agents.empty()) {
@@ -1109,6 +1112,7 @@ void MolDraw2D::calcReactionOffsets(
     arrowEnd = Point2D(xOffset, arrowBeg.y);
   }
   xOffset = arrowEnd.x + plusWidth / 2;
+
   for (size_t i = 0; i < products.size(); ++i) {
     double hOffset = y_offset_ + (panelHeight() - products[i]->height_) / 2.0;
     offsets.emplace_back(xOffset, hOffset);
