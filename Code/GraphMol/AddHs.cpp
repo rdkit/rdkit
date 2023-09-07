@@ -1150,7 +1150,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly, bool mergeIsotopes) {
 
   boost::dynamic_bitset<> hatoms(mol.getNumAtoms());
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    hatoms[i] = isQueryH(mol.getAtomWithIdx(i)) != HydrogenType::NotAHydrogen;
+    hatoms[i] = isQueryH(mol.getAtomWithIdx(i)) == HydrogenType::QueryHydrogen;
   }
   unsigned int currIdx = 0, stopIdx = mol.getNumAtoms();
   while (currIdx < stopIdx) {
