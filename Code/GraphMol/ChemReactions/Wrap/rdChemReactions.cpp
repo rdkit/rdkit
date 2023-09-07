@@ -878,8 +878,11 @@ of the replacements argument.",
 
   python::def(
       "ReactionToMrvBlock", RDKit::ChemicalReactionToMrvBlock,
-      (python::arg("reaction")),
+      (python::arg("reaction"), python::arg("prettyPrint") = false),
       "construct a string in Marvin (MRV) rxn format for a ChemicalReaction");
+  python::def("ReactionToMrvFile", RDKit::ChemicalReactionToMrvFile,
+              (python::arg("reaction"), python::arg("prettyPrint") = false),
+              "write a Marvin (MRV) rxn file for a ChemicalReaction");
 
   python::def(
       "ReactionToV3KRxnBlock", RDKit::ChemicalReactionToV3KRxnBlock,

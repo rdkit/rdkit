@@ -35,6 +35,7 @@ import os
 import pickle
 import sys
 import unittest
+import tempfile 
 
 from rdkit import Chem, Geometry, RDConfig, rdBase
 from rdkit.Chem import AllChem, rdChemReactions
@@ -1130,6 +1131,21 @@ M  END
 
     self.assertFalse(rdChemReactions.MrvBlockIsReaction(ind1))
     self.assertTrue(rdChemReactions.MrvBlockIsReaction(ind2))
+
+  def testMrvOutput(self):
+    fn2 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','MarvinParse','test_data','aspirineSynthesisWithAttributes.mrv')   
+    rxn = rdChemReactions.ReactionFromMrvFile(fn2)
+    self.assertIsNotNone(rxn)
+    rxnb = rdChemReactions.ReactionToMrvBlock(rxn)
+    self.assertTrue('<reaction>' in rxnb)
+
+    fName = tempfile.NamedTemporaryFile(suffix='.mrv').name
+    self.assertFalse(os.path.exists(fName))
+    rdChemReactions.ReactionToMrvFile(rxn,fName)
+    self.assertTrue(os.path.exists(fName))
+    os.unlink(fName)
+
+
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)
