@@ -1323,6 +1323,15 @@ struct molops_wrapper {
                 "merges hydrogens into their neighboring atoms as queries",
                 python::return_value_policy<python::manage_new_object>());
 
+    docString =
+      "Check to see if the molecule has query Hs, this is normally used on query molecules\n\
+such as those returned from MolFromSmarts.  To check to see if the molecule has hydrogens\n\
+that cannot be merged with MergeQueryHs, use HasQueryHs(mol, unmergableOnly=True)";								     
+    python::def("HasQueryHs", MolOps::hasQueryHs,
+                (python::arg("mol"), python::arg("unmergableOnly") = false),
+		docString.c_str());
+
+
     // ------------------------------------------------------------------------
     docString =
         "Removes atoms matching a substructure query from a molecule\n\

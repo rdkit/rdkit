@@ -7308,6 +7308,20 @@ CAS<~>
     self.assertEqual(sgs[1].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
     self.assertEqual(len(sgs[1].GetAtoms()), 1)
 
+  def testHasQueryHs(self):
+    for sma, hasH, hasUnmergeH in [
+        ("[#1]", True, False),
+        ("[#1,N]", True, True),
+        ("[$(C-[H])]", True, False),
+        ("[$([C,#1])]", True, True),
+        ("[$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naaaa1),$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naa[n,s,o]1)]",
+         True, False)]:
+      import sys
+      print(sma, hasH, hasUnmergeH, file=sys.stderr)
+      pat = Chem.MolFromSmarts(sma)
+      self.assertEqual(Chem.HasQueryHs(pat), hasH)
+      self.assertEqual(Chem.HasQueryHs(pat, True), hasUnmergeH)
+    
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
