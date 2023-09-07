@@ -1271,7 +1271,10 @@ bool needsHs(const ROMol &mol) {
 bool hasQueryHs(const ROMol &mol, bool unmergableOnly) {
   int unmergableHs = 0;
   int mergableHs = 0;
-    for (const auto &atom : mol.atoms()) {
+  // We don't care about announcing ORs or other items during isQueryH
+  RDLog::LogStateSetter blocker;
+
+  for (const auto &atom : mol.atoms()) {
         switch (isQueryH(atom)) {
             case HydrogenType::QueryHydrogen:
                 mergableHs += 1;
