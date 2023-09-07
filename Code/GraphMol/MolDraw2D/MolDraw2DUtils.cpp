@@ -481,7 +481,9 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
 
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
-  PRECONDITION(meanBondLen > 0.0, "mean bond length <= 0 for ACS1996 mode")
+  if (meanBondLen <= 0.0) {
+    throw ValueErrorException("ACS1996Options requires mean bond length > 0.0.");
+  }
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
   // the guideline is for a bond length of 14.4px, and we set things up

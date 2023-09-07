@@ -8654,8 +8654,8 @@ M  END)RXN";
     std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
     MolDraw2DSVG drawer(-1, -1);
     auto reactIter = rxn->beginReactantTemplates();
-    REQUIRE_THROWS(MolDraw2DUtils::setACS1996Options(
+    REQUIRE_THROWS_AS(MolDraw2DUtils::setACS1996Options(
         drawer.drawOptions(),
-        MolDraw2DUtils::meanBondLength(*(*reactIter)) * 0.7));
+        MolDraw2DUtils::meanBondLength(*(*reactIter)) * 0.7), ValueErrorException);
   }
 }
