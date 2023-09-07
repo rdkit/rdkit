@@ -1841,7 +1841,11 @@ void assignLegacyCIPLabels(ROMol &mol, bool flagPossibleStereoCenters) {
 void assignBondCisTrans(ROMol &mol, const StereoInfo &sinfo) {
   if (sinfo.type != StereoType::Bond_Double ||
       sinfo.specified != StereoSpecified::Unspecified ||
-      sinfo.controllingAtoms.size() != 4) {
+      sinfo.controllingAtoms.size() != 4 ||
+      ((sinfo.controllingAtoms[0] == StereoInfo::NOATOM &&
+        sinfo.controllingAtoms[1] == StereoInfo::NOATOM) ||
+       (sinfo.controllingAtoms[2] == StereoInfo::NOATOM &&
+        sinfo.controllingAtoms[3] == StereoInfo::NOATOM))) {
     return;
   }
 
