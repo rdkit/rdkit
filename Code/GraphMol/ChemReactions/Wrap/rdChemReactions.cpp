@@ -801,7 +801,8 @@ Sample Usage:
 
       .def("GetPropsAsDict", RDKit::GetPropsAsDict<RDKit::ChemicalReaction>,
            (python::arg("self"), python::arg("includePrivate") = false,
-            python::arg("includeComputed") = false),
+            python::arg("includeComputed") = false,
+            python::arg("autoConvertStrings") = true),
            "Returns a dictionary populated with the reaction's properties.\n"
            " n.b. Some properties are not able to be converted to python "
            "types.\n\n"

@@ -53,12 +53,14 @@ RDKIT_MARVINPARSER_EXPORT ChemicalReaction *MrvFileToChemicalReaction(
 
 RDKIT_MARVINPARSER_EXPORT void MolToMrvFile(const ROMol &mol,
                                             const std::string &fName,
-                                            bool includeStereo, int confId,
-                                            bool kekulize,
+                                            bool includeStereo = true,
+                                            int confId = -1,
+                                            bool kekulize = true,
                                             bool prettyPrint = false);
 RDKIT_MARVINPARSER_EXPORT std::string MolToMrvBlock(const ROMol &mol,
-                                                    bool includeStereo,
-                                                    int confId, bool kekulize,
+                                                    bool includeStereo = true,
+                                                    int confId = -1,
+                                                    bool kekulize = true,
                                                     bool prettyPrint = false);
 
 RDKIT_MARVINPARSER_EXPORT std::string ChemicalReactionToMrvBlock(
