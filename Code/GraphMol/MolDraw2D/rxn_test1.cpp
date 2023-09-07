@@ -48,14 +48,14 @@ namespace {
 static const bool DELETE_WITH_GOOD_HASH = true;
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"rxn_test1_1.svg", 3835295410U},   {"rxn_test1_2.svg", 3888212210U},
-    {"rxn_test1_3.svg", 560115723U},    {"rxn_test1_4.svg", 3986659638U},
-    {"rxn_test1_5.svg", 575063376U},    {"rxn_test1_6.svg", 4008399461U},
-    {"rxn_test1_7.svg", 2007520464U},   {"rxn_test2_1.svg", 761473402U},
-    {"rxn_test2_2_1.svg", 2373848662U}, {"rxn_test2_2_2.svg", 3936037048U},
-    {"rxn_test2_2_3.svg", 471097306U},  {"rxn_test2_2_4.svg", 2578444670U},
-    {"rxn_test3_1.svg", 2840804593U},   {"rxn_test4_1.svg", 3201430252U},
-    {"rxn_test4_2.svg", 4042224599U},
+    {"rxn_test1_1.svg", 1645502357U},   {"rxn_test1_2.svg", 3722210966U},
+    {"rxn_test1_3.svg", 45070391U},     {"rxn_test1_4.svg", 909677802U},
+    {"rxn_test1_5.svg", 3618798721U},   {"rxn_test1_6.svg", 43950973U},
+    {"rxn_test1_7.svg", 3838865932U},   {"rxn_test2_1.svg", 1550554114U},
+    {"rxn_test2_2_1.svg", 1797773039U}, {"rxn_test2_2_2.svg", 3578773992U},
+    {"rxn_test2_2_3.svg", 3111274240U}, {"rxn_test2_2_4.svg", 2622095256U},
+    {"rxn_test3_1.svg", 3344176741U},   {"rxn_test4_1.svg", 1710645612U},
+    {"rxn_test4_2.svg", 3908433704U},
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
@@ -81,14 +81,14 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
 static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
-    {"rxn_test1_1.png", 395248463U},    {"rxn_test1_2.png", 3623502687U},
-    {"rxn_test1_3.png", 1790395846U},   {"rxn_test1_4.png", 2279391933U},
-    {"rxn_test1_5.png", 1306568644U},   {"rxn_test1_6.png", 1308382000U},
-    {"rxn_test1_7.png", 510025097U},    {"rxn_test2_1.png", 1776067944U},
-    {"rxn_test2_2_1.png", 2539130171U}, {"rxn_test2_2_2.png", 4010824636U},
-    {"rxn_test2_2_3.png", 2593140125U}, {"rxn_test2_2_4.png", 1104710992U},
-    {"rxn_test3_1.png", 4131540334U},   {"rxn_test4_1.png", 3038447060U},
-    {"rxn_test4_2.png", 1502846204U},
+    {"rxn_test1_1.png", 1544714904U},   {"rxn_test1_2.png", 2597015317U},
+    {"rxn_test1_3.png", 3429104598U},   {"rxn_test1_4.png", 278632544U},
+    {"rxn_test1_5.png", 554465501U},    {"rxn_test1_6.png", 1081044566U},
+    {"rxn_test1_7.png", 743340471U},    {"rxn_test2_1.png", 1362682411U},
+    {"rxn_test2_2_1.png", 608987072U},  {"rxn_test2_2_2.png", 3954458598U},
+    {"rxn_test2_2_3.png", 4072189445U}, {"rxn_test2_2_4.png", 2064248054U},
+    {"rxn_test3_1.png", 2564385839U},   {"rxn_test4_1.png", 2621897426U},
+    {"rxn_test4_2.png", 2719174958U},
 };
 
 std::hash_result_t hash_file(const std::string &filename) {
@@ -138,9 +138,6 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
 #ifdef RDK_BUILD_CAIRO_SUPPORT
   {
     MolDraw2DCairo drawer(width, height);
-    // a light grey background to make it easier to see where the canvas
-    // is in a white browser.
-    drawer.drawOptions().backgroundColour = DrawColour(0.95, 0.95, 0.95);
     drawer.drawReaction(*rxn, highlight_map, highlight_colors);
     drawer.finishDrawing();
     drawer.writeDrawingText(nameBase + ".png");
@@ -150,7 +147,6 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
   {
     std::ofstream outs((nameBase + ".svg").c_str());
     MolDraw2DSVG drawer(width, height, outs);
-    drawer.drawOptions().backgroundColour = DrawColour(0.95, 0.95, 0.95);
     drawer.drawReaction(*rxn, highlight_map, highlight_colors);
     drawer.finishDrawing();
     outs.close();

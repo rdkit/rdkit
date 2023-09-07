@@ -981,6 +981,7 @@ int reactionWidth(
     totWidth += arrowMult * gapWidth;
   } else {
     // the agent doesn't start at front of arrow
+    totWidth += gapWidth / 2;
     for (auto &dm : agents) {
       totWidth += dm->width_ + gapWidth / 2;
     }

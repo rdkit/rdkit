@@ -313,10 +313,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"lasso_highlights_5.svg", 1103195299U},
     {"lasso_highlights_6.svg", 3501858565U},
     {"lasso_highlights_7.svg", 4002684466U},
-    {"testGithub6685_1.svg", 3986858199U},
-    {"testGithub6685_2.svg", 1868933201U},
-    {"testGithub6685_3.svg", 1904544571U},
-    {"testGithub6685_4.svg", 3541940378U}};
+    {"testGithub6685_1.svg", 3359258133U},
+    {"testGithub6685_2.svg", 116380465U},
+    {"testGithub6685_3.svg", 409385402U},
+    {"testGithub6685_4.svg", 1239628830U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -8688,9 +8688,6 @@ M  END)RXN";
 
     std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
     MolDraw2DSVG drawer(-1, -1);
-    // a light grey background to make it easier to see where the canvas
-    // is in a white browser.
-    drawer.drawOptions().backgroundColour = DrawColour(0.95, 0.95, 0.95);
     drawer.drawReaction(*rxn);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
@@ -8764,7 +8761,6 @@ M  END)RXN";
 
     std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
     MolDraw2DSVG drawer(-1, -1);
-    drawer.drawOptions().backgroundColour = DrawColour(0.95, 0.95, 0.95);
     drawer.drawReaction(*rxn);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
@@ -8859,7 +8855,6 @@ M  END
 
     std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
     MolDraw2DSVG drawer(-1, -1);
-    drawer.drawOptions().backgroundColour = DrawColour(0.95, 0.95, 0.95);
     drawer.drawReaction(*rxn);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
@@ -8878,7 +8873,6 @@ M  END
         RxnSmartsToChemicalReaction(smarts, nullptr, useSmiles));
     MolDraw2DSVG drawer(600, 150);
     drawer.drawOptions().padding = 0.0;
-    drawer.drawOptions().backgroundColour = DrawColour(0.95, 0.95, 0.95);
     drawer.drawReaction(*rxn);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
