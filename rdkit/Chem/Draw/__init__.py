@@ -23,6 +23,7 @@ from rdkit.Chem.Draw.MolDrawing import DrawingOptions
 from rdkit.Chem.Draw.MolDrawing import MolDrawing
 from rdkit.Chem.Draw.rdMolDraw2D import *
 
+
 def _getCanvas():
   useAGG = False
   useCairo = False
@@ -571,21 +572,25 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
 
   return res
 
+
 def _padList(inputList, lengthShouldBe, padWith=""):
   length = len(inputList)
   paddingCount = lengthShouldBe - length
   paddedList = inputList + [padWith] * paddingCount
   return paddedList
 
+
 def _padMatrix(inputMatrix, rowLength, padWith=""):
   paddedMatrix = [_padList(row, rowLength, padWith) for row in inputMatrix]
   return paddedMatrix
 
+
 def _flattenTwoDList(twoDList):
   return [item for sublist in twoDList for item in sublist]
 
-def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatrix = None,
-                        highlightBondListsMatrix = None):
+
+def _MolsNestedToLinear(molsMatrix, legendsMatrix=None, highlightAtomListsMatrix=None,
+                        highlightBondListsMatrix=None):
   """Converts a nested data structure (where each data substructure represents a row in mol grid image)
   to a linear one, padding rows as needed so all rows are the length of the longest row
   """
@@ -597,44 +602,44 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
   if legendsMatrix is not None:
     nLegendsRows = len(legendsMatrix)
     if nLegendsRows != nMolsRows:
-        err = f"If legendsMatrix is provided it must be the same length (have the same number "
-        err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nLegendsRows}."
-        raise ValueError(err)
+      err = f"If legendsMatrix is provided it must be the same length (have the same number "
+      err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nLegendsRows}."
+      raise ValueError(err)
     for rowIndex, row in enumerate(legendsMatrix):
-        if len(row) != len(molsMatrix[rowIndex]):
-            err = f"If legendsMatrix is provided each of its sub-iterables must be the same length "
-            err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
-            err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
-            err += f"while its length in legendsMatrix is {len(row)}."
-            raise ValueError(err)
+      if len(row) != len(molsMatrix[rowIndex]):
+        err = f"If legendsMatrix is provided each of its sub-iterables must be the same length "
+        err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
+        err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
+        err += f"while its length in legendsMatrix is {len(row)}."
+        raise ValueError(err)
 
   if highlightAtomListsMatrix is not None:
     nHighlightAtomListsRows = len(highlightAtomListsMatrix)
     if nHighlightAtomListsRows != nMolsRows:
-        err = f"If highlightAtomListsMatrix is provided it must be the same length (have the same number "
-        err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nHighlightAtomListsRows}."
-        raise ValueError(err)
+      err = f"If highlightAtomListsMatrix is provided it must be the same length (have the same number "
+      err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nHighlightAtomListsRows}."
+      raise ValueError(err)
     for rowIndex, row in enumerate(highlightAtomListsMatrix):
-        if len(row) != len(molsMatrix[rowIndex]):
-            err = f"If highlightAtomListsMatrix is provided each of its sub-iterables must be the same length "
-            err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
-            err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
-            err += f"while its length in highlightAtomListsMatrix is {len(row)}."
-            raise ValueError(err)
+      if len(row) != len(molsMatrix[rowIndex]):
+        err = f"If highlightAtomListsMatrix is provided each of its sub-iterables must be the same length "
+        err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
+        err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
+        err += f"while its length in highlightAtomListsMatrix is {len(row)}."
+        raise ValueError(err)
 
   if highlightBondListsMatrix is not None:
     nHighlightBondListsRows = len(highlightBondListsMatrix)
     if nHighlightBondListsRows != nMolsRows:
-        err = f"If highlightBondListsMatrix is provided it must be the same length (have the same number "
-        err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nHighlightBondListsRows}."
-        raise ValueError(err)
+      err = f"If highlightBondListsMatrix is provided it must be the same length (have the same number "
+      err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nHighlightBondListsRows}."
+      raise ValueError(err)
     for rowIndex, row in enumerate(highlightBondListsMatrix):
-        if len(row) != len(molsMatrix[rowIndex]):
-            err = f"If highlightBondListsMatrix is provided each of its sub-iterables must be the same length "
-            err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
-            err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
-            err += f"while its length in highlightBondListsMatrix is {len(row)}."
-            raise ValueError(err)
+      if len(row) != len(molsMatrix[rowIndex]):
+        err = f"If highlightBondListsMatrix is provided each of its sub-iterables must be the same length "
+        err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
+        err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
+        err += f"while its length in highlightBondListsMatrix is {len(row)}."
+        raise ValueError(err)
 
   molsPerRow = max(len(row) for row in molsMatrix)
 
@@ -645,27 +650,29 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix = None, highlightAtomListsMatr
   mols = _flattenTwoDList(molsMatrixPadded)
 
   if legendsMatrix is not None:
-      legendsMatrixPadded = _padMatrix(legendsMatrix, molsPerRow, "")
-      legends = _flattenTwoDList(legendsMatrixPadded)
+    legendsMatrixPadded = _padMatrix(legendsMatrix, molsPerRow, "")
+    legends = _flattenTwoDList(legendsMatrixPadded)
   else:
     legends = None
 
   if highlightAtomListsMatrix is not None:
-      highlightAtomListsPadded = _padMatrix(highlightAtomListsMatrix, molsPerRow, [])
-      highlightAtomLists = _flattenTwoDList(highlightAtomListsPadded)
+    highlightAtomListsPadded = _padMatrix(highlightAtomListsMatrix, molsPerRow, [])
+    highlightAtomLists = _flattenTwoDList(highlightAtomListsPadded)
   else:
     highlightAtomLists = None
 
   if highlightBondListsMatrix is not None:
-      highlightBondListsPadded = _padMatrix(highlightBondListsMatrix, molsPerRow, [])
-      highlightBondLists = _flattenTwoDList(highlightBondListsPadded)
+    highlightBondListsPadded = _padMatrix(highlightBondListsMatrix, molsPerRow, [])
+    highlightBondLists = _flattenTwoDList(highlightBondListsPadded)
   else:
     highlightBondLists = None
 
   return mols, molsPerRow, legends, highlightAtomLists, highlightBondLists
 
-def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix = None, 
-                          highlightAtomListsMatrix = None, highlightBondListsMatrix = None, useSVG=False, returnPNG=False, **kwargs):
+
+def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
+                          highlightAtomListsMatrix=None, highlightBondListsMatrix=None,
+                          useSVG=False, returnPNG=False, **kwargs):
   """Creates a mol grid image from a nested data structure (where each data substructure represents a row),
   padding rows as needed so all rows are the length of the longest row
           ARGUMENTS:
@@ -755,10 +762,13 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix = Non
         print(img_binary[:20])
         # Prints a binary string: b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x03\x84'
   """
-  mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsNestedToLinear(molsMatrix,
-  legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix)
-  
-  return MolsToGridImage(mols, molsPerRow, subImgSize, legends, highlightAtomLists, highlightBondLists, **kwargs)
+  mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsNestedToLinear(
+    molsMatrix, legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix)
+
+  return MolsToGridImage(mols, molsPerRow=molsPerRow, subImgSize=subImgSize, legends=legends,
+                         highlightAtomLists=highlightAtomLists,
+                         highlightBondLists=highlightBondLists, **kwargs)
+
 
 def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, highlightAtomLists=None,
                    highlightBondLists=None, drawOptions=None, **kwargs):
