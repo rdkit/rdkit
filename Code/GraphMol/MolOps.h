@@ -309,6 +309,19 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
                                         bool mergeUnmappedOnly = false,
                                         bool mergeIsotopes = false);
 
+//! returns a copy of a molecule with hydrogens removed and added as queries
+//!  to the heavy atoms to which they are bound.
+/*!
+  This is really intended to be used with molecules that contain QueryAtoms
+  such as when checking smarts patterns for explicit hydrogens
+
+  \param mol the molecule to remove Hs from
+  \param unmergableOnly set to true if you only want to find unmergable hs
+          these are generally hydrogens in OR clauses or isotopic hydrogens
+  \return true if the molecule has query hydrogens
+*/
+bool hasQueryHs(const ROMol &mol, bool unnmergableOnly = false);
+
 typedef enum {
   ADJUST_IGNORENONE = 0x0,
   ADJUST_IGNORECHAINS = 0x1,

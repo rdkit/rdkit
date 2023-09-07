@@ -8422,6 +8422,36 @@ void testGithub5099() {
   TEST_ASSERT(m->getNumAtoms() == 5);
 }
 
+void testHasQueryHs() {
+    BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing hasQueryHs "
+      << std::endl;
+
+  auto m = "[#1]"_smarts;
+    TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m));
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m, true) == false);
+
+  auto m2 = "[#1,N]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m2));
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m2, true) == true);
+
+  //remove the negation
+  auto recursive = "[$(C-[H])]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*recursive) == true);
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*recursive, true) == false);
+
+  auto recursive_or = "[$([C,#1])]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*recursive_or) == true);
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*recursive_or, true) == true);
+    
+  // from rd_filters for something bigger
+  auto keto_def_heterocycle = "[$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naaaa1),$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naa[n,s,o]1)]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*keto_def_heterocycle) == true);
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*keto_def_heterocycle, true) == false);
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+
+}
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -8538,6 +8568,6 @@ int main() {
   testSetTerminalAtomCoords();
   testGet3DDistanceMatrix();
   testGithub5099();
-
+  testHasQueryHs();
   return 0;
 }

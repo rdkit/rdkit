@@ -1063,7 +1063,12 @@ ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
 }
 
 namespace {
-bool isQueryH(const Atom *atom) {
+enum class HydrogenType { NotAHydrogen,
+  UnMergableQueryHydrogen,
+  QueryHydrogen };
+
+  
+HydrogenType isQueryH(const Atom *atom) {
   PRECONDITION(atom, "bogus atom");
   if (atom->getAtomicNum() == 1) {
     // the simple case: the atom is flagged as being an H and
@@ -1071,18 +1076,18 @@ bool isQueryH(const Atom *atom) {
     if (!atom->hasQuery() ||
         (!atom->getQuery()->getNegation() &&
          atom->getQuery()->getDescription() == "AtomAtomicNum")) {
-      return true;
+      return HydrogenType::QueryHydrogen;
     }
   }
 
   if (!(atom->getDegree() <= 1)) {
     // bonded and unbonded H atoms will continue rest will be returned
-    return false;
+    return HydrogenType::NotAHydrogen;
   }
 
   if (atom->hasQuery() && atom->getQuery()->getNegation()) {
     // we will not merge negated queries
-    return false;
+    return HydrogenType::NotAHydrogen;
   }
 
   bool hasHQuery = false, hasOr = false;
@@ -1119,10 +1124,10 @@ bool isQueryH(const Atom *atom) {
                                  "in ORs is not supported. This query will not "
                                  "be merged"
                               << std::endl;
-      return false;
+      return HydrogenType::UnMergableQueryHydrogen;
     }
   }
-  return hasHQuery;
+  return hasHQuery ? HydrogenType::QueryHydrogen : HydrogenType::NotAHydrogen;
 }
 }  // namespace
 
@@ -1145,7 +1150,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly, bool mergeIsotopes) {
 
   boost::dynamic_bitset<> hatoms(mol.getNumAtoms());
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    hatoms[i] = isQueryH(mol.getAtomWithIdx(i));
+    hatoms[i] = isQueryH(mol.getAtomWithIdx(i)) != HydrogenType::NotAHydrogen;
   }
   unsigned int currIdx = 0, stopIdx = mol.getNumAtoms();
   while (currIdx < stopIdx) {
@@ -1262,6 +1267,53 @@ bool needsHs(const ROMol &mol) {
   }
   return false;
 }
+
+bool hasQueryHs(const ROMol &mol, bool unmergableOnly) {
+  int unmergableHs = 0;
+  int mergableHs = 0;
+    for (const auto &atom : mol.atoms()) {
+        switch (isQueryH(atom)) {
+            case HydrogenType::QueryHydrogen:
+                mergableHs += 1;
+                break;
+            case HydrogenType::UnMergableQueryHydrogen:
+                unmergableHs += 1;
+                break;
+            case HydrogenType::NotAHydrogen:
+                break;
+        }
+        if (atom->hasQuery()) {
+            if (atom->getQuery()->getDescription() == "RecursiveStructure") {
+                auto *rsq = dynamic_cast<RecursiveStructureQuery *>(atom->getQuery());
+                CHECK_INVARIANT(rsq, "could not convert recursive structure query");
+                if (hasQueryHs(*rsq->getQueryMol(), unmergableOnly))
+                    return true;
+            }
+            
+            // FIX: shouldn't be repeating this code here -- yet again!
+            std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(
+                                                                         atom->getQuery()->beginChildren(), atom->getQuery()->endChildren());
+            while (childStack.size()) {
+                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE qry = childStack.front();
+                childStack.pop_front();
+                if (qry->getDescription() == "RecursiveStructure") {
+                    auto *rsq = dynamic_cast<RecursiveStructureQuery *>(qry.get());
+                    CHECK_INVARIANT(rsq, "could not convert recursive structure query");
+                    if (hasQueryHs(*rsq->getQueryMol(), unmergableOnly))
+                        return true;
+                } else if (qry->beginChildren() != qry->endChildren()) {
+                    childStack.insert(childStack.end(), qry->beginChildren(),
+                                      qry->endChildren());
+                }
+            }
+        }
+    }// end of recursion loop
+ 
+    return unmergableOnly ?
+      unmergableHs > 0:
+      unmergableHs > 0 || mergableHs > 0;
+}
+
 
 }  // namespace MolOps
 }  // namespace RDKit
