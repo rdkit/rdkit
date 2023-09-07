@@ -992,7 +992,7 @@ int reactionWidth(
   if (!products.empty()) {
     totWidth += gapWidth / 2;
   }
-  totWidth += gapWidth;
+
   if (!products.empty()) {
     for (auto &dm : products) {
       totWidth += dm->width_;
@@ -1098,7 +1098,6 @@ void MolDraw2D::calcReactionOffsets(
       xOffset += plusWidth;
     }
   }
-
   // only half a plusWidth to the arrow
   if (!reagents.empty()) {
     xOffset += plusWidth / 2;
