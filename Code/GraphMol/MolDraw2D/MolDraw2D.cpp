@@ -966,9 +966,9 @@ void MolDraw2D::makeReactionDrawMol(
 
 namespace {
 int reactionWidth(
-    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reagents,
-    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &products,
-    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
+    const std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reagents,
+    const std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &products,
+    const std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
     const MolDrawOptions &drawOptions, int arrowMult, int gapWidth) {
   int totWidth = 0;
   if (!reagents.empty()) {
