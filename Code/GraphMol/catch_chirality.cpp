@@ -3654,6 +3654,25 @@ M  END)CTAB";
 
   std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
   REQUIRE(mol);
+
+  // Removal of the stereogenic H will cause loss of stereo information
+  // on the imine double bond, and although the bond is still detected as
+  // potentially stereo, it will be reverted to "unspecified"
+  auto bond = mol->getBondWithIdx(2);
+  REQUIRE(bond->getBondType() == Bond::BondType::DOUBLE);
+  CHECK(Chirality::detail::isBondPotentialStereoBond(bond));
+  CHECK(bond->getStereo() == Bond::BondStereo::STEREONONE);
+
+  if (!use_legacy_stereo) {
+    auto sinfo = Chirality::detail::getStereoInfo(bond);
+    REQUIRE(sinfo.type == Chirality::StereoType::Bond_Double);
+    CHECK(sinfo.specified == Chirality::StereoSpecified::Unspecified);
+    REQUIRE(sinfo.controllingAtoms.size() == 4);
+    CHECK(sinfo.controllingAtoms[0] == 0);
+    CHECK(sinfo.controllingAtoms[1] == 1);
+    CHECK(sinfo.controllingAtoms[2] == Chirality::StereoInfo::NOATOM);
+    CHECK(sinfo.controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
+  }
 }
 
 TEST_CASE("GitHub Issue #6640", "[bug][stereo]") {
@@ -4371,7 +4390,7 @@ M  END)CTAB"_ctab;
     CHECK(m->getAtomWithIdx(15)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CW);
   }
-  SECTION("CHEMBL94022"){
+  SECTION("CHEMBL94022") {
     auto m = R"CTAB(CHEMBL94022
      RDKit          2D
 
@@ -4416,9 +4435,8 @@ M  END)CTAB"_ctab;
           Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-    
   }
-  SECTION("overlapping neighbors"){
+  SECTION("overlapping neighbors") {
     auto m = R"CTAB(derived from CHEMBL3752539
      RDKit          2D
 
@@ -4471,7 +4489,6 @@ $$$$
           Atom::ChiralType::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(0)->getChiralTag() !=
           Atom::ChiralType::CHI_UNSPECIFIED);
-    
   }
   SECTION("bond atoms overlapping central atom at the end of wedge bonds") {
     auto m = R"CTAB(CHEMBL3612237
@@ -4509,8 +4526,8 @@ $$$$
   4 14  1  1
 M  END)CTAB"_ctab;
     REQUIRE(m);
-    // if the bond is wedged, then we should have chirality even if the bonded atom
-    // overlaps the central atom
+    // if the bond is wedged, then we should have chirality even if the bonded
+    // atom overlaps the central atom
     CHECK(m->getAtomWithIdx(1)->getChiralTag() !=
           Atom::ChiralType::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(3)->getChiralTag() !=
