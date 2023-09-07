@@ -977,6 +977,9 @@ int reactionWidth(
     }
     totWidth += gapWidth * (reagents.size() - 1);
   }
+  if (!reagents.empty()) {
+    totWidth += gapWidth / 2;
+  }
   if (agents.empty()) {
     totWidth += arrowMult * gapWidth;
   } else {
@@ -985,9 +988,10 @@ int reactionWidth(
     for (auto &dm : agents) {
       totWidth += dm->width_ + gapWidth / 2;
     }
-    totWidth += gapWidth * (agents.size() - 1) / 2;
   }
-  // add half a gap either side of the arrow
+  if (!products.empty()) {
+    totWidth += gapWidth / 2;
+  }
   totWidth += gapWidth;
   if (!products.empty()) {
     for (auto &dm : products) {
@@ -1096,7 +1100,9 @@ void MolDraw2D::calcReactionOffsets(
   }
 
   // only half a plusWidth to the arrow
-  xOffset += plusWidth / 2;
+  if (!reagents.empty()) {
+    xOffset += plusWidth / 2;
+  }
 
   arrowBeg.y = y_offset_ + panelHeight() / 2.0;
   arrowBeg.x = xOffset;
