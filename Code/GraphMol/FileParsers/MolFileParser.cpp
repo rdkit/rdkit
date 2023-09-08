@@ -1369,7 +1369,6 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
               text.substr(7, text.length() - 7));
 }
 
-namespace {
 void setRGPProps(const std::string_view symb, Atom *res) {
   PRECONDITION(res, "bad atom pointer");
   // set the dummy label so that this is shown correctly
@@ -1384,7 +1383,6 @@ void lookupAtomicNumber(Atom *res, const std::string &symb,
     res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
   } catch (const Invar::Invariant &e) {
     if (strictParsing || symb.empty()) {
-      delete res;
       throw FileParseException(e.what());
     } else {
       res->setAtomicNum(0);
@@ -1392,8 +1390,6 @@ void lookupAtomicNumber(Atom *res, const std::string &symb,
     }
   }
 }
-
-}  // namespace
 
 Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
                            unsigned int line, bool strictParsing) {
@@ -1452,7 +1448,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       throw FileParseException(errout.str());
     }
   }
-  auto *res = new Atom;
+  std::unique_ptr<Atom> res(new Atom);
   bool isComplexQueryName =
       std::find(complexQueries.begin(), complexQueries.end(), symb) !=
       complexQueries.end();
@@ -1467,8 +1463,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       } else if (isComplexQueryName) {
         convertComplexNameToQuery(query, symb);
       }
-      delete res;
-      res = query;
+      res.reset(query);
       // queries have no implicit Hs:
       res->setNoImplicit(true);
     } else {
@@ -1492,7 +1487,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
     if (symb[0] == 'R') {
       // we used to skip R# here because that really should be handled by an
       // RGP spec, but that turned out to not be permissive enough... <sigh>
-      setRGPProps(symb, res);
+      setRGPProps(symb, res.get());
     }
   } else if (symb == "D") {  // mol blocks support "D" and "T" as shorthand...
                              // handle that.
@@ -1507,13 +1502,13 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
     res->setProp(common_properties::dummyLabel, symb);
   } else if (GenericGroups::genericMatchers.find(symb) !=
              GenericGroups::genericMatchers.end()) {
-    res = new QueryAtom(0);
+    res.reset(new QueryAtom(0));
     res->setProp(common_properties::atomLabel, std::string(symb));
   } else {
     if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
       symb[1] = static_cast<char>(tolower(symb[1]));
     }
-    lookupAtomicNumber(res, symb, strictParsing);
+    lookupAtomicNumber(res.get(), symb, strictParsing);
   }
 
   // res->setPos(pX,pY,pZ);
@@ -1524,8 +1519,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
   if (hCount >= 1) {
     if (!res->hasQuery()) {
       auto qatom = new QueryAtom(*res);
-      delete res;
-      res = qatom;
+      res.reset(qatom);
     }
     res->setNoImplicit(true);
     if (hCount > 1) {
@@ -1561,7 +1555,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(39, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp(common_properties::molParity, parity);
@@ -1575,7 +1568,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(45, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp(common_properties::molStereoCare, stereoCare);
@@ -1588,7 +1580,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(48, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     if (totValence != 0) {
@@ -1604,7 +1595,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(54, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     if (rxnRole != 0) {
@@ -1620,7 +1610,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(57, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     if (rxnComponent != 0) {
@@ -1636,7 +1625,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(60, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp(common_properties::molAtomMapNumber, atomMapNumber);
@@ -1649,7 +1637,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(63, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp(common_properties::molInversionFlag, inversionFlag);
@@ -1662,12 +1649,11 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(66, 3) << "' to int on line "
              << line;
-      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp("molExactChangeFlag", exactChangeFlag);
   }
-  return res;
+  return res.release();
 }
 
 Bond *ParseMolFileBondLine(const std::string_view text, unsigned int line) {
@@ -2097,7 +2083,7 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
     token = FileParserUtils::strip(token);
   }
 
-  Atom *res = nullptr;
+  std::unique_ptr<Atom> res;
   if (token[0] == '[') {
     // atom list:
     if (token.back() != ']') {
@@ -2123,7 +2109,7 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
 
       int atNum = PeriodicTable::getTable()->getAtomicNumber(atSymb);
       if (!res) {
-        res = new QueryAtom(atNum);
+        res.reset(new QueryAtom(atNum));
       } else {
         res->expandQuery(makeAtomNumQuery(atNum), Queries::COMPOSITE_OR, true);
       }
@@ -2145,17 +2131,17 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
         (token[0] == 'R' && token >= "R0" && token <= "R99") || token == "R#" ||
         token == "*") {
       if (isComplexQueryName || token == "*") {
-        res = new QueryAtom(0);
+        res.reset(new QueryAtom(0));
         if (token == "*") {
           // according to the MDL spec, these match anything
           res->setQuery(makeAtomNullQuery());
         } else if (isComplexQueryName) {
-          convertComplexNameToQuery(res, token);
+          convertComplexNameToQuery(res.get(), token);
         }
         // queries have no implicit Hs:
         res->setNoImplicit(true);
       } else {
-        res = new Atom(1);
+        res.reset(new Atom(1));
         res->setAtomicNum(0);
       }
       if (token[0] == 'R' && token >= "R0" && token <= "R99") {
@@ -2173,35 +2159,35 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
       if (token[0] == 'R') {
         // we used to skip R# here because that really should be handled by an
         // RGP spec, but that turned out to not be permissive enough... <sigh>
-        setRGPProps(token, res);
+        setRGPProps(token, res.get());
       }
     } else if (token == "D") {  // mol blocks support "D" and "T" as
                                 // shorthand... handle that.
-      res = new Atom(1);
+      res.reset(new Atom(1));
       res->setIsotope(2);
     } else if (token == "T") {  // mol blocks support "D" and "T" as
                                 // shorthand... handle that.
-      res = new Atom(1);
+      res.reset(new Atom(1));
       res->setIsotope(3);
     } else if (token == "Pol" || token == "Mod") {
-      res = new Atom(0);
+      res.reset(new Atom(0));
       res->setProp(common_properties::dummyLabel, std::string(token));
     } else if (GenericGroups::genericMatchers.find(std::string(token)) !=
                GenericGroups::genericMatchers.end()) {
-      res = new QueryAtom(0);
+      res.reset(new QueryAtom(0));
       res->setProp(common_properties::atomLabel, std::string(token));
     } else {
       std::string tcopy(token);
       if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z') {
         tcopy[1] = static_cast<char>(tolower(token[1]));
       }
-      res = new Atom(0);
-      lookupAtomicNumber(res, tcopy, strictParsing);
+      res.reset(new Atom(0));
+      lookupAtomicNumber(res.get(), tcopy, strictParsing);
     }
   }
 
   POSTCONDITION(res, "no atom built");
-  return res;
+  return res.release();
 }
 
 bool splitAssignToken(std::string_view token, std::string &prop,
@@ -2453,6 +2439,37 @@ void tokenizeV3000Line(std::string_view line,
 #endif
 }
 
+bool calculate3dFlag(const RWMol &mol, const Conformer &conf,
+                     bool chiralityPossible) {
+  int marked3d = 0;
+  if (mol.getPropIfPresent(common_properties::_3DConf, marked3d)) {
+    mol.clearProp(common_properties::_3DConf);
+  }
+
+  bool nonzeroZ = hasNonZeroZCoords(conf);
+
+  if (!nonzeroZ && marked3d == 1) {
+    // If we have no Z coordinates, mark the structure 2D if we see any
+    // 2D stereo markers, or stay as 3D if
+    if (chiralityPossible) {
+      BOOST_LOG(rdWarningLog)
+          << "Warning: molecule is tagged as 3D, but all Z coords are zero and 2D stereo "
+             "markers have been found, marking the mol as 2D."
+          << std::endl;
+      return false;
+    }
+    return true;
+  } else if (marked3d == 0 && nonzeroZ) {
+    BOOST_LOG(rdWarningLog)
+        << "Warning: molecule is tagged as 2D, but at least one Z coordinate is not zero. "
+           "Marking the mol as 3D."
+        << std::endl;
+    return true;
+  }
+
+  return nonzeroZ;
+}
+
 void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
                          unsigned int nAtoms, RWMol *mol, Conformer *conf,
                          bool strictParsing) {
@@ -2554,20 +2571,8 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
     errout << "END ATOM line not found on line " << line;
     throw FileParseException(errout.str());
   }
-
-  bool nonzeroZ = hasNonZeroZCoords(*conf);
-  if (mol->hasProp(common_properties::_3DConf)) {
-    conf->set3D(true);
-    mol->clearProp(common_properties::_3DConf);
-    if (!nonzeroZ) {
-      BOOST_LOG(rdWarningLog)
-          << "Warning: molecule is tagged as 3D, but all Z coords are zero"
-          << std::endl;
-    }
-  } else {
-    conf->set3D(nonzeroZ);
-  }
 }
+
 void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
                          unsigned int nBonds, RWMol *mol,
                          bool &chiralityPossible) {
@@ -3179,6 +3184,8 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     fileComplete = true;
   }
 
+  auto is3d = calculate3dFlag(*mol, *conf, chiralityPossible);
+  conf->set3D(is3d);
   mol->addConformer(conf, true);
   conf = nullptr;
 
@@ -3194,24 +3201,13 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     conf->set3D(false);
   } else {
     ParseMolBlockAtoms(inStream, line, nAtoms, mol, conf, strictParsing);
-
-    bool nonzeroZ = hasNonZeroZCoords(*conf);
-    if (mol->hasProp(common_properties::_3DConf)) {
-      conf->set3D(true);
-      mol->clearProp(common_properties::_3DConf);
-      if (!nonzeroZ) {
-        BOOST_LOG(rdWarningLog)
-            << "Warning: molecule is tagged as 3D, but all Z coords are zero"
-            << std::endl;
-      }
-    } else {
-      conf->set3D(nonzeroZ);
-    }
   }
+  ParseMolBlockBonds(inStream, line, nBonds, mol, chiralityPossible);
+
+  auto is3d = calculate3dFlag(*mol, *conf, chiralityPossible);
+  conf->set3D(is3d);
   mol->addConformer(conf, true);
   conf = nullptr;
-
-  ParseMolBlockBonds(inStream, line, nBonds, mol, chiralityPossible);
 
   bool fileComplete =
       ParseMolBlockProperties(inStream, line, mol, strictParsing);
@@ -3253,21 +3249,31 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
     }
   }
 
+  // now that atom stereochem has been perceived, the wedging
+  // information is no longer needed, so we clear
+  // single bond dir flags:
+  MolOps::clearSingleBondDirFlags(*res);
+
   if (sanitize) {
     try {
       if (removeHs) {
+        // Bond stereo detection must happen before H removal, or
+        // else we might be removing stereogenic H atoms in double
+        // bonds (e.g. imines). But before we run stereo detection,
+        // we need to run mol cleanup so don't have trouble with
+        // e.g. nitro groups. Sadly, this a;; means we will find
+        // run both cleanup and ring finding twice (a fast find
+        // rings in bond stereo detection, and another in
+        // sanitization's SSSR symmetrization).
+        unsigned int failedOp = 0;
+        MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
+        MolOps::detectBondStereochemistry(*res);
         MolOps::removeHs(*res, false, false);
       } else {
         MolOps::sanitizeMol(*res);
+        MolOps::detectBondStereochemistry(*res);
       }
-      // now that atom stereochem has been perceived, the wedging
-      // information is no longer needed, so we clear
-      // single bond dir flags:
-      MolOps::clearSingleBondDirFlags(*res);
 
-      // unlike DetectAtomStereoChemistry we call detectBondStereochemistry
-      // here after sanitization because we need the ring information:
-      MolOps::detectBondStereochemistry(*res);
     } catch (...) {
       delete res;
       res = nullptr;
@@ -3275,12 +3281,6 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
     }
     MolOps::assignStereochemistry(*res, true, true, true);
   } else {
-    // we still need to do something about double bond stereochemistry
-    // (was github issue 337)
-    // now that atom stereochem has been perceived, the wedging
-    // information is no longer needed, so we clear
-    // single bond dir flags:
-    ClearSingleBondDirFlags(*res);
     MolOps::detectBondStereochemistry(*res);
   }
 

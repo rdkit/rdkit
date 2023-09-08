@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015-2021 Greg Landrum and other RDKit Contributors
+//  Copyright (C) 2015-2023 Greg Landrum and other RDKit Contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,6 +16,7 @@
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
@@ -754,6 +755,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
         .def(python::map_indexing_suite<std::map<int, std::string>, true>());
   }
 
+  python::enum_<RDKit::MultiColourHighlightStyle>("MultiColourHighlightStyle")
+      .value("CircleAndLine", RDKit::MultiColourHighlightStyle::CIRCLEANDLINE)
+      .value("Lasso", RDKit::MultiColourHighlightStyle::LASSO)
+      .export_values();
+
   std::string docString = "Drawing options";
   python::class_<RDKit::MolDrawOptions, boost::noncopyable>("MolDrawOptions",
                                                             docString.c_str())
@@ -898,6 +904,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "forces atom highlights always to be circles."
                      "Default (false) is to put ellipses round"
                      "longer labels.")
+      .def_readwrite(
+          "multiColourHighlightStyle",
+          &RDKit::MolDrawOptions::multiColourHighlightStyle,
+          "Either 'CircleAndLine' or 'Lasso', to control style of"
+          "multi-coloured highlighting in DrawMoleculeWithHighlights."
+          "Default is CircleAndLine.")
       .def_readwrite("centreMoleculesBeforeDrawing",
                      &RDKit::MolDrawOptions::centreMoleculesBeforeDrawing,
                      "Moves the centre of the drawn molecule to (0,0)."

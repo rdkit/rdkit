@@ -395,26 +395,39 @@ void build_mol(RWMol &mol, mae::Block &structure_block, bool sanitize,
   // and it requires atoms and bonds to be available.
   set_mol_properties(mol, structure_block);
 
+  bool replaceExistingTags = false;
   if (sanitize) {
     if (removeHs) {
+      // Bond stereo detection must happen before H removal, or
+      // else we might be removing stereogenic H atoms in double
+      // bonds (e.g. imines). But before we run stereo detection,
+      // we need to run mol cleanup so don't have trouble with
+      // e.g. nitro groups. Sadly, this a;; means we will find
+      // run both cleanup and ring finding twice (a fast find
+      // rings in bond stereo detection, and another in
+      // sanitization's SSSR symmetrization).
+      unsigned int failedOp = 0;
+      MolOps::sanitizeMol(mol, failedOp, MolOps::SANITIZE_CLEANUP);
+      MolOps::detectBondStereochemistry(mol);
       MolOps::removeHs(mol, false, false);
     } else {
       MolOps::sanitizeMol(mol);
+      MolOps::detectBondStereochemistry(mol, replaceExistingTags);
     }
   } else {
     // we need some properties for the chiral setup
     mol.updatePropertyCache(false);
+    MolOps::detectBondStereochemistry(mol, replaceExistingTags);
   }
 
   // If there are 3D coordinates, try to read more chiralities from them, but do
   // not override the ones that were read from properties
-  bool replaceExistingTags = false;
+
   if (mol.getNumConformers() && mol.getConformer().is3D()) {
     MolOps::assignChiralTypesFrom3D(mol, -1, replaceExistingTags);
   }
 
-  // Find more stereo bonds, assign labels, but don't replace the existing ones
-  MolOps::detectBondStereochemistry(mol, replaceExistingTags);
+  // Assign labels, but don't replace the existing ones
   MolOps::assignStereochemistry(mol, replaceExistingTags);
 }
 

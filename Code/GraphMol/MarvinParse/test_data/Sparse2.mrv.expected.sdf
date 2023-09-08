@@ -1,0 +1,10 @@
+
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 0 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 END ATOM
+M  V30 END CTAB
+M  END

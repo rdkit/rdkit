@@ -222,6 +222,8 @@ class DrawShapeArc : public DrawShape {
  public:
   // draw the arc of an ellipse between ang1 and ang2.  Note that 0 is
   // at 3 o-clock and 90 at 12 o'clock as you'd expect from your maths.
+  // BUT because y increases down the screen, the angles go anticlockwise, such
+  // that 90 is actually at 6 o'clock on the screen.
   // ang2 must be > ang1 - it won't draw backwards. Angles in degrees,
   // between 0 and 360.0.
   // Points should be size 2 - the first entry is the centre, the second

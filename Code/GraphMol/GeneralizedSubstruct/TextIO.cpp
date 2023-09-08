@@ -9,25 +9,25 @@
 //
 //
 
-#include <cstdint>
-#include <variant>
-#include <sstream>
-#include <RDGeneral/StreamOps.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/MolPickler.h>
+#include <DataStructs/base64.h>
 #include <GraphMol/MolBundle.h>
+#include <GraphMol/MolPickler.h>
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmartsWrite.h>
-
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
-#include <DataStructs/base64.h>
+#include <RDGeneral/StreamOps.h>
+#include "XQMol.h"
 
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#include "XQMol.h"
+
+#include <cstdint>
+#include <sstream>
+#include <variant>
 
 namespace bpt = boost::property_tree;
 
@@ -148,7 +148,7 @@ bool has_query_feature(const ROMol &mol) {
 void add_mol_to_elem(bpt::ptree &elem, const ROMol &mol) {
   std::string pkl;
   MolPickler::pickleMol(mol, pkl);
-  std::unique_ptr<char> b64(Base64Encode(pkl.c_str(), pkl.length()));
+  std::unique_ptr<char[]> b64(Base64Encode(pkl.c_str(), pkl.length()));
   elem.put("pkl", b64.get());
   if (has_query_feature(mol)) {
     elem.put("smarts", MolToCXSmarts(mol));
@@ -228,7 +228,7 @@ RWMol *pt_to_mol(bpt::ptree &pt) {
   auto b64pkl = pt.get<std::string>("pkl", "");
   if (!b64pkl.empty()) {
     unsigned int len;
-    std::unique_ptr<char> cpkl(Base64Decode(b64pkl.c_str(), &len));
+    std::unique_ptr<char[]> cpkl(Base64Decode(b64pkl.c_str(), &len));
     std::string pkl(cpkl.get(), len);
     return new RWMol(pkl);
   }
@@ -349,5 +349,5 @@ std::string ExtendedQueryMol::toJSON() const {
   bpt::json_parser::write_json(ss, pt);
   return ss.str();
 }
-}  // namespace GeneralizeSubstruct
+}  // namespace GeneralizedSubstruct
 }  // namespace RDKit

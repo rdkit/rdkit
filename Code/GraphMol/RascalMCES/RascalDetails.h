@@ -21,7 +21,7 @@ class ROMol;
 
 namespace RascalMCES {
 
-class RascalClusterOptions;
+struct RascalClusterOptions;
 
 namespace details {
 

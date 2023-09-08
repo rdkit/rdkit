@@ -88,7 +88,7 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
 
   // returns the number of atoms in the largest contiguous fragment
   // in the MCES.
-  int getLargestFragSize() const;
+  unsigned int getLargestFragSize() const;
 
   std::string getSmarts() const;
   const std::shared_ptr<ROMol> getMcesMol() const;

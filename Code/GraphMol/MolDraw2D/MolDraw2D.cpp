@@ -18,7 +18,8 @@
 #include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>
-#include <GraphMol/MolDraw2D/DrawMolMCH.h>
+#include <GraphMol/MolDraw2D/DrawMolMCHCircleAndLine.h>
+#include <GraphMol/MolDraw2D/DrawMolMCHLasso.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
@@ -146,10 +147,21 @@ void MolDraw2D::drawMoleculeWithHighlights(
     const map<int, double> &highlight_radii,
     const map<int, int> &highlight_linewidth_multipliers, int confId) {
   setupTextDrawer();
-  MolDraw2D_detail::DrawMol *dm = new MolDraw2D_detail::DrawMolMCH(
-      mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
-      highlight_atom_map, highlight_bond_map, highlight_radii,
-      highlight_linewidth_multipliers, confId);
+  MolDraw2D_detail::DrawMol *dm = nullptr;
+  switch (drawOptions().multiColourHighlightStyle) {
+    case MultiColourHighlightStyle::CIRCLEANDLINE:
+      dm = new MolDraw2D_detail::DrawMolMCHCircleAndLine(
+          mol, legend, panelWidth(), panelHeight(), drawOptions(),
+          *text_drawer_, highlight_atom_map, highlight_bond_map,
+          highlight_radii, highlight_linewidth_multipliers, confId);
+      break;
+    case MultiColourHighlightStyle::LASSO:
+      dm = new MolDraw2D_detail::DrawMolMCHLasso(
+          mol, legend, panelWidth(), panelHeight(), drawOptions(),
+          *text_drawer_, highlight_atom_map, highlight_bond_map,
+          highlight_radii, highlight_linewidth_multipliers, confId);
+      break;
+  }
   drawMols_.emplace_back(dm);
   drawMols_.back()->createDrawObjects();
   fixVariableDimensions(*drawMols_.back());

@@ -38,7 +38,7 @@ void testCleanup() {
   {
     // Github 5997
     auto m = "CC(=O)O[Mg]OC(=O)C"_smiles;
-    auto res(MolStandardize::cleanup(*m, params));
+    RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
   }
 
@@ -117,7 +117,7 @@ void testMetalDisconnector() {
   MolStandardize::MetalDisconnector md;
   unsigned int failedOp;
   {
-    auto m(SmilesToMol("[O-]C(=O)C.[Mg+2][O-]C(=O)C", 0, false));
+    RWMOL_SPTR m(SmilesToMol("[O-]C(=O)C.[Mg+2][O-]C(=O)C", 0, false));
     MolOps::sanitizeMol(*m, failedOp, MolOps::SANITIZE_CLEANUP);
     TEST_ASSERT(m);
     md.disconnect(*m);

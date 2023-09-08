@@ -796,7 +796,11 @@ TEST_CASE("benchmarks") {
   //              << " runs\n";
   //  }
   for (size_t i = 0; i < tests.size(); ++i) {
-    REQUIRE(timings[i] < std::get<6>(tests[i]));
+    auto ref_time = std::get<6>(tests[i]);
+#ifndef NDEBUG  // allow more time for debug builds
+    ref_time *= 5;
+#endif
+    REQUIRE(timings[i] < ref_time);
   }
 }
 

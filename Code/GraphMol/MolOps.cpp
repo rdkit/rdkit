@@ -326,6 +326,7 @@ void cleanUpOrganometallics(RWMol &mol) {
     return;
   }
 
+  mol.updatePropertyCache(false);
   // First see if anything needs doing
   std::vector<unsigned int> ranks(mol.getNumAtoms());
   RDKit::Canon::rankMolAtoms(mol, ranks);
@@ -465,6 +466,12 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
     cleanUp(mol);
   }
 
+  // fix things like non-metal to metal bonds that should be dative.
+  operationThatFailed = SANITIZE_CLEANUP_ORGANOMETALLICS;
+  if (sanitizeOps & operationThatFailed) {
+    cleanUpOrganometallics(mol);
+  }
+
   // update computed properties on atoms and bonds:
   operationThatFailed = SANITIZE_PROPERTIES;
   if (sanitizeOps & operationThatFailed) {
@@ -526,12 +533,6 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   operationThatFailed = SANITIZE_ADJUSTHS;
   if (sanitizeOps & operationThatFailed) {
     adjustHs(mol);
-  }
-
-  // fix things like non-metal to metal bonds that should be dative.
-  operationThatFailed = SANITIZE_CLEANUP_ORGANOMETALLICS;
-  if (sanitizeOps & operationThatFailed) {
-    cleanUpOrganometallics(mol);
   }
 
   // now that everything has been cleaned up, go through and check/update the
@@ -1058,7 +1059,9 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   auto dummyAt = new QueryAtom(0);
   dummyAt->setQuery(makeAtomNullQuery());
 
-  unsigned int dummyIdx = mol.addAtom(dummyAt);
+  bool updateLabel = true;
+  bool takeOwnwership = true;
+  unsigned int dummyIdx = mol.addAtom(dummyAt, updateLabel, takeOwnwership);
   for (auto i = 0u; i < mol.getNumConformers(); ++i) {
     auto &conf = mol.getConformer(i);
     RDGeom::Point3D dummyPos;

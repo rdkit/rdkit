@@ -6,7 +6,8 @@ rdkit_python_extension(rdchem
                        Chirality.cpp
                        DEST Chem
                        LINK_LIBRARIES
-                       SmilesParse ChemTransforms SubstructMatch GraphMol)
+                       SmilesParse ChemTransforms SubstructMatch GraphMol
+                       MarvinParser)
 
 rdkit_python_extension(rdmolops
                        rdmolops.cpp MolOps.cpp
@@ -58,6 +59,7 @@ rdkit_python_extension(rdmolfiles
                        DEST Chem
                        LINK_LIBRARIES  SubstructMatch
                        SmilesParse FileParsers GraphMol
+                       MarvinParser
                        RDGeometryLib RDGeneral RDBoost)
 
 rdkit_python_extension(rdtrajectory

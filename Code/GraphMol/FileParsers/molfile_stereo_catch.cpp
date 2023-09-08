@@ -526,7 +526,38 @@ M  END
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
     {
-      auto m = R"CTAB(
+      // std::cerr<<"11111111111111"<<std::endl;
+      auto m = R"CTAB(opposing stereo, order change
+  Mrv2211 06102314502D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 O 9.0665 0.9156 0 0
+M  V30 2 N 9.6304 4.5593 0 0
+M  V30 3 C 8.2965 2.2493 0 0 MASS=14
+M  V30 4 C 6.9628 1.4792 0 0
+M  V30 5 C 9.6304 3.0193 0 0
+M  V30 6 H 7.8191 3.0761 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 3 1 CFG=1
+M  V30 2 1 2 5
+M  V30 3 1 3 4
+M  V30 4 1 3 6 CFG=3
+M  V30 5 1 3 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    {
+      // IUPAC (ST-1.2.12) says this one is wrong. It definitely requires making
+      // an assumption about where the H is.
+      auto m = R"CTAB(three-coordinate, T shaped, wedge in the middle
   Mrv2211 06102314502D          
 
   0  0  0     0  0            999 V3000
@@ -548,6 +579,7 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
+
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
             Atom::ChiralType::CHI_UNSPECIFIED);
@@ -556,7 +588,7 @@ M  END
 }
 
 TEST_CASE(
-    "GitHub Issue #6502: MolToMolBlock writes \"either\" stereo for double bonds "
+    "GitHub Issue #6502: MolToMolBlock writes \"either\" stereo for double bonds"
     "which shouldn't be stereo.",
     "[bug][molblock][stereo]") {
   auto m = "CP1(O)=NP(C)(O)=NP(C)(O)=NP(C)(O)=N1"_smiles;

@@ -752,8 +752,7 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
       const auto& targets = mcsIdx.Targets;
       const auto numAtomRings = ri->numAtomRings(atom->getIdx());
       const auto isAtomFusedAcrossAllTargets =
-          [ai, numAtomRings, &targets, &atomIdxMap,
-           &atomMatchResult](unsigned int itarget) {
+          [ai, numAtomRings, &targets, &atomMatchResult](unsigned int itarget) {
             const auto& tag = targets.at(itarget);
             const auto tagRingInfo = tag.Molecule->getRingInfo();
             const auto ti = atomMatchResult.at(itarget).at(ai).TargetAtomIdx;
@@ -910,13 +909,12 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   // molecule as a query
   std::stable_sort(Molecules.begin(), Molecules.end(), molPtr_NumBondLess);
   size_t startIdx = 0;
-  size_t endIdx = Molecules.size() - ThresholdCount;  
+  size_t endIdx = Molecules.size() - ThresholdCount;
   while (startIdx < endIdx && !Molecules.at(startIdx)->getNumAtoms()) {
     ++startIdx;
   }
   bool areSeedsEmpty = false;
-  for (size_t i = startIdx;
-       i < endIdx && !areSeedsEmpty && !res.Canceled;
+  for (size_t i = startIdx; i < endIdx && !areSeedsEmpty && !res.Canceled;
        ++i) {
     init(startIdx);
     if (Targets.empty()) {

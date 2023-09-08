@@ -64,8 +64,8 @@ class TimedOutException : public std::exception {
 };
 
 // This is in lap_a_la_scipy.cpp and solves the linear assignment problem.
-int lap_maximize(const std::vector<std::vector<int>> &costsMat,
-                 std::vector<size_t> &a, std::vector<size_t> &b);
+int lapMaximize(const std::vector<std::vector<int>> &costsMat,
+                std::vector<size_t> &a, std::vector<size_t> &b);
 
 // Contains the information used to start off a Rascal job.
 struct RascalStartPoint {
@@ -102,14 +102,14 @@ struct RascalStartPoint {
 // Get the sorted degree sequences for the molecule, one sequence for each
 // atomic number in the molecule.  Each element in the degree sequence is
 // the degree of the atom and its index.
-void sorted_degree_seqs(
+void sortedDegreeSeqs(
     const ROMol &mol,
-    std::map<int, std::vector<std::pair<int, int>>> &deg_seqs) {
+    std::map<int, std::vector<std::pair<int, int>>> &degSeqs) {
   for (const auto &a : mol.atoms()) {
-    deg_seqs[a->getAtomicNum()].push_back(
+    degSeqs[a->getAtomicNum()].push_back(
         std::make_pair(a->getDegree(), a->getIdx()));
   }
-  for (auto &it : deg_seqs) {
+  for (auto &it : degSeqs) {
     std::sort(it.second.begin(), it.second.end(),
               [](const std::pair<int, int> &p1, const std::pair<int, int> &p2)
                   -> bool { return p1.first > p2.first; });
@@ -117,8 +117,8 @@ void sorted_degree_seqs(
 }
 
 // Make labels for the atoms - by default the atomic symbol.
-void get_atom_labels(const ROMol &mol, const RascalOptions &opts,
-                     std::vector<std::string> &atomLabels) {
+void getAtomLabels(const ROMol &mol, const RascalOptions & /* opts */,
+                   std::vector<std::string> &atomLabels) {
   atomLabels.resize(mol.getNumAtoms());
   for (const auto &a : mol.atoms()) {
     std::string label = a->getSymbol();
@@ -126,8 +126,8 @@ void get_atom_labels(const ROMol &mol, const RascalOptions &opts,
   }
 }
 
-int calc_cost(const std::vector<unsigned int> &atomiBLs,
-              const std::vector<unsigned int> &atomjBLs) {
+int calcCost(const std::vector<unsigned int> &atomiBLs,
+             const std::vector<unsigned int> &atomjBLs) {
   std::unordered_set<unsigned int> uniqAtomiBLs;
   for (const auto bl : atomiBLs) {
     uniqAtomiBLs.insert(bl);
@@ -163,7 +163,7 @@ void assignCosts(const std::vector<std::pair<int, int>> &atomDegrees1,
       for (const auto b : mol2.atomBonds(atomj)) {
         atomjBLs.push_back(bondLabels2[b->getIdx()]);
       }
-      costsMat[i][j] = calc_cost(atomiBLs, atomjBLs);
+      costsMat[i][j] = calcCost(atomiBLs, atomjBLs);
     }
   }
 }
@@ -185,7 +185,7 @@ int getAssignmentScore(const std::vector<std::pair<int, int>> &atomDegrees1,
                         unassignedValue);
   std::vector<size_t> b(std::min(atomDegrees1.size(), atomDegrees2.size()),
                         unassignedValue);
-  int retVal = lap_maximize(costsMat, a, b);
+  int retVal = lapMaximize(costsMat, a, b);
   if (retVal < 0) {
     // no solution for the LAP was possible.
     return 0;
@@ -202,8 +202,8 @@ namespace details {
 double tier1Sim(const ROMol &mol1, const ROMol &mol2,
                 std::map<int, std::vector<std::pair<int, int>>> &degSeqs1,
                 std::map<int, std::vector<std::pair<int, int>>> &degSeqs2) {
-  sorted_degree_seqs(mol1, degSeqs1);
-  sorted_degree_seqs(mol2, degSeqs2);
+  sortedDegreeSeqs(mol1, degSeqs1);
+  sortedDegreeSeqs(mol2, degSeqs2);
   int vg1g2 = 0;
   int eg1g2 = 0;
   for (const auto &it1 : degSeqs1) {
@@ -250,7 +250,7 @@ double tier2Sim(const ROMol &mol1, const ROMol &mol2,
 void getBondLabels(const ROMol &mol, const RascalOptions &opts,
                    std::vector<std::string> &bondLabels) {
   std::vector<std::string> atomLabels;
-  get_atom_labels(mol, opts, atomLabels);
+  getAtomLabels(mol, opts, atomLabels);
   bondLabels = std::vector<std::string>(mol.getNumBonds());
   for (const auto &b : mol.bonds()) {
     if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
@@ -365,8 +365,8 @@ void extractRings(const ROMol &mol,
     for (auto a : molAtomRings[i]) {
       atomsInRing.set(a);
     }
-    for (auto ring_bond_idx : molBondRings[i]) {
-      auto ringBond = ringMol->getBondWithIdx(ring_bond_idx);
+    for (auto ringBondIdx : molBondRings[i]) {
+      auto ringBond = ringMol->getBondWithIdx(ringBondIdx);
       ringBond->setProp<int>("ORIG_INDEX", ringBond->getIdx());
     }
     ringMol->beginBatchEdit();
@@ -515,8 +515,8 @@ unsigned int calcLowerBound(const ROMol &mol1, const ROMol &mol2,
     }
   }
   int deltaVg1 = 0;
-  for (auto mol1_atno : mol1AtNos) {
-    if (!mol2AtNos[mol1_atno]) {
+  for (auto mol1AtNo : mol1AtNos) {
+    if (!mol2AtNos[mol1AtNo]) {
       ++deltaVg1;
     }
   }
@@ -609,15 +609,15 @@ RWMol *makeCliqueFrags(const ROMol &mol,
                        const std::vector<unsigned int> &clique,
                        const std::vector<std::pair<int, int>> &vtxPairs,
                        int pairNum) {
-  auto *mol_frags = new RWMol(mol);
+  auto *molFrags = new RWMol(mol);
   boost::dynamic_bitset<> aInClique(mol.getNumAtoms());
   boost::dynamic_bitset<> bInClique(mol.getNumBonds());
   for (auto mem : clique) {
     const Bond *bond = nullptr;
     if (pairNum == 1) {
-      bond = mol_frags->getBondWithIdx(vtxPairs[mem].first);
+      bond = molFrags->getBondWithIdx(vtxPairs[mem].first);
     } else {
-      bond = mol_frags->getBondWithIdx(vtxPairs[mem].second);
+      bond = molFrags->getBondWithIdx(vtxPairs[mem].second);
     }
     bInClique[bond->getIdx()] = 1;
     aInClique.set(bond->getBeginAtomIdx());
@@ -625,29 +625,29 @@ RWMol *makeCliqueFrags(const ROMol &mol,
     aInClique.set(bond->getEndAtomIdx());
     bond->getEndAtom()->setProp<int>("ORIG_INDEX", bond->getEndAtomIdx());
   }
-  mol_frags->beginBatchEdit();
-  for (auto &a : mol_frags->atoms()) {
+  molFrags->beginBatchEdit();
+  for (auto &a : molFrags->atoms()) {
     if (!aInClique[a->getIdx()]) {
-      mol_frags->removeAtom(a);
+      molFrags->removeAtom(a);
     }
   }
-  for (auto &b : mol_frags->bonds()) {
+  for (auto &b : molFrags->bonds()) {
     if (!bInClique[b->getIdx()]) {
-      mol_frags->removeBond(b->getBeginAtomIdx(), b->getEndAtomIdx());
+      molFrags->removeBond(b->getBeginAtomIdx(), b->getEndAtomIdx());
     }
   }
-  mol_frags->commitBatchEdit();
-  return mol_frags;
+  molFrags->commitBatchEdit();
+  return molFrags;
 }
 
 // Calculate the shortest bond distance between the 2 fragments in the molecule.
 int minFragSeparation(const ROMol &mol, const ROMol &molFrags,
                       std::vector<int> &fragMapping, int frag1, int frag2) {
-  auto extractFragAtoms = [&](int frag_num, std::vector<int> &frag_atoms) {
+  auto extractFragAtoms = [&](int fragNum, std::vector<int> &fragAtoms) {
     for (size_t i = 0u; i < fragMapping.size(); ++i) {
-      if (fragMapping[i] == frag_num) {
-        int orig_idx = molFrags.getAtomWithIdx(i)->getProp<int>("ORIG_INDEX");
-        frag_atoms.push_back(orig_idx);
+      if (fragMapping[i] == fragNum) {
+        int origIdx = molFrags.getAtomWithIdx(i)->getProp<int>("ORIG_INDEX");
+        fragAtoms.push_back(origIdx);
       }
     }
   };
@@ -803,7 +803,7 @@ bool checkEquivalentsAllowed(const ROMol &mol) {
       "*~*", "*~*1~*~*~1", "*12~*~*~2~*~1", "*14~*(~*~2~3~4)~*~2~*~3~1"};
   static std::vector<std::unique_ptr<ROMol>> notStructs;
   if (notStructs.empty()) {
-    for (const auto smt : notSmarts) {
+    for (const auto &smt : notSmarts) {
       notStructs.emplace_back(SmartsToMol(smt));
     }
   }
@@ -819,7 +819,7 @@ bool checkEquivalentsAllowed(const ROMol &mol) {
   return true;
 }
 
-void explore_partitions(
+void explorePartitions(
     RascalStartPoint &starter,
     const std::chrono::time_point<std::chrono::high_resolution_clock>
         &startTime,
@@ -1050,7 +1050,7 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
     tmpOpts.allBestMCESs = true;
   }
   try {
-    explore_partitions(starter, startTime, tmpOpts, maxCliques);
+    explorePartitions(starter, startTime, tmpOpts, maxCliques);
   } catch (TimedOutException &e) {
     std::cout << e.what() << std::endl;
     maxCliques = e.d_cliques;

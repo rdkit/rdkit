@@ -9,34 +9,36 @@
 //
 
 #include "MolFragmenter.h"
-#include "ChemTransforms.h"
-#include <RDGeneral/utils.h>
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/RDLog.h>
-#include <RDGeneral/Exceptions.h>
+
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/RDKitBase.h>
-#include <boost/dynamic_bitset.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/range/adaptor/reversed.hpp>
-#include <cstdint>
-#include <vector>
-#include <algorithm>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <RDGeneral/Exceptions.h>
+#include <RDGeneral/Invariant.h>
+#include <RDGeneral/RDLog.h>
 #include <RDGeneral/StreamOps.h>
+#include <RDGeneral/utils.h>
+#include "ChemTransforms.h"
 
 #include <RDGeneral/BoostStartInclude.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/no_tracking.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/range/adaptor/reversed.hpp>
+#include <boost/tokenizer.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-#include <sstream>
+#include <algorithm>
+#include <cstdint>
 #include <map>
+#include <optional>
+#include <sstream>
+#include <vector>
 
 namespace RDKit {
 namespace MolFragmenter {

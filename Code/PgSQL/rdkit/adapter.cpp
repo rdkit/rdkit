@@ -2404,7 +2404,7 @@ extern "C" CXQMol MolToXQMol(CROMol m, bool doEnumeration, bool doTautomers,
     try {
       MolOps::parseAdjustQueryParametersFromJSON(p, pstring);
     } catch (const ValueErrorException &e) {
-      elog(ERROR, "MolAdjustQueryProperties: %s", e.what());
+      elog(ERROR, "adjustQueryProperties: %s", e.what());
     } catch (...) {
       elog(WARNING,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
@@ -2416,10 +2416,10 @@ extern "C" CXQMol MolToXQMol(CROMol m, bool doEnumeration, bool doTautomers,
     xqm = new ExtendedQueryMol(GeneralizedSubstruct::createExtendedQueryMol(
         *im, doEnumeration, doTautomers, adjustQueryProperties, p));
   } catch (MolSanitizeException &e) {
-    elog(ERROR, "MolToTautomerQuery: %s", e.what());
+    elog(ERROR, "MolToXQMol: %s", e.what());
     xqm = nullptr;
   } catch (...) {
-    elog(ERROR, "MolToTautomerQuery: unknown failure type");
+    elog(ERROR, "MolToXQMol: unknown failure type");
     xqm = nullptr;
   }
   return (CXQMol)xqm;

@@ -156,6 +156,22 @@ void get_colour_palette_option(boost::property_tree::ptree *pt, const char *pnm,
   }
 }
 
+void get_highlight_style_option(boost::property_tree::ptree *pt,
+                                const char *pnm,
+                                MultiColourHighlightStyle &mchs) {
+  PRECONDITION(pnm && strlen(pnm), "bad property name");
+  if (pt->find(pnm) == pt->not_found()) {
+    return;
+  }
+  const auto &node = pt->get_child(pnm);
+  auto styleStr = node.get_value<std::string>();
+  if (styleStr == "Lasso") {
+    mchs = MultiColourHighlightStyle::LASSO;
+  } else if (styleStr == "CircleAndLine") {
+    mchs = MultiColourHighlightStyle::CIRCLEANDLINE;
+  }
+}
+
 void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
                                   const std::string &json) {
   if (json == "") {
@@ -232,6 +248,8 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
           item.second.get_value<std::string>();
     }
   }
+  get_highlight_style_option(&pt, "multiColourHighlightStyle",
+                             opts.multiColourHighlightStyle);
 }
 
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(

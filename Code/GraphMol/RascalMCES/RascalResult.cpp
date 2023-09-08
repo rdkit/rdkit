@@ -632,14 +632,14 @@ int RascalResult::getMaxDeltaAtomAtomDist() const {
   return d_maxDeltaAtomAtomDist;
 }
 
-int RascalResult::getLargestFragSize() const {
+unsigned int RascalResult::getLargestFragSize() const {
   if (!d_mol1 || !d_mol2) {
     return 0;
   }
   if (d_largestFragSize == -1) {
     d_largestFragSize = calcLargestFragSize();
   }
-  return d_largestFragSize;
+  return static_cast<unsigned int>(d_largestFragSize);
 }
 
 std::string RascalResult::getSmarts() const {

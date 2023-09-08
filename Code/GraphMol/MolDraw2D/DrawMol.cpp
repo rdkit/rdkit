@@ -418,10 +418,9 @@ void DrawMol::extractMolNotes() {
     }
     if (!didIt) {
       // There was nowhere to put it that didn't clash, so live with it.
-      DrawAnnotation *annot =
+      legends_.emplace_back(
           new DrawAnnotation(note, TextAlignType::START, "note", 1.0, locs[0],
-                             drawOptions_.annotationColour, textDrawer_);
-      legends_.emplace_back(annot);
+                             drawOptions_.annotationColour, textDrawer_));
     }
   }
 }
