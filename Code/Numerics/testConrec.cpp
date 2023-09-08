@@ -23,7 +23,7 @@ TEST_CASE("Conrec basics", "[conrec]") {
   SECTION("basics") {
     std::vector<RDGeom::Point2D> pts = {{0., 0.}, {1., 0.}, {1., 1.}, {0., 1.}};
     const size_t gridSz = 100;
-    auto *grid = new double[gridSz * gridSz];
+    auto grid = std::make_unique<double[]>(gridSz * gridSz);
     double xps[gridSz];
     double yps[gridSz];
     double x1 = -4, y1 = -4, x2 = 6, y2 = 6;
@@ -46,6 +46,7 @@ TEST_CASE("Conrec basics", "[conrec]") {
             val += 1 / r;
           }
         }
+        // to make the contours more visible, we cap the max val we set at 1000
         maxV = std::max(std::min(val, 1000.), maxV);
         grid[ix * gridSz + iy] = val;
       }
@@ -56,8 +57,8 @@ TEST_CASE("Conrec basics", "[conrec]") {
     for (size_t i = 0; i < nContours; ++i) {
       isoLevels[i] = (i + 1) * (maxV / (nContours + 1));
     }
-    conrec::Contour(grid, 0, gridSz - 1, 0, gridSz - 1, xps, yps, nContours,
-                    isoLevels, segs);
+    conrec::Contour(grid.get(), 0, gridSz - 1, 0, gridSz - 1, xps, yps,
+                    nContours, isoLevels, segs);
 
     std::ofstream outs("./blah.svg");
     outs << R"SVG(<?xml version='1.0' encoding='iso-8859-1'?>
@@ -82,7 +83,6 @@ width='300px' height='300px' >
       ;
     }
     outs << "</svg>" << std::endl;
-    delete[] grid;
   }
 }
 
@@ -90,7 +90,7 @@ TEST_CASE("connectLineSegments", "[conrec]") {
   SECTION("basics") {
     std::vector<RDGeom::Point2D> pts = {{0., 0.}, {1., 0.}, {1., 1.}, {0., 1.}};
     const size_t gridSz = 100;
-    auto *grid = new double[gridSz * gridSz];
+    auto grid = std::make_unique<double[]>(gridSz * gridSz);
     double xps[gridSz];
     double yps[gridSz];
     double x1 = -4, y1 = -4, x2 = 6, y2 = 6;
@@ -123,8 +123,8 @@ TEST_CASE("connectLineSegments", "[conrec]") {
     for (size_t i = 0; i < nContours; ++i) {
       isoLevels[i] = (i + 1) * (maxV / (nContours + 1));
     }
-    conrec::Contour(grid, 0, gridSz - 1, 0, gridSz - 1, xps, yps, nContours,
-                    isoLevels, segs);
+    conrec::Contour(grid.get(), 0, gridSz - 1, 0, gridSz - 1, xps, yps,
+                    nContours, isoLevels, segs);
 
     auto contours = conrec::connectLineSegments(segs);
     CHECK(contours.size() == 74);
@@ -157,7 +157,6 @@ width='300px' height='300px' >
            << std::endl;
     }
     outs << "</svg>" << std::endl;
-    delete[] grid;
   }
 }
 
@@ -166,7 +165,7 @@ TEST_CASE("super chunky", "[conrec]") {
   SECTION("basics") {
     std::vector<RDGeom::Point2D> pts = {{0., 0.}, {1., 0.}, {1., 1.}, {0., 1.}};
     const size_t gridSz = 5;
-    auto *grid = new double[gridSz * gridSz];
+    auto grid = std::make_unique<double[]>(gridSz * gridSz);
     double xps[gridSz];
     double yps[gridSz];
     double x1 = -4, y1 = -4, x2 = 6, y2 = 6;
@@ -200,8 +199,8 @@ TEST_CASE("super chunky", "[conrec]") {
       isoLevels[i] = (i + 1) * (maxV / (nContours + 1));
     }
 
-    conrec::Contour(grid, 0, gridSz - 1, 0, gridSz - 1, xps, yps, nContours,
-                    isoLevels, segs);
+    conrec::Contour(grid.get(), 0, gridSz - 1, 0, gridSz - 1, xps, yps,
+                    nContours, isoLevels, segs);
 
     std::ofstream outs("./chunky.svg");
     outs << R"SVG(<?xml version='1.0' encoding='iso-8859-1'?>
@@ -256,6 +255,5 @@ width='300px' height='300px' >
             << std::endl;
     }
     outs2 << "</svg>" << std::endl;
-    delete[] grid;
   }
 }

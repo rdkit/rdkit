@@ -548,7 +548,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     MolDraw2DUtils::prepareMolForDrawing(*m1);
 
     const size_t gridSz = 100;
-    auto *grid = new double[gridSz * gridSz];
+    auto grid = std::make_unique<double[]>(gridSz * gridSz);
     std::vector<double> xps(gridSz);
     std::vector<double> yps(gridSz);
 
@@ -588,7 +588,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
 
     std::vector<double> levels;
     drawer.clearDrawing();
-    MolDraw2DUtils::contourAndDrawGrid(drawer, grid, xps, yps, 10, levels,
+    MolDraw2DUtils::contourAndDrawGrid(drawer, grid.get(), xps, yps, 10, levels,
                                        MolDraw2DUtils::ContourParams(),
                                        m1.get());
     drawer.drawOptions().clearBackground = false;
@@ -599,7 +599,6 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     outs << text;
     outs.close();
     check_file_hash("contourMol_1.svg");
-    delete[] grid;
   }
   SECTION("gaussian basics") {
     MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);

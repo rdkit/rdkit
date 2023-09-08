@@ -101,14 +101,7 @@ void MolDraw2DCairo::setColour(const DrawColour &col) {
 
 namespace {
 void setDashes(cairo_t *dp_cr, const DashPattern &dashes) {
-  if (dashes.size()) {
-    auto *dd = new double[dashes.size()];
-    std::copy(dashes.begin(), dashes.end(), dd);
-    cairo_set_dash(dp_cr, dd, dashes.size(), 0);
-    delete[] dd;
-  } else {
-    cairo_set_dash(dp_cr, nullptr, 0, 0);
-  }
+  cairo_set_dash(dp_cr, dashes.data(), dashes.size(), 0);
 }
 }  // namespace
 
