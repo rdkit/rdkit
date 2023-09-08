@@ -320,7 +320,7 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
           these are generally hydrogens in OR clauses or isotopic hydrogens
   \return true if the molecule has query hydrogens
 */
-bool hasQueryHs(const ROMol &mol, bool unnmergableOnly = false);
+RDKIT_GRAPHMOL_EXPORT bool hasQueryHs(const ROMol &mol, bool unnmergableOnly = false);
 
 typedef enum {
   ADJUST_IGNORENONE = 0x0,
