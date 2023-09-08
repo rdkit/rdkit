@@ -1151,6 +1151,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       information in the output\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written.\n\
+    - prettyPrint: (optional) makes the output more human readable.\n\
 \n\
   RETURNS:\n\
 \n\
@@ -1158,7 +1159,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def("MolToMrvBlock", RDKit::MolToMrvBlock,
               (python::arg("mol"), python::arg("includeStereo") = true,
-               python::arg("confId") = -1, python::arg("kekulize") = true),
+               python::arg("confId") = -1, python::arg("kekulize") = true,
+               python::arg("prettyPrint") = false),
               docString.c_str());
 
   docString =
@@ -1171,16 +1173,18 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       information in the output\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written.\n\
+    - prettyPrint: (optional) makes the output more human readable.\n\
 \n\
   RETURNS:\n\
 \n\
     a string\n\
 \n";
-  python::def("MolToMrvFile", RDKit::MolToMrvFile,
-              (python::arg("mol"), python::arg("filename"),
-               python::arg("includeStereo") = true, python::arg("confId") = -1,
-               python::arg("kekulize") = true),
-              docString.c_str());
+  python::def(
+      "MolToMrvFile", RDKit::MolToMrvFile,
+      (python::arg("mol"), python::arg("filename"),
+       python::arg("includeStereo") = true, python::arg("confId") = -1,
+       python::arg("kekulize") = true, python::arg("prettyPrint") = false),
+      docString.c_str());
 
   docString =
       "Writes a CML block for a molecule\n\

@@ -35,6 +35,7 @@ import os
 import pickle
 import sys
 import unittest
+import tempfile 
 
 from rdkit import Chem, Geometry, RDConfig, rdBase
 from rdkit.Chem import AllChem, rdChemReactions
@@ -1116,6 +1117,34 @@ M  END
     rxn.GetSubstructParams().useChirality = True
     self.assertEqual(len(rxn.RunReactants((mol, ))), 0)
 
+  def testMrvBlockContainsReaction(self):
+    fn1 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','MarvinParse','test_data','aspirin.mrv')
+    with open(fn1,'r') as inf:
+      ind1 = inf.read()
+    fn2 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','MarvinParse','test_data','aspirineSynthesisWithAttributes.mrv')   
+    with open(fn2,'r') as inf:
+      ind2 = inf.read()
+
+    self.assertFalse(rdChemReactions.MrvFileIsReaction(fn1))
+    self.assertTrue(rdChemReactions.MrvFileIsReaction(fn2))
+
+
+    self.assertFalse(rdChemReactions.MrvBlockIsReaction(ind1))
+    self.assertTrue(rdChemReactions.MrvBlockIsReaction(ind2))
+
+  def testMrvOutput(self):
+    fn2 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','MarvinParse','test_data','aspirineSynthesisWithAttributes.mrv')   
+    rxn = rdChemReactions.ReactionFromMrvFile(fn2)
+    self.assertIsNotNone(rxn)
+    rxnb = rdChemReactions.ReactionToMrvBlock(rxn)
+    self.assertTrue('<reaction>' in rxnb)
+
+    fName = tempfile.NamedTemporaryFile(suffix='.mrv').name
+    self.assertFalse(os.path.exists(fName))
+    rdChemReactions.ReactionToMrvFile(rxn,fName)
+    self.assertTrue(os.path.exists(fName))
+    os.unlink(fName)
+
   def testCDXML(self):
     fname = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
                          'test_data','CDXML','rxn2.cdxml')
@@ -1137,9 +1166,6 @@ M  END
 
     rxns = AllChem.ReactionsFromCDXMLBlock('')
     self.assertEqual(len(rxns),0)
-
-
-
 
 
 if __name__ == '__main__':

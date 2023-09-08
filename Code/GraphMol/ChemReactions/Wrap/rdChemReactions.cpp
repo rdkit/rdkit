@@ -840,7 +840,8 @@ Sample Usage:
 
       .def("GetPropsAsDict", RDKit::GetPropsAsDict<RDKit::ChemicalReaction>,
            (python::arg("self"), python::arg("includePrivate") = false,
-            python::arg("includeComputed") = false),
+            python::arg("includeComputed") = false,
+            python::arg("autoConvertStrings") = true),
            "Returns a dictionary populated with the reaction's properties.\n"
            " n.b. Some properties are not able to be converted to python "
            "types.\n\n"
@@ -896,10 +897,26 @@ of the replacements argument.",
       "construct a ChemicalReaction from a string in Marvin (mrv) format",
       python::return_value_policy<python::manage_new_object>());
 
+  python::def(
+      "ReactionFromMrvBlock", RDKit::ReactionFromMrvBlock,
+      (python::arg("rxnblock"), python::arg("sanitize") = false,
+       python::arg("removeHs") = false),
+      "construct a ChemicalReaction from a string in Marvin (mrv) format",
+      python::return_value_policy<python::manage_new_object>());
+
+  python::def("MrvFileIsReaction", RDKit::MrvFileIsReaction,
+              (python::arg("filename")),
+              "returns whether or not an MRV file contains reaction data");
+  
+  python::def("MrvBlockIsReaction", RDKit::MrvBlockIsReaction,
+              (python::arg("mrvData")),
+              "returns whether or not an MRV block contains reaction data");
+
   python::def("ReactionsFromCDXMLFile", RDKit::ReactionsFromCDXMLFile,
               (python::arg("filename"), python::arg("sanitize") = false,
                python::arg("removeHs") = false),
               "construct a tuple of ChemicalReactions from a CDXML rxn file");
+
   python::def(
       "ReactionsFromCDXMLBlock", RDKit::ReactionsFromCDXMLBlock,
       (python::arg("rxnblock"), python::arg("sanitize") = false,
@@ -913,8 +930,11 @@ of the replacements argument.",
 
   python::def(
       "ReactionToMrvBlock", RDKit::ChemicalReactionToMrvBlock,
-      (python::arg("reaction")),
+      (python::arg("reaction"), python::arg("prettyPrint") = false),
       "construct a string in Marvin (MRV) rxn format for a ChemicalReaction");
+  python::def("ReactionToMrvFile", RDKit::ChemicalReactionToMrvFile,
+              (python::arg("reaction"), python::arg("prettyPrint") = false),
+              "write a Marvin (MRV) rxn file for a ChemicalReaction");
 
   python::def(
       "ReactionToV3KRxnBlock", RDKit::ChemicalReactionToV3KRxnBlock,
