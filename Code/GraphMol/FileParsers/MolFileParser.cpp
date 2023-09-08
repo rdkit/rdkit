@@ -1369,7 +1369,6 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
               text.substr(7, text.length() - 7));
 }
 
-namespace {
 void setRGPProps(const std::string_view symb, Atom *res) {
   PRECONDITION(res, "bad atom pointer");
   // set the dummy label so that this is shown correctly
@@ -1391,8 +1390,6 @@ void lookupAtomicNumber(Atom *res, const std::string &symb,
     }
   }
 }
-
-}  // namespace
 
 Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
                            unsigned int line, bool strictParsing) {
@@ -2442,6 +2439,37 @@ void tokenizeV3000Line(std::string_view line,
 #endif
 }
 
+bool calculate3dFlag(const RWMol &mol, const Conformer &conf,
+                     bool chiralityPossible) {
+  int marked3d = 0;
+  if (mol.getPropIfPresent(common_properties::_3DConf, marked3d)) {
+    mol.clearProp(common_properties::_3DConf);
+  }
+
+  bool nonzeroZ = hasNonZeroZCoords(conf);
+
+  if (!nonzeroZ && marked3d == 1) {
+    // If we have no Z coordinates, mark the structure 2D if we see any
+    // 2D stereo markers, or stay as 3D if
+    if (chiralityPossible) {
+      BOOST_LOG(rdWarningLog)
+          << "Warning: molecule is tagged as 3D, but all Z coords are zero and 2D stereo "
+             "markers have been found, marking the mol as 2D."
+          << std::endl;
+      return false;
+    }
+    return true;
+  } else if (marked3d == 0 && nonzeroZ) {
+    BOOST_LOG(rdWarningLog)
+        << "Warning: molecule is tagged as 2D, but at least one Z coordinate is not zero. "
+           "Marking the mol as 3D."
+        << std::endl;
+    return true;
+  }
+
+  return nonzeroZ;
+}
+
 void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
                          unsigned int nAtoms, RWMol *mol, Conformer *conf,
                          bool strictParsing) {
@@ -2543,20 +2571,8 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
     errout << "END ATOM line not found on line " << line;
     throw FileParseException(errout.str());
   }
-
-  bool nonzeroZ = hasNonZeroZCoords(*conf);
-  if (mol->hasProp(common_properties::_3DConf)) {
-    conf->set3D(true);
-    mol->clearProp(common_properties::_3DConf);
-    if (!nonzeroZ) {
-      BOOST_LOG(rdWarningLog)
-          << "Warning: molecule is tagged as 3D, but all Z coords are zero"
-          << std::endl;
-    }
-  } else {
-    conf->set3D(nonzeroZ);
-  }
 }
+
 void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
                          unsigned int nBonds, RWMol *mol,
                          bool &chiralityPossible) {
@@ -3168,6 +3184,8 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     fileComplete = true;
   }
 
+  auto is3d = calculate3dFlag(*mol, *conf, chiralityPossible);
+  conf->set3D(is3d);
   mol->addConformer(conf, true);
   conf = nullptr;
 
@@ -3183,24 +3201,13 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     conf->set3D(false);
   } else {
     ParseMolBlockAtoms(inStream, line, nAtoms, mol, conf, strictParsing);
-
-    bool nonzeroZ = hasNonZeroZCoords(*conf);
-    if (mol->hasProp(common_properties::_3DConf)) {
-      conf->set3D(true);
-      mol->clearProp(common_properties::_3DConf);
-      if (!nonzeroZ) {
-        BOOST_LOG(rdWarningLog)
-            << "Warning: molecule is tagged as 3D, but all Z coords are zero"
-            << std::endl;
-      }
-    } else {
-      conf->set3D(nonzeroZ);
-    }
   }
+  ParseMolBlockBonds(inStream, line, nBonds, mol, chiralityPossible);
+
+  auto is3d = calculate3dFlag(*mol, *conf, chiralityPossible);
+  conf->set3D(is3d);
   mol->addConformer(conf, true);
   conf = nullptr;
-
-  ParseMolBlockBonds(inStream, line, nBonds, mol, chiralityPossible);
 
   bool fileComplete =
       ParseMolBlockProperties(inStream, line, mol, strictParsing);
@@ -3242,21 +3249,31 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
     }
   }
 
+  // now that atom stereochem has been perceived, the wedging
+  // information is no longer needed, so we clear
+  // single bond dir flags:
+  MolOps::clearSingleBondDirFlags(*res);
+
   if (sanitize) {
     try {
       if (removeHs) {
+        // Bond stereo detection must happen before H removal, or
+        // else we might be removing stereogenic H atoms in double
+        // bonds (e.g. imines). But before we run stereo detection,
+        // we need to run mol cleanup so don't have trouble with
+        // e.g. nitro groups. Sadly, this a;; means we will find
+        // run both cleanup and ring finding twice (a fast find
+        // rings in bond stereo detection, and another in
+        // sanitization's SSSR symmetrization).
+        unsigned int failedOp = 0;
+        MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
+        MolOps::detectBondStereochemistry(*res);
         MolOps::removeHs(*res, false, false);
       } else {
         MolOps::sanitizeMol(*res);
+        MolOps::detectBondStereochemistry(*res);
       }
-      // now that atom stereochem has been perceived, the wedging
-      // information is no longer needed, so we clear
-      // single bond dir flags:
-      MolOps::clearSingleBondDirFlags(*res);
 
-      // unlike DetectAtomStereoChemistry we call detectBondStereochemistry
-      // here after sanitization because we need the ring information:
-      MolOps::detectBondStereochemistry(*res);
     } catch (...) {
       delete res;
       res = nullptr;
@@ -3264,12 +3281,6 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
     }
     MolOps::assignStereochemistry(*res, true, true, true);
   } else {
-    // we still need to do something about double bond stereochemistry
-    // (was github issue 337)
-    // now that atom stereochem has been perceived, the wedging
-    // information is no longer needed, so we clear
-    // single bond dir flags:
-    ClearSingleBondDirFlags(*res);
     MolOps::detectBondStereochemistry(*res);
   }
 
