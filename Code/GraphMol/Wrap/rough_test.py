@@ -7347,6 +7347,28 @@ CAS<~>
     self.assertEqual(sgs[1].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
     self.assertEqual(len(sgs[1].GetAtoms()), 1)
 
+  def testMrvHandling(self):
+    fn1 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','MarvinParse','test_data','aspirin.mrv')
+    mol = Chem.MolFromMrvFile(fn1)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(),13)
+    mrv = Chem.MolToMrvBlock(mol)
+    self.assertTrue('<molecule molID="m1">' in mrv)
+    self.assertFalse('<reaction>' in mrv)
+
+    fName = tempfile.NamedTemporaryFile(suffix='.mrv').name
+    self.assertFalse(os.path.exists(fName))
+    Chem.MolToMrvFile(mol,fName)
+    self.assertTrue(os.path.exists(fName))
+    os.unlink(fName)
+
+    with open(fn1,'r') as inf:
+      ind = inf.read()
+    mol = Chem.MolFromMrvBlock(ind)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(),13)
+
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

@@ -6529,6 +6529,173 @@ M  END
         Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
 }
 
+TEST_CASE("Calculate 2D/3D from coordinates", "[molblock]") {
+  SECTION("v2000, 2D structure marked as 3D without 2D stereo marks") {
+    const auto mol = R"CTAB(
+     RDKit          3D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981   -0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    2.2500    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1
+  2  3  1
+  2  4  1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+
+  SECTION("v2000, 2D structure marked as 3D with 2D stereo marks") {
+    const auto mol = R"CTAB(
+     RDKit          3D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981   -0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    2.2500    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  2  3  1  0
+  2  4  1  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(!conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+
+  SECTION("v2000, 3D structure marked as 2D") {
+    const auto mol = R"CTAB(
+     RDKit          2D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.0017    0.0135    0.0027 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8238    0.0150    0.0040 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0881   -0.3228    0.6346 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1772    0.9156   -0.0296 S   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1
+  2  3  1
+  2  4  1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+
+  SECTION("v3000, 2D structure marked as 3D without 2D stereo marks") {
+    const auto mol = R"CTAB(
+     RDKit          3D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.0912 0.945 0 0
+M  V30 2 C 2.4248 1.715 0 0
+M  V30 3 O 3.7586 0.945 0 0
+M  V30 4 S 2.4248 3.255 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+
+  SECTION("v3000, 2D structure marked as 3D with 2D stereo marks") {
+    const auto mol = R"CTAB(
+     RDKit          3D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.0912 0.945 0 0
+M  V30 2 C 2.4248 1.715 0 0 CFG=2
+M  V30 3 O 3.7586 0.945 0 0
+M  V30 4 S 2.4248 3.255 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(!conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+
+  SECTION("v3000, 3D structure marked as 2D") {
+    const auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.0033 0.0252 0.0052 0
+M  V30 2 C 1.5379 0.028 0.0075 0 CFG=2
+M  V30 3 O 2.0313 -0.6027 1.1846 0
+M  V30 4 S 2.1975 1.7092 -0.0554 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+}
+
 TEST_CASE(
     "GitHub Issue #6703: Exporting to mol marks imine bonds EITHERDOUBLE when imine H is implicit",
     "[bug][writer][stereo]") {
