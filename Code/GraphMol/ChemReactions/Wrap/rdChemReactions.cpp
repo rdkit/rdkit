@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2023, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
 //
 //  All rights reserved.
@@ -340,6 +340,44 @@ ChemicalReaction *ReactionFromMrvBlock(python::object imolBlock, bool sanitize,
   return newR;
 }
 
+python::object ReactionsFromCDXMLFile(const char *filename, bool sanitize,
+                                      bool removeHs) {
+  std::vector<std::unique_ptr<ChemicalReaction>> rxns;
+  try {
+    rxns = CDXMLFileToChemicalReactions(filename, sanitize, removeHs);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  python::list res;
+  for (auto &rxn : rxns) {
+    // take ownership of the data from the unique_ptr
+    res.append(std::shared_ptr<ChemicalReaction>(rxn.release()));
+  }
+  return python::tuple(res);
+}
+
+python::object ReactionsFromCDXMLBlock(python::object imolBlock, bool sanitize,
+                                       bool removeHs) {
+  std::istringstream inStream(pyObjectToString(imolBlock));
+  std::vector<std::unique_ptr<ChemicalReaction>> rxns;
+  try {
+    rxns = CDXMLDataStreamToChemicalReactions(inStream, sanitize, removeHs);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  python::list res;
+  for (auto &rxn : rxns) {
+    // take ownership of the data from the unique_ptr
+    res.append(std::shared_ptr<ChemicalReaction>(rxn.release()));
+  }
+  return python::tuple(res);
+}
+
 python::object GetReactingAtoms(const ChemicalReaction &self,
                                 bool mappedAtomsOnly) {
   python::list res;
@@ -541,7 +579,8 @@ Sample Usage:
   bool noproxy = true;
   RegisterVectorConverter<RDKit::ROMOL_SPTR>("MOL_SPTR_VECT", noproxy);
 
-  python::class_<RDKit::ChemicalReaction>(
+  python::class_<RDKit::ChemicalReaction,
+                 std::shared_ptr<RDKit::ChemicalReaction>>(
       "ChemicalReaction", docString.c_str(),
       python::init<>("Constructor, takes no arguments"))
       .def(python::init<const std::string &>())
@@ -868,9 +907,21 @@ of the replacements argument.",
   python::def("MrvFileIsReaction", RDKit::MrvFileIsReaction,
               (python::arg("filename")),
               "returns whether or not an MRV file contains reaction data");
+  
   python::def("MrvBlockIsReaction", RDKit::MrvBlockIsReaction,
               (python::arg("mrvData")),
               "returns whether or not an MRV block contains reaction data");
+
+  python::def("ReactionsFromCDXMLFile", RDKit::ReactionsFromCDXMLFile,
+              (python::arg("filename"), python::arg("sanitize") = false,
+               python::arg("removeHs") = false),
+              "construct a tuple of ChemicalReactions from a CDXML rxn file");
+
+  python::def(
+      "ReactionsFromCDXMLBlock", RDKit::ReactionsFromCDXMLBlock,
+      (python::arg("rxnblock"), python::arg("sanitize") = false,
+       python::arg("removeHs") = false),
+      "construct a tuple of ChemicalReactions from a string in CDXML format");
 
   python::def("ReactionToRxnBlock", RDKit::ChemicalReactionToRxnBlock,
               (python::arg("reaction"), python::arg("separateAgents") = false,

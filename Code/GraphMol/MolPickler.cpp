@@ -34,8 +34,8 @@ using std::uint32_t;
 
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 14;
-const int32_t MolPickler::versionMinor = 1;
+const int32_t MolPickler::versionMajor = 15;
+const int32_t MolPickler::versionMinor = 0;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -166,6 +166,7 @@ class PropTracker {
  public:
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
+  // the properties themselves are stored as std::int8_t
   const std::vector<std::pair<std::string, std::uint16_t>> explicitBondProps = {
       {RDKit::common_properties::_MolFileBondType, 0x1},
       {RDKit::common_properties::_MolFileBondStereo, 0x2},
@@ -175,6 +176,7 @@ class PropTracker {
   };
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
+  // the properties themselves are stored as std::int16_t
   const std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {
       {common_properties::molStereoCare, 0x1},
       {common_properties::molParity, 0x2},
@@ -1899,6 +1901,10 @@ void MolPickler::_pickleBond(std::ostream &ss, const Bond *bond,
   if (bond->getStereo() != Bond::STEREONONE) {
     flags |= 0x1 << 1;
   }
+  std::string endpts;
+  if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts)) {
+    flags |= 0x1;
+  }
   streamWrite(ss, flags);
 
   if (bond->getBondType() != Bond::SINGLE) {
@@ -1926,6 +1932,12 @@ void MolPickler::_pickleBond(std::ostream &ss, const Bond *bond,
     streamWrite(ss, BEGINQUERY);
     pickleQuery(ss, static_cast<const QueryBond *>(bond)->getQuery());
     streamWrite(ss, ENDQUERY);
+  }
+  if (!endpts.empty()) {
+    streamWrite(ss, endpts);
+    std::string attach = "ALL";
+    bond->getPropIfPresent(common_properties::_MolFileBondAttach, attach);
+    streamWrite(ss, attach);
   }
 }
 
@@ -2004,6 +2016,13 @@ Bond *MolPickler::_addBondFromPickle(std::istream &ss, ROMol *mol, int version,
         bond->setStereo(stereo);
       } else {
         bond->setStereo(Bond::STEREONONE);
+      }
+      if (flags & 0x1) {
+        std::string tmpStr;
+        streamRead(ss, tmpStr, version);
+        bond->setProp(common_properties::_MolFileBondEndPts, tmpStr);
+        streamRead(ss, tmpStr, version);
+        bond->setProp(common_properties::_MolFileBondAttach, tmpStr);
       }
     }
   }

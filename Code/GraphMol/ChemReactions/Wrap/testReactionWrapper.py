@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc. and
+#  Copyright (c) 2007-2023, Novartis Institutes for BioMedical Research Inc. and
 #  other RDKit contributors
 #
 #  All rights reserved.
@@ -1145,6 +1145,27 @@ M  END
     self.assertTrue(os.path.exists(fName))
     os.unlink(fName)
 
+  def testCDXML(self):
+    fname = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'test_data','CDXML','rxn2.cdxml')
+    rxns = AllChem.ReactionsFromCDXMLFile(fname)
+    self.assertEqual(len(rxns),1)
+    self.assertEqual(AllChem.ReactionToSmarts(rxns[0]),
+                     "[#6&D2:2]1:[#6&D2:3]:[#6&D2:4]:[#6&D3:1](:[#6&D2:5]:[#6&D2:6]:1)-[#17&D1].[#6&D3](-[#5&D2]-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1)(-[#8&D1])-[#8&D1]>>[#6:1]1=[#6:5]-[#6:6](=[#6:2]-[#6:3]=[#6:4]-1)-[#6:7]1-[#6:8]=[#6:9]-[#6:10]=[#6:11]-[#6:12]=1")
+    
+    rxns = AllChem.ReactionsFromCDXMLFile('does-not-exist.cdxml')
+    self.assertEqual(len(rxns),0)
+
+
+    with open(fname,'r') as inf:
+      cdxml = inf.read()
+    rxns = AllChem.ReactionsFromCDXMLBlock(cdxml)
+    self.assertEqual(len(rxns),1)
+    self.assertEqual(AllChem.ReactionToSmarts(rxns[0]),
+                     "[#6&D2:2]1:[#6&D2:3]:[#6&D2:4]:[#6&D3:1](:[#6&D2:5]:[#6&D2:6]:1)-[#17&D1].[#6&D3](-[#5&D2]-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1)(-[#8&D1])-[#8&D1]>>[#6:1]1=[#6:5]-[#6:6](=[#6:2]-[#6:3]=[#6:4]-1)-[#6:7]1-[#6:8]=[#6:9]-[#6:10]=[#6:11]-[#6:12]=1")
+
+    rxns = AllChem.ReactionsFromCDXMLBlock('')
+    self.assertEqual(len(rxns),0)
 
 
 if __name__ == '__main__':
