@@ -955,6 +955,10 @@ ROMol *molzipHelper(python::object &pmols, const MolzipParams &p) {
   return molzip(*mols, p).release();
 }
 
+python::tuple hasQueryHsHelper(const ROMol &m) {
+  return python::tuple(MolOps::hasQueryHs(m));
+}
+
 // we can really only set some of these types from C++ which means
 //  we need a helper function for testing that we can read them
 //  correctly.  
@@ -1325,10 +1329,12 @@ struct molops_wrapper {
 
     docString =
       "Check to see if the molecule has query Hs, this is normally used on query molecules\n\
-such as those returned from MolFromSmarts.  To check to see if the molecule has hydrogens\n\
-that cannot be merged with MergeQueryHs, use HasQueryHs(mol, unmergableOnly=True)";								     
-    python::def("HasQueryHs", MolOps::hasQueryHs,
-                (python::arg("mol"), python::arg("unmergableOnly") = false),
+such as those returned from MolFromSmarts.  \n\
+note: unmergableQueryHs cannot be removed with MergeQueryHs.\n\
+Example\n\
+  hasQueryHs, hasUnmergableQueryHs = HasQueryHs(mol)\n";
+    python::def("HasQueryHs", hasQueryHsHelper,
+                python::arg("mol"),
 		docString.c_str());
 
 
