@@ -155,7 +155,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3912.1.svg", 2513727029U},
     {"testGithub3912.2.svg", 3814673891U},
     {"testGithub2976.svg", 2669316911U},
-    {"testReactionCoords.svg", 3830348196U},
+    {"testReactionCoords.svg", 402445764U},
     {"testAnnotationColors.svg", 2216313312U},
     {"testGithub4323_1.svg", 2536621192U},
     {"testGithub4323_2.svg", 2120846759U},
@@ -306,13 +306,17 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"github6504_2.svg", 2871662880U},
     {"github6569_1.svg", 116573839U},
     {"github6569_2.svg", 2367779037U},
-    {"lasso_highlights_1.svg", 1024307046U},
-    {"lasso_highlights_2.svg", 637616295U},
-    {"lasso_highlights_3.svg", 2318220475U},
-    {"lasso_highlights_4.svg", 235663789U},
-    {"lasso_highlights_5.svg", 2913683946U},
-    {"lasso_highlights_6.svg", 1087545472U},
-    {"lasso_highlights_7.svg", 3119874886U}};
+    {"lasso_highlights_1.svg", 1259621911U},
+    {"lasso_highlights_2.svg", 39607542U},
+    {"lasso_highlights_3.svg", 2744227900U},
+    {"lasso_highlights_4.svg", 307369790U},
+    {"lasso_highlights_5.svg", 1103195299U},
+    {"lasso_highlights_6.svg", 3501858565U},
+    {"lasso_highlights_7.svg", 4002684466U},
+    {"testGithub6685_1.svg", 1835717197U},
+    {"testGithub6685_2.svg", 116380465U},
+    {"testGithub6685_3.svg", 409385402U},
+    {"testGithub6685_4.svg", 1239628830U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -8657,5 +8661,352 @@ M  END)RXN";
     REQUIRE_THROWS_AS(MolDraw2DUtils::setACS1996Options(
         drawer.drawOptions(),
         MolDraw2DUtils::meanBondLength(*(*reactIter)) * 0.7), ValueErrorException);
+  }
+}
+
+TEST_CASE("Github 6685 - flexicanvas cuts off bottom of reaction") {
+  std::string baseName = "testGithub6685_";
+
+  auto checkImage = [](const std::string &text) {
+    // extract the dimensions of the image
+    std::regex getDims("width='(\\d+)px' height='(\\d+)px' viewBox=");
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), getDims);
+    auto width = stod((*match_begin)[1]);
+    auto height = stod((*match_begin)[2]);
+    std::regex bond(
+        "<path class='bond-\\d+ atom-\\d+ atom-\\d+' d='M (-?\\d+.\\d+),(-?\\d+.\\d+) L (-?\\d+.\\d+),(-?\\d+.\\d+)' style=");
+    std::regex character(
+        "Q (-?\\d+.\\d+) (-?\\d+.\\d+), (-?\\d+.\\d+) (-?\\d+.\\d+)");
+    for (const auto &reg : {bond, character}) {
+      match_begin = std::sregex_iterator(text.begin(), text.end(), reg);
+      auto match_end = std::sregex_iterator();
+      for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+        std::smatch match = *i;
+        auto x1 = stod(match[1]);
+        auto y1 = stod(match[2]);
+        auto x2 = stod(match[3]);
+        auto y2 = stod(match[4]);
+        REQUIRE(x1 >= 0);
+        REQUIRE(x1 <= width);
+        REQUIRE((y1 >= 0 && y1 <= height));
+        REQUIRE(y1 <= height);
+        REQUIRE(x2 >= 0);
+        REQUIRE(x2 <= width);
+        REQUIRE(y2 >= 0);
+        REQUIRE(y2 <= height);
+      }
+    }
+  };
+
+  {
+    const char *rxnBlock = R"RXN($RXN
+
+      Mrv1920  090120231611
+
+  3  1
+$MOL
+
+  Mrv1920 09012316112D
+
+  1  0  0  0  0  0            999 V2000
+  -12.3227   -0.2785    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 11 11  0  0  0  0            999 V2000
+   -6.0796   -0.5503    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -6.7352   -0.0493    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.6291    0.7688    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4967   -0.3666    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1522    0.1344    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.9137   -0.1829    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.5692    0.3181    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.3307    0.0008    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.4370   -0.8173    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.7813   -1.3182    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0199   -1.0009    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  2  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  4  0  0  0  0
+  7  8  4  0  0  0  0
+  8  9  4  0  0  0  0
+  9 10  4  0  0  0  0
+ 10 11  4  0  0  0  0
+ 11  6  4  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 10 10  0  0  0  0            999 V2000
+   -3.2982    1.9786    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4043    1.1605    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7488    0.6596    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9872    0.9767    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8547   -0.1585    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1992   -0.6594    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3055   -1.4777    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0669   -1.7949    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7225   -1.2939    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6163   -0.4759    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  3  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10  5  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 20 21  0  0  0  0            999 V2000
+    7.3862    1.9786    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.2800    1.1605    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.9356    0.6596    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6971    0.9768    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.8294   -0.1586    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.4850   -0.6595    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3789   -1.4777    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6173   -1.7950    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9619   -1.2939    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0679   -0.4758    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.4124    0.0252    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5186    0.8432    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6509   -0.2920    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9954    0.2089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2337   -0.1084    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5784    0.3926    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8166    0.0753    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7107   -0.7427    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3661   -1.2438    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1276   -0.9266    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  3  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+ 11 13  1  0  0  0  0
+ 13 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 16  4  0  0  0  0
+ 16 17  4  0  0  0  0
+ 17 18  4  0  0  0  0
+ 18 19  4  0  0  0  0
+ 19 20  4  0  0  0  0
+ 10  5  1  0  0  0  0
+ 20 15  4  0  0  0  0
+M  END)RXN";
+
+    std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
+    MolDraw2DSVG drawer(-1, -1);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs((baseName + "1.svg").c_str());
+    outs << text;
+    outs.close();
+
+    checkImage(text);
+    check_file_hash(baseName + "1.svg");
+  }
+  {
+    const char *rxnBlock = R"RXN($RXN
+
+      Mrv1920  090220231847
+
+  2  1
+$MOL
+
+  Mrv1920 09022318472D
+
+  2  1  0  0  0  0            999 V2000
+   -7.4817   -0.2130    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.6567   -0.2130    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09022318472D
+
+  9  8  0  0  0  0            999 V2000
+   -3.3781    2.1354    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5235    1.3233    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2996    1.0435    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8932    0.7914    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0387   -0.0206    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7812   -0.3803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8567   -1.3430    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4672   -0.6157    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6500   -0.5031    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  2  0  0  0  0
+  8  5  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09022318472D
+
+  8  8  0  0  0  0            999 V2000
+    5.5359   -0.2650    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3537    1.0574    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6115    0.6978    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7993    0.8433    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4102    0.1159    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9815   -0.4790    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.7240   -0.1195    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5929    0.0033    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  4  0  0  0  0
+  5  6  4  0  0  0  0
+  6  7  4  0  0  0  0
+  7  1  1  0  0  0  0
+  7  3  4  0  0  0  0
+  5  8  1  0  0  0  0
+M  END)RXN";
+
+    std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
+    MolDraw2DSVG drawer(-1, -1);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs((baseName + "2.svg").c_str());
+    outs << text;
+    outs.close();
+    checkImage(text);
+    check_file_hash(baseName + "2.svg");
+  }
+  {
+    const char *rxnBlock = R"RXN($RXN
+
+      Mrv1920  090220231850
+
+  1  2
+$MOL
+
+  Mrv1920 09022318502D
+
+ 20 22  0  0  0  0            999 V2000
+   -2.4533   -0.5079    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0179    0.0939    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8212   -0.0941    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0600   -0.8837    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.8633   -1.0715    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.4277   -0.4698    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.2311   -0.6577    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.7954   -0.0558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.5987   -0.2436    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.8377   -1.0333    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.2734   -1.6351    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.4701   -1.4473    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.1888    0.3199    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3855    0.5077    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1465    1.2974    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7110    1.8993    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5142    1.7114    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.7532    0.9218    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4957   -1.4854    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6923   -1.2975    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  3  0  0  0
+  6  7  1  0  0  0  0
+  7  8  4  0  0  0  0
+  8  9  4  0  0  0  0
+  9 10  4  0  0  0  0
+ 10 11  4  0  0  0  0
+ 11 12  4  0  0  0  0
+  6 13  1  0  0  0  0
+ 13 14  4  0  0  0  0
+ 14 15  4  0  0  0  0
+ 15 16  4  0  0  0  0
+ 16 17  4  0  0  0  0
+ 17 18  4  0  0  0  0
+  4 19  4  0  0  0  0
+ 19 20  4  0  0  0  0
+ 20  1  4  0  0  0  0
+ 12  7  4  0  0  0  0
+ 18 13  4  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09022318502D
+
+  7  7  0  0  0  0            999 V2000
+    5.5920    0.3948    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0277    0.9966    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2244    0.8087    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9855    0.0191    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1821   -0.1689    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5499   -0.5827    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3531   -0.3949    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  1  0  0  0  0
+  4  6  4  0  0  0  0
+  6  7  4  0  0  0  0
+  7  1  4  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09022318502D
+
+  1  0  0  0  0  0            999 V2000
+    8.3990    0.0732    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+)RXN";
+
+    std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
+    MolDraw2DSVG drawer(-1, -1);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs((baseName + "3.svg").c_str());
+    outs << text;
+    outs.close();
+    checkImage(text);
+    check_file_hash(baseName + "3.svg");
+  }
+  {
+    // This one was clipped on the right hand side at one point.
+    std::string smarts(
+        "[cH:1]1[cH:2][cH:3][c:4][cH:5][cH:6]1>>[cH:3]1[cH:2][c:1]([cH:6][cH:5][c:4]1)Cl");
+    bool useSmiles = true;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(smarts, nullptr, useSmiles));
+    MolDraw2DSVG drawer(600, 150);
+    drawer.drawOptions().padding = 0.0;
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs((baseName + "4.svg").c_str());
+    outs << text;
+    outs.close();
+    checkImage(text);
+    check_file_hash(baseName + "4.svg");
   }
 }
