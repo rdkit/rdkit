@@ -1269,19 +1269,17 @@ bool needsHs(const ROMol &mol) {
   return false;
 }
 
-bool hasQueryHs(const ROMol &mol, bool unmergableOnly) {
-  int unmergableHs = 0;
-  int mergableHs = 0;
+std::pair<bool,bool> hasQueryHs(const ROMol &mol) {
+  bool queryHs = false;
   // We don't care about announcing ORs or other items during isQueryH
   RDLog::LogStateSetter blocker;
 
   for (const auto atom : mol.atoms()) {
     switch (isQueryH(atom)) {
-      case HydrogenType::QueryHydrogen:
-        mergableHs += 1;
-        break;
       case HydrogenType::UnMergableQueryHydrogen:
-        unmergableHs += 1;
+          return std::make_pair(true, true);
+      case HydrogenType::QueryHydrogen:
+        queryHs = true;
         break;
     default: // HydrogenType::NotAHydrogen:
         break;
@@ -1290,9 +1288,11 @@ bool hasQueryHs(const ROMol &mol, bool unmergableOnly) {
       if (atom->getQuery()->getDescription() == "RecursiveStructure") {
         auto *rsq = dynamic_cast<RecursiveStructureQuery *>(atom->getQuery());
         CHECK_INVARIANT(rsq, "could not convert recursive structure query");
-        if (hasQueryHs(*rsq->getQueryMol(), unmergableOnly)) {
-          return true;
+        auto res = hasQueryHs(*rsq->getQueryMol());
+        if(res.second) { // unmergableH implies queryH
+            return res;
         }
+        queryHs |= res.first;
       }
 
       // FIX: shouldn't be repeating this code here -- yet again!
@@ -1304,9 +1304,11 @@ bool hasQueryHs(const ROMol &mol, bool unmergableOnly) {
         if (qry->getDescription() == "RecursiveStructure") {
           auto *rsq = dynamic_cast<RecursiveStructureQuery *>(qry.get());
           CHECK_INVARIANT(rsq, "could not convert recursive structure query");
-          if (hasQueryHs(*rsq->getQueryMol(), unmergableOnly)) {
-            return true;
+          auto res = hasQueryHs(*rsq->getQueryMol());
+          if(res.second) {
+            return res;
           }
+          queryHs |= res.first;
         } else {
           childStack.insert(childStack.end(), qry->beginChildren(),
                             qry->endChildren());
@@ -1315,7 +1317,7 @@ bool hasQueryHs(const ROMol &mol, bool unmergableOnly) {
     }
   }  // end of recursion loop
 
-  return unmergableOnly ? unmergableHs > 0 : unmergableHs > 0 || mergableHs > 0;
+  return std::make_pair(queryHs, false);
 }
 
 }  // namespace MolOps

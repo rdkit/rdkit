@@ -309,17 +309,17 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
                                         bool mergeUnmappedOnly = false,
                                         bool mergeIsotopes = false);
 
-//! returns true if the molecule has queryHs
+//! returns a pair of booleans (hasQueryHs, hasUnmergaebleQueryHs)
 /*!
   This is really intended to be used with molecules that contain QueryAtoms
   such as when checking smarts patterns for explicit hydrogens
+   
 
-  \param mol the molecule to remove Hs from
-  \param unmergableOnly set to true if you only want to find unmergable hs
-          these are generally hydrogens in OR clauses or isotopic hydrogens
-  \return true if the molecule has query hydrogens
+  \param mol the molecule to check for query Hs from
+  \return std::pair  if pair.first is true if the molecule has query hydrogens, if pair.second
+                     is true, the queryHs cannot be removed my mergeQueryHs
 */
-RDKIT_GRAPHMOL_EXPORT bool hasQueryHs(const ROMol &mol, bool unnmergableOnly = false);
+RDKIT_GRAPHMOL_EXPORT std::pair<bool,bool> hasQueryHs(const ROMol &mol);
 
 typedef enum {
   ADJUST_IGNORENONE = 0x0,
