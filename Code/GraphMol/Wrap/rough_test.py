@@ -7309,7 +7309,7 @@ CAS<~>
     self.assertEqual(len(sgs[1].GetAtoms()), 1)
 
   def testHasQueryHs(self):
-    for sma, hasQHsin in [
+    for sma, hasQHs in [
         ("[#1]", (True, False)),
         ("[#1,N]", (True, True)),
         ("[$(C-[H])]", (True, False)),
