@@ -1716,9 +1716,9 @@ void testBadBondOrders() {
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/bondorder9.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
-  TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->hasQuery());
-  TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getQuery()->getDescription() ==
-              "BondNull");
+  TEST_ASSERT(!m->getBondBetweenAtoms(0, 1)->hasQuery());
+  TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
+
   delete m;
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -4906,6 +4906,19 @@ void testMolFileDativeBonds() {
 
     std::string smiles = MolToSmiles(*m);
     TEST_ASSERT(smiles == "CCC(=O)O->[Cu]<-OC(O)CC");
+
+    delete m;
+  }
+
+  {
+    std::string fName = rdbase + "DativeBond2000.mol";
+    RWMol *m = MolFileToMol(fName,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumBonds() == 5);
+    TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);
+
+    std::string smiles = MolToSmiles(*m);
+    TEST_ASSERT(smiles == "CC(C)->[Mg](Cl)Cl");
 
     delete m;
   }

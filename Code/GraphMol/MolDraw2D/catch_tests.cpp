@@ -50,257 +50,273 @@ static const bool DELETE_WITH_GOOD_HASH = true;
 // These values are for a build with FreeType, so expect them all to be
 // wrong when building without.
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"testAtomTags_1.svg", 146691388U},
-    {"testAtomTags_2.svg", 3210393969U},
-    {"testAtomTags_3.svg", 2131854465U},
-    {"contourMol_1.svg", 3218870758U},
-    {"contourMol_2.svg", 2353351393U},
-    {"contourMol_3.svg", 3493070184U},
-    {"contourMol_4.svg", 764999893U},
-    {"testDativeBonds_1.svg", 555607912U},
-    {"testDativeBonds_2.svg", 2355686690U},
-    {"testDativeBonds_3.svg", 3944956974U},
-    {"testDativeBonds_2a.svg", 1026259021U},
-    {"testDativeBonds_2b.svg", 3842058701U},
-    {"testDativeBonds_2c.svg", 1000280203U},
-    {"testDativeBonds_2d.svg", 3605527201U},
-    {"testZeroOrderBonds_1.svg", 582365640U},
-    {"testFoundations_1.svg", 767448647U},
-    {"testFoundations_2.svg", 1248494165U},
-    {"testTest_1.svg", 1248494165U},
-    {"testKekulizationProblems_1.svg", 3747357148U},
-    {"testAtomBondIndices_1.svg", 3247225756U},
-    {"testAtomBondIndices_2.svg", 2812688864U},
-    {"testAtomBondIndices_3.svg", 3653054459U},
-    {"testAtomBondIndices_4.svg", 635195563U},
-    {"testAtomBondIndices_5.svg", 23594241U},
-    {"testAtomBondIndices_6.svg", 1127540948U},
-    {"testGithub3226_1.svg", 4099803989U},
-    {"testGithub3226_2.svg", 3134615187U},
-    {"testGithub3226_3.svg", 1488097417U},
-    {"testGithub3369_1.svg", 4165525787U},
-    {"testIncludeRadicals_1a.svg", 2528551797U},
-    {"testIncludeRadicals_1b.svg", 3075507489U},
-    {"testLegendsAndDrawing-1.svg", 1693176512U},
-    {"testGithub3577-1.svg", 3974438540U},
-    {"testHandDrawn-1.svg", 799391905U},
-    {"testHandDrawn-2.svg", 1696668329U},
-    {"testHandDrawn-3.svg", 3293983707U},
-    {"testHandDrawn-4.svg", 3348972281U},
-    {"testHandDrawn-5a.svg", 1171105985U},
-    {"testHandDrawn-5b.svg", 1165866976U},
-    {"testBrackets-1a.svg", 3257646535U},
-    {"testBrackets-1b.svg", 776088825U},
-    {"testBrackets-1c.svg", 3257646535U},
-    {"testBrackets-1d.svg", 776088825U},
-    {"testBrackets-1e.svg", 1202405256U},
-    {"testBrackets-2a.svg", 728321376U},
-    {"testBrackets-2b.svg", 1408188695U},
-    {"testBrackets-2c.svg", 728321376U},
-    {"testBrackets-2d.svg", 1408188695U},
-    {"testBrackets-3a.svg", 791450653U},
-    {"testBrackets-4a.svg", 769125635U},
-    {"testBrackets-4b.svg", 4066682338U},
-    {"testBrackets-5a.svg", 1388227932U},
-    {"testBrackets-5768.svg", 3070888879U},
-    {"testSGroupData-1a.svg", 1463366807U},
-    {"testSGroupData-1b.svg", 223883202U},
-    {"testSGroupData-2a.svg", 3547547260U},
-    {"testSGroupData-2b.svg", 2573013307U},
-    {"testSGroupData-3a.svg", 2220120573U},
-    {"testPositionVariation-1.svg", 444914699U},
-    {"testPositionVariation-1b.svg", 3646629289U},
-    {"testPositionVariation-2.svg", 624353208U},
-    {"testPositionVariation-3.svg", 3408717052U},
-    {"testPositionVariation-4.svg", 4125874052U},
-    {"testNoAtomLabels-1.svg", 2648234379U},
-    {"testNoAtomLabels-2.svg", 3213096674U},
-    {"testQueryBonds-1a.svg", 713354870U},
-    {"testQueryBonds-1b.svg", 2517713542U},
-    {"testQueryBonds-1c.svg", 3119135647U},
-    {"testQueryBonds-2.svg", 69341882U},
-    {"testLinkNodes-2-0.svg", 2952965907U},
-    {"testLinkNodes-2-30.svg", 4117540200U},
-    {"testLinkNodes-2-60.svg", 520576199U},
-    {"testLinkNodes-2-90.svg", 1403605120U},
-    {"testLinkNodes-2-120.svg", 3607355853U},
-    {"testLinkNodes-2-150.svg", 177350824U},
-    {"testLinkNodes-2-180.svg", 3809030739U},
-    {"testMolAnnotations-1.svg", 1091624544U},
-    {"testMolAnnotations-2a.svg", 2203886283U},
-    {"testMolAnnotations-2b.svg", 400443600U},
-    {"testMolAnnotations-2c.svg", 3954034822U},
-    {"testMolAnnotations-3a.svg", 1752047273U},
-    {"testMolAnnotations-3b.svg", 2068377089U},
-    {"testMolAnnotations-3c.svg", 4288169182U},
-    {"testMolAnnotations-3d.svg", 1514775509U},
-    {"testMolAnnotations-4a.svg", 569955128U},
-    {"testLinkNodes-1-0.svg", 2929724949U},
-    {"testLinkNodes-1-30.svg", 800625899U},
-    {"testLinkNodes-1-60.svg", 609508172U},
-    {"testLinkNodes-1-90.svg", 2665766032U},
-    {"testLinkNodes-1-120.svg", 992989277U},
-    {"testLinkNodes-1-150.svg", 1392691166U},
-    {"testLinkNodes-1-180.svg", 130695597U},
-    {"testGithub3744.svg", 2774492807U},
-    {"testAtomLists-1.svg", 2751373083U},
-    {"testAtomLists-2.svg", 385738799U},
-    {"testIsoDummyIso.svg", 1696129196U},
-    {"testNoIsoDummyIso.svg", 2004687512U},
-    {"testIsoNoDummyIso.svg", 2734544682U},
-    {"testNoIsoNoDummyIso.svg", 918094584U},
-    {"testDeuteriumTritium.svg", 2634768249U},
-    {"testHydrogenBonds1.svg", 4137715598U},
-    {"testHydrogenBonds2.svg", 2044702263U},
-    {"testGithub3912.1.svg", 3081580881U},
-    {"testGithub3912.2.svg", 1662866562U},
-    {"testGithub2976.svg", 971026582U},
-    {"testReactionCoords.svg", 4128536127U},
-    {"testAnnotationColors.svg", 445523422U},
-    {"testGithub4323_1.svg", 1993234598U},
-    {"testGithub4323_2.svg", 2933922429U},
-    {"testGithub4323_3.svg", 1773544359U},
-    {"testGithub4323_4.svg", 213795827U},
-    {"testGithub4238_1.svg", 629357140U},
-    {"testGithub4508_1.svg", 3784765069U},
-    {"testGithub4508_1b.svg", 3433942203U},
-    {"testGithub4508_2.svg", 326155865U},
-    {"testGithub4508_2b.svg", 662225995U},
-    {"testGithub4538.svg", 3198623323U},
-    {"testDarkMode.1.svg", 1977391752U},
-    {"testMonochrome.1.svg", 1776897420U},
-    {"testMonochrome.2.svg", 399259780U},
-    {"testAvalon.1.svg", 1614166818U},
-    {"testCDK.1.svg", 3108685638U},
-    {"testGithub4519_1.svg", 473230604U},
-    {"testGithub4519_2.svg", 2515716875U},
-    {"testGithub4519_3.svg", 1017109741U},
-    {"testGithub4519_4.svg", 645908829U},
-    {"testBaseFontSize.1a.svg", 3939288880U},
-    {"testBaseFontSize.1b.svg", 2617787443U},
-    {"testBaseFontSize.2a.svg", 1031690455U},
-    {"testBaseFontSize.2b.svg", 3440038194U},
-    {"testFlexiCanvas.1a.svg", 3145560884U},
-    {"testFlexiCanvas.1b.svg", 1140847713U},
-    {"testFlexiCanvas.1c.svg", 2832891200U},
-    {"testFlexiCanvas.1d.svg", 4220526884U},
-    {"testFlexiCanvas.2.svg", 1185770886U},
-    {"testSemiFlexiCanvas.1a.svg", 414967968U},
-    {"testSemiFlexiCanvas.1b.svg", 367831852U},
-    {"testSemiFlexiCanvas.1c.svg", 316673185U},
-    {"testFlexiCanvas.3.svg", 3822475112U},
-    {"testFlexiCanvas.4a.svg", 438150211U},
-    {"testFlexiCanvas.4b.svg", 2015277207U},
-    {"testFlexiCanvas.4c.svg", 3138663789U},
-    {"testFlexiCanvas.4d.svg", 1950746506U},
-    {"testFlexiCanvas.5a.svg", 1204456580U},
-    {"testFlexiCanvas.5b.svg", 4164471763U},
-    {"testFlexiCanvas.5c.svg", 2381227232U},
-    {"testFlexiCanvas.5d.svg", 2157866153U},
-    {"testFlexiCanvas.6a.svg", 4104973953U},
-    {"testFlexiCanvas.6b.svg", 2392263541U},
-    {"testFlexiCanvas.6c.svg", 4104973953U},
-    {"testFlexiCanvas.6d.svg", 4104973953U},
-    {"testFlexiCanvas.7a.svg", 918094125U},
-    {"testFlexiCanvas.7b.svg", 4094511140U},
-    {"testFlexiCanvas.7c.svg", 918094125U},
-    {"testFlexiCanvas.7d.svg", 918094125U},
-    {"testGithub4764.sz1.svg", 1112373450U},
-    {"testGithub4764.sz2.svg", 3676136052U},
-    {"testGithub4764.sz3.svg", 2565894452U},
-    {"testDrawArc1.svg", 4039810147U},
-    {"testMetalWedges.svg", 3278785383U},
-    {"testVariableLegend_1.svg", 3914441319U},
-    {"testVariableLegend_2.svg", 3458084009U},
-    {"testVariableLegend_3.svg", 1996551457U},
-    {"testGithub_5061.svg", 2698477851U},
-    {"testGithub_5185.svg", 2944445711U},
-    {"testGithub_5269_1.svg", 2884233026U},
-    {"testGithub_5269_2.svg", 2987891082U},
-    {"test_classes_wavy_bonds.svg", 1271445012U},
+    {"testAtomTags_1.svg", 3187798125U},
+    {"testAtomTags_2.svg", 822910240U},
+    {"testAtomTags_3.svg", 2244078420U},
+    {"contourMol_1.svg", 1854090324U},
+    {"contourMol_2.svg", 3666750661U},
+    {"contourMol_3.svg", 4287715238U},
+    {"contourMol_4.svg", 250853502U},
+    {"testDativeBonds_1.svg", 2877255976U},
+    {"testDativeBonds_2.svg", 2510476717U},
+    {"testDativeBonds_3.svg", 3256011686U},
+    {"testDativeBonds_2a.svg", 3936523099U},
+    {"testDativeBonds_2b.svg", 1652957675U},
+    {"testDativeBonds_2c.svg", 630355005U},
+    {"testDativeBonds_2d.svg", 2346072497U},
+    {"testZeroOrderBonds_1.svg", 3733430366U},
+    {"testFoundations_1.svg", 2350247048U},
+    {"testFoundations_2.svg", 15997352U},
+    {"testTest_1.svg", 15997352U},
+    {"testKekulizationProblems_1.svg", 3009056821U},
+    {"testAtomBondIndices_1.svg", 2702803018U},
+    {"testAtomBondIndices_2.svg", 1564350363U},
+    {"testAtomBondIndices_3.svg", 2316486733U},
+    {"testAtomBondIndices_4.svg", 1200363593U},
+    {"testAtomBondIndices_5.svg", 1502163147U},
+    {"testAtomBondIndices_6.svg", 1659568104U},
+    {"testGithub3226_1.svg", 831257877U},
+    {"testGithub3226_2.svg", 3517325227U},
+    {"testGithub3226_3.svg", 3609721552U},
+    {"testGithub3369_1.svg", 3091976328U},
+    {"testIncludeRadicals_1a.svg", 1829641340U},
+    {"testIncludeRadicals_1b.svg", 4184066907U},
+    {"testLegendsAndDrawing-1.svg", 3563802758U},
+    {"testGithub3577-1.svg", 1294276543U},
+    {"testHandDrawn-1.svg", 2253418236U},
+    {"testHandDrawn-2.svg", 4132716144U},
+    {"testHandDrawn-3.svg", 4199337510U},
+    {"testHandDrawn-4.svg", 4197407865U},
+    {"testHandDrawn-5a.svg", 3628607349U},
+    {"testHandDrawn-5b.svg", 2522138089U},
+    {"testBrackets-1a.svg", 4189399574U},
+    {"testBrackets-1b.svg", 3773894816U},
+    {"testBrackets-1c.svg", 4189399574U},
+    {"testBrackets-1d.svg", 3773894816U},
+    {"testBrackets-1e.svg", 2492125470U},
+    {"testBrackets-2a.svg", 1050851904U},
+    {"testBrackets-2b.svg", 776446765U},
+    {"testBrackets-2c.svg", 1050851904U},
+    {"testBrackets-2d.svg", 776446765U},
+    {"testBrackets-3a.svg", 1374944956U},
+    {"testBrackets-4a.svg", 3837821771U},
+    {"testBrackets-4b.svg", 1477006167U},
+    {"testBrackets-5a.svg", 3061667963U},
+    {"testBrackets-5768.svg", 2559120196U},
+    {"testSGroupData-1a.svg", 426096222U},
+    {"testSGroupData-1b.svg", 1688385103U},
+    {"testSGroupData-2a.svg", 195363059U},
+    {"testSGroupData-2b.svg", 942041938U},
+    {"testSGroupData-3a.svg", 2405789536U},
+    {"testPositionVariation-1.svg", 1347003808U},
+    {"testPositionVariation-1b.svg", 174339626U},
+    {"testPositionVariation-2.svg", 473948585U},
+    {"testPositionVariation-3.svg", 4039188982U},
+    {"testPositionVariation-4.svg", 3407574474U},
+    {"testNoAtomLabels-1.svg", 4255907058U},
+    {"testNoAtomLabels-2.svg", 3643749531U},
+    {"testQueryBonds-1a.svg", 1525751327U},
+    {"testQueryBonds-1b.svg", 3339941561U},
+    {"testQueryBonds-1c.svg", 375371096U},
+    {"testQueryBonds-2.svg", 3399320861U},
+    {"testLinkNodes-2-0.svg", 145749789U},
+    {"testLinkNodes-2-30.svg", 3203923109U},
+    {"testLinkNodes-2-60.svg", 2004079267U},
+    {"testLinkNodes-2-90.svg", 171994932U},
+    {"testLinkNodes-2-120.svg", 673333745U},
+    {"testLinkNodes-2-150.svg", 51965551U},
+    {"testLinkNodes-2-180.svg", 433020402U},
+    {"testMolAnnotations-1.svg", 1638024035U},
+    {"testMolAnnotations-2a.svg", 3029896996U},
+    {"testMolAnnotations-2b.svg", 3110016833U},
+    {"testMolAnnotations-2c.svg", 611992302U},
+    {"testMolAnnotations-3a.svg", 55379064U},
+    {"testMolAnnotations-3b.svg", 936144383U},
+    {"testMolAnnotations-3c.svg", 3983292921U},
+    {"testMolAnnotations-3d.svg", 748075045U},
+    {"testMolAnnotations-4a.svg", 3474490519U},
+    {"testLinkNodes-1-0.svg", 3845035394U},
+    {"testLinkNodes-1-30.svg", 3207457801U},
+    {"testLinkNodes-1-60.svg", 2620138210U},
+    {"testLinkNodes-1-90.svg", 1457485851U},
+    {"testLinkNodes-1-120.svg", 4267267665U},
+    {"testLinkNodes-1-150.svg", 574622776U},
+    {"testLinkNodes-1-180.svg", 2541146503U},
+    {"testGithub3744.svg", 387800653U},
+    {"testAtomLists-1.svg", 1887579391U},
+    {"testAtomLists-2.svg", 555139782U},
+    {"testIsoDummyIso.svg", 2405371137U},
+    {"testNoIsoDummyIso.svg", 748558214U},
+    {"testIsoNoDummyIso.svg", 3054263824U},
+    {"testNoIsoNoDummyIso.svg", 1185561148U},
+    {"testDeuteriumTritium.svg", 1867318569U},
+    {"testHydrogenBonds1.svg", 2605974904U},
+    {"testHydrogenBonds2.svg", 645414593U},
+    {"testGithub3912.1.svg", 2513727029U},
+    {"testGithub3912.2.svg", 3814673891U},
+    {"testGithub2976.svg", 2669316911U},
+    {"testReactionCoords.svg", 402445764U},
+    {"testAnnotationColors.svg", 2216313312U},
+    {"testGithub4323_1.svg", 2536621192U},
+    {"testGithub4323_2.svg", 2120846759U},
+    {"testGithub4323_3.svg", 4156867630U},
+    {"testGithub4323_4.svg", 3824125601U},
+    {"testGithub4238_1.svg", 2621118499U},
+    {"testGithub4508_1.svg", 2047652713U},
+    {"testGithub4508_1b.svg", 2681019776U},
+    {"testGithub4508_2.svg", 1382076550U},
+    {"testGithub4508_2b.svg", 4005636724U},
+    {"testGithub4538.svg", 2797362550U},
+    {"testDarkMode.1.svg", 4157562958U},
+    {"testMonochrome.1.svg", 482290994U},
+    {"testMonochrome.2.svg", 2128285153U},
+    {"testAvalon.1.svg", 477303888U},
+    {"testCDK.1.svg", 1764612361U},
+    {"testGithub4519_1.svg", 736612670U},
+    {"testGithub4519_2.svg", 171503813U},
+    {"testGithub4519_3.svg", 3396792960U},
+    {"testGithub4519_4.svg", 3924693257U},
+    {"testBaseFontSize.1a.svg", 1295117205U},
+    {"testBaseFontSize.1b.svg", 3595811515U},
+    {"testBaseFontSize.2a.svg", 2958687877U},
+    {"testBaseFontSize.2b.svg", 1786972332U},
+    {"testFlexiCanvas.1a.svg", 2633733362U},
+    {"testFlexiCanvas.1b.svg", 1541095928U},
+    {"testFlexiCanvas.1c.svg", 3204351481U},
+    {"testFlexiCanvas.1d.svg", 1753089731U},
+    {"testFlexiCanvas.2.svg", 665664909U},
+    {"testSemiFlexiCanvas.1a.svg", 1541095928U},
+    {"testSemiFlexiCanvas.1b.svg", 3020732451U},
+    {"testSemiFlexiCanvas.1c.svg", 4178696811U},
+    {"testFlexiCanvas.3.svg", 2819587550U},
+    {"testFlexiCanvas.4a.svg", 1486952473U},
+    {"testFlexiCanvas.4b.svg", 1957607740U},
+    {"testFlexiCanvas.4c.svg", 3955371857U},
+    {"testFlexiCanvas.4d.svg", 1137945621U},
+    {"testFlexiCanvas.5a.svg", 3968863584U},
+    {"testFlexiCanvas.5b.svg", 649567318U},
+    {"testFlexiCanvas.5c.svg", 1826396133U},
+    {"testFlexiCanvas.5d.svg", 1730603480U},
+    {"testFlexiCanvas.6a.svg", 3085867303U},
+    {"testFlexiCanvas.6b.svg", 2819164642U},
+    {"testFlexiCanvas.6c.svg", 3085867303U},
+    {"testFlexiCanvas.6d.svg", 3085867303U},
+    {"testFlexiCanvas.7a.svg", 514767495U},
+    {"testFlexiCanvas.7b.svg", 4275125955U},
+    {"testFlexiCanvas.7c.svg", 514767495U},
+    {"testFlexiCanvas.7d.svg", 514767495U},
+    {"testGithub4764.sz1.svg", 3611125861U},
+    {"testGithub4764.sz2.svg", 1936114454U},
+    {"testGithub4764.sz3.svg", 2712214121U},
+    {"testDrawArc1.svg", 3279637525U},
+    {"testMetalWedges.svg", 2896721486U},
+    {"testVariableLegend_1.svg", 1817838365U},
+    {"testVariableLegend_2.svg", 1038247753U},
+    {"testVariableLegend_3.svg", 2073034956U},
+    {"testGithub_5061.svg", 83338095U},
+    {"testGithub_5185.svg", 3800073130U},
+    {"testGithub_5269_1.svg", 3886922298U},
+    {"testGithub_5269_2.svg", 2890052584U},
+    {"test_classes_wavy_bonds.svg", 1694809514U},
     {"testGithub_5383_1.svg", 1391972140U},
-    {"github5156_1.svg", 695855770U},
-    {"github5156_2.svg", 1130781980U},
-    {"github5156_3.svg", 3284451122U},
+    {"github5156_1.svg", 2145907703U},
+    {"github5156_2.svg", 4184795863U},
+    {"github5156_3.svg", 420595965U},
     {"test_molblock_wedges.svg", 1106580037U},
-    {"github5383_1.svg", 2353351393U},
-    {"acs1996_1.svg", 51426601U},
-    {"acs1996_2.svg", 833573044U},
-    {"acs1996_3.svg", 580751118U},
-    {"acs1996_4.svg", 1695920511U},
-    {"acs1996_5.svg", 2883542240U},
-    {"acs1996_6.svg", 1380727178U},
-    {"acs1996_7.svg", 2718384395U},
-    {"acs1996_8.svg", 939325262U},
-    {"acs1996_9.svg", 2607143500U},
-    {"acs1996_10.svg", 199499735U},
-    {"acs1996_11.svg", 2028939343U},
-    {"acs1996_12.svg", 2233727631U},
-    {"test_unspec_stereo.svg", 599119798U},
-    {"light_blue_h_no_label_1.svg", 3735371135U},
-    {"test_github_5534.svg", 574501211U},
-    {"bond_highlights_1.svg", 1426179967U},
-    {"bond_highlights_2.svg", 3654242474U},
-    {"bond_highlights_3.svg", 2068128924U},
-    {"bond_highlights_4.svg", 2068128924U},
-    {"bond_highlights_5.svg", 4115973245U},
-    {"bond_highlights_6.svg", 1566801788U},
-    {"bond_highlights_7.svg", 3347700584U},
-    {"bond_highlights_8.svg", 3826056528U},
-    {"bond_highlights_9.svg", 2915809284U},
-    {"testGithub5486_1.svg", 1149144091U},
-    {"testGithub5511_1.svg", 940106456U},
-    {"testGithub5511_2.svg", 1448975272U},
-    {"test_github5767.svg", 3153964439U},
-    {"test_github5704_1.svg", 2803704016U},
-    {"test_github5704_2.svg", 2000837483U},
-    {"test_github5704_3.svg", 2359820445U},
-    {"test_github5704_4.svg", 2033407805U},
-    {"test_github5943.svg", 1111951851U},
-    {"test_github5947.svg", 2858910387U},
-    {"test_github5767.svg", 3153964439U},
-    {"test_github5949.svg", 1324215728U},
-    {"test_github5974.svg", 394879876U},
-    {"test_github5963.svg", 582369551U},
-    {"test_github6025.svg", 1908346499U},
-    {"test_github5963.svg", 582369551U},
-    {"test_github6027_1.svg", 1864343362U},
-    {"test_github6027_2.svg", 330549720U},
-    {"test_complex_query_atoms_1.svg", 1569543436U},
-    {"test_complex_query_atoms_2.svg", 1958885073U},
-    {"test_complex_query_atoms_3.svg", 2485432018U},
-    {"test_complex_query_atoms_4.svg", 2485432018U},
-    {"test_complex_query_atoms_5.svg", 3301518551U},
-    {"test_complex_query_atoms_6.svg", 3415494504U},
-    {"test_complex_query_atoms_7.svg", 3857334874U},
-    {"test_complex_query_atoms_8.svg", 3355019842U},
-    {"test_complex_query_atoms_9.svg", 952404505U},
-    {"test_complex_query_atoms_10.svg", 2592662841U},
-    {"test_complex_query_atoms_11.svg", 3667326374U},
-    {"test_complex_query_atoms_12.svg", 582133495U},
-    {"test_complex_query_atoms_13.svg", 557287774U},
-    {"test_complex_query_atoms_14.svg", 3566661047U},
-    {"test_complex_query_atoms_15.svg", 4188921077U},
-    {"test_complex_query_atoms_16.svg", 1980695915U},
-    {"test_github6041b.svg", 3485054881U},
-    {"test_github6111_1.svg", 3458417163U},
-    {"test_github6112.svg", 908847383U},
-    {"test_github6160_1.svg", 3669327545U},
-    {"test_github6160_2.svg", 3704672111U},
-    {"test_github6160_3.svg", 2431440968U},
-    {"test_github6170.svg", 865612473U},
-    {"test_getMolSize.svg", 3574937936U},
-    {"test_github6200_1.svg", 1827224658U},
-    {"test_github6200_2.svg", 661919921U},
-    {"test_queryColour_1.svg", 3758375489U},
-    {"test_queryColour_2.svg", 2426598062U},
+    {"github5383_1.svg", 3666750661U},
+    {"acs1996_1.svg", 1111630317U},
+    {"acs1996_2.svg", 1521279517U},
+    {"acs1996_3.svg", 879041204U},
+    {"acs1996_4.svg", 1550424006U},
+    {"acs1996_5.svg", 1680320774U},
+    {"acs1996_6.svg", 3810124161U},
+    {"acs1996_7.svg", 1113821459U},
+    {"acs1996_8.svg", 2477908768U},
+    {"acs1996_9.svg", 3747924004U},
+    {"acs1996_10.svg", 2229333301U},
+    {"acs1996_11.svg", 4107969968U},
+    {"acs1996_12.svg", 2930884583U},
+    {"test_unspec_stereo.svg", 3923423666U},
+    {"light_blue_h_no_label_1.svg", 1615074554U},
+    {"test_github_5534.svg", 4139208597U},
+    {"bond_highlights_1.svg", 3940401825U},
+    {"bond_highlights_2.svg", 4196744632U},
+    {"bond_highlights_3.svg", 851066096U},
+    {"bond_highlights_4.svg", 851066096U},
+    {"bond_highlights_5.svg", 2352169547U},
+    {"bond_highlights_6.svg", 4191585723U},
+    {"bond_highlights_7.svg", 2160801877U},
+    {"bond_highlights_8.svg", 2956924065U},
+    {"bond_highlights_9.svg", 3999278931U},
+    {"testGithub5486_1.svg", 3146085634U},
+    {"testGithub5511_1.svg", 3975118836U},
+    {"testGithub5511_2.svg", 1730094503U},
+    {"test_github5767.svg", 3943519724U},
+    {"test_github5704_1.svg", 1676917819U},
+    {"test_github5704_2.svg", 2959183882U},
+    {"test_github5704_3.svg", 1303839406U},
+    {"test_github5704_4.svg", 578468407U},
+    {"test_github5943.svg", 1113511714U},
+    {"test_github5947.svg", 337972125U},
+    {"test_github5767.svg", 3943519724U},
+    {"test_github5949.svg", 420848566U},
+    {"test_github5974.svg", 1522014196U},
+    {"test_github5963.svg", 3467316956U},
+    {"test_github6025.svg", 2316385019U},
+    {"test_github5963.svg", 3467316956U},
+    {"test_github6027_1.svg", 1504848694U},
+    {"test_github6027_2.svg", 765638922U},
+    {"test_complex_query_atoms_1.svg", 1058348348U},
+    {"test_complex_query_atoms_2.svg", 3820627663U},
+    {"test_complex_query_atoms_3.svg", 2574610745U},
+    {"test_complex_query_atoms_4.svg", 2574610745U},
+    {"test_complex_query_atoms_5.svg", 2239402605U},
+    {"test_complex_query_atoms_6.svg", 2784917732U},
+    {"test_complex_query_atoms_7.svg", 4016570948U},
+    {"test_complex_query_atoms_8.svg", 1215989604U},
+    {"test_complex_query_atoms_9.svg", 774489308U},
+    {"test_complex_query_atoms_10.svg", 1888858967U},
+    {"test_complex_query_atoms_11.svg", 2202417832U},
+    {"test_complex_query_atoms_12.svg", 4094464645U},
+    {"test_complex_query_atoms_13.svg", 2082462146U},
+    {"test_complex_query_atoms_14.svg", 3306293765U},
+    {"test_complex_query_atoms_15.svg", 422354297U},
+    {"test_complex_query_atoms_16.svg", 1559600050U},
+    {"test_github6041b.svg", 444537337U},
+    {"test_github6111_1.svg", 57798875U},
+    {"test_github6112.svg", 3278777629U},
+    {"test_github6160_1.svg", 518073509U},
+    {"test_github6160_2.svg", 2491651948U},
+    {"test_github6160_3.svg", 2709442517U},
+    {"test_github6170.svg", 1561786551U},
+    {"test_getMolSize.svg", 1258513283U},
+    {"test_github6200_1.svg", 1044179149U},
+    {"test_github6200_2.svg", 2658818798U},
+    {"test_queryColour_1.svg", 778322651U},
+    {"test_queryColour_2.svg", 45913095U},
     {"github6336_1.svg", 612606818U},
-    {"github6416.svg", 3045235864U},
-    {"test_github6397_1.svg", 1825590478U},
-    {"test_github6397_2.svg", 3407468353U},
-    {"test_github6397_3.svg", 3170656352U},
-    {"test_github6397_4.svg", 187792316U},
-    {"test_github6397_5.svg", 2795990448U}};
+    {"github6416.svg", 3814405016U},
+    {"test_github6397_1.svg", 4203615821U},
+    {"test_github6397_2.svg", 3422233570U},
+    {"test_github6397_3.svg", 3320683230U},
+    {"test_github6397_4.svg", 2960192928U},
+    {"test_github6397_5.svg", 1245534660U},
+    {"test_github6400_1.svg", 2792561051U},
+    {"github6504_1.svg", 1429448598U},
+    {"github6504_2.svg", 2871662880U},
+    {"github6569_1.svg", 116573839U},
+    {"github6569_2.svg", 2367779037U},
+    {"lasso_highlights_1.svg", 1259621911U},
+    {"lasso_highlights_2.svg", 39607542U},
+    {"lasso_highlights_3.svg", 2744227900U},
+    {"lasso_highlights_4.svg", 307369790U},
+    {"lasso_highlights_5.svg", 1103195299U},
+    {"lasso_highlights_6.svg", 3501858565U},
+    {"lasso_highlights_7.svg", 4002684466U},
+    {"testGithub6685_1.svg", 1835717197U},
+    {"testGithub6685_2.svg", 116380465U},
+    {"testGithub6685_3.svg", 409385402U},
+    {"testGithub6685_4.svg", 1239628830U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -310,27 +326,27 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
 static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
-    {"testGithub3226_1.png", 284815097U},
-    {"testGithub3226_2.png", 2460913971U},
-    {"testGithub3226_3.png", 993799198U},
-    {"testPNGMetadata_1.png", 2022143293U},
-    {"testPNGMetadata_2.png", 3078435362U},
-    {"testHandDrawn-1.png", 1551605661U},
-    {"testHandDrawn-2.png", 2979412913U},
-    {"testHandDrawn-3.png", 1765396301U},
-    {"testHandDrawn-4.png", 2989933219U},
-    {"testHandDrawn-5.png", 1526220279U},
-    {"testGithub4323_1.png", 3711520691U},
-    {"testGithub4323_3.png", 2300228708U},
-    {"testFlexiCanvas.2a.png", 3618977786U},
-    {"testFlexiCanvas.2b.png", 2780757414U},
-    {"testGithub4764.sz1.png", 2320783268U},
-    {"testGithub4764.sz2.png", 3297570843U},
-    {"testGithub4764.sz3.png", 2178018272U},
-    {"testGithub4238_1.png", 458925131U},
-    {"github5383_1.png", 2963331215U},
-    {"acs1996_1.png", 2674458798U},
-    {"acs1996_2.png", 83755168U},
+    {"testGithub3226_1.png", 2350054896U},
+    {"testGithub3226_2.png", 606206725U},
+    {"testGithub3226_3.png", 2282880418U},
+    {"testPNGMetadata_1.png", 2423299691U},
+    {"testPNGMetadata_2.png", 2803353117U},
+    {"testHandDrawn-1.png", 698316547U},
+    {"testHandDrawn-2.png", 1605553248U},
+    {"testHandDrawn-3.png", 2881952238U},
+    {"testHandDrawn-4.png", 3431655453U},
+    {"testHandDrawn-5.png", 3439548169U},
+    {"testGithub4323_1.png", 3723958844U},
+    {"testGithub4323_3.png", 2185913679U},
+    {"testFlexiCanvas.2a.png", 3217758043U},
+    {"testFlexiCanvas.2b.png", 4070063910U},
+    {"testGithub4764.sz1.png", 98827714U},
+    {"testGithub4764.sz2.png", 89252465U},
+    {"testGithub4764.sz3.png", 148503574U},
+    {"testGithub4238_1.png", 3410617836U},
+    {"github5383_1.png", 992803933U},
+    {"acs1996_1.png", 2957839025U},
+    {"acs1996_2.png", 2664798808U},
     {"github6336_1.png", 2958833204U}};
 
 std::hash_result_t hash_file(const std::string &filename) {
@@ -711,9 +727,13 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_1.svg");
 
-    CHECK(text.find("d='M 122.5,88.4 L 85.6,88.4' "
-                    "style='fill:none;fill-rule:evenodd;stroke:#0000FF") !=
-          std::string::npos);
+    std::regex d1(
+        "<path class='bond-0 atom-0 atom-1' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
+    auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(122.3, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(88.5, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(85.7, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(88.5, 0.1));
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -728,9 +748,13 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_2.svg");
 
-    CHECK(text.find("-8' d='M 101.1,77.2 L 95.8,84.5' "
-                    "style='fill:none;fill-rule:evenodd;stroke:#0000FF;") !=
-          std::string::npos);
+    std::regex d1(
+        "<path class='bond-7 atom-7 atom-8' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
+    auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(100.9, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(77.5, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(95.8, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(84.7, 0.1));
   }
   SECTION("test colours") {
     // the dative bonds point the wrong way, but the point is to test
@@ -747,11 +771,13 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_3.svg");
 
-    CHECK(
-        text.find(
-            "<path class='bond-2 atom-3 atom-4' d='M 50.4,140.6 L 77.9,149.5' "
-            "style='fill:none;fill-rule:evenodd;stroke:#0000FF;") !=
-        std::string::npos);
+    std::regex d1(
+        "<path class='bond-2 atom-3 atom-4' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
+    auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(50.9, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(140.2, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(78.1, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(149.0, 0.1));
   }
   SECTION("dative series") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -1053,7 +1079,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_2.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 5);
+      CHECK(tkns.size() == 4);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -1249,7 +1275,7 @@ TEST_CASE(
     CHECK(txt == "abs (S)");
     CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
                                                  txt));
-    CHECK(txt == "and4");
+    CHECK(txt == "and2");
   }
   SECTION("including CIP with relative stereo") {
     ROMol m2(*m1);
@@ -1262,7 +1288,7 @@ TEST_CASE(
     CHECK(txt == "abs (S)");
     CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
                                                  txt));
-    CHECK(txt == "and4 (R)");
+    CHECK(txt == "and2 (R)");
   }
   SECTION("new CIP labels") {
     ROMol m2(*m1);
@@ -1356,9 +1382,9 @@ TEST_CASE("including legend in drawing results in offset drawing later",
     check_file_hash("testLegendsAndDrawing-1.svg");
 
     // make sure the polygon starts at a bond
-    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 316.7,135.0") !=
+    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 315.3,136.5") !=
           std::string::npos);
-    CHECK(text.find("<path d='M 316.7,135.0") != std::string::npos);
+    CHECK(text.find("<path d='M 311.8,142.6") != std::string::npos);
   }
 }
 
@@ -4039,7 +4065,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(20.4).margin(0.1));
+    CHECK(drawer.fontSize() == Approx(20.25).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2b.svg");
     outs << text;
@@ -4583,7 +4609,7 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_1.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='34.5' y='195.0' class='legend' "
+      CHECK(text.find("<text x='34.5' y='190.0' class='legend' "
                       "style='font-size:16px;") != std::string::npos);
       check_file_hash("testVariableLegend_1.svg");
     }
@@ -4598,7 +4624,7 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_2.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='1.6' y='195.0' class='legend' "
+      CHECK(text.find("<text x='2.8' y='190.0' class='legend' "
                       "style='font-size:31px;") != std::string::npos);
       check_file_hash("testVariableLegend_2.svg");
     }
@@ -4612,8 +4638,8 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_3.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='84.7' y='195.0' class='legend' "
-                      "style='font-size:6px;") != std::string::npos);
+      CHECK(text.find("<text x='72.4' y='190.0' class='legend' "
+                      "style='font-size:11px;") != std::string::npos);
       check_file_hash("testVariableLegend_3.svg");
     }
   }
@@ -4670,11 +4696,11 @@ TEST_CASE("Github 5185 - don't draw atom indices between double bond") {
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // the 2nd note
-      CHECK(text.find("<path class='note' d='M 93.4 129.9") !=
+      CHECK(text.find("<path class='note' d='M 94.4 129.6") !=
             std::string::npos);
       check_file_hash("testGithub_5185.svg");
 #else
-      CHECK(text.find("<text x='90.4' y='130.3' class='note' ") !=
+      CHECK(text.find("<text x='91.5' y='130.0' class='note' ") !=
             std::string::npos);
 #endif
     }
@@ -4857,6 +4883,27 @@ TEST_CASE("GitHub #5383: cairo error when using similarity maps", "") {
     outs << text;
     outs.flush();
     check_file_hash("github5383_1.svg");
+  }
+  SECTION("svg basics") {
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().padding = 0.0;
+
+    drawer.clearDrawing();
+    std::vector<double> levels;
+    MolDraw2DUtils::contourAndDrawGaussians(
+        drawer, cents, weights, widths, 10, levels,
+        MolDraw2DUtils::ContourParams(), m1.get());
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("width='250px' height='250px' viewBox='0 0 250 250'>") !=
+          std::string::npos);
+    std::ofstream outs("github5383_2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("github5383_2.svg");
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
   SECTION("cairo basics") {
@@ -5573,18 +5620,25 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   REQUIRE(wavyMatch.size() == 1);
 
   std::regex regex2(
-      "class='bond-4 atom-4 atom-5' d='M 118\\..*,135\\..* L "
-      "68\\..*,107\\..*'");
-  std::smatch cross1Match;
-  REQUIRE(std::regex_search(text, cross1Match, regex2));
-  REQUIRE(cross1Match.size() == 1);
+      "class='bond-4 atom-4 atom-5' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L "
+      "(\\d+\\.\\d+),(\\d+\\.\\d+)'");
 
-  std::regex regex3(
-      "class='bond-4 atom-4 atom-5' d='M 117\\..*,145\\..* L "
-      "74\\..*,100\\..*'");
-  std::smatch cross2Match;
-  REQUIRE(std::regex_search(text, cross2Match, regex3));
-  REQUIRE(cross1Match.size() == 1);
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), regex2),
+                    std::sregex_iterator()));
+  REQUIRE(match_count == 2);
+
+  // Check that the 2 bonds aren't parallel
+  auto cross1Match = std::sregex_iterator(text.begin(), text.end(), regex2);
+  Point2D point1{stod((*cross1Match)[1]), stod((*cross1Match)[2])};
+  Point2D point2{stod((*cross1Match)[3]), stod((*cross1Match)[4])};
+  auto vec1 = point1.directionVector(point2);
+
+  ++cross1Match;
+  Point2D point3{stod((*cross1Match)[1]), stod((*cross1Match)[2])};
+  Point2D point4{stod((*cross1Match)[3]), stod((*cross1Match)[4])};
+  auto vec2 = point3.directionVector(point4);
+  REQUIRE(vec1.dotProduct(vec2) != Approx(1.0).margin(1.0e-4));
 
   check_file_hash("test_unspec_stereo.svg");
 }
@@ -6286,19 +6340,19 @@ TEST_CASE("Github5947: Ellipse extremes not calculated correctly.") {
       std::distance(std::sregex_iterator(text.begin(), text.end(), r1),
                     std::sregex_iterator()));
   REQUIRE(match_count == 6);
-  // all the ellipses should have a radius of roughly 28.8
+  // all the ellipses should have a radius of roughly 72.0
   auto match_begin = std::sregex_iterator(text.begin(), text.end(), r1);
   auto match_end = std::sregex_iterator();
   for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
     std::smatch match = *i;
-    REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(72.7, 0.1));
-    REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(72.7, 0.1));
+    REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(72.0, 0.1));
+    REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(72.0, 0.1));
   }
 
   // check that the first ellipse is in the right place
   std::regex r2("<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'");
   auto ell1 = *std::sregex_iterator(text.begin(), text.end(), r2);
-  REQUIRE_THAT(stod(ell1[1]), Catch::Matchers::WithinAbs(309.1, 0.1));
+  REQUIRE_THAT(stod(ell1[1]), Catch::Matchers::WithinAbs(308.0, 0.1));
   REQUIRE_THAT(stod(ell1[2]), Catch::Matchers::WithinAbs(200.0, 0.1));
   check_file_hash(nameBase + ".svg");
 }
@@ -6368,8 +6422,8 @@ M  END
     auto match_end = std::sregex_iterator();
     for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
       std::smatch match = *i;
-      REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(25.2, 0.1));
-      REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(25.2, 0.1));
+      REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(25.0, 0.1));
+      REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(25.0, 0.1));
     }
     check_file_hash(nameBase + ".svg");
   }
@@ -6765,7 +6819,8 @@ M  END
     }
     auto vec1 = points[0].directionVector(points[1]);
     auto vec2 = points[2].directionVector(points[3]);
-    REQUIRE(fabs(1.0 - vec1.dotProduct(vec2)) < 1.0e-4);
+    REQUIRE_THAT(vec1.dotProduct(vec2),
+                 Catch::Matchers::WithinAbs(1.0, 2.0e-4));
     check_file_hash(nameBase + "_2.svg");
   }
 }
@@ -7535,7 +7590,7 @@ TEST_CASE(
           "class='atom-17' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
           " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
       // there are 3 arcs on atom-17, for a 3 colour highlight.
-      testArcs(text, atom17, 3, 0.9);
+      testArcs(text, atom17, 3, 0.85);
     }
     check_file_hash(nameBase + "_1.svg");
   }
@@ -7643,8 +7698,7 @@ TEST_CASE(
   }
 }
 
-TEST_CASE(
-    "Github #6416: crash with colinear atoms") {
+TEST_CASE("Github #6416: crash with colinear atoms") {
   std::string name = "github6416.svg";
   auto m = R"CTAB(168010013
      RDKit          2D
@@ -7794,7 +7848,7 @@ M  END)CTAB"_ctab;
     outs.flush();
     outs.close();
 
-    checkABS(text, 1, 238.9, 34.8);
+    checkABS(text, 1, 239.5, 34.5);
     check_file_hash(svgName);
   }
 
@@ -7923,10 +7977,10 @@ M  END)CTAB"_ctab;
     checkABS(text, 3, 0.0, 173.3);
     text = std::regex_replace(text, absA, "",
                               std::regex_constants::format_first_only);
-    checkABS(text, 2, 250.0, 43.2);
+    checkABS(text, 2, 250.0, 42.8);
     text = std::regex_replace(text, absA, "",
                               std::regex_constants::format_first_only);
-    checkABS(text, 1, 190.8, 233.8);
+    checkABS(text, 1, 191.4, 233.4);
     check_file_hash(svgName);
   }
   {
@@ -7947,5 +8001,1012 @@ M  END)CTAB"_ctab;
     outs.flush();
     outs.close();
     check_file_hash(svgName);
+  }
+}
+
+TEST_CASE("Github #6400: extra padding, no legend apparent") {
+  std::string nameBase = "test_github6400";
+  auto m = "CCCOC"_smiles;
+  REQUIRE(m);
+  MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().padding = 0.2;
+  drawer.drawMolecule(*m, "Legendary Big Padding");
+  drawer.finishDrawing();
+  std::ofstream outs(nameBase + "_1.svg");
+  auto text = drawer.getDrawingText();
+  // The original bug manifested itself with a font size of 0 for the
+  // legend.  Fixed, it comes out at 16.
+  REQUIRE(text.find("font-size:0px") == std::string::npos);
+  REQUIRE(text.find("font-size:16px") != std::string::npos);
+
+  outs << text;
+  outs.flush();
+  outs.close();
+  check_file_hash(nameBase + "_1.svg");
+}
+
+TEST_CASE("Github #6504: double bonds not drawn correctly for sulfoximines") {
+  std::string baseName = "github6504";
+  auto m1 = R"CTAB(
+     RDKit          2D
+
+  7  6  0  0  0  0  0  0  0  0999 V2000
+   -3.3489   -2.7067    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0093   -3.4808    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6698   -2.7067    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6696   -3.4792    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6698   -1.1601    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6696   -0.3864    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6698   -4.2536    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  2  0
+  3  5  1  0
+  5  6  1  0
+  3  7  1  1
+M  END
+)CTAB"_ctab;
+  // The bug report showed different manifestations of the problem
+  // using the given coords and those generated from scratch.
+  REQUIRE(m1);
+  std::unique_ptr<RDKit::ROMol> m2(new RDKit::ROMol(*m1));
+  RDDepict::compute2DCoords(*m2);
+
+  // The test, in both cases, is that the 2 ends of the lines
+  // making bond 1 are separated by a small distance.  It's a two
+  // colour line, so the relevant points are 0,4 and 3,7.
+  auto checkEndSep = [](const std::string &text) {
+    std::regex bond5(
+        "'bond-1 atom-1 atom-2' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 4);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond5);
+    auto match_end = std::sregex_iterator();
+    std::vector<Point2D> points;
+    for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+      std::smatch match = *i;
+      points.push_back(Point2D(stod(match[1]), stod(match[2])));
+      points.push_back(Point2D(stod(match[3]), stod(match[4])));
+    }
+    auto d1 = (points[0] - points[4]).length();
+    auto d2 = (points[3] - points[7]).length();
+    // the distances should be > 10 and roughly equal.  They are
+    // 12 and 14 pixels apart in the two molecules.
+    REQUIRE(d1 > 10.0);
+    REQUIRE(d2 > 10.0);
+    REQUIRE_THAT(fabs(d1 - d2), Catch::Matchers::WithinAbs(0.0, 0.1));
+  };
+
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::ofstream outs(baseName + "_1.svg");
+    std::string text = drawer.getDrawingText();
+    outs << text;
+    outs.flush();
+    outs.close();
+    checkEndSep(text);
+    check_file_hash(baseName + "_1.svg");
+  }
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m2);
+    drawer.finishDrawing();
+    std::ofstream outs(baseName + "_2.svg");
+    std::string text = drawer.getDrawingText();
+    outs << text;
+    outs.flush();
+    outs.close();
+    checkEndSep(text);
+    check_file_hash(baseName + "_2.svg");
+  }
+}
+
+TEST_CASE("Github #6569: placement of bond labels bad when atoms overlap") {
+  std::string baseName = "github6569";
+  auto m = R"CTAB(CHEMBL3612237
+     RDKit          2D
+
+ 14 15  0  0  0  0  0  0  0  0999 V2000
+   -0.6828   -1.6239    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090    0.5905    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007   -1.6239    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090   -2.3805    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    1.3471    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    1.3471    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090    2.0668    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6319    1.4849    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5072    2.6784    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7280    0.9964    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  6  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  4  7  1  0
+  2  8  1  0
+  8  9  1  0
+  7  9  1  0
+  3 10  1  1
+ 10 11  1  0
+ 10 12  2  0
+  2 13  1  1
+  4 14  1  1
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::ofstream outs(baseName + "_1.svg");
+    std::string text = drawer.getDrawingText();
+    outs << text;
+    outs.flush();
+    outs.close();
+    // All the coords came out as nan in the buggy version
+    REQUIRE(text.find("nan") == std::string::npos);
+    check_file_hash(baseName + "_1.svg");
+  }
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1);
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::ofstream outs(baseName + "_2.svg");
+    std::string text = drawer.getDrawingText();
+    outs << text;
+    outs.flush();
+    outs.close();
+    // All the coords came out as nan in the buggy version
+    REQUIRE(text.find("nan") == std::string::npos);
+    check_file_hash(baseName + "_2.svg");
+  }
+}
+
+TEST_CASE("Lasso highlights") {
+  std::string baseName = "lasso_highlights_";
+  auto get_all_hit_atoms = [](ROMol &mol,
+                              const std::string &smt) -> std::vector<int> {
+    std::vector<int> hit_atoms;
+    RWMol *query = SmartsToMol(smt);
+    std::vector<MatchVectType> hits_vect;
+    SubstructMatch(mol, *query, hits_vect);
+    for (size_t i = 0; i < hits_vect.size(); ++i) {
+      for (size_t j = 0; j < hits_vect[i].size(); ++j) {
+        hit_atoms.push_back(hits_vect[i][j].second);
+      }
+    }
+    delete query;
+    return hit_atoms;
+  };
+  auto update_colour_map = [](const std::vector<int> &ats, DrawColour col,
+                              std::map<int, std::vector<DrawColour>> &ha_map) {
+    for (auto h : ats) {
+      auto ex = ha_map.find(h);
+      if (ex == ha_map.end()) {
+        std::vector<DrawColour> cvec(1, col);
+        ha_map.insert(make_pair(h, cvec));
+      } else {
+        if (ex->second.end() ==
+            find(ex->second.begin(), ex->second.end(), col)) {
+          ex->second.push_back(col);
+        }
+      }
+    }
+  };
+  std::map<int, double> h_rads;
+  std::map<int, int> h_lw_mult;
+  {
+    std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
+    RDDepict::compute2DCoords(*m);
+
+    std::vector<std::string> smarts = {"CONN", "N#CC~CO", "C=CON", "CONNCN"};
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+
+    for (size_t i = 0; i < smarts.size(); ++i) {
+      std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
+      update_colour_map(hit_atoms, colours[i], ha_map);
+    }
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMoleculeWithHighlights(*m, "Lasso 1", ha_map, hb_map, h_rads,
+                                      h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "1.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash(baseName + "1.svg");
+  }
+  {
+    // The non-overlapping atom sets should have radii the same size.
+    std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
+    RDDepict::compute2DCoords(*m);
+
+    std::vector<std::string> smarts = {"CONN", "COC[OH]", "N#CC~CO"};
+    std::vector<DrawColour> colours = {DrawColour(1.0, 0.0, 0.0),
+                                       DrawColour(0.0, 1.0, 0.0),
+                                       DrawColour(0.0, 0.0, 1.0)};
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+
+    for (size_t i = 0; i < smarts.size(); ++i) {
+      std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
+      update_colour_map(hit_atoms, colours[i], ha_map);
+    }
+    std::map<int, double> h_rads;
+    std::map<int, int> h_lw_mult;
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    drawer.drawMoleculeWithHighlights(*m, "Lasso 2", ha_map, hb_map, h_rads,
+                                      h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "2.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash(baseName + "2.svg");
+  }
+  {
+    // Another example.
+    std::string smiles = "c1ccncc1c1ccc(C2CCC2)cc1";
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
+    RDDepict::compute2DCoords(*m);
+
+    std::vector<std::string> smarts = {"a1aaaaa1a1aaaaa1", "c1ccccn1",
+                                       "c1ccccc1", "C1CCC1"};
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+
+    for (size_t i = 0; i < smarts.size(); ++i) {
+      std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
+      update_colour_map(hit_atoms, colours[i], ha_map);
+    }
+    std::map<int, double> h_rads;
+    std::map<int, int> h_lw_mult;
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMoleculeWithHighlights(*m, "Lasso 3", ha_map, hb_map, h_rads,
+                                      h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "3.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash(baseName + "3.svg");
+  }
+  {
+    // Showing use of highlight_bond_map to control which bonds are drawn.
+    // Bond highlight colours are ignored.
+    std::string smiles = "c1ccccc1c1ccccc1";
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
+    RDDepict::compute2DCoords(*m);
+    std::map<int, std::vector<DrawColour>> ha_map;
+    for (int i = 0; i < 12; ++i) {
+      ha_map.insert(
+          std::pair{i, std::vector<DrawColour>(1, DrawColour(1.0, 0.0, 0.0))});
+    }
+    std::map<int, std::vector<DrawColour>> hb_map;
+    {
+      MolDraw2DSVG drawer(500, 500);
+      drawer.drawOptions().multiColourHighlightStyle =
+          RDKit::MultiColourHighlightStyle::LASSO;
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawMoleculeWithHighlights(*m, "Lasso 4", ha_map, hb_map, h_rads,
+                                        h_lw_mult);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(baseName + "4.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      // There should be 2 lines in red, the lasso along the bi-phenyl
+      // bond.
+      std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
+      std::ptrdiff_t const match_count(
+          std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
+                        std::sregex_iterator()));
+      REQUIRE(match_count == 2);
+      check_file_hash(baseName + "4.svg");
+    }
+    // Set up the bond highlights for everything but the bi-phenyl bond,
+    // colouring the bonds green although the colour will be ignored.
+    for (int i = 0; i < 13; ++i) {
+      if (i != 5) {
+        hb_map.insert(std::pair{
+            i, std::vector<DrawColour>(1, DrawColour(0.0, 1.0, 0.0))});
+      }
+    }
+    {
+      MolDraw2DSVG drawer(500, 500);
+      drawer.drawOptions().multiColourHighlightStyle =
+          RDKit::MultiColourHighlightStyle::LASSO;
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawOptions().addBondIndices = true;
+      drawer.drawMoleculeWithHighlights(*m, "Lasso 5", ha_map, hb_map, h_rads,
+                                        h_lw_mult);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(baseName + "5.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      // There should not be any red lines for bond 5.
+      std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
+      std::ptrdiff_t const match_count(
+          std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
+                        std::sregex_iterator()));
+      REQUIRE(match_count == 0);
+      check_file_hash(baseName + "5.svg");
+    }
+  }
+  {
+    // Bug with large radii lassos.
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 19 19 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.745421 0.232979 0.000000 0
+M  V30 2 O 1.879821 -0.268021 0.000000 0
+M  V30 3 C 1.013221 0.231179 0.000000 0
+M  V30 4 O 1.012421 1.231179 0.000000 0
+M  V30 5 C 0.147621 -0.269821 0.000000 0
+M  V30 6 C -0.110179 -1.236021 0.000000 0
+M  V30 7 O 0.390821 -2.101621 0.000000 0
+M  V30 8 C 1.390821 -2.100621 0.000000 0
+M  V30 9 F 1.889821 -1.234221 0.000000 0
+M  V30 10 Cl 1.891621 -2.966221 0.000000 0
+M  V30 11 C -1.076379 -0.978021 0.000000 0
+M  V30 12 C -1.941979 -1.479021 0.000000 0
+M  V30 13 N -2.807579 -1.980021 0.000000 0
+M  V30 14 C -0.818579 -0.011821 0.000000 0
+M  V30 15 O -1.319379 0.853779 0.000000 0
+M  V30 16 N -0.820379 1.720379 0.000000 0
+M  V30 17 N -1.321379 2.585779 0.000000 0
+M  V30 18 C -0.822379 3.452379 0.000000 0
+M  V30 19 N -1.323379 4.317779 0.000000 0 CHG=1 VAL=4
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4 CFG=3
+M  V30 4 1 3 5
+M  V30 5 2 5 6
+M  V30 6 1 6 7
+M  V30 7 1 7 8
+M  V30 8 1 8 9 CFG=3
+M  V30 9 1 8 10
+M  V30 10 1 6 11
+M  V30 11 1 11 12
+M  V30 12 3 12 13
+M  V30 13 2 11 14
+M  V30 14 1 14 15
+M  V30 15 1 15 16
+M  V30 16 1 16 17
+M  V30 17 1 17 18
+M  V30 18 1 18 19
+M  V30 19 1 14 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    std::vector<std::string> smarts = {"CONN", "N#CC~CO", "C=CON", "CONNCN"};
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+    for (size_t i = 0; i < smarts.size(); ++i) {
+      std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
+      update_colour_map(hit_atoms, colours[i], ha_map);
+    }
+    std::map<int, double> h_rads;
+    for (auto [idx, val] : ha_map) {
+      h_rads[idx] = 0.4;
+    }
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().fillHighlights = false;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    drawer.drawMoleculeWithHighlights(*m, "Lasso 6", ha_map, hb_map, h_rads,
+                                      h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "6.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash(baseName + "6.svg");
+  }
+  {
+    // Bug with different radii in lassos.
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 19 19 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.745421 0.232979 0.000000 0
+M  V30 2 O 1.879821 -0.268021 0.000000 0
+M  V30 3 C 1.013221 0.231179 0.000000 0
+M  V30 4 O 1.012421 1.231179 0.000000 0
+M  V30 5 C 0.147621 -0.269821 0.000000 0
+M  V30 6 C -0.110179 -1.236021 0.000000 0
+M  V30 7 O 0.390821 -2.101621 0.000000 0
+M  V30 8 C 1.390821 -2.100621 0.000000 0
+M  V30 9 F 1.889821 -1.234221 0.000000 0
+M  V30 10 Cl 1.891621 -2.966221 0.000000 0
+M  V30 11 C -1.076379 -0.978021 0.000000 0
+M  V30 12 C -1.941979 -1.479021 0.000000 0
+M  V30 13 N -2.807579 -1.980021 0.000000 0
+M  V30 14 C -0.818579 -0.011821 0.000000 0
+M  V30 15 O -1.319379 0.853779 0.000000 0
+M  V30 16 N -0.820379 1.720379 0.000000 0
+M  V30 17 N -1.321379 2.585779 0.000000 0
+M  V30 18 C -0.822379 3.452379 0.000000 0
+M  V30 19 N -1.323379 4.317779 0.000000 0 CHG=1 VAL=4
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4 CFG=3
+M  V30 4 1 3 5
+M  V30 5 2 5 6
+M  V30 6 1 6 7
+M  V30 7 1 7 8
+M  V30 8 1 8 9 CFG=3
+M  V30 9 1 8 10
+M  V30 10 1 6 11
+M  V30 11 1 11 12
+M  V30 12 3 12 13
+M  V30 13 2 11 14
+M  V30 14 1 14 15
+M  V30 15 1 15 16
+M  V30 16 1 16 17
+M  V30 17 1 17 18
+M  V30 18 1 18 19
+M  V30 19 1 14 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    std::vector<std::string> smarts = {"CONN", "N#CC~CO", "C=CON", "CONNCN"};
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+    for (size_t i = 0; i < smarts.size(); ++i) {
+      std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
+      update_colour_map(hit_atoms, colours[i], ha_map);
+    }
+    std::map<int, double> h_rads;
+    for (auto [idx, val] : ha_map) {
+      h_rads[idx] = 0.3;
+    }
+    h_rads[13] = 0.4;
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().fillHighlights = false;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    drawer.drawMoleculeWithHighlights(*m, "Lasso 7", ha_map, hb_map, h_rads,
+                                      h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "7.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash(baseName + "7.svg");
+  }
+}
+
+TEST_CASE("Github 6683 - SVGs with ridiculous width and/or height") {
+  std::string baseName = "testGithub6683_";
+
+  {
+    const char *rxnBlock = R"RXN($RXN
+
+      Mrv1920  090120231611
+
+  3  1
+$MOL
+
+  Mrv1920 09012316112D
+
+  1  0  0  0  0  0            999 V2000
+  -12.3227   -0.2785    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 11 11  0  0  0  0            999 V2000
+   -6.0796   -0.5503    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -6.7352   -0.0493    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.6291    0.7688    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4967   -0.3666    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1522    0.1344    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.9137   -0.1829    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.5692    0.3181    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.3307    0.0008    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.4370   -0.8173    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.7813   -1.3182    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0199   -1.0009    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  2  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  4  0  0  0  0
+  7  8  4  0  0  0  0
+  8  9  4  0  0  0  0
+  9 10  4  0  0  0  0
+ 10 11  4  0  0  0  0
+ 11  6  4  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 10 10  0  0  0  0            999 V2000
+   -3.2982    1.9786    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4043    1.1605    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7488    0.6596    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9872    0.9767    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8547   -0.1585    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1992   -0.6594    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3055   -1.4777    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0669   -1.7949    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7225   -1.2939    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6163   -0.4759    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  3  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10  5  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 20 21  0  0  0  0            999 V2000
+    7.3862    1.9786    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.2800    1.1605    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.9356    0.6596    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6971    0.9768    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.8294   -0.1586    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.4850   -0.6595    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3789   -1.4777    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6173   -1.7950    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9619   -1.2939    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0679   -0.4758    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.4124    0.0252    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5186    0.8432    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6509   -0.2920    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9954    0.2089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2337   -0.1084    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5784    0.3926    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8166    0.0753    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7107   -0.7427    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3661   -1.2438    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1276   -0.9266    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  3  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+ 11 13  1  0  0  0  0
+ 13 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 16  4  0  0  0  0
+ 16 17  4  0  0  0  0
+ 17 18  4  0  0  0  0
+ 18 19  4  0  0  0  0
+ 19 20  4  0  0  0  0
+ 10  5  1  0  0  0  0
+ 20 15  4  0  0  0  0
+M  END)RXN";
+
+    std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
+    MolDraw2DSVG drawer(-1, -1);
+    auto reactIter = rxn->beginReactantTemplates();
+    REQUIRE_THROWS_AS(MolDraw2DUtils::setACS1996Options(
+        drawer.drawOptions(),
+        MolDraw2DUtils::meanBondLength(*(*reactIter)) * 0.7), ValueErrorException);
+  }
+}
+
+TEST_CASE("Github 6685 - flexicanvas cuts off bottom of reaction") {
+  std::string baseName = "testGithub6685_";
+
+  auto checkImage = [](const std::string &text) {
+    // extract the dimensions of the image
+    std::regex getDims("width='(\\d+)px' height='(\\d+)px' viewBox=");
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), getDims);
+    auto width = stod((*match_begin)[1]);
+    auto height = stod((*match_begin)[2]);
+    std::regex bond(
+        "<path class='bond-\\d+ atom-\\d+ atom-\\d+' d='M (-?\\d+.\\d+),(-?\\d+.\\d+) L (-?\\d+.\\d+),(-?\\d+.\\d+)' style=");
+    std::regex character(
+        "Q (-?\\d+.\\d+) (-?\\d+.\\d+), (-?\\d+.\\d+) (-?\\d+.\\d+)");
+    for (const auto &reg : {bond, character}) {
+      match_begin = std::sregex_iterator(text.begin(), text.end(), reg);
+      auto match_end = std::sregex_iterator();
+      for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+        std::smatch match = *i;
+        auto x1 = stod(match[1]);
+        auto y1 = stod(match[2]);
+        auto x2 = stod(match[3]);
+        auto y2 = stod(match[4]);
+        REQUIRE(x1 >= 0);
+        REQUIRE(x1 <= width);
+        REQUIRE((y1 >= 0 && y1 <= height));
+        REQUIRE(y1 <= height);
+        REQUIRE(x2 >= 0);
+        REQUIRE(x2 <= width);
+        REQUIRE(y2 >= 0);
+        REQUIRE(y2 <= height);
+      }
+    }
+  };
+
+  {
+    const char *rxnBlock = R"RXN($RXN
+
+      Mrv1920  090120231611
+
+  3  1
+$MOL
+
+  Mrv1920 09012316112D
+
+  1  0  0  0  0  0            999 V2000
+  -12.3227   -0.2785    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 11 11  0  0  0  0            999 V2000
+   -6.0796   -0.5503    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -6.7352   -0.0493    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.6291    0.7688    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4967   -0.3666    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1522    0.1344    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.9137   -0.1829    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.5692    0.3181    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.3307    0.0008    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.4370   -0.8173    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.7813   -1.3182    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0199   -1.0009    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  2  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  4  0  0  0  0
+  7  8  4  0  0  0  0
+  8  9  4  0  0  0  0
+  9 10  4  0  0  0  0
+ 10 11  4  0  0  0  0
+ 11  6  4  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 10 10  0  0  0  0            999 V2000
+   -3.2982    1.9786    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4043    1.1605    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7488    0.6596    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9872    0.9767    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8547   -0.1585    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1992   -0.6594    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3055   -1.4777    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0669   -1.7949    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7225   -1.2939    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6163   -0.4759    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  3  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10  5  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09012316112D
+
+ 20 21  0  0  0  0            999 V2000
+    7.3862    1.9786    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.2800    1.1605    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.9356    0.6596    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6971    0.9768    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.8294   -0.1586    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.4850   -0.6595    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3789   -1.4777    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6173   -1.7950    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9619   -1.2939    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0679   -0.4758    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.4124    0.0252    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5186    0.8432    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6509   -0.2920    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9954    0.2089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2337   -0.1084    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5784    0.3926    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8166    0.0753    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7107   -0.7427    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3661   -1.2438    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1276   -0.9266    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  3  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+ 11 13  1  0  0  0  0
+ 13 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 16  4  0  0  0  0
+ 16 17  4  0  0  0  0
+ 17 18  4  0  0  0  0
+ 18 19  4  0  0  0  0
+ 19 20  4  0  0  0  0
+ 10  5  1  0  0  0  0
+ 20 15  4  0  0  0  0
+M  END)RXN";
+
+    std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
+    MolDraw2DSVG drawer(-1, -1);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs((baseName + "1.svg").c_str());
+    outs << text;
+    outs.close();
+
+    checkImage(text);
+    check_file_hash(baseName + "1.svg");
+  }
+  {
+    const char *rxnBlock = R"RXN($RXN
+
+      Mrv1920  090220231847
+
+  2  1
+$MOL
+
+  Mrv1920 09022318472D
+
+  2  1  0  0  0  0            999 V2000
+   -7.4817   -0.2130    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.6567   -0.2130    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09022318472D
+
+  9  8  0  0  0  0            999 V2000
+   -3.3781    2.1354    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5235    1.3233    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2996    1.0435    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8932    0.7914    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0387   -0.0206    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7812   -0.3803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8567   -1.3430    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4672   -0.6157    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6500   -0.5031    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  2  0  0  0  0
+  8  5  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09022318472D
+
+  8  8  0  0  0  0            999 V2000
+    5.5359   -0.2650    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3537    1.0574    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6115    0.6978    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7993    0.8433    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4102    0.1159    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9815   -0.4790    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.7240   -0.1195    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5929    0.0033    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  4  0  0  0  0
+  5  6  4  0  0  0  0
+  6  7  4  0  0  0  0
+  7  1  1  0  0  0  0
+  7  3  4  0  0  0  0
+  5  8  1  0  0  0  0
+M  END)RXN";
+
+    std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
+    MolDraw2DSVG drawer(-1, -1);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs((baseName + "2.svg").c_str());
+    outs << text;
+    outs.close();
+    checkImage(text);
+    check_file_hash(baseName + "2.svg");
+  }
+  {
+    const char *rxnBlock = R"RXN($RXN
+
+      Mrv1920  090220231850
+
+  1  2
+$MOL
+
+  Mrv1920 09022318502D
+
+ 20 22  0  0  0  0            999 V2000
+   -2.4533   -0.5079    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0179    0.0939    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8212   -0.0941    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0600   -0.8837    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.8633   -1.0715    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.4277   -0.4698    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.2311   -0.6577    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.7954   -0.0558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.5987   -0.2436    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.8377   -1.0333    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.2734   -1.6351    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.4701   -1.4473    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.1888    0.3199    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3855    0.5077    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1465    1.2974    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7110    1.8993    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5142    1.7114    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.7532    0.9218    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4957   -1.4854    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6923   -1.2975    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  3  0  0  0
+  6  7  1  0  0  0  0
+  7  8  4  0  0  0  0
+  8  9  4  0  0  0  0
+  9 10  4  0  0  0  0
+ 10 11  4  0  0  0  0
+ 11 12  4  0  0  0  0
+  6 13  1  0  0  0  0
+ 13 14  4  0  0  0  0
+ 14 15  4  0  0  0  0
+ 15 16  4  0  0  0  0
+ 16 17  4  0  0  0  0
+ 17 18  4  0  0  0  0
+  4 19  4  0  0  0  0
+ 19 20  4  0  0  0  0
+ 20  1  4  0  0  0  0
+ 12  7  4  0  0  0  0
+ 18 13  4  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09022318502D
+
+  7  7  0  0  0  0            999 V2000
+    5.5920    0.3948    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0277    0.9966    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2244    0.8087    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9855    0.0191    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1821   -0.1689    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5499   -0.5827    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3531   -0.3949    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  1  0  0  0  0
+  4  6  4  0  0  0  0
+  6  7  4  0  0  0  0
+  7  1  4  0  0  0  0
+M  END
+$MOL
+
+  Mrv1920 09022318502D
+
+  1  0  0  0  0  0            999 V2000
+    8.3990    0.0732    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+)RXN";
+
+    std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
+    MolDraw2DSVG drawer(-1, -1);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs((baseName + "3.svg").c_str());
+    outs << text;
+    outs.close();
+    checkImage(text);
+    check_file_hash(baseName + "3.svg");
+  }
+  {
+    // This one was clipped on the right hand side at one point.
+    std::string smarts(
+        "[cH:1]1[cH:2][cH:3][c:4][cH:5][cH:6]1>>[cH:3]1[cH:2][c:1]([cH:6][cH:5][c:4]1)Cl");
+    bool useSmiles = true;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(smarts, nullptr, useSmiles));
+    MolDraw2DSVG drawer(600, 150);
+    drawer.drawOptions().padding = 0.0;
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs((baseName + "4.svg").c_str());
+    outs << text;
+    outs.close();
+    checkImage(text);
+    check_file_hash(baseName + "4.svg");
   }
 }

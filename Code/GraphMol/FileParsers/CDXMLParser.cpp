@@ -478,8 +478,13 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   if (!sgroups.empty()) {
     std::vector<StereoGroup> stereo_groups;
     for (auto &sgroup : sgroups) {
-      stereo_groups.emplace_back(
-          StereoGroup(sgroup.second.grouptype, sgroup.second.atoms));
+      unsigned gId = 0;
+      if (sgroup.second.grouptype != StereoGroupType::STEREO_ABSOLUTE &&
+          sgroup.second.sgroup > 0) {
+        gId = sgroup.second.sgroup;
+      }
+      stereo_groups.emplace_back(sgroup.second.grouptype, sgroup.second.atoms,
+                                 gId);
     }
     mol.setStereoGroups(std::move(stereo_groups));
   }
@@ -600,12 +605,30 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                 DetectAtomStereoChemistry(*res, &res->getConformer(confidx));
               }
 
+              // now that atom stereochem has been perceived, the wedging
+              // information is no longer needed, so we clear
+              // single bond dir flags:
+              MolOps::clearSingleBondDirFlags(*res);
+
               if (sanitize) {
                 try {
                   if (removeHs) {
+                    // Bond stereo detection must happen before H removal, or
+                    // else we might be removing stereogenic H atoms in double
+                    // bonds (e.g. imines). But before we run stereo detection,
+                    // we need to run mol cleanup so don't have trouble with
+                    // e.g. nitro groups. Sadly, this a;; means we will find
+                    // run both cleanup and ring finding twice (a fast find
+                    // rings in bond stereo detection, and another in
+                    // sanitization's SSSR symmetrization).
+                    unsigned int failedOp = 0;
+                    MolOps::sanitizeMol(*res, failedOp,
+                                        MolOps::SANITIZE_CLEANUP);
+                    MolOps::detectBondStereochemistry(*res);
                     MolOps::removeHs(*res, false, false);
                   } else {
                     MolOps::sanitizeMol(*res);
+                    MolOps::detectBondStereochemistry(*res);
                   }
                 } catch (...) {
                   BOOST_LOG(rdWarningLog)
@@ -614,15 +637,8 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                   mols.pop_back();
                   continue;
                 }
-                // now that atom stereochem has been perceived, the wedging
-                // information is no longer needed, so we clear
-                // single bond dir flags:
-
-                ClearSingleBondDirFlags(*res);
-                MolOps::detectBondStereochemistry(*res);
                 MolOps::assignStereochemistry(*res, true, true, true);
               } else {
-                ClearSingleBondDirFlags(*res);
                 MolOps::detectBondStereochemistry(*res);
               }
             } else if (frag.first == "scheme") {  // get the reaction info

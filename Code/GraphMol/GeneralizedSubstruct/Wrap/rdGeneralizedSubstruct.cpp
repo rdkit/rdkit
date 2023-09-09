@@ -20,6 +20,18 @@ using namespace RDKit;
 using namespace RDKit::GeneralizedSubstruct;
 
 namespace {
+
+python::object XQMolToBinary(const ExtendedQueryMol &self) {
+  std::string res;
+  {
+    NOGIL gil;
+    res = self.toBinary();
+  }
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
+
 bool hasSubstructHelper(const ROMol &mol, const ExtendedQueryMol &query,
                         SubstructMatchParameters *iparams) {
   SubstructMatchParameters params;
@@ -77,8 +89,8 @@ ExtendedQueryMol *createExtendedQueryMolHelper(
   if (!ps) {
     ps = &defaults;
   }
-  return new ExtendedQueryMol(std::move(createExtendedQueryMol(
-      mol, doEnumeration, doTautomers, adjustQueryProperties, *ps)));
+  return new ExtendedQueryMol(createExtendedQueryMol(
+      mol, doEnumeration, doTautomers, adjustQueryProperties, *ps));
 }
 
 }  // namespace
@@ -95,7 +107,7 @@ BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
           "constructor from either a binary string (from ToBinary()) or a JSON string."))
       .def("InitFromBinary", &ExtendedQueryMol::initFromBinary)
       .def("InitFromJSON", &ExtendedQueryMol::initFromJSON)
-      .def("ToBinary", &ExtendedQueryMol::toBinary)
+      .def("ToBinary", XQMolToBinary)
       .def("ToJSON", &ExtendedQueryMol::toJSON);
 
   python::def(

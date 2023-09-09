@@ -74,6 +74,9 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   bool allowNonTerminalRGroups = false;
   // unlabelled core atoms can have multiple rgroups
   bool allowMultipleRGroupsOnUnlabelled = false;
+  // extended query settings for core matching
+  bool doTautomers = false;
+  bool doEnumeration = false;
 
   double timeout = -1.0;  ///< timeout in seconds. <=0 indicates no timeout
 

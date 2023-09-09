@@ -19,6 +19,7 @@
 // #define VERBOSE 1
 
 namespace RDKit {
+class TautomerQuery;
 
 //! RCore is the core common to a series of molecules
 struct RCore {
@@ -66,6 +67,8 @@ struct RCore {
       const RWMol &target, MatchVectType match,
       const SubstructMatchParameters &sssParams) const;
 
+  std::shared_ptr<TautomerQuery> getMatchingTautomerQuery();
+
   inline bool isTerminalRGroupWithUserLabel(const int idx) const {
     return terminalRGroupDummyAtoms.find(idx) != terminalRGroupDummyAtoms.end();
   }
@@ -87,6 +90,9 @@ struct RCore {
   std::set<int> terminalRGroupAtoms;
   // An atom index map of terminal R groups to their heavy atom neighbor
   std::map<int, int> terminalRGroupAtomToNeighbor;
+  // TautomerQuery for matching
+  bool checkedForTautomerQuery = false;
+  std::shared_ptr<TautomerQuery> matchingTautomerQuery = nullptr;
 
   void replaceCoreAtom(RWMol &mol, Atom &atom, const Atom &other) const;
 

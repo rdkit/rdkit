@@ -99,8 +99,8 @@ TEST_CASE("convert explicit dative bonds to haptic bond") {
       std::unique_ptr<ROMol> mol(MolFileToMol(pathName + td));
       REQUIRE(mol);
       auto initSmi = MolToSmiles(*mol);
-      auto mol1 = MolOps::hapticBondsToDative(*mol);
-      auto mol2 = MolOps::dativeBondsToHaptic(*mol1);
+      std::unique_ptr<ROMol> mol1{MolOps::hapticBondsToDative(*mol)};
+      std::unique_ptr<ROMol> mol2{MolOps::dativeBondsToHaptic(*mol1)};
       CHECK(initSmi == MolToSmiles(*mol2));
     }
   }

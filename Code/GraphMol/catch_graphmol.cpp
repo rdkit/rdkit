@@ -2958,12 +2958,16 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
       {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
        "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
   for (size_t i = 0; i < test_vals.size(); ++i) {
-    SmilesParserParams ps;
-    ps.sanitize = false;
-    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first, ps));
-    // MolOps::cleanUp(*m);
+    INFO(test_vals[i].first);
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
+    TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
+  }
+  // make sure we can call cleanupOrganometallics() on non-sanitized molecules
+  for (size_t i = 0; i < test_vals.size(); ++i) {
+    INFO(test_vals[i].first);
+    bool sanitize=false;
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first,0,sanitize));
     MolOps::cleanUpOrganometallics(*m);
-    MolOps::sanitizeMol(*m);
     TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
   }
 }
@@ -2975,14 +2979,10 @@ TEST_CASE(
       {"F[Pt]1(F)[35Cl][Pt]([Cl]1)(F)Br", "F[Pt]1(Br)<-Cl[Pt](F)(F)<-[35Cl]1"},
   };
 
-  SmilesParserParams ps;
-  ps.sanitize = false;
   for (size_t j = 0; j < test_vals.size(); ++j) {
     std::string &smi = test_vals[j].first;
     std::string &canon_smi = test_vals[j].second;
-    RWMOL_SPTR m(RDKit::SmilesToMol(smi, ps));
-    MolOps::cleanUpOrganometallics(*m);
-    MolOps::sanitizeMol(*m);
+    RWMOL_SPTR m(RDKit::SmilesToMol(smi));
     TEST_ASSERT(MolToSmiles(*m) == canon_smi);
 
     // scramble the order and check
@@ -2991,11 +2991,12 @@ TEST_CASE(
     std::random_device rd;
     std::mt19937 g(rd());
     for (int i = 0; i < 100; ++i) {
+      SmilesParserParams ps;
+      ps.sanitize = false;
       std::unique_ptr<ROMol> mol(RDKit::SmilesToMol(smi, ps));
       std::shuffle(atomInds.begin(), atomInds.end(), g);
       std::unique_ptr<ROMol> randmol(MolOps::renumberAtoms(*mol, atomInds));
       std::unique_ptr<RWMol> rwrandmol(new RWMol(*randmol));
-      MolOps::cleanUpOrganometallics(*rwrandmol);
       MolOps::sanitizeMol(*rwrandmol);
       TEST_ASSERT(MolToSmiles(*rwrandmol) == canon_smi);
     }
@@ -3182,7 +3183,7 @@ M  END
     REQUIRE(mol);
     bool explicitOnly = false;
     bool addCoords = true;
-    RDKit::ROMol *m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    std::unique_ptr<ROMol> m{MolOps::addHs(*mol, explicitOnly, addCoords)};
     REQUIRE(m->getNumAtoms() == 5);
     const auto &conf = m->getConformer();
     // Hydrogen will always be in the last position
@@ -3215,7 +3216,7 @@ M  END
     REQUIRE(mol);
     bool explicitOnly = false;
     bool addCoords = true;
-    RDKit::ROMol *m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    std::unique_ptr<ROMol> m{MolOps::addHs(*mol, explicitOnly, addCoords)};
     REQUIRE(m->getNumAtoms() == 5);
     const auto &conf = m->getConformer();
     // Hydrogen will always be in the last position
@@ -3388,5 +3389,33 @@ M  END
 
     const std::string reference_smiles = "c1cc[cH-]c1";
     run_test(mb, reference_smiles);
+  }
+}
+
+TEST_CASE(
+    "GitHub Issue #6681: ROMol move constructor and assignment do not update SubstanceGroup ownership",
+    "[bug]") {
+  auto m = "CCCCCC[NH3+] |SgD:6:lambda max:230:=:nm::|"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 7);
+  REQUIRE(getSubstanceGroups(*m).size() == 1);
+
+  SECTION("ROMol move constructor") {
+    ROMol mol(std::move(*m));
+    REQUIRE(mol.getNumAtoms() == 7);
+
+    auto sgs = getSubstanceGroups(mol);
+    REQUIRE(sgs.size() == 1);
+    CHECK(&sgs[0].getOwningMol() == &mol);
+  }
+
+  SECTION("ROMol move assignment") {
+    ROMol mol;
+    mol = std::move(*m);
+    REQUIRE(mol.getNumAtoms() == 7);
+
+    auto sgs = getSubstanceGroups(mol);
+    REQUIRE(sgs.size() == 1);
+    CHECK(&sgs[0].getOwningMol() == &mol);
   }
 }

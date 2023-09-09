@@ -347,4 +347,195 @@ TEST_CASE("more enhanced stereo canonicalization") {
 
     CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
   }
+  SECTION("case 3") {
+    auto m1 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"_smiles;
+    REQUIRE(m1);
+    auto m2 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
+    REQUIRE(m2);
+    Canon::canonicalizeEnhancedStereo(*m1);
+    Canon::canonicalizeEnhancedStereo(*m2);
+
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+  }
+  SECTION("case 4") {
+    auto m1 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"_smiles;
+    REQUIRE(m1);
+    auto m2 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
+    REQUIRE(m2);
+
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+  }
+  SECTION("case 5") {
+    auto m1 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"_smiles;
+    REQUIRE(m1);
+    auto m2 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
+    REQUIRE(m2);
+
+    forwardStereoGroupIds(*m1);
+    forwardStereoGroupIds(*m2);
+
+    auto cx1 = MolToCXSmiles(*m1);
+    auto cx2 = MolToCXSmiles(*m2);
+    CHECK(cx1 != cx2);
+    CHECK(cx1.find("&7:") != std::string::npos);
+    CHECK(cx1.find("&8:") != std::string::npos);
+    CHECK(cx2.find("&2:") != std::string::npos);
+    CHECK(cx2.find("&3:") != std::string::npos);
+  }
+  SECTION("case 6") {
+    auto m1 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"_smiles;
+    REQUIRE(m1);
+    auto m2 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
+    REQUIRE(m2);
+
+    forwardStereoGroupIds(*m1);
+    forwardStereoGroupIds(*m2);
+
+    // Canonicalization resets the Stereo Group IDs
+    Canon::canonicalizeEnhancedStereo(*m1);
+    Canon::canonicalizeEnhancedStereo(*m2);
+
+    auto cx1 = MolToCXSmiles(*m1);
+    auto cx2 = MolToCXSmiles(*m2);
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+
+    // "read" ids are also reset!
+    forwardStereoGroupIds(*m1);
+    forwardStereoGroupIds(*m2);
+
+    cx1 = MolToCXSmiles(*m1);
+    cx2 = MolToCXSmiles(*m2);
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+  }
+}
+
+TEST_CASE("ensure unused features are not used") {
+  SECTION("isotopes") {
+    auto mol = "[13CH3]OC"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    bool includeChirality = true;
+    bool includeIsotopes = true;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[0] != ranks[2]);
+
+    includeIsotopes = false;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[0] == ranks[2]);
+  }
+  SECTION("chirality") {
+    auto mol = "F[C@H](Cl)OC(F)Cl"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    bool includeChirality = true;
+    bool includeIsotopes = true;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] != ranks[4]);
+
+    includeChirality = false;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] == ranks[4]);
+  }
+  SECTION("chirality and stereogroups") {
+    auto mol = "F[C@H](Cl)O[C@H](F)Cl |o1:1|"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    bool includeChirality = true;
+    bool includeIsotopes = true;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] != ranks[4]);
+
+    includeChirality = false;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes);
+    CHECK(ranks[1] == ranks[4]);
+  }
+}
+
+TEST_CASE(
+    "GitHub Issue #6633: Pre-condition violation in canonicalization of dative bond adjacent to double bond",
+    "[bug][canonicalization]") {
+  auto mb = R"CTAB(
+                    3D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 16 16 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C  -2.0033 -1.4133 -0.0473 0
+M  V30 2 C  -2.9101 -0.3985 -0.2677 0
+M  V30 3 O  -2.7092 0.8645 -0.2504 0
+M  V30 4 Ir -0.9429 1.8106 0.2184 0
+M  V30 5 N  0.0151 -0.0816 0.3618 0
+M  V30 6 C  1.4929 -0.0477 0.5631 0
+M  V30 7 C  -0.6236 -1.2309 0.2291 0
+M  V30 8 C  -4.3730 -0.7437 -0.5877 0
+M  V30 9 H  -2.3752 -2.4232 -0.1048 0
+M  V30 10 H  1.8628 -0.9806 0.9803 0
+M  V30 11 H  1.6928 0.7152 1.3165 0
+M  V30 12 H  2.0044 0.1878 -0.3701 0
+M  V30 13 H  -4.9409 0.1756 -0.7308 0
+M  V30 14 H  -4.4149 -1.3416 -1.4982 0
+M  V30 15 H  -4.8022 -1.3104 0.2386 0
+M  V30 16 H  0.0202 -2.0891 0.3538 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 7
+M  V30 2 2 1 2
+M  V30 3 1 1 9
+M  V30 4 1 2 3
+M  V30 5 1 2 8
+M  V30 6 1 3 4
+M  V30 7 9 5 4
+M  V30 8 1 5 6
+M  V30 9 2 5 7
+M  V30 10 1 6 10
+M  V30 11 1 6 11
+M  V30 12 1 6 12
+M  V30 13 1 7 16
+M  V30 14 1 8 13
+M  V30 15 1 8 14
+M  V30 16 1 8 15
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB";
+
+  auto countStereoBonds = [](const auto& mol) {
+    unsigned num_stereo_bonds = 0;
+    for (const auto bond : mol.bonds()) {
+      if (bond->getBondType() == Bond::BondType::DOUBLE &&
+          bond->getStereo() != Bond::BondStereo::STEREONONE) {
+        ++num_stereo_bonds;
+      }
+    }
+    return num_stereo_bonds;
+  };
+
+  auto sanitize = true;
+  auto removeHs = false;
+  std::unique_ptr<ROMol> mol(MolBlockToMol(mb, sanitize, removeHs));
+
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 16);
+  REQUIRE(countStereoBonds(*mol) == 2);
+
+  CHECK_NOTHROW(MolToSmiles(*mol));
+
+  CHECK(countStereoBonds(*mol) == 2);
 }

@@ -10,8 +10,6 @@
 
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/StringRect.h>
-#include <GraphMol/Conformer.h>
-#include <GraphMol/SubstanceGroup.h>
 
 #include <cmath>
 #ifndef M_PI
@@ -49,9 +47,9 @@ void arcPoints(const Point2D &cds1, const Point2D &cds2,
 }
 
 void addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP) {
-  const auto &sgs = mol.getStereoGroups();
+  auto sgs = mol.getStereoGroups();
+  assignStereoGroupIds(sgs);
   std::vector<unsigned int> doneAts(mol.getNumAtoms(), 0);
-  unsigned int grpid = 1;
   for (const auto &sg : sgs) {
     for (const auto atom : sg.getAtoms()) {
       if (doneAts[atom->getIdx()]) {
@@ -72,10 +70,10 @@ void addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP) {
           lab = "abs";
           break;
         case StereoGroupType::STEREO_OR:
-          lab = (boost::format("or%d") % grpid).str();
+          lab = (boost::format("or%d") % sg.getWriteId()).str();
           break;
         case StereoGroupType::STEREO_AND:
-          lab = (boost::format("and%d") % grpid).str();
+          lab = (boost::format("and%d") % sg.getWriteId()).str();
           break;
         default:
           break;
@@ -87,9 +85,6 @@ void addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP) {
         }
         atom->setProp(common_properties::atomNote, lab);
       }
-    }
-    if (sg.getGroupType() != StereoGroupType::STEREO_ABSOLUTE) {
-      ++grpid;
     }
   }
   for (auto atom : mol.atoms()) {
@@ -429,6 +424,64 @@ RDKIT_MOLDRAW2D_EXPORT void calcArrowHead(Point2D &arrowEnd, Point2D &arrow1,
   arrow2 = arrowEnd;
   arrow2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
   arrow2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
+}
+
+// ****************************************************************************
+void adjustLineEndForEllipse(const Point2D &centre, double xradius,
+                             double yradius, Point2D p1, Point2D &p2) {
+  // move everything so the ellipse is centred on the origin.
+  p1 -= centre;
+  p2 -= centre;
+  double a2 = xradius * xradius;
+  double b2 = yradius * yradius;
+  double A =
+      (p2.x - p1.x) * (p2.x - p1.x) / a2 + (p2.y - p1.y) * (p2.y - p1.y) / b2;
+  double B = 2.0 * p1.x * (p2.x - p1.x) / a2 + 2.0 * p1.y * (p2.y - p1.y) / b2;
+  double C = p1.x * p1.x / a2 + p1.y * p1.y / b2 - 1.0;
+
+  auto t_to_point = [&](double t) -> Point2D {
+    Point2D ret_val;
+    ret_val.x = p1.x + (p2.x - p1.x) * t + centre.x;
+    ret_val.y = p1.y + (p2.y - p1.y) * t + centre.y;
+    return ret_val;
+  };
+
+  double disc = B * B - 4.0 * A * C;
+  if (disc < 0.0) {
+    // no solutions, leave things as they are.  Bit crap, though.
+    p1 += centre;
+    p2 += centre;
+    return;
+  } else if (fabs(disc) < 1.0e-6) {
+    // 1 solution
+    double t = -B / (2.0 * A);
+    p2 = t_to_point(t);
+  } else {
+    // 2 solutions - take the one nearest p1.
+    double disc_rt = sqrt(disc);
+    double t1 = (-B + disc_rt) / (2.0 * A);
+    double t2 = (-B - disc_rt) / (2.0 * A);
+    double t;
+    // prefer the t between 0 and 1, as that must be between the original
+    // points.  If both are, prefer the lower, as that will be nearest p1,
+    // so on the bit of the ellipse the line comes to first.
+    bool t1_ok = (t1 >= 0.0 && t1 <= 1.0);
+    bool t2_ok = (t2 >= 0.0 && t2 <= 1.0);
+    if (t1_ok && !t2_ok) {
+      t = t1;
+    } else if (t2_ok && !t1_ok) {
+      t = t2;
+    } else if (t1_ok && t2_ok) {
+      t = std::min(t1, t2);
+    } else {
+      // the intersections are both outside the line between p1 and p2
+      // so don't do anything.
+      p1 += centre;
+      p2 += centre;
+      return;
+    }
+    p2 = t_to_point(t);
+  }
 }
 
 }  // namespace MolDraw2D_detail

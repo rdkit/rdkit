@@ -241,7 +241,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
           string_props.push_back(keys[i]);
           string_props.push_back(val);
         }
-      } catch (const boost::bad_any_cast &) {
+      } catch (const std::bad_any_cast &) {
         // pass, can't serialize
         // warning, this changes properties types, see Dict.cpp
       }

@@ -78,6 +78,46 @@ CREATE TYPE qmol (
 
 CREATE CAST (mol as qmol) WITHOUT FUNCTION;
 
+
+-- xqmol type
+
+CREATE TYPE xqmol;
+
+CREATE OR REPLACE FUNCTION xqmol_in(cstring)
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_out(xqmol)
+RETURNS cstring
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_recv(internal)
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_send(xqmol)
+RETURNS bytea
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE TYPE xqmol (
+        INTERNALLENGTH = VARIABLE,
+        INPUT = xqmol_in,
+        OUTPUT = xqmol_out,
+        RECEIVE = xqmol_recv,
+        SEND = xqmol_send,
+        STORAGE = extended
+);
+
+
+
 -- bfp type
 
 CREATE TYPE bfp;
@@ -772,6 +812,15 @@ CREATE OR REPLACE FUNCTION mol_nm_hash(mol, cstring default 'AnonymousGraph')
     LANGUAGE C STRICT IMMUTABLE;
 
 
+-- extended query operations
+CREATE OR REPLACE FUNCTION mol_to_xqmol(mol, bool default true, 
+                                        bool default true, bool default false,
+                                        cstring default '' )
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
 -- bfp integer descriptors
 
 CREATE OR REPLACE FUNCTION size(bfp)
@@ -1152,6 +1201,65 @@ CREATE OPERATOR <<@ (
 );
 
 
+CREATE OR REPLACE FUNCTION substruct(mol, xqmol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_substruct'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @> (
+	LEFTARG = mol,
+	RIGHTARG = xqmol,
+	PROCEDURE = substruct(mol, xqmol),
+	COMMUTATOR = '<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+CREATE OR REPLACE FUNCTION rsubstruct(xqmol, mol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_rsubstruct'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR <@ (
+	LEFTARG = xqmol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct(xqmol, mol),
+	COMMUTATOR = '@>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION substruct_query(mol, xqmol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_substruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @>> (
+	LEFTARG = mol,
+	RIGHTARG = xqmol,
+	PROCEDURE = substruct_query(mol, xqmol),
+	COMMUTATOR = '<<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+
+CREATE OR REPLACE FUNCTION rsubstruct_query(xqmol, mol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_rsubstruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR <<@ (
+	LEFTARG = xqmol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct_query(xqmol, mol),
+	COMMUTATOR = '@>>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+
+
+
 -- mol comparison
 
 CREATE OR REPLACE FUNCTION mol_cmp(mol,mol)
@@ -1267,6 +1375,7 @@ CREATE OPERATOR @= (
     RESTRICT = eqsel,
     JOIN = eqjoinsel
 );
+
 
 -- bfp comparison
 

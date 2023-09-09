@@ -85,7 +85,7 @@ void _writePropToStream(std::ostream *dp_ostream, const ROMol &mol,
   std::string pval;
   try {
     mol.getProp(name, pval);
-  } catch (boost::bad_any_cast &) {
+  } catch (std::bad_any_cast &) {
     return;
   }
 

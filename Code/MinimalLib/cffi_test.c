@@ -567,8 +567,8 @@ void test_flexicanvas() {
   assert(pkl_size > 0);
 
   char *svg = get_svg(pkl, pkl_size, "{\"width\":-1,\"height\":-1}");
-  assert(strstr(svg, "width='95px'"));
-  assert(strstr(svg, "height='21px'"));
+  assert(strstr(svg, "width='87px'"));
+  assert(strstr(svg, "height='19px'"));
   assert(strstr(svg, "</svg>"));
   free(svg);
 
@@ -2124,6 +2124,95 @@ M  END\n",
   free(tpkl);
 }
 
+void test_partial_sanitization() {
+  printf("--------------------------\n");
+  printf("  test_partial_sanitization\n");
+  char *mpkl;
+  char *fp;
+  size_t mpkl_size;
+  const char *mfp_json = "{\"radius\":2,\"nBits\":32}";
+  const char *otherfp_json = "{\"nBits\":32}";
+  mpkl =
+      get_mol("C1CCC2CCCC2C1", &mpkl_size,
+              "{\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false}");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  fp = get_morgan_fp(mpkl, mpkl_size, mfp_json);
+  assert(fp);
+  assert(strlen(fp) == 32);
+  free(fp);
+  free(mpkl);
+  mpkl = get_mol(
+      "C1CCC2CCCC2C1", &mpkl_size,
+      "{\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false,\"fastFindRings\":false}");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  fp = get_morgan_fp(mpkl, mpkl_size, mfp_json);
+  assert(!fp);
+  fp = get_rdkit_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+  fp = get_pattern_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+  fp = get_atom_pair_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+  fp = get_maccs_fp(mpkl, mpkl_size);
+  assert(!fp);
+#ifdef RDK_BUILD_AVALON_SUPPORT
+  fp = get_avalon_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+#endif
+  free(mpkl);
+}
+
+void test_capture_logs() {
+  printf("--------------------------\n");
+  printf("  test_capture_logs\n");
+  char *mpkl;
+  char *log_buffer;
+  void *null_handle = NULL;
+  size_t mpkl_size;
+  void *log_handle;
+  typedef struct {
+    const char *type;
+    void *(*func)(const char *);
+  } capture_test;
+  capture_test tests[] = {{"tee", set_log_tee}, {"capture", set_log_capture}};
+  for (size_t i = 0; i < sizeof(tests) / sizeof(capture_test); ++i) {
+    printf("%d. %s\n", i + 1, tests[i].type);
+    log_handle = tests[i].func("dummy");
+    assert(!log_handle);
+    log_handle = tests[i].func("rdApp.*");
+    assert(log_handle);
+    assert(!get_log_buffer(null_handle));
+    log_buffer = get_log_buffer(log_handle);
+    assert(log_buffer);
+    assert(!strlen(log_buffer));
+    free(log_buffer);
+    mpkl = get_mol("CN(C)(C)C", &mpkl_size, "");
+    assert(!mpkl);
+    log_buffer = get_log_buffer(log_handle);
+    assert(log_buffer);
+    assert(strstr(
+        log_buffer,
+        "Explicit valence for atom # 1 N, 4, is greater than permitted"));
+    free(log_buffer);
+    assert(!clear_log_buffer(null_handle));
+    assert(clear_log_buffer(log_handle));
+    log_buffer = get_log_buffer(log_handle);
+    assert(log_buffer);
+    assert(!strlen(log_buffer));
+    free(log_buffer);
+    assert(!destroy_log_handle(null_handle));
+    assert(!destroy_log_handle(&null_handle));
+    assert(destroy_log_handle(&log_handle));
+    assert(!log_handle);
+  }
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -2149,5 +2238,7 @@ int main() {
   test_allow_non_tetrahedral_chirality();
   test_query_colour();
   test_alignment_r_groups_aromatic_ring();
+  test_partial_sanitization();
+  test_capture_logs();
   return 0;
 }

@@ -156,6 +156,22 @@ void get_colour_palette_option(boost::property_tree::ptree *pt, const char *pnm,
   }
 }
 
+void get_highlight_style_option(boost::property_tree::ptree *pt,
+                                const char *pnm,
+                                MultiColourHighlightStyle &mchs) {
+  PRECONDITION(pnm && strlen(pnm), "bad property name");
+  if (pt->find(pnm) == pt->not_found()) {
+    return;
+  }
+  const auto &node = pt->get_child(pnm);
+  auto styleStr = node.get_value<std::string>();
+  if (styleStr == "Lasso") {
+    mchs = MultiColourHighlightStyle::LASSO;
+  } else if (styleStr == "CircleAndLine") {
+    mchs = MultiColourHighlightStyle::CIRCLEANDLINE;
+  }
+}
+
 void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
                                   const std::string &json) {
   if (json == "") {
@@ -232,6 +248,8 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
           item.second.get_value<std::string>();
     }
   }
+  get_highlight_style_option(&pt, "multiColourHighlightStyle",
+                             opts.multiColourHighlightStyle);
 }
 
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(
@@ -374,6 +392,9 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
       maxP.y = std::max(loc.y, maxP.y);
     }
     Point2D dims = maxP - minP;
+    // Here, the drawOptions().padding is just used to extend the grid
+    // beyond the molecule.  The actual padding round the image is added
+    // later.
     minP.x -= drawer.drawOptions().padding * dims.x;
     minP.y -= drawer.drawOptions().padding * dims.y;
     maxP.x += drawer.drawOptions().padding * dims.x;
@@ -460,6 +481,9 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
 
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
+  if (meanBondLen <= 0.0) {
+    throw ValueErrorException("ACS1996Options requires mean bond length > 0.0.");
+  }
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
   // the guideline is for a bond length of 14.4px, and we set things up

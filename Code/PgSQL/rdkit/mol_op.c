@@ -217,6 +217,69 @@ Datum mol_substruct_count_chiral(PG_FUNCTION_ARGS) {
   PG_RETURN_INT32(MolSubstructCount(i, a, uniquify, true));
 }
 
+PGDLLEXPORT Datum mol_xq_substruct(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_xq_substruct);
+Datum mol_xq_substruct(PG_FUNCTION_ARGS) {
+  CROMol i;
+  CXQMol a;
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                       PG_GETARG_DATUM(1), NULL, &a, NULL);
+
+  PG_RETURN_BOOL(XQMolSubstruct(i, a, false, false));
+}
+
+PGDLLEXPORT Datum mol_xq_rsubstruct(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_xq_rsubstruct);
+Datum mol_xq_rsubstruct(PG_FUNCTION_ARGS) {
+  CROMol i;
+  CXQMol a;
+
+  fcinfo->flinfo->fn_extra =
+      searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                       PG_GETARG_DATUM(0), NULL, &a, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &i, NULL);
+
+  PG_RETURN_BOOL(XQMolSubstruct(i, a, false, false));
+}
+
+PGDLLEXPORT Datum mol_xq_substruct_query(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_xq_substruct_query);
+Datum mol_xq_substruct_query(PG_FUNCTION_ARGS) {
+  CROMol i;
+  CXQMol a;
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                       PG_GETARG_DATUM(1), NULL, &a, NULL);
+
+  PG_RETURN_BOOL(XQMolSubstruct(i, a, false, true));
+}
+PGDLLEXPORT Datum mol_xq_rsubstruct_query(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_xq_rsubstruct_query);
+Datum mol_xq_rsubstruct_query(PG_FUNCTION_ARGS) {
+  CROMol i;
+  CXQMol a;
+
+  fcinfo->flinfo->fn_extra =
+      searchXQMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                       PG_GETARG_DATUM(0), NULL, &a, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &i, NULL);
+
+  PG_RETURN_BOOL(XQMolSubstruct(i, a, false, true));
+}
+
 #define MOLDESCR(name, func, ret)                                         \
   PGDLLEXPORT Datum mol_##name(PG_FUNCTION_ARGS);                         \
   PG_FUNCTION_INFO_V1(mol_##name);                                        \
@@ -381,7 +444,7 @@ Datum mol_adjust_query_properties(PG_FUNCTION_ARGS) {
   if (!adj) {
     PG_RETURN_NULL();
   }
-  Mol *res = deconstructROMol(adj);
+  Mol *res = deconstructROMolWithQueryProperties(adj);
   freeCROMol(adj);
 
   PG_RETURN_MOL_P(res);
@@ -405,6 +468,32 @@ Datum mol_to_svg(PG_FUNCTION_ARGS) {
   char *res = pnstrdup(str, strlen(str));
   free((void *)str);
   PG_RETURN_CSTRING(res);
+}
+
+PGDLLEXPORT Datum mol_to_xqmol(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_to_xqmol);
+Datum mol_to_xqmol(PG_FUNCTION_ARGS) {
+  CROMol mol;
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
+  Assert(mol != 0);
+
+  bool doEnumeration = PG_GETARG_BOOL(1);
+  bool doTautomers = PG_GETARG_BOOL(2);
+  bool adjustQueryProperties = PG_GETARG_BOOL(3);
+  char *params = PG_GETARG_CSTRING(4);
+
+  CXQMol xqm = MolToXQMol(mol, doEnumeration, doTautomers,
+                          adjustQueryProperties, params);
+
+  if (!xqm) {
+    PG_RETURN_NULL();
+  }
+  XQMol *res = deconstructXQMol(xqm);
+  freeCXQMol(xqm);
+
+  PG_RETURN_MOL_P(res);
 }
 
 /*** fmcs ***/

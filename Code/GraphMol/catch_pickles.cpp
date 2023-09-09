@@ -170,4 +170,47 @@ M  END
     CHECK(mol2.getAtomWithIdx(3)->getProp<std::string>(
               common_properties::dummyLabel) == "foo");
   }
+
+  SECTION("attachment points") {
+    auto mol = R"CTAB(
+  Mrv2211 09062306242D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.7917 4.0833 0 0
+M  V30 2 C -6.458 4.8533 0 0
+M  V30 3 C -5.1243 4.0833 0 0
+M  V30 4 * -6.458 4.34 0 0
+M  V30 5 C -5.303 6.3405 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 4 5 ENDPTS=(3 1 2 3) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(2)->getProp<std::string>(
+              common_properties::_MolFileBondAttach) == "ANY");
+    CHECK(mol->getBondWithIdx(2)->getProp<std::string>(
+              common_properties::_MolFileBondEndPts) == "(3 1 2 3)");
+
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+
+    // make sure the property names aren't in the pickle
+    CHECK(pkl.find(common_properties::_MolFileBondAttach) == std::string::npos);
+    CHECK(pkl.find(common_properties::_MolFileBondEndPts) == std::string::npos);
+    // std::cerr << "!!!! " << pkl.size() << " " << basepkl.size() << std::endl;
+
+    RWMol mol2(pkl);
+    CHECK(mol2.getBondWithIdx(2)->getProp<std::string>(
+              common_properties::_MolFileBondAttach) == "ANY");
+    CHECK(mol2.getBondWithIdx(2)->getProp<std::string>(
+              common_properties::_MolFileBondEndPts) == "(3 1 2 3)");
+  }
 }

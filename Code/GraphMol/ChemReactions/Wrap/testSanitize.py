@@ -284,16 +284,16 @@ class TestCase(unittest.TestCase):
       res = rdChemReactions.PreprocessReaction(rxna)
       print(AllChem.ReactionToRxnBlock(rxna))
       if status == "good":
-        self.assertEquals(res, good_res)
+        self.assertEqual(res, good_res)
       elif status == "bad":
-        self.assertEquals(res, bad_res)
+        self.assertEqual(res, bad_res)
       print(">" * 44)
       rxnb.Initialize()
       try:
         rdChemReactions.SanitizeRxn(rxnb)
         res = rdChemReactions.PreprocessReaction(rxnb)
         print(AllChem.ReactionToRxnBlock(rxnb))
-        self.assertEquals(res, good_res)
+        self.assertEqual(res, good_res)
         assert not status == "fail"
       except Exception:
         print("$RXN Failed")

@@ -48,6 +48,8 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
   PT_OPT_GET(boundsMatForceScaling);
   PT_OPT_GET(forceTransAmides);
   PT_OPT_GET(useSymmetryForPruning);
+  PT_OPT_GET(enableSequentialRandomSeeds);
+
   std::map<int, RDGeom::Point3D> *cmap = nullptr;
   const auto coordMap = pt.get_child_optional("coordMap");
   if (coordMap) {

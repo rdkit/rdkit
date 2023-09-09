@@ -93,7 +93,7 @@ class TestCase(unittest.TestCase):
     assert len(d) == 10
     assert tuple(d[0]) == (0, 11)
     assert tuple(d[2]) == (4, 31)
-    with self.assertRaisesRegexp(IndexError, ""):
+    with self.assertRaisesRegex(IndexError, ""):
       d[11]
 
   def testGetData2(self):
@@ -103,14 +103,14 @@ class TestCase(unittest.TestCase):
     assert tuple(d[0]) == (0, 11)
     assert tuple(d[2]) == (4, 31)
     assert len(d) == 10
-    with self.assertRaisesRegexp(IndexError, ""):
+    with self.assertRaisesRegex(IndexError, ""):
       d[11]
 
   def testGetData3(self):
     """ using a DbResultSet
     """
     d = DbUtils.GetData(self.dbName, 'ten_elements', forceList=0, randomAccess=0)
-    with self.assertRaisesRegexp(TypeError, ""):
+    with self.assertRaisesRegex(TypeError, ""):
       len(d)
     rs = []
     for thing in d:
@@ -130,7 +130,7 @@ class TestCase(unittest.TestCase):
     assert tuple(d[0]) == (0, 22)
     assert tuple(d[2]) == (4, 62)
     assert len(d) == 10
-    with self.assertRaisesRegexp(IndexError, ""):
+    with self.assertRaisesRegex(IndexError, ""):
       d[11]
 
   def testGetData5(self):
@@ -141,7 +141,7 @@ class TestCase(unittest.TestCase):
       return (x[0], x[1] * 2)
 
     d = DbUtils.GetData(self.dbName, 'ten_elements', forceList=0, randomAccess=0, transform=fn)
-    with self.assertRaisesRegexp(TypeError, ""):
+    with self.assertRaisesRegex(TypeError, ""):
       len(d)
 
     rs = []

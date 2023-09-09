@@ -21,6 +21,10 @@ ROMol *removeHelper(MolStandardize::FragmentRemover &self, const ROMol &mol) {
   return self.remove(mol);
 }
 
+void removeInPlaceHelper(MolStandardize::FragmentRemover &self, ROMol &mol) {
+  self.removeInPlace(static_cast<RWMol &>(mol));
+}
+
 ROMol *chooseHelper(MolStandardize::LargestFragmentChooser &self,
                     const ROMol &mol) {
   return self.choose(mol);
@@ -50,7 +54,10 @@ struct fragment_wrapper {
              python::arg("leave_last") = true,
              python::arg("skip_if_all_match") = false)))
         .def("remove", &removeHelper, (python::arg("self"), python::arg("mol")),
-             "", python::return_value_policy<python::manage_new_object>());
+             "", python::return_value_policy<python::manage_new_object>())
+        .def("removeInPlace", &removeInPlaceHelper,
+             (python::arg("self"), python::arg("mol")),
+             "modifies the molecule in place");
 
     python::def(
         "FragmentRemoverFromData", &removerFromParams,

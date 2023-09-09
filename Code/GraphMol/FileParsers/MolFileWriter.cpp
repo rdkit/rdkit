@@ -810,11 +810,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
     if (bond->getStereo() <= Bond::STEREOANY) {
       if (bond->getStereo() == Bond::STEREOANY) {
         dirCode = 3;
-      } else if (bond->getBeginAtom()->getDegree() > 1 &&
-                 bond->getEndAtom()->getDegree() > 1 &&
-                 (!queryIsBondInRing(bond) ||
-                  static_cast<unsigned int>(queryBondMinRingSize(bond)) >=
-                      Chirality::minRingSizeForDoubleBondStereo)) {
+      } else if (Chirality::detail::isBondPotentialStereoBond(bond)) {
         // we don't know that it's explicitly unspecified (covered above with
         // the ==STEREOANY check)
 
@@ -1147,9 +1143,9 @@ const std::string GetV3000MolFileBondLine(const Bond *bond,
 }
 
 void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
-  unsigned or_count = 1u, and_count = 1u;
-  auto &stereo_groups = tmol.getStereoGroups();
-  if (!stereo_groups.empty()) {
+  if (!tmol.getStereoGroups().empty()) {
+    auto stereo_groups = tmol.getStereoGroups();
+    assignStereoGroupIds(stereo_groups);
     res += "M  V30 BEGIN COLLECTION\n";
     for (auto &&group : stereo_groups) {
       res += "M  V30 MDLV30/";
@@ -1159,13 +1155,11 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
           break;
         case RDKit::StereoGroupType::STEREO_OR:
           res += "STEREL";
-          res += std::to_string(or_count);
-          ++or_count;
+          res += std::to_string(group.getWriteId());
           break;
         case RDKit::StereoGroupType::STEREO_AND:
           res += "STERAC";
-          res += std::to_string(and_count);
-          ++and_count;
+          res += std::to_string(group.getWriteId());
           break;
       }
       res += " ATOMS=(";

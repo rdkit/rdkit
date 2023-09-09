@@ -1,0 +1,67 @@
+name: Pull molecular templates header updates
+on:
+  workflow_dispatch: ~
+  schedule:
+    # Run every Sunday at 00:00 UTC
+    - cron: '0 0 * * 6'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  tpl_repo: 'rdkit/molecular_templates'
+  tpl_hdr: 'template_smiles.h'
+  rdk_hdr: 'Code/GraphMol/Depictor/TemplateSmiles.h'
+
+jobs:
+  check_header_changes_and_create_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout RDKit
+        uses: actions/checkout@v3
+      - name: Checkout molecular_templates
+        uses: actions/checkout@v3
+        with:
+            repository: ${{ env.tpl_repo }}
+            ref: main
+            path: molecular_templates
+      - name: Commit and push changes
+        id: push_changes
+        run: |
+            cp -f molecular_templates/${{ env.tpl_hdr }} ${{ env.rdk_hdr }}
+            if ! git diff --quiet --exit-code ${{ env.rdk_hdr }}; then
+                git config user.name "github-actions[bot]"
+                git config user.email "github-actions[bot]@noreply.github.com"
+
+                templates_sha=$(cd molecular_templates && git rev-parse --short HEAD)
+                pr_branch=templates_update_${templates_sha}
+                git checkout -b ${pr_branch}
+
+                git add ${{ env.rdk_hdr }}
+
+                coauthor=$(cd molecular_templates && git log -1 --pretty=format:'%an <%ae>')
+
+                > commitmsg
+                echo -e "[bot] Update molecular templates header\n\n" >> commitmsg
+                echo -e "Co-authored-by: ${coauthor}\n" >> commitmsg
+
+                git commit -F commitmsg
+
+                git push origin ${pr_branch}
+
+                echo "header_changed=1" >> ${GITHUB_OUTPUT}
+            fi
+            echo "templates_sha=${templates_sha}" >> ${GITHUB_OUTPUT}
+            echo "pr_branch=${pr_branch}" >> ${GITHUB_OUTPUT}
+      - name: pull-request-action
+        if: ${{ steps.push_changes.outputs.header_changed == '1' }}
+        uses: vsoch/pull-request-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PULL_REQUEST_FROM_BRANCH: ${{ steps.push_changes.outputs.pr_branch }}
+          PULL_REQUEST_BRANCH: "master"
+          PULL_REQUEST_BODY: ${{ format('Automated Pull Request to update molecular templates for
+             coordinate generation to header in https://github.com/{0}/commit/{1})', env.tpl_repo,
+            steps.push_changes.outputs.templates_sha) }}
+          PULL_REQUEST_TITLE: "[bot] Update molecular templates header file"

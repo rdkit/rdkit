@@ -171,7 +171,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m)
 
     res = checker.CheckMolStructure(m)
-    self.assertEquals(res, rdStructChecker.StructureFlags.ATOM_CHECK_FAILED)
+    self.assertEqual(res, rdStructChecker.StructureFlags.ATOM_CHECK_FAILED)
 
 
 if __name__ == '__main__':

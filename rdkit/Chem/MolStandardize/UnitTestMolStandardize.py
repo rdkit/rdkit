@@ -20,11 +20,11 @@ class TestCase(unittest.TestCase):
     reord = MolStandardize.ReorderTautomers(m)[0]
     canonSmile = Chem.MolToSmiles(canon)
     reordSmile = Chem.MolToSmiles(reord)
-    self.assertEquals(canonSmile, reordSmile)
+    self.assertEqual(canonSmile, reordSmile)
 
   def testLength(self):
     m = Chem.MolFromSmiles('Oc1c(cccc3)c3nc2ccncc12')
     enumerator = rdMolStandardize.TautomerEnumerator()
     tauts = enumerator.Enumerate(m)
     reordtauts = MolStandardize.ReorderTautomers(m)
-    self.assertEquals(len(reordtauts), len(tauts))
+    self.assertEqual(len(reordtauts), len(tauts))

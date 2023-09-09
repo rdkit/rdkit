@@ -3496,7 +3496,7 @@ M  END
         "[H][C@@]12CC(=O)N1[C@@H](C(=O)O)C(C)(C)S2(=O)=O |(-2.78382,0.183015,;-1.38222,-0.351313,;-2.12923,-1.65207,;-0.828466,-2.39908,;-0.436905,-3.84707,;-0.0814577,-1.09832,;1.03095,-0.0920638,;2.49888,-0.400554,;2.96569,-1.82607,;3.50001,0.71647,;0.41769,1.27685,;1.8432,1.74365,;0.102447,2.74335,;-1.07373,1.11662,;-1.07718,2.61662,;-2.56587,1.26998,)|";
     SmilesParserParams spps;
     spps.removeHs = false;
-    auto m = SmilesToMol(smi, spps);
+    std::unique_ptr<RWMol> m{SmilesToMol(smi, spps)};
     REQUIRE(m);
     Chirality::BondWedgingParameters bwps;
     bwps.wedgeTwoBondsIfPossible = true;
@@ -3514,7 +3514,7 @@ M  END
         "[H][C@@]12CCCN1C(=O)CN1C(=O)[C@](C)(N)O[C@]12O |(-0.888297,0.626611,;-1.19852,-0.840959,;-1.94707,-2.14084,;-3.41464,-1.83061,;-3.5731,-0.339006,;-2.20347,0.272634,;-1.74154,1.69974,;-2.74648,2.81333,;-0.274666,2.01325,;0.730277,0.899655,;2.23028,0.901335,;3.11059,2.11585,;2.6954,-0.52473,;3.44685,-1.82293,;4.06503,0.0869091,;1.48286,-1.40777,;0.26835,-0.527448,;-0.0418744,-1.99502,)|";
     SmilesParserParams spps;
     spps.removeHs = false;
-    auto m = SmilesToMol(smi, spps);
+    std::unique_ptr<RWMol> m{SmilesToMol(smi, spps)};
     REQUIRE(m);
     Chirality::BondWedgingParameters bwps;
     bwps.wedgeTwoBondsIfPossible = true;
@@ -3625,5 +3625,897 @@ TEST_CASE("double bonded N with H should be stereogenic", "[bug][stereo]") {
     bool flagPossible = true;
     auto si = Chirality::findPotentialStereo(*m, cleanIt, flagPossible);
     CHECK(si.size() == 1);
+  }
+}
+
+TEST_CASE("Issue in GitHub #6473", "[bug][stereo]") {
+  constexpr const char *mb = R"CTAB(
+     RDKit          2D
+
+  6  5  0  0  0  0  0  0  0  0999 V2000
+    2.0443    0.2759    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7038    2.5963    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3828    2.5961    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0444    1.8228    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6359    1.8229    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3827   -0.4985    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0
+  4  2  1  0
+  4  3  2  0
+  2  5  1  0
+  6  1  1  0
+M  END)CTAB";
+
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+
+  auto use_legacy_stereo = GENERATE(true, false);
+  CAPTURE(use_legacy_stereo);
+  Chirality::setUseLegacyStereoPerception(use_legacy_stereo);
+
+  std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+  REQUIRE(mol);
+}
+
+TEST_CASE("GitHub Issue #6640", "[bug][stereo]") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+  Chirality::setUseLegacyStereoPerception(false);
+
+  auto p = SmilesParserParams();
+  p.sanitize = false;
+  p.removeHs = false;
+  std::string smiles{"NC1=NC(=N)N=C(N)C1C"};
+  std::unique_ptr<RWMol> mol(SmilesToMol(smiles, p));
+  REQUIRE(mol);
+
+  MolOps::removeHs(*mol);
+
+  auto cleanIt = true;
+  auto force = true;
+  auto flagPossibleStereoCenters = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force,
+                                flagPossibleStereoCenters);
+}
+
+TEST_CASE("zero bond-length chirality cases") {
+  SECTION("basics") {
+    {
+      auto m = R"CTAB(derived from CHEMBL3183068
+  Mrv2211 07202306222D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N 3.231 0 0 0
+M  V30 2 C 4.0137 -1.3378 0 0
+M  V30 3 C 2.6757 -2.1004 0 0
+M  V30 4 C 2.6757 -3.6389 0 0
+M  V30 5 C 1.3378 -1.3378 0 0
+M  V30 6 C 5.4672 -0.99 0 0
+M  V30 7 C 1.3378 -4.4216 0 0
+M  V30 8 C 0 -2.1205 0 0
+M  V30 9 C 0 -3.659 0 0
+M  V30 10 F 4.0137 -1.3378 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=3
+M  V30 2 1 2 3
+M  V30 3 1 2 6
+M  V30 4 1 2 10
+M  V30 5 2 3 4
+M  V30 6 1 3 5
+M  V30 7 1 4 7
+M  V30 8 2 5 8
+M  V30 9 2 7 9
+M  V30 10 1 8 9
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    {
+      auto m = R"CTAB(derived from CHEMBL3183068
+  Mrv2211 07202306222D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N 3.231 0 0 0
+M  V30 2 C 4.0137 -1.3378 0 0
+M  V30 3 C 2.6757 -2.1004 0 0
+M  V30 4 C 2.6757 -3.6389 0 0
+M  V30 5 C 1.3378 -1.3378 0 0
+M  V30 6 C 4.0137 -1.3378 0 0
+M  V30 7 C 1.3378 -4.4216 0 0
+M  V30 8 C 0 -2.1205 0 0
+M  V30 9 C 0 -3.659 0 0
+M  V30 10 F 4.5135 -2.6451 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=3
+M  V30 2 1 2 3
+M  V30 3 1 2 6
+M  V30 4 1 2 10
+M  V30 5 2 3 4
+M  V30 6 1 3 5
+M  V30 7 1 4 7
+M  V30 8 2 5 8
+M  V30 9 2 7 9
+M  V30 10 1 8 9
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+}
+
+TEST_CASE("t-shaped chirality cases") {
+  SECTION("ChEMBL example") {
+    {
+      auto m = R"CTAB(CHEMBL3183068
+     RDKit          2D
+
+ 11 11  0  0  1  0  0  0  0  0999 V2000
+    1.7309    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1502   -0.7167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4334   -1.1252    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4334   -1.9494    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7167   -0.7167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8669   -0.2974    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7167   -2.3687    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.1360    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.9602    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5836   -0.7060    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5694   -1.4334    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  6
+  2  3  1  0
+  2  6  1  0
+  2 11  1  0
+  3  4  2  0
+  3  5  1  0
+  4  7  1  0
+  5  8  2  0
+  6 10  1  0
+  7  9  2  0
+  8  9  1  0
+M  END
+> <chembl_id>
+CHEMBL3183068
+
+> <chembl_pref_name>
+None
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+    {
+      auto m = R"CTAB(CHEMBL3183068 (with an H removed)
+     RDKit          2D
+
+ 10 10  0  0  1  0  0  0  0  0999 V2000
+    1.7309    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1502   -0.7167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4334   -1.1252    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4334   -1.9494    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7167   -0.7167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8669   -0.2974    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7167   -2.3687    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.1360    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.9602    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5836   -0.7060    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  6
+  2  3  1  0
+  2  6  1  0
+  3  4  2  0
+  3  5  1  0
+  4  7  1  0
+  5  8  2  0
+  6 10  1  0
+  7  9  2  0
+  8  9  1  0
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("three-coordinate") {
+    {
+      auto m = R"CTAB(
+  Mrv2211 07202306442D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N 11.8331 -3.2011 0 0
+M  V30 2 C 12.6158 -4.5389 0 0 CFG=2
+M  V30 3 O 11.2777 -5.3015 0 0
+M  V30 4 C 13.9536 -3.7562 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=3
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    {
+      auto m = R"CTAB(
+  Mrv2211 07202306442D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N 11.8331 -3.2011 0 0
+M  V30 2 C 12.6158 -4.5389 0 0 CFG=2
+M  V30 3 O 11.2777 -5.3015 0 0
+M  V30 4 C 13.9536 -3.7562 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3  CFG=1
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+  }
+
+  SECTION("four-coordinate") {
+    {
+      auto m = R"CTAB(
+  Mrv2211 07202306492D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N -3.3332 0.9919 0 0
+M  V30 2 C -2.5555 -0.3373 0 0
+M  V30 3 O -3.885 -1.095 0 0
+M  V30 4 C -1.2263 0.4404 0 0
+M  V30 5 F -1.7854 -1.6709 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=3
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+    {
+      auto m = R"CTAB(
+  Mrv2211 07202306492D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N -3.3332 0.9919 0 0
+M  V30 2 C -2.5555 -0.3373 0 0
+M  V30 3 O -3.885 -1.095 0 0
+M  V30 4 C -1.2263 0.4404 0 0
+M  V30 5 F -1.7854 -1.6709 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+    {
+      auto m = R"CTAB(
+  Mrv2211 07202306492D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 N -3.3332 0.9919 0 0
+M  V30 2 C -2.5555 -0.3373 0 0
+M  V30 3 O -3.885 -1.095 0 0
+M  V30 4 C -1.2263 0.4404 0 0
+M  V30 5 F -1.7854 -1.6709 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3 CFG=1
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+  }
+}
+
+TEST_CASE("almost linear, degree 4") {
+  SECTION("from chembl 1") {
+    auto m = R"CTAB(CHEMBL3680147
+     RDKit          2D
+
+ 15 16  0  0  1  0  0  0  0  0999 V2000
+    3.8912   -4.9570    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8933   -3.7570    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5951   -3.0039    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5973   -1.5031    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2990   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2073   -4.4014    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.2131   -3.2886    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.4656   -1.9881    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9978   -2.2972    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.9557   -0.8928    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  2  0
+  6  7  1  0
+  7  8  2  0
+  8  9  1  0
+  9 10  2  0
+ 10  5  1  0
+  2 11  1  0
+ 11 12  1  0
+ 12 13  1  0
+ 13 14  2  0
+ 14  2  1  0
+ 13 15  1  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+  SECTION("from chembl 2") {
+    auto m = R"CTAB(CHEMBL76346
+     RDKit          2D
+
+ 16 17  0  0  1  0  0  0  0  0999 V2000
+    3.4292   -0.4250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7167   -0.0125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7167    0.8125    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4292   -1.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1500   -0.0125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7667   -1.7292    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1500    0.8208    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4292    1.2333    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0250   -2.5167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8500   -2.5167    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0042   -0.4250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1042   -1.7292    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4250    2.0583    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2250   -2.7292    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2375   -3.3125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0042   -3.5250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  3  2  1  0
+  4  1  1  0
+  5  1  1  0
+  6  4  1  0
+  7  5  2  0
+  8  7  1  0
+  9  6  1  0
+ 10 12  1  0
+ 11  2  2  0
+ 12  4  1  0
+ 13  8  1  0
+  9 14  1  6
+ 15  9  1  0
+ 16 14  1  0
+  3  8  2  0
+ 10  9  1  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(8)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+  SECTION("from chembl 3") {
+    auto m = R"CTAB(CHEMBL3577363
+     RDKit          2D
+
+ 15 16  0  0  0  0  0  0  0  0999 V2000
+   -2.5989    1.5003    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3863    2.3198    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8514    3.7459    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3514    3.7442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8133    2.3171    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2990   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    2.7000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3383   -1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6369    0.8981    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1471    4.7175    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  1  1  0
+  6  7  2  0
+  7  8  1  0
+  8  9  2  0
+  9 10  1  0
+ 10 11  2  0
+ 11  6  1  0
+  8 12  1  0
+  9  1  1  0
+  6 13  1  0
+  1 14  1  6
+  3 15  2  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+  SECTION("from chembl 4") {
+    auto m =
+        R"CTAB(derived from CHEMBL2373651. This was wrong in the RDKit implementation
+  Mrv2211 07212313282D
+            
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 O -7.4486 0.4751 0 0
+M  V30 2 C -6.1148 -0.2949 0 0
+M  V30 3 C -6.1148 1.2451 0 0
+M  V30 4 C -4.7811 -1.0649 0 0
+M  V30 5 C -4.7811 2.0151 0 0
+M  V30 6 H -6.1148 1.2451 0 0
+M  V30 7 H -6.1148 -0.2949 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 3 1
+M  V30 3 1 2 3
+M  V30 4 1 2 4
+M  V30 5 1 3 5
+M  V30 6 1 3 6 CFG=1
+M  V30 7 1 2 7 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+  SECTION("cut from CHEMBL4578507") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 8 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 10.694361 -35.424753 0.000000 0
+M  V30 2 C 9.463880 -34.700253 0.000000 0
+M  V30 3 C 8.217865 -35.405903 0.000000 0
+M  V30 4 C 8.207044 -36.840940 0.000000 0
+M  V30 5 N 9.449393 -37.570327 0.000000 0
+M  V30 6 C 6.965044 -36.121153 0.000000 0
+M  V30 7 O 8.215247 -33.985178 0.000000 0
+M  V30 8 H 6.885805 -37.382701 0.000000 0
+M  V30 9 H 9.169786 -33.305883 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 4 3
+M  V30 4 1 4 5
+M  V30 5 1 4 6
+M  V30 6 1 2 7
+M  V30 7 1 4 8 CFG=3
+M  V30 8 1 2 9 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+
+  SECTION("derived from CHEMBL4578507") {
+    auto m = R"CTAB(CHEMBL4578507
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 17 19 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 6.828300 -21.526500 0.000000 0
+M  V30 2 C 7.542200 -21.113800 0.000000 0
+M  V30 3 C 7.537900 -20.291100 0.000000 0
+M  V30 4 C 6.829700 -19.884700 0.000000 0
+M  V30 5 C 6.121000 -21.114600 0.000000 0
+M  V30 6 C 6.127300 -20.296500 0.000000 0
+M  V30 7 C 5.422300 -19.881400 0.000000 0
+M  V30 8 C 4.708400 -20.285700 0.000000 0
+M  V30 9 C 4.702200 -21.107900 0.000000 0
+M  V30 10 N 5.414000 -21.525800 0.000000 0
+M  V30 11 C 3.990600 -20.695500 0.000000 0
+M  V30 12 O 4.706900 -19.471700 0.000000 0
+M  V30 13 C 3.988500 -19.876800 0.000000 0
+M  V30 14 O 3.284900 -21.104500 0.000000 0
+M  V30 15 F 8.242300 -19.879800 0.000000 0
+M  V30 16 H 3.945200 -21.418300 0.000000 0 MASS=2
+M  V30 17 H 5.253800 -19.082500 0.000000 0 MASS=2
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 5 1
+M  V30 2 1 1 2
+M  V30 3 2 2 3
+M  V30 4 1 3 4
+M  V30 5 2 4 6
+M  V30 6 1 5 6
+M  V30 7 1 5 10
+M  V30 8 1 6 7
+M  V30 9 1 7 8
+M  V30 10 1 9 8
+M  V30 11 1 9 10
+M  V30 12 1 9 11
+M  V30 13 1 7 12
+M  V30 14 1 11 13
+M  V30 15 1 13 12
+M  V30 16 1 11 14 CFG=3
+M  V30 17 1 3 15
+M  V30 18 1 9 16 CFG=3
+M  V30 19 1 7 17 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(6)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(8)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(10)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+
+  SECTION("derived from CHEMBL123021") {
+    auto m = R"CTAB(CHEMBL123021
+     RDKit          2D
+
+ 16 17  0  0  1  0  0  0  0  0999 V2000
+   -2.8208   -0.5792    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8208    0.2458    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5375   -0.1542    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4083   -0.5792    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1125   -0.9917    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4000    0.2458    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1125    0.6583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6833    0.6583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1083   -1.8167    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1125    1.4833    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6833    1.4833    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6958   -0.9917    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0250   -0.5875    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0375    1.8958    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3161    1.1145    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3141    0.2829    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  1  3  1  0
+  4  5  1  0
+  5  1  1  0
+  6  4  2  0
+  7  2  1  0
+  8  6  1  0
+  9  5  2  0
+ 10  7  2  0
+ 11  8  2  0
+ 12  4  1  0
+ 13 12  1  0
+ 14 11  1  0
+  2  3  1  0
+  7  6  1  0
+  2 15  1  6
+  1 16  1  6
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+
+  SECTION("derived from CHEMBL85809") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 9 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 7.185783 -5.677981 0.000000 0
+M  V30 2 C 7.207427 -7.106480 0.000000 0
+M  V30 3 O 9.032790 -6.219079 0.000000 0
+M  V30 4 O 10.172645 -8.527707 0.000000 0
+M  V30 5 C 10.886895 -7.106480 0.000000 0
+M  V30 6 C 7.900033 -8.527707 0.000000 0
+M  V30 7 C 10.865251 -5.677981 0.000000 0
+M  V30 8 H 7.185783 -8.534979 0.000000 0 MASS=2
+M  V30 9 H 10.865251 -8.534979 0.000000 0 MASS=2
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=1
+M  V30 2 1 3 2
+M  V30 3 1 4 6
+M  V30 4 1 5 3 
+M  V30 5 1 6 2
+M  V30 6 1 5 7 CFG=1
+M  V30 7 1 2 8 CFG=3
+M  V30 8 1 5 9 CFG=3
+M  V30 9 1 4 5
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(2 2 5)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    CHECK(m->getAtomWithIdx(4)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+
+  SECTION("derived from CHEMBL2333552") {
+    auto m = R"CTAB(blah
+     RDKit          2D
+
+ 18 20  0  0  0  0  0  0  0  0999 V2000
+   35.6738   -9.2984    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   34.9598   -8.8850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   34.9588   -9.7100    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   32.1164   -7.2274    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   32.1164   -8.0541    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   32.8299   -8.4634    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   32.8299   -6.8099    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   33.5434   -7.2274    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   33.5399   -8.0541    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   34.9720   -7.2335    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   34.2572   -6.8149    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   31.3992   -6.8162    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   32.8308   -9.2901    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   33.5319   -8.8767    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   34.9684   -8.0602    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   34.2507   -8.4688    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   35.7656   -8.2712    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   34.2458   -7.6408    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  3  2  1  0
+  4  5  1  0
+  4  7  1  0
+  5  6  1  0
+  6  9  1  0
+  8  7  2  0
+  8  9  1  0
+  8 11  1  0
+  9 16  1  0
+ 15 10  1  0
+ 10 11  1  0
+  4 12  2  0
+  6 13  1  6
+  9 14  1  6
+ 16 15  1  0
+  2 16  1  0
+ 15  2  1  0
+ 15 17  1  6
+ 16 18  1  6
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(5)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    CHECK(m->getAtomWithIdx(8)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    CHECK(m->getAtomWithIdx(14)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    CHECK(m->getAtomWithIdx(15)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+  SECTION("CHEMBL94022"){
+    auto m = R"CTAB(CHEMBL94022
+     RDKit          2D
+
+ 16 18  0  0  1  0  0  0  0  0999 V2000
+    2.0917   -2.6875    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2667   -2.7042    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6917   -3.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6750   -3.2667    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4792   -4.0667    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5000   -3.2042    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5500   -2.2917    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1792   -4.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8125   -3.9667    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1708   -2.7042    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5500   -1.4667    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8833   -2.2917    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1708   -1.0542    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8833   -1.4667    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6792   -3.2917    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7917   -2.2542    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  3  1  1  0
+  1  4  1  1
+  5  4  2  0
+  6  4  1  0
+  7  2  1  0
+  8  5  1  0
+  9  6  1  0
+ 10  7  2  0
+ 11  7  1  0
+ 12 10  1  0
+ 13 11  2  0
+ 14 13  1  0
+  2 15  1  1
+  1 16  1  6
+  3  2  1  0
+  8  9  1  0
+ 14 12  2  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    
+  }
+  SECTION("overlapping neighbors"){
+    auto m = R"CTAB(derived from CHEMBL3752539
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.237143 -0.714286 0.000000 0
+M  V30 2 C -1.237143 0.714286 0.000000 0
+M  V30 3 C -2.474381 1.428571 0.000000 0
+M  V30 4 C -3.711524 0.714286 0.000000 0
+M  V30 5 C -2.474381 -1.428571 0.000000 0
+M  V30 6 C -3.711524 -0.714286 0.000000 0
+M  V30 7 O -2.474381 -2.857143 0.000000 0
+M  V30 8 H -4.536286 -0.238095 0.000000 0
+M  V30 9 H -1.649524 -1.904762 0.000000 0
+M  V30 10 C -4.948762 -1.428571 0.000000 0
+M  V30 11 C -2.474381 -1.428571 0.000000 0
+M  V30 12 C -3.711524 0.714286 0.000000 0
+M  V30 13 O -3.711524 -0.714286 0.000000 0
+M  V30 14 H -2.474381 2.380952 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 5
+M  V30 3 1 2 3
+M  V30 4 1 3 4
+M  V30 5 1 4 6
+M  V30 6 1 5 6
+M  V30 7 1 5 7
+M  V30 8 1 6 10
+M  V30 9 1 6 8 CFG=1
+M  V30 10 1 5 9 CFG=3
+M  V30 11 1 1 11 CFG=3
+M  V30 12 1 3 12
+M  V30 13 1 12 13
+M  V30 14 1 11 13
+M  V30 15 1 3 14 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 6)
+M  V30 MDLV30/STERAC1 ATOMS=(3 1 3 5)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(0)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    
+  }
+  SECTION("bond atoms overlapping central atom at the end of wedge bonds") {
+    auto m = R"CTAB(CHEMBL3612237
+     RDKit          2D
+
+ 14 15  0  0  0  0  0  0  0  0999 V2000
+   -0.6828   -1.6239    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090    0.5905    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007   -1.6239    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090   -2.3805    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    1.3471    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    1.3471    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6090    2.0668    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6319    1.4849    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5072    2.6784    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7280    0.9964    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6828    0.0000    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9007    0.0000    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  6  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  4  7  1  0
+  2  8  1  0
+  8  9  1  0
+  7  9  1  0
+  3 10  1  1
+ 10 11  1  0
+ 10 12  2  0
+  2 13  1  1
+  4 14  1  1
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    // if the bond is wedged, then we should have chirality even if the bonded atom
+    // overlaps the central atom
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(2)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
   }
 }

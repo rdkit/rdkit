@@ -60,6 +60,35 @@ RDKit::ROMol *canonicalTautomerHelper(const RDKit::ROMol *mol,
 }
 
 template <typename FUNCTYPE>
+void inPlaceHelper(RDKit::ROMol *mol, python::object params, FUNCTYPE func) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
+  const RDKit::MolStandardize::CleanupParameters *ps =
+      &RDKit::MolStandardize::defaultCleanupParameters;
+  if (params) {
+    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
+  }
+  func(*static_cast<RDKit::RWMol *>(mol), *ps);
+}
+
+void cleanupInPlaceHelper(RDKit::ROMol *mol, python::object params) {
+  inPlaceHelper(mol, params, RDKit::MolStandardize::cleanupInPlace);
+}
+
+void normalizeInPlaceHelper(RDKit::ROMol *mol, python::object params) {
+  inPlaceHelper(mol, params, RDKit::MolStandardize::normalizeInPlace);
+}
+
+void reionizeInPlaceHelper(RDKit::ROMol *mol, python::object params) {
+  inPlaceHelper(mol, params, RDKit::MolStandardize::reionizeInPlace);
+}
+
+void removeFragmentsInPlaceHelper(RDKit::ROMol *mol, python::object params) {
+  inPlaceHelper(mol, params, RDKit::MolStandardize::removeFragmentsInPlace);
+}
+
+template <typename FUNCTYPE>
 RDKit::ROMol *parentHelper(const RDKit::ROMol *mol, python::object params,
                            bool skip_standardize, FUNCTYPE func) {
   if (!mol) {
@@ -116,6 +145,19 @@ RDKit::ROMol *disconnectOrganometallicsHelper(RDKit::ROMol &mol,
     return RDKit::MolStandardize::disconnectOrganometallics(mol, *mdo);
   } else {
     return RDKit::MolStandardize::disconnectOrganometallics(mol);
+  }
+}
+void disconnectOrganometallicsInPlaceHelper(RDKit::ROMol *mol,
+                                            python::object params) {
+  if (params) {
+    RDKit::MolStandardize::MetalDisconnectorOptions *mdo =
+        python::extract<RDKit::MolStandardize::MetalDisconnectorOptions *>(
+            params);
+    return RDKit::MolStandardize::disconnectOrganometallicsInPlace(
+        *static_cast<RDKit::RWMol *>(mol), *mdo);
+  } else {
+    return RDKit::MolStandardize::disconnectOrganometallicsInPlace(
+        *static_cast<RDKit::RWMol *>(mol));
   }
 }
 
@@ -208,6 +250,10 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString = "Standardizes a molecule in place";
+  python::def("CleanupInPlace", cleanupInPlaceHelper,
+              (python::arg("mol"), python::arg("params") = python::object()),
+              docString.c_str());
   docString = "Convenience function for standardizing a SMILES";
   python::def("StandardizeSmiles", RDKit::MolStandardize::standardizeSmiles,
               (python::arg("smiles")), docString.c_str());
@@ -258,16 +304,32 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString =
+      "Applies a series of standard transformations to correct functional "
+      "groups and recombine charges, modifies the input molecule";
+  python::def("NormalizeInPlace", normalizeInPlaceHelper,
+              (python::arg("mol"), python::arg("params") = python::object()),
+              docString.c_str());
   docString = "Ensures the strongest acid groups are charged first";
   python::def("Reionize", reionizeHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString =
+      "Ensures the strongest acid groups are charged first, modifies the input molecule";
+  python::def("ReionizeInPlace", reionizeInPlaceHelper,
+              (python::arg("mol"), python::arg("params") = python::object()),
+              docString.c_str());
   docString = "Removes fragments from the molecule";
   python::def("RemoveFragments", removeFragsHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString =
+      "Removes fragments from the molecule, modifies the input molecule";
+  python::def("RemoveFragmentsInPlace", removeFragmentsInPlaceHelper,
+              (python::arg("mol"), python::arg("params") = python::object()),
+              docString.c_str());
   docString = "Returns the canonical tautomer for the molecule";
   python::def("CanonicalTautomer", canonicalTautomerHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
@@ -280,6 +342,13 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString =
+      "Disconnects the molecule using the organometallics"
+      " rules, modifies the input molecule";
+  python::def("DisconnectOrganometallicsInPlace",
+              disconnectOrganometallicsInPlaceHelper,
+              (python::arg("mol"), python::arg("params") = python::object()),
+              docString.c_str());
 
   wrap_validate();
   wrap_charge();

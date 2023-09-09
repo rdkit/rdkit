@@ -460,7 +460,10 @@ static bool SortBasedOnFirstElement(
   return a.first < b.first;
 }
 
-std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
+namespace SmilesWrite {
+namespace detail {
+std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
+                        bool doingCXSmiles) {
   if (!mol.getNumAtoms()) {
     return "";
   }
@@ -519,6 +522,16 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
       if (!mol.hasProp(common_properties::_StereochemDone)) {
         MolOps::assignStereochemistry(*tmol, true);
       }
+    }
+
+    if (!doingCXSmiles) {
+      // remove any stereo groups that may be present. Otherwise they will be
+      // used in the canonicalization
+      std::vector<StereoGroup> noStereoGroups;
+      tmol->setStereoGroups(noStereoGroups);
+
+      // if other CXSMILES features are added to the canonicalization code
+      // in the future, they should be removed here.
     }
 #if 0
       std::cout << "----------------------------" << std::endl;
@@ -649,10 +662,17 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
               true);
   return result;
 }
+}  // namespace detail
+}  // namespace SmilesWrite
+std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
+  bool doingCXSmiles = false;
+  return SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
+}
 
 std::string MolToCXSmiles(const ROMol &mol, const SmilesWriteParams &params,
                           std::uint32_t flags) {
-  auto res = MolToSmiles(mol, params);
+  bool doingCXSmiles = true;
+  auto res = SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
   if (!res.empty()) {
     if (!params.doIsomericSmiles) {
       flags &= ~(SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO |
