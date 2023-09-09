@@ -1275,7 +1275,7 @@ bool hasQueryHs(const ROMol &mol, bool unmergableOnly) {
   // We don't care about announcing ORs or other items during isQueryH
   RDLog::LogStateSetter blocker;
 
-  for (const auto &atom : mol.atoms()) {
+  for (const auto atom : mol.atoms()) {
     switch (isQueryH(atom)) {
       case HydrogenType::QueryHydrogen:
         mergableHs += 1;
@@ -1283,27 +1283,31 @@ bool hasQueryHs(const ROMol &mol, bool unmergableOnly) {
       case HydrogenType::UnMergableQueryHydrogen:
         unmergableHs += 1;
         break;
-      case HydrogenType::NotAHydrogen:
+    default: // HydrogenType::NotAHydrogen:
         break;
     }
     if (atom->hasQuery()) {
       if (atom->getQuery()->getDescription() == "RecursiveStructure") {
         auto *rsq = dynamic_cast<RecursiveStructureQuery *>(atom->getQuery());
         CHECK_INVARIANT(rsq, "could not convert recursive structure query");
-        if (hasQueryHs(*rsq->getQueryMol(), unmergableOnly)) return true;
+        if (hasQueryHs(*rsq->getQueryMol(), unmergableOnly)) {
+          return true;
+        }
       }
 
       // FIX: shouldn't be repeating this code here -- yet again!
       std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(
           atom->getQuery()->beginChildren(), atom->getQuery()->endChildren());
-      while (childStack.size()) {
+      while (!childStack.empty()) {
         QueryAtom::QUERYATOM_QUERY::CHILD_TYPE qry = childStack.front();
         childStack.pop_front();
         if (qry->getDescription() == "RecursiveStructure") {
           auto *rsq = dynamic_cast<RecursiveStructureQuery *>(qry.get());
           CHECK_INVARIANT(rsq, "could not convert recursive structure query");
-          if (hasQueryHs(*rsq->getQueryMol(), unmergableOnly)) return true;
-        } else if (qry->beginChildren() != qry->endChildren()) {
+          if (hasQueryHs(*rsq->getQueryMol(), unmergableOnly)) {
+            return true;
+          }
+        } else {
           childStack.insert(childStack.end(), qry->beginChildren(),
                             qry->endChildren());
         }

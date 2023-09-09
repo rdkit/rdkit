@@ -309,8 +309,7 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
                                         bool mergeUnmappedOnly = false,
                                         bool mergeIsotopes = false);
 
-//! returns a copy of a molecule with hydrogens removed and added as queries
-//!  to the heavy atoms to which they are bound.
+//! returns true if the molecule has queryHs
 /*!
   This is really intended to be used with molecules that contain QueryAtoms
   such as when checking smarts patterns for explicit hydrogens
