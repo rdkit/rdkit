@@ -15,6 +15,7 @@
 #include "RDDepictor.h"
 #include "DepictUtils.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
 using namespace RDKit;
@@ -239,7 +240,7 @@ TEST_CASE("dative bonds and rings") {
 
 TEST_CASE("vicinal R groups can match an aromatic ring") {
   auto benzene = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   8  8  0  0  0  0  0  0  0  0999 V2000
    -1.0263   -0.3133    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
@@ -262,7 +263,7 @@ M  RGP  2   1   2   2   1
 M  END)CTAB"_ctab;
   REQUIRE(benzene);
   auto biphenyl = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  14 15  0  0  0  0  0  0  0  0999 V2000
    -0.6027    2.4098    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -318,4 +319,16 @@ M  END)CTAB"_ctab;
       *phenantridine, *biphenyl, -1, nullptr, false, false, true);
     CHECK(match.size() == 14);
   }
+}
+
+TEST_CASE("trans bonds in large rings") {
+  // In large rings, we need to retain a trans geometry for double bonds.
+  // This simulates the case where we write to SDF and read again.
+  auto mol = "C1=C/CCCCCCCCCCCCC/1"_smiles;
+  RDDepict::compute2DCoords(*mol);
+  // simulate writing to SDF and reading again:
+  RDKit::MolOps::removeStereochemistry(*mol);
+  mol->getConformer().set3D(true);
+  RDKit::MolOps::assignStereochemistryFrom3D(*mol);
+  CHECK(RDKit::MolToSmiles(*mol) == "C1=C/CCCCCCCCCCCCC/1");
 }

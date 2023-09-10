@@ -419,6 +419,43 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
   return true;
 }
 
+// find any atoms in the ring that are in trans double bonds
+static RDKit::INT_VECT findTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT& ring)
+{
+  RDKit::INT_VECT res;
+  for (size_t i=0; i<ring.size(); ++i) {
+    const auto atom1 = ring[i];
+    const auto atom2 = ring[(i + 1) % ring.size()];
+    const auto b = mol.getBondBetweenAtoms(atom1, atom2);
+    if (b->getBondType() != RDKit::Bond::DOUBLE) {
+      continue;
+    }
+    const auto stype = b->getStereo();
+    if (stype <= RDKit::Bond::STEREOANY) {
+      continue;
+    }
+
+    // We care about bonds that are trans with respect to this ring
+    const auto& neighbors = b->getStereoAtoms();
+    if (neighbors.size() != 2) {
+      continue;
+    }
+    const auto leftIsIn = std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
+    const auto rightIsIn = std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
+    if (stype == RDKit::Bond::STEREOTRANS or stype == RDKit::Bond::STEREOE) {
+      if (leftIsIn == rightIsIn) {
+        // trans, both neighbors in the ring (or both out)
+        res.push_back(atom1);
+      }
+    } else if (leftIsIn != rightIsIn) {
+      // cis, but one of the neighbors is outside the ring
+      res.push_back(atom1);
+    }
+  }
+  return res;
+
+}
+
 //
 // NOTE: the individual rings in fusedRings must appear in traversal order.
 //    This is what is provided by the current ring-finding code.
@@ -451,7 +488,8 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
   auto firstRingId = pickFirstRingToEmbed(*dp_mol, fusedRings);
 
   for (const auto &ring : fusedRings) {
-    coords.push_back(embedRing(ring));
+    const auto transRingAtoms = findTransRingAtoms(*dp_mol, ring);
+    coords.push_back(embedRing(ring, transRingAtoms));
   }
 
   this->initFromRingCoords(fusedRings[firstRingId], coords[firstRingId]);
