@@ -29,6 +29,7 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+%include "std_pair.i"
 
 %{
 #include <GraphMol/MolOps.h>
@@ -46,6 +47,7 @@
 %ignore RDKit::MolOps::detectChemistryProblems;
 %include <GraphMol/MolOps.h>
 %ignore RDKit::MolOps::sanitizeMol(RWMol &,unsigned int &,unsigned int &);
+%template(BoolPair) std::pair<bool, bool>;
 
 %inline %{
   int sanitizeMol(RDKit::RWMol &mol,int sanitizeOps){
