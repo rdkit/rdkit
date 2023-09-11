@@ -442,7 +442,7 @@ static RDKit::INT_VECT findTransRingAtoms(const RDKit::ROMol& mol, const RDKit::
     }
     const auto leftIsIn = std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
     const auto rightIsIn = std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
-    if (stype == RDKit::Bond::STEREOTRANS or stype == RDKit::Bond::STEREOE) {
+    if (stype == RDKit::Bond::STEREOTRANS || stype == RDKit::Bond::STEREOE) {
       if (leftIsIn == rightIsIn) {
         // trans, both neighbors in the ring (or both out)
         res.push_back(atom1);
