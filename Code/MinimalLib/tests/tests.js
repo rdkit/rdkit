@@ -1053,8 +1053,8 @@ function test_flexicanvas() {
 
     var svg = mol.get_svg(-1,-1);
     assert(svg.search("svg")>0);
-    assert(svg.search("width='95px'")>0);
-    assert(svg.search("height='21px'")>0);
+    assert(svg.search("width='87px'")>0);
+    assert(svg.search("height='19px'")>0);
 }
 
 function test_rxn_drawing() {
