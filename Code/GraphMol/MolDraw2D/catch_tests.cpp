@@ -53,10 +53,11 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testAtomTags_1.svg", 3187798125U},
     {"testAtomTags_2.svg", 822910240U},
     {"testAtomTags_3.svg", 2244078420U},
-    {"contourMol_1.svg", 1854090324U},
-    {"contourMol_2.svg", 3666750661U},
-    {"contourMol_3.svg", 4287715238U},
-    {"contourMol_4.svg", 250853502U},
+    {"contourMol_1.svg", 2604538953U},
+    {"contourMol_2.svg", 572669511U},
+    {"contourMol_3.svg", 936771429U},
+    {"contourMol_4.svg", 3302971362U},
+    {"contourMol_5.svg", 2230414999U},
     {"testDativeBonds_1.svg", 2877255976U},
     {"testDativeBonds_2.svg", 2510476717U},
     {"testDativeBonds_3.svg", 3256011686U},
@@ -558,7 +559,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     MolDraw2DUtils::prepareMolForDrawing(*m1);
 
     const size_t gridSz = 100;
-    auto *grid = new double[gridSz * gridSz];
+    auto grid = std::make_unique<double[]>(gridSz * gridSz);
     std::vector<double> xps(gridSz);
     std::vector<double> yps(gridSz);
 
@@ -598,7 +599,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
 
     std::vector<double> levels;
     drawer.clearDrawing();
-    MolDraw2DUtils::contourAndDrawGrid(drawer, grid, xps, yps, 10, levels,
+    MolDraw2DUtils::contourAndDrawGrid(drawer, grid.get(), xps, yps, 10, levels,
                                        MolDraw2DUtils::ContourParams(),
                                        m1.get());
     drawer.drawOptions().clearBackground = false;
@@ -609,7 +610,6 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     outs << text;
     outs.close();
     check_file_hash("contourMol_1.svg");
-    delete[] grid;
   }
   SECTION("gaussian basics") {
     MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
@@ -653,7 +653,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     std::vector<double> widths(conf.getNumAtoms());
     for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
       cents[i] = Point2D(conf.getAtomPos(i).x, conf.getAtomPos(i).y);
-      weights[i] = i % 2 ? -0.5 : 1;
+      weights[i] = i % 2 ? -.5 : 1;
       widths[i] = 0.4 * PeriodicTable::getTable()->getRcovalent(
                             m1->getAtomWithIdx(i)->getAtomicNum());
     }
@@ -710,6 +710,39 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     outs << text;
     outs.close();
     check_file_hash("contourMol_4.svg");
+  }
+
+  SECTION("gaussian no fill") {
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    drawer.drawOptions().padding = 0.1;
+
+    const auto conf = m1->getConformer();
+    std::vector<Point2D> cents(conf.getNumAtoms());
+    std::vector<double> weights(conf.getNumAtoms());
+    std::vector<double> widths(conf.getNumAtoms());
+    for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
+      cents[i] = Point2D(conf.getAtomPos(i).x, conf.getAtomPos(i).y);
+      weights[i] = i % 2 ? -1 : 1;
+      widths[i] = 0.4 * PeriodicTable::getTable()->getRcovalent(
+                            m1->getAtomWithIdx(i)->getAtomicNum());
+    }
+
+    std::vector<double> levels;
+    MolDraw2DUtils::ContourParams cps;
+    cps.contourColour = DrawColour(.2, .2, .2);
+    drawer.clearDrawing();
+    MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths, 10,
+                                            levels, cps, m1.get());
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("contourMol_5.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("contourMol_5.svg");
   }
 }
 

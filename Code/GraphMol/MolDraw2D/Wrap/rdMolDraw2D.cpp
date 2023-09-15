@@ -1266,6 +1266,17 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("extraGridPadding",
                      &RDKit::MolDraw2DUtils::ContourParams::extraGridPadding,
                      "extra space (in molecule coords) around the grid")
+      .def_readwrite(
+          "drawAsLines", &RDKit::MolDraw2DUtils::ContourParams::drawAsLines,
+          "draw the contours as continuous lines isntead of line segments")
+      .def_readwrite(
+          "coordScaleForQuantization",
+          &RDKit::MolDraw2DUtils::ContourParams::coordScaleForQuantization,
+          "scaling factor used to convert coordinates to ints when forming the continuous lines")
+      .def_readwrite(
+          "isovalScaleForQuantization",
+          &RDKit::MolDraw2DUtils::ContourParams::isovalScaleForQuantization,
+          "scaling factor used to convert isovalues to ints when forming the continuous lines")
       .def("setContourColour", &RDKit::setContourColour,
            (python::arg("self"), python::arg("colour")))
       .def("setColourMap", &RDKit::setColoursHelper,

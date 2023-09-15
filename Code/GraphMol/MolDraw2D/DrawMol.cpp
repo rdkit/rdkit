@@ -407,9 +407,9 @@ void DrawMol::extractMolNotes() {
     for (int i = 0; i < 3; ++i) {
       locs[i].x += xOffset_;
       locs[i].y += yOffset_;
-      std::unique_ptr<DrawAnnotation> annot(
-          new DrawAnnotation(note, TextAlignType::START, "note", 1.0, locs[i],
-                             drawOptions_.annotationColour, textDrawer_));
+      auto annot = std::make_unique<DrawAnnotation>(
+          note, TextAlignType::START, "note", 1.0, locs[i],
+          drawOptions_.annotationColour, textDrawer_);
       // Put it into the legends_, because it's already in draw coords, so
       // shouldn't be treated by changeToDrawCoords.
       if (!doesNoteClash(*annot)) {

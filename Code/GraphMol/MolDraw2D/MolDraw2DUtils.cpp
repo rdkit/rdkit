@@ -350,25 +350,45 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
     std::vector<conrec::ConrecSegment> segs;
     conrec::Contour(grid, 0, nX - 1, 0, nY - 1, xcoords.data(), ycoords.data(),
                     nContours, levels.data(), segs);
-    static DashPattern negDash = {2, 6};
+    static DashPattern negDash{2., 2.};
     static DashPattern posDash;
     drawer.setColour(params.contourColour);
     drawer.setLineWidth(params.contourWidth);
-    for (const auto &seg : segs) {
-      if (params.dashNegative && seg.isoVal < 0) {
-        drawer.setDash(negDash);
-      } else {
-        drawer.setDash(posDash);
+    if (!params.drawAsLines) {
+      for (const auto &seg : segs) {
+        if (params.dashNegative && seg.isoVal < 0) {
+          drawer.setDash(negDash);
+        } else {
+          drawer.setDash(posDash);
+        }
+        drawer.drawLine(seg.p1, seg.p2);
       }
-      drawer.drawLine(seg.p1, seg.p2);
+    } else {
+      drawer.setFillPolys(false);
+      auto lines =
+          conrec::connectLineSegments(segs, params.coordScaleForQuantization,
+                                      params.isovalScaleForQuantization);
+      for (const auto &pr : lines) {
+        auto [contour, val] = pr;
+        if (params.dashNegative && val < 0) {
+          drawer.setDash(negDash);
+        } else {
+          drawer.setDash(posDash);
+        }
+        if (contour.size() > 2) {
+          drawer.drawPolygon(contour);
+        } else if (contour.size() == 2) {
+          drawer.drawLine(contour[0], contour[1]);
+        }
+      }
     }
-  }
 
-  drawer.setDash(odash);
-  drawer.setLineWidth(olw);
-  drawer.setColour(ocolor);
-  drawer.setFillPolys(ofill);
-  drawer.setLineWidth(owidth);
+    drawer.setDash(odash);
+    drawer.setLineWidth(olw);
+    drawer.setColour(ocolor);
+    drawer.setFillPolys(ofill);
+    drawer.setLineWidth(owidth);
+  }
 };
 
 void contourAndDrawGaussians(MolDraw2D &drawer,

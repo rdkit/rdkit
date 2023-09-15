@@ -69,7 +69,6 @@ void MolDraw2DJS::drawLine(const Point2D &cds1, const Point2D &cds2,
   Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
-  std::string dashString = "";
   const DashPattern &dashes = dash();
 
   d_context.call<void>("beginPath");
@@ -100,6 +99,12 @@ void MolDraw2DJS::drawPolygon(const std::vector<Point2D> &cds, bool rawCoords) {
   d_context.set("lineCap", std::string("butt"));
   d_context.set("lineJoin", std::string("round"));
   d_context.set("strokeStyle", col);
+
+  const DashPattern &dashes = dash();
+  if (dashes.size()) {
+    d_context.call<void>("setLineDash", emscripten::typed_memory_view(
+                                            dashes.size(), dashes.data()));
+  }
   Point2D c0 = rawCoords ? cds[0] : getDrawCoords(cds[0]);
   d_context.call<void>("moveTo", c0.x, c0.y);
   for (unsigned int i = 1; i < cds.size(); ++i) {
@@ -133,6 +138,11 @@ void MolDraw2DJS::drawEllipse(const Point2D &cds1, const Point2D &cds2,
   d_context.call<void>("beginPath");
   d_context.set("lineWidth", width);
   d_context.set("strokeStyle", col);
+  const DashPattern &dashes = dash();
+  if (dashes.size()) {
+    d_context.call<void>("setLineDash", emscripten::typed_memory_view(
+                                            dashes.size(), dashes.data()));
+  }
 #ifndef RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS
   d_context.call<void>("ellipse", cx, cy, rx, ry, 0, 0, 2 * M_PI);
 #else
