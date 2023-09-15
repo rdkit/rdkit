@@ -7347,6 +7347,17 @@ CAS<~>
     self.assertEqual(sgs[1].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
     self.assertEqual(len(sgs[1].GetAtoms()), 1)
 
+  def testHasQueryHs(self):
+    for sma, hasQHs in [
+        ("[#1]", (True, False)),
+        ("[#1,N]", (True, True)),
+        ("[$(C-[H])]", (True, False)),
+        ("[$([C,#1])]", (True, True)),
+        ("[$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naaaa1),$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naa[n,s,o]1)]",
+         (True, False))]:
+      pat = Chem.MolFromSmarts(sma)
+      self.assertEqual(Chem.HasQueryHs(pat), hasQHs)
+  
   def testMrvHandling(self):
     fn1 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','MarvinParse','test_data','aspirin.mrv')
     mol = Chem.MolFromMrvFile(fn1)
@@ -7367,7 +7378,6 @@ CAS<~>
     mol = Chem.MolFromMrvBlock(ind)
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(),13)
-
 
 
 if __name__ == '__main__':

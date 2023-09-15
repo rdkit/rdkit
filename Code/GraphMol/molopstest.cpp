@@ -8437,6 +8437,37 @@ void testGithub5099() {
   TEST_ASSERT(m->getNumAtoms() == 5);
 }
 
+void testHasQueryHs() {
+    BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing hasQueryHs "
+      << std::endl;
+  const auto has_no_query_hs = std::make_pair(false, false);
+  const auto has_only_query_hs = std::make_pair(true, false);
+  const auto has_unmergeable_hs = std::make_pair(true, true);
+    
+  auto m0 = "CCCC"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m0) == has_no_query_hs);
+    
+  auto m = "[#1]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m) == has_only_query_hs);
+  
+  auto m2 = "[#1,N]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m2) == has_unmergeable_hs);
+  
+  //remove the negation
+  auto recursive = "[$(C-[H])]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*recursive) == has_only_query_hs);
+
+  auto recursive_or = "[$([C,#1])]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*recursive_or) == has_unmergeable_hs);
+    
+  // from rd_filters for something bigger
+  auto keto_def_heterocycle = "[$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naaaa1),$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naa[n,s,o]1)]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*keto_def_heterocycle) == has_only_query_hs);
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+
+}
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -8553,6 +8584,6 @@ int main() {
   testSetTerminalAtomCoords();
   testGet3DDistanceMatrix();
   testGithub5099();
-
+  testHasQueryHs();
   return 0;
 }

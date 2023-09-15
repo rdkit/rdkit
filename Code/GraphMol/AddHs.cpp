@@ -1063,7 +1063,13 @@ ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
 }
 
 namespace {
-bool isQueryH(const Atom *atom) {
+enum class HydrogenType {
+  NotAHydrogen,
+  UnMergableQueryHydrogen,
+  QueryHydrogen
+};
+
+HydrogenType isQueryH(const Atom *atom) {
   PRECONDITION(atom, "bogus atom");
   if (atom->getAtomicNum() == 1) {
     // the simple case: the atom is flagged as being an H and
@@ -1071,18 +1077,18 @@ bool isQueryH(const Atom *atom) {
     if (!atom->hasQuery() ||
         (!atom->getQuery()->getNegation() &&
          atom->getQuery()->getDescription() == "AtomAtomicNum")) {
-      return true;
+      return HydrogenType::QueryHydrogen;
     }
   }
 
   if (!(atom->getDegree() <= 1)) {
     // bonded and unbonded H atoms will continue rest will be returned
-    return false;
+    return HydrogenType::NotAHydrogen;
   }
 
   if (atom->hasQuery() && atom->getQuery()->getNegation()) {
     // we will not merge negated queries
-    return false;
+    return HydrogenType::NotAHydrogen;
   }
 
   bool hasHQuery = false, hasOr = false;
@@ -1119,10 +1125,10 @@ bool isQueryH(const Atom *atom) {
                                  "in ORs is not supported. This query will not "
                                  "be merged"
                               << std::endl;
-      return false;
+      return HydrogenType::UnMergableQueryHydrogen;
     }
   }
-  return hasHQuery;
+  return hasHQuery ? HydrogenType::QueryHydrogen : HydrogenType::NotAHydrogen;
 }
 }  // namespace
 
@@ -1145,7 +1151,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly, bool mergeIsotopes) {
 
   boost::dynamic_bitset<> hatoms(mol.getNumAtoms());
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    hatoms[i] = isQueryH(mol.getAtomWithIdx(i));
+    hatoms[i] = isQueryH(mol.getAtomWithIdx(i)) == HydrogenType::QueryHydrogen;
   }
   unsigned int currIdx = 0, stopIdx = mol.getNumAtoms();
   while (currIdx < stopIdx) {
@@ -1261,6 +1267,57 @@ bool needsHs(const ROMol &mol) {
     }
   }
   return false;
+}
+
+std::pair<bool,bool> hasQueryHs(const ROMol &mol) {
+  bool queryHs = false;
+  // We don't care about announcing ORs or other items during isQueryH
+  RDLog::LogStateSetter blocker;
+
+  for (const auto atom : mol.atoms()) {
+    switch (isQueryH(atom)) {
+      case HydrogenType::UnMergableQueryHydrogen:
+          return std::make_pair(true, true);
+      case HydrogenType::QueryHydrogen:
+        queryHs = true;
+        break;
+    default: // HydrogenType::NotAHydrogen:
+        break;
+    }
+    if (atom->hasQuery()) {
+      if (atom->getQuery()->getDescription() == "RecursiveStructure") {
+        auto *rsq = dynamic_cast<RecursiveStructureQuery *>(atom->getQuery());
+        CHECK_INVARIANT(rsq, "could not convert recursive structure query");
+        auto res = hasQueryHs(*rsq->getQueryMol());
+        if(res.second) { // unmergableH implies queryH
+            return res;
+        }
+        queryHs |= res.first;
+      }
+
+      // FIX: shouldn't be repeating this code here -- yet again!
+      std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(
+          atom->getQuery()->beginChildren(), atom->getQuery()->endChildren());
+      while (!childStack.empty()) {
+        QueryAtom::QUERYATOM_QUERY::CHILD_TYPE qry = childStack.front();
+        childStack.pop_front();
+        if (qry->getDescription() == "RecursiveStructure") {
+          auto *rsq = dynamic_cast<RecursiveStructureQuery *>(qry.get());
+          CHECK_INVARIANT(rsq, "could not convert recursive structure query");
+          auto res = hasQueryHs(*rsq->getQueryMol());
+          if(res.second) {
+            return res;
+          }
+          queryHs |= res.first;
+        } else {
+          childStack.insert(childStack.end(), qry->beginChildren(),
+                            qry->endChildren());
+        }
+      }
+    }
+  }  // end of recursion loop
+
+  return std::make_pair(queryHs, false);
 }
 
 }  // namespace MolOps
