@@ -3190,7 +3190,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   conf = nullptr;
 
   return fileComplete;
-}  // namespace FileParserUtils
+}
 
 bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
                     Conformer *&conf, bool &chiralityPossible,
