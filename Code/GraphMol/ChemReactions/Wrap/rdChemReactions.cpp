@@ -907,7 +907,7 @@ of the replacements argument.",
   python::def("MrvFileIsReaction", RDKit::MrvFileIsReaction,
               (python::arg("filename")),
               "returns whether or not an MRV file contains reaction data");
-  
+
   python::def("MrvBlockIsReaction", RDKit::MrvBlockIsReaction,
               (python::arg("mrvData")),
               "returns whether or not an MRV block contains reaction data");
@@ -933,7 +933,8 @@ of the replacements argument.",
       (python::arg("reaction"), python::arg("prettyPrint") = false),
       "construct a string in Marvin (MRV) rxn format for a ChemicalReaction");
   python::def("ReactionToMrvFile", RDKit::ChemicalReactionToMrvFile,
-              (python::arg("reaction"), python::arg("prettyPrint") = false),
+              (python::arg("reaction"), python::arg("filename"),
+               python::arg("prettyPrint") = false),
               "write a Marvin (MRV) rxn file for a ChemicalReaction");
 
   python::def(
