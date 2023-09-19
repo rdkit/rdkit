@@ -25,7 +25,7 @@ unsigned int MAX_COLL_ITERS = 15;
 double HETEROATOM_COLL_SCALE = 1.3;
 unsigned int NUM_BONDS_FLIPS = 3;
 
-RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring, const RDKit::INT_VECT &transRingAtoms) {
+RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
   // The process here is very straight forward
   // we take the center of the ring to lies at the origin put the first
   // point at the origin and then sweep
@@ -56,23 +56,6 @@ RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring, const RDKit::INT_
     res[ring[i]] = loc;
   }
 
-  // Mirror one atom in each trans bond across the line defined by its two
-  // neighbors. This bumps it into the ring
-  for (auto idx: transRingAtoms) {
-    size_t offset = std::find(ring.begin(), ring.end(), idx) - ring.begin();
-    int left = ring[(offset + ring.size() - 1) % ring.size()];
-    int right = ring[(offset + 1) % ring.size()];
-
-    const auto last = res[left];
-    const auto ref = res[right];
-    const auto interest = res[idx];
-    const auto d = last - ref;
-    double a = (d.x * d.x - d.y * d.y) / d.dotProduct(d);
-    double b = 2 * d.x * d.y / d.dotProduct(d);
-    double x = a * (interest.x - ref.x) + b * (interest.y - ref.y) + ref.x;
-    double y = b * (interest.x - ref.x) - a * (interest.y - ref.y) + ref.y;
-    res[idx] = RDGeom::Point2D(x, y);
-  }
 
   return res;
 }

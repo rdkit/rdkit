@@ -420,40 +420,60 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
 }
 
 // find any atoms in the ring that are in trans double bonds
-static RDKit::INT_VECT findTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT& ring)
+// and mirror them into the ring
+static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT& ring, RDGeom::INT_POINT2D_MAP& coords)
 {
-  RDKit::INT_VECT res;
+  // a nice place for C++23 generator coroutines...
+  RDKit::INT_VECT transRingAtoms;
   for (size_t i=0; i<ring.size(); ++i) {
     const auto atom1 = ring[i];
     const auto atom2 = ring[(i + 1) % ring.size()];
-    const auto b = mol.getBondBetweenAtoms(atom1, atom2);
-    if (b->getBondType() != RDKit::Bond::DOUBLE) {
+    const auto bond = mol.getBondBetweenAtoms(atom1, atom2);
+    if (bond->getBondType() != RDKit::Bond::DOUBLE) {
       continue;
     }
-    const auto stype = b->getStereo();
+    const auto stype = bond->getStereo();
     if (stype <= RDKit::Bond::STEREOANY) {
       continue;
     }
 
     // We care about bonds that are trans with respect to this ring
-    const auto& neighbors = b->getStereoAtoms();
+    const auto& neighbors = bond->getStereoAtoms();
     if (neighbors.size() != 2) {
       continue;
     }
     const auto leftIsIn = std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
     const auto rightIsIn = std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
+    bool isTrans = false;
     if (stype == RDKit::Bond::STEREOTRANS || stype == RDKit::Bond::STEREOE) {
       if (leftIsIn == rightIsIn) {
         // trans, both neighbors in the ring (or both out)
-        res.push_back(atom1);
+        isTrans = true;
       }
     } else if (leftIsIn != rightIsIn) {
       // cis, but one of the neighbors is outside the ring
-      res.push_back(atom1);
+      isTrans = true;
     }
-  }
-  return res;
+    if (!isTrans) {
+      continue;
+    }
 
+
+    // Mirror one atom in each trans bond across the line defined by its two
+    // neighbors. This bumps it into the ring
+    const auto left = ring[(i + ring.size() - 1) % ring.size()];
+    const auto right = atom2;
+
+    const auto last = coords[left];
+    const auto ref = coords[right];
+    const auto interest = coords[atom1];
+    const auto d = last - ref;
+    const double a = (d.x * d.x - d.y * d.y) / d.dotProduct(d);
+    const double b = 2 * d.x * d.y / d.dotProduct(d);
+    const double x = a * (interest.x - ref.x) + b * (interest.y - ref.y) + ref.x;
+    const double y = b * (interest.x - ref.x) - a * (interest.y - ref.y) + ref.y;
+    coords[atom1] = RDGeom::Point2D(x, y);
+  }
 }
 
 //
@@ -488,8 +508,9 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
   auto firstRingId = pickFirstRingToEmbed(*dp_mol, fusedRings);
 
   for (const auto &ring : fusedRings) {
-    const auto transRingAtoms = findTransRingAtoms(*dp_mol, ring);
-    coords.push_back(embedRing(ring, transRingAtoms));
+    auto ring_coords = embedRing(ring);
+    mirrorTransRingAtoms(*dp_mol, ring, ring_coords);
+    coords.push_back(ring_coords);
   }
 
   this->initFromRingCoords(fusedRings[firstRingId], coords[firstRingId]);
