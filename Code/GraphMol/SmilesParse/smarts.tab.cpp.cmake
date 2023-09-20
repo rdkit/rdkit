@@ -1560,6 +1560,7 @@ yyreduce:
       int sz = molList->size();
       molList->resize(sz + 1);
       (*molList)[sz] = new RWMol();
+      (yyvsp[0].atom)->setProp(RDKit::common_properties::_SmilesStart,1);
       (*molList)[sz]->addAtom((yyvsp[0].atom), true, true);
       // delete $1;
       (yyval.moli) = sz;
@@ -1615,6 +1616,7 @@ yyreduce:
 #line 218 "smarts.yy"
     {
       RWMol *mp = (*molList)[(yyval.moli)];
+      (yyvsp[0].atom)->setProp(RDKit::common_properties::_SmilesStart,1);
       mp->addAtom((yyvsp[0].atom), true, true);
     }
 #line 1712 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
