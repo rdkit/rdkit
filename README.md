@@ -44,6 +44,8 @@
   * [2019 UGM](https://github.com/rdkit/UGM_2019)
   * [2020 UGM](https://github.com/rdkit/UGM_2020)
   * [2021 UGM](https://github.com/rdkit/UGM_2021)
+  * [2022 UGM](https://github.com/rdkit/UGM_2022)
+  * [2023 UGM](https://github.com/rdkit/UGM_2023)
 
 ## Documentation
 Available on the [RDKit page](https://www.rdkit.org/docs/index.html)
