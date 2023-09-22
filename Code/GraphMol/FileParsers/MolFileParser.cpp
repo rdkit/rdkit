@@ -3517,23 +3517,28 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
 RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
                           bool sanitize, bool removeHs, bool strictParsing,
                           bool multiConformer) {
+  RWMol *m;
   if (!multiConformer) {
-    return MolDataStreamToMol(&inStream, line, sanitize, removeHs,
+    m = MolDataStreamToMol(&inStream, line, sanitize, removeHs,
                               strictParsing);
   }
   else {
-    RWMol *m1 = MolDataStreamToMol(&inStream, line, sanitize, removeHs, strictParsing);
+    m = MolDataStreamToMol(&inStream, line, sanitize, removeHs, strictParsing);
     while (true) {
       RWMol *m2 = MolDataStreamToMol(&inStream, line, sanitize, removeHs, strictParsing);
-      if (!m2) {
+      if (m2 == nullptr) {
         break;
       }
-      // todo: check m1 and m2 are "the same"
+      // check m1 and m2 are "the same", this is only check size of mol
+      if (m->getNumAtoms() != m2->getNumAtoms()) {
+        break;
+      }
 
       auto c = m2->getConformer();
-      m1->addConformer(&c, true);
+      m->addConformer(&c, true);
     }
   }
+  return m;
 }
 //------------------------------------------------
 //
