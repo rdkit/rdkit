@@ -718,6 +718,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! \overload
   ConstHeteroatomIterator endHeteros() const;
 
+  //! if the Mol has any Query atoms or bonds
+  bool hasQuery() const;
+
   //! get an AtomIterator pointing at our first Atom that matches \c query
   QueryAtomIterator beginQueryAtoms(QueryAtom const *query);
   //! \overload
