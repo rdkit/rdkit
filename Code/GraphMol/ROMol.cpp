@@ -544,13 +544,13 @@ ROMol::ConstHeteroatomIterator ROMol::endHeteros() const {
 }
 
 bool ROMol::hasQuery() const {
-  for (auto it = beginAtoms(); it != endAtoms(); ++it) {
-    if ((*it)->hasQuery()) {
+  for (auto atom : atoms()) {
+    if (atom->hasQuery()) {
       return true;
     }
   }
-  for (auto it=beginBonds(); it != endBonds(); ++it) {
-    if ((*it)->hasQuery()) {
+  for (auto bond : bonds()) {
+    if (bond->hasQuery()) {
       return true;
     }
   }
