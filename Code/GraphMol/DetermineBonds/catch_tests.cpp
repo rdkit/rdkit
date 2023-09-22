@@ -48,6 +48,42 @@ TEST_CASE("Determine Connectivity") {
     }
   }  // SECTION
 
+  SECTION("connect the dots") {
+    unsigned int numTests = 39;
+    for (unsigned int i = 0; i < numTests; i++) {
+      std::string rdbase = getenv("RDBASE");
+      std::string fName =
+          rdbase + "/Code/GraphMol/DetermineBonds/test_data/connectivity/" +
+          "test" + std::to_string(i) + ".xyz";
+      std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
+      REQUIRE(mol);
+      std::string smiles = mol->getProp<std::string>("_FileComments");
+      std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
+      REQUIRE(orig);
+      bool useHueckel = false;
+      int charge = 0;
+      double factor = 1.3;  // not actually used here
+      bool useVdw = false;
+      determineConnectivity(*mol, useHueckel, charge, factor, useVdw);
+      MolOps::removeAllHs(*mol, false);
+
+      auto numAtoms = mol->getNumAtoms();
+
+      REQUIRE(orig->getNumAtoms() == numAtoms);
+      for (unsigned int i = 0; i < numAtoms; i++) {
+        for (unsigned int j = i + 1; j < numAtoms; j++) {
+          const auto origBond = orig->getBondBetweenAtoms(i, j);
+          const auto molBond = mol->getBondBetweenAtoms(i, j);
+          if (origBond) {
+            CHECK(molBond);
+          } else {
+            CHECK(!molBond);
+          }
+        }
+      }
+    }
+  }  // SECTION
+
   SECTION("Hueckel") {
     unsigned int numTests = 39;
     for (unsigned int i = 0; i < numTests; i++) {
