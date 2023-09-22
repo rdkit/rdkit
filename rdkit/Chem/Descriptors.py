@@ -18,7 +18,7 @@ from rdkit.Chem import rdPartialCharges
 from rdkit.Chem.EState.EState import (MaxAbsEStateIndex, MaxEStateIndex,
                                       MinAbsEStateIndex, MinEStateIndex)
 from rdkit.Chem.QED import qed
-
+from rdkit.Chem.SpacialScore import SPS
 
 def _isCallable(thing):
   return isinstance(thing, abc.Callable) or \
