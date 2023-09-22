@@ -444,6 +444,9 @@ struct mol_wrapper {
              "instead.\n\n"
              "  NOTE: bond indices start at 0\n")
 
+        .def("HasQuery", &ROMol::hasQuery,
+             "Returns if any atom or bond in molecule has a query")
+
         // substructures
         .def("HasSubstructMatch",
              (bool (*)(const ROMol &m, const ROMol &query, bool, bool,
