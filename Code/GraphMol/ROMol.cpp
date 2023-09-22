@@ -193,16 +193,16 @@ unsigned int ROMol::getNumAtoms(bool onlyExplicit) const {
   if (!onlyExplicit) {
     // if we are interested in hydrogens as well add them up from
     // each
-    for (ConstAtomIterator ai = beginAtoms(); ai != endAtoms(); ++ai) {
-      res += (*ai)->getTotalNumHs();
+    for (const auto atom : atoms()) {
+      res += atom->getTotalNumHs();
     }
   }
   return res;
 };
 unsigned int ROMol::getNumHeavyAtoms() const {
   unsigned int res = 0;
-  for (ConstAtomIterator ai = beginAtoms(); ai != endAtoms(); ++ai) {
-    if ((*ai)->getAtomicNum() > 1) {
+  for (const auto atom : atoms()) {
+    if (atom->getAtomicNum() > 1) {
       ++res;
     }
   }
@@ -246,7 +246,7 @@ ROMol::ATOM_PTR_LIST &ROMol::getAllAtomsWithBookmark(int mark) {
 // returns the unique atom with the given bookmark
 Atom *ROMol::getUniqueAtomWithBookmark(int mark) {
   auto lu = d_atomBookmarks.find(mark);
-  PRECONDITION((lu != d_atomBookmarks.end() && !lu->second.size() == 1),
+  PRECONDITION((lu != d_atomBookmarks.end()),
                "multiple atoms with same bookmark");
   return lu->second.front();
 }
@@ -269,7 +269,7 @@ ROMol::BOND_PTR_LIST &ROMol::getAllBondsWithBookmark(int mark) {
 // returns the unique bond with the given bookmark
 Bond *ROMol::getUniqueBondWithBookmark(int mark) {
   auto lu = d_bondBookmarks.find(mark);
-  PRECONDITION((lu != d_bondBookmarks.end() && !lu->second.size() == 1),
+  PRECONDITION((lu != d_bondBookmarks.end()),
                "multiple bonds with same bookmark");
   return lu->second.front();
 }
@@ -319,8 +319,8 @@ unsigned int ROMol::getNumBonds(bool onlyHeavy) const {
   auto res = numBonds;
   if (!onlyHeavy) {
     // If we need hydrogen connecting bonds add them up
-    for (ConstAtomIterator ai = beginAtoms(); ai != endAtoms(); ++ai) {
-      res += (*ai)->getTotalNumHs();
+    for (const auto atom : atoms()) {
+      res += atom->getTotalNumHs();
     }
   }
   return res;
@@ -466,17 +466,14 @@ void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
 }
 
 void ROMol::debugMol(std::ostream &str) const {
-  ATOM_ITER_PAIR atItP = getVertices();
-  BOND_ITER_PAIR bondItP = getEdges();
-
   str << "Atoms:" << std::endl;
-  while (atItP.first != atItP.second) {
-    str << "\t" << *d_graph[*(atItP.first++)] << std::endl;
+  for (const auto atom : atoms()) {
+    str << "\t" << *atom << std::endl;
   }
 
   str << "Bonds:" << std::endl;
-  while (bondItP.first != bondItP.second) {
-    str << "\t" << *d_graph[*(bondItP.first++)] << std::endl;
+  for (const auto bond : bonds()) {
+    str << "\t" << *bond << std::endl;
   }
 
   const auto &sgs = getSubstanceGroups(*this);
@@ -572,13 +569,11 @@ ROMol::ConstBondIterator ROMol::beginBonds() const {
   return ConstBondIterator(this);
 }
 ROMol::BondIterator ROMol::endBonds() {
-  EDGE_ITER beg, end;
-  boost::tie(beg, end) = getEdges();
+  auto [beg, end] = getEdges();
   return BondIterator(this, end);
 }
 ROMol::ConstBondIterator ROMol::endBonds() const {
-  EDGE_ITER beg, end;
-  boost::tie(beg, end) = getEdges();
+  auto [beg, end] = getEdges();
   return ConstBondIterator(this, end);
 }
 
@@ -594,27 +589,23 @@ void ROMol::clearComputedProps(bool includeRings) const {
     atom->clearComputedProps();
   }
 
-  for (ConstBondIterator bondIt = this->beginBonds();
-       bondIt != this->endBonds(); bondIt++) {
-    (*bondIt)->clearComputedProps();
+  for (auto bond : bonds()) {
+    bond->clearComputedProps();
   }
 }
 
 void ROMol::updatePropertyCache(bool strict) {
-  for (AtomIterator atomIt = this->beginAtoms(); atomIt != this->endAtoms();
-       ++atomIt) {
-    (*atomIt)->updatePropertyCache(strict);
+  for (auto atom : atoms()) {
+    atom->updatePropertyCache(strict);
   }
-  for (BondIterator bondIt = this->beginBonds(); bondIt != this->endBonds();
-       ++bondIt) {
-    (*bondIt)->updatePropertyCache(strict);
+  for (auto bond : bonds()) {
+    bond->updatePropertyCache(strict);
   }
 }
 
 bool ROMol::needsUpdatePropertyCache() const {
-  for (ConstAtomIterator atomIt = this->beginAtoms();
-       atomIt != this->endAtoms(); ++atomIt) {
-    if ((*atomIt)->needsUpdatePropertyCache()) {
+  for (const auto atom : atoms()) {
+    if (atom->needsUpdatePropertyCache()) {
       return true;
     }
   }
@@ -632,9 +623,9 @@ const Conformer &ROMol::getConformer(int id) const {
     return *(d_confs.front());
   }
   auto cid = (unsigned int)id;
-  for (auto ci = this->beginConformers(); ci != this->endConformers(); ++ci) {
-    if ((*ci)->getId() == cid) {
-      return *(*ci);
+  for (auto conf : d_confs) {
+    if (conf->getId() == cid) {
+      return *conf;
     }
   }
   // we did not find a conformation with the specified ID
@@ -653,9 +644,9 @@ Conformer &ROMol::getConformer(int id) {
     return *(d_confs.front());
   }
   auto cid = (unsigned int)id;
-  for (auto ci = this->beginConformers(); ci != this->endConformers(); ++ci) {
-    if ((*ci)->getId() == cid) {
-      return *(*ci);
+  for (auto conf : d_confs) {
+    if (conf->getId() == cid) {
+      return *conf;
     }
   }
   // we did not find a conformation with the specified ID
