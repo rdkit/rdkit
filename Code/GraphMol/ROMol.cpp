@@ -246,8 +246,7 @@ ROMol::ATOM_PTR_LIST &ROMol::getAllAtomsWithBookmark(int mark) {
 // returns the unique atom with the given bookmark
 Atom *ROMol::getUniqueAtomWithBookmark(int mark) {
   auto lu = d_atomBookmarks.find(mark);
-  PRECONDITION((lu != d_atomBookmarks.end()),
-               "multiple atoms with same bookmark");
+  PRECONDITION((lu != d_atomBookmarks.end()), "bookmark not found");
   return lu->second.front();
 }
 
@@ -269,8 +268,7 @@ ROMol::BOND_PTR_LIST &ROMol::getAllBondsWithBookmark(int mark) {
 // returns the unique bond with the given bookmark
 Bond *ROMol::getUniqueBondWithBookmark(int mark) {
   auto lu = d_bondBookmarks.find(mark);
-  PRECONDITION((lu != d_bondBookmarks.end()),
-               "multiple bonds with same bookmark");
+  PRECONDITION((lu != d_bondBookmarks.end()), "bookmark not found");
   return lu->second.front();
 }
 
@@ -327,28 +325,30 @@ unsigned int ROMol::getNumBonds(bool onlyHeavy) const {
 }
 
 Bond *ROMol::getBondWithIdx(unsigned int idx) {
-  PRECONDITION(getNumBonds() > 0, "no bonds");
   URANGE_CHECK(idx, getNumBonds());
 
-  auto bIter = getEdges();
+  // boost::graph doesn't give us random-access to edges,
+  // so we have to iterate to it
+  auto [iter, end] = getEdges();
   for (unsigned int i = 0; i < idx; i++) {
-    ++bIter.first;
+    ++iter;
   }
-  Bond *res = d_graph[*(bIter.first)];
+  Bond *res = d_graph[*iter];
 
   POSTCONDITION(res != nullptr, "Invalid bond requested");
   return res;
 }
 
 const Bond *ROMol::getBondWithIdx(unsigned int idx) const {
-  PRECONDITION(getNumBonds() > 0, "no bonds");
   URANGE_CHECK(idx, getNumBonds());
 
-  auto bIter = getEdges();
+  // boost::graph doesn't give us random-access to edges,
+  // so we have to iterate to it
+  auto [iter, end] = getEdges();
   for (unsigned int i = 0; i < idx; i++) {
-    ++bIter.first;
+    ++iter;
   }
-  const Bond *res = d_graph[*(bIter.first)];
+  const Bond *res = d_graph[*iter];
 
   POSTCONDITION(res != nullptr, "Invalid bond requested");
   return res;
