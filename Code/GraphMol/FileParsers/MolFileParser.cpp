@@ -3515,8 +3515,25 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
 }
 
 RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
-                          bool sanitize, bool removeHs, bool strictParsing) {
-  return MolDataStreamToMol(&inStream, line, sanitize, removeHs, strictParsing);
+                          bool sanitize, bool removeHs, bool strictParsing,
+                          bool multiConformer) {
+  if (!multiConformer) {
+    return MolDataStreamToMol(&inStream, line, sanitize, removeHs,
+                              strictParsing);
+  }
+  else {
+    RWMol *m1 = MolDataStreamToMol(&inStream, line, sanitize, removeHs, strictParsing);
+    while (true) {
+      RWMol *m2 = MolDataStreamToMol(&inStream, line, sanitize, removeHs, strictParsing);
+      if (!m2) {
+        break;
+      }
+      // todo: check m1 and m2 are "the same"
+
+      auto c = m2->getConformer();
+      m1->addConformer(&c, true);
+    }
+  }
 }
 //------------------------------------------------
 //
@@ -3524,10 +3541,11 @@ RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
 //
 //------------------------------------------------
 RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
-                     bool strictParsing) {
+                     bool strictParsing, bool multiConformer) {
   std::istringstream inStream(molBlock);
   unsigned int line = 0;
-  return MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+  return MolDataStreamToMol(inStream, line, sanitize, removeHs,
+                            strictParsing, multiConformer);
 }
 
 //------------------------------------------------
@@ -3536,7 +3554,7 @@ RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
 //
 //------------------------------------------------
 RWMol *MolFileToMol(const std::string &fName, bool sanitize, bool removeHs,
-                    bool strictParsing) {
+                    bool strictParsing, bool multiConformer) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
@@ -3546,7 +3564,8 @@ RWMol *MolFileToMol(const std::string &fName, bool sanitize, bool removeHs,
   RWMol *res = nullptr;
   if (!inStream.eof()) {
     unsigned int line = 0;
-    res = MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+    res = MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing,
+                             multiConformer);
   }
   return res;
 }
