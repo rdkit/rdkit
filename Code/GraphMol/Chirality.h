@@ -66,6 +66,7 @@ RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol,
                                               UINT_VECT &ranks);
 
 RDKIT_GRAPHMOL_EXPORT bool hasStereoBondDir(const Bond *bond);
+RDKIT_GRAPHMOL_EXPORT void runCleanup(ROMol &mol);
 
 /**
  *  Returns the first neighboring bond that can be found which has a stereo

@@ -106,7 +106,7 @@ struct RDKIT_GRAPHMOL_EXPORT canon_atom {
   bool isRingStereoAtom{false};
   unsigned int whichStereoGroup{0};
   StereoGroupType typeOfStereoGroup{StereoGroupType::STEREO_ABSOLUTE};
-  int *nbrIds{nullptr};
+  unsigned int *nbrIds{nullptr};
   const std::string *p_symbol{
       nullptr};  // if provided, this is used to order atoms
   std::vector<int> neighborNum;
@@ -290,7 +290,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       return 0;
     }
 
-    int *nbrs = dp_atoms[i].nbrIds;
+    unsigned int *nbrs = dp_atoms[i].nbrIds;
     unsigned int code = 0;
     for (unsigned j = 0; j < dp_atoms[i].degree; ++j) {
       if (dp_atoms[nbrs[j]].isRingStereoAtom) {

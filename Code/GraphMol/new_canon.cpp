@@ -392,7 +392,7 @@ bool hasRingNbr(const ROMol &mol, const Atom *at) {
   return false;
 }
 
-void getNbrs(const ROMol &mol, const Atom *at, int *ids) {
+void getNbrs(const ROMol &mol, const Atom *at, unsigned int *ids) {
   PRECONDITION(at, "bad pointer");
   PRECONDITION(ids, "bad pointer");
   ROMol::ADJ_ITER beg, end;
@@ -530,7 +530,7 @@ void basicInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
   atom.index = idx;
   atom.p_symbol = nullptr;
   atom.degree = atom.atom->getDegree();
-  atom.nbrIds = (int *)malloc(atom.degree * sizeof(int));
+  atom.nbrIds = (unsigned int *)malloc(atom.degree * sizeof(unsigned int));
   getNbrs(mol, atom.atom, atom.nbrIds);
 }
 
@@ -595,7 +595,8 @@ void initFragmentCanonAtoms(const ROMol &mol,
         atomsi.p_symbol = nullptr;
       }
       if (needsInit) {
-        atomsi.nbrIds = (int *)calloc(atom->getDegree(), sizeof(int));
+        atomsi.nbrIds =
+            (unsigned int *)calloc(atom->getDegree(), sizeof(unsigned int));
         advancedInitCanonAtom(mol, atomsi, i);
         atomsi.bonds.reserve(4);
       }
@@ -678,6 +679,18 @@ void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
   std::sort(nbrs.begin(), nbrs.end(), bondholder::greater);
 }
 
+// This routine calculates the number of swaps that would be required to
+// determine what the smiles chirality value would be for a given chiral atom
+// given that the atom is visited first from the atom of interest.
+// THis is used to determine which of two atoms has priority based on the
+// neighbor's chirality
+//
+// If the chiral neighbor has two equivlent (at least so far) neighbors that are
+// not the atom of interest, it cannot be used to determine the priority of the
+// atom of interest.  For this reason, we keep track of the number of neighbors
+// that have the same priority so far.  If any two are the same, we do NOT use
+// that neighbor to determine the priority of the atom of interest.
+
 void updateAtomNeighborNumSwaps(
     canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
     std::vector<std::pair<unsigned int, unsigned int>> &result) {
@@ -685,10 +698,21 @@ void updateAtomNeighborNumSwaps(
   for (auto &nbr : nbrs) {
     unsigned nbrIdx = nbr.nbrIdx;
 
+    std::list<unsigned int> neighborsSeen;
+    bool tooManySimilarNbrs = false;
     if (isRingAtom && atoms[nbrIdx].atom->getChiralTag() != 0) {
       std::vector<int> ref, probe;
       for (unsigned i = 0; i < atoms[nbrIdx].degree; ++i) {
         ref.push_back(atoms[nbrIdx].nbrIds[i]);
+        if (atomIdx != atoms[nbrIdx].nbrIds[i]) {
+          if ((std::find(neighborsSeen.begin(), neighborsSeen.end(),
+                         atoms[atoms[nbrIdx].nbrIds[i]].index) !=
+               neighborsSeen.end())) {
+            tooManySimilarNbrs = true;
+          } else {
+            neighborsSeen.push_back(atoms[atoms[nbrIdx].nbrIds[i]].index);
+          }
+        }
       }
       probe.push_back(atomIdx);
       for (auto &bond : atoms[nbrIdx].bonds) {
@@ -696,6 +720,10 @@ void updateAtomNeighborNumSwaps(
           probe.push_back(bond.nbrIdx);
         }
       }
+
+      if (tooManySimilarNbrs) {
+        result.emplace_back(nbr.nbrSymClass, 0);
+      } else {
       int nSwaps = static_cast<int>(countSwapsToInterconvert(ref, probe));
       if (atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
         if (nSwaps % 2) {
@@ -709,6 +737,7 @@ void updateAtomNeighborNumSwaps(
           result.emplace_back(nbr.nbrSymClass, 1);
         } else {
           result.emplace_back(nbr.nbrSymClass, 2);
+          }
         }
       }
     } else {

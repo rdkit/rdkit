@@ -313,13 +313,13 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
 /*!
   This is really intended to be used with molecules that contain QueryAtoms
   such as when checking smarts patterns for explicit hydrogens
-   
+
 
   \param mol the molecule to check for query Hs from
-  \return std::pair  if pair.first is true if the molecule has query hydrogens, if pair.second
-                     is true, the queryHs cannot be removed my mergeQueryHs
+  \return std::pair  if pair.first is true if the molecule has query hydrogens,
+  if pair.second is true, the queryHs cannot be removed my mergeQueryHs
 */
-RDKIT_GRAPHMOL_EXPORT std::pair<bool,bool> hasQueryHs(const ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT std::pair<bool, bool> hasQueryHs(const ROMol &mol);
 
 typedef enum {
   ADJUST_IGNORENONE = 0x0,
@@ -922,6 +922,15 @@ RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1,
 
 //! removes bogus chirality markers (those on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
+RDKIT_GRAPHMOL_EXPORT void cleanupTetrahedralChirality(
+    RWMol &mol, std::vector<Atom::HybridizationType> &hybridizations);
+
+//! removes bogus chirality markers (those on non-sp3 centers):
+
+RDKIT_GRAPHMOL_EXPORT void getHybridizations(
+    RWMol &mol, std::vector<Atom::HybridizationType> &hybridizations);
+
+RDKIT_GRAPHMOL_EXPORT void cleanupBadStereo(RWMol &mol);
 
 //! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms
 /*!
@@ -1105,6 +1114,8 @@ RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
 // If the bond is dative, and it has a common_properties::MolFileBondEndPts
 // prop, returns a vector of the indices of the atoms mentioned in the prop.
 RDKIT_GRAPHMOL_EXPORT std::vector<int> hapticBondEndpoints(const Bond *bond);
+
+int GetDoubleBondDirFlag(const Bond *bond);
 
 }  // namespace details
 

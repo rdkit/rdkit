@@ -463,6 +463,10 @@ void initAtomInfo(ROMol &mol, bool flagPossible, bool cleanIt,
                   boost::dynamic_bitset<> &possibleAtoms) {
   bool allowNontetrahedralStereo = getAllowNontetrahedralChirality();
   for (const auto atom : mol.atoms()) {
+    if (atom->getImplicitValence() == -1) {
+      atom->calcExplicitValence(false);
+      atom->calcImplicitValence(false);
+    }
     auto aidx = atom->getIdx();
     atomSymbols[aidx] = getAtomCompareSymbol(*atom);
     if (detail::isAtomPotentialStereoAtom(atom, allowNontetrahedralStereo)) {
@@ -862,11 +866,18 @@ void cleanMolStereo(ROMol &mol, const boost::dynamic_bitset<> &fixedAtoms,
                     const boost::dynamic_bitset<> &knownBonds) {
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     if (!fixedAtoms[i] && knownAtoms[i]) {
-      switch (mol.getAtomWithIdx(i)->getChiralTag()) {
+      auto atom = mol.getAtomWithIdx(i);
+      switch (atom->getChiralTag()) {
         case Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
         case Atom::ChiralType::CHI_TETRAHEDRAL_CW:
-          mol.getAtomWithIdx(i)->setChiralTag(
-              Atom::ChiralType::CHI_UNSPECIFIED);
+          atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+          for (auto nbrBond : mol.atomBonds(atom)) {
+            auto bondDir = nbrBond->getBondDir();
+            if (bondDir == Bond::BondDir::BEGINDASH ||
+                bondDir == Bond::BondDir::BEGINWEDGE) {
+              nbrBond->setBondDir(Bond::BondDir::NONE);
+            }
+          }
           break;
         case Atom::ChiralType::CHI_TETRAHEDRAL:
         case Atom::ChiralType::CHI_SQUAREPLANAR:
@@ -880,15 +891,43 @@ void cleanMolStereo(ROMol &mol, const boost::dynamic_bitset<> &fixedAtoms,
       }
     }
   }
+
+  bool removedStereo = false;
   for (auto i = 0u; i < mol.getNumBonds(); ++i) {
     auto bond = mol.getBondWithIdx(i);
     if (!fixedBonds[i] && knownBonds[i]) {
       bond->setStereo(Bond::BondStereo::STEREONONE);
       bond->setBondDir(Bond::BondDir::NONE);
       bond->getStereoAtoms().clear();
+      removedStereo = true;
+    }
+  }
+
+  // remove any slash bond dirs that do not have a stereo neighbor
+
+  if (removedStereo) {
+    for (auto bond : mol.bonds()) {
+      auto bondDir = bond->getBondDir();
+      if (bondDir == Bond::BondDir::ENDDOWNRIGHT ||
+          bondDir == Bond::BondDir::ENDUPRIGHT) {
+        bool dirOk = false;
+        for (auto bondEnd : {bond->getBeginAtom(), bond->getEndAtom()}) {
+          for (auto nbrBond : mol.atomBonds(bondEnd)) {
+            if (nbrBond != bond &&
+                nbrBond->getStereo() != Bond::BondStereo::STEREONONE) {
+              dirOk = true;
+              break;
+            }
+          }
+          if (!dirOk) {
+            bond->setBondDir(Bond::BondDir::NONE);
+          }
+        }
+      }
     }
   }
 }
+}  // namespace
 
 std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                                    bool cleanIt) {
@@ -943,17 +982,19 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   boost::dynamic_bitset<> bondsInPlay(mol.getNumBonds());
   bondsInPlay.set();
 
+#define LOCAL_CANON 0
+#if LOCAL_CANON
   std::vector<Canon::canon_atom> canonAtoms(mol.getNumAtoms());
   Canon::AtomCompareFunctor ftor(&canonAtoms.front(), mol, &atomsInPlay,
                                  &bondsInPlay);
   ftor.df_useIsotopes = false;
   ftor.df_useChirality = false;
   auto atomOrder = new int[mol.getNumAtoms()];
+#endif
   std::vector<unsigned int> aranks(mol.getNumAtoms());
   bool needAnotherRound = true;
   while (needAnotherRound) {
     res.clear();
-#define LOCAL_CANON 0
 #if LOCAL_CANON
     // find symmetry classes with the canonicalization code
     Canon::detail::initFragmentCanonAtoms(mol, canonAtoms, false, &atomSymbols,
@@ -1069,12 +1110,23 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                         knownAtoms, knownBonds, fixedBonds, res);
       }
     }
+
+    for (const auto atom : mol.atoms()) {
+      atom->setProp<unsigned int>(common_properties::_AtomRank,
+                                  aranks[atom->getIdx()]);
+    }
   }
+
+#if LOCAL_CANON
   delete[] atomOrder;
   Canon::detail::freeCanonAtoms(canonAtoms);
+#endif
   return res;
 }
-}  // namespace
+
+void runCleanup(ROMol &mol) { runCleanup(mol, true, true); }
+
+//}  // namespace
 
 std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
                                             bool findPossible) {

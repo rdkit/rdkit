@@ -28,6 +28,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/GenericGroups/GenericGroups.h>
 #include <GraphMol/QueryOps.h>
+#include <GraphMol/Chirality.h>
 
 #include <fstream>
 #include <RDGeneral/FileParseException.h>
@@ -1369,6 +1370,7 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
               text.substr(7, text.length() - 7));
 }
 
+namespace {
 void setRGPProps(const std::string_view symb, Atom *res) {
   PRECONDITION(res, "bad atom pointer");
   // set the dummy label so that this is shown correctly
@@ -1390,6 +1392,8 @@ void lookupAtomicNumber(Atom *res, const std::string &symb,
     }
   }
 }
+
+}  // namespace
 
 Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
                            unsigned int line, bool strictParsing) {
@@ -3281,6 +3285,11 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
     }
     MolOps::assignStereochemistry(*res, true, true, true);
   } else {
+    MolOps::cleanupBadStereo(*res);
+    if (!Chirality::getUseLegacyStereoPerception()) {
+      MolOps::findSSSR(*res);
+      Chirality::runCleanup(*res);
+    }
     MolOps::detectBondStereochemistry(*res);
   }
 
@@ -3508,8 +3517,17 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   }
 
   if (res) {
-    FileParserUtils::finishMolProcessing(res, chiralityPossible, sanitize,
-                                         removeHs);
+    try {
+      FileParserUtils::finishMolProcessing(res, chiralityPossible, sanitize,
+                                           removeHs);
+    } catch (FileParseException &e) {
+      // catch our exceptions and throw them back after cleanup
+      delete res;
+      delete conf;
+      res = nullptr;
+      conf = nullptr;
+      throw e;
+    }
   }
   return res;
 }

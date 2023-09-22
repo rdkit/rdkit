@@ -12,6 +12,7 @@
 #include <Geometry/point.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDGeneral/Ranking.h>
 #include <GraphMol/new_canon.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -2631,6 +2632,37 @@ void cleanupChirality(RWMol &mol) {
   }
 }
 
+void cleanupTetrahedralChirality(
+    RWMol &mol, std::vector<Atom::HybridizationType> &hybridizations) {
+  unsigned int perm;
+  for (auto atom : mol.atoms()) {
+    switch (atom->getChiralTag()) {
+      case Atom::CHI_TETRAHEDRAL_CW:
+      case Atom::CHI_TETRAHEDRAL_CCW:
+        if (hybridizations[atom->getIdx()] != Atom::SP3) {
+          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        }
+        break;
+
+      case Atom::CHI_TETRAHEDRAL:
+        if (hybridizations[atom->getIdx()] != Atom::SP3) {
+          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        } else {
+          perm = 0;
+          atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
+          if (perm > 2) {
+            perm = 0;
+            atom->setProp(common_properties::_chiralPermutation, perm);
+          }
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+}
+
 #define VOLTEST(X, Y, Z) (v[X].dotProduct(v[Y].crossProduct(v[Z])) >= 0.0)
 
 static unsigned int OctahedralPermFrom3D(unsigned char *pair,
@@ -3074,7 +3106,7 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
   bool resetRings = false;
   if (!mol.getRingInfo()->isInitialized()) {
     resetRings = true;
-    MolOps::fastFindRings(mol);
+    MolOps::symmetrizeSSSR(mol);
   }
 
   for (auto bond : mol.bonds()) {
@@ -3277,9 +3309,11 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
         Atom::ChiralType code =
             Chirality::atomChiralTypeFromBondDirPseudo3D(mol, bond, &conf)
                 .value_or(Atom::ChiralType::CHI_UNSPECIFIED);
-        atomsSet.set(atom->getIdx());
-        //   std::cerr << "atom " << atom->getIdx() << " code " << code
-        //             << " from bond " << bond->getIdx() << std::endl;
+        if (code != Atom::ChiralType::CHI_UNSPECIFIED) {
+          atomsSet.set(atom->getIdx());
+          //   std::cerr << "atom " << atom->getIdx() << " code " << code
+          //             << " from bond " << bond->getIdx() << std::endl;
+        }
         atom->setChiralTag(code);
 
         // within the RD representation, if a three-coordinate atom

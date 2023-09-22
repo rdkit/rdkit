@@ -13,6 +13,7 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 #include <GraphMol/PeriodicTable.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/RDKitQueries.h>
 
 #include <vector>
@@ -449,6 +450,45 @@ void assignRadicals(RWMol &mol) {
       atom->setNumRadicalElectrons(nValence % 2);
     }
   }
+}
+
+void cleanupBadStereo(RWMol &mol) {
+  // remove chiral designations and atropisomer designations that cannot be
+  // true because of hybridization
+
+  std::vector<Atom::HybridizationType> hybs;
+  MolOps::getHybridizations(mol, hybs);
+  MolOps::cleanupTetrahedralChirality(mol, hybs);
+}
+
+void getHybridizations(
+    RWMol &mol, std::vector<Atom::HybridizationType> &hydridizationValues) {
+  // see if the mol already has computed hybridizations:
+
+  if (mol.getNumAtoms() == 0) {
+    return;
+  }
+
+  if ((*mol.atoms().begin())->getHybridization() !=
+      Atom::HybridizationType::UNSPECIFIED) {
+    for (auto atom : mol.atoms()) {
+      hydridizationValues.push_back(atom->getHybridization());
+    }
+    return;
+  }
+
+  // compute them in a copy of the mol, so as not to change the mol passed in
+
+  RWMol molCopy(mol);
+  unsigned int operationThatFailed;
+  unsigned int santitizeOps =
+      MolOps::SANITIZE_SETCONJUGATION | MolOps::SANITIZE_SETHYBRIDIZATION;
+  MolOps::sanitizeMol(molCopy, operationThatFailed, santitizeOps);
+  for (auto atom : molCopy.atoms()) {
+    // determine hybridization and remove chiral atoms that are not sp3
+    hydridizationValues.push_back(atom->getHybridization());
+  }
+  return;
 }
 
 void sanitizeMol(RWMol &mol) {
@@ -966,6 +1006,129 @@ unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
   }
   return numPropAtoms;
 }
+
+namespace {
+bool checkNeighbors(const Bond *bond, const Atom *atom) {
+  PRECONDITION(bond, "no bond");
+  PRECONDITION(atom, "no atom");
+  std::vector<int> nbrRanks;
+
+  for (auto nbrBond : bond->getOwningMol().atomBonds(atom)) {
+    if (nbrBond == bond) {
+      continue;  // a bond is NOT its own neighbor
+    }
+
+    if (nbrBond->getBondType() == Bond::SINGLE) {
+      // if a neighbor has a wedge or hash bond, do NOT mark it as double
+      // crossed
+      if (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
+          nbrBond->getBondDir() == Bond::ENDDOWNRIGHT) {
+        return false;
+      }
+
+      // if a neighbor has a wiggle bond, do NOT mark it as crossed (although it
+      // is unknown
+      if (nbrBond->getBondDir() == Bond::BondDir::UNKNOWN &&
+          nbrBond->getBeginAtom() == atom) {
+        return false;
+      }
+
+      // if two neighbors has the same CIP ranking, this is not stereo
+
+      const auto otherAtom = nbrBond->getOtherAtom(atom);
+      int rank;
+      if (RDKit::Chirality::getUseLegacyStereoPerception()) {
+        if (!otherAtom->getPropIfPresent(common_properties::_CIPRank, rank)) {
+          rank = (-1);
+        }
+      } else  // NOT legacy stereo
+      {
+        if (!otherAtom->getPropIfPresent(common_properties::_AtomRank, rank)) {
+          rank = (-1);
+        }
+      }
+      if (rank >= 0) {
+        if (std::find(nbrRanks.begin(), nbrRanks.end(), rank) !=
+            nbrRanks.end()) {
+          return false;
+        } else {
+          nbrRanks.push_back(rank);
+        }
+      }
+    }
+  }
+  return true;
+}
+}  // namespace
+
+namespace details {
+int GetDoubleBondDirFlag(const Bond *bond) {
+  PRECONDITION(bond, "");
+
+  // double bond stereochemistry -
+  // if the bond isn't specified, then it should go in the mol block
+  // as "any", this was sf.net issue 2963522.
+  // two caveats to this:
+  // 1) if it's a ring bond, we'll only put the "any"
+  //    in the mol block if the user specifically asked for it.
+  //    Constantly seeing crossed bonds in rings, though maybe
+  //    technically correct, is irritating.
+  // 2) if it's a terminal bond (where there's no chance of
+  //    stereochemistry anyway), we also skip the any.
+  //    this was sf.net issue 3009756
+
+  if (bond->getStereo() == Bond::STEREOANY) {
+    // see if any of the neighbors have a wiggle bond - if so, do NOT make this
+    // one a cross bond
+    for (auto nbrBond : bond->getOwningMol().atomBonds(bond->getBeginAtom())) {
+      if (nbrBond->getBondDir() == Bond::UNKNOWN &&
+          nbrBond->getBeginAtom()->getIdx() == bond->getBeginAtom()->getIdx()) {
+        return 0;
+      }
+    }
+    for (auto nbrBond : bond->getOwningMol().atomBonds(bond->getEndAtom())) {
+      if (nbrBond->getBondDir() == Bond::UNKNOWN &&
+          nbrBond->getBeginAtom()->getIdx() == bond->getEndAtom()->getIdx()) {
+        return 0;
+      }
+    }
+
+    return 3;  // crossed double bond
+  }
+  if (bond->getStereo() != Bond::BondStereo::STEREONONE) {
+    return 0;
+  }
+
+  // if it is in a ring it is not makred as stereo.
+  // If either end is terminal, it is not stereo
+
+  if (!Chirality::detail::isBondPotentialStereoBond(bond)) {
+    return 0;
+  }
+  // we don't know that it's explicitly unspecified (covered above with
+  // the ==STEREOANY check)
+
+  if (bond->getBondDir() == Bond::EITHERDOUBLE) {
+    return 3;  // crossed double bond
+  }
+
+  if ((bond->getBeginAtom()->getTotalValence() -
+       bond->getBeginAtom()->getTotalDegree()) == 1 &&
+      (bond->getEndAtom()->getTotalValence() -
+       bond->getEndAtom()->getTotalDegree()) == 1) {
+    // we only do this if each atom only has one unsaturation
+    // FIX: this is the fix for github #2649, but we will need to
+    // change it once we start handling allenes properly
+
+    if (checkNeighbors(bond, bond->getBeginAtom()) &&
+        checkNeighbors(bond, bond->getEndAtom())) {
+      return 3;  // crossed double bond
+    }
+  }
+
+  return 0;  // NOT crossed double bond
+}
+}  // namespace details
 
 ROMol *hapticBondsToDative(const ROMol &mol) {
   auto *res = new RWMol(mol);
