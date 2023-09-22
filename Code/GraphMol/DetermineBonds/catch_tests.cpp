@@ -28,6 +28,11 @@ TEST_CASE("Determine Connectivity") {
       std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
       REQUIRE(orig);
 
+      bool useHueckel = false;
+      int charge = 0;
+      double factor = 1.3;
+      bool useVdw = true;
+      determineConnectivity(*mol, useHueckel, charge, factor, useVdw);
       determineConnectivity(*mol, false);
       MolOps::removeAllHs(*mol, false);
 
@@ -62,7 +67,7 @@ TEST_CASE("Determine Connectivity") {
       REQUIRE(orig);
       bool useHueckel = false;
       int charge = 0;
-      double factor = 1.3;  // not actually used here
+      double factor = 1.3;
       bool useVdw = false;
       determineConnectivity(*mol, useHueckel, charge, factor, useVdw);
       MolOps::removeAllHs(*mol, false);

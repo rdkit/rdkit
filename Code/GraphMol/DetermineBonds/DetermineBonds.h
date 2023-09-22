@@ -35,7 +35,7 @@ RDKIT_DETERMINEBONDS_EXPORT void determineConnectivity(RWMol &mol,
                                                        bool useHueckel = false,
                                                        int charge = 0,
                                                        double covFactor = 1.3,
-                                                       bool useVdw = true);
+                                                       bool useVdw = false);
 
 // ! assigns bond ordering to a molecule that has atomic connectivity defined;
 // it is recommended to sanitize the molecule after calling this function if
@@ -90,7 +90,7 @@ RDKIT_DETERMINEBONDS_EXPORT void determineBondOrders(
 RDKIT_DETERMINEBONDS_EXPORT void determineBonds(
     RWMol &mol, bool useHueckel = false, int charge = 0, double covFactor = 1.3,
     bool allowChargedFragments = true, bool embedChiral = true,
-    bool useAtomMap = false, bool useVdw = true);
+    bool useAtomMap = false, bool useVdw = false);
 
 }  // namespace RDKit
 

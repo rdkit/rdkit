@@ -63,7 +63,7 @@ Args:
   python::def("DetermineConnectivity", &determineConnectivityHelper,
               (python::arg("mol"), python::arg("useHueckel") = false,
                python::arg("charge") = 0, python::arg("covFactor") = 1.3,
-               python::arg("useVdw") = true),
+               python::arg("useVdw") = false),
               docs.c_str());
 
   docs =
@@ -119,7 +119,7 @@ Args:
       (python::arg("mol"), python::arg("useHueckel") = false,
        python::arg("charge") = 0, python::arg("covFactor") = 1.3,
        python ::arg("allowChargedFragments") = true,
-       python::arg("embedChiral") = true, python::arg("useAtomMap") = false, 
-       python::arg("useVdw") = true),
+       python::arg("embedChiral") = true, python::arg("useAtomMap") = false,
+       python::arg("useVdw") = false),
       docs.c_str());
 }
