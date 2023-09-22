@@ -639,7 +639,8 @@ bool Atom::hasValenceViolation() const {
   }
 
   try {
-    calculate_implicit_valence(*this, true);  // also checks explicit valence
+    calculate_explicit_valence(*this, true);
+    calculate_implicit_valence(*this, true);
   } catch (const RDKit::AtomValenceException &) {
     return true;
   }

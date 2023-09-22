@@ -1603,13 +1603,14 @@ void testHasValenceViolation() {
            "[CH3+]",
            "[CH3-]",
            "[NH4+]",
-           "[Na]([H])[H]",  // periodic_data allows any valence for groups I/II
-           "[Mg][H]",
+           "[Na]",
+           "[Na][H]",
+           "[Na]([H])[H]",
            "[Og][Og]([Og])([Og])([Og])([Og])([Og])[Og]",
            "[Lv-2]",
            "[Lv-4]",
            "[Lv+4]",
-           "[Lv+8]",
+           "[Lv+8]"
            "*",              // dummy atom, which also accounts for wildcards
            "*C |$_AP1;$|]",  // attachment point
            "[*] |$_R1$|",    // rgroup
