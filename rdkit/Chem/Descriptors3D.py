@@ -209,9 +209,15 @@ def CalcMolDescriptors3D(mol, confId=None):
     
     dict
         A dictionary with decriptor names as keys and the descriptor values as values
+
+    RuntimeError 
+        If a 2D molecule is supplied
     """
-    descriptors = [PMI1, PMI2, PMI3, NPR1, NPR2, RadiusOfGyration,InertialShapeFactor, Eccentricity, Asphericity, SpherocityIndex] 
-    names = ['PMI1', 'PMI2', 'PMI3', 'NPR1', 'NPR2', 'RadiusOfGyration','InertialShapeFactor', 'Eccentricity', 'Asphericity', 'SpherocityIndex'] 
-    vals_3D = [fn(mol) for fn in descriptors]
+    if mol.GetNumConformers() == 0:
+        raise RuntimeError('Computing 3D Descriptors requires a structure with at least 1 conformer')
+    else:
+        descriptors = [PMI1, PMI2, PMI3, NPR1, NPR2, RadiusOfGyration,InertialShapeFactor, Eccentricity, Asphericity, SpherocityIndex] 
+        names = ['PMI1', 'PMI2', 'PMI3', 'NPR1', 'NPR2', 'RadiusOfGyration','InertialShapeFactor', 'Eccentricity', 'Asphericity', 'SpherocityIndex'] 
+        vals_3D = [fn(mol) for fn in descriptors]
     
-    return dict(zip(names, vals_3D))
+        return dict(zip(names, vals_3D))
