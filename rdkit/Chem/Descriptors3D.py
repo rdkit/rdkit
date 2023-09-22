@@ -197,21 +197,21 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
 
     """
 
-    def CalcMolDescriptors3D(mol, confId=None):
-        r"""
-        Compute all 3D descriptors of a molecule
+def CalcMolDescriptors3D(mol, confId=None):
+    r"""
+    Compute all 3D descriptors of a molecule
     
-        Arguments:
-        - mol: the molecule to work with
-        - confId: conformer ID to work with. If not specified the default (-1) is used
+    Arguments:
+    - mol: the molecule to work with
+    - confId: conformer ID to work with. If not specified the default (-1) is used
     
-        Return:
+    Return:
     
-        dict
-            A dictionary with decriptor names as keys and the descriptor values as values
-        """
-        descriptors = [PMI1, PMI2, PMI3, NPR1, NPR2, RadiusOfGyration,InertialShapeFactor, Eccentricity, Asphericity, SpherocityIndex] 
-        names = ['PMI1', 'PMI2', 'PMI3', 'NPR1', 'NPR2', 'RadiusOfGyration','InertialShapeFactor', 'Eccentricity', 'Asphericity', 'SpherocityIndex'] 
-        vals_3D = [fn(mol) for fn in descriptors]
+    dict
+        A dictionary with decriptor names as keys and the descriptor values as values
+    """
+    descriptors = [PMI1, PMI2, PMI3, NPR1, NPR2, RadiusOfGyration,InertialShapeFactor, Eccentricity, Asphericity, SpherocityIndex] 
+    names = ['PMI1', 'PMI2', 'PMI3', 'NPR1', 'NPR2', 'RadiusOfGyration','InertialShapeFactor', 'Eccentricity', 'Asphericity', 'SpherocityIndex'] 
+    vals_3D = [fn(mol) for fn in descriptors]
     
-        return dict(zip(names, vals_3D))
+    return dict(zip(names, vals_3D))
