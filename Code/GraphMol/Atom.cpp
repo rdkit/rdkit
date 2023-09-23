@@ -664,14 +664,10 @@ bool Atom::needsUpdatePropertyCache() const {
 //   getPerturbationOrder([1,2,0,3]) = 2
 int Atom::getPerturbationOrder(const INT_LIST &probe) const {
   INT_LIST ref;
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = getOwningMol().getAtomBonds(this);
-  while (beg != end) {
-    ref.push_back(getOwningMol()[*beg]->getIdx());
-    ++beg;
+  for (const auto bnd : getOwningMol().atomBonds(this)) {
+    ref.push_back(bnd->getIdx());
   }
-  int nSwaps = static_cast<int>(countSwapsToInterconvert(probe, ref));
-  return nSwaps;
+  return static_cast<int>(countSwapsToInterconvert(probe, ref));
 }
 
 static const unsigned char octahedral_invert[31] = {
@@ -782,7 +778,7 @@ void setAtomRLabel(Atom *atm, int rlabel) {
   if (rlabel) {
     atm->setProp(common_properties::_MolFileRLabel,
                  static_cast<unsigned int>(rlabel));
-  } else if (atm->hasProp(common_properties::_MolFileRLabel)) {
+  } else {
     atm->clearProp(common_properties::_MolFileRLabel);
   }
 }
@@ -798,7 +794,7 @@ void setAtomAlias(Atom *atom, const std::string &alias) {
   PRECONDITION(atom, "bad atom");
   if (alias != "") {
     atom->setProp(common_properties::molFileAlias, alias);
-  } else if (atom->hasProp(common_properties::molFileAlias)) {
+  } else {
     atom->clearProp(common_properties::molFileAlias);
   }
 }
@@ -814,7 +810,7 @@ void setAtomValue(Atom *atom, const std::string &value) {
   PRECONDITION(atom, "bad atom");
   if (value != "") {
     atom->setProp(common_properties::molFileValue, value);
-  } else if (atom->hasProp(common_properties::molFileValue)) {
+  } else {
     atom->clearProp(common_properties::molFileValue);
   }
 }
@@ -830,7 +826,7 @@ void setSupplementalSmilesLabel(Atom *atom, const std::string &label) {
   PRECONDITION(atom, "bad atom");
   if (label != "") {
     atom->setProp(common_properties::_supplementalSmilesLabel, label);
-  } else if (atom->hasProp(common_properties::_supplementalSmilesLabel)) {
+  } else {
     atom->clearProp(common_properties::_supplementalSmilesLabel);
   }
 }
