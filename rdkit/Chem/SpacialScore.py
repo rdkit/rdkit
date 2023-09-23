@@ -33,15 +33,14 @@
 #
 """
 Spacial score (SPS) is an empirical scoring system to express the spacial complexity of a compound 
-in an uniform manner and on a highly granular scale for ranking and comparison between molecules[1].
+in an uniform manner and on a highly granular scale for ranking and comparison between molecules. [1]
 SPS takes into account the fraction of sp3 hybridized carbons and the fraction of stereogenic carbons.
 
 By default, this module generates the normalized spacial score (nSPS), which is a variation of the SPS score
 that considers the size of the molecule. 
 To obtain the nSPS score the SPS score is divided by the total number of heavy atoms in the analyzed molecule. 
-SPS and nSPS can correlate chemical structures with biologically relevant properties, such as selectivity and potency. 
 
-SPS = sum(h*s*r*n)
+SPS = sum(h*s*r*n*n)
 nSPS = SPS/a
 
 Where:
@@ -51,7 +50,7 @@ r = Non-aromatic ring term
 n = Number of heavy atom neighbors
 a = Total number of heavy atoms in the molecule
 
-The SPS function uses the class SpacialScore that computes the elements (h, s, r, n, a) to return the SPS and nSPS scores.
+The SPS function in this module takes a mol object and returns either the absolute score (normalize=False) or the score normalized by the number of heavy atoms (normalize=True (default)).
 
 The original code implementation can be found at: https://github.com/frog2000/Spacial-Score/blob/main/spacial_score.py
 
@@ -66,7 +65,7 @@ from rdkit.Chem.ChemUtils.DescriptorUtilities import setDescriptorVersion
 @setDescriptorVersion(version='1.0.0')
 def SPS(mol, normalize=True):
   """Calculates the SpacialScore descriptor. By default, the score is normalized by the number of heavy atoms (nSPS) resulting in a float value,
-  otherwise the absolute score is returned as an integer.
+  otherwise (normalize=False) the absolute score is returned as an integer.
   """
   return _SpacialScore(mol, normalize=normalize).score
 
