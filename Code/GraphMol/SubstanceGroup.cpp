@@ -276,7 +276,7 @@ bool SubstanceGroup::includesBond(unsigned int bondIdx) const {
 }
 
 namespace SubstanceGroupChecks {
-const std::vector<std::string> sGroupTypes = {
+const std::vector<const char *> sGroupTypes = {
     // polymer sgroups:
     "SRU", "MON", "COP", "CRO", "GRA", "MOD", "MER", "ANY",
     // formulations/mixtures:
@@ -284,22 +284,17 @@ const std::vector<std::string> sGroupTypes = {
     // other
     "SUP", "MUL", "DAT", "GEN"};
 
-const std::vector<std::string> sGroupSubtypes = {"ALT", "RAN", "BLO"};
-const std::vector<std::string> sGroupConnectTypes = {"HH", "HT", "EU"};
-
 bool isValidType(const std::string &type) {
   return std::find(sGroupTypes.begin(), sGroupTypes.end(), type) !=
          sGroupTypes.end();
 }
 
 bool isValidSubType(const std::string &type) {
-  return std::find(sGroupSubtypes.begin(), sGroupSubtypes.end(), type) !=
-         sGroupSubtypes.end();
+  return type == "ALT" || type == "RAN" || type == "BLO";
 }
 
 bool isValidConnectType(const std::string &type) {
-  return std::find(sGroupConnectTypes.begin(), sGroupConnectTypes.end(),
-                   type) != sGroupConnectTypes.end();
+  return type == "HH" || type == "HT" || type == "EU";
 }
 
 bool isSubstanceGroupIdFree(const ROMol &mol, unsigned int id) {
