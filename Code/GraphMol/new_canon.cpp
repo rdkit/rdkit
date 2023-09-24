@@ -133,13 +133,13 @@ void ActivatePartitions(unsigned int nAtoms, int *order, int *count,
   for (i = 0; i < nAtoms; i++) {
     j = order[i];
     int flag = 1;
-    //#define SKIP_NODE_CHANGED_OPTIMIZATION 0
-    //#ifndef SKIP_NODE_CHANGED_OPTIMIZATION
-    //        if(count[j]){
-    //          std::cout << "j " << j << std::endl;
-    //          flag=(next[j]!=-2);
-    //        }
-    //#endif
+    // #define SKIP_NODE_CHANGED_OPTIMIZATION 0
+    // #ifndef SKIP_NODE_CHANGED_OPTIMIZATION
+    //         if(count[j]){
+    //           std::cout << "j " << j << std::endl;
+    //           flag=(next[j]!=-2);
+    //         }
+    // #endif
     changed[j] = flag;
   }
 }
@@ -724,19 +724,19 @@ void updateAtomNeighborNumSwaps(
       if (tooManySimilarNbrs) {
         result.emplace_back(nbr.nbrSymClass, 0);
       } else {
-      int nSwaps = static_cast<int>(countSwapsToInterconvert(ref, probe));
-      if (atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
-        if (nSwaps % 2) {
-          result.emplace_back(nbr.nbrSymClass, 2);
-        } else {
-          result.emplace_back(nbr.nbrSymClass, 1);
-        }
-      } else if (atoms[nbrIdx].atom->getChiralTag() ==
-                 Atom::CHI_TETRAHEDRAL_CCW) {
-        if (nSwaps % 2) {
-          result.emplace_back(nbr.nbrSymClass, 1);
-        } else {
-          result.emplace_back(nbr.nbrSymClass, 2);
+        int nSwaps = static_cast<int>(countSwapsToInterconvert(ref, probe));
+        if (atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+          if (nSwaps % 2) {
+            result.emplace_back(nbr.nbrSymClass, 2);
+          } else {
+            result.emplace_back(nbr.nbrSymClass, 1);
+          }
+        } else if (atoms[nbrIdx].atom->getChiralTag() ==
+                   Atom::CHI_TETRAHEDRAL_CCW) {
+          if (nSwaps % 2) {
+            result.emplace_back(nbr.nbrSymClass, 1);
+          } else {
+            result.emplace_back(nbr.nbrSymClass, 2);
           }
         }
       }

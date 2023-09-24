@@ -923,12 +923,12 @@ RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1,
 //! removes bogus chirality markers (those on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 RDKIT_GRAPHMOL_EXPORT void cleanupTetrahedralChirality(
-    RWMol &mol, std::vector<Atom::HybridizationType> &hybridizations);
+    RWMol &mol, const std::vector<Atom::HybridizationType> &hybridizations);
 
 //! removes bogus chirality markers (those on non-sp3 centers):
 
 RDKIT_GRAPHMOL_EXPORT void getHybridizations(
-    RWMol &mol, std::vector<Atom::HybridizationType> &hybridizations);
+    const RWMol &mol, std::vector<Atom::HybridizationType> &hybridizations);
 
 RDKIT_GRAPHMOL_EXPORT void cleanupBadStereo(RWMol &mol);
 
@@ -1104,6 +1104,8 @@ RDKIT_GRAPHMOL_EXPORT ROMol *dativeBondsToHaptic(const ROMol &mol);
 //! \overload modifies molecule in place.
 RDKIT_GRAPHMOL_EXPORT void dativeBondsToHaptic(RWMol &mol);
 
+int GetDoubleBondDirFlag(const Bond *bond);
+
 namespace details {
 //! not recommended for use in other code
 RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
@@ -1114,8 +1116,6 @@ RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
 // If the bond is dative, and it has a common_properties::MolFileBondEndPts
 // prop, returns a vector of the indices of the atoms mentioned in the prop.
 RDKIT_GRAPHMOL_EXPORT std::vector<int> hapticBondEndpoints(const Bond *bond);
-
-int GetDoubleBondDirFlag(const Bond *bond);
 
 }  // namespace details
 

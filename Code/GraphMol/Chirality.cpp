@@ -2633,7 +2633,7 @@ void cleanupChirality(RWMol &mol) {
 }
 
 void cleanupTetrahedralChirality(
-    RWMol &mol, std::vector<Atom::HybridizationType> &hybridizations) {
+    RWMol &mol, const std::vector<Atom::HybridizationType> &hybridizations) {
   unsigned int perm;
   for (auto atom : mol.atoms()) {
     switch (atom->getChiralTag()) {

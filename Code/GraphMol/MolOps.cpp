@@ -453,7 +453,7 @@ void assignRadicals(RWMol &mol) {
 }
 
 void cleanupBadStereo(RWMol &mol) {
-  // remove chiral designations and atropisomer designations that cannot be
+  // remove chiral designations  that cannot be
   // true because of hybridization
 
   std::vector<Atom::HybridizationType> hybs;
@@ -462,7 +462,8 @@ void cleanupBadStereo(RWMol &mol) {
 }
 
 void getHybridizations(
-    RWMol &mol, std::vector<Atom::HybridizationType> &hydridizationValues) {
+    const RWMol &mol,
+    std::vector<Atom::HybridizationType> &hydridizationValues) {
   // see if the mol already has computed hybridizations:
 
   if (mol.getNumAtoms() == 0) {
@@ -1043,7 +1044,8 @@ bool checkNeighbors(const Bond *bond, const Atom *atom) {
         }
       } else  // NOT legacy stereo
       {
-        if (!otherAtom->getPropIfPresent(common_properties::_AtomRank, rank)) {
+        if (!otherAtom->getPropIfPresent(common_properties::_CanonicalAtomRank,
+                                         rank)) {
           rank = (-1);
         }
       }
@@ -1061,7 +1063,6 @@ bool checkNeighbors(const Bond *bond, const Atom *atom) {
 }
 }  // namespace
 
-namespace details {
 int GetDoubleBondDirFlag(const Bond *bond) {
   PRECONDITION(bond, "");
 
@@ -1128,7 +1129,6 @@ int GetDoubleBondDirFlag(const Bond *bond) {
 
   return 0;  // NOT crossed double bond
 }
-}  // namespace details
 
 ROMol *hapticBondsToDative(const ROMol &mol) {
   auto *res = new RWMol(mol);

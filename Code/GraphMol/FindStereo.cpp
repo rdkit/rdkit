@@ -1112,7 +1112,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
     }
 
     for (const auto atom : mol.atoms()) {
-      atom->setProp<unsigned int>(common_properties::_AtomRank,
+      atom->setProp<unsigned int>(common_properties::_CanonicalAtomRank,
                                   aranks[atom->getIdx()]);
     }
   }

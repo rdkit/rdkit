@@ -374,7 +374,7 @@ class MarvinCMLWriter {
         dir = Bond::NONE;  // other types are ignored
       }
     } else if (bond->getBondType() == Bond::DOUBLE) {
-      if (MolOps::details::GetDoubleBondDirFlag(bond) == 3) {
+      if (MolOps::GetDoubleBondDirFlag(bond) == 3) {
         dir = Bond::BondDir::EITHERDOUBLE;
       }
     }
