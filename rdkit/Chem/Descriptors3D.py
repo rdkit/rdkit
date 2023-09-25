@@ -197,6 +197,34 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
 
     """
 
+  PBF = lambda *x, **y: rdMolDescriptors.CalcPBF(*x, **y)
+  PBF.version = rdMolDescriptors._CalcPBF_version
+  PBF.__doc__ = """ Plane of best fit
+      from: https://doi.org/10.1021/ci300293f
+
+    **Arguments**
+
+      - inMol: a molecule
+
+      - confId: (optional) the conformation ID to use
+
+    """
+
+
+
+from rdkit.Chem.Descriptors import _isCallable
+descList = []
+def _setupDescriptors(namespace):
+  global descList
+  descList.clear()
+
+  for nm, thing in tuple(namespace.items()):
+    if nm[0] != '_' and nm != 'CalcMolDescriptors3D' and _isCallable(thing):
+      descList.append((nm, thing))
+
+
+_setupDescriptors(locals())
+
 def CalcMolDescriptors3D(mol, confId=None):
     r"""
     Compute all 3D descriptors of a molecule
@@ -216,8 +244,7 @@ def CalcMolDescriptors3D(mol, confId=None):
     if mol.GetNumConformers() == 0:
         raise RuntimeError('Computing 3D Descriptors requires a structure with at least 1 conformer')
     else:
-        descriptors = [PMI1, PMI2, PMI3, NPR1, NPR2, RadiusOfGyration,InertialShapeFactor, Eccentricity, Asphericity, SpherocityIndex] 
-        names = ['PMI1', 'PMI2', 'PMI3', 'NPR1', 'NPR2', 'RadiusOfGyration','InertialShapeFactor', 'Eccentricity', 'Asphericity', 'SpherocityIndex'] 
-        vals_3D = [fn(mol) for fn in descriptors]
-    
-        return dict(zip(names, vals_3D))
+        vals_3D = {}
+        for nm,fn in descList:
+           vals_3D[nm] = fn(mol)
+        return vals_3D
