@@ -68,8 +68,7 @@ typedef std::list<PAIR_D_I_I> LIST_PAIR_DII;
 
   where A is the angle between a and b
  */
-RDKIT_DEPICTOR_EXPORT RDGeom::INT_POINT2D_MAP embedRing(
-    const RDKit::INT_VECT &ring);
+RDKIT_DEPICTOR_EXPORT RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring);
 
 RDKIT_DEPICTOR_EXPORT void transformPoints(RDGeom::INT_POINT2D_MAP &nringCor,
                                            const RDGeom::Transform2D &trans);
