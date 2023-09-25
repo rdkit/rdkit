@@ -146,23 +146,36 @@ void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
   }
 }
 
+namespace {
+double getLassoWidth(const DrawMolMCH *dm, int atNum, int lassoNum) {
+  double xrad, yrad;
+  dm->getAtomRadius(atNum, xrad, yrad);
+  double rats[] = {1.0, 1.414, 2, 2.828, 4};
+  if (lassoNum > 4) {
+    return xrad * (1 + lassoNum) * 0.75;
+  } else {
+    return xrad * rats[lassoNum];
+  }
+}
+}  // namespace
+
 // ****************************************************************************
 void DrawMolMCHLasso::extractAtomArcs(
     size_t lassoNum, const RDKit::DrawColour &col,
     const std::vector<int> &colAtoms,
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const {
-  double xradius, yradius;
+  // an empirically derived lineWidth.
+  int lineWidth = 3;
   for (auto ca : colAtoms) {
     if (ca < 0 || static_cast<unsigned int>(ca) >= drawMol_->getNumAtoms()) {
       // there's an error in the colour map
       continue;
     }
-    getAtomRadius(ca, xradius, yradius);
-    xradius += xradius * lassoNum * 0.5;
-    Point2D radii(xradius, xradius);
+    double lassoWidth = getLassoWidth(this, ca, lassoNum);
+    Point2D radii(lassoWidth, lassoWidth);
     std::vector<Point2D> pts{atCds_[ca], radii};
-    DrawShapeArc *ell = new DrawShapeArc(
-        pts, 0.0, 360.0, drawOptions_.bondLineWidth, true, col, false, ca);
+    DrawShapeArc *ell =
+        new DrawShapeArc(pts, 0.0, 360.0, lineWidth, true, col, false, ca);
     arcs.emplace_back(ell);
   }
 }
@@ -172,6 +185,7 @@ void DrawMolMCHLasso::extractBondLines(
     size_t lassoNum, const RDKit::DrawColour &col,
     const std::vector<int> &colAtoms,
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
+  int lineWidth = 3;
   if (colAtoms.size() > 1) {
     for (size_t i = 0U; i < colAtoms.size() - 1; ++i) {
       if (colAtoms[i] < 0 ||
@@ -179,20 +193,16 @@ void DrawMolMCHLasso::extractBondLines(
         // there's an error in the colour map.
         continue;
       }
-      double xradiusI, yradiusI;
-      getAtomRadius(colAtoms[i], xradiusI, yradiusI);
-      xradiusI += xradiusI * lassoNum * 0.5;
-      auto dispI = xradiusI * 0.75;
+      auto lassoWidthI = getLassoWidth(this, colAtoms[i], lassoNum);
+      auto dispI = lassoWidthI * 0.75;
       for (size_t j = i + 1; j < colAtoms.size(); ++j) {
         if (colAtoms[j] < 0 ||
             static_cast<unsigned int>(colAtoms[j]) >= drawMol_->getNumAtoms()) {
           // there's an error in the colour map.
           continue;
         }
-        double xradiusJ, yradiusJ;
-        getAtomRadius(colAtoms[j], xradiusJ, yradiusJ);
-        xradiusJ += xradiusJ * lassoNum * 0.5;
-        auto dispJ = xradiusJ * 0.75;
+        auto lassoWidthJ = getLassoWidth(this, colAtoms[j], lassoNum);
+        auto dispJ = lassoWidthJ * 0.75;
         auto bond = drawMol_->getBondBetweenAtoms(colAtoms[i], colAtoms[j]);
         if (bond) {
           if (!mcHighlightBondMap_.empty()) {
@@ -213,13 +223,12 @@ void DrawMolMCHLasso::extractBondLines(
             // less than the radii of the circles (just less, so that they still
             // intersect rather than hitting on the tangent)
             auto mid = (p1 + p2) / 2.0;
-            if ((atCdsI - mid).lengthSq() < xradiusI * xradiusI) {
-              p1 = atCdsI + perp * xradiusI * 0.99 * m;
-              p2 = atCdsJ + perp * xradiusJ * 0.99 * m;
+            if ((atCdsI - mid).lengthSq() < lassoWidthI * lassoWidthI) {
+              p1 = atCdsI + perp * lassoWidthI * 0.99 * m;
+              p2 = atCdsJ + perp * lassoWidthJ * 0.99 * m;
             }
             DrawShapeSimpleLine *pl = new DrawShapeSimpleLine(
-                {p1, p2}, drawOptions_.bondLineWidth,
-                drawOptions_.scaleBondWidth, col, colAtoms[i], colAtoms[j],
+                {p1, p2}, lineWidth, true, col, colAtoms[i], colAtoms[j],
                 bond->getIdx(), noDash);
             lines.emplace_back(pl);
           }
