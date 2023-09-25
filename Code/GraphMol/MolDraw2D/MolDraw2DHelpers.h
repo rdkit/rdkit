@@ -149,6 +149,12 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomLabelDeuteriumTritium =
       false;  // toggles replacing 2H with D and 3H with T
   bool dummiesAreAttachments = false;  // draws "breaks" at dummy atoms
+  bool mappedDummiesAreRGroups =
+      false;  // mapped dummies are diplayed as "R#" rather than "*:#"
+  bool isotopeDummiesAreRGroups =
+      false;  // isotopic dummies are diplayed as "#R#" (if dummyIsotopeLabels
+              // is true) or "R#" (if dummyIsotopeLabels is false) rather than
+              // "#*"
   bool circleAtoms = true;             // draws circles under highlighted atoms
   bool splitBonds = false;             // split bonds into per atom segments
                             // most useful for dynamic manipulation of drawing

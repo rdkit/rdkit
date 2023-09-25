@@ -355,8 +355,9 @@ std::string parse_highlight_colors(const rj::Document &doc,
 }
 
 std::string process_details(rj::Document &doc, const std::string &details,
-                            int &width, int &height, int &offsetx, int &offsety,
-                            std::string &legend, std::vector<int> &atomIds,
+                            bool &noFreeType, int &width, int &height,
+                            int &offsetx, int &offsety, std::string &legend,
+                            std::vector<int> &atomIds,
                             std::vector<int> &bondIds, bool &kekulize,
                             bool &addChiralHs, bool &wedgeBonds,
                             bool &forceCoords, bool &wavyBonds) {
@@ -385,23 +386,23 @@ std::string process_details(rj::Document &doc, const std::string &details,
   GET_JSON_VALUE_WITH_DEFAULT(doc, wedgeBonds, Bool, true)
   GET_JSON_VALUE_WITH_DEFAULT(doc, forceCoords, Bool, false)
   GET_JSON_VALUE_WITH_DEFAULT(doc, wavyBonds, Bool, false)
+  GET_JSON_VALUE_WITH_DEFAULT(doc, noFreeType, Bool, false)
 
   return "";
 }
 
-std::string process_mol_details(const std::string &details, int &width,
-                                int &height, int &offsetx, int &offsety,
-                                std::string &legend, std::vector<int> &atomIds,
-                                std::vector<int> &bondIds,
-                                std::map<int, DrawColour> &atomMap,
-                                std::map<int, DrawColour> &bondMap,
-                                std::map<int, double> &radiiMap, bool &kekulize,
-                                bool &addChiralHs, bool &wedgeBonds,
-                                bool &forceCoords, bool &wavyBonds) {
+std::string process_mol_details(
+    const std::string &details, bool &noFreeType, int &width, int &height,
+    int &offsetx, int &offsety, std::string &legend, std::vector<int> &atomIds,
+    std::vector<int> &bondIds, std::map<int, DrawColour> &atomMap,
+    std::map<int, DrawColour> &bondMap, std::map<int, double> &radiiMap,
+    bool &kekulize, bool &addChiralHs, bool &wedgeBonds, bool &forceCoords,
+    bool &wavyBonds) {
   rj::Document doc;
-  auto problems = process_details(
-      doc, details, width, height, offsetx, offsety, legend, atomIds, bondIds,
-      kekulize, addChiralHs, wedgeBonds, forceCoords, wavyBonds);
+  auto problems =
+      process_details(doc, details, noFreeType, width, height, offsetx, offsety,
+                      legend, atomIds, bondIds, kekulize, addChiralHs,
+                      wedgeBonds, forceCoords, wavyBonds);
   if (!problems.empty()) {
     return problems;
   }
@@ -434,8 +435,8 @@ std::string process_mol_details(const std::string &details, int &width,
 }
 
 std::string process_rxn_details(
-    const std::string &details, int &width, int &height, int &offsetx,
-    int &offsety, std::string &legend, std::vector<int> &atomIds,
+    const std::string &details, bool &noFreeType, int &width, int &height,
+    int &offsetx, int &offsety, std::string &legend, std::vector<int> &atomIds,
     std::vector<int> &bondIds, bool &kekulize, bool &highlightByReactant,
     std::vector<DrawColour> &highlightColorsReactants) {
   rj::Document doc;
@@ -443,9 +444,10 @@ std::string process_rxn_details(
   bool wedgeBonds;
   bool forceCoords;
   bool wavyBonds;
-  auto problems = process_details(
-      doc, details, width, height, offsetx, offsety, legend, atomIds, bondIds,
-      kekulize, addChiralHs, wedgeBonds, forceCoords, wavyBonds);
+  auto problems =
+      process_details(doc, details, noFreeType, width, height, offsetx, offsety,
+                      legend, atomIds, bondIds, kekulize, addChiralHs,
+                      wedgeBonds, forceCoords, wavyBonds);
   if (!problems.empty()) {
     return problems;
   }
@@ -535,16 +537,17 @@ std::string mol_to_svg(const ROMol &m, int w, int h,
   bool wedgeBonds = true;
   bool forceCoords = false;
   bool wavyBonds = false;
+  bool noFreeType = false;
   if (!details.empty()) {
-    problems =
-        process_mol_details(details, w, h, offsetx, offsety, legend, atomIds,
-                            bondIds, atomMap, bondMap, radiiMap, kekulize,
-                            addChiralHs, wedgeBonds, forceCoords, wavyBonds);
+    problems = process_mol_details(details, noFreeType, w, h, offsetx, offsety,
+                                   legend, atomIds, bondIds, atomMap, bondMap,
+                                   radiiMap, kekulize, addChiralHs, wedgeBonds,
+                                   forceCoords, wavyBonds);
     if (!problems.empty()) {
       return problems;
     }
   }
-  MolDraw2DSVG drawer(w, h);
+  MolDraw2DSVG drawer(w, h, -1, -1, noFreeType);
   if (!details.empty()) {
     MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, details);
   }
@@ -570,17 +573,18 @@ std::string rxn_to_svg(const ChemicalReaction &rxn, int w, int h,
   int offsety = 0;
   bool kekulize = true;
   bool highlightByReactant = false;
+  bool noFreeType = false;
   std::vector<DrawColour> highlightColorsReactants;
   if (!details.empty()) {
     auto problems = process_rxn_details(
-        details, w, h, offsetx, offsety, legend, atomIds, bondIds, kekulize,
-        highlightByReactant, highlightColorsReactants);
+        details, noFreeType, w, h, offsetx, offsety, legend, atomIds, bondIds,
+        kekulize, highlightByReactant, highlightColorsReactants);
     if (!problems.empty()) {
       return problems;
     }
   }
 
-  MolDraw2DSVG drawer(w, h);
+  MolDraw2DSVG drawer(w, h, -1, -1, noFreeType);
   if (!kekulize) {
     drawer.drawOptions().prepareMolsBeforeDrawing = false;
   }

@@ -21,15 +21,15 @@ using namespace RDKit;
 namespace RDKit {
 namespace MinimalLib {
 extern std::string process_mol_details(
-    const std::string &details, int &width, int &height, int &offsetx,
-    int &offsety, std::string &legend, std::vector<int> &atomIds,
+    const std::string &details, bool &noFreeType, int &width, int &height,
+    int &offsetx, int &offsety, std::string &legend, std::vector<int> &atomIds,
     std::vector<int> &bondIds, std::map<int, DrawColour> &atomMap,
     std::map<int, DrawColour> &bondMap, std::map<int, double> &radiiMap,
     bool &kekulize, bool &addChiralHs, bool &wedgeBonds, bool &forceCoords,
     bool &wavyBonds);
 extern std::string process_rxn_details(
-    const std::string &details, int &width, int &height, int &offsetx,
-    int &offsety, std::string &legend, std::vector<int> &atomIds,
+    const std::string &details, bool &noFreeType, int &width, int &height,
+    int &offsetx, int &offsety, std::string &legend, std::vector<int> &atomIds,
     std::vector<int> &bondIds, bool &kekulize, bool &highlightByReactant,
     std::vector<DrawColour> &highlightColorsReactants);
 }  // namespace MinimalLib
@@ -82,11 +82,12 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
   bool wedgeBonds = true;
   bool forceCoords = false;
   bool wavyBonds = false;
+  bool noFreeType = false;
   if (!details.empty()) {
     auto problems = MinimalLib::process_mol_details(
-        details, w, h, offsetx, offsety, legend, atomIds, bondIds, atomMap,
-        bondMap, radiiMap, kekulize, addChiralHs, wedgeBonds, forceCoords,
-        wavyBonds);
+        details, noFreeType, w, h, offsetx, offsety, legend, atomIds, bondIds,
+        atomMap, bondMap, radiiMap, kekulize, addChiralHs, wedgeBonds,
+        forceCoords, wavyBonds);
     if (!problems.empty()) {
       return problems;
     }
@@ -149,11 +150,12 @@ std::string draw_rxn_to_canvas_with_highlights(JSReaction &self,
   int offsety = 0;
   bool kekulize = true;
   bool highlightByReactant = false;
+  bool noFreeType = false;
   std::vector<DrawColour> highlightColorsReactants;
   if (!details.empty()) {
     auto problems = MinimalLib::process_rxn_details(
-        details, w, h, offsetx, offsety, legend, atomIds, bondIds, kekulize,
-        highlightByReactant, highlightColorsReactants);
+        details, noFreeType, w, h, offsetx, offsety, legend, atomIds, bondIds,
+        kekulize, highlightByReactant, highlightColorsReactants);
     if (!problems.empty()) {
       return problems;
     }

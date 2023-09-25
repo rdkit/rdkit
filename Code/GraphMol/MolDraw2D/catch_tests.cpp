@@ -146,10 +146,38 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3744.svg", 387800653U},
     {"testAtomLists-1.svg", 1887579391U},
     {"testAtomLists-2.svg", 555139782U},
-    {"testIsoDummyIso.svg", 2405371137U},
-    {"testNoIsoDummyIso.svg", 748558214U},
-    {"testIsoNoDummyIso.svg", 3054263824U},
-    {"testNoIsoNoDummyIso.svg", 1185561148U},
+    {"test_isoLabelsFalse_dummyIsoLabelsFalse_mappedDummyRGFalse_isoDummyRGFalse.svg",
+     2815148205U},
+    {"test_isoLabelsTrue_dummyIsoLabelsFalse_mappedDummyRGFalse_isoDummyRGFalse.svg",
+     3282837U},
+    {"test_isoLabelsFalse_dummyIsoLabelsTrue_mappedDummyRGFalse_isoDummyRGFalse.svg",
+     960186254U},
+    {"test_isoLabelsTrue_dummyIsoLabelsTrue_mappedDummyRGFalse_isoDummyRGFalse.svg",
+     4226959926U},
+    {"test_isoLabelsFalse_dummyIsoLabelsFalse_mappedDummyRGTrue_isoDummyRGFalse.svg",
+     3836151417U},
+    {"test_isoLabelsTrue_dummyIsoLabelsFalse_mappedDummyRGTrue_isoDummyRGFalse.svg",
+     3909925584U},
+    {"test_isoLabelsFalse_dummyIsoLabelsTrue_mappedDummyRGTrue_isoDummyRGFalse.svg",
+     1382786252U},
+    {"test_isoLabelsTrue_dummyIsoLabelsTrue_mappedDummyRGTrue_isoDummyRGFalse.svg",
+     4077565003U},
+    {"test_isoLabelsFalse_dummyIsoLabelsFalse_mappedDummyRGFalse_isoDummyRGTrue.svg",
+     929333647U},
+    {"test_isoLabelsTrue_dummyIsoLabelsFalse_mappedDummyRGFalse_isoDummyRGTrue.svg",
+     1814197815U},
+    {"test_isoLabelsFalse_dummyIsoLabelsTrue_mappedDummyRGFalse_isoDummyRGTrue.svg",
+     2188879875U},
+    {"test_isoLabelsTrue_dummyIsoLabelsTrue_mappedDummyRGFalse_isoDummyRGTrue.svg",
+     2460641406U},
+    {"test_isoLabelsFalse_dummyIsoLabelsFalse_mappedDummyRGTrue_isoDummyRGTrue.svg",
+     929333647U},
+    {"test_isoLabelsTrue_dummyIsoLabelsFalse_mappedDummyRGTrue_isoDummyRGTrue.svg",
+     1814197815U},
+    {"test_isoLabelsFalse_dummyIsoLabelsTrue_mappedDummyRGTrue_isoDummyRGTrue.svg",
+     2188879875U},
+    {"test_isoLabelsTrue_dummyIsoLabelsTrue_mappedDummyRGTrue_isoDummyRGTrue.svg",
+     2460641406U},
     {"testDeuteriumTritium.svg", 1867318569U},
     {"testHydrogenBonds1.svg", 2605974904U},
     {"testHydrogenBonds2.svg", 645414593U},
@@ -3165,76 +3193,58 @@ M  END
   }
 }
 
-TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
+TEST_CASE("test the options that toggle isotope and R group labels",
+          "[drawing]") {
   SECTION("test all permutations") {
-    auto m = "[1*]c1cc([2*])c([3*])c[14c]1"_smiles;
+    auto m = "[1*:1]c1cc([2*:2])c([3*:3])c[14cH:7]1"_smiles;
     REQUIRE(m);
-    std::regex regex(R"regex(<text\s+.*>\d</text>)regex");
-    std::smatch match;
-    std::string line;
-    {
+    std::regex regex(R"regex(<text\s+.*>(.*)</text>)regex");
+    std::vector<std::pair<std::string, bool *>> options{
+        {"isoLabels", nullptr},
+        {"dummyIsoLabels", nullptr},
+        {"mappedDummyRG", nullptr},
+        {"isoDummyRG", nullptr},
+    };
+    static const std::vector<std::string> expectedResults{
+        "*:1*:2*:3C:7",         "*:1*:2*:314C:7",     "1*:12*:23*:3C:7",
+        "1*:12*:23*:314C:7",    "R1R2R3C7",           "R1R2R314C7",
+        "1R12R23R3C7",          "1R12R23R314C7",      "R1:1R2:2R3:3C:7",
+        "R1:1R2:2R3:314C:7",    "1R1:12R2:23R3:3C:7", "1R1:12R2:23R3:314C:7",
+        "R1:1R2:2R3:3C:7",      "R1:1R2:2R3:314C:7",  "1R1:12R2:23R3:3C:7",
+        "1R1:12R2:23R3:314C:7",
+    };
+    size_t nOptions = options.size();
+    size_t nPermutations = 1 << nOptions;
+    for (size_t i = 0; i < nPermutations; ++i) {
+      std::string svgFileName("test");
       MolDraw2DSVG drawer(300, 300, -1, -1, true);
+      auto &drawOptions = drawer.drawOptions();
+      options[0].second = &drawOptions.isotopeLabels;
+      options[1].second = &drawOptions.dummyIsotopeLabels;
+      options[2].second = &drawOptions.mappedDummiesAreRGroups;
+      options[3].second = &drawOptions.isotopeDummiesAreRGroups;
+      auto iTmp = i;
+      for (size_t j = 0; j < nOptions; ++j) {
+        bool state = iTmp & 1;
+        svgFileName += "_" + options.at(j).first + (state ? "True" : "False");
+        *options.at(j).second = state;
+        iTmp >>= 1;
+      }
+      svgFileName += ".svg";
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
-      std::string textIsoDummyIso = drawer.getDrawingText();
-      std::ofstream outs("testIsoDummyIso.svg");
-      outs << textIsoDummyIso;
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(svgFileName.c_str());
+      outs << text;
       outs.close();
-      check_file_hash("testIsoDummyIso.svg");
-      size_t nIsoDummyIso = std::distance(
-          std::sregex_token_iterator(textIsoDummyIso.begin(),
-                                     textIsoDummyIso.end(), regex),
-          std::sregex_token_iterator());
-      CHECK(nIsoDummyIso == 5);
-    }
-    {
-      MolDraw2DSVG drawer(300, 300, -1, -1, true);
-      drawer.drawOptions().isotopeLabels = false;
-      drawer.drawMolecule(*m);
-      drawer.finishDrawing();
-      std::string textNoIsoDummyIso = drawer.getDrawingText();
-      std::ofstream outs("testNoIsoDummyIso.svg");
-      outs << textNoIsoDummyIso;
-      outs.close();
-      check_file_hash("testNoIsoDummyIso.svg");
-      size_t nNoIsoDummyIso = std::distance(
-          std::sregex_token_iterator(textNoIsoDummyIso.begin(),
-                                     textNoIsoDummyIso.end(), regex, 1),
-          std::sregex_token_iterator());
-      CHECK(nNoIsoDummyIso == 3);
-    }
-    {
-      MolDraw2DSVG drawer(300, 300, -1, -1, true);
-      drawer.drawOptions().dummyIsotopeLabels = false;
-      drawer.drawMolecule(*m);
-      drawer.finishDrawing();
-      std::string textIsoNoDummyIso = drawer.getDrawingText();
-      std::ofstream outs("testIsoNoDummyIso.svg");
-      outs << textIsoNoDummyIso;
-      outs.close();
-      check_file_hash("testIsoNoDummyIso.svg");
-      size_t nIsoNoDummyIso = std::distance(
-          std::sregex_token_iterator(textIsoNoDummyIso.begin(),
-                                     textIsoNoDummyIso.end(), regex, 1),
-          std::sregex_token_iterator());
-      CHECK(nIsoNoDummyIso == 2);
-    }
-    {
-      MolDraw2DSVG drawer(300, 300, -1, -1, true);
-      drawer.drawOptions().isotopeLabels = false;
-      drawer.drawOptions().dummyIsotopeLabels = false;
-      drawer.drawMolecule(*m);
-      drawer.finishDrawing();
-      std::string textNoIsoNoDummyIso = drawer.getDrawingText();
-      std::ofstream outs("testNoIsoNoDummyIso.svg");
-      outs << textNoIsoNoDummyIso;
-      outs.close();
-      check_file_hash("testNoIsoNoDummyIso.svg");
-      size_t nNoIsoNoDummyIso = std::distance(
-          std::sregex_token_iterator(textNoIsoNoDummyIso.begin(),
-                                     textNoIsoNoDummyIso.end(), regex, 1),
-          std::sregex_token_iterator());
-      CHECK(nNoIsoNoDummyIso == 0);
+      auto res =
+          std::accumulate(std::sregex_iterator(text.begin(), text.end(), regex),
+                          std::sregex_iterator(), std::string(),
+                          [](const auto &acc, const auto &match) {
+                            return acc + std::string(match[1]);
+                          });
+      CHECK(res == expectedResults.at(i));
+      check_file_hash(svgFileName.c_str());
     }
   }
   SECTION("test that D/T show up even if isotope labels are hidden") {

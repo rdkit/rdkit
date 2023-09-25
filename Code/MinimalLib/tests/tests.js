@@ -551,26 +551,33 @@ function test_generate_aligned_coords() {
     assert.equal(mol.generate_aligned_coords(qmol, JSON.stringify({useCoordGen: true})), "");
 }
 
-function test_isotope_labels() {
-    var mol = RDKitModule.get_mol("[1*]c1cc([2*])c([3*])c[14c]1");
+function test_isotope_rgroup_labels() {
+    const mol = RDKitModule.get_mol("[1*:1]c1cc([2*:2])c([3*:3])c[14cH:7]1");
     assert(mol !== null);
-
-    var textIsoDummyIso = mol.get_svg_with_highlights(JSON.stringify({}));
-    var nLinesIsoDummyIso = textIsoDummyIso.split("\n").length;
-
-    var textNoIsoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ isotopeLabels: false }));
-    var nLinesNoIsoDummyIso = textNoIsoDummyIso.split("\n").length;
-
-    var textIsoNoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ dummyIsotopeLabels: false }));
-    var nLinesIsoNoDummyIso = textIsoNoDummyIso.split("\n").length;
-
-    var textNoIsoNoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ isotopeLabels: false, dummyIsotopeLabels: false }));
-    var nLinesNoIsoNoDummyIso = textNoIsoNoDummyIso.split("\n").length;
-
-    var res = [nLinesNoIsoNoDummyIso, nLinesIsoNoDummyIso, nLinesNoIsoDummyIso, nLinesIsoDummyIso];
-    var resSorted = [...res];
-    resSorted.sort((a, b) => (a - b));
-    assert.ok(res.every((resItem, i) => (resItem === resSorted[i])));
+    const regex = /<text\s+.*>(.*)<\/text>/g;
+    const options = ["isotopeLabels", "dummyIsotopeLabels", "mappedDummiesAreRGroups", "isotopeDummiesAreRGroups"];
+    const expectedResults = [
+        "*:1*:2*:3C:7",         "*:1*:2*:314C:7",     "1*:12*:23*:3C:7",
+        "1*:12*:23*:314C:7",    "R1R2R3C7",           "R1R2R314C7",
+        "1R12R23R3C7",          "1R12R23R314C7",      "R1:1R2:2R3:3C:7",
+        "R1:1R2:2R3:314C:7",    "1R1:12R2:23R3:3C:7", "1R1:12R2:23R3:314C:7",
+        "R1:1R2:2R3:3C:7",      "R1:1R2:2R3:314C:7",  "1R1:12R2:23R3:3C:7",
+        "1R1:12R2:23R3:314C:7",
+    ];
+    const nOptions = options.length;
+    const nPermutations = 1 << nOptions;
+    for (let i = 0; i < nPermutations; ++i) {
+        let iTmp = i;
+        const drawOpts = {noFreeType: true};
+        for (let j = 0; j < nOptions; ++j) {
+            const state = iTmp & 1;
+            drawOpts[options[j]] = state;
+            iTmp >>= 1;
+        }
+        const text = mol.get_svg_with_highlights(JSON.stringify(drawOpts));
+        const res = Array.from(text.matchAll(regex)).map(m => m[1]).join("");
+        assert.equal(res, expectedResults[i]);
+    }
 }
 
 function test_generate_aligned_coords_allow_rgroups() {
@@ -2451,7 +2458,7 @@ initRDKitModule().then(function(instance) {
         test_substruct_library_empty_query();
     }
     test_generate_aligned_coords();
-    test_isotope_labels();
+    test_isotope_rgroup_labels();
     test_generate_aligned_coords_allow_rgroups();
     test_generate_aligned_coords_accept_failure();
     test_generate_aligned_coords_align_only();

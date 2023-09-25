@@ -183,6 +183,8 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   boost::property_tree::read_json(ss, pt);
   PT_OPT_GET(atomLabelDeuteriumTritium);
   PT_OPT_GET(dummiesAreAttachments);
+  PT_OPT_GET(mappedDummiesAreRGroups);
+  PT_OPT_GET(isotopeDummiesAreRGroups);
   PT_OPT_GET(circleAtoms);
   PT_OPT_GET(splitBonds);
   PT_OPT_GET(continuousHighlight);

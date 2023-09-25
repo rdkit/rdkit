@@ -671,43 +671,37 @@ M  END''')
         txt = d2d.GetDrawingText()
         self.assertTrue('>8</text>' in txt)
 
-    def testIsotopeLabels(self):
-        m = Chem.MolFromSmiles("[1*]c1cc([2*])c([3*])c[14c]1")
-        regex = re.compile(r"<text\s+.*>\d</text>")
+    def testIsotopeRGroupLabels(self):
+        m = Chem.MolFromSmiles("[1*:1]c1cc([2*:2])c([3*:3])c[14cH:7]1")
         self.assertIsNotNone(m)
+        regex = re.compile(r"<text\s+.*>(.*)</text>")
+        options = ["isotopeLabels", "dummyIsotopeLabels", "mappedDummiesAreRGroups", "isotopeDummiesAreRGroups"]
+        expectedResults = [
+            "*:1*:2*:3C:7",         "*:1*:2*:314C:7",     "1*:12*:23*:3C:7",
+            "1*:12*:23*:314C:7",    "R1R2R3C7",           "R1R2R314C7",
+            "1R12R23R3C7",          "1R12R23R314C7",      "R1:1R2:2R3:3C:7",
+            "R1:1R2:2R3:314C:7",    "1R1:12R2:23R3:3C:7", "1R1:12R2:23R3:314C:7",
+            "R1:1R2:2R3:3C:7",      "R1:1R2:2R3:314C:7",  "1R1:12R2:23R3:3C:7",
+            "1R1:12R2:23R3:314C:7",
+        ]
+        nOptions = len(options)
+        nPermutations = 1 << nOptions
+        for i in range(nPermutations):
+            d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+            drawOptions = d2d.drawOptions()
+            iTmp = i
+            for j in range(nOptions):
+                state = iTmp & 1
+                setattr(drawOptions, options[j], state)
+                iTmp >>= 1
+            d2d.SetDrawOptions(drawOptions)
+            d2d.DrawMolecule(m)
+            d2d.FinishDrawing()
+            text = d2d.GetDrawingText()
+            res = "".join(match.group(1) for match in regex.finditer(text))
+            self.assertEqual(res, expectedResults[i])
 
-        d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
-        d2d.DrawMolecule(m)
-        d2d.FinishDrawing()
-        textIsoDummyIso = d2d.GetDrawingText()
-        nIsoDummyIso = len(regex.findall(textIsoDummyIso))
-        self.assertEqual(nIsoDummyIso, 5)
-
-        d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
-        d2d.drawOptions().isotopeLabels = False
-        d2d.DrawMolecule(m)
-        d2d.FinishDrawing()
-        textNoIsoDummyIso = d2d.GetDrawingText()
-        nNoIsoDummyIso = len(regex.findall(textNoIsoDummyIso))
-        self.assertEqual(nNoIsoDummyIso, 3)
-
-        d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
-        d2d.drawOptions().dummyIsotopeLabels = False
-        d2d.DrawMolecule(m)
-        d2d.FinishDrawing()
-        textIsoNoDummyIso = d2d.GetDrawingText()
-        nIsoNoDummyIso = len(regex.findall(textIsoNoDummyIso))
-        self.assertEqual(nIsoNoDummyIso, 2)
-
-        d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
-        d2d.drawOptions().isotopeLabels = False
-        d2d.drawOptions().dummyIsotopeLabels = False
-        d2d.DrawMolecule(m)
-        d2d.FinishDrawing()
-        textNoIsoNoDummyIso = d2d.GetDrawingText()
-        nNoIsoNoDummyIso = len(regex.findall(textNoIsoNoDummyIso))
-        self.assertEqual(nNoIsoNoDummyIso, 0)
-
+    def testDeuteriumTritiumLabels(self):
         m = Chem.MolFromSmiles("C([1H])([2H])([3H])[H]")
         deuteriumTritiumRegex = re.compile(r"<text\s+.*>[DT]</text>")
         d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)

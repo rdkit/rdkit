@@ -765,6 +765,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                                                             docString.c_str())
       .def_readwrite("dummiesAreAttachments",
                      &RDKit::MolDrawOptions::dummiesAreAttachments)
+      .def_readwrite("mappedDummiesAreRGroups",
+                     &RDKit::MolDrawOptions::mappedDummiesAreRGroups)
+      .def_readwrite("isotopeDummiesAreRGroups",
+                     &RDKit::MolDrawOptions::isotopeDummiesAreRGroups)
       .def_readwrite("circleAtoms", &RDKit::MolDrawOptions::circleAtoms)
       .def_readwrite("splitBonds", &RDKit::MolDrawOptions::splitBonds)
       .def("getBackgroundColour", &RDKit::getBgColour,

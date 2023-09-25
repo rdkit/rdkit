@@ -1289,6 +1289,8 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
   // as MolDrawing.py. My first thought was for a LaTeX-like system,
   // obviously...
   std::string symbol;
+  std::string mapNumAsString;
+  std::string isoAsString;
   bool literal_symbol = true;
   unsigned int iso = atom.getIsotope();
   if (drawOptions_.atomLabels.find(atom.getIdx()) !=
@@ -1341,9 +1343,13 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
 
     // first thing after the symbol is the atom map
     if (atom.hasProp("molAtomMapNumber")) {
-      std::string map_num = "";
-      atom.getProp("molAtomMapNumber", map_num);
-      postText.push_back(std::string(":") + map_num);
+      std::string mapNumSep;
+      atom.getProp("molAtomMapNumber", mapNumAsString);
+      if (!drawOptions_.mappedDummiesAreRGroups ||
+          (drawOptions_.isotopeDummiesAreRGroups && iso)) {
+        mapNumSep = ":";
+      }
+      postText.push_back(mapNumSep + mapNumAsString);
     }
 
     if (0 != atom.getFormalCharge()) {
@@ -1379,12 +1385,14 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
       postText.push_back(h);
     }
 
-    if (0 != iso &&
-        ((drawOptions_.isotopeLabels && atom.getAtomicNum() != 0) ||
-         (drawOptions_.dummyIsotopeLabels && atom.getAtomicNum() == 0))) {
-      // isotope always comes before the symbol
-      preText.push_back(std::string("<sup>") + std::to_string(iso) +
-                        std::string("</sup>"));
+    if (0 != iso) {
+      isoAsString = std::to_string(iso);
+      if ((drawOptions_.isotopeLabels && atom.getAtomicNum() != 0) ||
+          (drawOptions_.dummyIsotopeLabels && atom.getAtomicNum() == 0)) {
+        // isotope always comes before the symbol
+        preText.push_back(std::string("<sup>") + isoAsString +
+                          std::string("</sup>"));
+      }
     }
 
     symbol = "";
@@ -1397,7 +1405,23 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     if (isLinearAtom(atom, atCds_) ||
         (atom.getAtomicNum() != 6 || atom.getDegree() == 0 || preText.size() ||
          postText.size())) {
-      symbol += atom.getSymbol();
+      bool displayMappedDummyAsRGroup =
+          (drawOptions_.mappedDummiesAreRGroups && !mapNumAsString.empty());
+      bool displayIsotopeDummyAsRGroup =
+          (drawOptions_.isotopeDummiesAreRGroups && !isoAsString.empty());
+      bool displayDummyAsRGroup =
+          (atom.getAtomicNum() == 0 &&
+           (displayMappedDummyAsRGroup || displayIsotopeDummyAsRGroup));
+      std::string atomSymbol;
+      if (displayDummyAsRGroup) {
+        atomSymbol = "R";
+        if (displayIsotopeDummyAsRGroup) {
+          atomSymbol += isoAsString;
+        }
+      } else {
+        atomSymbol = atom.getSymbol();
+      }
+      symbol += atomSymbol;
     }
     for (const std::string &se : postText) {
       symbol += se;
