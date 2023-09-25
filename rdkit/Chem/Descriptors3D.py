@@ -238,11 +238,11 @@ def CalcMolDescriptors3D(mol, confId=None):
     dict
         A dictionary with decriptor names as keys and the descriptor values as values
 
-    RuntimeError 
-        If a 2D molecule is supplied
+    raises a ValueError 
+        If the molecule does not have conformers
     """
     if mol.GetNumConformers() == 0:
-        raise RuntimeError('Computing 3D Descriptors requires a structure with at least 1 conformer')
+        raise ValueError('Computing 3D Descriptors requires a structure with at least 1 conformer')
     else:
         vals_3D = {}
         for nm,fn in descList:
