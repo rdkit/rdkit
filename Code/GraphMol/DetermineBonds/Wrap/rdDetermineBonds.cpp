@@ -19,9 +19,9 @@ using namespace RDKit;
 
 namespace {
 void determineConnectivityHelper(ROMol &mol, bool useHueckel, int charge,
-                                 double covFactor) {
+                                 double covFactor, bool useVdw) {
   auto &wmol = static_cast<RWMol &>(mol);
-  determineConnectivity(wmol, useHueckel, charge, covFactor);
+  determineConnectivity(wmol, useHueckel, charge, covFactor, useVdw);
 }
 void determineBondOrdersHelper(ROMol &mol, int charge,
                                bool allowChargedFragments, bool embedChiral,
@@ -32,10 +32,10 @@ void determineBondOrdersHelper(ROMol &mol, int charge,
 }
 void determineBondsHelper(ROMol &mol, bool useHueckel, int charge,
                           double covFactor, bool allowChargedFragments,
-                          bool embedChiral, bool useAtomMap) {
+                          bool embedChiral, bool useAtomMap, bool useVdw) {
   auto &wmol = static_cast<RWMol &>(mol);
   determineBonds(wmol, useHueckel, charge, covFactor, allowChargedFragments,
-                 embedChiral, useAtomMap);
+                 embedChiral, useAtomMap, useVdw);
 }
 }  // namespace
 
@@ -51,15 +51,19 @@ disregarding pre-existing bonds
 Args:
    mol : the molecule of interest; it must have a 3D conformer
    useHueckel : (optional) if this is  \c true, extended Hueckel theory
-       will be used to determine connectivity rather than the van der Waals method
+       will be used to determine connectivity rather than the van der Waals 
+       or connect-the-dots methods
    charge : (optional) the charge of the molecule; it must be provided if
        the Hueckel method is used and charge is non-zero
    covFactor : (optional) the factor with which to multiply each covalent
        radius if the van der Waals method is used
+   useVdw: (optional) if this is false, the connect-the-dots method
+       will be used instead of the van der Waals method
 )DOC";
   python::def("DetermineConnectivity", &determineConnectivityHelper,
               (python::arg("mol"), python::arg("useHueckel") = false,
-               python::arg("charge") = 0, python::arg("covFactor") = 1.3),
+               python::arg("charge") = 0, python::arg("covFactor") = 1.3,
+               python::arg("useVdw") = false),
               docs.c_str());
 
   docs =
@@ -92,8 +96,9 @@ disregarding pre-existing bonds
 
 Args:
    mol : the molecule of interest; it must have a 3D conformer
-   useHueckel : (optional) if this is  \c true, extended Hueckel theory
-       will be used to determine connectivity rather than the van der Waals method
+   useHueckel : (optional) if this is true, extended Hueckel theory
+       will be used to determine connectivity rather than the van der Waals 
+       or connect-the-dots methods
    charge : (optional) the charge of the molecule; it must be provided if
        the Hueckel method is used and charge is non-zero
    covFactor : (optional) the factor with which to multiply each covalent
@@ -106,12 +111,15 @@ Args:
       sanitizeMol() when this is true
    useAtomMap : (optional) if this is true, an atom map will be created for the 
       molecule
+   useVdw: (optional) if this is false, the connect-the-dots method
+       will be used instead of the van der Waals method
 )DOC";
   python::def(
       "DetermineBonds", &determineBondsHelper,
       (python::arg("mol"), python::arg("useHueckel") = false,
        python::arg("charge") = 0, python::arg("covFactor") = 1.3,
        python ::arg("allowChargedFragments") = true,
-       python::arg("embedChiral") = true, python::arg("useAtomMap") = false),
+       python::arg("embedChiral") = true, python::arg("useAtomMap") = false,
+       python::arg("useVdw") = false),
       docs.c_str());
 }
