@@ -67,6 +67,9 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
 
 ## Projects using RDKit
 
+- [chemprop](https://github.com/chemprop/chemprop) - message passing neural networks for molecular property prediction
+- [RMG](https://github.com/ReactionMechanismGenerator/RMG-Py) - Reaction Mechanism Generator
+- [RDMC](https://github.com/xiaoruiDong/RDMC) - Reaction Data and Molecular Conformers - package for dealing with reactions, molecules, conformers, mainly in 3D
 - [pychemprojections](https://github.com/vandan-revanur/pychemprojections) - python library for visualizing various 2D projections of molecules.
 - [pychemovality](https://github.com/vandan-revanur/pychemovality) - python library for estimating the ovality of molecules.
 - [ChEMBL Structure Pipeline](https://github.com/chembl/ChEMBL_Structure_Pipeline) - ChEMBL protocols used to standardise and salt strip molecules.
