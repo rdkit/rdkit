@@ -61,14 +61,23 @@ void DrawMolMCHLasso::extractAtomColourLists(
     std::vector<DrawColour> &colours,
     std::vector<std::vector<int>> &colourAtoms,
     std::vector<std::vector<int>> &colourLists) const {
+  std::vector<boost::dynamic_bitset<>> inColourAtoms;
   for (const auto &cm : mcHighlightAtomMap_) {
     for (const auto &col : cm.second) {
       auto cpos = std::find(colours.begin(), colours.end(), col);
       if (cpos == colours.end()) {
         colours.push_back(col);
         colourAtoms.push_back(std::vector<int>(1, cm.first));
+        inColourAtoms.push_back(
+            boost::dynamic_bitset<>(drawMol_->getNumAtoms()));
+        inColourAtoms.back().set(cm.first);
       } else {
-        colourAtoms[std::distance(colours.begin(), cpos)].push_back(cm.first);
+        auto ln = std::distance(colours.begin(), cpos);
+        // it's important that each atom is only in the list once - Github6749
+        if (!inColourAtoms[ln][cm.first]) {
+          colourAtoms[ln].push_back(cm.first);
+          inColourAtoms[ln].set(cm.first);
+        }
       }
     }
   }
@@ -497,7 +506,8 @@ void DrawMolMCHLasso::fixIntersectingArcsAndLines(
 void DrawMolMCHLasso::fixProtrudingLines(
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
   // lasso_highlight_7.svg also had the problem where two lines didn't
-  // intersect, but one protruded beyond the end of the other inside the lasso.
+  // intersect, but one protruded beyond the end of the other inside the
+  // lasso.
   for (auto &line1 : lines) {
     for (auto &line2 : lines) {
       auto d1_0 = (line1->points_[0] - line2->points_[0]).length();
