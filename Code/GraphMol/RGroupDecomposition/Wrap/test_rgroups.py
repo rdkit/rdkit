@@ -697,6 +697,33 @@ M  END
         {'Core': 'O=c1cc([*:1])c([*:2])c[nH]1', 'R1': 'F[*:1]', 'R2': 'C[*:2]'}]
     self.assertEqual(rows, expected_rows)
 
+  def testMolMatchesCore(self):
+    core = Chem.MolFromSmarts("[*:1]c1[!#1]([*:2])cc([*:3])n([*:4])c(=O)1")
+    cmol = Chem.MolFromSmiles("Clc1c(C)cc(F)n(CC)c(=O)1")
+    nmol = Chem.MolFromSmiles("Clc1ncc(F)n(CC)c(=O)1")
+    smol = Chem.MolFromSmiles("Clc1ncc(F)n(CC)c(=S)1")
+    params = RGroupDecompositionParameters()
+    params.onlyMatchAtRGroups = True
+    rgd = RGroupDecomposition(core, params)
+    self.assertEqual(rgd.GetMatchingCoreIdx(cmol), 0)
+    self.assertEqual(rgd.GetMatchingCoreIdx(nmol), 0)
+    self.assertEqual(rgd.GetMatchingCoreIdx(smol), -1)
+    matches = []
+    self.assertEqual(rgd.GetMatchingCoreIdx(cmol, matches), 0)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(len(matches[0]), core.GetNumAtoms())
+    matches = []
+    self.assertEqual(rgd.GetMatchingCoreIdx(nmol, matches), 0)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(len(matches[0]), core.GetNumAtoms() - 1)
+    matches = []
+    self.assertEqual(rgd.GetMatchingCoreIdx(smol, matches), -1)
+    self.assertEqual(len(matches), 0)
+    cmol_h = Chem.AddHs(cmol)
+    nmol_h = Chem.AddHs(nmol)
+    self.assertTrue(cmol_h.HasSubstructMatch(core))
+    self.assertEqual(len(cmol_h.GetSubstructMatch(core)), core.GetNumAtoms())
+    self.assertFalse(nmol_h.HasSubstructMatch(core))
 
 
 if __name__ == '__main__':

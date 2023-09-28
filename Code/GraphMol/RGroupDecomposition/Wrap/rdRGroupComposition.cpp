@@ -81,6 +81,25 @@ class RGroupDecompositionHelper {
     NOGIL gil;
     return decomp->add(mol);
   }
+  int GetMatchingCoreIdx(const ROMol &mol, python::object &matches) {
+    std::vector<MatchVectType> matchVect;
+    int coreIdx;
+    {
+      NOGIL gil;
+      coreIdx = decomp->getMatchingCoreIdx(mol, &matchVect);
+    }
+    if (!matches.is_none() && PySequence_Check(matches.ptr())) {
+      auto &matchesList = reinterpret_cast<python::list &>(matches);
+      for (const auto &match : matchVect) {
+        python::list atomMap;
+        for (const auto &pair : match) {
+          atomMap.append(python::make_tuple(pair.first, pair.second));
+        }
+        matchesList.append(python::tuple(atomMap));
+      }
+    }
+    return coreIdx;
+  }
   bool Process() {
     NOGIL gil;
     return decomp->process();
@@ -333,6 +352,9 @@ struct rgroupdecomp_wrapper {
                 "Construct from a molecule or sequence of molecules and a "
                 "parameters object"))
         .def("Add", &RGroupDecompositionHelper::Add)
+        .def("GetMatchingCoreIdx",
+             &RGroupDecompositionHelper::GetMatchingCoreIdx,
+             (python::arg("mol"), python::arg("matches") = python::object()))
         .def("Process", &RGroupDecompositionHelper::Process,
              "Process the rgroups (must be done prior to "
              "GetRGroupsAsRows/Columns and GetRGroupLabels)")
