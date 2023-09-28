@@ -294,9 +294,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       // clean any existing R group numbers
       atom->setIsotope(0);
       atom->setAtomMapNum(0);
-      if (atom->hasProp(common_properties::_MolFileRLabel)) {
-        atom->clearProp(common_properties::_MolFileRLabel);
-      }
+      atom->clearProp(common_properties::_MolFileRLabel);
       atom->setProp(common_properties::dummyLabel, "*");
     }
   }
