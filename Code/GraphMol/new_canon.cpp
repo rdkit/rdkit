@@ -521,8 +521,8 @@ void basicInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
   atom.index = idx;
   atom.p_symbol = nullptr;
   atom.degree = atom.atom->getDegree();
-  atom.nbrIds = (int *)malloc(atom.degree * sizeof(int));
-  getNbrs(mol, atom.atom, atom.nbrIds);
+  atom.nbrIds = std::move(std::make_unique<int[]>(atom.degree));
+  getNbrs(mol, atom.atom, atom.nbrIds.get());
 }
 
 void advancedInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
@@ -586,7 +586,7 @@ void initFragmentCanonAtoms(const ROMol &mol,
         atomsi.p_symbol = nullptr;
       }
       if (needsInit) {
-        atomsi.nbrIds = (int *)calloc(atom->getDegree(), sizeof(int));
+        atomsi.nbrIds = std::move(std::make_unique<int[]>(atom->getDegree()));
         advancedInitCanonAtom(mol, atomsi, i);
         atomsi.bonds.reserve(4);
       }
@@ -652,10 +652,7 @@ void initChiralCanonAtoms(const ROMol &mol,
 
 void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms) {
   for (auto &atom : atoms) {
-    if (atom.nbrIds) {
-      free(atom.nbrIds);
-      atom.nbrIds = nullptr;
-    }
+    atom.nbrIds.reset();
   }
 }
 }  // namespace detail
