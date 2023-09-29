@@ -103,7 +103,7 @@ extern int yysmarts_debug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 79 "smarts.yy"
+#line 81 "smarts.yy"
 
   int                      moli;
   RDKit::QueryAtom * atom;
@@ -127,9 +127,11 @@ int yysmarts_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDK
 /* "%code provides" blocks.  */
 #line 74 "smarts.yy"
 
+#ifndef YY_DECL
 #define YY_DECL int yylex \
                (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+#endif
 
-#line 134 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp"
+#line 136 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp"
 
 #endif /* !YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED  */

@@ -72,8 +72,10 @@ yysmarts_error( const char *input,
 %parse-param {int& start_token}
 
 %code provides {
+#ifndef YY_DECL
 #define YY_DECL int yylex \
                (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+#endif
 }
 
 %union {
