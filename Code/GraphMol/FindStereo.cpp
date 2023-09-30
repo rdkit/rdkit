@@ -463,10 +463,6 @@ void initAtomInfo(ROMol &mol, bool flagPossible, bool cleanIt,
                   boost::dynamic_bitset<> &possibleAtoms) {
   bool allowNontetrahedralStereo = getAllowNontetrahedralChirality();
   for (const auto atom : mol.atoms()) {
-    if (atom->getImplicitValence() == -1) {
-      atom->calcExplicitValence(false);
-      atom->calcImplicitValence(false);
-    }
     auto aidx = atom->getIdx();
     atomSymbols[aidx] = getAtomCompareSymbol(*atom);
     if (detail::isAtomPotentialStereoAtom(atom, allowNontetrahedralStereo)) {
@@ -1112,7 +1108,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
     }
 
     for (const auto atom : mol.atoms()) {
-      atom->setProp<unsigned int>(common_properties::_CanonicalAtomRank,
+      atom->setProp<unsigned int>(common_properties::_ChiralAtomRank,
                                   aranks[atom->getIdx()]);
     }
   }
@@ -1124,7 +1120,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   return res;
 }
 
-void runCleanup(ROMol &mol) { runCleanup(mol, true, true); }
+void removeBadStereo(ROMol &mol) { runCleanup(mol, true, true); }
 
 //}  // namespace
 

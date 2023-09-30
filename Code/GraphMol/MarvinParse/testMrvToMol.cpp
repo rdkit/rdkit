@@ -9,6 +9,7 @@
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/FileParsers/SequenceWriters.h>
@@ -82,18 +83,30 @@ class MrvTests {
     std::string name;
     std::string smiles;
     bool expectedResult;
+    bool sanitizeFlag;
     unsigned int atomCount;
     unsigned int bondCount;
+
+    SmilesTest(std::string nameInit, std::string smilesInit,
+               bool expectedResultInit, int atomCountInit, int bondCountInit,
+               bool sanitizeFlagInit)
+        : name(nameInit),
+          smiles(smilesInit),
+          expectedResult(expectedResultInit),
+          sanitizeFlag(sanitizeFlagInit),
+          atomCount(atomCountInit),
+          bondCount(bondCountInit){};
 
     SmilesTest(std::string nameInit, std::string smilesInit,
                bool expectedResultInit, int atomCountInit, int bondCountInit)
         : name(nameInit),
           smiles(smilesInit),
           expectedResult(expectedResultInit),
+          sanitizeFlag(true),
           atomCount(atomCountInit),
           bondCount(bondCountInit){};
 
-    bool isRxnTest() const { return false; }
+    // bool isRxnTest() const { return false; }
   };
 
   std::string GetExpectedValue(std::string expectedFileName) {
@@ -131,7 +144,7 @@ class MrvTests {
 
     try {
       SmilesParserParams smilesParserParams;
-      smilesParserParams.sanitize = true;
+      smilesParserParams.sanitize = smilesTest->sanitizeFlag;
 
       localVars.smilesMol = SmilesToMol(smilesTest->smiles, smilesParserParams);
       reapplyMolBlockWedging(*localVars.smilesMol);
@@ -496,6 +509,9 @@ class MrvTests {
   }
 
   void RunTests() {
+    RDKit::Chirality::setUseLegacyStereoPerception(false);
+    printf("Using new chirality perception\n");
+
     // the molecule tests - starting with molfiles/sdf
     if (testToRun == "" || testToRun == "sdfTests") {
       std::list<MolTest> sdfTests{
@@ -651,6 +667,24 @@ class MrvTests {
 
     if (testToRun == "" || testToRun == "smiTests") {
       std::list<SmilesTest> smiTests{
+          SmilesTest("NewChiralTest", R"(C[C@H]1CC[C@@]2(CC[C@H](Cl)CC2)CC1)",
+                     true, 13, 14, true),
+          SmilesTest("NewChiralTest", R"(C[C@H]1CC[C@@]2(CC[C@H](Cl)CC2)CC1)",
+                     true, 13, 14, false),
+          SmilesTest("NewChiralTestNoChiral",
+                     R"(C[C@H]1CCC2(CC[C@H](Cl)CC2)CC1)", true, 13, 14, true),
+          SmilesTest("NewChiralTestNoChiral",
+                     R"(C[C@H]1CCC2(CC[C@H](Cl)CC2)CC1)", true, 13, 14, false),
+          SmilesTest("NewChiralTest2", R"(C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2)",
+                     true, 14, 15, true),
+          SmilesTest("NewChiralTest2", R"(C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2)",
+                     true, 14, 15, false),
+          SmilesTest("NewChiralTest2AllChiral",
+                     R"(C[C@H]1CC[C@@]2(CC1)CC[C@H](C)C(C)C2)", true, 14, 15,
+                     true),
+          SmilesTest("NewChiralTest2AllChiral",
+                     R"(C[C@H]1CC[C@@]2(CC1)CC[C@H](C)C(C)C2)", true, 14, 15,
+                     false),
 
           SmilesTest("DoubleBondChain",
                      R"(CC1=C(\C=C\C(C)=C\C=C\C(C)=C/C(O)=O)C(C)(C)CCC1)", true,
@@ -676,7 +710,6 @@ class MrvTests {
 
       for (auto smiTest : smiTests) {
         printf("Test\n\n %s\n\n", smiTest.name.c_str());
-        // RDDepict::preferCoordGen = true;
         testSmilesToMarvin(&smiTest);
       }
     }

@@ -696,7 +696,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
           int ori_ridx = abs(rnbr) - 1;
           int ridx = ids[ori_ridx] + 1;
           if (rnbr < 0) {
-            ridx *= (-1);
+            ridx *= -1;
           }
           ringStereoAtomsCopied.push_back(ridx);
         }
@@ -1040,13 +1040,13 @@ bool checkNeighbors(const Bond *bond, const Atom *atom) {
       int rank;
       if (RDKit::Chirality::getUseLegacyStereoPerception()) {
         if (!otherAtom->getPropIfPresent(common_properties::_CIPRank, rank)) {
-          rank = (-1);
+          rank = -1;
         }
       } else  // NOT legacy stereo
       {
-        if (!otherAtom->getPropIfPresent(common_properties::_CanonicalAtomRank,
+        if (!otherAtom->getPropIfPresent(common_properties::_ChiralAtomRank,
                                          rank)) {
-          rank = (-1);
+          rank = -1;
         }
       }
       if (rank >= 0) {
@@ -1063,7 +1063,7 @@ bool checkNeighbors(const Bond *bond, const Atom *atom) {
 }
 }  // namespace
 
-int GetDoubleBondDirFlag(const Bond *bond) {
+bool shouldBeACrossedBond(const Bond *bond) {
   PRECONDITION(bond, "");
 
   // double bond stereochemistry -
@@ -1084,33 +1084,33 @@ int GetDoubleBondDirFlag(const Bond *bond) {
     for (auto nbrBond : bond->getOwningMol().atomBonds(bond->getBeginAtom())) {
       if (nbrBond->getBondDir() == Bond::UNKNOWN &&
           nbrBond->getBeginAtom()->getIdx() == bond->getBeginAtom()->getIdx()) {
-        return 0;
+        return false;
       }
     }
     for (auto nbrBond : bond->getOwningMol().atomBonds(bond->getEndAtom())) {
       if (nbrBond->getBondDir() == Bond::UNKNOWN &&
           nbrBond->getBeginAtom()->getIdx() == bond->getEndAtom()->getIdx()) {
-        return 0;
+        return false;
       }
     }
 
     return 3;  // crossed double bond
   }
   if (bond->getStereo() != Bond::BondStereo::STEREONONE) {
-    return 0;
+    return false;
   }
 
   // if it is in a ring it is not makred as stereo.
   // If either end is terminal, it is not stereo
 
   if (!Chirality::detail::isBondPotentialStereoBond(bond)) {
-    return 0;
+    return false;
   }
   // we don't know that it's explicitly unspecified (covered above with
   // the ==STEREOANY check)
 
   if (bond->getBondDir() == Bond::EITHERDOUBLE) {
-    return 3;  // crossed double bond
+    return true;  // crossed double bond
   }
 
   if ((bond->getBeginAtom()->getTotalValence() -
@@ -1123,11 +1123,11 @@ int GetDoubleBondDirFlag(const Bond *bond) {
 
     if (checkNeighbors(bond, bond->getBeginAtom()) &&
         checkNeighbors(bond, bond->getEndAtom())) {
-      return 3;  // crossed double bond
+      return true;  // crossed double bond
     }
   }
 
-  return 0;  // NOT crossed double bond
+  return false;  // NOT crossed double bond
 }
 
 ROMol *hapticBondsToDative(const ROMol &mol) {

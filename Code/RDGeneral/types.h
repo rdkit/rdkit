@@ -147,7 +147,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string _hasMassQuery;  // atom bool
 RDKIT_RDGENERAL_EXPORT extern const std::string _protected;  // atom int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string
-    _CanonicalAtomRank;  // atom rank (unsigned int)
+    _ChiralAtomRank;  // atom rank (unsigned int)
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _supplementalSmilesLabel;  // atom string (SmilesWrite)
 RDKIT_RDGENERAL_EXPORT extern const std::string

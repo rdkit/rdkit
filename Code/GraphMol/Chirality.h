@@ -66,7 +66,12 @@ RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol,
                                               UINT_VECT &ranks);
 
 RDKIT_GRAPHMOL_EXPORT bool hasStereoBondDir(const Bond *bond);
-RDKIT_GRAPHMOL_EXPORT void runCleanup(ROMol &mol);
+
+// this routine removes chiral markers and stereo indications that should not be
+// present this is only called when the molecule has not been sanitized and when
+// the new stereo (not legacy) is in use
+
+RDKIT_GRAPHMOL_EXPORT void removeBadStereo(ROMol &mol);
 
 /**
  *  Returns the first neighboring bond that can be found which has a stereo
