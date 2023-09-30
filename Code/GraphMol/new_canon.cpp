@@ -521,7 +521,7 @@ void basicInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
   atom.index = idx;
   atom.p_symbol = nullptr;
   atom.degree = atom.atom->getDegree();
-  atom.nbrIds = std::move(std::make_unique<int[]>(atom.degree));
+  atom.nbrIds = std::make_unique<int[]>(atom.degree);
   getNbrs(mol, atom.atom, atom.nbrIds.get());
 }
 
