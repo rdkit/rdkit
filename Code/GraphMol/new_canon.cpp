@@ -586,7 +586,7 @@ void initFragmentCanonAtoms(const ROMol &mol,
         atomsi.p_symbol = nullptr;
       }
       if (needsInit) {
-        atomsi.nbrIds = std::move(std::make_unique<int[]>(atom->getDegree()));
+        atomsi.nbrIds = std::make_unique<int[]>(atom->getDegree());
         advancedInitCanonAtom(mol, atomsi, i);
         atomsi.bonds.reserve(4);
       }
