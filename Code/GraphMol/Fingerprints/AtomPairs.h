@@ -77,6 +77,7 @@ const std::string atomPairsVersion = "1.1.0";
   responsible for calling delete on this.
 
 */
+[[deprecated("please use AtomPairGenerator")]]
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::int32_t> *getAtomPairFingerprint(
     const ROMol &mol, unsigned int minLength, unsigned int maxLength,
     const std::vector<std::uint32_t> *fromAtoms = nullptr,
@@ -84,6 +85,7 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::int32_t> *getAtomPairFingerprint(
     const std::vector<std::uint32_t> *atomInvariants = nullptr,
     bool includeChirality = false, bool use2D = true, int confId = -1);
 //! \overload
+[[deprecated("please use AtomPairGenerator")]]
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::int32_t> *getAtomPairFingerprint(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
     const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
@@ -117,6 +119,7 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::int32_t> *getAtomPairFingerprint(
   responsible for calling delete on this.
 
 */
+[[deprecated("please use AtomPairGenerator")]]
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::int32_t>
     *getHashedAtomPairFingerprint(
         const ROMol &mol, unsigned int nBits = 2048, unsigned int minLength = 1,
@@ -154,6 +157,7 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::int32_t>
   responsible for calling delete on this.
 
 */
+[[deprecated("please use AtomPairGenerator")]]
 RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
 getHashedAtomPairFingerprintAsBitVect(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int minLength = 1,
@@ -190,6 +194,7 @@ getHashedAtomPairFingerprintAsBitVect(
   responsible for calling delete on this.
 
 */
+[[deprecated("please use TopologicalTorsionGenerator")]]
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::int64_t>
     *getTopologicalTorsionFingerprint(
         const ROMol &mol, unsigned int targetSize = 4,
@@ -224,6 +229,7 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::int64_t>
   responsible for calling delete on this.
 
 */
+[[deprecated("please use TopologicalTorsionGenerator")]]
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::int64_t> *
 getHashedTopologicalTorsionFingerprint(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int targetSize = 4,
@@ -255,6 +261,7 @@ getHashedTopologicalTorsionFingerprint(
   responsible for calling delete on this.
 
 */
+[[deprecated("please use TopologicalTorsionGenerator")]]
 RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
 getHashedTopologicalTorsionFingerprintAsBitVect(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int targetSize = 4,

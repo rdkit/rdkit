@@ -13,6 +13,7 @@
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <DataStructs/SparseIntVect.h>
 #include <RDGeneral/hash/hash.hpp>
+#include <RDGeneral/RDLog.h>
 #include <cstdint>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
@@ -61,6 +62,7 @@ SparseIntVect<std::int32_t> *getAtomPairFingerprint(
     const std::vector<std::uint32_t> *ignoreAtoms,
     const std::vector<std::uint32_t> *atomInvariants, bool includeChirality,
     bool use2D, int confId) {
+  RDLog::deprecationWarning("please use AtomPairGenerator");
   PRECONDITION(minLength <= maxLength, "bad lengths provided");
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
@@ -134,6 +136,7 @@ SparseIntVect<std::int32_t> *getHashedAtomPairFingerprint(
     const std::vector<std::uint32_t> *ignoreAtoms,
     const std::vector<std::uint32_t> *atomInvariants, bool includeChirality,
     bool use2D, int confId) {
+  RDLog::deprecationWarning("please use AtomPairGenerator");
   PRECONDITION(minLength <= maxLength, "bad lengths provided");
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
@@ -203,6 +206,7 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
     const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms,
     const std::vector<std::uint32_t> *atomInvariants, bool includeChirality) {
+  RDLog::deprecationWarning("please use TopologicalTorsionGenerator");
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
   const ROMol *lmol = &mol;
@@ -341,6 +345,7 @@ SparseIntVect<boost::int64_t> *getHashedTopologicalTorsionFingerprint(
     const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms,
     const std::vector<std::uint32_t> *atomInvariants, bool includeChirality) {
+  RDLog::deprecationWarning("please use TopologicalTorsionGenerator");
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
   auto *res = new SparseIntVect<boost::int64_t>(nBits);
@@ -355,6 +360,7 @@ ExplicitBitVect *getHashedTopologicalTorsionFingerprintAsBitVect(
     const std::vector<std::uint32_t> *ignoreAtoms,
     const std::vector<std::uint32_t> *atomInvariants,
     unsigned int nBitsPerEntry, bool includeChirality) {
+  RDLog::deprecationWarning("please use TopologicalTorsionGenerator");
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
   static int bounds[4] = {1, 2, 4, 8};

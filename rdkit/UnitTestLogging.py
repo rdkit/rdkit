@@ -25,6 +25,8 @@ import unittest
 
 import rdkit
 from rdkit import rdBase
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
 
 
 class CaptureStream:
@@ -405,6 +407,14 @@ class TestWrapLogs(unittest.TestCase):
     with CaptureOutput() as captured:
       expect = expect_error('error') + '\n'
     self.assertEqual(captured, {'sys.stderr': expect, 'std::cerr': expect})
+
+class TestDeprecationWarning(unittest.TestCase):
+
+  def testDeprecationWarning(self):
+    with CaptureOutput() as captured:
+      rdMolDescriptors.GetAtomPairFingerprint(Chem.MolFromSmiles('C'))
+    expected = {'std::cerr': '[timestamp] DEPRECATION WARNING: please use AtomPairGenerator\n'}
+    self.assertEqual(captured, expected)
 
 
 if __name__ == '__main__':  # pragma: nocover
