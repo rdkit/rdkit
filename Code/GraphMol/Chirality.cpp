@@ -113,8 +113,7 @@ void controllingBondFromAtom(const ROMol &mol,
                              const boost::dynamic_bitset<> &needsDir,
                              const std::vector<unsigned int> &singleBondCounts,
                              const Bond *dblBond, const Atom *atom, Bond *&bond,
-                             Bond *&obond, bool &squiggleBondSeen,
-                             bool &doubleBondSeen) {
+                             Bond *&obond, bool &squiggleBondSeen) {
   bond = nullptr;
   obond = nullptr;
   for (const auto tBond : mol.atomBonds(atom)) {
@@ -139,8 +138,6 @@ void controllingBondFromAtom(const ROMol &mol,
         obond = bond;
         bond = tBond;
       }
-    } else if (tBond->getBondType() == Bond::DOUBLE) {
-      doubleBondSeen = true;
     }
     int explicit_unknown_stereo;
     if ((tBond->getBondType() == Bond::SINGLE ||
@@ -179,36 +176,33 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
 
   Bond *bond1 = nullptr, *obond1 = nullptr;
   bool squiggleBondSeen = false;
-  bool doubleBondSeen = false;
 
   controllingBondFromAtom(mol, needsDir, singleBondCounts, dblBond,
                           dblBond->getBeginAtom(), bond1, obond1,
-                          squiggleBondSeen, doubleBondSeen);
+                          squiggleBondSeen);
 
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
-  if (!bond1 || squiggleBondSeen || doubleBondSeen) {
-    if (!doubleBondSeen) {
-      // FIX: This is the fix for #2649, but it will need to be modified once we
-      // decide to properly handle allenes
-      dblBond->setBondDir(Bond::EITHERDOUBLE);
-    }
+  if (squiggleBondSeen) {
+    dblBond->setBondDir(Bond::EITHERDOUBLE);
+    return;
+  }
+  if (!bond1) {
     return;
   }
 
   Bond *bond2 = nullptr, *obond2 = nullptr;
   controllingBondFromAtom(mol, needsDir, singleBondCounts, dblBond,
                           dblBond->getEndAtom(), bond2, obond2,
-                          squiggleBondSeen, doubleBondSeen);
+                          squiggleBondSeen);
 
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
-  if (!bond2 || squiggleBondSeen || doubleBondSeen) {
-    if (!doubleBondSeen) {
-      // FIX: This is the fix for #2649, but it will need to be modified once we
-      // decide to properly handle allenes
-      dblBond->setBondDir(Bond::EITHERDOUBLE);
-    }
+  if (squiggleBondSeen) {
+    dblBond->setBondDir(Bond::EITHERDOUBLE);
+    return;
+  }
+  if (!bond2) {
     return;
   }
 
@@ -1841,7 +1835,11 @@ void assignLegacyCIPLabels(ROMol &mol, bool flagPossibleStereoCenters) {
 void assignBondCisTrans(ROMol &mol, const StereoInfo &sinfo) {
   if (sinfo.type != StereoType::Bond_Double ||
       sinfo.specified != StereoSpecified::Unspecified ||
-      sinfo.controllingAtoms.size() != 4) {
+      sinfo.controllingAtoms.size() != 4 ||
+      ((sinfo.controllingAtoms[0] == StereoInfo::NOATOM &&
+        sinfo.controllingAtoms[1] == StereoInfo::NOATOM) ||
+       (sinfo.controllingAtoms[2] == StereoInfo::NOATOM &&
+        sinfo.controllingAtoms[3] == StereoInfo::NOATOM))) {
     return;
   }
 
