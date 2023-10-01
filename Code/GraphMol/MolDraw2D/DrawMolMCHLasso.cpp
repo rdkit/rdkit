@@ -157,10 +157,13 @@ void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
 
 namespace {
 double getLassoWidth(const DrawMolMCH *dm, int atNum, int lassoNum) {
+  PRECONDITION(dm, "Needs valid DrawMolMCH")
   double xrad, yrad;
   dm->getAtomRadius(atNum, xrad, yrad);
-  double rats[] = {1.0, 1.414, 2, 2.828, 4};
+  // Double the area of the circles for successive lassos.
+  const static double rats[] = {1.0, 1.414, 2, 2.828, 4};
   if (lassoNum > 4) {
+    // It's going to look horrible, probably, but it's a lot of lassos.
     return xrad * (1 + lassoNum) * 0.75;
   } else {
     return xrad * rats[lassoNum];
@@ -175,6 +178,7 @@ void DrawMolMCHLasso::extractAtomArcs(
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const {
   // an empirically derived lineWidth.
   int lineWidth = 3;
+  bool scaleLineWidth = true;
   for (auto ca : colAtoms) {
     if (ca < 0 || static_cast<unsigned int>(ca) >= drawMol_->getNumAtoms()) {
       // there's an error in the colour map
@@ -183,8 +187,8 @@ void DrawMolMCHLasso::extractAtomArcs(
     double lassoWidth = getLassoWidth(this, ca, lassoNum);
     Point2D radii(lassoWidth, lassoWidth);
     std::vector<Point2D> pts{atCds_[ca], radii};
-    DrawShapeArc *ell =
-        new DrawShapeArc(pts, 0.0, 360.0, lineWidth, true, col, false, ca);
+    DrawShapeArc *ell = new DrawShapeArc(pts, 0.0, 360.0, lineWidth,
+                                         scaleLineWidth, col, false, ca);
     arcs.emplace_back(ell);
   }
 }
@@ -195,6 +199,7 @@ void DrawMolMCHLasso::extractBondLines(
     const std::vector<int> &colAtoms,
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
   int lineWidth = 3;
+  bool scaleLineWidth = true;
   if (colAtoms.size() > 1) {
     for (size_t i = 0U; i < colAtoms.size() - 1; ++i) {
       if (colAtoms[i] < 0 ||
@@ -237,8 +242,8 @@ void DrawMolMCHLasso::extractBondLines(
               p2 = atCdsJ + perp * lassoWidthJ * 0.99 * m;
             }
             DrawShapeSimpleLine *pl = new DrawShapeSimpleLine(
-                {p1, p2}, lineWidth, true, col, colAtoms[i], colAtoms[j],
-                bond->getIdx(), noDash);
+                {p1, p2}, lineWidth, scaleLineWidth, col, colAtoms[i],
+                colAtoms[j], bond->getIdx(), noDash);
             lines.emplace_back(pl);
           }
         }
