@@ -634,7 +634,6 @@ class MarvinCMLReader {
 
         MolOps::assignStereochemistry(*mol, true, true, true);
       } else {
-        MolOps::cleanupBadStereo(*mol);
         if (!Chirality::getUseLegacyStereoPerception()) {
           MolOps::findSSSR(*mol);
           Chirality::removeBadStereo(*mol);

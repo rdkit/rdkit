@@ -452,46 +452,6 @@ void assignRadicals(RWMol &mol) {
   }
 }
 
-void cleanupBadStereo(RWMol &mol) {
-  // remove chiral designations  that cannot be
-  // true because of hybridization
-
-  std::vector<Atom::HybridizationType> hybs;
-  MolOps::getHybridizations(mol, hybs);
-  MolOps::cleanupTetrahedralChirality(mol, hybs);
-}
-
-void getHybridizations(
-    const RWMol &mol,
-    std::vector<Atom::HybridizationType> &hydridizationValues) {
-  // see if the mol already has computed hybridizations:
-
-  if (mol.getNumAtoms() == 0) {
-    return;
-  }
-
-  if ((*mol.atoms().begin())->getHybridization() !=
-      Atom::HybridizationType::UNSPECIFIED) {
-    for (auto atom : mol.atoms()) {
-      hydridizationValues.push_back(atom->getHybridization());
-    }
-    return;
-  }
-
-  // compute them in a copy of the mol, so as not to change the mol passed in
-
-  RWMol molCopy(mol);
-  unsigned int operationThatFailed;
-  unsigned int santitizeOps =
-      MolOps::SANITIZE_SETCONJUGATION | MolOps::SANITIZE_SETHYBRIDIZATION;
-  MolOps::sanitizeMol(molCopy, operationThatFailed, santitizeOps);
-  for (auto atom : molCopy.atoms()) {
-    // determine hybridization and remove chiral atoms that are not sp3
-    hydridizationValues.push_back(atom->getHybridization());
-  }
-  return;
-}
-
 void sanitizeMol(RWMol &mol) {
   unsigned int failedOp = 0;
   sanitizeMol(mol, failedOp, SANITIZE_ALL);

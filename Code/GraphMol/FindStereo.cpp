@@ -463,6 +463,10 @@ void initAtomInfo(ROMol &mol, bool flagPossible, bool cleanIt,
                   boost::dynamic_bitset<> &possibleAtoms) {
   bool allowNontetrahedralStereo = getAllowNontetrahedralChirality();
   for (const auto atom : mol.atoms()) {
+    if (atom->needsUpdatePropertyCache()) {
+      atom->updatePropertyCache(false);
+    }
+
     auto aidx = atom->getIdx();
     atomSymbols[aidx] = getAtomCompareSymbol(*atom);
     if (detail::isAtomPotentialStereoAtom(atom, allowNontetrahedralStereo)) {

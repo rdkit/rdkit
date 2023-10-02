@@ -926,11 +926,6 @@ RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 RDKIT_GRAPHMOL_EXPORT void cleanupTetrahedralChirality(
     RWMol &mol, const std::vector<Atom::HybridizationType> &hybridizations);
 
-RDKIT_GRAPHMOL_EXPORT void getHybridizations(
-    const RWMol &mol, std::vector<Atom::HybridizationType> &hybridizations);
-
-RDKIT_GRAPHMOL_EXPORT void cleanupBadStereo(RWMol &mol);
-
 //! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms
 /*!
   \param mol                  the molecule of interest

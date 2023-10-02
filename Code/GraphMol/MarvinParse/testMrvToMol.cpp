@@ -21,15 +21,12 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 #include <string>
 #include <fstream>
 #include <filesystem>
 
 using namespace RDKit;
-
-enum LoadAs { LoadAsMolOrRxn, LoadAsMol, LoadAsRxn };
 
 class MrvTests {
  public:
@@ -47,13 +44,18 @@ class MrvTests {
     unsigned int bondCount;
     std::string fileName;
     bool expectedResult;
+    bool sanitizeFlag;
+    bool reapplyMolBlockWedging;
 
     MolTest(std::string fileNameInit, bool expectedResultInit,
-            int atomCountInit, int bondCountInit)
+            int atomCountInit, int bondCountInit, bool sanitizeFlagInit = true,
+            bool reapplyMolBlockWedgingInit = true)
         : atomCount(atomCountInit),
           bondCount(bondCountInit),
           fileName(fileNameInit),
-          expectedResult(expectedResultInit){};
+          expectedResult(expectedResultInit),
+          sanitizeFlag(sanitizeFlagInit),
+          reapplyMolBlockWedging(reapplyMolBlockWedgingInit){};
   };
 
   class RxnTest {
@@ -105,9 +107,33 @@ class MrvTests {
           sanitizeFlag(true),
           atomCount(atomCountInit),
           bondCount(bondCountInit){};
-
-    // bool isRxnTest() const { return false; }
   };
+
+  RWMol *GetMol(const MolTest *molTest) {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/MarvinParse/test_data/" + molTest->fileName;
+
+    try {
+      return MrvFileToMol(fName, molTest->sanitizeFlag, false);
+    } catch (const std::exception &e) {
+      std::cerr << e.what() << '\n';
+      throw BadFileException("Could not parse the MRV block");
+    }
+  }
+
+  ChemicalReaction *GetReaction(const RxnTest *rxnTest) {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/MarvinParse/test_data/" + rxnTest->fileName;
+
+    try {
+      return MrvFileToChemicalReaction(fName, true, false);
+    } catch (const std::exception &e) {
+      std::cerr << e.what() << '\n';
+    }
+    throw BadFileException("Could not parse the MRV block");
+  }
 
   std::string GetExpectedValue(std::string expectedFileName) {
     std::stringstream expectedMolStr;
@@ -127,7 +153,7 @@ class MrvTests {
   }
 
   void testSmilesToMarvin(const SmilesTest *smilesTest) {
-    BOOST_LOG(rdInfoLog) << "testing smiles to marin " << std::endl;
+    BOOST_LOG(rdInfoLog) << "testing smiles to marvin " << std::endl;
     std::string rdbase = getenv("RDBASE");
     std::string fName =
         rdbase + "/Code/GraphMol/MarvinParse/test_data/" + smilesTest->name;
@@ -215,36 +241,6 @@ class MrvTests {
     TEST_ASSERT(smilesTest->expectedResult == true);
   }
 
-  RWMol *GetMol(const MolTest *molTest) {
-    std::string rdbase = getenv("RDBASE");
-    std::string fName =
-        rdbase + "/Code/GraphMol/MarvinParse/test_data/" + molTest->fileName;
-
-    for (bool sanitize : {true, false}) {
-      try {
-        return MrvFileToMol(fName, sanitize, false);
-      } catch (const std::exception &e) {
-        std::cerr << e.what() << '\n';
-      }
-    }
-    throw BadFileException("Could not parse the MRV block");
-  }
-
-  ChemicalReaction *GetReaction(const RxnTest *rxnTest) {
-    std::string rdbase = getenv("RDBASE");
-    std::string fName =
-        rdbase + "/Code/GraphMol/MarvinParse/test_data/" + rxnTest->fileName;
-
-    for (bool sanitize : {true, false}) {
-      try {
-        return MrvFileToChemicalReaction(fName, sanitize, false);
-      } catch (const std::exception &e) {
-        std::cerr << e.what() << '\n';
-      }
-    }
-    throw BadFileException("Could not parse the MRV block");
-  }
-
   void testMarvinMol(const MolTest *molTest) {
     BOOST_LOG(rdInfoLog) << "testing marvin parsing" << std::endl;
 
@@ -269,7 +265,10 @@ class MrvTests {
       }
 
       localVars.mol = GetMol(molTest);
-      reapplyMolBlockWedging(*localVars.mol);
+
+      if (molTest->reapplyMolBlockWedging) {
+        reapplyMolBlockWedging(*localVars.mol);
+      }
 
       TEST_ASSERT(localVars.mol != nullptr);
 
@@ -451,9 +450,11 @@ class MrvTests {
     } localVars;
 
     try {
-      localVars.mol = MolFileToMol(fName, true, false, false);
-      reapplyMolBlockWedging(*localVars.mol);
-
+      localVars.mol =
+          MolFileToMol(fName, molFileTest->sanitizeFlag, false, false);
+      if (molFileTest->reapplyMolBlockWedging) {
+        reapplyMolBlockWedging(*localVars.mol);
+      }
       TEST_ASSERT(localVars.mol != nullptr);
       TEST_ASSERT(localVars.mol->getNumAtoms() == molFileTest->atomCount)
       TEST_ASSERT(localVars.mol->getNumBonds() == molFileTest->bondCount)
@@ -515,6 +516,18 @@ class MrvTests {
     // the molecule tests - starting with molfiles/sdf
     if (testToRun == "" || testToRun == "sdfTests") {
       std::list<MolTest> sdfTests{
+          MolTest("NewChiralTest.sdf", true, 13, 14, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTest.sdf", true, 13, 14, false,
+                  false),  // not sanitized, wedges NOT reapplied
+          MolTest("NewChiralTestNoChiral.sdf", true, 13, 14, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTestNoChiral.sdf", true, 13, 14, false,
+                  false),  // not sanitized, wedges NOT reapplied
+          MolTest("NewChiralTestAllChiral.sdf", true, 14, 15, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTestAllChiral.sdf", true, 14, 15, false,
+                  false),  // not sanitized, wedges NOT reapplied
           MolTest("ProblemShort.mol", true, 993, 992),
           MolTest("lostStereoAnd.sdf", true, 6, 5),
           MolTest("DoubleBondChain.sdf", true, 22, 22),
@@ -536,6 +549,18 @@ class MrvTests {
     if (testToRun == "" || testToRun == "molFileTests") {
       std::list<MolTest> molFileTests{
           MolTest("Cubane.mrv", true, 16, 20),
+          MolTest("NewChiralTest.mrv", true, 13, 14, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTest.mrv", true, 13, 14, false,
+                  false),  // not sanitized, wedges NOT reapplied
+          MolTest("NewChiralTestNoChiral.mrv", true, 13, 14, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTestNoChiral.mrv", true, 13, 14, false,
+                  false),  // not sanitized, wedges NOT reapplied
+          MolTest("NewChiralTestAllChiral.mrv", true, 14, 15, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTestAllChiral.mrv", true, 14, 15, false,
+                  false),  // not sanitized, wedges NOT reapplied
           MolTest("lostStereoAnd.mrv", true, 6, 5),
           MolTest("DoubleBondChain.mrv", true, 22, 22),
           MolTest("WigglyAndCrossed.mrv", true, 8, 7),
@@ -551,7 +576,8 @@ class MrvTests {
           MolTest("EmbeddedSgroupSUPEXP_SUP.mrv", true, 10, 10),
           MolTest("EmbeddedSgroupSUPEXP_SUP2.mrv", true, 10, 10),
           MolTest("EmbeddedSgroupSUP_MULTICENTER.mrv", true, 10, 8),
-          MolTest("EmbeddedSgroupSUP_SUP.mrv", true, 12, 11),
+          MolTest("EmbeddedSgroupSUP_SUP.mrv", true, 12, 11,
+                  false),  // not sanitized
           MolTest("EmbeddedSgroupSUP_SUP2.mrv", true, 12, 12),
           MolTest("RgroupBad.mrv", true, 9, 9),
           MolTest("valenceLessThanDrawn.mrv", true, 14, 14),
@@ -590,7 +616,8 @@ class MrvTests {
           MolTest("MarvinMissingX2.mrv", true, 12, 11),
           MolTest("MarvinMissingY2.mrv", true, 12, 11),
           MolTest("DataSgroup.mrv", true, 7, 6),
-          MolTest("MulticenterSgroup.mrv", true, 17, 16),
+          MolTest("MulticenterSgroup.mrv", true, 17, 16,
+                  false),  // not sanitized),
           MolTest("GenericSgroup.mrv", true, 13, 13),
           MolTest("MonomerSgroup.mrv", true, 4, 3),
           MolTest("modification_sgroup.mrv", true, 54, 40),
