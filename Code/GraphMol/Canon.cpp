@@ -70,13 +70,26 @@ bool atomHasFourthValence(const Atom *atom) {
 }  // namespace details
 
 bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
-                                 const RDKit::Atom *atom, bool isAtomFirst,
+                                 const RDKit::Atom *atom, 
+                                 bool isAtomFirst,
                                  size_t numClosures) {
   PRECONDITION(atom, "bad atom");
-  return atom->getDegree() == 3 &&
+  bool newCondition = atom->getDegree() == 3 && isAtomFirst;
+
+  bool oldCondition = atom->getDegree() == 3 &&
          ((isAtomFirst && atom->getNumExplicitHs() == 1) ||
           (!details::atomHasFourthValence(atom) && numClosures == 1 &&
-           !details::isUnsaturated(atom, mol)));
+           !details::isUnsaturated(atom, mol)));  
+
+  // to be removed in future but handy to let the user know something has
+  // have changed!
+  if (newCondition != oldCondition) {
+    BOOST_LOG(rdWarningLog) << 
+      "Warning: A change in handling of implicit neighbors means a tetrahedral "
+      "center (usually the first atom) inverted meaning!\n";
+  }
+
+  return newCondition;           
 }
 
 auto _possibleCompare = [](const PossibleType &arg1, const PossibleType &arg2) {

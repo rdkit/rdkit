@@ -163,9 +163,9 @@ class TestCase(unittest.TestCase):
       # non-ring cases with no hydrogen property
       ('Cl[C@](F)(Br)(O)', '[C@](Cl)(F)(Br)(O)'),
 
-      # OpenBabel and Indigo have issues with sulfur chirality
-      ('Cl[S@](C)=O', '[S@](Cl)(C)=O'),  # ChemAxon flips this chirality
-      ('Cl[S@](C)=CCCC', '[S@](Cl)(C)=CCCC'),  # ChemAxon removes this chirality entirely
+      # Note: Different toolkits handle implicit/missing neighbors on tetrahedral differently
+      ('Cl[S@@](C)=O', '[S@](Cl)(C)=O'),  # ChemAxon flips this chirality
+      ('Cl[S@@](C)=CCCC', '[S@](Cl)(C)=CCCC'), # ChemAxon removes this chirality entirely
 
       # ring cases, RDKit parsed these as different isomers before https://github.com/rdkit/rdkit/issues/1652 was fixed
       ('Cl[C@](F)1CC[C@H](F)CC1', '[C@](Cl)(F)1CC[C@H](F)CC1'),
