@@ -3285,10 +3285,9 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
     }
     MolOps::assignStereochemistry(*res, true, true, true);
   } else {
-    MolOps::cleanupBadStereo(*res);
     if (!Chirality::getUseLegacyStereoPerception()) {
       MolOps::findSSSR(*res);
-      Chirality::runCleanup(*res);
+      Chirality::removeBadStereo(*res);
     }
     MolOps::detectBondStereochemistry(*res);
   }
@@ -3517,17 +3516,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   }
 
   if (res) {
-    try {
-      FileParserUtils::finishMolProcessing(res, chiralityPossible, sanitize,
-                                           removeHs);
-    } catch (FileParseException &e) {
-      // catch our exceptions and throw them back after cleanup
-      delete res;
-      delete conf;
-      res = nullptr;
-      conf = nullptr;
-      throw e;
-    }
+    FileParserUtils::finishMolProcessing(res, chiralityPossible, sanitize,
+                                         removeHs);
   }
   return res;
 }
