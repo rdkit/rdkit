@@ -843,7 +843,6 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             const boost::dynamic_bitset<> &atomsInPlay,
                             const boost::dynamic_bitset<> &bondsInPlay,
                             bool needsInit);
-void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms);
 template <typename T>
 void rankWithFunctor(T &ftor, bool breakTies, int *order,
                      bool useSpecial = false, bool useChirality = false,

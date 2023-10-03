@@ -650,11 +650,6 @@ void initChiralCanonAtoms(const ROMol &mol,
   }
 }
 
-void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms) {
-  for (auto &atom : atoms) {
-    atom.nbrIds.reset();
-  }
-}
 }  // namespace detail
 void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
   PRECONDITION(atoms, "bad pointer");
@@ -732,7 +727,6 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
   }
-  detail::freeCanonAtoms(atoms);
 
   if (clearRings) {
     mol.getRingInfo()->reset();
@@ -779,7 +773,6 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
   }
-  detail::freeCanonAtoms(atoms);
   if (clearRings) {
     mol.getRingInfo()->reset();
   }
@@ -807,7 +800,6 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
   }
-  detail::freeCanonAtoms(atoms);
   if (clearRings) {
     mol.getRingInfo()->reset();
   }
