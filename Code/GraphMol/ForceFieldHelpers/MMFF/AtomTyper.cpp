@@ -3775,7 +3775,8 @@ bool MMFFMolProperties::getMMFFStretchBendParams(
               getPeriodicTableRow(mol.getAtomWithIdx(idx2)->getAtomicNum()),
               getPeriodicTableRow(mol.getAtomWithIdx(idx3)->getAtomicNum()));
         }
-        res = (!(isDoubleZero((mmffStbnParams.second)->kbaIJK) &&
+        res = (mmffStbnParams.second &&
+               !(isDoubleZero((mmffStbnParams.second)->kbaIJK) &&
                  isDoubleZero((mmffStbnParams.second)->kbaKJI)));
       }
       if (res) {

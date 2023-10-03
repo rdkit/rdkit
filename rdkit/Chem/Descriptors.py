@@ -18,7 +18,7 @@ from rdkit.Chem import rdPartialCharges
 from rdkit.Chem.EState.EState import (MaxAbsEStateIndex, MaxEStateIndex,
                                       MinAbsEStateIndex, MinEStateIndex)
 from rdkit.Chem.QED import qed
-
+from rdkit.Chem.SpacialScore import SPS
 
 def _isCallable(thing):
   return isinstance(thing, abc.Callable) or \
@@ -31,7 +31,7 @@ _descList = []
 def _setupDescriptors(namespace):
   global _descList, descList
   from rdkit.Chem import (Crippen, Descriptors3D, Fragments, GraphDescriptors,
-                          Lipinski, MolSurf)
+                          Lipinski, MolSurf, SpacialScore)
   from rdkit.Chem.EState import EState_VSA
   _descList.clear()
 
@@ -66,6 +66,9 @@ def _setupDescriptors(namespace):
         if _isCallable(thing):
           namespace[name] = thing
           _descList.append((name, thing))
+
+  # add a few by hand
+  _descList.append(('SPS', SpacialScore.SPS))
   descList = _descList
 
 

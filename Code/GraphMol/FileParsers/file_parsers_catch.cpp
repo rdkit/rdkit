@@ -6695,3 +6695,43 @@ M  END
           Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
   }
 }
+
+TEST_CASE(
+    "GitHub Issue #6703: Exporting to mol marks imine bonds EITHERDOUBLE when imine H is implicit",
+    "[bug][writer][stereo]") {
+  auto m = "NC(O)=N"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 4);
+  auto bond = m->getBondWithIdx(2);
+  REQUIRE(bond->getBondType() == Bond::DOUBLE);
+  REQUIRE(bond->getStereo() == Bond::BondStereo::STEREONONE);
+  REQUIRE(bond->getBondDir() == Bond::BondDir::NONE);
+
+  std::string molblock;
+  SECTION("v2000") {
+    molblock = MolToMolBlock(*m);
+    REQUIRE(molblock.find("  4  3  0  0  0  0  0  0  0  0999 V2000") !=
+            std::string::npos);
+
+    // There must be a double bond, but it must not be marked as either
+    REQUIRE(molblock.find("  2  4  2") != std::string::npos);
+    CHECK(molblock.find("  2  4  2  3") == std::string::npos);
+  }
+  SECTION("v3000") {
+    molblock = MolToV3KMolBlock(*m);
+    REQUIRE(molblock.find("M  V30 COUNTS 4 3 0 0 0") != std::string::npos);
+
+    // There must be a double bond, but it must not be marked as either
+    REQUIRE(molblock.find("M  V30 3 2 2 4") != std::string::npos);
+    CHECK(molblock.find("CFG=2") == std::string::npos);
+  }
+
+  std::unique_ptr<ROMol> m2{MolBlockToMol(molblock)};
+  REQUIRE(m2);
+  REQUIRE(m2->getNumAtoms() == 4);
+
+  auto bond2 = m2->getBondWithIdx(2);
+  REQUIRE(bond2->getBondType() == Bond::DOUBLE);
+  CHECK(bond2->getStereo() == Bond::BondStereo::STEREONONE);
+  CHECK(bond2->getBondDir() == Bond::BondDir::NONE);
+}

@@ -55,6 +55,8 @@ RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
     RDGeom::Point2D loc(x, y);
     res[ring[i]] = loc;
   }
+
+
   return res;
 }
 

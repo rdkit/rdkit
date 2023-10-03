@@ -3419,3 +3419,22 @@ TEST_CASE(
     CHECK(&sgs[0].getOwningMol() == &mol);
   }
 }
+
+TEST_CASE(
+    "ROMol hasQuery") {
+  SECTION("check false Mol.hasQuery") {
+    std::unique_ptr<ROMol> mol{SmilesToMol("CCO")};
+
+    REQUIRE(!mol->hasQuery());
+  }
+  SECTION("check true Mol.hasQuery because Atom") {
+    std::unique_ptr<ROMol> mol{SmartsToMol("[#6][#6][#8]")};
+
+    REQUIRE(mol->hasQuery());
+  }
+  SECTION("check true Mol.hashQuery because Bond") {
+    std::unique_ptr<ROMol> mol{SmilesToMol("CC~O")};
+
+    REQUIRE(mol->hasQuery());
+  }
+}

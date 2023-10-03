@@ -40,6 +40,10 @@ different meaning in chemistry.
 - The error messages from failed type conversions in calls to `GetProp()` now
 differ slightly between compilers. Instead of always including "boost::bad_any
 cast", they now need to be matched with the regex `[B,b]ad any[\ ,_]cast`
+- The functions for determining connectivity in DetermineBonds now use a more
+efficient method by default. To go back to the old behavior, set the useVdw argument
+to True.
+
 
 ## Bug Fixes:
 

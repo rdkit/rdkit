@@ -543,6 +543,20 @@ ROMol::ConstHeteroatomIterator ROMol::endHeteros() const {
   return ConstHeteroatomIterator(this, getNumAtoms());
 }
 
+bool ROMol::hasQuery() const {
+  for (auto atom : atoms()) {
+    if (atom->hasQuery()) {
+      return true;
+    }
+  }
+  for (auto bond : bonds()) {
+    if (bond->hasQuery()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 ROMol::QueryAtomIterator ROMol::beginQueryAtoms(QueryAtom const *what) {
   return QueryAtomIterator(this, what);
 }
