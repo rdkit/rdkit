@@ -492,7 +492,6 @@ class MrvTests {
         }
 
         generateNewExpectedFilesIfSoSpecified(fName + ".NEW.mrv", outMolStr);
-
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
 
