@@ -694,10 +694,10 @@ void updateAtomNeighborNumSwaps(
     if (isRingAtom && atoms[nbrIdx].atom->getChiralTag() != 0) {
       std::vector<int> ref, probe;
       for (unsigned i = 0; i < atoms[nbrIdx].degree; ++i) {
-        const auto nbrNbrId =
+        auto nbrNbrId =
             atoms[nbrIdx].nbrIds[i];  // id of the neighbor's neighbor
         ref.push_back(nbrNbrId);
-        if (atomIdx != nbrNbrId) {
+        if ((int)atomIdx != nbrNbrId) {
           if ((std::find(neighborsSeen.begin(), neighborsSeen.end(),
                          atoms[nbrNbrId].index) != neighborsSeen.end())) {
             tooManySimilarNbrs = true;

@@ -2632,37 +2632,6 @@ void cleanupChirality(RWMol &mol) {
   }
 }
 
-void cleanupTetrahedralChirality(
-    RWMol &mol, const std::vector<Atom::HybridizationType> &hybridizations) {
-  unsigned int perm;
-  for (auto atom : mol.atoms()) {
-    switch (atom->getChiralTag()) {
-      case Atom::CHI_TETRAHEDRAL_CW:
-      case Atom::CHI_TETRAHEDRAL_CCW:
-        if (hybridizations[atom->getIdx()] != Atom::SP3) {
-          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
-        }
-        break;
-
-      case Atom::CHI_TETRAHEDRAL:
-        if (hybridizations[atom->getIdx()] != Atom::SP3) {
-          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
-        } else {
-          perm = 0;
-          atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
-          if (perm > 2) {
-            perm = 0;
-            atom->setProp(common_properties::_chiralPermutation, perm);
-          }
-        }
-        break;
-
-      default:
-        break;
-    }
-  }
-}
-
 #define VOLTEST(X, Y, Z) (v[X].dotProduct(v[Y].crossProduct(v[Z])) >= 0.0)
 
 static unsigned int OctahedralPermFrom3D(unsigned char *pair,
