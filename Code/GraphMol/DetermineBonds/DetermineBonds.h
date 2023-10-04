@@ -22,16 +22,20 @@ namespace RDKit {
 
    \param mol is the molecule of interest; it must have a 3D conformer
    \param useHueckel (optional) if this is  \c true, extended Hueckel theory
-   will be used to determine connectivity rather than the van der Waals method
+   will be used to determine connectivity rather than the van der Waals or
+   connect-the-dots method
    \param charge (optional) the charge of the molecule; it must be provided if
    the Hueckel method is used and charge is non-zero
    \param covFactor (optional) the factor with which to multiply each covalent
    radius if the van der Waals method is used
+   \param useVdw (optional) if this is  \c false, the connect-the-dots method
+    will be used instead of the van der Waals method
  */
 RDKIT_DETERMINEBONDS_EXPORT void determineConnectivity(RWMol &mol,
                                                        bool useHueckel = false,
                                                        int charge = 0,
-                                                       double covFactor = 1.3);
+                                                       double covFactor = 1.3,
+                                                       bool useVdw = false);
 
 // ! assigns bond ordering to a molecule that has atomic connectivity defined;
 // it is recommended to sanitize the molecule after calling this function if
@@ -66,7 +70,8 @@ RDKIT_DETERMINEBONDS_EXPORT void determineBondOrders(
 
    \param mol is the molecule of interest; it must have a 3D conformer
    \param useHueckel (optional) if this is  \c true, extended Hueckel theory
-   will be used to determine connectivity rather than the van der Waals method
+   will be used to determine connectivity rather than the van der Waals or
+   connect-the-dots method
    \param charge (optional) the charge of the molecule; it must be provided if
    charge is non-zero
    \param covFactor (optional) the factor with which to multiply each covalent
@@ -79,11 +84,13 @@ RDKIT_DETERMINEBONDS_EXPORT void determineBondOrders(
    true
    \param useAtomMap (optional) if this is \c true, an atom map will be created
    for the molecule
+   \param useVdw (optional) if this is  \c false, the connect-the-dots method
+    will be used instead of the van der Waals method
  */
 RDKIT_DETERMINEBONDS_EXPORT void determineBonds(
     RWMol &mol, bool useHueckel = false, int charge = 0, double covFactor = 1.3,
     bool allowChargedFragments = true, bool embedChiral = true,
-    bool useAtomMap = false);
+    bool useAtomMap = false, bool useVdw = false);
 
 }  // namespace RDKit
 

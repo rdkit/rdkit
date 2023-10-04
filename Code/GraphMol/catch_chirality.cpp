@@ -4060,6 +4060,25 @@ M  END)CTAB";
 
   std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
   REQUIRE(mol);
+
+  // Removal of the stereogenic H will cause loss of stereo information
+  // on the imine double bond, and although the bond is still detected as
+  // potentially stereo, it will be reverted to "unspecified"
+  auto bond = mol->getBondWithIdx(2);
+  REQUIRE(bond->getBondType() == Bond::BondType::DOUBLE);
+  CHECK(Chirality::detail::isBondPotentialStereoBond(bond));
+  CHECK(bond->getStereo() == Bond::BondStereo::STEREONONE);
+
+  if (!use_legacy_stereo) {
+    auto sinfo = Chirality::detail::getStereoInfo(bond);
+    REQUIRE(sinfo.type == Chirality::StereoType::Bond_Double);
+    CHECK(sinfo.specified == Chirality::StereoSpecified::Unspecified);
+    REQUIRE(sinfo.controllingAtoms.size() == 4);
+    CHECK(sinfo.controllingAtoms[0] == 0);
+    CHECK(sinfo.controllingAtoms[1] == 1);
+    CHECK(sinfo.controllingAtoms[2] == Chirality::StereoInfo::NOATOM);
+    CHECK(sinfo.controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
+  }
 }
 
 TEST_CASE("GitHub Issue #6640", "[bug][stereo]") {

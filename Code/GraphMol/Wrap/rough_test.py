@@ -7357,7 +7357,17 @@ CAS<~>
          (True, False))]:
       pat = Chem.MolFromSmarts(sma)
       self.assertEqual(Chem.HasQueryHs(pat), hasQHs)
-  
+
+  def testMolHasQuery(self):
+    m1 = Chem.MolFromSmiles("CCO")
+    self.assertFalse(m1.HasQuery())
+
+    m2 = Chem.MolFromSmarts("[#6][#6][#8]")
+    self.assertTrue(m2.HasQuery())
+
+    m3 = Chem.MolFromSmiles("CC~O")
+    self.assertTrue(m3.HasQuery())
+
   def testMrvHandling(self):
     fn1 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','MarvinParse','test_data','aspirin.mrv')
     mol = Chem.MolFromMrvFile(fn1)
