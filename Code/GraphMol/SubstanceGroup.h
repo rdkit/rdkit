@@ -242,17 +242,6 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
 
 namespace SubstanceGroupChecks {
 
-const std::vector<std::string> sGroupTypes = {
-    // polymer sgroups:
-    "SRU", "MON", "COP", "CRO", "GRA", "MOD", "MER", "ANY",
-    // formulations/mixtures:
-    "COM", "MIX", "FOR",
-    // other
-    "SUP", "MUL", "DAT", "GEN"};
-
-const std::vector<std::string> sGroupSubtypes = {"ALT", "RAN", "BLO"};
-const std::vector<std::string> sGroupConnectTypes = {"HH", "HT", "EU"};
-
 RDKIT_GRAPHMOL_EXPORT bool isValidType(const std::string &type);
 
 RDKIT_GRAPHMOL_EXPORT bool isValidSubType(const std::string &type);
