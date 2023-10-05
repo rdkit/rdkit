@@ -746,9 +746,7 @@ bool checkNeighbors(const Bond *bond, const Atom *atom) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(atom, "no atom");
   std::vector<int> nbrRanks;
-  for (auto bondIt :
-       boost::make_iterator_range(bond->getOwningMol().getAtomBonds(atom))) {
-    const auto nbrBond = bond->getOwningMol()[bondIt];
+  for (const auto nbrBond : bond->getOwningMol().atomBonds(atom)) {
     if (nbrBond->getBondType() == Bond::SINGLE) {
       if (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
           nbrBond->getBondDir() == Bond::ENDDOWNRIGHT) {
@@ -818,16 +816,21 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
         if (bond->getBondDir() == Bond::EITHERDOUBLE) {
           dirCode = 3;
         } else {
-          if ((bond->getBeginAtom()->getTotalValence() -
-               bond->getBeginAtom()->getTotalDegree()) == 1 &&
-              (bond->getEndAtom()->getTotalValence() -
-               bond->getEndAtom()->getTotalDegree()) == 1) {
+          const auto beginAtom = bond->getBeginAtom();
+          const auto endAtom = bond->getEndAtom();
+          // Both ends of the bond must have at least one neighbor other than
+          // the one in the double bond for dirCode=3 (except if explicitly
+          // marked, which has already been checked)
+          if (beginAtom->getDegree() > 1 && endAtom->getDegree() > 1 &&
+              (beginAtom->getTotalValence() - beginAtom->getTotalDegree()) ==
+                  1 &&
+              (endAtom->getTotalValence() - endAtom->getTotalDegree()) == 1) {
             // we only do this if each atom only has one unsaturation
             // FIX: this is the fix for github #2649, but we will need to change
             // it once we start handling allenes properly
 
-            if (checkNeighbors(bond, bond->getBeginAtom()) &&
-                checkNeighbors(bond, bond->getEndAtom())) {
+            if (checkNeighbors(bond, beginAtom) &&
+                checkNeighbors(bond, endAtom)) {
               dirCode = 3;
             }
           }

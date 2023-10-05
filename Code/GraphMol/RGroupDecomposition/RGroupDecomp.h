@@ -51,6 +51,7 @@ class UsedLabelMap {
 };
 
 struct RGroupDecompData;
+struct RCore;
 class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
  private:
   RGroupDecompData *data;                            // implementation details
@@ -59,6 +60,8 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
       const RGroupDecomposition &);  // Prevent assignment
   RWMOL_SPTR outputCoreMolecule(const RGroupMatch &match,
                                 const UsedLabelMap &usedRGroupMap) const;
+  int getMatchingCoreInternal(RWMol &mol, const RCore *&rcore,
+                              std::vector<MatchVectType> &matches);
 
  public:
   RGroupDecomposition(const ROMol &core,
@@ -70,13 +73,27 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
 
   ~RGroupDecomposition();
 
+  //! Returns the index of the core matching the passed molecule
+  //! and optionally the matching atom indices
+  /*!
+      \param mol Molecule to check for matches
+      \param matches Optional pointer to std::vector<MatchVectType>
+                     where core matches will be stored
+
+      \return the index of the matching core, or -1 if none matches
+  */
+  int getMatchingCoreIdx(const ROMol &mol,
+                         std::vector<MatchVectType> *matches = nullptr);
   //! Returns the index of the added molecule in the RGroupDecomposition
-  ///  or a negative error code
-  /// :param mol: Molecule to add to the decomposition
-  /// :result: index of the molecle or
-  ///             -1 if none of the core matches
-  ///             -2 if the matched molecule has no sidechains, i.e. is the
-  ///                same as the scaffold
+  //! or a negative error code
+  /*!
+      \param mol Molecule to add to the decomposition
+
+      \return index of the molecule or
+              -1 if none of the core matches
+              -2 if the matched molecule has no sidechains, i.e. is the
+              same as the scaffold
+  */
   int add(const ROMol &mol);
   RGroupDecompositionProcessResult processAndScore();
   bool process();

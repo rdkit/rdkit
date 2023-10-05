@@ -22,6 +22,7 @@
 #include <boost/graph/max_cardinality_matching.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include <GraphMol/FileParsers/ProximityBonds.h>
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>
     Graph;
@@ -159,7 +160,7 @@ void connectivityVdW(RWMol &mol, double covFactor) {
 }  // connectivityVdW()
 
 void determineConnectivity(RWMol &mol, bool useHueckel, int charge,
-                           double covFactor) {
+                           double covFactor, bool useVdw) {
   auto numAtoms = mol.getNumAtoms();
   for (unsigned int i = 0; i < numAtoms; i++) {
     for (unsigned int j = i + 1; j < numAtoms; j++) {
@@ -170,8 +171,10 @@ void determineConnectivity(RWMol &mol, bool useHueckel, int charge,
   }
   if (useHueckel) {
     connectivityHueckel(mol, charge);
-  } else {
+  } else if (useVdw) {
     connectivityVdW(mol, covFactor);
+  } else {
+    ConnectTheDots(&mol, ctdIGNORE_H_H_CONTACTS);
   }
 }  // determineConnectivity()
 
@@ -442,11 +445,11 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
 
 void determineBonds(RWMol &mol, bool useHueckel, int charge, double covFactor,
                     bool allowChargedFragments, bool embedChiral,
-                    bool useAtomMap) {
+                    bool useAtomMap, bool useVdw) {
   if (mol.getNumAtoms() <= 1) {
     return;
   }
-  determineConnectivity(mol, useHueckel, charge, covFactor);
+  determineConnectivity(mol, useHueckel, charge, covFactor, useVdw);
   determineBondOrders(mol, charge, allowChargedFragments, embedChiral,
                       useAtomMap);
 }  // determineBonds()
