@@ -645,7 +645,7 @@ std::string FragmentSmartsConstruct(
 
   // For Smarts, we avoid reordering of chiral atoms in canonicalizeFragment.
   bool doRandom = false;
-  bool doChiralInversions = false;
+  bool doChiralInversions = true;
   Canon::MolStack molStack;
   molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
