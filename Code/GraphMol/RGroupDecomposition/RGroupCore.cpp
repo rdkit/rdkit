@@ -64,7 +64,7 @@ void RCore::findIndicesWithRLabel() {
   }
 }
 
-std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
+RWMOL_SPTR RCore::extractCoreFromMolMatch(
     const ROMol &mol, const MatchVectType &match,
     const RGroupDecompositionParameters &params) const {
   auto extractedCore = boost::make_shared<RWMol>(mol);
@@ -72,7 +72,6 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
   std::vector<Bond *> newBonds;
   std::map<Atom *, int> dummyAtomMap;
   std::map<const Atom *, Atom *> molAtomMap;
-  bool hasCoreDummies = false;
   for (auto &pair : match) {
     const auto queryAtom = core->getAtomWithIdx(pair.first);
     auto const targetAtom = extractedCore->getAtomWithIdx(pair.second);
@@ -83,9 +82,6 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
       targetAtom->setProp(RLABEL_TYPE, rLabelType);
     }
 
-    if (!hasCoreDummies && queryAtom->getAtomicNum() == 0) {
-      hasCoreDummies = true;
-    }
     if (queryAtom->getAtomicNum() == 0 && queryAtom->hasProp(RLABEL) &&
         queryAtom->getDegree() == 1) {
       continue;
@@ -284,8 +280,7 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
   } catch (const MolSanitizeException &) {
   }
 
-  std::pair rtn(extractedCore, hasCoreDummies);
-  return rtn;
+  return extractedCore;
 }
 
 // Return a copy of core where dummy atoms are replaced by
@@ -293,14 +288,10 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
 // their aromatic flag and formal charge copied from
 // the respective matching atom in mol
 ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
-    bool &hasCoreDummies, const ROMol &mol, const MatchVectType &match) const {
+    const ROMol &mol, const MatchVectType &match) const {
   auto coreReplacedAtoms = boost::make_shared<RWMol>(*core);
-  hasCoreDummies = false;
   for (const auto &p : match) {
     auto atom = coreReplacedAtoms->getAtomWithIdx(p.first);
-    if (atom->getAtomicNum() == 0) {
-      hasCoreDummies = true;
-    }
     if (isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(*atom)) {
       auto molAtom = mol.getAtomWithIdx(p.second);
       replaceCoreAtom(*coreReplacedAtoms, *atom, *molAtom);
@@ -310,7 +301,6 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
   std::map<int, int> matchLookup(match.cbegin(), match.cend());
   for (auto bond : coreReplacedAtoms->bonds()) {
     if (bond->hasQuery()) {
-      hasCoreDummies = true;
       const auto molBond =
           mol.getBondBetweenAtoms(matchLookup[bond->getBeginAtomIdx()],
                                   matchLookup[bond->getEndAtomIdx()]);
