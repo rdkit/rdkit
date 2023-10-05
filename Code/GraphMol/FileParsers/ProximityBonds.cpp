@@ -228,7 +228,8 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
         auto *n_info =
             (AtomPDBResidueInfo *)(mol->getAtomWithIdx(*nbr)->getMonomerInfo());
         if (d < best &&
-            atom_info->getResidueNumber() == n_info->getResidueNumber()) {
+            ((!atom_info || !n_info) ||
+             atom_info->getResidueNumber() == n_info->getResidueNumber())) {
           best = d;
           best_idx = *nbr;
         }
