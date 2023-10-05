@@ -477,10 +477,13 @@ bool checkIfRingsAreClosed(const Seed& fs, bool noLoneRingAtoms) {
   if (noLoneRingAtoms) {
     for (const auto& atom : fs.MoleculeFragment.Atoms) {
       auto ai = atom->getIdx();
-      for (const auto& memberOf : ri->atomMembers(ai)) {
-        if (!fragmentRings.test(memberOf)) {
-          return false;
-        }
+      const auto& ringIndices = ri->atomMembers(ai);
+      if (!ringIndices.empty() &&
+          !std::any_of(ringIndices.begin(), ringIndices.end(),
+                       [&fragmentRings](const auto& ringIdx) {
+                         return fragmentRings.test(ringIdx);
+                       })) {
+        return false;
       }
     }
   }
@@ -725,7 +728,27 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
   auto mol = new RWMol();
   ROMOL_SPTR molSptr(mol);
   const auto ri = mcsIdx.QueryMolecule->getRingInfo();
+  boost::dynamic_bitset<> mcsRingIsComplete;
+  if (Parameters.BondCompareParameters.MatchFusedRingsStrict) {
+    mcsRingIsComplete.resize(ri->numRings(), true);
+    boost::dynamic_bitset<> queryBondInMcs(mcsIdx.QueryMolecule->getNumBonds());
+    for (const auto& bond : mcsIdx.Bonds) {
+      queryBondInMcs.set(bond->getIdx());
+    }
+    const auto& bondRings = ri->bondRings();
+    for (const auto& bondRing : bondRings) {
+      auto ringIdx = &bondRing - &bondRings.front();
+      for (const auto& bondIdx : bondRing) {
+        if (!queryBondInMcs.test(bondIdx)) {
+          mcsRingIsComplete.reset(ringIdx);
+          break;
+        }
+      }
+    }
+  }
   for (const auto& atom : mcsIdx.Atoms) {
+    auto queryAtomIdx = atom->getIdx();
+    auto numAtomRings = ri->numAtomRings(queryAtomIdx);
     QueryAtom a;
     const auto ai = &atom - &mcsIdx.Atoms.front();
     if (Parameters.AtomTyper == MCSAtomCompareIsotopes ||
@@ -749,29 +772,27 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
     }
     if (Parameters.AtomCompareParameters.RingMatchesRingOnly ||
         Parameters.BondCompareParameters.MatchFusedRingsStrict) {
-      const auto& targets = mcsIdx.Targets;
-      const auto numAtomRings = ri->numAtomRings(atom->getIdx());
-      const auto isAtomFusedAcrossAllTargets =
-          [ai, numAtomRings, &targets, &atomMatchResult](unsigned int itarget) {
-            const auto& tag = targets.at(itarget);
-            const auto tagRingInfo = tag.Molecule->getRingInfo();
-            const auto ti = atomMatchResult.at(itarget).at(ai).TargetAtomIdx;
-            return tagRingInfo->numAtomRings(ti) == numAtomRings;
-          };
+      unsigned int numCompleteRings = 0;
+      if (Parameters.BondCompareParameters.MatchFusedRingsStrict &&
+          numAtomRings > 1) {
+        const auto& ringIndicesAtomIsMemberOf = ri->atomMembers(queryAtomIdx);
+        numCompleteRings = std::count_if(
+            ringIndicesAtomIsMemberOf.begin(), ringIndicesAtomIsMemberOf.end(),
+            [&mcsRingIsComplete](const auto& ringIdx) {
+              return mcsRingIsComplete.test(ringIdx);
+            });
+      }
       if (Parameters.AtomCompareParameters.RingMatchesRingOnly ||
-          (Parameters.BondCompareParameters.MatchFusedRingsStrict &&
-           numAtomRings > 1 &&
-           std::all_of(matchedTargetIndices.begin(), matchedTargetIndices.end(),
-                       isAtomFusedAcrossAllTargets))) {
-        QueryAtom::QUERYATOM_QUERY* q = nullptr;
-        if (Parameters.BondCompareParameters.MatchFusedRingsStrict &&
-            numAtomRings > 1) {
-          q = makeAtomInNRingsQuery(numAtomRings);
-        } else {
-          q = makeAtomInRingQuery();
-          q->setNegation(!numAtomRings);
-        }
+          numCompleteRings > 1) {
+        QueryAtom::QUERYATOM_QUERY* q;
+        q = makeAtomInRingQuery();
+        q->setNegation(!numAtomRings);
         a.expandQuery(q, Queries::COMPOSITE_AND, true);
+        if (numCompleteRings > 1) {
+          q = makeAtomInNRingsQuery(1);
+          q->setNegation(true);
+          a.expandQuery(q, Queries::COMPOSITE_AND, true);
+        }
       }
     }
     mol->addAtom(&a, true, false);
