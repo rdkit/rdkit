@@ -226,7 +226,7 @@ def _setupDescriptors(namespace):
 _setupDescriptors(locals())
 
 def CalcMolDescriptors3D(mol, confId=None):
-    r"""
+    """
     Compute all 3D descriptors of a molecule
     
     Arguments:
