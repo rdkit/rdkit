@@ -210,10 +210,10 @@ class TestCase(unittest.TestCase):
       CalcMolDescriptors3D(mol)
 
     # test function returns expected outputs
-    AllChem.EmbedMolecule(mol)
+    AllChem.EmbedMolecule(mol, randomSeed=0xf00d)
     descs = Descriptors3D.CalcMolDescriptors3D(mol)
     self.assertTrue('InertialShapeFactor' in descs)
-    self.assertEqual(descs['PMI1'], 7.047388400522854)
+    self.assertEqual(descs['PMI1'], 20.9545313354931)
 
 if __name__ == '__main__':
   unittest.main()
