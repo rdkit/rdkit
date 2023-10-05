@@ -207,7 +207,7 @@ class TestCase(unittest.TestCase):
 
     # check ValueError raised when no 3D coordinates supplied
     with self.assertRaises(ValueError):
-      CalcMolDescriptors3D(mol)
+      Descriptors3D.CalcMolDescriptors3D(mol)
 
     # test function returns expected outputs
     AllChem.EmbedMolecule(mol, randomSeed=0xf00d)
