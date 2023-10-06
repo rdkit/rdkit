@@ -304,21 +304,21 @@ M  END)CTAB"_ctab;
     auto quinoxaline = "c1ccc2nccnc2c1"_smiles;
     REQUIRE(quinoxaline);
     auto match = RDDepict::generateDepictionMatching2DStructure(
-      *quinoxaline, *benzene, -1, nullptr, false, false, true);
+        *quinoxaline, *benzene, -1, nullptr, false, false, true);
     CHECK(match.size() == 8);
   }
   SECTION("R groups on benzene match tetralin") {
     auto tetralin = "c1cccc2CCCCc12"_smiles;
     REQUIRE(tetralin);
     auto match = RDDepict::generateDepictionMatching2DStructure(
-      *tetralin, *benzene, -1, nullptr, false, false, true);
+        *tetralin, *benzene, -1, nullptr, false, false, true);
     CHECK(match.size() == 8);
   }
   SECTION("R groups on biphenyl match phenantridine") {
     auto phenantridine = "c1cccc2ncc3ccccc3c12"_smiles;
     REQUIRE(phenantridine);
     auto match = RDDepict::generateDepictionMatching2DStructure(
-      *phenantridine, *biphenyl, -1, nullptr, false, false, true);
+        *phenantridine, *biphenyl, -1, nullptr, false, false, true);
     CHECK(match.size() == 14);
   }
 }
@@ -725,7 +725,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(
                    wedgedMolCopy, *scaffold, -1, nullptr, p)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
@@ -744,7 +744,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(
                    wedgedMolCopy, *scaffold, -1, nullptr, p)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
@@ -760,7 +760,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(wedgedMolCopy,
                                                               *scaffold)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
@@ -778,7 +778,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(
                    wedgedMolCopy, *scaffold, -1, nullptr, p)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
@@ -795,7 +795,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(wedgedMolCopy,
                                                               *scaffold)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
@@ -814,7 +814,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(
                    wedgedMolCopy, *scaffold, -1, nullptr, p)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
@@ -861,7 +861,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(
                    wedgedMolCopy, *scaffold, -1, nullptr, p)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
@@ -880,7 +880,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(
                    wedgedMolCopy, *scaffold, -1, nullptr, p)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
@@ -895,7 +895,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(wedgedMolCopy,
                                                               *scaffold)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
@@ -914,7 +914,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(
                    wedgedMolCopy, *scaffold, -1, nullptr, p)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
@@ -931,7 +931,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(wedgedMolCopy,
                                                               *scaffold)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
@@ -950,7 +950,7 @@ M  END
       REQUIRE(!RDDepict::generateDepictionMatching2DStructure(
                    wedgedMolCopy, *scaffold, -1, nullptr, p)
                    .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
@@ -997,7 +997,7 @@ M  END
     std::string origMolBlock;
     {
       ROMol wedgedMolCopy(*wedgedMol);
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       origMolBlock = MolToMolBlock(wedgedMolCopy);
     }
     REQUIRE(!origMolBlock.empty());
@@ -1010,7 +1010,7 @@ M  END
       REQUIRE_THROWS_AS(RDDepict::generateDepictionMatching2DStructure(
                             wedgedMolCopy, *scaffoldNoMatch, -1, nullptr, p),
                         RDDepict::DepictException);
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto currMolBlock = MolToMolBlock(wedgedMolCopy);
       CHECK(currMolBlock == origMolBlock);
       CHECK(currMolBlock.find(invertedWedges) == std::string::npos);
@@ -1026,7 +1026,7 @@ M  END
       REQUIRE(RDDepict::generateDepictionMatching2DStructure(
                   wedgedMolCopy, *scaffoldNoMatch, -1, nullptr, p)
                   .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto currMolBlock = MolToMolBlock(wedgedMolCopy);
       CHECK(currMolBlock != origMolBlock);
       CHECK(currMolBlock.find(invertedWedges) == std::string::npos);
@@ -1038,7 +1038,7 @@ M  END
       REQUIRE_THROWS_AS(RDDepict::generateDepictionMatching2DStructure(
                             wedgedMolCopy, *scaffoldNoMatch),
                         RDDepict::DepictException);
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto currMolBlock = MolToMolBlock(wedgedMolCopy);
       CHECK(currMolBlock == origMolBlock);
       CHECK(currMolBlock.find(invertedWedges) == std::string::npos);
@@ -1052,7 +1052,7 @@ M  END
       REQUIRE(RDDepict::generateDepictionMatching2DStructure(
                   wedgedMolCopy, *scaffoldNoMatch, -1, nullptr, p)
                   .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto currMolBlock = MolToMolBlock(wedgedMolCopy);
       CHECK(currMolBlock != origMolBlock);
       CHECK(currMolBlock.find(invertedWedges) == std::string::npos);
@@ -1065,7 +1065,7 @@ M  END
       REQUIRE_THROWS_AS(RDDepict::generateDepictionMatching2DStructure(
                             wedgedMolCopy, *scaffoldNoMatch),
                         RDDepict::DepictException);
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto currMolBlock = MolToMolBlock(wedgedMolCopy);
       CHECK(currMolBlock == origMolBlock);
       CHECK(currMolBlock.find(invertedWedges) == std::string::npos);
@@ -1080,7 +1080,7 @@ M  END
       REQUIRE(RDDepict::generateDepictionMatching2DStructure(
                   wedgedMolCopy, *scaffoldNoMatch, -1, nullptr, p)
                   .empty());
-      reapplyMolBlockWedging(wedgedMolCopy);
+      Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto currMolBlock = MolToMolBlock(wedgedMolCopy);
       CHECK(currMolBlock != origMolBlock);
       CHECK(currMolBlock.find(invertedWedges) == std::string::npos);
