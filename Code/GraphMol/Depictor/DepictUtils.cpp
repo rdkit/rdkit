@@ -13,7 +13,7 @@
 #include "DepictUtils.h"
 #include <iostream>
 #include <RDGeneral/Invariant.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/Chirality.h>
 #include <algorithm>
 
 namespace {
@@ -60,7 +60,6 @@ RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
     RDGeom::Point2D loc(x, y);
     res[ring[i]] = loc;
   }
-
 
   return res;
 }
@@ -468,7 +467,8 @@ bool hasTerminalRGroupOrQueryHydrogen(const RDKit::ROMol &mol) {
   // we do not need the allowRGroups logic if there are no
   // terminal dummy atoms
   auto atoms = mol.atoms();
-  return std::any_of(atoms.begin(), atoms.end(), RDKit::isAtomTerminalRGroupOrQueryHydrogen);
+  return std::any_of(atoms.begin(), atoms.end(),
+                     RDKit::isAtomTerminalRGroupOrQueryHydrogen);
 }
 
 std::unique_ptr<RDKit::RWMol> prepareTemplateForRGroups(
@@ -563,7 +563,7 @@ bool invertWedgingIfMolHasFlipped(RDKit::ROMol &mol,
   auto zRot = trans.getVal(2, 2);
   bool shouldFlip = zRot < FLIP_THRESHOLD;
   if (shouldFlip) {
-    RDKit::invertMolBlockWedgingInfo(mol);
+    RDKit::Chirality::invertMolBlockWedgingInfo(mol);
   }
   return shouldFlip;
 }

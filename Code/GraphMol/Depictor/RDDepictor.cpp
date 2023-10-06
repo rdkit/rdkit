@@ -28,7 +28,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/Chirality.h>
 #include "EmbeddedFrag.h"
 #include "DepictUtils.h"
 #include <iostream>
@@ -860,7 +860,7 @@ void generateDepictionMatching2DStructure(
     }
   }
   if (shouldClearWedgingInfo) {
-    RDKit::clearMolBlockWedgingInfo(mol);
+    RDKit::Chirality::clearMolBlockWedgingInfo(mol);
   } else if (shouldInvertWedgingIfRequired) {
     invertWedgingIfMolHasFlipped(mol, trans);
   }
@@ -1029,7 +1029,7 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
         compute2DCoords(mol, nullptr, false, true, 0, 0, 0, false,
                         p.forceRDKit);
         if (p.adjustMolBlockWedging) {
-          RDKit::clearMolBlockWedgingInfo(mol);
+          RDKit::Chirality::clearMolBlockWedgingInfo(mol);
           p.adjustMolBlockWedging = false;
         }
       }
@@ -1086,7 +1086,7 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
       // coordinates and clear any existing wedging info if requested
       compute2DCoords(mol, nullptr, false, true, 0, 0, 0, false, p.forceRDKit);
       if (p.adjustMolBlockWedging) {
-        RDKit::clearMolBlockWedgingInfo(mol);
+        RDKit::Chirality::clearMolBlockWedgingInfo(mol);
       }
     } else {
       throw DepictException("Substructure match with reference not found.");
