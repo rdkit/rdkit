@@ -657,7 +657,7 @@ inline bool ringFusionCheck(const std::uint32_t c1[], const std::uint32_t c2[],
   auto queryEdges = boost::edges(query);
   std::for_each(
       queryEdges.first, queryEdges.second,
-      [&c1, &c2, &mol1, &query, &mol2, &target, &mol1RingBondCountVect,
+      [&c1, &c2, &query, &target, &mol1RingBondCountVect,
        &mol2RingBondCountVect](const auto& edge) {
         const auto beginAtomIdx = boost::source(edge, query);
         const auto endAtomIdx = boost::target(edge, query);
