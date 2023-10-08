@@ -462,7 +462,7 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
   kekulize = shouldKekulize(mol, kwargs.get('kekulize', True))
   wedge = kwargs.get('wedgeBonds', True)
 
-  if drawOptions.prepareMolsBeforeDrawing:
+  if not drawOptions or drawOptions.prepareMolsBeforeDrawing:
     try:
       with rdBase.BlockLogs():
         mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
@@ -505,11 +505,12 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
 
   kekulize = shouldKekulize(mol, kekulize)
 
-  try:
-    with rdBase.BlockLogs():
-      mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
-  except ValueError:  # <- can happen on a kekulization failure
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
+  if not drawOptions or drawOptions.prepareMolsBeforeDrawing:
+    try:
+      with rdBase.BlockLogs():
+        mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
+    except ValueError:  # <- can happen on a kekulization failure
+      mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
   d2d = rdMolDraw2D.MolDraw2DSVG(sz[0], sz[1])
   if drawOptions is not None:
     d2d.SetDrawOptions(drawOptions)
@@ -517,10 +518,10 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
   d2d.drawOptions().prepareMolsBeforeDrawing = False
   bondHighlights = kwargs.get('highlightBonds', None)
   if bondHighlights is not None:
-    d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
+    d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [],
                      highlightBonds=bondHighlights)
   else:
-    d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [])
+    d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [])
   d2d.FinishDrawing()
   svg = d2d.GetDrawingText()
   return svg
