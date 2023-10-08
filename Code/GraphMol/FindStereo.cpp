@@ -1069,7 +1069,6 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
     }
   }
   delete[] atomOrder;
-  Canon::detail::freeCanonAtoms(canonAtoms);
   return res;
 }
 }  // namespace
