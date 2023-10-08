@@ -462,13 +462,14 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
   kekulize = shouldKekulize(mol, kwargs.get('kekulize', True))
   wedge = kwargs.get('wedgeBonds', True)
 
-  try:
-    with rdBase.BlockLogs():
-      mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
-  except ValueError:  # <- can happen on a kekulization failure
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
+  if drawOptions.prepareMolsBeforeDrawing:
+    try:
+      with rdBase.BlockLogs():
+        mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
+    except ValueError:  # <- can happen on a kekulization failure
+      mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-    img = MolToImage(mc, sz, legend=legend, highlightAtoms=highlights, **kwargs)
+    img = MolToImage(mol, sz, legend=legend, highlightAtoms=highlights, **kwargs)
     if returnPNG:
       bio = BytesIO()
       img.save(bio, format='PNG')
@@ -483,10 +484,10 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
     d2d.drawOptions().prepareMolsBeforeDrawing = False
     bondHighlights = kwargs.get('highlightBonds', None)
     if bondHighlights is not None:
-      d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
+      d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [],
                        highlightBonds=bondHighlights)
     else:
-      d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [])
+      d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [])
     d2d.FinishDrawing()
     if returnPNG:
       img = d2d.GetDrawingText()
