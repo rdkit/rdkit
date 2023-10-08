@@ -785,6 +785,7 @@ M  END
       auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
       CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
     }
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
     // the "rebuildCoordGen" alignment should succeed and clear original wedging
     // it should feature an even wider angle between the bridge bonds as
     // CoordGen has a template for the bridged system. Additionally, CoordGen
@@ -798,10 +799,6 @@ M  END
       Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
-      if(!(angle > 145. && angle < 150.)) {
-        std::cerr << "1) *** wedgeMol\n" << MolToMolBlock(*wedgedMol) << std::endl;
-        std::cerr << "1) *** wedgeMolCopy\n" << MolToMolBlock(wedgedMolCopy) << std::endl;
-      }
       CHECK((angle > 145. && angle < 150.));
       auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
       CHECK(mbAlignOnly.find(invertedWedges) == std::string::npos);
@@ -821,15 +818,12 @@ M  END
       Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
-      if(!(angle > 145. && angle < 150.)) {
-        std::cerr << "2) *** wedgeMol\n" << MolToMolBlock(*wedgedMol) << std::endl;
-        std::cerr << "2) *** wedgeMolCopy\n" << MolToMolBlock(wedgedMolCopy) << std::endl;
-      }
       CHECK((angle > 145. && angle < 150.));
       auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
       CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
     }
     RDDepict::preferCoordGen = false;
+#endif
   }
   SECTION("wedging outside scaffold") {
     auto scaffold = R"CTAB(
@@ -929,6 +923,7 @@ M  END
       auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
       CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
     }
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
     // the "rebuildCoordGen" alignment should succeed and clear original wedging
     // it should feature an even wider angle between the bridge bonds as
     // CoordGen has a template for the bridged system. Additionally, CoordGen
@@ -942,10 +937,6 @@ M  END
       Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
-      if(!(angle > 145. && angle < 150.)) {
-        std::cerr << "3) *** wedgeMol\n" << MolToMolBlock(*wedgedMol) << std::endl;
-        std::cerr << "3) *** wedgeMolCopy\n" << MolToMolBlock(wedgedMolCopy) << std::endl;
-      }
       CHECK((angle > 145. && angle < 150.));
       auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
       CHECK(mbAlignOnly.find(invertedWedges) == std::string::npos);
@@ -965,15 +956,12 @@ M  END
       Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
-      if(!(angle > 145. && angle < 150.)) {
-        std::cerr << "4) *** wedgeMol\n" << MolToMolBlock(*wedgedMol) << std::endl;
-        std::cerr << "4) *** wedgeMolCopy\n" << MolToMolBlock(wedgedMolCopy) << std::endl;
-      }
       CHECK((angle > 145. && angle < 150.));
       auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
       CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
     }
     RDDepict::preferCoordGen = false;
+#endif
   }
   SECTION("wedging no match") {
     auto scaffoldNoMatch = R"CTAB(
@@ -1073,6 +1061,7 @@ M  END
       CHECK(currMolBlock != origMolBlock);
       CHECK(currMolBlock.find(invertedWedges) == std::string::npos);
     }
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
     // the "rebuildCoordGen" alignment should throw if acceptFailure is false
     // and preserve the original coordinates
     RDDepict::preferCoordGen = true;
@@ -1102,6 +1091,7 @@ M  END
       CHECK(currMolBlock.find(invertedWedges) == std::string::npos);
     }
     RDDepict::preferCoordGen = false;
+#endif
   }
 }
 
