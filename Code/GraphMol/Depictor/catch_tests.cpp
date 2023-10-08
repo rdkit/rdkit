@@ -798,6 +798,10 @@ M  END
       Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
+      if(!(angle > 145. && angle < 150.)) {
+        std::cerr << "1) *** wedgeMol\n" << MolToMolBlock(*wedgedMol) << std::endl;
+        std::cerr << "1) *** wedgeMolCopy\n" << MolToMolBlock(wedgedMolCopy) << std::endl;
+      }
       CHECK((angle > 145. && angle < 150.));
       auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
       CHECK(mbAlignOnly.find(invertedWedges) == std::string::npos);
@@ -817,6 +821,10 @@ M  END
       Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
+      if(!(angle > 145. && angle < 150.)) {
+        std::cerr << "2) *** wedgeMol\n" << MolToMolBlock(*wedgedMol) << std::endl;
+        std::cerr << "2) *** wedgeMolCopy\n" << MolToMolBlock(wedgedMolCopy) << std::endl;
+      }
       CHECK((angle > 145. && angle < 150.));
       auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
       CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
@@ -934,6 +942,10 @@ M  END
       Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
+      if(!(angle > 145. && angle < 150.)) {
+        std::cerr << "3) *** wedgeMol\n" << MolToMolBlock(*wedgedMol) << std::endl;
+        std::cerr << "3) *** wedgeMolCopy\n" << MolToMolBlock(wedgedMolCopy) << std::endl;
+      }
       CHECK((angle > 145. && angle < 150.));
       auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
       CHECK(mbAlignOnly.find(invertedWedges) == std::string::npos);
@@ -953,6 +965,10 @@ M  END
       Chirality::reapplyMolBlockWedging(wedgedMolCopy);
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
+      if(!(angle > 145. && angle < 150.)) {
+        std::cerr << "4) *** wedgeMol\n" << MolToMolBlock(*wedgedMol) << std::endl;
+        std::cerr << "4) *** wedgeMolCopy\n" << MolToMolBlock(wedgedMolCopy) << std::endl;
+      }
       CHECK((angle > 145. && angle < 150.));
       auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
       CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
