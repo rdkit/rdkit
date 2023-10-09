@@ -319,7 +319,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     )
   endif()
 
-  find_package(Numpy)
+  find_package(NumPy)
   message("INFO: Found NumPy ${PYTHON_NUMPY_INCLUDE_PATH} for ${Python3_EXECUTABLE}")
   target_include_directories(rdkit_base INTERFACE $<BUILD_INTERFACE:${PYTHON_NUMPY_INCLUDE_PATH}>)
 
