@@ -15,8 +15,11 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
   if (WIN32)
     set( T_LIBS ${Boost_LIBRARIES})
     find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib)
-    set( Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-
+    if(Boost_zlib_FOUND)
+      set( Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+    else()
+      find_package(ZLIB)
+    endif()
   else()
     if(Boost_USE_STATIC_LIBS)
       # when we're doing static linkage of boost

@@ -69,6 +69,7 @@ option(RDK_BUILD_FUZZ_TARGETS "build the fuzz targets" OFF)
 option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" ON )
 option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
+option(RDK_BUILD_INSTALL_NUMPY "automatically install pip and numpy for python3" OFF)
 
 set(RDK_BOOST_VERSION "1.58.0")
 
@@ -252,6 +253,8 @@ install(TARGETS rdkit_base EXPORT ${RDKit_EXPORTED_TARGETS}
 
 # disable some warnings that we don't care about
 if(MSVC)
+  # Fix stupid conflict in debug python handling between boost::python and msvc lib pragmas in pyconfig.h
+  add_compile_definitions($<$<CONFIG:Debug>:BOOST_DEBUG_PYTHON>)
   # These should occasionally be enabled to check what's going on
   # 4267 conversion with possible loss of data.
   # 4305 truncation from 'double' to 'const float'
@@ -279,41 +282,73 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(PythonInterp)
-  if (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
-    set(Python_ADDITIONAL_VERSIONS "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
-  endif (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
-
-  if(PYTHON_VERSION_MAJOR EQUAL 2)
+  find_package (Python3 COMPONENTS Interpreter Development)
+  if(NOT Python3_FOUND)
     message(FATAL_ERROR "ERROR: The RDKit no longer supports Python 2.\nIf you have Python 3 installed, you can tell cmake where to find it using the -DPYTHON_EXECUTABLE argument.")
   endif()
 
-  find_package(PythonLibs)
-  target_include_directories(rdkit_base INTERFACE ${PYTHON_INCLUDE_DIR})
+  if(RDK_BUILD_INSTALL_NUMPY)
+    # ensure that python3 has pip
+    message("INFO: Installing pip for ${Python3_EXECUTABLE}")
+    execute_process(
+        COMMAND
+        ${Python3_EXECUTABLE} -m ensurepip
+        OUTPUT_VARIABLE Python3_PIP_INSTALL
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    # normalize numpy version
+    string(STRIP "${RDK_NUMPY_VERSION}" RDK_NUMPY_VERSION)
+    string(TOLOWER "${RDK_NUMPY_VERSION}" RDK_NUMPY_VERSION)
+    if ("${RDK_NUMPY_VERSION}" STREQUAL "")
+      set(RDK_NUMPY_VERSION "default")
+    endif ()
+
+    # ensure that python3 has numpy
+    message("INFO: Installing numpy==${RDK_NUMPY_VERSION} for ${Python3_EXECUTABLE}")
+    if ("${RDK_NUMPY_VERSION}" STREQUAL "default")
+      set(_NUMPY_VERSION "")
+    else ()
+      set(_NUMPY_VERSION "==${RDK_NUMPY_VERSION}")
+    endif ()
+    execute_process(
+        COMMAND
+        ${Python3_EXECUTABLE} -m pip install "numpy${_NUMPY_VERSION}"
+        OUTPUT_VARIABLE Python3_NUMPY_INSTALL
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+  endif()
+
+  find_package(Numpy)
+  message("INFO: Found NumPy ${PYTHON_NUMPY_INCLUDE_PATH} for ${Python3_EXECUTABLE}")
+  target_include_directories(rdkit_base INTERFACE $<BUILD_INTERFACE:${PYTHON_NUMPY_INCLUDE_PATH}>)
+
+  # set_target_properties(Python3::Module PROPERTIES MAP_IMPORTED_CONFIG_DEBUG ";RELEASE")
+
+  if (NOT Python_ADDITIONAL_VERSIONS)
+    set(Python_ADDITIONAL_VERSIONS "${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}")
+  endif (NOT Python_ADDITIONAL_VERSIONS)
+  
+  target_include_directories(rdkit_base INTERFACE $<BUILD_INTERFACE:${Python3_INCLUDE_DIRS}>)
 
   # determine linkage of python
   execute_process(
-      COMMAND
-      ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
-      OUTPUT_VARIABLE Py_ENABLE_SHARED
-      OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND
+    ${Python3_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
+    OUTPUT_VARIABLE Py_ENABLE_SHARED
+    OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-    target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
+    target_link_libraries(rdkit_py_base INTERFACE ${Python3_LIBRARIES} )
   endif()
-  
-  find_package(NumPy REQUIRED)
-  target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
-  if(PYTHON_VERSION_MAJOR EQUAL 3)
-    # Find boost-python3 using name specified as command line option then fall back to commonly used names
-    set(RDK_BOOST_PYTHON3_NAME "python3" CACHE STRING "Name of the boost python3 library. If installed as libboost_python-xxx.so, use python-xxx.")
-    list(APPEND Boost_Python_Names "${RDK_BOOST_PYTHON3_NAME}" "python-py3${PYTHON_VERSION_MINOR}" "python3")
-  endif(PYTHON_VERSION_MAJOR EQUAL 3)
+  # Find boost-python3 using name specified as command line option then fall back to commonly used names
+  set(RDK_BOOST_PYTHON3_NAME "python3" CACHE STRING "Name of the boost python3 library. If installed as libboost_python-xxx.so, use python-xxx.")
+  list(APPEND Boost_Python_Names "${RDK_BOOST_PYTHON3_NAME}" "python-py3${Python3_VERSION_MINOR}" "python3")
 
   # Boost 1.67+ uses a version suffix like "python36" or "python27"
-  list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
+  list(APPEND Boost_Python_Names "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
 
   # Try each potential boost-python name until one works
   foreach(Boost_Python_LibN ${Boost_Python_Names})
@@ -392,7 +427,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   # check to see if we can find nbval,
   execute_process(
     COMMAND
-    ${PYTHON_EXECUTABLE} -c "import nbval"
+    ${Python3_EXECUTABLE} -c "import nbval"
     ERROR_VARIABLE nbvalERR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT nbvalERR)
@@ -456,7 +491,7 @@ endif()
 target_include_directories(rdkit_base INTERFACE
                            $<BUILD_INTERFACE:${RDKit_CodeDir}>
                            $<INSTALL_INTERFACE:${RDKit_HdrDir}>
-                           ${Boost_INCLUDE_DIR}
+                           $<BUILD_INTERFACE:${Boost_INCLUDE_DIR}>
                            )
 target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES})
 

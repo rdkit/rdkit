@@ -7,15 +7,15 @@
 #
 #
 
-find_package(PythonInterp REQUIRED)
-IF(PYTHON_EXECUTABLE)
-  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/det_npp.py 
-       "try: import numpy; print(numpy.get_include())\nexcept Exception: pass\n")
-  EXEC_PROGRAM("${PYTHON_EXECUTABLE}"
-    ARGS "\"${CMAKE_CURRENT_BINARY_DIR}/det_npp.py\""
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+IF(Python3_EXECUTABLE)
+  execute_process(
+    COMMAND
+    ${Python3_EXECUTABLE} -c "try:\n import numpy\n print(numpy.get_include())\nexcept Exception:\n pass\n"
     OUTPUT_VARIABLE NUMPY_PATH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
   )
-ENDIF(PYTHON_EXECUTABLE)
+ENDIF(Python3_EXECUTABLE)
 
 FIND_PATH(PYTHON_NUMPY_INCLUDE_PATH numpy/arrayobject.h
   "${NUMPY_PATH}/"
