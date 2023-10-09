@@ -410,10 +410,14 @@ class TestWrapLogs(unittest.TestCase):
 
 class TestDeprecationWarning(unittest.TestCase):
 
+  @classmethod
+  def setUpClass(cls):
+    rdBase.LogToPythonStderr()
+
   def testDeprecationWarning(self):
     with CaptureOutput() as captured:
       rdMolDescriptors.GetAtomPairFingerprint(Chem.MolFromSmiles('C'))
-    expected = {'std::cerr': '[timestamp] DEPRECATION WARNING: please use AtomPairGenerator\n'}
+    expected = {'sys.stderr': '[timestamp] DEPRECATION WARNING: please use AtomPairGenerator\n'}
     self.assertEqual(captured, expected)
 
 
