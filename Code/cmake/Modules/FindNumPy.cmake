@@ -19,7 +19,7 @@ IF(Python3_EXECUTABLE)
 ENDIF(Python3_EXECUTABLE)
 
 IF(NUMPY_ERROR)
-  message(FATAL_ERROR "ERROR: The RDKit requires numpy. Numpy not found for Python ${${Python3_EXECUTABLE}}")
+  message(FATAL_ERROR "ERROR: The RDKit requires numpy. Numpy not found for Python ${Python3_EXECUTABLE}")
 ENDIF()
 
 FIND_PATH(PYTHON_NUMPY_INCLUDE_PATH numpy/arrayobject.h

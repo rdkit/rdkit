@@ -373,7 +373,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       # Determine correct installation directory for Python bindings
       execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "import sys; import sysconfig; \
+        ${Python3_EXECUTABLE} -c "import sys; import sysconfig; \
           base_key = 'base' if sys.platform == 'win32' else 'platbase'; \
           schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
           print(sysconfig.get_path('platlib', schema, vars={base_key: '${CMAKE_INSTALL_PREFIX}'}))"
@@ -413,7 +413,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     # We strip off the first word though (which will be the compiler name).
     execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
+        ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
         OUTPUT_VARIABLE PYTHON_LDSHARED
         OUTPUT_STRIP_TRAILING_WHITESPACE
      )
