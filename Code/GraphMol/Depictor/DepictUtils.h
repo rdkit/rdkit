@@ -16,7 +16,9 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RWMol.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/Substruct/SubstructUtils.h>
 #include <Geometry/Transform2D.h>
+#include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
 #include <queue>
 
@@ -360,6 +362,15 @@ inline int getAtomDepictRank(const RDKit::Atom *at) {
   int deg = at->getDegree();
   return maxDeg * anum + deg;
 }
+
+RDKIT_DEPICTOR_EXPORT bool hasTerminalRGroupOrQueryHydrogen(const RDKit::ROMol &query);
+RDKIT_DEPICTOR_EXPORT std::unique_ptr<RDKit::RWMol> prepareTemplateForRGroups(
+    RDKit::RWMol &templateMol);
+RDKIT_DEPICTOR_EXPORT void reducedToFullMatches(
+    const RDKit::RWMol &reducedQuery, const RDKit::RWMol &molHs,
+    std::vector<RDKit::MatchVectType> &matches);
+RDKIT_DEPICTOR_EXPORT bool invertWedgingIfMolHasFlipped(
+    RDKit::ROMol &mol, const RDGeom::Transform3D &trans);
 }  // namespace RDDepict
 
 #endif
