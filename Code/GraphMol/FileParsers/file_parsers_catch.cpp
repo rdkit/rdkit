@@ -5019,16 +5019,16 @@ M  END
 )CTAB"_ctab;
     REQUIRE(m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
-    Chirality::reapplyMolBlockWedging(*m);
+    reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINWEDGE);
-    Chirality::invertMolBlockWedgingInfo(*m);
-    Chirality::reapplyMolBlockWedging(*m);
+    invertMolBlockWedgingInfo(*m);
+    reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINDASH);
-    Chirality::invertMolBlockWedgingInfo(*m);
-    Chirality::reapplyMolBlockWedging(*m);
+    invertMolBlockWedgingInfo(*m);
+    reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINWEDGE);
-    Chirality::clearMolBlockWedgingInfo(*m);
-    Chirality::reapplyMolBlockWedging(*m);
+    clearMolBlockWedgingInfo(*m);
+    reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
   }
   SECTION("GitHub5448") {
@@ -5076,7 +5076,7 @@ M  END)CTAB"_ctab;
       WedgeMolBonds(*m, &m->getConformer());
       CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::BEGINWEDGE);
       CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::NONE);
-      Chirality::reapplyMolBlockWedging(*m);
+      reapplyMolBlockWedging(*m);
       CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::NONE);
       CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::BEGINWEDGE);
     }
