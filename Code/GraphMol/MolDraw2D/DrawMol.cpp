@@ -20,7 +20,6 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RWMol.h>
-#include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
@@ -187,7 +186,7 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
     markUnspecifiedStereoAsUnknown(*drawMol_);
   }
   if (drawOptions_.useMolBlockWedging) {
-    Chirality::reapplyMolBlockWedging(*drawMol_);
+    RDKit::reapplyMolBlockWedging(*drawMol_);
   }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {

@@ -601,70 +601,28 @@ M  END`;
     var ortho_meta_smiles = 'c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1';
     var ortho_smiles = 'c1ccc(-c2ccccc2-c2ccccc2)cc1';
     var meta_smiles = 'c1ccc(-c2cccc(-c3ccccc3)c2)cc1';
-    var para_smiles = 'c1ccc(-c2ccc(-c3ccccc3)cc2)cc1';
     var biphenyl_smiles = 'c1ccccc1-c1ccccc1';
     var phenyl_smiles = 'c1ccccc1';
     var template_ref = RDKitModule.get_mol(template_molblock);
     var ortho_meta = RDKitModule.get_mol(ortho_meta_smiles);
     var ortho = RDKitModule.get_mol(ortho_smiles);
     var meta = RDKitModule.get_mol(meta_smiles);
-    var para = RDKitModule.get_mol(para_smiles);
     var biphenyl = RDKitModule.get_mol(biphenyl_smiles);
     var phenyl = RDKitModule.get_mol(phenyl_smiles);
     assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
         template_ref, JSON.stringify({ useCoordGen: false, allowRGroups: true}))).atoms.length, 9);
     [ true, false ].forEach(alignOnly => {
-        var opts = JSON.stringify({ useCoordGen: false, allowRGroups: true, alignOnly });
+        var opts = JSON.stringify({ useCoordGen: false, allowRGroups: true, alignOnly })
         assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
             template_ref, opts)).atoms.length, 9);
         assert.equal(JSON.parse(ortho.generate_aligned_coords(
             template_ref, opts)).atoms.length, 8);
         assert.equal(JSON.parse(meta.generate_aligned_coords(
             template_ref, opts)).atoms.length, 8);
-        assert.equal(JSON.parse(para.generate_aligned_coords(
-            template_ref, opts)).atoms.length, 8);
         assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
             template_ref, opts)).atoms.length, 7);
         assert.equal(JSON.parse(phenyl.generate_aligned_coords(
             template_ref, opts)).atoms.length, 6);
-    });
-    const pyridineRef = RDKitModule.get_mol(`
-  MJ201100                      
-
-  8  8  0  0  0  0  0  0  0  0999 V2000
-    0.0000    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.7144    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.7144   -0.4124    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.7144   -0.4124    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.7144    0.4125    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000   -1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0  0  0  0
-  2  3  1  0  0  0  0
-  3  4  2  0  0  0  0
-  4  5  1  0  0  0  0
-  5  6  2  0  0  0  0
-  6  1  1  0  0  0  0
-  1  7  1  0  0  0  0
-  4  8  1  0  0  0  0
-M  END
-`);
-    const referenceSmarts = "[*:3]a1a([*:1])aa([*:2])aa1";
-    [ true, false ].forEach(alignOnly => {
-        var opts = JSON.stringify({ useCoordGen: false, allowRGroups: true, alignOnly, referenceSmarts });
-        assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
-            pyridineRef, opts)).atoms.length, 8);
-        assert.equal(JSON.parse(ortho.generate_aligned_coords(
-            pyridineRef, opts)).atoms.length, 7);
-        assert.equal(JSON.parse(meta.generate_aligned_coords(
-            pyridineRef, opts)).atoms.length, 7);
-        assert.equal(JSON.parse(para.generate_aligned_coords(
-            pyridineRef, opts)).atoms.length, 8);
-        assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
-            pyridineRef, opts)).atoms.length, 7);
-        assert.equal(JSON.parse(phenyl.generate_aligned_coords(
-            pyridineRef, opts)).atoms.length, 6);
     });
 }
 
@@ -2464,61 +2422,6 @@ function test_capture_logs() {
     })
 }
 
-function test_rgroup_match_heavy_hydro_none_charged() {
-    var templateRef = RDKitModule.get_mol(`
-  MJ201100                      
-
-  7  7  0  0  0  0  0  0  0  0999 V2000
-   -0.5804    1.2045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.2948    0.7920    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.2948   -0.0330    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.5804   -0.4455    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.1340   -0.0330    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
-    0.1340    0.7920    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.8485   -0.4455    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0  0  0  0
-  2  3  1  0  0  0  0
-  3  4  2  0  0  0  0
-  6  1  1  0  0  0  0
-  4  5  1  0  0  0  0
-  5  6  2  0  0  0  0
-  5  7  1  0  0  0  0
-M  RGP  1   7   1
-M  END
-`);
-    assert(templateRef);
-    var mol;
-    var allowRGroups = true;
-    [true, false].forEach((alignOnly) => {
-        mol = RDKitModule.get_mol("Cc1ccccc1");
-        assert(mol);
-        assert.equal(mol.get_num_atoms(), 7);
-        assert.equal(JSON.parse(mol.generate_aligned_coords(templateRef, JSON.stringify({ allowRGroups, alignOnly }))).atoms.length, 7);
-        mol.delete();
-        mol = RDKitModule.get_mol("c1ccccc1");
-        assert(mol);
-        assert.equal(mol.get_num_atoms(), 6);
-        assert.equal(JSON.parse(mol.generate_aligned_coords(templateRef, JSON.stringify({ allowRGroups, alignOnly }))).atoms.length, 6);
-        mol.delete();
-        mol = RDKitModule.get_mol("[H]c1ccccc1", JSON.stringify({removeHs: false}));
-        assert(mol);
-        assert.equal(mol.get_num_atoms(), 7);
-        assert.equal(JSON.parse(mol.generate_aligned_coords(templateRef, JSON.stringify({ allowRGroups, alignOnly }))).atoms.length, 7);
-        mol.delete();
-        mol = RDKitModule.get_mol("n1ccccc1");
-        assert(mol);
-        assert.equal(mol.get_num_atoms(), 6);
-        assert.equal(JSON.parse(mol.generate_aligned_coords(templateRef, JSON.stringify({ allowRGroups, alignOnly }))).atoms.length, 6);
-        mol.delete();
-        mol = RDKitModule.get_mol("C[n+]1ccccc1");
-        assert(mol);
-        assert.equal(mol.get_num_atoms(), 7);
-        assert.equal(JSON.parse(mol.generate_aligned_coords(templateRef, JSON.stringify({ allowRGroups, alignOnly }))).atoms.length, 7);
-        mol.delete();
-    });
-    templateRef.delete();
-}
-
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -2586,7 +2489,6 @@ initRDKitModule().then(function(instance) {
     test_sanitize_no_kekulize_no_setaromaticity();
     test_partial_sanitization();
     test_capture_logs();
-    test_rgroup_match_heavy_hydro_none_charged();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

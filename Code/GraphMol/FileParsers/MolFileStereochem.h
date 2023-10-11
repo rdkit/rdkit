@@ -61,12 +61,20 @@ RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
 //! \deprecated use Chirality::detail::determineBondWedgeState instead
 RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
     const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf);
-
-//! \deprecated use Chirality::reapplyMolBlockWedging instead
+//! Clears existing bond wedging and forces use of atom wedging from MolBlock.
+/*!
+ \param mol: molecule to have its wedges altered
+ */
 RDKIT_FILEPARSERS_EXPORT void reapplyMolBlockWedging(ROMol &mol);
-//! \deprecated use Chirality::clearMolBlockWedgingInfo instead
+//! Remove MolBlock bond wedging information from molecule.
+/*!
+ \param mol: molecule to modify
+ */
 RDKIT_FILEPARSERS_EXPORT void clearMolBlockWedgingInfo(ROMol &mol);
-//! \deprecated use Chirality::invertMolBlockWedgingInfo instead
+//! Invert bond wedging information read from a mol block (if present).
+/*!
+ \param mol: molecule to modify
+ */
 RDKIT_FILEPARSERS_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
 
 //! Set double bonds with unspecified stereo to STEREOANY and add wavy bonds to
