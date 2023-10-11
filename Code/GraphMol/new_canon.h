@@ -106,16 +106,12 @@ struct RDKIT_GRAPHMOL_EXPORT canon_atom {
   bool isRingStereoAtom{false};
   unsigned int whichStereoGroup{0};
   StereoGroupType typeOfStereoGroup{StereoGroupType::STEREO_ABSOLUTE};
-  int *nbrIds{nullptr};
+  std::unique_ptr<int[]> nbrIds;
   const std::string *p_symbol{
       nullptr};  // if provided, this is used to order atoms
   std::vector<int> neighborNum;
   std::vector<int> revistedNeighbors;
   std::vector<bondholder> bonds;
-
-  canon_atom() {}
-
-  ~canon_atom() { free(nbrIds); }
 };
 
 RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborIndex(
@@ -290,7 +286,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       return 0;
     }
 
-    int *nbrs = dp_atoms[i].nbrIds;
+    auto nbrs = dp_atoms[i].nbrIds.get();
     unsigned int code = 0;
     for (unsigned j = 0; j < dp_atoms[i].degree; ++j) {
       if (dp_atoms[nbrs[j]].isRingStereoAtom) {
@@ -847,7 +843,6 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             const boost::dynamic_bitset<> &atomsInPlay,
                             const boost::dynamic_bitset<> &bondsInPlay,
                             bool needsInit);
-void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms);
 template <typename T>
 void rankWithFunctor(T &ftor, bool breakTies, int *order,
                      bool useSpecial = false, bool useChirality = false,
