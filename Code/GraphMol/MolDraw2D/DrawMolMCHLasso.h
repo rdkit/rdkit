@@ -84,6 +84,10 @@ class DrawMolMCHLasso : public DrawMolMCH {
       std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
   void fixProtrudingLines(
       std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
+  // Orphan lines are ones where at least one end isn't close to the end
+  // of any line or arc.
+  void fixOrphanLines(std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
+                      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines);
 };
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit

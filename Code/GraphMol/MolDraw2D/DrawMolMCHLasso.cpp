@@ -146,6 +146,7 @@ void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
   fixIntersectingLines(arcs, lines);
   fixIntersectingArcsAndLines(arcs, lines);
   fixProtrudingLines(lines);
+  fixOrphanLines(arcs, lines);
 
   for (auto &it : arcs) {
     highlights_.push_back(std::move(it));
@@ -537,6 +538,84 @@ void DrawMolMCHLasso::fixProtrudingLines(
       }
     }
   }
+}
+
+namespace {
+std::pair<Point2D, Point2D> getArcEnds(const DrawShapeArc &arc) {
+  std::pair<Point2D, Point2D> retVal;
+  // for these purposes, it's always a circle, so just use the x
+  // radius
+  retVal.first.x =
+      arc.points_[0].x + arc.points_[1].x * cos(arc.ang1_ * M_PI / 180.0);
+  retVal.first.y =
+      arc.points_[0].y + arc.points_[1].x * sin(arc.ang1_ * M_PI / 180.0);
+  retVal.second.x =
+      arc.points_[0].x + arc.points_[1].x * cos(arc.ang2_ * M_PI / 180.0);
+  retVal.second.y =
+      arc.points_[0].y + arc.points_[1].x * sin(arc.ang2_ * M_PI / 180.0);
+  return retVal;
+}
+}  // namespace
+void DrawMolMCHLasso::fixOrphanLines(
+    std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
+    std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) {
+  // lasso_highlights_7.svg had a line close to an arc at
+  // one end, but not at the other.  Such lines are clearly
+  // artifacts that need to be removed.  Takes out all lines
+  // that aren't within a tolerance of something at both ends.
+  std::vector<std::pair<Point2D, Point2D>> arcEnds;
+  for (const auto &arc : arcs) {
+    arcEnds.push_back(getArcEnds(*arc));
+  }
+  static const double tol = 0.05;
+  for (size_t i = 0; i < lines.size(); ++i) {
+    bool attached0 = false, attached1 = false;
+    for (const auto &arcEnd : arcEnds) {
+      if ((lines[i]->points_[0] - arcEnd.first).length() < tol) {
+        attached0 = true;
+      }
+      if ((lines[i]->points_[1] - arcEnd.first).length() < tol) {
+        attached1 = true;
+      }
+      if ((lines[i]->points_[0] - arcEnd.second).length() < tol) {
+        attached0 = true;
+      }
+      if ((lines[i]->points_[1] - arcEnd.second).length() < tol) {
+        attached1 = true;
+      }
+    }
+    if (!attached0 || !attached1) {
+      for (size_t j = 0; j < lines.size(); ++j) {
+        if (i == j || !lines[i] || !lines[j]) {
+          continue;
+        }
+        if ((lines[i]->points_[0] - lines[j]->points_[0]).length() < tol) {
+          attached0 = true;
+        }
+        if ((lines[i]->points_[0] - lines[j]->points_[1]).length() < tol) {
+          attached0 = true;
+        }
+        if ((lines[i]->points_[1] - lines[j]->points_[0]).length() < tol) {
+          attached1 = true;
+        }
+        if ((lines[i]->points_[1] - lines[j]->points_[1]).length() < tol) {
+          attached1 = true;
+        }
+      }
+    }
+    if (attached0 && attached1) {
+      break;
+    }
+    if (!attached0 || !attached1) {
+      lines[i].reset();
+    }
+  }
+  lines.erase(std::remove_if(
+                  lines.begin(), lines.end(),
+                  [](const std::unique_ptr<DrawShapeSimpleLine> &line) -> bool {
+                    return !line;
+                  }),
+              lines.end());
 }
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit

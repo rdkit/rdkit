@@ -44,7 +44,7 @@ namespace {
 // The hand-drawn pictures will fail this frequently due to the use
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
-static const bool DELETE_WITH_GOOD_HASH = true;
+static const bool DELETE_WITH_GOOD_HASH = false;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
 // These values are for a build with FreeType, so expect them all to be
@@ -313,7 +313,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"lasso_highlights_4.svg", 1265047504U},
     {"lasso_highlights_5.svg", 35778943U},
     {"lasso_highlights_6.svg", 1359376880U},
-    {"lasso_highlights_7.svg", 2941001626U},
+    {"lasso_highlights_7.svg", 773081917U},
     {"testGithub6685_1.svg", 1835717197U},
     {"testGithub6685_2.svg", 116380465U},
     {"testGithub6685_3.svg", 409385402U},
