@@ -9,6 +9,7 @@
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/FileParsers/SequenceWriters.h>
@@ -134,7 +135,7 @@ class MrvTests {
       smilesParserParams.sanitize = true;
 
       localVars.smilesMol = SmilesToMol(smilesTest->smiles, smilesParserParams);
-      reapplyMolBlockWedging(*localVars.smilesMol);
+      Chirality::reapplyMolBlockWedging(*localVars.smilesMol);
 
       TEST_ASSERT(localVars.smilesMol->getNumAtoms() == smilesTest->atomCount);
       TEST_ASSERT(localVars.smilesMol->getNumBonds() == smilesTest->bondCount);
@@ -256,7 +257,7 @@ class MrvTests {
       }
 
       localVars.mol = GetMol(molTest);
-      reapplyMolBlockWedging(*localVars.mol);
+      Chirality::reapplyMolBlockWedging(*localVars.mol);
 
       TEST_ASSERT(localVars.mol != nullptr);
 
@@ -439,7 +440,7 @@ class MrvTests {
 
     try {
       localVars.mol = MolFileToMol(fName, true, false, false);
-      reapplyMolBlockWedging(*localVars.mol);
+      Chirality::reapplyMolBlockWedging(*localVars.mol);
 
       TEST_ASSERT(localVars.mol != nullptr);
       TEST_ASSERT(localVars.mol->getNumAtoms() == molFileTest->atomCount)
