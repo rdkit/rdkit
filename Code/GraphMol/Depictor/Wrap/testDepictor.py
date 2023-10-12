@@ -369,6 +369,24 @@ M  END"""
 
     atomMap = rdDepictor.GenerateDepictionMatching2DStructure(orthoMeta, templateRef)
     self.assertEqual(orthoMeta.GetNumConformers(), 1)
+
+
+    # test original usage pattern
+    for mol in (ortho, meta, biphenyl, phenyl):
+      # fails as does not match template
+      with self.assertRaises(ValueError):
+        rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef)
+
+      # succeeds with allowRGroups=true
+      atomMap = rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, allowRGroups=True)
+      self.assertEqual(mol.GetNumConformers(), 1)
+      msd = 0.0
+      for refIdx, molIdx in atomMap:
+        msd += (templateRef.GetConformer().GetAtomPosition(refIdx) -
+                mol.GetConformer().GetAtomPosition(molIdx)).LengthSq()
+      msd /= len(atomMap)
+      self.assertAlmostEqual(msd, 0.0)
+
     for alignOnly in (True, False):
       p = rdDepictor.ConstrainedDepictionParams()
       p.allowRGroups = True
