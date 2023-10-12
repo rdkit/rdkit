@@ -568,37 +568,37 @@ void DrawMolMCHLasso::fixOrphanLines(
     arcEnds.push_back(getArcEnds(*arc));
   }
   static const double tol = 0.05;
-  for (size_t i = 0; i < lines.size(); ++i) {
+  for (auto &line1 : lines) {
     bool attached0 = false, attached1 = false;
     for (const auto &arcEnd : arcEnds) {
-      if ((lines[i]->points_[0] - arcEnd.first).length() < tol) {
+      if ((line1->points_[0] - arcEnd.first).length() < tol) {
         attached0 = true;
       }
-      if ((lines[i]->points_[1] - arcEnd.first).length() < tol) {
+      if ((line1->points_[1] - arcEnd.first).length() < tol) {
         attached1 = true;
       }
-      if ((lines[i]->points_[0] - arcEnd.second).length() < tol) {
+      if ((line1->points_[0] - arcEnd.second).length() < tol) {
         attached0 = true;
       }
-      if ((lines[i]->points_[1] - arcEnd.second).length() < tol) {
+      if ((line1->points_[1] - arcEnd.second).length() < tol) {
         attached1 = true;
       }
     }
     if (!attached0 || !attached1) {
-      for (size_t j = 0; j < lines.size(); ++j) {
-        if (i == j || !lines[i] || !lines[j]) {
+      for (auto &line2 : lines) {
+        if (line1 == line2 || !line1 || !line2) {
           continue;
         }
-        if ((lines[i]->points_[0] - lines[j]->points_[0]).length() < tol) {
+        if ((line1->points_[0] - line2->points_[0]).length() < tol) {
           attached0 = true;
         }
-        if ((lines[i]->points_[0] - lines[j]->points_[1]).length() < tol) {
+        if ((line1->points_[0] - line2->points_[1]).length() < tol) {
           attached0 = true;
         }
-        if ((lines[i]->points_[1] - lines[j]->points_[0]).length() < tol) {
+        if ((line1->points_[1] - line2->points_[0]).length() < tol) {
           attached1 = true;
         }
-        if ((lines[i]->points_[1] - lines[j]->points_[1]).length() < tol) {
+        if ((line1->points_[1] - line2->points_[1]).length() < tol) {
           attached1 = true;
         }
       }
@@ -607,7 +607,7 @@ void DrawMolMCHLasso::fixOrphanLines(
       break;
     }
     if (!attached0 || !attached1) {
-      lines[i].reset();
+      line1.reset();
     }
   }
   lines.erase(std::remove_if(

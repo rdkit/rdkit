@@ -44,7 +44,7 @@ namespace {
 // The hand-drawn pictures will fail this frequently due to the use
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
-static const bool DELETE_WITH_GOOD_HASH = false;
+static const bool DELETE_WITH_GOOD_HASH = true;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
 // These values are for a build with FreeType, so expect them all to be
