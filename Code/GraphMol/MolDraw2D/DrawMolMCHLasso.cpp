@@ -567,20 +567,25 @@ void DrawMolMCHLasso::fixOrphanLines(
   for (const auto &arc : arcs) {
     arcEnds.push_back(getArcEnds(*arc));
   }
-  static const double tol = 0.05;
+  // This tolerance was arrived at empirically.  It's enough
+  // to fix lasso_highlights_7.svg without breaking it and
+  // lasso_highlights_6.svg.  A slightly tighter tolerance
+  // (e.g. 0.003) causes green lines associated with bonds 9
+  // and 12 to be removed incorrectly in both of these.
+  static const double tol = 0.005;
   for (auto &line1 : lines) {
     bool attached0 = false, attached1 = false;
     for (const auto &arcEnd : arcEnds) {
-      if ((line1->points_[0] - arcEnd.first).length() < tol) {
+      if ((line1->points_[0] - arcEnd.first).lengthSq() < tol) {
         attached0 = true;
       }
-      if ((line1->points_[1] - arcEnd.first).length() < tol) {
+      if ((line1->points_[1] - arcEnd.first).lengthSq() < tol) {
         attached1 = true;
       }
-      if ((line1->points_[0] - arcEnd.second).length() < tol) {
+      if ((line1->points_[0] - arcEnd.second).lengthSq() < tol) {
         attached0 = true;
       }
-      if ((line1->points_[1] - arcEnd.second).length() < tol) {
+      if ((line1->points_[1] - arcEnd.second).lengthSq() < tol) {
         attached1 = true;
       }
     }
@@ -589,22 +594,22 @@ void DrawMolMCHLasso::fixOrphanLines(
         if (line1 == line2 || !line1 || !line2) {
           continue;
         }
-        if ((line1->points_[0] - line2->points_[0]).length() < tol) {
+        if ((line1->points_[0] - line2->points_[0]).lengthSq() < tol) {
           attached0 = true;
         }
-        if ((line1->points_[0] - line2->points_[1]).length() < tol) {
+        if ((line1->points_[0] - line2->points_[1]).lengthSq() < tol) {
           attached0 = true;
         }
-        if ((line1->points_[1] - line2->points_[0]).length() < tol) {
+        if ((line1->points_[1] - line2->points_[0]).lengthSq() < tol) {
           attached1 = true;
         }
-        if ((line1->points_[1] - line2->points_[1]).length() < tol) {
+        if ((line1->points_[1] - line2->points_[1]).lengthSq() < tol) {
           attached1 = true;
+        }
+        if (attached0 && attached1) {
+          break;
         }
       }
-    }
-    if (attached0 && attached1) {
-      break;
     }
     if (!attached0 || !attached1) {
       line1.reset();
