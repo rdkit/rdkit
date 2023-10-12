@@ -645,8 +645,8 @@ inline bool ringFusionCheck(const std::uint32_t c1[], const std::uint32_t c2[],
   there is no missing fused bond. This is OK for permissive mode.
   In strict mode, we also need to check against 1-methylbicyclo[3.1.0]hexane,
   where there is indeed a missing fused bond.
-  Basically, in permissive mode one of two pairs is allowed to fail the
-  match. In strict mode, none is.
+  Basically, in permissive mode one of two molecules is allowed to fail the
+  match, but not both. In strict mode, none is.
   */
   bool res = true;
   if (boost::num_edges(target) < boost::num_edges(query)) {

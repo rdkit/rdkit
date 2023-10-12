@@ -3078,6 +3078,18 @@ void testGitHub6773() {
   }
 }
 
+void testBondCompareCompleteRingsOnly() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "test CompleteRingsOnly should work also on unsubstituted fused systems" << std::endl;
+  std::vector<ROMOL_SPTR> mols{"C1CCCC2CCCCC12"_smiles,
+                                "C1CCC2CCCC12"_smiles};
+  MCSParameters p;
+  p.BondCompareParameters.CompleteRingsOnly = true;
+  auto mcs = findMCS(mols, &p);
+  TEST_ASSERT(mcs.NumAtoms == 0);
+  TEST_ASSERT(mcs.NumBonds == 0);
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -3172,6 +3184,7 @@ int main(int argc, const char* argv[]) {
   testGitHub3965();
   testGitHub6578();
   testGitHub6773();
+  testBondCompareCompleteRingsOnly();
 #endif
 
   unsigned long long t1 = nanoClock();

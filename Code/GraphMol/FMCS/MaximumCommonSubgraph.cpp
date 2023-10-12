@@ -446,17 +446,18 @@ bool checkIfRingsAreClosed(const Seed& fs, bool noLoneRingAtoms) {
   if (!ri->numRings()) {
     return true;
   }
-  boost::dynamic_bitset<> fragmentBonds(om.getNumBonds());
-  boost::dynamic_bitset<> fragmentRings(ri->numRings());
+  boost::dynamic_bitset<> mcsBonds(om.getNumBonds());
+  boost::dynamic_bitset<> mcsNonFusedRings(ri->numRings());
+  boost::dynamic_bitset<> mcsFusedRings(ri->numRings());
   for (const auto& bond : fs.MoleculeFragment.Bonds) {
     auto bi = bond->getIdx();
-    fragmentBonds.set(bi);
+    mcsBonds.set(bi);
     if (ri->numBondRings(bi) == 1) {
-      fragmentRings.set(ri->bondMembers(bi).front());
+      mcsNonFusedRings.set(ri->bondMembers(bi).front());
     }
   }
-  for (unsigned int ringIdx = 0; ringIdx < fragmentRings.size(); ++ringIdx) {
-    if (!fragmentRings.test(ringIdx)) {
+  for (unsigned int ringIdx = 0; ringIdx < mcsNonFusedRings.size(); ++ringIdx) {
+    if (!mcsNonFusedRings.test(ringIdx)) {
       continue;
     }
     for (const auto& bi : ri->bondRings().at(ringIdx)) {
@@ -464,12 +465,12 @@ bool checkIfRingsAreClosed(const Seed& fs, bool noLoneRingAtoms) {
       for (unsigned int memberOf : ri->bondMembers(bi)) {
         if (memberOf == ringIdx) {
           keepBond = true;
-        } else if (fragmentRings.test(memberOf)) {
+        } else if (mcsNonFusedRings.test(memberOf)) {
           keepBond = false;
           break;
         }
       }
-      if (keepBond && !fragmentBonds.test(bi)) {
+      if (keepBond && !mcsBonds.test(bi)) {
         return false;
       }
     }
@@ -480,12 +481,36 @@ bool checkIfRingsAreClosed(const Seed& fs, bool noLoneRingAtoms) {
       const auto& ringIndices = ri->atomMembers(ai);
       if (!ringIndices.empty() &&
           !std::any_of(ringIndices.begin(), ringIndices.end(),
-                       [&fragmentRings](const auto& ringIdx) {
-                         return fragmentRings.test(ringIdx);
+                       [&mcsNonFusedRings](const auto& ringIdx) {
+                         return mcsNonFusedRings.test(ringIdx);
                        })) {
         return false;
       }
     }
+  }
+  if (mcsNonFusedRings.none()) {
+    for (const auto& bond : fs.MoleculeFragment.Bonds) {
+      auto bi = bond->getIdx();
+      if (ri->numBondRings(bi) > 1) {
+        for (auto ringIdx : ri->bondMembers(bi)) {
+          mcsFusedRings.set(ringIdx);
+        }
+      }
+    }
+  }
+  if (mcsFusedRings.any()) {
+    for (unsigned int ringIdx = 0; ringIdx < mcsFusedRings.size(); ++ringIdx) {
+      if (!mcsFusedRings.test(ringIdx)) {
+        continue;
+      }
+      const auto &ringBondIndices = ri->bondRings().at(ringIdx);
+      if (std::all_of(ringBondIndices.begin(), ringBondIndices.end(), [&mcsBonds](const auto &bi) {
+        return mcsBonds.test(bi);
+      })) {
+        return true;
+      }
+    }
+    return false;
   }
   return true;
 }
