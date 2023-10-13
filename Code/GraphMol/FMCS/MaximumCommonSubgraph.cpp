@@ -754,7 +754,10 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
   ROMOL_SPTR molSptr(mol);
   const auto ri = mcsIdx.QueryMolecule->getRingInfo();
   boost::dynamic_bitset<> mcsRingIsComplete;
-  if (Parameters.BondCompareParameters.MatchFusedRingsStrict) {
+  bool needAtomRingQueries =
+      (Parameters.AtomCompareParameters.RingMatchesRingOnly ||
+       Parameters.BondCompareParameters.MatchFusedRingsStrict);
+  if (needAtomRingQueries) {
     mcsRingIsComplete.resize(ri->numRings(), true);
     boost::dynamic_bitset<> queryBondInMcs(mcsIdx.QueryMolecule->getNumBonds());
     for (const auto& bond : mcsIdx.Bonds) {
@@ -795,29 +798,30 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
         }
       }
     }
-    if (Parameters.AtomCompareParameters.RingMatchesRingOnly ||
-        Parameters.BondCompareParameters.MatchFusedRingsStrict) {
-      unsigned int numCompleteRings = 0;
-      if (Parameters.BondCompareParameters.MatchFusedRingsStrict &&
-          numAtomRings > 1) {
-        const auto& ringIndicesAtomIsMemberOf = ri->atomMembers(queryAtomIdx);
-        numCompleteRings = std::count_if(
-            ringIndicesAtomIsMemberOf.begin(), ringIndicesAtomIsMemberOf.end(),
-            [&mcsRingIsComplete](const auto& ringIdx) {
-              return mcsRingIsComplete.test(ringIdx);
-            });
-      }
-      if (Parameters.AtomCompareParameters.RingMatchesRingOnly ||
-          numCompleteRings > 1) {
-        QueryAtom::QUERYATOM_QUERY* q;
-        q = makeAtomInRingQuery();
+    if (needAtomRingQueries) {
+      const auto& ringIndicesAtomIsMemberOf = ri->atomMembers(queryAtomIdx);
+      auto numCompleteRings = std::count_if(
+          ringIndicesAtomIsMemberOf.begin(), ringIndicesAtomIsMemberOf.end(),
+          [&mcsRingIsComplete](const auto& ringIdx) {
+            return mcsRingIsComplete.test(ringIdx);
+          });
+      if (Parameters.AtomCompareParameters.RingMatchesRingOnly &&
+          !numCompleteRings) {
+        auto q = makeAtomInRingQuery();
         q->setNegation(!numAtomRings);
         a.expandQuery(q, Queries::COMPOSITE_AND, true);
-        if (numCompleteRings > 1) {
-          q = makeAtomInNRingsQuery(1);
-          q->setNegation(true);
-          a.expandQuery(q, Queries::COMPOSITE_AND, true);
-        }
+      } else if (Parameters.BondCompareParameters.MatchFusedRingsStrict &&
+                 numAtomRings == 1 && numCompleteRings == 1) {
+        auto ringSize =
+            ri->atomRings().at(ringIndicesAtomIsMemberOf.front()).size();
+        auto q = new ATOM_OR_QUERY;
+        q->setDescription("AtomOr");
+        q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(
+            makeAtomMinRingSizeQuery(ringSize)));
+        auto q2 = makeAtomInNRingsQuery(1);
+        q2->setNegation(true);
+        q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(q2));
+        a.expandQuery(q, Queries::COMPOSITE_AND, true);
       }
     }
     mol->addAtom(&a, true, false);
