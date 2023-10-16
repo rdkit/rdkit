@@ -504,14 +504,18 @@ void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
   obj.AddMember("atoms", rjAtoms, doc.GetAllocator());
 
   rj::Value rjBonds(rj::kArrayType);
+  std::vector<int> invMatch(q_mol.getNumAtoms(), -1);
+  for (const auto &pair : match) {
+    invMatch[pair.first] = &pair - &match.front();
+  }
   for (const auto qbond : q_mol.bonds()) {
-    unsigned int beginIdx = qbond->getBeginAtomIdx();
-    unsigned int endIdx = qbond->getEndAtomIdx();
-    if (beginIdx >= match.size() || endIdx >= match.size()) {
+    auto beginIdx = invMatch.at(qbond->getBeginAtomIdx());
+    auto endIdx = invMatch.at(qbond->getEndAtomIdx());
+    if (beginIdx == -1 || endIdx == -1) {
       continue;
     }
-    unsigned int idx1 = match[beginIdx].second;
-    unsigned int idx2 = match[endIdx].second;
+    unsigned int idx1 = match.at(beginIdx).second;
+    unsigned int idx2 = match.at(endIdx).second;
     const auto bond = d_mol.getBondBetweenAtoms(idx1, idx2);
     if (bond != nullptr) {
       rjBonds.PushBack(bond->getIdx(), doc.GetAllocator());
