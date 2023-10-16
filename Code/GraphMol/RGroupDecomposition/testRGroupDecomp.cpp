@@ -3926,7 +3926,7 @@ void testTautomerCore() {
     CHECK_RGROUP(it, expected2[i]);
   }
 
-  auto core3 = R"CTAB("
+  auto core3 = R"CTAB(
   Mrv2008 08072313382D          
 
   9  9  0  0  0  0            999 V2000
@@ -3967,6 +3967,63 @@ M  END
   }
 }
 
+void testStereoBondBug() {
+  auto core = R"CTAB(
+  ChemDraw10112320582D
+
+ 12 12  0  0  0  0  0  0  0  0999 V2000
+   -0.7248   -0.8250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0103   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0103    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7042    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4186    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1331    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4186   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1331   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7042   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4393   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1331   -0.8250    0.0000 R1  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4393    0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0        0
+  2  3  2  0        0
+  3  4  1  0        0
+  4  5  2  0        0
+  5  6  1  0        0
+  5  7  1  0        0
+  7  8  1  0        0
+  7  9  2  0        0
+  2  9  1  0        0
+  1 10  1  0        0
+ 10 11  1  0        0
+ 10 12  2  0        0
+M  END
+)CTAB"_ctab;
+  auto mol = "C\\C=C\\C(=O)NC1=CC=C(C)C(C)=C1"_smiles;
+
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  params.allowMultipleRGroupsOnUnlabelled = true;
+  params.onlyMatchAtRGroups = false;
+  params.doEnumeration = false;
+
+  const char *expected[] = {
+      "Core:Fc1ccc([*:2])cc1Cl R2:C[*:2]",
+      "Core:Fc1ccc(Cl)cc1[*:1] R1:CC[*:1]"};
+
+  RGroupDecomposition decomp(*core, params);
+  const auto add11 = decomp.add(*mol);
+  TEST_ASSERT(add11 == 0);
+  decomp.process();
+  auto rows = decomp.getRGroupsAsRows();
+  auto decomp_core = rows[0]["Core"];
+  auto block1 = MolToMolBlock(*decomp_core);
+  auto decomp_r1 = rows[0]["R1"];
+  auto block2 = MolToMolBlock(*decomp_r1);
+
+  std::cerr << "Hello" << std::endl;
+
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -3974,6 +4031,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
+  testStereoBondBug();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
