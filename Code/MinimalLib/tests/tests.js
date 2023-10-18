@@ -2428,6 +2428,42 @@ function test_mcs() {
         assert(mcs.smarts.includes('[#6]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[#7]'));
         assert(mcs.smarts.includes('[#7]-[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6]'));
     }
+    {
+        const smiArray = [
+            "C1CC1",
+            "c1ccccc1",
+        ];
+        let molList;
+        let mcs;
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs(molList, JSON.stringify({ CompleteRingsOnly: true }));
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(!mcs.canceled);
+        assert(!mcs.numAtoms);
+        assert(!mcs.numBonds);
+        assert(!mcs.smarts);
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs(molList, JSON.stringify({ CompleteRingsOnly: true, StoreAll: true }));
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(!mcs.canceled);
+        assert(!mcs.numAtoms);
+        assert(!mcs.numBonds);
+        assert(!mcs.smarts.length);
+    }
 }
 
 function test_get_num_atoms_bonds() {
