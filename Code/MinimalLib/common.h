@@ -33,6 +33,7 @@
 #include <External/AvalonTools/AvalonTools.h>
 #endif
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/Depictor/DepictUtils.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
@@ -503,14 +504,18 @@ void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
   obj.AddMember("atoms", rjAtoms, doc.GetAllocator());
 
   rj::Value rjBonds(rj::kArrayType);
+  std::vector<int> invMatch(q_mol.getNumAtoms(), -1);
+  for (const auto &pair : match) {
+    invMatch[pair.first] = &pair - &match.front();
+  }
   for (const auto qbond : q_mol.bonds()) {
-    unsigned int beginIdx = qbond->getBeginAtomIdx();
-    unsigned int endIdx = qbond->getEndAtomIdx();
-    if (beginIdx >= match.size() || endIdx >= match.size()) {
+    auto beginIdx = invMatch.at(qbond->getBeginAtomIdx());
+    auto endIdx = invMatch.at(qbond->getEndAtomIdx());
+    if (beginIdx == -1 || endIdx == -1) {
       continue;
     }
-    unsigned int idx1 = match[beginIdx].second;
-    unsigned int idx2 = match[endIdx].second;
+    unsigned int idx1 = match.at(beginIdx).second;
+    unsigned int idx2 = match.at(endIdx).second;
     const auto bond = d_mol.getBondBetweenAtoms(idx1, idx2);
     if (bond != nullptr) {
       rjBonds.PushBack(bond->getIdx(), doc.GetAllocator());
@@ -864,198 +869,43 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
   if (!templateMol.getNumConformers()) {
     return res;
   }
-  constexpr int MAX_MATCHES = 1000;
-  constexpr double RMSD_THRESHOLD = 1.e-2;
-  constexpr double MSD_THRESHOLD = RMSD_THRESHOLD * RMSD_THRESHOLD;
+  RDDepict::ConstrainedDepictionParams p;
   bool useCoordGen = false;
-  bool allowRGroups = false;
-  bool acceptFailure = true;
-  bool alignOnly = false;
+  std::string referenceSmarts;
   if (details_json && strlen(details_json)) {
     std::istringstream ss;
     ss.str(details_json);
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ss, pt);
     LPT_OPT_GET(useCoordGen);
-    LPT_OPT_GET(allowRGroups);
-    LPT_OPT_GET(acceptFailure);
-    LPT_OPT_GET(alignOnly);
+    LPT_OPT_GET(referenceSmarts);
+    LPT_OPT_GET2(p, allowRGroups);
+    LPT_OPT_GET2(p, acceptFailure);
+    LPT_OPT_GET2(p, alignOnly);
   }
-  MatchVectType match;
   int confId = -1;
-  std::unique_ptr<Conformer> origConformer;
-  std::unique_ptr<ROMol> templateMolAdj;
+  MatchVectType match;
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   bool oprefer = RDDepict::preferCoordGen;
   RDDepict::preferCoordGen = useCoordGen;
 #endif
-  // store the original conformer so it can be restored
-  // if alignment fails and acceptFailure is false
-  if (!acceptFailure && mol.getNumConformers()) {
-    origConformer.reset(new Conformer(mol.getConformer()));
+  std::unique_ptr<ROMol> refPattern;
+  if (!referenceSmarts.empty()) {
+    try {
+      refPattern.reset(SmartsToMol(referenceSmarts));
+    } catch (...) {
+    }
   }
-  if (alignOnly) {
-    std::vector<MatchVectType> matches;
-    std::unique_ptr<ROMol> molHs;
-    ROMol *prbMol = &mol;
-    if (allowRGroups) {
-      auto atoms = templateMol.atoms();
-      allowRGroups = std::any_of(atoms.begin(), atoms.end(),
-                                 isAtomTerminalRGroupOrQueryHydrogen);
-    }
-    if (allowRGroups) {
-      molHs.reset(MolOps::addHs(mol));
-      prbMol = molHs.get();
-      auto queryParams = RDKit::MolOps::AdjustQueryParameters::noAdjustments();
-      queryParams.adjustSingleBondsToDegreeOneNeighbors = true;
-      queryParams.adjustSingleBondsBetweenAromaticAtoms = true;
-      templateMolAdj.reset(
-          RDKit::MolOps::adjustQueryProperties(templateMol, &queryParams));
-    }
-    const ROMol &templateMolRef =
-        templateMolAdj ? *templateMolAdj : templateMol;
-    if (SubstructMatch(*prbMol, templateMolRef, matches, false)) {
-      if (allowRGroups) {
-        matches = sortMatchesByDegreeOfCoreSubstitution(*prbMol, templateMolRef,
-                                                        matches);
-        int maxMatchedHeavies = -1;
-        std::vector<MatchVectType> prunedMatches;
-        prunedMatches.reserve(matches.size());
-        for (const auto &match : matches) {
-          int nMatchedHeavies = 0;
-          MatchVectType prunedMatch;
-          prunedMatch.reserve(match.size());
-          for (const auto &pair : match) {
-            const auto templateAtom = templateMolRef.getAtomWithIdx(pair.first);
-            const auto prbAtom = prbMol->getAtomWithIdx(pair.second);
-            if (isAtomTerminalRGroupOrQueryHydrogen(templateAtom)) {
-              if (prbAtom->getAtomicNum() == 1) {
-                continue;
-              }
-              ++nMatchedHeavies;
-            }
-            prunedMatch.push_back(std::move(pair));
-          }
-          if (nMatchedHeavies < maxMatchedHeavies) {
-            break;
-          } else {
-            prunedMatches.push_back(std::move(prunedMatch));
-            maxMatchedHeavies = nMatchedHeavies;
-          }
-        }
-        matches = std::move(prunedMatches);
-      }
-      std::for_each(matches.begin(), matches.end(), [](auto &match) {
-        std::for_each(match.begin(), match.end(),
-                      [](auto &pair) { std::swap(pair.first, pair.second); });
-      });
-      if (!mol.getNumConformers()) {
-        RDDepict::compute2DCoords(mol);
-      }
-      RDGeom::Transform3D trans;
-      MolAlign::getBestAlignmentTransform(mol, templateMolRef, trans, match,
-                                          confId, confId, matches, MAX_MATCHES);
-      std::for_each(match.begin(), match.end(),
-                    [](auto &pair) { std::swap(pair.first, pair.second); });
-      MolTransforms::transformConformer(mol.getConformer(), trans);
-      invertWedgingIfMolHasFlipped(mol, trans);
-    } else if (acceptFailure) {
-      RDDepict::compute2DCoords(mol);
-      clearMolBlockWedgingInfo(mol);
-    }
-  } else {
-    const ROMol *refPattern = nullptr;
-    // always accept failure in the original call because
-    // we detect it afterwards and, in case, restore the
-    // original conformation
-    const bool acceptOrigFailure = true;
-    std::unique_ptr<ROMol> molOrig;
-    if (mol.getNumConformers()) {
-      molOrig.reset(new ROMol(mol));
-    }
+  try {
     match = RDDepict::generateDepictionMatching2DStructure(
-        mol, templateMol, confId, refPattern, acceptOrigFailure, false,
-        allowRGroups);
-    // we need to clear the existing wedging information if:
-    // 1. there is no match and we accept failure; this means that
-    //    we rebuild coordinates from scratch, hence pre-existing
-    //    wedging info is not valid anymore
-    // 2. there is a match
-    // 3. the original molecule has no coordinates to start with
-    //    (in that case it should already have no wedging info either, anyway)
-    // If there is no match and we do not accept failure, we keep
-    // existing coordinates and hence also keep the wedging info
-    bool shouldNeverClearWedgingInfo = match.empty() && !acceptFailure;
-    bool shouldClearWedgingInfo = (match.empty() && acceptFailure) || !molOrig;
-    if (!shouldNeverClearWedgingInfo) {
-      if (!shouldClearWedgingInfo) {
-        std::set<unsigned int> molMatchIndices;
-        std::transform(match.begin(), match.end(),
-                       std::inserter(molMatchIndices, molMatchIndices.begin()),
-                       [](const auto &pair) { return pair.second; });
-        // if any of the bonds that have wedging information from the molblock
-        // has at least one atom which is not part of the scaffold, we cannot
-        // preserve wedging information
-        auto molBonds = mol.bonds();
-        shouldClearWedgingInfo = std::any_of(
-            molBonds.begin(), molBonds.end(), [&molMatchIndices](const auto b) {
-              return ((b->hasProp(common_properties::_MolFileBondStereo) ||
-                       b->hasProp(common_properties::_MolFileBondCfg)) &&
-                      (!molMatchIndices.count(b->getBeginAtomIdx()) ||
-                       !molMatchIndices.count(b->getEndAtomIdx())));
-            });
-      }
-      if (!shouldClearWedgingInfo) {
-        // check that scaffold coordinates have not changed, which may
-        // happen when using CoordGen
-        const auto &molPos = mol.getConformer().getPositions();
-        const auto &templatePos = templateMol.getConformer().getPositions();
-        shouldClearWedgingInfo = std::any_of(
-            match.begin(), match.end(),
-            [&molPos, &templatePos, MSD_THRESHOLD](const auto &pair) {
-              return (molPos.at(pair.second) - templatePos.at(pair.first))
-                         .lengthSq() > MSD_THRESHOLD;
-            });
-      }
-      // final check: we still might need to invert wedging if the molecule
-      // has flipped to match the scaffold
-      if (!shouldClearWedgingInfo) {
-        RDGeom::Transform3D trans;
-        MatchVectType identityMatch(match.size());
-        std::transform(match.begin(), match.end(), identityMatch.begin(),
-                       [](const auto &pair) {
-                         return std::make_pair(pair.second, pair.second);
-                       });
-        auto rmsd = MolAlign::getAlignmentTransform(
-            *molOrig, mol, trans, confId, confId, &identityMatch);
-        // this should not happen as we checked that previously, but we are
-        // notoriously paranoid
-        if (rmsd > RMSD_THRESHOLD) {
-          shouldClearWedgingInfo = true;
-        } else {
-          invertWedgingIfMolHasFlipped(mol, trans);
-        }
-      }
-    }
-    if (shouldClearWedgingInfo) {
-      clearMolBlockWedgingInfo(mol);
-    }
+        mol, templateMol, confId, refPattern.get(), p);
+  } catch (...) {
   }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = oprefer;
 #endif
   if (match.empty()) {
-    if (acceptFailure) {
-      res = "{}";
-    } else {
-      if (mol.getNumConformers()) {
-        mol.removeConformer(mol.getConformer().getId());
-      }
-      if (origConformer) {
-        mol.addConformer(origConformer.release());
-      }
-      res = "";
-    }
+    res = (p.acceptFailure ? "{}" : "");
   } else {
     rj::Document doc;
     doc.SetObject();

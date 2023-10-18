@@ -241,6 +241,22 @@ RDKIT_GRAPHMOL_EXPORT void wedgeMolBonds(
 RDKIT_GRAPHMOL_EXPORT void wedgeBond(Bond *bond, unsigned int fromAtomIdx,
                                      const Conformer *conf);
 
+//! Clears existing bond wedging and forces use of atom wedging from MolBlock.
+/*!
+ \param mol: molecule to have its wedges altered
+ */
+RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol);
+//! Remove MolBlock bond wedging information from molecule.
+/*!
+ \param mol: molecule to modify
+ */
+RDKIT_GRAPHMOL_EXPORT void clearMolBlockWedgingInfo(ROMol &mol);
+//! Invert bond wedging information read from a mol block (if present).
+/*!
+ \param mol: molecule to modify
+ */
+RDKIT_GRAPHMOL_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
+
 }  // namespace Chirality
 }  // namespace RDKit
 #endif

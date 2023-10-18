@@ -2062,7 +2062,7 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
     CHECK(m->getBondWithIdx(2)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
     // make sure we end up with a wiggly bond in output mol blocks:
-    reapplyMolBlockWedging(*m);
+    Chirality::reapplyMolBlockWedging(*m);
     auto mb = MolToV3KMolBlock(*m);
     CHECK(mb.find("CFG=2") != std::string::npos);
     // make sure we end up with the wiggly bond in the output CXSMILES:
@@ -2085,7 +2085,7 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
           Atom::ChiralType::CHI_UNSPECIFIED);
 
     // make sure we end up with a wiggly bond in output mol blocks:
-    reapplyMolBlockWedging(*m);
+    Chirality::reapplyMolBlockWedging(*m);
     auto mb = MolToV3KMolBlock(*m);
     CHECK(mb.find("CFG=2") != std::string::npos);
     // make sure we end up with the wiggly bond in the output CXSMILES:
@@ -2119,21 +2119,21 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
     invertMolBlockWedgingInfo(*m);
     CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 1);
-    reapplyMolBlockWedging(*m);
+    Chirality::reapplyMolBlockWedging(*m);
     MolOps::assignChiralTypesFromBondDirs(*m);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CW);
     invertMolBlockWedgingInfo(*m);
     CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 3);
-    reapplyMolBlockWedging(*m);
+    Chirality::reapplyMolBlockWedging(*m);
     MolOps::assignChiralTypesFromBondDirs(*m);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
     clearMolBlockWedgingInfo(*m);
     m->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
     CHECK(!m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
-    reapplyMolBlockWedging(*m);
+    Chirality::reapplyMolBlockWedging(*m);
     MolOps::assignChiralTypesFromBondDirs(*m);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
           Atom::ChiralType::CHI_UNSPECIFIED);
