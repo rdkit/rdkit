@@ -30,29 +30,16 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
 endif()
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
-find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS iostreams REQUIRED)
-if (NOT Boost_USE_STATIC_LIBS)
-   add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
+    set(compressedsupplier CompressedSDMolSupplier.cpp)
 endif()
 set(rdmolfiles_sources rdmolfiles.cpp
                        ForwardSDMolSupplier.cpp ${maesupplier}
-                       SDMolSupplier.cpp TDTMolSupplier.cpp
-                       SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
-                       TDTWriter.cpp CompressedSDMolSupplier.cpp
-                       PDBWriter.cpp
-                       MultithreadedSmilesMolSupplier.cpp
-                       MultithreadedSDMolSupplier.cpp)
-else(RDK_BUILD_COMPRESSED_SUPPLIERS)
-set(rdmolfiles_sources rdmolfiles.cpp
-                       ForwardSDMolSupplier.cpp ${maesupplier}
-                       SDMolSupplier.cpp TDTMolSupplier.cpp
+                       SDMolSupplier.cpp TDTMolSupplier.cpp ${compressedsupplier}
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
                        TDTWriter.cpp
                        PDBWriter.cpp
                        MultithreadedSmilesMolSupplier.cpp
                        MultithreadedSDMolSupplier.cpp)
-
-endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 
 rdkit_python_extension(rdmolfiles
                        ${rdmolfiles_sources}

@@ -452,6 +452,36 @@ if(RDK_USE_BOOST_SERIALIZATION)
     endif()
 endif()
 
+if(RDK_USE_BOOST_IOSTREAMS)
+    set(T_LIBS ${Boost_LIBRARIES})
+    target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_IOSTREAMS)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS iostreams REQUIRED)
+    set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+
+    if (NOT Boost_USE_STATIC_LIBS)
+      target_compile_definitions(rdkit_base INTERFACE -DBOOST_IOSTREAMS_DYN_LINK)
+    endif()
+
+    # deal with zlib
+    if (WIN32)
+      set(T_LIBS ${Boost_LIBRARIES})
+      find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib)
+      set(Boost_LIBRARIES ${T_LIBS} )
+      if(Boost_zlib_FOUND)
+        set(zlib_lib Boost::zlib)
+      endif()
+    else()
+      if(Boost_USE_STATIC_LIBS)
+        # when we're doing static linkage of boost
+        # to also link against zlib (due to iostreams)
+        find_package(ZLIB)
+        set(zlib_lib ${ZLIB_LIBRARIES})
+     endif()
+    endif()
+    set(Boost_LIBRARIES ${Boost_LIBRARIES} ${zlib_lib})
+    target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
+
+endif()
 
 # set the boost include directories and linkage:
 target_include_directories(rdkit_base INTERFACE
