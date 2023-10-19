@@ -61,14 +61,23 @@ void DrawMolMCHLasso::extractAtomColourLists(
     std::vector<DrawColour> &colours,
     std::vector<std::vector<int>> &colourAtoms,
     std::vector<std::vector<int>> &colourLists) const {
+  std::vector<boost::dynamic_bitset<>> inColourAtoms;
   for (const auto &cm : mcHighlightAtomMap_) {
     for (const auto &col : cm.second) {
       auto cpos = std::find(colours.begin(), colours.end(), col);
       if (cpos == colours.end()) {
         colours.push_back(col);
         colourAtoms.push_back(std::vector<int>(1, cm.first));
+        inColourAtoms.push_back(
+            boost::dynamic_bitset<>(drawMol_->getNumAtoms()));
+        inColourAtoms.back().set(cm.first);
       } else {
-        colourAtoms[std::distance(colours.begin(), cpos)].push_back(cm.first);
+        auto ln = std::distance(colours.begin(), cpos);
+        // it's important that each atom is only in the list once - Github6749
+        if (!inColourAtoms[ln][cm.first]) {
+          colourAtoms[ln].push_back(cm.first);
+          inColourAtoms[ln].set(cm.first);
+        }
       }
     }
   }
@@ -137,6 +146,7 @@ void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
   fixIntersectingLines(arcs, lines);
   fixIntersectingArcsAndLines(arcs, lines);
   fixProtrudingLines(lines);
+  fixOrphanLines(arcs, lines);
 
   for (auto &it : arcs) {
     highlights_.push_back(std::move(it));
@@ -146,23 +156,40 @@ void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
   }
 }
 
+namespace {
+double getLassoWidth(const DrawMolMCH *dm, int atNum, int lassoNum) {
+  PRECONDITION(dm, "Needs valid DrawMolMCH")
+  double xrad, yrad;
+  dm->getAtomRadius(atNum, xrad, yrad);
+  // Double the area of the circles for successive lassos.
+  const static double rats[] = {1.0, 1.414, 2, 2.828, 4};
+  if (lassoNum > 4) {
+    // It's going to look horrible, probably, but it's a lot of lassos.
+    return xrad * (1 + lassoNum) * 0.75;
+  } else {
+    return xrad * rats[lassoNum];
+  }
+}
+}  // namespace
+
 // ****************************************************************************
 void DrawMolMCHLasso::extractAtomArcs(
     size_t lassoNum, const RDKit::DrawColour &col,
     const std::vector<int> &colAtoms,
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const {
-  double xradius, yradius;
+  // an empirically derived lineWidth.
+  int lineWidth = 3;
+  bool scaleLineWidth = true;
   for (auto ca : colAtoms) {
     if (ca < 0 || static_cast<unsigned int>(ca) >= drawMol_->getNumAtoms()) {
       // there's an error in the colour map
       continue;
     }
-    getAtomRadius(ca, xradius, yradius);
-    xradius += xradius * lassoNum * 0.5;
-    Point2D radii(xradius, xradius);
+    double lassoWidth = getLassoWidth(this, ca, lassoNum);
+    Point2D radii(lassoWidth, lassoWidth);
     std::vector<Point2D> pts{atCds_[ca], radii};
-    DrawShapeArc *ell = new DrawShapeArc(
-        pts, 0.0, 360.0, drawOptions_.bondLineWidth, true, col, false, ca);
+    DrawShapeArc *ell = new DrawShapeArc(pts, 0.0, 360.0, lineWidth,
+                                         scaleLineWidth, col, false, ca);
     arcs.emplace_back(ell);
   }
 }
@@ -172,6 +199,8 @@ void DrawMolMCHLasso::extractBondLines(
     size_t lassoNum, const RDKit::DrawColour &col,
     const std::vector<int> &colAtoms,
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
+  int lineWidth = 3;
+  bool scaleLineWidth = true;
   if (colAtoms.size() > 1) {
     for (size_t i = 0U; i < colAtoms.size() - 1; ++i) {
       if (colAtoms[i] < 0 ||
@@ -179,20 +208,16 @@ void DrawMolMCHLasso::extractBondLines(
         // there's an error in the colour map.
         continue;
       }
-      double xradiusI, yradiusI;
-      getAtomRadius(colAtoms[i], xradiusI, yradiusI);
-      xradiusI += xradiusI * lassoNum * 0.5;
-      auto dispI = xradiusI * 0.75;
+      auto lassoWidthI = getLassoWidth(this, colAtoms[i], lassoNum);
+      auto dispI = lassoWidthI * 0.75;
       for (size_t j = i + 1; j < colAtoms.size(); ++j) {
         if (colAtoms[j] < 0 ||
             static_cast<unsigned int>(colAtoms[j]) >= drawMol_->getNumAtoms()) {
           // there's an error in the colour map.
           continue;
         }
-        double xradiusJ, yradiusJ;
-        getAtomRadius(colAtoms[j], xradiusJ, yradiusJ);
-        xradiusJ += xradiusJ * lassoNum * 0.5;
-        auto dispJ = xradiusJ * 0.75;
+        auto lassoWidthJ = getLassoWidth(this, colAtoms[j], lassoNum);
+        auto dispJ = lassoWidthJ * 0.75;
         auto bond = drawMol_->getBondBetweenAtoms(colAtoms[i], colAtoms[j]);
         if (bond) {
           if (!mcHighlightBondMap_.empty()) {
@@ -213,14 +238,13 @@ void DrawMolMCHLasso::extractBondLines(
             // less than the radii of the circles (just less, so that they still
             // intersect rather than hitting on the tangent)
             auto mid = (p1 + p2) / 2.0;
-            if ((atCdsI - mid).lengthSq() < xradiusI * xradiusI) {
-              p1 = atCdsI + perp * xradiusI * 0.99 * m;
-              p2 = atCdsJ + perp * xradiusJ * 0.99 * m;
+            if ((atCdsI - mid).lengthSq() < lassoWidthI * lassoWidthI) {
+              p1 = atCdsI + perp * lassoWidthI * 0.99 * m;
+              p2 = atCdsJ + perp * lassoWidthJ * 0.99 * m;
             }
             DrawShapeSimpleLine *pl = new DrawShapeSimpleLine(
-                {p1, p2}, drawOptions_.bondLineWidth,
-                drawOptions_.scaleBondWidth, col, colAtoms[i], colAtoms[j],
-                bond->getIdx(), noDash);
+                {p1, p2}, lineWidth, scaleLineWidth, col, colAtoms[i],
+                colAtoms[j], bond->getIdx(), noDash);
             lines.emplace_back(pl);
           }
         }
@@ -488,7 +512,8 @@ void DrawMolMCHLasso::fixIntersectingArcsAndLines(
 void DrawMolMCHLasso::fixProtrudingLines(
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
   // lasso_highlight_7.svg also had the problem where two lines didn't
-  // intersect, but one protruded beyond the end of the other inside the lasso.
+  // intersect, but one protruded beyond the end of the other inside the
+  // lasso.
   for (auto &line1 : lines) {
     for (auto &line2 : lines) {
       auto d1_0 = (line1->points_[0] - line2->points_[0]).length();
@@ -513,6 +538,89 @@ void DrawMolMCHLasso::fixProtrudingLines(
       }
     }
   }
+}
+
+namespace {
+std::pair<Point2D, Point2D> getArcEnds(const DrawShapeArc &arc) {
+  std::pair<Point2D, Point2D> retVal;
+  // for these purposes, it's always a circle, so just use the x
+  // radius
+  retVal.first.x =
+      arc.points_[0].x + arc.points_[1].x * cos(arc.ang1_ * M_PI / 180.0);
+  retVal.first.y =
+      arc.points_[0].y + arc.points_[1].x * sin(arc.ang1_ * M_PI / 180.0);
+  retVal.second.x =
+      arc.points_[0].x + arc.points_[1].x * cos(arc.ang2_ * M_PI / 180.0);
+  retVal.second.y =
+      arc.points_[0].y + arc.points_[1].x * sin(arc.ang2_ * M_PI / 180.0);
+  return retVal;
+}
+}  // namespace
+void DrawMolMCHLasso::fixOrphanLines(
+    std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
+    std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) {
+  // lasso_highlights_7.svg had a line close to an arc at
+  // one end, but not at the other.  Such lines are clearly
+  // artifacts that need to be removed.  Takes out all lines
+  // that aren't within a tolerance of something at both ends.
+  std::vector<std::pair<Point2D, Point2D>> arcEnds;
+  for (const auto &arc : arcs) {
+    arcEnds.push_back(getArcEnds(*arc));
+  }
+  // This tolerance was arrived at empirically.  It's enough
+  // to fix lasso_highlights_7.svg without breaking it and
+  // lasso_highlights_6.svg.  A slightly tighter tolerance
+  // (e.g. 0.003) causes green lines associated with bonds 9
+  // and 12 to be removed incorrectly in both of these.
+  static const double tol = 0.005;
+  for (auto &line1 : lines) {
+    bool attached0 = false, attached1 = false;
+    for (const auto &arcEnd : arcEnds) {
+      if ((line1->points_[0] - arcEnd.first).lengthSq() < tol) {
+        attached0 = true;
+      }
+      if ((line1->points_[1] - arcEnd.first).lengthSq() < tol) {
+        attached1 = true;
+      }
+      if ((line1->points_[0] - arcEnd.second).lengthSq() < tol) {
+        attached0 = true;
+      }
+      if ((line1->points_[1] - arcEnd.second).lengthSq() < tol) {
+        attached1 = true;
+      }
+    }
+    if (!attached0 || !attached1) {
+      for (auto &line2 : lines) {
+        if (line1 == line2 || !line1 || !line2) {
+          continue;
+        }
+        if ((line1->points_[0] - line2->points_[0]).lengthSq() < tol) {
+          attached0 = true;
+        }
+        if ((line1->points_[0] - line2->points_[1]).lengthSq() < tol) {
+          attached0 = true;
+        }
+        if ((line1->points_[1] - line2->points_[0]).lengthSq() < tol) {
+          attached1 = true;
+        }
+        if ((line1->points_[1] - line2->points_[1]).lengthSq() < tol) {
+          attached1 = true;
+        }
+        if (attached0 && attached1) {
+          break;
+        }
+      }
+    }
+    if (!attached0 || !attached1) {
+      line1.reset();
+    }
+  }
+  lines.erase(std::remove_if(
+                  lines.begin(), lines.end(),
+                  [](const std::unique_ptr<DrawShapeSimpleLine> &line) -> bool {
+                    return !line;
+                  }),
+              lines.end());
 }
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit

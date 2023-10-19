@@ -14,7 +14,7 @@ endif()
 
 rdkit_library(Depictor
               RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp Templates.cpp
-              LINK_LIBRARIES ${RDK_COORDGEN_LIBS} SmilesParse SubstructMatch MolTransforms GraphMol RDGeneral)
+              LINK_LIBRARIES ${RDK_COORDGEN_LIBS} SmilesParse SubstructMatch MolTransforms GraphMol RDGeneral MolAlign)
 target_compile_definitions(Depictor PRIVATE RDKIT_DEPICTOR_BUILD)
 
 rdkit_headers(DepictUtils.h

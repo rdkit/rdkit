@@ -1342,17 +1342,15 @@ struct molops_wrapper {
                 python::return_value_policy<python::manage_new_object>());
 
     docString =
-      "Check to see if the molecule has query Hs, this is normally used on query molecules\n\
+        "Check to see if the molecule has query Hs, this is normally used on query molecules\n\
 such as thos returned from MolFromSmarts\n\
 Example: \n\
       (hasQueryHs, hasUnmergableQueryHs) = HasQueryHs(mol)\n\
 \n\
 if hasUnmergableQueryHs, these query hs cannot be removed by calling\n\
 MergeQueryHs";
-    python::def("HasQueryHs", hasQueryHsHelper,
-                python::arg("mol"),
-		docString.c_str());
-
+    python::def("HasQueryHs", hasQueryHsHelper, python::arg("mol"),
+                docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
@@ -2429,7 +2427,7 @@ ARGUMENTS:\n\
             - molecule: the molecule to update\n\
         \n\
         \n";
-    python::def("ReapplyMolBlockWedging", reapplyMolBlockWedging,
+    python::def("ReapplyMolBlockWedging", Chirality::reapplyMolBlockWedging,
                 docString.c_str());
     docString =
         R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";
