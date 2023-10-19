@@ -707,7 +707,7 @@ class Common:
       r = rdFMCS.FindMCS(ms, params)
     else:
       r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1', ringMatchesRingOnly=True)
-    self.assertEqual(r.smartsString, "[#6&R]1-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@1")
+    self.assertEqual(r.smartsString, "[#6]1-&@[#6]-&@[#6]-&@[#6]-&@1")
     self.assertEqual(r.numAtoms, 4)
     self.assertEqual(r.numBonds, 4)
     if kwargs:
@@ -1164,7 +1164,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(res.numBonds, 11)
     self.assertEqual(
       res.smartsString,
-      "[#6&R]1:&@[#6&R]:&@[#6&R]:&@[#6&R]2:&@[#6&R](:&@[#6&R]:&@1):&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@2"
+      "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2"
     )
 
     params = rdFMCS.MCSParameters()
@@ -1176,7 +1176,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(res.numBonds, 11)
     self.assertEqual(
       res.smartsString,
-      "[#6&R]1:&@[#6&R]:&@[#6&R]:&@[#6&R]2:&@[#6&R](:&@[#6&R]:&@1):&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@2"
+      "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2"
     )
 
   def test19MCS3d(self):
@@ -1241,7 +1241,7 @@ class TestCase(unittest.TestCase):
     mcs = rdFMCS.FindMCS(mols2, params)
     self.assertEqual(mcs.numAtoms, 4)
     self.assertEqual(mcs.numBonds, 4)
-    self.assertEqual(mcs.smartsString, "[#6&R]1-&@[#6&R]-&@[#6&R]-&@1-&!@[#0,#6;!R]")
+    self.assertEqual(mcs.smartsString, "[#6]1-&@[#6]-&@[#6]-&@1-&!@[#0,#6;!R]")
     self.assertGreater(params.ProgressCallback.callCount, 0)
     self.assertGreater(params.FinalMatchChecker.callCount, 0)
 
