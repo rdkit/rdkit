@@ -84,9 +84,9 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     set(coordgen_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         CACHE STRING "CoordGen Include File" FORCE)
     file(GLOB CGSOURCES "${COORDGEN_DIR}/*.cpp")
-    rdkit_library(coordgen ${CGSOURCES} SHARED )
+    rdkit_library(coordgen ${CGSOURCES} SHARED LINK_LIBRARIES MolAlign maeparser )
     install(TARGETS coordgen DESTINATION ${RDKit_LibDir})
-    set(coordgen_LIBRARIES coordgen)
+    set(RDK_COORDGEN_LIBS coordgen CACHE STRING "the external libraries" FORCE)
 
   endif(COORDGEN_FORCE_BUILD OR (NOT coordgen_FOUND))
 
