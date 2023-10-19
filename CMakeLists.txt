@@ -439,24 +439,23 @@ else()
 endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
-    set(T_LIBS ${Boost_LIBRARIES})
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams)
-    if (Boost_SERIALIZATION_LIBRARY)
-      set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-    else()
-      set(Boost_LIBRARIES ${T_LIBS})
-    endif()
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams REQUIRED)
+    target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_SERIALIZATION)
     if(NOT Boost_USE_STATIC_LIBS)
       target_compile_definitions(rdkit_base INTERFACE -DBOOST_SERIALIZATION_DYN_LINK)
     endif()
 endif()
 
+if(RDK_BUILD_MAEPARSER_SUPPORT AND NOT RDK_USE_BOOST_IOSTREAMS)
+    message("Enabling RDK_USE_BOOST_IOSTREAMS because RDK_BUILD_MAEPARSER_SUPPORT is enabled.")
+    set(RDK_USE_BOOST_IOSTREAMS ON)
+endif()
+
 if(RDK_USE_BOOST_IOSTREAMS)
-    set(T_LIBS ${Boost_LIBRARIES})
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_IOSTREAMS)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS iostreams REQUIRED)
-    set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
+    target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
 
     if (NOT Boost_USE_STATIC_LIBS)
       target_compile_definitions(rdkit_base INTERFACE -DBOOST_IOSTREAMS_DYN_LINK)
@@ -464,9 +463,7 @@ if(RDK_USE_BOOST_IOSTREAMS)
 
     # deal with zlib
     if (WIN32)
-      set(T_LIBS ${Boost_LIBRARIES})
       find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib)
-      set(Boost_LIBRARIES ${T_LIBS} )
       if(Boost_zlib_FOUND)
         set(zlib_lib Boost::zlib)
       endif()
@@ -478,10 +475,15 @@ if(RDK_USE_BOOST_IOSTREAMS)
         set(zlib_lib ${ZLIB_LIBRARIES})
      endif()
     endif()
-    set(Boost_LIBRARIES ${Boost_LIBRARIES} ${zlib_lib})
-    target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
-
+    target_link_libraries(rdkit_base INTERFACE ${zlib_lib})
 endif()
+
+if(RDK_USE_BOOST_REGEX)
+  add_definitions(-DRDKIT_USE_BOOST_REGEX)
+  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS regex REQUIRED)
+  target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
+endif()
+
 
 # set the boost include directories and linkage:
 target_include_directories(rdkit_base INTERFACE

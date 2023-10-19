@@ -3,12 +3,6 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
     set (maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
 endif()
 
-if(RDK_USE_BOOST_REGEX)
-  add_definitions(-DRDKIT_USE_BOOST_REGEX)
-  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS regex REQUIRED)
-  set(regex_lib Boost::regex)
-endif()
-
 rdkit_library(FileParsers
               CDXMLParser.cpp
               Mol2FileParser.cpp MolFileParser.cpp
@@ -27,7 +21,7 @@ rdkit_library(FileParsers
               MultithreadedMolSupplier.cpp
               MultithreadedSmilesMolSupplier.cpp
               MultithreadedSDMolSupplier.cpp
-              LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib})
+              LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol ${RDK_MAEPARSER_LIBS})
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
 rdkit_headers(CDXMLParser.h
