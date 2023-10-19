@@ -1553,7 +1553,7 @@ requirement.
   >>> rdFMCS.FindMCS(mols).smartsString
   '[#6]1-[#6]-[#6](-[#6]-1-[#6])-[#6]'
   >>> rdFMCS.FindMCS(mols, ringMatchesRingOnly=True).smartsString
-  '[#6&R]1-&@[#6&R]-&@[#6&R](-&@[#6&R]-&@1)-&@[#6&R]'
+  '[#6]1-&@[#6]-&@[#6](-&@[#6]-&@1)-&@[#6&R]'
   >>> rdFMCS.FindMCS(mols, completeRingsOnly=True).smartsString
   '[#6]1-&@[#6]-&@[#6]-&@[#6]-&@1'
 
