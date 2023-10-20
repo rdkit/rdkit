@@ -731,6 +731,8 @@ M  END
       _reacts = [Chem.MolToSmarts(r) for r in _rxn.GetReactants()]
       _prods = [Chem.MolToSmarts(p) for p in _rxn.GetProducts()]
 
+  @unittest.skipUnless(hasattr(rdChemReactions,'ReactionFromPNGFile'),
+                     "RDKit not built with iostreams support")
   def test_PNGMetadata(self):
     fname = os.path.join(self.dataDir, 'reaction1.smarts.png')
     rxn = rdChemReactions.ReactionFromPNGFile(fname)
