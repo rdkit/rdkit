@@ -617,12 +617,8 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
                               const SubstructMatchParameters &params,
                               std::vector<RecursiveStructureQuery *> &locked) {
   SubstructMatchParameters lparams = params;
-  // NOTE: maxMatches and recursive queries is problematic. To make this really
-  // cover all cases we'd need a separate parameter for the number of possible
-  // recursive matches. We will add that for the 2023.03 release; for now
-  // we can still fix #888 without introducing any new problems using this
-  // heuristic:
-  lparams.maxMatches = std::max(1000u, params.maxMatches);
+  // use the maxRecursiveMatches parameter if it's set, otherwise use maxMatches
+  lparams.maxMatches = params.maxRecursiveMatches;
   lparams.uniquify = false;
   ROMol::ConstAtomIterator atIt;
   for (atIt = query.beginAtoms(); atIt != query.endAtoms(); atIt++) {
@@ -667,6 +663,9 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
           BOOST_LOG(rdErrorLog)
               << "no match found for queryRootAtom" << std::endl;
         }
+      }
+      if (matches.size() == lparams.maxMatches) {
+        break;
       }
     }
     res = matches.size();
