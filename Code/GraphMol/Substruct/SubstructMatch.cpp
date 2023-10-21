@@ -725,9 +725,6 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
   }
 
   // now recurse over our children (these things can be nested)
-  Queries::Query<int, Atom const *, true>::CHILD_VECT_CI childIt;
-  // std::cout << query << " " << query->endChildren()-query->beginChildren() <<
-  // std::endl;
   for (auto childIt = query->beginChildren(); childIt != query->endChildren();
        ++childIt) {
     MatchSubqueries(mol, childIt->get(), params, subqueryMap, locked);
