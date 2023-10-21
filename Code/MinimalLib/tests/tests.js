@@ -2372,7 +2372,7 @@ function test_mcs() {
         let mcs;
         try {
             molList = molListFromSmiArray(smiArray);
-            mcs = RDKitModule.get_mcs(molList, JSON.stringify({
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({
                 RingMatchesRingOnly: true,
                 CompleteRingsOnly: true,
                 BondCompare: 'Any',
@@ -2397,7 +2397,7 @@ function test_mcs() {
         let mcs;
         try {
             molList = molListFromSmiArray(smiArray);
-            mcs = RDKitModule.get_mcs(molList);
+            mcs = RDKitModule.get_mcs_as_json(molList);
         } finally {
             if (molList) {
                 molList.delete();
@@ -2412,7 +2412,7 @@ function test_mcs() {
         assert(mcs.smarts === '[#7]-[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6]');
         try {
             molList = molListFromSmiArray(smiArray);
-            mcs = RDKitModule.get_mcs(molList, JSON.stringify({StoreAll: true}));
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({StoreAll: true}));
         } finally {
             if (molList) {
                 molList.delete();
@@ -2437,7 +2437,7 @@ function test_mcs() {
         let mcs;
         try {
             molList = molListFromSmiArray(smiArray);
-            mcs = RDKitModule.get_mcs(molList, JSON.stringify({ CompleteRingsOnly: true }));
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({ CompleteRingsOnly: true }));
         } finally {
             if (molList) {
                 molList.delete();
@@ -2451,7 +2451,7 @@ function test_mcs() {
         assert(!mcs.smarts);
         try {
             molList = molListFromSmiArray(smiArray);
-            mcs = RDKitModule.get_mcs(molList, JSON.stringify({ CompleteRingsOnly: true, StoreAll: true }));
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({ CompleteRingsOnly: true, StoreAll: true }));
         } finally {
             if (molList) {
                 molList.delete();

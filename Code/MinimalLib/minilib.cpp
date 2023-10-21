@@ -835,7 +835,7 @@ MCSResult getMcsResult(const JSMolList &molList,
 }
 } // namespace
 
-std::string get_mcs(const JSMolList &molList, const std::string &details_json) {
+std::string get_mcs_as_json(const JSMolList &molList, const std::string &details_json) {
   auto mcsResult = getMcsResult(molList, details_json);
   rj::Document doc;
   doc.SetObject();
