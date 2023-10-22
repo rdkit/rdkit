@@ -2363,6 +2363,107 @@ function test_mcs() {
         }
         assert(res.size === 4);
     }
+    {
+        const smiArray = [
+            "c1cccc(c12)ccc(c2)-c3n(CCC[NH3+])c(nn3)SCCc4c[nH]c(c45)cccc5",
+            "c1cccc(c12)sc(c2)-c3n(CCCC[NH3+])c(nn3)SCCc4c[nH]c(c45)cccc5",
+        ];
+        let molList;
+        let mcs;
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({
+                RingMatchesRingOnly: true,
+                CompleteRingsOnly: true,
+                BondCompare: 'Any',
+                AtomCompare: 'Any',
+                Timeout: 1,
+            }));
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(mcs.canceled);
+    }
+    {
+        const smiArray = [
+            "Nc1ccc(cc1)C-Cc1c(N)cccc1",
+            "Nc1ccc(cc1)C=Cc1c(N)cccc1",
+        ];
+        let molList;
+        let mcs;
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs_as_json(molList);
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(!mcs.canceled);
+        assert(!Array.isArray(mcs.smarts));
+        assert(mcs.numAtoms === 8);
+        assert(mcs.numBonds === 8);
+        assert(mcs.smarts === '[#7]-[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6]');
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({StoreAll: true}));
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(!mcs.canceled);
+        assert(Array.isArray(mcs.smarts));
+        assert(mcs.numAtoms === 8);
+        assert(mcs.numBonds === 8);
+        assert(mcs.smarts.length === 2);
+        assert(mcs.smarts.includes('[#6]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[#7]'));
+        assert(mcs.smarts.includes('[#7]-[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6]'));
+    }
+    {
+        const smiArray = [
+            "C1CC1",
+            "c1ccccc1",
+        ];
+        let molList;
+        let mcs;
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({ CompleteRingsOnly: true }));
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(!mcs.canceled);
+        assert(!mcs.numAtoms);
+        assert(!mcs.numBonds);
+        assert(!mcs.smarts);
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({ CompleteRingsOnly: true, StoreAll: true }));
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(!mcs.canceled);
+        assert(!mcs.numAtoms);
+        assert(!mcs.numBonds);
+        assert(!mcs.smarts.length);
+    }
 }
 
 function test_get_num_atoms_bonds() {
