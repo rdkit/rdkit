@@ -835,6 +835,39 @@ MCSResult getMcsResult(const JSMolList &molList,
 }
 } // namespace
 
+std::string get_mcs_as_json(const JSMolList &molList, const std::string &details_json) {
+  auto mcsResult = getMcsResult(molList, details_json);
+  rj::Document doc;
+  doc.SetObject();
+  auto &alloc = doc.GetAllocator();
+  rj::Value rjSmarts;
+  if (!mcsResult.DegenerateSmartsQueryMolDict.empty()) {
+    rjSmarts.SetArray();
+    for (const auto &pair : mcsResult.DegenerateSmartsQueryMolDict) {
+      rjSmarts.PushBack(rj::Value(pair.first.c_str(), pair.first.size()),
+                        alloc);
+    }
+  } else {
+    rjSmarts.SetString(mcsResult.SmartsString.c_str(),
+                       mcsResult.SmartsString.size());
+  }
+  doc.AddMember("smarts", rjSmarts, alloc);
+  rj::Value rjCanceled;
+  rjCanceled.SetBool(mcsResult.Canceled);
+  doc.AddMember("canceled", rjCanceled, alloc);
+  rj::Value rjNumAtoms;
+  rjNumAtoms.SetInt(mcsResult.NumAtoms);
+  doc.AddMember("numAtoms", rjNumAtoms, alloc);
+  rj::Value rjNumBonds;
+  rjNumBonds.SetInt(mcsResult.NumBonds);
+  doc.AddMember("numBonds", rjNumBonds, alloc);
+  rj::StringBuffer buffer;
+  rj::Writer<rj::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  std::string res = buffer.GetString();
+  return res;
+}
+
 std::string get_mcs_as_smarts(const JSMolList &molList,
                const std::string &details_json) {
   auto res = getMcsResult(molList, details_json);
