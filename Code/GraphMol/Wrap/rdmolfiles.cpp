@@ -2075,7 +2075,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("allBondsExplicit") = false,
        python::arg("allHsExplicit") = false),
       "returns a list of SMILES generated using the randomSmiles algorithm");
-
+#ifdef RDK_USE_BOOST_IOSTREAMS
   docString =
       R"DOC(Construct a molecule from metadata in a PNG string.
 
@@ -2121,6 +2121,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg("filename"), python::arg("tag") = PNGData::pklTag,
                python::arg("params") = python::object()),
               "returns a tuple of molecules constructed from the PNG file");
+#endif
 
   docString =
       R"DOC(Construct a molecule from a cdxml file.
@@ -2167,6 +2168,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                python::arg("removeHs") = true),
               docString.c_str());
 
+#ifdef RDK_USE_BOOST_IOSTREAMS
   docString =
       R"DOC(Adds molecular metadata to PNG data read from a file.
 
@@ -2254,7 +2256,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg("png")),
               "Returns a dict with all metadata from the PNG string. Keys are "
               "strings, values are bytes.");
-
+#endif
 /********************************************************
  * MolSupplier stuff
  *******************************************************/

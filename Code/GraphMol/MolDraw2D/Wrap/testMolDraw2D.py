@@ -622,6 +622,8 @@ M  END
       do_a_picture(smi, smarts, 'pyTest3')
 
     @unittest.skipUnless(hasattr(Draw, 'MolDraw2DCairo'), 'Cairo support not enabled')
+    @unittest.skipUnless(hasattr(Chem,'MolFromPNGString'),
+                     "RDKit not built with iostreams support")
     def testPNGMetadata(self):
         m = Chem.MolFromMolBlock('''
   Mrv2014 08172015242D          

@@ -278,6 +278,7 @@ TEST_CASE("GithHub #3119: partial reacting atom detection", "[Reaction][Bug]") {
   }
 }
 
+#ifdef RDK_USE_BOOST_IOSTREAMS
 TEST_CASE("reaction data in PNGs 1", "[Reaction][PNG]") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ChemReactions/testData/";
@@ -371,6 +372,7 @@ TEST_CASE("reaction data in PNGs 1", "[Reaction][PNG]") {
     }
   }
 }
+#endif
 
 TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
   SECTION("reaction parsing inversion logic") {
