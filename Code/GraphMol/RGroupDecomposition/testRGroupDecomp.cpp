@@ -4020,7 +4020,7 @@ M  END
   auto decomp_r1 = rows[0]["R1"];
   auto block2 = MolToMolBlock(*decomp_r1);
 
-  std::cerr << "Hello" << std::endl;
+  std::cerr << "Hello" << std::endl << block1 << std::endl;
 
 }
 

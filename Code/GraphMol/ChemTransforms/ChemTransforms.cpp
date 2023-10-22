@@ -607,14 +607,40 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           dummyAtomMap[newAt] = nbrIdx;
           keepList.push_back(newAt);
           Bond *bnd = connectingBond->copy();
+          if (bnd->getStereo() > Bond::STEREOANY) {
+            bnd->setStereo(Bond::STEREOANY);
+            std::cerr << "hello" << std::endl;
+          }
+          unsigned int disconnectedAtomIdx;
           if (bnd->getBeginAtomIdx() ==
               static_cast<size_t>(mappingInfo.molIndex)) {
+            disconnectedAtomIdx = bnd->getEndAtomIdx();
             bnd->setEndAtomIdx(newAt->getIdx());
           } else {
+            disconnectedAtomIdx = bnd->getBeginAtomIdx();
             bnd->setBeginAtomIdx(newAt->getIdx());
           }
+          assert(nbrIdx == disconnectedAtomIdx);
           newBonds.push_back(bnd);
           allNewBonds.push_back(bnd);
+
+          for (const auto neighbor: newMol->atomNeighbors(sidechainAtom)) {
+            auto bond = newMol->getBondBetweenAtoms(sidechainAtom->getIdx(),
+                                                    neighbor->getIdx());
+            if (bond->getIdx() == connectingBond->getIdx()) {
+              continue;
+            }
+
+            if (bond->getStereo() > Bond::STEREOANY) {
+              std::cerr << "hello" << std::endl;
+              auto &stereoAtoms = bond->getStereoAtoms();
+              for (int i=0; i<stereoAtoms.size(); ++i) {
+                if (stereoAtoms[i] == nbrIdx) {
+                  stereoAtoms[i] = newAt->getIdx();
+                }
+              }
+            }
+          }
 
           // we may be changing the bond ordering at the atom.
           // e.g. replacing the N in C[C@](Cl)(N)F gives an atom ordering of
