@@ -88,6 +88,10 @@ def MultiConfSupplier(filename, propertyName=None, includeStereo=False):
         if [bond.GetBondType() for bond in a.GetBonds()] != [bond.GetBondType() for bond in b.GetBonds()]:
             return False
 
+        # bond stereo
+        if [bond.GetStereo() for bond in a.GetBonds()] != [bond.GetStereo() for bond in b.GetBonds()]:
+            return False
+
         # bonds by index - check first and last are same
         if a.GetBonds()[0].GetIdx() != b.GetBonds()[0].GetIdx() or a.GetBonds()[-1].GetIdx() != b.GetBonds()[
             -1].GetIdx(): \
