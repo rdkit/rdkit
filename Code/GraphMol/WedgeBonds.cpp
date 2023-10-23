@@ -528,6 +528,15 @@ void reapplyMolBlockWedging(ROMol &mol) {
       } else if (bond_dir == 6) {
         b->setBondDir(Bond::BEGINDASH);
       }
+      if (b->getBondType() == Bond::DOUBLE) {
+        if (bond_dir == 0 && b->getStereo() == Bond::STEREOANY) {
+          b->setBondDir(Bond::NONE);
+          b->setStereo(Bond::STEREONONE);
+        } else if (bond_dir == 3) {
+          b->setBondDir(Bond::EITHERDOUBLE);
+          b->setStereo(Bond::STEREOANY);
+        }
+      }
     }
     int cfg = -1;
     if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
@@ -547,6 +556,10 @@ void reapplyMolBlockWedging(ROMol &mol) {
           b->setBondDir(Bond::BEGINDASH);
           break;
       }
+    } else if (bond_dir == -1 && b->getBondType() == Bond::DOUBLE &&
+               b->getStereo() == Bond::STEREOANY) {
+      b->setBondDir(Bond::NONE);
+      b->setStereo(Bond::STEREONONE);
     }
   }
 }
