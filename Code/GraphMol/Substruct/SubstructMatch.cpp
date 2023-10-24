@@ -615,8 +615,7 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
                               const SubstructMatchParameters &params,
                               std::vector<RecursiveStructureQuery *> &locked) {
   SubstructMatchParameters lparams = params;
-  // use the maxRecursiveMatches parameter if it's set, otherwise use maxMatches
-  lparams.maxMatches = params.maxRecursiveMatches;
+  lparams.maxMatches = std::max(params.maxRecursiveMatches, params.maxMatches);
   lparams.uniquify = false;
   for (auto qAtom : query.atoms()) {
     if (qAtom->hasQuery()) {

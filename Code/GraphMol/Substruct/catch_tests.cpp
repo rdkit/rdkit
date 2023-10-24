@@ -482,7 +482,7 @@ TEST_CASE(
 TEST_CASE("Github #6017: add maxRecursiveMatches to SubstructMatchParameters") {
   SECTION("Basics") {
     auto m = "OCC(O)C(O)C(O)C(O)CO"_smiles;
-    auto q = "[$(CO)]C"_smarts;
+    auto q = "[$(CO)][$(CO)]"_smarts;
     REQUIRE(m);
     REQUIRE(q);
     SubstructMatchParameters ps;
@@ -491,7 +491,7 @@ TEST_CASE("Github #6017: add maxRecursiveMatches to SubstructMatchParameters") {
       auto matches = SubstructMatch(*m, *q, ps);
       CHECK(matches.size() == 5);
     }
-    ps.maxRecursiveMatches = 3;
+    ps.maxMatches = 3;
     {
       auto matches = SubstructMatch(*m, *q, ps);
       CHECK(matches.size() == 3);
