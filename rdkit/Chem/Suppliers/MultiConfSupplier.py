@@ -3,6 +3,7 @@ Wrapper function to parse SDFs containing multiple conformers
 """
 
 from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
 
 
 def MultiConfSupplier(filename, propertyName=None, includeStereo=False):
@@ -71,7 +72,7 @@ def MultiConfSupplier(filename, propertyName=None, includeStereo=False):
         # fail fast checks
 
         # number of atoms and bonds
-        if Chem.rdMolDescriptors.CalcMolFormula(a) != Chem.rdMolDescriptors.CalcMolFormula(
+        if rdMolDescriptors.CalcMolFormula(a) != rdMolDescriptors.CalcMolFormula(
                 b) or a.GetNumAtoms() != b.GetNumAtoms() or a.GetNumBonds() != b.GetNumBonds():
             return False
 
