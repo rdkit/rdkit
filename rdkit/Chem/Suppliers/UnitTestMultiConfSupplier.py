@@ -1,4 +1,5 @@
 import unittest
+import os
 from rdkit import RDConfig
 from rdkit.Chem.Suppliers.MultiConfSupplier import MultiConfSupplier
 
