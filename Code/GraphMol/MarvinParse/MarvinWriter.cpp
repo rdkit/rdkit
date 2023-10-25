@@ -374,7 +374,7 @@ class MarvinCMLWriter {
         dir = Bond::NONE;  // other types are ignored
       }
     } else if (bond->getBondType() == Bond::DOUBLE) {
-      if (MolOps::shouldBeACrossedBond(bond)) {
+      if (Chirality::shouldBeACrossedBond(bond)) {
         dir = Bond::BondDir::EITHERDOUBLE;
       }
     }

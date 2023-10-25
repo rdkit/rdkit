@@ -1096,12 +1096,6 @@ RDKIT_GRAPHMOL_EXPORT ROMol *dativeBondsToHaptic(const ROMol &mol);
 //! \overload modifies molecule in place.
 RDKIT_GRAPHMOL_EXPORT void dativeBondsToHaptic(RWMol &mol);
 
-// this function returns the true for a double bond if  it should be shown
-// as a crossed double bond.   It does NOT return true even if the bond is
-// of unknown stereochemistry if any adjacent bond is a sqiggle bond.
-
-RDKIT_GRAPHMOL_EXPORT bool shouldBeACrossedBond(const Bond *bond);
-
 namespace details {
 //! not recommended for use in other code
 RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
