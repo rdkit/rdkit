@@ -104,22 +104,22 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
 }  // namespace detail
 
 bool propertyCompat(const RDProps *r1, const RDProps *r2,
-                    const std::vector<std::string>& properties) {
-  PRECONDITION(r1,"bad RDProps");
-  PRECONDITION(r2,"bad RDProps");
-  
+                    const std::vector<std::string> &properties) {
+  PRECONDITION(r1, "bad RDProps");
+  PRECONDITION(r2, "bad RDProps");
+
   for (const auto &prop : properties) {
     std::string prop1;
     bool hasprop1 = r1->getPropIfPresent<std::string>(prop, prop1);
     std::string prop2;
     bool hasprop2 = r2->getPropIfPresent<std::string>(prop, prop2);
     if (hasprop1 && hasprop2) {
-        if (prop1 != prop2) {
-            return false;
-        }
-    } else if (hasprop1 || hasprop2) {
-        // only one has the property
+      if (prop1 != prop2) {
         return false;
+      }
+    } else if (hasprop1 || hasprop2) {
+      // only one has the property
+      return false;
     }
   }
   return true;
@@ -272,6 +272,7 @@ void updateSubstructMatchParamsFromJSON(SubstructMatchParameters &params,
   PT_OPT_GET(recursionPossible);
   PT_OPT_GET(uniquify);
   PT_OPT_GET(maxMatches);
+  PT_OPT_GET(maxRecursiveMatches);
   PT_OPT_GET(numThreads);
 }
 
@@ -285,6 +286,7 @@ std::string substructMatchParamsToJSON(const SubstructMatchParameters &params) {
   PT_OPT_PUT(recursionPossible);
   PT_OPT_PUT(uniquify);
   PT_OPT_PUT(maxMatches);
+  PT_OPT_PUT(maxRecursiveMatches);
   PT_OPT_PUT(numThreads);
 
   std::stringstream ss;
