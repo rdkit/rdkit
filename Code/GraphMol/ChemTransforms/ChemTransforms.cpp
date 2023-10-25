@@ -606,16 +606,12 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           if (bnd->getStereo() > Bond::STEREOANY) {
             bnd->setStereo(Bond::STEREOANY);
           }
-          unsigned int disconnectedAtomIdx;
           if (bnd->getBeginAtomIdx() ==
               static_cast<size_t>(mappingInfo.molIndex)) {
-            disconnectedAtomIdx = bnd->getEndAtomIdx();
             bnd->setEndAtomIdx(newAt->getIdx());
           } else {
-            disconnectedAtomIdx = bnd->getBeginAtomIdx();
             bnd->setBeginAtomIdx(newAt->getIdx());
           }
-          assert(nbrIdx == disconnectedAtomIdx);
           newBonds.push_back(bnd);
           allNewBonds.push_back(bnd);
 
