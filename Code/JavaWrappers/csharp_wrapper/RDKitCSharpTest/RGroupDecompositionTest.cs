@@ -80,7 +80,6 @@ M  END";
 M  END
 ";
             var core = RWMol.MolFromMolBlock(block);
-
             var rgdParameters = new RGroupDecompositionParameters
             {
                 matchingStrategy = (uint)RGroupMatching.GreedyChunks,

@@ -3992,13 +3992,11 @@ void testStereoBondBug() {
 M  END
 )CTAB"_ctab;
   const auto mol = "C/C=C/C1=CC=CC=C1"_smiles;
-
   RGroupDecompositionParameters params;
   params.matchingStrategy = GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = true;
   params.onlyMatchAtRGroups = false;
   params.doEnumeration = false;
-
   RGroupDecomposition decomp(*core, params);
   const auto add1 = decomp.add(*mol);
   TEST_ASSERT(add1 == 0);
@@ -4036,7 +4034,6 @@ M  END
   5  7  1  0        0
 M  END
 )CTAB"_ctab;
-
   RGroupDecomposition decomp2(*core2, params);
   const auto add2 = decomp2.add(*mol);
   TEST_ASSERT(add2 == 0);
@@ -4072,7 +4069,6 @@ M  END
   6  7  2  0        0
 M  END
 )CTAB"_ctab;
-
   const auto mol3 = "C/C=C1N=CCC=C/1"_smiles;
   RGroupDecomposition decomp3(*core3, params);
   const auto add3 = decomp3.add(*mol3);
@@ -4089,8 +4085,6 @@ M  END
     }
   }
   TEST_ASSERT(foundStereo);
-
-
 }
 
 int main() {
