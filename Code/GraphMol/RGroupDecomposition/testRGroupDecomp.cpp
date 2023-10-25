@@ -3973,7 +3973,7 @@ void testStereoBondBug() {
   BOOST_LOG(rdInfoLog) << "Test that stereo bonds adjacent to the core or attachment atoms are handled correctly"
                        << std::endl;
 
-  auto core = R"CTAB(ACS Document 1996
+  const auto core = R"CTAB(ACS Document 1996
   ChemDraw10242316092D
 
   6  6  0  0  0  0  0  0  0  0999 V2000
@@ -3991,7 +3991,7 @@ void testStereoBondBug() {
   6  1  1  0      
 M  END
 )CTAB"_ctab;
-  auto mol = "C/C=C/C1=CC=CC=C1"_smiles;
+  const auto mol = "C/C=C/C1=CC=CC=C1"_smiles;
 
   RGroupDecompositionParameters params;
   params.matchingStrategy = GreedyChunks;
@@ -4016,7 +4016,7 @@ M  END
   }
   TEST_ASSERT(foundStereo);
 
-  auto core2 = R"CTAB(
+  const auto core2 = R"CTAB(
   ChemDraw10242316432D
 
   7  7  0  0  0  0  0  0  0  0999 V2000
@@ -4051,6 +4051,46 @@ M  END
     }
   }
   TEST_ASSERT(!foundStereo);
+
+  const auto core3 = R"CTAB(
+  ChemDraw10252316142D
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -0.7145    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0        0
+  2  3  1  0        0
+  3  4  1  0        0
+  4  5  2  0        0
+  5  6  1  0        0
+  6  1  1  0        0
+  6  7  2  0        0
+M  END
+)CTAB"_ctab;
+
+  const auto mol3 = "C/C=C1N=CCC=C/1"_smiles;
+  RGroupDecomposition decomp3(*core3, params);
+  const auto add3 = decomp3.add(*mol3);
+  TEST_ASSERT(add3 == 0);
+  decomp3.process();
+  rows = decomp3.getRGroupsAsRows();
+  const auto c1 = rows[0]["Core"];
+  // Check to see that Stereo bond is not present
+  foundStereo = false;
+  for (const auto bond: c1->bonds()) {
+    if (bond->getStereo() > Bond::STEREOANY) {
+      TEST_ASSERT(!foundStereo);
+      foundStereo = true;
+    }
+  }
+  TEST_ASSERT(foundStereo);
+
+
 }
 
 int main() {
