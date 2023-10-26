@@ -4082,6 +4082,7 @@ M  END
     if (bond->getStereo() > Bond::STEREOANY) {
       TEST_ASSERT(!foundStereo);
       foundStereo = true;
+      TEST_ASSERT(bond->getStereoAtoms().size() == 2);
     }
   }
   TEST_ASSERT(foundStereo);
