@@ -6214,7 +6214,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
       // Skip ahead to the ct block
     }
 
-    // The only ct level should be the title and stereo status
+    // The only ct level property should be the title and stereo status
     std::getline(*oss, line);
     CHECK(line.find("i_m_ct_stereo_status") != std::string::npos);
     std::getline(*oss, line);

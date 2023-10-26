@@ -223,7 +223,7 @@ int bondTypeToOrder(const Bond& bond) {
   }
 }
 
-static bool is_double_any_bond(const RDKit::Bond& b)
+static bool isDoubleAnyBond(const RDKit::Bond& b)
 {
     if (b.getBondType() == RDKit::Bond::DOUBLE) {
         if (b.getStereo() == RDKit::Bond::BondStereo::STEREOANY ||
@@ -232,12 +232,12 @@ static bool is_double_any_bond(const RDKit::Bond& b)
         }
 
         // Check v3000/v2000 stereo either props
-        auto has_either_prop = [&b](const auto& prop, const int& either_value) {
+        auto hasPropValue = [&b](const auto& prop, const int& either_value) {
             return b.hasProp(prop) && b.getProp<int>(prop) == either_value;
         };
 
-        return has_either_prop(RDKit::common_properties::_MolFileBondCfg, 2) ||
-               has_either_prop(RDKit::common_properties::_MolFileBondStereo, 3);
+        return hasPropValue(RDKit::common_properties::_MolFileBondCfg, 2) ||
+               hasPropValue(RDKit::common_properties::_MolFileBondStereo, 3);
     }
     return false;
 }
@@ -258,7 +258,7 @@ static void copyAtomNumChirality(const ROMol& mol, mae::Block& stBlock) {
     } else {
       continue;
     }
-    chiralAts++;
+    ++chiralAts;
     std::string propName = mae::CT_CHIRALITY_PROP_PREFIX + std::to_string(chiralAts);
     std::string propVal = std::to_string(at->getIdx() + 1) + "_" + atomNumChirality;
 
@@ -422,7 +422,7 @@ void mapBond(
 
   // Only set double bond stereo if stereo is 'unspecified', otherwise
   // users can calculate double bond stereo from the coordinates.
-  if (is_double_any_bond(bond)) {
+  if (isDoubleAnyBond(bond)) {
     setPropertyValue(bondBlock, MAE_BOND_PARITY, numBonds, idx, 2);
   }
 
