@@ -10,7 +10,8 @@ class TestCase(unittest.TestCase):
         # check ValueError raised when no 3D coordinates supplied
         with self.assertRaises(ValueError):
             suppl = MultiConfSupplier(os.path.join(path, 'read_multi_conf_error.sdf'))
-            mols = [mol for mol in suppl]
+            for mol in suppl:
+                print(mol)
 
         # test function returns expected outputs
         truth = [62, 7, 200]

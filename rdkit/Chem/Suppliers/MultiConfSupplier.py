@@ -93,11 +93,6 @@ def MultiConfSupplier(filename, propertyName=None, includeStereo=False):
         if [bond.GetStereo() for bond in a.GetBonds()] != [bond.GetStereo() for bond in b.GetBonds()]:
             return False
 
-        # bonds by index - check first and last are same
-        if a.GetBonds()[0].GetIdx() != b.GetBonds()[0].GetIdx() or a.GetBonds()[-1].GetIdx() != b.GetBonds()[
-            -1].GetIdx(): \
-                return False
-
         # if all pass, check supplied property
         if propertyName is not None:
             return CalcProp(a, propertyName) == CalcProp(b, propertyName)
@@ -108,6 +103,9 @@ def MultiConfSupplier(filename, propertyName=None, includeStereo=False):
 
     mol = None
     for itm in supplier:
+        if not itm.GetConformer().Is3D():
+            raise ValueError("No 3D coordinates supplied")
+
         if itm is None:
             continue
         if mol is None:
