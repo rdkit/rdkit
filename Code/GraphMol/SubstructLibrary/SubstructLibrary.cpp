@@ -520,9 +520,8 @@ unsigned int SubstructLibrary::countMatches(
 }
 
 unsigned int SubstructLibrary::countMatches(
-    const GeneralizedSubstruct::ExtendedQueryMol &query, unsigned int startIdx,
-    unsigned int endIdx, const SubstructMatchParameters &params,
-    int numThreads) const {
+    const ExtendedQueryMol &query, unsigned int startIdx, unsigned int endIdx,
+    const SubstructMatchParameters &params, int numThreads) const {
   boost::dynamic_bitset<> found(mols->size());
   return internalGetMatches(query, *mols, fps, startIdx, endIdx, params,
                             numThreads, -1, found, searchOrder, nullptr);
@@ -553,10 +552,10 @@ bool SubstructLibrary::hasMatch(const MolBundle &query, unsigned int startIdx,
   return getMatches(query, startIdx, endIdx, params, numThreads, maxResults)
              .size() > 0;
 }
-bool SubstructLibrary::hasMatch(
-    const GeneralizedSubstruct::ExtendedQueryMol &query, unsigned int startIdx,
-    unsigned int endIdx, const SubstructMatchParameters &params,
-    int numThreads) const {
+bool SubstructLibrary::hasMatch(const ExtendedQueryMol &query,
+                                unsigned int startIdx, unsigned int endIdx,
+                                const SubstructMatchParameters &params,
+                                int numThreads) const {
   const int maxResults = 1;
   return getMatches(query, startIdx, endIdx, params, numThreads, maxResults)
              .size() > 0;

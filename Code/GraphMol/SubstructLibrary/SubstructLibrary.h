@@ -54,6 +54,8 @@
 
 namespace RDKit {
 
+using GeneralizedSubstruct::ExtendedQueryMol;
+
 RDKIT_SUBSTRUCTLIBRARY_EXPORT bool SubstructLibraryCanSerialize();
 
 //! Base class API for holding molecules to substructure search.
@@ -745,11 +747,12 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                                        int numThreads = -1,
                                        int maxResults = -1) const;
   //! overload
-  std::vector<unsigned int> getMatches(
-      const GeneralizedSubstruct::ExtendedQueryMol &query,
-      unsigned int startIdx, unsigned int endIdx,
-      const SubstructMatchParameters &params, int numThreads = -1,
-      int maxResults = -1) const;
+  std::vector<unsigned int> getMatches(const ExtendedQueryMol &query,
+                                       unsigned int startIdx,
+                                       unsigned int endIdx,
+                                       const SubstructMatchParameters &params,
+                                       int numThreads = -1,
+                                       int maxResults = -1) const;
 
   //! Return the number of matches for the query
   /*!
@@ -827,7 +830,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                             const SubstructMatchParameters &params,
                             int numThreads = -1) const;
   //! overload
-  unsigned int countMatches(const GeneralizedSubstruct::ExtendedQueryMol &query,
+  unsigned int countMatches(const ExtendedQueryMol &query,
                             unsigned int startIdx, unsigned int endIdx,
                             const SubstructMatchParameters &params,
                             int numThreads = -1) const;
@@ -896,9 +899,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                 unsigned int endIdx, const SubstructMatchParameters &params,
                 int numThreads = -1) const;
   //! overload
-  bool hasMatch(const GeneralizedSubstruct::ExtendedQueryMol &query,
-                unsigned int startIdx, unsigned int endIdx,
-                const SubstructMatchParameters &params,
+  bool hasMatch(const ExtendedQueryMol &query, unsigned int startIdx,
+                unsigned int endIdx, const SubstructMatchParameters &params,
                 int numThreads = -1) const;
   //! Returns the molecule at the given index
   /*!
