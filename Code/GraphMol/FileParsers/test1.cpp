@@ -2475,12 +2475,12 @@ void test3V3K() {
   {
     // radical and valence
     fName = rdbase + "CH.v3k.mol";
-    RWMol *m = MolFileToMol(fName);
+    RWMol *m = MolFileToMol(fName);  // cxsmiles = "[CH] |(0,0,),^5:0|"
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 1);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit());
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     std::string mb = MolToMolBlock(*m, true, -1, true, true);
     delete m;
@@ -2494,7 +2494,7 @@ void test3V3K() {
     TEST_ASSERT(m->getNumAtoms() == 1);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit());
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     delete m;
   }
@@ -3007,10 +3007,7 @@ void testIssue3359739() {
   delete m;
   m = MolBlockToMol(molBlock);
   TEST_ASSERT(m);
-  // NOTE: the following is correct according to the current
-  // state of the code and what the CTAB format supports,
-  // but it's definitely not chemically correct
-  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
   delete m;
 
   BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
@@ -3528,12 +3525,12 @@ void testMolFileTotalValence() {
     RWMol *m1;
     std::string fName;
     fName = rdbase + "CH.mol";
-    m1 = MolFileToMol(fName);
+    m1 = MolFileToMol(fName);  // cxsmi = "[CH] |(-1.2375,2.1509,),^5:0|"
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getNumAtoms() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs() == 1);
-    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     delete m1;
   }
@@ -3566,12 +3563,12 @@ void testMolFileTotalValence() {
     RWMol *m1;
     std::string fName;
     fName = rdbase + "CH.v3k.mol";
-    m1 = MolFileToMol(fName);
+    m1 = MolFileToMol(fName);  // cxsmiles = "[CH] |(0,0,),^5:0|"
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getNumAtoms() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs() == 1);
-    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     delete m1;
   }
