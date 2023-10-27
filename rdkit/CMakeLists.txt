@@ -13,11 +13,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RDPaths.py
   DESTINATION ${RDKit_PythonDir}
   COMPONENT python)
 
-# we aren't testing the sping stuff with pytest, so use the old method for as
-# long as sping is still around
-add_pytest(pythonTestSping
-         ${CMAKE_CURRENT_SOURCE_DIR}/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/sping )
-
 add_pythonpytest(pythonSourceTests ${CMAKE_CURRENT_SOURCE_DIR} )
 
 add_subdirectory(Chem)
