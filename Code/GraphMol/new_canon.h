@@ -287,7 +287,6 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
     }
 
     auto nbrs = dp_atoms[i].nbrIds.get();
-
     unsigned int code = 0;
     for (unsigned j = 0; j < dp_atoms[i].degree; ++j) {
       if (dp_atoms[nbrs[j]].isRingStereoAtom) {

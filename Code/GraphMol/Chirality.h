@@ -252,6 +252,21 @@ RDKIT_GRAPHMOL_EXPORT bool canBeStereoBond(const Bond *bond);
 // this function returns the true for a double bond if  it should be shown
 // as a crossed double bond.   It does NOT return true even if the bond is
 // of unknown stereochemistry if any adjacent bond is a sqiggle bond.
+//! Clears existing bond wedging and forces use of atom wedging from MolBlock.
+/*!
+ \param mol: molecule to have its wedges altered
+ */
+RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol);
+//! Remove MolBlock bond wedging information from molecule.
+/*!
+ \param mol: molecule to modify
+ */
+RDKIT_GRAPHMOL_EXPORT void clearMolBlockWedgingInfo(ROMol &mol);
+//! Invert bond wedging information read from a mol block (if present).
+/*!
+ \param mol: molecule to modify
+ */
+RDKIT_GRAPHMOL_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
 
 RDKIT_GRAPHMOL_EXPORT bool shouldBeACrossedBond(const Bond *bond);
 }  // namespace Chirality

@@ -13,7 +13,6 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 #include <GraphMol/PeriodicTable.h>
-#include <GraphMol/Chirality.h>
 #include <GraphMol/RDKitQueries.h>
 
 #include <vector>

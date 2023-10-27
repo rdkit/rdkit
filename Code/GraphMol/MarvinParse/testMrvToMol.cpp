@@ -267,7 +267,7 @@ class MrvTests {
       localVars.mol = GetMol(molTest);
 
       if (molTest->reapplyMolBlockWedging) {
-        reapplyMolBlockWedging(*localVars.mol);
+        Chirality::reapplyMolBlockWedging(*localVars.mol);
       }
 
       TEST_ASSERT(localVars.mol != nullptr);

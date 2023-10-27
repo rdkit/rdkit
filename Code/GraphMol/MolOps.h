@@ -955,8 +955,8 @@ RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFrom3D(
 RDKIT_GRAPHMOL_EXPORT void assignStereochemistryFrom3D(
     ROMol &mol, int confId = -1, bool replaceExistingTags = true);
 
-//! \brief Use bond directions to assign ChiralTypes to a molecule's atoms
-//! and stereo flags to its bonds
+//! \brief Use bond directions to assign ChiralTypes to a molecule's atoms and
+//! stereo flags to its bonds
 /*!
 
   \param mol                  the molecule of interest
@@ -974,8 +974,8 @@ RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
 //! Sets bond directions based on double bond stereochemistry
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
-//! removes directions from single bonds. Wiggly bonds will have the
-//! property _UnknownStereo set on them
+//! removes directions from single bonds. Wiggly bonds will have the property
+//! _UnknownStereo set on them
 RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol);
 
 //! Assign CIS/TRANS bond stereochemistry tags based on neighboring
@@ -1018,8 +1018,7 @@ RDKIT_GRAPHMOL_EXPORT void assignStereochemistry(
 */
 RDKIT_GRAPHMOL_EXPORT void removeStereochemistry(ROMol &mol);
 
-//! \brief finds bonds that could be cis/trans in a molecule and mark them
-//! as
+//! \brief finds bonds that could be cis/trans in a molecule and mark them as
 //!  Bond::STEREOANY.
 /*!
   \param mol     the molecule of interest
@@ -1048,8 +1047,8 @@ RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol,
 //! molecule's atoms
 /*!
   \param mol                  the molecule of interest
-  \param replaceExistingTags  if this flag is true, any existing atomic
-  chiral tags will be replaced
+  \param replaceExistingTags  if this flag is true, any existing atomic chiral
+                              tags will be replaced
 */
 RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromMolParity(
     ROMol &mol, bool replaceExistingTags = true);
@@ -1069,11 +1068,11 @@ RDKIT_GRAPHMOL_EXPORT bool needsHs(const ROMol &mol);
  * @param mol the molecule of interest
  *
  * One way of showing haptic bonds (such as cyclopentadiene to iron in
- * ferrocene) is to use a dummy atom with a dative bond to the iron atom
- * with the bond labelled with the atoms involved in the organic end of the
- * bond. Another way is to have explicit dative bonds from the atoms of the
- * haptic group to the metal atom.  This function converts the former
- * representation to the latter.
+ * ferrocene) is to use a dummy atom with a dative bond to the iron atom with
+ * the bond labelled with the atoms involved in the organic end of the bond.
+ * Another way is to have explicit dative bonds from the atoms of the haptic
+ * group to the metal atom.  This function converts the former representation to
+ * the latter.
  */
 RDKIT_GRAPHMOL_EXPORT ROMol *hapticBondsToDative(const ROMol &mol);
 
@@ -1085,11 +1084,11 @@ RDKIT_GRAPHMOL_EXPORT void hapticBondsToDative(RWMol &mol);
  *
  * @param mol the molecule of interest
  *
- * Does the reverse of hapticBondsToDative.  If there are multiple
- * contiguous atoms attached by dative bonds to an atom (probably a metal
- * atom), the dative bonds will be replaced by a dummy atom in their centre
- * attached to the (metal) atom by a dative bond, which is labelled with
- * ENDPTS of the atoms that had the original dative bonds.
+ * Does the reverse of hapticBondsToDative.  If there are multiple contiguous
+ * atoms attached by dative bonds to an atom (probably a metal atom), the dative
+ * bonds will be replaced by a dummy atom in their centre attached to the
+ * (metal) atom by a dative bond, which is labelled with ENDPTS of the atoms
+ * that had the original dative bonds.
  */
 RDKIT_GRAPHMOL_EXPORT ROMol *dativeBondsToHaptic(const ROMol &mol);
 
