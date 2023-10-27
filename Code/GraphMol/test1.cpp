@@ -14,7 +14,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
-//#include <boost/log/functions.hpp>
+// #include <boost/log/functions.hpp>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -1680,8 +1680,9 @@ void testGithub6370() {
                            explicitHCount % radicalType)
                               .str();
         RWMol *m = SmilesToMol(smi);
-        TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() ==
-                    valence - explicitHCount);
+        TEST_ASSERT(
+            static_cast<int>(m->getAtomWithIdx(0)->getNumRadicalElectrons()) ==
+            valence - explicitHCount);
       }
     }
   };
@@ -1708,7 +1709,8 @@ void testGithub6370() {
   for (int radicalType = 1; radicalType <= 7; radicalType++) {
     std::string smi = (boost::format("[NH4+] |^%d:0|") % radicalType).str();
     RWMol *m = SmilesToMol(smi);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+    TEST_ASSERT(
+        static_cast<int>(m->getAtomWithIdx(0)->getNumRadicalElectrons()) == 0);
   }
 
   BOOST_LOG(rdErrorLog) << "Finished" << std::endl;
