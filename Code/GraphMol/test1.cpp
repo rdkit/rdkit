@@ -1674,11 +1674,16 @@ void testGithub6370() {
       << std::endl;
 
   auto testRadicalsForSingleAtom = [](const std::string &element, int valence) {
-    for (int explicitHCount = 1; explicitHCount <= valence; explicitHCount++) {
+    for (int explicitHCount = 0; explicitHCount <= valence; explicitHCount++) {
       for (int radicalType = 1; radicalType <= 7; radicalType++) {
-        std::string smi = (boost::format("[%sH%d] |^%d:0|") % element %
-                           explicitHCount % radicalType)
-                              .str();
+        std::string smi;
+        if (explicitHCount == 0) {
+          smi = (boost::format("[%s] |^%d:0|") % element % radicalType).str();
+        } else {
+          smi = (boost::format("[%sH%d] |^%d:0|") % element % explicitHCount %
+                 radicalType)
+                    .str();
+        }
         RWMol *m = SmilesToMol(smi);
         TEST_ASSERT(
             static_cast<int>(m->getAtomWithIdx(0)->getNumRadicalElectrons()) ==
@@ -1689,7 +1694,7 @@ void testGithub6370() {
 
   // Checks CXSMILES in the form of [XHn] |^m:0|
   // where X is the element symbol,
-  // n = 1, ..., valence,
+  // n = 0, ..., valence,
   // m = 1, ..., 7 denotes the radical type
   for (int atomicNum = 2; atomicNum <= 118; atomicNum++) {
     const auto &defaultVs =
