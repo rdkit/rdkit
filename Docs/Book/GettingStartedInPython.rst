@@ -402,7 +402,7 @@ An SDWriter can also be initialized using a file-like object:
 
 .. doctest::
 
-  >>> from rdkit.six import StringIO
+  >>> from io import StringIO
   >>> sio = StringIO()
   >>> with Chem.SDWriter(sio) as w:
   ...   for m in mols: 
