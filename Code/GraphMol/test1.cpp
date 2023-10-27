@@ -22,6 +22,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <sstream>
 #include <iostream>
+#include <boost/format.hpp>
 #include <boost/range/iterator_range.hpp>
 
 using namespace std;
@@ -1666,6 +1667,53 @@ void testHasValenceViolation() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub6370() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test Github 6370: non-physical radical counts being preserved"
+      << std::endl;
+
+  auto testRadicalsForSingleAtom = [](const std::string &element, int valence) {
+    for (int explicitHCount = 1; explicitHCount <= valence; explicitHCount++) {
+      for (int radicalType = 1; radicalType <= 7; radicalType++) {
+        std::string smi = (boost::format("[%sH%d] |^%d:0|") % element %
+                           explicitHCount % radicalType)
+                              .str();
+        RWMol *m = SmilesToMol(smi);
+        TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() ==
+                    valence - explicitHCount);
+      }
+    }
+  };
+
+  // Checks CXSMILES in the form of [XHn] |^m:0|
+  // where X is the element symbol,
+  // n = 1, ..., valence,
+  // m = 1, ..., 7 denotes the radical type
+  for (int atomicNum = 2; atomicNum <= 118; atomicNum++) {
+    const auto &defaultVs =
+        PeriodicTable::getTable()->getValenceList(atomicNum);
+    if (defaultVs.size() != 1) {
+      // Skips elements with multiple valences, e.g., transition metals
+      continue;
+    }
+    int valence = defaultVs[0];
+    std::string element =
+        PeriodicTable::getTable()->getElementSymbol(atomicNum);
+    testRadicalsForSingleAtom(element, valence);
+  }
+
+  // Checks CXSMILES in the form of [NH4+] |^m:0|
+  // where m = 1, ..., 7 denotes the radical type
+  for (int radicalType = 1; radicalType <= 7; radicalType++) {
+    std::string smi = (boost::format("[NH4+] |^%d:0|") % radicalType).str();
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+  }
+
+  BOOST_LOG(rdErrorLog) << "Finished" << std::endl;
+}
+
 // -------------------------------------------------------------------
 int main() {
   RDLog::InitLogs();
@@ -1695,6 +1743,7 @@ int main() {
   testRanges();
   testGithub1642();
   testGithub1843();
+  testGithub6370();
   testAtomListLineRoundTrip();
   testAtomListLineWithOtherQueries();
   testReplaceChargedAtomWithQueryAtom();
