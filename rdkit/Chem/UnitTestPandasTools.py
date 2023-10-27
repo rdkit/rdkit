@@ -11,9 +11,6 @@ import numpy
 from rdkit import Chem, RDConfig, rdBase
 from rdkit.Chem import PandasTools
 
-if (getattr(doctest, 'ELLIPSIS_MARKER')):
-  doctest.ELLIPSIS_MARKER = '*...*'
-
 try:
   import IPython
 except ImportError:
@@ -448,4 +445,6 @@ $$$$
 """
 
 if __name__ == '__main__':  # pragma: nocover
+  if (getattr(doctest, 'ELLIPSIS_MARKER')):
+    doctest.ELLIPSIS_MARKER = '*...*'
   unittest.main()
