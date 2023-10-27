@@ -399,7 +399,7 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(KeyError):
       Draw.DrawMorganBit(m, 32, bi)
 
-    if hasattr(Draw, 'MolDraw2DCairo'):
+    if hasattr(Draw, 'MolDraw2DCairo') and hasattr(Draw,'MolFromPNGString'):
       # Github #3796: make sure we aren't trying to generate metadata:
       png = Draw.DrawMorganBit(m, 872, bi, useSVG=False)
       self.assertIn(b'PNG', png)
@@ -420,7 +420,7 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(KeyError):
       Draw.DrawRDKitBit(m, 32, bi)
 
-    if hasattr(Draw, 'MolDraw2DCairo'):
+    if hasattr(Draw, 'MolDraw2DCairo') and hasattr(Draw,'MolFromPNGString'):
       # Github #3796: make sure we aren't trying to generate metadata:
       png = Draw.DrawRDKitBit(m, 1553, bi, useSVG=False)
       self.assertIn(b'PNG', png)

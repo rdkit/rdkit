@@ -35,6 +35,7 @@
 %}
 
 %ignore MCSParameters;
+%ignore MCSParametersInternal;
 %ignore findMCS(const std::vector<ROMOL_SPTR>& mols, const MCSParameters* params);
 %ignore checkAtomRingMatch(const MCSAtomCompareParameters& p,
                            const ROMol& mol1, unsigned int atom1,

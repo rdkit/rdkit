@@ -173,7 +173,7 @@ class MrvTests {
       smilesParserParams.sanitize = smilesTest->sanitizeFlag;
 
       localVars.smilesMol = SmilesToMol(smilesTest->smiles, smilesParserParams);
-      reapplyMolBlockWedging(*localVars.smilesMol);
+      Chirality::reapplyMolBlockWedging(*localVars.smilesMol);
 
       TEST_ASSERT(localVars.smilesMol->getNumAtoms() == smilesTest->atomCount);
       TEST_ASSERT(localVars.smilesMol->getNumBonds() == smilesTest->bondCount);
@@ -455,6 +455,7 @@ class MrvTests {
       if (molFileTest->reapplyMolBlockWedging) {
         reapplyMolBlockWedging(*localVars.mol);
       }
+
       TEST_ASSERT(localVars.mol != nullptr);
       TEST_ASSERT(localVars.mol->getNumAtoms() == molFileTest->atomCount)
       TEST_ASSERT(localVars.mol->getNumBonds() == molFileTest->bondCount)

@@ -20,7 +20,7 @@ import unittest
 import numpy as np
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import AllChem, Descriptors, Lipinski, rdMolDescriptors
+from rdkit.Chem import AllChem, Descriptors, Lipinski, rdMolDescriptors, Descriptors3D
 
 
 def load_tests(loader, tests, ignore):
@@ -202,6 +202,18 @@ class TestCase(unittest.TestCase):
     self.assertTrue('MolLogP' in descs)
     self.assertEqual(descs['NumHDonors'], 1)
 
+  def testGet3DMolDescriptors(self):
+    mol = Chem.MolFromSmiles('CCCO')
+
+    # check ValueError raised when no 3D coordinates supplied
+    with self.assertRaises(ValueError):
+      Descriptors3D.CalcMolDescriptors3D(mol)
+
+    # test function returns expected outputs
+    AllChem.EmbedMolecule(mol, randomSeed=0xf00d)
+    descs = Descriptors3D.CalcMolDescriptors3D(mol)
+    self.assertTrue('InertialShapeFactor' in descs)
+    self.assertEqual(descs['PMI1'], 20.954531335493417)
 
 if __name__ == '__main__':
   unittest.main()

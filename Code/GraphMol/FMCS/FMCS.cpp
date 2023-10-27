@@ -30,12 +30,6 @@ struct cmpCStr {
     return std::strcmp(a, b) < 0;
   }
 };
-
-struct BondCount {
-  boost::dynamic_bitset<> isMCSRingBond;
-  boost::dynamic_bitset<> isMCSRingBondNonFused;
-  boost::dynamic_bitset<> isMCSRingBondFused;
-};
 }  // namespace
 
 void MCSParameters::setMCSAtomTyperFromEnum(AtomComparator atomComp) {
@@ -141,6 +135,7 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
       "MatchFusedRingsStrict", p.BondCompareParameters.MatchFusedRingsStrict);
   p.BondCompareParameters.MatchStereo =
       pt.get<bool>("MatchStereo", p.BondCompareParameters.MatchStereo);
+  p.StoreAll = pt.get<bool>("StoreAll", p.StoreAll);
 
   p.setMCSAtomTyperFromConstChar(
       pt.get<std::string>("AtomCompare", "def").c_str());
@@ -498,111 +493,131 @@ bool MCSBondCompareOrderExact(const MCSBondCompareParameters& p,
 
 //=== RING COMPARE ========================================================
 namespace {
-std::vector<BondCount> initRingBondCountVect(const ROMol& mol) {
-  std::vector<BondCount> res(mol.getRingInfo()->bondRings().size());
-  for (auto& ringBondCount : res) {
-    ringBondCount.isMCSRingBond.resize(mol.getNumBonds());
-    ringBondCount.isMCSRingBondNonFused.resize(mol.getNumBonds());
-    ringBondCount.isMCSRingBondFused.resize(mol.getNumBonds());
-  }
-  return res;
-}
-
 // there are 3 bitsets for each ring
 // isMCSRingBond: bits are set in correspondence of ring bond indices which are
-// part of MCS isMCSRingBondFused: bits are set in correspondence of ring bond
-// indices which are part of MCS and are fused isMCSRingBondNonFused: bits are
-// set in correspondence of ring bond indices which are part of MCS and are not
-// fused in the 1st pass, we set fused/non-fused bits simply based on
-// numBondRings in the 2nd pass, we refine the above as certain bonds originally
-// marked as fused can be relabelled as non-fused
-void setMCSBondBitsPass1(unsigned int beginAtomIdx, unsigned int endAtomIdx,
-                         const ROMol& mol, const std::uint32_t c[],
-                         const FMCS::Graph& graph,
-                         std::vector<BondCount>& ringBondCountVect) {
-  const auto ri = mol.getRingInfo();
-  const auto bond =
-      mol.getBondBetweenAtoms(graph[c[beginAtomIdx]], graph[c[endAtomIdx]]);
-  CHECK_INVARIANT(bond, "");
-  const auto bi = bond->getIdx();
-  if (!ri->numBondRings(bi)) {
-    return;
-  }
-  if (ri->numBondRings(bi) == 1) {
-    const auto ringIdx = ri->bondMembers(bi).front();
-    ringBondCountVect[ringIdx].isMCSRingBond.set(bi);
-    ringBondCountVect[ringIdx].isMCSRingBondNonFused.set(bi);
-  } else {
-    for (const auto& ringIdx : ri->bondMembers(bi)) {
-      ringBondCountVect[ringIdx].isMCSRingBond.set(bi);
-      ringBondCountVect[ringIdx].isMCSRingBondFused.set(bi);
+// part of MCS.
+// isMCSRingBondFused: bits are set in correspondence of ring bond
+// indices which are part of MCS and are fused.
+// isMCSRingBondNonFused: bits are set in correspondence of ring bond indices
+// which are part of MCS and are not fused.
+class RingBondCountVect {
+ public:
+  RingBondCountVect(const ROMol& mol) :
+    d_mol(mol),
+    d_ringInfo(mol.getRingInfo()) {
+    d_ringBondCountVect.resize(d_ringInfo->numRings());
+    d_isMCSBond.resize(mol.getNumBonds());
+    for (auto& ringBondCount : d_ringBondCountVect) {
+      ringBondCount.isMCSRingBond.resize(mol.getNumBonds());
+      ringBondCount.isMCSRingBondNonFused.resize(mol.getNumBonds());
+      ringBondCount.isMCSRingBondFused.resize(mol.getNumBonds());
     }
   }
-}
-
-void setMCSBondBitsPass2(const ROMol& mol,
-                         std::vector<BondCount>& ringBondCountVect) {
-  const auto ri = mol.getRingInfo();
-  for (unsigned int bi = 0; bi < mol.getNumBonds(); ++bi) {
-    int fusedBondRingIdx = -1;
-    unsigned int fusedBondCount = 0;
-    for (auto& ringBondCount : ringBondCountVect) {
-      auto ringIdx = &ringBondCount - &ringBondCountVect.front();
-      if (ringBondCount.isMCSRingBondFused.test(bi)) {
-        if (ringBondCount.isMCSRingBondNonFused.count() == 0 &&
-            ringBondCount.isMCSRingBondFused.count() <
-                ri->bondRings().at(ringIdx).size()) {
+  // In the 1st pass, we set fused/non-fused bits simply based on
+  // numBondRings.
+  void setMCSBondBitsPass1(unsigned int beginAtomIdx, unsigned int endAtomIdx,
+                          const std::uint32_t c[],
+                          const FMCS::Graph& graph) {
+    const auto bond =
+        d_mol.getBondBetweenAtoms(graph[c[beginAtomIdx]], graph[c[endAtomIdx]]);
+    CHECK_INVARIANT(bond, "");
+    const auto bi = bond->getIdx();
+    d_isMCSBond.set(bi);
+    if (!d_ringInfo->numBondRings(bi)) {
+      return;
+    }
+    if (d_ringInfo->numBondRings(bi) == 1) {
+      const auto ringIdx = d_ringInfo->bondMembers(bi).front();
+      d_ringBondCountVect[ringIdx].isMCSRingBond.set(bi);
+      d_ringBondCountVect[ringIdx].isMCSRingBondNonFused.set(bi);
+    } else {
+      for (const auto& ringIdx : d_ringInfo->bondMembers(bi)) {
+        d_ringBondCountVect[ringIdx].isMCSRingBond.set(bi);
+        d_ringBondCountVect[ringIdx].isMCSRingBondFused.set(bi);
+      }
+    }
+  }
+  // In the 2nd pass, we refine the above as certain bonds originally
+  // marked as fused can be relabelled as non-fused
+  void setMCSBondBitsPass2() {
+    for (auto& ringBondCount : d_ringBondCountVect) {
+      ringBondCount.nonFusedCountPass1 = ringBondCount.isMCSRingBondNonFused.count();
+      ringBondCount.fusedCountPass1 = ringBondCount.isMCSRingBondFused.count();
+    }
+    for (unsigned int bi = 0; bi < d_mol.getNumBonds(); ++bi) {
+      if (!d_isMCSBond.test(bi)) {
+        continue;
+      }
+      int fusedBondRingIdx = -1;
+      unsigned int fusedBondCount = 0;
+      for (auto& ringBondCount : d_ringBondCountVect) {
+        if (!ringBondCount.isMCSRingBondFused.test(bi)) {
+          continue;
+        }
+        auto ringIdx = &ringBondCount - &d_ringBondCountVect.front();
+        if (ringBondCount.nonFusedCountPass1 == 0 &&
+            ringBondCount.fusedCountPass1 <
+                d_ringInfo->bondRings().at(ringIdx).size()) {
           ringBondCount.isMCSRingBondFused.set(bi, false);
         } else {
           ++fusedBondCount;
           fusedBondRingIdx = ringIdx;
         }
       }
-    }
-    if (fusedBondCount == 1) {
-      ringBondCountVect[fusedBondRingIdx].isMCSRingBondNonFused.set(bi);
-      ringBondCountVect[fusedBondRingIdx].isMCSRingBondFused.set(bi, false);
-    }
-  }
-}
-
-bool isRingFusionHonored(const ROMol& mol,
-                         const std::vector<BondCount>& ringBondCountVect) {
-  const auto ri = mol.getRingInfo();
-  for (const auto& ringBondCount : ringBondCountVect) {
-    unsigned int ringIdx = &ringBondCount - &ringBondCountVect.front();
-    const auto& bondRings = ri->bondRings().at(ringIdx);
-    // if all or no bonds of this ring are part of MCS, no need to do further
-    // checks
-    const auto numRingBondsInMCS = ringBondCount.isMCSRingBond.count();
-    if (!numRingBondsInMCS || numRingBondsInMCS == bondRings.size()) {
-      continue;
-    }
-    // check ring bonds:
-    // if they are non-fused, it's OK
-    // if they are fused but classified as non-fused, it's OK
-    // otherwise count a missing fused bond
-    // if the sum of missing fused bonds + fused bonds in MCS + non-fused bonds
-    // in MCS equals to the ring size, then we have failed the check
-    const auto numNonFusedRingBondsInMCS =
-        ringBondCount.isMCSRingBondNonFused.count();
-    const auto numFusedRingBondsInMCS =
-        ringBondCount.isMCSRingBondFused.count();
-    const auto numMissingFusedBonds =
-        std::count_if(bondRings.begin(), bondRings.end(),
-                      [ri, &ringBondCount](const auto bi) {
-                        return (ri->numBondRings(bi) > 1 &&
-                                !ringBondCount.isMCSRingBondNonFused.test(bi) &&
-                                !ringBondCount.isMCSRingBondFused.test(bi));
-                      });
-    if (numMissingFusedBonds + numFusedRingBondsInMCS +
-            numNonFusedRingBondsInMCS ==
-        bondRings.size()) {
-      return false;
+      if (fusedBondCount == 1) {
+        d_ringBondCountVect[fusedBondRingIdx].isMCSRingBondNonFused.set(bi);
+        d_ringBondCountVect[fusedBondRingIdx].isMCSRingBondFused.set(bi, false);
+      }
     }
   }
-  return true;
-}
+  bool isRingFusionHonored() {
+    for (const auto& ringBondCount : d_ringBondCountVect) {
+      unsigned int ringIdx = &ringBondCount - &d_ringBondCountVect.front();
+      const auto& bondRings = d_ringInfo->bondRings().at(ringIdx);
+      // if all or no bonds of this ring are part of MCS, no need to do further
+      // checks
+      const auto numRingBondsInMCS = ringBondCount.isMCSRingBond.count();
+      if (!numRingBondsInMCS || numRingBondsInMCS == bondRings.size()) {
+        continue;
+      }
+      // check ring bonds:
+      // if they are non-fused, it's OK
+      // if they are fused but classified as non-fused, it's OK
+      // otherwise count a missing fused bond
+      // if the sum of missing fused bonds + fused bonds in MCS + non-fused bonds
+      // in MCS equals to the ring size, then we have failed the check
+      const auto numNonFusedRingBondsInMCS =
+          ringBondCount.isMCSRingBondNonFused.count();
+      const auto numFusedRingBondsInMCS =
+          ringBondCount.isMCSRingBondFused.count();
+      const auto numMissingFusedBonds =
+          std::count_if(bondRings.begin(), bondRings.end(),
+                        [this, &ringBondCount](const auto bi) {
+                          return (d_ringInfo->numBondRings(bi) > 1 &&
+                                  !ringBondCount.isMCSRingBondNonFused.test(bi) &&
+                                  !ringBondCount.isMCSRingBondFused.test(bi));
+                        });
+      if (numMissingFusedBonds + numFusedRingBondsInMCS +
+              numNonFusedRingBondsInMCS ==
+          bondRings.size()) {
+        return false;
+      }
+    }
+    return true;
+  }
+ private:
+  struct BondCount {
+    boost::dynamic_bitset<> isMCSRingBond;
+    boost::dynamic_bitset<> isMCSRingBondNonFused;
+    unsigned int nonFusedCountPass1 = 0;
+    boost::dynamic_bitset<> isMCSRingBondFused;
+    unsigned int fusedCountPass1 = 0;
+  };
+  const ROMol& d_mol;
+  const RingInfo *d_ringInfo;
+  std::vector<BondCount> d_ringBondCountVect;
+  boost::dynamic_bitset<> d_isMCSBond;
+};
 }  // end of anonymous namespace
 
 inline bool ringFusionCheck(const std::uint32_t c1[], const std::uint32_t c2[],
@@ -631,31 +646,29 @@ inline bool ringFusionCheck(const std::uint32_t c1[], const std::uint32_t c2[],
   there is no missing fused bond. This is OK for permissive mode.
   In strict mode, we also need to check against 1-methylbicyclo[3.1.0]hexane,
   where there is indeed a missing fused bond.
-  Basically, in permissive mode one of two pairs is allowed to fail the
-  match. In strict mode, none is.
+  Basically, in permissive mode one of two molecules is allowed to fail the
+  match, but not both. In strict mode, none is.
   */
   bool res = true;
   if (boost::num_edges(target) < boost::num_edges(query)) {
     return true;
   }
-  auto mol1RingBondCountVect = initRingBondCountVect(mol1);
-  auto mol2RingBondCountVect = initRingBondCountVect(mol2);
+  RingBondCountVect mol1RingBondCountVect(mol1);
+  RingBondCountVect mol2RingBondCountVect(mol2);
   auto queryEdges = boost::edges(query);
   std::for_each(
       queryEdges.first, queryEdges.second,
-      [&c1, &c2, &mol1, &query, &mol2, &target, &mol1RingBondCountVect,
+      [&c1, &c2, &query, &target, &mol1RingBondCountVect,
        &mol2RingBondCountVect](const auto& edge) {
         const auto beginAtomIdx = boost::source(edge, query);
         const auto endAtomIdx = boost::target(edge, query);
-        setMCSBondBitsPass1(beginAtomIdx, endAtomIdx, mol1, c1, query,
-                            mol1RingBondCountVect);
-        setMCSBondBitsPass1(beginAtomIdx, endAtomIdx, mol2, c2, target,
-                            mol2RingBondCountVect);
+        mol1RingBondCountVect.setMCSBondBitsPass1(beginAtomIdx, endAtomIdx, c1, query);
+        mol2RingBondCountVect.setMCSBondBitsPass1(beginAtomIdx, endAtomIdx, c2, target);
       });
-  setMCSBondBitsPass2(mol1, mol1RingBondCountVect);
-  setMCSBondBitsPass2(mol2, mol2RingBondCountVect);
-  bool mol1Honored = isRingFusionHonored(mol1, mol1RingBondCountVect);
-  bool mol2Honored = isRingFusionHonored(mol2, mol2RingBondCountVect);
+  mol1RingBondCountVect.setMCSBondBitsPass2();
+  mol2RingBondCountVect.setMCSBondBitsPass2();
+  bool mol1Honored = mol1RingBondCountVect.isRingFusionHonored();
+  bool mol2Honored = mol2RingBondCountVect.isRingFusionHonored();
   if (p.BondCompareParameters.MatchFusedRingsStrict) {
     res = mol1Honored && mol2Honored;
   } else {
