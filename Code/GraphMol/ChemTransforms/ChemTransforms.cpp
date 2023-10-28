@@ -617,9 +617,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
           // Check to see if we are breaking a stereo bond definition, by removing one of the stereo atoms
           // If so, set to the new atom
-          for (const auto neighbor: newMol->atomNeighbors(sidechainAtom)) {
-            auto bond = newMol->getBondBetweenAtoms(sidechainAtom->getIdx(),
-                                                    neighbor->getIdx());
+          for (const auto bond : newMol->atomBonds(sidechainAtom)) {
             if (bond->getIdx() == connectingBond->getIdx()) {
               continue;
             }
