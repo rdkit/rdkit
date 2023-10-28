@@ -169,9 +169,7 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
 
           // Check to see if we are breaking a stereo bond definition, by removing one of the stereo atoms
           // If so, set to the new atom
-          for (const auto neighbor: extractedCore->atomNeighbors(targetAtom)) {
-            auto bond = extractedCore->getBondBetweenAtoms(targetAtom->getIdx(),
-                                                    neighbor->getIdx());
+          for (auto bond: extractedCore->atomBonds(targetAtom)) {
             if (bond->getIdx() == connectingBond->getIdx()) {
               continue;
             }
