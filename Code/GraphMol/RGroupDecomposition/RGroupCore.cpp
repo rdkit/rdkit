@@ -152,7 +152,6 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
                   ->getBondBetweenAtoms(pair.second, targetNeighborIndex)
                   ->copy();
           if (connectingBond->getStereo() > Bond::BondStereo::STEREOANY) {
-            // TODO: how to handle bond stereo on rgroups connected to core by
             // stereo double bonds
             connectingBond->setStereo(Bond::BondStereo::STEREOANY);
           }
@@ -163,6 +162,23 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
             connectingBond->setEndAtomIdx(newDummyIdx);
           }
           newBonds.push_back(connectingBond);
+
+          // Check to see if we are breaking a stereo bond definition, by removing one of the stereo atoms
+          // If so, set to the new atom
+          for (auto bond: extractedCore->atomBonds(targetAtom)) {
+            if (bond->getIdx() == connectingBond->getIdx()) {
+              continue;
+            }
+
+            if (bond->getStereo() > Bond::STEREOANY) {
+              auto &stereoAtoms = bond->getStereoAtoms();
+              for (int& stereoAtom : stereoAtoms) {
+                if (stereoAtom == static_cast<int>(targetNeighborIndex)) {
+                  stereoAtom = static_cast<int>(newDummyIdx);
+                }
+              }
+            }
+          }
 
           // Chirality parity stuff see RDKit::replaceCore in
           // Code/GraphMol/ChemTransforms/ChemTransforms.cpp

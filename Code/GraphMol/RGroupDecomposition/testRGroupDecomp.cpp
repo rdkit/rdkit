@@ -3926,7 +3926,7 @@ void testTautomerCore() {
     CHECK_RGROUP(it, expected2[i]);
   }
 
-  auto core3 = R"CTAB("
+  auto core3 = R"CTAB(
   Mrv2008 08072313382D          
 
   9  9  0  0  0  0            999 V2000
@@ -3965,6 +3965,127 @@ M  END
     TEST_ASSERT(i < 2);
     CHECK_RGROUP(it, expected2[i]);
   }
+}
+
+void testStereoBondBug() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that stereo bonds adjacent to the core or attachment atoms are handled correctly"
+                       << std::endl;
+
+  const auto core = R"CTAB(ACS Document 1996
+  ChemDraw10242316092D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0      
+  2  3  1  0      
+  3  4  2  0      
+  4  5  1  0      
+  5  6  2  0      
+  6  1  1  0      
+M  END
+)CTAB"_ctab;
+  const auto mol = "C/C=C/C1=CC=CC=C1"_smiles;
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  params.allowMultipleRGroupsOnUnlabelled = true;
+  params.onlyMatchAtRGroups = false;
+  params.doEnumeration = false;
+  RGroupDecomposition decomp(*core, params);
+  const auto add1 = decomp.add(*mol);
+  TEST_ASSERT(add1 == 0);
+  decomp.process();
+  auto rows = decomp.getRGroupsAsRows();
+  auto r1 = rows[0]["R1"];
+  // Check to see that Stereo bond is present and defined
+  bool foundStereo = false;
+  for (const auto bond: r1->bonds()) {
+    if (bond->getStereo() > Bond::STEREOANY) {
+      TEST_ASSERT(!foundStereo);
+      foundStereo = true;
+      TEST_ASSERT(bond->getStereoAtoms().size() == 2);
+    }
+  }
+  TEST_ASSERT(foundStereo);
+
+  const auto core2 = R"CTAB(
+  ChemDraw10242316432D
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -1.0717    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0717   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3572   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3572   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3572    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3572    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0717    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0        0
+  2  3  1  0        0
+  3  4  2  0        0
+  4  5  1  0        0
+  5  6  2  0        0
+  6  1  1  0        0
+  5  7  1  0        0
+M  END
+)CTAB"_ctab;
+  RGroupDecomposition decomp2(*core2, params);
+  const auto add2 = decomp2.add(*mol);
+  TEST_ASSERT(add2 == 0);
+  decomp2.process();
+  rows = decomp2.getRGroupsAsRows();
+  r1 = rows[0]["R1"];
+  // Check to see that Stereo bond is not present
+  foundStereo = false;
+  for (const auto bond: r1->bonds()) {
+    if (bond->getStereo() > Bond::STEREOANY) {
+      foundStereo = true;
+    }
+  }
+  TEST_ASSERT(!foundStereo);
+
+  const auto core3 = R"CTAB(
+  ChemDraw10252316142D
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -0.7145    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0        0
+  2  3  1  0        0
+  3  4  1  0        0
+  4  5  2  0        0
+  5  6  1  0        0
+  6  1  1  0        0
+  6  7  2  0        0
+M  END
+)CTAB"_ctab;
+  const auto mol3 = "C/C=C1N=CCC=C/1"_smiles;
+  RGroupDecomposition decomp3(*core3, params);
+  const auto add3 = decomp3.add(*mol3);
+  TEST_ASSERT(add3 == 0);
+  decomp3.process();
+  rows = decomp3.getRGroupsAsRows();
+  const auto c1 = rows[0]["Core"];
+  // Check to see that Stereo bond is not present
+  foundStereo = false;
+  for (const auto bond: c1->bonds()) {
+    if (bond->getStereo() > Bond::STEREOANY) {
+      TEST_ASSERT(!foundStereo);
+      foundStereo = true;
+      TEST_ASSERT(bond->getStereoAtoms().size() == 2);
+    }
+  }
+  TEST_ASSERT(foundStereo);
 }
 
 int main() {
@@ -4030,6 +4151,7 @@ int main() {
   testStereoGroupsPreserved();
   testTautomerCore();
   testEnumeratedCore();
+  testStereoBondBug();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
