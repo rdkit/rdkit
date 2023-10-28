@@ -1,7 +1,7 @@
 steps:
 - bash: |
     sudo apt-get update
-    sudo apt-get install -y software-properties-common zlib1g zlib1g-dev swig3.0
+    sudo apt-get install -y software-properties-common zlib1g zlib1g-dev swig
     sudo apt-get install -y libboost-all-dev libfreetype-dev libeigen3-dev
   displayName: Setup build environment
 - bash: |
