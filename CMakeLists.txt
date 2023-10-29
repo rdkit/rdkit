@@ -302,9 +302,13 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   endif()
-  
+
+  find_package(Boost COMPONENTS python3 COMPONENTS numpy3 REQUIRED)
   target_link_libraries(rdkit_py_base INTERFACE Boost::numpy)
-  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS numpy REQUIRED)
+
+  find_package(Python3 3.7 COMPONENTS Interpreter NumPy REQUIRED)
+  include_directories(${PYTHON_INCLUDE_DIRS})
+  target_link_libraries(rdkit_base INTERFACE ${PYTHON_LIBRARIES} Python3::NumPy)
 
   if(PYTHON_VERSION_MAJOR EQUAL 3)
     # Find boost-python3 using name specified as command line option then fall back to commonly used names

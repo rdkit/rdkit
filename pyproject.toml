@@ -6,8 +6,9 @@ authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "3.11.5"
 conan = "^2.0.13"
+numpy = "^1.26.1"
 
 [tool.poetry.group.dev.dependencies]
 
