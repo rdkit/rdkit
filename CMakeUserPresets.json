@@ -1,0 +1,9 @@
+{
+    "version": 4,
+    "vendor": {
+        "conan": {}
+    },
+    "include": [
+        "/home/niklas/projects/uni/rdkit/build/Release/generators/CMakePresets.json"
+    ]
+}

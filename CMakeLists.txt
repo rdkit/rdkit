@@ -70,7 +70,7 @@ option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" O
 option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 
-set(RDK_BOOST_VERSION "1.58.0")
+set(RDK_BOOST_VERSION "1.83.0")
 
 if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
@@ -303,8 +303,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   endif()
   
-  find_package(NumPy REQUIRED)
-  target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
+  target_link_libraries(rdkit_py_base INTERFACE Boost::numpy)
+  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS numpy REQUIRED)
 
   if(PYTHON_VERSION_MAJOR EQUAL 3)
     # Find boost-python3 using name specified as command line option then fall back to commonly used names
@@ -329,7 +329,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     set(Boost_Python_Lib "python")
   endif()
 
-  target_link_libraries(rdkit_py_base INTERFACE Boost::${Boost_Python_Lib})
+  target_link_libraries(rdkit_py_base INTERFACE Boost::python)
 
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
@@ -406,12 +406,12 @@ else(RDK_BUILD_PYTHON_WRAPPERS)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 find_package(Eigen3)
-if(RDK_BUILD_DESCRIPTORS3D)
-  if(NOT EIGEN3_FOUND)
-    add_subdirectory(External/Eigen)
-  endif()
-  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
-endif()
+#if(RDK_BUILD_DESCRIPTORS3D)
+#  if(NOT EIGEN3_FOUND)
+#    add_subdirectory(External/Eigen)
+#  endif()
+#  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
+#endif()
 
 if(TARGET Eigen3::Eigen)
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_HAS_EIGEN3")
