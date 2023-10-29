@@ -18,21 +18,16 @@ class RDKitRecipe(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
 
+    requires = "freetype/2.10.4", "boost/1.83.0"#"eigen/3.3.9", "boost/1.83.0"
 
     # Sources are located in the same place as this recipe, copy them to the recipe
-    exports_sources = "CMakeLists.txt", "Code/*", "External/*", "Projects/*", "rdkit/*", "rdkit-config.cmake*", "README", "license.txt", "CTestCustom*"
+    exports_sources = "CMakeLists.txt", "*"
 
     def config_options(self):
         if self.settings.os == "Windows":
             self.options.rm_safe("fPIC")
 
-    def requirements(self):
-        self.requires("freetype/2.10.4")
-        self.requires("eigen/3.3.9")
-        self.requires("boost/1.83.0")
-
     def configure(self):
-
         if self.options.shared:
             self.options.rm_safe("fPIC")
 
