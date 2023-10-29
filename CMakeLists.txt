@@ -45,7 +45,7 @@ option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" 
 option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" ON)
 option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" OFF)
 option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
-option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" ON)
+option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" OFF)
 option(RDK_USE_BOOST_STACKTRACE "use boost::stacktrace to do more verbose invariant output (linux only)" ON)
 option(RDK_BUILD_TEST_GZIP "Build the gzip'd stream test" OFF)
 option(RDK_OPTIMIZE_POPCNT "Use SSE4.2 popcount instruction while compiling." ON)
@@ -71,6 +71,8 @@ option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrar
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 
 set(RDK_BOOST_VERSION "1.83.0")
+
+include_directories(/usr/include/freetype2)
 
 if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
@@ -303,12 +305,12 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   endif()
 
-  find_package(Boost COMPONENTS python3 COMPONENTS numpy3 REQUIRED)
-  target_link_libraries(rdkit_py_base INTERFACE Boost::numpy)
+  find_package(NumPy REQUIRED)
+  target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
-  find_package(Python3 3.7 COMPONENTS Interpreter NumPy REQUIRED)
-  include_directories(${PYTHON_INCLUDE_DIRS})
-  target_link_libraries(rdkit_base INTERFACE ${PYTHON_LIBRARIES} Python3::NumPy)
+  include(CMakePrintHelpers)
+
+  cmake_print_variables(PYTHON_LIBRARIES)
 
   if(PYTHON_VERSION_MAJOR EQUAL 3)
     # Find boost-python3 using name specified as command line option then fall back to commonly used names
@@ -317,7 +319,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endif(PYTHON_VERSION_MAJOR EQUAL 3)
 
   # Boost 1.67+ uses a version suffix like "python36" or "python27"
-  list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
+  #list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
 
   # Try each potential boost-python name until one works
   foreach(Boost_Python_LibN ${Boost_Python_Names})
@@ -333,7 +335,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     set(Boost_Python_Lib "python")
   endif()
 
-  target_link_libraries(rdkit_py_base INTERFACE Boost::python)
+
+  target_link_libraries(rdkit_py_base INTERFACE Boost::python)#${Boost_Python_Lib})
 
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
@@ -410,12 +413,12 @@ else(RDK_BUILD_PYTHON_WRAPPERS)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 find_package(Eigen3)
-#if(RDK_BUILD_DESCRIPTORS3D)
-#  if(NOT EIGEN3_FOUND)
-#    add_subdirectory(External/Eigen)
-#  endif()
-#  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
-#endif()
+if(RDK_BUILD_DESCRIPTORS3D)
+  if(NOT EIGEN3_FOUND)
+    add_subdirectory(External/Eigen)
+  endif()
+  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
+endif()
 
 if(TARGET Eigen3::Eigen)
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_HAS_EIGEN3")
@@ -441,6 +444,8 @@ else()
   endif()
 endif()
 
+find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS archive system filesystem serialization REQUIRED)
+
 if(RDK_USE_BOOST_SERIALIZATION)
     set(T_LIBS ${Boost_LIBRARIES})
     find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams)
@@ -455,6 +460,7 @@ if(RDK_USE_BOOST_SERIALIZATION)
     endif()
 endif()
 
+set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lfreetype")
 
 # set the boost include directories and linkage:
 target_include_directories(rdkit_base INTERFACE
@@ -663,7 +669,6 @@ SET(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSIO
 #  SET(CPACK_SOURCE_STRIP_FILES "")
 #ENDIF(WIN32 AND NOT UNIX)
 #SET(CPACK_PACKAGE_EXECUTABLES "MyExecutable" "My Executable")
-
 
 SET(CPACK_SET_DESTDIR ON)
 
