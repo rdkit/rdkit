@@ -123,45 +123,70 @@ TEST_CASE("tautomer bundle basics") {
   }
 }
 
-TEST_CASE("createExtendedQueryMol") {
+TEST_CASE("createExtendedQueryMol and copy ctors") {
   SECTION("RWMol") {
     auto mol = "COCC"_smiles;
     REQUIRE(mol);
-    auto xqm = createExtendedQueryMol(*mol);
-    CHECK(std::holds_alternative<ExtendedQueryMol::RWMol_T>(xqm.xqmol));
-    CHECK(SubstructMatch(*"COCC"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"COOCC"_smiles, xqm).empty());
+    auto txqm = createExtendedQueryMol(*mol);
+    ExtendedQueryMol xqm1(txqm);
+    ExtendedQueryMol xqm2(std::make_unique<RWMol>(*mol));
+    xqm2 = txqm;
+
+    for (const auto &xqm : {txqm, xqm1, xqm2}) {
+      CHECK(std::holds_alternative<ExtendedQueryMol::RWMol_T>(xqm.xqmol));
+      CHECK(SubstructMatch(*"COCC"_smiles, xqm).size() == 1);
+      CHECK(SubstructMatch(*"COOCC"_smiles, xqm).empty());
+    }
   }
   SECTION("MolBundle") {
     auto mol = "COCC |LN:1:1.3|"_smiles;
     REQUIRE(mol);
-    auto xqm = createExtendedQueryMol(*mol);
-    CHECK(std::holds_alternative<ExtendedQueryMol::MolBundle_T>(xqm.xqmol));
-    CHECK(SubstructMatch(*"COCC"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"COOCC"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"COOOCC"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"COOOOCC"_smiles, xqm).empty());
+    auto txqm = createExtendedQueryMol(*mol);
+    ExtendedQueryMol xqm1(txqm);
+    ExtendedQueryMol xqm2(std::make_unique<RWMol>(*mol));
+    xqm2 = txqm;
+
+    for (const auto &xqm : {txqm, xqm1, xqm2}) {
+      CHECK(std::holds_alternative<ExtendedQueryMol::MolBundle_T>(xqm.xqmol));
+      CHECK(SubstructMatch(*"COCC"_smiles, xqm).size() == 1);
+      CHECK(SubstructMatch(*"COOCC"_smiles, xqm).size() == 1);
+      CHECK(SubstructMatch(*"COOOCC"_smiles, xqm).size() == 1);
+      CHECK(SubstructMatch(*"COOOOCC"_smiles, xqm).empty());
+    }
   }
   SECTION("TautomerQuery") {
     auto mol1 = "CC1OC(N)=N1"_smiles;
     REQUIRE(mol1);
-    auto xqm = createExtendedQueryMol(*mol1);
-    CHECK(std::holds_alternative<ExtendedQueryMol::TautomerQuery_T>(xqm.xqmol));
-    CHECK(SubstructMatch(*"CCC1OC(N)=N1"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"CCC1OC(=N)N1"_smiles, *mol1).empty());
-    CHECK(SubstructMatch(*"CCC1OC(=N)N1"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"c1[nH]ncc1"_smiles, xqm).empty());
+    auto txqm = createExtendedQueryMol(*mol1);
+    ExtendedQueryMol xqm1(txqm);
+    ExtendedQueryMol xqm2(std::make_unique<RWMol>(*mol1));
+    xqm2 = txqm;
+
+    for (const auto &xqm : {txqm, xqm1, xqm2}) {
+      CHECK(
+          std::holds_alternative<ExtendedQueryMol::TautomerQuery_T>(xqm.xqmol));
+      CHECK(SubstructMatch(*"CCC1OC(N)=N1"_smiles, xqm).size() == 1);
+      CHECK(SubstructMatch(*"CCC1OC(=N)N1"_smiles, *mol1).empty());
+      CHECK(SubstructMatch(*"CCC1OC(=N)N1"_smiles, xqm).size() == 1);
+      CHECK(SubstructMatch(*"c1[nH]ncc1"_smiles, xqm).empty());
+    }
   }
   SECTION("TautomerBundle") {
     auto mol1 = "COCC1OC(N)=N1 |LN:1:1.3|"_smiles;
     REQUIRE(mol1);
-    auto xqm = createExtendedQueryMol(*mol1);
-    CHECK(
-        std::holds_alternative<ExtendedQueryMol::TautomerBundle_T>(xqm.xqmol));
-    CHECK(SubstructMatch(*"COCC1(F)OC(N)=N1"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"COOCC1(F)OC(=N)N1"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"COCC1OC(N)=N1"_smiles, xqm).size() == 1);
-    CHECK(SubstructMatch(*"COOOOCC1OC(=N)N1"_smiles, xqm).empty());
+    auto txqm = createExtendedQueryMol(*mol1);
+    ExtendedQueryMol xqm1(txqm);
+    ExtendedQueryMol xqm2(std::make_unique<RWMol>(*mol1));
+    xqm2 = txqm;
+
+    for (const auto &xqm : {txqm, xqm1, xqm2}) {
+      CHECK(std::holds_alternative<ExtendedQueryMol::TautomerBundle_T>(
+          xqm.xqmol));
+      CHECK(SubstructMatch(*"COCC1(F)OC(N)=N1"_smiles, xqm).size() == 1);
+      CHECK(SubstructMatch(*"COOCC1(F)OC(=N)N1"_smiles, xqm).size() == 1);
+      CHECK(SubstructMatch(*"COCC1OC(N)=N1"_smiles, xqm).size() == 1);
+      CHECK(SubstructMatch(*"COOOOCC1OC(=N)N1"_smiles, xqm).empty());
+    }
   }
 }
 
