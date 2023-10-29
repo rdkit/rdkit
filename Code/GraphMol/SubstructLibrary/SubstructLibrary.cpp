@@ -231,7 +231,7 @@ bool query_needs_rings(const ExtendedQueryMol &xqm) {
 }
 
 template <class Query>
-void SubSearcher(const Query &query, const Bits &bits,
+void SubSearcher(const Query &in_query, const Bits &bits,
                  const MolHolderBase &mols, unsigned int start,
                  unsigned int &end, unsigned int numThreads,
                  const bool needs_rings, int &counter, const int maxResults,
@@ -240,7 +240,9 @@ void SubSearcher(const Query &query, const Bits &bits,
                  std::vector<unsigned int> *idxs) {
   PRECONDITION(searchOrder.empty() || searchOrder.size() >= end,
                "bad searchOrder data");
-  // Query query(in_query);
+  // we copy the query so that we don't end up with lock contention for
+  // recursive matchers when using multiple threads
+  Query query(in_query);
   for (unsigned int idx = start; idx < end; idx += numThreads) {
     unsigned int sidx = idx;
     if (!searchOrder.empty()) {
