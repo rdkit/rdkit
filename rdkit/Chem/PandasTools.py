@@ -131,7 +131,7 @@ import numpy as np
 import rdkit
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem, Draw, SDWriter, rdchem
-from Chem.Suppliers.MultiConfSupplier import MultiConfSupplier
+from rdkit.Chem.Suppliers.MultiConfSupplier import MultiConfSupplier
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
 InteractiveRenderer = None
