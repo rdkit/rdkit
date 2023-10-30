@@ -206,8 +206,8 @@ SDF files containing multiple conformers per molecule can be read such that the 
 
 .. doctest::
 
-    >>> mols = [x for x in Chem.Suppliers.MultiConfSupplier.MultiConfSupplier('data/lenalidomideconfs.sdf')]
-    >>> print(mols[0].GetNumConformers())
+    >>> conformers = [x for x in Chem.Suppliers.MultiConfSupplier.MultiConfSupplier('data/lenalidomideconfs.sdf')]
+    >>> print(conformers[0].GetNumConformers())
     7
 
 This is built on the ForwardSDMolSupplier module, so can be used with compressed files as shown above.
