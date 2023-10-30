@@ -131,6 +131,7 @@ import numpy as np
 import rdkit
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem, Draw, SDWriter, rdchem
+from Chem.Suppliers.MultiConfSupplier import MultiConfSupplier
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
 InteractiveRenderer = None
@@ -234,11 +235,14 @@ else:
 
   def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
               isomericSmiles=True, smilesName=None, embedProps=False, removeHs=True,
-              strictParsing=True):
+              strictParsing=True, multiConf=False, multiConfParams=[]):
     '''Read file in SDF format and return as Pandas data frame.
       If embedProps=True all properties also get embedded in Mol objects in the molecule column.
       If molColName=None molecules would not be present in resulting DataFrame (only properties
       would be read).
+      If multiConf=True conformers from a supplied SDF are grouped by molecule using the MultiConfSupplier function.
+      The additional flag multiConfParams can be used to supply non-default parameters as a list of the form
+      [propertyName, includeStereo, suppliedConfId].
       '''
     if isinstance(filename, str):
       if filename.lower()[-3:] == ".gz":
@@ -253,9 +257,12 @@ else:
     records = []
     indices = []
     sanitize = bool(molColName is not None or smilesName is not None)
-    for i, mol in enumerate(
-        Chem.ForwardSDMolSupplier(f, sanitize=sanitize, removeHs=removeHs,
-                                  strictParsing=strictParsing)):
+    if multiConf:
+      suppl = [x for x in MultiConfSupplier(f, *multiConfParams)]  # if empty list, default params used
+    else:
+      suppl = Chem.ForwardSDMolSupplier(f, sanitize=sanitize, removeHs=removeHs,
+                                  strictParsing=strictParsing)
+    for i, mol in enumerate(suppl):
       if mol is None:
         continue
       row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())

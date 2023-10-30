@@ -15,7 +15,7 @@ class TestCase(unittest.TestCase):
 
         # test function returns expected outputs
         truth = [62, 7, 200]
-
+        # TODO maybe change these to just use the file containing energy values
         # check default
         self.assertEqual([m.GetNumConformers() for m in [x for x in MultiConfSupplier(os.path.join(path, 'read_multi_conf.sdf'))]], truth)
 
@@ -29,6 +29,9 @@ class TestCase(unittest.TestCase):
         # check propertyName using GetProp
         self.assertEqual([m.GetNumConformers() for m in [x for x in MultiConfSupplier(os.path.join(path, 'read_multi_conf.sdf'), "ID")]], truth)
 
+        # check correct CID:Property Value pairing
+        mols = [x for x in MultiConfSupplier(os.path.join(path, 'read_multi_conf.sdf'), suppliedConfId='CID')]
+        self.assertEqual(mols[0].GetConformer(4).GetProp('Energy'), '75.56787014654348')
 
 if __name__ == '__main__':
     unittest.main()
