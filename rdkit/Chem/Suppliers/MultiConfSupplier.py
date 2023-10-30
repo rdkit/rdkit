@@ -6,7 +6,7 @@ from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 
 
-def MultiConfSupplier(filename, propertyName=None, includeStereo=False):
+def MultiConfSupplier(filename, propertyName=None, includeStereo=False, suppliedConfId=None):
     """
     Reads SDF file containing multiple conformers per molecule
 
@@ -21,6 +21,7 @@ def MultiConfSupplier(filename, propertyName=None, includeStereo=False):
             - SMILES
             - property: any attribute retrievable using mol.GetProp() (name, ID etc)
         - includeStereo: consider stereoisomers separately when grouping conformers (default False)
+        - suppliedConfId: string for property name containing confId. If None a new id is generated (default None)
 
     RETURNS:
         generator object of molecules with cids assigned
@@ -113,7 +114,17 @@ def MultiConfSupplier(filename, propertyName=None, includeStereo=False):
             continue
 
         if matchConf(mol, itm, propertyName, includeStereo):
-            mol.AddConformer(itm.GetConformer(), assignId=True)
+            props = itm.GetPropsAsDict()
+            for key, value in props.items():
+                if key == suppliedConfId:
+                    itm.GetConformer().SetId(value)
+                else:
+                    itm.GetConformer().SetProp(str(key), str(value))
+
+            if suppliedConfId is not None:
+                mol.AddConformer(itm.GetConformer(), assignId=False)
+            else:
+                mol.AddConformer(itm.GetConformer(), assignId=True)
         else:
             # we're done with the last molecule, so let's restart the next one
             res = mol
@@ -121,3 +132,4 @@ def MultiConfSupplier(filename, propertyName=None, includeStereo=False):
             yield res
 
     yield mol
+
