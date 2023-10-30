@@ -200,7 +200,17 @@ By default a single reader thread is used to extract records from the file and a
 single writer thread is used to process them. Note that due to multithreading
 the output may not be in the expected order. Furthermore, the
 MultithreadedSmilesMolSupplier and the MultithreadedSDMolSupplier cannot be used
-as random-access objects. 
+as random-access objects.
+
+SDF files containing multiple conformers per molecule can be read such that the conformers are grouped into a single molecule object using the MultiConfSupplier option:
+
+.. doctest::
+
+    >>> mols = [x for x in Chem.Suppliers.MultiConfSupplier.MultiConfSupplier('data/lenalidomideconfs.sdf')]
+    >>> print(mols[0].GetNumConformers())
+    7
+
+This is built on the ForwardSDMolSupplier module, so can be used with compressed files as shown above.
 
 
 Writing molecules
