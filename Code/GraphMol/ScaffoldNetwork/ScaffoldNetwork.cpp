@@ -59,6 +59,7 @@ ROMol *makeScaffoldGeneric(const ROMol &mol, bool doAtoms, bool doBonds) {
       atom->setAtomicNum(0);
       atom->setNumExplicitHs(0);
       atom->setNoImplicit(false);
+      atom->setIsotope(0);
     }
   }
   if (doBonds) {
