@@ -18,7 +18,7 @@ class RDKitRecipe(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
 
-    requires = "freetype/2.10.4", "boost/1.83.0"#"eigen/3.3.9", "boost/1.83.0"
+    requires = "freetype/2.13.0", "boost/1.83.0"#"eigen/3.3.9", "boost/1.83.0"
 
     # Sources are located in the same place as this recipe, copy them to the recipe
     exports_sources = "CMakeLists.txt", "*"
