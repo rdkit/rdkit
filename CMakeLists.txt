@@ -162,7 +162,7 @@ if(RDK_INSTALL_INTREE)
 else(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "bin")
   set(RDKit_LibDir "lib${LIB_SUFFIX}")
-  set(RDKit_HdrDir "include/rdkit")
+  set(RDKit_HdrDir "include")
   set(RDKit_ShareDir "share/RDKit")
 endif(RDK_INSTALL_INTREE)
 
