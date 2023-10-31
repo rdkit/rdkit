@@ -1,0 +1,22 @@
+{
+    "dependencies": [
+        "boost-assign",
+        "boost-crc",
+        "boost-filesystem",
+        "boost-flyweight",
+        "boost-iostreams",
+        {"name": "boost-locale", "features": ["icu"]},
+        "boost-log",
+        "boost-multi-array",
+        "boost-multiprecision",
+        "boost-program-options",
+        "boost-property-tree",
+        "boost-python",
+        {"name": "boost-regex", "features": ["icu"]},        
+        "cairo",
+        "eigen3",
+        "freetype",
+        "python3",
+        "zlib"
+    ]
+}
