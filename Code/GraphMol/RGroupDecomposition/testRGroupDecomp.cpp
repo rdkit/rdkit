@@ -4124,7 +4124,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
-  testNotEnumeratedCore();
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
@@ -4181,6 +4180,7 @@ int main() {
   testTautomerCore();
   testEnumeratedCore();
   testStereoBondBug();
+  testNotEnumeratedCore();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
