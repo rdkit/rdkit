@@ -28,8 +28,7 @@
 
 namespace RDKit {
 namespace GeneralizedSubstruct {
-struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol
-    : private boost::noncopyable {
+struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol {
   enum ExtendedQueryMolTypes : unsigned char {
     XQM_MOL = 1,
     XQM_MOLBUNDLE = 2,
@@ -50,12 +49,21 @@ struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol
   ExtendedQueryMol(
       std::unique_ptr<std::vector<std::unique_ptr<TautomerQuery>>> tqs)
       : xqmol(std::move(tqs)) {}
+  ExtendedQueryMol(const ExtendedQueryMol &other) { initFromOther(other); }
+  ExtendedQueryMol &operator=(const ExtendedQueryMol &other) {
+    if (this == &other) {
+      return *this;
+    }
+    initFromOther(other);
+    return *this;
+  }
 
   ExtendedQueryMol(ExtendedQueryMol &&o) noexcept : xqmol(std::move(o.xqmol)) {}
   ExtendedQueryMol(const std::string &text, bool isJSON = false);
 
   void initFromBinary(const std::string &pkl);
   void initFromJSON(const std::string &text);
+  void initFromOther(const ExtendedQueryMol &other);
 
   ContainedType xqmol;
   std::string toBinary() const;

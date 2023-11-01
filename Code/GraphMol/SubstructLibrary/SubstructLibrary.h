@@ -46,12 +46,15 @@
 #include <DataStructs/BitOps.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
+#include <GraphMol/GeneralizedSubstruct/XQMol.h>
 
 #include <algorithm>
 #include <string>
 #include <boost/lexical_cast.hpp>
 
 namespace RDKit {
+
+using GeneralizedSubstruct::ExtendedQueryMol;
 
 RDKIT_SUBSTRUCTLIBRARY_EXPORT bool SubstructLibraryCanSerialize();
 
@@ -743,6 +746,13 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                                        const SubstructMatchParameters &params,
                                        int numThreads = -1,
                                        int maxResults = -1) const;
+  //! overload
+  std::vector<unsigned int> getMatches(const ExtendedQueryMol &query,
+                                       unsigned int startIdx,
+                                       unsigned int endIdx,
+                                       const SubstructMatchParameters &params,
+                                       int numThreads = -1,
+                                       int maxResults = -1) const;
 
   //! Return the number of matches for the query
   /*!
@@ -819,6 +829,11 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                             unsigned int endIdx,
                             const SubstructMatchParameters &params,
                             int numThreads = -1) const;
+  //! overload
+  unsigned int countMatches(const ExtendedQueryMol &query,
+                            unsigned int startIdx, unsigned int endIdx,
+                            const SubstructMatchParameters &params,
+                            int numThreads = -1) const;
 
   //! Returns true if any match exists for the query
   /*!
@@ -881,6 +896,10 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                 int numThreads = -1) const;
   //! overload
   bool hasMatch(const MolBundle &query, unsigned int startIdx,
+                unsigned int endIdx, const SubstructMatchParameters &params,
+                int numThreads = -1) const;
+  //! overload
+  bool hasMatch(const ExtendedQueryMol &query, unsigned int startIdx,
                 unsigned int endIdx, const SubstructMatchParameters &params,
                 int numThreads = -1) const;
   //! Returns the molecule at the given index
