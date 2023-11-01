@@ -37,11 +37,14 @@
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/SubstructLibrary/PatternFactory.h>
+#include <GraphMol/GeneralizedSubstruct/XQMol.h>
 
 namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
+
+using GeneralizedSubstruct::ExtendedQueryMol;
 
 // Because we need to release the GIL before we launch a thread, we need to make
 // a thin stub
@@ -110,29 +113,8 @@ class SubstructLibraryWrap {
                          maxResults);
   };
 
-  std::vector<unsigned int> getMatches(const ROMol &query,
-                                       unsigned int startIdx,
-                                       unsigned int endIdx,
-                                       const SubstructMatchParameters &params,
-                                       int numThreads = -1,
-                                       int maxResults = -1) const {
-    NOGIL h;
-    return ss.getMatches(query, startIdx, endIdx, params, numThreads,
-                         maxResults);
-  }
-
-  std::vector<unsigned int> getMatches(const MolBundle &query,
-                                       unsigned int startIdx,
-                                       unsigned int endIdx,
-                                       const SubstructMatchParameters &params,
-                                       int numThreads = -1,
-                                       int maxResults = -1) const {
-    NOGIL h;
-    return ss.getMatches(query, startIdx, endIdx, params, numThreads,
-                         maxResults);
-  }
-  //! overload
-  std::vector<unsigned int> getMatches(const TautomerQuery &query,
+  template <class Query>
+  std::vector<unsigned int> getMatches(const Query &query,
                                        unsigned int startIdx,
                                        unsigned int endIdx,
                                        const SubstructMatchParameters &params,
@@ -172,23 +154,8 @@ class SubstructLibraryWrap {
                            useChirality, useQueryQueryMatches, numThreads);
   };
 
-  unsigned int countMatches(const ROMol &query, unsigned int startIdx,
-                            unsigned int endIdx,
-                            const SubstructMatchParameters &params,
-                            int numThreads = -1) const {
-    NOGIL h;
-    return ss.countMatches(query, startIdx, endIdx, params, numThreads);
-  }
-
-  unsigned int countMatches(const TautomerQuery &query, unsigned int startIdx,
-                            unsigned int endIdx,
-                            const SubstructMatchParameters &params,
-                            int numThreads = -1) const {
-    NOGIL h;
-    return ss.countMatches(query, startIdx, endIdx, params, numThreads);
-  }
-
-  unsigned int countMatches(const MolBundle &query, unsigned int startIdx,
+  template <class Query>
+  unsigned int countMatches(const Query &query, unsigned int startIdx,
                             unsigned int endIdx,
                             const SubstructMatchParameters &params,
                             int numThreads = -1) const {
@@ -220,22 +187,9 @@ class SubstructLibraryWrap {
                        useQueryQueryMatches, numThreads);
   };
 
-  bool hasMatch(const ROMol &query, unsigned int startIdx, unsigned int endIdx,
+  template <class Query>
+  bool hasMatch(const Query &query, unsigned int startIdx, unsigned int endIdx,
                 const SubstructMatchParameters &params,
-                int numThreads = -1) const {
-    NOGIL h;
-    return ss.hasMatch(query, startIdx, endIdx, params, numThreads);
-  }
-
-  bool hasMatch(const TautomerQuery &query, unsigned int startIdx,
-                unsigned int endIdx, const SubstructMatchParameters &params,
-                int numThreads = -1) const {
-    NOGIL h;
-    return ss.hasMatch(query, startIdx, endIdx, params, numThreads);
-  }
-
-  bool hasMatch(const MolBundle &query, unsigned int startIdx,
-                unsigned int endIdx, const SubstructMatchParameters &params,
                 int numThreads = -1) const {
     NOGIL h;
     return ss.hasMatch(query, startIdx, endIdx, params, numThreads);
@@ -794,6 +748,7 @@ struct substructlibrary_wrapper {
         LARGE_DEF(ROMol)
         LARGE_DEF(TautomerQuery)
         LARGE_DEF(MolBundle)
+        LARGE_DEF(ExtendedQueryMol)
         // clang-format on
 
         .def("GetMol", &SubstructLibraryWrap::getMol,

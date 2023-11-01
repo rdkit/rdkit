@@ -17,6 +17,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/SubstructLibrary/PatternFactory.h>
+#include <GraphMol/GeneralizedSubstruct/XQMol.h>
 
 using namespace RDKit;
 
@@ -231,5 +232,96 @@ TEST_CASE("searchOrderFunctionDemo") {
     auto libMatches = ssslib.getMatches(*qm);
     CHECK(libMatches.size() == 5);
     CHECK(libMatches == std::vector<unsigned int>{3, 2, 0, 1, 4});
+  }
+}
+
+TEST_CASE("ExtendedQueryMol") {
+  std::vector<std::string> libSmiles = {"COCC=O", "COOCC=O", "COOOCC=O",
+                                        "COOOOCC=O"};
+  boost::shared_ptr<MolHolder> mholder(new MolHolder());
+  boost::shared_ptr<PatternHolder> fpholder(new TautomerPatternHolder());
+
+  SubstructLibrary ssslib(mholder, fpholder);
+
+  for (const auto &smi : libSmiles) {
+    std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+    REQUIRE(mol);
+    ssslib.addMol(*mol);
+  }
+  SECTION("mol") {
+    auto mol = "COCC"_smiles;
+    auto xqm = GeneralizedSubstruct::createExtendedQueryMol(*mol);
+
+    auto libMatches = ssslib.getMatches(xqm);
+    CHECK(libMatches.size() == 1);
+    CHECK(libMatches == std::vector<unsigned int>{0});
+    CHECK(ssslib.countMatches(xqm) == 1);
+    CHECK(ssslib.hasMatch(xqm));
+  }
+  SECTION("tautomer query") {
+    auto mol = "COCC"_smiles;
+    auto xqm = GeneralizedSubstruct::ExtendedQueryMol(
+        std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol)));
+    auto libMatches = ssslib.getMatches(xqm);
+    CHECK(libMatches.size() == 1);
+    CHECK(libMatches == std::vector<unsigned int>{0});
+    CHECK(ssslib.countMatches(xqm) == 1);
+    CHECK(ssslib.hasMatch(xqm));
+  }
+  SECTION("mol bundle") {
+    auto mol = "COCC |LN:1:1.3|"_smiles;
+    auto xqm = GeneralizedSubstruct::createExtendedQueryMol(*mol);
+
+    auto libMatches = ssslib.getMatches(xqm);
+    CHECK(libMatches.size() == 3);
+    CHECK(libMatches == std::vector<unsigned int>{0, 1, 2});
+    CHECK(ssslib.countMatches(xqm) == 3);
+    CHECK(ssslib.hasMatch(xqm));
+  }
+  SECTION("tautomer bundle") {
+    auto mol = "COC=CO |LN:1:1.3|"_smiles;
+    auto xqm = GeneralizedSubstruct::createExtendedQueryMol(*mol);
+
+    auto libMatches = ssslib.getMatches(xqm);
+    CHECK(libMatches.size() == 3);
+    CHECK(libMatches == std::vector<unsigned int>{0, 1, 2});
+    CHECK(ssslib.countMatches(xqm) == 3);
+    CHECK(ssslib.hasMatch(xqm));
+  }
+  SECTION("mol no match") {
+    auto mol = "CNCC"_smiles;
+    auto xqm = GeneralizedSubstruct::createExtendedQueryMol(*mol);
+
+    auto libMatches = ssslib.getMatches(xqm);
+    CHECK(libMatches.empty());
+    CHECK(ssslib.countMatches(xqm) == 0);
+    CHECK(!ssslib.hasMatch(xqm));
+  }
+  SECTION("tautomer query no match") {
+    auto mol = "CNCC"_smiles;
+    auto xqm = GeneralizedSubstruct::ExtendedQueryMol(
+        std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol)));
+    auto libMatches = ssslib.getMatches(xqm);
+    CHECK(libMatches.empty());
+    CHECK(ssslib.countMatches(xqm) == 0);
+    CHECK(!ssslib.hasMatch(xqm));
+  }
+  SECTION("mol bundle no match") {
+    auto mol = "CNCC |LN:1:1.3|"_smiles;
+    auto xqm = GeneralizedSubstruct::createExtendedQueryMol(*mol);
+
+    auto libMatches = ssslib.getMatches(xqm);
+    CHECK(libMatches.empty());
+    CHECK(ssslib.countMatches(xqm) == 0);
+    CHECK(!ssslib.hasMatch(xqm));
+  }
+  SECTION("tautomer bundle no match") {
+    auto mol = "CNC=CO |LN:1:1.3|"_smiles;
+    auto xqm = GeneralizedSubstruct::createExtendedQueryMol(*mol);
+
+    auto libMatches = ssslib.getMatches(xqm);
+    CHECK(libMatches.empty());
+    CHECK(ssslib.countMatches(xqm) == 0);
+    CHECK(!ssslib.hasMatch(xqm));
   }
 }

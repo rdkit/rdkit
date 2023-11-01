@@ -38,9 +38,12 @@
 #endif
 
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/GeneralizedSubstruct/XQMol.h>
 #include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
+
+using namespace GeneralizedSubstruct;
 
 bool SubstructLibraryCanSerialize() {
 #ifdef RDK_USE_BOOST_SERIALIZATION
@@ -55,9 +58,9 @@ struct Bits {
   const FPHolderBase *fps;
   SubstructMatchParameters params;
 
-  Bits(const FPHolderBase *fps, const ROMol &m,
+  Bits(const FPHolderBase *fingerprints, const ROMol &m,
        const SubstructMatchParameters &ssparams)
-      : fps(fps), params(ssparams) {
+      : fps(fingerprints), params(ssparams) {
     if (fps) {
       queryBits = fps->makeFingerprint(m);
     } else {
@@ -80,6 +83,64 @@ struct Bits {
       } else {
         fps = fingerprints;
         queryBits = m.patternFingerprintTemplate(tp->getNumBits());
+      }
+    } else {
+      queryBits = nullptr;
+    }
+  }
+
+  // FIX complete this
+  Bits(const FPHolderBase *fingerprints, const ExtendedQueryMol &xqm,
+       const SubstructMatchParameters &ssparams)
+      : fps(fingerprints), params(ssparams) {
+    if (fps) {
+      const auto *tph = dynamic_cast<const TautomerPatternHolder *>(fps);
+      const auto *ph = dynamic_cast<const PatternHolder *>(fps);
+      if (std::holds_alternative<ExtendedQueryMol::RWMol_T>(xqm.xqmol)) {
+        queryBits = fps->makeFingerprint(
+            *std::get<ExtendedQueryMol::RWMol_T>(xqm.xqmol));
+      } else if (std::holds_alternative<ExtendedQueryMol::MolBundle_T>(
+                     xqm.xqmol)) {
+        auto &bndl = std::get<ExtendedQueryMol::MolBundle_T>(xqm.xqmol);
+        auto tqb = new ExplicitBitVect(ph->getNumBits());
+        queryBits = tqb;
+        for (auto mol : bndl->getMols()) {
+          auto tfp = fps->makeFingerprint(*mol);
+          *tqb &= *tfp;
+          delete tfp;
+        }
+      } else if (std::holds_alternative<ExtendedQueryMol::TautomerQuery_T>(
+                     xqm.xqmol)) {
+        auto &tq = std::get<ExtendedQueryMol::TautomerQuery_T>(xqm.xqmol);
+        if (!tph) {
+          BOOST_LOG(rdWarningLog) << "Pattern fingerprints for tautomersearch "
+                                     "aren't tautomer fingerprints, ignoring..."
+                                  << std::endl;
+          queryBits = nullptr;
+          fps = nullptr;
+        } else {
+          queryBits = tq->patternFingerprintTemplate(tph->getNumBits());
+        }
+      } else if (std::holds_alternative<ExtendedQueryMol::TautomerBundle_T>(
+                     xqm.xqmol)) {
+        if (!tph) {
+          BOOST_LOG(rdWarningLog) << "Pattern fingerprints for tautomersearch "
+                                     "aren't tautomer fingerprints, ignoring..."
+                                  << std::endl;
+          queryBits = nullptr;
+          fps = nullptr;
+        } else {
+          auto &bndl = std::get<ExtendedQueryMol::TautomerBundle_T>(xqm.xqmol);
+          auto tqb = new ExplicitBitVect(ph->getNumBits());
+          queryBits = tqb;
+          for (auto &tq : *bndl) {
+            auto tfp = tq->patternFingerprintTemplate(tph->getNumBits());
+            *tqb &= *tfp;
+            delete tfp;
+          }
+        }
+      } else {
+        queryBits = nullptr;
       }
     } else {
       queryBits = nullptr;
@@ -139,6 +200,36 @@ bool query_needs_rings(const TautomerQuery &in_query) {
   return query_needs_rings(in_query.getTemplateMolecule());
 }
 
+bool query_needs_rings(const ExtendedQueryMol &xqm) {
+  if (std::holds_alternative<ExtendedQueryMol::RWMol_T>(xqm.xqmol)) {
+    return query_needs_rings(*std::get<ExtendedQueryMol::RWMol_T>(xqm.xqmol));
+  } else if (std::holds_alternative<ExtendedQueryMol::TautomerQuery_T>(
+                 xqm.xqmol)) {
+    return query_needs_rings(
+        std::get<ExtendedQueryMol::TautomerQuery_T>(xqm.xqmol)
+            ->getTemplateMolecule());
+  } else if (std::holds_alternative<ExtendedQueryMol::MolBundle_T>(xqm.xqmol)) {
+    for (const auto &mol :
+         std::get<ExtendedQueryMol::MolBundle_T>(xqm.xqmol)->getMols()) {
+      if (query_needs_rings(*mol)) {
+        return true;
+      }
+    }
+    return false;
+  } else if (std::holds_alternative<ExtendedQueryMol::TautomerBundle_T>(
+                 xqm.xqmol)) {
+    for (const auto &tq :
+         *std::get<ExtendedQueryMol::TautomerBundle_T>(xqm.xqmol)) {
+      if (query_needs_rings(tq->getTemplateMolecule())) {
+        return true;
+      }
+    }
+    return false;
+  }
+  return true;  // if we somehow get here, we better assume that rings are
+                // necessary
+}
+
 template <class Query>
 void SubSearcher(const Query &in_query, const Bits &bits,
                  const MolHolderBase &mols, unsigned int start,
@@ -149,6 +240,8 @@ void SubSearcher(const Query &in_query, const Bits &bits,
                  std::vector<unsigned int> *idxs) {
   PRECONDITION(searchOrder.empty() || searchOrder.size() >= end,
                "bad searchOrder data");
+  // we copy the query so that we don't end up with lock contention for
+  // recursive matchers when using multiple threads
   Query query(in_query);
   for (unsigned int idx = start; idx < end; idx += numThreads) {
     unsigned int sidx = idx;
@@ -176,8 +269,8 @@ void SubSearcher(const Query &in_query, const Bits &bits,
       if (idxs) {
         idxs->push_back(sidx);
         if (maxResults > 0 && counter == maxResults) {
-          // if we reached maxResults, record the last idx we processed and bail
-          // out
+          // if we reached maxResults, record the last idx we processed and
+          // bail out
           end = idx;
           break;
         }
@@ -258,18 +351,18 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
       // If maxResults was close to the theoretical maximum, some threads
       // might have even run out of molecules to screen without reaching
       // maxResults so we need to make sure that all threads have screened as
-      // many molecules as the most productive thread if we want multi-threaded
-      // runs to yield the same results independently from the number of
-      // threads.
+      // many molecules as the most productive thread if we want
+      // multi-threaded runs to yield the same results independently from the
+      // number of threads.
       thread_group_idx = 0;
       for (auto &fut : thread_group) {
         fut.get();
         counter += counterVect[thread_group_idx++];
       }
       thread_group.clear();
-      // Find out out the max number of molecules that was screened by the most
-      // productive thread and do the same in all other threads, unless the
-      // max number of molecules was reached
+      // Find out out the max number of molecules that was screened by the
+      // most productive thread and do the same in all other threads, unless
+      // the max number of molecules was reached
       maxEndIdx = *std::max_element(endIdxVect.begin(), endIdxVect.end());
       for (thread_group_idx = 0; thread_group_idx < numThreads;
            ++thread_group_idx) {
@@ -395,6 +488,17 @@ std::vector<unsigned int> SubstructLibrary::getMatches(
   return idxs;
 }
 
+std::vector<unsigned int> SubstructLibrary::getMatches(
+    const ExtendedQueryMol &query, unsigned int startIdx, unsigned int endIdx,
+    const SubstructMatchParameters &params, int numThreads,
+    int maxResults) const {
+  std::vector<unsigned int> idxs;
+  boost::dynamic_bitset<> found(mols->size());
+  internalGetMatches(query, *mols, fps, startIdx, endIdx, params, numThreads,
+                     maxResults, found, searchOrder, &idxs);
+  return idxs;
+}
+
 unsigned int SubstructLibrary::countMatches(
     const ROMol &query, unsigned int startIdx, unsigned int endIdx,
     const SubstructMatchParameters &params, int numThreads) const {
@@ -417,6 +521,14 @@ unsigned int SubstructLibrary::countMatches(
                              numThreads, -1, searchOrder, nullptr);
 }
 
+unsigned int SubstructLibrary::countMatches(
+    const ExtendedQueryMol &query, unsigned int startIdx, unsigned int endIdx,
+    const SubstructMatchParameters &params, int numThreads) const {
+  boost::dynamic_bitset<> found(mols->size());
+  return internalGetMatches(query, *mols, fps, startIdx, endIdx, params,
+                            numThreads, -1, found, searchOrder, nullptr);
+}
+
 bool SubstructLibrary::hasMatch(const ROMol &query, unsigned int startIdx,
                                 unsigned int endIdx,
                                 const SubstructMatchParameters &params,
@@ -436,6 +548,14 @@ bool SubstructLibrary::hasMatch(const TautomerQuery &query,
 }
 bool SubstructLibrary::hasMatch(const MolBundle &query, unsigned int startIdx,
                                 unsigned int endIdx,
+                                const SubstructMatchParameters &params,
+                                int numThreads) const {
+  const int maxResults = 1;
+  return getMatches(query, startIdx, endIdx, params, numThreads, maxResults)
+             .size() > 0;
+}
+bool SubstructLibrary::hasMatch(const ExtendedQueryMol &query,
+                                unsigned int startIdx, unsigned int endIdx,
                                 const SubstructMatchParameters &params,
                                 int numThreads) const {
   const int maxResults = 1;
