@@ -33,7 +33,7 @@ option(RDK_PGSQL_QMOL_GIST_SORTSUPPORT "enable the sortsupport method in the Pos
 option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" OFF)
 option(RDK_INSTALL_DLLS_MSVC "install the rdkit DLLs when using MSVC" OFF)
-option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
+option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" OFF )
 option(RDK_INSTALL_PYTHON_TESTS "install the rdkit Python tests with the wrappers" OFF )
 option(RDK_BUILD_THREADSAFE_SSS "enable thread-safe substructure searching" ON )
 option(RDK_BUILD_SLN_SUPPORT "include support for the SLN format" ON )

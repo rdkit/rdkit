@@ -16,7 +16,7 @@ class RDKitRecipe(ConanFile):
     # Binary configuration
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False], "fPIC": [True, False]}
-    default_options = {"shared": False, "fPIC": True}
+    default_options = {"shared": True, "fPIC": True}
 
     requires = "freetype/2.10.4", "boost/1.83.0"# "eigen/3.3.9"# "boost/1.83.0"
 
