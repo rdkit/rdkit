@@ -38,6 +38,8 @@
 #include "../ReactionPickler.h"
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/multiprecision/cpp_int.hpp>

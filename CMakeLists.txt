@@ -20,7 +20,7 @@ set(CMAKE_MODULE_PATH
 add_library(rdkit_base INTERFACE)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
-option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
+option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" OFF)
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
@@ -31,26 +31,26 @@ option(RDK_PGSQL_BFP_GIST_SORTSUPPORT "enable the sortsupport method in the Post
 option(RDK_PGSQL_MOL_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL mol gist index" ON )
 option(RDK_PGSQL_QMOL_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL qmol gist index" ON )
 option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
-option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
+option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" OFF)
 option(RDK_INSTALL_DLLS_MSVC "install the rdkit DLLs when using MSVC" OFF)
-option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
+option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" OFF )
 option(RDK_INSTALL_PYTHON_TESTS "install the rdkit Python tests with the wrappers" OFF )
 option(RDK_BUILD_THREADSAFE_SSS "enable thread-safe substructure searching" ON )
 option(RDK_BUILD_SLN_SUPPORT "include support for the SLN format" ON )
-option(RDK_TEST_MULTITHREADED "run some tests of multithreading" ON )
+option(RDK_TEST_MULTITHREADED "run some tests of multithreading" OFF )
 option(RDK_BUILD_SWIG_JAVA_WRAPPER "build the SWIG JAVA wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" ON )
 option(RDK_BUILD_SWIG_CSHARP_WRAPPER "build the experimental SWIG C# wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" OFF )
 option(RDK_SWIG_STATIC "statically link rdkit libraries into the SWIG wrappers" ON )
-option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" ON )
-option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" ON)
+option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" OFF )
+option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" OFF)
 option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" OFF)
 option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
-option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" ON)
+option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" OFF)
 option(RDK_USE_BOOST_STACKTRACE "use boost::stacktrace to do more verbose invariant output (linux only)" ON)
 option(RDK_BUILD_TEST_GZIP "Build the gzip'd stream test" OFF)
 option(RDK_OPTIMIZE_POPCNT "Use SSE4.2 popcount instruction while compiling." ON)
 option(RDK_USE_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
-option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires Eigen3 to be installed" ON)
+option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires Eigen3 to be installed" OFF)
 option(RDK_BUILD_FREESASA_SUPPORT "build the rdkit freesasa wrapper" OFF )
 option(RDK_BUILD_COORDGEN_SUPPORT "build the rdkit coordgen wrapper" ON )
 option(RDK_BUILD_MAEPARSER_SUPPORT "build the rdkit MAE parser wrapper" ON )
@@ -70,7 +70,9 @@ option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" O
 option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 
-set(RDK_BOOST_VERSION "1.58.0")
+set(RDK_BOOST_VERSION "1.83.0")
+
+include_directories(/usr/include/freetype2)
 
 if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
@@ -160,7 +162,7 @@ if(RDK_INSTALL_INTREE)
 else(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "bin")
   set(RDKit_LibDir "lib${LIB_SUFFIX}")
-  set(RDKit_HdrDir "include/rdkit")
+  set(RDKit_HdrDir "include")
   set(RDKit_ShareDir "share/RDKit")
 endif(RDK_INSTALL_INTREE)
 
@@ -250,6 +252,7 @@ include(RDKitUtils)
 install(TARGETS rdkit_base EXPORT ${RDKit_EXPORTED_TARGETS}
         COMPONENT dev )
 
+
 # disable some warnings that we don't care about
 if(MSVC)
   # These should occasionally be enabled to check what's going on
@@ -302,9 +305,13 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   endif()
-  
+
   find_package(NumPy REQUIRED)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
+
+  include(CMakePrintHelpers)
+
+  cmake_print_variables(PYTHON_LIBRARIES)
 
   if(PYTHON_VERSION_MAJOR EQUAL 3)
     # Find boost-python3 using name specified as command line option then fall back to commonly used names
@@ -313,7 +320,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endif(PYTHON_VERSION_MAJOR EQUAL 3)
 
   # Boost 1.67+ uses a version suffix like "python36" or "python27"
-  list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
+  #list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
 
   # Try each potential boost-python name until one works
   foreach(Boost_Python_LibN ${Boost_Python_Names})
@@ -329,7 +336,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     set(Boost_Python_Lib "python")
   endif()
 
-  target_link_libraries(rdkit_py_base INTERFACE Boost::${Boost_Python_Lib})
+
+  target_link_libraries(rdkit_py_base INTERFACE Boost::python)#${Boost_Python_Lib})
 
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
@@ -405,19 +413,19 @@ else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost ${RDK_BOOST_VERSION} REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
-find_package(Eigen3)
-if(RDK_BUILD_DESCRIPTORS3D)
-  if(NOT EIGEN3_FOUND)
-    add_subdirectory(External/Eigen)
-  endif()
-  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
-endif()
-
-if(TARGET Eigen3::Eigen)
-  target_compile_definitions(rdkit_base INTERFACE "-DRDK_HAS_EIGEN3")
-  target_link_libraries(rdkit_base INTERFACE Eigen3::Eigen)
-  set(RDK_HAS_EIGEN ON)
-endif()
+#find_package(Eigen3)
+#if(RDK_BUILD_DESCRIPTORS3D)
+#  if(NOT EIGEN3_FOUND)
+#    add_subdirectory(External/Eigen)
+#  endif()
+#  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
+#endif()
+#
+#if(TARGET Eigen3::Eigen)
+#  target_compile_definitions(rdkit_base INTERFACE "-DRDK_HAS_EIGEN3")
+#  target_link_libraries(rdkit_base INTERFACE Eigen3::Eigen)
+#  set(RDK_HAS_EIGEN ON)
+#endif()
 
 if(RDK_BUILD_THREADSAFE_SSS)
   find_package (Threads)
@@ -437,6 +445,8 @@ else()
   endif()
 endif()
 
+find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS archive system filesystem serialization REQUIRED)
+
 if(RDK_USE_BOOST_SERIALIZATION)
     set(T_LIBS ${Boost_LIBRARIES})
     find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams)
@@ -451,6 +461,7 @@ if(RDK_USE_BOOST_SERIALIZATION)
     endif()
 endif()
 
+set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lfreetype")
 
 # set the boost include directories and linkage:
 target_include_directories(rdkit_base INTERFACE
@@ -659,7 +670,6 @@ SET(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSIO
 #  SET(CPACK_SOURCE_STRIP_FILES "")
 #ENDIF(WIN32 AND NOT UNIX)
 #SET(CPACK_PACKAGE_EXECUTABLES "MyExecutable" "My Executable")
-
 
 SET(CPACK_SET_DESTDIR ON)
 
