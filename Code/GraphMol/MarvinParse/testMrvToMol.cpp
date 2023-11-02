@@ -276,7 +276,8 @@ class MrvTests {
       TEST_ASSERT(localVars.mol->getNumBonds() == molTest->bondCount)
 
       {
-        std::string expectedMrvName = fName + ".expected.sdf";
+        std::string expectedMrvName =
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".expected.sdf";
         std::string outMolStr = "";
         try {
           outMolStr = MolToMolBlock(*localVars.mol, true, 0, true, true);
@@ -294,7 +295,8 @@ class MrvTests {
       }
 
       {
-        std::string expectedMrvName = fName + ".expected.mrv";
+        std::string expectedMrvName =
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".expected.mrv";
 
         std::string outMolStr = "";
         try {
@@ -461,7 +463,9 @@ class MrvTests {
       TEST_ASSERT(localVars.mol->getNumBonds() == molFileTest->bondCount)
 
       {
-        std::string expectedMrvName = fName + ".expected.sdf";
+        std::string expectedMrvName =
+            fName + (molFileTest->sanitizeFlag ? "" : ".nosan") +
+            ".expected.sdf";
         std::string outMolStr = "";
         try {
           outMolStr = MolToMolBlock(*localVars.mol, true, 0, true, true);
@@ -474,12 +478,13 @@ class MrvTests {
         }
 
         generateNewExpectedFilesIfSoSpecified(fName + ".NEW.sdf", outMolStr);
-
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
 
       {
-        std::string expectedMrvName = fName + ".expected.mrv";
+        std::string expectedMrvName =
+            fName + (molFileTest->sanitizeFlag ? "" : ".nosan") +
+            ".expected.mrv";
 
         std::string outMolStr = "";
         try {
