@@ -295,6 +295,11 @@ class TestLoadSDF(unittest.TestCase):
     df = PandasTools.LoadSDF(sio, molColName=None)
     self.assertEqual(set(df.columns), set("ID prop1 prop2 prop3".split()))
 
+  def test_load_multiconf(self):
+    path = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'read_multi_conf.sdf')
+    data = PandasTools.LoadSDF(path, multiConf=True, multiConfParams=['_Name', False, 'CID'])
+    self.assertEqual([m.GetNumConformers() for m in list(data['ROMol'])], [62, 7, 200])
+
 
 @unittest.skipIf((not hasattr(PandasTools, 'pd')) or PandasTools.pd is None,
                  'Pandas not installed, skipping')
