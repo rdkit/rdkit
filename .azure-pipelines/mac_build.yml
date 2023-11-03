@@ -25,7 +25,7 @@ steps:
         jupyter
     conda activate rdkit_build
     conda install -c conda-forge sphinx myst-parser
-    conda install -c conda-forge nbval
+    conda install -c conda-forge pytest nbval
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

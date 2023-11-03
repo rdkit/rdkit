@@ -10,7 +10,7 @@ steps:
         boost-cpp=$(boost_version) \
         py-boost=$(boost_version) \
         numpy pillow eigen pandas \
-        qt
+        qt pytest
     conda activate rdkit_build
     conda install -c rdkit nox cairo=1.14.6
   displayName: Setup build environment

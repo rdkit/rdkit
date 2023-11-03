@@ -7,7 +7,7 @@ from rdkit import Chem, RDConfig
 from rdkit.Chem import QED
 
 doLong = False
-TestData = namedtuple('TestData', 'lineNo,smiles,mol,expected')
+_TestData = namedtuple('_TestData', 'lineNo,smiles,mol,expected')
 dataNCI200 = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'QED', 'NCI_200_qed.csv')
 dataRegression = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'QED', 'Regression_qed.csv')
 
@@ -89,7 +89,7 @@ def readTestData(filename):
       mol = Chem.MolFromSmiles(smiles)
       if not mol:
         raise AssertionError('molecule construction failed on line %d' % lineNo)
-      yield TestData(lineNo, smiles, mol, float(expected))
+      yield _TestData(lineNo, smiles, mol, float(expected))
 
 
 def updateTestData():

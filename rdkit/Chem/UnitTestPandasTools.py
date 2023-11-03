@@ -11,9 +11,6 @@ import numpy
 from rdkit import Chem, RDConfig, rdBase
 from rdkit.Chem import PandasTools
 
-if (getattr(doctest, 'ELLIPSIS_MARKER')):
-  doctest.ELLIPSIS_MARKER = '*...*'
-
 try:
   import IPython
 except ImportError:
@@ -50,12 +47,6 @@ class TestPandasTools(unittest.TestCase):
     PandasTools.molRepresentation = self._molRepresentation
     PandasTools.highlightSubstructures = self._highlightSubstructures
     PandasTools.UninstallPandasTools()
-
-  def testDoctest(self):
-    # We need to do it like this to ensure that default RDkit functionality is restored
-    failed, _ = doctest.testmod(PandasTools,
-                                optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
-    self.assertFalse(failed)
 
   def test_RestoreMonkeyPatch(self):
     sio = getStreamIO(methane + peroxide)
@@ -454,4 +445,6 @@ $$$$
 """
 
 if __name__ == '__main__':  # pragma: nocover
+  if (getattr(doctest, 'ELLIPSIS_MARKER')):
+    doctest.ELLIPSIS_MARKER = '*...*'
   unittest.main()
