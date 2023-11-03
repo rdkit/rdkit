@@ -208,4 +208,35 @@ std::string toJSON(const RGroupColumns &cols, const std::string &prefix) {
   return res;
 }
 
+void relabelMappedDummies(ROMol &mol, RGroupLabelling inputLabels,
+                          RGroupLabelling outputLabels) {
+  for (auto &atom : mol.atoms()) {
+    if (atom->getAtomicNum()) {
+      continue;
+    }
+    unsigned int atomMapNum = 0;
+    if (inputLabels & AtomMap) {
+      atomMapNum = static_cast<unsigned int>(abs(atom->getAtomMapNum()));
+    }
+    if (!atomMapNum && (inputLabels & Isotope)) {
+      atomMapNum = atom->getIsotope();
+    }
+    if (!atomMapNum && (inputLabels & MDLRGroup)) {
+      atom->getPropIfPresent(common_properties::_MolFileRLabel, atomMapNum);
+    }
+    if (!atomMapNum) {
+      continue;
+    }
+    auto rLabel = "R" + std::to_string(atomMapNum);
+    atom->setProp(common_properties::dummyLabel, rLabel);
+    atom->setAtomMapNum((outputLabels & AtomMap) ? atomMapNum : 0);
+    atom->setIsotope((outputLabels & Isotope) ? atomMapNum : 0);
+    if (outputLabels & MDLRGroup) {
+      atom->setProp(common_properties::_MolFileRLabel, atomMapNum);
+    } else {
+      atom->clearProp(common_properties::_MolFileRLabel);
+    }
+  }
+}
+
 }  // namespace RDKit
