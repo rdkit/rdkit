@@ -1122,8 +1122,6 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   return res;
 }
 
-void removeBadStereo(ROMol &mol) { runCleanup(mol, true, true); }
-
 //}  // namespace
 
 std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,

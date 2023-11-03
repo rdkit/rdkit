@@ -171,6 +171,7 @@ class MrvTests {
     try {
       SmilesParserParams smilesParserParams;
       smilesParserParams.sanitize = smilesTest->sanitizeFlag;
+      smilesParserParams.removeHs = smilesTest->sanitizeFlag;
 
       localVars.smilesMol = SmilesToMol(smilesTest->smiles, smilesParserParams);
       Chirality::reapplyMolBlockWedging(*localVars.smilesMol);
@@ -180,20 +181,26 @@ class MrvTests {
 
       // test round trip back to smiles
       {
-        std::string expectedMrvName = fName + ".expected.smi";
+        std::string expectedMrvName =
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") +
+            ".expected.smi";
 
         SmilesWriteParams ps;
         ps.canonical = false;
 
         std::string smilesOut = MolToSmiles(*localVars.smilesMol, ps);
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.smi", smilesOut);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") + ".NEW.smi",
+            smilesOut);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == smilesOut);
       }
 
       {
-        std::string expectedMrvName = fName + ".expected.sdf";
+        std::string expectedMrvName =
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") +
+            ".expected.sdf";
         std::string outMolStr = "";
         try {
           outMolStr = MolToMolBlock(*localVars.smilesMol, true, 0, true, true);
@@ -205,13 +212,17 @@ class MrvTests {
                                     true);  // try without kekule'ing
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.sdf", outMolStr);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") + ".NEW.sdf",
+            outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
       {
         std::string mrvBlock;
-        std::string expectedMrvName = fName + ".expected.mrv";
+        std::string expectedMrvName =
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") +
+            ".expected.mrv";
         std::string outMolStr = "";
         try {
           outMolStr =
@@ -226,7 +237,9 @@ class MrvTests {
                                     false);  // try without kekule'ing
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.mrv", outMolStr);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") + ".NEW.mrv",
+            outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
@@ -289,7 +302,9 @@ class MrvTests {
                                     true);  // try without kekule'ing
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.sdf", outMolStr);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".NEW.sdf",
+            outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
@@ -309,7 +324,9 @@ class MrvTests {
                                     false);  // try without kekule'ing
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.mrv", outMolStr);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".NEW.mrv",
+            outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
 
@@ -477,7 +494,9 @@ class MrvTests {
                                     true);  // try without kekule'ing
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.sdf", outMolStr);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (molFileTest->sanitizeFlag ? "" : ".nosan") + ".NEW.sdf",
+            outMolStr);
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
 
@@ -497,7 +516,9 @@ class MrvTests {
           outMolStr = MolToMrvBlock(*localVars.mol, true, -1, false, false);
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.mrv", outMolStr);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (molFileTest->sanitizeFlag ? "" : ".nosan") + ".NEW.mrv",
+            outMolStr);
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
 

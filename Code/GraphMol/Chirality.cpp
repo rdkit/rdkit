@@ -2429,7 +2429,7 @@ bool canBeStereoBond(const Bond *bond) {
           return false;
         }
 
-        // if two neighbors havr the same CIP ranking, this is not stereo
+        // if two neighbors have the same CIP ranking, this is not stereo
         const auto otherAtom = nbrBond->getOtherAtom(atom);
         int rank;
         if (RDKit::Chirality::getUseLegacyStereoPerception()) {
