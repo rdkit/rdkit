@@ -910,4 +910,5 @@ TEST_CASE("Github #6855 MakeScaffoldGeneric isotope removal", "[bug]") {
     REQUIRE(pm);
     auto smiles = MolToSmiles(*pm);
     CHECK(smiles == "C1CC1");
+  }
 }

@@ -744,4 +744,3 @@ TEST_CASE("Github #6855 MakeScaffoldGeneric isotope removal") {
     }
   }
 }
-
