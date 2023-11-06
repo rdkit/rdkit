@@ -71,6 +71,9 @@ class TestCase(unittest.TestCase):
     self.assertEqual(testSmiles('c1[nH]ccc1'), 'C1CCCC1')
     self.assertEqual(testSmiles('C1[NH2+]C1'), 'C1CC1')
     self.assertEqual(testSmiles('C1[C@](Cl)(F)O1'), 'CC1(C)CC1')
+    
+    # Examples from github issue 6855
+    self.assertEqual(testSmiles('[235U]1CC1'), 'C1CC1')
 
   testMolecules = [
     TestMolecule('CC1CCC1', 'C1CCC1'),
@@ -106,8 +109,6 @@ class TestCase(unittest.TestCase):
     TestMolecule('Cn1cccc1', 'c1ccc[nH]1'),
     # Explicit hydrogens are removed
     TestMolecule('C1CC1[CH](C)C1CC1', 'C1CC1CC1CC1'),
-    # Isotope is reset
-    TestMolecule('[235U]1CC1','C1CC1'),
   ]
 
   testMolecules2 = [
