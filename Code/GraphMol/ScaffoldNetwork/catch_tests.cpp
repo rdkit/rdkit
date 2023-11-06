@@ -900,3 +900,14 @@ TEST_CASE("molCounts", "[scaffolds]") {
     }
   }
 }
+
+TEST_CASE("Github #6855 MakeScaffoldGeneric isotope removal", "[bug]") {
+  auto m = "[235U]1CC1"_smiles;
+  REQUIRE(m);
+  SECTION("basics") {
+    std::unique_ptr<ROMol> pm(
+        ScaffoldNetwork::detail::makeScaffoldGeneric(*m, true, false));
+    REQUIRE(pm);
+    auto smiles = MolToSmiles(*pm);
+    CHECK(smiles == "C1CC1");
+}

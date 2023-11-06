@@ -106,6 +106,8 @@ class TestCase(unittest.TestCase):
     TestMolecule('Cn1cccc1', 'c1ccc[nH]1'),
     # Explicit hydrogens are removed
     TestMolecule('C1CC1[CH](C)C1CC1', 'C1CC1CC1CC1'),
+    # Isotope is reset
+    TestMolecule('[235U]1CC1','C1CC1'),
   ]
 
   testMolecules2 = [

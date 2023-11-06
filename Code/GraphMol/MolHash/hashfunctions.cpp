@@ -795,6 +795,7 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
       aptr->setFormalCharge(0);
       aptr->setNoImplicit(true);
       aptr->setNumExplicitHs(0);
+      aptr->setIsotope(0);
     } else {
       for_deletion.push_back(aptr);
     }
