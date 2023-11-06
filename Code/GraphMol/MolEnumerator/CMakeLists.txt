@@ -1,5 +1,5 @@
 rdkit_library(MolEnumerator
-    MolEnumerator.cpp PositionVariation.cpp LinkNode.cpp RepeatUnit.cpp EnumerateStereoisomers.cpp
+    MolEnumerator.cpp PositionVariation.cpp LinkNode.cpp RepeatUnit.cpp EnumerateStereoisomers.cpp StereoIsomer.cpp
               LINK_LIBRARIES FileParsers ChemReactions ChemTransforms
               SubstructMatch GraphMol RDGeneral)
 target_compile_definitions(MolEnumerator PRIVATE RDKIT_MOLENUMERATOR_BUILD)

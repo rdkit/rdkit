@@ -237,6 +237,47 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
   void initFromMol();
 };
 
+class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
+ public:
+  StereoIsomerOp() {}
+  StereoIsomerOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
+    PRECONDITION(mol, "bad molecule");
+    initFromMol();
+  }
+  StereoIsomerOp(const ROMol &mol) : dp_mol(new ROMol(mol)) { initFromMol(); }
+  StereoIsomerOp(const StereoIsomerOp &other)
+      : dp_mol(other.dp_mol), d_variationPoints(other.d_variationPoints) {}
+  StereoIsomerOp &operator=(const StereoIsomerOp &other) {
+    if (&other == this) {
+      return *this;
+    }
+    dp_mol = other.dp_mol;
+    d_variationPoints = other.d_variationPoints;
+    return *this;
+  }
+  //! \override
+  std::vector<size_t> getVariationCounts() const override;
+
+  //! \override
+  std::unique_ptr<ROMol> operator()(
+      const std::vector<size_t> &which) const override;
+
+  //! \override
+  void initFromMol(const ROMol &mol) override;
+
+  //! \override
+  std::unique_ptr<MolEnumeratorOp> copy() const override {
+    return std::unique_ptr<MolEnumeratorOp>(new StereoIsomerOp(*this));
+  }
+
+ private:
+  std::shared_ptr<ROMol> dp_mol{nullptr};
+  std::vector<std::pair<unsigned int, std::vector<unsigned int>>>
+      d_variationPoints{};
+  std::vector<size_t> d_dummiesAtEachPoint{};
+  void initFromMol();
+};
+
 //! Parameters used to control the molecule enumeration
 struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
   bool sanitize = false;

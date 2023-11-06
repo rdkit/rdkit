@@ -155,6 +155,15 @@ MolBundle enumerate(const ROMol &mol, size_t maxPerOperation) {
   }
   paramsList.push_back(linkParams);
 
+  //  stereo
+  MolEnumerator::MolEnumeratorParams stereoParams;
+  auto sOp = new MolEnumerator::StereoIsomerOp;
+  stereoParams.dp_operation =
+      std::shared_ptr<MolEnumerator::MolEnumeratorOp>(sOp);
+  if (maxPerOperation > 0) {
+    stereoParams.maxToEnumerate = maxPerOperation;
+  }
+  paramsList.push_back(stereoParams);
   return enumerate(mol, paramsList);
 }
 

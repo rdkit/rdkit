@@ -8,7 +8,7 @@ class ROMol;
 
 struct RDKIT_MOLENUMERATOR_EXPORT StereoEnumerationOptions {
   bool try_embedding;
-  bool only_unassgned;
+  bool only_unassigned;
   bool only_stereo_groups;
   bool unique;
   unsigned int max_isomers;

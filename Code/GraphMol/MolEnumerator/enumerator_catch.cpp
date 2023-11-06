@@ -1734,3 +1734,11 @@ M  END)CTAB"};
   CHECK(MolToSmiles(*bundle[0]) == "*N(CC)N(*)CF");      // repeated 2x
   CHECK(MolToSmiles(*bundle[1]) == "*N(CC)N(*)N(*)CF");  // repeated 3x
 }
+
+TEST_CASE("MolEnumerator stereo debug") {
+  auto mol = "CC(F)=CC(Cl)C=C(Br)C(I)N"_smiles;
+  REQUIRE(mol);
+  auto bundle = MolEnumerator::enumerate(*mol);
+  std::cout << "bundle::size(): " << bundle.size() << std::endl;
+  CHECK(bundle.size() == 2);
+}
