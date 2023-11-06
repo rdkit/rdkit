@@ -21,15 +21,12 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 #include <string>
 #include <fstream>
 #include <filesystem>
 
 using namespace RDKit;
-
-enum LoadAs { LoadAsMolOrRxn, LoadAsMol, LoadAsRxn };
 
 class MrvTests {
  public:
@@ -47,13 +44,18 @@ class MrvTests {
     unsigned int bondCount;
     std::string fileName;
     bool expectedResult;
+    bool sanitizeFlag;
+    bool reapplyMolBlockWedging;
 
     MolTest(std::string fileNameInit, bool expectedResultInit,
-            int atomCountInit, int bondCountInit)
+            int atomCountInit, int bondCountInit, bool sanitizeFlagInit = true,
+            bool reapplyMolBlockWedgingInit = true)
         : atomCount(atomCountInit),
           bondCount(bondCountInit),
           fileName(fileNameInit),
-          expectedResult(expectedResultInit){};
+          expectedResult(expectedResultInit),
+          sanitizeFlag(sanitizeFlagInit),
+          reapplyMolBlockWedging(reapplyMolBlockWedgingInit){};
   };
 
   class RxnTest {
@@ -83,19 +85,55 @@ class MrvTests {
     std::string name;
     std::string smiles;
     bool expectedResult;
+    bool sanitizeFlag;
     unsigned int atomCount;
     unsigned int bondCount;
+
+    SmilesTest(std::string nameInit, std::string smilesInit,
+               bool expectedResultInit, int atomCountInit, int bondCountInit,
+               bool sanitizeFlagInit)
+        : name(nameInit),
+          smiles(smilesInit),
+          expectedResult(expectedResultInit),
+          sanitizeFlag(sanitizeFlagInit),
+          atomCount(atomCountInit),
+          bondCount(bondCountInit){};
 
     SmilesTest(std::string nameInit, std::string smilesInit,
                bool expectedResultInit, int atomCountInit, int bondCountInit)
         : name(nameInit),
           smiles(smilesInit),
           expectedResult(expectedResultInit),
+          sanitizeFlag(true),
           atomCount(atomCountInit),
           bondCount(bondCountInit){};
-
-    bool isRxnTest() const { return false; }
   };
+
+  RWMol *GetMol(const MolTest *molTest) {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/MarvinParse/test_data/" + molTest->fileName;
+
+    try {
+      return MrvFileToMol(fName, molTest->sanitizeFlag, false);
+    } catch (const std::exception &e) {
+      std::cerr << e.what() << '\n';
+      throw BadFileException("Could not parse the MRV block");
+    }
+  }
+
+  ChemicalReaction *GetReaction(const RxnTest *rxnTest) {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/MarvinParse/test_data/" + rxnTest->fileName;
+
+    try {
+      return MrvFileToChemicalReaction(fName, true, false);
+    } catch (const std::exception &e) {
+      std::cerr << e.what() << '\n';
+    }
+    throw BadFileException("Could not parse the MRV block");
+  }
 
   std::string GetExpectedValue(std::string expectedFileName) {
     std::stringstream expectedMolStr;
@@ -115,7 +153,7 @@ class MrvTests {
   }
 
   void testSmilesToMarvin(const SmilesTest *smilesTest) {
-    BOOST_LOG(rdInfoLog) << "testing smiles to marin " << std::endl;
+    BOOST_LOG(rdInfoLog) << "testing smiles to marvin " << std::endl;
     std::string rdbase = getenv("RDBASE");
     std::string fName =
         rdbase + "/Code/GraphMol/MarvinParse/test_data/" + smilesTest->name;
@@ -132,7 +170,8 @@ class MrvTests {
 
     try {
       SmilesParserParams smilesParserParams;
-      smilesParserParams.sanitize = true;
+      smilesParserParams.sanitize = smilesTest->sanitizeFlag;
+      smilesParserParams.removeHs = smilesTest->sanitizeFlag;
 
       localVars.smilesMol = SmilesToMol(smilesTest->smiles, smilesParserParams);
       Chirality::reapplyMolBlockWedging(*localVars.smilesMol);
@@ -142,20 +181,26 @@ class MrvTests {
 
       // test round trip back to smiles
       {
-        std::string expectedMrvName = fName + ".expected.smi";
+        std::string expectedMrvName =
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") +
+            ".expected.smi";
 
         SmilesWriteParams ps;
         ps.canonical = false;
 
         std::string smilesOut = MolToSmiles(*localVars.smilesMol, ps);
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.smi", smilesOut);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") + ".NEW.smi",
+            smilesOut);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == smilesOut);
       }
 
       {
-        std::string expectedMrvName = fName + ".expected.sdf";
+        std::string expectedMrvName =
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") +
+            ".expected.sdf";
         std::string outMolStr = "";
         try {
           outMolStr = MolToMolBlock(*localVars.smilesMol, true, 0, true, true);
@@ -167,13 +212,17 @@ class MrvTests {
                                     true);  // try without kekule'ing
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.sdf", outMolStr);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") + ".NEW.sdf",
+            outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
       {
         std::string mrvBlock;
-        std::string expectedMrvName = fName + ".expected.mrv";
+        std::string expectedMrvName =
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") +
+            ".expected.mrv";
         std::string outMolStr = "";
         try {
           outMolStr =
@@ -188,7 +237,9 @@ class MrvTests {
                                     false);  // try without kekule'ing
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.mrv", outMolStr);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") + ".NEW.mrv",
+            outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
@@ -201,36 +252,6 @@ class MrvTests {
     }
 
     TEST_ASSERT(smilesTest->expectedResult == true);
-  }
-
-  RWMol *GetMol(const MolTest *molTest) {
-    std::string rdbase = getenv("RDBASE");
-    std::string fName =
-        rdbase + "/Code/GraphMol/MarvinParse/test_data/" + molTest->fileName;
-
-    for (bool sanitize : {true, false}) {
-      try {
-        return MrvFileToMol(fName, sanitize, false);
-      } catch (const std::exception &e) {
-        std::cerr << e.what() << '\n';
-      }
-    }
-    throw BadFileException("Could not parse the MRV block");
-  }
-
-  ChemicalReaction *GetReaction(const RxnTest *rxnTest) {
-    std::string rdbase = getenv("RDBASE");
-    std::string fName =
-        rdbase + "/Code/GraphMol/MarvinParse/test_data/" + rxnTest->fileName;
-
-    for (bool sanitize : {true, false}) {
-      try {
-        return MrvFileToChemicalReaction(fName, sanitize, false);
-      } catch (const std::exception &e) {
-        std::cerr << e.what() << '\n';
-      }
-    }
-    throw BadFileException("Could not parse the MRV block");
   }
 
   void testMarvinMol(const MolTest *molTest) {
@@ -257,7 +278,10 @@ class MrvTests {
       }
 
       localVars.mol = GetMol(molTest);
-      Chirality::reapplyMolBlockWedging(*localVars.mol);
+
+      if (molTest->reapplyMolBlockWedging) {
+        Chirality::reapplyMolBlockWedging(*localVars.mol);
+      }
 
       TEST_ASSERT(localVars.mol != nullptr);
 
@@ -265,7 +289,8 @@ class MrvTests {
       TEST_ASSERT(localVars.mol->getNumBonds() == molTest->bondCount)
 
       {
-        std::string expectedMrvName = fName + ".expected.sdf";
+        std::string expectedMrvName =
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".expected.sdf";
         std::string outMolStr = "";
         try {
           outMolStr = MolToMolBlock(*localVars.mol, true, 0, true, true);
@@ -277,13 +302,16 @@ class MrvTests {
                                     true);  // try without kekule'ing
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.sdf", outMolStr);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".NEW.sdf",
+            outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
 
       {
-        std::string expectedMrvName = fName + ".expected.mrv";
+        std::string expectedMrvName =
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".expected.mrv";
 
         std::string outMolStr = "";
         try {
@@ -296,7 +324,9 @@ class MrvTests {
                                     false);  // try without kekule'ing
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.mrv", outMolStr);
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".NEW.mrv",
+            outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
 
@@ -439,15 +469,20 @@ class MrvTests {
     } localVars;
 
     try {
-      localVars.mol = MolFileToMol(fName, true, false, false);
-      Chirality::reapplyMolBlockWedging(*localVars.mol);
+      localVars.mol =
+          MolFileToMol(fName, molFileTest->sanitizeFlag, false, false);
+      if (molFileTest->reapplyMolBlockWedging) {
+        reapplyMolBlockWedging(*localVars.mol);
+      }
 
       TEST_ASSERT(localVars.mol != nullptr);
       TEST_ASSERT(localVars.mol->getNumAtoms() == molFileTest->atomCount)
       TEST_ASSERT(localVars.mol->getNumBonds() == molFileTest->bondCount)
 
       {
-        std::string expectedMrvName = fName + ".expected.sdf";
+        std::string expectedMrvName =
+            fName + (molFileTest->sanitizeFlag ? "" : ".nosan") +
+            ".expected.sdf";
         std::string outMolStr = "";
         try {
           outMolStr = MolToMolBlock(*localVars.mol, true, 0, true, true);
@@ -459,13 +494,16 @@ class MrvTests {
                                     true);  // try without kekule'ing
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.sdf", outMolStr);
-
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (molFileTest->sanitizeFlag ? "" : ".nosan") + ".NEW.sdf",
+            outMolStr);
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
 
       {
-        std::string expectedMrvName = fName + ".expected.mrv";
+        std::string expectedMrvName =
+            fName + (molFileTest->sanitizeFlag ? "" : ".nosan") +
+            ".expected.mrv";
 
         std::string outMolStr = "";
         try {
@@ -478,8 +516,9 @@ class MrvTests {
           outMolStr = MolToMrvBlock(*localVars.mol, true, -1, false, false);
         }
 
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.mrv", outMolStr);
-
+        generateNewExpectedFilesIfSoSpecified(
+            fName + (molFileTest->sanitizeFlag ? "" : ".nosan") + ".NEW.mrv",
+            outMolStr);
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
 
@@ -497,9 +536,24 @@ class MrvTests {
   }
 
   void RunTests() {
+    RDKit::Chirality::setUseLegacyStereoPerception(false);
+    printf("Using new chirality perception\n");
+
     // the molecule tests - starting with molfiles/sdf
     if (testToRun == "" || testToRun == "sdfTests") {
       std::list<MolTest> sdfTests{
+          MolTest("NewChiralTest.sdf", true, 13, 14, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTest.sdf", true, 13, 14, false,
+                  false),  // not sanitized, wedges NOT reapplied
+          MolTest("NewChiralTestNoChiral.sdf", true, 13, 14, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTestNoChiral.sdf", true, 13, 14, false,
+                  false),  // not sanitized, wedges NOT reapplied
+          MolTest("NewChiralTestAllChiral.sdf", true, 14, 15, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTestAllChiral.sdf", true, 14, 15, false,
+                  false),  // not sanitized, wedges NOT reapplied
           MolTest("ProblemShort.mol", true, 993, 992),
           MolTest("lostStereoAnd.sdf", true, 6, 5),
           MolTest("DoubleBondChain.sdf", true, 22, 22),
@@ -521,6 +575,18 @@ class MrvTests {
     if (testToRun == "" || testToRun == "molFileTests") {
       std::list<MolTest> molFileTests{
           MolTest("Cubane.mrv", true, 16, 20),
+          MolTest("NewChiralTest.mrv", true, 13, 14, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTest.mrv", true, 13, 14, false,
+                  false),  // not sanitized, wedges NOT reapplied
+          MolTest("NewChiralTestNoChiral.mrv", true, 13, 14, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTestNoChiral.mrv", true, 13, 14, false,
+                  false),  // not sanitized, wedges NOT reapplied
+          MolTest("NewChiralTestAllChiral.mrv", true, 14, 15, true,
+                  false),  // wedges NOT reapplied
+          MolTest("NewChiralTestAllChiral.mrv", true, 14, 15, false,
+                  false),  // not sanitized, wedges NOT reapplied
           MolTest("lostStereoAnd.mrv", true, 6, 5),
           MolTest("DoubleBondChain.mrv", true, 22, 22),
           MolTest("WigglyAndCrossed.mrv", true, 8, 7),
@@ -536,7 +602,8 @@ class MrvTests {
           MolTest("EmbeddedSgroupSUPEXP_SUP.mrv", true, 10, 10),
           MolTest("EmbeddedSgroupSUPEXP_SUP2.mrv", true, 10, 10),
           MolTest("EmbeddedSgroupSUP_MULTICENTER.mrv", true, 10, 8),
-          MolTest("EmbeddedSgroupSUP_SUP.mrv", true, 12, 11),
+          MolTest("EmbeddedSgroupSUP_SUP.mrv", true, 12, 11,
+                  false),  // not sanitized
           MolTest("EmbeddedSgroupSUP_SUP2.mrv", true, 12, 12),
           MolTest("RgroupBad.mrv", true, 9, 9),
           MolTest("valenceLessThanDrawn.mrv", true, 14, 14),
@@ -575,7 +642,8 @@ class MrvTests {
           MolTest("MarvinMissingX2.mrv", true, 12, 11),
           MolTest("MarvinMissingY2.mrv", true, 12, 11),
           MolTest("DataSgroup.mrv", true, 7, 6),
-          MolTest("MulticenterSgroup.mrv", true, 17, 16),
+          MolTest("MulticenterSgroup.mrv", true, 17, 16,
+                  false),  // not sanitized),
           MolTest("GenericSgroup.mrv", true, 13, 13),
           MolTest("MonomerSgroup.mrv", true, 4, 3),
           MolTest("modification_sgroup.mrv", true, 54, 40),
@@ -652,6 +720,24 @@ class MrvTests {
 
     if (testToRun == "" || testToRun == "smiTests") {
       std::list<SmilesTest> smiTests{
+          SmilesTest("NewChiralTest", R"(C[C@H]1CC[C@@]2(CC[C@H](Cl)CC2)CC1)",
+                     true, 13, 14, true),
+          SmilesTest("NewChiralTest", R"(C[C@H]1CC[C@@]2(CC[C@H](Cl)CC2)CC1)",
+                     true, 13, 14, false),
+          SmilesTest("NewChiralTestNoChiral",
+                     R"(C[C@H]1CCC2(CC[C@H](Cl)CC2)CC1)", true, 13, 14, true),
+          SmilesTest("NewChiralTestNoChiral",
+                     R"(C[C@H]1CCC2(CC[C@H](Cl)CC2)CC1)", true, 13, 14, false),
+          SmilesTest("NewChiralTest2", R"(C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2)",
+                     true, 14, 15, true),
+          SmilesTest("NewChiralTest2", R"(C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2)",
+                     true, 14, 15, false),
+          SmilesTest("NewChiralTest2AllChiral",
+                     R"(C[C@H]1CC[C@@]2(CC1)CC[C@H](C)C(C)C2)", true, 14, 15,
+                     true),
+          SmilesTest("NewChiralTest2AllChiral",
+                     R"(C[C@H]1CC[C@@]2(CC1)CC[C@H](C)C(C)C2)", true, 14, 15,
+                     false),
 
           SmilesTest("DoubleBondChain",
                      R"(CC1=C(\C=C\C(C)=C\C=C\C(C)=C/C(O)=O)C(C)(C)CCC1)", true,
@@ -677,7 +763,6 @@ class MrvTests {
 
       for (auto smiTest : smiTests) {
         printf("Test\n\n %s\n\n", smiTest.name.c_str());
-        // RDDepict::preferCoordGen = true;
         testSmilesToMarvin(&smiTest);
       }
     }
