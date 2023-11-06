@@ -741,34 +741,6 @@ int BondGetDirCode(const Bond::BondDir dir) {
   return res;
 }
 
-namespace {
-bool checkNeighbors(const Bond *bond, const Atom *atom) {
-  PRECONDITION(bond, "no bond");
-  PRECONDITION(atom, "no atom");
-  std::vector<int> nbrRanks;
-  for (const auto nbrBond : bond->getOwningMol().atomBonds(atom)) {
-    if (nbrBond->getBondType() == Bond::SINGLE) {
-      if (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-          nbrBond->getBondDir() == Bond::ENDDOWNRIGHT) {
-        return false;
-      } else {
-        const auto otherAtom = nbrBond->getOtherAtom(atom);
-        int rank;
-        if (otherAtom->getPropIfPresent(common_properties::_CIPRank, rank)) {
-          if (std::find(nbrRanks.begin(), nbrRanks.end(), rank) !=
-              nbrRanks.end()) {
-            return false;
-          } else {
-            nbrRanks.push_back(rank);
-          }
-        }
-      }
-    }
-  }
-  return true;
-}
-}  // namespace
-
 void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
                               const Conformer *conf, int &dirCode,
                               bool &reverse) {
@@ -829,8 +801,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
             // FIX: this is the fix for github #2649, but we will need to change
             // it once we start handling allenes properly
 
-            if (checkNeighbors(bond, beginAtom) &&
-                checkNeighbors(bond, endAtom)) {
+            if (Chirality::canBeStereoBond(bond)) {
               dirCode = 3;
             }
           }
