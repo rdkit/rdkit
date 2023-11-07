@@ -372,6 +372,15 @@ emscripten::val get_avalon_fp_as_uint8array(const JSMol &self) {
 }
 #endif
 
+#ifdef RDK_BUILD_MINIMAL_LIB_FRAGMENTATION
+emscripten::val get_matched_fragments(const JSMol &mol, unsigned int minCuts, unsigned int maxCuts, unsigned int maxCutBonds) {
+  auto obj = emscripten::val::object();
+  std::pair<std::vector<std::string>, std::vector<std::string>> pairs = fragmentMol(mol, minCuts, maxCuts, maxCutBonds);
+  obj.set("fragmentsFirst", pairs.first);
+  obj.set("fragmentsSecond", pairs.second);
+  return obj;
+}
+#endif
 }  // namespace
 
 using namespace emscripten;
@@ -678,5 +687,8 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   function("get_mcs_as_mol", &get_mcs_as_mol_no_details, allow_raw_pointers());
   function("get_mcs_as_smarts", &get_mcs_as_smarts);
   function("get_mcs_as_smarts", &get_mcs_as_smarts_no_details);
+#endif
+#ifdef RDK_BUILD_MINIMAL_LIB_FRAGMENTATION
+  function("get_matched_fragments", &get_matched_fragments, allow_raw_pointers());
 #endif
 }
