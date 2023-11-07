@@ -2,11 +2,15 @@
 #include <RDGeneral/Exceptions.h>
 
 #include <boost/range/irange.hpp>
+#include <unordered_set>
 #include <variant>
-#include <GraphMol/MolEnumerator/EnumerateStereoisomers.h>
+#include <GraphMol/MolEnumerator/MolEnumerator.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/DistGeomHelpers/Embedder.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 namespace RDKit {
+namespace MolEnumerator {
 
 namespace {
 class StereoFlipper {
@@ -186,62 +190,43 @@ std::vector<stereo_flipper_t> get_flippers(
   return std::pow(2, flippers.size());
 }
 
-/*
 [[nodiscard]] MolBundle enumerate_stereoisomers(
-  const ROMol& mol, const StereoEnumerationOptions options, bool verbose) {
-MolBundle result;
+    const ROMol& mol, const StereoEnumerationOptions options, bool verbose) {
+  using namespace MolEnumerator;
 
-RWMol rwmol(input_mol);
+  MolBundle stereo_isomers;
 
-auto flippers = get_flippers(mol, options);
-const unsigned int n_centers = flippers.size();
-
-if (!n_centers) {
-  result.addMol(std::move(rwmol));
-  return result;
-}
-
-auto bitsource = boost::irange(0, static_cast<int>(std::pow(2 * *n_centers)));
-
-std::set<std::string> seen_isomers;
-int num_isomers = 0;
-for (auto bitflag : bitsource) {
-  for (int i = 0; i < n_centers; ++i) {
-    flippers[i]->flip(bitflag & (1 << i));
+  std::vector<MolEnumeratorParams> paramsList;
+  MolEnumerator::MolEnumeratorParams stereoParams;
+  auto sOp = new MolEnumerator::StereoIsomerOp;
+  stereoParams.dp_operation =
+      std::shared_ptr<MolEnumerator::MolEnumeratorOp>(sOp);
+  if (options.max_isomers > 0) {
+    stereoParams.maxToEnumerate = options.max_isomers;
   }
+  paramsList.push_back(stereoParams);
 
-  RWMol* isomer;
-  if (mol->getStereoGroups()) {
-    std::vector<StereoGroup> empty_group;
-    isomer = new RWMol(*mol);
-    isomer->setStereoGroups(std::move(empty_group));
-
-  } else {
-    isomer = new RWMol(*mol);
-  }
-  MolOps::setDoubleBondNeighborDirections(*isomer);
-  isomer->clearComputedProps(false);
-
-  MolOps::assignStereochemistry(*isomer, true, true, true);
-  if (options.unique) {
-    std::string cansmi = MolToSmiles(*isomer, true);
-    if (seen_isomers.find(cansmi) != seen_isomers.end()) {
-      continue;
+  // we don't need the values, so we can use temporary values
+  std::unordered_set<std::string_view> seen_isomers;
+  auto all_stereoisomers = MolEnumerator::enumerate(mol, paramsList);
+  for (auto mm : all_stereoisomers.getMols()) {
+    if (options.unique) {
+      std::string canon_smiles = MolToSmiles(*mm, true);
+      if (!seen_isomers.insert(canon_smiles).second) {
+        continue;
+      }
     }
 
-    seen_isomers.insert(cansmi);
-  }
+    if (options.try_embedding) {
+      MolOps::addHs(*mm);
+      DGeomHelpers::EmbedMolecule(*mm);
+    }
 
-  if (options.try_embedding) {
-    MolOps::addHs(*isomer);
-    DGeomHelpers::EmbedMolecule(*isomer, bitflag & 0x7fffffff);
+    stereo_isomers.addMol(std::move(mm));
   }
+  return stereo_isomers;
 }
-return result;
-}
-*/
 
-namespace MolEnumerator {
 void StereoIsomerOp::initFromMol(const ROMol& mol) {
   dp_mol.reset(new ROMol(mol));
   initFromMol();

@@ -44,8 +44,9 @@ void setEnumerationHelper(MolEnumerator::MolEnumeratorParams *self,
                           EnumeratorTypes typ) {
   self->dp_operation = opFromName(typ);
 }
-MolBundle *enumerateHelper1(const ROMol &mol, unsigned int maxPerOperation) {
-  auto res = MolEnumerator::enumerate(mol, maxPerOperation);
+MolBundle *enumerateHelper1(const ROMol &mol, unsigned int maxPerOperation,
+                            bool enumerate_stereo) {
+  auto res = MolEnumerator::enumerate(mol, maxPerOperation, enumerate_stereo);
   return new MolBundle(res);
 }
 MolBundle *enumerateHelper2(const ROMol &mol,
@@ -83,7 +84,7 @@ BOOST_PYTHON_MODULE(rdMolEnumerator) {
               (python::arg("mol"), python::arg("maxPerOperation") = 0),
               python::return_value_policy<python::manage_new_object>(),
               R"DOC(do an enumeration and return a MolBundle.
-  If maxPerOperation is >0 that will be used as the maximum number of molecules which 
+  If maxPerOperation is >0 that will be used as the maximum number of molecules which
     can be returned by any given operation.
 Limitations:
   - the current implementation does not support molecules which include both

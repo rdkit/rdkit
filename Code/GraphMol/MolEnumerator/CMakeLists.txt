@@ -1,13 +1,13 @@
 rdkit_library(MolEnumerator
-    MolEnumerator.cpp PositionVariation.cpp LinkNode.cpp RepeatUnit.cpp EnumerateStereoisomers.cpp StereoIsomer.cpp
+    MolEnumerator.cpp PositionVariation.cpp LinkNode.cpp RepeatUnit.cpp StereoIsomer.cpp
               LINK_LIBRARIES FileParsers ChemReactions ChemTransforms
-              SubstructMatch GraphMol RDGeneral)
+              SubstructMatch GraphMol RDGeneral DistGeomHelpers)
 target_compile_definitions(MolEnumerator PRIVATE RDKIT_MOLENUMERATOR_BUILD)
 
 rdkit_headers(MolEnumerator.h LinkNode.h EnumerateStereoisomers.h DEST GraphMol/MolEnumerator)
 
 rdkit_catch_test(testMolEnumerator enumerator_catch.cpp
-LINK_LIBRARIES MolEnumerator SmilesParse FileParsers )
+LINK_LIBRARIES MolEnumerator SmilesParse FileParsers)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

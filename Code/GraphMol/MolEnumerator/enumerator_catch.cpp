@@ -16,8 +16,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
-#include "MolEnumerator.h"
-#include <GraphMol/MolEnumerator/EnumerateStereoisomers.h>
+#include <GraphMol/MolEnumerator/MolEnumerator.h>
 
 using namespace RDKit;
 
@@ -1739,9 +1738,16 @@ M  END)CTAB"};
 TEST_CASE("MolEnumerator stereo debug") {
   auto mol = "CC(F)=CC(Cl)C=C(Br)C(I)N"_smiles;
   REQUIRE(mol);
-  auto bundle = MolEnumerator::enumerate(*mol);
-  std::cout << "bundle::size(): " << bundle.size() << std::endl;
-  std::cout << "stereoisomer count: " << get_stereoisomer_count(*mol)
-            << std::endl;
+
+  auto bundle = MolEnumerator::enumerate_stereoisomers(
+      *mol, MolEnumerator::StereoEnumerationOptions{
+                false,  // bool try_embedding;
+                false,  // bool only_unassigned;
+                false,  // bool only_stereo_groups;
+                true,   // bool unique;
+                2,      // unsigned int max_isomers;
+                0,      // unsigned int rand;
+            });
+
   CHECK(bundle.size() == 2);
 }
