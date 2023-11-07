@@ -18,7 +18,9 @@ GitHub)
 
 ## Code removed in this release:
 - The python implementations of MolStandardize has been removed.
-Please use the implementation in `rdkit.Chem.MolStandardize.rdMolStandardize` instead.
+  Please use the implementation in `rdkit.Chem.MolStandardize.rdMolStandardize` instead.
+- The rdkit.six module, a leftover from the days when we supported both python 2
+  and python 3, has been removed
 
 ## Deprecated code (to be removed in a future release):
 

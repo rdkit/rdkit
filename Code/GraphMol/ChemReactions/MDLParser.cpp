@@ -289,6 +289,9 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
       FileParserUtils::ParseV3000CTAB(&inStream, line, agent, conf,
                                       chiralityPossible, natoms, nbonds, true,
                                       false);
+      FileParserUtils::finishMolProcessing(agent, chiralityPossible, sanitize,
+                                           removeHs);
+
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse agent " << i << ". The error was:\n\t"

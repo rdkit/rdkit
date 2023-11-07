@@ -29,6 +29,7 @@ const std::string _2DConf = "_2DConf";
 const std::string _3DConf = "_3DConf";
 const std::string _AtomID = "_AtomID";
 const std::string _BondsPotentialStereo = "_BondsPotentialStereo";
+const std::string _ChiralAtomRank = "_chiralAtomRank";
 const std::string _CIPCode = "_CIPCode";
 const std::string _CIPRank = "_CIPRank";
 const std::string _ChiralityPossible = "_ChiralityPossible";

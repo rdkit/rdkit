@@ -67,6 +67,12 @@ RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol,
 
 RDKIT_GRAPHMOL_EXPORT bool hasStereoBondDir(const Bond *bond);
 
+// this routine removes chiral markers and stereo indications that should not be
+// present this is only called when the molecule has not been sanitized and when
+// the new stereo (not legacy) is in use
+
+RDKIT_GRAPHMOL_EXPORT void removeBadStereo(ROMol &mol);
+
 /**
  *  Returns the first neighboring bond that can be found which has a stereo
  * bond direction set. If no such bond can be found, it returns null. No
@@ -240,6 +246,13 @@ RDKIT_GRAPHMOL_EXPORT void wedgeMolBonds(
     const BondWedgingParameters *params = nullptr);
 RDKIT_GRAPHMOL_EXPORT void wedgeBond(Bond *bond, unsigned int fromAtomIdx,
                                      const Conformer *conf);
+
+//! Returns whether or not a bond is a candidate for bond stereo
+RDKIT_GRAPHMOL_EXPORT bool canBeStereoBond(const Bond *bond);
+
+//! Returns true for double bonds which should be shown as a crossed bonds.
+// It always returns false if any adjacent bond is a squiggle bond.
+RDKIT_GRAPHMOL_EXPORT bool shouldBeACrossedBond(const Bond *bond);
 
 //! Clears existing bond wedging and forces use of atom wedging from MolBlock.
 /*!

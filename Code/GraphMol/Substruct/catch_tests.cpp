@@ -136,7 +136,7 @@ TEST_CASE("substructure parameters", "[substruct]") {
   SECTION("atom properties") {
     std::vector<matchCase> examples;
     examples.push_back(
-        std::make_tuple(std::string("CCCCCCCCC"),std::string("CCC"), 7));
+        std::make_tuple(std::string("CCCCCCCCC"), std::string("CCC"), 7));
     examples.push_back(
         std::make_tuple(std::string("CCCCCCCCC |atomProp:0.test_prop.1|"),
                         std::string("CCC |atomProp:0.test_prop.1|"), 1));
@@ -475,6 +475,42 @@ TEST_CASE(
       SubstructMatchParameters ps;
       auto matches = SubstructMatch(*m, *q, ps);
       CHECK(matches.empty());
+    }
+  }
+}
+
+TEST_CASE("Github #6017: add maxRecursiveMatches to SubstructMatchParameters") {
+  SECTION("Basics") {
+    auto m = "OCC(O)C(O)C(O)C(O)CO"_smiles;
+    auto q = "[$(CO)][$(CO)]"_smarts;
+    REQUIRE(m);
+    REQUIRE(q);
+    SubstructMatchParameters ps;
+    ps.uniquify = true;
+    {
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 5);
+    }
+
+    // if maxRecursiveMatches isn't larger than maxMatches this will fail
+    ps.maxMatches = 3;
+    {
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 3);
+    }
+  }
+  SECTION("maxMatches larger than maxRecursiveMatches") {
+    auto m = "OCC(O)C(O)C(O)C(O)CO"_smiles;
+    auto q = "[$(CO)]C"_smarts;
+    REQUIRE(m);
+    REQUIRE(q);
+    SubstructMatchParameters ps;
+    ps.uniquify = true;
+    ps.maxMatches = 3;
+    ps.maxRecursiveMatches = 2;
+    {
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 3);
     }
   }
 }
