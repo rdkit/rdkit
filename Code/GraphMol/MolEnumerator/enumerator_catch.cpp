@@ -17,6 +17,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include "MolEnumerator.h"
+#include <GraphMol/MolEnumerator/EnumerateStereoisomers.h>
 
 using namespace RDKit;
 
@@ -1740,5 +1741,7 @@ TEST_CASE("MolEnumerator stereo debug") {
   REQUIRE(mol);
   auto bundle = MolEnumerator::enumerate(*mol);
   std::cout << "bundle::size(): " << bundle.size() << std::endl;
+  std::cout << "stereoisomer count: " << get_stereoisomer_count(*mol)
+            << std::endl;
   CHECK(bundle.size() == 2);
 }
