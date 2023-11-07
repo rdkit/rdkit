@@ -539,27 +539,29 @@ void reapplyMolBlockWedging(ROMol &mol) {
       }
     }
     int cfg = -1;
-    if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
-      switch (cfg) {
-        case 1:
-          b->setBondDir(Bond::BEGINWEDGE);
-          break;
-        case 2:
-          if (b->getBondType() == Bond::SINGLE) {
-            b->setBondDir(Bond::UNKNOWN);
-          } else if (b->getBondType() == Bond::DOUBLE) {
-            b->setBondDir(Bond::EITHERDOUBLE);
-            b->setStereo(Bond::STEREOANY);
-          }
-          break;
-        case 3:
-          b->setBondDir(Bond::BEGINDASH);
-          break;
-      }
-    } else if (bond_dir == -1 && b->getBondType() == Bond::DOUBLE &&
-               b->getStereo() == Bond::STEREOANY) {
-      b->setBondDir(Bond::NONE);
-      b->setStereo(Bond::STEREONONE);
+    b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg);
+    switch (cfg) {
+      case 1:
+        b->setBondDir(Bond::BEGINWEDGE);
+        break;
+      case 2:
+        if (b->getBondType() == Bond::SINGLE) {
+          b->setBondDir(Bond::UNKNOWN);
+        } else if (b->getBondType() == Bond::DOUBLE) {
+          b->setBondDir(Bond::EITHERDOUBLE);
+          b->setStereo(Bond::STEREOANY);
+        }
+        break;
+      case 3:
+        b->setBondDir(Bond::BEGINDASH);
+        break;
+      case 0:
+      case -1:
+        if (bond_dir == -1 && b->getBondType() == Bond::DOUBLE &&
+            b->getStereo() == Bond::STEREOANY) {
+          b->setBondDir(Bond::NONE);
+          b->setStereo(Bond::STEREONONE);
+        }
     }
   }
 }
