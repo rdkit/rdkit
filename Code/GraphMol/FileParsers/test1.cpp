@@ -4769,7 +4769,7 @@ void testGithub1034() {
         explicit_unknown_stereo)
 
     TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);  // now set in detectStereochemistry
     ROMol(*m).getBondWithIdx(0)->setStereo(Bond::STEREOCIS); // ensure we have stereo atoms
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
