@@ -48,7 +48,7 @@ void enumerateVariations(std::vector<std::vector<size_t>> &variations,
 
 }  // namespace
 
-namespace detail {
+inline namespace detail {
 const std::string idxPropName = "_enumeratorOrigIdx";
 void preserveOrigIndices(ROMol &mol) {
   mol.setProp(idxPropName, 1);
@@ -124,6 +124,15 @@ MolBundle enumerate(const ROMol &mol, size_t maxPerOperation,
                     bool enumerate_stereo) {
   std::vector<MolEnumeratorParams> paramsList;
 
+  if (enumerate_stereo) {
+    MolEnumerator::MolEnumeratorParams stereoParams;
+    stereoParams.dp_operation = MolEnumerator::StereoIsomerOp::createOp();
+    if (maxPerOperation > 0) {
+      stereoParams.maxToEnumerate = maxPerOperation;
+    }
+    paramsList.push_back(stereoParams);
+  }
+
   // position variation first
   MolEnumerator::MolEnumeratorParams posVariationParams;
   auto pvOp = new MolEnumerator::PositionVariationOp();
@@ -155,17 +164,6 @@ MolBundle enumerate(const ROMol &mol, size_t maxPerOperation,
     linkParams.maxToEnumerate = maxPerOperation;
   }
   paramsList.push_back(linkParams);
-
-  if (enumerate_stereo) {
-    MolEnumerator::MolEnumeratorParams stereoParams;
-    auto sOp = new MolEnumerator::StereoIsomerOp;
-    stereoParams.dp_operation =
-        std::shared_ptr<MolEnumerator::MolEnumeratorOp>(sOp);
-    if (maxPerOperation > 0) {
-      stereoParams.maxToEnumerate = maxPerOperation;
-    }
-    paramsList.push_back(stereoParams);
-  }
   return enumerate(mol, paramsList);
 }
 

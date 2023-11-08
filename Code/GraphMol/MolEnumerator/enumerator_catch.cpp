@@ -1736,18 +1736,15 @@ M  END)CTAB"};
 }
 
 TEST_CASE("MolEnumerator stereo debug") {
-  auto mol = "CC(F)=CC(Cl)C=C(Br)C(I)N"_smiles;
+  auto mol = "C"_smiles;
   REQUIRE(mol);
 
-  auto bundle = MolEnumerator::enumerate_stereoisomers(
-      *mol, MolEnumerator::StereoEnumerationOptions{
-                false,  // bool try_embedding;
-                false,  // bool only_unassigned;
-                false,  // bool only_stereo_groups;
-                true,   // bool unique;
-                2,      // unsigned int max_isomers;
-                0,      // unsigned int rand;
-            });
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
 
+  CHECK(bundle.size() == 0);
+
+  mol = "C(F)(Cl)Br"_smiles;
+  REQUIRE(mol);
+  bundle = MolEnumerator::enumerate_stereoisomers(*mol);
   CHECK(bundle.size() == 2);
 }

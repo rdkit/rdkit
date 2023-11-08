@@ -24,10 +24,13 @@ namespace RDKit {
 class ChemicalReaction;
 namespace MolEnumerator {
 
-namespace detail {
+inline namespace detail {
 extern const std::string idxPropName;
 void preserveOrigIndices(ROMol &mol);
 void removeOrigIndices(ROMol &mol);
+
+class StereoFlipper;
+
 }  // namespace detail
 
 //! abstract base class for the a molecule enumeration operation
@@ -237,45 +240,38 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
   void initFromMol();
 };
 
-class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
+using stereo_flipper_t = std::shared_ptr<StereoFlipper>;
+
+class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp
+    : public MolEnumeratorOp,
+      public std::enable_shared_from_this<StereoIsomerOp> {
  public:
-  StereoIsomerOp() {}
-  StereoIsomerOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
-    PRECONDITION(mol, "bad molecule");
-    initFromMol();
-  }
-  StereoIsomerOp(const ROMol &mol) : dp_mol(new ROMol(mol)) { initFromMol(); }
-  StereoIsomerOp(const StereoIsomerOp &other)
-      : dp_mol(other.dp_mol), d_variationPoints(other.d_variationPoints) {}
-  StereoIsomerOp &operator=(const StereoIsomerOp &other) {
-    if (&other == this) {
-      return *this;
-    }
-    dp_mol = other.dp_mol;
-    d_variationPoints = other.d_variationPoints;
-    return *this;
-  }
-  //! \override
-  std::vector<size_t> getVariationCounts() const override;
+  StereoIsomerOp(const std::shared_ptr<ROMol> mol);
+  StereoIsomerOp(const ROMol &mol);
+  StereoIsomerOp(const StereoIsomerOp &other);
+  StereoIsomerOp &operator=(const StereoIsomerOp &other);
+
+  [[nodiscard]] static std::shared_ptr<StereoIsomerOp> createOp();
 
   //! \override
-  std::unique_ptr<ROMol> operator()(
+  [[nodiscard]] std::vector<size_t> getVariationCounts() const override;
+
+  //! \override
+  [[nodiscard]] std::unique_ptr<ROMol> operator()(
       const std::vector<size_t> &which) const override;
 
   //! \override
   void initFromMol(const ROMol &mol) override;
 
   //! \override
-  std::unique_ptr<MolEnumeratorOp> copy() const override {
-    return std::unique_ptr<MolEnumeratorOp>(new StereoIsomerOp(*this));
-  }
+  [[nodiscard]] std::unique_ptr<MolEnumeratorOp> copy() const override;
 
  private:
-  std::shared_ptr<ROMol> dp_mol{nullptr};
-  std::vector<std::pair<unsigned int, std::vector<unsigned int>>>
-      d_variationPoints{};
-  std::vector<size_t> d_dummiesAtEachPoint{};
+  std::shared_ptr<ROMol> dp_mol;
+  std::vector<stereo_flipper_t> d_variationPoints;
+
   void initFromMol();
+  StereoIsomerOp() = default;
 };
 
 //! Parameters used to control the molecule enumeration
@@ -326,7 +322,7 @@ struct RDKIT_MOLENUMERATOR_EXPORT StereoEnumerationOptions {
   bool only_stereo_groups;
   bool unique;
   unsigned int max_isomers;
-  unsigned int rand;
+  unsigned int rand;  // NOTE: Currently unsupported
 };
 
 [[nodiscard]] RDKIT_MOLENUMERATOR_EXPORT unsigned int get_stereoisomer_count(

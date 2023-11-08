@@ -3,7 +3,6 @@
 
 #include <boost/range/irange.hpp>
 #include <unordered_set>
-#include <variant>
 #include <GraphMol/MolEnumerator/MolEnumerator.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
@@ -12,147 +11,129 @@
 namespace RDKit {
 namespace MolEnumerator {
 
-namespace {
+inline namespace detail {
 class StereoFlipper {
  public:
-  virtual void flip(bool flag) = 0;
+  virtual void flip(RWMol& mol, bool flag) = 0;
 };
+}  // namespace detail
 
-class BondStereoFlipper;
-class AtomStereoFlipper;
-class StereoGroupFlipper;
-
-using stereo_flipper_t =
-    std::variant<AtomStereoFlipper, BondStereoFlipper, StereoGroupFlipper>;
-
-class BondStereoFlipper : public StereoFlipper {
- public:
-  BondStereoFlipper(Bond* bond) : m_bond(bond) {}
-
-  void flip(bool flag) override;
-  static void add_flippers_from_mol(const ROMol& mol,
-                                    const StereoEnumerationOptions& options,
-                                    std::vector<stereo_flipper_t>& flippers);
-
- private:
-  Bond* m_bond;
-};
+namespace {
 
 class AtomStereoFlipper : public StereoFlipper {
  public:
-  AtomStereoFlipper(Atom* atom) : m_atom(atom) {}
+  AtomStereoFlipper(Atom* atom) : d_atom(atom->getIdx()) {}
 
-  void flip(bool flag) override;
+  void flip(RWMol& mol, bool flag) override {
+    auto next_atom_stereo =
+        flag ? Atom::CHI_TETRAHEDRAL_CW : Atom::CHI_TETRAHEDRAL_CCW;
+    mol.getAtomWithIdx(d_atom)->setChiralTag(next_atom_stereo);
+  }
   static void add_flippers_from_mol(const ROMol& mol,
                                     const StereoEnumerationOptions& options,
-                                    std::vector<stereo_flipper_t>& flippers);
+                                    std::vector<stereo_flipper_t>& flippers) {
+    if (options.only_stereo_groups) {
+      return;
+    }
+
+    for (auto* atom : mol.atoms()) {
+      if (!atom->hasProp("_ChiralityPossible")) {
+        continue;
+      }
+
+      if (!options.only_unassigned ||
+          atom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+        flippers.push_back(std::make_shared<AtomStereoFlipper>(atom));
+      }
+    }
+  }
 
  private:
-  Atom* m_atom;
+  int d_atom;
+};
+
+class BondStereoFlipper : public StereoFlipper {
+ public:
+  BondStereoFlipper(Bond* bond) : d_bond(bond->getIdx()) {}
+
+  void flip(RWMol& mol, bool flag) override {
+    auto next_bond_stereo = flag ? Bond::STEREOCIS : Bond::STEREOTRANS;
+    mol.getBondWithIdx(d_bond)->setStereo(next_bond_stereo);
+  }
+  static void add_flippers_from_mol(const ROMol& mol,
+                                    const StereoEnumerationOptions& options,
+                                    std::vector<stereo_flipper_t>& flippers) {
+    if (options.only_stereo_groups) {
+      return;
+    }
+
+    for (auto bond : mol.bonds()) {
+      auto bond_stereo = bond->getStereo();
+      if (bond_stereo == Bond::STEREONONE) {
+        continue;
+      }
+
+      if (!options.only_unassigned || bond_stereo == Bond::STEREOANY) {
+        flippers.push_back(std::make_shared<BondStereoFlipper>(bond));
+      }
+    }
+  }
+
+ private:
+  int d_bond;
 };
 
 class StereoGroupFlipper : public StereoFlipper {
  public:
   StereoGroupFlipper(StereoGroup* group) {
     auto& stereo_group_atoms = group->getAtoms();
-    m_input_atom_parities.reserve(stereo_group_atoms.size());
+    d_input_atom_parities.reserve(stereo_group_atoms.size());
 
     std::transform(stereo_group_atoms.begin(), stereo_group_atoms.end(),
-                   std::back_inserter(m_input_atom_parities), [](auto* atom) {
-                     return std::make_pair(atom, atom->getChiralTag());
+                   std::back_inserter(d_input_atom_parities), [](auto* atom) {
+                     return std::make_pair(atom->getIdx(),
+                                           atom->getChiralTag());
                    });
   }
 
-  StereoGroupFlipper(StereoGroupFlipper&& other) noexcept = default;
+  void flip(RWMol& mol, bool flag) override {
+    auto flip_atom_parity = [](auto& atom_parity) {
+      if (atom_parity != Atom::CHI_TETRAHEDRAL_CW &&
+          atom_parity != Atom::CHI_TETRAHEDRAL_CCW) {
+        return atom_parity;
+      }
 
-  void flip(bool flag) override;
+      return atom_parity == Atom::CHI_TETRAHEDRAL_CW ? Atom::CHI_TETRAHEDRAL_CCW
+                                                     : Atom::CHI_TETRAHEDRAL_CW;
+    };
+
+    for (auto& [atom, parity] : d_input_atom_parities) {
+      mol.getAtomWithIdx(atom)->setChiralTag(flag ? parity
+                                                  : flip_atom_parity(parity));
+    }
+  }
 
   static void add_flippers_from_mol(const ROMol& mol,
                                     const StereoEnumerationOptions& options,
-                                    std::vector<stereo_flipper_t>& flippers);
+                                    std::vector<stereo_flipper_t>& flippers) {
+    if (!options.only_unassigned) {
+      return;
+    }
+
+    for (auto group : mol.getStereoGroups()) {
+      if (group.getGroupType() != StereoGroupType::STEREO_ABSOLUTE) {
+        flippers.push_back(std::make_shared<StereoGroupFlipper>(&group));
+      }
+    }
+  }
 
  private:
-  std::vector<std::pair<Atom*, Atom::ChiralType>> m_input_atom_parities;
+  std::vector<std::pair<int, Atom::ChiralType>> d_input_atom_parities;
 };
 
-void BondStereoFlipper::flip(bool flag) {
-  auto next_bond_stereo = flag ? Bond::STEREOCIS : Bond::STEREOTRANS;
-  m_bond->setStereo(next_bond_stereo);
-}
+}  // namespace
 
-void BondStereoFlipper::add_flippers_from_mol(
-    const ROMol& mol, const StereoEnumerationOptions& options,
-    std::vector<stereo_flipper_t>& flippers) {
-  if (options.only_stereo_groups) {
-    return;
-  }
-
-  for (auto bond : mol.bonds()) {
-    auto bond_stereo = bond->getStereo();
-    if (bond_stereo == Bond::STEREONONE) {
-      continue;
-    }
-
-    if (!options.only_unassigned || bond_stereo == Bond::STEREOANY) {
-      flippers.push_back(BondStereoFlipper(bond));
-    }
-  }
-}
-
-void AtomStereoFlipper::flip(bool flag) {
-  auto next_atom_stereo =
-      flag ? Atom::CHI_TETRAHEDRAL_CW : Atom::CHI_TETRAHEDRAL_CCW;
-  m_atom->setChiralTag(next_atom_stereo);
-}
-
-void AtomStereoFlipper::add_flippers_from_mol(
-    const ROMol& mol, const StereoEnumerationOptions& options,
-    std::vector<stereo_flipper_t>& flippers) {
-  if (options.only_stereo_groups) {
-    return;
-  }
-
-  for (auto* atom : mol.atoms()) {
-    if (!atom->hasProp("_ChiralityPossible")) {
-      continue;
-    }
-
-    if (!options.only_unassigned ||
-        atom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
-      flippers.push_back(AtomStereoFlipper(atom));
-    }
-  }
-}
-
-void StereoGroupFlipper::flip(bool flag) {
-  auto flip_atom_parity = [](auto& atom_parity) {
-    if (atom_parity != Atom::CHI_TETRAHEDRAL_CW &&
-        atom_parity != Atom::CHI_TETRAHEDRAL_CCW) {
-      return atom_parity;
-    }
-
-    return atom_parity == Atom::CHI_TETRAHEDRAL_CW ? Atom::CHI_TETRAHEDRAL_CCW
-                                                   : Atom::CHI_TETRAHEDRAL_CW;
-  };
-
-  for (auto& [atom, parity] : m_input_atom_parities) {
-    atom->setChiralTag(flag ? parity : flip_atom_parity(parity));
-  }
-}
-
-void StereoGroupFlipper::add_flippers_from_mol(
-    const ROMol& mol, const StereoEnumerationOptions& options,
-    std::vector<stereo_flipper_t>& flippers) {
-  if (!options.only_unassigned) {
-    return;
-  }
-
-  for (auto group : mol.getStereoGroups()) {
-    if (group.getGroupType() != StereoGroupType::STEREO_ABSOLUTE) {
-      flippers.push_back(StereoGroupFlipper(&group));
-    }
-  }
-}
+namespace {
 
 void preprocess_mol_for_stereoisomer_enumeration(RWMol& rwmol) {
   for (auto* atom : rwmol.atoms()) {
@@ -192,39 +173,65 @@ std::vector<stereo_flipper_t> get_flippers(
 
 [[nodiscard]] MolBundle enumerate_stereoisomers(
     const ROMol& mol, const StereoEnumerationOptions options, bool verbose) {
-  using namespace MolEnumerator;
-
-  MolBundle stereo_isomers;
-
   std::vector<MolEnumeratorParams> paramsList;
+
   MolEnumerator::MolEnumeratorParams stereoParams;
-  auto sOp = new MolEnumerator::StereoIsomerOp;
-  stereoParams.dp_operation =
-      std::shared_ptr<MolEnumerator::MolEnumeratorOp>(sOp);
+  stereoParams.dp_operation = MolEnumerator::StereoIsomerOp::createOp();
   if (options.max_isomers > 0) {
     stereoParams.maxToEnumerate = options.max_isomers;
   }
   paramsList.push_back(stereoParams);
 
-  // we don't need the values, so we can use temporary values
+  // NOTE: we don't need the values, so we don't have to worry about underlying
+  // values being invalid
+  MolBundle stereoisomers;
   std::unordered_set<std::string_view> seen_isomers;
   auto all_stereoisomers = MolEnumerator::enumerate(mol, paramsList);
-  for (auto mm : all_stereoisomers.getMols()) {
+  for (auto& stereoisomer : all_stereoisomers.getMols()) {
     if (options.unique) {
-      std::string canon_smiles = MolToSmiles(*mm, true);
+      std::string canon_smiles = MolToSmiles(*stereoisomer, true);
       if (!seen_isomers.insert(canon_smiles).second) {
         continue;
       }
     }
 
     if (options.try_embedding) {
-      MolOps::addHs(*mm);
-      DGeomHelpers::EmbedMolecule(*mm);
+      MolOps::addHs(*stereoisomer);
+      DGeomHelpers::EmbedMolecule(*stereoisomer);
     }
 
-    stereo_isomers.addMol(std::move(mm));
+    stereoisomers.addMol(std::move(stereoisomer));
   }
-  return stereo_isomers;
+  return stereoisomers;
+}
+
+StereoIsomerOp::StereoIsomerOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
+  PRECONDITION(mol, "bad molecule");
+  initFromMol();
+}
+
+StereoIsomerOp::StereoIsomerOp(const ROMol& mol) : dp_mol(new ROMol(mol)) {
+  initFromMol();
+}
+
+std::shared_ptr<StereoIsomerOp> StereoIsomerOp::createOp() {
+  return std::shared_ptr<StereoIsomerOp>(new StereoIsomerOp);
+}
+
+std::unique_ptr<MolEnumeratorOp> StereoIsomerOp::copy() const {
+  return std::unique_ptr<MolEnumeratorOp>(new StereoIsomerOp(*this));
+}
+
+StereoIsomerOp::StereoIsomerOp(const StereoIsomerOp& other)
+    : dp_mol(other.dp_mol), d_variationPoints(other.d_variationPoints) {}
+
+StereoIsomerOp& StereoIsomerOp::operator=(const StereoIsomerOp& other) {
+  if (&other == this) {
+    return *this;
+  }
+  dp_mol = other.dp_mol;
+  d_variationPoints = other.d_variationPoints;
+  return *this;
 }
 
 void StereoIsomerOp::initFromMol(const ROMol& mol) {
@@ -239,42 +246,37 @@ void StereoIsomerOp::initFromMol() {
   if (!dp_mol->hasProp(detail::idxPropName)) {
     detail::preserveOrigIndices(*dp_mol);
   }
+
+  d_variationPoints = get_flippers(*dp_mol);
 }
 
 std::vector<size_t> StereoIsomerOp::getVariationCounts() const {
-  auto flippers = get_flippers(*dp_mol);
-  return std::vector<size_t>(flippers.size(), 2);
+  return std::vector<size_t>(d_variationPoints.size(), 2);
 }
 
 std::unique_ptr<ROMol> StereoIsomerOp::operator()(
     const std::vector<size_t>& which) const {
   PRECONDITION(dp_mol, "no molecule");
 
-  RWMol* mol = new RWMol(*dp_mol);
-  auto flippers = get_flippers(*mol);
-  if (which.size() != flippers.size()) {
+  if (which.size() != d_variationPoints.size()) {
     throw ValueErrorException("bad element choice in enumeration");
   }
 
+  auto isomer = std::make_unique<RWMol>(*dp_mol);
   for (size_t i = 0; i < which.size(); ++i) {
-    std::visit([&](auto&& flipper) { flipper.flip(which[i]); }, flippers[i]);
+    d_variationPoints[i]->flip(*isomer, which[i]);
   }
 
-  RWMol* isomer;
-  if (mol->getStereoGroups().size()) {
-    std::vector<StereoGroup> empty_group;
-    isomer = new RWMol(*mol);
-    isomer->setStereoGroups(std::move(empty_group));
-
-  } else {
-    isomer = new RWMol(*mol);
+  if (isomer->getStereoGroups().size()) {
+    isomer->setStereoGroups({});  // set to empty
   }
+
   MolOps::setDoubleBondNeighborDirections(*isomer);
   isomer->clearComputedProps(false);
 
   MolOps::assignStereochemistry(*isomer, true, true, true);
 
-  return std::unique_ptr<ROMol>(static_cast<ROMol*>(isomer));
+  return isomer;
 }
 
 }  // namespace MolEnumerator
