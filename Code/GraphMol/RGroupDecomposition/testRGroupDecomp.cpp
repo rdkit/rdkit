@@ -935,13 +935,11 @@ $$$$)CTAB";
       SDMolSupplier sdsup;
       sdsup.setData(sdmols);
 
-      int idx = 0;
       while (!sdsup.atEnd()) {
         ROMol *mol = sdsup.next();
         TEST_ASSERT(mol);
         int addedIndex = decomp.add(*mol);
         TEST_ASSERT(addedIndex == -1);  // none should match
-        ++idx;
         delete mol;
       }
     }
@@ -966,12 +964,10 @@ $$$$)CTAB";
       SDMolSupplier sdsup;
       sdsup.setData(sdmols);
 
-      int idx = 0;
       while (!sdsup.atEnd()) {
         ROMol *mol = sdsup.next();
         TEST_ASSERT(mol);
         decomp.add(*mol);
-        ++idx;
         delete mol;
       }
     }
