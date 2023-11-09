@@ -18,14 +18,14 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda config --set solver libmamba
+    conda config --set channel_priority strict
+    conda config --add channels conda-forge
     conda create --name rdkit_build $(python) $(compiler) libcxx cmake \
         libboost=$(boost_version) libboost-devel=$(boost_version) \
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         qt \
         numpy matplotlib cairo pillow eigen pandas  \
-        jupyter
-    conda activate rdkit_build
-    conda install -c conda-forge sphinx myst-parser pytest nbval
+        jupyter sphinx myst-parser pytest nbval
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
