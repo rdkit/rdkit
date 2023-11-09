@@ -135,6 +135,7 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
       "MatchFusedRingsStrict", p.BondCompareParameters.MatchFusedRingsStrict);
   p.BondCompareParameters.MatchStereo =
       pt.get<bool>("MatchStereo", p.BondCompareParameters.MatchStereo);
+  p.StoreAll = pt.get<bool>("StoreAll", p.StoreAll);
 
   p.setMCSAtomTyperFromConstChar(
       pt.get<std::string>("AtomCompare", "def").c_str());

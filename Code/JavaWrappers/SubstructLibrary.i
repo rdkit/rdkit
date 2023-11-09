@@ -36,6 +36,8 @@
 %{
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
+#include <GraphMol/GeneralizedSubstruct/XQMol.h>
+using RDKit::GeneralizedSubstruct::ExtendedQueryMol;
 %}
 %shared_ptr(RDKit::TautomerQuery)
 %shared_ptr(RDKit::MolHolderBase)
@@ -102,10 +104,13 @@
 %extend RDKit::SubstructLibrary {
  %template(getMatches) getMatches<ROMol>;
  %template(getMatches) getMatches<TautomerQuery>;
+ %template(getMatches) getMatches<RDKit::GeneralizedSubstruct::ExtendedQueryMol>;
  %template(countMatches) countMatches<ROMol>;
  %template(countMatches) countMatches<TautomerQuery>;
+ %template(countMatches) countMatches<ExtendedQueryMol>;
  %template(hasMatch) hasMatch<ROMol>;
  %template(hasMatch) hasMatch<TautomerQuery>;
+ %template(hasMatch) hasMatch<ExtendedQueryMol>;
 }
 
 

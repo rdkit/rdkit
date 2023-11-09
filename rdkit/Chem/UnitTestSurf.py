@@ -19,7 +19,7 @@ from rdkit import Chem, RDConfig
 from rdkit.Chem import MolSurf
 
 doLong = False
-TestData = namedtuple('TestData', 'lineNo,smiles,mol,expected')
+_TestData = namedtuple('_TestData', 'lineNo,smiles,mol,expected')
 
 
 class TestCase(unittest.TestCase):
@@ -218,7 +218,7 @@ def readPSAtestData(filename):
       mol = Chem.MolFromSmiles(smiles)
       if not mol:
         raise AssertionError('molecule construction failed on line %d' % lineNo)
-      yield TestData(lineNo, smiles, mol, float(expected))
+      yield _TestData(lineNo, smiles, mol, float(expected))
 
 
 def readRegressionData(filename, col):
@@ -235,7 +235,7 @@ def readRegressionData(filename, col):
       if mol is None:
         raise AssertionError('line %d, smiles: %s' % (lineNum, smi))
       expected = float(splitL[col])
-      yield TestData(lineNum, smi, mol, expected)
+      yield _TestData(lineNum, smi, mol, expected)
 
 
 if __name__ == '__main__':  # pragma: nocover

@@ -3318,6 +3318,412 @@ TEST_CASE(
   }
 }
 
+void testStereoValidationFromMol(std::string molBlock,
+                                 std::string expectedSmiles, bool legacyFlag,
+                                 bool canonicalFlag = false) {
+  RDKit::Chirality::setUseLegacyStereoPerception(legacyFlag);
+
+  std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock, true, false, false));
+  REQUIRE(mol);
+
+  // CHECK(CIPLabeler::validateStereochem(*mol, validationFlags));
+
+  RDKit::SmilesWriteParams smilesWriteParams;
+  smilesWriteParams.doIsomericSmiles = true;
+  smilesWriteParams.doKekule = false;
+  smilesWriteParams.canonical = canonicalFlag;
+
+  unsigned int flags = 0 |
+                       RDKit::SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
+                       RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS |
+                       RDKit::SmilesWrite::CXSmilesFields::CX_BOND_CFG |
+                       RDKit::SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO |
+                       RDKit::SmilesWrite::CXSmilesFields::CX_SGROUPS |
+                       RDKit::SmilesWrite::CXSmilesFields::CX_POLYMER;
+
+  auto outSmiles = MolToCXSmiles(*mol, smilesWriteParams, flags);
+  RDKit::Chirality::setUseLegacyStereoPerception(false);
+
+  CHECK(outSmiles == expectedSmiles);
+}
+
+std::string validateStereoMolBlockSpiro = R"(
+  Mrv2308 06232316112D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 13 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.2921 0.9158 0 0
+M  V30 2 C -4.2921 -0.6244 0 0
+M  V30 3 C -2.9583 -1.3942 0 0 CFG=1
+M  V30 4 C -1.6246 -0.6244 0 0
+M  V30 5 C -1.6246 0.9158 0 0
+M  V30 6 C -2.9583 4.7658 0 0 CFG=2
+M  V30 7 C -4.2921 3.9958 0 0
+M  V30 8 C -4.2921 2.4556 0 0
+M  V30 9 C -2.9583 1.6858 0 0 CFG=2
+M  V30 10 C -1.6246 2.4556 0 0
+M  V30 11 C -1.6246 3.9958 0 0
+M  V30 12 C -2.9583 6.3058 0 0
+M  V30 13 Cl -2.9583 -2.9342 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 6 7
+M  V30 6 1 6 11
+M  V30 7 1 7 8
+M  V30 8 1 9 8 CFG=1
+M  V30 9 1 9 10
+M  V30 10 1 10 11
+M  V30 11 1 9 1
+M  V30 12 1 9 5
+M  V30 13 1 6 12 CFG=1
+M  V30 14 1 3 13 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+
+  )";
+
+std::string validateStereoMolBlockDoubleBondNoStereo = R"(
+  Mrv2308 06232316392D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 9 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.8498 2.3564 0 0
+M  V30 2 C 2.1835 1.5864 0 0
+M  V30 3 C 2.1835 0.0464 0 0
+M  V30 4 C -0.4839 1.5864 0 0
+M  V30 5 O -1.8176 2.3564 0 0
+M  V30 6 C -1.8176 3.8964 0 0
+M  V30 7 C -3.3342 3.629 0 0
+M  V30 8 O -0.4839 4.6664 0 0
+M  V30 9 C 0.8498 3.8964 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 1 1 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 1 6 8
+M  V30 8 1 8 9
+M  V30 9 1 1 9
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+  )";
+
+std::string validateStereoMolBlockDoubleBondNoStereo2 = R"(
+  Mrv0541 07011416342D          
+
+ 21 22  0  0  0  0            999 V2000
+   -1.9814    1.4834    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9581   -2.7980    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3658   -2.0787    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8189    1.5764    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5800    0.7796    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9760    2.3967    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1333   -2.7836    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9581   -1.3592    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7256   -2.0690    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4882   -1.3401    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8471    2.4140    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7304   -0.6351    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9007   -0.6351    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4834    0.0700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1333   -1.3497    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3658    0.9831    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9814    0.0525    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7598    0.7854    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3410    0.0700    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6556    2.2396    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2722    2.7980    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+ 20  1  1  0  0  0  0
+  4  1  2  0  0  0  0
+  5  1  1  0  0  0  0
+  2  7  2  0  0  0  0
+  3  2  1  0  0  0  0
+  3  8  2  0  0  0  0
+  6  4  1  0  0  0  0
+ 16  4  1  0  0  0  0
+ 18  5  1  0  0  0  0
+ 17  5  2  0  0  0  0
+ 21  6  2  0  0  0  0
+  7  9  1  0  0  0  0
+  8 15  1  0  0  0  0
+  9 15  2  0  0  0  0
+ 10 13  1  0  0  0  0
+ 11 20  1  0  0  0  0
+ 13 12  2  0  0  0  0
+ 15 12  1  0  0  0  0
+ 14 13  1  0  0  0  0
+ 19 14  2  0  0  0  0
+ 19 18  1  0  0  0  0
+ 21 20  1  0  0  0  0
+M  END
+> <Compound Name>
+VM-0411129
+
+> <CDD Number>
+CDD-2839271
+
+$$$$
+
+)";
+
+std::string validateStereoError1 = R"(
+  -ISIS-  -- StrEd -- 
+
+ 29 32  0  0  0  0  0  0  0  0999 V2000
+   -1.2050   -4.7172    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8959   -3.7660    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0823   -3.5582    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7514   -4.3013    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7296   -4.0934    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0385   -3.1425    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3694   -2.3993    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6785   -1.4481    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0094   -0.7050    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0312   -0.9129    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9470   -1.1209    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3183    0.2461    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2694    0.5550    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2694    1.5549    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3183    1.8641    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0094    2.8151    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6785    3.5582    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3694    4.5093    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3912    4.7172    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2777    3.9739    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0312    3.0230    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7305    1.0550    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2694    1.0550    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7694    1.9210    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7695    1.9210    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2694    1.0550    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7695    0.1889    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7694    0.1889    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3912   -2.6071    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  2  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  2  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  3  0  0  0  0
+  9 12  1  0  0  0  0
+ 12 13  2  0  0  0  0
+ 13 14  1  0  0  0  0
+ 14 15  2  0  0  0  0
+ 15 16  1  0  0  0  0
+ 16 17  1  0  0  0  0
+ 17 18  1  0  0  0  0
+ 18 19  1  0  0  0  0
+ 19 20  1  0  0  0  0
+ 20 21  1  0  0  0  0
+ 16 21  1  0  0  0  0
+ 15 22  1  0  0  0  0
+ 12 22  1  0  0  0  0
+ 22 23  1  0  0  0  0
+ 23 24  1  0  0  0  0
+ 24 25  2  0  0  0  0
+ 25 26  1  0  0  0  0
+ 26 27  2  0  0  0  0
+ 27 28  1  0  0  0  0
+ 23 28  2  0  0  0  0
+  7 29  1  0  0  0  0
+  3 29  2  0  0  0  0
+M  END
+> <Compound Name>
+Z362114294
+
+> <CDD Number>
+CDD-3164311
+
+$$$$
+
+)";
+
+std::string validateStereoUniq1 = R"(
+  Mrv0541 06301412152D          
+
+ 15 15  0  0  0  0            999 V2000
+    1.0464   -0.3197    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0464   -1.1460    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7601   -1.5571    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4739   -1.1460    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4739   -0.3197    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7601    0.0914    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3309   -1.5706    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1912    0.0976    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9103   -0.3114    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1853    0.9197    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9115   -1.1336    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7601    0.9135    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6215   -1.5447    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7601   -2.3793    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1894   -1.5665    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+  1  6  1  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2  7  2  0  0  0  0
+  3  4  1  0  0  0  0
+  3 14  1  0  0  0  0
+  4 15  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  5  8  1  0  0  0  0
+  6 12  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  2  0  0  0  0
+  9 11  2  0  0  0  0
+ 11 13  1  0  0  0  0
+M  STY  4   1 SUP   2 SUP   3 SUP   4 SUP
+M  SAL   1  1  12
+M  SBL   1  1  11
+M  SMT   1 R3a
+M  SAP   1  1  12   6  1
+M  SCL   1 CXN
+M  SAL   2  1  13
+M  SBL   2  1  15
+M  SMT   2 R3b
+M  SAP   2  1  13  11  1
+M  SCL   2 CXN
+M  SAL   3  1  14
+M  SBL   3  1   6
+M  SMT   3 R1
+M  SAP   3  1  14   3  1
+M  SCL   3 CXN
+M  SAL   4  1  15
+M  SBL   4  1   7
+M  SMT   4 R2
+M  SAP   4  1  15   4  1
+M  SCL   4 CXN
+M  END
+> <Compound Name>
+VM-0021367
+
+> <CDD Number>
+CDD-3832787
+
+$$$$
+)";
+
+TEST_CASE("ValidateStereo", "[accurateCIP]") {
+  SECTION("validateStereoUniqOldCanon1") {
+    testStereoValidationFromMol(validateStereoUniq1,
+                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1* |,,,|", true,
+                                true);
+  }
+
+  SECTION("validateStereoUniqNewCanon1") {
+    testStereoValidationFromMol(validateStereoUniq1,
+                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1* |,,,|", false,
+                                true);
+  }
+
+  SECTION("validateStereoUniqNewNoCanon1") {
+    testStereoValidationFromMol(validateStereoUniq1,
+                                "N1C(=O)N(*)C(*)=C(C(/C=C/*)=O)C1* |,,,|",
+                                false, false);
+  }
+
+  SECTION("SprioChiralLostOldNoCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockSpiro,
+                                "C1C[C@H](Cl)CCC12CC[C@@H](C)CC2", true, false);
+  }
+
+  SECTION("SprioChiralLostOldCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockSpiro,
+                                "C[C@H]1CCC2(CC1)CC[C@H](Cl)CC2", true, true);
+  }
+
+  SECTION("SprioChiralNotLostNewNoCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockSpiro,
+                                "C1C[C@H](Cl)CC[C@]12CC[C@@H](C)CC2", false,
+                                false);
+  }
+
+  SECTION("SprioChiralNotLostNewCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockSpiro,
+                                "C[C@H]1CC[C@@]2(CC1)CC[C@H](Cl)CC2", false,
+                                true);
+  }
+
+  SECTION("DoubleBondMarkedStereoOldNoCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockDoubleBondNoStereo,
+                                "C1(=CC)COC(C)OC1", true, false);
+  }
+  SECTION("DoubleBondMarkedStereoNewNoCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockDoubleBondNoStereo,
+                                "C1(=CC)COC(C)OC1", false, false);
+  }
+
+  SECTION("DoubleBondMarkedStereoOldCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockDoubleBondNoStereo,
+                                "CC=C1COC(C)OC1", true, true);
+  }
+
+  SECTION("DoubleBondMarkedStereoNewCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockDoubleBondNoStereo,
+                                "CC=C1COC(C)OC1", false, true);
+  }
+
+  SECTION("DoubleBondStereo2OldCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockDoubleBondNoStereo2,
+                                "CC(/C=N/NC(=O)c1c(Br)cnn1C)=C\\c1ccccc1", true,
+                                true);
+  }
+  SECTION("DoubleBondStereo2NewCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockDoubleBondNoStereo2,
+                                "CC(=C\\c1ccccc1)/C=N/NC(=O)c1c(Br)cnn1C",
+                                false, true);
+  }
+
+  SECTION("DoubleBondStereo2NewNoCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockDoubleBondNoStereo2,
+                                "c1(C(=O)N/N=C/C(C)=C/c2ccccc2)c(Br)cnn1C",
+                                false, false);
+  }
+  SECTION("DoubleBondStereo2OldNoCanon") {
+    testStereoValidationFromMol(validateStereoMolBlockDoubleBondNoStereo2,
+                                "c1(C(=O)N/N=C/C(C)=C/c2ccccc2)c(Br)cnn1C",
+                                true, false);
+  }
+
+  SECTION("ValidateStereoError1OldCanon") {
+    testStereoValidationFromMol(
+        validateStereoError1,
+        "COc1cccc(/C=C(\\C#N)c2nnc(N3CCOCC3)n2-c2ccccc2)c1", true, true);
+  }
+  SECTION("ValidateStereoError1NewCanon") {
+    testStereoValidationFromMol(
+        validateStereoError1,
+        "COc1cccc(/C=C(\\C#N)c2nnc(N3CCOCC3)n2-c2ccccc2)c1", false, true);
+  }
+  SECTION("ValidateStereoError1OldNoCanon") {
+    testStereoValidationFromMol(
+        validateStereoError1,
+        "COc1cccc(/C=C(\\C#N)c2nnc(N3CCOCC3)n2-c2ccccc2)c1", true, false);
+  }
+  SECTION("ValidateStereoError1NewNoCanon") {
+    testStereoValidationFromMol(
+        validateStereoError1,
+        "COc1cccc(/C=C(\\C#N)c2nnc(N3CCOCC3)n2-c2ccccc2)c1", false, false);
+  }
+}
+
 TEST_CASE(
     "assignStereochemistry should clear crossed double bonds that can't have stereo") {
   SECTION("basics") {

@@ -223,6 +223,16 @@ function(add_jupytertest testname workingdir notebook)
   endif()
 endfunction(add_jupytertest)
 
+function(add_pythonpytest testname workingdir)
+  if(RDK_BUILD_PYTHON_WRAPPERS)
+    add_test(NAME ${testname}  COMMAND ${PYTHON_EXECUTABLE} -m pytest 
+       WORKING_DIRECTORY ${workingdir} )
+    SET(RDKIT_PYTHONTEST_CACHE "${testname};${RDKIT_PYTHONTEST_CACHE}" CACHE INTERNAL "Global list of pytest tests")
+  endif()
+endfunction(add_pythonpytest)
+
+
+
 function(computeMD5 target md5chksum)
   execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${target} OUTPUT_VARIABLE md5list)
   string(REGEX REPLACE "([a-z0-9]+)" "\\1;" md5list "${md5list}")
