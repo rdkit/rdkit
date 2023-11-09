@@ -39,9 +39,9 @@ jobs:
   variables:
     compiler: clangxx_osx-64
     compiler_version: 12.0
-    boost_version: 1.71.0
+    boost_version: 1.82.0
     number_of_cores: sysctl -n hw.ncpu
-    python_name: python38
+    python_name: python311
     target_platform: 10.13
   steps:
   - template: .azure-pipelines/mac_build.yml
