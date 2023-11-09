@@ -209,7 +209,6 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   }
   std::set<int> foundLabels;
 
-  int nextOffset = 0;
   std::map<int, int> atomToLabel;
 
   for (auto atom : core.atoms()) {
@@ -273,7 +272,6 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       // insufficient dummy groups are added to the core
       if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
                    relabel, Labelling::INDEX_LABELS)) {
-        nextOffset++;
       }
       found = true;
     }

@@ -170,7 +170,6 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
     memset(lastLevelNbrs.get(), 0, nAtoms * sizeof(char));
     memset(currentLevelNbrs.get(), 0, nAtoms * sizeof(char));
     memset(revisitedNeighbors.get(), 0, nAtoms * sizeof(int));
-    unsigned count = 1;
     std::vector<int> nextLevelNbrs;
     while (!neighbors.empty()) {
       unsigned int numLevelNbrs = 0;
@@ -237,7 +236,6 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
 
       neighbors.insert(neighbors.end(), nextLevelNbrs.begin(),
                        nextLevelNbrs.end());
-      count++;
     }
     atoms[idx].revistedNeighbors.resize(currentRNIdx);
   }
