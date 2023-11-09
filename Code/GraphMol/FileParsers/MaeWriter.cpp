@@ -35,6 +35,8 @@ namespace RDKit {
 
 namespace {
 const std::string MAE_BOND_DATIVE_MARK = "b_sPrivate_dative_bond";
+const std::string MAE_BOND_PARITY = "i_sd_original_parity";
+const std::string MAE_STEREO_STATUS = "i_m_ct_stereo_status";
 const std::string PDB_ATOM_NAME = "s_m_pdb_atom_name";
 const std::string PDB_RESIDUE_NAME = "s_m_pdb_residue_name";
 const std::string PDB_CHAIN_NAME = "s_m_chain_name";
@@ -221,6 +223,61 @@ int bondTypeToOrder(const Bond& bond) {
   }
 }
 
+static bool isDoubleAnyBond(const RDKit::Bond& b)
+{
+    if (b.getBondType() == RDKit::Bond::DOUBLE) {
+        if (b.getStereo() == RDKit::Bond::BondStereo::STEREOANY ||
+            b.getBondDir() == RDKit::Bond::EITHERDOUBLE) {
+            return true;
+        }
+
+        // Check v3000/v2000 stereo either props
+        auto hasPropValue = [&b](const auto& prop, const int& either_value) {
+            return b.hasProp(prop) && b.getProp<int>(prop) == either_value;
+        };
+
+        return hasPropValue(RDKit::common_properties::_MolFileBondCfg, 2) ||
+               hasPropValue(RDKit::common_properties::_MolFileBondStereo, 3);
+    }
+    return false;
+}
+
+static void copyAtomNumChirality(const ROMol& mol, mae::Block& stBlock) {
+  // This property tells Schrodinger software that the stereo and chirality in
+  // the mae file are valid
+  stBlock.setIntProperty(MAE_STEREO_STATUS, 1);
+
+  // Set atom numbering chirality
+  int chiralAts = 0;
+  for (const auto at : mol.atoms()) {
+    std::string atomNumChirality;
+    if (at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+      atomNumChirality = "ANR";
+    } else if (at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
+      atomNumChirality = "ANS";
+    } else {
+      continue;
+    }
+    ++chiralAts;
+    std::string propName = mae::CT_CHIRALITY_PROP_PREFIX + std::to_string(chiralAts);
+    std::string propVal = std::to_string(at->getIdx() + 1) + "_" + atomNumChirality;
+
+    // We don't know CIP ranks of atoms, so instead we use atom numbering
+    // chirality and adjacent atoms will just be sorted by index.
+    std::vector<int> neighbors;
+    for (const auto nb : mol.atomNeighbors(at)) {
+      neighbors.push_back(nb->getIdx());
+    }
+
+    std::sort(neighbors.begin(), neighbors.end());
+    for (const auto nb : neighbors) {
+      propVal += "_" + std::to_string(nb + 1);
+    }
+    stBlock.setStringProperty(propName, propVal);
+  }
+
+}
+
 void mapMolProperties(const ROMol& mol, const STR_VECT& propNames,
                       mae::Block& stBlock) {
   // We always write a title, even if the mol doesn't have one
@@ -230,7 +287,7 @@ void mapMolProperties(const ROMol& mol, const STR_VECT& propNames,
   stBlock.setStringProperty(mae::CT_TITLE, molName);
   mol.clearProp(common_properties::_Name);
 
-  // TO DO: Map stereo properties
+  copyAtomNumChirality(mol, stBlock);
 
   auto boolSetter = [&stBlock](const std::string& prop, unsigned, bool value) {
     stBlock.setBoolProperty(prop, value);
@@ -362,6 +419,12 @@ void mapBond(
   setPropertyValue(bondBlock, mae::BOND_ATOM_2, numBonds, idx, bondTo);
   setPropertyValue(bondBlock, mae::BOND_ORDER, numBonds, idx,
                    bondTypeToOrder(bond));
+
+  // Only set double bond stereo if stereo is 'unspecified', otherwise
+  // users can calculate double bond stereo from the coordinates.
+  if (isDoubleAnyBond(bond)) {
+    setPropertyValue(bondBlock, MAE_BOND_PARITY, numBonds, idx, 2);
+  }
 
   if (dativeBondMark != nullptr) {
     dativeBondMark->set(idx, (bond.getBondType() == Bond::BondType::DATIVE));

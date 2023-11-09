@@ -107,6 +107,9 @@ struct RGroupDecompData {
 
   RGroupDecompositionProcessResult process(bool pruneMatches,
                                            bool finalize = false);
+
+private:
+  void addInputCore(const ROMol &inputCore);
 };
 }  // namespace RDKit
 
