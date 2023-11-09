@@ -31,7 +31,6 @@ void test1() {
   std::string fName =
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.out";
   std::ifstream instrm(fName.c_str());
-  int nDone = 0;
   while (!reader.atEnd()) {
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
@@ -50,7 +49,6 @@ void test1() {
     }
     TEST_ASSERT(fabs(ref - dpbf) < 0.001);
     delete m;
-    ++nDone;
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
