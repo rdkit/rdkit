@@ -41,7 +41,7 @@ jobs:
     compiler_version: 12.0
     boost_version: 1.82.0
     number_of_cores: sysctl -n hw.ncpu
-    python_name: python311
+    python: python=3.11
     target_platform: 10.13
   steps:
   - template: .azure-pipelines/mac_build.yml
@@ -108,8 +108,8 @@ jobs:
   pool:
     vmImage: ubuntu-20.04
   variables:
-    python: python=3.8
-    boost_version: 1.71.0
+    python: python=3.11
+    boost_version: 1.82.0
     number_of_cores: nproc
     python_name: python38
     compiler: gxx_linux-64
