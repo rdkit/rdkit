@@ -1,3 +1,61 @@
+# Release_2023.09.2
+(Changes relative to Release_2023.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Tad Hurst, Gareth Jones, Dan Nealschneider Ricardo Rodriguez-Schmidt, Paolo
+Tosco, Rachel Walker, Meng Wu, vslashg
+
+## New Features and Enhancements:
+  - add maxRecursiveMatches to SubstructMatchParameters
+ (github issue #6017 from greglandrum)
+  - Removed some code duplication between Depictor.cpp and common.h
+ (github pull #6799 from greglandrum)
+  - Add support for writing chirality and stereo in MaeWriter
+ (github pull #6810 from rachelnwalker)
+  - Implement MinimalLib get_mcs() version that returns JSON
+ (github pull #6812 from ptosco)
+  - support generalized substructure search in the SubstructLibrary
+ (github pull #6835 from greglandrum)
+  - Support copying of GeneralizeQueryMolecules 
+ (github issue #6851 from greglandrum)
+
+## Bug Fixes:
+  - CXSMILES: atom with labels should not also have `dummyLabel` property set
+ (github issue #6309 from greglandrum)
+  - Fixes for canonicalization, and stereochemistry
+ (github pull #6743 from tadhurst-cdd)
+  - MCS query incorrect when ringCompare=RingCompare.StrictRingFusion
+ (github issue #6773 from d-b-w)
+  - Fixes bug in get_sss_json()
+ (github pull #6806 from ptosco)
+  - SWIG builds failing on Windows
+ (github pull #6808 from jones-gareth)
+  - We should be able to run the tests without boost::iostreams
+ (github issue #6818 from greglandrum)
+  - Fix stereo bond corruption on RGD.
+ (github pull #6832 from jones-gareth)
+  - Fix unclosed resource in BuildFuncGroupHierarchy
+ (github pull #6846 from ricrogz)
+  - RGD: Fix doEnumeration true for cores that are not bundles
+ (github pull #6857 from jones-gareth)
+  - Fix build error when serialization is off.
+ (github pull #6867 from vslashg)
+
+## Cleanup work:
+  - Switch over to using pytest to run the python tests
+ (github pull #5916 from greglandrum)
+  - Redundant variable`hasCoreDummies` in R-group decomposition code
+ (github issue #6779 from MarioAndWario)
+  - remove the deprecated python implementation of MolStandardize
+ (github pull #6819 from greglandrum)
+  - Update CI, remove some warnings
+ (github pull #6882 from greglandrum)
+
+
 # Release_2023.09.1
 (Changes relative to Release_2023.03.1)
 
