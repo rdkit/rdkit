@@ -730,3 +730,28 @@ TEST_CASE("GitHub Issue #6505") {
     CHECK(hsh2 == "[CH3]-[CH2]-[CH2]-[CH2]-[CH2]-[CH2]-[NH3+]_0_0");
   }
 }
+
+TEST_CASE("Github Issue #6855 MakeScaffoldGeneric isotope removal") {
+  SECTION("Extended Murcko") {
+    auto mol =
+        "[235U]C1CC1"_smiles;
+    REQUIRE(mol);
+    {
+      RWMol cp(*mol);
+      auto hsh =
+          MolHash::MolHash(&cp, MolHash::HashFunction::ExtendedMurcko);
+      CHECK(hsh == "*C1CC1");
+    }
+  }
+  SECTION("Anonymous") {
+    auto mol =
+        "[235U]1CC1"_smiles;
+    REQUIRE(mol);
+
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::AnonymousGraph);
+      CHECK(hsh == "*1**1");
+    }
+  }
+}

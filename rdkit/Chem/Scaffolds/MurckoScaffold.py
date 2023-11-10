@@ -39,6 +39,7 @@ def MakeScaffoldGeneric(mol):
     if atom.GetAtomicNum() != 1:
       atom.SetAtomicNum(6)
     atom.SetIsAromatic(False)
+    atom.SetIsotope(0)
     atom.SetFormalCharge(0)
     atom.SetChiralTag(Chem.ChiralType.CHI_UNSPECIFIED)
     atom.SetNoImplicit(0)
