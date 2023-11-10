@@ -10,7 +10,9 @@
 
 #include "DetermineBonds.h"
 #include <GraphMol/RDKitBase.h>
+#ifdef RDK_BUILD_YAEHMOP_SUPPORT
 #include <YAeHMOP/EHTTools.h>
+#endif
 #include <iostream>
 #include <vector>
 #include <numeric>
@@ -121,6 +123,7 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
 
 namespace RDKit {
 
+#ifdef RDK_BUILD_YAEHMOP_SUPPORT
 void connectivityHueckel(RWMol &mol, int charge) {
   auto numAtoms = mol.getNumAtoms();
   mol.getAtomWithIdx(0)->setFormalCharge(charge);
@@ -140,6 +143,11 @@ void connectivityHueckel(RWMol &mol, int charge) {
     }
   }
 }  // connectivityHueckel()
+#else
+void connectivityHueckel(RWMol &, int) {
+  CHECK_INVARIANT(0, "YAeHMOP support not available");
+}
+#endif
 
 void connectivityVdW(RWMol &mol, double covFactor) {
   auto numAtoms = mol.getNumAtoms();
@@ -161,6 +169,12 @@ void connectivityVdW(RWMol &mol, double covFactor) {
 
 void determineConnectivity(RWMol &mol, bool useHueckel, int charge,
                            double covFactor, bool useVdw) {
+#ifndef RDK_BUILD_YAEHMOP_SUPPORT
+  if (useHueckel) {
+    throw ValueErrorException(
+        "The RDKit was not compiled with YAeHMOP support");
+  }
+#endif
   auto numAtoms = mol.getNumAtoms();
   for (unsigned int i = 0; i < numAtoms; i++) {
     for (unsigned int j = i + 1; j < numAtoms; j++) {

@@ -88,7 +88,7 @@ TEST_CASE("Determine Connectivity") {
       }
     }
   }  // SECTION
-
+#ifdef RDK_BUILD_YAEHMOP_SUPPORT
   SECTION("Hueckel") {
     unsigned int numTests = 39;
     for (unsigned int i = 0; i < numTests; i++) {
@@ -122,7 +122,7 @@ TEST_CASE("Determine Connectivity") {
       }
     }
   }  // SECTION
-
+#endif
   SECTION("DetermineBondOrdering using charged fragments") {
     unsigned int numTests = 38;
     for (unsigned int i = 0; i < numTests; i++) {
