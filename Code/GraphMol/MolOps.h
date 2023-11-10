@@ -975,8 +975,10 @@ RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
 //! removes directions from single bonds. Wiggly bonds will have the property
-//! _UnknownStereo set on them
-RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol);
+//! _UnknownStereo set on them. If retainCisTransInfo is true,
+//! ENDUPRIGHT and ENDDOWNRIGHT bond directions will not be cleared
+RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(
+    ROMol &mol, bool retainCisTransInfo = false);
 
 //! Assign CIS/TRANS bond stereochemistry tags based on neighboring
 //! directions
