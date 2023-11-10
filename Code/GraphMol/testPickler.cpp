@@ -90,7 +90,6 @@ void _createPickleFile() {
 
   SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
   std::ofstream outStream(pklName.c_str(), std::ios_base::binary);
-  int count = 0;
   while (!suppl.atEnd()) {
     ROMol *m = suppl.next();
     TEST_ASSERT(m);
@@ -98,7 +97,6 @@ void _createPickleFile() {
     std::string pickle;
     MolPickler::pickleMol(*m, outStream);
     delete m;
-    count++;
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
