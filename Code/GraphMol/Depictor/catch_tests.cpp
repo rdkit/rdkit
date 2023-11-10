@@ -1179,3 +1179,878 @@ M  END
     }
   }
 }
+
+TEST_CASE("test GitHub6816") {
+  SECTION("double-2000") {
+    auto mol = R"CTAB(double-2000.mol
+  ChemDraw10192311132D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.7145    0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.6188    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    0.2062    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.6188    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0        0
+  2  3  1  4        0
+  1  4  1  4        0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(0)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(1)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(2)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::UNKNOWN);
+  }
+  SECTION("double-3000") {
+    auto mol = R"CTAB(double-3000.mol
+  ChemDraw10232310312D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.714435 0.206182 0.000000 0
+M  V30 2 C 0.000000 0.618744 0.000000 0
+M  V30 3 F 0.714435 0.206182 0.000000 0
+M  V30 4 O -0.714435 -0.618744 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3 CFG=2
+M  V30 3 1 1 4 CFG=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(0)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(1)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(2)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::UNKNOWN);
+  }
+  SECTION("double-explicit-crossed-2000") {
+    auto mol = R"CTAB(double-explicit-crossed-2000.mol
+  ChemDraw10232310432D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.7144    0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.6187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7144    0.2062    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7144   -0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  3      
+  2  3  1  4      
+  1  4  1  4      
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(0)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 3);
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(1)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(2)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::EITHERDOUBLE);
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::UNKNOWN);
+  }
+  SECTION("double-explicit-crossed-3000") {
+    auto mol = R"CTAB(double-explicit-crossed-3000.mol
+  ChemDraw10232310422D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.714435 0.206182 0.000000 0
+M  V30 2 C 0.000000 0.618744 0.000000 0
+M  V30 3 F 0.714435 0.206182 0.000000 0
+M  V30 4 O -0.714435 -0.618744 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2 CFG=2
+M  V30 2 1 2 3 CFG=2
+M  V30 3 1 1 4 CFG=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(0)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(0)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(1)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(2)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::EITHERDOUBLE);
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::UNKNOWN);
+  }
+  SECTION("double-2-2000") {
+    auto mol = R"CTAB(double-2-2000.mol
+  ChemDraw10192311332D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.3572   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3572    0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0717    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0717   -0.6188    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0        0
+  2  3  1  4        0
+  1  4  1  4        0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(0)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(1)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(2)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::UNKNOWN);
+  }
+  SECTION("double-2-3000") {
+    auto mol = R"CTAB(double-2-3000.mol
+  ChemDraw10232310312D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.357168 -0.206181 0.000000 0
+M  V30 2 C 0.357167 0.206182 0.000000 0
+M  V30 3 F 1.071603 0.618744 0.000000 0
+M  V30 4 O -1.071603 -0.618744 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3 CFG=2
+M  V30 3 1 1 4 CFG=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(0)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(1)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(2)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::UNKNOWN);
+  }
+  SECTION("double-2-explicit-crossed-2000") {
+    auto mol = R"CTAB(double-2-explicit-crossed-2000.mol
+  ChemDraw10232310432D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.3572   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3572    0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0716    0.6187    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0716   -0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  3      
+  2  3  1  4      
+  1  4  1  4      
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(0)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 3);
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(1)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(2)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::EITHERDOUBLE);
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::UNKNOWN);
+  }
+  SECTION("double-2-explicit-crossed-3000") {
+    auto mol = R"CTAB(double-2-explicit-crossed-3000.mol
+  ChemDraw10232310422D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.357168 -0.206181 0.000000 0
+M  V30 2 C 0.357167 0.206182 0.000000 0
+M  V30 3 F 1.071603 0.618744 0.000000 0
+M  V30 4 O -1.071603 -0.618744 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2 CFG=2
+M  V30 2 1 2 3 CFG=2
+M  V30 3 1 1 4 CFG=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(0)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(0)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(!mol->getBondWithIdx(0)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(1)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(1)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(2)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(2)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::EITHERDOUBLE);
+
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::UNKNOWN);
+  }
+  SECTION("di-imine-2-2000") {
+    auto mol = R"CTAB(di-imine-2-2000.mol
+  ChemDraw10192311522D
+
+  8  7  0  0  0  0  0  0  0  0999 V2000
+   -0.9959   -1.0600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4125   -0.4767    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4125   -0.4767    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9959   -1.0600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7282    0.2855    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9971    1.0600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7282    0.2855    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9971    1.0270    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0        0
+  2  3  1  0        0
+  3  4  1  0        0
+  2  5  2  0        0
+  5  6  1  4        0
+  3  7  2  0        0
+  7  8  1  4        0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(3)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(3)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(3)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(4)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(4)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(4)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(5)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(6)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(6)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(6)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::UNKNOWN);
+  }
+  SECTION("di-imine-2-3000") {
+    auto mol = R"CTAB(di-imine-2-3000.mol
+  ChemDraw10232310302D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.995922 -1.060024 0.000000 0
+M  V30 2 C -0.412509 -0.476711 0.000000 0
+M  V30 3 C 0.412509 -0.476711 0.000000 0
+M  V30 4 C 0.995923 -1.060024 0.000000 0
+M  V30 5 N -0.728217 0.285506 0.000000 0
+M  V30 6 C -0.997122 1.060024 0.000000 0
+M  V30 7 N 0.728216 0.285506 0.000000 0
+M  V30 8 C 0.997122 1.027023 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 2 5
+M  V30 5 1 5 6 CFG=2
+M  V30 6 2 3 7
+M  V30 7 1 7 8 CFG=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(3)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(3)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(3)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(4)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(4)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(4)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(5)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(6)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(6)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(6)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::UNKNOWN);
+  }
+  SECTION("di-imine-2-explicit-crossed-2000") {
+    auto mol = R"CTAB(di-imine-2-explicit-crossed-2000.mol
+  ChemDraw10232310432D
+
+  8  7  0  0  0  0  0  0  0  0999 V2000
+   -0.9959   -1.0600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4125   -0.4767    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4125   -0.4767    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9959   -1.0600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7282    0.2855    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9971    1.0600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7282    0.2855    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9971    1.0270    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0      
+  2  3  1  0      
+  3  4  1  0      
+  2  5  2  3      
+  5  6  1  4      
+  3  7  2  0      
+  7  8  1  4      
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(3)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 3);
+    CHECK(!mol->getBondWithIdx(3)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(3)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(4)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(4)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(4)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(5)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(6)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 4);
+    CHECK(!mol->getBondWithIdx(6)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(mol->getBondWithIdx(6)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::EITHERDOUBLE);
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::UNKNOWN);
+  }
+  SECTION("di-imine-2-explicit-crossed-3000") {
+    auto mol = R"CTAB(di-imine-2-explicit-crossed-3000.mol
+  ChemDraw10232310432D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.995922 -1.060024 0.000000 0
+M  V30 2 C -0.412509 -0.476711 0.000000 0
+M  V30 3 C 0.412509 -0.476711 0.000000 0
+M  V30 4 C 0.995923 -1.060024 0.000000 0
+M  V30 5 N -0.728217 0.285506 0.000000 0
+M  V30 6 C -0.997122 1.060024 0.000000 0
+M  V30 7 N 0.728216 0.285506 0.000000 0
+M  V30 8 C 0.997122 1.027023 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 2 5 CFG=2
+M  V30 5 1 5 6 CFG=2
+M  V30 6 2 3 7
+M  V30 7 1 7 8 CFG=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(3)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(3)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(!mol->getBondWithIdx(3)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(4)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(4)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(4)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(5)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(6)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(6)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(mol->getBondWithIdx(6)->getProp<int>(
+        common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::EITHERDOUBLE);
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::UNKNOWN);
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::UNKNOWN);
+  }
+
+  SECTION("di-imine-cross-2000") {
+    auto mol = R"CTAB(di-imine-cross-2000.mol
+  ChemDraw10192311582D
+
+  8  7  0  0  0  0  0  0  0  0999 V2000
+   -1.0099   -1.1129    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5974   -0.3984    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2276   -0.3984    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6401   -1.1129    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8109    0.3984    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6401    0.3160    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2234    1.1129    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2234    0.8994    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0        0
+  2  3  1  0        0
+  3  4  1  0        0
+  2  5  2  3        0
+  3  6  2  3        0
+  5  7  1  0        0
+  6  8  1  0        0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(3)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 3);
+    CHECK(!mol->getBondWithIdx(3)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(3)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::NONE);
+    CHECK(mol->getBondWithIdx(4)->getProp<int>(
+              common_properties::_MolFileBondStereo) == 3);
+    CHECK(!mol->getBondWithIdx(4)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(4)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(5)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(6)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(6)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(6)->hasProp(common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::EITHERDOUBLE);
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::EITHERDOUBLE);
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::NONE);
+  }
+  SECTION("di-imine-cross-3000") {
+    auto mol = R"CTAB(di-imine-cross-3000.mol
+  ChemDraw10232310302D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.009900 -1.112900 0.000000 0
+M  V30 2 C -0.597400 -0.398400 0.000000 0
+M  V30 3 C 0.227600 -0.398400 0.000000 0
+M  V30 4 C 0.640100 -1.112900 0.000000 0
+M  V30 5 N -0.810900 0.398400 0.000000 0
+M  V30 6 N 0.640100 0.316000 0.000000 0
+M  V30 7 C -1.223400 1.112900 0.000000 0
+M  V30 8 C 1.223400 0.899400 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 2 5 CFG=2
+M  V30 5 2 3 6 CFG=2
+M  V30 6 1 5 7
+M  V30 7 1 6 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(3)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(3)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(!mol->getBondWithIdx(3)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(4)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(mol->getBondWithIdx(4)->getProp<int>(
+              common_properties::_MolFileBondCfg) == 2);
+    CHECK(!mol->getBondWithIdx(4)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(5)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(5)->hasProp(common_properties::_UnknownStereo));
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::NONE);
+    CHECK(!mol->getBondWithIdx(6)->hasProp(
+        common_properties::_MolFileBondStereo));
+    CHECK(!mol->getBondWithIdx(6)->hasProp(common_properties::_MolFileBondCfg));
+    CHECK(!mol->getBondWithIdx(6)->hasProp(common_properties::_UnknownStereo));
+
+    Chirality::reapplyMolBlockWedging(*mol);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::EITHERDOUBLE);
+
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::EITHERDOUBLE);
+
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(5)->getBondDir() == Bond::NONE);
+
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::NONE);
+  }
+  SECTION(
+      "roundtripping molblock with cis double bond should not change it into crosssed") {
+    auto molblockIn = R"CTAB(
+     RDKit          2D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+   -2.4998    2.4772    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2142    2.0647    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4998    3.3022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2142    3.7147    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.9287    3.3022    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  1  3  2  0
+  3  4  1  0
+  4  5  1  0
+M  END
+)CTAB";
+    {
+      std::unique_ptr<RWMol> mol(MolBlockToMol(molblockIn, false));
+      auto molblockOut = MolToMolBlock(*mol);
+      CHECK(molblockIn == molblockOut);
+    }
+    {
+      std::unique_ptr<RWMol> mol(MolBlockToMol(molblockIn, false));
+      reapplyMolBlockWedging(*mol);
+      auto molblockOut = MolToMolBlock(*mol);
+      CHECK(molblockIn == molblockOut);
+    }
+  }
+}
