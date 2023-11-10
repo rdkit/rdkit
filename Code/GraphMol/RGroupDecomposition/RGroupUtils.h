@@ -104,11 +104,8 @@ RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
 /// The inputLabels parameter allows to configure which mappings
 /// are taken into consideration.
 RDKIT_RGROUPDECOMPOSITION_EXPORT void relabelMappedDummies(
-    ROMol &mol,
-    RGroupLabelling inputLabels = static_cast<RGroupLabelling>(AtomMap |
-                                                               Isotope |
-                                                               MDLRGroup),
-    RGroupLabelling outputLabels = MDLRGroup);
+    ROMol &mol, unsigned int inputLabels = AtomMap | Isotope | MDLRGroup,
+    unsigned int outputLabels = MDLRGroup);
 
 }  // namespace RDKit
 
