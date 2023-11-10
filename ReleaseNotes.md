@@ -21,9 +21,14 @@ GitHub)
   Please use the implementation in `rdkit.Chem.MolStandardize.rdMolStandardize` instead.
 - The rdkit.six module, a leftover from the days when we supported both python 2
   and python 3, has been removed
+- The RDKit implementation of standard machine learning algorithms has been
+  removed. The affected packages include: rdkit.ML.Composite, rdkit.ML.DecTree,
+  rdkit.ML.KNN, rdkit.ML.ModelPackage, rdkit.ML.NaiveBayes, rdkit.ML.Neural
+  rdkit.ML.{Analyze,Screen,Grow,Build}Composite, rdkit.ML.CompositeRun,
+  rdkit.ML.EnrichPlot
 
 ## Deprecated code (to be removed in a future release):
-- The RDKit implementation of standard machine learning algorithsm has been deprecated and will be removed in the 2024.09 release. The affected packages include: rdkit.ML.Composite, rdkit.ML.DecTree, rdkit.ML.KNN, rdkit.ML.ModelPackage, rdkit.ML.NaiveBayes, rdkit.ML.Neural rdkit.ML.{Analyze,Screen,Grow,Build}Composite, rdkit.ML.CompositeRun, rdkit.ML.EnrichPlot
+
 
 # Release_2023.09.1
 (Changes relative to Release_2023.03.1)
