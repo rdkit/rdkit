@@ -253,7 +253,7 @@ int testMolSup() {
         if (i == 0) {
           auto smiles = MolToSmiles(*nmol);
           TEST_ASSERT(smiles ==
-                      "CCC1=[O+][Cu@]2([O+]=C(CC)CC(CC)=[O+]2)[O+]=C(CC)C1");
+                      "CCC1=[O+][Cu@]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2");
         }
       }
     }

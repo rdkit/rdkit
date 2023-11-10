@@ -655,7 +655,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
           int ori_ridx = abs(rnbr) - 1;
           int ridx = ids[ori_ridx] + 1;
           if (rnbr < 0) {
-            ridx *= (-1);
+            ridx *= -1;
           }
           ringStereoAtomsCopied.push_back(ridx);
         }

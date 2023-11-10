@@ -128,6 +128,10 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::LinkedPopLinearSel(
       (((2.0 * totalScaledFitness) / popsize) - (2.0 * SELECT_START)) /
       (popsize - 1);
 
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
   double predictTotalScaledFitness = .0, currentFitness = SELECT_START;
   for (size_t i = 0; i < popsize; i++) {
     predictTotalScaledFitness += currentFitness;
@@ -139,6 +143,9 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::LinkedPopLinearSel(
                           << predictTotalScaledFitness;
 #endif
   assert(std::abs(totalScaledFitness - predictTotalScaledFitness) < 1.0e-5);
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
 
   double predictEndFitness = SELECT_START + (popsize - 1.0) * scaledFitnessStep;
   (void)predictEndFitness;  // suppress warnings when building with
@@ -260,14 +267,15 @@ void LinkedPopLinearSel<Chromosome, PopulationPolicy>::iterate() {
 
   (*selectedOperation->getOpfunction())(parents, children);
 
+#ifdef INCLUDE_REPORTER
   int i = 0;
+#endif
   for (auto& child : children) {
 #ifdef INCLUDE_REPORTER
-    REPORT(Reporter::TRACE) << "Child  " << i << ": " << child->info();
+    REPORT(Reporter::TRACE) << "Child  " << i++ << ": " << child->info();
 #endif
     child->score();
     addToPopulation(child);
-    i++;
   }
 
   nOperations++;

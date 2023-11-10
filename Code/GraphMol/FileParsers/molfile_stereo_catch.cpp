@@ -597,3 +597,47 @@ TEST_CASE(
   auto mb = MolToV3KMolBlock(*m);
   CHECK(mb.find("CFG=2") == std::string::npos);
 }
+
+TEST_CASE("stereo in ring", "[molblock][stereo]") {
+  SECTION("test 1") {
+    auto molblock = R"CTAB(
+  Mrv2311 10242314442D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 11 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -2.6673 -0.77 0 0
+M  V30 2 C -2.6673 0.77 0 0
+M  V30 3 C -1.3337 1.54 0 0
+M  V30 4 C 0 0.77 0 0
+M  V30 5 C 1.3336 1.54 0 0
+M  V30 6 C 2.6673 0.77 0 0
+M  V30 7 C 2.6673 -0.77 0 0
+M  V30 8 C 1.3336 -1.54 0 0
+M  V30 9 C 0 -0.77 0 0
+M  V30 10 C -1.3337 -1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 1 7 8
+M  V30 8 1 8 9
+M  V30 9 1 4 9
+M  V30 10 1 9 10
+M  V30 11 1 1 10
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+
+    auto m = MolBlockToMol(molblock, true, false, false);
+
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+}
