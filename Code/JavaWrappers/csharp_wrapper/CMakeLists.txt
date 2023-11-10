@@ -87,7 +87,7 @@ SWIG_ADD_LIBRARY(RDKFuncs TYPE MODULE LANGUAGE CSharp SOURCES GraphMolCSharp.i )
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
 # link error if they aren't there.
 SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
-      ${RDKit_THREAD_LIBS} )
+      rdkit_base ${RDKit_THREAD_LIBS} )
 
 INSTALL(TARGETS RDKFuncs
         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )
