@@ -315,6 +315,7 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
       aptr->setNumExplicitHs(0);
       aptr->setNoImplicit(true);
       aptr->setAtomicNum(0);
+      aptr->setIsotope(0);
     } else {
       NormalizeHCount(aptr);
     }
@@ -793,6 +794,7 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
       aptr->setFormalCharge(0);
       aptr->setNoImplicit(true);
       aptr->setNumExplicitHs(0);
+      aptr->setIsotope(0);
     } else {
       for_deletion.push_back(aptr);
     }
