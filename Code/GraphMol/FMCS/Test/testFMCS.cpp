@@ -1374,7 +1374,7 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
   std::cout << "\n****** RANDOM SET test *********\n\n";
   const unsigned int N_RandomTests = all_mols.size() * 7;
   srand(1);  // make stable pseudorandom sequence
-  for (unsigned int jn = 0; n <= N_RandomTests; jn++, n++) {
+  for (; n <= N_RandomTests; n++) {
     char smiName[256];
     sprintf(smiName, "%s/smilesRAND/%s.%u.smi", path, test, n);
     FILE* fsmi = fopen(smiName, "wt");

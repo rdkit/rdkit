@@ -148,7 +148,6 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
 
   neighborBondIndices.push_back(bond->getIdx());
   neighborBondAngles.push_back(0.0);
-  unsigned int neighborsWithDirection = 0;
   for (const auto nbrBond : mol->atomBonds(atom)) {
     const auto otherAtom = nbrBond->getOtherAtom(atom);
     if (nbrBond != bond) {
@@ -169,11 +168,6 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
       }
       neighborBondAngles.insert(angleIt, angle);
       neighborBondIndices.insert(nbrIt, nbrBond->getIdx());
-      if (nbrBond->getBeginAtomIdx() == atom->getIdx() &&
-          (nbrBond->getBondDir() == Bond::BondDir::BEGINDASH ||
-           nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE)) {
-        ++neighborsWithDirection;
-      }
     }
   }
 

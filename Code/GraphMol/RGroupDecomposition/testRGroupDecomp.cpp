@@ -935,13 +935,11 @@ $$$$)CTAB";
       SDMolSupplier sdsup;
       sdsup.setData(sdmols);
 
-      int idx = 0;
       while (!sdsup.atEnd()) {
         ROMol *mol = sdsup.next();
         TEST_ASSERT(mol);
         int addedIndex = decomp.add(*mol);
         TEST_ASSERT(addedIndex == -1);  // none should match
-        ++idx;
         delete mol;
       }
     }
@@ -966,12 +964,10 @@ $$$$)CTAB";
       SDMolSupplier sdsup;
       sdsup.setData(sdmols);
 
-      int idx = 0;
       while (!sdsup.atEnd()) {
         ROMol *mol = sdsup.next();
         TEST_ASSERT(mol);
         decomp.add(*mol);
-        ++idx;
         delete mol;
       }
     }
@@ -4088,6 +4084,34 @@ M  END
   TEST_ASSERT(foundStereo);
 }
 
+void testNotEnumeratedCore() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that enumerated setting for non enumerated cores behaves properly"
+                       << std::endl;
+  
+  const auto core = "C1CCCCC1"_smarts;
+  const auto mol =  "C1CCCCC1C"_smiles;
+  
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  params.allowMultipleRGroupsOnUnlabelled = true;
+  params.onlyMatchAtRGroups = false;
+  params.doEnumeration = true;
+  params.doTautomers = false;
+
+  const char *expected = "Core:C1CCC([*:1])CC1 R1:C[*:1]";
+
+  RGroupDecomposition decomp(*core, params);
+  const auto add11 = decomp.add(*mol);
+  TEST_ASSERT(add11 == 0);
+  decomp.process();
+  auto rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1);
+  RGroupRows::const_iterator it = rows.begin();
+  CHECK_RGROUP(it, expected);
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -4152,6 +4176,7 @@ int main() {
   testTautomerCore();
   testEnumeratedCore();
   testStereoBondBug();
+  testNotEnumeratedCore();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

@@ -307,10 +307,8 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
                            unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
-  int charge = 0;
 
   for (auto aptr : mol->atoms()) {
-    charge += aptr->getFormalCharge();
     aptr->setIsAromatic(false);
     aptr->setFormalCharge(0);
     if (!elem) {
