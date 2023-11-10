@@ -506,7 +506,7 @@ void wedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
 }
 
 void reapplyMolBlockWedging(ROMol &mol) {
-  MolOps::clearSingleBondDirFlags(mol);
+  MolOps::clearSingleBondDirFlags(mol, true);
   for (auto b : mol.bonds()) {
     int explicit_unknown_stereo = -1;
     if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,

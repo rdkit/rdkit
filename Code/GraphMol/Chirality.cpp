@@ -3303,13 +3303,17 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
   }
 }
 
-void clearSingleBondDirFlags(ROMol &mol) {
+void clearSingleBondDirFlags(ROMol &mol, bool retainCisTransInfo) {
   for (auto bond : mol.bonds()) {
     if (bond->getBondType() == Bond::SINGLE) {
-      if (bond->getBondDir() == Bond::UNKNOWN) {
+      auto bondDir = bond->getBondDir();
+      if (bondDir == Bond::UNKNOWN) {
         bond->setProp(common_properties::_UnknownStereo, 1);
       }
-      bond->setBondDir(Bond::NONE);
+      if (!retainCisTransInfo ||
+          (bondDir != Bond::ENDDOWNRIGHT && bondDir != Bond::ENDUPRIGHT)) {
+        bond->setBondDir(Bond::NONE);
+      }
     }
   }
 }

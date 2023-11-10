@@ -2024,4 +2024,33 @@ M  END
     CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
     CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::NONE);
   }
+  SECTION(
+      "roundtripping molblock with cis double bond should not change it into crosssed") {
+    auto molblockIn = R"CTAB(
+     RDKit          2D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+   -2.4998    2.4772    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2142    2.0647    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4998    3.3022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2142    3.7147    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.9287    3.3022    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  1  3  2  0
+  3  4  1  0
+  4  5  1  0
+M  END
+)CTAB";
+    {
+      std::unique_ptr<RWMol> mol(MolBlockToMol(molblockIn, false));
+      auto molblockOut = MolToMolBlock(*mol);
+      CHECK(molblockIn == molblockOut);
+    }
+    {
+      std::unique_ptr<RWMol> mol(MolBlockToMol(molblockIn, false));
+      reapplyMolBlockWedging(*mol);
+      auto molblockOut = MolToMolBlock(*mol);
+      CHECK(molblockIn == molblockOut);
+    }
+  }
 }
