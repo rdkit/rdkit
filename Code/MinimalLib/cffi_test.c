@@ -2213,6 +2213,28 @@ void test_capture_logs() {
   }
 }
 
+void test_relabel_mapped_dummies() {
+  printf("--------------------------\n");
+  printf("  test_relabel_mapped_dummies\n");
+  char *mpkl;
+  size_t mpkl_size;
+  char *smiles;
+  mpkl = get_mol("c1cc([4*:2])c([3*:1])cn1", &mpkl_size, "");
+  smiles = get_cxsmiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(
+      smiles,
+      "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.molAtomMapNumber.2:3.dummyLabel.*:5.molAtomMapNumber.1:5.dummyLabel.*|"));
+  free(smiles);
+  free(mpkl);
+  mpkl = get_mol("c1cc([4*:2])c([3*:1])cn1", &mpkl_size,
+                 "{\"mappedDummiesAreRGroups\":true}");
+  smiles = get_cxsmiles(mpkl, mpkl_size, NULL);
+  assert(
+      !strcmp(smiles, "*c1ccncc1* |atomProp:0.dummyLabel.R2:7.dummyLabel.R1|"));
+  free(smiles);
+  free(mpkl);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -2240,5 +2262,6 @@ int main() {
   test_alignment_r_groups_aromatic_ring();
   test_partial_sanitization();
   test_capture_logs();
+  test_relabel_mapped_dummies();
   return 0;
 }
