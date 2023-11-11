@@ -193,6 +193,29 @@ double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
   return rmsd;
 }
 
+python::tuple GetAllConformerBestRMS(ROMol &mol, int numThreads,
+                                     python::object map, int maxMatches,
+                                     bool symmetrizeTerminalGroups,
+                                     python::object weights = python::list()) {
+  std::vector<MatchVectType> aMapVec;
+  if (map != python::object()) {
+    aMapVec = translateAtomMapSeq(map);
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
+  std::vector<double> rmsds;
+  {
+    NOGIL gil;
+    rmsds = MolAlign::getAllConformerBestRMS(
+        mol, numThreads, aMapVec, maxMatches, symmetrizeTerminalGroups,
+        wtsVec.get());
+  }
+  python::list res;
+  for (auto v : rmsds) {
+    res.append(v);
+  }
+  return python::tuple(res);
+}
+
 double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
                python::object map, int maxMatches,
                bool symmetrizeTerminalGroups,
@@ -706,6 +729,34 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
        python::arg("symmetrizeConjugatedTerminalGroups") = true,
        python::arg("weights") = python::list(), python::arg("numThreads") = 1),
       docString.c_str());
+
+  docString =
+      R"DOC(
+
+       ARGUMENTS
+        - mol:       the molecule to be considered
+        - numThreads:  (optional) number of threads to use
+        - map:         (optional) a list of lists of (probeAtomId,refAtomId)
+                       tuples with the atom-atom mappings of the two
+                       molecules. If not provided, these will be generated
+                       using a substructure search.
+        - maxMatches:  (optional) if map isn't specified, this will be
+                       the max number of matches found in a SubstructMatch()
+        - symmetrizeConjugatedTerminalGroups:  (optional) if set, conjugated
+                       terminal functional groups (like nitro or carboxylate)
+                       will be considered symmetrically
+        - weights:     (optional) weights for mapping
+       
+      RETURNS
+      A tuple with the best RMSDS. The ordering is [(1,0),(2,0),(2,1),(3,0),... etc]
+  )DOC";
+  python::def("GetAllConformerBestRMS", RDKit::GetAllConformerBestRMS,
+              (python::arg("mol"), python::arg("numThreads") = 1,
+               python::arg("map") = python::object(),
+               python::arg("maxMatches") = 1000000,
+               python::arg("symmetrizeConjugatedTerminalGroups") = true,
+               python::arg("weights") = python::list()),
+              docString.c_str());
 
   docString =
       "Returns the RMS between two molecules, taking symmetry into account.\n\

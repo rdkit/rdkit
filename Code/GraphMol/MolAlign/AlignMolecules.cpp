@@ -289,17 +289,20 @@ std::vector<double> getAllConformerBestRMS(
                         symmetrizeConjugatedTerminalGroups);
   }
   const auto &matches = map.empty() ? allMatches : map;
-
   std::vector<double> res;
-  RDGeom::Transform3D *trans = nullptr;
+  RDGeom::Transform3D trans;
   bool reflect = false;
   unsigned int maxIters = 50;
+  std::vector<int> cids;
+  for (auto cit = mol.beginConformers(); cit != mol.endConformers(); ++cit) {
+    cids.push_back((*cit)->getId());
+  }
   if (numThreads == 1) {
     for (auto ci = 0u; ci < mol.getNumConformers(); ++ci) {
       for (auto cj = 0u; cj < ci; ++cj) {
-        res.push_back(getBestRMSInternal(mol, mol, ci, cj, matches, trans,
-                                         nullptr, weights, reflect, maxIters,
-                                         1));
+        res.push_back(getBestRMSInternal(mol, mol, cids[ci], cids[cj], matches,
+                                         &trans, nullptr, weights, reflect,
+                                         maxIters, 1));
       }
     }
   }
@@ -308,18 +311,18 @@ std::vector<double> getAllConformerBestRMS(
     std::vector<std::pair<unsigned int, unsigned int>> pairs;
     for (auto ci = 0u; ci < mol.getNumConformers(); ++ci) {
       for (auto cj = 0u; cj < ci; ++cj) {
-        pairs.emplace_back(ci, cj);
+        pairs.emplace_back(cids[ci], cids[cj]);
       }
     }
     std::vector<std::vector<std::pair<unsigned int, double>>> rmsds(numThreads);
     auto func = [&](unsigned int tidx) {
-      RDGeom::Transform3D *trans = nullptr;
+      RDGeom::Transform3D trans;
       bool reflect = false;
       unsigned int maxIters = 50;
       for (auto i = tidx; i < pairs.size(); i += numThreads) {
         auto rms = getBestRMSInternal(mol, mol, pairs[i].first, pairs[i].second,
-                                      matches, trans, nullptr, weights, reflect,
-                                      maxIters, 1);
+                                      matches, &trans, nullptr, weights,
+                                      reflect, maxIters, 1);
         rmsds[tidx].emplace_back(i, rms);
       }
     };

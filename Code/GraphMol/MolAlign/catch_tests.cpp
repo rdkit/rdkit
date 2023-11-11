@@ -187,6 +187,11 @@ TEST_CASE("getAllConformerBestRMS") {
       CHECK(rmsds.size() == (nconfs * (nconfs - 1)) / 2);
       auto finish = std::chrono::high_resolution_clock::now();
       std::cerr << (finish - start).count() << std::endl;
+
+      ROMol refMol(*mol);
+      ROMol prbMol(*mol);
+      auto refVal = MolAlign::getBestRMS(refMol, prbMol, 1, 0);
+      CHECK(rmsds[0] == Approx(refVal).epsilon(0.00001));
     }
     std::vector<double> mtrmsds;
     {
