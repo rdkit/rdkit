@@ -278,6 +278,71 @@ double getBestRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
   return bestRMS;
 }
 
+std::vector<double> getAllConformerBestRMS(
+    const ROMol &mol, int numThreads, const std::vector<MatchVectType> &map,
+    int maxMatches, bool symmetrizeConjugatedTerminalGroups,
+    const RDNumeric::DoubleVector *weights) {
+  numThreads = getNumThreadsToUse(numThreads);
+  std::vector<MatchVectType> allMatches;
+  if (map.empty()) {
+    getAllMatchesPrbRef(mol, mol, allMatches, maxMatches,
+                        symmetrizeConjugatedTerminalGroups);
+  }
+  const auto &matches = map.empty() ? allMatches : map;
+
+  std::vector<double> res;
+  RDGeom::Transform3D *trans = nullptr;
+  bool reflect = false;
+  unsigned int maxIters = 50;
+  if (numThreads == 1) {
+    for (auto ci = 0u; ci < mol.getNumConformers(); ++ci) {
+      for (auto cj = 0u; cj < ci; ++cj) {
+        res.push_back(getBestRMSInternal(mol, mol, ci, cj, matches, trans,
+                                         nullptr, weights, reflect, maxIters,
+                                         1));
+      }
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  else {
+    std::vector<std::pair<unsigned int, unsigned int>> pairs;
+    for (auto ci = 0u; ci < mol.getNumConformers(); ++ci) {
+      for (auto cj = 0u; cj < ci; ++cj) {
+        pairs.emplace_back(ci, cj);
+      }
+    }
+    std::vector<std::vector<std::pair<unsigned int, double>>> rmsds(numThreads);
+    auto func = [&](unsigned int tidx) {
+      RDGeom::Transform3D *trans = nullptr;
+      bool reflect = false;
+      unsigned int maxIters = 50;
+      for (auto i = tidx; i < pairs.size(); i += numThreads) {
+        auto rms = getBestRMSInternal(mol, mol, pairs[i].first, pairs[i].second,
+                                      matches, trans, nullptr, weights, reflect,
+                                      maxIters, 1);
+        rmsds[tidx].emplace_back(i, rms);
+      }
+    };
+    std::vector<std::thread> tg;
+    for (auto ti = 0; ti < numThreads; ++ti) {
+      tg.emplace_back(std::thread(func, ti));
+    }
+    for (auto &thread : tg) {
+      if (thread.joinable()) {
+        thread.join();
+      }
+    }
+    res.resize(pairs.size());
+    for (const auto &tres : rmsds) {
+      for (const auto &v : tres) {
+        res[v.first] = v.second;
+      }
+    }
+  }
+#endif
+  return res;
+}
+
 double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
                const std::vector<MatchVectType> &map, int maxMatches,
                bool symmetrizeConjugatedTerminalGroups,

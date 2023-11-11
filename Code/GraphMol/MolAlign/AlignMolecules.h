@@ -177,6 +177,12 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
     const RDNumeric::DoubleVector *weights = nullptr, int numThreads = 1);
 
+RDKIT_MOLALIGN_EXPORT std::vector<double> getAllConformerBestRMS(
+    const ROMol &mol, int numThreads = 1,
+    const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
+    int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
+    const RDNumeric::DoubleVector *weights = nullptr);
+
 //! Returns the RMS between two molecules, taking symmetry into account.
 //! In contrast to getBestRMS, the RMS is computed "in place", i.e.
 //! probe molecules are not aligned to the reference ahead of the

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2022-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +10,7 @@
 #include "catch.hpp"
 #include "AlignMolecules.h"
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -148,7 +149,7 @@ TEST_CASE("multithreaded getBestRMS") {
       auto ref = MolAlign::getBestRMS(*m1, *m1, probeId, refId, mp, maxMatches,
                                       symmetrize, weights, numThreads);
       auto finish = std::chrono::high_resolution_clock::now();
-      // std::cerr << (finish - start).count() << std::endl;
+      std::cerr << (finish - start).count() << std::endl;
       CHECK(ref == Approx(0.0).epsilon(0.00001));
     }
     {
@@ -157,9 +158,47 @@ TEST_CASE("multithreaded getBestRMS") {
       auto ref = MolAlign::getBestRMS(*m1, *m1, probeId, refId, mp, maxMatches,
                                       symmetrize, weights, numThreads);
       auto finish = std::chrono::high_resolution_clock::now();
-      // std::cerr << (finish - start).count() << std::endl;
+      std::cerr << (finish - start).count() << std::endl;
       CHECK(ref == Approx(0.0).epsilon(0.00001));
     }
   }
 }
 #endif
+
+TEST_CASE("getAllConformerBestRMS") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/MolAlign/test_data/symmetric.confs.sdf";
+  SDMolSupplier suppl(fname1);
+  std::unique_ptr<ROMol> mol{suppl[0]};
+  REQUIRE(mol);
+  for (auto i = 1u; i < suppl.length(); ++i) {
+    std::unique_ptr<ROMol> nm{suppl[i]};
+    REQUIRE(nm);
+    mol->addConformer(new Conformer(nm->getConformer()), true);
+  }
+  // CHECK(mol->getNumConformers() == 10);
+  SECTION("basics") {
+    auto nconfs = mol->getNumConformers();
+    std::vector<double> rmsds;
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      rmsds = MolAlign::getAllConformerBestRMS(*mol);
+      CHECK(rmsds.size() == (nconfs * (nconfs - 1)) / 2);
+      auto finish = std::chrono::high_resolution_clock::now();
+      std::cerr << (finish - start).count() << std::endl;
+    }
+    std::vector<double> mtrmsds;
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      int numThreads = 4;
+      mtrmsds = MolAlign::getAllConformerBestRMS(*mol, numThreads);
+      CHECK(mtrmsds.size() == (nconfs * (nconfs - 1)) / 2);
+      auto finish = std::chrono::high_resolution_clock::now();
+      std::cerr << (finish - start).count() << std::endl;
+    }
+    for (auto i = 0u; i < rmsds.size(); ++i) {
+      CHECK(rmsds[i] == Approx(mtrmsds[i]).epsilon(0.00001));
+    }
+  }
+}
