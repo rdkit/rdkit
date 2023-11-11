@@ -47,6 +47,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
+#include <GraphMol/RGroupDecomposition/RGroupUtils.h>
 #include <RDGeneral/RDLog.h>
 
 #include <sstream>
@@ -104,6 +105,7 @@ RWMol *mol_from_input(const std::string &input,
   bool setAromaticity = true;
   bool fastFindRings = true;
   bool assignStereo = true;
+  bool mappedDummiesAreRGroups = false;
   RWMol *res = nullptr;
   boost::property_tree::ptree pt;
   if (!details_json.empty()) {
@@ -117,6 +119,7 @@ RWMol *mol_from_input(const std::string &input,
     LPT_OPT_GET(setAromaticity);
     LPT_OPT_GET(fastFindRings);
     LPT_OPT_GET(assignStereo);
+    LPT_OPT_GET(mappedDummiesAreRGroups);
   }
   try {
     if (input.find("M  END") != std::string::npos) {
@@ -169,6 +172,9 @@ RWMol *mol_from_input(const std::string &input,
       }
       if (mergeQueryHs) {
         MolOps::mergeQueryHs(*res);
+      }
+      if (mappedDummiesAreRGroups) {
+        relabelMappedDummies(*res);
       }
     } catch (...) {
       delete res;
