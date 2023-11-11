@@ -128,6 +128,7 @@ RDKIT_MOLALIGN_EXPORT double alignMol(
   \param weights    (optional) weights for each pair of atoms.
   \param reflect    if true reflect the conformation of the probe molecule
   \param maxIters   maximum number of iterations used in minimizing the RMSD
+  \param numThreads (optional) number of threads to use during the calculation
 
   <b>Returns</b>
   Best RMSD value found
@@ -138,7 +139,7 @@ RDKIT_MOLALIGN_EXPORT double getBestAlignmentTransform(
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
     const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
-    unsigned int maxIters = 50);
+    unsigned int maxIters = 50, int numThreads = 1);
 
 //! Returns the optimal RMS for aligning two molecules, taking
 /// symmetry into account. As a side-effect, the probe molecule is
@@ -165,6 +166,7 @@ RDKIT_MOLALIGN_EXPORT double getBestAlignmentTransform(
                     terminal functional groups (like nitro or carboxylate)
                     will be considered symmetrically
   \param weights    (optional) weights for each pair of atoms.
+  \param numThreads (optional) number of threads to use during the calculation
 
   <b>Returns</b>
   Best RMSD value found
@@ -173,7 +175,7 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
     ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
-    const RDNumeric::DoubleVector *weights = nullptr);
+    const RDNumeric::DoubleVector *weights = nullptr, int numThreads = 1);
 
 //! Returns the RMS between two molecules, taking symmetry into account.
 //! In contrast to getBestRMS, the RMS is computed "in place", i.e.
