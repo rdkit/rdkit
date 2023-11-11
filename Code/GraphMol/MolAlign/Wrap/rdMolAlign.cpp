@@ -113,14 +113,12 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
   return generateRmsdTransMatchPyTuple(rmsd, trans);
 }
 
-PyObject *getBestMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
-                                   int prbCid = -1, int refCid = -1,
-                                   python::object map = python::list(),
-                                   int maxMatches = 1000000,
-                                   bool symmetrizeTerminalGroups = true,
-                                   python::object weights = python::list(),
-                                   bool reflect = false,
-                                   unsigned int maxIters = 50) {
+PyObject *getBestMolAlignTransform(
+    const ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    python::object map = python::list(), int maxMatches = 1000000,
+    bool symmetrizeTerminalGroups = true,
+    python::object weights = python::list(), bool reflect = false,
+    unsigned int maxIters = 50, int numThreads = 1) {
   std::vector<MatchVectType> aMapVec;
   unsigned int nAtms = 0;
   if (map != python::object()) {
@@ -142,7 +140,8 @@ PyObject *getBestMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
     NOGIL gil;
     rmsd = MolAlign::getBestAlignmentTransform(
         prbMol, refMol, bestTrans, bestMatch, prbCid, refCid, aMapVec,
-        maxMatches, symmetrizeTerminalGroups, wtsVec.get(), reflect, maxIters);
+        maxMatches, symmetrizeTerminalGroups, wtsVec.get(), reflect, maxIters,
+        numThreads);
   }
 
   return generateRmsdTransMatchPyTuple(rmsd, bestTrans, &bestMatch);
@@ -178,7 +177,7 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
 double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
                   python::object map, int maxMatches,
                   bool symmetrizeTerminalGroups,
-                  python::object weights = python::list()) {
+                  python::object weights = python::list(), int numThreads = 1) {
   std::vector<MatchVectType> aMapVec;
   if (map != python::object()) {
     aMapVec = translateAtomMapSeq(map);
@@ -187,9 +186,9 @@ double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
   double rmsd;
   {
     NOGIL gil;
-    rmsd =
-        MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec, maxMatches,
-                             symmetrizeTerminalGroups, wtsVec.get());
+    rmsd = MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec,
+                                maxMatches, symmetrizeTerminalGroups,
+                                wtsVec.get(), numThreads);
   }
   return rmsd;
 }
@@ -617,6 +616,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       - weights     Optionally specify weights for each of the atom pairs\n\
       - reflect     if true reflect the conformation of the probe molecule\n\
       - maxIters    maximum number of iterations used in minimizing the RMSD\n\
+      - numThreads  (optional) number of threads to use\n\
        \n\
       RETURNS\n\
       a tuple of (RMSD value, best transform matrix, best atom map)\n\
@@ -629,7 +629,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
        python::arg("maxMatches") = 1000000,
        python::arg("symmetrizeConjugatedTerminalGroups") = true,
        python::arg("weights") = python::list(), python::arg("reflect") = false,
-       python::arg("maxIters") = 50),
+       python::arg("maxIters") = 50, python::arg("numThreads") = 1),
       docString.c_str());
 
   docString =
@@ -693,6 +693,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                        terminal functional groups (like nitro or carboxylate)\n\
                        will be considered symmetrically\n\
         - weights:     (optional) weights for mapping\n\
+        - numThreads:  (optional) number of threads to use\n\
        \n\
       RETURNS\n\
       The best RMSD found\n\
@@ -703,7 +704,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
        python::arg("refId") = -1, python::arg("map") = python::object(),
        python::arg("maxMatches") = 1000000,
        python::arg("symmetrizeConjugatedTerminalGroups") = true,
-       python::arg("weights") = python::list()),
+       python::arg("weights") = python::list(), python::arg("numThreads") = 1),
       docString.c_str());
 
   docString =
