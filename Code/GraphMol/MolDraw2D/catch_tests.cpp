@@ -44,7 +44,7 @@ namespace {
 // The hand-drawn pictures will fail this frequently due to the use
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
-static const bool DELETE_WITH_GOOD_HASH = true;
+static const bool DELETE_WITH_GOOD_HASH = false;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
 // These values are for a build with FreeType, so expect them all to be
@@ -8568,6 +8568,57 @@ M  END)CTAB"_ctab;
     outs.flush();
     outs.close();
     check_file_hash(baseName + "7.svg");
+  }
+}
+
+TEST_CASE("Better Lasso") {
+  std::string baseName = "better_lasso_";
+  {
+    // Simple tests.
+    auto m = R"CTAB(
+     RDKit          2D
+
+  8  4  0  0  0  0  0  0  0  0999 V2000
+   -2.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0610    3.0610    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0000    2.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    2.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    3.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0000    2.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0610    3.0610    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  3  4  1  0
+  5  6  1  0
+  7  8  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().fillHighlights = false;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::vector<DrawColour> cvec(1, colours[0]);
+    for (int i = 0; i < 8; ++i) {
+      ha_map.insert(std::make_pair(i, cvec));
+    }
+
+    std::map<int, double> h_rads;
+    std::map<int, int> h_lw_mult;
+    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 1", ha_map, hb_map,
+                                      h_rads, h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "1.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    //    check_file_hash(baseName + "1.svg");
   }
 }
 

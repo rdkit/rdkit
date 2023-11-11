@@ -139,20 +139,22 @@ void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
     return;
   }
   std::vector<std::unique_ptr<DrawShapeArc>> arcs;
-  extractAtomArcs(lassoNum, col, colAtoms, arcs);
+  //  extractAtomArcs(lassoNum, col, colAtoms, arcs);
   std::vector<std::unique_ptr<DrawShapeSimpleLine>> lines;
-  extractBondLines(lassoNum, col, colAtoms, lines);
-  fixArcsAndLines(arcs, lines);
-  fixIntersectingLines(arcs, lines);
-  fixIntersectingArcsAndLines(arcs, lines);
-  fixProtrudingLines(lines);
-  fixOrphanLines(arcs, lines);
+  std::vector<std::vector<LinePair>> atomLines(drawMol_->getNumAtoms());
+  extractBondLines(lassoNum, col, colAtoms, lines, atomLines);
+  extractAtomArcs(atomLines, arcs);
+  //  fixArcsAndLines(arcs, lines);
+  //  fixIntersectingLines(arcs, lines);
+  //  fixIntersectingArcsAndLines(arcs, lines);
+  //  fixProtrudingLines(lines);
+  //  fixOrphanLines(arcs, lines);
 
   for (auto &it : arcs) {
     highlights_.push_back(std::move(it));
   }
   for (auto &it : lines) {
-    highlights_.push_back(std::move(it));
+    highlights_.emplace_back(std::move(it));
   }
 }
 
@@ -198,7 +200,8 @@ void DrawMolMCHLasso::extractAtomArcs(
 void DrawMolMCHLasso::extractBondLines(
     size_t lassoNum, const RDKit::DrawColour &col,
     const std::vector<int> &colAtoms,
-    std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const {
+    std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines,
+    std::vector<std::vector<LinePair>> &atomLines) const {
   int lineWidth = 3;
   bool scaleLineWidth = true;
   if (colAtoms.size() > 1) {
@@ -229,6 +232,7 @@ void DrawMolMCHLasso::extractBondLines(
           auto atCdsI = atCds_[colAtoms[i]];
           auto atCdsJ = atCds_[colAtoms[j]];
           auto perp = calcPerpendicular(atCdsI, atCdsJ);
+          LinePair thisPair;
           for (auto m : {-1.0, +1.0}) {
             auto p1 = atCdsI + perp * dispI * m;
             auto p2 = atCdsJ + perp * dispJ * m;
@@ -237,17 +241,93 @@ void DrawMolMCHLasso::extractBondLines(
             // with.  To duck the problem completely, push the line out to just
             // less than the radii of the circles (just less, so that they still
             // intersect rather than hitting on the tangent)
+#if 0
             auto mid = (p1 + p2) / 2.0;
             if ((atCdsI - mid).lengthSq() < lassoWidthI * lassoWidthI) {
               p1 = atCdsI + perp * lassoWidthI * 0.99 * m;
               p2 = atCdsJ + perp * lassoWidthJ * 0.99 * m;
             }
+#endif
+            adjustLineEndForEllipse(atCds_[colAtoms[i]], lassoWidthI,
+                                    lassoWidthI, p2, p1);
+            adjustLineEndForEllipse(atCds_[colAtoms[j]], lassoWidthJ,
+                                    lassoWidthJ, p1, p2);
             DrawShapeSimpleLine *pl = new DrawShapeSimpleLine(
                 {p1, p2}, lineWidth, scaleLineWidth, col, colAtoms[i],
                 colAtoms[j], bond->getIdx(), noDash);
             lines.emplace_back(pl);
+            if (m < 0.0) {
+              thisPair.line1 = pl;
+            } else {
+              thisPair.line2 = pl;
+            }
+          }
+          thisPair.radius = lassoWidthI;
+          thisPair.atom = i;
+          atomLines[colAtoms[i]].push_back(thisPair);
+          thisPair.radius = lassoWidthJ;
+          thisPair.atom = j;
+          atomLines[colAtoms[j]].push_back(thisPair);
+        }
+      }
+    }
+  }
+  orderAtomLines(atomLines);
+}
+
+namespace {
+DrawShapeArc *makeArc(LinePair &lp1, LinePair &lp2, const Point2D &atCds,
+                      size_t atInd) {
+  // Make an arc between line2 of lp1 and line1 of lp2.  If the 2 lines
+  // intersect outside the radius of the arc, trim them both back to the
+  // point of intersection and return nullptr.
+  std::cout << "making arc for " << lp1.atom << " and " << lp2.atom << " from "
+            << lp1.angle2 << " to " << lp2.angle1 << std::endl;
+  int oatom =
+      lp1.line1->atom1_ == atInd ? lp1.line1->atom2_ : lp1.line1->atom1_;
+
+  DrawShapeArc *arc = new DrawShapeArc(
+      {atCds, {lp1.radius, lp1.radius}}, lp1.angle2, lp2.angle1,
+      lp1.line1->lineWidth_, lp1.line1->scaleLineWidth_, lp1.line1->lineColour_,
+      false, lp1.atom);
+  return arc;
+}
+
+}  // namespace
+
+// ****************************************************************************
+void DrawMolMCHLasso::extractAtomArcs(
+    std::vector<std::vector<LinePair>> &atomLines,
+    std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const {
+  for (size_t k = 0; k < atomLines.size(); ++k) {
+    auto &atomLine = atomLines[k];
+    if (atomLine.empty()) {
+      continue;
+    }
+    if (atomLine.size() == 1) {
+      std::cout << "making arc for " << atomLine[0].atom << " angles "
+                << atomLine[0].angle2 << " to " << atomLine[0].angle1
+                << std::endl;
+      DrawShapeArc *arc = new DrawShapeArc(
+          {atCds_[atomLine[0].atom], {atomLine[0].radius, atomLine[0].radius}},
+          atomLine[0].angle2, atomLine[0].angle1, atomLine[0].line1->lineWidth_,
+          atomLine[0].line1->scaleLineWidth_, atomLine[0].line1->lineColour_,
+          false, atomLine[0].atom);
+      arcs.emplace_back(arc);
+    } else {
+      for (size_t i = 0; i < atomLine.size() - 1; ++i) {
+        for (size_t j = i + 1; j < atomLine.size(); ++j) {
+          auto arc =
+              makeArc(atomLine[i], atomLine[j], atCds_[atomLine[i].atom], k);
+          if (arc) {
+            arcs.emplace_back(arc);
           }
         }
+      }
+      auto arc = makeArc(atomLine.back(), atomLine.front(),
+                         atCds_[atomLine.front().atom], k);
+      if (arc) {
+        arcs.emplace_back(arc);
       }
     }
   }
@@ -294,6 +374,101 @@ void calcAnglesFromXAxis(Point2D &centre, Point2D &end1, Point2D &end2,
 }  // namespace
 
 // ****************************************************************************
+void DrawMolMCHLasso::orderAtomLines(
+    std::vector<std::vector<LinePair>> &atomLines) const {
+  static const Point2D index{1.0, 0.0};
+  for (size_t i = 0; i < drawMol_->getNumAtoms(); ++i) {
+    if (atomLines[i].empty()) {
+      continue;
+    }
+    std::cout << std::endl << "atom " << i << " : " << atCds_[i] << std::endl;
+    std::vector<std::pair<double, size_t>> bondAngles;
+    double minBondAngle = 720.0;
+    for (size_t j = 0; j < atomLines[i].size(); ++j) {
+      // because the same DrawShapeSimpleLine is used for both atoms, the
+      // points_[0] may not be the nearer point to atom i.
+      int oatom = atomLines[i][j].line1->atom1_ == i
+                      ? atomLines[i][j].line1->atom2_
+                      : atomLines[i][j].line1->atom1_;
+      int pt = 0;
+      if ((atCds_[i] - atomLines[i][j].line1->points_[0]).lengthSq() >
+          (atCds_[i] - atomLines[i][j].line1->points_[1]).lengthSq()) {
+        pt = 1;
+      }
+      std::cout << i << " : " << j << " : " << oatom << " : "
+                << atomLines[i][j].line1->atom1_ << " -> "
+                << atomLines[i][j].line1->atom2_ << " : "
+                << atomLines[i][j].line1->points_[pt] << " : "
+                << atomLines[i][j].line2->points_[pt] << std::endl;
+      auto rad1 = atCds_[i].directionVector(atomLines[i][j].line1->points_[pt]);
+      auto rad2 = atCds_[i].directionVector(atomLines[i][j].line2->points_[pt]);
+      auto brad = atCds_[i].directionVector(atCds_[oatom]);
+      double ang1 = 360.0 - rad1.signedAngleTo(index) * 180.0 / M_PI;
+      if (ang1 >= 360.0) {
+        ang1 -= 360.0;
+      }
+      double ang2 = 360.0 - rad2.signedAngleTo(index) * 180.0 / M_PI;
+      if (ang2 >= 360.0) {
+        ang2 -= 360.0;
+      }
+      double bang = 360.0 - brad.signedAngleTo(index) * 180.0 / M_PI;
+      if (bang >= 360.0) {
+        bang -= 360.0;
+      }
+      bondAngles.push_back(std::pair(bang, j));
+      if (bang < minBondAngle) {
+        minBondAngle = bang;
+      }
+      double cross = rad1.x * rad2.y - rad1.y * rad2.x;
+      std::cout << "atom " << i << "  ang1 = " << ang1 << "  bang = " << bang
+                << "  ang2 = " << ang2 << " cross = " << cross << std::endl;
+      //      std::cout << "2 angles : " << rad1.signedAngleTo(brad) * 180 /
+      //      M_PI
+      //                << " and " << rad2.signedAngleTo(brad) * 180 / M_PI
+      //                << std::endl;
+      //      if (cross > 0.0) {
+      //        std::cout << "cross +ve, so swap" << std::endl;
+      //        std::swap(atomLines[i][j].line1, atomLines[i][j].line1);
+      //        atomLines[i][j].angle1 = ang2;
+      //        atomLines[i][j].angle2 = ang1;
+      //      } else {
+      //        atomLines[i][j].angle1 = ang1;
+      //        atomLines[i][j].angle2 = ang2;
+      //      }
+      if (cross > 0.0) {
+        std::cout << "cross +ve to swap" << std::endl;
+        std::swap(ang1, ang2);
+      }
+      double minAng = std::min({ang1, ang2, bang});
+      std::cout << "min ang = " << minAng << " : " << ang1 - minAng << " vs "
+                << bang - minAng << " vs " << ang2 - minAng << std::endl;
+      if (ang1 - minAng < bang - minAng && bang - minAng < ang2 - minAng) {
+        std::cout << "don't swap" << std::endl;
+        atomLines[i][j].angle1 = ang1;
+        atomLines[i][j].angle2 = ang2;
+      } else {
+        std::cout << "swap" << std::endl;
+        atomLines[i][j].angle1 = ang2;
+        atomLines[i][j].angle2 = ang1;
+      }
+    }
+    std::for_each(bondAngles.begin(), bondAngles.end(),
+                  [&](std::pair<double, size_t> &ba) -> void {
+                    ba.first -= minBondAngle;
+                  });
+    std::sort(bondAngles.begin(), bondAngles.end());
+    std::vector<LinePair> newAtomLine;
+    for (auto &ba : bondAngles) {
+      newAtomLine.push_back(atomLines[i][ba.second]);
+    }
+    atomLines[i] = newAtomLine;
+    for (auto &al : atomLines[i]) {
+      std::cout << "final angles : " << al.angle1 << " to " << al.angle2
+                << std::endl;
+    }
+  }
+}
+
 // Take the initial circles and lines, and:
 // 1.trim the lines back to the circles they intersect
 // 2.make a new set of arcs that go between the pairs of lines, cutting
