@@ -6821,5 +6821,10 @@ TEST_CASE(
     CHECK(ctab.find("FIELDDATA=\"*\"") == std::string::npos);
     CHECK(ctab.find("SMARTSQ") != std::string::npos);
     CHECK(ctab.find("[$(C(=O)O)]") != std::string::npos);
+
+    // make sure we can properly parse that
+    std::unique_ptr<RWMol> nm{MolBlockToMol(ctab)};
+    REQUIRE(nm);
+    CHECK(MolToSmarts(*nm) == "[#6,#7,#8][#6][#6]*[$(C(=O)O)]");
   }
 }
