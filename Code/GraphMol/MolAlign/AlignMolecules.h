@@ -177,6 +177,30 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
     const RDNumeric::DoubleVector *weights = nullptr, int numThreads = 1);
 
+//! Returns the symmetric distance matrix between the conformers of a molecule.
+/// getBestRMS() is used to calculate the inter-conformer distances
+/*!
+  This function will attempt to align all permutations of matching atom
+  orders in both molecules, for some molecules it will lead to 'combinatorial
+  explosion' especially if hydrogens are present.
+
+  \param mol        the molecule to be considered
+  \param numThreads (optional) number of threads to use during the calculation
+  \param map        (optional) a vector of vectors of pairs of atom IDs
+                    (probe AtomId, ref AtomId) used to compute the alignments.
+                    If not provided, these will be generated using a
+                    substructure search.
+  \param maxMatches (optional) if map is empty, this will be the max number of
+                    matches found in a SubstructMatch().
+  \param symmetrizeConjugatedTerminalGroups (optional) if set, conjugated
+                    terminal functional groups (like nitro or carboxylate)
+                    will be considered symmetrically
+  \param weights    (optional) weights for each pair of atoms.
+
+  <b>Returns</b>
+  a vector with the RMSD values stored in the order:
+    [(1,0), (2,0), (2,1), (3,0), (3, 2), (3,1), ...]
+*/
 RDKIT_MOLALIGN_EXPORT std::vector<double> getAllConformerBestRMS(
     const ROMol &mol, int numThreads = 1,
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
