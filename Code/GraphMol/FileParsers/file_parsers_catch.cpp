@@ -5871,7 +5871,8 @@ TEST_CASE("MaeWriter atom numbering chirality", "[mae][MaeWriter][writer]") {
     w.flush();
     auto iss = new std::istringstream(oss->str());
     auto roundtrip = MaeMolSupplier(iss).next();
-    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::CHI_TETRAHEDRAL_CW);
   }
 
   SECTION("S") {
@@ -5882,7 +5883,8 @@ TEST_CASE("MaeWriter atom numbering chirality", "[mae][MaeWriter][writer]") {
     w.flush();
     auto iss = new std::istringstream(oss->str());
     auto roundtrip = MaeMolSupplier(iss).next();
-    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::CHI_TETRAHEDRAL_CCW);
   }
 }
 
@@ -5914,8 +5916,8 @@ $$$$
 )CTAB"_ctab;
   REQUIRE(m);
 
-  // Currently, MaeMolSupplier does not recognize "either" double bonds, this just
-  // tests that the bond will be recognizable by schrodinger software
+  // Currently, MaeMolSupplier does not recognize "either" double bonds, this
+  // just tests that the bond will be recognizable by schrodinger software
   auto oss = new std::ostringstream;
   MaeWriter w(oss);
   w.write(*m);
@@ -6802,4 +6804,22 @@ TEST_CASE(
   REQUIRE(bond2->getBondType() == Bond::DOUBLE);
   CHECK(bond2->getStereo() == Bond::BondStereo::STEREONONE);
   CHECK(bond2->getBondDir() == Bond::BondDir::NONE);
+}
+
+TEST_CASE(
+    "github #5819: Support writing detailed SMARTS queries to CTABs using the SMARTSQ mechanism") {
+  SECTION("as reported") {
+    auto m = "[C,N,O]C[#6]*[$(C(=O)O)]"_smarts;
+    REQUIRE(m);
+    auto ctab = MolToV3KMolBlock(*m);
+    // std::cerr << ctab << std::endl;
+    // make sure we still do list queries correctly
+    CHECK(ctab.find("V30 1 [C,N,O]") != std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"[C,N,O]") == std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"C\"") == std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"[#6]\"") == std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"*\"") == std::string::npos);
+    CHECK(ctab.find("SMARTSQ") != std::string::npos);
+    CHECK(ctab.find("[$(C(=O)O)]") != std::string::npos);
+  }
 }

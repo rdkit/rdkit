@@ -1038,17 +1038,30 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
 namespace {
 void createSMARTSQSubstanceGroups(ROMol &mol) {
   for (const auto atom : mol.atoms()) {
-    std::string sma;
-    if (atom->hasQuery() &&
-        atom->getPropIfPresent(common_properties::MRV_SMA, sma) &&
-        !sma.empty()) {
-      SubstanceGroup sg(&mol, "DAT");
-      sg.setProp("QUERYTYPE", "SMARTSQ");
-      sg.setProp("QUERYOP", "=");
-      std::vector<std::string> dataFields{sma};
-      sg.setProp("DATAFIELDS", dataFields);
-      sg.addAtomWithIdx(atom->getIdx());
-      addSubstanceGroup(mol, sg);
+    if (atom->hasQuery()) {
+      std::string sma;
+
+      if (!atom->getPropIfPresent(common_properties::MRV_SMA, sma) &&
+          !isAtomListQuery(atom) &&
+          atom->getQuery()->getDescription() != "AtomNull" &&
+          // we may want to re-think this next one.
+          // including AtomType queries will result in an entry
+          // for every atom that comes from SMARTS, and I don't think
+          // we want that.
+          !boost::starts_with(atom->getQuery()->getDescription(), "AtomType") &&
+          !boost::starts_with(atom->getQuery()->getDescription(),
+                              "AtomAtomicNum")) {
+        sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
+      }
+      if (!sma.empty()) {
+        SubstanceGroup sg(&mol, "DAT");
+        sg.setProp("QUERYTYPE", "SMARTSQ");
+        sg.setProp("QUERYOP", "=");
+        std::vector<std::string> dataFields{sma};
+        sg.setProp("DATAFIELDS", dataFields);
+        sg.addAtomWithIdx(atom->getIdx());
+        addSubstanceGroup(mol, sg);
+      }
     }
   }
 }
