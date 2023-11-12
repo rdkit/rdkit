@@ -150,7 +150,7 @@ set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
 set(RDKit_DataDir "${CMAKE_CURRENT_SOURCE_DIR}/Data")
 
 #include catch
-find_package(catch2 3)
+find_package(Catch2 3)
 if(NOT Catch2_FOUND)
   Include(FetchContent)
 
