@@ -57,7 +57,7 @@ TEST_CASE("translating the chiral flag to stereo groups") {
 M  END
 )CTAB"_ctab;
     REQUIRE(withFlag);
-    int flag;
+    int flag = 0;
     CHECK(withFlag->getPropIfPresent(common_properties::_MolFileChiralFlag,
                                      flag));
     CHECK(flag == 1);
@@ -118,7 +118,7 @@ M  END
 M  END
 )CTAB"_ctab;
     REQUIRE(zeroFlag);
-    int flag;
+    int flag = 0;
     CHECK(zeroFlag->getPropIfPresent(common_properties::_MolFileChiralFlag,
                                      flag));
     CHECK(flag == 0);

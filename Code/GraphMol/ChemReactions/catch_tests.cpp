@@ -1227,7 +1227,7 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     REQUIRE(rxn);
     CHECK(rxn->getReactants().size() == 1);
     CHECK(rxn->getProducts().size() == 1);
-    unsigned int bondcfg;
+    unsigned int bondcfg = 0;
     CHECK(rxn->getReactants()[0]->getBondWithIdx(0)->getPropIfPresent(
         "_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);

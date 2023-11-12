@@ -1845,7 +1845,7 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 4);
-    int val;
+    int val = 0;
     CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
         common_properties::molStereoCare, val));
     CHECK(val == 1);
@@ -1881,8 +1881,8 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 4);
-    int val;
     REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    int val = 0;
     CHECK(mol->getBondBetweenAtoms(0, 1)->getPropIfPresent(
         common_properties::molStereoCare, val));
     CHECK(val == 1);
@@ -1957,8 +1957,8 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 4);
-    int val;
     REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    int val = 0;
     CHECK(mol->getBondBetweenAtoms(0, 1)->getPropIfPresent(
         common_properties::molStereoCare, val));
     CHECK(val == 1);
