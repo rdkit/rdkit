@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
 #include <thread>

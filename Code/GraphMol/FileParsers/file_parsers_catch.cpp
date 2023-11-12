@@ -15,7 +15,7 @@
 #include <streambuf>
 
 #include "RDGeneral/test.h"
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
@@ -5871,7 +5871,8 @@ TEST_CASE("MaeWriter atom numbering chirality", "[mae][MaeWriter][writer]") {
     w.flush();
     auto iss = new std::istringstream(oss->str());
     auto roundtrip = MaeMolSupplier(iss).next();
-    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::CHI_TETRAHEDRAL_CW);
   }
 
   SECTION("S") {
@@ -5882,7 +5883,8 @@ TEST_CASE("MaeWriter atom numbering chirality", "[mae][MaeWriter][writer]") {
     w.flush();
     auto iss = new std::istringstream(oss->str());
     auto roundtrip = MaeMolSupplier(iss).next();
-    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::CHI_TETRAHEDRAL_CCW);
   }
 }
 
@@ -5914,8 +5916,8 @@ $$$$
 )CTAB"_ctab;
   REQUIRE(m);
 
-  // Currently, MaeMolSupplier does not recognize "either" double bonds, this just
-  // tests that the bond will be recognizable by schrodinger software
+  // Currently, MaeMolSupplier does not recognize "either" double bonds, this
+  // just tests that the bond will be recognizable by schrodinger software
   auto oss = new std::ostringstream;
   MaeWriter w(oss);
   w.write(*m);

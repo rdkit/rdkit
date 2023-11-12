@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include "AlignMolecules.h"
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/ROMol.h>
@@ -33,7 +33,7 @@ TEST_CASE("symmetric functional groups") {
 
     {
       auto rmsd = MolAlign::getBestRMS(m2, *m1);
-      CHECK(rmsd == Approx(0.0).margin(1e-3));
+      CHECK(rmsd == Catch::Approx(0.0).margin(1e-3));
     }
     {
       // previous behavior
@@ -44,7 +44,7 @@ TEST_CASE("symmetric functional groups") {
       bool symmetrize = false;
       auto rmsd = MolAlign::getBestRMS(m2, *m1, probeId, refId, mp, maxMatches,
                                        symmetrize);
-      CHECK(rmsd == Approx(0.747).margin(1e-3));
+      CHECK(rmsd == Catch::Approx(0.747).margin(1e-3));
     }
   }
   SECTION("terminal sulfate1") {
@@ -61,7 +61,7 @@ TEST_CASE("symmetric functional groups") {
 
     {
       auto rmsd = MolAlign::getBestRMS(m2, *m1);
-      CHECK(rmsd == Approx(0.0).margin(1e-3));
+      CHECK(rmsd == Catch::Approx(0.0).margin(1e-3));
     }
     {
       // previous behavior
@@ -72,7 +72,7 @@ TEST_CASE("symmetric functional groups") {
       bool symmetrize = false;
       auto rmsd = MolAlign::getBestRMS(m2, *m1, probeId, refId, mp, maxMatches,
                                        symmetrize);
-      CHECK(rmsd == Approx(0.097).margin(1e-3));
+      CHECK(rmsd == Catch::Approx(0.097).margin(1e-3));
     }
   }
   SECTION("terminal sulfate2") {
@@ -89,7 +89,7 @@ TEST_CASE("symmetric functional groups") {
 
     {
       auto rmsd = MolAlign::getBestRMS(m2, *m1);
-      CHECK(rmsd == Approx(0.0).margin(1e-3));
+      CHECK(rmsd == Catch::Approx(0.0).margin(1e-3));
     }
     {
       // previous behavior
@@ -100,7 +100,7 @@ TEST_CASE("symmetric functional groups") {
       bool symmetrize = false;
       auto rmsd = MolAlign::getBestRMS(m2, *m1, probeId, refId, mp, maxMatches,
                                        symmetrize);
-      CHECK(rmsd == Approx(0.097).margin(1e-3));
+      CHECK(rmsd == Catch::Approx(0.097).margin(1e-3));
     }
   }
 }

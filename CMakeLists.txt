@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.11)
 
 project (RDKit)
 
@@ -150,8 +150,18 @@ set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
 set(RDKit_DataDir "${CMAKE_CURRENT_SOURCE_DIR}/Data")
 
 #include catch
-add_subdirectory(${RDKit_ExternalDir}/catch)
-message("CATCH: ${CATCH_INCLUDE_DIR}")
+find_package(catch2 3)
+if(NOT Catch2_FOUND)
+  Include(FetchContent)
+
+  FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG        v3.4.0 # or a later release
+  )
+
+  FetchContent_MakeAvailable(Catch2)
+endif()
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
