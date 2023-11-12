@@ -843,3 +843,272 @@ TEST_CASE("Github #6262: preserve bond wedging") {
     }
   }
 }
+
+TEST_CASE("Github #6887: and1 or1 in same mol") {
+  SECTION("case 1") {
+    std::string cdxml1 = R"(<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 21.0.0.28"
+ Name="Untitled A4 Document-2"
+ BoundingBox="115.75 357.32 272.13 406.58"
+ WindowPosition="0 0"
+ WindowSize="0 0"
+ FractionalWidths="yes"
+ InterpretChemically="yes"
+ ShowAtomQuery="yes"
+ ShowAtomStereo="no"
+ ShowAtomEnhancedStereo="yes"
+ ShowAtomNumber="no"
+ ShowResidueID="no"
+ ShowBondQuery="yes"
+ ShowBondRxn="yes"
+ ShowBondStereo="no"
+ ShowTerminalCarbonLabels="no"
+ ShowNonTerminalCarbonLabels="no"
+ HideImplicitHydrogens="no"
+ LabelFont="21"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="510"
+ CaptionSize="12"
+ HashSpacing="2.70"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ LabelJustification="Auto"
+ CaptionJustification="Left"
+ AminoAcidTermini="HOH"
+ ShowSequenceTermini="yes"
+ ShowSequenceBonds="yes"
+ ShowSequenceUnlinkedBranches="no"
+ ResidueWrapCount="40"
+ ResidueBlockCount="10"
+ ResidueZigZag="yes"
+ NumberResidueBlocks="no"
+ PrintMargins="36 36 36 36"
+ color="0"
+ bgcolor="1"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="21" charset="x-mac-roman" name="Helvetica"/>
+<font id="510" charset="x-mac-roman" name="Times New Roman"/>
+</fonttable><page
+ id="24"
+ BoundingBox="0 0 523 770"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="3"
+ BoundingBox="115.75 357.32 272.13 406.58"
+ Z="2"
+><n
+ id="2"
+ p="116 406"
+ Z="1"
+ AS="N"
+/><n
+ id="4"
+ p="141.98 391"
+ Z="3"
+ Geometry="Tetrahedral"
+ AS="N"
+ BondOrdering="5 7 0 17"
+ EnhancedStereoType="And"
+ EnhancedStereoGroupNum="1"
+><objecttag
+ TagType="Unknown"
+ Name="enhancedstereo"
+><t
+ p="137.96 401.37"
+ BoundingBox="138.29 396 145.62 401.50"
+ CaptionLineHeight="variable"
+><s font="21" size="7.5" color="0">&amp;1</s></t></objecttag></n><n
+ id="6"
+ p="167.96 406"
+ Z="5"
+ AS="N"
+/><n
+ id="8"
+ p="193.94 391"
+ Z="7"
+ Geometry="Tetrahedral"
+ AS="N"
+ BondOrdering="9 11 0 19"
+ EnhancedStereoType="Or"
+ EnhancedStereoGroupNum="2"
+><objecttag
+ TagType="Unknown"
+ Name="enhancedstereo"
+><t
+ p="188.54 401.26"
+ BoundingBox="188.76 396 199.07 401.41"
+ CaptionLineHeight="variable"
+><s font="21" size="7.5" color="0">or2</s></t></objecttag></n><n
+ id="10"
+ p="219.92 406"
+ Z="9"
+ AS="N"
+/><n
+ id="12"
+ p="245.90 391"
+ Z="11"
+ Geometry="Tetrahedral"
+ AS="N"
+ BondOrdering="13 15 0 21"
+ EnhancedStereoType="Or"
+ EnhancedStereoGroupNum="1"
+><objecttag
+ TagType="Unknown"
+ Name="enhancedstereo"
+><t
+ p="241.11 401.22"
+ BoundingBox="241.32 396 250.43 401.36"
+ CaptionLineHeight="variable"
+><s font="21" size="7.5" color="0">or1</s></t></objecttag></n><n
+ id="14"
+ p="271.88 406"
+ Z="13"
+ AS="N"
+/><n
+ id="16"
+ p="141.98 361"
+ Z="15"
+ NodeType="Fragment"
+ NeedsClean="yes"
+ AS="N"
+><fragment
+ id="25"
+><n
+ id="26"
+ p="141.98 361"
+ Element="8"
+ NumHydrogens="0"
+/><n
+ id="27"
+ p="116 346"
+ NumHydrogens="3"
+/><n
+ id="28"
+ p="141.98 391"
+ NodeType="ExternalConnectionPoint"
+/><b
+ id="29"
+ B="26"
+ E="27"
+/><b
+ id="30"
+ B="28"
+ E="26"
+ Display="WedgeBegin"
+/></fragment><t
+ p="138.09 364.68"
+ BoundingBox="138.48 357.32 159.33 364.89"
+ LabelJustification="Left"
+ LabelAlignment="Left"
+><s font="21" size="10" color="0" face="96">OMe</s></t></n><n
+ id="18"
+ p="193.94 361"
+ Z="17"
+ Element="17"
+ NumHydrogens="0"
+ NeedsClean="yes"
+ AS="N"
+><t
+ p="190.33 364.68"
+ BoundingBox="190.77 357.32 199.10 364.87"
+ LabelJustification="Left"
+ LabelAlignment="Left"
+><s font="21" size="10" color="0" face="96">Cl</s></t></n><n
+ id="20"
+ p="245.90 361"
+ Z="19"
+ Element="35"
+ NumHydrogens="0"
+ NeedsClean="yes"
+ AS="N"
+><t
+ p="242.57 364.59"
+ BoundingBox="243.31 357.41 252.45 364.59"
+ LabelJustification="Left"
+ LabelAlignment="Left"
+><s font="21" size="10" color="0" face="96">Br</s></t></n><b
+ id="5"
+ Z="4"
+ B="2"
+ E="4"
+ BS="N"
+/><b
+ id="7"
+ Z="6"
+ B="4"
+ E="6"
+ BS="N"
+/><b
+ id="9"
+ Z="8"
+ B="6"
+ E="8"
+ BS="N"
+/><b
+ id="11"
+ Z="10"
+ B="8"
+ E="10"
+ BS="N"
+/><b
+ id="13"
+ Z="12"
+ B="10"
+ E="12"
+ BS="N"
+/><b
+ id="15"
+ Z="14"
+ B="12"
+ E="14"
+ BS="N"
+/><b
+ id="17"
+ Z="16"
+ B="4"
+ E="16"
+ Display="WedgeBegin"
+ BS="N"
+/><b
+ id="19"
+ Z="18"
+ B="8"
+ E="18"
+ Display="WedgeBegin"
+ BS="N"
+/><b
+ id="21"
+ Z="20"
+ B="12"
+ E="20"
+ Display="WedgeBegin"
+ BS="N"
+/></fragment></page></CDXML>
+)";
+    std::stringstream iss(cdxml1);
+    auto mols = CDXMLDataStreamToMols(iss);
+    mols[0]->clearConformers();
+    CHECK(MolToCXSmiles(*mols[0]) == "CO[C@H](C)C[C@H](Cl)C[C@H](C)Br |o1:5,o2:8,&1:2|");
+  }
+
+}
