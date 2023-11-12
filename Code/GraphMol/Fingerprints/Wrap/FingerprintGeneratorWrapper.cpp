@@ -23,6 +23,12 @@
 #include <GraphMol/Fingerprints/Wrap/TopologicalTorsionWrapper.cpp>
 #include <cstdint>
 
+#include <RDGeneral/RDThreads.h>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <thread>
+#include <future>
+#endif
+
 namespace python = boost::python;
 namespace np = boost::python::numpy;
 
@@ -206,6 +212,64 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
   delete ignoreAtoms;
 
   return result.release();
+}
+
+template <typename OutputType>
+python::tuple getFingerprints(const FingerprintGenerator<OutputType> *fpGen,
+                              python::object mols, int numThreads) {
+  std::vector<std::uint32_t> *fromAtoms = nullptr;
+  std::vector<std::uint32_t> *ignoreAtoms = nullptr;
+  std::vector<std::uint32_t> *customAtomInvariants = nullptr;
+  std::vector<std::uint32_t> *customBondInvariants = nullptr;
+  int confId = -1;
+  AdditionalOutput *additionalOutput = nullptr;
+  FingerprintFuncArguments args(fromAtoms, ignoreAtoms, confId,
+                                additionalOutput, customAtomInvariants,
+                                customBondInvariants);
+
+  numThreads = getNumThreadsToUse(numThreads);
+  unsigned int nmols = python::extract<unsigned int>(mols.attr("__len__")());
+  python::list result;
+  if (numThreads == 1) {
+    for (auto i = 0u; i < nmols; ++i) {
+      const ROMol *mol = python::extract<ROMol *>(mols[i])();
+      result.append(boost::shared_ptr<ExplicitBitVect>(
+          fpGen->getFingerprint(*mol, args).release()));
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  else {
+    std::vector<const ROMol *> tmols;
+    for (auto i = 0u; i < nmols; ++i) {
+      tmols.push_back(python::extract<ROMol *>(mols[i])());
+    }
+    std::vector<std::vector<boost::shared_ptr<ExplicitBitVect>>> accum(
+        numThreads);
+    {
+      NOGIL gil;
+      std::vector<std::thread> tg;
+      for (auto ti = 0; ti < numThreads; ++ti) {
+        auto func = [&](unsigned int tidx) {
+          for (auto midx = tidx; midx < tmols.size(); midx += numThreads) {
+            accum[tidx].push_back(boost::shared_ptr<ExplicitBitVect>(
+                fpGen->getFingerprint(*tmols[midx], args).release()));
+          }
+        };
+        tg.emplace_back(std::thread(func, ti));
+      }
+      for (auto &thread : tg) {
+        if (thread.joinable()) {
+          thread.join();
+        }
+      }
+    }
+    for (auto midx = 0u; midx < tmols.size(); midx += numThreads) {
+      result.append(accum[midx % numThreads][midx / numThreads]);
+    }
+  }
+#endif
+
+  return python::tuple(result);
 }
 
 template <typename OutputType>
@@ -543,6 +607,13 @@ void wrapGenerator(const std::string &nm) {
            "    - additionalOutput: AdditionalOutput instance used to return "
            "extra information about the bits\n\n"
            "  RETURNS: a numpy array containing the fingerprint\n\n")
+      .def("GetFingerprints", getFingerprints<T>,
+           (python::arg("mol"), python::arg("numThreads") = 1),
+           "Generates a fingerprint\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - numThreads: number of threads to use\n\n"
+           "  RETURNS: a tuple of ExplicitBitVects\n\n")
       .def("GetInfoString", getInfoString<T>,
            "Returns a string containing information about the fingerprint "
            "generator\n\n"
