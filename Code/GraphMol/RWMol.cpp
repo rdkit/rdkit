@@ -468,6 +468,12 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
     }
     if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
                   aid2) != obnd->getStereoAtoms().end()) {
+        // github #6900 if we remove stereo atoms we need to remove
+        //  the CIS and or TRANS since this requires stereo atoms
+        if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
+            obnd->getStereo() == Bond::BondStereo::STEREOTRANS ) {
+          obnd->setStereo(Bond::BondStereo::STEREONONE);
+      }
       obnd->getStereoAtoms().clear();
     }
   }
