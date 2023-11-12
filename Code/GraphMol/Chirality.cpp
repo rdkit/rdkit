@@ -153,46 +153,6 @@ void controllingBondFromAtom(const ROMol &mol,
   }
 }
 
-namespace {
-void set_stereoany_from_squigglebond(ROMol &mol, Bond *bond) {
-    
-    // NOTE:  copied from parse_doublebond_stereo CXSmilesOps
-    //  we might want to consolidate this code into a
-    //   set_stereoany_from_wavybond
-    // the cis/trans/unknown marker is relative to the lowest numbered atom
-    // connected to the lowest numbered double bond atom and the
-    // highest-numbered atom connected to the highest-numbered double bond
-    // atom find those
-    auto begAtom = bond->getBeginAtom();
-    auto endAtom = bond->getEndAtom();
-    if (begAtom->getIdx() > endAtom->getIdx()) {
-        std::swap(begAtom, endAtom);
-    }
-    if (begAtom->getDegree() > 1 && endAtom->getDegree() > 1) {
-        unsigned int begControl = mol.getNumAtoms();
-        for (auto nbr : mol.atomNeighbors(begAtom)) {
-            if (nbr == endAtom) {
-                continue;
-            }
-            begControl = std::min(nbr->getIdx(), begControl);
-        }
-        unsigned int endControl = 0;
-        for (auto nbr : mol.atomNeighbors(endAtom)) {
-            if (nbr == begAtom) {
-                continue;
-            }
-            endControl = std::max(nbr->getIdx(), endControl);
-        }
-        if (begAtom != bond->getBeginAtom()) {
-            std::swap(begControl, endControl);
-        }
-        bond->setStereoAtoms(begControl, endControl);
-        bond->setStereo(Bond::STEREOANY);//stereo); //STEREOANY
-        mol.setProp("_needsDetectBondStereo", 1);
-    }
-}
-}
-
 void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
                                boost::dynamic_bitset<> &needsDir,
                                std::vector<unsigned int> &singleBondCounts,
@@ -225,7 +185,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
   if (squiggleBondSeen) {
-    set_stereoany_from_squigglebond(mol, dblBond);
+    Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond);
     return;
   }
   if (!bond1) {
@@ -240,7 +200,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
   if (squiggleBondSeen) {
-    set_stereoany_from_squigglebond(mol, dblBond);
+      Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond);
     return;
   }
   if (!bond2) {
@@ -299,7 +259,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
       }
     }
     if (linear) {
-      set_stereoany_from_squigglebond(mol, dblBond);
+        Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond);
       return;
     }
 
@@ -959,6 +919,40 @@ bool has_protium_neighbor(const ROMol &mol, const Atom *atom) {
   return false;
 }
 
+void setStereoanyFromSquiggleBond(ROMol &mol, Bond *bond) {
+    // NOTE:  moved from parse_doublebond_stereo CXSmilesOps
+    // the cis/trans/unknown marker is relative to the lowest numbered atom
+    // connected to the lowest numbered double bond atom and the
+    // highest-numbered atom connected to the highest-numbered double bond
+    // atom find those
+    auto begAtom = bond->getBeginAtom();
+    auto endAtom = bond->getEndAtom();
+    if (begAtom->getIdx() > endAtom->getIdx()) {
+        std::swap(begAtom, endAtom);
+    }
+    if (begAtom->getDegree() > 1 && endAtom->getDegree() > 1) {
+        unsigned int begControl = mol.getNumAtoms();
+        for (auto nbr : mol.atomNeighbors(begAtom)) {
+            if (nbr == endAtom) {
+                continue;
+            }
+            begControl = std::min(nbr->getIdx(), begControl);
+        }
+        unsigned int endControl = 0;
+        for (auto nbr : mol.atomNeighbors(endAtom)) {
+            if (nbr == begAtom) {
+                continue;
+            }
+            endControl = std::max(nbr->getIdx(), endControl);
+        }
+        if (begAtom != bond->getBeginAtom()) {
+            std::swap(begControl, endControl);
+        }
+        bond->setStereoAtoms(begControl, endControl);
+        bond->setStereo(Bond::STEREOANY);//stereo); //STEREOANY
+        mol.setProp("_needsDetectBondStereo", 1);
+    }
+}
 }  // namespace detail
 
 typedef std::pair<int, int> INT_PAIR;
