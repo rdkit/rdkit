@@ -919,7 +919,8 @@ bool has_protium_neighbor(const ROMol &mol, const Atom *atom) {
   return false;
 }
 
-void setStereoanyFromSquiggleBond(ROMol &mol, Bond *bond) {
+void setStereoanyFromSquiggleBond(ROMol &mol, Bond *bond,
+				  Bond::BondStereo stereo) {
     // NOTE:  moved from parse_doublebond_stereo CXSmilesOps
     // the cis/trans/unknown marker is relative to the lowest numbered atom
     // connected to the lowest numbered double bond atom and the
@@ -949,7 +950,7 @@ void setStereoanyFromSquiggleBond(ROMol &mol, Bond *bond) {
             std::swap(begControl, endControl);
         }
         bond->setStereoAtoms(begControl, endControl);
-        bond->setStereo(Bond::STEREOANY);//stereo); //STEREOANY
+        bond->setStereo(stereo);
         mol.setProp("_needsDetectBondStereo", 1);
     }
 }
