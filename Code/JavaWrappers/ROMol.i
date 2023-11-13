@@ -66,6 +66,7 @@
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/Chirality.h>
 #include <sstream>
+#include <unique_ptr>
 %}
 
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
@@ -121,6 +122,10 @@
  */
 %ignore addConformer(Conformer * conf, bool assignId=false);
 %rename(addConformer) RDKit::ROMol::addConf;
+
+%ignore setRingInfo();
+%rename(setRingInfo) RDKit::ROMol::setRingInformation;
+
 %typemap(javain) RDKit::Conformer * ownedConf "getCPtrAndReleaseControl($javainput)"
 %typemap(javacode) RDKit::ROMol %{
   // Ensure that the GC doesn't collect this item,
@@ -255,6 +260,11 @@ void setAllowNontetrahedralChirality(bool);
     return self->addConformer(ownedConf, assignId);
   }
 
+  void RDKit::ROMol::setRingInformation(RingInfo *ring) {
+    std::unique_ptr<RingInfo> ri(ring);
+    self->setRingInfo(ri);
+  }
+  
   std::string MolToSmiles(bool doIsomericSmiles=true, bool doKekule=false, int rootedAtAtom=-1, bool canonical=true,
                           bool allBondsExplicit=false, bool allHsExplicit=false, bool doRandom=false) {
     return RDKit::MolToSmiles(*($self), doIsomericSmiles, doKekule, rootedAtAtom, canonical, allBondsExplicit, allHsExplicit, doRandom);
