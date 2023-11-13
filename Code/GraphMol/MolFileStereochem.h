@@ -93,9 +93,9 @@ RDKIT_GRAPHMOL_EXPORT void markUnspecifiedStereoAsUnknown(ROMol &mol,
  only returned if it was exlicility set witha wiggle bond
  */
 
-void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
-                              const Conformer *conf, int &dirCode,
-                              bool &reverse);
+RDKIT_GRAPHMOL_EXPORT void GetMolFileBondStereoInfo(
+    const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf,
+    int &dirCode, bool &reverse);
 
 //! Forces use of atom wedging from MolBlock if present.
 /*

@@ -13,7 +13,9 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolFileStereochem.h>
 #include <Geometry/point.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <algorithm>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/FileParseException.h>

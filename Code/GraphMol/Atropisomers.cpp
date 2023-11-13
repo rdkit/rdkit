@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/FileParseException.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
