@@ -21,6 +21,7 @@
 #include "MolPickler.h"
 #include "Conformer.h"
 #include "SubstanceGroup.h"
+#include "MolOps.h"
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <RDGeneral/BoostStartInclude.h>
@@ -696,6 +697,18 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   return conf->getId();
 }
 
+RingInfo *ROMol::getRingInfo() const {
+    if (!dp_ringInfo) {
+        // To be threadsafe there should be a lock here...
+        RingInfo *ri = new RingInfo();
+        // IF DEFAULT==findSSSR MolOps::findSSSR(*this, ri);
+        // IF DEFAULT==symm
+        MolOps::symmetrizeSSSR(*this, *ri);
+        dp_ringInfo = ri;
+    }
+    return dp_ringInfo;
+}
+  
 #ifdef RDK_USE_BOOST_SERIALIZATION
 template <class Archive>
 void ROMol::save(Archive &ar, const unsigned int) const {

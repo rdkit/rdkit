@@ -574,7 +574,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   //! returns a pointer to our RingInfo structure
   //! <b>Note:</b> the client should not delete this.
-  RingInfo *getRingInfo() const { return dp_ringInfo; }
+  RingInfo *getRingInfo() const;// { return dp_ringInfo; }
 
   //! provides access to all neighbors around an Atom
   /*!
@@ -815,7 +815,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   MolGraph d_graph;
   ATOM_BOOKMARK_MAP d_atomBookmarks;
   BOND_BOOKMARK_MAP d_bondBookmarks;
-  RingInfo *dp_ringInfo = nullptr;
+  mutable RingInfo *dp_ringInfo = nullptr;
   CONF_SPTR_LIST d_confs;
   std::vector<SubstanceGroup> d_sgroups;
   std::vector<StereoGroup> d_stereo_groups;

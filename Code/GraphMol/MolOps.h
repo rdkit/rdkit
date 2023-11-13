@@ -747,6 +747,14 @@ RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
                                    std::vector<std::vector<int>> *res = nullptr,
                                    bool includeDativeBonds = false);
 
+RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol, RingInfo &ri,
+                                   std::vector<std::vector<int>> &res,
+                                   bool includeDativeBonds = false);
+//! \overload
+RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol, RingInfo &ri,
+                                   std::vector<std::vector<int>> *res = nullptr,
+                                   bool includeDativeBonds = false);
+  
 //! use a DFS algorithm to identify ring bonds and atoms in a molecule
 /*!
   \b NOTE: though the RingInfo structure is populated by this function,
@@ -755,6 +763,7 @@ RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
   return values >0
 */
 RDKIT_GRAPHMOL_EXPORT void fastFindRings(const ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void fastFindRings(const ROMol &mol, RingInfo &ri);  
 
 RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
 
@@ -790,6 +799,14 @@ RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
 //! \overload
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
                                          bool includeDativeBonds = false);
+
+RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(const ROMol &mol, RingInfo &ri,
+                                         std::vector<std::vector<int>> &res,
+                                         bool includeDativeBonds = false);
+//! \overload
+RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(const ROMol &mol, RingInfo &ri,
+                                         bool includeDativeBonds = false);
+  
 
 //! @}
 

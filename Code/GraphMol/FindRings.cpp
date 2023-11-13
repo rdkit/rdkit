@@ -94,16 +94,25 @@ class BFSWorkspace {
 
 void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
                INT_VECT &atomDegrees, boost::dynamic_bitset<> &activeBonds);
-void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
+
+void storeRingInfo(const ROMol &mol, RingInfo &ri, const INT_VECT &ring) {
   INT_VECT bondIndices;
   RingUtils::convertToBonds(ring, bondIndices, mol);
-  mol.getRingInfo()->addRing(ring, bondIndices);
+  ri.addRing(ring, bondIndices);
+}
+  
+void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
+  storeRingInfo(mol, *mol.getRingInfo(), ring);
+}
+
+void storeRingsInfo(const ROMol &mol, RingInfo &ri, const VECT_INT_VECT &rings) {
+  for (const auto &ring : rings) {
+    storeRingInfo(mol, ri, ring);
+  }
 }
 
 void storeRingsInfo(const ROMol &mol, const VECT_INT_VECT &rings) {
-  for (const auto &ring : rings) {
-    storeRingInfo(mol, ring);
-  }
+  storeRingsInfo(mol, *mol.getRingInfo(), rings);
 }
 
 void markUselessD2s(unsigned int root, const ROMol &tMol,
@@ -856,21 +865,29 @@ bool findRingConnectingAtoms(const ROMol &tMol, const Bond *bond,
 
 namespace RDKit {
 namespace MolOps {
+int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
+  return findSSSR(mol, *mol.getRingInfo(), &res, includeDativeBonds);
+}
+
 int findSSSR(const ROMol &mol, VECT_INT_VECT *res, bool includeDativeBonds) {
+  return findSSSR(mol, *mol.getRingInfo(), res, includeDativeBonds);
+}
+  
+int findSSSR(const ROMol &mol, RingInfo &ri, VECT_INT_VECT *res, bool includeDativeBonds) {
   if (!res) {
     VECT_INT_VECT rings;
-    return findSSSR(mol, rings, includeDativeBonds);
+    return findSSSR(mol, ri, rings, includeDativeBonds);
   } else {
-    return findSSSR(mol, (*res), includeDativeBonds);
+    return findSSSR(mol, ri, (*res), includeDativeBonds);
   }
 }
 
-int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
+int findSSSR(const ROMol &mol, RingInfo &ri, VECT_INT_VECT &res, bool includeDativeBonds) {
   res.resize(0);
-  if (mol.getRingInfo()->isInitialized()) {
-    mol.getRingInfo()->reset();
+  if (ri.isInitialized()) {
+    ri.reset();
   }
-  mol.getRingInfo()->initialize();
+  ri.initialize();
   RINGINVAR_SET invars;
 
   unsigned int nats = mol.getNumAtoms();
@@ -1087,10 +1104,10 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
             << "WARNING: could not find number of expected rings. Switching to "
                "an approximate ring finding algorithm."
             << std::endl;
-        mol.getRingInfo()->reset();
-        fastFindRings(mol);
+        ri.reset();
+        fastFindRings(mol, ri);
         res.clear();
-        res = mol.getRingInfo()->atomRings();
+        res = ri.atomRings();
         return rdcast<int>(res.size());
       }
     }
@@ -1117,7 +1134,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
     }
   }  // done with all fragments
 
-  FindRings::storeRingsInfo(mol, res);
+  FindRings::storeRingsInfo(mol, ri, res);
 
   // update the ring memberships of atoms and bonds in the molecule:
   // store the SSSR rings on the molecule as a property
@@ -1125,12 +1142,23 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
   return rdcast<int>(res.size());
 }
 
+int symmetrizeSSSR(ROMol &mol, std::vector<std::vector<int>> &res,
+                   bool includeDativeBonds) {
+    return symmetrizeSSSR(mol, *mol.getRingInfo(), res, includeDativeBonds);
+}
+
 int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds) {
   VECT_INT_VECT tmp;
   return symmetrizeSSSR(mol, tmp, includeDativeBonds);
 };
 
-int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
+int symmetrizeSSSR(const ROMol &mol, RingInfo &ri, bool includeDativeBonds) {
+  VECT_INT_VECT tmp;
+  return symmetrizeSSSR(mol, ri, tmp, includeDativeBonds);
+};
+  
+
+int symmetrizeSSSR(const ROMol &mol, RingInfo &ri, VECT_INT_VECT &res, bool includeDativeBonds) {
   res.clear();
   VECT_INT_VECT sssrs;
 
@@ -1207,7 +1235,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
 
       if (shareBond && replacesAllUniqueBonds) {
         res.push_back(extraAtomRing);
-        FindRings::storeRingInfo(mol, extraAtomRing);
+        FindRings::storeRingInfo(mol, ri, extraAtomRing);
         break;
       }
     }
@@ -1217,6 +1245,10 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
     mol.clearProp(common_properties::extraRings);
   }
   return rdcast<int>(res.size());
+}
+
+int symmetrizeSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
+  return symmetrizeSSSR(mol, *mol.getRingInfo(), res, includeDativeBonds);
 }
 
 namespace {
@@ -1265,11 +1297,15 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
 }
 }  // end of anonymous namespace
 void fastFindRings(const ROMol &mol) {
-  if (mol.getRingInfo()->isInitialized()) {
-    mol.getRingInfo()->reset();
+  fastFindRings(mol, *mol.getRingInfo());
+}
+  
+void fastFindRings(const ROMol &mol, RingInfo &ri) {
+  if (ri.isInitialized()) {
+    ri.reset();
   }
 
-  mol.getRingInfo()->initialize();
+  ri.initialize();
 
   VECT_INT_VECT res;
   res.resize(0);
@@ -1290,7 +1326,7 @@ void fastFindRings(const ROMol &mol) {
     _DFS(mol, mol.getAtomWithIdx(i), atomColors, traversalOrder, res);
   }
 
-  FindRings::storeRingsInfo(mol, res);
+  FindRings::storeRingsInfo(mol, ri, res);
 }
 
 #ifdef RDK_USE_URF
