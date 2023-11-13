@@ -30,6 +30,7 @@ std::string stereoGroupClassDoc =
 StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
                                python::object atomIds, unsigned readId) {
   std::vector<Atom *> cppAtoms;
+  std::vector<Bond *> cppBonds;
   python::stl_input_iterator<unsigned int> beg(atomIds), end;
   while (beg != end) {
     unsigned int v = *beg;
@@ -39,7 +40,7 @@ StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
     cppAtoms.push_back(mol.getAtomWithIdx(v));
     ++beg;
   }
-  auto *sg = new StereoGroup(typ, cppAtoms, readId);
+  auto *sg = new StereoGroup(typ, cppAtoms, cppBonds, readId);
   return sg;
 }
 

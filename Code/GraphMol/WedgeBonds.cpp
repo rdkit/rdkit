@@ -53,7 +53,7 @@ namespace detail {
 std::pair<bool, INT_VECT> countChiralNbrs(const ROMol &mol, int noNbrs) {
   // we need ring information; make sure findSSSR has been called before
   // if not call now
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(mol);
   }
 
@@ -440,7 +440,7 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
     params = &defaultWedgingParams;
   }
   // we need ring info
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(mol);
   }
 
@@ -506,7 +506,7 @@ void wedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
 }
 
 void reapplyMolBlockWedging(ROMol &mol) {
-  MolOps::clearSingleBondDirFlags(mol, true);
+  MolOps::clearDirFlags(mol, true);
   for (auto b : mol.bonds()) {
     int explicit_unknown_stereo = -1;
     if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
@@ -517,10 +517,12 @@ void reapplyMolBlockWedging(ROMol &mol) {
     int bond_dir = -1;
     if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
                                  bond_dir)) {
-      if (bond_dir == 1) {
-        b->setBondDir(Bond::BEGINWEDGE);
-      } else if (bond_dir == 6) {
-        b->setBondDir(Bond::BEGINDASH);
+      if (b->canHaveDirection()) {
+        if (bond_dir == 1) {
+          b->setBondDir(Bond::BEGINWEDGE);
+        } else if (bond_dir == 6) {
+          b->setBondDir(Bond::BEGINDASH);
+        }
       }
       if (b->getBondType() == Bond::DOUBLE) {
         if (bond_dir == 0 && b->getStereo() == Bond::STEREOANY) {
@@ -536,10 +538,12 @@ void reapplyMolBlockWedging(ROMol &mol) {
     b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg);
     switch (cfg) {
       case 1:
-        b->setBondDir(Bond::BEGINWEDGE);
+        if (b->canHaveDirection()) {
+          b->setBondDir(Bond::BEGINWEDGE);
+        }
         break;
       case 2:
-        if (b->getBondType() == Bond::SINGLE) {
+        if (b->canHaveDirection()) {
           b->setBondDir(Bond::UNKNOWN);
         } else if (b->getBondType() == Bond::DOUBLE) {
           b->setBondDir(Bond::EITHERDOUBLE);
@@ -547,7 +551,9 @@ void reapplyMolBlockWedging(ROMol &mol) {
         }
         break;
       case 3:
-        b->setBondDir(Bond::BEGINDASH);
+        if (b->canHaveDirection()) {
+          b->setBondDir(Bond::BEGINDASH);
+        }
         break;
       case 0:
       case -1:

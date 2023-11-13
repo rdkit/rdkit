@@ -31,17 +31,26 @@ constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
 
 constexpr auto nonTetrahedralStereoEnvVar = "RDK_ENABLE_NONTETRAHEDRAL_STEREO";
 constexpr auto useLegacyStereoEnvVar = "RDK_USE_LEGACY_STEREO_PERCEPTION";
+constexpr auto perceive3DChiralExplicitOnlyEnvVar =
+    "PERCIEVE_3D_CHIRALITY_EXPLICIT_ONLY";
 constexpr bool nonTetrahedralStereoDefaultVal =
     true;  //!< whether or not nontetrahedral stereo is perceived by default
 constexpr bool useLegacyStereoDefaultVal =
     true;  //!< whether or not the legacy stereo perception code is used by
            //!< default
+constexpr bool perceive3DChiralExplicitOnlyDefaultVal =
+    false;  //!< whether or not chirality is perceived from a 3D structure only
+            //!< if it is explicitly specified by having a wedge bond
+            // the value of the wedge bond is ignored
 
 RDKIT_GRAPHMOL_EXPORT extern void setAllowNontetrahedralChirality(bool val);
 RDKIT_GRAPHMOL_EXPORT extern bool getAllowNontetrahedralChirality();
 
 RDKIT_GRAPHMOL_EXPORT extern void setUseLegacyStereoPerception(bool val);
 RDKIT_GRAPHMOL_EXPORT extern bool getUseLegacyStereoPerception();
+
+RDKIT_GRAPHMOL_EXPORT extern void setPerceive3DChiralExplicitOnly(bool val);
+RDKIT_GRAPHMOL_EXPORT extern bool getPerceive3DChiralExplicitOnly();
 
 RDKIT_GRAPHMOL_EXPORT extern bool
     useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
@@ -66,12 +75,6 @@ RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol,
                                               UINT_VECT &ranks);
 
 RDKIT_GRAPHMOL_EXPORT bool hasStereoBondDir(const Bond *bond);
-
-// this routine removes chiral markers and stereo indications that should not be
-// present this is only called when the molecule has not been sanitized and when
-// the new stereo (not legacy) is in use
-
-RDKIT_GRAPHMOL_EXPORT void removeBadStereo(ROMol &mol);
 
 /**
  *  Returns the first neighboring bond that can be found which has a stereo
@@ -101,7 +104,15 @@ enum class StereoType {
   Bond_Atropisomer
 };
 
-enum class StereoDescriptor { None, Tet_CW, Tet_CCW, Bond_Cis, Bond_Trans };
+enum class StereoDescriptor {
+  None,
+  Tet_CW,
+  Tet_CCW,
+  Bond_Cis,
+  Bond_Trans,
+  Bond_AtropCW,
+  Bond_AtropCCW
+};
 
 enum class StereoSpecified {
   Unspecified,  // no information provided
@@ -246,9 +257,6 @@ RDKIT_GRAPHMOL_EXPORT void wedgeMolBonds(
     const BondWedgingParameters *params = nullptr);
 RDKIT_GRAPHMOL_EXPORT void wedgeBond(Bond *bond, unsigned int fromAtomIdx,
                                      const Conformer *conf);
-
-//! Returns whether or not a bond is a candidate for bond stereo
-RDKIT_GRAPHMOL_EXPORT bool canBeStereoBond(const Bond *bond);
 
 //! Returns true for double bonds which should be shown as a crossed bonds.
 // It always returns false if any adjacent bond is a squiggle bond.

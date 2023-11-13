@@ -19,21 +19,16 @@
 #include <iomanip>
 #include <cstdio>
 
-#include <GraphMol/SubstanceGroup.h>
-#include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
-#include <RDGeneral/Invariant.h>
-
-#include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/GenericGroups/GenericGroups.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Atropisomers.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSGroupWriting.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolFileStereochem.h>
 #include "MarvinParser.h"
 #include "MarvinDefs.h"
 
@@ -521,6 +516,12 @@ class MarvinCMLWriter {
 
       INT_MAP_INT wedgeBonds = pickBondsToWedge(*mol);
 
+      if (conf) {
+        WedgeBondsFromAtropisomers(*mol, conf, wedgeBonds);
+      } else if (conf3d) {
+        WedgeBondsFromAtropisomers(*mol, conf3d, wedgeBonds);
+      }
+
       for (auto bond : mol->bonds()) {
         auto marvinBond = new MarvinBond();
         marvinMol->pushOwnedBond(marvinBond);
@@ -601,8 +602,12 @@ class MarvinCMLWriter {
           default:
             throw MarvinWriterException("Unrecognized stereo group type");
         }
-        for (auto &&atom : group.getAtoms()) {
-          marvinMol->atoms[atom->getIdx()]->mrvStereoGroup = stereoGroupType;
+
+        std::vector<unsigned int> atomIds;
+        getAllAtomIdsForStereoGroup(*mol, group, atomIds);
+
+        for (auto atomId : atomIds) {
+          marvinMol->atoms[atomId]->mrvStereoGroup = stereoGroupType;
         }
       }
 
@@ -1176,7 +1181,8 @@ class MarvinCMLWriter {
 
 std::string MolToMrvBlock(const ROMol &mol, bool includeStereo, int confId,
                           bool kekulize, bool prettyPrint) {
-  RDKit::Utils::LocaleSwitcher switcher;
+  Utils::LocaleSwitcher ls;
+
   RWMol trwmol(mol);
   // NOTE: kekulize the molecule before writing it out
   // because of the way mol files handle aromaticity
@@ -1234,6 +1240,8 @@ void MolToMrvFile(const ROMol &mol, const std::string &fName,
 
 std::string ChemicalReactionToMrvBlock(const ChemicalReaction &rxn,
                                        bool prettyPrint) {
+  Utils::LocaleSwitcher ls;
+
   MarvinCMLWriter marvinCMLWriter;
 
   auto marvinRxn = marvinCMLWriter.ChemicalReactionToMarvinRxn(&rxn);

@@ -49,11 +49,15 @@ void Sp2Bond::setPrimaryLabel(Descriptor desc) {
     case Descriptor::S:
     case Descriptor::r:
     case Descriptor::s:
+    case Descriptor::M:
+    case Descriptor::P:
+    case Descriptor::m:
+    case Descriptor::p:
     case Descriptor::SP_4:
     case Descriptor::TBPY_5:
     case Descriptor::OC_6:
       throw std::runtime_error(
-          "Received a Descriptor that is not supported for bonds");
+          "Received a Descriptor that is not supported for double bonds");
     default:
       throw std::runtime_error("Received an invalid Bond Descriptor");
   }

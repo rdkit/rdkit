@@ -7,9 +7,10 @@ rdkit_library(GraphMol
         Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
         Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
         new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
-        NontetrahedralStereo.cpp WedgeBonds.cpp
+              NontetrahedralStereo.cpp Atropisomers.cpp MolFileStereochem.cpp
+              WedgeBonds.cpp
         SHARED
-        LINK_LIBRARIES RDGeometryLib RDGeneral)
+              LINK_LIBRARIES RDGeometryLib RDGeneral ${RDKit_SERIALIZATION_LIBS} )
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 if (RDK_USE_URF)
     target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
@@ -26,6 +27,7 @@ rdkit_headers(Atom.h
         Canon.h
         Chirality.h
         Conformer.h
+        MolFileStereochem.h  
         details.h
         GraphMol.h
         MolOps.h

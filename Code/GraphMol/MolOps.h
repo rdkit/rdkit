@@ -455,6 +455,7 @@ typedef enum {
   SANITIZE_CLEANUPCHIRALITY = 0x100,
   SANITIZE_ADJUSTHS = 0x200,
   SANITIZE_CLEANUP_ORGANOMETALLICS = 0x400,
+  SANITIZE_CLEANUPATROPISOMERS = 0x800,
   SANITIZE_ALL = 0xFFFFFFF
 } SanitizeFlags;
 
@@ -923,6 +924,12 @@ RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1,
 //! removes bogus chirality markers (those on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &mol);
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(
+    RWMol &mol, std::vector<Atom::HybridizationType> &hybridizations);
+
+RDKIT_GRAPHMOL_EXPORT std::vector<Atom::HybridizationType> getHybridizations(
+    const RWMol &mol);
 //! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms
 /*!
   \param mol                  the molecule of interest
@@ -975,10 +982,15 @@ RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
 //! removes directions from single bonds. Wiggly bonds will have the property
-//! _UnknownStereo set on them. If retainCisTransInfo is true,
-//! ENDUPRIGHT and ENDDOWNRIGHT bond directions will not be cleared
-RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(
-    ROMol &mol, bool retainCisTransInfo = false);
+//! _UnknownStereo set on them
+RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol,
+                                                   bool onlyWedgeFlags = false);
+
+//! removes directions from all bonds. Wiggly bonds and cross bonds will have
+//! the property _UnknownStereo set on them
+RDKIT_GRAPHMOL_EXPORT void clearAllBondDirFlags(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void clearDirFlags(ROMol &mol,
+                                         bool onlyWedgeFlags = false);
 
 //! Assign CIS/TRANS bond stereochemistry tags based on neighboring
 //! directions

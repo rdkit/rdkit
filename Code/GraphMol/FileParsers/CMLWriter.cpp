@@ -14,7 +14,7 @@
 //
 
 #include "FileParsers.h"
-#include "MolFileStereochem.h"
+#include <GraphMol/MolFileStereochem.h>
 #include <fstream>
 #include <sstream>
 #include <boost/format.hpp>

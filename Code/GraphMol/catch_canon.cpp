@@ -18,7 +18,7 @@
 #include <GraphMol/Canon.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>

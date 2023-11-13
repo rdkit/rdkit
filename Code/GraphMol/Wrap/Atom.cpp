@@ -77,13 +77,13 @@ python::tuple AtomGetBonds(Atom *atom) {
 }
 
 bool AtomIsInRing(const Atom *atom) {
-  if (!atom->getOwningMol().getRingInfo()->isInitialized()) {
+  if (!atom->getOwningMol().getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(atom->getOwningMol());
   }
   return atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx()) != 0;
 }
 bool AtomIsInRingSize(const Atom *atom, int size) {
-  if (!atom->getOwningMol().getRingInfo()->isInitialized()) {
+  if (!atom->getOwningMol().getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(atom->getOwningMol());
   }
   return atom->getOwningMol().getRingInfo()->isAtomInRingOfSize(atom->getIdx(),
@@ -276,8 +276,10 @@ struct atom_wrapper {
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (a string).\n\n")
 
-        .def("GetProp", GetPyProp<Atom>,
-	     (python::arg("self"), python::arg("key"), python::arg("autoConvert")=false),
+        .def(
+            "GetProp", GetPyProp<Atom>,
+            (python::arg("self"), python::arg("key"),
+             python::arg("autoConvert") = false),
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"

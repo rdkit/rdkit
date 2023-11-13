@@ -18,7 +18,7 @@
 #include <RDGeneral/BadFileException.h>
 #include <fstream>
 #include <sstream>
-#include "MolFileStereochem.h"
+#include <GraphMol/MolFileStereochem.h>
 #include <RDGeneral/FileParseException.h>
 
 using boost::property_tree::ptree;
@@ -483,8 +483,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           sgroup.second.sgroup > 0) {
         gId = sgroup.second.sgroup;
       }
+      std::vector<Bond *> newBonds;
       stereo_groups.emplace_back(sgroup.second.grouptype, sgroup.second.atoms,
-                                 gId);
+                                 newBonds, gId);
     }
     mol.setStereoGroups(std::move(stereo_groups));
   }

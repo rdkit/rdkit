@@ -13,7 +13,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParsers.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolFileStereochem.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>

@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolFileStereochem.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Chirality.h>
@@ -21,7 +21,6 @@
 #include <GraphMol/RWMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Depictor/RDDepictor.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
@@ -502,7 +501,8 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
   if (meanBondLen <= 0.0) {
-    throw ValueErrorException("ACS1996Options requires mean bond length > 0.0.");
+    throw ValueErrorException(
+        "ACS1996Options requires mean bond length > 0.0.");
   }
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;

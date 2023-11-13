@@ -13,6 +13,7 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 #include <GraphMol/PeriodicTable.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/RDKitQueries.h>
 
 #include <vector>
@@ -451,6 +452,64 @@ void assignRadicals(RWMol &mol) {
   }
 }
 
+std::vector<Atom::HybridizationType> getHybridizations(const RWMol &mol) {
+  std::vector<Atom::HybridizationType> hydridizationValues;
+  // see if the mol already has computed hybridizations:
+
+  if (mol.getNumAtoms() == 0) {
+    return hydridizationValues;
+  }
+
+  if ((*mol.atoms().begin())->getHybridization() !=
+      Atom::HybridizationType::UNSPECIFIED) {
+    for (auto atom : mol.atoms()) {
+      hydridizationValues.push_back(atom->getHybridization());
+    }
+    return hydridizationValues;
+  }
+
+  // compute them in a copy of the mol, so as not to change the mol passed in
+
+  RWMol molCopy(mol);
+  unsigned int operationThatFailed;
+  unsigned int santitizeOps =
+      MolOps::SANITIZE_SETCONJUGATION | MolOps::SANITIZE_SETHYBRIDIZATION;
+  MolOps::sanitizeMol(molCopy, operationThatFailed, santitizeOps);
+  for (auto atom : molCopy.atoms()) {
+    // determine hybridization and remove chiral atoms that are not sp3
+    hydridizationValues.push_back(atom->getHybridization());
+  }
+  return hydridizationValues;
+}
+
+void cleanupAtropisomers(RWMol &mol) {
+  std::vector<Atom::HybridizationType> hybs =
+      RDKit::MolOps::getHybridizations(mol);
+
+  MolOps::cleanupAtropisomers(mol, hybs);
+}
+
+void cleanupAtropisomers(RWMol &mol,
+                         std::vector<Atom::HybridizationType> &hybs) {
+  const RingInfo *ri = mol.getRingInfo();
+  for (auto bond : mol.bonds()) {
+    switch (bond->getStereo()) {
+      case Bond::BondStereo::STEREOATROPCW:
+      case Bond::BondStereo::STEREOATROPCCW:
+        if (ri->numBondRings(bond->getIdx()) > 0 ||
+            hybs[bond->getBeginAtom()->getIdx()] != Atom::SP2 ||
+            hybs[bond->getEndAtom()->getIdx()] != Atom::SP2) {
+          bond->setStereo(Bond::BondStereo::STEREONONE);
+        }
+
+        break;
+
+      default:
+        break;
+    }
+  }
+}
+
 void sanitizeMol(RWMol &mol) {
   unsigned int failedOp = 0;
   sanitizeMol(mol, failedOp, SANITIZE_ALL);
@@ -527,6 +586,11 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   operationThatFailed = SANITIZE_CLEANUPCHIRALITY;
   if (sanitizeOps & operationThatFailed) {
     cleanupChirality(mol);
+  }
+
+  operationThatFailed = SANITIZE_CLEANUPATROPISOMERS;
+  if (sanitizeOps & operationThatFailed) {
+    cleanupAtropisomers(mol);
   }
 
   // adjust Hydrogen counts:
@@ -613,6 +677,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     }
   } else {
     std::vector<int> ids(mol.getNumAtoms(), -1);
+    std::vector<int> bondIds(mol.getNumBonds(), -1);
     boost::dynamic_bitset<> copiedAtoms(mol.getNumAtoms(), 0);
     boost::dynamic_bitset<> copiedBonds(mol.getNumBonds(), 0);
     res.reserve(nFrags);
@@ -683,7 +748,8 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
       for (int stereoAtom : stereoAtoms) {
         nBond->getStereoAtoms().push_back(ids[stereoAtom]);
       }
-      tmp->addBond(nBond, true);
+      bondIds[bond->getIdx()] =
+          tmp->addBond(nBond, true) - 1;  // addBond returns the number of bonds
     }
 
     // copy RingInfo
@@ -751,13 +817,21 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         std::vector<StereoGroup> fragsgs;
         for (auto &sg : mol.getStereoGroups()) {
           std::vector<Atom *> sgats;
+          std::vector<Bond *> sgbds;
           for (auto sga : sg.getAtoms()) {
             if ((*mapping)[sga->getIdx()] == static_cast<int>(frag)) {
               sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
             }
           }
+          for (auto sgb : sg.getBonds()) {
+            if ((*mapping)[sgb->getBeginAtom()->getIdx()] ==
+                static_cast<int>(frag)) {
+              sgbds.push_back(re->getBondWithIdx(bondIds[sgb->getIdx()]));
+            }
+          }
           if (!sgats.empty()) {
-            fragsgs.emplace_back(sg.getGroupType(), sgats, sg.getReadId());
+            fragsgs.emplace_back(sg.getGroupType(), sgats, sgbds,
+                                 sg.getReadId());
           }
         }
         if (!fragsgs.empty()) {

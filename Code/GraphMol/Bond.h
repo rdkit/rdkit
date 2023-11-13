@@ -100,7 +100,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     STEREOZ,     // Z double bond
     STEREOE,     // E double bond
     STEREOCIS,   // cis double bond
-    STEREOTRANS  // trans double bond
+    STEREOTRANS,     // trans double bond
+    STEREOATROPCW,   //  atropisomer clockwise rotation
+    STEREOATROPCCW,  //  atropisomer counter clockwise rotation
   } BondStereo;
 
   Bond();
@@ -190,6 +192,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   //! sets our owning molecule
   void setOwningMol(ROMol &other) { setOwningMol(&other); }
 
+  // inverts the chirality of an atropisomer
+  bool invertChirality();
+
   //! returns our index within the ROMol
   /*!
     <b>Notes:</b>
@@ -218,6 +223,13 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
       - this makes no sense if we do not have an owning molecule
   */
   unsigned int getEndAtomIdx() const { return d_endAtomIdx; }
+
+  std::vector<Atom *> getAtoms() const {
+    std::vector<Atom *> res;
+    res.push_back(getBeginAtom());
+    res.push_back(getEndAtom());
+    return res;
+  }
 
   //! given the index of one Atom, returns the index of the other
   /*!
@@ -305,6 +317,17 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   //! returns our direction
   BondDir getBondDir() const { return static_cast<BondDir>(d_dirTag); }
 
+  bool canHaveDirection() const {
+    auto bondType = getBondType();
+    return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC);
+  }
+
+  bool canSetDoubleBondStereo() const {
+    auto bondType = getBondType();
+    return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC ||
+            isDative());
+  }
+
   //! sets our stereo code
   /*!
       STEREONONE, STEREOANY, STEREOE and STEREOZ can be set without
@@ -318,7 +341,8 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
           getStereoAtoms before setting CIS/TRANS
   */
   void setStereo(BondStereo what) {
-    PRECONDITION(what <= STEREOE || getStereoAtoms().size() == 2,
+    PRECONDITION(((what != STEREOCIS && what != STEREOTRANS) ||
+                  getStereoAtoms().size() == 2),
                  "Stereo atoms should be specified before specifying CIS/TRANS "
                  "bond stereochemistry")
     d_stereo = what;
@@ -353,6 +377,12 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
       dp_stereoAtoms = new INT_VECT();
     }
     return *dp_stereoAtoms;
+  }
+
+  bool isDative() const {
+    auto bt = this->getBondType();
+    return bt == Bond::BondType::DATIVE || bt == Bond::BondType::DATIVEL ||
+           bt == Bond::BondType::DATIVER || bt == Bond::BondType::DATIVEONE;
   }
 
   //! calculates any of our lazy \c properties

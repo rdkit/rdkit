@@ -28,7 +28,7 @@
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolFileStereochem.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/GenericGroups/GenericGroups.h>
 #include <RDBoost/PySequenceHolder.h>
@@ -386,6 +386,11 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
   } else {
     oAt->expandQuery(q, Queries::COMPOSITE_AND);
   }
+}
+
+void reapplyWedging(ROMol &mol) {
+  auto &wmol = static_cast<RWMol &>(mol);
+  reapplyMolBlockWedging(wmol);
 }
 
 MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
@@ -1036,6 +1041,8 @@ struct molops_wrapper {
         .value("SANITIZE_SETCONJUGATION", MolOps::SANITIZE_SETCONJUGATION)
         .value("SANITIZE_SETHYBRIDIZATION", MolOps::SANITIZE_SETHYBRIDIZATION)
         .value("SANITIZE_CLEANUPCHIRALITY", MolOps::SANITIZE_CLEANUPCHIRALITY)
+        .value("SANITIZE_CLEANUPATROPISOMERS",
+               MolOps::SANITIZE_CLEANUPATROPISOMERS)
         .value("SANITIZE_ADJUSTHS", MolOps::SANITIZE_ADJUSTHS)
         .value("SANITIZE_CLEANUP_ORGANOMETALLICS",
                MolOps::SANITIZE_CLEANUP_ORGANOMETALLICS)
@@ -2427,8 +2434,9 @@ ARGUMENTS:\n\
             - molecule: the molecule to update\n\
         \n\
         \n";
-    python::def("ReapplyMolBlockWedging", Chirality::reapplyMolBlockWedging,
+    python::def("ReapplyMolBlockWedging", reapplyWedging, (python::arg("mol")),
                 docString.c_str());
+
     docString =
         R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";
     python::class_<StereoBondThresholds>("StereoBondThresholds",
@@ -2966,9 +2974,16 @@ A note on the flags controlling which atoms/bonds are modified:
                 "chirality from 3D structures is enabled");
     python::def("SetUseLegacyStereoPerception",
                 Chirality::setUseLegacyStereoPerception,
-                "toggles usage of the legacy stereo perception code");
+                "sets usage of the legacy stereo perception code");
     python::def("GetUseLegacyStereoPerception",
                 Chirality::getUseLegacyStereoPerception,
+                "returns whether or not the legacy stereo perception code is "
+                "being used");
+    python::def("SetPerceive3DChiralExplicitOnly",
+                Chirality::setPerceive3DChiralExplicitOnly,
+                "sets usage of the legacy stereo perception code");
+    python::def("GetPerceive3DChiralExplicitOnly",
+                Chirality::getPerceive3DChiralExplicitOnly,
                 "returns whether or not the legacy stereo perception code is "
                 "being used");
 

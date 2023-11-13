@@ -53,14 +53,14 @@ void BondClearProp(const Bond *bond, const char *key) {
 }
 
 bool BondIsInRing(const Bond *bond) {
-  if (!bond->getOwningMol().getRingInfo()->isInitialized()) {
+  if (!bond->getOwningMol().getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(bond->getOwningMol());
   }
   return bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx()) != 0;
 }
 
 bool BondIsInRingSize(const Bond *bond, int size) {
-  if (!bond->getOwningMol().getRingInfo()->isInitialized()) {
+  if (!bond->getOwningMol().getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(bond->getOwningMol());
   }
   return bond->getOwningMol().getRingInfo()->isBondInRingOfSize(bond->getIdx(),
@@ -187,8 +187,10 @@ struct bond_wrapper {
              "  ARGUMENTS:\n"
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (a string).\n\n")
-        .def("GetProp", GetPyProp<Bond>,
-	     (python::arg("self"), python::arg("key"), python::arg("autoConvert")=false),
+        .def(
+            "GetProp", GetPyProp<Bond>,
+            (python::arg("self"), python::arg("key"),
+             python::arg("autoConvert") = false),
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -325,7 +327,9 @@ struct bond_wrapper {
         .value("STEREOZ", Bond::STEREOZ)
         .value("STEREOE", Bond::STEREOE)
         .value("STEREOCIS", Bond::STEREOCIS)
-        .value("STEREOTRANS", Bond::STEREOTRANS);
+        .value("STEREOTRANS", Bond::STEREOTRANS)
+        .value("STEREOATROPCW", Bond::STEREOATROPCW)
+        .value("STEREOATROPCCW", Bond::STEREOATROPCCW);
 
     bondClassDoc =
         "The class to store QueryBonds.\n\

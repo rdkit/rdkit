@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/Ranking.h>
 #include <GraphMol/new_canon.h>
+#include <GraphMol/Atropisomers.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Ranking.h>
@@ -114,7 +115,8 @@ void controllingBondFromAtom(const ROMol &mol,
                              const boost::dynamic_bitset<> &needsDir,
                              const std::vector<unsigned int> &singleBondCounts,
                              const Bond *dblBond, const Atom *atom, Bond *&bond,
-                             Bond *&obond, bool &squiggleBondSeen) {
+                             Bond *&obond, bool &squiggleBondSeen,
+                             bool &doubleBondSeen) {
   bond = nullptr;
   obond = nullptr;
   for (const auto tBond : mol.atomBonds(atom)) {
@@ -139,6 +141,8 @@ void controllingBondFromAtom(const ROMol &mol,
         obond = bond;
         bond = tBond;
       }
+    } else if (tBond->getBondType() == Bond::DOUBLE) {
+      doubleBondSeen = true;
     }
     int explicit_unknown_stereo;
     if ((tBond->getBondType() == Bond::SINGLE ||
@@ -177,33 +181,36 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
 
   Bond *bond1 = nullptr, *obond1 = nullptr;
   bool squiggleBondSeen = false;
+  bool doubleBondSeen = false;
 
   controllingBondFromAtom(mol, needsDir, singleBondCounts, dblBond,
                           dblBond->getBeginAtom(), bond1, obond1,
-                          squiggleBondSeen);
+                          squiggleBondSeen, doubleBondSeen);
 
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
-  if (squiggleBondSeen) {
-    dblBond->setBondDir(Bond::EITHERDOUBLE);
-    return;
-  }
-  if (!bond1) {
+  if (!bond1 || squiggleBondSeen || doubleBondSeen) {
+    if (!doubleBondSeen) {
+      // FIX: This is the fix for #2649, but it will need to be modified once we
+      // decide to properly handle allenes
+      dblBond->setBondDir(Bond::EITHERDOUBLE);
+    }
     return;
   }
 
   Bond *bond2 = nullptr, *obond2 = nullptr;
   controllingBondFromAtom(mol, needsDir, singleBondCounts, dblBond,
                           dblBond->getEndAtom(), bond2, obond2,
-                          squiggleBondSeen);
+                          squiggleBondSeen, doubleBondSeen);
 
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
-  if (squiggleBondSeen) {
-    dblBond->setBondDir(Bond::EITHERDOUBLE);
-    return;
-  }
-  if (!bond2) {
+  if (!bond2 || squiggleBondSeen || doubleBondSeen) {
+    if (!doubleBondSeen) {
+      // FIX: This is the fix for #2649, but it will need to be modified once we
+      // decide to properly handle allenes
+      dblBond->setBondDir(Bond::EITHERDOUBLE);
+    }
     return;
   }
 
@@ -882,6 +889,19 @@ void setUseLegacyStereoPerception(bool val) {
 bool getUseLegacyStereoPerception() {
   return getValFromEnvironment(useLegacyStereoEnvVar,
                                useLegacyStereoDefaultVal);
+}
+
+void setPerceive3DChiralExplicitOnly(bool val) {
+  if (val) {
+    setenv(perceive3DChiralExplicitOnlyEnvVar, "1", 1);
+  } else {
+    setenv(perceive3DChiralExplicitOnlyEnvVar, "0", 1);
+  }
+}
+
+bool getPerceive3DChiralExplicitOnly() {
+  return getValFromEnvironment(perceive3DChiralExplicitOnlyEnvVar,
+                               perceive3DChiralExplicitOnlyDefaultVal);
 }
 
 namespace detail {
@@ -2039,6 +2059,7 @@ void cleanupStereoGroups(ROMol &mol) {
   std::vector<StereoGroup> newsgs;
   for (auto sg : mol.getStereoGroups()) {
     std::vector<Atom *> okatoms;
+    std::vector<Bond *> okbonds;
     bool keep = true;
     for (const auto atom : sg.getAtoms()) {
       if (atom->getChiralTag() == Atom::ChiralType::CHI_UNSPECIFIED) {
@@ -2047,12 +2068,20 @@ void cleanupStereoGroups(ROMol &mol) {
         okatoms.push_back(atom);
       }
     }
+    for (const auto bond : sg.getBonds()) {
+      if (bond->getStereo() != Bond::BondStereo::STEREOATROPCCW &&
+          bond->getStereo() != Bond::BondStereo::STEREOATROPCW) {
+        keep = false;
+      } else {
+        okbonds.push_back(bond);
+      }
+    }
 
     if (keep) {
       newsgs.push_back(sg);
     } else if (!okatoms.empty()) {
       newsgs.emplace_back(sg.getGroupType(), std::move(okatoms),
-                          sg.getReadId());
+                          std::move(okbonds), sg.getReadId());
     }
   }
   mol.setStereoGroups(std::move(newsgs));
@@ -2429,7 +2458,7 @@ bool canBeStereoBond(const Bond *bond) {
           return false;
         }
 
-        // if two neighbors have the same CIP ranking, this is not stereo
+        // if two neighbors havr the same CIP ranking, this is not stereo
         const auto otherAtom = nbrBond->getOtherAtom(atom);
         int rank;
         if (RDKit::Chirality::getUseLegacyStereoPerception()) {
@@ -2487,7 +2516,7 @@ bool shouldBeACrossedBond(const Bond *bond) {
       }
     }
 
-    return 3;  // crossed double bond
+    return true;  // crossed double bond
   }
   if (bond->getStereo() != Bond::BondStereo::STEREONONE) {
     return false;
@@ -2506,10 +2535,11 @@ bool shouldBeACrossedBond(const Bond *bond) {
     return true;  // crossed double bond
   }
 
-  if ((bond->getBeginAtom()->getTotalValence() -
-       bond->getBeginAtom()->getTotalDegree()) == 1 &&
-      (bond->getEndAtom()->getTotalValence() -
-       bond->getEndAtom()->getTotalDegree()) == 1) {
+  const auto beginAtom = bond->getBeginAtom();
+  const auto endAtom = bond->getEndAtom();
+  if (beginAtom->getDegree() > 1 && endAtom->getDegree() > 1 &&
+      (beginAtom->getTotalValence() - beginAtom->getTotalDegree()) == 1 &&
+      (endAtom->getTotalValence() - endAtom->getTotalDegree()) == 1) {
     // we only do this if each atom only has one unsaturation
     // FIX: this is the fix for github #2649, but we will need to
     // change it once we start handling allenes properly
@@ -2521,7 +2551,6 @@ bool shouldBeACrossedBond(const Bond *bond) {
 
   return false;  // NOT crossed double bond
 }
-
 }  // namespace Chirality
 
 namespace MolOps {
@@ -3041,7 +3070,33 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
   }
 
   auto allowNontetrahedralStereo = Chirality::getAllowNontetrahedralChirality();
+  auto perceive3DChiralExplicitOnly =
+      Chirality::getPerceive3DChiralExplicitOnly();
+
+  boost::dynamic_bitset<> atomsToUse;
+  if (perceive3DChiralExplicitOnly && mol.getNumAtoms() > 0) {
+    atomsToUse.resize(mol.getNumAtoms(), 0);
+    for (auto bond : mol.bonds()) {
+      auto bondDir = bond->getBondDir();
+      if (bondDir == Bond::BondDir::BEGINWEDGE ||
+          bondDir == Bond::BondDir::BEGINDASH) {
+        atomsToUse[bond->getBeginAtom()->getIdx()] = 1;
+      }
+    }
+
+    for (auto atom : mol.atoms()) {
+      if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
+        atomsToUse[atom->getIdx()] = 1;
+      }
+    }
+  }
+
   for (auto atom : mol.atoms()) {
+    // see if only the explicitly wedged atoms are to be used
+    if (perceive3DChiralExplicitOnly && !atomsToUse[atom->getIdx()]) {
+      continue;
+    }
+
     // if we aren't replacing existing tags and the atom is already tagged,
     // punt:
     if (!replaceExistingTags && atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
@@ -3194,10 +3249,8 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
   // stereochemistry
   // NOTE that we are explicitly excluding double bonds in rings
   // with this test.
-  bool resetRings = false;
-  if (!mol.getRingInfo()->isInitialized()) {
-    resetRings = true;
-    MolOps::symmetrizeSSSR(mol);
+  if (!mol.getRingInfo()->isSymmSssr()) {
+    RDKit::MolOps::symmetrizeSSSR(mol);
   }
 
   for (auto bond : mol.bonds()) {
@@ -3252,9 +3305,6 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
   }
 
   if (!bondsInPlay.size()) {
-    if (resetRings) {
-      mol.getRingInfo()->reset();
-    }
     return;
   }
 
@@ -3284,9 +3334,6 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
     updateDoubleBondNeighbors(mol, pairIter->second, conf, needsDir,
                               singleBondCounts, singleBondNbrs);
   }
-  if (resetRings) {
-    mol.getRingInfo()->reset();
-  }
 }
 
 void detectBondStereochemistry(ROMol &mol, int confId) {
@@ -3303,20 +3350,38 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
   }
 }
 
-void clearSingleBondDirFlags(ROMol &mol, bool retainCisTransInfo) {
+void clearSingleBondDirFlags(ROMol &mol, bool onlyWedgeFlags) {
   for (auto bond : mol.bonds()) {
     if (bond->getBondType() == Bond::SINGLE) {
-      auto bondDir = bond->getBondDir();
-      if (bondDir == Bond::UNKNOWN) {
+      if (bond->getBondDir() == Bond::UNKNOWN) {
         bond->setProp(common_properties::_UnknownStereo, 1);
       }
-      if (!retainCisTransInfo ||
-          (bondDir != Bond::ENDDOWNRIGHT && bondDir != Bond::ENDUPRIGHT)) {
+
+      if (!onlyWedgeFlags ||
+          (bond->getBondDir() != Bond::BondDir::ENDDOWNRIGHT &&
+           bond->getBondDir() != Bond::BondDir::ENDUPRIGHT)) {
         bond->setBondDir(Bond::NONE);
       }
     }
   }
 }
+
+void clearDirFlags(ROMol &mol, bool onlyWedgeTypeBondDirs) {
+  for (auto bond : mol.bonds()) {
+    if (bond->getBondDir() == Bond::UNKNOWN ||
+        bond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
+      bond->setProp(common_properties::_UnknownStereo, 1);
+    }
+
+    if (onlyWedgeTypeBondDirs == false ||
+        (bond->getBondDir() != Bond::BondDir::ENDDOWNRIGHT &&
+         bond->getBondDir() != Bond::BondDir::ENDUPRIGHT)) {
+      bond->setBondDir(Bond::NONE);
+    }
+  }
+}
+
+void clearAllBondDirFlags(ROMol &mol) { clearDirFlags(mol, false); }
 
 void setBondStereoFromDirections(ROMol &mol) {
   for (Bond *bond : mol.bonds()) {
@@ -3449,6 +3514,5 @@ void removeStereochemistry(ROMol &mol) {
   std::vector<StereoGroup> sgs;
   static_cast<RWMol &>(mol).setStereoGroups(std::move(sgs));
 }
-
-}  // end of namespace MolOps
+}  // namespace MolOps
 }  // namespace RDKit

@@ -21,11 +21,12 @@
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolFileStereochem.h>
 #include "MarvinParser.h"
 #include "MarvinDefs.h"
 #include <GraphMol/Conformer.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
 
 #include <GraphMol/RDKitQueries.h>
@@ -554,12 +555,13 @@ class MarvinCMLReader {
 
       for (auto groupPtr : stereoGroups) {
         std::vector<Atom *> atoms;
+        std::vector<Bond *> bonds;
         for (auto atomPtr : groupPtr->atoms) {
           atoms.push_back(mol->getAtomWithIdx(atomPtr));
         }
 
         groups.emplace_back(groupPtr->groupType, std::move(atoms),
-                            groupPtr->groupNumber);
+                            std::move(bonds), groupPtr->groupNumber);
       }
       if (!groups.empty()) {
         mol->setStereoGroups(std::move(groups));
@@ -608,9 +610,11 @@ class MarvinCMLReader {
         MolOps::assignChiralTypesFrom3D(*mol, conf3d->getId(), true);
       }
 
-      // now that atom stereochem has been perceived, the wedging
-      // information is no longer needed, so we clear
-      // single bond dir flags:
+      if (conf || conf3d) {
+        RDKit::DetectAtropisomerChirality(*mol,
+                                          conf != nullptr ? conf : conf3d);
+      }
+
       ClearSingleBondDirFlags(*mol);
 
       if (sanitize) {
@@ -754,9 +758,10 @@ class MarvinCMLReader {
       }
 
       if (foundChild) {
-        for (auto &v : childTree)
+        for (auto &v : childTree) {
           res->reactants.push_back(std::unique_ptr<MarvinMol>(
               (MarvinMol *)parseMarvinMolecule(v.second)));
+      }
       }
 
       try {
@@ -766,9 +771,10 @@ class MarvinCMLReader {
         foundChild = false;
       }
       if (foundChild) {
-        for (auto &v : childTree)
+        for (auto &v : childTree) {
           res->agents.push_back(std::unique_ptr<MarvinMol>(
               (MarvinMol *)parseMarvinMolecule(v.second)));
+      }
       }
 
       try {
@@ -778,9 +784,10 @@ class MarvinCMLReader {
         foundChild = false;
       }
       if (foundChild) {
-        for (auto &v : childTree)
+        for (auto &v : childTree) {
           res->products.push_back(std::unique_ptr<MarvinMol>(
               (MarvinMol *)parseMarvinMolecule(v.second)));
+      }
       }
 
       if (parseArrowPlusesAndConditions) {
@@ -929,15 +936,9 @@ class MarvinCMLReader {
   }
 };
 
-//------------------------------------------------
-//
-//  Read a molecule from a stream
-//
-//------------------------------------------------
-
 bool MrvDataStreamIsReaction(std::istream &inStream) {
   PRECONDITION(inStream, "no stream");
-
+  Utils::LocaleSwitcher ls;
   ptree tree;
 
   // Parse the XML into the property tree.
@@ -1043,6 +1044,8 @@ ChemicalReaction *MrvDataStreamToChemicalReaction(std::istream *inStream,
                                                   bool sanitize,
                                                   bool removeHs) {
   PRECONDITION(inStream, "no stream");
+
+  Utils::LocaleSwitcher ls;
 
   ptree tree;
 

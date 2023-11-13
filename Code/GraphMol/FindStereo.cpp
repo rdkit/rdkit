@@ -223,6 +223,50 @@ StereoInfo getStereoInfo(const Bond *bond) {
     } else {
       sinfo.specified = Chirality::StereoSpecified::Unspecified;
     }
+  } else if (bond->getBondType() == Bond::BondType::SINGLE &&
+             (bond->getStereo() == Bond::BondStereo::STEREOATROPCCW ||
+              bond->getStereo() == Bond::BondStereo::STEREOATROPCW)) {
+    if (beginAtom->getDegree() < 2 || endAtom->getDegree() < 2 ||
+        beginAtom->getDegree() > 3 || endAtom->getDegree() > 3) {
+      throw ValueErrorException("invalid atom degree in getStereoInfo(bond)");
+    }
+
+    sinfo.type = StereoType::Bond_Atropisomer;
+    sinfo.centeredOn = bond->getIdx();
+    sinfo.controllingAtoms.reserve(4);
+
+    const auto &mol = bond->getOwningMol();
+    for (const auto nbr : mol.atomBonds(beginAtom)) {
+      if (nbr->getIdx() != bond->getIdx()) {
+        sinfo.controllingAtoms.push_back(
+            nbr->getOtherAtomIdx(beginAtom->getIdx()));
+      }
+    }
+    if (beginAtom->getDegree() == 2) {
+      sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
+    }
+    for (const auto nbr : mol.atomBonds(endAtom)) {
+      if (nbr->getIdx() != bond->getIdx()) {
+        sinfo.controllingAtoms.push_back(
+            nbr->getOtherAtomIdx(endAtom->getIdx()));
+      }
+    }
+    if (endAtom->getDegree() == 2) {
+      sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
+    }
+
+    Bond::BondStereo stereo = bond->getStereo();
+    sinfo.specified = Chirality::StereoSpecified::Specified;
+    switch (stereo) {
+      case Bond::BondStereo::STEREOATROPCW:
+        sinfo.descriptor = Chirality::StereoDescriptor::Bond_AtropCW;
+        break;
+      case Bond::BondStereo::STEREOATROPCCW:
+        sinfo.descriptor = Chirality::StereoDescriptor::Bond_AtropCCW;
+        break;
+      default:
+        UNDER_CONSTRUCTION("unrecognized bond stereo type");
+    }
   } else {
     UNDER_CONSTRUCTION("unsupported bond type in getStereoInfo()");
   }
@@ -536,8 +580,21 @@ void initBondInfo(ROMol &mol, bool flagPossible, bool cleanIt,
         default:
           throw ValueErrorException("bad StereoInfo.specified type");
       }
-    } else if (cleanIt) {
+    } else {
+      auto currentStereo = bond->getStereo();
+      if (currentStereo != Bond::BondStereo::STEREOATROPCW &&
+          currentStereo != Bond::BondStereo::STEREOATROPCCW) {
+        if (cleanIt) {
       bond->setStereo(Bond::BondStereo::STEREONONE);
+    }
+      } else {
+        knownBonds.set(bidx);
+        if (currentStereo == Bond::BondStereo::STEREOATROPCW) {
+          bondSymbols[bidx] += "_atropcw";
+        } else if (currentStereo == Bond::BondStereo::STEREOATROPCCW) {
+          bondSymbols[bidx] += "_atropccw";
+        }
+      }
     }
   }
 }
@@ -779,10 +836,10 @@ bool updateBonds(ROMol &mol, const std::vector<unsigned int> &aranks,
            sinfo.controllingAtoms[3] == Chirality::StereoInfo::NOATOM)) {
         // we have a bond with no neighbors on one side, which means it must
         // have a single implicit H on that side. Since the H is implicit,
-        // there is no way to know whether it is cis or trans. It must either be
-        // unspecified (no information) or explicitly marked as unknown.
-        ASSERT_INVARIANT(sinfo.specified != StereoSpecified::Specified,
-                         "stereo bond without neighbors cannot be specified");
+        // there is no way to know whether it is cis or trans.
+        ASSERT_INVARIANT(
+            sinfo.specified != StereoSpecified::Specified,
+            "stereo bond without neighbors can only be unspecified");
         fixedBonds.set(bidx);
       }
 
@@ -1126,9 +1183,10 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
 
 std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
                                             bool findPossible) {
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
   }
+
   if (mol.needsUpdatePropertyCache()) {
     mol.updatePropertyCache(false);
   }

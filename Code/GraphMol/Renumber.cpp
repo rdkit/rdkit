@@ -103,11 +103,18 @@ ROMol *renumberAtoms(const ROMol &mol,
     nsgs.reserve(mol.getStereoGroups().size());
     for (const auto &osg : mol.getStereoGroups()) {
       std::vector<Atom *> ats;
+      std::vector<Bond *> bds;
       ats.reserve(osg.getAtoms().size());
+      bds.reserve(osg.getBonds().size());
       for (const auto aptr : osg.getAtoms()) {
         ats.push_back(res->getAtomWithIdx(revOrder[aptr->getIdx()]));
       }
-      nsgs.emplace_back(osg.getGroupType(), ats, osg.getReadId());
+      for (const auto bptr : osg.getBonds()) {
+        bds.push_back(
+            res->getBondWithIdx(bptr->getIdx()));  // bonds do not change order
+      }
+
+      nsgs.emplace_back(osg.getGroupType(), ats, bds, osg.getReadId());
     }
     res->setStereoGroups(std::move(nsgs));
   }

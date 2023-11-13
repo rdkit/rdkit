@@ -22,7 +22,7 @@
 #include <GraphMol/RWMol.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
 #include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>

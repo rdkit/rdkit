@@ -16,7 +16,7 @@
 #include "FileParsers.h"
 #include "SequenceParsers.h"
 #include "SequenceWriters.h"
-#include "MolFileStereochem.h"
+#include <GraphMol/MolFileStereochem.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -5406,8 +5406,8 @@ void RunTests() {
   testGithub1689();
   testWedgeBondToDoublebond();
   testGithub1615();
-#endif
   testGithub2000();
+#endif
 }
 
 // must be in German Locale for test...
