@@ -8,7 +8,7 @@
 #include "MolDisplay2DWidget.H"
 
 #include "stddefs.H"
-#include <GraphMol/MolDraw2D/MolDraw2DQt.h>
+#include <GraphMol/MolDraw2D/Qt/MolDraw2DQt.h>
 
 #include <QColor>
 #include <QMouseEvent>
@@ -137,7 +137,7 @@ void MolDisplay2DWidget::draw_molecule(QPainter &qp) {
     h = int(float(rect().height()) * 0.95);
   }
 
-  mol_drawer_.reset(new RDKit::MolDraw2DQt(rect().width(), h, qp));
+  mol_drawer_.reset(new RDKit::MolDraw2DQt(rect().width(), h, &qp));
 
   vector<int> sa = selected_atoms();
   mol_drawer_->drawMolecule(*disp_mol_, &sa);

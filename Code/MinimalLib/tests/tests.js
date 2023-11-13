@@ -2690,6 +2690,15 @@ M  END
     fentanylScaffold.delete();
 }
 
+function test_relabel_mapped_dummies() {
+    var core = RDKitModule.get_mol("c1cc([4*:2])c([3*:1])cn1");
+    assert.equal(core.get_cxsmiles(), "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|");
+    core.delete();
+    core = RDKitModule.get_mol("c1cc([4*:2])c([3*:1])cn1", JSON.stringify({mappedDummiesAreRGroups: true}));
+    assert.equal(core.get_cxsmiles(), "*c1ccncc1* |atomProp:0.dummyLabel.R2:7.dummyLabel.R1|");
+    core.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -2759,6 +2768,7 @@ initRDKitModule().then(function(instance) {
     test_capture_logs();
     test_rgroup_match_heavy_hydro_none_charged();
     test_get_sss_json();
+    test_relabel_mapped_dummies();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

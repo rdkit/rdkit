@@ -191,7 +191,6 @@ std::vector<double> clusterArray(std::vector<double> data, double precision) {
   // std::transform(diffs.begin(), diffs.end(), data.begin(), diffs.begin(),
   //    std::divides<double>());
 
-  int j = 0;
   int count = 0;
   for (unsigned int i = 0; i < data.size(); i++) {
     // std::cout << diffs[i] << ",";
@@ -203,7 +202,6 @@ std::vector<double> clusterArray(std::vector<double> data, double precision) {
     if (diffs[i] > pow(0.1, precision)) {
       Store.push_back(count);
       count = 0;
-      j++;
     }
   }
 

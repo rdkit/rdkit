@@ -23,14 +23,7 @@ namespace RDKit {
 RGroupDecompData::RGroupDecompData(const RWMol &inputCore,
                                    RGroupDecompositionParameters inputParams)
     : params(std::move(inputParams)) {
-  if (inputParams.doEnumeration) {
-    auto bundle = MolEnumerator::enumerate(inputCore);
-    for (auto c: bundle.getMols()) {
-      addCore(*c);
-    }
-  } else {
-    addCore(inputCore);
-  }
+  addInputCore(inputCore);
   prepareCores();
 }
 
@@ -38,17 +31,26 @@ RGroupDecompData::RGroupDecompData(const std::vector<ROMOL_SPTR> &inputCores,
                                    RGroupDecompositionParameters inputParams)
     : params(std::move(inputParams)) {
   for (const auto &core : inputCores) {
-    if (inputParams.doEnumeration) {
-      auto bundle = MolEnumerator::enumerate(*core);
+    addInputCore(*core);
+  }
+  prepareCores();
+}
+
+void RGroupDecompData::addInputCore(const ROMol& inputCore) {
+  if (params.doEnumeration) {
+    if (const auto bundle = MolEnumerator::enumerate(inputCore);
+        !bundle.empty()) {
       for (auto c : bundle.getMols()) {
         addCore(*c);
       }
     } else {
-      addCore(*core);
+      addCore(inputCore);
     }
+  } else  {
+    addCore(inputCore);
   }
-  prepareCores();
 }
+
 
 void RGroupDecompData::addCore(const ROMol &inputCore) {
   if (params.allowMultipleRGroupsOnUnlabelled && !params.onlyMatchAtRGroups) {

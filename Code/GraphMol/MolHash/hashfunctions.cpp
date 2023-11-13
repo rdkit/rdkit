@@ -307,16 +307,15 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
                            unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
-  int charge = 0;
 
   for (auto aptr : mol->atoms()) {
-    charge += aptr->getFormalCharge();
     aptr->setIsAromatic(false);
     aptr->setFormalCharge(0);
     if (!elem) {
       aptr->setNumExplicitHs(0);
       aptr->setNoImplicit(true);
       aptr->setAtomicNum(0);
+      aptr->setIsotope(0);
     } else {
       NormalizeHCount(aptr);
     }
@@ -795,6 +794,7 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
       aptr->setFormalCharge(0);
       aptr->setNoImplicit(true);
       aptr->setNumExplicitHs(0);
+      aptr->setIsotope(0);
     } else {
       for_deletion.push_back(aptr);
     }

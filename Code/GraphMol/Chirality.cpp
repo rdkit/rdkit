@@ -12,6 +12,7 @@
 #include <Geometry/point.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDGeneral/Ranking.h>
 #include <GraphMol/new_canon.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -2397,6 +2398,130 @@ void stereoPerception(ROMol &mol, bool cleanIt,
     Chirality::cleanupStereoGroups(mol);
   }
 }
+
+bool canBeStereoBond(const Bond *bond) {
+  PRECONDITION(bond, "no bond");
+  if (bond->getBondType() != Bond::BondType::DOUBLE &&
+      bond->getBondType() != Bond::BondType::AROMATIC) {
+    return false;
+  }
+  auto beginAtom = bond->getBeginAtom();
+  auto endAtom = bond->getEndAtom();
+  for (const auto atom : {beginAtom, endAtom}) {
+    std::vector<int> nbrRanks;
+    for (auto nbrBond : bond->getOwningMol().atomBonds(atom)) {
+      if (nbrBond == bond) {
+        continue;  // a bond is NOT its own neighbor
+      }
+
+      if (nbrBond->getBondType() == Bond::SINGLE) {
+        // if a neighbor has a wedge or hash bond, do NOT mark it as double
+        // crossed
+        if (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
+            nbrBond->getBondDir() == Bond::ENDDOWNRIGHT) {
+          return false;
+        }
+
+        // if a neighbor has a wiggle bond, do NOT mark it as crossed (although
+        // it is unknown
+        if (nbrBond->getBondDir() == Bond::BondDir::UNKNOWN &&
+            nbrBond->getBeginAtom() == atom) {
+          return false;
+        }
+
+        // if two neighbors have the same CIP ranking, this is not stereo
+        const auto otherAtom = nbrBond->getOtherAtom(atom);
+        int rank;
+        if (RDKit::Chirality::getUseLegacyStereoPerception()) {
+          if (!otherAtom->getPropIfPresent(common_properties::_CIPRank, rank)) {
+            rank = -1;
+          }
+        } else {  // NOT legacy stereo
+          if (!otherAtom->getPropIfPresent(common_properties::_ChiralAtomRank,
+                                           rank)) {
+            rank = -1;
+          }
+        }
+        if (rank >= 0) {
+          if (std::find(nbrRanks.begin(), nbrRanks.end(), rank) !=
+              nbrRanks.end()) {
+            return false;
+          } else {
+            nbrRanks.push_back(rank);
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
+bool shouldBeACrossedBond(const Bond *bond) {
+  PRECONDITION(bond, "");
+
+  // double bond stereochemistry -
+  // if the bond isn't specified, then it should go in the mol block
+  // as "any", this was sf.net issue 2963522.
+  // two caveats to this:
+  // 1) if it's a ring bond, we'll only put the "any"
+  //    in the mol block if the user specifically asked for it.
+  //    Constantly seeing crossed bonds in rings, though maybe
+  //    technically correct, is irritating.
+  // 2) if it's a terminal bond (where there's no chance of
+  //    stereochemistry anyway), we also skip the any.
+  //    this was sf.net issue 3009756
+
+  if (bond->getStereo() == Bond::STEREOANY) {
+    // see if any of the neighbors have a wiggle bond - if so, do NOT make this
+    // one a cross bond
+    for (auto nbrBond : bond->getOwningMol().atomBonds(bond->getBeginAtom())) {
+      if (nbrBond->getBondDir() == Bond::UNKNOWN &&
+          nbrBond->getBeginAtom()->getIdx() == bond->getBeginAtom()->getIdx()) {
+        return false;
+      }
+    }
+    for (auto nbrBond : bond->getOwningMol().atomBonds(bond->getEndAtom())) {
+      if (nbrBond->getBondDir() == Bond::UNKNOWN &&
+          nbrBond->getBeginAtom()->getIdx() == bond->getEndAtom()->getIdx()) {
+        return false;
+      }
+    }
+
+    return 3;  // crossed double bond
+  }
+  if (bond->getStereo() != Bond::BondStereo::STEREONONE) {
+    return false;
+  }
+
+  // if it is in a ring it is not makred as stereo.
+  // If either end is terminal, it is not stereo
+
+  if (!Chirality::detail::isBondPotentialStereoBond(bond)) {
+    return false;
+  }
+  // we don't know that it's explicitly unspecified (covered above with
+  // the ==STEREOANY check)
+
+  if (bond->getBondDir() == Bond::EITHERDOUBLE) {
+    return true;  // crossed double bond
+  }
+
+  if ((bond->getBeginAtom()->getTotalValence() -
+       bond->getBeginAtom()->getTotalDegree()) == 1 &&
+      (bond->getEndAtom()->getTotalValence() -
+       bond->getEndAtom()->getTotalDegree()) == 1) {
+    // we only do this if each atom only has one unsaturation
+    // FIX: this is the fix for github #2649, but we will need to
+    // change it once we start handling allenes properly
+
+    if (canBeStereoBond(bond)) {
+      return true;  // crossed double bond
+    }
+  }
+
+  return false;  // NOT crossed double bond
+}
+
 }  // namespace Chirality
 
 namespace MolOps {
@@ -3072,7 +3197,7 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
   bool resetRings = false;
   if (!mol.getRingInfo()->isInitialized()) {
     resetRings = true;
-    MolOps::fastFindRings(mol);
+    MolOps::symmetrizeSSSR(mol);
   }
 
   for (auto bond : mol.bonds()) {
@@ -3178,13 +3303,17 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
   }
 }
 
-void clearSingleBondDirFlags(ROMol &mol) {
+void clearSingleBondDirFlags(ROMol &mol, bool retainCisTransInfo) {
   for (auto bond : mol.bonds()) {
     if (bond->getBondType() == Bond::SINGLE) {
-      if (bond->getBondDir() == Bond::UNKNOWN) {
+      auto bondDir = bond->getBondDir();
+      if (bondDir == Bond::UNKNOWN) {
         bond->setProp(common_properties::_UnknownStereo, 1);
       }
-      bond->setBondDir(Bond::NONE);
+      if (!retainCisTransInfo ||
+          (bondDir != Bond::ENDDOWNRIGHT && bondDir != Bond::ENDUPRIGHT)) {
+        bond->setBondDir(Bond::NONE);
+      }
     }
   }
 }
@@ -3275,9 +3404,11 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
         Atom::ChiralType code =
             Chirality::atomChiralTypeFromBondDirPseudo3D(mol, bond, &conf)
                 .value_or(Atom::ChiralType::CHI_UNSPECIFIED);
-        atomsSet.set(atom->getIdx());
-        //   std::cerr << "atom " << atom->getIdx() << " code " << code
-        //             << " from bond " << bond->getIdx() << std::endl;
+        if (code != Atom::ChiralType::CHI_UNSPECIFIED) {
+          atomsSet.set(atom->getIdx());
+          //   std::cerr << "atom " << atom->getIdx() << " code " << code
+          //             << " from bond " << bond->getIdx() << std::endl;
+        }
         atom->setChiralTag(code);
 
         // within the RD representation, if a three-coordinate atom

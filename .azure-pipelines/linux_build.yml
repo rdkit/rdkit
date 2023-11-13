@@ -12,7 +12,7 @@ steps:
         numpy pillow eigen pandas matplotlib-base \
         qt=5.9.7 cairo
     conda activate rdkit_build
-    conda install -c conda-forge nbval ipykernel>=6.0
+    conda install -c conda-forge pytest nbval ipykernel>=6.0
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
