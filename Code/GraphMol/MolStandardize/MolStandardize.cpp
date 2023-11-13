@@ -20,6 +20,11 @@
 #include "Charge.h"
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <RDGeneral/RDThreads.h>
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <thread>
+#endif
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
@@ -135,6 +140,35 @@ void cleanupInPlace(RWMol &mol, const CleanupParameters &params) {
   bool cleanIt = true;
   bool force = true;
   MolOps::assignStereochemistry(mol, cleanIt, force);
+}
+
+void cleanupInPlace(std::vector<RWMol *> &mols, int numThreads,
+                    const CleanupParameters &params) {
+  unsigned int numThreadsToUse = std::min(
+      static_cast<unsigned int>(mols.size()), getNumThreadsToUse(numThreads));
+  if (numThreadsToUse == 1) {
+    for (auto molp : mols) {
+      cleanupInPlace(*molp, params);
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  else {
+    auto func = [&](unsigned int tidx) {
+      for (auto mi = tidx; mi < mols.size(); mi += numThreads) {
+        cleanupInPlace(*mols[mi], params);
+      }
+    };
+    std::vector<std::thread> threads;
+    for (auto tidx = 0u; tidx < numThreadsToUse; ++tidx) {
+      threads.emplace_back(func, tidx);
+    }
+    for (auto &t : threads) {
+      if (t.joinable()) {
+        t.join();
+      }
+    }
+  }
+#endif
 }
 
 RWMol *tautomerParent(const RWMol &mol, const CleanupParameters &params,

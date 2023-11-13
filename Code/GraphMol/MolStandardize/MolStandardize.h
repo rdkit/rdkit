@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
+//  Copyright (C) 2018-2023 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -106,6 +106,10 @@ inline RWMol *cleanup(const RWMol &mol, const CleanupParameters &params =
 //! Works the same as cleanup(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT void cleanupInPlace(
     RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
+//! Operates on multiple molecules
+RDKIT_MOLSTANDARDIZE_EXPORT void cleanupInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
+    const CleanupParameters &params = defaultCleanupParameters);
 
 //! Works the same as Normalizer().normalize(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *normalize(
