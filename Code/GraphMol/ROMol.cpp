@@ -698,15 +698,21 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
 }
 
 RingInfo *ROMol::getRingInfo() const {
-    if (!dp_ringInfo) {
-        // To be threadsafe there should be a lock here...
-        RingInfo *ri = new RingInfo();
-        // IF DEFAULT==findSSSR MolOps::findSSSR(*this, ri);
-        // IF DEFAULT==symm
-        MolOps::symmetrizeSSSR(*this, *ri);
-        dp_ringInfo = ri;
-    }
-    return dp_ringInfo;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  d_mutex.lock();
+#endif
+  if (!dp_ringInfo) {
+    // To be threadsafe there should be a lock here...
+    RingInfo *ri = new RingInfo();
+    // IF DEFAULT==findSSSR MolOps::findSSSR(*this, ri);
+    // IF DEFAULT==symm
+    MolOps::symmetrizeSSSR(*this, *ri);
+    dp_ringInfo = ri;
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  d_mutex.unlock();
+#endif
+  return dp_ringInfo;
 }
   
 #ifdef RDK_USE_BOOST_SERIALIZATION
