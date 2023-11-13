@@ -14,7 +14,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 
-#ifdef RDK_BUILD_MINIMAL_LIB_FRAGMENTATION
+#ifdef RDK_BUILD_MINIMAL_LIB_MATCHED_PAIRS
 #include <GraphMol/MMPA/MMPA.h>
 #endif
 
@@ -281,6 +281,6 @@ std::string get_mcs_as_smarts(const JSMolList &mols, const std::string &details_
 JSMol *get_mcs_as_mol(const JSMolList &mols, const std::string &details_json);
 #endif
 
-#ifdef RDK_BUILD_MINIMAL_LIB_FRAGMENTATION
-std::pair<std::vector<std::string>, std::vector<std::string>> fragmentMol(const JSMol &mol, unsigned int minCuts, unsigned int maxCuts, unsigned int maxCutBonds);
+#ifdef RDK_BUILD_MINIMAL_LIB_MATCHED_PAIRS
+std::pair<JSMolList *, JSMolList *>fragmentMol(const JSMol &mol, unsigned int minCuts, unsigned int maxCuts, unsigned int maxCutBonds);
 #endif
