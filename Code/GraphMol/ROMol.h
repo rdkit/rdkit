@@ -580,6 +580,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! <b>Note:</b> the client should not delete this.
   RingInfo *getRingInfo() const;
 
+  //! Set non-default ring information for this molecue
+  void setRingInfo(std::unique_ptr<RingInfo> ri);
+  
   //! provides access to all neighbors around an Atom
   /*!
     \param at the atom whose neighbors we are looking for

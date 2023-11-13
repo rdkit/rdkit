@@ -714,7 +714,20 @@ RingInfo *ROMol::getRingInfo() const {
 #endif
   return dp_ringInfo;
 }
-  
+
+void ROMol::setRingInfo(std::unique_ptr<RingInfo> ri) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  d_mutex.lock();
+#endif
+  if (dp_ringInfo) {
+    delete dp_ringInfo;
+  }
+  dp_ringInfo = ri.release();
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  d_mutex.unlock();
+#endif    
+}
+ 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 template <class Archive>
 void ROMol::save(Archive &ar, const unsigned int) const {
