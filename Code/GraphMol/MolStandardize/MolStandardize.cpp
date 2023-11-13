@@ -126,6 +126,39 @@ void updateCleanupParamsFromJSON(CleanupParameters &params,
   }
 }
 
+namespace {
+template <typename FuncType>
+void standardizeMultipleMolsInPlace(FuncType sfunc, std::vector<RWMol *> &mols,
+                                    int numThreads,
+                                    const CleanupParameters &params) {
+  unsigned int numThreadsToUse = std::min(
+      static_cast<unsigned int>(mols.size()), getNumThreadsToUse(numThreads));
+  if (numThreadsToUse == 1) {
+    for (auto molp : mols) {
+      sfunc(*molp, params);
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  else {
+    auto func = [&](unsigned int tidx) {
+      for (auto mi = tidx; mi < mols.size(); mi += numThreads) {
+        sfunc(*mols[mi], params);
+      }
+    };
+    std::vector<std::thread> threads;
+    for (auto tidx = 0u; tidx < numThreadsToUse; ++tidx) {
+      threads.emplace_back(func, tidx);
+    }
+    for (auto &t : threads) {
+      if (t.joinable()) {
+        t.join();
+      }
+    }
+  }
+#endif
+}
+}  // namespace
+
 RWMol *cleanup(const RWMol *mol, const CleanupParameters &params) {
   auto nmol = new RWMol(*mol);
   cleanupInPlace(*nmol, params);
@@ -144,31 +177,9 @@ void cleanupInPlace(RWMol &mol, const CleanupParameters &params) {
 
 void cleanupInPlace(std::vector<RWMol *> &mols, int numThreads,
                     const CleanupParameters &params) {
-  unsigned int numThreadsToUse = std::min(
-      static_cast<unsigned int>(mols.size()), getNumThreadsToUse(numThreads));
-  if (numThreadsToUse == 1) {
-    for (auto molp : mols) {
-      cleanupInPlace(*molp, params);
-    }
-  }
-#ifdef RDK_BUILD_THREADSAFE_SSS
-  else {
-    auto func = [&](unsigned int tidx) {
-      for (auto mi = tidx; mi < mols.size(); mi += numThreads) {
-        cleanupInPlace(*mols[mi], params);
-      }
-    };
-    std::vector<std::thread> threads;
-    for (auto tidx = 0u; tidx < numThreadsToUse; ++tidx) {
-      threads.emplace_back(func, tidx);
-    }
-    for (auto &t : threads) {
-      if (t.joinable()) {
-        t.join();
-      }
-    }
-  }
-#endif
+  standardizeMultipleMolsInPlace(
+      static_cast<void (*)(RWMol &, const CleanupParameters &)>(cleanupInPlace),
+      mols, numThreads, params);
 }
 
 RWMol *tautomerParent(const RWMol &mol, const CleanupParameters &params,
@@ -267,9 +278,26 @@ void normalizeInPlace(RWMol &mol, const CleanupParameters &params) {
   normalizer->normalizeInPlace(mol);
 }
 
+void normalizeInPlace(std::vector<RWMol *> &mols, int numThreads,
+                      const CleanupParameters &params) {
+  std::unique_ptr<Normalizer> normalizer{normalizerFromParams(params)};
+  auto sfunc = [&](RWMol &m, const CleanupParameters &) {
+    normalizer->normalizeInPlace(m);
+  };
+  standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
+}
+
 void reionizeInPlace(RWMol &mol, const CleanupParameters &params) {
   std::unique_ptr<Reionizer> reionizer{reionizerFromParams(params)};
   reionizer->reionizeInPlace(mol);
+}
+void reionizeInPlace(std::vector<RWMol *> &mols,int numThreads,
+                     const CleanupParameters &params) {
+  std::unique_ptr<Reionizer> reionizer{reionizerFromParams(params)};
+  auto sfunc = [&](RWMol &m, const CleanupParameters &) {
+    reionizer->reionizeInPlace(m);
+  };
+  standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
 }
 
 RWMol *removeFragments(const RWMol *mol, const CleanupParameters &params) {
@@ -281,6 +309,15 @@ RWMol *removeFragments(const RWMol *mol, const CleanupParameters &params) {
 void removeFragmentsInPlace(RWMol &mol, const CleanupParameters &params) {
   std::unique_ptr<FragmentRemover> remover{fragmentRemoverFromParams(params)};
   remover->removeInPlace(mol);
+}
+
+void removeFragmentsInPlace(std::vector<RWMol *> &mols,int numThreads,
+                            const CleanupParameters &params) {
+  std::unique_ptr<FragmentRemover> remover{fragmentRemoverFromParams(params)};
+  auto sfunc = [&](RWMol &m, const CleanupParameters &) {
+    remover->removeInPlace(m);
+  };
+  standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
 }
 
 RWMol *canonicalTautomer(const RWMol *mol, const CleanupParameters &params) {
@@ -326,5 +363,5 @@ ROMol *disconnectOrganometallics(
   return md.disconnect(mol);
 }
 
-}  // end of namespace MolStandardize
+}  // namespace MolStandardize
 }  // namespace RDKit

@@ -1115,7 +1115,7 @@ TEST_CASE("in place operations") {
   }
 }
 
-TEST_CASE("cleanupInPlace with multiple mols") {
+TEST_CASE("cleanup with multiple mols") {
   SmilesParserParams ps;
   ps.sanitize = false;
   // silly ugly examples which ensures disconnection, normalization, and
@@ -1152,7 +1152,130 @@ TEST_CASE("cleanupInPlace with multiple mols") {
 #ifdef RDK_BUILD_THREADSAFE_SSS
   SECTION("multithreaded") {
     int numThreads = 4;
-    MolStandardize::cleanupInPlace(molPtrs, 4);
+    MolStandardize::cleanupInPlace(molPtrs, numThreads);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#endif
+}
+
+TEST_CASE("normalize with multiple mols") {
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  std::vector<std::pair<std::string, std::string>> data = {
+      {"O=N(=O)-CC-N(=O)=O", "O=[N+]([O-])CC[N+](=O)[O-]"},
+      {"O=N(=O)-CCC-N(=O)=O", "O=[N+]([O-])CCC[N+](=O)[O-]"},
+      {"O=N(=O)-CCCC-N(=O)=O", "O=[N+]([O-])CCCC[N+](=O)[O-]"},
+  };
+  // bulk that up a bit
+  for (auto iter = 0u; iter < 8; ++iter) {
+    auto sz = data.size();
+    for (auto i = 0u; i < sz; ++i) {
+      data.push_back(data[i]);
+    }
+  }
+  std::vector<std::unique_ptr<RWMol>> mols;
+  std::vector<RWMol *> molPtrs;
+  for (const auto &pr : data) {
+    mols.emplace_back(SmilesToMol(pr.first, ps));
+    REQUIRE(mols.back());
+    molPtrs.push_back(mols.back().get());
+  }
+  SECTION("basics") {
+    MolStandardize::normalizeInPlace(molPtrs);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  SECTION("multithreaded") {
+    int numThreads = 4;
+    MolStandardize::normalizeInPlace(molPtrs, numThreads);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#endif
+}
+
+TEST_CASE("Reionize with multiple mols") {
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  std::vector<std::pair<std::string, std::string>> data = {
+      {"c1cc([O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(O)c1"},
+      {"c1cc(C[O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(CO)c1"},
+      {"c1cc(CC[O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(CCO)c1"},
+  };
+  // bulk that up a bit
+  for (auto iter = 0u; iter < 8; ++iter) {
+    auto sz = data.size();
+    for (auto i = 0u; i < sz; ++i) {
+      data.push_back(data[i]);
+    }
+  }
+  std::vector<std::unique_ptr<RWMol>> mols;
+  std::vector<RWMol *> molPtrs;
+  for (const auto &pr : data) {
+    mols.emplace_back(SmilesToMol(pr.first, ps));
+    REQUIRE(mols.back());
+    molPtrs.push_back(mols.back().get());
+  }
+  SECTION("basics") {
+    MolStandardize::reionizeInPlace(molPtrs);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  SECTION("multithreaded") {
+    int numThreads = 4;
+    MolStandardize::reionizeInPlace(molPtrs, numThreads);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#endif
+}
+
+TEST_CASE("RemoveFragments with multiple mols") {
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  std::vector<std::pair<std::string, std::string>> data = {
+      {"CCCC.Cl.[Na]", "CCCC"},
+      {"CCCCO.Cl.[Na]", "CCCCO"},
+      {"CCOC.Cl.[Na]", "CCOC"},
+  };
+  // bulk that up a bit
+  for (auto iter = 0u; iter < 8; ++iter) {
+    auto sz = data.size();
+    for (auto i = 0u; i < sz; ++i) {
+      data.push_back(data[i]);
+    }
+  }
+  std::vector<std::unique_ptr<RWMol>> mols;
+  std::vector<RWMol *> molPtrs;
+  for (const auto &pr : data) {
+    mols.emplace_back(SmilesToMol(pr.first, ps));
+    REQUIRE(mols.back());
+    molPtrs.push_back(mols.back().get());
+  }
+  SECTION("basics") {
+    MolStandardize::removeFragmentsInPlace(molPtrs);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  SECTION("multithreaded") {
+    int numThreads = 4;
+    MolStandardize::removeFragmentsInPlace(molPtrs, numThreads);
     for (auto i = 0u; i < mols.size(); ++i) {
       REQUIRE(mols[i]);
       CHECK(MolToSmiles(*mols[i]) == data[i].second);
