@@ -606,7 +606,7 @@ TEST_CASE("GitHub Issue #5142", "[bug][accurateCIP]") {
 
 TEST_CASE("CIP max iterations test", "[accurateCIP]") {
   SECTION("Exceeds max iterations") {
-  std::string molBlock = R"(
+    std::string molBlock = R"(
   Mrv2117 11112217353D          
 
  40 50  0  0  0  0            999 V2000
@@ -704,16 +704,16 @@ M  END
 
   )";
 
-  auto mol =
-      std::unique_ptr<RDKit::RWMol>(MolBlockToMol(molBlock, true, false));
-  REQUIRE(mol);
-  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
-                  CIPLabeler::MaxIterationsExceeded);
+    auto mol =
+        std::unique_ptr<RDKit::RWMol>(MolBlockToMol(molBlock, true, false));
+    REQUIRE(mol);
+    CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
+                    CIPLabeler::MaxIterationsExceeded);
 
-  // try a second call to test that the timer is reset
+    // try a second call to test that the timer is reset
 
-  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
-                  CIPLabeler::MaxIterationsExceeded);
+    CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
+                    CIPLabeler::MaxIterationsExceeded);
   }
 }
 
@@ -743,10 +743,17 @@ void testOneAtropIomerMandP(std::string inputText, const std::string &expected,
     }
   }
 
+  std::string outstr = "";
   if (!foundOne) {
-    out << "none";
+    outstr = "none ";
+  } else {
+    outstr = out.str();
+
+    if (!outstr.empty() && (outstr[outstr.size() - 1] != ':'))
+      outstr.erase(outstr.size() - 1);
   }
-  CHECK(out.str() == expected);
+
+  CHECK(outstr == expected);
 }
 
 TEST_CASE("AssignMandP", "[accurateCIP]") {

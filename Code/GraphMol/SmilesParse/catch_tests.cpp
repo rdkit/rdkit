@@ -2494,7 +2494,7 @@ TEST_CASE("Dative  bond in cxsmiles double double def", "[bug][cxsmiles]") {
     std::unique_ptr<RWMol> smilesMol(
         SmilesToMol("C1CCC2=[N]1[Fe](\\[O]=C(\\C)/C=C/C1CCCC1)[N]1=C(CCC1)C2",
                     smilesParserParams));
-    reapplyMolBlockWedging(*smilesMol);
+    RDKit::Chirality::reapplyMolBlockWedging(*smilesMol);
     {
       SmilesWriteParams ps;
       ps.canonical = true;
@@ -2515,7 +2515,7 @@ TEST_CASE("Fieldname not found in SuperatomSgroup in CXSmiles",
 
     std::unique_ptr<RWMol> smilesMol(
         SmilesToMol("CC |SgD:0:::|", smilesParserParams));
-    reapplyMolBlockWedging(*smilesMol);
+    RDKit::Chirality::reapplyMolBlockWedging(*smilesMol);
     {
       SmilesWriteParams ps;
       ps.canonical = true;

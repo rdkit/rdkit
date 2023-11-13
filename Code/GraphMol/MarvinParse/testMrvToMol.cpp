@@ -214,18 +214,18 @@ class MrvTests {
         } catch (const RDKit::KekulizeException &e) {
           outMolStr = "";
 
-        if (outMolStr == "") {
+          if (outMolStr == "") {
             outMolStr = MolToMrvBlock(*smilesMol, true, -1, false,
-                                    false);  // try without kekule'ing
+                                      false);  // try without kekule'ing
+          }
+
+          generateNewExpectedFilesIfSoSpecified(
+              fName + (smilesTest->sanitizeFlag ? "" : ".nosan") + ".NEW.mrv",
+              outMolStr);
+
+          TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
         }
-
-        generateNewExpectedFilesIfSoSpecified(
-            fName + (smilesTest->sanitizeFlag ? "" : ".nosan") + ".NEW.mrv",
-            outMolStr);
-
-        TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
-      }
-      BOOST_LOG(rdInfoLog) << "done" << std::endl;
+        BOOST_LOG(rdInfoLog) << "done" << std::endl;
       }
     } catch (const std::exception &e) {
       if (smilesTest->expectedResult != false) {
@@ -428,7 +428,7 @@ class MrvTests {
         rwMol->updatePropertyCache(false);
       }
       MolOps::Kekulize(*rwMol);
-      reapplyMolBlockWedging(*rwMol);
+      RDKit::Chirality::reapplyMolBlockWedging(*rwMol);
 
       {
         std::string outMolStr = MolToMrvBlock(*rwMol, false, -1, false, false);
@@ -547,7 +547,7 @@ class MrvTests {
 
       MolOps::Kekulize(*mol);
       if (molTest->reapplyMolBlockWedging) {
-        reapplyMolBlockWedging(*mol);
+        RDKit::Chirality::reapplyMolBlockWedging(*mol);
       }
 
       {
@@ -566,7 +566,7 @@ class MrvTests {
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
       }
 
-    {
+      {
         std::string expectedMrvName =
             fName + (molTest->sanitizeFlag ? "" : ".nosan") +
             (molTest->reapplyMolBlockWedging ? "" : ".noReapply") +

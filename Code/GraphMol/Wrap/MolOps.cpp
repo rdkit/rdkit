@@ -390,7 +390,7 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
 
 void reapplyWedging(ROMol &mol) {
   auto &wmol = static_cast<RWMol &>(mol);
-  reapplyMolBlockWedging(wmol);
+  RDKit::Chirality::reapplyMolBlockWedging(wmol);
 }
 
 MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,

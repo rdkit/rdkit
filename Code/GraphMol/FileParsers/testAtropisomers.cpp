@@ -93,7 +93,7 @@ class MolAtropTest {
 
       {
         MolOps::Kekulize(*mol);
-        reapplyMolBlockWedging(*mol);
+        RDKit::Chirality::reapplyMolBlockWedging(*mol);
         std::string outMolStr = MolToMolBlock(*mol, true, 0, true, true);
 
         generateNewExpectedFilesIfSoSpecified(fName + ".NEW.sdf", outMolStr);

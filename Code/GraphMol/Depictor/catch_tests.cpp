@@ -2048,7 +2048,7 @@ M  END
     }
     {
       std::unique_ptr<RWMol> mol(MolBlockToMol(molblockIn, false));
-      reapplyMolBlockWedging(*mol);
+      RDKit::Chirality::reapplyMolBlockWedging(*mol);
       auto molblockOut = MolToMolBlock(*mol);
       CHECK(molblockIn == molblockOut);
     }

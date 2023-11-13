@@ -24,7 +24,6 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 constexpr double REALLY_SMALL_BOND_LEN = 0.0000001;
-constexpr int MIN_RINGS_FOR_ATROPISOMER = 8;
 
 namespace RDKit {
 

@@ -17,6 +17,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
+#include <GraphMol/Chirality.h>
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
@@ -54,7 +55,7 @@ void testMolFiles(const MolTest *molFileTest) {
 
   try {
     std::unique_ptr<RWMol> mol(MolFileToMol(fName, true, false, false));
-    reapplyMolBlockWedging(*mol);
+    RDKit::Chirality::reapplyMolBlockWedging(*mol);
 
     CHECK(mol != nullptr);
     CHECK(mol->getNumAtoms() == molFileTest->atomCount);

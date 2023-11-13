@@ -815,7 +815,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
       std::string outMolStr = "";
       try {
         MolOps::Kekulize(*smilesMol);
-        reapplyMolBlockWedging(*smilesMol);
+        RDKit::Chirality::reapplyMolBlockWedging(*smilesMol);
         outMolStr = MolToMrvBlock(*smilesMol, true, -1, true, false);
       } catch (const RDKit::KekulizeException &e) {
         outMolStr = "";
@@ -823,7 +823,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
         throw;  // re-trhow the error if not a kekule error
       }
       if (outMolStr == "") {
-        reapplyMolBlockWedging(*smilesMol);
+        RDKit::Chirality::reapplyMolBlockWedging(*smilesMol);
         outMolStr = MolToMrvBlock(*smilesMol, true, -1, false,
                                   false);  // try without kekule'ing
       }

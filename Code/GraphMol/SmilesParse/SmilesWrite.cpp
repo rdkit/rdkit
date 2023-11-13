@@ -683,7 +683,7 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
     return res;
   }
   if (restoreBondDirs == RestoreBondDirOptionTrue) {
-    reapplyMolBlockWedging(trwmol);
+    RDKit::Chirality::reapplyMolBlockWedging(trwmol);
   } else if (restoreBondDirs == RestoreBondDirOptionClear) {
     for (auto bond : trwmol.bonds()) {
       if (!bond->canHaveDirection()) {
@@ -700,14 +700,14 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
     }
   }
 
-    if (!params.doIsomericSmiles) {
-      flags &= ~(SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO |
-                 SmilesWrite::CXSmilesFields::CX_BOND_CFG);
-    }
+  if (!params.doIsomericSmiles) {
+    flags &= ~(SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO |
+               SmilesWrite::CXSmilesFields::CX_BOND_CFG);
+  }
 
   auto cxext = SmilesWrite::getCXExtensions(trwmol, flags);
-    if (!cxext.empty()) {
-      res += " " + cxext;
+  if (!cxext.empty()) {
+    res += " " + cxext;
   }
   return res;
 }

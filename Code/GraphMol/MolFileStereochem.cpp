@@ -218,7 +218,7 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
   MolOps::detectBondStereochemistry(mol, conf->getId());
 }
 void reapplyMolBlockWedging(RWMol &mol) {
-  Chirality::reapplyMolBlockWedging(mol);
+  RDKit::Chirality::reapplyMolBlockWedging(mol);
 }
 
 void clearMolBlockWedgingInfo(RWMol &mol) {
