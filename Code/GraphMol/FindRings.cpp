@@ -1164,7 +1164,7 @@ int symmetrizeSSSR(const ROMol &mol, RingInfo &ri, VECT_INT_VECT &res, bool incl
 
   // FIX: need to set flag here the symmetrization has been done in order to
   // avoid repeating this work
-  findSSSR(mol, sssrs, includeDativeBonds);
+  findSSSR(mol, ri, sssrs, includeDativeBonds);
 
   res.reserve(sssrs.size());
   for (const auto &r : sssrs) {
