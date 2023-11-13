@@ -18,10 +18,7 @@
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/FileParseException.h>
 
-constexpr double REALLY_SMALL = 0.0000001;
-
 namespace RDKit {
-constexpr double REALLY_SMALL_BOND_LEN = 0.0000001;
 
 void WedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
   Chirality::wedgeBond(bond, fromAtomIdx, conf);
