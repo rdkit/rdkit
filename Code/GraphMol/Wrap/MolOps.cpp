@@ -1179,7 +1179,7 @@ struct molops_wrapper {
 \n\
   RETURNS: Nothing\n\
 \n";
-    python::def("FastFindRings", MolOps::fastFindRings, docString.c_str());
+    python::def("FastFindRings",  (void (*)(const ROMol &))MolOps::fastFindRings, docString.c_str());
 #ifdef RDK_USE_URF
     python::def("FindRingFamilies", MolOps::findRingFamilies,
                 "generate Unique Ring Families");
