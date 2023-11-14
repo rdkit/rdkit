@@ -715,7 +715,7 @@ RingInfo *ROMol::getRingInfo() const {
   return dp_ringInfo;
 }
 
-void ROMol::setRingInfo(std::unique_ptr<RingInfo> ri) {
+void ROMol::setRingInfo(std::unique_ptr<RingInfo> &ri) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
   d_mutex.lock();
 #endif

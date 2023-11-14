@@ -123,7 +123,7 @@
 %ignore addConformer(Conformer * conf, bool assignId=false);
 %rename(addConformer) RDKit::ROMol::addConf;
 
-%ignore setRingInfo(std::unique_ptr<RingInfo>);
+%ignore setRingInfo(std::unique_ptr<RingInfo>&);
 %rename(setRingInfo) RDKit::ROMol::setRingInformation;
 
 %typemap(javain) RDKit::Conformer * ownedConf "getCPtrAndReleaseControl($javainput)"
