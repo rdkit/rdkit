@@ -66,7 +66,7 @@
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/Chirality.h>
 #include <sstream>
-#include <unique_ptr>
+#include <memory>
 %}
 
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
