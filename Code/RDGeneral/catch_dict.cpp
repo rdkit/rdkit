@@ -70,18 +70,3 @@ TEST_CASE("RDProps move semantics") {
     CHECK(!d1.hasProp("bar"s));
   }
 }
-
-template <typename Callable>
-int tfunc(Callable f) {
-  int foo = 10;
-  int bar = 20;
-  return f(7);
-}
-
-TEST_CASE("lambda games") {
-  int foo = 1;
-  int bar = 2;
-  auto func = [&](int baz) { return foo + bar + baz; };
-
-  CHECK(tfunc(func) == 11);
-}
