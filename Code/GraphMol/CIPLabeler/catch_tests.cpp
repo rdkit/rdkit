@@ -750,7 +750,7 @@ void testOneAtropIomerMandP(std::string inputText, const std::string &expected,
     outstr = out.str();
 
     if (!outstr.empty() && (outstr[outstr.size() - 1] != ':'))
-      outstr.erase(outstr.size() - 1);
+      outstr.substr(0, outstr.size() - 1);
   }
 
   CHECK(outstr == expected);
