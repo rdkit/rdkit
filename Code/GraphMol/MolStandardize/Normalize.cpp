@@ -50,6 +50,13 @@ Normalizer::Normalizer() {
       param_filename_flyweight(defaultCleanupParameters.normalizations).get());
   this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = 200;
+
+  // initialize the transforms
+  for (auto &transform : this->d_tcat->getCatalogParams()->getTransformations()) {
+    if (!transform->isInitialized()) {
+      transform->initReactantMatchers();
+    }
+  }
 }
 
 // overloaded constructor
@@ -60,6 +67,12 @@ Normalizer::Normalizer(const std::string normalizeFile,
       &(param_filename_flyweight(normalizeFile).get());
   this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = maxRestarts;
+  // initialize the transforms
+  for (auto &transform : this->d_tcat->getCatalogParams()->getTransformations()) {
+    if (!transform->isInitialized()) {
+      transform->initReactantMatchers();
+    }
+  }
 }
 
 // overloaded constructor
@@ -69,6 +82,12 @@ Normalizer::Normalizer(std::istream &normalizeStream,
   TransformCatalogParams tparams(normalizeStream);
   this->d_tcat = new TransformCatalog(&tparams);
   this->MAX_RESTARTS = maxRestarts;
+  // initialize the transforms
+  for (auto &transform : this->d_tcat->getCatalogParams()->getTransformations()) {
+    if (!transform->isInitialized()) {
+      transform->initReactantMatchers();
+    }
+  }
 }
 
 // overloaded constructor
@@ -80,6 +99,12 @@ Normalizer::Normalizer(
       &(param_data_flyweight(normalizations).get());
   this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = maxRestarts;
+  // initialize the transforms
+  for (auto &transform : this->d_tcat->getCatalogParams()->getTransformations()) {
+    if (!transform->isInitialized()) {
+      transform->initReactantMatchers();
+    }
+  }
 }
 
 // destructor
@@ -98,12 +123,9 @@ void Normalizer::normalizeInPlace(RWMol &mol) {
   const std::vector<std::shared_ptr<ChemicalReaction>> &transforms =
       tparams->getTransformations();
 
-  // initialize the transforms and make sure that they are compatible with the
+  // make the transforms are compatible with the
   // restrictions on in-place reactions
   for (auto &transform : transforms) {
-    if (!transform->isInitialized()) {
-      transform->initReactantMatchers();
-    }
     if (transform->getNumProductTemplates() != 1 ||
         transform->getNumReactantTemplates() != 1 ||
         transform->getProducts()[0]->getNumAtoms() >
@@ -226,9 +248,6 @@ SmilesMolPair Normalizer::applyTransform(const ROMOL_SPTR &mol,
 
   SmilesMolPair smilesMolPair{std::string(), mol};
 
-  if (!transform.isInitialized()) {
-    transform.initReactantMatchers();
-  }
   // REVIEW: what's the source of the 20 in the next line?
   for (unsigned int i = 0; i < 20; ++i) {
     std::map<std::string, ROMOL_SPTR> pdts;
