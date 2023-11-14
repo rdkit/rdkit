@@ -91,6 +91,11 @@ class DrawMolMCHLasso : public DrawMolMCH {
       std::vector<std::vector<LinePair>> &atomLines) const;
   void extractAtomArcs(std::vector<std::vector<LinePair>> &atomLines,
                        std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const;
+  void addSingletonArcs(
+      const std::vector<int> &colAtoms, size_t lassoNum,
+      const RDKit::DrawColour &col,
+      const std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines,
+      std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const;
   // Put the start points of each pair of atoms in order so that going in
   // an anti-clockwise direction the bond that the lines straddle is in
   // between them such that the arc between the first and second is always

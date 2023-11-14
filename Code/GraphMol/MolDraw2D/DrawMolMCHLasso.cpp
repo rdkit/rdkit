@@ -23,6 +23,10 @@
 namespace RDKit {
 namespace MolDraw2D_detail {
 
+// an empirically derived lineWidth.
+int LINE_WIDTH = 3;
+bool SCALE_LINE_WIDTH = true;
+
 // ****************************************************************************
 DrawMolMCHLasso::DrawMolMCHLasso(
     const ROMol &mol, const std::string &legend, int width, int height,
@@ -138,6 +142,11 @@ void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
   if (colAtoms.empty()) {
     return;
   }
+  std::cout << "colouring atoms ";
+  for (auto ca : colAtoms) {
+    std::cout << ca << " ";
+  }
+  std::cout << std::endl;
   std::vector<std::unique_ptr<DrawShapeArc>> arcs;
   //  extractAtomArcs(lassoNum, col, colAtoms, arcs);
   std::vector<std::unique_ptr<DrawShapeSimpleLine>> lines;
@@ -149,6 +158,7 @@ void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
   //  fixIntersectingArcsAndLines(arcs, lines);
   //  fixProtrudingLines(lines);
   //  fixOrphanLines(arcs, lines);
+  addSingletonArcs(colAtoms, lassoNum, col, lines, arcs);
 
   for (auto &it : arcs) {
     highlights_.push_back(std::move(it));
@@ -179,9 +189,6 @@ void DrawMolMCHLasso::extractAtomArcs(
     size_t lassoNum, const RDKit::DrawColour &col,
     const std::vector<int> &colAtoms,
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const {
-  // an empirically derived lineWidth.
-  int lineWidth = 3;
-  bool scaleLineWidth = true;
   for (auto ca : colAtoms) {
     if (ca < 0 || static_cast<unsigned int>(ca) >= drawMol_->getNumAtoms()) {
       // there's an error in the colour map
@@ -190,9 +197,37 @@ void DrawMolMCHLasso::extractAtomArcs(
     double lassoWidth = getLassoWidth(this, ca, lassoNum);
     Point2D radii(lassoWidth, lassoWidth);
     std::vector<Point2D> pts{atCds_[ca], radii};
-    DrawShapeArc *ell = new DrawShapeArc(pts, 0.0, 360.0, lineWidth,
-                                         scaleLineWidth, col, false, ca);
+    DrawShapeArc *ell = new DrawShapeArc(pts, 0.0, 360.0, LINE_WIDTH,
+                                         SCALE_LINE_WIDTH, col, false, ca);
     arcs.emplace_back(ell);
+  }
+}
+
+// ****************************************************************************
+void DrawMolMCHLasso::addSingletonArcs(
+    const std::vector<int> &colAtoms, size_t lassoNum,
+    const RDKit::DrawColour &col,
+    const std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines,
+    std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const {
+  boost::dynamic_bitset<> inColAtoms(drawMol_->getNumAtoms());
+  for (auto &ca : colAtoms) {
+    inColAtoms.set(ca);
+  }
+  boost::dynamic_bitset<> inLines(drawMol_->getNumAtoms());
+  for (auto &l : lines) {
+    inLines.set(l->atom1_);
+    inLines.set(l->atom2_);
+  }
+  for (size_t i = 0; i != inColAtoms.size(); ++i) {
+    std::cout << i << " : " << inColAtoms[i] << " : " << inLines[i]
+              << std::endl;
+    if (inColAtoms[i] && !inLines[i]) {
+      auto rad = getLassoWidth(this, colAtoms[i], lassoNum);
+      std::vector<Point2D> pts{atCds_[i], Point2D{rad, rad}};
+      DrawShapeArc *arc = new DrawShapeArc(pts, 0.0, 360.0, LINE_WIDTH,
+                                           SCALE_LINE_WIDTH, col, false, i);
+      arcs.emplace_back(arc);
+    }
   }
 }
 
@@ -202,8 +237,6 @@ void DrawMolMCHLasso::extractBondLines(
     const std::vector<int> &colAtoms,
     std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines,
     std::vector<std::vector<LinePair>> &atomLines) const {
-  int lineWidth = 3;
-  bool scaleLineWidth = true;
   if (colAtoms.size() > 1) {
     for (size_t i = 0U; i < colAtoms.size() - 1; ++i) {
       if (colAtoms[i] < 0 ||
@@ -253,7 +286,7 @@ void DrawMolMCHLasso::extractBondLines(
             adjustLineEndForEllipse(atCds_[colAtoms[j]], lassoWidthJ,
                                     lassoWidthJ, p1, p2);
             DrawShapeSimpleLine *pl = new DrawShapeSimpleLine(
-                {p1, p2}, lineWidth, scaleLineWidth, col, colAtoms[i],
+                {p1, p2}, LINE_WIDTH, SCALE_LINE_WIDTH, col, colAtoms[i],
                 colAtoms[j], bond->getIdx(), noDash);
             lines.emplace_back(pl);
             if (m < 0.0) {
@@ -281,8 +314,27 @@ DrawShapeArc *makeArc(LinePair &lp1, LinePair &lp2, const Point2D &atCds,
   // Make an arc between line2 of lp1 and line1 of lp2.  If the 2 lines
   // intersect outside the radius of the arc, trim them both back to the
   // point of intersection and return nullptr.
-  std::cout << "making arc for " << lp1.atom << " and " << lp2.atom << " from "
-            << lp1.angle2 << " to " << lp2.angle1 << std::endl;
+  std::cout << "gen making arc for " << lp1.atom << " and " << lp2.atom
+            << " from " << lp1.angle2 << " to " << lp2.angle1 << std::endl;
+  auto adjustLine = [](DrawShapeSimpleLine *line, const Point2D &pt) -> void {
+    double d1 = (line->points_[0] - pt).lengthSq();
+    double d2 = (line->points_[1] - pt).lengthSq();
+    if (d1 < d2) {
+      line->points_[0] = pt;
+    } else {
+      line->points_[1] = pt;
+    }
+  };
+  Point2D ip;
+  if (doLinesIntersect(lp1.line2->points_[0], lp1.line2->points_[1],
+                       lp2.line1->points_[0], lp2.line1->points_[1], &ip)) {
+    std::cout << "lines intersect : " << lp1.line1->atom1_ << "->"
+              << lp1.line1->atom2_ << " and " << lp2.line2->atom1_ << "->"
+              << lp2.line2->atom2_ << std::endl;
+    adjustLine(lp1.line2, ip);
+    adjustLine(lp2.line1, ip);
+    return nullptr;
+  }
   int oatom =
       lp1.line1->atom1_ == atInd ? lp1.line1->atom2_ : lp1.line1->atom1_;
 
@@ -305,7 +357,7 @@ void DrawMolMCHLasso::extractAtomArcs(
       continue;
     }
     if (atomLine.size() == 1) {
-      std::cout << "making arc for " << atomLine[0].atom << " angles "
+      std::cout << "size 1 making arc for " << atomLine[0].atom << " angles "
                 << atomLine[0].angle2 << " to " << atomLine[0].angle1
                 << std::endl;
       DrawShapeArc *arc = new DrawShapeArc(
@@ -316,12 +368,10 @@ void DrawMolMCHLasso::extractAtomArcs(
       arcs.emplace_back(arc);
     } else {
       for (size_t i = 0; i < atomLine.size() - 1; ++i) {
-        for (size_t j = i + 1; j < atomLine.size(); ++j) {
-          auto arc =
-              makeArc(atomLine[i], atomLine[j], atCds_[atomLine[i].atom], k);
-          if (arc) {
-            arcs.emplace_back(arc);
-          }
+        auto arc =
+            makeArc(atomLine[i], atomLine[i + 1], atCds_[atomLine[i].atom], k);
+        if (arc) {
+          arcs.emplace_back(arc);
         }
       }
       auto arc = makeArc(atomLine.back(), atomLine.front(),
@@ -403,6 +453,9 @@ void DrawMolMCHLasso::orderAtomLines(
       auto rad1 = atCds_[i].directionVector(atomLines[i][j].line1->points_[pt]);
       auto rad2 = atCds_[i].directionVector(atomLines[i][j].line2->points_[pt]);
       auto brad = atCds_[i].directionVector(atCds_[oatom]);
+      // Because +ve y is down the screen, the arcs draw anti-clockwise i.e.
+      // 90 degrees is straight down.  This is the opposite of usual
+      // convention.
       double ang1 = 360.0 - rad1.signedAngleTo(index) * 180.0 / M_PI;
       if (ang1 >= 360.0) {
         ang1 -= 360.0;
@@ -422,22 +475,10 @@ void DrawMolMCHLasso::orderAtomLines(
       double cross = rad1.x * rad2.y - rad1.y * rad2.x;
       std::cout << "atom " << i << "  ang1 = " << ang1 << "  bang = " << bang
                 << "  ang2 = " << ang2 << " cross = " << cross << std::endl;
-      //      std::cout << "2 angles : " << rad1.signedAngleTo(brad) * 180 /
-      //      M_PI
-      //                << " and " << rad2.signedAngleTo(brad) * 180 / M_PI
-      //                << std::endl;
-      //      if (cross > 0.0) {
-      //        std::cout << "cross +ve, so swap" << std::endl;
-      //        std::swap(atomLines[i][j].line1, atomLines[i][j].line1);
-      //        atomLines[i][j].angle1 = ang2;
-      //        atomLines[i][j].angle2 = ang1;
-      //      } else {
-      //        atomLines[i][j].angle1 = ang1;
-      //        atomLines[i][j].angle2 = ang2;
-      //      }
       if (cross > 0.0) {
         std::cout << "cross +ve to swap" << std::endl;
         std::swap(ang1, ang2);
+        std::swap(atomLines[i][j].line1, atomLines[i][j].line2);
       }
       double minAng = std::min({ang1, ang2, bang});
       std::cout << "min ang = " << minAng << " : " << ang1 - minAng << " vs "
@@ -450,13 +491,26 @@ void DrawMolMCHLasso::orderAtomLines(
         std::cout << "swap" << std::endl;
         atomLines[i][j].angle1 = ang2;
         atomLines[i][j].angle2 = ang1;
+        std::swap(atomLines[i][j].line1, atomLines[i][j].line2);
       }
     }
     std::for_each(bondAngles.begin(), bondAngles.end(),
                   [&](std::pair<double, size_t> &ba) -> void {
                     ba.first -= minBondAngle;
                   });
+    std::cout << "un sorted bond angles" << std::endl;
+    for (auto &ba : bondAngles) {
+      std::cout << ba.first + minBondAngle << " : " << ba.second << " : "
+                << atomLines[i][ba.second].angle1 << " to "
+                << atomLines[i][ba.second].angle2 << std::endl;
+    }
     std::sort(bondAngles.begin(), bondAngles.end());
+    std::cout << "sorted bond angles" << std::endl;
+    for (auto &ba : bondAngles) {
+      std::cout << ba.first + minBondAngle << " : " << ba.second << " : "
+                << atomLines[i][ba.second].angle1 << " to "
+                << atomLines[i][ba.second].angle2 << std::endl;
+    }
     std::vector<LinePair> newAtomLine;
     for (auto &ba : bondAngles) {
       newAtomLine.push_back(atomLines[i][ba.second]);

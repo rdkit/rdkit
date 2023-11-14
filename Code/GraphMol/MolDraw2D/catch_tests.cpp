@@ -25,6 +25,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <Geometry/point.h>
 #include <regex>
 
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -8573,8 +8574,9 @@ M  END)CTAB"_ctab;
 
 TEST_CASE("Better Lasso") {
   std::string baseName = "better_lasso_";
+#if 0
   {
-    // Simple tests.
+    // Simple 2 atom tests.
     auto m = R"CTAB(
      RDKit          2D
 
@@ -8604,7 +8606,7 @@ M  END)CTAB"_ctab;
         DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
         DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
     std::vector<DrawColour> cvec(1, colours[0]);
-    for (int i = 0; i < 8; ++i) {
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
       ha_map.insert(std::make_pair(i, cvec));
     }
 
@@ -8619,6 +8621,95 @@ M  END)CTAB"_ctab;
     outs.flush();
     outs.close();
     //    check_file_hash(baseName + "1.svg");
+  }
+  {
+    // Simple 3 atom tests.
+    auto m = R"CTAB(
+     RDKit          2D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -1.2990   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990   -0.7500    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  2  4  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().fillHighlights = false;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::vector<DrawColour> cvec(1, colours[0]);
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      ha_map.insert(std::make_pair(i, cvec));
+    }
+
+    std::map<int, double> h_rads;
+    std::map<int, int> h_lw_mult;
+    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 2", ha_map, hb_map,
+                                      h_rads, h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "2.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    //    check_file_hash(baseName + "2.svg");
+  }
+#endif
+  {
+    // Simple 3 atom tests.
+    auto m = R"CTAB(
+     RDKit          2D
+
+  6  4  0  0  0  0  0  0  0  0999 V2000
+   -1.2990   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -0.0000    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 N   0  0  0  0  0  4  0  0  0  0  0  0
+    2.2990    0.0000    0.0000 Cl  0  0  0  0  0 15  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  2  4  2  0
+  2  5  1  0
+M  CHG  2   5   1   6  -1
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().fillHighlights = false;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::vector<DrawColour> cvec(1, colours[0]);
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      ha_map.insert(std::make_pair(i, cvec));
+    }
+
+    std::map<int, double> h_rads;
+    std::map<int, int> h_lw_mult;
+    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 3", ha_map, hb_map,
+                                      h_rads, h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "3.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    //    check_file_hash(baseName + "3.svg");
   }
 }
 
