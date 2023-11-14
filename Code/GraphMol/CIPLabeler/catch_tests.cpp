@@ -743,17 +743,12 @@ void testOneAtropIomerMandP(std::string inputText, const std::string &expected,
     }
   }
 
-  std::string outstr = "";
   if (!foundOne) {
-    outstr = "none ";
-  } else {
-    outstr = out.str();
-
-    if (!outstr.empty() && (outstr[outstr.size() - 1] != ':'))
-      outstr.substr(0, outstr.size() - 1);
+    out << "none ";
   }
+  out << std::ends;
 
-  CHECK(outstr == expected);
+  CHECK(out.str() == expected);
 }
 
 TEST_CASE("AssignMandP", "[accurateCIP]") {
