@@ -172,7 +172,7 @@ std::vector<stereo_flipper_t> get_flippers(
 }
 
 [[nodiscard]] MolBundle enumerate_stereoisomers(
-    const ROMol& mol, const StereoEnumerationOptions options, bool verbose) {
+    const ROMol& mol, const StereoEnumerationOptions options) {
   std::vector<MolEnumeratorParams> paramsList;
 
   MolEnumerator::MolEnumeratorParams stereoParams;

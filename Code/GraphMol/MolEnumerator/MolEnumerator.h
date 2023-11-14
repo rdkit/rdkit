@@ -242,9 +242,7 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
 
 using stereo_flipper_t = std::shared_ptr<StereoFlipper>;
 
-class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp
-    : public MolEnumeratorOp,
-      public std::enable_shared_from_this<StereoIsomerOp> {
+class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
  public:
   StereoIsomerOp(const std::shared_ptr<ROMol> mol);
   StereoIsomerOp(const ROMol &mol);
@@ -329,8 +327,7 @@ struct RDKIT_MOLENUMERATOR_EXPORT StereoEnumerationOptions {
     const ROMol &mol, const StereoEnumerationOptions options = {});
 
 [[nodiscard]] RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate_stereoisomers(
-    const ROMol &mol, const StereoEnumerationOptions options = {},
-    bool verbose = false);
+    const ROMol &mol, const StereoEnumerationOptions options = {});
 
 }  // namespace MolEnumerator
 }  // namespace RDKit
