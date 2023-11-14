@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2023 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -73,19 +73,89 @@ void inPlaceHelper(RDKit::ROMol *mol, python::object params, FUNCTYPE func) {
 }
 
 void cleanupInPlaceHelper(RDKit::ROMol *mol, python::object params) {
-  inPlaceHelper(mol, params, RDKit::MolStandardize::cleanupInPlace);
+  inPlaceHelper(
+      mol, params,
+      static_cast<void (*)(RDKit::RWMol &,
+                           const RDKit::MolStandardize::CleanupParameters &)>(
+          RDKit::MolStandardize::cleanupInPlace));
 }
 
 void normalizeInPlaceHelper(RDKit::ROMol *mol, python::object params) {
-  inPlaceHelper(mol, params, RDKit::MolStandardize::normalizeInPlace);
+  inPlaceHelper(
+      mol, params,
+      static_cast<void (*)(RDKit::RWMol &,
+                           const RDKit::MolStandardize::CleanupParameters &)>(
+          RDKit::MolStandardize::normalizeInPlace));
 }
 
 void reionizeInPlaceHelper(RDKit::ROMol *mol, python::object params) {
-  inPlaceHelper(mol, params, RDKit::MolStandardize::reionizeInPlace);
+  inPlaceHelper(
+      mol, params,
+      static_cast<void (*)(RDKit::RWMol &,
+                           const RDKit::MolStandardize::CleanupParameters &)>(
+          RDKit::MolStandardize::reionizeInPlace));
 }
 
 void removeFragmentsInPlaceHelper(RDKit::ROMol *mol, python::object params) {
-  inPlaceHelper(mol, params, RDKit::MolStandardize::removeFragmentsInPlace);
+  inPlaceHelper(
+      mol, params,
+      static_cast<void (*)(RDKit::RWMol &,
+                           const RDKit::MolStandardize::CleanupParameters &)>(
+          RDKit::MolStandardize::removeFragmentsInPlace));
+}
+
+template <typename FUNCTYPE>
+void mtinPlaceHelper(python::object pymols, int numThreads,
+                     python::object params, FUNCTYPE func) {
+  const RDKit::MolStandardize::CleanupParameters *ps =
+      &RDKit::MolStandardize::defaultCleanupParameters;
+  if (params) {
+    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
+  }
+  unsigned int nmols = python::extract<unsigned int>(pymols.attr("__len__")());
+  std::vector<RDKit::RWMol *> mols(nmols);
+  for (auto i = 0u; i < nmols; ++i) {
+    RDKit::RWMol *mol = static_cast<RDKit::RWMol *>(
+        python::extract<RDKit::ROMol *>(pymols[i])());
+    mols[i] = mol;
+  }
+
+  func(mols, numThreads, *ps);
+}
+void mtcleanupInPlaceHelper(python::object mols, int numThreads,
+                            python::object params) {
+  mtinPlaceHelper(
+      mols, numThreads, params,
+      static_cast<void (*)(std::vector<RDKit::RWMol *> &, int,
+                           const RDKit::MolStandardize::CleanupParameters &)>(
+          RDKit::MolStandardize::cleanupInPlace));
+}
+
+void mtnormalizeInPlaceHelper(python::object mols, int numThreads,
+                              python::object params) {
+  mtinPlaceHelper(
+      mols, numThreads, params,
+      static_cast<void (*)(std::vector<RDKit::RWMol *> &, int,
+                           const RDKit::MolStandardize::CleanupParameters &)>(
+          RDKit::MolStandardize::normalizeInPlace));
+}
+
+void mtreionizeInPlaceHelper(python::object mols, int numThreads,
+                             python::object params) {
+  mtinPlaceHelper(
+      mols, numThreads, params,
+      static_cast<void (*)(std::vector<RDKit::RWMol *> &, int,
+                           const RDKit::MolStandardize::CleanupParameters &)>(
+          RDKit::MolStandardize::reionizeInPlace));
+}
+
+void mtremoveFragmentsInPlaceHelper(python::object mols, int numThreads,
+                                    python::object params) {
+  mtinPlaceHelper(
+      mols, numThreads, params,
+      static_cast<void (*)(std::vector<RDKit::RWMol *> &, int,
+                           const RDKit::MolStandardize::CleanupParameters &)>(
+          RDKit::MolStandardize::removeFragmentsInPlace));
 }
 
 template <typename FUNCTYPE>
@@ -257,6 +327,11 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
   python::def("CleanupInPlace", cleanupInPlaceHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str());
+  docString = "Standardizes multiple molecules in place";
+  python::def("CleanupInPlace", mtcleanupInPlaceHelper,
+              (python::arg("mols"), python::arg("numThreads"),
+               python::arg("params") = python::object()),
+              docString.c_str());
   docString = "Convenience function for standardizing a SMILES";
   python::def("StandardizeSmiles", RDKit::MolStandardize::standardizeSmiles,
               (python::arg("smiles")), docString.c_str());
@@ -313,6 +388,11 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
   python::def("NormalizeInPlace", normalizeInPlaceHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str());
+  docString = "Normalizes multiple molecules in place";
+  python::def("NormalizeInPlace", mtnormalizeInPlaceHelper,
+              (python::arg("mols"), python::arg("numThreads"),
+               python::arg("params") = python::object()),
+              docString.c_str());
   docString = "Ensures the strongest acid groups are charged first";
   python::def("Reionize", reionizeHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
@@ -323,6 +403,11 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
   python::def("ReionizeInPlace", reionizeInPlaceHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str());
+  docString = "Reionizes multiple molecules in place";
+  python::def("ReionizeInPlace", mtreionizeInPlaceHelper,
+              (python::arg("mols"), python::arg("numThreads"),
+               python::arg("params") = python::object()),
+              docString.c_str());
   docString = "Removes fragments from the molecule";
   python::def("RemoveFragments", removeFragsHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
@@ -332,6 +417,11 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
       "Removes fragments from the molecule, modifies the input molecule";
   python::def("RemoveFragmentsInPlace", removeFragmentsInPlaceHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
+              docString.c_str());
+  docString = "Removes fragments from multiple molecules in place";
+  python::def("RemoveFragmentsInPlace", mtremoveFragmentsInPlaceHelper,
+              (python::arg("mols"), python::arg("numThreads"),
+               python::arg("params") = python::object()),
               docString.c_str());
   docString = "Returns the canonical tautomer for the molecule";
   python::def("CanonicalTautomer", canonicalTautomerHelper,
