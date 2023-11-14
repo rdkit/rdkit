@@ -260,8 +260,8 @@ void setAllowNontetrahedralChirality(bool);
     return self->addConformer(ownedConf, assignId);
   }
 
-  void RDKit::ROMol::setRingInformation(RingInfo *ring) {
-    std::unique_ptr<RingInfo> ri(ring);
+  void RDKit::ROMol::setRingInformation(RDKit::RingInfo *ring) {
+    std::unique_ptr<RDKit::RingInfo> ri(ring);
     self->setRingInfo(ri);
   }
   
