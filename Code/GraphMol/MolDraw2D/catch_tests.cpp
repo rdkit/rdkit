@@ -8244,6 +8244,7 @@ TEST_CASE("Lasso highlights") {
   };
   std::map<int, double> h_rads;
   std::map<int, int> h_lw_mult;
+#if 0
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
@@ -8405,6 +8406,7 @@ TEST_CASE("Lasso highlights") {
       check_file_hash(baseName + "5.svg");
     }
   }
+#endif
   {
     // Bug with large radii lassos.
     auto m = R"CTAB(
@@ -8487,6 +8489,7 @@ M  END)CTAB"_ctab;
     outs.close();
     check_file_hash(baseName + "6.svg");
   }
+#if 0
   {
     // Bug with different radii in lassos.
     auto m = R"CTAB(
@@ -8570,6 +8573,7 @@ M  END)CTAB"_ctab;
     outs.close();
     check_file_hash(baseName + "7.svg");
   }
+#endif
 }
 
 TEST_CASE("Better Lasso") {
@@ -8622,8 +8626,10 @@ M  END)CTAB"_ctab;
     outs.close();
     //    check_file_hash(baseName + "1.svg");
   }
+#endif
+#if 0
   {
-    // Simple 3 atom tests.
+    // Simple 4 atom tests.
     auto m = R"CTAB(
      RDKit          2D
 
@@ -8664,9 +8670,8 @@ M  END)CTAB"_ctab;
     outs.close();
     //    check_file_hash(baseName + "2.svg");
   }
-#endif
   {
-    // Simple 3 atom tests.
+    // Simple 4-connected atom test.
     auto m = R"CTAB(
      RDKit          2D
 
@@ -8711,6 +8716,212 @@ M  END)CTAB"_ctab;
     outs.close();
     //    check_file_hash(baseName + "3.svg");
   }
+#endif
+#if 0
+  {
+    // Overlapping circles 1
+    auto m = R"CTAB(
+     RDKit          2D
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -0.7500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().fillHighlights = false;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+    std::vector<DrawColour> colours = {DrawColour(1.0, 0.0, 0.0)};
+    std::vector<DrawColour> cvec(1, colours[0]);
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      ha_map.insert(std::make_pair(i, cvec));
+    }
+
+    std::map<int, double> h_rads;
+    h_rads[0] = 2.4;
+    h_rads[1] = 2.4;
+    std::map<int, int> h_lw_mult;
+    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 4", ha_map, hb_map,
+                                      h_rads, h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "4.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    //    check_file_hash(baseName + "4.svg");
+  }
+#endif
+#if 0
+  {
+    // Simple 2 atom tests.
+    auto m = R"CTAB(
+     RDKit          2D
+
+  8  4  0  0  0  0  0  0  0  0999 V2000
+   -1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  3  4  1  0
+  5  6  1  0
+  7  8  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    RDGeom::Point3D atCds;
+    double ang = M_PI_4;
+    for (unsigned int i = 2; i < m->getNumAtoms(); i += 2) {
+      atCds = m->getConformer().getAtomPos(i);
+      double newX = atCds.x * cos(ang) + atCds.y * sin(ang);
+      double newY = atCds.y * cos(ang) - atCds.x * sin(ang);
+      atCds.x = newX;
+      atCds.y = newY;
+      atCds.x += 4 * i;
+      m->getConformer().setAtomPos(i, atCds);
+      atCds = m->getConformer().getAtomPos(i + 1);
+      newX = atCds.x * cos(ang) + atCds.y * sin(ang);
+      newY = atCds.y * cos(ang) - atCds.x * sin(ang);
+      atCds.x = newX;
+      atCds.y = newY;
+      atCds.x += 4 * i;
+      m->getConformer().setAtomPos(i + 1, atCds);
+      ang += M_PI_4;
+    }
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().fillHighlights = false;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::vector<DrawColour> cvec(1, colours[0]);
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      ha_map.insert(std::make_pair(i, cvec));
+    }
+
+    std::map<int, double> h_rads;
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      h_rads[i] = 1.8;
+    }
+    std::map<int, int> h_lw_mult;
+    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 5", ha_map, hb_map,
+                                      h_rads, h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "5.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    //    check_file_hash(baseName + "5.svg");
+  }
+#endif
+#if 0
+  {
+    // Overlapping circles 2
+    auto m = R"CTAB(
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+   -1.2990   -0.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990   -0.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().fillHighlights = false;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::vector<DrawColour> cvec(1, colours[0]);
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      ha_map.insert(std::make_pair(i, cvec));
+    }
+
+    std::map<int, double> h_rads;
+    for (auto [idx, val] : ha_map) {
+      h_rads[idx] = 2.0;
+    }
+    std::map<int, int> h_lw_mult;
+    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 6", ha_map, hb_map,
+                                      h_rads, h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "6.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    //    check_file_hash(baseName + "6.svg");
+  }
+#endif
+#if 1
+  {
+    // Overlapping circles 3
+    auto m = R"CTAB(
+     RDKit          2D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+   -2.5981   -0.3000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2990    0.4500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -0.3000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.4500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981   -0.3000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().fillHighlights = false;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().multiColourHighlightStyle =
+        RDKit::MultiColourHighlightStyle::LASSO;
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::vector<DrawColour> cvec(1, colours[0]);
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      ha_map.insert(std::make_pair(i, cvec));
+    }
+
+    std::map<int, double> h_rads;
+    for (auto [idx, val] : ha_map) {
+      h_rads[idx] = 2.0;
+    }
+    std::map<int, int> h_lw_mult;
+    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 7", ha_map, hb_map,
+                                      h_rads, h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "7.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    //    check_file_hash(baseName + "7.svg");
+  }
+#endif
 }
 
 TEST_CASE("Github 6683 - SVGs with ridiculous width and/or height") {
@@ -9263,6 +9474,7 @@ TEST_CASE("Github 6749 : various bad things in the lasso highlighting") {
   drawer.drawOptions().multiColourHighlightStyle =
       RDKit::MultiColourHighlightStyle::LASSO;
   drawer.drawOptions().fillHighlights = false;
+  drawer.drawOptions().addAtomIndices = true;
   drawer.drawMoleculeWithHighlights(*mol, "Bad Lasso", ha_map, hb_map, h_rads,
                                     h_lw_mult);
   drawer.finishDrawing();

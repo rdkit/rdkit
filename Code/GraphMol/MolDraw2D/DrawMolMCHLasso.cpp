@@ -52,6 +52,9 @@ void DrawMolMCHLasso::extractMCHighlights() {
   extractAtomColourLists(colours, colourAtoms, colourLists);
   for (const auto &colourList : colourLists) {
     for (size_t i = 0U; i < colourList.size(); ++i) {
+      if (i != 2) {
+        continue;
+      }
       drawLasso(i, colours[colourList[i]], colourAtoms[colourList[i]]);
     }
   }
@@ -203,6 +206,182 @@ void DrawMolMCHLasso::extractAtomArcs(
   }
 }
 
+namespace {
+Point2D arcEnd(const DrawShapeArc &arc, double ang) {
+  // angles are in degrees
+  ang *= M_PI / 180.0;
+  return Point2D{arc.points_[0].x + arc.points_[1].x * cos(ang),
+                 arc.points_[0].y + arc.points_[1].x * sin(ang)};
+};
+
+void adjustArcEndToCircle(const DrawShapeArc &arc2, DrawShapeArc &arc1,
+                          int endNum) {
+  std::cout << "adjustArcEndToCircle" << std::endl;
+  double ang1, ang2;
+  if (endNum == 0) {
+    ang1 = arc1.ang1_;
+    ang2 = arc1.ang2_;
+  } else {
+    ang1 = arc1.ang2_;
+    ang2 = arc1.ang1_;
+  }
+  bool finished = false;
+  for (int i = 0; i < 5; ++i) {
+    auto arc1end = arcEnd(arc1, ang1);
+    if ((arc1end - arc2.points_[0]).lengthSq() <
+        arc2.points_[1].x * arc2.points_[1].x) {
+      std::cout << i << " : end is inside arc2 circle" << std::endl;
+      ang1 = (ang1 + ang2) / 2.0;
+    } else {
+      Point2D adjEnd(arc1end);
+      adjustLineEndForEllipse(arc2.points_[0], arc2.points_[1].x,
+                              arc2.points_[1].x, arc1.points_[0], adjEnd);
+      std::cout << i << " : adjusted end : " << adjEnd << " : "
+                << fabs((arc1.points_[0] - adjEnd).lengthSq() -
+                        arc1.points_[1].x * arc1.points_[1].x)
+                << std::endl;
+      if (fabs((arc1.points_[0] - adjEnd).lengthSq() -
+               arc1.points_[1].x * arc1.points_[1].x) > 1.0e-4) {
+        ang1 = (ang1 + ang2) / 2.0;
+      } else {
+        finished = true;
+      }
+    }
+    std::cout << "new ang1 = " << ang1 << "  finished = " << finished
+              << std::endl;
+    if (finished) {
+      break;
+    }
+  }
+}
+
+// given 2 points pt1, pt2, assumed to be either side of the line between
+// points at1 and at2, compute the angle of the line from at1 to pt1 and
+// the x-axis and likewise for pt2 and the mid-point of the line between
+// at1 and at2.  All angles go anti-clockwise from the x-axis and are in
+// degrees ready for plugging straight into a DrawShapeArc.  If they
+// had to be swapped so that ang1 is less than ang2, swapped is set true.
+void calcSubtendedAngles(const Point2D &pt1, const Point2D &pt2,
+                         const Point2D &at1, const Point2D &at2, double &rang1,
+                         double &rang2, double &bang, bool &swapped) {
+  static const Point2D index{1.0, 0.0};
+
+  auto rad1 = at1.directionVector(pt1);
+  auto rad2 = at1.directionVector(pt2);
+  auto brad = at1.directionVector(at2);
+
+  double ang1 = 360.0 - rad1.signedAngleTo(index) * 180.0 / M_PI;
+  if (ang1 >= 360.0) {
+    ang1 -= 360.0;
+  }
+  double ang2 = 360.0 - rad2.signedAngleTo(index) * 180.0 / M_PI;
+  if (ang2 >= 360.0) {
+    ang2 -= 360.0;
+  }
+  bang = 360.0 - brad.signedAngleTo(index) * 180.0 / M_PI;
+  if (bang >= 360.0) {
+    bang -= 360.0;
+  }
+  double cross = rad1.x * rad2.y - rad1.y * rad2.x;
+  swapped = false;
+  if (cross > 0.0) {
+    std::swap(ang1, ang2);
+    swapped = true;
+  }
+  double minAng = std::min({ang1, ang2, bang});
+  if (ang1 - minAng < bang - minAng && bang - minAng < ang2 - minAng) {
+    rang1 = ang1;
+    rang2 = ang2;
+  } else {
+    rang1 = ang2;
+    rang2 = ang1;
+    swapped = !swapped;
+  }
+  std::cout << "returning : " << ang1 << " to " << bang << " to " << ang2
+            << "  swapped = " << swapped << std::endl;
+}
+
+void adjustArcEndsIfNotInside(std::vector<DrawShapeArc *> arcs, size_t a1,
+                              size_t a2, double ang1, double &ang2) {
+  DrawShapeArc &arc1 = *arcs[a1];
+  DrawShapeArc &arc2 = *arcs[a2];
+  Point2D ang1End{
+      arc1.points_[0].x + arc1.points_[1].x * cos(ang1 * M_PI / 180.0),
+      arc1.points_[0].y + arc1.points_[1].x * sin(ang1 * M_PI / 180.0)};
+  Point2D ang2End{
+      arc1.points_[0].x + arc1.points_[1].x * cos(ang2 * M_PI / 180.0),
+      arc1.points_[0].y + arc1.points_[1].x * sin(ang2 * M_PI / 180.0)};
+  bool inside1 = false;
+  bool inside2 = false;
+  for (size_t i = 0; i < arcs.size(); ++i) {
+    if (i != a1 && i != a2) {
+      if ((arcs[i]->points_[0] - ang1End).lengthSq() <
+          arcs[i]->points_[1].x * arcs[i]->points_[1].x) {
+        std::cout << "ang1end inside : " << ang1End << " : "
+                  << (arcs[i]->points_[0] - ang1End).length() << std::endl;
+        inside1 = true;
+      }
+      if ((arcs[i]->points_[0] - ang2End).lengthSq() <
+          arcs[i]->points_[1].x * arcs[i]->points_[1].x) {
+        std::cout << "ang2end inside : " << ang2End << " : "
+                  << (arcs[i]->points_[0] - ang2End).length() << std::endl;
+        inside2 = true;
+      }
+    }
+  }
+  if (!inside1) {
+    arc1.ang2_ = ang1;
+  }
+  if (!inside2) {
+    arc1.ang1_ = ang2;
+  }
+}
+
+void adjustArcEnds(std::vector<DrawShapeArc *> arcs, size_t a1, size_t a2) {
+  DrawShapeArc &arc1 = *arcs[a1];
+  DrawShapeArc &arc2 = *arcs[a2];
+  // if the radii are the same, the intersection points are where
+  // the perpendicular at the mid-point intersects with either arcs.
+  Point2D mid = (arc1.points_[0] + arc2.points_[0]) / 2.0;
+  auto perp = calcPerpendicular(arc1.points_[0], arc2.points_[0]);
+  Point2D perpEnd1 = mid + perp * 2.0 * arc1.points_[1].x;
+  adjustLineEndForEllipse(arc1.points_[0], arc1.points_[1].x, arc1.points_[1].x,
+                          mid, perpEnd1);
+  //  std::cout << "mid : " << mid << "  perpEnd1 : " << perpEnd1 << " : "
+  //            << (arc1.points_[0] - perpEnd1).length() << " and "
+  //            << (arc2.points_[0] - perpEnd1).length() << std::endl;
+  auto perpEnd2 = mid - perp * (mid - perpEnd1).length();
+  //  std::cout << "mid : " << mid << "  perpEnd2 : " << perpEnd2 << " : "
+  //            << (arc1.points_[0] - perpEnd2).length() << " and "
+  //            << (arc2.points_[0] - perpEnd2).length() << std::endl;
+  double ang1, ang2, bang;
+  bool swapped;
+  calcSubtendedAngles(perpEnd1, perpEnd2, arc1.points_[0], arc2.points_[0],
+                      ang1, ang2, bang, swapped);
+  std::cout << "arc " << arc1.atom1_ << " currently : " << arc1.ang1_ << " to "
+            << arc1.ang2_ << "  new ones are " << ang1 << " to " << ang2
+            << std::endl;
+  if (arc1.ang1_ == 0.0 && arc1.ang2_ == 360) {
+    adjustArcEndsIfNotInside(arcs, a1, a2, ang1, ang2);
+  } else {
+    std::cout << "AWOOGA : " << arc1.ang1_ << ", " << arc1.ang2_ << ", " << ang1
+              << ", " << ang2 << std::endl;
+  }
+  std::cout << "arc " << arc2.atom1_ << " currently : " << arc2.ang1_ << " to "
+            << arc2.ang2_ << "  new ones are " << ang1 << " to " << ang2
+            << std::endl;
+  calcSubtendedAngles(perpEnd1, perpEnd2, arc2.points_[0], arc1.points_[0],
+                      ang1, ang2, bang, swapped);
+  if (arc2.ang1_ == 0.0 && arc2.ang2_ == 360) {
+    adjustArcEndsIfNotInside(arcs, a2, a1, ang1, ang2);
+  } else {
+    std::cout << "AWOOGA : " << arc2.ang1_ << ", " << arc2.ang2_ << ", " << ang1
+              << ", " << ang2 << std::endl;
+  }
+}
+
+}  // namespace
+
 // ****************************************************************************
 void DrawMolMCHLasso::addSingletonArcs(
     const std::vector<int> &colAtoms, size_t lassoNum,
@@ -218,14 +397,43 @@ void DrawMolMCHLasso::addSingletonArcs(
     inLines.set(l->atom1_);
     inLines.set(l->atom2_);
   }
+  std::vector<DrawShapeArc *> newArcs;
   for (size_t i = 0; i != inColAtoms.size(); ++i) {
     if (inColAtoms[i] && !inLines[i]) {
-      auto rad = getLassoWidth(this, colAtoms[i], lassoNum);
+      std::cout << "singleton arcs : " << i << std::endl;
+      auto rad = getLassoWidth(this, i, lassoNum);
       std::vector<Point2D> pts{atCds_[i], Point2D{rad, rad}};
       DrawShapeArc *arc = new DrawShapeArc(pts, 0.0, 360.0, LINE_WIDTH,
                                            SCALE_LINE_WIDTH, col, false, i);
-      arcs.emplace_back(arc);
+      newArcs.push_back(arc);
     }
+  }
+  std::cout << "have " << newArcs.size() << " new arcs" << std::endl;
+  if (newArcs.empty()) {
+    return;
+  }
+  for (size_t i = 0; i < newArcs.size() - 1; ++i) {
+    if (i > 2) {
+      continue;
+    }
+    for (size_t j = 0; j < newArcs.size(); ++j) {
+      if (i == j) {
+        continue;
+      }
+      if (j > 2) {
+        continue;
+      }
+      if ((newArcs[i]->points_[0] - newArcs[j]->points_[0]).length() <
+          newArcs[i]->points_[1].x + newArcs[j]->points_[1].x) {
+        std::cout << i << " and " << j << " for " << newArcs[i]->atom1_
+                  << " and " << newArcs[j]->atom1_ << " could intersect"
+                  << std::endl;
+        adjustArcEnds(newArcs, j, i);
+      }
+    }
+  }
+  for (auto &a : newArcs) {
+    arcs.emplace_back(a);
   }
 }
 
@@ -264,6 +472,7 @@ void DrawMolMCHLasso::extractBondLines(
           auto atCdsJ = atCds_[colAtoms[j]];
           auto perp = calcPerpendicular(atCdsI, atCdsJ);
           LinePair thisPair;
+          bool skip = false;
           for (auto m : {-1.0, +1.0}) {
             auto p1 = atCdsI + perp * dispI * m;
             auto p2 = atCdsJ + perp * dispJ * m;
@@ -272,13 +481,12 @@ void DrawMolMCHLasso::extractBondLines(
             // with.  To duck the problem completely, push the line out to just
             // less than the radii of the circles (just less, so that they still
             // intersect rather than hitting on the tangent)
-#if 0
             auto mid = (p1 + p2) / 2.0;
-            if ((atCdsI - mid).lengthSq() < lassoWidthI * lassoWidthI) {
-              p1 = atCdsI + perp * lassoWidthI * 0.99 * m;
-              p2 = atCdsJ + perp * lassoWidthJ * 0.99 * m;
+            if ((atCdsI - mid).lengthSq() < lassoWidthI * lassoWidthI ||
+                (atCdsI - mid).lengthSq() < lassoWidthJ * lassoWidthJ) {
+              skip = true;
+              continue;
             }
-#endif
             adjustLineEndForEllipse(atCds_[colAtoms[i]], lassoWidthI,
                                     lassoWidthI, p2, p1);
             adjustLineEndForEllipse(atCds_[colAtoms[j]], lassoWidthJ,
@@ -293,12 +501,14 @@ void DrawMolMCHLasso::extractBondLines(
               thisPair.line2 = pl;
             }
           }
-          thisPair.radius = lassoWidthI;
-          thisPair.atom = colAtoms[i];
-          atomLines[colAtoms[i]].push_back(thisPair);
-          thisPair.radius = lassoWidthJ;
-          thisPair.atom = colAtoms[j];
-          atomLines[colAtoms[j]].push_back(thisPair);
+          if (!skip) {
+            thisPair.radius = lassoWidthI;
+            thisPair.atom = colAtoms[i];
+            atomLines[colAtoms[i]].push_back(thisPair);
+            thisPair.radius = lassoWidthJ;
+            thisPair.atom = colAtoms[j];
+            atomLines[colAtoms[j]].push_back(thisPair);
+          }
         }
       }
     }
@@ -358,11 +568,20 @@ void DrawMolMCHLasso::extractAtomArcs(
       std::cout << "size 1 making arc for " << atomLine[0].atom << " angles "
                 << atomLine[0].angle2 << " to " << atomLine[0].angle1
                 << std::endl;
+#if 1
       DrawShapeArc *arc = new DrawShapeArc(
           {atCds_[atomLine[0].atom], {atomLine[0].radius, atomLine[0].radius}},
           atomLine[0].angle2, atomLine[0].angle1, atomLine[0].line1->lineWidth_,
           atomLine[0].line1->scaleLineWidth_, atomLine[0].line1->lineColour_,
           false, atomLine[0].atom);
+#endif
+#if 0
+      DrawShapeArc *arc = new DrawShapeArc(
+          {atCds_[atomLine[0].atom], {atomLine[0].radius, atomLine[0].radius}},
+          0.0, 360.0, atomLine[0].line1->lineWidth_,
+          atomLine[0].line1->scaleLineWidth_, DrawColour(0.0, 1.0, 0.0), false,
+          atomLine[0].atom);
+#endif
       arcs.emplace_back(arc);
     } else {
       for (size_t i = 0; i < atomLine.size() - 1; ++i) {
@@ -424,7 +643,6 @@ void calcAnglesFromXAxis(Point2D &centre, Point2D &end1, Point2D &end2,
 // ****************************************************************************
 void DrawMolMCHLasso::orderAtomLines(
     std::vector<std::vector<LinePair>> &atomLines) const {
-  static const Point2D index{1.0, 0.0};
   for (size_t i = 0; i < drawMol_->getNumAtoms(); ++i) {
     if (atomLines[i].empty()) {
       continue;
@@ -448,47 +666,17 @@ void DrawMolMCHLasso::orderAtomLines(
                 << atomLines[i][j].line1->atom2_ << " : "
                 << atomLines[i][j].line1->points_[pt] << " : "
                 << atomLines[i][j].line2->points_[pt] << std::endl;
-      auto rad1 = atCds_[i].directionVector(atomLines[i][j].line1->points_[pt]);
-      auto rad2 = atCds_[i].directionVector(atomLines[i][j].line2->points_[pt]);
-      auto brad = atCds_[i].directionVector(atCds_[oatom]);
-      // Because +ve y is down the screen, the arcs draw anti-clockwise i.e.
-      // 90 degrees is straight down.  This is the opposite of usual
-      // convention.
-      double ang1 = 360.0 - rad1.signedAngleTo(index) * 180.0 / M_PI;
-      if (ang1 >= 360.0) {
-        ang1 -= 360.0;
-      }
-      double ang2 = 360.0 - rad2.signedAngleTo(index) * 180.0 / M_PI;
-      if (ang2 >= 360.0) {
-        ang2 -= 360.0;
-      }
-      double bang = 360.0 - brad.signedAngleTo(index) * 180.0 / M_PI;
-      if (bang >= 360.0) {
-        bang -= 360.0;
-      }
+      double bang;
+      bool swapped;
+      calcSubtendedAngles(atomLines[i][j].line1->points_[pt],
+                          atomLines[i][j].line2->points_[pt], atCds_[i],
+                          atCds_[oatom], atomLines[i][j].angle1,
+                          atomLines[i][j].angle2, bang, swapped);
       bondAngles.push_back(std::pair(bang, j));
       if (bang < minBondAngle) {
         minBondAngle = bang;
       }
-      double cross = rad1.x * rad2.y - rad1.y * rad2.x;
-      std::cout << "atom " << i << "  ang1 = " << ang1 << "  bang = " << bang
-                << "  ang2 = " << ang2 << " cross = " << cross << std::endl;
-      if (cross > 0.0) {
-        std::cout << "cross +ve to swap" << std::endl;
-        std::swap(ang1, ang2);
-        std::swap(atomLines[i][j].line1, atomLines[i][j].line2);
-      }
-      double minAng = std::min({ang1, ang2, bang});
-      std::cout << "min ang = " << minAng << " : " << ang1 - minAng << " vs "
-                << bang - minAng << " vs " << ang2 - minAng << std::endl;
-      if (ang1 - minAng < bang - minAng && bang - minAng < ang2 - minAng) {
-        std::cout << "don't swap" << std::endl;
-        atomLines[i][j].angle1 = ang1;
-        atomLines[i][j].angle2 = ang2;
-      } else {
-        std::cout << "swap" << std::endl;
-        atomLines[i][j].angle1 = ang2;
-        atomLines[i][j].angle2 = ang1;
+      if (swapped) {
         std::swap(atomLines[i][j].line1, atomLines[i][j].line2);
       }
     }
@@ -782,6 +970,7 @@ std::pair<Point2D, Point2D> getArcEnds(const DrawShapeArc &arc) {
       arc.points_[0].y + arc.points_[1].x * sin(arc.ang2_ * M_PI / 180.0);
   return retVal;
 }
+
 }  // namespace
 void DrawMolMCHLasso::fixOrphanLines(
     std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
