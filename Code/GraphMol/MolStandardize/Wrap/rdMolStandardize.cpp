@@ -119,8 +119,10 @@ void mtinPlaceHelper(python::object pymols, int numThreads,
         python::extract<RDKit::ROMol *>(pymols[i])());
     mols[i] = mol;
   }
-
-  func(mols, numThreads, *ps);
+  {
+    NOGIL gil;
+    func(mols, numThreads, *ps);
+  }
 }
 void mtcleanupInPlaceHelper(python::object mols, int numThreads,
                             python::object params) {
