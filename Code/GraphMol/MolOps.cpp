@@ -452,20 +452,20 @@ void assignRadicals(RWMol &mol) {
   }
 }
 
-std::vector<Atom::HybridizationType> getHybridizations(const RWMol &mol) {
-  std::vector<Atom::HybridizationType> hydridizationValues;
+MolOps::Hybridizations::Hybridizations(const ROMol &mol) {
+  d_hybridizations.clear();
   // see if the mol already has computed hybridizations:
 
   if (mol.getNumAtoms() == 0) {
-    return hydridizationValues;
+    return;
   }
 
   if ((*mol.atoms().begin())->getHybridization() !=
       Atom::HybridizationType::UNSPECIFIED) {
     for (auto atom : mol.atoms()) {
-      hydridizationValues.push_back(atom->getHybridization());
+      d_hybridizations.push_back((int)atom->getHybridization());
     }
-    return hydridizationValues;
+    return;
   }
 
   // compute them in a copy of the mol, so as not to change the mol passed in
@@ -477,20 +477,18 @@ std::vector<Atom::HybridizationType> getHybridizations(const RWMol &mol) {
   MolOps::sanitizeMol(molCopy, operationThatFailed, santitizeOps);
   for (auto atom : molCopy.atoms()) {
     // determine hybridization and remove chiral atoms that are not sp3
-    hydridizationValues.push_back(atom->getHybridization());
+    d_hybridizations.push_back((int)atom->getHybridization());
   }
-  return hydridizationValues;
+  return;
 }
 
 void cleanupAtropisomers(RWMol &mol) {
-  std::vector<Atom::HybridizationType> hybs =
-      RDKit::MolOps::getHybridizations(mol);
+  auto hybs = MolOps::Hybridizations(mol);
 
   MolOps::cleanupAtropisomers(mol, hybs);
 }
 
-void cleanupAtropisomers(RWMol &mol,
-                         std::vector<Atom::HybridizationType> &hybs) {
+void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
   const RingInfo *ri = mol.getRingInfo();
   for (auto bond : mol.bonds()) {
     switch (bond->getStereo()) {

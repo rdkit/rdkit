@@ -486,7 +486,7 @@ std::string molblock_helper(RWMol &mol, const char *details_json,
     LPT_OPT_GET(addChiralHs);
   }
   if (useMolBlockWedging) {
-    RDKit::CHirality::reapplyMolBlockWedging(mol);
+    RDKit::Chirality::reapplyMolBlockWedging(mol);
   }
   if (addChiralHs) {
     MolDraw2DUtils::prepareMolForDrawing(mol, false, true, false, false, false);

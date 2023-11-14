@@ -21,6 +21,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/types.h>
 #include "SanitException.h"
+#include <RDGeneral/FileParseException.h>
 
 RDKIT_GRAPHMOL_EXPORT extern const int ci_LOCAL_INF;
 namespace RDKit {
@@ -921,15 +922,43 @@ RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1,
 //! \name Stereochemistry
 //! @{
 
+// class to hold hybridizations
+
+class Hybridizations {
+ public:
+  Hybridizations() {
+    throw FileParseException("not to be called without a mol parameter");
+  };
+  Hybridizations(const ROMol &mol);
+  Hybridizations(const Hybridizations &) {
+    throw FileParseException("not to be called without a mol parameter");
+  };
+
+  ~Hybridizations() = default;
+
+  Atom::HybridizationType operator[](int idx) {
+    return static_cast<Atom::HybridizationType>(d_hybridizations[idx]);
+  }
+  // Atom::HybridizationType &operator[](unsigned int idx) {
+  //      return static_cast<Atom::HybridizationType>(d_hybridizations[idx]);
+  //   d_hybridizations[d_hybridizations[idx]];
+  // }
+
+  // // void clear() { d_hybridizations.clear(); }
+  // // void resize(unsigned int sz) { d_hybridizations.resize(sz); }
+  unsigned int size() const { return d_hybridizations.size(); }
+
+ private:
+  std::vector<int> d_hybridizations;
+};
+
 //! removes bogus chirality markers (those on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 
-RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &mol);
-RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(
-    RWMol &mol, std::vector<Atom::HybridizationType> &hybridizations);
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &mol,
+                                               Hybridizations &hybridizations);
 
-RDKIT_GRAPHMOL_EXPORT std::vector<Atom::HybridizationType> getHybridizations(
-    const RWMol &mol);
 //! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms
 /*!
   \param mol                  the molecule of interest
