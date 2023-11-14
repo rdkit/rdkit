@@ -219,8 +219,6 @@ void DrawMolMCHLasso::addSingletonArcs(
     inLines.set(l->atom2_);
   }
   for (size_t i = 0; i != inColAtoms.size(); ++i) {
-    std::cout << i << " : " << inColAtoms[i] << " : " << inLines[i]
-              << std::endl;
     if (inColAtoms[i] && !inLines[i]) {
       auto rad = getLassoWidth(this, colAtoms[i], lassoNum);
       std::vector<Point2D> pts{atCds_[i], Point2D{rad, rad}};
@@ -296,10 +294,10 @@ void DrawMolMCHLasso::extractBondLines(
             }
           }
           thisPair.radius = lassoWidthI;
-          thisPair.atom = i;
+          thisPair.atom = colAtoms[i];
           atomLines[colAtoms[i]].push_back(thisPair);
           thisPair.radius = lassoWidthJ;
-          thisPair.atom = j;
+          thisPair.atom = colAtoms[j];
           atomLines[colAtoms[j]].push_back(thisPair);
         }
       }
