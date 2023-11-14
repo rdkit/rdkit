@@ -1064,9 +1064,7 @@ struct molops_wrapper {
                 (python::arg("mol"), python::arg("conformer")),
                 docString.c_str());
     docString =
-        "DEPRECATED, use SetDoubleBondNeighborDirections() instead\n\
-  ARGUMENTS:\n\
-  \n\
+        "\n\
     - mol: the molecule to be modified\n\
     - confId: Conformer to use for the coordinates\n\
 \n";
