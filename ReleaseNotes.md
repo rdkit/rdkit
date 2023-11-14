@@ -1,3 +1,26 @@
+# Release_2023.09.3
+(Changes relative to Release_2023.09.2)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+
+## Cleanup work:
+
+## Deprecated code (to be removed in a future release):
+- The RDKit implementation of standard machine learning algorithms are
+  deprecated and will be removed in the 2024.03 release. The affected packages
+  include: rdkit.ML.Composite, rdkit.ML.DecTree, rdkit.ML.KNN,
+  rdkit.ML.ModelPackage, rdkit.ML.NaiveBayes, rdkit.ML.Neural
+  rdkit.ML.{Analyze,Screen,Grow,Build}Composite, rdkit.ML.CompositeRun,
+  rdkit.ML.EnrichPlot
+
 # Release_2023.09.2
 (Changes relative to Release_2023.09.1)
 
