@@ -252,7 +252,7 @@ TEST_CASE("multithreaded fp generation") {
     std::vector<std::unique_ptr<ExplicitBitVect>> ovs;
     FingerprintFuncArguments args;
     for (const auto mp : mols) {
-      ovs.emplace_back(std::move(fpgen->getFingerprint(*mp, args)));
+      ovs.emplace_back(fpgen->getFingerprint(*mp, args));
     }
     mols.push_back(nullptr);  // make sure we handle this properly
     auto mtvs1 = fpgen->getFingerprints(mols, 1);
@@ -274,7 +274,7 @@ TEST_CASE("multithreaded fp generation") {
     std::vector<std::unique_ptr<SparseBitVect>> ovs;
     FingerprintFuncArguments args;
     for (const auto mp : mols) {
-      ovs.emplace_back(std::move(fpgen->getSparseFingerprint(*mp, args)));
+      ovs.emplace_back(fpgen->getSparseFingerprint(*mp, args));
     }
     mols.push_back(nullptr);  // make sure we handle this properly
     auto mtvs1 = fpgen->getSparseFingerprints(mols, 1);
@@ -296,7 +296,7 @@ TEST_CASE("multithreaded fp generation") {
     std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>> ovs;
     FingerprintFuncArguments args;
     for (const auto mp : mols) {
-      ovs.emplace_back(std::move(fpgen->getCountFingerprint(*mp, args)));
+      ovs.emplace_back(fpgen->getCountFingerprint(*mp, args));
     }
     mols.push_back(nullptr);  // make sure we handle this properly
     auto mtvs1 = fpgen->getCountFingerprints(mols, 1);
@@ -318,7 +318,7 @@ TEST_CASE("multithreaded fp generation") {
     std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>> ovs;
     FingerprintFuncArguments args;
     for (const auto mp : mols) {
-      ovs.emplace_back(std::move(fpgen->getSparseCountFingerprint(*mp, args)));
+      ovs.emplace_back(fpgen->getSparseCountFingerprint(*mp, args));
     }
     mols.push_back(nullptr);  // make sure we handle this properly
     auto mtvs1 = fpgen->getSparseCountFingerprints(mols, 1);
