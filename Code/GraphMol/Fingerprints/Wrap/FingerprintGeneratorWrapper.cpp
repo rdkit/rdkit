@@ -222,7 +222,13 @@ python::tuple mtgetFingerprints(FuncType func, python::object mols,
   for (auto i = 0u; i < nmols; ++i) {
     tmols.push_back(python::extract<const ROMol *>(mols[i])());
   }
-  auto fps = func(tmols, numThreads);
+
+  decltype(std::function{
+      func})::result_type fps;  // sometimes you really have to love C++ syntax
+  {
+    NOGIL gil;
+    fps = std::move(func(tmols, numThreads));
+  }
   python::list result;
   for (auto &fp : fps) {
     result.append(boost::shared_ptr<ReturnType>(fp.release()));
