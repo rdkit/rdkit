@@ -37,18 +37,7 @@
 #include <typeinfo>
 #include <exception>
 #include <charconv>
-
-#ifdef RDKIT_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::regex_match;
-using boost::smatch;
-#else
 #include <regex>
-using std::regex;
-using std::regex_match;
-using std::smatch;
-#endif
 #include <sstream>
 #include <locale>
 #include <cstdlib>
@@ -56,6 +45,10 @@ using std::smatch;
 #include <string_view>
 
 using namespace RDKit::SGroupParsing;
+using std::regex;
+using std::regex_match;
+using std::smatch;
+
 
 namespace RDKit {
 
