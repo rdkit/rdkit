@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <string>
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include "Dict.h"
 #include "RDProps.h"
 using namespace std::string_literals;
