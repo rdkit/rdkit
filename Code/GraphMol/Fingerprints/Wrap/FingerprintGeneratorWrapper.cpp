@@ -223,7 +223,7 @@ python::tuple mtgetFingerprints(FuncType func, python::object mols,
     tmols.push_back(python::extract<const ROMol *>(mols[i])());
   }
 
-  decltype(std::function{
+  typename decltype(std::function{
       func})::result_type fps;  // sometimes you really have to love C++ syntax
   {
     NOGIL gil;
