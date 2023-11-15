@@ -11,7 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include "RDLog.h"
 
 TEST_CASE("LogStateSetter") {
