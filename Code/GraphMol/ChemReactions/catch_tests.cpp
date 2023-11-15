@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 ///
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
@@ -1227,7 +1227,7 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     REQUIRE(rxn);
     CHECK(rxn->getReactants().size() == 1);
     CHECK(rxn->getProducts().size() == 1);
-    unsigned int bondcfg;
+    unsigned int bondcfg = 0;
     CHECK(rxn->getReactants()[0]->getBondWithIdx(0)->getPropIfPresent(
         "_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);

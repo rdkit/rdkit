@@ -10,7 +10,7 @@
 
 #include <cstdlib>
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <boost/noncopyable.hpp>
 
@@ -3983,7 +3983,7 @@ TEST_CASE(
     "[bug][stereo]") {
   // Parametrize test to run under legacy and new stereo perception
   const auto legacy_stereo = GENERATE(true, false);
-  INFO("Legacy stereo perception == " << legacy_stereo)
+  INFO("Legacy stereo perception == " << legacy_stereo);
 
   UseLegacyStereoPerceptionFixture reset_stereo_perception;
   Chirality::setUseLegacyStereoPerception(legacy_stereo);
@@ -4015,7 +4015,7 @@ TEST_CASE("double bonded N with H should be stereogenic", "[bug][stereo]") {
   SECTION("assign stereo") {
     // Parametrize test to run under legacy and new stereo perception
     const auto legacy_stereo = GENERATE(true, false);
-    INFO("Legacy stereo perception == " << legacy_stereo)
+    INFO("Legacy stereo perception == " << legacy_stereo);
 
     UseLegacyStereoPerceptionFixture reset_stereo_perception;
     Chirality::setUseLegacyStereoPerception(legacy_stereo);

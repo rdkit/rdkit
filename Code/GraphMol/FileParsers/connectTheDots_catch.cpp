@@ -15,7 +15,7 @@
 #include <streambuf>
 
 #include "RDGeneral/test.h"
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>

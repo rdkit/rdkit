@@ -15,7 +15,7 @@
 #include <iostream>
 #include <strstream>
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Chirality.h>

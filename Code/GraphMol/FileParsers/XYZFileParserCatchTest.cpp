@@ -1,5 +1,5 @@
 #include "RDGeneral/test.h"
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
@@ -47,9 +47,9 @@ TEST_CASE("xyz file parser") {
 
     ind = 0;
     for (auto p : positions) {
-      CHECK(conf->getAtomPos(ind).x == Approx(p.x).margin(1e-6));
-      CHECK(conf->getAtomPos(ind).y == Approx(p.y).margin(1e-6));
-      CHECK(conf->getAtomPos(ind).z == Approx(p.z).margin(1e-6));
+      CHECK(conf->getAtomPos(ind).x == Catch::Approx(p.x).margin(1e-6));
+      CHECK(conf->getAtomPos(ind).y == Catch::Approx(p.y).margin(1e-6));
+      CHECK(conf->getAtomPos(ind).z == Catch::Approx(p.z).margin(1e-6));
       ind++;
     }
   }
@@ -87,9 +87,9 @@ TEST_CASE("xyz file parser") {
 
     ind = 0;
     for (auto p : positions) {
-      CHECK(conf->getAtomPos(ind).x == Approx(p.x).margin(1e-6));
-      CHECK(conf->getAtomPos(ind).y == Approx(p.y).margin(1e-6));
-      CHECK(conf->getAtomPos(ind).z == Approx(p.z).margin(1e-6));
+      CHECK(conf->getAtomPos(ind).x == Catch::Approx(p.x).margin(1e-6));
+      CHECK(conf->getAtomPos(ind).y == Catch::Approx(p.y).margin(1e-6));
+      CHECK(conf->getAtomPos(ind).z == Catch::Approx(p.z).margin(1e-6));
       ind++;
     }
   }
@@ -150,9 +150,9 @@ TEST_CASE("xyz block parser") {
 
     ind = 0;
     for (auto p : positions) {
-      CHECK(conf->getAtomPos(ind).x == Approx(p.x).margin(1e-6));
-      CHECK(conf->getAtomPos(ind).y == Approx(p.y).margin(1e-6));
-      CHECK(conf->getAtomPos(ind).z == Approx(p.z).margin(1e-6));
+      CHECK(conf->getAtomPos(ind).x == Catch::Approx(p.x).margin(1e-6));
+      CHECK(conf->getAtomPos(ind).y == Catch::Approx(p.y).margin(1e-6));
+      CHECK(conf->getAtomPos(ind).z == Catch::Approx(p.z).margin(1e-6));
       ind++;
     }
   }

@@ -10,7 +10,7 @@
 // Tests of substructure searching
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <tuple>
 #include <utility>
@@ -23,7 +23,7 @@
 using namespace RDKit;
 typedef std::tuple<std::string, std::string, size_t> matchCase;
 
-class _IsSubstructOf : public Catch::MatcherBase<const ROMol &> {
+class _IsSubstructOf : public Catch::Matchers::MatcherBase<const ROMol &> {
   ROMol const *m_mol;
   SubstructMatchParameters m_ps;
 
