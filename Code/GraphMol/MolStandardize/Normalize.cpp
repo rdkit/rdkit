@@ -51,12 +51,7 @@ Normalizer::Normalizer() {
   this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = 200;
 
-  // initialize the transforms
-  for (auto &transform : this->d_tcat->getCatalogParams()->getTransformations()) {
-    if (!transform->isInitialized()) {
-      transform->initReactantMatchers();
-    }
-  }
+  this->d_tcat->getCatalogParams()->initializeTransforms();
 }
 
 // overloaded constructor
@@ -67,12 +62,8 @@ Normalizer::Normalizer(const std::string normalizeFile,
       &(param_filename_flyweight(normalizeFile).get());
   this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = maxRestarts;
-  // initialize the transforms
-  for (auto &transform : this->d_tcat->getCatalogParams()->getTransformations()) {
-    if (!transform->isInitialized()) {
-      transform->initReactantMatchers();
-    }
-  }
+
+  this->d_tcat->getCatalogParams()->initializeTransforms();
 }
 
 // overloaded constructor
@@ -82,12 +73,8 @@ Normalizer::Normalizer(std::istream &normalizeStream,
   TransformCatalogParams tparams(normalizeStream);
   this->d_tcat = new TransformCatalog(&tparams);
   this->MAX_RESTARTS = maxRestarts;
-  // initialize the transforms
-  for (auto &transform : this->d_tcat->getCatalogParams()->getTransformations()) {
-    if (!transform->isInitialized()) {
-      transform->initReactantMatchers();
-    }
-  }
+
+  this->d_tcat->getCatalogParams()->initializeTransforms();
 }
 
 // overloaded constructor
@@ -99,12 +86,8 @@ Normalizer::Normalizer(
       &(param_data_flyweight(normalizations).get());
   this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = maxRestarts;
-  // initialize the transforms
-  for (auto &transform : this->d_tcat->getCatalogParams()->getTransformations()) {
-    if (!transform->isInitialized()) {
-      transform->initReactantMatchers();
-    }
-  }
+
+  this->d_tcat->getCatalogParams()->initializeTransforms();
 }
 
 // destructor
