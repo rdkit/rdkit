@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include <Geometry/point.h>
 #include <Geometry/UniformGrid3D.h>
 

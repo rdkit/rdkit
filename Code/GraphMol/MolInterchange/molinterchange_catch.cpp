@@ -8,7 +8,7 @@
 //
 
 #include <RDGeneral/test.h>
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
@@ -307,10 +307,10 @@ M  END)CTAB"_ctab;
     CHECK(sgs[0].getBonds() == std::vector<unsigned>{8});
     REQUIRE(sgs[0].getBrackets().size() == 1);
     REQUIRE(sgs[0].getBrackets()[0].size() == 3);
-    CHECK(sgs[0].getBrackets()[0][0].x == Approx(6.24).margin(0.01));
+    CHECK(sgs[0].getBrackets()[0][0].x == Catch::Approx(6.24).margin(0.01));
     REQUIRE(sgs[0].getCStates().size() == 1);
     CHECK(sgs[0].getCStates()[0].bondIdx == 8);
-    CHECK(sgs[0].getCStates()[0].vector.y == Approx(0.82).margin(0.01));
+    CHECK(sgs[0].getCStates()[0].vector.y == Catch::Approx(0.82).margin(0.01));
     REQUIRE(sgs[0].getAttachPoints().size() == 1);
     CHECK(sgs[0].getAttachPoints()[0].aIdx == 12);
     CHECK(sgs[0].getAttachPoints()[0].lvIdx == 5);

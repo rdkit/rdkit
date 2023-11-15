@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
 #include <thread>
@@ -2058,7 +2058,7 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
   SECTION("basic reading/writing") {
     auto m = "CC(O)F |w:1.2|"_smiles;
     REQUIRE(m);
-    unsigned int bondcfg;
+    unsigned int bondcfg = 0;
     CHECK(m->getBondWithIdx(2)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
     // make sure we end up with a wiggly bond in output mol blocks:
@@ -2078,7 +2078,7 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
   SECTION("CXSMILES wiggly bond over-rides atomic stereo") {
     auto m = "C[C@H](O)F |w:1.2|"_smiles;
     REQUIRE(m);
-    unsigned int bondcfg;
+    unsigned int bondcfg = 0;
     CHECK(m->getBondWithIdx(2)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
@@ -2096,7 +2096,7 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
     auto m = "CC(O)Cl |w:1.0|"_smiles;
     REQUIRE(m);
     CHECK(m->getBondWithIdx(0)->getBeginAtomIdx() == 1);
-    unsigned int bondcfg;
+    unsigned int bondcfg = 0;
     CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
   }
@@ -2105,7 +2105,7 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
     auto m =
         "CC(O)Cl |(-3.9163,5.4767,;-3.9163,3.9367,;-2.5826,3.1667,;-5.25,3.1667,),wU:1.0|"_smiles;
     REQUIRE(m);
-    unsigned int bondcfg;
+    unsigned int bondcfg = 0;
     CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 1);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
@@ -2225,7 +2225,7 @@ M  END
     REQUIRE(m_from_ctab);
     auto m = "CC=CC |w:2.2|"_smiles;
     REQUIRE(m);
-    unsigned int bondcfg;
+    unsigned int bondcfg = 0;
     CHECK(m->getBondWithIdx(2)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
   }
