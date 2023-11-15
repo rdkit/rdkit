@@ -298,13 +298,15 @@ enumerate(const ROMol &mol, const std::vector<MolEnumeratorParams> &paramsList);
 \param maxPerOperation: the maximum number of molecules which an individual
 operation is allowed to generate
 
+\param enumerateStereo: whether to enumerate stereoisomers
+
 NOTE: the current implementation does not support molecules which include
 both LINKNODE and SRU features.
 
 */
 RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate(const ROMol &mol,
                                                size_t maxPerOperation = 0,
-                                               bool enumerate_stereo = false);
+                                               bool enumerateStereo = false);
 
 //! Returns a MolBundle containing the molecules resulting from applying the
 //! operator contained in \c params to \c mol.

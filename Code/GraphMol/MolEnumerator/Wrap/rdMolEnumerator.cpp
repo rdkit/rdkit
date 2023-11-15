@@ -15,7 +15,12 @@ namespace python = boost::python;
 using namespace RDKit;
 namespace {
 
-enum class EnumeratorTypes { LinkNode, PositionVariation, RepeatUnit };
+enum class EnumeratorTypes {
+  LinkNode,
+  PositionVariation,
+  RepeatUnit,
+  StereoIsomer
+};
 
 std::shared_ptr<MolEnumerator::MolEnumeratorOp> opFromName(
     EnumeratorTypes typ) {
@@ -29,6 +34,9 @@ std::shared_ptr<MolEnumerator::MolEnumeratorOp> opFromName(
       break;
     case EnumeratorTypes::RepeatUnit:
       res.reset(new MolEnumerator::RepeatUnitOp());
+      break;
+    case EnumeratorTypes::StereoIsomer:
+      res = MolEnumerator::StereoIsomerOp::createOp();
       break;
     default:
       throw ValueErrorException("unrecognized operator type");
@@ -45,8 +53,8 @@ void setEnumerationHelper(MolEnumerator::MolEnumeratorParams *self,
   self->dp_operation = opFromName(typ);
 }
 MolBundle *enumerateHelper1(const ROMol &mol, unsigned int maxPerOperation,
-                            bool enumerate_stereo) {
-  auto res = MolEnumerator::enumerate(mol, maxPerOperation, enumerate_stereo);
+                            bool enumerateStereo) {
+  auto res = MolEnumerator::enumerate(mol, maxPerOperation, enumerateStereo);
   return new MolBundle(res);
 }
 MolBundle *enumerateHelper2(const ROMol &mol,
@@ -61,7 +69,8 @@ BOOST_PYTHON_MODULE(rdMolEnumerator) {
   python::enum_<EnumeratorTypes>("EnumeratorType")
       .value("LinkNode", EnumeratorTypes::LinkNode)
       .value("PositionVariation", EnumeratorTypes::PositionVariation)
-      .value("RepeatUnit", EnumeratorTypes::RepeatUnit);
+      .value("RepeatUnit", EnumeratorTypes::RepeatUnit)
+      .value("StereoIsomer", EnumeratorTypes::StereoIsomer);
 
   python::class_<MolEnumerator::MolEnumeratorParams>(
       "MolEnumeratorParams", "Molecular enumerator parameters",
@@ -81,11 +90,14 @@ BOOST_PYTHON_MODULE(rdMolEnumerator) {
            python::args("self", "typ"),
            "set the operator to be used for enumeration");
   python::def("Enumerate", &enumerateHelper1,
-              (python::arg("mol"), python::arg("maxPerOperation") = 0),
+              (python::arg("mol"), python::arg("maxPerOperation") = 0,
+               python::arg("enumerateStereo") = false),
               python::return_value_policy<python::manage_new_object>(),
               R"DOC(do an enumeration and return a MolBundle.
   If maxPerOperation is >0 that will be used as the maximum number of molecules which
     can be returned by any given operation.
+  If enumerateStereo == true, the procedure will enumerate stereoisomers in addition
+    to the other enumerator types.
 Limitations:
   - the current implementation does not support molecules which include both
     SRUs and LINKNODEs

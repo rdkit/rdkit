@@ -121,10 +121,10 @@ MolBundle enumerate(const ROMol &mol,
 }
 
 MolBundle enumerate(const ROMol &mol, size_t maxPerOperation,
-                    bool enumerate_stereo) {
+                    bool enumerateStereo) {
   std::vector<MolEnumeratorParams> paramsList;
 
-  if (enumerate_stereo) {
+  if (enumerateStereo) {
     MolEnumerator::MolEnumeratorParams stereoParams;
     stereoParams.dp_operation = MolEnumerator::StereoIsomerOp::createOp();
     if (maxPerOperation > 0) {
