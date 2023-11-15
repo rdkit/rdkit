@@ -233,7 +233,7 @@ TEST_CASE("multithreaded fp generation") {
   std::vector<std::string> smis = {"CC1CCC1", "CCC1CCC1", "CCCC1CCC1",
                                    "CCCC1CC(O)C1", "CCCC1CC(CO)C1"};
   std::vector<std::unique_ptr<ROMol>> ov;
-  std::vector<ROMol *> mols;
+  std::vector<const ROMol *> mols;
   for (const auto &smi : smis) {
     ov.emplace_back(SmilesToMol(smi));
     REQUIRE(ov.back());

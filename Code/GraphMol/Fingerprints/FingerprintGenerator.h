@@ -338,17 +338,17 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
       const ROMol &mol, FingerprintFuncArguments &args) const;
 
   std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprints(
-      const std::vector<ROMol *> &mols, int numThreads = 1) const;
+      const std::vector<const ROMol *> &mols, int numThreads = 1) const;
 
   std::vector<std::unique_ptr<SparseBitVect>> getSparseFingerprints(
-      const std::vector<ROMol *> &mols, int numThreads = 1) const;
+      const std::vector<const ROMol *> &mols, int numThreads = 1) const;
 
   std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>>
-  getCountFingerprints(const std::vector<ROMol *> &mols,
+  getCountFingerprints(const std::vector<const ROMol *> &mols,
                        int numThreads = 1) const;
 
   std::vector<std::unique_ptr<SparseIntVect<OutputType>>>
-  getSparseCountFingerprints(const std::vector<ROMol *> &mols,
+  getSparseCountFingerprints(const std::vector<const ROMol *> &mols,
                              int numThreads = 1) const;
 
   SparseIntVect<OutputType> *getSparseCountFingerprint(
