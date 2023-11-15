@@ -214,68 +214,6 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
   return result.release();
 }
 
-#if 0
-template <typename ReturnType, typename FuncType>
-python::tuple mtgetFingerprints(FuncType func, python::object mols,
-                                int numThreads) {
-  std::vector<std::uint32_t> *fromAtoms = nullptr;
-  std::vector<std::uint32_t> *ignoreAtoms = nullptr;
-  std::vector<std::uint32_t> *customAtomInvariants = nullptr;
-  std::vector<std::uint32_t> *customBondInvariants = nullptr;
-  int confId = -1;
-  AdditionalOutput *additionalOutput = nullptr;
-  FingerprintFuncArguments args(fromAtoms, ignoreAtoms, confId,
-                                additionalOutput, customAtomInvariants,
-                                customBondInvariants);
-
-  numThreads = getNumThreadsToUse(numThreads);
-  unsigned int nmols = python::extract<unsigned int>(mols.attr("__len__")());
-  python::list result;
-  if (numThreads == 1) {
-    for (auto i = 0u; i < nmols; ++i) {
-      const ROMol *mol = python::extract<ROMol *>(mols[i])();
-      result.append(boost::shared_ptr<ReturnType>(func(*mol, args).release()));
-    }
-    return python::tuple(result);
-  }
-#ifdef RDK_BUILD_THREADSAFE_SSS
-  else {
-    std::vector<const ROMol *> tmols;
-    for (auto i = 0u; i < nmols; ++i) {
-      tmols.push_back(python::extract<ROMol *>(mols[i])());
-    }
-    std::vector<std::vector<boost::shared_ptr<ReturnType>>> accum(numThreads);
-    {
-      NOGIL gil;
-      std::vector<std::thread> tg;
-      for (auto ti = 0; ti < numThreads; ++ti) {
-        auto lfunc = [&](unsigned int tidx) {
-          for (auto midx = tidx; midx < tmols.size(); midx += numThreads) {
-            accum[tidx].push_back(boost::shared_ptr<ReturnType>(
-                func(*tmols[midx], args).release()));
-          }
-        };
-        tg.emplace_back(std::thread(lfunc, ti));
-      }
-      for (auto &thread : tg) {
-        if (thread.joinable()) {
-          thread.join();
-        }
-      }
-    }
-    python::list result;
-    for (auto midx = 0u; midx < tmols.size(); ++midx) {
-      auto tidx = midx % numThreads;
-      auto jidx = midx / numThreads;
-      result.append(accum[tidx][jidx]);
-    }
-    return python::tuple(result);
-  }
-
-#endif
-}
-#endif
-
 template <typename ReturnType, typename FuncType>
 python::tuple mtgetFingerprints(FuncType func, python::object mols,
                                 int numThreads) {
