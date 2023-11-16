@@ -192,7 +192,6 @@ class MarvinCMLReader {
 
       if (marvinAtom->isotope != 0) {
         res->setIsotope(marvinAtom->isotope);
-        res->setProp(common_properties::_hasMassQuery, true);
       }
 
       // mrvValence and hydrogenCount both set the number of explicit hydrogens

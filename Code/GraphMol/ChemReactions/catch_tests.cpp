@@ -1605,4 +1605,54 @@ TEST_CASE(
     REQUIRE(nrxn);
     CHECK(MolToSmarts(*nrxn->getReactants()[0]) == "[C&$(C([#6])=O):1][O&H1:2]");
   }
+
+
+SECTION("isotopes are weird"){
+  auto rxnb = R"CTAB($RXN V3000
+
+      Mrv2211  111620231722
+
+M  V30 COUNTS 1 1
+M  V30 BEGIN REACTANT
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 6.9035 -10.0923 0 1
+M  V30 2 O 6.9035 -8.5923 0 2 MASS=18
+M  V30 3 Cl 5.6045 -10.8423 0 0
+M  V30 4 C 8.2025 -10.8423 0 4
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 4
+M  V30 2 2 1 2
+M  V30 3 1 1 3
+M  V30 END BOND
+M  V30 END CTAB
+M  V30 END REACTANT
+M  V30 BEGIN PRODUCT
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 22.0416 -9.3829 0 0
+M  V30 2 C 23.3406 -8.6329 0 1
+M  V30 3 O 23.3406 -7.1329 0 2 MASS=18
+M  V30 4 C 24.6396 -9.3829 0 4
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 4
+M  V30 3 2 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  V30 END PRODUCT
+M  END
+)CTAB";
+  std::unique_ptr<ChemicalReaction> rxn{RxnBlockToChemicalReaction(rxnb)};
+  REQUIRE(rxn);
+  CHECK(rxn->getReactants()[0]->getAtomWithIdx(0)->hasQuery());
+  CHECK(rxn->getReactants()[0]->getAtomWithIdx(1)->hasQuery());
+  auto ctab = ChemicalReactionToV3KRxnBlock(*rxn);
+  CHECK(ctab.find("SMARTSQ") == std::string::npos);
+
+}
 }

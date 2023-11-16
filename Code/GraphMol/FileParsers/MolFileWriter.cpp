@@ -1037,6 +1037,19 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
 
 namespace {
 void createSMARTSQSubstanceGroups(ROMol &mol) {
+  auto isRedundantQuery = [](const auto query) {
+    if (query->getDescription() == "AtomAnd" &&
+        (query->endChildren() - query->beginChildren() == 2) &&
+        (*query->beginChildren())->getDescription() == "AtomAtomicNum" &&
+        !(*query->beginChildren())->getNegation() &&
+        !(*(query->beginChildren() + 1))->getNegation() &&
+        ((*(query->beginChildren() + 1))->getDescription() == "AtomIsotope" ||
+         (*(query->beginChildren() + 1))->getDescription() ==
+             "AtomFormalCharge")) {
+      return true;
+    }
+    return false;
+  };
   for (const auto atom : mol.atoms()) {
     if (atom->hasQuery()) {
       std::string sma;
@@ -1050,7 +1063,8 @@ void createSMARTSQSubstanceGroups(ROMol &mol) {
           // we want that.
           !boost::starts_with(atom->getQuery()->getDescription(), "AtomType") &&
           !boost::starts_with(atom->getQuery()->getDescription(),
-                              "AtomAtomicNum")) {
+                              "AtomAtomicNum") &&
+          !isRedundantQuery(atom->getQuery())) {
         sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
       }
       if (!sma.empty()) {
