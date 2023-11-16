@@ -1585,3 +1585,24 @@ TEST_CASE("problematic in-place example from MolStandardize") {
     CHECK(MolToSmiles(*m)=="CN(C)c1cc[nH+]cc1");
   }
 }
+
+TEST_CASE(
+    "github #5819: Support writing detailed SMARTS queries to CTABs using the SMARTSQ mechanism") {
+  SECTION("as reported") {
+    auto rxn = "[C;$(C([#6])=O):1][OH:2]>>[C:1][NH2:2]"_rxnsmarts;
+    REQUIRE(rxn);
+    auto ctab = ChemicalReactionToV3KRxnBlock(*rxn);
+
+    // make sure the templates haven't been modified by that operation
+    CHECK(getSubstanceGroups(*rxn->getReactants()[0]).empty());
+
+    CHECK(ctab.find("SMARTSQ") != std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"[C&$(C([#6])=O):1]\"") != std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"[N&H2:2]\"") != std::string::npos);
+
+    // make sure we can properly parse that
+    std::unique_ptr<ChemicalReaction> nrxn{RxnBlockToChemicalReaction(ctab)};
+    REQUIRE(nrxn);
+    CHECK(MolToSmarts(*nrxn->getReactants()[0]) == "[C&$(C([#6])=O):1][O&H1:2]");
+  }
+}

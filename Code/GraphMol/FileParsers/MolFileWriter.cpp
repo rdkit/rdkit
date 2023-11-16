@@ -1066,12 +1066,12 @@ void createSMARTSQSubstanceGroups(ROMol &mol) {
   }
 }
 }  // namespace
-
+namespace FileParserUtils {
 void moveAdditionalPropertiesToSGroups(RWMol &mol) {
   GenericGroups::convertGenericQueriesToSubstanceGroups(mol);
   createSMARTSQSubstanceGroups(mol);
 }
-
+}  // namespace FileParserUtils
 const std::string GetV3000MolFileBondLine(const Bond *bond,
                                           const INT_MAP_INT &wedgeBonds,
                                           const Conformer *conf) {
@@ -1387,7 +1387,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
       MolOps::assignStereochemistry(trwmol);
     }
 #endif
-  moveAdditionalPropertiesToSGroups(trwmol);
+  FileParserUtils::moveAdditionalPropertiesToSGroups(trwmol);
 
   try {
     return outputMolToMolBlock(trwmol, confId, forceV3000);
