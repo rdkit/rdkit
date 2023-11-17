@@ -38,7 +38,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/Bond.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolFileStereochem.h>
 %}
 
 %template(RWMol_Vect) std::vector< boost::shared_ptr<RDKit::RWMol> >;
@@ -182,10 +182,10 @@ void reapplyMolBlockWedging() {
   RDKit::reapplyMolBlockWedging(*($self));
 }
 void clearMolBlockWedgingInfo() {
-  RDKit::clearMolBlockWedgingInfo(*($self));
+  RDKit::Chirality::clearMolBlockWedgingInfo(*($self));
 }
 void invertMolBlockWedgingInfo() {
-  RDKit::invertMolBlockWedgingInfo(*($self));
+  RDKit::Chirality::invertMolBlockWedgingInfo(*($self));
 }
 void markUnspecifiedStereoAsUnknown(int confId) {
   RDKit::markUnspecifiedStereoAsUnknown(*($self), confId);
