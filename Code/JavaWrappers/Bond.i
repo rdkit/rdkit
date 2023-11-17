@@ -39,7 +39,7 @@
 %{
 #include <RDGeneral/types.h>
 #include <GraphMol/Bond.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolFileStereochem.h>
 %}
 
 %ignore RDKit::Bond::getValenceContrib(const Atom *) const;
