@@ -444,7 +444,7 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
     MolOps::findSSSR(mol);
   }
 
-  auto wedgeBonds = pickBondsToWedge(mol, params);
+  auto wedgeBonds = Chirality::pickBondsToWedge(mol, params);
 
   // loop over the bonds we need to wedge:
   for (const auto &[wbi, waid] : wedgeBonds) {

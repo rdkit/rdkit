@@ -2551,6 +2551,59 @@ bool shouldBeACrossedBond(const Bond *bond) {
 
   return false;  // NOT crossed double bond
 }
+
+// only valid for single or aromatic  bonds
+int BondGetDirCode(const Bond::BondDir dir) {
+  int res = 0;
+  switch (dir) {
+    case Bond::NONE:
+      res = 0;
+      break;
+    case Bond::BEGINWEDGE:
+      res = 1;
+      break;
+    case Bond::BEGINDASH:
+      res = 6;
+      break;
+    case Bond::UNKNOWN:
+      res = 4;
+      break;
+    default:
+      break;
+  }
+  return res;
+}
+
+void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
+                              const Conformer *conf, int &dirCode,
+                              bool &reverse) {
+  PRECONDITION(bond, "");
+  dirCode = 0;
+  reverse = false;
+  Bond::BondDir dir = Bond::NONE;
+  if (bond->canHaveDirection()) {
+    // single bond stereo chemistry
+    dir = Chirality::detail::determineBondWedgeState(bond, wedgeBonds, conf);
+    dirCode = BondGetDirCode(dir);
+    // if this bond needs to be wedged it is possible that this
+    // wedging was determined by a chiral atom at the end of the
+    // bond (instead of at the beginning). In this case we need to
+    // reverse the begin and end atoms for the bond when we write
+    // the mol file
+    if ((dirCode == 1) || (dirCode == 6)) {
+      auto wbi = wedgeBonds.find(bond->getIdx());
+      if (wbi != wedgeBonds.end() &&
+          static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
+        reverse = true;
+      }
+    }
+  } else if (bond->getBondType() == Bond::DOUBLE) {
+    if (Chirality::shouldBeACrossedBond(bond)) {
+      dirCode = 3;
+    }
+  }
+}
+
 }  // namespace Chirality
 
 namespace MolOps {
@@ -3514,5 +3567,6 @@ void removeStereochemistry(ROMol &mol) {
   std::vector<StereoGroup> sgs;
   static_cast<RWMol &>(mol).setStereoGroups(std::move(sgs));
 }
+
 }  // namespace MolOps
 }  // namespace RDKit

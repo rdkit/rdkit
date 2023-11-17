@@ -11,7 +11,7 @@
 #include <list>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/Chirality.h>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/Atropisomers.h>
 #include <Geometry/point.h>
 #include <boost/dynamic_bitset.hpp>

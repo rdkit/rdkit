@@ -13,7 +13,7 @@
 #include <vector>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/Chirality.h>
 #include "SmilesParse.h"

@@ -15,7 +15,7 @@
 #include <GraphMol/new_canon.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/Atropisomers.h>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/utils.h>

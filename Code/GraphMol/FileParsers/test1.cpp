@@ -16,7 +16,7 @@
 #include "FileParsers.h"
 #include "SequenceParsers.h"
 #include "SequenceWriters.h"
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -4912,7 +4912,7 @@ void testMolFileDativeBonds() {
 
   {
     std::string fName = rdbase + "DativeBond2000.mol";
-    RWMol *m = MolFileToMol(fName,false);
+    RWMol *m = MolFileToMol(fName, false);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumBonds() == 5);
     TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);

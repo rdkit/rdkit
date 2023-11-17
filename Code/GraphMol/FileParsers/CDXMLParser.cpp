@@ -18,7 +18,7 @@
 #include <RDGeneral/BadFileException.h>
 #include <fstream>
 #include <sstream>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/FileParseException.h>
 
 using boost::property_tree::ptree;

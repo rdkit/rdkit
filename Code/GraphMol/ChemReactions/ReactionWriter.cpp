@@ -41,7 +41,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Chirality.h>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 
 #include <sstream>
 

@@ -38,7 +38,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/Bond.h>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 %}
 
 %template(RWMol_Vect) std::vector< boost::shared_ptr<RDKit::RWMol> >;

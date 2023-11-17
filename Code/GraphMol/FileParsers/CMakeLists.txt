@@ -7,7 +7,7 @@ rdkit_library(FileParsers
               CDXMLParser.cpp
               Mol2FileParser.cpp MolFileParser.cpp
               MolSGroupParsing.cpp MolSGroupWriting.cpp
-               MolFileWriter.cpp
+              MolFileStereochem.cpp MolFileWriter.cpp
               ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
               SmilesMolSupplier.cpp SmilesWriter.cpp
               TDTMolSupplier.cpp TDTWriter.cpp

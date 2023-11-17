@@ -32,7 +32,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/Atropisomers.h>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Chirality.h>
 
@@ -443,22 +443,22 @@ RWMol *SmilesToMol(const std::string &smiles,
     }
   }
 
-    if (res->hasProp(SmilesParseOps::detail::_needsDetectAtomStereo)) {
-      // we encountered a wedged bond in the CXSMILES,
-      // these need to be handled the same way they were in mol files
-      res->clearProp(SmilesParseOps::detail::_needsDetectAtomStereo);
+  if (res->hasProp(SmilesParseOps::detail::_needsDetectAtomStereo)) {
+    // we encountered a wedged bond in the CXSMILES,
+    // these need to be handled the same way they were in mol files
+    res->clearProp(SmilesParseOps::detail::_needsDetectAtomStereo);
 
     if (conf) {
       MolOps::assignChiralTypesFromBondDirs(*res, conf->getId());
-      }
     }
+  }
 
-    // if we read a 3D conformer, set the stereo:
+  // if we read a 3D conformer, set the stereo:
   // if (res->getNumConformers() && res->getConformer().is3D()) {
   if (!conf && conf3d) {
-      res->updatePropertyCache(false);
+    res->updatePropertyCache(false);
     MolOps::assignChiralTypesFrom3D(*res, conf3d->getId(), true);
-    }
+  }
   if (conf || conf3d) {
     try {
       RDKit::DetectAtropisomerChirality(*res, conf ? conf : conf3d);

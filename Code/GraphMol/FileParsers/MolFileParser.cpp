@@ -18,7 +18,7 @@
 #include "FileParsers.h"
 #include "FileParserUtils.h"
 #include "MolSGroupParsing.h"
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/StereoGroup.h>

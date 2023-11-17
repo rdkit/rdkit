@@ -278,6 +278,20 @@ RDKIT_GRAPHMOL_EXPORT void clearMolBlockWedgingInfo(ROMol &mol);
  */
 RDKIT_GRAPHMOL_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
 
+//! gets stereo info for a bond
+/*!
+ \param bond: bond to check
+ \param wedgeBonds - the list of bonds to have wedges
+ \param conf -  Conformer to use
+ \param dirCode - receives the dircode for the bond
+ \param reverse - receives the reverse flag
+ only returned if it was exlicility set witha wiggle bond
+ */
+
+RDKIT_GRAPHMOL_EXPORT void GetMolFileBondStereoInfo(
+    const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf,
+    int &dirCode, bool &reverse);
+
 }  // namespace Chirality
 }  // namespace RDKit
 #endif

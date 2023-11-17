@@ -7,7 +7,7 @@ rdkit_library(GraphMol
         Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
         Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
         new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
-              NontetrahedralStereo.cpp Atropisomers.cpp MolFileStereochem.cpp
+              NontetrahedralStereo.cpp Atropisomers.cpp
               WedgeBonds.cpp
         SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral ${RDKit_SERIALIZATION_LIBS} )

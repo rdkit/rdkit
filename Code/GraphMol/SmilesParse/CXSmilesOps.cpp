@@ -14,8 +14,9 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/Atropisomers.h>
+#include <GraphMol/Chirality.h>
 
 #include <iostream>
 #include <algorithm>
@@ -2094,7 +2095,7 @@ std::string get_bond_config_block(const ROMol &mol,
       }
     } else {  //  atropisomeronly is FALSE - check for a wedging caused by
               //  chiral atom
-    unsigned int cfg = 0;
+      unsigned int cfg = 0;
       if (bd == Bond::BondDir::NONE &&
           bond->getPropIfPresent(common_properties::_MolFileBondCfg, cfg)) {
         switch (cfg) {
@@ -2110,14 +2111,14 @@ std::string get_bond_config_block(const ROMol &mol,
 
           default:
             bd = Bond::BondDir::NONE;
-    }
+        }
       }
 
       if (bd == Bond::BondDir::NONE && coordsIncluded) {
         int dirCode;
         bool reverse;
-        GetMolFileBondStereoInfo(bond, wedgeBonds, &mol.getConformer(0),
-                                 dirCode, reverse);
+        Chirality::GetMolFileBondStereoInfo(
+            bond, wedgeBonds, &mol.getConformer(0), dirCode, reverse);
         switch (dirCode) {
           case 1:
             bd = Bond::BondDir::BEGINWEDGE;
@@ -2139,7 +2140,7 @@ std::string get_bond_config_block(const ROMol &mol,
 
     auto begAtomOrder =
         std::find(atomOrder.begin(), atomOrder.end(), wedgeStartAtomIdx) -
-                          atomOrder.begin();
+        atomOrder.begin();
 
     std::string wType = "";
     if (bd == Bond::BondDir::UNKNOWN) {
@@ -2156,11 +2157,11 @@ std::string get_bond_config_block(const ROMol &mol,
     if (wType != "") {
       if (wParts.find(wType) == wParts.end()) {
         wParts[wType] = std::vector<std::string>();
-        }
+      }
       wParts[wType].push_back(
           boost::str(boost::format("%d.%d") % begAtomOrder % i));
-        }
-      }
+    }
+  }
   std::string res = "";
 
   for (auto wPart : wParts) {
@@ -2367,7 +2368,7 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   }
 
   if (flags & SmilesWrite::CXSmilesFields::CX_BOND_CFG) {
-    INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
+    INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(mol);
 
     if (mol.getNumConformers()) {
       WedgeBondsFromAtropisomers(mol, &mol.getConformer(), wedgeBonds);

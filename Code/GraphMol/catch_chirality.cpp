@@ -20,7 +20,7 @@
 #include <GraphMol/MolOps.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -1519,7 +1519,7 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
   SECTION("simplest") {
     auto mol = "OC=C[C@H](C1CC1)C2CCC2"_smiles;
     REQUIRE(mol);
-    auto wedgedBonds = pickBondsToWedge(*mol);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 3);
@@ -1530,7 +1530,7 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
     REQUIRE(mol);
     mol->getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
     mol->getBondBetweenAtoms(1, 2)->setStereo(Bond::BondStereo::STEREOCIS);
-    auto wedgedBonds = pickBondsToWedge(*mol);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 3);
@@ -1543,7 +1543,7 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
     mol->getBondBetweenAtoms(1, 2)->setStereo(Bond::BondStereo::STEREOCIS);
     mol->getBondBetweenAtoms(4, 5)->setStereoAtoms(3, 6);
     mol->getBondBetweenAtoms(4, 5)->setStereo(Bond::BondStereo::STEREOANY);
-    auto wedgedBonds = pickBondsToWedge(*mol);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 6);
@@ -2808,13 +2808,13 @@ M  END
 
   SECTION("details: pickBondsWedge()") {
     // this is with aromatic bonds
-    auto bnds = pickBondsToWedge(*m);
+    auto bnds = Chirality::pickBondsToWedge(*m);
     CHECK(bnds.at(3) == 3);
     RWMol cp(*m);
 
     // now try kekulized:
     MolOps::Kekulize(cp);
-    bnds = pickBondsToWedge(cp);
+    bnds = Chirality::pickBondsToWedge(cp);
     CHECK(bnds.at(3) == 3);
   }
 }

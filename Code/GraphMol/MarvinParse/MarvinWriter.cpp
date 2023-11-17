@@ -28,7 +28,7 @@
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSGroupWriting.h>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include "MarvinParser.h"
 #include "MarvinDefs.h"
 
@@ -514,7 +514,7 @@ class MarvinCMLWriter {
         //  atom maps for rxns
       }
 
-      INT_MAP_INT wedgeBonds = pickBondsToWedge(*mol);
+      INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(*mol);
 
       if (conf) {
         WedgeBondsFromAtropisomers(*mol, conf, wedgeBonds);

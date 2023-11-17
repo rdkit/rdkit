@@ -14,7 +14,7 @@
 #include "FileParserUtils.h"
 #include "MolSGroupWriting.h"
 #include <RDGeneral/Invariant.h>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SubstanceGroup.h>
 #include <GraphMol/Chirality.h>
@@ -1097,7 +1097,7 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
   if (tmol.getNumBonds()) {
     res += "M  V30 BEGIN BOND\n";
 
-    INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
+    INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(tmol);
     if (conf) {
       WedgeBondsFromAtropisomers(tmol, conf, wedgeBonds);
     }
@@ -1239,7 +1239,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
       res += "\n";
     }
 
-    INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
+    INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(tmol);
 
     if (conf) {
       WedgeBondsFromAtropisomers(tmol, conf, wedgeBonds);

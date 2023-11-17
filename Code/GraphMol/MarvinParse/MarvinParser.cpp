@@ -21,7 +21,7 @@
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
-#include <GraphMol/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include "MarvinParser.h"
 #include "MarvinDefs.h"
 #include <GraphMol/Conformer.h>
@@ -761,7 +761,7 @@ class MarvinCMLReader {
         for (auto &v : childTree) {
           res->reactants.push_back(std::unique_ptr<MarvinMol>(
               (MarvinMol *)parseMarvinMolecule(v.second)));
-      }
+        }
       }
 
       try {
@@ -774,7 +774,7 @@ class MarvinCMLReader {
         for (auto &v : childTree) {
           res->agents.push_back(std::unique_ptr<MarvinMol>(
               (MarvinMol *)parseMarvinMolecule(v.second)));
-      }
+        }
       }
 
       try {
@@ -787,7 +787,7 @@ class MarvinCMLReader {
         for (auto &v : childTree) {
           res->products.push_back(std::unique_ptr<MarvinMol>(
               (MarvinMol *)parseMarvinMolecule(v.second)));
-      }
+        }
       }
 
       if (parseArrowPlusesAndConditions) {
