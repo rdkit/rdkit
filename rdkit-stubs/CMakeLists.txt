@@ -22,10 +22,4 @@ if(RDK_BUILD_PYTHON_STUBS)
     "endif()\n"
   )
   install(CODE "${RUN_GEN_RDKIT_STUBS_PY}" COMPONENT python)
-else(RDK_BUILD_PYTHON_STUBS)
-  install(DIRECTORY "${CMAKE_SOURCE_DIR_FWDSLASH}/rdkit-stubs"
-    DESTINATION ${PYTHON_INSTDIR}
-    COMPONENT python
-    PATTERN "CMakeLists.txt" EXCLUDE
-  )
 endif(RDK_BUILD_PYTHON_STUBS)
