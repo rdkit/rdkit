@@ -457,11 +457,6 @@ if(RDK_USE_BOOST_SERIALIZATION)
     endif()
 endif()
 
-if(RDK_BUILD_MAEPARSER_SUPPORT AND NOT RDK_USE_BOOST_IOSTREAMS)
-    message("Enabling RDK_USE_BOOST_IOSTREAMS because RDK_BUILD_MAEPARSER_SUPPORT is enabled.")
-    set(RDK_USE_BOOST_IOSTREAMS ON)
-endif()
-
 if(RDK_USE_BOOST_IOSTREAMS)
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_IOSTREAMS)
     find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)

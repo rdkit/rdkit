@@ -379,6 +379,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(lib.CountMatches(pat2), 1)
     print("done")
 
+  @unittest.skipIf(not rdBase._serializationEnabled, "not built with serialization support")
   def test_init_from_and_to_stream(self):
     mols = makeStereoExamples() * 10
     holder = rdSubstructLibrary.CachedSmilesMolHolder()
@@ -685,6 +686,7 @@ class TestCase(unittest.TestCase):
     pylog.setLevel(logging.WARN)
     rdBase.LogToCppStreams()
 
+  @unittest.skipIf(not rdBase._serializationEnabled, "not built with serialization support")
   def test_using_xqms(self):
     smis = ["COCC=O", "COOCC=O", "COOOCC=O", "COOOOCC=O"]
 
