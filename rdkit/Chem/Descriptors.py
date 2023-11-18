@@ -67,8 +67,6 @@ def _setupDescriptors(namespace):
           namespace[name] = thing
           _descList.append((name, thing))
 
-  # add a few by hand
-  _descList.append(('SPS', SpacialScore.SPS))
   descList = _descList
 
 
