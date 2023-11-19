@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 
@@ -307,17 +307,18 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"github6504_2.svg", 2871662880U},
     {"github6569_1.svg", 116573839U},
     {"github6569_2.svg", 2367779037U},
-    {"lasso_highlights_1.svg", 1259621911U},
-    {"lasso_highlights_2.svg", 39607542U},
-    {"lasso_highlights_3.svg", 2744227900U},
-    {"lasso_highlights_4.svg", 307369790U},
-    {"lasso_highlights_5.svg", 1103195299U},
-    {"lasso_highlights_6.svg", 3501858565U},
-    {"lasso_highlights_7.svg", 4002684466U},
+    {"lasso_highlights_1.svg", 689837467U},
+    {"lasso_highlights_2.svg", 348394942U},
+    {"lasso_highlights_3.svg", 2174136207U},
+    {"lasso_highlights_4.svg", 1265047504U},
+    {"lasso_highlights_5.svg", 35778943U},
+    {"lasso_highlights_6.svg", 1359376880U},
+    {"lasso_highlights_7.svg", 773081917U},
     {"testGithub6685_1.svg", 1835717197U},
     {"testGithub6685_2.svg", 116380465U},
     {"testGithub6685_3.svg", 409385402U},
-    {"testGithub6685_4.svg", 1239628830U}};
+    {"testGithub6685_4.svg", 1239628830U},
+    {"bad_lasso_1.svg", 1183031575U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -4061,7 +4062,7 @@ TEST_CASE("changing baseFontSize") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(6.0).margin(0.1));
+    CHECK(drawer.fontSize() == Catch::Approx(6.0).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1a.svg");
     outs << text;
@@ -4075,7 +4076,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(5.5).margin(.1));
+    CHECK(drawer.fontSize() == Catch::Approx(5.5).margin(.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1b.svg");
     outs << text;
@@ -4086,7 +4087,7 @@ TEST_CASE("changing baseFontSize") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(14.0).margin(0.1));
+    CHECK(drawer.fontSize() == Catch::Approx(14.0).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2a.svg");
     outs << text;
@@ -4098,7 +4099,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(20.25).margin(0.1));
+    CHECK(drawer.fontSize() == Catch::Approx(20.25).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2b.svg");
     outs << text;
@@ -4176,7 +4177,7 @@ M  END
     drawer.drawOptions().fixedFontSize = 32;
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(32).margin(0.1));
+    CHECK(drawer.fontSize() == Catch::Approx(32).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testFlexiCanvas.1d.svg");
     outs << text;
@@ -5623,11 +5624,11 @@ M  END
       double dbl = drawnBondLength(regex, text);
       // the bonds should all be 14.4 long, but the SVG is only written
       // to 1 decimal place, so rounding errors are largish.
-      REQUIRE(dbl == Approx(14.4253));
+      REQUIRE(dbl == Catch::Approx(14.4253));
       regex =
           R"(class='bond-1 atom-1 atom-2' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*)')";
       dbl = drawnBondLength(regex, text);
-      REQUIRE(dbl == Approx(14.4));
+      REQUIRE(dbl == Catch::Approx(14.4));
       check_file_hash(nameBase + "12.svg");
     }
 #endif
@@ -5671,7 +5672,7 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   Point2D point3{stod((*cross1Match)[1]), stod((*cross1Match)[2])};
   Point2D point4{stod((*cross1Match)[3]), stod((*cross1Match)[4])};
   auto vec2 = point3.directionVector(point4);
-  REQUIRE(vec1.dotProduct(vec2) != Approx(1.0).margin(1.0e-4));
+  REQUIRE(vec1.dotProduct(vec2) != Catch::Approx(1.0).margin(1.0e-4));
 
   check_file_hash("test_unspec_stereo.svg");
 }
@@ -7416,7 +7417,7 @@ TEST_CASE("Bad double bond - Github 6160") {
     }
     auto vec1 = points[0].directionVector(points[1]);
     auto vec2 = points[2].directionVector(points[3]);
-    CHECK(vec1.dotProduct(vec2) == Approx(1.0).margin(1.0e-4));
+    CHECK(vec1.dotProduct(vec2) == Catch::Approx(1.0).margin(1.0e-4));
     check_file_hash(svgName);
   }
 }
@@ -8692,8 +8693,9 @@ M  END)RXN";
     MolDraw2DSVG drawer(-1, -1);
     auto reactIter = rxn->beginReactantTemplates();
     REQUIRE_THROWS_AS(MolDraw2DUtils::setACS1996Options(
-        drawer.drawOptions(),
-        MolDraw2DUtils::meanBondLength(*(*reactIter)) * 0.7), ValueErrorException);
+                          drawer.drawOptions(),
+                          MolDraw2DUtils::meanBondLength(*(*reactIter)) * 0.7),
+                      ValueErrorException);
   }
 }
 
@@ -9042,4 +9044,96 @@ M  END
     checkImage(text);
     check_file_hash(baseName + "4.svg");
   }
+}
+
+TEST_CASE("Github 6749 : various bad things in the lasso highlighting") {
+  std::string baseName = "bad_lasso_";
+  auto mol =
+      "CCCS(=O)(=O)Nc1ccc(F)c(c1F)C(=O)c2c[nH]c3c2cc(cn3)c4ccc(Cl)cc4"_smiles;
+  REQUIRE(mol);
+
+  auto update_colour_map =
+      [](const std::vector<int> &ats, DrawColour col,
+         std::map<int, std::vector<DrawColour>> &ha_map) -> void {
+    for (auto h : ats) {
+      auto ex = ha_map.find(h);
+      if (ex == ha_map.end()) {
+        std::vector<DrawColour> cvec(1, col);
+        ha_map.insert(make_pair(h, cvec));
+      } else {
+        if (ex->second.end() ==
+            find(ex->second.begin(), ex->second.end(), col)) {
+          ex->second.push_back(col);
+        }
+      }
+    }
+  };
+  auto update_bond_map =
+      [](const std::vector<int> &ats, DrawColour col, const ROMol &mol,
+         std::map<int, std::vector<DrawColour>> &hb_map) -> void {
+    for (auto at1 : ats) {
+      for (auto at2 : ats) {
+        if (at1 > at2) {
+          auto b = mol.getBondBetweenAtoms(at1, at2);
+          if (b) {
+            auto ex = hb_map.find(b->getIdx());
+            if (ex == hb_map.end()) {
+              std::vector<DrawColour> cvec(1, col);
+              hb_map.insert(make_pair(b->getIdx(), cvec));
+            } else {
+              ex->second.push_back(col);
+            }
+          }
+        }
+      }
+    }
+  };
+  std::vector<DrawColour> colours = {
+      DrawColour(1.0, 0.2, 1.0), DrawColour(0.2, 1.0, 1.0),
+      DrawColour(0.8, 0.8, 0.2), DrawColour(0.4, 0.4, 0.2)};
+  std::map<int, std::vector<DrawColour>> ha_map;
+  std::map<int, std::vector<DrawColour>> hb_map;
+  update_colour_map({6, 19, 25}, colours[0], ha_map);
+  update_bond_map({6, 19, 25}, colours[0], *mol, hb_map);
+
+  update_colour_map({25, 4, 5, 11, 14, 16}, colours[1], ha_map);
+  update_bond_map({25, 4, 5, 11, 14, 16}, colours[1], *mol, hb_map);
+
+  update_colour_map({19, 25, 17, 18, 20, 21, 7,  8,  9,  10, 12,
+                     13, 22, 23, 24, 26, 27, 28, 29, 31, 32},
+                    colours[2], ha_map);
+  update_bond_map({19, 25, 17, 18, 20, 21, 7,  8,  9,  10, 12,
+                   13, 22, 23, 24, 26, 27, 28, 29, 31, 32},
+                  colours[2], *mol, hb_map);
+  // If there are duplicate colours in the list, there was a bug where
+  // arcs weren't removed correctly (Github 6749)
+  ha_map[20].push_back(colours[2]);
+  ha_map[21].push_back(colours[2]);
+
+  update_colour_map({7, 8, 9, 10, 12, 13, 26, 27, 28, 29, 31, 32}, colours[3],
+                    ha_map);
+  update_bond_map({7, 8, 9, 10, 12, 13, 26, 27, 28, 29, 31, 32}, colours[3],
+                  *mol, hb_map);
+
+  std::map<int, double> h_rads;
+  std::map<int, int> h_lw_mult;
+  MolDraw2DSVG drawer(600, 400);
+  drawer.drawOptions().multiColourHighlightStyle =
+      RDKit::MultiColourHighlightStyle::LASSO;
+  drawer.drawOptions().fillHighlights = false;
+  drawer.drawMoleculeWithHighlights(*mol, "Bad Lasso", ha_map, hb_map, h_rads,
+                                    h_lw_mult);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs(baseName + "1.svg");
+  outs << text;
+  outs.flush();
+  outs.close();
+  std::regex atom20("<path class='atom-20'");
+  // there should be 3 matches for "class='atom-20'" - the buggy version gave 5
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), atom20),
+                    std::sregex_iterator()));
+  REQUIRE(match_count == 3);
+  check_file_hash(baseName + "1.svg");
 }

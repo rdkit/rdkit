@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -49,7 +49,7 @@ TEST_CASE("Kier kappa2", "[2D]") {
       std::unique_ptr<ROMol> m(SmilesToMol(pr.first));
       REQUIRE(m);
       auto k2 = Descriptors::calcKappa2(*m);
-      CHECK(k2 == Approx(pr.second).epsilon(0.01));
+      CHECK(k2 == Catch::Approx(pr.second).epsilon(0.01));
     }
   }
 }
@@ -110,7 +110,7 @@ TEST_CASE("Kier Phi", "[2D]") {
       std::unique_ptr<ROMol> m(SmilesToMol(pr.first));
       REQUIRE(m);
       auto val = Descriptors::calcPhi(*m);
-      CHECK(val == Approx(pr.second).epsilon(0.01));
+      CHECK(val == Catch::Approx(pr.second).epsilon(0.01));
     }
   }
 }

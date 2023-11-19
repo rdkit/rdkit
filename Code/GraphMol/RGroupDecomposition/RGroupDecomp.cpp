@@ -150,7 +150,7 @@ int RGroupDecomposition::getMatchingCoreInternal(
       } else {
         baseMatches = SubstructMatch(mol, *core.second.matchingMol, sssparams);
       }
-      
+
       tmatches.clear();
       for (const auto &baseMatch : baseMatches) {
         // Match the R Groups
@@ -315,10 +315,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     const bool replaceDummies = false;
     const bool labelByIndex = true;
     const bool requireDummyMatch = false;
-    bool hasCoreDummies = false;
     // TODO see if we need relaceCoreWithMolMatches or can just use rcore->core
-    auto coreCopy =
-        rcore->replaceCoreAtomsWithMolMatches(hasCoreDummies, mol, tmatche);
+    auto coreCopy = rcore->replaceCoreAtomsWithMolMatches(mol, tmatche);
     tMol.reset(replaceCore(mol, *coreCopy, tmatche, replaceDummies,
                            labelByIndex, requireDummyMatch));
 #ifdef VERBOSE
@@ -446,9 +444,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             rcore->numberUserRGroups - numberUserGroupsInMatch;
         CHECK_INVARIANT(numberMissingUserGroups >= 0,
                         "Data error in missing user rgroup count");
-        const auto [extractedCore, hasDummies] =
+        const auto extractedCore =
             rcore->extractCoreFromMolMatch(mol, tmatche, params());
-        hasCoreDummies = hasDummies;
         potentialMatches.emplace_back(core_idx, numberMissingUserGroups, match,
                                       extractedCore);
       }

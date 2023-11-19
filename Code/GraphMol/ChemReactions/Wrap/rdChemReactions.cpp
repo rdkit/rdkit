@@ -942,6 +942,7 @@ of the replacements argument.",
       (python::arg("reaction"), python::arg("separateAgents") = false),
       "construct a string in MDL v3000 rxn format for a ChemicalReaction");
 
+#ifdef RDK_USE_BOOST_IOSTREAMS
   python::def("ReactionFromPNGFile", RDKit::PNGFileToChemicalReaction,
               "construct a ChemicalReaction from metadata in a PNG file",
               python::return_value_policy<python::manage_new_object>());
@@ -962,7 +963,7 @@ of the replacements argument.",
        python::arg("includeSmarts") = false, python::arg("includeRxn") = false),
       "Adds metadata about a reaction to the PNG string passed in."
       "The modified string is returned.");
-
+#endif
   python::def("ReactionFromMolecule", RDKit::RxnMolToChemicalReaction,
               "construct a ChemicalReaction from an molecule if the RXN role "
               "property of the molecule is set",

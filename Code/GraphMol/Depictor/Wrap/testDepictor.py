@@ -12,7 +12,7 @@ import unittest
 import numpy as np
 
 from rdkit import Chem, Geometry, RDConfig
-from rdkit.Chem import rdDepictor, rdMolAlign
+from rdkit.Chem import rdDepictor, rdMolAlign, rdMolTransforms
 from rdkit.Chem.ChemUtils import AlignDepict
 
 
@@ -363,12 +363,15 @@ M  END"""
     orthoMeta = Chem.MolFromSmiles("c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1")
     ortho = Chem.MolFromSmiles("c1ccc(-c2ccccc2-c2ccccc2)cc1")
     meta = Chem.MolFromSmiles("c1ccc(-c2cccc(-c3ccccc3)c2)cc1")
+    para = Chem.MolFromSmiles("c1ccc(-c2ccc(-c3ccccc3)cc2)cc1")
     biphenyl = Chem.MolFromSmiles("c1ccccc1-c1ccccc1")
     phenyl = Chem.MolFromSmiles("c1ccccc1")
 
     atomMap = rdDepictor.GenerateDepictionMatching2DStructure(orthoMeta, templateRef)
     self.assertEqual(orthoMeta.GetNumConformers(), 1)
 
+
+    # test original usage pattern
     for mol in (ortho, meta, biphenyl, phenyl):
       # fails as does not match template
       with self.assertRaises(ValueError):
@@ -384,36 +387,65 @@ M  END"""
       msd /= len(atomMap)
       self.assertAlmostEqual(msd, 0.0)
 
-    # test that using a refPattern with R groups and a reference without works
-    pyridineRef = Chem.MolFromMolBlock("""
+    for alignOnly in (True, False):
+      p = rdDepictor.ConstrainedDepictionParams()
+      p.allowRGroups = True
+      p.alignOnly = alignOnly
+      for mol in (ortho, meta, para, biphenyl, phenyl):
+        # fails as does not match template
+        with self.assertRaises(ValueError):
+          rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef)
+
+        # succeeds with allowRGroups=true
+        atomMap = rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, params=p)
+        self.assertGreater(len(atomMap), 0)
+        self.assertEqual(mol.GetNumConformers(), 1)
+        msd = 0.0
+        for refIdx, molIdx in atomMap:
+          msd += (templateRef.GetConformer().GetAtomPosition(refIdx) -
+                  mol.GetConformer().GetAtomPosition(molIdx)).LengthSq()
+        msd /= len(atomMap)
+        self.assertAlmostEqual(msd, 0.0)
+        if not p.alignOnly:
+          self.assertEqual(atomMap, rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, allowRGroups=True))
+
+      # test that using a refPattern with R groups and a reference without works
+      pyridineRef = Chem.MolFromMolBlock("""
      RDKit          2D
 
-  6  6  0  0  0  0  0  0  0  0999 V2000
-   -0.8929    1.0942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -2.1919    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -2.1919   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.8929   -1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.4060   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.4060    0.3442    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  8  8  0  0  0  0  0  0  0  0999 V2000
+    0.0000    1.5469    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3395    0.7734    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3395   -0.7732    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.5469    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3395   -0.7732    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3395    0.7734    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    3.0938    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -3.0938    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  2  0
   2  3  1  0
   3  4  2  0
   4  5  1  0
   5  6  2  0
   6  1  1  0
+  1  7  1  0
+  4  8  1  0
 M  END""")
-    genericRefPatternWithRGroups = Chem.MolFromSmarts("[*:3]a1a([*:1])aa([*:2])aa1")
+      genericRefPatternWithRGroups = Chem.MolFromSmarts("[*:3]a1a([*:1])aa([*:2])aa1")
 
-    for mol in (ortho, meta, biphenyl, phenyl):
-      atomMap = rdDepictor.GenerateDepictionMatching2DStructure(
-        mol, pyridineRef, refPatt=genericRefPatternWithRGroups, allowRGroups=True)
-      self.assertEqual(mol.GetNumConformers(), 1)
-      msd = 0.0
-      for refIdx, molIdx in atomMap:
-        msd += (pyridineRef.GetConformer().GetAtomPosition(refIdx) -
-                mol.GetConformer().GetAtomPosition(molIdx)).LengthSq()
-      msd /= len(atomMap)
-      self.assertAlmostEqual(msd, 0.0)
+      for numExpectedMatches, mol in (
+        (8, orthoMeta), (7, ortho), (7, meta), (8, para), (7, biphenyl), (6, phenyl)
+      ):
+        atomMap = rdDepictor.GenerateDepictionMatching2DStructure(
+          mol, pyridineRef, -1, genericRefPatternWithRGroups, p)
+        self.assertEqual(len(atomMap), numExpectedMatches)
+        self.assertEqual(mol.GetNumConformers(), 1)
+        msd = 0.0
+        for refIdx, molIdx in atomMap:
+          msd += (pyridineRef.GetConformer().GetAtomPosition(refIdx) -
+                  mol.GetConformer().GetAtomPosition(molIdx)).LengthSq()
+        msd /= len(atomMap)
+        self.assertLess(msd, 5.e-3 if alignOnly else 1.e-4)
 
   def testNormalizeStraighten(self):
     noradrenalineMJ = Chem.MolFromMolBlock("""
@@ -798,6 +830,218 @@ M  END)""")
     # set back to default ring system templates
     rdDepictor.LoadDefaultRingSystemTemplates()
 
+  def testGenerateAlignedCoordsAcceptFailure(self):
+    template_ref_molblock = """
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+   -0.8929    1.0942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8929   -1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910    1.0942    0.0000 R1  0  0  0  0  0  0  0  0  0  0  0  0
+    1.7051    1.0942    0.0000 R2  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910   -1.9059    0.0000 R3  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  6  8  1  0
+  3  9  1  0
+  2  7  1  0
+M  RGP  3   7   1   8   2   9   3
+M  END
+"""
+    template_ref = Chem.MolFromMolBlock(template_ref_molblock)
+    mol_molblock = """
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+   -0.8929    1.0942    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8929   -1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910    1.0942    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7051    1.0942    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910   -1.9059    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  6  8  1  0
+  3  9  1  0
+  2  7  1  0
+M  END
+"""
+    mol = Chem.MolFromMolBlock(mol_molblock)
+    self.assertRaises(ValueError, lambda: rdDepictor.GenerateDepictionMatching2DStructure(mol, template_ref,
+      -1, None, False, False, True))
+    self.assertEqual(Chem.MolToMolBlock(mol), mol_molblock)
+    self.assertEqual(len(rdDepictor.GenerateDepictionMatching2DStructure(mol, template_ref,
+      -1, None, True, False, True)), 0)
+    self.assertNotEqual(Chem.MolToMolBlock(mol), mol_molblock)
+    mol.RemoveAllConformers()
+    p = rdDepictor.ConstrainedDepictionParams()
+    p.allowRGroups = True
+    p.acceptFailure = False
+    self.assertEqual(mol.GetNumConformers(), 0)
+    self.assertRaises(ValueError, lambda: rdDepictor.GenerateDepictionMatching2DStructure(mol, template_ref,
+      -1, None, p))
+    self.assertEqual(mol.GetNumConformers(), 0)
+    mol.RemoveAllConformers()
+    p = rdDepictor.ConstrainedDepictionParams()
+    p.allowRGroups = True
+    p.acceptFailure = True
+    self.assertEqual(mol.GetNumConformers(), 0)
+    self.assertEqual(len(rdDepictor.GenerateDepictionMatching2DStructure(mol, template_ref,
+      -1, None, p)), 0)
+    self.assertEqual(mol.GetNumConformers(), 1)
+
+  def testGenerateAlignedCoordsAlignOnly(self):
+    template_ref_molblock = """
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+  -13.7477    6.3036    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  -13.7477    4.7567    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.6540    3.6628    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.7477    2.5691    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.8414    3.6628    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  -11.1071    3.6628    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  2  5  1  0
+  3  6  1  0
+M  RGP  2   1   1   6   2
+M  END
+"""
+    template_ref = Chem.MolFromMolBlock(template_ref_molblock)
+    mol_molblock = """
+     RDKit          2D
+
+ 18 22  0  0  0  0  0  0  0  0999 V2000
+    4.3922   -1.5699    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9211   -2.0479    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5995   -0.5349    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3731    0.8046    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.8441    1.2825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0704   -0.0568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8666    0.7748    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7736   -0.3197    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7749   -1.8666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7718   -1.8679    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7731   -0.3208    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8679    0.7718    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0718   -0.0598    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3933   -1.5729    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9222   -2.0509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6008   -0.5379    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3744    0.8016    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.8454    1.2795    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  9 10  1  0
+ 11 10  1  0
+ 11  8  1  0
+  8  9  1  0
+  4  5  1  0
+  6  5  1  0
+  7  6  1  0
+  3  4  1  0
+  3  7  1  0
+  1  6  1  0
+  2  3  1  0
+  2  1  1  0
+ 17 18  1  0
+ 13 18  1  0
+ 12 13  1  0
+ 16 17  1  0
+ 16 12  1  0
+ 14 13  1  0
+ 15 16  1  0
+ 15 14  1  0
+ 12 11  1  0
+  8  7  1  0
+M  END
+"""
+    mol = Chem.MolFromMolBlock(mol_molblock)
+    bondLength11_12 = rdMolTransforms.GetBondLength(mol.GetConformer(), 11, 12)
+    bondLength5_6 = rdMolTransforms.GetBondLength(mol.GetConformer(), 5, 6)
+    self.assertLess(abs(bondLength11_12 - bondLength5_6), 1.e-4)
+    self.assertGreater(bondLength11_12, 2.3)
+    #for alignOnly in (False, True):
+    for alignOnly in (True,):
+      mol = Chem.MolFromMolBlock(mol_molblock)
+      p = rdDepictor.ConstrainedDepictionParams()
+      p.allowRGroups = True
+      p.alignOnly = alignOnly
+      res = rdDepictor.GenerateDepictionMatching2DStructure(mol, template_ref, params=p)
+      expectedMolIndices = [11, 10, 7, 8, 9, 6]
+      self.assertTrue(all(templateRefAtomIdx == i and molAtomIdx == expectedMolIndices[i]
+                          for i, (templateRefAtomIdx, molAtomIdx) in enumerate(res)))
+      self.assertEqual(Chem.MolToSmiles(mol), "C1CC2CCC1N2C1CNC1N1C2CCC1CC2")
+      self.assertTrue(all((mol.GetConformer().GetAtomPosition(molAtomIdx)
+                           - template_ref.GetConformer().GetAtomPosition(templateRefAtomIdx)).LengthSq() < 1.e-4
+                           for templateRefAtomIdx, molAtomIdx in res))
+      bondLengthAli11_12 = rdMolTransforms.GetBondLength(mol.GetConformer(), 11, 12)
+      bondLengthAli5_6 = rdMolTransforms.GetBondLength(mol.GetConformer(), 5, 6)
+      self.assertLess(abs(bondLengthAli11_12 - bondLengthAli5_6), 1.e-4)
+      if alignOnly:
+        self.assertGreater(bondLengthAli11_12, 2.3)
+      else:
+        self.assertLess(bondLengthAli11_12, 1.6)
+
+  def testRGroupMatchHeavyHydroNoneCharged(self):
+    templateRef = Chem.MolFromMolBlock("""
+  MJ201100                      
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -0.5804    1.2045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2948    0.7920    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2948   -0.0330    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5804   -0.4455    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1340   -0.0330    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1340    0.7920    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8485   -0.4455    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  6  1  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  5  7  1  0  0  0  0
+M  RGP  1   7   1
+M  END
+""")
+    p = rdDepictor.ConstrainedDepictionParams()
+    p.allowRGroups = True
+    for alignOnly in (True, False):
+      p.alignOnly = alignOnly
+      mol = Chem.MolFromSmiles("Cc1ccccc1")
+      self.assertEqual(mol.GetNumAtoms(), 7)
+      self.assertEqual(len(rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, params=p)), 7)
+      mol = Chem.MolFromSmiles("c1ccccc1")
+      self.assertEqual(mol.GetNumAtoms(), 6)
+      self.assertEqual(len(rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, params=p)), 6)
+      smilesParams = Chem.SmilesParserParams()
+      smilesParams.removeHs = False
+      mol = Chem.MolFromSmiles("[H]c1ccccc1", smilesParams)
+      self.assertEqual(mol.GetNumAtoms(), 7)
+      self.assertEqual(len(rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, params=p)), 7)
+      mol = Chem.MolFromSmiles("n1ccccc1")
+      self.assertEqual(mol.GetNumAtoms(), 6)
+      self.assertEqual(len(rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, params=p)), 6)
+      mol = Chem.MolFromSmiles("C[n+]1ccccc1")
+      self.assertEqual(mol.GetNumAtoms(), 7)
+      self.assertEqual(len(rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, params=p)), 7)
 
 if __name__ == '__main__':
   unittest.main()

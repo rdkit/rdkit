@@ -476,13 +476,11 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
       field->fixedPoints().push_back(v.first);
     }
   }
-  unsigned int nPasses = 0;
   field->initialize();
   if (field->calcEnergy() > ERROR_TOL) {
     int needMore = 1;
     while (needMore) {
       needMore = field->minimize(400, embedParams.optimizerForceTol);
-      ++nPasses;
     }
   }
   std::vector<double> e_contribs;
@@ -577,13 +575,9 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
   // std::cerr<<"FIELD2 E: "<<field2->calcEnergy()<<std::endl;
   if (field2->calcEnergy() > ERROR_TOL) {
     int needMore = 1;
-    int nPasses2 = 0;
     while (needMore) {
       needMore = field2->minimize(200, embedParams.optimizerForceTol);
-      ++nPasses2;
     }
-    // std::cerr<<"   "<<field2->calcEnergy()<<" after npasses2:
-    // "<<nPasses2<<std::endl;
   }
   return true;
 }

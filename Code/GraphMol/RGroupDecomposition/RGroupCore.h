@@ -53,13 +53,12 @@ struct RCore {
   // the respective matching atom in mol, while other atoms have
   // their aromatic flag and formal charge copied from
   // the respective matching atom in mol
-  ROMOL_SPTR replaceCoreAtomsWithMolMatches(bool &hasCoreDummies,
-                                            const ROMol &mol,
+  ROMOL_SPTR replaceCoreAtomsWithMolMatches(const ROMol &mol,
                                             const MatchVectType &match) const;
 
   // Final core returned to user, created by extracting core from target
   // molecule
-  std::pair<RWMOL_SPTR, bool> extractCoreFromMolMatch(
+  RWMOL_SPTR extractCoreFromMolMatch(
       const ROMol &mol, const MatchVectType &match,
       const RGroupDecompositionParameters &params) const;
 

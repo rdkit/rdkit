@@ -55,6 +55,7 @@ class TestCase(unittest.TestCase):
           if omol.GetBondBetweenAtoms(aid1, aid2):
             self.assertIsNotNone(mol.GetBondBetweenAtoms(aid1, aid2))
 
+  @unittest.skipUnless(rdDetermineBonds.hueckelEnabled(), "YAeHMOP support not enabled")
   def testHueckelConnectivity(self):
     testDir = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DetermineBonds', 'test_data',
                            'connectivity')

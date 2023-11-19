@@ -37,6 +37,7 @@ Reading single molecules
   IPythonConsole.UninstallIPythonRenderer()
   from rdkit.Chem import rdDepictor
   rdDepictor.SetPreferCoordGen(False)
+  
 
 The majority of the basic molecular functionality is found in module :py:mod:`rdkit.Chem`:
 
@@ -401,7 +402,7 @@ An SDWriter can also be initialized using a file-like object:
 
 .. doctest::
 
-  >>> from rdkit.six import StringIO
+  >>> from io import StringIO
   >>> sio = StringIO()
   >>> with Chem.SDWriter(sio) as w:
   ...   for m in mols: 
@@ -1042,6 +1043,7 @@ metadata about the molecule(s) or chemical reaction included in the drawing.
 This metadata can be used later to reconstruct the molecule(s) or reaction.
 
 .. doctest::
+  :skipif: not hasattr(Chem,'MolFromPNGString')
 
   >>> template = Chem.MolFromSmiles('c1nccc2n1ccc2')
   >>> AllChem.Compute2DCoords(template)
@@ -1065,6 +1067,7 @@ If the PNG contains multiple molecules we can retrieve them all at once using
 `Chem.MolsFromPNGString()`:
 
 .. doctest::
+  :skipif: not hasattr(Chem,'MolsFromPNGString')
 
   >>> from rdkit.Chem import Draw
   >>> png = Draw.MolsToGridImage(ms,returnPNG=True)
@@ -1553,7 +1556,7 @@ requirement.
   >>> rdFMCS.FindMCS(mols).smartsString
   '[#6]1-[#6]-[#6](-[#6]-1-[#6])-[#6]'
   >>> rdFMCS.FindMCS(mols, ringMatchesRingOnly=True).smartsString
-  '[#6&R]1-&@[#6&R]-&@[#6&R](-&@[#6&R]-&@1)-&@[#6&R]'
+  '[#6]1-&@[#6]-&@[#6](-&@[#6]-&@1)-&@[#6&R]'
   >>> rdFMCS.FindMCS(mols, completeRingsOnly=True).smartsString
   '[#6]1-&@[#6]-&@[#6]-&@[#6]-&@1'
 
@@ -2538,6 +2541,7 @@ As of the 2020.09 release, PNG images of reactions include metadata allowing the
 reaction to be reconstructed:
 
 .. doctest::
+  :skipif: not hasattr(AllChem,'ReactionFromPNGString')
 
   >>> newRxn = AllChem.ReactionFromPNGString(png)
   >>> AllChem.ReactionToSmarts(newRxn)

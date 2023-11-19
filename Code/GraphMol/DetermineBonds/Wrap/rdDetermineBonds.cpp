@@ -37,6 +37,13 @@ void determineBondsHelper(ROMol &mol, bool useHueckel, int charge,
   determineBonds(wmol, useHueckel, charge, covFactor, allowChargedFragments,
                  embedChiral, useAtomMap, useVdw);
 }
+bool hueckelSupportEnabled() {
+#ifdef RDK_BUILD_YAEHMOP_SUPPORT
+  return true;
+#else
+  return false;
+#endif
+}
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdDetermineBonds) {
@@ -122,4 +129,6 @@ Args:
        python::arg("embedChiral") = true, python::arg("useAtomMap") = false,
        python::arg("useVdw") = false),
       docs.c_str());
+  python::def("hueckelEnabled", &hueckelSupportEnabled,
+              "whether or not the RDKit was compiled with YAeHMOP support");
 }

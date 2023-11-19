@@ -8,7 +8,7 @@
 //
 
 #include <RDGeneral/test.h>
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
@@ -173,7 +173,7 @@ TEST_CASE("update parameters from JSON") {
       auto conf = mol->getConformer();
       auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
       auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
-      CHECK(v1.angleTo(v2) == Approx(M_PI / 2).margin(0.15));
+      CHECK(v1.angleTo(v2) == Catch::Approx(M_PI / 2).margin(0.15));
     }
   }
 }

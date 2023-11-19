@@ -1,4 +1,36 @@
-# Release_2023.09.1b1
+# Release_2024.03.1
+(Changes relative to Release_2023.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+## Highlights
+
+## Backwards incompatible changes
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+
+## Cleanup work:
+
+## Code removed in this release:
+- The python implementations of MolStandardize has been removed.
+  Please use the implementation in `rdkit.Chem.MolStandardize.rdMolStandardize` instead.
+- The rdkit.six module, a leftover from the days when we supported both python 2
+  and python 3, has been removed
+- The RDKit implementation of standard machine learning algorithms has been
+  removed. The affected packages include: rdkit.ML.Composite, rdkit.ML.DecTree,
+  rdkit.ML.KNN, rdkit.ML.ModelPackage, rdkit.ML.NaiveBayes, rdkit.ML.Neural
+  rdkit.ML.{Analyze,Screen,Grow,Build}Composite, rdkit.ML.CompositeRun,
+  rdkit.ML.EnrichPlot
+
+## Deprecated code (to be removed in a future release):
+
+
+# Release_2023.09.1
 (Changes relative to Release_2023.03.1)
 
 ## Acknowledgements
@@ -9,13 +41,20 @@ GitHub)
 Jason Biggs, Jonathan Bisson, David Cosgrove, Andrew Dalke, Christian W.
 Feldmann, Eloy Félix, Richard Gowers, Tadd Hurst, Gareth Jones, Eisuke
 Kawashima, Brian Kelley, Joos Kiener, Juuso Lehtivarjo, John Mayfield, Vedran
-Miletić, Jeremy Monat, Dan Nealschneider, Timothy Ngotiaoco, Axel Pahl, Ricardo
-Rodriguez-Schmidt, Ernst-Georg Schmid, Paolo Tosco, Ivan Tubert-Brohman,
-Riccardo Vianello, Rachel Walker, Maciej Wójcikowski, pierred5, lhyuen,
-paconius, BartlomiejF, thomp-j, wangyingxie, teltim, Meteor-han, abefrandsen, 
+Miletić, Jeremy Monat, Dan Nealschneider, Timothy Ngotiaoco, Axel Pahl, Rachael
+Pirie, Ricardo Rodriguez-Schmidt, Ernst-Georg Schmid, Paolo Tosco, Ivan
+Tubert-Brohman, Riccardo Vianello, Rachel Walker, Maciej Wójcikowski, pierred5,
+lhyuen, paconius, BartlomiejF, thomp-j, wangyingxie, teltim, Meteor-han,
+abefrandsen, 
 
 ## Highlights
-to be completed
+- The new RascalMCES code adds a very fast maximum common substructure
+  implementation for pairs of molecules.
+- The RDKit core now supports "generalized substructure searching", making it
+  easier to take link nodes, variable attachment points, and tautomer queries
+  into account when doing substructure searches. This is now also supported in
+  the PostgreSQL cartridge.
+- The RDKit now has support for reading and writing MRV files.
 
 ## Backwards incompatible changes
 - The CDXML parser now returns mols with reasonable coordinates and in
@@ -58,6 +97,8 @@ to True.
 - The algorithm for perception of atomic stereochemistry from 2D structures has
 been rewritten. The new algorithm is more accurate, which results in some
 differences in perceived stereo between this release and the previous ones.
+- Information about stereo groups is no longer used in the SMILES
+canonicalization process if CXSMILES are not being generated.
 
 ## New Features and Enhancements:
   - Mols matrix to grid image
@@ -132,8 +173,12 @@ differences in perceived stereo between this release and the previous ones.
  (github pull #6700 from greglandrum)
   - Add hasQueryHs
  (github pull #6702 from bp-kelley)
+  - Exporting to mol marks imine bonds EITHERDOUBLE when imine H is implicit
+ (github issue #6703 from ricrogz) 
   - Use the connect-the-dots algorithm by default in DetermineBonds
  (github pull #6740 from greglandrum)
+  - Add function to calculate all 3D descriptors
+ (github pull #6741 from RPirie96)
   - Add SpacialScore
  (github pull #6742 from apahl)
   - Extract the core matching logic into a separate function
@@ -215,6 +260,8 @@ differences in perceived stereo between this release and the previous ones.
  (github pull #6473 from greglandrum)
   - Fix RWMol::addAtom docstring
  (github pull #6477 from d-b-w)
+  - StereoGroup information should not impact canonicalization when CXSMILES isn't being generated
+ (github issue #6479 from greglandrum)
   - Fix a few broken docstrings
  (github pull #6480 from ptosco)
   - pin numpy to 1.24.3
@@ -281,6 +328,8 @@ differences in perceived stereo between this release and the previous ones.
  (github pull #6730 from johnmay)
   - ConnectTheDots can segfault if all atoms do not have residue info
  (github issue #6756 from jasondbiggs)
+  - _moltoimg() should honor drawOptions.prepareMolsBeforeDrawing
+ (github issue #6792 from ptosco)
 
 ## Cleanup work:
  - adjustQueryProperties cleanup

@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <utility>
 
@@ -24,7 +24,8 @@ using namespace RDKit;
 
 using matchCase = std::tuple<std::string, std::string, bool, bool>;
 
-class _IsSubstructOf : public Catch::MatcherBase<const std::string &> {
+class _IsSubstructOf
+    : public Catch::Matchers::MatcherBase<const std::string &> {
   ROMol const *m_query;
   std::string m_description;
   SubstructMatchParameters m_ps;

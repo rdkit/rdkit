@@ -11,7 +11,7 @@ steps:
         libboost=$(boost_version) ^
         cairo eigen
     call activate rdkit_build
-    conda install -c conda-forge cmake
+    conda install -c conda-forge cmake pytest nbval
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=

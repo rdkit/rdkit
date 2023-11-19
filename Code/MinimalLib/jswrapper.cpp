@@ -180,6 +180,10 @@ JSMol *get_mol_no_details(const std::string &input) {
 }
 
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
+std::string get_mcs_as_json_no_details(const JSMolList &mols) {
+  return get_mcs_as_json(mols, std::string());
+}
+
 JSMol *get_mcs_as_mol_no_details(const JSMolList &mols) {
   return get_mcs_as_mol(mols, std::string());
 }
@@ -668,6 +672,8 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   function("get_rxn", &get_rxn_no_details, allow_raw_pointers());
 #endif
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
+  function("get_mcs_as_json", &get_mcs_as_json);
+  function("get_mcs_as_json", &get_mcs_as_json_no_details);
   function("get_mcs_as_mol", &get_mcs_as_mol, allow_raw_pointers());
   function("get_mcs_as_mol", &get_mcs_as_mol_no_details, allow_raw_pointers());
   function("get_mcs_as_smarts", &get_mcs_as_smarts);

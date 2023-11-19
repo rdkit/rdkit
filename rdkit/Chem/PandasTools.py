@@ -33,8 +33,9 @@ Importing pandasTools enables several features that allow for using RDKit molecu
 Pandas dataframe.
 If the dataframe is containing a molecule format in a column (e.g. smiles), like in this example:
 
->>> from rdkit.Chem import PandasTools
 >>> import pandas as pd
+>>> from rdkit.Chem import PandasTools
+>>> PandasTools.InstallPandasTools() # <- only necessary during testing, you don't need to do this
 >>> import os
 >>> from rdkit import RDConfig
 >>> antibiotics = pd.DataFrame(columns=['Name','Smiles'])
@@ -66,7 +67,7 @@ because the ">=" operator has been modified to work as a substructure check.
 Such the antibiotics containing the beta-lactam ring "C1C(=O)NC1" can be obtained by
 
 >>> beta_lactam = Chem.MolFromSmiles('C1C(=O)NC1')
->>> beta_lactam_antibiotics = antibiotics[antibiotics['Molecule'] >= beta_lactam]
+>>> beta_lactam_antibiotics = antibiotics[antibiotics['Molecule'] >= beta_lactam] 
 >>> print(beta_lactam_antibiotics[['Name','Smiles']])
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
@@ -112,7 +113,7 @@ The standard ForwardSDMolSupplier keywords are also available:
 
 Conversion to html is quite easy:
 
->>> htm = frame.to_html() # doctest:
+>>> htm = frame.to_html()
 ...
 >>> str(htm[:36])
 '<table border="1" class="dataframe">'
@@ -543,7 +544,8 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300), formats=N
       if col_idx in molCol_indices:
         image_data = BytesIO()
         m = row[col]
-        img = Draw.MolToImage(m if isinstance(m, Chem.Mol) else Chem.Mol(), size=size, options=drawOptions)
+        img = Draw.MolToImage(m if isinstance(m, Chem.Mol) else Chem.Mol(), size=size,
+                              options=drawOptions)
         img.save(image_data, format='PNG')
         worksheet.insert_image(row_idx_actual, col_idx, "f", {'image_data': image_data})
         worksheet.set_column(col_idx, col_idx,
@@ -648,12 +650,32 @@ def _runDoctests(verbose=None):  # pragma: nocover
 
 InstallPandasTools()
 
+try:
+  import xlsxwriter
+except ImportError:
+  xlsxwriter = None
+import unittest
+
+
+class TestCase(unittest.TestCase):
+
+  @unittest.skipIf(xlsxwriter is None or pd is None, 'pandas/xlsxwriter not installed')
+  def testGithub1507(self):
+    import os
+    from rdkit import RDConfig
+    sdfFile = os.path.join(RDConfig.RDDataDir, 'NCI/first_200.props.sdf')
+    frame = LoadSDF(sdfFile)
+    SaveXlsxFromFrame(frame, 'foo.xlsx', formats={'write_string': {'text_wrap': True}})
+
+  @unittest.skipIf(pd is None, 'pandas not installed')
+  def testGithub3701(self):
+    ' problem with update to pandas v1.2.0 '
+    df = pd.DataFrame({"name": ["ethanol", "furan"], "smiles": ["CCO", "c1ccoc1"]})
+    AddMoleculeColumnToFrame(df, 'smiles', 'molecule')
+    self.assertEqual(len(df.molecule), 2)
+
+
 if __name__ == '__main__':  # pragma: nocover
-  import unittest
-  try:
-    import xlsxwriter
-  except ImportError:
-    xlsxwriter = None
   try:
     import pandas as pd
 

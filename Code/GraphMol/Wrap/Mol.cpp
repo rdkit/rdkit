@@ -325,6 +325,9 @@ struct mol_wrapper {
         .def_readwrite("maxMatches",
                        &RDKit::SubstructMatchParameters::maxMatches,
                        "maximum number of matches to return")
+        .def_readwrite("maxRecursiveMatches",
+                       &RDKit::SubstructMatchParameters::maxRecursiveMatches,
+                       "maximum number of recursive matches to find")
         .def_readwrite(
             "numThreads", &RDKit::SubstructMatchParameters::numThreads,
             "number of threads to use when multi-threading is possible."

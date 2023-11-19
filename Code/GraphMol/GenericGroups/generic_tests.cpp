@@ -10,7 +10,7 @@
 // Tests of handling generics in substructure searching
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <tuple>
 #include <utility>
@@ -24,7 +24,7 @@
 
 using namespace RDKit;
 
-class _IsSubstructOf : public Catch::MatcherBase<const ROMol &> {
+class _IsSubstructOf : public Catch::Matchers::MatcherBase<const ROMol &> {
   ROMol const *m_mol;
   SubstructMatchParameters m_ps;
   unsigned m_count;
@@ -745,7 +745,6 @@ TEST_CASE("group with ring or H", "[substructure][generics]") {
     runTest("GH*", tests);
   }
 }
-
 
 TEST_CASE("from mol blocks using atom labels") {
   SECTION("basics") {
