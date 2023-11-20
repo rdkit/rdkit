@@ -8489,7 +8489,7 @@ M  END)CTAB"_ctab;
     outs.close();
     check_file_hash(baseName + "6.svg");
   }
-#if 0
+#if 1
   {
     // Bug with different radii in lassos.
     auto m = R"CTAB(
@@ -8828,7 +8828,7 @@ M  END)CTAB"_ctab;
     //    check_file_hash(baseName + "5.svg");
   }
 #endif
-#if 0
+#if 1
   {
     // Overlapping circles 2
     auto m = R"CTAB(

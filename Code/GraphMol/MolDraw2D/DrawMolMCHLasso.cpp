@@ -52,9 +52,9 @@ void DrawMolMCHLasso::extractMCHighlights() {
   extractAtomColourLists(colours, colourAtoms, colourLists);
   for (const auto &colourList : colourLists) {
     for (size_t i = 0U; i < colourList.size(); ++i) {
-      if (i != 2) {
-        continue;
-      }
+      //      if (i != 2) {
+      //        continue;
+      //      }
       drawLasso(i, colours[colourList[i]], colourAtoms[colourList[i]]);
     }
   }
@@ -161,7 +161,7 @@ void DrawMolMCHLasso::drawLasso(size_t lassoNum, const RDKit::DrawColour &col,
   //  fixIntersectingArcsAndLines(arcs, lines);
   //  fixProtrudingLines(lines);
   //  fixOrphanLines(arcs, lines);
-  addSingletonArcs(colAtoms, lassoNum, col, lines, arcs);
+  addNoLineArcs(colAtoms, lassoNum, col, lines, arcs);
 
   for (auto &it : arcs) {
     highlights_.push_back(std::move(it));
@@ -336,54 +336,10 @@ void adjustArcEndsIfNotInside(std::vector<DrawShapeArc *> arcs, size_t a1,
     arc1.ang1_ = ang2;
   }
 }
-
-void adjustArcEnds(std::vector<DrawShapeArc *> arcs, size_t a1, size_t a2) {
-  DrawShapeArc &arc1 = *arcs[a1];
-  DrawShapeArc &arc2 = *arcs[a2];
-  // if the radii are the same, the intersection points are where
-  // the perpendicular at the mid-point intersects with either arcs.
-  Point2D mid = (arc1.points_[0] + arc2.points_[0]) / 2.0;
-  auto perp = calcPerpendicular(arc1.points_[0], arc2.points_[0]);
-  Point2D perpEnd1 = mid + perp * 2.0 * arc1.points_[1].x;
-  adjustLineEndForEllipse(arc1.points_[0], arc1.points_[1].x, arc1.points_[1].x,
-                          mid, perpEnd1);
-  //  std::cout << "mid : " << mid << "  perpEnd1 : " << perpEnd1 << " : "
-  //            << (arc1.points_[0] - perpEnd1).length() << " and "
-  //            << (arc2.points_[0] - perpEnd1).length() << std::endl;
-  auto perpEnd2 = mid - perp * (mid - perpEnd1).length();
-  //  std::cout << "mid : " << mid << "  perpEnd2 : " << perpEnd2 << " : "
-  //            << (arc1.points_[0] - perpEnd2).length() << " and "
-  //            << (arc2.points_[0] - perpEnd2).length() << std::endl;
-  double ang1, ang2, bang;
-  bool swapped;
-  calcSubtendedAngles(perpEnd1, perpEnd2, arc1.points_[0], arc2.points_[0],
-                      ang1, ang2, bang, swapped);
-  std::cout << "arc " << arc1.atom1_ << " currently : " << arc1.ang1_ << " to "
-            << arc1.ang2_ << "  new ones are " << ang1 << " to " << ang2
-            << std::endl;
-  if (arc1.ang1_ == 0.0 && arc1.ang2_ == 360) {
-    adjustArcEndsIfNotInside(arcs, a1, a2, ang1, ang2);
-  } else {
-    std::cout << "AWOOGA : " << arc1.ang1_ << ", " << arc1.ang2_ << ", " << ang1
-              << ", " << ang2 << std::endl;
-  }
-  std::cout << "arc " << arc2.atom1_ << " currently : " << arc2.ang1_ << " to "
-            << arc2.ang2_ << "  new ones are " << ang1 << " to " << ang2
-            << std::endl;
-  calcSubtendedAngles(perpEnd1, perpEnd2, arc2.points_[0], arc1.points_[0],
-                      ang1, ang2, bang, swapped);
-  if (arc2.ang1_ == 0.0 && arc2.ang2_ == 360) {
-    adjustArcEndsIfNotInside(arcs, a2, a1, ang1, ang2);
-  } else {
-    std::cout << "AWOOGA : " << arc2.ang1_ << ", " << arc2.ang2_ << ", " << ang1
-              << ", " << ang2 << std::endl;
-  }
-}
-
 }  // namespace
 
 // ****************************************************************************
-void DrawMolMCHLasso::addSingletonArcs(
+void DrawMolMCHLasso::addNoLineArcs(
     const std::vector<int> &colAtoms, size_t lassoNum,
     const RDKit::DrawColour &col,
     const std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines,
@@ -398,42 +354,180 @@ void DrawMolMCHLasso::addSingletonArcs(
     inLines.set(l->atom2_);
   }
   std::vector<DrawShapeArc *> newArcs;
-  for (size_t i = 0; i != inColAtoms.size(); ++i) {
+  std::vector<std::vector<unsigned int>> intersects(
+      drawMol_->getNumAtoms(), std::vector<unsigned int>());
+  for (unsigned int i = 0; i < drawMol_->getNumAtoms(); ++i) {
     if (inColAtoms[i] && !inLines[i]) {
-      std::cout << "singleton arcs : " << i << std::endl;
-      auto rad = getLassoWidth(this, i, lassoNum);
-      std::vector<Point2D> pts{atCds_[i], Point2D{rad, rad}};
-      DrawShapeArc *arc = new DrawShapeArc(pts, 0.0, 360.0, LINE_WIDTH,
-                                           SCALE_LINE_WIDTH, col, false, i);
-      newArcs.push_back(arc);
+      intersects[i].push_back(i);
     }
   }
-  std::cout << "have " << newArcs.size() << " new arcs" << std::endl;
-  if (newArcs.empty()) {
-    return;
-  }
-  for (size_t i = 0; i < newArcs.size() - 1; ++i) {
-    if (i > 2) {
+
+  for (unsigned int i = 0; i < drawMol_->getNumAtoms() - 1; ++i) {
+    if (intersects[i].empty()) {
       continue;
     }
-    for (size_t j = 0; j < newArcs.size(); ++j) {
-      if (i == j) {
+    auto radI = getLassoWidth(this, i, lassoNum);
+    for (unsigned int j = i + 1; j < drawMol_->getNumAtoms(); ++j) {
+      if (intersects[j].empty()) {
         continue;
       }
-      if (j > 2) {
-        continue;
-      }
-      if ((newArcs[i]->points_[0] - newArcs[j]->points_[0]).length() <
-          newArcs[i]->points_[1].x + newArcs[j]->points_[1].x) {
-        std::cout << i << " and " << j << " for " << newArcs[i]->atom1_
-                  << " and " << newArcs[j]->atom1_ << " could intersect"
-                  << std::endl;
-        adjustArcEnds(newArcs, j, i);
+      auto radJ = getLassoWidth(this, j, lassoNum);
+      if ((atCds_[i] - atCds_[j]).length() < radI + radJ) {
+        intersects[i].push_back(j);
+        intersects[j].push_back(i);
       }
     }
   }
+  makeIntersectingArcs(intersects, lassoNum, col, newArcs);
   for (auto &a : newArcs) {
     arcs.emplace_back(a);
+  }
+}
+
+namespace {
+
+// get the angles for the intersections of the 2 circles given,
+// relative to the first one.  They are the angles from the x axis
+// going anti-clockwise. Also returns the angle for where the line
+// between the centres intersects with the circle on at1Cds (bang).
+void calcIntersectingArcAngles(const Point2D &at1Cds, double rad1,
+                               const Point2D &at2Cds, double rad2, double &ang1,
+                               double &ang2, double &bang) {
+  // if the radii are the same, the intersection points are where
+  // the perpendicular at the mid-point intersects with either arcs.
+  Point2D mid = (at1Cds + at2Cds) / 2.0;
+  auto perp = calcPerpendicular(at1Cds, at2Cds);
+  Point2D perpEnd1 = mid + perp * 2.0 * rad1;
+  adjustLineEndForEllipse(at1Cds, rad1, rad1, mid, perpEnd1);
+  auto perpEnd2 = mid - perp * (mid - perpEnd1).length();
+  bool swapped;
+  calcSubtendedAngles(perpEnd1, perpEnd2, at1Cds, at2Cds, ang1, ang2, bang,
+                      swapped);
+}
+
+// See if the arc defined by the centre, radius etc. has either of its ends
+// inside a circle of one of the otherAtoms
+bool areArcEndsInOtherCircle(const Point2D &centre, double radius, double ang1,
+                             double ang2, size_t atNum, const DrawMolMCH *dm,
+                             const std::vector<unsigned int> &otherAtoms,
+                             int lassoNum) {
+  std::cout << "checking atom " << atNum << " centre " << centre
+            << "  rad = " << radius << " angs " << ang1 << " -> " << ang2
+            << std::endl;
+  ang1 *= M_PI / 180.0;
+  Point2D end1{centre.x + radius * cos(ang1), centre.y + radius * sin(ang1)};
+  ang2 *= M_PI / 180.0;
+  Point2D end2{centre.x + radius * cos(ang2), centre.y + radius * sin(ang2)};
+
+  for (size_t i = 0; i < otherAtoms.size(); ++i) {
+    if (otherAtoms[i] == atNum) {
+      continue;
+    }
+    auto otherRad = getLassoWidth(dm, otherAtoms[i], lassoNum);
+    if ((end1 - dm->atCds_[otherAtoms[i]]).lengthSq() - otherRad * otherRad <
+        -1.0e-4) {
+      std::cout << "END 1 " << ang1 << " inside " << otherAtoms[i] << " : "
+                << (end1 - dm->atCds_[otherAtoms[i]]).lengthSq() << " vs "
+                << otherRad * otherRad << " :: "
+                << (end1 - dm->atCds_[otherAtoms[i]]).lengthSq() -
+                       otherRad * otherRad
+                << std::endl;
+      return true;
+    }
+    if ((end2 - dm->atCds_[otherAtoms[i]]).lengthSq() - otherRad * otherRad <
+        -1.0e-4) {
+      std::cout << "END 2 " << ang2 << " inside " << otherAtoms[i] << " : "
+                << (end2 - dm->atCds_[otherAtoms[i]]).lengthSq() << " vs "
+                << otherRad * otherRad << " :: "
+                << (end2 - dm->atCds_[otherAtoms[i]]).lengthSq() -
+                       otherRad * otherRad
+                << std::endl;
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
+// ****************************************************************************
+void DrawMolMCHLasso::makeIntersectingArcs(
+    const std::vector<std::vector<unsigned int>> &intersects, int lassoNum,
+    const RDKit::DrawColour &col, std::vector<DrawShapeArc *> &arcs) const {
+  for (size_t i = 0; i < intersects.size(); ++i) {
+    if (intersects[i].empty()) {
+      continue;
+    }
+    std::cout << i << " : ";
+    for (size_t j = 0; j < intersects[i].size(); ++j) {
+      std::cout << intersects[i][j] << ", ";
+    }
+    std::cout << std::endl;
+    std::cout << "singleton arcs : " << i << std::endl;
+    auto radI = getLassoWidth(this, i, lassoNum);
+    if (intersects[i].size() == 1 && intersects[i][0] == i) {
+      std::vector<Point2D> pts{atCds_[i], Point2D{radI, radI}};
+      DrawShapeArc *arc = new DrawShapeArc(pts, 0.0, 360.0, LINE_WIDTH,
+                                           SCALE_LINE_WIDTH, col, false, i);
+      arcs.push_back(arc);
+    } else {
+      std::vector<double> arcAngs;
+      std::vector<std::pair<double, unsigned int>> bangs;
+      // the first entry is the atom itself, that's how it's set up
+      for (size_t j = 1; j < intersects[i].size(); ++j) {
+        auto radJ = getLassoWidth(this, intersects[i][j], lassoNum);
+        double ang1, ang2, bang;
+        calcIntersectingArcAngles(atCds_[i], radI, atCds_[intersects[i][j]],
+                                  radJ, ang1, ang2, bang);
+        std::cout << i << " to " << intersects[i][j] << " : " << ang1 << " to "
+                  << ang2 << " via " << bang << std::endl;
+        arcAngs.push_back(ang1);
+        arcAngs.push_back(ang2);
+        bangs.push_back(std::make_pair(bang, j - 1));
+      }
+      std::cout << "arc angs :";
+      for (size_t ii = 0; ii < arcAngs.size(); ii += 2) {
+        std::cout << arcAngs[ii] << " -> " << arcAngs[ii + 1] << "  :: ";
+      }
+      std::cout << std::endl;
+      std::sort(bangs.begin(), bangs.end());
+      std::vector<double> sortedArcAngs;
+      for (auto &b : bangs) {
+        sortedArcAngs.push_back(arcAngs[2 * b.second]);
+        sortedArcAngs.push_back(arcAngs[2 * b.second + 1]);
+      }
+      std::cout << "final arc angs :";
+      for (size_t ii = 0; ii < sortedArcAngs.size(); ii += 2) {
+        std::cout << sortedArcAngs[ii] << " -> " << sortedArcAngs[ii + 1]
+                  << "  :: ";
+      }
+      std::cout << std::endl;
+      // Now make the arcs from i.second to (i + 1).first, and finally from
+      // last.first to first.second
+      for (size_t j = 0; j < sortedArcAngs.size() - 2; j += 2) {
+        std::vector<Point2D> pts{atCds_[i], Point2D{radI, radI}};
+        // if either end of this arc we're about to make are inside another
+        // of the intersecting rings, skip it.
+        if (!areArcEndsInOtherCircle(atCds_[i], radI, sortedArcAngs[j + 1],
+                                     sortedArcAngs[j + 2], i, this,
+                                     intersects[i], lassoNum)) {
+          DrawShapeArc *arc =
+              new DrawShapeArc(pts, sortedArcAngs[j + 1], sortedArcAngs[j + 2],
+                               LINE_WIDTH, SCALE_LINE_WIDTH, col, false, i);
+          arcs.push_back(arc);
+        }
+      }
+      // if either end of this arc we're about to make are inside another
+      // of the intersecting rings, skip it.
+      std::vector<Point2D> pts{atCds_[i], Point2D{radI, radI}};
+      if (!areArcEndsInOtherCircle(atCds_[i], radI, sortedArcAngs.back(),
+                                   sortedArcAngs.front(), i, this,
+                                   intersects[i], lassoNum)) {
+        DrawShapeArc *arc =
+            new DrawShapeArc(pts, sortedArcAngs.back(), sortedArcAngs.front(),
+                             LINE_WIDTH, SCALE_LINE_WIDTH, col, false, i);
+        arcs.push_back(arc);
+      }
+    }
   }
 }
 
