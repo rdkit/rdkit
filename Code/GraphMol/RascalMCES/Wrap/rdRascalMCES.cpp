@@ -30,15 +30,15 @@ python::list convertVecPairInt(const std::vector<std::pair<int, int>> &vec) {
   return pyres;
 }
 
-python::list bondMatches(const RDKit::RascalMCES::RascalResult &res) {
-  return convertVecPairInt(res.getBondMatches());
+python::list bondMatches(const RDKit::RascalMCES::RascalResult &self) {
+  return convertVecPairInt(self.getBondMatches());
 }
-python::list atomMatches(const RDKit::RascalMCES::RascalResult &res) {
-  return convertVecPairInt(res.getAtomMatches());
+python::list atomMatches(const RDKit::RascalMCES::RascalResult &self) {
+  return convertVecPairInt(self.getAtomMatches());
 }
 
-void largestFragmentOnly(RDKit::RascalMCES::RascalResult &res) {
-  res.largestFragOnly();
+void largestFragmentOnly(RDKit::RascalMCES::RascalResult &self) {
+  self.largestFragOnly();
 }
 
 struct RascalResult_wrapper {
@@ -49,13 +49,13 @@ struct RascalResult_wrapper {
         .def_readonly("smartsString",
                       &RDKit::RascalMCES::RascalResult::getSmarts,
                       "SMARTS string defining the MCES.")
-        .def("bondMatches", &bondMatches,
+        .def("bondMatches", bondMatches,
              "A function returning a list of list "
              "of tuples, each inner list containing the matching bonds in the "
              "MCES as tuples of bond indices from mol1 and mol2")
-        .def("atomMatches", &atomMatches, "Likewise for atoms.")
+        .def("atomMatches", atomMatches, "Likewise for atoms.")
         .def(
-            "largestFragmentOnly", &largestFragmentOnly,
+            "largestFragmentOnly", largestFragmentOnly,
             "Function that cuts the MCES down to the single largest frag.  This cannot be undone.")
         .def_readonly("similarity",
                       &RDKit::RascalMCES::RascalResult::getSimilarity,

@@ -1,5 +1,6 @@
 import sys
 import os
+import argparse
 import pybind11_stubgen
 from pybind11_stubgen.parser.mixins.parse import ExtractSignaturesFromPybind11Docstrings
 from pybind11_stubgen.printer import Printer
@@ -11,10 +12,30 @@ worker script
 1st param is the temporary directory
 2nd param is the module name
 """
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--tempdir",
+                        help=f"Temporary directory")
+    parser.add_argument("--module-name",
+                        help=f"Python module name for which stubs will be generated")
+    parser.add_argument("--outer-dirs", nargs="*",
+                        help=f"Outer dirs where stubs should be copied")
+    parser.add_argument("--keep-incorrect-staticmethods",
+                        help=f"Whether incorrectly assigned staticmethods should be kept as such",
+                        action="store_true")
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == "__main__":
-    tempdir = sys.argv[1]
-    module_name = sys.argv[2]
-    outer_dirs = sys.argv[3:]
+    args = parse_args()
+    keep_incorrect_staticmethods = args.keep_incorrect_staticmethods or os.environ.get("KEEP_INCORRECT_STATICMETHODS", None)
+    if isinstance(keep_incorrect_staticmethods, str):
+        try:
+            keep_incorrect_staticmethods = bool(int(keep_incorrect_staticmethods))
+        except ValueError:
+            keep_incorrect_staticmethods = False
     sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     gen_rdkit_stubs = importlib.import_module("gen_rdkit_stubs")
 
@@ -22,7 +43,7 @@ if __name__ == "__main__":
         parse_function_docstring_orig = ExtractSignaturesFromPybind11Docstrings.parse_function_docstring
 
         def parse_function_docstring_patched(self, func_name, doc_lines, **kwargs):
-            doc_lines = gen_rdkit_stubs.ProcessDocLines.process(module_name, doc_lines)
+            doc_lines = gen_rdkit_stubs.ProcessDocLines.process(args.module_name, doc_lines, keep_incorrect_staticmethods)
             return parse_function_docstring_orig(self, func_name, doc_lines, **kwargs)
 
         ExtractSignaturesFromPybind11Docstrings.parse_function_docstring = parse_function_docstring_patched
@@ -35,6 +56,7 @@ if __name__ == "__main__":
 
         Printer.print_submodule_import = print_submodule_import_patched
 
+
     stored_argv = list(sys.argv)
     try:
         sys.argv = ["",
@@ -42,8 +64,8 @@ if __name__ == "__main__":
                     "",
                     "--ignore-all-errors",
                     "-o",
-                    tempdir,
-                    module_name]
+                    args.tempdir,
+                    args.module_name]
         pybind11_stubgen.main()
     except Exception as e:
         if isinstance(e, AssertionError):
@@ -52,4 +74,4 @@ if __name__ == "__main__":
             print(str(e))
     finally:
         sys.argv = stored_argv
-    gen_rdkit_stubs.copy_stubs(os.path.join(tempdir, *module_name.split(".")), outer_dirs)
+    gen_rdkit_stubs.copy_stubs(os.path.join(args.tempdir, *args.module_name.split(".")), args.outer_dirs)

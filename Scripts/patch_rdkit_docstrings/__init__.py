@@ -116,6 +116,13 @@ class DictLike(dict):
         return instance
 
 
+class ClassInfo(DictLike):
+    def __init__(self, hash, parents):
+        self.hash = hash
+        self.parents = parents
+        self.python_class_name = None
+        self.cpp_class_name = None
+
 class CppFile(DictLike):
     """Class associated to a single C++ file.
     """
@@ -134,6 +141,10 @@ class CppFile(DictLike):
         """
         self.cpp_path = cpp_path
         self.arg1_func_defs = []
+        # type_ref_dict is a dictionary of class alias typedefs
+        # relating typedefs to the actual class name
+        # found while walking the AST tree
+        self.type_ref_dict = {}
         self.ast_error = None
         self.ast_warning = None
 
@@ -210,14 +221,11 @@ class CppFile(DictLike):
             self.ast_error += f"{cpp_file}: Failed to run clang\n{str(e)}\n{str(tb)}\n"
         return res
 
-    @classmethod
-    def recurse_ast_cursor(cls, cursor, type_ref_dict, hnd=sys.stdout, recursion_level=0):
+    def recurse_ast_cursor(self, cursor, hnd=sys.stdout, recursion_level=0):
         """Recursively walk on the AST tree and write a dump to hnd.
 
         Args:
             cursor (Cursor): current cursor position
-            type_ref_dict (dict): dictionary of class alias typedefs
-            found while walking the tree
             hnd (file-like object, optional): Handle to which the dump should be written.
             Defaults to sys.stdout.
             recursion_level (int, optional): Used to indent the dump. Defaults to 0.
@@ -234,10 +242,10 @@ class CppFile(DictLike):
                         break
                 if typedef_value is not None:
                     typedef_value = typedef_value.split(" ")[-1]
-                    type_ref_dict[typedef_key] = typedef_value
+                    self.type_ref_dict[typedef_key] = typedef_value
             print(f"{tabs}{child.kind}:{child.spelling}", file=hnd)
             hnd.flush()
-            cls.recurse_ast_cursor(child, type_ref_dict, hnd, recursion_level)
+            self.recurse_ast_cursor(child, hnd, recursion_level)
 
     def get_func_name_if_has_arg1_param_r(self, cursor, arg1_func_names):
         """Return name of function that needs fixing.
@@ -275,8 +283,22 @@ class CppFile(DictLike):
                 return True
         return False
 
-    def find_non_class_defs_r(self, cursor, non_class_defs, class_method_node_hashes, arg1_func_names):
+    def find_non_class_defs(self, cursor, class_method_node_hashes, arg1_func_names):
         """Recursively find free function nodes that need fixing.
+
+        Args:
+            cursor (Cursor): current cursor position
+            non_class_defs (dict): dict relating a function name to a list of nodes
+            class_method_node_hashes (iterable): set of hashes corresponding to class method
+            nodes that need fixing previously found
+            arg1_func_names (iterable): function names that need fixing
+        """
+        non_class_defs = {}
+        self.find_non_class_defs_r(cursor, non_class_defs, class_method_node_hashes, set(arg1_func_names))
+        return non_class_defs
+
+    def find_non_class_defs_r(self, cursor, non_class_defs, class_method_node_hashes, arg1_func_names):
+        """Find free function nodes that need fixing (recursive).
 
         Args:
             cursor (Cursor): current cursor position
@@ -295,32 +317,53 @@ class CppFile(DictLike):
         for child in cursor.get_children():
             self.find_non_class_defs_r(child, non_class_defs, class_method_node_hashes, arg1_func_names)
 
-    def find_nodes_r(self, cursor, parents, nodes_by_class_hash):
+    def find_nodes(self, cursor):
         """Recursively walk on the AST tree and associate node
         to their python::class_ hash.
 
         Args:
             cursor (Cursor): current cursor position
+
+        Returns:
+            dict[int, ClassInfo]: dict associating a class hash
+            to a ClassInfo instance
+        """
+        class_info_by_class_hash = {}
+        self.find_nodes_r(cursor, [], class_info_by_class_hash)
+        return class_info_by_class_hash
+
+    def find_nodes_r(self, cursor, parents, class_info_by_class_hash):
+        """Walk on the AST tree and associate node
+        to their python::class_ hash (recursive)
+
+        Args:
+            cursor (Cursor): current cursor position
             parents (list): growing list of parents
-            nodes_by_class_hash (dict): dict associating a class hash
-            to a list of nodes
+            class_info_by_class_hash (dict): dict associating a class hash
+            to a ClassInfo instance
         """
         if cursor.kind == CursorKind.CALL_EXPR:
             parents = [cursor] + parents
         if cursor.kind in (CursorKind.CALL_EXPR, CursorKind.TEMPLATE_REF) and cursor.spelling == "class_":
             class_hash = cursor.hash
-            prev_parents = nodes_by_class_hash.get(class_hash, None)
-            if prev_parents is None or len(parents) + 1 > len(prev_parents):
-                nodes_by_class_hash[class_hash] = parents
+            prev_class_info = class_info_by_class_hash.get(class_hash, None)
+            if prev_class_info is None or len(parents) + 1 > len(prev_class_info.parents):
+                class_info = ClassInfo(class_hash, parents)
+                class_info_by_class_hash[class_hash] = class_info
+                for child in cursor.get_children():
+                    if child.kind == CursorKind.TYPE_REF:
+                        cpp_class_name = child.spelling.split(" ")[-1].split("::")[-1]
+                        class_info.cpp_class_name = self.type_ref_dict.get(cpp_class_name, cpp_class_name)
+                        break
                 return
         for child in cursor.get_children():
-            self.find_nodes_r(child, parents, nodes_by_class_hash)
+            self.find_nodes_r(child, parents, class_info_by_class_hash)
 
-    def find_class_name_r(self, class_hash, cursor, found_class_names, arg1_func_byclass_dict):
+    def find_class_name_r(self, class_info, cursor, found_class_names, arg1_func_byclass_dict):
         """Find the name of the python::class_ associated to class_hash.
 
         Args:
-            class_hash (int): class hash
+            class_info (ClassInfo): ClassInfo instance
             cursor (Cursor): current cursor position
             found_class_names (dict): dict relating class hash to class name
             arg1_func_byclass_dict (dict): dict relating class names to methods
@@ -330,45 +373,46 @@ class CppFile(DictLike):
         Returns:
             bool: True if the class name corresponding to class_hash was found
         """
+        class_hash = class_info.hash
         if cursor.kind == CursorKind.STRING_LITERAL:
             class_name = self.extract_quoted_content(cursor.spelling)
             if (class_name is not None and class_name in arg1_func_byclass_dict
                 and class_hash not in found_class_names and class_name not in found_class_names.values()):
                 found_class_names[class_hash] = class_name
+                class_info.python_class_name = class_name
                 return True
         for child in cursor.get_children():
-            if self.find_class_name_r(class_hash, child, found_class_names, arg1_func_byclass_dict):
+            if self.find_class_name_r(class_info, child, found_class_names, arg1_func_byclass_dict):
                 return True
         return False
 
-    def prune_nodes(self, tu_cursor, nodes_by_class_hash, arg1_func_byclass_dict):
-        """Return a dict relating class name to a (class_hash, nodes) tuple.
+    def prune_nodes(self, tu_cursor, class_info_by_class_hash, arg1_func_byclass_dict):
+        """Return a dict relating class name to a ClassInfo instance.
 
         Args:
-            nodes_by_class_hash (dict): dict relating class hash to method nodes
+            class_info_by_class_hash (dict): dict relating class hash to class_info
             arg1_func_byclass_dict (dict): dict relating class names to methods
 
         Returns:
-            dict: dict relating class name to a (class_hash, nodes) tuple
+            dict: dict relating class name to a ClassInfo instance
         """
         # populate found_class_names dictionary {class_hash: class_name}
         # with classes that have methods we need to fix
         found_class_names = {}
-        for class_hash, nodes in nodes_by_class_hash.items():
-            call_expr_class_node = nodes[0]
+        for class_hash, class_info in class_info_by_class_hash.items():
+            call_expr_class_node = class_info.parents[0]
             # we might not find the class name as STRING_LITERAL for template classes
-            self.find_class_name_r(class_hash, call_expr_class_node, found_class_names, arg1_func_byclass_dict)
-        for class_hash, nodes in nodes_by_class_hash.items():
+            self.find_class_name_r(class_info, call_expr_class_node, found_class_names, arg1_func_byclass_dict)
+        for class_hash, class_info in class_info_by_class_hash.items():
             # 2nd pass over the whole translation unit to find template classes
-            self.find_class_name_r(class_hash, tu_cursor, found_class_names, arg1_func_byclass_dict)
+            self.find_class_name_r(class_info, tu_cursor, found_class_names, arg1_func_byclass_dict)
         # prune class_hash entries that do not have methods we need to fix
-        class_hash_and_nodes_by_class_name = {}
-        for class_hash in tuple(nodes_by_class_hash.keys()):
+        class_info_by_class_name = {}
+        for class_hash in tuple(class_info_by_class_hash.keys()):
             if class_hash in found_class_names.keys():
                 found_class_name = found_class_names[class_hash]
-                nodes = nodes_by_class_hash[class_hash]
-                class_hash_and_nodes_by_class_name[found_class_name] = (class_hash, nodes)
-        return class_hash_and_nodes_by_class_name
+                class_info_by_class_name[found_class_name] = class_info_by_class_hash[class_hash]
+        return class_info_by_class_name
 
     def have_python_range_r(self, cursor, requested_level, level=0):
         """Return True if there is a python::range among the children of cursor.
@@ -442,14 +486,15 @@ class CppFile(DictLike):
                                         print(f"3) find_func_name_r def_cursor.hash {def_cursor.hash} level {level} func_name {func_name} kind {def_cursor.kind} tokens {[t.spelling for t in def_cursor.get_tokens()]}", file=hnd)
                                         hnd.flush()
                                     def_init_nodes[def_cursor.hash] = FunctionDef(def_cursor, func_name, is_staticmethod, prev_function_def.level)
+                elif func_name == "__init__":
+                    def_init_nodes[cursor.hash] = FunctionDef(cursor, "__init__", False, level)
             self.find_func_name_r(child, def_cursor, func_names, func_name_to_hash, def_init_nodes, level)
 
-    def find_cpp_func_r(self, cursor, type_ref_dict, requested_level, param_count=-1, level=0):
+    def find_cpp_func_r(self, cursor, requested_level, func_name, param_count=-1, level=0):
         """Find the C++ function corresponding to this cursor.
 
         Args:
             cursor (Cursor): current cursor position
-            type_ref_dict (dict): dict relating typedefs to the actual class name
             requested_level (int): requested nesting level
             param_count (int, optional): parameter count for this function. Defaults to -1.
             level (int, optional): current nesting level. Defaults to 0.
@@ -475,8 +520,17 @@ class CppFile(DictLike):
                         if child2.kind == CursorKind.DECL_REF_EXPR:
                             res = child2
                             break
+                elif child.kind == CursorKind.CALL_EXPR and child.spelling == "make_constructor":
+                    for child2 in child.get_children():
+                        if child2.kind in (CursorKind.UNARY_OPERATOR, CursorKind.UNEXPOSED_EXPR) and not child2.spelling:
+                            for child3 in child2.get_children():
+                                if child3.kind == CursorKind.DECL_REF_EXPR:
+                                    res = child3
+                                    break
+                            if res is not None:
+                                break
             if res is None:
-                res = self.find_cpp_func_r(child, type_ref_dict, requested_level, param_count, level)
+                res = self.find_cpp_func_r(child, requested_level, func_name, param_count, level)
         if res is not None and not isinstance(res, tuple):
             decl_ref = res
             res = None
@@ -486,7 +540,7 @@ class CppFile(DictLike):
                     with open(log_path, "a") as hnd:
                         print(f"1) find_cpp_func_r template_ref {template_ref}", file=hnd)
                         hnd.flush()
-                    template_ref = type_ref_dict.get(template_ref, template_ref)
+                    template_ref = self.type_ref_dict.get(template_ref, template_ref)
                     with open(log_path, "a") as hnd:
                         print(f"2) find_cpp_func_r template_ref {template_ref}", file=hnd)
                         hnd.flush()
@@ -497,7 +551,7 @@ class CppFile(DictLike):
                     with open(log_path, "a") as hnd:
                         print(f"3) find_cpp_func_r type_ref {type_ref}", file=hnd)
                         hnd.flush()
-                    type_ref = type_ref_dict.get(type_ref, type_ref)
+                    type_ref = self.type_ref_dict.get(type_ref, type_ref)
                     with open(log_path, "a") as hnd:
                         print(f"4) find_cpp_func_r type_ref {type_ref}", file=hnd)
                         hnd.flush()
@@ -546,7 +600,10 @@ class CppFile(DictLike):
             if (child.kind in (CursorKind.CLASS_DECL, CursorKind.CLASS_TEMPLATE, CursorKind.STRUCT_DECL)
                 and child.spelling == cpp_class_name):
                 for child2 in child.get_children():
-                    if child2.kind in (CursorKind.CXX_METHOD, CursorKind.FUNCTION_TEMPLATE) and child2.spelling == func_name:
+                    if child2.spelling.split("<")[0] == func_name and (
+                        (child2.kind in (CursorKind.CXX_METHOD, CursorKind.FUNCTION_TEMPLATE)
+                         or (func_name == cpp_class_name and child2.kind == CursorKind.CONSTRUCTOR))
+                    ):
                         res = child
                         break
                     elif child2.kind == CursorKind.CXX_BASE_SPECIFIER:
@@ -560,38 +617,99 @@ class CppFile(DictLike):
             return base_cpp_class_name
         return res
 
-    def find_cpp_func_params_r(self, cursor, cpp_class_name, func_name, expected_param_count):
+    @staticmethod
+    def num_matching_parameters(expected_params, params):
+        """Find the number of matching params between params
+        (list of individual parameter typenames) and expected_params
+        (concatenated string of expected parameter typenames)
+        Args:
+            expected_params (str): concatenated string of expected parameter typenames
+            params (list[str]): list of individual parameter typenames
+
+        Returns:
+            int: number of matching params
+        """
+        expected_params_concat = "".join(expected_params)
+        return [p in expected_params_concat for p in params].count(True)
+
+    def find_cpp_func_params(self, cursor, is_staticmethod, cpp_class_name, func_name,
+                             expected_cpp_params, expected_param_count):
         """Find parameter names of a C++ method.
+        First we try to find the exact number of expected parameters.
+        If we fail, we will accept an overload with a number of parameters
+        greater than the expected one, in the assumption that some parameters
+        can be optional.
 
         Args:
             cursor (Cursor): current cursor position
             cpp_class_name (str): C++ class name
             func_name (str): C++ method name
+            expected_cpp_params: expected parameter string based
+            on the Python function signature. This is a cumulative, concatenated
+            string with no spaces which is used when there are multiple overloads
+            with the same number of parameters to try and pick the C++ funciton whose
+            parameter types best fit the Python signature.
             expected_param_count (int): expected parameter count based
             on the Python function signature
 
         Returns:
-            list: parameter names
+            list[str]: list of parameter names
         """
-        res = None
+        self.params = None
+        for cmp_func in (int.__eq__, int.__gt__):
+            self.find_cpp_func_params_r(cursor, cpp_class_name, func_name,
+                                        expected_cpp_params, expected_param_count, cmp_func)
+            if self.params is not None:
+                break
+        if self.params is None:
+            params = [f"arg{i + 1}" for i in range(expected_param_count)]
+            if not is_staticmethod:
+                params.insert(0, "self")
+            return params
+        return [p for p, _ in self.params]
+
+    def find_cpp_func_params_r(self, cursor, cpp_class_name, func_name,
+                               expected_cpp_params, expected_param_count, cmp_func):
+        """Find parameter names of a C++ method (recursive).
+
+        Args:
+            cursor (Cursor): current cursor position
+            cpp_class_name (str): C++ class name
+            func_name (str): C++ method name
+            expected_cpp_params: expected parameter string based
+            on the Python function signature. This is a cumulative, concatenated
+            string with no spaces which is used when there are multiple overloads
+            with the same number of parameters to try and pick the C++ funciton whose
+            parameter types best fit the Python signature.
+            expected_param_count (int): expected parameter count based
+            on the Python function signature
+            cmp_func (function): the comparator to use between the expected number
+            of parameters and the best-fitting found number of parameters
+        """
         accepted_kinds = [CursorKind.FUNCTION_DECL,
                           CursorKind.FUNCTION_TEMPLATE]
         if cpp_class_name is not None:
-            accepted_kinds.append(CursorKind.CXX_METHOD)
+            if func_name != cpp_class_name:
+                accepted_kinds.append(CursorKind.CXX_METHOD)
+            else:
+                accepted_kinds.append(CursorKind.CONSTRUCTOR)
         for child in cursor.get_children():
-            if child.kind in accepted_kinds and child.spelling == func_name:
-                params = [child2.spelling for child2 in child.get_children() if child2.kind == CursorKind.PARM_DECL]
+            if child.kind in accepted_kinds and child.spelling.split("<")[0] == func_name:
+                params = [(child2.spelling, "".join(child3.spelling for child3 in child2.get_children() if child3.kind == CursorKind.TYPE_REF))
+                          for child2 in child.get_children() if child2.kind == CursorKind.PARM_DECL]
                 # certain C++ headers have only the type declaration but no variable name,
-                # in that case we replace "" with a dummy parameter name as python::args("")
+                # in that case we replace "" with a dummy parameter name since python::args("")
                 # is not acceptable
-                params = [p or f"arg{i + 1}" for i, p in enumerate(params)]
-                if expected_param_count == -1 or len(params) == expected_param_count:
-                    res = params
-                    break
-            res = self.find_cpp_func_params_r(child, cpp_class_name, func_name, expected_param_count)
-            if res is not None:
-                break
-        return res
+                params = [(p or f"arg{i + 1}", t) for i, (p, t) in enumerate(params)]
+                if ((expected_param_count == -1 or cmp_func(len(params), expected_param_count))
+                    and (not expected_cpp_params or self.params is None or
+                         self.num_matching_parameters(expected_cpp_params, [t for _, t in params])
+                         > self.num_matching_parameters(expected_cpp_params, [t for _, t in self.params]))):
+                    if expected_param_count != -1:
+                        params = params[:expected_param_count]
+                    self.params = params
+            else:
+                self.find_cpp_func_params_r(child, cpp_class_name, func_name, expected_cpp_params, expected_param_count, cmp_func)
 
     def find_def_init_nodes_in_class_r(self, cursor, func_names, func_name_to_hash, def_init_nodes):
         """Find nodes corresponding to Python constructors and methods for a class.
@@ -630,12 +748,12 @@ class CppFile(DictLike):
                 return True
         return False
 
-    def find_def_init_nodes(self, class_hash_and_nodes_by_class_name, arg1_func_byclass_dict):
+    def find_def_init_nodes(self, class_info_by_class_name, arg1_func_byclass_dict):
         """Find Python constructors and methods.
 
         Args:
-            class_hash_and_nodes_by_class_name (dict): dict relating class name
-            to a (class_hash, nodes) tuple
+            class_info_by_class_name (dict): dict relating class name
+            to a ClassInfo instance
             arg1_func_byclass_dict (dict): dict relating class name to methods
 
         Returns:
@@ -645,12 +763,12 @@ class CppFile(DictLike):
             not be associated to any methods (currently unused)
         """
         res = {}
-        for class_name, (class_hash, nodes) in class_hash_and_nodes_by_class_name.items():
+        for class_name, class_info in class_info_by_class_name.items():
             def_init_nodes = {}
             func_name_to_hash = {}
             func_names = arg1_func_byclass_dict[class_name]
-            for i, node in enumerate(nodes):
-                if i and not self.is_class_hash_among_node_children_r(class_hash, node):
+            for i, node in enumerate(class_info.parents):
+                if i and not self.is_class_hash_among_node_children_r(class_info.hash, node):
                     break
                 self.find_def_init_nodes_in_class_r(node, func_names, func_name_to_hash, def_init_nodes)
             res[class_name] = (def_init_nodes.values(), func_names)
@@ -742,7 +860,7 @@ class CppFile(DictLike):
                     return res
         return None
 
-    def find_no_arg(self, is_init, tokens, is_staticmethod, cpp_func_name, expected_param_count, cursor):
+    def find_no_arg(self, is_init, tokens, is_staticmethod, cpp_func_name, expected_param_count, cursor, class_info):
         """Insert the appropriate python::args where needed based on the C++
         method parameter names.
 
@@ -754,6 +872,7 @@ class CppFile(DictLike):
             expected_param_count (int): expected number of parameters
             based on the Python function signature
             cursor (Cursor): current cursor position
+            class_info (ClassInfo): ClassInfo instance
 
         Raises:
             IndexError: in case there are unexpected inconsistencies
@@ -766,6 +885,7 @@ class CppFile(DictLike):
         log_path = self.cpp_path_noext + ".log"
         bracket_count = 0
         init_args = ""
+        expected_cpp_params = None
         for i, t in enumerate(tokens):
             num_downstream_tokens = len(tokens[i:])
             if is_init:
@@ -775,7 +895,6 @@ class CppFile(DictLike):
                     init_args += t.spelling
                     bracket_count += (open_bracket_count - closed_bracket_count)
                     if bracket_count == 0:
-                        n_init_args = 0
                         if init_args:
                             m = self.EXTRACT_INIT_ARGS.match(init_args)
                             if not m or "python::optional" in init_args:
@@ -784,23 +903,27 @@ class CppFile(DictLike):
                             else:
                                 init_args = m.group(1)
                         if init_args:
-                            n_init_args = 1 + init_args.count(",")
-                            init_args = "".join(f", \"arg{i + 1}\"" for i in range(n_init_args))
+                            cpp_func_name = f"{class_info.cpp_class_name}::{class_info.cpp_class_name}"
+                            expected_param_count = 1 + init_args.count(",")
+                            expected_cpp_params = init_args
+                            init_args = ""
             is_def = (t.spelling == "def")
             if (num_downstream_tokens > 2 and (is_init or is_def)
                 and tokens[i+1].spelling == "("):
                 need_comma = (tokens[i+2].spelling != ")")
+                is_make_constructor = "make_constructor" in (t.spelling for t in tokens)
                 python_args = "python::args("
-                if not is_staticmethod:
+                need_self = not is_staticmethod and not is_make_constructor
+                if need_self:
                     python_args += f"\"{self.SELF_LITERAL}\"" + init_args
                 if cpp_func_name is not None and expected_param_count is not None and cursor is not None:
                     cpp_func_name_tokens = cpp_func_name.split("::")
                     cpp_class_name = cpp_func_name_tokens[-2] if len(cpp_func_name_tokens) > 1 else None
                     func_name = cpp_func_name_tokens[-1]
                     with open(log_path, "a") as hnd:
-                        print(f"1) find_no_arg cpp_func_name {cpp_func_name} class_name {cpp_class_name} func_name {func_name} expected_param_count {expected_param_count} is_staticmethod {is_staticmethod}", file=hnd)
+                        print(f"1) find_no_arg cpp_func_name {cpp_func_name} cpp_class_name {cpp_class_name} func_name {func_name} expected_param_count {expected_param_count} is_staticmethod {is_staticmethod} tokens {[t.spelling for t in tokens]}", file=hnd)
                         hnd.flush()
-                    rename_first_param = not is_staticmethod
+                    rename_first_param = need_self
                     if cpp_class_name is not None:
                         while 1:
                             res = self.find_cpp_class_r(cursor, cpp_class_name, func_name)
@@ -813,7 +936,7 @@ class CppFile(DictLike):
                         if res is not None:
                             rename_first_param = False
                             cursor = res
-                    params = self.find_cpp_func_params_r(cursor, cpp_class_name, func_name, expected_param_count)
+                    params = self.find_cpp_func_params(cursor, is_staticmethod, cpp_class_name, func_name, expected_cpp_params, expected_param_count)
                     if rename_first_param:
                         if not params:
                             raise IndexError(f"Expected at least one parameter on {func_name}, found none")
@@ -824,7 +947,7 @@ class CppFile(DictLike):
                     if params is not None:
                         params = ", ".join(f"\"{p}\"" for p in params if p != self.SELF_LITERAL)
                         if params:
-                            if not is_staticmethod:
+                            if need_self:
                                 python_args += ", "
                             python_args += params
                 python_args += ")"
@@ -878,6 +1001,7 @@ class CppFile(DictLike):
         """
         for i, t in reversed(list(enumerate(tokens))):
             if (t.spelling == "def"
+                and i + 2 < len(tokens)
                 and tokens[i+1].spelling == "("
                 and tokens[i+2].spelling == f"\"{func_name}\""):
                 return tokens[i:]
@@ -898,7 +1022,7 @@ class CppFile(DictLike):
                 return (tokens[i+2].spelling == f"\"{func_name}\"")
         return False
 
-    def get_insertion(self, is_init, tokens, is_staticmethod=False, cpp_func_name=None, param_count=None, tu_cursor=None):
+    def get_insertion(self, is_init, tokens, is_staticmethod=False, cpp_func_name=None, param_count=None, tu_cursor=None, class_info=None):
         """Get the insertion string to fix a Python function signature.
 
         Args:
@@ -908,6 +1032,7 @@ class CppFile(DictLike):
             cpp_func_name (str, optional): C++ function name. Defaults to None.
             param_count (int, optional): expected number of parameters. Defaults to None.
             tu_cursor (Cursor, optional): translation unit cursor. Defaults to None.
+            class_info (ClassInfo, optional): ClassInfo instance. Defaults to None.
 
         Returns:
             list(tuple)|None: list of tuples with source line number, source column number
@@ -926,7 +1051,7 @@ class CppFile(DictLike):
             hnd.flush()
         if insertion is not None:
             return insertion if not is_staticmethod else None
-        insertion = self.find_no_arg(is_init, tokens, is_staticmethod, cpp_func_name, param_count, tu_cursor)
+        insertion = self.find_no_arg(is_init, tokens, is_staticmethod, cpp_func_name, param_count, tu_cursor, class_info)
         with open(log_path, "a") as hnd:
             print(f"3) get_insertion insertion {insertion}", file=hnd)
             hnd.flush()
@@ -992,47 +1117,45 @@ class CppFile(DictLike):
         """
         try:
             translation_unit = TranslationUnit.from_ast_file(self.ast_path)
-            type_ref_dict = {}
             out_path = self.cpp_path_noext + ".out"
             with open(out_path, "w") as hnd:
-                self.recurse_ast_cursor(translation_unit.cursor, type_ref_dict, hnd)
-            nodes_by_class_hash = {}
+                self.recurse_ast_cursor(translation_unit.cursor, hnd)
             log_path = self.cpp_path_noext + ".log"
             with open(log_path, "w") as hnd:
                 pass
-            self.find_nodes_r(translation_unit.cursor, [], nodes_by_class_hash)
-            class_method_node_hashes = set(sum([[node.hash for node in node_list] for node_list in nodes_by_class_hash.values()], []))
-            non_class_defs = {}
+            class_info_by_class_hash = self.find_nodes(translation_unit.cursor)
+            class_method_node_hashes = set(sum([[node.hash for node in class_info.parents] for class_info in class_info_by_class_hash.values()], []))
             arg1_non_class_func_names = arg1_func_byclass_dict.get(FixSignatures.NO_CLASS_KEY, None)
             if arg1_non_class_func_names is not None:
-                self.find_non_class_defs_r(translation_unit.cursor, non_class_defs, class_method_node_hashes, set(arg1_non_class_func_names))
+                non_class_defs = self.find_non_class_defs(translation_unit.cursor, class_method_node_hashes, arg1_non_class_func_names)
             with open(log_path, "a") as hnd:
-                print(f"1) parse_ast cpp_path {self.cpp_path} nodes_by_class_hash {tuple(nodes_by_class_hash.keys())}", file=hnd)
+                print(f"1) parse_ast cpp_path {self.cpp_path} class_info_by_class_hash {tuple(class_info_by_class_hash.keys())}", file=hnd)
                 hnd.flush()
-            class_hash_and_nodes_by_class_name = self.prune_nodes(translation_unit.cursor, nodes_by_class_hash, arg1_func_byclass_dict)
+            class_info_by_class_name = self.prune_nodes(translation_unit.cursor, class_info_by_class_hash, arg1_func_byclass_dict)
             with open(log_path, "a") as hnd:
-                print(f"2) parse_ast cpp_path {self.cpp_path} class_hash_and_nodes_by_class_name {[(class_name, class_hash) for class_name, (class_hash, _) in class_hash_and_nodes_by_class_name.items()]}", file=hnd)
+                print(f"2) parse_ast cpp_path {self.cpp_path} class_info_by_class_name {[(class_name, class_info.hash) for class_name, class_info in class_info_by_class_name.items()]}", file=hnd)
                 hnd.flush()
             def_init_nodes_and_unassigned_func_names_by_class_name = self.find_def_init_nodes(
-                class_hash_and_nodes_by_class_name, arg1_func_byclass_dict)
+                class_info_by_class_name, arg1_func_byclass_dict)
             insertions = {}
             with open(log_path, "a") as hnd:
                 print(f"3) parse_ast cpp_path {self.cpp_path} def_init_nodes_and_unassigned_func_names_by_class_name {def_init_nodes_and_unassigned_func_names_by_class_name}", file=hnd)
                 hnd.flush()
             with open(log_path, "a") as hnd:
                 for class_name, (def_init_nodes,_unassigned_func_names) in def_init_nodes_and_unassigned_func_names_by_class_name.items():
+                    class_info = class_info_by_class_name[class_name]
                     for function_def in def_init_nodes:
                         tokens = list(function_def.def_cursor.get_tokens())
                         insertion = None
                         boost_python_entity = "".join(t.spelling for t in tokens[:3])
                         is_init = False
                         if boost_python_entity == "python::init":
-                            print(f"4) parse_ast cpp_path {self.cpp_path} func_name {function_def.func_name} python::init tokens {[t.spelling for t in tokens]}", file=hnd)
+                            print(f"4) parse_ast cpp_path {self.cpp_path} class_name {class_name} cpp_class_name {class_info.cpp_class_name} func_name {function_def.func_name} python::init tokens {[t.spelling for t in tokens]}", file=hnd)
                             hnd.flush()
                             is_init = True
-                            insertion = self.get_insertion(is_init, tokens[3:])
+                            insertion = self.get_insertion(is_init, tokens[3:], tu_cursor=translation_unit.cursor, class_info=class_info)
                         elif boost_python_entity == "python::class_":
-                            res = self.find_cpp_func_r(function_def.def_cursor, type_ref_dict, function_def.level)
+                            res = self.find_cpp_func_r(function_def.def_cursor, function_def.level, function_def.func_name)
                             param_count = None
                             cpp_func_name = None
                             if res is not None:
@@ -1043,7 +1166,7 @@ class CppFile(DictLike):
                             if tokens_from_func_def is not None:
                                 print(f"6) parse_ast cpp_path {self.cpp_path} python::class_ tokens_from_func_def {[t.spelling for t in tokens_from_func_def]}", file=hnd)
                                 hnd.flush()
-                                insertion = self.get_insertion(is_init, tokens_from_func_def, function_def.is_staticmethod, cpp_func_name, param_count, translation_unit.cursor)
+                                insertion = self.get_insertion(is_init, tokens_from_func_def, function_def.is_staticmethod, cpp_func_name, param_count, translation_unit.cursor, class_info=class_info)
                         self.add_insertion(insertion, insertions)
                     print(f"8) parse_ast cpp_path {self.cpp_path} {insertions}", file=hnd)
                     hnd.flush()
@@ -1057,7 +1180,7 @@ class CppFile(DictLike):
                         hnd.flush()
                         boost_python_entity = "".join(t.spelling for t in tokens[:3])
                         if boost_python_entity == "python::def":
-                            res = self.find_cpp_func_r(def_node, type_ref_dict, requested_level)
+                            res = self.find_cpp_func_r(def_node, requested_level, func_name)
                             param_count = None
                             cpp_func_name = None
                             if res is not None:
@@ -1360,7 +1483,7 @@ class FixSignatures:
         self.queue = queue.Queue()
         cpp_class_files = list(self.cpp_file_dict.values())
         # Uncomment the following to troubleshoot specific file(s)
-        # cpp_class_files = [f for f in cpp_class_files if os.path.basename(f.cpp_path).startswith("Conformer")]
+        # cpp_class_files = [f for f in cpp_class_files if os.path.basename(f.cpp_path).startswith("Validate")]
         n_files = len(cpp_class_files)
         self.logger.debug(f"Number of files: {n_files}")
         n_workers = min(self.concurrency, n_files)

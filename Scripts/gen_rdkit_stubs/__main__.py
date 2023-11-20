@@ -43,6 +43,9 @@ def parse_args():
     parser.add_argument("--verbose",
                         help=f"print non-fatal warnings/errors to stdout (defaults to false)",
                         action="store_true")
+    parser.add_argument("--keep-incorrect-staticmethods",
+                        help=f"Whether incorrectly assigned staticmethods should be kept as such",
+                        action="store_true")
     parser.add_argument("output_dirs", nargs="*",
                         help=f"output directories (defaults to {default_output_dirs[0]})",
                         default=default_output_dirs)
@@ -61,4 +64,4 @@ if __name__ == "__main__":
               "Please pip install pybind11_stubgen (available on PyPI and GitHub).", file=sys.stderr)
         sys.exit(1)
     site_packages_path = Path(site_packages_path)
-    generate_stubs(site_packages_path, args.output_dirs, args.concurrency, args.verbose)
+    generate_stubs(site_packages_path, args)

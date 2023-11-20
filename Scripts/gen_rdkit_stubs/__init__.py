@@ -103,7 +103,13 @@ def run_worker(module_name):
     """
     out = ""
     err = ""
-    cmd = run_worker.cmd + [run_worker.tempdir, module_name] + run_worker.outer_dirs
+    args = [
+        "--tempdir", run_worker.tempdir,
+        "--module-name", module_name,
+    ]
+    if run_worker.keep_incorrect_staticmethods:
+        args.append("--keep-incorrect-staticmethods")
+    cmd = run_worker.cmd + args + ["--outer-dirs"] + run_worker.outer_dirs
     proc = subprocess.run(cmd, capture_output=True)
     if proc.returncode:
         msg = proc.stderr.decode("utf-8") or "(no error message)"
@@ -155,12 +161,13 @@ def clear_stubs(outer_dir):
         else:
             os.remove(entry)
 
-def generate_stubs_internal(modules, outer_dirs, concurrency=1, verbose=False):
-    concurrency = min(concurrency, len(modules))
+def generate_stubs_internal(modules, outer_dirs, args):
+    concurrency = min(args.concurrency, len(modules))
     with tempfile.TemporaryDirectory() as tempdir:
         src_dir = os.path.join(tempdir, RDKIT_MODULE_NAME)
         run_worker.cmd = [sys.executable, os.path.join(os.path.dirname(__file__), WORKER_SCRIPT)]
         run_worker.tempdir = tempdir
+        run_worker.keep_incorrect_staticmethods = args.keep_incorrect_staticmethods
         run_worker.outer_dirs = outer_dirs
         with ThreadPool(concurrency) as pool:
             res = pool.map(run_worker, modules)
@@ -169,7 +176,7 @@ def generate_stubs_internal(modules, outer_dirs, concurrency=1, verbose=False):
         concat_err = "\n".join(err for err in concat_err if err)
         if concat_err:
             logger.critical(concat_err)
-        if concat_out and verbose:
+        if concat_out and args.verbose:
             logger.warning(concat_out)
         if os.path.isdir(src_dir):
             for f in os.listdir(src_dir):
@@ -177,7 +184,7 @@ def generate_stubs_internal(modules, outer_dirs, concurrency=1, verbose=False):
                 if os.path.exists(src_entry):
                     copy_stubs(src_entry, outer_dirs)
 
-def generate_stubs(site_packages_path, output_dirs=[os.getcwd()], concurrency=1, verbose=False):
+def generate_stubs(site_packages_path, args):
     """Generate RDKit stubs.
 
     Args:
@@ -190,6 +197,10 @@ def generate_stubs(site_packages_path, output_dirs=[os.getcwd()], concurrency=1,
         verbose (bool, optional): Whether output should be verbose.
         Defaults to False.
     """
+    output_dirs = args.output_dirs or [os.getcwd()]
+    args.concurrency = args.concurrency or 1
+    args.verbose = args.verbose or False
+    args.keep_incorrect_staticmethods = args.keep_incorrect_staticmethods or False
     modules = {str(p.parent.relative_to(site_packages_path)).replace(os.sep, ".")
                for p in sorted(site_packages_path.joinpath(RDKIT_MODULE_NAME).rglob(INIT_PY))}
     outer_dirs = []
@@ -202,7 +213,7 @@ def generate_stubs(site_packages_path, output_dirs=[os.getcwd()], concurrency=1,
             os.remove(outer_dir)
         if not os.path.isdir(outer_dir):
             os.makedirs(outer_dir)
-    generate_stubs_internal(modules, outer_dirs, concurrency, verbose)
+    generate_stubs_internal(modules, outer_dirs, args)
     pyi_path = pathlib.Path(outer_dirs[0])
     pyi_files = {PYI_TO_PY.sub(".py", str(p.relative_to(pyi_path))) for p in pyi_path.rglob("*.pyi")}
     modules = {str(p.relative_to(site_packages_path.joinpath(RDKIT_MODULE_NAME)))
@@ -212,7 +223,55 @@ def generate_stubs(site_packages_path, output_dirs=[os.getcwd()], concurrency=1,
         sorted(site_packages_path.joinpath(RDKIT_MODULE_NAME).rglob("*.py"))
     ) if p.name != INIT_PY}.difference(pyi_files)
     modules = {RDKIT_MODULE_NAME + "." + os.path.splitext(p.replace(os.sep, "."))[0] for p in modules}
-    generate_stubs_internal(modules, outer_dirs, concurrency, verbose)
+    generate_stubs_internal(modules, outer_dirs, args)
+
+class PythonParameter:
+    """Class to store Python function signature parameters."""
+
+    ARG1 = "arg1"
+    ARG_DIGIT = re.compile(r"^arg\d+$")
+
+    def __init__(self, arg_type, arg_name, arg_default=None):
+        self.arg_type = arg_type
+        self.arg_name = arg_name
+        self.arg_default = arg_default
+
+    def as_str(self):
+        """Return this parameter as a .pyi signature string parameter.
+
+        Returns:
+            str: parameter: type as string, followed by optional
+            default parameter
+        """
+        res = f"{self.arg_name}: {self.arg_type}"
+        if self.arg_default:
+            res += f" = {self.arg_default}"
+        return res
+
+    def is_arg1(self):
+        """Return True if this parameter is an arg1 parameter.
+
+        Returns:
+            bool: True if this parameter is an arg1 parameter
+        """
+        return self.arg_name == self.ARG1
+
+    def is_arg_digit(self):
+        """Return True if this parameter is an arg# parameter.
+
+        Returns:
+            bool: True if this parameter is an arg# parameter
+        """
+        return self.ARG_DIGIT.match(self.arg_name) is not None
+
+    def rename(self, new_name):
+        """Rename this parameter to new_name.
+
+        Args:
+            new_name (str): new parameter name
+        """
+        self.arg_name = new_name
+
 
 class ProcessDocLines:
     """A class to pre-process docstrings before feeding them to pybind11_stubgen."""
@@ -240,10 +299,50 @@ class ProcessDocLines:
         "_vectSt6vectorIiSaIiEE": "typing.Sequence[typing.Sequence[int]]",
         "_vectSt6vectorIjSaIjEE": "typing.Sequence[typing.Sequence[int]]",
     }
+    STD_MEMBER_FUNC_PARAM_NAMES = {
+        "__add__": ("other",),
+        "__and__": ("other",),
+        "append": ("item",),
+        "__call__": (),
+        "__contains__": ("item",),
+        "__copy__": (),
+        "data": (),
+        "__delitem__": ("item",),
+        "__enter__": (),
+        "__eq__": ("other",),
+        "__exit__": ("exc_type", "exc_value", "traceback"),
+        "extend": ("other",),
+        "__getinitargs__": (),
+        "__getitem__": ("item",),
+        "__getstate__": (),
+        "__iadd__": ("other",),
+        "__iand__": ("other",),
+        "__idiv__": ("other",),
+        "__imul__": ("other",),
+        "__init__": (),
+        "__invert__": (),
+        "__ior__": ("other",),
+        "__isub__": ("other",),
+        "__iter__": (),
+        "key": (),
+        "__len__": (),
+        "__mul__": ("other",),
+        "__ne__": ("other",),
+        "__next__": (),
+        "next": (),
+        "__or__": ("other",),
+        "__setitem__": ("item", "value"),
+        "__setstate__": ("data",),
+        "__str__": (),
+        "__sub__": ("other",),
+        "__truediv__": ("other",),
+        "__xor__": ("other",),
+    }
     OVERLOADED_FUNCTION_TAG = "Overloaded function."
 
-    def __init__(self, module_name):
+    def __init__(self, module_name, keep_incorrect_staticmethods=False):
         self.module_name = module_name
+        self.keep_incorrect_staticmethods = keep_incorrect_staticmethods
         self.num_overloads = 0
         self.overload_num = 0
         self.top_signature = None
@@ -306,10 +405,7 @@ class ProcessDocLines:
         py_signature_arg_type = py_signature_arg_match.group(1)
         py_signature_arg_name = py_signature_arg_match.group(2)
         py_signature_arg_default = cls.deprotect_quoted_square_brackets_and_equals(py_signature_arg_match.group(3))
-        res = f"{py_signature_arg_name}: {py_signature_arg_type}"
-        if py_signature_arg_default:
-            res += f" = {py_signature_arg_default}"
-        return res
+        return PythonParameter(py_signature_arg_type, py_signature_arg_name, py_signature_arg_default)
 
     @classmethod
     def find_def_match(cls, src_line):
@@ -349,6 +445,45 @@ class ProcessDocLines:
             else:
                 module_name_tmp = ".".join(module_name_tmp.split(".")[:-1])
         return res
+
+    def correct_function_args(self, func_name, args):
+        """Correct Python signatures.
+
+        In spite of our efforts, boost::python will still generate
+        incorrect docstrings for certain class methods, i.e., with
+        "arg1" instead of the "self" parameter. This happens, among
+        others, for those generated with boost::python::make_constructor.
+        We cannot patch the C++ sources adding the "self" parameter
+        as a boost::python::arg or the compiler will issue an error.
+        Therefore, the only option is to post-process the generated
+        .pyi files and replace "arg1" with "self". When we do so
+        and the parameters which follow are "arg#", we also renumber
+        them accordingly.
+
+        Args:
+            func_name (str): name of the function whose signature
+            may needs to be corrected
+            args (list[PythonParameter]): list of PythonParameter
+            instances that may need to be corrected
+
+        Returns:
+            list[PythonParameter]: corrected list of PythonParameter
+            instances
+        """
+        param_names = self.STD_MEMBER_FUNC_PARAM_NAMES.get(func_name, None)
+        if param_names is not None and args and args[0].is_arg1():
+            param_names_with_self = ["self", *param_names]
+            param_idx = 0
+            for i, arg in enumerate(args):
+                param_name = None
+                if i <= len(param_names):
+                    param_name = param_names_with_self[i]
+                elif arg.is_arg_digit():
+                    param_idx += 1
+                    param_name = f"arg{param_idx}"
+                if param_name is not None:
+                    arg.rename(param_name)
+        return args
 
     def process_src_line(self, src_line):
         """Process single docstring line.
@@ -394,7 +529,10 @@ class ProcessDocLines:
                     py_signature_args = []
                 py_signature_ret = py_signature_match.group(2)
                 py_signature_ret = self.convert_to_valid_type(py_signature_ret)
-                processed_args = ", ".join(self.process_py_signature_arg(py_signature_arg) for py_signature_arg in py_signature_args)
+                processed_args = [self.process_py_signature_arg(py_signature_arg) for py_signature_arg in py_signature_args]
+                if not self.keep_incorrect_staticmethods:
+                    processed_args = self.correct_function_args(func_name, processed_args)
+                processed_args = ", ".join(arg.as_str() for arg in processed_args)
                 src_line = f"{func_name}{func_open_bracket}{processed_args}{func_end_bracket_and_arrow}{py_signature_ret}{func_colon_to_end}"
                 if self.top_signature is None:
                     self.top_signature = src_line
@@ -404,7 +542,7 @@ class ProcessDocLines:
 
     def process_doc_lines(self, doc_lines):
         """Process the raw docstring lines.
-        * Coount the number of overloads for the function described
+        * Count the number of overloads for the function described
           in the docstring
         * Trim any empty lines at the beginning of the docstring,
           as pybind11_stubgen does expects no empty lines
@@ -433,7 +571,7 @@ class ProcessDocLines:
         return doc_lines
 
     @classmethod
-    def process(cls, module_name, doc_lines):
+    def process(cls, module_name, doc_lines, keep_incorrect_staticmethods=False):
         """Process the raw docstring lines.
         This is a convenience static function that creates an instance
         of ProcessDocLines and calls process_doc_lines() on it.
@@ -442,9 +580,11 @@ class ProcessDocLines:
             module_name (str): fully qualified Python module
             name the docstring belongs to
             doc_lines (list[str]): raw docstring lines
+            keep_incorrect_staticmethods (bool): if true, incorrectly
+            typed staticmethods are left unmodified
 
         Returns:
             list[str]: processed docstring lines
         """
-        instance = cls(module_name)
+        instance = cls(module_name, keep_incorrect_staticmethods)
         return instance.process_doc_lines(doc_lines)

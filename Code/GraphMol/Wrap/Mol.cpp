@@ -792,13 +792,13 @@ struct mol_wrapper {
         .def_pickle(mol_pickle_suite())
 
         .def("Debug", MolDebug,
-             (python::arg("mol"), python::arg("useStdout") = true),
+             (python::arg("self"), python::arg("useStdout") = true),
              "Prints debugging information about the molecule.\n")
 
         .def("ToBinary", MolToBinary,
              "Returns a binary string representation of the molecule.\n")
         .def("ToBinary", MolToBinaryWithProps,
-             (python::arg("mol"), python::arg("propertyFlags")),
+             (python::arg("self"), python::arg("propertyFlags")),
              "Returns a binary string representation of the molecule pickling "
              "the "
              "specified properties.\n")
