@@ -137,7 +137,7 @@ double getBestRMSInternal(const ROMol &prbMol, const ROMol &refMol, int prbCid,
   const Conformer &refCnf = refMol.getConformer(refCid);
   const MatchVectType *bestMatchPtr = &matches[0];
 
-  if (numThreads == 1 || numThreads <= matches.size()) {
+  if (numThreads == 1) {
     for (const auto &matche : matches) {
       RDGeom::Transform3D tmpTrans;
       double msd = trans ? alignConfsOnAtomMap(prbCnf, refCnf, matche, tmpTrans,
