@@ -160,7 +160,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   // for atom in frag
   int atom_id = -1;
   std::vector<BondInfo> bonds;
-  std::map<int, StereoGroupInfo> sgroups;
+  std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> sgroups;
 
   // nodetypes =
   // https://www.cambridgesoft.com/services/documentation/sdk/chemdraw/cdx/properties/Node_Type.htm
@@ -325,13 +325,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         }
       }
       if (sgroup != -1) {
-        auto &stereo = sgroups[sgroup];
-        if (stereo.sgroup != -1 && stereo.grouptype != grouptype) {
-          BOOST_LOG(rdWarningLog)
-              << "StereoGroup " << sgroup
-              << " has conflicting stereo group types, ignoring" << std::endl;
-          stereo.conflictingSgroupTypes = true;
-        }
+        auto key = std::make_pair(sgroup, grouptype);
+        auto &stereo = sgroups[key];
+        stereo.sgroup = sgroup;
         stereo.grouptype = grouptype;
         stereo.atoms.push_back(rd_atom);
       }

@@ -1,7 +1,7 @@
 steps:
 - bash: |
     sudo apt-get update
-    sudo apt-get install -y software-properties-common zlib1g zlib1g-dev swig3.0
+    sudo apt-get install -y software-properties-common zlib1g zlib1g-dev swig
     sudo apt-get install -y libboost-all-dev libfreetype-dev libeigen3-dev
   displayName: Setup build environment
 - bash: |
@@ -14,7 +14,6 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=ON \
     -DRDK_BUILD_CPP_TESTS=OFF \
     -DRDK_BUILD_PYTHON_WRAPPERS=OFF \
-    -DRDK_USE_BOOST_REGEX=OFF \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \

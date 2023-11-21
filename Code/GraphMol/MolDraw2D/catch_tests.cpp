@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 
@@ -4064,7 +4064,7 @@ TEST_CASE("changing baseFontSize") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(6.0).margin(0.1));
+    CHECK(drawer.fontSize() == Catch::Approx(6.0).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1a.svg");
     outs << text;
@@ -4078,7 +4078,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(5.5).margin(.1));
+    CHECK(drawer.fontSize() == Catch::Approx(5.5).margin(.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1b.svg");
     outs << text;
@@ -4089,7 +4089,7 @@ TEST_CASE("changing baseFontSize") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(14.0).margin(0.1));
+    CHECK(drawer.fontSize() == Catch::Approx(14.0).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2a.svg");
     outs << text;
@@ -4101,7 +4101,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(20.25).margin(0.1));
+    CHECK(drawer.fontSize() == Catch::Approx(20.25).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2b.svg");
     outs << text;
@@ -4179,7 +4179,7 @@ M  END
     drawer.drawOptions().fixedFontSize = 32;
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(32).margin(0.1));
+    CHECK(drawer.fontSize() == Catch::Approx(32).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testFlexiCanvas.1d.svg");
     outs << text;
@@ -5626,11 +5626,11 @@ M  END
       double dbl = drawnBondLength(regex, text);
       // the bonds should all be 14.4 long, but the SVG is only written
       // to 1 decimal place, so rounding errors are largish.
-      REQUIRE(dbl == Approx(14.4253));
+      REQUIRE(dbl == Catch::Approx(14.4253));
       regex =
           R"(class='bond-1 atom-1 atom-2' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*)')";
       dbl = drawnBondLength(regex, text);
-      REQUIRE(dbl == Approx(14.4));
+      REQUIRE(dbl == Catch::Approx(14.4));
       check_file_hash(nameBase + "12.svg");
     }
 #endif
@@ -5674,7 +5674,7 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   Point2D point3{stod((*cross1Match)[1]), stod((*cross1Match)[2])};
   Point2D point4{stod((*cross1Match)[3]), stod((*cross1Match)[4])};
   auto vec2 = point3.directionVector(point4);
-  REQUIRE(vec1.dotProduct(vec2) != Approx(1.0).margin(1.0e-4));
+  REQUIRE(vec1.dotProduct(vec2) != Catch::Approx(1.0).margin(1.0e-4));
 
   check_file_hash("test_unspec_stereo.svg");
 }
@@ -7419,7 +7419,7 @@ TEST_CASE("Bad double bond - Github 6160") {
     }
     auto vec1 = points[0].directionVector(points[1]);
     auto vec2 = points[2].directionVector(points[3]);
-    CHECK(vec1.dotProduct(vec2) == Approx(1.0).margin(1.0e-4));
+    CHECK(vec1.dotProduct(vec2) == Catch::Approx(1.0).margin(1.0e-4));
     check_file_hash(svgName);
   }
 }

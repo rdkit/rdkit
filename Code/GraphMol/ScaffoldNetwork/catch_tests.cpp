@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include "GraphMol/ScaffoldNetwork/detail.h"
 #include "RDGeneral/test.h"
 #include <sstream>
@@ -898,5 +898,17 @@ TEST_CASE("molCounts", "[scaffolds]") {
       auto idx = loc - net.nodes.begin();
       CHECK(net.molCounts[idx] == endp.second);
     }
+  }
+}
+
+TEST_CASE("Github #6855 MakeScaffoldGeneric isotope removal", "[bug]") {
+  auto m = "[235U]1CC1"_smiles;
+  REQUIRE(m);
+  SECTION("basics") {
+    std::unique_ptr<ROMol> pm(
+        ScaffoldNetwork::detail::makeScaffoldGeneric(*m, true, false));
+    REQUIRE(pm);
+    auto smiles = MolToSmiles(*pm);
+    CHECK(smiles == "*1**1");
   }
 }

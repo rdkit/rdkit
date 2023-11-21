@@ -35,15 +35,7 @@
 #include <fstream>
 #include <sstream>
 
-#ifdef RDKIT_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::regex_search;
-#else
 #include <regex>
-using std::regex;
-using std::regex_search;
-#endif
 
 // if 0, turns off a lot of the FREETYPE TEST_ASSERT checks
 // because sometimes you want to look at all the pictures first.
@@ -4553,10 +4545,10 @@ void testGithub4156() {
     outs.flush();
     outs.close();
     // this is the start of the radical spot.
-    regex qry(
+    std::regex qry(
         "<path class='atom-1' d='M 23.[0-9]*,76.[0-9]* L 23.[0-9]*,76.[0-9]*");
 #if DO_TEST_ASSERT
-    TEST_ASSERT(regex_search(text, qry));
+    TEST_ASSERT(std::regex_search(text, qry));
 #endif
     check_file_hash("testGithub4156_1.svg");
   }
@@ -4573,11 +4565,11 @@ void testGithub4156() {
     outs.flush();
     outs.close();
     // this is the start of the radical spot.
-    regex qry(
+    std::regex qry(
         "<path class='atom-1' d='M 273.[0-9]*,76.[0-9]* L "
         "273.[0-9]*,76.[0-9]*");
 #if DO_TEST_ASSERT
-    TEST_ASSERT(regex_search(text, qry));
+    TEST_ASSERT(std::regex_search(text, qry));
 #endif
     check_file_hash("testGithub4156_2.svg");
   }

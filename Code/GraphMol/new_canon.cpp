@@ -133,13 +133,13 @@ void ActivatePartitions(unsigned int nAtoms, int *order, int *count,
   for (i = 0; i < nAtoms; i++) {
     j = order[i];
     int flag = 1;
-    //#define SKIP_NODE_CHANGED_OPTIMIZATION 0
-    //#ifndef SKIP_NODE_CHANGED_OPTIMIZATION
-    //        if(count[j]){
-    //          std::cout << "j " << j << std::endl;
-    //          flag=(next[j]!=-2);
-    //        }
-    //#endif
+    // #define SKIP_NODE_CHANGED_OPTIMIZATION 0
+    // #ifndef SKIP_NODE_CHANGED_OPTIMIZATION
+    //         if(count[j]){
+    //           std::cout << "j " << j << std::endl;
+    //           flag=(next[j]!=-2);
+    //         }
+    // #endif
     changed[j] = flag;
   }
 }
@@ -170,7 +170,6 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
     memset(lastLevelNbrs.get(), 0, nAtoms * sizeof(char));
     memset(currentLevelNbrs.get(), 0, nAtoms * sizeof(char));
     memset(revisitedNeighbors.get(), 0, nAtoms * sizeof(int));
-    unsigned count = 1;
     std::vector<int> nextLevelNbrs;
     while (!neighbors.empty()) {
       unsigned int numLevelNbrs = 0;
@@ -237,7 +236,6 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
 
       neighbors.insert(neighbors.end(), nextLevelNbrs.begin(),
                        nextLevelNbrs.end());
-      count++;
     }
     atoms[idx].revistedNeighbors.resize(currentRNIdx);
   }
@@ -661,6 +659,18 @@ void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
   std::sort(nbrs.begin(), nbrs.end(), bondholder::greater);
 }
 
+// This routine calculates the number of swaps that would be required to
+// determine what the smiles chirality value would be for a given chiral atom
+// given that the atom is visited first from the atom of interest.
+// THis is used to determine which of two atoms has priority based on the
+// neighbor's chirality
+//
+// If the chiral neighbor has two equivlent (at least so far) neighbors that are
+// not the atom of interest, it cannot be used to determine the priority of the
+// atom of interest.  For this reason, we keep track of the number of neighbors
+// that have the same priority so far.  If any two are the same, we do NOT use
+// that neighbor to determine the priority of the atom of interest.
+
 void updateAtomNeighborNumSwaps(
     canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
     std::vector<std::pair<unsigned int, unsigned int>> &result) {
@@ -668,30 +678,48 @@ void updateAtomNeighborNumSwaps(
   for (auto &nbr : nbrs) {
     unsigned nbrIdx = nbr.nbrIdx;
 
+    std::list<unsigned int> neighborsSeen;
+    bool tooManySimilarNbrs = false;
     if (isRingAtom && atoms[nbrIdx].atom->getChiralTag() != 0) {
       std::vector<int> ref, probe;
       for (unsigned i = 0; i < atoms[nbrIdx].degree; ++i) {
-        ref.push_back(atoms[nbrIdx].nbrIds[i]);
+        auto nbrNbrId =
+            atoms[nbrIdx].nbrIds[i];  // id of the neighbor's neighbor
+        ref.push_back(nbrNbrId);
+        if ((int)atomIdx != nbrNbrId) {
+          if ((std::find(neighborsSeen.begin(), neighborsSeen.end(),
+                         atoms[nbrNbrId].index) != neighborsSeen.end())) {
+            tooManySimilarNbrs = true;
+          } else {
+            neighborsSeen.push_back(atoms[nbrNbrId].index);
+          }
+        }
       }
+
       probe.push_back(atomIdx);
       for (auto &bond : atoms[nbrIdx].bonds) {
         if (bond.nbrIdx != atomIdx) {
           probe.push_back(bond.nbrIdx);
         }
       }
-      int nSwaps = static_cast<int>(countSwapsToInterconvert(ref, probe));
-      if (atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
-        if (nSwaps % 2) {
-          result.emplace_back(nbr.nbrSymClass, 2);
-        } else {
-          result.emplace_back(nbr.nbrSymClass, 1);
-        }
-      } else if (atoms[nbrIdx].atom->getChiralTag() ==
-                 Atom::CHI_TETRAHEDRAL_CCW) {
-        if (nSwaps % 2) {
-          result.emplace_back(nbr.nbrSymClass, 1);
-        } else {
-          result.emplace_back(nbr.nbrSymClass, 2);
+
+      if (tooManySimilarNbrs) {
+        result.emplace_back(nbr.nbrSymClass, 0);
+      } else {
+        int nSwaps = static_cast<int>(countSwapsToInterconvert(ref, probe));
+        if (atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+          if (nSwaps % 2) {
+            result.emplace_back(nbr.nbrSymClass, 2);
+          } else {
+            result.emplace_back(nbr.nbrSymClass, 1);
+          }
+        } else if (atoms[nbrIdx].atom->getChiralTag() ==
+                   Atom::CHI_TETRAHEDRAL_CCW) {
+          if (nSwaps % 2) {
+            result.emplace_back(nbr.nbrSymClass, 1);
+          } else {
+            result.emplace_back(nbr.nbrSymClass, 2);
+          }
         }
       }
     } else {
@@ -773,6 +801,7 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
   }
+
   if (clearRings) {
     mol.getRingInfo()->reset();
   }
@@ -800,6 +829,7 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
   }
+
   if (clearRings) {
     mol.getRingInfo()->reset();
   }

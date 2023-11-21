@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>

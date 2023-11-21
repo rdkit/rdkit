@@ -155,7 +155,6 @@ void DrawText::drawStringRects(const std::string &label, OrientType orient,
   std::vector<TextDrawType> draw_modes;
   std::vector<char> draw_chars;
 
-  size_t i = 0;
   getStringRects(label, orient, rects, draw_modes, draw_chars, false, talign);
   for (auto r : rects) {
     r->trans_.x += cds.x;
@@ -176,7 +175,6 @@ void DrawText::drawStringRects(const std::string &label, OrientType orient,
     mol_draw.drawLine(br, bl);
     mol_draw.setColour(DrawColour(0.0, 0.95, 0.95));
     mol_draw.drawLine(bl, tl);
-    ++i;
   }
 }
 
@@ -310,7 +308,6 @@ void DrawText::getStringExtremes(const std::string &label, OrientType orient,
   std::vector<char> to_draw;
   getStringRects(label, orient, rects, draw_modes, to_draw, dontSplit);
 
-  int i = 0;
   for (auto r : rects) {
     Point2D tl, tr, br, bl;
     r->calcCorners(tl, tr, br, bl, 0.0);
@@ -326,7 +323,6 @@ void DrawText::getStringExtremes(const std::string &label, OrientType orient,
     x_max = std::max(tr.x, x_max);
     y_max = std::max(bl.y, y_max);
     y_max = std::max(tr.y, y_max);
-    ++i;
   }
 }
 
@@ -362,7 +358,6 @@ void DrawText::alignString(
     double x_max = std::numeric_limits<double>::lowest();
     double y_min = std::numeric_limits<double>::max();
     double y_max = std::numeric_limits<double>::lowest();
-    int num_norm = 0;
     int align_char = -1;
     for (size_t i = 0; i < rects.size(); ++i) {
       if (draw_modes[i] == TextDrawType::TextDrawNormal) {
@@ -381,7 +376,6 @@ void DrawText::alignString(
         x_max = std::max(tr.x, x_max);
         y_max = std::max(bl.y, y_max);
         y_max = std::max(tr.y, y_max);
-        ++num_norm;
       }
     }
     align_char = align_char == -1 ? 0 : align_char;

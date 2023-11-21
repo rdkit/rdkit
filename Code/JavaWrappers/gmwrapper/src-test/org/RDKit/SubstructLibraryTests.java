@@ -353,6 +353,34 @@ public class SubstructLibraryTests extends GraphMolTest {
 	    assertEquals(ids.get(0), "foo");
 	    assertEquals(ids2.get(0), "foo");
         }
+
+
+
+  	@Test 
+	public void test6XQM() {
+            MolHolder mh = new MolHolder();
+            PatternHolder pat = new TautomerPatternHolder();
+            assertEquals(0, mh.size());
+            // mol holder
+            SubstructLibrary lib = new SubstructLibrary(mh, pat);
+
+            mol = RWMol.MolFromSmiles("COCC=O");
+            lib.addMol(mol);
+            mol = RWMol.MolFromSmiles("COOCC=O");
+            lib.addMol(mol);
+            mol = RWMol.MolFromSmiles("COOOCC=O");
+            lib.addMol(mol);
+            mol = RWMol.MolFromSmiles("COOOOCC=O");
+            lib.addMol(mol);
+
+
+            RWMol rwm = RWMol.MolFromSmiles("COC=CO |LN:1:1.3|");
+            ExtendedQueryMol qry = RDKFuncs.createExtendedQueryMol(rwm);
+
+            UInt_Vect matches = lib.getMatches(qry);
+            assertEquals(3, matches.size());
+        }
+
   
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.SubstructLibraryTests");

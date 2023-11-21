@@ -28,6 +28,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/GenericGroups/GenericGroups.h>
 #include <GraphMol/QueryOps.h>
+#include <GraphMol/Chirality.h>
 
 #include <fstream>
 #include <RDGeneral/FileParseException.h>
@@ -36,18 +37,7 @@
 #include <typeinfo>
 #include <exception>
 #include <charconv>
-
-#ifdef RDKIT_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::regex_match;
-using boost::smatch;
-#else
 #include <regex>
-using std::regex;
-using std::regex_match;
-using std::smatch;
-#endif
 #include <sstream>
 #include <locale>
 #include <cstdlib>
@@ -55,6 +45,10 @@ using std::smatch;
 #include <string_view>
 
 using namespace RDKit::SGroupParsing;
+using std::regex;
+using std::regex_match;
+using std::smatch;
+
 
 namespace RDKit {
 
@@ -1369,6 +1363,7 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
               text.substr(7, text.length() - 7));
 }
 
+namespace {
 void setRGPProps(const std::string_view symb, Atom *res) {
   PRECONDITION(res, "bad atom pointer");
   // set the dummy label so that this is shown correctly
@@ -1390,6 +1385,8 @@ void lookupAtomicNumber(Atom *res, const std::string &symb,
     }
   }
 }
+
+}  // namespace
 
 Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
                            unsigned int line, bool strictParsing) {

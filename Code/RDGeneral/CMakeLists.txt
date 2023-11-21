@@ -59,8 +59,7 @@ endif(RDK_BUILD_THREADSAFE_SSS)
 
 if(RDK_BUILD_CPP_TESTS)
 add_library(rdkitCatch catch_main.cpp)
-target_link_libraries(rdkitCatch PUBLIC rdkit_base)
-target_include_directories(rdkitCatch PUBLIC ${CATCH_INCLUDE_DIR})
+target_link_libraries(rdkitCatch PUBLIC rdkit_base Catch2::Catch2)
 endif(RDK_BUILD_CPP_TESTS)
 
 

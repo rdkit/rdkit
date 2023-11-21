@@ -39,9 +39,9 @@ jobs:
   variables:
     compiler: clangxx_osx-64
     compiler_version: 12.0
-    boost_version: 1.71.0
+    boost_version: 1.82.0
     number_of_cores: sysctl -n hw.ncpu
-    python_name: python38
+    python: python=3.11
     target_platform: 10.13
   steps:
   - template: .azure-pipelines/mac_build.yml
@@ -106,15 +106,14 @@ jobs:
 - job: Ubuntu_x64_limitexternaldependencies
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
   variables:
-    python: python=3.8
-    boost_version: 1.71.0
+    python: python=3.11
+    boost_version: 1.82.0
     number_of_cores: nproc
-    python_name: python38
     compiler: gxx_linux-64
-    cc: gcc-10
-    cxx: g++-10
+    cc: gcc-11
+    cxx: g++-11
   steps:
   - template: .azure-pipelines/linux_build_limitexternal.yml
 

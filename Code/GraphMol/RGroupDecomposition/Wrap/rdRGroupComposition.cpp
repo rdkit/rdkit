@@ -43,6 +43,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
+#include <GraphMol/RGroupDecomposition/RGroupUtils.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
 
@@ -186,7 +187,13 @@ python::object RGroupDecomp(python::object cores, python::object mols,
   } else {
     return make_tuple(decomp.GetRGroupsAsColumn(asSmiles), unmatched);
   }
-}  // namespace RDKit
+}
+
+void relabelMappedDummiesHelper(ROMol &mol, unsigned int inputLabels,
+                                unsigned int outputLabels) {
+  relabelMappedDummies(mol, static_cast<RGroupLabelling>(inputLabels),
+                       static_cast<RGroupLabelling>(outputLabels));
+}
 
 struct rgroupdecomp_wrapper {
   static void wrap() {
@@ -405,10 +412,28 @@ struct rgroupdecomp_wrapper {
         "\n"
         "    unmatched is a vector of indices in the input mols that were not "
         "matched.\n";
-    python::def("RGroupDecompose", RDKit::RGroupDecomp,
+    python::def("RGroupDecompose", RGroupDecomp,
                 (python::arg("cores"), python::arg("mols"),
                  python::arg("asSmiles") = false, python::arg("asRows") = true,
                  python::arg("options") = RGroupDecompositionParameters()),
+                docString.c_str());
+
+    docString =
+        "Relabel dummy atoms bearing an R-group mapping (as\n"
+        "atom map number, isotope or MDLRGroup label) such that\n"
+        "they will be displayed by the rendering code as R# rather\n"
+        "than #*, *:#, #*:#, etc. By default, only the MDLRGroup label\n"
+        "is retained on output; this may be configured through the\n"
+        "outputLabels parameter.\n"
+        "In case there are multiple potential R-group mappings,\n"
+        "the priority on input is Atom map number > Isotope > MDLRGroup.\n"
+        "The inputLabels parameter allows to configure which mappings\n"
+        "are taken into consideration.\n";
+    python::def("RelabelMappedDummies", relabelMappedDummiesHelper,
+                (python::arg("mol"),
+                 python::arg("inputLabels") = static_cast<RGroupLabelling>(
+                     AtomMap | Isotope | MDLRGroup),
+                 python::arg("outputLabels") = MDLRGroup),
                 docString.c_str());
   };
 };

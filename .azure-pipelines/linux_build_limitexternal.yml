@@ -5,14 +5,16 @@ steps:
     sudo chown -R ${USER} ${CONDA}
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
+    conda config --set channel_priority strict
+    conda config --add channels conda-forge
+    conda config --set solver libmamba
     conda info -a
     conda create --name rdkit_build $(python) cmake \
-        boost-cpp=$(boost_version) \
-        py-boost=$(boost_version) \
+        libboost=$(boost_version) libboost-devel=$(boost_version) \
+        libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         numpy pillow eigen pandas \
-        qt
+        qt pytest
     conda activate rdkit_build
-    conda install -c rdkit nox cairo=1.14.6
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -24,7 +26,6 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF \
     -DRDK_BUILD_CPP_TESTS=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
-    -DRDK_USE_BOOST_REGEX=OFF \
     -DRDK_BUILD_COORDGEN_SUPPORT=OFF \
     -DRDK_BUILD_MAEPARSER_SUPPORT=OFF \
     -DRDK_OPTIMIZE_POPCNT=ON \
@@ -35,17 +36,11 @@ steps:
     -DRDK_BUILD_INCHI_SUPPORT=OFF \
     -DRDK_BUILD_CAIRO_SUPPORT=OFF \
     -DRDK_BUILD_QT_SUPPORT=OFF \
-    -DQt5_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
+    -DRDK_BUILD_XYZ2MOL_SUPPORT=ON \
     -DRDK_BUILD_SWIG_WRAPPERS=OFF \
     -DRDK_SWIG_STATIC=OFF \
     -DRDK_BUILD_THREADSAFE_SSS=OFF \
-    -DRDK_TEST_MULTITHREADED=OFF \
-    -DBoost_NO_SYSTEM_PATHS=ON \
-    -DBoost_NO_BOOST_CMAKE=TRUE \
-    -DRDK_BOOST_PYTHON3_NAME=$(python_name) \
-    -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
-    -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
-    -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
+    -DRDK_TEST_MULTITHREADED=OFF
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

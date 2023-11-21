@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.11)
 
 project (RDKit)
 
@@ -60,11 +60,11 @@ option(RDK_BUILD_XYZ2MOL_SUPPORT "build in support for the RDKit's implementatio
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
 option(RDK_USE_URF "Build support for Florian Flachsenberg's URF library" ON)
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
-option(RDK_USE_BOOST_REGEX "use boost::regex instead of std::regex (needed for systems with g++-4.8)" OFF)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindings)" OFF)
 option(RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS "build the minimal RDKit JS wrapper such that it supports legacy browsers" OFF)
 option(RDK_BUILD_CFFI_LIB "build the CFFI wrapper (for use in other programming languges)" OFF)
+option(RDK_CFFI_STATIC "statically link rdkit libraries into the cffi wrapper" ON)
 option(RDK_BUILD_FUZZ_TARGETS "build the fuzz targets" OFF)
 option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" ON )
 option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
@@ -114,9 +114,9 @@ if(RDK_PGSQL_STATIC AND RDK_BUILD_PGSQL)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
 
-if(RDK_BUILD_CFFI_LIB)
+if(RDK_CFFI_STATIC AND RDK_BUILD_CFFI_LIB)
   if(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
-    message("Enabling RDK_INSTALL_STATIC_LIBS because RDK_BUILD_CFFI_LIB is set.")
+    message("Enabling RDK_INSTALL_STATIC_LIBS because RDK_CFFI_STATIC is set.")
     set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
@@ -149,8 +149,18 @@ set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
 set(RDKit_DataDir "${CMAKE_CURRENT_SOURCE_DIR}/Data")
 
 #include catch
-add_subdirectory(${RDKit_ExternalDir}/catch)
-message("CATCH: ${CATCH_INCLUDE_DIR}")
+find_package(Catch2 3)
+if(NOT Catch2_FOUND)
+  Include(FetchContent)
+
+  FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG        v3.4.0 # or a later release
+  )
+
+  FetchContent_MakeAvailable(Catch2)
+endif()
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
@@ -302,7 +312,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   endif()
-  
+
   find_package(NumPy REQUIRED)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
@@ -438,17 +448,43 @@ else()
 endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
-    set(T_LIBS ${Boost_LIBRARIES})
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams)
-    if (Boost_SERIALIZATION_LIBRARY)
-      set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-    else()
-      set(Boost_LIBRARIES ${T_LIBS})
-    endif()
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams REQUIRED)
+    target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_SERIALIZATION)
     if(NOT Boost_USE_STATIC_LIBS)
       target_compile_definitions(rdkit_base INTERFACE -DBOOST_SERIALIZATION_DYN_LINK)
     endif()
+endif()
+
+if(RDK_BUILD_MAEPARSER_SUPPORT AND NOT RDK_USE_BOOST_IOSTREAMS)
+    message("Enabling RDK_USE_BOOST_IOSTREAMS because RDK_BUILD_MAEPARSER_SUPPORT is enabled.")
+    set(RDK_USE_BOOST_IOSTREAMS ON)
+endif()
+
+if(RDK_USE_BOOST_IOSTREAMS)
+    target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_IOSTREAMS)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
+    target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
+
+    if (NOT Boost_USE_STATIC_LIBS)
+      target_compile_definitions(rdkit_base INTERFACE -DBOOST_IOSTREAMS_DYN_LINK)
+    endif()
+
+    # deal with zlib
+    if (WIN32)
+      find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib)
+      if(Boost_zlib_FOUND)
+        set(zlib_lib Boost::zlib)
+      endif()
+    else()
+      if(Boost_USE_STATIC_LIBS)
+        # when we're doing static linkage of boost
+        # to also link against zlib (due to iostreams)
+        find_package(ZLIB)
+        set(zlib_lib ${ZLIB_LIBRARIES})
+     endif()
+    endif()
+    target_link_libraries(rdkit_base INTERFACE ${zlib_lib})
 endif()
 
 

@@ -395,7 +395,7 @@ def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
   try:
     err, inchi, fixed_mol = GetInchiForCTAB(ctab)
   except BadMoleculeException:
-    logger.warn(u'Corrupt molecule substituting no-struct: --->\n{0}\n<----'.format(ctab))
+    logger.warning(u'Corrupt molecule substituting no-struct: --->\n{0}\n<----'.format(ctab))
     err = NULL_MOL
     key = _identify(err, '', '', None, None)
     return MolKeyResult(key, err, '', '', None, None)
@@ -411,7 +411,7 @@ def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
       if not stereo_comment and len(info_flds) > 1:
         extra_structure_desc = info_flds[1].strip()
     else:
-      logger.warn(f'stereo code {code_fld} not recognized. Using default value for ctab.')
+      logger.warning(f'stereo code {code_fld} not recognized. Using default value for ctab.')
 
   if not (err & BAD_SET):
     n_stereo, n_undef_stereo, is_meso, dummy = InchiInfo.InchiInfo(

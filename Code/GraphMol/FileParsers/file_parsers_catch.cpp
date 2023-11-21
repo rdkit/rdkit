@@ -15,7 +15,7 @@
 #include <streambuf>
 
 #include "RDGeneral/test.h"
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
@@ -1845,7 +1845,7 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 4);
-    int val;
+    int val = 0;
     CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
         common_properties::molStereoCare, val));
     CHECK(val == 1);
@@ -1881,8 +1881,8 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 4);
-    int val;
     REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    int val = 0;
     CHECK(mol->getBondBetweenAtoms(0, 1)->getPropIfPresent(
         common_properties::molStereoCare, val));
     CHECK(val == 1);
@@ -1957,8 +1957,8 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 4);
-    int val;
     REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    int val = 0;
     CHECK(mol->getBondBetweenAtoms(0, 1)->getPropIfPresent(
         common_properties::molStereoCare, val));
     CHECK(val == 1);
@@ -5862,6 +5862,72 @@ void check_roundtripped_properties(RDProps &original, RDProps &roundtrip) {
   }
 }
 
+TEST_CASE("MaeWriter atom numbering chirality", "[mae][MaeWriter][writer]") {
+  SECTION("R") {
+    auto mol = "C/C=C/[C@@H](CO)C(C)C"_smiles;
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+    auto iss = new std::istringstream(oss->str());
+    auto roundtrip = MaeMolSupplier(iss).next();
+    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::CHI_TETRAHEDRAL_CW);
+  }
+
+  SECTION("S") {
+    auto mol = "C/C=C/[C@H](CO)C(C)C"_smiles;
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+    auto iss = new std::istringstream(oss->str());
+    auto roundtrip = MaeMolSupplier(iss).next();
+    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::CHI_TETRAHEDRAL_CCW);
+  }
+}
+
+TEST_CASE("MaeWriter any stereo", "[mae][MaeWriter][writer]") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.942857 -0.857143 0.000000 0
+M  V30 2 C -1.514286 -0.857143 0.000000 0
+M  V30 3 H -3.657143 0.380036 0.000000 0
+M  V30 4 Br -3.657143 -2.094322 0.000000 0
+M  V30 5 F -0.800000 -2.094322 0.000000 0
+M  V30 6 Cl -0.800000 0.380036 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2 CFG=2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 1 2 5
+M  V30 5 1 2 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+  REQUIRE(m);
+
+  // Currently, MaeMolSupplier does not recognize "either" double bonds, this
+  // just tests that the bond will be recognizable by schrodinger software
+  auto oss = new std::ostringstream;
+  MaeWriter w(oss);
+  w.write(*m);
+  w.flush();
+  auto maeblock = oss->str();
+  CHECK(maeblock.find("i_sd_original_parity") != std::string::npos);
+  // expected bond line -- include RDKit cfg properties
+  CHECK(maeblock.find("1 1 2 2 2 2 2") != std::string::npos);
+}
+
 TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
   auto mol = "C1CCCCC1"_smiles;
   REQUIRE(mol);
@@ -6152,7 +6218,9 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
       // Skip ahead to the ct block
     }
 
-    // The only ct level should be the title
+    // The only ct level property should be the title and stereo status
+    std::getline(*oss, line);
+    CHECK(line.find("i_m_ct_stereo_status") != std::string::npos);
     std::getline(*oss, line);
     CHECK(line.find("s_m_title") != std::string::npos);
 
