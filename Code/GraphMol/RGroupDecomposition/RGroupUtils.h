@@ -93,6 +93,20 @@ RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
 RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
     const RGroupColumns &rgr, const std::string &prefix = "");
 
+//! Relabel dummy atoms bearing an R-group mapping (as
+/// atom map number, isotope or MDLRGroup label) such that
+/// they will be displayed by the rendering code as R# rather
+/// than #*, *:#, #*:#, etc. By default, only the MDLRGroup label
+/// is retained on output; this may be configured through the
+/// outputLabels parameter.
+/// In case there are multiple potential R-group mappings,
+/// the priority on input is Atom map number > Isotope > MDLRGroup.
+/// The inputLabels parameter allows to configure which mappings
+/// are taken into consideration.
+RDKIT_RGROUPDECOMPOSITION_EXPORT void relabelMappedDummies(
+    ROMol &mol, unsigned int inputLabels = AtomMap | Isotope | MDLRGroup,
+    unsigned int outputLabels = MDLRGroup);
+
 }  // namespace RDKit
 
 #endif

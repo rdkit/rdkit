@@ -71,6 +71,9 @@ class TestCase(unittest.TestCase):
     self.assertEqual(testSmiles('c1[nH]ccc1'), 'C1CCCC1')
     self.assertEqual(testSmiles('C1[NH2+]C1'), 'C1CC1')
     self.assertEqual(testSmiles('C1[C@](Cl)(F)O1'), 'CC1(C)CC1')
+    
+    # Examples from github issue 6855
+    self.assertEqual(testSmiles('[235U]1CC1'), 'C1CC1')
 
   testMolecules = [
     _TestMolecule('CC1CCC1', 'C1CCC1'),

@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 ///
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -23,7 +23,7 @@
 using namespace RDKit;
 using std::unique_ptr;
 
-TEST_CASE("Github #1039", "[]") {
+TEST_CASE("Github #1039") {
   SECTION("double bond") {
     auto m1 = "C/C=C/C=C/C"_smiles;
     REQUIRE(m1);
@@ -125,7 +125,7 @@ TEST_CASE("Github #1039", "[]") {
   }
 }
 
-TEST_CASE("molzip", "[]") {
+TEST_CASE("molzip") {
   SECTION("basic tests") {
     auto a = "C[*:1]"_smiles;
     auto b = "N[*:1]"_smiles;
@@ -506,8 +506,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "ReplaceCore handles chiral center with multiple bonds from core to chiral center",
-    "[]") {
+    "ReplaceCore handles chiral center with multiple bonds from core to chiral center") {
   auto structure = "C1CSCN[C@@]12(NCCCO2)"_smiles;
   auto core = "NCSCC"_smarts;
   std::unique_ptr<ROMol> res{replaceCore(*structure, *core, true, true)};
