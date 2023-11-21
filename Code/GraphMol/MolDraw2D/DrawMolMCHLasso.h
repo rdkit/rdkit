@@ -98,7 +98,9 @@ class DrawMolMCHLasso : public DrawMolMCH {
       std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const;
   void makeIntersectingArcs(
       const std::vector<std::vector<unsigned int>> &intersects, int lassoNum,
-      const RDKit::DrawColour &col, std::vector<DrawShapeArc *> &arcs) const;
+      const RDKit::DrawColour &col,
+      std::vector<std::unique_ptr<DrawShapeArc>> &currArcs,
+      std::vector<DrawShapeArc *> &arcs) const;
   // Put the start points of each pair of atoms in order so that going in
   // an anti-clockwise direction the bond that the lines straddle is in
   // between them such that the arc between the first and second is always

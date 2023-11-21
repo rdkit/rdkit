@@ -8244,7 +8244,7 @@ TEST_CASE("Lasso highlights") {
   };
   std::map<int, double> h_rads;
   std::map<int, int> h_lw_mult;
-#if 0
+#if 1
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
@@ -8407,6 +8407,7 @@ TEST_CASE("Lasso highlights") {
     }
   }
 #endif
+#if 1
   {
     // Bug with large radii lassos.
     auto m = R"CTAB(
@@ -8489,6 +8490,7 @@ M  END)CTAB"_ctab;
     outs.close();
     check_file_hash(baseName + "6.svg");
   }
+#endif
 #if 1
   {
     // Bug with different radii in lassos.
@@ -8578,7 +8580,7 @@ M  END)CTAB"_ctab;
 
 TEST_CASE("Better Lasso") {
   std::string baseName = "better_lasso_";
-#if 0
+#if 1
   {
     // Simple 2 atom tests.
     auto m = R"CTAB(
@@ -8627,7 +8629,7 @@ M  END)CTAB"_ctab;
     //    check_file_hash(baseName + "1.svg");
   }
 #endif
-#if 0
+#if 1
   {
     // Simple 4 atom tests.
     auto m = R"CTAB(
@@ -8717,7 +8719,7 @@ M  END)CTAB"_ctab;
     //    check_file_hash(baseName + "3.svg");
   }
 #endif
-#if 0
+#if 1
   {
     // Overlapping circles 1
     auto m = R"CTAB(
@@ -8757,7 +8759,7 @@ M  END)CTAB"_ctab;
     //    check_file_hash(baseName + "4.svg");
   }
 #endif
-#if 0
+#if 1
   {
     // Simple 2 atom tests.
     auto m = R"CTAB(
