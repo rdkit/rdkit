@@ -128,7 +128,7 @@ TEST_CASE("multithreaded getBestRMS") {
     numThreads = 4;
     auto mt_val = MolAlign::getBestRMS(*m2, *m1, probeId, refId, mp, maxMatches,
                                        symmetrize, weights, numThreads);
-    CHECK(ref == Approx(mt_val).epsilon(0.00001));
+    CHECK(ref == Catch::Approx(mt_val).epsilon(0.00001));
   }
   SECTION("more symmetry") {
     std::string rdbase = getenv("RDBASE");
@@ -150,7 +150,7 @@ TEST_CASE("multithreaded getBestRMS") {
                                       symmetrize, weights, numThreads);
       auto finish = std::chrono::high_resolution_clock::now();
       std::cerr << (finish - start).count() << std::endl;
-      CHECK(ref == Approx(0.0).epsilon(0.00001));
+      CHECK(ref == Catch::Approx(0.0).epsilon(0.00001));
     }
     {
       int numThreads = 4;
@@ -159,7 +159,7 @@ TEST_CASE("multithreaded getBestRMS") {
                                       symmetrize, weights, numThreads);
       auto finish = std::chrono::high_resolution_clock::now();
       std::cerr << (finish - start).count() << std::endl;
-      CHECK(ref == Approx(0.0).epsilon(0.00001));
+      CHECK(ref == Catch::Approx(0.0).epsilon(0.00001));
     }
   }
 }
@@ -191,7 +191,7 @@ TEST_CASE("getAllConformerBestRMS") {
       ROMol refMol(*mol);
       ROMol prbMol(*mol);
       auto refVal = MolAlign::getBestRMS(refMol, prbMol, 1, 0);
-      CHECK(rmsds[0] == Approx(refVal).epsilon(0.00001));
+      CHECK(rmsds[0] == Catch::Approx(refVal).epsilon(0.00001));
     }
     std::vector<double> mtrmsds;
     {
@@ -203,7 +203,7 @@ TEST_CASE("getAllConformerBestRMS") {
       std::cerr << (finish - start).count() << std::endl;
     }
     for (auto i = 0u; i < rmsds.size(); ++i) {
-      CHECK(rmsds[i] == Approx(mtrmsds[i]).epsilon(0.00001));
+      CHECK(rmsds[i] == Catch::Approx(mtrmsds[i]).epsilon(0.00001));
     }
   }
 }
