@@ -8273,6 +8273,19 @@ TEST_CASE("Lasso highlights") {
     outs << text;
     outs.flush();
     outs.close();
+    // atom 16 should have 1 red arc
+    std::regex a16(
+        "<path class='atom-16' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+).*stroke:#FF0000;");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), a16),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 1);
+    auto a16reg = std::sregex_iterator(text.begin(), text.end(), a16);
+    auto dat1 = *a16reg;
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(273.1, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(131.2, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(272.1, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(130.0, 0.1));
     check_file_hash(baseName + "1.svg");
   }
   {
@@ -8305,6 +8318,19 @@ TEST_CASE("Lasso highlights") {
     outs << text;
     outs.flush();
     outs.close();
+    // atom 0 should have 1 green arc
+    std::regex a0(
+        "<path class='atom-0' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+).*stroke:#00FF00;");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), a0),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 1);
+    auto a0reg = std::sregex_iterator(text.begin(), text.end(), a0);
+    auto dat1 = *a0reg;
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(389.5, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(214.4, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(390.2, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(213.9, 0.1));
     check_file_hash(baseName + "2.svg");
   }
   {
@@ -8339,6 +8365,25 @@ TEST_CASE("Lasso highlights") {
     outs << text;
     outs.flush();
     outs.close();
+    // atom 0 should have 4 arcs
+    std::regex a0(
+        "<path class='atom-0' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), a0),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 4);
+    auto a0reg = std::sregex_iterator(text.begin(), text.end(), a0);
+    auto dat1 = *a0reg;
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(229.1, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(365.1, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(228.9, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(364.2, 0.1));
+    a0reg++;
+    dat1 = *a0reg;
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.3, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(351.7, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.2, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(352.0, 0.1));
     check_file_hash(baseName + "3.svg");
   }
   {
@@ -8366,13 +8411,39 @@ TEST_CASE("Lasso highlights") {
       outs << text;
       outs.flush();
       outs.close();
+      // All the atoms should have 2 arcs except 5 and 6.  Check those for
+      // atom 5.
+      std::regex a5(
+          "<path class='atom-5' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
+      std::ptrdiff_t const match_count(
+          std::distance(std::sregex_iterator(text.begin(), text.end(), a5),
+                        std::sregex_iterator()));
+      REQUIRE(match_count == 3);
+      auto a5reg = std::sregex_iterator(text.begin(), text.end(), a5);
+      auto dat1 = *a5reg;
+      REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.2, 0.1));
+      REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(280.4, 0.1));
+      REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(221.9, 0.1));
+      REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(280.0, 0.1));
+      a5reg++;
+      dat1 = *a5reg;
+      REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(217.4, 0.1));
+      REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(251.6, 0.1));
+      REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(218.4, 0.1));
+      REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(250.7, 0.1));
+      a5reg++;
+      dat1 = *a5reg;
+      REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(245.3, 0.1));
+      REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(261.0, 0.1));
+      REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.5, 0.1));
+      REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(262.3, 0.1));
       // There should be 2 lines in red, the lasso along the bi-phenyl
       // bond.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
-      std::ptrdiff_t const match_count(
+      std::ptrdiff_t const match_count1(
           std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
                         std::sregex_iterator()));
-      REQUIRE(match_count == 2);
+      REQUIRE(match_count1 == 2);
       check_file_hash(baseName + "4.svg");
     }
     // Set up the bond highlights for everything but the bi-phenyl bond,
@@ -8397,12 +8468,33 @@ TEST_CASE("Lasso highlights") {
       outs << text;
       outs.flush();
       outs.close();
+      // All the atoms should have 2 arcs except 5 and 6.  Check those for
+      // atom 11.
+      std::regex a11(
+          "<path class='atom-11' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
+      std::ptrdiff_t const match_count(
+          std::distance(std::sregex_iterator(text.begin(), text.end(), a11),
+                        std::sregex_iterator()));
+      REQUIRE(match_count == 2);
+      auto a11reg = std::sregex_iterator(text.begin(), text.end(), a11);
+      auto dat1 = *a11reg;
+      REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.2, 0.1));
+      REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(133.1, 0.1));
+      REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(221.8, 0.1));
+      REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(132.6, 0.1));
+      a11reg++;
+      dat1 = *a11reg;
+      REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(245.3, 0.1));
+      REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(113.7, 0.1));
+      REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.5, 0.1));
+      REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(115.0, 0.1));
+
       // There should not be any red lines for bond 5.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
-      std::ptrdiff_t const match_count(
+      std::ptrdiff_t const match_count1(
           std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
                         std::sregex_iterator()));
-      REQUIRE(match_count == 0);
+      REQUIRE(match_count1 == 0);
       check_file_hash(baseName + "5.svg");
     }
   }
@@ -8488,6 +8580,25 @@ M  END)CTAB"_ctab;
     outs << text;
     outs.flush();
     outs.close();
+    // The arcs on 13 have been a hassle in the past.  There should be 6 of them
+    std::regex a13(
+        "<path class='atom-13' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), a13),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 6);
+    // Check the penultimate one is in the right place
+    auto a13reg = std::sregex_iterator(text.begin(), text.end(), a13);
+    // you can't add 4, apparently.
+    a13reg++;
+    a13reg++;
+    a13reg++;
+    a13reg++;
+    auto dat1 = *a13reg;
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(236.1, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(238.2, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(238.9, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(239.4, 0.1));
     check_file_hash(baseName + "6.svg");
   }
 #endif
@@ -8573,107 +8684,31 @@ M  END)CTAB"_ctab;
     outs << text;
     outs.flush();
     outs.close();
+    // The arcs on 13 have been a hassle in the past.  There should be 6 of them
+    std::regex a13(
+        "<path class='atom-13' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), a13),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 6);
+    // Check the last one is in the right place
+    auto a13reg = std::sregex_iterator(text.begin(), text.end(), a13);
+    // you can't add 5, apparently.
+    a13reg++;
+    a13reg++;
+    a13reg++;
+    a13reg++;
+    a13reg++;
+    auto dat1 = *a13reg;
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.1, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(218.7, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(248.2, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(220.8, 0.1));
     check_file_hash(baseName + "7.svg");
   }
 #endif
-}
-
-TEST_CASE("Better Lasso") {
-  std::string baseName = "better_lasso_";
-#if 1
   {
-    // Simple 2 atom tests.
-    auto m = R"CTAB(
-     RDKit          2D
-
-  8  4  0  0  0  0  0  0  0  0999 V2000
-   -2.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -3.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -3.0610    3.0610    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -2.0000    2.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    2.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    3.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    2.0000    2.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    3.0610    3.0610    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0
-  3  4  1  0
-  5  6  1  0
-  7  8  1  0
-M  END)CTAB"_ctab;
-    REQUIRE(m);
-    MolDraw2DSVG drawer(500, 500);
-    drawer.drawOptions().fillHighlights = false;
-    drawer.drawOptions().addAtomIndices = true;
-    drawer.drawOptions().multiColourHighlightStyle =
-        RDKit::MultiColourHighlightStyle::LASSO;
-    std::map<int, std::vector<DrawColour>> ha_map;
-    std::map<int, std::vector<DrawColour>> hb_map;
-    std::vector<DrawColour> colours = {
-        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
-        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
-    std::vector<DrawColour> cvec(1, colours[0]);
-    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
-      ha_map.insert(std::make_pair(i, cvec));
-    }
-
-    std::map<int, double> h_rads;
-    std::map<int, int> h_lw_mult;
-    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 1", ha_map, hb_map,
-                                      h_rads, h_lw_mult);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs(baseName + "1.svg");
-    outs << text;
-    outs.flush();
-    outs.close();
-    //    check_file_hash(baseName + "1.svg");
-  }
-#endif
-#if 1
-  {
-    // Simple 4 atom tests.
-    auto m = R"CTAB(
-     RDKit          2D
-
-  4  3  0  0  0  0  0  0  0  0999 V2000
-   -1.2990   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    1.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-    1.2990   -0.7500    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0
-  2  3  2  0
-  2  4  1  0
-M  END)CTAB"_ctab;
-    REQUIRE(m);
-    MolDraw2DSVG drawer(500, 500);
-    drawer.drawOptions().fillHighlights = false;
-    drawer.drawOptions().addAtomIndices = true;
-    drawer.drawOptions().multiColourHighlightStyle =
-        RDKit::MultiColourHighlightStyle::LASSO;
-    std::map<int, std::vector<DrawColour>> ha_map;
-    std::map<int, std::vector<DrawColour>> hb_map;
-    std::vector<DrawColour> colours = {
-        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
-        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
-    std::vector<DrawColour> cvec(1, colours[0]);
-    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
-      ha_map.insert(std::make_pair(i, cvec));
-    }
-
-    std::map<int, double> h_rads;
-    std::map<int, int> h_lw_mult;
-    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 2", ha_map, hb_map,
-                                      h_rads, h_lw_mult);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs(baseName + "2.svg");
-    outs << text;
-    outs.flush();
-    outs.close();
-    //    check_file_hash(baseName + "2.svg");
-  }
-  {
-    // Simple 4-connected atom test.
+    // Simple 4-connected and 0-connected atoms test.
     auto m = R"CTAB(
      RDKit          2D
 
@@ -8708,222 +8743,32 @@ M  END)CTAB"_ctab;
 
     std::map<int, double> h_rads;
     std::map<int, int> h_lw_mult;
-    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 3", ha_map, hb_map,
-                                      h_rads, h_lw_mult);
+    drawer.drawMoleculeWithHighlights(*m, "Lasso 8", ha_map, hb_map, h_rads,
+                                      h_lw_mult);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs(baseName + "3.svg");
+    std::ofstream outs(baseName + "8.svg");
     outs << text;
     outs.flush();
     outs.close();
-    //    check_file_hash(baseName + "3.svg");
+    // Check one of the arcs starts in the right place.  There was a time
+    // when they didn't on Windows machines.
+    std::regex a0(
+        "<path class='atom-0' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
+    auto dat1 = *std::sregex_iterator(text.begin(), text.end(), a0);
+    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(87.6, 0.1));
+    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(318.1, 0.1));
+    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(86.6, 0.1));
+    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(320.7, 0.1));
+    // There should be no arc for atom 1.
+    std::regex a1(
+        "<path class='atom-1' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), a1),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 0);
+    check_file_hash(baseName + "8.svg");
   }
-#endif
-#if 1
-  {
-    // Overlapping circles 1
-    auto m = R"CTAB(
-     RDKit          2D
-
-  2  1  0  0  0  0  0  0  0  0999 V2000
-   -0.7500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.7500   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0
-M  END)CTAB"_ctab;
-    REQUIRE(m);
-    MolDraw2DSVG drawer(500, 500);
-    drawer.drawOptions().fillHighlights = false;
-    drawer.drawOptions().addAtomIndices = true;
-    drawer.drawOptions().multiColourHighlightStyle =
-        RDKit::MultiColourHighlightStyle::LASSO;
-    std::map<int, std::vector<DrawColour>> ha_map;
-    std::map<int, std::vector<DrawColour>> hb_map;
-    std::vector<DrawColour> colours = {DrawColour(1.0, 0.0, 0.0)};
-    std::vector<DrawColour> cvec(1, colours[0]);
-    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
-      ha_map.insert(std::make_pair(i, cvec));
-    }
-
-    std::map<int, double> h_rads;
-    h_rads[0] = 2.4;
-    h_rads[1] = 2.4;
-    std::map<int, int> h_lw_mult;
-    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 4", ha_map, hb_map,
-                                      h_rads, h_lw_mult);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs(baseName + "4.svg");
-    outs << text;
-    outs.flush();
-    outs.close();
-    //    check_file_hash(baseName + "4.svg");
-  }
-#endif
-#if 1
-  {
-    // Simple 2 atom tests.
-    auto m = R"CTAB(
-     RDKit          2D
-
-  8  4  0  0  0  0  0  0  0  0999 V2000
-   -1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.2500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0
-  3  4  1  0
-  5  6  1  0
-  7  8  1  0
-M  END)CTAB"_ctab;
-    REQUIRE(m);
-    RDGeom::Point3D atCds;
-    double ang = M_PI_4;
-    for (unsigned int i = 2; i < m->getNumAtoms(); i += 2) {
-      atCds = m->getConformer().getAtomPos(i);
-      double newX = atCds.x * cos(ang) + atCds.y * sin(ang);
-      double newY = atCds.y * cos(ang) - atCds.x * sin(ang);
-      atCds.x = newX;
-      atCds.y = newY;
-      atCds.x += 4 * i;
-      m->getConformer().setAtomPos(i, atCds);
-      atCds = m->getConformer().getAtomPos(i + 1);
-      newX = atCds.x * cos(ang) + atCds.y * sin(ang);
-      newY = atCds.y * cos(ang) - atCds.x * sin(ang);
-      atCds.x = newX;
-      atCds.y = newY;
-      atCds.x += 4 * i;
-      m->getConformer().setAtomPos(i + 1, atCds);
-      ang += M_PI_4;
-    }
-    MolDraw2DSVG drawer(500, 500);
-    drawer.drawOptions().fillHighlights = false;
-    drawer.drawOptions().addAtomIndices = true;
-    drawer.drawOptions().multiColourHighlightStyle =
-        RDKit::MultiColourHighlightStyle::LASSO;
-    std::map<int, std::vector<DrawColour>> ha_map;
-    std::map<int, std::vector<DrawColour>> hb_map;
-    std::vector<DrawColour> colours = {
-        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
-        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
-    std::vector<DrawColour> cvec(1, colours[0]);
-    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
-      ha_map.insert(std::make_pair(i, cvec));
-    }
-
-    std::map<int, double> h_rads;
-    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
-      h_rads[i] = 1.8;
-    }
-    std::map<int, int> h_lw_mult;
-    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 5", ha_map, hb_map,
-                                      h_rads, h_lw_mult);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs(baseName + "5.svg");
-    outs << text;
-    outs.flush();
-    outs.close();
-    //    check_file_hash(baseName + "5.svg");
-  }
-#endif
-#if 1
-  {
-    // Overlapping circles 2
-    auto m = R"CTAB(
-     RDKit          2D
-
-  3  2  0  0  0  0  0  0  0  0999 V2000
-   -1.2990   -0.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.2990   -0.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0
-  2  3  1  0
-M  END)CTAB"_ctab;
-    REQUIRE(m);
-    MolDraw2DSVG drawer(500, 500);
-    drawer.drawOptions().fillHighlights = false;
-    drawer.drawOptions().addAtomIndices = true;
-    drawer.drawOptions().multiColourHighlightStyle =
-        RDKit::MultiColourHighlightStyle::LASSO;
-    std::map<int, std::vector<DrawColour>> ha_map;
-    std::map<int, std::vector<DrawColour>> hb_map;
-    std::vector<DrawColour> colours = {
-        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
-        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
-    std::vector<DrawColour> cvec(1, colours[0]);
-    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
-      ha_map.insert(std::make_pair(i, cvec));
-    }
-
-    std::map<int, double> h_rads;
-    for (auto [idx, val] : ha_map) {
-      h_rads[idx] = 2.0;
-    }
-    std::map<int, int> h_lw_mult;
-    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 6", ha_map, hb_map,
-                                      h_rads, h_lw_mult);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs(baseName + "6.svg");
-    outs << text;
-    outs.flush();
-    outs.close();
-    //    check_file_hash(baseName + "6.svg");
-  }
-#endif
-#if 1
-  {
-    // Overlapping circles 3
-    auto m = R"CTAB(
-     RDKit          2D
-
-  5  4  0  0  0  0  0  0  0  0999 V2000
-   -2.5981   -0.3000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.2990    0.4500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000   -0.3000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.2990    0.4500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    2.5981   -0.3000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0
-  2  3  1  0
-  3  4  1  0
-  4  5  1  0
-M  END)CTAB"_ctab;
-    REQUIRE(m);
-    MolDraw2DSVG drawer(500, 500);
-    drawer.drawOptions().fillHighlights = false;
-    drawer.drawOptions().addAtomIndices = true;
-    drawer.drawOptions().multiColourHighlightStyle =
-        RDKit::MultiColourHighlightStyle::LASSO;
-    std::map<int, std::vector<DrawColour>> ha_map;
-    std::map<int, std::vector<DrawColour>> hb_map;
-    std::vector<DrawColour> colours = {
-        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
-        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
-    std::vector<DrawColour> cvec(1, colours[0]);
-    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
-      ha_map.insert(std::make_pair(i, cvec));
-    }
-
-    std::map<int, double> h_rads;
-    for (auto [idx, val] : ha_map) {
-      h_rads[idx] = 2.0;
-    }
-    std::map<int, int> h_lw_mult;
-    drawer.drawMoleculeWithHighlights(*m, "Better Lasso 7", ha_map, hb_map,
-                                      h_rads, h_lw_mult);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs(baseName + "7.svg");
-    outs << text;
-    outs.flush();
-    outs.close();
-    //    check_file_hash(baseName + "7.svg");
-  }
-#endif
 }
 
 TEST_CASE("Github 6683 - SVGs with ridiculous width and/or height") {
@@ -9487,9 +9332,5 @@ TEST_CASE("Github 6749 : various bad things in the lasso highlighting") {
   outs.close();
   std::regex atom20("<path class='atom-20'");
   // there should be 3 matches for "class='atom-20'" - the buggy version gave 5
-  std::ptrdiff_t const match_count(
-      std::distance(std::sregex_iterator(text.begin(), text.end(), atom20),
-                    std::sregex_iterator()));
-  REQUIRE(match_count == 3);
   check_file_hash(baseName + "1.svg");
 }
