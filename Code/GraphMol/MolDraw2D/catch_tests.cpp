@@ -5019,8 +5019,6 @@ TEST_CASE("github #5156") {
 TEST_CASE("ACS 1996 mode") {
   SECTION("basics") {
     std::string nameBase = "acs1996_";
-#if 1
-
     {
       auto m = R"CTAB(mol1
   ChemDraw05162216032D
@@ -5071,8 +5069,6 @@ M  END)CTAB"_ctab;
       }
 #endif
     }
-#endif
-#if 1
     {
       auto m = R"CTAB(mol2
   ChemDraw06062216302D
@@ -5132,8 +5128,6 @@ M  END
       }
 #endif
     }
-#endif
-#if 1
     {
       auto m = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
       m->setProp<std::string>("_Name", "mol3");
@@ -5149,8 +5143,6 @@ M  END
       outs.close();
       check_file_hash(nameBase + "3.svg");
     }
-#endif
-#if 1
     {
       auto m = "CC(I)CC(Cl)CC(F)C"_smiles;
       m->setProp<std::string>("_Name", "mol4");
@@ -5167,8 +5159,6 @@ M  END
       outs.close();
       check_file_hash(nameBase + "4.svg");
     }
-#endif
-#if 1
     {
       auto m = R"CTAB(mol5
   ChemDraw06112209342D
@@ -5259,8 +5249,6 @@ M  END
       outs.close();
       check_file_hash(nameBase + "5.svg");
     }
-#endif
-#if 1
     {
       auto m = R"CTAB(mol6
   ChemDraw06132212082D
@@ -5317,8 +5305,6 @@ M  END
       outs.close();
       check_file_hash(nameBase + "6.svg");
     }
-#endif
-#if 1
     {
       auto m = R"CTAB(mol7
   ChemDraw06192209312D
@@ -5379,8 +5365,6 @@ M  END
       outs.close();
       check_file_hash(nameBase + "7.svg");
     }
-#endif
-#if 1
     {
       auto m = R"CTAB(mol8
   ChemDraw07042207302D
@@ -5444,8 +5428,6 @@ M  END
       outs.close();
       check_file_hash(nameBase + "8.svg");
     }
-#endif
-#if 1
     {
       auto m = R"CTAB(mol9
   ChemDraw06302215142D
@@ -5518,8 +5500,6 @@ M  END
       outs.close();
       check_file_hash(nameBase + "9.svg");
     }
-#endif
-#if 1
     {
       auto m = R"CTAB(mol10
   ChemDraw07062213362D
@@ -5560,8 +5540,6 @@ M  END
       outs.close();
       check_file_hash(nameBase + "10.svg");
     }
-#endif
-#if 1
     {
       auto m = "CCOC(=O)Nc1ccc(SCC2COC(Cn3ccnc3)(c3ccc(Cl)cc3Cl)O2)cc1"_smiles;
       REQUIRE(m);
@@ -5591,8 +5569,6 @@ M  END
       outs.close();
       check_file_hash(nameBase + "11.svg");
     }
-#endif
-#if 1
     auto drawnBondLength = [&](const std::string &r1,
                                const std::string &t) -> double {
       std::regex regex1(r1);
@@ -5633,7 +5609,6 @@ M  END
       REQUIRE(dbl == Catch::Approx(14.4));
       check_file_hash(nameBase + "12.svg");
     }
-#endif
   }
 }
 
@@ -5701,7 +5676,6 @@ TEST_CASE("Bond Highlights", "") {
   auto m1 = "c1c(OCC)cncc1CCCC=O"_smiles;
   REQUIRE(m1);
   MolDraw2DUtils::prepareMolForDrawing(*m1);
-#if 1
   {
     // only bonds highlighted, continuous highlighting, highlights
     // joining neatly.
@@ -5718,8 +5692,6 @@ TEST_CASE("Bond Highlights", "") {
     outs.flush();
     check_file_hash("bond_highlights_1.svg");
   }
-#endif
-#if 1
   {
     // same as 1, but with highlighting as coloured bonds.  The O for
     // atom 2 is red because it is not highlighted, though bond 1 from
@@ -5738,8 +5710,6 @@ TEST_CASE("Bond Highlights", "") {
     outs.flush();
     check_file_hash("bond_highlights_2.svg");
   }
-#endif
-#if 1
   {
     // same bonds highlighted, but some atoms highlighted with
     // different colours.  Where an atom and a bond off it are
@@ -5770,8 +5740,6 @@ TEST_CASE("Bond Highlights", "") {
     outs.flush();
     check_file_hash("bond_highlights_3.svg");
   }
-#endif
-#if 1
   {
     // same as 3, except that the N on atom 6 isn't highlighted,
     // but both bonds off it are, so it gets the highlight colour.
@@ -5796,8 +5764,6 @@ TEST_CASE("Bond Highlights", "") {
     outs.flush();
     check_file_hash("bond_highlights_4.svg");
   }
-#endif
-#if 1
   {
     // same as 4, except that atom 6 has a highlight colour assigned
     // in the map, but isn't highlighted.  It just happens that it's
@@ -5824,8 +5790,6 @@ TEST_CASE("Bond Highlights", "") {
     outs.flush();
     check_file_hash("bond_highlights_5.svg");
   }
-#endif
-#if 1
   {
     // same as 3, but showing that atom circles can be used
     // to rescue the missing atom highlights.
@@ -5851,8 +5815,6 @@ TEST_CASE("Bond Highlights", "") {
     outs.flush();
     check_file_hash("bond_highlights_6.svg");
   }
-#endif
-#if 1
   {
     // same as 1, but in ACS1996 mode.
     MolDraw2DSVG drawer(-1, -1, -1, -1, NO_FREETYPE);
@@ -5869,8 +5831,6 @@ TEST_CASE("Bond Highlights", "") {
     outs.flush();
     check_file_hash("bond_highlights_7.svg");
   }
-#endif
-#if 1
   {
     // check 3- and 4-way intersections of continuous highlights are ok
     auto m = "c1c(C(C)(C)C)cccc1"_smiles;
@@ -5895,8 +5855,6 @@ TEST_CASE("Bond Highlights", "") {
     outs.flush();
     check_file_hash("bond_highlights_8.svg");
   }
-#endif
-#if 1
   {
     // cyclopropane (Github5592)
     auto m = "CC1CC1"_smiles;
@@ -5940,7 +5898,6 @@ TEST_CASE("Bond Highlights", "") {
     outs.flush();
     check_file_hash("bond_highlights_9.svg");
   }
-#endif
 }
 
 TEST_CASE("drawMolecules should not crash on null molecules",
@@ -8245,7 +8202,6 @@ TEST_CASE("Lasso highlights") {
   };
   std::map<int, double> h_rads;
   std::map<int, int> h_lw_mult;
-#if 1
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
@@ -8499,8 +8455,6 @@ TEST_CASE("Lasso highlights") {
       check_file_hash(baseName + "5.svg");
     }
   }
-#endif
-#if 1
   {
     // Bug with large radii lassos.
     auto m = R"CTAB(
@@ -8602,8 +8556,6 @@ M  END)CTAB"_ctab;
     REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(239.4, 0.1));
     check_file_hash(baseName + "6.svg");
   }
-#endif
-#if 1
   {
     // Bug with different radii in lassos.
     auto m = R"CTAB(
@@ -8707,7 +8659,6 @@ M  END)CTAB"_ctab;
     REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(220.8, 0.1));
     check_file_hash(baseName + "7.svg");
   }
-#endif
   {
     // Simple 4-connected and 0-connected atoms test.
     auto m = R"CTAB(
