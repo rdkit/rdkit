@@ -1297,6 +1297,26 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 2);
   }
+  SECTION("Removal of stereoatoms requires removing CIS/TRANS when using legacy stereo") {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(false);
+
+    {
+      auto mol = "N/C=C/C"_smiles;
+      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      auto rwmol = dynamic_cast<RWMol*>(mol.get());
+      rwmol->removeBond(0,1);
+      CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::BondStereo::STEREONONE);
+    }
+    {
+      auto mol = "N/C=C/C"_smiles;
+      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      auto rwmol = dynamic_cast<RWMol*>(mol.get());
+      rwmol->removeBond(2,3);
+      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+    }
+	  
+  }
 }
 
 TEST_CASE(
