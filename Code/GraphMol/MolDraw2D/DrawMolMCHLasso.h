@@ -82,9 +82,6 @@ class DrawMolMCHLasso : public DrawMolMCH {
                               std::vector<std::vector<int>> &colourLists) const;
   void drawLasso(size_t lassoNum, const DrawColour &col,
                  const std::vector<int> &colAtoms);
-  void extractAtomArcs(size_t lassoNum, const DrawColour &col,
-                       const std::vector<int> &colAtoms,
-                       std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const;
   void extractBondLines(
       size_t lassoNum, const DrawColour &col, const std::vector<int> &colAtoms,
       std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines,
@@ -107,21 +104,6 @@ class DrawMolMCHLasso : public DrawMolMCH {
   // the bit that isn't drawn.  And then order the pairs so that the bonds
   // are moving round in an anti-clockwise direction.
   void orderAtomLines(std::vector<std::vector<LinePair>> &atomLines) const;
-  void fixArcsAndLines(
-      std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
-      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
-  void fixIntersectingLines(
-      const std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
-      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
-  void fixIntersectingArcsAndLines(
-      std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
-      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
-  void fixProtrudingLines(
-      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
-  // Orphan lines are ones where at least one end isn't close to the end
-  // of any line or arc.
-  void fixOrphanLines(std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
-                      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines);
 };
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit

@@ -45,7 +45,7 @@ namespace {
 // The hand-drawn pictures will fail this frequently due to the use
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
-static const bool DELETE_WITH_GOOD_HASH = false;
+static const bool DELETE_WITH_GOOD_HASH = true;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
 // These values are for a build with FreeType, so expect them all to be
@@ -308,18 +308,19 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"github6504_2.svg", 2871662880U},
     {"github6569_1.svg", 116573839U},
     {"github6569_2.svg", 2367779037U},
-    {"lasso_highlights_1.svg", 689837467U},
-    {"lasso_highlights_2.svg", 348394942U},
-    {"lasso_highlights_3.svg", 2174136207U},
-    {"lasso_highlights_4.svg", 1265047504U},
-    {"lasso_highlights_5.svg", 35778943U},
-    {"lasso_highlights_6.svg", 1359376880U},
-    {"lasso_highlights_7.svg", 773081917U},
+    {"lasso_highlights_1.svg", 3709434534U},
+    {"lasso_highlights_2.svg", 757121560U},
+    {"lasso_highlights_3.svg", 556406365U},
+    {"lasso_highlights_4.svg", 4148844874U},
+    {"lasso_highlights_5.svg", 1281259383U},
+    {"lasso_highlights_6.svg", 2113147733U},
+    {"lasso_highlights_7.svg", 514868036U},
+    {"lasso_highlights_8.svg", 3231367552U},
     {"testGithub6685_1.svg", 1835717197U},
     {"testGithub6685_2.svg", 116380465U},
     {"testGithub6685_3.svg", 409385402U},
     {"testGithub6685_4.svg", 1239628830U},
-    {"bad_lasso_1.svg", 1183031575U}};
+    {"bad_lasso_1.svg", 726527516U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -9332,5 +9333,9 @@ TEST_CASE("Github 6749 : various bad things in the lasso highlighting") {
   outs.close();
   std::regex atom20("<path class='atom-20'");
   // there should be 3 matches for "class='atom-20'" - the buggy version gave 5
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), atom20),
+                    std::sregex_iterator()));
+  REQUIRE(match_count == 3);
   check_file_hash(baseName + "1.svg");
 }
