@@ -317,12 +317,12 @@ inline MolBundle enumerate(const ROMol &mol,
 };
 
 struct RDKIT_MOLENUMERATOR_EXPORT StereoEnumerationOptions {
-  bool try_embedding;
-  bool only_unassigned;
-  bool only_stereo_groups;
-  bool unique;
-  unsigned int max_isomers;
-  unsigned int rand;  // NOTE: Currently unsupported
+  bool try_embedding = false;
+  bool only_unassigned = true;
+  bool only_stereo_groups = false;
+  bool unique = true;
+  unsigned int max_isomers = 1024;
+  [[maybe_unused]] unsigned int rand;  // NOTE: Currently unsupported
 };
 
 [[nodiscard]] RDKIT_MOLENUMERATOR_EXPORT unsigned int get_stereoisomer_count(

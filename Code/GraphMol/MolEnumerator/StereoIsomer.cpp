@@ -154,7 +154,12 @@ std::vector<stereo_flipper_t> get_flippers(
   RWMol mol(input_mol);
   preprocess_mol_for_stereoisomer_enumeration(mol);
 
-  static_cast<void>(RDKit::Chirality::findPotentialStereo(mol));
+  auto clean = true;
+  auto force = true;
+  auto flagPossible = true;
+  RDKit::MolOps::assignStereochemistry(mol, clean, force, flagPossible);
+
+  RDKit::Chirality::findPotentialStereo(mol, false);
 
   AtomStereoFlipper::add_flippers_from_mol(mol, options, flippers);
   BondStereoFlipper::add_flippers_from_mol(mol, options, flippers);
@@ -177,10 +182,7 @@ std::vector<stereo_flipper_t> get_flippers(
 
   MolEnumerator::MolEnumeratorParams stereoParams;
   stereoParams.dp_operation = MolEnumerator::StereoIsomerOp::createOp();
-  if (options.max_isomers > 0) {
-    stereoParams.maxToEnumerate = options.max_isomers;
-  }
-  paramsList.push_back(stereoParams);
+  paramsList.push_back(std::move(stereoParams));
 
   // NOTE: we don't need the values, so we don't have to worry about underlying
   // values being invalid
@@ -188,6 +190,10 @@ std::vector<stereo_flipper_t> get_flippers(
   std::unordered_set<std::string_view> seen_isomers;
   auto all_stereoisomers = MolEnumerator::enumerate(mol, paramsList);
   for (auto& stereoisomer : all_stereoisomers.getMols()) {
+    if (stereoisomers.size() >= options.max_isomers) {
+      break;
+    }
+
     if (options.unique) {
       std::string canon_smiles = MolToSmiles(*stereoisomer, true);
       if (!seen_isomers.insert(canon_smiles).second) {

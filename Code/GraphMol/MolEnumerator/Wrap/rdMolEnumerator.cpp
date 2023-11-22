@@ -62,6 +62,12 @@ MolBundle *enumerateHelper2(const ROMol &mol,
   auto res = MolEnumerator::enumerate(mol, ps);
   return new MolBundle(res);
 }
+
+MolBundle *enumerate_stereoisomers_helper(
+    const ROMol &mol, const MolEnumerator::StereoEnumerationOptions &options) {
+  return new MolBundle(MolEnumerator::enumerate_stereoisomers(mol, options));
+}
+
 }  // namespace
 BOOST_PYTHON_MODULE(rdMolEnumerator) {
   python::scope().attr("__doc__") =
@@ -111,4 +117,56 @@ Limitations:
 Limitations:
   - Overlapping SRUs, i.e. where one monomer is contained within another, are
     not supported)DOC");
+
+  python::class_<MolEnumerator::StereoEnumerationOptions>(
+      "StereoEnumerationOptions", "Stereoisomer enumeration parameters",
+      python::init<>())
+      .def("__init__", python::make_constructor(createParamsFromName))
+      .def_readwrite(
+          "try_embedding",
+          &MolEnumerator::StereoEnumerationOptions::try_embedding,
+          R"(if set the process attempts to generate a standard RDKit distance geometry
+                conformation for the stereisomer. If this fails, we assume that the stereoisomer is
+                non-physical and don't return it. NOTE that this is computationally expensive and is
+                just a heuristic that could result in stereoisomers being lost.
+              )")
+      .def_readwrite(
+          "only_unassigned",
+          &MolEnumerator::StereoEnumerationOptions::only_unassigned,
+          R"(if set (the default), stereocenters which have specified stereochemistry
+                will not be perturbed unless they are part of a relative stereo
+                group.)")
+      .def_readwrite(
+          "only_stereo_groups",
+          &MolEnumerator::StereoEnumerationOptions::only_stereo_groups,
+          R"(Only find stereoisomers that differ at the StereoGroups associated with the molecule.)")
+      .def_readwrite(
+          "unique", &MolEnumerator::StereoEnumerationOptions::unique,
+          R"(If set, removes duplicate stereoisomers from the result.)")
+      .def_readwrite("max_isomers",
+                     &MolEnumerator::StereoEnumerationOptions::max_isomers,
+                     R"(the maximum number of isomers to yield, if the
+                number of possible isomers is greater than maxIsomers, a
+                random subset will be yielded. If 0, all isomers are
+                yielded. Since every additional stereo center doubles the
+                number of results (and execution time) it's important to
+                keep an eye on this.)")
+      .def_readwrite("rand", &MolEnumerator::StereoEnumerationOptions::rand,
+                     "do random enumeration (not yet implemented)");
+
+  python::def(
+      "GetStereoisomerCount",
+      (unsigned int (*)(const ROMol &,
+                        const MolEnumerator::StereoEnumerationOptions))
+          MolEnumerator::get_stereoisomer_count,
+      (python::arg("mol"),
+       python::arg("options") = MolEnumerator::StereoEnumerationOptions()),
+      R"DOC(get the total number of non-unique stereoisomers that can be be generated from mol.)DOC");
+
+  python::def(
+      "EnumerateStereoisomers", &enumerate_stereoisomers_helper,
+      (python::arg("mol"),
+       python::arg("options") = MolEnumerator::StereoEnumerationOptions()),
+      python::return_value_policy<python::manage_new_object>(),
+      R"DOC(enumerate stereoisomers and return a MolBundle)DOC");
 }
