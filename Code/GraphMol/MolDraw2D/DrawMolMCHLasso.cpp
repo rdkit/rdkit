@@ -674,7 +674,7 @@ void DrawMolMCHLasso::orderAtomLines(
     for (size_t j = 0; j < atomLines[i].size(); ++j) {
       // because the same DrawShapeSimpleLine is used for both atoms, the
       // points_[0] may not be the nearer point to atom i.
-      int oatom = atomLines[i][j].line1->atom1_ == i
+      int oatom = atomLines[i][j].line1->atom1_ == static_cast<int>(i)
                       ? atomLines[i][j].line1->atom2_
                       : atomLines[i][j].line1->atom1_;
       int pt = 0;
