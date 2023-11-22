@@ -766,10 +766,10 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     std::regex d1(
         "<path class='bond-0 atom-0 atom-1' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
     auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
-    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(122.3, 0.1));
-    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(88.5, 0.1));
-    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(85.7, 0.1));
-    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(88.5, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(122.3, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(88.5, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(85.7, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(88.5, 0.1));
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -787,10 +787,10 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     std::regex d1(
         "<path class='bond-7 atom-7 atom-8' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
     auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
-    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(100.9, 0.1));
-    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(77.5, 0.1));
-    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(95.8, 0.1));
-    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(84.7, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(100.9, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(77.5, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(95.8, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(84.7, 0.1));
   }
   SECTION("test colours") {
     // the dative bonds point the wrong way, but the point is to test
@@ -810,10 +810,10 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     std::regex d1(
         "<path class='bond-2 atom-3 atom-4' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
     auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
-    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(50.9, 0.1));
-    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(140.2, 0.1));
-    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(78.1, 0.1));
-    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(149.0, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(50.9, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(140.2, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(78.1, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(149.0, 0.1));
   }
   SECTION("dative series") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -3059,17 +3059,17 @@ M  END)CTAB"));
         "^.*d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)\\s+L\\s+(\\d+\\.\\d+),(\\d+\\."
         "\\d+)'.*$");
     std::smatch bond0OuterMatch;
-    REQUIRE(std::regex_match(bond0[0], bond0OuterMatch, regex));
-    REQUIRE(bond0OuterMatch.size() == 5);
+    CHECK(std::regex_match(bond0[0], bond0OuterMatch, regex));
+    CHECK(bond0OuterMatch.size() == 5);
     std::smatch bond0InnerMatch;
-    REQUIRE(std::regex_match(bond0[1], bond0InnerMatch, regex));
-    REQUIRE(bond0InnerMatch.size() == 5);
+    CHECK(std::regex_match(bond0[1], bond0InnerMatch, regex));
+    CHECK(bond0InnerMatch.size() == 5);
     std::smatch bond2OuterMatch;
-    REQUIRE(std::regex_match(bond2[0], bond2OuterMatch, regex));
-    REQUIRE(bond2OuterMatch.size() == 5);
+    CHECK(std::regex_match(bond2[0], bond2OuterMatch, regex));
+    CHECK(bond2OuterMatch.size() == 5);
     std::smatch bond2InnerMatch;
-    REQUIRE(std::regex_match(bond2[1], bond2InnerMatch, regex));
-    REQUIRE(bond2InnerMatch.size() == 5);
+    CHECK(std::regex_match(bond2[1], bond2InnerMatch, regex));
+    CHECK(bond2InnerMatch.size() == 5);
     RDGeom::Point2D bond0InnerCtd(
         RDGeom::Point2D(std::stof(bond0InnerMatch[1]),
                         std::stof(bond0InnerMatch[2])) +
@@ -3449,22 +3449,22 @@ M  END
     {
       std::regex regex("class='bond-0.*? d='M (\\d+\\.\\d+).* L (\\d+\\.\\d+)");
       std::smatch bondMatch;
-      REQUIRE(std::regex_search(txt, bondMatch, regex));
-      REQUIRE(bondMatch.size() == 3);  // match both halves of the bond
+      CHECK(std::regex_search(txt, bondMatch, regex));
+      CHECK(bondMatch.size() == 3);  // match both halves of the bond
       CHECK(bondMatch[1].str() == bondMatch[2].str());
     }
     {
       std::regex regex("class='bond-2.*? d='M (\\d+\\.\\d+).* L (\\d+\\.\\d+)");
       std::smatch bondMatch;
-      REQUIRE(std::regex_search(txt, bondMatch, regex));
-      REQUIRE(bondMatch.size() == 3);  // match both halves of the bond
+      CHECK(std::regex_search(txt, bondMatch, regex));
+      CHECK(bondMatch.size() == 3);  // match both halves of the bond
       CHECK(bondMatch[1].str() == bondMatch[2].str());
     }
     {
       std::regex regex("class='bond-4.*? d='M (\\d+\\.\\d+).* L (\\d+\\.\\d+)");
       std::smatch bondMatch;
-      REQUIRE(std::regex_search(txt, bondMatch, regex));
-      REQUIRE(bondMatch.size() == 3);  // match both halves of the bond
+      CHECK(std::regex_search(txt, bondMatch, regex));
+      CHECK(bondMatch.size() == 3);  // match both halves of the bond
       CHECK(bondMatch[1].str() == bondMatch[2].str());
     }
   }
@@ -3696,7 +3696,7 @@ M  END)CTAB"_ctab;
 
     // remove the sgroup-atom atom... the SGroup will not be drawn
     auto &sgs = getSubstanceGroups(*mol);
-    REQUIRE(sgs.size() == 1);
+    CHECK(sgs.size() == 1);
     sgs[0].setAtoms(std::vector<unsigned int>());
     {
       MolDraw2DSVG drawer(300, 250);
@@ -3758,7 +3758,7 @@ M  END)CTAB"_ctab;
 
     // remove the sgroup-atom atom... the SGroup will still be drawn
     auto &sgs = getSubstanceGroups(*mol);
-    REQUIRE(sgs.size() == 1);
+    CHECK(sgs.size() == 1);
     sgs[0].setAtoms(std::vector<unsigned int>());
     {
       MolDraw2DSVG drawer(300, 250);
@@ -5602,11 +5602,11 @@ M  END
       double dbl = drawnBondLength(regex, text);
       // the bonds should all be 14.4 long, but the SVG is only written
       // to 1 decimal place, so rounding errors are largish.
-      REQUIRE(dbl == Catch::Approx(14.4253));
+      CHECK(dbl == Catch::Approx(14.4253));
       regex =
           R"(class='bond-1 atom-1 atom-2' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*)')";
       dbl = drawnBondLength(regex, text);
-      REQUIRE(dbl == Catch::Approx(14.4));
+      CHECK(dbl == Catch::Approx(14.4));
       check_file_hash(nameBase + "12.svg");
     }
   }
@@ -5627,8 +5627,8 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
 
   std::regex regex1("class='bond-2 atom-1 atom-3' .*M.*C");
   std::smatch wavyMatch;
-  REQUIRE(std::regex_search(text, wavyMatch, regex1));
-  REQUIRE(wavyMatch.size() == 1);
+  CHECK(std::regex_search(text, wavyMatch, regex1));
+  CHECK(wavyMatch.size() == 1);
 
   std::regex regex2(
       "class='bond-4 atom-4 atom-5' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L "
@@ -5637,7 +5637,7 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   std::ptrdiff_t const match_count(
       std::distance(std::sregex_iterator(text.begin(), text.end(), regex2),
                     std::sregex_iterator()));
-  REQUIRE(match_count == 2);
+  CHECK(match_count == 2);
 
   // Check that the 2 bonds aren't parallel
   auto cross1Match = std::sregex_iterator(text.begin(), text.end(), regex2);
@@ -5649,7 +5649,7 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   Point2D point3{stod((*cross1Match)[1]), stod((*cross1Match)[2])};
   Point2D point4{stod((*cross1Match)[3]), stod((*cross1Match)[4])};
   auto vec2 = point3.directionVector(point4);
-  REQUIRE(vec1.dotProduct(vec2) != Catch::Approx(1.0).margin(1.0e-4));
+  CHECK(vec1.dotProduct(vec2) != Catch::Approx(1.0).margin(1.0e-4));
 
   check_file_hash("test_unspec_stereo.svg");
 }
@@ -5667,8 +5667,8 @@ TEST_CASE("Colour H light blue with no atom labels", "") {
   outs.flush();
   std::regex regex1(R"(class='bond-12 atom-6 atom-11'.*fill:#ADD8E5)");
   std::smatch regex1Match;
-  REQUIRE(std::regex_search(text, regex1Match, regex1));
-  REQUIRE(regex1Match.size() == 1);
+  CHECK(std::regex_search(text, regex1Match, regex1));
+  CHECK(regex1Match.size() == 1);
   check_file_hash("light_blue_h_no_label_1.svg");
 }
 
@@ -5888,11 +5888,11 @@ TEST_CASE("Bond Highlights", "") {
       ends.push_back(Point2D(std::stod(match[5]), std::stod(match[6])));
       ends.push_back(Point2D(std::stod(match[7]), std::stod(match[8])));
     }
-    REQUIRE(ends.size() == 12);
+    CHECK(ends.size() == 12);
     // When this had a bug in it, it drew a butterfly-type motif, because
     // ends 2 and 3 were the wrong way round.
     for (int i = 0; i < 12; i += 4) {
-      REQUIRE(!MolDraw2D_detail::doLinesIntersect(
+      CHECK(!MolDraw2D_detail::doLinesIntersect(
           ends[i], ends[i + 3], ends[i + 1], ends[i + 2], nullptr));
     }
     outs.flush();
@@ -5918,7 +5918,7 @@ TEST_CASE("drawMolecules should not crash on null molecules",
   auto nMatches =
       std::distance(std::sregex_iterator(text.begin(), text.end(), regex1),
                     std::sregex_iterator());
-  REQUIRE(nMatches == 11);
+  CHECK(nMatches == 11);
 }
 
 TEST_CASE("Crossed bonds in transdecene") {
@@ -5971,9 +5971,9 @@ M  END)CTAB"_ctab;
           ends.push_back(Point2D(std::stod(match[1]), std::stod(match[2])));
           ends.push_back(Point2D(std::stod(match[3]), std::stod(match[4])));
         }
-        REQUIRE(ends.size() == 4);
-        REQUIRE(!MolDraw2D_detail::doLinesIntersect(ends[0], ends[1], ends[2],
-                                                    ends[3], nullptr));
+        CHECK(ends.size() == 4);
+        CHECK(!MolDraw2D_detail::doLinesIntersect(ends[0], ends[1], ends[2],
+                                                  ends[3], nullptr));
         check_file_hash(nameBase + "1.svg");
       }
     }
@@ -6307,7 +6307,7 @@ M  END
       std::ptrdiff_t const match_count(
           std::distance(std::sregex_iterator(text.begin(), text.end(), rn),
                         std::sregex_iterator()));
-      REQUIRE(match_count == 2);
+      CHECK(match_count == 2);
     }
     check_file_hash(nameBase + ".svg");
   }
@@ -6332,21 +6332,21 @@ TEST_CASE("Github5947: Ellipse extremes not calculated correctly.") {
   std::ptrdiff_t const match_count(
       std::distance(std::sregex_iterator(text.begin(), text.end(), r1),
                     std::sregex_iterator()));
-  REQUIRE(match_count == 6);
+  CHECK(match_count == 6);
   // all the ellipses should have a radius of roughly 72.0
   auto match_begin = std::sregex_iterator(text.begin(), text.end(), r1);
   auto match_end = std::sregex_iterator();
   for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
     std::smatch match = *i;
-    REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(72.0, 0.1));
-    REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(72.0, 0.1));
+    CHECK_THAT(stod(match[1]), Catch::Matchers::WithinAbs(72.0, 0.1));
+    CHECK_THAT(stod(match[2]), Catch::Matchers::WithinAbs(72.0, 0.1));
   }
 
   // check that the first ellipse is in the right place
   std::regex r2("<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'");
   auto ell1 = *std::sregex_iterator(text.begin(), text.end(), r2);
-  REQUIRE_THAT(stod(ell1[1]), Catch::Matchers::WithinAbs(308.0, 0.1));
-  REQUIRE_THAT(stod(ell1[2]), Catch::Matchers::WithinAbs(200.0, 0.1));
+  CHECK_THAT(stod(ell1[1]), Catch::Matchers::WithinAbs(308.0, 0.1));
+  CHECK_THAT(stod(ell1[2]), Catch::Matchers::WithinAbs(200.0, 0.1));
   check_file_hash(nameBase + ".svg");
 }
 
@@ -6408,15 +6408,15 @@ M  END
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), r),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 10);
+    CHECK(match_count == 10);
 
     // all the ellipses should have a radius of roughly 25.2.
     auto match_begin = std::sregex_iterator(text.begin(), text.end(), r);
     auto match_end = std::sregex_iterator();
     for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
       std::smatch match = *i;
-      REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(25.0, 0.1));
-      REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(25.0, 0.1));
+      CHECK_THAT(stod(match[1]), Catch::Matchers::WithinAbs(25.0, 0.1));
+      CHECK_THAT(stod(match[2]), Catch::Matchers::WithinAbs(25.0, 0.1));
     }
     check_file_hash(nameBase + ".svg");
   }
@@ -6494,24 +6494,24 @@ M  END
         " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) Z'");
     std::vector<Point2D> ends1;
     extract_ends(text, head1, ends1);
-    REQUIRE(ends1.size() == 3);
+    CHECK(ends1.size() == 3);
 
     std::regex head2(
         "atom-14 atom-12' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
         " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) Z'");
     std::vector<Point2D> ends2;
     extract_ends(text, head2, ends2);
-    REQUIRE(ends2.size() == 3);
+    CHECK(ends2.size() == 3);
 
     auto h1s1 = (ends1[0] - ends1[1]).length();
     auto h2s1 = (ends2[0] - ends2[1]).length();
     // there's still a small difference in size of arrow head because the
     // allowance for mitring is done as a fraction of the overall arrow
     // length.
-    REQUIRE_THAT(h1s1, Catch::Matchers::WithinAbs(h2s1, 0.1));
+    CHECK_THAT(h1s1, Catch::Matchers::WithinAbs(h2s1, 0.1));
     auto h1s2 = (ends1[0] - ends1[2]).length();
     auto h2s2 = (ends2[0] - ends2[2]).length();
-    REQUIRE_THAT(h1s2, Catch::Matchers::WithinAbs(h2s2, 0.1));
+    CHECK_THAT(h1s2, Catch::Matchers::WithinAbs(h2s2, 0.1));
 
     check_file_hash(nameBase + ".svg");
   }
@@ -6560,7 +6560,7 @@ TEST_CASE("Github5963: bond end wrong on wedge") {
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), bond7),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 3);
+    CHECK(match_count == 3);
     auto bond7_match = std::sregex_iterator(text.begin(), text.end(), bond7);
     ++bond7_match;
     std::smatch match7 = *bond7_match;
@@ -6574,8 +6574,8 @@ TEST_CASE("Github5963: bond end wrong on wedge") {
     // line
     Point2D midtri(std::stod(match7[3]), std::stod(match7[4]));
     Point2D startline(std::stod(match8[1]), std::stod(match8[2]));
-    REQUIRE_THAT((midtri - startline).length(),
-                 Catch::Matchers::WithinAbs(0.0, 0.1));
+    CHECK_THAT((midtri - startline).length(),
+               Catch::Matchers::WithinAbs(0.0, 0.1));
     check_file_hash(nameBase + ".svg");
   }
 }
@@ -6682,13 +6682,13 @@ M  END
       std::ptrdiff_t const match_count(
           std::distance(std::sregex_iterator(text.begin(), text.end(), r),
                         std::sregex_iterator()));
-      REQUIRE(match_count == 4);
+      CHECK(match_count == 4);
       auto match_begin = std::sregex_iterator(text.begin(), text.end(), r);
       auto match_end = std::sregex_iterator();
       for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
         std::smatch match = *i;
-        REQUIRE(stod(match[1]) > 0.0);
-        REQUIRE(stod(match[3]) > 0.0);
+        CHECK(stod(match[1]) > 0.0);
+        CHECK(stod(match[3]) > 0.0);
       }
     };
     std::regex bond9(
@@ -6766,7 +6766,7 @@ M  END
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 2);
+    CHECK(match_count == 2);
     auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond5);
     auto match_end = std::sregex_iterator();
     std::vector<float> ys;
@@ -6774,10 +6774,10 @@ M  END
       std::smatch match = *i;
       ys.push_back(stod(match[2]));
       ys.push_back(stod(match[4]));
-      REQUIRE(match[1] == match[3]);
+      CHECK(match[1] == match[3]);
     }
-    REQUIRE(ys[0] == ys[2]);
-    REQUIRE(ys[1] == ys[3]);
+    CHECK(ys[0] == ys[2]);
+    CHECK(ys[1] == ys[3]);
     check_file_hash(nameBase + "_1.svg");
   }
   {
@@ -6801,7 +6801,7 @@ M  END
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 2);
+    CHECK(match_count == 2);
     auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond5);
     auto match_end = std::sregex_iterator();
     std::vector<Point2D> points;
@@ -6812,8 +6812,7 @@ M  END
     }
     auto vec1 = points[0].directionVector(points[1]);
     auto vec2 = points[2].directionVector(points[3]);
-    REQUIRE_THAT(vec1.dotProduct(vec2),
-                 Catch::Matchers::WithinAbs(1.0, 2.0e-4));
+    CHECK_THAT(vec1.dotProduct(vec2), Catch::Matchers::WithinAbs(1.0, 2.0e-4));
     check_file_hash(nameBase + "_2.svg");
   }
 }
@@ -6839,7 +6838,7 @@ TEST_CASE("Down/dashed wedge not visible on small canvas..") {
   std::ptrdiff_t const match_count(
       std::distance(std::sregex_iterator(text.begin(), text.end(), bond12),
                     std::sregex_iterator()));
-  REQUIRE(match_count == 3);
+  CHECK(match_count == 3);
   check_file_hash(nameBase + ".svg");
 }
 
@@ -6882,7 +6881,7 @@ TEST_CASE("Optionally depict complex query atoms in a more compact form") {
     std::string res;
     while (std::getline(ss, line)) {
       if (std::regex_match(line, match, regex)) {
-        REQUIRE(match.size() == 2);
+        CHECK(match.size() == 2);
         res += match[1];
       }
     }
@@ -7365,7 +7364,7 @@ TEST_CASE("Bad double bond - Github 6160") {
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 2);
+    CHECK(match_count == 2);
     auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond5);
     auto match_end = std::sregex_iterator();
     std::vector<Point2D> points;
@@ -7410,7 +7409,7 @@ M  END
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), bond),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 2);
+    CHECK(match_count == 2);
     auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond);
     auto match_end = std::sregex_iterator();
     std::vector<Point2D> points;
@@ -7419,8 +7418,8 @@ M  END
       points.push_back(Point2D(stod(match[1]), stod(match[2])));
       points.push_back(Point2D(stod(match[3]), stod(match[4])));
     }
-    REQUIRE(MolDraw2D_detail::doLinesIntersect(points[0], points[1], points[2],
-                                               points[3], nullptr));
+    CHECK(MolDraw2D_detail::doLinesIntersect(points[0], points[1], points[2],
+                                             points[3], nullptr));
   };
 
   REQUIRE(m);
@@ -7507,7 +7506,7 @@ TEST_CASE(
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), atomLine),
                       std::sregex_iterator()));
-    REQUIRE(match_count == numArcs);
+    CHECK(match_count == numArcs);
     auto match_begin = std::sregex_iterator(text.begin(), text.end(), atomLine);
     auto match_end = std::sregex_iterator();
     // Check that the lengths of the lines in the arc are the correct size.
@@ -7516,10 +7515,10 @@ TEST_CASE(
       auto p1 = Point2D(stod(match[1]), stod(match[2]));
       auto p2 = Point2D(stod(match[3]), stod(match[4]));
       auto p3 = Point2D(stod(match[5]), stod(match[6]));
-      REQUIRE_THAT((p1 - p2).length(),
-                   Catch::Matchers::WithinAbs(arcLength, 0.1));
-      REQUIRE_THAT((p2 - p3).length(),
-                   Catch::Matchers::WithinAbs(arcLength, 0.1));
+      CHECK_THAT((p1 - p2).length(),
+                 Catch::Matchers::WithinAbs(arcLength, 0.1));
+      CHECK_THAT((p2 - p3).length(),
+                 Catch::Matchers::WithinAbs(arcLength, 0.1));
     }
   };
   {
@@ -7796,13 +7795,13 @@ TEST_CASE("Github 6397 - chiral tag overlapping atom label") {
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), absA),
                       std::sregex_iterator()));
-    REQUIRE(match_count == expCount);
+    CHECK(match_count == expCount);
     auto match_begin = std::sregex_iterator(text.begin(), text.end(), absA);
     std::smatch match = *match_begin;
     double x = stod(match[1]);
-    REQUIRE_THAT(x, Catch::Matchers::WithinAbs(expX, 0.1));
+    CHECK_THAT(x, Catch::Matchers::WithinAbs(expX, 0.1));
     double y = stod(match[2]);
-    REQUIRE_THAT(y, Catch::Matchers::WithinAbs(expY, 0.1));
+    CHECK_THAT(y, Catch::Matchers::WithinAbs(expY, 0.1));
   };
   std::string nameBase = "test_github6397";
   auto m1 = R"CTAB(
@@ -8009,7 +8008,7 @@ TEST_CASE("Github #6400: extra padding, no legend apparent") {
   auto text = drawer.getDrawingText();
   // The original bug manifested itself with a font size of 0 for the
   // legend.  Fixed, it comes out at 16.
-  REQUIRE(text.find("font-size:0px") == std::string::npos);
+  CHECK(text.find("font-size:0px") == std::string::npos);
   REQUIRE(text.find("font-size:16px") != std::string::npos);
 
   outs << text;
@@ -8055,7 +8054,7 @@ M  END
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 4);
+    CHECK(match_count == 4);
     auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond5);
     auto match_end = std::sregex_iterator();
     std::vector<Point2D> points;
@@ -8068,9 +8067,9 @@ M  END
     auto d2 = (points[3] - points[7]).length();
     // the distances should be > 10 and roughly equal.  They are
     // 12 and 14 pixels apart in the two molecules.
-    REQUIRE(d1 > 10.0);
-    REQUIRE(d2 > 10.0);
-    REQUIRE_THAT(fabs(d1 - d2), Catch::Matchers::WithinAbs(0.0, 0.1));
+    CHECK(d1 > 10.0);
+    CHECK(d2 > 10.0);
+    CHECK_THAT(fabs(d1 - d2), Catch::Matchers::WithinAbs(0.0, 0.1));
   };
 
   {
@@ -8150,7 +8149,7 @@ M  END
     outs.flush();
     outs.close();
     // All the coords came out as nan in the buggy version
-    REQUIRE(text.find("nan") == std::string::npos);
+    CHECK(text.find("nan") == std::string::npos);
     check_file_hash(baseName + "_1.svg");
   }
   {
@@ -8164,7 +8163,7 @@ M  END
     outs.flush();
     outs.close();
     // All the coords came out as nan in the buggy version
-    REQUIRE(text.find("nan") == std::string::npos);
+    CHECK(text.find("nan") == std::string::npos);
     check_file_hash(baseName + "_2.svg");
   }
 }
@@ -8236,14 +8235,21 @@ TEST_CASE("Lasso highlights") {
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), a16),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 1);
+    CHECK(match_count == 1);
     auto a16reg = std::sregex_iterator(text.begin(), text.end(), a16);
     auto dat1 = *a16reg;
-    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(273.1, 0.1));
-    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(131.2, 0.1));
-    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(272.1, 0.1));
-    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(130.0, 0.1));
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(273.1, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(131.2, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(272.1, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(130.0, 0.1));
     check_file_hash(baseName + "1.svg");
+#else
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(274.9, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(130.9, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(273.9, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(129.7, 0.1));
+#endif
   }
   {
     // The non-overlapping atom sets should have radii the same size.
@@ -8275,20 +8281,22 @@ TEST_CASE("Lasso highlights") {
     outs << text;
     outs.flush();
     outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
     // atom 0 should have 1 green arc
     std::regex a0(
         "<path class='atom-0' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+).*stroke:#00FF00;");
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), a0),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 1);
+    CHECK(match_count == 1);
     auto a0reg = std::sregex_iterator(text.begin(), text.end(), a0);
     auto dat1 = *a0reg;
-    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(389.5, 0.1));
-    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(214.4, 0.1));
-    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(390.2, 0.1));
-    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(213.9, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(389.5, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(214.4, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(390.2, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(213.9, 0.1));
     check_file_hash(baseName + "2.svg");
+#endif
   }
   {
     // Another example.
@@ -8322,26 +8330,28 @@ TEST_CASE("Lasso highlights") {
     outs << text;
     outs.flush();
     outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
     // atom 0 should have 4 arcs
     std::regex a0(
         "<path class='atom-0' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), a0),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 4);
+    CHECK(match_count == 4);
     auto a0reg = std::sregex_iterator(text.begin(), text.end(), a0);
     auto dat1 = *a0reg;
-    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(229.1, 0.1));
-    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(365.1, 0.1));
-    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(228.9, 0.1));
-    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(364.2, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(229.1, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(365.1, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(228.9, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(364.2, 0.1));
     a0reg++;
     dat1 = *a0reg;
-    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.3, 0.1));
-    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(351.7, 0.1));
-    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.2, 0.1));
-    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(352.0, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.3, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(351.7, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.2, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(352.0, 0.1));
     check_file_hash(baseName + "3.svg");
+#endif
   }
   {
     // Showing use of highlight_bond_map to control which bonds are drawn.
@@ -8368,6 +8378,7 @@ TEST_CASE("Lasso highlights") {
       outs << text;
       outs.flush();
       outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
       // All the atoms should have 2 arcs except 5 and 6.  Check those for
       // atom 5.
       std::regex a5(
@@ -8375,33 +8386,34 @@ TEST_CASE("Lasso highlights") {
       std::ptrdiff_t const match_count(
           std::distance(std::sregex_iterator(text.begin(), text.end(), a5),
                         std::sregex_iterator()));
-      REQUIRE(match_count == 3);
+      CHECK(match_count == 3);
       auto a5reg = std::sregex_iterator(text.begin(), text.end(), a5);
       auto dat1 = *a5reg;
-      REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.2, 0.1));
-      REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(280.4, 0.1));
-      REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(221.9, 0.1));
-      REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(280.0, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.2, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(280.4, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(221.9, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(280.0, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(217.4, 0.1));
-      REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(251.6, 0.1));
-      REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(218.4, 0.1));
-      REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(250.7, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(217.4, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(251.6, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(218.4, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(250.7, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(245.3, 0.1));
-      REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(261.0, 0.1));
-      REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.5, 0.1));
-      REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(262.3, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(245.3, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(261.0, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.5, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(262.3, 0.1));
       // There should be 2 lines in red, the lasso along the bi-phenyl
       // bond.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
       std::ptrdiff_t const match_count1(
           std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
                         std::sregex_iterator()));
-      REQUIRE(match_count1 == 2);
+      CHECK(match_count1 == 2);
       check_file_hash(baseName + "4.svg");
+#endif
     }
     // Set up the bond highlights for everything but the bi-phenyl bond,
     // colouring the bonds green although the colour will be ignored.
@@ -8425,6 +8437,7 @@ TEST_CASE("Lasso highlights") {
       outs << text;
       outs.flush();
       outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
       // All the atoms should have 2 arcs except 5 and 6.  Check those for
       // atom 11.
       std::regex a11(
@@ -8432,27 +8445,28 @@ TEST_CASE("Lasso highlights") {
       std::ptrdiff_t const match_count(
           std::distance(std::sregex_iterator(text.begin(), text.end(), a11),
                         std::sregex_iterator()));
-      REQUIRE(match_count == 2);
+      CHECK(match_count == 2);
       auto a11reg = std::sregex_iterator(text.begin(), text.end(), a11);
       auto dat1 = *a11reg;
-      REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.2, 0.1));
-      REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(133.1, 0.1));
-      REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(221.8, 0.1));
-      REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(132.6, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.2, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(133.1, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(221.8, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(132.6, 0.1));
       a11reg++;
       dat1 = *a11reg;
-      REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(245.3, 0.1));
-      REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(113.7, 0.1));
-      REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.5, 0.1));
-      REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(115.0, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(245.3, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(113.7, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.5, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(115.0, 0.1));
 
       // There should not be any red lines for bond 5.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
       std::ptrdiff_t const match_count1(
           std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
                         std::sregex_iterator()));
-      REQUIRE(match_count1 == 0);
+      CHECK(match_count1 == 0);
       check_file_hash(baseName + "5.svg");
+#endif
     }
   }
   {
@@ -8535,13 +8549,14 @@ M  END)CTAB"_ctab;
     outs << text;
     outs.flush();
     outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
     // The arcs on 13 have been a hassle in the past.  There should be 6 of them
     std::regex a13(
         "<path class='atom-13' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), a13),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 6);
+    CHECK(match_count == 6);
     // Check the penultimate one is in the right place
     auto a13reg = std::sregex_iterator(text.begin(), text.end(), a13);
     // you can't add 4, apparently.
@@ -8550,11 +8565,12 @@ M  END)CTAB"_ctab;
     a13reg++;
     a13reg++;
     auto dat1 = *a13reg;
-    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(236.1, 0.1));
-    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(238.2, 0.1));
-    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(238.9, 0.1));
-    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(239.4, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(236.1, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(238.2, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(238.9, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(239.4, 0.1));
     check_file_hash(baseName + "6.svg");
+#endif
   }
   {
     // Bug with different radii in lassos.
@@ -8637,13 +8653,14 @@ M  END)CTAB"_ctab;
     outs << text;
     outs.flush();
     outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
     // The arcs on 13 have been a hassle in the past.  There should be 6 of them
     std::regex a13(
         "<path class='atom-13' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), a13),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 6);
+    CHECK(match_count == 6);
     // Check the last one is in the right place
     auto a13reg = std::sregex_iterator(text.begin(), text.end(), a13);
     // you can't add 5, apparently.
@@ -8653,11 +8670,12 @@ M  END)CTAB"_ctab;
     a13reg++;
     a13reg++;
     auto dat1 = *a13reg;
-    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.1, 0.1));
-    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(218.7, 0.1));
-    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(248.2, 0.1));
-    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(220.8, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.1, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(218.7, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(248.2, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(220.8, 0.1));
     check_file_hash(baseName + "7.svg");
+#endif
   }
   {
     // Simple 4-connected and 0-connected atoms test.
@@ -8703,23 +8721,25 @@ M  END)CTAB"_ctab;
     outs << text;
     outs.flush();
     outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
     // Check one of the arcs starts in the right place.  There was a time
     // when they didn't on Windows machines.
     std::regex a0(
         "<path class='atom-0' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
     auto dat1 = *std::sregex_iterator(text.begin(), text.end(), a0);
-    REQUIRE_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(87.6, 0.1));
-    REQUIRE_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(318.1, 0.1));
-    REQUIRE_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(86.6, 0.1));
-    REQUIRE_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(320.7, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(87.6, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(318.1, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(86.6, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(320.7, 0.1));
     // There should be no arc for atom 1.
     std::regex a1(
         "<path class='atom-1' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)");
     std::ptrdiff_t const match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), a1),
                       std::sregex_iterator()));
-    REQUIRE(match_count == 0);
+    CHECK(match_count == 0);
     check_file_hash(baseName + "8.svg");
+#endif
   }
 }
 
@@ -8844,10 +8864,10 @@ M  END)RXN";
     std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnBlock));
     MolDraw2DSVG drawer(-1, -1);
     auto reactIter = rxn->beginReactantTemplates();
-    REQUIRE_THROWS_AS(MolDraw2DUtils::setACS1996Options(
-                          drawer.drawOptions(),
-                          MolDraw2DUtils::meanBondLength(*(*reactIter)) * 0.7),
-                      ValueErrorException);
+    CHECK_THROWS_AS(MolDraw2DUtils::setACS1996Options(
+                        drawer.drawOptions(),
+                        MolDraw2DUtils::meanBondLength(*(*reactIter)) * 0.7),
+                    ValueErrorException);
   }
 }
 
@@ -8873,14 +8893,14 @@ TEST_CASE("Github 6685 - flexicanvas cuts off bottom of reaction") {
         auto y1 = stod(match[2]);
         auto x2 = stod(match[3]);
         auto y2 = stod(match[4]);
-        REQUIRE(x1 >= 0);
-        REQUIRE(x1 <= width);
-        REQUIRE((y1 >= 0 && y1 <= height));
-        REQUIRE(y1 <= height);
-        REQUIRE(x2 >= 0);
-        REQUIRE(x2 <= width);
-        REQUIRE(y2 >= 0);
-        REQUIRE(y2 <= height);
+        CHECK(x1 >= 0);
+        CHECK(x1 <= width);
+        CHECK((y1 >= 0 && y1 <= height));
+        CHECK(y1 <= height);
+        CHECK(x2 >= 0);
+        CHECK(x2 <= width);
+        CHECK(y2 >= 0);
+        CHECK(y2 <= height);
       }
     }
   };
@@ -9287,6 +9307,6 @@ TEST_CASE("Github 6749 : various bad things in the lasso highlighting") {
   std::ptrdiff_t const match_count(
       std::distance(std::sregex_iterator(text.begin(), text.end(), atom20),
                     std::sregex_iterator()));
-  REQUIRE(match_count == 3);
+  CHECK(match_count == 3);
   check_file_hash(baseName + "1.svg");
 }
