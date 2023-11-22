@@ -223,37 +223,6 @@ void calcSubtendedAngles(const Point2D &pt1, const Point2D &pt2,
   }
 }
 
-void adjustArcEndsIfNotInside(std::vector<DrawShapeArc *> arcs, size_t a1,
-                              size_t a2, double ang1, double &ang2) {
-  DrawShapeArc &arc1 = *arcs[a1];
-  DrawShapeArc &arc2 = *arcs[a2];
-  Point2D ang1End{
-      arc1.points_[0].x + arc1.points_[1].x * cos(ang1 * M_PI / 180.0),
-      arc1.points_[0].y + arc1.points_[1].x * sin(ang1 * M_PI / 180.0)};
-  Point2D ang2End{
-      arc1.points_[0].x + arc1.points_[1].x * cos(ang2 * M_PI / 180.0),
-      arc1.points_[0].y + arc1.points_[1].x * sin(ang2 * M_PI / 180.0)};
-  bool inside1 = false;
-  bool inside2 = false;
-  for (size_t i = 0; i < arcs.size(); ++i) {
-    if (i != a1 && i != a2) {
-      if ((arcs[i]->points_[0] - ang1End).lengthSq() <
-          arcs[i]->points_[1].x * arcs[i]->points_[1].x) {
-        inside1 = true;
-      }
-      if ((arcs[i]->points_[0] - ang2End).lengthSq() <
-          arcs[i]->points_[1].x * arcs[i]->points_[1].x) {
-        inside2 = true;
-      }
-    }
-  }
-  if (!inside1) {
-    arc1.ang2_ = ang1;
-  }
-  if (!inside2) {
-    arc1.ang1_ = ang2;
-  }
-}
 }  // namespace
 
 // ****************************************************************************
@@ -425,7 +394,7 @@ void addExistingArcs(size_t i,
                      std::vector<double> &arcAngs,
                      std::vector<std::pair<double, unsigned int>> &bangs) {
   for (auto &arc : currArcs) {
-    if (arc->atom1_ == i) {
+    if (arc->atom1_ == static_cast<int>(i)) {
       arcAngs.push_back(arc->ang2_);
       arcAngs.push_back(arc->ang1_);
       if (arc->ang2_ < arc->ang1_) {
@@ -591,8 +560,7 @@ void DrawMolMCHLasso::extractBondLines(
 }
 
 namespace {
-DrawShapeArc *makeArc(LinePair &lp1, LinePair &lp2, const Point2D &atCds,
-                      size_t atInd) {
+DrawShapeArc *makeArc(LinePair &lp1, LinePair &lp2, const Point2D &atCds) {
   // Make an arc between line2 of lp1 and line1 of lp2.  If the 2 lines
   // intersect outside the radius of the arc, trim them both back to the
   // point of intersection and return nullptr.
@@ -640,13 +608,13 @@ void DrawMolMCHLasso::extractAtomArcs(
     } else {
       for (size_t i = 0; i < atomLine.size() - 1; ++i) {
         auto arc =
-            makeArc(atomLine[i], atomLine[i + 1], atCds_[atomLine[i].atom], k);
+            makeArc(atomLine[i], atomLine[i + 1], atCds_[atomLine[i].atom]);
         if (arc) {
           arcs.emplace_back(arc);
         }
       }
       auto arc = makeArc(atomLine.back(), atomLine.front(),
-                         atCds_[atomLine.front().atom], k);
+                         atCds_[atomLine.front().atom]);
       if (arc) {
         arcs.emplace_back(arc);
       }
