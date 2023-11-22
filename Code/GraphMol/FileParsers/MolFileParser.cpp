@@ -1544,7 +1544,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
           << " has a negative isotope offset. line:  " << line << std::endl;
     }
     res->setIsotope(dIso);
-    res->setProp(common_properties::_hasMassQuery, true);
   }
 
   if (text.size() >= 42 && text.substr(39, 3) != "  0") {
