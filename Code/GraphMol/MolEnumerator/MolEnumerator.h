@@ -322,7 +322,6 @@ struct RDKIT_MOLENUMERATOR_EXPORT StereoEnumerationOptions {
   bool only_stereo_groups = false;
   bool unique = true;
   unsigned int max_isomers = 1024;
-  [[maybe_unused]] unsigned int rand;  // NOTE: Currently unsupported
 };
 
 [[nodiscard]] RDKIT_MOLENUMERATOR_EXPORT unsigned int get_stereoisomer_count(
