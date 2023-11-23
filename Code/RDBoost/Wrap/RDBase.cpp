@@ -286,6 +286,25 @@ BOOST_PYTHON_MODULE(rdBase) {
   python::scope().attr("boostVersion") = RDKit::boostVersion;
   python::scope().attr("rdkitBuild") = RDKit::rdkitBuild;
 
+  python::scope().attr("_serializationEnabled") =
+#ifdef RDK_USE_BOOST_SERIALIZATION
+      true;
+#else
+      false;
+#endif
+  python::scope().attr("_iostreamsEnabled") =
+#ifdef RDK_USE_BOOST_IOSTREAMS
+      true;
+#else
+      false;
+#endif
+  python::scope().attr("_multithreadedEnabled") =
+#ifdef RDK_BUILD_THREADSAFE_SSS
+      true;
+#else
+      false;
+#endif
+
   python::def("LogToCppStreams", RDLog::InitLogs,
               "Initialize RDKit logs with C++ streams");
   python::def("LogToPythonLogger", LogToPythonLogger,

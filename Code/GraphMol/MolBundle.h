@@ -98,6 +98,7 @@ class MolBundle : public RDProps {
   //! serializes (pickles) to a stream
   void toStream(std::ostream &ss) const {
 #ifndef RDK_USE_BOOST_SERIALIZATION
+    RDUNUSED_PARAM(ss);
     PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
     boost::archive::text_oarchive ar(ss);
@@ -113,6 +114,7 @@ class MolBundle : public RDProps {
   //! initializes from a stream pickle
   void initFromStream(std::istream &ss) {
 #ifndef RDK_USE_BOOST_SERIALIZATION
+    RDUNUSED_PARAM(ss);
     PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
     boost::archive::text_iarchive ar(ss);
