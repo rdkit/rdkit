@@ -150,9 +150,7 @@ Limitations:
                 random subset will be yielded. If 0, all isomers are
                 yielded. Since every additional stereo center doubles the
                 number of results (and execution time) it's important to
-                keep an eye on this.)")
-      .def_readwrite("rand", &MolEnumerator::StereoEnumerationOptions::rand,
-                     "do random enumeration (not yet implemented)");
+                keep an eye on this.)");
 
   python::def(
       "GetStereoisomerCount",
