@@ -41,4 +41,6 @@ TEST_CASE("MolBundle serialization") {
     REQUIRE(bundle.size() == nbundle.size());
   }
 }
+#else
+TEST_CASE("MolBundle serialization") {}
 #endif

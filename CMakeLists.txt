@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.14)
 
 project (RDKit)
 
@@ -454,11 +454,6 @@ if(RDK_USE_BOOST_SERIALIZATION)
     if(NOT Boost_USE_STATIC_LIBS)
       target_compile_definitions(rdkit_base INTERFACE -DBOOST_SERIALIZATION_DYN_LINK)
     endif()
-endif()
-
-if(RDK_BUILD_MAEPARSER_SUPPORT AND NOT RDK_USE_BOOST_IOSTREAMS)
-    message("Enabling RDK_USE_BOOST_IOSTREAMS because RDK_BUILD_MAEPARSER_SUPPORT is enabled.")
-    set(RDK_USE_BOOST_IOSTREAMS ON)
 endif()
 
 if(RDK_USE_BOOST_IOSTREAMS)
