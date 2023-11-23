@@ -177,7 +177,8 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
   };
   RepeatUnitOp(const ROMol &mol) : dp_mol(new ROMol(mol)) { initFromMol(); };
   RepeatUnitOp(const RepeatUnitOp &other)
-      : dp_mol(other.dp_mol),
+      : d_maxNumRounds(other.d_maxNumRounds),
+        dp_mol(other.dp_mol),
         dp_frame(other.dp_frame),
         d_repeats(other.d_repeats),
         d_countAtEachPoint(other.d_countAtEachPoint),
@@ -185,7 +186,6 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
         d_pointRanges(other.d_pointRanges),
         d_isotopeMap(other.d_isotopeMap),
         d_atomMap(other.d_atomMap),
-        d_maxNumRounds(other.d_maxNumRounds),
         d_minRepeatCounts(other.d_minRepeatCounts){};
   RepeatUnitOp &operator=(const RepeatUnitOp &other) {
     if (&other == this) {
