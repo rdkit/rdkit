@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <GraphMol/MolEnumerator/MolEnumerator.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
@@ -57,7 +58,8 @@ class BondStereoFlipper : public StereoFlipper {
   BondStereoFlipper(Bond* bond) : d_bond(bond->getIdx()) {}
 
   void flip(RWMol& mol, bool flag) override {
-    auto next_bond_stereo = flag ? Bond::STEREOCIS : Bond::STEREOTRANS;
+    auto next_bond_stereo =
+        flag ? Bond::BondStereo::STEREOCIS : Bond::BondStereo::STEREOTRANS;
     mol.getBondWithIdx(d_bond)->setStereo(next_bond_stereo);
   }
   static void add_flippers_from_mol(const ROMol& mol,
@@ -69,7 +71,7 @@ class BondStereoFlipper : public StereoFlipper {
 
     for (auto bond : mol.bonds()) {
       auto bond_stereo = bond->getStereo();
-      if (bond_stereo == Bond::STEREONONE) {
+      if (bond_stereo == Bond::BondStereo::STEREONONE) {
         continue;
       }
 
@@ -88,7 +90,6 @@ class StereoGroupFlipper : public StereoFlipper {
   StereoGroupFlipper(StereoGroup* group) {
     auto& stereo_group_atoms = group->getAtoms();
     d_input_atom_parities.reserve(stereo_group_atoms.size());
-
     std::transform(stereo_group_atoms.begin(), stereo_group_atoms.end(),
                    std::back_inserter(d_input_atom_parities), [](auto* atom) {
                      return std::make_pair(atom->getIdx(),
@@ -135,12 +136,12 @@ class StereoGroupFlipper : public StereoFlipper {
 
 namespace {
 
-void preprocess_mol_for_stereoisomer_enumeration(RWMol& rwmol) {
-  for (auto* atom : rwmol.atoms()) {
+void preprocess_mol_for_stereoisomer_enumeration(ROMol& mol) {
+  for (auto* atom : mol.atoms()) {
     atom->clearProp("_CIPCode");
   }
 
-  for (auto bond : rwmol.bonds()) {
+  for (auto bond : mol.bonds()) {
     if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
       bond->setBondDir(Bond::BondDir::NONE);
     }
@@ -148,18 +149,12 @@ void preprocess_mol_for_stereoisomer_enumeration(RWMol& rwmol) {
 }
 
 std::vector<stereo_flipper_t> get_flippers(
-    const ROMol& input_mol, const StereoEnumerationOptions& options = {}) {
+    ROMol& mol, const StereoEnumerationOptions& options = {}) {
   std::vector<stereo_flipper_t> flippers;
 
-  RWMol mol(input_mol);
   preprocess_mol_for_stereoisomer_enumeration(mol);
 
-  auto clean = true;
-  auto force = true;
-  auto flagPossible = true;
-  RDKit::MolOps::assignStereochemistry(mol, clean, force, flagPossible);
-
-  RDKit::Chirality::findPotentialStereo(mol, false);
+  RDKit::MolOps::findPotentialStereoBonds(mol, false);
 
   AtomStereoFlipper::add_flippers_from_mol(mol, options, flippers);
   BondStereoFlipper::add_flippers_from_mol(mol, options, flippers);
@@ -171,7 +166,8 @@ std::vector<stereo_flipper_t> get_flippers(
 }  // namespace
 
 [[nodiscard]] unsigned int get_stereoisomer_count(
-    const ROMol& mol, const StereoEnumerationOptions options) {
+    const ROMol& input_mol, const StereoEnumerationOptions options) {
+  ROMol mol(input_mol);
   auto flippers = get_flippers(mol, options);
   return std::pow(2, flippers.size());
 }
@@ -187,7 +183,7 @@ std::vector<stereo_flipper_t> get_flippers(
   // NOTE: we don't need the values, so we don't have to worry about underlying
   // values being invalid
   MolBundle stereoisomers;
-  std::unordered_set<std::string_view> seen_isomers;
+  std::unordered_set<std::string> seen_isomers;
   auto all_stereoisomers = MolEnumerator::enumerate(mol, paramsList);
   for (auto& stereoisomer : all_stereoisomers.getMols()) {
     if (stereoisomers.size() >= options.max_isomers) {
