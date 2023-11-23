@@ -81,7 +81,7 @@ void RepeatUnitOp::initFromMol(const ROMol &mol) {
 //      * well assume the desired range is {0,
 //      RepeatUnitOp::DEFAULT_REPEAT_COUNT}
 //        for anything else
-static std::pair<size_t, size_t> parse_repeat_counts(
+[[nodiscard]] static std::pair<size_t, size_t> parse_repeat_counts(
     const std::string &sru_label) {
   static constexpr std::pair<size_t, size_t> default_repeat_counts{
       0, RepeatUnitOp::DEFAULT_REPEAT_COUNT};

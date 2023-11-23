@@ -1685,7 +1685,7 @@ TEST_CASE("SRU enumeration should adhere to repeat counts #6429") {
   // check that maxPerOperation is still valid
   mol = "FCN(CC)-* |Sg:n:2,5:20:ht|"_smiles;
   REQUIRE(mol);
-  auto maxPerOperation = 3;
+  size_t maxPerOperation = 3;
   bundle = MolEnumerator::enumerate(*mol, maxPerOperation);
   CHECK(bundle.size() == maxPerOperation);
 
