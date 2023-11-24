@@ -250,10 +250,10 @@ struct RDKIT_MOLENUMERATOR_EXPORT StereoEnumerationOptions {
   unsigned int max_isomers = 1024;
 };
 
-[[nodiscard]] RDKIT_MOLENUMERATOR_EXPORT unsigned int get_stereoisomer_count(
+RDKIT_MOLENUMERATOR_EXPORT unsigned int get_stereoisomer_count(
     const ROMol &mol, const StereoEnumerationOptions options = {});
 
-[[nodiscard]] RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate_stereoisomers(
+RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate_stereoisomers(
     const ROMol &mol, const StereoEnumerationOptions options = {});
 
 class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
@@ -263,20 +263,20 @@ class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
   StereoIsomerOp(const StereoIsomerOp &other);
   StereoIsomerOp &operator=(const StereoIsomerOp &other);
 
-  [[nodiscard]] static std::shared_ptr<StereoIsomerOp> createOp();
+  static std::shared_ptr<StereoIsomerOp> createOp();
 
   //! \override
-  [[nodiscard]] std::vector<size_t> getVariationCounts() const override;
+  std::vector<size_t> getVariationCounts() const override;
 
   //! \override
-  [[nodiscard]] std::unique_ptr<ROMol> operator()(
+  std::unique_ptr<ROMol> operator()(
       const std::vector<size_t> &which) const override;
 
   //! \override
   void initFromMol(const ROMol &mol) override;
 
   //! \override
-  [[nodiscard]] std::unique_ptr<MolEnumeratorOp> copy() const override;
+  std::unique_ptr<MolEnumeratorOp> copy() const override;
 
   void setOptions(StereoEnumerationOptions options);
 

@@ -19,7 +19,6 @@
 #include <GraphMol/MolEnumerator/MolEnumerator.h>
 
 #include <boost/algorithm/string.hpp>
-#include <filesystem>
 #include <string>
 #include <tuple>
 #include <unordered_set>
@@ -1873,14 +1872,17 @@ TEST_CASE("Test StereoEnumerationOptions::unique option") {
   }
 }
 
-[[nodiscard]] static std::string get_testfile_path(std::string_view rel_path) {
-  auto fpath = std::filesystem::path(getenv("RDBASE")) / rel_path;
-  return fpath.string();
+// std::filesystem is not available on mac os 10.5, which one of the ci
+// builders use
+[[nodiscard]] static std::string get_testfile_path(std::string_view fname) {
+  static const std::string test_data_dir =
+      (std::string(getenv("RDBASE")) + "/Code/GraphMol/FileParsers/test_data");
+
+  return test_data_dir + "/" + fname.data();
 }
 
 TEST_CASE("Test enhanced stereo feature") {
-  auto fpath = get_testfile_path(
-      "Code/GraphMol/FileParsers/test_data/two_centers_or.mol");
+  auto fpath = get_testfile_path("two_centers_or.mol");
   auto mol = MolFileToMol(fpath);
   REQUIRE(mol);
 
@@ -1901,8 +1903,7 @@ TEST_CASE("Test enhanced stereo feature") {
 }
 
 TEST_CASE("Test StereoEnumerationOptions::only_stereo_groups option") {
-  auto fpath = get_testfile_path(
-      "Code/GraphMol/FileParsers/test_data/two_centers_or.mol");
+  auto fpath = get_testfile_path("two_centers_or.mol");
   auto mol = MolFileToMol(fpath);
 
   MolEnumerator::StereoEnumerationOptions options;
@@ -1914,8 +1915,7 @@ TEST_CASE("Test StereoEnumerationOptions::only_stereo_groups option") {
 }
 
 TEST_CASE("Test no duplication of enhanced stereo groups") {
-  auto fpath = get_testfile_path(
-      "Code/GraphMol/FileParsers/test_data/two_centers_or.mol");
+  auto fpath = get_testfile_path("two_centers_or.mol");
   auto mol = MolFileToMol(fpath);
 
   MolEnumerator::StereoEnumerationOptions options;
@@ -1955,8 +1955,7 @@ TEST_CASE("Test issue #3505") {
 
 TEST_CASE("Test enumerating double bond stereo") {
   // MOL with explicit either cis/trans bond
-  auto fpath = get_testfile_path(
-      "Code/GraphMol/FileParsers/test_data/simple_either.mol");
+  auto fpath = get_testfile_path("simple_either.mol");
   auto mol = MolFileToMol(fpath);
   REQUIRE(mol);
 
