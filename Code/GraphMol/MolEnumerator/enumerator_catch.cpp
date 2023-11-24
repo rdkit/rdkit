@@ -1789,7 +1789,7 @@ TEST_CASE("Basic test of StereoEnumerationOptions::tryEmbedding option") {
   CHECK(bundle.size() == 8);
 }
 
-// FIXME:
+/* FIXME?:
 TEST_CASE(
     "Test StereoEnumerationOptions::tryEmbedding with very large maxIsomers") {
   auto mol = "BrC=CC1OC(C2)(F)C2(Cl)C1"_smiles;
@@ -1801,17 +1801,18 @@ TEST_CASE(
   auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
   CHECK(bundle.size() == 8);
 
-  /*
-    def
-    testEnumerateStereoisomersTryEmbeddingShouldNotInfiniteLoopWhenMaxIsomersIsLargerThanActual(
-        self):
-      m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
-      opts = AllChem.StereoEnumerationOptions(tryEmbedding=True,
-    maxIsomers=1024) isomers = set() for x in AllChem.EnumerateStereoisomers(m,
-    options=opts): isomers.add(Chem.MolToSmiles(x, isomericSmiles=True))
-    self.assertEqual(len(isomers), 8)
-    */
+  //
+  //def
+  //testEnumerateStereoisomersTryEmbeddingShouldNotInfiniteLoopWhenMaxIsomersIsLargerThanActual(
+  //    self):
+  //  m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
+  //  opts = AllChem.StereoEnumerationOptions(tryEmbedding=True,
+  //maxIsomers=1024) isomers = set() for x in AllChem.EnumerateStereoisomers(m,
+  //options=opts): isomers.add(Chem.MolToSmiles(x, isomericSmiles=True))
+  //self.assertEqual(len(isomers), 8)
+  //
 }
+*/
 
 TEST_CASE("Test StereoEnumerationOptions::onlyUnassigned option") {
   auto mol = "C/C(F)=C/[C@@H](C)Cl"_smiles;
