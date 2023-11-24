@@ -18,8 +18,12 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/MolEnumerator/MolEnumerator.h>
 
+#include <boost/algorithm/string.hpp>
+#include <filesystem>
 #include <string>
+#include <tuple>
 #include <unordered_set>
+#include <vector>
 
 using namespace RDKit;
 
@@ -1738,7 +1742,7 @@ M  END)CTAB"};
   CHECK(MolToSmiles(*bundle[1]) == "*N(CC)N(*)N(*)CF");  // repeated 3x
 }
 
-[[nodiscard]] static int getNumUniqueMols(const MolBundle &bundle) {
+[[nodiscard]] static size_t getNumUniqueMols(const MolBundle &bundle) {
   std::unordered_set<std::string> seen_isomers;
   for (auto &stereoisomer : bundle.getMols()) {
     std::string canon_smiles = MolToSmiles(*stereoisomer, true);
@@ -1755,231 +1759,237 @@ TEST_CASE("Basic stereoisomer enumeration") {
   CHECK(getNumUniqueMols(bundle) == 4);
 }
 
-/*
-  def testEnumerateStereoisomersBasic(self):
-    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
-    smiles = set(
-      Chem.MolToSmiles(i, isomericSmiles=True) for i in
-  AllChem.EnumerateStereoisomers(mol)) print(smiles)
-    self.assertEqual(len(smiles), 4)
+TEST_CASE("Test enumeration with large isomer sample") {
+  std::vector<std::string> tokens(31, "CC(F)=CC(Cl)C");
+  auto mol = SmilesToMol(boost::algorithm::join(tokens, ""));
+  REQUIRE(mol);
 
-  def testEnumerateStereoisomersLargeRandomSample(self):
-    # near max number of stereo centers allowed
-    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 31)
-    smiles = set(
-      Chem.MolToSmiles(i, isomericSmiles=True) for i in
-  AllChem.EnumerateStereoisomers(mol)) self.assertEqual(len(smiles), 1024)
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  CHECK(bundle.size() == 1024);
+}
 
-  def testEnumerateStereoisomersWithCrazyNumberOfCenters(self):
-    # insanely large numbers of isomers aren't a problem
-    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 101)
-    opts = AllChem.StereoEnumerationOptions(rand=None, maxIsomers=13)
-    smiles = set(
-      Chem.MolToSmiles(i, isomericSmiles=True) for i in
-  AllChem.EnumerateStereoisomers(mol, opts)) self.assertEqual(len(smiles), 13)
+TEST_CASE("Test StereoEnumerationOptions::max_isomers option") {
+  std::vector<std::string> tokens(101, "CC(F)=CC(Cl)C");
+  auto mol = SmilesToMol(boost::algorithm::join(tokens, ""));
+  REQUIRE(mol);
 
-  def
-  testEnumerateStereoisomersMaxIsomersShouldBeReturnedEvenWithTryEmbedding(self):
-    m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
-    opts = AllChem.StereoEnumerationOptions(tryEmbedding=True, maxIsomers=8)
-    isomers = set()
-    for x in AllChem.EnumerateStereoisomers(m, options=opts):
-      isomers.add(Chem.MolToSmiles(x, isomericSmiles=True))
+  MolEnumerator::StereoEnumerationOptions options;
+  options.max_isomers = 13;
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  CHECK(bundle.size() == 13);
+}
+
+TEST_CASE("Basic test of StereoEnumerationOptions::try_embedding option") {
+  auto mol = "BrC=CC1OC(C2)(F)C2(Cl)C1"_smiles;
+  REQUIRE(mol);
+
+  MolEnumerator::StereoEnumerationOptions options;
+  options.max_isomers = 8;
+  options.try_embedding = true;
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  CHECK(bundle.size() == 8);
+}
+
+// FIXME:
+TEST_CASE(
+    "Test StereoEnumerationOptions::try_embedding with very large max_isomers") {
+  auto mol = "BrC=CC1OC(C2)(F)C2(Cl)C1"_smiles;
+  REQUIRE(mol);
+
+  MolEnumerator::StereoEnumerationOptions options;
+  options.max_isomers = 1024;
+  options.try_embedding = true;
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  CHECK(bundle.size() == 8);
+
+  /*
+    def
+    testEnumerateStereoisomersTryEmbeddingShouldNotInfiniteLoopWhenMaxIsomersIsLargerThanActual(
+        self):
+      m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
+      opts = AllChem.StereoEnumerationOptions(tryEmbedding=True,
+    maxIsomers=1024) isomers = set() for x in AllChem.EnumerateStereoisomers(m,
+    options=opts): isomers.add(Chem.MolToSmiles(x, isomericSmiles=True))
     self.assertEqual(len(isomers), 8)
+    */
+}
 
-  def
-  testEnumerateStereoisomersTryEmbeddingShouldNotInfiniteLoopWhenMaxIsomersIsLargerThanActual(
-      self):
-    m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
-    opts = AllChem.StereoEnumerationOptions(tryEmbedding=True, maxIsomers=1024)
-    isomers = set()
-    for x in AllChem.EnumerateStereoisomers(m, options=opts):
-      isomers.add(Chem.MolToSmiles(x, isomericSmiles=True))
-    self.assertEqual(len(isomers), 8)
+TEST_CASE("Test StereoEnumerationOptions::only_unassigned option") {
+  auto mol = "C/C(F)=C/[C@@H](C)Cl"_smiles;
+  REQUIRE(mol);
 
-  def testEnumerateStereoisomersOnlyUnassigned(self):
-    # shouldn't enumerate anything
-    fully_assigned = Chem.MolFromSmiles('C/C(F)=C/[C@@H](C)Cl')
-    smiles = set(
-      Chem.MolToSmiles(i, isomericSmiles=True)
-      for i in AllChem.EnumerateStereoisomers(fully_assigned))
-    self.assertEqual(smiles, set(['C/C(F)=C/[C@@H](C)Cl']))
+  // there is nothing to enumerate
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  CHECK(bundle.size() == 0);
 
-    # should only enumerate the bond stereo
-    partially_assigned = Chem.MolFromSmiles('CC(F)=C[C@@H](C)Cl')
-    smiles = set(
-      Chem.MolToSmiles(i, isomericSmiles=True)
-      for i in AllChem.EnumerateStereoisomers(partially_assigned))
-    self.assertEqual(smiles, set(['C/C(F)=C/[C@@H](C)Cl',
-  'C/C(F)=C\\[C@@H](C)Cl']))
+  mol = "CC(F)=C[C@@H](C)Cl"_smiles;
+  bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  CHECK(bundle.size() == 2);
+  CHECK(std::unordered_set<std::string>{
+            MolToSmiles(*bundle[0]),
+            MolToSmiles(*bundle[1]),
+        } == std::unordered_set<std::string>{"C/C(F)=C/[C@@H](C)Cl",
+                                             R"(C/C(F)=C\[C@@H](C)Cl)"});
 
-    # should enumerate everything
-    opts = AllChem.StereoEnumerationOptions(onlyUnassigned=False)
-    smiles = set(
-      Chem.MolToSmiles(i, isomericSmiles=True)
-      for i in AllChem.EnumerateStereoisomers(fully_assigned, opts))
-    print(smiles)
-    self.assertEqual(
-      smiles,
-      set([
-        'C/C(F)=C\\[C@@H](C)Cl',
-        'C/C(F)=C\\[C@H](C)Cl',
-        'C/C(F)=C/[C@H](C)Cl',
-        'C/C(F)=C/[C@@H](C)Cl',
-      ]))
+  mol = "C/C(F)=C/[C@@H](C)Cl"_smiles;
+  MolEnumerator::StereoEnumerationOptions options;
+  options.only_unassigned = false;
+  bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  CHECK(bundle.size() == 4);
+  CHECK(std::unordered_set<std::string>{
+            MolToSmiles(*bundle[0]),
+            MolToSmiles(*bundle[1]),
+            MolToSmiles(*bundle[2]),
+            MolToSmiles(*bundle[3]),
+        } == std::unordered_set<std::string>{
+                 "C/C(F)=C\\[C@@H](C)Cl",
+                 "C/C(F)=C\\[C@H](C)Cl",
+                 "C/C(F)=C/[C@H](C)Cl",
+                 "C/C(F)=C/[C@@H](C)Cl",
+             });
+}
 
-  def testEnumerateStereoisomersOnlyUnique(self):
-    mol = Chem.MolFromSmiles('FC(Cl)C(Cl)F')
-    opts = AllChem.StereoEnumerationOptions(unique=False)
-    smiles = [
-      Chem.MolToSmiles(i, isomericSmiles=True) for i in
-  AllChem.EnumerateStereoisomers(mol, opts)
-    ]
-    self.assertEqual(len(smiles), 4)
-    print(set(smiles))
-    self.assertEqual(len(set(smiles)), 3)
+TEST_CASE("Test StereoEnumerationOptions::unique option") {
+  std::vector<std::tuple<std::string, size_t, size_t>> test_info{
+      // smiles, num expected, num unique
+      {"FC(Cl)C(Cl)F", 4, 3},
+      {"CC=CC=CC", 4, 3},
+      {"FC(Cl)C=CC=CC(F)Cl", 16, 10}};
 
-    mol = Chem.MolFromSmiles('FC(Cl)C(Cl)F')
-    opts = AllChem.StereoEnumerationOptions(unique=True)
-    smiles = set(
-      Chem.MolToSmiles(i, isomericSmiles=True) for i in
-  AllChem.EnumerateStereoisomers(mol, opts)) self.assertEqual( smiles,
-  set(['F[C@@H](Cl)[C@@H](F)Cl', 'F[C@H](Cl)[C@@H](F)Cl',
-  'F[C@H](Cl)[C@H](F)Cl']))
+  for (auto [smiles, num_expected, num_unique] : test_info) {
+    auto mol = SmilesToMol(smiles);
+    REQUIRE(mol);
 
-    mol = Chem.MolFromSmiles('CC=CC=CC')
-    opts = AllChem.StereoEnumerationOptions(unique=False)
-    smiles = [
-      Chem.MolToSmiles(i, isomericSmiles=True) for i in
-  AllChem.EnumerateStereoisomers(mol, opts)
-    ]
-    self.assertEqual(len(smiles), 4)
-    self.assertEqual(len(set(smiles)), 3)
+    MolEnumerator::StereoEnumerationOptions options;
+    options.unique = false;
+    auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+    CHECK(bundle.size() == num_expected);
+    CHECK(getNumUniqueMols(bundle) == num_unique);
 
-    mol = Chem.MolFromSmiles('CC=CC=CC')
-    opts = AllChem.StereoEnumerationOptions(unique=True)
-    smiles = set(
-      Chem.MolToSmiles(i, isomericSmiles=True) for i in
-  AllChem.EnumerateStereoisomers(mol, opts)) self.assertEqual(smiles,
-  set(['C/C=C/C=C/C', 'C/C=C\\C=C\\C', 'C/C=C\\C=C/C']))
+    options.unique = true;
+    bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+    CHECK(bundle.size() == num_unique);
+    CHECK(getNumUniqueMols(bundle) == num_unique);
+  }
+}
 
-    mol = Chem.MolFromSmiles('FC(Cl)C=CC=CC(F)Cl')
-    opts = AllChem.StereoEnumerationOptions(unique=False)
-    smiles = [
-      Chem.MolToSmiles(i, isomericSmiles=True) for i in
-  AllChem.EnumerateStereoisomers(mol, opts)
-    ]
-    self.assertEqual(len(smiles), 16)
-    self.assertEqual(len(set(smiles)), 10)
+[[nodiscard]] static std::string get_testfile_path(std::string_view rel_path) {
+  auto fpath = std::filesystem::path(getenv("RDBASE")) / rel_path;
+  return fpath.string();
+}
 
-    mol = Chem.MolFromSmiles('FC(Cl)C=CC=CC(F)Cl')
-    opts = AllChem.StereoEnumerationOptions(unique=True)
-    smiles = set(
-      sorted(
-        Chem.MolToSmiles(i, isomericSmiles=True)
-        for i in AllChem.EnumerateStereoisomers(mol, opts)))
-    self.assertEqual(
-      smiles,
-      set(
-        sorted([
-          'F[C@H](Cl)/C=C/C=C/[C@@H](F)Cl', 'F[C@H](Cl)/C=C/C=C/[C@H](F)Cl',
-          'F[C@@H](Cl)/C=C/C=C/[C@@H](F)Cl',
-  'F[C@@H](Cl)/C=C\\C=C\\[C@@H](F)Cl', 'F[C@H](Cl)/C=C\\C=C/[C@@H](F)Cl',
-  'F[C@H](Cl)/C=C/C=C\\[C@@H](F)Cl', 'F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl',
-  'F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl', 'F[C@H](Cl)/C=C\\C=C/[C@H](F)Cl',
-  'F[C@H](Cl)/C=C\\C=C\\[C@@H](F)Cl'
-        ])))
+TEST_CASE("Test enhanced stereo feature") {
+  auto fpath = get_testfile_path(
+      "Code/GraphMol/FileParsers/test_data/two_centers_or.mol");
+  auto mol = MolFileToMol(fpath);
+  REQUIRE(mol);
 
-  def testEnumerateStereoisomersOnlyEnhancedStereo(self):
-    rdbase = os.environ["RDBASE"]
-    filename = os.path.join(rdbase,
-  'Code/GraphMol/FileParsers/test_data/two_centers_or.mol') mol =
-  Chem.MolFromMolFile(filename) smiles = set(Chem.MolToSmiles(m) for m in
-  AllChem.EnumerateStereoisomers(mol)) # switches the centers linked by an "OR",
-  but not the absolute group self.assertEqual(smiles,
-  {r'C[C@H]([C@@H](C)F)[C@@H](C)Br', r'C[C@@H]([C@H](C)F)[C@@H](C)Br'})
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  CHECK(bundle.size() == 2);
 
-    # we need the SMILES without the influence of the stereo groups:
-    mol = Chem.RWMol(mol)
-    mol.SetStereoGroups([])
-    original_smiles = Chem.MolToSmiles(mol)
-    self.assertIn(original_smiles, smiles)
+  std::unordered_set<std::string> expected_smiles{
+      R"(C[C@H]([C@@H](C)F)[C@@H](C)Br)", R"(C[C@@H]([C@H](C)F)[C@@H](C)Br)"};
+  CHECK(std::unordered_set<std::string>{
+            MolToSmiles(*bundle[0]),
+            MolToSmiles(*bundle[1]),
+        } == expected_smiles);
 
-  def testNoExtrasIfEnumeratingAllWithEnhancedStereo(self):
-    """
-    If the onlyUnassigned option is False, make sure that enhanced stereo
-    groups aren't double-counted.
-    """
-    rdbase = os.environ["RDBASE"]
-    filename = os.path.join(rdbase,
-  'Code/GraphMol/FileParsers/test_data/two_centers_or.mol') mol =
-  Chem.MolFromMolFile(filename)
+  // we need the SMILES without the influence of the stereo groups:
+  RWMol rwmol(*mol);
+  rwmol.setStereoGroups({});
+  CHECK(expected_smiles.count(MolToSmiles(rwmol)));
+}
 
-    opts = AllChem.StereoEnumerationOptions(onlyUnassigned=False, unique=False)
-    smiles = [Chem.MolToSmiles(m) for m in AllChem.EnumerateStereoisomers(mol,
-  opts)] print('!!!!', smiles) self.assertEqual(len(smiles), len(set(smiles)))
-    self.assertEqual(len(smiles), 2**3)
+TEST_CASE("Test StereoEnumerationOptions::only_stereo_groups option") {
+  auto fpath = get_testfile_path(
+      "Code/GraphMol/FileParsers/test_data/two_centers_or.mol");
+  auto mol = MolFileToMol(fpath);
 
-  def testIssue2890(self):
-    mol = Chem.MolFromSmiles('CC=CC')
-    mol.GetBondWithIdx(1).SetStereo(Chem.rdchem.BondStereo.STEREOANY)
+  MolEnumerator::StereoEnumerationOptions options;
+  options.only_stereo_groups = true;
 
-    self.assertEqual(len(list(AllChem.EnumerateStereoisomers(mol))), 2)
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  CHECK(bundle.size() == 2);
+  CHECK(bundle.size() == getNumUniqueMols(bundle));
+}
 
-  def testIssue3231(self):
-    mol = Chem.MolFromSmiles(
-      'C[C@H](OC1=C(N)N=CC(C2=CN(C3C[C@H](C)NCC3)N=C2)=C1)C4=C(Cl)C=CC(F)=C4Cl')
-    Chem.AssignStereochemistry(mol, force=True, flagPossibleStereoCenters=True)
-    l = Chem.FindMolChiralCenters(mol, includeUnassigned=True)
-    self.assertEqual(l, [(1, 'S'), (12, '?'), (14, 'S')])
-    enumsi_opt = AllChem.StereoEnumerationOptions(maxIsomers=20,
-  onlyUnassigned=False) isomers = list(AllChem.EnumerateStereoisomers(mol,
-  enumsi_opt)) chi_cents = [] for iso in isomers:
-      Chem.AssignStereochemistry(iso)
-      chi_cents.append(Chem.FindMolChiralCenters(iso, includeUnassigned=True))
-    self.assertEqual(sorted(chi_cents),
-                     [[(1, 'R'), (12, 'R'),
-                       (14, 'R')], [(1, 'R'), (12, 'R'),
-                                    (14, 'S')], [(1, 'R'), (12, 'S'),
-                                                 (14, 'R')], [(1, 'R'), (12,
-  'S'), (14, 'S')],
-                      [(1, 'S'), (12, 'R'),
-                       (14, 'R')], [(1, 'S'), (12, 'R'),
-                                    (14, 'S')], [(1, 'S'), (12, 'S'),
-                                                 (14, 'R')], [(1, 'S'), (12,
-  'S'), (14, 'S')]])
+TEST_CASE("Test no duplication of enhanced stereo groups") {
+  auto fpath = get_testfile_path(
+      "Code/GraphMol/FileParsers/test_data/two_centers_or.mol");
+  auto mol = MolFileToMol(fpath);
 
-  def testIssue3505(self):
-    m = Chem.MolFromSmiles('CCC(C)Br')
-    mols = list(AllChem.EnumerateStereoisomers(m))
-    self.assertEqual(len(mols), 2)
-    for mol in mols:
-      at = mol.GetAtomWithIdx(2)
-      self.assertIn(at.GetChiralTag(),
-                    [Chem.ChiralType.CHI_TETRAHEDRAL_CW,
-  Chem.ChiralType.CHI_TETRAHEDRAL_CCW])
-      self.assertTrue(at.HasProp("_ChiralityPossible"))
+  MolEnumerator::StereoEnumerationOptions options;
+  options.only_unassigned = false;
+  options.unique = false;
 
-  def testEnumerateEitherDoubleStereo(self):
-    """ EnumerateStereoisomers from MOL with explicit either cis/trans bond """
-    rdbase = os.environ["RDBASE"]
-    filename = os.path.join(rdbase,
-  'Code/GraphMol/FileParsers/test_data/simple_either.mol') mol =
-  Chem.MolFromMolFile(filename) smiles = [Chem.MolToSmiles(m) for m in
-  AllChem.EnumerateStereoisomers(mol)] self.assertEqual(set(smiles), {"C/C=C/C",
-  "C/C=C\\C"})
+  // If the onlyUnassigned option is False, make sure that enhanced stereo
+  // groups aren't double-counted.
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  CHECK(bundle.size() == 8);
+  CHECK(bundle.size() == getNumUniqueMols(bundle));
+}
 
-  def testTryEmbeddingManyChirals(self):
-    smiles = "C1" + "C(Cl)(Br)" * 40 + "C1"
-    mol = Chem.MolFromSmiles(smiles)
-    opts = AllChem.StereoEnumerationOptions(tryEmbedding=True, maxIsomers=2)
-    self.assertEqual(len(list(AllChem.EnumerateStereoisomers(mol,
-  options=opts))), 2)
+TEST_CASE("Test issue #2890") {
+  auto mol = "CC=CC"_smiles;
+  mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
 
-  def testGithub6045(self):
-    mol = Chem.MolFromSmiles('O[C@H](Br)[C@H](F)C |&1:1,3|')
-    prods = list(AllChem.EnumerateStereoisomers(mol))
-    self.assertEqual(len(prods), 2)
-    for prod in prods:
-      self.assertEqual(len(prod.GetStereoGroups()), 0)
-      */
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  CHECK(bundle.size() == 2);
+}
+
+TEST_CASE("Test issue #3505") {
+  auto mol = "CCC(C)Br"_smiles;
+  REQUIRE(mol);
+
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  CHECK(bundle.size() == 2);
+
+  for (size_t i = 0; i < bundle.size(); ++i) {
+    auto stereoisomer = bundle[i];
+    auto atom = stereoisomer->getAtomWithIdx(2);
+    CHECK((atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW ||
+           atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW));
+    CHECK(atom->hasProp(common_properties::_ChiralityPossible));
+  }
+}
+
+TEST_CASE("Test enumerating double bond stereo") {
+  // MOL with explicit either cis/trans bond
+  auto fpath = get_testfile_path(
+      "Code/GraphMol/FileParsers/test_data/simple_either.mol");
+  auto mol = MolFileToMol(fpath);
+  REQUIRE(mol);
+
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  CHECK(bundle.size() == 2);
+  CHECK(std::unordered_set<std::string>{
+            MolToSmiles(*bundle[0]),
+            MolToSmiles(*bundle[1]),
+        } == std::unordered_set<std::string>{"C/C=C/C", "C/C=C\\C"});
+}
+
+TEST_CASE("Test embedding many chirals") {
+  std::vector<std::string> tokens(42, "C(Cl)(Br)");
+  tokens[0] = "C1";
+  tokens[41] = "C1";
+
+  auto mol = SmilesToMol(boost::algorithm::join(tokens, ""));
+  REQUIRE(mol);
+
+  MolEnumerator::StereoEnumerationOptions options;
+  options.try_embedding = true;
+  options.max_isomers = 2;
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  CHECK(bundle.size() == 2);
+}
+
+TEST_CASE("Test issue #6045") {
+  auto mol = "O[C@H](Br)[C@H](F)C |&1:1,3|"_smiles;
+  REQUIRE(mol);
+
+  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  CHECK(bundle.size() == 2);
+
+  CHECK(bundle[0]->getStereoGroups().size() == 0);
+  CHECK(bundle[1]->getStereoGroups().size() == 0);
+}

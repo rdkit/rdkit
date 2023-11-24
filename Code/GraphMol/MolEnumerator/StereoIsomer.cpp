@@ -15,6 +15,9 @@ namespace MolEnumerator {
 inline namespace detail {
 class StereoFlipper {
  public:
+  StereoFlipper() = default;
+  virtual ~StereoFlipper() = default;
+
   virtual void flip(RWMol& mol, bool flag) = 0;
 };
 }  // namespace detail
@@ -25,9 +28,9 @@ class AtomStereoFlipper : public StereoFlipper {
  public:
   AtomStereoFlipper(Atom* atom) : d_atom(atom->getIdx()) {}
 
-  void flip(RWMol& mol, bool flag) override {
-    auto next_atom_stereo =
-        flag ? Atom::CHI_TETRAHEDRAL_CW : Atom::CHI_TETRAHEDRAL_CCW;
+  void flip(RWMol& mol, bool flag) final {
+    auto next_atom_stereo = flag ? Atom::ChiralType::CHI_TETRAHEDRAL_CW
+                                 : Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
     mol.getAtomWithIdx(d_atom)->setChiralTag(next_atom_stereo);
   }
   static void add_flippers_from_mol(const ROMol& mol,
@@ -38,12 +41,12 @@ class AtomStereoFlipper : public StereoFlipper {
     }
 
     for (auto* atom : mol.atoms()) {
-      if (!atom->hasProp("_ChiralityPossible")) {
+      if (!atom->hasProp(common_properties::_ChiralityPossible)) {
         continue;
       }
 
       if (!options.only_unassigned ||
-          atom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+          atom->getChiralTag() == Atom::ChiralType::CHI_UNSPECIFIED) {
         flippers.push_back(std::make_shared<AtomStereoFlipper>(atom));
       }
     }
@@ -57,7 +60,7 @@ class BondStereoFlipper : public StereoFlipper {
  public:
   BondStereoFlipper(Bond* bond) : d_bond(bond->getIdx()) {}
 
-  void flip(RWMol& mol, bool flag) override {
+  void flip(RWMol& mol, bool flag) final {
     auto next_bond_stereo =
         flag ? Bond::BondStereo::STEREOCIS : Bond::BondStereo::STEREOTRANS;
     mol.getBondWithIdx(d_bond)->setStereo(next_bond_stereo);
@@ -97,7 +100,7 @@ class StereoGroupFlipper : public StereoFlipper {
                    });
   }
 
-  void flip(RWMol& mol, bool flag) override {
+  void flip(RWMol& mol, bool flag) final {
     auto flip_atom_parity = [](auto& atom_parity) {
       if (atom_parity != Atom::CHI_TETRAHEDRAL_CW &&
           atom_parity != Atom::CHI_TETRAHEDRAL_CCW) {
@@ -138,7 +141,7 @@ namespace {
 
 void preprocess_mol_for_stereoisomer_enumeration(ROMol& mol) {
   for (auto* atom : mol.atoms()) {
-    atom->clearProp("_CIPCode");
+    atom->clearProp(common_properties::_CIPCode);
   }
 
   for (auto bond : mol.bonds()) {
@@ -177,33 +180,27 @@ std::vector<stereo_flipper_t> get_flippers(
   std::vector<MolEnumeratorParams> paramsList;
 
   MolEnumerator::MolEnumeratorParams stereoParams;
-  stereoParams.dp_operation = MolEnumerator::StereoIsomerOp::createOp();
+
+  auto stereoisomer_op = MolEnumerator::StereoIsomerOp::createOp();
+  stereoisomer_op->setOptions(options);
+  stereoParams.dp_operation = std::move(stereoisomer_op);
+
+  stereoParams.maxToEnumerate = options.max_isomers;
   paramsList.push_back(std::move(stereoParams));
 
-  // NOTE: we don't need the values, so we don't have to worry about underlying
-  // values being invalid
   MolBundle stereoisomers;
   std::unordered_set<std::string> seen_isomers;
   auto all_stereoisomers = MolEnumerator::enumerate(mol, paramsList);
-  for (auto& stereoisomer : all_stereoisomers.getMols()) {
-    if (stereoisomers.size() >= options.max_isomers) {
-      break;
-    }
-
+  for (auto stereoisomer : all_stereoisomers.getMols()) {
     if (options.unique) {
-      std::string canon_smiles = MolToSmiles(*stereoisomer, true);
+      auto canon_smiles = MolToSmiles(*stereoisomer, true);
       if (!seen_isomers.insert(canon_smiles).second) {
         continue;
       }
     }
-
-    if (options.try_embedding) {
-      MolOps::addHs(*stereoisomer);
-      DGeomHelpers::EmbedMolecule(*stereoisomer);
-    }
-
     stereoisomers.addMol(std::move(stereoisomer));
   }
+
   return stereoisomers;
 }
 
@@ -225,7 +222,9 @@ std::unique_ptr<MolEnumeratorOp> StereoIsomerOp::copy() const {
 }
 
 StereoIsomerOp::StereoIsomerOp(const StereoIsomerOp& other)
-    : dp_mol(other.dp_mol), d_variationPoints(other.d_variationPoints) {}
+    : dp_mol(other.dp_mol),
+      d_variationPoints(other.d_variationPoints),
+      d_options(other.d_options) {}
 
 StereoIsomerOp& StereoIsomerOp::operator=(const StereoIsomerOp& other) {
   if (&other == this) {
@@ -233,6 +232,7 @@ StereoIsomerOp& StereoIsomerOp::operator=(const StereoIsomerOp& other) {
   }
   dp_mol = other.dp_mol;
   d_variationPoints = other.d_variationPoints;
+  d_options = other.d_options;
   return *this;
 }
 
@@ -249,7 +249,7 @@ void StereoIsomerOp::initFromMol() {
     detail::preserveOrigIndices(*dp_mol);
   }
 
-  d_variationPoints = get_flippers(*dp_mol);
+  d_variationPoints = get_flippers(*dp_mol, d_options);
 }
 
 std::vector<size_t> StereoIsomerOp::getVariationCounts() const {
@@ -278,7 +278,16 @@ std::unique_ptr<ROMol> StereoIsomerOp::operator()(
 
   MolOps::assignStereochemistry(*isomer, true, true, true);
 
+  if (d_options.try_embedding) {
+    MolOps::addHs(*isomer);
+    DGeomHelpers::EmbedMolecule(*isomer);
+  }
+
   return isomer;
+}
+
+void StereoIsomerOp::setOptions(StereoEnumerationOptions options) {
+  d_options = std::move(options);
 }
 
 }  // namespace MolEnumerator

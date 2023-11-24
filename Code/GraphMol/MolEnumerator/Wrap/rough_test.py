@@ -11,6 +11,7 @@
 import unittest
 
 from rdkit import Chem, RDConfig
+from rdkit.Chem import AllChem
 from rdkit.Chem import rdMolEnumerator
 
 
@@ -21,7 +22,7 @@ class TestCase(unittest.TestCase):
 
   def testLinkNodes(self):
     mb = '''one linknode
-  Mrv2007 06222005102D          
+  Mrv2007 06222005102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -52,7 +53,7 @@ M  END'''
 
   def testPositionVariation(self):
     mb = '''two position variation bonds
-  Mrv2007 06242006032D          
+  Mrv2007 06242006032D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -89,7 +90,7 @@ M  END
 
   def testCombined(self):
     mb = '''
-  Mrv2014 12212013392D          
+  Mrv2014 12212013392D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -129,6 +130,30 @@ M  END
     m = Chem.MolFromMolBlock(mb)
     bndl = rdMolEnumerator.Enumerate(m)
     self.assertEqual(bndl.Size(), 9)
+
+    def testIssue3231(self):
+      mol = Chem.MolFromSmiles(
+        'C[C@H](OC1=C(N)N=CC(C2=CN(C3C[C@H](C)NCC3)N=C2)=C1)C4=C(Cl)C=CC(F)=C4Cl')
+      Chem.AssignStereochemistry(mol, force=True, flagPossibleStereoCenters=True)
+      l = Chem.FindMolChiralCenters(mol, includeUnassigned=True)
+      self.assertEqual(l, [(1, 'S'), (12, '?'), (14, 'S')])
+
+      enumsi_opt = rdMolEnumerator.StereoEnumerationOptions(max_isomers=20, only_unassigned=False)
+      isomers = list(rdMolEnumerator.EnumerateStereoisomers(mol, enumsi_opt))
+      chi_cents = []
+      for iso in isomers:
+        Chem.AssignStereochemistry(iso)
+        chi_cents.append(Chem.FindMolChiralCenters(iso, includeUnassigned=True))
+
+      self.assertEqual(sorted(chi_cents),
+                       [[(1, 'R'), (12, 'R'),
+                         (14, 'R')], [(1, 'R'), (12, 'R'),
+                                      (14, 'S')], [(1, 'R'), (12, 'S'),
+                                                   (14, 'R')], [(1, 'R'), (12, 'S'), (14, 'S')],
+                        [(1, 'S'), (12, 'R'),
+                         (14, 'R')], [(1, 'S'), (12, 'R'),
+                                      (14, 'S')], [(1, 'S'), (12, 'S'),
+                                                   (14, 'R')], [(1, 'S'), (12, 'S'), (14, 'S')]])
 
 
 if __name__ == '__main__':

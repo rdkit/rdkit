@@ -242,6 +242,20 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
 
 using stereo_flipper_t = std::shared_ptr<StereoFlipper>;
 
+struct RDKIT_MOLENUMERATOR_EXPORT StereoEnumerationOptions {
+  bool try_embedding = false;
+  bool only_unassigned = true;
+  bool only_stereo_groups = false;
+  bool unique = true;
+  unsigned int max_isomers = 1024;
+};
+
+[[nodiscard]] RDKIT_MOLENUMERATOR_EXPORT unsigned int get_stereoisomer_count(
+    const ROMol &mol, const StereoEnumerationOptions options = {});
+
+[[nodiscard]] RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate_stereoisomers(
+    const ROMol &mol, const StereoEnumerationOptions options = {});
+
 class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
  public:
   StereoIsomerOp(const std::shared_ptr<ROMol> mol);
@@ -264,9 +278,12 @@ class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
   //! \override
   [[nodiscard]] std::unique_ptr<MolEnumeratorOp> copy() const override;
 
+  void setOptions(StereoEnumerationOptions options);
+
  private:
   std::shared_ptr<ROMol> dp_mol;
   std::vector<stereo_flipper_t> d_variationPoints;
+  StereoEnumerationOptions d_options;
 
   void initFromMol();
   StereoIsomerOp() = default;
@@ -315,20 +332,6 @@ inline MolBundle enumerate(const ROMol &mol,
   std::vector<MolEnumeratorParams> v = {params};
   return enumerate(mol, v);
 };
-
-struct RDKIT_MOLENUMERATOR_EXPORT StereoEnumerationOptions {
-  bool try_embedding = false;
-  bool only_unassigned = true;
-  bool only_stereo_groups = false;
-  bool unique = true;
-  unsigned int max_isomers = 1024;
-};
-
-[[nodiscard]] RDKIT_MOLENUMERATOR_EXPORT unsigned int get_stereoisomer_count(
-    const ROMol &mol, const StereoEnumerationOptions options = {});
-
-[[nodiscard]] RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate_stereoisomers(
-    const ROMol &mol, const StereoEnumerationOptions options = {});
 
 }  // namespace MolEnumerator
 }  // namespace RDKit
