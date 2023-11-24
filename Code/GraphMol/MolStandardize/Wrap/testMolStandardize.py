@@ -1009,6 +1009,53 @@ chlorine	[Cl]
     rdMolStandardize.NormalizeInPlace(m)
     self.assertEqual(Chem.MolToSmiles(m), "CN(C)C=CC=O")
 
+  def test23CleanupInPlaceMT(self):
+    ind = (("O=N(=O)-C(O[Fe])C(C(=O)O)C-N(=O)=O",
+       "O=C([O-])C(C[N+](=O)[O-])C(O)[N+](=O)[O-].[Fe+]"),
+      ("O=N(=O)-CC(O[Fe])C(C(=O)O)C-N(=O)=O",
+       "O=C([O-])C(C[N+](=O)[O-])C(O)C[N+](=O)[O-].[Fe+]"),
+      ("O=N(=O)-CCC(O[Fe])C(C(=O)O)C-N(=O)=O",
+       "O=C([O-])C(C[N+](=O)[O-])C(O)CC[N+](=O)[O-].[Fe+]"))
+    for i in range(4):
+      ind = ind + ind
+    ms = [Chem.MolFromSmiles(x) for x,y in ind]
+    rdMolStandardize.CleanupInPlace(ms,4)
+    self.assertEqual([Chem.MolToSmiles(m) for m in ms],
+                     [y for x,y in ind])
+
+  def test24NormalizeInPlaceMT(self):
+    ind = (("O=N(=O)-CC-N(=O)=O", "O=[N+]([O-])CC[N+](=O)[O-]"),
+           ("O=N(=O)-CCC-N(=O)=O", "O=[N+]([O-])CCC[N+](=O)[O-]"),
+           ("O=N(=O)-CCCC-N(=O)=O", "O=[N+]([O-])CCCC[N+](=O)[O-]"))
+    for i in range(4):
+      ind = ind + ind
+    ms = [Chem.MolFromSmiles(x) for x,y in ind]
+    rdMolStandardize.NormalizeInPlace(ms,4)
+    self.assertEqual([Chem.MolToSmiles(m) for m in ms],
+                     [y for x,y in ind])
+
+  def test25ReionizeInPlaceMT(self):
+    ind = (("c1cc([O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(O)c1"),
+           ("c1cc(C[O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(CO)c1"),
+           ("c1cc(CC[O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(CCO)c1"))
+    for i in range(4):
+      ind = ind + ind
+    ms = [Chem.MolFromSmiles(x) for x,y in ind]
+    rdMolStandardize.ReionizeInPlace(ms,4)
+    self.assertEqual([Chem.MolToSmiles(m) for m in ms],
+                     [y for x,y in ind])
+
+  def test26RemoveFragmentsInPlaceMT(self):
+    ind = (("CCCC.Cl.[Na]", "CCCC"),
+           ("CCCCO.Cl.[Na]", "CCCCO"),
+           ("CCOC.Cl.[Na]", "CCOC"))
+    for i in range(4):
+      ind = ind + ind
+    ms = [Chem.MolFromSmiles(x) for x,y in ind]
+    rdMolStandardize.RemoveFragmentsInPlace(ms,4)
+    self.assertEqual([Chem.MolToSmiles(m) for m in ms],
+                     [y for x,y in ind])
+
 
 
 if __name__ == "__main__":
