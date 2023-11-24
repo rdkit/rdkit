@@ -8,6 +8,7 @@
 //
 
 #include <RDGeneral/test.h>
+#include <boost/format.hpp>
 #include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
@@ -1664,34 +1665,72 @@ TEST_CASE("MolEnumerator should propagate atom properties") {
 }
 
 TEST_CASE("SRU enumeration should adhere to repeat counts #6429") {
-  auto mol = "FCN(CC)-* |Sg:n:2,5:2-3:ht|"_smiles;
-  REQUIRE(mol);
+  // these encode the same molecule
+  std::string smiles_template{"FCN(CC)-* |Sg:n:2,5:%s:ht|"};
+  std::string molblock_template{R"CTAB(
+       RDKit          2D
 
-  // check if both ends of the range are provided
-  auto bundle = MolEnumerator::enumerate(*mol);
-  CHECK(bundle.size() == 2);
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 F 2.598076 3.000000 0.000000 0
+M  V30 2 C 1.299038 2.250000 0.000000 0
+M  V30 3 N 1.299038 0.750000 0.000000 0
+M  V30 4 C 2.598076 -0.000000 0.000000 0
+M  V30 5 C 3.897114 0.750000 0.000000 0
+M  V30 6 A 0.000000 0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 3 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(2 3 6) XBONDS=(2 2 3) XBHEAD=(2 2 3) CONNECT=HT -
+M  V30 LABEL=%s
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"};
 
-  std::vector<std::string> expected_smiles{"*N(CC)N(*)CF", "*N(CC)N(*)N(*)CF"};
-  for (size_t i = 0; i < bundle.size(); ++i) {
-    CHECK(expected_smiles[i] == MolToSmiles(*bundle[i]));
+  // test that the right number of repetitions produced
+  std::vector<std::pair<std::string, size_t>> test_info{
+      {"", MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT},
+      {"n", MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT},
+      {"hello", MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT},
+      {"23-20", MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT},
+      {"-20", MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT},
+      {"2-4", 3},
+      {"20", 21},
+      {"20-20", 1},
+  };
+
+  for (auto &[sru_label, expected_repetitions] : test_info) {
+    std::vector test_mols{
+        SmilesToMol(boost::str(boost::format(smiles_template) % sru_label)),
+        MolBlockToMol(
+            boost::str(boost::format(molblock_template) % sru_label))};
+
+    REQUIRE(test_mols[0]);
+    REQUIRE(test_mols[1]);
+
+    for (auto &mol : test_mols) {
+      auto bundle = MolEnumerator::enumerate(*mol);
+      CHECK(bundle.size() == expected_repetitions);
+
+      // check that maxPerOperation is still valid
+      size_t maxPerOperation = 1;
+      bundle = MolEnumerator::enumerate(*mol, maxPerOperation);
+      CHECK(bundle.size() == maxPerOperation);
+    }
   }
 
-  // check if only one side of the range is provided
-  mol = "FCN(CC)-* |Sg:n:2,5:20:ht|"_smiles;
+  // check that the right smiles are produced
+  auto mol = "FCN(CC)-* |Sg:n:2,5:2-3:ht|"_smiles;
   REQUIRE(mol);
-  bundle = MolEnumerator::enumerate(*mol);
-  CHECK(bundle.size() == 21);  // 0-20
-
-  // check that maxPerOperation is still valid
-  mol = "FCN(CC)-* |Sg:n:2,5:20:ht|"_smiles;
-  REQUIRE(mol);
-  size_t maxPerOperation = 3;
-  bundle = MolEnumerator::enumerate(*mol, maxPerOperation);
-  CHECK(bundle.size() == maxPerOperation);
-
-  // check this weird but allowed case
-  mol = "FCN(CC)-* |Sg:n:2,5:20-20:ht|"_smiles;
-  REQUIRE(mol);
-  bundle = MolEnumerator::enumerate(*mol);
-  CHECK(bundle.size() == 1);
+  auto bundle = MolEnumerator::enumerate(*mol);
+  CHECK(MolToSmiles(*bundle[0]) == "*N(CC)N(*)CF");      // repeated 2x
+  CHECK(MolToSmiles(*bundle[1]) == "*N(CC)N(*)N(*)CF");  // repeated 3x
 }
