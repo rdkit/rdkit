@@ -55,6 +55,10 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TransformCatalogParams
   void initFromStream(std::istream &ss) override;
   void initFromString(const std::string &text) override;
 
+  // it's a bit dirty to make this "const", but it's weakly defensible
+  // since the set of transformations themselves will not be changed.
+  void initializeTransforms() const;
+
  private:
   std::vector<std::shared_ptr<ChemicalReaction>> d_transformations;
 
