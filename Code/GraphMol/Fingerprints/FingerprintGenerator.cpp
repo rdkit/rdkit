@@ -466,6 +466,7 @@ std::vector<std::unique_ptr<ReturnType>> mtgetFingerprints(
   std::vector<std::unique_ptr<ReturnType>> result;
   auto numThreadsToUse = getNumThreadsToUse(numThreads);
   unsigned int nmols = mols.size();
+  result.reserve(nmols);
   if (numThreadsToUse == 1) {
     for (auto i = 0u; i < nmols; ++i) {
       if (!mols[i]) {
@@ -474,7 +475,6 @@ std::vector<std::unique_ptr<ReturnType>> mtgetFingerprints(
         result.emplace_back(std::move(func(*mols[i], args)));
       }
     }
-    return result;
   }
 #ifdef RDK_BUILD_THREADSAFE_SSS
   else {
@@ -503,10 +503,9 @@ std::vector<std::unique_ptr<ReturnType>> mtgetFingerprints(
       auto jidx = midx / numThreadsToUse;
       result.emplace_back(std::move(accum[tidx][jidx]));
     }
-    return result;
   }
-
 #endif
+  return result;
 }
 }  // namespace
 
