@@ -1562,7 +1562,7 @@ getSortedStereoGroupsAndIndices(const ROMol &mol,
   for (const auto &sg : groups) {
     // const auto atomIndexes = getSortedMappedIndexes(sg.getAtoms(), revOrder);
     std::vector<unsigned int> atomIds;
-    getAllAtomIdsForStereoGroup(mol, sg, atomIds);
+    Atropisomers::getAllAtomIdsForStereoGroup(mol, sg, atomIds);
     const auto newAtomIndexes = getSortedMappedIndexes(atomIds, revOrder);
     if (!newAtomIndexes.empty()) {
       sortingGroups.emplace_back(sg, newAtomIndexes);
@@ -2371,7 +2371,8 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(mol);
 
     if (mol.getNumConformers()) {
-      WedgeBondsFromAtropisomers(mol, &mol.getConformer(), wedgeBonds);
+      Atropisomers::wedgeBondsFromAtropisomers(mol, &mol.getConformer(),
+                                               wedgeBonds);
     }
 
     bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&
@@ -2390,7 +2391,8 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     INT_MAP_INT wedgeBonds;
 
     if (mol.getNumConformers()) {
-      WedgeBondsFromAtropisomers(mol, &mol.getConformer(), wedgeBonds);
+      Atropisomers::wedgeBondsFromAtropisomers(mol, &mol.getConformer(),
+                                               wedgeBonds);
     }
 
     bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&

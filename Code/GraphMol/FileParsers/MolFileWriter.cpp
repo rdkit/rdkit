@@ -1075,7 +1075,7 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
       res += " ATOMS=(";
 
       std::vector<unsigned int> atomIds;
-      getAllAtomIdsForStereoGroup(tmol, group, atomIds);
+      Atropisomers::getAllAtomIdsForStereoGroup(tmol, group, atomIds);
 
       res += std::to_string(atomIds.size());
       for (auto &&atom : atomIds) {
@@ -1126,7 +1126,7 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
 
     INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(tmol);
     if (conf) {
-      WedgeBondsFromAtropisomers(tmol, conf, wedgeBonds);
+      Atropisomers::wedgeBondsFromAtropisomers(tmol, conf, wedgeBonds);
     }
 
     for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
@@ -1269,7 +1269,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(tmol);
 
     if (conf) {
-      WedgeBondsFromAtropisomers(tmol, conf, wedgeBonds);
+      Atropisomers::wedgeBondsFromAtropisomers(tmol, conf, wedgeBonds);
     }
 
     for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();

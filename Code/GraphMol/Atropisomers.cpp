@@ -26,8 +26,9 @@
 constexpr double REALLY_SMALL_BOND_LEN = 0.0000001;
 
 namespace RDKit {
+namespace Atropisomers {
 
-bool GetAtropisomerAtomsAndBonds(const Bond *bond, Atom *atoms[2],
+bool getAtropisomerAtomsAndBonds(const Bond *bond, Atom *atoms[2],
                                  std::vector<Bond *> bonds[2],
                                  const ROMol &mol) {
   PRECONDITION(bond, "no bond");
@@ -218,7 +219,7 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
   std::vector<Bond *> bonds[2];  // one vector for each end - each one
                                  // should end up with 1 ro 2 entries
 
-  if (!GetAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
+  if (!getAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
     return false;  // not an atropisomer
   }
 
@@ -395,7 +396,7 @@ void cleanupAtropisomerStereoGroups(ROMol &mol) {
   mol.setStereoGroups(std::move(newsgs));
 }
 
-void DetectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
+void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
   PRECONDITION(&(conf->getOwningMol()) == &mol,
                "conformer does not belong to molecule");
@@ -482,7 +483,7 @@ bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
   std::vector<Bond *> bonds[2];  // one vector for each end - each one
                                  // should end up with 1 ro 2 entries
 
-  if (!GetAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
+  if (!getAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
     return false;  // not an atropisomer
   }
 
@@ -659,7 +660,7 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
   std::vector<Bond *> bonds[2];  // one vector for each end - each one
                                  // should end up with 1 ro 2 entries
 
-  if (!GetAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
+  if (!getAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
     return false;  // not an atropisomer
   }
 
@@ -794,7 +795,7 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
   return true;
 }
 
-void WedgeBondsFromAtropisomers(const ROMol &mol, const Conformer *conf,
+void wedgeBondsFromAtropisomers(const ROMol &mol, const Conformer *conf,
                                 const INT_MAP_INT &wedgeBonds) {
   PRECONDITION(conf, "no conformer");
   PRECONDITION(&(conf->getOwningMol()) == &mol,
@@ -832,5 +833,5 @@ bool doesMolHaveAtropisomers(const ROMol &mol) {
   }
   return false;
 }
-
+}  // namespace Atropisomers
 }  // namespace RDKit

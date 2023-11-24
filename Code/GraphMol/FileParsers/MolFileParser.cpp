@@ -3248,7 +3248,7 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
     }
   }
 
-  DetectAtropisomerChirality(*res, &conf);
+  Atropisomers::detectAtropisomerChirality(*res, &conf);
 
   // now that atom stereochem has been perceived, the wedging
   // information is no longer needed, so we clear

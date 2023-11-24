@@ -30,7 +30,8 @@ AtropisomerBond::AtropisomerBond(const CIPMol &mol, Bond *bond, Atom *startAtom,
   std::vector<Bond *> bonds[2];  // one vector for each end - each one
                                  // should end up with 1 ro 2 entries
 
-  if (!GetAtropisomerAtomsAndBonds(bond, atoms, bonds, bond->getOwningMol())) {
+  if (!Atropisomers::getAtropisomerAtomsAndBonds(bond, atoms, bonds,
+                                                 bond->getOwningMol())) {
     return;  // not an atropisomer
   }
   auto atom1 = mol.getAtom(bonds[0][0]->getOtherAtomIdx(atoms[0]->getIdx()));
