@@ -138,8 +138,8 @@ M  END
       l = Chem.FindMolChiralCenters(mol, includeUnassigned=True)
       self.assertEqual(l, [(1, 'S'), (12, '?'), (14, 'S')])
 
-      enumsi_opt = rdMolEnumerator.StereoEnumerationOptions(max_isomers=20, only_unassigned=False)
-      isomers = list(rdMolEnumerator.EnumerateStereoisomers(mol, enumsi_opt))
+      enumsi_opt = rdMolEnumerator.StereoEnumerationOptionsV2(maxIsomers=20, onlyUnassigned=False)
+      isomers = list(rdMolEnumerator.EnumerateStereoisomersV2(mol, enumsi_opt))
       chi_cents = []
       for iso in isomers:
         Chem.AssignStereochemistry(iso)

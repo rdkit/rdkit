@@ -119,7 +119,7 @@ Limitations:
     not supported)DOC");
 
   python::class_<MolEnumerator::StereoEnumerationOptions>(
-      "StereoEnumerationOptions", "Stereoisomer enumeration parameters",
+      "StereoEnumerationOptionsV2", "Stereoisomer enumeration parameters",
       python::init<>())
       .def("__init__", python::make_constructor(createParamsFromName))
       .def_readwrite(
@@ -153,7 +153,7 @@ Limitations:
                 keep an eye on this.)");
 
   python::def(
-      "GetStereoisomerCount",
+      "GetStereoisomerCountV2",
       (unsigned int (*)(const ROMol &,
                         const MolEnumerator::StereoEnumerationOptions))
           MolEnumerator::get_stereoisomer_count,
@@ -162,7 +162,7 @@ Limitations:
       R"DOC(get the total number of non-unique stereoisomers that can be be generated from mol.)DOC");
 
   python::def(
-      "EnumerateStereoisomers", &enumerate_stereoisomers_helper,
+      "EnumerateStereoisomersV2", &enumerate_stereoisomers_helper,
       (python::arg("mol"),
        python::arg("options") = MolEnumerator::StereoEnumerationOptions()),
       python::return_value_policy<python::manage_new_object>(),
