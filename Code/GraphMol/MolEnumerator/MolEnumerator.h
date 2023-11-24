@@ -258,6 +258,7 @@ RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate_stereoisomers(
 
 class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
  public:
+  StereoIsomerOp(){};
   StereoIsomerOp(const std::shared_ptr<ROMol> mol);
   StereoIsomerOp(const ROMol &mol);
   StereoIsomerOp(const StereoIsomerOp &other);
@@ -286,7 +287,6 @@ class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
   StereoEnumerationOptions d_options;
 
   void initFromMol();
-  StereoIsomerOp() = default;
 };
 
 //! Parameters used to control the molecule enumeration
