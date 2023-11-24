@@ -123,28 +123,28 @@ Limitations:
       python::init<>())
       .def("__init__", python::make_constructor(createParamsFromName))
       .def_readwrite(
-          "try_embedding",
-          &MolEnumerator::StereoEnumerationOptions::try_embedding,
+          "tryEmbedding",
+          &MolEnumerator::StereoEnumerationOptions::tryEmbedding,
           R"(if set the process attempts to generate a standard RDKit distance geometry
                 conformation for the stereisomer. If this fails, we assume that the stereoisomer is
                 non-physical and don't return it. NOTE that this is computationally expensive and is
                 just a heuristic that could result in stereoisomers being lost.
               )")
       .def_readwrite(
-          "only_unassigned",
-          &MolEnumerator::StereoEnumerationOptions::only_unassigned,
+          "onlyUnassigned",
+          &MolEnumerator::StereoEnumerationOptions::onlyUnassigned,
           R"(if set (the default), stereocenters which have specified stereochemistry
                 will not be perturbed unless they are part of a relative stereo
                 group.)")
       .def_readwrite(
-          "only_stereo_groups",
-          &MolEnumerator::StereoEnumerationOptions::only_stereo_groups,
+          "onlyStereoGroups",
+          &MolEnumerator::StereoEnumerationOptions::onlyStereoGroups,
           R"(Only find stereoisomers that differ at the StereoGroups associated with the molecule.)")
       .def_readwrite(
           "unique", &MolEnumerator::StereoEnumerationOptions::unique,
           R"(If set, removes duplicate stereoisomers from the result.)")
-      .def_readwrite("max_isomers",
-                     &MolEnumerator::StereoEnumerationOptions::max_isomers,
+      .def_readwrite("maxIsomers",
+                     &MolEnumerator::StereoEnumerationOptions::maxIsomers,
                      R"(the maximum number of isomers to yield, if the
                 number of possible isomers is greater than maxIsomers, a
                 random subset will be yielded. If 0, all isomers are

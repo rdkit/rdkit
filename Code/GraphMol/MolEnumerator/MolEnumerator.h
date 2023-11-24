@@ -243,11 +243,11 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
 using stereo_flipper_t = std::shared_ptr<StereoFlipper>;
 
 struct RDKIT_MOLENUMERATOR_EXPORT StereoEnumerationOptions {
-  bool try_embedding = false;
-  bool only_unassigned = true;
-  bool only_stereo_groups = false;
+  bool tryEmbedding = false;
+  bool onlyUnassigned = true;
+  bool onlyStereoGroups = false;
   bool unique = true;
-  unsigned int max_isomers = 1024;
+  unsigned int maxIsomers = 1024;
 };
 
 RDKIT_MOLENUMERATOR_EXPORT unsigned int get_stereoisomer_count(

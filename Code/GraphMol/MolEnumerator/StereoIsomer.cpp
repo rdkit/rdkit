@@ -36,7 +36,7 @@ class AtomStereoFlipper : public StereoFlipper {
   static void add_flippers_from_mol(const ROMol& mol,
                                     const StereoEnumerationOptions& options,
                                     std::vector<stereo_flipper_t>& flippers) {
-    if (options.only_stereo_groups) {
+    if (options.onlyStereoGroups) {
       return;
     }
 
@@ -45,7 +45,7 @@ class AtomStereoFlipper : public StereoFlipper {
         continue;
       }
 
-      if (!options.only_unassigned ||
+      if (!options.onlyUnassigned ||
           atom->getChiralTag() == Atom::ChiralType::CHI_UNSPECIFIED) {
         flippers.push_back(std::make_shared<AtomStereoFlipper>(atom));
       }
@@ -68,7 +68,7 @@ class BondStereoFlipper : public StereoFlipper {
   static void add_flippers_from_mol(const ROMol& mol,
                                     const StereoEnumerationOptions& options,
                                     std::vector<stereo_flipper_t>& flippers) {
-    if (options.only_stereo_groups) {
+    if (options.onlyStereoGroups) {
       return;
     }
 
@@ -78,7 +78,7 @@ class BondStereoFlipper : public StereoFlipper {
         continue;
       }
 
-      if (!options.only_unassigned || bond_stereo == Bond::STEREOANY) {
+      if (!options.onlyUnassigned || bond_stereo == Bond::STEREOANY) {
         flippers.push_back(std::make_shared<BondStereoFlipper>(bond));
       }
     }
@@ -120,7 +120,7 @@ class StereoGroupFlipper : public StereoFlipper {
   static void add_flippers_from_mol(const ROMol& mol,
                                     const StereoEnumerationOptions& options,
                                     std::vector<stereo_flipper_t>& flippers) {
-    if (!options.only_unassigned) {
+    if (!options.onlyUnassigned) {
       return;
     }
 
@@ -185,7 +185,7 @@ std::vector<stereo_flipper_t> get_flippers(
   stereoisomer_op->setOptions(options);
   stereoParams.dp_operation = std::move(stereoisomer_op);
 
-  stereoParams.maxToEnumerate = options.max_isomers;
+  stereoParams.maxToEnumerate = options.maxIsomers;
   paramsList.push_back(std::move(stereoParams));
 
   MolBundle stereoisomers;
@@ -278,7 +278,7 @@ std::unique_ptr<ROMol> StereoIsomerOp::operator()(
 
   MolOps::assignStereochemistry(*isomer, true, true, true);
 
-  if (d_options.try_embedding) {
+  if (d_options.tryEmbedding) {
     MolOps::addHs(*isomer);
     DGeomHelpers::EmbedMolecule(*isomer);
   }
