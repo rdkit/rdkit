@@ -407,10 +407,11 @@ void addExistingArcs(size_t i,
       arc.reset();
     }
   }
-  currArcs.erase(
-      remove_if(currArcs.begin(), currArcs.end(),
-                [](const std::unique_ptr<DrawShapeArc> &arc) { return !arc; }),
-      currArcs.end());
+  currArcs.erase(std::remove_if(currArcs.begin(), currArcs.end(),
+                                [](const std::unique_ptr<DrawShapeArc> &arc) {
+                                  return !arc;
+                                }),
+                 currArcs.end());
 }
 }  // namespace
 
@@ -465,7 +466,7 @@ void DrawMolMCHLasso::makeIntersectingArcs(
           arcs.push_back(arc);
         }
       }
-      // if either end of this arc we're about to make are inside another
+      // if either end of this arc we're about to make is inside another
       // of the intersecting rings, skip it.
       std::vector<Point2D> pts{atCds_[i], Point2D{radI, radI}};
       if (!areArcEndsInOtherCircle(atCds_[i], radI, sortedArcAngs.back(),
