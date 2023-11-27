@@ -9,11 +9,12 @@
 
 import unittest
 
-#
 from rdkit import Chem
 from rdkit.Chem import rdGeneralizedSubstruct
+from rdkit import rdBase
 
 
+@unittest.skipIf(not rdBase._serializationEnabled, "not built with serialization support")
 class TestCase(unittest.TestCase):
 
   def test1CreationAndSubstruct(self):
@@ -116,21 +117,21 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('COC1=NNC(*)=C1 |$;;;;;;AEL_p;$,LN:1:1.3|')
     qps = Chem.AdjustQueryParameters.NoAdjustments()
     qps.makeDummiesQueries = True
-    m = Chem.AdjustQueryProperties(m,qps)
+    m = Chem.AdjustQueryProperties(m, qps)
     Chem.SetGenericQueriesFromProperties(m)
     ps = Chem.SubstructMatchParameters()
-    ps.useGenericMatchers = True;
+    ps.useGenericMatchers = True
 
     mol1 = Chem.MolFromSmiles('COC1=NNC(C=C)=C1')
     mol2 = Chem.MolFromSmiles('COC1=NNC(CC)=C1')
     mol3 = Chem.MolFromSmiles('COOC1=NNC(C=C)=C1')
     mol4 = Chem.MolFromSmiles('COOC1=NNC(CC)=C1')
 
-    self.assertTrue(mol1.HasSubstructMatch(m,ps))
-    self.assertFalse(mol2.HasSubstructMatch(m,ps))
-    self.assertFalse(mol3.HasSubstructMatch(m,ps))
-    self.assertFalse(mol4.HasSubstructMatch(m,ps))
-    
+    self.assertTrue(mol1.HasSubstructMatch(m, ps))
+    self.assertFalse(mol2.HasSubstructMatch(m, ps))
+    self.assertFalse(mol3.HasSubstructMatch(m, ps))
+    self.assertFalse(mol4.HasSubstructMatch(m, ps))
+
     xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
     self.assertTrue(rdGeneralizedSubstruct.MolHasSubstructMatch(mol1, xqm, ps))
     self.assertFalse(rdGeneralizedSubstruct.MolHasSubstructMatch(mol2, xqm, ps))
@@ -142,8 +143,6 @@ class TestCase(unittest.TestCase):
     self.assertFalse(rdGeneralizedSubstruct.MolHasSubstructMatch(mol2, xqm2, ps))
     self.assertTrue(rdGeneralizedSubstruct.MolHasSubstructMatch(mol3, xqm2, ps))
     self.assertFalse(rdGeneralizedSubstruct.MolHasSubstructMatch(mol4, xqm2, ps))
-
-
 
 
 if __name__ == '__main__':  # pragma: nocover

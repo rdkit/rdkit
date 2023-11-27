@@ -20,6 +20,12 @@
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
 
+#include <RDGeneral/RDThreads.h>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <thread>
+#include <future>
+#endif
+
 namespace RDKit {
 
 FingerprintArguments::FingerprintArguments(
@@ -441,7 +447,111 @@ FingerprintGenerator<OutputType>::getFingerprint(
   }
 
   return result;
-}  // namespace RDKit
+}
+
+namespace {
+template <typename ReturnType, typename FuncType>
+std::vector<std::unique_ptr<ReturnType>> mtgetFingerprints(
+    FuncType func, const std::vector<const ROMol *> &mols, int numThreads) {
+  std::vector<std::uint32_t> *fromAtoms = nullptr;
+  std::vector<std::uint32_t> *ignoreAtoms = nullptr;
+  std::vector<std::uint32_t> *customAtomInvariants = nullptr;
+  std::vector<std::uint32_t> *customBondInvariants = nullptr;
+  int confId = -1;
+  AdditionalOutput *additionalOutput = nullptr;
+  FingerprintFuncArguments args(fromAtoms, ignoreAtoms, confId,
+                                additionalOutput, customAtomInvariants,
+                                customBondInvariants);
+
+  std::vector<std::unique_ptr<ReturnType>> result;
+  auto numThreadsToUse = getNumThreadsToUse(numThreads);
+  unsigned int nmols = mols.size();
+  result.reserve(nmols);
+  if (numThreadsToUse == 1) {
+    for (auto i = 0u; i < nmols; ++i) {
+      if (!mols[i]) {
+        result.emplace_back(std::unique_ptr<ReturnType>());
+      } else {
+        result.emplace_back(std::move(func(*mols[i], args)));
+      }
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  else {
+    std::vector<std::vector<std::unique_ptr<ReturnType>>> accum(
+        numThreadsToUse);
+    std::vector<std::thread> tg;
+    for (auto ti = 0u; ti < numThreadsToUse; ++ti) {
+      auto lfunc = [&](unsigned int tidx) {
+        for (auto midx = tidx; midx < mols.size(); midx += numThreadsToUse) {
+          if (!mols[midx]) {
+            accum[tidx].emplace_back(std::unique_ptr<ReturnType>());
+          } else {
+            accum[tidx].emplace_back(std::move(func(*mols[midx], args)));
+          }
+        }
+      };
+      tg.emplace_back(std::thread(lfunc, ti));
+    }
+    for (auto &thread : tg) {
+      if (thread.joinable()) {
+        thread.join();
+      }
+    }
+    for (auto midx = 0u; midx < mols.size(); ++midx) {
+      auto tidx = midx % numThreadsToUse;
+      auto jidx = midx / numThreadsToUse;
+      result.emplace_back(std::move(accum[tidx][jidx]));
+    }
+  }
+#endif
+  return result;
+}
+}  // namespace
+
+template <typename OutputType>
+std::vector<std::unique_ptr<ExplicitBitVect>>
+FingerprintGenerator<OutputType>::getFingerprints(
+    const std::vector<const ROMol *> &mols, int numThreads) const {
+  auto fpfunc = [&](const ROMol &mol, FingerprintFuncArguments &args) {
+    return this->getFingerprint(mol, args);
+  };
+  return mtgetFingerprints<ExplicitBitVect, decltype(fpfunc)>(fpfunc, mols,
+                                                              numThreads);
+}
+
+template <typename OutputType>
+std::vector<std::unique_ptr<SparseBitVect>>
+FingerprintGenerator<OutputType>::getSparseFingerprints(
+    const std::vector<const ROMol *> &mols, int numThreads) const {
+  auto fpfunc = [&](const ROMol &mol, FingerprintFuncArguments &args) {
+    return this->getSparseFingerprint(mol, args);
+  };
+  return mtgetFingerprints<SparseBitVect, decltype(fpfunc)>(fpfunc, mols,
+                                                            numThreads);
+}
+
+template <typename OutputType>
+std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>>
+FingerprintGenerator<OutputType>::getCountFingerprints(
+    const std::vector<const ROMol *> &mols, int numThreads) const {
+  auto fpfunc = [&](const ROMol &mol, FingerprintFuncArguments &args) {
+    return this->getCountFingerprint(mol, args);
+  };
+  return mtgetFingerprints<SparseIntVect<std::uint32_t>, decltype(fpfunc)>(
+      fpfunc, mols, numThreads);
+}
+
+template <typename OutputType>
+std::vector<std::unique_ptr<SparseIntVect<OutputType>>>
+FingerprintGenerator<OutputType>::getSparseCountFingerprints(
+    const std::vector<const ROMol *> &mols, int numThreads) const {
+  auto fpfunc = [&](const ROMol &mol, FingerprintFuncArguments &args) {
+    return this->getSparseCountFingerprint(mol, args);
+  };
+  return mtgetFingerprints<SparseIntVect<OutputType>, decltype(fpfunc)>(
+      fpfunc, mols, numThreads);
+}
 
 template RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<SparseIntVect<std::uint32_t>>
 FingerprintGenerator<std::uint32_t>::getSparseCountFingerprint(
@@ -474,6 +584,42 @@ FingerprintGenerator<std::uint32_t>::getFingerprint(
 template RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<ExplicitBitVect>
 FingerprintGenerator<std::uint64_t>::getFingerprint(
     const ROMol &mol, FingerprintFuncArguments &args) const;
+
+template RDKIT_FINGERPRINTS_EXPORT std::vector<std::unique_ptr<ExplicitBitVect>>
+FingerprintGenerator<std::uint32_t>::getFingerprints(
+    const std::vector<const ROMol *> &mols, int numThreads) const;
+
+template RDKIT_FINGERPRINTS_EXPORT std::vector<std::unique_ptr<ExplicitBitVect>>
+FingerprintGenerator<std::uint64_t>::getFingerprints(
+    const std::vector<const ROMol *> &mols, int numThreads) const;
+
+template RDKIT_FINGERPRINTS_EXPORT std::vector<std::unique_ptr<SparseBitVect>>
+FingerprintGenerator<std::uint32_t>::getSparseFingerprints(
+    const std::vector<const ROMol *> &mols, int numThreads) const;
+
+template RDKIT_FINGERPRINTS_EXPORT std::vector<std::unique_ptr<SparseBitVect>>
+FingerprintGenerator<std::uint64_t>::getSparseFingerprints(
+    const std::vector<const ROMol *> &mols, int numThreads) const;
+
+template RDKIT_FINGERPRINTS_EXPORT
+    std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>>
+    FingerprintGenerator<std::uint32_t>::getCountFingerprints(
+        const std::vector<const ROMol *> &mols, int numThreads) const;
+
+template RDKIT_FINGERPRINTS_EXPORT
+    std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>>
+    FingerprintGenerator<std::uint64_t>::getCountFingerprints(
+        const std::vector<const ROMol *> &mols, int numThreads) const;
+
+template RDKIT_FINGERPRINTS_EXPORT
+    std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>>
+    FingerprintGenerator<std::uint32_t>::getSparseCountFingerprints(
+        const std::vector<const ROMol *> &mols, int numThreads) const;
+
+template RDKIT_FINGERPRINTS_EXPORT
+    std::vector<std::unique_ptr<SparseIntVect<std::uint64_t>>>
+    FingerprintGenerator<std::uint64_t>::getSparseCountFingerprints(
+        const std::vector<const ROMol *> &mols, int numThreads) const;
 
 SparseIntVect<std::uint64_t> *getSparseCountFP(const ROMol &mol,
                                                FPType fPType) {
