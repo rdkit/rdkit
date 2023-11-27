@@ -14,7 +14,6 @@
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/Chirality.h>
 #include <algorithm>
 
 using namespace RDKit;
