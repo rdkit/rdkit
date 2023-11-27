@@ -1,7 +1,7 @@
 add_custom_target(coordgen_support ALL)
 include(RDKitUtils)
 
-if(RDK_BUILD_MAEPARSER_SUPPORT)
+if(RDK_BUILD_MAEPARSER_SUPPORT OR RDK_BUILD_COORDGEN_SUPPORT)
   if((NOT MSVC) OR RDK_INSTALL_DLLS_MSVC)
     add_definitions(-DIN_MAEPARSER)
   endif()
@@ -48,11 +48,11 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
   set(RDK_MAEPARSER_LIBS ${maeparser_LIBRARIES}
       CACHE STRING "the external libraries" FORCE)
 
-else (RDK_BUILD_MAEPARSER_SUPPORT)
+else ()
 
   set(RDK_MAEPARSER_LIBS CACHE STRING "the external libraries" FORCE)
 
-endif(RDK_BUILD_MAEPARSER_SUPPORT)
+endif()
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
   if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))

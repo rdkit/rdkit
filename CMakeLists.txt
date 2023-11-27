@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.14)
 
 project (RDKit)
 
@@ -60,7 +60,6 @@ option(RDK_BUILD_XYZ2MOL_SUPPORT "build in support for the RDKit's implementatio
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
 option(RDK_USE_URF "Build support for Florian Flachsenberg's URF library" ON)
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
-option(RDK_USE_BOOST_REGEX "use boost::regex instead of std::regex (needed for systems with g++-4.8)" OFF)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindings)" OFF)
 option(RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS "build the minimal RDKit JS wrapper such that it supports legacy browsers" OFF)
@@ -313,7 +312,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   endif()
-  
+
   find_package(NumPy REQUIRED)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
@@ -457,11 +456,6 @@ if(RDK_USE_BOOST_SERIALIZATION)
     endif()
 endif()
 
-if(RDK_BUILD_MAEPARSER_SUPPORT AND NOT RDK_USE_BOOST_IOSTREAMS)
-    message("Enabling RDK_USE_BOOST_IOSTREAMS because RDK_BUILD_MAEPARSER_SUPPORT is enabled.")
-    set(RDK_USE_BOOST_IOSTREAMS ON)
-endif()
-
 if(RDK_USE_BOOST_IOSTREAMS)
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_IOSTREAMS)
     find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
@@ -486,12 +480,6 @@ if(RDK_USE_BOOST_IOSTREAMS)
      endif()
     endif()
     target_link_libraries(rdkit_base INTERFACE ${zlib_lib})
-endif()
-
-if(RDK_USE_BOOST_REGEX)
-  add_definitions(-DRDKIT_USE_BOOST_REGEX)
-  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS regex REQUIRED)
-  target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
 endif()
 
 

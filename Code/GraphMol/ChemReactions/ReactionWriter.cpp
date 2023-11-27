@@ -106,10 +106,14 @@ std::string chemicalReactionToRxnToString(const RDKit::ChemicalReaction &rxn,
 }
 
 void write_template(std::ostringstream &res, RDKit::ROMol &tpl) {
-  if (tpl.needsUpdatePropertyCache()) {
-    tpl.updatePropertyCache(false);
+  RDKit::RWMol trwmol(tpl);
+
+  if (trwmol.needsUpdatePropertyCache()) {
+    trwmol.updatePropertyCache(false);
   }
-  res << RDKit::FileParserUtils::getV3000CTAB(tpl, -1);
+  RDKit::FileParserUtils::moveAdditionalPropertiesToSGroups(trwmol);
+
+  res << RDKit::FileParserUtils::getV3000CTAB(trwmol, -1);
 }
 
 }  // namespace

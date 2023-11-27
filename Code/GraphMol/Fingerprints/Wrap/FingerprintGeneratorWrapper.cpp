@@ -23,6 +23,12 @@
 #include <GraphMol/Fingerprints/Wrap/TopologicalTorsionWrapper.cpp>
 #include <cstdint>
 
+#include <RDGeneral/RDThreads.h>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <thread>
+#include <future>
+#endif
+
 namespace python = boost::python;
 namespace np = boost::python::numpy;
 
@@ -208,6 +214,71 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
   return result.release();
 }
 
+template <typename ReturnType, typename FuncType>
+python::tuple mtgetFingerprints(FuncType func, python::object mols,
+                                int numThreads) {
+  unsigned int nmols = python::extract<unsigned int>(mols.attr("__len__")());
+  std::vector<const ROMol *> tmols;
+  for (auto i = 0u; i < nmols; ++i) {
+    tmols.push_back(python::extract<const ROMol *>(mols[i])());
+  }
+
+  typename decltype(std::function{
+      func})::result_type fps;  // sometimes you really have to love C++ syntax
+  {
+    NOGIL gil;
+    fps = std::move(func(tmols, numThreads));
+  }
+  python::list result;
+  for (auto &fp : fps) {
+    result.append(boost::shared_ptr<ReturnType>(fp.release()));
+  }
+  return python::tuple(result);
+}
+
+template <typename OutputType>
+python::tuple getFingerprints(const FingerprintGenerator<OutputType> *fpGen,
+                              python::object mols, int numThreads) {
+  auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
+                         int numThreads) {
+    return fpGen->getFingerprints(tmols, numThreads);
+  };
+  return mtgetFingerprints<ExplicitBitVect, decltype(fpfunc)>(fpfunc, mols,
+                                                              numThreads);
+}
+template <typename OutputType>
+python::tuple getCountFingerprints(
+    const FingerprintGenerator<OutputType> *fpGen, python::object mols,
+    int numThreads) {
+  auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
+                         int numThreads) {
+    return fpGen->getCountFingerprints(tmols, numThreads);
+  };
+  return mtgetFingerprints<SparseIntVect<std::uint32_t>, decltype(fpfunc)>(
+      fpfunc, mols, numThreads);
+}
+template <typename OutputType>
+python::tuple getSparseFingerprints(
+    const FingerprintGenerator<OutputType> *fpGen, python::object mols,
+    int numThreads) {
+  auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
+                         int numThreads) {
+    return fpGen->getSparseFingerprints(tmols, numThreads);
+  };
+  return mtgetFingerprints<SparseBitVect, decltype(fpfunc)>(fpfunc, mols,
+                                                            numThreads);
+}
+template <typename OutputType>
+python::tuple getSparseCountFingerprints(
+    const FingerprintGenerator<OutputType> *fpGen, python::object mols,
+    int numThreads) {
+  auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
+                         int numThreads) {
+    return fpGen->getSparseCountFingerprints(tmols, numThreads);
+  };
+  return mtgetFingerprints<SparseIntVect<OutputType>, decltype(fpfunc)>(
+      fpfunc, mols, numThreads);
+}
 template <typename OutputType>
 python::object getNumPyFingerprint(
     const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
@@ -543,6 +614,34 @@ void wrapGenerator(const std::string &nm) {
            "    - additionalOutput: AdditionalOutput instance used to return "
            "extra information about the bits\n\n"
            "  RETURNS: a numpy array containing the fingerprint\n\n")
+      .def("GetFingerprints", getFingerprints<T>,
+           (python::arg("mols"), python::arg("numThreads") = 1),
+           "Generates fingerprints for a sequence of molecules\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - numThreads: number of threads to use\n\n"
+           "  RETURNS: a tuple of ExplicitBitVects\n\n")
+      .def("GetCountFingerprints", getCountFingerprints<T>,
+           (python::arg("mols"), python::arg("numThreads") = 1),
+           "Generates count fingerprints for a sequence of molecules\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - numThreads: number of threads to use\n\n"
+           "  RETURNS: a tuple of SparseIntVects\n\n")
+      .def("GetSparseFingerprints", getSparseFingerprints<T>,
+           (python::arg("mols"), python::arg("numThreads") = 1),
+           "Generates sparse fingerprints for a sequence of molecules\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - numThreads: number of threads to use\n\n"
+           "  RETURNS: a tuple of SparseBitVects\n\n")
+      .def("GetSparseCountFingerprints", getSparseCountFingerprints<T>,
+           (python::arg("mols"), python::arg("numThreads") = 1),
+           "Generates sparse count fingerprints for a sequence of molecules\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - numThreads: number of threads to use\n\n"
+           "  RETURNS: a tuple of SparseIntVects\n\n")
       .def("GetInfoString", getInfoString<T>,
            "Returns a string containing information about the fingerprint "
            "generator\n\n"

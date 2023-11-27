@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -946,28 +946,55 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
 
 namespace {
 void createSMARTSQSubstanceGroups(ROMol &mol) {
+  auto isRedundantQuery = [](const auto query) {
+    if (query->getDescription() == "AtomAnd" &&
+        (query->endChildren() - query->beginChildren() == 2) &&
+        (*query->beginChildren())->getDescription() == "AtomAtomicNum" &&
+        !(*query->beginChildren())->getNegation() &&
+        !(*(query->beginChildren() + 1))->getNegation() &&
+        ((*(query->beginChildren() + 1))->getDescription() == "AtomIsotope" ||
+         (*(query->beginChildren() + 1))->getDescription() ==
+             "AtomFormalCharge")) {
+      return true;
+    }
+    return false;
+  };
   for (const auto atom : mol.atoms()) {
-    std::string sma;
-    if (atom->hasQuery() &&
-        atom->getPropIfPresent(common_properties::MRV_SMA, sma) &&
-        !sma.empty()) {
-      SubstanceGroup sg(&mol, "DAT");
-      sg.setProp("QUERYTYPE", "SMARTSQ");
-      sg.setProp("QUERYOP", "=");
-      std::vector<std::string> dataFields{sma};
-      sg.setProp("DATAFIELDS", dataFields);
-      sg.addAtomWithIdx(atom->getIdx());
-      addSubstanceGroup(mol, sg);
+    if (atom->hasQuery()) {
+      std::string sma;
+
+      if (!atom->getPropIfPresent(common_properties::MRV_SMA, sma) &&
+          !isAtomListQuery(atom) &&
+          atom->getQuery()->getDescription() != "AtomNull" &&
+          // we may want to re-think this next one.
+          // including AtomType queries will result in an entry
+          // for every atom that comes from SMARTS, and I don't think
+          // we want that.
+          !boost::starts_with(atom->getQuery()->getDescription(), "AtomType") &&
+          !boost::starts_with(atom->getQuery()->getDescription(),
+                              "AtomAtomicNum") &&
+          !isRedundantQuery(atom->getQuery())) {
+        sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
+      }
+      if (!sma.empty()) {
+        SubstanceGroup sg(&mol, "DAT");
+        sg.setProp("QUERYTYPE", "SMARTSQ");
+        sg.setProp("QUERYOP", "=");
+        std::vector<std::string> dataFields{sma};
+        sg.setProp("DATAFIELDS", dataFields);
+        sg.addAtomWithIdx(atom->getIdx());
+        addSubstanceGroup(mol, sg);
+      }
     }
   }
 }
 }  // namespace
-
+namespace FileParserUtils {
 void moveAdditionalPropertiesToSGroups(RWMol &mol) {
   GenericGroups::convertGenericQueriesToSubstanceGroups(mol);
   createSMARTSQSubstanceGroups(mol);
 }
-
+}  // namespace FileParserUtils
 const std::string GetV3000MolFileBondLine(const Bond *bond,
                                           const INT_MAP_INT &wedgeBonds,
                                           const Conformer *conf) {
@@ -1297,7 +1324,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
       MolOps::assignStereochemistry(trwmol);
     }
 #endif
-  moveAdditionalPropertiesToSGroups(trwmol);
+  FileParserUtils::moveAdditionalPropertiesToSGroups(trwmol);
 
   try {
     return outputMolToMolBlock(trwmol, confId, forceV3000);
