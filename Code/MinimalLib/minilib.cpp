@@ -650,8 +650,9 @@ size_t JSMolList::insert(size_t idx, const JSMol &mol) {
 #ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits) :
   d_fpHolder(nullptr) {
-  boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolderSptr(new CachedTrustedSmilesMolHolder());
-  boost::shared_ptr<PatternHolder> fpHolderSptr;
+  std::shared_ptr<CachedTrustedSmilesMolHolder> molHolderSptr(
+      new CachedTrustedSmilesMolHolder());
+  std::shared_ptr<PatternHolder> fpHolderSptr;
   d_molHolder = molHolderSptr.get();
   if (num_bits) {
     fpHolderSptr.reset(new PatternHolder(num_bits));

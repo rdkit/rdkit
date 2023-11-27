@@ -67,7 +67,7 @@ void RCore::findIndicesWithRLabel() {
 RWMOL_SPTR RCore::extractCoreFromMolMatch(
     const ROMol &mol, const MatchVectType &match,
     const RGroupDecompositionParameters &params) const {
-  auto extractedCore = boost::make_shared<RWMol>(mol);
+  auto extractedCore = std::make_shared<RWMol>(mol);
   std::set<int> atomIndicesToKeep;
   std::vector<Bond *> newBonds;
   std::map<Atom *, int> dummyAtomMap;
@@ -305,7 +305,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
 // the respective matching atom in mol
 ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
     const ROMol &mol, const MatchVectType &match) const {
-  auto coreReplacedAtoms = boost::make_shared<RWMol>(*core);
+  auto coreReplacedAtoms = std::make_shared<RWMol>(*core);
   for (const auto &p : match) {
     auto atom = coreReplacedAtoms->getAtomWithIdx(p.first);
     if (isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(*atom)) {
@@ -405,7 +405,7 @@ void RCore::replaceCoreAtom(RWMol &mol, Atom &atom, const Atom &other) const {
 // Builds a matching molecule which is the core with terminal user R groups
 // removed Also creates the data structures used in matching the R groups
 void RCore::buildMatchingMol() {
-  matchingMol = boost::make_shared<RWMol>(*core);
+  matchingMol = std::make_shared<RWMol>(*core);
   terminalRGroupDummyAtoms.clear();
   terminalRGroupAtomToNeighbor.clear();
   RWMol::ATOM_PTR_VECT atomsToRemove;

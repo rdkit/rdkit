@@ -83,7 +83,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidations {
  public:
   virtual void run(const ROMol &mol, bool reportAllFailures,
                    std::vector<ValidationErrorInfo> &errors) const = 0;
-  virtual boost::shared_ptr<MolVSValidations> copy() const = 0;
+  virtual std::shared_ptr<MolVSValidations> copy() const = 0;
 };
 
 //! The NoAtomValidation class throws an error if no atoms are present in the
@@ -95,8 +95,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NoAtomValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of NoAtomValidation object and returns a MolVSValidations
   //! pointer to it
-  boost::shared_ptr<MolVSValidations> copy() const override {
-    return boost::make_shared<NoAtomValidation>(*this);
+  std::shared_ptr<MolVSValidations> copy() const override {
+    return std::make_shared<NoAtomValidation>(*this);
   }
 };
 
@@ -108,8 +108,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of FragmentValidation object and returns a MolVSValidations
   //! pointer to it
-  boost::shared_ptr<MolVSValidations> copy() const override {
-    return boost::make_shared<FragmentValidation>(*this);
+  std::shared_ptr<MolVSValidations> copy() const override {
+    return std::make_shared<FragmentValidation>(*this);
   }
 };
 
@@ -121,8 +121,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NeutralValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of NeutralValidation object and returns a MolVSValidations
   //! pointer to it
-  boost::shared_ptr<MolVSValidations> copy() const override {
-    return boost::make_shared<NeutralValidation>(*this);
+  std::shared_ptr<MolVSValidations> copy() const override {
+    return std::make_shared<NeutralValidation>(*this);
   }
 };
 
@@ -134,8 +134,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT IsotopeValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of IsotopeValidation object and returns a MolVSValidations
   //! pointer to it
-  boost::shared_ptr<MolVSValidations> copy() const override {
-    return boost::make_shared<IsotopeValidation>(*this);
+  std::shared_ptr<MolVSValidations> copy() const override {
+    return std::make_shared<IsotopeValidation>(*this);
   }
 };
 
@@ -148,7 +148,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidation : public ValidationMethod {
   MolVSValidation();
   //! overloaded constructor to take in a user-defined list of MolVSValidations
   MolVSValidation(
-      const std::vector<boost::shared_ptr<MolVSValidations>> validations);
+      const std::vector<std::shared_ptr<MolVSValidations>> validations);
   MolVSValidation(const MolVSValidation &other);
   ~MolVSValidation() override;
 
@@ -156,7 +156,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidation : public ValidationMethod {
       const ROMol &mol, bool reportAllFailures) const override;
 
  private:
-  std::vector<boost::shared_ptr<MolVSValidations>> d_validations;
+  std::vector<std::shared_ptr<MolVSValidations>> d_validations;
 };
 
 //! The AllowedAtomsValidation class lets the user input a list of atoms,

@@ -31,10 +31,10 @@ python::list rdkitValidate(MolStandardize::RDKitValidation &self,
 
 MolStandardize::MolVSValidation *getMolVSValidation(
     python::object validations) {
-  std::vector<boost::shared_ptr<MolStandardize::MolVSValidations>> vs;
+  std::vector<std::shared_ptr<MolStandardize::MolVSValidations>> vs;
 
   auto pvect =
-      pythonObjectToVect<boost::shared_ptr<MolStandardize::MolVSValidations>>(
+      pythonObjectToVect<std::shared_ptr<MolStandardize::MolVSValidations>>(
           validations);
   if (!pvect) {
     throw_value_error("validations argument must be non-empty");

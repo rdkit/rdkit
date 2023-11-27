@@ -56,7 +56,7 @@ typedef std::map<std::string, std::string> STRING_PROPS;
 class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
     : public RDCatalog::CatalogEntry {
  private:
-  boost::shared_ptr<FilterMatcherBase> d_matcher;
+  std::shared_ptr<FilterMatcherBase> d_matcher;
   Dict d_props;
 
  public:
@@ -68,7 +68,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
   }
 
   FilterCatalogEntry(const std::string &name,
-                     boost::shared_ptr<FilterMatcherBase> matcher)
+                     std::shared_ptr<FilterMatcherBase> matcher)
       : RDCatalog::CatalogEntry(), d_matcher(std::move(matcher)) {
     setDescription(name);
   }

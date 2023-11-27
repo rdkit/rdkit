@@ -129,13 +129,13 @@ struct sgroup_wrap {
     RegisterVectorConverter<SubstanceGroup>("SubstanceGroup_VECT");
 
     python::class_<SubstanceGroup::CState,
-                   boost::shared_ptr<SubstanceGroup::CState>>(
+                   std::shared_ptr<SubstanceGroup::CState>>(
         "SubstanceGroupCState", "CSTATE for a SubstanceGroup", python::init<>())
         .def_readonly("bondIdx", &SubstanceGroup::CState::bondIdx)
         .def_readonly("vector", &SubstanceGroup::CState::vector);
 
     python::class_<SubstanceGroup::AttachPoint,
-                   boost::shared_ptr<SubstanceGroup::AttachPoint>>(
+                   std::shared_ptr<SubstanceGroup::AttachPoint>>(
         "SubstanceGroupAttach", "AttachPoint for a SubstanceGroup",
         python::init<>())
         .def_readonly("aIdx", &SubstanceGroup::AttachPoint::aIdx,
@@ -144,7 +144,7 @@ struct sgroup_wrap {
                       "leaving atom or index (0 for implied)")
         .def_readonly("id", &SubstanceGroup::AttachPoint::id, "attachment id");
 
-    python::class_<SubstanceGroup, boost::shared_ptr<SubstanceGroup>>(
+    python::class_<SubstanceGroup, std::shared_ptr<SubstanceGroup>>(
         "SubstanceGroup", sGroupClassDoc.c_str(), python::no_init)
         .def("GetOwningMol", &SubstanceGroup::getOwningMol,
              "returns the molecule owning this SubstanceGroup",
@@ -227,16 +227,18 @@ struct sgroup_wrap {
              (bool(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::hasProp,
              "returns whether or not a particular property exists")
-        .def("GetProp", GetPyProp<SubstanceGroup>,
-	     (python::arg("self"), python::arg("key"), python::arg("autoConvert")=false),
-             "Returns the value of the property.\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to return (a string).\n\n"
-             "    - autoConvert: if True attempt to convert the property into a python object\n\n"
-             "  RETURNS: a string\n\n"
-             "  NOTE:\n"
-             "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+        .def(
+            "GetProp", GetPyProp<SubstanceGroup>,
+            (python::arg("self"), python::arg("key"),
+             python::arg("autoConvert") = false),
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
+            "  RETURNS: a string\n\n"
+            "  NOTE:\n"
+            "    - If the property has not been set, a KeyError exception "
+            "will be raised.\n")
         .def("GetIntProp",
              (int(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::getProp<int>,
@@ -270,7 +272,7 @@ struct sgroup_wrap {
         .def("GetPropsAsDict", GetPropsAsDict<SubstanceGroup>,
              (python::arg("self"), python::arg("includePrivate") = true,
               python::arg("includeComputed") = true,
-	      python::arg("autoConvertStrings") = true),
+              python::arg("autoConvertStrings") = true),
              "Returns a dictionary of the properties set on the "
              "SubstanceGroup.\n"
              " n.b. some properties cannot be converted to python types.\n")

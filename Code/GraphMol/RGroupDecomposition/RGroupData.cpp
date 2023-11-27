@@ -17,7 +17,7 @@
 
 namespace RDKit {
 
-void RGroupData::add(boost::shared_ptr<ROMol> newMol,
+void RGroupData::add(std::shared_ptr<ROMol> newMol,
                      const std::vector<int> &rlabel_attachments) {
   // some fragments can be add multiple times if they are cyclic
   for (auto &mol : mols) {
@@ -53,7 +53,7 @@ void RGroupData::add(boost::shared_ptr<ROMol> newMol,
   smilesVect.push_back(std::regex_replace(MolToSmiles(*newMol, true),
                                           remove_isotopes_regex, "*"));
   if (!combinedMol.get()) {
-    combinedMol = boost::shared_ptr<RWMol>(new RWMol(*mols[0].get()));
+    combinedMol = std::shared_ptr<RWMol>(new RWMol(*mols[0].get()));
   } else {
     ROMol *m = combineMols(*combinedMol.get(), *newMol.get());
     single_fragment = false;

@@ -220,7 +220,7 @@ void setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
   memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),
          dSize * sizeof(double));
   DistGeom::BoundsMatrix::DATA_SPTR sdata(cData);
-  self->boundsMat = boost::shared_ptr<const DistGeom::BoundsMatrix>(
+  self->boundsMat = std::shared_ptr<const DistGeom::BoundsMatrix>(
       new DistGeom::BoundsMatrix(nrows, sdata));
 }
 
