@@ -449,7 +449,6 @@ void adjustLineEndForEllipse(const Point2D &centre, double xradius,
   double disc = B * B - 4.0 * A * C;
   if (disc < 0.0) {
     // no solutions, leave things as they are.  Bit crap, though.
-    p1 += centre;
     p2 += centre;
     return;
   } else if (fabs(disc) < 1.0e-6) {
@@ -476,7 +475,6 @@ void adjustLineEndForEllipse(const Point2D &centre, double xradius,
     } else {
       // the intersections are both outside the line between p1 and p2
       // so don't do anything.
-      p1 += centre;
       p2 += centre;
       return;
     }
