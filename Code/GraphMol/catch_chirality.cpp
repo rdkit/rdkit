@@ -3830,11 +3830,15 @@ M  V30 END CTAB
 M  END)CTAB"_ctab;
       //mol->debugMol(std::cerr);
       std::string smi = MolToCXSmiles(*mol, SmilesWriteParams());
-      std::cout << smi << std::endl;
-      auto f = SmilesToMol(smi);
+      std::unique_ptr<ROMol> f(SmilesToMol(smi));
       mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOCIS);
       f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOCIS);
-      delete f;
+      CHECK(MolToSmiles(*mol) == "C1=C\\CCCCCC/1");
+      CHECK(MolToSmiles(*f) == "C1=C\\CCCCCC/1");
+      mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOTRANS);
+      f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOTRANS);
+      CHECK(MolToSmiles(*mol) == "C1=C/CCCCCC/1");
+      CHECK(MolToSmiles(*f) == "C1=C/CCCCCC/1");
   }
     
 }
