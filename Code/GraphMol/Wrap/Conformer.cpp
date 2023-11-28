@@ -19,7 +19,6 @@
 #include <Geometry/point.h>
 #include <GraphMol/Conformer.h>
 #include <RDBoost/PySequenceHolder.h>
-// #include "seqs.hpp"
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 namespace python = boost::python;

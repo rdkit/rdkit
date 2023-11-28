@@ -136,7 +136,7 @@ struct sparseIntVec_wrapper {
                    boost::shared_ptr<SparseIntVect<IndexType>>>(
         className, sparseIntVectDoc.c_str(),
         python::init<IndexType>("Constructor"))
-        .def(python::init<std::string>(python::args("self", "arg1")))
+        .def(python::init<std::string>(python::args("self", "pkl")))
         // Note: we cannot support __len__ because, at least at the moment
         // (BPL v1.34.1), it must return an int.
         .def("__setitem__", &SparseIntVect<IndexType>::setVal,

@@ -146,8 +146,7 @@ struct atom_wrapper {
         .def(python::init<const Atom &>(python::args("self", "num")))
         .def(python::init<unsigned int>(
             python::args("self", "num"),
-            "Constructor, takes either an int (atomic number) or a string "
-            "(atomic symbol).\n"))
+            "Constructor, takes the atomic number"))
 
         .def("__copy__", &Atom::copy,
              python::return_value_policy<
