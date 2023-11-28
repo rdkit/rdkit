@@ -46,7 +46,8 @@ struct pdbwriter_wrap {
                  &getPDBWriter, python::default_call_policies(),
                  (python::arg("fileObj"), python::arg("flavor") = 0)))
         .def(python::init<std::string, unsigned int>(
-            (python::arg("fileName"), python::arg("flavor") = 0),
+            (python::arg("self"), python::arg("fileName"),
+             python::arg("flavor") = 0),
             pdbwDocStr.c_str()))
         .def("__enter__", &MolIOEnter<PDBWriter>,
              python::return_internal_reference<>())
@@ -59,13 +60,13 @@ struct pdbwriter_wrap {
              "  ARGUMENTS:\n\n"
              "    - mol: the Mol to be written\n"
              "    - confId: (optional) ignored \n\n")
-        .def("flush", &PDBWriter::flush,
+        .def("flush", &PDBWriter::flush, python::args("self"),
              "Flushes the output file (forces the disk file to be "
              "updated).\n\n")
-        .def("close", &PDBWriter::close,
+        .def("close", &PDBWriter::close, python::args("self"),
              "Flushes the output file and closes it. The Writer cannot be used "
              "after this.\n\n")
-        .def("NumMols", &PDBWriter::numMols,
+        .def("NumMols", &PDBWriter::numMols, python::args("self"),
              "Returns the number of molecules written so far.\n\n");
   };
 };

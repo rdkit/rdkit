@@ -102,18 +102,18 @@ struct forwardsdmolsup_wrap {
     python::class_<LocalForwardSDMolSupplier, boost::noncopyable>(
         "ForwardSDMolSupplier", fsdMolSupplierClassDoc.c_str(), python::no_init)
         .def(python::init<python::object &, bool, bool, bool>(
-            (python::arg("fileobj"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true,
+            (python::arg("self"), python::arg("fileobj"),
+             python::arg("sanitize") = true, python::arg("removeHs") = true,
              python::arg("strictParsing") =
                  true))[python::with_custodian_and_ward_postcall<0, 2>()])
         .def(python::init<streambuf &, bool, bool, bool>(
-            (python::arg("streambuf"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true,
+            (python::arg("self"), python::arg("streambuf"),
+             python::arg("sanitize") = true, python::arg("removeHs") = true,
              python::arg("strictParsing") =
                  true))[python::with_custodian_and_ward_postcall<0, 2>()])
         .def(python::init<std::string, bool, bool, bool>(
-            (python::arg("filename"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true,
+            (python::arg("self"), python::arg("filename"),
+             python::arg("sanitize") = true, python::arg("removeHs") = true,
              python::arg("strictParsing") = true)))
         .def("__enter__",
              (LocalForwardSDMolSupplier * (*)(LocalForwardSDMolSupplier *)) &
@@ -126,20 +126,24 @@ struct forwardsdmolsup_wrap {
              (ROMol * (*)(LocalForwardSDMolSupplier *)) & MolForwardSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
-             python::return_value_policy<python::manage_new_object>())
-        .def("atEnd", &ForwardSDMolSupplier::atEnd,
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"))
+        .def("atEnd", &ForwardSDMolSupplier::atEnd, python::args("self"),
              "Returns whether or not we have hit EOF.\n")
         .def("GetEOFHitOnRead", &ForwardSDMolSupplier::getEOFHitOnRead,
+             python::args("self"),
              "Returns whether or EOF was hit while parsing the previous "
              "entry.\n")
         .def("__iter__", &FwdMolSupplIter,
-             python::return_internal_reference<1>())
+             python::return_internal_reference<1>(), python::args("self"))
         .def("GetProcessPropertyLists",
              &ForwardSDMolSupplier::getProcessPropertyLists,
+             python::args("self"),
              "returns whether or not any property lists that are present will "
              "be processed when reading molecules")
         .def("SetProcessPropertyLists",
              &ForwardSDMolSupplier::setProcessPropertyLists,
+             python::args("self", "val"),
              "sets whether or not any property lists that are present will be "
              "processed when reading molecules");
   };

@@ -87,25 +87,28 @@ struct smimolsup_wrap {
     python::class_<SmilesMolSupplier, boost::noncopyable>(
         "SmilesMolSupplier", smilesMolSupplierClassDoc.c_str(),
         python::init<std::string, std::string, int, int, bool, bool>(
-            (python::arg("data"), python::arg("delimiter") = " ",
-             python::arg("smilesColumn") = 0, python::arg("nameColumn") = 1,
-             python::arg("titleLine") = true, python::arg("sanitize") = true),
+            (python::arg("self"), python::arg("data"),
+             python::arg("delimiter") = " ", python::arg("smilesColumn") = 0,
+             python::arg("nameColumn") = 1, python::arg("titleLine") = true,
+             python::arg("sanitize") = true),
             smsDocStr.c_str()))
-        .def(python::init<>())
+        .def(python::init<>(python::args("self")))
         .def("__enter__", &MolIOEnter<SmilesMolSupplier>,
              python::return_internal_reference<>())
         .def("__exit__", &MolIOExit<SmilesMolSupplier>)
         .def("__iter__", &MolSupplIter<SmilesMolSupplier>,
-             python::return_internal_reference<1>())
+             python::return_internal_reference<1>(), python::args("self"))
         .def("__next__", &MolSupplNext<SmilesMolSupplier>,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
-             python::return_value_policy<python::manage_new_object>())
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"))
         .def("__getitem__", &MolSupplGetItem<SmilesMolSupplier>,
-             python::return_value_policy<python::manage_new_object>())
-        .def("reset", &SmilesMolSupplier::reset,
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self", "idx"))
+        .def("reset", &SmilesMolSupplier::reset, python::args("self"),
              "Resets our position in the file to the beginning.\n")
-        .def("__len__", &SmilesMolSupplier::length)
+        .def("__len__", &SmilesMolSupplier::length, python::args("self"))
         .def("SetData", &SmilesMolSupplier::setData,
              "Sets the text to be parsed",
              (python::arg("self"), python::arg("data"),

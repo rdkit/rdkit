@@ -76,8 +76,9 @@ struct HierarchCP_wrap {
     python::class_<HierarchicalClusterPicker>(
         "HierarchicalClusterPicker", docString.c_str(),
         python::init<HierarchicalClusterPicker::ClusterMethod>(
-            python::args("clusterMethod")))
+            python::args("self", "clusterMethod")))
         .def("Pick", HierarchicalPicks,
+             python::args("self", "distMat", "poolSize", "pickSize"),
              "Pick a diverse subset of items from a pool of items using "
              "hierarchical clustering\n"
              "\n"
@@ -87,6 +88,7 @@ struct HierarchCP_wrap {
              "  - poolSize: number of items in the pool\n"
              "  - pickSize: number of items to pick from the pool\n")
         .def("Cluster", HierarchicalClusters,
+             python::args("self", "distMat", "poolSize", "pickSize"),
              "Return a list of clusters of item from the pool using "
              "hierarchical clustering\n"
              "\n"

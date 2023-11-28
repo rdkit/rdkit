@@ -296,5 +296,6 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
   docString =
       "Compute the union of two boxes, so that all the points in both boxes are \n\
     contained in the new box";
-  python::def("ComputeUnionBox", RDKit::getUnionOfTwoBox, docString.c_str());
+  python::def("ComputeUnionBox", RDKit::getUnionOfTwoBox, docString.c_str(),
+              python::args("box1", "box2"));
 }

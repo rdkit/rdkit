@@ -314,18 +314,20 @@ BOOST_PYTHON_MODULE(rdBase) {
   python::def("WrapLogs", WrapLogs,
               "Tee the RDKit logs to Python's stderr stream");
 
-  python::def("EnableLog", EnableLog);
-  python::def("DisableLog", DisableLog);
+  python::def("EnableLog", EnableLog, python::args("spec"));
+  python::def("DisableLog", DisableLog, python::args("spec"));
   python::def("LogStatus", LogStatus);
 
-  python::def("LogDebugMsg", LogDebugMsg,
+  python::def("LogDebugMsg", LogDebugMsg, python::args("msg"),
               "Log a message to the RDKit debug logs");
-  python::def("LogInfoMsg", LogInfoMsg, "Log a message to the RDKit info logs");
-  python::def("LogWarningMsg", LogWarningMsg,
+  python::def("LogInfoMsg", LogInfoMsg, python::args("msg"),
+              "Log a message to the RDKit info logs");
+  python::def("LogWarningMsg", LogWarningMsg, python::args("msg"),
               "Log a message to the RDKit warning logs");
-  python::def("LogErrorMsg", LogErrorMsg,
+  python::def("LogErrorMsg", LogErrorMsg, python::args("msg"),
               "Log a message to the RDKit error logs");
-  python::def("LogMessage", LogMessage, "Log a message to any rdApp.* log");
+  python::def("LogMessage", LogMessage, python::args("spec", "msg"),
+              "Log a message to any rdApp.* log");
 
   python::def("AttachFileToLog", AttachFileToLog,
               "Causes the log to write to a file",
@@ -344,7 +346,7 @@ BOOST_PYTHON_MODULE(rdBase) {
   python::class_<BlockLogs, boost::noncopyable>(
       "BlockLogs",
       "Temporarily block logs from outputting while this instance is in scope.",
-      python::init<>())
+      python::init<>(python::args("self")))
       .def("__enter__", &BlockLogs::enter,
            python::return_internal_reference<>())
       .def("__exit__", &BlockLogs::exit);
