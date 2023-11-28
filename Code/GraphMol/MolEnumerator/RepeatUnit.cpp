@@ -18,6 +18,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/format.hpp>
 #include <algorithm>
+#include <charconv>
 
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
@@ -65,10 +66,61 @@ void tagAtoms(std::shared_ptr<ROMol> mol, const Bond *bond,
 }
 }  // namespace
 
+const size_t RepeatUnitOp::DEFAULT_REPEAT_COUNT = 4;
+
 void RepeatUnitOp::initFromMol(const ROMol &mol) {
   dp_mol.reset(new ROMol(mol));
   initFromMol();
 }
+
+// if the SRU label has information about the repetition range, we should use
+// that information for the enumerator. There are these cases:
+//      * if label is a number, N, assume desired range is 0-N
+//      * if label is M-N, where M and N are non-negative integers
+//        and M <= N, we'll assume the desired range is {M, N}.
+//      * well assume the desired range is {0,
+//      RepeatUnitOp::DEFAULT_REPEAT_COUNT}
+//        for anything else
+[[nodiscard]] static std::pair<size_t, size_t> parse_repeat_counts(
+    const std::string &sru_label) {
+  static constexpr std::pair<size_t, size_t> default_repeat_counts{
+      0, RepeatUnitOp::DEFAULT_REPEAT_COUNT};
+
+  if (sru_label.empty()) {
+    return default_repeat_counts;
+  }
+
+  auto end = sru_label.data() + sru_label.size();
+
+  size_t min_repeats = 0;
+  auto status = std::from_chars(sru_label.data(), end, min_repeats);
+
+  // if label is something like 'N', max count should be N
+  if (status.ec == std::errc() && status.ptr == end) {
+    // offset by one since range is inclusive
+    return std::make_pair(0u, min_repeats + 1);
+  }
+
+  // if we failed to parse the first number for some reason
+  if (status.ec != std::errc() || (status.ptr != end && status.ptr[0] != '-')) {
+    return default_repeat_counts;
+  }
+
+  size_t max_repeats = 0;
+  status = std::from_chars(status.ptr + 1, end, max_repeats);
+  if (status.ec != std::errc() || status.ptr != end) {
+    return default_repeat_counts;
+  }
+
+  // assume it's nonsense
+  if (max_repeats < min_repeats) {
+    return default_repeat_counts;
+  }
+
+  // offset by one since range is inclusive
+  return std::make_pair(min_repeats, max_repeats + 1);
+}
+
 void RepeatUnitOp::initFromMol() {
   // we're making an assumption here that each atom has at most one bond to an
   // atom not in the repeat unit
@@ -88,6 +140,7 @@ void RepeatUnitOp::initFromMol() {
     if (!sg.getPropIfPresent("TYPE", typ) || typ != "SRU") {
       continue;
     }
+
     std::string connect;
     sg.getPropIfPresent("CONNECT", connect);
     if (!connect.empty()) {
@@ -98,6 +151,13 @@ void RepeatUnitOp::initFromMol() {
         continue;
       }
     }
+
+    std::string label;
+    sg.getPropIfPresent("LABEL", label);
+    auto [min_repeats, max_repeats] = parse_repeat_counts(label);
+    d_minRepeatCounts.push_back(min_repeats);
+    d_countAtEachPoint.push_back(
+        std::min(max_repeats - min_repeats, d_maxNumRounds));
 
     // tag the atoms in the repeat unit:
     boost::dynamic_bitset<> sgatoms(dp_mol->getNumAtoms());
@@ -122,12 +182,12 @@ void RepeatUnitOp::initFromMol() {
                tailmarker, headmarker_frame, connect);
     } else if (bnds.size() == 4) {
       // four bonds are what we see for a ladder polymer, here we need two
-      // different heads and two different tails. We mark the second set with a
-      // large offset so that they don't get confused, but otherwise the rest of
-      // the code handles this automatically.
+      // different heads and two different tails. We mark the second set with
+      // a large offset so that they don't get confused, but otherwise the
+      // rest of the code handles this automatically.
 
-      // NOTE: theoretically we could support larger numbers of head/tail pairs,
-      // but I don't believe these show up in reality
+      // NOTE: theoretically we could support larger numbers of head/tail
+      // pairs, but I don't believe these show up in reality
 
       // We may have XBCORR to indicate which bonds correspond to which
       std::vector<unsigned int> xbcorr;
@@ -186,7 +246,6 @@ void RepeatUnitOp::initFromMol() {
     }
     repeat->commitBatchEdit();
     d_repeats.push_back(repeat);
-    d_countAtEachPoint.push_back(d_defaultRepeatCount);
   }
   dp_frame->commitBatchEdit();
 
@@ -351,14 +410,18 @@ std::unique_ptr<ROMol> RepeatUnitOp::operator()(
   res->insertMol(*dp_frame);
 
   // ---------------------
-  // we will use these maps from head/tail markerss to atoms in the frame later
+  // we will use these maps from head/tail markerss to atoms in the frame
+  // later
   std::map<unsigned, Atom *> headMap;
   std::map<unsigned, Atom *> tailMap;
   constructHeadAndTailMaps(*res, headMap, tailMap);
 
   for (size_t i = 0; i < which.size(); ++i) {
     RWMol filling;
-    for (size_t iter = 0; iter < which[i]; ++iter) {
+    // if there SRU sgroups has a repetition range like 3-5, we should make
+    // sure each output has at least 3 repetitions
+    auto offset = d_minRepeatCounts[i];
+    for (size_t iter = 0; iter < offset + which[i]; ++iter) {
       auto origAtomCount = filling.getNumAtoms();
       filling.insertMol(*d_repeats[i]);
 
