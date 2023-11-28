@@ -58,8 +58,9 @@ std::string molBundleClassDoc =
 struct molbundle_wrap {
   static void wrap() {
     python::class_<MolBundle, boost::noncopyable>(
-        "MolBundle", molBundleClassDoc.c_str(), python::init<>())
-        .def(python::init<const std::string &>(python::args("pklString")))
+        "MolBundle", molBundleClassDoc.c_str(),
+        python::init<>(python::args("self")))
+        .def(python::init<const std::string &>(python::args("self", "pkl")))
         .def_pickle(molbundle_pickle_suite())
         .def("ToBinary", BundleToBinary,
              "Returns a binary string representation of the MolBundle.\n")

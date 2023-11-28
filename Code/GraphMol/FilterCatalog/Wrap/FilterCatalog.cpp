@@ -316,7 +316,8 @@ RunFilterCatalogWrapper(const FilterCatalog &fc,
 struct filtercat_wrapper {
   static void wrap() {
     python::class_<std::pair<int, int>>("IntPair")
-        .def(python::init<const int &, const int &>())
+        .def(python::init<const int &, const int &>(
+            python::args("self", "query", "target")))
         .def_readwrite("query", &std::pair<int, int>::first)
         .def_readwrite("target", &std::pair<int, int>::second)
         .def("__getitem__", &GetMatchVectItem);

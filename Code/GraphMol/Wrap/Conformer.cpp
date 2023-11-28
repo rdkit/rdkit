@@ -19,7 +19,6 @@
 #include <Geometry/point.h>
 #include <GraphMol/Conformer.h>
 #include <RDBoost/PySequenceHolder.h>
-//#include "seqs.hpp"
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 namespace python = boost::python;
@@ -154,16 +153,18 @@ struct conformer_wrapper {
              "assigned.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to check for (a string).\n")
-        .def("GetProp", GetPyProp<Conformer>,
-	     (python::arg("self"), python::arg("key"), python::arg("autoConvert")=false),
-             "Returns the value of the property.\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to return (a string).\n\n"
-             "    - autoConvert: if True attempt to convert the property into a python object\n\n"
-             "  RETURNS: a string\n\n"
-             "  NOTE:\n"
-             "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+        .def(
+            "GetProp", GetPyProp<Conformer>,
+            (python::arg("self"), python::arg("key"),
+             python::arg("autoConvert") = false),
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
+            "  RETURNS: a string\n\n"
+            "  NOTE:\n"
+            "    - If the property has not been set, a KeyError exception "
+            "will be raised.\n")
         .def("GetDoubleProp", GetProp<Conformer, double>,
              "Returns the double value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -219,7 +220,7 @@ struct conformer_wrapper {
         .def("GetPropsAsDict", GetPropsAsDict<Conformer>,
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false,
-	      python::arg("autoConvertStrings") = true),
+              python::arg("autoConvertStrings") = true),
              "Returns a dictionary populated with the conformer's properties.\n"
              " n.b. Some properties are not able to be converted to python "
              "types.\n\n"

@@ -1553,6 +1553,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                  boost::noncopyable>("PropertyFunctor", docString.c_str(),
                                      python::no_init)
       .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
+           python::args("self", "mol"),
            "Compute the property for the specified molecule")
       .def("GetName", &RDKit::Descriptors::PropertyFunctor::getName,
            "Return the name of the property to calculate")
