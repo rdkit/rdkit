@@ -17,11 +17,13 @@
 %ignore RDKit::MolEnumerator::detail::idxPropName;
 %ignore RDKit::MolEnumerator::detail::preserveOrigIndices;
 %ignore RDKit::MolEnumerator::detail::removeOrigIndices;
+%ignore RDKit::MolEnumerator::detail::StereoFlipper;
 
 %ignore RDKit::MolEnumerator::MolEnumeratorOp;
 %ignore RDKit::MolEnumerator::PositionVariationOp;
 %ignore RDKit::MolEnumerator::LinkNodeOp;
 %ignore RDKit::MolEnumerator::RepeatUnitOp;
+%ignore RDKit::MolEnumerator::StereoIsomerOp;
 
 %inline %{
 
