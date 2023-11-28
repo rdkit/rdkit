@@ -28,6 +28,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
 #if 1
@@ -3436,4 +3437,29 @@ TEST_CASE("ROMol hasQuery") {
 
     REQUIRE(mol->hasQuery());
   }
+}
+
+TEST_CASE(
+    "Github Issue #6944: With new stereo, removing H from an Imine double bond does not remove bond stereo",
+    "[bug][molops]") {
+  // This issue only happens with the new stereo perception,
+  // since the legacy one does not support stereo on imine bonds
+  UseLegacyStereoPerceptionFixture use_new_stereo_perception{false};
+
+  auto m = "[H]/N=C(/C)O"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 5);
+
+  auto bnd = m->getBondWithIdx(1);
+  REQUIRE(bnd->getBondType() == Bond::BondType::DOUBLE);
+  REQUIRE(bnd->getStereo() == Bond::BondStereo::STEREOTRANS);
+  REQUIRE(bnd->getStereoAtoms().size() == 2);
+
+  MolOps::removeAllHs(*m);
+  REQUIRE(m->getNumAtoms() == 4);
+
+  bnd = m->getBondWithIdx(0);
+  REQUIRE(bnd->getBondType() == Bond::BondType::DOUBLE);
+  CHECK(bnd->getStereo() == Bond::BondStereo::STEREONONE);
+  CHECK(bnd->getStereoAtoms().empty());
 }
