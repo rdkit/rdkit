@@ -234,6 +234,8 @@ RDKIT_GRAPHMOL_EXPORT int pickBondToWedge(const Atom *atom, const ROMol &mol,
                                           const INT_VECT &nChiralNbrs,
                                           const INT_MAP_INT &resSoFar,
                                           int noNbrs);
+RDKIT_GRAPHMOL_EXPORT void setStereoanyFromSquiggleBond(ROMol &mol, Bond *bond,
+							Bond::BondStereo stereo=Bond::STEREOANY);
 }  // namespace detail
 
 //! picks the bonds which should be wedged
