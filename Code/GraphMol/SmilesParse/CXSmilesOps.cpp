@@ -1147,37 +1147,7 @@ bool parse_doublebond_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
         return false;
       }
 
-      // the cis/trans/unknown marker is relative to the lowest numbered atom
-      // connected to the lowest numbered double bond atom and the
-      // highest-numbered atom connected to the highest-numbered double bond
-      // atom find those
-      auto begAtom = bond->getBeginAtom();
-      auto endAtom = bond->getEndAtom();
-      if (begAtom->getIdx() > endAtom->getIdx()) {
-        std::swap(begAtom, endAtom);
-      }
-      if (begAtom->getDegree() > 1 && endAtom->getDegree() > 1) {
-        unsigned int begControl = mol.getNumAtoms();
-        for (auto nbr : mol.atomNeighbors(begAtom)) {
-          if (nbr == endAtom) {
-            continue;
-          }
-          begControl = std::min(nbr->getIdx(), begControl);
-        }
-        unsigned int endControl = 0;
-        for (auto nbr : mol.atomNeighbors(endAtom)) {
-          if (nbr == begAtom) {
-            continue;
-          }
-          endControl = std::max(nbr->getIdx(), endControl);
-        }
-        if (begAtom != bond->getBeginAtom()) {
-          std::swap(begControl, endControl);
-        }
-        bond->setStereoAtoms(begControl, endControl);
-        bond->setStereo(stereo);
-        mol.setProp(SmilesParseOps::detail::_needsDetectBondStereo, 1);
-      }
+      Chirality::detail::setStereoanyFromSquiggleBond(mol, bond, stereo);
     }
     if (first < last && *first == ',') {
       ++first;
