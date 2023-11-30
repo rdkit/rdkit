@@ -1845,63 +1845,65 @@ function test_get_frags() {
     }
 }
 
-function test_get_matched_fragments() {
+function test_get_mmpa_frags() {
     {
-        var RDKitModule = getRdKitModule();
         var mol = RDKitModule.get_mol("CC(C)CCN1C(=O)CN=C(c2ccccc12)C3CCCCC3");
-        var expectedFragSmiles1 = ["O=C1CN=C(C2CCCCC2)c2ccccc2N1CCC([*:1])[*:2]", "CC([*:1])[*:2]", "CC(C[*:2])[*:1]", "CC(CC[*:2])[*:1]",
+        var expectedCores = ["O=C1CN=C(C2CCCCC2)c2ccccc2N1CCC([*:1])[*:2]", "CC([*:1])[*:2]", "CC(C[*:2])[*:1]", "CC(CC[*:2])[*:1]",
         "CC(CCN1C(=O)CN=C([*:2])c2ccccc21)[*:1]", "C([*:1])[*:2]", "C(C[*:2])[*:1]", "O=C1CN=C([*:2])c2ccccc2N1CC[*:1]",
         "C([*:1])[*:2]", "O=C1CN=C([*:1])c2ccccc2N1C[*:2]", "O=C1CN=C([*:1])c2ccccc2N1[*:2]"];
-        var expectedFragSmiles2 = ["C[*:1].C[*:2]", "C[*:1].O=C1CN=C(C2CCCCC2)c2ccccc2N1CC[*:2]", "C[*:1].O=C1CN=C(C2CCCCC2)c2ccccc2N1C[*:2]",
+        var expectedSidechains = ["C[*:1].C[*:2]", "C[*:1].O=C1CN=C(C2CCCCC2)c2ccccc2N1CC[*:2]", "C[*:1].O=C1CN=C(C2CCCCC2)c2ccccc2N1C[*:2]",
         "C[*:1].O=C1CN=C(C2CCCCC2)c2ccccc2N1[*:2]", "C1CCC([*:2])CC1.C[*:1]", "CC(C)[*:1].O=C1CN=C(C2CCCCC2)c2ccccc2N1C[*:2]",
         "CC(C)[*:1].O=C1CN=C(C2CCCCC2)c2ccccc2N1[*:2]", "C1CCC([*:2])CC1.CC(C)[*:1]", "CC(C)C[*:1].O=C1CN=C(C2CCCCC2)c2ccccc2N1[*:2]",
         "C1CCC([*:1])CC1.CC(C)C[*:2]", "C1CCC([*:1])CC1.CC(C)CC[*:2]"];
-        var pairs = RDKitModule.get_matched_fragments(mol, 2, 2, 20);
-        assert(pairs.first.size() === 11);
-        assert(pairs.second.size() === 11);
+        var pairs = mol.get_mmpa_frags(2, 2, 20);
+        assert(pairs.cores);
+        assert(pairs.cores.size() === 11);
+        assert(pairs.sidechains);
+        assert(pairs.sidechains.size() === 11);
         var i = 0;
-        while (!pairs.first.at_end()) {
-            var mol = pairs.first.next();
-            assert(mol.get_smiles() === expectedFragSmiles1[i++]);
-            mol.delete();
+        while (!pairs.cores.at_end()) {
+            var m = pairs.cores.next();
+            assert(m.get_smiles() === expectedCores[i++]);
+            m.delete();
         }
         i = 0;
-        while (!pairs.second.at_end()) {
-            var mol = pairs.second.next();
-            assert(mol.get_smiles() === expectedFragSmiles2[i++]);
-            mol.delete();
+        while (!pairs.sidechains.at_end()) {
+            var m = pairs.sidechains.next();
+            assert(m.get_smiles() === expectedSidechains[i++]);
+            m.delete();
         }
-        assert(!pairs.first.next());
-        assert(!pairs.second.next());
-        pairs.first.delete();
-        pairs.second.delete();
+        assert(!pairs.cores.next());
+        assert(!pairs.sidechains.next());
+        pairs.cores.delete();
+        pairs.sidechains.delete();
+        mol.delete();
     }
     {
-        var RDKitModule = getRdKitModule();
         var mol = RDKitModule.get_mol("CC(C)CCN1C(=O)CN=C(c2ccccc12)C3CCCCC3");
-        var expectedFragSmiles = ["CC(CCN1C(=O)CN=C(C2CCCCC2)c2ccccc21)[*:1].C[*:1]",
+        var expectedSidechains = ["CC(CCN1C(=O)CN=C(C2CCCCC2)c2ccccc21)[*:1].C[*:1]",
             "CC(C)[*:1].O=C1CN=C(C2CCCCC2)c2ccccc2N1CC[*:1]", "CC(C)C[*:1].O=C1CN=C(C2CCCCC2)c2ccccc2N1C[*:1]",
             "CC(C)CC[*:1].O=C1CN=C(C2CCCCC2)c2ccccc2N1[*:1]", "C1CCC([*:1])CC1.CC(C)CCN1C(=O)CN=C([*:1])c2ccccc21"];
 
-        var pairs = RDKitModule.get_matched_fragments(mol, 1, 1, 20);
-        assert(pairs.first.size() === 5);
-        assert(pairs.second.size() === 5);
-      
-        while (!pairs.first.at_end()) {
-            var mol = pairs.first.next();
-            assert(mol.get_smiles() === '');
-            mol.delete();
+        var pairs = mol.get_mmpa_frags(1, 1, 20);
+        assert(pairs.cores);
+        assert(pairs.cores.size() === 5);
+        assert(pairs.sidechains);
+        assert(pairs.sidechains.size() === 5);
+        while (!pairs.cores.at_end()) {
+            var m = pairs.cores.next();
+            assert(m === null);
         }
         var i = 0;
-        while (!pairs.second.at_end()) {
-            var mol = pairs.second.next();
-            assert(mol.get_smiles() === expectedFragSmiles[i++]);
-            mol.delete();
+        while (!pairs.sidechains.at_end()) {
+            var m = pairs.sidechains.next();
+            assert(m.get_smiles() === expectedSidechains[i++]);
+            m.delete();
         }
-        assert(!pairs.first.next());
-        assert(!pairs.second.next());
-        pairs.first.delete();
-        pairs.second.delete();
+        assert(!pairs.cores.next());
+        assert(!pairs.sidechains.next());
+        pairs.cores.delete();
+        pairs.sidechains.delete();
+        mol.delete();
     }
 }
 
@@ -2814,7 +2816,9 @@ initRDKitModule().then(function(instance) {
     test_wedging_outside_scaffold();
     test_wedging_if_no_match();
     test_get_frags();
-    test_get_matched_fragments();
+    if (RDKitModule.Mol.prototype.get_mmpa_frags) {
+        test_get_mmpa_frags();
+    }
     test_hs_in_place();
     test_query_colour();
     test_alignment_r_groups_aromatic_ring();

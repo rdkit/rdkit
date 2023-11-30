@@ -14,7 +14,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 
-#ifdef RDK_BUILD_MINIMAL_LIB_MATCHED_PAIRS
+#ifdef RDK_BUILD_MINIMAL_LIB_MMPA
 #include <GraphMol/MMPA/MMPA.h>
 #endif
 
@@ -147,6 +147,11 @@ class JSMol {
   unsigned int get_num_atoms(bool heavyOnly) const;
   unsigned int get_num_atoms() const { return get_num_atoms(false); };
   unsigned int get_num_bonds() const;
+#ifdef RDK_BUILD_MINIMAL_LIB_MMPA
+  std::pair<JSMolList *, JSMolList *> get_mmpa_frags(
+      unsigned int minCuts, unsigned int maxCuts,
+      unsigned int maxCutBonds) const;
+#endif
 
   std::unique_ptr<RDKit::RWMol> d_mol;
   static constexpr int d_defaultWidth = 250;
@@ -281,6 +286,9 @@ std::string get_mcs_as_smarts(const JSMolList &mols, const std::string &details_
 JSMol *get_mcs_as_mol(const JSMolList &mols, const std::string &details_json);
 #endif
 
-#ifdef RDK_BUILD_MINIMAL_LIB_MATCHED_PAIRS
-std::pair<JSMolList *, JSMolList *>fragmentMol(const JSMol &mol, unsigned int minCuts, unsigned int maxCuts, unsigned int maxCutBonds);
+#ifdef RDK_BUILD_MINIMAL_LIB_MMPA
+std::pair<JSMolList *, JSMolList *> fragmentMol(const JSMol &mol,
+                                                unsigned int minCuts,
+                                                unsigned int maxCuts,
+                                                unsigned int maxCutBonds);
 #endif

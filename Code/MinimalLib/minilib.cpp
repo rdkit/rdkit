@@ -591,6 +591,44 @@ unsigned int JSMol::get_num_bonds() const {
   return d_mol->getNumBonds();
 }
 
+#ifdef RDK_BUILD_MINIMAL_LIB_MMPA
+namespace {
+bool mmpaFragmentMol(const ROMol &mol, std::vector<RDKit::ROMOL_SPTR> &cores,
+                     std::vector<RDKit::ROMOL_SPTR> &sidechains,
+                     unsigned int minCuts, unsigned int maxCuts,
+                     unsigned int maxCutBonds) {
+  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> mmpaFrags;
+  if (!RDKit::MMPA::fragmentMol(mol, mmpaFrags, minCuts, maxCuts,
+                                maxCutBonds)) {
+    return false;
+  }
+  auto numEntries = mmpaFrags.size();
+  cores.clear();
+  cores.reserve(numEntries);
+  sidechains.clear();
+  sidechains.reserve(numEntries);
+  for (const auto &mmpaFrag : mmpaFrags) {
+    cores.push_back(std::move(mmpaFrag.first));
+    sidechains.push_back(std::move(mmpaFrag.second));
+  }
+  return true;
+}
+}  // end of anonymous namespace
+
+std::pair<JSMolList *, JSMolList *> JSMol::get_mmpa_frags(
+    unsigned int minCuts, unsigned int maxCuts,
+    unsigned int maxCutBonds) const {
+  std::vector<RDKit::ROMOL_SPTR> cores;
+  std::vector<RDKit::ROMOL_SPTR> sidechains;
+  if (!mmpaFragmentMol(*d_mol, cores, sidechains, minCuts, maxCuts,
+                       maxCutBonds)) {
+    return std::make_pair(nullptr, nullptr);
+  }
+  return std::make_pair(new JSMolList(std::move(cores)),
+                        new JSMolList(std::move(sidechains)));
+}
+#endif
+
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
 std::string JSReaction::get_svg(int w, int h) const {
   assert(d_rxn);
@@ -611,9 +649,14 @@ bool JSReaction::is_valid() const {
 #endif
 
 JSMol *JSMolList::next() {
-  return (d_idx < d_mols.size()
-              ? new JSMol(new RDKit::RWMol(*d_mols.at(d_idx++)))
-              : nullptr);
+  JSMol *res = nullptr;
+  if (d_idx < d_mols.size()) {
+    const auto &molSptr = d_mols.at(d_idx++);
+    if (molSptr) {
+      res = new JSMol(new RDKit::RWMol(*molSptr));
+    }
+  }
+  return res;
 }
 
 JSMol *JSMolList::at(size_t idx) const {
@@ -908,21 +951,3 @@ JSLog *set_log_capture(const std::string &log_name) {
 void enable_logging() { RDKit::MinimalLib::LogHandle::enableLogging(); }
 
 void disable_logging() { RDKit::MinimalLib::LogHandle::disableLogging(); }
-
-#ifdef RDK_BUILD_MINIMAL_LIB_MATCHED_PAIRS
-std::pair<JSMolList *, JSMolList *> fragmentMol(const JSMol &mol, unsigned int minCuts, unsigned int maxCuts, unsigned int maxCutBonds) {
-  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> res;
-  RDKit::MMPA::fragmentMol(*(mol.d_mol.get()), res, minCuts, maxCuts, maxCutBonds);
-
-  size_t length = res.size();
-  std::vector<RDKit::ROMOL_SPTR> fragments1(length);
-  std::vector<RDKit::ROMOL_SPTR> fragments2(length);
-
-  for (size_t res_idx = 0; res_idx < length; res_idx++) {
-    fragments1[res_idx] = res[res_idx].first;
-    fragments2[res_idx] = res[res_idx].second;
-  }
-
-  return std::make_pair(new JSMolList(fragments1), new JSMolList(fragments2));
-}
-#endif

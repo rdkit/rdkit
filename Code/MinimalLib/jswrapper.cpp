@@ -372,12 +372,14 @@ emscripten::val get_avalon_fp_as_uint8array(const JSMol &self) {
 }
 #endif
 
-#ifdef RDK_BUILD_MINIMAL_LIB_MATCHED_PAIRS
-emscripten::val get_matched_fragments(const JSMol &mol, unsigned int minCuts, unsigned int maxCuts, unsigned int maxCutBonds) {
+#ifdef RDK_BUILD_MINIMAL_LIB_MMPA
+emscripten::val get_mmpa_frags_helper(const JSMol &self, unsigned int minCuts,
+                                      unsigned int maxCuts,
+                                      unsigned int maxCutBonds) {
   auto obj = emscripten::val::object();
-  std::pair<JSMolList *, JSMolList *> pairs = fragmentMol(mol, minCuts, maxCuts, maxCutBonds);
-  obj.set("first", pairs.first);
-  obj.set("second", pairs.second);
+  auto pairs = self.get_mmpa_frags(minCuts, maxCuts, maxCutBonds);
+  obj.set("cores", pairs.first);
+  obj.set("sidechains", pairs.second);
   return obj;
 }
 #endif
@@ -573,7 +575,14 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_num_atoms",
                 select_overload<unsigned int() const>(&JSMol::get_num_atoms))
       .function("get_num_bonds", &JSMol::get_num_bonds)
-  ;
+#ifdef RDK_BUILD_MINIMAL_LIB_MMPA
+      .function("get_mmpa_frags",
+                select_overload<emscripten::val(const JSMol &, unsigned int,
+                                                unsigned int, unsigned int)>(
+                    get_mmpa_frags_helper),
+                allow_raw_pointers())
+#endif
+      ;
 
   class_<JSMolList>("MolList")
       .constructor<>()
@@ -687,8 +696,5 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   function("get_mcs_as_mol", &get_mcs_as_mol_no_details, allow_raw_pointers());
   function("get_mcs_as_smarts", &get_mcs_as_smarts);
   function("get_mcs_as_smarts", &get_mcs_as_smarts_no_details);
-#endif
-#ifdef RDK_BUILD_MINIMAL_LIB_MATCHED_PAIRS
-  function("get_matched_fragments", &get_matched_fragments, allow_raw_pointers());
 #endif
 }
