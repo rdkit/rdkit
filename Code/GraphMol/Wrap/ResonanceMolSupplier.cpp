@@ -176,26 +176,32 @@ struct resmolsup_wrap {
 
     python::class_<PyResonanceMolSupplierCallback, boost::noncopyable>(
         "ResonanceMolSupplierCallback",
-        resonanceMolSupplierCallbackClassDoc.c_str(), python::init<>())
+        resonanceMolSupplierCallbackClassDoc.c_str(),
+        python::init<>(python::args("self")))
         .def("GetNumConjGrps",
              &PyResonanceMolSupplierCallback::wrapGetNumConjGrps,
+             python::args("self"),
              "Returns the number of individual conjugated groups in the "
              "molecule.\n")
         .def("GetMaxStructures",
              &PyResonanceMolSupplierCallback::wrapGetMaxStructures,
+             python::args("self"),
              "Get the number of conjugated groups this molecule has.\n")
         .def("GetNumStructures",
              (size_t(PyResonanceMolSupplierCallback::*)(unsigned int)) &
                  PyResonanceMolSupplierCallback::wrapGetNumStructures,
+             python::args("self", "conjGrpIdx"),
              "Get the number of resonance structures generated so far "
              "for the passed conjugated group index.\n")
         .def("GetNumDiverseStructures",
              (size_t(PyResonanceMolSupplierCallback::*)(unsigned int)) &
                  PyResonanceMolSupplierCallback::wrapGetNumDiverseStructures,
+             python::args("self", "conjGrpIdx"),
              "Get the number of non-degenrate resonance structures "
              "generated so far for the passed conjugated group index.\n")
         .def("__call__",
              python::pure_virtual(&PyResonanceMolSupplierCallback::operator()),
+             python::args("self"),
              "This must be implemented in the derived class. "
              "Return True if the resonance structure generation "
              "should continue; False if the resonance structure "
@@ -204,62 +210,73 @@ struct resmolsup_wrap {
     python::class_<ResonanceMolSupplier, boost::noncopyable>(
         "ResonanceMolSupplier", resonanceMolSupplierClassDoc.c_str(),
         python::init<ROMol &, unsigned int, unsigned int>(
-            (python::arg("mol"), python::arg("flags") = 0,
+            (python::arg("self"), python::arg("mol"), python::arg("flags") = 0,
              python::arg("maxStructs") = 1000)))
         .def(
             "__iter__",
             (ResonanceMolSupplier * (*)(ResonanceMolSupplier *)) & MolSupplIter,
-            python::return_internal_reference<1>())
+            python::return_internal_reference<1>(), python::args("self"))
         .def("__next__", (ROMol * (*)(ResonanceMolSupplier *)) & MolSupplNext,
              "Returns the next resonance structure in the supplier. Raises "
              "_StopIteration_ on end.\n",
-             python::return_value_policy<python::manage_new_object>())
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"))
         .def("__getitem__",
              (ROMol * (*)(ResonanceMolSupplier *, int)) & MolSupplGetItem,
-             python::return_value_policy<python::manage_new_object>())
-        .def("reset", &ResonanceMolSupplier::reset,
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self", "idx"))
+        .def("reset", &ResonanceMolSupplier::reset, python::args("self"),
              "Resets our position in the resonance structure supplier to the "
              "beginning.\n")
-        .def("__len__", &ResonanceMolSupplier::length)
-        .def("atEnd", &ResonanceMolSupplier::atEnd,
+        .def("__len__", &ResonanceMolSupplier::length, python::args("self"))
+        .def("atEnd", &ResonanceMolSupplier::atEnd, python::args("self"),
              "Returns whether or not we have hit the end of the resonance "
              "structure supplier.\n")
         .def("GetNumConjGrps", &ResonanceMolSupplier::getNumConjGrps,
+             python::args("self"),
              "Returns the number of individual conjugated groups in the "
              "molecule.\n")
         .def("GetBondConjGrpIdx",
              (unsigned int (ResonanceMolSupplier::*)(unsigned int)) &
                  ResonanceMolSupplier::getBondConjGrpIdx,
+             python::args("self", "bi"),
              "Given a bond index, it returns the index of the conjugated group"
              "the bond belongs to, or -1 if it is not conjugated.\n")
         .def("GetAtomConjGrpIdx",
              (unsigned int (ResonanceMolSupplier::*)(unsigned int)) &
                  ResonanceMolSupplier::getAtomConjGrpIdx,
+             python::args("self", "ai"),
              "Given an atom index, it returns the index of the conjugated group"
              "the atom belongs to, or -1 if it is not conjugated.\n")
         .def(
             "SetNumThreads",
             (void(ResonanceMolSupplier::*)(unsigned int)) &
                 ResonanceMolSupplier::setNumThreads,
+            python::args("self", "numThreads"),
             "Sets the number of threads to be used to enumerate resonance\n"
             "structures (defaults to 1; 0 selects the number of concurrent\n"
             "threads supported by the hardware; negative values are added\n"
             "to the number of concurrent threads supported by the hardware).\n")
         .def("SetProgressCallback", &setProgressCallbackHelper,
+             python::args("self", "callback"),
              "Pass an instance of a class derived from\n"
              "ResonanceMolSupplierCallback, which must implement the\n"
              "__call__() method.\n")
         .def("GetProgressCallback", &getProgressCallbackHelper,
+             python::args("self"),
              "Get the ResonanceMolSupplierCallback subclass instance,\n"
              "or None if none was set.\n")
         .def("WasCanceled", &ResonanceMolSupplier::wasCanceled,
+             python::args("self"),
              "Returns True if the resonance structure generation was "
              "canceled.\n")
         .def("Enumerate", &ResonanceMolSupplier::enumerate,
+             python::args("self"),
              "Ask ResonanceMolSupplier to enumerate resonance structures"
              "(automatically done as soon as any attempt to access them is "
              "made).\n")
         .def("GetIsEnumerated", &ResonanceMolSupplier::getIsEnumerated,
+             python::args("self"),
              "Returns true if resonance structure enumeration has already "
              "happened.\n")
         .def("GetSubstructMatch",

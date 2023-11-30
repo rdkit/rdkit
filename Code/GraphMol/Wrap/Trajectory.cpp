@@ -83,7 +83,7 @@ struct Trajectory_wrapper {
         .def("NumPoints", &Trajectory::numPoints, (python::arg("self")),
              "returns the number of coordinate tuples associated to each "
              "Snapshot")
-        .def("__len__", &Trajectory::size)
+        .def("__len__", &Trajectory::size, python::args("self"))
         .def("AddSnapshot", &Trajectory::addSnapshot,
              (python::arg("self"), python::arg("s")),
              "appends Snapshot s to this Trajectory; returns the zero-based "
@@ -108,8 +108,8 @@ struct Trajectory_wrapper {
         .def("Clear", &Trajectory::clear, (python::arg("self")),
              "removes all Snapshots from the Trajectory\n")
         .def("AddConformersToMol", &Trajectory::addConformersToMol,
-             (python::arg("self"), python::arg("mol"), python::arg("fromCid") = -1,
-              python::arg("toCid") = -1),
+             (python::arg("self"), python::arg("mol"),
+              python::arg("fromCid") = -1, python::arg("toCid") = -1),
              "adds conformations from the Trajectory to mol\n"
              "fromCid is the first Snapshot that will be added as a Conformer; "
              "defaults to -1 (first available)\n"

@@ -1167,7 +1167,7 @@ struct molops_wrapper {
   RETURNS: Nothing\n\
 \n";
     python::def("SetTerminalAtomCoords", MolOps::setTerminalAtomCoords,
-                docString.c_str());
+                docString.c_str(), python::args("mol", "idx", "otherIdx"));
 
     // ------------------------------------------------------------------------
     docString =
@@ -1179,10 +1179,11 @@ struct molops_wrapper {
 \n\
   RETURNS: Nothing\n\
 \n";
-    python::def("FastFindRings", MolOps::fastFindRings, docString.c_str());
+    python::def("FastFindRings", MolOps::fastFindRings, docString.c_str(),
+                python::args("mol"));
 #ifdef RDK_USE_URF
     python::def("FindRingFamilies", MolOps::findRingFamilies,
-                "generate Unique Ring Families");
+                python::args("mol"), "generate Unique Ring Families");
 #endif
     // ------------------------------------------------------------------------
     docString =
@@ -2019,7 +2020,8 @@ RETURNS:
 \n\
     - mol: the molecule to use\n\
 \n";
-    python::def("GetFormalCharge", &MolOps::getFormalCharge, docString.c_str());
+    python::def("GetFormalCharge", &MolOps::getFormalCharge, docString.c_str(),
+                python::args("mol"));
 
     // ------------------------------------------------------------------------
     docString =
@@ -2031,7 +2033,8 @@ RETURNS:
     - idx1: index of the first atom\n\
     - idx2: index of the second atom\n\
 \n";
-    python::def("GetShortestPath", getShortestPathHelper, docString.c_str());
+    python::def("GetShortestPath", getShortestPathHelper, docString.c_str(),
+                python::args("mol", "aid1", "aid2"));
 
     // ------------------------------------------------------------------------
     docString =
@@ -2428,7 +2431,7 @@ ARGUMENTS:\n\
         \n\
         \n";
     python::def("ReapplyMolBlockWedging", Chirality::reapplyMolBlockWedging,
-                docString.c_str());
+                docString.c_str(), python::args("mol"));
     docString =
         R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";
     python::class_<StereoBondThresholds>("StereoBondThresholds",
@@ -2463,7 +2466,8 @@ ARGUMENTS:\n\
     - atom ID: the atom from which to do the wedging
     - conformer: the conformer to use to determine wedge direction
 )DOC";
-    python::def("WedgeBond", WedgeBond, docString.c_str());
+    python::def("WedgeBond", WedgeBond, docString.c_str(),
+                python::args("bond", "fromAtomIdx", "conf"));
 
     // ------------------------------------------------------------------------
     docString =
@@ -2712,7 +2716,7 @@ EXAMPLES:\n\n\
 ";
 
     python::class_<MolzipParams>("MolzipParams", docString.c_str(),
-                                 python::init<>())
+                                 python::init<>(python::args("self")))
         .def_readwrite("label", &MolzipParams::label,
                        "Set the atom labelling system to zip together")
         .def_readwrite("enforceValenceRules",
@@ -2724,6 +2728,7 @@ Setting this to false allows assembling chemically incorrect fragments.")
             "If true will add depiction coordinates to input molecules and\n\
 zipped molecule (for molzipFragments only)")
         .def("setAtomSymbols", &RDKit::setAtomSymbols,
+             python::args("self", "symbols"),
              "Set the atom symbols used to zip mols together when using "
              "AtomType labeling");
 
@@ -2958,14 +2963,14 @@ A note on the flags controlling which atoms/bonds are modified:
                 python::arg("mol"), "documentation");
     python::def(
         "SetAllowNontetrahedralChirality",
-        Chirality::setAllowNontetrahedralChirality,
+        Chirality::setAllowNontetrahedralChirality, python::args("val"),
         "toggles recognition of non-tetrahedral chirality from 3D structures");
     python::def("GetAllowNontetrahedralChirality",
                 Chirality::getAllowNontetrahedralChirality,
                 "returns whether or not recognition of non-tetrahedral "
                 "chirality from 3D structures is enabled");
     python::def("SetUseLegacyStereoPerception",
-                Chirality::setUseLegacyStereoPerception,
+                Chirality::setUseLegacyStereoPerception, python::args("val"),
                 "toggles usage of the legacy stereo perception code");
     python::def("GetUseLegacyStereoPerception",
                 Chirality::getUseLegacyStereoPerception,

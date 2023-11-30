@@ -99,11 +99,11 @@ struct multiSDMolSup_wrap {
 
     python::class_<MultithreadedSDMolSupplier, boost::noncopyable>(
         "MultithreadedSDMolSupplier", multiSDMolSupplierClassDoc.c_str(),
-        python::init<>())
+        python::init<>(python::args("self")))
         .def(python::init<std::string, bool, bool, bool, unsigned int, size_t,
                           size_t>(
-            (python::arg("fileName"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true,
+            (python::arg("self"), python::arg("fileName"),
+             python::arg("sanitize") = true, python::arg("removeHs") = true,
              python::arg("strictParsing") = true,
              python::arg("numWriterThreads") = 1,
              python::arg("sizeInputQueue") = 5,
@@ -112,7 +112,7 @@ struct multiSDMolSup_wrap {
         .def("__iter__",
              (MultithreadedSDMolSupplier * (*)(MultithreadedSDMolSupplier *)) &
                  MTMolSupplIter,
-             python::return_internal_reference<1>())
+             python::return_internal_reference<1>(), python::args("self"))
         .def("__enter__",
              (MultithreadedSDMolSupplier * (*)(MultithreadedSDMolSupplier *)) &
                  MolIOEnter,
@@ -124,23 +124,28 @@ struct multiSDMolSup_wrap {
              (ROMol * (*)(MultithreadedSDMolSupplier *)) & MolForwardSupplNext,
              "Returns the next molecule in the file. Raises _StopIteration_ "
              "on EOF.\n",
-             python::return_value_policy<python::manage_new_object>())
-        .def("atEnd", &MultithreadedSDMolSupplier::atEnd,
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"))
+        .def("atEnd", &MultithreadedSDMolSupplier::atEnd, python::args("self"),
              "Returns true if we have read all records else false.\n")
         .def(
             "GetLastRecordId",
             (unsigned int (*)(MultithreadedSDMolSupplier *)) & MTMolSupplLastId,
+            python::args("self"),
             "Returns the record id for the last extracted item.\n")
         .def(
             "GetLastItemText",
             (std::string(*)(MultithreadedSDMolSupplier *)) & MTMolSupplLastItem,
+            python::args("self"),
             "Returns the text for the last extracted item.\n")
         .def("GetProcessPropertyLists",
              &MultithreadedSDMolSupplier::getProcessPropertyLists,
+             python::args("self"),
              "returns whether or not any property lists that are present will "
              "be processed when reading molecules")
         .def("SetProcessPropertyLists",
              &MultithreadedSDMolSupplier::setProcessPropertyLists,
+             python::args("self", "val"),
              "sets whether or not any property lists that are present will be "
              "processed when reading molecules");
   };

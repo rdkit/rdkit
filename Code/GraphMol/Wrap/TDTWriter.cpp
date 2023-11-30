@@ -51,12 +51,12 @@ struct tdtwriter_wrap {
         "TDTWriter", "A class for writing molecules to TDT files.\n",
         python::no_init)
         .def("__init__", python::make_constructor(&getTDTWriter))
-        .def(
-            python::init<std::string>(python::args("fileName"), docStr.c_str()))
+        .def(python::init<std::string>(python::args("self", "fileName"),
+                                       docStr.c_str()))
         .def("__enter__", &MolIOEnter<TDTWriter>,
              python::return_internal_reference<>())
         .def("__exit__", &MolIOExit<TDTWriter>)
-        .def("SetProps", SetTDTWriterProps,
+        .def("SetProps", SetTDTWriterProps, python::args("self", "props"),
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"
              "    - props: a list or tuple of property names\n\n")
@@ -67,26 +67,27 @@ struct tdtwriter_wrap {
              "  ARGUMENTS:\n\n"
              "    - mol: the Mol to be written\n"
              "    - confId: (optional) ID of the conformation to write\n\n")
-        .def("flush", &TDTWriter::flush,
+        .def("flush", &TDTWriter::flush, python::args("self"),
              "Flushes the output file (forces the disk file to be "
              "updated).\n\n")
-        .def("close", &TDTWriter::close,
+        .def("close", &TDTWriter::close, python::args("self"),
              "Flushes the output file and closes it. The Writer cannot be used "
              "after this.\n\n")
-        .def("NumMols", &TDTWriter::numMols,
+        .def("NumMols", &TDTWriter::numMols, python::args("self"),
              "Returns the number of molecules written so far.\n\n")
         .def("SetWrite2D", &TDTWriter::setWrite2D,
              (python::arg("self"), python::arg("state") = true),
              "causes 2D conformations to be written (default is 3D "
              "conformations)")
-        .def("GetWrite2D", &TDTWriter::getWrite2D)
+        .def("GetWrite2D", &TDTWriter::getWrite2D, python::args("self"))
         .def("SetWriteNames", &TDTWriter::setWriteNames,
              (python::arg("self"), python::arg("state") = true),
              "causes names to be written to the output file as NAME records")
-        .def("GetWriteNames", &TDTWriter::getWriteNames)
+        .def("GetWriteNames", &TDTWriter::getWriteNames, python::args("self"))
         .def("SetNumDigits", &TDTWriter::setNumDigits,
+             python::args("self", "numDigits"),
              "sets the number of digits to be written for coordinates")
-        .def("GetNumDigits", &TDTWriter::getNumDigits);
+        .def("GetNumDigits", &TDTWriter::getNumDigits, python::args("self"));
   };
 };
 }  // namespace RDKit
