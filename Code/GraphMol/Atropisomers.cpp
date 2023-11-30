@@ -404,7 +404,7 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
   std::set<Bond *> bondsToTry;
 
   for (auto bond : mol.bonds()) {
-    if (bond->canHaveDirection() &&
+    if (canHaveDirection(*bond) &&
         (bond->getBondDir() == Bond::BondDir::BEGINDASH ||
          bond->getBondDir() == Bond::BondDir::BEGINWEDGE)) {
       for (const auto &nbrBond : mol.atomBonds(bond->getBeginAtom())) {
@@ -550,7 +550,7 @@ bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
 
       if ((bondDir == Bond::BEGINWEDGE || bondDir == Bond::BEGINDASH) &&
           bonds[whichEnd][whichBond]->getBeginAtom() == atoms[whichEnd] &&
-          bond->canHaveDirection()) {
+          canHaveDirection(*bond)) {
         useBondsAtEnd[whichEnd].push_back(whichBond);
         foundBondDir = true;
       }
@@ -584,7 +584,7 @@ bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
          ++whichBond) {
       auto bondToTry = bonds[whichEnd][whichBond];
 
-      if (!bondToTry->canHaveDirection() ||
+      if (!canHaveDirection(*bondToTry) ||
           wedgeBonds.find(bondToTry->getIdx()) != wedgeBonds.end()) {
         continue;  // must be a single OR aromatic bond and not already spoken
                    // for by a chiral center
@@ -689,7 +689,7 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
       // main bond
 
       if ((bondDir == Bond::BEGINWEDGE || bondDir == Bond::BEGINDASH) &&
-          bond->getBeginAtom() == atoms[whichEnd] && bond->canHaveDirection()) {
+          bond->getBeginAtom() == atoms[whichEnd] && canHaveDirection(*bond)) {
         useBonds.push_back(bond);
       }
     }
@@ -723,7 +723,7 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
       // cannot use a bond that is not single, nor if it is already slated
       // to be used for a chiral center
 
-      if (!bondToTry->canHaveDirection() ||
+      if (!canHaveDirection(*bondToTry) ||
           wedgeBonds.find(bond->getIdx()) != wedgeBonds.end()) {
         continue;  // must be a single bond and not already spoken
                    // for by a chiral center

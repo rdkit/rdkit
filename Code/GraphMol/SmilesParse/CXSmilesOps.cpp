@@ -1106,11 +1106,11 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
       }
       bond->setProp(common_properties::_MolFileBondCfg, cfg);
       bond->setBondDir(state);
-      if (cfg == 2 && bond->canHaveDirection()) {
+      if (cfg == 2 && canHaveDirection(*bond)) {
         bond->getBeginAtom()->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
         mol.setProp(detail::_needsDetectBondStereo, 1);
       }
-      if ((cfg == 1 || cfg == 3) && bond->canHaveDirection()) {
+      if ((cfg == 1 || cfg == 3) && canHaveDirection(*bond)) {
         mol.setProp(detail::_needsDetectAtomStereo, 1);
       }
     }
@@ -2060,7 +2060,7 @@ std::string get_bond_config_block(const ROMol &mol,
     const auto bond = mol.getBondWithIdx(idx);
     unsigned int wedgeStartAtomIdx = bond->getBeginAtomIdx();
 
-    if (!bond->canHaveDirection()) {
+    if (!canHaveDirection(*bond)) {
       continue;
     }
     // when figuring out what to output for the bond, favor the wedge state:

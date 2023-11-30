@@ -325,6 +325,7 @@ bool Bond::invertChirality() {
   }
   return false;
 }
+
 };  // namespace RDKit
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {
