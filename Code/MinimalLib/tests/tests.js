@@ -1901,6 +1901,15 @@ function test_get_mmpa_frags() {
         }
         assert(!pairs.cores.next());
         assert(!pairs.sidechains.next());
+        var numCores = pairs.cores.size();
+        for (i = 0; i < numCores; ++i) {
+            assert(pairs.cores.at(i) === null);
+        }
+        for (i = 0; i < numCores; ++i) {
+            assert(pairs.cores.pop(0) === null);
+        }
+        assert(pairs.cores.size() === 0);
+        assert(pairs.cores.next() === null);
         pairs.cores.delete();
         pairs.sidechains.delete();
         mol.delete();

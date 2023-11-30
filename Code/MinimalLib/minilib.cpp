@@ -651,7 +651,15 @@ bool JSReaction::is_valid() const {
 JSMol *JSMolList::next() {
   JSMol *res = nullptr;
   if (d_idx < d_mols.size()) {
-    const auto &molSptr = d_mols.at(d_idx++);
+    res = at(d_idx++);
+  }
+  return res;
+}
+
+JSMol *JSMolList::at(size_t idx) const {
+  JSMol *res = nullptr;
+  if (idx < d_mols.size()) {
+    const auto &molSptr = d_mols.at(idx);
     if (molSptr) {
       res = new JSMol(new RDKit::RWMol(*molSptr));
     }
@@ -659,15 +667,10 @@ JSMol *JSMolList::next() {
   return res;
 }
 
-JSMol *JSMolList::at(size_t idx) const {
-  return (idx < d_mols.size() ? new JSMol(new RDKit::RWMol(*d_mols.at(idx)))
-                              : nullptr);
-}
-
 JSMol *JSMolList::pop(size_t idx) {
   JSMol *res = nullptr;
   if (idx < d_mols.size()) {
-    res = new JSMol(new RDKit::RWMol(*d_mols.at(idx)));
+    res = at(idx);
     d_mols.erase(d_mols.begin() + idx);
     if (d_idx > idx) {
       --d_idx;
