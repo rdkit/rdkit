@@ -15,6 +15,21 @@
 namespace RDKit {
 namespace MolDraw2D_detail {
 
+// Struct to hold a pair of lines that make up part of the
+// lasso.  Each atom in the lasso will have one for each
+// of its bonds that are in the lasso.  The angles are
+// subtended by the line ends at the atom centres relative
+// to the x axis.  The radius is also the distance from
+// the nearest end of each line ot the atom.
+struct LinePair {
+  DrawShapeSimpleLine *line1;
+  DrawShapeSimpleLine *line2;
+  double angle1;
+  double angle2;
+  double radius;
+  int atom;
+};
+
 class DrawMolMCHLasso : public DrawMolMCH {
  public:
   /*!
@@ -67,27 +82,28 @@ class DrawMolMCHLasso : public DrawMolMCH {
                               std::vector<std::vector<int>> &colourLists) const;
   void drawLasso(size_t lassoNum, const DrawColour &col,
                  const std::vector<int> &colAtoms);
-  void extractAtomArcs(size_t lassoNum, const DrawColour &col,
-                       const std::vector<int> &colAtoms,
-                       std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const;
   void extractBondLines(
       size_t lassoNum, const DrawColour &col, const std::vector<int> &colAtoms,
-      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
-  void fixArcsAndLines(
-      std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
-      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
-  void fixIntersectingLines(
-      const std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
-      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
-  void fixIntersectingArcsAndLines(
-      std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
-      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
-  void fixProtrudingLines(
-      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines) const;
-  // Orphan lines are ones where at least one end isn't close to the end
-  // of any line or arc.
-  void fixOrphanLines(std::vector<std::unique_ptr<DrawShapeArc>> &arcs,
-                      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines);
+      std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines,
+      std::vector<std::vector<LinePair>> &atomLines) const;
+  void extractAtomArcs(std::vector<std::vector<LinePair>> &atomLines,
+                       std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const;
+  void addNoLineArcs(
+      const std::vector<int> &colAtoms, size_t lassoNum,
+      const RDKit::DrawColour &col,
+      const std::vector<std::unique_ptr<DrawShapeSimpleLine>> &lines,
+      std::vector<std::unique_ptr<DrawShapeArc>> &arcs) const;
+  void makeIntersectingArcs(
+      const std::vector<std::vector<unsigned int>> &intersects, int lassoNum,
+      const RDKit::DrawColour &col,
+      std::vector<std::unique_ptr<DrawShapeArc>> &currArcs,
+      std::vector<DrawShapeArc *> &arcs) const;
+  // Put the start points of each pair of atoms in order so that going in
+  // an anti-clockwise direction the bond that the lines straddle is in
+  // between them such that the arc between the first and second is always
+  // the bit that isn't drawn.  And then order the pairs so that the bonds
+  // are moving round in an anti-clockwise direction.
+  void orderAtomLines(std::vector<std::vector<LinePair>> &atomLines) const;
 };
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
