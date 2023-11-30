@@ -285,10 +285,3 @@ std::string get_mcs_as_json(const JSMolList &mols, const std::string &details_js
 std::string get_mcs_as_smarts(const JSMolList &mols, const std::string &details_json);
 JSMol *get_mcs_as_mol(const JSMolList &mols, const std::string &details_json);
 #endif
-
-#ifdef RDK_BUILD_MINIMAL_LIB_MMPA
-std::pair<JSMolList *, JSMolList *> fragmentMol(const JSMol &mol,
-                                                unsigned int minCuts,
-                                                unsigned int maxCuts,
-                                                unsigned int maxCutBonds);
-#endif
