@@ -6560,8 +6560,21 @@ M  END
     self.assertEqual(len(ctrs), 2)
     self.assertEqual(ctrs, [(1, 'S'), (5, '?')])
 
-  @unittest.skipUnless(hasattr(Chem,'MolFromPNGFile'),
-                     "RDKit not built with iostreams support")
+  def testGithub6945(self):
+    origVal = Chem.GetUseLegacyStereoPerception()
+    tgt = [(1, '?'), (4, 'R')]
+    try:
+      for opt in (True, False):
+        Chem.SetUseLegacyStereoPerception(True)
+        for useLegacy in (True, False):
+          self.assertEqual(
+            tgt,
+            Chem.FindMolChiralCenters(Chem.MolFromSmiles('FC(Cl)(Br)[C@H](F)Cl'),
+                                      includeUnassigned=True, useLegacyImplementation=useLegacy))
+    finally:
+      pass
+
+  @unittest.skipUnless(hasattr(Chem, 'MolFromPNGFile'), "RDKit not built with iostreams support")
   def testMolFromPNG(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.png')
