@@ -130,7 +130,8 @@ BOOST_PYTHON_MODULE(rdInfoTheory) {
     - dim: long int containing the length of the _tPtr_ array.\n\n\
   RETURNS:\n\n\
     a double\n";
-  python::def("InfoEntropy", RDInfoTheory::infoEntropy, docString.c_str());
+  python::def("InfoEntropy", RDInfoTheory::infoEntropy, docString.c_str(),
+              python::args("resArr"));
 
   docString =
       "Calculates the information gain for a variable\n\n\
@@ -144,7 +145,8 @@ BOOST_PYTHON_MODULE(rdInfoTheory) {
      - a Python float object\n\n\
    NOTES\n\n\
      - this is a dropin replacement for _PyInfoGain()_ in entropy.py\n";
-  python::def("InfoGain", RDInfoTheory::infoGain, docString.c_str());
+  python::def("InfoGain", RDInfoTheory::infoGain, docString.c_str(),
+              python::args("resArr"));
 
   docString =
       "Calculates the chi squared value for a variable\n\n\
@@ -156,5 +158,6 @@ BOOST_PYTHON_MODULE(rdInfoTheory) {
          has 3 possible values, varMat would be 4x3\n\n\
    RETURNS:\n\n\
      - a Python float object\n";
-  python::def("ChiSquare", RDInfoTheory::chiSquare, docString.c_str());
+  python::def("ChiSquare", RDInfoTheory::chiSquare, docString.c_str(),
+              python::args("resArr"));
 }

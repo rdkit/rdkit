@@ -66,35 +66,44 @@ std::string confClassDoc =
 
 struct conformer_wrapper {
   static void wrap() {
-    python::class_<Conformer, CONFORMER_SPTR>("Conformer", confClassDoc.c_str(),
-                                              python::init<>())
+    python::class_<Conformer, CONFORMER_SPTR>(
+        "Conformer", confClassDoc.c_str(), python::init<>(python::args("self")))
         .def(python::init<unsigned int>(
+            python::args("self", "numAtoms"),
             "Constructor with the number of atoms specified"))
-        .def(python::init<const Conformer &>())
+        .def(python::init<const Conformer &>(python::args("self", "numAtoms")))
 
-        .def("GetNumAtoms", &Conformer::getNumAtoms,
+        .def("GetNumAtoms", &Conformer::getNumAtoms, python::args("self"),
              "Get the number of atoms in the conformer\n")
 
-        .def("HasOwningMol", &Conformer::hasOwningMol,
+        .def("HasOwningMol", &Conformer::hasOwningMol, python::args("self"),
              "Returns whether or not this instance belongs to a molecule.\n")
         .def("GetOwningMol", &Conformer::getOwningMol,
              "Get the owning molecule\n",
-             python::return_value_policy<python::reference_existing_object>())
+             python::return_value_policy<python::reference_existing_object>(),
+             python::args("self"))
 
-        .def("GetId", &Conformer::getId, "Get the ID of the conformer")
-        .def("SetId", &Conformer::setId, "Set the ID of the conformer\n")
+        .def("GetId", &Conformer::getId, python::args("self"),
+             "Get the ID of the conformer")
+        .def("SetId", &Conformer::setId, python::args("self", "id"),
+             "Set the ID of the conformer\n")
 
-        .def("GetAtomPosition", GetAtomPos, "Get the posistion of an atom\n")
-        .def("GetPositions", GetPos, "Get positions of all the atoms\n")
-        .def("SetAtomPosition", SetAtomPos,
+        .def("GetAtomPosition", GetAtomPos, python::args("self", "aid"),
+             "Get the posistion of an atom\n")
+        .def("GetPositions", GetPos, python::args("self"),
+             "Get positions of all the atoms\n")
+        .def("SetAtomPosition", SetAtomPos, python::args("self", "aid", "loc"),
              "Set the position of the specified atom\n")
         .def("SetAtomPosition",
              (void(Conformer::*)(unsigned int, const RDGeom::Point3D &)) &
                  Conformer::setAtomPos,
+             python::args("self", "atomId", "position"),
              "Set the position of the specified atom\n")
 
-        .def("Set3D", &Conformer::set3D, "Set the 3D flag of the conformer\n")
-        .def("Is3D", &Conformer::is3D, "returns the 3D flag of the conformer\n")
+        .def("Set3D", &Conformer::set3D, python::args("self", "v"),
+             "Set the 3D flag of the conformer\n")
+        .def("Is3D", &Conformer::is3D, python::args("self"),
+             "returns the 3D flag of the conformer\n")
 
         // properties
         .def("SetProp", MolSetProp<Conformer, std::string>,
@@ -148,7 +157,7 @@ struct conformer_wrapper {
              "    - computed: (optional) marks the property as being "
              "computed.\n"
              "                Defaults to False.\n\n")
-        .def("HasProp", MolHasProp<Conformer>,
+        .def("HasProp", MolHasProp<Conformer>, python::args("self", "key"),
              "Queries a conformer to see if a particular property has been "
              "assigned.\n\n"
              "  ARGUMENTS:\n"
@@ -166,6 +175,7 @@ struct conformer_wrapper {
             "    - If the property has not been set, a KeyError exception "
             "will be raised.\n")
         .def("GetDoubleProp", GetProp<Conformer, double>,
+             python::args("self", "key"),
              "Returns the double value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -173,7 +183,7 @@ struct conformer_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-        .def("GetIntProp", GetProp<Conformer, int>,
+        .def("GetIntProp", GetProp<Conformer, int>, python::args("self", "key"),
              "Returns the integer value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -182,6 +192,7 @@ struct conformer_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
         .def("GetUnsignedProp", GetProp<Conformer, unsigned int>,
+             python::args("self", "key"),
              "Returns the unsigned int value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -190,6 +201,7 @@ struct conformer_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
         .def("GetBoolProp", GetProp<Conformer, bool>,
+             python::args("self", "key"),
              "Returns the Bool value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -197,12 +209,13 @@ struct conformer_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-        .def("ClearProp", MolClearProp<Conformer>,
+        .def("ClearProp", MolClearProp<Conformer>, python::args("self", "key"),
              "Removes a property from the conformer.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to clear (a string).\n")
 
         .def("ClearComputedProps", MolClearComputedProps<Conformer>,
+             python::args("self"),
              "Removes all computed properties from the conformer.\n\n")
         .def("GetPropNames", &Conformer::getPropList,
              (python::arg("self"), python::arg("includePrivate") = false,

@@ -21,6 +21,7 @@ add_library(rdkit_base INTERFACE)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
+option(RDK_BUILD_PYTHON_STUBS "build the python stubs" OFF )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
@@ -365,7 +366,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
         PATTERN ".svn" EXCLUDE
         PATTERN "CMake*" EXCLUDE
         PATTERN "Basement" EXCLUDE
-        )
+      )
     else(RDK_INSTALL_PYTHON_TESTS)
       install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
         COMPONENT python
@@ -376,7 +377,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
         PATTERN "CMake*" EXCLUDE
         PATTERN "Basement" EXCLUDE
         PATTERN "UnitTest*" EXCLUDE
-        )
+      )
     endif(RDK_INSTALL_PYTHON_TESTS)
 
   endif(RDK_INSTALL_INTREE)
@@ -619,6 +620,7 @@ add_subdirectory(Code)
 if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(Projects)
   add_subdirectory(rdkit)
+  add_subdirectory(rdkit-stubs)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 if(RDK_BUILD_CONTRIB)

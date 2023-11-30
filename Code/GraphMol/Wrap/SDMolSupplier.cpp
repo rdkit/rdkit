@@ -75,25 +75,28 @@ std::string sdMolSupplierClassDoc =
 struct sdmolsup_wrap {
   static void wrap() {
     python::class_<SDMolSupplier, boost::noncopyable>(
-        "SDMolSupplier", sdMolSupplierClassDoc.c_str(), python::init<>())
+        "SDMolSupplier", sdMolSupplierClassDoc.c_str(),
+        python::init<>(python::args("self")))
         .def(python::init<std::string, bool, bool, bool>(
-            (python::arg("fileName"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true,
+            (python::arg("self"), python::arg("fileName"),
+             python::arg("sanitize") = true, python::arg("removeHs") = true,
              python::arg("strictParsing") = true)))
         .def("__enter__", &MolIOEnter<SDMolSupplier>,
              python::return_internal_reference<>())
         .def("__exit__", &MolIOExit<SDMolSupplier>)
         .def("__iter__", &MolSupplIter<SDMolSupplier>,
-             python::return_internal_reference<1>())
+             python::return_internal_reference<1>(), python::args("self"))
         .def("__next__", &MolSupplNext<SDMolSupplier>,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
-             python::return_value_policy<python::manage_new_object>())
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"))
         .def("__getitem__", &MolSupplGetItem<SDMolSupplier>,
-             python::return_value_policy<python::manage_new_object>())
-        .def("reset", &SDMolSupplier::reset,
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self", "idx"))
+        .def("reset", &SDMolSupplier::reset, python::args("self"),
              "Resets our position in the file to the beginning.\n")
-        .def("__len__", &SDMolSupplier::length)
+        .def("__len__", &SDMolSupplier::length, python::args("self"))
         .def("SetData", setDataHelper, "Sets the text to be parsed",
              (python::arg("self"), python::arg("data"),
               python::arg("sanitize") = true, python::arg("removeHs") = true,
@@ -105,12 +108,14 @@ struct sdmolsup_wrap {
         .def("GetItemText", &SDMolSupplier::getItemText,
              "returns the text for an item",
              (python::arg("self"), python::arg("index")))
-        .def("atEnd", &SDMolSupplier::atEnd,
+        .def("atEnd", &SDMolSupplier::atEnd, python::args("self"),
              "Returns whether or not we have hit EOF.\n")
         .def("GetProcessPropertyLists", &SDMolSupplier::getProcessPropertyLists,
+             python::args("self"),
              "returns whether or not any property lists that are present will "
              "be processed when reading molecules")
         .def("SetProcessPropertyLists", &SDMolSupplier::setProcessPropertyLists,
+             python::args("self", "val"),
              "sets whether or not any property lists that are present will be "
              "processed when reading molecules");
   };

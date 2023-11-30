@@ -77,7 +77,7 @@ struct deprotect_wrap {
         "DeprotectData", deprotect_doc_string,
         python::init<std::string, std::string, std::string, std::string>(
             constructor_doc,
-            python::args("deprotection_class", "reaction_smarts",
+            python::args("self", "deprotection_class", "reaction_smarts",
                          "abbreviation", "full_name")))
         .def_readonly("deprotection_class",
                       &RDKit::Deprotect::DeprotectData::deprotection_class)
@@ -88,6 +88,7 @@ struct deprotect_wrap {
                       &RDKit::Deprotect::DeprotectData::reaction_smarts)
         .def_readonly("example", &RDKit::Deprotect::DeprotectData::example)
         .def("isValid", &RDKit::Deprotect::DeprotectData::isValid,
+             python::args("self"),
              "Returns True if the DeprotectData has a valid reaction");
 
     python::def("GetDeprotections", &RDKit::GetDeprotectionsWrap,

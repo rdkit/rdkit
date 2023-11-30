@@ -279,32 +279,42 @@ struct BitOps_wrapper {
             "(B(bv1) - B(bv1^bv2)) / B(bv1)");
 
     python::def("OnBitProjSimilarity",
-                (DoubleVect(*)(const SBV &, const SBV &))OnBitProjSimilarity);
+                (DoubleVect(*)(const SBV &, const SBV &))OnBitProjSimilarity,
+                python::args("bv1", "bv2"));
     python::def(
         "OnBitProjSimilarity",
         (DoubleVect(*)(const EBV &, const EBV &))OnBitProjSimilarity,
+        python::args("bv1", "bv2"),
         "Returns a 2-tuple: (B(bv1&bv2) / B(bv1), B(bv1&bv2) / B(bv2))");
     python::def("OffBitProjSimilarity",
-                (DoubleVect(*)(const SBV &, const SBV &))OffBitProjSimilarity);
+                (DoubleVect(*)(const SBV &, const SBV &))OffBitProjSimilarity,
+                python::args("bv1", "bv2"));
     python::def("OffBitProjSimilarity",
-                (DoubleVect(*)(const EBV &, const EBV &))OffBitProjSimilarity);
+                (DoubleVect(*)(const EBV &, const EBV &))OffBitProjSimilarity,
+                python::args("bv1", "bv2"));
 
     python::def("NumBitsInCommon",
-                (int (*)(const SBV &, const SBV &))NumBitsInCommon);
+                (int (*)(const SBV &, const SBV &))NumBitsInCommon,
+                python::args("bv1", "bv2"));
     python::def("NumBitsInCommon",
                 (int (*)(const EBV &, const EBV &))NumBitsInCommon,
+                python::args("bv1", "bv2"),
                 "Returns the total number of bits in common between the two "
                 "bit vectors");
     python::def("OnBitsInCommon",
-                (IntVect(*)(const SBV &, const SBV &))OnBitsInCommon);
+                (IntVect(*)(const SBV &, const SBV &))OnBitsInCommon,
+                python::args("bv1", "bv2"));
     python::def(
         "OnBitsInCommon", (IntVect(*)(const EBV &, const EBV &))OnBitsInCommon,
+        python::args("bv1", "bv2"),
         "Returns the number of on bits in common between the two bit vectors");
     python::def("OffBitsInCommon",
-                (IntVect(*)(const SBV &, const SBV &))OffBitsInCommon);
+                (IntVect(*)(const SBV &, const SBV &))OffBitsInCommon,
+                python::args("bv1", "bv2"));
     python::def(
         "OffBitsInCommon",
         (IntVect(*)(const EBV &, const EBV &))OffBitsInCommon,
+        python::args("bv1", "bv2"),
         "Returns the number of off bits in common between the two bit vectors");
 
     python::def("FoldFingerprint",
@@ -320,30 +330,40 @@ struct BitOps_wrapper {
                 "the original.");
 
     python::def("AllProbeBitsMatch",
-                (bool (*)(const SBV &, const SBV &))AllProbeBitsMatch);
+                (bool (*)(const SBV &, const SBV &))AllProbeBitsMatch,
+                python::args("probe", "ref"));
     python::def("AllProbeBitsMatch",
-                (bool (*)(const EBV &, const EBV &))AllProbeBitsMatch);
+                (bool (*)(const EBV &, const EBV &))AllProbeBitsMatch,
+                python::args("probe", "ref"));
     python::def("AllProbeBitsMatch",
-                (bool (*)(const SBV &, const std::string &))AllProbeBitsMatch);
+                (bool (*)(const SBV &, const std::string &))AllProbeBitsMatch,
+                python::args("probe", "ref"));
     python::def(
         "AllProbeBitsMatch",
         (bool (*)(const EBV &, const std::string &))AllProbeBitsMatch,
+        python::args("probe", "ref"),
         "Returns True if all bits in the first argument match all bits in the \n\
   vector defined by the pickle in the second argument.\n");
 
-    python::def("BitVectToText", (std::string(*)(const SBV &))BitVectToText);
+    python::def("BitVectToText", (std::string(*)(const SBV &))BitVectToText,
+                python::args("bv1"));
     python::def(
         "BitVectToText", (std::string(*)(const EBV &))BitVectToText,
+        python::args("bv1"),
         "Returns a string of zeros and ones representing the bit vector.");
     python::def("BitVectToFPSText",
-                (std::string(*)(const SBV &))BitVectToFPSText);
+                (std::string(*)(const SBV &))BitVectToFPSText,
+                python::args("bv1"));
     python::def("BitVectToFPSText",
                 (std::string(*)(const EBV &))BitVectToFPSText,
+                python::args("bv1"),
                 "Returns an FPS string representing the bit vector.");
     python::def("BitVectToBinaryText",
-                (python::object(*)(const SBV &))BVToBinaryText);
+                (python::object(*)(const SBV &))BVToBinaryText,
+                python::args("bv"));
     python::def(
         "BitVectToBinaryText", (python::object(*)(const EBV &))BVToBinaryText,
+        python::args("bv"),
         "Returns a binary string (byte array) representing the bit vector.");
   }
 };
