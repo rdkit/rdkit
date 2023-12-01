@@ -64,16 +64,50 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
 
 }  // namespace SmilesParse
 
+namespace v2 {
+namespace SmilesParse {
+using RDKit::SmilesParse::SmartsParserParams;
+using RDKit::SmilesParse::SmilesParseException;
+using RDKit::SmilesParse::SmilesParserParams;
+
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> SmilesToMol(
+    const std::string &smi,
+    const SmilesParserParams &params = SmilesParserParams());
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> SmartsToMol(
+    const std::string &sma,
+    const SmartsParserParams &params = SmartsParserParams());
+
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Atom> SmilesToAtom(
+    const std::string &smi);
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Bond> SmilesToBond(
+    const std::string &smi);
+
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Atom> SmartsToAtom(
+    const std::string &sma);
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Bond> SmartsToBond(
+    const std::string &sma);
+
+}  // namespace SmilesParse
+}  // namespace v2
+
 inline namespace v1 {
 using RDKit::SmilesParse::SmartsParserParams;
 using RDKit::SmilesParse::SmilesParseException;
 using RDKit::SmilesParse::SmilesParserParams;
 
-RDKIT_SMILESPARSE_EXPORT RDKit::RWMol *SmilesToMol(
-    const std::string &smi, const SmilesParserParams &params);
+inline RDKit::RWMol *SmilesToMol(const std::string &smi,
+                                 const SmilesParserParams &params) {
+  return RDKit::v2::SmilesParse::SmilesToMol(smi, params).release();
+}
 
-RDKIT_SMILESPARSE_EXPORT Atom *SmilesToAtom(const std::string &smi);
-RDKIT_SMILESPARSE_EXPORT Bond *SmilesToBond(const std::string &smi);
+inline Atom *SmilesToAtom(const std::string &smi) {
+  auto res = RDKit::v2::SmilesParse::SmilesToAtom(smi).release();
+  return res;
+}
+
+inline Bond *SmilesToBond(const std::string &smi) {
+  return RDKit::v2::SmilesParse::SmilesToBond(smi).release();
+}
 
 //! Construct a molecule from a SMILES string
 /*!
@@ -118,8 +152,10 @@ inline RWMol *SmilesToMol(
   return SmilesToMol(smi, params);
 };
 
-RDKIT_SMILESPARSE_EXPORT RWMol *SmartsToMol(const std::string &sma,
-                                            const SmartsParserParams &ps);
+inline RWMol *SmartsToMol(const std::string &sma,
+                          const SmartsParserParams &ps) {
+  return RDKit::v2::SmilesParse::SmartsToMol(sma, ps).release();
+}
 
 //! Construct a molecule from a SMARTS string
 /*!
@@ -143,42 +179,13 @@ inline RWMol *SmartsToMol(
   return SmartsToMol(sma, ps);
 };
 
-RDKIT_SMILESPARSE_EXPORT Atom *SmartsToAtom(const std::string &sma);
-RDKIT_SMILESPARSE_EXPORT Bond *SmartsToBond(const std::string &sma);
+inline Atom *SmartsToAtom(const std::string &sma) {
+  return RDKit::v2::SmilesParse::SmartsToAtom(sma).release();
+}
+inline Bond *SmartsToBond(const std::string &sma) {
+  return RDKit::v2::SmilesParse::SmartsToBond(sma).release();
+}
 }  // namespace v1
-
-namespace v2 {
-namespace SmilesParse {
-using RDKit::SmilesParse::SmartsParserParams;
-using RDKit::SmilesParse::SmilesParseException;
-using RDKit::SmilesParse::SmilesParserParams;
-
-inline std::unique_ptr<RDKit::RWMol> SmilesToMol(
-    const std::string &smi,
-    const SmilesParserParams &params = SmilesParserParams()) {
-  return std::unique_ptr<RDKit::RWMol>{RDKit::v1::SmilesToMol(smi, params)};
-};
-inline std::unique_ptr<RDKit::RWMol> SmartsToMol(
-    const std::string &sma,
-    const SmartsParserParams &params = SmartsParserParams()) {
-  return std::unique_ptr<RDKit::RWMol>{RDKit::v1::SmartsToMol(sma, params)};
-}
-
-inline std::unique_ptr<RDKit::Atom> SmilesToAtom(const std::string &smi) {
-  return std::unique_ptr<RDKit::Atom>{RDKit::v1::SmilesToAtom(smi)};
-}
-inline std::unique_ptr<RDKit::Bond> SmilesToBond(const std::string &smi) {
-  return std::unique_ptr<RDKit::Bond>{RDKit::v1::SmilesToBond(smi)};
-}
-
-inline std::unique_ptr<RDKit::Atom> SmartsToAtom(const std::string &sma) {
-  return std::unique_ptr<RDKit::Atom>{RDKit::v1::SmartsToAtom(sma)};
-}
-inline std::unique_ptr<RDKit::Bond> SmartsToBond(const std::string &sma) {
-  return std::unique_ptr<RDKit::Bond>{RDKit::v1::SmartsToBond(sma)};
-}
-}  // namespace SmilesParse
-}  // namespace v2
 
 inline std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text,
                                                         size_t len) {
@@ -193,11 +200,7 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text,
 inline std::unique_ptr<RDKit::RWMol> operator"" _smarts(const char *text,
                                                         size_t len) {
   std::string smi(text, len);
-
-  // no need for exception handling here: SmartsToMol() doesn't do
-  // sanitization
-  auto ptr = v2::SmilesParse::SmartsToMol(smi);
-  return ptr;
+  return v2::SmilesParse::SmartsToMol(smi);
 }
 
 }  // namespace RDKit
