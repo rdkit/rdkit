@@ -190,7 +190,8 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
   if (squiggleBondSeen) {
-    Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond);
+    Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond,
+                                                    Bond::STEREOANY);
     return;
   }
   if (!bond1) {
