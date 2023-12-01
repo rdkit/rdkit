@@ -98,36 +98,41 @@ std::string maeMolSupplierClassDoc =
 struct maemolsup_wrap {
   static void wrap() {
     python::class_<LocalMaeMolSupplier, boost::noncopyable>(
-        "MaeMolSupplier", maeMolSupplierClassDoc.c_str(), python::init<>())
+        "MaeMolSupplier", maeMolSupplierClassDoc.c_str(),
+        python::init<>(python::args("self")))
         .def(python::init<python::object &, bool, bool>(
-            (python::arg("fileobj"), python::arg("sanitize") = true,
+            (python::arg("self"), python::arg("fileobj"),
+             python::arg("sanitize") = true,
              python::arg("removeHs") =
                  true))[python::with_custodian_and_ward_postcall<0, 2>()])
         .def(python::init<streambuf &, bool, bool>(
-            (python::arg("streambuf"), python::arg("sanitize") = true,
+            (python::arg("self"), python::arg("streambuf"),
+             python::arg("sanitize") = true,
              python::arg("removeHs") =
                  true))[python::with_custodian_and_ward_postcall<0, 2>()])
         .def(python::init<std::string, bool, bool>(
-            (python::arg("filename"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true)))
+            (python::arg("self"), python::arg("filename"),
+             python::arg("sanitize") = true, python::arg("removeHs") = true)))
         .def("__enter__", &MolIOEnter<LocalMaeMolSupplier>,
              python::return_internal_reference<>())
         .def("__exit__", &MolIOExit<LocalMaeMolSupplier>)
         .def("__iter__", &FwdMolSupplIter,
-             python::return_internal_reference<1>())
+             python::return_internal_reference<1>(), python::args("self"))
         .def("__next__", &MolSupplNext<LocalMaeMolSupplier>,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
-             python::return_value_policy<python::manage_new_object>())
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"))
         .def("__getitem__", &MolSupplGetItem<LocalMaeMolSupplier>,
-             python::return_value_policy<python::manage_new_object>())
-        .def("reset", &MaeMolSupplier::reset,
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self", "idx"))
+        .def("reset", &MaeMolSupplier::reset, python::args("self"),
              "Resets our position in the file to the beginning.\n")
-        .def("__len__", &MaeMolSupplier::length)
+        .def("__len__", &MaeMolSupplier::length, python::args("self"))
         .def("SetData", &MaeMolSupplier::setData, "Sets the text to be parsed",
-             (python::arg("data"), python::arg("sanitize") = true,
-              python::arg("removeHs") = true))
-        .def("atEnd", &MaeMolSupplier::atEnd,
+             ((python::arg("self"), python::arg("data")),
+              python::arg("sanitize") = true, python::arg("removeHs") = true))
+        .def("atEnd", &MaeMolSupplier::atEnd, python::args("self"),
              "Returns whether or not we have hit EOF.\n");
   };
 };

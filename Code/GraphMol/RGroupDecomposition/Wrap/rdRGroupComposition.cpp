@@ -293,7 +293,7 @@ struct rgroupdecomp_wrapper {
         "be attached to an unlabelled core atom";
     python::class_<RDKit::RGroupDecompositionParameters>(
         "RGroupDecompositionParameters", docString.c_str(),
-        python::init<>("Constructor, takes no arguments"))
+        python::init<>(python::args("self"), "Constructor, takes no arguments"))
 
         .def_readwrite("labels", &RDKit::RGroupDecompositionParameters::labels)
         .def_readwrite("matchingStrategy",
@@ -341,11 +341,9 @@ struct rgroupdecomp_wrapper {
                        &RDKit::RGroupDecompositionParameters::
                            allowMultipleRGroupsOnUnlabelled)
         .def_readwrite("doTautomers",
-                       &RDKit::RGroupDecompositionParameters::
-                           doTautomers)
+                       &RDKit::RGroupDecompositionParameters::doTautomers)
         .def_readwrite("doEnumeration",
-                       &RDKit::RGroupDecompositionParameters::
-                           doEnumeration)
+                       &RDKit::RGroupDecompositionParameters::doEnumeration)
         .def_readonly(
             "substructMatchParams",
             &RDKit::RGroupDecompositionParameters::substructmatchParams);
@@ -353,26 +351,33 @@ struct rgroupdecomp_wrapper {
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
         "RGroupDecomposition", docString.c_str(),
         python::init<python::object>(
+            python::args("self", "cores"),
             "Construct from a molecule or sequence of molecules"))
         .def(
             python::init<python::object, const RGroupDecompositionParameters &>(
+                python::args("self", "cores", "params"),
                 "Construct from a molecule or sequence of molecules and a "
                 "parameters object"))
-        .def("Add", &RGroupDecompositionHelper::Add)
+        .def("Add", &RGroupDecompositionHelper::Add,
+             python::args("self", "mol"))
         .def("GetMatchingCoreIdx",
              &RGroupDecompositionHelper::GetMatchingCoreIdx,
-             (python::arg("mol"), python::arg("matches") = python::object()))
+             ((python::arg("self"), python::arg("mol")),
+              python::arg("matches") = python::object()))
         .def("Process", &RGroupDecompositionHelper::Process,
+             python::args("self"),
              "Process the rgroups (must be done prior to "
              "GetRGroupsAsRows/Columns and GetRGroupLabels)")
         .def("ProcessAndScore", &RGroupDecompositionHelper::ProcessAndScore,
+             python::args("self"),
              "Process the rgroups and returns the score (must be done prior to "
              "GetRGroupsAsRows/Columns and GetRGroupLabels)")
         .def("GetRGroupLabels", &RGroupDecompositionHelper::GetRGroupLabels,
+             python::args("self"),
              "Return the current list of found rgroups.\n"
              "Note, Process() should be called first")
         .def("GetRGroupsAsRows", &RGroupDecompositionHelper::GetRGroupsAsRows,
-             python::arg("asSmiles") = false,
+             (python::arg("self"), python::arg("asSmiles") = false),
              "Return the rgroups as rows (note: can be fed directrly into a "
              "pandas datatable)\n"
              "  ARGUMENTS:\n"
@@ -382,7 +387,7 @@ struct rgroupdecomp_wrapper {
              "       rows[idx] = {rgroup_label: molecule_or_smiles}\n")
         .def("GetRGroupsAsColumns",
              &RGroupDecompositionHelper::GetRGroupsAsColumn,
-             python::arg("asSmiles") = false,
+             (python::arg("self"), python::arg("asSmiles") = false),
              "Return the rgroups as columns (note: can be fed directrly into a "
              "pandas datatable)\n"
              "  ARGUMENTS:\n"

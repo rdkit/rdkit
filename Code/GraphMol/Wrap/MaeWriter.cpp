@@ -80,9 +80,12 @@ struct wrap_maewriter {
 \n ";
     python::class_<LocalMaeWriter, boost::noncopyable>(
         "MaeWriter", docStr.c_str(), python::no_init)
-        .def(python::init<python::object &>(python::arg("fileobj")))
-        .def(python::init<streambuf &>(python::arg("streambuf")))
-        .def(python::init<std::string>(python::arg("filename")))
+        .def(python::init<python::object &>(
+            (python::arg("self"), python::arg("fileobj"))))
+        .def(python::init<streambuf &>(
+            (python::arg("self"), python::arg("streambuf"))))
+        .def(python::init<std::string>(
+            (python::arg("self"), python::arg("filename"))))
         .def("__enter__", &MolIOEnter<LocalMaeWriter>,
              python::return_internal_reference<>())
         .def("__exit__", &MolIOExit<LocalMaeWriter>)
@@ -102,13 +105,13 @@ struct wrap_maewriter {
              "    - mol: the Mol to be written\n"
              "    - confId: (optional) ID of the conformation to write\n\n")
 
-        .def("flush", &LocalMaeWriter::flush,
+        .def("flush", &LocalMaeWriter::flush, python::args("self"),
              "Flushes the output file (forces the disk file to be "
              "updated).\n\n")
-        .def("close", &LocalMaeWriter::close,
+        .def("close", &LocalMaeWriter::close, python::args("self"),
              "Flushes the output file and closes it. The Writer cannot be used "
              "after this.\n\n")
-        .def("NumMols", &LocalMaeWriter::numMols,
+        .def("NumMols", &LocalMaeWriter::numMols, python::args("self"),
              "Returns the number of molecules written so far.\n\n")
         .def("GetText", &LocalMaeWriter::getText,
              (python::arg("mol"), python::arg("confId") = -1,

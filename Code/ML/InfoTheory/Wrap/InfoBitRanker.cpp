@@ -140,10 +140,11 @@ struct ranker_wrap {
 
     python::class_<InfoBitRanker>(
         "InfoBitRanker", docString.c_str(),
-        python::init<int, int>(python::args("nBits", "nClasses")))
+        python::init<int, int>(python::args("self", "nBits", "nClasses")))
         .def(python::init<int, int, InfoBitRanker::InfoType>(
-            python::args("nBits", "nClasses", "infoType")))
+            python::args("self", "nBits", "nClasses", "infoType")))
         .def("AccumulateVotes", AccumulateVotes,
+             python::args("self", "bitVect", "label"),
              "Accumulate the votes for all the bits turned on in a bit "
              "vector\n\n"
              "ARGUMENTS:\n\n"
@@ -151,7 +152,7 @@ struct ranker_wrap {
              "operator\n"
              "  - label : the class label for the bit vector. It is assumed "
              "that 0 <= class < nClasses \n")
-        .def("SetBiasList", SetBiasList,
+        .def("SetBiasList", SetBiasList, python::args("self", "classList"),
              "Set the classes to which the entropy calculation should be "
              "biased\n\n"
              "This list contains a set of class ids used when in the "
@@ -164,19 +165,20 @@ struct ranker_wrap {
              "inactives that hit the bit\n\n"
              "ARGUMENTS: \n\n"
              "  - classList : list of class ids that we want a bias towards\n")
-        .def("SetMaskBits", SetMaskBits,
+        .def("SetMaskBits", SetMaskBits, python::args("self", "maskBits"),
              "Set the mask bits for the calculation\n\n"
              "ARGUMENTS: \n\n"
              "  - maskBits : list of mask bits to use\n")
-        .def("GetTopN", getTopNbits,
+        .def("GetTopN", getTopNbits, python::args("self", "num"),
              "Returns the top n bits ranked by the information metric\n"
              "This is actually the function where most of the work of ranking "
              "is happening\n\n"
              "ARGUMENTS:\n\n"
              "  - num : the number of top ranked bits that are required\n")
         .def("WriteTopBitsToFile", &InfoBitRanker::writeTopBitsToFile,
+             python::args("self", "fileName"),
              "Write the bits that have been ranked to a file")
-        .def("Tester", tester);
+        .def("Tester", tester, python::args("self", "bitVect"));
 
     python::enum_<InfoBitRanker::InfoType>("InfoType")
         .value("ENTROPY", InfoBitRanker::ENTROPY)

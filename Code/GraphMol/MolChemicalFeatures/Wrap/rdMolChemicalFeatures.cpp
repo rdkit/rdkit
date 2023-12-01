@@ -60,11 +60,13 @@ BOOST_PYTHON_MODULE(rdMolChemicalFeatures) {
   python::def(
       "BuildFeatureFactory", RDKit::buildFeatFactory,
       "Construct a feature factory given a feature definition in a file",
-      python::return_value_policy<python::manage_new_object>());
+      python::return_value_policy<python::manage_new_object>(),
+      python::args("fileName"));
   python::def("BuildFeatureFactoryFromString",
               RDKit::buildFeatFactoryFromString,
               "Construct a feature factory given a feature definition block",
-              python::return_value_policy<python::manage_new_object>());
+              python::return_value_policy<python::manage_new_object>(),
+              python::args("fdefString"));
 
   wrap_MolChemicalFeat();
   wrap_factory();
