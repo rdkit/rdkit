@@ -3,13 +3,16 @@
 #  Copyright (C) 2004, 2005 Rational Discovery LLC
 #  All Rights Reserved
 #
+import os
+import sys
+import tempfile
+
 import Chem
-from Chem.Draw.MolDrawing import MolDrawing
 from Chem import TemplateAlign
-from sping.SVG.pidSVG import SVGCanvas as Canvas
+from Chem.Draw.MolDrawing import MolDrawing
 from mod_python import apache
+from sping.SVG.pidSVG import SVGCanvas as Canvas
 from utils import cactvs
-import sys, os, tempfile
 
 
 def gif(req, smiles, width=100, height=100, highlight='[]', frame=0, dblSize=0, **kwargs):

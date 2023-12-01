@@ -32,11 +32,7 @@
 #include <postgres.h>
 
 #include <access/gin.h>
-#if PG_VERSION_NUM >= 90500
 #include <access/stratnum.h>
-#else
-#include <access/skey.h>
-#endif
 #include <fmgr.h>
 
 #include "rdkit.h"
@@ -148,7 +144,6 @@ Datum gin_bfp_consistent(PG_FUNCTION_ARGS) {
 PGDLLEXPORT Datum gin_bfp_triconsistent(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gin_bfp_triconsistent);
 Datum gin_bfp_triconsistent(PG_FUNCTION_ARGS) {
-#if PG_VERSION_NUM >= 90300
   /*
 
    */
@@ -197,5 +192,4 @@ Datum gin_bfp_triconsistent(PG_FUNCTION_ARGS) {
   }
 
   PG_RETURN_GIN_TERNARY_VALUE(result);
-#endif
 }

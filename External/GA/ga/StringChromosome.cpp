@@ -73,9 +73,10 @@ void StringChromosome<int, IntegerStringChromosomePolicy>::fullMixing(
  * @param child1
  * @param child2
  */
-void StringChromosome<int, IntegerStringChromosomePolicy>::fullMixingAndCrossover(
-    const IntegerStringChromosome &parent2, IntegerStringChromosome &child1,
-    IntegerStringChromosome &child2) const {
+void StringChromosome<int, IntegerStringChromosomePolicy>::
+    fullMixingAndCrossover(const IntegerStringChromosome &parent2,
+                           IntegerStringChromosome &child1,
+                           IntegerStringChromosome &child2) const {
   // select crossover site
   int site = getRng().randomInt(0, length);
 
@@ -114,6 +115,5 @@ void StringChromosome<int, IntegerStringChromosomePolicy>::fullMixingAndCrossove
     }
   }
 }
-
 
 }  // namespace GapeGa

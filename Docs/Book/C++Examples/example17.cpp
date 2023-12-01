@@ -17,8 +17,8 @@ std::vector<int> get_all_hit_atoms(ROMol &mol, const std::string &smt) {
   RWMol *query = SmartsToMol(smt);
   std::vector<MatchVectType> hits_vect;
   SubstructMatch(mol, *query, hits_vect);
-  for( size_t i = 0 ; i < hits_vect.size() ; ++i ) {
-    for( size_t j = 0 ; j < hits_vect[i].size() ; ++j ) {
+  for (size_t i = 0; i < hits_vect.size(); ++i) {
+    for (size_t j = 0; j < hits_vect[i].size(); ++j) {
       hit_atoms.emplace_back(hits_vect[i][j].second);
     }
   }
@@ -26,39 +26,39 @@ std::vector<int> get_all_hit_atoms(ROMol &mol, const std::string &smt) {
   return hit_atoms;
 }
 
-std::vector<int> get_all_hit_bonds(ROMol &mol, const std::vector<int> &hit_atoms) {
+std::vector<int> get_all_hit_bonds(ROMol &mol,
+                                   const std::vector<int> &hit_atoms) {
   std::vector<int> hit_bonds;
-  for(int i: hit_atoms) {
-    for(int j: hit_atoms) {
-      if(i > j) {
-	Bond *bnd = mol.getBondBetweenAtoms(i, j);
-	if(bnd) {
-	  hit_bonds.emplace_back(bnd->getIdx());
-	}
+  for (int i : hit_atoms) {
+    for (int j : hit_atoms) {
+      if (i > j) {
+        Bond *bnd = mol.getBondBetweenAtoms(i, j);
+        if (bnd) {
+          hit_bonds.emplace_back(bnd->getIdx());
+        }
       }
     }
   }
   return hit_bonds;
 }
-    
+
 void update_colour_map(const std::vector<int> &ats, DrawColour col,
-		       std::map<int, std::vector<DrawColour> > &ha_map) {
-  for(auto h: ats) {
+                       std::map<int, std::vector<DrawColour>> &ha_map) {
+  for (auto h : ats) {
     auto ex = ha_map.find(h);
-    if(ex == ha_map.end()) {
+    if (ex == ha_map.end()) {
       std::vector<DrawColour> cvec(1, col);
       ha_map.insert(make_pair(h, cvec));
     } else {
-      if(ex->second.end() == find(ex->second.begin(), ex->second.end(), col)) {
-	ex->second.emplace_back(col);
+      if (ex->second.end() == find(ex->second.begin(), ex->second.end(), col)) {
+        ex->second.emplace_back(col);
       }
     }
   }
 }
 
 int main() {
-
-  std::string file_root = getenv( "RDBASE" );
+  std::string file_root = getenv("RDBASE");
   file_root += "/Docs/Book/images/";
 
   auto mol = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]"_smiles;
@@ -96,13 +96,13 @@ int main() {
   std::vector<int> hit3_bonds = get_all_hit_bonds(*mol, hit3_atoms);
   std::vector<int> hit4_atoms = get_all_hit_atoms(*mol, "CONNCN");
   std::vector<int> hit4_bonds = get_all_hit_bonds(*mol, hit4_atoms);
-  
-  std::map<int, std::vector<DrawColour> > ha_map;
+
+  std::map<int, std::vector<DrawColour>> ha_map;
   update_colour_map(hit1_atoms, DrawColour(1.0, 0.0, 0.0), ha_map);
   update_colour_map(hit2_atoms, DrawColour(0.0, 1.0, 0.0), ha_map);
   update_colour_map(hit3_atoms, DrawColour(0.0, 0.0, 1.0), ha_map);
   update_colour_map(hit4_atoms, DrawColour(1.0, 0.55, 0.0), ha_map);
-  std::map<int, std::vector<DrawColour> > hb_map;
+  std::map<int, std::vector<DrawColour>> hb_map;
   update_colour_map(hit1_bonds, DrawColour(1.0, 0.0, 0.0), hb_map);
   update_colour_map(hit2_bonds, DrawColour(0.0, 1.0, 0.0), hb_map);
   update_colour_map(hit3_bonds, DrawColour(0.0, 0.0, 1.0), hb_map);
@@ -117,10 +117,9 @@ int main() {
     drawer.drawOptions().fillHighlights = false;
     drawer.drawOptions().continuousHighlight = true;
     drawer.drawOptions().atomHighlightsAreCircles = true;
-    drawer.drawMoleculeWithHighlights(*mol, "Test 1", ha_map,
-    				      hb_map, h_rads, h_lw_mult);
+    drawer.drawMoleculeWithHighlights(*mol, "Test 1", ha_map, hb_map, h_rads,
+                                      h_lw_mult);
     drawer.finishDrawing();
     outs.flush();
   }
-  
 }

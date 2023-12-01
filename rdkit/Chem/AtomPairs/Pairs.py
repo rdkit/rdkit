@@ -24,8 +24,9 @@ The fingerprints can be accessed through the following functions:
 from rdkit import DataStructs
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.AtomPairs import Utils
+from rdkit.Chem.rdMolDescriptors import (GetAtomPairFingerprint,
+                                         GetHashedAtomPairFingerprint)
 
-from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint, GetHashedAtomPairFingerprint
 GetAtomPairFingerprintAsIntVect = rdMolDescriptors.GetAtomPairFingerprint
 
 numPathBits = rdMolDescriptors.AtomPairsParameters.numPathBits
@@ -56,14 +57,14 @@ def pyScorePair(at1, at2, dist, atomCodes=None, includeChirality=False):
 
   """
   if not atomCodes:
-    code1 = Utils.GetAtomCode(at1, includeChirality = includeChirality)
-    code2 = Utils.GetAtomCode(at2, includeChirality = includeChirality)
+    code1 = Utils.GetAtomCode(at1, includeChirality=includeChirality)
+    code2 = Utils.GetAtomCode(at2, includeChirality=includeChirality)
   else:
     code1, code2 = atomCodes
 
   codeSize = rdMolDescriptors.AtomPairsParameters.codeSize
   if includeChirality:
-      codeSize += rdMolDescriptors.AtomPairsParameters.numChiralBits
+    codeSize += rdMolDescriptors.AtomPairsParameters.numChiralBits
 
   accum = int(dist) % _maxPathLen
   accum |= min(code1, code2) << numPathBits
@@ -71,7 +72,7 @@ def pyScorePair(at1, at2, dist, atomCodes=None, includeChirality=False):
   return accum
 
 
-def ExplainPairScore(score,includeChirality=False):
+def ExplainPairScore(score, includeChirality=False):
   """
   >>> from rdkit import Chem
   >>> m = Chem.MolFromSmiles('C=CC')
@@ -104,7 +105,7 @@ def ExplainPairScore(score,includeChirality=False):
   """
   codeSize = rdMolDescriptors.AtomPairsParameters.codeSize
   if includeChirality:
-      codeSize += rdMolDescriptors.AtomPairsParameters.numChiralBits
+    codeSize += rdMolDescriptors.AtomPairsParameters.numChiralBits
 
   codeMask = (1 << codeSize) - 1
   pathMask = (1 << numPathBits) - 1
@@ -115,8 +116,7 @@ def ExplainPairScore(score,includeChirality=False):
   score = score >> codeSize
   code2 = score & codeMask
 
-  return (Utils.ExplainAtomCode(code1, includeChirality=includeChirality),
-          dist,
+  return (Utils.ExplainAtomCode(code1, includeChirality=includeChirality), dist,
           Utils.ExplainAtomCode(code2, includeChirality=includeChirality))
 
 
@@ -155,8 +155,8 @@ def GetAtomPairFingerprintAsBitVect(mol):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

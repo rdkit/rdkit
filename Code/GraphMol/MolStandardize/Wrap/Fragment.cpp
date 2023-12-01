@@ -21,6 +21,10 @@ ROMol *removeHelper(MolStandardize::FragmentRemover &self, const ROMol &mol) {
   return self.remove(mol);
 }
 
+void removeInPlaceHelper(MolStandardize::FragmentRemover &self, ROMol &mol) {
+  self.removeInPlace(static_cast<RWMol &>(mol));
+}
+
 ROMol *chooseHelper(MolStandardize::LargestFragmentChooser &self,
                     const ROMol &mol) {
   return self.choose(mol);
@@ -44,13 +48,16 @@ struct fragment_wrapper {
     std::string docString = "";
 
     python::class_<MolStandardize::FragmentRemover, boost::noncopyable>(
-        "FragmentRemover", python::init<>())
+        "FragmentRemover", python::init<>(python::args("self")))
         .def(python::init<std::string, bool, bool>(
-            (python::arg("fragmentFilename") = "",
+            (python::arg("self"), python::arg("fragmentFilename") = "",
              python::arg("leave_last") = true,
              python::arg("skip_if_all_match") = false)))
         .def("remove", &removeHelper, (python::arg("self"), python::arg("mol")),
-             "", python::return_value_policy<python::manage_new_object>());
+             "", python::return_value_policy<python::manage_new_object>())
+        .def("removeInPlace", &removeInPlaceHelper,
+             (python::arg("self"), python::arg("mol")),
+             "modifies the molecule in place");
 
     python::def(
         "FragmentRemoverFromData", &removerFromParams,
@@ -61,9 +68,10 @@ struct fragment_wrapper {
 
     python::class_<MolStandardize::LargestFragmentChooser, boost::noncopyable>(
         "LargestFragmentChooser",
-        python::init<bool>(python::arg("preferOrganic") = false))
+        python::init<bool>(
+            (python::arg("self"), python::arg("preferOrganic") = false)))
         .def(python::init<const MolStandardize::CleanupParameters &>(
-            python::arg("params")))
+            (python::arg("self"), python::arg("params"))))
         .def("choose", &chooseHelper, (python::arg("self"), python::arg("mol")),
              "", python::return_value_policy<python::manage_new_object>());
   }

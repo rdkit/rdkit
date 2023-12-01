@@ -154,8 +154,18 @@ std::vector<std::tuple<Point2D, Point2D, Point2D, Point2D>> getWavyLineSegments(
 // for the fact that in polygon mode the point can extend over the end
 // of the point, because of the mitring.
 RDKIT_MOLDRAW2D_EXPORT void calcArrowHead(Point2D &arrowEnd, Point2D &arrow1,
-                                          Point2D &arrow2, const Point2D &arrowBegin,
-                                          bool asPolygon, double frac, double angle);
+                                          Point2D &arrow2,
+                                          const Point2D &arrowBegin,
+                                          bool asPolygon, double frac,
+                                          double angle);
+
+// adjust p2 so that the line from p1 to p2 stops where it intersects
+// the ellipse.
+RDKIT_MOLDRAW2D_EXPORT void adjustLineEndForEllipse(const Point2D &centre,
+                                                    double xradius,
+                                                    double yradius, Point2D p1,
+                                                    Point2D &p2);
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

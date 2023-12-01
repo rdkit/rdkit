@@ -7,16 +7,18 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from collections import abc  # this won't work in python2, but we don't support that any more
+from collections import \
+    abc  # this won't work in python2, but we don't support that any more
 
-from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
-from rdkit.Chem import rdPartialCharges, rdMolDescriptors
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
-from rdkit.Chem.EState.EState import (MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex,
-                                      MinAbsEStateIndex)
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
+from rdkit.Chem import rdPartialCharges
+from rdkit.Chem.EState.EState import (MaxAbsEStateIndex, MaxEStateIndex,
+                                      MinAbsEStateIndex, MinEStateIndex)
 from rdkit.Chem.QED import qed
-
+from rdkit.Chem.SpacialScore import SPS
 
 def _isCallable(thing):
   return isinstance(thing, abc.Callable) or \
@@ -28,7 +30,8 @@ _descList = []
 
 def _setupDescriptors(namespace):
   global _descList, descList
-  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen, Descriptors3D
+  from rdkit.Chem import (Crippen, Descriptors3D, Fragments, GraphDescriptors,
+                          Lipinski, MolSurf, SpacialScore)
   from rdkit.Chem.EState import EState_VSA
   _descList.clear()
 
@@ -63,6 +66,7 @@ def _setupDescriptors(namespace):
         if _isCallable(thing):
           namespace[name] = thing
           _descList.append((name, thing))
+
   descList = _descList
 
 
@@ -267,8 +271,9 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
   def __call__(self, mol):
     raise NotImplementedError("Please implement the __call__ method")
 
+
 def CalcMolDescriptors(mol, missingVal=None, silent=True):
-    ''' calculate the full set of descriptors for a molecule
+  ''' calculate the full set of descriptors for a molecule
     
     Parameters
     ----------
@@ -283,18 +288,18 @@ def CalcMolDescriptors(mol, missingVal=None, silent=True):
     dict 
          A dictionary with decriptor names as keys and the descriptor values as values
     '''
-    res = {}
-    for nm,fn in _descList:
-        # some of the descriptor fucntions can throw errors if they fail, catch those here:
-        try:
-            val = fn(mol)
-        except:
-            if not silent:
-              import traceback
-              traceback.print_exc()
-            val = missingVal
-        res[nm] = val
-    return res
+  res = {}
+  for nm, fn in _descList:
+    # some of the descriptor fucntions can throw errors if they fail, catch those here:
+    try:
+      val = fn(mol)
+    except:
+      if not silent:
+        import traceback
+        traceback.print_exc()
+      val = missingVal
+    res[nm] = val
+  return res
 
 
 # ------------------------------------
@@ -302,8 +307,8 @@ def CalcMolDescriptors(mol, missingVal=None, silent=True):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

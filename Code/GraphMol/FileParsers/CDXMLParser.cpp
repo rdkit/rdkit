@@ -38,6 +38,8 @@ const std::string CDX_ATOM_ID("_CDX_ATOM_ID");
 const std::string CDX_BOND_ID("_CDX_BOND_ID");
 const std::string CDX_BOND_ORDERING("CDXML_BOND_ORDERING");
 
+constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
+
 struct BondInfo {
   int bond_id = -1;
   int start = -1;
@@ -116,6 +118,29 @@ std::vector<T> to_vec(const std::string &s) {
   return n;
 }
 
+void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength,
+                double bondLength) {
+  double avg_bond_length = 0.0;
+  if (bondLength < 0) {
+    // If we don't have a bond length for any reason, just scale the avgerage
+    // bond length
+    for (auto &bond : mol.bonds()) {
+      avg_bond_length += (conf.getAtomPos(bond->getBeginAtomIdx()) -
+                          conf.getAtomPos(bond->getEndAtomIdx()))
+                             .length();
+    }
+    avg_bond_length /= mol.getNumBonds();
+  } else {
+    avg_bond_length = bondLength;
+  }
+
+  if (avg_bond_length > 0) {
+    double scale = targetBondLength / avg_bond_length;
+    for (auto &pos : conf.getPositions()) {
+      pos *= scale;
+    }
+  }
+}
 bool parse_fragment(RWMol &mol, ptree &frag,
                     std::map<unsigned int, Atom *> &ids, int &missing_frag_id,
                     int external_attachment = -1) {
@@ -135,7 +160,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   // for atom in frag
   int atom_id = -1;
   std::vector<BondInfo> bonds;
-  std::map<int, StereoGroupInfo> sgroups;
+  std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> sgroups;
 
   // nodetypes =
   // https://www.cambridgesoft.com/services/documentation/sdk/chemdraw/cdx/properties/Node_Type.htm
@@ -300,13 +325,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         }
       }
       if (sgroup != -1) {
-        auto &stereo = sgroups[sgroup];
-        if (stereo.sgroup != -1 && stereo.grouptype != grouptype) {
-          BOOST_LOG(rdWarningLog)
-              << "StereoGroup " << sgroup
-              << " has conflicting stereo group types, ignoring" << std::endl;
-          stereo.conflictingSgroupTypes = true;
-        }
+        auto key = std::make_pair(sgroup, grouptype);
+        auto &stereo = sgroups[key];
+        stereo.sgroup = sgroup;
         stereo.grouptype = grouptype;
         stereo.atoms.push_back(rd_atom);
       }
@@ -388,15 +409,25 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       } else {
         bonds.push_back(bond);
       }
-      // end if atom or bond 
-    } 
-  }    // for node
+      // end if atom or bond
+    }
+  }  // for node
 
   // add bonds
   if (!skip_fragment) {
     for (auto &bond : bonds) {
       unsigned int bond_idx;
-      if (bond.display == "WedgeEnd" || bond.display == "WedgedHashEnd") {
+      bool swap = false;
+      if (bond.display == "WedgeEnd") {
+        swap = true;
+        bond.display = "WedgeBegin";
+      }
+      if (bond.display == "WedgedHashEnd") {
+        swap = true;
+        bond.display = "WedgedHashBegin";
+      }
+
+      if (swap) {
         // here The "END" of the bond is really our Beginning.
         // swap atom direction
         bond_idx = mol.addBond(ids[bond.end]->getIdx(),
@@ -414,27 +445,26 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         ids[bond.start]->setIsAromatic(true);
       }
       bnd->setProp("CDX_BOND_ID", bond.bond_id);
-      // More confusion
-      // RDKit/MolFile Wedge (up)  == CDXML WedgedHash
-      // RDKit//MolFile WedgedHash (down) == CDXML Wedge
-      if (bond.display == "WedgeEnd" || bond.display == "WedgeBegin") {
-        bnd->setBondDir(Bond::BondDir::BEGINDASH);
-      } else if (bond.display == "WedgedHashBegin" ||
-                 bond.display == "WedgedHashEnd") {
+      if (bond.display == "WedgeBegin") {
         bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
+        bnd->setProp(common_properties::_MolFileBondCfg, 1);
+      } else if (bond.display == "WedgedHashBegin") {
+        bnd->setBondDir(Bond::BondDir::BEGINDASH);
+        bnd->setProp(common_properties::_MolFileBondCfg, 3);
       } else if (bond.display == "Wavy") {
-        switch(bond.getBondType()) {
-            case Bond::BondType::SINGLE:
-              bnd->setBondDir(Bond::BondDir::UNKNOWN);
-              break;
-            case Bond::BondType::DOUBLE:
-              bnd->setBondDir(Bond::BondDir::EITHERDOUBLE);
-              bnd->setStereo(Bond::STEREOANY);
-              break;
-            default:
-              BOOST_LOG(rdWarningLog)
+        switch (bond.getBondType()) {
+          case Bond::BondType::SINGLE:
+            bnd->setBondDir(Bond::BondDir::UNKNOWN);
+            bnd->setProp(common_properties::_MolFileBondCfg, 2);
+            break;
+          case Bond::BondType::DOUBLE:
+            bnd->setBondDir(Bond::BondDir::EITHERDOUBLE);
+            bnd->setStereo(Bond::STEREOANY);
+            break;
+          default:
+            BOOST_LOG(rdWarningLog)
                 << "ignoring Wavy bond set on a non double bond id: "
-                << bond.bond_id  << std::endl;
+                << bond.bond_id << std::endl;
         }
       }
     }
@@ -444,8 +474,13 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   if (!sgroups.empty()) {
     std::vector<StereoGroup> stereo_groups;
     for (auto &sgroup : sgroups) {
-      stereo_groups.emplace_back(
-          StereoGroup(sgroup.second.grouptype, sgroup.second.atoms));
+      unsigned gId = 0;
+      if (sgroup.second.grouptype != StereoGroupType::STEREO_ABSOLUTE &&
+          sgroup.second.sgroup > 0) {
+        gId = sgroup.second.sgroup;
+      }
+      stereo_groups.emplace_back(sgroup.second.grouptype, sgroup.second.atoms,
+                                 gId);
     }
     mol.setStereoGroups(std::move(stereo_groups));
   }
@@ -507,6 +542,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
   int missing_frag_id = -1;
   for (auto &cdxml : pt) {
     if (cdxml.first == "CDXML") {
+      double bondLength = cdxml.second.get<double>("<xmlattr>.BondLength");
       for (auto &node : cdxml.second) {
         if (node.first == "page") {
           for (auto &frag : node.second) {
@@ -521,7 +557,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                 mol->clearProp(NEEDS_FUSE);
                 std::unique_ptr<ROMol> fused;
                 try {
-                  fused = std::move(molzip(*mol, molzip_params));
+                  fused = molzip(*mol, molzip_params);
                 } catch (Invar::Invariant &) {
                   BOOST_LOG(rdWarningLog)
                       << "Failed fusion of fragment skipping... " << frag_id
@@ -538,34 +574,57 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
               RWMol *res = mols.back().get();
               auto conf = std::make_unique<Conformer>(res->getNumAtoms());
               conf->set3D(false);
+
               bool hasConf = false;
               for (auto &atm : res->atoms()) {
+                RDGeom::Point3D p{0.0, 0.0, 0.0};
+
                 if (atm->hasProp(CDX_ATOM_POS)) {
                   hasConf = true;
                   const std::vector<double> coord =
                       atm->getProp<std::vector<double>>(CDX_ATOM_POS);
 
-                  RDGeom::Point3D p;
                   if (coord.size() == 2) {
                     p.x = coord[0];
-                    p.y = coord[1];
+                    p.y = -1 * coord[1];  // CDXML uses an inverted coordinate
+                                          // system, so we need to reverse that
                     p.z = 0.0;
                   }
-                  conf->setAtomPos(atm->getIdx(), p);
-                  atm->clearProp(CDX_ATOM_POS);
                 }
+                conf->setAtomPos(atm->getIdx(), p);
+                atm->clearProp(CDX_ATOM_POS);
               }
+
               if (hasConf) {
+                scaleBonds(*res, *conf, RDKIT_DEPICT_BONDLENGTH, bondLength);
                 auto confidx = res->addConformer(conf.release());
                 DetectAtomStereoChemistry(*res, &res->getConformer(confidx));
               }
 
+              // now that atom stereochem has been perceived, the wedging
+              // information is no longer needed, so we clear
+              // single bond dir flags:
+              MolOps::clearSingleBondDirFlags(*res);
+
               if (sanitize) {
                 try {
                   if (removeHs) {
+                    // Bond stereo detection must happen before H removal, or
+                    // else we might be removing stereogenic H atoms in double
+                    // bonds (e.g. imines). But before we run stereo detection,
+                    // we need to run mol cleanup so don't have trouble with
+                    // e.g. nitro groups. Sadly, this a;; means we will find
+                    // run both cleanup and ring finding twice (a fast find
+                    // rings in bond stereo detection, and another in
+                    // sanitization's SSSR symmetrization).
+                    unsigned int failedOp = 0;
+                    MolOps::sanitizeMol(*res, failedOp,
+                                        MolOps::SANITIZE_CLEANUP);
+                    MolOps::detectBondStereochemistry(*res);
                     MolOps::removeHs(*res, false, false);
                   } else {
                     MolOps::sanitizeMol(*res);
+                    MolOps::detectBondStereochemistry(*res);
                   }
                 } catch (...) {
                   BOOST_LOG(rdWarningLog)
@@ -574,15 +633,8 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                   mols.pop_back();
                   continue;
                 }
-                // now that atom stereochem has been perceived, the wedging
-                // information is no longer needed, so we clear
-                // single bond dir flags:
-
-                ClearSingleBondDirFlags(*res);
-                MolOps::detectBondStereochemistry(*res);
                 MolOps::assignStereochemistry(*res, true, true, true);
               } else {
-                ClearSingleBondDirFlags(*res);
                 MolOps::detectBondStereochemistry(*res);
               }
             } else if (frag.first == "scheme") {  // get the reaction info

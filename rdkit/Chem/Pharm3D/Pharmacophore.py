@@ -186,7 +186,9 @@ class ExplicitPharmacophore:
       if txt:
         splitL = spaces.split(txt)
         if len(splitL) < 5:
-          logger.error(f'Input line {lineNum} only contains {len(splitL)} fields, 5 are required. Read failed.')
+          logger.error(
+            f'Input line {lineNum} only contains {len(splitL)} fields, 5 are required. Read failed.'
+          )
           return
         fName = splitL[0]
         try:

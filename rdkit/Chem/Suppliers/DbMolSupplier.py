@@ -27,10 +27,11 @@ class DbMolSupplier(MolSupplier):
 
   """
 
-  def __init__(self, dbResults, molColumnFormats={'SMILES': 'SMI',
-                                                  'SMI': 'SMI',
-                                                  'MOLPKL': 'PKL'}, nameCol='', transformFunc=None,
-               **kwargs):
+  def __init__(self, dbResults, molColumnFormats={
+    'SMILES': 'SMI',
+    'SMI': 'SMI',
+    'MOLPKL': 'PKL'
+  }, nameCol='', transformFunc=None, **kwargs):
     """
 
       DbResults should be a subclass of Dbase.DbResultSet.DbResultBase

@@ -101,15 +101,22 @@ RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSBondTypes(
     std::vector<FragmenterBondType> &defs);
 }  // namespace MolFragmenter
 
-// n.b. AtomProperty must resolve to an unsigned integer value on an atom property
-enum class MolzipLabel { AtomMapNumber, Isotope, FragmentOnBonds, AtomType, AtomProperty };
+// n.b. AtomProperty must resolve to an unsigned integer value on an atom
+// property
+enum class MolzipLabel {
+  AtomMapNumber,
+  Isotope,
+  FragmentOnBonds,
+  AtomType,
+  AtomProperty
+};
 
 struct RDKIT_CHEMTRANSFORMS_EXPORT MolzipParams {
   MolzipLabel label = MolzipLabel::AtomMapNumber;
   std::vector<std::string> atomSymbols;
   std::string atomProperty;
-  bool enforceValenceRules=true;
-  bool generateCoordinates=false;
+  bool enforceValenceRules = true;
+  bool generateCoordinates = false;
 };
 
 RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
@@ -132,7 +139,8 @@ RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
  *
  * @return the zipped molecule
  */
-RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
-                              const MolzipParams &params = MolzipParams());
+RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
+    std::vector<ROMOL_SPTR> &decomposition,
+    const MolzipParams &params = MolzipParams());
 }  // namespace RDKit
 #endif

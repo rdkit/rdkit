@@ -1,11 +1,14 @@
-from rdkit import RDConfig
-import os, sys, math
+import math
+import os
+import sys
 import unittest
+
 import numpy as np
-from rdkit import DataStructs
-from rdkit import Chem
-from rdkit.Geometry import rdGeometry as geom
+
+from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Chem import rdMolTransforms as rdmt
+from rdkit.Geometry import rdGeometry as geom
+
 
 def feq(v1, v2, tol=1.0e-4):
   return abs(v1 - v2) < tol
@@ -81,12 +84,8 @@ class TestCase(unittest.TestCase):
   2  4  1  0
 M  END
 '''
-    axesRef = (
-      (-0.9997, -0.0246,  0.0009),
-      ( 0.0246, -0.9981,  0.0559),
-      ( 0.0004, -0.0559, -0.9984)
-    )
-    momentsRef = ( 3.4220,  4.7230,  7.1757)
+    axesRef = ((-0.9997, -0.0246, 0.0009), (0.0246, -0.9981, 0.0559), (0.0004, -0.0559, -0.9984))
+    momentsRef = (3.4220, 4.7230, 7.1757)
     m = Chem.MolFromMolBlock(molBlock)
     axes, moments = rdmt.ComputePrincipalAxesAndMoments(m.GetConformer())
     self.assertIsNotNone(axes)
@@ -97,18 +96,15 @@ M  END
       self.assertAlmostEqual(moments[y], momentsRef[y], 3)
     failed = False
     try:
-      axes, moments = rdmt.ComputePrincipalAxesAndMoments(m.GetConformer(), weights = (0.5, 0.5))
+      axes, moments = rdmt.ComputePrincipalAxesAndMoments(m.GetConformer(), weights=(0.5, 0.5))
     except Exception:
       failed = True
     self.assertTrue(failed)
-    axesWeightedRef = (
-      (-0.9998, -0.0114, -0.0189),
-      (-0.0153,  0.9744,  0.2245),
-      ( 0.0158,  0.2247, -0.9743)
-    )
-    momentsWeightedRef = ( 0.5496,  1.5559,  1.9361)
+    axesWeightedRef = ((-0.9998, -0.0114, -0.0189), (-0.0153, 0.9744, 0.2245), (0.0158, 0.2247,
+                                                                                -0.9743))
+    momentsWeightedRef = (0.5496, 1.5559, 1.9361)
     axesWeighted, momentsWeighted = rdmt.ComputePrincipalAxesAndMoments(
-                                    m.GetConformer(), weights = (0.1, 0.2, 0.3, 0.4))
+      m.GetConformer(), weights=(0.1, 0.2, 0.3, 0.4))
     self.assertIsNotNone(axesWeighted)
     self.assertIsNotNone(momentsWeighted)
     for y in range(3):
@@ -133,12 +129,8 @@ M  END
   2  4  1  0
 M  END
 '''
-    axesRef = (
-      (-0.0009, -0.0246,  0.9997),
-      (-0.0559, -0.9981, -0.0246),
-      ( 0.9984, -0.0559, -0.0004)
-    )
-    momentsRef = ( 0.1212,  0.7343,  1.0596)
+    axesRef = ((-0.0009, -0.0246, 0.9997), (-0.0559, -0.9981, -0.0246), (0.9984, -0.0559, -0.0004))
+    momentsRef = (0.1212, 0.7343, 1.0596)
     m = Chem.MolFromMolBlock(molBlock)
     axes, moments = rdmt.ComputePrincipalAxesAndMomentsFromGyrationMatrix(m.GetConformer())
     self.assertIsNotNone(axes)
@@ -149,18 +141,16 @@ M  END
       self.assertAlmostEqual(moments[y], momentsRef[y], 3)
     failed = False
     try:
-      axes, moments = rdmt.ComputePrincipalAxesAndMomentsFromGyrationMatrix(m.GetConformer(), weights = (0.5, 0.5))
+      axes, moments = rdmt.ComputePrincipalAxesAndMomentsFromGyrationMatrix(
+        m.GetConformer(), weights=(0.5, 0.5))
     except Exception:
       failed = True
     self.assertTrue(failed)
-    axesWeightedRef = (
-      ( 0.0189, -0.0114,  0.9998),
-      (-0.2245,  0.9744,  0.0153),
-      ( 0.9743,  0.2247, -0.0158)
-    )
-    momentsWeightedRef = (  0.0847,  0.4649,  1.4712)
+    axesWeightedRef = ((0.0189, -0.0114, 0.9998), (-0.2245, 0.9744, 0.0153), (0.9743, 0.2247,
+                                                                              -0.0158))
+    momentsWeightedRef = (0.0847, 0.4649, 1.4712)
     axesWeighted, momentsWeighted = rdmt.ComputePrincipalAxesAndMomentsFromGyrationMatrix(
-                                    m.GetConformer(), weights = (0.1, 0.2, 0.3, 0.4))
+      m.GetConformer(), weights=(0.1, 0.2, 0.3, 0.4))
     self.assertIsNotNone(axesWeighted)
     self.assertIsNotNone(momentsWeighted)
     for y in range(3):
@@ -248,6 +238,7 @@ M  END
     self.assertTrue(exceptionRaised)
 
   def testEigen3CanonicalTransformAgainstNumpy(self):
+
     def canonicalize_conf_rdkit(mol, conf_id=-1):
       mol = Chem.Mol(mol)
       conf = mol.GetConformer(conf_id)
@@ -265,7 +256,9 @@ M  END
       cov_mat = np.cov(trans_pos, bias=1, rowvar=False) * conf.GetNumAtoms()
       eigval, eigvect = np.linalg.eig(cov_mat)
       eigval_sorted = sorted(enumerate(eigval), key=lambda x: x[1], reverse=True)
-      eigvect_sorted = [eigvect[:, i] * (1.0 if eigvect[:, i].sum() > 0.0 else -1.0) for i, _ in eigval_sorted]
+      eigvect_sorted = [
+        eigvect[:, i] * (1.0 if eigvect[:, i].sum() > 0.0 else -1.0) for i, _ in eigval_sorted
+      ]
       canon_trans = np.array([
         [*eigvect_sorted[0], 0.],
         [*eigvect_sorted[1], 0.],

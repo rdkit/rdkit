@@ -1,4 +1,5 @@
 import ctypes
+
 rdk = ctypes.cdll.LoadLibrary('./lib/librdkitcffi.so')
 rdk.get_smiles.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_char_p]
 rdk.get_smiles.restype = ctypes.c_char_p

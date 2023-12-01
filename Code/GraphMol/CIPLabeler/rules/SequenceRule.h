@@ -34,7 +34,6 @@ inline int three_way_comparison(const T &x, const T &y) {
 }  // namespace
 
 class SequenceRule {
-
  public:
   SequenceRule();
 

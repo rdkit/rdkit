@@ -28,7 +28,8 @@ RDKIT_SMILESPARSE_EXPORT std::string GetBondSmarts(const Bond *qbond,
 class ROMol;
 //! returns the SMARTS for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string MolToSmarts(const ROMol &mol,
-                                                 bool doIsomericSmarts = true);
+                                                 bool doIsomericSmarts = true,
+                                                 int rootedAtAtom = -1);
 
 RDKIT_SMILESPARSE_EXPORT std::string MolFragmentToSmarts(
     const ROMol &mol, const std::vector<int> &atomsToUse,

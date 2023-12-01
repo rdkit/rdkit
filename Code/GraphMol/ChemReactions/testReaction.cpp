@@ -7777,9 +7777,10 @@ void testChemicalReactionCopyAssignment() {
 
 void testGithub6138() {
   // Pickling reactions removed some of their properties set after reaction
-    // initialization
+  // initialization
   auto rxn_smarts = "[c:1]:[n&H1&+0&D2:3]:[n:2]>>[c:1]:[3n&H0&+0&D3:3]:[2n:2]";
-  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(rxn_smarts));
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction(rxn_smarts));
   ROMOL_SPTR mol("c1cn[nH]c1"_smiles);
   rxn->initReactantMatchers();
   MOL_SPTR_VECT reacts;
@@ -7790,9 +7791,61 @@ void testGithub6138() {
   std::unique_ptr<ChemicalReaction> lrxn(new ChemicalReaction());
   ReactionPickler::reactionFromPickle(pkl, lrxn.get());
   auto prods2 = lrxn->runReactants(reacts);
-  auto s1 =MolToSmiles(*prods[0][0]);
-  auto s2 =MolToSmiles(*prods2[0][0]);
+  auto s1 = MolToSmiles(*prods[0][0]);
+  auto s2 = MolToSmiles(*prods2[0][0]);
   TEST_ASSERT(s1 == s2);
+}
+
+void testReactionWithChiralAgent() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing introduction of new atoms with chirality"
+                       << std::endl;
+
+  {  // a reaction with a chiral agent - v3000
+    std::string rdbase = getenv("RDBASE");
+    std::string fName;
+
+    fName =
+        rdbase +
+        "/Code/GraphMol/ChemReactions/testData/testRXNChiralityAgentV3000.rxn";
+    ChemicalReaction *rxn =
+        RxnFileToChemicalReaction(fName, false, false, false);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    TEST_ASSERT(rxn->getNumAgentTemplates() == 1);
+    auto outputRxn = ChemicalReactionToRxnSmiles(*rxn);
+    TEST_ASSERT(
+        outputRxn ==
+        "[CH:1]([F:2])([CH3:3])[CH2:4][CH2:5][Br:6]>CC[C@H](C)Cl>[CH:1]([F:2])([CH3:3])[CH2:4][CH2:5][CH2:7][CH:8]([CH3:9])[Cl:10]");
+
+    BOOST_LOG(rdInfoLog) << ChemicalReactionToRxnSmiles(*rxn) << std::endl;
+
+    delete rxn;
+  }
+
+  {  // a reaction with a chiral agent - v2000
+    std::string rdbase = getenv("RDBASE");
+    std::string fName;
+
+    fName =
+        rdbase +
+        "/Code/GraphMol/ChemReactions/testData/testRXNChiralityAgentV2000.rxn";
+    ChemicalReaction *rxn =
+        RxnFileToChemicalReaction(fName, false, false, false);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    TEST_ASSERT(rxn->getNumAgentTemplates() == 1);
+    auto outputRxn = ChemicalReactionToRxnSmiles(*rxn);
+    TEST_ASSERT(
+        outputRxn ==
+        "[CH:1]([F:2])([CH3:3])[CH2:4][CH2:5][Br:6]>CC[C@H](C)Cl>[CH:1]([F:2])([CH3:3])[CH2:4][CH2:5][CH2:7][CH:8]([CH3:9])[Cl:10]");
+
+    BOOST_LOG(rdInfoLog) << ChemicalReactionToRxnSmiles(*rxn) << std::endl;
+
+    delete rxn;
+  }
 }
 
 int main() {
@@ -7895,6 +7948,7 @@ int main() {
   testMultiTemplateRxnQueries();
   testChemicalReactionCopyAssignment();
   testGithub6138();
+  testReactionWithChiralAgent();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

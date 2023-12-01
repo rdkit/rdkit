@@ -4,19 +4,19 @@
 #     All Rights Reserved
 #
 
-from rdkit import RDConfig
-from rdkit import Chem
 import os.path
 
+from rdkit import Chem, RDConfig
+from rdkit.VLib import Filter, Supply
 from rdkit.VLib.NodeLib import *
-from rdkit.VLib import Supply, Filter
 
 # this would be a real input, from an sd file:
 #fName = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib','test_data','NCI_aids.10.dupes.sdf')
 #supplier = SDSupply.SDSupplyNode(fName)
 # instead though, we want a simpler input:
-smis = ['CCOC', 'CCO.Cl', 'CC(=O)[O-].[Na+]', 'CC[Cu]CC', 'OCC', 'C[N+](C)(C)C.[Cl-]',
-        '[Na+].[Cl-]']
+smis = [
+  'CCOC', 'CCO.Cl', 'CC(=O)[O-].[Na+]', 'CC[Cu]CC', 'OCC', 'C[N+](C)(C)C.[Cl-]', '[Na+].[Cl-]'
+]
 mols = [Chem.MolFromSmiles(x) for x in smis]
 # name the molecules (only needed because we built them from smiles):
 for i in range(len(mols)):
@@ -46,9 +46,9 @@ dupeFilter.AddParent(atsFilter)
 # should be 4 here
 print('post-dupes:', len([x for x in dupeFilter]))
 
-import StringIO
+from io import StringIO
 # a StringIO object acts like a file:
-io = StringIO.StringIO()
+io = StringIO()
 output = SmilesOutput.OutputNode(dest=io, delim=', ', idField='Name')
 output.AddParent(dupeFilter)
 print('post-output:', len([x for x in output]))

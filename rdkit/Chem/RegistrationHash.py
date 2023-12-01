@@ -26,16 +26,16 @@ import hashlib
 import json
 import logging
 import re
-from typing import Iterable
-from typing import Optional
+from typing import Iterable, Optional
 
 from rdkit import Chem
-from rdkit.Chem import EnumerateStereoisomers
 from rdkit.Chem import rdMolHash
 
 ATOM_PROP_MAP_NUMBER = 'molAtomMapNumber'
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_CXFLAG = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
 
 ENHANCED_STEREO_GROUP_REGEX = re.compile(r'((?:a|[&o]\d+):\d+(?:,\d+)*)')
 
@@ -54,10 +54,9 @@ class HashLayer(enum.Enum):
     :cvar ESCAPE: arbitrary other information to be incorporated
     :cvar FORMULA: a simple molecular formula for the molecule
     :cvar NO_STEREO_SMILES: RDKit canonical SMILES with all stereo removed
-    :cvar NO_STEREO_TAUTOMER_HASH: the above tautomer hash lacking all stereo
     :cvar SGROUP_DATA: canonicalization of all SGroups data present
     :cvar TAUTOMER_HASH: SMILES-like representation for a generic tautomer form
-
+    :cvar NO_STEREO_TAUTOMER_HASH: the above tautomer hash lacking all stereo
     """
   CANONICAL_SMILES = enum.auto()
   ESCAPE = enum.auto()
@@ -108,12 +107,14 @@ def GetMolHash(all_layers, hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> s
 
   h = hashlib.sha1()
   for layer in hash_scheme.value:
-    h.update(all_layers[layer].encode())
+    if layer in all_layers:
+      h.update(all_layers[layer].encode())
   return h.hexdigest()
 
 
 def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[Iterable] = None,
-                 escape: Optional[str] = None) -> set(HashLayer):
+                 escape: Optional[str] = None, cxflag=DEFAULT_CXFLAG,
+                 enable_tautomer_hash_v2=False) -> set(HashLayer):
   """
     Generate layers of data about that could be used to identify a molecule
 
@@ -121,6 +122,7 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
     :param data_field_names: optional sequence of names of SGroup DAT fields which
        will be included in the hash.
     :param escape: optional field which can contain arbitrary information
+    :param enable_tautomer_hash_v2: use v2 of the tautomer hash
     :return: dictionary of HashLayer enum to calculated hash
     """
   # Work on a copy with all non-stereogenic Hydrogens removed
@@ -130,16 +132,20 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   Chem.CanonicalizeEnhancedStereo(mol)
 
   formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
-  cxsmiles = Chem.MolToCXSmiles(mol)
-  tautomer_hash = GetStereoTautomerHash(mol)
 
-  canonical_smiles = GetCanonicalSmiles(cxsmiles)
+  ps = Chem.SmilesWriteParams()
+  cxsmiles = Chem.MolToCXSmiles(mol, ps, cxflag)
+
+  tautomer_hash = GetStereoTautomerHash(mol, cxflag=cxflag,
+                                        enable_tautomer_hash_v2=enable_tautomer_hash_v2)
+
   sgroup_data = _CanonicalizeSGroups(mol, dataFieldNames=data_field_names)
 
-  no_stereo_tautomer_hash, no_stereo_smiles = GetNoStereoLayers(mol)
+  no_stereo_tautomer_hash, no_stereo_smiles = GetNoStereoLayers(
+    mol, enable_tautomer_hash_v2=enable_tautomer_hash_v2)
 
   return {
-    HashLayer.CANONICAL_SMILES: canonical_smiles,
+    HashLayer.CANONICAL_SMILES: cxsmiles,
     HashLayer.ESCAPE: escape or "",
     HashLayer.FORMULA: formula,
     HashLayer.NO_STEREO_SMILES: no_stereo_smiles,
@@ -167,7 +173,7 @@ def _RemoveUnnecessaryHs(rdk_mol, preserve_stereogenic_hs=False):
   return edited_mol
 
 
-def GetStereoTautomerHash(molecule):
+def GetStereoTautomerHash(molecule, cxflag=DEFAULT_CXFLAG, enable_tautomer_hash_v2=False):
   if molecule.GetNumAtoms() == 0:
     return EMPTY_MOL_TAUTOMER_HASH
 
@@ -178,44 +184,29 @@ def GetStereoTautomerHash(molecule):
 
   # setting useCxSmiles param value to always include enhanced stereo info
   useCxSmiles = True
-  hash_with_cxExtensions = rdMolHash.MolHash(no_h_mol, rdMolHash.HashFunction.HetAtomTautomer,
-                                             useCxSmiles)
+  cx_flags_to_skip = Chem.CXSmilesFields.CX_ALL ^ cxflag
+  if enable_tautomer_hash_v2:
+    hash_func = rdMolHash.HashFunction.HetAtomTautomerv2
+  else:
+    hash_func = rdMolHash.HashFunction.HetAtomTautomer
 
-  # since the cxSmiles can include anything, we want to only include
-  # enhanced stereo information
-  canonical_smiles = GetCanonicalSmiles(hash_with_cxExtensions)
-  return canonical_smiles
+  hash_with_cxExtensions = rdMolHash.MolHash(no_h_mol, hash_func, useCxSmiles, cx_flags_to_skip)
 
-
-def GetCanonicalSmiles(cxsmiles):
-  smiles_parts = (p.strip() for p in cxsmiles.split('|'))
-  smiles_parts = [p for p in smiles_parts if p]
-  if not smiles_parts:
-    return '', ''
-  elif len(smiles_parts) > 2:
-    raise ValueError('Unexpected number of fragments in canonical CXSMILES')
-
-  canonical_smiles = smiles_parts[0]
-  stereo_groups = ''
-  if len(smiles_parts) == 2:
-    # note: as with many regex-based things, this is fragile
-    groups = ENHANCED_STEREO_GROUP_REGEX.findall(smiles_parts[1])
-    if groups:
-      # We might have other CXSMILES extensions that aren't stereo groups
-      stereo_groups = f"|{','.join(sorted(groups))}|"
-
-  if stereo_groups:
-    return canonical_smiles + " " + stereo_groups
-
-  return canonical_smiles
+  return hash_with_cxExtensions
 
 
-def GetNoStereoLayers(mol):
+def GetNoStereoLayers(mol, enable_tautomer_hash_v2=False):
   # SHARED-7909: Strip all Hs, including stereogenic ones.
   no_stereo_mol = _RemoveUnnecessaryHs(mol)
   no_stereo_mol.UpdatePropertyCache(False)
   Chem.rdmolops.RemoveStereochemistry(no_stereo_mol)
-  no_stereo_tautomer_hash = rdMolHash.MolHash(no_stereo_mol, rdMolHash.HashFunction.HetAtomTautomer)
+
+  if enable_tautomer_hash_v2:
+    hash_func = rdMolHash.HashFunction.HetAtomTautomerv2
+  else:
+    hash_func = rdMolHash.HashFunction.HetAtomTautomer
+  no_stereo_tautomer_hash = rdMolHash.MolHash(no_stereo_mol, hash_func)
+
   no_stereo_smiles = rdMolHash.MolHash(no_stereo_mol, rdMolHash.HashFunction.CanonicalSmiles)
   return (no_stereo_tautomer_hash, no_stereo_smiles)
 
@@ -342,7 +333,7 @@ def _CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder, sortAtomAndBondOrder):
   return res
 
 
-def _CaonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder):
+def _CanonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder):
   """
     NOTES: if sortAtomAndBondOrder is true then the atom and bond lists will be sorted.
     This assumes that the ordering of those lists is not important
@@ -373,7 +364,7 @@ def _CanonicalizeSGroups(mol, dataFieldNames=None, sortAtomAndBondOrder=True):
     elif sg.GetProp("TYPE") == "SRU":
       lres = _CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder, sortAtomAndBondOrder)
     elif sg.GetProp("TYPE") == "COP":
-      lres = _CaonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder)
+      lres = _CanonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder)
 
     if lres is not None:
       res.append(lres)
@@ -397,5 +388,3 @@ def _CanonicalizeSGroups(mol, dataFieldNames=None, sortAtomAndBondOrder=True):
 class EnhancedStereoUpdateMode(enum.Enum):
   ADD_WEIGHTS = enum.auto()
   REMOVE_WEIGHTS = enum.auto()
-
-

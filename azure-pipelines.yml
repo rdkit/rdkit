@@ -14,6 +14,8 @@ jobs:
     compiler: gxx_linux-64
     number_of_cores: nproc
     python_name: python38
+    cc: gcc-10
+    cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build.yml
 - job: Ubuntu_x64_py311
@@ -24,20 +26,22 @@ jobs:
     python: python=3.11
     boost_version: 1.80.0
     compiler: gxx_linux-64
+    cc: gcc-10
+    cxx: g++-10
     number_of_cores: nproc
     python_name: python311
   steps:
   - template: .azure-pipelines/linux_build_py311.yml
 - job: macOS_x64
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
   pool:
     vmImage: macos-latest
   variables:
     compiler: clangxx_osx-64
     compiler_version: 12.0
-    boost_version: 1.71.0
+    boost_version: 1.82.0
     number_of_cores: sysctl -n hw.ncpu
-    python_name: python38
+    python: python=3.11
     target_platform: 10.13
   steps:
   - template: .azure-pipelines/mac_build.yml
@@ -46,9 +50,9 @@ jobs:
   pool:
     vmImage: windows-2019
   variables:
-    boost_version: 1.67.0
+    boost_version: 1.71.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
-    python_name: python37
+    python_name: python38
   steps:
   - template: .azure-pipelines/vs_build.yml
 - job: Windows_VS2022_x64_dll
@@ -56,9 +60,9 @@ jobs:
   pool:
     vmImage: windows-2019
   variables:
-    boost_version: 1.67.0
+    boost_version: 1.71.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
-    python_name: python37
+    python_name: python38
   steps:
   - template: .azure-pipelines/vs_build_dll.yml
 - job: Ubuntu_x64_java
@@ -66,10 +70,12 @@ jobs:
   pool:
     vmImage: ubuntu-20.04
   variables:
-    compiler: gxx_linux-64=9.3.0
     boost_version: 1.67.0
     number_of_cores: nproc
     python_name: python37
+    compiler: gxx_linux-64
+    cc: gcc-10
+    cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build_java.yml
 - job: macOS_x64_java
@@ -92,21 +98,25 @@ jobs:
   variables:
     boost_version: 1.69.0
     number_of_cores: nproc
+    compiler: gxx_linux-64
+    cc: gcc-10
+    cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build_cartridge.yml
 - job: Ubuntu_x64_limitexternaldependencies
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
   variables:
-    python: python=3.8
-    boost_version: 1.71.0
-    compiler: gxx_linux-64
+    python: python=3.11
+    boost_version: 1.82.0
     number_of_cores: nproc
-    python_name: python38
+    compiler: gxx_linux-64
+    cc: gcc-11
+    cxx: g++-11
   steps:
   - template: .azure-pipelines/linux_build_limitexternal.yml
-#
+
 # - job: Ubuntu_18_04_x64_fuzzer
 #  timeoutInMinutes: 90
 #  pool:

@@ -309,6 +309,18 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
                                         bool mergeUnmappedOnly = false,
                                         bool mergeIsotopes = false);
 
+//! returns a pair of booleans (hasQueryHs, hasUnmergaebleQueryHs)
+/*!
+  This is really intended to be used with molecules that contain QueryAtoms
+  such as when checking smarts patterns for explicit hydrogens
+
+
+  \param mol the molecule to check for query Hs from
+  \return std::pair  if pair.first is true if the molecule has query hydrogens,
+  if pair.second is true, the queryHs cannot be removed my mergeQueryHs
+*/
+RDKIT_GRAPHMOL_EXPORT std::pair<bool, bool> hasQueryHs(const ROMol &mol);
+
 typedef enum {
   ADJUST_IGNORENONE = 0x0,
   ADJUST_IGNORECHAINS = 0x1,
@@ -376,6 +388,7 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   bool adjustSingleBondsBetweenAromaticAtoms =
       false; /**<  sets non-ring single bonds between two aromatic or conjugated
                 atoms to SINGLE|AROMATIC */
+
   //! \brief returns an AdjustQueryParameters object with all adjustments
   //! disabled
   static AdjustQueryParameters noAdjustments() {
@@ -450,7 +463,6 @@ typedef enum {
 /*!
    This functions calls the following in sequence
      -# MolOps::cleanUp()
-     -# MolOps::cleanUpOrganometallics()
      -# mol.updatePropertyCache()
      -# MolOps::symmetrizeSSSR()
      -# MolOps::Kekulize()
@@ -589,6 +601,9 @@ RDKIT_GRAPHMOL_EXPORT void cleanUp(RWMol &mol);
 //! organometallic species before valence is perceived
 /*!
 
+    \b Note that this function is experimental and may either change in behavior
+   or be replaced with something else in future releases.
+
     Currently this:
      - replaces single bonds between "hypervalent" organic atoms and metals with
        dative bonds (this is following an IUPAC recommendation:
@@ -688,6 +703,8 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
   \param res used to return the vector of rings. Each entry is a vector with
       atom indices.  This information is also stored in the molecule's
       RingInfo structure, so this argument is optional (see overload)
+  \param includeDativeBonds - determines whether or not dative bonds are used in
+      the ring finding.
 
   \return number of smallest rings found
 
@@ -723,10 +740,12 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
   done. The extra rings this process adds can be quite useful.
 */
 RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
-                                   std::vector<std::vector<int>> &res);
+                                   std::vector<std::vector<int>> &res,
+                                   bool includeDativeBonds = false);
 //! \overload
-RDKIT_GRAPHMOL_EXPORT int findSSSR(
-    const ROMol &mol, std::vector<std::vector<int>> *res = nullptr);
+RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
+                                   std::vector<std::vector<int>> *res = nullptr,
+                                   bool includeDativeBonds = false);
 
 //! use a DFS algorithm to identify ring bonds and atoms in a molecule
 /*!
@@ -756,6 +775,8 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
   \param res used to return the vector of rings. Each entry is a vector with
       atom indices.  This information is also stored in the molecule's
       RingInfo structure, so this argument is optional (see overload)
+  \param includeDativeBonds - determines whether or not dative bonds are used in
+      the ring finding.
 
   \return the total number of rings = (new rings + old SSSRs)
 
@@ -764,9 +785,11 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
   first
 */
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
-                                         std::vector<std::vector<int>> &res);
+                                         std::vector<std::vector<int>> &res,
+                                         bool includeDativeBonds = false);
 //! \overload
-RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
+                                         bool includeDativeBonds = false);
 
 //! @}
 
@@ -952,8 +975,10 @@ RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
 //! removes directions from single bonds. Wiggly bonds will have the property
-//! _UnknownStereo set on them
-RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol);
+//! _UnknownStereo set on them. If retainCisTransInfo is true,
+//! ENDUPRIGHT and ENDDOWNRIGHT bond directions will not be cleared
+RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(
+    ROMol &mol, bool retainCisTransInfo = false);
 
 //! Assign CIS/TRANS bond stereochemistry tags based on neighboring
 //! directions

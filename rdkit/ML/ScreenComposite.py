@@ -108,9 +108,13 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 
 
 """
+from warnings import warn
 
+warn('This module is deprecated and will be removed in the 2024.03 release', DeprecationWarning,
+     stacklevel=2)
 
 import os
+import pickle
 import sys
 
 import numpy
@@ -120,8 +124,6 @@ from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
 from rdkit.ML.Data import DataUtils, SplitData
-import pickle
-
 
 try:
   from PIL import Image, ImageDraw
@@ -787,10 +789,11 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
       errorEstimate = 0
     else:
       errorEstimate = 1
-    g, b, s, aG, aB, aS, vT = ShowVoteResults(
-      testIdx, data, model, nPossible[-1], details.threshold, verbose=0, callback=cb,
-      appendExamples=appendExamples, goodVotes=goodVotes, badVotes=badVotes, noVotes=noVotes,
-      errorEstimate=errorEstimate)
+    g, b, s, aG, aB, aS, vT = ShowVoteResults(testIdx, data, model, nPossible[-1],
+                                              details.threshold, verbose=0, callback=cb,
+                                              appendExamples=appendExamples, goodVotes=goodVotes,
+                                              badVotes=badVotes, noVotes=noVotes,
+                                              errorEstimate=errorEstimate)
     if voteTab is None:
       voteTab = numpy.zeros(vT.shape, float)
     if hasattr(details, 'errorAnalysis') and details.errorAnalysis:
@@ -845,8 +848,8 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
     avgConfSkip = sum(confSkip) / nModels
     devConfSkip = numpy.sqrt(sum((confSkip - avgConfSkip)**2) / (nModels - 1))
     return ((avgNGood, devNGood), (avgNBad, devNBad), (avgNSkip, devNSkip),
-            (avgConfGood, devConfGood), (avgConfBad, devConfBad), (avgConfSkip, devConfSkip),
-            voteTab)
+            (avgConfGood, devConfGood), (avgConfBad, devConfBad), (avgConfSkip,
+                                                                   devConfSkip), voteTab)
 
 
 def GetScreenImage(nGood, nBad, nRej, size=None):
@@ -1219,14 +1222,16 @@ def ShowVersion(includeArgs=0):
 def ParseArgs(details):
   import getopt
   try:
-    args, extras = getopt.getopt(sys.argv[1:], 'EDd:t:VN:HThSRF:v:AX', ['predPlot=',
-                                                                        'predActCol=',
-                                                                        'predActTable=',
-                                                                        'predLogScale',
-                                                                        'predShow',
-                                                                        'OOB',
-                                                                        'pickleCol=',
-                                                                        'enrich=', ])
+    args, extras = getopt.getopt(sys.argv[1:], 'EDd:t:VN:HThSRF:v:AX', [
+      'predPlot=',
+      'predActCol=',
+      'predActTable=',
+      'predLogScale',
+      'predShow',
+      'OOB',
+      'pickleCol=',
+      'enrich=',
+    ])
   except Exception:
     import traceback
     traceback.print_exc()
@@ -1429,10 +1434,11 @@ if __name__ == '__main__':
             goodVotes = []
           else:
             goodVotes = None
-          g, b, s, aG, aB, aS, vT = ShowVoteResults(
-            testIdx, tmpD, model, nRes, tol, verbose=details.verbose, screenResults=screenRes,
-            badVotes=badVotes, noVotes=noVotes, goodVotes=goodVotes,
-            errorEstimate=details.errorEstimate)
+          g, b, s, aG, aB, aS, vT = ShowVoteResults(testIdx, tmpD, model, nRes, tol,
+                                                    verbose=details.verbose,
+                                                    screenResults=screenRes, badVotes=badVotes,
+                                                    noVotes=noVotes, goodVotes=goodVotes,
+                                                    errorEstimate=details.errorEstimate)
           if voteTab is None:
             voteTab = numpy.zeros(vT.shape, float)
           if details.errorAnalysis:
@@ -1472,18 +1478,18 @@ if __name__ == '__main__':
           print('id, prediction, confidence, flag(-1=skipped,0=wrong,1=correct)')
           for ans, pred, conf, idx in goodVotes:
             pt = tmpD[testIdx[idx]]
-            assert model.GetActivityQuantBounds() or pt[-1] == ans, 'bad point?: %s != %s' % (
-              str(pt[-1]), str(ans))
+            assert model.GetActivityQuantBounds() or pt[-1] == ans, 'bad point?: %s != %s' % (str(
+              pt[-1]), str(ans))
             print('%s, %d, %.4f, 1' % (str(pt[0]), pred, conf))
           for ans, pred, conf, idx in badVotes:
             pt = tmpD[testIdx[idx]]
-            assert model.GetActivityQuantBounds() or pt[-1] == ans, 'bad point?: %s != %s' % (
-              str(pt[-1]), str(ans))
+            assert model.GetActivityQuantBounds() or pt[-1] == ans, 'bad point?: %s != %s' % (str(
+              pt[-1]), str(ans))
             print('%s, %d, %.4f, 0' % (str(pt[0]), pred, conf))
           for ans, pred, conf, idx in noVotes:
             pt = tmpD[testIdx[idx]]
-            assert model.GetActivityQuantBounds() or pt[-1] == ans, 'bad point?: %s != %s' % (
-              str(pt[-1]), str(ans))
+            assert model.GetActivityQuantBounds() or pt[-1] == ans, 'bad point?: %s != %s' % (str(
+              pt[-1]), str(ans))
             print('%s, %d, %.4f, -1' % (str(pt[0]), pred, conf))
           print('-^-^-^-^-^-^-^-  -^-^-^-^-^-^-^-')
 
@@ -1578,11 +1584,11 @@ if __name__ == '__main__':
       bestSkip = nSkip[bestIdx]
       nClassified = bestGood + bestBad
       nExamples = nClassified + bestSkip
-      print('Misclassifications: \t%%%5.2f   %d / %d' % (100 * bestBad / nExamples, bestBad,
-                                                         nExamples))
+      print('Misclassifications: \t%%%5.2f   %d / %d' %
+            (100 * bestBad / nExamples, bestBad, nExamples))
       if bestSkip > 0:
-        print('\tthreshold: \t%%%5.2f   %d / %d' % (100 * bestBad / nClassified, bestBad,
-                                                    nClassified))
+        print('\tthreshold: \t%%%5.2f   %d / %d' %
+              (100 * bestBad / nClassified, bestBad, nClassified))
         print()
         print('Number Skipped: %%%4.2f    %d' % (100 * bestSkip / nExamples, bestSkip))
 

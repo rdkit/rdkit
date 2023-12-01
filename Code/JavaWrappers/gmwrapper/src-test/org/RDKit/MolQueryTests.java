@@ -63,6 +63,19 @@ public class MolQueryTests extends GraphMolTest {
         assertTrue(m1.hasSubstructMatch(aqmol));
         assertFalse(m2.hasSubstructMatch(aqmol));
     }
+    @Test public void testHasQueryHs() {
+	ROMol m2;
+	m2 = RWMol.MolFromSmarts("[#1]",0,false);
+	BoolPair res = RDKFuncs.hasQueryHs(m2);
+	assertTrue(res.getFirst());
+	assertFalse(res.getSecond());
+
+	m2 = RWMol.MolFromSmarts("[#1,C]",0,false);
+	res = RDKFuncs.hasQueryHs(m2);
+	assertTrue(res.getFirst());
+	assertTrue(res.getSecond());
+    }
+
     public static void main(String args[]) {
         org.junit.runner.JUnitCore.main("org.RDKit.BasicMoleculeTests");
     }

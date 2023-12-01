@@ -9,16 +9,19 @@
 #  of the RDKit source tree.
 #
 """ Interactive molecule rendering through rdkit-structure-renderer.js """
-from xml.dom import minidom
-import uuid
 import base64
 import json
-import re
 import logging
-from . import rdMolDraw2D
+import re
+import uuid
+from xml.dom import minidom
+
 from IPython.display import HTML, display
+
 from rdkit import Chem
 from rdkit.Chem import Draw
+
+from . import rdMolDraw2D
 
 log = logging.getLogger(__name__)
 
@@ -82,8 +85,8 @@ def setEnabled(shouldEnable=True, quiet=False):
 
   def _wrapMsgIntoDiv(uuid, msg, quiet):
     return ('<div '
-      'class="lm-Widget p-Widget jp-RenderedText jp-mod-trusted jp-OutputArea-output"'
-      f'id="{uuid}">{"" if quiet else msg}</div>')
+            'class="lm-Widget p-Widget jp-RenderedText jp-mod-trusted jp-OutputArea-output"'
+            f'id="{uuid}">{"" if quiet else msg}</div>')
 
   global _enabled_div_uuid
   loadingMsg = "Loading rdkit-structure-renderer.js..."
@@ -98,8 +101,9 @@ def setEnabled(shouldEnable=True, quiet=False):
   if _enabled_div_uuid:
     return display(HTML(_wrapMsgIntoDiv(_enabled_div_uuid, renderingEnabledMsg, quiet)))
   _enabled_div_uuid = str(uuid.uuid1())
-  return display(HTML(_wrapMsgIntoDiv(_enabled_div_uuid, loadingMsg, quiet) +
-f"""<script type="module">
+  return display(
+    HTML(
+      _wrapMsgIntoDiv(_enabled_div_uuid, loadingMsg, quiet) + f"""<script type="module">
 const jsLoader = document.getElementById('{_enabled_div_uuid}') || {{}};
 const setError = (e, resolve) => {{
   jsLoader.innerHTML = (
@@ -162,7 +166,9 @@ def getOpts(mol):
 
 def setOpts(mol, opts):
   if not isinstance(mol, Chem.Mol) or not isinstance(opts, dict):
-    raise ValueError(f"Bad args ({str(type(mol)), str(type(opts))}) for {__name__}.setOpts(mol: Chem.Mol, opts: dict)")
+    raise ValueError(
+      f"Bad args ({str(type(mol)), str(type(opts))}) for {__name__}.setOpts(mol: Chem.Mol, opts: dict)"
+    )
   if not all(opts.keys()):
     raise ValueError(
       f"{__name__}.setOpts(mol: Chem.Mol, opts: dict): no key in opts should be null")
@@ -174,7 +180,9 @@ def setOpts(mol, opts):
 
 def setOpt(mol, key, value):
   if not isinstance(mol, Chem.Mol) or not isinstance(key, str) or not key:
-    raise ValueError(f"Bad args ({str(type(mol))}, {str(type(key))}) for {__name__}.setOpt(mol: Chem.Mol, key: str, value: Any)")
+    raise ValueError(
+      f"Bad args ({str(type(mol))}, {str(type(key))}) for {__name__}.setOpt(mol: Chem.Mol, key: str, value: Any)"
+    )
   opts = getOpts(mol)
   opts[key] = value
   setOpts(mol, opts)
@@ -188,7 +196,9 @@ def clearOpts(mol):
 
 def clearOpt(mol, key):
   if not isinstance(mol, Chem.Mol) or not isinstance(key, str):
-    raise ValueError(f"Bad args ({str(type(mol))}, {str(type(key))}) for {__name__}.clearOpt(mol: Chem.Mol, key: str)")
+    raise ValueError(
+      f"Bad args ({str(type(mol))}, {str(type(key))}) for {__name__}.clearOpt(mol: Chem.Mol, key: str)"
+    )
   opts = getOpts(mol)
   if key in opts:
     opts.pop(key)
@@ -225,6 +235,7 @@ def injectHTMLFooterAfterTable(html):
       return generateHTMLFooter(doc, table)
   return html
 
+
 def generateHTMLFooter(doc, element):
   element_parent = element.parentNode
   if element_parent.nodeName.lower() != "div":
@@ -259,9 +270,9 @@ def xmlToNewline(xmlblock):
 
 
 def toDataMol(mol):
-  return "pkl_" + base64.b64encode(mol.ToBinary(
-    Chem.PropertyPickleOptions.AllProps ^ Chem.PropertyPickleOptions.ComputedProps
-  )).decode("utf-8")
+  return "pkl_" + base64.b64encode(
+    mol.ToBinary(Chem.PropertyPickleOptions.AllProps
+                 ^ Chem.PropertyPickleOptions.ComputedProps)).decode("utf-8")
 
 
 def _dashLower(m):
@@ -276,6 +287,7 @@ def camelCaseOptToDataTag(opt):
 
 
 def generateHTMLBody(mol, size, **kwargs):
+
   def toJson(x):
     return json.dumps(x, separators=(",", ":"))
 
@@ -289,8 +301,7 @@ def generateHTMLBody(mol, size, **kwargs):
     highlightAtoms = mol.__sssAtoms
     highlightBonds = [
       b.GetIdx() for b in mol.GetBonds()
-      if b.GetBeginAtomIdx() in highlightAtoms
-      and b.GetEndAtomIdx() in highlightAtoms
+      if b.GetBeginAtomIdx() in highlightAtoms and b.GetEndAtomIdx() in highlightAtoms
     ]
   doc = minidom.Document()
   unique_id = str(uuid.uuid1())
@@ -386,8 +397,8 @@ def MolsToHTMLTable(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
       content = None
       if isinstance(mol, Chem.Mol):
         if isEnabled(mol):
-          content = generateHTMLBody(mol, subImgSize, drawOptions=drawOptions, legend=legend, useSVG=useSVG,
-                                     highlightAtoms=highlights, **kwargs)
+          content = generateHTMLBody(mol, subImgSize, drawOptions=drawOptions, legend=legend,
+                                     useSVG=useSVG, highlightAtoms=highlights, **kwargs)
         else:
           fn = Draw._moltoSVG if useSVG else Draw._moltoimg
           content = fn(mol, subImgSize, highlights, legend, **kwargs)

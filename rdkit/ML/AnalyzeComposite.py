@@ -26,8 +26,12 @@ Usage:  AnalyzeComposite [optional args] <models>
 
       -v: be verbose whilst screening
 """
+from warnings import warn
 
+warn('This module is deprecated and will be removed in the 2024.03 release', DeprecationWarning,
+     stacklevel=2)
 
+import pickle
 import sys
 
 import numpy
@@ -35,9 +39,7 @@ import numpy
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import ScreenComposite
 from rdkit.ML.Data import Stats
-from rdkit.ML.DecTree import TreeUtils, Tree
-import pickle
-
+from rdkit.ML.DecTree import Tree, TreeUtils
 
 __VERSION_STRING = "2.2.0"
 
@@ -276,8 +278,10 @@ def Usage():
 if __name__ == "__main__":
   import getopt
   try:
-    args, extras = getopt.getopt(sys.argv[1:], 'n:d:N:vX', ('skip',
-                                                            'enrich=', ))
+    args, extras = getopt.getopt(sys.argv[1:], 'n:d:N:vX', (
+      'skip',
+      'enrich=',
+    ))
   except Exception:
     Usage()
 

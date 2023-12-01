@@ -19,8 +19,9 @@ else:
   raise ValueError('invalid RD_MOLVIEWER specified')
 
 if __name__ == '__main__':
-  import AllChem
   import sys
+
+  import AllChem
   if len(sys.argv) < 2:
     smi = 'c1cccc2c1cccc2CC(=O)N'
   else:

@@ -31,6 +31,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+
 namespace RDKit {
 namespace details {
 void updateSubMolConfs(const ROMol &mol, RWMol &res,
@@ -52,6 +53,27 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
     res.addConformer(newConf, false);
   }
 }
+void copyStereoGroups(const std::map<const Atom *, Atom *> &molAtomMap,
+                      const ROMol &mol, RWMol &newMol) {
+  // Copy over any stereo groups that lie in the new molecule
+  if (!mol.getStereoGroups().empty()) {
+    std::vector<StereoGroup> newStereoGroups;
+    for (auto &stereoGroup : mol.getStereoGroups()) {
+      std::vector<Atom *> newStereoAtoms;
+      for (const auto stereoGroupAtom : stereoGroup.getAtoms()) {
+        if (auto found = molAtomMap.find(stereoGroupAtom);
+            found != molAtomMap.end()) {
+          newStereoAtoms.push_back(found->second);
+        }
+      }
+      if (!newStereoAtoms.empty()) {
+        newStereoGroups.emplace_back(stereoGroup.getGroupType(), newStereoAtoms,
+                                     stereoGroup.getReadId());
+      }
+    }
+    newMol.setStereoGroups(std::move(newStereoGroups));
+  }
+}
 }  // namespace details
 
 namespace {
@@ -62,10 +84,10 @@ struct SideChainMapping {
 
   SideChainMapping(int molIndex)
       : molIndex(molIndex), coreIndex(-1), useMatch(false) {}
+
   SideChainMapping(int molIndex, int coreIndex, bool useMatch)
       : molIndex(molIndex), coreIndex(coreIndex), useMatch(useMatch) {}
 };
-
 }  // namespace
 
 ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
@@ -174,10 +196,9 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
   INT_VECT delList;
 
   // now loop over the list of matches and replace them:
-  for (std::vector<MatchVectType>::const_iterator mati = fgpMatches.begin();
-       mati != fgpMatches.end(); mati++) {
+  for (const auto& fgpMatche : fgpMatches) {
     INT_VECT match;  // each match onto the molecule - list of atoms ids
-    for (const auto &mi : *mati) {
+    for (const auto &mi : fgpMatche) {
       match.push_back(mi.second);
     }
 
@@ -268,24 +289,22 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
   }
 
   boost::dynamic_bitset<> matchingIndices(mol.getNumAtoms());
-  for (MatchVectType::const_iterator mvit = matchV.begin();
-       mvit != matchV.end(); ++mvit) {
-    matchingIndices[mvit->second] = 1;
+  for (auto mvit : matchV) {
+    matchingIndices[mvit.second] = 1;
   }
 
   auto *newMol = new RWMol(mol);
   boost::dynamic_bitset<> keepSet(newMol->getNumAtoms());
   std::vector<unsigned int> dummyIndices;
-  for (MatchVectType::const_iterator mvit = matchV.begin();
-       mvit != matchV.end(); ++mvit) {
-    keepSet.set(mvit->second);
+  for (auto mvit : matchV) {
+    keepSet.set(mvit.second);
     // if the atom in the molecule has higher degree than the atom in the
     // core, we have an attachment point:
-    if (newMol->getAtomWithIdx(mvit->second)->getDegree() >
-        coreQuery.getAtomWithIdx(mvit->first)->getDegree()) {
+    if (newMol->getAtomWithIdx(mvit.second)->getDegree() >
+        coreQuery.getAtomWithIdx(mvit.first)->getDegree()) {
       ROMol::ADJ_ITER nbrIdx, endNbrs;
       boost::tie(nbrIdx, endNbrs) =
-          newMol->getAtomNeighbors(newMol->getAtomWithIdx(mvit->second));
+          newMol->getAtomNeighbors(newMol->getAtomWithIdx(mvit.second));
       while (nbrIdx != endNbrs) {
         if (!matchingIndices[*nbrIdx]) {
           // this neighbor isn't in the match, convert it to a dummy atom and
@@ -293,7 +312,7 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
           keepSet.set(*nbrIdx);
           dummyIndices.push_back(*nbrIdx);
           Atom *at = newMol->getAtomWithIdx(*nbrIdx);
-          Bond *b = newMol->getBondBetweenAtoms(mvit->second, *nbrIdx);
+          Bond *b = newMol->getBondBetweenAtoms(mvit.second, *nbrIdx);
           if (b) {
             b->setIsAromatic(false);
             b->setBondType(Bond::SINGLE);
@@ -488,6 +507,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   auto *newMol = new RWMol(mol);
   std::vector<Atom *> keepList;
   std::map<Atom *, int> dummyAtomMap;
+  std::map<const Atom *, Atom *> molAtomMap;
 
   // go through the matches in query order, not target molecule
   //  order
@@ -516,6 +536,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       Atom *sidechainAtom = newMol->getAtomWithIdx(mappingInfo.molIndex);
       // we're keeping the sidechain atoms:
       keepList.push_back(sidechainAtom);
+      molAtomMap[mol.getAtomWithIdx(mappingInfo.molIndex)] = sidechainAtom;
 
       // loop over our neighbors and see if any are in the match:
       std::list<unsigned int> nbrList;
@@ -530,9 +551,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       }
       unsigned int whichNbr = 0;
       std::list<Bond *> newBonds;
-      for (std::list<unsigned int>::const_iterator lIter = nbrList.begin();
-           lIter != nbrList.end(); ++lIter) {
-        unsigned int nbrIdx = *lIter;
+      for (unsigned int nbrIdx : nbrList) {
         Bond *connectingBond =
             newMol->getBondBetweenAtoms(mappingInfo.molIndex, nbrIdx);
         bool bondToCore = matchingIndices[nbrIdx] > -1;
@@ -583,6 +602,10 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           dummyAtomMap[newAt] = nbrIdx;
           keepList.push_back(newAt);
           Bond *bnd = connectingBond->copy();
+          // If the connecting bond has stereo settings those cannot be preserved
+          if (bnd->getStereo() > Bond::STEREOANY) {
+            bnd->setStereo(Bond::STEREOANY);
+          }
           if (bnd->getBeginAtomIdx() ==
               static_cast<size_t>(mappingInfo.molIndex)) {
             bnd->setEndAtomIdx(newAt->getIdx());
@@ -591,6 +614,23 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           }
           newBonds.push_back(bnd);
           allNewBonds.push_back(bnd);
+
+          // Check to see if we are breaking a stereo bond definition, by removing one of the stereo atoms
+          // If so, set to the new atom
+          for (const auto bond : newMol->atomBonds(sidechainAtom)) {
+            if (bond->getIdx() == connectingBond->getIdx()) {
+              continue;
+            }
+
+            if (bond->getStereo() > Bond::STEREOANY) {
+              auto &stereoAtoms = bond->getStereoAtoms();
+              for (int& stereoAtom : stereoAtoms) {
+                if (stereoAtom == static_cast<int>(nbrIdx)) {
+                  stereoAtom = static_cast<int>(newAt->getIdx());
+                }
+              }
+            }
+          }
 
           // we may be changing the bond ordering at the atom.
           // e.g. replacing the N in C[C@](Cl)(N)F gives an atom ordering of
@@ -700,24 +740,26 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
                                       endAtom->getIdx());
       }
     }
-
-    // make a guess at the position of the dummy atoms showing the attachment
-    // point:
-    for (auto citer = mol.beginConformers(); citer != mol.endConformers();
-         ++citer) {
-      Conformer &newConf = newMol->getConformer((*citer)->getId());
-      for (auto iter = dummyAtomMap.begin(); iter != dummyAtomMap.end();
-           ++iter) {
-        newConf.setAtomPos(iter->first->getIdx(),
-                           (*citer)->getAtomPos(iter->second));
-      }
-    }
-
-    // clear computed props and do basic updates on
-    // the resulting molecule, but allow unhappiness:
-    newMol->clearComputedProps(true);
-    newMol->updatePropertyCache(false);
   }
+
+  // make a guess at the position of the dummy atoms showing the attachment
+  // point:
+  for (auto citer = mol.beginConformers(); citer != mol.endConformers();
+       ++citer) {
+    Conformer &newConf = newMol->getConformer((*citer)->getId());
+    for (auto& iter : dummyAtomMap) {
+      newConf.setAtomPos(iter.first->getIdx(),
+                         (*citer)->getAtomPos(iter.second));
+    }
+  }
+
+  // copy over stereo groups
+  details::copyStereoGroups(molAtomMap, mol, *newMol);
+
+  // clear computed props and do basic updates on
+  // the resulting molecule, but allow unhappiness:
+  newMol->clearComputedProps(true);
+  newMol->updatePropertyCache(false);
 
   return static_cast<ROMol *>(newMol);
 }
@@ -971,6 +1013,7 @@ void parseQueryDefFile(std::istream *inStream,
     queryDefs[qname] = msptr;
   }
 }
+
 void parseQueryDefFile(const std::string &filename,
                        std::map<std::string, ROMOL_SPTR> &queryDefs,
                        bool standardize, const std::string &delimiter,
@@ -985,6 +1028,7 @@ void parseQueryDefFile(const std::string &filename,
   parseQueryDefFile(&inStream, queryDefs, standardize, delimiter, comment,
                     nameColumn, smartsColumn);
 }
+
 void parseQueryDefText(const std::string &queryDefText,
                        std::map<std::string, ROMOL_SPTR> &queryDefs,
                        bool standardize, const std::string &delimiter,

@@ -58,7 +58,9 @@ class RDKIT_CHEMREACTIONS_EXPORT ReactionPickler {
     ENDAGENTS,
     ENDREACTION,
     BEGINPROPS,
-    ENDPROPS
+    ENDPROPS,
+    BEGINSSSPARAMS,
+    ENDSSSPARAMS
   } Tags;
 
   //! pickles a reaction and sends the results to stream \c ss

@@ -12,9 +12,14 @@
 Composite building
 
 """
+from warnings import warn
+
+warn('This module is deprecated and will be removed in the 2024.03 release', DeprecationWarning,
+     stacklevel=2)
+
 from rdkit import RDConfig
-from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.Dbase import DbModule
+from rdkit.Dbase.DbConnection import DbConnect
 
 
 def SetDefaults(runDetails):
@@ -130,38 +135,40 @@ class CompositeRun:
 
 
   """
-  fields = (("rundate", "varchar(32)"),
-            ("dbName", "varchar(200)"),
-            ("dbWhat", "varchar(200)"),
-            ("dbWhere", "varchar(200)"),
-            ("dbJoin", "varchar(200)"),
-            ("tableName", "varchar(80)"),
-            ("note", "varchar(120)"),
-            ("shuffled", "smallint"),
-            ("randomized", "smallint"),
-            ("overall_error", "float"),
-            ("holdout_error", "float"),
-            ("overall_fraction_dropped", "float"),
-            ("holdout_fraction_dropped", "float"),
-            ("overall_correct_conf", "float"),
-            ("overall_incorrect_conf", "float"),
-            ("holdout_correct_conf", "float"),
-            ("holdout_incorrect_conf", "float"),
-            ("overall_result_matrix", "varchar(256)"),
-            ("holdout_result_matrix", "varchar(256)"),
-            ("threshold", "float"),
-            ("splitFrac", "float"),
-            ("filterFrac", "float"),
-            ("filterVal", "float"),
-            ("modelFilterVal", "float"),
-            ("modelFilterFrac", "float"),
-            ("nModels", "int"),
-            ("limitDepth", "int"),
-            ("bayesModels", "int"),
-            ("qBoundCount", "varchar(3000)"),
-            ("activityBoundsVals", "varchar(200)"),
-            ("cmd", "varchar(500)"),
-            ("model", DbModule.binaryTypeName), )
+  fields = (
+    ("rundate", "varchar(32)"),
+    ("dbName", "varchar(200)"),
+    ("dbWhat", "varchar(200)"),
+    ("dbWhere", "varchar(200)"),
+    ("dbJoin", "varchar(200)"),
+    ("tableName", "varchar(80)"),
+    ("note", "varchar(120)"),
+    ("shuffled", "smallint"),
+    ("randomized", "smallint"),
+    ("overall_error", "float"),
+    ("holdout_error", "float"),
+    ("overall_fraction_dropped", "float"),
+    ("holdout_fraction_dropped", "float"),
+    ("overall_correct_conf", "float"),
+    ("overall_incorrect_conf", "float"),
+    ("holdout_correct_conf", "float"),
+    ("holdout_incorrect_conf", "float"),
+    ("overall_result_matrix", "varchar(256)"),
+    ("holdout_result_matrix", "varchar(256)"),
+    ("threshold", "float"),
+    ("splitFrac", "float"),
+    ("filterFrac", "float"),
+    ("filterVal", "float"),
+    ("modelFilterVal", "float"),
+    ("modelFilterFrac", "float"),
+    ("nModels", "int"),
+    ("limitDepth", "int"),
+    ("bayesModels", "int"),
+    ("qBoundCount", "varchar(3000)"),
+    ("activityBoundsVals", "varchar(200)"),
+    ("cmd", "varchar(500)"),
+    ("model", DbModule.binaryTypeName),
+  )
 
   def _CreateTable(self, cn, tblName):
     """ *Internal Use only*

@@ -9,7 +9,6 @@
 #  of the RDKit source tree.
 #
 
-
 import doctest
 import unittest
 

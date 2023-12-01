@@ -44,7 +44,7 @@ Array.prototype.includes||Object.defineProperty(Array.prototype,"includes",{valu
 
 # run the tests
 WORKDIR /src/rdkit/Code/MinimalLib/tests
-RUN RDKIT_MINIMAL_JS="../demo/RDKit_minimal_legacy.js" node tests.js
+RUN RDKIT_MINIMAL_JS="../demo/RDKit_minimal_legacy.js" /opt/emsdk/node/*/bin/node tests.js
 
 # Copy pure js RDKit MinimalLib file to use in legacy browsers
 # This feature requires the BuildKit backend

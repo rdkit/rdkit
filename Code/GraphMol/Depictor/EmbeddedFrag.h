@@ -185,7 +185,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
     \param useRingTemplates whether to use ring system templates for generating
       initial coordinates
   */
-  EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings, bool useRingTemplates);
+  EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings,
+               bool useRingTemplates);
 
   //! Initializer for a cis/trans system using the double bond
   /*!
@@ -371,9 +372,11 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   double totalDensity();
 
   // returns true if fused rings found a template
-  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsigned int ring_count);
+  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
+                       unsigned int ring_count);
 
-  void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings, bool useRingTemplates);
+  void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
+                       bool useRingTemplates);
 
   void setupAttachmentPoints();
 

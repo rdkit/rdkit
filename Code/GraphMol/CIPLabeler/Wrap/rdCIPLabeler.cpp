@@ -17,11 +17,11 @@
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
-
 namespace python = boost::python;
 using RDKit::CIPLabeler::assignCIPLabels;
 
-void rdMaxIterationsExceededTranslator(RDKit::CIPLabeler::MaxIterationsExceeded const &x) {
+void rdMaxIterationsExceededTranslator(
+    RDKit::CIPLabeler::MaxIterationsExceeded const &x) {
   std::ostringstream ss;
   ss << x.what();
   PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
@@ -40,7 +40,7 @@ void assignCIPLabelsWrapHelper(RDKit::ROMol &mol,
     bonds.set();
   }
 
-  assignCIPLabels(mol, atoms, bonds,maxRecursiveIterations);
+  assignCIPLabels(mol, atoms, bonds, maxRecursiveIterations);
 }
 
 BOOST_PYTHON_MODULE(rdCIPLabeler) {
@@ -54,8 +54,9 @@ BOOST_PYTHON_MODULE(rdCIPLabeler) {
       "Stereochemistry:\nProposals for Revised Rules and a Guide for Machine "
       "Implementation.\nJ. Chem. Inf. Model. 2018, 58, 1755-1765.\n";
 
-   python::register_exception_translator<RDKit::CIPLabeler::MaxIterationsExceeded>(
-       &rdMaxIterationsExceededTranslator);      
+  python::register_exception_translator<
+      RDKit::CIPLabeler::MaxIterationsExceeded>(
+      &rdMaxIterationsExceededTranslator);
 
   std::string docString =
       "New implementation of Stereo assignment using a true CIP ranking.\n"
@@ -73,8 +74,7 @@ BOOST_PYTHON_MODULE(rdCIPLabeler) {
 
   python::def(
       "AssignCIPLabels", assignCIPLabelsWrapHelper,
-      (python::arg("mol"), 
-       python::arg("atomsToLabel") = python::object(),
+      (python::arg("mol"), python::arg("atomsToLabel") = python::object(),
        python::arg("bondsToLabel") = python::object(),
        python::arg("maxRecursiveIterations") = 0),
       docString.c_str());

@@ -66,7 +66,7 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> R1(30);
+  std::vector<double> R1(210);
   std::vector<double> R2(30);
   std::vector<double> R3(30);
   std::vector<double> R4(30);
@@ -112,12 +112,12 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
     R7[i] = std::round(1000 * res7) / 1000;
   }
 
-  R1.insert(R1.end(), R2.begin(), R2.end());
-  R1.insert(R1.end(), R3.begin(), R3.end());
-  R1.insert(R1.end(), R4.begin(), R4.end());
-  R1.insert(R1.end(), R5.begin(), R5.end());
-  R1.insert(R1.end(), R6.begin(), R6.end());
-  R1.insert(R1.end(), R7.begin(), R7.end());
+  std::copy(R2.begin(), R2.end(), R1.begin() + 30);
+  std::copy(R3.begin(), R3.end(), R1.begin() + 60);
+  std::copy(R4.begin(), R4.end(), R1.begin() + 90);
+  std::copy(R5.begin(), R5.end(), R1.begin() + 120);
+  std::copy(R6.begin(), R6.end(), R1.begin() + 150);
+  std::copy(R7.begin(), R7.end(), R1.begin() + 180);
 
   res = R1;
 }

@@ -1,6 +1,5 @@
-
-from Numeric import *
 import linalg
+from Numeric import *
 
 print(linalg.GetFirstElement(array([1, 0, 2], Int)))
 print(linalg.GetFirstElement(array([1, 0, 2], Float)))

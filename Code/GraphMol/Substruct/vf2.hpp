@@ -663,16 +663,13 @@ bool vf2_all(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
              DoubleBackInsertionSequence &F, unsigned int max_results = 1000) {
   detail::VF2SubState<const Graph, VertexLabeling, EdgeLabeling, MatchChecking>
       s0(&g1, &g2, vertex_labeling, edge_labeling, match_checking, false);
-  detail::node_id *ni1 = new detail::node_id[num_vertices(g1)];
-  detail::node_id *ni2 = new detail::node_id[num_vertices(g2)];
+  std::unique_ptr<detail::node_id[]> ni1(new detail::node_id[num_vertices(g1)]);
+  std::unique_ptr<detail::node_id[]> ni2(new detail::node_id[num_vertices(g2)]);
 
   F.clear();
   F.resize(0);
 
-  match(ni1, ni2, s0, F, max_results);
-
-  delete[] ni1;
-  delete[] ni2;
+  match(ni1.get(), ni2.get(), s0, F, max_results);
 
   return !F.empty();
 };

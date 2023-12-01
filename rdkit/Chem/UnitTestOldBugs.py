@@ -14,10 +14,11 @@ The bugs were in the OELib code, so these are maybe no longer
 relevant... but tests are tests
 
 """
-from rdkit import RDConfig
-import unittest, os
+import os
 import pickle
-from rdkit import Chem
+import unittest
+
+from rdkit import Chem, RDConfig
 from rdkit.Chem import AllChem
 
 
@@ -72,7 +73,9 @@ class TestCase(unittest.TestCase):
 
     """
     from rdkit.Chem import MolSurf
-    inD = [('[O-][N+](=O)C1=CNC(=N)S1', 82.78), ]
+    inD = [
+      ('[O-][N+](=O)C1=CNC(=N)S1', 82.78),
+    ]
     for smi, val in inD:
       mol = Chem.MolFromSmiles(smi)
       v = MolSurf.TPSA(mol)

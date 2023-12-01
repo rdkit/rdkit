@@ -13,14 +13,17 @@ If changes are found, the script will exit with error code 1, otherwise 0.
 '''
 
 import os
-from yapf.yapflib.yapf_api import FormatCode
 import sys
+
+from yapf.yapflib.yapf_api import FormatCode
 
 rdbase = os.environ.get('RDBASE', '')
 styleConfig = os.path.join(rdbase, 'setup.cfg')
 
-excludeDirs = [os.path.join(rdbase, 'build'),
-               os.path.join(rdbase, 'External'), ]
+excludeDirs = [
+  os.path.join(rdbase, 'build'),
+  os.path.join(rdbase, 'External'),
+]
 
 
 def pythonFiles(dirname=rdbase):

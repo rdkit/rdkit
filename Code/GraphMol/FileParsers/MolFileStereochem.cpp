@@ -219,72 +219,15 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
 }
 
 void reapplyMolBlockWedging(ROMol &mol) {
-  MolOps::clearSingleBondDirFlags(mol);
-  for (auto b : mol.bonds()) {
-    int explicit_unknown_stereo = -1;
-    if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
-                                 explicit_unknown_stereo) &&
-        explicit_unknown_stereo) {
-      b->setBondDir(Bond::UNKNOWN);
-    }
-    int bond_dir = -1;
-    if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
-                                 bond_dir)) {
-      if (bond_dir == 1) {
-        b->setBondDir(Bond::BEGINWEDGE);
-      } else if (bond_dir == 6) {
-        b->setBondDir(Bond::BEGINDASH);
-      }
-    }
-    int cfg = -1;
-    if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
-      switch (cfg) {
-        case 1:
-          b->setBondDir(Bond::BEGINWEDGE);
-          break;
-        case 2:
-          if (b->getBondType() == Bond::SINGLE) {
-            b->setBondDir(Bond::UNKNOWN);
-          } else if (b->getBondType() == Bond::DOUBLE) {
-            b->setBondDir(Bond::EITHERDOUBLE);
-            b->setStereo(Bond::STEREOANY);
-          }
-          break;
-        case 3:
-          b->setBondDir(Bond::BEGINDASH);
-          break;
-      }
-    }
-  }
+  Chirality::reapplyMolBlockWedging(mol);
 }
 
 void clearMolBlockWedgingInfo(ROMol &mol) {
-  for (auto b : mol.bonds()) {
-    b->clearProp(common_properties::_MolFileBondStereo);
-    b->clearProp(common_properties::_MolFileBondCfg);
-  }
+  Chirality::clearMolBlockWedgingInfo(mol);
 }
 
 void invertMolBlockWedgingInfo(ROMol &mol) {
-  for (auto b : mol.bonds()) {
-    int bond_dir = -1;
-    if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
-                                 bond_dir)) {
-      if (bond_dir == 1) {
-        b->setProp<int>(common_properties::_MolFileBondStereo, 6);
-      } else if (bond_dir == 6) {
-        b->setProp<int>(common_properties::_MolFileBondStereo, 1);
-      }
-    }
-    int cfg = -1;
-    if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
-      if (cfg == 1) {
-        b->setProp<int>(common_properties::_MolFileBondCfg, 3);
-      } else if (cfg == 3) {
-        b->setProp<int>(common_properties::_MolFileBondCfg, 1);
-      }
-    }
-  }
+  Chirality::invertMolBlockWedgingInfo(mol);
 }
 
 void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
@@ -317,6 +260,61 @@ void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
         auto bond = mol.getBondWithIdx(bndIdx);
         bond->setBondDir(Bond::UNKNOWN);
       }
+    }
+  }
+}
+
+void translateChiralFlagToStereoGroups(ROMol &mol,
+                                       StereoGroupType zeroFlagGroupType) {
+  if (!mol.hasProp(common_properties::_MolFileChiralFlag)) {
+    return;
+  }
+  int flagVal = 0;
+  mol.getProp(common_properties::_MolFileChiralFlag, flagVal);
+  mol.clearProp(common_properties::_MolFileChiralFlag);
+
+  StereoGroupType sgType =
+      flagVal ? StereoGroupType::STEREO_ABSOLUTE : zeroFlagGroupType;
+
+  auto sgs = mol.getStereoGroups();
+
+  boost::dynamic_bitset<> sgAtoms(mol.getNumAtoms());
+  const StereoGroup *absGroup = nullptr;
+  for (const auto &sg : sgs) {
+    for (const auto aptr : sg.getAtoms()) {
+      sgAtoms.set(aptr->getIdx());
+    }
+    // if we already have an ABS group, we'll add to it
+    if (sgType == StereoGroupType::STEREO_ABSOLUTE && !absGroup &&
+        sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+      absGroup = &sg;
+    }
+  }
+  ROMol::ATOM_PTR_VECT stereoAts;
+  for (const auto atom : mol.atoms()) {
+    if (!sgAtoms[atom->getIdx()] &&
+        (atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
+         atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW)) {
+      stereoAts.push_back(atom);
+    }
+  }
+  if (!stereoAts.empty()) {
+    if (!absGroup) {
+      sgs.emplace_back(sgType, stereoAts);
+      mol.setStereoGroups(sgs);
+    } else {
+      std::vector<StereoGroup> newSgs;
+      for (const auto &sg : sgs) {
+        if (&sg != absGroup) {
+          newSgs.push_back(sg);
+        } else {
+          ROMol::ATOM_PTR_VECT newStereoAtoms = sg.getAtoms();
+          newStereoAtoms.insert(newStereoAtoms.end(), stereoAts.begin(),
+                                stereoAts.end());
+          newSgs.emplace_back(StereoGroupType::STEREO_ABSOLUTE, newStereoAtoms);
+        }
+      }
+      mol.setStereoGroups(newSgs);
     }
   }
 }

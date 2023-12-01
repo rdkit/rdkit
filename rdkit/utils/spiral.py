@@ -1,7 +1,8 @@
+import math
 
 from numpy import *
+
 from rdkit.sping import pid
-import math
 
 
 def DrawSpiral(canvas, startColor, endColor, startRadius, endRadius, nLoops, degsPerSlice=70,
@@ -41,6 +42,7 @@ if __name__ == '__main__':
   #from sping.PIL.pidPIL import PILCanvas
   #canv = PILCanvas(size=(600,600),name='test.png')
   from rdkit.sping.SVG.pidSVG import SVGCanvas
+
   #from rdkit.sping.PDF.pidPDf import PDFCanvas
   canv = SVGCanvas(size=(600, 600), name='test.svg')
   #canv = PDFCanvas(size=(600,600),name='test.pdf')

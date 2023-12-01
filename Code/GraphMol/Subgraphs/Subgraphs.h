@@ -126,7 +126,7 @@ RDKIT_SUBGRAPHS_EXPORT PATH_LIST findAllPathsOfLengthN(
     bool useHs = false, int rootedAtAtom = -1, bool onlyShortestPaths = false);
 RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
     const ROMol &mol, unsigned int lowerLen, unsigned int upperLen,
-    bool useBonds = true, bool useHs = false, int rootedAtAtom = -1, 
+    bool useBonds = true, bool useHs = false, int rootedAtAtom = -1,
     bool onlyShortestPaths = false);
 
 //! \brief Find bond subgraphs of a particular radius around an atom.

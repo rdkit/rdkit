@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2021  Greg Landrum and other RDKit contributors
+#  Copyright (C) 2003-2023  Greg Landrum and other RDKit contributors
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -840,7 +840,9 @@ class TestCase(unittest.TestCase):
     smi = Chem.MolToSmiles(query)
     self.assertEqual(smi, 'c1ccccc1')
     smi = Chem.MolToSmarts(query)
-    self.assertEqual(smi, '[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1', smi)
+    self.assertEqual(smi, '[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1')
+    smi = Chem.MolToSmarts(query, rootedAtAtom=5)
+    self.assertEqual(smi, '[#6,#7,#15]1:[#6]:[#6]:[#6]:[#6]:[#6]:1')
 
     query = Chem.MolFromMolFile(fileN, sanitize=False)
     smi = Chem.MolToSmiles(query)
@@ -848,6 +850,8 @@ class TestCase(unittest.TestCase):
     query.UpdatePropertyCache()
     smi = Chem.MolToSmarts(query)
     self.assertEqual(smi, '[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1')
+    smi = Chem.MolToSmarts(query, rootedAtAtom=3)
+    self.assertEqual(smi, '[#6]1=[#6]-[#6]=[#6]-[#6,#7,#15]=[#6]-1')
     smi = "C1=CC=CC=C1"
     mol = Chem.MolFromSmiles(smi, 0)
     self.assertTrue(mol.HasSubstructMatch(query))
@@ -2152,15 +2156,15 @@ CAS<~>
     self.assertFalse(ri.IsBondInRingOfSize(1, 3))
     self.assertFalse(ri.IsBondInRingOfSize(2, 3))
     if hasattr(Chem, 'FindRingFamilies'):
-      self.assertEquals(ri.AtomRingFamilies(), ())
+      self.assertEqual(ri.AtomRingFamilies(), ())
     if hasattr(Chem, 'FindRingFamilies'):
-      self.assertEquals(ri.BondRingFamilies(), ())
+      self.assertEqual(ri.BondRingFamilies(), ())
 
     smi = 'C1CC2C1C2'
     m = Chem.MolFromSmiles(smi)
     ri = m.GetRingInfo()
     self.assertTrue(ri)
-    self.assertEquals(ri.NumRings(), 2)
+    self.assertEqual(ri.NumRings(), 2)
     self.assertFalse(ri.IsAtomInRingOfSize(0, 3))
     self.assertTrue(ri.IsAtomInRingOfSize(0, 4))
     self.assertFalse(ri.IsBondInRingOfSize(0, 3))
@@ -2181,6 +2185,11 @@ CAS<~>
     self.assertFalse(ri.AreAtomsInSameRingOfSize(2, 3, 5))
     self.assertEqual(len(ri.BondMembers(2)), 2)
     self.assertEqual(len(ri.BondMembers(0)), 1)
+    self.assertTrue(ri.IsRingFused(0))
+    self.assertTrue(ri.IsRingFused(1))
+    self.assertTrue(ri.AreRingsFused(0, 1))
+    self.assertTrue(ri.NumFusedBonds(0) == 1)
+    self.assertTrue(ri.NumFusedBonds(1) == 1)
     self.assertEqual(ri.BondRingSizes(2), (4, 3))
     self.assertEqual(ri.BondRingSizes(0), (4, ))
     self.assertEqual(ri.BondRingSizes(99), ())
@@ -2198,9 +2207,9 @@ CAS<~>
       Chem.FindRingFamilies(m)
       ri = m.GetRingInfo()
       self.assertTrue(ri.AreRingFamiliesInitialized())
-      self.assertEquals(ri.NumRingFamilies(), 2)
-      self.assertEquals(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
-      self.assertEquals(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
+      self.assertEqual(ri.NumRingFamilies(), 2)
+      self.assertEqual(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
+      self.assertEqual(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
 
   def test46ReplaceCore(self):
     """ test the ReplaceCore functionality
@@ -4376,6 +4385,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t2.46E-05\t3',
         '_Name': 48,
         'CAS_RN': '15716-70-8',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '15716-70-8',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t3',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4386,6 +4396,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t9.80E-05\t3',
         '_Name': 78,
         'CAS_RN': '6290-84-2',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '6290-84-2',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t3',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4396,6 +4407,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t4.60E-05\t4',
         '_Name': 128,
         'CAS_RN': '5395-10-8',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5395-10-8',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4406,6 +4418,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '6.75E-04\tM\t>\t6.75E-04\t2',
         '_Name': 163,
         'CAS_RN': '81-11-8',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '81-11-8',
         'NCI_AIDS_Antiviral_Screen_EC50': '6.75E-04\tM\t>\t6.75E-04\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4416,6 +4429,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t2',
         '_Name': 164,
         'CAS_RN': '5325-43-9',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5325-43-9',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4425,6 +4439,7 @@ $$$$
         'NSC': 170,
         '_Name': 170,
         'CAS_RN': '999-99-9',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '999-99-9',
         'NCI_AIDS_Antiviral_Screen_EC50': '9.47E-04\tM\t>\t9.47E-04\t1',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4436,6 +4451,7 @@ $$$$
         '6.46E-04\tM\t=\t5.80E-04\t2\n1.81E-03\tM\t=\t6.90E-04\t2',
         '_Name': 180,
         'CAS_RN': '69-72-7',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '69-72-7',
         'NCI_AIDS_Antiviral_Screen_EC50':
         '6.46E-04\tM\t>\t6.46E-04\t2\n1.81E-03\tM\t>\t1.81E-03\t2',
@@ -4447,6 +4463,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '1.44E-04\tM\t=\t2.49E-05\t2',
         '_Name': 186,
         'CAS_RN': '518-75-2',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '518-75-2',
         'NCI_AIDS_Antiviral_Screen_EC50': '1.44E-04\tM\t>\t1.44E-04\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4457,6 +4474,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t3.38E-06\t2',
         '_Name': 192,
         'CAS_RN': '2217-55-2',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '2217-55-2',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4466,6 +4484,7 @@ $$$$
         'NSC': 203,
         '_Name': 203,
         'CAS_RN': '1155-00-6',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '1155-00-6',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
       },
@@ -4475,6 +4494,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '1.33E-03\tM\t>\t1.33E-03\t2',
         '_Name': 210,
         'CAS_RN': '5325-75-7',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5325-75-7',
         'NCI_AIDS_Antiviral_Screen_EC50': '1.33E-03\tM\t>\t1.33E-03\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4486,6 +4506,7 @@ $$$$
         '2.00E-04\tM\t>\t2.00E-04\t8\n2.00E-03\tM\t=\t1.12E-03\t2',
         '_Name': 211,
         'CAS_RN': '5325-76-8',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5325-76-8',
         'NCI_AIDS_Antiviral_Screen_EC50':
         '2.00E-04\tM\t>\t7.42E-05\t8\n2.00E-03\tM\t=\t6.35E-05\t2',
@@ -4497,6 +4518,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         '_Name': 213,
         'CAS_RN': '119-80-2',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '119-80-2',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4507,6 +4529,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         '_Name': 220,
         'CAS_RN': '5325-83-7',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5325-83-7',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4517,6 +4540,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t2',
         '_Name': 229,
         'CAS_RN': '5325-88-2',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5325-88-2',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4527,6 +4551,7 @@ $$$$
         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         '_Name': 256,
         'CAS_RN': '5326-06-7',
+        '_MolFileChiralFlag': 0,
         '_MolFileComments': '5326-06-7',
         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
@@ -4540,35 +4565,35 @@ $$$$
     m = Chem.MolFromSmiles("CC")
     errors = {
       "int":
-      "key `foo` exists but does not result in an integer value reason: boost::bad_any_cast: failed conversion using boost::any_cast",
+      r"key `foo` exists but does not result in an integer value reason: [B,b]ad any[\ ,_]cast",
       "uint overflow":
       "key `foo` exists but does not result in an unsigned integer value reason: bad numeric conversion: negative overflow",
       "int overflow":
       "key `foo` exists but does not result in an integer value reason: bad numeric conversion: positive overflow",
       "double":
-      "key `foo` exists but does not result in a double value reason: boost::bad_any_cast: failed conversion using boost::any_cast",
+      r"key `foo` exists but does not result in a double value reason: [B,b]ad any[\ ,_]cast",
       "bool":
-      "key `foo` exists but does not result in a True or False value reason: boost::bad_any_cast: failed conversion using boost::any_cast"
+      r"key `foo` exists but does not result in a True or False value reason: [B,b]ad any[\ ,_]cast"
     }
 
     for ob in [m, list(m.GetAtoms())[0], list(m.GetBonds())[0]]:
       ob.SetDoubleProp("foo", 2.0)
       with self.assertRaises(ValueError) as e:
         ob.GetBoolProp("foo")
-      self.assertEqual(str(e.exception), errors["bool"])
+      self.assertRegex(str(e.exception), errors["bool"])
 
       with self.assertRaises(ValueError) as e:
         ob.GetIntProp("foo")
-      self.assertEqual(str(e.exception), errors["int"])
+      self.assertRegex(str(e.exception), errors["int"])
 
       ob.SetBoolProp("foo", True)
       with self.assertRaises(ValueError) as e:
         ob.GetDoubleProp("foo")
-      self.assertEqual(str(e.exception), errors["double"])
+      self.assertRegex(str(e.exception), errors["double"])
 
       with self.assertRaises(ValueError) as e:
         ob.GetIntProp("foo")
-      self.assertEqual(str(e.exception), errors["int"])
+      self.assertRegex(str(e.exception), errors["int"])
 
       ob.SetIntProp("foo", -1)
       with self.assertRaises(ValueError) as e:
@@ -5023,6 +5048,12 @@ M  END
       len(
         b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
                               useChirality=False)[0]), 8)
+
+    if Chem.MolBundleCanSerialize():
+      for b2 in (pickle.loads(pickle.dumps(b)), Chem.MolBundle(b.ToBinary())):
+        self.assertEqual(len(b2), len(b))
+        for m, m2 in zip(b, b2):
+          self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(m2))
 
   def testMolBundles2(self):
     b = Chem.MolBundle()
@@ -5537,6 +5568,43 @@ M  END
     self.assertEqual(m.GetSubstructMatches(p2, ps), ())
     self.assertEqual(m.GetSubstructMatches(p3, ps), ((0, 1, 2, 3, 4), ))
 
+  def testForwardEnhancedStereoGroupIds(self):
+    m = Chem.MolFromSmiles('C[C@H](O)Cl |o5:1|')
+    self.assertIsNotNone(m)
+
+    # StereoGroup id is read, but not forwarded to "write id"
+    stgs = m.GetStereoGroups()
+    self.assertEqual(len(stgs), 1)
+    self.assertEqual(stgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    self.assertEqual(stgs[0].GetReadId(), 5)
+    self.assertEqual(stgs[0].GetWriteId(), 0)
+
+    self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o1:1|')
+
+    stgs[0].SetWriteId(7)
+    self.assertEqual(stgs[0].GetWriteId(), 7)
+    self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o7:1|')
+
+    # ids are forwarded to copies of the mol
+    m2 = Chem.RWMol(m)
+    self.assertIsNotNone(m2)
+
+    stgs2 = m2.GetStereoGroups()
+    self.assertEqual(len(stgs), 1)
+    self.assertEqual(stgs2[0].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    self.assertEqual(stgs2[0].GetReadId(), 5)
+    self.assertEqual(stgs2[0].GetWriteId(), 7)
+
+    self.assertEqual(Chem.MolToCXSmiles(m2), 'C[C@H](O)Cl |o7:1|')
+
+    # Forwardings the ids overrides the WriteId
+    Chem.ForwardStereoGroupIds(m)
+    self.assertEqual(stgs[0].GetWriteId(), 5)
+    self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o5:1|')
+
+    # the copy mol is not affected
+    self.assertEqual(stgs2[0].GetWriteId(), 7)
+
   def testSubstructParametersBundles(self):
     b = Chem.MolBundle()
     smis = ('C[C@](F)(Cl)O', 'C[C@](Br)(Cl)O', 'C[C@](I)(Cl)O')
@@ -5589,6 +5657,46 @@ M  END
     self.assertEqual(b.GetSubstructMatches(b, ps), ((0, 1, 2, 3, 4), ))
     self.assertEqual(b.GetSubstructMatches(b2, ps), ())
     self.assertEqual(b2.GetSubstructMatches(b, ps), ())
+
+  def testSubstructMatchAtomProperties(self):
+    m = Chem.MolFromSmiles("CCCCCCCCC")
+    query = Chem.MolFromSmiles("CCC")
+    m.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    query.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    ps = Chem.SubstructMatchParameters()
+    ps.atomProperties = ["test_prop"]
+
+    self.assertEqual(len(m.GetSubstructMatches(query)), 7)
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+    # more than one property works as well
+    m.GetAtomWithIdx(1).SetProp("test_prop2", "1")
+    query.GetAtomWithIdx(1).SetProp("test_prop2", "1")
+    ps.atomProperties = ["test_prop", "test_prop2"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+  def testSubstructMatchBondProperties(self):
+    m = Chem.MolFromSmiles("CCCCCCCCC")
+    query = Chem.MolFromSmiles("CCC")
+    m.GetBondWithIdx(0).SetProp("test_prop", "1")
+    query.GetBondWithIdx(0).SetProp("test_prop", "1")
+    ps = Chem.SubstructMatchParameters()
+    ps.bondProperties = ["test_prop"]
+
+    self.assertEqual(len(m.GetSubstructMatches(query)), 7)
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+    # more than one property works as well
+    m.GetBondWithIdx(1).SetProp("test_prop2", "1")
+    query.GetBondWithIdx(1).SetProp("test_prop2", "1")
+    ps.bondProperties = ["test_prop", "test_prop2"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+
+    # atom and bond properties work together
+    m.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    query.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    ps.atomProperties = ["test_prop"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
 
   def testGithub2285(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -6452,6 +6560,8 @@ M  END
     self.assertEqual(len(ctrs), 2)
     self.assertEqual(ctrs, [(1, 'S'), (5, '?')])
 
+  @unittest.skipUnless(hasattr(Chem,'MolFromPNGFile'),
+                     "RDKit not built with iostreams support")
   def testMolFromPNG(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.png')
@@ -6465,6 +6575,8 @@ M  END
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
 
+  @unittest.skipUnless(hasattr(Chem,'MolFromPNGFile'),
+                     "RDKit not built with iostreams support")
   def testMolToPNG(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.no_metadata.png')
@@ -6485,6 +6597,8 @@ M  END
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
 
+  @unittest.skipUnless(hasattr(Chem,'MolFromPNGFile'),
+                     "RDKit not built with iostreams support")
   def testMolsFromPNG(self):
     refMols = [Chem.MolFromSmiles(x) for x in ('c1ccccc1', 'CCO', 'CC(=O)O', 'c1ccccn1')]
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -6494,6 +6608,8 @@ M  END
     for mol, refMol in zip(mols, refMols):
       self.assertEqual(Chem.MolToSmiles(mol), Chem.MolToSmiles(refMol))
 
+  @unittest.skipUnless(hasattr(Chem,'MolFromPNGFile'),
+                     "RDKit not built with iostreams support")
   def testMetadataToPNG(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.png')
@@ -6856,6 +6972,8 @@ CAS<~>
     self.assertEqual(
       Chem.MolToCXSmiles(m, ps, (Chem.CXSmilesFields.CX_ALL ^ Chem.CXSmilesFields.CX_LINKNODES)),
       "C1(O)CCC(F)C1")
+    self.assertTrue(hasattr(Chem.CXSmilesFields, 'CX_BOND_CFG'))
+    self.assertTrue(hasattr(Chem.CXSmilesFields, 'CX_ALL_BUT_COORDS'))
 
   def testKekulizeIfPossible(self):
     m = Chem.MolFromSmiles('c1cccn1', sanitize=False)
@@ -7055,8 +7173,6 @@ CAS<~>
 
     self.assertIn(f' m_atom[{mol.GetNumAtoms()}] {{', maefile)
 
-    self.assertEqual(maefile.count("A0A0A0"), 6)  # 6 grey-colored heavy atoms
-
     self.assertTrue(f' m_bond[{mol.GetNumBonds()}] {{', maefile)
 
   @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not built with MAEParser support")
@@ -7095,12 +7211,10 @@ CAS<~>
     b.SetProp(str_dummy_prop, strProp)
     b.SetProp(ignored_prop, ignored_prop)
 
-    heavyAtomColor = "767676"
-
     osio = StringIO()
     with Chem.MaeWriter(osio) as w:
       w.SetProps(exported_props)
-      w.write(mol, heavyAtomColor=heavyAtomColor)
+      w.write(mol)
 
     maestr = osio.getvalue()
 
@@ -7135,7 +7249,6 @@ CAS<~>
         break
     self.assertIn(str(realProp), line)
     self.assertIn(strProp, line)
-    self.assertIn(heavyAtomColor, line)
 
     # bond properties
     self.assertIn(bond_prop, maestr[bondBlockStart:])
@@ -7177,12 +7290,10 @@ CAS<~>
     mol.SetProp(dummy_prop, dummy_prop)
     mol.SetProp(another_dummy_prop, another_dummy_prop)
 
-    heavyAtomColor = "767676"
-
     osio = StringIO()
     with Chem.MaeWriter(osio) as w:
       w.SetProps([dummy_prop])
-      w.write(mol, heavyAtomColor=heavyAtomColor)
+      w.write(mol)
 
     iomae = osio.getvalue()
 
@@ -7192,10 +7303,9 @@ CAS<~>
     self.assertIn(dummy_prop, iomae)
     self.assertNotIn(another_dummy_prop, iomae)
 
-    mae = Chem.MaeWriter.GetText(mol, heavyAtomColor, -1, [dummy_prop])
+    mae = Chem.MaeWriter.GetText(mol, -1, [dummy_prop])
 
     self.assertEqual(mae, iomae[ctBlockStart:])
-
 
   def test_HapticBondsToDative(self):
     fefile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
@@ -7204,8 +7314,7 @@ CAS<~>
     newfemol = Chem.rdmolops.HapticBondsToDative(femol)
     self.assertEqual(Chem.MolToSmiles(newfemol),
                      'c12->[Fe+2]3456789(<-c1c->3[cH-]->4c->52)<-c1c->6c->7[cH-]->8c->91')
-    
-    
+
   def test_DativeBondsToHaptic(self):
     fefile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
                           'ferrocene.mol')
@@ -7213,7 +7322,81 @@ CAS<~>
     newfemol = Chem.rdmolops.HapticBondsToDative(femol)
     backfemol = Chem.rdmolops.DativeBondsToHaptic(newfemol)
     self.assertEqual(Chem.MolToSmiles(femol), Chem.MolToSmiles(backfemol))
-    
+
+  def testTranslateChiralFlag(self):
+    mol = Chem.MolFromSmiles("C[C@@](N)(F)C[C@](C)(O)F |a:1|")
+    flagMol = Chem.Mol(mol)
+    flagMol.SetIntProp("_MolFileChiralFlag", 1)
+    Chem.TranslateChiralFlagToStereoGroups(flagMol)
+    sgs = flagMol.GetStereoGroups()
+    self.assertEqual(len(sgs), 1)
+    self.assertEqual(len(sgs[0].GetAtoms()), 2)
+    self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
+
+    flagMol = Chem.Mol(mol)
+    flagMol.SetIntProp("_MolFileChiralFlag", 0)
+    Chem.TranslateChiralFlagToStereoGroups(flagMol)
+    sgs = flagMol.GetStereoGroups()
+    self.assertEqual(len(sgs), 2)
+    self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
+    self.assertEqual(len(sgs[0].GetAtoms()), 1)
+
+    self.assertEqual(sgs[1].GetGroupType(), Chem.StereoGroupType.STEREO_AND)
+    self.assertEqual(len(sgs[1].GetAtoms()), 1)
+
+    flagMol = Chem.Mol(mol)
+    flagMol.SetIntProp("_MolFileChiralFlag", 0)
+    Chem.TranslateChiralFlagToStereoGroups(flagMol, Chem.StereoGroupType.STEREO_OR)
+    sgs = flagMol.GetStereoGroups()
+    self.assertEqual(len(sgs), 2)
+    self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_ABSOLUTE)
+    self.assertEqual(len(sgs[0].GetAtoms()), 1)
+
+    self.assertEqual(sgs[1].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    self.assertEqual(len(sgs[1].GetAtoms()), 1)
+
+  def testHasQueryHs(self):
+    for sma, hasQHs in [
+        ("[#1]", (True, False)),
+        ("[#1,N]", (True, True)),
+        ("[$(C-[H])]", (True, False)),
+        ("[$([C,#1])]", (True, True)),
+        ("[$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naaaa1),$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naa[n,s,o]1)]",
+         (True, False))]:
+      pat = Chem.MolFromSmarts(sma)
+      self.assertEqual(Chem.HasQueryHs(pat), hasQHs)
+
+  def testMolHasQuery(self):
+    m1 = Chem.MolFromSmiles("CCO")
+    self.assertFalse(m1.HasQuery())
+
+    m2 = Chem.MolFromSmarts("[#6][#6][#8]")
+    self.assertTrue(m2.HasQuery())
+
+    m3 = Chem.MolFromSmiles("CC~O")
+    self.assertTrue(m3.HasQuery())
+
+  def testMrvHandling(self):
+    fn1 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','MarvinParse','test_data','aspirin.mrv')
+    mol = Chem.MolFromMrvFile(fn1)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(),13)
+    mrv = Chem.MolToMrvBlock(mol)
+    self.assertTrue('<molecule molID="m1">' in mrv)
+    self.assertFalse('<reaction>' in mrv)
+
+    fName = tempfile.NamedTemporaryFile(suffix='.mrv').name
+    self.assertFalse(os.path.exists(fName))
+    Chem.MolToMrvFile(mol,fName)
+    self.assertTrue(os.path.exists(fName))
+    os.unlink(fName)
+
+    with open(fn1,'r') as inf:
+      ind = inf.read()
+    mol = Chem.MolFromMrvBlock(ind)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(),13)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

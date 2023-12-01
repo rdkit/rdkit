@@ -106,7 +106,7 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
   std::istringstream inStream(paramData);
 
   std::string inLine = RDKit::getLine(inStream);
-  unsigned int torsionIdx=0;
+  unsigned int torsionIdx = 0;
   while (!inStream.eof()) {
     if (inLine[0] != '#') {
       ExpTorsionAngle angle;
@@ -143,7 +143,8 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
 
 void getExperimentalTorsions(
     const RDKit::ROMol &mol, CrystalFFDetails &details,
-    std::vector<std::tuple<unsigned int, std::vector<unsigned int>, const ExpTorsionAngle *>> &torsionBonds,
+    std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                           const ExpTorsionAngle *>> &torsionBonds,
     bool useExpTorsions, bool useSmallRingTorsions, bool useMacrocycleTorsions,
     bool useBasicKnowledge, unsigned int version, bool verbose) {
   torsionBonds.clear();
@@ -229,7 +230,7 @@ void getExperimentalTorsions(
           doneBonds[bid2] = 1;
         }
         if (!doneBonds[bid2]) {
-          std::vector<unsigned int> aids{aid1,aid2,aid3,aid4};
+          std::vector<unsigned int> aids{aid1, aid2, aid3, aid4};
           torsionBonds.emplace_back(bid2, aids, &param);
           doneBonds[bid2] = 1;
           std::vector<int> atoms(4);
@@ -358,7 +359,9 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
                              bool useExpTorsions, bool useSmallRingTorsions,
                              bool useMacrocycleTorsions, bool useBasicKnowledge,
                              unsigned int version, bool verbose) {
-  std::vector<std::tuple<unsigned int, std::vector<unsigned int>, const ExpTorsionAngle *>> torsionBonds;
+  std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                         const ExpTorsionAngle *>>
+      torsionBonds;
   getExperimentalTorsions(mol, details, torsionBonds, useExpTorsions,
                           useSmallRingTorsions, useMacrocycleTorsions,
                           useBasicKnowledge, version, verbose);

@@ -8,7 +8,6 @@ and evaluation of individual models
 
 """
 
-
 from rdkit.ML.Data import SplitData
 from rdkit.ML.NaiveBayes.ClassificationModel import NaiveBayesClassifier
 

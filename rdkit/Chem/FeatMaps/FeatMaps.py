@@ -8,8 +8,9 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit.Chem.FeatMaps.FeatMapPoint import FeatMapPoint
 import math
+
+from rdkit.Chem.FeatMaps.FeatMapPoint import FeatMapPoint
 
 
 class FeatMapScoreMode(object):
@@ -152,7 +153,8 @@ class FeatMap(object):
 
     return score
 
-  def ScoreFeats(self, featsToScore, mapScoreVect=None, featsScoreVect=None, featsToFeatMapIdx=None):
+  def ScoreFeats(self, featsToScore, mapScoreVect=None, featsScoreVect=None,
+                 featsToFeatMapIdx=None):
     nFeats = len(self._feats)
     if mapScoreVect is not None:
       if len(mapScoreVect) != nFeats:
@@ -165,9 +167,9 @@ class FeatMap(object):
     nToScore = len(featsToScore)
     if self.scoreMode == FeatMapScoreMode.Closest:
       defScore = 1000.0
-    else: 
+    else:
       defScore = 0.0
-      
+
     if featsScoreVect is not None:
       if len(featsScoreVect) != nToScore:
         raise ValueError('if provided, len(featsScoreVect) should equal len(featsToScore)')
@@ -176,18 +178,18 @@ class FeatMap(object):
     else:
       featsScoreVect = [defScore] * nToScore
 
-    if featsToFeatMapIdx is not None: # Initialize a 2D-empty array
+    if featsToFeatMapIdx is not None:  # Initialize a 2D-empty array
       if len(featsToFeatMapIdx) != nToScore:
         raise ValueError('if provided, len(featsToFeatMapIdx) should equal len(featsToScore)')
     else:
       featsToFeatMapIdx = [None] * nToScore
-    
+
     for i in range(nToScore):
       if self.scoreMode != FeatMapScoreMode.All:
         featsToFeatMapIdx[i] = [-1]
       else:
         featsToFeatMapIdx[i] = []
-    
+
     for oIdx, oFeat in enumerate(featsToScore):
       for sIdx, sFeat in self._loopOverMatchingFeats(oFeat):
         if self.scoreMode == FeatMapScoreMode.Closest:

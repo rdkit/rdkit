@@ -12,11 +12,13 @@
 Rough in that only basic functionality is evaluated.
 """
 
-from rdkit import Chem, DataStructs
-from rdkit.Chem import rdTautomerQuery
-from unittest import TestCase, main
 import os
 import pickle
+from unittest import TestCase, main
+import unittest
+from rdkit import Chem, DataStructs
+from rdkit.Chem import rdTautomerQuery
+from rdkit import rdBase
 
 
 class TautomerQueryTestCase(TestCase):
@@ -90,6 +92,7 @@ class TautomerQueryTestCase(TestCase):
     self.assertTrue(target.HasSubstructMatch(mol))
     self.assertTrue(tautomer_query.IsSubstructOf(target))
 
+  @unittest.skipIf(not rdBase._serializationEnabled, "not built with serialization support")
   def test_serialization(self):
     mol = Chem.MolFromSmiles("O=C1CCCCC1")
     base_tautomer_query = rdTautomerQuery.TautomerQuery(mol)

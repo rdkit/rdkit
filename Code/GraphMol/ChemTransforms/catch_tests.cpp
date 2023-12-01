@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 ///
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -23,7 +23,7 @@
 using namespace RDKit;
 using std::unique_ptr;
 
-TEST_CASE("Github #1039", "[]") {
+TEST_CASE("Github #1039") {
   SECTION("double bond") {
     auto m1 = "C/C=C/C=C/C"_smiles;
     REQUIRE(m1);
@@ -125,7 +125,7 @@ TEST_CASE("Github #1039", "[]") {
   }
 }
 
-TEST_CASE("molzip", "[]") {
+TEST_CASE("molzip") {
   SECTION("basic tests") {
     auto a = "C[*:1]"_smiles;
     auto b = "N[*:1]"_smiles;
@@ -506,8 +506,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "ReplaceCore handles chiral center with multiple bonds from core to chiral center",
-    "[]") {
+    "ReplaceCore handles chiral center with multiple bonds from core to chiral center") {
   auto structure = "C1CSCN[C@@]12(NCCCO2)"_smiles;
   auto core = "NCSCC"_smarts;
   std::unique_ptr<ROMol> res{replaceCore(*structure, *core, true, true)};
@@ -517,30 +516,25 @@ TEST_CASE(
 }
 
 TEST_CASE("Molzip with 2D coordinates", "[molzip]") {
-  std::vector<std::string> frags = {
-      "c1nc([1*:1])c([2*:2])c([3*:3])n1",
-      "CC(C)(C#N)c1ccc([1*:1])cc1",
-      "Nc1ccc(C#C[2*:2])cn1",
-      "OCC[3*:3]"
-  };
+  std::vector<std::string> frags = {"c1nc([1*:1])c([2*:2])c([3*:3])n1",
+                                    "CC(C)(C#N)c1ccc([1*:1])cc1",
+                                    "Nc1ccc(C#C[2*:2])cn1", "OCC[3*:3]"};
   std::vector<ROMOL_SPTR> mols = {
-    ROMOL_SPTR(SmilesToMol(frags[0])),
-    ROMOL_SPTR(SmilesToMol(frags[1])),
-    ROMOL_SPTR(SmilesToMol(frags[2])),
-    ROMOL_SPTR(SmilesToMol(frags[3]))
-  };
+      ROMOL_SPTR(SmilesToMol(frags[0])), ROMOL_SPTR(SmilesToMol(frags[1])),
+      ROMOL_SPTR(SmilesToMol(frags[2])), ROMOL_SPTR(SmilesToMol(frags[3]))};
   MolzipParams params;
   params.generateCoordinates = true;
   const auto zippedMol = molzip(mols, params);
-  for (auto &mol: mols) {
-    for (auto  &atom: mol->atoms()) {
+  for (auto &mol : mols) {
+    for (auto &atom : mol->atoms()) {
       atom->setIsotope(0);
       atom->setAtomMapNum(0);
     }
   }
   const auto &zippedConformer = zippedMol->getConformer();
-  for (size_t i=0; i<frags.size(); i++) {
-    const auto sma = std::regex_replace(frags[i], std::regex(R"(\[\d\*\:\d\])"), "*");
+  for (size_t i = 0; i < frags.size(); i++) {
+    const auto sma =
+        std::regex_replace(frags[i], std::regex(R"(\[\d\*\:\d\])"), "*");
     const auto query = SmartsToMol(sma);
     const auto &mol = mols[i];
     const auto &molConformer = mol->getConformer();
@@ -550,7 +544,7 @@ TEST_CASE("Molzip with 2D coordinates", "[molzip]") {
     REQUIRE(zippedMatches.size() == 1);
     const auto molMatch = molMatches[0];
     const auto zippedMatch = zippedMatches[0];
-    for (size_t j=0; j<molMatch.size(); j++) {
+    for (size_t j = 0; j < molMatch.size(); j++) {
       const auto &position1 = molConformer.getAtomPos(molMatch[i].second);
       const auto &position2 = zippedConformer.getAtomPos(zippedMatch[i].second);
       CHECK(position1.x == position2.x);

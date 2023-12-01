@@ -30,10 +30,11 @@
 #
 # Created by Jameed Hussain, September 2012
 
-import sys
 import re
-from rdkit import Chem
+import sys
 from optparse import OptionParser
+
+from rdkit import Chem
 
 
 def heavy_atom_count(smi):
@@ -143,18 +144,18 @@ def cansmirk(lhs, rhs, context):
   elif (stars == 3):
     #simple cases
     #completely symmetric lhs and completely symmetric rhs
-    if (((lhs_sym[0] == lhs_sym[1]) and (lhs_sym[1] == lhs_sym[2]) and
-         (lhs_sym[0] == lhs_sym[2])) and
-        ((rhs_sym[0] == rhs_sym[1]) and (rhs_sym[1] == rhs_sym[2]) and (rhs_sym[0] == rhs_sym[2]))):
+    if (((lhs_sym[0] == lhs_sym[1]) and (lhs_sym[1] == lhs_sym[2]) and (lhs_sym[0] == lhs_sym[2]))
+        and ((rhs_sym[0] == rhs_sym[1]) and (rhs_sym[1] == rhs_sym[2]) and
+             (rhs_sym[0] == rhs_sym[2]))):
       #the points are all equivalent so change labels on lhs and rhs based on position
       #labels on context don't need to change
       lhs = switch_labels_on_position(lhs)
       rhs = switch_labels_on_position(rhs)
 
     #completely symmetric lhs and completely unsymmetric rhs
-    elif (
-      ((lhs_sym[0] == lhs_sym[1]) and (lhs_sym[1] == lhs_sym[2]) and (lhs_sym[0] == lhs_sym[2])) and
-      ((rhs_sym[0] != rhs_sym[1]) and (rhs_sym[1] != rhs_sym[2]) and (rhs_sym[0] != rhs_sym[2]))):
+    elif (((lhs_sym[0] == lhs_sym[1]) and (lhs_sym[1] == lhs_sym[2]) and (lhs_sym[0] == lhs_sym[2]))
+          and ((rhs_sym[0] != rhs_sym[1]) and (rhs_sym[1] != rhs_sym[2]) and
+               (rhs_sym[0] != rhs_sym[2]))):
 
       #alter lhs in usual way
       lhs = switch_labels_on_position(lhs)
@@ -165,9 +166,9 @@ def cansmirk(lhs, rhs, context):
       context = switch_labels(isotope_track, stars, context)
 
     #completely unsymmetric lhs and completely unsymmetric rhs
-    elif (
-      ((lhs_sym[0] != lhs_sym[1]) and (lhs_sym[1] != lhs_sym[2]) and (lhs_sym[0] != lhs_sym[2])) and
-      ((rhs_sym[0] != rhs_sym[1]) and (rhs_sym[1] != rhs_sym[2]) and (rhs_sym[0] != rhs_sym[2]))):
+    elif (((lhs_sym[0] != lhs_sym[1]) and (lhs_sym[1] != lhs_sym[2]) and (lhs_sym[0] != lhs_sym[2]))
+          and ((rhs_sym[0] != rhs_sym[1]) and (rhs_sym[1] != rhs_sym[2]) and
+               (rhs_sym[0] != rhs_sym[2]))):
 
       #build the isotope track
       isotope_track = build_track_dictionary(lhs, stars)
@@ -178,9 +179,9 @@ def cansmirk(lhs, rhs, context):
       context = switch_labels(isotope_track, stars, context)
 
     #completely unsymmetric lhs and completely symmetric rhs
-    elif (
-      ((lhs_sym[0] != lhs_sym[1]) and (lhs_sym[1] != lhs_sym[2]) and (lhs_sym[0] != lhs_sym[2])) and
-      ((rhs_sym[0] == rhs_sym[1]) and (rhs_sym[1] == rhs_sym[2]) and (rhs_sym[0] == rhs_sym[2]))):
+    elif (((lhs_sym[0] != lhs_sym[1]) and (lhs_sym[1] != lhs_sym[2]) and (lhs_sym[0] != lhs_sym[2]))
+          and ((rhs_sym[0] == rhs_sym[1]) and (rhs_sym[1] == rhs_sym[2]) and
+               (rhs_sym[0] == rhs_sym[2]))):
 
       #build isotope trach on lhs
       isotope_track = build_track_dictionary(lhs, stars)
@@ -281,8 +282,10 @@ def switch_specific_labels_on_symmetry(smi, symmetry_class, a, b):
       #if the higher label comes first, fix
       if (int(matchObj.group(a)) > int(matchObj.group(b))):
         #if(int(matchObj.group(1)) > int(matchObj.group(2))):
-        smi = re.sub(r'\[\*\:' + matchObj.group(a) + r'\]', '[*:XX' + matchObj.group(b) + 'XX]', smi)
-        smi = re.sub(r'\[\*\:' + matchObj.group(b) + r'\]', '[*:XX' + matchObj.group(a) + 'XX]', smi)
+        smi = re.sub(r'\[\*\:' + matchObj.group(a) + r'\]', '[*:XX' + matchObj.group(b) + 'XX]',
+                     smi)
+        smi = re.sub(r'\[\*\:' + matchObj.group(b) + r'\]', '[*:XX' + matchObj.group(a) + 'XX]',
+                     smi)
         smi = re.sub('XX', '', smi)
 
   return smi
@@ -404,16 +407,18 @@ if __name__ == '__main__':
   #parser = OptionParser()
   parser = OptionParser(description="Program to generate MMPs")
   parser.add_option(
-    '-s', '--symmetric', default=False, action='store_true', dest='sym',
-    help='Output symmetrically equivalent MMPs, i.e output both cmpd1,cmpd2, SMIRKS:A>>B and cmpd2,cmpd1, SMIRKS:B>>A')
+    '-s', '--symmetric', default=False, action='store_true', dest='sym', help=
+    'Output symmetrically equivalent MMPs, i.e output both cmpd1,cmpd2, SMIRKS:A>>B and cmpd2,cmpd1, SMIRKS:B>>A'
+  )
   parser.add_option(
-    '-m', '--maxsize', action='store', dest='maxsize', type='int',
-    help='Maximum size of change (in heavy atoms) allowed in matched molecular pairs identified. DEFAULT=10. \
+    '-m', '--maxsize', action='store', dest='maxsize', type='int', help=
+    'Maximum size of change (in heavy atoms) allowed in matched molecular pairs identified. DEFAULT=10. \
                       Note: This option overrides the ratio option if both are specified.')
   parser.add_option(
-    '-r', '--ratio', action='store', dest='ratio', type='float',
-    help='Maximum ratio of change allowed in matched molecular pairs identified. The ratio is: size of change / \
-                      size of cmpd (in terms of heavy atoms). DEFAULT=0.3. Note: If this option is used with the maxsize option, the maxsize option will be used.')
+    '-r', '--ratio', action='store', dest='ratio', type='float', help=
+    'Maximum ratio of change allowed in matched molecular pairs identified. The ratio is: size of change / \
+                      size of cmpd (in terms of heavy atoms). DEFAULT=0.3. Note: If this option is used with the maxsize option, the maxsize option will be used.'
+  )
 
   #parse the command line options
   (options, args) = parser.parse_args()

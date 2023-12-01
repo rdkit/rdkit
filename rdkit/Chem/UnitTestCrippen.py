@@ -12,14 +12,15 @@
 
 """
 
-import unittest, sys, os
 import io
+import os
+import pickle
+import sys
+import unittest
 
 import numpy
 
-from rdkit import RDConfig
-import pickle
-from rdkit import Chem
+from rdkit import Chem, RDConfig
 from rdkit.Chem import Crippen
 
 

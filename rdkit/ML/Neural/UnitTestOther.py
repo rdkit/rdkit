@@ -7,7 +7,6 @@
 
 """
 
-
 import unittest
 
 from rdkit.ML.Neural.ActFuncs import Sigmoid, TanH

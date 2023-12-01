@@ -3,7 +3,8 @@
 #include <assert.h>
 #include <errno.h>
 
-int getline(lineptr, n, stream) char **lineptr;
+int getline(lineptr, n, stream)
+char **lineptr;
 size_t *n;
 FILE *stream;
 {

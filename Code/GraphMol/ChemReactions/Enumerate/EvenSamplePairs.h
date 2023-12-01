@@ -182,6 +182,8 @@ class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy
 };
 }  // namespace RDKit
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(RDKit::EvenSamplePairsStrategy, 1)
+#endif
 
 #endif

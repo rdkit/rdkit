@@ -462,13 +462,14 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
   kekulize = shouldKekulize(mol, kwargs.get('kekulize', True))
   wedge = kwargs.get('wedgeBonds', True)
 
-  try:
-    with rdBase.BlockLogs():
-      mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
-  except ValueError:  # <- can happen on a kekulization failure
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
+  if not drawOptions or drawOptions.prepareMolsBeforeDrawing:
+    try:
+      with rdBase.BlockLogs():
+        mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
+    except ValueError:  # <- can happen on a kekulization failure
+      mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-    img = MolToImage(mc, sz, legend=legend, highlightAtoms=highlights, **kwargs)
+    img = MolToImage(mol, sz, legend=legend, highlightAtoms=highlights, **kwargs)
     if returnPNG:
       bio = BytesIO()
       img.save(bio, format='PNG')
@@ -483,10 +484,10 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
     d2d.drawOptions().prepareMolsBeforeDrawing = False
     bondHighlights = kwargs.get('highlightBonds', None)
     if bondHighlights is not None:
-      d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
+      d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [],
                        highlightBonds=bondHighlights)
     else:
-      d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [])
+      d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [])
     d2d.FinishDrawing()
     if returnPNG:
       img = d2d.GetDrawingText()
@@ -504,11 +505,12 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
 
   kekulize = shouldKekulize(mol, kekulize)
 
-  try:
-    with rdBase.BlockLogs():
-      mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
-  except ValueError:  # <- can happen on a kekulization failure
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
+  if not drawOptions or drawOptions.prepareMolsBeforeDrawing:
+    try:
+      with rdBase.BlockLogs():
+        mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
+    except ValueError:  # <- can happen on a kekulization failure
+      mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
   d2d = rdMolDraw2D.MolDraw2DSVG(sz[0], sz[1])
   if drawOptions is not None:
     d2d.SetDrawOptions(drawOptions)
@@ -516,10 +518,10 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
   d2d.drawOptions().prepareMolsBeforeDrawing = False
   bondHighlights = kwargs.get('highlightBonds', None)
   if bondHighlights is not None:
-    d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
+    d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [],
                      highlightBonds=bondHighlights)
   else:
-    d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [])
+    d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [])
   d2d.FinishDrawing()
   svg = d2d.GetDrawingText()
   return svg
@@ -571,6 +573,203 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
       res = d2d.GetDrawingText()
 
   return res
+
+
+def _padList(inputList, lengthShouldBe, padWith=""):
+  length = len(inputList)
+  paddingCount = lengthShouldBe - length
+  paddedList = inputList + [padWith] * paddingCount
+  return paddedList
+
+
+def _padMatrix(inputMatrix, rowLength, padWith=""):
+  paddedMatrix = [_padList(row, rowLength, padWith) for row in inputMatrix]
+  return paddedMatrix
+
+
+def _flattenTwoDList(twoDList):
+  return [item for sublist in twoDList for item in sublist]
+
+
+def _MolsNestedToLinear(molsMatrix, legendsMatrix=None, highlightAtomListsMatrix=None,
+                        highlightBondListsMatrix=None):
+  """Converts a nested data structure (where each data substructure represents a row in mol grid image)
+  to a linear one, padding rows as needed so all rows are the length of the longest row
+  """
+  # Check that other matrices (if provided) are same length,
+  #   and each element (sub-iterable) is the same length, as molsMatrix
+
+  nMolsRows = len(molsMatrix)
+
+  if legendsMatrix is not None:
+    nLegendsRows = len(legendsMatrix)
+    if nLegendsRows != nMolsRows:
+      err = f"If legendsMatrix is provided it must be the same length (have the same number "
+      err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nLegendsRows}."
+      raise ValueError(err)
+    for rowIndex, row in enumerate(legendsMatrix):
+      if len(row) != len(molsMatrix[rowIndex]):
+        err = f"If legendsMatrix is provided each of its sub-iterables must be the same length "
+        err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
+        err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
+        err += f"while its length in legendsMatrix is {len(row)}."
+        raise ValueError(err)
+
+  if highlightAtomListsMatrix is not None:
+    nHighlightAtomListsRows = len(highlightAtomListsMatrix)
+    if nHighlightAtomListsRows != nMolsRows:
+      err = f"If highlightAtomListsMatrix is provided it must be the same length (have the same number "
+      err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nHighlightAtomListsRows}."
+      raise ValueError(err)
+    for rowIndex, row in enumerate(highlightAtomListsMatrix):
+      if len(row) != len(molsMatrix[rowIndex]):
+        err = f"If highlightAtomListsMatrix is provided each of its sub-iterables must be the same length "
+        err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
+        err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
+        err += f"while its length in highlightAtomListsMatrix is {len(row)}."
+        raise ValueError(err)
+
+  if highlightBondListsMatrix is not None:
+    nHighlightBondListsRows = len(highlightBondListsMatrix)
+    if nHighlightBondListsRows != nMolsRows:
+      err = f"If highlightBondListsMatrix is provided it must be the same length (have the same number "
+      err += f"of sub-iterables) as molsMatrix, {nMolsRows}; its length is {nHighlightBondListsRows}."
+      raise ValueError(err)
+    for rowIndex, row in enumerate(highlightBondListsMatrix):
+      if len(row) != len(molsMatrix[rowIndex]):
+        err = f"If highlightBondListsMatrix is provided each of its sub-iterables must be the same length "
+        err += f"as the corresponding sub-iterable of molsMatrix. For sub-iterable of index "
+        err += f"{rowIndex}, its length in molsMatrix is {len(molsMatrix[rowIndex])} "
+        err += f"while its length in highlightBondListsMatrix is {len(row)}."
+        raise ValueError(err)
+
+  molsPerRow = max(len(row) for row in molsMatrix)
+
+  # Pad matrices so they're rectangular (same length for each sublist),
+  #   then convert to 1D lists
+  # Pad using None for molecule for empty cells
+  molsMatrixPadded = _padMatrix(molsMatrix, molsPerRow, None)
+  mols = _flattenTwoDList(molsMatrixPadded)
+
+  if legendsMatrix is not None:
+    legendsMatrixPadded = _padMatrix(legendsMatrix, molsPerRow, "")
+    legends = _flattenTwoDList(legendsMatrixPadded)
+  else:
+    legends = None
+
+  if highlightAtomListsMatrix is not None:
+    highlightAtomListsPadded = _padMatrix(highlightAtomListsMatrix, molsPerRow, [])
+    highlightAtomLists = _flattenTwoDList(highlightAtomListsPadded)
+  else:
+    highlightAtomLists = None
+
+  if highlightBondListsMatrix is not None:
+    highlightBondListsPadded = _padMatrix(highlightBondListsMatrix, molsPerRow, [])
+    highlightBondLists = _flattenTwoDList(highlightBondListsPadded)
+  else:
+    highlightBondLists = None
+
+  return mols, molsPerRow, legends, highlightAtomLists, highlightBondLists
+
+
+def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
+                          highlightAtomListsMatrix=None, highlightBondListsMatrix=None,
+                          useSVG=False, returnPNG=False, **kwargs):
+  """Creates a mol grid image from a nested data structure (where each data substructure represents a row),
+  padding rows as needed so all rows are the length of the longest row
+          ARGUMENTS:
+
+        - molsMatrix: A two-deep nested data structure of RDKit molecules to draw,
+         iterable of iterables (for example list of lists) of RDKit molecules
+
+        - subImgSize: The size of a cell in the drawing; passed through to MolsToGridImage (default (200, 200))
+
+        - legendsMatrix: A two-deep nested data structure of strings to label molecules with,
+         iterable of iterables (for example list of lists) of strings (default None)
+
+        - highlightAtomListsMatrix: A three-deep nested data structure of integers of atoms to highlight,
+         iterable of iterables (for example list of lists) of integers (default None)
+
+        - highlightBondListsMatrix: A three-deep nested data structure of integers of bonds to highlight,
+         iterable of iterables (for example list of lists) of integers (default None)
+
+        - useSVG: Whether to return an SVG (if true) or PNG (if false);
+         passed through to MolsToGridImage (default false)
+
+        - returnPNG: Whether to return PNG data (if true) or a PIL object for a PNG image file (if false);
+         has no effect if useSVG is true; passed through to MolsToGridImage (default false)
+
+        - kwargs: Any other keyword arguments are passed to MolsToGridImage
+
+      NOTES:
+
+            To include a blank cell in the middle of a row, supply None for that entry in molsMatrix.
+            You do not need to do that for empty cells at the end of a row; 
+            this function will automatically pad rows so that all rows are the same length.
+            
+            This function is useful when each row has some meaning,
+            for example the generation in a mass spectrometry fragmentation tree--refer to 
+            example at https://en.wikipedia.org/wiki/Fragmentation_(mass_spectrometry).
+            If you want to display a set molecules where each row does not have any specific meaning,
+            use MolsToGridImage instead.
+
+            This function nests data structures one additional level beyond the analogous function MolsToGridImage
+            (in which the molecules and legends are non-nested lists, 
+            and the highlight parameters are two-deep nested lists) 
+
+      RETURNS:
+
+        A grid of molecular images in one of these formats:
+        
+        - useSVG=False and returnPNG=False (default): A PIL object for a PNG image file
+
+        - useSVG=False and returnPNG=True: PNG data
+
+        - useSVG=True: An SVG string
+
+      EXAMPLES:
+
+        from rdkit import Chem
+        from rdkit.Chem.Draw import MolsMatrixToGridImage, rdMolDraw2D
+        FCl = Chem.MolFromSmiles("FCl")
+        molsMatrix = [[FCl, FCl], [FCl, None, FCl]]
+
+        # Minimal example: Only molsMatrix is supplied,
+        # result will be a drawing containing (where each row contains molecules):
+        # F-Cl    F-Cl
+        # F-Cl            F-Cl
+        img = MolsMatrixToGridImage(molsMatrix)
+        img.save("MolsMatrixToGridImageMinimal.png")
+        # img is a PIL object for a PNG image file like:
+        # <PIL.PngImagePlugin.PngImageFile image mode=RGB size=600x200 at 0x1648CC390>
+        # Drawing will be saved as PNG file MolsMatrixToGridImageMinimal.png
+
+        # Exhaustive example: All parameters are supplied,
+        # result will be a drawing containing (where each row of molecules is followed by a row of legends):
+        # 1 F-Cl 0              1 F-Cl 0
+        # no highlighting       bond highlighted         
+        # 1 F-Cl 0                                  1 F-Cl 0
+        # sodium highlighted                        chloride and bond highlighted
+        legendsMatrix = [["no highlighting", "bond highlighted"], 
+        ["F highlighted", "", "Cl and bond highlighted"]]
+        highlightAtomListsMatrix = [[[],[]], [[0], None, [1]]]
+        highlightBondListsMatrix = [[[],[0]], [[], None, [0]]]
+
+        dopts = rdMolDraw2D.MolDrawOptions()
+        dopts.addAtomIndices = True
+
+        img_binary = MolsMatrixToGridImage(molsMatrix=molsMatrix, subImgSize=(300, 400), 
+        legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, 
+        highlightBondListsMatrix=highlightBondListsMatrix, useSVG=False, returnPNG=True, drawOptions=dopts)
+        print(img_binary[:20])
+        # Prints a binary string: b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x03\x84'
+  """
+  mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsNestedToLinear(
+    molsMatrix, legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix)
+
+  return MolsToGridImage(mols, molsPerRow=molsPerRow, subImgSize=subImgSize, legends=legends,
+                         highlightAtomLists=highlightAtomLists,
+                         highlightBondLists=highlightBondLists, **kwargs)
 
 
 def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, highlightAtomLists=None,
@@ -704,6 +903,40 @@ def MolToQPixmap(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=
   drawer.AddMol(mol, **kwargs)
   canvas.flush()
   return canvas.pixmap
+
+
+def DebugDraw(mol, size=(350, 350), drawer=None, asSVG=True, useBW=True, includeHLabels=True,
+              addAtomIndices=True, addBondIndices=False):
+  if drawer is None:
+    if asSVG:
+      drawer = rdMolDraw2D.MolDraw2DSVG(size[0], size[1])
+    else:
+      drawer = rdMolDraw2D.MolDraw2DCairo(size[0], size[1])
+  if useBW:
+    drawer.drawOptions().useBWAtomPalette()
+
+  drawer.drawOptions().addAtomIndices = addAtomIndices
+  drawer.drawOptions().addBondIndices = addBondIndices
+
+  drawer.drawOptions().annotationFontScale = 0.75
+
+  if includeHLabels:
+    for atom in mol.GetAtoms():
+      if atom.GetTotalNumHs():
+        atom.SetProp('atomNote', f'H{atom.GetTotalNumHs()}')
+
+  aromAtoms = [x.GetIdx() for x in mol.GetAtoms() if x.GetIsAromatic()]
+  clrs = {x: (.9, .9, .2) for x in aromAtoms}
+  aromBonds = [x.GetIdx() for x in mol.GetBonds() if x.GetIsAromatic()]
+
+  rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, addChiralHs=False)
+  drawer.drawOptions().prepareMolsBeforeDrawing = False
+
+  drawer.DrawMolecule(mol, highlightAtoms=aromAtoms, highlightAtomColors=clrs,
+                      highlightBonds=aromBonds)
+
+  drawer.FinishDrawing()
+  return drawer.GetDrawingText()
 
 
 def DrawMorganBit(mol, bitId, bitInfo, whichExample=0, **kwargs):

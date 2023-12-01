@@ -32,16 +32,14 @@
 #
 # Created by Jameed Hussain, July 2013
 
-
-import sys
-import re
 import array
+import re
+import sys
 
-from chemaxon.util import MolHandler
+from chemaxon.descriptors import (CFParameters, ChemicalFingerprint,
+                                  SimilarityCalculatorFactory)
 from chemaxon.struc import Molecule
-from chemaxon.descriptors import ChemicalFingerprint
-from chemaxon.descriptors import CFParameters
-from chemaxon.descriptors import SimilarityCalculatorFactory
+from chemaxon.util import MolHandler
 
 
 def desalt(mol):
@@ -59,7 +57,8 @@ def desalt(mol):
 
 
 cfp = CFParameters(
-  "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ChemicalFingerprintConfiguration Version =\"0.3\" schemaLocation=\"cfp.xsd\">    <Parameters Length=\"1024\" BondCount=\"7\" BitCount=\"4\"/>    <StandardizerConfiguration Version =\"0.1\"><Actions><Action ID=\"aromatize\" Act=\"aromatize\"/> </Actions> </StandardizerConfiguration><ScreeningConfiguration><ParametrizedMetrics><ParametrizedMetric Name=\"Tversky\" ActiveFamily=\"Generic\" Metric=\"Tversky\" Threshold=\"0.5\" TverskyAlpha=\"0.1\" TverskyBeta=\"0.9\"/></ParametrizedMetrics></ScreeningConfiguration></ChemicalFingerprintConfiguration>")
+  "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ChemicalFingerprintConfiguration Version =\"0.3\" schemaLocation=\"cfp.xsd\">    <Parameters Length=\"1024\" BondCount=\"7\" BitCount=\"4\"/>    <StandardizerConfiguration Version =\"0.1\"><Actions><Action ID=\"aromatize\" Act=\"aromatize\"/> </Actions> </StandardizerConfiguration><ScreeningConfiguration><ParametrizedMetrics><ParametrizedMetric Name=\"Tversky\" ActiveFamily=\"Generic\" Metric=\"Tversky\" Threshold=\"0.5\" TverskyAlpha=\"0.1\" TverskyBeta=\"0.9\"/></ParametrizedMetrics></ScreeningConfiguration></ChemicalFingerprintConfiguration>"
+)
 cfp.setLength(1024)
 cfp.setBondCount(7)
 cfp.setBitCount(4)

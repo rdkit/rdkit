@@ -1,6 +1,7 @@
 # coding: utf-8
 import os
 import sys
+
 from rdkit import Chem
 
 EXPECTED_LABELS_OVERRIDES = {

@@ -3,9 +3,11 @@
 
 """
 
+import os
+import sys
+import unittest
 
 from rdkit import RDConfig
-import unittest, os, sys
 
 
 class TestCase(unittest.TestCase):

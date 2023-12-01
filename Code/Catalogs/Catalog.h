@@ -163,16 +163,13 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
 
   //------------------------------------
   //! Construct by making a copy of the input \c params object
-  HierarchCatalog(const paramType *params)
-      : Catalog<entryType, paramType>() {
+  HierarchCatalog(const paramType *params) : Catalog<entryType, paramType>() {
     this->setCatalogParams(params);
   }
 
   //------------------------------------
   //! Construct from a \c pickle (a serialized form of the HierarchCatalog)
-  HierarchCatalog(const std::string &pickle) {
-    this->initFromString(pickle);
-  }
+  HierarchCatalog(const std::string &pickle) { this->initFromString(pickle); }
 
   //------------------------------------
   ~HierarchCatalog() override { destroy(); }

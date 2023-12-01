@@ -7,12 +7,12 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 
-from rdkit import RDConfig
-from rdkit import Chem
-from rdkit.Chem import rdDetermineBonds
-import unittest
-import os
 import glob
+import os
+import unittest
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import rdDetermineBonds
 
 
 class TestCase(unittest.TestCase):
@@ -36,6 +36,26 @@ class TestCase(unittest.TestCase):
           if omol.GetBondBetweenAtoms(aid1, aid2):
             self.assertIsNotNone(mol.GetBondBetweenAtoms(aid1, aid2))
 
+  def testCtDConnectivity(self):
+    testDir = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DetermineBonds', 'test_data',
+                           'connectivity')
+    for fn in glob.glob(os.path.join(testDir, 'test*.xyz')):
+      mol = Chem.MolFromXYZFile(fn)
+      self.assertIsNotNone(mol)
+      smi = mol.GetProp('_FileComments')
+      omol = Chem.MolFromSmiles(smi)
+      self.assertIsNotNone(omol)
+
+      rdDetermineBonds.DetermineConnectivity(mol, useHueckel=False, useVdw=False)
+      mol = Chem.RemoveAllHs(mol, sanitize=False)
+      self.assertEqual(mol.GetNumAtoms(), omol.GetNumAtoms())
+      self.assertEqual(mol.GetNumBonds(), omol.GetNumBonds())
+      for aid1 in range(mol.GetNumAtoms()):
+        for aid2 in range(aid1 + 1, mol.GetNumAtoms()):
+          if omol.GetBondBetweenAtoms(aid1, aid2):
+            self.assertIsNotNone(mol.GetBondBetweenAtoms(aid1, aid2))
+
+  @unittest.skipUnless(rdDetermineBonds.hueckelEnabled(), "YAeHMOP support not enabled")
   def testHueckelConnectivity(self):
     testDir = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DetermineBonds', 'test_data',
                            'connectivity')

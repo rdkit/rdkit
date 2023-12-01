@@ -11,8 +11,7 @@
 
 """
 
-
-from rdkit.Chem.Pharm2D import SigFactory, Matcher
+from rdkit.Chem.Pharm2D import Matcher, SigFactory
 
 raise NotImplementedError('not finished yet')
 
@@ -67,8 +66,9 @@ class Generator(object):
     else:
       self.bits = None
 
-    featFamilies = [fam for fam in sigFactory.featFactory.GetFeatureFamilies()
-                    if fam not in sigFactory.skipFeats]
+    featFamilies = [
+      fam for fam in sigFactory.featFactory.GetFeatureFamilies() if fam not in sigFactory.skipFeats
+    ]
     nFeats = len(featFamilies)
     featMatches = {}
     for fam in featFamilies:
@@ -117,10 +117,11 @@ class Generator(object):
 
 
 if __name__ == '__main__':
-  import time
-  from rdkit import RDConfig, Chem
-  from rdkit.Chem.Pharm2D import Gobbi_Pharm2D, Generate
   import random
+  import time
+
+  from rdkit import Chem, RDConfig
+  from rdkit.Chem.Pharm2D import Generate, Gobbi_Pharm2D
 
   factory = Gobbi_Pharm2D.factory
   nToDo = 100

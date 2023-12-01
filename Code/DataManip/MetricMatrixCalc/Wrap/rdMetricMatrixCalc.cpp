@@ -276,7 +276,7 @@ BOOST_PYTHON_MODULE(rdMetricMatrixCalc) {
   RETURNS: \n\
     A numeric one-dimensional array containing the lower triangle elements of the symmetric distance matrix\n\n";
   python::def("GetEuclideanDistMat", RDDataManip::getEuclideanDistMat,
-              docString.c_str());
+              docString.c_str(), python::args("descripMat"));
 
   docString =
       "Compute the distance matrix from a list of BitVects using the Tanimoto distance metric\n\n\
@@ -288,7 +288,7 @@ BOOST_PYTHON_MODULE(rdMetricMatrixCalc) {
     A numeric 1 dimensional array containing the lower triangle elements of the\n\
     symmetric distance matrix\n\n";
   python::def("GetTanimotoDistMat", RDDataManip::getTanimotoDistMat,
-              docString.c_str());
+              docString.c_str(), python::args("bitVectList"));
 
   docString =
       "Compute the similarity matrix from a list of BitVects \n\n\
@@ -299,5 +299,5 @@ BOOST_PYTHON_MODULE(rdMetricMatrixCalc) {
   RETURNS: \n\
     A numeric 1 dimensional array containing the lower triangle elements of the symmetric similarity matrix\n\n";
   python::def("GetTanimotoSimMat", RDDataManip::getTanimotoSimMat,
-              docString.c_str());
+              docString.c_str(), python::args("bitVectList"));
 }

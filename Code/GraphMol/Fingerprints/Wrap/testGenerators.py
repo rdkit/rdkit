@@ -1,7 +1,9 @@
+import unittest
+
+import numpy as np
+
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
-import numpy as np
-import unittest
 
 
 class TestCase(unittest.TestCase):
@@ -339,6 +341,47 @@ class TestCase(unittest.TestCase):
     fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)
+
+  def testMorganGeneratorMultiMol(self):
+    smis = ['CC1CCC1','CCC1CCC1','CCCC1CCC1','CC1CC(O)C1','CC1CC(OC)C1',]
+    for i in range(4):
+      smis = smis + smis
+    ms = [Chem.MolFromSmiles(smi) for smi in smis]
+    g = rdFingerprintGenerator.GetMorganGenerator()
+    ofps = tuple([g.GetFingerprint(m) for m in ms])
+    tfps = g.GetFingerprints(ms,numThreads=1)
+    for ofp,tfp in zip(ofps,tfps):
+      self.assertEqual(ofp,tfp)
+    tfps = g.GetFingerprints(ms,numThreads=4)
+    for ofp,tfp in zip(ofps,tfps):
+      self.assertEqual(ofp,tfp)
+    
+    ofps = tuple([g.GetCountFingerprint(m) for m in ms])
+    tfps = g.GetCountFingerprints(ms,numThreads=1)
+    for ofp,tfp in zip(ofps,tfps):
+      self.assertEqual(ofp,tfp)
+    tfps = g.GetCountFingerprints(ms,numThreads=4)
+    for ofp,tfp in zip(ofps,tfps):
+      self.assertEqual(ofp,tfp)
+
+    ofps = tuple([g.GetSparseFingerprint(m) for m in ms])
+    tfps = g.GetSparseFingerprints(ms,numThreads=1)
+    for ofp,tfp in zip(ofps,tfps):
+      self.assertEqual(ofp,tfp)
+    tfps = g.GetSparseFingerprints(ms,numThreads=4)
+    for ofp,tfp in zip(ofps,tfps):
+      self.assertEqual(ofp,tfp)
+
+    ofps = tuple([g.GetSparseCountFingerprint(m) for m in ms])
+    tfps = g.GetSparseCountFingerprints(ms,numThreads=1)
+    for ofp,tfp in zip(ofps,tfps):
+      self.assertEqual(ofp,tfp)
+    tfps = g.GetSparseCountFingerprints(ms,numThreads=4)
+    for ofp,tfp in zip(ofps,tfps):
+      self.assertEqual(ofp,tfp)
+
+
+
 
 if __name__ == '__main__':
   unittest.main()

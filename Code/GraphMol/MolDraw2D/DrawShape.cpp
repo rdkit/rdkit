@@ -674,6 +674,10 @@ DrawShapeArc::DrawShapeArc(const std::vector<Point2D> points, double ang1,
 
 // ****************************************************************************
 void DrawShapeArc::myDraw(MolDraw2D &drawer) const {
+  if (fill_) {
+    drawer.setLineWidth(1);
+    drawer.drawOptions().scaleBondWidth = false;
+  }
   double start_ang = ang1_ > ang2_ ? ang1_ - 360.0 : ang1_;
   drawer.drawArc(points_[0], points_[1].x, points_[1].y, start_ang, ang2_,
                  true);

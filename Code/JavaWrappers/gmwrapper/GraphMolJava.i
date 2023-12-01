@@ -170,6 +170,7 @@ typedef unsigned long long int	uintmax_t;
 // Conformer seems to need to come before ROMol
 %include "../Conformer.i"
 %include "../Dict.i"
+%include "../RDLogger.i"
 %include "../RDProps.i"
 %include "../StereoGroup.i"
 %include "../ROMol.i"
@@ -222,6 +223,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../MolHash.i"
 %include "../Abbreviations.i"
 %include "../Streams.i"
+%include "../GeneralizedSubstruct.i"
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java
 #ifdef INCLUDE_ERROR_GENERATOR

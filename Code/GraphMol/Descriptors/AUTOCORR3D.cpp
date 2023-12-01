@@ -37,11 +37,12 @@
 #include "MolData3Ddescriptors.h"
 
 #include <cmath>
-#include <Eigen/Dense>
-#include <Eigen/SVD>
 #include <iostream>
+
 #include <Eigen/Core>
+#include <Eigen/Dense>
 #include <Eigen/QR>
+#include <Eigen/SVD>
 
 using namespace Eigen;
 namespace RDKit {
@@ -105,8 +106,6 @@ void get3DautocorrelationDesc(double* dist3D, double* topologicaldistance,
   std::vector<double> wr = moldata3D.GetRelativeRcov(mol);
   VectorXd Wr = getEigenVect(wr);
 
-  MatrixXd Bi;
-  MatrixXd tmp;
   double TDBmat[8][10];
   double dtmp;
 
@@ -114,9 +113,8 @@ void get3DautocorrelationDesc(double* dist3D, double* topologicaldistance,
     double* Bimat = GetGeodesicMatrix(topologicaldistance, i + 1, numAtoms);
     Map<MatrixXd> Bi(Bimat, numAtoms, numAtoms);
     MatrixXd RBi = Bi.cwiseProduct(dm);
-    // double Bicount = (double)Bi.sum();
 
-    tmp = Wu.transpose() * RBi * Wu;
+    MatrixXd tmp = Wu.transpose() * RBi * Wu;
     dtmp = (double)tmp(0);
     if (std::isnan(dtmp)) {
       dtmp = 0.0;
@@ -194,8 +192,6 @@ void get3DautocorrelationDescCustom(double* dist3D, double* topologicaldistance,
       moldata3D.GetCustomAtomProp(mol, customAtomPropName);
   VectorXd Wc = getEigenVect(customAtomArray);
 
-  MatrixXd Bi;
-  MatrixXd tmp;
   double TDBmat[10];
   double dtmp;
 
@@ -204,7 +200,7 @@ void get3DautocorrelationDescCustom(double* dist3D, double* topologicaldistance,
     Map<MatrixXd> Bi(Bimat, numAtoms, numAtoms);
     MatrixXd RBi = Bi.cwiseProduct(dm);
 
-    tmp = Wc.transpose() * RBi * Wc;
+    MatrixXd tmp = Wc.transpose() * RBi * Wc;
     dtmp = (double)tmp(0);
     if (std::isnan(dtmp)) {
       dtmp = 0.0;

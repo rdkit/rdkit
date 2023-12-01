@@ -156,7 +156,8 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   }
 
   int maxLabel = 1;
-  // makes no sense to do MCS alignment if we are only matching at user defined R-Groups
+  // makes no sense to do MCS alignment if we are only matching at user defined
+  // R-Groups
   if (alignCore && !onlyMatchAtRGroups && (alignment & MCS)) {
     std::vector<ROMOL_SPTR> mols;
     mols.push_back(ROMOL_SPTR(new ROMol(core)));
@@ -208,7 +209,6 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   }
   std::set<int> foundLabels;
 
-  int nextOffset = 0;
   std::map<int, int> atomToLabel;
 
   for (auto atom : core.atoms()) {
@@ -272,7 +272,6 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       // insufficient dummy groups are added to the core
       if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
                    relabel, Labelling::INDEX_LABELS)) {
-        nextOffset++;
       }
       found = true;
     }
@@ -351,7 +350,7 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
       auto valence = *std::max_element(valances.begin(), valances.end());
       // round up aromatic contributions
       dummiesToAdd = valence - (int)(bondOrder + .51);
-      dummiesToAdd = std::min(dummiesToAdd,maxNumDummies);
+      dummiesToAdd = std::min(dummiesToAdd, maxNumDummies);
     }
 
     std::vector<int> newIndices;

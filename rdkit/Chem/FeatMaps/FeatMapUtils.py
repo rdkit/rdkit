@@ -9,6 +9,7 @@
 #  of the RDKit source tree.
 #
 import copy
+
 from rdkit.Chem.FeatMaps import FeatMaps
 
 
@@ -75,10 +76,11 @@ def GetFeatFeatDistMatrix(fm, mergeMetric, mergeTol, dirMergeMode, compatFunc):
   dists = [[1e8] * numFeatures for _ in range(numFeatures)]
   if mergeMetric == MergeMetric.NoMerge:
     return dists
-  
-  # Setup distance matrix, depending on mergeMetric. 
-  benchmarkDict = { MergeMetric.Distance: mergeTol * mergeTol, MergeMetric.Overlap: mergeTol}
+
+  # Setup distance matrix, depending on mergeMetric.
+  benchmarkDict = {MergeMetric.Distance: mergeTol * mergeTol, MergeMetric.Overlap: mergeTol}
   benchmark = benchmarkDict[mergeMetric]
+
   def assignMatrix(matrix, i, j, value, constraint):
     if value < constraint:
       matrix[i][j] = value
@@ -177,7 +179,7 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
       # print '    bottom:',mergeThem
       if mergeThem:
         break
-    
+
     if mergeThem:
       res = True
       featI = fm.GetFeature(fi)

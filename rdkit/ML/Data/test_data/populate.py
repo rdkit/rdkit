@@ -1,5 +1,5 @@
-import RDConfig
-from Dbase import DbUtils
+from rdkit import RDConfig
+from rdkit.Dbase import DbUtils
 from io import StringIO
 
 basic_2class = """ID,VAL,ACT

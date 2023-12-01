@@ -54,7 +54,7 @@ namespace common_properties {
 RDKIT_ABBREVIATIONS_EXPORT extern const std::string numDummies;
 RDKIT_ABBREVIATIONS_EXPORT extern const std::string origAtomMapping;
 RDKIT_ABBREVIATIONS_EXPORT extern const std::string origBondMapping;
-}
+}  // namespace common_properties
 namespace Utils {
 //! returns the default set of abbreviation definitions
 RDKIT_ABBREVIATIONS_EXPORT std::vector<AbbreviationDefinition>

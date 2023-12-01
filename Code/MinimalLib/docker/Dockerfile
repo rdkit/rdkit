@@ -28,10 +28,12 @@ ARG RDKIT_BRANCH
 
 LABEL maintainer="Greg Landrum <greg.landrum@t5informatics.com>"
 
+RUN echo "deb http://deb.debian.org/debian buster-backports main" >> /etc/apt/sources.list.d/backports.list
+
 RUN apt-get update && apt-get upgrade -y && apt install -y \
   curl \
   wget \
-  cmake \
+  cmake/buster-backports \
   python3 \
   g++ \
   libeigen3-dev \
@@ -41,9 +43,9 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
 ENV LANG C
 
 WORKDIR /opt
-RUN wget -q https://boostorg.jfrog.io/artifactory/main/release/1.67.0/source/boost_1_67_0.tar.gz && \
-  tar xzf boost_1_67_0.tar.gz 
-WORKDIR /opt/boost_1_67_0
+RUN wget -q https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.gz && \
+  tar xzf boost_1_72_0.tar.gz 
+WORKDIR /opt/boost_1_72_0
 RUN ./bootstrap.sh --prefix=/opt/boost --with-libraries=system && \
   ./b2 install
 
@@ -93,7 +95,7 @@ RUN make -j2 RDKit_minimal && \
 
 # run the tests
 WORKDIR /src/rdkit/Code/MinimalLib/tests
-RUN node tests.js
+RUN /opt/emsdk/node/*/bin/node tests.js
 
 # Copy js and wasm rdkit files to use in browser
 # This feature requires the BuildKit backend

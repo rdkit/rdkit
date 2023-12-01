@@ -15,6 +15,7 @@
 typedef std::vector<std::string> STR_VECT;
 %}
 
+%include "enums.swg"
 %include "std_string.i"
 
 

@@ -30,11 +30,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import unittest
 
 from rdkit import Chem
 from rdkit.Chem import rdStructChecker
-
-import unittest
 
 data = """310929550
   -OEChem-07211613022D
@@ -172,7 +171,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m)
 
     res = checker.CheckMolStructure(m)
-    self.assertEquals(res, rdStructChecker.StructureFlags.ATOM_CHECK_FAILED)
+    self.assertEqual(res, rdStructChecker.StructureFlags.ATOM_CHECK_FAILED)
 
 
 if __name__ == '__main__':

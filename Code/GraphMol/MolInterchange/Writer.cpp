@@ -111,7 +111,7 @@ void addStringVal(rj::Value &dest, const char *tag, const std::string &val,
 }
 
 void addAtom(const Atom &atom, rj::Value &rjAtom, rj::Document &doc,
-             const rj::Value &rjDefaults, const JSONWriteParameters &params) {
+             const rj::Value &rjDefaults) {
   addIntVal(rjAtom, rjDefaults, "z", atom.getAtomicNum(), doc);
   if (!atom.hasQuery()) {
     addIntVal(rjAtom, rjDefaults, "impHs", atom.getTotalNumHs(), doc);
@@ -268,15 +268,15 @@ void addProperties(const T &obj, const std::vector<std::string> &propNames,
     try {
       auto val = obj.template getProp<int>(pN);
       rjv = val;
-    } catch (const boost::bad_any_cast &) {
+    } catch (const std::bad_any_cast &) {
       try {
         auto val = obj.template getProp<double>(pN);
         rjv = val;
-      } catch (const boost::bad_any_cast &) {
+      } catch (const std::bad_any_cast &) {
         try {
           auto val = obj.template getProp<std::string>(pN);
           rjv.SetString(val.c_str(), val.size(), doc.GetAllocator());
-        } catch (const boost::bad_any_cast &) {
+        } catch (const std::bad_any_cast &) {
           BOOST_LOG(rdWarningLog)
               << "Warning: Could not convert property " << pN
               << " to a recognized type. Skipping it." << std::endl;
@@ -290,13 +290,17 @@ void addProperties(const T &obj, const std::vector<std::string> &propNames,
   }
 }
 
-void addStereoGroup(const StereoGroup &sg, rj::Value &rjSG, rj::Document &doc,
-                    const JSONWriteParameters &params) {
+void addStereoGroup(const StereoGroup &sg, rj::Value &rjSG, rj::Document &doc) {
   if (inv_stereoGrouplookup.find(sg.getGroupType()) ==
       inv_stereoGrouplookup.end()) {
     throw ValueErrorException("unrecognized StereoGroup type");
   }
   addStringVal(rjSG, "type", inv_stereoGrouplookup.at(sg.getGroupType()), doc);
+
+  if (sg.getGroupType() != StereoGroupType::STEREO_ABSOLUTE) {
+    addIntVal(rjSG, "id", sg.getWriteId(), doc);
+  }
+
   rj::Value rjAtoms(rj::kArrayType);
   for (const auto atm : sg.getAtoms()) {
     rj::Value v1(static_cast<int>(atm->getIdx()));
@@ -306,7 +310,7 @@ void addStereoGroup(const StereoGroup &sg, rj::Value &rjSG, rj::Document &doc,
 }
 
 void addSubstanceGroup(const SubstanceGroup &sg, rj::Value &rjSG,
-                       rj::Document &doc, const JSONWriteParameters &params) {
+                       rj::Document &doc) {
   bool includePrivate = false, includeComputed = false;
   auto propNames = sg.getPropList(includePrivate, includeComputed);
   if (propNames.size()) {
@@ -389,8 +393,7 @@ void addSubstanceGroup(const SubstanceGroup &sg, rj::Value &rjSG,
   }
 }
 
-void addConformer(const Conformer &conf, rj::Value &rjConf, rj::Document &doc,
-                  const JSONWriteParameters &params) {
+void addConformer(const Conformer &conf, rj::Value &rjConf, rj::Document &doc) {
   int dim = 2;
   if (conf.is3D()) {
     dim = 3;
@@ -439,7 +442,7 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
   bool hasQueryAtoms = false;
   for (const auto &at : mol.atoms()) {
     rj::Value rjAtom(rj::kObjectType);
-    addAtom(*at, rjAtom, doc, atomDefaults, params);
+    addAtom(*at, rjAtom, doc, atomDefaults);
     rjAtoms.PushBack(rjAtom, doc.GetAllocator());
     if (at->hasQuery()) {
       hasQueryAtoms = true;
@@ -463,7 +466,7 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
     rj::Value rjStereoGroups(rj::kArrayType);
     for (const auto &sg : mol.getStereoGroups()) {
       rj::Value rjSG(rj::kObjectType);
-      addStereoGroup(sg, rjSG, doc, params);
+      addStereoGroup(sg, rjSG, doc);
       rjStereoGroups.PushBack(rjSG, doc.GetAllocator());
     }
     rjMol.AddMember("stereoGroups", rjStereoGroups, doc.GetAllocator());
@@ -473,7 +476,7 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
     rj::Value rjSubstanceGroups(rj::kArrayType);
     for (const auto &sg : getSubstanceGroups(mol)) {
       rj::Value rjSG(rj::kObjectType);
-      addSubstanceGroup(sg, rjSG, doc, params);
+      addSubstanceGroup(sg, rjSG, doc);
       rjSubstanceGroups.PushBack(rjSG, doc.GetAllocator());
     }
     rjMol.AddMember("substanceGroups", rjSubstanceGroups, doc.GetAllocator());
@@ -484,7 +487,7 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
     for (auto conf = mol.beginConformers(); conf != mol.endConformers();
          ++conf) {
       rj::Value rjConf(rj::kObjectType);
-      addConformer(*(conf->get()), rjConf, doc, params);
+      addConformer(*(conf->get()), rjConf, doc);
       rjConfs.PushBack(rjConf, doc.GetAllocator());
     }
 

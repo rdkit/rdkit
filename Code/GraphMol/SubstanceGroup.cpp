@@ -275,26 +275,29 @@ bool SubstanceGroup::includesBond(unsigned int bondIdx) const {
   return false;
 }
 
-bool SubstanceGroupChecks::isValidType(const std::string &type) {
-  return std::find(SubstanceGroupChecks::sGroupTypes.begin(),
-                   SubstanceGroupChecks::sGroupTypes.end(),
-                   type) != SubstanceGroupChecks::sGroupTypes.end();
+namespace SubstanceGroupChecks {
+const std::vector<const char *> sGroupTypes = {
+    // polymer sgroups:
+    "SRU", "MON", "COP", "CRO", "GRA", "MOD", "MER", "ANY",
+    // formulations/mixtures:
+    "COM", "MIX", "FOR",
+    // other
+    "SUP", "MUL", "DAT", "GEN"};
+
+bool isValidType(const std::string &type) {
+  return std::find(sGroupTypes.begin(), sGroupTypes.end(), type) !=
+         sGroupTypes.end();
 }
 
-bool SubstanceGroupChecks::isValidSubType(const std::string &type) {
-  return std::find(SubstanceGroupChecks::sGroupSubtypes.begin(),
-                   SubstanceGroupChecks::sGroupSubtypes.end(),
-                   type) != SubstanceGroupChecks::sGroupSubtypes.end();
+bool isValidSubType(const std::string &type) {
+  return type == "ALT" || type == "RAN" || type == "BLO";
 }
 
-bool SubstanceGroupChecks::isValidConnectType(const std::string &type) {
-  return std::find(SubstanceGroupChecks::sGroupConnectTypes.begin(),
-                   SubstanceGroupChecks::sGroupConnectTypes.end(),
-                   type) != SubstanceGroupChecks::sGroupConnectTypes.end();
+bool isValidConnectType(const std::string &type) {
+  return type == "HH" || type == "HT" || type == "EU";
 }
 
-bool SubstanceGroupChecks::isSubstanceGroupIdFree(const ROMol &mol,
-                                                  unsigned int id) {
+bool isSubstanceGroupIdFree(const ROMol &mol, unsigned int id) {
   auto match_sgroup = [id](const SubstanceGroup &sg) {
     unsigned int storedId;
     return sg.getPropIfPresent("ID", storedId) && id == storedId;
@@ -304,6 +307,7 @@ bool SubstanceGroupChecks::isSubstanceGroupIdFree(const ROMol &mol,
   return std::find_if(sgroups.begin(), sgroups.end(), match_sgroup) ==
          sgroups.end();
 }
+}  // namespace SubstanceGroupChecks
 
 std::vector<SubstanceGroup> &getSubstanceGroups(ROMol &mol) {
   return mol.d_sgroups;

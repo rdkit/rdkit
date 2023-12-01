@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 import unittest
+
 import pidtest
+
 from rdkit.sping.PS import pidPS
 
+
 class TestCase(unittest.TestCase):
+
   def test_all(self):
     canvas = pidPS.PSCanvas(name="testallps.ps", size=(400, 500))
 
@@ -37,6 +41,7 @@ class TestCase(unittest.TestCase):
     from rdkit.Chem.Draw.spingCanvas import Canvas
     canvas = Canvas((200, 400), 'test.pdf', imageType="pdf")
     canvas.canvas.showPage()
+
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

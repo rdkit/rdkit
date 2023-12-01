@@ -1,4 +1,5 @@
 import random
+
 from rdkit import Chem
 from rdkit.Chem.rdDistGeom import EmbedMolecule
 
@@ -369,7 +370,8 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
+  import doctest
+  import sys
   return doctest.testmod(sys.modules["__main__"])
 
 

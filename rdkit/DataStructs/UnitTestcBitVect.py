@@ -11,12 +11,11 @@
 """ unit testing code for the C++ BitVects
 """
 
-
 import os
+import pickle
 import unittest
 
 from rdkit.DataStructs import cDataStructs
-import pickle
 
 klass = cDataStructs.SparseBitVect
 
@@ -39,7 +38,7 @@ class VectTests(object):
     v[2] = 1
     v[9] = 1
 
-    with self.assertRaisesRegexp(IndexError, ""):
+    with self.assertRaisesRegex(IndexError, ""):
       v[10] = 1
 
     assert v[0] == 1, 'bad bit'
@@ -49,7 +48,7 @@ class VectTests(object):
     assert v[-1] == 1, 'bad bit'
     assert v[-2] == 0, 'bad bit'
 
-    with self.assertRaisesRegexp(IndexError, ""):
+    with self.assertRaisesRegex(IndexError, ""):
       _ = v[10]
 
   def testSparseBitGet(self):

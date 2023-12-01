@@ -1,15 +1,15 @@
-from rdkit import RDConfig, rdBase, Chem
-from io import StringIO, BytesIO
-from rdkit.Chem import PandasTools
-import numpy
-import unittest
-import tempfile
-import shutil
-import os
-import gzip
 import doctest
-if (getattr(doctest, 'ELLIPSIS_MARKER')):
-  doctest.ELLIPSIS_MARKER = '*...*'
+import gzip
+import os
+import shutil
+import tempfile
+import unittest
+from io import BytesIO, StringIO
+
+import numpy
+
+from rdkit import Chem, RDConfig, rdBase
+from rdkit.Chem import PandasTools
 
 try:
   import IPython
@@ -20,15 +20,23 @@ except ImportError:
 PandasTools.UninstallPandasTools()
 
 
-@unittest.skipIf(PandasTools.pd is None, 'Pandas not installed, skipping')
+@unittest.skipIf((not hasattr(PandasTools, 'pd')) or PandasTools.pd is None,
+                 'Pandas not installed, skipping')
 class TestPandasTools(unittest.TestCase):
 
   def __init__(self, methodName='runTest'):
-    self.df = getTestFrame()
-    self.df.index.name = 'IndexName'
+    self.df = None
     super(TestPandasTools, self).__init__(methodName=methodName)
 
+  def initialize_dataframe(self):
+    # We only need to initialize the dataframe once, but we defer to actual running of the tests,
+    # as getTestFrame() needs pandas installed, and __init__() is run even in the absence of pandas.
+    if self.df is None:
+      self.df = getTestFrame()
+      self.df.index.name = 'IndexName'
+
   def setUp(self):
+    self.initialize_dataframe()
     PandasTools.InstallPandasTools()
     PandasTools.ChangeMoleculeRendering(renderer='PNG')
     PandasTools.pd.set_option('display.max_columns', None)
@@ -39,12 +47,6 @@ class TestPandasTools(unittest.TestCase):
     PandasTools.molRepresentation = self._molRepresentation
     PandasTools.highlightSubstructures = self._highlightSubstructures
     PandasTools.UninstallPandasTools()
-
-  def testDoctest(self):
-    # We need to do it like this to ensure that default RDkit functionality is restored
-    failed, _ = doctest.testmod(PandasTools,
-                                optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
-    self.assertFalse(failed)
 
   def test_RestoreMonkeyPatch(self):
     sio = getStreamIO(methane + peroxide)
@@ -203,8 +205,26 @@ class TestPandasTools(unittest.TestCase):
     self.assertEqual([Chem.MolToSmiles(x) for x in df.R2],
                      ['F[*:2]', 'Cl[*:2]', 'O[*:2]', 'F[*:2]', 'F[*:2]'])
 
+  def testPandasShouldShowMoleculesWhenTruncating(self):
+    csv_data = '''"Molecule ChEMBL ID";"Molecule Name";"Molecule Max Phase";"Molecular Weight";"#RO5 Violations";"AlogP";"Compound Key";"Smiles";"Standard Type";"Standard Relation";"Standard Value";"Standard Units";"pChEMBL Value";"Data Validity Comment";"Comment";"Uo Units";"Ligand Efficiency BEI";"Ligand Efficiency LE";"Ligand Efficiency LLE";"Ligand Efficiency SEI";"Potential Duplicate";"Assay ChEMBL ID";"Assay Description";"Assay Type";"BAO Format ID";"BAO Label";"Assay Organism";"Assay Tissue ChEMBL ID";"Assay Tissue Name";"Assay Cell Type";"Assay Subcellular Fraction";"Target ChEMBL ID";"Target Name";"Target Organism";"Target Type";"Document ChEMBL ID";"Source ID";"Source Description";"Document Journal";"Document Year";"Cell ChEMBL ID"
+  "CHEMBL543779";"";"0";"341.86";"0";"2.60";"1w";"CCN(CC)CCS/C(=N\O)C(=O)c1ccc(C#N)cc1.Cl";"IC50";"'='";"180000.0";"nM";"";"Outside typical range";"";"UO_0000065";"";"";"";"";"False";"CHEMBL644102";"Reversible inhibition of Human AchE";"B";"BAO_0000357";"single protein format";"None";"None";"None";"None";"None";"CHEMBL220";"Acetylcholinesterase";"Homo sapiens";"SINGLE PROTEIN";"CHEMBL1123431";"1";"Scientific Literature";"J. Med. Chem.";"1986";"None"
+  '''
+    try:
+      with StringIO(csv_data) as hnd:
+        df = PandasTools.pd.read_csv(hnd, sep=";")
+        PandasTools.InstallPandasTools()
+        PandasTools.RenderImagesInAllDataFrames()
+        PandasTools.AddMoleculeColumnToFrame(df, 'Smiles')
+        html_output = df.to_html(notebook=True, max_cols=10)
+        self.assertIn('...', html_output)
+        self.assertIn('data-content="rdkit/molecule"', html_output)
+        self.assertIn('data:image/png;base64', html_output)
+    finally:
+      PandasTools.UninstallPandasTools()
 
-@unittest.skipIf(PandasTools.pd is None, 'Pandas not installed, skipping')
+
+@unittest.skipIf((not hasattr(PandasTools, 'pd')) or PandasTools.pd is None,
+                 'Pandas not installed, skipping')
 class TestLoadSDF(unittest.TestCase):
   gz_filename = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'pandas_load.sdf.gz')
 
@@ -267,7 +287,8 @@ class TestLoadSDF(unittest.TestCase):
     self.assertEqual(set(df.columns), set("ID prop1 prop2 prop3".split()))
 
 
-@unittest.skipIf(PandasTools.pd is None, 'Pandas not installed, skipping')
+@unittest.skipIf((not hasattr(PandasTools, 'pd')) or PandasTools.pd is None,
+                 'Pandas not installed, skipping')
 class TestWriteSDF(unittest.TestCase):
 
   def setUp(self):
@@ -424,4 +445,6 @@ $$$$
 """
 
 if __name__ == '__main__':  # pragma: nocover
+  if (getattr(doctest, 'ELLIPSIS_MARKER')):
+    doctest.ELLIPSIS_MARKER = '*...*'
   unittest.main()

@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -49,13 +49,13 @@ TEST_CASE("mol.bonds()") {
   }
   CHECK(doubleBondCount == 2);
   auto bonds = m->bonds();
-  auto hasDoubleBond = std::any_of(bonds.begin(), bonds.end(), [](const auto bond) {
-    return bond->getBondType() == Bond::DOUBLE;
-  });
+  auto hasDoubleBond = std::any_of(
+      bonds.begin(), bonds.end(),
+      [](const auto bond) { return bond->getBondType() == Bond::DOUBLE; });
   CHECK(hasDoubleBond);
-  doubleBondCount = std::count_if(bonds.begin(), bonds.end(), [](const auto bond) {
-    return bond->getBondType() == Bond::DOUBLE;
-  });
+  doubleBondCount = std::count_if(
+      bonds.begin(), bonds.end(),
+      [](const auto bond) { return bond->getBondType() == Bond::DOUBLE; });
   CHECK(doubleBondCount == 2);
 }
 

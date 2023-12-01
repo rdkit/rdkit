@@ -1,15 +1,12 @@
-# $Id$
-#
-
-from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors as rdMD, Descriptors
-from rdkit.Chem import AllChem
-from rdkit import DataStructs
-from rdkit import RDConfig
-from rdkit.Geometry import rdGeometry as rdG
 import unittest
 from os import environ
 from pathlib import Path
+import re
+
+from rdkit import Chem, DataStructs, RDConfig
+from rdkit.Chem import AllChem, Descriptors
+from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit.Geometry import rdGeometry as rdG
 
 haveBCUT = hasattr(rdMD, 'BCUT2D')
 
@@ -712,7 +709,7 @@ class TestCase(unittest.TestCase):
       bcut2 = rdMD.BCUT2D(m, "bad_prop")
       self.assertTrue(0, "Failed to handle bad prop (not a double)")
     except RuntimeError as e:
-      self.assertTrue("boost::bad_any_cast" in str(e))
+      self.assertTrue(re.search(r"[B,b]ad any[\ ,_]cast",str(e)))
 
   def testOxidationNumbers(self):
     # majority of tests are in the C++ layer.  These are just to make

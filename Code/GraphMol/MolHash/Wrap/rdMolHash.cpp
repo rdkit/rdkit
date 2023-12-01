@@ -18,9 +18,9 @@ using namespace RDKit;
 namespace {
 
 std::string MolHashHelper(const ROMol &mol, MolHash::HashFunction func,
-                          bool useCXSmiles) {
+                          bool useCXSmiles, unsigned cxFlagsToSkip) {
   RWMol cpy(mol);
-  return MolHash::MolHash(&cpy, func, useCXSmiles);
+  return MolHash::MolHash(&cpy, func, useCXSmiles, cxFlagsToSkip);
 }
 }  // namespace
 
@@ -46,11 +46,13 @@ BOOST_PYTHON_MODULE(rdMolHash) {
       .value("SmallWorldIndexBR", MolHash::HashFunction::SmallWorldIndexBR)
       .value("SmallWorldIndexBRL", MolHash::HashFunction::SmallWorldIndexBRL)
       .value("ArthorSubstructureOrder",
-             MolHash::HashFunction::ArthorSubstructureOrder);
+             MolHash::HashFunction::ArthorSubstructureOrder)
+      .value("HetAtomTautomerv2", MolHash::HashFunction::HetAtomTautomerv2);
 
-  python::def("MolHash", MolHashHelper,
-              (python::arg("mol"), python::arg("func"),
-               python::arg("useCxSmiles") = false),
-              "Generate a hash for a molecule. The func argument determines "
-              "which hash is generated.");
+  python::def(
+      "MolHash", MolHashHelper,
+      (python::arg("mol"), python::arg("func"),
+       python::arg("useCxSmiles") = false, python::arg("cxFlagsToSkip") = 0),
+      "Generate a hash for a molecule. The func argument determines "
+      "which hash is generated.");
 }

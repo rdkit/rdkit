@@ -1716,9 +1716,9 @@ void testBadBondOrders() {
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/bondorder9.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
-  TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->hasQuery());
-  TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getQuery()->getDescription() ==
-              "BondNull");
+  TEST_ASSERT(!m->getBondBetweenAtoms(0, 1)->hasQuery());
+  TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
+
   delete m;
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -4677,8 +4677,7 @@ void testParseCHG() {
 
   TEST_ASSERT(m);
   // Write it out in V3000 format, which makes counting the different charges
-  // easier but is really because of a change that caused it always to write
-  // V3000 but which is no longer extant.
+  // easier
   bool forceV3000(true);
   std::string out = MolToMolBlock(*m, true, -1, true, forceV3000);
   std::regex chg_all("CHG="), chg_m1("CHG=-1"), chg_p1("CHG=1"),
@@ -4770,10 +4769,11 @@ void testGithub1034() {
         explicit_unknown_stereo)
 
     TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);  // now set in detectStereochemistry
+    ROMol(*m).getBondWithIdx(0)->setStereo(Bond::STEREOCIS); // ensure we have stereo atoms
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::SINGLE);
     TEST_ASSERT(m->getBondWithIdx(1)->getBondDir() == Bond::NONE);
     TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::SINGLE);
@@ -4907,6 +4907,19 @@ void testMolFileDativeBonds() {
 
     std::string smiles = MolToSmiles(*m);
     TEST_ASSERT(smiles == "CCC(=O)O->[Cu]<-OC(O)CC");
+
+    delete m;
+  }
+
+  {
+    std::string fName = rdbase + "DativeBond2000.mol";
+    RWMol *m = MolFileToMol(fName,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumBonds() == 5);
+    TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);
+
+    std::string smiles = MolToSmiles(*m);
+    TEST_ASSERT(smiles == "CC(C)->[Mg](Cl)Cl");
 
     delete m;
   }

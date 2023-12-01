@@ -119,6 +119,12 @@ cmake -DPy_ENABLE_SHARED=1 \
 
 And finally, `make`, `make install` and `ctest`
 
+The `ctest` build requires that the installation path (the root of the source tree with RDK_INSTALL_INTREE=ON as above) be set in the RDBASE environment variable, and that the location of the installed Python files and shared library files to use for the tests be properly specified. This can be done by setting environment variables for the ctest run as follows:
+
+```
+RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH ctest
+```
+
 
 ### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
 
@@ -353,26 +359,6 @@ In each case I've replaced specific pieces of the path with `...`.
 *Problem:* :
 
 ```
-Linking CXX shared library libSLNParse.so
-/usr/bin/ld: .../libboost_regex.a(cpp_regex_traits.o): relocation R_X86_64_32S against `std::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Rep::_S_empty_rep_storage' can not be used when making a shared object; recompile with -fPIC
-.../libboost_regex.a: could not read symbols: Bad value
-collect2: ld returned 1 exit status
-make[2]: *** [Code/GraphMol/SLNParse/libSLNParse.so] Error 1
-make[1]: *** [Code/GraphMol/SLNParse/CMakeFiles/SLNParse.dir/all] Error 2
-make: *** [all] Error 2
-```
-
-*Solution:*
-
-Add this to the arguments when you call cmake: `-DBoost_USE_STATIC_LIBS=OFF`
-
-More information here: http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01119.html
-
-* * * * *
-
-*Problem:* :
-
-```
 .../Code/GraphMol/Wrap/EditableMol.cpp:114:   instantiated from here
 .../boost/type_traits/detail/cv_traits_impl.hpp:37: internal compiler error: in make_rtl_for_nonlocal_decl, at cp/decl.c:5067
 
@@ -473,15 +459,15 @@ This section assumes that python is installed in `C:\Python36 that the boost lib
 #### Building from the command line (recommended)
 
 -   Create a directory `C:\RDKit\build` and cd into it
--   Run cmake. Here's an example basic command line for 64bit windows that will download the InChI and Avalon toolkit sources from the InChI Trust and SourceForge repositories, respectively, and build the PostgreSQL cartridge for the installed version of PostgreSQL:  
+-   Run cmake. Here's an example basic command line for 64bit windows that will download the InChI and Avalon toolkit sources from the InChI Trust and SourceForge repositories, respectively, and build the PostgreSQL cartridge for the installed version of PostgreSQL:
   `cmake -DRDK_BUILD_PYTHON_WRAPPERS=ON -DBOOST_ROOT=C:/boost -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_AVALON_SUPPORT=ON -DRDK_BUILD_PGSQL=ON -DPostgreSQL_ROOT="C:\Program Files\PostgreSQL\9.5" -G"Visual Studio 14 2015 Win64" ..`
--   Build the code. Here's an example command line:  
+-   Build the code. Here's an example command line:
   `C:/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe /m:4 /p:Configuration=Release INSTALL.vcxproj`
 -   If you have built in PostgreSQL support, you will need to open a shell with administrator privileges, stop the PostgreSQL service, run the `pgsql_install.bat` installation script, then restart the PostgreSQL service (please refer to `%RDBASE%\Code\PgSQL\rdkit\README` for further details):
     -   `"C:\Program Files\PostgreSQL\9.5\bin\pg_ctl.exe" -N "postgresql-9.5" -D "C:\Program Files\PostgreSQL\9.5\data" -w stop`
     -   `C:\RDKit\build\Code\PgSQL\rdkit\pgsql_install.bat`
     -   `"C:\Program Files\PostgreSQL\9.5\bin\pg_ctl.exe" -N "postgresql-9.5" -D "C:\Program Files\PostgreSQL\9.5\data" -w start`
-    -   Before restarting the PostgreSQL service, make sure that the Boost libraries the RDKit was built against are in the system PATH, or PostgreSQL will fail to create the `rdkit` extension with a deceptive error message such as:  
+    -   Before restarting the PostgreSQL service, make sure that the Boost libraries the RDKit was built against are in the system PATH, or PostgreSQL will fail to create the `rdkit` extension with a deceptive error message such as:
       `ERROR: could not load library "C:/Program Files/PostgreSQL/9.5/lib/rdkit.dll": The specified module could not be found.`
 
 

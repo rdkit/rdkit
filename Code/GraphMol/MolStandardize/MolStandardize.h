@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
+//  Copyright (C) 2018-2023 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -103,20 +103,48 @@ inline RWMol *cleanup(const RWMol &mol, const CleanupParameters &params =
                                             defaultCleanupParameters) {
   return cleanup(&mol, params);
 };
+//! Works the same as cleanup(mol)
+RDKIT_MOLSTANDARDIZE_EXPORT void cleanupInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
+//! Operates on multiple molecules
+RDKIT_MOLSTANDARDIZE_EXPORT void cleanupInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
+    const CleanupParameters &params = defaultCleanupParameters);
 
 //! Works the same as Normalizer().normalize(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *normalize(
     const RWMol *mol,
+    const CleanupParameters &params = defaultCleanupParameters);
+//! Works the same as Normalizer().normalizeInPlace(mol)
+RDKIT_MOLSTANDARDIZE_EXPORT void normalizeInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
+//! Operates on multiple molecules
+RDKIT_MOLSTANDARDIZE_EXPORT void normalizeInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
     const CleanupParameters &params = defaultCleanupParameters);
 
 //! Works the same as Reionizer().reionize(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *reionize(
     const RWMol *mol,
     const CleanupParameters &params = defaultCleanupParameters);
+//! Works the same as Reionizer().reionizeInPlace(mol)
+RDKIT_MOLSTANDARDIZE_EXPORT void reionizeInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
+//! Operates on multiple molecules
+RDKIT_MOLSTANDARDIZE_EXPORT void reionizeInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
+    const CleanupParameters &params = defaultCleanupParameters);
 
 //! Works the same as FragmentRemover().remove(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *removeFragments(
     const RWMol *mol,
+    const CleanupParameters &params = defaultCleanupParameters);
+//! Works the same as FragmentRemover().removeInPlace(mol)
+RDKIT_MOLSTANDARDIZE_EXPORT void removeFragmentsInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
+//! Operates on multiple molecules
+RDKIT_MOLSTANDARDIZE_EXPORT void removeFragmentsInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
     const CleanupParameters &params = defaultCleanupParameters);
 
 //! Works the same as TautomerEnumerator().canonicalize(mol)
@@ -188,6 +216,12 @@ RDKIT_MOLSTANDARDIZE_EXPORT void disconnectOrganometallics(
 RDKIT_MOLSTANDARDIZE_EXPORT ROMol *disconnectOrganometallics(
     const ROMol &mol, RDKit::MolStandardize::MetalDisconnectorOptions mdo = {
                           true, true, false, true});
+//! As above, included for API consistency.
+inline void disconnectOrganometallicsInPlace(
+    RWMol &mol, RDKit::MolStandardize::MetalDisconnectorOptions mdo = {
+                    true, true, false, true}) {
+  disconnectOrganometallics(mol, mdo);
+};
 
 //! TODO
 RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::string> enumerateTautomerSmiles(

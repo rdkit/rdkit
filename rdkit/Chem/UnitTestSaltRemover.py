@@ -1,10 +1,9 @@
 import doctest
+import os
 import unittest
 
-import os
 from rdkit import Chem
-
-from rdkit.Chem.SaltRemover import SaltRemover, InputFormat
+from rdkit.Chem.SaltRemover import InputFormat, SaltRemover
 
 
 def load_tests(loader, tests, ignore):

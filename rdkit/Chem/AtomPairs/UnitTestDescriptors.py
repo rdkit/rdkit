@@ -9,14 +9,14 @@
 #  of the RDKit source tree.
 #
 
-import unittest
 import doctest
-import os
 import gzip
+import os
 import pickle
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem.AtomPairs import Pairs, Torsions, Utils, Sheridan
+import unittest
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem.AtomPairs import Pairs, Sheridan, Torsions, Utils
 
 
 def load_tests(loader, tests, ignore):
@@ -60,8 +60,8 @@ class TestCase(unittest.TestCase):
     tt = Torsions.GetTopologicalTorsionFingerprint(mol)
     self.assertEqual(tt.GetNonzeroElements(), {4437590049: 2, 8732557345: 2, 4445978657: 2})
     tt = Torsions.GetTopologicalTorsionFingerprintAsIds(mol)
-    self.assertEqual(
-      sorted(tt), [4437590049, 4437590049, 4445978657, 4445978657, 8732557345, 8732557345])
+    self.assertEqual(sorted(tt),
+                     [4437590049, 4437590049, 4445978657, 4445978657, 8732557345, 8732557345])
     tt = Torsions.GetTopologicalTorsionFingerprintAsIntVect(mol)
     self.assertEqual(tt.GetNonzeroElements(), {4437590049: 2, 8732557345: 2, 4445978657: 2})
 

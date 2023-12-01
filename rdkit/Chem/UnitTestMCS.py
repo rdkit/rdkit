@@ -1,9 +1,10 @@
-import unittest
 import time
+import unittest
 
 from rdkit import Chem
 from rdkit.Chem import rdFMCS
 from rdkit.TestRunner import isDebugBuild
+
 
 def load_smiles(text):
   mols = []
@@ -23,7 +24,7 @@ class MCSTestCase(unittest.TestCase):
   def assert_search(self, smiles, numAtoms, numBonds, smarts=_ignore, verbose=False, **kwargs):
     result = rdFMCS.FindMCS(smiles, **kwargs)
     if verbose:
-      print("RESULT: ",result.smartsString)
+      print("RESULT: ", result.smartsString)
     self.assert_result(result, canceled=False, numAtoms=numAtoms, numBonds=numBonds, smarts=smarts)
 
   def assert_result(self, result, canceled=_ignore, numAtoms=_ignore, numBonds=_ignore,
@@ -42,7 +43,6 @@ simple_mols = load_smiles("""
 c1ccccc1O phenol
 CO methanol""")
 
-
 # class TestMinAtoms(MCSTestCase):
 #
 #   def test_min_atoms_2(self):
@@ -58,7 +58,6 @@ CO methanol""")
 #       pass
 #     else:
 #       raise AssertionError("should have raised an exception")
-
 
 maximize_mols = load_smiles("""
 C12CCC1CC2OCCCCCCC 2-rings-and-chain-with-O
@@ -103,20 +102,17 @@ class TestAtomTypes(MCSTestCase):
   def test_atom_compare_any(self):
     # Note: bond aromaticities must still match!
     # 'cccccO' matches 'ccccnO'
-    self.assert_search(atomtype_mols, 6, 5,
-                       atomCompare=rdFMCS.AtomCompare.CompareAny,
+    self.assert_search(atomtype_mols, 6, 5, atomCompare=rdFMCS.AtomCompare.CompareAny,
                        bondCompare=rdFMCS.BondCompare.CompareOrderExact)
 
   def test_atom_compare_any_bond_compare_any(self):
     # Linear chain of 7 atoms
-    self.assert_search(atomtype_mols, 7, 6,
-                       atomCompare=rdFMCS.AtomCompare.CompareAny,
-                        bondCompare=rdFMCS.BondCompare.CompareAny)
+    self.assert_search(atomtype_mols, 7, 6, atomCompare=rdFMCS.AtomCompare.CompareAny,
+                       bondCompare=rdFMCS.BondCompare.CompareAny)
 
   def test_bond_compare_any(self):
     # Linear chain of 7 atoms
-    self.assert_search(atomtype_mols, 7, 6,
-                       bondCompare=rdFMCS.BondCompare.CompareAny)
+    self.assert_search(atomtype_mols, 7, 6, bondCompare=rdFMCS.BondCompare.CompareAny)
 
 
 isotope_mols = load_smiles("""
@@ -134,13 +130,11 @@ class TestIsotopes(MCSTestCase):
 
   def test_isotopes(self):
     # 5 atoms of class '0' in the ring
-    self.assert_search(isotope_mols, 5, 4,
-                       atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
+    self.assert_search(isotope_mols, 5, 4, atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
 
   def test_isotope_complete_ring_only(self):
     # the 122 in the chain
-    self.assert_search(isotope_mols, 3, 2,
-                       atomCompare=rdFMCS.AtomCompare.CompareIsotopes,
+    self.assert_search(isotope_mols, 3, 2, atomCompare=rdFMCS.AtomCompare.CompareIsotopes,
                        completeRingsOnly=True)
 
 
@@ -158,23 +152,19 @@ class TestBondTypes(MCSTestCase):
 
   def test_bond_compare_bondtypes(self):
     # Match the 'CCCCCC' part of the first ring, with the second's tail
-    self.assert_search(bondtype_mols, 6, 5,
-                       bondCompare=rdFMCS.BondCompare.CompareOrderExact)
+    self.assert_search(bondtype_mols, 6, 5, bondCompare=rdFMCS.BondCompare.CompareOrderExact)
 
   def test_bond_compare_any(self):
     # the CC#CC chain matches the CCCC tail
-    self.assert_search(bondtype_mols, 10, 9,
-                       bondCompare=rdFMCS.BondCompare.CompareAny)
+    self.assert_search(bondtype_mols, 10, 9, bondCompare=rdFMCS.BondCompare.CompareAny)
 
   def test_atom_compare_elements_bond_compare_any(self):
-    self.assert_search(bondtype_mols, 10, 9,
-                       atomCompare=rdFMCS.AtomCompare.CompareElements,
+    self.assert_search(bondtype_mols, 10, 9, atomCompare=rdFMCS.AtomCompare.CompareElements,
                        bondCompare=rdFMCS.BondCompare.CompareAny)
 
   def test_atom_compare_any_bond_compare_any(self):
     # complete match!
-    self.assert_search(bondtype_mols, 18, 18,
-                       atomCompare=rdFMCS.AtomCompare.CompareAny,
+    self.assert_search(bondtype_mols, 18, 18, atomCompare=rdFMCS.AtomCompare.CompareAny,
                        bondCompare=rdFMCS.BondCompare.CompareAny)
 
 
@@ -309,7 +299,6 @@ class TestCompleteRingsOnly(MCSTestCase):
     # Should match everything
     self.assert_search(SELECT(ring_mols, 1, 7), 10, 11, completeRingsOnly=True,
                        atomCompare=rdFMCS.AtomCompare.CompareAny)
-
 
   def test_ring_to_nonring_bond(self):
     # Should allow the cO in phenol to match the CO in the other structure

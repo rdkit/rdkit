@@ -61,7 +61,7 @@ def _ConstructSQL(details, extraFields=''):
     if details.actName:
       fields += f',{details.actName}'
     join += f'join {details.actTableName} act on act.{details.idName}={details.tableName}.{details.idName}'
-    
+
   # data = conn.GetData(fields=fields,join=join)
   if extraFields:
     fields += f',{extraFields}'
@@ -76,11 +76,11 @@ def ScreenInDb(details, mol):
     FingerprintMols.error('Error: problems fingerprinting molecule.\n')
     traceback.print_exc()
     return []
-  
+
   if details.metric not in (DataStructs.TanimotoSimilarity, DataStructs.DiceSimilarity,
                             DataStructs.CosineSimilarity):
     return ScreenFingerprints(details, data=GetFingerprints(details), mol=mol)
-  
+
   conn: DbConnect = _ConnectToDatabase(details)
   if details.metric == DataStructs.TanimotoSimilarity:
     func = 'rd_tanimoto'
@@ -98,7 +98,7 @@ def ScreenInDb(details, mol):
   cmd += " order by tani desc"
   if not details.doThreshold and details.topN > 0:
     cmd += f" limit {details.topN}"
-  
+
   curs = conn.GetCursor()
   curs.execute(cmd, (pkl, ))
   return curs.fetchall()
@@ -116,13 +116,13 @@ def GetFingerprints(details):
     curs = conn.GetCursor()
     # curs.execute(cmd)
     # print 'CURSOR:',curs,curs.closed
-    
+
     if _dataSeq:
       suppl = _dataSeq(curs, cmd, depickle=not details.noPickle, klass=DataStructs.ExplicitBitVect)
       _dataSeq._conn = conn
       return suppl
     return DbFpSupplier.ForwardDbFpSupplier(data, fpColName=details.fpColName)
-  
+
   if details.inFileName:
     try:
       inF = open(details.inFileName, 'r')
@@ -215,7 +215,8 @@ def ScreenFromDetails(details, mol=None):
     try:
       outF = open(details.outFileName, 'w+')
     except IOError:
-      FingerprintMols.error(f"Error: could not open output file {details.outFileName} for writing\n")
+      FingerprintMols.error(
+        f"Error: could not open output file {details.outFileName} for writing\n")
       return None
   else:
     outF = None
@@ -224,7 +225,7 @@ def ScreenFromDetails(details, mol=None):
     res = ScreenFingerprints(details, data=GetFingerprints(details), mol=mol)
   else:
     res = ScreenInDb(details, mol)
-    
+
   if outF:
     for pt in res:
       outF.write(','.join([str(x) for x in pt]))

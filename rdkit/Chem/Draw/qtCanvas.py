@@ -13,12 +13,10 @@ from rdkit.Chem.Draw.rdMolDraw2DQt import rdkitQtVersion
 
 if rdkitQtVersion.startswith('6'):
   try:
-    from PyQt6 import QtCore
-    from PyQt6 import QtGui
+    from PyQt6 import QtCore, QtGui
   except ImportError:
     # PySide version numbers leapt at Qt6
-    from PySide6 import QtCore
-    from PySide6 import QtGui
+    from PySide6 import QtCore, QtGui
 
   QPainter_Antialiasing = QtGui.QPainter.RenderHint.Antialiasing
   QPainter_SmoothPixmapTransform = QtGui.QPainter.RenderHint.SmoothPixmapTransform
@@ -28,16 +26,13 @@ if rdkitQtVersion.startswith('6'):
 
 else:
   try:
-    from PyQt5 import QtCore
-    from PyQt5 import QtGui
+    from PyQt5 import QtCore, QtGui
   except ImportError:
     try:
-      from PySide import QtCore
-      from PySide import QtGui
+      from PySide import QtCore, QtGui
     except ImportError:
       # PySide2 supports Qt >= 5.12
-      from PySide2 import QtCore
-      from PySide2 import QtGui
+      from PySide2 import QtCore, QtGui
 
   QPainter_Antialiasing = QtGui.QPainter.Antialiasing
   QPainter_SmoothPixmapTransform = QtGui.QPainter.SmoothPixmapTransform

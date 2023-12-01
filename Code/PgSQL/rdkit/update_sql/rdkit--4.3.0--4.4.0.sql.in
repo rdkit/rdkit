@@ -1,0 +1,168 @@
+CREATE OR REPLACE FUNCTION gmol_sortsupport(internal)
+    RETURNS void
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION gbfp_sortsupport(internal)
+    RETURNS void
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT;
+
+DROP OPERATOR CLASS IF EXISTS gist_mol_ops USING gist;
+
+CREATE OPERATOR CLASS gist_mol_ops
+DEFAULT FOR TYPE mol USING gist
+AS
+    OPERATOR    3   @> (mol, mol),
+    OPERATOR    4   <@ (mol, mol),
+    OPERATOR    3   @> (mol, qmol),
+    OPERATOR    4   <@ (qmol, mol),
+    OPERATOR    6   @= (mol, mol),
+    FUNCTION    1   gmol_consistent (bytea, internal, int4),
+    FUNCTION    2   gmol_union (bytea, internal),
+    FUNCTION    3   gmol_compress (internal),
+    FUNCTION    4   gmol_decompress (internal),
+    FUNCTION    5   gmol_penalty (internal, internal, internal),
+    FUNCTION    6   gmol_picksplit (internal, internal),
+    FUNCTION    7   gmol_same (bytea, bytea, internal),
+    @RDKIT_PG_MOL_GIST_SORTSUPPORT@
+STORAGE         bytea;
+
+DROP OPERATOR CLASS IF EXISTS gist_qmol_ops USING gist;
+
+CREATE OPERATOR CLASS gist_qmol_ops
+DEFAULT FOR TYPE qmol USING gist
+AS
+    OPERATOR    3   @> (mol, mol),
+    OPERATOR    4   <@ (mol, mol),
+    OPERATOR    3   @> (mol, qmol),
+    OPERATOR    4   <@ (qmol, mol),
+    OPERATOR    6   @= (mol, mol),
+    FUNCTION    1   gmol_consistent (bytea, internal, int4),
+    FUNCTION    2   gmol_union (bytea, internal),
+    FUNCTION    3   gmol_compress (internal),
+    FUNCTION    4   gmol_decompress (internal),
+    FUNCTION    5   gmol_penalty (internal, internal, internal),
+    FUNCTION    6   gmol_picksplit (internal, internal),
+    FUNCTION    7   gmol_same (bytea, bytea, internal),
+    @RDKIT_PG_QMOL_GIST_SORTSUPPORT@
+STORAGE         bytea;
+
+DROP OPERATOR CLASS IF EXISTS gist_bfp_ops USING gist;
+
+CREATE OPERATOR CLASS gist_bfp_ops
+DEFAULT FOR TYPE bfp USING gist
+AS
+    OPERATOR    1   % (bfp, bfp),
+    OPERATOR    2   # (bfp, bfp),
+    OPERATOR    3   <%> FOR ORDER BY pg_catalog.float_ops,
+    OPERATOR    4   <#> FOR ORDER BY pg_catalog.float_ops,
+    FUNCTION    1   gbfp_consistent (internal, bytea, smallint, oid, internal),
+    FUNCTION    2   gbfp_union (internal, internal),
+    FUNCTION    3   gbfp_compress (internal),
+    FUNCTION    4   gbfp_decompress (internal),
+    FUNCTION    5   gbfp_penalty (internal, internal, internal),
+    FUNCTION    6   gbfp_picksplit (internal, internal),
+    FUNCTION    7   gbfp_same (internal, internal, internal),
+    FUNCTION    8   (bfp, bfp) gbfp_distance(internal, bytea, smallint, oid),
+    @RDKIT_PG_BFP_GIST_FETCH@
+    @RDKIT_PG_BFP_GIST_SORTSUPPORT@
+STORAGE         bytea;
+
+CREATE TYPE xqmol;
+
+CREATE OR REPLACE FUNCTION xqmol_in(cstring)
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_out(xqmol)
+RETURNS cstring
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_recv(internal)
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION xqmol_send(xqmol)
+RETURNS bytea
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE TYPE xqmol (
+        INTERNALLENGTH = VARIABLE,
+        INPUT = xqmol_in,
+        OUTPUT = xqmol_out,
+        RECEIVE = xqmol_recv,
+        SEND = xqmol_send,
+        STORAGE = extended
+);
+
+CREATE OR REPLACE FUNCTION mol_to_xqmol(mol, bool default true, 
+                                        bool default true, bool default false,
+                                        cstring default '' )
+RETURNS xqmol
+PARALLEL SAFE
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct(mol, xqmol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_substruct'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @> (
+	LEFTARG = mol,
+	RIGHTARG = xqmol,
+	PROCEDURE = substruct(mol, xqmol),
+	COMMUTATOR = '<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+CREATE OR REPLACE FUNCTION rsubstruct(xqmol, mol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_rsubstruct'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR <@ (
+	LEFTARG = xqmol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct(xqmol, mol),
+	COMMUTATOR = '@>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION substruct_query(mol, xqmol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_substruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @>> (
+	LEFTARG = mol,
+	RIGHTARG = xqmol,
+	PROCEDURE = substruct_query(mol, xqmol),
+	COMMUTATOR = '<<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION rsubstruct_query(xqmol, mol)
+RETURNS bool
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_xq_rsubstruct_query'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR <<@ (
+	LEFTARG = xqmol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct_query(xqmol, mol),
+	COMMUTATOR = '@>>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);

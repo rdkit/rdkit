@@ -8,7 +8,8 @@
 //
 
 #include <RDGeneral/test.h>
-#include "catch.hpp"
+#include <boost/format.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -21,7 +22,7 @@ using namespace RDKit;
 
 TEST_CASE("PositionVariation", "[MolEnumerator]") {
   auto mol1 = R"CTAB(
-  Mrv2007 06232015292D          
+  Mrv2007 06232015292D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -52,7 +53,7 @@ M  END)CTAB"_ctab;
   REQUIRE(mol1);
 
   auto mol2 = R"CTAB(
-  Mrv2007 06242006032D          
+  Mrv2007 06242006032D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -163,7 +164,7 @@ M  END
 
 TEST_CASE("LINKNODE", "[MolEnumerator]") {
   auto mol1 = R"CTAB(one linknode
-  Mrv2007 06222005102D          
+  Mrv2007 06222005102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -208,7 +209,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("LinkNode unit tests 2") {
     auto mol2 = R"CTAB(two linknodes
-  Mrv2014 07072016412D          
+  Mrv2014 07072016412D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -261,7 +262,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("LinkNode unit tests 3") {
     auto mol = R"CTAB(neighboring linknodes
-  Mrv2014 07082008052D          
+  Mrv2014 07082008052D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -319,7 +320,7 @@ M  END
   }
   SECTION("LinkNode unit tests: isotopes") {
     auto mol = R"CTAB(isotopes and linknodes
-  Mrv2014 07082008362D          
+  Mrv2014 07082008362D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -355,7 +356,7 @@ M  END
   }
   SECTION("LinkNode unit tests: no linknodes") {
     auto mol = R"CTAB(no linknodes
-  Mrv2007 06222005102D          
+  Mrv2007 06222005102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -401,7 +402,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("enumeration basics 2") {
     auto mol = R"CTAB(no linknodes
-  Mrv2007 06222005102D          
+  Mrv2007 06222005102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -435,7 +436,7 @@ M  END)CTAB"_ctab;
 
 TEST_CASE("multiple enumeration points", "[MolEnumerator]") {
   auto mol1 = R"CTAB(
-  Mrv2014 12212013392D          
+  Mrv2014 12212013392D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -530,7 +531,7 @@ M  END
 
 TEST_CASE("multiple enumeration points 2", "[MolEnumerator][bug]") {
   auto mol1 = R"CTAB(
-  Mrv2014 02182116082D          
+  Mrv2014 02182116082D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -595,7 +596,7 @@ TEST_CASE(
     "[MolEnumerator][bug]") {
   SECTION("test1") {
     auto mol1 = R"CTAB(
-  Mrv2108 08032115452D          
+  Mrv2108 08032115452D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -633,7 +634,7 @@ M  END
   SECTION("test1 reversed") {
     // never actually observed one of these, but it should still work
     auto mol1 = R"CTAB(
-  Mrv2108 08032115452D          
+  Mrv2108 08032115452D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -671,7 +672,7 @@ M  END
 
   SECTION("test3: both are dummy atoms") {
     auto mol1 = R"CTAB(
-  Mrv2108 08032115452D          
+  Mrv2108 08032115452D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -712,7 +713,7 @@ TEST_CASE("github #4381: need implicit H cleanup after Enumerate",
           "[MolEnumerator][bug]") {
   SECTION("test1") {
     auto mol1 = R"CTAB(
-  Mrv2108 08032115452D          
+  Mrv2108 08032115452D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -758,20 +759,20 @@ TEST_CASE("RepeatUnit", "[MolEnumerator]") {
 M  V30 BEGIN CTAB
 M  V30 COUNTS 4 3 1 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C 9.7578 -7.0211 0 0 
-M  V30 2 O 10.7757 -7.6201 0 0 
-M  V30 3 * 11.8037 -7.0378 0 0 
-M  V30 4 * 8.7298 -7.6034 0 0 
+M  V30 1 C 9.7578 -7.0211 0 0
+M  V30 2 O 10.7757 -7.6201 0 0
+M  V30 3 * 11.8037 -7.0378 0 0
+M  V30 4 * 8.7298 -7.6034 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
-M  V30 1 1 1 2 
-M  V30 2 1 2 3 
-M  V30 3 1 1 4 
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 1 4
 M  V30 END BOND
 M  V30 BEGIN SGROUP
 M  V30 1 SRU 1 ATOMS=(2 2 1) XBONDS=(2 3 2) BRKXYZ=(9 9.24 -7.9 0 9.24 -6.72 -
 M  V30 0 0 0 0) BRKXYZ=(9 11.29 -6.74 0 11.29 -7.92 0 0 0 0) CONNECT=HT -
-M  V30 LABEL=n 
+M  V30 LABEL=n
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END)CTAB"_ctab;
@@ -780,7 +781,7 @@ M  END)CTAB"_ctab;
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 1);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
 
     {
       std::vector<size_t> elems{0};
@@ -806,20 +807,20 @@ M  END)CTAB"_ctab;
 M  V30 BEGIN CTAB
 M  V30 COUNTS 4 3 1 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C 9.7578 -7.0211 0 0 
-M  V30 2 O 10.7757 -7.6201 0 0 
-M  V30 3 * 11.8037 -7.0378 0 0 
-M  V30 4 * 8.7298 -7.6034 0 0 
+M  V30 1 C 9.7578 -7.0211 0 0
+M  V30 2 O 10.7757 -7.6201 0 0
+M  V30 3 * 11.8037 -7.0378 0 0
+M  V30 4 * 8.7298 -7.6034 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
-M  V30 1 1 1 2 
-M  V30 2 1 2 3 
-M  V30 3 1 1 4 
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 1 4
 M  V30 END BOND
 M  V30 BEGIN SGROUP
 M  V30 1 SRU 1 ATOMS=(2 2 1) XBONDS=(2 3 2) BRKXYZ=(9 9.24 -7.9 0 9.24 -6.72 -
 M  V30 0 0 0 0) BRKXYZ=(9 11.29 -6.74 0 11.29 -7.92 0 0 0 0) CONNECT=HH -
-M  V30 LABEL=n 
+M  V30 LABEL=n
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END)CTAB"_ctab;
@@ -828,7 +829,7 @@ M  END)CTAB"_ctab;
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 1);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
 
     {
       std::vector<size_t> elems{3};
@@ -844,20 +845,20 @@ M  END)CTAB"_ctab;
 M  V30 BEGIN CTAB
 M  V30 COUNTS 4 3 1 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C 9.7578 -7.0211 0 0 
-M  V30 2 O 10.7757 -7.6201 0 0 
-M  V30 3 * 11.8037 -7.0378 0 0 
-M  V30 4 * 8.7298 -7.6034 0 0 
+M  V30 1 C 9.7578 -7.0211 0 0
+M  V30 2 O 10.7757 -7.6201 0 0
+M  V30 3 * 11.8037 -7.0378 0 0
+M  V30 4 * 8.7298 -7.6034 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
-M  V30 1 1 1 2 
-M  V30 2 1 2 3 
-M  V30 3 1 1 4 
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 1 4
 M  V30 END BOND
 M  V30 BEGIN SGROUP
 M  V30 1 SRU 1 ATOMS=(2 2 1) XBONDS=(2 3 2) BRKXYZ=(9 9.24 -7.9 0 9.24 -6.72 -
 M  V30 0 0 0 0) BRKXYZ=(9 11.29 -6.74 0 11.29 -7.92 0 0 0 0) CONNECT=EU -
-M  V30 LABEL=n 
+M  V30 LABEL=n
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END)CTAB"_ctab;
@@ -870,7 +871,7 @@ M  END)CTAB"_ctab;
 
   SECTION("non-overlapping multi-HT enumeration") {
     auto mol1 = R"CTAB(
-  Mrv2108 09232105582D          
+  Mrv2108 09232105582D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -908,8 +909,8 @@ M  END
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 2);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
-    CHECK(vcnts[1] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
+    CHECK(vcnts[1] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
 
     {
       std::vector<size_t> elems{0, 0};
@@ -952,7 +953,7 @@ M  END
     // same as the previous example, but the head/tail definition of the second
     // SRU is swapped. This shouldn't change the results
     auto mol1 = R"CTAB(
-  Mrv2108 09232105582D          
+  Mrv2108 09232105582D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -990,8 +991,8 @@ M  END
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 2);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
-    CHECK(vcnts[1] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
+    CHECK(vcnts[1] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
 
     {
       std::vector<size_t> elems{0, 0};
@@ -1038,29 +1039,29 @@ M  END
 M  V30 BEGIN CTAB
 M  V30 COUNTS 7 6 2 0 0
 M  V30 BEGIN ATOM
-M  V30 1 * 9.2115 -7.4169 0 0 
-M  V30 2 C 10.2483 -6.8511 0 0 CFG=3 
-M  V30 3 C 10.2767 -5.67 0 0 
-M  V30 4 O 11.257 -7.4662 0 0 
-M  V30 5 * 12.2941 -6.9003 0 0 
-M  V30 6 N 9.268 -5.0548 0 0 CFG=3 
-M  V30 7 * 9.2964 -3.8737 0 0 
+M  V30 1 * 9.2115 -7.4169 0 0
+M  V30 2 C 10.2483 -6.8511 0 0 CFG=3
+M  V30 3 C 10.2767 -5.67 0 0
+M  V30 4 O 11.257 -7.4662 0 0
+M  V30 5 * 12.2941 -6.9003 0 0
+M  V30 6 N 9.268 -5.0548 0 0 CFG=3
+M  V30 7 * 9.2964 -3.8737 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
-M  V30 1 1 1 2 
-M  V30 2 1 2 3 
-M  V30 3 1 2 4 
-M  V30 4 1 4 5 
-M  V30 5 1 3 6 
-M  V30 6 1 6 7 
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 4 5
+M  V30 5 1 3 6
+M  V30 6 1 6 7
 M  V30 END BOND
 M  V30 BEGIN SGROUP
 M  V30 1 SRU 1 ATOMS=(5 3 2 4 6 7) XBONDS=(2 1 4) BRKXYZ=(9 9.72 -7.72 0 9.74 -
 M  V30 -6.54 0 0 0 0) BRKXYZ=(9 11.79 -6.59 0 11.76 -7.77 0 0 0 0) -
-M  V30 CONNECT=HT LABEL=n 
+M  V30 CONNECT=HT LABEL=n
 M  V30 2 SRU 2 ATOMS=(2 3 6) XBONDS=(2 6 2) BRKXYZ=(9 8.78 -4.78 0 9.78 -4.15 -
 M  V30 0 0 0 0) BRKXYZ=(9 10.76 -5.95 0 9.76 -6.57 0 0 0 0) CONNECT=HT -
-M  V30 LABEL=n 
+M  V30 LABEL=n
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END)CTAB"_ctab;
@@ -1071,7 +1072,7 @@ M  END)CTAB"_ctab;
 
   SECTION("single atom SRU enumeration") {
     auto mol1 = R"CTAB(
-  Mrv2108 09232115452D          
+  Mrv2108 09232115452D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1098,7 +1099,7 @@ M  END
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 1);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
 
     {
       std::vector<size_t> elems{0};
@@ -1121,7 +1122,7 @@ M  END
 TEST_CASE("SRUs directly bound to each other") {
   SECTION("basics") {
     auto mol1 = R"CTAB(
-  Mrv2108 09242104182D          
+  Mrv2108 09242104182D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1157,8 +1158,8 @@ M  END
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 2);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
-    CHECK(vcnts[1] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
+    CHECK(vcnts[1] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
 
     {
       std::vector<size_t> elems{0, 0};
@@ -1200,20 +1201,20 @@ TEST_CASE("RepeatUnit with enumerate()", "[MolEnumerator]") {
 M  V30 BEGIN CTAB
 M  V30 COUNTS 4 3 1 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C 9.7578 -7.0211 0 0 
-M  V30 2 O 10.7757 -7.6201 0 0 
-M  V30 3 * 11.8037 -7.0378 0 0 
-M  V30 4 * 8.7298 -7.6034 0 0 
+M  V30 1 C 9.7578 -7.0211 0 0
+M  V30 2 O 10.7757 -7.6201 0 0
+M  V30 3 * 11.8037 -7.0378 0 0
+M  V30 4 * 8.7298 -7.6034 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
-M  V30 1 1 1 2 
-M  V30 2 1 2 3 
-M  V30 3 1 1 4 
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 1 4
 M  V30 END BOND
 M  V30 BEGIN SGROUP
 M  V30 1 SRU 1 ATOMS=(2 2 1) XBONDS=(2 3 2) BRKXYZ=(9 9.24 -7.9 0 9.24 -6.72 -
 M  V30 0 0 0 0) BRKXYZ=(9 11.29 -6.74 0 11.29 -7.92 0 0 0 0) CONNECT=HT -
-M  V30 LABEL=n 
+M  V30 LABEL=n
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END)CTAB"_ctab;
@@ -1222,7 +1223,7 @@ M  END)CTAB"_ctab;
 
     std::vector<std::string> expected = {"**", "*CO*", "*COCO*", "*COCOCO*"};
     auto bundle = MolEnumerator::enumerate(*mol1);
-    CHECK(bundle.size() == op.d_defaultRepeatCount);
+    CHECK(bundle.size() == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
     for (const auto &molp : bundle.getMols()) {
       auto smiles = MolToSmiles(*molp);
       CHECK(std::find(expected.begin(), expected.end(), smiles) !=
@@ -1234,7 +1235,7 @@ M  END)CTAB"_ctab;
 TEST_CASE("RepeatUnit+LINKNODE", "[MolEnumerator]") {
   SECTION("basics") {
     auto mol1 = R"CTAB(
-  Mrv2108 09252115192D          
+  Mrv2108 09252115192D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1274,7 +1275,7 @@ M  END
 TEST_CASE("ladder") {
   SECTION("basics, no XBCORR") {
     auto mol1 = R"CTAB(
-  Mrv2108 09262105082D          
+  Mrv2108 09262105082D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1313,7 +1314,7 @@ M  END
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 1);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
     {
       std::vector<size_t> elems{0};
       std::unique_ptr<ROMol> newmol(op(elems));
@@ -1342,7 +1343,7 @@ M  END
 
   SECTION("basics, with XBCORR") {
     auto mol1 = R"CTAB(
-  Mrv2108 09262105082D          
+  Mrv2108 09262105082D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1381,7 +1382,7 @@ M  END
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 1);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
     {
       std::vector<size_t> elems{0};
       std::unique_ptr<ROMol> newmol(op(elems));
@@ -1409,7 +1410,7 @@ M  END
   }
   SECTION("using enumerate with XBCORR") {
     auto mol1 = R"CTAB(
-  Mrv2108 09262105082D          
+  Mrv2108 09262105082D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1449,7 +1450,7 @@ M  END
                                          "*CC1CC(*)N(*)CN1C*",
                                          "*CC1CC2CC(*)N(*)CN2CN1C*"};
     auto bundle = MolEnumerator::enumerate(*mol1);
-    CHECK(bundle.size() == op.d_defaultRepeatCount);
+    CHECK(bundle.size() == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
     for (const auto &molp : bundle.getMols()) {
       auto smiles = MolToSmiles(*molp);
       CHECK(std::find(expected.begin(), expected.end(), smiles) !=
@@ -1466,7 +1467,7 @@ TEST_CASE("starting from CXSMILES") {
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 1);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
 
     {
       std::vector<size_t> elems{0};
@@ -1491,7 +1492,7 @@ TEST_CASE("starting from CXSMILES") {
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 1);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
 
     {
       std::vector<size_t> elems{3};
@@ -1508,8 +1509,8 @@ TEST_CASE("starting from CXSMILES") {
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 2);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
-    CHECK(vcnts[1] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
+    CHECK(vcnts[1] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
 
     {
       std::vector<size_t> elems{0, 0};
@@ -1556,7 +1557,7 @@ TEST_CASE("starting from CXSMILES") {
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 1);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
     {
       std::vector<size_t> elems{0};
       std::unique_ptr<ROMol> newmol(op(elems));
@@ -1592,7 +1593,7 @@ TEST_CASE("starting from CXSMILES") {
     op.initFromMol(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 1);
-    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[0] == MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT);
     {
       std::vector<size_t> elems{0};
       std::unique_ptr<ROMol> newmol(op(elems));
@@ -1633,4 +1634,103 @@ TEST_CASE(
     CHECK(MolToSmarts(*q0) == "O-[C&X4]-[C&H3]");
     CHECK(MolToSmarts(*bundle[1]) == "O-[C&X4]-[C&X4]-[C&H3]");
   }
+}
+
+TEST_CASE(
+    "Github #6432: MolEnumerate should clear the reaction properties on its results") {
+  SECTION("basics") {
+    auto m = "COC |LN:1:1.3|"_smarts;
+    REQUIRE(m);
+    auto bundle = MolEnumerator::enumerate(*m);
+    CHECK(bundle.size() == 3);
+    auto q0 = bundle[0];
+    REQUIRE(q0);
+    for (const auto atom : q0->atoms()) {
+      CHECK(!atom->hasProp(common_properties::reactantAtomIdx));
+      CHECK(!atom->hasProp(common_properties::reactionMapNum));
+      CHECK(!atom->hasProp("was_dummy"));
+    }
+  }
+}
+
+TEST_CASE("MolEnumerator should propagate atom properties") {
+  auto mol = "COC1=NNC(*)=C1 |LN:1:1.3|"_smiles;
+  REQUIRE(mol);
+  mol->getAtomWithIdx(6)->setProp("_foo", 6);
+  auto bundle = MolEnumerator::enumerate(*mol);
+  CHECK(bundle.size() == 3);
+  CHECK(bundle[0]->getAtomWithIdx(7)->hasProp("_foo"));
+  CHECK(bundle[1]->getAtomWithIdx(8)->hasProp("_foo"));
+  CHECK(bundle[2]->getAtomWithIdx(9)->hasProp("_foo"));
+}
+
+TEST_CASE("SRU enumeration should adhere to repeat counts #6429") {
+  // these encode the same molecule
+  std::string smiles_template{"FCN(CC)-* |Sg:n:2,5:%s:ht|"};
+  std::string molblock_template{R"CTAB(
+       RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 F 2.598076 3.000000 0.000000 0
+M  V30 2 C 1.299038 2.250000 0.000000 0
+M  V30 3 N 1.299038 0.750000 0.000000 0
+M  V30 4 C 2.598076 -0.000000 0.000000 0
+M  V30 5 C 3.897114 0.750000 0.000000 0
+M  V30 6 A 0.000000 0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 3 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(2 3 6) XBONDS=(2 2 3) XBHEAD=(2 2 3) CONNECT=HT -
+M  V30 LABEL=%s
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"};
+
+  // test that the right number of repetitions produced
+  std::vector<std::pair<std::string, size_t>> test_info{
+      {"", MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT},
+      {"n", MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT},
+      {"hello", MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT},
+      {"23-20", MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT},
+      {"-20", MolEnumerator::RepeatUnitOp::DEFAULT_REPEAT_COUNT},
+      {"2-4", 3},
+      {"20", 21},
+      {"20-20", 1},
+  };
+
+  for (auto &[sru_label, expected_repetitions] : test_info) {
+    std::vector test_mols{
+        SmilesToMol(boost::str(boost::format(smiles_template) % sru_label)),
+        MolBlockToMol(
+            boost::str(boost::format(molblock_template) % sru_label))};
+
+    REQUIRE(test_mols[0]);
+    REQUIRE(test_mols[1]);
+
+    for (auto &mol : test_mols) {
+      auto bundle = MolEnumerator::enumerate(*mol);
+      CHECK(bundle.size() == expected_repetitions);
+
+      // check that maxPerOperation is still valid
+      size_t maxPerOperation = 1;
+      bundle = MolEnumerator::enumerate(*mol, maxPerOperation);
+      CHECK(bundle.size() == maxPerOperation);
+    }
+  }
+
+  // check that the right smiles are produced
+  auto mol = "FCN(CC)-* |Sg:n:2,5:2-3:ht|"_smiles;
+  REQUIRE(mol);
+  auto bundle = MolEnumerator::enumerate(*mol);
+  CHECK(MolToSmiles(*bundle[0]) == "*N(CC)N(*)CF");      // repeated 2x
+  CHECK(MolToSmiles(*bundle[1]) == "*N(CC)N(*)N(*)CF");  // repeated 3x
 }

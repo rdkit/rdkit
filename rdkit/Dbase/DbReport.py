@@ -9,7 +9,6 @@
 #  of the RDKit source tree.
 #
 
-
 try:
   from reportlab import platypus
 except ImportError:
@@ -25,17 +24,19 @@ else:
     hasCDX = 0
   else:
     hasCDX = 1
-  from rdkit.utils import cactvs
-  from rdkit.Chem import rdDepictor
-  from rdkit.Chem.Draw import DrawUtils
-  from rdkit.Dbase.DbConnection import DbConnect
-  from rdkit.Dbase import DbInfo
-  from rdkit.Reports.PDFReport import PDFReport, ReportUtils
-  from rdkit.sping.ReportLab.pidReportLab import RLCanvas as Canvas
-  from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
+  import sys
+
   from reportlab.lib import colors
   from reportlab.lib.units import inch
-  import sys
+
+  from rdkit.Chem import rdDepictor
+  from rdkit.Chem.Draw import DrawUtils
+  from rdkit.Chem.Draw.MolDrawing import DrawingOptions, MolDrawing
+  from rdkit.Dbase import DbInfo
+  from rdkit.Dbase.DbConnection import DbConnect
+  from rdkit.Reports.PDFReport import PDFReport, ReportUtils
+  from rdkit.sping.ReportLab.pidReportLab import RLCanvas as Canvas
+  from rdkit.utils import cactvs
 
   def GetReportlabTable(self, *args, **kwargs):
     """ this becomes a method of DbConnect  """
@@ -224,8 +225,10 @@ else:
     kwargs['transform'] = tform
     tbl = conn.GetReportlabTable(*args, **kwargs)
     tbl.setStyle(
-      platypus.TableStyle([('GRID', (0, 0), (-1, -1), 1, colors.black),
-                           ('FONT', (0, 0), (-1, -1), 'Times-Roman', 8), ]))
+      platypus.TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONT', (0, 0), (-1, -1), 'Times-Roman', 8),
+      ]))
 
     if smiCol > -1 and tform:
       tbl._argW[smiCol] = tform.width * 1.2

@@ -1,7 +1,8 @@
-from rdkit import RDConfig
-import os, sys
+import os
+import sys
 import unittest
-from rdkit import Chem
+
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdMolHash
 
 
@@ -35,12 +36,23 @@ class TestCase(unittest.TestCase):
     self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.ArthorSubstructureOrder),
                      '000f001001000c000300005f000000')
 
+  def testTautomerV2(self):
+    m = Chem.MolFromSmiles('CCC=O')
+    self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomTautomer), "CC[CH][O]_0_0")
+    self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomTautomerv2),
+                     "[CH3]-[C]:[C]:[O]_3_0")
+    m = Chem.MolFromSmiles('CC=CO')
+    self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomTautomer),
+                     "C[CH][CH][O]_1_0")
+    self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomTautomerv2),
+                     "[CH3]-[C]:[C]:[O]_3_0")
+
   def testCxSmiles(self):
     m = Chem.MolFromSmiles(
       'C[C@@H](O)[C@@H](C)[C@@H](C)C[C@H](C1=CN=CN1)C1=CNC=N1 |o1:8,5,&1:1,3,r,c:11,18,t:9,15|')
 
     self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomTautomer),
-                     'C[C@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@@H](C)[C@H](C)[O]_3_0')
+                     'C[C@H]([C@@H](C)[O])[C@@H](C)CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1_3_0')
 
     self.assertEqual(
       rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomTautomer, True),

@@ -57,16 +57,17 @@ __pycache__/
 
 /External/**/*.tar.gz
 /External/**/*.zip
-/External/catch/catch/
+/External/AvalonTools/SourceDistribution
 /External/CoordGen/coordgen/
 /External/CoordGen/maeparser/
 /External/Eigen/eigen/
-/External/FreeSASA/freesasa-2.0.1/
+/External/FreeSASA/freesasa*/
 /External/INCHI-API/INCHI-1-SRC/
 /External/INCHI-API/src/
-/External/rapidjson-1.1.0/
 /External/RingFamilies/RingDecomposerLib/
-/External/AvalonTools/SourceDistribution
+/External/YAeHMOP/yaehmop/
+/External/catch/catch/
+/External/rapidjson*/
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
@@ -88,18 +89,33 @@ __pycache__/
 
 
 /Code/GraphMol/FileParsers/test_data/blah.sdf
+/Code/GraphMol/FileParsers/test_data/blah_molsupplier.sdf
 /Code/GraphMol/FileParsers/test_data/cdk2_stereo.sdf
+/Code/GraphMol/FileParsers/test_data/cdk2_stereo_molsupplier.sdf
 /Code/GraphMol/FileParsers/test_data/outNCI_few.sdf
 /Code/GraphMol/FileParsers/test_data/outNCI_few.tdt
+/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf_molwriter.sdf
+/Code/GraphMol/FileParsers/test_data/outNCI_few_molsupplier.sdf
+/Code/GraphMol/FileParsers/test_data/outNCI_few_molwriter.sdf
+/Code/GraphMol/FileParsers/test_data/outNCI_few_molwriter.tdt
 /Code/GraphMol/FileParsers/test_data/outNCI_first_200.props.sdf
+/Code/GraphMol/FileParsers/test_data/outNCI_first_200.props_molwriter.sdf
 /Code/GraphMol/FileParsers/test_data/outSmiles.csv
+/Code/GraphMol/FileParsers/test_data/outSmiles_molsupplier.csv
+/Code/GraphMol/FileParsers/test_data/outSmiles_molwriter.csv
 /Code/GraphMol/FileParsers/test_data/testSGroupsSample_V?000.mol
+/Code/GraphMol/FileParsers/test_data/testSubstanceGroupsSample_V?000.mol
 
 /Code/GraphMol/ForceFieldHelpers/UFF/test_data/Issue62.sdf
 
 /Code/GraphMol/MolAlign/test_data/ref_e2_pyCrippenO3A.sdf
 
+/Code/GraphMol/MolDraw2D/Comic_Neue.zip
+
+/Code/GraphMol/MolTransforms/test_data/github4302_canon.sdf
+
 /Code/GraphMol/Wrap/test_data/bilastine_trajectory.sdf
+/Code/GraphMol/Wrap/test_data/outMaeWriter.mae
 /Code/GraphMol/Wrap/test_data/outNCI_few.sdf
 /Code/GraphMol/Wrap/test_data/outSmiles.txt
 
@@ -107,6 +123,10 @@ __pycache__/
 /Code/GraphMol/test_data/prop.pkl
 
 /Projects/DbCLI/testData/bzr/
+
+/rdkit/Chem/Draw/similarityMap1_out.svg
+/rdkit/Chem/Draw/similarityMap1_out2.svg
+/rdkit/Chem/Draw/similarityMap1_out3.svg
 
 /rdkit/sping/tests/testallps.ps
 

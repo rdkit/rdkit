@@ -6,7 +6,7 @@ from rdkit import Chem
 
 
 class PropertyMol(Chem.Mol):
-    """ allows rdkit molecules to be pickled with their properties saved.
+  """ allows rdkit molecules to be pickled with their properties saved.
 
      >>> import os
      >>> import pickle
@@ -90,42 +90,42 @@ class PropertyMol(Chem.Mol):
 
 
     """
-    __getstate_manages_dict__ = True
+  __getstate_manages_dict__ = True
 
-    def __init__(self, mol):
-        if not isinstance(mol, Chem.Mol):
-            return
-        Chem.Mol.__init__(self, mol)
-        for pn in mol.GetPropNames(includePrivate=True):
-            self.SetProp(pn, mol.GetProp(pn))
+  def __init__(self, mol):
+    if not isinstance(mol, Chem.Mol):
+      return
+    Chem.Mol.__init__(self, mol)
+    for pn in mol.GetPropNames(includePrivate=True):
+      self.SetProp(pn, mol.GetProp(pn))
 
-    def SetProp(self, nm, val):
-        Chem.Mol.SetProp(self, nm, str(val))
+  def SetProp(self, nm, val):
+    Chem.Mol.SetProp(self, nm, str(val))
 
-    def __getstate__(self):
-        pDict = {}
-        for pn in self.GetPropNames(includePrivate=True):
-            pDict[pn] = self.GetProp(pn)
-        return {'pkl': self.ToBinary(), 'propD': pDict}
+  def __getstate__(self):
+    pDict = {}
+    for pn in self.GetPropNames(includePrivate=True):
+      pDict[pn] = self.GetProp(pn)
+    return {'pkl': self.ToBinary(), 'propD': pDict}
 
-    def __setstate__(self, stateD):
-        Chem.Mol.__init__(self, stateD['pkl'])
-        for prop, val in stateD['propD'].items():
-            self.SetProp(prop, val)
+  def __setstate__(self, stateD):
+    Chem.Mol.__init__(self, stateD['pkl'])
+    for prop, val in stateD['propD'].items():
+      self.SetProp(prop, val)
 
-        # ------------------------------------
-        #
-        #  doctest boilerplate
-        #
+    # ------------------------------------
+    #
+    #  doctest boilerplate
+    #
 
 
 def _test():
-    import doctest
-    import sys
-    return doctest.testmod(sys.modules["__main__"], optionflags=doctest.ELLIPSIS)
+  import doctest
+  import sys
+  return doctest.testmod(sys.modules["__main__"], optionflags=doctest.ELLIPSIS)
 
 
 if __name__ == '__main__':
-    import sys
-    failed, tried = _test()
-    sys.exit(failed)
+  import sys
+  failed, tried = _test()
+  sys.exit(failed)

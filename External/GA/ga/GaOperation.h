@@ -84,7 +84,7 @@ void twoPointCrossoverOperation(const std::vector<std::shared_ptr<T>>& parents,
 
 template <typename T>
 void fullMixingOperation(const std::vector<std::shared_ptr<T>>& parents,
-                                std::vector<std::shared_ptr<T>>& children) {
+                         std::vector<std::shared_ptr<T>>& children) {
   auto parent1 = parents[0];
   auto child1 = children[0];
   auto parent2 = parents[1];
@@ -94,8 +94,9 @@ void fullMixingOperation(const std::vector<std::shared_ptr<T>>& parents,
 }
 
 template <typename T>
-void fullMixingAndCrossoverOperation(const std::vector<std::shared_ptr<T>>& parents,
-                                std::vector<std::shared_ptr<T>>& children) {
+void fullMixingAndCrossoverOperation(
+    const std::vector<std::shared_ptr<T>>& parents,
+    std::vector<std::shared_ptr<T>>& children) {
   auto parent1 = parents[0];
   auto child1 = children[0];
   auto parent2 = parents[1];

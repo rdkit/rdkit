@@ -40,12 +40,12 @@ function test_basics() {
     var bmol = null;
     try {
         bmol = RDKitModule.get_mol("c1ccccc");
-        assert.equal(bmol.is_valid(),0);
+        assert(bmol === null);
     } catch {
         assert(bmol === null);
     }
     var mol = RDKitModule.get_mol("c1ccccc1O");
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
     assert.equal(mol.get_smiles(),"Oc1ccccc1");
     assert.equal(mol.get_inchi(),"InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
     assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi()),"ISWSIDIOOBJBQZ-UHFFFAOYSA-N");
@@ -53,13 +53,13 @@ function test_basics() {
     var mb = mol.get_molblock();
     assert(mb.search("M  END")>0);
     var mol2 = RDKitModule.get_mol(mb);
-    assert.equal(mol2.is_valid(),1);
+    assert(mol2 !== null);
     assert.equal(mol2.get_smiles(),"Oc1ccccc1");
 
     var mjson = mol.get_json();
     assert(mjson.search("rdkitjson")>0);
     var mol3 = RDKitModule.get_mol(mjson);
-    assert.equal(mol3.is_valid(),1);
+    assert(mol3 !== null);
     assert.equal(mol3.get_smiles(),"Oc1ccccc1");
 
     var descrs = JSON.parse(mol.get_descriptors());
@@ -190,7 +190,7 @@ function test_basics() {
     assert(svg.search("svg")>0);
 
     var qmol = RDKitModule.get_qmol("Oc(c)c");
-    assert.equal(qmol.is_valid(),1);
+    assert(qmol !== null);
     var match = mol.get_substruct_match(qmol);
     var pmatch = JSON.parse(match);
     assert.equal(pmatch.atoms.length,4);
@@ -233,11 +233,11 @@ M  SBL   1  1   7
 M  SAP   1  1   8
 M  END`;
     var mol = RDKitModule.get_mol(molblock);
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
     var mb = mol.get_molblock();
     assert.equal(mb.includes("M  SAP   1  1   8   6"), true);
     var qmol = RDKitModule.get_qmol(molblock);
-    assert.equal(qmol.is_valid(),1);
+    assert(qmol !== null);
     var qmb = qmol.get_molblock();
     assert.equal(qmb.includes("M  SAP   1  1   8   6"), true);
 }
@@ -268,7 +268,7 @@ function test_molblock_rgp() {
 M  RGP  2   1   2   9   1
 M  END`;
     var mol = RDKitModule.get_mol(molblock);
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
 }
 
 function test_get_aromatic_kekule_form() {
@@ -284,24 +284,80 @@ function test_get_aromatic_kekule_form() {
     molblock = mol.get_aromatic_form();
     assert (molblock.match(aromRegExp).length === 6);
     assert (molblock.match(kekRegExp) === null);
+    mol.delete();
+    mol = RDKitModule.get_qmol(`
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.6473    0.8696    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6473   -0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  4  0  0  0  0
+  5  6  4  0  0  0  0
+  6  1  4  0  0  0  0
+M  END
+`);
+    molblock = mol.get_aromatic_form();
+    assert (molblock.match(aromRegExp).length === 6);
+    assert (molblock.match(kekRegExp) === null);
+    molblock = mol.get_kekule_form();
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
+    mol.delete();
+    mol = RDKitModule.get_qmol(`
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.6473    0.8696    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3617   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6473   -0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671   -0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671    0.4571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+M  END
+`);
+    molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
+    mol.convert_to_aromatic_form();
+    molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
+    assert (molblock.match(aromRegExp).length === 6);
+    assert (molblock.match(kekRegExp) === null);
+    mol.convert_to_kekule_form();
+    molblock = mol.get_molblock(JSON.stringify({ kekulize: false }));
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
+    mol.delete();
 }
 
 function test_sketcher_services() {
     var mol = RDKitModule.get_mol("C[C@](F)(Cl)/C=C/C(F)Br");
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
     var tags = mol.get_stereo_tags();
     assert.equal(tags,'{"CIP_atoms":[[1,"(S)"],[6,"(?)"]],"CIP_bonds":[[4,5,"(E)"]]}');
 }
 
 function test_sketcher_services2() {
     var mol = RDKitModule.get_mol("c1ccccc1");
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
     var molb = mol.add_hs();
     assert(molb.search(" H ")>0);
     assert.equal((molb.match(/ H /g) || []).length,6);
 
     var mol2 = RDKitModule.get_mol(molb);
-    assert.equal(mol2.is_valid(),1);
+    assert(mol2 !== null);
     var molb2 = mol2.get_molblock();
     assert(molb2.search(" H ")>0);
     assert.equal((molb2.match(/ H /g) || []).length,6);
@@ -312,7 +368,7 @@ function test_sketcher_services2() {
 
 function test_abbreviations() {
     var bmol = RDKitModule.get_mol("C1CC(C(F)(F)F)C1");
-    assert.equal(bmol.is_valid(),1);
+    assert(bmol !== null);
     var mapping = bmol.condense_abbreviations();
     assert.equal(mapping, JSON.stringify({
         atoms: [0, 1, 2, 3, 4, 5, 6, 7],
@@ -329,26 +385,101 @@ function test_abbreviations() {
 
 function test_substruct_library(done) {
     done.test_substruct_library = false;
-    var smiReader = readline.createInterface({
-        input: fs.createReadStream(__dirname + '/../../GraphMol/test_data/compounds.smi')
-    });
-    var sslib = new RDKitModule.SubstructLibrary();
-    // var t0 = performance.now()
-    // console.log('Started adding trusted SMILES');
-    smiReader.on('line', (smi) => {
-        sslib.add_trusted_smiles(smi);
-    });
-    smiReader.on('close', () => {
-        var query = RDKitModule.get_qmol("N");
-        // var t1 = performance.now();
-        // console.log('Finished adding trusted SMILES took ' + (t1 - t0) / 1000 + ' seconds');
-        assert.equal(sslib.count_matches(query), 52);
-        assert.equal(sslib.get_matches(query), JSON.stringify([
-            12,13,19,22,24,30,31,32,35,36,39,41,43,44,55,56,58,64,72,80,
-            85,95,96,101,105,113,124,127,128,131,143,150,151,185,201,202,
-            203,214,215,223,232,234,238,240,241,246,258,261,263,265,266,284
-        ]));
-        done.test_substruct_library = true;
+    var query = RDKitModule.get_qmol('C1CCCCN1');
+    var nonExistingQuery = RDKitModule.get_mol('O=C(O)C(c1ccc(cc1)CCN4CCC(c2nc3ccccc3n2CCOCC)CC4)(C)C');
+    const numBitOptions = [-1, 0];
+    var patternFpArray = [];
+    numBitOptions.forEach((numBits, optIdx) => {
+        var smiReader = readline.createInterface({
+            input: fs.createReadStream(__dirname + '/../../GraphMol/test_data/compounds.smi')
+        });
+        var sslib = numBits < 0 ? new RDKitModule.SubstructLibrary() : new RDKitModule.SubstructLibrary(numBits);
+        assert.equal(sslib.count_matches(query), 0);
+        assert.equal(sslib.get_matches(query), JSON.stringify([]));
+        assert.equal(sslib.get_matches_as_uint32array(query).length, 0);
+        // var t0 = performance.now()
+        // console.log('Started adding trusted SMILES');
+        var matches = [];
+        var expectedMatches = [39, 64, 80, 127, 128, 234, 240];
+        var i = 0;
+        var trustedSmiArray = []
+        smiReader.on('line', (smi) => {
+            sslib.add_trusted_smiles(smi);
+            var mol = RDKitModule.get_mol(smi);
+            var res = JSON.parse(mol.get_substruct_match(query));
+            if (res.atoms) {
+                matches.push(i);
+            }
+            ++i;
+            mol.delete();
+        });
+        smiReader.on('close', () => {
+            // var t1 = performance.now();
+            // console.log('Finished adding trusted SMILES took ' + (t1 - t0) / 1000 + ' seconds');
+            for (var i = 0; i < sslib.size(); ++i) {
+                trustedSmiArray.push(sslib.get_trusted_smiles(i));
+                let excRaised = false;
+                try {
+                    var fp = sslib.get_pattern_fp_as_uint8array(i);
+                    patternFpArray.push(fp);
+                } catch (e) {
+                    // this is expected to fail when numBits === 0
+                    excRaised = true;
+                }
+                assert((excRaised && numBits === 0) || (!excRaised && numBits !== 0));
+            }
+            assert.equal(trustedSmiArray.length, sslib.size());
+            assert.equal(patternFpArray.length, sslib.size());
+            assert.equal(trustedSmiArray.length, patternFpArray.length);
+            var sslib2 = new RDKitModule.SubstructLibrary();
+            for (var i = 0; i < sslib.size(); ++i) {
+                sslib2.add_trusted_smiles_and_pattern_fp(trustedSmiArray[i], patternFpArray[i]);
+            }
+            assert.equal(sslib.size(), sslib2.size());
+            {
+                assert.equal(sslib.count_matches(query, false), 7);
+                var sslibMatches = sslib.get_matches(query);
+                assert.equal(sslibMatches, JSON.stringify(expectedMatches));
+                assert.equal(sslibMatches, JSON.stringify(matches));
+                var sslibMatchesUInt32Array = sslib.get_matches_as_uint32array(query);
+                assert.equal(sslibMatchesUInt32Array.length, expectedMatches.length);
+                for (var i = 0; i < expectedMatches.length; ++i) {
+                    assert.equal(sslibMatchesUInt32Array[i], expectedMatches[i]);
+                }
+            }
+            {
+                assert.equal(sslib.count_matches(nonExistingQuery, false), 0);
+                var sslibMatches = sslib.get_matches(nonExistingQuery);
+                assert.equal(sslibMatches, JSON.stringify([]));
+                var sslibMatchesUInt32Array = sslib.get_matches_as_uint32array(nonExistingQuery);
+                assert.equal(sslibMatchesUInt32Array.length, 0);
+            }
+            {
+                assert.equal(sslib2.count_matches(query, false), 7);
+                var sslib2Matches = sslib2.get_matches(query);
+                assert.equal(sslib2Matches, JSON.stringify(expectedMatches));
+                assert.equal(sslib2Matches, JSON.stringify(matches));
+                var sslib2MatchesUInt32Array = sslib2.get_matches_as_uint32array(query);
+                assert.equal(sslib2MatchesUInt32Array.length, expectedMatches.length);
+                for (var i = 0; i < expectedMatches.length; ++i) {
+                    assert.equal(sslib2MatchesUInt32Array[i], expectedMatches[i]);
+                }
+            }
+            {
+                assert.equal(sslib2.count_matches(nonExistingQuery, false), 0);
+                var sslib2Matches = sslib2.get_matches(nonExistingQuery);
+                assert.equal(sslib2Matches, JSON.stringify([]));
+                var sslib2MatchesUInt32Array = sslib2.get_matches_as_uint32array(nonExistingQuery);
+                assert.equal(sslib2MatchesUInt32Array.length, 0);
+            }
+            sslib.delete();
+            sslib2.delete();
+            if (optIdx === numBitOptions.length - 1) {
+                done.test_substruct_library = true;
+                query.delete();
+                nonExistingQuery.delete();
+            }
+        });
     });
 }
 
@@ -422,7 +553,7 @@ function test_generate_aligned_coords() {
 
 function test_isotope_labels() {
     var mol = RDKitModule.get_mol("[1*]c1cc([2*])c([3*])c[14c]1");
-    assert.equal(mol.is_valid(), 1);
+    assert(mol !== null);
 
     var textIsoDummyIso = mol.get_svg_with_highlights(JSON.stringify({}));
     var nLinesIsoDummyIso = textIsoDummyIso.split("\n").length;
@@ -470,28 +601,70 @@ M  END`;
     var ortho_meta_smiles = 'c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1';
     var ortho_smiles = 'c1ccc(-c2ccccc2-c2ccccc2)cc1';
     var meta_smiles = 'c1ccc(-c2cccc(-c3ccccc3)c2)cc1';
+    var para_smiles = 'c1ccc(-c2ccc(-c3ccccc3)cc2)cc1';
     var biphenyl_smiles = 'c1ccccc1-c1ccccc1';
     var phenyl_smiles = 'c1ccccc1';
     var template_ref = RDKitModule.get_mol(template_molblock);
     var ortho_meta = RDKitModule.get_mol(ortho_meta_smiles);
     var ortho = RDKitModule.get_mol(ortho_smiles);
     var meta = RDKitModule.get_mol(meta_smiles);
+    var para = RDKitModule.get_mol(para_smiles);
     var biphenyl = RDKitModule.get_mol(biphenyl_smiles);
     var phenyl = RDKitModule.get_mol(phenyl_smiles);
     assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
         template_ref, JSON.stringify({ useCoordGen: false, allowRGroups: true}))).atoms.length, 9);
     [ true, false ].forEach(alignOnly => {
-        var opts = JSON.stringify({ useCoordGen: false, allowRGroups: true, alignOnly })
+        var opts = JSON.stringify({ useCoordGen: false, allowRGroups: true, alignOnly });
         assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
             template_ref, opts)).atoms.length, 9);
         assert.equal(JSON.parse(ortho.generate_aligned_coords(
             template_ref, opts)).atoms.length, 8);
         assert.equal(JSON.parse(meta.generate_aligned_coords(
             template_ref, opts)).atoms.length, 8);
+        assert.equal(JSON.parse(para.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 8);
         assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
             template_ref, opts)).atoms.length, 7);
         assert.equal(JSON.parse(phenyl.generate_aligned_coords(
             template_ref, opts)).atoms.length, 6);
+    });
+    const pyridineRef = RDKitModule.get_mol(`
+  MJ201100                      
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7144    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7144   -0.4124    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7144   -0.4124    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7144    0.4125    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  1  7  1  0  0  0  0
+  4  8  1  0  0  0  0
+M  END
+`);
+    const referenceSmarts = "[*:3]a1a([*:1])aa([*:2])aa1";
+    [ true, false ].forEach(alignOnly => {
+        var opts = JSON.stringify({ useCoordGen: false, allowRGroups: true, alignOnly, referenceSmarts });
+        assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
+            pyridineRef, opts)).atoms.length, 8);
+        assert.equal(JSON.parse(ortho.generate_aligned_coords(
+            pyridineRef, opts)).atoms.length, 7);
+        assert.equal(JSON.parse(meta.generate_aligned_coords(
+            pyridineRef, opts)).atoms.length, 7);
+        assert.equal(JSON.parse(para.generate_aligned_coords(
+            pyridineRef, opts)).atoms.length, 8);
+        assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
+            pyridineRef, opts)).atoms.length, 7);
+        assert.equal(JSON.parse(phenyl.generate_aligned_coords(
+            pyridineRef, opts)).atoms.length, 6);
     });
 }
 
@@ -690,13 +863,13 @@ function test_get_mol_no_kekulize() {
     var molIsValid = true;
     try {
         mol = RDKitModule.get_mol("c");
-        molIsValid = mol.is_valid();
+        molIsValid = (mol !== null);
     } catch (e) {
         molIsValid = false;
     }
     assert(!molIsValid);
     mol = RDKitModule.get_mol("c", JSON.stringify({kekulize: false}));
-    assert(mol.is_valid());
+    assert(mol !== null);
 }
 
 function test_get_smarts() {
@@ -723,7 +896,7 @@ function test_get_smarts() {
 M  RGP  2   7   1   8   2
 M  END
 `);
-    assert(mol.is_valid());
+    assert(mol !== null);
     smarts = mol.get_smarts();
     assert(smarts == "[#6]1:[#6]:[#6]:[#6]:[#6](:[#6]:1-&!@*)-&!@*");
 }
@@ -752,7 +925,7 @@ function test_get_cxsmarts() {
 M  RGP  2   7   1   8   2
 M  END
 `);
-    assert(mol.is_valid());
+    assert(mol !== null);
     cxsmarts = mol.get_cxsmarts();
     assert(cxsmarts == "[#6]1:[#6]:[#6]:[#6]:[#6](:[#6]:1-&!@*)-&!@* |" +
         "(-1.0491,1.5839,;-1.7635,1.1714,;-1.7635,0.3463,;-1.0491,-0.0661,;" +
@@ -791,44 +964,91 @@ M  END
 }
 
 function test_straighten_depiction() {
-    var mol1 = RDKitModule.get_mol(`
-  MJ201900
+    var benzeneHoriz = RDKitModule.get_mol(`
+  MJ201100                      
 
-  2  1  0  0  0  0  0  0  0  0999 V2000
-   -0.3904    2.1535    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.1049    1.7410    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  2  1  1  0  0  0  0
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.0785    1.6073    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9035    1.6073    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3160    0.8928    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9036    0.1783    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0786    0.1783    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3339    0.8929    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
 M  END
 `);
-    var mol2 = RDKitModule.get_mol(`
-  MJ201900
+    var benzeneVert = RDKitModule.get_mol(`
+  MJ201100                      
 
-  2  1  0  0  0  0  0  0  0  0999 V2000
-    0.1899    1.9526    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.5245    1.5401    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  2  1  1  0  0  0  0
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    0.2234    1.3054    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4910    1.7178    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2055    1.3053    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2056    0.4803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4911    0.0678    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2234    0.4804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
 M  END
 `);
-    mol1.normalize_depiction();
-    mol1Copy1 = RDKitModule.get_mol_copy(mol1)
-    mol1Copy2 = RDKitModule.get_mol_copy(mol1)
-    mol1.straighten_depiction();
-    mol2.normalize_depiction();
-    mol2.straighten_depiction();
-    assert(mol1.get_molblock() === mol2.get_molblock());
-    mol1Copy1.straighten_depiction(true);
-    assert(mol1Copy1.get_molblock() !== mol2.get_molblock());
-    assert(mol1Copy1.get_molblock() === mol1Copy2.get_molblock());
+    var benzeneHorizCopy = RDKitModule.get_mol_copy(benzeneHoriz);
+    var benzeneVertCopy = RDKitModule.get_mol_copy(benzeneVert);
+    benzeneHoriz.straighten_depiction();
+    benzeneVert.straighten_depiction();
+    assert(benzeneHoriz.get_molblock() !== benzeneHorizCopy.get_molblock());
+    assert(benzeneVert.get_molblock() === benzeneVertCopy.get_molblock());
+    benzeneHoriz = benzeneHorizCopy;
+    benzeneVert = benzeneVertCopy;
+    benzeneHorizCopy = RDKitModule.get_mol_copy(benzeneHoriz);
+    benzeneVertCopy = RDKitModule.get_mol_copy(benzeneVert);
+    benzeneHoriz.straighten_depiction(true);
+    benzeneVert.straighten_depiction(true);
+    assert(benzeneHoriz.get_molblock() === benzeneHorizCopy.get_molblock());
+    assert(benzeneVert.get_molblock() === benzeneVertCopy.get_molblock());
 }
 
 function test_has_coords() {
     var mol = RDKitModule.get_mol('CC');
     assert(!mol.has_coords());
     var mol2 = RDKitModule.get_mol(mol.get_new_coords());
-    assert(mol2.has_coords());
+    assert(mol2.has_coords() === 2);
     assert(!mol.has_coords());
     mol.set_new_coords();
-    assert(mol.has_coords());
+    assert(mol.has_coords() === 2);
+    var mol3 = RDKitModule.get_mol(`
+     RDKit          3D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+   -0.5909   -0.6086    0.0018 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2459    0.8185   -0.0936 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8271   -0.1760    0.1017 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1425   -0.9648    0.9113 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8767   -1.2011   -0.8967 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5849    1.4596    0.7584 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2393    1.3618   -1.0674 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4853   -0.4161   -0.7761 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3678   -0.2732    1.0608 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  1  1  0
+  1  4  1  0
+  1  5  1  0
+  2  6  1  0
+  2  7  1  0
+  3  8  1  0
+  3  9  1  0
+M  END
+`);
+    assert(mol3.has_coords() === 3);
 }
 
 function test_kekulize() {
@@ -836,12 +1056,12 @@ function test_kekulize() {
     var mol = null;
     try {
         mol = RDKitModule.get_mol(badAromaticSmiles);
-        assert(!mol.is_valid());
+        assert(mol === null);
     } catch {
         assert(mol === null);
     }
     mol = RDKitModule.get_mol(badAromaticSmiles, JSON.stringify({ kekulize: false }));
-    assert(mol.is_valid());
+    assert(mol !== null);
 }
 
 function test_sanitize() {
@@ -849,34 +1069,34 @@ function test_sanitize() {
     var mol = null;
     try {
         mol = RDKitModule.get_mol(badValenceSmiles);
-        assert(!mol.is_valid());
+        assert(mol === null);
     } catch {
         assert(mol === null);
     }
     try {
         mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ kekulize: false }));
-        assert(!mol.is_valid());
+        assert(mol === null);
     } catch {
         assert(mol === null);
     }
     mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ sanitize: false }));
-    assert(mol.is_valid());
+    assert(mol !== null);
 }
 
 function test_removehs() {
     const badValenceSmiles = 'N1C=CC(=O)c2ccc(N(C)(C)(C)(C)C)cc12';
     mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ sanitize: false, removeHs: false }));
-    assert(mol.is_valid());
+    assert(mol !== null);
 }
 
 function test_flexicanvas() {
     var mol = RDKitModule.get_mol("CCCC");
-    assert.equal(mol.is_valid(),1);
+    assert(mol !== null);
 
     var svg = mol.get_svg(-1,-1);
     assert(svg.search("svg")>0);
-    assert(svg.search("width='95px'")>0);
-    assert(svg.search("height='21px'")>0);
+    assert(svg.search("width='87px'")>0);
+    assert(svg.search("height='19px'")>0);
 }
 
 function test_rxn_drawing() {
@@ -982,12 +1202,12 @@ function test_legacy_stereochem() {
     try {
         origSetting = RDKitModule.use_legacy_stereo_perception(true);
         var mol = RDKitModule.get_mol("O[C@@]1(C)C/C(/C1)=C(/C)\\CC");
-        assert.equal(mol.is_valid(),1);
+        assert(mol !== null);
         assert.equal(mol.get_smiles(),"CCC(C)=C1CC(C)(O)C1");
 
         RDKitModule.use_legacy_stereo_perception(false);
         mol = RDKitModule.get_mol("O[C@@]1(C)C/C(/C1)=C(/C)\\CC");
-        assert.equal(mol.is_valid(),1);
+        assert(mol !== null);
         assert.equal(mol.get_smiles(),"CC/C(C)=C1\\C[C@](C)(O)C1");
     } finally {
         RDKitModule.use_legacy_stereo_perception(origSetting);
@@ -1014,11 +1234,11 @@ M  END
     try {
         origSetting = RDKitModule.allow_non_tetrahedral_chirality(true);
         var mol = RDKitModule.get_mol(ctab);
-        assert.equal(mol.is_valid(),1);
+        assert(mol !== null);
         assert.equal(mol.get_smiles(), "F[Pt@SP3](F)(Cl)Cl");
         RDKitModule.allow_non_tetrahedral_chirality(false);
         var mol = RDKitModule.get_mol(ctab);
-        assert.equal(mol.is_valid(),1);
+        assert(mol !== null);
         assert.equal(mol.get_smiles(), "F[Pt](F)(Cl)Cl");
     } finally {
         RDKitModule.allow_non_tetrahedral_chirality(origSetting);
@@ -1591,17 +1811,17 @@ function test_get_frags() {
             frags: [0,0,0,0,0,0,1,1,1,1,2,2,2,2,2],
             fragsMolAtomMapping: [[0,1,2,3,4,5],[6,7,8,9],[10,11,12,13,14]],
         };
-        var { molIterator, mappings } = mol.get_frags();
-        assert(molIterator.size() === 3);
+        var { molList, mappings } = mol.get_frags();
+        assert(molList.size() === 3);
         assert(JSON.stringify(JSON.parse(mappings)) === JSON.stringify(expectedMappings));
         var i = 0;
-        while (!molIterator.at_end()) {
-            var mol = molIterator.next();
+        while (!molList.at_end()) {
+            var mol = molList.next();
             assert(mol.get_smiles() === expectedFragSmiles[i++]);
             mol.delete();
         }
-        assert(!molIterator.next());
-        molIterator.delete();
+        assert(!molList.next());
+        molList.delete();
     }
     {
         var mol = RDKitModule.get_mol("N(C)(C)(C)C.c1ccc1", JSON.stringify({sanitize: false}));
@@ -1612,16 +1832,16 @@ function test_get_frags() {
             exceptionThrown = true;
         }
         assert(exceptionThrown);
-        var { molIterator, mappings } = mol.get_frags(JSON.stringify({sanitizeFrags: false}));
-        assert(molIterator.size() === 2);
+        var { molList, mappings } = mol.get_frags(JSON.stringify({sanitizeFrags: false}));
+        assert(molList.size() === 2);
         var i = 0;
-        while (!molIterator.at_end()) {
-            var mol = molIterator.next();
+        while (!molList.at_end()) {
+            var mol = molList.next();
             assert(mol.get_smiles() === expectedFragSmilesNonSanitized[i++]);
             mol.delete();
         }
-        assert(!molIterator.next());
-        molIterator.delete();
+        assert(!molList.next());
+        molList.delete();
     }
 }
 
@@ -1767,6 +1987,718 @@ M  END
     }
 }
 
+function test_query_colour() {
+    var mol;
+    try {
+        mol = RDKitModule.get_qmol('c1ccc2nc([*:1])nc([*:2])c2c1');
+        var svg1 = mol.get_svg_with_highlights(JSON.stringify({width: 350, height: 300}));
+        assert(svg1.includes("width='350px'"));
+        assert(svg1.includes("height='300px'"));
+        assert(svg1.includes("</svg>"));
+        assert(svg1.includes("#7F7F7F"));
+        var svg2 = mol.get_svg_with_highlights(JSON.stringify({width: 350, height: 300, queryColour: [0.0, 0.0, 0.0]}));
+        assert(svg2.includes("width='350px'"));
+        assert(svg2.includes("height='300px'"));
+        assert(svg2.includes("</svg>"));
+        assert(!svg2.includes("#7F7F7F"));
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+    }
+}
+
+function test_alignment_r_groups_aromatic_ring() {
+    var mol;
+    var scaffold;
+    try {
+        mol = RDKitModule.get_mol('c1ccc2nccnc2c1');
+        assert(mol !== null);
+        scaffold = RDKitModule.get_mol(`
+  MJ201100                      
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0263   -0.3133    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4553    0.5116    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7408   -0.7258    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7408   -1.5509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4553   -1.9633    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1698   -1.5509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1698   -0.7258    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4553   -0.3133    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  3  1  1  0  0  0  0
+  8  2  1  0  0  0  0
+  4  3  2  0  0  0  0
+  5  4  1  0  0  0  0
+  6  5  2  0  0  0  0
+  7  6  1  0  0  0  0
+  8  3  1  0  0  0  0
+  8  7  2  0  0  0  0
+M  RGP  2   1   2   2   1
+M  END`);
+        assert(scaffold !== null);
+        var res = mol.generate_aligned_coords(scaffold, JSON.stringify({useCoordGen: true, allowRGroups: true}));
+        assert(res);
+        assert.equal(JSON.parse(res).atoms.length, 8);
+        assert.equal(JSON.parse(res).bonds.length, 8);
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+    }
+    try {
+        mol = RDKitModule.get_mol(`
+  MJ201100                      
+
+ 10 11  0  0  0  0  0  0  0  0999 V2000
+    3.6937    2.5671    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8687    2.5671    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4561    1.8526    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8687    1.1382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6937    1.1381    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1062    1.8526    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9313    1.8527    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3438    2.5671    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9313    3.2816    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1062    3.2816    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  5  6  1  0  0  0  0
+  4  5  2  0  0  0  0
+  3  4  1  0  0  0  0
+  2  3  2  0  0  0  0
+  1  6  2  0  0  0  0
+  1  2  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  2  0  0  0  0
+ 10  1  1  0  0  0  0
+  7  8  2  0  0  0  0
+  6  7  1  0  0  0  0
+M  END`);
+        var res = mol.generate_aligned_coords(scaffold, JSON.stringify({allowRGroups: true, alignOnly: true}));
+        assert(res);
+        assert.equal(JSON.parse(res).atoms.length, 8);
+        assert.equal(JSON.parse(res).bonds.length, 8);
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+        if (scaffold) {
+            scaffold.delete();
+        }
+    }
+}
+
+function test_is_valid_deprecated() {
+    var mol = RDKitModule.get_mol('C');
+    assert(mol !== null);
+    assert(mol.is_valid());
+    var mol;
+    try {
+        mol = RDKitModule.get_mol('CN(C)(C)C');
+    } catch (e) {
+        // in case MinimalLib was built without exception support
+        mol = null;
+    }
+    assert(mol === null);
+    if (RDKitModule.get_rxn)  {
+        var rxn;
+        rxn = RDKitModule.get_rxn('C>>N');
+        assert(rxn !== null);
+        try {
+            rxn = RDKitModule.get_rxn('Z>>C');
+        } catch (e) {
+            // in case MinimalLib was built without exception support
+            rxn = null;
+        }
+        assert(rxn === null);
+    }
+}
+
+function molListFromSmiArray(smiArray) {
+    const molList = new RDKitModule.MolList();
+    assert(molList);
+    smiArray.forEach((smiName) => {
+        const [smi, name] = smiName.split(' ');
+        let mol;
+        try {
+            mol = RDKitModule.get_mol(smi);
+            assert(mol);
+            molList.append(mol);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+    });
+    return molList;
+}
+
+function test_mol_list() {
+    const smiArray = [ 'C1CC1', 'C1CCCC1' ];
+    let molList;
+    let mol;
+    try {
+        molList = molListFromSmiArray(smiArray);
+        assert(molList);
+        assert.equal(molList.size(), 2);
+        assert(!molList.at_end());
+        try {
+            mol = molList.next();
+            assert(mol);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        try {
+            mol = molList.next();
+            assert(mol);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        mol = molList.next();
+        assert(!mol);
+        assert(molList.at_end());
+        try {
+            mol = molList.at(0);
+            assert.equal(mol.get_num_atoms(), 3);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        try {
+            mol = molList.at(1);
+            assert.equal(mol.get_num_atoms(), 5);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        assert(molList.at_end());
+        try {
+            mol = RDKitModule.get_mol('C1CCC1');
+            assert(mol);
+            molList.insert(1, mol);
+            assert.equal(molList.size(), 3);
+            assert(!molList.at_end());
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        molList.reset();
+        assert(!molList.at_end());
+        try {
+            mol = molList.at(1);
+            assert.equal(mol.get_num_atoms(), 4);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        try {
+            mol = molList.pop(0);
+            assert.equal(mol.get_num_atoms(), 3);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        assert.equal(molList.size(), 2);
+        let i = 0;
+        while (!molList.at_end()) {
+            try {
+                mol = molList.next();
+            } finally {
+                if (mol) {
+                    ++i;
+                    mol.delete();
+                }
+            }
+        }
+        assert.equal(i, 2);
+        assert(molList.at_end());
+        try {
+            mol = molList.pop(0);
+            assert.equal(mol.get_num_atoms(), 4);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        assert.equal(molList.size(), 1);
+        assert(molList.at_end());
+        try {
+            mol = molList.pop(0);
+            assert.equal(mol.get_num_atoms(), 5);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        assert.equal(molList.size(), 0);
+        assert(molList.at_end());
+        assert(!molList.pop(0));
+        try {
+            mol = RDKitModule.get_mol('C1CCCCC1');
+            assert(mol);
+            molList.append(mol);
+            assert.equal(molList.size(), 1);
+            assert(!molList.at_end());
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+        assert(!molList.at(1));
+        try {
+            mol = molList.at(0);
+            assert(mol);
+            assert(mol.get_num_atoms(), 6);
+        } finally {
+            if (mol) {
+                mol.delete();
+            }
+        }
+    } finally {
+        if (molList) {
+            molList.delete();
+        }
+    }
+}
+
+function test_mcs() {
+    {
+        const smiArray = [
+            "COc1cc2nc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)ccc3)oc2cc1  CHEMBL1479679",
+            "COc1cc2nc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)c(C)cc3)oc2cc1  CHEMBL1333382",
+            "Cc1cc2oc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)ccc3)nc2cc1  CHEMBL1437584",
+            "COc1c(NC(=O)CSc2ccc(Cl)cc2)cc(-c2nc3ccccc3o2)cc1  CHEMBL1601350",
+            "Cc1cc2nc(-c3cccc(NC(=O)CSc4ccc(Cl)cc4)c3)oc2cc1C  CHEMBL1398008",
+            "Cc1cc2oc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)c(C)cc3)nc2cc1  CHEMBL1612903",
+            "COc1cc2nc(-c3cc(NC(=O)Cc4ccc(Cl)cc4)c(C)cc3)oc2cc1  CHEMBL1316483",
+            "Cc1c(NC(=O)CSc2ccc(Cl)cc2)cccc1-c1nc2cc(Cl)ccc2o1  CHEMBL1568754",
+            "COc1ccc2oc(-c3ccc(C)c(NC(=O)COc4cc(C)cc(C)c4)c3)nc2c1  CHEMBL1436972",
+            "Cc1ccc(SCC(=O)Nc2cc(-c3nc4cc(C)ccc4o3)c(O)cc2)cc1  CHEMBL1611932",
+        ];
+        let molList;
+        let mcsSmarts;
+        try {
+            molList = molListFromSmiArray(smiArray);
+            let mcsMol;
+            try {
+                mcsMol = RDKitModule.get_mcs_as_mol(molList);
+                assert(mcsMol);
+                assert.equal(mcsMol.get_smarts(), '[#6]1:[#6]:[#6]2:[#8]:[#6](:[#7]:[#6]:2:[#6]:[#6]:1)-[#6]1:[#6]:[#6](-[#7]-[#6](=[#8])-[#6]):[#6]:[#6]:[#6]:1');
+                mcsSmarts = RDKitModule.get_mcs_as_smarts(molList);
+            } finally {
+                if (mcsMol) {
+                    mcsMol.delete();
+                }
+            }
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcsSmarts);
+        assert.equal(mcsSmarts, '[#6]1:[#6]:[#6]2:[#8]:[#6](:[#7]:[#6]:2:[#6]:[#6]:1)-[#6]1:[#6]:[#6](-[#7]-[#6](=[#8])-[#6]):[#6]:[#6]:[#6]:1');
+    }
+    {
+        const smiArray = ["C1CC1N2CC2", "C1CC1N"];
+        let molList;
+        try {
+            molList = molListFromSmiArray(smiArray);
+            let mcsMol;
+            try {
+                mcsMol = RDKitModule.get_mcs_as_mol(molList);
+                assert(mcsMol);
+                assert.equal(mcsMol.get_num_atoms(), 4);
+                assert.equal(mcsMol.get_num_bonds(), 4);
+            } finally {
+                if (mcsMol) {
+                    mcsMol.delete();
+                }
+            }
+            try {
+                mcsMol = RDKitModule.get_mcs_as_mol(molList, JSON.stringify({ RingMatchesRingOnly: true }));
+                assert(mcsMol);
+                assert.equal(mcsMol.get_num_atoms(), 3);
+                assert.equal(mcsMol.get_num_bonds(), 3);
+            } finally {
+                if (mcsMol) {
+                    mcsMol.delete();
+                }
+            }
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+    }
+    {
+        const smiArray = ["NC1CCCCC1", "Cc1ccccc1", "Cc1cnccc1", "CC1CCCCN1"];
+        let molList;
+        const res = new Set();
+        try {
+            molList = molListFromSmiArray(smiArray);
+            ["Elements", "Any"].forEach((AtomCompare) => {
+                ["Order", "OrderExact"].forEach((BondCompare) => {
+                    const details = {
+                        AtomCompare,
+                        BondCompare
+                    };
+                    let mcsSmarts;
+                    mcsSmarts = RDKitModule.get_mcs_as_smarts(molList, JSON.stringify(details));
+                    assert(mcsSmarts);
+                    res.add(mcsSmarts);
+                });
+            });
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(res.size === 4);
+    }
+    {
+        const smiArray = [
+            "c1cccc(c12)ccc(c2)-c3n(CCC[NH3+])c(nn3)SCCc4c[nH]c(c45)cccc5",
+            "c1cccc(c12)sc(c2)-c3n(CCCC[NH3+])c(nn3)SCCc4c[nH]c(c45)cccc5",
+        ];
+        let molList;
+        let mcs;
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({
+                RingMatchesRingOnly: true,
+                CompleteRingsOnly: true,
+                BondCompare: 'Any',
+                AtomCompare: 'Any',
+                Timeout: 1,
+            }));
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(mcs.canceled);
+    }
+    {
+        const smiArray = [
+            "Nc1ccc(cc1)C-Cc1c(N)cccc1",
+            "Nc1ccc(cc1)C=Cc1c(N)cccc1",
+        ];
+        let molList;
+        let mcs;
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs_as_json(molList);
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(!mcs.canceled);
+        assert(!Array.isArray(mcs.smarts));
+        assert(mcs.numAtoms === 8);
+        assert(mcs.numBonds === 8);
+        assert(mcs.smarts === '[#7]-[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6]');
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({StoreAll: true}));
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(!mcs.canceled);
+        assert(Array.isArray(mcs.smarts));
+        assert(mcs.numAtoms === 8);
+        assert(mcs.numBonds === 8);
+        assert(mcs.smarts.length === 2);
+        assert(mcs.smarts.includes('[#6]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[#7]'));
+        assert(mcs.smarts.includes('[#7]-[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6]'));
+    }
+    {
+        const smiArray = [
+            "C1CC1",
+            "c1ccccc1",
+        ];
+        let molList;
+        let mcs;
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({ CompleteRingsOnly: true }));
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(!mcs.canceled);
+        assert(!mcs.numAtoms);
+        assert(!mcs.numBonds);
+        assert(!mcs.smarts);
+        try {
+            molList = molListFromSmiArray(smiArray);
+            mcs = RDKitModule.get_mcs_as_json(molList, JSON.stringify({ CompleteRingsOnly: true, StoreAll: true }));
+        } finally {
+            if (molList) {
+                molList.delete();
+            }
+        }
+        assert(mcs);
+        mcs = JSON.parse(mcs);
+        assert(!mcs.canceled);
+        assert(!mcs.numAtoms);
+        assert(!mcs.numBonds);
+        assert(!mcs.smarts.length);
+    }
+}
+
+function test_get_num_atoms_bonds() {
+    var mol = RDKitModule.get_mol('CCCC');
+    var molH = RDKitModule.get_mol_copy(mol);
+    molH.add_hs_in_place();
+    assert.equal(mol.get_num_atoms(), molH.get_num_atoms(true));
+    assert.equal(mol.get_num_atoms(), 4);
+    assert.equal(molH.get_num_atoms(), 14);
+    assert.equal(molH.get_num_atoms(false), 14);
+    assert.equal(mol.get_num_bonds(), 3);
+    assert.equal(molH.get_num_bonds(), 13);
+}
+
+function test_sanitize_no_kekulize_no_setaromaticity() {
+    var molblock1 = `
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END`;
+    var molblock2 = `
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
+M  END`;
+    var mol1 = RDKitModule.get_mol(molblock1, JSON.stringify({kekulize: false, setAromaticity: false}));
+    var mol2 = RDKitModule.get_mol(molblock2, JSON.stringify({kekulize: false, setAromaticity: false}));
+    assert.notEqual(mol1.get_molblock(), mol2.get_molblock());
+    mol1.delete();
+    mol2.delete();
+    mol1 = RDKitModule.get_mol(molblock1);
+    mol2 = RDKitModule.get_mol(molblock2);
+    assert.equal(mol1.get_molblock(), mol2.get_molblock());
+    mol1.delete();
+    mol2.delete();
+}
+
+function test_partial_sanitization() {
+    var mol1 = RDKitModule.get_mol('C1CCC2CCCC2C1', JSON.stringify({
+        sanitize: false, removeHs: false, assignStereo: false,
+    }));
+    var fp1 = mol1.get_morgan_fp(JSON.stringify({radius: 2, nBits: 32}));
+    assert.equal(fp1, '00001001010101000000100000110010');
+    mol1.delete();
+    var mol2 = RDKitModule.get_mol('C1CCC2CCCC2C1', JSON.stringify({
+        sanitize: false, removeHs: false, assignStereo: false, fastFindRings: false
+    }));
+    var exceptionThrown = false;
+    try {
+        mol2.get_morgan_fp(JSON.stringify({radius: 2, nBits: 32}));
+    } catch (e) {
+        exceptionThrown = true;
+    }
+    assert(exceptionThrown);
+    mol2.delete();
+}
+
+function test_capture_logs() {
+    ["set_log_tee", "set_log_capture"].forEach((func, i) => {
+        console.log(`${i + 1}. ${func}`);
+        var logHandle = RDKitModule[func]("dummy");
+        assert(!logHandle);
+        var logHandle = RDKitModule[func]("rdApp.*");
+        assert(logHandle);
+        var logBuffer = logHandle.get_buffer();
+        assert(!logBuffer);
+        var mol = RDKitModule.get_mol("CN(C)(C)C");
+        assert(!mol);
+        logBuffer = logHandle.get_buffer();
+        assert(logBuffer);
+        assert(logBuffer.includes('Explicit valence for atom # 1 N, 4, is greater than permitted'));
+        logHandle.clear_buffer();
+        assert(!logHandle.get_buffer());
+        logHandle.delete();
+    })
+}
+
+function test_rgroup_match_heavy_hydro_none_charged() {
+    var templateRef = RDKitModule.get_mol(`
+  MJ201100                      
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -0.5804    1.2045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2948    0.7920    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2948   -0.0330    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5804   -0.4455    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1340   -0.0330    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1340    0.7920    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8485   -0.4455    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  6  1  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  5  7  1  0  0  0  0
+M  RGP  1   7   1
+M  END
+`);
+    assert(templateRef);
+    var mol;
+    var allowRGroups = true;
+    [true, false].forEach((alignOnly) => {
+        mol = RDKitModule.get_mol("Cc1ccccc1");
+        assert(mol);
+        assert.equal(mol.get_num_atoms(), 7);
+        assert.equal(JSON.parse(mol.generate_aligned_coords(templateRef, JSON.stringify({ allowRGroups, alignOnly }))).atoms.length, 7);
+        mol.delete();
+        mol = RDKitModule.get_mol("c1ccccc1");
+        assert(mol);
+        assert.equal(mol.get_num_atoms(), 6);
+        assert.equal(JSON.parse(mol.generate_aligned_coords(templateRef, JSON.stringify({ allowRGroups, alignOnly }))).atoms.length, 6);
+        mol.delete();
+        mol = RDKitModule.get_mol("[H]c1ccccc1", JSON.stringify({removeHs: false}));
+        assert(mol);
+        assert.equal(mol.get_num_atoms(), 7);
+        assert.equal(JSON.parse(mol.generate_aligned_coords(templateRef, JSON.stringify({ allowRGroups, alignOnly }))).atoms.length, 7);
+        mol.delete();
+        mol = RDKitModule.get_mol("n1ccccc1");
+        assert(mol);
+        assert.equal(mol.get_num_atoms(), 6);
+        assert.equal(JSON.parse(mol.generate_aligned_coords(templateRef, JSON.stringify({ allowRGroups, alignOnly }))).atoms.length, 6);
+        mol.delete();
+        mol = RDKitModule.get_mol("C[n+]1ccccc1");
+        assert(mol);
+        assert.equal(mol.get_num_atoms(), 7);
+        assert.equal(JSON.parse(mol.generate_aligned_coords(templateRef, JSON.stringify({ allowRGroups, alignOnly }))).atoms.length, 7);
+        mol.delete();
+    });
+    templateRef.delete();
+}
+
+function test_get_sss_json() {
+    var fentanylScaffold = RDKitModule.get_mol(`
+  MJ201100                      
+
+ 25 27  0  0  0  0  0  0  0  0999 V2000
+   -0.3910   -1.2720    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2160   -1.2721    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6285   -1.9866    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2161   -2.7010    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3911   -2.7011    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0214   -1.9865    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0213   -0.5575    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3911    0.1568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0213    0.8713    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3911    1.5859    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2161    1.5858    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6287    0.8714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2161    0.1568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6286    2.3002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8463   -0.5575    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2588    0.1569    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4536    2.3002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8661    1.5858    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6910    1.5858    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1036    0.8712    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6912    0.1568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8662    0.1567    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4536    0.8713    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2589   -1.2720    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0839   -1.2719    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 12 13  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 13  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 11 14  1  0  0  0  0
+  1  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  7 15  1  0  0  0  0
+ 14 17  1  0  0  0  0
+ 17 18  1  0  0  0  0
+ 19 20  1  0  0  0  0
+ 20 21  2  0  0  0  0
+ 21 22  1  0  0  0  0
+ 22 23  2  0  0  0  0
+ 18 19  2  0  0  0  0
+ 23 18  1  0  0  0  0
+ 15 24  1  0  0  0  0
+ 24 25  1  0  0  0  0
+ 15 16  2  0  0  0  0
+M  END
+`);
+    var bilastine = RDKitModule.get_mol("O=C(O)C(c1ccc(cc1)CCN4CCC(c2nc3ccccc3n2CCOCC)CC4)(C)C");
+    var referenceSmarts = "c1ccccc1CCN1CCCCC1";
+    var res = bilastine.generate_aligned_coords(fentanylScaffold, JSON.stringify({useCoordGen: true, referenceSmarts}));
+    assert(res);
+    var resExpected = "{\"atoms\":[6,5,4,9,8,7,10,11,12,13,14,15,30,31],\"bonds\":[13,30,14,29,12,36,11,10,9,5,4,33,8,6,7]}";
+    assert.equal(res, resExpected);
+    assert.equal(JSON.parse(res).bonds.length, 15);
+    bilastine.delete();
+    fentanylScaffold.delete();
+}
+
+function test_relabel_mapped_dummies() {
+    var core = RDKitModule.get_mol("c1cc([4*:2])c([3*:1])cn1");
+    assert.equal(core.get_cxsmiles(), "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|");
+    core.delete();
+    core = RDKitModule.get_mol("c1cc([4*:2])c([3*:1])cn1", JSON.stringify({mappedDummiesAreRGroups: true}));
+    assert.equal(core.get_cxsmiles(), "*c1ccncc1* |atomProp:0.dummyLabel.R2:7.dummyLabel.R1|");
+    core.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -1788,11 +2720,13 @@ initRDKitModule().then(function(instance) {
     test_sketcher_services();
     test_sketcher_services2();
     test_abbreviations();
-    test_substruct_library(done);
-    test_substruct_library_merge_hs();
-    test_substruct_library_empty_mols();
-    test_substruct_library_empty_lib();
-    test_substruct_library_empty_query();
+    if (RDKitModule.SubstructLibrary) {
+        test_substruct_library(done);
+        test_substruct_library_merge_hs();
+        test_substruct_library_empty_mols();
+        test_substruct_library_empty_lib();
+        test_substruct_library_empty_query();
+    }
     test_generate_aligned_coords();
     test_isotope_labels();
     test_generate_aligned_coords_allow_rgroups();
@@ -1808,7 +2742,9 @@ initRDKitModule().then(function(instance) {
     test_normalize_depiction();
     test_straighten_depiction();
     test_flexicanvas();
-    test_rxn_drawing();
+    if (RDKitModule.get_rxn)  {
+        test_rxn_drawing();
+    }
     test_legacy_stereochem();
     test_allow_non_tetrahedral_chirality();
     test_prop();
@@ -1819,6 +2755,20 @@ initRDKitModule().then(function(instance) {
     test_wedging_if_no_match();
     test_get_frags();
     test_hs_in_place();
+    test_query_colour();
+    test_alignment_r_groups_aromatic_ring();
+    test_is_valid_deprecated();
+    test_mol_list();
+    test_get_num_atoms_bonds();
+    if (RDKitModule.get_mcs_as_mol)  {
+        test_mcs();
+    }
+    test_sanitize_no_kekulize_no_setaromaticity();
+    test_partial_sanitization();
+    test_capture_logs();
+    test_rgroup_match_heavy_hydro_none_charged();
+    test_get_sss_json();
+    test_relabel_mapped_dummies();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

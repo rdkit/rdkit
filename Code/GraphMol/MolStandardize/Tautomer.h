@@ -325,9 +325,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
 
   //! Deprecated, please use the form returning a \c TautomerEnumeratorResult
   //! instead
-  [
-      [deprecated("please use the form returning a TautomerEnumeratorResult "
-                  "instead")]] std::vector<ROMOL_SPTR>
+  [[deprecated(
+      "please use the form returning a TautomerEnumeratorResult "
+      "instead")]] std::vector<ROMOL_SPTR>
   enumerate(const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms,
             boost::dynamic_bitset<> *modifiedBonds = nullptr) const;
 

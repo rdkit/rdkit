@@ -38,8 +38,8 @@
 #include <limits>
 
 #include <cstring>
+#include <any>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/any.hpp>
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
@@ -146,6 +146,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _queryRootAtom;  // int SLNParse/SubstructMatch
 RDKIT_RDGENERAL_EXPORT extern const std::string _hasMassQuery;  // atom bool
 RDKIT_RDGENERAL_EXPORT extern const std::string _protected;  // atom int (bool)
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _ChiralAtomRank;  // atom rank (unsigned int)
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _supplementalSmilesLabel;  // atom string (SmilesWrite)
 RDKIT_RDGENERAL_EXPORT extern const std::string

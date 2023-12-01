@@ -1,6 +1,9 @@
 
+if(RDK_BUILD_YAEHMOP_SUPPORT)
+set(ehtlib EHTLib)
+endif()
 rdkit_library(DetermineBonds DetermineBonds.cpp
-              LINK_LIBRARIES EHTLib GraphMol RDGeneral)
+              LINK_LIBRARIES ${ehtlib} FileParsers GraphMol RDGeneral)
 
 target_compile_definitions(DetermineBonds PRIVATE RDKIT_DETERMINEBONDS_BUILD)
 

@@ -13,12 +13,15 @@
 # peter ertl, august 2015
 #
 
+import gzip
+import math
+import os.path
+import pickle
+import sys
+from collections import namedtuple
 
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
-import sys, math, gzip, pickle
-import os.path
-from collections import namedtuple
 
 
 def readNPModel(filename=os.path.join(os.path.dirname(__file__), 'publicnp.model.gz')):

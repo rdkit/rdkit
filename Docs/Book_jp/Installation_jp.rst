@@ -425,24 +425,6 @@ JAVAラッパーのビルド
 
 .. code:: console
 
-   Linking CXX shared library libSLNParse.so
-   /usr/bin/ld: .../libboost_regex.a(cpp_regex_traits.o): relocation R_X86_64_32S against `std::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Rep::_S_empty_rep_storage' can not be used when making a shared object; recompile with -fPIC
-   .../libboost_regex.a: could not read symbols: Bad value
-   collect2: ld returned 1 exit status
-   make[2]: *** [Code/GraphMol/SLNParse/libSLNParse.so] Error 1
-   make[1]: *** [Code/GraphMol/SLNParse/CMakeFiles/SLNParse.dir/all] Error 2
-   make: *** [all] Error 2
-
-*解決方法:*
-
-cmakeを呼び出すときに次を引数に加えてください:\ ``-DBoost_USE_STATIC_LIBS=OFF``\
-
-さらに情報が欲しい場合はこちら：http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01119.html
-
-*問題:*
-
-.. code:: console
-
    .../Code/GraphMol/Wrap/EditableMol.cpp:114:   instantiated from here
    .../boost/type_traits/detail/cv_traits_impl.hpp:37: internal compiler error: in make_rtl_for_nonlocal_decl, at cp/decl.c:5067
 

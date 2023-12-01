@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -61,26 +61,40 @@ RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
 //! \deprecated use Chirality::detail::determineBondWedgeState instead
 RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
     const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf);
-//! Clears existing bond wedging and forces use of atom wedging from MolBlock.
-/*!
- \param mol: molecule to have its wedges altered
- */
+
+//! \deprecated use Chirality::reapplyMolBlockWedging instead
 RDKIT_FILEPARSERS_EXPORT void reapplyMolBlockWedging(ROMol &mol);
-//! Remove MolBlock bond wedging information from molecule.
-/*!
- \param mol: molecule to modify
- */
+//! \deprecated use Chirality::clearMolBlockWedgingInfo instead
 RDKIT_FILEPARSERS_EXPORT void clearMolBlockWedgingInfo(ROMol &mol);
-//! Invert bond wedging information read from a mol block (if present).
-/*!
- \param mol: molecule to modify
- */
+//! \deprecated use Chirality::invertMolBlockWedgingInfo instead
 RDKIT_FILEPARSERS_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
 
 //! Set double bonds with unspecified stereo to STEREOANY and add wavy bonds to
 ///  potential stereocenters with unspecified chirality
 RDKIT_FILEPARSERS_EXPORT void markUnspecifiedStereoAsUnknown(ROMol &mol,
                                                              int confId = -1);
+
+//! generate enhanced stereo groups based on the status of the chiral flag
+/// property
+/*
+ \param mol: molecule to be modified
+ \param zeroFlagGroupType: how to handle non-grouped stereo centers when the
+        chiral flag is set to zero
+
+  If the chiral flag is set to a value of 1 then all specified tetrahedral
+  chiral centers which are not already in StereoGroups will be added to an
+  ABS StereoGroup.
+
+  If the chiral flag is set to a value of 0 then all specified tetrahedral
+  chiral centers will be added to a StereoGroup of the type zeroFlagGroupType
+
+  If there is no chiral flag set (i.e. the property is not present), the
+  molecule will not be modified.
+
+*/
+RDKIT_FILEPARSERS_EXPORT void translateChiralFlagToStereoGroups(
+    ROMol &mol,
+    StereoGroupType zeroFlagGroupType = StereoGroupType::STEREO_AND);
 
 }  // namespace RDKit
 #endif

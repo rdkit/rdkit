@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <limits>
 
 namespace RDKit {
 class ChemicalReaction;
@@ -159,6 +160,9 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
 /*!
   This should be considered a work-in-progress and to be somewhat fragile.
 
+  NOTE: The SRU labels are parsed to infer the desired number of repetitions
+  allowed.
+
   Known limitations:
   - Overlapping SRUs, i.e. where one monomer is contained within another, are
   not supported
@@ -173,7 +177,7 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
   };
   RepeatUnitOp(const ROMol &mol) : dp_mol(new ROMol(mol)) { initFromMol(); };
   RepeatUnitOp(const RepeatUnitOp &other)
-      : d_defaultRepeatCount(other.d_defaultRepeatCount),
+      : d_maxNumRounds(other.d_maxNumRounds),
         dp_mol(other.dp_mol),
         dp_frame(other.dp_frame),
         d_repeats(other.d_repeats),
@@ -181,7 +185,8 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
         d_variations(other.d_variations),
         d_pointRanges(other.d_pointRanges),
         d_isotopeMap(other.d_isotopeMap),
-        d_atomMap(other.d_atomMap){};
+        d_atomMap(other.d_atomMap),
+        d_minRepeatCounts(other.d_minRepeatCounts){};
   RepeatUnitOp &operator=(const RepeatUnitOp &other) {
     if (&other == this) {
       return *this;
@@ -194,7 +199,8 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
     d_pointRanges = other.d_pointRanges;
     d_isotopeMap = other.d_isotopeMap;
     d_atomMap = other.d_atomMap;
-    d_defaultRepeatCount = other.d_defaultRepeatCount;
+    d_maxNumRounds = other.d_maxNumRounds;
+    d_minRepeatCounts = other.d_minRepeatCounts;
     return *this;
   };
   //! \override
@@ -212,9 +218,9 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
     return std::unique_ptr<MolEnumeratorOp>(new RepeatUnitOp(*this));
   }
 
-  size_t d_defaultRepeatCount =
-      4;  //!< from mol files we typically don't know the repeat count. This is
-          //!< what we use instead
+  static const size_t DEFAULT_REPEAT_COUNT;
+  size_t d_maxNumRounds = std::numeric_limits<size_t>::max();
+
  private:
   std::shared_ptr<ROMol> dp_mol{nullptr};
   std::shared_ptr<RWMol> dp_frame{nullptr};
@@ -226,6 +232,7 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
   std::vector<std::pair<unsigned, unsigned>> d_pointRanges;
   std::map<unsigned, unsigned> d_isotopeMap;
   std::map<unsigned, Atom *> d_atomMap;
+  std::vector<size_t> d_minRepeatCounts;
 
   void initFromMol();
 };

@@ -259,14 +259,10 @@ std::string Atom::getSymbol() const {
 }
 
 unsigned int Atom::getDegree() const {
-  PRECONDITION(dp_mol,
-               "degree not defined for atoms not associated with molecules");
   return getOwningMol().getAtomDegree(this);
 }
 
 unsigned int Atom::getTotalDegree() const {
-  PRECONDITION(dp_mol,
-               "degree not defined for atoms not associated with molecules");
   unsigned int res = this->getTotalNumHs(false) + this->getDegree();
   return res;
 }
@@ -276,8 +272,6 @@ unsigned int Atom::getTotalDegree() const {
 //   and include any of them that are Hs in the count here
 //
 unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
-  PRECONDITION(dp_mol,
-               "valence not defined for atoms not associated with molecules")
   int res = getNumExplicitHs() + getNumImplicitHs();
   if (includeNeighbors) {
     for (auto nbr : getOwningMol().atomNeighbors(this)) {
@@ -301,8 +295,6 @@ unsigned int Atom::getNumImplicitHs() const {
 }
 
 int Atom::getExplicitValence() const {
-  PRECONDITION(dp_mol,
-               "valence not defined for atoms not associated with molecules");
   PRECONDITION(
       d_explicitValence > -1,
       "getExplicitValence() called without call to calcExplicitValence()");
@@ -310,14 +302,10 @@ int Atom::getExplicitValence() const {
 }
 
 unsigned int Atom::getTotalValence() const {
-  PRECONDITION(dp_mol,
-               "valence not defined for atoms not associated with molecules");
   return getExplicitValence() + getImplicitValence();
 }
 
 int Atom::calcExplicitValence(bool strict) {
-  PRECONDITION(dp_mol,
-               "valence not defined for atoms not associated with molecules");
   unsigned int res;
   // FIX: contributions of bonds to valence are being done at best
   // approximately
@@ -431,8 +419,6 @@ int Atom::getImplicitValence() const {
 // NOTE: this uses the explicitValence, so it will call
 // calcExplictValence() if it hasn't already been called
 int Atom::calcImplicitValence(bool strict) {
-  PRECONDITION(dp_mol,
-               "valence not defined for atoms not associated with molecules");
   if (df_noImplicit) {
     return 0;
   }
@@ -444,9 +430,7 @@ int Atom::calcImplicitValence(bool strict) {
     d_implicitValence = 0;
     return 0;
   }
-  for (const auto &nbri :
-       boost::make_iterator_range(getOwningMol().getAtomBonds(this))) {
-    const auto bnd = getOwningMol()[nbri];
+  for (const auto bnd : getOwningMol().atomBonds(this)) {
     if (QueryOps::hasComplexBondTypeQuery(*bnd)) {
       d_implicitValence = 0;
       return 0;
@@ -679,18 +663,11 @@ bool Atom::needsUpdatePropertyCache() const {
 //   getPerturbationOrder([1,2,3,0]) = 3
 //   getPerturbationOrder([1,2,0,3]) = 2
 int Atom::getPerturbationOrder(const INT_LIST &probe) const {
-  PRECONDITION(
-      dp_mol,
-      "perturbation order not defined for atoms not associated with molecules")
   INT_LIST ref;
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = getOwningMol().getAtomBonds(this);
-  while (beg != end) {
-    ref.push_back(getOwningMol()[*beg]->getIdx());
-    ++beg;
+  for (const auto bnd : getOwningMol().atomBonds(this)) {
+    ref.push_back(bnd->getIdx());
   }
-  int nSwaps = static_cast<int>(countSwapsToInterconvert(probe, ref));
-  return nSwaps;
+  return static_cast<int>(countSwapsToInterconvert(probe, ref));
 }
 
 static const unsigned char octahedral_invert[31] = {
@@ -801,7 +778,7 @@ void setAtomRLabel(Atom *atm, int rlabel) {
   if (rlabel) {
     atm->setProp(common_properties::_MolFileRLabel,
                  static_cast<unsigned int>(rlabel));
-  } else if (atm->hasProp(common_properties::_MolFileRLabel)) {
+  } else {
     atm->clearProp(common_properties::_MolFileRLabel);
   }
 }
@@ -817,7 +794,7 @@ void setAtomAlias(Atom *atom, const std::string &alias) {
   PRECONDITION(atom, "bad atom");
   if (alias != "") {
     atom->setProp(common_properties::molFileAlias, alias);
-  } else if (atom->hasProp(common_properties::molFileAlias)) {
+  } else {
     atom->clearProp(common_properties::molFileAlias);
   }
 }
@@ -833,7 +810,7 @@ void setAtomValue(Atom *atom, const std::string &value) {
   PRECONDITION(atom, "bad atom");
   if (value != "") {
     atom->setProp(common_properties::molFileValue, value);
-  } else if (atom->hasProp(common_properties::molFileValue)) {
+  } else {
     atom->clearProp(common_properties::molFileValue);
   }
 }
@@ -849,7 +826,7 @@ void setSupplementalSmilesLabel(Atom *atom, const std::string &label) {
   PRECONDITION(atom, "bad atom");
   if (label != "") {
     atom->setProp(common_properties::_supplementalSmilesLabel, label);
-  } else if (atom->hasProp(common_properties::_supplementalSmilesLabel)) {
+  } else {
     atom->clearProp(common_properties::_supplementalSmilesLabel);
   }
 }

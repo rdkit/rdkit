@@ -148,7 +148,6 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
 
   neighborBondIndices.push_back(bond->getIdx());
   neighborBondAngles.push_back(0.0);
-  unsigned int neighborsWithDirection = 0;
   for (const auto nbrBond : mol->atomBonds(atom)) {
     const auto otherAtom = nbrBond->getOtherAtom(atom);
     if (nbrBond != bond) {
@@ -169,11 +168,6 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
       }
       neighborBondAngles.insert(angleIt, angle);
       neighborBondIndices.insert(nbrIt, nbrBond->getIdx());
-      if (nbrBond->getBeginAtomIdx() == atom->getIdx() &&
-          (nbrBond->getBondDir() == Bond::BondDir::BEGINDASH ||
-           nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE)) {
-        ++neighborsWithDirection;
-      }
     }
   }
 
@@ -201,7 +195,7 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   if (neighborBondAngles.size() == 3) {
     // three coordinated
     auto angleIt = neighborBondAngles.begin();
-    ++angleIt;  // the first is the 0 (or reference bond - we will ignoire
+    ++angleIt;  // the first is the 0 (or reference bond - we will ignore
                 // that
     double angle1 = (*angleIt);
     ++angleIt;
@@ -453,8 +447,7 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
   auto wedgeBonds = pickBondsToWedge(mol, params);
 
   // loop over the bonds we need to wedge:
-  for (auto wbIter = wedgeBonds.begin(); wbIter != wedgeBonds.end(); ++wbIter) {
-    auto [wbi, waid] = *wbIter;
+  for (const auto &[wbi, waid] : wedgeBonds) {
     auto bond = mol.getBondWithIdx(wbi);
     auto dir = detail::determineBondWedgeState(bond, waid, conf);
     if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
@@ -469,8 +462,30 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
         bond->setBeginAtomIdx(bond->getEndAtomIdx());
         bond->setEndAtomIdx(tmp);
       }
-      if (params->wedgeTwoBondsIfPossible) {
-        addSecondWedgeAroundAtom(mol, bond, conf);
+    }
+  }
+  if (params->wedgeTwoBondsIfPossible) {
+    // This should probably check whether the existing wedge
+    // is in agreement with the chiral tag on the atom.
+
+    for (const auto atom : mol.atoms()) {
+      if (atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+          atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
+        continue;
+      }
+      unsigned numWedged = 0;
+      Bond *wedgedBond = nullptr;
+      for (const auto bond : mol.atomBonds(atom)) {
+        if (bond->getBeginAtom() == atom &&
+            bond->getBondType() == Bond::SINGLE &&
+            (bond->getBondDir() == Bond::BEGINWEDGE ||
+             bond->getBondDir() == Bond::BEGINDASH)) {
+          ++numWedged;
+          wedgedBond = bond;
+        }
+      }
+      if (numWedged == 1) {
+        addSecondWedgeAroundAtom(mol, wedgedBond, conf);
       }
     }
   }
@@ -487,6 +502,90 @@ void wedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
   Bond::BondDir dir = detail::determineBondWedgeState(bond, fromAtomIdx, conf);
   if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
     bond->setBondDir(dir);
+  }
+}
+
+void reapplyMolBlockWedging(ROMol &mol) {
+  MolOps::clearSingleBondDirFlags(mol, true);
+  for (auto b : mol.bonds()) {
+    int explicit_unknown_stereo = -1;
+    if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                 explicit_unknown_stereo) &&
+        explicit_unknown_stereo) {
+      b->setBondDir(Bond::UNKNOWN);
+    }
+    int bond_dir = -1;
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
+                                 bond_dir)) {
+      if (bond_dir == 1) {
+        b->setBondDir(Bond::BEGINWEDGE);
+      } else if (bond_dir == 6) {
+        b->setBondDir(Bond::BEGINDASH);
+      }
+      if (b->getBondType() == Bond::DOUBLE) {
+        if (bond_dir == 0 && b->getStereo() == Bond::STEREOANY) {
+          b->setBondDir(Bond::NONE);
+          b->setStereo(Bond::STEREONONE);
+        } else if (bond_dir == 3) {
+          b->setBondDir(Bond::EITHERDOUBLE);
+          b->setStereo(Bond::STEREOANY);
+        }
+      }
+    }
+    int cfg = -1;
+    b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg);
+    switch (cfg) {
+      case 1:
+        b->setBondDir(Bond::BEGINWEDGE);
+        break;
+      case 2:
+        if (b->getBondType() == Bond::SINGLE) {
+          b->setBondDir(Bond::UNKNOWN);
+        } else if (b->getBondType() == Bond::DOUBLE) {
+          b->setBondDir(Bond::EITHERDOUBLE);
+          b->setStereo(Bond::STEREOANY);
+        }
+        break;
+      case 3:
+        b->setBondDir(Bond::BEGINDASH);
+        break;
+      case 0:
+      case -1:
+        if (bond_dir == -1 && b->getBondType() == Bond::DOUBLE &&
+            b->getStereo() == Bond::STEREOANY) {
+          b->setBondDir(Bond::NONE);
+          b->setStereo(Bond::STEREONONE);
+        }
+    }
+  }
+}
+
+void clearMolBlockWedgingInfo(ROMol &mol) {
+  for (auto b : mol.bonds()) {
+    b->clearProp(common_properties::_MolFileBondStereo);
+    b->clearProp(common_properties::_MolFileBondCfg);
+  }
+}
+
+void invertMolBlockWedgingInfo(ROMol &mol) {
+  for (auto b : mol.bonds()) {
+    int bond_dir = -1;
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
+                                 bond_dir)) {
+      if (bond_dir == 1) {
+        b->setProp<int>(common_properties::_MolFileBondStereo, 6);
+      } else if (bond_dir == 6) {
+        b->setProp<int>(common_properties::_MolFileBondStereo, 1);
+      }
+    }
+    int cfg = -1;
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
+      if (cfg == 1) {
+        b->setProp<int>(common_properties::_MolFileBondCfg, 3);
+      } else if (cfg == 3) {
+        b->setProp<int>(common_properties::_MolFileBondCfg, 1);
+      }
+    }
   }
 }
 

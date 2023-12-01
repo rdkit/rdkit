@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-
 import pidtest
+
 
 def testLatin1Chars(can):
   curx, cury = 10, 20

@@ -27,11 +27,13 @@ Greg Landrum (glandrum@users.sourceforge.net)
 
 """
 
-from rdkit.sping import pid
-import types
-from PyQt4 import QtCore, QtGui, QtSvg
-from math import *
 import copy
+import types
+from math import *
+
+from PyQt4 import QtCore, QtGui, QtSvg
+
+from rdkit.sping import pid
 
 
 def _ColorToQt(color):
@@ -321,7 +323,7 @@ def test(canvas):
   canvas.drawRoundRect(30, 30, 100, 100, fillColor=blue, edgeColor=maroon)
   canvas.drawCurve(20, 20, 100, 50, 50, 100, 160, 160)
 
-  #canvas.drawString("This is a test!", 30,130, Font(face="times",size=16,bold=1), 
+  #canvas.drawString("This is a test!", 30,130, Font(face="times",size=16,bold=1),
   #                color=green, angle=-45)
 
   #canvas.drawString("This is a test!", 30,130, color=red, angle=-45)
@@ -347,8 +349,8 @@ def dashtest(canvas):
 
   canvas.drawEllipse(130, 30, 200, 100, fillColor=yellow, edgeWidth=4, dash=(3, 3))
 
-  canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4, dash=(3,
-                                                                                               3))
+  canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4,
+                 dash=(3, 3))
 
   canvas.defaultLineWidth = 4
   canvas.drawRoundRect(30, 30, 100, 100, fillColor=blue, edgeColor=maroon, dash=(3, 3))
@@ -371,8 +373,10 @@ def dashtest(canvas):
 
 if __name__ == '__main__':
   import sys
-  from rdkit.sping.pid import *
+
   from PIL import Image
+
+  from rdkit.sping.pid import *
   app = QtGui.QApplication(sys.argv)
   w = QtGui.QGraphicsView()
 

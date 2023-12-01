@@ -21,13 +21,13 @@ The fingerprints can be accessed through the following functions:
 import os.path
 import re
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdMolDescriptors
-from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint, GetTopologicalTorsionFingerprint
+from rdkit.Chem.rdMolDescriptors import (GetAtomPairFingerprint,
+                                         GetTopologicalTorsionFingerprint)
 
 numPathBits = rdMolDescriptors.AtomPairsParameters.numPathBits
-_maxPathLen = (1 << numPathBits) - 1  # Unused variable 
+_maxPathLen = (1 << numPathBits) - 1  # Unused variable
 numFpBits = numPathBits + 2 * rdMolDescriptors.AtomPairsParameters.codeSize
 fpLen = 1 << numFpBits
 
@@ -110,8 +110,8 @@ def GetBTFingerprint(mol, fpfn=GetTopologicalTorsionFingerprint):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

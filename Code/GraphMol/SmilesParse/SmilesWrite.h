@@ -90,6 +90,12 @@ RDKIT_SMILESPARSE_EXPORT std::string GetAtomSmiles(const Atom *atom,
 RDKIT_SMILESPARSE_EXPORT std::string GetBondSmiles(
     const Bond *bond, int atomToLeftIdx = -1, bool doKekule = false,
     bool allBondsExplicit = false);
+
+namespace detail {
+RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
+    const ROMol &mol, const SmilesWriteParams &params, bool doingCXSmiles);
+}
+
 }  // namespace SmilesWrite
 
 //! \brief returns canonical SMILES for a molecule

@@ -23,7 +23,6 @@ Other compatibility notes:
 
 """
 
-
 import numpy
 
 from rdkit.ML.Composite import Composite

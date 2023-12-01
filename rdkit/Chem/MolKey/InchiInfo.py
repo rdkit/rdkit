@@ -1,19 +1,19 @@
 #
 #  Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -50,7 +50,7 @@ def _is_achiral_by_symmetry(INCHI):
     return len(Chem.FindMolChiralCenters(mol, True, True)) == 0
   except Exception:
     return False
-  
+
 
 console = logging.StreamHandler()
 UPD_APP = logging.getLogger('inchiinfo.application')  # application runtime information
@@ -78,7 +78,8 @@ class InchiInfo(object):
 
     connection_layers = {}
     if reconn_match:
-      connection_layers['id_disconnected'], connection_layers['id_reconnected'] = reconn_match.groups()
+      connection_layers['id_disconnected'], connection_layers[
+        'id_reconnected'] = reconn_match.groups()
     else:
       connection_layers['id'] = rest
 
@@ -87,7 +88,8 @@ class InchiInfo(object):
       fixed_h_layers[conn_layer] = {}
       fixed_match = fixed_h_re.match(connection_layers[conn_layer])
       if fixed_match:
-        fixed_h_layers[conn_layer]['main'], fixed_h_layers[conn_layer]['fixed_h'] = fixed_match.groups()
+        fixed_h_layers[conn_layer]['main'], fixed_h_layers[conn_layer][
+          'fixed_h'] = fixed_match.groups()
       else:
         fixed_h_layers[conn_layer]['main'] = connection_layers[conn_layer]
 
@@ -98,7 +100,8 @@ class InchiInfo(object):
         inchi[i0_layer][i1_layer] = {}
         iso_match = isotope_re.match(fixed_h_layers[i0_layer][i1_layer])
         if iso_match:
-          inchi[i0_layer][i1_layer]['non-isotopic'], inchi[i0_layer][i1_layer]['isotopic'] = iso_match.groups()
+          inchi[i0_layer][i1_layer]['non-isotopic'], inchi[i0_layer][i1_layer][
+            'isotopic'] = iso_match.groups()
         else:
           inchi[i0_layer][i1_layer]['non-isotopic'] = fixed_h_layers[i0_layer][i1_layer]
 
@@ -119,8 +122,9 @@ class InchiInfo(object):
         for iso_layer in self.parsed_inchi[con_layer][fixed_layer]:
           sp3_stereo[fixed_layer][iso_layer] = {}
           stereo_match = stereo_re.match(self.parsed_inchi[con_layer][fixed_layer][iso_layer])
-          stereo_all_match = stereo_all_re.match(self.parsed_inchi[con_layer][fixed_layer][iso_layer])
-          
+          stereo_all_match = stereo_all_re.match(
+            self.parsed_inchi[con_layer][fixed_layer][iso_layer])
+
           num_stereo = 0
           num_undef_stereo = 0
           is_meso = False
@@ -132,11 +136,11 @@ class InchiInfo(object):
           elif stereo_all_match:
             stereo = stereo_all_match.group(1)
             is_meso = len(defined_stereo_re.findall(stereo)) > 1
-            
+
           #    Number of ALL stereo centres
           num_stereo = len(all_stereo_re.findall(stereo))
           num_undef_stereo = len(undef_stereo_re.findall(stereo))
-          
+
           #    Meso centres    --    VT     --    2011.12.08
           inchi_layer = self.parsed_inchi[con_layer][fixed_layer][iso_layer]
           is_meso = is_meso or (num_undef_stereo > 1 and _is_achiral_by_symmetry(inchi_layer))

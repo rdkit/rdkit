@@ -132,8 +132,8 @@ void testTorsionPrefs() {
   TEST_ASSERT(details.expTorsionAngles[0].first.size() == 6);
   TEST_ASSERT(details.expTorsionAngles[0].second.size() == 6);
 
-  std::vector<
-      std::tuple<unsigned int, std::vector<unsigned int>, const ForceFields::CrystalFF::ExpTorsionAngle *>>
+  std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                         const ForceFields::CrystalFF::ExpTorsionAngle *>>
       torsionBonds;
   ForceFields::CrystalFF::getExperimentalTorsions(
       *mol, details, torsionBonds, true, false, false, false, 2, false);

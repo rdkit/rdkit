@@ -8,7 +8,7 @@ from rdkit.VLib.Output import OutputNode as BaseOutputNode
 
 
 class OutputNode(BaseOutputNode):
-    """ dumps smiles output
+  """ dumps smiles output
 
     Assumptions:
 
@@ -35,36 +35,36 @@ class OutputNode(BaseOutputNode):
 
     """
 
-    def __init__(self, dest=None, delim='\t', idField=None, **kwargs):
-        BaseOutputNode.__init__(self, dest=dest, strFunc=self.smilesOut)
-        self._dest = dest
-        self._idField = idField
-        self._delim = delim
-        self._nDumped = 0
+  def __init__(self, dest=None, delim='\t', idField=None, **kwargs):
+    BaseOutputNode.__init__(self, dest=dest, strFunc=self.smilesOut)
+    self._dest = dest
+    self._idField = idField
+    self._delim = delim
+    self._nDumped = 0
 
-    def reset(self):
-        BaseOutputNode.reset(self)
-        self._nDumped = 0
+  def reset(self):
+    BaseOutputNode.reset(self)
+    self._nDumped = 0
 
-    def smilesOut(self, mol):
-        self._nDumped += 1
-        if isinstance(mol, (tuple, list)):
-            args = mol
-            mol = args[0]
-            if len(args) > 1:
-                args = list(args[1:])
-            else:
-                args = []
-        else:
-            args = []
+  def smilesOut(self, mol):
+    self._nDumped += 1
+    if isinstance(mol, (tuple, list)):
+      args = mol
+      mol = args[0]
+      if len(args) > 1:
+        args = list(args[1:])
+      else:
+        args = []
+    else:
+      args = []
 
-        if self._idField and mol.HasProp(self._idField):
-            label = mol.GetProp(self._idField)
-        else:
-            label = str(self._nDumped)
-        smi = Chem.MolToSmiles(mol)
-        outp = [label, smi] + args
-        return '%s\n' % (self._delim.join(outp))
+    if self._idField and mol.HasProp(self._idField):
+      label = mol.GetProp(self._idField)
+    else:
+      label = str(self._nDumped)
+    smi = Chem.MolToSmiles(mol)
+    outp = [label, smi] + args
+    return '%s\n' % (self._delim.join(outp))
 
 
 # ------------------------------------
@@ -72,11 +72,11 @@ class OutputNode(BaseOutputNode):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import doctest
-    import sys
-    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-    sys.exit(failed)
+  import doctest
+  import sys
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+  sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-    _runDoctests()
+  _runDoctests()

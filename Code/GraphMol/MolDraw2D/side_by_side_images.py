@@ -32,7 +32,7 @@ with open(args.outfile, 'w') as f:
     <title>{d1} vs {d2}</title>
     <link href="index.css" rel="stylesheet" />
   </head>
-  <body>
+  <body style="background-color:#eeeeee;">
     <table border="1">
       <tr>
         <td></td>
@@ -42,7 +42,7 @@ with open(args.outfile, 'w') as f:
 
     inglob = Path(d1)
     fns = [Path(fn) for fn in inglob.glob(args.file_glob)]
-    fns.sort(key = lambda f: f.stat().st_mtime, reverse=True)
+    fns.sort(key=lambda f: f.stat().st_mtime, reverse=True)
 
     for fp in fns:
         fn = fp.name
@@ -54,7 +54,7 @@ with open(args.outfile, 'w') as f:
         <td><img src="{d1}/{fn}" alt="{fns}"/></td>
         <td><img src="{d2}/{fn}" alt="{fns}"/></td>
         </tr>\n''')
-    
+
     f.write('''    </table>
   </body>
 </html>\n''')

@@ -38,6 +38,7 @@
 #include <Geometry/point.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
 
 const int ci_LOCAL_INF = static_cast<int>(1e8);
@@ -183,62 +184,99 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
   }
 }
 
-void metalBondCleanup(RWMol &mol, Atom *atom) {
+bool isMetal(const Atom *atom) {
+  static const std::unique_ptr<ATOM_OR_QUERY> q(makeMAtomQuery());
+  return q->Match(atom);
+}
+
+bool isHypervalentNonMetal(Atom *atom) {
+  if (isMetal(atom)) {
+    return false;
+  }
+  auto ev = atom->calcExplicitValence(false);
+  // Check the explicit valence of the non-metal against the allowed
+  // valences of the atom, adjusted by its formal charge.  This means that
+  // N+ is treated the same as C, O+ the same as N.  This allows for,
+  // for example, c1cccc[n+]1-[Fe] to be acceptable and not turned into
+  // c1cccc[n+]1->[Fe].  After all, c1cccc[n+]1-C is ok.  Although this is
+  // a poor example because c1ccccn1->[Fe] appears to be the normal
+  // way that pyridine complexes with transition metals.  Heme b in
+  // CHEBI:26355 is an example of when this is required.
+  int effAtomicNum = atom->getAtomicNum() - atom->getFormalCharge();
+  if (effAtomicNum <= 0) {
+    return false;
+  }
+  // atom is a non-metal, so if its atomic number is > 2, it should
+  // obey the octet rule (2*ev <= 8).  If it doesn't, don't set the bond to
+  // dative, so the molecule is later flagged as having bad valence.
+  // [CH4]-[Na] being a case in point, line 1800 of
+  // FileParsers/file_parsers_catch.cpp.
+  const auto &otherValens =
+      PeriodicTable::getTable()->getValenceList(effAtomicNum);
+  if (otherValens.back() > 0 && ev > otherValens.back() && ev <= 4) {
+    return true;
+  }
+
+  return false;
+}
+
+int numDativeBonds(const Atom *atom) {
+  int numDatives = 0;
+  auto &mol = atom->getOwningMol();
+  for (auto bond : mol.atomBonds(atom)) {
+    if (bond->getBondType() == Bond::BondType::DATIVE ||
+        bond->getBondType() == Bond::BondType::DATIVEONE ||
+        bond->getBondType() == Bond::BondType::DATIVEL ||
+        bond->getBondType() == Bond::BondType::DATIVER) {
+      ++numDatives;
+    }
+  }
+  return numDatives;
+}
+
+// Returns true if the atom shouldn't do dative bonds.
+bool noDative(const Atom *a) {
+  static const std::set<int> noD{1, 2, 9, 10};
+  return (noD.find(a->getAtomicNum()) != noD.end());
+};
+
+void metalBondCleanup(RWMol &mol, Atom *atom,
+                      const std::vector<unsigned int> &ranks) {
   PRECONDITION(atom, "bad atom in metalBondCleanup");
   // The IUPAC recommendation for ligand->metal coordination bonds is that they
   // be single.  This upsets the RDKit valence model, as seen in CHEBI:26355,
   // heme b.  If the valence of a non-metal atom is above the maximum in the
   // RDKit model, and there are single bonds from it to metal
   // change those bonds to atom->metal dative.
-
-  auto isMetal = [](const Atom *a) -> bool {
-    // This is the list of not metal atoms from QueryOps.cpp
-    static const std::set<int> notMetals{0,  1,  2,  5,  6,  7,  8,  9,
-                                         10, 14, 15, 16, 17, 18, 33, 34,
-                                         35, 36, 52, 53, 54, 85, 86};
-    return (notMetals.find(a->getAtomicNum()) == notMetals.end());
-  };
-  auto noDative = [](const Atom *a) -> bool {
-    static const std::set<int> noD{1, 2, 9, 10};
-    return (noD.find(a->getAtomicNum()) != noD.end());
-  };
-  if (!isMetal(atom)) {
-    return;
-  }
-  const auto &valens =
-      PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
-  if (valens.back() != -1) {
-    // the atom can only have specific valences, so leave it.
-    return;
-  }
-  for (auto bond : mol.atomBonds(atom)) {
-    auto otherAtom = bond->getOtherAtom(atom);
-    if (!isMetal(otherAtom) && !noDative(otherAtom)) {
-      auto ev = otherAtom->calcExplicitValence(false);
-      // Check the explicit valence of the non-metal against the allowed
-      // valences of the atom, adjusted by its formal charge.  This means that
-      // N+ is treated the same as C, O+ the same as N.  This allows for,
-      // for example, c1cccc[n+]1-[Fe] to be acceptable and not turned into
-      // c1cccc[n+]1->[Fe].  After all, c1cccc[n+]1-C is ok.  Although this is
-      // a poor example because c1ccccn1->[Fe] appears to be the normal
-      // way that pyridine complexes with transition metals.  Heme b in
-      // CHEBI:26355 is an example of when this is required.
-      int effAtomicNum =
-          otherAtom->getAtomicNum() - otherAtom->getFormalCharge();
-      if (effAtomicNum <= 0) {
-        continue;
+  // If the atom is bonded to more than 1 metal atom, choose the one
+  // with the fewer dative bonds incident on it, with the canonical
+  // rank of the atoms as a tie-breaker.
+  if (isHypervalentNonMetal(atom) && !noDative(atom)) {
+    std::vector<Atom *> metals;
+    // see if there are any metals bonded to it by a single bond
+    for (auto bond : mol.atomBonds(atom)) {
+      if (bond->getBondType() == Bond::BondType::SINGLE &&
+          isMetal(bond->getOtherAtom(atom))) {
+        metals.push_back(bond->getOtherAtom(atom));
       }
-      // otherAtom is a non-metal, so if its atomic number is > 2, it should
-      // obey the octet rule (2*ev <= 8).  If it doesn't, don't set the bond to
-      // dative, so the molecule is later flagged as having bad valence.
-      // [CH4]-[Na] being a case in point, line 1800 of
-      // FileParsers/file_parsers_catch.cpp.
-      const auto &otherValens =
-          PeriodicTable::getTable()->getValenceList(effAtomicNum);
-      if (otherValens.back() > 0 && ev > otherValens.back() && ev <= 4) {
+    }
+    if (!metals.empty()) {
+      std::sort(metals.begin(), metals.end(),
+                [&](const Atom *a1, const Atom *a2) -> bool {
+                  int nda1 = numDativeBonds(a1);
+                  int nda2 = numDativeBonds(a2);
+                  if (nda1 == nda2) {
+                    return ranks[a1->getIdx()] > ranks[a2->getIdx()];
+                  } else {
+                    return nda1 < nda2;
+                  }
+                });
+      auto bond =
+          mol.getBondBetweenAtoms(atom->getIdx(), metals.front()->getIdx());
+      if (bond) {
         bond->setBondType(RDKit::Bond::BondType::DATIVE);
-        bond->setBeginAtom(otherAtom);
-        bond->setEndAtom(atom);
+        bond->setBeginAtom(atom);
+        bond->setEndAtom(metals.front());
       }
     }
   }
@@ -264,8 +302,45 @@ void cleanUp(RWMol &mol) {
 }
 
 void cleanUpOrganometallics(RWMol &mol) {
-  for (auto atom : mol.atoms()) {
-    metalBondCleanup(mol, atom);
+  // At present all this does is look for single bonds between
+  // non-metals and metals where the non-metal exceeds one of
+  // its normal valence states, and replaces that bond with
+  // a dative one from the non-metal to the metal.
+  bool needsFixing = false;
+  for (const auto atom : mol.atoms()) {
+    if (isHypervalentNonMetal(atom) && !noDative(atom)) {
+      // see if there are any metals bonded to it by a single bond
+      for (auto bond : mol.atomBonds(atom)) {
+        if (bond->getBondType() == Bond::BondType::SINGLE &&
+            isMetal(bond->getOtherAtom(atom))) {
+          needsFixing = true;
+          break;
+        }
+      }
+    }
+    if (needsFixing) {
+      break;
+    }
+  }
+  if (!needsFixing) {
+    return;
+  }
+
+  mol.updatePropertyCache(false);
+  // First see if anything needs doing
+  std::vector<unsigned int> ranks(mol.getNumAtoms());
+  RDKit::Canon::rankMolAtoms(mol, ranks);
+  std::vector<std::pair<int, int>> atom_ranks;
+  for (size_t i = 0; i < ranks.size(); ++i) {
+    atom_ranks.push_back(std::make_pair(i, ranks[i]));
+  }
+  std::sort(atom_ranks.begin(), atom_ranks.end(),
+            [](const std::pair<int, int> &p1, std::pair<int, int> &p2) -> bool {
+              return p1.second < p2.second;
+            });
+  for (auto ar : atom_ranks) {
+    auto atom = mol.getAtomWithIdx(ar.first);
+    metalBondCleanup(mol, atom, ranks);
   }
 }
 
@@ -391,9 +466,9 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
     cleanUp(mol);
   }
 
+  // fix things like non-metal to metal bonds that should be dative.
   operationThatFailed = SANITIZE_CLEANUP_ORGANOMETALLICS;
   if (sanitizeOps & operationThatFailed) {
-    // clean up things like nitro groups
     cleanUpOrganometallics(mol);
   }
 
@@ -580,7 +655,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
           int ori_ridx = abs(rnbr) - 1;
           int ridx = ids[ori_ridx] + 1;
           if (rnbr < 0) {
-            ridx *= (-1);
+            ridx *= -1;
           }
           ringStereoAtomsCopied.push_back(ridx);
         }
@@ -677,12 +752,12 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         for (auto &sg : mol.getStereoGroups()) {
           std::vector<Atom *> sgats;
           for (auto sga : sg.getAtoms()) {
-            if ((*mapping)[sga->getIdx()] == frag) {
+            if ((*mapping)[sga->getIdx()] == static_cast<int>(frag)) {
               sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
             }
           }
           if (!sgats.empty()) {
-            fragsgs.push_back(StereoGroup(sg.getGroupType(), sgats));
+            fragsgs.emplace_back(sg.getGroupType(), sgats, sg.getReadId());
           }
         }
         if (!fragsgs.empty()) {
@@ -984,8 +1059,10 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   auto dummyAt = new QueryAtom(0);
   dummyAt->setQuery(makeAtomNullQuery());
 
-  unsigned int dummyIdx = mol.addAtom(dummyAt);
-  for (auto i = 0; i < mol.getNumConformers(); ++i) {
+  bool updateLabel = true;
+  bool takeOwnwership = true;
+  unsigned int dummyIdx = mol.addAtom(dummyAt, updateLabel, takeOwnwership);
+  for (auto i = 0u; i < mol.getNumConformers(); ++i) {
     auto &conf = mol.getConformer(i);
     RDGeom::Point3D dummyPos;
     for (auto ha : hapticAtoms) {
@@ -998,17 +1075,20 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   unsigned int numbonds = mol.addBond(dummyIdx, metalIdx, Bond::DATIVE);
   auto bond = mol.getBondWithIdx(numbonds - 1);
 
-  // Get the atom numbers for the end points.
+  // Get the atom numbers for the end points.  First number is the
+  // count, the rest count from 1.
   std::ostringstream oss;
+  oss << "(" << hapticAtoms.size() << " ";
   for (auto ha : hapticAtoms) {
-    oss << ha << " ";
+    oss << ha + 1 << " ";
   }
-  std::string endpts = "(" + oss.str();
+  std::string endpts{oss.str()};
   if (endpts.back() == ' ') {
     endpts = endpts.substr(0, endpts.length() - 1);
   }
   endpts += ")";
   bond->setProp(common_properties::_MolFileBondEndPts, endpts);
+  bond->setProp<std::string>(common_properties::_MolFileBondAttach, "ALL");
 }
 }  // namespace
 

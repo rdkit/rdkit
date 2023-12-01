@@ -107,6 +107,7 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
   return "";
 }
 
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 std::string draw_rxn_to_canvas_with_offset(JSReaction &self,
                                            emscripten::val canvas, int offsetx,
                                            int offsety, int width, int height) {
@@ -172,16 +173,42 @@ std::string draw_rxn_to_canvas_with_highlights(JSReaction &self,
                         : &highlightColorsReactants);
   return "";
 }
+#endif
 
 JSMol *get_mol_no_details(const std::string &input) {
   return get_mol(input, std::string());
 }
+
+#ifdef RDK_BUILD_MINIMAL_LIB_MCS
+std::string get_mcs_as_json_no_details(const JSMolList &mols) {
+  return get_mcs_as_json(mols, std::string());
+}
+
+JSMol *get_mcs_as_mol_no_details(const JSMolList &mols) {
+  return get_mcs_as_mol(mols, std::string());
+}
+
+std::string get_mcs_as_smarts_no_details(const JSMolList &mols) {
+  return get_mcs_as_smarts(mols, std::string());
+}
+#endif
 
 emscripten::val binary_string_to_uint8array(const std::string &pkl) {
   emscripten::val view(emscripten::typed_memory_view(
       pkl.size(), reinterpret_cast<const unsigned char *>(pkl.c_str())));
   auto res = emscripten::val::global("Uint8Array").new_(pkl.size());
   res.call<void>("set", view);
+  return res;
+}
+
+emscripten::val uint_vector_to_uint32array(
+    const std::vector<unsigned int> &vec) {
+  auto res = emscripten::val::global("Uint32Array").new_(vec.size());
+  if (!vec.empty()) {
+    emscripten::val view(emscripten::typed_memory_view(
+        vec.size(), reinterpret_cast<const unsigned int *>(vec.data())));
+    res.call<void>("set", view);
+  }
   return res;
 }
 
@@ -193,9 +220,11 @@ JSMol *get_mol_from_uint8array(const emscripten::val &pklAsUInt8Array) {
   return get_mol_from_pickle(pklAsUInt8Array.as<std::string>());
 }
 
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
 JSReaction *get_rxn_no_details(const std::string &input) {
   return get_rxn(input, std::string());
 }
+#endif
 
 std::string generate_aligned_coords_helper(JSMol &self,
                                            const JSMol &templateMol,
@@ -205,19 +234,6 @@ std::string generate_aligned_coords_helper(JSMol &self,
         "generate_aligned_coords expects a JSON string parameter");
   }
   return self.generate_aligned_coords(templateMol, param.as<std::string>());
-}
-
-std::string parse_morgan_fp_param(unsigned int radius, unsigned int fplen,
-                                  const std::string &funcName) {
-  static std::unordered_set<std::string> deprecationMsgShown;
-  if (deprecationMsgShown.find(funcName) == deprecationMsgShown.end()) {
-    deprecationMsgShown.insert(funcName);
-    std::cerr << funcName << "(radius, fplen) is deprecated, use " << funcName
-              << "(details) instead" << std::endl;
-  }
-  std::stringstream ss;
-  ss << "{\"radius\":" << radius << ",\"nBits\":" << fplen << "}";
-  return ss.str();
 }
 
 emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
@@ -232,14 +248,12 @@ emscripten::val get_morgan_fp_as_uint8array(const JSMol &self) {
 
 std::string parse_pattern_fp_param(const emscripten::val &param,
                                    const std::string &funcName) {
-  static std::unordered_set<std::string> deprecationMsgShown;
   std::string details;
   if (param.typeOf().as<std::string>() == "string") {
     details = param.as<std::string>();
   } else {
     throw std::runtime_error(
-        (funcName + "get_pattern_fp expects a JSON string as parameter")
-            .c_str());
+        (funcName + " expects a JSON string as parameter").c_str());
   }
   return details;
 }
@@ -300,8 +314,7 @@ emscripten::val get_maccs_fp_as_uint8array(const JSMol &self) {
 emscripten::val get_frags_helper(JSMol &self, const std::string &details) {
   auto res = self.get_frags(details);
   auto obj = emscripten::val::object();
-  auto molArray = emscripten::val::object();
-  obj.set("molIterator", res.first);
+  obj.set("molList", res.first);
   obj.set("mappings", res.second);
   return obj;
 }
@@ -309,6 +322,43 @@ emscripten::val get_frags_helper(JSMol &self, const std::string &details) {
 emscripten::val get_frags_helper(JSMol &self) {
   return get_frags_helper(self, "{}");
 }
+
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
+int add_trusted_smiles_and_pattern_fp_helper(
+    JSSubstructLibrary &self, const std::string &smi,
+    const emscripten::val &patternFpAsUInt8Array) {
+  return self.add_trusted_smiles_and_pattern_fp(
+      smi, patternFpAsUInt8Array.as<std::string>());
+}
+
+emscripten::val get_pattern_fp_as_uint8array_from_sslib(
+    const JSSubstructLibrary &self, unsigned int i) {
+  return binary_string_to_uint8array(self.get_pattern_fp(i));
+}
+
+emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self,
+                                           const JSMol &q, bool useChirality,
+                                           int numThreads, int maxResults) {
+  auto indices = self.d_sslib->size()
+                     ? self.d_sslib->getMatches(*q.d_mol, true, useChirality,
+                                                false, numThreads, maxResults)
+                     : std::vector<unsigned int>();
+  return uint_vector_to_uint32array(indices);
+}
+
+emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self,
+                                           const JSMol &q, int maxResults) {
+  return get_matches_as_uint32array(self, q, self.d_defaultUseChirality,
+                                    self.d_defaultNumThreads, maxResults);
+}
+
+emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self,
+                                           const JSMol &q) {
+  return get_matches_as_uint32array(self, q, self.d_defaultUseChirality,
+                                    self.d_defaultNumThreads,
+                                    self.d_defaultMaxResults);
+}
+#endif
 
 #ifdef RDK_BUILD_AVALON_SUPPORT
 emscripten::val get_avalon_fp_as_uint8array(const JSMol &self,
@@ -335,10 +385,16 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_cxsmiles", &JSMol::get_cxsmiles)
       .function("get_smarts", &JSMol::get_smarts)
       .function("get_cxsmarts", &JSMol::get_cxsmarts)
-      .function("get_molblock", select_overload<std::string() const>(&JSMol::get_molblock))
-      .function("get_molblock", select_overload<std::string(const std::string &) const>(&JSMol::get_molblock))
-      .function("get_v3Kmolblock", select_overload<std::string() const>(&JSMol::get_v3Kmolblock))
-      .function("get_v3Kmolblock", select_overload<std::string(const std::string &) const>(&JSMol::get_v3Kmolblock))
+      .function("get_molblock",
+                select_overload<std::string() const>(&JSMol::get_molblock))
+      .function("get_molblock",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMol::get_molblock))
+      .function("get_v3Kmolblock",
+                select_overload<std::string() const>(&JSMol::get_v3Kmolblock))
+      .function("get_v3Kmolblock",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMol::get_v3Kmolblock))
       .function("get_as_uint8array", &get_as_uint8array)
       .function("get_inchi", &JSMol::get_inchi)
       .function("get_json", &JSMol::get_json)
@@ -422,7 +478,6 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_morgan_fp",
                 select_overload<std::string(const std::string &) const>(
                     &JSMol::get_morgan_fp))
-      // DEPRECATED
       .function("get_pattern_fp",
                 select_overload<std::string() const>(&JSMol::get_pattern_fp))
       .function("get_topological_torsion_fp",
@@ -453,7 +508,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       // functionality primarily useful in ketcher
       .function("get_stereo_tags", &JSMol::get_stereo_tags)
       .function("get_aromatic_form", &JSMol::get_aromatic_form)
+      .function("convert_to_aromatic_form", &JSMol::convert_to_aromatic_form)
       .function("get_kekule_form", &JSMol::get_kekule_form)
+      .function("convert_to_kekule_form", &JSMol::convert_to_kekule_form)
       .function("set_new_coords",
                 select_overload<bool()>(&JSMol::set_new_coords))
       .function("get_new_coords",
@@ -501,14 +558,26 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("straighten_depiction",
                 select_overload<void()>(&JSMol::straighten_depiction))
       .function("straighten_depiction",
-                select_overload<void(bool)>(&JSMol::straighten_depiction));
+                select_overload<void(bool)>(&JSMol::straighten_depiction))
+      .function("get_num_atoms", select_overload<unsigned int(bool) const>(
+                                     &JSMol::get_num_atoms))
+      .function("get_num_atoms",
+                select_overload<unsigned int() const>(&JSMol::get_num_atoms))
+      .function("get_num_bonds", &JSMol::get_num_bonds)
+  ;
 
-  class_<JSMolIterator>("MolIterator")
-      .function("next", &JSMolIterator::next, allow_raw_pointers())
-      .function("reset", &JSMolIterator::reset)
-      .function("at_end", &JSMolIterator::at_end)
-      .function("size", &JSMolIterator::size);
+  class_<JSMolList>("MolList")
+      .constructor<>()
+      .function("append", &JSMolList::append)
+      .function("insert", &JSMolList::insert)
+      .function("at", &JSMolList::at, allow_raw_pointers())
+      .function("pop", &JSMolList::pop, allow_raw_pointers())
+      .function("next", &JSMolList::next, allow_raw_pointers())
+      .function("reset", &JSMolList::reset)
+      .function("at_end", &JSMolList::at_end)
+      .function("size", &JSMolList::size);
 
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
   class_<JSReaction>("Reaction")
 #ifdef __EMSCRIPTEN__
       .function("draw_to_canvas_with_offset", &draw_rxn_to_canvas_with_offset)
@@ -523,13 +592,38 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
 
       .function("get_svg_with_highlights",
                 &JSReaction::get_svg_with_highlights);
+#endif
 
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
   class_<JSSubstructLibrary>("SubstructLibrary")
       .constructor<>()
       .constructor<unsigned int>()
       .function("add_mol", &JSSubstructLibrary::add_mol)
       .function("add_smiles", &JSSubstructLibrary::add_smiles)
       .function("add_trusted_smiles", &JSSubstructLibrary::add_trusted_smiles)
+      .function("get_trusted_smiles", &JSSubstructLibrary::get_trusted_smiles)
+#ifdef __EMSCRIPTEN__
+      .function("add_trusted_smiles_and_pattern_fp",
+                select_overload<int(JSSubstructLibrary &, const std::string &,
+                                    const emscripten::val &)>(
+                    add_trusted_smiles_and_pattern_fp_helper))
+      .function("get_pattern_fp_as_uint8array",
+                select_overload<emscripten::val(const JSSubstructLibrary &,
+                                                unsigned int)>(
+                    get_pattern_fp_as_uint8array_from_sslib))
+      .function("get_matches_as_uint32array",
+                select_overload<emscripten::val(const JSSubstructLibrary &,
+                                                const JSMol &, bool, int, int)>(
+                    get_matches_as_uint32array))
+      .function("get_matches_as_uint32array",
+                select_overload<emscripten::val(const JSSubstructLibrary &,
+                                                const JSMol &, int)>(
+                    get_matches_as_uint32array))
+      .function("get_matches_as_uint32array",
+                select_overload<emscripten::val(const JSSubstructLibrary &,
+                                                const JSMol &)>(
+                    get_matches_as_uint32array))
+#endif
       .function("get_mol", &JSSubstructLibrary::get_mol, allow_raw_pointers())
       .function(
           "get_matches",
@@ -545,8 +639,18 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<unsigned int(const JSMol &, bool, int) const>(
                     &JSSubstructLibrary::count_matches))
       .function("count_matches",
+                select_overload<unsigned int(const JSMol &, bool) const>(
+                    &JSSubstructLibrary::count_matches))
+      .function("count_matches",
                 select_overload<unsigned int(const JSMol &) const>(
-                    &JSSubstructLibrary::count_matches));
+                    &JSSubstructLibrary::count_matches))
+      .function("size", &JSSubstructLibrary::size)
+#endif
+      ;
+
+  class_<JSLog>("Log")
+      .function("get_buffer", &JSLog::get_buffer)
+      .function("clear_buffer", &JSLog::clear_buffer);
 
   function("version", &version);
   function("prefer_coordgen", &prefer_coordgen);
@@ -559,6 +663,20 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
            allow_raw_pointers());
   function("get_mol_copy", &get_mol_copy, allow_raw_pointers());
   function("get_qmol", &get_qmol, allow_raw_pointers());
+  function("enable_logging", &enable_logging);
+  function("disable_logging", &disable_logging);
+  function("set_log_capture", &set_log_capture, allow_raw_pointers());
+  function("set_log_tee", &set_log_tee, allow_raw_pointers());
+#ifdef RDK_BUILD_MINIMAL_LIB_RXN
   function("get_rxn", &get_rxn, allow_raw_pointers());
   function("get_rxn", &get_rxn_no_details, allow_raw_pointers());
+#endif
+#ifdef RDK_BUILD_MINIMAL_LIB_MCS
+  function("get_mcs_as_json", &get_mcs_as_json);
+  function("get_mcs_as_json", &get_mcs_as_json_no_details);
+  function("get_mcs_as_mol", &get_mcs_as_mol, allow_raw_pointers());
+  function("get_mcs_as_mol", &get_mcs_as_mol_no_details, allow_raw_pointers());
+  function("get_mcs_as_smarts", &get_mcs_as_smarts);
+  function("get_mcs_as_smarts", &get_mcs_as_smarts_no_details);
+#endif
 }

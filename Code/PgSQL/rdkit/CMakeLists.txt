@@ -27,9 +27,6 @@ if(RDK_OPTIMIZE_POPCNT)
 endif(RDK_OPTIMIZE_POPCNT)
 
 set(EXTENSION rdkit)
-if(NOT DEFINED Boost_INCLUDE_DIRS)
-  find_package(Boost ${RDK_BOOST_VERSION} REQUIRED)
-endif(NOT DEFINED Boost_INCLUDE_DIRS)
 include_directories(${Boost_INCLUDE_DIRS})
 message("postgres: ${PostgreSQL_INCLUDE_DIRS}")
 add_definitions(-DRDK_TOOLKIT_VERSION="${RDKit_RELEASENAME}")
@@ -137,7 +134,7 @@ if(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
   set(pgRDKitLibList "${pgRDKitLibList}MolInterchange;")
 endif(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 set(pgRDKitLibList "${pgRDKitLibList}"
-    "MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
+    "GeneralizedSubstruct;MolEnumerator;TautomerQuery;MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
     "FileParsers;SmilesParse;Fingerprints;Subgraphs;Descriptors;"
     "PartialCharges;SubstructMatch;GraphMol;EigenSolvers;DataStructs;Depictor;"
     "RDGeometryLib;RDGeneral")
@@ -151,7 +148,7 @@ foreach(pgRDKitLib ${pgRDKitLibList})
   endif()
   set(pgRDKitLibs "${pgRDKitLibs}${pgRDKitLib}${pgRDKitLibSuffix}")
 endforeach()
-target_link_libraries(${EXTENSION}${EXTENSION_SUFFIX} ${pgRDKitLibs})
+target_link_libraries(${EXTENSION}${EXTENSION_SUFFIX} ${pgRDKitLibs} rdkit_base)
 if(RDK_BUILD_THREADSAFE_SSS)
   target_link_libraries(${EXTENSION}${EXTENSION_SUFFIX} ${RDKit_THREAD_LIBS})
 endif(RDK_BUILD_THREADSAFE_SSS)
@@ -230,7 +227,7 @@ endif()
 set(testPgSQLBody "cd \"${PG_CURRENT_BINARY_DIR}\"\n"
     "\"${PGREGRESS_BINARY}\" --inputdir=sql "
     "${PGREGRESS_BINDIR_SWITCH} rdkit-91 "
-    "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction fmcs"
+    "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction fmcs query xqm"
     " ${avalonRegress} ${inchiRegress} ${jsonRegress}\n")
 file(STRINGS ${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control
     PG_EXTVERSION LIMIT_COUNT 1 REGEX default_version)
@@ -244,30 +241,33 @@ if(MSVC)
     set(PG_RDKIT_LIB_SRC "${CMAKE_BUILD_TYPE}\\${PG_RDKIT_LIB_SRC}")
   endif(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
 endif(MSVC)
-if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
-    set(RDKIT_PG_BFP_GIST_FETCH "")
-else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
-    set(RDKIT_PG_BFP_GIST_FETCH "FUNCTION    9   gbfp_fetch (internal),")
-endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
 
-if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
-  set(RDKIT_RDK_GIN_BFP_TRICONSISTENT "")
-else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
-  set(RDKIT_GIN_BFP_TRICONSISTENT "FUNCTION    6   gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal),")
-endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
+if(RDK_PGSQL_MOL_GIST_SORTSUPPORT AND ${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 14.0)
+  set(RDKIT_PG_MOL_GIST_SORTSUPPORT "FUNCTION    11   gmol_sortsupport (internal),")
+else()
+  set(RDKIT_PG_MOL_GIST_SORTSUPPORT "")
+endif()
 
-if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
-    set(RDKIT_PARALLEL_SAFE "")
-else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
-    set(RDKIT_PARALLEL_SAFE "PARALLEL SAFE")
-endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
+if(RDK_PGSQL_QMOL_GIST_SORTSUPPORT AND ${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 14.0)
+  set(RDKIT_PG_QMOL_GIST_SORTSUPPORT "FUNCTION    11   gmol_sortsupport (internal),")
+else()
+  set(RDKIT_PG_QMOL_GIST_SORTSUPPORT "")
+endif()
 
+if(RDK_PGSQL_BFP_GIST_SORTSUPPORT AND ${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 14.0)
+  set(RDKIT_PG_BFP_GIST_SORTSUPPORT "FUNCTION    11   gbfp_sortsupport (internal),")
+else()
+  set(RDKIT_PG_BFP_GIST_SORTSUPPORT "")
+endif()
 
 configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
                "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
 file(GLOB files "update_sql/*.in")
 foreach(file ${files})
   string(REPLACE ".in" "" output_name ${file})
+  if(MSVC)
+    string(REGEX REPLACE "/" ${REGEX_SEPARATOR} output_name ${output_name})
+  endif()
   string(REPLACE "${PG_CURRENT_SOURCE_DIR}" "${PG_CURRENT_BINARY_DIR}" output_name ${output_name})
   configure_file(${file} ${output_name})
 endforeach()

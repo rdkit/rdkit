@@ -30,7 +30,6 @@ class MolDraw2D;
 namespace MolDraw2D_detail {
 
 class AtomSymbol {
-
  public:
   virtual ~AtomSymbol() = default;
 
@@ -82,6 +81,6 @@ class AtomSymbol {
 };
 
 }  // namespace MolDraw2D_detail
-} // namespace RDKit
+}  // namespace RDKit
 
 #endif  // RDKIT_ATOMSYMBOL_H

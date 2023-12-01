@@ -1,11 +1,11 @@
-from rdkit import RDConfig
-import sys, os
-from time import sleep
-from multiprocessing import Process, Value
+import os
+import sys
 import unittest
-from rdkit import Chem
-from rdkit.Chem import ChemicalForceFields
-from rdkit.Chem import rdMolTransforms
+from multiprocessing import Process, Value
+from time import sleep
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import ChemicalForceFields, rdMolTransforms
 
 
 class OptSafe:

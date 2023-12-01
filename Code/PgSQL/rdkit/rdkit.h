@@ -39,6 +39,19 @@ extern "C" {
 #endif
 
 #include <postgres.h>
+#ifdef PG_VERSION_NUM
+#if PG_VERSION_NUM >= 160000
+#include <varatt.h>
+#ifndef Abs
+#define Abs(x)  ((x) >= 0 ? (x) : -(x))
+#endif
+#endif
+#endif
+
+#define RDKIT_FREE_IF_COPY_P(ptrsrc, ptrori)                   \
+  do {                                                         \
+    if ((Pointer)(ptrsrc) != (Pointer)(ptrori)) pfree(ptrsrc); \
+  } while (0)
 
 typedef bytea Mol;
 
@@ -49,6 +62,13 @@ typedef bytea Mol;
 #define PG_GETARG_MOL_P(x) DatumGetMolP(PG_GETARG_DATUM(x))
 #define PG_GETARG_MOL_P_COPY(x) DatumGetMolPCopy(PG_GETARG_DATUM(x))
 #define PG_RETURN_MOL_P(x) PG_RETURN_DATUM(MolPGetDatum(x))
+
+#define DatumGetXQMolP(x) ((XQMol *)PG_DETOAST_DATUM(x))
+#define DatumGetXQMolPCopy(x) ((XQMol *)PG_DETOAST_DATUM_COPY(x))
+#define XQMolPGetDatum(x) (PointerGetDatum(x))
+#define PG_GETARG_XQMOL_P(x) DatumGetXQMolP(PG_GETARG_DATUM(x))
+#define PG_GETARG_XQMOL_P_COPY(x) DatumGetXQMolPCopy(PG_GETARG_DATUM(x))
+#define PG_RETURN_XQMOL_P(x) PG_RETURN_DATUM(XQMolPGetDatum(x))
 
 typedef bytea Bfp;
 
@@ -98,11 +118,13 @@ void freeCROMol(CROMol data);
 
 CROMol constructROMol(Mol *data);
 Mol *deconstructROMol(CROMol data);
+Mol *deconstructROMolWithQueryProperties(CROMol data);
 
 CROMol parseMolBlob(char *data, int len);
 char *makeMolBlob(CROMol data, int *len);
 /* sanitize argument is only used if asSmarts and asQuery are false */
-CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail, bool asQuery, bool sanitize);
+CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail, bool asQuery,
+                    bool sanitize);
 CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
                     bool asQuery);
 char *makeMolText(CROMol data, int *len, bool asSmarts, bool cxSmiles);
@@ -118,7 +140,7 @@ bool isValidMolBlob(char *data, int len);
 
 int molcmp(CROMol i, CROMol a);
 
-int MolSubstruct(CROMol i, CROMol a, bool useChirality);
+int MolSubstruct(CROMol i, CROMol a, bool useChirality, bool useMatchers);
 int MolSubstructCount(CROMol i, CROMol a, bool uniquify, bool useChirality);
 
 bytea *makeMolSignature(CROMol data);
@@ -177,6 +199,23 @@ CROMol MolMurckoScaffold(CROMol i);
 CROMol MolAdjustQueryProperties(CROMol m, const char *params);
 char *MolGetSVG(CROMol i, unsigned int w, unsigned int h, const char *legend,
                 const char *params);
+
+/* XQMols */
+typedef bytea XQMol;
+typedef void *CXQMol;
+void freeCXQMol(CXQMol data);
+
+CXQMol constructXQMol(XQMol *data);
+XQMol *deconstructXQMol(CXQMol data);
+
+CXQMol parseXQMolBlob(char *data, int len);
+char *makeXQMolBlob(CXQMol data, int *len);
+CXQMol parseXQMolText(char *data);
+char *makeXQMolText(CXQMol data, int *len);
+CXQMol MolToXQMol(CROMol m, bool doEnumeration, bool doTautomers,
+                  bool adjustQueryProperties, const char *params);
+
+int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality, bool useMatchers);
 
 /* ExplicitBitVect */
 typedef void *CBfp;

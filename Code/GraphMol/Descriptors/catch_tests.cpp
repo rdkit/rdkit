@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -49,7 +49,7 @@ TEST_CASE("Kier kappa2", "[2D]") {
       std::unique_ptr<ROMol> m(SmilesToMol(pr.first));
       REQUIRE(m);
       auto k2 = Descriptors::calcKappa2(*m);
-      CHECK(k2 == Approx(pr.second).epsilon(0.01));
+      CHECK(k2 == Catch::Approx(pr.second).epsilon(0.01));
     }
   }
 }
@@ -110,7 +110,7 @@ TEST_CASE("Kier Phi", "[2D]") {
       std::unique_ptr<ROMol> m(SmilesToMol(pr.first));
       REQUIRE(m);
       auto val = Descriptors::calcPhi(*m);
-      CHECK(val == Approx(pr.second).epsilon(0.01));
+      CHECK(val == Catch::Approx(pr.second).epsilon(0.01));
     }
   }
 }
@@ -259,7 +259,7 @@ TEST_CASE("Oxidation numbers") {
       std::vector<std::string> smis{"CO", "C=O", "C(=O)O", "S(=O)(=O)(O)O"};
       std::vector<std::vector<int>> expected{
           {-2, -2}, {0, -2}, {2, -2, -2}, {6, -2, -2, -2, -2}};
-      for (auto i = 0; i < smis.size(); ++i) {
+      for (auto i = 0u; i < smis.size(); ++i) {
         std::unique_ptr<RWMol> mol(RDKit::SmilesToMol(smis[i]));
         Descriptors::calcOxidationNumbers(*mol);
         for (const auto &a : mol->atoms()) {
@@ -274,7 +274,7 @@ TEST_CASE("Oxidation numbers") {
       std::string file1 =
           rdbase + "/Code/GraphMol/MolStandardize/test_data/ferrocene.mol";
       std::vector<int> expected{-2, -1, -1, -1, -1, -2, -1,
-                                -1, -1, -1, 2,  1,  1};
+                                -1, -1, -1, 2,  0,  0};
       bool takeOwnership = true;
       SDMolSupplier mol_supplier(file1, takeOwnership);
       std::unique_ptr<ROMol> m1(mol_supplier.next());
@@ -295,12 +295,35 @@ TEST_CASE("Oxidation numbers") {
       RWMol m2(*m1);
       RDKit::MolOps::Kekulize(m2);
       std::vector<unsigned int> ats{0, 5, 10, 13, 14, 19, 20, 21, 42, 43, 44};
-      std::vector<int> expected{-2, -2, 2, 4, 4, 2, -2, -2, -1, 0, -1};
+      std::vector<int> expected{-2, -2, 2, 3, 3, 2, -1, -1, -1, 0, -1};
       Descriptors::calcOxidationNumbers(m2);
       for (unsigned int i = 0; i < ats.size(); ++i) {
         auto a = m2.getAtomWithIdx(ats[i]);
         CHECK(a->getProp<int>(common_properties::OxidationNumber) ==
               expected[i]);
+      }
+    }
+    {
+      std::string file3 =
+          rdbase + "/Code/GraphMol/MolStandardize/test_data/MOL_00104.mol";
+      bool takeOwnership = true;
+      SDMolSupplier mol_supplier(file3, takeOwnership);
+      std::unique_ptr<ROMol> m1(mol_supplier.next());
+      REQUIRE(m1);
+      RWMol m2(*m1);
+      RDKit::MolOps::Kekulize(m2);
+      std::vector<int> expected{-3, -1, -2, 0, 2, -3, -1, -2, 0, -1, -1, 2};
+      Descriptors::calcOxidationNumbers(m2);
+      for (auto &a : m2.atoms()) {
+        CHECK(a->getProp<int>(common_properties::OxidationNumber) ==
+              expected[a->getIdx()]);
+      }
+      RDKit::MolOps::hapticBondsToDative(m2);
+      Descriptors::calcOxidationNumbers(m2);
+      std::vector<int> expectedNoDummies{-3, -1, -2, 2, -3, -1, -2, -1, -1, 2};
+      for (auto &a : m2.atoms()) {
+        CHECK(a->getProp<int>(common_properties::OxidationNumber) ==
+              expectedNoDummies[a->getIdx()]);
       }
     }
   }

@@ -34,10 +34,12 @@ from rdkit import Chem
 from rdkit.Chem.Fraggle import FraggleSim
 
 if __name__ == '__main__':
-  import sys, re
+  import re
+  import sys
   if (len(sys.argv) >= 2):
     print(
-      "Program to run the first part of Fraggle. Program splits the molecule\nready for the search\n")
+      "Program to run the first part of Fraggle. Program splits the molecule\nready for the search\n"
+    )
     print("USAGE: ./fraggle.py <file_of_smiles")
     print("Format of smiles file: SMILES ID (space or comma separated)")
     print("Output: whole mol smiles,ID,fraggle split smiles\n")

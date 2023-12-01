@@ -270,6 +270,9 @@ namespace details {
 //! not recommended for use in other code
 RDKIT_CHEMTRANSFORMS_EXPORT void updateSubMolConfs(
     const ROMol &mol, RWMol &res, boost::dynamic_bitset<> &removedAtoms);
+RDKIT_CHEMTRANSFORMS_EXPORT void copyStereoGroups(
+    const std::map<const Atom *, Atom *> &molAtomMap, const ROMol &mol,
+    RWMol &newMol);
 }  // namespace details
 
 }  // namespace RDKit

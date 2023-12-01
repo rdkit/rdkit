@@ -47,12 +47,12 @@ extern "C" {
  * that would be otherwise required to some queries to process the same
  * argument values multiple times (for example repeatedly unpickling the
  * same RDKit molecule).
- * 
+ *
  * This cache mechanism also provides the functions code with a high level
  * API that encapsulates the details of the conversion from the toasted
  * PostgreSQL Datum and the different representations of the supported
  * value types.
- * 
+ *
  * A cache instance is associated with a memory context where the
  * cached values are allocated, and it's therefore automatically cleared
  * when the same context is reset or destroyed. For this reason the client
@@ -66,6 +66,9 @@ struct MemoryContextData; /* forward declaration to prevent conflicts with C++
 
 void *searchMolCache(void *cache, struct MemoryContextData *ctx, Datum a,
                      Mol **m, CROMol *mol, bytea **sign);
+
+void *searchXQMolCache(void *cache, struct MemoryContextData *ctx, Datum a,
+                     XQMol **m, CXQMol *mol, bytea **sign);
 
 void *searchBfpCache(void *cache, struct MemoryContextData *ctx, Datum a,
                      Bfp **f, CBfp *fp, BfpSignature **sign);

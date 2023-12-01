@@ -8,12 +8,12 @@
 #  of the RDKit source tree.
 #
 
-
 import math
 import sys
 import time
 
 import numpy
+
 import rdkit.DistanceGeometry as DG
 from rdkit import Chem
 from rdkit import RDLogger as logging
@@ -121,8 +121,8 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
   maxVal *= scaleFact
 
   replaceIdx = bounds.shape[0]
-  enhanceSize: int = int(bool(useDirs)) # Whether to increase the size of the bounds matrix by one
-  bm = numpy.zeros((bounds.shape[0] + 1 + enhanceSize, bounds.shape[1] + 1 + enhanceSize), 
+  enhanceSize: int = int(bool(useDirs))  # Whether to increase the size of the bounds matrix by one
+  bm = numpy.zeros((bounds.shape[0] + 1 + enhanceSize, bounds.shape[1] + 1 + enhanceSize),
                    dtype=numpy.float64)
   bm[:bounds.shape[0], :bounds.shape[1]] = bounds
   bm[:replaceIdx, replaceIdx] = 1000.
@@ -138,8 +138,8 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
     bm[replaceIdx, idx1] = minVal
     if useDirs:
       # set the point - direction point bounds:
-      bm[idx1, replaceIdx + 1] = numpy.sqrt(bm[replaceIdx, replaceIdx + 1] ** 2 + maxVal ** 2)
-      bm[replaceIdx + 1, idx1] = numpy.sqrt(bm[replaceIdx + 1, replaceIdx] ** 2 + minVal ** 2)
+      bm[idx1, replaceIdx + 1] = numpy.sqrt(bm[replaceIdx, replaceIdx + 1]**2 + maxVal**2)
+      bm[replaceIdx + 1, idx1] = numpy.sqrt(bm[replaceIdx + 1, replaceIdx]**2 + minVal**2)
   return bm, replaceIdx
 
 
@@ -172,7 +172,7 @@ def EmbedMol(mol, bm, atomMatch=None, weight=2.0, randomSeed=-1, excludedVolumes
   if atomMatch:
     atomMatchSize = len(atomMatch)
     weights = [(i, j, weight) for i in range(atomMatchSize) for j in range(i + 1, atomMatchSize)]
-        
+
   if excludedVolumes:
     for vol in excludedVolumes:
       idx = vol.index
@@ -539,14 +539,14 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
 
   weights = []
   if atomMatches:
-    weights = [(i, j) for k in range(len(atomMatches)) for i in atomMatches[k] 
+    weights = [(i, j) for k in range(len(atomMatches)) for i in atomMatches[k]
                for l in range(k + 1, len(atomMatches)) for j in atomMatches[l]]
 
   for i, j in weights:
     if j < i:
       i, j = j, i
     ff.AddDistanceConstraint(i, j, bm[j, i], bm[i, j], forceConstant)
-    
+
   if excludedVolumes:
     nAts = mol.GetNumAtoms()
     conf = mol.GetConformer()
@@ -555,19 +555,21 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
       assert exVol.pos is not None
       logger.debug(f'ff.AddExtraPoint({exVol.pos[0]:.4f},{exVol.pos[1]:.4f},{exVol.pos[2]:.4f}')
       ff.AddExtraPoint(exVol.pos[0], exVol.pos[1], exVol.pos[2], True)
-      
+
       indices = []
       for localIndices, _, _ in exVol.featInfo:
         indices.extend(list(localIndices))
       indicesSet = set(indices)
       del indices
-      
+
       for i in range(nAts):
         v = numpy.array(conf.GetAtomPosition(i)) - numpy.array(exVol.pos)
         d = numpy.sqrt(numpy.dot(v, v))
         if i not in indicesSet:
           if d < 5.0:
-            logger.debug(f'ff.AddDistanceConstraint({i},{idx},{exVol.exclusionDist:.3f},1000,{forceConstant:.0f})')
+            logger.debug(
+              f'ff.AddDistanceConstraint({i},{idx},{exVol.exclusionDist:.3f},1000,{forceConstant:.0f})'
+            )
             ff.AddDistanceConstraint(i, idx, exVol.exclusionDist, 1000, forceConstant)
 
         else:
@@ -575,7 +577,7 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
                        f'{bm[i, exVol.index]:.3f},{forceConstant:.0f})')
           ff.AddDistanceConstraint(i, idx, bm[exVol.index, i], bm[i, exVol.index], forceConstant)
       idx += 1
-  
+
   ff.Initialize()
   e1 = ff.CalcEnergy()
   if isNaN(e1):
@@ -586,13 +588,13 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
       pos = ff.GetExtraPointPos(i)
       print('   % 7.4f   % 7.4f   % 7.4f As  0  0  0  0  0  0  0  0  0  0  0  0' % tuple(pos),
             file=sys.stderr)
-      
+
   needsMore = ff.Minimize()
   nPasses = 0
   while needsMore and nPasses < maxPasses:
     needsMore = ff.Minimize()
     nPasses += 1
-  
+
   e2 = ff.CalcEnergy()
   if isNaN(e2):
     raise ValueError('bogus energy')
@@ -654,7 +656,7 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
       e2s.append(e2)
 
       d12s.append(e1 - e2)
-      
+
       t1 = time.perf_counter()
       try:
         e3, e4 = OptimizeMol(m, bm)
@@ -913,13 +915,13 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
   """
   nPts = bm.shape[0]
   if len(indices) == 0:
-      return numpy.zeros(shape=tuple([0] * len(bm.shape)), dtype=bm.dtype)
+    return numpy.zeros(shape=tuple([0] * len(bm.shape)), dtype=bm.dtype)
   indicesSet = list(set(indices))
   maskMatrix = numpy.zeros(nPts, dtype=numpy.uint8)
   maskMatrix[indicesSet] = 1
   for idx in indicesSet:
     maskMatrix[numpy.nonzero(bm[idx, idx + 1:] < maxThresh)[0] + (idx + 1)] = 1
-  
+
   keep = numpy.nonzero(maskMatrix)[0]
   if keep.shape[0] == nPts:
     return bm.copy()
@@ -1015,7 +1017,7 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
             idx0, idx1 = atomMatch[l][0], atomMatch[k][0]
           else:
             idx0, idx1 = atomMatch[k][0], atomMatch[l][0]
-          
+
           if bounds[idx1, idx0] >= pcophore.getUpperBound(k, l) or \
             bounds[idx0, idx1] <= pcophore.getLowerBound(k, l):
             if verbose:
@@ -1180,7 +1182,7 @@ def GetAllPharmacophoreMatches(matches, bounds, pcophore, useDownsampling=0, pro
         print('pre update:')
         for row in bm:
           print(' ', ' '.join(['% 4.2f' % x for x in row]))
-          
+
       bm = UpdatePharmacophoreBounds(bounds.copy(), atomMatch, pcophore)
       if verbose:
         print('pre downsample:')
@@ -1265,8 +1267,7 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     return 0.0
 
   nbrs = center.GetNeighbors()
-  nbrRanks = [(int(nbr.GetProp('_CIPRank')), conf.GetAtomPosition(nbr.GetIdx())) 
-              for nbr in nbrs]
+  nbrRanks = [(int(nbr.GetProp('_CIPRank')), conf.GetAtomPosition(nbr.GetIdx())) for nbr in nbrs]
 
   # if we only have three neighbors (i.e. the determining H isn't present)
   # then use the central atom as the fourth point:

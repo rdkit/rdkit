@@ -7,9 +7,10 @@ which is included in the file license.txt, found at the root
 of the RDKit source tree.
 """
 
+import unittest
+
 from rdkit import Chem
 from rdkit.Chem import rdMHFPFingerprint
-import unittest
 
 
 class TestCase(unittest.TestCase):

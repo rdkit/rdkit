@@ -8,7 +8,7 @@ from rdkit.VLib.Supply import SupplyNode
 
 
 class SDSupplyNode(SupplyNode):
-    """ SD supplier
+  """ SD supplier
 
     Sample Usage:
       >>> import os
@@ -31,20 +31,20 @@ class SDSupplyNode(SupplyNode):
 
     """
 
-    def __init__(self, fileName, **kwargs):
-        SupplyNode.__init__(self, **kwargs)
-        self._fileName = fileName
-        self._supplier = Chem.SDMolSupplier(self._fileName)
+  def __init__(self, fileName, **kwargs):
+    SupplyNode.__init__(self, **kwargs)
+    self._fileName = fileName
+    self._supplier = Chem.SDMolSupplier(self._fileName)
 
-    def reset(self):
-        SupplyNode.reset(self)
-        self._supplier.reset()
+  def reset(self):
+    SupplyNode.reset(self)
+    self._supplier.reset()
 
-    def next(self):
+  def next(self):
+    """
+
         """
-
-        """
-        return next(self._supplier)
+    return next(self._supplier)
 
 
 SDSupplyNode.__next__ = SDSupplyNode.next
@@ -55,11 +55,11 @@ SDSupplyNode.__next__ = SDSupplyNode.next
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
-    import doctest
-    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-    sys.exit(failed)
+  import doctest
+  import sys
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+  sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-    _runDoctests()
+  _runDoctests()

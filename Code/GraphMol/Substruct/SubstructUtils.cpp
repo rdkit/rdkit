@@ -42,13 +42,12 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
         d_minIdx(-1),
         d_isSorted(false) {
     PRECONDITION(!matches.empty(), "matches must not be empty");
-    for (unsigned int i = 0; i < d_mol.getNumAtoms(); ++i) {
-      d_sumIndices += static_cast<double>(i);
-    }
+    auto na = d_mol.getNumAtoms();
+    d_sumIndices = static_cast<double>(na * (na + 1) / 2);
     unsigned int i = 0;
     d_matchIdxVsScore.reserve(d_matches.size());
     for (const auto &match : d_matches) {
-      d_matchIdxVsScore.emplace_back(std::make_pair(i++, computeScore(match)));
+      d_matchIdxVsScore.emplace_back(i++, computeScore(match));
     }
   }
   const RDKit::MatchVectType &getMostSubstitutedCoreMatch() {
@@ -79,8 +78,8 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
   bool doesRGroupMatchHydrogen(const std::pair<int, int> &pair) const {
     const auto queryAtom = d_query.getAtomWithIdx(pair.first);
     const auto molAtom = d_mol.getAtomWithIdx(pair.second);
-    return (queryAtom->getAtomicNum() == 0 && queryAtom->getDegree() == 1 &&
-            molAtom->getAtomicNum() == 1);
+    return (molAtom->getAtomicNum() == 1 &&
+            isAtomTerminalRGroupOrQueryHydrogen(queryAtom));
   }
   double computeScore(const RDKit::MatchVectType &match) const {
     double penalty = 0.0;
@@ -104,6 +103,28 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
 };
 }  // namespace detail
 
+bool propertyCompat(const RDProps *r1, const RDProps *r2,
+                    const std::vector<std::string> &properties) {
+  PRECONDITION(r1, "bad RDProps");
+  PRECONDITION(r2, "bad RDProps");
+
+  for (const auto &prop : properties) {
+    std::string prop1;
+    bool hasprop1 = r1->getPropIfPresent<std::string>(prop, prop1);
+    std::string prop2;
+    bool hasprop2 = r2->getPropIfPresent<std::string>(prop, prop2);
+    if (hasprop1 && hasprop2) {
+      if (prop1 != prop2) {
+        return false;
+      }
+    } else if (hasprop1 || hasprop2) {
+      // only one has the property
+      return false;
+    }
+  }
+  return true;
+}
+
 bool atomCompat(const Atom *a1, const Atom *a2,
                 const SubstructMatchParameters &ps) {
   PRECONDITION(a1, "bad atom");
@@ -117,6 +138,10 @@ bool atomCompat(const Atom *a1, const Atom *a2,
   } else {
     res = a1->Match(a2);
   }
+  if (res && !ps.atomProperties.empty()) {
+    res = propertyCompat(a1, a2, ps.atomProperties);
+  }
+
   return res;
 }
 
@@ -163,6 +188,9 @@ bool bondCompat(const Bond *b1, const Bond *b2,
         !b1->getEndAtom()->Match(b2->getEndAtom())) {
       res = false;
     }
+  }
+  if (res && !ps.bondProperties.empty()) {
+    res = propertyCompat(b1, b2, ps.bondProperties);
   }
   // std::cerr << "\t\tbondCompat: " << b1->getIdx() << "-" << b2->getIdx() <<
   // ":"
@@ -217,7 +245,16 @@ std::vector<MatchVectType> sortMatchesByDegreeOfCoreSubstitution(
   return matchScorer.sortMatchesByDegreeOfCoreSubstitution();
 }
 
+bool isAtomTerminalRGroupOrQueryHydrogen(const Atom *atom) {
+  return atom->getDegree() == 1 &&
+         (atom->getAtomicNum() == 0 ||
+          (atom->hasQuery() &&
+           describeQuery(atom).find("AtomAtomicNum 1 = val") !=
+               std::string::npos));
+}
+
 #define PT_OPT_GET(opt) params.opt = pt.get(#opt, params.opt)
+#define PT_OPT_PUT(opt) pt.put(#opt, params.opt);
 
 void updateSubstructMatchParamsFromJSON(SubstructMatchParameters &params,
                                         const std::string &json) {
@@ -235,7 +272,26 @@ void updateSubstructMatchParamsFromJSON(SubstructMatchParameters &params,
   PT_OPT_GET(recursionPossible);
   PT_OPT_GET(uniquify);
   PT_OPT_GET(maxMatches);
+  PT_OPT_GET(maxRecursiveMatches);
   PT_OPT_GET(numThreads);
+}
+
+std::string substructMatchParamsToJSON(const SubstructMatchParameters &params) {
+  boost::property_tree::ptree pt;
+
+  PT_OPT_PUT(useChirality);
+  PT_OPT_PUT(useEnhancedStereo);
+  PT_OPT_PUT(aromaticMatchesConjugated);
+  PT_OPT_PUT(useQueryQueryMatches);
+  PT_OPT_PUT(recursionPossible);
+  PT_OPT_PUT(uniquify);
+  PT_OPT_PUT(maxMatches);
+  PT_OPT_PUT(maxRecursiveMatches);
+  PT_OPT_PUT(numThreads);
+
+  std::stringstream ss;
+  boost::property_tree::json_parser::write_json(ss, pt);
+  return ss.str();
 }
 
 }  // namespace RDKit

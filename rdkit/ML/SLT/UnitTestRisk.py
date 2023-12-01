@@ -5,10 +5,12 @@
 
 """
 
-import unittest
-from rdkit.ML.SLT import Risk
 import math
+import unittest
+
 import numpy
+
+from rdkit.ML.SLT import Risk
 
 
 class TestCase(unittest.TestCase):

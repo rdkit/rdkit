@@ -40,59 +40,59 @@ from rdkit.Chem.rdmolfiles import SDMolSupplier, SmilesMolSupplier
 
 
 class InputFormat:
-    SMARTS = 'smarts'
-    MOL = 'mol'
-    SMILES = 'smiles'
+  SMARTS = 'smarts'
+  MOL = 'mol'
+  SMILES = 'smiles'
 
 
 def _smartsFromSmartsLine(line):
-    """
+  """
     Converts given line into a molecule using 'Chem.MolFromSmarts'.
     """
-    # Name the regular expression (better than inlining it)
-    whitespace = re.compile(r'[\t ]+')
-    # Reflects the specialisation of this method to read the rather unusual
-    # SMARTS files with the // comments.
-    line = line.strip().split('//')[0]
-    if line:
-        smarts = whitespace.split(line)
-        salt = Chem.MolFromSmarts(smarts[0])
-        if salt is None:
-            raise ValueError(line)
-        return salt
+  # Name the regular expression (better than inlining it)
+  whitespace = re.compile(r'[\t ]+')
+  # Reflects the specialisation of this method to read the rather unusual
+  # SMARTS files with the // comments.
+  line = line.strip().split('//')[0]
+  if line:
+    smarts = whitespace.split(line)
+    salt = Chem.MolFromSmarts(smarts[0])
+    if salt is None:
+      raise ValueError(line)
+    return salt
 
 
 def _getSmartsSaltsFromStream(stream):
-    """
+  """
     Yields extracted SMARTS salts from given stream.
     """
-    with closing(stream) as lines:
-        for line in lines:
-            smarts = _smartsFromSmartsLine(line)
-            if smarts:
-                yield smarts
+  with closing(stream) as lines:
+    for line in lines:
+      smarts = _smartsFromSmartsLine(line)
+      if smarts:
+        yield smarts
 
 
 def _getSmartsSaltsFromFile(filename):
-    """
+  """
     Extracts SMARTS salts from given file object.
     """
-    return _getSmartsSaltsFromStream(open(filename, 'r'))
+  return _getSmartsSaltsFromStream(open(filename, 'r'))
 
 
 class SaltRemover(object):
-    defnFilename = os.path.join(RDConfig.RDDataDir, 'Salts.txt')
+  defnFilename = os.path.join(RDConfig.RDDataDir, 'Salts.txt')
 
-    def __init__(self, defnFilename=None, defnData=None, defnFormat=InputFormat.SMARTS):
-        if defnFilename:
-            self.defnFilename = defnFilename
-        self.defnData = defnData
-        self.salts = None
-        self.defnFormat = defnFormat
-        self._initPatterns()
+  def __init__(self, defnFilename=None, defnData=None, defnFormat=InputFormat.SMARTS):
+    if defnFilename:
+      self.defnFilename = defnFilename
+    self.defnData = defnData
+    self.salts = None
+    self.defnFormat = defnFormat
+    self._initPatterns()
 
-    def _initPatterns(self):
-        """
+  def _initPatterns(self):
+    """
 
         >>> remover = SaltRemover()
         >>> len(remover.salts)>0
@@ -116,34 +116,34 @@ class SaltRemover(object):
 
         >>> RDLogger.EnableLog('rdApp.error')
         """
-        if self.defnData:
-            from io import StringIO
-            inF = StringIO(self.defnData)
-            with closing(inF):
-                self.salts = []
-                for line in inF:
-                    if line:
-                        if self.defnFormat == InputFormat.SMARTS:
-                            salt = _smartsFromSmartsLine(line)
-                        elif self.defnFormat == InputFormat.SMILES:
-                            salt = Chem.MolFromSmiles(line)
-                        else:
-                            raise ValueError('Unsupported format for supplier.')
-                        if salt is None:
-                            raise ValueError(line)
-                        self.salts.append(salt)
-        else:
+    if self.defnData:
+      from io import StringIO
+      inF = StringIO(self.defnData)
+      with closing(inF):
+        self.salts = []
+        for line in inF:
+          if line:
             if self.defnFormat == InputFormat.SMARTS:
-                self.salts = [mol for mol in _getSmartsSaltsFromFile(self.defnFilename)]
-            elif self.defnFormat == InputFormat.MOL:
-                self.salts = [mol for mol in SDMolSupplier(self.defnFilename)]
+              salt = _smartsFromSmartsLine(line)
             elif self.defnFormat == InputFormat.SMILES:
-                self.salts = [mol for mol in SmilesMolSupplier(self.defnFilename)]
+              salt = Chem.MolFromSmiles(line)
             else:
-                raise ValueError('Unsupported format for supplier.')
+              raise ValueError('Unsupported format for supplier.')
+            if salt is None:
+              raise ValueError(line)
+            self.salts.append(salt)
+    else:
+      if self.defnFormat == InputFormat.SMARTS:
+        self.salts = [mol for mol in _getSmartsSaltsFromFile(self.defnFilename)]
+      elif self.defnFormat == InputFormat.MOL:
+        self.salts = [mol for mol in SDMolSupplier(self.defnFilename)]
+      elif self.defnFormat == InputFormat.SMILES:
+        self.salts = [mol for mol in SmilesMolSupplier(self.defnFilename)]
+      else:
+        raise ValueError('Unsupported format for supplier.')
 
-    def StripMol(self, mol, dontRemoveEverything=False, sanitize=True):
-        """
+  def StripMol(self, mol, dontRemoveEverything=False, sanitize=True):
+    """
 
         >>> remover = SaltRemover(defnData="[Cl,Br]")
         >>> len(remover.salts)
@@ -208,11 +208,11 @@ class SaltRemover(object):
         2
 
         """
-        strippedMol = self._StripMol(mol, dontRemoveEverything, sanitize)
-        return strippedMol.mol
+    strippedMol = self._StripMol(mol, dontRemoveEverything, sanitize)
+    return strippedMol.mol
 
-    def StripMolWithDeleted(self, mol, dontRemoveEverything=False):
-        """
+  def StripMolWithDeleted(self, mol, dontRemoveEverything=False):
+    """
         Strips given molecule and returns it, with the fragments which have been deleted.
 
         >>> remover = SaltRemover(defnData="[Cl,Br]")
@@ -251,48 +251,48 @@ class SaltRemover(object):
         >>> Chem.MolToSmarts(deleted[0])
         '[Cl,Br]'
         """
-        return self._StripMol(mol, dontRemoveEverything)
+    return self._StripMol(mol, dontRemoveEverything)
 
-    def _StripMol(self, mol, dontRemoveEverything=False, sanitize=True):
+  def _StripMol(self, mol, dontRemoveEverything=False, sanitize=True):
 
-        def _applyPattern(m, salt, notEverything):
-            nAts = m.GetNumAtoms()
-            if not nAts:
-                return m
-            res = m
+    def _applyPattern(m, salt, notEverything):
+      nAts = m.GetNumAtoms()
+      if not nAts:
+        return m
+      res = m
 
-            t = Chem.DeleteSubstructs(res, salt, True)
-            if not t or (notEverything and t.GetNumAtoms() == 0):
-                return res
-            res = t
-            while res.GetNumAtoms() and nAts > res.GetNumAtoms():
-                nAts = res.GetNumAtoms()
-                t = Chem.DeleteSubstructs(res, salt, True)
-                if notEverything and t.GetNumAtoms() == 0:
-                    break
-                res = t
-            return res
+      t = Chem.DeleteSubstructs(res, salt, True)
+      if not t or (notEverything and t.GetNumAtoms() == 0):
+        return res
+      res = t
+      while res.GetNumAtoms() and nAts > res.GetNumAtoms():
+        nAts = res.GetNumAtoms()
+        t = Chem.DeleteSubstructs(res, salt, True)
+        if notEverything and t.GetNumAtoms() == 0:
+          break
+        res = t
+      return res
 
-        StrippedMol = namedtuple('StrippedMol', ['mol', 'deleted'])
-        deleted = []
-        if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
-            return StrippedMol(mol, deleted)
-        modified = False
+    StrippedMol = namedtuple('StrippedMol', ['mol', 'deleted'])
+    deleted = []
+    if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
+      return StrippedMol(mol, deleted)
+    modified = False
+    natoms = mol.GetNumAtoms()
+    for salt in self.salts:
+      mol = _applyPattern(mol, salt, dontRemoveEverything)
+      if natoms != mol.GetNumAtoms():
         natoms = mol.GetNumAtoms()
-        for salt in self.salts:
-            mol = _applyPattern(mol, salt, dontRemoveEverything)
-            if natoms != mol.GetNumAtoms():
-                natoms = mol.GetNumAtoms()
-                modified = True
-                deleted.append(salt)
-                if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
-                    break
-        if sanitize and modified and mol.GetNumAtoms() > 0:
-            Chem.SanitizeMol(mol)
-        return StrippedMol(mol, deleted)
+        modified = True
+        deleted.append(salt)
+        if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
+          break
+    if sanitize and modified and mol.GetNumAtoms() > 0:
+      Chem.SanitizeMol(mol)
+    return StrippedMol(mol, deleted)
 
-    def __call__(self, mol, dontRemoveEverything=False):
-        """
+  def __call__(self, mol, dontRemoveEverything=False):
+    """
 
         >>> remover = SaltRemover(defnData="[Cl,Br]")
         >>> len(remover.salts)
@@ -308,7 +308,7 @@ class SaltRemover(object):
         4
 
         """
-        return self.StripMol(mol, dontRemoveEverything=dontRemoveEverything)
+    return self.StripMol(mol, dontRemoveEverything=dontRemoveEverything)
 
 
 # ------------------------------------
@@ -316,11 +316,11 @@ class SaltRemover(object):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
-    import doctest
-    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-    sys.exit(failed)
+  import doctest
+  import sys
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+  sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-    _runDoctests()
+  _runDoctests()

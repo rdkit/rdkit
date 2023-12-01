@@ -1,6 +1,7 @@
-from rdkit import DataStructs
-from rdkit import RDConfig
-import unittest, os
+import os
+import unittest
+
+from rdkit import DataStructs, RDConfig
 
 
 def feq(a, b, tol=1e-4):
@@ -84,9 +85,10 @@ class TestCase(unittest.TestCase):
     nbrs = fpbr.GetContainingNeighbors(bytes)
     self.assertEqual(len(nbrs), 9)
     ids = sorted(fpbr.GetId(x) for x in nbrs)
-    self.assertEqual(ids, ['ZINC00000562', 'ZINC00000843', 'ZINC00000969', 'ZINC00001484',
-                           'ZINC00001585', 'ZINC00002094', 'ZINC00004739', 'ZINC00005235',
-                           'ZINC00006300'])
+    self.assertEqual(ids, [
+      'ZINC00000562', 'ZINC00000843', 'ZINC00000969', 'ZINC00001484', 'ZINC00001585',
+      'ZINC00002094', 'ZINC00004739', 'ZINC00005235', 'ZINC00006300'
+    ])
 
   def test6MultiFPBReaderTani(self):
     basen = os.path.join(RDConfig.RDBaseDir, 'Code', 'DataStructs', 'testData')

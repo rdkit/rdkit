@@ -3,7 +3,7 @@ rdkit_library(RGroupDecomposition RGroupDecomp.cpp RGroupDecompData.cpp RGroupDa
 				  RGroupDecompParams.cpp RGroupScore.cpp RGroupFingerprintScore.cpp RGroupGa.cpp
   LINK_LIBRARIES
   FMCS ChemTransforms SubstructMatch SmilesParse Fingerprints
- GraphMol RDGeneral ga)
+ GraphMol RDGeneral ga MolEnumerator TautomerQuery )
 target_compile_definitions(RGroupDecomposition PRIVATE RDKIT_RGROUPDECOMPOSITION_BUILD)
 
 rdkit_headers(

@@ -1,7 +1,6 @@
-
-from Tkinter import *
-from sping.TK import TKCanvas
 from sping import colors
+from sping.TK import TKCanvas
+from Tkinter import *
 
 # This example program creates a scrolling canvas with sping.TK
 # how to tie scrollbars and canvases together. The mechanism
@@ -48,7 +47,7 @@ class Test(Frame):
     self.draw.scrollX['command'] = self.draw.xview
     self.draw.scrollY['command'] = self.draw.yview
 
-    # draw something. Note that the first square 
+    # draw something. Note that the first square
     # is visible, but you need to scroll to see the second one.
 
     self.spingDrawingCommands(self.draw)  # hand this a sping Canvas and it draws to it

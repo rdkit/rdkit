@@ -9,12 +9,10 @@ cross validation == evaluating the accuracy of a tree.
 
 """
 
-
 import numpy
 
 from rdkit.ML.Data import SplitData
-from rdkit.ML.DecTree import ID3
-from rdkit.ML.DecTree import randomtest
+from rdkit.ML.DecTree import ID3, randomtest
 
 
 def ChooseOptimalRoot(examples, trainExamples, testExamples, attrs, nPossibleVals, treeBuilder,

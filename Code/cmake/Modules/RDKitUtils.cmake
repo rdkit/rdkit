@@ -193,11 +193,8 @@ macro(rdkit_catch_test)
   CDR(RDKTEST_SOURCES ${RDKTEST_DEFAULT_ARGS})
   if(RDK_BUILD_CPP_TESTS)
     add_executable(${RDKTEST_NAME} ${RDKTEST_SOURCES})
-    target_include_directories(${RDKTEST_NAME} PRIVATE ${CATCH_INCLUDE_DIR})
-    target_link_libraries(${RDKTEST_NAME} rdkitCatch ${RDKTEST_LINK_LIBRARIES})
+    target_link_libraries(${RDKTEST_NAME} PRIVATE rdkitCatch ${RDKTEST_LINK_LIBRARIES} Catch2::Catch2)
     add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
-    #ParseAndAddCatchTests(${RDKTEST_NAME})
-    add_dependencies(${RDKTEST_NAME} catch)
   endif(RDK_BUILD_CPP_TESTS)
 endmacro(rdkit_catch_test)
 
@@ -222,6 +219,16 @@ function(add_jupytertest testname workingdir notebook)
     SET(RDKIT_JUPYTERTEST_CACHE "${testname};${RDKIT_JUPYTERTEST_CACHE}" CACHE INTERNAL "Global list of jupyter tests")
   endif()
 endfunction(add_jupytertest)
+
+function(add_pythonpytest testname workingdir)
+  if(RDK_BUILD_PYTHON_WRAPPERS)
+    add_test(NAME ${testname}  COMMAND ${PYTHON_EXECUTABLE} -m pytest 
+       WORKING_DIRECTORY ${workingdir} )
+    SET(RDKIT_PYTHONTEST_CACHE "${testname};${RDKIT_PYTHONTEST_CACHE}" CACHE INTERNAL "Global list of pytest tests")
+  endif()
+endfunction(add_pythonpytest)
+
+
 
 function(computeMD5 target md5chksum)
   execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${target} OUTPUT_VARIABLE md5list)

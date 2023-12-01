@@ -1,10 +1,3 @@
-if (RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
-    set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
-else ()
-    message("== Making SubstructLibrary without boost Serialization support")
-    set(RDKit_SERIALIZATION_LIBS)
-endif ()
-
 rdkit_library(GraphMol
         Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
         MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp
@@ -16,7 +9,7 @@ rdkit_library(GraphMol
         new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
         NontetrahedralStereo.cpp WedgeBonds.cpp
         SHARED
-        LINK_LIBRARIES RDGeometryLib RDGeneral ${RDKit_SERIALIZATION_LIBS})
+        LINK_LIBRARIES RDGeometryLib RDGeneral)
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 if (RDK_USE_URF)
     target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
@@ -58,6 +51,7 @@ rdkit_headers(Atom.h
 
 add_subdirectory(SmilesParse)
 add_subdirectory(Depictor)
+add_subdirectory(MarvinParse)
 add_subdirectory(FileParsers)
 add_subdirectory(Substruct)
 add_subdirectory(GenericGroups)
@@ -87,6 +81,7 @@ add_subdirectory(MolDraw2D)
 add_subdirectory(FMCS)
 add_subdirectory(MolHash)
 add_subdirectory(MMPA)
+add_subdirectory(RascalMCES)
 
 add_subdirectory(CIPLabeler)
 add_subdirectory(Deprotect)
@@ -125,6 +120,7 @@ add_subdirectory(MolStandardize)
 add_subdirectory(ScaffoldNetwork)
 add_subdirectory(MolEnumerator)
 add_subdirectory(Abbreviations)
+add_subdirectory(GeneralizedSubstruct)
 
 
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol
@@ -189,3 +185,9 @@ rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp
 
 rdkit_catch_test(queryTestsCatch catch_queries.cpp
         LINK_LIBRARIES SmilesParse GraphMol)
+
+rdkit_catch_test(molbundleTestsCatch catch_molbundle.cpp
+        LINK_LIBRARIES SmilesParse GraphMol)
+
+rdkit_catch_test(pickleTestsCatch catch_pickles.cpp
+        LINK_LIBRARIES FileParsers SmilesParse GraphMol)

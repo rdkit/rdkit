@@ -1,12 +1,11 @@
-import os, sys
-import unittest
 import copy
 import math
-
+import os
 import pickle
+import sys
+import unittest
 
-from rdkit import RDConfig
-from rdkit import DataStructs
+from rdkit import DataStructs, RDConfig
 from rdkit.Geometry import rdGeometry as geom
 
 

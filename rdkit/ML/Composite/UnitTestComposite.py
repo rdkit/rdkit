@@ -6,12 +6,13 @@
 """ unit testing code for composite models
 
 """
-import unittest
 import io
 import pickle
+import unittest
+
+from rdkit import RDConfig
 from rdkit.ML.Composite import Composite
 from rdkit.ML.DecTree.DecTree import DecTreeNode as Node
-from rdkit import RDConfig
 
 
 class TestCase(unittest.TestCase):
@@ -22,8 +23,9 @@ class TestCase(unittest.TestCase):
       pklTF.close()
     with io.BytesIO(buf) as pklF:
       self.examples = pickle.load(pklF)
-    self.varNames = ['composition', 'max_atomic', 'has3d', 'has4d', 'has5d', 'elconc', 'atvol',
-                     'isferro']
+    self.varNames = [
+      'composition', 'max_atomic', 'has3d', 'has4d', 'has5d', 'elconc', 'atvol', 'isferro'
+    ]
     self.qBounds = [[], [1.89, 3.53], [], [], [], [0.55, 0.73], [11.81, 14.52], []]
     self.nPoss = [0, 3, 2, 2, 2, 3, 3, 2]
     self.attrs = list(range(1, len(self.varNames) - 1))

@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
@@ -1037,4 +1037,249 @@ TEST_CASE("Github 5784: kekulization error when enumerating tautomers") {
     std::unique_ptr<ROMol> res(te.canonicalize(*m));
     REQUIRE(res);
   }
+}
+
+TEST_CASE("in place operations") {
+  SECTION("reionizer") {
+    MolStandardize::Reionizer reion;
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    reion.reionizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=C([O-])c1cccc(O)c1");
+  }
+  SECTION("reionize") {
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    MolStandardize::reionizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=C([O-])c1cccc(O)c1");
+  }
+  SECTION("uncharge") {
+    MolStandardize::Uncharger unchg;
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    unchg.unchargeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=C(O)c1cccc(O)c1");
+  }
+  SECTION("normalizer") {
+    MolStandardize::Normalizer nrml;
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("O=N(=O)-CC-N(=O)=O", ps)};
+    REQUIRE(m);
+    nrml.normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=[N+]([O-])CC[N+](=O)[O-]");
+    m.reset(SmilesToMol("OCCN", ps));
+    REQUIRE(m);
+    nrml.normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "NCCO");
+  }
+  SECTION("normalize") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("O=N(=O)-CC-N(=O)=O", ps)};
+    REQUIRE(m);
+    MolStandardize::normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=[N+]([O-])CC[N+](=O)[O-]");
+    m.reset(SmilesToMol("OCCN", ps));
+    REQUIRE(m);
+    MolStandardize::normalizeInPlace(*m);
+    CHECK(MolToSmiles(*m) == "NCCO");
+  }
+  SECTION("FragmentRemover") {
+    auto m = "CCCC.Cl.[Na]"_smiles;
+    REQUIRE(m);
+    MolStandardize::FragmentRemover fragremover;
+    RWMol cp1(*m);
+    fragremover.removeInPlace(cp1);
+    CHECK(MolToSmiles(cp1) == "CCCC");
+    RWMol cp2(*m);
+    MolStandardize::removeFragmentsInPlace(cp2);
+    CHECK(MolToSmiles(cp2) == "CCCC");
+  }
+  SECTION("cleanup") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    // silly ugly example which ensures disconnection, normalization, and
+    // reionization
+    std::unique_ptr<RWMol> m{
+        SmilesToMol("O=N(=O)-C(O[Fe])C(C(=O)O)C-N(=O)=O", ps)};
+    REQUIRE(m);
+    MolStandardize::cleanupInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=C([O-])C(C[N+](=O)[O-])C(O)[N+](=O)[O-].[Fe+]");
+  }
+  SECTION("disconnect organometallics") {
+    auto m("[CH2-](->[K+])c1ccccc1"_smiles);
+    TEST_ASSERT(m);
+    MolStandardize::disconnectOrganometallicsInPlace(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "[CH2-]c1ccccc1.[K+]");
+  }
+}
+
+TEST_CASE("cleanup with multiple mols") {
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  // silly ugly examples which ensures disconnection, normalization, and
+  // reionization
+  std::vector<std::pair<std::string, std::string>> data = {
+      {"O=N(=O)-C(O[Fe])C(C(=O)O)C-N(=O)=O",
+       "O=C([O-])C(C[N+](=O)[O-])C(O)[N+](=O)[O-].[Fe+]"},
+      {"O=N(=O)-CC(O[Fe])C(C(=O)O)C-N(=O)=O",
+       "O=C([O-])C(C[N+](=O)[O-])C(O)C[N+](=O)[O-].[Fe+]"},
+      {"O=N(=O)-CCC(O[Fe])C(C(=O)O)C-N(=O)=O",
+       "O=C([O-])C(C[N+](=O)[O-])C(O)CC[N+](=O)[O-].[Fe+]"},
+  };
+  // bulk that up a bit
+  for (auto iter = 0u; iter < 8; ++iter) {
+    auto sz = data.size();
+    for (auto i = 0u; i < sz; ++i) {
+      data.push_back(data[i]);
+    }
+  }
+  std::vector<std::unique_ptr<RWMol>> mols;
+  std::vector<RWMol *> molPtrs;
+  for (const auto &pr : data) {
+    mols.emplace_back(SmilesToMol(pr.first, ps));
+    REQUIRE(mols.back());
+    molPtrs.push_back(mols.back().get());
+  }
+  SECTION("basics") {
+    MolStandardize::cleanupInPlace(molPtrs);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  SECTION("multithreaded") {
+    int numThreads = 4;
+    MolStandardize::cleanupInPlace(molPtrs, numThreads);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#endif
+}
+
+TEST_CASE("normalize with multiple mols") {
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  std::vector<std::pair<std::string, std::string>> data = {
+      {"O=N(=O)-CC-N(=O)=O", "O=[N+]([O-])CC[N+](=O)[O-]"},
+      {"O=N(=O)-CCC-N(=O)=O", "O=[N+]([O-])CCC[N+](=O)[O-]"},
+      {"O=N(=O)-CCCC-N(=O)=O", "O=[N+]([O-])CCCC[N+](=O)[O-]"},
+  };
+  // bulk that up a bit
+  for (auto iter = 0u; iter < 8; ++iter) {
+    auto sz = data.size();
+    for (auto i = 0u; i < sz; ++i) {
+      data.push_back(data[i]);
+    }
+  }
+  std::vector<std::unique_ptr<RWMol>> mols;
+  std::vector<RWMol *> molPtrs;
+  for (const auto &pr : data) {
+    mols.emplace_back(SmilesToMol(pr.first, ps));
+    REQUIRE(mols.back());
+    molPtrs.push_back(mols.back().get());
+  }
+  SECTION("basics") {
+    MolStandardize::normalizeInPlace(molPtrs);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  SECTION("multithreaded") {
+    int numThreads = 4;
+    MolStandardize::normalizeInPlace(molPtrs, numThreads);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#endif
+}
+
+TEST_CASE("Reionize with multiple mols") {
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  std::vector<std::pair<std::string, std::string>> data = {
+      {"c1cc([O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(O)c1"},
+      {"c1cc(C[O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(CO)c1"},
+      {"c1cc(CC[O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(CCO)c1"},
+  };
+  // bulk that up a bit
+  for (auto iter = 0u; iter < 8; ++iter) {
+    auto sz = data.size();
+    for (auto i = 0u; i < sz; ++i) {
+      data.push_back(data[i]);
+    }
+  }
+  std::vector<std::unique_ptr<RWMol>> mols;
+  std::vector<RWMol *> molPtrs;
+  for (const auto &pr : data) {
+    mols.emplace_back(SmilesToMol(pr.first, ps));
+    REQUIRE(mols.back());
+    molPtrs.push_back(mols.back().get());
+  }
+  SECTION("basics") {
+    MolStandardize::reionizeInPlace(molPtrs);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  SECTION("multithreaded") {
+    int numThreads = 4;
+    MolStandardize::reionizeInPlace(molPtrs, numThreads);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#endif
+}
+
+TEST_CASE("RemoveFragments with multiple mols") {
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  std::vector<std::pair<std::string, std::string>> data = {
+      {"CCCC.Cl.[Na]", "CCCC"},
+      {"CCCCO.Cl.[Na]", "CCCCO"},
+      {"CCOC.Cl.[Na]", "CCOC"},
+  };
+  // bulk that up a bit
+  for (auto iter = 0u; iter < 8; ++iter) {
+    auto sz = data.size();
+    for (auto i = 0u; i < sz; ++i) {
+      data.push_back(data[i]);
+    }
+  }
+  std::vector<std::unique_ptr<RWMol>> mols;
+  std::vector<RWMol *> molPtrs;
+  for (const auto &pr : data) {
+    mols.emplace_back(SmilesToMol(pr.first, ps));
+    REQUIRE(mols.back());
+    molPtrs.push_back(mols.back().get());
+  }
+  SECTION("basics") {
+    MolStandardize::removeFragmentsInPlace(molPtrs);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  SECTION("multithreaded") {
+    int numThreads = 4;
+    MolStandardize::removeFragmentsInPlace(molPtrs, numThreads);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#endif
 }

@@ -39,26 +39,55 @@ class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
   std::string _msg;
 };
 
+//! \brief Set the path to the file containing the ring system templates
+/*!
+
+  \param templatePath the file path to a file containing the ring system
+  templates. Each template must be a single line in the file represented using
+  CXSMILES, and the structure should be a single ring system.
+
+  \throws DepictException if any of the templates are invalid
+*/
+void RDKIT_DEPICTOR_EXPORT
+setRingSystemTemplates(const std::string templatePath);
+
+//! \brief Add ring system templates to be used in 2D coordinater generation.
+/// If there are duplicates, the most recently added template will be used.
+/*!
+
+  \param templatePath the file path to a file containing the ring system
+  templates. Each template must be a single line in the file represented using
+  CXSMILES, and the structure should be a single ring system.
+
+  \throws DepictException if any of the templates are invalid
+*/
+void RDKIT_DEPICTOR_EXPORT
+addRingSystemTemplates(const std::string templatePath);
+
+//! \brief Load default ring system templates to be used in 2D coordinate
+//! generation
+void RDKIT_DEPICTOR_EXPORT loadDefaultRingSystemTemplates();
+
 struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
   const RDGeom::INT_POINT2D_MAP *coordMap =
       nullptr;  //!< a map of int to Point2D, between atom IDs and their
                 //!< locations.  This is the container the user needs to
                 //!< fill if he/she wants to specify coordinates for a portion
                 //!< of the molecule, defaults to 0
-  bool canonOrient = false; //!< canonicalize the orientation so that the long
-                            //!< axes align with the x-axis etc.
-  bool clearConfs = true; //!< clear all existing conformations on the molecule
-                          //!< before adding the 2D coordinates instead of
-                          //!< simply adding to the list
-  unsigned int nFlipsPerSample = 0; //!< the number of rotatable bonds that are
-                                    //!< flipped at random for each sample
-  unsigned int nSamples = 0; //!< the number of samples
-  int sampleSeed = 0; //!< seed for the random sampling process
+  bool canonOrient = false;  //!< canonicalize the orientation so that the long
+                             //!< axes align with the x-axis etc.
+  bool clearConfs = true;  //!< clear all existing conformations on the molecule
+                           //!< before adding the 2D coordinates instead of
+                           //!< simply adding to the list
+  unsigned int nFlipsPerSample = 0;  //!< the number of rotatable bonds that are
+                                     //!< flipped at random for each sample
+  unsigned int nSamples = 0;         //!< the number of samples
+  int sampleSeed = 0;                //!< seed for the random sampling process
   bool permuteDeg4Nodes = false;  //!< try permuting the drawing order of bonds
                                   //!< around atoms with four neighbors in order
                                   //!< to improve the depiction
-  bool forceRDKit = false;  //!< use RDKit to generate coordinates even if
-                            //!< preferCoordGen is set to true
+  bool forceRDKit = false;        //!< use RDKit to generate coordinates even if
+                                  //!< preferCoordGen is set to true
   bool useRingTemplates = false;  //!< whether to use ring system templates for
                                   //!< generating initial coordinates
 
@@ -77,7 +106,7 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
 
 */
 RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
-    RDKit::ROMol &mol, const Compute2DCoordParameters& params);
+    RDKit::ROMol &mol, const Compute2DCoordParameters &params);
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule
 /*!
@@ -181,49 +210,41 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
     unsigned int nFlipsPerSample = 3, unsigned int nSamples = 100,
     int sampleSeed = 25, bool permuteDeg4Nodes = true, bool forceRDKit = false);
 
-//! \brief Compute 2D coordinates where a piece of the molecule is
-///  constrained to have the same coordinates as a reference.
-/*!
-  This function generates a depiction for a molecule where a piece of the
-  molecule is constrained to have the same coordinates as a reference.
-
-  This is useful for, for example, generating depictions of SAR data
-  sets so that the cores of the molecules are all oriented the same way.
-
-  ARGUMENTS:
-
-  \param mol -    the molecule to be aligned, this will come back
-                  with a single conformer.
-  \param reference -    a molecule with the reference atoms to align to;
-                        this should have a depiction.
-  \param confId -       (optional) the id of the reference conformation to use
-  \param referencePattern -  (optional) a query molecule to be used to
-                             generate the atom mapping between the molecule
-                             and the reference.
-  \param acceptFailure - (optional) if true, standard depictions will be
-                         generated for molecules that don't have a substructure
-                         match to the reference; if false, throws a
-                         DepictException.
-  \param forceRDKit - (optional) use RDKit to generate coordinates even if
-                      preferCoordGen is set to true
-  \param allowOptionalAttachments -  (optional) if true, terminal dummy atoms in
-                         the reference are ignored if they match an implicit
-                         hydrogen in the molecule, and a constrained
-                         depiction is still attempted
-  RETURNS:
-
-  \return MatchVectType with (queryAtomidx, molAtomIdx) pairs used for
-          the constrained depiction
-*/
-RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
-    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
-    const RDKit::ROMol *referencePattern =
-        static_cast<const RDKit::ROMol *>(nullptr),
-    bool acceptFailure = false, bool forceRDKit = false,
-    bool allowOptionalAttachments = false);
+struct RDKIT_DEPICTOR_EXPORT ConstrainedDepictionParams {
+  //! if false (default), a DepictException is thrown if the molecule
+  /// does not have a substructure match to the reference;
+  /// if true, an unconstrained depiction will be generated
+  bool acceptFailure = false;
+  //! if true, use RDKit to generate coordinates even if preferCoordGen
+  /// is set to true; defaults to false
+  bool forceRDKit = false;
+  //! if true, terminal dummy atoms in the reference are ignored
+  /// if they match an implicit hydrogen in the molecule or if they are
+  /// attached top a query atom; defaults to false
+  bool allowRGroups = false;
+  //! if false (default), a part of the molecule is hard-constrained
+  /// to have the same coordinates as the reference, and the rest of
+  // the molecule is built around it; if true, coordinates
+  /// from conformation existingConfId are preserved (if they exist)
+  /// or generated without constraints (if they do not exist), then
+  /// the conformation is rigid-body aligned to the reference
+  bool alignOnly = false;
+  //! if true (default), existing wedging information will be updated
+  /// or cleared as required; if false (default), existing molblock
+  /// wedging information will always be preserved
+  bool adjustMolBlockWedging = true;
+  //! conformation id whose 2D coordinates should be
+  /// * rigid-body aligned to the reference (if alignOnly is true)
+  /// * used to determine whether existing molblock wedging information
+  ///   can be preserved following the constrained depiction (if
+  ///   adjustMolBlockWedging is true)
+  int existingConfId = -1;
+};
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
 ///  constrained to have the same coordinates as a reference.
+///  Correspondences between reference and molecule atom indices
+///  are determined by refMatchVect.
 /*!
   This function generates a depiction for a molecule where a piece of the
   molecule is constrained to have the same coordinates as a reference.
@@ -243,14 +264,128 @@ RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
   \param refMatchVect -  a MatchVectType that will be used to
                          generate the atom mapping between the molecule
                          and the reference.
-  \param confId -       (optional) the id of the reference conformation to use
-  \param forceRDKit - (optional) use RDKit to generate coordinates even if
-                      preferCoordGen is set to true
+  \param confId - (optional) the id of the reference conformation to use
+  \param params - (optional) an instance of ConstrainedDepictionParams
 */
 RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference,
     const RDKit::MatchVectType &refMatchVect, int confId = -1,
-    bool forceRDKit = false);
+    const ConstrainedDepictionParams &params = ConstrainedDepictionParams());
+
+//! \brief Overload
+/*!
+  ARGUMENTS:
+
+  \param mol -    the molecule to be aligned, this will come back
+                  with a single conformer.
+  \param reference -    a molecule with the reference atoms to align to;
+                        this should have a depiction.
+  \param refMatchVect -  a MatchVectType that will be used to
+                         generate the atom mapping between the molecule
+                         and the reference.
+  \param confId -       the id of the reference conformation to use
+  \param forceRDKit - use RDKit to generate coordinates even if
+                      preferCoordGen is set to true
+*/
+RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference,
+    const RDKit::MatchVectType &refMatchVect, int confId, bool forceRDKit);
+
+//! \brief Compute 2D coordinates constrained to a reference;
+///  the constraint can be hard (default) or soft.
+/*!
+  Hard (default, ConstrainedDepictionParams::alignOnly = false):
+  Existing molecule coordinates, if present, are discarded;
+  new coordinates are generated constraining a piece of the molecule
+  to have the same coordinates as the reference, while the rest of
+  the molecule is built around it.
+  If ConstrainedDepictionParams::adjustMolBlockWedging is false
+  (default), existing molblock wedging information is always preserved.
+  If ConstrainedDepictionParams::adjustMolBlockWedging is true,
+  existing molblock wedging information is preserved in case it
+  only involves the invariant core and the core conformation has not
+  changed, while it is cleared in case the wedging is also outside
+  the invariant core, or core coordinates were changed.
+  If ConstrainedDepictionParams::acceptFailure is set to true and no
+  substructure match is found, coordinates will be recomputed from
+  scratch, hence molblock wedging information will be cleared.
+
+  Soft (ConstrainedDepictionParams::alignOnly = true):
+  Existing coordinates in the conformation identified by
+  ConstrainedDepictionParams::existingConfId are preserved if present,
+  otherwise unconstrained new coordinates are generated.
+  Subsequently, coodinates undergo a rigid-body alignment to the reference.
+  If ConstrainedDepictionParams::adjustMolBlockWedging is false
+  (default), existing molblock wedging information is always preserved.
+  If ConstrainedDepictionParams::adjustMolBlockWedging is true,
+  existing molblock wedging information is inverted in case the rigid-body
+  alignment involved a flip around the Z axis.
+
+  This is useful, for example, for generating depictions
+  of SAR data sets such that the cores of the molecules are all oriented
+  the same way.
+
+  ARGUMENTS:
+
+  \param mol -    the molecule to be aligned, this will come back
+                  with a single conformer.
+  \param reference -    a molecule with the reference atoms to align to;
+                        this should have a depiction.
+  \param confId -       (optional) the id of the reference conformation to use
+  \param referencePattern -  (optional) a query molecule to be used to
+                             generate the atom mapping between the molecule
+                             and the reference.
+  \param params -       (optional) a ConstrainedDepictionParams instance
+  RETURNS:
+
+  \return MatchVectType with (queryAtomidx, molAtomIdx) pairs used for
+          the constrained depiction
+*/
+RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
+    const RDKit::ROMol *referencePattern =
+        static_cast<const RDKit::ROMol *>(nullptr),
+    const ConstrainedDepictionParams &params = ConstrainedDepictionParams());
+
+//! \brief Compute 2D coordinates where a piece of the molecule is
+///  constrained to have the same coordinates as a reference.
+/*!
+  This function generates a depiction for a molecule where a piece of the
+  molecule is constrained to have the same coordinates as a reference.
+
+  This is useful, for example, for generating depictions
+  of SAR data sets such that the cores of the molecules are all oriented
+  the same way.
+
+  ARGUMENTS:
+
+  \param mol -    the molecule to be aligned, this will come back
+                  with a single conformer.
+  \param reference -    a molecule with the reference atoms to align to;
+                        this should have a depiction.
+  \param confId -       the id of the reference conformation to use
+  \param referencePattern -  a query molecule to be used to
+                             generate the atom mapping between the molecule
+                             and the reference.
+  \param acceptFailure - if true, standard depictions will be
+                         generated for molecules that don't have a substructure
+                         match to the reference; if false, throws a
+                         DepictException.
+  \param forceRDKit - (optional) use RDKit to generate coordinates even if
+                      preferCoordGen is set to true
+  \param allowOptionalAttachments -  (optional) if true, terminal dummy atoms in
+                         the reference are ignored if they match an implicit
+                         hydrogen in the molecule, and a constrained
+                         depiction is still attempted
+  RETURNS:
+
+  \return MatchVectType with (queryAtomidx, molAtomIdx) pairs used for
+          the constrained depiction
+*/
+RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
+    const RDKit::ROMol *referencePattern, bool acceptFailure,
+    bool forceRDKit = false, bool allowOptionalAttachments = false);
 
 //! \brief Generate a 2D depiction for a molecule where all or part of
 ///  it mimics the coordinates of a 3D reference structure.

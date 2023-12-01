@@ -8,7 +8,6 @@
 #  of the RDKit source tree.
 #
 
-
 import unittest
 
 from rdkit.Chem.Pharm3D.ExcludedVolume import ExcludedVolume
@@ -20,8 +19,12 @@ class TestCase(unittest.TestCase):
     # featInfo must have a length
     self.assertRaises(ValueError, ExcludedVolume, 123)
     self.assertRaises(ValueError, ExcludedVolume, [])
-    self.assertRaises(ValueError, ExcludedVolume, [123, ])
-    self.assertRaises(ValueError, ExcludedVolume, [[], ])
+    self.assertRaises(ValueError, ExcludedVolume, [
+      123,
+    ])
+    self.assertRaises(ValueError, ExcludedVolume, [
+      [],
+    ])
 
     featInfo = ([(0, ), 0.5, 1.0], )
     excludedVolume = ExcludedVolume(featInfo)

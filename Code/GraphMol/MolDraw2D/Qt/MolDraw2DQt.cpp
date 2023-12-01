@@ -82,14 +82,8 @@ void MolDraw2DQt::setColour(const DrawColour &col) {
   d_qp->setBrush(brush);
 }
 
-// ****************************************************************************
-void MolDraw2DQt::drawLine(const Point2D &cds1, const Point2D &cds2,
-                           bool rawCoords) {
-  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
-  Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
-
-  const DashPattern &dashes = dash();
-  QPen pen = d_qp->pen();
+namespace {
+void setDashes(QPen &pen, const DashPattern &dashes) {
   if (dashes.size()) {
     QVector<qreal> dd;
     for (unsigned int di = 0; di < dashes.size(); ++di) dd << dashes[di];
@@ -98,6 +92,17 @@ void MolDraw2DQt::drawLine(const Point2D &cds1, const Point2D &cds2,
     pen.setStyle(Qt::SolidLine);
     pen.setCapStyle(Qt::FlatCap);
   }
+}
+}  // namespace
+
+// ****************************************************************************
+void MolDraw2DQt::drawLine(const Point2D &cds1, const Point2D &cds2,
+                           bool rawCoords) {
+  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
+  Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
+
+  QPen pen = d_qp->pen();
+  setDashes(pen, dash());
   pen.setWidth(getDrawLineWidth());
   d_qp->setPen(pen);
   d_qp->drawLine(QPointF(c1.x, c1.y), QPointF(c2.x, c2.y));
@@ -121,6 +126,7 @@ void MolDraw2DQt::drawPolygon(const std::vector<Point2D> &cds, bool rawCoords) {
     points[i] = QPointF(lc.x, lc.y);
   }
   QPen pen = d_qp->pen();
+  setDashes(pen, dash());
   pen.setStyle(Qt::SolidLine);
   pen.setCapStyle(Qt::FlatCap);
   pen.setWidth(getDrawLineWidth());

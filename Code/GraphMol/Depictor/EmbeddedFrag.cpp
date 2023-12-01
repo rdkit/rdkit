@@ -346,8 +346,10 @@ void EmbeddedFrag::setupAttachmentPoints() {
   }
 }
 
-bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsigned int ring_count) {
-  CoordinateTemplates& coordinate_templates = CoordinateTemplates::getRingSystemTemplates();
+bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
+                                   unsigned int ring_count) {
+  CoordinateTemplates &coordinate_templates =
+      CoordinateTemplates::getRingSystemTemplates();
 
   // only look for an exact match to the ring system because our method of
   // completing rings from a template isn't reliably better than not using
@@ -357,20 +359,20 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsig
   }
 
   // make a mol out of the induced subgraph using the ring system atoms
-  RDKit::RWMol rs_mol (*dp_mol);
+  RDKit::RWMol rs_mol(*dp_mol);
 
   // track original indices so that we can map template coordinates correctly
-  for (auto& at : rs_mol.atoms()) {
+  for (auto &at : rs_mol.atoms()) {
     at->setProp(RDKit::common_properties::molAtomMapNumber, at->getIdx());
   }
 
-  boost::dynamic_bitset<> rs_atoms (dp_mol->getNumAtoms());
+  boost::dynamic_bitset<> rs_atoms(dp_mol->getNumAtoms());
   for (auto aidx : ringSystemAtoms) {
     rs_atoms.set(aidx);
   }
 
   rs_mol.beginBatchEdit();
-  for (auto& at : dp_mol->atoms()) {
+  for (auto &at : dp_mol->atoms()) {
     if (!rs_atoms.test(at->getIdx())) {
       rs_mol.removeAtom(at->getIdx());
     }
@@ -380,9 +382,10 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsig
   // find template that this mol matches to, if any
   RDKit::MatchVectType match;
   std::shared_ptr<RDKit::ROMol> template_mol(nullptr);
-  for (const auto mol : coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
-    // To reduce how often we have to do substructure matches, check ring info and
-    // bond count first
+  for (const auto &mol :
+       coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
+    // To reduce how often we have to do substructure matches, check ring info
+    // and bond count first
     if (mol->getNumBonds() != rs_mol.getNumBonds()) {
       continue;
     } else if (mol->getRingInfo()->numRings() != ring_count) {
@@ -404,10 +407,10 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsig
 
   // copy over new coordinates
   auto conf = template_mol->getConformer();
-  for (auto& [template_aidx, rs_aidx] : match) {
+  for (auto &[template_aidx, rs_aidx] : match) {
     auto mol_aidx = rs_mol.getAtomWithIdx(rs_aidx)->getAtomMapNum();
-    RDGeom::Point2D loc (conf.getAtomPos(template_aidx));
-    EmbeddedAtom new_at (mol_aidx, loc);
+    RDGeom::Point2D loc(conf.getAtomPos(template_aidx));
+    EmbeddedAtom new_at(mol_aidx, loc);
     new_at.df_fixed = true;
     d_eatoms.emplace(mol_aidx, new_at);
   }
@@ -416,11 +419,69 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsig
   return true;
 }
 
+// find any atoms in the ring that are in trans double bonds
+// and mirror them into the ring
+static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT& ring, RDGeom::INT_POINT2D_MAP& coords)
+{
+  // a nice place for C++23 generator coroutines...
+  RDKit::INT_VECT transRingAtoms;
+  for (size_t i=0; i<ring.size(); ++i) {
+    const auto atom1 = ring[i];
+    const auto atom2 = ring[(i + 1) % ring.size()];
+    const auto bond = mol.getBondBetweenAtoms(atom1, atom2);
+    if (bond->getBondType() != RDKit::Bond::DOUBLE) {
+      continue;
+    }
+    const auto stype = bond->getStereo();
+    if (stype <= RDKit::Bond::STEREOANY) {
+      continue;
+    }
+
+    // We care about bonds that are trans with respect to this ring
+    const auto& neighbors = bond->getStereoAtoms();
+    if (neighbors.size() != 2) {
+      continue;
+    }
+    const auto leftIsIn = std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
+    const auto rightIsIn = std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
+    bool isTrans = false;
+    if (stype == RDKit::Bond::STEREOTRANS || stype == RDKit::Bond::STEREOE) {
+      if (leftIsIn == rightIsIn) {
+        // trans, both neighbors in the ring (or both out)
+        isTrans = true;
+      }
+    } else if (leftIsIn != rightIsIn) {
+      // cis, but one of the neighbors is outside the ring
+      isTrans = true;
+    }
+    if (!isTrans) {
+      continue;
+    }
+
+
+    // Mirror one atom in each trans bond across the line defined by its two
+    // neighbors. This bumps it into the ring
+    const auto left = ring[(i + ring.size() - 1) % ring.size()];
+    const auto right = atom2;
+
+    const auto last = coords[left];
+    const auto ref = coords[right];
+    const auto interest = coords[atom1];
+    const auto d = last - ref;
+    const double a = (d.x * d.x - d.y * d.y) / d.dotProduct(d);
+    const double b = 2 * d.x * d.y / d.dotProduct(d);
+    const double x = a * (interest.x - ref.x) + b * (interest.y - ref.y) + ref.x;
+    const double y = b * (interest.x - ref.x) - a * (interest.y - ref.y) + ref.y;
+    coords[atom1] = RDGeom::Point2D(x, y);
+  }
+}
+
 //
 // NOTE: the individual rings in fusedRings must appear in traversal order.
 //    This is what is provided by the current ring-finding code.
 //
-void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings, bool useRingTemplates) {
+void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
+                                   bool useRingTemplates) {
   PRECONDITION(dp_mol, "");
   // ok this is what we are going to do here
   // embed each of the individual rings. Then
@@ -447,7 +508,9 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings, bool 
   auto firstRingId = pickFirstRingToEmbed(*dp_mol, fusedRings);
 
   for (const auto &ring : fusedRings) {
-    coords.push_back(embedRing(ring));
+    auto ring_coords = embedRing(ring);
+    mirrorTransRingAtoms(*dp_mol, ring, ring_coords);
+    coords.push_back(ring_coords);
   }
 
   this->initFromRingCoords(fusedRings[firstRingId], coords[firstRingId]);

@@ -2,11 +2,12 @@
 #
 #  Copyright (C) 2006  Greg Landrum
 #
-import unittest, os, sys
+import os
 import pickle
-from rdkit import RDConfig
-from rdkit import Chem
-from rdkit import DataStructs
+import sys
+import unittest
+
+from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Chem import MolCatalog
 
 

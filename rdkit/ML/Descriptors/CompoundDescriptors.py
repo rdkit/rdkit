@@ -6,9 +6,8 @@
 
 """
 
-
 from rdkit import RDConfig
-from rdkit.ML.Descriptors import Parser, Descriptors
+from rdkit.ML.Descriptors import Descriptors, Parser
 from rdkit.utils import chemutils
 
 # the list of possible ways to count valence electrons that we know

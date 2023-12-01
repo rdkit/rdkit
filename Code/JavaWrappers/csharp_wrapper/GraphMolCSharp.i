@@ -159,6 +159,8 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(RDKit::QueryAtom)
 %shared_ptr(RDKit::QueryBond)
 %shared_ptr(RDKit::QueryOps)
+%shared_ptr(RDKit::MolBundle)
+%shared_ptr(RDKit::FixedMolSizeMolBundle)
 %shared_ptr(RDKit::MolSanitizeException)
 %shared_ptr(RDKit::AtomSanitizeException)
 %shared_ptr(RDKit::AtomValenceException)
@@ -191,6 +193,7 @@ typedef unsigned long long int	uintmax_t;
 // Conformer seems to need to come before ROMol
 %include "../Conformer.i"
 %include "../Dict.i"
+%include "../RDLogger.i"
 %include "../RDProps.i"
 %include "../StereoGroup.i"
 %include "../ROMol.i"
@@ -205,6 +208,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../QueryAtom.i"
 %include "../QueryBond.i"
 %include "../QueryOps.i"
+%include "../MolBundle.i"
 %include "../MonomerInfo.i"
 %include "../PeriodicTable.i"
 %include "../SanitException.i"
@@ -236,6 +240,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../SubstructLibrary.i"
 %include "../ScaffoldNetwork.i"
 %include "../TautomerQuery.i"
+%include "../MolEnumerator.i"
 %include "../SubstanceGroup.i"
 %include "../MolHash.i"
 %include "../Abbreviations.i"

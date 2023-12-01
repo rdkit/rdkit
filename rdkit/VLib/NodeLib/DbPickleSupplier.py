@@ -4,10 +4,12 @@
 #     All Rights Reserved
 #
 
-from rdkit import RDConfig
-import sys, os.path
-from rdkit.VLib.Supply import SupplyNode
+import os.path
 import pickle
+import sys
+
+from rdkit import RDConfig
+from rdkit.VLib.Supply import SupplyNode
 
 if RDConfig.usePgSQL:
   from pyPgSQL import PgSQL as sql
@@ -199,7 +201,8 @@ def GetNode(dbName, tableName):
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
+  import doctest
+  import sys
   return doctest.testmod(sys.modules["__main__"])
 
 

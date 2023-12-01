@@ -18,9 +18,10 @@
 #include <boost/iostreams/stream.hpp>
 #include "BoostEndInclude.h"
 #include <iostream>
+#include <fstream>
 #include <vector>
+#include <cstdint>
 
-#include <vector>
 namespace boost {
 namespace logging {
 
@@ -30,8 +31,10 @@ typedef boost::iostreams::stream<RDTee> RDTeeStream;
 class RDKIT_RDGENERAL_EXPORT rdLogger {
  public:
   std::ostream *dp_dest;
-  bool df_owner, df_enabled;
+  bool df_owner;
+  bool df_enabled;
 
+  std::ofstream *dp_teeHelperStream;
   RDTee *tee;
   RDTeeStream *teestream;
 
@@ -39,18 +42,31 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
       : dp_dest(dest),
         df_owner(owner),
         df_enabled(true),
+        dp_teeHelperStream(nullptr),
         tee(nullptr),
         teestream(nullptr) {}
 
   //! Sets a stream to tee the output to.
   void SetTee(std::ostream &stream) {
     if (dp_dest) {
-      delete teestream;
-      delete tee;
+      ClearTee();
       tee = new RDTee(*dp_dest, stream);
       teestream = new RDTeeStream(*tee);
     }
   }
+
+  //! Sets a filename to tee the output to.
+  void SetTee(const char *filename) {
+    if (dp_dest) {
+      auto s = new std::ofstream(filename);
+      SetTee(*s);
+      dp_teeHelperStream = s;
+    }
+  }
+
+  //! Sets a filename to tee the output to.
+  void SetTee(const std::string &filename) { return SetTee(filename.c_str()); }
+
   //! Remove our tee if it's set.
   void ClearTee() {
     if (dp_dest) {
@@ -58,20 +74,22 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
       delete tee;
       tee = nullptr;
       teestream = nullptr;
+      if (dp_teeHelperStream) {
+        dp_teeHelperStream->close();
+        delete dp_teeHelperStream;
+        dp_teeHelperStream = nullptr;
+      }
     }
   }
   ~rdLogger() {
     if (dp_dest) {
       dp_dest->flush();
+      ClearTee();
       if (df_owner) {
         delete dp_dest;
       }
       dp_dest = nullptr;
     }
-    delete teestream;
-    teestream = nullptr;
-    delete tee;
-    tee = nullptr;
   }
 
  private:

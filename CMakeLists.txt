@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.14)
 
 project (RDKit)
 
@@ -21,12 +21,16 @@ add_library(rdkit_base INTERFACE)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
+option(RDK_BUILD_PYTHON_STUBS "build the python stubs" OFF )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
 option(RDK_BUILD_PGSQL "build the PostgreSQL cartridge" OFF )
 option(RDK_BUILD_RPATH_SUPPORT "build shared libraries using rpath" OFF)
 option(RDK_PGSQL_STATIC "statically link rdkit libraries into the PostgreSQL cartridge" ON )
+option(RDK_PGSQL_BFP_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL bfp gist index" OFF )
+option(RDK_PGSQL_MOL_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL mol gist index" ON )
+option(RDK_PGSQL_QMOL_GIST_SORTSUPPORT "enable the sortsupport method in the PostgreSQL qmol gist index" ON )
 option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_DLLS_MSVC "install the rdkit DLLs when using MSVC" OFF)
@@ -57,12 +61,15 @@ option(RDK_BUILD_XYZ2MOL_SUPPORT "build in support for the RDKit's implementatio
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
 option(RDK_USE_URF "Build support for Florian Flachsenberg's URF library" ON)
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
-option(RDK_USE_BOOST_REGEX "use boost::regex instead of std::regex (needed for systems with g++-4.8)" OFF)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindings)" OFF)
 option(RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS "build the minimal RDKit JS wrapper such that it supports legacy browsers" OFF)
 option(RDK_BUILD_CFFI_LIB "build the CFFI wrapper (for use in other programming languges)" OFF)
+option(RDK_CFFI_STATIC "statically link rdkit libraries into the cffi wrapper" ON)
 option(RDK_BUILD_FUZZ_TARGETS "build the fuzz targets" OFF)
+option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" ON )
+option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
+option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 
 set(RDK_BOOST_VERSION "1.58.0")
 
@@ -108,9 +115,9 @@ if(RDK_PGSQL_STATIC AND RDK_BUILD_PGSQL)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
 
-if(RDK_BUILD_CFFI_LIB)
+if(RDK_CFFI_STATIC AND RDK_BUILD_CFFI_LIB)
   if(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
-    message("Enabling RDK_INSTALL_STATIC_LIBS because RDK_BUILD_CFFI_LIB is set.")
+    message("Enabling RDK_INSTALL_STATIC_LIBS because RDK_CFFI_STATIC is set.")
     set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
@@ -128,7 +135,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 
 #-------
 # Config variables:
-set(RDKit_Year "2023")
+set(RDKit_Year "2024")
 set(RDKit_Month "03")
 set(RDKit_Revision "1")
 set(RDKit_RevisionModifier "pre")
@@ -143,8 +150,18 @@ set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
 set(RDKit_DataDir "${CMAKE_CURRENT_SOURCE_DIR}/Data")
 
 #include catch
-add_subdirectory(${RDKit_ExternalDir}/catch)
-message("CATCH: ${CATCH_INCLUDE_DIR}")
+find_package(Catch2 3)
+if(NOT Catch2_FOUND)
+  Include(FetchContent)
+
+  FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG        v3.4.0 # or a later release
+  )
+
+  FetchContent_MakeAvailable(Catch2)
+endif()
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
@@ -216,8 +233,11 @@ if(RDK_BUILD_XYZ2MOL_SUPPORT)
     include_directories(${RDKit_ExternalDir})
 endif()
 
-
-
+# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
+# detect it.
+string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
+# Detect emcc
+string(REGEX MATCH "Emscripten" CMAKE_COMPILER_IS_EMCC "${CMAKE_SYSTEM_NAME}")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_32BIT_BUILD")
@@ -228,6 +248,12 @@ endif()
 if(MINGW)
   target_compile_definitions(rdkit_base INTERFACE "-DBOOST_SYSTEM_NO_DEPRECATED")
 endif(MINGW)
+if (CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_EMCC)
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 15)
+    target_compile_definitions(rdkit_base INTERFACE -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_NO_CXX98_FUNCTION_BASE -D_HAS_AUTO_PTR_ETC=0)
+    target_compile_options(rdkit_base INTERFACE -Wno-deprecated-builtins -Wno-deprecated-non-prototype -Wno-unused-parameter)
+  endif()
+endif()
 
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)
@@ -279,7 +305,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   # determine linkage of python
   execute_process(
       COMMAND
-      ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
+      ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
       OUTPUT_VARIABLE Py_ENABLE_SHARED
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
@@ -287,7 +313,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   endif()
-  
+
   find_package(NumPy REQUIRED)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
@@ -321,10 +347,12 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   else(RDK_INSTALL_INTREE)
     if (NOT PYTHON_INSTDIR)
       # Determine correct installation directory for Python bindings
-      # From http://plplot.svn.sourceforge.net/viewvc/plplot/trunk/cmake/modules/python.cmake?revision=11014
       execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "from __future__ import print_function; from distutils import sysconfig; print(sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_PREFIX}'))"
+        ${PYTHON_EXECUTABLE} -c "import sys; import sysconfig; \
+          base_key = 'base' if sys.platform == 'win32' else 'platbase'; \
+          schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
+          print(sysconfig.get_path('platlib', schema, vars={base_key: '${CMAKE_INSTALL_PREFIX}'}))"
         OUTPUT_VARIABLE PYTHON_INSTDIR
         OUTPUT_STRIP_TRAILING_WHITESPACE
       )
@@ -337,7 +365,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
         PATTERN ".svn" EXCLUDE
         PATTERN "CMake*" EXCLUDE
         PATTERN "Basement" EXCLUDE
-        )
+      )
     else(RDK_INSTALL_PYTHON_TESTS)
       install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
         COMPONENT python
@@ -348,7 +376,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
         PATTERN "CMake*" EXCLUDE
         PATTERN "Basement" EXCLUDE
         PATTERN "UnitTest*" EXCLUDE
-        )
+      )
     endif(RDK_INSTALL_PYTHON_TESTS)
 
   endif(RDK_INSTALL_INTREE)
@@ -361,7 +389,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     # We strip off the first word though (which will be the compiler name).
     execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
+        ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
         OUTPUT_VARIABLE PYTHON_LDSHARED
         OUTPUT_STRIP_TRAILING_WHITESPACE
      )
@@ -387,10 +415,6 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost ${RDK_BOOST_VERSION} REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
-
-# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
-# detect it.
-string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
 find_package(Eigen3)
 if(RDK_BUILD_DESCRIPTORS3D)
@@ -425,17 +449,38 @@ else()
 endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
-    set(T_LIBS ${Boost_LIBRARIES})
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams)
-    if (Boost_SERIALIZATION_LIBRARY)
-      set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-    else()
-      set(Boost_LIBRARIES ${T_LIBS})
-    endif()
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams REQUIRED)
+    target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_SERIALIZATION)
     if(NOT Boost_USE_STATIC_LIBS)
       target_compile_definitions(rdkit_base INTERFACE -DBOOST_SERIALIZATION_DYN_LINK)
     endif()
+endif()
+
+if(RDK_USE_BOOST_IOSTREAMS)
+    target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_IOSTREAMS)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
+    target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
+
+    if (NOT Boost_USE_STATIC_LIBS)
+      target_compile_definitions(rdkit_base INTERFACE -DBOOST_IOSTREAMS_DYN_LINK)
+    endif()
+
+    # deal with zlib
+    if (WIN32)
+      find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib)
+      if(Boost_zlib_FOUND)
+        set(zlib_lib Boost::zlib)
+      endif()
+    else()
+      if(Boost_USE_STATIC_LIBS)
+        # when we're doing static linkage of boost
+        # to also link against zlib (due to iostreams)
+        find_package(ZLIB)
+        set(zlib_lib ${ZLIB_LIBRARIES})
+     endif()
+    endif()
+    target_link_libraries(rdkit_base INTERFACE ${zlib_lib})
 endif()
 
 
@@ -485,7 +530,7 @@ else(RDK_TEST_COVERAGE)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   endif()
  endif()
- if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang") # there's at least Clang and AppleClang
    # We don't on C_FLAGS warnings to keep Avalon compiling quiet
    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wno-format -Wno-logical-op-parentheses -fPIC")
@@ -568,6 +613,7 @@ add_subdirectory(Code)
 if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(Projects)
   add_subdirectory(rdkit)
+  add_subdirectory(rdkit-stubs)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 if(RDK_BUILD_CONTRIB)

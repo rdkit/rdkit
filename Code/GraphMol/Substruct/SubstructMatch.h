@@ -57,16 +57,24 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
                        //!< concurrent threads supported by the hardware
                        //!< negative values are added to the number of
                        //!< concurrent threads supported by the hardware
+  std::vector<std::string> atomProperties;  //!< atom properties that must be
+                                            //!< equivalent in order to match
+  std::vector<std::string> bondProperties;  //!< bond properties that must be
+                                            //!< equivalent in order to match
   std::function<bool(const ROMol &mol,
                      const std::vector<unsigned int> &match)>
       extraFinalCheck;  //!< a function to be called at the end to validate a
                         //!< match
-
+  unsigned int maxRecursiveMatches =
+      1000;  //!< maximum number of matches that the recursive substructure
+             //!< matching should return
   SubstructMatchParameters() {}
 };
 
 RDKIT_SUBSTRUCTMATCH_EXPORT void updateSubstructMatchParamsFromJSON(
     SubstructMatchParameters &params, const std::string &json);
+RDKIT_SUBSTRUCTMATCH_EXPORT std::string substructMatchParamsToJSON(
+    const SubstructMatchParameters &params);
 
 //! Find a substructure match for a query in a molecule
 /*!

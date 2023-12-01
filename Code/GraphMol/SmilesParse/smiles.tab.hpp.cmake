@@ -31,10 +31,10 @@
    version 2.2 of Bison.  */
 
 #ifndef YY_YYSMILES_C_USERS_GLANDRUM_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
-# define YY_YYSMILES_C_USERS_GLANDRUM_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
+#define YY_YYSMILES_C_USERS_GLANDRUM_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+#define YYDEBUG 0
 #endif
 #if YYDEBUG
 extern int yysmiles_debug;
@@ -42,66 +42,67 @@ extern int yysmiles_debug;
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
-    START_MOL = 258,
-    START_ATOM = 259,
-    START_BOND = 260,
-    AROMATIC_ATOM_TOKEN = 261,
-    ATOM_TOKEN = 262,
-    ORGANIC_ATOM_TOKEN = 263,
-    NONZERO_DIGIT_TOKEN = 264,
-    ZERO_TOKEN = 265,
-    GROUP_OPEN_TOKEN = 266,
-    GROUP_CLOSE_TOKEN = 267,
-    SEPARATOR_TOKEN = 268,
-    LOOP_CONNECTOR_TOKEN = 269,
-    MINUS_TOKEN = 270,
-    PLUS_TOKEN = 271,
-    H_TOKEN = 272,
-    AT_TOKEN = 273,
-    PERCENT_TOKEN = 274,
-    COLON_TOKEN = 275,
-    HASH_TOKEN = 276,
-    BOND_TOKEN = 277,
-    CHI_CLASS_TOKEN = 278,
-    ATOM_OPEN_TOKEN = 279,
-    ATOM_CLOSE_TOKEN = 280,
-    EOS_TOKEN = 281
-  };
+#define YYTOKENTYPE
+enum yytokentype {
+  START_MOL = 258,
+  START_ATOM = 259,
+  START_BOND = 260,
+  AROMATIC_ATOM_TOKEN = 261,
+  ATOM_TOKEN = 262,
+  ORGANIC_ATOM_TOKEN = 263,
+  NONZERO_DIGIT_TOKEN = 264,
+  ZERO_TOKEN = 265,
+  GROUP_OPEN_TOKEN = 266,
+  GROUP_CLOSE_TOKEN = 267,
+  SEPARATOR_TOKEN = 268,
+  LOOP_CONNECTOR_TOKEN = 269,
+  MINUS_TOKEN = 270,
+  PLUS_TOKEN = 271,
+  H_TOKEN = 272,
+  AT_TOKEN = 273,
+  PERCENT_TOKEN = 274,
+  COLON_TOKEN = 275,
+  HASH_TOKEN = 276,
+  BOND_TOKEN = 277,
+  CHI_CLASS_TOKEN = 278,
+  ATOM_OPEN_TOKEN = 279,
+  ATOM_CLOSE_TOKEN = 280,
+  EOS_TOKEN = 281
+};
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+#if !defined YYSTYPE && !defined YYSTYPE_IS_DECLARED
 
-union YYSTYPE
-{
+union YYSTYPE {
 #line 82 "smiles.yy" /* yacc.c:1909  */
 
-  int                      moli;
-  RDKit::Atom * atom;
-  RDKit::Bond * bond;
+  int moli;
+  RDKit::Atom *atom;
+  RDKit::Bond *bond;
   RDKit::Atom::ChiralType chiraltype;
-  int                      ival;
+  int ival;
 
 #line 89 "C:/Users/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+#define YYSTYPE_IS_TRIVIAL 1
+#define YYSTYPE_IS_DECLARED 1
 #endif
 
-
-
-int yysmiles_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::list<unsigned int> *branchPoints, void *scanner, int& start_token);
+int yysmiles_parse(const char *input, std::vector<RDKit::RWMol *> *molList,
+                   RDKit::Atom *&lastAtom, RDKit::Bond *&lastBond,
+                   unsigned &numAtomsParsed, unsigned &numBondsParsed,
+                   std::list<unsigned int> *branchPoints, void *scanner,
+                   int &start_token);
 /* "%code provides" blocks.  */
 #line 77 "smiles.yy" /* yacc.c:1909  */
 
-#define YY_DECL int yylex \
-               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+#define YY_DECL \
+  int yylex(YYSTYPE *yylval_param, yyscan_t yyscanner, int &start_token)
 
 #line 106 "C:/Users/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp" /* yacc.c:1909  */
 
-#endif /* !YY_YYSMILES_C_USERS_GLANDRUM_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED  */
+#endif /* !YY_YYSMILES_C_USERS_GLANDRUM_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED \
+        */

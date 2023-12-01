@@ -8,13 +8,18 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Chem
-import numpy
-import math
 import copy
 import functools
+import math
+
+import numpy
+
+from rdkit import Chem
+
+
 def cmp(t1, t2):
-    return (t1 < t2) * -1 or (t1 > t2) * 1
+  return (t1 < t2) * -1 or (t1 > t2) * 1
+
 
 periodicTable = Chem.GetPeriodicTable()
 
@@ -87,16 +92,17 @@ class MolDrawing(object):
     self.boundingBoxes = {}
 
     if self.drawingOptions.bgColor is not None:
-      self.canvas.addCanvasPolygon(((0, 0), (canvas.size[0], 0), (canvas.size[0], canvas.size[1]),
-                                    (0, canvas.size[1])), color=self.drawingOptions.bgColor,
-                                   fill=True, stroke=False)
+      self.canvas.addCanvasPolygon(
+        ((0, 0), (canvas.size[0], 0), (canvas.size[0], canvas.size[1]), (0, canvas.size[1])),
+        color=self.drawingOptions.bgColor, fill=True, stroke=False)
 
   def transformPoint(self, pos):
     res = [0, 0]
     res[0] = (pos[0] + self.molTrans[0]
               ) * self.currDotsPerAngstrom * self.drawingOptions.useFraction + self.drawingTrans[0]
-    res[1] = self.canvasSize[1] - ((pos[1] + self.molTrans[1]) * self.currDotsPerAngstrom *
-                                   self.drawingOptions.useFraction + self.drawingTrans[1])
+    res[1] = self.canvasSize[1] - (
+      (pos[1] + self.molTrans[1]) * self.currDotsPerAngstrom * self.drawingOptions.useFraction +
+      self.drawingTrans[1])
     return res
 
   def _getBondOffset(self, p1, p2):
@@ -170,8 +176,9 @@ class MolDrawing(object):
   def _getBondAttachmentCoordinates(self, p1, p2, labelSize):
     newpos = [None, None]
     if labelSize is not None:
-      labelSizeOffset = [labelSize[0][0] / 2 + (cmp(p2[0], p1[0]) * labelSize[0][2]),
-                         labelSize[0][1] / 2]
+      labelSizeOffset = [
+        labelSize[0][0] / 2 + (cmp(p2[0], p1[0]) * labelSize[0][2]), labelSize[0][1] / 2
+      ]
       if p1[1] == p2[1]:
         newpos[0] = p1[0] + cmp(p2[0], p1[0]) * labelSizeOffset[0]
       else:
@@ -198,8 +205,8 @@ class MolDrawing(object):
     _, offsetX, offsetY = self._getBondOffset(pos, nbrPos)
     offsetX *= .75
     offsetY *= .75
-    poly = ((pos[0], pos[1]), (nbrPos[0] + offsetX, nbrPos[1] + offsetY),
-            (nbrPos[0] - offsetX, nbrPos[1] - offsetY))
+    poly = ((pos[0], pos[1]), (nbrPos[0] + offsetX, nbrPos[1] + offsetY), (nbrPos[0] - offsetX,
+                                                                           nbrPos[1] - offsetY))
     # canvas.drawPolygon(poly,edgeColor=color,edgeWidth=1,fillColor=color,closed=1)
     if not dash:
       self.canvas.addCanvasPolygon(poly, color=color)
@@ -239,8 +246,8 @@ class MolDrawing(object):
       else:
         addDefaultLine(newpos, newnbrPos)
     elif bType == Chem.BondType.DOUBLE:
-      crossBond = (self.drawingOptions.showUnknownDoubleBonds and
-                   bond.GetStereo() == Chem.BondStereo.STEREOANY)
+      crossBond = (self.drawingOptions.showUnknownDoubleBonds
+                   and bond.GetStereo() == Chem.BondStereo.STEREOANY)
       if (not crossBond and (bond.IsInRing() or
                              (atom.GetDegree() != 1 and bond.GetOtherAtom(atom).GetDegree() != 1))):
         addDefaultLine(newpos, newnbrPos)
@@ -405,9 +412,9 @@ class MolDrawing(object):
         nbrSum[1] += nbrPos[1] - pos[1]
 
       iso = atom.GetIsotope()
-      labelIt = (not self.drawingOptions.noCarbonSymbols or iso or atom.GetAtomicNum() != 6 or
-                 atom.GetFormalCharge() != 0 or atom.GetNumRadicalElectrons() or
-                 includeAtomNumbers or atom.HasProp('molAtomMapNumber') or atom.GetDegree() == 0)
+      labelIt = (not self.drawingOptions.noCarbonSymbols or iso or atom.GetAtomicNum() != 6
+                 or atom.GetFormalCharge() != 0 or atom.GetNumRadicalElectrons()
+                 or includeAtomNumbers or atom.HasProp('molAtomMapNumber') or atom.GetDegree() == 0)
       orient = ''
       if labelIt:
         baseOffset = 0
@@ -416,14 +423,15 @@ class MolDrawing(object):
           symbolLength = len(symbol)
         else:
           base = atom.GetSymbol()
-          if base == 'H' and (iso == 2 or iso == 3) and self.drawingOptions.atomLabelDeuteriumTritium:
+          if base == 'H' and (iso == 2
+                              or iso == 3) and self.drawingOptions.atomLabelDeuteriumTritium:
             if iso == 2:
               base = 'D'
             else:
               base = 'T'
             iso = 0
           symbolLength = len(base)
-          
+
           nHs = 0
           if not atom.HasQuery():
             nHs = atom.GetTotalNumHs()
@@ -473,7 +481,7 @@ class MolDrawing(object):
           # the size of 'base', or the size of 'mapNum' and the size of 'base'
           # (depending on 'deg' and 'nbrSum[0]') in order to determine the exact
           # position of the base
-          
+
           if deg == 0:
             tSym = periodicTable.GetElementSymbol(atom.GetAtomicNum())
             if tSym in ('O', 'S', 'Se', 'Te', 'F', 'Cl', 'Br', 'I', 'At'):
@@ -486,7 +494,7 @@ class MolDrawing(object):
           else:
             symbol = '%s%s%s%s%s%s' % (rad, chg, hs, isotope, base, mapNum)
             baseOffset = -0.5 + (mapNumLength + len(base) / 2.) / symbolLength
-            
+
           if deg == 1:
             if abs(nbrSum[1]) > 1:
               islope = nbrSum[0] / abs(nbrSum[1])
@@ -504,7 +512,7 @@ class MolDrawing(object):
                 orient = 'S'
           else:
             orient = 'C'
-        
+
         if highlightMap and idx in highlightMap:
           color = highlightMap[idx]
         elif highlightAtoms and idx in highlightAtoms:

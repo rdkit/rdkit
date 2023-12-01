@@ -178,8 +178,6 @@ class DrawMol {
   void calcAnnotationPosition(const Atom *atom, DrawAnnotation &annot) const;
   void calcAnnotationPosition(const Bond *bond, DrawAnnotation &annot) const;
   double getNoteStartAngle(const Atom *atom) const;
-  void calcMolNotePosition(const std::vector<Point2D> atCds,
-                           DrawAnnotation &annot) const;
   // see if the note will clash with anything else drawn on the molecule.
   // Returns 0 if no clash, 1-4 if there is a clash, denoting what clashed.
   int doesNoteClash(const DrawAnnotation &annot) const;
@@ -256,6 +254,10 @@ class DrawMol {
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
+  // For drawing reactions, padding needs to be 0 irrespective
+  // of what drawOptions_ does elsewhere, so it is copied from drawOptions_
+  // on construction, and is then immune to changes in the outer program.
+  double marginPadding_;
   std::vector<int> highlightAtoms_;
   std::vector<int> highlightBonds_;
   std::map<int, DrawColour> highlightAtomMap_;
@@ -283,7 +285,14 @@ class DrawMol {
   std::vector<std::tuple<StringRect, OrientType, int>> radicals_;
   std::vector<int> singleBondLines_;
 
+  // The total width and height of the canvas.  Either or both may be
+  // -1 initially, in which case they will be calculated so the molecule
+  // can be drawn within it at a fixed scale (the so-called flexiCanvas).
   int width_, height_;
+  // The width and height of the drawing area within the canvas.  This is
+  // width_ and height_ less the drawOptions._padding round the outside.
+  // Will always be <= width_, height_.
+  int drawWidth_, drawHeight_;
   // to allow for min and max font sizes, the font scale needs to be
   // independent of the main scale.
   double scale_, fontScale_;
@@ -291,8 +300,10 @@ class DrawMol {
   // offsets are for drawing molecules in grids, for example.
   double xOffset_ = 0.0, yOffset_ = 0.0;
   double meanBondLength_ = 0.0;
-  // if there's a legend, we reserve a bit for it.
-  int drawHeight_, legendHeight_ = 0;
+  // if there's a legend, we reserve a bit for it.  molHeight_ is the
+  // bit for drawing the molecule, legendHeight_ the bit under that
+  // for the legend.  In pixels.
+  int molHeight_, legendHeight_ = 0;
   bool drawingInitialised_ = false;
   // when drawing the atoms and bonds in an SVG, they are given a class
   // via MolDraw2D's activeAtmIdx[12]_ and activeBndIdx.  We don't always want

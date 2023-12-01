@@ -20,7 +20,7 @@ As of the end of the GSOC coding period, the first 3 steps have been completed. 
 
 ## The XYZ File Parser
 
-As with other RDKit file parsers (such as the Mol file parser), the XYZ parser contructs an RDKit molecule from the file data. Since the only information an XYZ file contains is the element and location of each atom, the molecule built from the parser contains only atoms and not bonds, as well as a conformer containing the atomic coordinates. The function ```XYZFileToMol()``` calls the file parser.
+As with other RDKit file parsers (such as the Mol file parser), the XYZ parser constructs an RDKit molecule from the file data. Since the only information an XYZ file contains is the element and location of each atom, the molecule built from the parser contains only atoms and not bonds, as well as a conformer containing the atomic coordinates. The function ```XYZFileToMol()``` calls the file parser.
 
 ## Atomic Connectivity Determination
 

@@ -44,6 +44,9 @@ class MetalDisconnectorWrap {
   RDKit::ROMol *disconnect(const RDKit::ROMol &mol) {
     return md_->disconnect(mol);
   }
+  void disconnectInPlace(RDKit::ROMol &mol) {
+    return md_->disconnectInPlace(static_cast<RDKit::RWMol &>(mol));
+  }
 
  private:
   std::unique_ptr<RDKit::MolStandardize::MetalDisconnector> md_;
@@ -73,7 +76,8 @@ struct metal_wrapper {
 
     std::string docString = "Metal Disconnector Options";
     python::class_<RDKit::MolStandardize::MetalDisconnectorOptions>(
-        "MetalDisconnectorOptions", docString.c_str(), python::init<>())
+        "MetalDisconnectorOptions", docString.c_str(),
+        python::init<>(python::args("self")))
         .def_readwrite(
             "splitGrignards",
             &RDKit::MolStandardize::MetalDisconnectorOptions::splitGrignards,
@@ -100,7 +104,7 @@ struct metal_wrapper {
     python::class_<MetalDisconnectorWrap, boost::noncopyable>(
         "MetalDisconnector", docString.c_str(),
         python::init<python::optional<python::object>>(
-            (python::arg("options") = python::object())))
+            (python::arg("self"), python::arg("options") = python::object())))
         .add_property("MetalNof", &getMetalNofHelper,
                       "SMARTS defining the metals to disconnect if attached to "
                       "Nitrogen, Oxygen or Fluorine")
@@ -118,8 +122,12 @@ struct metal_wrapper {
             "Set the query molecule defining the metals to disconnect if attached"
             " to Nitrogen, Oxygen or Fluorine.")
         .def("Disconnect", &MetalDisconnectorWrap::disconnect,
-             (python::arg("self"), python::arg("mol")), docString.c_str(),
-             python::return_value_policy<python::manage_new_object>());
+             (python::arg("self"), python::arg("mol")),
+             "performs the disconnection",
+             python::return_value_policy<python::manage_new_object>())
+        .def("DisconnectInPlace", &MetalDisconnectorWrap::disconnectInPlace,
+             (python::arg("self"), python::arg("mol")),
+             "performs the disconnection, modifies the input molecule");
   }
 };
 

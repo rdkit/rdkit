@@ -8,13 +8,12 @@ are actually the same.
 import unittest
 
 from rdkit import Chem
-
 from rdkit.Chem import RegistrationHash
 from rdkit.Chem.RegistrationHash import HashLayer
 
 
-def hash_sdf(molblock: str, escape=None, data_field_names=None):
-    """
+def hash_sdf(molblock: str, escape=None, data_field_names=None, enable_tautomer_hash_v2=False):
+  """
     Gets the layers of the SDF, and generates the hash based on only the layers passed in
 
     :param molblock: The molblock to hash
@@ -24,18 +23,17 @@ def hash_sdf(molblock: str, escape=None, data_field_names=None):
 
     :return: A dict with the hash & the layers
     """
-    mol = Chem.MolFromMolBlock(molblock)
-    return RegistrationHash.GetMolLayers(mol,
-                                    escape=escape,
-                                    data_field_names=data_field_names)
+  mol = Chem.MolFromMolBlock(molblock)
+  return RegistrationHash.GetMolLayers(mol, escape=escape, data_field_names=data_field_names,
+                                       enable_tautomer_hash_v2=enable_tautomer_hash_v2)
 
 
 class CanonicalizerTest(unittest.TestCase):
-    maxDiff = 2000 # hash diffs can be long!
+  maxDiff = 2000  # hash diffs can be long!
 
-    def test_example_structure(self):
+  def test_example_structure(self):
 
-        structure = """
+    structure = """
      RDKit          2D
 
   0  0  0  0  0  0  0  0  0  0999 V3000
@@ -98,28 +96,35 @@ M  END
 $$$$
 """
 
-        layers = hash_sdf(structure)
-        expected_layers = {
-                HashLayer.CANONICAL_SMILES: "C[C@H]1C[C@@H](C)c2cc3c(C(F)(F)F)cc(O)nc3cc2N1 |o1:1,3|",
-                HashLayer.ESCAPE: "",
-                HashLayer.FORMULA: "C15H15F3N2O",
-                HashLayer.NO_STEREO_SMILES: "CC1CC(C)c2cc3c(C(F)(F)F)cc(O)nc3cc2N1",
-                HashLayer.NO_STEREO_TAUTOMER_HASH: "CC1CC(C)[C]2[CH][C]3[C]([CH][C]2[N]1)[N][C]([O])[CH][C]3C(F)(F)F_2_0",
-                HashLayer.SGROUP_DATA: "[]",
-                HashLayer.TAUTOMER_HASH: "C[C@H]1C[C@@H](C)[C]2[CH][C]3[C]([CH][C]2[N]1)[N][C]([O])[CH][C]3C(F)(F)F_2_0 |o1:1,3|",
-        }
-        self.assertEqual(layers, expected_layers)
+    layers = hash_sdf(structure)
+    expected_layers = {
+      HashLayer.CANONICAL_SMILES:
+      "C[C@H]1C[C@@H](C)c2cc3c(C(F)(F)F)cc(O)nc3cc2N1 |o1:1,3|",
+      HashLayer.ESCAPE:
+      "",
+      HashLayer.FORMULA:
+      "C15H15F3N2O",
+      HashLayer.NO_STEREO_SMILES:
+      "CC1CC(C)c2cc3c(C(F)(F)F)cc(O)nc3cc2N1",
+      HashLayer.NO_STEREO_TAUTOMER_HASH:
+      "CC1CC(C)[C]2[CH][C]3[C]([CH][C]2[N]1)[N][C]([O])[CH][C]3C(F)(F)F_2_0",
+      HashLayer.SGROUP_DATA:
+      "[]",
+      HashLayer.TAUTOMER_HASH:
+      "C[C@H]1C[C@@H](C)[C]2[CH][C]3[C]([CH][C]2[N]1)[N][C]([O])[CH][C]3C(F)(F)F_2_0 |o1:1,3|",
+    }
+    self.assertEqual(layers, expected_layers)
 
-        # should have the same NO_STEREO_SMILES the structure with stereo removed
-        mol = Chem.MolFromMolBlock(structure)
-        Chem.rdmolops.RemoveStereochemistry(mol)
-        stereo_insensitive_layers = hash_sdf(Chem.MolToMolBlock(mol))
-        self.assertEqual(stereo_insensitive_layers[HashLayer.NO_STEREO_SMILES], expected_layers[
-                HashLayer.NO_STEREO_SMILES])
+    # should have the same NO_STEREO_SMILES the structure with stereo removed
+    mol = Chem.MolFromMolBlock(structure)
+    Chem.rdmolops.RemoveStereochemistry(mol)
+    stereo_insensitive_layers = hash_sdf(Chem.MolToMolBlock(mol))
+    self.assertEqual(stereo_insensitive_layers[HashLayer.NO_STEREO_SMILES],
+                     expected_layers[HashLayer.NO_STEREO_SMILES])
 
-    def test_XBHEAD_XBCORR(self):
-        # rdkit/Code/GraphMol/FileParsers/sgroup_test_data/repeat_groups_query1.mol
-        structure = """
+  def test_XBHEAD_XBCORR(self):
+    # rdkit/Code/GraphMol/FileParsers/sgroup_test_data/repeat_groups_query1.mol
+    structure = """
   Mrv1824 06192020192D
 
   0  0  0     0  0            999 V3000
@@ -150,28 +155,29 @@ M  V30 END CTAB
 M  END
 """
 
-        expected_layers = {
-            HashLayer.CANONICAL_SMILES: "C1CCCCC1",
-            HashLayer.ESCAPE: "",
-            HashLayer.FORMULA: "C6H12",
-            HashLayer.NO_STEREO_SMILES: "C1CCCCC1",
-            HashLayer.NO_STEREO_TAUTOMER_HASH: "C1CCCCC1_0_0",
-            HashLayer.SGROUP_DATA: '[{"type": "SRU", "atoms": [2], "bonds": [[1, 2], [2, 3]], "index": 1, "connect": "HT", "label": "1-3", "XBHEAD": [[0, 5], [1, 0]], "XBCORR": [[[0, 5], [0, 5]], [[1, 0], [1, 0]]]}]',
-            HashLayer.TAUTOMER_HASH: "C1CCCCC1_0_0",
-        }
+    expected_layers = {
+      HashLayer.CANONICAL_SMILES: "C1CCCCC1",
+      HashLayer.ESCAPE: "",
+      HashLayer.FORMULA: "C6H12",
+      HashLayer.NO_STEREO_SMILES: "C1CCCCC1",
+      HashLayer.NO_STEREO_TAUTOMER_HASH: "C1CCCCC1_0_0",
+      HashLayer.SGROUP_DATA:
+      '[{"type": "SRU", "atoms": [2], "bonds": [[1, 2], [2, 3]], "index": 1, "connect": "HT", "label": "1-3", "XBHEAD": [[0, 5], [1, 0]], "XBCORR": [[[0, 5], [0, 5]], [[1, 0], [1, 0]]]}]',
+      HashLayer.TAUTOMER_HASH: "C1CCCCC1_0_0",
+    }
 
-        layers = hash_sdf(structure)
-        self.assertEqual(layers, expected_layers)
+    layers = hash_sdf(structure)
+    self.assertEqual(layers, expected_layers)
 
-        # test for the same hash if the order in the XBHEAD block is changed
-        structure.replace("XBHEAD=(2 6 1)", "XBHEAD=(2 1 6)")
+    # test for the same hash if the order in the XBHEAD block is changed
+    structure.replace("XBHEAD=(2 6 1)", "XBHEAD=(2 1 6)")
 
-        layers = hash_sdf(structure)
-        self.assertEqual(layers, expected_layers)
+    layers = hash_sdf(structure)
+    self.assertEqual(layers, expected_layers)
 
-    def test_data_sgroups(self):
-        # see SHARED-7879
-        structure = """
+  def test_data_sgroups(self):
+    # see SHARED-7879
+    structure = """
    Mrv1808 05312108392D
 
   0  0  0     0  0            999 V3000
@@ -203,230 +209,302 @@ M  V30 END CTAB
 M  END
 """
 
-        expected_layers = {
-                HashLayer.CANONICAL_SMILES: 'CCCCCCC',
-                HashLayer.ESCAPE: '',
-                HashLayer.FORMULA: 'C7H16',
-                HashLayer.NO_STEREO_SMILES: 'CCCCCCC',
-                HashLayer.NO_STEREO_TAUTOMER_HASH: 'CCCCCCC_0_0',
-                HashLayer.SGROUP_DATA: '[]',
-                HashLayer.TAUTOMER_HASH: 'CCCCCCC_0_0'
-        }
+    expected_layers = {
+      HashLayer.CANONICAL_SMILES: 'CCCCCCC',
+      HashLayer.ESCAPE: '',
+      HashLayer.FORMULA: 'C7H16',
+      HashLayer.NO_STEREO_SMILES: 'CCCCCCC',
+      HashLayer.NO_STEREO_TAUTOMER_HASH: 'CCCCCCC_0_0',
+      HashLayer.SGROUP_DATA: '[]',
+      HashLayer.TAUTOMER_HASH: 'CCCCCCC_0_0'
+    }
 
-        layers = hash_sdf(structure)
-        self.assertEqual(layers, expected_layers)
+    expected_layers_v2 = {
+      HashLayer.CANONICAL_SMILES: 'CCCCCCC',
+      HashLayer.ESCAPE: '',
+      HashLayer.FORMULA: 'C7H16',
+      HashLayer.NO_STEREO_SMILES: 'CCCCCCC',
+      HashLayer.NO_STEREO_TAUTOMER_HASH: '[CH3]-[CH2]-[CH2]-[CH2]-[CH2]-[CH2]-[CH3]_0_0',
+      HashLayer.SGROUP_DATA: '[]',
+      HashLayer.TAUTOMER_HASH: '[CH3]-[CH2]-[CH2]-[CH2]-[CH2]-[CH2]-[CH3]_0_0'
+    }
 
-    def test_stereo_imine_hash(self):
-        stereo_mol = Chem.MolFromSmiles(r'[H]\N=C\C', sanitize=False)
-        stereo = RegistrationHash.GetMolLayers(stereo_mol)
+    layers = hash_sdf(structure)
+    self.assertEqual(layers, expected_layers)
 
-        no_stereo_mol = Chem.MolFromSmiles('N=CC', sanitize=False)
-        no_stereo = RegistrationHash.GetMolLayers(no_stereo_mol)
+    layers_v2 = hash_sdf(structure, enable_tautomer_hash_v2=True)
+    self.assertEqual(layers_v2, expected_layers_v2)
 
-        hydrogen_as_is_mol = Chem.MolFromSmiles('N=CC[H]', sanitize=False)
-        hydrogen_as_is = RegistrationHash.GetMolLayers(hydrogen_as_is_mol)
+  def test_stereo_imine_hash(self):
+    stereo_mol = Chem.MolFromSmiles(r'[H]\N=C\C', sanitize=False)
+    stereo = RegistrationHash.GetMolLayers(stereo_mol)
 
-        self.assertNotEqual(stereo[HashLayer.CANONICAL_SMILES], no_stereo[
-            HashLayer.CANONICAL_SMILES])
-        self.assertEqual(no_stereo[HashLayer.CANONICAL_SMILES], hydrogen_as_is[
-            HashLayer.CANONICAL_SMILES])
+    no_stereo_mol = Chem.MolFromSmiles('N=CC', sanitize=False)
+    no_stereo = RegistrationHash.GetMolLayers(no_stereo_mol)
 
-        self.assertEqual(stereo[HashLayer.NO_STEREO_SMILES], no_stereo[
-            HashLayer.NO_STEREO_SMILES])
-        self.assertEqual(no_stereo[HashLayer.NO_STEREO_SMILES], hydrogen_as_is[
-            HashLayer.NO_STEREO_SMILES])
+    hydrogen_as_is_mol = Chem.MolFromSmiles('N=CC[H]', sanitize=False)
+    hydrogen_as_is = RegistrationHash.GetMolLayers(hydrogen_as_is_mol)
 
-        self.assertEqual(stereo[HashLayer.NO_STEREO_TAUTOMER_HASH], no_stereo[
-            HashLayer.NO_STEREO_TAUTOMER_HASH])
-        self.assertEqual(no_stereo[HashLayer.NO_STEREO_TAUTOMER_HASH], hydrogen_as_is[
-            HashLayer.NO_STEREO_TAUTOMER_HASH])
+    self.assertNotEqual(stereo[HashLayer.CANONICAL_SMILES], no_stereo[HashLayer.CANONICAL_SMILES])
+    self.assertEqual(no_stereo[HashLayer.CANONICAL_SMILES],
+                     hydrogen_as_is[HashLayer.CANONICAL_SMILES])
 
-        self.assertEqual(stereo[HashLayer.TAUTOMER_HASH], no_stereo[
-            HashLayer.TAUTOMER_HASH])
-        self.assertEqual(no_stereo[HashLayer.TAUTOMER_HASH], hydrogen_as_is[
-            HashLayer.TAUTOMER_HASH])
+    self.assertEqual(stereo[HashLayer.NO_STEREO_SMILES], no_stereo[HashLayer.NO_STEREO_SMILES])
+    self.assertEqual(no_stereo[HashLayer.NO_STEREO_SMILES],
+                     hydrogen_as_is[HashLayer.NO_STEREO_SMILES])
 
-    def test_empty(self):
-        """Can the hasher operate on an empty molecule without traceback?"""
-        mol = Chem.Mol()
-        RegistrationHash.GetMolLayers(mol)
+    self.assertEqual(stereo[HashLayer.NO_STEREO_TAUTOMER_HASH],
+                     no_stereo[HashLayer.NO_STEREO_TAUTOMER_HASH])
+    self.assertEqual(no_stereo[HashLayer.NO_STEREO_TAUTOMER_HASH],
+                     hydrogen_as_is[HashLayer.NO_STEREO_TAUTOMER_HASH])
 
+    self.assertEqual(stereo[HashLayer.TAUTOMER_HASH], no_stereo[HashLayer.TAUTOMER_HASH])
+    self.assertEqual(no_stereo[HashLayer.TAUTOMER_HASH], hydrogen_as_is[HashLayer.TAUTOMER_HASH])
 
-    def test_enhanced_stereo_canonicalizer(self):
-        """Can we correctly canonicalize a molecule with enhanced stereo?"""
-        groups = (
-            # basics
-            ('C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)F |a:3,&1:1,7,&2:5,r|',
-            'C[C@H](O)[C@H](C)[C@@H](C)[C@H](C)F |a:3,&1:1,7,&2:5,r|'),
+  def test_empty(self):
+    """Can the hasher operate on an empty molecule without traceback?"""
+    mol = Chem.Mol()
+    RegistrationHash.GetMolLayers(mol)
 
-            # renumbering the groups
-            ('C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)F |a:3,&1:1,7,&2:5,r|',
-            'C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)F |a:3,&2:1,7,&1:5,r|'),
+  def test_enhanced_stereo_canonicalizer(self):
+    """Can we correctly canonicalize a molecule with enhanced stereo?"""
+    groups = (
+      # basics
+      ('C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)F |a:3,&1:1,7,&2:5,r|',
+       'C[C@H](O)[C@H](C)[C@@H](C)[C@H](C)F |a:3,&1:1,7,&2:5,r|'),
 
-            # AND/OR canonicalization
-            ('C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,o1:7,&2:1,&3:5,r|',
-            'C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,&2:7,o1:1,&3:5,r|'),
+      # renumbering the groups
+      ('C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)F |a:3,&1:1,7,&2:5,r|',
+       'C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)F |a:3,&2:1,7,&1:5,r|'),
 
-            # Dan's example in SHARED-7811 (corrected)
-            (
-                r'C[C@@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@H](C)C1 |o1:1,7,o2:5,11|',  # s1
-                r'C[C@H](O)[C@H](C)CC1C[C@H](C)C[C@@H](C)C1 |o1:1,8;o2:3,11|',  # s2
-                r'C[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,5,o2:7,11|'  # s3 fixed!
-                r'C[C@@H](O)[C@H](C)CC1C[C@H](C)C[C@H](C)C1 |o1:1,11;o2:3,8|',  # s4
-            ),
-        )
-        for mols_smis in groups:
-            csmis = set()
-            for smi in mols_smis:
-                mol = Chem.MolFromSmiles(smi)
-                csmi = Chem.MolToCXSmiles(mol)
-                self.assertIsNotNone(csmi)
-                csmis.add(csmi)
-            self.assertEqual(len(csmis), 1)
+      # AND/OR canonicalization
+      ('C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,o1:7,&2:1,&3:5,r|',
+       'C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,&2:7,o1:1,&3:5,r|'),
 
+      # Dan's example in SHARED-7811 (corrected)
+      (
+        r'C[C@@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@H](C)C1 |o1:1,7,o2:5,11|',  # s1
+        r'C[C@H](O)[C@H](C)CC1C[C@H](C)C[C@@H](C)C1 |o1:1,8;o2:3,11|',  # s2
+        r'C[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,5,o2:7,11|'  # s3 fixed!
+        r'C[C@@H](O)[C@H](C)CC1C[C@H](C)C[C@H](C)C1 |o1:1,11;o2:3,8|',  # s4
+      ),
+    )
+    for mols_smis in groups:
+      csmis = set()
+      for smi in mols_smis:
+        mol = Chem.MolFromSmiles(smi)
+        csmi = Chem.MolToCXSmiles(mol)
+        self.assertIsNotNone(csmi)
+        csmis.add(csmi)
+      self.assertEqual(len(csmis), 1)
 
-    def test_enhanced_stereo_canonicalizer_non_matching(self):
-        # Uncorrected example in SHARED-7811. These are NOT equivalent,
-        # since the groups are defined on non-interconvertible pairs of atomss
-        s1 = r'C[C@@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@H](C)C1 |o1:1,7,o2:5,11|'
-        s3 = r'C[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,11,o2:5,7|'
+  def test_enhanced_stereo_canonicalizer_non_matching(self):
+    # Uncorrected example in SHARED-7811. These are NOT equivalent,
+    # since the groups are defined on non-interconvertible pairs of atomss
+    s1 = r'C[C@@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@H](C)C1 |o1:1,7,o2:5,11|'
+    s3 = r'C[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,11,o2:5,7|'
 
-        csmis = set()
-        for smi in (s1, s3):
-            mol = Chem.MolFromSmiles(smi)
-            csmi = Chem.MolToCXSmiles(mol)
-            csmis.add(csmi)
-        self.assertEqual(len(csmis), 2)
+    csmis = set()
+    for smi in (s1, s3):
+      mol = Chem.MolFromSmiles(smi)
+      csmi = Chem.MolToCXSmiles(mol)
+      csmis.add(csmi)
+    self.assertEqual(len(csmis), 2)
 
-    def test_enhanced_stereo_regex(self):
-        cxsmileses = ((
-        'C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)F |a:3,&1:1,7,&2:5,r|',
-        'C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,o1:7,&2:1,&3:5,r|',
-        'C[C@@H](O)[C@H](C)CC1C[C@H](C)C[C@H](C)C1 |o1:1,11;o2:3,8|',
-        ))
-        for cxsmiles in cxsmileses:
-            self.assertEqual(cxsmiles.count(':'), len(RegistrationHash.ENHANCED_STEREO_GROUP_REGEX.findall(cxsmiles)))
+  def test_enhanced_stereo_regex(self):
+    cxsmileses = ((
+      'C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)F |a:3,&1:1,7,&2:5,r|',
+      'C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,o1:7,&2:1,&3:5,r|',
+      'C[C@@H](O)[C@H](C)CC1C[C@H](C)C[C@H](C)C1 |o1:1,11;o2:3,8|',
+    ))
+    for cxsmiles in cxsmileses:
+      self.assertEqual(cxsmiles.count(':'),
+                       len(RegistrationHash.ENHANCED_STEREO_GROUP_REGEX.findall(cxsmiles)))
 
-    def test_shared_7984(self):
-        smi = '[2H]C([2H])=C([2H])C(=O)O'
-        no_stereo_mol = Chem.MolFromSmiles(smi)
-        self.assertEqual(no_stereo_mol.GetNumAtoms(), 8)
+  def test_shared_7984(self):
+    smi = '[2H]C([2H])=C([2H])C(=O)O'
+    no_stereo_mol = Chem.MolFromSmiles(smi)
+    self.assertEqual(no_stereo_mol.GetNumAtoms(), 8)
 
-        stereo_mol = Chem.Mol(no_stereo_mol)
+    stereo_mol = Chem.Mol(no_stereo_mol)
 
-        # We consider a double bond with these features equal to a STEREONONE one.
-        stereo_mol.GetBondWithIdx(2).SetStereo(Chem.BondStereo.STEREOANY)
-        stereo_mol.GetBondWithIdx(2).SetBondDir(Chem.BondDir.EITHERDOUBLE)
+    # We consider a double bond with these features equal to a STEREONONE one.
+    stereo_mol.GetBondWithIdx(2).SetStereo(Chem.BondStereo.STEREOANY)
+    stereo_mol.GetBondWithIdx(2).SetBondDir(Chem.BondDir.EITHERDOUBLE)
 
-        no_stereo_hash = RegistrationHash.GetMolLayers(no_stereo_mol)
-        stereo_hash = RegistrationHash.GetMolLayers(stereo_mol)
+    no_stereo_hash = RegistrationHash.GetMolLayers(no_stereo_mol)
+    stereo_hash = RegistrationHash.GetMolLayers(stereo_mol)
 
-        self.assertEqual(no_stereo_hash, stereo_hash)
+    self.assertEqual(no_stereo_hash, stereo_hash)
 
+  def test_non_matching_pseudoatom_label(self):
 
-    def test_hash_schemes(self):
+    pol_sdf = """
+     RDKit          2D
 
-        def get_hash(m, scheme):
-            hash = RegistrationHash.GetMolHash(RegistrationHash.GetMolLayers(m), scheme)
-            self.assertEqual(len(hash), 40)  # SHA-1 hashes are 40 hex digits long
-            return hash
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 Pol 0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END"""
 
-        def same_hash(m1, m2, scheme):
-            return get_hash(m1, scheme) == get_hash(m2, scheme)
+    mod_sdf = """
+     RDKit          2D
 
-        mol1 = Chem.MolFromSmiles(
-            "C[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,11,o2:5,7|")
-        self.assertEqual(mol1.GetNumAtoms(), 14)
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 Mod 0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END"""
 
-        all_layers_hash = get_hash(mol1, RegistrationHash.HashScheme.ALL_LAYERS)
-        stereo_insensitive_layers_hash = get_hash(
-            mol1, RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS)
-        tautomer_insensitive_layers_hash = get_hash(
-            mol1, RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS)
+    carbon_sdf = """
+     RDKit          2D
 
-        self.assertNotEqual(all_layers_hash, tautomer_insensitive_layers_hash)
-        self.assertNotEqual(all_layers_hash, stereo_insensitive_layers_hash)
-        self.assertNotEqual(stereo_insensitive_layers_hash, tautomer_insensitive_layers_hash)
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END"""
 
-        # Compare stereoisomers
-        mol2 = Chem.MolFromSmiles("CC(O)C(C)CC1CC(C)CC(C)C1")
-        self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.ALL_LAYERS))
-        self.assertTrue(same_hash(mol1, mol2, RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
-        self.assertFalse(same_hash(mol1, mol2,
-                            RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+    pol_hash = RegistrationHash.GetMolHash(hash_sdf(pol_sdf))
+    mod_hash = RegistrationHash.GetMolHash(hash_sdf(mod_sdf))
+    carbon_hash = RegistrationHash.GetMolHash(hash_sdf(carbon_sdf))
 
-        # Compare tautomers
-        mol1 = Chem.MolFromSmiles("N1C=NC2=CN=CN=C12")
-        mol2 = Chem.MolFromSmiles("N1C=NC2=NC=NC=C12")
-        self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.ALL_LAYERS))
-        self.assertFalse(same_hash(mol1, mol2,
-                            RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
-        self.assertTrue(same_hash(mol1, mol2, RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+    hashes = {pol_hash, mod_hash, carbon_hash}
+    self.assertEqual(len(hashes), 3)
 
-        # Compare with and without sgroup data we canonicalize on (DAT/SRU/COP)
-        smiles = "CNCC(=O)OC"
-        mol1 = Chem.MolFromSmiles(smiles)
-        mol2 = Chem.MolFromSmiles(f"{smiles} |Sg:n:5,3,4::ht|")
-        # ...where all hash schemes account for sgroup data
-        self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.ALL_LAYERS))
-        self.assertFalse(same_hash(mol1, mol2,
-                            RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
-        self.assertFalse(same_hash(mol1, mol2,
-                            RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+  def test_matching_pseudoatom_label(self):
 
-    def test_no_stereo_hash(self):
-        """
+    pol_sdf = """
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 Pol 0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END"""
+
+    pol_sdf_2 = """
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    2.5981   -0.0000    0.0000 Pol 0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END"""
+
+    pol_hash = RegistrationHash.GetMolHash(hash_sdf(pol_sdf))
+    pol_hash_2 = RegistrationHash.GetMolHash(hash_sdf(pol_sdf_2))
+
+    hashes = {pol_hash, pol_hash_2}
+    self.assertEqual(len(hashes), 1)
+
+  def test_hash_schemes(self):
+
+    def get_hash(m, scheme):
+      hash = RegistrationHash.GetMolHash(RegistrationHash.GetMolLayers(m), scheme)
+      self.assertEqual(len(hash), 40)  # SHA-1 hashes are 40 hex digits long
+      return hash
+
+    def same_hash(m1, m2, scheme):
+      return get_hash(m1, scheme) == get_hash(m2, scheme)
+
+    mol1 = Chem.MolFromSmiles("C[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,11,o2:5,7|")
+    self.assertEqual(mol1.GetNumAtoms(), 14)
+
+    all_layers_hash = get_hash(mol1, RegistrationHash.HashScheme.ALL_LAYERS)
+    stereo_insensitive_layers_hash = get_hash(mol1,
+                                              RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS)
+    tautomer_insensitive_layers_hash = get_hash(
+      mol1, RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS)
+
+    self.assertNotEqual(all_layers_hash, tautomer_insensitive_layers_hash)
+    self.assertNotEqual(all_layers_hash, stereo_insensitive_layers_hash)
+    self.assertNotEqual(stereo_insensitive_layers_hash, tautomer_insensitive_layers_hash)
+
+    # Compare stereoisomers
+    mol2 = Chem.MolFromSmiles("CC(O)C(C)CC1CC(C)CC(C)C1")
+    self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.ALL_LAYERS))
+    self.assertTrue(same_hash(mol1, mol2, RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
+    self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+
+    # Compare tautomers
+    mol1 = Chem.MolFromSmiles("N1C=NC2=CN=CN=C12")
+    mol2 = Chem.MolFromSmiles("N1C=NC2=NC=NC=C12")
+    self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.ALL_LAYERS))
+    self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
+    self.assertTrue(same_hash(mol1, mol2, RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+
+    # Compare with and without sgroup data we canonicalize on (DAT/SRU/COP)
+    smiles = "CNCC(=O)OC"
+    mol1 = Chem.MolFromSmiles(smiles)
+    mol2 = Chem.MolFromSmiles(f"{smiles} |Sg:n:5,3,4::ht|")
+    # ...where all hash schemes account for sgroup data
+    self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.ALL_LAYERS))
+    self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
+    self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+
+  def test_no_stereo_hash(self):
+    """
         Check that none of the layers involved in the STEREO_INSENSITIVE_LAYERS HashScheme
         includes any SMILES stereo markers
         """
-        smi = r'C\C=C/[C@@H](C)Cl'
-        mol = Chem.MolFromSmiles(smi)
-        self.assertEqual(mol.GetNumAtoms(), 6)
+    smi = r'C\C=C/[C@@H](C)Cl'
+    mol = Chem.MolFromSmiles(smi)
+    self.assertEqual(mol.GetNumAtoms(), 6)
 
-        layers = RegistrationHash.GetMolLayers(mol)
+    layers = RegistrationHash.GetMolLayers(mol)
 
-        for layer in RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS.value:
-            self.assertNotIn('@', layers[layer])
-            self.assertNotIn('/', layers[layer])
-            self.assertNotIn('\\', layers[layer])
+    for layer in RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS.value:
+      self.assertNotIn('@', layers[layer])
+      self.assertNotIn('/', layers[layer])
+      self.assertNotIn('\\', layers[layer])
 
-    def test_atom_map_numbers(self):
-        """
+  def test_atom_map_numbers(self):
+    """
         Check that atom map numbers are stripped in the molhash (SHARED-8007)
         """
-        mol_w_atom_map = Chem.MolFromSmiles('Oc1cc([*:1])ccn1')
-        mol = Chem.MolFromSmiles('Oc1cc([*])ccn1')
-        atom_map_hash_layers = RegistrationHash.GetMolLayers(mol_w_atom_map)
-        hash_layers = RegistrationHash.GetMolLayers(mol)
-        assert atom_map_hash_layers[HashLayer.CANONICAL_SMILES] == hash_layers[
-            HashLayer.CANONICAL_SMILES]
+    mol_w_atom_map = Chem.MolFromSmiles('Oc1cc([*:1])ccn1')
+    mol = Chem.MolFromSmiles('Oc1cc([*])ccn1')
+    atom_map_hash_layers = RegistrationHash.GetMolLayers(mol_w_atom_map)
+    hash_layers = RegistrationHash.GetMolLayers(mol)
+    assert atom_map_hash_layers[HashLayer.CANONICAL_SMILES] == hash_layers[
+      HashLayer.CANONICAL_SMILES]
 
-    def test_compare_stereoisomers(self):
-        stereo_mol = Chem.MolFromSmiles(
-            "C[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,11,o2:5,7|")
-        no_stereo_mol = Chem.MolFromSmiles("CC(O)C(C)CC1CC(C)CC(C)C1")
+  def test_compare_stereoisomers(self):
+    stereo_mol = Chem.MolFromSmiles("C[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,11,o2:5,7|")
+    no_stereo_mol = Chem.MolFromSmiles("CC(O)C(C)CC1CC(C)CC(C)C1")
 
-        stereo_layers = RegistrationHash.GetMolLayers(stereo_mol)
-        stereo_insensitive_layers = RegistrationHash.GetMolLayers(no_stereo_mol)
-        self.assertEqual(RegistrationHash.GetMolHash(
-            stereo_layers,
-            RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS), RegistrationHash.GetMolHash(
-                stereo_insensitive_layers,
-                RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
-        self.assertEqual(stereo_layers[
-            HashLayer.NO_STEREO_SMILES], "CC1CC(C)CC(CC(C)C(C)O)C1")
-        self.assertEqual(stereo_insensitive_layers[
-            HashLayer.NO_STEREO_SMILES], "CC1CC(C)CC(CC(C)C(C)O)C1")
+    stereo_layers = RegistrationHash.GetMolLayers(stereo_mol)
+    stereo_insensitive_layers = RegistrationHash.GetMolLayers(no_stereo_mol)
+    self.assertEqual(
+      RegistrationHash.GetMolHash(stereo_layers,
+                                  RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS),
+      RegistrationHash.GetMolHash(stereo_insensitive_layers,
+                                  RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
+    self.assertEqual(stereo_layers[HashLayer.NO_STEREO_SMILES], "CC1CC(C)CC(CC(C)C(C)O)C1")
+    self.assertEqual(stereo_insensitive_layers[HashLayer.NO_STEREO_SMILES],
+                     "CC1CC(C)CC(CC(C)C(C)O)C1")
 
-    def _compare_layers_with_expected_diffs(self, new_layers, old_layers, expected_diffs):
-        for k in old_layers:
-            if k not in expected_diffs:
-                self.assertEqual(new_layers[k], old_layers[k])
-            else:
-                self.assertEqual(new_layers[k], expected_diffs[k])
+  def _compare_layers_with_expected_diffs(self, new_layers, old_layers, expected_diffs):
+    for k in old_layers:
+      if k not in expected_diffs:
+        self.assertEqual(new_layers[k], old_layers[k])
+      else:
+        self.assertEqual(new_layers[k], expected_diffs[k])
 
-    def test_sgroup_data_hashes(self):
-        structure1 = '''
+  def test_sgroup_data_hashes(self):
+    structure1 = '''
   Mrv2108 11252113552D
 
   0  0  0     0  0            999 V3000
@@ -509,134 +587,142 @@ M  V30 END SGROUP
 M  V30 END CTAB
 M  END
 '''
-        structure2 = structure1.replace('FIELDDATA=R', 'FIELDDATA=S')
-        structure3 = structure1.replace('FIELDDATA=R', 'FIELDDATA=S', 1)
+    structure2 = structure1.replace('FIELDDATA=R', 'FIELDDATA=S')
+    structure3 = structure1.replace('FIELDDATA=R', 'FIELDDATA=S', 1)
 
-        # default behavior is that these are all the same:
-        layers1 = hash_sdf(structure1)
-        layers2 = hash_sdf(structure2)
-        expected_layers1 = {
-                HashLayer.CANONICAL_SMILES: "Cc1ccc2ccccc2c1-c1c(Cl)cc2ccc(C[C@H]3CCCC3C)cc2c1C",
-                HashLayer.ESCAPE: "",
-                HashLayer.FORMULA: "C29H29Cl",
-                HashLayer.NO_STEREO_SMILES: "Cc1ccc2ccccc2c1-c1c(Cl)cc2ccc(CC3CCCC3C)cc2c1C",
-                HashLayer.NO_STEREO_TAUTOMER_HASH: "C[C]1[CH][CH][C]2[CH][CH][CH][CH][C]2[C]1[C]1[C](Cl)[CH][C]2[CH][CH][C](CC3CCCC3C)[CH][C]2[C]1C_0_0",
-                HashLayer.SGROUP_DATA: "[]",
-                HashLayer.TAUTOMER_HASH: "C[C]1[CH][CH][C]2[CH][CH][CH][CH][C]2[C]1[C]1[C](Cl)[CH][C]2[CH][CH][C](C[C@H]3CCCC3C)[CH][C]2[C]1C_0_0",
-        }
-        self.assertEqual(layers1, expected_layers1)
-        self.assertEqual(layers2, layers1)
+    # default behavior is that these are all the same:
+    layers1 = hash_sdf(structure1)
+    layers2 = hash_sdf(structure2)
+    expected_layers1 = {
+      HashLayer.CANONICAL_SMILES:
+      "Cc1ccc2ccccc2c1-c1c(Cl)cc2ccc(C[C@H]3CCCC3C)cc2c1C",
+      HashLayer.ESCAPE:
+      "",
+      HashLayer.FORMULA:
+      "C29H29Cl",
+      HashLayer.NO_STEREO_SMILES:
+      "Cc1ccc2ccccc2c1-c1c(Cl)cc2ccc(CC3CCCC3C)cc2c1C",
+      HashLayer.NO_STEREO_TAUTOMER_HASH:
+      "C[C]1[CH][CH][C]2[CH][CH][CH][CH][C]2[C]1[C]1[C](Cl)[CH][C]2[CH][CH][C](CC3CCCC3C)[CH][C]2[C]1C_0_0",
+      HashLayer.SGROUP_DATA:
+      "[]",
+      HashLayer.TAUTOMER_HASH:
+      "C[C]1[CH][CH][C]2[CH][CH][CH][CH][C]2[C]1[C]1[C](Cl)[CH][C]2[CH][CH][C](C[C@H]3CCCC3C)[CH][C]2[C]1C_0_0",
+    }
+    self.assertEqual(layers1, expected_layers1)
+    self.assertEqual(layers2, layers1)
 
-        # using both stereo labels they are all different from each other:
-        layers1a = hash_sdf(structure1,
-                            data_field_names=['STEREOLABEL', 'stereolabel'])
-        expected_diffs = {
-                HashLayer.SGROUP_DATA: '[{"fieldName": "STEREOLABEL", "atom": [10, 11], "bonds": [], "value": "R"}, {"fieldName": "stereolabel", "atom": [20], "bonds": [], "value": "R"}]',
-        }
-        self._compare_layers_with_expected_diffs(layers1a, layers1, expected_diffs)
+    # using both stereo labels they are all different from each other:
+    layers1a = hash_sdf(structure1, data_field_names=['STEREOLABEL', 'stereolabel'])
+    expected_diffs = {
+      HashLayer.SGROUP_DATA:
+      '[{"fieldName": "STEREOLABEL", "atom": [10, 11], "bonds": [], "value": "R"}, {"fieldName": "stereolabel", "atom": [20], "bonds": [], "value": "R"}]',
+    }
+    self._compare_layers_with_expected_diffs(layers1a, layers1, expected_diffs)
 
-        layers2a = hash_sdf(structure2,
-                            data_field_names=['STEREOLABEL', 'stereolabel'])
-        expected_diffs = {
-                HashLayer.SGROUP_DATA: '[{"fieldName": "STEREOLABEL", "atom": [10, 11], "bonds": [], "value": "S"}, {"fieldName": "stereolabel", "atom": [20], "bonds": [], "value": "S"}]',
-        }
-        self._compare_layers_with_expected_diffs(layers2a, layers1, expected_diffs)
+    layers2a = hash_sdf(structure2, data_field_names=['STEREOLABEL', 'stereolabel'])
+    expected_diffs = {
+      HashLayer.SGROUP_DATA:
+      '[{"fieldName": "STEREOLABEL", "atom": [10, 11], "bonds": [], "value": "S"}, {"fieldName": "stereolabel", "atom": [20], "bonds": [], "value": "S"}]',
+    }
+    self._compare_layers_with_expected_diffs(layers2a, layers1, expected_diffs)
 
-        layers3a = hash_sdf(structure3,
-                            data_field_names=['STEREOLABEL', 'stereolabel'])
-        expected_diffs = {
-                HashLayer.SGROUP_DATA: '[{"fieldName": "STEREOLABEL", "atom": [10, 11], "bonds": [], "value": "R"}, {"fieldName": "stereolabel", "atom": [20], "bonds": [], "value": "S"}]',
-        }
-        self._compare_layers_with_expected_diffs(layers3a, layers1, expected_diffs)
+    layers3a = hash_sdf(structure3, data_field_names=['STEREOLABEL', 'stereolabel'])
+    expected_diffs = {
+      HashLayer.SGROUP_DATA:
+      '[{"fieldName": "STEREOLABEL", "atom": [10, 11], "bonds": [], "value": "R"}, {"fieldName": "stereolabel", "atom": [20], "bonds": [], "value": "S"}]',
+    }
+    self._compare_layers_with_expected_diffs(layers3a, layers1, expected_diffs)
 
-        # ensure that we can pick the data field to use:
-        layers1b = hash_sdf(structure1, data_field_names=['stereolabel'])
-        expected_diffs = {
-                HashLayer.SGROUP_DATA: '[{"fieldName": "stereolabel", "atom": [20], "bonds": [], "value": "R"}]',
-        }
-        self._compare_layers_with_expected_diffs(layers1b, layers1, expected_diffs)
+    # ensure that we can pick the data field to use:
+    layers1b = hash_sdf(structure1, data_field_names=['stereolabel'])
+    expected_diffs = {
+      HashLayer.SGROUP_DATA:
+      '[{"fieldName": "stereolabel", "atom": [20], "bonds": [], "value": "R"}]',
+    }
+    self._compare_layers_with_expected_diffs(layers1b, layers1, expected_diffs)
 
-    def test_escape_layer(self):
-        mol = Chem.MolFromSmiles("c1ccccc1")
+  def test_escape_layer(self):
+    mol = Chem.MolFromSmiles("c1ccccc1")
 
-        layers = RegistrationHash.GetMolLayers(mol)
-        layers_with_escape = RegistrationHash.GetMolLayers(mol, escape="make it unique")
-        assert layers_with_escape[HashLayer.ESCAPE] == "make it unique"
-        for k in layers_with_escape:
-            if k != HashLayer.ESCAPE:
-                assert layers_with_escape[k] == layers[k]
+    layers = RegistrationHash.GetMolLayers(mol)
+    layers_with_escape = RegistrationHash.GetMolLayers(mol, escape="make it unique")
+    assert layers_with_escape[HashLayer.ESCAPE] == "make it unique"
+    for k in layers_with_escape:
+      if k != HashLayer.ESCAPE:
+        assert layers_with_escape[k] == layers[k]
 
-    def test_shared_8516(self):
-        no_explicit_h_mol = Chem.MolFromSmiles('C[C@H](N)C(=O)O', sanitize=False)
-        with_explicit_h_mol = Chem.MolFromSmiles('[H][C@@](C)(N)C(=O)O', sanitize=False)
-        no_explicit_h_layers = RegistrationHash.GetMolLayers(no_explicit_h_mol)
-        with_explicit_h_layers = RegistrationHash.GetMolLayers(with_explicit_h_mol)
-        self.assertEqual(no_explicit_h_layers, with_explicit_h_layers)
+  def test_shared_8516(self):
+    no_explicit_h_mol = Chem.MolFromSmiles('C[C@H](N)C(=O)O', sanitize=False)
+    with_explicit_h_mol = Chem.MolFromSmiles('[H][C@@](C)(N)C(=O)O', sanitize=False)
+    no_explicit_h_layers = RegistrationHash.GetMolLayers(no_explicit_h_mol)
+    with_explicit_h_layers = RegistrationHash.GetMolLayers(with_explicit_h_mol)
+    self.assertEqual(no_explicit_h_layers, with_explicit_h_layers)
 
-    def test_mol_layers_distinguish_carbon_isotopes(self):
-        benzene = Chem.MolFromSmiles("c1ccccc1")
-        benzene_with_c13 = Chem.MolFromSmiles("[13c]1ccccc1")
+  def test_mol_layers_distinguish_carbon_isotopes(self):
+    benzene = Chem.MolFromSmiles("c1ccccc1")
+    benzene_with_c13 = Chem.MolFromSmiles("[13c]1ccccc1")
 
-        layers1 = RegistrationHash.GetMolLayers(benzene)
-        layers2 = RegistrationHash.GetMolLayers(benzene_with_c13)
+    layers1 = RegistrationHash.GetMolLayers(benzene)
+    layers2 = RegistrationHash.GetMolLayers(benzene_with_c13)
 
-        self.assertNotEqual(layers1, layers2)
+    self.assertNotEqual(layers1, layers2)
 
-    def test_mol_layers_distinguish_non_tautomeric_hydrogen_isotopes(self):
-        benzene_with_deuterium = Chem.MolFromSmiles("[2H]c1ccccc1")
-        layers = RegistrationHash.GetMolLayers(benzene_with_deuterium)
+  def test_mol_layers_distinguish_non_tautomeric_hydrogen_isotopes(self):
+    benzene_with_deuterium = Chem.MolFromSmiles("[2H]c1ccccc1")
+    layers = RegistrationHash.GetMolLayers(benzene_with_deuterium)
 
-        expected_layers = {
-            HashLayer.CANONICAL_SMILES: "[2H]c1ccccc1",
-            HashLayer.ESCAPE: "",
-            HashLayer.FORMULA: "C6H6",
-            HashLayer.NO_STEREO_SMILES: "[2H]c1ccccc1",
-            HashLayer.NO_STEREO_TAUTOMER_HASH: "[2H][C]1[CH][CH][CH][CH][CH]1_0_0",
-            HashLayer.SGROUP_DATA: "[]",
-            HashLayer.TAUTOMER_HASH: "[2H][C]1[CH][CH][CH][CH][CH]1_0_0"
-        }
+    expected_layers = {
+      HashLayer.CANONICAL_SMILES: "[2H]c1ccccc1",
+      HashLayer.ESCAPE: "",
+      HashLayer.FORMULA: "C6H6",
+      HashLayer.NO_STEREO_SMILES: "[2H]c1ccccc1",
+      HashLayer.NO_STEREO_TAUTOMER_HASH: "[2H][C]1[CH][CH][CH][CH][CH]1_0_0",
+      HashLayer.SGROUP_DATA: "[]",
+      HashLayer.TAUTOMER_HASH: "[2H][C]1[CH][CH][CH][CH][CH]1_0_0"
+    }
 
-        assert layers == expected_layers
+    assert layers == expected_layers
 
-    def test_mol_layers_distinguish_tautomeric_hydrogen_isotopes(self):
-        mol1 = Chem.MolFromSmiles("[2H]N1C=NC2=CN=CN=C12")
-        mol2 = Chem.MolFromSmiles("[2H]N1C=NC2=NC=NC=C12")
+  def test_mol_layers_distinguish_tautomeric_hydrogen_isotopes(self):
+    mol1 = Chem.MolFromSmiles("[2H]N1C=NC2=CN=CN=C12")
+    mol2 = Chem.MolFromSmiles("[2H]N1C=NC2=NC=NC=C12")
 
-        layers1 = RegistrationHash.GetMolLayers(mol1)
-        layers2 = RegistrationHash.GetMolLayers(mol2)
+    layers1 = RegistrationHash.GetMolLayers(mol1)
+    layers2 = RegistrationHash.GetMolLayers(mol2)
 
-        expected_layers1 = {
-            HashLayer.CANONICAL_SMILES: "[2H]n1cnc2cncnc21",
-            HashLayer.ESCAPE: "",
-            HashLayer.FORMULA: "C5H4N4",
-            HashLayer.NO_STEREO_SMILES: "[2H]n1cnc2cncnc21",
-            HashLayer.NO_STEREO_TAUTOMER_HASH: "[2H]N1[CH][N][C]2[CH][N][CH][N][C]21_0_0",
-            HashLayer.SGROUP_DATA: "[]",
-            HashLayer.TAUTOMER_HASH: "[2H]N1[CH][N][C]2[CH][N][CH][N][C]21_0_0"
-        }
+    expected_layers1 = {
+      HashLayer.CANONICAL_SMILES: "[2H]n1cnc2cncnc21",
+      HashLayer.ESCAPE: "",
+      HashLayer.FORMULA: "C5H4N4",
+      HashLayer.NO_STEREO_SMILES: "[2H]n1cnc2cncnc21",
+      HashLayer.NO_STEREO_TAUTOMER_HASH: "[2H]N1[CH][N][C]2[CH][N][CH][N][C]21_0_0",
+      HashLayer.SGROUP_DATA: "[]",
+      HashLayer.TAUTOMER_HASH: "[2H]N1[CH][N][C]2[CH][N][CH][N][C]21_0_0"
+    }
 
-        expected_layers2 = {
-            HashLayer.CANONICAL_SMILES: "[2H]n1cnc2ncncc21",
-            HashLayer.ESCAPE: "",
-            HashLayer.FORMULA: "C5H4N4",
-            HashLayer.NO_STEREO_SMILES: "[2H]n1cnc2ncncc21",
-            HashLayer.NO_STEREO_TAUTOMER_HASH: "[2H]N1[CH][N][C]2[N][CH][N][CH][C]21_0_0",
-            HashLayer.SGROUP_DATA: "[]",
-            HashLayer.TAUTOMER_HASH: "[2H]N1[CH][N][C]2[N][CH][N][CH][C]21_0_0"
-        }
+    expected_layers2 = {
+      HashLayer.CANONICAL_SMILES: "[2H]n1cnc2ncncc21",
+      HashLayer.ESCAPE: "",
+      HashLayer.FORMULA: "C5H4N4",
+      HashLayer.NO_STEREO_SMILES: "[2H]n1cnc2ncncc21",
+      HashLayer.NO_STEREO_TAUTOMER_HASH: "[2H]N1[CH][N][C]2[N][CH][N][CH][C]21_0_0",
+      HashLayer.SGROUP_DATA: "[]",
+      HashLayer.TAUTOMER_HASH: "[2H]N1[CH][N][C]2[N][CH][N][CH][C]21_0_0"
+    }
 
-        self.assertEqual(layers1, expected_layers1)
-        self.assertEqual(layers2, expected_layers2)
+    self.assertEqual(layers1, expected_layers1)
+    self.assertEqual(layers2, expected_layers2)
 
-    def testIodine(self):
-        """Does stereo group canonicalization mess up isotopes?"""
-        mol = Chem.MolFromSmiles('CC[C@H](C)[999C@H](C)O  |o1:2,4|')
-        layers = RegistrationHash.GetMolLayers(mol)
-        self.assertEqual(layers[HashLayer.CANONICAL_SMILES], 'CC[C@H](C)[999C@H](C)O |o1:2,4|')
+  def testIodine(self):
+    """Does stereo group canonicalization mess up isotopes?"""
+    mol = Chem.MolFromSmiles('CC[C@H](C)[999C@H](C)O  |o1:2,4|')
+    layers = RegistrationHash.GetMolLayers(mol)
+    self.assertEqual(layers[HashLayer.CANONICAL_SMILES], 'CC[C@H](C)[999C@H](C)O |o1:2,4|')
 
-    def testBadBondDir(self):
-        """"""
-        molBlock = """
+  def testBadBondDir(self):
+    """"""
+    molBlock = """
      RDKit          2D
 
   0  0  0  0  0  0  0  0  0  0999 V3000
@@ -677,11 +763,48 @@ M  V30 END CTAB
 M  END
 $$$$
 """
-        mol = Chem.MolFromMolBlock(molBlock)
-        # Simulate reapplying the wedging from the original molBlock
-        mol.GetBondBetweenAtoms(4, 5).SetBondDir(Chem.BondDir.BEGINWEDGE)
-        # this shouldn't throw an exception
-        RegistrationHash.GetMolLayers(mol)
+    mol = Chem.MolFromMolBlock(molBlock)
+    # Simulate reapplying the wedging from the original molBlock
+    mol.GetBondBetweenAtoms(4, 5).SetBondDir(Chem.BondDir.BEGINWEDGE)
+    # this shouldn't throw an exception
+    RegistrationHash.GetMolLayers(mol)
+
+  def test_tautomer_v2_hash(self):
+    """
+        Check that using v2 of the tautomer hash works
+    """
+    enol = Chem.MolFromSmiles('CC=CO')
+    keto = Chem.MolFromSmiles('CCC=O')
+
+    # Default, v1 of the tautomer hash:
+    enol_layers = RegistrationHash.GetMolLayers(enol)
+    keto_layers = RegistrationHash.GetMolLayers(keto)
+
+    for layer in (RegistrationHash.HashLayer.TAUTOMER_HASH,
+                  RegistrationHash.HashLayer.NO_STEREO_TAUTOMER_HASH):
+      self.assertNotEqual(enol_layers[layer], keto_layers[layer])
+
+    self.assertNotEqual(
+      RegistrationHash.GetMolHash(
+        enol_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS),
+      RegistrationHash.GetMolHash(
+        keto_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+
+    # v2 of the tautomer hash:
+    enol_layers = RegistrationHash.GetMolLayers(enol, enable_tautomer_hash_v2=True)
+    self.assertIn(RegistrationHash.HashLayer.TAUTOMER_HASH, enol_layers)
+
+    keto_layers = RegistrationHash.GetMolLayers(keto, enable_tautomer_hash_v2=True)
+
+    for layer in (RegistrationHash.HashLayer.TAUTOMER_HASH,
+                  RegistrationHash.HashLayer.NO_STEREO_TAUTOMER_HASH):
+      self.assertEqual(enol_layers[layer], keto_layers[layer])
+
+    self.assertEqual(
+      RegistrationHash.GetMolHash(
+        enol_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS),
+      RegistrationHash.GetMolHash(
+        keto_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
 
 
 if __name__ == '__main__':  # pragma: nocover

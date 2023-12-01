@@ -57,12 +57,13 @@ std::vector<MOL_SPTR_VECT> ChemicalReaction::runReactant(
   return run_Reactant(*this, reactant, reactionTemplateIdx);
 }
 
-bool ChemicalReaction::runReactant(RWMol &reactant) const {
+bool ChemicalReaction::runReactant(RWMol &reactant,
+                                   bool removeUnmatchedAtoms) const {
   if (getReactants().size() != 1 || getProducts().size() != 1) {
     throw ChemicalReactionException(
         "Only single reactant - single product reactions can be run in place.");
   }
-  return run_Reactant(*this, reactant);
+  return run_Reactant(*this, reactant, removeUnmatchedAtoms);
 }
 
 ChemicalReaction::ChemicalReaction(const std::string &pickle) {
@@ -343,8 +344,8 @@ bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
   unsigned int reactant_template_idx = 0;
   for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter, ++reactant_template_idx) {
-    MatchVectType tvect;
-    if (SubstructMatch(mol, **iter, tvect)) {
+    auto tvect = SubstructMatch(mol, **iter, rxn.getSubstructParams());
+    if (!tvect.empty()) {
       which.push_back(reactant_template_idx);
       if (stopAtFirstMatch) {
         return true;
@@ -383,8 +384,8 @@ bool isMoleculeProductOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
   unsigned int product_template_idx = 0;
   for (auto iter = rxn.beginProductTemplates();
        iter != rxn.endProductTemplates(); ++iter, ++product_template_idx) {
-    MatchVectType tvect;
-    if (SubstructMatch(mol, **iter, tvect)) {
+    auto tvect = SubstructMatch(mol, **iter, rxn.getSubstructParams());
+    if (!tvect.empty()) {
       which.push_back(product_template_idx);
       if (stopAtFirstMatch) {
         return true;
@@ -436,8 +437,8 @@ bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
         RDKit::Descriptors::calcAMW(mol)) {
       continue;
     }
-    MatchVectType tvect;
-    if (SubstructMatch(mol, **iter, tvect)) {
+    auto tvect = SubstructMatch(mol, **iter, rxn.getSubstructParams());
+    if (!tvect.empty()) {
       return true;
     }
   }

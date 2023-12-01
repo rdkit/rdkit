@@ -20,10 +20,11 @@
 
 """
 
-import numpy
 import random
 
-from rdkit.ML.Neural import NetNode, ActFuncs
+import numpy
+
+from rdkit.ML.Neural import ActFuncs, NetNode
 
 
 # FIX: this class has not been updated to new-style classes

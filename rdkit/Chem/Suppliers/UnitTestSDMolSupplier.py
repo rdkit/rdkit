@@ -15,83 +15,83 @@ import os
 import tempfile
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 
 
 class TestCase(unittest.TestCase):
 
-    def setUp(self):
-        self.fName = os.path.join(RDConfig.RDDataDir, 'NCI', 'first_200.props.sdf')
-        with open(self.fName, 'r') as inf:
-            inD = inf.read()
-        self.nMolecules = inD.count('$$$$')
+  def setUp(self):
+    self.fName = os.path.join(RDConfig.RDDataDir, 'NCI', 'first_200.props.sdf')
+    with open(self.fName, 'r') as inf:
+      inD = inf.read()
+    self.nMolecules = inD.count('$$$$')
 
-    def assertMolecule(self, mol, i):
-        """ Assert that we have a valid molecule """
-        self.assertIsNotNone(mol, 'read %d failed' % i)
-        self.assertGreater(mol.GetNumAtoms(), 0, 'no atoms in mol %d' % i)
+  def assertMolecule(self, mol, i):
+    """ Assert that we have a valid molecule """
+    self.assertIsNotNone(mol, 'read %d failed' % i)
+    self.assertGreater(mol.GetNumAtoms(), 0, 'no atoms in mol %d' % i)
 
-    def test_SDMolSupplier(self):
-        # tests reads using a file name (file contains 200 molecules)
-        supp = Chem.SDMolSupplier(self.fName)
+  def test_SDMolSupplier(self):
+    # tests reads using a file name (file contains 200 molecules)
+    supp = Chem.SDMolSupplier(self.fName)
 
-        # Can use as an iterator
-        for i in range(10):
-            mol = next(supp)
-            self.assertMolecule(mol, i)
+    # Can use as an iterator
+    for i in range(10):
+      mol = next(supp)
+      self.assertMolecule(mol, i)
 
-        # Can access directly
-        i = 100
-        mol = supp[i - 1]
-        self.assertMolecule(mol, i)
+    # Can access directly
+    i = 100
+    mol = supp[i - 1]
+    self.assertMolecule(mol, i)
 
-        # We can access the number of molecules
-        self.assertEqual(len(supp), self.nMolecules, 'bad supplier length')
+    # We can access the number of molecules
+    self.assertEqual(len(supp), self.nMolecules, 'bad supplier length')
 
-        # We know the number and can still access directly
-        i = 12
-        mol = supp[i - 1]
-        self.assertMolecule(mol, i)
+    # We know the number and can still access directly
+    i = 12
+    mol = supp[i - 1]
+    self.assertMolecule(mol, i)
 
-        # Get an exception if we access an invalid number
-        with self.assertRaises(IndexError):
-            _ = supp[self.nMolecules]  # out of bound read must fail
+    # Get an exception if we access an invalid number
+    with self.assertRaises(IndexError):
+      _ = supp[self.nMolecules]  # out of bound read must fail
 
-        # and we can access with negative numbers
-        mol1 = supp[len(supp) - 1]
-        mol2 = supp[-1]
-        self.assertEqual(Chem.MolToSmiles(mol1), Chem.MolToSmiles(mol2))
+    # and we can access with negative numbers
+    mol1 = supp[len(supp) - 1]
+    mol2 = supp[-1]
+    self.assertEqual(Chem.MolToSmiles(mol1), Chem.MolToSmiles(mol2))
 
-    def test_SDWriter(self):
-        # tests writes using a file name
-        supp = Chem.SDMolSupplier(self.fName)
-        outName = tempfile.NamedTemporaryFile(suffix='.sdf', delete=False).name
-        writer = Chem.SDWriter(outName)
-        m1 = next(supp)
-        writer.SetProps(m1.GetPropNames())
-        for m in supp:
-            writer.write(m)
-        writer.flush()
-        writer.close()
+  def test_SDWriter(self):
+    # tests writes using a file name
+    supp = Chem.SDMolSupplier(self.fName)
+    outName = tempfile.NamedTemporaryFile(suffix='.sdf', delete=False).name
+    writer = Chem.SDWriter(outName)
+    m1 = next(supp)
+    writer.SetProps(m1.GetPropNames())
+    for m in supp:
+      writer.write(m)
+    writer.flush()
+    writer.close()
 
-        # The writer does not have an explicit "close()" so need to
-        # let the garbage collector kick in to close the file.
-        writer = None
-        with open(outName, 'r') as inf:
-            outD = inf.read()
-        # The file should be closed, but if it isn't, and this
-        # is Windows, then the unlink() can fail. Wait and try again.
-        try:
-            os.unlink(outName)
-        except Exception:
-            import time
-            time.sleep(1)
-            try:
-                os.unlink(outName)
-            except Exception:
-                pass
-        self.assertEqual(self.nMolecules, outD.count('$$$$'), 'bad nMols in output')
+    # The writer does not have an explicit "close()" so need to
+    # let the garbage collector kick in to close the file.
+    writer = None
+    with open(outName, 'r') as inf:
+      outD = inf.read()
+    # The file should be closed, but if it isn't, and this
+    # is Windows, then the unlink() can fail. Wait and try again.
+    try:
+      os.unlink(outName)
+    except Exception:
+      import time
+      time.sleep(1)
+      try:
+        os.unlink(outName)
+      except Exception:
+        pass
+    self.assertEqual(self.nMolecules, outD.count('$$$$'), 'bad nMols in output')
+
 
 #   def _testStreamRoundtrip(self):
 #     inD = open(self.fName).read()
@@ -175,6 +175,5 @@ class TestCase(unittest.TestCase):
 #       fail = 0
 #     assert fail, 'out of bound read did not fail'
 
-
 if __name__ == '__main__':  # pragma: nocover
-    unittest.main()
+  unittest.main()

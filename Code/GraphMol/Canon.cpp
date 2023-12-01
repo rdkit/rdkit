@@ -142,6 +142,13 @@ bool isClosingRingBond(Bond *bond) {
   return beginIdx > endIdx && beginIdx - endIdx > 1 &&
          bond->hasProp(common_properties::_TraversalRingClosureBond);
 }
+
+bool canHaveDirection(const Bond *bond) {
+  PRECONDITION(bond, "bad bond");
+  Bond::BondType bondType = bond->getBondType();
+  return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC);
+}
+
 }  // namespace
 // FIX: this may only be of interest from the SmilesWriter, should we
 // move it there?
@@ -185,53 +192,39 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   // find the lowest visit order bonds from each end and determine
   // if anything is already constraining our choice of directions:
   bool dir1Set = false, dir2Set = false;
-  for (const auto &bndItr :
-       boost::make_iterator_range(mol.getAtomBonds(atom1))) {
-    auto bond = mol[bndItr];
-    if (bond != dblBond) {
+
+  auto findNeighborBonds = [&mol, &dblBond, &bondDirCounts, &bondVisitOrders,
+                            &firstVisitOrder](
+                               auto atom, auto &firstNeighborBond,
+                               auto &secondNeighborBond, auto &dirSet) {
+    for (const auto bond : mol.atomBonds(atom)) {
+      if (bond == dblBond || !canHaveDirection(bond)) {
+        continue;
+      }
+
       auto bondIdx = bond->getIdx();
       if (bondDirCounts[bondIdx] > 0) {
-        dir1Set = true;
+        dirSet = true;
       }
-      if (!firstFromAtom1 || bondVisitOrders[bondIdx] < firstVisitOrder) {
-        if (firstFromAtom1) {
-          secondFromAtom1 = firstFromAtom1;
+      if (!firstNeighborBond || bondVisitOrders[bondIdx] < firstVisitOrder) {
+        if (firstNeighborBond) {
+          secondNeighborBond = firstNeighborBond;
         }
-        firstFromAtom1 = bond;
+        firstNeighborBond = bond;
         firstVisitOrder = bondVisitOrders[bondIdx];
       } else {
-        secondFromAtom1 = bond;
+        secondNeighborBond = bond;
       }
     }
-  }
+  };
+
+  findNeighborBonds(atom1, firstFromAtom1, secondFromAtom1, dir1Set);
   firstVisitOrder = mol.getNumBonds() + 1;
-  for (const auto &bndItr :
-       boost::make_iterator_range(mol.getAtomBonds(atom2))) {
-    auto bond = mol[bndItr];
-    if (bond != dblBond) {
-      auto bondIdx = bond->getIdx();
-      if (bondDirCounts[bondIdx] > 0) {
-        dir2Set = true;
-      }
-      if (!firstFromAtom2 || bondVisitOrders[bondIdx] < firstVisitOrder) {
-        if (firstFromAtom2) {
-          secondFromAtom2 = firstFromAtom2;
-        }
-        firstFromAtom2 = bond;
-        firstVisitOrder = bondVisitOrders[bondIdx];
-      } else {
-        secondFromAtom2 = bond;
-      }
-    }
-  }
+  findNeighborBonds(atom2, firstFromAtom2, secondFromAtom2, dir2Set);
 
   // make sure we found everything we need to find:
   CHECK_INVARIANT(firstFromAtom1, "could not find atom1");
   CHECK_INVARIANT(firstFromAtom2, "could not find atom2");
-  CHECK_INVARIANT(atom1->getDegree() == 2 || secondFromAtom1,
-                  "inconsistency at atom1");
-  CHECK_INVARIANT(atom2->getDegree() == 2 || secondFromAtom2,
-                  "inconsistency at atom2");
 
   bool setFromBond1 = true;
   Bond::BondDir atom1Dir = Bond::NONE;
@@ -429,7 +422,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   // Check if there are other bonds from atoms 1 and 2 that need
   // to have their directionalities set:
   ///
-  if (atom1->getDegree() == 3) {
+  if (atom1->getDegree() == 3 && secondFromAtom1) {
     if (!bondDirCounts[secondFromAtom1->getIdx()]) {
       // This bond (the second bond from the starting atom of the double bond)
       // is a special case.  It's going to appear in a branch in the smiles:
@@ -461,7 +454,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
     atomDirCounts[atom1->getIdx()] += 1;
   }
 
-  if (atom2->getDegree() == 3) {
+  if (atom2->getDegree() == 3 && secondFromAtom2) {
     if (!bondDirCounts[secondFromAtom2->getIdx()]) {
       // Here we set the bond direction to be opposite the other one (since
       // both come after the atom connected to the double bond).
@@ -901,12 +894,6 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
                 atomTraversalBondOrder, bondsInPlay, bondSymbols, doRandom);
 }
 
-bool canHaveDirection(const Bond *bond) {
-  PRECONDITION(bond, "bad bond");
-  Bond::BondType bondType = bond->getBondType();
-  return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC);
-}
-
 void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
                    UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts,
                    const UINT_VECT &) {
@@ -1030,7 +1017,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
                           const UINT_VECT &ranks, MolStack &molStack,
                           const boost::dynamic_bitset<> *bondsInPlay,
                           const std::vector<std::string> *bondSymbols,
-                          bool doIsomericSmiles, bool doRandom) {
+                          bool doIsomericSmiles, bool doRandom,
+                          bool doChiralInversions) {
   PRECONDITION(colors.size() >= mol.getNumAtoms(), "vector too small");
   PRECONDITION(ranks.size() >= mol.getNumAtoms(), "vector too small");
   PRECONDITION(!bondsInPlay || bondsInPlay->size() >= mol.getNumBonds(),
@@ -1088,15 +1076,16 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
         if (atom->hasProp(common_properties::_brokenChirality)) {
           continue;
         }
-        const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
-        int perm = 0;
-        if (Chirality::hasNonTetrahedralStereo(atom)) {
-          atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
-        }
 
         // Check if the atom can be chiral, and if chirality needs inversion
+        const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
         if (trueOrder.size() >= 3) {
           int nSwaps = 0;
+          int perm = 0;
+          if (Chirality::hasNonTetrahedralStereo(atom)) {
+            atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
+          }
+
           // We have to make sure that trueOrder contains all the
           // bonds, even if they won't be written to the SMILES
           if (trueOrder.size() < atom->getDegree()) {
@@ -1122,7 +1111,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
             }
           }
           // FIX: handle this case for non-tet stereo too
-          if (chiralAtomNeedsTagInversion(
+          if (doChiralInversions &&
+              chiralAtomNeedsTagInversion(
                   mol, atom,
                   molStack.begin()->obj.atom->getIdx() == atom->getIdx(),
                   atomRingClosures[atom->getIdx()].size())) {
@@ -1228,7 +1218,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
             }
           }
         } else if (size_t sgidx;
-                   msI.obj.atom->getPropIfPresent("_stereoGroup", sgidx)) {
+                   msI.obj.atom->getPropIfPresent("_stereoGroup", sgidx) &&
+                   mol.getStereoGroups().size() > sgidx) {
           // make sure that the reference atom in the stereogroup is CCW
           auto &sg = mol.getStereoGroups()[sgidx];
           bool swapIt =
@@ -1335,7 +1326,10 @@ void canonicalizeEnhancedStereo(ROMol &mol,
       std::for_each(sgAtoms.begin(), sgAtoms.end(),
                     [](auto atom) { atom->invertChirality(); });
     }
-    newSgs.emplace_back(StereoGroup(sg.getGroupType(), std::move(sgAtoms)));
+
+    // note that we do not forward the Group Ids: this is intentional, so that
+    // the Ids are reassigned based on the canonicalized order.
+    newSgs.emplace_back(sg.getGroupType(), std::move(sgAtoms), 0u);
     refAtom->setProp("_stereoGroup", newSgs.size() - 1, true);
   }
   mol.setStereoGroups(newSgs);

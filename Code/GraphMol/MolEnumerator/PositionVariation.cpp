@@ -77,9 +77,7 @@ std::vector<size_t> PositionVariationOp::getVariationCounts() const {
   std::vector<size_t> res(d_variationPoints.size());
   std::transform(
       d_variationPoints.begin(), d_variationPoints.end(), res.begin(),
-      [](std::pair<unsigned int, std::vector<unsigned int>> pr) -> size_t {
-        return pr.second.size();
-      });
+      [](const auto&  pr) -> size_t { return pr.second.size(); });
   return res;
 }
 

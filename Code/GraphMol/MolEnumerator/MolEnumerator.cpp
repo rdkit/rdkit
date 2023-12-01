@@ -64,11 +64,20 @@ void removeOrigIndices(ROMol &mol) {
 }
 }  // namespace detail
 
+namespace {
+void clearReactionProps(ROMol &mol) {
+  bool includeRings = false;
+  mol.clearComputedProps(includeRings);
+  for (auto atom : mol.atoms()) {
+    atom->clearProp(common_properties::reactantAtomIdx);
+    atom->clearProp("was_dummy");
+    atom->clearProp(common_properties::reactionMapNum);
+  }
+}
+}  // namespace
+
 MolBundle enumerate(const ROMol &mol,
                     const std::vector<MolEnumeratorParams> &paramLists) {
-  if (paramLists.empty()) {
-    return MolBundle();
-  }
   std::unique_ptr<MolBundle> accum{new MolBundle()};
   boost::shared_ptr<ROMol> molCpy{new ROMol(mol)};
   detail::preserveOrigIndices(*molCpy);
@@ -85,7 +94,9 @@ MolBundle enumerate(const ROMol &mol,
       op->initFromMol(*tmol);
       auto variationCounts = op->getVariationCounts();
       if (variationCounts.empty()) {
-        thisRound->addMol(tmol);
+        RDKit::ROMOL_SPTR mcp(new ROMol(*tmol));
+        clearReactionProps(*mcp);
+        thisRound->addMol(mcp);
         continue;
       }
       std::vector<std::vector<size_t>> variations;
@@ -94,6 +105,7 @@ MolBundle enumerate(const ROMol &mol,
         variationsFound = true;
         auto newMol = (*op)(variation);
         newMol->updatePropertyCache(false);
+        clearReactionProps(*newMol);
         thisRound->addMol(ROMOL_SPTR(newMol.release()));
       }
     }
@@ -127,7 +139,7 @@ MolBundle enumerate(const ROMol &mol, size_t maxPerOperation) {
   repeatUnitParams.dp_operation =
       std::shared_ptr<MolEnumerator::MolEnumeratorOp>(sruOp);
   if (maxPerOperation > 0) {
-    sruOp->d_defaultRepeatCount = maxPerOperation;
+    sruOp->d_maxNumRounds = maxPerOperation;
     repeatUnitParams.maxToEnumerate = maxPerOperation;
   }
   paramsList.push_back(repeatUnitParams);

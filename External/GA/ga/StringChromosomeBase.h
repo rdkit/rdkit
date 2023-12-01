@@ -63,7 +63,7 @@ class StringChromosomeBase {
   void onePointCrossover(const StringChromosomeBase &parent2,
                          StringChromosomeBase &child1,
                          StringChromosomeBase &child2) const;
- std::string geneInfo() const;
+  std::string geneInfo() const;
   const T getValue(int pos) const;
   T *getString() const;
   int getLength() const { return length; }

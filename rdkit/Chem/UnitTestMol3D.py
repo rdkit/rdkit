@@ -1,13 +1,13 @@
 """unit testing code for 3D stuff
 
 """
-from rdkit import RDConfig
-import unittest, os
-import sys
+import os
 import random
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import TorsionFingerprints
+import sys
+import unittest
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import AllChem, TorsionFingerprints
 
 
 class TestCase(unittest.TestCase):
@@ -162,6 +162,12 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('S(F)(F)(F)(F)(Cl)c1ccccc1')
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
     self.assertEqual(len(tors_list), 1)
+
+  def testTorsionAngleLeargerThan14(self):
+    # incorrect value from more than 15-membered ring
+    mol = Chem.MolFromSmiles('C1' + 'C' * 13 + 'C1')
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
+    self.assertAlmostEqual(tors_list_rings[-1][1], 180.0, 4)
 
   def assertBondStereoRoundTrips(self, fname):
     path = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', fname)

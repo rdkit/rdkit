@@ -3,7 +3,6 @@
 
 """
 
-
 import re
 
 import numpy

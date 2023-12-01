@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 ///
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
@@ -23,6 +23,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 
@@ -277,6 +278,7 @@ TEST_CASE("GithHub #3119: partial reacting atom detection", "[Reaction][Bug]") {
   }
 }
 
+#ifdef RDK_USE_BOOST_IOSTREAMS
 TEST_CASE("reaction data in PNGs 1", "[Reaction][PNG]") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ChemReactions/testData/";
@@ -370,6 +372,7 @@ TEST_CASE("reaction data in PNGs 1", "[Reaction][PNG]") {
     }
   }
 }
+#endif
 
 TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
   SECTION("reaction parsing inversion logic") {
@@ -978,8 +981,35 @@ TEST_CASE("one-component reactions") {
       CHECK_THROWS_AS(rxn->runReactant(*mol), ChemicalReactionException);
     }
   }
+  SECTION("toggling removing unmapped atoms") {
+    auto rxn = "CC[N:1]>>[N:1]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    {
+      auto mol = "CCN.Cl"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "N");
+    }
+    {
+      auto mol = "CCN.Cl"_smiles;
+      REQUIRE(mol);
+      bool removeUnmatchedAtoms = false;
+      CHECK(rxn->runReactant(*mol, removeUnmatchedAtoms));
+      CHECK(mol->getNumAtoms() == 2);
+      CHECK(MolToSmiles(*mol) == "Cl.N");
+    }
+    {  // extra atoms connected to the matching part should not be removed
+      auto mol = "CCCN.Cl"_smiles;
+      REQUIRE(mol);
+      bool removeUnmatchedAtoms = false;
+      CHECK(rxn->runReactant(*mol, removeUnmatchedAtoms));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "C.Cl.N");
+    }
+  }
 }
-
 TEST_CASE("Github #4759 Reaction parser fails when CX extensions are present") {
   std::string sma = "[C:1]Br.[C:2]O>>[C:2][C:1] |$Aryl;;;;;Aryl$|";
   SECTION("SMARTS") {
@@ -1197,7 +1227,7 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     REQUIRE(rxn);
     CHECK(rxn->getReactants().size() == 1);
     CHECK(rxn->getProducts().size() == 1);
-    unsigned int bondcfg;
+    unsigned int bondcfg = 0;
     CHECK(rxn->getReactants()[0]->getBondWithIdx(0)->getPropIfPresent(
         "_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
@@ -1458,4 +1488,171 @@ M  END
     CHECK(rxn->getNumAgentTemplates()==0);
     CHECK(rxn->getProducts()[0]->getBondWithIdx(3)->getProp<int>("molReactStatus") == 4);
   }
+}
+
+TEST_CASE("Github #6211: substructmatchparams for chemical reactions") {
+  SECTION("Basics") {
+    auto rxn = "[C:1][C@:2]([N:3])[O:4]>>[C:1][C@@:2]([N:3])[O:4]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    {
+      // defaults
+      std::vector<std::tuple<std::string, std::string>> data = {
+          {"CC[C@H](N)O", "CC[C@@H](N)O"},
+          {"CC[C@@H](N)O", "CC[C@H](N)O"},
+          {"CCC(N)O", "CCC(N)O"}};
+      for (const auto& [inSmi, outSmi] : data) {
+        INFO(inSmi);
+        MOL_SPTR_VECT reacts = {ROMOL_SPTR(SmilesToMol(inSmi))};
+        REQUIRE(reacts[0]);
+        auto prods = rxn->runReactants(reacts);
+        if (outSmi != "") {
+          REQUIRE(prods.size() == 1);
+          CHECK(MolToSmiles(*prods[0][0]) == outSmi);
+          CHECK(isMoleculeReactantOfReaction(*rxn,*reacts.front()));
+          std::unique_ptr<RWMol> prod{SmilesToMol(outSmi)};
+          REQUIRE(prod);
+          CHECK(isMoleculeProductOfReaction(*rxn,*prod));
+        } else {
+          CHECK(prods.empty());
+          CHECK(!isMoleculeReactantOfReaction(*rxn,*reacts.front()));
+        }
+      }
+    }
+    {
+      // use chiral matching (makes sure the parameters are actually used)
+      std::vector<std::tuple<std::string, std::string>> data = {
+          {"CC[C@H](N)O", "CC[C@@H](N)O"},
+          {"CC[C@@H](N)O", ""},
+          {"CCC(N)O", ""}};
+      rxn->getSubstructParams().useChirality = true;
+      for (const auto& [inSmi, outSmi] : data) {
+        INFO(inSmi);
+        MOL_SPTR_VECT reacts = {ROMOL_SPTR(SmilesToMol(inSmi))};
+        REQUIRE(reacts[0]);
+        auto prods = rxn->runReactants(reacts);
+        if (outSmi != "") {
+          REQUIRE(prods.size() == 1);
+          CHECK(MolToSmiles(*prods[0][0]) == outSmi);
+          CHECK(isMoleculeReactantOfReaction(*rxn,*reacts.front()));
+          std::unique_ptr<RWMol> prod{SmilesToMol(outSmi)};
+          REQUIRE(prod);
+          CHECK(isMoleculeProductOfReaction(*rxn,*prod));
+        } else {
+          CHECK(prods.empty());
+          CHECK(!isMoleculeReactantOfReaction(*rxn,*reacts.front()));
+        }
+      }
+      // make sure the parameters are copied
+      ChemicalReaction cpy(*rxn);
+      for (const auto& [inSmi, outSmi] : data) {
+        INFO(inSmi);
+        MOL_SPTR_VECT reacts = {ROMOL_SPTR(SmilesToMol(inSmi))};
+        REQUIRE(reacts[0]);
+        auto prods = cpy.runReactants(reacts);
+        if (outSmi != "") {
+          REQUIRE(prods.size() == 1);
+          CHECK(MolToSmiles(*prods[0][0]) == outSmi);
+        } else {
+          CHECK(prods.empty());
+        }
+      }
+    }
+  }
+
+  SECTION("serialization") {
+    auto rxn = "[C:1][C@:2]([N:3])[O:4]>>[C:1][C@@:2]([N:3])[O:4]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    rxn->getSubstructParams().useChirality = true;
+    std::string pkl;
+    ReactionPickler::pickleReaction(*rxn,pkl);
+    ChemicalReaction rxn2;
+    ReactionPickler::reactionFromPickle(pkl,rxn2);
+    CHECK(rxn2.getSubstructParams().useChirality == true);
+
+  }
+}
+
+TEST_CASE("problematic in-place example from MolStandardize") {
+  SECTION("basics"){
+    RWMOL_SPTR m = "[nH]1ccc(=[N+](C)C)cc1"_smiles;
+    REQUIRE(m);
+    auto rxn = "[n;+0!H0:1]:[a:2]:[a:3]:[c:4]=[N!$(*[O-]),O;+1H0:5]>>[n+1:1]:[*:2]:[*:3]:[*:4]-[*+0:5]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    rxn->runReactant(*m);
+    CHECK(MolToSmiles(*m)=="CN(C)c1cc[nH+]cc1");
+  }
+}
+
+TEST_CASE(
+    "github #5819: Support writing detailed SMARTS queries to CTABs using the SMARTSQ mechanism") {
+  SECTION("as reported") {
+    auto rxn = "[C;$(C([#6])=O):1][OH:2]>>[C:1][NH2:2]"_rxnsmarts;
+    REQUIRE(rxn);
+    auto ctab = ChemicalReactionToV3KRxnBlock(*rxn);
+
+    // make sure the templates haven't been modified by that operation
+    CHECK(getSubstanceGroups(*rxn->getReactants()[0]).empty());
+
+    CHECK(ctab.find("SMARTSQ") != std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"[C&$(C([#6])=O):1]\"") != std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"[N&H2:2]\"") != std::string::npos);
+
+    // make sure we can properly parse that
+    std::unique_ptr<ChemicalReaction> nrxn{RxnBlockToChemicalReaction(ctab)};
+    REQUIRE(nrxn);
+    CHECK(MolToSmarts(*nrxn->getReactants()[0]) == "[C&$(C([#6])=O):1][O&H1:2]");
+  }
+
+
+SECTION("isotopes are weird"){
+  auto rxnb = R"CTAB($RXN V3000
+
+      Mrv2211  111620231722
+
+M  V30 COUNTS 1 1
+M  V30 BEGIN REACTANT
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 6.9035 -10.0923 0 1
+M  V30 2 O 6.9035 -8.5923 0 2 MASS=18
+M  V30 3 Cl 5.6045 -10.8423 0 0
+M  V30 4 C 8.2025 -10.8423 0 4
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 4
+M  V30 2 2 1 2
+M  V30 3 1 1 3
+M  V30 END BOND
+M  V30 END CTAB
+M  V30 END REACTANT
+M  V30 BEGIN PRODUCT
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 22.0416 -9.3829 0 0
+M  V30 2 C 23.3406 -8.6329 0 1
+M  V30 3 O 23.3406 -7.1329 0 2 MASS=18
+M  V30 4 C 24.6396 -9.3829 0 4
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 4
+M  V30 3 2 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  V30 END PRODUCT
+M  END
+)CTAB";
+  std::unique_ptr<ChemicalReaction> rxn{RxnBlockToChemicalReaction(rxnb)};
+  REQUIRE(rxn);
+  CHECK(rxn->getReactants()[0]->getAtomWithIdx(0)->hasQuery());
+  CHECK(rxn->getReactants()[0]->getAtomWithIdx(1)->hasQuery());
+  auto ctab = ChemicalReactionToV3KRxnBlock(*rxn);
+  CHECK(ctab.find("SMARTSQ") == std::string::npos);
+
+}
 }

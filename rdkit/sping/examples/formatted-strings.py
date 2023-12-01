@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 lines = []
 lines.append("This is a test of the <i>stringformat</i> module.")
 lines.append("This module allows you to insert html-like formating tags")

@@ -9,9 +9,11 @@
 #
 
 from boost import mpi
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.RDLogger import logger
+
 logger = logger()
 
 
@@ -48,8 +50,9 @@ def dividetask(data, task, silent=True):
 
 
 if __name__ == '__main__':
-  from rdkit import RDConfig
   import os
+
+  from rdkit import RDConfig
   fName = os.path.join(RDConfig.RDBaseDir, 'Projects', 'DbCLI', 'testData', 'bzr.sdf')
   if mpi.world.rank == 0:
     data = [x for x in Chem.SDMolSupplier(fName)][:50]

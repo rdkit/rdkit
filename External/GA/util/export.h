@@ -12,4 +12,4 @@
 
 #include <RDGeneral/RDExportMacros.h>
 
-#define  GA_EXPORT RDKIT_EXPORT_API
+#define GA_EXPORT RDKIT_EXPORT_API

@@ -10,11 +10,14 @@
 """ unit testing code for IPython/Jupyter integration
 """
 import unittest
+
 from rdkit import Chem
 from rdkit.Chem import Draw
+
 try:
-  from rdkit.Chem.Draw import IPythonConsole, rdMolDraw2D
   from IPython.core.display import SVG
+
+  from rdkit.Chem.Draw import IPythonConsole, rdMolDraw2D
 except ImportError:
   IPythonConsole = None
 
@@ -83,7 +86,7 @@ class TestCase(unittest.TestCase):
     self.assertNotIn('computedprop', html)
 
     for i in range(10):
-      m.SetIntProp(f'prop-{i}',i)
+      m.SetIntProp(f'prop-{i}', i)
     IPythonConsole.ipython_showProperties = True
     IPythonConsole.ipython_maxProperties = 5
     html = m._repr_html_()
@@ -103,7 +106,26 @@ class TestCase(unittest.TestCase):
     self.assertIn('prop-1', html)
     self.assertNotIn('prop-8', html)
 
+  @unittest.skipIf(IPythonConsole is None, 'IPython not available')
+  def testMolsMatrixToGridImage(self):
+    # For testMolsMatrixToLinear and testMolsMatrixToLinear (which test MolsMatrixToGridImage and its helper _MolsNestedToLinear)
+    s = "NC(C)C(=O)"
+    mol = Chem.MolFromSmiles(s)
+    # Set up matrix with oligomer count for the molecules
+    # Should produce this grid:
+    # NC(C)C(=O)
+    #                                NC(C)C(=O)NC(C)C(=O)
+    # NC(C)C(=O)NC(C)C(=O)NC(C)C(=O)                      NC(C)C(=O)NC(C)C(=O)NC(C)C(=O)NC(C)C(=O)
+    repeats = [[1], [0, 2], [3, 0, 4]]
 
+    # Create molecule if there are 1 or more oligomers;
+    # otherwise, use None for molecule because drawing is distorted if use Chem.MolFromSmiles("")
+    molsMatrix = [[Chem.MolFromSmiles(s * count) if count else None for count in row]
+                  for row in repeats]
+
+    legendsMatrix = [[str(count) + " unit(s)" for count in row] for row in repeats]
+    d = Draw.MolsMatrixToGridImage(molsMatrix, legendsMatrix=legendsMatrix)
+    self.assertIsNotNone(d)
 
 
 if __name__ == '__main__':

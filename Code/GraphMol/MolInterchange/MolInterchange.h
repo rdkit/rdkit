@@ -93,8 +93,7 @@ template <typename T>
 std::string MolToJSONData(const T &mol, const JSONWriteParameters &params =
                                             defaultJSONWriteParameters) {
   std::vector<const T *> ms{&mol};
-  return MolsToJSONData(
-      ms, params);
+  return MolsToJSONData(ms, params);
 };
 
 }  // end of namespace MolInterchange

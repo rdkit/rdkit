@@ -1,14 +1,13 @@
-from rdkit import Chem
-from rdkit import rdBase
-from rdkit import RDConfig
 import os
 
-from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit import Chem, RDConfig, rdBase
 from rdkit.Chem import AllChem
+from rdkit.Chem import rdMolDescriptors as rdMD
 
 haveDescrs3D = hasattr(rdMD, 'CalcAUTOCORR3D')
 
-import time, unittest
+import time
+import unittest
 
 
 def _gen3D(m, is3d, calculator):

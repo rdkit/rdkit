@@ -135,7 +135,6 @@ DiscrimTuple calcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path,
     CHECK_INVARIANT(extraInvars->size() == mol.getNumAtoms(),
                     "bad extra invars");
   }
-  DiscrimTuple res;
 
   // Start by collecting the atoms in the path and their degrees
   std::vector<int32_t> atomsUsed(mol.getNumAtoms(),

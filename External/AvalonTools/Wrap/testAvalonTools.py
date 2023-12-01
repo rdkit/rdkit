@@ -3,10 +3,11 @@
 # Created by Greg Landrum, July 2008
 #
 
-from rdkit import RDConfig
-import os, sys
+import os
+import sys
 import unittest
-from rdkit import DataStructs, Chem
+
+from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Avalon import pyAvalonTools
 
 struchk_conf_path = os.path.join(RDConfig.RDDataDir, 'struchk', '')
@@ -179,6 +180,7 @@ CC[C@H](C)[C@@H](C(=O)N[C@@H](CC(C)C)C(=O)O)NC(=O)[C@H](Cc1ccccc1)CC(=O)NO
 $$$$
 """
 
+
 def feq(v1, v2, tol=1e-4):
   return abs(v1 - v2) < tol
 
@@ -196,11 +198,13 @@ class TestCase(unittest.TestCase):
     self.assertTrue(smi == 'c1ccncc1')
 
   def test2(self):
-    tgts = ['CC1=CC(=O)C=CC1=O', 'c2ccc1SC(=Nc1c2)SSC4=Nc3ccccc3S4',
-            '[O-][N+](=O)c1cc(Cl)c(O)c(c1)[N+]([O-])=O', 'N=C1NC=C(S1)[N+]([O-])=O',
-            'Nc3ccc2C(=O)c1ccccc1C(=O)c2c3', 'OC(=O)c1ccccc1C3=C2C=CC(=O)C(Br)=C2Oc4c3ccc(O)c4Br',
-            'CN(C)C2C(=O)c1ccccc1C(=O)C=2Cl', 'Cc3ccc2C(=O)c1ccccc1C(=O)c2c3[N+]([O-])=O',
-            r'C/C(=N\O)/C(/C)=N/O', 'c1ccc(cc1)P(c2ccccc2)c3ccccc3']
+    tgts = [
+      'CC1=CC(=O)C=CC1=O', 'c2ccc1SC(=Nc1c2)SSC4=Nc3ccccc3S4',
+      '[O-][N+](=O)c1cc(Cl)c(O)c(c1)[N+]([O-])=O', 'N=C1NC=C(S1)[N+]([O-])=O',
+      'Nc3ccc2C(=O)c1ccccc1C(=O)c2c3', 'OC(=O)c1ccccc1C3=C2C=CC(=O)C(Br)=C2Oc4c3ccc(O)c4Br',
+      'CN(C)C2C(=O)c1ccccc1C(=O)C=2Cl', 'Cc3ccc2C(=O)c1ccccc1C(=O)c2c3[N+]([O-])=O',
+      r'C/C(=N\O)/C(/C)=N/O', 'c1ccc(cc1)P(c2ccccc2)c3ccccc3'
+    ]
     with open(os.path.join(RDConfig.RDDataDir, 'NCI', 'first_200.props.sdf'), 'r') as f:
       d = f.read()
     mbs = d.split('$$$$\n')[:10]
@@ -285,7 +289,6 @@ class TestCase(unittest.TestCase):
     s2 = Chem.MolToSmiles(m2)
     self.assertEqual(s1, s2)
 
-
   def testRDK151(self):
     smi = "C[C@H](F)Cl"
     m = Chem.MolFromSmiles(smi)
@@ -323,17 +326,16 @@ class TestCase(unittest.TestCase):
     r = pyAvalonTools.InitializeCheckMol(STRUCHK_INIT_IN_MEMORY_LOGGING)
     try:
       (err, fixed_mol) = pyAvalonTools.CheckMoleculeString(atom_clash, False)
-      log =  pyAvalonTools.GetCheckMolLog()
+      log = pyAvalonTools.GetCheckMolLog()
       self.assertTrue("of average bond length from bond" in log)
 
       # make sure that the log is cleared for the next molecule
       (err, fixed_mol) = pyAvalonTools.CheckMoleculeString("c1ccccc1", True)
-      log =  pyAvalonTools.GetCheckMolLog()
+      log = pyAvalonTools.GetCheckMolLog()
       self.assertFalse(log)
 
     finally:
       pyAvalonTools.CloseCheckMolFiles()
-
 
   #   def testIsotopeBug(self):
   #     mb="""D isotope problem.mol

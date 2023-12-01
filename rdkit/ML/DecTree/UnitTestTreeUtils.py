@@ -3,7 +3,6 @@
 #
 """ unit testing code for trees and decision trees (not learning/xvalidation) """
 
-
 import unittest
 
 from rdkit.ML.DecTree import TreeUtils

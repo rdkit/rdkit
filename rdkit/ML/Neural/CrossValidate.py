@@ -8,9 +8,10 @@ cross validation == evaluating the accuracy of a net.
 
 """
 
-from rdkit.ML.Neural import Network, Trainers
-from rdkit.ML.Data import SplitData
 import math
+
+from rdkit.ML.Data import SplitData
+from rdkit.ML.Neural import Network, Trainers
 
 
 def CrossValidate(net, testExamples, tolerance, appendExamples=0):

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,6 +17,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SubstanceGroup.h>
+#include <GraphMol/Chirality.h>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
@@ -740,36 +741,6 @@ int BondGetDirCode(const Bond::BondDir dir) {
   return res;
 }
 
-namespace {
-bool checkNeighbors(const Bond *bond, const Atom *atom) {
-  PRECONDITION(bond, "no bond");
-  PRECONDITION(atom, "no atom");
-  std::vector<int> nbrRanks;
-  for (auto bondIt :
-       boost::make_iterator_range(bond->getOwningMol().getAtomBonds(atom))) {
-    const auto nbrBond = bond->getOwningMol()[bondIt];
-    if (nbrBond->getBondType() == Bond::SINGLE) {
-      if (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-          nbrBond->getBondDir() == Bond::ENDDOWNRIGHT) {
-        return false;
-      } else {
-        const auto otherAtom = nbrBond->getOtherAtom(atom);
-        int rank;
-        if (otherAtom->getPropIfPresent(common_properties::_CIPRank, rank)) {
-          if (std::find(nbrRanks.begin(), nbrRanks.end(), rank) !=
-              nbrRanks.end()) {
-            return false;
-          } else {
-            nbrRanks.push_back(rank);
-          }
-        }
-      }
-    }
-  }
-  return true;
-}
-}  // namespace
-
 void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
                               const Conformer *conf, int &dirCode,
                               bool &reverse) {
@@ -799,35 +770,38 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
     // as "any", this was sf.net issue 2963522.
     // two caveats to this:
     // 1) if it's a ring bond, we'll only put the "any"
-    //    in the mol block if the user specifically asked for it.
-    //    Constantly seeing crossed bonds in rings, though maybe
-    //    technically correct, is irritating.
+    //    in the mol block if the ring size is >=
+    //    Chirality::minRingSizeForDoubleBondStereo.
+    ///   Constantly seeing crossed
+    //    bonds in rings, though maybe technically correct, is irritating.
     // 2) if it's a terminal bond (where there's no chance of
     //    stereochemistry anyway), we also skip the any.
     //    this was sf.net issue 3009756
     if (bond->getStereo() <= Bond::STEREOANY) {
       if (bond->getStereo() == Bond::STEREOANY) {
         dirCode = 3;
-      } else if (!(bond->getOwningMol().getRingInfo()->numBondRings(
-                     bond->getIdx())) &&
-                 bond->getBeginAtom()->getDegree() > 1 &&
-                 bond->getEndAtom()->getDegree() > 1) {
+      } else if (Chirality::detail::isBondPotentialStereoBond(bond)) {
         // we don't know that it's explicitly unspecified (covered above with
         // the ==STEREOANY check)
+
         // look to see if one of the atoms has a bond with direction set
         if (bond->getBondDir() == Bond::EITHERDOUBLE) {
           dirCode = 3;
         } else {
-          if ((bond->getBeginAtom()->getTotalValence() -
-               bond->getBeginAtom()->getTotalDegree()) == 1 &&
-              (bond->getEndAtom()->getTotalValence() -
-               bond->getEndAtom()->getTotalDegree()) == 1) {
+          const auto beginAtom = bond->getBeginAtom();
+          const auto endAtom = bond->getEndAtom();
+          // Both ends of the bond must have at least one neighbor other than
+          // the one in the double bond for dirCode=3 (except if explicitly
+          // marked, which has already been checked)
+          if (beginAtom->getDegree() > 1 && endAtom->getDegree() > 1 &&
+              (beginAtom->getTotalValence() - beginAtom->getTotalDegree()) ==
+                  1 &&
+              (endAtom->getTotalValence() - endAtom->getTotalDegree()) == 1) {
             // we only do this if each atom only has one unsaturation
             // FIX: this is the fix for github #2649, but we will need to change
             // it once we start handling allenes properly
 
-            if (checkNeighbors(bond, bond->getBeginAtom()) &&
-                checkNeighbors(bond, bond->getEndAtom())) {
+            if (Chirality::canBeStereoBond(bond)) {
               dirCode = 3;
             }
           }
@@ -1063,28 +1037,55 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
 
 namespace {
 void createSMARTSQSubstanceGroups(ROMol &mol) {
+  auto isRedundantQuery = [](const auto query) {
+    if (query->getDescription() == "AtomAnd" &&
+        (query->endChildren() - query->beginChildren() == 2) &&
+        (*query->beginChildren())->getDescription() == "AtomAtomicNum" &&
+        !(*query->beginChildren())->getNegation() &&
+        !(*(query->beginChildren() + 1))->getNegation() &&
+        ((*(query->beginChildren() + 1))->getDescription() == "AtomIsotope" ||
+         (*(query->beginChildren() + 1))->getDescription() ==
+             "AtomFormalCharge")) {
+      return true;
+    }
+    return false;
+  };
   for (const auto atom : mol.atoms()) {
-    std::string sma;
-    if (atom->hasQuery() &&
-        atom->getPropIfPresent(common_properties::MRV_SMA, sma) &&
-        !sma.empty()) {
-      SubstanceGroup sg(&mol, "DAT");
-      sg.setProp("QUERYTYPE", "SMARTSQ");
-      sg.setProp("QUERYOP", "=");
-      std::vector<std::string> dataFields{sma};
-      sg.setProp("DATAFIELDS", dataFields);
-      sg.addAtomWithIdx(atom->getIdx());
-      addSubstanceGroup(mol, sg);
+    if (atom->hasQuery()) {
+      std::string sma;
+
+      if (!atom->getPropIfPresent(common_properties::MRV_SMA, sma) &&
+          !isAtomListQuery(atom) &&
+          atom->getQuery()->getDescription() != "AtomNull" &&
+          // we may want to re-think this next one.
+          // including AtomType queries will result in an entry
+          // for every atom that comes from SMARTS, and I don't think
+          // we want that.
+          !boost::starts_with(atom->getQuery()->getDescription(), "AtomType") &&
+          !boost::starts_with(atom->getQuery()->getDescription(),
+                              "AtomAtomicNum") &&
+          !isRedundantQuery(atom->getQuery())) {
+        sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
+      }
+      if (!sma.empty()) {
+        SubstanceGroup sg(&mol, "DAT");
+        sg.setProp("QUERYTYPE", "SMARTSQ");
+        sg.setProp("QUERYOP", "=");
+        std::vector<std::string> dataFields{sma};
+        sg.setProp("DATAFIELDS", dataFields);
+        sg.addAtomWithIdx(atom->getIdx());
+        addSubstanceGroup(mol, sg);
+      }
     }
   }
 }
 }  // namespace
-
+namespace FileParserUtils {
 void moveAdditionalPropertiesToSGroups(RWMol &mol) {
   GenericGroups::convertGenericQueriesToSubstanceGroups(mol);
   createSMARTSQSubstanceGroups(mol);
 }
-
+}  // namespace FileParserUtils
 const std::string GetV3000MolFileBondLine(const Bond *bond,
                                           const INT_MAP_INT &wedgeBonds,
                                           const Conformer *conf) {
@@ -1143,9 +1144,9 @@ const std::string GetV3000MolFileBondLine(const Bond *bond,
 }
 
 void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
-  unsigned or_count = 1u, and_count = 1u;
-  auto &stereo_groups = tmol.getStereoGroups();
-  if (!stereo_groups.empty()) {
+  if (!tmol.getStereoGroups().empty()) {
+    auto stereo_groups = tmol.getStereoGroups();
+    assignStereoGroupIds(stereo_groups);
     res += "M  V30 BEGIN COLLECTION\n";
     for (auto &&group : stereo_groups) {
       res += "M  V30 MDLV30/";
@@ -1155,13 +1156,11 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
           break;
         case RDKit::StereoGroupType::STEREO_OR:
           res += "STEREL";
-          res += std::to_string(or_count);
-          ++or_count;
+          res += std::to_string(group.getWriteId());
           break;
         case RDKit::StereoGroupType::STEREO_AND:
           res += "STERAC";
-          res += std::to_string(and_count);
-          ++and_count;
+          res += std::to_string(group.getWriteId());
           break;
       }
       res += " ATOMS=(";
@@ -1402,7 +1401,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
       MolOps::assignStereochemistry(trwmol);
     }
 #endif
-  moveAdditionalPropertiesToSGroups(trwmol);
+  FileParserUtils::moveAdditionalPropertiesToSGroups(trwmol);
 
   try {
     return outputMolToMolBlock(trwmol, confId, forceV3000);

@@ -1070,6 +1070,22 @@ void testGithub224() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub6728() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Testing github6728: crash due to missing stretch-bend params."
+      << std::endl;
+  RWMol *mol = SmilesToMol("CC(C)(C)CO[H-]F");
+  TEST_ASSERT(mol);
+  MolOps::addHs(*mol);
+  TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol) >= 0);
+  auto field = MMFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  delete mol;
+  delete field;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1098,4 +1114,5 @@ int main() {
   testGithub162();
 #endif
   testGithub224();
+  testGithub6728();
 }

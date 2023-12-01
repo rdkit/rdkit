@@ -53,10 +53,11 @@ struct coordgen_wrapper {
     python::class_<CoordGen::CoordGenParams>(
         "CoordGenParams", "Parameters controlling coordinate generation")
         .def(
-            "SetCoordMap", SetCoordMap,
+            "SetCoordMap", SetCoordMap, python::args("self", "coordMap"),
             "expects a dictionary of Point2D objects with template coordinates")
         .def("SetTemplateMol", SetTemplateMol,
              python::with_custodian_and_ward<1, 2>(),
+             python::args("self", "templ"),
              "sets a molecule to be used as the template")
         .def_readwrite("coordgenScaling",
                        &CoordGen::CoordGenParams::coordgenScaling,
@@ -91,7 +92,8 @@ struct coordgen_wrapper {
         .def_readwrite(
             "treatNonterminalBondsToMetalAsZOBs",
             &CoordGen::CoordGenParams::treatNonterminalBondsToMetalAsZeroOrder);
-    python::def("SetDefaultTemplateFileDir", SetDefaultTemplateFileDir);
+    python::def("SetDefaultTemplateFileDir", SetDefaultTemplateFileDir,
+                python::args("dir"));
     docString =
         "Add 2D coordinates.\n"
         "ARGUMENTS:\n"

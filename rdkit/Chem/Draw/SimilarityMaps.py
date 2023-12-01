@@ -44,13 +44,11 @@ except RuntimeError:
 
 import numpy
 
-from rdkit import Chem
-from rdkit import DataStructs
-from rdkit import Geometry
-from rdkit.Chem import Draw
-from rdkit.Chem.Draw import rdMolDraw2D
-from rdkit.Chem import rdDepictor
+from rdkit import Chem, DataStructs, Geometry
+from rdkit.Chem import Draw, rdDepictor
 from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit.Chem.Draw import rdMolDraw2D
+
 
 def _DeleteFpInfoAttr(mol):
   if hasattr(mol, '_fpInfo'):
@@ -78,8 +76,10 @@ def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStru
   baseSimilarity = metric(refFP, fpFunction(probeMol, -1))
 
   # loop over atoms
-  weights = [baseSimilarity - metric(refFP, fpFunction(probeMol, atomId)) 
-             for atomId in range(probeMol.GetNumAtoms())]
+  weights = [
+    baseSimilarity - metric(refFP, fpFunction(probeMol, atomId))
+    for atomId in range(probeMol.GetNumAtoms())
+  ]
 
   _DeleteFpInfoAttr(probeMol)
   _DeleteFpInfoAttr(refMol)
@@ -101,9 +101,11 @@ def GetAtomicWeightsForModel(probeMol, fpFunction, predictionFunction):
   baseProba = predictionFunction(fpFunction(probeMol, -1))
 
   # loop over atoms
-  weights = [baseProba - predictionFunction(fpFunction(probeMol, atomId)) 
-             for atomId in range(probeMol.GetNumAtoms())]
-  
+  weights = [
+    baseProba - predictionFunction(fpFunction(probeMol, atomId))
+    for atomId in range(probeMol.GetNumAtoms())
+  ]
+
   _DeleteFpInfoAttr(probeMol)
   return weights
 
@@ -118,7 +120,7 @@ def GetStandardizedWeights(weights):
     """
 
   maxAbsWeight = max(math.fabs(w) for w in weights)
-  
+
   if maxAbsWeight > 0:
     return [w / maxAbsWeight for w in weights], maxAbsWeight
   return weights, maxAbsWeight
@@ -163,7 +165,7 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
         sigma = 0.3 * (mol.GetConformer().GetAtomPosition(0) -
                        mol.GetConformer().GetAtomPosition(1)).Length()
       sigma = round(sigma, 2)
-    
+
     sigmas = [sigma] * mol.GetNumAtoms()
     locs = []
     for i in range(mol.GetNumAtoms()):
@@ -174,12 +176,12 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
     ps.fillGrid = True
     ps.gridResolution = 0.1
     ps.extraGridPadding = 0.5
-    
+
     if colorMap is not None:
       if cm is not None and isinstance(colorMap, type(cm.Blues)):
         # it's a matplotlib colormap:
         clrs = [tuple(x) for x in colorMap([0, 0.5, 1])]
-      elif type(colorMap)==str:
+      elif type(colorMap) == str:
         if cm is None:
           raise ValueError("cannot provide named colormaps unless matplotlib is installed")
         clrs = [tuple(x) for x in cm.get_cmap(colorMap)([0, 0.5, 1])]
@@ -205,13 +207,13 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
           math.sqrt(sum([(mol._atomPs[0][i] - mol._atomPs[1][i])**2 for i in range(2)]))
     sigma = round(sigma, 2)
   x, y, z = Draw.calcAtomGaussians(mol, sigma, weights=weights, step=step)
-  
+
   # scaling
   if scale <= 0.0:
     maxScale = max(math.fabs(numpy.min(z)), math.fabs(numpy.max(z)))
   else:
     maxScale = scale
-  
+
   # coloring
   if colorMap is None:
     if cm is None:
@@ -232,7 +234,7 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
       elif contourset.levels[j] < 0:
         c.set_dashes([(0, (3.0, 3.0))])
   fig.axes[0].set_axis_off()
-  
+
   return fig
 
 
@@ -364,7 +366,7 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
     """
   if fpType not in ['bv', 'count']:
     raise ValueError("Unknown Morgan fingerprint type")
-  
+
   isBitVect = fpType == 'bv'
   if not hasattr(mol, '_fpInfo'):
     info = {}
@@ -413,6 +415,7 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
     for bit in mol._fpInfo[1][atomId]:
       molFp[bit] -= 1
   return molFp
+
 
 # usage:   lambda m,i: GetRDKFingerprint(m, i, fpType, nBits, minPath, maxPath, nBitsPerHash)
 def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPath=5, nBitsPerHash=2,
