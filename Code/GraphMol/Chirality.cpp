@@ -190,8 +190,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
   if (squiggleBondSeen) {
-    Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond,
-                                                    Bond::STEREOANY);
+    Chirality::detail::setStereoForBond(mol, dblBond, Bond::STEREOANY);
     return;
   }
   if (!bond1) {
@@ -206,7 +205,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
   if (squiggleBondSeen) {
-    Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond);
+    Chirality::detail::setStereoForBond(mol, dblBond, Bond::STEREOANY);
     return;
   }
   if (!bond2) {
@@ -265,7 +264,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
       }
     }
     if (linear) {
-      Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond);
+      Chirality::detail::setStereoForBond(mol, dblBond, Bond::STEREOANY);
       return;
     }
 
@@ -938,8 +937,7 @@ bool has_protium_neighbor(const ROMol &mol, const Atom *atom) {
   return false;
 }
 
-void setStereoanyFromSquiggleBond(ROMol &mol, Bond *bond,
-                                  Bond::BondStereo stereo) {
+void setStereoForBond(ROMol &mol, Bond *bond, Bond::BondStereo stereo) {
   // NOTE:  moved from parse_doublebond_stereo CXSmilesOps
   // the cis/trans/unknown marker is relative to the lowest numbered atom
   // connected to the lowest numbered double bond atom and the
