@@ -126,7 +126,7 @@ struct validate_wrapper {
     std::string docString = "";
 
     python::class_<MolStandardize::RDKitValidation, boost::noncopyable>(
-        "RDKitValidation", python::init<>())
+        "RDKitValidation", python::init<>(python::args("self")))
         .def("validate", rdkitValidate,
              (python::arg("self"), python::arg("mol"),
               python::arg("reportAllFailures") = false),
@@ -141,7 +141,7 @@ struct validate_wrapper {
 
     python::class_<MolStandardize::NoAtomValidation,
                    python::bases<MolStandardize::MolVSValidations>>(
-        "NoAtomValidation", python::init<>())
+        "NoAtomValidation", python::init<>(python::args("self")))
         .def("run", &MolStandardize::NoAtomValidation::run,
              (python::arg("self"), python::arg("mol"),
               python::arg("reportAllFailures"), python::arg("errors")),
@@ -149,21 +149,21 @@ struct validate_wrapper {
 
     python::class_<MolStandardize::FragmentValidation,
                    python::bases<MolStandardize::MolVSValidations>>(
-        "FragmentValidation", python::init<>())
+        "FragmentValidation", python::init<>(python::args("self")))
         .def("run", &MolStandardize::FragmentValidation::run,
              (python::arg("self"), python::arg("mol"),
               python::arg("reportAllFailures"), python::arg("errors")),
              "");
     python::class_<MolStandardize::NeutralValidation,
                    python::bases<MolStandardize::MolVSValidations>>(
-        "NeutralValidation", python::init<>())
+        "NeutralValidation", python::init<>(python::args("self")))
         .def("run", &MolStandardize::NeutralValidation::run,
              (python::arg("self"), python::arg("mol"),
               python::arg("reportAllFailures"), python::arg("errors")),
              "");
     python::class_<MolStandardize::IsotopeValidation,
                    python::bases<MolStandardize::MolVSValidations>>(
-        "IsotopeValidation", python::init<>())
+        "IsotopeValidation", python::init<>(python::args("self")))
         .def("run", &MolStandardize::IsotopeValidation::run,
              (python::arg("self"), python::arg("mol"),
               python::arg("reportAllFailures"), python::arg("errors")),
