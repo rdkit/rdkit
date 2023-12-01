@@ -18,6 +18,7 @@
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/test_fixtures.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
@@ -26,59 +27,6 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
 using namespace RDKit;
-
-class TestFixtureTemplate : public boost::noncopyable {
- public:
-  TestFixtureTemplate() = delete;
-
-  TestFixtureTemplate(std::string var, bool (*getter_func)(),
-                      void (*setter_func)(bool))
-      : m_var{std::move(var)},
-        m_getter_func{getter_func},
-        m_setter_func{setter_func} {
-    auto evar = std::getenv(m_var.c_str());
-    m_env_var_set = evar == nullptr;
-    m_flag_state = (*m_getter_func)();
-  }
-
-  ~TestFixtureTemplate() {
-    if (m_env_var_set) {
-      (*m_setter_func)(m_flag_state);
-    } else {
-#ifdef _WIN32
-      _putenv_s(m_var.c_str(), "");
-#else
-      unsetenv(m_var.c_str());
-#endif
-    }
-  }
-
- private:
-  std::string m_var;
-
-  bool (*m_getter_func)();
-  void (*m_setter_func)(bool);
-
-  bool m_flag_state;
-  bool m_env_var_set;
-};
-
-class UseLegacyStereoPerceptionFixture : private TestFixtureTemplate {
- public:
-  UseLegacyStereoPerceptionFixture()
-      : TestFixtureTemplate(RDKit::Chirality::useLegacyStereoEnvVar,
-                            &RDKit::Chirality::getUseLegacyStereoPerception,
-                            &RDKit::Chirality::setUseLegacyStereoPerception) {}
-};
-
-class AllowNontetrahedralChiralityFixture : private TestFixtureTemplate {
- public:
-  AllowNontetrahedralChiralityFixture()
-      : TestFixtureTemplate(
-            RDKit::Chirality::nonTetrahedralStereoEnvVar,
-            &RDKit::Chirality::getAllowNontetrahedralChirality,
-            &RDKit::Chirality::setAllowNontetrahedralChirality) {}
-};
 
 unsigned count_wedged_bonds(const ROMol &mol) {
   unsigned nWedged = 0;
