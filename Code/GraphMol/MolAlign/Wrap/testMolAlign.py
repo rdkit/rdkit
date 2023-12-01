@@ -12,8 +12,8 @@ import sys
 import unittest
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import (ChemicalForceFields, rdDistGeom, rdMolAlign,
-                        rdMolDescriptors, rdMolTransforms)
+from rdkit.Chem import (ChemicalForceFields, rdDistGeom, rdMolAlign, rdMolDescriptors,
+                        rdMolTransforms)
 
 
 def lstFeq(l1, l2, tol=1.e-4):
@@ -537,6 +537,25 @@ class TestCase(unittest.TestCase):
 
     rmsd = rdMolAlign.GetBestRMS(qry, mol, symmetrizeConjugatedTerminalGroups=False)
     self.assertAlmostEqual(rmsd, 0.747, 3)
+
+  def test19GetAllConformerBestRMS(self):
+    file1 = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                         'symmetric.confs.sdf')
+    ms = [x for x in Chem.SDMolSupplier(file1)]
+    mol = Chem.Mol(ms[0])
+    for i in range(1, len(ms)):
+      mol.AddConformer(ms[i].GetConformer(), assignId=True)
+
+    nconfs = mol.GetNumConformers()
+    origVals = rdMolAlign.GetAllConformerBestRMS(mol)
+    self.assertEqual(len(origVals), (nconfs * (nconfs - 1)) // 2)
+
+    self.assertAlmostEqual(origVals[0], rdMolAlign.GetBestRMS(mol, mol, 0, 1))
+
+    newVals = rdMolAlign.GetAllConformerBestRMS(mol, numThreads=4)
+    self.assertEqual(len(origVals), len(newVals))
+    for ov, nv in zip(origVals, newVals):
+      self.assertAlmostEqual(ov, nv)
 
 
 if __name__ == '__main__':

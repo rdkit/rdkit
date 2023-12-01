@@ -97,9 +97,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     STEREOANY,       // intentionally unspecified
     // -- Put any true specifications about this point so
     // that we can do comparisons like if(bond->getStereo()>Bond::STEREOANY)
-    STEREOZ,     // Z double bond
-    STEREOE,     // E double bond
-    STEREOCIS,   // cis double bond
+    STEREOZ,         // Z double bond
+    STEREOE,         // E double bond
+    STEREOCIS,       // cis double bond
     STEREOTRANS,     // trans double bond
     STEREOATROPCW,   //  atropisomer clockwise rotation
     STEREOATROPCCW,  //  atropisomer counter clockwise rotation

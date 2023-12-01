@@ -250,6 +250,8 @@ inline void createAtomStringPropertyList(
                                                missingValueMarker, lineSize));
 }
 
+RDKIT_FILEPARSERS_EXPORT void moveAdditionalPropertiesToSGroups(RWMol &mol);
+
 }  // namespace FileParserUtils
 }  // namespace RDKit
 

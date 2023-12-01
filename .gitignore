@@ -57,16 +57,17 @@ __pycache__/
 
 /External/**/*.tar.gz
 /External/**/*.zip
-/External/catch/catch/
+/External/AvalonTools/SourceDistribution
 /External/CoordGen/coordgen/
 /External/CoordGen/maeparser/
 /External/Eigen/eigen/
-/External/FreeSASA/freesasa-2.0.1/
+/External/FreeSASA/freesasa*/
 /External/INCHI-API/INCHI-1-SRC/
 /External/INCHI-API/src/
-/External/rapidjson-1.1.0/
 /External/RingFamilies/RingDecomposerLib/
-/External/AvalonTools/SourceDistribution
+/External/YAeHMOP/yaehmop/
+/External/catch/catch/
+/External/rapidjson*/
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
