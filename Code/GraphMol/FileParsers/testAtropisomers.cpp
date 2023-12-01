@@ -224,7 +224,6 @@ class MolAtropTest {
       for (auto sdfTest : sdfTests) {
         BOOST_LOG(rdInfoLog) << "Test: " << sdfTest.fileName << std::endl;
 
-        printf("Test\n\n %s\n\n", sdfTest.fileName.c_str());
         testMolFiles(&sdfTest);
       }
     }
@@ -235,6 +234,7 @@ int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
+  boost::logging::enable_logs("rdApp.info");
   BOOST_LOG(rdInfoLog) << " ---- Running with POSIX locale ----- " << std::endl;
 
   RDKit::Chirality::setPerceive3DChiralExplicitOnly(true);

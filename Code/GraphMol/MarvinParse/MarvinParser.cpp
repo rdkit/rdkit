@@ -610,8 +610,8 @@ class MarvinCMLReader {
       }
 
       if (conf || conf3d) {
-        RDKit::DetectAtropisomerChirality(*mol,
-                                          conf != nullptr ? conf : conf3d);
+        Atropisomers::detectAtropisomerChirality(
+            *mol, conf != nullptr ? conf : conf3d);
       }
 
       ClearSingleBondDirFlags(*mol);

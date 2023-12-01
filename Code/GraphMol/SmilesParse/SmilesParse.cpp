@@ -461,7 +461,7 @@ RWMol *SmilesToMol(const std::string &smiles,
   }
   if (conf || conf3d) {
     try {
-      RDKit::DetectAtropisomerChirality(*res, conf ? conf : conf3d);
+      Atropisomers::detectAtropisomerChirality(*res, conf ? conf : conf3d);
     } catch (...) {
       delete res;
       throw;

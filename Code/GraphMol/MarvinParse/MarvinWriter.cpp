@@ -517,9 +517,9 @@ class MarvinCMLWriter {
       INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(*mol);
 
       if (conf) {
-        WedgeBondsFromAtropisomers(*mol, conf, wedgeBonds);
+        Atropisomers::wedgeBondsFromAtropisomers(*mol, conf, wedgeBonds);
       } else if (conf3d) {
-        WedgeBondsFromAtropisomers(*mol, conf3d, wedgeBonds);
+        Atropisomers::wedgeBondsFromAtropisomers(*mol, conf3d, wedgeBonds);
       }
 
       for (auto bond : mol->bonds()) {
@@ -604,7 +604,7 @@ class MarvinCMLWriter {
         }
 
         std::vector<unsigned int> atomIds;
-        getAllAtomIdsForStereoGroup(*mol, group, atomIds);
+        Atropisomers::getAllAtomIdsForStereoGroup(*mol, group, atomIds);
 
         for (auto atomId : atomIds) {
           marvinMol->atoms[atomId]->mrvStereoGroup = stereoGroupType;

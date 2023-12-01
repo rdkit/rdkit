@@ -119,7 +119,7 @@ bool checkBondsInSameBranch(MolStack &molStack, Bond *dblBnd, Bond *dirBnd) {
 void switchBondDir(Bond *bond) {
   PRECONDITION(bond, "bad bond");
   PRECONDITION(bond->getBondType() == Bond::SINGLE || bond->getIsAromatic() ||
-                   bond->isDative(),
+                   isDative(*bond),
                "bad bond type");
   switch (bond->getBondDir()) {
     case Bond::ENDUPRIGHT:
@@ -193,7 +193,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
                                auto atom, auto &firstNeighborBond,
                                auto &secondNeighborBond, auto &dirSet) {
     for (const auto bond : mol.atomBonds(atom)) {
-      if (bond == dblBond || !bond->canSetDoubleBondStereo()) {
+      if (bond == dblBond || !canSetDoubleBondStereo(*bond)) {
         continue;
       }
 
@@ -910,10 +910,10 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
   bool nbrPossible = false, adjusted = false;
   while (beg != end) {
     Bond *oBond = mol[*beg];
-    // std::cerr<<"  >>"<<oBond->getIdx()<<" "<<canHaveDirection(oBond)<<"
+    // std::cerr<<"  >>"<<oBond->getIdx()<<" "<<canHaveDirection(*oBond)<<"
     // "<<bondDirCounts[oBond->getIdx()]<<"-"<<bondDirCounts[refBond->getIdx()]<<"
     // "<<atomDirCounts[oBond->getBeginAtomIdx()]<<"-"<<atomDirCounts[oBond->getEndAtomIdx()]<<std::endl;
-    if (oBond != refBond && oBond->canHaveDirection()) {
+    if (oBond != refBond && canHaveDirection(*oBond)) {
       nbrPossible = true;
       if ((bondDirCounts[oBond->getIdx()] >=
            bondDirCounts[refBond->getIdx()]) &&
@@ -967,7 +967,7 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
       const Atom *canonBeginAtom = mol.getAtomWithIdx(msI.number);
       const Atom *canonEndAtom =
           mol.getAtomWithIdx(tBond->getOtherAtomIdx(msI.number));
-      if (tBond->canHaveDirection() && bondDirCounts[tBond->getIdx()] >= 1) {
+      if (canHaveDirection(*tBond) && bondDirCounts[tBond->getIdx()] >= 1) {
         // start by finding the double bond that sets tBond's direction:
         const Atom *dblBondAtom = nullptr;
         ROMol::OEDGE_ITER beg, end;

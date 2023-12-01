@@ -2613,7 +2613,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
   dirCode = 0;
   reverse = false;
   Bond::BondDir dir = Bond::NONE;
-  if (bond->canHaveDirection()) {
+  if (canHaveDirection(*bond)) {
     // single bond stereo chemistry
     dir = Chirality::detail::determineBondWedgeState(bond, wedgeBonds, conf);
     dirCode = BondGetDirCode(dir);

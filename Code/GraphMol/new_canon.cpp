@@ -438,8 +438,8 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
       std::vector<Bond *> atropBonds[2];  // one vector for each end - each one
                                           // should end up with 1 ro 2 entries
 
-      CHECK_INVARIANT(GetAtropisomerAtomsAndBonds(bond, atropAtoms, atropBonds,
-                                                  bond->getOwningMol()),
+      CHECK_INVARIANT(Atropisomers::getAtropisomerAtomsAndBonds(
+                          bond, atropAtoms, atropBonds, bond->getOwningMol()),
                       "Could not find atropisomer controlling atoms")
 
       res.controllingAtoms[0] =
