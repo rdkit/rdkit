@@ -2449,8 +2449,8 @@ void testAtomPairFPDifference() {
   std::sort(fpFromGeneratorAsVectOfPairs.begin(),
             fpFromGeneratorAsVectOfPairs.end());
   if (fpFromFreeFuncAsVectOfPairs != fpFromGeneratorAsVectOfPairs) {
-    for (const auto &fpFromFreeFuncPair : fpFromFreeFuncAsVectOfPairs) {
-      auto i = &fpFromFreeFuncPair - &fpFromFreeFuncAsVectOfPairs.front();
+    for (auto i = 0u; i < fpFromFreeFuncAsVectOfPairs.size(); ++i) {
+      const auto &fpFromFreeFuncPair = fpFromFreeFuncAsVectOfPairs.at(i);
       const auto &fpFromGeneratorPair = fpFromGeneratorAsVectOfPairs.at(i);
       if (fpFromFreeFuncPair != fpFromGeneratorPair) {
         std::cerr << "fpFromFreeFuncPair (" << fpFromFreeFuncPair.first << ", "
