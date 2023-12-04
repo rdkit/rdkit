@@ -139,7 +139,7 @@ def SupplierFromFilename(fileN, delim='', **kwargs):
 
 
 def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=True,
-                         useLegacyImplementation=GetUseLegacyStereoPerception()):
+                         useLegacyImplementation=None):
   """
     >>> from rdkit import Chem
     >>> mol = Chem.MolFromSmiles('[C@H](Cl)(F)Br')
@@ -189,6 +189,8 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
 
   """
   origUseLegacyVal = GetUseLegacyStereoPerception()
+  if useLegacyImplementation is None:
+    useLegacyImplementation = origUseLegacyVal
   SetUseLegacyStereoPerception(useLegacyImplementation)
   try:
     if useLegacyImplementation:
