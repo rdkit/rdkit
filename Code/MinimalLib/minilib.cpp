@@ -608,8 +608,8 @@ bool mmpaFragmentMol(const ROMol &mol, std::vector<RDKit::ROMOL_SPTR> &cores,
   sidechains.clear();
   sidechains.reserve(numEntries);
   for (const auto &mmpaFrag : mmpaFrags) {
-    cores.push_back(std::move(mmpaFrag.first));
-    sidechains.push_back(std::move(mmpaFrag.second));
+    cores.push_back(mmpaFrag.first);
+    sidechains.push_back(mmpaFrag.second);
   }
   return true;
 }
