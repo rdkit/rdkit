@@ -579,8 +579,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_mmpa_frags",
                 select_overload<emscripten::val(const JSMol &, unsigned int,
                                                 unsigned int, unsigned int)>(
-                    get_mmpa_frags_helper),
-                allow_raw_pointers())
+                    get_mmpa_frags_helper))
 #endif
       ;
 
