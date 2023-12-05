@@ -6,12 +6,72 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
+Jason Biggs, Hussein Faara, Brian Kelley, Yoshinobu Ogura, Yakov Pechersky,
+Ricardo Rodriguez-Schmidt, Leonid Stolbov, Paolo Tosco, Ivan Tubert-Brohman,
+dehaenw
 
 ## New Features and Enhancements:
+  - Support writing detailed SMARTS queries to CTABs using the SMARTSQ mechanism
+ (github issue #5819 from greglandrum)
+  - Support copying of GeneralizeQueryMolecules
+ (github issue #6851 from greglandrum)
+  - Enable chemist-friendly depiction of R-groups
+ (github pull #6866 from ptosco)
+  - Allow building DetermineBonds without YAeHMOP support
+ (github pull #6885 from greglandrum)
+  - Add multithreading to getBestRMS and new getAllConformerBestRMS
+ (github pull #6896 from greglandrum)
+  - switch to catch2 v3
+ (github pull #6898 from greglandrum)
+  - minilib functions exposure: mmpa
+ (github pull #6902 from StLeonidas)
+  - Add multi-threaded versions of some MolStandardize operations
+ (github pull #6909 from greglandrum)
+  - Add (multithreaded) functions to the fingerprint generators for calculating multiple fingeprints in one call
+ (github pull #6910 from greglandrum)
+  - Add Python modules to generate stubs and automatically patch docstrings
+ (github pull #6919 from ptosco)
 
 ## Bug Fixes:
+  - MolEnumerator: use repeat counts for SRUs when present
+ (github issue #6429 from greglandrum)
+  - Double bonds should not be depicted as crossed bonds in the presence of wavy bonds
+ (github issue #6816 from ptosco)
+  - MurckoScaffold.MakeScaffoldGeneric() has issues with isotopes
+ (github issue #6836 from dehaenw)
+  - Wavy bonds in mol blocks can't be stereo enumerated
+ (github issue #6876 from bp-kelley)
+  - CDXML read of AND1 group (specifying racemic center) gets associated into an OR1 group
+ (github issue #6887 from pechersky)
+  - Segfault in JSONToMols when "commonchem" is an int
+ (github issue #6890 from i-tub)
+  - reapplyMolBlockWedging() should retain ENDDOWNRIGHT, ENDUPRIGHT dirs
+ (github issue #6893 from ptosco)
+  - MMPA FragmentMol segfaults when new stereo perception is turned on
+ (github issue #6900 from jasondbiggs)
+  - Obtaining descriptors via Descriptors.descList results in duplication of SPS.
+ (github issue #6928 from wsuzume)
+  - Some Clang-specific build instructions skip some clang compilers on mac
+ (github issue #6941 from whosayn)
+  - With new stereo, removing H from an Imine double bond does not remove bond stereo
+ (github issue #6944 from ricrogz)
+  - FindMolChiralCenters should honor RDK_USE_LEGACY_STEREO_PERCEPTION
+ (github issue #6945 from ricrogz)
+  - generateDepictionMatching2DStructure does not optimally align when refPatt!=None, allowRGroups=False, alignOnly=True
+ (github issue #6952 from ptosco)
+  - GetAtomPairFingerprint yields different rooted FP from generator
+ (github issue #6958 from ptosco)
 
 ## Cleanup work:
+  - cmake cleanup
+ (github pull #6814 from greglandrum)
+  - Deprecate some of the ancient python-based ML code
+ (github pull #6891 from greglandrum)
+  - Remove boost::regex support #6817
+ (github pull #6913 from whosayn)
+  - Fix minimal build, allow building without boost::serialization
+ (github pull #6932 from greglandrum)
+
 
 ## Deprecated code (to be removed in a future release):
 - The RDKit implementation of standard machine learning algorithms are
