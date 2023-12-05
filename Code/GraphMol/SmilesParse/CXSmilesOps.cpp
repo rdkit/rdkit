@@ -1106,11 +1106,11 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
       }
       bond->setProp(common_properties::_MolFileBondCfg, cfg);
       bond->setBondDir(state);
-      if (cfg == 2 && bond->canHaveDirection()) {
+      if (cfg == 2 && canHaveDirection(*bond)) {
         bond->getBeginAtom()->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
         mol.setProp(detail::_needsDetectBondStereo, 1);
       }
-      if ((cfg == 1 || cfg == 3) && bond->canHaveDirection()) {
+      if ((cfg == 1 || cfg == 3) && canHaveDirection(*bond)) {
         mol.setProp(detail::_needsDetectAtomStereo, 1);
       }
     }
@@ -1151,7 +1151,7 @@ bool parse_doublebond_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
         return false;
       }
 
-      Chirality::detail::setStereoanyFromSquiggleBond(mol, bond, stereo);
+      Chirality::detail::setStereoForBond(mol, bond, stereo);
     }
     if (first < last && *first == ',') {
       ++first;
@@ -1532,7 +1532,7 @@ getSortedStereoGroupsAndIndices(const ROMol &mol,
   for (const auto &sg : groups) {
     // const auto atomIndexes = getSortedMappedIndexes(sg.getAtoms(), revOrder);
     std::vector<unsigned int> atomIds;
-    getAllAtomIdsForStereoGroup(mol, sg, atomIds);
+    Atropisomers::getAllAtomIdsForStereoGroup(mol, sg, atomIds);
     const auto newAtomIndexes = getSortedMappedIndexes(atomIds, revOrder);
     if (!newAtomIndexes.empty()) {
       sortingGroups.emplace_back(sg, newAtomIndexes);
@@ -2030,7 +2030,7 @@ std::string get_bond_config_block(const ROMol &mol,
     const auto bond = mol.getBondWithIdx(idx);
     unsigned int wedgeStartAtomIdx = bond->getBeginAtomIdx();
 
-    if (!bond->canHaveDirection()) {
+    if (!canHaveDirection(*bond)) {
       continue;
     }
     // when figuring out what to output for the bond, favor the wedge state:
@@ -2341,7 +2341,8 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(mol);
 
     if (mol.getNumConformers()) {
-      WedgeBondsFromAtropisomers(mol, &mol.getConformer(), wedgeBonds);
+      Atropisomers::wedgeBondsFromAtropisomers(mol, &mol.getConformer(),
+                                               wedgeBonds);
     }
 
     bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&
@@ -2360,7 +2361,8 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     INT_MAP_INT wedgeBonds;
 
     if (mol.getNumConformers()) {
-      WedgeBondsFromAtropisomers(mol, &mol.getConformer(), wedgeBonds);
+      Atropisomers::wedgeBondsFromAtropisomers(mol, &mol.getConformer(),
+                                               wedgeBonds);
     }
 
     bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&

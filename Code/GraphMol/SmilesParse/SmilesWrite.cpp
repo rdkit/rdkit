@@ -686,7 +686,7 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
     RDKit::Chirality::reapplyMolBlockWedging(trwmol);
   } else if (restoreBondDirs == RestoreBondDirOptionClear) {
     for (auto bond : trwmol.bonds()) {
-      if (!bond->canHaveDirection()) {
+      if (!canHaveDirection(*bond)) {
         continue;
       }
       if (bond->getBondDir() != Bond::BondDir::NONE) {

@@ -878,7 +878,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
   while (firstB != lastB) {
     const Bond *bond = mol[*firstB];
     if (bond->getBondType() == Bond::ZERO ||
-        (!includeDativeBonds && bond->isDative())) {
+        (!includeDativeBonds && isDative(*bond))) {
       activeBonds[bond->getIdx()] = 0;
     }
     ++firstB;
@@ -896,7 +896,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
     atomDegreesWithZeroOrderBonds[i] = deg;
     for (const auto bond : mol.atomBonds(atom)) {
       if (bond->getBondType() == Bond::ZERO ||
-          (!includeDativeBonds && bond->isDative())) {
+          (!includeDativeBonds && isDative(*bond))) {
         atomDegrees[i]--;
       }
     }

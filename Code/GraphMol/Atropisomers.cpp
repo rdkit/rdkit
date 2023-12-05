@@ -26,8 +26,9 @@
 constexpr double REALLY_SMALL_BOND_LEN = 0.0000001;
 
 namespace RDKit {
+namespace Atropisomers {
 
-bool GetAtropisomerAtomsAndBonds(const Bond *bond, Atom *atoms[2],
+bool getAtropisomerAtomsAndBonds(const Bond *bond, Atom *atoms[2],
                                  std::vector<Bond *> bonds[2],
                                  const ROMol &mol) {
   PRECONDITION(bond, "no bond");
@@ -218,7 +219,7 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
   std::vector<Bond *> bonds[2];  // one vector for each end - each one
                                  // should end up with 1 ro 2 entries
 
-  if (!GetAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
+  if (!getAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
     return false;  // not an atropisomer
   }
 
@@ -395,7 +396,7 @@ void cleanupAtropisomerStereoGroups(ROMol &mol) {
   mol.setStereoGroups(std::move(newsgs));
 }
 
-void DetectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
+void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
   PRECONDITION(&(conf->getOwningMol()) == &mol,
                "conformer does not belong to molecule");
@@ -403,7 +404,7 @@ void DetectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
   std::set<Bond *> bondsToTry;
 
   for (auto bond : mol.bonds()) {
-    if (bond->canHaveDirection() &&
+    if (canHaveDirection(*bond) &&
         (bond->getBondDir() == Bond::BondDir::BEGINDASH ||
          bond->getBondDir() == Bond::BondDir::BEGINWEDGE)) {
       for (const auto &nbrBond : mol.atomBonds(bond->getBeginAtom())) {
@@ -482,7 +483,7 @@ bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
   std::vector<Bond *> bonds[2];  // one vector for each end - each one
                                  // should end up with 1 ro 2 entries
 
-  if (!GetAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
+  if (!getAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
     return false;  // not an atropisomer
   }
 
@@ -549,7 +550,7 @@ bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
 
       if ((bondDir == Bond::BEGINWEDGE || bondDir == Bond::BEGINDASH) &&
           bonds[whichEnd][whichBond]->getBeginAtom() == atoms[whichEnd] &&
-          bond->canHaveDirection()) {
+          canHaveDirection(*bond)) {
         useBondsAtEnd[whichEnd].push_back(whichBond);
         foundBondDir = true;
       }
@@ -583,7 +584,7 @@ bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
          ++whichBond) {
       auto bondToTry = bonds[whichEnd][whichBond];
 
-      if (!bondToTry->canHaveDirection() ||
+      if (!canHaveDirection(*bondToTry) ||
           wedgeBonds.find(bondToTry->getIdx()) != wedgeBonds.end()) {
         continue;  // must be a single OR aromatic bond and not already spoken
                    // for by a chiral center
@@ -659,7 +660,7 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
   std::vector<Bond *> bonds[2];  // one vector for each end - each one
                                  // should end up with 1 ro 2 entries
 
-  if (!GetAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
+  if (!getAtropisomerAtomsAndBonds(bond, atoms, bonds, mol)) {
     return false;  // not an atropisomer
   }
 
@@ -688,7 +689,7 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
       // main bond
 
       if ((bondDir == Bond::BEGINWEDGE || bondDir == Bond::BEGINDASH) &&
-          bond->getBeginAtom() == atoms[whichEnd] && bond->canHaveDirection()) {
+          bond->getBeginAtom() == atoms[whichEnd] && canHaveDirection(*bond)) {
         useBonds.push_back(bond);
       }
     }
@@ -722,7 +723,7 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
       // cannot use a bond that is not single, nor if it is already slated
       // to be used for a chiral center
 
-      if (!bondToTry->canHaveDirection() ||
+      if (!canHaveDirection(*bondToTry) ||
           wedgeBonds.find(bond->getIdx()) != wedgeBonds.end()) {
         continue;  // must be a single bond and not already spoken
                    // for by a chiral center
@@ -794,7 +795,7 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
   return true;
 }
 
-void WedgeBondsFromAtropisomers(const ROMol &mol, const Conformer *conf,
+void wedgeBondsFromAtropisomers(const ROMol &mol, const Conformer *conf,
                                 const INT_MAP_INT &wedgeBonds) {
   PRECONDITION(conf, "no conformer");
   PRECONDITION(&(conf->getOwningMol()) == &mol,
@@ -832,5 +833,5 @@ bool doesMolHaveAtropisomers(const ROMol &mol) {
   }
   return false;
 }
-
+}  // namespace Atropisomers
 }  // namespace RDKit

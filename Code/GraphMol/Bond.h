@@ -97,9 +97,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     STEREOANY,       // intentionally unspecified
     // -- Put any true specifications about this point so
     // that we can do comparisons like if(bond->getStereo()>Bond::STEREOANY)
-    STEREOZ,     // Z double bond
-    STEREOE,     // E double bond
-    STEREOCIS,   // cis double bond
+    STEREOZ,         // Z double bond
+    STEREOE,         // E double bond
+    STEREOCIS,       // cis double bond
     STEREOTRANS,     // trans double bond
     STEREOATROPCW,   //  atropisomer clockwise rotation
     STEREOATROPCCW,  //  atropisomer counter clockwise rotation
@@ -317,17 +317,6 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   //! returns our direction
   BondDir getBondDir() const { return static_cast<BondDir>(d_dirTag); }
 
-  bool canHaveDirection() const {
-    auto bondType = getBondType();
-    return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC);
-  }
-
-  bool canSetDoubleBondStereo() const {
-    auto bondType = getBondType();
-    return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC ||
-            isDative());
-  }
-
   //! sets our stereo code
   /*!
       STEREONONE, STEREOANY, STEREOE and STEREOZ can be set without
@@ -379,12 +368,6 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     return *dp_stereoAtoms;
   }
 
-  bool isDative() const {
-    auto bt = this->getBondType();
-    return bt == Bond::BondType::DATIVE || bt == Bond::BondType::DATIVEL ||
-           bt == Bond::BondType::DATIVER || bt == Bond::BondType::DATIVEONE;
-  }
-
   //! calculates any of our lazy \c properties
   /*!
     <b>Notes:</b>
@@ -409,6 +392,23 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
 
   void initBond();
 };
+
+inline bool isDative(const Bond &bond) {
+  auto bt = bond.getBondType();
+  return bt == Bond::BondType::DATIVE || bt == Bond::BondType::DATIVEL ||
+         bt == Bond::BondType::DATIVER || bt == Bond::BondType::DATIVEONE;
+}
+
+inline bool canSetDoubleBondStereo(const Bond &bond) {
+  auto bondType = bond.getBondType();
+  return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC ||
+          isDative(bond));
+}
+
+inline bool canHaveDirection(const Bond &bond) {
+  auto bondType = bond.getBondType();
+  return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC);
+}
 
 //! returns twice the \c bondType
 //! (e.g. SINGLE->2, AROMATIC->3, etc.)

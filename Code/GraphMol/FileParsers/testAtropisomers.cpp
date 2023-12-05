@@ -224,7 +224,6 @@ class MolAtropTest {
       for (auto sdfTest : sdfTests) {
         BOOST_LOG(rdInfoLog) << "Test: " << sdfTest.fileName << std::endl;
 
-        printf("Test\n\n %s\n\n", sdfTest.fileName.c_str());
         testMolFiles(&sdfTest);
       }
     }
@@ -263,7 +262,7 @@ void testLookForAtropisomersInSDdfFiles(std::string fileName,
     std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock, false, false, false));
     TEST_ASSERT(mol != nullptr);
 
-    auto hasAtropisomers = doesMolHaveAtropisomers(*mol);
+    auto hasAtropisomers = RDKit::Atropisomers::doesMolHaveAtropisomers(*mol);
 
     if (hasAtropisomers) {
       BOOST_LOG(rdInfoLog) << "Found atropisomers in " << fileName << std::endl;
@@ -293,6 +292,7 @@ int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
+  boost::logging::enable_logs("rdApp.info");
   BOOST_LOG(rdInfoLog) << " ---- Running with POSIX locale ----- " << std::endl;
 
   RDKit::Chirality::setPerceive3DChiralExplicitOnly(true);

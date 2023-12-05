@@ -17,19 +17,21 @@
 #include <stdexcept>
 
 namespace RDKit {
-RDKIT_GRAPHMOL_EXPORT void DetectAtropisomerChirality(ROMol &mol,
+namespace Atropisomers {
+RDKIT_GRAPHMOL_EXPORT void detectAtropisomerChirality(ROMol &mol,
                                                       const Conformer *conf);
-RDKIT_GRAPHMOL_EXPORT void WedgeBondsFromAtropisomers(
+RDKIT_GRAPHMOL_EXPORT void wedgeBondsFromAtropisomers(
     const ROMol &mol, const Conformer *conf, const INT_MAP_INT &wedgeBonds);
 
 RDKIT_GRAPHMOL_EXPORT bool doesMolHaveAtropisomers(const ROMol &mol);
 
-RDKIT_GRAPHMOL_EXPORT bool GetAtropisomerAtomsAndBonds(
+RDKIT_GRAPHMOL_EXPORT bool getAtropisomerAtomsAndBonds(
     const Bond *bond, Atom *atoms[2], std::vector<Bond *> bonds[2],
     const ROMol &mol);
 
 RDKIT_GRAPHMOL_EXPORT void getAllAtomIdsForStereoGroup(
     const ROMol &mol, const StereoGroup &group,
     std::vector<unsigned int> &atomIds);
+}  // namespace Atropisomers
 }  // namespace RDKit
 #endif
