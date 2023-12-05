@@ -309,31 +309,33 @@ BOOST_PYTHON_MODULE(rdForceField) {
       .def("CalcEnergy",
            (double(PyForceField::*)(const python::object &) const) &
                PyForceField::calcEnergyWithPos,
-           (python::arg("pos") = python::object()),
+           ((python::arg("self"), python::arg("pos") = python::object())),
            "Returns the energy (in kcal/mol) of the current arrangement\n"
            "or of the supplied coordinate list (if non-empty)")
       .def("CalcGrad", &PyForceField::calcGradWithPos,
-           (python::arg("pos") = python::object()),
+           ((python::arg("self"), python::arg("pos") = python::object())),
            "Returns a tuple filled with the per-coordinate gradients\n"
            "of the current arrangement or of the supplied coordinate list "
            "(if non-empty)")
-      .def("Positions", &PyForceField::positions,
+      .def("Positions", &PyForceField::positions, python::args("self"),
            "Returns a tuple filled with the coordinates of the\n"
            "points the ForceField is handling")
       .def("Dimension",
            (unsigned int (PyForceField::*)() const) & PyForceField::dimension,
-           "Returns the dimension of the ForceField")
+           python::args("self"), "Returns the dimension of the ForceField")
       .def("NumPoints",
            (unsigned int (PyForceField::*)() const) & PyForceField::numPoints,
+           python::args("self"),
            "Returns the number of points the ForceField is handling")
       .def("Minimize", &PyForceField::minimize,
-           (python::arg("maxIts") = 200, python::arg("forceTol") = 1e-4,
-            python::arg("energyTol") = 1e-6),
+           ((python::arg("self"), python::arg("maxIts") = 200),
+            python::arg("forceTol") = 1e-4, python::arg("energyTol") = 1e-6),
            "Runs some minimization iterations.\n\n  Returns 0 if the "
            "minimization succeeded.")
       .def("MinimizeTrajectory", &PyForceField::minimizeTrajectory,
-           (python::arg("snapshotFreq"), python::arg("maxIts") = 200,
-            python::arg("forceTol") = 1e-4, python::arg("energyTol") = 1e-6),
+           ((python::arg("self"), python::arg("snapshotFreq")),
+            python::arg("maxIts") = 200, python::arg("forceTol") = 1e-4,
+            python::arg("energyTol") = 1e-6),
            "Runs some minimization iterations, recording the minimization "
            "trajectory every snapshotFreq steps.\n\n"
            "Returns a (int, []) tuple; the int is 0 if the minimization "
@@ -410,7 +412,7 @@ BOOST_PYTHON_MODULE(rdForceField) {
            (python::arg("self"), python::arg("idx"), python::arg("maxDispl"),
             python::arg("forceConstant")),
            "Adds a position constraint to the MMFF force field.")
-      .def("Initialize", &PyForceField::initialize,
+      .def("Initialize", &PyForceField::initialize, python::args("self"),
            "initializes the force field (call this before minimizing)")
       .def("AddExtraPoint", &PyForceField::addExtraPoint,
            (python::arg("self"), python::arg("x"), python::arg("y"),

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.14)
 
 project (RDKit)
 
@@ -21,6 +21,7 @@ add_library(rdkit_base INTERFACE)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
+option(RDK_BUILD_PYTHON_STUBS "build the python stubs" OFF )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
@@ -60,7 +61,6 @@ option(RDK_BUILD_XYZ2MOL_SUPPORT "build in support for the RDKit's implementatio
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
 option(RDK_USE_URF "Build support for Florian Flachsenberg's URF library" ON)
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
-option(RDK_USE_BOOST_REGEX "use boost::regex instead of std::regex (needed for systems with g++-4.8)" OFF)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindings)" OFF)
 option(RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS "build the minimal RDKit JS wrapper such that it supports legacy browsers" OFF)
@@ -313,7 +313,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   endif()
-  
+
   find_package(NumPy REQUIRED)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
@@ -365,7 +365,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
         PATTERN ".svn" EXCLUDE
         PATTERN "CMake*" EXCLUDE
         PATTERN "Basement" EXCLUDE
-        )
+      )
     else(RDK_INSTALL_PYTHON_TESTS)
       install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
         COMPONENT python
@@ -376,7 +376,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
         PATTERN "CMake*" EXCLUDE
         PATTERN "Basement" EXCLUDE
         PATTERN "UnitTest*" EXCLUDE
-        )
+      )
     endif(RDK_INSTALL_PYTHON_TESTS)
 
   endif(RDK_INSTALL_INTREE)
@@ -457,11 +457,6 @@ if(RDK_USE_BOOST_SERIALIZATION)
     endif()
 endif()
 
-if(RDK_BUILD_MAEPARSER_SUPPORT AND NOT RDK_USE_BOOST_IOSTREAMS)
-    message("Enabling RDK_USE_BOOST_IOSTREAMS because RDK_BUILD_MAEPARSER_SUPPORT is enabled.")
-    set(RDK_USE_BOOST_IOSTREAMS ON)
-endif()
-
 if(RDK_USE_BOOST_IOSTREAMS)
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_IOSTREAMS)
     find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
@@ -486,12 +481,6 @@ if(RDK_USE_BOOST_IOSTREAMS)
      endif()
     endif()
     target_link_libraries(rdkit_base INTERFACE ${zlib_lib})
-endif()
-
-if(RDK_USE_BOOST_REGEX)
-  add_definitions(-DRDKIT_USE_BOOST_REGEX)
-  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS regex REQUIRED)
-  target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
 endif()
 
 
@@ -541,7 +530,7 @@ else(RDK_TEST_COVERAGE)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   endif()
  endif()
- if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang") # there's at least Clang and AppleClang
    # We don't on C_FLAGS warnings to keep Avalon compiling quiet
    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wno-format -Wno-logical-op-parentheses -fPIC")
@@ -624,6 +613,7 @@ add_subdirectory(Code)
 if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(Projects)
   add_subdirectory(rdkit)
+  add_subdirectory(rdkit-stubs)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 if(RDK_BUILD_CONTRIB)

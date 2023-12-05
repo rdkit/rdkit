@@ -17,8 +17,10 @@ namespace python = boost::python;
 namespace RDKit {
 struct fragcatgen_wrapper {
   static void wrap() {
-    python::class_<FragCatGenerator>("FragCatGenerator", python::init<>())
-        .def("AddFragsFromMol", &FragCatGenerator::addFragsFromMol);
+    python::class_<FragCatGenerator>("FragCatGenerator",
+                                     python::init<>(python::args("self")))
+        .def("AddFragsFromMol", &FragCatGenerator::addFragsFromMol,
+             python::args("self", "mol", "fcat"));
   };
 };  // end of struct
 }  // namespace RDKit

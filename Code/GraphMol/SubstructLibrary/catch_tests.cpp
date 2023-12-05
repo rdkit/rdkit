@@ -235,6 +235,7 @@ TEST_CASE("searchOrderFunctionDemo") {
   }
 }
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
 TEST_CASE("ExtendedQueryMol") {
   std::vector<std::string> libSmiles = {"COCC=O", "COOCC=O", "COOOCC=O",
                                         "COOOOCC=O"};
@@ -325,3 +326,4 @@ TEST_CASE("ExtendedQueryMol") {
     CHECK(!ssslib.hasMatch(xqm));
   }
 }
+#endif

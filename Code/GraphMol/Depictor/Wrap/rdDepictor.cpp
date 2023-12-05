@@ -284,7 +284,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
   python::class_<UsingCoordGen, boost::noncopyable>(
       "UsingCoordGen",
       "Context manager to temporarily set CoordGen library preference in RDKit depiction.",
-      python::init<bool>("Constructor"))
+      python::init<bool>(python::args("self", "temp_state"), "Constructor"))
       .def("__enter__", &UsingCoordGen::enter)
       .def("__exit__", &UsingCoordGen::exit);
 

@@ -40,26 +40,32 @@ struct Utils_wrapper {
   static void wrap() {
     python::def("ConvertToExplicit", convertToExplicit,
                 python::return_value_policy<python::manage_new_object>(),
+                python::args("sbv"),
                 "Converts a SparseBitVector to an ExplicitBitVector and "
                 "returns the ExplicitBitVector");
     python::def(
         "CreateFromBitString", createFromBitString,
         python::return_value_policy<python::manage_new_object>(),
+        python::args("bits"),
         "Creates an ExplicitBitVect from a bit string (string of 0s and 1s).");
     python::def("CreateFromFPSText", createFromFPSText,
                 python::return_value_policy<python::manage_new_object>(),
+                python::args("fps"),
                 "Creates an ExplicitBitVect from an FPS string.");
     python::def(
         "CreateFromBinaryText", createFromBinaryText,
         python::return_value_policy<python::manage_new_object>(),
+        python::args("fps"),
         "Creates an ExplicitBitVect from a binary string (byte array).");
 
     python::def(
         "InitFromDaylightString",
-        (void (*)(SparseBitVect &, const std::string &))FromDaylightString);
+        (void (*)(SparseBitVect &, const std::string &))FromDaylightString,
+        python::args("sbv", "s"));
     python::def(
         "InitFromDaylightString",
         (void (*)(ExplicitBitVect &, const std::string &))FromDaylightString,
+        python::args("sbv", "s"),
         "Fill a BitVect using an ASCII (Daylight) encoding of a fingerprint.\n\
 \n\
    **Arguments**\n\

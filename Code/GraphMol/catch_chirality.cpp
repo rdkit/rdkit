@@ -18,6 +18,7 @@
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/test_fixtures.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
@@ -26,59 +27,6 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
 using namespace RDKit;
-
-class TestFixtureTemplate : public boost::noncopyable {
- public:
-  TestFixtureTemplate() = delete;
-
-  TestFixtureTemplate(std::string var, bool (*getter_func)(),
-                      void (*setter_func)(bool))
-      : m_var{std::move(var)},
-        m_getter_func{getter_func},
-        m_setter_func{setter_func} {
-    auto evar = std::getenv(m_var.c_str());
-    m_env_var_set = evar == nullptr;
-    m_flag_state = (*m_getter_func)();
-  }
-
-  ~TestFixtureTemplate() {
-    if (m_env_var_set) {
-      (*m_setter_func)(m_flag_state);
-    } else {
-#ifdef _WIN32
-      _putenv_s(m_var.c_str(), "");
-#else
-      unsetenv(m_var.c_str());
-#endif
-    }
-  }
-
- private:
-  std::string m_var;
-
-  bool (*m_getter_func)();
-  void (*m_setter_func)(bool);
-
-  bool m_flag_state;
-  bool m_env_var_set;
-};
-
-class UseLegacyStereoPerceptionFixture : private TestFixtureTemplate {
- public:
-  UseLegacyStereoPerceptionFixture()
-      : TestFixtureTemplate(RDKit::Chirality::useLegacyStereoEnvVar,
-                            &RDKit::Chirality::getUseLegacyStereoPerception,
-                            &RDKit::Chirality::setUseLegacyStereoPerception) {}
-};
-
-class AllowNontetrahedralChiralityFixture : private TestFixtureTemplate {
- public:
-  AllowNontetrahedralChiralityFixture()
-      : TestFixtureTemplate(
-            RDKit::Chirality::nonTetrahedralStereoEnvVar,
-            &RDKit::Chirality::getAllowNontetrahedralChirality,
-            &RDKit::Chirality::setAllowNontetrahedralChirality) {}
-};
 
 unsigned count_wedged_bonds(const ROMol &mol) {
   unsigned nWedged = 0;
@@ -1296,6 +1244,26 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
     auto stereoInfo =
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 2);
+  }
+  SECTION("Removal of stereoatoms requires removing CIS/TRANS when using legacy stereo") {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception;
+      Chirality::setUseLegacyStereoPerception(false);
+
+    {
+      auto mol = "N/C=C/C"_smiles;
+      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      auto rwmol = dynamic_cast<RWMol*>(mol.get());
+      rwmol->removeBond(0,1);
+      CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::BondStereo::STEREONONE);
+    }
+    {
+      auto mol = "N/C=C/C"_smiles;
+      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      auto rwmol = dynamic_cast<RWMol*>(mol.get());
+      rwmol->removeBond(2,3);
+      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+    }
+	  
   }
 }
 
@@ -3799,8 +3767,49 @@ TEST_CASE(
       CHECK(cp.getBondWithIdx(1)->getStereoAtoms().empty());
     }
   }
-}
+  SECTION("ensure we can enumerate stereo on either double bonds") {
+    auto mol = R"CTAB(
+  Mrv2004 11072316002D          
 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 1.859 2.7821 0 0
+M  V30 2 C 3.2818 2.1928 0 0
+M  V30 3 C 3.8711 0.77 0 0
+M  V30 4 C 3.2818 -0.6528 0 0
+M  V30 5 C 1.859 -1.2421 0 0
+M  V30 6 C 0.4362 -0.6528 0 0
+M  V30 7 C -0.1533 0.77 0 0
+M  V30 8 C 0.4362 2.1928 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 4 3 CFG=2
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 1 7 8
+M  V30 8 1 1 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+      //mol->debugMol(std::cerr);
+      std::string smi = MolToCXSmiles(*mol, SmilesWriteParams());
+      std::unique_ptr<ROMol> f(SmilesToMol(smi));
+      mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOCIS);
+      f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOCIS);
+      CHECK(MolToSmiles(*mol) == "C1=C\\CCCCCC/1");
+      CHECK(MolToSmiles(*f) == "C1=C\\CCCCCC/1");
+      mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOTRANS);
+      f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOTRANS);
+      CHECK(MolToSmiles(*mol) == "C1=C/CCCCCC/1");
+      CHECK(MolToSmiles(*f) == "C1=C/CCCCCC/1");
+  }
+    
+}
 TEST_CASE("adding two wedges to chiral centers") {
   SECTION("basics") {
     auto mol = R"CTAB(

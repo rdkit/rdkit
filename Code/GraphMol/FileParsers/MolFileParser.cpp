@@ -37,18 +37,7 @@
 #include <typeinfo>
 #include <exception>
 #include <charconv>
-
-#ifdef RDKIT_USE_BOOST_REGEX
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::regex_match;
-using boost::smatch;
-#else
 #include <regex>
-using std::regex;
-using std::regex_match;
-using std::smatch;
-#endif
 #include <sstream>
 #include <locale>
 #include <cstdlib>
@@ -56,6 +45,10 @@ using std::smatch;
 #include <string_view>
 
 using namespace RDKit::SGroupParsing;
+using std::regex;
+using std::regex_match;
+using std::smatch;
+
 
 namespace RDKit {
 
@@ -1548,7 +1541,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
           << " has a negative isotope offset. line:  " << line << std::endl;
     }
     res->setIsotope(dIso);
-    res->setProp(common_properties::_hasMassQuery, true);
   }
 
   if (text.size() >= 42 && text.substr(39, 3) != "  0") {

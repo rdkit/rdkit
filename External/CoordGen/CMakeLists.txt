@@ -1,7 +1,7 @@
 add_custom_target(coordgen_support ALL)
 include(RDKitUtils)
 
-if(RDK_BUILD_MAEPARSER_SUPPORT)
+if(RDK_BUILD_MAEPARSER_SUPPORT OR RDK_BUILD_COORDGEN_SUPPORT)
   if((NOT MSVC) OR RDK_INSTALL_DLLS_MSVC)
     add_definitions(-DIN_MAEPARSER)
   endif()
@@ -48,11 +48,11 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
   set(RDK_MAEPARSER_LIBS ${maeparser_LIBRARIES}
       CACHE STRING "the external libraries" FORCE)
 
-else (RDK_BUILD_MAEPARSER_SUPPORT)
+else ()
 
   set(RDK_MAEPARSER_LIBS CACHE STRING "the external libraries" FORCE)
 
-endif(RDK_BUILD_MAEPARSER_SUPPORT)
+endif()
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
   if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
@@ -84,11 +84,15 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     set(coordgen_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         CACHE STRING "CoordGen Include File" FORCE)
     file(GLOB CGSOURCES "${COORDGEN_DIR}/*.cpp")
-    rdkit_library(coordgen ${CGSOURCES} SHARED LINK_LIBRARIES MolAlign maeparser )
+    rdkit_library(coordgen ${CGSOURCES} SHARED)
     install(TARGETS coordgen DESTINATION ${RDKit_LibDir})
     set(RDK_COORDGEN_LIBS coordgen CACHE STRING "the external libraries" FORCE)
 
-  endif(COORDGEN_FORCE_BUILD OR (NOT coordgen_FOUND))
+  elseif(coordgen_FOUND)
+
+    set(RDK_COORDGEN_LIBS "${coordgen_LIBRARIES}" CACHE STRING "the external libraries" FORCE)
+
+  endif(COORDGEN_FORCE_BUILD OR(NOT coordgen_FOUND))
 
   include_directories(${coordgen_INCLUDE_DIRS})
 
@@ -100,7 +104,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
   rdkit_test(testCoordGen test.cpp
     LINK_LIBRARIES
-    coordgen Depictor ChemTransforms
+    "${RDK_COORDGEN_LIBS}" Depictor ChemTransforms
     FileParsers SmilesParse SubstructMatch GraphMol
     RDGeneral DataStructs RDGeneral RDGeometryLib
     ${RDKit_THREAD_LIBS})

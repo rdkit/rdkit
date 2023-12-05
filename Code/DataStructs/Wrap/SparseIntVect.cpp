@@ -136,12 +136,13 @@ struct sparseIntVec_wrapper {
                    boost::shared_ptr<SparseIntVect<IndexType>>>(
         className, sparseIntVectDoc.c_str(),
         python::init<IndexType>("Constructor"))
-        .def(python::init<std::string>())
+        .def(python::init<std::string>(python::args("self", "pkl")))
         // Note: we cannot support __len__ because, at least at the moment
         // (BPL v1.34.1), it must return an int.
         .def("__setitem__", &SparseIntVect<IndexType>::setVal,
-             "Set the value at a specified location")
+             python::args("self"), "Set the value at a specified location")
         .def("__getitem__", &SparseIntVect<IndexType>::getVal,
+             python::args("self"),
              "Get the value at a specified location")
         .def(python::self & python::self)
         .def(python::self | python::self)
@@ -168,17 +169,19 @@ struct sparseIntVec_wrapper {
         //.def(python::self * int())
         .def(python::self *= int())
         .def("GetTotalVal", &SparseIntVect<IndexType>::getTotalVal,
-             (python::args("useAbs") = false),
+             ((python::args("self"), python::args("useAbs") = false)),
              "Get the sum of the values in the vector, basically L1 norm")
         .def("GetLength", &SparseIntVect<IndexType>::getLength,
-             "Returns the length of the vector")
-        .def("ToBinary", &SIVToBinaryText<IndexType>,
+             python::args("self"), "Returns the length of the vector")
+        .def("ToBinary", &SIVToBinaryText<IndexType>, python::args("self"),
              "returns a binary (pickle) representation of the vector")
         .def("UpdateFromSequence", &pyUpdateFromSequence<IndexType>,
+             python::args("self", "seq"),
              "update the vector based on the values in the list or tuple")
         .def("GetNonzeroElements", &pyGetNonzeroElements<IndexType>,
+             python::args("self"),
              "returns a dictionary of the nonzero elements")
-        .def("ToList", pyToList<IndexType>,
+        .def("ToList", pyToList<IndexType>, python::args("self"),
              "Return the SparseIntVect as a python list")
         .def_pickle(siv_pickle_suite<IndexType>());
 

@@ -921,15 +921,18 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
   if (!doc.IsObject()) {
     throw FileParseException("Bad Format: JSON should be an object");
   }
+
   if (doc.HasMember("commonchem")) {
-    if (!doc["commonchem"].HasMember("version")) {
+    if (!doc["commonchem"].IsObject() ||
+        !doc["commonchem"].HasMember("version")) {
       throw FileParseException("Bad Format: missing version in JSON");
     }
     if (doc["commonchem"]["version"].GetInt() != currentMolJSONVersion) {
       throw FileParseException("Bad Format: bad version in JSON");
     }
   } else if (doc.HasMember("rdkitjson")) {
-    if (!doc["rdkitjson"].HasMember("version")) {
+    if (!doc["rdkitjson"].IsObject() ||
+        !doc["rdkitjson"].HasMember("version")) {
       throw FileParseException("Bad Format: missing version in JSON");
     }
     // FIX: we want to be backwards compatible

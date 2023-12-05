@@ -123,37 +123,42 @@ struct FPB_wrapper {
     python::class_<FPBReader, boost::noncopyable>(
         "FPBReader", FPBReaderClassDoc.c_str(),
         python::init<std::string, python::optional<bool>>(
-            (python::arg("filename"), python::arg("lazy") = false),
+            (python::arg("self"), python::arg("filename"),
+             python::arg("lazy") = false),
             "docstring"))
-        .def("Init", &FPBReader::init,
+        .def("Init", &FPBReader::init, python::args("self"),
              "Read the fingerprints from the file. This can take a while.\n")
-        .def("__len__", &FPBReader::length)
-        .def("__getitem__", &getItemHelper)
-        .def("GetNumBits", &FPBReader::nBits,
+        .def("__len__", &FPBReader::length, python::args("self"))
+        .def("__getitem__", &getItemHelper, python::args("self", "which"))
+        .def("GetNumBits", &FPBReader::nBits, python::args("self"),
              "returns the number of bits in a fingerprint")
-        .def("GetFP", &FPBReader::getFP,
+        .def("GetFP", &FPBReader::getFP, python::args("self", "idx"),
              "returns a particular fingerprint as an ExplicitBitVect")
-        .def("GetBytes", &getBytesHelper,
+        .def("GetBytes", &getBytesHelper, python::args("self", "which"),
              "returns a particular fingerprint as bytes")
-        .def("GetId", &FPBReader::getId,
+        .def("GetId", &FPBReader::getId, python::args("self", "idx"),
              "returns the id of a particular fingerprint")
         .def("GetTanimoto", &getTaniHelper,
+             python::args("self", "which", "bytes"),
              "return the tanimoto similarity of a particular fingerprint to "
              "the bytes provided")
         .def("GetTanimotoNeighbors", &taniNbrHelper,
-             (python::arg("bv"), python::arg("threshold") = 0.7),
+             ((python::arg("self"), python::arg("bv")),
+              python::arg("threshold") = 0.7),
              "returns tanimoto similarities to and indices of all neighbors "
              "above the specified threshold")
         .def("GetTversky", &getTverskyHelper,
+             python::args("self", "which", "bytes", "ca", "cb"),
              "return the Tverksy similarity of a particular fingerprint to "
              "the bytes provided")
         .def("GetTverskyNeighbors", &tverskyNbrHelper,
-             (python::arg("bv"), python::arg("ca"), python::arg("cb"),
-              python::arg("threshold") = 0.7),
+             ((python::arg("self"), python::arg("bv")), python::arg("ca"),
+              python::arg("cb"), python::arg("threshold") = 0.7),
              "returns Tversky similarities to and indices of all neighbors "
              "above the specified threshold")
         .def(
-            "GetContainingNeighbors", &containingNbrHelper, (python::arg("bv")),
+            "GetContainingNeighbors", &containingNbrHelper,
+            ((python::arg("self"), python::arg("bv"))),
             "returns indices of neighbors that contain this fingerprint (where "
             "all bits from this fingerprint are also set)");
 
@@ -165,31 +170,35 @@ struct FPB_wrapper {
     python::class_<MultiFPBReader, boost::noncopyable>(
         "MultiFPBReader", MultiFPBReaderClassDoc.c_str(),
         python::init<python::optional<bool>>(
-            (python::arg("initOnSearch") = false), "docstring"))
-        .def("Init", &MultiFPBReader::init,
+            (python::arg("self"), python::arg("initOnSearch") = false),
+            "docstring"))
+        .def("Init", &MultiFPBReader::init, python::args("self"),
              "Call Init() on each of our children. This can take a while.\n")
-        .def("__len__", &MultiFPBReader::length)
-        .def("GetNumBits", &MultiFPBReader::nBits,
+        .def("__len__", &MultiFPBReader::length, python::args("self"))
+        .def("GetNumBits", &MultiFPBReader::nBits, python::args("self"),
              "returns the number of bits in a fingerprint")
         .def("AddReader", &MultiFPBReader::addReader,
              python::with_custodian_and_ward<1, 2>(),
+             python::args("self", "rdr"),
              "adds an FPBReader to our set of readers")
         .def("GetReader", &MultiFPBReader::getReader,
              python::return_value_policy<python::reference_existing_object>(),
-             "returns one of our readers")
+             python::args("self", "which"), "returns one of our readers")
         .def("GetTanimotoNeighbors", &multiTaniNbrHelper,
-             (python::arg("bv"), python::arg("threshold") = 0.7,
-              python::arg("numThreads") = 1),
+             ((python::arg("self"), python::arg("bv")),
+              python::arg("threshold") = 0.7, python::arg("numThreads") = 1),
              "returns tanimoto similarities to and indices of all neighbors "
              "above the specified threshold")
         .def("GetTverskyNeighbors", &multiTverskyNbrHelper,
-             (python::arg("bv"), python::arg("ca"), python::arg("cb"),
-              python::arg("threshold") = 0.7, python::arg("numThreads") = 1),
+             ((python::arg("self"), python::arg("bv")), python::arg("ca"),
+              python::arg("cb"), python::arg("threshold") = 0.7,
+              python::arg("numThreads") = 1),
              "returns Tversky similarities to and indices of all neighbors "
              "above the specified threshold")
         .def(
             "GetContainingNeighbors", &multiContainingNbrHelper,
-            (python::arg("bv"), python::arg("numThreads") = 1),
+            ((python::arg("self"), python::arg("bv")),
+             python::arg("numThreads") = 1),
             "returns indices of neighbors that contain this fingerprint (where "
             "all bits from this fingerprint are also set)");
   }

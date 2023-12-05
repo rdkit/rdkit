@@ -38,13 +38,15 @@ python::object BundleToBinary(const RDKit::MolBundle &self) {
 
 #else
 struct molbundle_pickle_suite : rdkit_pickle_suite {
-  static python::tuple getinitargs(const RDKit::MolBundle &self) {
+  static python::tuple getinitargs(const RDKit::MolBundle &) {
     throw_runtime_error("Pickling of MolBundle instances is not enabled");
+    return python::tuple();  // warning suppression, we never get here
   };
 };
 
-python::object BundleToBinary(const RDKit::MolBundle &self) {
+python::object BundleToBinary(const RDKit::MolBundle &) {
   throw_runtime_error("Pickling of MolBundle instances is not enabled");
+  return python::object();  // warning suppression, we never get here
 }
 #endif
 
@@ -56,17 +58,19 @@ std::string molBundleClassDoc =
 struct molbundle_wrap {
   static void wrap() {
     python::class_<MolBundle, boost::noncopyable>(
-        "MolBundle", molBundleClassDoc.c_str(), python::init<>())
-        .def(python::init<const std::string &>(python::args("pklString")))
+        "MolBundle", molBundleClassDoc.c_str(),
+        python::init<>(python::args("self")))
+        .def(python::init<const std::string &>(
+            python::args("self", "pkl")))
         .def_pickle(molbundle_pickle_suite())
-        .def("ToBinary", BundleToBinary,
+        .def("ToBinary", BundleToBinary, python::args("self"),
              "Returns a binary string representation of the MolBundle.\n")
 
-        .def("__getitem__", &MolBundle::getMol)
-        .def("__len__", &MolBundle::size)
-        .def("AddMol", &MolBundle::addMol)
-        .def("GetMol", &MolBundle::getMol)
-        .def("Size", &MolBundle::size)
+        .def("__getitem__", &MolBundle::getMol, python::args("self", "idx"))
+        .def("__len__", &MolBundle::size, python::args("self"))
+        .def("AddMol", &MolBundle::addMol, python::args("self", "nmol"))
+        .def("GetMol", &MolBundle::getMol, python::args("self", "idx"))
+        .def("Size", &MolBundle::size, python::args("self"))
 
         // substructures
         .def("HasSubstructMatch",
@@ -324,7 +328,8 @@ struct molbundle_wrap {
     Here related means that the molecules have to have the same number of atoms.\n\
 \n";
     python::class_<FixedMolSizeMolBundle, python::bases<MolBundle>>(
-        "FixedMolSizeMolBundle", molBundleClassDoc.c_str(), python::init<>());
+        "FixedMolSizeMolBundle", molBundleClassDoc.c_str(),
+        python::init<>(python::args("self")));
 
     python::def("MolBundleCanSerialize", MolBundleCanSerialize,
                 "Returns True if the MolBundle is serializable "
