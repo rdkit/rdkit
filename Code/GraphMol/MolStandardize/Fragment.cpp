@@ -161,20 +161,10 @@ void FragmentRemover::removeInPlace(RWMol &mol) {
   mol.commitBatchEdit();
 }
 
-bool isOrganic(const ROMol &frag) {
-  // Returns true if fragment contains at least one carbon atom.
-  for (const auto at : frag.atoms()) {
-    if (at->getAtomicNum() == 6) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool isOrganic(const ROMol &frag, const std::vector<int> &indices) {
+bool isOrganic(const ROMol &mol, const std::vector<int> &indices) {
   // Returns true if fragment contains at least one carbon atom.
   for (auto idx : indices) {
-    if (frag.getAtomWithIdx(idx)->getAtomicNum() == 6) {
+    if (mol.getAtomWithIdx(idx)->getAtomicNum() == 6) {
       return true;
     }
   }
@@ -189,75 +179,13 @@ LargestFragmentChooser::LargestFragmentChooser(
   countHeavyAtomsOnly = other.countHeavyAtomsOnly;
 }
 
-ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
-  BOOST_LOG(rdInfoLog) << "Running LargestFragmentChooser\n";
-
-  if (!mol.getNumAtoms()) {
-    return new ROMol(mol);
-  }
-  std::vector<boost::shared_ptr<ROMol>> frags = MolOps::getMolFrags(mol);
-  LargestFragmentChooser::Largest l;
-
-  for (const auto &frag : frags) {
-    std::string smiles = MolToSmiles(*frag);
-    BOOST_LOG(rdInfoLog) << "Fragment: " << smiles << "\n";
-    bool organic = isOrganic(*frag);
-    if (this->preferOrganic) {
-      // Skip this fragment if not organic and we already have an organic
-      // fragment as the largest so far
-      if (l.Fragment != nullptr && l.Organic && !organic) {
-        continue;
-      }
-      // Reset largest if it wasn't organic and this fragment is organic
-      // if largest and organic and not largest['organic']:
-      if (l.Fragment != nullptr && organic && !l.Organic) {
-        l.Fragment = nullptr;
-      }
-    }
-    unsigned int numatoms = 0;
-    if (this->useAtomCount) {
-      for (const auto at : frag->atoms()) {
-        ++numatoms;
-        if (!this->countHeavyAtomsOnly) {
-          numatoms += at->getTotalNumHs();
-        }
-      }
-      // Skip this fragment if fewer atoms than the largest
-      if (l.Fragment != nullptr && (numatoms < l.NumAtoms)) {
-        continue;
-      }
-    }
-
-    // Skip this fragment if equal number of atoms but weight is lower
-    double weight = Descriptors::calcExactMW(*frag);
-    if (l.Fragment != nullptr &&
-        (!this->useAtomCount || numatoms == l.NumAtoms) &&
-        (weight < l.Weight)) {
-      continue;
-    }
-
-    // Skip this fragment if equal number of atoms and equal weight but smiles
-    // comes last alphabetically
-    if (l.Fragment != nullptr &&
-        (!this->useAtomCount || numatoms == l.NumAtoms) &&
-        (weight == l.Weight) && (smiles > l.Smiles)) {
-      continue;
-    }
-
-    BOOST_LOG(rdInfoLog) << "New largest fragment: " << smiles << " ("
-                         << numatoms << ")\n";
-    // Otherwise this is the largest so far
-    l.Smiles = smiles;
-    l.Fragment = frag;
-    l.NumAtoms = numatoms;
-    l.Weight = weight;
-    l.Organic = organic;
-  }
-
-  return new ROMol(*(l.Fragment));
+ROMol *LargestFragmentChooser::choose(const ROMol &mol) const {
+  auto res = new RWMol(mol);
+  chooseInPlace(*res);
+  return static_cast<ROMol *>(res);
 }
 
-void LargestFragmentChooser::chooseInPlace(RWMol &mol) {
+void LargestFragmentChooser::chooseInPlace(RWMol &mol) const {
   BOOST_LOG(rdInfoLog) << "Running LargestFragmentChooser\n";
 
   if (!mol.getNumAtoms()) {

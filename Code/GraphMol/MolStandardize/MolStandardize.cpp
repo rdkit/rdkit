@@ -194,55 +194,103 @@ RWMol *tautomerParent(const RWMol &mol, const CleanupParameters &params,
   return ct.release();
 }
 
+void fragmentParentInPlace(std::vector<RWMol *> &mols, int numThreads,
+                           const CleanupParameters &params,
+                           bool skip_standardize) {
+  auto sfunc = [&](RWMol &m, const CleanupParameters &ps) {
+    fragmentParentInPlace(m, ps, skip_standardize);
+  };
+  standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
+}
+void fragmentParentInPlace(RWMol &mol, const CleanupParameters &params,
+                           bool skip_standardize) {
+  if (!skip_standardize) {
+    cleanupInPlace(mol, params);
+  }
+  LargestFragmentChooser lfragchooser(params.preferOrganic);
+  lfragchooser.chooseInPlace(mol);
+}
+
 // Return the fragment parent of a given molecule.
 // The fragment parent is the largest organic covalent unit in the molecule.
 //
 RWMol *fragmentParent(const RWMol &mol, const CleanupParameters &params,
                       bool skip_standardize) {
   std::unique_ptr<RWMol> res{new RWMol(mol)};
-  if (!skip_standardize) {
-    cleanupInPlace(*res, params);
-  }
-  LargestFragmentChooser lfragchooser(params.preferOrganic);
-  return static_cast<RWMol *>(lfragchooser.choose(*res));
+  fragmentParentInPlace(*res, params, skip_standardize);
+  return res.release();
 }
 
+void stereoParentInPlace(std::vector<RWMol *> &mols, int numThreads,
+                         const CleanupParameters &params,
+                         bool skip_standardize) {
+  auto sfunc = [&](RWMol &m, const CleanupParameters &ps) {
+    stereoParentInPlace(m, ps, skip_standardize);
+  };
+  standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
+}
+void stereoParentInPlace(RWMol &mol, const CleanupParameters &params,
+                         bool skip_standardize) {
+  if (!skip_standardize) {
+    cleanupInPlace(mol, params);
+  }
+
+  MolOps::removeStereochemistry(mol);
+}
 RWMol *stereoParent(const RWMol &mol, const CleanupParameters &params,
                     bool skip_standardize) {
-  RWMol *res = new RWMol(mol);
-  if (!skip_standardize) {
-    cleanupInPlace(*res, params);
-  }
-
-  MolOps::removeStereochemistry(*res);
-  return res;
+  std::unique_ptr<RWMol> res{new RWMol(mol)};
+  stereoParentInPlace(*res, params, skip_standardize);
+  return res.release();
+}
+void isotopeParentInPlace(std::vector<RWMol *> &mols, int numThreads,
+                          const CleanupParameters &params,
+                          bool skip_standardize) {
+  auto sfunc = [&](RWMol &m, const CleanupParameters &ps) {
+    isotopeParentInPlace(m, ps, skip_standardize);
+  };
+  standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
 }
 
-RWMol *isotopeParent(const RWMol &mol, const CleanupParameters &params,
-                     bool skip_standardize) {
-  RWMol *res = new RWMol(mol);
+void isotopeParentInPlace(RWMol &mol, const CleanupParameters &params,
+                          bool skip_standardize) {
   if (!skip_standardize) {
-    cleanupInPlace(*res, params);
+    cleanupInPlace(mol, params);
   }
 
-  for (auto atom : res->atoms()) {
+  for (auto atom : mol.atoms()) {
     atom->setIsotope(0);
   }
-  return res;
+}
+RWMol *isotopeParent(const RWMol &mol, const CleanupParameters &params,
+                     bool skip_standardize) {
+  std::unique_ptr<RWMol> res{new RWMol(mol)};
+  isotopeParentInPlace(*res, params, skip_standardize);
+  return res.release();
 }
 
+void chargeParentInPlace(std::vector<RWMol *> &mols, int numThreads,
+                         const CleanupParameters &params,
+                         bool skip_standardize) {
+  auto sfunc = [&](RWMol &m, const CleanupParameters &ps) {
+    chargeParentInPlace(m, ps, skip_standardize);
+  };
+  standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
+}
+void chargeParentInPlace(RWMol &mol, const CleanupParameters &params,
+                         bool skip_standardize) {
+  fragmentParentInPlace(mol, params, skip_standardize);
+  Uncharger uncharger(params.doCanonical);
+  uncharger.unchargeInPlace(mol);
+  cleanupInPlace(mol, params);
+}
 RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
                     bool skip_standardize) {
   // Return the charge parent of a given molecule.
   // The charge parent is the uncharged version of the fragment parent.
-
-  std::unique_ptr<RWMol> fragparent{
-      fragmentParent(mol, params, skip_standardize)};
-
-  Uncharger uncharger(params.doCanonical);
-  uncharger.unchargeInPlace(*fragparent);
-  cleanupInPlace(*fragparent, params);
-  return fragparent.release();
+  std::unique_ptr<RWMol> res{new RWMol(mol)};
+  chargeParentInPlace(*res, params, skip_standardize);
+  return res.release();
 }
 
 RWMol *superParent(const RWMol &mol, const CleanupParameters &params,
@@ -291,7 +339,7 @@ void reionizeInPlace(RWMol &mol, const CleanupParameters &params) {
   std::unique_ptr<Reionizer> reionizer{reionizerFromParams(params)};
   reionizer->reionizeInPlace(mol);
 }
-void reionizeInPlace(std::vector<RWMol *> &mols,int numThreads,
+void reionizeInPlace(std::vector<RWMol *> &mols, int numThreads,
                      const CleanupParameters &params) {
   std::unique_ptr<Reionizer> reionizer{reionizerFromParams(params)};
   auto sfunc = [&](RWMol &m, const CleanupParameters &) {
@@ -311,7 +359,7 @@ void removeFragmentsInPlace(RWMol &mol, const CleanupParameters &params) {
   remover->removeInPlace(mol);
 }
 
-void removeFragmentsInPlace(std::vector<RWMol *> &mols,int numThreads,
+void removeFragmentsInPlace(std::vector<RWMol *> &mols, int numThreads,
                             const CleanupParameters &params) {
   std::unique_ptr<FragmentRemover> remover{fragmentRemoverFromParams(params)};
   auto sfunc = [&](RWMol &m, const CleanupParameters &) {
