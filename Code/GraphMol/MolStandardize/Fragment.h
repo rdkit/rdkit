@@ -84,6 +84,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
   ~LargestFragmentChooser() = default;
 
   ROMol *choose(const ROMol &mol);
+  void chooseInPlace(RWMol &mol);
   struct Largest {
     Largest();
     Largest(std::string &smiles, boost::shared_ptr<ROMol> fragment,
