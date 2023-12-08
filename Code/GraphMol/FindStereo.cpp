@@ -1014,9 +1014,10 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
     const bool includeChirality = false;
     const bool includeIsotopes = false;
     const bool breakTies = false;
-    Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
-                             &atomSymbols, &bondSymbols, breakTies,
-                             includeChirality, includeIsotopes);
+    const bool includeAtomMaps = false;
+    Canon::rankFragmentAtoms(
+        mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
+        breakTies, includeChirality, includeIsotopes, includeAtomMaps);
 #endif
     // check if any new atoms definitely now have stereo; do another loop if so
     needAnotherRound = updateAtoms(
@@ -1094,9 +1095,10 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
         const bool breakTies = false;
         const bool includeChirality = false;
         const bool includeIsotopes = false;
-        Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
-                                 &atomSymbols, &bondSymbols, breakTies,
-                                 includeChirality, includeIsotopes);
+        const bool includeAtomMaps = false;
+        Canon::rankFragmentAtoms(
+            mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
+            breakTies, includeChirality, includeIsotopes, includeAtomMaps);
 #endif
         // fixedAtoms.reset();
         // fixedBonds.reset();
