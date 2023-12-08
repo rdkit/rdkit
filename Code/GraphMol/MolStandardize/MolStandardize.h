@@ -151,11 +151,20 @@ RDKIT_MOLSTANDARDIZE_EXPORT void removeFragmentsInPlace(
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *canonicalTautomer(
     const RWMol *mol,
     const CleanupParameters &params = defaultCleanupParameters);
+RDKIT_MOLSTANDARDIZE_EXPORT void canonicalTautomerInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
 
 //! Returns the tautomer parent of a given molecule. The fragment parent is the
 /// standardized canonical tautomer of the molecule
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *tautomerParent(
     const RWMol &mol,
+    const CleanupParameters &params = defaultCleanupParameters,
+    bool skipStandardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void tautomerParentInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters,
+    bool skipStandardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void tautomerParentInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
     const CleanupParameters &params = defaultCleanupParameters,
     bool skipStandardize = false);
 
@@ -208,7 +217,7 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *chargeParent(
 RDKIT_MOLSTANDARDIZE_EXPORT void chargeParentInPlace(
     RWMol &mol, const CleanupParameters &params = defaultCleanupParameters,
     bool skip_standardize = false);
-//! operates on mulitple molecules
+//! operates on multiple molecules
 RDKIT_MOLSTANDARDIZE_EXPORT void chargeParentInPlace(
     std::vector<RWMol *> &mols, int numThreads = 1,
     const CleanupParameters &params = defaultCleanupParameters,
@@ -218,6 +227,13 @@ RDKIT_MOLSTANDARDIZE_EXPORT void chargeParentInPlace(
 //! isotope, stereo, and tautomer parent of the molecule.
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *superParent(
     const RWMol &mol,
+    const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void superParentInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void superParentInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
     const CleanupParameters &params = defaultCleanupParameters,
     bool skip_standardize = false);
 

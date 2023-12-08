@@ -794,6 +794,8 @@ TEST_CASE("tautomer parent") {
     REQUIRE(m);
     std::unique_ptr<ROMol> nm{MolStandardize::tautomerParent(*m)};
     CHECK(MolToSmiles(*nm) == "O=CCCc1cc(C(=O)[O-])ccc1O");
+    MolStandardize::tautomerParentInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=CCCc1cc(C(=O)[O-])ccc1O");
   }
 }
 
@@ -830,6 +832,8 @@ TEST_CASE("super parent") {
     REQUIRE(m);
     std::unique_ptr<ROMol> nm{MolStandardize::superParent(*m)};
     CHECK(MolToSmiles(*nm) == "O=CCCc1cc(C(=O)O)c(O)c(C(F)Cl)c1O");
+    MolStandardize::superParentInPlace(*m);
+    CHECK(MolToSmiles(*m) == "O=CCCc1cc(C(=O)O)c(O)c(C(F)Cl)c1O");
   }
 }
 
@@ -957,6 +961,9 @@ TEST_CASE("Github 5318: standardizing unsanitized molecules should work") {
     std::unique_ptr<ROMol> res{MolStandardize::canonicalTautomer(m2.get())};
     REQUIRE(res);
     CHECK(MolToSmiles(*res) == "Cc1cc[nH]n1.Cl");
+    RWMol cp(*m2);
+    MolStandardize::canonicalTautomerInPlace(cp);
+    CHECK(MolToSmiles(cp) == "Cc1cc[nH]n1.Cl");
   }
   SECTION("fragments") {
     std::unique_ptr<ROMol> res{MolStandardize::removeFragments(m2.get())};
@@ -1476,6 +1483,90 @@ TEST_CASE("stereo with multiple mols") {
   SECTION("multithreaded") {
     int numThreads = 4;
     MolStandardize::stereoParentInPlace(molPtrs, numThreads, params);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#endif RDK_BUILD_THREADSAFE_SSS
+}
+
+TEST_CASE("tautomerParent with multiple mols") {
+  auto params = MolStandardize::defaultCleanupParameters;
+
+  std::vector<std::pair<std::string, std::string>> data = {
+      {"[O-]c1ccc(C(=O)O)cc1CC=CO", "O=CCCc1cc(C(=O)[O-])ccc1O"},
+      {"[O-]c1ccc(C(=O)O)cc1CC=CO.[Na+]", "O=CCCc1cc(C(=O)[O-])ccc1O.[Na+]"},
+      {"[O-]c1ccc(C(=O)O)cc1C[13CH]=CO", "O=C[13CH2]Cc1cc(C(=O)[O-])ccc1O"},
+  };
+  // bulk that up a bit
+  for (auto iter = 0u; iter < 5; ++iter) {
+    auto sz = data.size();
+    for (auto i = 0u; i < sz; ++i) {
+      data.push_back(data[i]);
+    }
+  }
+  std::vector<std::unique_ptr<RWMol>> mols;
+  std::vector<RWMol *> molPtrs;
+  for (const auto [insmi, outsmi] : data) {
+    mols.emplace_back(SmilesToMol(insmi));
+    REQUIRE(mols.back());
+    molPtrs.push_back(mols.back().get());
+  }
+  SECTION("basics") {
+    int numThreads = 1;
+    MolStandardize::tautomerParentInPlace(molPtrs, numThreads, params);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  SECTION("multithreaded") {
+    int numThreads = 4;
+    MolStandardize::tautomerParentInPlace(molPtrs, numThreads, params);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#endif RDK_BUILD_THREADSAFE_SSS
+}
+
+TEST_CASE("superParent with multiple mols") {
+  auto params = MolStandardize::defaultCleanupParameters;
+
+  std::vector<std::pair<std::string, std::string>> data = {
+      {"[O-]c1ccc(C(=O)O)cc1CC=CO", "O=CCCc1cc(C(=O)O)ccc1O"},
+      {"[O-]c1ccc(C(=O)O)cc1CC=CO.[Na+]", "O=CCCc1cc(C(=O)O)ccc1O"},
+      {"[O-]c1ccc(C(=O)O)cc1C[13CH]=CO", "O=CCCc1cc(C(=O)O)ccc1O"},
+  };
+  // bulk that up a bit
+  for (auto iter = 0u; iter < 5; ++iter) {
+    auto sz = data.size();
+    for (auto i = 0u; i < sz; ++i) {
+      data.push_back(data[i]);
+    }
+  }
+  std::vector<std::unique_ptr<RWMol>> mols;
+  std::vector<RWMol *> molPtrs;
+  for (const auto [insmi, outsmi] : data) {
+    mols.emplace_back(SmilesToMol(insmi));
+    REQUIRE(mols.back());
+    molPtrs.push_back(mols.back().get());
+  }
+  SECTION("basics") {
+    int numThreads = 1;
+    MolStandardize::superParentInPlace(molPtrs, numThreads, params);
+    for (auto i = 0u; i < mols.size(); ++i) {
+      REQUIRE(mols[i]);
+      CHECK(MolToSmiles(*mols[i]) == data[i].second);
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  SECTION("multithreaded") {
+    int numThreads = 4;
+    MolStandardize::superParentInPlace(molPtrs, numThreads, params);
     for (auto i = 0u; i < mols.size(); ++i) {
       REQUIRE(mols[i]);
       CHECK(MolToSmiles(*mols[i]) == data[i].second);
