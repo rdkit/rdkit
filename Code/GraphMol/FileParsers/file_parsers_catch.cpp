@@ -6449,9 +6449,10 @@ f_m_ct {
   }
 }
 
-TEST_CASE("GitHub issue #6153: MaeMolSupplier cannot read dummy atoms from Maestro files", "[mae][MaeMolSupplier][MaeWriter]") {
-  SECTION("Read dummy atoms") {
-    std::string maeBlock = R"MAE(f_m_ct {
+TEST_CASE(
+    "GitHub issue #6153: MaeMolSupplier cannot read dummy atoms from Maestro files",
+    "[mae][MaeMolSupplier][MaeWriter]") {
+  std::string maeBlock = R"MAE(f_m_ct {
  s_m_title
  i_m_ct_stereo_status
  i_m_ct_format
@@ -6495,7 +6496,7 @@ TEST_CASE("GitHub issue #6153: MaeMolSupplier cannot read dummy atoms from Maest
   :::
  }
 })MAE";
-
+  SECTION("Read dummy atoms") {
     MaeMolSupplier supplier;
     supplier.setData(maeBlock);
 
@@ -6503,6 +6504,22 @@ TEST_CASE("GitHub issue #6153: MaeMolSupplier cannot read dummy atoms from Maest
     CHECK(mol);
     CHECK(mol->getNumAtoms() == 4);
     CHECK(mol->getAtomWithIdx(0)->getAtomicNum() == 0);
+  }
+
+  SECTION("Read Mol with reserved atom type") {
+    const std::string dummyAtomicNum = " -2 ";
+    const std::string reservedAtomicNum = " 0 ";
+    size_t pos = maeBlock.find(dummyAtomicNum);
+    maeBlock.replace(pos, dummyAtomicNum.size(), reservedAtomicNum);
+
+    MaeMolSupplier supplier;
+    supplier.setData(maeBlock);
+
+    std::unique_ptr<ROMol> mol{supplier.next()};
+    CHECK(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getNumBonds() == 2);
+    CHECK(mol->getAtomWithIdx(0)->getAtomicNum() == 6);
   }
 
   SECTION("Write dummy atoms") {
