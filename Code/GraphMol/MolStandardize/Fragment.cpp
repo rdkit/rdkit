@@ -182,6 +182,9 @@ LargestFragmentChooser::LargestFragmentChooser(
 ROMol *LargestFragmentChooser::choose(const ROMol &mol) const {
   auto res = new RWMol(mol);
   chooseInPlace(*res);
+  // resanitize the molecule
+  MolOps::sanitizeMol(*res);
+
   return static_cast<ROMol *>(res);
 }
 
