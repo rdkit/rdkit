@@ -312,13 +312,13 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
 
 void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol) {
   // All atoms are guaranteed to have these three field names:
-  const auto atomic_numbers = atom_block.getIntProperty(mae::ATOM_ATOMIC_NUM);
+  const auto atomicNumbers = atom_block.getIntProperty(mae::ATOM_ATOMIC_NUM);
   const auto xs = atom_block.getRealProperty(mae::ATOM_X_COORD);
   const auto ys = atom_block.getRealProperty(mae::ATOM_Y_COORD);
   const auto zs = atom_block.getRealProperty(mae::ATOM_Z_COORD);
 
   // atomic numbers, and x, y, and z coordinates
-  const auto size = atomic_numbers->size();
+  const auto size = atomicNumbers->size();
   auto conf = new RDKit::Conformer(size);
   conf->setId(0);
 
@@ -326,7 +326,13 @@ void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol) {
 
   bool nonzeroZ = false;
   for (size_t i = 0; i < size; ++i) {
-    Atom *atom = new Atom(atomic_numbers->at(i));
+    auto atomicNumber = atomicNumbers->at(i);
+    if (atomicNumber == -2) {
+      // Maestro files use atomic number -2 to indicate a dummy atom.
+      atomicNumber = 0;
+    }
+
+    Atom *atom = new Atom(atomicNumber);
     mol.addAtom(atom, true, true);
 
     pdb_info.addPDBData(atom, i);
