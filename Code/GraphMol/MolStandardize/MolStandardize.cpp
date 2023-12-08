@@ -204,7 +204,7 @@ void tautomerParentInPlace(std::vector<RWMol *> &mols, int numThreads,
 RWMol *tautomerParent(const RWMol &mol, const CleanupParameters &params,
                       bool skip_standardize) {
   std::unique_ptr<RWMol> res{new RWMol(mol)};
-  tautomerParentInPlace(*res, params);
+  tautomerParentInPlace(*res, params, skip_standardize);
   return res.release();
 }
 

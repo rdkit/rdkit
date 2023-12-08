@@ -1339,7 +1339,7 @@ TEST_CASE("charge with multiple mols") {
   }
   std::vector<std::unique_ptr<RWMol>> mols;
   std::vector<RWMol *> molPtrs;
-  for (const auto [insmi, outsmi] : data) {
+  for (const auto &[insmi, outsmi] : data) {
     mols.emplace_back(SmilesToMol(insmi));
     REQUIRE(mols.back());
     molPtrs.push_back(mols.back().get());
@@ -1361,7 +1361,7 @@ TEST_CASE("charge with multiple mols") {
       CHECK(MolToSmiles(*mols[i]) == data[i].second);
     }
   }
-#endif RDK_BUILD_THREADSAFE_SSS
+#endif
 }
 
 TEST_CASE("isotope with multiple mols") {
@@ -1381,7 +1381,7 @@ TEST_CASE("isotope with multiple mols") {
   }
   std::vector<std::unique_ptr<RWMol>> mols;
   std::vector<RWMol *> molPtrs;
-  for (const auto [insmi, outsmi] : data) {
+  for (const auto &[insmi, outsmi] : data) {
     mols.emplace_back(SmilesToMol(insmi));
     REQUIRE(mols.back());
     molPtrs.push_back(mols.back().get());
@@ -1403,7 +1403,7 @@ TEST_CASE("isotope with multiple mols") {
       CHECK(MolToSmiles(*mols[i]) == data[i].second);
     }
   }
-#endif RDK_BUILD_THREADSAFE_SSS
+#endif
 }
 
 TEST_CASE("fragments with multiple mols") {
@@ -1424,7 +1424,7 @@ TEST_CASE("fragments with multiple mols") {
   }
   std::vector<std::unique_ptr<RWMol>> mols;
   std::vector<RWMol *> molPtrs;
-  for (const auto [insmi, outsmi] : data) {
+  for (const auto &[insmi, outsmi] : data) {
     mols.emplace_back(SmilesToMol(insmi));
     REQUIRE(mols.back());
     molPtrs.push_back(mols.back().get());
@@ -1446,7 +1446,7 @@ TEST_CASE("fragments with multiple mols") {
       CHECK(MolToSmiles(*mols[i]) == data[i].second);
     }
   }
-#endif RDK_BUILD_THREADSAFE_SSS
+#endif
 }
 
 TEST_CASE("stereo with multiple mols") {
@@ -1466,7 +1466,7 @@ TEST_CASE("stereo with multiple mols") {
   }
   std::vector<std::unique_ptr<RWMol>> mols;
   std::vector<RWMol *> molPtrs;
-  for (const auto [insmi, outsmi] : data) {
+  for (const auto &[insmi, outsmi] : data) {
     mols.emplace_back(SmilesToMol(insmi));
     REQUIRE(mols.back());
     molPtrs.push_back(mols.back().get());
@@ -1488,7 +1488,7 @@ TEST_CASE("stereo with multiple mols") {
       CHECK(MolToSmiles(*mols[i]) == data[i].second);
     }
   }
-#endif RDK_BUILD_THREADSAFE_SSS
+#endif
 }
 
 TEST_CASE("tautomerParent with multiple mols") {
@@ -1508,7 +1508,7 @@ TEST_CASE("tautomerParent with multiple mols") {
   }
   std::vector<std::unique_ptr<RWMol>> mols;
   std::vector<RWMol *> molPtrs;
-  for (const auto [insmi, outsmi] : data) {
+  for (const auto &[insmi, outsmi] : data) {
     mols.emplace_back(SmilesToMol(insmi));
     REQUIRE(mols.back());
     molPtrs.push_back(mols.back().get());
@@ -1530,7 +1530,7 @@ TEST_CASE("tautomerParent with multiple mols") {
       CHECK(MolToSmiles(*mols[i]) == data[i].second);
     }
   }
-#endif RDK_BUILD_THREADSAFE_SSS
+#endif
 }
 
 TEST_CASE("superParent with multiple mols") {
@@ -1550,7 +1550,7 @@ TEST_CASE("superParent with multiple mols") {
   }
   std::vector<std::unique_ptr<RWMol>> mols;
   std::vector<RWMol *> molPtrs;
-  for (const auto [insmi, outsmi] : data) {
+  for (const auto &[insmi, outsmi] : data) {
     mols.emplace_back(SmilesToMol(insmi));
     REQUIRE(mols.back());
     molPtrs.push_back(mols.back().get());
@@ -1572,5 +1572,5 @@ TEST_CASE("superParent with multiple mols") {
       CHECK(MolToSmiles(*mols[i]) == data[i].second);
     }
   }
-#endif RDK_BUILD_THREADSAFE_SSS
+#endif
 }

@@ -268,7 +268,7 @@ void LargestFragmentChooser::chooseInPlace(RWMol &mol) const {
     l.Organic = organic;
   }
   mol.beginBatchEdit();
-  for (auto fi = 0u; fi < frags.size(); ++fi) {
+  for (auto fi = 0; fi < static_cast<int>(frags.size()); ++fi) {
     if (fi == bestFragment) {
       continue;
     }
