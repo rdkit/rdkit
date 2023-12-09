@@ -393,3 +393,21 @@ H   0.0         0.0           0.0
     determineBonds(*m);
   }
 }
+
+TEST_CASE("github 6961: P-H bonds not found in phosphine") {
+  SECTION("as reported") {
+    std::string xyz = R"XYZ(4
+xyz file
+P 9.9999767321286015 9.9999428968490651 9.9298216136095618 
+H 8.8082284983002523 9.9999330478847508 10.7216030817151875 
+H 10.5974890657086007 11.0338788274478361 10.7168666854072114 
+H 10.5976057038625981 8.9661452278177478 10.7170086192680003)XYZ";
+    std::unique_ptr<RWMol> m(XYZBlockToMol(xyz));
+    REQUIRE(m);
+    determineBonds(*m);
+    CHECK(m->getNumBonds() == 3);
+    CHECK(m->getBondBetweenAtoms(0, 1));
+    CHECK(m->getBondBetweenAtoms(0, 2));
+    CHECK(m->getBondBetweenAtoms(0, 3));
+  }
+}
