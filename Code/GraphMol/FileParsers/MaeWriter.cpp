@@ -267,8 +267,12 @@ void mapAtom(
   setPropertyValue(atomBlock, mae::ATOM_Y_COORD, numAtoms, idx, coordinates.y);
   setPropertyValue(atomBlock, mae::ATOM_Z_COORD, numAtoms, idx, coordinates.z);
 
-  auto atomic_num = static_cast<int>(atom.getAtomicNum());
-  setPropertyValue(atomBlock, mae::ATOM_ATOMIC_NUM, numAtoms, idx, atomic_num);
+  auto atomicNum = static_cast<int>(atom.getAtomicNum());
+  if (atomicNum == 0) {
+    // Maestro files use atomic number -2 to indicate a dummy atom.
+    atomicNum = -2;
+  }
+  setPropertyValue(atomBlock, mae::ATOM_ATOMIC_NUM, numAtoms, idx, atomicNum);
 
   setPropertyValue(atomBlock, mae::ATOM_FORMAL_CHARGE, numAtoms, idx,
                    atom.getFormalCharge());
