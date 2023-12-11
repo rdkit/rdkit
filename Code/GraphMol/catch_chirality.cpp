@@ -1245,25 +1245,29 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 2);
   }
-  SECTION("Removal of stereoatoms requires removing CIS/TRANS when using legacy stereo") {
-      UseLegacyStereoPerceptionFixture reset_stereo_perception;
-      Chirality::setUseLegacyStereoPerception(false);
+  SECTION(
+      "Removal of stereoatoms requires removing CIS/TRANS when using legacy stereo") {
+    UseLegacyStereoPerceptionFixture reset_stereo_perception;
+    Chirality::setUseLegacyStereoPerception(false);
 
     {
       auto mol = "N/C=C/C"_smiles;
-      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
-      auto rwmol = dynamic_cast<RWMol*>(mol.get());
-      rwmol->removeBond(0,1);
-      CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::BondStereo::STEREONONE);
+      CHECK(mol->getBondWithIdx(1)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+      auto rwmol = dynamic_cast<RWMol *>(mol.get());
+      rwmol->removeBond(0, 1);
+      CHECK(mol->getBondWithIdx(0)->getStereo() ==
+            Bond::BondStereo::STEREONONE);
     }
     {
       auto mol = "N/C=C/C"_smiles;
-      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
-      auto rwmol = dynamic_cast<RWMol*>(mol.get());
-      rwmol->removeBond(2,3);
-      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+      CHECK(mol->getBondWithIdx(1)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+      auto rwmol = dynamic_cast<RWMol *>(mol.get());
+      rwmol->removeBond(2, 3);
+      CHECK(mol->getBondWithIdx(1)->getStereo() ==
+            Bond::BondStereo::STEREONONE);
     }
-	  
   }
 }
 
@@ -3796,19 +3800,18 @@ M  V30 8 1 1 8
 M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB"_ctab;
-      //mol->debugMol(std::cerr);
-      std::string smi = MolToCXSmiles(*mol, SmilesWriteParams());
-      std::unique_ptr<ROMol> f(SmilesToMol(smi));
-      mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOCIS);
-      f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOCIS);
-      CHECK(MolToSmiles(*mol) == "C1=C\\CCCCCC/1");
-      CHECK(MolToSmiles(*f) == "C1=C\\CCCCCC/1");
-      mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOTRANS);
-      f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOTRANS);
-      CHECK(MolToSmiles(*mol) == "C1=C/CCCCCC/1");
-      CHECK(MolToSmiles(*f) == "C1=C/CCCCCC/1");
+    // mol->debugMol(std::cerr);
+    std::string smi = MolToCXSmiles(*mol, SmilesWriteParams());
+    std::unique_ptr<ROMol> f(SmilesToMol(smi));
+    mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOCIS);
+    f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOCIS);
+    CHECK(MolToSmiles(*mol) == "C1=C\\CCCCCC/1");
+    CHECK(MolToSmiles(*f) == "C1=C\\CCCCCC/1");
+    mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOTRANS);
+    f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOTRANS);
+    CHECK(MolToSmiles(*mol) == "C1=C/CCCCCC/1");
+    CHECK(MolToSmiles(*f) == "C1=C/CCCCCC/1");
   }
-    
 }
 TEST_CASE("adding two wedges to chiral centers") {
   SECTION("basics") {
@@ -4949,5 +4952,21 @@ M  END)CTAB"_ctab;
           Atom::ChiralType::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(2)->getChiralTag() !=
           Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+}
+
+TEST_CASE("github #6931: atom maps influencing chirality perception") {
+  SECTION("basics") {
+    auto m = "[CH3:1]C([CH3:2])(O)F"_smiles;
+    REQUIRE(m);
+    bool cleanIt = true;
+    bool force = true;
+    bool flagPossibleStereoCenters = true;
+    UseLegacyStereoPerceptionFixture reset_stereo_perception;
+    Chirality::setUseLegacyStereoPerception(false);
+    MolOps::assignStereochemistry(*m, cleanIt, force,
+                                  flagPossibleStereoCenters);
+    CHECK(
+        !m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
   }
 }
