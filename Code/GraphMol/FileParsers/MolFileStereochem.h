@@ -12,6 +12,7 @@
 #define RD_MOL_FILE_STEREOCHEM_H
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Chirality.h>
 
 namespace RDKit {
 //! deprecated, please use MolOps::assignChiralTypesFromBondDirs instead
@@ -53,7 +54,9 @@ RDKIT_FILEPARSERS_EXPORT void addWavyBondsForStereoAny(
     unsigned addWhenImpossible = StereoBondThresholds::DBL_BOND_NO_STEREO);
 
 //! \deprecated use Chirality::pickBondsToWedge instead
-RDKIT_FILEPARSERS_EXPORT INT_MAP_INT pickBondsToWedge(const ROMol &mol);
+RDKIT_FILEPARSERS_EXPORT
+std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+pickBondsToWedge(const ROMol &mol);
 //! \deprecated, please use MolOps::clearSingleBondDirFlags instead
 RDKIT_FILEPARSERS_EXPORT void ClearSingleBondDirFlags(ROMol &mol);
 //! \deprecated use Chirality::detail::determineBondWedgeState instead
@@ -61,7 +64,10 @@ RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
     const Bond *bond, unsigned int fromAtomIdx, const Conformer *conf);
 //! \deprecated use Chirality::detail::determineBondWedgeState instead
 RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
-    const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf);
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf);
 
 //! \deprecated use Chirality::reapplyMolBlockWedging instead
 RDKIT_FILEPARSERS_EXPORT void reapplyMolBlockWedging(ROMol &mol);
@@ -77,8 +83,10 @@ RDKIT_FILEPARSERS_EXPORT void markUnspecifiedStereoAsUnknown(ROMol &mol,
                                                              int confId = -1);
 //! \deprecated use Chirality::GetMolFileBondStereoInfo instead
 RDKIT_FILEPARSERS_EXPORT void GetMolFileBondStereoInfo(
-    const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf,
-    int &dirCode, bool &reverse);
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf, int &dirCode, bool &reverse);
 
 //! generate enhanced stereo groups based on the status of the chiral flag
 /// property

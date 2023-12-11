@@ -1245,25 +1245,29 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 2);
   }
-  SECTION("Removal of stereoatoms requires removing CIS/TRANS when using legacy stereo") {
-      UseLegacyStereoPerceptionFixture reset_stereo_perception;
-      Chirality::setUseLegacyStereoPerception(false);
+  SECTION(
+      "Removal of stereoatoms requires removing CIS/TRANS when using legacy stereo") {
+    UseLegacyStereoPerceptionFixture reset_stereo_perception;
+    Chirality::setUseLegacyStereoPerception(false);
 
     {
       auto mol = "N/C=C/C"_smiles;
-      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
-      auto rwmol = dynamic_cast<RWMol*>(mol.get());
-      rwmol->removeBond(0,1);
-      CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::BondStereo::STEREONONE);
+      CHECK(mol->getBondWithIdx(1)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+      auto rwmol = dynamic_cast<RWMol *>(mol.get());
+      rwmol->removeBond(0, 1);
+      CHECK(mol->getBondWithIdx(0)->getStereo() ==
+            Bond::BondStereo::STEREONONE);
     }
     {
       auto mol = "N/C=C/C"_smiles;
-      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
-      auto rwmol = dynamic_cast<RWMol*>(mol.get());
-      rwmol->removeBond(2,3);
-      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+      CHECK(mol->getBondWithIdx(1)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+      auto rwmol = dynamic_cast<RWMol *>(mol.get());
+      rwmol->removeBond(2, 3);
+      CHECK(mol->getBondWithIdx(1)->getStereo() ==
+            Bond::BondStereo::STEREONONE);
     }
-	  
   }
 }
 
@@ -1491,7 +1495,7 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 3);
-    CHECK(head->second == 3);
+    CHECK(head->second->getIdx() == 3);
   }
   SECTION("simplest, specified double bond") {
     auto mol = "OC=C[C@H](C1CC1)C2CCC2"_smiles;
@@ -1502,7 +1506,7 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 3);
-    CHECK(head->second == 3);
+    CHECK(head->second->getIdx() == 3);
   }
   SECTION("prefer unspecified bond stereo") {
     auto mol = "OC=C[C@H](C=CF)(C=CC)"_smiles;
@@ -1515,7 +1519,7 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 6);
-    CHECK(head->second == 3);
+    CHECK(head->second->getIdx() == 3);
   }
 }
 
@@ -2776,14 +2780,14 @@ M  END
 
   SECTION("details: pickBondsWedge()") {
     // this is with aromatic bonds
-    auto bnds = Chirality::pickBondsToWedge(*m);
-    CHECK(bnds.at(3) == 3);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*m);
+    CHECK(wedgedBonds.at(3)->getIdx() == 3);
     RWMol cp(*m);
 
     // now try kekulized:
     MolOps::Kekulize(cp);
-    bnds = Chirality::pickBondsToWedge(cp);
-    CHECK(bnds.at(3) == 3);
+    wedgedBonds = Chirality::pickBondsToWedge(cp);
+    CHECK(wedgedBonds.at(3)->getIdx() == 3);
   }
 }
 
@@ -3796,19 +3800,18 @@ M  V30 8 1 1 8
 M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB"_ctab;
-      //mol->debugMol(std::cerr);
-      std::string smi = MolToCXSmiles(*mol, SmilesWriteParams());
-      std::unique_ptr<ROMol> f(SmilesToMol(smi));
-      mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOCIS);
-      f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOCIS);
-      CHECK(MolToSmiles(*mol) == "C1=C\\CCCCCC/1");
-      CHECK(MolToSmiles(*f) == "C1=C\\CCCCCC/1");
-      mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOTRANS);
-      f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOTRANS);
-      CHECK(MolToSmiles(*mol) == "C1=C/CCCCCC/1");
-      CHECK(MolToSmiles(*f) == "C1=C/CCCCCC/1");
+    // mol->debugMol(std::cerr);
+    std::string smi = MolToCXSmiles(*mol, SmilesWriteParams());
+    std::unique_ptr<ROMol> f(SmilesToMol(smi));
+    mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOCIS);
+    f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOCIS);
+    CHECK(MolToSmiles(*mol) == "C1=C\\CCCCCC/1");
+    CHECK(MolToSmiles(*f) == "C1=C\\CCCCCC/1");
+    mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOTRANS);
+    f->getBondWithIdx(0)->setStereo(Bond::BondStereo::STEREOTRANS);
+    CHECK(MolToSmiles(*mol) == "C1=C/CCCCCC/1");
+    CHECK(MolToSmiles(*f) == "C1=C/CCCCCC/1");
   }
-    
 }
 TEST_CASE("adding two wedges to chiral centers") {
   SECTION("basics") {

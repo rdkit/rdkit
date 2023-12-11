@@ -75,7 +75,7 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
     RDDepict::compute2DCoords(mol, nullptr, canonOrient);
   }
   if (wedgeBonds) {
-    WedgeMolBonds(mol, &mol.getConformer());
+    Chirality::wedgeMolBonds(mol, &mol.getConformer());
   }
   if (wavyBonds) {
     addWavyBondsForStereoAny(mol);

@@ -2600,40 +2600,59 @@ int BondGetDirCode(const Bond::BondDir dir) {
     case Bond::UNKNOWN:
       res = 4;
       break;
+    case Bond::BondDir::EITHERDOUBLE:
+      res = 3;
+      break;
     default:
       break;
   }
   return res;
 }
 
-void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
-                              const Conformer *conf, int &dirCode,
-                              bool &reverse) {
+void GetMolFileBondStereoInfo(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf, Bond::BondDir &dir, bool &reverse) {
   PRECONDITION(bond, "");
-  dirCode = 0;
   reverse = false;
-  Bond::BondDir dir = Bond::NONE;
+  dir = Bond::NONE;
   if (canHaveDirection(*bond)) {
     // single bond stereo chemistry
+
     dir = Chirality::detail::determineBondWedgeState(bond, wedgeBonds, conf);
-    dirCode = BondGetDirCode(dir);
+
     // if this bond needs to be wedged it is possible that this
     // wedging was determined by a chiral atom at the end of the
     // bond (instead of at the beginning). In this case we need to
     // reverse the begin and end atoms for the bond when we write
     // the mol file
-    if ((dirCode == 1) || (dirCode == 6)) {
+    if ((dir == Bond::BEGINDASH) ||
+        (dir == Bond::BEGINWEDGE || dir == Bond::UNKNOWN)) {
       auto wbi = wedgeBonds.find(bond->getIdx());
       if (wbi != wedgeBonds.end() &&
-          static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
+          wbi->second->getType() ==
+              Chirality::WedgeInfoType::WedgeInfoTypeChiral &&
+          static_cast<unsigned int>(wbi->second->getIdx()) !=
+              bond->getBeginAtomIdx()) {
         reverse = true;
       }
     }
   } else if (bond->getBondType() == Bond::DOUBLE) {
     if (Chirality::shouldBeACrossedBond(bond)) {
-      dirCode = 3;
+      dir = Bond::BondDir::EITHERDOUBLE;
     }
   }
+}
+
+void GetMolFileBondStereoInfo(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf, int &dirCode, bool &reverse) {
+  Bond::BondDir dir;
+  GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dir, reverse);
+  dirCode = BondGetDirCode(dir);
 }
 
 }  // namespace Chirality
