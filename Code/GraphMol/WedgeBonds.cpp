@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Atropisomers.h>
 #include <RDGeneral/types.h>
 #include <sstream>
 #include <set>
@@ -231,9 +232,11 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
 
   return res;
 }
-Bond::BondDir determineBondWedgeState(const Bond *bond,
-                                      const INT_MAP_INT &wedgeBonds,
-                                      const Conformer *conf) {
+Bond::BondDir determineBondWedgeState(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf) {
   PRECONDITION(bond, "no bond");
   int bid = bond->getIdx();
   auto wbi = wedgeBonds.find(bid);
@@ -241,7 +244,14 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
     return bond->getBondDir();
   }
 
-  unsigned int waid = wbi->second;
+  if (wbi->second->getType() ==
+      Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer) {
+    return wbi->second->getDir();
+  } else {
+    return determineBondWedgeState(bond, wbi->second->getIdx(), conf);
+  }
+
+  unsigned int waid = wbi->second->getIdx();
   return determineBondWedgeState(bond, waid, conf);
 }
 
@@ -253,9 +263,10 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
 
 // picks a bond for atom that we will wedge when we write the mol file
 // returns idx of that bond.
-int pickBondToWedge(const Atom *atom, const ROMol &mol,
-                    const INT_VECT &nChiralNbrs, const INT_MAP_INT &resSoFar,
-                    int noNbrs) {
+int pickBondToWedge(
+    const Atom *atom, const ROMol &mol, const INT_VECT &nChiralNbrs,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &resSoFar,
+    int noNbrs) {
   // here is what we are going to do
   // - at each chiral center look for a bond that is begins at the atom and
   //   is not yet picked to be wedged for a different chiral center, preferring
@@ -327,8 +338,9 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
 
 // returns map of bondIdx -> bond begin atom for those bonds that
 // need wedging.
-INT_MAP_INT pickBondsToWedge(const ROMol &mol,
-                             const BondWedgingParameters *params) {
+std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
+    const ROMol &mol, const BondWedgingParameters *params,
+    const Conformer *conf) {
   if (!params) {
     params = &defaultWedgingParams;
   }
@@ -352,7 +364,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol,
             std::ostream_iterator<int>(std::cerr, " "));
   std::cerr << std::endl;
 #endif
-  INT_MAP_INT res;
+  std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> wedgeInfo;
   for (auto idx : indices) {
     if (nChiralNbrs[idx] > noNbrs) {
       // std::cerr << " SKIPPING2: " << idx << std::endl;
@@ -365,12 +377,25 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol,
     if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       break;
     }
-    auto bnd1 = detail::pickBondToWedge(atom, mol, nChiralNbrs, res, noNbrs);
+    auto bnd1 =
+        detail::pickBondToWedge(atom, mol, nChiralNbrs, wedgeInfo, noNbrs);
     if (bnd1 >= 0) {
-      res[bnd1] = idx;
+      auto wi = std::unique_ptr<RDKit::Chirality::WedgeInfoChiral>(
+          new RDKit::Chirality::WedgeInfoChiral(idx));
+      wedgeInfo[bnd1] = std::move(wi);
     }
   }
-  return res;
+
+  if (conf == nullptr) {
+    if (mol.getNumConformers()) {
+      conf = &mol.getConformer();
+    }
+  }
+  if (conf) {
+    RDKit::Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeInfo);
+  }
+
+  return wedgeInfo;
 }
 
 namespace {
@@ -447,20 +472,27 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
   auto wedgeBonds = Chirality::pickBondsToWedge(mol, params);
 
   // loop over the bonds we need to wedge:
-  for (const auto &[wbi, waid] : wedgeBonds) {
-    auto bond = mol.getBondWithIdx(wbi);
-    auto dir = detail::determineBondWedgeState(bond, waid, conf);
-    if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
-      bond->setBondDir(dir);
+  for (const auto &[wbi, wedgeInfo] : wedgeBonds) {
+    if (wedgeInfo->getType() ==
+        Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer) {
+      mol.getBondWithIdx(wbi)->setBondDir(wedgeInfo->getDir());
+    } else {  // chiral atom needs wedging
+      auto bond = mol.getBondWithIdx(wbi);
+      auto dir =
+          detail::determineBondWedgeState(bond, wedgeInfo->getIdx(), conf);
+      if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
+        bond->setBondDir(dir);
 
-      // it is possible that this
-      // wedging was determined by a chiral atom at the end of the
-      // bond (instead of at the beginning). In this case we need to
-      // reverse the begin and end atoms for the bond
-      if (static_cast<unsigned int>(waid) != bond->getBeginAtomIdx()) {
-        auto tmp = bond->getBeginAtomIdx();
-        bond->setBeginAtomIdx(bond->getEndAtomIdx());
-        bond->setEndAtomIdx(tmp);
+        // it is possible that this
+        // wedging was determined by a chiral atom at the end of the
+        // bond (instead of at the beginning). In this case we need to
+        // reverse the begin and end atoms for the bond
+        if (static_cast<unsigned int>(wedgeInfo->getIdx()) !=
+            bond->getBeginAtomIdx()) {
+          auto tmp = bond->getBeginAtomIdx();
+          bond->setBeginAtomIdx(bond->getEndAtomIdx());
+          bond->setEndAtomIdx(tmp);
+        }
       }
     }
   }

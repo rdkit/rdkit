@@ -444,9 +444,11 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
     cleanupAtropisomerStereoGroups(mol);
   }
 }
-
-void getAllAtomIdsForStereoGroup(const ROMol &mol, const StereoGroup &group,
-                                 std::vector<unsigned int> &atomIds) {
+void getAllAtomIdsForStereoGroup(
+    const ROMol &mol, const StereoGroup &group,
+    std::vector<unsigned int> &atomIds,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds) {
   atomIds.clear();
   for (auto &&atom : group.getAtoms()) {
     atomIds.push_back(atom->getIdx());
@@ -461,8 +463,12 @@ void getAllAtomIdsForStereoGroup(const ROMol &mol, const StereoGroup &group,
         if (atomBond->getIdx() == bond->getIdx()) {
           continue;
         }
+
         if (atomBond->getBondDir() == Bond::BEGINWEDGE ||
-            atomBond->getBondDir() == Bond::BEGINDASH) {
+            atomBond->getBondDir() == Bond::BEGINDASH ||
+            (wedgeBonds.find(atomBond->getIdx()) != wedgeBonds.end() &&
+             (wedgeBonds.at(atomBond->getIdx())->getType()) ==
+                 Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer)) {
           if (std::find(atomIds.begin(), atomIds.end(), atom->getIdx()) ==
               atomIds.end()) {
             atomIds.push_back(atom->getIdx());
@@ -473,9 +479,10 @@ void getAllAtomIdsForStereoGroup(const ROMol &mol, const StereoGroup &group,
   }
 }
 
-bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
-                                       const Conformer *conf,
-                                       const INT_MAP_INT &wedgeBonds) {
+bool WedgeBondFromAtropisomerOneBond2d(
+    Bond *bond, const ROMol &mol, const Conformer *conf,
+    std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds) {
   PRECONDITION(bond, "no bond");
 
   Atom *atoms[2];
@@ -572,11 +579,12 @@ bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
   }
 
   // did not find a good bond dir - pick one to use
-  // we would like to have one that is not in a ring, and will be a dash
+  // we would like to have one that is not in a ring, and will be a wedge
 
   const RingInfo *ri = bond->getOwningMol().getRingInfo();
 
   int bestBondEnd = -1, bestBondNumber = -1;
+  bool bestBondIsSingle = false;
   unsigned int bestRingCount = INT_MAX;
   Bond::BondDir bestBondDir = Bond::BondDir::NONE;
   for (unsigned int whichEnd = 0; whichEnd < 2; ++whichEnd) {
@@ -611,8 +619,22 @@ bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
         bestBondEnd = whichEnd;
         bestBondNumber = whichBond;
         bestRingCount = ringCount;
+        bestBondIsSingle = (bondToTry->getBondType() == Bond::BondType::SINGLE);
         bestBondDir = getBondDirForAtropisomer2d(bondVecs, bond->getStereo(),
                                                  whichEnd, whichBond);
+      } else if (bestBondIsSingle &&
+                 bondToTry->getBondType() != Bond::BondType::SINGLE) {
+        continue;
+
+      } else if (!bestBondIsSingle &&
+                 bondToTry->getBondType() == Bond::BondType::SINGLE) {
+        bestBondEnd = whichEnd;
+        bestBondNumber = whichBond;
+        bestRingCount = ringCount;
+        bestBondIsSingle = true;
+        bestBondDir = getBondDirForAtropisomer2d(bondVecs, bond->getStereo(),
+                                                 whichEnd, whichBond);
+
       } else {
         auto bondDir = getBondDirForAtropisomer2d(bondVecs, bond->getStereo(),
                                                   whichEnd, whichBond);
@@ -622,6 +644,8 @@ bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
           bestBondEnd = whichEnd;
           bestBondNumber = whichBond;
           bestRingCount = ringCount;
+          bestBondIsSingle =
+              (bondToTry->getBondType() == Bond::BondType::SINGLE);
           bestBondDir = bondDir;
         }
       }
@@ -639,7 +663,11 @@ bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
       bestBond->setEndAtom(bestBond->getBeginAtom());
       bestBond->setBeginAtom(atoms[bestBondEnd]);
     }
-    bonds[bestBondEnd][bestBondNumber]->setBondDir(bestBondDir);
+    // bonds[bestBondEnd][bestBondNumber]->setBondDir(bestBondDir);
+    auto newWedgeInfo = std::unique_ptr<RDKit::Chirality::WedgeInfoBase>(
+        new RDKit::Chirality::WedgeInfoAtropisomer(bond->getIdx(),
+                                                   bestBondDir));
+    wedgeBonds[bestBond->getIdx()] = std::move(newWedgeInfo);
   } else {
     BOOST_LOG(rdWarningLog)
         << "Failed to find a good bond to set as UP or DOWN for an atropisomer - atoms are: "
@@ -650,9 +678,10 @@ bool WedgeBondFromAtropisomerOneBond2d(Bond *bond, const ROMol &mol,
   return true;
 }
 
-bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
-                                       const Conformer *conf,
-                                       const INT_MAP_INT &wedgeBonds) {
+bool WedgeBondFromAtropisomerOneBond3d(
+    Bond *bond, const ROMol &mol, const Conformer *conf,
+    std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds) {
   PRECONDITION(bond, "bad bond");
 
   Atom *atoms[2];
@@ -715,6 +744,7 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
   int bestBondEnd = -1;
   unsigned int bestRingCount = UINT_MAX;
   Bond::BondDir bestBondDir = Bond::BondDir::NONE;
+  bool bestBondIsSingle = false;
   for (unsigned int whichEnd = 0; whichEnd < 2; ++whichEnd) {
     for (unsigned int whichBond = 0; whichBond < bonds[whichEnd].size();
          ++whichBond) {
@@ -759,6 +789,17 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
         bestBond = bondToTry;
         bestBondEnd = whichEnd;
         bestRingCount = ringCount;
+        bestBondIsSingle = (bondToTry->getBondType() == Bond::BondType::SINGLE);
+        bestBondDir = getBondDirForAtropisomer3d(bondToTry, conf);
+      } else if (bestBondIsSingle &&
+                 bondToTry->getBondType() != Bond::BondType::SINGLE) {
+        continue;
+      } else if (!bestBondIsSingle &&
+                 bondToTry->getBondType() == Bond::BondType::SINGLE) {
+        bestBondEnd = whichEnd;
+        bestBond = bondToTry;
+        bestRingCount = ringCount;
+        bestBondIsSingle = true;
         bestBondDir = getBondDirForAtropisomer3d(bondToTry, conf);
       } else {
         auto bondDir = getBondDirForAtropisomer3d(bondToTry, conf);
@@ -768,6 +809,9 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
           bestBond = bondToTry;
           bestBondEnd = whichEnd;
           bestRingCount = ringCount;
+          bestBondIsSingle =
+              (bondToTry->getBondType() == Bond::BondType::SINGLE);
+
           bestBondDir = bondDir;
         }
       }
@@ -784,7 +828,11 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
       bestBond->setEndAtom(bestBond->getBeginAtom());
       bestBond->setBeginAtom(atoms[bestBondEnd]);
     }
-    bestBond->setBondDir(bestBondDir);
+    // bestBond->setBondDir(bestBondDir);
+    auto newWedgeInfo = std::unique_ptr<RDKit::Chirality::WedgeInfoBase>(
+        new RDKit::Chirality::WedgeInfoAtropisomer(bond->getIdx(),
+                                                   bestBondDir));
+    wedgeBonds[bestBond->getIdx()] = std::move(newWedgeInfo);
   } else {
     BOOST_LOG(rdWarningLog)
         << "Failed to find a good bond to set as UP or DOWN for an atropisomer - atoms are: "
@@ -795,12 +843,13 @@ bool WedgeBondFromAtropisomerOneBond3d(Bond *bond, const ROMol &mol,
   return true;
 }
 
-void wedgeBondsFromAtropisomers(const ROMol &mol, const Conformer *conf,
-                                const INT_MAP_INT &wedgeBonds) {
+void wedgeBondsFromAtropisomers(
+    const ROMol &mol, const Conformer *conf,
+    std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds) {
   PRECONDITION(conf, "no conformer");
   PRECONDITION(&(conf->getOwningMol()) == &mol,
                "conformer does not belong to molecule");
-
   for (auto bond : mol.bonds()) {
     auto bondStereo = bond->getStereo();
 

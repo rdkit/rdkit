@@ -33,6 +33,7 @@
 #include <GraphMol/MolEnumerator/LinkNode.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/Atropisomers.h>
 
 namespace RDKit {
 namespace MolDraw2D_detail {
@@ -218,6 +219,7 @@ void DrawMol::extractAll(double scale) {
   extractHighlights(scale);
   extractAttachments();
   extractAtomNotes();
+  extractStereoGroups();
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
@@ -441,6 +443,44 @@ void DrawMol::extractAtomNotes() {
         calcAnnotationPosition(atom, *annot);
         annotations_.emplace_back(annot);
       }
+    }
+  }
+}
+
+// ****************************************************************************
+void DrawMol::extractStereoGroups() {
+  int orCount(0), andCount(0);
+  for (const StereoGroup &group : drawMol_->getStereoGroups()) {
+    std::string stereoGroupType;
+
+    switch (group.getGroupType()) {
+      case RDKit::StereoGroupType::STEREO_ABSOLUTE:
+        stereoGroupType = "abs";
+        break;
+      case RDKit::StereoGroupType::STEREO_OR:
+        stereoGroupType = "or" + std::to_string(++orCount);
+        break;
+      case RDKit::StereoGroupType::STEREO_AND:
+        stereoGroupType = "and" + std::to_string(++andCount);
+        break;
+      default:
+        throw ValueErrorException("Unrecognized stereo group type");
+    }
+
+    std::vector<unsigned int> atomIds;
+    std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        wedgeBonds;  // empty - all wedges should have been added to the mol, so
+                     // this doesn't matter
+    Atropisomers::getAllAtomIdsForStereoGroup(*drawMol_, group, atomIds,
+                                              wedgeBonds);
+
+    for (auto atomId : atomIds) {
+      DrawAnnotation *annot = new DrawAnnotation(
+          stereoGroupType, TextAlignType::MIDDLE, "stereoGroup",
+          drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+          drawOptions_.annotationColour, textDrawer_);
+      calcAnnotationPosition(drawMol_->getAtomWithIdx(atomId), *annot);
+      annotations_.emplace_back(annot);
     }
   }
 }

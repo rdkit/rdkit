@@ -1520,8 +1520,10 @@ std::vector<unsigned> getSortedMappedIndexes(
 }
 
 std::pair<std::vector<StereoGroup>, std::vector<std::vector<unsigned>>>
-getSortedStereoGroupsAndIndices(const ROMol &mol,
-                                const std::vector<unsigned int> &revOrder) {
+getSortedStereoGroupsAndIndices(
+    const ROMol &mol, const std::vector<unsigned int> &revOrder,
+    std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds) {
   using StGrpIdxPair = std::pair<StereoGroup, std::vector<unsigned>>;
 
   auto &groups = mol.getStereoGroups();
@@ -1530,9 +1532,8 @@ getSortedStereoGroupsAndIndices(const ROMol &mol,
   sortingGroups.reserve(groups.size());
 
   for (const auto &sg : groups) {
-    // const auto atomIndexes = getSortedMappedIndexes(sg.getAtoms(), revOrder);
     std::vector<unsigned int> atomIds;
-    Atropisomers::getAllAtomIdsForStereoGroup(mol, sg, atomIds);
+    Atropisomers::getAllAtomIdsForStereoGroup(mol, sg, atomIds, wedgeBonds);
     const auto newAtomIndexes = getSortedMappedIndexes(atomIds, revOrder);
     if (!newAtomIndexes.empty()) {
       sortingGroups.emplace_back(sg, newAtomIndexes);
@@ -1603,7 +1604,9 @@ class sGrp {
 };
 
 std::string get_enhanced_stereo_block(
-    const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
+    const ROMol &mol, const std::vector<unsigned int> &atomOrder,
+    std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds) {
   if (mol.getStereoGroups().empty()) {
     return "";
   }
@@ -1614,7 +1617,8 @@ std::string get_enhanced_stereo_block(
     revOrder[atomOrder[i]] = i;
   }
 
-  auto [groups, groupsAtoms] = getSortedStereoGroupsAndIndices(mol, revOrder);
+  auto [groups, groupsAtoms] =
+      getSortedStereoGroupsAndIndices(mol, revOrder, wedgeBonds);
 
   assignStereoGroupIds(groups);
 
@@ -2019,11 +2023,11 @@ std::string get_atom_props_block(const ROMol &mol,
   return res;
 }
 
-std::string get_bond_config_block(const ROMol &mol,
-                                  const std::vector<unsigned int> &atomOrder,
-                                  const std::vector<unsigned int> &bondOrder,
-                                  bool coordsIncluded, INT_MAP_INT wedgeBonds,
-                                  bool atropisomerOnly = false) {
+std::string get_bond_config_block(
+    const ROMol &mol, const std::vector<unsigned int> &atomOrder,
+    const std::vector<unsigned int> &bondOrder, bool coordsIncluded,
+    std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>> &wedgeBonds,
+    bool atropisomerOnly = false) {
   std::map<std::string, std ::vector<std::string>> wParts;
   for (unsigned int i = 0; i < bondOrder.size(); ++i) {
     auto idx = bondOrder[i];
@@ -2337,13 +2341,19 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     appendToCXExtension(atomblock, res);
   }
 
-  if (flags & SmilesWrite::CXSmilesFields::CX_BOND_CFG) {
-    INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(mol);
+  const Conformer *conf = nullptr;
+  if (mol.getNumConformers()) {
+    conf = &mol.getConformer();
+  }
 
-    if (mol.getNumConformers()) {
-      Atropisomers::wedgeBondsFromAtropisomers(mol, &mol.getConformer(),
-                                               wedgeBonds);
-    }
+  std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>> wedgeBonds;
+  if (flags & SmilesWrite::CXSmilesFields::CX_BOND_CFG) {
+    wedgeBonds = Chirality::pickBondsToWedge(mol, nullptr, conf);
+
+    // if (mol.getNumConformers()) {
+    //   Atropisomers::wedgeBondsFromAtropisomers(mol, &mol.getConformer(),
+    //                                            wedgeBonds);
+    // }
 
     bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&
                          mol.getNumConformers();
@@ -2358,11 +2368,8 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   // do the CX_BOND_ATROPISOMER only if CX_BOND_CFG s not done.  CX_BOND_CFG
   // includes the atropisomer wedging
   else if (flags & SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER) {
-    INT_MAP_INT wedgeBonds;
-
-    if (mol.getNumConformers()) {
-      Atropisomers::wedgeBondsFromAtropisomers(mol, &mol.getConformer(),
-                                               wedgeBonds);
+    if (conf) {
+      Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeBonds);
     }
 
     bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&
@@ -2377,7 +2384,8 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     appendToCXExtension(linknodeblock, res);
   }
   if (flags & SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO) {
-    const auto stereoblock = get_enhanced_stereo_block(mol, atomOrder);
+    const auto stereoblock =
+        get_enhanced_stereo_block(mol, atomOrder, wedgeBonds);
     appendToCXExtension(stereoblock, res);
   }
   if (flags & SmilesWrite::CXSmilesFields::CX_SGROUPS) {

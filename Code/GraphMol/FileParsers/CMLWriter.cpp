@@ -69,7 +69,7 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
   if (rwmol.getNumConformers()) {
     conf = &rwmol.getConformer(confId);
     // wedge bonds so that we can use that info:
-    WedgeMolBonds(rwmol, conf);
+    Chirality::wedgeMolBonds(rwmol, conf);
   }
   auto& atomArray = molecule.put("atomArray", "");
   for (unsigned i = 0u, nAtoms = rwmol.getNumAtoms(); i < nAtoms; i++) {
