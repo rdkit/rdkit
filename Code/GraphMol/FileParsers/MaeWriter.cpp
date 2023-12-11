@@ -223,23 +223,22 @@ int bondTypeToOrder(const Bond& bond) {
   }
 }
 
-static bool isDoubleAnyBond(const RDKit::Bond& b)
-{
-    if (b.getBondType() == RDKit::Bond::DOUBLE) {
-        if (b.getStereo() == RDKit::Bond::BondStereo::STEREOANY ||
-            b.getBondDir() == RDKit::Bond::EITHERDOUBLE) {
-            return true;
-        }
-
-        // Check v3000/v2000 stereo either props
-        auto hasPropValue = [&b](const auto& prop, const int& either_value) {
-            return b.hasProp(prop) && b.getProp<int>(prop) == either_value;
-        };
-
-        return hasPropValue(RDKit::common_properties::_MolFileBondCfg, 2) ||
-               hasPropValue(RDKit::common_properties::_MolFileBondStereo, 3);
+static bool isDoubleAnyBond(const RDKit::Bond& b) {
+  if (b.getBondType() == RDKit::Bond::DOUBLE) {
+    if (b.getStereo() == RDKit::Bond::BondStereo::STEREOANY ||
+        b.getBondDir() == RDKit::Bond::EITHERDOUBLE) {
+      return true;
     }
-    return false;
+
+    // Check v3000/v2000 stereo either props
+    auto hasPropValue = [&b](const auto& prop, const int& either_value) {
+      return b.hasProp(prop) && b.getProp<int>(prop) == either_value;
+    };
+
+    return hasPropValue(RDKit::common_properties::_MolFileBondCfg, 2) ||
+           hasPropValue(RDKit::common_properties::_MolFileBondStereo, 3);
+  }
+  return false;
 }
 
 static void copyAtomNumChirality(const ROMol& mol, mae::Block& stBlock) {
@@ -259,8 +258,10 @@ static void copyAtomNumChirality(const ROMol& mol, mae::Block& stBlock) {
       continue;
     }
     ++chiralAts;
-    std::string propName = mae::CT_CHIRALITY_PROP_PREFIX + std::to_string(chiralAts);
-    std::string propVal = std::to_string(at->getIdx() + 1) + "_" + atomNumChirality;
+    std::string propName =
+        mae::CT_CHIRALITY_PROP_PREFIX + std::to_string(chiralAts);
+    std::string propVal =
+        std::to_string(at->getIdx() + 1) + "_" + atomNumChirality;
 
     // We don't know CIP ranks of atoms, so instead we use atom numbering
     // chirality and adjacent atoms will just be sorted by index.
@@ -275,7 +276,6 @@ static void copyAtomNumChirality(const ROMol& mol, mae::Block& stBlock) {
     }
     stBlock.setStringProperty(propName, propVal);
   }
-
 }
 
 void mapMolProperties(const ROMol& mol, const STR_VECT& propNames,
@@ -324,8 +324,12 @@ void mapAtom(
   setPropertyValue(atomBlock, mae::ATOM_Y_COORD, numAtoms, idx, coordinates.y);
   setPropertyValue(atomBlock, mae::ATOM_Z_COORD, numAtoms, idx, coordinates.z);
 
-  auto atomic_num = static_cast<int>(atom.getAtomicNum());
-  setPropertyValue(atomBlock, mae::ATOM_ATOMIC_NUM, numAtoms, idx, atomic_num);
+  auto atomicNum = static_cast<int>(atom.getAtomicNum());
+  if (atomicNum == 0) {
+    // Maestro files use atomic number -2 to indicate a dummy atom.
+    atomicNum = -2;
+  }
+  setPropertyValue(atomBlock, mae::ATOM_ATOMIC_NUM, numAtoms, idx, atomicNum);
 
   setPropertyValue(atomBlock, mae::ATOM_FORMAL_CHARGE, numAtoms, idx,
                    atom.getFormalCharge());
