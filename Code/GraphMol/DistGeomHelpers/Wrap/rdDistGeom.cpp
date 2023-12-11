@@ -257,6 +257,17 @@ python::tuple getExpTorsHelperWithParams(
                           ps.useBasicKnowledge, ps.ETversion, ps.verbose);
 }
 
+void setCoordMap(DGeomHelpers::EmbedParameters &self,python::dict cmap) {
+  // NOTE that this leaks core.
+  auto coordMap = new std::map<int, RDGeom::Point3D>();
+  for (unsigned int i = 0;
+       i < python::extract<unsigned int>(cmap.keys().attr("__len__")()); ++i) {
+    (*coordMap)[python::extract<int>(cmap.keys()[i])] = 
+    python::extract<RDGeom::Point3D>(cmap.values()[i]);
+  }
+  self.coordMap = coordMap;
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -531,7 +542,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite(
           "enableSequentialRandomSeeds",
           &RDKit::DGeomHelpers::EmbedParameters::enableSequentialRandomSeeds,
-          "handle random number seeds so that conformer generation can be restarted");
+          "handle random number seeds so that conformer generation can be restarted")
+      .def("SetCoordMap",&RDKit::setCoordMap,"sets the coordmap to be used");
 
   docString =
       "Use distance geometry to obtain multiple sets of \n\
