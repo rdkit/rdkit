@@ -45,6 +45,37 @@ void setAtomPairBit(std::uint32_t i, std::uint32_t j, std::uint32_t nAtoms,
   }
 }
 
+namespace {
+std::unique_ptr<SparseIntVect<std::uint32_t>> getAtomPairFingerprintInternal(
+    const ROMol &mol, unsigned int nBits, unsigned int minLength,
+    unsigned int maxLength, const std::vector<std::uint32_t> *fromAtoms,
+    const std::vector<std::uint32_t> *ignoreAtoms,
+    const std::vector<std::uint32_t> *atomInvariants, bool includeChirality,
+    bool use2D, int confId, bool sparse) {
+  PRECONDITION(minLength <= maxLength, "bad lengths provided");
+  PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
+               "bad atomInvariants size");
+  const ROMol *lmol = &mol;
+  std::unique_ptr<ROMol> tmol;
+  if (includeChirality && !mol.hasProp(common_properties::_StereochemDone)) {
+    tmol = std::unique_ptr<ROMol>(new ROMol(mol));
+    MolOps::assignStereochemistry(*tmol);
+    lmol = tmol.get();
+  }
+  FingerprintFuncArguments args;
+  args.fromAtoms = fromAtoms;
+  args.ignoreAtoms = ignoreAtoms;
+  args.customAtomInvariants = atomInvariants;
+  args.confId = confId;
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+      RDKit::AtomPair::getAtomPairGenerator<std::uint32_t>(
+          minLength, maxLength, includeChirality, use2D, nullptr, true, nBits)};
+  return std::unique_ptr<SparseIntVect<std::uint32_t>>(
+      sparse ? fpgen->getSparseCountFingerprint(*lmol, args)
+             : fpgen->getCountFingerprint(*lmol, args));
+}
+}  // end of anonymous namespace
+
 SparseIntVect<std::int32_t> *getAtomPairFingerprint(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms,
@@ -61,71 +92,11 @@ SparseIntVect<std::int32_t> *getAtomPairFingerprint(
     const std::vector<std::uint32_t> *ignoreAtoms,
     const std::vector<std::uint32_t> *atomInvariants, bool includeChirality,
     bool use2D, int confId) {
-  PRECONDITION(minLength <= maxLength, "bad lengths provided");
-  PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
-               "bad atomInvariants size");
-
-  const ROMol *lmol = &mol;
-  std::unique_ptr<ROMol> tmol;
-  if (includeChirality && !mol.hasProp(common_properties::_StereochemDone)) {
-    tmol = std::unique_ptr<ROMol>(new ROMol(mol));
-    MolOps::assignStereochemistry(*tmol);
-    lmol = tmol.get();
-  }
-
-  auto *res = new SparseIntVect<std::int32_t>(
-      1 << (numAtomPairFingerprintBits + 2 * (includeChirality ? 2 : 0)));
-  const double *dm;
-  if (use2D) {
-    dm = MolOps::getDistanceMat(*lmol);
-  } else {
-    dm = MolOps::get3DDistanceMat(*lmol, confId);
-  }
-  const unsigned int nAtoms = lmol->getNumAtoms();
-
-  std::vector<std::uint32_t> atomCodes;
-  for (ROMol::ConstAtomIterator atomItI = lmol->beginAtoms();
-       atomItI != lmol->endAtoms(); ++atomItI) {
-    if (!atomInvariants) {
-      atomCodes.push_back(getAtomCode(*atomItI, 0, includeChirality));
-    } else {
-      atomCodes.push_back((*atomInvariants)[(*atomItI)->getIdx()] %
-                          ((1 << codeSize) - 1));
-    }
-  }
-
-  for (ROMol::ConstAtomIterator atomItI = lmol->beginAtoms();
-       atomItI != lmol->endAtoms(); ++atomItI) {
-    unsigned int i = (*atomItI)->getIdx();
-    if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(), i) !=
-                           ignoreAtoms->end()) {
-      continue;
-    }
-    if (!fromAtoms) {
-      for (ROMol::ConstAtomIterator atomItJ = atomItI + 1;
-           atomItJ != lmol->endAtoms(); ++atomItJ) {
-        unsigned int j = (*atomItJ)->getIdx();
-        if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(),
-                                     j) != ignoreAtoms->end()) {
-          continue;
-        }
-        setAtomPairBit(i, j, nAtoms, atomCodes, dm, res, minLength, maxLength,
-                       includeChirality);
-      }
-    } else {
-      for (auto j : *fromAtoms) {
-        if (j != i) {
-          if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(),
-                                       j) != ignoreAtoms->end()) {
-            continue;
-          }
-          setAtomPairBit(i, j, nAtoms, atomCodes, dm, res, minLength, maxLength,
-                         includeChirality);
-        }
-      }
-    }
-  }
-  return res;
+  return reinterpret_cast<SparseIntVect<std::int32_t> *>(
+      getAtomPairFingerprintInternal(mol, 0, minLength, maxLength, fromAtoms,
+                                     ignoreAtoms, atomInvariants,
+                                     includeChirality, use2D, confId, true)
+          .release());
 }
 
 SparseIntVect<std::int32_t> *getHashedAtomPairFingerprint(
@@ -134,26 +105,9 @@ SparseIntVect<std::int32_t> *getHashedAtomPairFingerprint(
     const std::vector<std::uint32_t> *ignoreAtoms,
     const std::vector<std::uint32_t> *atomInvariants, bool includeChirality,
     bool use2D, int confId) {
-  PRECONDITION(minLength <= maxLength, "bad lengths provided");
-  PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
-               "bad atomInvariants size");
-  const ROMol *lmol = &mol;
-  std::unique_ptr<ROMol> tmol;
-  if (includeChirality && !mol.hasProp(common_properties::_StereochemDone)) {
-    tmol = std::unique_ptr<ROMol>(new ROMol(mol));
-    MolOps::assignStereochemistry(*tmol);
-    lmol = tmol.get();
-  }
-
-  std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
-      RDKit::AtomPair::getAtomPairGenerator<std::uint32_t>(
-          minLength, maxLength, includeChirality, use2D, nullptr, true, nBits)};
-  FingerprintFuncArguments args;
-  args.fromAtoms = fromAtoms;
-  args.ignoreAtoms = ignoreAtoms;
-  args.customAtomInvariants = atomInvariants;
-  args.confId = confId;
-  auto siv = fpgen->getCountFingerprint(*lmol, args);
+  auto siv = getAtomPairFingerprintInternal(
+      mol, nBits, minLength, maxLength, fromAtoms, ignoreAtoms, atomInvariants,
+      includeChirality, use2D, confId, false);
   auto *res = new SparseIntVect<std::int32_t>(nBits);
   for (auto v : siv->getNonzeroElements()) {
     res->setVal(v.first, v.second);
