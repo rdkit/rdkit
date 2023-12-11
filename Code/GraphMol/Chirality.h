@@ -241,8 +241,7 @@ enum class WedgeInfoType {
 
 class WedgeInfoBase {
  public:
-  WedgeInfoBase(int idxInit, Bond::BondDir dirInit = Bond::BondDir::NONE)
-      : idx(idxInit), dir(dirInit){};
+  WedgeInfoBase(int idxInit) : idx(idxInit){};
   virtual ~WedgeInfoBase(){};
 
   virtual WedgeInfoType getType() const = 0;
@@ -252,7 +251,6 @@ class WedgeInfoBase {
 
  private:
   int idx = -1;
-  Bond::BondDir dir = Bond::BondDir::NONE;
 };
 
 class WedgeInfoChiral : public WedgeInfoBase {
@@ -272,7 +270,7 @@ class WedgeInfoChiral : public WedgeInfoBase {
 class WedgeInfoAtropisomer : public WedgeInfoBase {
  public:
   WedgeInfoAtropisomer(int bondId, RDKit::Bond::BondDir dirInit)
-      : WedgeInfoBase(bondId, dirInit) {
+      : WedgeInfoBase(bondId) {
     dir = dirInit;
   };
   ~WedgeInfoAtropisomer(){};
