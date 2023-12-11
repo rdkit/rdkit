@@ -2472,7 +2472,7 @@ ARGUMENTS:\n\
     - atom ID: the atom from which to do the wedging
     - conformer: the conformer to use to determine wedge direction
 )DOC";
-    python::def("WedgeBond", WedgeBond, docString.c_str(),
+    python::def("WedgeBond", Chirality::wedgeBond, docString.c_str(),
                 python::args("bond", "fromAtomIdx", "conf"));
 
     // ------------------------------------------------------------------------

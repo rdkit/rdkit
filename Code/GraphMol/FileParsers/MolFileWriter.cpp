@@ -720,14 +720,16 @@ int BondGetMolFileSymbol(const Bond *bond) {
   // return res.c_str();
 }
 
-const std::string GetMolFileBondLine(const Bond *bond,
-                                     const INT_MAP_INT &wedgeBonds,
-                                     const Conformer *conf) {
+const std::string GetMolFileBondLine(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
+    const Conformer *conf) {
   PRECONDITION(bond, "");
 
   int dirCode;
   bool reverse;
-  GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode, reverse);
+  RDKit::Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode,
+                                             reverse);
   int symbol = BondGetMolFileSymbol(bond);
 
   std::stringstream ss;
@@ -995,14 +997,16 @@ void moveAdditionalPropertiesToSGroups(RWMol &mol) {
   createSMARTSQSubstanceGroups(mol);
 }
 }  // namespace FileParserUtils
-const std::string GetV3000MolFileBondLine(const Bond *bond,
-                                          const INT_MAP_INT &wedgeBonds,
-                                          const Conformer *conf) {
+const std::string GetV3000MolFileBondLine(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
+    const Conformer *conf) {
   PRECONDITION(bond, "");
 
   int dirCode;
   bool reverse;
-  GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode, reverse);
+  RDKit::Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode,
+                                             reverse);
 
   std::stringstream ss;
   ss << "M  V30 " << bond->getIdx() + 1;
@@ -1052,7 +1056,9 @@ const std::string GetV3000MolFileBondLine(const Bond *bond,
   return ss.str();
 }
 
-void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
+void appendEnhancedStereoGroups(
+    std::string &res, const RWMol &tmol,
+    std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds) {
   if (!tmol.getStereoGroups().empty()) {
     auto stereo_groups = tmol.getStereoGroups();
     assignStereoGroupIds(stereo_groups);
@@ -1075,7 +1081,8 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
       res += " ATOMS=(";
 
       std::vector<unsigned int> atomIds;
-      Atropisomers::getAllAtomIdsForStereoGroup(tmol, group, atomIds);
+      Atropisomers::getAllAtomIdsForStereoGroup(tmol, group, atomIds,
+                                                wedgeBonds);
 
       res += std::to_string(atomIds.size());
       for (auto &&atom : atomIds) {
@@ -1121,13 +1128,9 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
   }
   res += "M  V30 END ATOM\n";
 
+  auto wedgeBonds = Chirality::pickBondsToWedge(tmol, nullptr, conf);
   if (tmol.getNumBonds()) {
     res += "M  V30 BEGIN BOND\n";
-
-    INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(tmol);
-    if (conf) {
-      Atropisomers::wedgeBondsFromAtropisomers(tmol, conf, wedgeBonds);
-    }
 
     for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
          bondIt != tmol.endBonds(); ++bondIt) {
@@ -1155,7 +1158,7 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
       res += "M  V30 LINKNODE " + linknode + "\n";
     }
   }
-  appendEnhancedStereoGroups(res, tmol);
+  appendEnhancedStereoGroups(res, tmol, wedgeBonds);
 
   res += "M  V30 END CTAB\n";
   return res;
@@ -1266,11 +1269,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
       res += "\n";
     }
 
-    INT_MAP_INT wedgeBonds = Chirality::pickBondsToWedge(tmol);
-
-    if (conf) {
-      Atropisomers::wedgeBondsFromAtropisomers(tmol, conf, wedgeBonds);
-    }
+    auto wedgeBonds = Chirality::pickBondsToWedge(tmol, nullptr, conf);
 
     for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
          bondIt != tmol.endBonds(); ++bondIt) {

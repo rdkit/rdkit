@@ -30,7 +30,8 @@ void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
   return Chirality::wedgeMolBonds(mol, conf);
 }
 
-INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
+std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
+    const ROMol &mol) {
   return Chirality::pickBondsToWedge(mol);
 }
 
@@ -191,9 +192,11 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
                                       const Conformer *conf) {
   return Chirality::detail::determineBondWedgeState(bond, fromAtomIdx, conf);
 }
-Bond::BondDir DetermineBondWedgeState(const Bond *bond,
-                                      const INT_MAP_INT &wedgeBonds,
-                                      const Conformer *conf) {
+Bond::BondDir DetermineBondWedgeState(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf) {
   return Chirality::detail::determineBondWedgeState(bond, wedgeBonds, conf);
 }
 
@@ -230,13 +233,14 @@ void invertMolBlockWedgingInfo(ROMol &mol) {
 }
 
 void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
-  INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
+  auto wedgeBonds = RDKit::Chirality::pickBondsToWedge(mol);
   const auto conf = mol.getConformer(confId);
   for (auto b : mol.bonds()) {
     if (b->getBondType() == Bond::DOUBLE) {
       int dirCode;
       bool reverse;
-      GetMolFileBondStereoInfo(b, wedgeBonds, &conf, dirCode, reverse);
+      RDKit::Chirality::GetMolFileBondStereoInfo(b, wedgeBonds, &conf, dirCode,
+                                                 reverse);
       if (dirCode == 3) {
         b->setStereo(Bond::STEREOANY);
       }
@@ -253,7 +257,8 @@ void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
           i.specified == Chirality::StereoSpecified::Unspecified) {
         i.specified = Chirality::StereoSpecified::Unknown;
         auto atom = mol.getAtomWithIdx(i.centeredOn);
-        INT_MAP_INT resSoFar;
+        std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+            resSoFar;
         int bndIdx = Chirality::detail::pickBondToWedge(atom, mol, nChiralNbrs,
                                                         resSoFar, noNbrs);
         auto bond = mol.getBondWithIdx(bndIdx);
@@ -263,9 +268,11 @@ void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
   }
 }
 
-void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
-                              const Conformer *conf, int &dirCode,
-                              bool &reverse) {
+void GetMolFileBondStereoInfo(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf, int &dirCode, bool &reverse) {
   return Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode,
                                              reverse);
 }

@@ -2298,7 +2298,7 @@ void testGithub87() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 5);
     TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-    WedgeMolBonds(*m, &m->getConformer());
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
     MolOps::assignStereochemistry(*m, true, true);
     TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() == Bond::BEGINWEDGE);
     m->getAtomWithIdx(0)->setChiralTag(Atom::CHI_UNSPECIFIED);
@@ -2313,7 +2313,7 @@ void testGithub87() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 5);
     TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-    WedgeMolBonds(*m, &m->getConformer());
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
     MolOps::assignStereochemistry(*m, true, true);
     TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() == Bond::BEGINDASH);
     m->getAtomWithIdx(0)->setChiralTag(Atom::CHI_UNSPECIFIED);
@@ -3028,7 +3028,7 @@ void testIncorrectBondDirsOnWedging() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getBondBetweenAtoms(10, 4));
     TEST_ASSERT(m->getBondBetweenAtoms(10, 4)->getBeginAtomIdx() == 10);
-    WedgeMolBonds(*m, &m->getConformer());
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
     TEST_ASSERT(m->getBondBetweenAtoms(10, 4));
     TEST_ASSERT(m->getBondBetweenAtoms(10, 4)->getBondDir() ==
                 Bond::BEGINWEDGE);
@@ -3045,7 +3045,7 @@ void testIncorrectBondDirsOnWedging() {
     TEST_ASSERT(m->getBondBetweenAtoms(3, 21)->getBeginAtomIdx() == 3);
     TEST_ASSERT(m->getBondBetweenAtoms(2, 20));
     TEST_ASSERT(m->getBondBetweenAtoms(2, 20)->getBeginAtomIdx() == 2);
-    WedgeMolBonds(*m, &m->getConformer());
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
     TEST_ASSERT(m->getBondBetweenAtoms(3, 21));
     TEST_ASSERT(m->getBondBetweenAtoms(3, 21)->getBeginAtomIdx() == 21);
     TEST_ASSERT(m->getBondBetweenAtoms(2, 20));

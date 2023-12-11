@@ -3255,7 +3255,7 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB"_ctab;
     REQUIRE(m);
-    WedgeMolBonds(*m, &m->getConformer());
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
     CHECK(m->getBondBetweenAtoms(2, 4)->getBondDir() != Bond::BondDir::NONE);
     CHECK(m->getBondBetweenAtoms(3, 6)->getBondDir() != Bond::BondDir::NONE);
     CHECK(m->getBondBetweenAtoms(2, 1)->getBondDir() == Bond::BondDir::NONE);
@@ -5075,7 +5075,7 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END)CTAB"_ctab;
       REQUIRE(m);
-      WedgeMolBonds(*m, &m->getConformer());
+      Chirality::wedgeMolBonds(*m, &m->getConformer());
       CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::BEGINWEDGE);
       CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::NONE);
       Chirality::reapplyMolBlockWedging(*m);
