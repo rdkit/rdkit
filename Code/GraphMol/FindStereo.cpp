@@ -1015,6 +1015,9 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
     const bool includeIsotopes = false;
     const bool breakTies = false;
     const bool includeAtomMaps = false;
+    // Now apply the canonical atom ranking code with basic connectivity
+    // invariants The necessary condition for chirality is that an atom's
+    // neighbors must have unique ranks
     Canon::rankFragmentAtoms(
         mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
         breakTies, includeChirality, includeIsotopes, includeAtomMaps);
