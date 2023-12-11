@@ -149,8 +149,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(tbl.GetAtomicNumber('C') == 6)
     self.assertTrue(feq(tbl.GetRvdw(6), 1.7))
     self.assertTrue(feq(tbl.GetRvdw("C"), 1.7))
-    self.assertTrue(feq(tbl.GetRcovalent(6), 0.680))
-    self.assertTrue(feq(tbl.GetRcovalent("C"), 0.680))
+    self.assertTrue(feq(tbl.GetRcovalent(6), 0.76))
+    self.assertTrue(feq(tbl.GetRcovalent("C"), 0.76))
     self.assertTrue(tbl.GetDefaultValence(6) == 4)
     self.assertTrue(tbl.GetDefaultValence("C") == 4)
     self.assertTrue(tuple(tbl.GetValenceList(6)) == (4, ))
@@ -4002,8 +4002,8 @@ CAS<~>
     self.assertTrue(resMolSuppl.GetIsEnumerated())
     self.assertTrue(
       (resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType() != resMolSuppl[1].GetBondBetweenAtoms(
-        0, 1).GetBondType()) or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType() !=
-                                 resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
+        0, 1).GetBondType()) or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType()
+                                 != resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
     self.assertEqual(len(resMolSuppl), 8)
@@ -6563,8 +6563,28 @@ M  END
     self.assertEqual(len(ctrs), 2)
     self.assertEqual(ctrs, [(1, 'S'), (5, '?')])
 
-  @unittest.skipUnless(hasattr(Chem,'MolFromPNGFile'),
-                     "RDKit not built with iostreams support")
+  def testGithub6945(self):
+    origVal = Chem.GetUseLegacyStereoPerception()
+    tgt = [(1, '?'), (4, 'R')]
+    try:
+      for opt in (not origVal, origVal):
+        Chem.SetUseLegacyStereoPerception(opt)
+        # make sure calling with the default value works:
+        self.assertEqual(
+          tgt,
+          Chem.FindMolChiralCenters(Chem.MolFromSmiles('FC(Cl)(Br)[C@H](F)Cl'),
+                                    includeUnassigned=True))
+        for useLegacy in (True, False):
+          self.assertEqual(
+            tgt,
+            Chem.FindMolChiralCenters(Chem.MolFromSmiles('FC(Cl)(Br)[C@H](F)Cl'),
+                                      includeUnassigned=True, useLegacyImplementation=useLegacy))
+    except:
+      raise
+    finally:
+      Chem.SetUseLegacyStereoPerception(origVal)
+
+  @unittest.skipUnless(hasattr(Chem, 'MolFromPNGFile'), "RDKit not built with iostreams support")
   def testMolFromPNG(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.png')
@@ -6578,8 +6598,7 @@ M  END
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
 
-  @unittest.skipUnless(hasattr(Chem,'MolFromPNGFile'),
-                     "RDKit not built with iostreams support")
+  @unittest.skipUnless(hasattr(Chem, 'MolFromPNGFile'), "RDKit not built with iostreams support")
   def testMolToPNG(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.no_metadata.png')
@@ -6600,8 +6619,7 @@ M  END
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
 
-  @unittest.skipUnless(hasattr(Chem,'MolFromPNGFile'),
-                     "RDKit not built with iostreams support")
+  @unittest.skipUnless(hasattr(Chem, 'MolFromPNGFile'), "RDKit not built with iostreams support")
   def testMolsFromPNG(self):
     refMols = [Chem.MolFromSmiles(x) for x in ('c1ccccc1', 'CCO', 'CC(=O)O', 'c1ccccn1')]
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -6611,8 +6629,7 @@ M  END
     for mol, refMol in zip(mols, refMols):
       self.assertEqual(Chem.MolToSmiles(mol), Chem.MolToSmiles(refMol))
 
-  @unittest.skipUnless(hasattr(Chem,'MolFromPNGFile'),
-                     "RDKit not built with iostreams support")
+  @unittest.skipUnless(hasattr(Chem, 'MolFromPNGFile'), "RDKit not built with iostreams support")
   def testMetadataToPNG(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.png')
@@ -7940,12 +7957,11 @@ CAS<~>
 
   def testHasQueryHs(self):
     for sma, hasQHs in [
-        ("[#1]", (True, False)),
-        ("[#1,N]", (True, True)),
-        ("[$(C-[H])]", (True, False)),
-        ("[$([C,#1])]", (True, True)),
-        ("[$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naaaa1),$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naa[n,s,o]1)]",
-         (True, False))]:
+      ("[#1]", (True, False)), ("[#1,N]", (True, True)), ("[$(C-[H])]", (True, False)),
+      ("[$([C,#1])]", (True, True)),
+      ("[$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naaaa1),$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naa[n,s,o]1)]",
+       (True, False))
+    ]:
       pat = Chem.MolFromSmarts(sma)
       self.assertEqual(Chem.HasQueryHs(pat), hasQHs)
 
@@ -7960,25 +7976,26 @@ CAS<~>
     self.assertTrue(m3.HasQuery())
 
   def testMrvHandling(self):
-    fn1 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','MarvinParse','test_data','aspirin.mrv')
+    fn1 = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
+                       'aspirin.mrv')
     mol = Chem.MolFromMrvFile(fn1)
     self.assertIsNotNone(mol)
-    self.assertEqual(mol.GetNumAtoms(),13)
+    self.assertEqual(mol.GetNumAtoms(), 13)
     mrv = Chem.MolToMrvBlock(mol)
     self.assertTrue('<molecule molID="m1">' in mrv)
     self.assertFalse('<reaction>' in mrv)
 
     fName = tempfile.NamedTemporaryFile(suffix='.mrv').name
     self.assertFalse(os.path.exists(fName))
-    Chem.MolToMrvFile(mol,fName)
+    Chem.MolToMrvFile(mol, fName)
     self.assertTrue(os.path.exists(fName))
     os.unlink(fName)
 
-    with open(fn1,'r') as inf:
+    with open(fn1, 'r') as inf:
       ind = inf.read()
     mol = Chem.MolFromMrvBlock(ind)
     self.assertIsNotNone(mol)
-    self.assertEqual(mol.GetNumAtoms(),13)
+    self.assertEqual(mol.GetNumAtoms(), 13)
 
 
 if __name__ == '__main__':
