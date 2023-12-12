@@ -29,6 +29,12 @@ ROMol *chooseHelper(MolStandardize::LargestFragmentChooser &self,
                     const ROMol &mol) {
   return self.choose(mol);
 }
+
+void chooseInPlaceHelper(MolStandardize::LargestFragmentChooser &self,
+                         ROMol &mol) {
+  self.chooseInPlace(static_cast<RWMol &>(mol));
+}
+
 MolStandardize::FragmentRemover *removerFromParams(const std::string &data,
                                                    bool leave_last,
                                                    bool skip_if_all_match) {
@@ -73,7 +79,11 @@ struct fragment_wrapper {
         .def(python::init<const MolStandardize::CleanupParameters &>(
             (python::arg("self"), python::arg("params"))))
         .def("choose", &chooseHelper, (python::arg("self"), python::arg("mol")),
-             "", python::return_value_policy<python::manage_new_object>());
+             "", python::return_value_policy<python::manage_new_object>())
+        .def("chooseInPlace", &chooseInPlaceHelper,
+             (python::arg("self"), python::arg("mol")), "",
+             python::return_value_policy<python::manage_new_object>());
+    ;
   }
 };
 

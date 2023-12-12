@@ -717,11 +717,13 @@ void testCanonicalize() {
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   for (const auto &itm : canonTautomerData) {
-    std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
+    std::unique_ptr<RWMol> mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
     std::unique_ptr<ROMol> res{te.canonicalize(*mol)};
     TEST_ASSERT(res);
     TEST_ASSERT(MolToSmiles(*res) == itm.second);
+    te.canonicalizeInPlace(*mol);
+    TEST_ASSERT(MolToSmiles(*mol) == itm.second);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -1374,10 +1376,12 @@ void testGithub3755() {
       {"NC(=N)C(N)CO", "N=C(N)C(N)CO"}, {"NC(=N)NC(N)CO", "N=C(N)NC(N)CO"}};
   TautomerEnumerator te;
   for (const auto &pair : orig_vs_expected) {
-    ROMOL_SPTR orig(SmilesToMol(pair.first));
+    std::unique_ptr<RWMol> orig{SmilesToMol(pair.first)};
     TEST_ASSERT(orig);
     ROMOL_SPTR canonical(te.canonicalize(*orig));
     TEST_ASSERT(MolToSmiles(*canonical) == pair.second);
+    te.canonicalizeInPlace(*orig);
+    TEST_ASSERT(MolToSmiles(*orig) == pair.second);
   }
 }
 

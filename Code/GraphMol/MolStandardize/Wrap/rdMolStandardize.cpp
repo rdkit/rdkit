@@ -72,6 +72,19 @@ void inPlaceHelper(RDKit::ROMol *mol, python::object params, FUNCTYPE func) {
   func(*static_cast<RDKit::RWMol *>(mol), *ps);
 }
 
+template <typename FUNCTYPE>
+void inPlaceHelper2(RDKit::ROMol *mol, python::object params,
+                    bool skip_standardize, FUNCTYPE func) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
+  const RDKit::MolStandardize::CleanupParameters *ps =
+      &RDKit::MolStandardize::defaultCleanupParameters;
+  if (params) {
+    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
+  }
+  func(*static_cast<RDKit::RWMol *>(mol), *ps, skip_standardize);
+}
 void cleanupInPlaceHelper(RDKit::ROMol *mol, python::object params) {
   inPlaceHelper(
       mol, params,
@@ -104,6 +117,60 @@ void removeFragmentsInPlaceHelper(RDKit::ROMol *mol, python::object params) {
           RDKit::MolStandardize::removeFragmentsInPlace));
 }
 
+void fragmentParentInPlaceHelper(RDKit::ROMol *mol, python::object params,
+                                 bool skip_standardize) {
+  inPlaceHelper2(
+      mol, params, skip_standardize,
+      static_cast<void (*)(
+          RDKit::RWMol &, const RDKit::MolStandardize::CleanupParameters &,
+          bool)>(RDKit::MolStandardize::fragmentParentInPlace));
+}
+
+void stereoParentInPlaceHelper(RDKit::ROMol *mol, python::object params,
+                               bool skip_standardize) {
+  inPlaceHelper2(
+      mol, params, skip_standardize,
+      static_cast<void (*)(RDKit::RWMol &,
+                           const RDKit::MolStandardize::CleanupParameters &,
+                           bool)>(RDKit::MolStandardize::stereoParentInPlace));
+}
+
+void isotopeParentInPlaceHelper(RDKit::ROMol *mol, python::object params,
+                                bool skip_standardize) {
+  inPlaceHelper2(
+      mol, params, skip_standardize,
+      static_cast<void (*)(RDKit::RWMol &,
+                           const RDKit::MolStandardize::CleanupParameters &,
+                           bool)>(RDKit::MolStandardize::isotopeParentInPlace));
+}
+
+void chargeParentInPlaceHelper(RDKit::ROMol *mol, python::object params,
+                               bool skip_standardize) {
+  inPlaceHelper2(
+      mol, params, skip_standardize,
+      static_cast<void (*)(RDKit::RWMol &,
+                           const RDKit::MolStandardize::CleanupParameters &,
+                           bool)>(RDKit::MolStandardize::chargeParentInPlace));
+}
+
+void superParentInPlaceHelper(RDKit::ROMol *mol, python::object params,
+                              bool skip_standardize) {
+  inPlaceHelper2(
+      mol, params, skip_standardize,
+      static_cast<void (*)(RDKit::RWMol &,
+                           const RDKit::MolStandardize::CleanupParameters &,
+                           bool)>(RDKit::MolStandardize::superParentInPlace));
+}
+
+void tautomerParentInPlaceHelper(RDKit::ROMol *mol, python::object params,
+                                 bool skip_standardize) {
+  inPlaceHelper2(
+      mol, params, skip_standardize,
+      static_cast<void (*)(
+          RDKit::RWMol &, const RDKit::MolStandardize::CleanupParameters &,
+          bool)>(RDKit::MolStandardize::tautomerParentInPlace));
+}
+
 template <typename FUNCTYPE>
 void mtinPlaceHelper(python::object pymols, int numThreads,
                      python::object params, FUNCTYPE func) {
@@ -115,7 +182,7 @@ void mtinPlaceHelper(python::object pymols, int numThreads,
   unsigned int nmols = python::extract<unsigned int>(pymols.attr("__len__")());
   std::vector<RDKit::RWMol *> mols(nmols);
   for (auto i = 0u; i < nmols; ++i) {
-    RDKit::RWMol *mol = static_cast<RDKit::RWMol *>(
+    auto mol = static_cast<RDKit::RWMol *>(
         python::extract<RDKit::ROMol *>(pymols[i])());
     mols[i] = mol;
   }
@@ -124,6 +191,28 @@ void mtinPlaceHelper(python::object pymols, int numThreads,
     func(mols, numThreads, *ps);
   }
 }
+template <typename FUNCTYPE>
+void mtinPlaceHelper2(python::object pymols, int numThreads,
+                      python::object params, bool skip_standardize,
+                      FUNCTYPE func) {
+  const auto *ps =
+      &RDKit::MolStandardize::defaultCleanupParameters;
+  if (params) {
+    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
+  }
+  unsigned int nmols = python::extract<unsigned int>(pymols.attr("__len__")());
+  std::vector<RDKit::RWMol *> mols(nmols);
+  for (auto i = 0u; i < nmols; ++i) {
+    auto mol = static_cast<RDKit::RWMol *>(
+        python::extract<RDKit::ROMol *>(pymols[i])());
+    mols[i] = mol;
+  }
+  {
+    NOGIL gil;
+    func(mols, numThreads, *ps, skip_standardize);
+  }
+}
+
 void mtcleanupInPlaceHelper(python::object mols, int numThreads,
                             python::object params) {
   mtinPlaceHelper(
@@ -158,6 +247,63 @@ void mtremoveFragmentsInPlaceHelper(python::object mols, int numThreads,
       static_cast<void (*)(std::vector<RDKit::RWMol *> &, int,
                            const RDKit::MolStandardize::CleanupParameters &)>(
           RDKit::MolStandardize::removeFragmentsInPlace));
+}
+
+void mtfragmentParentInPlaceHelper(python::object mols, int numThreads,
+                                   python::object params,
+                                   bool skip_standardize) {
+  mtinPlaceHelper2(mols, numThreads, params, skip_standardize,
+                   static_cast<void (*)(
+                       std::vector<RDKit::RWMol *> &, int,
+                       const RDKit::MolStandardize::CleanupParameters &, bool)>(
+                       RDKit::MolStandardize::fragmentParentInPlace));
+}
+
+void mtstereoParentInPlaceHelper(python::object mols, int numThreads,
+                                 python::object params, bool skip_standardize) {
+  mtinPlaceHelper2(
+      mols, numThreads, params, skip_standardize,
+      static_cast<void (*)(std::vector<RDKit::RWMol *> &, int,
+                           const RDKit::MolStandardize::CleanupParameters &,
+                           bool)>(RDKit::MolStandardize::stereoParentInPlace));
+}
+
+void mtisotopeParentInPlaceHelper(python::object mols, int numThreads,
+                                  python::object params,
+                                  bool skip_standardize) {
+  mtinPlaceHelper2(
+      mols, numThreads, params, skip_standardize,
+      static_cast<void (*)(std::vector<RDKit::RWMol *> &, int,
+                           const RDKit::MolStandardize::CleanupParameters &,
+                           bool)>(RDKit::MolStandardize::isotopeParentInPlace));
+}
+
+void mtchargeParentInPlaceHelper(python::object mols, int numThreads,
+                                 python::object params, bool skip_standardize) {
+  mtinPlaceHelper2(
+      mols, numThreads, params, skip_standardize,
+      static_cast<void (*)(std::vector<RDKit::RWMol *> &, int,
+                           const RDKit::MolStandardize::CleanupParameters &,
+                           bool)>(RDKit::MolStandardize::chargeParentInPlace));
+}
+
+void mtsuperParentInPlaceHelper(python::object mols, int numThreads,
+                                python::object params, bool skip_standardize) {
+  mtinPlaceHelper2(
+      mols, numThreads, params, skip_standardize,
+      static_cast<void (*)(std::vector<RDKit::RWMol *> &, int,
+                           const RDKit::MolStandardize::CleanupParameters &,
+                           bool)>(RDKit::MolStandardize::superParentInPlace));
+}
+
+void mttautomerParentInPlaceHelper(python::object mols, int numThreads,
+                                   python::object params,
+                                   bool skip_standardize) {
+  mtinPlaceHelper2(mols, numThreads, params, skip_standardize,
+                   static_cast<void (*)(
+                       std::vector<RDKit::RWMol *> &, int,
+                       const RDKit::MolStandardize::CleanupParameters &, bool)>(
+                       RDKit::MolStandardize::tautomerParentInPlace));
 }
 
 template <typename FUNCTYPE>
@@ -346,30 +492,87 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString = "Generates the tautomer parent in place";
+  python::def("TautomerParentInPlace", tautomerParentInPlaceHelper,
+              (python::arg("mol"), python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
+  docString = "Generates the tautomer parent in place for multiple molecules";
+  python::def("TautomerParentInPlace", mttautomerParentInPlaceHelper,
+              (python::arg("mols"), python::arg("numThreads"),
+               python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
+
   docString = "Returns the largest fragment after doing a cleanup";
   python::def("FragmentParent", fragmentParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  docString = "calls removeStereochemistry() on the given molecule";
+  docString = "Generates the largest fragment in place";
+  python::def("FragmentParentInPlace", fragmentParentInPlaceHelper,
+              (python::arg("mol"), python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
+  docString = "Generates the largest fragment in place for multiple molecules";
+  python::def("FragmentParentInPlace", mtfragmentParentInPlaceHelper,
+              (python::arg("mols"), python::arg("numThreads"),
+               python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
+
   python::def("StereoParent", stereoParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString = "Generates the stereo parent in place";
+  python::def("StereoParentInPlace", stereoParentInPlaceHelper,
+              (python::arg("mol"), python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
+  docString = "Generates the stereo parent in place for multiple molecules";
+  python::def("StereoParentInPlace", mtstereoParentInPlaceHelper,
+              (python::arg("mols"), python::arg("numThreads"),
+               python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
   docString = "removes all isotopes specifications from the given molecule";
   python::def("IsotopeParent", isotopeParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString = "Generates the isotope parent in place";
+  python::def("IsotopeParentInPlace", isotopeParentInPlaceHelper,
+              (python::arg("mol"), python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
+  docString = "Generates the isotope parent in place for multiple molecules";
+  python::def("IsotopeParentInPlace", mtisotopeParentInPlaceHelper,
+              (python::arg("mols"), python::arg("numThreads"),
+               python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
   docString = "Returns the uncharged version of the largest fragment";
   python::def("ChargeParent", chargeParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString = "Generates the charge parent in place";
+  python::def("ChargeParentInPlace", chargeParentInPlaceHelper,
+              (python::arg("mol"), python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
+  docString = "Generates the chargeparent in place for multiple molecules";
+  python::def("ChargeParentInPlace", mtchargeParentInPlaceHelper,
+              (python::arg("mols"), python::arg("numThreads"),
+               python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
+
   docString =
       "Returns the super parent. The super parent is the fragment, charge, "
       "isotope, stereo, and tautomer parent of the molecule.";
@@ -378,6 +581,18 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString = "Generates the super parent in place";
+  python::def("SuperParentInPlace", superParentInPlaceHelper,
+              (python::arg("mol"), python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
+  docString = "Generates the super parent in place for multiple molecules";
+  python::def("SuperParentInPlace", mtsuperParentInPlaceHelper,
+              (python::arg("mols"), python::arg("numThreads"),
+               python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str());
+
   docString =
       "Applies a series of standard transformations to correct functional "
       "groups and recombine charges";
@@ -431,6 +646,7 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+
   docString =
       "Returns the molecule disconnected using the organometallics"
       " rules.";
