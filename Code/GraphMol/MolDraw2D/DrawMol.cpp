@@ -2250,7 +2250,6 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
           // occur in practice.
           // Sort so the lowest y point is first, with lowest x as
           // tie-breaker.
-#if 0
           std::sort(points.begin(), points.end(),
                     [](Point2D &p1, Point2D &p2) -> bool {
                       if (p1.y < p2.y) {
@@ -2275,7 +2274,6 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
                         return false;
                       }
                     });
-#endif
           DrawShape *hb = new DrawShapePolyLine(
               points, 0, false, col, true, thisIdx + activeAtmIdxOffset_,
               nbrIdx + activeAtmIdxOffset_,
