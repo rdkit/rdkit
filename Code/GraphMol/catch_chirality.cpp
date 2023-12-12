@@ -4970,3 +4970,40 @@ TEST_CASE("github #6931: atom maps influencing chirality perception") {
         !m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
   }
 }
+
+TEST_CASE(
+    "Github Issue #6981: Parsing a Mol leaks the \"_needsDetectBondStereo\" property",
+    "[bug][stereo]") {
+  // Parametrize test to run under legacy and new stereo perception
+  const auto legacy_stereo = GENERATE(true, false);
+  INFO("Legacy stereo perception == " << legacy_stereo);
+
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+  Chirality::setUseLegacyStereoPerception(legacy_stereo);
+
+  auto m = R"CTAB(
+  Mrv2311 12122315472D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -9.2083 1.8333 0 0
+M  V30 2 C -8.0639 0.8029 0 0
+M  V30 3 C -6.5239 0.8029 0 0
+M  V30 4 C -5.7539 -0.5308 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 4);
+
+  CHECK(m->hasProp("_needsDetectBondStereo") == false);
+}
