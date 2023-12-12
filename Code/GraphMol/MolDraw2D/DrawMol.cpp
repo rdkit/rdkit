@@ -2250,6 +2250,7 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
           // occur in practice.
           // Sort so the lowest y point is first, with lowest x as
           // tie-breaker.
+#if 0
           std::sort(points.begin(), points.end(),
                     [](Point2D &p1, Point2D &p2) -> bool {
                       if (p1.y < p2.y) {
@@ -2274,6 +2275,7 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
                         return false;
                       }
                     });
+#endif
           DrawShape *hb = new DrawShapePolyLine(
               points, 0, false, col, true, thisIdx + activeAtmIdxOffset_,
               nbrIdx + activeAtmIdxOffset_,
@@ -3370,6 +3372,19 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
     // There is only 1 intersection to deal with, which is easier - just
     // a slanted end.
     auto end3Cds = atCds_[end1HighNbrs[0]->getIdx()];
+    auto b1 = end2Cds.directionVector(end1Cds);
+    auto b2 = end2Cds.directionVector(end3Cds);
+    if (1.0 - fabs(b1.dotProduct(b2)) < 1.0e-4) {
+      // rotate end3 about end2 by a small amount to create
+      // an inner and outer
+      end3Cds -= end2Cds;
+      RDGeom::Transform2D trans;
+      trans.SetTransform(Point2D(0, 0), M_PI / 20.0);
+      trans.TransformPoint(end3Cds);
+      end3Cds += end2Cds;
+    }
+    // The rotated end is only used to construct ins1 and ins2 wrt
+    // end1Cds and end2Cds so there's no need to rotate them back.
     auto ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
     points.push_back(ins1);
     auto ins2 = innerPoint(end1Cds, end2Cds, end3Cds, -1.0);
