@@ -182,7 +182,7 @@ void mtinPlaceHelper(python::object pymols, int numThreads,
   unsigned int nmols = python::extract<unsigned int>(pymols.attr("__len__")());
   std::vector<RDKit::RWMol *> mols(nmols);
   for (auto i = 0u; i < nmols; ++i) {
-    RDKit::RWMol *mol = static_cast<RDKit::RWMol *>(
+    auto mol = static_cast<RDKit::RWMol *>(
         python::extract<RDKit::ROMol *>(pymols[i])());
     mols[i] = mol;
   }
@@ -195,7 +195,7 @@ template <typename FUNCTYPE>
 void mtinPlaceHelper2(python::object pymols, int numThreads,
                       python::object params, bool skip_standardize,
                       FUNCTYPE func) {
-  const RDKit::MolStandardize::CleanupParameters *ps =
+  const auto *ps =
       &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
     ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
@@ -203,7 +203,7 @@ void mtinPlaceHelper2(python::object pymols, int numThreads,
   unsigned int nmols = python::extract<unsigned int>(pymols.attr("__len__")());
   std::vector<RDKit::RWMol *> mols(nmols);
   for (auto i = 0u; i < nmols; ++i) {
-    RDKit::RWMol *mol = static_cast<RDKit::RWMol *>(
+    auto mol = static_cast<RDKit::RWMol *>(
         python::extract<RDKit::ROMol *>(pymols[i])());
     mols[i] = mol;
   }

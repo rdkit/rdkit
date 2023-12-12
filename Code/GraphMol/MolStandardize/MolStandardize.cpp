@@ -195,7 +195,7 @@ void tautomerParentInPlace(RWMol &mol, const CleanupParameters &params,
 void tautomerParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                            const CleanupParameters &params,
                            bool skip_standardize) {
-  auto sfunc = [&](RWMol &m, const CleanupParameters &ps) {
+  auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     tautomerParentInPlace(m, ps, skip_standardize);
   };
   standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
@@ -211,7 +211,7 @@ RWMol *tautomerParent(const RWMol &mol, const CleanupParameters &params,
 void fragmentParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                            const CleanupParameters &params,
                            bool skip_standardize) {
-  auto sfunc = [&](RWMol &m, const CleanupParameters &ps) {
+  auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     fragmentParentInPlace(m, ps, skip_standardize);
   };
   standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
@@ -238,7 +238,7 @@ RWMol *fragmentParent(const RWMol &mol, const CleanupParameters &params,
 void stereoParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                          const CleanupParameters &params,
                          bool skip_standardize) {
-  auto sfunc = [&](RWMol &m, const CleanupParameters &ps) {
+  auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     stereoParentInPlace(m, ps, skip_standardize);
   };
   standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
@@ -260,7 +260,7 @@ RWMol *stereoParent(const RWMol &mol, const CleanupParameters &params,
 void isotopeParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                           const CleanupParameters &params,
                           bool skip_standardize) {
-  auto sfunc = [&](RWMol &m, const CleanupParameters &ps) {
+  auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     isotopeParentInPlace(m, ps, skip_standardize);
   };
   standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
@@ -286,7 +286,7 @@ RWMol *isotopeParent(const RWMol &mol, const CleanupParameters &params,
 void chargeParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                          const CleanupParameters &params,
                          bool skip_standardize) {
-  auto sfunc = [&](RWMol &m, const CleanupParameters &ps) {
+  auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     chargeParentInPlace(m, ps, skip_standardize);
   };
   standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
@@ -323,7 +323,7 @@ void superParentInPlace(RWMol &mol, const CleanupParameters &params,
 void superParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                         const CleanupParameters &params,
                         bool skip_standardize) {
-  auto sfunc = [&](RWMol &m, const CleanupParameters &ps) {
+  auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     superParentInPlace(m, ps, skip_standardize);
   };
   standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
@@ -356,7 +356,7 @@ void normalizeInPlace(RWMol &mol, const CleanupParameters &params) {
 void normalizeInPlace(std::vector<RWMol *> &mols, int numThreads,
                       const CleanupParameters &params) {
   std::unique_ptr<Normalizer> normalizer{normalizerFromParams(params)};
-  auto sfunc = [&](RWMol &m, const CleanupParameters &) {
+  auto sfunc = [&normalizer](RWMol &m, const CleanupParameters &) {
     normalizer->normalizeInPlace(m);
   };
   standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
@@ -369,7 +369,7 @@ void reionizeInPlace(RWMol &mol, const CleanupParameters &params) {
 void reionizeInPlace(std::vector<RWMol *> &mols, int numThreads,
                      const CleanupParameters &params) {
   std::unique_ptr<Reionizer> reionizer{reionizerFromParams(params)};
-  auto sfunc = [&](RWMol &m, const CleanupParameters &) {
+  auto sfunc = [&reionizer](RWMol &m, const CleanupParameters &) {
     reionizer->reionizeInPlace(m);
   };
   standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);
@@ -389,7 +389,7 @@ void removeFragmentsInPlace(RWMol &mol, const CleanupParameters &params) {
 void removeFragmentsInPlace(std::vector<RWMol *> &mols, int numThreads,
                             const CleanupParameters &params) {
   std::unique_ptr<FragmentRemover> remover{fragmentRemoverFromParams(params)};
-  auto sfunc = [&](RWMol &m, const CleanupParameters &) {
+  auto sfunc = [&remover](RWMol &m, const CleanupParameters &) {
     remover->removeInPlace(m);
   };
   standardizeMultipleMolsInPlace(sfunc, mols, numThreads, params);

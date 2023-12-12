@@ -238,7 +238,7 @@ void LargestFragmentChooser::chooseInPlace(RWMol &mol) const {
     }
 
     // Skip this fragment if equal number of atoms but weight is lower
-    double weight = 0;
+    double weight = 0.0;
     for (auto idx : frag) {
       const auto atom = mol.getAtomWithIdx(idx);
       // it's not important to be perfect here
