@@ -58,7 +58,7 @@ struct discreteValVec_wrapper {
     python::class_<DiscreteValueVect>(
         "DiscreteValueVect", disValVectDoc.c_str(),
         python::init<DiscreteValueVect::DiscreteValueType, unsigned int>(
-            python::args("self", "pkl", "len"), "Constructor"))
+            python::args("self", "valType", "length"), "Constructor"))
         .def(python::init<std::string>(python::args("self", "pkl")))
         .def("__len__", &DiscreteValueVect::getLength, python::args("self"),
              "Get the number of entries in the vector")

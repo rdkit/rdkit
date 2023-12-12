@@ -354,7 +354,7 @@ struct filtercat_wrapper {
                    python::bases<FilterMatcherBase>>(
         "SmartsMatcher", SmartsMatcherDoc,
         python::init<const std::string &>(python::args("self", "name")))
-        .def(python::init<const ROMol &>(python::args("self", "name"),
+        .def(python::init<const ROMol &>(python::args("self", "rhs"),
                                          "Construct from a molecule"))
         .def(python::init<const std::string &, const ROMol &, unsigned int,
                           unsigned int>(
@@ -532,7 +532,7 @@ struct filtercat_wrapper {
                                   python::init<>(python::args("self")))
         .def(python::init<const std::string &>(python::args("self", "binStr")))
         .def(python::init<const FilterCatalogParams &>(
-            python::args("self", "catalogs")))
+            python::args("self", "params")))
         .def(python::init<FilterCatalogParams::FilterCatalogs>(
             python::args("self", "catalogs")))
         .def("Serialize", &FilterCatalog_Serialize, python::args("self"))
