@@ -38,7 +38,7 @@ class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
   ExplicitBitVect(unsigned int size, bool bitsSet);
   ExplicitBitVect(const ExplicitBitVect &other);
   //! construct from a string pickle
-  ExplicitBitVect(const std::string &);
+  ExplicitBitVect(const std::string &pkl);
   //! construct from a text pickle
   ExplicitBitVect(const char *, const unsigned int);
   //! construct directly from a dynamic_bitset pointer
