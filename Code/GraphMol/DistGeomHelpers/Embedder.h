@@ -133,7 +133,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool verbose{false};
   double basinThresh{5.0};
   double pruneRmsThresh{-1.0};
-  bool onlyHeavyAtomsForRMS{false};
+  bool onlyHeavyAtomsForRMS{true};
   unsigned int ETversion{1};
   boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat;
   bool embedFragmentsSeparately{true};
