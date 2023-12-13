@@ -636,7 +636,8 @@ struct substructlibrary_wrapper {
              "    - idx: which molecule to return\n\n"
              "    - sanitize: if sanitize is False, return the internal "
              "molecule state [default True]\n\n"
-             "  NOTE: molecule indices start at 0\n");
+             "  NOTE: molecule indices start at 0\n")
+        .def("__len__", &MolHolderBase::size, python::args("self"));
 
     python::class_<MolHolder, boost::shared_ptr<MolHolder>,
                    python::bases<MolHolderBase>>(
@@ -753,7 +754,7 @@ struct substructlibrary_wrapper {
             python::args("self", "molecules", "fingerprints")))
         .def(python::init<boost::shared_ptr<MolHolderBase>,
                           boost::shared_ptr<KeyHolderBase>>(
-            python::args("self", "molecules", "fingerprints")))
+            python::args("self", "molecules", "keys")))
         .def(python::init<boost::shared_ptr<MolHolderBase>,
                           boost::shared_ptr<FPHolderBase>,
                           boost::shared_ptr<KeyHolderBase>>(

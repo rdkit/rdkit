@@ -37,7 +37,7 @@ def parse_args():
     default_n_cpus = max(1, multiprocessing.cpu_count() - 2)
     default_output_dirs = [os.getcwd()]
     parser = argparse.ArgumentParser()
-    parser.add_argument("--concurrency",
+    parser.add_argument("--concurrency", type=int,
                         help=f"max number of CPUs to be used (defaults to {default_n_cpus})",
                         default=default_n_cpus)
     parser.add_argument("--verbose",
