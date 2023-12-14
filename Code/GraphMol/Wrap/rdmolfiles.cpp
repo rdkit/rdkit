@@ -413,18 +413,19 @@ std::string MolFragmentToSmilesHelper2(
 std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
                                              bool breakTies = true,
                                              bool includeChirality = true,
-                                             bool includeIsotopes = true) {
+                                             bool includeIsotopes = true,
+                                             bool includeAtomMaps = true) {
   std::vector<unsigned int> ranks(mol.getNumAtoms());
-  Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes);
+  Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes,
+                      includeAtomMaps);
   return ranks;
 }
 
 std::vector<int> CanonicalRankAtomsInFragment(
     const ROMol &mol, python::object atomsToUse, python::object bondsToUse,
     python::object atomSymbols, bool breakTies = true,
-    bool includeChirality = true, bool includeIsotopes = true)
-
-{
+    bool includeChirality = true, bool includeIsotopes = true,
+    bool includeAtomMaps = true) {
   std::unique_ptr<std::vector<int>> avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
@@ -2017,6 +2018,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - breakTies: (optional) force breaking of ranked ties [default=True]\n\
     - includeChirality: (optional) use chiral information when computing rank [default=True]\n\
     - includeIsotopes: (optional) use isotope information when computing rank [default=True]\n\
+    - includeAtomMaps: (optional) use atom map information when computing rank [default=True]\n\
 \n\
   RETURNS:\n\
 \n\
@@ -2025,7 +2027,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def("CanonicalRankAtoms", CanonicalRankAtoms,
               (python::arg("mol"), python::arg("breakTies") = true,
                python::arg("includeChirality") = true,
-               python::arg("includeIsotopes") = true),
+               python::arg("includeIsotopes") = true,
+               python::arg("includeAtomMaps") = true),
               docString.c_str());
 
   docString =
@@ -2050,6 +2053,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - breakTies: (optional) force breaking of ranked ties\n\
     - includeChirality: (optional) use chiral information when computing rank [default=True]\n\
     - includeIsotopes: (optional) use isotope information when computing rank [default=True]\n\
+    - includeAtomMaps: (optional) use atom map information when computing rank [default=True]\n\
 \n\
   RETURNS:\n\
 \n\
@@ -2060,7 +2064,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       (python::arg("mol"), python::arg("atomsToUse"),
        python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
        python::arg("breakTies") = true, python::arg("includeChirality") = true,
-       python::arg("includeIsotopes") = true),
+       python::arg("includeIsotopes") = true,
+       python::arg("includeAtomMaps") = true),
       docString.c_str());
 
   python::def("CanonicalizeEnhancedStereo", CanonicalizeEnhancedStereo,

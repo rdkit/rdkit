@@ -4954,3 +4954,19 @@ M  END)CTAB"_ctab;
           Atom::ChiralType::CHI_UNSPECIFIED);
   }
 }
+
+TEST_CASE("github #6931: atom maps influencing chirality perception") {
+  SECTION("basics") {
+    auto m = "[CH3:1]C([CH3:2])(O)F"_smiles;
+    REQUIRE(m);
+    bool cleanIt = true;
+    bool force = true;
+    bool flagPossibleStereoCenters = true;
+    UseLegacyStereoPerceptionFixture reset_stereo_perception;
+    Chirality::setUseLegacyStereoPerception(false);
+    MolOps::assignStereochemistry(*m, cleanIt, force,
+                                  flagPossibleStereoCenters);
+    CHECK(
+        !m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
+  }
+}

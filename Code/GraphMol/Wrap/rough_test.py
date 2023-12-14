@@ -7990,6 +7990,14 @@ CAS<~>
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 13)
 
+  def testAtomMapsInCanonicalization(self):
+    mol = Chem.MolFromSmiles("[F:1]C([F:2])O")
+    ranks = Chem.CanonicalRankAtoms(mol,breakTies=False,includeAtomMaps=True)
+    self.assertNotEqual(ranks[0],ranks[2])
+    ranks = Chem.CanonicalRankAtoms(mol,breakTies=False,includeAtomMaps=False)
+    self.assertEqual(ranks[0],ranks[2])
+
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
