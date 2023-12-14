@@ -5320,7 +5320,6 @@ width='200px' height='200px' >
       self.assertEqual(mol.GetBondWithIdx(3).GetStereo(), Chem.BondStereo.STEREONONE)
       for bond in mol.GetBonds():
         bond.SetBondDir(Chem.BondDir.NONE)
-      Chem.SetPerceive3DChiralExplicitOnly(False)
 
       Chem.AssignStereochemistryFrom3D(mol)
       self.assertTrue(mol.GetAtomWithIdx(1).HasProp("_CIPCode"))
@@ -7531,15 +7530,11 @@ CAS<~>
     with open(fileNoWedges, 'r') as inF:
       inNoWedges = inF.read()
 
-    Chem.SetPerceive3DChiralExplicitOnly(False)
-
     m1 = Chem.MolFromMolBlock(inD, sanitize:=False, removeHs:=False, strictParsing:=True)
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inWedges)
-
-    Chem.SetPerceive3DChiralExplicitOnly(False)
 
     m1 = Chem.MolFromMolFile(fileN, sanitize:=False, removeHs:=False, strictParsing:=True)
     self.assertTrue(m1 is not None)
@@ -7547,20 +7542,21 @@ CAS<~>
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inWedges)
 
-    Chem.SetPerceive3DChiralExplicitOnly(True)
     m1 = Chem.MolFromMolBlock(inD, sanitize:=False, removeHs:=False, strictParsing:=True)
+    Chem.RemoveNonExplicit3DChirality(m1)
+
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inNoWedges)
 
-    Chem.SetPerceive3DChiralExplicitOnly(True)
     m1 = Chem.MolFromMolFile(fileN, sanitize:=False, removeHs:=False, strictParsing:=True)
+    Chem.RemoveNonExplicit3DChirality(m1)
+
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inNoWedges)
-    Chem.SetPerceive3DChiralExplicitOnly(False)
 
   def test3dChiralMrvFile(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
@@ -7579,7 +7575,6 @@ CAS<~>
       inNoWedges = inF.read()
 
 
-    Chem.SetPerceive3DChiralExplicitOnly(False)
     m1 = Chem.MolFromMrvBlock(inD, sanitize:=False, removeHs:=False)
 
     self.assertTrue(m1 is not None)
@@ -7588,7 +7583,6 @@ CAS<~>
     sys.stdout.flush()
     self.assertTrue(smi == inWedges)
 
-    Chem.SetPerceive3DChiralExplicitOnly(False)
     m1 = Chem.MolFromMrvFile(fileN, sanitize:=False, removeHs:=False)
 
     self.assertTrue(m1 is not None)
@@ -7596,20 +7590,21 @@ CAS<~>
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inWedges)
 
-    Chem.SetPerceive3DChiralExplicitOnly(True)
     m1 = Chem.MolFromMrvBlock(inD, sanitize:=False, removeHs:=False)
+    Chem.RemoveNonExplicit3DChirality(m1)
+
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inNoWedges)
 
-    Chem.SetPerceive3DChiralExplicitOnly(True)
     m1 = Chem.MolFromMrvFile(fileN, sanitize:=False, removeHs:=False)
+    Chem.RemoveNonExplicit3DChirality(m1)
+
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inNoWedges)
-    Chem.SetPerceive3DChiralExplicitOnly(True)
 
   def test3dChiralCxsmiles(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'SmilesParse', 'test_data',
@@ -7632,8 +7627,6 @@ CAS<~>
     ps.parseName = False
     ps.sanitize = False
     ps.removeHs = False
-    Chem.SetPerceive3DChiralExplicitOnly(False)
-
 
     m1 = Chem.MolFromSmiles(inD, ps)
     self.assertTrue(m1 is not None)
@@ -7641,10 +7634,11 @@ CAS<~>
     smi = Chem.MolToCXSmiles(m1)
     sys.stdout.flush()
     self.assertTrue(smi == inWedges)
-    Chem.SetPerceive3DChiralExplicitOnly(True)
 
 
     m1 = Chem.MolFromSmiles(inD, ps)
+    Chem.RemoveNonExplicit3DChirality(m1)
+
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
@@ -7652,7 +7646,6 @@ CAS<~>
     print('inWedges: ', inNoWedges)
 
     self.assertTrue(smi == inNoWedges)
-    Chem.SetPerceive3DChiralExplicitOnly(False)
 
   def testReapplyMolBlockWedging(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',

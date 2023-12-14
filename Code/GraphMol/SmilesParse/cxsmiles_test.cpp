@@ -977,10 +977,10 @@ void testOne3dChiral(const SmilesTest *smilesTest) {
 
     // second pass use onlyExplicit3D
 
-    RDKit::Chirality::setPerceive3DChiralExplicitOnly(true);
     smilesParserParams.sanitize = true;
     smilesMol =
         std::unique_ptr<RWMol>(SmilesToMol(inputSmiles, smilesParserParams));
+    RDKit::Chirality::removeNonExplicit3DChirality(*smilesMol);
 
     // test no canonical, sanitize,  no restore bond dirs
     {
@@ -1001,8 +1001,6 @@ void testOne3dChiral(const SmilesTest *smilesTest) {
 
       generateNewExpectedFilesIfSoSpecified(fName + ".NEW3D2.cxsmi", smilesOut);
       CHECK(getExpectedValue(expectedFileName) == smilesOut);
-
-      RDKit::Chirality::setPerceive3DChiralExplicitOnly(false);
     }
 
     BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -1110,7 +1108,6 @@ TEST_CASE("testAtropisomersInCXSmilesCanon") {
 }
 
 TEST_CASE("test3DChrial") {
-  RDKit::Chirality::setPerceive3DChiralExplicitOnly(false);
   std::list<SmilesTest> smiTests{
       SmilesTest("Cubane.cxsmi", true, 16, 20),
       SmilesTest("BMS-986142_3d_chiral.cxsmi", true, 72, 77),
@@ -1124,8 +1121,6 @@ TEST_CASE("test3DChrial") {
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
-
-  RDKit::Chirality::setPerceive3DChiralExplicitOnly(false);
 }
 
 void testOneSmilesCanonicalization(std::string smiles,

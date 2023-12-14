@@ -31,17 +31,11 @@ constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
 
 constexpr auto nonTetrahedralStereoEnvVar = "RDK_ENABLE_NONTETRAHEDRAL_STEREO";
 constexpr auto useLegacyStereoEnvVar = "RDK_USE_LEGACY_STEREO_PERCEPTION";
-constexpr auto perceive3DChiralExplicitOnlyEnvVar =
-    "PERCIEVE_3D_CHIRALITY_EXPLICIT_ONLY";
 constexpr bool nonTetrahedralStereoDefaultVal =
     true;  //!< whether or not nontetrahedral stereo is perceived by default
 constexpr bool useLegacyStereoDefaultVal =
     true;  //!< whether or not the legacy stereo perception code is used by
            //!< default
-constexpr bool perceive3DChiralExplicitOnlyDefaultVal =
-    false;  //!< whether or not chirality is perceived from a 3D structure only
-            //!< if it is explicitly specified by having a wedge bond
-            // the value of the wedge bond is ignored
 
 RDKIT_GRAPHMOL_EXPORT extern void setAllowNontetrahedralChirality(bool val);
 RDKIT_GRAPHMOL_EXPORT extern bool getAllowNontetrahedralChirality();
@@ -49,8 +43,10 @@ RDKIT_GRAPHMOL_EXPORT extern bool getAllowNontetrahedralChirality();
 RDKIT_GRAPHMOL_EXPORT extern void setUseLegacyStereoPerception(bool val);
 RDKIT_GRAPHMOL_EXPORT extern bool getUseLegacyStereoPerception();
 
-RDKIT_GRAPHMOL_EXPORT extern void setPerceive3DChiralExplicitOnly(bool val);
-RDKIT_GRAPHMOL_EXPORT extern bool getPerceive3DChiralExplicitOnly();
+RDKIT_GRAPHMOL_EXPORT void removeNonExplicit3DChirality(ROMol &mol);
+
+// RDKIT_GRAPHMOL_EXPORT extern void setPerceive3DChiralExplicitOnly(bool val);
+//  RDKIT_GRAPHMOL_EXPORT extern bool getPerceive3DChiralExplicitOnly();
 
 RDKIT_GRAPHMOL_EXPORT extern bool
     useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo

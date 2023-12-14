@@ -251,6 +251,7 @@ class MrvTests {
       }
 
       std::unique_ptr<RWMol> mol(GetMol(molTest));
+      RDKit::Chirality::removeNonExplicit3DChirality(*mol);
 
       if (molTest->reapplyMolBlockWedging) {
         Chirality::reapplyMolBlockWedging(*mol);
@@ -468,6 +469,7 @@ class MrvTests {
       }
 
       std::unique_ptr<RWMol> mol(GetMol(molTest));
+      RDKit::Chirality::removeNonExplicit3DChirality(*mol);
 
       Chirality::reapplyMolBlockWedging(*mol);
 
@@ -502,6 +504,8 @@ class MrvTests {
         std::string outMolStr = "";
         try {
           outMolStr = MolToMrvBlock(*mol, true, -1, true, false);
+          RDKit::Chirality::removeNonExplicit3DChirality(*mol);
+
         } catch (const RDKit::KekulizeException &e) {
           outMolStr = "";
         } catch (...) {
@@ -537,6 +541,7 @@ class MrvTests {
     try {
       std::unique_ptr<RWMol> mol(
           MrvFileToMol(fName, molTest->sanitizeFlag, false));
+      RDKit::Chirality::removeNonExplicit3DChirality(*mol);
 
       // mol  test
 
@@ -783,7 +788,6 @@ class MrvTests {
  public:
   void RunTests() {
     RDKit::Chirality::setUseLegacyStereoPerception(false);
-    RDKit::Chirality::setPerceive3DChiralExplicitOnly(true);
     printf("Using new chirality perception\n");
 
     // rxn test returning a single mol

@@ -86,6 +86,7 @@ class MolAtropTest {
 
     try {
       std::unique_ptr<RWMol> mol(MolFileToMol(fName, false, false, false));
+      RDKit::Chirality::removeNonExplicit3DChirality(*mol);
 
       TEST_ASSERT(mol != nullptr);
       TEST_ASSERT(mol->getNumAtoms() == molFileTest->atomCount)
@@ -106,6 +107,7 @@ class MolAtropTest {
       // SANITIZATION IS ON
 
       mol = std::unique_ptr<RWMol>(MolFileToMol(fName, true, false, false));
+      RDKit::Chirality::removeNonExplicit3DChirality(*mol);
 
       {
         MolOps::Kekulize(*mol);
@@ -119,6 +121,7 @@ class MolAtropTest {
       // CXSMILES
 
       mol = std::unique_ptr<RWMol>(MolFileToMol(fName, false, false, false));
+      RDKit::Chirality::removeNonExplicit3DChirality(*mol);
 
       {
         std::string expectedFileName = fName + ".expected.cxsmi";
@@ -236,8 +239,6 @@ int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   boost::logging::enable_logs("rdApp.info");
   BOOST_LOG(rdInfoLog) << " ---- Running with POSIX locale ----- " << std::endl;
-
-  RDKit::Chirality::setPerceive3DChiralExplicitOnly(true);
 
   MolAtropTest molAtropTest;
 
