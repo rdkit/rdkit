@@ -267,17 +267,17 @@ class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
   static std::shared_ptr<StereoIsomerOp> createOp();
 
   //! \override
-  std::vector<size_t> getVariationCounts() const override;
+  std::vector<size_t> getVariationCounts() const final;
 
   //! \override
   std::unique_ptr<ROMol> operator()(
-      const std::vector<size_t> &which) const override;
+      const std::vector<size_t> &which) const final;
 
   //! \override
-  void initFromMol(const ROMol &mol) override;
+  void initFromMol(const ROMol &mol) final;;
 
   //! \override
-  std::unique_ptr<MolEnumeratorOp> copy() const override;
+  std::unique_ptr<MolEnumeratorOp> copy() const final;
 
   void setOptions(StereoEnumerationOptions options);
 
