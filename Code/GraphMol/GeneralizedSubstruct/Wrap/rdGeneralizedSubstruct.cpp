@@ -111,7 +111,11 @@ BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
       .def("InitFromJSON", &ExtendedQueryMol::initFromJSON,
            python::args("self", "text"))
       .def("ToBinary", XQMolToBinary, python::args("self"))
-      .def("ToJSON", &ExtendedQueryMol::toJSON, python::args("self"));
+      .def("ToJSON", &ExtendedQueryMol::toJSON, python::args("self"))
+      .def("PatternFingerprintQuery",
+           &ExtendedQueryMol::patternFingerprintQuery,
+           (python::arg("self"), python::arg("fingerprintSize") = 2048),
+           python::return_value_policy<python::manage_new_object>());
 
   python::def(
       "MolHasSubstructMatch", &hasSubstructHelper,
@@ -128,6 +132,12 @@ BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
       (python::arg("mol"), python::arg("query"),
        python::arg("params") = python::object()),
       "returns all matches (if any) of a molecule to a generalized substructure query");
+
+  python::def(
+      "PatternFingerprintTarget", &patternFingerprintTargetMol,
+      (python::arg("target"), python::arg("fingerprintSize") = 2048),
+      python::return_value_policy<python::manage_new_object>(),
+      "Creates a pattern fingerprint for a target molecule that is compatible with an extended query");
 
   python::def("CreateExtendedQueryMol", createExtendedQueryMolHelper,
               (python::arg("mol"), python::arg("doEnumeration") = true,

@@ -19,6 +19,8 @@
 
 #include "XQMol.h"
 
+#include "GraphMol/Fingerprints/Fingerprints.h"
+
 namespace RDKit {
 namespace GeneralizedSubstruct {
 
@@ -52,6 +54,35 @@ void ExtendedQueryMol::initFromOther(const ExtendedQueryMol &other) {
     xqmol = std::move(tb);
   }
 }
+
+ExplicitBitVect *ExtendedQueryMol::patternFingerprintQuery(
+    unsigned fpSize) const {
+  if (std::holds_alternative<ExtendedQueryMol::RWMol_T>(xqmol)) {
+    return PatternFingerprintMol(*std::get<RWMol_T>(xqmol), fpSize, nullptr,
+                                 nullptr, true);
+  } if (std::holds_alternative<MolBundle_T>(xqmol)) {
+    return PatternFingerprintMol(*std::get<MolBundle_T>(xqmol), fpSize, nullptr,
+                                 true);
+  } if (std::holds_alternative<TautomerQuery_T>(xqmol)) {
+    return std::get<TautomerQuery_T>(xqmol)->patternFingerprintTemplate(fpSize);
+  } if (std::holds_alternative<TautomerBundle_T>(xqmol)) {
+    const auto &tautomerBundle = std::get<TautomerBundle_T>(xqmol);
+    ExplicitBitVect *res = nullptr;
+    for (const auto &tautomer : *tautomerBundle) {
+      const auto molfp = tautomer->patternFingerprintTemplate(fpSize);
+      if (!res) {
+        res = molfp;
+      } else {
+        *res &= *molfp;
+        delete molfp;
+      }
+    }
+    return res;
+  }
+
+  throw std::invalid_argument("Unknown extended query molecule type");
+}
+
 
 std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ExtendedQueryMol &query,
@@ -151,6 +182,11 @@ ExtendedQueryMol createExtendedQueryMol(const RWMol &mol, bool doEnumeration,
       return {std::move(tautomerBundle)};
     }
   }
+}
+
+ExplicitBitVect* patternFingerprintTargetMol(
+  const ROMol& mol, unsigned fpSize) {
+  return PatternFingerprintMol(mol, fpSize, nullptr, nullptr, true);
 }
 }  // namespace GeneralizedSubstruct
 }  // namespace RDKit
