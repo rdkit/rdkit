@@ -45,9 +45,6 @@ RDKIT_GRAPHMOL_EXPORT extern bool getUseLegacyStereoPerception();
 
 RDKIT_GRAPHMOL_EXPORT void removeNonExplicit3DChirality(ROMol &mol);
 
-// RDKIT_GRAPHMOL_EXPORT extern void setPerceive3DChiralExplicitOnly(bool val);
-//  RDKIT_GRAPHMOL_EXPORT extern bool getPerceive3DChiralExplicitOnly();
-
 RDKIT_GRAPHMOL_EXPORT extern bool
     useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
                                 //!< perception code

@@ -26,16 +26,15 @@ AtropisomerBond::AtropisomerBond(const CIPMol &mol, Bond *bond, Atom *startAtom,
   CHECK_INVARIANT(d_cfg == Bond::STEREOATROPCW || d_cfg == Bond::STEREOATROPCCW,
                   "bad config")
 
-  Atom *atoms[2];
-  std::vector<Bond *> bonds[2];  // one vector for each end - each one
-                                 // should end up with 1 ro 2 entries
-
-  if (!Atropisomers::getAtropisomerAtomsAndBonds(bond, atoms, bonds,
+  AtropAtomAndBondVec atomAndBondVecs[2];
+  if (!Atropisomers::getAtropisomerAtomsAndBonds(bond, atomAndBondVecs,
                                                  bond->getOwningMol())) {
     return;  // not an atropisomer
   }
-  auto atom1 = mol.getAtom(bonds[0][0]->getOtherAtomIdx(atoms[0]->getIdx()));
-  auto atom2 = mol.getAtom(bonds[1][0]->getOtherAtomIdx(atoms[1]->getIdx()));
+  auto atom1 = mol.getAtom(atomAndBondVecs[0].second[0]->getOtherAtomIdx(
+      atomAndBondVecs[0].first->getIdx()));
+  auto atom2 = mol.getAtom(atomAndBondVecs[1].second[0]->getOtherAtomIdx(
+      atomAndBondVecs[1].first->getIdx()));
 
   std::vector<Atom *> anchors{atom1, atom2};
 

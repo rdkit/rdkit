@@ -434,25 +434,34 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
 
     if (res.stype == Bond::BondStereo::STEREOATROPCCW ||
         res.stype == Bond::BondStereo::STEREOATROPCW) {
-      Atom *atropAtoms[2];
-      std::vector<Bond *> atropBonds[2];  // one vector for each end - each one
-                                          // should end up with 1 ro 2 entries
-
+      AtropAtomAndBondVec atropAtomAndBondVecs[2];
       CHECK_INVARIANT(Atropisomers::getAtropisomerAtomsAndBonds(
-                          bond, atropAtoms, atropBonds, bond->getOwningMol()),
+                          bond, atropAtomAndBondVecs, bond->getOwningMol()),
                       "Could not find atropisomer controlling atoms")
 
       res.controllingAtoms[0] =
-          &atoms[atropBonds[0][0]->getOtherAtom(atropAtoms[0])->getIdx()];
+          &atoms[atropAtomAndBondVecs[0]
+                     .second[0]
+                     ->getOtherAtom(atropAtomAndBondVecs[0].first)
+                     ->getIdx()];
       res.controllingAtoms[2] =
-          &atoms[atropBonds[1][0]->getOtherAtom(atropAtoms[1])->getIdx()];
-      if (atropBonds[0].size() > 1) {
+          &atoms[atropAtomAndBondVecs[1]
+                     .second[0]
+                     ->getOtherAtom(atropAtomAndBondVecs[1].first)
+                     ->getIdx()];
+      if (atropAtomAndBondVecs[0].second.size() > 1) {
         res.controllingAtoms[1] =
-            &atoms[atropBonds[0][1]->getOtherAtom(atropAtoms[0])->getIdx()];
+            &atoms[atropAtomAndBondVecs[0]
+                       .second[1]
+                       ->getOtherAtom(atropAtomAndBondVecs[0].first)
+                       ->getIdx()];
       }
-      if (atropBonds[1].size() > 1) {
+      if (atropAtomAndBondVecs[1].second.size() > 1) {
         res.controllingAtoms[3] =
-            &atoms[atropBonds[1][1]->getOtherAtom(atropAtoms[1])->getIdx()];
+            &atoms[atropAtomAndBondVecs[1]
+                       .second[1]
+                       ->getOtherAtom(atropAtomAndBondVecs[1].first)
+                       ->getIdx()];
       }
     }
   }
