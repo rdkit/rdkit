@@ -21,7 +21,7 @@ rdkit_library(FileParsers
               MultithreadedMolSupplier.cpp
               MultithreadedSmilesMolSupplier.cpp
               MultithreadedSDMolSupplier.cpp
-              LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol CIPLabeler ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams} ${zlib_lib})
+              LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol  ${RDK_MAEPARSER_LIBS})
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
 rdkit_headers(CDXMLParser.h
@@ -82,7 +82,7 @@ rdkit_catch_test(cdxmlParserCatchTest cdxml_parser_catch.cpp
            LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(molfileStereoCatchTest molfile_stereo_catch.cpp
-           LINK_LIBRARIES FileParsers Subgraphs)
+           LINK_LIBRARIES FileParsers CIPLabeler Subgraphs)
 
 rdkit_catch_test(connectTheDotsTest connectTheDots_catch.cpp
            LINK_LIBRARIES FileParsers)

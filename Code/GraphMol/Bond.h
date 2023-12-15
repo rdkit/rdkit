@@ -224,13 +224,6 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   */
   unsigned int getEndAtomIdx() const { return d_endAtomIdx; }
 
-  std::vector<Atom *> getAtoms() const {
-    std::vector<Atom *> res;
-    res.push_back(getBeginAtom());
-    res.push_back(getEndAtom());
-    return res;
-  }
-
   //! given the index of one Atom, returns the index of the other
   /*!
     <b>Notes:</b>

@@ -10,7 +10,7 @@ rdkit_library(GraphMol
               NontetrahedralStereo.cpp Atropisomers.cpp
               WedgeBonds.cpp
         SHARED
-              LINK_LIBRARIES RDGeometryLib RDGeneral ${RDKit_SERIALIZATION_LIBS} )
+              LINK_LIBRARIES RDGeometryLib RDGeneral  )
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 if (RDK_USE_URF)
     target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
@@ -27,7 +27,6 @@ rdkit_headers(Atom.h
         Canon.h
         Chirality.h
         Conformer.h
-        MolFileStereochem.h  
         details.h
         GraphMol.h
         MolOps.h

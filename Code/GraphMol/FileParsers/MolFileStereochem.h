@@ -81,12 +81,6 @@ RDKIT_FILEPARSERS_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
 ///  potential stereocenters with unspecified chirality
 RDKIT_FILEPARSERS_EXPORT void markUnspecifiedStereoAsUnknown(ROMol &mol,
                                                              int confId = -1);
-//! \deprecated use Chirality::GetMolFileBondStereoInfo instead
-RDKIT_FILEPARSERS_EXPORT void GetMolFileBondStereoInfo(
-    const Bond *bond,
-    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
-        &wedgeBonds,
-    const Conformer *conf, int &dirCode, bool &reverse);
 
 //! generate enhanced stereo groups based on the status of the chiral flag
 /// property

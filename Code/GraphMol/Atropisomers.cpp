@@ -68,17 +68,17 @@ bool getAtropisomerAtomsAndBonds(const Bond *bond,
   return true;
 }
 
-bool getBondFrameOfReference(const std::vector<Atom *> atoms,
-                             const Conformer *conf, RDGeom::Point3D &xAxis,
-                             RDGeom::Point3D &yAxis, RDGeom::Point3D &zAxis) {
+bool getBondFrameOfReference(const Bond *bond, const Conformer *conf,
+                             RDGeom::Point3D &xAxis, RDGeom::Point3D &yAxis,
+                             RDGeom::Point3D &zAxis) {
   // create a frame of reference that has its X-axis along the atrop bond
   // for 2D confs, the yAxis is in the 2D plane and the zAxis is perpendicular
   // to that plane) for 3D confs  the yAxis and the zAxis are arbitrary.
 
-  PRECONDITION(atoms.size() == 2, "bad atom");
+  PRECONDITION(bond, "bad bond");
 
-  xAxis = conf->getAtomPos(atoms[1]->getIdx()) -
-          conf->getAtomPos(atoms[0]->getIdx());
+  xAxis = conf->getAtomPos(bond->getEndAtom()->getIdx()) -
+          conf->getAtomPos(bond->getBeginAtom()->getIdx());
   if (xAxis.length() < REALLY_SMALL_BOND_LEN) {
     return false;  // bond len is xero
   }
@@ -244,7 +244,7 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
   // create a frame of reference that has its X-axis along the atrop bond
 
   RDGeom::Point3D xAxis, yAxis, zAxis;
-  if (!getBondFrameOfReference(bond->getAtoms(), conf, xAxis, yAxis, zAxis)) {
+  if (!getBondFrameOfReference(bond, conf, xAxis, yAxis, zAxis)) {
     // connot percieve atroisomer
     BOOST_LOG(rdWarningLog)
         << "Failed to get a frame of reference along an atropisomer bond - atoms are: "
@@ -471,7 +471,7 @@ void getAllAtomIdsForStereoGroup(
     // figure out which atoms of the bond get wedge/hash indications
     // mark the atom with the wedge/hash
 
-    for (auto atom : bond->getAtoms()) {
+    for (auto atom : {bond->getBeginAtom(), bond->getEndAtom()}) {
       for (const auto atomBond : mol.atomBonds(atom)) {
         if (atomBond->getIdx() == bond->getIdx()) {
           continue;
@@ -517,7 +517,7 @@ bool WedgeBondFromAtropisomerOneBond2d(
 
   RDGeom::Point3D xAxis, yAxis, zAxis;
 
-  if (!getBondFrameOfReference(bond->getAtoms(), conf, xAxis, yAxis, zAxis)) {
+  if (!getBondFrameOfReference(bond, conf, xAxis, yAxis, zAxis)) {
     // connot percieve atroisomer bond
 
     BOOST_LOG(rdWarningLog)

@@ -12,7 +12,7 @@
 #include <list>
 #include <string>
 #include <vector>
-#include <iostream>
+
 #include <strstream>
 
 #include <catch2/catch_all.hpp>
