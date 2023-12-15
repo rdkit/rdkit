@@ -17,10 +17,8 @@
 %include "GraphMol/GeneralizedSubstruct/XQMol.h";
 
 %extend RDKit::GeneralizedSubstruct::ExtendedQueryMol  {
-
   std::vector< std::vector<std::pair<int, int> > > getSubstructMatches(RDKit::ROMol &target,RDKit::SubstructMatchParameters ps = RDKit::SubstructMatchParameters()){
     std::vector<RDKit::MatchVectType> mvs = SubstructMatch(target, *($self),ps);
     return mvs;
   };
-
 }
