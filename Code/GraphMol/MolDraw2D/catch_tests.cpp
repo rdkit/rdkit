@@ -323,7 +323,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub6685_3.svg", 409385402U},
     {"testGithub6685_4.svg", 1239628830U},
     {"bad_lasso_1.svg", 726527516U},
-    {"testGithub6869.svg", 1554428830U}};
+    {"testGithub6968.svg", 1554428830U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -9337,9 +9337,6 @@ TEST_CASE("Github6968 - bad bond highlights with triple bonds") {
       drawer.drawMolecule(*mol, "", &highlightAtoms, &highlightBonds);
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
-      std::ofstream outs("testGithub6869.svg");
-      outs << text;
-      outs.close();
       std::regex bond(
           "<path class='bond-(\\d+) atom-(\\d+) atom-(\\d+)' d='M (-?\\d+.\\d+),"
           "(-?\\d+.\\d+) L (-?\\d+.\\d+),(-?\\d+.\\d+) L (-?\\d+.\\d+),"
@@ -9361,7 +9358,10 @@ TEST_CASE("Github6968 - bad bond highlights with triple bonds") {
         }
       }
       if (testNum == 0) {
-        check_file_hash("testGithub6869.svg");
+        std::ofstream outs("testGithub6968.svg");
+        outs << text;
+        outs.close();
+        check_file_hash("testGithub6968.svg");
       }
       std::shuffle(atOrder.begin(), atOrder.end(),
                    std::mt19937{std::random_device{}()});
