@@ -14,8 +14,6 @@
 %ignore ExtendedQueryMol(
       std::unique_ptr<std::vector<std::unique_ptr<TautomerQuery>>> tqs);
 %ignore xqmol;
-%newobject RDKit::GeneralizedSubstruct::ExtendedQueryMol::patternFingerprintQuery; 
-%newobject RDKit::GeneralizedSubstruct::patternFingerprintTargetMol;
 
 %include "GraphMol/GeneralizedSubstruct/XQMol.h";
 
