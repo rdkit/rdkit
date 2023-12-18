@@ -3370,6 +3370,17 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
     // There is only 1 intersection to deal with, which is easier - just
     // a slanted end.
     auto end3Cds = atCds_[end1HighNbrs[0]->getIdx()];
+    auto b1 = end2Cds.directionVector(end1Cds);
+    auto b2 = end2Cds.directionVector(end3Cds);
+    if (1.0 - fabs(b1.dotProduct(b2)) < 1.0e-4) {
+      // move end3 by a small amount to create an inner and outer
+      auto d32 = end3Cds - end2Cds;
+      Point2D d32transp(d32.y, -d32.x);
+      d32transp *= 0.1;
+      end3Cds += d32transp;
+    }
+    // The moved end is only used to construct ins1 and ins2 wrt
+    // end1Cds and end2Cds so there's no need do anything more.
     auto ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
     points.push_back(ins1);
     auto ins2 = innerPoint(end1Cds, end2Cds, end3Cds, -1.0);

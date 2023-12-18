@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <catch2/catch_all.hpp>
+#include <numeric>
+#include <random>
 
 #include <GraphMol/RDKitBase.h>
 
@@ -320,7 +322,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub6685_2.svg", 116380465U},
     {"testGithub6685_3.svg", 409385402U},
     {"testGithub6685_4.svg", 1239628830U},
-    {"bad_lasso_1.svg", 726527516U}};
+    {"bad_lasso_1.svg", 726527516U},
+    {"testGithub6968.svg", 1554428830U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -9309,4 +9312,59 @@ TEST_CASE("Github 6749 : various bad things in the lasso highlighting") {
                     std::sregex_iterator()));
   CHECK(match_count == 3);
   check_file_hash(baseName + "1.svg");
+}
+
+TEST_CASE("Github6968 - bad bond highlights with triple bonds") {
+  // The issue is that in the linear highlight across the triple bond,
+  // some of the highlights didn't appear, and others were
+  // triangular - the corners of the rectangle weren't all distinct.
+  auto m = "ClCC#CCOC(=O)Nc1cccc(c1)Cl"_smiles;
+  std::vector<unsigned int> atOrder(m->getNumAtoms(), 0);
+  std::iota(atOrder.begin(), atOrder.end(), 0);
+  REQUIRE(m);
+  {
+    // Because I worried about the atom order giving a non-general
+    // result, repeat it 10 times with atoms in random order.
+    for (int testNum = 0; testNum < 10; ++testNum) {
+      std::unique_ptr<ROMol> mol(MolOps::renumberAtoms(*m, atOrder));
+      MolDraw2DSVG drawer(350, 300);
+      std::vector<int> highlightAtoms = {};
+      // Helpfully, the atoms are scrambled but not the bonds.
+      std::vector<int> highlightBonds = {1, 2, 3};
+
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawOptions().addBondIndices = true;
+      drawer.drawMolecule(*mol, "", &highlightAtoms, &highlightBonds);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::regex bond(
+          "<path class='bond-(\\d+) atom-(\\d+) atom-(\\d+)' d='M (-?\\d+.\\d+),"
+          "(-?\\d+.\\d+) L (-?\\d+.\\d+),(-?\\d+.\\d+) L (-?\\d+.\\d+),"
+          "(-?\\d+.\\d+) L (-?\\d+.\\d+),(-?\\d+.\\d+) Z' style=");
+
+      auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond);
+      auto match_end = std::sregex_iterator();
+      for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+        std::smatch match = *i;
+        std::vector<Point2D> pts;
+        for (int j = 4; j < 12; j += 2) {
+          pts.push_back(Point2D(stod(match[j]), stod(match[j + 1])));
+        }
+        // None of the points should be on top of each other
+        for (size_t j = 0; j < 3; ++j) {
+          for (size_t k = j + 1; k < 4; ++k) {
+            CHECK((pts[j] - pts[k]).lengthSq() > 1.0e-4);
+          }
+        }
+      }
+      if (testNum == 0) {
+        std::ofstream outs("testGithub6968.svg");
+        outs << text;
+        outs.close();
+        check_file_hash("testGithub6968.svg");
+      }
+      std::shuffle(atOrder.begin(), atOrder.end(),
+                   std::mt19937{std::random_device{}()});
+    }
+  }
 }
