@@ -33,8 +33,6 @@ bool fingerprintsMatch(const ROMol& target, const ExtendedQueryMol& xqm) {
   CHECK(queryFingerprint->getNumOnBits() > 0);
   CHECK(targetFingerprint->getNumOnBits() > 0);
   const auto match = AllProbeBitsMatch(*queryFingerprint, *targetFingerprint);
-  delete queryFingerprint;
-  delete targetFingerprint;
   return match;
 }
 

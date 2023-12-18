@@ -114,8 +114,7 @@ BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
       .def("ToJSON", &ExtendedQueryMol::toJSON, python::args("self"))
       .def("PatternFingerprintQuery",
            &ExtendedQueryMol::patternFingerprintQuery,
-           (python::arg("self"), python::arg("fingerprintSize") = 2048),
-           python::return_value_policy<python::manage_new_object>());
+           (python::arg("self"), python::arg("fingerprintSize") = 2048));
 
   python::def(
       "MolHasSubstructMatch", &hasSubstructHelper,
@@ -136,7 +135,6 @@ BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
   python::def(
       "PatternFingerprintTarget", &patternFingerprintTargetMol,
       (python::arg("target"), python::arg("fingerprintSize") = 2048),
-      python::return_value_policy<python::manage_new_object>(),
       "Creates a pattern fingerprint for a target molecule that is compatible with an extended query");
 
   python::def("CreateExtendedQueryMol", createExtendedQueryMolHelper,

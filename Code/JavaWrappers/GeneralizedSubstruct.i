@@ -1,4 +1,7 @@
 
+%include <std_unique_ptr.i>
+%unique_ptr(ExplicitBitVect)
+
 %{
 #include <GraphMol/GeneralizedSubstruct/XQMol.h>
 %}
