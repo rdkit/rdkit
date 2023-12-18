@@ -11,6 +11,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <RDGeneral/RDLog.h>
+#include <GraphMol/test_fixtures.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -564,8 +565,7 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
   }
 
   SECTION("github #5283") {
-    auto oVal = Chirality::getUseLegacyStereoPerception();
-    Chirality::setUseLegacyStereoPerception(false);
+    UseLegacyStereoPerceptionFixture useLegacy(false);
     auto m =
         "Cc3nn(CC(=O)N2CCN(c1ccccc1)CC2)c(C)c3/N=N\\c6ccc(CNC(=O)CCC(=O)Nc4cccc5C(=O)NCc45)cc6"_smiles;
     REQUIRE(m);
@@ -585,7 +585,6 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
       REQUIRE(bnd->getBondType() == Bond::BondType::DOUBLE);
       CHECK(bnd->getStereo() == m->getBondWithIdx(bnd->getIdx())->getStereo());
     }
-    Chirality::setUseLegacyStereoPerception(oVal);
   }
 }
 

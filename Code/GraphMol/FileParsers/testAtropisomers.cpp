@@ -160,7 +160,7 @@ class MolAtropTest {
   void RunTests() {
     // the molecule tests
 
-    if (testToRun == "sdfTests") {
+    if (testToRun == "" || testToRun == "sdfTests") {
       std::list<MolTest> sdfTests{
           MolTest("AtropTest.sdf", true, 38, 41),
           MolTest("AtropManyChiralsEnhanced.sdf", true, 20, 20),

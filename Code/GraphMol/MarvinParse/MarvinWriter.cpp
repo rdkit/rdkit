@@ -489,12 +489,6 @@ class MarvinCMLWriter {
       }
       auto wedgeBonds = Chirality::pickBondsToWedge(*mol, nullptr, confToUse);
 
-      // if (conf) {
-      //   Atropisomers::wedgeBondsFromAtropisomers(*mol, conf, wedgeBonds);
-      // } else if (conf3d) {
-      //   Atropisomers::wedgeBondsFromAtropisomers(*mol, conf3d, wedgeBonds);
-      // }
-
       for (auto bond : mol->bonds()) {
         auto marvinBond = new MarvinBond();
         marvinMol->pushOwnedBond(marvinBond);

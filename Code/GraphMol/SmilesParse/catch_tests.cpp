@@ -20,6 +20,7 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/test_fixtures.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -2254,8 +2255,7 @@ M  END
 }
 
 TEST_CASE("ring bond stereochemistry in CXSMILES") {
-  auto oval = Chirality::getUseLegacyStereoPerception();
-  Chirality::setUseLegacyStereoPerception(false);
+  UseLegacyStereoPerceptionFixture useLegacy(false);
   SECTION("basic reading") {
     std::vector<std::pair<std::string, Bond::BondStereo>> tests = {
         {"C1CCCC/C=C/CCC1 |t:5|", Bond::BondStereo::STEREOTRANS},
@@ -2313,7 +2313,6 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
       CHECK(cxsmi == val);
     }
   }
-  Chirality::setUseLegacyStereoPerception(oval);
 }
 
 TEST_CASE(
@@ -2334,28 +2333,22 @@ TEST_CASE(
     CHECK(b->getStereo() == Bond::STEREOANY);
   }
   SECTION("'c:' label") {
-    auto oval = Chirality::getUseLegacyStereoPerception();
-    Chirality::setUseLegacyStereoPerception(false);
+    UseLegacyStereoPerceptionFixture useLegacy(false);
 
     auto m = "CC1CN1C=CC1CC1 |c:5|"_smiles;
     REQUIRE(m);
     auto b = m->getBondWithIdx(4);
     REQUIRE(b->getBondType() == Bond::BondType::DOUBLE);
     CHECK(b->getStereo() == Bond::STEREOCIS);
-
-    Chirality::setUseLegacyStereoPerception(oval);
   }
   SECTION("'t:' label") {
-    auto oval = Chirality::getUseLegacyStereoPerception();
-    Chirality::setUseLegacyStereoPerception(false);
+    UseLegacyStereoPerceptionFixture useLegacy(false);
 
     auto m = "CC1CN1C=CC1CC1 |t:5|"_smiles;
     REQUIRE(m);
     auto b = m->getBondWithIdx(4);
     REQUIRE(b->getBondType() == Bond::BondType::DOUBLE);
     CHECK(b->getStereo() == Bond::STEREOTRANS);
-
-    Chirality::setUseLegacyStereoPerception(oval);
   }
 }
 
