@@ -514,3 +514,30 @@ TEST_CASE("Github #6017: add maxRecursiveMatches to SubstructMatchParameters") {
     }
   }
 }
+
+TEST_CASE(
+    "GitHub Issue #6983: SubstructMatch maxRecursiveMatches is not being honored",
+    "[bug][substruct]") {
+  constexpr unsigned num_atoms = 1005;
+  std::string smiles;
+  smiles.reserve(num_atoms * 2);
+
+  // 'smiles' already contains 1 O, so start from 1
+  // so we end up with 'num_atoms' water mols
+  smiles += "O";
+  for (unsigned i = 1; i < num_atoms; ++i) {
+    smiles += ".O";
+  }
+  std::unique_ptr<RWMol> m(SmilesToMol(smiles));
+  auto q = "[$(O)]"_smarts;
+  REQUIRE(m);
+  REQUIRE(q);
+
+  SubstructMatchParameters ps;
+  ps.maxMatches = num_atoms * 2;
+  ps.maxRecursiveMatches = ps.maxMatches;
+  {
+    auto matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == num_atoms);
+  }
+}
