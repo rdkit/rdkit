@@ -2488,14 +2488,11 @@ Defining Atropisomers
 At least one of the neighbor bonds of one of the atoms of the potential atropisomer bond must be a single or aromatic bond, and must have a bond direction that is either "wedged" or "hashed". If any of the neighbor bonds is marked as "sqwiggly", the bond is considered to have "Any" stereochemistry.
 Example structure:
 	N1(C2C(C)=CC=CC=2I)C(C)=CC=C1Br |wU:1.1,(16.58,-10.58,;16.58,-9.58,;17.45,-9.08,;18.31,-9.57,;17.44,-8.08,;16.58,-7.58,;15.71,-8.08,;15.71,-9.08,;14.84,-9.58,;17.38,-11.17,;18.34,-10.87,;17.08,-12.12,;16.07,-12.12,;15.77,-11.17,;14.81,-10.87,)|
-If more than one of the neighbor bonds are wedged or hashed, they must be consistent.  For example,
-if two neighbor bonds on the same end atom are wedged/hashed, one must be a wedge and the other must be a hash.  If one neighbor bond is wedged/hashed, and a neighbor bond on the other end atom is 
-wedged/hashed, and the two bonds are opposite sides of the potential atropisomer bond (the dihedral 
-angle is greater than 90 degrees or less than -90 degrees), the two must both be wedges or both 
-must be hashed.
-If the two wedged/hashed neighbor bonds are on the same side of the potential atropisomer bond,
-and the two are on the same side of the potential atropisomer bond (the dihedral angle is less
-than 90 degrees and greater than -90 degrees), one must be a wedge and the other a hash.
+If more than one of the neighbor bonds are wedged or hashed, they must be consistent.  
+
+For example, if two neighbor bonds on the same end atom are wedged/hashed, one must be a wedge and the other must be a hash.  
+If neighbor bonds on different ends of the atropisomer bond are wedged, and the two bonds are opposite sides of the potential atropisomer bond (the dihedral angle is greater than 90 degrees or less than -90 degrees), the two must both be wedges or both must be hashed.
+If the two wedged/hashed neighbor bonds are on the same side of the potential atropisomer bond (the dihedral angle is less than 90 degrees and greater than -90 degrees), one must be a wedge and the other a hash.
 
 Examples – valid atropisomers with multiple wedges:
 	N1(C2=C(I)C=CC=C2C)C(Br)=CC=C1C |wU:1.7,0.9,(15.40,-10.23,;15.40,-9.23,;14.54,-8.73,;13.67,-9.23,;14.54,-7.73,;15.40,-7.23,;16.26,-7.73,;16.27,-8.73,;17.13,-9.22,;14.60,-10.82,;13.64,-10.52,;14.90,-11.77,;15.90,-11.77,;16.20,-10.82,;17.16,-10.52,)|
@@ -2505,7 +2502,7 @@ Examples – invalid atropisomers with multiple wedges:
 N1(C(C)=CC=C1Br)C1C(C)=CC=CC=1I |wU:0.5,7.8,(12.97,-10.71,;13.78,-11.30,;14.74,-11.00,;13.48,-12.25,;12.47,-12.25,;12.17,-11.30,;11.21,-11.00,;12.97,-9.70,;13.85,-9.20,;14.71,-9.69,;13.84,-8.20,;12.97,-7.70,;12.11,-8.20,;12.11,-9.20,;11.24,-9.70,)|
 N1(C2=C(I)C=CC=C2C)C(Br)=CC=C1C |wU:0.9,0.14,(16.20,-9.43,;16.20,-8.43,;15.34,-7.93,;14.47,-8.43,;15.34,-6.93,;16.20,-6.43,;17.06,-6.93,;17.07,-7.93,;17.93,-8.42,;15.40,-10.02,;14.44,-9.72,;15.70,-10.97,;16.70,-10.97,;17.00,-10.02,;17.96,-9.72,)|
 
-Note:  no attempt is made to determine if the bond is rotationally constrained.  If the bond meets
+Note: the RDKit software makes no attempt to determine if the bond is rotationally constrained.  If the bond meets
 the requirements above, it is marked as an atropisomer.
 
 Formats supporting Atropisomers
