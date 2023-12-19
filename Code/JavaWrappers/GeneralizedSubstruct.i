@@ -1,12 +1,20 @@
 
+
+#if SWIG_VERSION >= 0x040101                 
 %include <std_unique_ptr.i>
 %unique_ptr(ExplicitBitVect)
+#endif
 
 %{
 #include <GraphMol/GeneralizedSubstruct/XQMol.h>
 %}
 // %include "std_unique_ptr.i"
 // %unique_ptr(ExtendedQueryMol)
+
+#if SWIG_VERSION < 0x040101                 
+%ignore patternFingerprintTargetMol(const ROMol &mol, unsigned int fpSize = 2048U);
+%ignore patternFingerprintQuery(unsigned int fpSize = 2048U) const;
+#endif
 
 %ignore ExtendedQueryMol(std::unique_ptr<RWMol> mol);
 %ignore ExtendedQueryMol(std::unique_ptr<MolBundle> mol);
