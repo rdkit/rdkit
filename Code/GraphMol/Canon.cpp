@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/new_canon.h>
 
 #include <GraphMol/SmilesParse/SmilesParseOps.h>
 #include <GraphMol/RDKitQueries.h>
@@ -1265,9 +1266,6 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     std::cerr<<"----------------------------------------->"<<std::endl;
 #endif
 }
-void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
-                  bool breakTies = true, bool includeChirality = true,
-                  bool includeIsotopes = true);
 void canonicalizeEnhancedStereo(ROMol &mol,
                                 const std::vector<unsigned int> *atomRanks) {
   const auto &sgs = mol.getStereoGroups();

@@ -730,7 +730,8 @@ void updateAtomNeighborNumSwaps(
 }
 
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
-                  bool breakTies, bool includeChirality, bool includeIsotopes) {
+                  bool breakTies, bool includeChirality, bool includeIsotopes,
+                  bool includeAtomMaps) {
   if (!mol.getNumAtoms()) {
     return;
   }
@@ -748,6 +749,7 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   ftor.df_useIsotopes = includeIsotopes;
   ftor.df_useChirality = includeChirality;
   ftor.df_useChiralityRings = includeChirality;
+  ftor.df_useAtomMaps = includeAtomMaps;
 
   auto order = std::make_unique<int[]>(mol.getNumAtoms());
   detail::rankWithFunctor(ftor, breakTies, order.get(), true, includeChirality);
@@ -767,7 +769,7 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                        const std::vector<std::string> *atomSymbols,
                        const std::vector<std::string> *bondSymbols,
                        bool breakTies, bool includeChirality,
-                       bool includeIsotopes) {
+                       bool includeIsotopes, bool includeAtomMaps) {
   PRECONDITION(atomsInPlay.size() == mol.getNumAtoms(), "bad atomsInPlay size");
   PRECONDITION(bondsInPlay.size() == mol.getNumBonds(), "bad bondsInPlay size");
   PRECONDITION(!atomSymbols || atomSymbols->size() == mol.getNumAtoms(),
@@ -793,6 +795,7 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   AtomCompareFunctor ftor(&atoms.front(), mol, &atomsInPlay, &bondsInPlay);
   ftor.df_useIsotopes = includeIsotopes;
   ftor.df_useChirality = includeChirality;
+  ftor.df_useAtomMaps = includeAtomMaps;
 
   auto order = std::make_unique<int[]>(mol.getNumAtoms());
   detail::rankWithFunctor(ftor, breakTies, order.get(), true, includeChirality,

@@ -539,3 +539,22 @@ M  END)CTAB";
 
   CHECK(countStereoBonds(*mol) == 2);
 }
+
+TEST_CASE("atom mapping in canonicalization") {
+  SECTION("basics") {
+    auto m = "[F:1]C([F:2])O"_smiles;
+    REQUIRE(m);
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    bool includeChirality = true;
+    bool includeIsotopes = true;
+    bool includeAtomMaps = true;
+    Canon::rankMolAtoms(*m, ranks, breakTies, includeChirality, includeIsotopes,
+                        includeAtomMaps);
+    CHECK(ranks[0] != ranks[2]);
+    includeAtomMaps = false;
+    Canon::rankMolAtoms(*m, ranks, breakTies, includeChirality, includeIsotopes,
+                        includeAtomMaps);
+    CHECK(ranks[0] == ranks[2]);
+  }
+}

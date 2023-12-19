@@ -149,8 +149,8 @@ BOOST_PYTHON_FUNCTION_OVERLOADS(EncodeSECFPMolsBulkOverloads,
 
 BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
   python::class_<MHFPEncoder>(
-      "MHFPEncoder",
-      python::init<python::optional<unsigned int, unsigned int>>())
+      "MHFPEncoder", python::init<python::optional<unsigned int, unsigned int>>(
+                         python::args("self", "n_permutations", "seed")))
       .def("FromStringArray", FromStringArray, python::args("self", "vec"),
            "Creates a MHFP vector from a list of arbitrary strings.")
       .def("FromArray", FromArray, python::args("self", "vec"),

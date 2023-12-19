@@ -148,8 +148,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(tbl.GetAtomicNumber('C') == 6)
     self.assertTrue(feq(tbl.GetRvdw(6), 1.7))
     self.assertTrue(feq(tbl.GetRvdw("C"), 1.7))
-    self.assertTrue(feq(tbl.GetRcovalent(6), 0.680))
-    self.assertTrue(feq(tbl.GetRcovalent("C"), 0.680))
+    self.assertTrue(feq(tbl.GetRcovalent(6), 0.76))
+    self.assertTrue(feq(tbl.GetRcovalent("C"), 0.76))
     self.assertTrue(tbl.GetDefaultValence(6) == 4)
     self.assertTrue(tbl.GetDefaultValence("C") == 4)
     self.assertTrue(tuple(tbl.GetValenceList(6)) == (4, ))
@@ -7413,6 +7413,14 @@ CAS<~>
     mol = Chem.MolFromMrvBlock(ind)
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 13)
+
+  def testAtomMapsInCanonicalization(self):
+    mol = Chem.MolFromSmiles("[F:1]C([F:2])O")
+    ranks = Chem.CanonicalRankAtoms(mol,breakTies=False,includeAtomMaps=True)
+    self.assertNotEqual(ranks[0],ranks[2])
+    ranks = Chem.CanonicalRankAtoms(mol,breakTies=False,includeAtomMaps=False)
+    self.assertEqual(ranks[0],ranks[2])
+
 
 
 if __name__ == '__main__':

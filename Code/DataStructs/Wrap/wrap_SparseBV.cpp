@@ -62,7 +62,7 @@ struct SBV_wrapper {
     python::class_<SparseBitVect, boost::shared_ptr<SparseBitVect>>(
         "SparseBitVect", sbvClassDoc.c_str(),
         python::init<unsigned int>(python::args("self", "size")))
-        .def(python::init<std::string>(python::args("self", "size")))
+        .def(python::init<std::string>(python::args("self", "pkl")))
         .def("SetBit", (bool(SBV::*)(unsigned int)) & SBV::setBit,
              python::args("self", "which"),
              "Turns on a particular bit.  Returns the original state of the "
