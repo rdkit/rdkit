@@ -8,7 +8,7 @@ steps:
     conda info -a
     conda create --name rdkit_build -c conda-forge cmake \
         libboost=$(boost_version) \
-        libbost-devel=$(boost_version) \
+        libboost-devel=$(boost_version) \
         swig=4.1
   displayName: Setup build environment
 - bash: |

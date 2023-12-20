@@ -18,9 +18,9 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda create --name rdkit_build  -c conda-forge $(compiler)=$(compiler_version) \
-        libcxx=$(compiler_version) cmake=3.27.1 \
+        libcxx=$(compiler_version) cmake=3.28.1 \
         libboost=$(boost_version) \
-        libbost-devel=$(boost_version) \
+        libboost-devel=$(boost_version) \
         cairo eigen swig=4.1
     conda activate rdkit_build
   displayName: Setup build environment
