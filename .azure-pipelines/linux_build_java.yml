@@ -6,13 +6,10 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build $(python) cmake \
-        boost-cpp=$(boost_version) \
-        py-boost=$(boost_version) \
-        numpy pillow eigen pandas matplotlib-base \
-        qt=5.9.7 cairo
-    conda activate rdkit_build
-    conda install -c conda-forge pytest nbval ipykernel>=6.0 swig>=4.1
+    conda create --name rdkit_build -c conda-forge cmake \
+        libboost=$(boost_version) \
+        libbost-devel=$(boost_version) \
+        swig=4.1
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -38,9 +35,7 @@ steps:
     -DRDK_BUILD_SWIG_WRAPPERS=ON \
     -DRDK_SWIG_STATIC=ON \
     -DRDK_BUILD_THREADSAFE_SSS=ON \
-    -DRDK_TEST_MULTITHREADED=ON \
-    -DBoost_NO_SYSTEM_PATHS=ON \
-    -DBoost_NO_BOOST_CMAKE=TRUE
+    -DRDK_TEST_MULTITHREADED=ON
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
