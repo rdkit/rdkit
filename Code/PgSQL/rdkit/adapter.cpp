@@ -46,6 +46,8 @@
 #endif
 #endif
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
