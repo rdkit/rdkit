@@ -1546,7 +1546,7 @@ Here's an example of using the features:
 
 Here are the supported groups and a brief description of what they mean:
 
- ========================   =========
+ =========================  =========
   Alkyl (ALK)               alkyl side chains (not an H atom)
   AlkylH (ALH)              alkyl side chains including an H atom
   Alkenyl (AEL)             alkenyl side chains      
@@ -1581,7 +1581,7 @@ Here are the supported groups and a brief description of what they mean:
   GroupH (GH)               any group (including H atom)
   Group* (G*)               any group with a ring closure
   GroupH* (GH*)             any group with a ring closure or an H atom
- ========================   =========
+ =========================  =========
  
 For more detailed descriptions, look at the documentation for the C++ file GenericGroups.h
 
@@ -2162,6 +2162,114 @@ Some concrete examples of this:
   True
   >>> m_OR.HasSubstructMatch(m_AND,ps)
   False
+
+Atropisomeric Bonds
+*******************
+
+Some single bonds have restricted rotation because of steric interactions
+between the groups on adjacent atoms. If the groups on the adjacent atoms are
+different from each other, chirality can be induced. An atropisomer bond is such
+a restricted rotation bond. 
+
+The requirements for a bond to be eligible for atropisomerism in the RDKit are:
+
+- It bond must be a single bond between SP2 hybridized atoms.
+- The neighboring bonds must be single, double or aromatic. 
+- If there are two groups on either end, those groups must be different as per CIP rules. 
+- Currently the RDKit does not consider ring bonds as potential atropisomer bonds. 
+- The molecule must have coordinates for atropisomer bonds to be interpreted.
+
+The definition of potential atropisomer bonds is based on the wedging of
+adjacent bonds. 
+
+Defining Atropisomers
+=====================
+
+At least one of the neighbor bonds of one of the atoms of the potential
+atropisomer bond must be a single or aromatic bond, and must have a bond
+direction that is either "wedged" or "hashed". If any of the neighbor bonds is
+marked as "sqwiggly", the bond is considered to have "Any" stereochemistry.
+Example structure:
+
+.. image:: images/atrop_example1.png
+
+If more than one of the neighbor bonds are wedged or hashed, they must be consistent. 
+
+For example, if two neighbor bonds on the same end atom are wedged/hashed, one
+must be a wedge and the other must be a hash. If neighbor bonds on different
+ends of the atropisomer bond are wedged, and the two bonds are opposite sides of
+the potential atropisomer bond (the dihedral angle is greater than 90 degrees or
+less than -90 degrees), the two must both be wedges or both must be hashed. If
+the two wedged/hashed neighbor bonds are on the same side of the potential
+atropisomer bond (the dihedral angle is less than 90 degrees and greater than
+-90 degrees), one must be a wedge and the other a hash.
+
+Examples – valid atropisomers with multiple wedges:
+
+.. image:: images/atrop_example2.png
+
+
+Examples – invalid atropisomers with multiple wedges:
+
+.. image:: images/atrop_example3.png
+
+
+Note: the RDKit software makes no attempt to determine if the bond is actually
+rotationally constrained. If the bond meets the requirements above, it is
+marked as an atropisomer.
+
+Formats supporting atropisomers
+===============================
+
+Atropisomers are supported for molecule parsing and writing in Mol, MRV, and CXSmiles formats. 
+For reactions, atropisomers are supported for in rxn, MRV and CXSmiles formats.
+Atropisomers can be parsed from a CDXML file.
+
+Enhanced Stereochemistry
+========================
+
+Atropisomers can be part of Enhanced Stereochemistry Groups (Or, And, or
+Absolute). This is indicated by marking one or both of the atropisomer bond's
+atoms as being in the enhanced Stereo Group
+
+Example:
+
+
+.. image:: images/atrop_example4.png
+
+
+3D Coordinates for Input of Atropisomers
+========================================
+
+If 3D coordinates are available (and 2D coordinates are not), the atropisomer
+bond is marked only if one of the neighbor bonds is wedged/hashed. The
+wedge/hash information is ignored except for signaling the presence of the
+atropisomer. The actual configuration is determined by the 3D coordinates.
+
+Here's an example. The drawing at the left shows a 3D structure with a wedged
+bond on one end of the atropisomer bond. The drawing at the right shows a 2D
+drawing of the same structure. In both cases, the atropisomer bond is
+highlighted in red. Notice that the bond wedging in the 3D structure is
+inconsistent with the 3D coordinates; it's just used to indicate that there is
+an atropisomer bond, the actual stereochemistry of the bond is determined by the
+3D coordinates.
+
+.. image:: images/atrop_example5.png
+
+
+Validation of Atropisomers
+==========================
+
+Invalid atropisomers (for example, those with two equivalent groups on one end)
+will be removed when reading molecules in with sanitization enabled or by
+calling ``cleanupAtropisomers(mol)``.
+
+Searching and Canonicalization
+==============================
+
+Atropisomers are supported in the canonicalization algorithm of RDKit. They are ignored in 
+substructure searching and similarity searching at this time.
+
 
 
 Query Features in Molecule Drawings
