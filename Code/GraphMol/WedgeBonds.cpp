@@ -250,9 +250,6 @@ Bond::BondDir determineBondWedgeState(
   } else {
     return determineBondWedgeState(bond, wbi->second->getIdx(), conf);
   }
-
-  unsigned int waid = wbi->second->getIdx();
-  return determineBondWedgeState(bond, waid, conf);
 }
 
 // Logic for two wedges at one atom (based on IUPAC stuff)
@@ -265,7 +262,7 @@ Bond::BondDir determineBondWedgeState(
 // returns idx of that bond.
 int pickBondToWedge(
     const Atom *atom, const ROMol &mol, const INT_VECT &nChiralNbrs,
-    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &resSoFar,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
     int noNbrs) {
   // here is what we are going to do
   // - at each chiral center look for a bond that is begins at the atom and
@@ -284,7 +281,7 @@ int pickBondToWedge(
     }
 
     int bid = bond->getIdx();
-    if (resSoFar.find(bid) == resSoFar.end()) {
+    if (wedgeBonds.find(bid) == wedgeBonds.end()) {
       // very strong preference for Hs:
       if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
         nbrScores.emplace_back(-1000000,
@@ -321,10 +318,11 @@ int pickBondToWedge(
     }
   }
   // There's still one situation where this whole thing can fail: an unlucky
-  // situation where all neighbors of all neighbors of an atom are chiral and
-  // that atom ends up being the last one picked for stereochem assignment. This
-  // also happens in cases where the chiral atom doesn't have all of its
-  // neighbors (like when working with partially sanitized fragments)
+  // situation where all neighbors of all neighbors of an atom are chiral
+  // and that atom ends up being the last one picked for stereochem
+  // assignment. This also happens in cases where the chiral atom doesn't
+  // have all of its neighbors (like when working with partially sanitized
+  // fragments)
   //
   // We'll bail here by returning -1
   if (nbrScores.empty()) {

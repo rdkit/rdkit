@@ -23,6 +23,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MarvinParse/MarvinParser.h>
+#include <GraphMol/test_fixtures.h>
 
 #include "CIPLabeler.h"
 #include "Digraph.h"
@@ -469,7 +470,7 @@ TEST_CASE("para-stereochemistry", "[accurateCIP]") {
 TEST_CASE("para-stereochemistry2", "[accurateCIP]") {
   SECTION("example 1") {
     // example with one pseudo symmetry
-    RDKit::Chirality::setUseLegacyStereoPerception(false);
+    UseLegacyStereoPerceptionFixture useLegacy(false);
 
     auto mol = "OC(=O)[C@H]1CC[C@@H](CC1)O[C@@H](F)Cl"_smiles;
     REQUIRE(mol);
@@ -485,12 +486,11 @@ TEST_CASE("para-stereochemistry2", "[accurateCIP]") {
     CHECK(mol->getAtomWithIdx(10)->getPropIfPresent(common_properties::_CIPCode,
                                                     chirality));
     CHECK(chirality == "S");
-    RDKit::Chirality::setUseLegacyStereoPerception(true);
   }
 
   SECTION("example 2") {
     // example with one pseudo symmetry
-    RDKit::Chirality::setUseLegacyStereoPerception(false);
+    UseLegacyStereoPerceptionFixture useLegacy(false);
 
     auto mol = "OC(=O)[C@H]1CC[C@@H](CC1)O[CH](Cl)Cl"_smiles;
     REQUIRE(mol);
@@ -506,7 +506,6 @@ TEST_CASE("para-stereochemistry2", "[accurateCIP]") {
     CHECK(!mol->getAtomWithIdx(10)->getPropIfPresent(
         common_properties::_CIPCode, chirality));
     // CHECK(chirality == "S");
-    RDKit::Chirality::setUseLegacyStereoPerception(true);
   }
 }
 

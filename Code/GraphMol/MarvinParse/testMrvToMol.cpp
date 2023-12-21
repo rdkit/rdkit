@@ -10,6 +10,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/test_fixtures.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/FileParsers/SequenceWriters.h>
@@ -787,7 +788,7 @@ class MrvTests {
 
  public:
   void RunTests() {
-    RDKit::Chirality::setUseLegacyStereoPerception(false);
+    UseLegacyStereoPerceptionFixture useLegacy(false);
     printf("Using new chirality perception\n");
 
     // rxn test returning a single mol

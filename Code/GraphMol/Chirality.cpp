@@ -2165,6 +2165,8 @@ std::ostream &operator<<(std::ostream &oss, const StereoSpecified &s) {
  */
 void legacyStereoPerception(ROMol &mol, bool cleanIt,
                             bool flagPossibleStereoCenters) {
+  mol.clearProp("_needsDetectBondStereo");
+
   // later we're going to need ring information, get it now if we don't
   // have it already:
   if (!mol.getRingInfo()->isInitialized()) {
@@ -3491,6 +3493,7 @@ void clearDirFlags(ROMol &mol, bool onlyWedgeTypeBondDirs) {
 void clearAllBondDirFlags(ROMol &mol) { clearDirFlags(mol, false); }
 
 void setBondStereoFromDirections(ROMol &mol) {
+  mol.clearProp("_needsDetectBondStereo");
   for (Bond *bond : mol.bonds()) {
     if (bond->getBondType() == Bond::DOUBLE) {
       const Atom *stereoBondBeginAtom = bond->getBeginAtom();

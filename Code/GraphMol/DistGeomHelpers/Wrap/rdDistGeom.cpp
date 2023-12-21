@@ -333,8 +333,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("useBasicKnowledge") = true,
        python::arg("printExpTorsionAngles") = false,
        python::arg("useSmallRingTorsions") = false,
-       python::arg("useMacrocycleTorsions") = false,
-       python::arg("ETversion") = 1),
+       python::arg("useMacrocycleTorsions") = true,
+       python::arg("ETversion") = 2),
       docString.c_str());
 
   docString =
@@ -402,8 +402,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("useBasicKnowledge") = true,
        python::arg("printExpTorsionAngles") = false,
        python::arg("useSmallRingTorsions") = false,
-       python::arg("useMacrocycleTorsions") = false,
-       python::arg("ETversion") = 1),
+       python::arg("useMacrocycleTorsions") = true,
+       python::arg("ETversion") = 2),
       docString.c_str());
 
   python::enum_<RDKit::DGeomHelpers::EmbedFailureCauses>("EmbedFailureCauses")

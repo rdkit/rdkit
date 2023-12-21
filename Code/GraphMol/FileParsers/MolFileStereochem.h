@@ -53,10 +53,6 @@ RDKIT_FILEPARSERS_EXPORT void addWavyBondsForStereoAny(
     ROMol &mol, bool clearDoubleBondFlags = true,
     unsigned addWhenImpossible = StereoBondThresholds::DBL_BOND_NO_STEREO);
 
-//! \deprecated use Chirality::pickBondsToWedge instead
-RDKIT_FILEPARSERS_EXPORT
-std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
-pickBondsToWedge(const ROMol &mol);
 //! \deprecated, please use MolOps::clearSingleBondDirFlags instead
 RDKIT_FILEPARSERS_EXPORT void ClearSingleBondDirFlags(ROMol &mol);
 //! \deprecated use Chirality::detail::determineBondWedgeState instead

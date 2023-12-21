@@ -30,11 +30,6 @@ void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
   return Chirality::wedgeMolBonds(mol, conf);
 }
 
-std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
-    const ROMol &mol) {
-  return Chirality::pickBondsToWedge(mol);
-}
-
 std::vector<Bond *> getBondNeighbors(ROMol &mol, const Bond &bond) {
   std::vector<Bond *> res;
   for (auto nbri :
