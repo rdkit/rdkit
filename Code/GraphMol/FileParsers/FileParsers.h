@@ -111,7 +111,7 @@ RDKIT_FILEPARSERS_EXPORT RWMol *MolFileToMol(const std::string &fName,
  *                          of the molecule before it is written (default=true)
  *   \param forceV3000    - force generation a V3000 mol block (happens
  *                          automatically with more than 999 atoms or
- *                          bonds)(default=false)*
+ *                          bonds)(default=false)
  */
 RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol,
                                                    bool includeStereo = true,
@@ -124,7 +124,7 @@ RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol,
  *   \param mol           - the molecule in question
  *   \param includeStereo - toggles inclusion of stereochemistry information
  *   \param confId        - selects the conformer to be used
- *   \param kekulize      - triggers kekulization of the molecule before it is *
+ *   \param kekulize      - triggers kekulization of the molecule before it is
  *                        - written
  */
 inline std::string MolToV3KMolBlock(const ROMol &mol, bool includeStereo = true,

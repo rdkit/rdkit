@@ -446,6 +446,9 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 
 namespace Chirality {
 
+const std::string _NonExplicit3DChirality =
+    "_NonExplicit3DChirality";  // set if the molecule has explicit 3D
+                                // stereochemistry
 std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     const ROMol &mol, const Bond *bond, const Conformer *conf,
     double pseudo3DOffset = 0.1, double volumeTolerance = 0.01) {
@@ -887,19 +890,6 @@ void setUseLegacyStereoPerception(bool val) {
 bool getUseLegacyStereoPerception() {
   return getValFromEnvironment(useLegacyStereoEnvVar,
                                useLegacyStereoDefaultVal);
-}
-
-void setPerceive3DChiralExplicitOnly(bool val) {
-  if (val) {
-    setenv(perceive3DChiralExplicitOnlyEnvVar, "1", 1);
-  } else {
-    setenv(perceive3DChiralExplicitOnlyEnvVar, "0", 1);
-  }
-}
-
-bool getPerceive3DChiralExplicitOnly() {
-  return getValFromEnvironment(perceive3DChiralExplicitOnlyEnvVar,
-                               perceive3DChiralExplicitOnlyDefaultVal);
 }
 
 namespace detail {
@@ -2175,6 +2165,8 @@ std::ostream &operator<<(std::ostream &oss, const StereoSpecified &s) {
  */
 void legacyStereoPerception(ROMol &mol, bool cleanIt,
                             bool flagPossibleStereoCenters) {
+  mol.clearProp("_needsDetectBondStereo");
+
   // later we're going to need ring information, get it now if we don't
   // have it already:
   if (!mol.getRingInfo()->isInitialized()) {
@@ -2653,6 +2645,15 @@ void GetMolFileBondStereoInfo(
   Bond::BondDir dir;
   GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dir, reverse);
   dirCode = BondGetDirCode(dir);
+}
+
+void removeNonExplicit3DChirality(ROMol &mol) {
+  for (auto atom : mol.atoms()) {
+    if (atom->hasProp(Chirality::_NonExplicit3DChirality)) {
+      atom->clearProp(Chirality::_NonExplicit3DChirality);
+      atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+    }
+  }
 }
 
 }  // namespace Chirality
@@ -3174,32 +3175,25 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
   }
 
   auto allowNontetrahedralStereo = Chirality::getAllowNontetrahedralChirality();
-  auto perceive3DChiralExplicitOnly =
-      Chirality::getPerceive3DChiralExplicitOnly();
 
-  boost::dynamic_bitset<> atomsToUse;
-  if (perceive3DChiralExplicitOnly && mol.getNumAtoms() > 0) {
-    atomsToUse.resize(mol.getNumAtoms(), 0);
+  boost::dynamic_bitset<> explicitAtoms;
+  explicitAtoms.resize(mol.getNumAtoms(), 0);
     for (auto bond : mol.bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::BEGINWEDGE ||
           bondDir == Bond::BondDir::BEGINDASH) {
-        atomsToUse[bond->getBeginAtom()->getIdx()] = 1;
+      explicitAtoms[bond->getBeginAtom()->getIdx()] = 1;
       }
     }
 
     for (auto atom : mol.atoms()) {
       if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
-        atomsToUse[atom->getIdx()] = 1;
-      }
+      explicitAtoms[atom->getIdx()] = 1;
     }
   }
 
   for (auto atom : mol.atoms()) {
     // see if only the explicitly wedged atoms are to be used
-    if (perceive3DChiralExplicitOnly && !atomsToUse[atom->getIdx()]) {
-      continue;
-    }
 
     // if we aren't replacing existing tags and the atom is already tagged,
     // punt:
@@ -3216,6 +3210,9 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     }
     if (allowNontetrahedralStereo &&
         assignNontetrahedralChiralTypeFrom3D(mol, conf, atom)) {
+      if (explicitAtoms[atom->getIdx()] == 0) {
+        atom->setProp(Chirality::_NonExplicit3DChirality, 1);
+      }
       continue;
     }
     /* We're only doing tetrahedral cases here */
@@ -3255,12 +3252,20 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     auto v3 = *nbrs[2] - p0;
 
     double chiralVol = v1.dotProduct(v2.crossProduct(v3));
+    bool chiralitySet = false;
     if (chiralVol < -ZERO_VOLUME_TOL) {
       atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+      chiralitySet = true;
     } else if (chiralVol > ZERO_VOLUME_TOL) {
       atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+      chiralitySet = true;
+
     } else {
       atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+    }
+
+    if (chiralitySet && explicitAtoms[atom->getIdx()] == 0) {
+      atom->setProp<int>(Chirality::_NonExplicit3DChirality, 1);
     }
   }
 }
@@ -3488,6 +3493,7 @@ void clearDirFlags(ROMol &mol, bool onlyWedgeTypeBondDirs) {
 void clearAllBondDirFlags(ROMol &mol) { clearDirFlags(mol, false); }
 
 void setBondStereoFromDirections(ROMol &mol) {
+  mol.clearProp("_needsDetectBondStereo");
   for (Bond *bond : mol.bonds()) {
     if (bond->getBondType() == Bond::DOUBLE) {
       const Atom *stereoBondBeginAtom = bond->getBeginAtom();

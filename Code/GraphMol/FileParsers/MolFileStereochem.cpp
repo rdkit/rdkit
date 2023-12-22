@@ -30,11 +30,6 @@ void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
   return Chirality::wedgeMolBonds(mol, conf);
 }
 
-std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
-    const ROMol &mol) {
-  return Chirality::pickBondsToWedge(mol);
-}
-
 std::vector<Bond *> getBondNeighbors(ROMol &mol, const Bond &bond) {
   std::vector<Bond *> res;
   for (auto nbri :
@@ -268,14 +263,6 @@ void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
   }
 }
 
-void GetMolFileBondStereoInfo(
-    const Bond *bond,
-    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
-        &wedgeBonds,
-    const Conformer *conf, int &dirCode, bool &reverse) {
-  return Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode,
-                                             reverse);
-}
 void translateChiralFlagToStereoGroups(ROMol &mol,
                                        StereoGroupType zeroFlagGroupType) {
   if (!mol.hasProp(common_properties::_MolFileChiralFlag)) {

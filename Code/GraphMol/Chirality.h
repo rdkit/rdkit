@@ -31,17 +31,11 @@ constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
 
 constexpr auto nonTetrahedralStereoEnvVar = "RDK_ENABLE_NONTETRAHEDRAL_STEREO";
 constexpr auto useLegacyStereoEnvVar = "RDK_USE_LEGACY_STEREO_PERCEPTION";
-constexpr auto perceive3DChiralExplicitOnlyEnvVar =
-    "PERCIEVE_3D_CHIRALITY_EXPLICIT_ONLY";
 constexpr bool nonTetrahedralStereoDefaultVal =
     true;  //!< whether or not nontetrahedral stereo is perceived by default
 constexpr bool useLegacyStereoDefaultVal =
     true;  //!< whether or not the legacy stereo perception code is used by
            //!< default
-constexpr bool perceive3DChiralExplicitOnlyDefaultVal =
-    false;  //!< whether or not chirality is perceived from a 3D structure only
-            //!< if it is explicitly specified by having a wedge bond
-            // the value of the wedge bond is ignored
 
 RDKIT_GRAPHMOL_EXPORT extern void setAllowNontetrahedralChirality(bool val);
 RDKIT_GRAPHMOL_EXPORT extern bool getAllowNontetrahedralChirality();
@@ -49,8 +43,7 @@ RDKIT_GRAPHMOL_EXPORT extern bool getAllowNontetrahedralChirality();
 RDKIT_GRAPHMOL_EXPORT extern void setUseLegacyStereoPerception(bool val);
 RDKIT_GRAPHMOL_EXPORT extern bool getUseLegacyStereoPerception();
 
-RDKIT_GRAPHMOL_EXPORT extern void setPerceive3DChiralExplicitOnly(bool val);
-RDKIT_GRAPHMOL_EXPORT extern bool getPerceive3DChiralExplicitOnly();
+RDKIT_GRAPHMOL_EXPORT void removeNonExplicit3DChirality(ROMol &mol);
 
 RDKIT_GRAPHMOL_EXPORT extern bool
     useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
@@ -241,8 +234,7 @@ enum class WedgeInfoType {
 
 class WedgeInfoBase {
  public:
-  WedgeInfoBase(int idxInit, Bond::BondDir dirInit = Bond::BondDir::NONE)
-      : idx(idxInit), dir(dirInit){};
+  WedgeInfoBase(int idxInit) : idx(idxInit){};
   virtual ~WedgeInfoBase(){};
 
   virtual WedgeInfoType getType() const = 0;
@@ -252,7 +244,6 @@ class WedgeInfoBase {
 
  private:
   int idx = -1;
-  Bond::BondDir dir = Bond::BondDir::NONE;
 };
 
 class WedgeInfoChiral : public WedgeInfoBase {
@@ -272,7 +263,7 @@ class WedgeInfoChiral : public WedgeInfoBase {
 class WedgeInfoAtropisomer : public WedgeInfoBase {
  public:
   WedgeInfoAtropisomer(int bondId, RDKit::Bond::BondDir dirInit)
-      : WedgeInfoBase(bondId, dirInit) {
+      : WedgeInfoBase(bondId) {
     dir = dirInit;
   };
   ~WedgeInfoAtropisomer(){};
@@ -307,7 +298,7 @@ RDKIT_GRAPHMOL_EXPORT void setStereoForBond(ROMol &mol, Bond *bond,
 }  // namespace detail
 
 //! picks the bonds which should be wedged
-/// \returns a map from bond idx -> controlling atom idx
+/// returns a map from bond idx -> controlling atom idx
 RDKIT_GRAPHMOL_EXPORT
 std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
     const ROMol &mol, const BondWedgingParameters *params = nullptr,

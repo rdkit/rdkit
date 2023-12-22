@@ -587,7 +587,7 @@ Sample Usage:
       python::init<>(python::args("self"), "Constructor, takes no arguments"))
       .def(python::init<const std::string &>(python::args("self", "binStr")))
       .def(python::init<const RDKit::ChemicalReaction &>(
-          python::args("self", "binStr")))
+          python::args("self", "other")))
       .def("GetNumReactantTemplates",
            &RDKit::ChemicalReaction::getNumReactantTemplates,
            python::args("self"),

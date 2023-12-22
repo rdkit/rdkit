@@ -2439,6 +2439,19 @@ ARGUMENTS:\n\
                 docString.c_str());
 
     docString =
+        "Remove chiral markings that were derived from a 3D mol but were not \n\
+        explicity marked in the mol block. (wedge bond or CFG indication\n\
+        \n\
+          ARGUMENTS:\n\
+        \n\
+            - molecule: the molecule to update\n\
+        \n\
+        \n";
+    python::def("RemoveNonExplicit3DChirality",
+                Chirality::removeNonExplicit3DChirality, (python::arg("mol")),
+                docString.c_str());
+
+    docString =
         R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";
     python::class_<StereoBondThresholds>("StereoBondThresholds",
                                          docString.c_str(), python::no_init)
@@ -2982,14 +2995,6 @@ A note on the flags controlling which atoms/bonds are modified:
                 Chirality::getUseLegacyStereoPerception,
                 "returns whether or not the legacy stereo perception code is "
                 "being used");
-    python::def("SetPerceive3DChiralExplicitOnly",
-                Chirality::setPerceive3DChiralExplicitOnly,
-                "sets usage of the legacy stereo perception code");
-    python::def("GetPerceive3DChiralExplicitOnly",
-                Chirality::getPerceive3DChiralExplicitOnly,
-                "returns whether or not the legacy stereo perception code is "
-                "being used");
-
     python::def(
         "TranslateChiralFlagToStereoGroups", translateChiralFlagToStereoGroups,
         (python::arg("mol"),

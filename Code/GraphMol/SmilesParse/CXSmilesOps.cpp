@@ -1584,25 +1584,6 @@ std::string quote_atomprop_string(const std::string &txt) {
   return res;
 }
 
-class sGrp {
- public:
-  unsigned int id;
-  std::vector<unsigned int> atoms;
-
-  sGrp(unsigned int i, const std::vector<unsigned int> &a) : id(i), atoms(a){};
-
-  int operator<(const sGrp &o) const { return id < o.id; }
-
-  std::string toString() const {
-    std::stringstream res;
-    res << id << ":";
-    for (auto aid : atoms) {
-      res << aid << ",";
-    }
-    return res.str();
-  }
-};
-
 std::string get_enhanced_stereo_block(
     const ROMol &mol, const std::vector<unsigned int> &atomOrder,
     std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
@@ -2349,11 +2330,6 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>> wedgeBonds;
   if (flags & SmilesWrite::CXSmilesFields::CX_BOND_CFG) {
     wedgeBonds = Chirality::pickBondsToWedge(mol, nullptr, conf);
-
-    // if (mol.getNumConformers()) {
-    //   Atropisomers::wedgeBondsFromAtropisomers(mol, &mol.getConformer(),
-    //                                            wedgeBonds);
-    // }
 
     bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&
                          mol.getNumConformers();

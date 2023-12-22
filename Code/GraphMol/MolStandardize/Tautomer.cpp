@@ -594,5 +594,47 @@ ROMol *TautomerEnumerator::canonicalize(
   return pickCanonical(res, scoreFunc);
 }
 
+void TautomerEnumerator::canonicalizeInPlace(
+    RWMol &mol, boost::function<int(const ROMol &mol)> scoreFunc) const {
+  auto thisCopy = TautomerEnumerator(*this);
+  thisCopy.setReassignStereo(false);
+  auto res = thisCopy.enumerate(mol);
+  if (res.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "no tautomers found, molecule unchanged" << std::endl;
+    return;
+  }
+  std::unique_ptr<ROMol> tmp{pickCanonical(res, scoreFunc)};
+
+  TEST_ASSERT(tmp->getNumAtoms() == mol.getNumAtoms());
+  TEST_ASSERT(tmp->getNumBonds() == mol.getNumBonds());
+  // now copy the info from the canonical tautomer over to the input molecule
+  for (const auto tmpAtom : tmp->atoms()) {
+    auto atom = mol.getAtomWithIdx(tmpAtom->getIdx());
+    TEST_ASSERT(tmpAtom->getAtomicNum() == atom->getAtomicNum());
+    atom->setFormalCharge(tmpAtom->getFormalCharge());
+    atom->setNoImplicit(tmpAtom->getNoImplicit());
+    atom->setIsAromatic(tmpAtom->getIsAromatic());
+    atom->setNumExplicitHs(tmpAtom->getNumExplicitHs());
+    atom->setNumRadicalElectrons(tmpAtom->getNumRadicalElectrons());
+    atom->setChiralTag(tmpAtom->getChiralTag());
+  }
+  for (const auto tmpBond : tmp->bonds()) {
+    auto bond = mol.getBondWithIdx(tmpBond->getIdx());
+    TEST_ASSERT(tmpBond->getBeginAtomIdx() == bond->getBeginAtomIdx());
+    TEST_ASSERT(tmpBond->getEndAtomIdx() == bond->getEndAtomIdx());
+    bond->setBondType(tmpBond->getBondType());
+    bond->setBondDir(tmpBond->getBondDir());
+    bond->setIsAromatic(tmpBond->getIsAromatic());
+    bond->setIsConjugated(tmpBond->getIsConjugated());
+    if (tmpBond->getStereoAtoms().size() == 2) {
+      bond->setStereoAtoms(tmpBond->getStereoAtoms()[0],
+                           tmpBond->getStereoAtoms()[1]);
+    }
+    bond->setStereo(tmpBond->getStereo());
+  }
+  mol.updatePropertyCache(false);
+}
+
 }  // namespace MolStandardize
 }  // namespace RDKit

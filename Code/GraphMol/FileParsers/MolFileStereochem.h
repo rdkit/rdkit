@@ -53,10 +53,6 @@ RDKIT_FILEPARSERS_EXPORT void addWavyBondsForStereoAny(
     ROMol &mol, bool clearDoubleBondFlags = true,
     unsigned addWhenImpossible = StereoBondThresholds::DBL_BOND_NO_STEREO);
 
-//! \deprecated use Chirality::pickBondsToWedge instead
-RDKIT_FILEPARSERS_EXPORT
-std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
-pickBondsToWedge(const ROMol &mol);
 //! \deprecated, please use MolOps::clearSingleBondDirFlags instead
 RDKIT_FILEPARSERS_EXPORT void ClearSingleBondDirFlags(ROMol &mol);
 //! \deprecated use Chirality::detail::determineBondWedgeState instead
@@ -81,12 +77,6 @@ RDKIT_FILEPARSERS_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
 ///  potential stereocenters with unspecified chirality
 RDKIT_FILEPARSERS_EXPORT void markUnspecifiedStereoAsUnknown(ROMol &mol,
                                                              int confId = -1);
-//! \deprecated use Chirality::GetMolFileBondStereoInfo instead
-RDKIT_FILEPARSERS_EXPORT void GetMolFileBondStereoInfo(
-    const Bond *bond,
-    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
-        &wedgeBonds,
-    const Conformer *conf, int &dirCode, bool &reverse);
 
 //! generate enhanced stereo groups based on the status of the chiral flag
 /// property

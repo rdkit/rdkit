@@ -634,8 +634,9 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
       bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
 				    atomLabeler,bondLabeler,pms);
 #else
-  bool found = boost::vf2_all(query.getTopology(), mol.getTopology(),
-                              atomLabeler, bondLabeler, matchChecker, pms);
+  bool found =
+      boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
+                     bondLabeler, matchChecker, pms, lparams.maxMatches);
 #endif
   unsigned int res = 0;
   if (found) {

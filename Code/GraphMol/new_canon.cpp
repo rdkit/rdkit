@@ -434,25 +434,34 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
 
     if (res.stype == Bond::BondStereo::STEREOATROPCCW ||
         res.stype == Bond::BondStereo::STEREOATROPCW) {
-      Atom *atropAtoms[2];
-      std::vector<Bond *> atropBonds[2];  // one vector for each end - each one
-                                          // should end up with 1 ro 2 entries
-
+      AtropAtomAndBondVec atropAtomAndBondVecs[2];
       CHECK_INVARIANT(Atropisomers::getAtropisomerAtomsAndBonds(
-                          bond, atropAtoms, atropBonds, bond->getOwningMol()),
+                          bond, atropAtomAndBondVecs, bond->getOwningMol()),
                       "Could not find atropisomer controlling atoms")
 
       res.controllingAtoms[0] =
-          &atoms[atropBonds[0][0]->getOtherAtom(atropAtoms[0])->getIdx()];
+          &atoms[atropAtomAndBondVecs[0]
+                     .second[0]
+                     ->getOtherAtom(atropAtomAndBondVecs[0].first)
+                     ->getIdx()];
       res.controllingAtoms[2] =
-          &atoms[atropBonds[1][0]->getOtherAtom(atropAtoms[1])->getIdx()];
-      if (atropBonds[0].size() > 1) {
+          &atoms[atropAtomAndBondVecs[1]
+                     .second[0]
+                     ->getOtherAtom(atropAtomAndBondVecs[1].first)
+                     ->getIdx()];
+      if (atropAtomAndBondVecs[0].second.size() > 1) {
         res.controllingAtoms[1] =
-            &atoms[atropBonds[0][1]->getOtherAtom(atropAtoms[0])->getIdx()];
+            &atoms[atropAtomAndBondVecs[0]
+                       .second[1]
+                       ->getOtherAtom(atropAtomAndBondVecs[0].first)
+                       ->getIdx()];
       }
-      if (atropBonds[1].size() > 1) {
+      if (atropAtomAndBondVecs[1].second.size() > 1) {
         res.controllingAtoms[3] =
-            &atoms[atropBonds[1][1]->getOtherAtom(atropAtoms[1])->getIdx()];
+            &atoms[atropAtomAndBondVecs[1]
+                       .second[1]
+                       ->getOtherAtom(atropAtomAndBondVecs[1].first)
+                       ->getIdx()];
       }
     }
   }
@@ -755,7 +764,8 @@ void updateAtomNeighborNumSwaps(
 }
 
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
-                  bool breakTies, bool includeChirality, bool includeIsotopes) {
+                  bool breakTies, bool includeChirality, bool includeIsotopes,
+                  bool includeAtomMaps) {
   if (!mol.getNumAtoms()) {
     return;
   }
@@ -773,6 +783,7 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   ftor.df_useIsotopes = includeIsotopes;
   ftor.df_useChirality = includeChirality;
   ftor.df_useChiralityRings = includeChirality;
+  ftor.df_useAtomMaps = includeAtomMaps;
 
   auto order = std::make_unique<int[]>(mol.getNumAtoms());
   detail::rankWithFunctor(ftor, breakTies, order.get(), true, includeChirality);
@@ -792,7 +803,7 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                        const std::vector<std::string> *atomSymbols,
                        const std::vector<std::string> *bondSymbols,
                        bool breakTies, bool includeChirality,
-                       bool includeIsotopes) {
+                       bool includeIsotopes, bool includeAtomMaps) {
   PRECONDITION(atomsInPlay.size() == mol.getNumAtoms(), "bad atomsInPlay size");
   PRECONDITION(bondsInPlay.size() == mol.getNumBonds(), "bad bondsInPlay size");
   PRECONDITION(!atomSymbols || atomSymbols->size() == mol.getNumAtoms(),
@@ -818,6 +829,7 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   AtomCompareFunctor ftor(&atoms.front(), mol, &atomsInPlay, &bondsInPlay);
   ftor.df_useIsotopes = includeIsotopes;
   ftor.df_useChirality = includeChirality;
+  ftor.df_useAtomMaps = includeAtomMaps;
 
   auto order = std::make_unique<int[]>(mol.getNumAtoms());
   detail::rankWithFunctor(ftor, breakTies, order.get(), true, includeChirality,

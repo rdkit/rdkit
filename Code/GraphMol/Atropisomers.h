@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-203 Tad hurst/CDD and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,6 +17,8 @@
 #include <string>
 #include <stdexcept>
 
+#define AtropAtomAndBondVec std::pair<Atom *, std::vector<Bond *>>
+
 namespace RDKit {
 namespace Atropisomers {
 RDKIT_GRAPHMOL_EXPORT void detectAtropisomerChirality(ROMol &mol,
@@ -29,8 +31,7 @@ RDKIT_GRAPHMOL_EXPORT void wedgeBondsFromAtropisomers(
 RDKIT_GRAPHMOL_EXPORT bool doesMolHaveAtropisomers(const ROMol &mol);
 
 RDKIT_GRAPHMOL_EXPORT bool getAtropisomerAtomsAndBonds(
-    const Bond *bond, Atom *atoms[2], std::vector<Bond *> bonds[2],
-    const ROMol &mol);
+    const Bond *bond, AtropAtomAndBondVec atomAndBonds[2], const ROMol &mol);
 
 RDKIT_GRAPHMOL_EXPORT void getAllAtomIdsForStereoGroup(
     const ROMol &mol, const StereoGroup &group,

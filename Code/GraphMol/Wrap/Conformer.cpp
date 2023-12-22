@@ -71,7 +71,7 @@ struct conformer_wrapper {
         .def(python::init<unsigned int>(
             python::args("self", "numAtoms"),
             "Constructor with the number of atoms specified"))
-        .def(python::init<const Conformer &>(python::args("self", "numAtoms")))
+        .def(python::init<const Conformer &>(python::args("self", "other")))
 
         .def("GetNumAtoms", &Conformer::getNumAtoms, python::args("self"),
              "Get the number of atoms in the conformer\n")
