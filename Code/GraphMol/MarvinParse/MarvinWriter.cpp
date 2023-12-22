@@ -19,17 +19,12 @@
 #include <iomanip>
 #include <cstdio>
 
-#include <GraphMol/SubstanceGroup.h>
-#include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
-#include <RDGeneral/Invariant.h>
-
-#include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/GenericGroups/GenericGroups.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Atropisomers.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSGroupWriting.h>
@@ -347,39 +342,6 @@ class MarvinCMLWriter {
     }
   }
 
-  void GetMarvinBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
-                               const Conformer *conf, Bond::BondDir &dir,
-                               bool &reverse) {
-    PRECONDITION(bond, "");
-    reverse = false;
-    dir = Bond::NONE;
-    if (bond->getBondType() == Bond::SINGLE) {
-      // single bond stereo chemistry
-      dir = DetermineBondWedgeState(bond, wedgeBonds, conf);
-
-      // if this bond needs to be wedged it is possible that this
-      // wedging was determined by a chiral atom at the end of the
-      // bond (instead of at the beginning). In this case we need to
-      // reverse the begin and end atoms for the bond when we write
-      // the mol file
-
-      if ((dir == Bond::BEGINDASH) ||
-          (dir == Bond::BEGINWEDGE || dir == Bond::UNKNOWN)) {
-        auto wbi = wedgeBonds.find(bond->getIdx());
-        if (wbi != wedgeBonds.end() &&
-            static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
-          reverse = true;
-        }
-      } else {
-        dir = Bond::NONE;  // other types are ignored
-      }
-    } else if (bond->getBondType() == Bond::DOUBLE) {
-      if (Chirality::shouldBeACrossedBond(bond)) {
-        dir = Bond::BondDir::EITHERDOUBLE;
-      }
-    }
-  }
-
  private:
   bool hasNonDefaultValence(const Atom *atom) {
     PRECONDITION(atom, "no atom");
@@ -519,7 +481,13 @@ class MarvinCMLWriter {
         //  atom maps for rxns
       }
 
-      INT_MAP_INT wedgeBonds = pickBondsToWedge(*mol);
+      const Conformer *confToUse = nullptr;
+      if (conf) {
+        confToUse = conf;
+      } else if (conf3d) {
+        confToUse = conf3d;
+      }
+      auto wedgeBonds = Chirality::pickBondsToWedge(*mol, nullptr, confToUse);
 
       for (auto bond : mol->bonds()) {
         auto marvinBond = new MarvinBond();
@@ -535,11 +503,11 @@ class MarvinCMLWriter {
         bool reverse = false;
 
         if (conf) {
-          GetMarvinBondStereoInfo(bond, wedgeBonds, conf, bondDirection,
-                                  reverse);
+          Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf,
+                                              bondDirection, reverse);
         } else if (conf3d) {
-          GetMarvinBondStereoInfo(bond, wedgeBonds, conf3d, bondDirection,
-                                  reverse);
+          Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf3d,
+                                              bondDirection, reverse);
         }
 
         if (reverse) {
@@ -601,8 +569,13 @@ class MarvinCMLWriter {
           default:
             throw MarvinWriterException("Unrecognized stereo group type");
         }
-        for (auto &&atom : group.getAtoms()) {
-          marvinMol->atoms[atom->getIdx()]->mrvStereoGroup = stereoGroupType;
+
+        std::vector<unsigned int> atomIds;
+        Atropisomers::getAllAtomIdsForStereoGroup(*mol, group, atomIds,
+                                                  wedgeBonds);
+
+        for (auto atomId : atomIds) {
+          marvinMol->atoms[atomId]->mrvStereoGroup = stereoGroupType;
         }
       }
 
@@ -1176,7 +1149,8 @@ class MarvinCMLWriter {
 
 std::string MolToMrvBlock(const ROMol &mol, bool includeStereo, int confId,
                           bool kekulize, bool prettyPrint) {
-  RDKit::Utils::LocaleSwitcher switcher;
+  Utils::LocaleSwitcher ls;
+
   RWMol trwmol(mol);
   // NOTE: kekulize the molecule before writing it out
   // because of the way mol files handle aromaticity
@@ -1234,6 +1208,8 @@ void MolToMrvFile(const ROMol &mol, const std::string &fName,
 
 std::string ChemicalReactionToMrvBlock(const ChemicalReaction &rxn,
                                        bool prettyPrint) {
+  Utils::LocaleSwitcher ls;
+
   MarvinCMLWriter marvinCMLWriter;
 
   auto marvinRxn = marvinCMLWriter.ChemicalReactionToMarvinRxn(&rxn);

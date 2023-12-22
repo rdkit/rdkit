@@ -23,6 +23,7 @@
 
 namespace RDKit {
 class Atom;
+class Bond;
 class ROMol;
 
 // OR means that it is known to be one or the other, but not both
@@ -44,6 +45,7 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
  private:
   StereoGroupType d_grouptype{StereoGroupType::STEREO_ABSOLUTE};
   std::vector<Atom*> d_atoms;
+  std::vector<Bond*> d_bonds;
 
   // The group ID for AND/OR groups (it has no meaning in ABS groups).
   // 0 means no group ID is defined.
@@ -54,9 +56,10 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
   StereoGroup() {}
   // Takes control of atoms if possible.
   StereoGroup(StereoGroupType grouptype, std::vector<Atom*>&& atoms,
-              unsigned readId = 0);
+              std::vector<Bond*>&& bonds, unsigned readId = 0);
   StereoGroup(StereoGroupType grouptype, const std::vector<Atom*>& atoms,
-              unsigned readId = 0);
+              std::vector<Bond*>& bonds, unsigned readId = 0);
+
   StereoGroup(const StereoGroup& other) = default;
   StereoGroup& operator=(const StereoGroup& other) = default;
   StereoGroup(StereoGroup&& other) = default;
@@ -64,6 +67,7 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
 
   StereoGroupType getGroupType() const;
   const std::vector<Atom*>& getAtoms() const;
+  const std::vector<Bond*>& getBonds() const;
 
   unsigned getReadId() const { return d_readId; }
   unsigned getWriteId() const { return d_writeId; }
@@ -72,10 +76,12 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
   // Seems odd to have to define these, but otherwise the SWIG wrappers
   // won't build
   bool operator==(const StereoGroup& other) const {
-    return (d_grouptype == other.d_grouptype) && (d_atoms == other.d_atoms);
+    return (d_grouptype == other.d_grouptype) && (d_atoms == other.d_atoms) &&
+           (d_bonds == other.d_bonds);
   }
   bool operator!=(const StereoGroup& other) const {
-    return (d_grouptype != other.d_grouptype) || (d_atoms != other.d_atoms);
+    return (d_grouptype != other.d_grouptype) || (d_atoms != other.d_atoms) ||
+           (d_bonds != other.d_bonds);
   }
 };
 RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtom(

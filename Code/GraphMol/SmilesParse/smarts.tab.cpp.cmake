@@ -93,6 +93,7 @@
 #define YYDEBUG 1
 #include "smarts.tab.hpp"
 
+
 extern int yysmarts_lex(YYSTYPE *,void *, int &);
 
 using namespace RDKit;

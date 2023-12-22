@@ -35,6 +35,7 @@
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SanitException.h>
+#include <string.h>
 
 namespace python = boost::python;
 using namespace RDKit;
@@ -125,8 +126,8 @@ ROMol *MolFromTPLBlock(python::object itplBlock, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,
-                      bool strictParsing) {
+ROMol *MolFromMolFileHelper(const char *molFilename, bool sanitize,
+                            bool removeHs, bool strictParsing) {
   RWMol *newM = nullptr;
   try {
     newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
@@ -148,6 +149,21 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
   try {
     newM =
         MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return static_cast<ROMol *>(newM);
+}
+
+ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,
+                      bool strictParsing) {
+  RWMol *newM = nullptr;
+  try {
+    newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
@@ -799,7 +815,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a Mol object, None on failure.\n\
 \n";
   python::def(
-      "MolFromMolFile", RDKit::MolFromMolFile,
+      "MolFromMolFile", RDKit::MolFromMolFileHelper,
       (python::arg("molFileName"), python::arg("sanitize") = true,
        python::arg("removeHs") = true, python::arg("strictParsing") = true),
       docString.c_str(),
@@ -1527,16 +1543,26 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .value("CX_SGROUPS", RDKit::SmilesWrite::CXSmilesFields::CX_SGROUPS)
       .value("CX_POLYMER", RDKit::SmilesWrite::CXSmilesFields::CX_POLYMER)
       .value("CX_BOND_CFG", RDKit::SmilesWrite::CXSmilesFields::CX_BOND_CFG)
+      .value("CX_BOND_ATROPISOMER",
+             RDKit::SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER)
       .value("CX_ALL", RDKit::SmilesWrite::CXSmilesFields::CX_ALL)
       .value("CX_ALL_BUT_COORDS",
              RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
 
+  python::enum_<RDKit::RestoreBondDirOption>("RestoreBondDirOption")
+      .value("RestoreBondDirOptionClear",
+             RDKit::RestoreBondDirOption::RestoreBondDirOptionClear)
+      .value("RestoreBondDirOptionTrue",
+             RDKit::RestoreBondDirOption::RestoreBondDirOptionTrue);
+
   python::def(
       "MolToCXSmiles",
-      (std::string(*)(const ROMol &, const SmilesWriteParams &,
-                      std::uint32_t))RDKit::MolToCXSmiles,
+      (std::string(*)(const ROMol &, const SmilesWriteParams &, std::uint32_t,
+                      RestoreBondDirOption))RDKit::MolToCXSmiles,
       (python::arg("mol"), python::arg("params"),
-       python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
+       python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
+       python::arg("restoreBondDirs") =
+           RDKit::RestoreBondDirOption::RestoreBondDirOptionClear),
       "Returns the CXSMILES string for a molecule");
 
   docString =

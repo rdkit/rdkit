@@ -143,6 +143,9 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINCONFPROPS,
     BEGINCONFS_DOUBLE,
     QUERY_TYPELABEL,
+    BEGINSYMMSSSR,
+    BEGINFASTFIND,
+    BEGINFINDOTHERORUNKNOWN,
     // add new entries above here
     INVALID_TAG = 255
   } Tags;
@@ -240,7 +243,8 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   //! do the actual work of pickling Stereo Group data
   template <typename T>
   static void _pickleStereo(std::ostream &ss, std::vector<StereoGroup> groups,
-                            std::map<int, int> &atomIdxMap);
+                            std::map<int, int> &atomIdxMap,
+                            std::map<int, int> &bondIdxMap);
 
   //! do the actual work of pickling a Conformer
   template <typename T, typename C>
@@ -266,8 +270,10 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   //! extract ring info from a pickle and add the resulting RingInfo to the
   /// molecule
   template <typename T>
-  static void _addRingInfoFromPickle(std::istream &ss, ROMol *mol, int version,
-                                     bool directMap = false);
+  static void _addRingInfoFromPickle(
+      std::istream &ss, ROMol *mol, int version, bool directMap = false,
+      FIND_RING_TYPE ringType =
+          FIND_RING_TYPE::FIND_RING_TYPE_OTHER_OR_UNKNOWN);
 
   //! extract a SubstanceGroup from a pickle
   template <typename T>

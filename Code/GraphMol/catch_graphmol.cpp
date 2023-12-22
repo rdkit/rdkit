@@ -302,7 +302,7 @@ M  END
     CHECK(mol->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
     CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
     std::vector<unsigned int> ranks;
-    CHECK(!mol->getRingInfo()->isInitialized());
+    CHECK(mol->getRingInfo()->isInitialized());
     Canon::rankMolAtoms(*mol, ranks);
   }
 

@@ -59,8 +59,9 @@ void Configuration::setCarriers(std::vector<Atom *> &&carriers) {
 Configuration::Configuration(const CIPMol &mol, Atom *focus)
     : d_foci{focus}, d_digraph{mol, focus} {};
 
-Configuration::Configuration(const CIPMol &mol, std::vector<Atom *> &&foci)
-    : d_foci{std::move(foci)}, d_digraph{mol, d_foci[0]} {}
+Configuration::Configuration(const CIPMol &mol, std::vector<Atom *> &&foci,
+                             bool atropisomerMode)
+    : d_foci{std::move(foci)}, d_digraph{mol, d_foci[0], atropisomerMode} {}
 
 Configuration::~Configuration() = default;
 

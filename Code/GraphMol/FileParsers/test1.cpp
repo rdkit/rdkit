@@ -11,12 +11,13 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/MolPickler.h>
 #include "FileParsers.h"
 #include "SequenceParsers.h"
 #include "SequenceWriters.h"
-#include "MolFileStereochem.h"
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -858,7 +859,7 @@ void testIssue399() {
   m1->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, smi2);
   TEST_ASSERT(smi2 == "S");
 #if 1
-  WedgeMolBonds(*m1, &m1->getConformer());
+  Chirality::wedgeMolBonds(*m1, &m1->getConformer());
   TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir() == Bond::BEGINWEDGE);
   TEST_ASSERT(m1->getBondWithIdx(1)->getBondDir() == Bond::NONE);
   TEST_ASSERT(m1->getBondWithIdx(2)->getBondDir() == Bond::NONE);
@@ -876,7 +877,7 @@ void testIssue399() {
   TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondType() == Bond::SINGLE);
   TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondDir() == Bond::NONE);
 
-  WedgeMolBonds(*m1, &m1->getConformer());
+  Chirality::wedgeMolBonds(*m1, &m1->getConformer());
   TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondDir() == Bond::BEGINDASH);
 
   delete m1;
@@ -4769,8 +4770,10 @@ void testGithub1034() {
         explicit_unknown_stereo)
 
     TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);  // now set in detectStereochemistry
-    ROMol(*m).getBondWithIdx(0)->setStereo(Bond::STEREOCIS); // ensure we have stereo atoms
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() ==
+                Bond::STEREOANY);  // now set in detectStereochemistry
+    ROMol(*m).getBondWithIdx(0)->setStereo(
+        Bond::STEREOCIS);  // ensure we have stereo atoms
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
@@ -4913,7 +4916,7 @@ void testMolFileDativeBonds() {
 
   {
     std::string fName = rdbase + "DativeBond2000.mol";
-    RWMol *m = MolFileToMol(fName,false);
+    RWMol *m = MolFileToMol(fName, false);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumBonds() == 5);
     TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);
@@ -5239,7 +5242,7 @@ void testGithub1615() {
     TEST_ASSERT(m1->getAtomWithIdx(1)->getProp<std::string>(
                     common_properties::_CIPCode) == "S");
     TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir() == Bond::NONE);
-    WedgeBond(m1->getBondWithIdx(0), 1, &m1->getConformer());
+    Chirality::wedgeBond(m1->getBondWithIdx(0), 1, &m1->getConformer());
     TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir() == Bond::BEGINWEDGE);
 
     delete m1;
@@ -5276,7 +5279,7 @@ void testGithub1615() {
                     common_properties::_CIPCode) == "S");
     TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir() == Bond::NONE);
 
-    WedgeBond(m1->getBondWithIdx(0), 1, &m1->getConformer());
+    Chirality::wedgeBond(m1->getBondWithIdx(0), 1, &m1->getConformer());
     TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir() == Bond::BEGINWEDGE);
 
     delete m1;
@@ -5407,8 +5410,8 @@ void RunTests() {
   testGithub1689();
   testWedgeBondToDoublebond();
   testGithub1615();
-#endif
   testGithub2000();
+#endif
 }
 
 // must be in German Locale for test...

@@ -161,7 +161,8 @@ class Configuration {
 
   Configuration(const CIPMol &mol, Atom *focus);
 
-  Configuration(const CIPMol &mol, std::vector<Atom *> &&foci);
+  Configuration(const CIPMol &mol, std::vector<Atom *> &&foci,
+                bool atropisomerMode = false);
 
   virtual ~Configuration();
 

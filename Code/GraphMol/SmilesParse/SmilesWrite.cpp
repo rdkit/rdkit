@@ -14,6 +14,8 @@
 #include <GraphMol/Canon.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Atropisomers.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/utils.h>
@@ -669,20 +671,43 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
   return SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
 }
 
-std::string MolToCXSmiles(const ROMol &mol, const SmilesWriteParams &params,
-                          std::uint32_t flags) {
-  bool doingCXSmiles = true;
-  auto res = SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
-  if (!res.empty()) {
-    if (!params.doIsomericSmiles) {
-      flags &= ~(SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO |
-                 SmilesWrite::CXSmilesFields::CX_BOND_CFG);
-    }
+std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
+                          std::uint32_t flags,
+                          RestoreBondDirOption restoreBondDirs) {
+  RWMol trwmol(romol);
 
-    auto cxext = SmilesWrite::getCXExtensions(mol, flags);
-    if (!cxext.empty()) {
-      res += " " + cxext;
+  bool doingCXSmiles = true;
+
+  auto res = SmilesWrite::detail::MolToSmiles(trwmol, params, doingCXSmiles);
+  if (res.empty()) {
+    return res;
+  }
+  if (restoreBondDirs == RestoreBondDirOptionTrue) {
+    RDKit::Chirality::reapplyMolBlockWedging(trwmol);
+  } else if (restoreBondDirs == RestoreBondDirOptionClear) {
+    for (auto bond : trwmol.bonds()) {
+      if (!canHaveDirection(*bond)) {
+        continue;
+      }
+      if (bond->getBondDir() != Bond::BondDir::NONE) {
+        bond->setBondDir(Bond::BondDir::NONE);
+      }
+      unsigned int cfg;
+      if (bond->getPropIfPresent<unsigned int>(
+              common_properties::_MolFileBondCfg, cfg)) {
+        bond->clearProp(common_properties::_MolFileBondCfg);
+      }
     }
+  }
+
+  if (!params.doIsomericSmiles) {
+    flags &= ~(SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO |
+               SmilesWrite::CXSmilesFields::CX_BOND_CFG);
+  }
+
+  auto cxext = SmilesWrite::getCXExtensions(trwmol, flags);
+  if (!cxext.empty()) {
+    res += " " + cxext;
   }
   return res;
 }

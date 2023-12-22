@@ -74,7 +74,7 @@ void adjustConjugatedFiveRings(RWMol &mol) {
 
   std::vector<Bond::BondType> bondTypesToModify = {
       Bond::BondType::SINGLE, Bond::BondType::DOUBLE, Bond::BondType::AROMATIC};
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
   }
   for (auto ring : mol.getRingInfo()->bondRings()) {
@@ -134,7 +134,7 @@ void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
   }
   QueryBond qb;
   qb.setQuery(makeSingleOrAromaticBondQuery());
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
   }
   for (auto bond : mol.bonds()) {
@@ -170,7 +170,7 @@ void setMDLAromaticity(RWMol &mol) {
 
   // it would be simpler to use the substructure matcher for this, but we can't
   // use SubstructMatch in the core GraphMol lib
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
   }
   for (auto ring : mol.getRingInfo()->atomRings()) {
@@ -355,7 +355,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     unsigned int failed;
     sanitizeMol(mol, failed, SANITIZE_SYMMRINGS | SANITIZE_SETAROMATICITY);
   } else {
-    if (!ringInfo->isInitialized()) {
+    if (!ringInfo->isSymmSssr()) {
       MolOps::symmetrizeSSSR(mol);
     }
   }
