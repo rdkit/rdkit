@@ -859,6 +859,11 @@ class MrvTests {
 
     if (testToRun == "" || testToRun == "molFileTests") {
       std::list<MolTest> molFileTests{
+          MolTest("FalseChiral.mrv", true, 4, 3, false,
+                  false),  // not sanitized, wedges NOT reapplied
+          MolTest("FalseChiral.mrv", true, 4, 3, true,
+                  false),  // sanitized, wedges NOT reapplied
+
           MolTest("Cubane.mrv", true, 16, 20),
           MolTest("NewChiralTest.mrv", true, 13, 14, true,
                   false),  // wedges NOT reapplied
