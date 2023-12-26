@@ -179,13 +179,13 @@ void ClearSingleBondDirFlags() {
  RDKit::ClearSingleBondDirFlags(*($self));
 };
 void reapplyMolBlockWedging() {
-  RDKit::reapplyMolBlockWedging(*($self));
+  RDKit::Chirality::reapplyMolBlockWedging(*($self));
 }
 void clearMolBlockWedgingInfo() {
-  RDKit::clearMolBlockWedgingInfo(*($self));
+  RDKit::Chirality::clearMolBlockWedgingInfo(*($self));
 }
 void invertMolBlockWedgingInfo() {
-  RDKit::invertMolBlockWedgingInfo(*($self));
+  RDKit::Chirality::invertMolBlockWedgingInfo(*($self));
 }
 void markUnspecifiedStereoAsUnknown(int confId) {
   RDKit::markUnspecifiedStereoAsUnknown(*($self), confId);

@@ -52,7 +52,7 @@ bool CIPMol::isInRing(Bond *bond) const {
   PRECONDITION(bond, "bad bond")
   const auto rings = d_mol.getRingInfo();
 
-  if (!rings->isInitialized()) {
+  if (!rings->isFindFastOrBetter()) {
     MolOps::fastFindRings(d_mol);
   }
 

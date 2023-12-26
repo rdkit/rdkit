@@ -1491,22 +1491,22 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
   SECTION("simplest") {
     auto mol = "OC=C[C@H](C1CC1)C2CCC2"_smiles;
     REQUIRE(mol);
-    auto wedgedBonds = pickBondsToWedge(*mol);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 3);
-    CHECK(head->second == 3);
+    CHECK(head->second->getIdx() == 3);
   }
   SECTION("simplest, specified double bond") {
     auto mol = "OC=C[C@H](C1CC1)C2CCC2"_smiles;
     REQUIRE(mol);
     mol->getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
     mol->getBondBetweenAtoms(1, 2)->setStereo(Bond::BondStereo::STEREOCIS);
-    auto wedgedBonds = pickBondsToWedge(*mol);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 3);
-    CHECK(head->second == 3);
+    CHECK(head->second->getIdx() == 3);
   }
   SECTION("prefer unspecified bond stereo") {
     auto mol = "OC=C[C@H](C=CF)(C=CC)"_smiles;
@@ -1515,11 +1515,11 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
     mol->getBondBetweenAtoms(1, 2)->setStereo(Bond::BondStereo::STEREOCIS);
     mol->getBondBetweenAtoms(4, 5)->setStereoAtoms(3, 6);
     mol->getBondBetweenAtoms(4, 5)->setStereo(Bond::BondStereo::STEREOANY);
-    auto wedgedBonds = pickBondsToWedge(*mol);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 6);
-    CHECK(head->second == 3);
+    CHECK(head->second->getIdx() == 3);
   }
 }
 
@@ -2780,14 +2780,14 @@ M  END
 
   SECTION("details: pickBondsWedge()") {
     // this is with aromatic bonds
-    auto bnds = pickBondsToWedge(*m);
-    CHECK(bnds.at(3) == 3);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*m);
+    CHECK(wedgedBonds.at(3)->getIdx() == 3);
     RWMol cp(*m);
 
     // now try kekulized:
     MolOps::Kekulize(cp);
-    bnds = pickBondsToWedge(cp);
-    CHECK(bnds.at(3) == 3);
+    wedgedBonds = Chirality::pickBondsToWedge(cp);
+    CHECK(wedgedBonds.at(3)->getIdx() == 3);
   }
 }
 

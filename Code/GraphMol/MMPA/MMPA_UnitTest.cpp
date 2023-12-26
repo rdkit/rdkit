@@ -50,6 +50,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/test_fixtures.h>
 #include "../RDKitBase.h"
 #include "../FileParsers/FileParsers.h"  //MOL single molecule !
 #include "../FileParsers/MolSupplier.h"  //SDF
@@ -692,12 +693,11 @@ std::endl;
 //====================================================================================================
 
 void testGithub6900 () {
-  RDKit::Chirality::setUseLegacyStereoPerception(false);
+  UseLegacyStereoPerceptionFixture useLegacy(false);
   //auto mol = "CN1CCCN=C1/C=C/c1cccs1"_smiles;
   auto mol = "N/C=C/C"_smiles;
   std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> res;
   RDKit::MMPA::fragmentMol(*mol, res, 3);
-  RDKit::Chirality::setUseLegacyStereoPerception(true);
 }
 int main() {
   BOOST_LOG(rdInfoLog)

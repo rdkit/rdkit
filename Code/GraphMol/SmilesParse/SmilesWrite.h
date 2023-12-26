@@ -51,6 +51,7 @@ enum CXSmilesFields : uint32_t {
   CX_SGROUPS = 1 << 7,
   CX_POLYMER = 1 << 8,
   CX_BOND_CFG = 1 << 9,
+  CX_BOND_ATROPISOMER = 1 << 10,
   CX_ALL = 0x7fffffff,
   CX_ALL_BUT_COORDS = CX_ALL ^ CX_COORDS
 };
@@ -206,10 +207,16 @@ inline std::string MolFragmentToSmiles(
                              bondSymbols);
 }
 
+enum RestoreBondDirOption {
+  RestoreBondDirOptionTrue = 0,  //<!DO restore bond dirs
+  RestoreBondDirOptionClear = 1  //<! clear all bond dir information
+};
+
 //! \brief returns canonical CXSMILES for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(
     const ROMol &mol, const SmilesWriteParams &ps,
-    std::uint32_t flags = SmilesWrite::CXSmilesFields::CX_ALL);
+    std::uint32_t flags = SmilesWrite::CXSmilesFields::CX_ALL,
+    RestoreBondDirOption restoreBondDirs = RestoreBondDirOptionClear);
 
 //! \brief returns canonical CXSMILES for a molecule
 /*!
@@ -223,6 +230,8 @@ RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(
   SMILES
   \param allBondsExplicit : if true, symbols will be included for all bonds.
   \param allHsExplicit : if true, hydrogen counts will be provided for every
+  \param doRandom : generate a randomized smiles string by randomly choosing
+                    the priority to follow in the DFS traversal. [default false]
   atom.
  */
 inline std::string MolToCXSmiles(const ROMol &mol, bool doIsomericSmiles = true,
@@ -239,7 +248,7 @@ inline std::string MolToCXSmiles(const ROMol &mol, bool doIsomericSmiles = true,
   ps.allBondsExplicit = allBondsExplicit;
   ps.allHsExplicit = allHsExplicit;
   ps.doRandom = doRandom;
-  return MolToCXSmiles(mol, ps);
+  return MolToCXSmiles(mol, ps, SmilesWrite::CXSmilesFields::CX_ALL);
 };
 
 //! \brief returns canonical CXSMILES for part of a molecule

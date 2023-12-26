@@ -112,6 +112,7 @@ class DrawMol {
   void extractRegions();
   void extractAttachments();
   void extractMolNotes();
+  void extractStereoGroups();
   void extractAtomNotes();
   void extractBondNotes();
   void extractRadicals();
@@ -119,10 +120,10 @@ class DrawMol {
   void extractVariableBonds();
   void extractBrackets();
   void extractLinkNodes();
-  // extractCloseContacts is to show where 2 atoms are drawn too close together
-  // and so needs the final drawing coords.  It is therefore called at the end
-  // of changeToDrawCoords() and any necessary DrawShapePolyLines added to
-  // postShapes_ in drawCoords.
+  // extractCloseContacts is to show where 2 atoms are drawn too close
+  // together and so needs the final drawing coords.  It is therefore called
+  // at the end of changeToDrawCoords() and any necessary DrawShapePolyLines
+  // added to postShapes_ in drawCoords.
   void extractCloseContacts();
   void calculateScale();
   void findExtremes();
@@ -232,13 +233,14 @@ class DrawMol {
                           Point2D &l1f, Point2D &l2s, Point2D &l2f) const;
   // assuming at[1-3] are atoms where at1 is bonded to at2 and at2 is bonded
   // to at3, find the position of the at2 end of a double bond between at2
-  // and at3.  If trunc, it'll be along the vector that bisects the two bonds on
-  // the inside, otherwise it's perpendicular to the bond from at1 to at2.
+  // and at3.  If trunc, it'll be along the vector that bisects the two bonds
+  // on the inside, otherwise it's perpendicular to the bond from at1 to at2.
   Point2D doubleBondEnd(unsigned int at1, unsigned int at2, unsigned int at3,
                         double offset, bool trunc) const;
   void calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
                            Point2D &l1f, Point2D &l2s, Point2D &l2f);
-  // find the vectors of any atoms singly bonded to atom that aren't otherAtom.
+  // find the vectors of any atoms singly bonded to atom that aren't
+  // otherAtom.
   void findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
                          std::vector<Point2D> &otherBondVecs) const;
   void adjustBondsOnSolidWedgeEnds();

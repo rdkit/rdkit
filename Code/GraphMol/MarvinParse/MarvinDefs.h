@@ -141,7 +141,6 @@ class MarvinAtom {
 
   MarvinAtom();
   MarvinAtom(const MarvinAtom &atomToCopy, std::string newId);
-  ~MarvinAtom() {}
 
   bool operator==(const MarvinAtom &rhs) const;
 
@@ -247,13 +246,8 @@ class MarvinMolBase {
  public:
   std::string molID;
   std::string id;  // used in all sGroups
-
-  // these atoms and bonds are only owned by this mol if it is a MarvinMol or
-  // MarvinSuperatomSgroup all other derived classes have atoms that are owned
-  // by the actual parent, and are references
-  std::vector<MarvinAtom *> atoms;
-  std::vector<MarvinBond *> bonds;
-
+  std::vector<MarvinAtom *> atoms;  // owned by parent MarvinMol
+  std::vector<MarvinBond *> bonds;  // owned by parent MarvinMol
   std::vector<std::unique_ptr<MarvinMolBase>> sgroups;
   MarvinMolBase *parent;
 
@@ -335,8 +329,6 @@ class MarvinMolBase {
   MarvinAtom *findAtomByRef(std::string atomId);
   MarvinBond *findBondByRef(std::string atomId);
 
-  void clearMaps();
-
   void prepSgroupsForRDKit();
   void processSgroupsFromRDKit();
 
@@ -362,10 +354,9 @@ class MarvinSruCoModSgroup : public MarvinMolBase {
   std::string roleName;  // could be MarvinSruSgroup, MarvinCopolymerSgroup or
                          // MarvinModificationSgroup
  public:
+  MarvinMolBase *copyMol(const std::string &idAppend) const override;
   MarvinSruCoModSgroup(std::string type, MarvinMolBase *parent);
   MarvinSruCoModSgroup(MarvinMolBase *parent, std::string role, ptree &molTree);
-
-  MarvinMolBase *copyMol(const std::string &idAppend) const override;
 
   std::string title;
   std::string connect;

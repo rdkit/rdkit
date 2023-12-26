@@ -492,7 +492,7 @@ std::string molblock_helper(RWMol &mol, const char *details_json,
     LPT_OPT_GET(addChiralHs);
   }
   if (useMolBlockWedging) {
-    reapplyMolBlockWedging(mol);
+    RDKit::Chirality::reapplyMolBlockWedging(mol);
   }
   if (addChiralHs) {
     MolDraw2DUtils::prepareMolForDrawing(mol, false, true, false, false, false);
@@ -641,7 +641,7 @@ bool invertWedgingIfMolHasFlipped(ROMol &mol,
   auto zRot = trans.getVal(2, 2);
   bool shouldFlip = zRot < FLIP_THRESHOLD;
   if (shouldFlip) {
-    invertMolBlockWedgingInfo(mol);
+    RDKit::Chirality::invertMolBlockWedgingInfo(mol);
   }
   return shouldFlip;
 }

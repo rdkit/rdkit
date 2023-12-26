@@ -74,7 +74,6 @@ bool getCleanNumber(std::string strToParse, T &outVal) {
 }
 
 void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
-  if (this->hasAtomBondBlocks()) {
     boost::property_tree::ptree atomArray = molTree.get_child("atomArray");
 
     // there are two types of atom arrays:
@@ -230,12 +229,8 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
         mrvAtom->sgroupRef =
             v.second.get<std::string>("<xmlattr>.sgroupRef", "");
 
-        // if (role == "SuperatomSgroup") {
         mrvAtom->sgroupAttachmentPoint =
             v.second.get<std::string>("<xmlattr>.sgroupAttachmentPoint", "");
-
-        // atom->setProp(common_properties::molAttachPoint, ival);
-        //}
       }
     } else  // single line form of atoms
     {
@@ -451,7 +446,6 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
           mrvAtom->sgroupRef = "";
         }
 
-        // if (role == "SuperatomSgroup" && sgroupAttachmentPoint != "" &&
         if (sgroupAttachmentPoint != "" && sgroupAttachmentPoints.size() > i &&
             sgroupAttachmentPoints[i] != "0") {
           mrvAtom->sgroupAttachmentPoint = sgroupAttachmentPoints[i];
@@ -489,10 +483,10 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
         if (atomRefs2s.size() != 2 ||
             !boost::algorithm::contains(
                 this->atoms, std::vector<std::string>{mrvBond->atomRefs2[0]},
-                MarvinMol::atomRefInAtoms) ||
+              atomRefInAtoms) ||
             !boost::algorithm::contains(
                 this->atoms, std::vector<std::string>{mrvBond->atomRefs2[1]},
-                MarvinMol::atomRefInAtoms)) {
+              atomRefInAtoms)) {
           throw FileParseException(
               "atomRefs2 must contain two atom refs that must appear in the atoms array in MRV file");
         }
@@ -541,15 +535,13 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
         mrvBond->bondStereo.value = v.second.get<std::string>("bondStereo", "");
         if (mrvBond->bondStereo.value != "") {
           bondStereoDeclCount++;
-          if (boost::algorithm::to_lower_copy(mrvBond->bondStereo.value) ==
-                  "w" ||
+        if (boost::algorithm::to_lower_copy(mrvBond->bondStereo.value) == "w" ||
+            boost::algorithm::to_lower_copy(mrvBond->bondStereo.value) == "h") {
+          // do nothing  - this is OK
+        } else if (boost::algorithm::to_lower_copy(mrvBond->bondStereo.value) ==
+                       "c" ||
               boost::algorithm::to_lower_copy(mrvBond->bondStereo.value) ==
-                  "h") {
-            // do nothing  - this is OK
-          } else if (boost::algorithm::to_lower_copy(
-                         mrvBond->bondStereo.value) == "c" ||
-                     boost::algorithm::to_lower_copy(
-                         mrvBond->bondStereo.value) == "t") {
+                       "t") {
             mrvBond->bondStereo.value = "";  // cis and trans are ignored
           } else {
             throw FileParseException(
@@ -610,7 +602,6 @@ void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
       }
     }
   }
-}
 
 ptree MarvinArrow::toPtree() const {
   ptree out;
@@ -1089,11 +1080,13 @@ int MarvinMolBase::getAtomIndex(std::string id) const {
 }
 
 void MarvinMolBase::pushOwnedAtom(MarvinAtom *atom) {
+  PRECONDITION(atom, "bad atom");
   PRECONDITION(this->parent, "only sgroups should call the base class version");
   this->parent->pushOwnedAtom(atom);
 }
 
 void MarvinMolBase::pushOwnedBond(MarvinBond *bond) {
+  PRECONDITION(bond, "bad bond");
   PRECONDITION(this->parent, "only sgroups should call the base class version");
   this->parent->pushOwnedBond(std::move(bond));
 }

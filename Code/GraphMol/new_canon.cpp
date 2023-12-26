@@ -12,6 +12,7 @@
 #include "new_canon.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
+#include <GraphMol/Atropisomers.h>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
@@ -430,6 +431,39 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
         }
       }
     }
+
+    if (res.stype == Bond::BondStereo::STEREOATROPCCW ||
+        res.stype == Bond::BondStereo::STEREOATROPCW) {
+      AtropAtomAndBondVec atropAtomAndBondVecs[2];
+      CHECK_INVARIANT(Atropisomers::getAtropisomerAtomsAndBonds(
+                          bond, atropAtomAndBondVecs, bond->getOwningMol()),
+                      "Could not find atropisomer controlling atoms")
+
+      res.controllingAtoms[0] =
+          &atoms[atropAtomAndBondVecs[0]
+                     .second[0]
+                     ->getOtherAtom(atropAtomAndBondVecs[0].first)
+                     ->getIdx()];
+      res.controllingAtoms[2] =
+          &atoms[atropAtomAndBondVecs[1]
+                     .second[0]
+                     ->getOtherAtom(atropAtomAndBondVecs[1].first)
+                     ->getIdx()];
+      if (atropAtomAndBondVecs[0].second.size() > 1) {
+        res.controllingAtoms[1] =
+            &atoms[atropAtomAndBondVecs[0]
+                       .second[1]
+                       ->getOtherAtom(atropAtomAndBondVecs[0].first)
+                       ->getIdx()];
+      }
+      if (atropAtomAndBondVecs[1].second.size() > 1) {
+        res.controllingAtoms[3] =
+            &atoms[atropAtomAndBondVecs[1]
+                       .second[1]
+                       ->getOtherAtom(atropAtomAndBondVecs[1].first)
+                       ->getIdx()];
+      }
+    }
   }
   return res;
 }
@@ -662,7 +696,7 @@ void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
 // This routine calculates the number of swaps that would be required to
 // determine what the smiles chirality value would be for a given chiral atom
 // given that the atom is visited first from the atom of interest.
-// THis is used to determine which of two atoms has priority based on the
+// This is used to determine which of two atoms has priority based on the
 // neighbor's chirality
 //
 // If the chiral neighbor has two equivlent (at least so far) neighbors that are
@@ -737,7 +771,7 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   }
 
   bool clearRings = false;
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
     clearRings = true;
   }
@@ -782,7 +816,7 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   }
 
   bool clearRings = false;
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
     clearRings = true;
   }
@@ -816,7 +850,7 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   }
 
   bool clearRings = false;
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
     clearRings = true;
   }

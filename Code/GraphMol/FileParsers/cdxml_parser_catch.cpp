@@ -800,6 +800,28 @@ TEST_CASE("CDXML") {
   }
 }
 
+TEST_CASE("atropisomers") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+
+  SECTION("atropisomer") {
+    {
+      std::vector<std::string> filenames = {"atrop1.cdxml"};
+      std::vector<std::string> expected = {
+          "C[C]1[C][CH]C(Cl)C(C)=C1c1c(C)ccc(Cl)c1C |(-2.936,-0.12,;-2.936,-1.66,;-1.602,-2.43,;-1.602,-3.97,;-2.936,-4.74,;-2.93,-6.28,;-4.27,-3.97,;-5.603,-4.74,;-4.27,-2.43,;-5.603,-1.66,;-5.603,-0.12,;-4.27,0.64,;-6.937,0.64,;-8.271,-0.12,;-8.271,-1.66,;-9.604,-2.43,;-6.937,-2.43,;-6.937,-3.97,),^1:1,3,^2:2,wU:8.8|"};
+      for (auto i = 0u; i < filenames.size(); ++i) {
+        auto fname = cdxmlbase + filenames[i];
+        auto mol = CDXMLFileToMols(fname);
+
+        SmilesWriteParams ps;
+        auto smi = MolToCXSmiles(*(mol[0].get()), ps,
+                                 SmilesWrite::CXSmilesFields::CX_ALL);
+        CHECK(smi == expected[i]);
+      }
+    }
+  }
+}
+
 TEST_CASE("bad stereo in a natural product") {
   std::string cdxmlbase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
@@ -1108,7 +1130,7 @@ TEST_CASE("Github #6887: and1 or1 in same mol") {
     std::stringstream iss(cdxml1);
     auto mols = CDXMLDataStreamToMols(iss);
     mols[0]->clearConformers();
-    CHECK(MolToCXSmiles(*mols[0]) == "CO[C@H](C)C[C@H](Cl)C[C@H](C)Br |o1:5,o2:8,&1:2|");
+    CHECK(MolToCXSmiles(*mols[0]) ==
+          "CO[C@H](C)C[C@H](Cl)C[C@H](C)Br |o1:5,o2:8,&1:2|");
   }
-
 }

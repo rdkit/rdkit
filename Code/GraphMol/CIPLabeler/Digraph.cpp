@@ -48,7 +48,8 @@ void Digraph::addEdge(Node *beg, Bond *bond, Node *end) {
   end->add(&e);
 }
 
-Digraph::Digraph(const CIPMol &mol, Atom *atom) : d_mol{mol} {
+Digraph::Digraph(const CIPMol &mol, Atom *atom, bool atropisomerMode)
+    : d_mol{mol} {
   PRECONDITION(atom, "cannot init digraph on a nullptr")
 
   auto visit = std::vector<char>(d_mol.getNumAtoms());
@@ -60,6 +61,7 @@ Digraph::Digraph(const CIPMol &mol, Atom *atom) : d_mol{mol} {
 
   dp_root = &addNode(std::move(visit), atom, atomic_num, dist, flags);
   dp_origin = dp_root;
+  d_atropisomerMode = atropisomerMode;
 }
 
 const CIPMol &Digraph::getMol() const { return d_mol; };
@@ -151,7 +153,7 @@ void Digraph::expand(Node *beg) {
 
       // duplicate nodes for bond orders (except for root atoms...)
       // for example >S=O
-      if (dp_origin != beg) {
+      if (dp_origin != beg || d_atropisomerMode) {
         if (atom->getFormalCharge() < 0 &&
             d_mol.getFractionalAtomicNum(atom).denominator() > 1) {
           end = beg->newBondDuplicateChild(nbrIdx, nbr);
@@ -164,7 +166,7 @@ void Digraph::expand(Node *beg) {
         }
       }
     } else if (bond == prev) {  // bond order expansion (backwards)
-      if (dp_origin->getAtom() != nbr) {
+      if (dp_origin->getAtom() != nbr || d_atropisomerMode) {
         for (int i = 0; i < virtual_nodes; ++i) {
           auto end = beg->newBondDuplicateChild(nbrIdx, nbr);
           addEdge(beg, bond, end);
