@@ -310,16 +310,15 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
   }
 }
 
-void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol,
-              std::vector<unsigned int> &atomsToRemove) {
+void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol) {
   // All atoms are guaranteed to have these three field names:
-  const auto atomicNumbers = atom_block.getIntProperty(mae::ATOM_ATOMIC_NUM);
+  const auto atomic_numbers = atom_block.getIntProperty(mae::ATOM_ATOMIC_NUM);
   const auto xs = atom_block.getRealProperty(mae::ATOM_X_COORD);
   const auto ys = atom_block.getRealProperty(mae::ATOM_Y_COORD);
   const auto zs = atom_block.getRealProperty(mae::ATOM_Z_COORD);
 
   // atomic numbers, and x, y, and z coordinates
-  const auto size = atomicNumbers->size();
+  const auto size = atomic_numbers->size();
   auto conf = new RDKit::Conformer(size);
   conf->setId(0);
 
@@ -327,29 +326,11 @@ void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol,
 
   bool nonzeroZ = false;
   for (size_t i = 0; i < size; ++i) {
-    bool removeAtom = false;
-    auto atomicNumber = atomicNumbers->at(i);
-    if (atomicNumber == 0 || atomicNumber == -1 || atomicNumber == -3) {
-      BOOST_LOG(rdWarningLog)
-          << "WARNING: atom " << (i + 1)
-          << " in input Maestro file has atomic number '" << atomicNumber
-          << "', which is reserved for internal use, and not allowed in inputs."
-          << " The atom will be ignored.";
-
-      // removing the atom now would be problematic for parsing the bonds
-      // (especially if the atom is bonded!), so we'll just add a dummy
-      // atom instead, and remove it again once we have finished parsing
-      // the file.
-      atomsToRemove.push_back(i);
-      removeAtom = true;
-      atomicNumber = 0;
-    } else if (atomicNumber == -2) {
-      // Maestro files use atomic number -2 to indicate a dummy atom.
-      atomicNumber = 0;
-    }
-
-    Atom *atom = new Atom(atomicNumber);
+    Atom *atom = new Atom(atomic_numbers->at(i));
     mol.addAtom(atom, true, true);
+
+    pdb_info.addPDBData(atom, i);
+    set_atom_properties(*atom, atom_block, i);
 
     RDGeom::Point3D pos;
     pos.x = xs->at(i);
@@ -357,14 +338,7 @@ void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol,
     pos.z = zs->at(i);
     conf->setAtomPos(i, pos);
 
-    // If the atom is going to be removed, don't bother with pdb info or
-    // properties, and also don't consider it for planarity
-    if (!removeAtom) {
-      pdb_info.addPDBData(atom, i);
-      set_atom_properties(*atom, atom_block, i);
-
-      nonzeroZ |= (std::abs(pos.z) > 1.e-4);
-    }
+    nonzeroZ |= (std::abs(pos.z) > 1.e-4);
   }
 
   conf->set3D(nonzeroZ);
@@ -404,9 +378,8 @@ void addBonds(const mae::IndexedBlock &bond_block, RWMol &mol) {
 
 void build_mol(RWMol &mol, mae::Block &structure_block, bool sanitize,
                bool removeHs) {
-  std::vector<unsigned int> atomsToRemove;
   const auto &atom_block = structure_block.getIndexedBlock(mae::ATOM_BLOCK);
-  addAtoms(*atom_block, mol, atomsToRemove);
+  addAtoms(*atom_block, mol);
 
   std::shared_ptr<const mae::IndexedBlock> bond_block{nullptr};
   try {
@@ -456,15 +429,6 @@ void build_mol(RWMol &mol, mae::Block &structure_block, bool sanitize,
 
   // Assign labels, but don't replace the existing ones
   MolOps::assignStereochemistry(mol, replaceExistingTags);
-
-  // If we saw any invalid atoms, remove them now
-  if (!atomsToRemove.empty()) {
-    mol.beginBatchEdit();
-    for (auto aidx : atomsToRemove) {
-      mol.removeAtom(aidx);
-    }
-    mol.commitBatchEdit();
-  }
 }
 
 void throw_idx_error(unsigned idx) {
