@@ -320,12 +320,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub6685_2.svg", 116380465U},
     {"testGithub6685_3.svg", 409385402U},
     {"testGithub6685_4.svg", 1239628830U},
-<<<<<<< HEAD
-    {"bad_lasso_1.svg", 1183031575U}};
-=======
     {"bad_lasso_1.svg", 726527516U},
     {"testGithub6968.svg", 1554428830U}};
->>>>>>> fbd548ecd (Github6968 (#6979))
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
