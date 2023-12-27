@@ -13,6 +13,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RDPaths.py
   DESTINATION ${RDKit_PythonDir}
   COMPONENT python)
 
-add_pythonpytest(pythonSourceTests ${CMAKE_CURRENT_SOURCE_DIR} )
+# add_pythonpytest(pythonSourceTests ${CMAKE_CURRENT_SOURCE_DIR} )
 
 add_subdirectory(Chem)

@@ -285,11 +285,11 @@ inline int EmbedMolecule(ROMol &mol, EmbedParameters &params) {
   \param onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
   \param ETversion	version of torsion preferences to use
   \param useSmallRingTorsions	optional torsions to improve small ring
-  conformer sampling
+                              conformer sampling
   \param useMacrocycleTorsions	optional torsions to improve macrocycle
-                                conformer sampling 
-  \param useMacrocycle14config  If 1-4 distances bound heuristics for macrocycles 
-                                is used 
+                                conformer sampling
+  \param useMacrocycle14config  If 1-4 distances bound heuristics for
+  macrocycles is used
 
   \return ID of the conformer added to the molecule, -1 if the emdedding failed
 */
@@ -384,11 +384,11 @@ inline int EmbedMolecule(
   \param onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
   \param ETversion	version of torsion preferences to use
   \param useSmallRingTorsions	optional torsions to improve small ring
-  conformer sampling
+                              conformer sampling
   \param useMacrocycleTorsions	optional torsions to improve macrocycle
-                                conformer sampling 
-  \param useMacrocycle14config  If 1-4 distances bound heuristics for macrocycles 
-                                is used 
+                                conformer sampling
+  \param useMacrocycle14config  If 1-4 distances bound heuristics for
+  macrocycles is used
 
 */
 inline void EmbedMultipleConfs(

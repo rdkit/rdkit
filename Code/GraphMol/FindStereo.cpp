@@ -585,8 +585,8 @@ void initBondInfo(ROMol &mol, bool flagPossible, bool cleanIt,
       if (currentStereo != Bond::BondStereo::STEREOATROPCW &&
           currentStereo != Bond::BondStereo::STEREOATROPCCW) {
         if (cleanIt) {
-      bond->setStereo(Bond::BondStereo::STEREONONE);
-    }
+          bond->setStereo(Bond::BondStereo::STEREONONE);
+        }
       } else {
         knownBonds.set(bidx);
         if (currentStereo == Bond::BondStereo::STEREOATROPCW) {
@@ -1075,7 +1075,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
     // Now apply the canonical atom ranking code with basic connectivity
     // invariants The necessary condition for chirality is that an atom's
     // neighbors must have unique ranks
-    Canon::rankFragmentAtoms(
+    RDKit::Canon::rankFragmentAtoms(
         mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
         breakTies, includeChirality, includeIsotopes, includeAtomMaps);
 #endif
@@ -1156,7 +1156,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
         const bool includeChirality = false;
         const bool includeIsotopes = false;
         const bool includeAtomMaps = false;
-        Canon::rankFragmentAtoms(
+        RDKit::Canon::rankFragmentAtoms(
             mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
             breakTies, includeChirality, includeIsotopes, includeAtomMaps);
 #endif

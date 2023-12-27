@@ -272,7 +272,7 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
       auto bond2Dir =
           atomAndBondVecs[bondAtomIndex].second.size() == 2
               ? atomAndBondVecs[bondAtomIndex].second[1]->getBondDir()
-                          : Bond::NONE;
+              : Bond::NONE;
       if (bond2Dir != Bond::BEGINWEDGE && bond2Dir != Bond::BEGINDASH) {
         bond2Dir = Bond::NONE;
       }
@@ -312,7 +312,7 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
               atomAndBondVecs[bondAtomIndex]
                   .second[0]
                   ->getOtherAtom(atomAndBondVecs[bondAtomIndex].first)
-                               ->getIdx()) -
+                  ->getIdx()) -
           conf->getAtomPos(atomAndBondVecs[bondAtomIndex].first->getIdx());
       bondVecs[bondAtomIndex] = RDGeom::Point3D(
           0.0, tempBondVec.dotProduct(yAxis), tempBondVec.dotProduct(zAxis));
@@ -323,7 +323,7 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
                 atomAndBondVecs[bondAtomIndex]
                     .second[1]
                     ->getOtherAtom(atomAndBondVecs[bondAtomIndex].first)
-                                           ->getIdx()) -
+                    ->getIdx()) -
             conf->getAtomPos(atomAndBondVecs[bondAtomIndex].first->getIdx());
 
         // get the projection of the 2nd bond on the x=0 plane

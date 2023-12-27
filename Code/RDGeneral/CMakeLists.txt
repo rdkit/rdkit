@@ -13,7 +13,7 @@ target_compile_definitions(RDGeneral PRIVATE RDKIT_RDGENERAL_BUILD)
 
 if(RDK_USE_BOOST_STACKTRACE AND UNIX AND NOT APPLE)
   target_compile_definitions(RDGeneral PRIVATE RDK_USE_BOOST_STACKTRACE)
-set(EXTRA_STACKTRACE_LIBS dl)
+  set(EXTRA_STACKTRACE_LIBS dl)
 endif()
 
 target_link_libraries(RDGeneral PUBLIC ${RDKit_THREAD_LIBS} ${EXTRA_STACKTRACE_LIBS})

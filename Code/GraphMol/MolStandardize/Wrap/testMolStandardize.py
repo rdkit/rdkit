@@ -993,7 +993,7 @@ chlorine	[Cl]
   def test22StandardizeInPlace(self):
     m = Chem.MolFromSmiles("O=N(=O)-C(O[Fe])C(C(=O)O)C-N(=O)=O")
     rdMolStandardize.CleanupInPlace(m)
-    self.assertEqual(Chem.MolToSmiles(m),"O=C([O-])C(C[N+](=O)[O-])C(O)[N+](=O)[O-].[Fe+]")
+    self.assertEqual(Chem.MolToSmiles(m), "O=C([O-])C(C[N+](=O)[O-])C(O)[N+](=O)[O-].[Fe+]")
 
     m = Chem.MolFromSmiles('[F-].[Cl-].[Br-].CC')
     rdMolStandardize.RemoveFragmentsInPlace(m)
@@ -1013,15 +1013,15 @@ chlorine	[Cl]
 
   def test23CleanupInPlaceMT(self):
     ind = (("O=N(=O)-C(O[Fe])C(C(=O)O)C-N(=O)=O",
-       "O=C([O-])C(C[N+](=O)[O-])C(O)[N+](=O)[O-].[Fe+]"),
-      ("O=N(=O)-CC(O[Fe])C(C(=O)O)C-N(=O)=O",
-       "O=C([O-])C(C[N+](=O)[O-])C(O)C[N+](=O)[O-].[Fe+]"),
-      ("O=N(=O)-CCC(O[Fe])C(C(=O)O)C-N(=O)=O",
-       "O=C([O-])C(C[N+](=O)[O-])C(O)CC[N+](=O)[O-].[Fe+]"))
+            "O=C([O-])C(C[N+](=O)[O-])C(O)[N+](=O)[O-].[Fe+]"),
+           ("O=N(=O)-CC(O[Fe])C(C(=O)O)C-N(=O)=O",
+            "O=C([O-])C(C[N+](=O)[O-])C(O)C[N+](=O)[O-].[Fe+]"),
+           ("O=N(=O)-CCC(O[Fe])C(C(=O)O)C-N(=O)=O",
+            "O=C([O-])C(C[N+](=O)[O-])C(O)CC[N+](=O)[O-].[Fe+]"))
     for i in range(4):
       ind = ind + ind
-    ms = [Chem.MolFromSmiles(x) for x,y in ind]
-    rdMolStandardize.CleanupInPlace(ms,4)
+    ms = [Chem.MolFromSmiles(x) for x, y in ind]
+    rdMolStandardize.CleanupInPlace(ms, 4)
     self.assertEqual([Chem.MolToSmiles(m) for m in ms], [y for x, y in ind])
 
   def test24NormalizeInPlaceMT(self):
@@ -1030,8 +1030,8 @@ chlorine	[Cl]
                                                                     "O=[N+]([O-])CCCC[N+](=O)[O-]"))
     for i in range(4):
       ind = ind + ind
-    ms = [Chem.MolFromSmiles(x) for x,y in ind]
-    rdMolStandardize.NormalizeInPlace(ms,4)
+    ms = [Chem.MolFromSmiles(x) for x, y in ind]
+    rdMolStandardize.NormalizeInPlace(ms, 4)
     self.assertEqual([Chem.MolToSmiles(m) for m in ms], [y for x, y in ind])
 
   def test25ReionizeInPlaceMT(self):
@@ -1040,16 +1040,16 @@ chlorine	[Cl]
                                                                   "O=C([O-])c1cccc(CCO)c1"))
     for i in range(4):
       ind = ind + ind
-    ms = [Chem.MolFromSmiles(x) for x,y in ind]
-    rdMolStandardize.ReionizeInPlace(ms,4)
+    ms = [Chem.MolFromSmiles(x) for x, y in ind]
+    rdMolStandardize.ReionizeInPlace(ms, 4)
     self.assertEqual([Chem.MolToSmiles(m) for m in ms], [y for x, y in ind])
 
   def test26RemoveFragmentsInPlaceMT(self):
     ind = (("CCCC.Cl.[Na]", "CCCC"), ("CCCCO.Cl.[Na]", "CCCCO"), ("CCOC.Cl.[Na]", "CCOC"))
     for i in range(4):
       ind = ind + ind
-    ms = [Chem.MolFromSmiles(x) for x,y in ind]
-    rdMolStandardize.RemoveFragmentsInPlace(ms,4)
+    ms = [Chem.MolFromSmiles(x) for x, y in ind]
+    rdMolStandardize.RemoveFragmentsInPlace(ms, 4)
     self.assertEqual([Chem.MolToSmiles(m) for m in ms], [y for x, y in ind])
 
   def test27ChargeParentInPlaceMT(self):

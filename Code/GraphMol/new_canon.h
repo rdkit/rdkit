@@ -308,18 +308,18 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       return 1;
     }
     if (df_useAtomMaps) {
-    // use the atom-mapping numbers if they were assigned
-    int molAtomMapNumber_i = 0;
-    int molAtomMapNumber_j = 0;
-    dp_atoms[i].atom->getPropIfPresent(common_properties::molAtomMapNumber,
-                                       molAtomMapNumber_i);
-    dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
-                                       molAtomMapNumber_j);
-    if (molAtomMapNumber_i < molAtomMapNumber_j) {
-      return -1;
-    } else if (molAtomMapNumber_i > molAtomMapNumber_j) {
-      return 1;
-    }
+      // use the atom-mapping numbers if they were assigned
+      int molAtomMapNumber_i = 0;
+      int molAtomMapNumber_j = 0;
+      dp_atoms[i].atom->getPropIfPresent(common_properties::molAtomMapNumber,
+                                         molAtomMapNumber_i);
+      dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
+                                         molAtomMapNumber_j);
+      if (molAtomMapNumber_i < molAtomMapNumber_j) {
+        return -1;
+      } else if (molAtomMapNumber_i > molAtomMapNumber_j) {
+        return 1;
+      }
     }
     // start by comparing degree
     ivi = dp_atoms[i].degree;

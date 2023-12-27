@@ -265,7 +265,9 @@ class MrvTests {
 
       {
         std::string expectedMrvName =
-            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".expected.sdf";
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") +
+            (molTest->reapplyMolBlockWedging ? "" : ".noreapply") +
+            ".expected.sdf";
         std::string outMolStr = "";
         try {
           outMolStr = MolToMolBlock(*mol, true, 0, true, true);
@@ -278,7 +280,9 @@ class MrvTests {
         }
 
         generateNewExpectedFilesIfSoSpecified(
-            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".NEW.sdf",
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") +
+                (molTest->reapplyMolBlockWedging ? "" : ".noreapply") +
+                ".NEW.sdf",
             outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
@@ -286,7 +290,9 @@ class MrvTests {
 
       {
         std::string expectedMrvName =
-            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".expected.mrv";
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") +
+            (molTest->reapplyMolBlockWedging ? "" : ".noreapply") +
+            ".expected.mrv";
 
         std::string outMolStr = "";
         try {
@@ -299,7 +305,9 @@ class MrvTests {
                                     false);  // try without kekule'ing
         }
         generateNewExpectedFilesIfSoSpecified(
-            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".NEW.mrv",
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") +
+                (molTest->reapplyMolBlockWedging ? "" : ".noreapply") +
+                ".NEW.mrv",
             outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
@@ -791,6 +799,11 @@ class MrvTests {
     UseLegacyStereoPerceptionFixture useLegacy(false);
     printf("Using new chirality perception\n");
 
+    auto sanitizeOff = false;
+    auto reapplyWedgesOn = true;
+    auto sanitizeOn = true;
+    auto reapplyWedgesOff = false;
+
     // rxn test returning a single mol
 
     if (testToRun == "" || testToRun == "rxnMolTests") {
@@ -859,10 +872,10 @@ class MrvTests {
 
     if (testToRun == "" || testToRun == "molFileTests") {
       std::list<MolTest> molFileTests{
-          MolTest("FalseChiral.mrv", true, 4, 3, false,
-                  false),  // not sanitized, wedges NOT reapplied
-          MolTest("FalseChiral.mrv", true, 4, 3, true,
-                  false),  // sanitized, wedges NOT reapplied
+          MolTest("FalseChiral.mrv", true, 4, 3, sanitizeOff,
+                  reapplyWedgesOff),  // not sanitized, wedges NOT reapplied
+          MolTest("FalseChiral.mrv", true, 4, 3, sanitizeOn,
+                  reapplyWedgesOff),  // sanitized, wedges NOT reapplied
 
           MolTest("Cubane.mrv", true, 16, 20),
           MolTest("NewChiralTest.mrv", true, 13, 14, true,
@@ -996,11 +1009,6 @@ class MrvTests {
 
     // atropisomer tests
     if (testToRun == "" || testToRun == "atropisomerTests") {
-      auto sanitizeOff = false;
-      auto reapplyWedgesOn = true;
-      auto sanitizeOn = true;
-      auto reapplyWedgesOff = false;
-
       std::vector<MolTest> atropisomerTests{
           // first the tests with sanitize off,
           // and reapplyMolBlockWedging on

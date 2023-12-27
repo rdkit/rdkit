@@ -1546,7 +1546,7 @@ Here's an example of using the features:
 
 Here are the supported groups and a brief description of what they mean:
 
- ========================   =========
+ =========================  =========
   Alkyl (ALK)               alkyl side chains (not an H atom)
   AlkylH (ALH)              alkyl side chains including an H atom
   Alkenyl (AEL)             alkenyl side chains      
@@ -1581,7 +1581,7 @@ Here are the supported groups and a brief description of what they mean:
   GroupH (GH)               any group (including H atom)
   Group* (G*)               any group with a ring closure
   GroupH* (GH*)             any group with a ring closure or an H atom
- ========================   =========
+ =========================  =========
  
 For more detailed descriptions, look at the documentation for the C++ file GenericGroups.h
 
@@ -2162,6 +2162,136 @@ Some concrete examples of this:
   True
   >>> m_OR.HasSubstructMatch(m_AND,ps)
   False
+
+Atropisomeric Bonds
+*******************
+
+Some single bonds have restricted rotation because of steric interactions
+between the groups on adjacent atoms. If the groups on the adjacent atoms are
+different from each other, chirality can be induced. An atropisomer bond is such
+a restricted rotation bond. 
+
+The requirements for a bond to be eligible for atropisomerism in the RDKit are:
+
+- It bond must be a single bond between SP2 hybridized atoms.
+- The neighboring bonds must be single, double or aromatic. 
+- If there are two groups on either end, those groups must be different as per CIP rules. 
+- Currently the RDKit does not consider ring bonds as potential atropisomer bonds. 
+- The molecule must have coordinates for atropisomer bonds to be interpreted.
+
+The definition of potential atropisomer bonds is based on the wedging of
+adjacent bonds. 
+
+Defining Atropisomers
+=====================
+
+At least one of the neighbor bonds of one of the atoms of the potential
+atropisomer bond must be a single or aromatic bond, and must have a bond
+direction that is either "wedged" or "hashed". If any of the neighbor bonds is
+marked as "sqwiggly", the bond is considered to have "Any" stereochemistry.
+Example structure:
+
+.. testsetup::
+
+  'N1(C2C(C)=CC=CC=2I)C(C)=CC=C1Br |wU:1.1,(16.58,-10.58,;16.58,-9.58,;17.45,-9.08,;18.31,-9.57,;17.44,-8.08,;16.58,-7.58,;15.71,-8.08,;15.71,-9.08,;14.84,-9.58,;17.38,-11.17,;18.34,-10.87,;17.08,-12.12,;16.07,-12.12,;15.77,-11.17,;14.81,-10.87,)|'
+  
+
+.. image:: images/atrop_example1.png
+
+If more than one of the neighbor bonds are wedged or hashed, they must be consistent. 
+
+For example, if two neighbor bonds on the same end atom are wedged/hashed, one
+must be a wedge and the other must be a hash. If neighbor bonds on different
+ends of the atropisomer bond are wedged, and the two bonds are opposite sides of
+the potential atropisomer bond (the dihedral angle is greater than 90 degrees or
+less than -90 degrees), the two must both be wedges or both must be hashed. If
+the two wedged/hashed neighbor bonds are on the same side of the potential
+atropisomer bond (the dihedral angle is less than 90 degrees and greater than
+-90 degrees), one must be a wedge and the other a hash.
+
+Examples – valid atropisomers with multiple wedges:
+
+.. testsetup::
+
+  'N1(C2=C(I)C=CC=C2C)C(Br)=CC=C1C |wU:1.7,0.9,(15.40,-10.23,;15.40,-9.23,;14.54,-8.73,;13.67,-9.23,;14.54,-7.73,;15.40,-7.23,;16.26,-7.73,;16.27,-8.73,;17.13,-9.22,;14.60,-10.82,;13.64,-10.52,;14.90,-11.77,;15.90,-11.77,;16.20,-10.82,;17.16,-10.52,)|',
+  'N1(C(C)=CC=C1Br)C1C(C)=CC=CC=1I |wU:0.5,wD:0.0,(16.58,-10.58,;17.38,-11.17,;18.34,-10.87,;17.08,-12.12,;16.07,-12.12,;15.77,-11.17,;14.81,-10.87,;16.58,-9.58,;17.45,-9.08,;18.31,-9.57,;17.44,-8.08,;16.58,-7.58,;15.71,-8.08,;15.71,-9.08,;14.84,-9.58,)|'
+  
+.. image:: images/atrop_example2.png
+
+
+Examples – invalid atropisomers with multiple wedges:
+
+.. testsetup::
+
+  'N1(C(C)=CC=C1Br)C1C(C)=CC=CC=1I |wU:0.5,wD:7.8,(12.97,-10.71,;13.78,-11.30,;14.74,-11.00,;13.48,-12.25,;12.47,-12.25,;12.17,-11.30,;11.21,-11.00,;12.97,-9.70,;13.85,-9.20,;14.71,-9.69,;13.84,-8.20,;12.97,-7.70,;12.11,-8.20,;12.11,-9.20,;11.24,-9.70,)|',
+  'N1(C2=C(I)C=CC=C2C)C(Br)=CC=C1C |wU:0.9,0.14,(16.20,-9.43,;16.20,-8.43,;15.34,-7.93,;14.47,-8.43,;15.34,-6.93,;16.20,-6.43,;17.06,-6.93,;17.07,-7.93,;17.93,-8.42,;15.40,-10.02,;14.44,-9.72,;15.70,-10.97,;16.70,-10.97,;17.00,-10.02,;17.96,-9.72,)|'
+  
+.. image:: images/atrop_example3.png
+
+
+Note: the RDKit software makes no attempt to determine if the bond is actually
+rotationally constrained. If the bond meets the requirements above, it is
+marked as an atropisomer.
+
+Formats supporting atropisomers
+===============================
+
+Atropisomers are supported for molecule parsing and writing in Mol, MRV, and CXSmiles formats. 
+For reactions, atropisomers are supported for in rxn, MRV and CXSmiles formats.
+Atropisomers can be parsed from a CDXML file.
+
+Enhanced Stereochemistry
+========================
+
+Atropisomers can be part of Enhanced Stereochemistry Groups (Or, And, or
+Absolute). This is indicated by marking one or both of the atropisomer bond's
+atoms as being in the enhanced Stereo Group
+
+Example:
+
+.. testsetup::
+
+  'C=C(N1C(=O)C=CNC1=O)[C@]([C@H](C)F)([C@H](C)Cl)[C@@H](C)Br |(-1.5948,0.91515,;-0.7334,0.39295,;-0.7868,-0.77245,;0.0764,-1.27085,;0.9432,-0.76745,;0.0748,-2.26505,;-0.7868,-2.76205,;-1.6494,-2.26165,;-1.6512,-1.26665,;-2.5194,-0.77025,;0.283,0.98175,;1.4986,1.05295,;2.1262,0.24415,;1.941,1.95055,;0.2298,1.98075,;1.059,2.52775,;-0.6704,2.43135,;0.631,0.16635,;0.0594,-0.45685,;1.4698,-0.05045,),wD:2.8,14.15,wU:2.1,2.2,10.10,11.12,17.18,o1:2,10,11,&1:14,17|'
+  
+.. image:: images/atrop_example4.png
+
+
+3D Coordinates for Input of Atropisomers
+========================================
+
+If 3D coordinates are available (and 2D coordinates are not), the atropisomer
+bond is marked only if one of the neighbor bonds is wedged/hashed. The
+wedge/hash information is ignored except for signaling the presence of the
+atropisomer. The actual configuration is determined by the 3D coordinates.
+
+Here's an example. The drawing at the left shows a 3D structure with a wedged
+bond on one end of the atropisomer bond. The drawing at the right shows a 2D
+drawing of the same structure. In both cases, the atropisomer bond is
+highlighted in red. Notice that the bond wedging in the 3D structure is
+inconsistent with the 3D coordinates; it's just used to indicate that there is
+an atropisomer bond, the actual stereochemistry of the bond is determined by the
+3D coordinates.
+
+.. testsetup::
+
+  'FC1=C(C2=C(C([H])([H])[H])C(N3C(=O)C4=C(N(C([H])([H])[H])C3=O)C(F)=C([H])C([H])=C4[H])=C([H])C([H])=C2[H])C2=C(N([H])C3=C2C([H])([H])C([H])([H])C(C(O[H])(C([H])([H])[H])C([H])([H])[H])([H])C3([H])[H])C(C(=O)N([H])[H])=C1[H] |(-1.4248,-1.9619,-2.2208;-1.8741,-1.6494,-1.6034;-1.6332,-0.9186,-1.2186;-0.9031,-0.4893,-1.4844;-0.138,-0.6553,-1.1342;-0.0582,-1.2887,-0.4699;-0.2862,-1.8851,-0.6843;0.5723,-1.396,-0.2643;-0.4068,-1.1014,0.0747;0.5573,-0.2316,-1.4028;1.3588,-0.3932,-1.0482;1.5905,0.0773,-0.3585;1.2002,0.6554,-0.0665;2.3933,-0.1194,0.0095;2.9068,-0.6967,-0.3594;2.6425,-1.1179,-1.0794;3.1982,-1.7169,-1.457;3.3106,-2.2227,-1.0278;3.7704,-1.4129,-1.6385;2.9318,-1.9829,-2.0144;1.8575,-1.0047,-1.4246;1.6168,-1.4364,-2.0026;3.6768,-0.8489,0.0041;4.2097,-1.3952,-0.3066;3.9217,-0.4363,0.7167;4.5184,-0.5645,0.9877;3.4017,0.1354,1.0788;3.5896,0.457,1.6328;2.6386,0.2956,0.7262;2.2428,0.7475,1.0192;0.4878,0.3584,-2.0214;1.0254,0.6927,-2.2354;-0.2773,0.5242,-2.3716;-0.3315,0.9837,-2.8531;-0.9727,0.1003,-2.1031;-1.5642,0.2383,-2.3831;-2.1142,-0.6018,-0.5711;-2.8218,-1.0304,-0.3345;-3.1799,-0.5981,0.3004;-3.7005,-0.7644,0.5964;-2.7239,0.0857,0.4696;-2.0583,0.1027,-0.0552;-1.4396,0.7778,-0.0395;-0.8137,0.538,-0.0869;-1.5466,1.1855,-0.5657;-1.4992,1.2797,0.7621;-1.2099,0.9291,1.2614;-1.1302,1.8345,0.67;-2.4007,1.4836,0.9934;-2.4335,2.0277,1.7578;-2.112,1.5747,2.4382;-2.128,1.9287,2.9199;-1.9128,2.8014,1.6418;-2.0588,3.1185,1.0662;-1.2527,2.6718,1.666;-2.0211,3.2354,2.1466;-3.3209,2.2556,1.9643;-3.6328,2.5429,1.4415;-3.3403,2.6896,2.48;-3.6795,1.7235,2.1686;-2.6689,1.821,0.4719;-2.9136,0.6925,1.1267;-2.7776,0.4065,1.7216;-3.5722,0.834,1.1115;-3.069,-1.7619,-0.7143;-3.8054,-2.1982,-0.4602;-4.2532,-1.9338,0.1012;-4.0043,-2.9212,-0.8738;-3.6777,-3.1773,-1.3373;-4.5184,-3.2354,-0.7104;-2.581,-2.0639,-1.3539;-2.7202,-2.6244,-1.6865),wD:10.20|',
+  
+.. image:: images/atrop_example5.png
+
+
+Validation of Atropisomers
+==========================
+
+Invalid atropisomers (for example, those with two equivalent groups on one end)
+will be removed when reading molecules in with sanitization enabled or by
+calling ``cleanupAtropisomers(mol)``.
+
+Searching and Canonicalization
+==============================
+
+Atropisomers are supported in the canonicalization algorithm of RDKit. They are ignored in 
+substructure searching and similarity searching at this time.
+
 
 
 Query Features in Molecule Drawings

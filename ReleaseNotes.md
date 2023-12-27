@@ -9,6 +9,8 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes
+- Two changes to improve the defaults for conformer generation: the functions EmbedMolecule() and EmbedMultipleConfis() now use ETKDGv3 by default (previously they were using ETKDGV1) and only consider heavy atoms when calculating RMSD for conformer pruning (previously Hs were alos considered).
+
 
 ## New Features and Enhancements:
 
