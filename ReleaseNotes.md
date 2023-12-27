@@ -1,3 +1,49 @@
+# Release_2023.09.4
+(Changes relative to Release_2023.09.3)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Jason Biggs, David Cosgrove, Tad Hurst, Gareth Jones, Axel Pahl, Paolo Tosco,
+Nicola Zonta, skystreet8, dhibbit
+
+## New Features and Enhancements:
+  - Add Python modules to generate stubs and automatically patch docstrings
+ (github pull #6919 from ptosco)
+  - Update molecular templates headers and drop bond-length tests
+ (github pull #6960 from ricrogz)
+  - Add in place and multithread support for more of the MolStandardize code
+ (github pull #6970 from greglandrum)
+  - Enable in-tree builds and improve overloaded constructor docstrings
+ (github pull #6980 from ptosco)
+  - Added fingerprints to GeneralizedSubstruct search and extended SWIG wrappers
+ (github pull #6991 from jones-gareth)
+
+## Bug Fixes:
+  - SpacialScore ignores undefined bond stereo
+ (github issue #6957 from jasondbiggs)
+  - DetermineBonds() for PH3 yields no bonding
+ (github issue #6961 from dhibbit)
+  - Highlights of triple bonds come out wrong
+ (github issue #6968 from DavidACosgrove)
+  - MaeMolSupplier cannot read dummy atoms from Maestro files
+ (github issue #6973 from ricrogz)
+  - Chem.FindMolChiralCenters function should not be sensitive to atom-map numbers
+ (github issue #6975 from skystreet8)
+  - Parsing a Mol leaks the "_needsDetectBondStereo" property
+ (github issue #6981 from ricrogz)
+  - SubstructMatch maxRecursiveMatches is not being honored
+ (github issue #6983 from ricrogz)
+  - HierarchicalClusterPicker::pick() randomly fails with Invariant Violation
+ (github issue #7001 from ricrogz)
+
+## Cleanup work:
+  - Drop unrequired zlib include which may break the windows build
+ (github pull #6966 from ricrogz)
+
+
 # Release_2023.09.3
 (Changes relative to Release_2023.09.2)
 
