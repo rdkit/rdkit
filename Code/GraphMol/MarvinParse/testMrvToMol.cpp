@@ -799,6 +799,7 @@ class MrvTests {
     UseLegacyStereoPerceptionFixture useLegacy(false);
     printf("Using new chirality perception\n");
 
+
     auto sanitizeOff = false;
     auto reapplyWedgesOn = true;
     auto sanitizeOn = true;

@@ -596,6 +596,15 @@ void initBondInfo(ROMol &mol, bool flagPossible, bool cleanIt,
         }
       }
     }
+      } else {
+        knownBonds.set(bidx);
+        if (currentStereo == Bond::BondStereo::STEREOATROPCW) {
+          bondSymbols[bidx] += "_atropcw";
+        } else if (currentStereo == Bond::BondStereo::STEREOATROPCCW) {
+          bondSymbols[bidx] += "_atropccw";
+        }
+      }
+    }
   }
 }
 void flagRingStereo(ROMol &mol,
@@ -1156,6 +1165,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
         const bool includeChirality = false;
         const bool includeIsotopes = false;
         const bool includeAtomMaps = false;
+
         RDKit::Canon::rankFragmentAtoms(
             mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
             breakTies, includeChirality, includeIsotopes, includeAtomMaps);
