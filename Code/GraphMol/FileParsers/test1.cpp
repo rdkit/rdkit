@@ -5313,6 +5313,100 @@ void testGithub2000() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testAtomQueries() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing atom queries contains HCOUNT, RBCOUNT, UNSAT"
+                       << std::endl;
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *testQuery =
+        MolFileToMol(pathName + "AtomQuery1.mol", true, false, true);
+    TEST_ASSERT(testQuery);
+
+    RWMol *testMol = SmilesToMol("[H]C([H])([H])C1=CN=C(C=C)C(C2CCCCC2)=C1C");
+    TEST_ASSERT(testMol);
+
+    MatchVectType mv;
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() > 0);
+
+    delete testMol;
+    testMol = SmilesToMol("[H]CC1=CN=C(C=C)C(C2CCCCC2)=C1C");
+    TEST_ASSERT(testMol);
+
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() > 0);
+
+    delete testMol;
+    testMol = SmilesToMol("CCC1=CN=C(C=C)C(C2CCCCC2)=C1C");
+    TEST_ASSERT(testMol);
+
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() == 0);  // search fails
+
+    delete testMol;
+    delete testQuery;
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *testQuery =
+        MolFileToMol(pathName + "AtomQuery2.mol", true, false, true);
+    TEST_ASSERT(testQuery);
+
+    RWMol *testMol = SmilesToMol("C1(C)C(C)=CN=C(C)C=1C1CCCCC1");
+    TEST_ASSERT(testMol);
+
+    MatchVectType mv;
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() > 0);
+
+    delete testMol;
+    testMol = SmilesToMol("C1(C)C(C)=CN=C(C)C=1C12CCC(CC1)CC2");
+    TEST_ASSERT(testMol);
+
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() == 0);  // search fails
+
+    delete testMol;
+    delete testQuery;
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *testQuery =
+        MolFileToMol(pathName + "AtomQuery3.mol", true, false, true);
+    TEST_ASSERT(testQuery);
+
+    RWMol *testMol = SmilesToMol("CCC1=CN=C(C=C)C(C2CCCCC2)=C1C");
+    TEST_ASSERT(testMol);
+
+    MatchVectType mv;
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() > 0);
+
+    delete testMol;
+    testMol = SmilesToMol("CCC1=CN=C(C3=CC=CC=C3)C(C2CCCCC2)=C1C");
+    TEST_ASSERT(testMol);
+
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() > 0);
+
+    delete testMol;
+    testMol = SmilesToMol("CCC1=CN=C(C3CCCCC3)C(C2CCCCC2)=C1C");
+    TEST_ASSERT(testMol);
+
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() == 0);
+
+    delete testMol;
+    delete testQuery;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -5411,6 +5505,7 @@ void RunTests() {
   testWedgeBondToDoublebond();
   testGithub1615();
   testGithub2000();
+  testAtomQueries();
 #endif
 }
 

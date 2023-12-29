@@ -592,13 +592,12 @@ const static std::map<
         {"NoCarbonRing", Matchers::NoCarbonRingAtomMatcher},
         {"CXX", Matchers::NoCarbonRingAtomMatcher},
         {"NoCarbonRingH", Matchers::NoCarbonRingHAtomMatcher},
-        {"CXH", Matchers::NoCarbonRingHAtomMatcher}
-};
+        {"CXH", Matchers::NoCarbonRingHAtomMatcher}};
 
-// This is an extension of adjustQueryProperties from GraphMol that allows the search of generic groups 
+// This is an extension of adjustQueryProperties from GraphMol that allows the
+// search of generic groups
 RDKIT_GENERICGROUPS_EXPORT ROMol *adjustQueryPropertiesWithGenericGroups(
-    const ROMol &mol,
-    const MolOps::AdjustQueryParameters *inParams=nullptr);
+    const ROMol &mol, const MolOps::AdjustQueryParameters *inParams = nullptr);
 
 //! returns false if any of the molecule's generic atoms are not satisfied in
 /// the current match
