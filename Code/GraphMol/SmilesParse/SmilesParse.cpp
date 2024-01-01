@@ -39,18 +39,11 @@
 #include "SmilesParseOps.h"
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
-#include "smiles.tab.hpp"
-// NOTE: this is a bit fragile since a lot of the #defines in smiles.tab.hpp
-// could prevent the same #defines in smarts.tab.hpp from being read.
-// Fortunately if there are actually any problems here, they will inevitably
-// show up very quickly in the tests.
+
 #include "smarts.tab.hpp"
 #include <list>
 
-int yysmiles_lex_init(void **);
-int yysmiles_lex_destroy(void *);
-size_t setup_smiles_string(const std::string &text, void *);
-extern int yysmiles_debug;
+#include "SmilesMolBuilder.h"
 
 int yysmarts_lex_init(void **);
 int yysmarts_lex_destroy(void *);
@@ -110,58 +103,6 @@ int smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
   Atom *atom = nullptr;
   Bond *bond = nullptr;
   return smarts_parse_helper(inp, molVect, atom, bond, start_tok);
-}
-
-int smiles_parse_helper(const std::string &inp,
-                        std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
-                        Bond *&bond, int start_tok) {
-  std::list<unsigned int> branchPoints;
-  void *scanner;
-  int res = 1;  // initialize with fail code
-  unsigned numAtomsParsed = 0;
-  unsigned numBondsParsed = 0;
-  TEST_ASSERT(!yysmiles_lex_init(&scanner));
-  try {
-    size_t ltrim = setup_smiles_string(inp, scanner);
-    res = yysmiles_parse(inp.c_str() + ltrim, &molVect, atom, bond,
-                         numAtomsParsed, numBondsParsed, &branchPoints, scanner,
-                         start_tok);
-  } catch (...) {
-    yysmiles_lex_destroy(scanner);
-    throw;
-  }
-  yysmiles_lex_destroy(scanner);
-
-  if (res == 1) {
-    std::stringstream errout;
-    errout << "Failed parsing SMILES '" << inp << "'";
-    throw SmilesParseException(errout.str());
-  }
-
-  if (!branchPoints.empty()) {
-    throw SmilesParseException("extra open parentheses");
-  }
-  return res;
-}
-
-int smiles_bond_parse(const std::string &inp, Bond *&bond) {
-  auto start_tok = static_cast<int>(START_BOND);
-  std::vector<RWMol *> molVect;
-  Atom *atom = nullptr;
-  return smiles_parse_helper(inp, molVect, atom, bond, start_tok);
-}
-int smiles_atom_parse(const std::string &inp, Atom *&atom) {
-  auto start_tok = static_cast<int>(START_ATOM);
-  std::vector<RWMol *> molVect;
-  Bond *bond = nullptr;
-  return smiles_parse_helper(inp, molVect, atom, bond, start_tok);
-}
-
-int smiles_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
-  auto start_tok = static_cast<int>(START_MOL);
-  Atom *atom = nullptr;
-  Bond *bond = nullptr;
-  return smiles_parse_helper(inp, molVect, atom, bond, start_tok);
 }
 
 typedef enum { BASE = 0, BRANCH, RECURSE } SmaState;
@@ -247,11 +188,7 @@ RWMol *toMol(const std::string &inp,
                              // occur last in this if.
     }
   } catch (SmilesParseException &e) {
-    std::string nm = "SMILES";
-    if (func == smarts_parse) {
-      nm = "SMARTS";
-    }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
+    BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << e.what()
                           << " for input: '" << origInp << "'" << std::endl;
     res = nullptr;
   }
@@ -275,11 +212,7 @@ Atom *toAtom(const std::string &inp, int func(const std::string &, Atom *&)) {
   try {
     func(inp, res);
   } catch (SmilesParseException &e) {
-    std::string nm = "SMILES";
-    if (func != smiles_atom_parse) {
-      nm = "SMARTS";
-    }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
+    BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << e.what()
                           << " for input: '" << inp << "'" << std::endl;
     res = nullptr;
   }
@@ -295,11 +228,7 @@ Bond *toBond(const std::string &inp, int func(const std::string &, Bond *&)) {
   try {
     func(inp, res);
   } catch (SmilesParseException &e) {
-    std::string nm = "SMILES";
-    if (func != smiles_bond_parse) {
-      nm = "SMARTS";
-    }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
+    BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << e.what()
                           << " for input: '" << inp << "'" << std::endl;
     res = nullptr;
   }
@@ -350,19 +279,11 @@ void preprocessSmiles(const std::string &smiles, const T &params,
 }  // namespace
 
 Atom *SmilesToAtom(const std::string &smiles) {
-  yysmiles_debug = false;
-
-  Atom *res = nullptr;
-  res = toAtom(smiles, smiles_atom_parse);
-  return res;
+  return smiles_parser::mol_builder::SmilesToAtom(smiles).release();
 };
 
 Bond *SmilesToBond(const std::string &smiles) {
-  yysmiles_debug = false;
-
-  Bond *res = nullptr;
-  res = toBond(smiles, smiles_bond_parse);
-  return res;
+  return smiles_parser::mol_builder::SmilesToBond(smiles).release();
 };
 
 namespace {
@@ -381,14 +302,12 @@ void handleCXPartAndName(RWMol *res, const T &params, const std::string &cxPart,
       } catch (...) {
         cxfailed = true;
         if (params.strictCXSMILES) {
-          delete res;
           throw;
         }
       }
       res->setProp("_CXSMILES_Data", std::string(cxPart.cbegin(), pos));
     } else if (params.strictCXSMILES && !params.parseName &&
                pos != cxPart.cend()) {
-      delete res;
       throw RDKit::SmilesParseException(
           "CXSMILES extension does not start with | and parseName=false");
     }
@@ -402,25 +321,17 @@ void handleCXPartAndName(RWMol *res, const T &params, const std::string &cxPart,
 
 RWMol *SmilesToMol(const std::string &smiles,
                    const SmilesParserParams &params) {
-  // Calling SmilesToMol in a multithreaded context is generally safe *unless*
-  // the value of debugParse is different for different threads. The if
-  // statement below avoids a TSAN warning in the case where multiple threads
-  // all use the same value for debugParse.
-  if (yysmiles_debug != params.debugParse) {
-    yysmiles_debug = params.debugParse;
-  }
-
   std::string lsmiles, name, cxPart;
-  preprocessSmiles(smiles, params, lsmiles, name, cxPart);
+
   // strip any leading/trailing whitespace:
-  // boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
-  RWMol *res = nullptr;
-  res = toMol(lsmiles, smiles_parse, lsmiles);
+  auto trimmed_smiles = boost::trim_copy(smiles);
+  preprocessSmiles(trimmed_smiles, params, lsmiles, name, cxPart);
+  auto res = smiles_parser::mol_builder::SmilesToMol(lsmiles);
 
   if (!res) {
     return nullptr;
   }
-  handleCXPartAndName(res, params, cxPart, name);
+  handleCXPartAndName(res.get(), params, cxPart, name);
 
   const Conformer *conf = nullptr, *conf3d = nullptr;
   // get a conformer
@@ -460,26 +371,16 @@ RWMol *SmilesToMol(const std::string &smiles,
     MolOps::assignChiralTypesFrom3D(*res, conf3d->getId(), true);
   }
   if (conf || conf3d) {
-    try {
-      Atropisomers::detectAtropisomerChirality(*res, conf ? conf : conf3d);
-    } catch (...) {
-      delete res;
-      throw;
-    }
+    Atropisomers::detectAtropisomerChirality(*res, conf ? conf : conf3d);
   }
 
   if (res && (params.sanitize || params.removeHs)) {
-    try {
-      if (params.removeHs) {
-        bool implicitOnly = false, updateExplicitCount = true;
-        MolOps::removeHs(*res, implicitOnly, updateExplicitCount,
-                         params.sanitize);
-      } else if (params.sanitize) {
-        MolOps::sanitizeMol(*res);
-      }
-    } catch (...) {
-      delete res;
-      throw;
+    if (params.removeHs) {
+      bool implicitOnly = false, updateExplicitCount = true;
+      MolOps::removeHs(*res, implicitOnly, updateExplicitCount,
+                       params.sanitize);
+    } else if (params.sanitize) {
+      MolOps::sanitizeMol(*res);
     }
 
     if (res->hasProp(SmilesParseOps::detail::_needsDetectBondStereo)) {
@@ -510,18 +411,18 @@ RWMol *SmilesToMol(const std::string &smiles,
       // need to:
       MolOps::fastFindRings(*res);
     }
-    QueryOps::completeMolQueries(res, 0xDEADBEEF);
+    QueryOps::completeMolQueries(res.get(), 0xDEADBEEF);
   }
 
   if (res) {
     if (!params.skipCleanup) {
-      SmilesParseOps::CleanupAfterParsing(res);
+      SmilesParseOps::CleanupAfterParsing(res.get());
     }
     if (!name.empty()) {
       res->setProp(common_properties::_Name, name);
     }
   }
-  return res;
+  return res.release();
 };
 
 Atom *SmartsToAtom(const std::string &smiles) {

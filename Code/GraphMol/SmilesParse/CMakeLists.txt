@@ -15,23 +15,23 @@ if(CMAKE_COMPILER_IS_CLANG AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 15)
 set_source_files_properties(smarts.tab.cpp smiles.tab.cpp PROPERTIES COMPILE_OPTIONS "-Wno-unused-but-set-variable")
 endif()
 
-if(FLEX_EXECUTABLE)
+if(FLEX_EXECUTABLE AND ${FLEX_VERSION} VERSION_GREATER_EQUAL "2.6")
   FLEX_TARGET(SmilesL smiles.ll
               ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp
-             COMPILE_FLAGS "-Pyysmiles_" )
+              COMPILE_FLAGS "-Pyysmiles_" )
   FLEX_TARGET(SmartsL smarts.ll
               ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp
               COMPILE_FLAGS "-Pyysmarts_" )
   SET(FLEX_OUTPUT_FILES ${FLEX_SmilesL_OUTPUTS} ${FLEX_SmartsL_OUTPUTS})
-else(FLEX_EXECUTABLE)
+else()
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp COPYONLY)
   FILE(GLOB FLEX_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/lex.*.cpp")
-endif(FLEX_EXECUTABLE)
+endif()
 
-if(BISON_EXECUTABLE)
+if(BISON_EXECUTABLE AND ${BISON_VERSION} VERSION_GREATER_EQUAL "3.8")
   BISON_TARGET(SmilesY smiles.yy
                ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp
                COMPILE_FLAGS "-pyysmiles_" )
@@ -39,26 +39,29 @@ if(BISON_EXECUTABLE)
                ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp
                COMPILE_FLAGS "-pyysmarts_" )
   SET(BISON_OUTPUT_FILES ${BISON_SmilesY_OUTPUTS} ${BISON_SmartsY_OUTPUTS})
-  if(FLEX_EXECUTABLE)
+  if(FLEX_EXECUTABLE AND ${FLEX_VERSION} VERSION_GREATER_EQUAL "2.6")
     ADD_FLEX_BISON_DEPENDENCY(SmilesL SmilesY)
     ADD_FLEX_BISON_DEPENDENCY(SmartsL SmartsY)
-  endif(FLEX_EXECUTABLE)
-else(BISON_EXECUTABLE)
+  endif()
+else()
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.hpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp COPYONLY)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smiles_location.tab.hpp.cmake
+                 ${CMAKE_CURRENT_SOURCE_DIR}/smiles_location.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.hpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp COPYONLY)
   FILE(GLOB BISON_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.tab.?pp")
-endif(BISON_EXECUTABLE)
+endif()
 
 
 rdkit_library(SmilesParse
               SmilesParse.cpp SmilesParseOps.cpp
               SmilesWrite.cpp SmartsWrite.cpp CXSmilesOps.cpp
+              SmilesASTParser.cpp SmilesMolBuilder.cpp
               ${BISON_OUTPUT_FILES}
               ${FLEX_OUTPUT_FILES}
               LINK_LIBRARIES GraphMol RDGeneral)

@@ -9,6 +9,7 @@
 //
 #include <RDGeneral/test.h>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <GraphMol/RDKitBase.h>
 #include "SmilesParse.h"
@@ -22,8 +23,6 @@ using namespace std;
 typedef ROMol Mol;
 
 void testPass() {
-  int i = 0;
-  ROMol *mol, *mol2;
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing molecules which should parse." << std::endl;
   string smis[] = {
@@ -121,81 +120,77 @@ void testPass() {
     "C[Fe@TB10](O)(Cl)(Br)F",
     "C[Fe@OH](O)(Cl)(Br)(N)F",
     "C[Fe@OH20](O)(Cl)(Br)(N)F",
-    "EOS"
+    "C1.C%01"
   };
-  while (smis[i] != "EOS") {
-    string smi = smis[i];
+
+  for (auto smi : smis) {
     BOOST_LOG(rdInfoLog) << "***: " << smi << std::endl;
-    mol = SmilesToMol(smi);
+    auto mol = std::unique_ptr<Mol>(SmilesToMol(smi));
     CHECK_INVARIANT(mol, smi);
-    if (mol) {
-      unsigned int nAts = mol->getNumAtoms();
-      CHECK_INVARIANT(nAts != 0, smi.c_str());
-      smi = MolToSmiles(*mol);
-      // BOOST_LOG(rdInfoLog)<< "  > " << smi << std::endl;
-      mol2 = SmilesToMol(smi);
-      CHECK_INVARIANT(mol2->getNumAtoms() == nAts, smi.c_str())
-      delete mol;
-      delete mol2;
-    }
-    i++;
+
+    unsigned int nAts = mol->getNumAtoms();
+    CHECK_INVARIANT(nAts != 0, smi.c_str());
+
+    auto roundtripped_smi = MolToSmiles(*mol);
+    auto mol2 = std::unique_ptr<Mol>(SmilesToMol(roundtripped_smi));
+    CHECK_INVARIANT(mol2->getNumAtoms() == nAts, roundtripped_smi.c_str())
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testFail() {
-  int i = 0;
-  Mol *mol;
-
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog)
       << "Testing molecules which should fail to parse/sanitize." << std::endl;
 
-  // alternate good and bad smiles here to ensure that the parser can resume
-  // parsing
-  // on good input:
   string smis[] = {
-      "CC=(CO)C",    "CC(=CO)C", "C1CC",
-      "C1CC1",       "Ccc",      "CCC",
+      "CC=(CO)C",
+      "C1CC",
+      "Ccc",
       "fff",  // tests the situation where the parser cannot do anything at all
-      "CCC",
       "N(=O)(=O)=O",  // bad sanitization failure
-      "C1CC1",
-      "C=0",  // part of sf.net issue 2525792
-      "C1CC1",
-      "C0",  // part of sf.net issue 2525792
-      "C1CC1",
-      "C-0",  // part of sf.net issue 2525792
-      "C1CC1",
-      "C+0",  // part of sf.net issue 2525792
-      "C1CC1",       "[H2H]",    "C1CC1",
-      "[HH2]",       "C1CC1",    "[555555555555555555C]",
-      "C1CC1",             //
-      "[Fe@TD]",     "C",  //
-      "[Fe@TH3]",    "C",  //
-      "[Fe@SP4]",    "C",  //
-      "[Fe@AL3]",    "C",  //
-      "[Fe@TB21]",   "C",  //
-      "[Fe@OH31]",   "C",  //
-      "EOS"};
+      "C=0",          // part of sf.net issue 2525792
+      "C0",           // part of sf.net issue 2525792
+      "C-0",          // part of sf.net issue 2525792
+      "C+0",          // part of sf.net issue 2525792
+      "[H2H]",
+      "[HH2]",
+      "[555555555555555555C]",
+      "[Fe@TD]",
+      "[Fe@TH3]",
+      "[Fe@SP4]",
+      "[Fe@AL3]",
+      "[Fe@TB21]",
+      "[Fe@OH31]",
+      "[#1@]",
+      "[H@@]",
+      "C%0CC%00",
+      "C%1CC%01",
+      "C1CC1  CC",
+      // check for numbers > max int32_t
+      "[2147483648C]",
+      "[C+2147483648]",
+      "[C:2147483648]",
+      "C%(2147483648)CC%(2147483648)",
+      // charges should be -15 <= charge 15
+      "[C+16]",
+      "[C-16]",
+  };
 
   // turn off the error log temporarily:
-  while (smis[i] != "EOS") {
-    string smi = smis[i];
+  SmilesParserParams params;
+  params.allowCXSMILES = false;
+  params.parseName = false;
+  for (auto smi : smis) {
     boost::logging::disable_logs("rdApp.error");
+
+    std::unique_ptr<Mol> mol = nullptr;
     try {
-      mol = SmilesToMol(smi);
+      mol.reset(SmilesToMol(smi, params));
     } catch (MolSanitizeException &) {
-      mol = (Mol *)nullptr;
     }
     boost::logging::enable_logs("rdApp.error");
-    if (!(i % 2)) {
-      CHECK_INVARIANT(!mol, smi);
-    } else {
-      CHECK_INVARIANT(mol, smi);
-      delete mol;
-    }
-    i++;
+    CHECK_INVARIANT(!mol, smi);
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }

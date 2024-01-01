@@ -1667,7 +1667,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("a simpler system") {
     auto m = R"CTAB(
-  Mrv2014 03092106042D          
+  Mrv2014 03092106042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2595,7 +2595,7 @@ TEST_CASE("query moves") {
 
 TEST_CASE("moves with conformer") {
   auto m1 = R"CTAB(
-  Mrv2108 01192209042D          
+  Mrv2108 01192209042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2761,7 +2761,7 @@ TEST_CASE(
     CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
   }
   SECTION("extreme") {
-    auto m = "[Fe+30]"_smiles;
+    auto m = "[Fe+15]"_smiles;
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
   }
