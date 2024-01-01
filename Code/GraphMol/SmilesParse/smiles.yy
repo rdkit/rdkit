@@ -10,7 +10,7 @@
 %}
 
 
-%require  "4.0"
+%require  "3.8"
 
 %debug
 %defines
