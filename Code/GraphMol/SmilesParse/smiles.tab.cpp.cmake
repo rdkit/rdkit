@@ -39,7 +39,7 @@
 #define yylex   yysmiles_lex
 
 // First part of user prologue.
-#line 1 "smiles.yy"
+#line 1 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
 
 
   // $Id$
@@ -48,16 +48,15 @@
   //
   //   @@ All Rights Reserved  @@
   //
-  //
 
-#line 54 "smiles.tab.cpp"
+#line 53 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 
 
 #include "smiles.tab.hpp"
 
 
 // Unqualified %code blocks.
-#line 43 "smiles.yy"
+#line 40 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
 
 #include <charconv>
 #include <utility>
@@ -69,7 +68,7 @@
 #define yylex token_scanner.lex
 
 
-#line 73 "smiles.tab.cpp"
+#line 72 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 
 
 #ifndef YY_
@@ -160,9 +159,9 @@
 #define YYERROR         goto yyerrorlab
 #define YYRECOVERING()  (!!yyerrstatus_)
 
-#line 17 "smiles.yy"
+#line 16 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
 namespace smiles_parser { namespace ast_parser {
-#line 166 "smiles.tab.cpp"
+#line 165 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 
   /// Build a parser object.
   Parser::Parser (Scanner& token_scanner_yyarg, Builder& ast_yyarg)
@@ -201,8 +200,7 @@ namespace smiles_parser { namespace ast_parser {
         break;
 
       case symbol_kind::S_HYDROGEN: // HYDROGEN
-      case symbol_kind::S_AROMATIC_ORGANIC: // AROMATIC_ORGANIC
-      case symbol_kind::S_ALIPHATIC_ORGANIC: // ALIPHATIC_ORGANIC
+      case symbol_kind::S_ORGANIC_ATOM: // ORGANIC_ATOM
       case symbol_kind::S_AROMATIC_SYMBOL: // AROMATIC_SYMBOL
       case symbol_kind::S_ELEMENT_SYMBOL: // ELEMENT_SYMBOL
       case symbol_kind::S_CHIRAL_TAG: // CHIRAL_TAG
@@ -247,8 +245,7 @@ namespace smiles_parser { namespace ast_parser {
         break;
 
       case symbol_kind::S_HYDROGEN: // HYDROGEN
-      case symbol_kind::S_AROMATIC_ORGANIC: // AROMATIC_ORGANIC
-      case symbol_kind::S_ALIPHATIC_ORGANIC: // ALIPHATIC_ORGANIC
+      case symbol_kind::S_ORGANIC_ATOM: // ORGANIC_ATOM
       case symbol_kind::S_AROMATIC_SYMBOL: // AROMATIC_SYMBOL
       case symbol_kind::S_ELEMENT_SYMBOL: // ELEMENT_SYMBOL
       case symbol_kind::S_CHIRAL_TAG: // CHIRAL_TAG
@@ -363,8 +360,7 @@ namespace smiles_parser { namespace ast_parser {
         break;
 
       case symbol_kind::S_HYDROGEN: // HYDROGEN
-      case symbol_kind::S_AROMATIC_ORGANIC: // AROMATIC_ORGANIC
-      case symbol_kind::S_ALIPHATIC_ORGANIC: // ALIPHATIC_ORGANIC
+      case symbol_kind::S_ORGANIC_ATOM: // ORGANIC_ATOM
       case symbol_kind::S_AROMATIC_SYMBOL: // AROMATIC_SYMBOL
       case symbol_kind::S_ELEMENT_SYMBOL: // ELEMENT_SYMBOL
       case symbol_kind::S_CHIRAL_TAG: // CHIRAL_TAG
@@ -393,8 +389,7 @@ namespace smiles_parser { namespace ast_parser {
         break;
 
       case symbol_kind::S_HYDROGEN: // HYDROGEN
-      case symbol_kind::S_AROMATIC_ORGANIC: // AROMATIC_ORGANIC
-      case symbol_kind::S_ALIPHATIC_ORGANIC: // ALIPHATIC_ORGANIC
+      case symbol_kind::S_ORGANIC_ATOM: // ORGANIC_ATOM
       case symbol_kind::S_AROMATIC_SYMBOL: // AROMATIC_SYMBOL
       case symbol_kind::S_ELEMENT_SYMBOL: // ELEMENT_SYMBOL
       case symbol_kind::S_CHIRAL_TAG: // CHIRAL_TAG
@@ -423,8 +418,7 @@ namespace smiles_parser { namespace ast_parser {
         break;
 
       case symbol_kind::S_HYDROGEN: // HYDROGEN
-      case symbol_kind::S_AROMATIC_ORGANIC: // AROMATIC_ORGANIC
-      case symbol_kind::S_ALIPHATIC_ORGANIC: // ALIPHATIC_ORGANIC
+      case symbol_kind::S_ORGANIC_ATOM: // ORGANIC_ATOM
       case symbol_kind::S_AROMATIC_SYMBOL: // AROMATIC_SYMBOL
       case symbol_kind::S_ELEMENT_SYMBOL: // ELEMENT_SYMBOL
       case symbol_kind::S_CHIRAL_TAG: // CHIRAL_TAG
@@ -452,8 +446,7 @@ namespace smiles_parser { namespace ast_parser {
         break;
 
       case symbol_kind::S_HYDROGEN: // HYDROGEN
-      case symbol_kind::S_AROMATIC_ORGANIC: // AROMATIC_ORGANIC
-      case symbol_kind::S_ALIPHATIC_ORGANIC: // ALIPHATIC_ORGANIC
+      case symbol_kind::S_ORGANIC_ATOM: // ORGANIC_ATOM
       case symbol_kind::S_AROMATIC_SYMBOL: // AROMATIC_SYMBOL
       case symbol_kind::S_ELEMENT_SYMBOL: // ELEMENT_SYMBOL
       case symbol_kind::S_CHIRAL_TAG: // CHIRAL_TAG
@@ -609,10 +602,10 @@ namespace smiles_parser { namespace ast_parser {
 
 
     // User initialization code.
-#line 41 "smiles.yy"
+#line 38 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
 { yyla.location.begin.column = 0; }
 
-#line 616 "smiles.tab.cpp"
+#line 609 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 
 
     /* Initialize the stack.  The initial state will be set in
@@ -732,8 +725,7 @@ namespace smiles_parser { namespace ast_parser {
         break;
 
       case symbol_kind::S_HYDROGEN: // HYDROGEN
-      case symbol_kind::S_AROMATIC_ORGANIC: // AROMATIC_ORGANIC
-      case symbol_kind::S_ALIPHATIC_ORGANIC: // ALIPHATIC_ORGANIC
+      case symbol_kind::S_ORGANIC_ATOM: // ORGANIC_ATOM
       case symbol_kind::S_AROMATIC_SYMBOL: // AROMATIC_SYMBOL
       case symbol_kind::S_ELEMENT_SYMBOL: // ELEMENT_SYMBOL
       case symbol_kind::S_CHIRAL_TAG: // CHIRAL_TAG
@@ -762,259 +754,253 @@ namespace smiles_parser { namespace ast_parser {
           switch (yyn)
             {
   case 11: // dot: '.'
-#line 72 "smiles.yy"
+#line 69 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
          { ast.add_dot(); }
-#line 768 "smiles.tab.cpp"
+#line 760 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 12: // branch_open: '('
-#line 73 "smiles.yy"
+#line 70 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                   { ast.open_branch(); }
-#line 774 "smiles.tab.cpp"
+#line 766 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 13: // branch_close: ')'
-#line 74 "smiles.yy"
+#line 71 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                    { ast.close_branch(); }
-#line 780 "smiles.tab.cpp"
+#line 772 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 14: // bond: '-'
-#line 76 "smiles.yy"
+#line 73 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
           { ast.add_bond("-"); }
-#line 786 "smiles.tab.cpp"
+#line 778 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 15: // bond: '='
-#line 77 "smiles.yy"
+#line 74 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
           { ast.add_bond("="); }
-#line 792 "smiles.tab.cpp"
+#line 784 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 16: // bond: '#'
-#line 78 "smiles.yy"
+#line 75 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
           { ast.add_bond("#"); }
-#line 798 "smiles.tab.cpp"
+#line 790 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 17: // bond: ':'
-#line 79 "smiles.yy"
+#line 76 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
           { ast.add_bond(":"); }
-#line 804 "smiles.tab.cpp"
+#line 796 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 18: // bond: '$'
-#line 80 "smiles.yy"
+#line 77 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
           { ast.add_bond("$"); }
-#line 810 "smiles.tab.cpp"
+#line 802 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 19: // bond: '~'
-#line 81 "smiles.yy"
+#line 78 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
           { ast.add_bond("~"); }
-#line 816 "smiles.tab.cpp"
+#line 808 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 20: // bond: '/'
-#line 82 "smiles.yy"
+#line 79 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
           { ast.add_bond("/"); }
-#line 822 "smiles.tab.cpp"
+#line 814 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 21: // bond: '\\'
-#line 83 "smiles.yy"
+#line 80 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
               { ast.add_bond("\\"); }
-#line 828 "smiles.tab.cpp"
+#line 820 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 22: // bond: '-' '>'
-#line 84 "smiles.yy"
+#line 81 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
               { ast.add_bond("->"); }
-#line 834 "smiles.tab.cpp"
+#line 826 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 23: // bond: '<' '-'
-#line 85 "smiles.yy"
+#line 82 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
               { ast.add_bond("<-"); }
-#line 840 "smiles.tab.cpp"
+#line 832 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 24: // bond: '\\' '\\'
-#line 86 "smiles.yy"
+#line 83 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                 { ast.add_bond("\\\\"); }
-#line 846 "smiles.tab.cpp"
+#line 838 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 25: // atom: bracket_atom
-#line 88 "smiles.yy"
-                   { ast.set_no_implicit_hs(); }
-#line 852 "smiles.tab.cpp"
+  case 27: // atom: bracket_atom
+#line 85 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
+                                          { ast.set_no_implicit_hs(); }
+#line 844 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 32: // isotope: NUMBER symbol
-#line 94 "smiles.yy"
+  case 31: // isotope: NUMBER symbol
+#line 90 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                                 { ast.add_isotope_num(yystack_[1].value.as < std::string_view > ()); }
-#line 858 "smiles.tab.cpp"
+#line 850 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 37: // aliphatic_organic: ALIPHATIC_ORGANIC
-#line 98 "smiles.yy"
-                                     { ast.add_atom(yystack_[0].value.as < std::string_view > ()); }
-#line 864 "smiles.tab.cpp"
+  case 35: // organic: ORGANIC_ATOM
+#line 94 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
+                      { ast.add_atom(yystack_[0].value.as < std::string_view > ()); }
+#line 856 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 38: // aromatic_organic: AROMATIC_ORGANIC
-#line 99 "smiles.yy"
-                                   { ast.add_atom(yystack_[0].value.as < std::string_view > ()); }
-#line 870 "smiles.tab.cpp"
-    break;
-
-  case 39: // element_symbol: ELEMENT_SYMBOL
-#line 101 "smiles.yy"
+  case 36: // element_symbol: ELEMENT_SYMBOL
+#line 96 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                                { ast.add_atom(yystack_[0].value.as < std::string_view > ()); }
-#line 876 "smiles.tab.cpp"
+#line 862 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 40: // element_symbol: HYDROGEN
-#line 102 "smiles.yy"
+  case 37: // element_symbol: HYDROGEN
+#line 97 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                          { ast.add_atom(yystack_[0].value.as < std::string_view > ()); }
-#line 882 "smiles.tab.cpp"
+#line 868 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 41: // element_symbol: '\'' ELEMENT_SYMBOL '\''
-#line 104 "smiles.yy"
+  case 38: // element_symbol: '\'' ELEMENT_SYMBOL '\''
+#line 99 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                                          { ast.add_atom(yystack_[1].value.as < std::string_view > ()); }
-#line 888 "smiles.tab.cpp"
+#line 874 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 42: // element_symbol: AROMATIC_SYMBOL
-#line 105 "smiles.yy"
+  case 39: // element_symbol: AROMATIC_SYMBOL
+#line 100 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                                  { ast.add_atom(yystack_[0].value.as < std::string_view > ()); }
-#line 894 "smiles.tab.cpp"
+#line 880 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 43: // element_symbol: '#' NUMBER
-#line 106 "smiles.yy"
+  case 40: // element_symbol: '#' NUMBER
+#line 101 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                            { ast.add_atom(yystack_[0].value.as < std::string_view > ()); }
-#line 900 "smiles.tab.cpp"
+#line 886 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 44: // dummy_atom: '*'
-#line 109 "smiles.yy"
+  case 41: // dummy_atom: '*'
+#line 104 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                 { ast.add_atom("*"); }
-#line 906 "smiles.tab.cpp"
+#line 892 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 46: // chirality: '@'
-#line 112 "smiles.yy"
+  case 43: // chirality: '@'
+#line 107 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                { ast.add_chirality_tag("@"); }
-#line 912 "smiles.tab.cpp"
+#line 898 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 47: // chirality: '@' '@'
-#line 113 "smiles.yy"
+  case 44: // chirality: '@' '@'
+#line 108 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                    { ast.add_chirality_tag("@@"); }
-#line 918 "smiles.tab.cpp"
+#line 904 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 48: // chirality: CHIRAL_TAG
-#line 114 "smiles.yy"
+  case 45: // chirality: CHIRAL_TAG
+#line 109 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                       { ast.add_chirality_class(yystack_[0].value.as < std::string_view > ()); }
-#line 924 "smiles.tab.cpp"
+#line 910 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 49: // chirality: CHIRAL_TAG NUMBER
-#line 115 "smiles.yy"
+  case 46: // chirality: CHIRAL_TAG NUMBER
+#line 110 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                              { ast.add_chirality_class(yystack_[1].value.as < std::string_view > (), yystack_[0].value.as < std::string_view > ()); }
-#line 930 "smiles.tab.cpp"
+#line 916 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 51: // hcount: HYDROGEN
-#line 119 "smiles.yy"
+  case 48: // hcount: HYDROGEN
+#line 114 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                  { ast.add_explicit_h(1); }
-#line 936 "smiles.tab.cpp"
+#line 922 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 52: // hcount: HYDROGEN NUMBER
-#line 120 "smiles.yy"
+  case 49: // hcount: HYDROGEN NUMBER
+#line 115 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                         { ast.add_explicit_h(yystack_[0].value.as < std::string_view > ()); }
-#line 942 "smiles.tab.cpp"
+#line 928 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 54: // charge: plus_signs
-#line 123 "smiles.yy"
+  case 51: // charge: plus_signs
+#line 118 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                    { ast.add_atom_charge(yystack_[0].value.as < int > ()); }
-#line 948 "smiles.tab.cpp"
+#line 934 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 55: // charge: minus_signs
-#line 124 "smiles.yy"
+  case 52: // charge: minus_signs
+#line 119 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                     { ast.add_atom_charge(yystack_[0].value.as < int > ()); }
-#line 954 "smiles.tab.cpp"
+#line 940 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 56: // charge: '+' NUMBER
-#line 125 "smiles.yy"
+  case 53: // charge: '+' NUMBER
+#line 120 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                    { ast.add_atom_charge(yystack_[0].value.as < std::string_view > ()); }
-#line 960 "smiles.tab.cpp"
+#line 946 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 57: // charge: '-' NUMBER
-#line 126 "smiles.yy"
+  case 54: // charge: '-' NUMBER
+#line 121 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                    { ast.add_atom_charge(yystack_[0].value.as < std::string_view > ()); }
-#line 966 "smiles.tab.cpp"
+#line 952 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 58: // plus_signs: '+'
-#line 128 "smiles.yy"
+  case 55: // plus_signs: '+'
+#line 123 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                 { yylhs.value.as < int > () = 1; }
-#line 972 "smiles.tab.cpp"
+#line 958 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 59: // plus_signs: plus_signs '+'
-#line 128 "smiles.yy"
+  case 56: // plus_signs: plus_signs '+'
+#line 123 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                                              { yylhs.value.as < int > () = yystack_[1].value.as < int > () + 1; }
-#line 978 "smiles.tab.cpp"
+#line 964 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 60: // minus_signs: '-'
-#line 129 "smiles.yy"
+  case 57: // minus_signs: '-'
+#line 124 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                  { yylhs.value.as < int > () = -1; }
-#line 984 "smiles.tab.cpp"
+#line 970 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 61: // minus_signs: minus_signs '-'
-#line 129 "smiles.yy"
+  case 58: // minus_signs: minus_signs '-'
+#line 124 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                                                 { yylhs.value.as < int > () = yystack_[1].value.as < int > () - 1; }
-#line 990 "smiles.tab.cpp"
+#line 976 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 62: // map_number: NUMBER
-#line 131 "smiles.yy"
+  case 59: // map_number: NUMBER
+#line 126 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                    { ast.add_atom_map_number(yystack_[0].value.as < std::string_view > ()); }
-#line 996 "smiles.tab.cpp"
+#line 982 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 65: // ring_number: NUMBER
-#line 135 "smiles.yy"
+  case 62: // ring_number: NUMBER
+#line 130 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                     { ast.add_ring(yystack_[0].value.as < std::string_view > ()); }
-#line 1002 "smiles.tab.cpp"
+#line 988 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 66: // ring_number: '%' NUMBER
-#line 136 "smiles.yy"
+  case 63: // ring_number: '%' NUMBER
+#line 131 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                         { ast.add_ring(yystack_[0].value.as < std::string_view > ()); }
-#line 1008 "smiles.tab.cpp"
+#line 994 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
-  case 67: // ring_number: '%' '(' NUMBER ')'
-#line 137 "smiles.yy"
+  case 64: // ring_number: '%' '(' NUMBER ')'
+#line 132 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
                                 { ast.add_ring(yystack_[1].value.as < std::string_view > ()); }
-#line 1014 "smiles.tab.cpp"
+#line 1000 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
 
-#line 1018 "smiles.tab.cpp"
+#line 1004 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 
             default:
               break;
@@ -1207,108 +1193,108 @@ namespace smiles_parser { namespace ast_parser {
 
 
 
-  const signed char Parser::yypact_ninf_ = -15;
+  const signed char Parser::yypact_ninf_ = -14;
 
   const signed char Parser::yytable_ninf_ = -4;
 
   const signed char
   Parser::yypact_[] =
   {
-      33,   -15,   -15,    21,   -15,     2,     0,   -15,   -15,   -15,
-     -15,   -15,   -15,   -15,   -15,    28,    -3,     1,    -4,   -15,
-     -15,   -15,   -15,   -15,   -15,   -15,   -15,   -15,   -14,   -15,
-     -15,   -15,   -15,   -15,   -15,    22,    -1,    -6,    33,   -15,
-      68,    -8,   -15,   -15,   -15,   -15,    19,    39,    23,    49,
-     -15,   -15,   -15,   -15,    63,   -15,    33,   -15,   -15,   -15,
-     -15,   -15,    65,    27,    46,    51,   -15,    66,    67,    25,
-      64,    78,   -15,   -15,   -15,   -15,   -15,    70,   -15,   -15,
-     -15,   -15,    69,   -15
+      16,   -14,    19,   -14,     1,     0,   -14,   -14,   -14,   -14,
+     -14,   -14,   -14,    26,    -3,    31,    38,   -14,   -14,   -14,
+     -14,   -14,   -14,   -14,   -14,   -13,   -14,   -14,   -14,   -14,
+     -14,   -14,    20,    30,    -6,    16,   -14,    61,    -2,   -14,
+     -14,   -14,   -14,    24,    58,    41,    65,   -14,   -14,   -14,
+     -14,    63,   -14,    16,   -14,   -14,   -14,   -14,   -14,    73,
+      22,    72,    44,   -14,    76,    77,   -12,    42,    74,   -14,
+     -14,   -14,   -14,   -14,    79,   -14,   -14,   -14,   -14,    66,
+     -14
   };
 
   const signed char
   Parser::yydefact_[] =
   {
-       2,    38,    37,     0,    44,     0,     8,     4,    25,    26,
-      27,    28,    40,    42,    39,     0,     0,     0,    45,    31,
-      33,    34,    35,    36,     1,    65,    11,    12,    14,    15,
-      16,    17,    18,    19,    20,    21,     0,     0,     0,     9,
-       8,    10,     6,    63,    32,    43,     0,    48,    46,    50,
-      22,    24,    23,    66,     0,     5,     0,    10,    64,    41,
-      49,    47,    51,    53,     0,     8,    52,    60,    58,     0,
-      54,    55,    67,    13,     7,    57,    56,     0,    29,    59,
-      61,    62,     0,    30
+       2,    35,     0,    41,     0,     8,     4,    27,    25,    26,
+      37,    39,    36,     0,     0,     0,    42,    30,    32,    33,
+      34,     1,    62,    11,    12,    14,    15,    16,    17,    18,
+      19,    20,    21,     0,     0,     0,     9,     8,    10,     6,
+      60,    31,    40,     0,    45,    43,    47,    22,    24,    23,
+      63,     0,     5,     0,    10,    61,    38,    46,    44,    48,
+      50,     0,     8,    49,    57,    55,     0,    51,    52,    64,
+      13,     7,    54,    53,     0,    28,    56,    58,    59,     0,
+      29
   };
 
   const signed char
   Parser::yypgoto_[] =
   {
-     -15,   -15,    38,    55,   -15,   -15,   -15,    56,    59,   -15,
-     -15,    83,    36,    42,   -15,    74,   -15,   -15,   -15,   -15,
-     -15,   -15,   -15,    58
+     -14,   -14,    35,    53,   -14,   -14,   -14,    54,    57,   -14,
+     -14,    80,    33,   -14,    34,   -14,   -14,   -14,   -14,   -14,
+     -14,   -14,    56
   };
 
   const signed char
   Parser::yydefgoto_[] =
   {
-       0,     5,     6,    38,    39,    40,    74,    41,     7,     8,
-      18,    19,     9,    10,    22,    11,    49,    63,    69,    70,
-      71,    82,    42,    43
+       0,     4,     5,    35,    36,    37,    71,    38,     6,     7,
+      16,    17,     8,    19,     9,    46,    60,    66,    67,    68,
+      79,    39,    40
   };
 
   const signed char
   Parser::yytable_[] =
   {
-      -3,    25,    24,    53,    47,    54,    45,    50,    46,    25,
-      26,    27,    52,    28,    29,    30,    31,    32,    33,    34,
-      35,    37,    36,    48,    12,     1,     2,    13,    14,    37,
-      15,    12,     1,     2,    13,    14,    16,     1,     2,    20,
-      67,    77,    51,    16,    59,    21,    17,     4,    60,    78,
-      61,    20,    62,    17,     4,    68,     3,    21,    72,     4,
-      25,    26,    27,    73,    28,    29,    30,    31,    32,    33,
-      34,    35,    64,    36,    66,    75,    76,    23,    26,    81,
-      37,    28,    29,    30,    31,    32,    33,    34,    35,    23,
-      36,    80,    79,    83,    65,    56,    57,    55,    44,    58
+      -3,    21,    50,    74,    51,    42,    22,    47,    22,    23,
+      24,    75,    25,    26,    27,    28,    29,    30,    31,    32,
+       1,    33,    10,     1,    11,    12,    34,    13,    34,    10,
+       1,    11,    12,    14,    64,    18,    20,    43,     2,    48,
+      14,     3,    49,    15,     3,    44,    18,    20,    56,    65,
+      15,     3,    22,    23,    24,    70,    25,    26,    27,    28,
+      29,    30,    31,    32,    45,    33,    57,    58,    59,    76,
+      23,    61,    34,    25,    26,    27,    28,    29,    30,    31,
+      32,    63,    33,    69,    72,    73,    77,    78,    62,    80,
+      53,    54,    52,    41,    55
   };
 
   const signed char
   Parser::yycheck_[] =
   {
-       0,     9,     0,     9,     8,    11,     9,    21,     7,     9,
-      10,    11,    13,    13,    14,    15,    16,    17,    18,    19,
-      20,    29,    22,    27,     3,     4,     5,     6,     7,    29,
-       9,     3,     4,     5,     6,     7,    15,     4,     5,     3,
-      13,    16,    20,    15,    25,     3,    25,    26,     9,    24,
-      27,    15,     3,    25,    26,    28,    23,    15,    12,    26,
-       9,    10,    11,    12,    13,    14,    15,    16,    17,    18,
-      19,    20,     9,    22,     9,     9,     9,     3,    10,     9,
-      29,    13,    14,    15,    16,    17,    18,    19,    20,    15,
-      22,    13,    28,    24,    56,    40,    40,    38,    15,    41
+       0,     0,     8,    15,    10,     8,     8,    20,     8,     9,
+      10,    23,    12,    13,    14,    15,    16,    17,    18,    19,
+       4,    21,     3,     4,     5,     6,    28,     8,    28,     3,
+       4,     5,     6,    14,    12,     2,     2,     6,    22,    19,
+      14,    25,    12,    24,    25,     7,    13,    13,    24,    27,
+      24,    25,     8,     9,    10,    11,    12,    13,    14,    15,
+      16,    17,    18,    19,    26,    21,     8,    26,     3,    27,
+       9,     8,    28,    12,    13,    14,    15,    16,    17,    18,
+      19,     8,    21,    11,     8,     8,    12,     8,    53,    23,
+      37,    37,    35,    13,    38
   };
 
   const signed char
   Parser::yystos_[] =
   {
-       0,     4,     5,    23,    26,    31,    32,    38,    39,    42,
-      43,    45,     3,     6,     7,     9,    15,    25,    40,    41,
-      42,    43,    44,    45,     0,     9,    10,    11,    13,    14,
-      15,    16,    17,    18,    19,    20,    22,    29,    33,    34,
-      35,    37,    52,    53,    41,     9,     7,     8,    27,    46,
-      21,    20,    13,     9,    11,    38,    33,    37,    53,    25,
-       9,    27,     3,    47,     9,    32,     9,    13,    28,    48,
-      49,    50,    12,    12,    36,     9,     9,    16,    24,    28,
-      13,     9,    51,    24
+       0,     4,    22,    25,    30,    31,    37,    38,    41,    43,
+       3,     5,     6,     8,    14,    24,    39,    40,    41,    42,
+      43,     0,     8,     9,    10,    12,    13,    14,    15,    16,
+      17,    18,    19,    21,    28,    32,    33,    34,    36,    50,
+      51,    40,     8,     6,     7,    26,    44,    20,    19,    12,
+       8,    10,    37,    32,    36,    51,    24,     8,    26,     3,
+      45,     8,    31,     8,    12,    27,    46,    47,    48,    11,
+      11,    35,     8,     8,    15,    23,    27,    12,     8,    49,
+      23
   };
 
   const signed char
   Parser::yyr1_[] =
   {
-       0,    30,    31,    31,    32,    32,    32,    32,    33,    33,
-      33,    34,    35,    36,    37,    37,    37,    37,    37,    37,
-      37,    37,    37,    37,    37,    38,    38,    38,    38,    39,
-      39,    40,    40,    41,    41,    41,    41,    42,    43,    44,
-      44,    44,    44,    44,    45,    46,    46,    46,    46,    46,
-      47,    47,    47,    48,    48,    48,    48,    48,    49,    49,
-      50,    50,    51,    52,    52,    53,    53,    53
+       0,    29,    30,    30,    31,    31,    31,    31,    32,    32,
+      32,    33,    34,    35,    36,    36,    36,    36,    36,    36,
+      36,    36,    36,    36,    36,    37,    37,    37,    38,    38,
+      39,    39,    40,    40,    40,    41,    42,    42,    42,    42,
+      42,    43,    44,    44,    44,    44,    44,    45,    45,    45,
+      46,    46,    46,    46,    46,    47,    47,    48,    48,    49,
+      50,    50,    51,    51,    51
   };
 
   const signed char
@@ -1316,11 +1302,11 @@ namespace smiles_parser { namespace ast_parser {
   {
        0,     2,     0,     1,     1,     3,     2,     5,     0,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     2,     2,     2,     1,     1,     1,     1,     6,
-       8,     1,     2,     1,     1,     1,     1,     1,     1,     1,
-       1,     3,     1,     2,     1,     0,     1,     2,     1,     2,
-       0,     1,     2,     0,     1,     1,     2,     2,     1,     2,
-       1,     2,     1,     1,     2,     1,     2,     4
+       1,     1,     2,     2,     2,     1,     1,     1,     6,     8,
+       1,     2,     1,     1,     1,     1,     1,     1,     3,     1,
+       2,     1,     0,     1,     2,     1,     2,     0,     1,     2,
+       0,     1,     1,     2,     2,     1,     2,     1,     2,     1,
+       1,     2,     1,     2,     4
   };
 
 
@@ -1331,13 +1317,12 @@ namespace smiles_parser { namespace ast_parser {
   const Parser::yytname_[] =
   {
   "\"end of file\"", "error", "\"invalid token\"", "HYDROGEN",
-  "AROMATIC_ORGANIC", "ALIPHATIC_ORGANIC", "AROMATIC_SYMBOL",
-  "ELEMENT_SYMBOL", "CHIRAL_TAG", "NUMBER", "'.'", "'('", "')'", "'-'",
-  "'='", "'#'", "':'", "'$'", "'~'", "'/'", "'\\\\'", "'>'", "'<'", "'['",
-  "']'", "'\\''", "'*'", "'@'", "'+'", "'%'", "$accept", "mol", "chain",
-  "connector", "dot", "branch_open", "branch_close", "bond", "atom",
-  "bracket_atom", "isotope", "symbol", "aliphatic_organic",
-  "aromatic_organic", "element_symbol", "dummy_atom", "chirality",
+  "ORGANIC_ATOM", "AROMATIC_SYMBOL", "ELEMENT_SYMBOL", "CHIRAL_TAG",
+  "NUMBER", "'.'", "'('", "')'", "'-'", "'='", "'#'", "':'", "'$'", "'~'",
+  "'/'", "'\\\\'", "'>'", "'<'", "'['", "']'", "'\\''", "'*'", "'@'",
+  "'+'", "'%'", "$accept", "mol", "chain", "connector", "dot",
+  "branch_open", "branch_close", "bond", "atom", "bracket_atom", "isotope",
+  "symbol", "organic", "element_symbol", "dummy_atom", "chirality",
   "hcount", "charge", "plus_signs", "minus_signs", "map_number",
   "ring_bond", "ring_number", YY_NULLPTR
   };
@@ -1348,13 +1333,13 @@ namespace smiles_parser { namespace ast_parser {
   const unsigned char
   Parser::yyrline_[] =
   {
-       0,    63,    63,    63,    65,    66,    67,    68,    70,    70,
-      70,    72,    73,    74,    76,    77,    78,    79,    80,    81,
-      82,    83,    84,    85,    86,    88,    89,    89,    89,    91,
-      92,    94,    94,    96,    96,    96,    96,    98,    99,   101,
-     102,   104,   105,   106,   109,   111,   112,   113,   114,   115,
-     118,   119,   120,   122,   123,   124,   125,   126,   128,   128,
-     129,   129,   131,   133,   133,   135,   136,   137
+       0,    60,    60,    60,    62,    63,    64,    65,    67,    67,
+      67,    69,    70,    71,    73,    74,    75,    76,    77,    78,
+      79,    80,    81,    82,    83,    85,    85,    85,    87,    88,
+      90,    90,    92,    92,    92,    94,    96,    97,    99,   100,
+     101,   104,   106,   107,   108,   109,   110,   113,   114,   115,
+     117,   118,   119,   120,   121,   123,   123,   124,   124,   126,
+     128,   128,   130,   131,   132
   };
 
   void
@@ -1396,16 +1381,16 @@ namespace smiles_parser { namespace ast_parser {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,    15,    17,    29,     2,    25,
-      11,    12,    26,    28,     2,    13,    10,    19,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,    16,     2,
-      22,    14,    21,     2,    27,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,    14,    16,    28,     2,    24,
+      10,    11,    25,    27,     2,    12,     9,    18,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,    15,     2,
+      21,    13,    20,     2,    26,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    23,    20,    24,     2,     2,     2,     2,     2,     2,
+       2,    22,    19,    23,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,    18,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,    17,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -1419,10 +1404,10 @@ namespace smiles_parser { namespace ast_parser {
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9
+       5,     6,     7,     8
     };
     // Last valid token kind.
-    const int code_max = 264;
+    const int code_max = 263;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -1432,11 +1417,11 @@ namespace smiles_parser { namespace ast_parser {
       return symbol_kind::S_YYUNDEF;
   }
 
-#line 17 "smiles.yy"
+#line 16 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
 } } // smiles_parser::ast_parser
-#line 1438 "smiles.tab.cpp"
+#line 1423 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 
-#line 138 "smiles.yy"
+#line 133 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
 
 
 void smiles_parser::ast_parser::Parser::error(const location& loc, const std::string& msg) {

@@ -1,6 +1,6 @@
-#line 1 "lex.yysmiles.cpp"
+#line 1 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
-#line 3 "lex.yysmiles.cpp"
+#line 3 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -949,8 +949,8 @@ static const flex_int16_t yy_nxt[][128] =
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 12
-#define YY_END_OF_BUFFER 13
+#define YY_NUM_RULES 11
+#define YY_END_OF_BUFFER 12
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -960,16 +960,16 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[34] =
     {   0,
-        0,    0,    0,    0,   13,   11,   12,    1,   11,    3,
-        3,    3,    2,    9,    5,    4,    7,    3,    3,    3,
-        2,   10,    5,    4,    5,    1,    0,    0,    3,    7,
-        3,    6,    8
+        0,    0,    0,    0,   12,   10,   11,    1,   10,    3,
+        3,    3,    2,    8,    4,    3,    6,    3,    3,    3,
+        2,    9,    4,    3,    4,    1,    0,    0,    3,    6,
+        3,    5,    7
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static const flex_int32_t yy_rule_can_match_eol[13] =
+static const flex_int32_t yy_rule_can_match_eol[12] =
     {   0,
-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,     };
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,     };
 
 static const yy_state_type yy_NUL_trans[34] =
     {   0,
@@ -1005,14 +1005,16 @@ using smiles_parser::ast_parser::Scanner;
 #undef YY_DECL
 #define YY_DECL int Scanner::lex(Parser::semantic_type* const lval, Parser::location_type* location)
 
+// constructing the token this way allows us maintain the relationship between
+// the input smiles and the current token
 #define YY_USER_ACTION \
     lval->build<std::string_view>(input().substr(location->begin.column, yyleng)); \
     location->begin += yyleng; location->columns(yyleng);
 
 using token = Parser::token_kind_type;
-#line 1013 "lex.yysmiles.cpp"
+#line 1015 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
-#line 1015 "lex.yysmiles.cpp"
+#line 1017 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 #define INITIAL 0
 #define IN_ATOM_STATE 1
@@ -1145,10 +1147,10 @@ YY_DECL
 		}
 
 	{
-#line 36 "smiles.ll"
+#line 37 "smiles.ll"
 
 
-#line 1151 "lex.yysmiles.cpp"
+#line 1153 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1205,65 +1207,60 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 38 "smiles.ll"
+#line 39 "smiles.ll"
 { return token::NUMBER; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 40 "smiles.ll"
+#line 41 "smiles.ll"
 { return token::HYDROGEN; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 41 "smiles.ll"
-{ return token::ALIPHATIC_ORGANIC; }
+#line 42 "smiles.ll"
+{ return token::ORGANIC_ATOM; }
 	YY_BREAK
 case 4:
-YY_RULE_SETUP
-#line 42 "smiles.ll"
-{ return token::AROMATIC_ORGANIC; }
-	YY_BREAK
-case 5:
 YY_RULE_SETUP
 #line 44 "smiles.ll"
 { return token::AROMATIC_SYMBOL; }
 	YY_BREAK
-case 6:
+case 5:
 YY_RULE_SETUP
 #line 45 "smiles.ll"
 { return token::AROMATIC_SYMBOL; }
 	YY_BREAK
-case 7:
+case 6:
 YY_RULE_SETUP
 #line 47 "smiles.ll"
 {  return token::ELEMENT_SYMBOL ; }
 	YY_BREAK
-case 8:
+case 7:
 YY_RULE_SETUP
 #line 48 "smiles.ll"
 {  return token::CHIRAL_TAG;}
 	YY_BREAK
-case 9:
+case 8:
 YY_RULE_SETUP
 #line 50 "smiles.ll"
 { BEGIN IN_ATOM_STATE;  return yytext[0]; }
 	YY_BREAK
-case 10:
+case 9:
 YY_RULE_SETUP
 #line 51 "smiles.ll"
 { BEGIN INITIAL; return yytext[0]; }
 	YY_BREAK
-case 11:
+case 10:
 YY_RULE_SETUP
 #line 53 "smiles.ll"
 {  return yytext[0]; }
 	YY_BREAK
-case 12:
+case 11:
 YY_RULE_SETUP
 #line 55 "smiles.ll"
 ECHO;
 	YY_BREAK
-#line 1266 "lex.yysmiles.cpp"
+#line 1263 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(IN_ATOM_STATE):
 	yyterminate();

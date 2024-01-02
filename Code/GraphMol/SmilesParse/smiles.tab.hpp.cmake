@@ -32,7 +32,7 @@
 
 
 /**
- ** \file smiles.tab.hpp
+ ** \file /Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.hpp
  ** Define the smiles_parser::ast_parser::parser class.
  */
 
@@ -42,10 +42,10 @@
 // especially those whose name start with YY_ or yy_.  They are
 // private implementation details that can be changed or removed.
 
-#ifndef YY_YYSMILES_SMILES_TAB_HPP_INCLUDED
-# define YY_YYSMILES_SMILES_TAB_HPP_INCLUDED
+#ifndef YY_YYSMILES_USERS_FAARA_DOCUMENTS_CODE_RDKIT_BUILDER_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
+# define YY_YYSMILES_USERS_FAARA_DOCUMENTS_CODE_RDKIT_BUILDER_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
 // "%code requires" blocks.
-#line 28 "smiles.yy"
+#line 25 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
 
 namespace smiles_parser {
 namespace ast_parser {
@@ -56,7 +56,7 @@ class Builder;
 } // namespace ast_parser
 } // namespace smiles_parser
 
-#line 60 "smiles.tab.hpp"
+#line 60 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.hpp"
 
 
 # include <cstdlib> // std::abort
@@ -190,9 +190,9 @@ class Builder;
 # define YYDEBUG 1
 #endif
 
-#line 17 "smiles.yy"
+#line 16 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
 namespace smiles_parser { namespace ast_parser {
-#line 196 "smiles.tab.hpp"
+#line 196 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.hpp"
 
 
 
@@ -393,8 +393,7 @@ namespace smiles_parser { namespace ast_parser {
       char dummy1[sizeof (int)];
 
       // HYDROGEN
-      // AROMATIC_ORGANIC
-      // ALIPHATIC_ORGANIC
+      // ORGANIC_ATOM
       // AROMATIC_SYMBOL
       // ELEMENT_SYMBOL
       // CHIRAL_TAG
@@ -450,12 +449,11 @@ namespace smiles_parser { namespace ast_parser {
     YYerror = 256,                 // error
     YYUNDEF = 257,                 // "invalid token"
     HYDROGEN = 258,                // HYDROGEN
-    AROMATIC_ORGANIC = 259,        // AROMATIC_ORGANIC
-    ALIPHATIC_ORGANIC = 260,       // ALIPHATIC_ORGANIC
-    AROMATIC_SYMBOL = 261,         // AROMATIC_SYMBOL
-    ELEMENT_SYMBOL = 262,          // ELEMENT_SYMBOL
-    CHIRAL_TAG = 263,              // CHIRAL_TAG
-    NUMBER = 264                   // NUMBER
+    ORGANIC_ATOM = 259,            // ORGANIC_ATOM
+    AROMATIC_SYMBOL = 260,         // AROMATIC_SYMBOL
+    ELEMENT_SYMBOL = 261,          // ELEMENT_SYMBOL
+    CHIRAL_TAG = 262,              // CHIRAL_TAG
+    NUMBER = 263                   // NUMBER
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -472,62 +470,60 @@ namespace smiles_parser { namespace ast_parser {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 30, ///< Number of tokens.
+        YYNTOKENS = 29, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
         S_YYUNDEF = 2,                           // "invalid token"
         S_HYDROGEN = 3,                          // HYDROGEN
-        S_AROMATIC_ORGANIC = 4,                  // AROMATIC_ORGANIC
-        S_ALIPHATIC_ORGANIC = 5,                 // ALIPHATIC_ORGANIC
-        S_AROMATIC_SYMBOL = 6,                   // AROMATIC_SYMBOL
-        S_ELEMENT_SYMBOL = 7,                    // ELEMENT_SYMBOL
-        S_CHIRAL_TAG = 8,                        // CHIRAL_TAG
-        S_NUMBER = 9,                            // NUMBER
-        S_10_ = 10,                              // '.'
-        S_11_ = 11,                              // '('
-        S_12_ = 12,                              // ')'
-        S_13_ = 13,                              // '-'
-        S_14_ = 14,                              // '='
-        S_15_ = 15,                              // '#'
-        S_16_ = 16,                              // ':'
-        S_17_ = 17,                              // '$'
-        S_18_ = 18,                              // '~'
-        S_19_ = 19,                              // '/'
-        S_20_ = 20,                              // '\\'
-        S_21_ = 21,                              // '>'
-        S_22_ = 22,                              // '<'
-        S_23_ = 23,                              // '['
-        S_24_ = 24,                              // ']'
-        S_25_ = 25,                              // '\''
-        S_26_ = 26,                              // '*'
-        S_27_ = 27,                              // '@'
-        S_28_ = 28,                              // '+'
-        S_29_ = 29,                              // '%'
-        S_YYACCEPT = 30,                         // $accept
-        S_mol = 31,                              // mol
-        S_chain = 32,                            // chain
-        S_connector = 33,                        // connector
-        S_dot = 34,                              // dot
-        S_branch_open = 35,                      // branch_open
-        S_branch_close = 36,                     // branch_close
-        S_bond = 37,                             // bond
-        S_atom = 38,                             // atom
-        S_bracket_atom = 39,                     // bracket_atom
-        S_isotope = 40,                          // isotope
-        S_symbol = 41,                           // symbol
-        S_aliphatic_organic = 42,                // aliphatic_organic
-        S_aromatic_organic = 43,                 // aromatic_organic
-        S_element_symbol = 44,                   // element_symbol
-        S_dummy_atom = 45,                       // dummy_atom
-        S_chirality = 46,                        // chirality
-        S_hcount = 47,                           // hcount
-        S_charge = 48,                           // charge
-        S_plus_signs = 49,                       // plus_signs
-        S_minus_signs = 50,                      // minus_signs
-        S_map_number = 51,                       // map_number
-        S_ring_bond = 52,                        // ring_bond
-        S_ring_number = 53                       // ring_number
+        S_ORGANIC_ATOM = 4,                      // ORGANIC_ATOM
+        S_AROMATIC_SYMBOL = 5,                   // AROMATIC_SYMBOL
+        S_ELEMENT_SYMBOL = 6,                    // ELEMENT_SYMBOL
+        S_CHIRAL_TAG = 7,                        // CHIRAL_TAG
+        S_NUMBER = 8,                            // NUMBER
+        S_9_ = 9,                                // '.'
+        S_10_ = 10,                              // '('
+        S_11_ = 11,                              // ')'
+        S_12_ = 12,                              // '-'
+        S_13_ = 13,                              // '='
+        S_14_ = 14,                              // '#'
+        S_15_ = 15,                              // ':'
+        S_16_ = 16,                              // '$'
+        S_17_ = 17,                              // '~'
+        S_18_ = 18,                              // '/'
+        S_19_ = 19,                              // '\\'
+        S_20_ = 20,                              // '>'
+        S_21_ = 21,                              // '<'
+        S_22_ = 22,                              // '['
+        S_23_ = 23,                              // ']'
+        S_24_ = 24,                              // '\''
+        S_25_ = 25,                              // '*'
+        S_26_ = 26,                              // '@'
+        S_27_ = 27,                              // '+'
+        S_28_ = 28,                              // '%'
+        S_YYACCEPT = 29,                         // $accept
+        S_mol = 30,                              // mol
+        S_chain = 31,                            // chain
+        S_connector = 32,                        // connector
+        S_dot = 33,                              // dot
+        S_branch_open = 34,                      // branch_open
+        S_branch_close = 35,                     // branch_close
+        S_bond = 36,                             // bond
+        S_atom = 37,                             // atom
+        S_bracket_atom = 38,                     // bracket_atom
+        S_isotope = 39,                          // isotope
+        S_symbol = 40,                           // symbol
+        S_organic = 41,                          // organic
+        S_element_symbol = 42,                   // element_symbol
+        S_dummy_atom = 43,                       // dummy_atom
+        S_chirality = 44,                        // chirality
+        S_hcount = 45,                           // hcount
+        S_charge = 46,                           // charge
+        S_plus_signs = 47,                       // plus_signs
+        S_minus_signs = 48,                      // minus_signs
+        S_map_number = 49,                       // map_number
+        S_ring_bond = 50,                        // ring_bond
+        S_ring_number = 51                       // ring_number
       };
     };
 
@@ -570,8 +566,7 @@ namespace smiles_parser { namespace ast_parser {
         break;
 
       case symbol_kind::S_HYDROGEN: // HYDROGEN
-      case symbol_kind::S_AROMATIC_ORGANIC: // AROMATIC_ORGANIC
-      case symbol_kind::S_ALIPHATIC_ORGANIC: // ALIPHATIC_ORGANIC
+      case symbol_kind::S_ORGANIC_ATOM: // ORGANIC_ATOM
       case symbol_kind::S_AROMATIC_SYMBOL: // AROMATIC_SYMBOL
       case symbol_kind::S_ELEMENT_SYMBOL: // ELEMENT_SYMBOL
       case symbol_kind::S_CHIRAL_TAG: // CHIRAL_TAG
@@ -660,8 +655,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_HYDROGEN: // HYDROGEN
-      case symbol_kind::S_AROMATIC_ORGANIC: // AROMATIC_ORGANIC
-      case symbol_kind::S_ALIPHATIC_ORGANIC: // ALIPHATIC_ORGANIC
+      case symbol_kind::S_ORGANIC_ATOM: // ORGANIC_ATOM
       case symbol_kind::S_AROMATIC_SYMBOL: // AROMATIC_SYMBOL
       case symbol_kind::S_ELEMENT_SYMBOL: // ELEMENT_SYMBOL
       case symbol_kind::S_CHIRAL_TAG: // CHIRAL_TAG
@@ -890,31 +884,16 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_AROMATIC_ORGANIC (std::string_view v, location_type l)
+      make_ORGANIC_ATOM (std::string_view v, location_type l)
       {
-        return symbol_type (token::AROMATIC_ORGANIC, std::move (v), std::move (l));
+        return symbol_type (token::ORGANIC_ATOM, std::move (v), std::move (l));
       }
 #else
       static
       symbol_type
-      make_AROMATIC_ORGANIC (const std::string_view& v, const location_type& l)
+      make_ORGANIC_ATOM (const std::string_view& v, const location_type& l)
       {
-        return symbol_type (token::AROMATIC_ORGANIC, v, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_ALIPHATIC_ORGANIC (std::string_view v, location_type l)
-      {
-        return symbol_type (token::ALIPHATIC_ORGANIC, std::move (v), std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_ALIPHATIC_ORGANIC (const std::string_view& v, const location_type& l)
-      {
-        return symbol_type (token::ALIPHATIC_ORGANIC, v, l);
+        return symbol_type (token::ORGANIC_ATOM, v, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1281,9 +1260,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 99,     ///< Last index in yytable_.
-      yynnts_ = 24,  ///< Number of nonterminal symbols.
-      yyfinal_ = 24 ///< Termination state number.
+      yylast_ = 94,     ///< Last index in yytable_.
+      yynnts_ = 23,  ///< Number of nonterminal symbols.
+      yyfinal_ = 21 ///< Termination state number.
     };
 
 
@@ -1294,11 +1273,11 @@ switch (yykind)
   };
 
 
-#line 17 "smiles.yy"
+#line 16 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
 } } // smiles_parser::ast_parser
-#line 1300 "smiles.tab.hpp"
+#line 1279 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.tab.hpp"
 
 
 
 
-#endif // !YY_YYSMILES_SMILES_TAB_HPP_INCLUDED
+#endif // !YY_YYSMILES_USERS_FAARA_DOCUMENTS_CODE_RDKIT_BUILDER_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED

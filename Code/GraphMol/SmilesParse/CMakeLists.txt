@@ -1,9 +1,9 @@
-if(RDK_USE_FLEXBISON)
-  FIND_PACKAGE(BISON)
-  FIND_PACKAGE(FLEX)
+if (RDK_USE_FLEXBISON)
+    FIND_PACKAGE(BISON 3.8.0 REQUIRED)
+    FIND_PACKAGE(FLEX 2.6.0 REQUIRED)
 else(RDK_USE_FLEXBISON)
-  set(FLEX_EXECUTABLE "")
-  set(BISON_EXECUTABLE "")
+    set(FLEX_EXECUTABLE "")
+    set(BISON_EXECUTABLE "")
 endif(RDK_USE_FLEXBISON)
 
 if(MSVC)
@@ -14,6 +14,7 @@ if(CMAKE_COMPILER_IS_CLANG AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 15)
 # the output from bison triggers some warnings we can safely ignore with clang 16+
 set_source_files_properties(smarts.tab.cpp smiles.tab.cpp PROPERTIES COMPILE_OPTIONS "-Wno-unused-but-set-variable")
 endif()
+
 
 if(FLEX_EXECUTABLE)
   FLEX_TARGET(SmilesL smiles.ll
@@ -34,7 +35,8 @@ endif(FLEX_EXECUTABLE)
 if(BISON_EXECUTABLE)
   BISON_TARGET(SmilesY smiles.yy
                ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp
-               COMPILE_FLAGS "-pyysmiles_" )
+               DEFINES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.hpp
+               COMPILE_FLAGS "-pyysmiles_ -Wall -Werror" )
   BISON_TARGET(SmartsY smarts.yy
                ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp
                COMPILE_FLAGS "-pyysmarts_" )

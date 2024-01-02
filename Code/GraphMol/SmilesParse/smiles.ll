@@ -31,7 +31,6 @@ using token = Parser::token_kind_type;
 %option noyywrap
 %option yylineno
 %option yyclass="smiles_parser::ast_parser::Scanner"
-%option outfile="lex.yysmiles.cpp"
 
 %s IN_ATOM_STATE
 

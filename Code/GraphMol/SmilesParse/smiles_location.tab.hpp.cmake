@@ -31,12 +31,12 @@
 // version 2.2 of Bison.
 
 /**
- ** \file smiles_location.tab.hpp
+ ** \file /Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles_location.tab.hpp
  ** Define the smiles_parser::ast_parser::location class.
  */
 
-#ifndef YY_YYSMILES_SMILES_LOCATION_TAB_HPP_INCLUDED
-# define YY_YYSMILES_SMILES_LOCATION_TAB_HPP_INCLUDED
+#ifndef YY_YYSMILES_USERS_FAARA_DOCUMENTS_CODE_RDKIT_BUILDER_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_LOCATION_TAB_HPP_INCLUDED
+# define YY_YYSMILES_USERS_FAARA_DOCUMENTS_CODE_RDKIT_BUILDER_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_LOCATION_TAB_HPP_INCLUDED
 
 # include <iostream>
 # include <string>
@@ -53,9 +53,9 @@
 #  endif
 # endif
 
-#line 17 "smiles.yy"
+#line 16 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
 namespace smiles_parser { namespace ast_parser {
-#line 59 "smiles_location.tab.hpp"
+#line 59 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles_location.tab.hpp"
 
   /// A point in a source file.
   class position
@@ -299,8 +299,8 @@ namespace smiles_parser { namespace ast_parser {
     return ostr;
   }
 
-#line 17 "smiles.yy"
+#line 16 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles.yy"
 } } // smiles_parser::ast_parser
-#line 305 "smiles_location.tab.hpp"
+#line 305 "/Users/faara/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SmilesParse/smiles_location.tab.hpp"
 
-#endif // !YY_YYSMILES_SMILES_LOCATION_TAB_HPP_INCLUDED
+#endif // !YY_YYSMILES_USERS_FAARA_DOCUMENTS_CODE_RDKIT_BUILDER_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_LOCATION_TAB_HPP_INCLUDED

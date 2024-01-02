@@ -69,7 +69,6 @@ __pycache__/
 /External/YAeHMOP/yaehmop/
 /External/catch/catch/
 /External/rapidjson*/
-/External/flex/*
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py

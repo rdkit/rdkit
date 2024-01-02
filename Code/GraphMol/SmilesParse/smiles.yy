@@ -6,7 +6,6 @@
   //
   //   @@ All Rights Reserved  @@
   //
-  //
 %}
 
 
@@ -17,8 +16,6 @@
 %define api.namespace {smiles_parser::ast_parser}
 %define api.parser.class {Parser}
 %define api.value.type variant
-%defines "smiles.tab.hpp"
-%output "smiles.tab.cpp"
 %define api.location.file "smiles_location.tab.hpp"
 
 %language "c++"
@@ -60,14 +57,14 @@ class Builder;
 %start mol
 
 %%
-mol: /* empty */ | chain;
+mol: %empty | chain;
 
 chain: atom
    | chain connector atom
    | chain ring_bond
    | chain branch_open connector chain branch_close;
 
-connector: /* empty */ | dot | bond;
+connector: %empty | dot | bond;
 
 dot: '.' { ast.add_dot(); }
 branch_open: '('  { ast.open_branch(); }
@@ -106,18 +103,18 @@ element_symbol: ELEMENT_SYMBOL { ast.add_atom($1); }
 
 dummy_atom: '*' { ast.add_atom("*"); }
 
-chirality: /* empty */
+chirality: %empty
          | '@' { ast.add_chirality_tag("@"); }
          | '@' '@' { ast.add_chirality_tag("@@"); }
          | CHIRAL_TAG { ast.add_chirality_class($1); }
          | CHIRAL_TAG NUMBER { ast.add_chirality_class($1, $2); }
 
 
-hcount: /* empty */
+hcount: %empty
       | HYDROGEN { ast.add_explicit_h(1); }
       | HYDROGEN NUMBER { ast.add_explicit_h($2); };
 
-charge: /* empty */
+charge: %empty
       | plus_signs { ast.add_atom_charge($1); }
       | minus_signs { ast.add_atom_charge($1); }
       | '+' NUMBER { ast.add_atom_charge($2); }
