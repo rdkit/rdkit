@@ -5,7 +5,7 @@
 
 #undef yyFlexLexer
 #define yyFlexLexer smilesFlexLexer
-#include <flex/FlexLexer.h>
+#include <FlexLexer.h>
 
 #include "smiles.tab.hpp"
 
