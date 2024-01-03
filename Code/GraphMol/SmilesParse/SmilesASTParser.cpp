@@ -1,10 +1,12 @@
 #include "SmilesASTParser.h"
 
+#include <array>
 #include <charconv>
 #include <optional>
 #include <RDGeneral/RDLog.h>
 #include <sstream>
 #include <unordered_map>
+#include <utility>
 
 #include "smiles.tab.hpp"
 #include "SmilesScanner.h"

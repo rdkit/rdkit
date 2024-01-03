@@ -3,7 +3,6 @@
 #include <array>
 #include <charconv>
 #include <unordered_map>
-#include <utility>
 
 #include <GraphMol/RWMol.h>
 #include <GraphMol/Bond.h>
