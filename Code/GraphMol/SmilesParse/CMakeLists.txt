@@ -57,6 +57,8 @@ else(BISON_EXECUTABLE)
   FILE(GLOB BISON_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.tab.?pp")
 endif(BISON_EXECUTABLE)
 
+# do this to make FlexLexer.h discoverable
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 rdkit_library(SmilesParse
               SmilesParse.cpp SmilesParseOps.cpp
