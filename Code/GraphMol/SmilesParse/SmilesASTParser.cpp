@@ -13,11 +13,11 @@ namespace smiles_parser {
 
 namespace ast_parser {
 int Builder::svtoi(std::string_view s) {
-  std::int32_t result;
+  std::int32_t result = 0;
+
   auto [unused, ec] = std::from_chars(s.data(), s.data() + s.size(), result);
   if (ec == std::errc::result_out_of_range) {
     save_error_message(s, "number too large");
-    return 0;
   }
 
   return result;

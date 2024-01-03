@@ -126,7 +126,7 @@ void add_ring_bond(::RDKit::RWMol& mol,
 
   ring_bond->setBondDir(bond->getBondDir());
   int ring_number = [](auto s) {
-    int result;
+    int result = 0;
     std::from_chars(s.data(), s.data() + s.size(), result);
     return result;
   }(std::get<ast_parser::ring_t>(ring_event).token);
