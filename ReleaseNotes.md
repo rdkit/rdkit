@@ -7,7 +7,7 @@ see your contribution acknowledged with your name, please set your name in
 GitHub)
 
 Jason Biggs, David Cosgrove, Tad Hurst, Gareth Jones, Axel Pahl, Paolo Tosco,
-Nicola Zonta, skystreet8, dhibbit
+Riccardo Vianello, Nicola Zonta, skystreet8, dhibbit
 
 ## New Features and Enhancements:
   - Add Python modules to generate stubs and automatically patch docstrings
@@ -38,6 +38,8 @@ Nicola Zonta, skystreet8, dhibbit
  (github issue #6983 from ricrogz)
   - HierarchicalClusterPicker::pick() randomly fails with Invariant Violation
  (github issue #7001 from ricrogz)
+  - rdkit.Dbase doesn't work correctly with Python 3.12
+ (github issue #7009 from rvianello)
 
 ## Cleanup work:
   - Drop unrequired zlib include which may break the windows build
