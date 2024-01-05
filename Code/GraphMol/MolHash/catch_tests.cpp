@@ -752,3 +752,45 @@ TEST_CASE("Github Issue #6855 MakeScaffoldGeneric isotope removal") {
     }
   }
 }
+
+TEST_CASE("Github Issue #6472 non-matching element and anononymous graph") {
+  SECTION("Element graph test1") {
+    auto mol = "C1COC(C1)C1=NC=NC=C1"_smiles;
+    REQUIRE(mol);
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::ElementGraph);
+      CHECK(hsh == "C1COC(C2CCNCN2)C1");
+    }
+  }
+  SECTION("Element graph test2") {
+    auto mol = "C1CC(N=CN1)C1=CC=CO1"_smiles;
+    REQUIRE(mol);
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::ElementGraph);
+      CHECK(hsh == "C1COC(C2CCNCN2)C1");
+    }
+  }
+  SECTION("Anonymous graph test 1") {
+    auto mol = "C1COC(C1)C1=NC=NC=C1"_smiles;
+    REQUIRE(mol);
+
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::AnonymousGraph);
+      CHECK(hsh == "*1***(*2****2)**1");
+    }
+  }
+   SECTION("Anonymous graph test 2") {
+    auto mol = "C1CC(N=CN1)C1=CC=CO1"_smiles;
+    REQUIRE(mol);
+
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::AnonymousGraph);
+      CHECK(hsh == "*1***(*2****2)**1");
+    }
+  }
+}
+
