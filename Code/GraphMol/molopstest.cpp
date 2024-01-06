@@ -8467,7 +8467,7 @@ M  END)CTAB"_ctab;
   TEST_ASSERT(t);
 
   MolOps::AdjustQueryParameters params;
-  auto m = new RWMol(*query);
+  std::unique_ptr<RWMol> m{new RWMol(*query)};
 
   TEST_ASSERT(m);
 
@@ -8479,13 +8479,11 @@ M  END)CTAB"_ctab;
   auto matchVect = SubstructMatch(*t, *m, params_match);
   TEST_ASSERT(matchVect.size() == 1);
 
-  delete m;
-  m = new RWMol(*query);
-  // params.setGenericQueryFromProperties = true;
+  m.reset(new RWMol(*query));
+  params.setGenericQueryFromProperties = true;
   MolOps::adjustQueryProperties(*m, &params);
   matchVect = SubstructMatch(*t, *m, params_match);
   TEST_ASSERT(matchVect.size() == 0);
-  delete m;
 }
 
 void testHasQueryHs() {
@@ -8636,5 +8634,6 @@ int main() {
   testGet3DDistanceMatrix();
   testGithub5099();
   testHasQueryHs();
+  testGenericQueries();
   return 0;
 }
