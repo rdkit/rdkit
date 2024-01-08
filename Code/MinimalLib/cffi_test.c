@@ -567,8 +567,8 @@ void test_flexicanvas() {
   assert(pkl_size > 0);
 
   char *svg = get_svg(pkl, pkl_size, "{\"width\":-1,\"height\":-1}");
-  assert(strstr(svg, "width='95px'"));
-  assert(strstr(svg, "height='21px'"));
+  assert(strstr(svg, "width='87px'"));
+  assert(strstr(svg, "height='19px'"));
   assert(strstr(svg, "</svg>"));
   free(svg);
 
@@ -2037,6 +2037,204 @@ void test_query_colour() {
   free(pkl);
 }
 
+void test_alignment_r_groups_aromatic_ring() {
+  printf("--------------------------\n");
+  printf("  test_alignment_r_groups_aromatic_ring\n");
+  char *mpkl;
+  size_t mpkl_size;
+  char *tpkl;
+  size_t tpkl_size;
+  char *match_json = NULL;
+  mpkl = get_mol("c1ccc2nccnc2c1", &mpkl_size, "");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  tpkl = get_mol(
+      "\n\
+  MJ201100                      \n\
+\n\
+  8  8  0  0  0  0  0  0  0  0999 V2000\n\
+   -1.0263   -0.3133    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.4553    0.5116    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.7408   -0.7258    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.7408   -1.5509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.4553   -1.9633    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.1698   -1.5509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.1698   -0.7258    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.4553   -0.3133    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  3  1  1  0  0  0  0\n\
+  8  2  1  0  0  0  0\n\
+  4  3  2  0  0  0  0\n\
+  5  4  1  0  0  0  0\n\
+  6  5  2  0  0  0  0\n\
+  7  6  1  0  0  0  0\n\
+  8  3  1  0  0  0  0\n\
+  8  7  2  0  0  0  0\n\
+M  RGP  2   1   2   2   1\n\
+M  END\n",
+      &tpkl_size, "");
+  assert(tpkl);
+  assert(tpkl_size > 0);
+  assert(set_2d_coords_aligned(
+      &mpkl, &mpkl_size, tpkl, tpkl_size,
+      "{\"acceptFailure\":false,\"allowRGroups\":true}", &match_json));
+  assert(match_json);
+  assert(!strcmp(match_json,
+                 "{\"atoms\":[4,7,3,2,1,0,9,8],\"bonds\":[3,7,2,1,0,9,10,8]}"));
+  free(match_json);
+  free(mpkl);
+  mpkl = get_mol(
+      "\n\
+  MJ201100                      \n\
+\n\
+ 10 11  0  0  0  0  0  0  0  0999 V2000\n\
+    3.6937    2.5671    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.8687    2.5671    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.4561    1.8526    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.8687    1.1382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.6937    1.1381    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.1062    1.8526    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.9313    1.8527    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    5.3438    2.5671    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.9313    3.2816    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.1062    3.2816    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  5  6  1  0  0  0  0\n\
+  4  5  2  0  0  0  0\n\
+  3  4  1  0  0  0  0\n\
+  2  3  2  0  0  0  0\n\
+  1  6  2  0  0  0  0\n\
+  1  2  1  0  0  0  0\n\
+  8  9  1  0  0  0  0\n\
+  9 10  2  0  0  0  0\n\
+ 10  1  1  0  0  0  0\n\
+  7  8  2  0  0  0  0\n\
+  6  7  1  0  0  0  0\n\
+M  END\n",
+      &mpkl_size, "");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  assert(set_2d_coords_aligned(
+      &mpkl, &mpkl_size, tpkl, tpkl_size,
+      "{\"acceptFailure\":false,\"allowRGroups\":true,\"alignOnly\":true}",
+      &match_json));
+  assert(match_json);
+  assert(!strcmp(match_json,
+                 "{\"atoms\":[6,9,5,4,3,2,1,0],\"bonds\":[10,8,0,1,2,3,4,5]}"));
+  free(match_json);
+  free(mpkl);
+  free(tpkl);
+}
+
+void test_partial_sanitization() {
+  printf("--------------------------\n");
+  printf("  test_partial_sanitization\n");
+  char *mpkl;
+  char *fp;
+  size_t mpkl_size;
+  const char *mfp_json = "{\"radius\":2,\"nBits\":32}";
+  const char *otherfp_json = "{\"nBits\":32}";
+  mpkl =
+      get_mol("C1CCC2CCCC2C1", &mpkl_size,
+              "{\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false}");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  fp = get_morgan_fp(mpkl, mpkl_size, mfp_json);
+  assert(fp);
+  assert(strlen(fp) == 32);
+  free(fp);
+  free(mpkl);
+  mpkl = get_mol(
+      "C1CCC2CCCC2C1", &mpkl_size,
+      "{\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false,\"fastFindRings\":false}");
+  assert(mpkl);
+  assert(mpkl_size > 0);
+  fp = get_morgan_fp(mpkl, mpkl_size, mfp_json);
+  assert(!fp);
+  fp = get_rdkit_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+  fp = get_pattern_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+  fp = get_atom_pair_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+  fp = get_maccs_fp(mpkl, mpkl_size);
+  assert(!fp);
+#ifdef RDK_BUILD_AVALON_SUPPORT
+  fp = get_avalon_fp(mpkl, mpkl_size, otherfp_json);
+  assert(fp);
+  free(fp);
+#endif
+  free(mpkl);
+}
+
+void test_capture_logs() {
+  printf("--------------------------\n");
+  printf("  test_capture_logs\n");
+  char *mpkl;
+  char *log_buffer;
+  void *null_handle = NULL;
+  size_t mpkl_size;
+  void *log_handle;
+  typedef struct {
+    const char *type;
+    void *(*func)(const char *);
+  } capture_test;
+  capture_test tests[] = {{"tee", set_log_tee}, {"capture", set_log_capture}};
+  for (size_t i = 0; i < sizeof(tests) / sizeof(capture_test); ++i) {
+    printf("%d. %s\n", i + 1, tests[i].type);
+    log_handle = tests[i].func("dummy");
+    assert(!log_handle);
+    log_handle = tests[i].func("rdApp.*");
+    assert(log_handle);
+    assert(!get_log_buffer(null_handle));
+    log_buffer = get_log_buffer(log_handle);
+    assert(log_buffer);
+    assert(!strlen(log_buffer));
+    free(log_buffer);
+    mpkl = get_mol("CN(C)(C)C", &mpkl_size, "");
+    assert(!mpkl);
+    log_buffer = get_log_buffer(log_handle);
+    assert(log_buffer);
+    assert(strstr(
+        log_buffer,
+        "Explicit valence for atom # 1 N, 4, is greater than permitted"));
+    free(log_buffer);
+    assert(!clear_log_buffer(null_handle));
+    assert(clear_log_buffer(log_handle));
+    log_buffer = get_log_buffer(log_handle);
+    assert(log_buffer);
+    assert(!strlen(log_buffer));
+    free(log_buffer);
+    assert(!destroy_log_handle(null_handle));
+    assert(!destroy_log_handle(&null_handle));
+    assert(destroy_log_handle(&log_handle));
+    assert(!log_handle);
+  }
+}
+
+void test_relabel_mapped_dummies() {
+  printf("--------------------------\n");
+  printf("  test_relabel_mapped_dummies\n");
+  char *mpkl;
+  size_t mpkl_size;
+  char *smiles;
+  mpkl = get_mol("c1cc([4*:2])c([3*:1])cn1", &mpkl_size, "");
+  smiles = get_cxsmiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(
+      smiles,
+      "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.molAtomMapNumber.2:3.dummyLabel.*:5.molAtomMapNumber.1:5.dummyLabel.*|"));
+  free(smiles);
+  free(mpkl);
+  mpkl = get_mol("c1cc([4*:2])c([3*:1])cn1", &mpkl_size,
+                 "{\"mappedDummiesAreRGroups\":true}");
+  smiles = get_cxsmiles(mpkl, mpkl_size, NULL);
+  assert(
+      !strcmp(smiles, "*c1ccncc1* |atomProp:0.dummyLabel.R2:7.dummyLabel.R1|"));
+  free(smiles);
+  free(mpkl);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -2061,5 +2259,9 @@ int main() {
   test_use_legacy_stereo();
   test_allow_non_tetrahedral_chirality();
   test_query_colour();
+  test_alignment_r_groups_aromatic_ring();
+  test_partial_sanitization();
+  test_capture_logs();
+  test_relabel_mapped_dummies();
   return 0;
 }

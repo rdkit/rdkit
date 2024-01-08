@@ -34,8 +34,9 @@ using namespace schrodinger;
 namespace RDKit {
 
 namespace {
-const std::string MAE_ATOM_RGB_COLOR = "s_m_color_rgb";
 const std::string MAE_BOND_DATIVE_MARK = "b_sPrivate_dative_bond";
+const std::string MAE_BOND_PARITY = "i_sd_original_parity";
+const std::string MAE_STEREO_STATUS = "i_m_ct_stereo_status";
 const std::string PDB_ATOM_NAME = "s_m_pdb_atom_name";
 const std::string PDB_RESIDUE_NAME = "s_m_pdb_residue_name";
 const std::string PDB_CHAIN_NAME = "s_m_chain_name";
@@ -222,6 +223,61 @@ int bondTypeToOrder(const Bond& bond) {
   }
 }
 
+static bool isDoubleAnyBond(const RDKit::Bond& b) {
+  if (b.getBondType() == RDKit::Bond::DOUBLE) {
+    if (b.getStereo() == RDKit::Bond::BondStereo::STEREOANY ||
+        b.getBondDir() == RDKit::Bond::EITHERDOUBLE) {
+      return true;
+    }
+
+    // Check v3000/v2000 stereo either props
+    auto hasPropValue = [&b](const auto& prop, const int& either_value) {
+      return b.hasProp(prop) && b.getProp<int>(prop) == either_value;
+    };
+
+    return hasPropValue(RDKit::common_properties::_MolFileBondCfg, 2) ||
+           hasPropValue(RDKit::common_properties::_MolFileBondStereo, 3);
+  }
+  return false;
+}
+
+static void copyAtomNumChirality(const ROMol& mol, mae::Block& stBlock) {
+  // This property tells Schrodinger software that the stereo and chirality in
+  // the mae file are valid
+  stBlock.setIntProperty(MAE_STEREO_STATUS, 1);
+
+  // Set atom numbering chirality
+  int chiralAts = 0;
+  for (const auto at : mol.atoms()) {
+    std::string atomNumChirality;
+    if (at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+      atomNumChirality = "ANR";
+    } else if (at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
+      atomNumChirality = "ANS";
+    } else {
+      continue;
+    }
+    ++chiralAts;
+    std::string propName =
+        mae::CT_CHIRALITY_PROP_PREFIX + std::to_string(chiralAts);
+    std::string propVal =
+        std::to_string(at->getIdx() + 1) + "_" + atomNumChirality;
+
+    // We don't know CIP ranks of atoms, so instead we use atom numbering
+    // chirality and adjacent atoms will just be sorted by index.
+    std::vector<int> neighbors;
+    for (const auto nb : mol.atomNeighbors(at)) {
+      neighbors.push_back(nb->getIdx());
+    }
+
+    std::sort(neighbors.begin(), neighbors.end());
+    for (const auto nb : neighbors) {
+      propVal += "_" + std::to_string(nb + 1);
+    }
+    stBlock.setStringProperty(propName, propVal);
+  }
+}
+
 void mapMolProperties(const ROMol& mol, const STR_VECT& propNames,
                       mae::Block& stBlock) {
   // We always write a title, even if the mol doesn't have one
@@ -231,7 +287,7 @@ void mapMolProperties(const ROMol& mol, const STR_VECT& propNames,
   stBlock.setStringProperty(mae::CT_TITLE, molName);
   mol.clearProp(common_properties::_Name);
 
-  // TO DO: Map stereo properties
+  copyAtomNumChirality(mol, stBlock);
 
   auto boolSetter = [&stBlock](const std::string& prop, unsigned, bool value) {
     stBlock.setBoolProperty(prop, value);
@@ -254,8 +310,7 @@ void mapMolProperties(const ROMol& mol, const STR_VECT& propNames,
 }
 void mapAtom(
     const Conformer& conformer, const Atom& atom, const STR_VECT& propNames,
-    const std::string& heavyAtomColor, mae::IndexedBlock& atomBlock,
-    size_t numAtoms,
+    mae::IndexedBlock& atomBlock, size_t numAtoms,
     std::function<void(const std::string&, unsigned, bool)> boolSetter,
     std::function<void(const std::string&, unsigned, int)> intSetter,
     std::function<void(const std::string&, unsigned, double)> realSetter,
@@ -269,12 +324,12 @@ void mapAtom(
   setPropertyValue(atomBlock, mae::ATOM_Y_COORD, numAtoms, idx, coordinates.y);
   setPropertyValue(atomBlock, mae::ATOM_Z_COORD, numAtoms, idx, coordinates.z);
 
-  auto atomic_num = static_cast<int>(atom.getAtomicNum());
-  setPropertyValue(atomBlock, mae::ATOM_ATOMIC_NUM, numAtoms, idx, atomic_num);
-
-  // Default heavy atoms to be drawn in grey in Maestro, and H atoms in white.
-  std::string color = (atom.getAtomicNum() == 1 ? "FFFFFF" : heavyAtomColor);
-  setPropertyValue(atomBlock, MAE_ATOM_RGB_COLOR, numAtoms, idx, color);
+  auto atomicNum = static_cast<int>(atom.getAtomicNum());
+  if (atomicNum == 0) {
+    // Maestro files use atomic number -2 to indicate a dummy atom.
+    atomicNum = -2;
+  }
+  setPropertyValue(atomBlock, mae::ATOM_ATOMIC_NUM, numAtoms, idx, atomicNum);
 
   setPropertyValue(atomBlock, mae::ATOM_FORMAL_CHARGE, numAtoms, idx,
                    atom.getFormalCharge());
@@ -310,8 +365,7 @@ void mapAtom(
                  stringSetter);
 }
 
-void mapAtoms(const ROMol& mol, const STR_VECT& propNames,
-              const std::string& heavyAtomColor, int confId,
+void mapAtoms(const ROMol& mol, const STR_VECT& propNames, int confId,
               mae::IndexedBlockMap& indexedBlockMap) {
   auto atomBlock = std::make_shared<mae::IndexedBlock>(mae::ATOM_BLOCK);
   auto conformer = mol.getConformer(confId);
@@ -337,8 +391,8 @@ void mapAtoms(const ROMol& mol, const STR_VECT& propNames,
   };
 
   for (auto atom : mol.atoms()) {
-    mapAtom(conformer, *atom, propNames, heavyAtomColor, *atomBlock, numAtoms,
-            boolSetter, intSetter, realSetter, stringSetter);
+    mapAtom(conformer, *atom, propNames, *atomBlock, numAtoms, boolSetter,
+            intSetter, realSetter, stringSetter);
   }
 
   indexedBlockMap.addIndexedBlock(mae::ATOM_BLOCK, atomBlock);
@@ -365,10 +419,16 @@ void mapBond(
     std::swap(bondFrom, bondTo);
   }
 
-  setPropertyValue(bondBlock, mae::BOND_ATOM_1, numBonds, idx, bondTo);
-  setPropertyValue(bondBlock, mae::BOND_ATOM_2, numBonds, idx, bondFrom);
+  setPropertyValue(bondBlock, mae::BOND_ATOM_1, numBonds, idx, bondFrom);
+  setPropertyValue(bondBlock, mae::BOND_ATOM_2, numBonds, idx, bondTo);
   setPropertyValue(bondBlock, mae::BOND_ORDER, numBonds, idx,
                    bondTypeToOrder(bond));
+
+  // Only set double bond stereo if stereo is 'unspecified', otherwise
+  // users can calculate double bond stereo from the coordinates.
+  if (isDoubleAnyBond(bond)) {
+    setPropertyValue(bondBlock, MAE_BOND_PARITY, numBonds, idx, 2);
+  }
 
   if (dativeBondMark != nullptr) {
     dativeBondMark->set(idx, (bond.getBondType() == Bond::BondType::DATIVE));
@@ -422,9 +482,7 @@ void mapBonds(const ROMol& mol, const STR_VECT& propNames,
   indexedBlockMap.addIndexedBlock(mae::BOND_BLOCK, bondBlock);
 }
 
-std::shared_ptr<mae::Block> _MolToMaeCtBlock(const ROMol& mol,
-                                             const std::string& heavyAtomColor,
-                                             int confId,
+std::shared_ptr<mae::Block> _MolToMaeCtBlock(const ROMol& mol, int confId,
                                              const STR_VECT& propNames) {
   if (mol.getNumAtoms() == 0) {
     BOOST_LOG(rdErrorLog)
@@ -449,7 +507,7 @@ std::shared_ptr<mae::Block> _MolToMaeCtBlock(const ROMol& mol,
 
   auto indexedBlockMap = std::make_shared<mae::IndexedBlockMap>();
 
-  mapAtoms(tmpMol, propNames, heavyAtomColor, confId, *indexedBlockMap);
+  mapAtoms(tmpMol, propNames, confId, *indexedBlockMap);
 
   if (mol.getNumBonds() > 0) {
     try {
@@ -523,24 +581,19 @@ void MaeWriter::flush() {
 }
 
 void MaeWriter::close() {
+  if (dp_ostream && dp_ostream->good()) {
+    flush();
+  }
   if (dp_writer) {
     dp_writer.reset();
-  }
-  if (dp_ostream) {
-    flush();
   }
   dp_ostream.reset();
 }
 
 void MaeWriter::write(const ROMol& mol, int confId) {
-  write(mol, defaultMaeHeavyAtomColor, confId);
-}
-
-void MaeWriter::write(const ROMol& mol, const std::string& heavyAtomColor,
-                      int confId) {
   PRECONDITION(dp_ostream, "no output stream");
 
-  auto block = _MolToMaeCtBlock(mol, heavyAtomColor, confId, d_props);
+  auto block = _MolToMaeCtBlock(mol, confId, d_props);
 
   if (block != nullptr) {
     if (!dp_writer) {
@@ -552,11 +605,10 @@ void MaeWriter::write(const ROMol& mol, const std::string& heavyAtomColor,
   }
 }
 
-std::string MaeWriter::getText(const ROMol& mol,
-                               const std::string& heavyAtomColor, int confId,
+std::string MaeWriter::getText(const ROMol& mol, int confId,
                                const STR_VECT& propNames) {
   std::stringstream sstr;
-  auto block = _MolToMaeCtBlock(mol, heavyAtomColor, confId, propNames);
+  auto block = _MolToMaeCtBlock(mol, confId, propNames);
   if (block != nullptr) {
     block->write(sstr);
   }

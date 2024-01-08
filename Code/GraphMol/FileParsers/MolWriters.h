@@ -33,7 +33,6 @@ class Writer;
 namespace RDKit {
 
 static int defaultConfId = -1;
-static const std::string defaultMaeHeavyAtomColor = "A0A0A0";
 
 class RDKIT_FILEPARSERS_EXPORT MolWriter : private boost::noncopyable {
  public:
@@ -392,18 +391,11 @@ class RDKIT_FILEPARSERS_EXPORT MaeWriter : public MolWriter {
   void setProps(const STR_VECT &propNames) override;
 
   //! \brief return the text that would be written to the file
-  static std::string getText(
-      const ROMol &mol,
-      const std::string &heavyAtomColor = defaultMaeHeavyAtomColor,
-      int confId = defaultConfId, const STR_VECT &propNames = STR_VECT());
+  static std::string getText(const ROMol &mol, int confId = defaultConfId,
+                             const STR_VECT &propNames = STR_VECT());
 
-  //! \brief write a new molecule to the file
+  //! \brief write a new molecule to the file.
   void write(const ROMol &mol, int confId = defaultConfId) override;
-
-  //! \brief write a new molecule to the file, specifying the HTML color string
-  //! which should be used for heavy atoms when the file is opened in Maestro.
-  void write(const ROMol &mol, const std::string &heavyAtomColor,
-             int confId = defaultConfId);
 
   //! \brief flush the ostream
   void flush() override;

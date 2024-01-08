@@ -149,82 +149,90 @@ BOOST_PYTHON_FUNCTION_OVERLOADS(EncodeSECFPMolsBulkOverloads,
 
 BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
   python::class_<MHFPEncoder>(
-      "MHFPEncoder",
-      python::init<python::optional<unsigned int, unsigned int>>())
-      .def("FromStringArray", &FromStringArray,
-           ((python::arg("vec")),
-            "Creates a MHFP vector from a list of arbitrary strings."))
-      .def("FromArray", &FromArray,
-           ((python::arg("vec")),
-            "Creates a MHFP vector from a list of unsigned integers."))
+      "MHFPEncoder", python::init<python::optional<unsigned int, unsigned int>>(
+                         python::args("self", "n_permutations", "seed")))
+      .def("FromStringArray", FromStringArray, python::args("self", "vec"),
+           "Creates a MHFP vector from a list of arbitrary strings.")
+      .def("FromArray", FromArray, python::args("self", "vec"),
+           "Creates a MHFP vector from a list of unsigned integers.")
       .def("CreateShinglingFromSmiles", CreateShinglingFromSmiles,
            CreateShinglingFromSmilesOverloads(
-               (python::arg("smiles"), python::arg("radius") = 3,
-                python::arg("rings") = true, python::arg("isomeric") = false,
+               (python::arg("self"), python::arg("smiles"),
+                python::arg("radius") = 3, python::arg("rings") = true,
+                python::arg("isomeric") = false,
                 python::arg("kekulize") = false, python::arg("min_radius") = 1),
                "Creates a shingling (a list of circular n-grams / "
                "substructures) from a SMILES string."))
       .def("CreateShinglingFromMol", CreateShinglingFromMol,
            CreateShinglingFromMolOverloads(
-               (python::arg("mol"), python::arg("radius") = 3,
-                python::arg("rings") = true, python::arg("isomeric") = false,
+               (python::arg("self"), python::arg("mol"),
+                python::arg("radius") = 3, python::arg("rings") = true,
+                python::arg("isomeric") = false,
                 python::arg("kekulize") = false, python::arg("min_radius") = 1),
                "Creates a shingling (a list of circular n-grams / "
                "substructures) from a RDKit Mol instance."))
       .def("EncodeSmiles", EncodeSmiles,
            EncodeSmilesOverloads(
-               (python::arg("smiles"), python::arg("radius") = 3,
-                python::arg("rings") = true, python::arg("isomeric") = false,
+               (python::arg("self"), python::arg("smiles"),
+                python::arg("radius") = 3, python::arg("rings") = true,
+                python::arg("isomeric") = false,
                 python::arg("kekulize") = false, python::arg("min_radius") = 1),
                "Creates a MHFP vector from a SMILES string."))
       .def("EncodeMol", EncodeMol,
            EncodeMolOverloads(
-               (python::arg("mol"), python::arg("radius") = 3,
-                python::arg("rings") = true, python::arg("isomeric") = false,
+               (python::arg("self"), python::arg("mol"),
+                python::arg("radius") = 3, python::arg("rings") = true,
+                python::arg("isomeric") = false,
                 python::arg("kekulize") = false, python::arg("min_radius") = 1),
                "Creates a MHFP vector from an RDKit Mol instance."))
       .def("EncodeSmilesBulk", EncodeSmilesBulk,
            EncodeSmilesBulkOverloads(
-               (python::arg("smiles"), python::arg("radius") = 3,
-                python::arg("rings") = true, python::arg("isomeric") = false,
+               (python::arg("self"), python::arg("smiles"),
+                python::arg("radius") = 3, python::arg("rings") = true,
+                python::arg("isomeric") = false,
                 python::arg("kekulize") = false, python::arg("min_radius") = 1),
                "Creates a MHFP vector from a list of SMILES strings."))
       .def("EncodeMolsBulk", EncodeMolsBulk,
            EncodeMolsBulkOverloads(
-               (python::arg("mols"), python::arg("radius") = 3,
-                python::arg("rings") = true, python::arg("isomeric") = false,
+               (python::arg("self"), python::arg("mols"),
+                python::arg("radius") = 3, python::arg("rings") = true,
+                python::arg("isomeric") = false,
                 python::arg("kekulize") = false, python::arg("min_radius") = 1),
                "Creates a MHFP vector from a list of RDKit Mol instances."))
-      .def("EncodeSECFPSmiles", EncodeSECFPSmiles,
-           EncodeSECFPSmilesOverloads(
-               (python::arg("smiles"), python::arg("radius") = 3,
-                python::arg("rings") = true, python::arg("isomeric") = false,
-                python::arg("kekulize") = false, python::arg("min_radius") = 1,
-                python::arg("length") = 2048),
-               "Creates a SECFP binary vector from a SMILES string."))
-      .def("EncodeSECFPMol", EncodeSECFPMol,
-           EncodeSECFPMolOverloads(
-               (python::arg("smiles"), python::arg("radius") = 3,
-                python::arg("rings") = true, python::arg("isomeric") = false,
-                python::arg("kekulize") = false, python::arg("min_radius") = 1,
-                python::arg("length") = 2048),
-               "Creates a SECFP binary vector from an RDKit Mol instance."))
-      .def("EncodeSECFPSmilesBulk", EncodeSECFPSmilesBulk,
-           EncodeSECFPSmilesBulkOverloads(
-               (python::arg("smiles"), python::arg("radius") = 3,
-                python::arg("rings") = true, python::arg("isomeric") = false,
-                python::arg("kekulize") = false, python::arg("min_radius") = 1,
-                python::arg("length") = 2048),
-               "Creates a SECFP binary vector from a list of SMILES strings."))
-      .def("EncodeSECFPMolsBulk", EncodeSECFPMolsBulk,
-           EncodeSECFPMolsBulkOverloads(
-               (python::arg("smiles"), python::arg("radius") = 3,
-                python::arg("rings") = true, python::arg("isomeric") = false,
-                python::arg("kekulize") = false, python::arg("min_radius") = 1,
-                python::arg("length") = 2048),
-               "Creates a SECFP binary vector from a list of RDKit Mol "
-               "instances."))
-      .def("Distance", &MHFPEncoder::Distance)
+      .def(
+          "EncodeSECFPSmiles", EncodeSECFPSmiles,
+          EncodeSECFPSmilesOverloads(
+              (python::arg("self"), python::arg("smiles"),
+               python::arg("radius") = 3, python::arg("rings") = true,
+               python::arg("isomeric") = false, python::arg("kekulize") = false,
+               python::arg("min_radius") = 1, python::arg("length") = 2048),
+              "Creates a SECFP binary vector from a SMILES string."))
+      .def(
+          "EncodeSECFPMol", EncodeSECFPMol,
+          EncodeSECFPMolOverloads(
+              (python::arg("self"), python::arg("smiles"),
+               python::arg("radius") = 3, python::arg("rings") = true,
+               python::arg("isomeric") = false, python::arg("kekulize") = false,
+               python::arg("min_radius") = 1, python::arg("length") = 2048),
+              "Creates a SECFP binary vector from an RDKit Mol instance."))
+      .def(
+          "EncodeSECFPSmilesBulk", EncodeSECFPSmilesBulk,
+          EncodeSECFPSmilesBulkOverloads(
+              (python::arg("self"), python::arg("smiles"),
+               python::arg("radius") = 3, python::arg("rings") = true,
+               python::arg("isomeric") = false, python::arg("kekulize") = false,
+               python::arg("min_radius") = 1, python::arg("length") = 2048),
+              "Creates a SECFP binary vector from a list of SMILES strings."))
+      .def(
+          "EncodeSECFPMolsBulk", EncodeSECFPMolsBulk,
+          EncodeSECFPMolsBulkOverloads(
+              (python::arg("self"), python::arg("smiles"),
+               python::arg("radius") = 3, python::arg("rings") = true,
+               python::arg("isomeric") = false, python::arg("kekulize") = false,
+               python::arg("min_radius") = 1, python::arg("length") = 2048),
+              "Creates a SECFP binary vector from a list of RDKit Mol "
+              "instances."))
+      .def("Distance", &MHFPEncoder::Distance, python::args("a", "b"))
       .staticmethod("Distance");
 }
 

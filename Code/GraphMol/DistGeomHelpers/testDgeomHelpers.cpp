@@ -402,11 +402,9 @@ void test5() {
       rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/cis_trans_cases.csv";
   SmilesMolSupplier smiSup(smifile, ",", 0, 1);
 
-  int i = 0;
   int cid;
   while (1) {
     try {
-      i++;
       std::unique_ptr<RWMol> mol{static_cast<RWMol *>(smiSup.next())};
       MolOps::addHs(*mol);
       cid = DGeomHelpers::EmbedMolecule(*mol, 10, 1);  // getCoords(*mol, iter);

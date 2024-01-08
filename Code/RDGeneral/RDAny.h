@@ -31,8 +31,8 @@
 #include <RDGeneral/export.h>
 #ifndef RDKIT_RDANY_H
 #define RDKIT_RDANY_H
+#include <any>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/any.hpp>
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
@@ -49,10 +49,10 @@ namespace RDKit {
 //  cdiggins::any)  However, it doesn't use RTTI type info
 //  directly, it uses a companion short valued type
 //  to determine what to do.
-// For unregistered types, it falls back to boost::any.
+// For unregistered types, it falls back to std::any.
 //  The Size of an RDAny is (sizeof(double) + sizeof(short) == 10 bytes)
 //
-//   For the sake of compatibility, errors throw boost::bad_any_cast
+//   For the sake of compatibility, errors throw std::bad_any_cast
 //
 // Examples:
 //
@@ -63,7 +63,7 @@ namespace RDKit {
 //   v.asDoubleVect().push_back(4.)
 //   rdany_cast<std::vector<double>(v).push_back(4.)
 //
-//   Falls back to boost::any for non registered types
+//   Falls back to std::any for non registered types
 //   v = boost::shared_ptr<ROMol>(new ROMol(m));
 //
 
@@ -155,16 +155,16 @@ struct RDAny {
     return *this;
   }
 
-  RDAny &operator=(const boost::any &d) {
+  RDAny &operator=(const std::any &d) {
     RDValue::cleanup_rdvalue(m_value);
-    m_value = RDValue(d);  // new boost::any(d);
+    m_value = RDValue(d);  // new std::any(d);
     return *this;
   }
 
   template <class T>
   RDAny &operator=(const T &d) {
     RDValue::cleanup_rdvalue(m_value);
-    boost::any *v = new boost::any(d);
+    std::any *v = new std::any(d);
     m_value = RDValue(v);
     return *this;
   }
@@ -194,7 +194,7 @@ typename boost::enable_if<boost::is_arithmetic<T>, T>::type from_rdany(
     Utils::LocaleSwitcher ls;
     try {
       res = rdany_cast<T>(arg);
-    } catch (const boost::bad_any_cast &exc) {
+    } catch (const std::bad_any_cast &exc) {
       try {
         res = boost::lexical_cast<T>(rdany_cast<std::string>(arg));
       } catch (...) {

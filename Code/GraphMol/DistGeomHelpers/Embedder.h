@@ -112,6 +112,8 @@ enum EmbedFailureCauses {
   trackFailures    keep track of which checks during the embedding process fail
   failures         if trackFailures is true, this is used to track the number
                    of times each embedding check fails
+  enableSequentialRandomSeeds    handle the random number seeds so that
+                                 conformer generation can be restarted
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -131,7 +133,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool verbose{false};
   double basinThresh{5.0};
   double pruneRmsThresh{-1.0};
-  bool onlyHeavyAtomsForRMS{false};
+  bool onlyHeavyAtomsForRMS{true};
   unsigned int ETversion{1};
   boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat;
   bool embedFragmentsSeparately{true};
@@ -145,6 +147,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   double boundsMatForceScaling{1.0};
   bool trackFailures{false};
   std::vector<unsigned int> failures;
+  bool enableSequentialRandomSeeds{false};
 
   EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
   EmbedParameters(
@@ -155,7 +158,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
       bool ignoreSmoothingFailures, bool enforceChirality,
       bool useExpTorsionAnglePrefs, bool useBasicKnowledge, bool verbose,
       double basinThresh, double pruneRmsThresh, bool onlyHeavyAtomsForRMS,
-      unsigned int ETversion = 1,
+      unsigned int ETversion = 2,
       const DistGeom::BoundsMatrix *boundsMat = nullptr,
       bool embedFragmentsSeparately = true, bool useSmallRingTorsions = false,
       bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
@@ -282,12 +285,13 @@ inline int EmbedMolecule(ROMol &mol, EmbedParameters &params) {
   \param onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
   \param ETversion	version of torsion preferences to use
   \param useSmallRingTorsions	optional torsions to improve small ring
-  conformer sampling
-
+                              conformer sampling
   \param useMacrocycleTorsions	optional torsions to improve macrocycle
-  conformer sampling \param useMacrocycle14config  If 1-4 distances bound
-  heuristics for macrocycles is used \return ID of the conformations added to
-  the molecule, -1 if the emdedding failed
+                                conformer sampling 
+  \param useMacrocycle14config  If 1-4 distances bound heuristics for macrocycles 
+                                is used 
+  
+  \return ID of the conformer added to the molecule, -1 if the emdedding failed
 */
 inline int EmbedMolecule(
     ROMol &mol, unsigned int maxIterations = 0, int seed = -1,
@@ -299,8 +303,8 @@ inline int EmbedMolecule(
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
-    unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    unsigned int ETversion = 2, bool useSmallRingTorsions = false,
+    bool useMacrocycleTorsions = true, bool useMacrocycle14config = true) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
@@ -380,11 +384,11 @@ inline int EmbedMolecule(
   \param onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
   \param ETversion	version of torsion preferences to use
   \param useSmallRingTorsions	optional torsions to improve small ring
-  conformer sampling
-
+                              conformer sampling
   \param useMacrocycleTorsions	optional torsions to improve macrocycle
-  conformer sampling \param useMacrocycle14config  If 1-4 distances bound
-  heuristics for macrocycles is used
+                                conformer sampling 
+  \param useMacrocycle14config  If 1-4 distances bound heuristics for macrocycles 
+                                is used 
 
 */
 inline void EmbedMultipleConfs(
@@ -398,8 +402,8 @@ inline void EmbedMultipleConfs(
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
-    unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    unsigned int ETversion = 2, bool useSmallRingTorsions = false,
+    bool useMacrocycleTorsions = true, bool useMacrocycle14config = true) {
   EmbedParameters params(
       maxIterations, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
@@ -420,7 +424,7 @@ inline INT_VECT EmbedMultipleConfs(
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
-    unsigned int ETversion = 1, bool useSmallRingTorsions = false,
+    unsigned int ETversion = 2, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,

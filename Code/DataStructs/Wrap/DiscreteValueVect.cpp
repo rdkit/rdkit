@@ -58,13 +58,15 @@ struct discreteValVec_wrapper {
     python::class_<DiscreteValueVect>(
         "DiscreteValueVect", disValVectDoc.c_str(),
         python::init<DiscreteValueVect::DiscreteValueType, unsigned int>(
-            "Constructor"))
-        .def(python::init<std::string>())
-        .def("__len__", &DiscreteValueVect::getLength,
+            python::args("self", "valType", "length"), "Constructor"))
+        .def(python::init<std::string>(python::args("self", "pkl")))
+        .def("__len__", &DiscreteValueVect::getLength, python::args("self"),
              "Get the number of entries in the vector")
         .def("__setitem__", &DiscreteValueVect::setVal,
+             python::args("self", "i", "val"),
              "Set the value at a specified location")
         .def("__getitem__", &DiscreteValueVect::getVal,
+             python::args("self", "i"),
              "Get the value at a specified location")
         .def(python::self & python::self)
         .def(python::self | python::self)
@@ -82,13 +84,14 @@ struct discreteValVec_wrapper {
         .def(python::self += python::self)
 
         .def("GetValueType", &DiscreteValueVect::getValueType,
-             "Get the type of value stored in the vector")
+             python::args("self"), "Get the type of value stored in the vector")
         .def("GetTotalVal", &DiscreteValueVect::getTotalVal,
+             python::args("self"),
              "Get the sum of the values in the vector, basically L1 norm")
 
         .def_pickle(dvv_pickle_suite());
 
-    python::def("ComputeL1Norm", computeL1Norm,
+    python::def("ComputeL1Norm", computeL1Norm, python::args("v1", "v2"),
                 "Compute the distance between two discrete vector values\n");
   }
 };

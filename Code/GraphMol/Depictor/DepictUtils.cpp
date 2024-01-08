@@ -10,11 +10,16 @@
 #include <RDGeneral/types.h>
 #include <cmath>
 #include <Geometry/point.h>
-#include <Geometry/Transform2D.h>
 #include "DepictUtils.h"
 #include <iostream>
 #include <RDGeneral/Invariant.h>
+#include <GraphMol/Chirality.h>
 #include <algorithm>
+
+namespace {
+static const char *FORMER_NBR_INDICES = "__formerNbrIndices";
+static const char *FORMER_IDX = "__formerIdx";
+}  // end anonymous namespace
 
 namespace RDDepict {
 double BOND_LEN = 1.5;
@@ -55,6 +60,7 @@ RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
     RDGeom::Point2D loc(x, y);
     res[ring[i]] = loc;
   }
+
   return res;
 }
 
@@ -456,4 +462,109 @@ template RDKit::INT_DEQUE rankAtomsByRank(const RDKit::ROMol &mol,
 template RDKit::INT_LIST rankAtomsByRank(const RDKit::ROMol &mol,
                                          const RDKit::INT_LIST &commAtms,
                                          bool ascending);
+
+bool hasTerminalRGroupOrQueryHydrogen(const RDKit::ROMol &mol) {
+  // we do not need the allowRGroups logic if there are no
+  // terminal dummy atoms
+  auto atoms = mol.atoms();
+  return std::any_of(atoms.begin(), atoms.end(),
+                     RDKit::isAtomTerminalRGroupOrQueryHydrogen);
+}
+
+std::unique_ptr<RDKit::RWMol> prepareTemplateForRGroups(
+    RDKit::RWMol &templateMol) {
+  auto queryParams = RDKit::MolOps::AdjustQueryParameters::noAdjustments();
+  queryParams.adjustSingleBondsToDegreeOneNeighbors = true;
+  queryParams.adjustSingleBondsBetweenAromaticAtoms = true;
+  RDKit::MolOps::adjustQueryProperties(templateMol, &queryParams);
+  std::map<unsigned int, unsigned int> removedIdxToNbrIdx;
+  std::unique_ptr<RDKit::RWMol> reducedTemplateMol;
+  for (const auto &bond : templateMol.bonds()) {
+    int atomIdxToRemove = -1;
+    int nbrIdx = -1;
+    auto beginAtom = bond->getBeginAtom();
+    auto endAtom = bond->getEndAtom();
+    if (RDKit::isAtomTerminalRGroupOrQueryHydrogen(beginAtom) &&
+        endAtom->hasQuery()) {
+      atomIdxToRemove = beginAtom->getIdx();
+      nbrIdx = endAtom->getIdx();
+    } else if (RDKit::isAtomTerminalRGroupOrQueryHydrogen(endAtom) &&
+               beginAtom->hasQuery()) {
+      atomIdxToRemove = endAtom->getIdx();
+      nbrIdx = beginAtom->getIdx();
+    }
+    if (atomIdxToRemove != -1) {
+      removedIdxToNbrIdx[atomIdxToRemove] = nbrIdx;
+    }
+  }
+  if (!removedIdxToNbrIdx.empty()) {
+    reducedTemplateMol.reset(new RDKit::RWMol(templateMol));
+    for (auto reducedTemplateAtom : reducedTemplateMol->atoms()) {
+      auto formerIdx = reducedTemplateAtom->getIdx();
+      reducedTemplateAtom->setProp(FORMER_IDX, formerIdx);
+      auto it = removedIdxToNbrIdx.find(formerIdx);
+      if (it != removedIdxToNbrIdx.end()) {
+        auto otherAtom = reducedTemplateMol->getAtomWithIdx(it->second);
+        std::vector<unsigned int> formerNbrIndices;
+        otherAtom->getPropIfPresent(FORMER_NBR_INDICES, formerNbrIndices);
+        formerNbrIndices.push_back(formerIdx);
+        otherAtom->setProp(FORMER_NBR_INDICES, formerNbrIndices);
+      }
+    }
+    reducedTemplateMol->beginBatchEdit();
+    for (const auto &pair : removedIdxToNbrIdx) {
+      reducedTemplateMol->removeAtom(
+          reducedTemplateMol->getAtomWithIdx(pair.first));
+    }
+    reducedTemplateMol->commitBatchEdit();
+  }
+  return reducedTemplateMol;
+}
+
+void reducedToFullMatches(const RDKit::RWMol &reducedQuery,
+                          const RDKit::RWMol &molHs,
+                          std::vector<RDKit::MatchVectType> &matches) {
+  boost::dynamic_bitset<> molHsMatches(molHs.getNumAtoms());
+  for (auto &match : matches) {
+    molHsMatches.reset();
+    for (const auto &pair : match) {
+      molHsMatches.set(pair.second);
+    }
+    RDKit::MatchVectType newMatch;
+    for (auto pairIt = match.begin(); pairIt != match.end(); ++pairIt) {
+      const auto reducedQueryAtom = reducedQuery.getAtomWithIdx(pairIt->first);
+      const auto molAtom = molHs.getAtomWithIdx(pairIt->second);
+      unsigned int formerIdx;
+      reducedQueryAtom->getProp(FORMER_IDX, formerIdx);
+      pairIt->first = formerIdx;
+      std::vector<unsigned int> formerNbrIndices;
+      reducedQueryAtom->getPropIfPresent(FORMER_NBR_INDICES, formerNbrIndices);
+      for (const auto &molNbr : molHs.atomNeighbors(molAtom)) {
+        if (formerNbrIndices.empty()) {
+          break;
+        }
+        auto molNbrIdx = molNbr->getIdx();
+        if (!molHsMatches.test(molNbrIdx)) {
+          auto formerNbrIdx = formerNbrIndices.back();
+          formerNbrIndices.pop_back();
+          newMatch.emplace_back(formerNbrIdx, molNbrIdx);
+        }
+      }
+    }
+    auto matchSize = match.size();
+    match.resize(matchSize + newMatch.size());
+    std::move(newMatch.begin(), newMatch.end(), match.begin() + matchSize);
+  }
+}
+
+bool invertWedgingIfMolHasFlipped(RDKit::ROMol &mol,
+                                  const RDGeom::Transform3D &trans) {
+  constexpr double FLIP_THRESHOLD = -0.99;
+  auto zRot = trans.getVal(2, 2);
+  bool shouldFlip = zRot < FLIP_THRESHOLD;
+  if (shouldFlip) {
+    RDKit::Chirality::invertMolBlockWedgingInfo(mol);
+  }
+  return shouldFlip;
+}
 }  // namespace RDDepict

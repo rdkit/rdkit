@@ -58,7 +58,7 @@
   }
 
   /* Methods from MolFileStereoChem.h */
-  Bond::BondDir DetermineBondWedgeState(const RDKit::INT_MAP_INT &wedgeBonds,
+  Bond::BondDir DetermineBondWedgeState(const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>> &wedgeBonds,
                                         const RDKit::Conformer *conf) {
     RDKit::DetermineBondWedgeState(($self), wedgeBonds, conf);
   }

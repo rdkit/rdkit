@@ -333,8 +333,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("useBasicKnowledge") = true,
        python::arg("printExpTorsionAngles") = false,
        python::arg("useSmallRingTorsions") = false,
-       python::arg("useMacrocycleTorsions") = false,
-       python::arg("ETversion") = 1),
+       python::arg("useMacrocycleTorsions") = true,
+       python::arg("ETversion") = 2),
       docString.c_str());
 
   docString =
@@ -402,8 +402,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("useBasicKnowledge") = true,
        python::arg("printExpTorsionAngles") = false,
        python::arg("useSmallRingTorsions") = false,
-       python::arg("useMacrocycleTorsions") = false,
-       python::arg("ETversion") = 1),
+       python::arg("useMacrocycleTorsions") = true,
+       python::arg("ETversion") = 2),
       docString.c_str());
 
   python::enum_<RDKit::DGeomHelpers::EmbedFailureCauses>("EmbedFailureCauses")
@@ -423,6 +423,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
              RDKit::DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS)
       .value("FINAL_CENTER_IN_VOLUME",
              RDKit::DGeomHelpers::EmbedFailureCauses::FINAL_CENTER_IN_VOLUME)
+      .value("LINEAR_DOUBLE_BOND",
+             RDKit::DGeomHelpers::EmbedFailureCauses::LINEAR_DOUBLE_BOND)
+      .value("BAD_DOUBLE_BOND_STEREO",
+             RDKit::DGeomHelpers::EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO)
       .export_values();
 
   python::class_<RDKit::DGeomHelpers::EmbedParameters, boost::noncopyable>(
@@ -510,9 +514,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "use molecule symmetry when doing the RMSD pruning. Note that this "
           "option automatically also sets onlyHeavyAtomsForRMS to true.")
       .def("SetBoundsMat", &RDKit::setBoundsMatrix,
+           python::args("self", "boundsMatArg"),
            "set the distance-bounds matrix to be used (no triangle smoothing "
            "will be done on this) from a Numpy array")
-      .def("SetCPCI", &RDKit::setCPCI,
+      .def("SetCPCI", &RDKit::setCPCI, python::args("self", "CPCIdict"),
            "set the customised pairwise Columb-like interaction to atom pairs."
            "used during structural minimisation stage")
       .def_readwrite("forceTransAmides",
@@ -521,8 +526,13 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite(
           "trackFailures", &RDKit::DGeomHelpers::EmbedParameters::trackFailures,
           "keep track of which checks during the embedding process fail")
-      .def("GetFailureCounts", &RDKit::getFailureCounts,
-           "returns the counts of eacu");
+      .def("GetFailureCounts", &RDKit::getFailureCounts, python::args("self"),
+           "returns the counts of each failure type")
+      .def_readwrite(
+          "enableSequentialRandomSeeds",
+          &RDKit::DGeomHelpers::EmbedParameters::enableSequentialRandomSeeds,
+          "handle random number seeds so that conformer generation can be restarted");
+
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\

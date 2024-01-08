@@ -226,6 +226,8 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->bondRingSizes(99).empty());
   TEST_ASSERT(m->getRingInfo()->bondMembers(0).size() == 1);
   TEST_ASSERT(m->getRingInfo()->bondMembers(1).empty());
+  TEST_ASSERT(!m->getRingInfo()->isRingFused(0));
+  TEST_ASSERT(m->getRingInfo()->numFusedBonds(0) == 0);
   TEST_ASSERT(
       !m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(1, 2)->getIdx()));
   BOOST_LOG(rdInfoLog) << smi << "\n";
@@ -265,7 +267,11 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->atomMembers(2).size() == 2);
   TEST_ASSERT(m->getRingInfo()->atomMembers(2).at(0) == 0);
   TEST_ASSERT(m->getRingInfo()->atomMembers(2).at(1) == 1);
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  TEST_ASSERT(m->getRingInfo()->isRingFused(0));
+  TEST_ASSERT(m->getRingInfo()->isRingFused(1));
+  TEST_ASSERT(m->getRingInfo()->areRingsFused(0, 1));
+  TEST_ASSERT(m->getRingInfo()->numFusedBonds(0) == 2);
+  TEST_ASSERT(m->getRingInfo()->numFusedBonds(1) == 2);
   delete m;
 
   smi = "C(C1C2C3C41)(C2C35)C45";  // cubane
@@ -294,6 +300,10 @@ void test3() {
     BOOST_LOG(rdInfoLog) << ")\n";
   }
   BOOST_LOG(rdInfoLog) << smi << "\n";
+  for (unsigned int i = 0; i < m->getRingInfo()->numRings(); ++i) {
+    TEST_ASSERT(m->getRingInfo()->isRingFused(i));
+    TEST_ASSERT(m->getRingInfo()->numFusedBonds(i) == 4);
+  }
 
   delete m;
 
@@ -428,6 +438,11 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->areBondsInSameRingOfSize(2, 5, 3));
   TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(1, 2, 3));
   TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(1, 3, 4));
+  TEST_ASSERT(m->getRingInfo()->isRingFused(0));
+  TEST_ASSERT(m->getRingInfo()->isRingFused(1));
+  TEST_ASSERT(m->getRingInfo()->areRingsFused(0, 1));
+  TEST_ASSERT(m->getRingInfo()->numFusedBonds(0) == 1);
+  TEST_ASSERT(m->getRingInfo()->numFusedBonds(1) == 1);
   delete m;
 
   // This is a test of Issue 217
@@ -8422,6 +8437,37 @@ void testGithub5099() {
   TEST_ASSERT(m->getNumAtoms() == 5);
 }
 
+void testHasQueryHs() {
+    BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing hasQueryHs "
+      << std::endl;
+  const auto has_no_query_hs = std::make_pair(false, false);
+  const auto has_only_query_hs = std::make_pair(true, false);
+  const auto has_unmergeable_hs = std::make_pair(true, true);
+    
+  auto m0 = "CCCC"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m0) == has_no_query_hs);
+    
+  auto m = "[#1]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m) == has_only_query_hs);
+  
+  auto m2 = "[#1,N]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m2) == has_unmergeable_hs);
+  
+  //remove the negation
+  auto recursive = "[$(C-[H])]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*recursive) == has_only_query_hs);
+
+  auto recursive_or = "[$([C,#1])]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*recursive_or) == has_unmergeable_hs);
+    
+  // from rd_filters for something bigger
+  auto keto_def_heterocycle = "[$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naaaa1),$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naa[n,s,o]1)]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*keto_def_heterocycle) == has_only_query_hs);
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+
+}
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -8538,6 +8584,6 @@ int main() {
   testSetTerminalAtomCoords();
   testGet3DDistanceMatrix();
   testGithub5099();
-
+  testHasQueryHs();
   return 0;
 }

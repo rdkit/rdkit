@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Atropisomers.h>
 #include <RDGeneral/types.h>
 #include <sstream>
 #include <set>
@@ -53,7 +54,7 @@ namespace detail {
 std::pair<bool, INT_VECT> countChiralNbrs(const ROMol &mol, int noNbrs) {
   // we need ring information; make sure findSSSR has been called before
   // if not call now
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(mol);
   }
 
@@ -148,7 +149,6 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
 
   neighborBondIndices.push_back(bond->getIdx());
   neighborBondAngles.push_back(0.0);
-  unsigned int neighborsWithDirection = 0;
   for (const auto nbrBond : mol->atomBonds(atom)) {
     const auto otherAtom = nbrBond->getOtherAtom(atom);
     if (nbrBond != bond) {
@@ -169,11 +169,6 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
       }
       neighborBondAngles.insert(angleIt, angle);
       neighborBondIndices.insert(nbrIt, nbrBond->getIdx());
-      if (nbrBond->getBeginAtomIdx() == atom->getIdx() &&
-          (nbrBond->getBondDir() == Bond::BondDir::BEGINDASH ||
-           nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE)) {
-        ++neighborsWithDirection;
-      }
     }
   }
 
@@ -201,7 +196,7 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   if (neighborBondAngles.size() == 3) {
     // three coordinated
     auto angleIt = neighborBondAngles.begin();
-    ++angleIt;  // the first is the 0 (or reference bond - we will ignoire
+    ++angleIt;  // the first is the 0 (or reference bond - we will ignore
                 // that
     double angle1 = (*angleIt);
     ++angleIt;
@@ -237,9 +232,11 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
 
   return res;
 }
-Bond::BondDir determineBondWedgeState(const Bond *bond,
-                                      const INT_MAP_INT &wedgeBonds,
-                                      const Conformer *conf) {
+Bond::BondDir determineBondWedgeState(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf) {
   PRECONDITION(bond, "no bond");
   int bid = bond->getIdx();
   auto wbi = wedgeBonds.find(bid);
@@ -247,8 +244,12 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
     return bond->getBondDir();
   }
 
-  unsigned int waid = wbi->second;
-  return determineBondWedgeState(bond, waid, conf);
+  if (wbi->second->getType() ==
+      Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer) {
+    return wbi->second->getDir();
+  } else {
+    return determineBondWedgeState(bond, wbi->second->getIdx(), conf);
+  }
 }
 
 // Logic for two wedges at one atom (based on IUPAC stuff)
@@ -259,9 +260,10 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
 
 // picks a bond for atom that we will wedge when we write the mol file
 // returns idx of that bond.
-int pickBondToWedge(const Atom *atom, const ROMol &mol,
-                    const INT_VECT &nChiralNbrs, const INT_MAP_INT &resSoFar,
-                    int noNbrs) {
+int pickBondToWedge(
+    const Atom *atom, const ROMol &mol, const INT_VECT &nChiralNbrs,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
+    int noNbrs) {
   // here is what we are going to do
   // - at each chiral center look for a bond that is begins at the atom and
   //   is not yet picked to be wedged for a different chiral center, preferring
@@ -279,7 +281,7 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
     }
 
     int bid = bond->getIdx();
-    if (resSoFar.find(bid) == resSoFar.end()) {
+    if (wedgeBonds.find(bid) == wedgeBonds.end()) {
       // very strong preference for Hs:
       if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
         nbrScores.emplace_back(-1000000,
@@ -316,10 +318,11 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
     }
   }
   // There's still one situation where this whole thing can fail: an unlucky
-  // situation where all neighbors of all neighbors of an atom are chiral and
-  // that atom ends up being the last one picked for stereochem assignment. This
-  // also happens in cases where the chiral atom doesn't have all of its
-  // neighbors (like when working with partially sanitized fragments)
+  // situation where all neighbors of all neighbors of an atom are chiral
+  // and that atom ends up being the last one picked for stereochem
+  // assignment. This also happens in cases where the chiral atom doesn't
+  // have all of its neighbors (like when working with partially sanitized
+  // fragments)
   //
   // We'll bail here by returning -1
   if (nbrScores.empty()) {
@@ -333,8 +336,9 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
 
 // returns map of bondIdx -> bond begin atom for those bonds that
 // need wedging.
-INT_MAP_INT pickBondsToWedge(const ROMol &mol,
-                             const BondWedgingParameters *params) {
+std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
+    const ROMol &mol, const BondWedgingParameters *params,
+    const Conformer *conf) {
   if (!params) {
     params = &defaultWedgingParams;
   }
@@ -358,7 +362,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol,
             std::ostream_iterator<int>(std::cerr, " "));
   std::cerr << std::endl;
 #endif
-  INT_MAP_INT res;
+  std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> wedgeInfo;
   for (auto idx : indices) {
     if (nChiralNbrs[idx] > noNbrs) {
       // std::cerr << " SKIPPING2: " << idx << std::endl;
@@ -371,12 +375,25 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol,
     if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       break;
     }
-    auto bnd1 = detail::pickBondToWedge(atom, mol, nChiralNbrs, res, noNbrs);
+    auto bnd1 =
+        detail::pickBondToWedge(atom, mol, nChiralNbrs, wedgeInfo, noNbrs);
     if (bnd1 >= 0) {
-      res[bnd1] = idx;
+      auto wi = std::unique_ptr<RDKit::Chirality::WedgeInfoChiral>(
+          new RDKit::Chirality::WedgeInfoChiral(idx));
+      wedgeInfo[bnd1] = std::move(wi);
     }
   }
-  return res;
+
+  if (conf == nullptr) {
+    if (mol.getNumConformers()) {
+      conf = &mol.getConformer();
+    }
+  }
+  if (conf) {
+    RDKit::Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeInfo);
+  }
+
+  return wedgeInfo;
 }
 
 namespace {
@@ -446,31 +463,59 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
     params = &defaultWedgingParams;
   }
   // we need ring info
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(mol);
   }
 
-  auto wedgeBonds = pickBondsToWedge(mol, params);
+  auto wedgeBonds = Chirality::pickBondsToWedge(mol, params);
 
   // loop over the bonds we need to wedge:
-  for (auto wbIter = wedgeBonds.begin(); wbIter != wedgeBonds.end(); ++wbIter) {
-    auto [wbi, waid] = *wbIter;
-    auto bond = mol.getBondWithIdx(wbi);
-    auto dir = detail::determineBondWedgeState(bond, waid, conf);
-    if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
-      bond->setBondDir(dir);
+  for (const auto &[wbi, wedgeInfo] : wedgeBonds) {
+    if (wedgeInfo->getType() ==
+        Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer) {
+      mol.getBondWithIdx(wbi)->setBondDir(wedgeInfo->getDir());
+    } else {  // chiral atom needs wedging
+      auto bond = mol.getBondWithIdx(wbi);
+      auto dir =
+          detail::determineBondWedgeState(bond, wedgeInfo->getIdx(), conf);
+      if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
+        bond->setBondDir(dir);
 
-      // it is possible that this
-      // wedging was determined by a chiral atom at the end of the
-      // bond (instead of at the beginning). In this case we need to
-      // reverse the begin and end atoms for the bond
-      if (static_cast<unsigned int>(waid) != bond->getBeginAtomIdx()) {
-        auto tmp = bond->getBeginAtomIdx();
-        bond->setBeginAtomIdx(bond->getEndAtomIdx());
-        bond->setEndAtomIdx(tmp);
+        // it is possible that this
+        // wedging was determined by a chiral atom at the end of the
+        // bond (instead of at the beginning). In this case we need to
+        // reverse the begin and end atoms for the bond
+        if (static_cast<unsigned int>(wedgeInfo->getIdx()) !=
+            bond->getBeginAtomIdx()) {
+          auto tmp = bond->getBeginAtomIdx();
+          bond->setBeginAtomIdx(bond->getEndAtomIdx());
+          bond->setEndAtomIdx(tmp);
+        }
       }
-      if (params->wedgeTwoBondsIfPossible) {
-        addSecondWedgeAroundAtom(mol, bond, conf);
+    }
+  }
+  if (params->wedgeTwoBondsIfPossible) {
+    // This should probably check whether the existing wedge
+    // is in agreement with the chiral tag on the atom.
+
+    for (const auto atom : mol.atoms()) {
+      if (atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+          atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
+        continue;
+      }
+      unsigned numWedged = 0;
+      Bond *wedgedBond = nullptr;
+      for (const auto bond : mol.atomBonds(atom)) {
+        if (bond->getBeginAtom() == atom &&
+            bond->getBondType() == Bond::SINGLE &&
+            (bond->getBondDir() == Bond::BEGINWEDGE ||
+             bond->getBondDir() == Bond::BEGINDASH)) {
+          ++numWedged;
+          wedgedBond = bond;
+        }
+      }
+      if (numWedged == 1) {
+        addSecondWedgeAroundAtom(mol, wedgedBond, conf);
       }
     }
   }
@@ -487,6 +532,96 @@ void wedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
   Bond::BondDir dir = detail::determineBondWedgeState(bond, fromAtomIdx, conf);
   if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
     bond->setBondDir(dir);
+  }
+}
+
+void reapplyMolBlockWedging(ROMol &mol) {
+  MolOps::clearDirFlags(mol, true);
+  for (auto b : mol.bonds()) {
+    int explicit_unknown_stereo = -1;
+    if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                 explicit_unknown_stereo) &&
+        explicit_unknown_stereo) {
+      b->setBondDir(Bond::UNKNOWN);
+    }
+    int bond_dir = -1;
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
+                                 bond_dir)) {
+      if (canHaveDirection(*b)) {
+        if (bond_dir == 1) {
+          b->setBondDir(Bond::BEGINWEDGE);
+        } else if (bond_dir == 6) {
+          b->setBondDir(Bond::BEGINDASH);
+        }
+      }
+      if (b->getBondType() == Bond::DOUBLE) {
+        if (bond_dir == 0 && b->getStereo() == Bond::STEREOANY) {
+          b->setBondDir(Bond::NONE);
+          b->setStereo(Bond::STEREONONE);
+        } else if (bond_dir == 3) {
+          b->setBondDir(Bond::EITHERDOUBLE);
+          b->setStereo(Bond::STEREOANY);
+        }
+      }
+    }
+    int cfg = -1;
+    b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg);
+    switch (cfg) {
+      case 1:
+        if (canHaveDirection(*b)) {
+          b->setBondDir(Bond::BEGINWEDGE);
+        }
+        break;
+      case 2:
+        if (canHaveDirection(*b)) {
+          b->setBondDir(Bond::UNKNOWN);
+        } else if (b->getBondType() == Bond::DOUBLE) {
+          b->setBondDir(Bond::EITHERDOUBLE);
+          b->setStereo(Bond::STEREOANY);
+        }
+        break;
+      case 3:
+        if (canHaveDirection(*b)) {
+          b->setBondDir(Bond::BEGINDASH);
+        }
+        break;
+      case 0:
+      case -1:
+        if (bond_dir == -1 && b->getBondType() == Bond::DOUBLE &&
+            b->getStereo() == Bond::STEREOANY) {
+          b->setBondDir(Bond::NONE);
+          b->setStereo(Bond::STEREONONE);
+        }
+    }
+  }
+}
+
+void clearMolBlockWedgingInfo(ROMol &mol) {
+  for (auto b : mol.bonds()) {
+    b->clearProp(common_properties::_MolFileBondStereo);
+    b->clearProp(common_properties::_MolFileBondCfg);
+  }
+}
+
+void invertMolBlockWedgingInfo(ROMol &mol) {
+  for (auto b : mol.bonds()) {
+    int bond_dir = -1;
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
+                                 bond_dir)) {
+      if (bond_dir == 1) {
+        b->setProp<int>(common_properties::_MolFileBondStereo, 6);
+      } else if (bond_dir == 6) {
+        b->setProp<int>(common_properties::_MolFileBondStereo, 1);
+      }
+    }
+    int cfg = -1;
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
+      if (cfg == 1) {
+        b->setProp<int>(common_properties::_MolFileBondCfg, 3);
+      } else if (cfg == 3) {
+        b->setProp<int>(common_properties::_MolFileBondCfg, 1);
+      }
+    }
   }
 }
 

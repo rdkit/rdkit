@@ -8,11 +8,12 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <algorithm>
 #include <limits>
 #include <fstream>
+#include <random>
 #include <boost/format.hpp>
 
 #include <GraphMol/RDKitBase.h>
@@ -27,6 +28,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
 #if 1
@@ -300,7 +302,7 @@ M  END
     CHECK(mol->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
     CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
     std::vector<unsigned int> ranks;
-    CHECK(!mol->getRingInfo()->isInitialized());
+    CHECK(mol->getRingInfo()->isInitialized());
     Canon::rankMolAtoms(*mol, ranks);
   }
 
@@ -1874,7 +1876,7 @@ TEST_CASE("batch edits", "[editing]") {
   }
 }
 
-TEST_CASE("github #4122: segfaults in commitBatchEdit()", "[editing]][bug]") {
+TEST_CASE("github #4122: segfaults in commitBatchEdit()", "[editing][bug]") {
   SECTION("as reported, no atoms") {
     RWMol m;
     m.beginBatchEdit();
@@ -2946,7 +2948,7 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
   // Change heme coordination from single bond to dative.
   // Test mols are CHEBI:26355, CHEBI:60344, CHEBI:17627.  26355 should be
   // changed (Github 6019) the other two should not be.
-  // 4th mol is one that gave other problems during testing.
+  // Counting from 1, 4th mol is one that gave other problems during testing.
   std::vector<std::pair<std::string, std::string>> test_vals{
       {"CC1=C(CCC(O)=O)C2=[N]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N]5[Fe]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
        "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"},
@@ -2957,13 +2959,48 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
       {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
        "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
   for (size_t i = 0; i < test_vals.size(); ++i) {
-    SmilesParserParams ps;
-    ps.sanitize = false;
-    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first, ps));
-    // MolOps::cleanUp(*m);
+    INFO(test_vals[i].first);
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
+    CHECK(MolToSmiles(*m) == test_vals[i].second);
+  }
+  // make sure we can call cleanupOrganometallics() on non-sanitized molecules
+  for (size_t i = 0; i < test_vals.size(); ++i) {
+    INFO(test_vals[i].first);
+    bool sanitize = false;
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first, 0, sanitize));
     MolOps::cleanUpOrganometallics(*m);
-    MolOps::sanitizeMol(*m);
-    TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
+    CHECK(MolToSmiles(*m) == test_vals[i].second);
+  }
+}
+
+TEST_CASE(
+    "cleanUpOrganometallics should produce canonical output.  cf PR6292") {
+  std::vector<std::pair<std::string, std::string>> test_vals{
+      {"F[Pd](Cl)(Cl1)Cl[Pd]1(Cl)Cl", "F[Pd]1(Cl)<-Cl[Pd](Cl)(Cl)<-Cl1"},
+      {"F[Pt]1(F)[35Cl][Pt]([Cl]1)(F)Br", "F[Pt]1(Br)<-Cl[Pt](F)(F)<-[35Cl]1"},
+  };
+
+  for (size_t j = 0; j < test_vals.size(); ++j) {
+    std::string &smi = test_vals[j].first;
+    std::string &canon_smi = test_vals[j].second;
+    RWMOL_SPTR m(RDKit::SmilesToMol(smi));
+    CHECK(MolToSmiles(*m) == canon_smi);
+
+    // scramble the order and check
+    std::vector<unsigned int> atomInds(m->getNumAtoms(), 0);
+    std::iota(atomInds.begin(), atomInds.end(), 0);
+    std::random_device rd;
+    std::mt19937 g(rd());
+    for (int i = 0; i < 100; ++i) {
+      SmilesParserParams ps;
+      ps.sanitize = false;
+      std::unique_ptr<ROMol> mol(RDKit::SmilesToMol(smi, ps));
+      std::shuffle(atomInds.begin(), atomInds.end(), g);
+      std::unique_ptr<ROMol> randmol(MolOps::renumberAtoms(*mol, atomInds));
+      std::unique_ptr<RWMol> rwrandmol(new RWMol(*randmol));
+      MolOps::sanitizeMol(*rwrandmol);
+      CHECK(MolToSmiles(*rwrandmol) == canon_smi);
+    }
   }
 }
 
@@ -3017,7 +3054,7 @@ TEST_CASE(
     rdWarningLog->SetTee(ss);
     MolOps::mergeQueryHs(*m);
     rdWarningLog->ClearTee();
-    TEST_ASSERT(
+    CHECK(
         ss.str().find(
             "WARNING: merging explicit H queries involved in ORs is not supported. "
             "This query will not be merged") != std::string::npos);
@@ -3029,7 +3066,7 @@ TEST_CASE(
     rdWarningLog->SetTee(ss);
     MolOps::mergeQueryHs(*m);
     rdWarningLog->ClearTee();
-    TEST_ASSERT(
+    CHECK(
         ss.str().find(
             "WARNING: merging explicit H queries involved in ORs is not supported. "
             "This query will not be merged") != std::string::npos);
@@ -3041,7 +3078,7 @@ TEST_CASE(
     rdWarningLog->SetTee(ss);
     MolOps::mergeQueryHs(*m);
     rdWarningLog->ClearTee();
-    TEST_ASSERT(
+    CHECK(
         ss.str().find(
             "WARNING: merging explicit H queries involved in ORs is not supported. "
             "This query will not be merged") == std::string::npos);
@@ -3147,7 +3184,7 @@ M  END
     REQUIRE(mol);
     bool explicitOnly = false;
     bool addCoords = true;
-    RDKit::ROMol *m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    std::unique_ptr<ROMol> m{MolOps::addHs(*mol, explicitOnly, addCoords)};
     REQUIRE(m->getNumAtoms() == 5);
     const auto &conf = m->getConformer();
     // Hydrogen will always be in the last position
@@ -3180,7 +3217,7 @@ M  END
     REQUIRE(mol);
     bool explicitOnly = false;
     bool addCoords = true;
-    RDKit::ROMol *m = MolOps::addHs(*mol, explicitOnly, addCoords);
+    std::unique_ptr<ROMol> m{MolOps::addHs(*mol, explicitOnly, addCoords)};
     REQUIRE(m->getNumAtoms() == 5);
     const auto &conf = m->getConformer();
     // Hydrogen will always be in the last position
@@ -3191,4 +3228,238 @@ M  END
     const auto distToTarget = HPos - targetPos;
     CHECK(distToTarget.lengthSq() < 0.1);
   }
+}
+
+TEST_CASE(
+    "GitHub Issue #6437 Removing Hs on a pyrrol-like structure throws kekulization error",
+    "[bug][molops][removeHs]") {
+  auto run_test = [](const std::string &mb,
+                     const std::string &reference_smiles) {
+    bool sanitize = true;  // aromatization is key in triggering the issue
+    bool removeHs = false;
+    std::unique_ptr<RWMol> mol(MolBlockToMol(mb, sanitize, removeHs));
+
+    REQUIRE(mol);
+
+    MolOps::removeHs(*mol);
+
+    REQUIRE_NOTHROW(MolOps::Kekulize(*mol));
+
+    MolOps::sanitizeMol(*mol);
+    auto smiles = MolToSmiles(*mol);
+    CHECK(smiles == reference_smiles);
+
+    REQUIRE_NOTHROW(mol.reset(SmilesToMol(smiles)));
+  };
+
+  SECTION("original issue") {
+    const std::string mb = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 21 23 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -2.860897 0.790642 -0.873026 0 CHG=-1
+M  V30 2 C -2.892815 1.449062 0.345481 0
+M  V30 3 N -1.696600 1.269967 0.996982 0 CHG=1
+M  V30 4 C -0.879551 0.492797 0.203823 0
+M  V30 5 C -1.573299 0.166246 -0.987870 0
+M  V30 6 C 0.442583 0.044533 0.450671 0
+M  V30 7 C 1.074625 -0.756491 -0.540699 0
+M  V30 8 C 0.374093 -1.078083 -1.728707 0
+M  V30 9 C -0.929617 -0.625959 -1.953003 0
+M  V30 10 C 2.393185 -1.188970 -0.266871 0
+M  V30 11 N 3.077189 -0.890802 0.863186 0
+M  V30 12 C 2.450112 -0.125881 1.790360 0
+M  V30 13 C 1.151414 0.363643 1.640805 0
+M  V30 14 H -3.670927 0.767620 -1.587024 0
+M  V30 15 H -3.671872 2.035677 0.809804 0
+M  V30 16 H 0.862037 -1.686990 -2.476160 0
+M  V30 17 H -1.436100 -0.889168 -2.869956 0
+M  V30 18 H 2.914471 -1.799551 -0.989817 0
+M  V30 19 H 3.016681 0.097751 2.682259 0
+M  V30 20 H 0.694206 0.970092 2.408942 0
+M  V30 21 H -1.498216 1.663637 1.905533 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 2 3 2
+M  V30 3 1 4 3
+M  V30 4 1 5 1
+M  V30 5 2 5 4
+M  V30 6 1 6 4
+M  V30 7 2 7 6
+M  V30 8 1 8 7
+M  V30 9 1 9 5
+M  V30 10 2 9 8
+M  V30 11 1 10 7
+M  V30 12 2 11 10
+M  V30 13 1 12 11
+M  V30 14 1 13 6
+M  V30 15 2 13 12
+M  V30 16 1 14 1
+M  V30 17 1 15 2
+M  V30 18 1 16 8
+M  V30 19 1 17 9
+M  V30 20 1 18 10
+M  V30 21 1 19 12
+M  V30 22 1 20 13
+M  V30 23 1 21 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+
+    const std::string reference_smiles = "c1cc2c(ccc3[cH-]c[nH+]c32)cn1";
+    run_test(mb, reference_smiles);
+  }
+
+  SECTION("pyrrole") {
+    const std::string mb = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 3.080550 -0.830350 2.955935 0
+M  V30 2 C 1.665136 -0.838141 2.947220 0
+M  V30 3 C 1.247504 0.474081 2.948961 0
+M  V30 4 N 2.361202 1.272855 2.958419 0
+M  V30 5 C 3.483658 0.486391 2.962730 0
+M  V30 6 H 2.355611 2.284759 2.961704 0
+M  V30 7 H 1.020283 -1.707337 2.940409 0
+M  V30 8 H 0.256169 0.906820 2.944294 0
+M  V30 9 H 3.734967 -1.692394 2.957125 0
+M  V30 10 H 4.470152 0.930015 2.970242 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 2 3 2
+M  V30 3 1 4 3
+M  V30 4 2 5 1
+M  V30 5 1 5 4
+M  V30 6 1 6 4
+M  V30 7 1 7 2
+M  V30 8 1 8 3
+M  V30 9 1 9 1
+M  V30 10 1 10 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+    const std::string reference_smiles = "c1cc[nH]c1";
+    run_test(mb, reference_smiles);
+  }
+
+  SECTION("pseudo-pyrrole") {
+    const std::string mb = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 3.080550 -0.830350 2.955935 0
+M  V30 2 C 1.665136 -0.838141 2.947220 0
+M  V30 3 C 1.247504 0.474081 2.948961 0
+M  V30 4 C 2.361202 1.272855 2.958419 0 CHG=-1
+M  V30 5 C 3.483658 0.486391 2.962730 0
+M  V30 6 H 2.355611 2.284759 2.961704 0
+M  V30 7 H 1.020283 -1.707337 2.940409 0
+M  V30 8 H 0.256169 0.906820 2.944294 0
+M  V30 9 H 3.734967 -1.692394 2.957125 0
+M  V30 10 H 4.470152 0.930015 2.970242 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 2 3 2
+M  V30 3 1 4 3
+M  V30 4 2 5 1
+M  V30 5 1 5 4
+M  V30 6 1 6 4
+M  V30 7 1 7 2
+M  V30 8 1 8 3
+M  V30 9 1 9 1
+M  V30 10 1 10 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+
+    const std::string reference_smiles = "c1cc[cH-]c1";
+    run_test(mb, reference_smiles);
+  }
+}
+
+TEST_CASE(
+    "GitHub Issue #6681: ROMol move constructor and assignment do not update SubstanceGroup ownership",
+    "[bug]") {
+  auto m = "CCCCCC[NH3+] |SgD:6:lambda max:230:=:nm::|"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 7);
+  REQUIRE(getSubstanceGroups(*m).size() == 1);
+
+  SECTION("ROMol move constructor") {
+    ROMol mol(std::move(*m));
+    REQUIRE(mol.getNumAtoms() == 7);
+
+    auto sgs = getSubstanceGroups(mol);
+    REQUIRE(sgs.size() == 1);
+    CHECK(&sgs[0].getOwningMol() == &mol);
+  }
+
+  SECTION("ROMol move assignment") {
+    ROMol mol;
+    mol = std::move(*m);
+    REQUIRE(mol.getNumAtoms() == 7);
+
+    auto sgs = getSubstanceGroups(mol);
+    REQUIRE(sgs.size() == 1);
+    CHECK(&sgs[0].getOwningMol() == &mol);
+  }
+}
+
+TEST_CASE("ROMol hasQuery") {
+  SECTION("check false Mol.hasQuery") {
+    std::unique_ptr<ROMol> mol{SmilesToMol("CCO")};
+
+    REQUIRE(!mol->hasQuery());
+  }
+  SECTION("check true Mol.hasQuery because Atom") {
+    std::unique_ptr<ROMol> mol{SmartsToMol("[#6][#6][#8]")};
+
+    REQUIRE(mol->hasQuery());
+  }
+  SECTION("check true Mol.hashQuery because Bond") {
+    std::unique_ptr<ROMol> mol{SmilesToMol("CC~O")};
+
+    REQUIRE(mol->hasQuery());
+  }
+}
+
+TEST_CASE(
+    "Github Issue #6944: With new stereo, removing H from an Imine double bond does not remove bond stereo",
+    "[bug][molops]") {
+  // This issue only happens with the new stereo perception,
+  // since the legacy one does not support stereo on imine bonds
+  UseLegacyStereoPerceptionFixture use_new_stereo_perception{false};
+
+  auto m = "[H]/N=C(/C)O"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 5);
+
+  auto bnd = m->getBondWithIdx(1);
+  REQUIRE(bnd->getBondType() == Bond::BondType::DOUBLE);
+  REQUIRE(bnd->getStereo() == Bond::BondStereo::STEREOTRANS);
+  REQUIRE(bnd->getStereoAtoms().size() == 2);
+
+  MolOps::removeAllHs(*m);
+  REQUIRE(m->getNumAtoms() == 4);
+
+  bnd = m->getBondWithIdx(0);
+  REQUIRE(bnd->getBondType() == Bond::BondType::DOUBLE);
+  CHECK(bnd->getStereo() == Bond::BondStereo::STEREONONE);
+  CHECK(bnd->getStereoAtoms().empty());
 }

@@ -525,6 +525,11 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               angle = 2 * M_PI / 3;
             } else if (ahyb == Atom::SP3) {
               angle = 109.5 * M_PI / 180;
+            } else if (Chirality::hasNonTetrahedralStereo(atom)) {
+              angle = Chirality::getIdealAngleBetweenLigands(
+                          atom, mol.getAtomWithIdx(aid1),
+                          mol.getAtomWithIdx(aid3)) *
+                      M_PI / 180;
             } else if (ahyb == Atom::SP3D) {
               // FIX: this and the remaining two hybridization states below
               // should probably be special cased. These defaults below are
@@ -537,7 +542,18 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               angle = 120.0 * M_PI / 180;
             }
           }
-          _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+          if (atom->getDegree() <= 4 ||
+              (Chirality::hasNonTetrahedralStereo(atom) &&
+               atom->hasProp(common_properties::_chiralPermutation))) {
+            _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+          } else {
+            // just use 180 as the max angle and an arbitrary min angle
+            auto dmax =
+                accumData.bondLengths[bid1] + accumData.bondLengths[bid2];
+            auto dl = 1.0;
+            auto du = dmax * 1.2;
+            _checkAndSetBounds(aid1, aid3, dl, du, mmat);
+          }
           accumData.bondAngles->setVal(bid1, bid2, angle);
           accumData.bondAdj->setVal(bid1, bid2, aid2);
           angleTaken[aid2] += angle;

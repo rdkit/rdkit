@@ -6,7 +6,7 @@ import unittest
 from io import BytesIO
 
 from rdkit import Chem, RDConfig, rdBase
-
+from rdkit.Chem.rdmolops import _TestSetProps
 
 class TestCase(unittest.TestCase):
 
@@ -110,6 +110,40 @@ $$$$"""
       a.SetIntProp("foo", 1)
     Chem.CreateAtomIntPropertyList(m, "foo")
 
+  def testSetProps(self):
+    from rdkit import Chem
+    m = Chem.MolFromSmiles("CC")
+
+    conf = Chem.Conformer(m.GetNumAtoms())
+    for i in range(m.GetNumAtoms()):
+      conf.SetAtomPosition(i, (0., 0., 0.))
+    m.AddConformer(conf)
+    
+    _TestSetProps(m)
+    default_expected = {'bool': True, 'uint': 4294967295, 'double': 3.14159, 'svint': [0, 1, 2, -2], 'svuint': [0, 1, 2, 4294967294], 'svdouble': [0.0, 1.0, 2.0], 'svstring': ['The', 'RDKit']}
+
+    def check(ob, prefix):
+      expected = {prefix + k:v for k,v in default_expected.items()}      
+      d = ob.GetPropsAsDict(False, False)
+      for k,v in d.items():
+        if 'sv' in k: d[k] = list(v)
+      assert d == expected, repr((d, expected))
+      for k,v in expected.items():
+        v2 = ob.GetProp(k, True)
+        if 'sv' in k: v2 = list(v2)
+        assert v2 == v, repr(k, v2, v)
+        assert type(ob.GetProp(k)) == str
+      return len(d) > 0
+    
+    assert check(m, "mol_")
+    for atom in m.GetAtoms():
+      check(atom, f"atom_{atom.GetIdx()}")
+
+    for bond in m.GetBonds():
+      check(bond, f"bond_{bond.GetIdx()}")
+
+    for idx, conf in enumerate(m.GetConformers()):
+      check(conf, f"conf_{idx}")
 
 if __name__ == '__main__':
   unittest.main()

@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cstdint>
 
 namespace boost {
 namespace logging {
@@ -147,6 +148,10 @@ class RDKIT_RDGENERAL_EXPORT LogStateSetter : public boost::noncopyable {
  private:
   std::uint64_t d_origState = 0;
 };
+
+inline void deprecationWarning(const std::string& message) {
+  BOOST_LOG(rdWarningLog) << "DEPRECATION WARNING: " << message << std::endl;
+}
 
 }  // namespace RDLog
 #endif

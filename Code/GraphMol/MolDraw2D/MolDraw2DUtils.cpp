@@ -21,7 +21,6 @@
 #include <GraphMol/RWMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Depictor/RDDepictor.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
@@ -76,7 +75,7 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
     RDDepict::compute2DCoords(mol, nullptr, canonOrient);
   }
   if (wedgeBonds) {
-    WedgeMolBonds(mol, &mol.getConformer());
+    Chirality::wedgeMolBonds(mol, &mol.getConformer());
   }
   if (wavyBonds) {
     addWavyBondsForStereoAny(mol);
@@ -156,6 +155,22 @@ void get_colour_palette_option(boost::property_tree::ptree *pt, const char *pnm,
   }
 }
 
+void get_highlight_style_option(boost::property_tree::ptree *pt,
+                                const char *pnm,
+                                MultiColourHighlightStyle &mchs) {
+  PRECONDITION(pnm && strlen(pnm), "bad property name");
+  if (pt->find(pnm) == pt->not_found()) {
+    return;
+  }
+  const auto &node = pt->get_child(pnm);
+  auto styleStr = node.get_value<std::string>();
+  if (styleStr == "Lasso") {
+    mchs = MultiColourHighlightStyle::LASSO;
+  } else if (styleStr == "CircleAndLine") {
+    mchs = MultiColourHighlightStyle::CIRCLEANDLINE;
+  }
+}
+
 void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
                                   const std::string &json) {
   if (json == "") {
@@ -232,6 +247,8 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
           item.second.get_value<std::string>();
     }
   }
+  get_highlight_style_option(&pt, "multiColourHighlightStyle",
+                             opts.multiColourHighlightStyle);
 }
 
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(
@@ -332,25 +349,45 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
     std::vector<conrec::ConrecSegment> segs;
     conrec::Contour(grid, 0, nX - 1, 0, nY - 1, xcoords.data(), ycoords.data(),
                     nContours, levels.data(), segs);
-    static DashPattern negDash = {2, 6};
+    static DashPattern negDash{2., 2.};
     static DashPattern posDash;
     drawer.setColour(params.contourColour);
     drawer.setLineWidth(params.contourWidth);
-    for (const auto &seg : segs) {
-      if (params.dashNegative && seg.isoVal < 0) {
-        drawer.setDash(negDash);
-      } else {
-        drawer.setDash(posDash);
+    if (!params.drawAsLines) {
+      for (const auto &seg : segs) {
+        if (params.dashNegative && seg.isoVal < 0) {
+          drawer.setDash(negDash);
+        } else {
+          drawer.setDash(posDash);
+        }
+        drawer.drawLine(seg.p1, seg.p2);
       }
-      drawer.drawLine(seg.p1, seg.p2);
+    } else {
+      drawer.setFillPolys(false);
+      auto lines =
+          conrec::connectLineSegments(segs, params.coordScaleForQuantization,
+                                      params.isovalScaleForQuantization);
+      for (const auto &pr : lines) {
+        auto [contour, val] = pr;
+        if (params.dashNegative && val < 0) {
+          drawer.setDash(negDash);
+        } else {
+          drawer.setDash(posDash);
+        }
+        if (contour.size() > 2) {
+          drawer.drawPolygon(contour);
+        } else if (contour.size() == 2) {
+          drawer.drawLine(contour[0], contour[1]);
+        }
+      }
     }
-  }
 
-  drawer.setDash(odash);
-  drawer.setLineWidth(olw);
-  drawer.setColour(ocolor);
-  drawer.setFillPolys(ofill);
-  drawer.setLineWidth(owidth);
+    drawer.setDash(odash);
+    drawer.setLineWidth(olw);
+    drawer.setColour(ocolor);
+    drawer.setFillPolys(ofill);
+    drawer.setLineWidth(owidth);
+  }
 };
 
 void contourAndDrawGaussians(MolDraw2D &drawer,
@@ -374,6 +411,9 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
       maxP.y = std::max(loc.y, maxP.y);
     }
     Point2D dims = maxP - minP;
+    // Here, the drawOptions().padding is just used to extend the grid
+    // beyond the molecule.  The actual padding round the image is added
+    // later.
     minP.x -= drawer.drawOptions().padding * dims.x;
     minP.y -= drawer.drawOptions().padding * dims.y;
     maxP.x += drawer.drawOptions().padding * dims.x;
@@ -460,6 +500,10 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
 
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
+  if (meanBondLen <= 0.0) {
+    throw ValueErrorException(
+        "ACS1996Options requires mean bond length > 0.0.");
+  }
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
   // the guideline is for a bond length of 14.4px, and we set things up

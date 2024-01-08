@@ -48,6 +48,20 @@
 %ignore RDKit::RWMol::addAtom(Atom *atom,bool updateLabel,bool takeOwnership);
 %ignore RDKit::RWMol::addBond(Bond *bond,bool takeOwnership);
 
+%newobject RDKit::SmilesToMol;
+%newobject RDKit::SmartsToMol;
+%newobject RDKit::MolBlockToMol;
+%newobject RDKit::MolFileToMol;
+%newobject RDKit::MolFromMolFile;
+%newobject RDKit::MolFromTPLFIle;
+%newobject RDKit::MolFromMol2File;
+%newobject RDKit::MolFromMol2Block;
+%newobject RDKit::MolFromPDBBlock;
+%newobject RDKit::MolFromPDBFile;
+%newobject RDKit::MolFromSequence;
+%newobject RDKit::MolFromFasta;
+
+
 %shared_ptr(RDKit::RWMol)
 %include "enums.swg"
 #if swifjava
@@ -165,13 +179,13 @@ void ClearSingleBondDirFlags() {
  RDKit::ClearSingleBondDirFlags(*($self));
 };
 void reapplyMolBlockWedging() {
-  RDKit::reapplyMolBlockWedging(*($self));
+  RDKit::Chirality::reapplyMolBlockWedging(*($self));
 }
 void clearMolBlockWedgingInfo() {
-  RDKit::clearMolBlockWedgingInfo(*($self));
+  RDKit::Chirality::clearMolBlockWedgingInfo(*($self));
 }
 void invertMolBlockWedgingInfo() {
-  RDKit::invertMolBlockWedgingInfo(*($self));
+  RDKit::Chirality::invertMolBlockWedgingInfo(*($self));
 }
 void markUnspecifiedStereoAsUnknown(int confId) {
   RDKit::markUnspecifiedStereoAsUnknown(*($self), confId);

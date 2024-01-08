@@ -50,6 +50,8 @@ Normalizer::Normalizer() {
       param_filename_flyweight(defaultCleanupParameters.normalizations).get());
   this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = 200;
+
+  this->d_tcat->getCatalogParams()->initializeTransforms();
 }
 
 // overloaded constructor
@@ -60,6 +62,8 @@ Normalizer::Normalizer(const std::string normalizeFile,
       &(param_filename_flyweight(normalizeFile).get());
   this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = maxRestarts;
+
+  this->d_tcat->getCatalogParams()->initializeTransforms();
 }
 
 // overloaded constructor
@@ -69,6 +73,8 @@ Normalizer::Normalizer(std::istream &normalizeStream,
   TransformCatalogParams tparams(normalizeStream);
   this->d_tcat = new TransformCatalog(&tparams);
   this->MAX_RESTARTS = maxRestarts;
+
+  this->d_tcat->getCatalogParams()->initializeTransforms();
 }
 
 // overloaded constructor
@@ -80,10 +86,72 @@ Normalizer::Normalizer(
       &(param_data_flyweight(normalizations).get());
   this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = maxRestarts;
+
+  this->d_tcat->getCatalogParams()->initializeTransforms();
 }
 
 // destructor
 Normalizer::~Normalizer() { delete d_tcat; }
+
+void Normalizer::normalizeInPlace(RWMol &mol) {
+  BOOST_LOG(rdInfoLog) << "Running Normalizer\n";
+  PRECONDITION(this->d_tcat, "");
+  const TransformCatalogParams *tparams = this->d_tcat->getCatalogParams();
+  PRECONDITION(tparams, "no transform parameters");
+
+  if (!mol.getNumAtoms()) {
+    return;
+  }
+
+  const std::vector<std::shared_ptr<ChemicalReaction>> &transforms =
+      tparams->getTransformations();
+
+  // make the transforms are compatible with the
+  // restrictions on in-place reactions
+  for (auto &transform : transforms) {
+    if (transform->getNumProductTemplates() != 1 ||
+        transform->getNumReactantTemplates() != 1 ||
+        transform->getProducts()[0]->getNumAtoms() >
+            transform->getReactants()[0]->getNumAtoms()) {
+      throw ValueErrorException(
+          "normalizeInPlace can only be used with transforms which have a single reactant and single product. The number of atoms in the product cannot be larger than the number of atoms in the reactant.");
+    }
+  }
+  // we might want ring info
+  if (!mol.getRingInfo()->isSymmSssr()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
+  for (unsigned int i = 0; i < MAX_RESTARTS; ++i) {
+    bool loop_break = false;
+    // Iterate through Normalization transforms and apply each in order
+    for (auto &transform : transforms) {
+      constexpr bool removeUnmatchedAtoms = false;
+      if (transform->runReactant(mol, removeUnmatchedAtoms)) {
+        BOOST_LOG(rdInfoLog)
+            << "Rule applied: "
+            << transform->getProp<std::string>(common_properties::_Name)
+            << "\n";
+        constexpr unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^
+                                             MolOps::SANITIZE_CLEANUP ^
+                                             MolOps::SANITIZE_PROPERTIES;
+        unsigned int failed;
+        try {
+          MolOps::sanitizeMol(mol, failed, sanitizeOps);
+        } catch (MolSanitizeException &) {
+          BOOST_LOG(rdInfoLog) << "FAILED sanitizeMol.\n";
+        }
+        loop_break = true;
+        break;
+      }
+    }
+    // For loop finishes normally, all applicable transforms have been applied
+    if (!loop_break) {
+      return;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Gave up normalization after " << MAX_RESTARTS
+                       << " restarts.\n";
+}
 
 ROMol *Normalizer::normalize(const ROMol &mol) {
   BOOST_LOG(rdInfoLog) << "Running Normalizer\n";
@@ -119,7 +187,7 @@ ROMOL_SPTR Normalizer::normalizeFragment(
     const ROMol &mol,
     const std::vector<std::shared_ptr<ChemicalReaction>> &transforms) const {
   ROMOL_SPTR nfrag(new ROMol(mol));
-  if (!nfrag->getRingInfo()->isInitialized()) {
+  if (!nfrag->getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(*nfrag);
   }
   std::set<std::string> seenProductSmiles;
@@ -163,9 +231,6 @@ SmilesMolPair Normalizer::applyTransform(const ROMOL_SPTR &mol,
 
   SmilesMolPair smilesMolPair{std::string(), mol};
 
-  if (!transform.isInitialized()) {
-    transform.initReactantMatchers();
-  }
   // REVIEW: what's the source of the 20 in the next line?
   for (unsigned int i = 0; i < 20; ++i) {
     std::map<std::string, ROMOL_SPTR> pdts;

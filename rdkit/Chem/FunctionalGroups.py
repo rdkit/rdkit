@@ -33,7 +33,6 @@
 import os
 import re
 import weakref
-from io import StringIO
 
 from rdkit import Chem, RDConfig
 
@@ -87,16 +86,17 @@ def BuildFuncGroupHierarchy(fileNm=None, data=None, force=False):
     fileNm = os.path.join(RDConfig.RDDataDir, 'Functional_Group_Hierarchy.txt')
 
   if fileNm:
-    inF = open(fileNm, 'r')
+    with open(fileNm, 'r') as inF:
+      data = inF.readlines()
     lastFilename = fileNm
   elif data:
-    inF = StringIO(data)
+    data = data.splitlines()
   else:
     raise ValueError("need data or filename")
 
   groupDefns = {}
   res = []
-  for lineNo, line in enumerate(inF.readlines(), 1):
+  for lineNo, line in enumerate(data, 1):
     line = line.strip()
     line = line.split('//')[0]
     if not line:

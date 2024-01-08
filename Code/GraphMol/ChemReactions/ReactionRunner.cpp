@@ -1255,6 +1255,7 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
   std::vector<StereoGroup> new_stereo_groups;
   for (const auto &sg : reactant.getStereoGroups()) {
     std::vector<Atom *> atoms;
+    std::vector<Bond *> bonds;
     for (auto &&reactantAtom : sg.getAtoms()) {
       auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
       if (productAtoms == mapping.reactProdAtomMap.end()) {
@@ -1279,9 +1280,14 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
       }
     }
     if (!atoms.empty()) {
-      new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms));
+      new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms),
+                                     std::move(bonds), sg.getReadId());
     }
   }
+
+  // Although we have added storage, and canonicalization of Atropisomers,
+  // searching is not yet supported.  When it is, we will need to copy
+  // bond-part of the SG groups to the products as appropriate.
 
   if (!new_stereo_groups.empty()) {
     auto &existing_sg = product->getStereoGroups();
@@ -1581,7 +1587,8 @@ bool updateAtomsModifiedByReaction(
     const auto pAtom =
         productTemplate->getAtomWithIdx(productAtomMap.at(pr.first));
     const auto atom = reactant.getAtomWithIdx(match[pr.second].second);
-    if (rAtom->getAtomicNum() != pAtom->getAtomicNum()) {
+    if (rAtom->getAtomicNum() != pAtom->getAtomicNum() &&
+        (pAtom->getAtomicNum() || !pAtom->hasQuery())) {
       atom->setAtomicNum(pAtom->getAtomicNum());
       molModified = true;
     }
@@ -1725,14 +1732,6 @@ bool updateBondsModifiedByReaction(
         molModified = true;
       }
     }
-
-    if (rAtom->getAtomicNum() != pAtom->getAtomicNum()) {
-      atom->setAtomicNum(pAtom->getAtomicNum());
-      molModified = true;
-    }
-    if (ReactionRunnerUtils::updatePropsFromImplicitProps(pAtom, atom)) {
-      molModified = true;
-    }
   }
   return molModified;
 }
@@ -1740,7 +1739,8 @@ bool updateBondsModifiedByReaction(
 }  // namespace
 
 // Modifies a single reactant IN PLACE
-bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant) {
+bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
+                  bool removeUnmatchedAtoms) {
   PRECONDITION(rxn.getNumReactantTemplates() == 1,
                "only one reactant supported");
   PRECONDITION(rxn.getNumProductTemplates() == 1, "only one product supported");
@@ -1789,14 +1789,18 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant) {
   const auto &match = reactantMatch[0];
 
   // we now have a match for the reactant, so we can work on it
-  // start by marking atoms which are in the reactants, but not in the product
+  // start by marking atoms which are in the reactant template, but not in the
+  // product template for removal
   boost::dynamic_bitset<> atomsToRemove(reactant.getNumAtoms());
   // finds atoms in the reactantTemplate which aren't in the productTemplate
   ReactionRunnerUtils::identifyAtomsInReactantTemplateNotProductTemplate(
       *reactantTemplate, atomsToRemove, reactantProductMap, match);
-  // identify atoms which should be removed from the molecule
-  ReactionRunnerUtils::traverseToFindAtomsToRemove(reactant, *reactantTemplate,
-                                                   atomsToRemove, match);
+  if (removeUnmatchedAtoms) {
+    // identify atoms which did not match something in the reactant template but
+    // which should be removed from the molecule
+    ReactionRunnerUtils::traverseToFindAtomsToRemove(
+        reactant, *reactantTemplate, atomsToRemove, match);
+  }
   bool molModified = false;
   reactant.beginBatchEdit();
 

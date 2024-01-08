@@ -21,7 +21,6 @@
 #    -DRDK_BUILD_THREADSAFE_SSS=ON \
 #    -DRDK_TEST_MULTITHREADED=ON \
 #    -DRDK_BUILD_FREESASA_SUPPORT=ON \
-#    -DRDK_USE_BOOST_REGEX=ON \
 #    -DPYTHON_NUMPY_INCLUDE_PATH="$CONDA_PREFIX/lib/python3.6/site-packages/numpy/core/include"
 #
 {

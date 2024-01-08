@@ -53,25 +53,28 @@ std::string tdtMolSupplierClassDoc =
 struct tdtmolsup_wrap {
   static void wrap() {
     python::class_<TDTMolSupplier, boost::noncopyable>(
-        "TDTMolSupplier", tdtMolSupplierClassDoc.c_str(), python::init<>())
+        "TDTMolSupplier", tdtMolSupplierClassDoc.c_str(),
+        python::init<>(python::args("self")))
         .def(python::init<std::string, std::string, int, int, bool>(
-            (python::arg("fileName"), python::arg("nameRecord") = "",
-             python::arg("confId2D") = -1, python::arg("confId3D") = -1,
-             python::arg("sanitize") = true)))
+            (python::arg("self"), python::arg("fileName"),
+             python::arg("nameRecord") = "", python::arg("confId2D") = -1,
+             python::arg("confId3D") = -1, python::arg("sanitize") = true)))
         .def("__enter__", &MolIOEnter<TDTMolSupplier>,
              python::return_internal_reference<>())
         .def("__exit__", &MolIOExit<TDTMolSupplier>)
         .def("__iter__", &MolSupplIter<TDTMolSupplier>,
-             python::return_internal_reference<1>())
+             python::return_internal_reference<1>(), python::args("self"))
         .def("__next__", &MolSupplNext<TDTMolSupplier>,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
-             python::return_value_policy<python::manage_new_object>())
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"))
         .def("__getitem__", &MolSupplGetItem<TDTMolSupplier>,
-             python::return_value_policy<python::manage_new_object>())
-        .def("reset", &TDTMolSupplier::reset,
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self", "idx"))
+        .def("reset", &TDTMolSupplier::reset, python::args("self"),
              "Resets our position in the file to the beginning.\n")
-        .def("__len__", &TDTMolSupplier::length)
+        .def("__len__", &TDTMolSupplier::length, python::args("self"))
         .def("SetData", &TDTMolSupplier::setData, "Sets the text to be parsed",
              (python::arg("self"), python::arg("data"),
               python::arg("nameRecord") = "", python::arg("confId2D") = -1,

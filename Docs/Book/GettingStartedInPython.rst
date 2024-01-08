@@ -37,6 +37,7 @@ Reading single molecules
   IPythonConsole.UninstallIPythonRenderer()
   from rdkit.Chem import rdDepictor
   rdDepictor.SetPreferCoordGen(False)
+  
 
 The majority of the basic molecular functionality is found in module :py:mod:`rdkit.Chem`:
 
@@ -322,7 +323,9 @@ molecule before generating the conformer. This is essential to get good structur
 .. doctest::
 
   >>> m3 = Chem.AddHs(m2)
-  >>> AllChem.EmbedMolecule(m3,randomSeed=0xf00d)   # optional random seed for reproducibility)
+  >>> params = AllChem.ETKDGv3()
+  >>> params.randomSeed = 0xf00d # optional random seed for reproducibility
+  >>> AllChem.EmbedMolecule(m3, params)   
   0
   >>> print(Chem.MolToMolBlock(m3))    # doctest: +NORMALIZE_WHITESPACE
   cyclobutane
@@ -401,7 +404,7 @@ An SDWriter can also be initialized using a file-like object:
 
 .. doctest::
 
-  >>> from rdkit.six import StringIO
+  >>> from io import StringIO
   >>> sio = StringIO()
   >>> with Chem.SDWriter(sio) as w:
   ...   for m in mols: 
@@ -690,7 +693,8 @@ minimisation step to clean up the structures.
 More detailed information about the conformer generator and the parameters
 controlling it can be found in the "RDKit Book".
 
-Since the 2018.09 release of the RDKit, ETKDG is the default conformer generation method.
+Since the 2018.09 release of the RDKit, ETKDG is the default conformer
+generation method. Since the 2024.03 release ETKDGv3 is the default.
 
 The full process of embedding a molecule is easier than all the above verbiage makes it sound:
 
@@ -770,7 +774,9 @@ via the `numThreads` argument:
 
 .. doctest::
 
-  >>> cids = AllChem.EmbedMultipleConfs(m2, numThreads=0)
+  >>> params = AllChem.ETKDGv3()
+  >>> params.numThreads = 0
+  >>> cids = AllChem.EmbedMultipleConfs(m2, 10, params)
   >>> res = AllChem.MMFFOptimizeMoleculeConfs(m2, numThreads=0)
 
 Setting `numThreads` to zero causes the software to use the maximum number
@@ -962,7 +968,7 @@ sequence numbers.
 
 .. doctest::
    
-   >>> mol = Chem.MolFromSmiles('Cl[C@H](F)NC\C=C\C')
+   >>> mol = Chem.MolFromSmiles(r'Cl[C@H](F)NC\C=C\C')
    >>> d = rdMolDraw2D.MolDraw2DCairo(250, 200) # or MolDraw2DSVG to get SVGs
    >>> mol.GetAtomWithIdx(2).SetProp('atomNote', 'foo')
    >>> mol.GetBondWithIdx(0).SetProp('bondNote', 'bar')
@@ -1042,6 +1048,7 @@ metadata about the molecule(s) or chemical reaction included in the drawing.
 This metadata can be used later to reconstruct the molecule(s) or reaction.
 
 .. doctest::
+  :skipif: not hasattr(Chem,'MolFromPNGString')
 
   >>> template = Chem.MolFromSmiles('c1nccc2n1ccc2')
   >>> AllChem.Compute2DCoords(template)
@@ -1065,6 +1072,7 @@ If the PNG contains multiple molecules we can retrieve them all at once using
 `Chem.MolsFromPNGString()`:
 
 .. doctest::
+  :skipif: not hasattr(Chem,'MolsFromPNGString')
 
   >>> from rdkit.Chem import Draw
   >>> png = Draw.MolsToGridImage(ms,returnPNG=True)
@@ -1417,8 +1425,38 @@ or into a generic framework:
 Maximum Common Substructure
 ***************************
 
-The FindMCS function find a maximum common substructure (MCS) of two
-or more molecules:
+There are 2 methods for finding maximum common substructures.  The first, FindMCS,
+finds a single fragment maximum common substructure (MCS) of two or more molecules:
+The second, RascalMCES, finds the maximum common edge substructure (MCES) between two
+molecules and can return a multi-fragment MCES.  The difference is demonstrated with the
+following pair of molecules:
+
++-------------------------------------+
+| .. image:: images/mcs_example_1.png |
++-------------------------------------+
+| .. image:: images/mcs_example_2.png |
++-------------------------------------+
+
+FMCS gives this maximum common substructure:
+
++-------------------------------------+
+| .. image:: images/mcs_example_3.png |
++-------------------------------------+
+| .. image:: images/mcs_example_4.png |
++-------------------------------------+
+
+Whereas RascalMCES gives:
+
++-------------------------------------+
+| .. image:: images/mcs_example_5.png |
++-------------------------------------+
+| .. image:: images/mcs_example_6.png |
++-------------------------------------+
+
+FindMCS
+=======
+
+FindMCS operates on 2 or more molecules:
 
 .. doctest::
 
@@ -1523,7 +1561,7 @@ requirement.
   >>> rdFMCS.FindMCS(mols).smartsString
   '[#6]1-[#6]-[#6](-[#6]-1-[#6])-[#6]'
   >>> rdFMCS.FindMCS(mols, ringMatchesRingOnly=True).smartsString
-  '[#6&R](-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@[#6&R])-&@[#6&R]'
+  '[#6]1-&@[#6]-&@[#6](-&@[#6]-&@1)-&@[#6&R]'
   >>> rdFMCS.FindMCS(mols, completeRingsOnly=True).smartsString
   '[#6]1-&@[#6]-&@[#6]-&@[#6]-&@1'
 
@@ -1554,6 +1592,135 @@ return the best match found in that time. If timeout is reached then the
   True
 
 (The MCS after 50 seconds contained 511 atoms.)
+
+RascalMCES
+==========
+
+RascalMCES can only work on 2 molecules at a time:
+
+.. doctest::
+
+  >>> from rdkit.Chem import rdRascalMCES
+  >>> mol1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
+  >>> mol2 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL152361")
+  >>> res = rdRascalMCES.FindMCES(mol1, mol2)
+  >>> res[0].smartsString
+  'CN(-C)-c1:c:c:c(-CC(=O)-NCCCCCCC):c:c:1.NC12CC3CC(-C1)-CC(-C2)-C3'
+  >>> len(res[0].bondMatches())
+  33
+
+It returns a list of RascalResult objects.  Each RascalResult contains the 2 molecules that
+the result pertains to, the SMARTS string of the MCES, the lists of atoms and bonds in the
+two molecules that match, the Johnson similarity between the 2 molecules, the number of
+fragments in the MCES, the number of atoms in the largest fragment and whether the run
+timed out or not.  There is also the method largestFragmentOnly(), which cuts the MCES
+down to the largest single fragment.  This is a non-reversible change, so if you want both
+results, take a copy first.
+
+By default, the MCES algorithm returns the first result it finds of maximum size.  Because of
+symmetry, there may be other equivalent solutions with the same number of atoms and bonds,
+but with different equivalent bonds matched to each other.  If you want to see all MCESs of
+maximum size, you can use the option allBestMCESs = True.  This will increase the run time,
+partly because more branches in the search tree must be examined, but mostly because sorting
+the multiple results is quite time-consuming.  The results are returned in a consistent order
+sorted by number of bond matches, then number of fragments (fewer first), then largest
+fragment size and so on.  Some of these aren't trivial to compute.  The adamantane example
+above is particularly extreme because not only is there extensive symmetry about the
+adamantane end and 2-fold symmetry at the phenyl end but also several points of breaking the
+matching alkyl chain all of which give rise to valid MCESs of the same size.  In this case,
+sorting into a consistent order takes significantly longer than determining the MCESs in the
+first place.
+
+The MCES differs from a conventional MCS in that it is the maximum common substructure based
+on bonds rather than atoms.  Often the result is the same, but not always.
+
+The Johnson similarity is akin to a Tanimoto similarity, but expressed in terms of the
+atoms and bonds in the MCES.  It is the square of the sum of the number of atoms and bonds
+in the MCES divided by the product of the sums of the numbers of atoms and bonds in the
+2 input molecules.  It has values between 0.0 (no MCES between the molecules) and 1.0 (the
+molecules are identical).  A key source of efficiency in the RASCAL algorithm is a fast and
+correct prediction of a maximum value for the Johnson similarity between 2 molecules and
+hence the maximum size of the MCES.  The first step in the algorithm is then a screening,
+whereby the full MCES determination is not performed if the predicted similarity is less
+than some desired threshold.  The final similarity between the 2 molecules may be less
+than the threshold, but it will never be higher than the predicted upper bound.  RASCAL
+stems from RApid Similarity CALulation.
+
+The default settings for RascalMCES are good for general use, but they may be altered
+by passing an optional RascalOptions object:
+
+.. doctest::
+
+  >>> mol1 = Chem.MolFromSmiles('Oc1cccc2C(=O)C=CC(=O)c12')
+  >>> mol2 = Chem.MolFromSmiles('O1C(=O)C=Cc2cc(OC)c(O)cc12')
+  >>> results = rdRascalMCES.FindMCES(mol1, mol2)
+  >>> len(results)
+  0
+  >>> opts = rdRascalMCES.RascalOptions()
+  >>> opts.similarityThreshold = 0.5
+  >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+  >>> len(results)
+  1
+  >>> f'{results[0].similarity:.2f}'
+  '0.37'
+  >>> results[0].smartsString
+  'Oc1:c:c:c:c:c:1.[#6]=O'
+  >>> opts.minFragSize = 3
+  >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+  >>> len(results)
+  1
+  >>> f'{results[0].similarity:.2f}'
+  '0.25'
+  >>> results[0].smartsString
+  'Oc1:c:c:c:c:c:1'
+
+In this case, the upper bound on the similarity score is below the default threshold
+of 0.7, so no results are returned.  Setting the threshold to 0.5 produces the second
+result although, as can be seen, the final similarity is substantially below the
+threshold.  This example also shows a disadvantage of the MCES method, which is that
+it can produce small fragments in the MCES which are rarely helpful.  The option
+minFragSize can be used to over-ride the default value of -1, which means no minimum
+size.
+
+Like FindMCS, there is a ringMatchesRingOnly option, and also there's
+completeAromaticRings, which is True by default, and means that MCESs won't be returned
+with partial aromatic rings matching:
+
+.. doctest::
+
+  >>> mol1 = Chem.MolFromSmiles('C1CCCC1c1ccncc1')
+  >>> mol2 = Chem.MolFromSmiles('C1CCCC1c1ccccc1')
+  >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+  >>> f'{results[0].similarity:.2f}'
+  '0.27'
+  >>> results[0].smartsString
+  'C1CCCC1-c'
+  >>> opts.completeAromaticRings = False
+  >>> results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+  >>> f'{results[0].similarity:.2f}'
+  '0.76'
+  >>> results[0].smartsString
+  'C1CCCC1-c(:c:c):c:c'
+
+This result may look a bit odd, with a single aromatic carbon in the first SMARTS
+string.  This is a consequence of the fact that the MCES works on matching bonds.
+A better, atom-centric, representation might be C1CCC[$(C-c)]1.  When the
+completeAromaticRings option is set to False, a larger MCES is found, with just
+the pyridine nitrogen atom not matching the corresponding phenyl carbon atom.
+
+Clustering with Rascal
+======================
+
+There are 2 clustering methods available using the Johnson metric.  The first,
+RascalCluster, is a fuzzy method described in 'A Line Graph Algorithm for
+Clustering Chemical Structures Based on Common Substructural Cores', JW Raymond,
+PW Willett
+(https://match.pmf.kg.ac.rs/electronic_versions/Match48/match48_197-207.pdf also
+available at https://eprints.whiterose.ac.uk/77598/).
+The second, RascalButinaCluster, uses the Butina sphere-exclusion algorithm
+(Butina JCICS 39 747-750 (1999)).  Because of the time-consuming nature of the MCES
+determination, these clustering methods can be slow to run, so are best used
+on small sets (no more than a few hundred molecules) of small molecules.
 
 
 Fingerprinting and Molecular Similarity
@@ -2379,6 +2546,7 @@ As of the 2020.09 release, PNG images of reactions include metadata allowing the
 reaction to be reconstructed:
 
 .. doctest::
+  :skipif: not hasattr(AllChem,'ReactionFromPNGString')
 
   >>> newRxn = AllChem.ReactionFromPNGString(png)
   >>> AllChem.ReactionToSmarts(newRxn)
@@ -2568,10 +2736,12 @@ The molecules have not been sanitized, so it's a good idea to at least update th
   ...     prod.UpdatePropertyCache(strict=False)
   ...  
   >>> Chem.MolToSmiles(prods[0],True)
-  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccc3ncsc3c21'
+  '[H]/N=C(\\N)NC(=O)C(C)C'
   >>> Chem.MolToSmiles(prods[1],True)
-  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccccc21'
+  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccc3ncsc3c21'
   >>> Chem.MolToSmiles(prods[2],True)
+  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccccc21'
+  >>> Chem.MolToSmiles(prods[3],True)
   'CNC(=O)C(C)C'
 
 
@@ -3103,7 +3273,7 @@ These are accessible using Python's help command:
   Help on method GetNumAtoms:
   <BLANKLINE>
   GetNumAtoms(...) method of rdkit.Chem.rdchem.Mol instance
-      GetNumAtoms( (Mol)arg1 [, (int)onlyHeavy=-1 [, (bool)onlyExplicit=True]]) -> int :
+      GetNumAtoms( (Mol)self [, (int)onlyHeavy=-1 [, (bool)onlyExplicit=True]]) -> int :
           Returns the number of atoms in the molecule.
   <BLANKLINE>
             ARGUMENTS:

@@ -8,7 +8,7 @@
 //
 
 #include <RDGeneral/test.h>
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
@@ -17,6 +17,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include "MolInterchange.h"
+#include <RDGeneral/FileParseException.h>
 
 using namespace RDKit;
 
@@ -43,7 +44,7 @@ TEST_CASE("queries to JSON", "[query]") {
   }
   SECTION("mol blocks") {
     auto mol = R"CTAB(
-  Mrv2102 04092105442D          
+  Mrv2102 04092105442D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -190,7 +191,7 @@ TEST_CASE("StereoGroups") {
 
 TEST_CASE("SubstanceGroups") {
   auto polymol = R"CTAB(
-  Mrv2219 12292206542D          
+  Mrv2219 12292206542D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -307,10 +308,10 @@ M  END)CTAB"_ctab;
     CHECK(sgs[0].getBonds() == std::vector<unsigned>{8});
     REQUIRE(sgs[0].getBrackets().size() == 1);
     REQUIRE(sgs[0].getBrackets()[0].size() == 3);
-    CHECK(sgs[0].getBrackets()[0][0].x == Approx(6.24).margin(0.01));
+    CHECK(sgs[0].getBrackets()[0][0].x == Catch::Approx(6.24).margin(0.01));
     REQUIRE(sgs[0].getCStates().size() == 1);
     CHECK(sgs[0].getCStates()[0].bondIdx == 8);
-    CHECK(sgs[0].getCStates()[0].vector.y == Approx(0.82).margin(0.01));
+    CHECK(sgs[0].getCStates()[0].vector.y == Catch::Approx(0.82).margin(0.01));
     REQUIRE(sgs[0].getAttachPoints().size() == 1);
     CHECK(sgs[0].getAttachPoints()[0].aIdx == 12);
     CHECK(sgs[0].getAttachPoints()[0].lvIdx == 5);
@@ -330,5 +331,49 @@ TEST_CASE("do not crash with null molecules") {
     auto tmol = "CCC"_smiles;
     std::vector<ROMol *> mols{tmol.get(), nullptr};
     CHECK_THROWS_AS(MolInterchange::MolsToJSONData(mols), ValueErrorException);
+  }
+}
+
+TEST_CASE("Test segv reported in #6890") {
+  {
+    std::string mol_json_with_bad_format{R"({
+  "commonchem": 10,
+  "molecules": [
+    {
+      "name": "ethane",
+      "atoms": [
+        {"z": 6, "impHs": 3},
+        {"z": 6, "impHs": 3}
+      ],
+      "bonds": [
+        {"type": 1, "atoms": [0, 1]}
+      ]
+    }
+  ]
+})"};
+
+    CHECK_THROWS_AS(MolInterchange::JSONDataToMols(mol_json_with_bad_format),
+                    FileParseException);
+  }
+
+  {
+    std::string mol_json_with_bad_format{R"({
+  "rdkitjson": 10,
+  "molecules": [
+    {
+      "name": "ethane",
+      "atoms": [
+        {"z": 6, "impHs": 3},
+        {"z": 6, "impHs": 3}
+      ],
+      "bonds": [
+        {"type": 1, "atoms": [0, 1]}
+      ]
+    }
+  ]
+})"};
+
+    CHECK_THROWS_AS(MolInterchange::JSONDataToMols(mol_json_with_bad_format),
+                    FileParseException);
   }
 }

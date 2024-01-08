@@ -12,6 +12,7 @@
 #include "GraphMol/SmilesParse/SmilesWrite.h"
 #include "GraphMol/ChemTransforms/ChemTransforms.h"
 #include "GraphMol/Substruct/SubstructUtils.h"
+#include "GraphMol/TautomerQuery/TautomerQuery.h"
 
 namespace RDKit {
 namespace {
@@ -63,7 +64,7 @@ void RCore::findIndicesWithRLabel() {
   }
 }
 
-std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
+RWMOL_SPTR RCore::extractCoreFromMolMatch(
     const ROMol &mol, const MatchVectType &match,
     const RGroupDecompositionParameters &params) const {
   auto extractedCore = boost::make_shared<RWMol>(mol);
@@ -71,7 +72,6 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
   std::vector<Bond *> newBonds;
   std::map<Atom *, int> dummyAtomMap;
   std::map<const Atom *, Atom *> molAtomMap;
-  bool hasCoreDummies = false;
   for (auto &pair : match) {
     const auto queryAtom = core->getAtomWithIdx(pair.first);
     auto const targetAtom = extractedCore->getAtomWithIdx(pair.second);
@@ -82,9 +82,6 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
       targetAtom->setProp(RLABEL_TYPE, rLabelType);
     }
 
-    if (!hasCoreDummies && queryAtom->getAtomicNum() == 0) {
-      hasCoreDummies = true;
-    }
     if (queryAtom->getAtomicNum() == 0 && queryAtom->hasProp(RLABEL) &&
         queryAtom->getDegree() == 1) {
       continue;
@@ -155,7 +152,6 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
                   ->getBondBetweenAtoms(pair.second, targetNeighborIndex)
                   ->copy();
           if (connectingBond->getStereo() > Bond::BondStereo::STEREOANY) {
-            // TODO: how to handle bond stereo on rgroups connected to core by
             // stereo double bonds
             connectingBond->setStereo(Bond::BondStereo::STEREOANY);
           }
@@ -166,6 +162,23 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
             connectingBond->setEndAtomIdx(newDummyIdx);
           }
           newBonds.push_back(connectingBond);
+
+          // Check to see if we are breaking a stereo bond definition, by removing one of the stereo atoms
+          // If so, set to the new atom
+          for (auto bond: extractedCore->atomBonds(targetAtom)) {
+            if (bond->getIdx() == connectingBond->getIdx()) {
+              continue;
+            }
+
+            if (bond->getStereo() > Bond::STEREOANY) {
+              auto &stereoAtoms = bond->getStereoAtoms();
+              for (int& stereoAtom : stereoAtoms) {
+                if (stereoAtom == static_cast<int>(targetNeighborIndex)) {
+                  stereoAtom = static_cast<int>(newDummyIdx);
+                }
+              }
+            }
+          }
 
           // Chirality parity stuff see RDKit::replaceCore in
           // Code/GraphMol/ChemTransforms/ChemTransforms.cpp
@@ -283,8 +296,7 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
   } catch (const MolSanitizeException &) {
   }
 
-  std::pair rtn(extractedCore, hasCoreDummies);
-  return rtn;
+  return extractedCore;
 }
 
 // Return a copy of core where dummy atoms are replaced by
@@ -292,14 +304,10 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
 // their aromatic flag and formal charge copied from
 // the respective matching atom in mol
 ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
-    bool &hasCoreDummies, const ROMol &mol, const MatchVectType &match) const {
+    const ROMol &mol, const MatchVectType &match) const {
   auto coreReplacedAtoms = boost::make_shared<RWMol>(*core);
-  hasCoreDummies = false;
   for (const auto &p : match) {
     auto atom = coreReplacedAtoms->getAtomWithIdx(p.first);
-    if (atom->getAtomicNum() == 0) {
-      hasCoreDummies = true;
-    }
     if (isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(*atom)) {
       auto molAtom = mol.getAtomWithIdx(p.second);
       replaceCoreAtom(*coreReplacedAtoms, *atom, *molAtom);
@@ -309,7 +317,6 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
   std::map<int, int> matchLookup(match.cbegin(), match.cend());
   for (auto bond : coreReplacedAtoms->bonds()) {
     if (bond->hasQuery()) {
-      hasCoreDummies = true;
       const auto molBond =
           mol.getBondBetweenAtoms(matchLookup[bond->getBeginAtomIdx()],
                                   matchLookup[bond->getEndAtomIdx()]);
@@ -816,4 +823,28 @@ int RCore::matchingIndexToCoreIndex(int matchingIndex) const {
                   "Matched atom missing core index");
   return atom->getProp<int>(RLABEL_CORE_INDEX);
 }
+
+// Create tautomer query for the matching mol on demand and cache for performance
+// If the tautomer query cannot be created (because we can't kekulize the query)
+// then nullptr will be returned and we revert to non-tautomer match
+std::shared_ptr<TautomerQuery> RCore::getMatchingTautomerQuery() {
+  if (!checkedForTautomerQuery) {
+    try {
+      // Enumerate tautomers from a sanitized copy of the matching molecule
+      RWMol copy(*matchingMol);
+      // If the core has had rgroup labels removed when creating the matching mol
+      // then we need to update properties.  Should a full sanitization be done?
+      // MolOps::sanitizeMol(*copy);
+      copy.updatePropertyCache(false);
+      std::shared_ptr<TautomerQuery> tautomerQuery(
+          TautomerQuery::fromMol(copy));
+      matchingTautomerQuery = tautomerQuery;
+    } catch (const MolSanitizeException &) {
+      matchingTautomerQuery = nullptr;
+    }
+    checkedForTautomerQuery = true;
+  }
+  return matchingTautomerQuery;
+}
+
 }  // namespace RDKit

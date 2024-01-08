@@ -7,12 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <RDBoost/Wrap.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/GraphMol.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <RDGeneral/BoostEndInclude.h>
+#include <RDGeneral/RDLog.h>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/AtomFeat.h>
@@ -353,11 +356,13 @@ double hkAlphaHelper(const RDKit::ROMol &mol, python::object atomContribs) {
   return kappaHelper(RDKit::Descriptors::calcHallKierAlpha, mol, atomContribs);
 }
 
+[[deprecated("please use MorganGenerator")]]
 RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
     const RDKit::ROMol &mol, unsigned int radius, int nBits,
     python::object invariants, python::object fromAtoms, bool useChirality,
     bool useBondTypes, bool useFeatures, bool useCounts, python::object bitInfo,
     bool includeRedundantEnvironments) {
+  RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
     unsigned int nInvar =
@@ -493,11 +498,13 @@ RDKit::SparseIntVect<std::uint32_t> *GetHashedMorganFingerprint(
                                  bitInfo, includeRedundantEnvironments);
 }
 
+[[deprecated("please use MorganGenerator")]]
 ExplicitBitVect *GetMorganFingerprintBV(
     const RDKit::ROMol &mol, unsigned int radius, unsigned int nBits,
     python::object invariants, python::object fromAtoms, bool useChirality,
     bool useBondTypes, bool useFeatures, python::object bitInfo,
     bool includeRedundantEnvironments) {
+  RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
     unsigned int nInvar =
@@ -1553,10 +1560,12 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                  boost::noncopyable>("PropertyFunctor", docString.c_str(),
                                      python::no_init)
       .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
+           python::args("self", "mol"),
            "Compute the property for the specified molecule")
       .def("GetName", &RDKit::Descriptors::PropertyFunctor::getName,
-           "Return the name of the property to calculate")
+           python::args("self"), "Return the name of the property to calculate")
       .def("GetVersion", &RDKit::Descriptors::PropertyFunctor::getVersion,
+           python::args("self"),
            "Return the version of the calculated property");
 
   iterable_converter().from_python<std::vector<std::string>>();
@@ -1578,20 +1587,23 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
   python::class_<RDKit::Descriptors::Properties,
                  RDKit::Descriptors::Properties *>(
-      "Properties", docString.c_str(), python::init<>())
-      .def(python::init<const std::vector<std::string> &>())
+      "Properties", docString.c_str(), python::init<>(python::args("self")))
+      .def(python::init<const std::vector<std::string> &>(
+          python::args("self", "propNames")))
       .def("GetPropertyNames",
            &RDKit::Descriptors::Properties::getPropertyNames,
+           python::args("self"),
            "Return the property names computed by this instance")
       .def("ComputeProperties",
            &RDKit::Descriptors::Properties::computeProperties,
-           (python::arg("mol"), python::arg("annotateMol") = false),
+           ((python::arg("self"), python::arg("mol")),
+            python::arg("annotateMol") = false),
            "Return a list of computed properties, if annotateMol==True, "
            "annotate the molecule with "
            "the computed properties.")
       .def("AnnotateProperties",
            &RDKit::Descriptors::Properties::annotateProperties,
-           python::arg("mol"),
+           (python::arg("self"), python::arg("mol")),
            "Annotate the molecule with the computed properties.  These "
            "properties will be available "
            "as SDData or from mol.GetProp(prop)")
@@ -1611,8 +1623,10 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::class_<PythonPropertyFunctor, boost::noncopyable,
                  python::bases<RDKit::Descriptors::PropertyFunctor>>(
       "PythonPropertyFunctor", "",
-      python::init<PyObject *, const std::string &, const std::string &>())
+      python::init<PyObject *, const std::string &, const std::string &>(
+          python::args("self", "name", "version")))
       .def("__call__", &PythonPropertyFunctor::operator(),
+           python::args("self", "mol"),
            "Compute the property for the specified molecule");
 
   docString =
@@ -1622,7 +1636,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                  boost::noncopyable>("PropertyRangeQuery", docString.c_str(),
                                      python::no_init)
       .def("Match",
-           &Queries::RangeQuery<double, RDKit::ROMol const &, true>::Match);
+           &Queries::RangeQuery<double, RDKit::ROMol const &, true>::Match,
+           python::args("self", "what"));
 
   docString =
       "Generates a Range property for the specified property, between min and "

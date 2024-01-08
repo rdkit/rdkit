@@ -18,6 +18,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <unordered_set>
 #include <boost/cstdint.hpp>
 #include <boost/predef.h>
 
@@ -480,34 +481,40 @@ inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair,
   return true;
 }
 
-inline bool streamWriteProps(std::ostream &ss, const RDProps &props,
-                             bool savePrivate = false,
-                             bool saveComputed = false,
-                             const CustomPropHandlerVec &handlers = {}) {
+template <typename COUNT_TYPE = unsigned int>
+inline bool streamWriteProps(
+    std::ostream &ss, const RDProps &props, bool savePrivate = false,
+    bool saveComputed = false, const CustomPropHandlerVec &handlers = {},
+    const std::unordered_set<std::string> &ignore = {}) {
   STR_VECT propsToSave = props.getPropList(savePrivate, saveComputed);
-  std::set<std::string> propnames(propsToSave.begin(), propsToSave.end());
+  std::unordered_set<std::string> propnames;
+  for (const auto &pn : propsToSave) {
+    if (ignore.empty() || ignore.find(pn) == ignore.end()) {
+      propnames.insert(pn);
+    }
+  }
 
   const Dict &dict = props.getDict();
-  unsigned int count = 0;
-  for (Dict::DataType::const_iterator it = dict.getData().begin();
-       it != dict.getData().end(); ++it) {
-    if (propnames.find(it->key) != propnames.end()) {
-      if (isSerializable(*it, handlers)) {
+  COUNT_TYPE count = 0;
+  for (const auto &elem : dict.getData()) {
+    if (propnames.find(elem.key) != propnames.end()) {
+      if (isSerializable(elem, handlers)) {
         count++;
       }
     }
   }
-
   streamWrite(ss, count);  // packed int?
+  if (!count) {
+    return false;
+  }
 
-  unsigned int writtenCount = 0;
-  for (Dict::DataType::const_iterator it = dict.getData().begin();
-       it != dict.getData().end(); ++it) {
-    if (propnames.find(it->key) != propnames.end()) {
-      if (isSerializable(*it, handlers)) {
+  COUNT_TYPE writtenCount = 0;
+  for (const auto &elem : dict.getData()) {
+    if (propnames.find(elem.key) != propnames.end()) {
+      if (isSerializable(elem, handlers)) {
         // note - not all properties are serializable, this may be
         //  a null op
-        if (streamWriteProp(ss, *it, handlers)) {
+        if (streamWriteProp(ss, elem, handlers)) {
           writtenCount++;
         }
       }
@@ -615,21 +622,26 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair,
   return true;
 }
 
+template <typename COUNT_TYPE = unsigned int>
 inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
-                                    const CustomPropHandlerVec &handlers = {}) {
-  unsigned int count;
+                                    const CustomPropHandlerVec &handlers = {},
+                                    bool reset = true) {
+  COUNT_TYPE count;
   streamRead(ss, count);
 
   Dict &dict = props.getDict();
-  dict.reset();  // Clear data before repopulating
-  dict.getData().resize(count);
+  if (reset) {
+    dict.reset();  // Clear data before repopulating
+  }
+  auto startSz = dict.getData().size();
+  dict.getData().resize(startSz + count);
   for (unsigned index = 0; index < count; ++index) {
-    CHECK_INVARIANT(streamReadProp(ss, dict.getData()[index],
+    CHECK_INVARIANT(streamReadProp(ss, dict.getData()[startSz + index],
                                    dict.getNonPODStatus(), handlers),
                     "Corrupted property serialization detected");
   }
 
-  return count;
+  return static_cast<unsigned int>(count);
 }
 
 }  // namespace RDKit

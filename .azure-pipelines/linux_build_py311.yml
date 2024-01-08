@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build -c conda-forge $(python) cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
-        numpy pillow eigen pandas matplotlib-base \
+        numpy=1.24.3 pillow eigen pandas matplotlib-base \
         cairo
     conda activate rdkit_build
     conda install -c conda-forge nbval ipykernel>=6.0
@@ -24,7 +24,6 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF \
     -DRDK_BUILD_CPP_TESTS=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
-    -DRDK_USE_BOOST_REGEX=ON \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \
@@ -67,7 +66,7 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda install ipython matplotlib-base 
+    conda install ipython matplotlib-base
     conda install -c conda-forge sphinx myst-parser
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}

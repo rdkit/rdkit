@@ -16,14 +16,14 @@ d1 = args.dir1
 d2 = args.dir2
 
 if not Path(d1).exists():
-  print(f'Directory {d1} missing.')
-  exit(1)
+    print(f'Directory {d1} missing.')
+    exit(1)
 if not Path(d2).exists():
-  print(f'Directory {d2} missing.')
-  exit(1)
+    print(f'Directory {d2} missing.')
+    exit(1)
 
 with open(args.outfile, 'w') as f:
-  f.write(f'''<!DOCTYPE html>
+    f.write(f'''<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -32,7 +32,7 @@ with open(args.outfile, 'w') as f:
     <title>{d1} vs {d2}</title>
     <link href="index.css" rel="stylesheet" />
   </head>
-  <body>
+  <body style="background-color:#eeeeee;">
     <table border="1">
       <tr>
         <td></td>
@@ -40,21 +40,21 @@ with open(args.outfile, 'w') as f:
         <td>{d2}</td>
       </tr>\n''')
 
-  inglob = Path(d1)
-  fns = [Path(fn) for fn in inglob.glob(args.file_glob)]
-  fns.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+    inglob = Path(d1)
+    fns = [Path(fn) for fn in inglob.glob(args.file_glob)]
+    fns.sort(key=lambda f: f.stat().st_mtime, reverse=True)
 
-  for fp in fns:
-    fn = fp.name
-    if not fn.endswith('.svg') and not fn.endswith('.png'):
-      continue
-    fns = fn.replace('.svg', '')
-    f.write(f'''      <tr>
+    for fp in fns:
+        fn = fp.name
+        if not fn.endswith('.svg') and not fn.endswith('.png'):
+            continue
+        fns = fn.replace('.svg', '')
+        f.write(f'''      <tr>
         <td>{fns}</td>
         <td><img src="{d1}/{fn}" alt="{fns}"/></td>
         <td><img src="{d2}/{fn}" alt="{fns}"/></td>
         </tr>\n''')
 
-  f.write('''    </table>
+    f.write('''    </table>
   </body>
 </html>\n''')

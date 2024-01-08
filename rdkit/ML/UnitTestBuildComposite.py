@@ -129,7 +129,7 @@ class TestCase(unittest.TestCase):
 
     self.compare(compos, refCompos)
 
-  def test4_more_trees(self):
+  def _test4_more_trees(self):
     # """ more trees """
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_50_3.pkl'

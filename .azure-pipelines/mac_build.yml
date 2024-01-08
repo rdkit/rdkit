@@ -17,21 +17,22 @@ steps:
     echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
-    conda create --name rdkit_build $(compiler)=$(compiler_version) libcxx=$(compiler_version) cmake=3.19.6 \
-        boost-cpp=$(boost_version) boost=$(boost_version) \
-        py-boost=$(boost_version) libboost=$(boost_version) \
+    conda config --set solver libmamba
+    conda config --set channel_priority strict
+    conda config --add channels conda-forge
+    conda create --name rdkit_build $(python) $(compiler) libcxx cmake \
+        libboost=$(boost_version) libboost-devel=$(boost_version) \
+        libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         qt \
         numpy matplotlib cairo pillow eigen pandas  \
-        jupyter
-    conda activate rdkit_build
-    conda install -c conda-forge sphinx myst-parser
-    conda install -c conda-forge nbval
+        jupyter sphinx myst-parser pytest nbval
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
     export CONDA_BUILD_SYSROOT=${SDKROOT}
+    export CXXFLAGS="${CXXFLAGS} -Wall -Werror"
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -39,7 +40,6 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF \
     -DRDK_BUILD_CPP_TESTS=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
-    -DRDK_USE_BOOST_REGEX=ON \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \
@@ -56,13 +56,8 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_CFFI_LIB=ON \
-    -DBoost_NO_SYSTEM_PATHS=ON \
     -DCMAKE_OSX_SYSROOT=${SDKROOT} \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform) \
-    -DRDK_BOOST_PYTHON3_NAME=$(python_name) \
-    -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
-    -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
-    -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
+    -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform)
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cml xmlns="http://www.chemaxon.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.chemaxon.com http://www.chemaxon.com/marvin/schema/mrvSchema_20_20_0.xsd">
+    <MDocument>
+        <MChemicalStruct>
+            <molecule molID="m1">
+                <atomArray>
+                    <atom id="a1" elementType="C" x2="6.3148" y2="-10.5751"/>
+                    <atom id="a2" elementType="C" x2="8.9102" y2="-10.5744"/>
+                    <atom id="a3" elementType="C" x2="7.615" y2="-9.825"/>
+                    <atom id="a4" elementType="C" x2="8.9102" y2="-12.0758"/>
+                    <atom id="a5" elementType="C" x2="6.3148" y2="-12.0825"/>
+                    <atom id="a6" elementType="C" x2="7.6182" y2="-12.825"/>
+                    <atom id="a7" elementType="C" x2="10.2093" y2="-9.8244" sgroupRef="sg1"/>
+                    <atom id="a8" elementType="C" x2="11.5049" y2="-7.5754"/>
+                    <atom id="a9" elementType="C" x2="10.2087" y2="-8.3233"/>
+                    <atom id="a10" elementType="C" x2="12.8056" y2="-8.3253"/>
+                    <atom id="a11" elementType="C" x2="11.5152" y2="-10.5772" sgroupRef="sg1"/>
+                    <atom id="a12" elementType="C" x2="12.8095" y2="-9.8188"/>
+                    <atom id="a13" elementType="S" x2="7.6159" y2="-8.325"/>
+                    <atom id="a14" elementType="P" x2="10.21" y2="-12.8245"/>
+                    <atom id="a15" elementType="I" x2="11.5206" y2="-12.0772"/>
+                </atomArray>
+                <bondArray>
+                    <bond id="b1" atomRefs2="a3 a1" order="2"/>
+                    <bond id="b2" atomRefs2="a4 a2" order="2"/>
+                    <bond id="b3" atomRefs2="a1 a5" order="1"/>
+                    <bond id="b4" atomRefs2="a2 a3" order="1">
+                        <bondStereo>H</bondStereo>
+                    </bond>
+                    <bond id="b5" atomRefs2="a5 a6" order="2"/>
+                    <bond id="b6" atomRefs2="a6 a4" order="1"/>
+                    <bond id="b7" atomRefs2="a2 a7" order="1"/>
+                    <bond id="b8" atomRefs2="a9 a7" order="2"/>
+                    <bond id="b9" atomRefs2="a10 a8" order="2"/>
+                    <bond id="b10" atomRefs2="a7 a11" order="1"/>
+                    <bond id="b11" atomRefs2="a8 a9" order="1"/>
+                    <bond id="b12" atomRefs2="a11 a12" order="2"/>
+                    <bond id="b13" atomRefs2="a12 a10" order="1"/>
+                    <bond id="b14" atomRefs2="a3 a13" order="1"/>
+                    <bond id="b15" atomRefs2="a4 a14" order="1"/>
+                    <bond id="b16" atomRefs2="a11 a15" order="1"/>
+                </bondArray>
+                <molecule molID="m2" id="sg1" role="DataSgroup" atomRefs="a7 a11" context="" fieldName="atropisomer" placement="" unitsDisplayed="" fieldData="test" x="0" y="0"/></molecule>
+        </MChemicalStruct>
+    </MDocument>
+</cml>

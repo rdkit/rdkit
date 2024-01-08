@@ -156,12 +156,17 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool,
 
   // handle stereo group
   for (auto &group : d_stereo_groups) {
+    auto groupId = group.getReadId();
     auto atoms = group.getAtoms();
+    auto bonds = group.getBonds();
     auto aiter = std::find(atoms.begin(), atoms.end(), orig_p);
-    if (aiter != atoms.end()) {
+    while (aiter != atoms.end()) {
       *aiter = atom_p;
-      group = StereoGroup(group.getGroupType(), std::move(atoms));
+      ++aiter;
+      aiter = std::find(aiter, atoms.end(), orig_p);
     }
+    group = StereoGroup(group.getGroupType(), std::move(atoms),
+                        std::move(bonds), groupId);
   }
 };
 
@@ -466,6 +471,12 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
     }
     if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
                   aid2) != obnd->getStereoAtoms().end()) {
+      // github #6900 if we remove stereo atoms we need to remove
+      //  the CIS and or TRANS since this requires stereo atoms
+      if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
+          obnd->getStereo() == Bond::BondStereo::STEREOTRANS ) {
+          obnd->setStereo(Bond::BondStereo::STEREONONE);
+      }
       obnd->getStereoAtoms().clear();
     }
   }
@@ -482,6 +493,12 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
     }
     if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
                   aid1) != obnd->getStereoAtoms().end()) {
+      // github #6900 if we remove stereo atoms we need to remove
+      //  the CIS and or TRANS since this requires stereo atoms
+      if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
+        obnd->getStereo() == Bond::BondStereo::STEREOTRANS ) {
+        obnd->setStereo(Bond::BondStereo::STEREONONE);
+      }
       obnd->getStereoAtoms().clear();
     }
   }

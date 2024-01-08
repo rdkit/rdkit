@@ -25,6 +25,9 @@ ROMol *reionizeHelper(MolStandardize::Reionizer &self, const ROMol &mol) {
   return self.reionize(mol);
 }
 
+void reionizeInPlaceHelper(MolStandardize::Reionizer &self, ROMol &mol) {
+  self.reionizeInPlace(static_cast<RWMol &>(mol));
+}
 MolStandardize::Reionizer *reionizerFromData(const std::string &data,
                                              python::object chargeCorrections) {
   std::istringstream sstr(data);
@@ -40,6 +43,10 @@ MolStandardize::Reionizer *reionizerFromData(const std::string &data,
   return res;
 }
 
+void unchargeInPlaceHelper(MolStandardize::Uncharger &self, ROMol &mol) {
+  self.unchargeInPlace(static_cast<RWMol &>(mol));
+}
+
 }  // namespace
 
 struct charge_wrapper {
@@ -50,8 +57,9 @@ struct charge_wrapper {
     std::string docString = "";
 
     python::class_<MolStandardize::ChargeCorrection, boost::noncopyable>(
-        "ChargeCorrection", python::init<std::string, std::string, int>(
-                                python::args("name", "smarts", "charge")))
+        "ChargeCorrection",
+        python::init<std::string, std::string, int>(
+            python::args("self", "name", "smarts", "charge")))
         .def_readwrite("Name", &MolStandardize::ChargeCorrection::Name)
         .def_readwrite("Smarts", &MolStandardize::ChargeCorrection::Smarts)
         .def_readwrite("Charge", &MolStandardize::ChargeCorrection::Charge);
@@ -59,13 +67,17 @@ struct charge_wrapper {
     python::def("CHARGE_CORRECTIONS", defaultChargeCorrections);
 
     python::class_<MolStandardize::Reionizer, boost::noncopyable>(
-        "Reionizer", python::init<>())
-        .def(python::init<std::string>())
+        "Reionizer", python::init<>(python::args("self")))
+        .def(python::init<std::string>(python::args("self", "acidbaseFile")))
         .def(python::init<std::string,
-                          std::vector<MolStandardize::ChargeCorrection>>())
+                          std::vector<MolStandardize::ChargeCorrection>>(
+            python::args("self", "acidbaseFile", "ccs")))
         .def("reionize", &reionizeHelper,
              (python::arg("self"), python::arg("mol")), "",
-             python::return_value_policy<python::manage_new_object>());
+             python::return_value_policy<python::manage_new_object>())
+        .def("reionizeInPlace", reionizeInPlaceHelper,
+             (python::arg("self"), python::arg("mol")),
+             "modifies the input molecule");
 
     python::def("ReionizerFromData", &reionizerFromData,
                 (python::arg("paramData"),
@@ -78,7 +90,10 @@ struct charge_wrapper {
                                          python::arg("canonicalOrder") = true)))
         .def("uncharge", &MolStandardize::Uncharger::uncharge,
              (python::arg("self"), python::arg("mol")), "",
-             python::return_value_policy<python::manage_new_object>());
+             python::return_value_policy<python::manage_new_object>())
+        .def("unchargeInPlace", unchargeInPlaceHelper,
+             (python::arg("self"), python::arg("mol")),
+             "modifies the input molecule");
   }
 };
 

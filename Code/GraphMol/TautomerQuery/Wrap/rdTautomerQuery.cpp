@@ -180,7 +180,7 @@ struct TautomerQuery_wrapper {
         "TautomerQuery", docString, python::no_init)
         .def("__init__", python::make_constructor(createDefaultTautomerQuery))
         .def("__init__", python::make_constructor(&TautomerQuery::fromMol))
-        .def(python::init<std::string>())
+        .def(python::init<std::string>(python::args("self", "pickle")))
         .def("IsSubstructOf", tautomerIsSubstructOf,
              (python::arg("self"), python::arg("target"),
               python::arg("recursionPossible") = true,
@@ -218,14 +218,16 @@ struct TautomerQuery_wrapper {
             (python::arg("self"), python::arg("target"), python::arg("params")))
         .def("PatternFingerprintTemplate",
              &TautomerQuery::patternFingerprintTemplate,
-             (python::arg("fingerprintSize") = 2048),
+             ((python::arg("self"), python::arg("fingerprintSize") = 2048)),
              python::return_value_policy<python::manage_new_object>())
         .def("GetTemplateMolecule", &TautomerQuery::getTemplateMolecule,
-             python::return_internal_reference<>())
-        .def("GetModifiedAtoms", &TautomerQuery::getModifiedAtoms)
-        .def("GetModifiedBonds", &TautomerQuery::getModifiedBonds)
-        .def("GetTautomers", getTautomers)
-        .def("ToBinary", TQToBinary)
+             python::return_internal_reference<>(), python::args("self"))
+        .def("GetModifiedAtoms", &TautomerQuery::getModifiedAtoms,
+             python::args("self"))
+        .def("GetModifiedBonds", &TautomerQuery::getModifiedBonds,
+             python::args("self"))
+        .def("GetTautomers", getTautomers, python::args("self"))
+        .def("ToBinary", TQToBinary, python::args("self"))
         .def_pickle(tautomerquery_pickle_suite());
 
     python::def("PatternFingerprintTautomerTarget",

@@ -74,7 +74,7 @@ void adjustConjugatedFiveRings(RWMol &mol) {
 
   std::vector<Bond::BondType> bondTypesToModify = {
       Bond::BondType::SINGLE, Bond::BondType::DOUBLE, Bond::BondType::AROMATIC};
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
   }
   for (auto ring : mol.getRingInfo()->bondRings()) {
@@ -134,7 +134,7 @@ void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
   }
   QueryBond qb;
   qb.setQuery(makeSingleOrAromaticBondQuery());
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
   }
   for (auto bond : mol.bonds()) {
@@ -170,7 +170,7 @@ void setMDLAromaticity(RWMol &mol) {
 
   // it would be simpler to use the substructure matcher for this, but we can't
   // use SubstructMatch in the core GraphMol lib
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
   }
   for (auto ring : mol.getRingInfo()->atomRings()) {
@@ -343,21 +343,24 @@ ROMol *adjustQueryProperties(const ROMol &mol,
   }
   return static_cast<ROMol *>(res);
 }
+
 void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
   AdjustQueryParameters params;
   if (inParams) {
     params = *inParams;
   }
-  const RingInfo *ringInfo = mol.getRingInfo();
+  const auto ringInfo = mol.getRingInfo();
 
   if (params.aromatizeIfPossible) {
     unsigned int failed;
     sanitizeMol(mol, failed, SANITIZE_SYMMRINGS | SANITIZE_SETAROMATICITY);
   } else {
-    if (!ringInfo->isInitialized()) {
+    if (!ringInfo->isSymmSssr()) {
       MolOps::symmetrizeSSSR(mol);
     }
   }
+  QueryAtom qaTmpl;
+  QueryBond qbTmpl;
 
   if (params.makeAtomsGeneric) {
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -367,12 +370,10 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
             ringInfo->numAtomRings(i)) &&
           !((params.makeAtomsGenericFlags & ADJUST_IGNOREMAPPED) &&
             isMapped(mol.getAtomWithIdx(i)))) {
-        auto *qa = new QueryAtom();
-        qa->setQuery(makeAtomNullQuery());
-        const bool updateLabel = false;
-        const bool preserveProps = true;
-        mol.replaceAtom(i, qa, updateLabel, preserveProps);
-        delete qa;
+        qaTmpl.setQuery(makeAtomNullQuery());
+        constexpr bool updateLabel = false;
+        constexpr bool preserveProps = true;
+        mol.replaceAtom(i, &qaTmpl, updateLabel, preserveProps);
       }
     }
   }  // end of makeAtomsGeneric
@@ -382,28 +383,24 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
             !ringInfo->numBondRings(i)) &&
           !((params.makeBondsGenericFlags & ADJUST_IGNORERINGS) &&
             ringInfo->numBondRings(i))) {
-        auto *qb = new QueryBond();
-        qb->setQuery(makeBondNullQuery());
-        const bool preserveProps = true;
-        mol.replaceBond(i, qb, preserveProps);
-        delete qb;
+        qbTmpl.setQuery(makeBondNullQuery());
+        constexpr bool preserveProps = true;
+        mol.replaceBond(i, &qbTmpl, preserveProps);
       }
     }
   }  // end of makeBondsGeneric
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    Atom *at = mol.getAtomWithIdx(i);
+    auto *at = mol.getAtomWithIdx(i);
     // pull properties we need from the atom here, once we
     // create a query atom they may no longer be valid.
-    unsigned int nRings = ringInfo->numAtomRings(i);
-    int atomicNum = at->getAtomicNum();
+    auto nRings = ringInfo->numAtomRings(i);
+    auto atomicNum = at->getAtomicNum();
     if (params.makeDummiesQueries && atomicNum == 0 && !at->hasQuery() &&
         !at->getIsotope()) {
-      auto *qa = new QueryAtom();
-      qa->setQuery(makeAtomNullQuery());
-      const bool updateLabel = false;
-      const bool preserveProps = true;
-      mol.replaceAtom(i, qa, updateLabel, preserveProps);
-      delete qa;
+      qaTmpl.setQuery(makeAtomNullQuery());
+      constexpr bool updateLabel = false;
+      constexpr bool preserveProps = true;
+      mol.replaceAtom(i, &qaTmpl, updateLabel, preserveProps);
       at = mol.getAtomWithIdx(i);
     }  // end of makeDummiesQueries
     if (params.adjustDegree &&
@@ -414,11 +411,10 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
         !((params.adjustDegreeFlags & ADJUST_IGNOREMAPPED) && isMapped(at))) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
-        qa = new QueryAtom(*at);
-        const bool updateLabel = false;
-        const bool preserveProps = true;
-        mol.replaceAtom(i, qa, updateLabel, preserveProps);
-        delete qa;
+        QueryAtom atQueryAtom(*at);
+        constexpr bool updateLabel = false;
+        constexpr bool preserveProps = true;
+        mol.replaceAtom(i, &atQueryAtom, updateLabel, preserveProps);
         qa = static_cast<QueryAtom *>(mol.getAtomWithIdx(i));
         at = static_cast<Atom *>(qa);
       } else {
@@ -437,11 +433,10 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
           isMapped(at))) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
-        qa = new QueryAtom(*at);
-        const bool updateLabel = false;
-        const bool preserveProps = true;
-        mol.replaceAtom(i, qa, updateLabel, preserveProps);
-        delete qa;
+        QueryAtom atQueryAtom(*at);
+        constexpr bool updateLabel = false;
+        constexpr bool preserveProps = true;
+        mol.replaceAtom(i, &atQueryAtom, updateLabel, preserveProps);
         qa = static_cast<QueryAtom *>(mol.getAtomWithIdx(i));
         at = static_cast<Atom *>(qa);
       } else {
@@ -460,11 +455,10 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
           isMapped(at))) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
-        qa = new QueryAtom(*at);
-        const bool updateLabel = false;
-        const bool preserveProps = true;
-        mol.replaceAtom(i, qa, updateLabel, preserveProps);
-        delete qa;
+        QueryAtom atQueryAtom(*at);
+        constexpr bool updateLabel = false;
+        constexpr bool preserveProps = true;
+        mol.replaceAtom(i, &atQueryAtom, updateLabel, preserveProps);
         qa = static_cast<QueryAtom *>(mol.getAtomWithIdx(i));
         at = static_cast<Atom *>(qa);
       } else {
@@ -482,11 +476,10 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
           isMapped(at))) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
-        qa = new QueryAtom(*at);
-        const bool updateLabel = false;
-        const bool preserveProps = true;
-        mol.replaceAtom(i, qa, updateLabel, preserveProps);
-        delete qa;
+        QueryAtom atQueryAtom(*at);
+        constexpr bool updateLabel = false;
+        constexpr bool preserveProps = true;
+        mol.replaceAtom(i, &atQueryAtom, updateLabel, preserveProps);
         qa = static_cast<QueryAtom *>(mol.getAtomWithIdx(i));
         at = static_cast<Atom *>(qa);
       } else {

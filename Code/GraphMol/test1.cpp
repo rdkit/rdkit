@@ -258,7 +258,7 @@ void testAtomProps() {
   TEST_ASSERT(a1->hasProp("dprop"));
   try {
     a1->getProp<int>("dprop");
-  } catch (const boost::bad_any_cast &) {
+  } catch (const std::bad_any_cast &) {
     ok = true;
   }
   TEST_ASSERT(ok);
@@ -267,7 +267,7 @@ void testAtomProps() {
   ok = false;
   try {
     a1->getProp<double>("iprop");
-  } catch (const boost::bad_any_cast &) {
+  } catch (const std::bad_any_cast &) {
     ok = true;
   }
   TEST_ASSERT(ok);

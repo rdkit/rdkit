@@ -153,7 +153,7 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
     return res;
   }
 
-  bool hasRings = mol.getRingInfo()->isInitialized();
+  bool hasRings = mol.getRingInfo()->isFindFastOrBetter();
   if (!hasRings) {
     MolOps::fastFindRings(mol);
   }
@@ -225,7 +225,10 @@ void condenseMolAbbreviations(
       findApplicableAbbreviationMatches(mol, abbrevs, maxCoverage);
   applyMatches(mol, applicable);
   if (sanitize) {
+    auto ringInfo = mol.getRingInfo();
+    if (!ringInfo->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
+    }
   }
 };
 

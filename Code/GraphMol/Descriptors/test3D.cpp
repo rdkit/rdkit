@@ -59,7 +59,6 @@ void testPMI1() {
   std::string fName =
       pathName + "/Code/GraphMol/Descriptors/test_data/PMI_egfr.out";
   std::ifstream instrm(fName.c_str());
-  int nDone = 0;
   while (!reader.atEnd()) {
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
@@ -108,7 +107,6 @@ void testPMI1() {
     TEST_ASSERT(compare(inm, pmi3_m, val));
 
     delete m;
-    ++nDone;
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -252,7 +250,6 @@ void testNPR1() {
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
   RDKit::SDMolSupplier reader(sdfName, true, false);
 
-  int nDone = 0;
   while (!reader.atEnd()) {
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
@@ -280,7 +277,6 @@ void testNPR1() {
     compare(nm, pmi2_nom / pmi3_nom, val);
 
     delete m;
-    ++nDone;
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

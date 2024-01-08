@@ -24,15 +24,19 @@ struct monomerinfo_wrapper {
     std::string classDoc =
         "The class to store monomer information attached to Atoms\n";
     python::class_<AtomMonomerInfo>("AtomMonomerInfo", classDoc.c_str(),
-                                    python::init<>())
+                                    python::init<>(python::args("self")))
         .def(
             python::init<AtomMonomerInfo::AtomMonomerType, const std::string &>(
-                (python::arg("type"), python::arg("name") = "")))
+                (python::arg("self"), python::arg("type"),
+                 python::arg("name") = "")))
         .def("GetName", &AtomMonomerInfo::getName,
-             python::return_value_policy<python::copy_const_reference>())
-        .def("GetMonomerType", &AtomMonomerInfo::getMonomerType)
-        .def("SetName", &AtomMonomerInfo::setName)
-        .def("SetMonomerType", &AtomMonomerInfo::setMonomerType);
+             python::return_value_policy<python::copy_const_reference>(),
+             python::args("self"))
+        .def("GetMonomerType", &AtomMonomerInfo::getMonomerType,
+             python::args("self"))
+        .def("SetName", &AtomMonomerInfo::setName, python::args("self", "nm"))
+        .def("SetMonomerType", &AtomMonomerInfo::setMonomerType,
+             python::args("self", "typ"));
 
     python::enum_<AtomMonomerInfo::AtomMonomerType>("AtomMonomerType")
         .value("UNKNOWN", AtomMonomerInfo::UNKNOWN)
@@ -41,47 +45,69 @@ struct monomerinfo_wrapper {
 
     classDoc = "The class to store PDB residue information attached to Atoms\n";
     python::class_<AtomPDBResidueInfo, python::bases<AtomMonomerInfo>>(
-        "AtomPDBResidueInfo", classDoc.c_str(), python::init<>())
+        "AtomPDBResidueInfo", classDoc.c_str(),
+        python::init<>(python::args("self")))
         .def(python::init<std::string, int, std::string, std::string, int,
                           std::string, std::string, double, double, bool,
                           unsigned int, unsigned int>(
-            (python::arg("atomName"), python::arg("serialNumber") = 1,
-             python::arg("altLoc") = "", python::arg("residueName") = "",
-             python::arg("residueNumber") = 0, python::arg("chainId") = "",
-             python::arg("insertionCode") = "", python::arg("occupancy") = 1.0,
-             python::arg("tempFactor") = 0.0,
+            (python::arg("self"), python::arg("atomName"),
+             python::arg("serialNumber") = 1, python::arg("altLoc") = "",
+             python::arg("residueName") = "", python::arg("residueNumber") = 0,
+             python::arg("chainId") = "", python::arg("insertionCode") = "",
+             python::arg("occupancy") = 1.0, python::arg("tempFactor") = 0.0,
              python::arg("isHeteroAtom") = false,
              python::arg("secondaryStructure") = 0,
              python::arg("segmentNumber") = 0)))
-        .def("GetSerialNumber", &AtomPDBResidueInfo::getSerialNumber)
+        .def("GetSerialNumber", &AtomPDBResidueInfo::getSerialNumber,
+             python::args("self"))
         .def("GetAltLoc", &AtomPDBResidueInfo::getAltLoc,
-             python::return_value_policy<python::copy_const_reference>())
+             python::return_value_policy<python::copy_const_reference>(),
+             python::args("self"))
         .def("GetResidueName", &AtomPDBResidueInfo::getResidueName,
-             python::return_value_policy<python::copy_const_reference>())
-        .def("GetResidueNumber", &AtomPDBResidueInfo::getResidueNumber)
+             python::return_value_policy<python::copy_const_reference>(),
+             python::args("self"))
+        .def("GetResidueNumber", &AtomPDBResidueInfo::getResidueNumber,
+             python::args("self"))
         .def("GetChainId", &AtomPDBResidueInfo::getChainId,
-             python::return_value_policy<python::copy_const_reference>())
+             python::return_value_policy<python::copy_const_reference>(),
+             python::args("self"))
         .def("GetInsertionCode", &AtomPDBResidueInfo::getInsertionCode,
-             python::return_value_policy<python::copy_const_reference>())
-        .def("GetOccupancy", &AtomPDBResidueInfo::getOccupancy)
-        .def("GetTempFactor", &AtomPDBResidueInfo::getTempFactor)
-        .def("GetIsHeteroAtom", &AtomPDBResidueInfo::getIsHeteroAtom)
+             python::return_value_policy<python::copy_const_reference>(),
+             python::args("self"))
+        .def("GetOccupancy", &AtomPDBResidueInfo::getOccupancy,
+             python::args("self"))
+        .def("GetTempFactor", &AtomPDBResidueInfo::getTempFactor,
+             python::args("self"))
+        .def("GetIsHeteroAtom", &AtomPDBResidueInfo::getIsHeteroAtom,
+             python::args("self"))
         .def("GetSecondaryStructure",
-             &AtomPDBResidueInfo::getSecondaryStructure)
-        .def("GetSegmentNumber", &AtomPDBResidueInfo::getSegmentNumber)
+             &AtomPDBResidueInfo::getSecondaryStructure, python::args("self"))
+        .def("GetSegmentNumber", &AtomPDBResidueInfo::getSegmentNumber,
+             python::args("self"))
 
-        .def("SetSerialNumber", &AtomPDBResidueInfo::setSerialNumber)
-        .def("SetAltLoc", &AtomPDBResidueInfo::setAltLoc)
-        .def("SetResidueName", &AtomPDBResidueInfo::setResidueName)
-        .def("SetResidueNumber", &AtomPDBResidueInfo::setResidueNumber)
-        .def("SetChainId", &AtomPDBResidueInfo::setChainId)
-        .def("SetInsertionCode", &AtomPDBResidueInfo::setInsertionCode)
-        .def("SetOccupancy", &AtomPDBResidueInfo::setOccupancy)
-        .def("SetTempFactor", &AtomPDBResidueInfo::setTempFactor)
-        .def("SetIsHeteroAtom", &AtomPDBResidueInfo::setIsHeteroAtom)
+        .def("SetSerialNumber", &AtomPDBResidueInfo::setSerialNumber,
+             python::args("self", "val"))
+        .def("SetAltLoc", &AtomPDBResidueInfo::setAltLoc,
+             python::args("self", "val"))
+        .def("SetResidueName", &AtomPDBResidueInfo::setResidueName,
+             python::args("self", "val"))
+        .def("SetResidueNumber", &AtomPDBResidueInfo::setResidueNumber,
+             python::args("self", "val"))
+        .def("SetChainId", &AtomPDBResidueInfo::setChainId,
+             python::args("self", "val"))
+        .def("SetInsertionCode", &AtomPDBResidueInfo::setInsertionCode,
+             python::args("self", "val"))
+        .def("SetOccupancy", &AtomPDBResidueInfo::setOccupancy,
+             python::args("self", "val"))
+        .def("SetTempFactor", &AtomPDBResidueInfo::setTempFactor,
+             python::args("self", "val"))
+        .def("SetIsHeteroAtom", &AtomPDBResidueInfo::setIsHeteroAtom,
+             python::args("self", "val"))
         .def("SetSecondaryStructure",
-             &AtomPDBResidueInfo::setSecondaryStructure)
-        .def("SetSegmentNumber", &AtomPDBResidueInfo::setSegmentNumber)
+             &AtomPDBResidueInfo::setSecondaryStructure,
+             python::args("self", "val"))
+        .def("SetSegmentNumber", &AtomPDBResidueInfo::setSegmentNumber,
+             python::args("self", "val"))
 
         ;
   };

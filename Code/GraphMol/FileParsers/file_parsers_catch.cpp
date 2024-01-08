@@ -10,11 +10,12 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <string_view>
 #include <streambuf>
 
 #include "RDGeneral/test.h"
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
@@ -1844,7 +1845,7 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 4);
-    int val;
+    int val = 0;
     CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
         common_properties::molStereoCare, val));
     CHECK(val == 1);
@@ -1880,8 +1881,8 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 4);
-    int val;
     REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    int val = 0;
     CHECK(mol->getBondBetweenAtoms(0, 1)->getPropIfPresent(
         common_properties::molStereoCare, val));
     CHECK(val == 1);
@@ -1956,8 +1957,8 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 4);
-    int val;
     REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    int val = 0;
     CHECK(mol->getBondBetweenAtoms(0, 1)->getPropIfPresent(
         common_properties::molStereoCare, val));
     CHECK(val == 1);
@@ -2497,6 +2498,7 @@ M  END
   }
 }
 
+#ifdef RDK_USE_BOOST_IOSTREAMS
 TEST_CASE("read metadata from PNG", "[reader][PNG]") {
   std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
@@ -2550,7 +2552,6 @@ TEST_CASE("read metadata from PNG", "[reader][PNG]") {
     REQUIRE_THROWS_AS(PNGStringToMetadata(data.substr(1000)),
                       FileParseException);
   }
-#ifdef RDK_USE_BOOST_IOSTREAMS
   SECTION("compressed metadata") {
     std::string fname =
         rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.mrv.png";
@@ -2563,7 +2564,6 @@ TEST_CASE("read metadata from PNG", "[reader][PNG]") {
     REQUIRE(iter != metadata.end());
     CHECK(iter->second.find("<MChemicalStruct>") != std::string::npos);
   }
-#endif
 }
 
 TEST_CASE("write metadata to PNG", "[writer][PNG]") {
@@ -2624,6 +2624,7 @@ TEST_CASE("read molecule from PNG", "[reader][PNG]") {
     REQUIRE_THROWS_AS(PNGFileToMol(fname), FileParseException);
   }
 }
+#endif
 
 TEST_CASE("write molecule to PNG", "[writer][PNG]") {
   std::string rdbase = getenv("RDBASE");
@@ -2739,6 +2740,7 @@ TEST_CASE("multiple molecules in the PNG, second example", "[writer][PNG]") {
   for (const auto &smi : smiles) {
     mols.emplace_back(SmilesToMol(smi));
   }
+#ifdef RDK_USE_BOOST_IOSTREAMS
   SECTION("pickles") {
     std::string fname =
         rdbase + "/Code/GraphMol/FileParsers/test_data/multiple_mols.png";
@@ -2749,6 +2751,7 @@ TEST_CASE("multiple molecules in the PNG, second example", "[writer][PNG]") {
       CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
     }
   }
+#endif
   SECTION("SMILES") {
     std::vector<std::pair<std::string, std::string>> metadata;
     for (const auto &mol : mols) {
@@ -3252,7 +3255,7 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB"_ctab;
     REQUIRE(m);
-    WedgeMolBonds(*m, &m->getConformer());
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
     CHECK(m->getBondBetweenAtoms(2, 4)->getBondDir() != Bond::BondDir::NONE);
     CHECK(m->getBondBetweenAtoms(3, 6)->getBondDir() != Bond::BondDir::NONE);
     CHECK(m->getBondBetweenAtoms(2, 1)->getBondDir() == Bond::BondDir::NONE);
@@ -5018,16 +5021,16 @@ M  END
 )CTAB"_ctab;
     REQUIRE(m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
-    reapplyMolBlockWedging(*m);
+    Chirality::reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINWEDGE);
-    invertMolBlockWedgingInfo(*m);
-    reapplyMolBlockWedging(*m);
+    Chirality::invertMolBlockWedgingInfo(*m);
+    Chirality::reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINDASH);
-    invertMolBlockWedgingInfo(*m);
-    reapplyMolBlockWedging(*m);
+    Chirality::invertMolBlockWedgingInfo(*m);
+    Chirality::reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINWEDGE);
-    clearMolBlockWedgingInfo(*m);
-    reapplyMolBlockWedging(*m);
+    Chirality::clearMolBlockWedgingInfo(*m);
+    Chirality::reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
   }
   SECTION("GitHub5448") {
@@ -5072,10 +5075,10 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END)CTAB"_ctab;
       REQUIRE(m);
-      WedgeMolBonds(*m, &m->getConformer());
+      Chirality::wedgeMolBonds(*m, &m->getConformer());
       CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::BEGINWEDGE);
       CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::NONE);
-      reapplyMolBlockWedging(*m);
+      Chirality::reapplyMolBlockWedging(*m);
       CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::NONE);
       CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::BEGINWEDGE);
     }
@@ -5327,7 +5330,7 @@ M  V30 BEGIN CTAB
 M  V30 COUNTS 2 1 0 0 0
 M  V30 BEGIN ATOM
 M  V30 1 C 0.5 6.0833 0 0
-M  V30 2 ARY 1.8337 6.8533 0 0
+M  V30 2 QQQ 1.8337 6.8533 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
@@ -5352,7 +5355,7 @@ M  END
 
   2  1  0  0  0  0            999 V2000
    -1.5625    1.6071    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.8480    2.0196    0.0000 ARY 0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8480    2.0196    0.0000 QQQ 0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0  0  0  0
 M  END
       )CTAB";
@@ -5444,6 +5447,125 @@ M  END
       auto mb = MolToV3KMolBlock(*m);
       CHECK(mb.find("NOT [N]") != std::string::npos);
     }
+  }
+}
+
+TEST_CASE("Github #6395: Mol Unsaturated Query Not Parsed Correctly") {
+  SECTION("as reported") {
+    auto m = R"CTAB(
+MOESketch           2D                              
+
+  5  5  0  0  1  0            999 V2000
+   13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   14.0120    1.4152    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.5120    1.4227    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9683    2.8516    0.0000 N   0  0  0  0  0  0  0  0  0  2  0  0
+   14.7504    3.7272    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+  1  2  8  0  0  0  4
+  2  3  8  0  0  0  0
+  3  4  8  0  0  0  4
+  4  5  8  0  0  0  9
+  5  1  1  0  0  0  0
+M  SUB  4   1   2   2   2   3   2   4   2
+M  UNS  4   2   1   3   1   4   1   5   1
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+  }
+  SECTION("test that queries exist for only nonzero unsaturated values") {
+    auto m = R"CTAB(
+MOESketch           2D                              
+
+  5  5  0  0  1  0            999 V2000
+   13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   14.0120    1.4152    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.5120    1.4227    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9683    2.8516    0.0000 N   0  0  0  0  0  0  0  0  0  2  0  0
+   14.7504    3.7272    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+  1  2  8  0  0  0  4
+  2  3  8  0  0  0  0
+  3  4  8  0  0  0  4
+  4  5  8  0  0  0  9
+  5  1  1  0  0  0  0
+M  UNS  4   2   1   3   0   4   1   5   0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(2)->hasQuery());
+    REQUIRE(m->getAtomWithIdx(3)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(4)->hasQuery());
+  }
+  SECTION("test that isotope properties parse correctly") {
+    auto m = R"CTAB(
+MOESketch           2D                              
+
+  5  5  0  0  1  0            999 V2000
+   13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   14.0120    1.4152    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.5120    1.4227    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9683    2.8516    0.0000 N   0  0  0  0  0  0  0  0  0  2  0  0
+   14.7504    3.7272    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+  1  2  8  0  0  0  4
+  2  3  8  0  0  0  0
+  3  4  8  0  0  0  4
+  4  5  8  0  0  0  9
+  5  1  1  0  0  0  0
+M  ISO  3   2  15   3  -1   5  14
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->getIsotope() == 15);
+    REQUIRE(m->getAtomWithIdx(2)->getIsotope() == 0);
+    REQUIRE(m->getAtomWithIdx(4)->getIsotope() == 14);
+  }
+  SECTION("test that substitution properties parse correctly") {
+    auto m = R"CTAB(
+MOESketch           2D                              
+
+  5  5  0  0  1  0            999 V2000
+   13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   14.0120    1.4152    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.5120    1.4227    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9683    2.8516    0.0000 N   0  0  0  0  0  0  0  0  0  2  0  0
+   14.7504    3.7272    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+  1  2  8  0  0  0  4
+  2  3  8  0  0  0  0
+  3  4  8  0  0  0  4
+  4  5  8  0  0  0  9
+  5  1  1  0  0  0  0
+M  SUB  4   2   1   3   0   4  -1   5   0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(2)->hasQuery());
+    REQUIRE(m->getAtomWithIdx(3)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(4)->hasQuery());
+  }
+  SECTION("test that ring bond count properties parse correctly") {
+    auto m = R"CTAB(
+MOESketch           2D                              
+
+  5  5  0  0  1  0            999 V2000
+   13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   14.0120    1.4152    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.5120    1.4227    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9683    2.8516    0.0000 N   0  0  0  0  0  0  0  0  0  2  0  0
+   14.7504    3.7272    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+  1  2  8  0  0  0  4
+  2  3  8  0  0  0  0
+  3  4  8  0  0  0  4
+  4  5  8  0  0  0  9
+  5  1  1  0  0  0  0
+M  RBC  4   2   1   3   0   4  -1   5   0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(2)->hasQuery());
+    REQUIRE(m->getAtomWithIdx(3)->hasQuery());
+    REQUIRE(!m->getAtomWithIdx(4)->hasQuery());
   }
 }
 
@@ -5740,6 +5862,72 @@ void check_roundtripped_properties(RDProps &original, RDProps &roundtrip) {
   }
 }
 
+TEST_CASE("MaeWriter atom numbering chirality", "[mae][MaeWriter][writer]") {
+  SECTION("R") {
+    auto mol = "C/C=C/[C@@H](CO)C(C)C"_smiles;
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+    auto iss = new std::istringstream(oss->str());
+    auto roundtrip = MaeMolSupplier(iss).next();
+    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::CHI_TETRAHEDRAL_CW);
+  }
+
+  SECTION("S") {
+    auto mol = "C/C=C/[C@H](CO)C(C)C"_smiles;
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+    auto iss = new std::istringstream(oss->str());
+    auto roundtrip = MaeMolSupplier(iss).next();
+    CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::CHI_TETRAHEDRAL_CCW);
+  }
+}
+
+TEST_CASE("MaeWriter any stereo", "[mae][MaeWriter][writer]") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.942857 -0.857143 0.000000 0
+M  V30 2 C -1.514286 -0.857143 0.000000 0
+M  V30 3 H -3.657143 0.380036 0.000000 0
+M  V30 4 Br -3.657143 -2.094322 0.000000 0
+M  V30 5 F -0.800000 -2.094322 0.000000 0
+M  V30 6 Cl -0.800000 0.380036 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2 CFG=2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 1 2 5
+M  V30 5 1 2 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+  REQUIRE(m);
+
+  // Currently, MaeMolSupplier does not recognize "either" double bonds, this
+  // just tests that the bond will be recognizable by schrodinger software
+  auto oss = new std::ostringstream;
+  MaeWriter w(oss);
+  w.write(*m);
+  w.flush();
+  auto maeblock = oss->str();
+  CHECK(maeblock.find("i_sd_original_parity") != std::string::npos);
+  // expected bond line -- include RDKit cfg properties
+  CHECK(maeblock.find("1 1 2 2 2 2 2") != std::string::npos);
+}
+
 TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
   auto mol = "C1CCCCC1"_smiles;
   REQUIRE(mol);
@@ -5798,7 +5986,6 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(atomBlock.find("r_m_z_coord") != std::string::npos);
     CHECK(atomBlock.find("i_m_atomic_number") != std::string::npos);
     CHECK(atomBlock.find("i_m_formal_charge") != std::string::npos);
-    CHECK(atomBlock.find("s_m_color_rgb") != std::string::npos);
 
     CHECK(atomBlock.find("b_rdk_atom_bool_prop") != std::string::npos);
     CHECK(atomBlock.find("i_rdk_atom_int_prop") != std::string::npos);
@@ -5814,6 +6001,68 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(bondBlock.find("i_rdk_bond_int_prop") != std::string::npos);
     CHECK(bondBlock.find("r_rdk_bond_real_prop") != std::string::npos);
     CHECK(bondBlock.find("s_rdk_bond_string_prop") != std::string::npos);
+  }
+
+  SECTION("Check bond ends indices order") {
+    // in the bonds block, 'from' index must be lower than 'to' index
+
+    // As usual, the writer takes ownership of the stream
+    auto oss = new std::stringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+
+    std::string line;
+    while (std::getline(*oss, line) &&
+           line.find("m_bond[6]") == std::string::npos) {
+      // Discard data until we reach the bond block
+    }
+
+    unsigned from_pos = -1;  // offset comment
+    unsigned to_pos = -1;    // offset comment
+    bool from_seen = false;
+    bool to_seen = false;
+
+    while (std::getline(*oss, line) && line.find(":::") == std::string::npos) {
+      // Skip lines (comment, property names, separator)
+      // until we reach the actual data.
+      // Also, find position of 'to' and 'from' indices in the property list
+      if (!from_seen) {
+        ++from_pos;
+        if (line.find("i_m_from") != std::string::npos) {
+          from_seen = true;
+        }
+      }
+      if (!to_seen) {
+        ++to_pos;
+        if (line.find("i_m_to") != std::string::npos) {
+          to_seen = true;
+        }
+      }
+    }
+    REQUIRE(from_pos > 0);
+    REQUIRE(to_pos > 0);
+
+    int from = -1;
+    int to = -1;
+    std::string prop;
+    unsigned tokens = 1 + std::max(from_pos, to_pos);
+    for (unsigned i = 0; i < mol->getNumAtoms(); ++i) {
+      std::getline(*oss, line);
+      std::stringstream ss(line);
+      for (unsigned j = 0; j < tokens; ++j) {
+        if (j == from_pos) {
+          ss >> from;
+        } else if (j == to_pos) {
+          ss >> to;
+        } else {
+          ss >> prop;
+        }
+      }
+      REQUIRE(from != -1);
+      REQUIRE(to != -1);
+      CHECK(from < to);
+    }
   }
 
   SECTION("Check Property filtering") {
@@ -5832,8 +6081,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
 
     w.setProps(keptProps);
 
-    std::string heavyAtomColor = "131313";
-    w.write(*mol, heavyAtomColor);
+    w.write(*mol);
     w.flush();
 
     auto mae = oss->str();
@@ -5871,7 +6119,6 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(atomBlock.find("r_m_z_coord") != std::string::npos);
     CHECK(atomBlock.find("i_m_atomic_number") != std::string::npos);
     CHECK(atomBlock.find("i_m_formal_charge") != std::string::npos);
-    CHECK(atomBlock.find("s_m_color_rgb") != std::string::npos);
 
     CHECK(atomBlock.find("i_rdk_atom_int_prop") != std::string::npos);
 
@@ -5890,14 +6137,20 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(bondBlock.find("i_rdk_bond_int_prop") == std::string::npos);
     CHECK(bondBlock.find("s_rdk_bond_string_prop") == std::string::npos);
 
-    size_t pos = 0;
-    unsigned atom_color_count = 0;
-    while (pos < std::string::npos) {
-      pos = atomBlock.find(heavyAtomColor, pos + 1);
-      atom_color_count += (pos != std::string::npos);
-    }
+    // The "i_rdk_atom_int_prop" prop should only be set on the first atom,
+    // and unset on the other five
+    auto count_occurrences = [&atomBlock](const char *needle) {
+      size_t pos = 0;
+      unsigned counter = 0;
+      while (pos < std::string::npos) {
+        pos = atomBlock.find(needle, pos + 1);
+        counter += (pos != std::string::npos);
+      }
+      return counter;
+    };
 
-    CHECK(atom_color_count == mol->getNumAtoms());
+    CHECK(count_occurrences(" 42") == 1);
+    CHECK(count_occurrences(" <>") == 5);
   }
 
   SECTION("Check roundtrip") {
@@ -5929,6 +6182,77 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
       }
     }
     // Maeparser does not parse bond properties, so don't check them.
+  }
+  SECTION("Check reverse roundtrip") {
+    constexpr std::string_view maeBlock = R"MAE(f_m_ct {
+  s_m_title
+  :::
+  ""
+  m_atom[1] {
+    # First column is Index #
+    r_m_x_coord
+    r_m_y_coord
+    r_m_z_coord
+    i_m_atomic_number
+    i_m_formal_charge
+    :::
+    1 -2.542857 2.171429 0.000000 6 0
+    :::
+  }
+})MAE";
+
+    auto iss = new std::istringstream(maeBlock.data());
+    MaeMolSupplier r(iss);
+
+    std::unique_ptr<ROMol> mol(r.next());
+    REQUIRE(mol);
+
+    // The writer always takes ownership of the stream!
+    auto oss = new std::stringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+
+    std::string line;
+    while (std::getline(*oss, line) && line != "f_m_ct {") {
+      // Skip ahead to the ct block
+    }
+
+    // The only ct level property should be the title and stereo status
+    std::getline(*oss, line);
+    CHECK(line.find("i_m_ct_stereo_status") != std::string::npos);
+    std::getline(*oss, line);
+    CHECK(line.find("s_m_title") != std::string::npos);
+
+    // End block marker
+    std::getline(*oss, line);
+    CHECK(line.find(":::") != std::string::npos);
+
+    while (std::getline(*oss, line) &&
+           line.find("m_atom[1]") == std::string::npos) {
+      // Skip ahead to the atom block
+    }
+
+    // Only the atom properties in the initial mae block should be present
+    std::getline(*oss, line);  // Chomp the comment line
+    CAPTURE(line);
+    REQUIRE(line.find("# First column is Index #") != std::string::npos);
+    std::getline(*oss, line);
+
+    CAPTURE(line);
+    CHECK(line.find("r_m_x_coord") != std::string::npos);
+    std::getline(*oss, line);
+    CHECK(line.find("r_m_y_coord") != std::string::npos);
+    std::getline(*oss, line);
+    CHECK(line.find("r_m_z_coord") != std::string::npos);
+    std::getline(*oss, line);
+    CHECK(line.find("i_m_atomic_number") != std::string::npos);
+    std::getline(*oss, line);
+    CHECK(line.find("i_m_formal_charge") != std::string::npos);
+
+    // End block marker
+    std::getline(*oss, line);
+    CHECK(line.find(":::") != std::string::npos);
   }
 
   SECTION("getText()") {
@@ -6027,9 +6351,8 @@ TEST_CASE("GitHub issue #6153: MaeMolSupplier requires bond block",
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
-    1 -2.542857 2.171429 0.000000 6 0 A0A0A0
+    1 -2.542857 2.171429 0.000000 6 0
     :::
   }
 })MAE";
@@ -6070,7 +6393,6 @@ TEST_CASE("GitHub issue #6153: MaeMolSupplier requires bond block",
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
     :::
   }
@@ -6093,9 +6415,8 @@ TEST_CASE("GitHub issue #6153: MaeMolSupplier requires bond block",
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
-    1 -2.542857 2.171429 0.000000 6 0 A0A0A0
+    1 -2.542857 2.171429 0.000000 6 0
     :::
   }
 }
@@ -6111,7 +6432,6 @@ f_m_ct {
     r_m_z_coord
     i_m_atomic_number
     i_m_formal_charge
-    s_m_color_rgb
     :::
     :::
   }
@@ -6129,4 +6449,483 @@ f_m_ct {
   }
 }
 
+TEST_CASE(
+    "GitHub issue #6153: MaeMolSupplier cannot read dummy atoms from Maestro files",
+    "[mae][MaeMolSupplier][MaeWriter]") {
+  std::string maeBlock = R"MAE(f_m_ct {
+ s_m_title
+ i_m_ct_stereo_status
+ i_m_ct_format
+ :::
+ COCH3
+  1
+  2
+ m_atom[7] {
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  s_m_atom_name
+  i_m_mass_number
+  :::
+  1 61 -0.536336 0.931891 -0.000000 10 -2 1EE11E  DU1  1
+  2 2 0.000000 0.000000 0.000000 2 6 A0A0A0  C2  <>
+  3 3 1.500000 0.000000 0.000000 2 6 A0A0A0  C3  <>
+  4 15 -0.623038 -1.078345 -0.000420 70 8 FF2F2F  O4  <>
+  5 41 1.863333 -1.027662 -0.000000 21 1 FFFFFF  H5  <>
+  6 41 1.863333 0.513831 -0.889981 21 1 FFFFFF  H6  <>
+  7 41 1.863333 0.513831 0.889981 21 1 FFFFFF  H7  <>
+  :::
+ }
+ m_bond[6] {
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 2 3 1
+  3 2 4 2
+  4 3 5 1
+  5 3 6 1
+  6 3 7 1
+  :::
+ }
+})MAE";
+  SECTION("Read dummy atoms") {
+    MaeMolSupplier supplier;
+    supplier.setData(maeBlock);
+
+    std::unique_ptr<ROMol> mol{supplier.next()};
+    CHECK(mol);
+    CHECK(mol->getNumAtoms() == 4);
+    CHECK(mol->getAtomWithIdx(0)->getAtomicNum() == 0);
+  }
+
+  SECTION("Read Mol with reserved atom type") {
+    const std::string dummyAtomicNum = " -2 ";
+    const std::string reservedAtomicNum = " 0 ";
+    size_t pos = maeBlock.find(dummyAtomicNum);
+    maeBlock.replace(pos, dummyAtomicNum.size(), reservedAtomicNum);
+
+    MaeMolSupplier supplier;
+    supplier.setData(maeBlock);
+
+    std::unique_ptr<ROMol> mol{supplier.next()};
+    CHECK(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getNumBonds() == 2);
+    CHECK(mol->getAtomWithIdx(0)->getAtomicNum() == 6);
+  }
+
+  SECTION("Write dummy atoms") {
+    auto m = "*CC"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getNumAtoms() == 3);
+    REQUIRE(m->getAtomWithIdx(0)->getAtomicNum() == 0);
+
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*m);
+    w.flush();
+
+    const auto mae = oss->str();
+    REQUIRE(!mae.empty());
+
+    auto atomBlockStart = mae.find("m_atom[3]");
+    REQUIRE(atomBlockStart != std::string::npos);
+
+    auto bondBlockStart = mae.find("m_bond[2]");
+    REQUIRE(bondBlockStart != std::string::npos);
+
+    const std::string_view atomBlock(&mae[atomBlockStart],
+                                     bondBlockStart - atomBlockStart);
+
+    CHECK(atomBlock.find(" -2 ") != std::string::npos);
+  }
+}
+
 #endif
+
+TEST_CASE("Chained bond stereo and wiggly bonds") {
+  SECTION("github6434") {
+    std::string molblock = R"CTAB(
+  Mrv2004 07102311132D
+
+ 10  9  0  0  0  0            999 V2000
+   -4.7714   -0.0130    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.4839   -0.4255    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.2152   -0.0130    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.9277   -0.4255    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.4839   -1.2693    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.2152    0.8120    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5007    1.2245    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.9277    1.2433    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.6422    0.8308    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.9192    2.0683    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+  3  2  2  0  0  0  0
+  2  5  1  4  0  0  0
+  4  3  1  0  0  0  0
+  6  3  1  0  0  0  0
+  8  6  2  0  0  0  0
+  6  7  1  4  0  0  0
+  8  9  1  4  0  0  0
+  8 10  1  0  0  0  0
+M  END
+  )CTAB";
+    std::unique_ptr<RWMol> m;
+    m.reset(MolBlockToMol(molblock));
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 8);
+  }
+}
+
+TEST_CASE("StereoGroup id forwarding", "[StereoGroup][ctab]") {
+  auto m = "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&7:3,o1:7,&8:1,&9:5|"_smiles;
+  REQUIRE(m);
+  CHECK(m->getStereoGroups().size() == 4);
+
+  SECTION("ids reassigned by default") {
+    const auto mb_out = MolToMolBlock(*m);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC1") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC2") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC3") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STEREL1") != std::string::npos);
+  }
+
+  SECTION("forward input ids") {
+    forwardStereoGroupIds(*m);
+    const auto mb_out = MolToMolBlock(*m);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC7") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC8") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STERAC9") != std::string::npos);
+    CHECK(mb_out.find("M  V30 MDLV30/STEREL1") != std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "GitHub issue #6664: Mol file parser strips stereogenic H from imine bonds",
+    "[reader]") {
+  SECTION("mol file") {
+    auto mol = R"CTAB(
+                    2D
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -5.6250    1.1481    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.2924    0.6631    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.0375   -0.1214    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.2125   -0.1214    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.9576    0.6631    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1729    0.9181    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0014    1.7250    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  1  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  7  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+M  END
+  )CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 7);
+
+    auto dblBond = mol->getBondWithIdx(3);
+    REQUIRE(dblBond->getBondType() == Bond::DOUBLE);
+    CHECK(dblBond->getStereo() == Bond::STEREOE);
+  }
+  SECTION("mol2 file") {
+    auto mol = R"MOL2(
+@<TRIPOS>MOLECULE
+title: molecule 1
+7   7    1
+SMALL
+USER_CHARGES
+
+
+@<TRIPOS>ATOM
+      1 C1         -5.6250    1.1481    0.0000 C.3       1 UNK         0.0000 
+      2 C2         -6.2924    0.6631    0.0000 C.3       1 UNK         0.0000 
+      3 C3         -6.0375   -0.1214    0.0000 C.3       1 UNK         0.0000 
+      4 O4         -5.2125   -0.1214    0.0000 O.3       1 UNK         0.0000 
+      5 C5         -4.9576    0.6631    0.0000 C.2       1 UNK         0.0000 
+      6 N6         -4.1729    0.9181    0.0000 N.2       1 UNK         0.0000 
+      7 H7         -4.0014    1.7250    0.0000 H         1 UNK         0.0000 
+@<TRIPOS>BOND
+     1    1    2 1    
+     2    1    5 1    
+     3    2    3 1    
+     4    3    4 1    
+     5    4    5 1    
+     6    5    6 2    
+     7    6    7 1    
+  )MOL2"_mol2;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 7);
+
+    auto dblBond = mol->getBondWithIdx(5);
+    REQUIRE(dblBond->getBondType() == Bond::DOUBLE);
+    CHECK(dblBond->getStereo() == Bond::STEREOE);
+  }
+}
+
+TEST_CASE(
+    "z coordinate tolerance in flat structures"
+    "[bug][molblock]") {
+  const auto mol = R"CTAB(
+     RDKit          2D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0010 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981   -0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    2.2500    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  2  3  1  0
+  2  4  1  0
+M  END
+)CTAB"_ctab;
+  REQUIRE(mol);
+  REQUIRE(mol->getNumConformers() == 1);
+
+  auto conf = mol->getConformer();
+  CHECK(!conf.is3D());
+
+  CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+        Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+}
+
+TEST_CASE("Calculate 2D/3D from coordinates", "[molblock]") {
+  SECTION("v2000, 2D structure marked as 3D without 2D stereo marks") {
+    const auto mol = R"CTAB(
+     RDKit          3D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981   -0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    2.2500    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1
+  2  3  1
+  2  4  1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+
+  SECTION("v2000, 2D structure marked as 3D with 2D stereo marks") {
+    const auto mol = R"CTAB(
+     RDKit          3D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981   -0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    2.2500    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  2  3  1  0
+  2  4  1  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(!conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+
+  SECTION("v2000, 3D structure marked as 2D") {
+    const auto mol = R"CTAB(
+     RDKit          2D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.0017    0.0135    0.0027 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8238    0.0150    0.0040 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0881   -0.3228    0.6346 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1772    0.9156   -0.0296 S   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1
+  2  3  1
+  2  4  1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+
+  SECTION("v3000, 2D structure marked as 3D without 2D stereo marks") {
+    const auto mol = R"CTAB(
+     RDKit          3D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.0912 0.945 0 0
+M  V30 2 C 2.4248 1.715 0 0
+M  V30 3 O 3.7586 0.945 0 0
+M  V30 4 S 2.4248 3.255 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+
+  SECTION("v3000, 2D structure marked as 3D with 2D stereo marks") {
+    const auto mol = R"CTAB(
+     RDKit          3D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.0912 0.945 0 0
+M  V30 2 C 2.4248 1.715 0 0 CFG=2
+M  V30 3 O 3.7586 0.945 0 0
+M  V30 4 S 2.4248 3.255 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(!conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+
+  SECTION("v3000, 3D structure marked as 2D") {
+    const auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.0033 0.0252 0.0052 0
+M  V30 2 C 1.5379 0.028 0.0075 0 CFG=2
+M  V30 3 O 2.0313 -0.6027 1.1846 0
+M  V30 4 S 2.1975 1.7092 -0.0554 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumConformers() == 1);
+
+    auto conf = mol->getConformer();
+    CHECK(conf.is3D());
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+}
+
+TEST_CASE(
+    "GitHub Issue #6703: Exporting to mol marks imine bonds EITHERDOUBLE when imine H is implicit",
+    "[bug][writer][stereo]") {
+  auto m = "NC(O)=N"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 4);
+  auto bond = m->getBondWithIdx(2);
+  REQUIRE(bond->getBondType() == Bond::DOUBLE);
+  REQUIRE(bond->getStereo() == Bond::BondStereo::STEREONONE);
+  REQUIRE(bond->getBondDir() == Bond::BondDir::NONE);
+
+  std::string molblock;
+  SECTION("v2000") {
+    molblock = MolToMolBlock(*m);
+    REQUIRE(molblock.find("  4  3  0  0  0  0  0  0  0  0999 V2000") !=
+            std::string::npos);
+
+    // There must be a double bond, but it must not be marked as either
+    REQUIRE(molblock.find("  2  4  2") != std::string::npos);
+    CHECK(molblock.find("  2  4  2  3") == std::string::npos);
+  }
+  SECTION("v3000") {
+    molblock = MolToV3KMolBlock(*m);
+    REQUIRE(molblock.find("M  V30 COUNTS 4 3 0 0 0") != std::string::npos);
+
+    // There must be a double bond, but it must not be marked as either
+    REQUIRE(molblock.find("M  V30 3 2 2 4") != std::string::npos);
+    CHECK(molblock.find("CFG=2") == std::string::npos);
+  }
+
+  std::unique_ptr<ROMol> m2{MolBlockToMol(molblock)};
+  REQUIRE(m2);
+  REQUIRE(m2->getNumAtoms() == 4);
+
+  auto bond2 = m2->getBondWithIdx(2);
+  REQUIRE(bond2->getBondType() == Bond::DOUBLE);
+  CHECK(bond2->getStereo() == Bond::BondStereo::STEREONONE);
+  CHECK(bond2->getBondDir() == Bond::BondDir::NONE);
+}
+
+TEST_CASE(
+    "github #5819: Support writing detailed SMARTS queries to CTABs using the SMARTSQ mechanism") {
+  SECTION("as reported") {
+    auto m = "[C,N,O]C[#6]*[$(C(=O)O)]"_smarts;
+    REQUIRE(m);
+    auto ctab = MolToV3KMolBlock(*m);
+    // std::cerr << ctab << std::endl;
+    // make sure we still do list queries correctly
+    CHECK(ctab.find("V30 1 [C,N,O]") != std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"[C,N,O]") == std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"C\"") == std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"[#6]\"") == std::string::npos);
+    CHECK(ctab.find("FIELDDATA=\"*\"") == std::string::npos);
+    CHECK(ctab.find("SMARTSQ") != std::string::npos);
+    CHECK(ctab.find("[$(C(=O)O)]") != std::string::npos);
+
+    // make sure we can properly parse that
+    std::unique_ptr<RWMol> nm{MolBlockToMol(ctab)};
+    REQUIRE(nm);
+    CHECK(MolToSmarts(*nm) == "[#6,#7,#8][#6][#6]*[$(C(=O)O)]");
+  }
+}

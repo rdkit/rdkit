@@ -47,7 +47,7 @@ inline std::string rdvalue_cast<std::string>(RDValue_cast_t v) {
   if (rdvalue_is<std::string>(v)) {
     return *v.ptrCast<std::string>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
@@ -55,7 +55,7 @@ inline std::string &rdvalue_cast<std::string &>(RDValue_cast_t v) {
   if (rdvalue_is<std::string>(v)) {
     return *v.ptrCast<std::string>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 // Special Vecor Casts
@@ -64,7 +64,7 @@ inline std::vector<double> rdvalue_cast<std::vector<double>>(RDValue_cast_t v) {
   if (rdvalue_is<std::vector<double>>(v)) {
     return *v.ptrCast<std::vector<double>>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
@@ -73,7 +73,7 @@ inline std::vector<double> &rdvalue_cast<std::vector<double> &>(
   if (rdvalue_is<std::vector<double>>(v)) {
     return *v.ptrCast<std::vector<double>>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
@@ -81,7 +81,7 @@ inline std::vector<float> rdvalue_cast<std::vector<float>>(RDValue_cast_t v) {
   if (rdvalue_is<std::vector<float>>(v)) {
     return *v.ptrCast<std::vector<float>>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
@@ -90,7 +90,7 @@ inline std::vector<float> &rdvalue_cast<std::vector<float> &>(
   if (rdvalue_is<std::vector<float>>(v)) {
     return *v.ptrCast<std::vector<float>>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
@@ -99,7 +99,7 @@ inline std::vector<std::string> rdvalue_cast<std::vector<std::string>>(
   if (rdvalue_is<std::vector<std::string>>(v)) {
     return *v.ptrCast<std::vector<std::string>>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
@@ -108,7 +108,7 @@ inline std::vector<std::string> &rdvalue_cast<std::vector<std::string> &>(
   if (rdvalue_is<std::vector<std::string>>(v)) {
     return *v.ptrCast<std::vector<std::string>>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
@@ -116,7 +116,7 @@ inline std::vector<int> rdvalue_cast<std::vector<int>>(RDValue_cast_t v) {
   if (rdvalue_is<std::vector<int>>(v)) {
     return *v.ptrCast<std::vector<int>>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
@@ -124,7 +124,7 @@ inline std::vector<int> &rdvalue_cast<std::vector<int> &>(RDValue_cast_t v) {
   if (rdvalue_is<std::vector<int>>(v)) {
     return *v.ptrCast<std::vector<int>>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
@@ -133,7 +133,7 @@ inline std::vector<unsigned int> rdvalue_cast<std::vector<unsigned int>>(
   if (rdvalue_is<std::vector<unsigned int>>(v)) {
     return *v.ptrCast<std::vector<unsigned int>>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
@@ -142,32 +142,32 @@ inline std::vector<unsigned int> &rdvalue_cast<std::vector<unsigned int> &>(
   if (rdvalue_is<std::vector<unsigned int>>(v)) {
     return *v.ptrCast<std::vector<unsigned int>>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 // Get boost any
 template <>
-inline boost::any rdvalue_cast<boost::any>(RDValue_cast_t v) {
-  if (rdvalue_is<boost::any>(v)) {
-    return *v.ptrCast<boost::any>();
+inline std::any rdvalue_cast<std::any>(RDValue_cast_t v) {
+  if (rdvalue_is<std::any>(v)) {
+    return *v.ptrCast<std::any>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
-inline boost::any &rdvalue_cast<boost::any &>(RDValue_cast_t v) {
-  if (rdvalue_is<boost::any>(v)) {
-    return *v.ptrCast<boost::any>();
+inline std::any &rdvalue_cast<std::any &>(RDValue_cast_t v) {
+  if (rdvalue_is<std::any>(v)) {
+    return *v.ptrCast<std::any>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 template <>
-inline const boost::any &rdvalue_cast<const boost::any &>(RDValue_cast_t v) {
-  if (rdvalue_is<boost::any>(v)) {
-    return *v.ptrCast<boost::any>();
+inline const std::any &rdvalue_cast<const std::any &>(RDValue_cast_t v) {
+  if (rdvalue_is<std::any>(v)) {
+    return *v.ptrCast<std::any>();
   }
-  throw boost::bad_any_cast();
+  throw std::bad_any_cast();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -232,15 +232,21 @@ inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
     case RDTypeTag::AnyTag: {
       Utils::LocaleSwitcher ls;  // for lexical cast...
       try {
-        res = boost::any_cast<std::string>(rdvalue_cast<boost::any &>(val));
-      } catch (const boost::bad_any_cast &) {
-        if (rdvalue_cast<boost::any &>(val).type() == typeid(long)) {
+        res = std::any_cast<std::string>(rdvalue_cast<std::any &>(val));
+      } catch (const std::bad_any_cast &) {
+        auto &rdtype = rdvalue_cast<std::any &>(val).type();
+        if (rdtype == typeid(long)) {
           res = boost::lexical_cast<std::string>(
-              boost::any_cast<long>(rdvalue_cast<boost::any &>(val)));
-        } else if (rdvalue_cast<boost::any &>(val).type() ==
-                   typeid(unsigned long)) {
+              std::any_cast<long>(rdvalue_cast<std::any &>(val)));
+        } else if (rdtype == typeid(int64_t)) {
           res = boost::lexical_cast<std::string>(
-              boost::any_cast<unsigned long>(rdvalue_cast<boost::any &>(val)));
+              std::any_cast<int64_t>(rdvalue_cast<std::any &>(val)));
+        } else if (rdtype == typeid(uint64_t)) {
+          res = boost::lexical_cast<std::string>(
+              std::any_cast<uint64_t>(rdvalue_cast<std::any &>(val)));
+        } else if (rdtype == typeid(unsigned long)) {
+          res = boost::lexical_cast<std::string>(
+              std::any_cast<unsigned long>(rdvalue_cast<std::any &>(val)));
         } else {
           throw;
           return false;
@@ -263,7 +269,7 @@ typename boost::enable_if<boost::is_arithmetic<T>, T>::type from_rdvalue(
     Utils::LocaleSwitcher ls;
     try {
       res = rdvalue_cast<T>(arg);
-    } catch (const boost::bad_any_cast &exc) {
+    } catch (const std::bad_any_cast &exc) {
       try {
         res = boost::lexical_cast<T>(rdvalue_cast<std::string>(arg));
       } catch (...) {

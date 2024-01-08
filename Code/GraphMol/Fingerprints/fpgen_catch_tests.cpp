@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
@@ -174,7 +174,7 @@ TEST_CASE(
       // there's an unfortunate bit of information loss happening here
       // due to the fact that the SparseBitVect uses ints, so we have to
       // do this test backwards:
-      for (auto pr : *ao.bitInfoMap) {
+      for (const auto &pr : *ao.bitInfoMap) {
         INFO(pr.first);
         CHECK(std::find(obl.begin(), obl.end(), (int)(pr.first)) != obl.end());
       }
@@ -226,5 +226,114 @@ TEST_CASE("numBitsPerFeature") {
       CHECK(fp->getTotalVal() == 16);
     }
     CHECK(fpgen->infoString().find("bitsPerFeature=2") != std::string::npos);
+  }
+}
+
+TEST_CASE("multithreaded fp generation") {
+  std::vector<std::string> smis = {"CC1CCC1", "CCC1CCC1", "CCCC1CCC1",
+                                   "CCCC1CC(O)C1", "CCCC1CC(CO)C1"};
+  std::vector<std::unique_ptr<ROMol>> ov;
+  std::vector<const ROMol *> mols;
+  for (const auto &smi : smis) {
+    ov.emplace_back(SmilesToMol(smi));
+    REQUIRE(ov.back());
+    mols.push_back(ov.back().get());
+  }
+  for (auto i = 0u; i < 6; ++i) {
+    auto n = mols.size();
+    for (auto j = 0u; j < n; ++j) {
+      mols.push_back(mols[j]);
+    }
+  }
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(2)};
+  REQUIRE(fpgen);
+  SECTION("getFingerprints") {
+    std::vector<std::unique_ptr<ExplicitBitVect>> ovs;
+    FingerprintFuncArguments args;
+    for (const auto mp : mols) {
+      ovs.emplace_back(fpgen->getFingerprint(*mp, args));
+    }
+    mols.push_back(nullptr);  // make sure we handle this properly
+    auto mtvs1 = fpgen->getFingerprints(mols, 1);
+    CHECK(mtvs1.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs1[fpi]);
+    }
+    CHECK(mtvs1.back().get() == nullptr);
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    auto mtvs4 = fpgen->getFingerprints(mols, 4);
+    CHECK(mtvs4.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs4[fpi]);
+    }
+    CHECK(mtvs4.back().get() == nullptr);
+#endif
+  }
+  SECTION("getSparseFingerprints") {
+    std::vector<std::unique_ptr<SparseBitVect>> ovs;
+    FingerprintFuncArguments args;
+    for (const auto mp : mols) {
+      ovs.emplace_back(fpgen->getSparseFingerprint(*mp, args));
+    }
+    mols.push_back(nullptr);  // make sure we handle this properly
+    auto mtvs1 = fpgen->getSparseFingerprints(mols, 1);
+    CHECK(mtvs1.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs1[fpi]);
+    }
+    CHECK(mtvs1.back().get() == nullptr);
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    auto mtvs4 = fpgen->getSparseFingerprints(mols, 4);
+    CHECK(mtvs4.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs4[fpi]);
+    }
+    CHECK(mtvs4.back().get() == nullptr);
+#endif
+  }
+  SECTION("getCountFingerprints") {
+    std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>> ovs;
+    FingerprintFuncArguments args;
+    for (const auto mp : mols) {
+      ovs.emplace_back(fpgen->getCountFingerprint(*mp, args));
+    }
+    mols.push_back(nullptr);  // make sure we handle this properly
+    auto mtvs1 = fpgen->getCountFingerprints(mols, 1);
+    CHECK(mtvs1.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs1[fpi]);
+    }
+    CHECK(mtvs1.back().get() == nullptr);
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    auto mtvs4 = fpgen->getCountFingerprints(mols, 4);
+    CHECK(mtvs4.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs4[fpi]);
+    }
+    CHECK(mtvs4.back().get() == nullptr);
+#endif
+  }
+  SECTION("getSparseCountFingerprints") {
+    std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>> ovs;
+    FingerprintFuncArguments args;
+    for (const auto mp : mols) {
+      ovs.emplace_back(fpgen->getSparseCountFingerprint(*mp, args));
+    }
+    mols.push_back(nullptr);  // make sure we handle this properly
+    auto mtvs1 = fpgen->getSparseCountFingerprints(mols, 1);
+    CHECK(mtvs1.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs1[fpi]);
+    }
+    CHECK(mtvs1.back().get() == nullptr);
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    auto mtvs4 = fpgen->getSparseCountFingerprints(mols, 4);
+    CHECK(mtvs4.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs4[fpi]);
+    }
+    CHECK(mtvs4.back().get() == nullptr);
+#endif
   }
 }

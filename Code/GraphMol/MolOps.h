@@ -21,6 +21,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/types.h>
 #include "SanitException.h"
+#include <RDGeneral/FileParseException.h>
 
 RDKIT_GRAPHMOL_EXPORT extern const int ci_LOCAL_INF;
 namespace RDKit {
@@ -309,6 +310,18 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
                                         bool mergeUnmappedOnly = false,
                                         bool mergeIsotopes = false);
 
+//! returns a pair of booleans (hasQueryHs, hasUnmergaebleQueryHs)
+/*!
+  This is really intended to be used with molecules that contain QueryAtoms
+  such as when checking smarts patterns for explicit hydrogens
+
+
+  \param mol the molecule to check for query Hs from
+  \return std::pair  if pair.first is true if the molecule has query hydrogens,
+  if pair.second is true, the queryHs cannot be removed my mergeQueryHs
+*/
+RDKIT_GRAPHMOL_EXPORT std::pair<bool, bool> hasQueryHs(const ROMol &mol);
+
 typedef enum {
   ADJUST_IGNORENONE = 0x0,
   ADJUST_IGNORECHAINS = 0x1,
@@ -376,6 +389,7 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   bool adjustSingleBondsBetweenAromaticAtoms =
       false; /**<  sets non-ring single bonds between two aromatic or conjugated
                 atoms to SINGLE|AROMATIC */
+
   //! \brief returns an AdjustQueryParameters object with all adjustments
   //! disabled
   static AdjustQueryParameters noAdjustments() {
@@ -441,6 +455,8 @@ typedef enum {
   SANITIZE_SETHYBRIDIZATION = 0x80,
   SANITIZE_CLEANUPCHIRALITY = 0x100,
   SANITIZE_ADJUSTHS = 0x200,
+  SANITIZE_CLEANUP_ORGANOMETALLICS = 0x400,
+  SANITIZE_CLEANUPATROPISOMERS = 0x800,
   SANITIZE_ALL = 0xFFFFFFF
 } SanitizeFlags;
 
@@ -906,8 +922,42 @@ RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1,
 //! \name Stereochemistry
 //! @{
 
+// class to hold hybridizations
+
+class Hybridizations {
+ public:
+  Hybridizations() {
+    throw FileParseException("not to be called without a mol parameter");
+  };
+  Hybridizations(const ROMol &mol);
+  Hybridizations(const Hybridizations &) {
+    throw FileParseException("not to be called without a mol parameter");
+  };
+
+  ~Hybridizations() = default;
+
+  Atom::HybridizationType operator[](int idx) {
+    return static_cast<Atom::HybridizationType>(d_hybridizations[idx]);
+  }
+  // Atom::HybridizationType &operator[](unsigned int idx) {
+  //      return static_cast<Atom::HybridizationType>(d_hybridizations[idx]);
+  //   d_hybridizations[d_hybridizations[idx]];
+  // }
+
+  // // void clear() { d_hybridizations.clear(); }
+  // // void resize(unsigned int sz) { d_hybridizations.resize(sz); }
+  unsigned int size() const { return d_hybridizations.size(); }
+
+ private:
+  std::vector<int> d_hybridizations;
+};
+
 //! removes bogus chirality markers (those on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
+
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &mol,
+                                               Hybridizations &hybridizations);
 
 //! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms
 /*!
@@ -962,7 +1012,14 @@ RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
 //! removes directions from single bonds. Wiggly bonds will have the property
 //! _UnknownStereo set on them
-RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol,
+                                                   bool onlyWedgeFlags = false);
+
+//! removes directions from all bonds. Wiggly bonds and cross bonds will have
+//! the property _UnknownStereo set on them
+RDKIT_GRAPHMOL_EXPORT void clearAllBondDirFlags(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void clearDirFlags(ROMol &mol,
+                                         bool onlyWedgeFlags = false);
 
 //! Assign CIS/TRANS bond stereochemistry tags based on neighboring
 //! directions

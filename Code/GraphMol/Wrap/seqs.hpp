@@ -7,9 +7,9 @@
 #define _SEQS_HPP_
 
 #include <GraphMol/RDKitBase.h>
+#include <RDBoost/python.h>
 #include <iostream>
 #include <utility>
-#include <RDBoost/python.h>
 namespace python = boost::python;
 
 namespace RDKit {
@@ -122,10 +122,9 @@ class ReadOnlySeq {
   }
 };
 
-typedef ReadOnlySeq<ROMol::AtomIterator, Atom *, AtomCountFunctor> AtomIterSeq;
 typedef ReadOnlySeq<ROMol::QueryAtomIterator, Atom *, AtomCountFunctor>
     QueryAtomIterSeq;
-typedef ReadOnlySeq<ROMol::BondIterator, Bond *, BondCountFunctor> BondIterSeq;
+
 typedef ReadOnlySeq<ROMol::ConformerIterator, CONFORMER_SPTR &,
                     ConformerCountFunctor>
     ConformerIterSeq;

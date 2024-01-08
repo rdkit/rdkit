@@ -38,8 +38,8 @@
 #include <limits>
 
 #include <cstring>
+#include <any>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/any.hpp>
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
@@ -147,6 +147,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string _hasMassQuery;  // atom bool
 RDKIT_RDGENERAL_EXPORT extern const std::string _protected;  // atom int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string
+    _ChiralAtomRank;  // atom rank (unsigned int)
+RDKIT_RDGENERAL_EXPORT extern const std::string
     _supplementalSmilesLabel;  // atom string (SmilesWrite)
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _unspecifiedOrder;  // atom int (bool) smarts/smiles
@@ -187,7 +189,6 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _MolFileBondStereo;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _MolFileBondCfg;  // unsigned int
-
 RDKIT_RDGENERAL_EXPORT extern const std::string
     MRV_SMA;  // smarts string from Marvin
 RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;  // atom string

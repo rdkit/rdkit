@@ -188,7 +188,9 @@ void guessFormalCharges(RWMol *res) {
       // FIX: do we need make sure this only happens for atoms in ring?
       std::string tATT;
       at->getProp(common_properties::_TriposAtomType, tATT);
+      if (!res->getRingInfo()->isSssrOrBetter()) {
       MolOps::findSSSR(*res);
+      }
       if (tATT.find("ar") == std::string::npos && at->getIsAromatic() &&
           res->getRingInfo()->isAtomInRingOfSize(at->getIdx(), 5)) {
         continue;
@@ -435,7 +437,9 @@ bool cleanUpMol2Substructures(RWMol *res) {
             }
           } else {
             // perceive the rings
+            if (!res->getRingInfo()->isSssrOrBetter()) {
             MolOps::findSSSR(*res);
+            }
             // then we check if both atoms are in a ring
             unsigned int rIdx1 = res->getRingInfo()->numAtomRings((*idxIt1));
             unsigned int rIdx2 = res->getRingInfo()->numAtomRings((*idxIt2));
@@ -930,8 +934,7 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
     }
 
     // mol2 format does not support formal charge information, hence we need to
-    // guess it
-    // based on default and explicit valences
+    // guess it based on default and explicit valences
     guessFormalCharges(res);
   } else {
     inStream->seekg(chargeStart, std::ios::beg);
@@ -943,11 +946,10 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
     }
   }
 
-  // set chirality prior to sanitisation since it happens from 3D and it's not
+  // set chirality prior to sanitization since it happens from 3D and it's not
   // possible anymore once the hydrogens are removed
   // FIX: for now this is only for the first conformer - need to be changed once
-  // we
-  // use multiconformer files
+  // we use multiconformer files
   MolOps::assignChiralTypesFrom3D(*res);
 
   if (res && sanitize) {
@@ -955,18 +957,25 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
 
     try {
       if (removeHs) {
+        // Bond stereo detection must happen before H removal, or
+        // else we might be removing stereogenic H atoms in double
+        // bonds (e.g. imines). But before we run stereo detection,
+        // we need to run mol cleanup so don't have trouble with
+        // e.g. nitro groups. Sadly, this a;; means we will find
+        // run both cleanup and ring finding twice (a fast find
+        // rings in bond stereo detection, and another in
+        // sanitization's SSSR symmetrization).
+        unsigned int failedOp = 0;
+        MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
+        MolOps::detectBondStereochemistry(*res);
         MolOps::removeHs(*res, false, false);
       } else {
         MolOps::sanitizeMol(*res);
+        MolOps::detectBondStereochemistry(*res);
       }
 
-      // call detectBondStereochemistry after sanitization "because we need
-      // the ring information".  Also this will set the E/Z labels on the bond.
-      // Similar in spirit to what happens in MolFileParser
-      MolOps::detectBondStereochemistry(*res);
-
     } catch (MolSanitizeException &se) {
-      BOOST_LOG(rdWarningLog) << "sanitise ";
+      BOOST_LOG(rdWarningLog) << "sanitize ";
       std::string molName;
       res->getProp(common_properties::_Name, molName);
       BOOST_LOG(rdWarningLog) << molName << ": ";

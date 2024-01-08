@@ -33,6 +33,7 @@
 #include <fmgr.h>
 #include <access/gist.h>
 #include <access/skey.h>
+#include <utils/sortsupport.h>
 #include <utils/memutils.h>
 #include <math.h>
 
@@ -533,6 +534,41 @@ Datum gmol_consistent(PG_FUNCTION_ARGS) {
   }
 
   PG_RETURN_BOOL(res);
+}
+
+
+/*
+ * Sortsupport function
+ *
+ * Returns a comparator function to sort data in a way that preserves locality.
+ */
+static int
+gmol_cmp(Datum x, Datum y, SortSupport ssup)
+{
+  /* establish order between x and y */
+  bytea *a = (bytea*)DatumGetPointer(PG_DETOAST_DATUM(x));
+  bytea *b = (bytea*)DatumGetPointer(PG_DETOAST_DATUM(y));
+
+  Assert(!ISALLTRUE(a));
+  Assert(!ISALLTRUE(b));
+
+  int siglen = SIGLEN(a);
+  Assert(siglen == SIGLEN(b));
+
+  int retval = bitstringGrayCmp(siglen, VARDATA(a), VARDATA(b));
+  RDKIT_FREE_IF_COPY_P(a, x);
+  RDKIT_FREE_IF_COPY_P(b, y);
+  return retval;
+}
+
+PGDLLEXPORT Datum  gmol_sortsupport(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(gmol_sortsupport);
+Datum
+gmol_sortsupport(PG_FUNCTION_ARGS)
+{
+  SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+  ssup->comparator = gmol_cmp;
+  PG_RETURN_VOID();
 }
 
 bool calcConsistency(bool isLeaf, uint16 strategy, double nCommonUp,

@@ -53,8 +53,8 @@ TransformCatalogParams::TransformCatalogParams(
 
 TransformCatalogParams::~TransformCatalogParams() {}
 
-const std::vector<std::shared_ptr<ChemicalReaction>>
-    &TransformCatalogParams::getTransformations() const {
+const std::vector<std::shared_ptr<ChemicalReaction>> &
+TransformCatalogParams::getTransformations() const {
   return d_transformations;
 }
 
@@ -63,6 +63,15 @@ const ChemicalReaction *TransformCatalogParams::getTransformation(
   URANGE_CHECK(fid, d_transformations.size());
   // return d_transformations[fid];
   return d_transformations[fid].get();
+}
+
+void TransformCatalogParams::initializeTransforms() const {
+  for (auto &transform : d_transformations) {
+    if (!transform || transform->isInitialized()) {
+      continue;
+    }
+    transform->initReactantMatchers();
+  }
 }
 
 void TransformCatalogParams::toStream(std::ostream &ss) const {

@@ -68,6 +68,7 @@ accordingly.
   //! overload
   /// modifies the molecule in place
   void disconnect(RWMol &mol);
+  void disconnectInPlace(RWMol &mol) { disconnect(mol); };
 
  private:
   struct NonMetal {

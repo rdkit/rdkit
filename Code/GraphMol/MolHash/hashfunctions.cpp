@@ -295,20 +295,27 @@ void NormalizeHCount(Atom *aptr) {
   aptr->setNumExplicitHs(hcount);
 }
 
+namespace {
+std::string convertToSmilesWithCXFlags(
+    const RWMol &mol, bool doingCXSmiles,
+    SmilesWriteParams ps = SmilesWriteParams()) {
+  return SmilesWrite::detail::MolToSmiles(mol, ps, doingCXSmiles);
+}
+}  // namespace
+
 std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
                            unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
-  int charge = 0;
 
   for (auto aptr : mol->atoms()) {
-    charge += aptr->getFormalCharge();
     aptr->setIsAromatic(false);
     aptr->setFormalCharge(0);
     if (!elem) {
       aptr->setNumExplicitHs(0);
       aptr->setNoImplicit(true);
       aptr->setAtomicNum(0);
+      aptr->setIsotope(0);
     } else {
       NormalizeHCount(aptr);
     }
@@ -325,7 +332,7 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
-  result = MolToSmiles(*mol);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
 
   if (useCXSmiles) {
     addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
@@ -359,7 +366,7 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles,
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
-  result = MolToSmiles(*mol);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (netq) {
     sprintf(buffer, "_%d", charge);
     result += buffer;
@@ -637,7 +644,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   SmilesWriteParams ps;
   ps.allBondsExplicit = true;
   ps.allHsExplicit = true;
-  result = MolToSmiles(*mol, ps);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles, ps);
   char buffer[32];
   if (!proto) {
     sprintf(buffer, "_%d_%d", hcount, charge);
@@ -687,7 +694,7 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles,
   bool cleanIt = true;
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
-  result = MolToSmiles(*mol);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (!proto) {
     sprintf(buffer, "_%d_%d", hcount, charge);
   } else {
@@ -766,7 +773,7 @@ bool HasNbrInScaffold(Atom *aptr, unsigned char *is_in_scaffold) {
 std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
                                    unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
-  if (!mol->getRingInfo()->isInitialized()) {
+  if (!mol->getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(*mol);
   }
 
@@ -787,6 +794,7 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
       aptr->setFormalCharge(0);
       aptr->setNoImplicit(true);
       aptr->setNumExplicitHs(0);
+      aptr->setIsotope(0);
     } else {
       for_deletion.push_back(aptr);
     }
@@ -805,7 +813,7 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
   std::string result;
-  result = MolToSmiles(*mol);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (useCXSmiles) {
     addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
@@ -849,7 +857,7 @@ std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles,
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
   std::string result;
-  result = MolToSmiles(*mol);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (useCXSmiles) {
     addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
@@ -986,7 +994,7 @@ std::string RegioisomerHash(RWMol *mol, bool useCXSmiles,
   // we need a copy of the molecule so that we can loop over the bonds of
   // something while modifying something else
   RDKit::ROMol molcpy(*mol);
-  if (molcpy.getRingInfo()->isInitialized()) {
+  if (molcpy.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(molcpy);
   }
   for (int i = molcpy.getNumBonds() - 1; i >= 0; --i) {
@@ -1029,7 +1037,7 @@ std::string RegioisomerHash(RWMol *mol, bool useCXSmiles,
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
-  std::string result = MolToSmiles(*mol);
+  auto result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (useCXSmiles) {
     addCXExtensions(mol, result, cxFlagsToSkip);
   }
@@ -1172,7 +1180,7 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles,
       result = AnonymousGraph(mol, true, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::CanonicalSmiles:
-      result = MolToSmiles(*mol);
+      result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
       if (useCXSmiles) {
         addCXExtensions(mol, result, cxFlagsToSkip);
       }
@@ -1193,7 +1201,7 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles,
       result = TautomerHash(mol, false, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::HetAtomTautomerv2:
-      result = TautomerHashv2(mol, false, useCXSmiles);
+      result = TautomerHashv2(mol, false, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::HetAtomProtomer:
       result = TautomerHash(mol, true, useCXSmiles, cxFlagsToSkip);

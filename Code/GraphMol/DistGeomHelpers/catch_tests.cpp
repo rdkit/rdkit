@@ -8,9 +8,10 @@
 //
 
 #include <RDGeneral/test.h>
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <RDGeneral/RDLog.h>
+#include <GraphMol/test_fixtures.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -173,7 +174,7 @@ TEST_CASE("update parameters from JSON") {
       auto conf = mol->getConformer();
       auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
       auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
-      CHECK(v1.angleTo(v2) == Approx(M_PI / 2).margin(0.15));
+      CHECK(v1.angleTo(v2) == Catch::Approx(M_PI / 2).margin(0.15));
     }
   }
 }
@@ -564,8 +565,7 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
   }
 
   SECTION("github #5283") {
-    auto oVal = Chirality::getUseLegacyStereoPerception();
-    Chirality::setUseLegacyStereoPerception(false);
+    UseLegacyStereoPerceptionFixture useLegacy(false);
     auto m =
         "Cc3nn(CC(=O)N2CCN(c1ccccc1)CC2)c(C)c3/N=N\\c6ccc(CNC(=O)CCC(=O)Nc4cccc5C(=O)NCc45)cc6"_smiles;
     REQUIRE(m);
@@ -585,7 +585,6 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
       REQUIRE(bnd->getBondType() == Bond::BondType::DOUBLE);
       CHECK(bnd->getStereo() == m->getBondWithIdx(bnd->getIdx())->getStereo());
     }
-    Chirality::setUseLegacyStereoPerception(oVal);
   }
 }
 
@@ -707,5 +706,43 @@ TEST_CASE("Github #5883: confgen failing for chiral N in a three ring") {
     ps.maxIterations = 1;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid >= 0);
+  }
+}
+
+TEST_CASE("Github #6365: cannot generate conformers for PF6- or SF6") {
+  SECTION("basics") {
+    std::vector<std::string> smileses = {"S(F)(F)(F)(F)(F)F",
+                                         "[P-](F)(F)(F)(F)(F)F"};
+    for (const auto &smi : smileses) {
+      std::unique_ptr<RWMol> mol{SmilesToMol(smi)};
+      REQUIRE(mol);
+      DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+      ps.randomSeed = 42;
+      ps.useRandomCoords = true;
+      auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+      CHECK(cid >= 0);
+    }
+  }
+}
+
+TEST_CASE("Sequential random seeds") {
+  SECTION("basics") {
+    auto mol = "CCCCCCCCCCCC"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+
+    RWMol mol2(*mol);
+
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.enableSequentialRandomSeeds = true;
+    ps.useRandomCoords = true;
+    ps.randomSeed = 0xf00d;
+    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
+    CHECK(cids.size() == 10);
+    ps.randomSeed = 0xf00d + 5;
+    auto cids2 = DGeomHelpers::EmbedMultipleConfs(mol2, 5, ps);
+    CHECK(cids2.size() == 5);
+
+    compareConfs(mol.get(), &mol2, 5, 0);
   }
 }

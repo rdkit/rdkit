@@ -120,7 +120,7 @@ class TestCase(unittest.TestCase):
     ids = [int(x[0]) for x in res]
     ids.sort()
     self.assertTrue(ids == [10, 15, 25, 63, 70])
-    with self.assertRaisesRegexp(Exception, ""):
+    with self.assertRaisesRegex(Exception, ""):
       res = rn.GetTopN(10)
 
   def test3Issue140(self):

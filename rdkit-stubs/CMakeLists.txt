@@ -1,0 +1,36 @@
+string(REGEX REPLACE "\\\\" "/" CMAKE_SOURCE_DIR_FWDSLASH ${CMAKE_SOURCE_DIR})
+set(CMAKE_SOURCE_DIR_FWDSLASH_QUOTED "\"${CMAKE_SOURCE_DIR_FWDSLASH}\" ")
+string(REGEX REPLACE "\\\\" "/" CMAKE_CURRENT_BINARY_DIR_FWDSLASH ${CMAKE_CURRENT_BINARY_DIR})
+set(PYTHON_INSTDIR_FWDSLASH_QUOTED "")
+set(DIR_OR_DIRS "y")
+set(STUB_LOCATIONS "${CMAKE_SOURCE_DIR_FWDSLASH}")
+if (PYTHON_INSTDIR)
+  string(REGEX REPLACE "\\\\" "/" PYTHON_INSTDIR_FWDSLASH ${PYTHON_INSTDIR})
+  set(PYTHON_INSTDIR_FWDSLASH_QUOTED "\"${PYTHON_INSTDIR_FWDSLASH}\" ")
+  set(DIR_OR_DIRS "ies")
+  set(STUB_LOCATIONS "${STUB_LOCATIONS}, ${PYTHON_INSTDIR_FWDSLASH}")
+endif()
+set(CONCURRENCY "")
+if (DEFINED ENV{CMAKE_BUILD_PARALLEL_LEVEL})
+  set(CONCURRENCY "--concurrency $ENV{CMAKE_BUILD_PARALLEL_LEVEL} ")
+endif()
+string(CONCAT RUN_GEN_RDKIT_STUBS_PY "message("
+  "\"-- Building and Installing rdkit-stubs into the following director${DIR_OR_DIRS}: ${STUB_LOCATIONS}\")\n"
+  "set (SEPARATOR \"=====================================================================\n\")\n"
+  "set (COMMON_FILENAME ${CMAKE_CURRENT_BINARY_DIR_FWDSLASH}/gen_rdkit_stubs)\n"
+  "execute_process("
+  "COMMAND "
+  "${PYTHON_EXECUTABLE} -m Scripts.gen_rdkit_stubs ${CONCURRENCY}"
+  "${CMAKE_SOURCE_DIR_FWDSLASH_QUOTED}${PYTHON_INSTDIR_FWDSLASH_QUOTED}"
+  "WORKING_DIRECTORY \"${CMAKE_SOURCE_DIR_FWDSLASH}\" "
+  "OUTPUT_FILE \"\${COMMON_FILENAME}.out\" "
+  "ERROR_FILE \"\${COMMON_FILENAME}.err\" "
+  "RESULT_VARIABLE RETCODE)\n"
+  "if (NOT \"\${RETCODE}\" EQUAL 0)\n"
+  "  file(READ \"\${COMMON_FILENAME}.err\" ERROR_STRING)\n"
+  "  message(\"\n\${SEPARATOR}Installation of rdkit-stubs failed.\n\${ERROR_STRING}\${SEPARATOR}\")\n"
+  "endif()\n"
+)
+set(BUILD_STUBS_SCRIPT "${CMAKE_CURRENT_BINARY_DIR_FWDSLASH}/build_stubs.cmake")
+file(GENERATE OUTPUT ${BUILD_STUBS_SCRIPT} CONTENT "${RUN_GEN_RDKIT_STUBS_PY}")
+add_custom_target(stubs ${CMAKE_COMMAND} -P ${BUILD_STUBS_SCRIPT})

@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #pragma once
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include <string>
 #include <RDGeneral/versions.h>
@@ -33,6 +34,7 @@
 #include <External/AvalonTools/AvalonTools.h>
 #endif
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/Depictor/DepictUtils.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
@@ -46,6 +48,8 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
+#include <GraphMol/RGroupDecomposition/RGroupUtils.h>
+#include <RDGeneral/RDLog.h>
 
 #include <sstream>
 #include <RDGeneral/BoostStartInclude.h>
@@ -99,6 +103,10 @@ RWMol *mol_from_input(const std::string &input,
   bool kekulize = true;
   bool removeHs = true;
   bool mergeQueryHs = false;
+  bool setAromaticity = true;
+  bool fastFindRings = true;
+  bool assignStereo = true;
+  bool mappedDummiesAreRGroups = false;
   RWMol *res = nullptr;
   boost::property_tree::ptree pt;
   if (!details_json.empty()) {
@@ -109,6 +117,10 @@ RWMol *mol_from_input(const std::string &input,
     LPT_OPT_GET(kekulize);
     LPT_OPT_GET(removeHs);
     LPT_OPT_GET(mergeQueryHs);
+    LPT_OPT_GET(setAromaticity);
+    LPT_OPT_GET(fastFindRings);
+    LPT_OPT_GET(assignStereo);
+    LPT_OPT_GET(mappedDummiesAreRGroups);
   }
   try {
     if (input.find("M  END") != std::string::npos) {
@@ -146,13 +158,24 @@ RWMol *mol_from_input(const std::string &input,
         if (!kekulize) {
           sanitizeOps ^= MolOps::SANITIZE_KEKULIZE;
         }
+        if (!setAromaticity) {
+          sanitizeOps ^= MolOps::SANITIZE_SETAROMATICITY;
+        }
         MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
       } else {
         res->updatePropertyCache(false);
+        if (fastFindRings) {
+          MolOps::fastFindRings(*res);
+        }
       }
-      MolOps::assignStereochemistry(*res, true, true, true);
+      if (assignStereo) {
+        MolOps::assignStereochemistry(*res, true, true, true);
+      }
       if (mergeQueryHs) {
         MolOps::mergeQueryHs(*res);
+      }
+      if (mappedDummiesAreRGroups) {
+        relabelMappedDummies(*res);
       }
     } catch (...) {
       delete res;
@@ -470,7 +493,7 @@ std::string molblock_helper(RWMol &mol, const char *details_json,
     LPT_OPT_GET(addChiralHs);
   }
   if (useMolBlockWedging) {
-    reapplyMolBlockWedging(mol);
+    RDKit::Chirality::reapplyMolBlockWedging(mol);
   }
   if (addChiralHs) {
     MolDraw2DUtils::prepareMolForDrawing(mol, false, true, false, false, false);
@@ -488,14 +511,18 @@ void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
   obj.AddMember("atoms", rjAtoms, doc.GetAllocator());
 
   rj::Value rjBonds(rj::kArrayType);
+  std::vector<int> invMatch(q_mol.getNumAtoms(), -1);
+  for (const auto &pair : match) {
+    invMatch[pair.first] = &pair - &match.front();
+  }
   for (const auto qbond : q_mol.bonds()) {
-    unsigned int beginIdx = qbond->getBeginAtomIdx();
-    unsigned int endIdx = qbond->getEndAtomIdx();
-    if (beginIdx >= match.size() || endIdx >= match.size()) {
+    auto beginIdx = invMatch.at(qbond->getBeginAtomIdx());
+    auto endIdx = invMatch.at(qbond->getEndAtomIdx());
+    if (beginIdx == -1 || endIdx == -1) {
       continue;
     }
-    unsigned int idx1 = match[beginIdx].second;
-    unsigned int idx2 = match[endIdx].second;
+    unsigned int idx1 = match.at(beginIdx).second;
+    unsigned int idx2 = match.at(endIdx).second;
     const auto bond = d_mol.getBondBetweenAtoms(idx1, idx2);
     if (bond != nullptr) {
       rjBonds.PushBack(bond->getIdx(), doc.GetAllocator());
@@ -615,7 +642,7 @@ bool invertWedgingIfMolHasFlipped(ROMol &mol,
   auto zRot = trans.getVal(2, 2);
   bool shouldFlip = zRot < FLIP_THRESHOLD;
   if (shouldFlip) {
-    invertMolBlockWedgingInfo(mol);
+    RDKit::Chirality::invertMolBlockWedgingInfo(mol);
   }
   return shouldFlip;
 }
@@ -849,190 +876,43 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
   if (!templateMol.getNumConformers()) {
     return res;
   }
-  constexpr int MAX_MATCHES = 1000;
-  constexpr double RMSD_THRESHOLD = 1.e-2;
-  constexpr double MSD_THRESHOLD = RMSD_THRESHOLD * RMSD_THRESHOLD;
+  RDDepict::ConstrainedDepictionParams p;
   bool useCoordGen = false;
-  bool allowRGroups = false;
-  bool acceptFailure = true;
-  bool alignOnly = false;
+  std::string referenceSmarts;
   if (details_json && strlen(details_json)) {
     std::istringstream ss;
     ss.str(details_json);
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ss, pt);
     LPT_OPT_GET(useCoordGen);
-    LPT_OPT_GET(allowRGroups);
-    LPT_OPT_GET(acceptFailure);
-    LPT_OPT_GET(alignOnly);
+    LPT_OPT_GET(referenceSmarts);
+    LPT_OPT_GET2(p, allowRGroups);
+    LPT_OPT_GET2(p, acceptFailure);
+    LPT_OPT_GET2(p, alignOnly);
   }
-  MatchVectType match;
   int confId = -1;
-  std::unique_ptr<Conformer> origConformer;
+  MatchVectType match;
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   bool oprefer = RDDepict::preferCoordGen;
   RDDepict::preferCoordGen = useCoordGen;
 #endif
-  // store the original conformer so it can be restored
-  // if alignment fails and acceptFailure is false
-  if (!acceptFailure && mol.getNumConformers()) {
-    origConformer.reset(new Conformer(mol.getConformer()));
+  std::unique_ptr<ROMol> refPattern;
+  if (!referenceSmarts.empty()) {
+    try {
+      refPattern.reset(SmartsToMol(referenceSmarts));
+    } catch (...) {
+    }
   }
-  if (alignOnly) {
-    std::vector<MatchVectType> matches;
-    std::unique_ptr<ROMol> molHs;
-    ROMol *prbMol = &mol;
-    if (allowRGroups) {
-      auto atoms = templateMol.atoms();
-      allowRGroups = std::any_of(atoms.begin(), atoms.end(),
-                                 isAtomTerminalRGroupOrQueryHydrogen);
-    }
-    if (allowRGroups) {
-      molHs.reset(MolOps::addHs(mol));
-      prbMol = molHs.get();
-    }
-    if (SubstructMatch(*prbMol, templateMol, matches, false)) {
-      if (allowRGroups) {
-        matches = sortMatchesByDegreeOfCoreSubstitution(*prbMol, templateMol,
-                                                        matches);
-        int maxMatchedHeavies = -1;
-        std::vector<MatchVectType> prunedMatches;
-        prunedMatches.reserve(matches.size());
-        for (const auto &match : matches) {
-          int nMatchedHeavies = 0;
-          MatchVectType prunedMatch;
-          prunedMatch.reserve(match.size());
-          for (const auto &pair : match) {
-            const auto templateAtom = templateMol.getAtomWithIdx(pair.first);
-            const auto prbAtom = prbMol->getAtomWithIdx(pair.second);
-            if (isAtomTerminalRGroupOrQueryHydrogen(templateAtom)) {
-              if (prbAtom->getAtomicNum() == 1) {
-                continue;
-              }
-              ++nMatchedHeavies;
-            }
-            prunedMatch.push_back(std::move(pair));
-          }
-          if (nMatchedHeavies < maxMatchedHeavies) {
-            break;
-          } else {
-            prunedMatches.push_back(std::move(prunedMatch));
-            maxMatchedHeavies = nMatchedHeavies;
-          }
-        }
-        matches = std::move(prunedMatches);
-      }
-      std::for_each(matches.begin(), matches.end(), [](auto &match) {
-        std::for_each(match.begin(), match.end(),
-                      [](auto &pair) { std::swap(pair.first, pair.second); });
-      });
-      if (!mol.getNumConformers()) {
-        RDDepict::compute2DCoords(mol);
-      }
-      RDGeom::Transform3D trans;
-      MolAlign::getBestAlignmentTransform(mol, templateMol, trans, match,
-                                          confId, confId, matches, MAX_MATCHES);
-      std::for_each(match.begin(), match.end(),
-                    [](auto &pair) { std::swap(pair.first, pair.second); });
-      MolTransforms::transformConformer(mol.getConformer(), trans);
-      invertWedgingIfMolHasFlipped(mol, trans);
-    } else if (acceptFailure) {
-      RDDepict::compute2DCoords(mol);
-      clearMolBlockWedgingInfo(mol);
-    }
-  } else {
-    const ROMol *refPattern = nullptr;
-    // always accept failure in the original call because
-    // we detect it afterwards and, in case, restore the
-    // original conformation
-    const bool acceptOrigFailure = true;
-    std::unique_ptr<ROMol> molOrig;
-    if (mol.getNumConformers()) {
-      molOrig.reset(new ROMol(mol));
-    }
+  try {
     match = RDDepict::generateDepictionMatching2DStructure(
-        mol, templateMol, confId, refPattern, acceptOrigFailure, false,
-        allowRGroups);
-    // we need to clear the existing wedging information if:
-    // 1. there is no match and we accept failure; this means that
-    //    we rebuild coordinates from scratch, hence pre-existing
-    //    wedging info is not valid anymore
-    // 2. there is a match
-    // 3. the original molecule has no coordinates to start with
-    //    (in that case it should already have no wedging info either, anyway)
-    // If there is no match and we do not accept failure, we keep
-    // existing coordinates and hence also keep the wedging info
-    bool shouldNeverClearWedgingInfo = match.empty() && !acceptFailure;
-    bool shouldClearWedgingInfo = (match.empty() && acceptFailure) || !molOrig;
-    if (!shouldNeverClearWedgingInfo) {
-      if (!shouldClearWedgingInfo) {
-        std::set<unsigned int> molMatchIndices;
-        std::transform(match.begin(), match.end(),
-                       std::inserter(molMatchIndices, molMatchIndices.begin()),
-                       [](const auto &pair) { return pair.second; });
-        // if any of the bonds that have wedging information from the molblock
-        // has at least one atom which is not part of the scaffold, we cannot
-        // preserve wedging information
-        auto molBonds = mol.bonds();
-        shouldClearWedgingInfo = std::any_of(
-            molBonds.begin(), molBonds.end(), [&molMatchIndices](const auto b) {
-              return ((b->hasProp(common_properties::_MolFileBondStereo) ||
-                       b->hasProp(common_properties::_MolFileBondCfg)) &&
-                      (!molMatchIndices.count(b->getBeginAtomIdx()) ||
-                       !molMatchIndices.count(b->getEndAtomIdx())));
-            });
-      }
-      if (!shouldClearWedgingInfo) {
-        // check that scaffold coordinates have not changed, which may
-        // happen when using CoordGen
-        const auto &molPos = mol.getConformer().getPositions();
-        const auto &templatePos = templateMol.getConformer().getPositions();
-        shouldClearWedgingInfo = std::any_of(
-            match.begin(), match.end(),
-            [&molPos, &templatePos, MSD_THRESHOLD](const auto &pair) {
-              return (molPos.at(pair.second) - templatePos.at(pair.first))
-                         .lengthSq() > MSD_THRESHOLD;
-            });
-      }
-      // final check: we still might need to invert wedging if the molecule
-      // has flipped to match the scaffold
-      if (!shouldClearWedgingInfo) {
-        RDGeom::Transform3D trans;
-        MatchVectType identityMatch(match.size());
-        std::transform(match.begin(), match.end(), identityMatch.begin(),
-                       [](const auto &pair) {
-                         return std::make_pair(pair.second, pair.second);
-                       });
-        auto rmsd = MolAlign::getAlignmentTransform(
-            *molOrig, mol, trans, confId, confId, &identityMatch);
-        // this should not happen as we checked that previously, but we are
-        // notoriously paranoid
-        if (rmsd > RMSD_THRESHOLD) {
-          shouldClearWedgingInfo = true;
-        } else {
-          invertWedgingIfMolHasFlipped(mol, trans);
-        }
-      }
-    }
-    if (shouldClearWedgingInfo) {
-      clearMolBlockWedgingInfo(mol);
-    }
+        mol, templateMol, confId, refPattern.get(), p);
+  } catch (...) {
   }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = oprefer;
 #endif
   if (match.empty()) {
-    if (acceptFailure) {
-      res = "{}";
-    } else {
-      if (mol.getNumConformers()) {
-        mol.removeConformer(mol.getConformer().getId());
-      }
-      if (origConformer) {
-        mol.addConformer(origConformer.release());
-      }
-      res = "";
-    }
+    res = (p.acceptFailure ? "{}" : "");
   } else {
     rj::Document doc;
     doc.SetObject();
@@ -1082,6 +962,150 @@ std::string get_mol_frags_mappings(
   doc.Accept(writer);
   return buffer.GetString();
 }
+
+struct LogHandle {
+ public:
+  LogHandle(const std::string &logName) : d_logName(logName) {
+    d_logNameToLoggers = std::map<std::string, LoggerStateVector>{
+        {"rdApp.debug", {LoggerState(rdDebugLog)}},
+        {"rdApp.info", {LoggerState(rdInfoLog)}},
+        {"rdApp.warning", {LoggerState(rdWarningLog)}},
+        {"rdApp.error", {LoggerState(rdErrorLog)}},
+        {"rdApp.*",
+         {LoggerState(rdDebugLog), LoggerState(rdInfoLog),
+          LoggerState(rdWarningLog), LoggerState(rdErrorLog)}}};
+  }
+  ~LogHandle() { close(); }
+  static void enableLogging() {
+    initLogsIfNeeded();
+    boost::logging::enable_logs("rdApp.*");
+  }
+  static void disableLogging() {
+    initLogsIfNeeded();
+    boost::logging::disable_logs("rdApp.*");
+  }
+  void clearBuffer() {
+    d_stream.str({});
+    d_stream.clear();
+  }
+  std::string getBuffer() {
+    d_stream.flush();
+    return d_stream.str();
+  }
+  static LogHandle *setLogTee(const char *logNameCStr) {
+    return setLogCommon(logNameCStr, true);
+  }
+  static LogHandle *setLogCapture(const char *logNameCStr) {
+    return setLogCommon(logNameCStr, false);
+  }
+
+ private:
+  struct LoggerState {
+   public:
+    LoggerState(RDLogger &logger) : d_logger(logger) {
+      if (d_logger) {
+        d_prevDest = d_logger->dp_dest;
+        d_prevWasEnabled = d_logger->df_enabled;
+      }
+    }
+    ~LoggerState() {
+      if (!d_prevDest) {
+        d_logger = nullptr;
+      } else {
+        if (d_logger->dp_dest) {
+          d_logger->dp_dest->flush();
+        }
+        d_logger->dp_dest = d_prevDest;
+        d_logger->df_enabled = d_prevWasEnabled;
+      }
+    }
+    const RDLogger &logger() const { return d_logger; }
+    std::ostream *stream() const { return d_logger->dp_dest; }
+    void setStream(std::ostream &ostream) {
+      if (!d_logger) {
+        d_logger = std::make_shared<boost::logging::rdLogger>(&ostream);
+      } else {
+        if (d_logger->dp_dest) {
+          d_logger->dp_dest->flush();
+        }
+        d_logger->dp_dest = &ostream;
+      }
+    }
+
+   private:
+    RDLogger &d_logger;
+    std::ostream *d_prevDest = nullptr;
+    bool d_prevWasEnabled = false;
+  };
+  typedef std::vector<LoggerState> LoggerStateVector;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  typedef std::atomic_bool LoggingFlag;
+#else
+  typedef bool LoggingFlag;
+#endif
+  bool open(bool setTee) {
+    d_haveTee = setTee;
+    auto loggerStates = getLoggerStates();
+    if (!loggerStates) {
+      return false;
+    }
+    clearBuffer();
+    if (d_haveTee) {
+      initLogsIfNeeded();
+    }
+    for (auto &loggerState : *loggerStates) {
+      if (d_haveTee) {
+        CHECK_INVARIANT(loggerState.logger(), "");
+        loggerState.logger()->SetTee(d_stream);
+      } else {
+        loggerState.setStream(d_stream);
+      }
+      loggerState.logger()->df_enabled = true;
+    }
+    return true;
+  }
+  void close() {
+    const auto loggerStates = getLoggerStates();
+    if (!loggerStates) {
+      return;
+    }
+    for (const auto &loggerState : *loggerStates) {
+      if (d_haveTee) {
+        CHECK_INVARIANT(loggerState.logger(), "");
+        loggerState.logger()->ClearTee();
+      }
+    }
+  }
+  static LogHandle *setLogCommon(const char *logNameCStr, bool setTee) {
+    const auto logName = std::string(logNameCStr);
+    std::unique_ptr<MinimalLib::LogHandle> log_handle(
+        new MinimalLib::LogHandle(logName));
+    return (log_handle->open(setTee) ? log_handle.release() : nullptr);
+  }
+  // init logs if not yet initialized; returns true
+  // if they were actually initialized, false if not
+  static bool initLogsIfNeeded() {
+    if (d_loggingNeedsInit) {
+      RDLog::InitLogs();
+      d_loggingNeedsInit = false;
+      return true;
+    }
+    return false;
+  }
+  // returns nullptr if no loggers can be found
+  LoggerStateVector *getLoggerStates() {
+    const auto it = d_logNameToLoggers.find(d_logName);
+    if (it == d_logNameToLoggers.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  }
+  bool d_haveTee;
+  std::map<std::string, LoggerStateVector> d_logNameToLoggers;
+  std::string d_logName;
+  std::stringstream d_stream;
+  static LoggingFlag d_loggingNeedsInit;
+};
 
 }  // namespace MinimalLib
 }  // namespace RDKit

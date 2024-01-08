@@ -61,29 +61,15 @@ class DrawMolMCH : public DrawMol {
   DrawMolMCH &operator=(DrawMol &&) = delete;
 
   void extractHighlights(double scale) override;
-  void extractMCHighlights();
-  void makeBondHighlights(
-      std::vector<std::unique_ptr<DrawShape>> &bondHighlights);
-  void makeAtomHighlights(
-      std::vector<std::unique_ptr<DrawShape>> &atomHighlights);
-  // adjust p2 so that the line from p1 to p2 stops where it intersects
-  // the label ellipse for at_idx.
-  void adjustLineEndForHighlight(int at_idx, Point2D p1, Point2D &p2) const;
-  void calcSymbolEllipse(unsigned int atomIdx, Point2D &centre, double &xradius,
-                         double &yradius) const;
-  void fixHighlightJoinProblems(
-      std::vector<std::unique_ptr<DrawShape>> &atomHighlights,
-      std::vector<std::unique_ptr<DrawShape>> &bondHighlights);
+  virtual void extractMCHighlights() = 0;
+  void getAtomRadius(unsigned int atomIdx, double &xradius,
+                     double &yradius) const;
 
-  const std::map<int, std::vector<DrawColour>> mcHighlightAtomMap_;
+  const std::map<int, std::vector<DrawColour>> &mcHighlightAtomMap_;
   const std::map<int, std::vector<DrawColour>> &mcHighlightBondMap_;
   const std::map<int, int> &highlightLinewidthMultipliers_;
 };
 
-// adjust p2 so that the line from p1 to p2 stops where it intersects
-// the ellipse.
-void adjustLineEndForEllipse(const Point2D &centre, double xradius,
-                             double yradius, Point2D p1, Point2D &p2);
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

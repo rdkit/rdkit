@@ -158,6 +158,14 @@ RDKIT_MOLDRAW2D_EXPORT void calcArrowHead(Point2D &arrowEnd, Point2D &arrow1,
                                           const Point2D &arrowBegin,
                                           bool asPolygon, double frac,
                                           double angle);
+
+// adjust p2 so that the line from p1 to p2 stops where it intersects
+// the ellipse.
+RDKIT_MOLDRAW2D_EXPORT void adjustLineEndForEllipse(const Point2D &centre,
+                                                    double xradius,
+                                                    double yradius, Point2D p1,
+                                                    Point2D &p2);
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

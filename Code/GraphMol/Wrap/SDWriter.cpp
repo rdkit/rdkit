@@ -78,7 +78,7 @@ struct sdwriter_wrap {
     python::class_<SDWriter, boost::noncopyable>("SDWriter", docStr.c_str(),
                                                  python::no_init)
         .def("__init__", python::make_constructor(&getSDWriter))
-        .def(python::init<std::string>(python::args("fileName"),
+        .def(python::init<std::string>(python::args("self", "fileName"),
                                        "Constructor.\n\n"
                                        "   If a string argument is provided, "
                                        "it will be treated as the name of the "
@@ -88,7 +88,7 @@ struct sdwriter_wrap {
         .def("__enter__", &MolIOEnter<SDWriter>,
              python::return_internal_reference<>())
         .def("__exit__", &MolIOExit<SDWriter>)
-        .def("SetProps", SetSDWriterProps,
+        .def("SetProps", SetSDWriterProps, python::args("self", "props"),
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"
              "    - props: a list or tuple of property names\n\n")
@@ -99,22 +99,23 @@ struct sdwriter_wrap {
              "  ARGUMENTS:\n\n"
              "    - mol: the Mol to be written\n"
              "    - confId: (optional) ID of the conformation to write\n\n")
-        .def("flush", &SDWriter::flush,
+        .def("flush", &SDWriter::flush, python::args("self"),
              "Flushes the output file (forces the disk file to be "
              "updated).\n\n")
-        .def("close", &SDWriter::close,
+        .def("close", &SDWriter::close, python::args("self"),
              "Flushes the output file and closes it. The Writer cannot be used "
              "after this.\n\n")
-        .def("NumMols", &SDWriter::numMols,
+        .def("NumMols", &SDWriter::numMols, python::args("self"),
              "Returns the number of molecules written so far.\n\n")
         .def("SetForceV3000", &SDWriter::setForceV3000,
+             python::args("self", "val"),
              "Sets whether or not V3000 mol file writing is being forced.\n\n")
-        .def("GetForceV3000", &SDWriter::getForceV3000,
+        .def("GetForceV3000", &SDWriter::getForceV3000, python::args("self"),
              "Returns whether or not V3000 mol file writing is being "
              "forced.\n\n")
-        .def("SetKekulize", &SDWriter::setKekulize,
+        .def("SetKekulize", &SDWriter::setKekulize, python::args("self", "val"),
              "Sets whether or not molecules are kekulized on writing.\n\n")
-        .def("GetKekulize", &SDWriter::getKekulize,
+        .def("GetKekulize", &SDWriter::getKekulize, python::args("self"),
              "Returns whether or not molecules are kekulized on writing.\n\n")
         .def("GetText", getSDTextHelper,
              (python::arg("mol"), python::arg("confId") = -1,

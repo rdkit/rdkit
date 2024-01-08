@@ -44,6 +44,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentRemover {
   FragmentRemover &operator=(FragmentRemover const &) = delete;
 
   ROMol *remove(const ROMol &mol);
+  void removeInPlace(RWMol &mol);
 
  private:
   // Setting leave_last to True will ensure at least one fragment
@@ -82,7 +83,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
   LargestFragmentChooser(const LargestFragmentChooser &other);
   ~LargestFragmentChooser() = default;
 
-  ROMol *choose(const ROMol &mol);
+  ROMol *choose(const ROMol &mol) const;
+  void chooseInPlace(RWMol &mol) const;
   struct Largest {
     Largest();
     Largest(std::string &smiles, boost::shared_ptr<ROMol> fragment,

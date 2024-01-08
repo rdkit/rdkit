@@ -11,7 +11,8 @@ steps:
         py-boost=$(boost_version) libboost=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas jupyter
     call activate rdkit_build
-    conda install -c conda-forge cmake nbval
+    conda install -c conda-forge sphinx myst-parser jupyter pytest nbval
+    conda install -c conda-forge cmake
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=
@@ -24,7 +25,6 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF ^
     -DRDK_BUILD_CPP_TESTS=ON ^
     -DRDK_BUILD_PYTHON_WRAPPERS=ON ^
-    -DRDK_USE_BOOST_REGEX=ON ^
     -DRDK_BUILD_COORDGEN_SUPPORT=ON ^
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON ^
     -DRDK_OPTIMIZE_POPCNT=ON ^

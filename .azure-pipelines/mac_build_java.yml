@@ -17,10 +17,12 @@ steps:
     echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
-    conda create --name rdkit_build  $(compiler)=$(compiler_version) libcxx=$(compiler_version) cmake=3.19.6 \
-        boost-cpp=$(boost_version) boost=$(boost_version) \
-        py-boost=$(boost_version) libboost=$(boost_version) \
-        cairo eigen swig=3
+    conda create --name rdkit_build  -c conda-forge $(compiler)=$(compiler_version) \
+        libcxx=$(compiler_version) cmake=3.26 \
+        libboost=$(boost_version) \
+        libboost-devel=$(boost_version) \
+        cairo eigen swig=4.1
+    conda activate rdkit_build
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -34,7 +36,6 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=ON \
     -DRDK_BUILD_CPP_TESTS=OFF \
     -DRDK_BUILD_PYTHON_WRAPPERS=OFF \
-    -DRDK_USE_BOOST_REGEX=OFF \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \
@@ -47,11 +48,7 @@ steps:
     -DRDK_BUILD_SWIG_WRAPPERS=ON \
     -DRDK_SWIG_STATIC=ON \
     -DRDK_BUILD_THREADSAFE_SSS=ON \
-    -DRDK_TEST_MULTITHREADED=ON \
-    -DBoost_NO_SYSTEM_PATHS=ON \
-    -DBoost_USE_STATIC_LIBS=ON \
-    -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
-    -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
+    -DRDK_TEST_MULTITHREADED=ON
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
