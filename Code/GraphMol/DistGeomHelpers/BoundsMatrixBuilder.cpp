@@ -1304,9 +1304,6 @@ void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
     return;
   }
 
-  Atom::HybridizationType ahyb3 = atm3->getHybridization();
-  Atom::HybridizationType ahyb2 = atm2->getHybridization();
-
   double bl1 = accumData.bondLengths[bid1];
   double bl2 = accumData.bondLengths[bid2];
   double bl3 = accumData.bondLengths[bid3];
