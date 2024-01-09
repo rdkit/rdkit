@@ -41,7 +41,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo {
   std::string message;
 
   bool operator==(const ValidationErrorInfo & other) const {
-    return (this == &other) || (
+    return (
       level == other.level &&
       component == other.component &&
       message == other.message
