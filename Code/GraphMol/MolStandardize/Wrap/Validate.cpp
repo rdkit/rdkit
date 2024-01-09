@@ -23,8 +23,7 @@ python::list rdkitValidate(MolStandardize::RDKitValidation &self,
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
   for (auto &query : errout) {
-    std::string msg = query.what();
-    res.append(msg);
+    res.append(query);
   }
   return res;
 }
@@ -51,7 +50,7 @@ python::list molVSvalidateHelper(MolStandardize::MolVSValidation &self,
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
   for (auto &query : errout) {
-    s.append(query.what());
+    s.append(query);
   }
   return s;
 }
@@ -76,8 +75,7 @@ python::list allowedAtomsValidate(MolStandardize::AllowedAtomsValidation &self,
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
   for (auto &query : errout) {
-    std::string msg = query.what();
-    res.append(msg);
+    res.append(query);
   }
   return res;
 }
@@ -102,8 +100,7 @@ python::list disallowedAtomsValidate(
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
   for (auto &query : errout) {
-    std::string msg = query.what();
-    res.append(msg);
+    res.append(query);
   }
   return res;
 }
@@ -113,8 +110,7 @@ python::list standardizeSmilesHelper(const std::string &smiles) {
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       MolStandardize::validateSmiles(smiles);
   for (auto &query : errout) {
-    std::string msg = query.what();
-    res.append(msg);
+    res.append(query);
   }
   return res;
 }
@@ -124,6 +120,12 @@ python::list standardizeSmilesHelper(const std::string &smiles) {
 struct validate_wrapper {
   static void wrap() {
     std::string docString = "";
+
+    python::class_<MolStandardize::ValidationErrorInfo>("ValidationErrorInfo")
+        .def_readwrite("level", &MolStandardize::ValidationErrorInfo::level)
+        .def_readwrite("component", &MolStandardize::ValidationErrorInfo::component)
+        .def_readwrite("message", &MolStandardize::ValidationErrorInfo::message)
+        ;
 
     python::class_<MolStandardize::RDKitValidation, boost::noncopyable>(
         "RDKitValidation", python::init<>(python::args("self")))
