@@ -1568,7 +1568,7 @@ Molecule Hash Strings
 .. testoutput::
    :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
 
-   AnonymousGraph **(***1*****1)*(*)*(*)*(*)*1***(*)*(*)*1
+   AnonymousGraph **1***(*(*)*(*)*(*)*(*)***2*****2)**1*
    ElementGraph CC(C(O)C1CCC(O)C(O)C1)N(C)C(O)OCC1CCCCC1
    CanonicalSmiles CC(C(O)c1ccc(O)c(O)c1)N(C)C(=O)OCc1ccccc1
    MurckoScaffold c1ccc(CCNCOCc2ccccc2)cc1

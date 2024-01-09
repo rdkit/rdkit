@@ -323,6 +323,7 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
 
   for (auto bptr : mol->bonds()) {
     bptr->setBondType(Bond::SINGLE);
+    bptr->setIsAromatic(false); // clear aromatic flags
   }
   MolOps::assignRadicals(*mol);
 
