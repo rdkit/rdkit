@@ -12,6 +12,17 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Validate.h>
 
+namespace RDKit {
+namespace MolStandardize {
+std::ostream &operator<<(std::ostream &ostr, const MolStandardize::ValidationErrorInfo &vei)
+{
+  ostr
+    << "ValidationErrorInfo('" << vei.level << "', '" << vei.component << "', '" << vei.message << "')";
+  return ostr;
+}
+}
+}
+
 namespace python = boost::python;
 using namespace RDKit;
 
@@ -121,10 +132,16 @@ struct validate_wrapper {
   static void wrap() {
     std::string docString = "";
 
-    python::class_<MolStandardize::ValidationErrorInfo>("ValidationErrorInfo")
+    python::class_<MolStandardize::ValidationErrorInfo>(
+          "ValidationErrorInfo",
+          python::init<std::string, std::string, std::string>(
+            python::args("self", "level", "component", "message"))
+        )
         .def_readwrite("level", &MolStandardize::ValidationErrorInfo::level)
         .def_readwrite("component", &MolStandardize::ValidationErrorInfo::component)
         .def_readwrite("message", &MolStandardize::ValidationErrorInfo::message)
+        .def(python::self == python::self)
+        .def(python::self_ns::repr(python::self))
         ;
 
     python::class_<MolStandardize::RDKitValidation, boost::noncopyable>(

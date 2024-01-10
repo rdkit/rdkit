@@ -269,10 +269,10 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("CO(C)C", sanitize=False)
     errors = vm.validate(mol)
     self.assertEqual(len(errors), 1)
-    error = errors[0]
     self.assertEqual(
-      (error.level, error.component, error.message),
-      ("INFO", "ValenceValidation", "Explicit valence for atom # 1 O, 3, is greater than permitted"))
+      errors[0],
+      rdMolStandardize.ValidationErrorInfo(
+        "INFO", "ValenceValidation", "Explicit valence for atom # 1 O, 3, is greater than permitted"))
 
     vm2 = rdMolStandardize.MolVSValidation([rdMolStandardize.FragmentValidation()])
     # with no argument it also works
@@ -280,22 +280,23 @@ class TestCase(unittest.TestCase):
     mol2 = Chem.MolFromSmiles("COc1cccc(C=N[N-]C(N)=O)c1[O-].O.O.O.O=[U+2]=O")
     errors2 = vm2.validate(mol2)
     self.assertEqual(len(errors2), 1)
-    error2 = errors2[0]
     self.assertEqual(
-      (error2.level, error2.component, error2.message),
-      ("INFO", "FragmentValidation", "water/hydroxide is present"))
+      errors2[0],
+      rdMolStandardize.ValidationErrorInfo(
+        "INFO", "FragmentValidation", "water/hydroxide is present"))
 
     vm3 = rdMolStandardize.MolVSValidation()
     mol3 = Chem.MolFromSmiles("C1COCCO1.O=C(NO)NO")
     errors3 = vm3.validate(mol3)
     self.assertEqual(len(errors3), 2)
-    error3a, error3b = errors3
     self.assertEqual(
-      (error3a.level, error3a.component, error3a.message),
-      ("INFO", "FragmentValidation", "1,2-dimethoxyethane is present"))
+      errors3[0],
+      rdMolStandardize.ValidationErrorInfo(
+        "INFO", "FragmentValidation", "1,2-dimethoxyethane is present"))
     self.assertEqual(
-      (error3b.level, error3b.component, error3b.message),
-      ("INFO", "FragmentValidation", "1,4-dioxane is present"))
+      errors3[1],
+      rdMolStandardize.ValidationErrorInfo(
+        "INFO", "FragmentValidation", "1,4-dioxane is present"))
 
     atomic_no = [6, 7, 8]
     allowed_atoms = [Atom(i) for i in atomic_no]
@@ -303,10 +304,10 @@ class TestCase(unittest.TestCase):
     mol4 = Chem.MolFromSmiles("CC(=O)CF")
     errors4 = vm4.validate(mol4)
     self.assertEqual(len(errors4), 1)
-    error4 = errors4[0]
     self.assertEqual(
-      (error4.level, error4.component, error4.message),
-      ("INFO", "AllowedAtomsValidation", "Atom F is not in allowedAtoms list"))
+      errors4[0],
+      rdMolStandardize.ValidationErrorInfo(
+        "INFO", "AllowedAtomsValidation", "Atom F is not in allowedAtoms list"))
 
     atomic_no = [9, 17, 35]
     disallowed_atoms = [Atom(i) for i in atomic_no]
@@ -314,17 +315,17 @@ class TestCase(unittest.TestCase):
     mol5 = Chem.MolFromSmiles("CC(=O)CF")
     errors5 = vm5.validate(mol5)
     self.assertEqual(len(errors5), 1)
-    error5 = errors5[0]
     self.assertEqual(
-      (error5.level, error5.component, error5.message),
-      ("INFO", "DisallowedAtomsValidation", "Atom F is in disallowedAtoms list"))
+      errors5[0],
+      rdMolStandardize.ValidationErrorInfo(
+        "INFO", "DisallowedAtomsValidation", "Atom F is in disallowedAtoms list"))
 
     errors6 = rdMolStandardize.ValidateSmiles("ClCCCl.c1ccccc1O")
     self.assertEqual(len(errors6), 1)
-    error6 = errors6[0]
     self.assertEqual(
-      (error6.level, error6.component, error6.message),
-      ("INFO", "FragmentValidation", "1,2-dichloroethane is present"))
+      errors6[0],
+      rdMolStandardize.ValidationErrorInfo(
+        "INFO", "FragmentValidation", "1,2-dichloroethane is present"))
 
   def test10NormalizeFromData(self):
     data = """//	Name	SMIRKS

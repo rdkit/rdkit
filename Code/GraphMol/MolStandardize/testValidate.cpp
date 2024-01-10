@@ -33,10 +33,10 @@ void testRDKitValidation() {
   unique_ptr<ROMol> m1(SmilesToMol(smi1, 0, false));
   vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
   for (auto &query : errout1) {
-    TEST_ASSERT(query == ValidationErrorInfo({
+    TEST_ASSERT(query == ValidationErrorInfo(
       "INFO", "ValenceValidation",
-      "Explicit valence for atom # 1 O, 3, is greater than permitted"
-    }));
+      "Explicit valence for atom # 1 O, 3, is greater than permitted")
+      );
   }
 
   // testing for molecule with no atoms
@@ -44,9 +44,9 @@ void testRDKitValidation() {
   unique_ptr<ROMol> m2(SmilesToMol(smi2, 0, false));
   vector<ValidationErrorInfo> errout2 = vm.validate(*m2, true);
   for (auto &query : errout2) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "ERROR", "NoAtomValidation", "Molecule has no atoms"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "ERROR", "NoAtomValidation", "Molecule has no atoms")
+      );
   }
 
   // testing molecule with multiple valency errors
@@ -83,54 +83,54 @@ void testMolVSValidation() {
   unique_ptr<ROMol> m1(SmilesToMol(smi1, 0, false));
   vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
   for (auto &query : errout1) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "ERROR", "NoAtomValidation", "Molecule has no atoms"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "ERROR", "NoAtomValidation", "Molecule has no atoms")
+      );
   }
 
   smi2 = "O=C([O-])c1ccccc1";
   unique_ptr<ROMol> m2(SmilesToMol(smi2, 0, false));
   vector<ValidationErrorInfo> errout2 = vm.validate(*m2, true);
   for (auto &query : errout2) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "NeutralValidation", "Not an overall neutral system (-1)"
-    }))
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "NeutralValidation", "Not an overall neutral system (-1)")
+      );
   }
 
   smi3 = "CN=[NH+]CN=N";
   unique_ptr<ROMol> m3(SmilesToMol(smi3, 0, false));
   vector<ValidationErrorInfo> errout3 = vm.validate(*m3, true);
   for (auto &query : errout3) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "NeutralValidation", "Not an overall neutral system (+1)"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "NeutralValidation", "Not an overall neutral system (+1)")
+      );
   }
 
   smi4 = "[13CH4]";
   unique_ptr<ROMol> m4(SmilesToMol(smi4, 0, false));
   vector<ValidationErrorInfo> errout4 = vm.validate(*m4, true);
   for (auto &query : errout4) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "IsotopeValidation", "Molecule contains isotope 13C"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "IsotopeValidation", "Molecule contains isotope 13C")
+      );
   }
 
   smi5 = "[2H]C(Cl)(Cl)Cl";
   unique_ptr<ROMol> m5(SmilesToMol(smi5, 0, false));
   vector<ValidationErrorInfo> errout5 = vm.validate(*m5, true);
   for (auto &query : errout5) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "IsotopeValidation", "Molecule contains isotope 2H"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "IsotopeValidation", "Molecule contains isotope 2H")
+      );
   }
 
   smi6 = "[2H]OC([2H])([2H])[2H]";
   unique_ptr<ROMol> m6(SmilesToMol(smi6, 0, false));
   vector<ValidationErrorInfo> errout6 = vm.validate(*m6, true);
   for (auto &query : errout6) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "IsotopeValidation", "Molecule contains isotope 2H"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "IsotopeValidation", "Molecule contains isotope 2H")
+      );
   }
 
   std::string smi7 = "COc1cccc(C=N[N-]C(N)=O)c1[O-].O.O.O.O=[U+2]=O";
@@ -138,9 +138,9 @@ void testMolVSValidation() {
   vector<ValidationErrorInfo> errout7 = vm.validate(*m7, true);
   TEST_ASSERT(errout7.size() != 0);
   for (auto &query : errout7) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "FragmentValidation", "water/hydroxide is present"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "FragmentValidation", "water/hydroxide is present")
+      );
   }
 
   std::string smi8 = "CC(=O)O.NCC(=O)NCCCCCCCCCCNC(=O)CN";
@@ -148,9 +148,9 @@ void testMolVSValidation() {
   vector<ValidationErrorInfo> errout8 = vm.validate(*m8, true);
   TEST_ASSERT(errout8.size() != 0);
   for (auto &query : errout8) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "FragmentValidation", "acetate/acetic acid is present"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "FragmentValidation", "acetate/acetic acid is present")
+      );
   }
 
   std::string smi9 = "N#CC(Br)(Br)C#N.[Br-].[K+]";
@@ -226,9 +226,9 @@ void testAllowedAtomsValidation() {
   unique_ptr<ROMol> m1(SmilesToMol(smi1));
   vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
   for (auto &query : errout1) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "AllowedAtomsValidation", "Atom F is not in allowedAtoms list"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "AllowedAtomsValidation", "Atom F is not in allowedAtoms list")
+      );
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -254,9 +254,9 @@ void testDisallowedAtomsValidation() {
   unique_ptr<ROMol> m1(SmilesToMol(smi1));
   vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
   for (auto &query : errout1) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "DisallowedAtomsValidation", "Atom F is in disallowedAtoms list"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "DisallowedAtomsValidation", "Atom F is in disallowedAtoms list")
+      );
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -274,18 +274,18 @@ void testFragment() {
   unique_ptr<ROMol> m1(SmilesToMol(smi1, 0, false));
   vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
   for (auto &query : errout1) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "FragmentValidation", "1,2-dichloroethane is present"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "FragmentValidation", "1,2-dichloroethane is present")
+      );
   }
 
   smi2 = "COCCOC.CCCBr";
   unique_ptr<ROMol> m2(SmilesToMol(smi2, 0, false));
   vector<ValidationErrorInfo> errout2 = vm.validate(*m2, true);
   for (auto &query : errout2) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "FragmentValidation", "1,2-dimethoxyethane is present"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "FragmentValidation", "1,2-dimethoxyethane is present")
+      );
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -305,16 +305,16 @@ void testValidateSmiles() {
 
   vector<ValidationErrorInfo> errout2 = validateSmiles("");
   for (auto &query : errout2) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "ERROR", "NoAtomValidation", "Molecule has no atoms"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "ERROR", "NoAtomValidation", "Molecule has no atoms")
+      );
   }
 
   vector<ValidationErrorInfo> errout3 = validateSmiles("ClCCCl.c1ccccc1O");
   for (auto &query : errout3) {
-    TEST_ASSERT(query == ValidationErrorInfo({
-      "INFO", "FragmentValidation", "1,2-dichloroethane is present"
-    }));
+    TEST_ASSERT(query == ValidationErrorInfo(
+      "INFO", "FragmentValidation", "1,2-dichloroethane is present")
+      );
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
