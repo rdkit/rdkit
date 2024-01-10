@@ -528,10 +528,6 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       atom->clearProp(conjugatedOrAromatic);
     }
   }
-
-  if (params.setGenericQueryFromProperties) {
-    GenericGroups::setGenericQueriesFromProperties(mol);
-  }
 }
 }  // namespace MolOps
 }  // namespace RDKit
