@@ -14,7 +14,6 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
-#include <GraphMol/GenericGroups/GenericGroups.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
