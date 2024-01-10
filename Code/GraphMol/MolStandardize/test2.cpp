@@ -66,10 +66,10 @@ void testValidate() {
     RWMOL_SPTR m(SmilesToMol(smi, 0, false));
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
     for (auto &query : errout) {
-      TEST_ASSERT(query == ValidationErrorInfo({
+      TEST_ASSERT(query == ValidationErrorInfo(
         "INFO", "ValenceValidation",
-        "Explicit valence for atom # 1 O, 3, is greater than permitted"
-      }));
+        "Explicit valence for atom # 1 O, 3, is greater than permitted")
+        );
     }
   }
   //**************************
@@ -79,9 +79,9 @@ void testValidate() {
     RWMOL_SPTR m(SmilesToMol(smi, 0, false));
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
     for (auto &query : errout) {
-      TEST_ASSERT(query == ValidationErrorInfo({
-        "INFO", "NeutralValidation", "Not an overall neutral system (-1)"
-      }));
+      TEST_ASSERT(query == ValidationErrorInfo(
+        "INFO", "NeutralValidation", "Not an overall neutral system (-1)")
+        );
     }
   }
   // ************************
@@ -98,9 +98,9 @@ void testValidate() {
     RWMOL_SPTR m = "CC(=O)CF"_smiles;
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
     for (auto &query : errout) {
-      TEST_ASSERT(query == ValidationErrorInfo({
-        "INFO", "AllowedAtomsValidation", "Atom F is not in allowedAtoms list"
-      }));
+      TEST_ASSERT(query == ValidationErrorInfo(
+        "INFO", "AllowedAtomsValidation", "Atom F is not in allowedAtoms list")
+        );
     }
   }
   //********************************
@@ -117,9 +117,9 @@ void testValidate() {
     RWMOL_SPTR m = "CC(=O)CF"_smiles;
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
     for (auto &query : errout) {
-      TEST_ASSERT(query == ValidationErrorInfo({
-        "INFO", "DisallowedAtomsValidation", "Atom F is in disallowedAtoms list"
-      }));
+      TEST_ASSERT(query == ValidationErrorInfo(
+        "INFO", "DisallowedAtomsValidation", "Atom F is in disallowedAtoms list")
+        );
     }
   }
   //********************************
@@ -131,9 +131,9 @@ void testValidate() {
     RWMOL_SPTR m(SmilesToMol(smi, 0, false));
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
     for (auto &query : errout) {
-      TEST_ASSERT(query == ValidationErrorInfo({
-        "INFO", "FragmentValidation", "1,2-dichloroethane is present"
-      }));
+      TEST_ASSERT(query == ValidationErrorInfo(
+        "INFO", "FragmentValidation", "1,2-dichloroethane is present")
+        );
     }
     BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
   }
