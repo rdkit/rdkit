@@ -289,22 +289,18 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(PythonInterp)
-  if (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
-    set(Python_ADDITIONAL_VERSIONS "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
-  endif (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
-
-  if(PYTHON_VERSION_MAJOR EQUAL 2)
-    message(FATAL_ERROR "ERROR: The RDKit no longer supports Python 2.\nIf you have Python 3 installed, you can tell cmake where to find it using the -DPYTHON_EXECUTABLE argument.")
+  find_package(Python COMPONENTS Interpreter Development NumPy REQUIRED)
+  message("=== ${Python_SOABI}")
+  if(Python_VERSION_MAJOR EQUAL 2)
+    message(FATAL_ERROR "ERROR: The RDKit no longer supports Python 2.\nIf you have Python 3 installed, you can tell cmake where to find it using the -DPython_ROOT_DIR argument.")
   endif()
 
-  find_package(PythonLibs)
-  target_include_directories(rdkit_base INTERFACE ${PYTHON_INCLUDE_DIR})
+  target_include_directories(rdkit_base INTERFACE ${Python_INCLUDE_DIRS})
 
   # determine linkage of python
   execute_process(
       COMMAND
-      ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
+      ${Python_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
       OUTPUT_VARIABLE Py_ENABLE_SHARED
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
@@ -313,15 +309,12 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   endif()
 
-  find_package(NumPy REQUIRED)
-  target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
+  target_include_directories(rdkit_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
 
-  if(PYTHON_VERSION_MAJOR EQUAL 3)
-    # Find boost-python3 using name specified as command line option then fall back to commonly used names
-    set(RDK_BOOST_PYTHON3_NAME "python3" CACHE STRING "Name of the boost python3 library. If installed as libboost_python-xxx.so, use python-xxx.")
-    list(APPEND Boost_Python_Names "${RDK_BOOST_PYTHON3_NAME}" "python-py3${PYTHON_VERSION_MINOR}" "python3")
-  endif(PYTHON_VERSION_MAJOR EQUAL 3)
-
+  # Find boost-python3 using name specified as command line option then fall back to commonly used names
+  set(RDK_BOOST_PYTHON3_NAME "python3" CACHE STRING "Name of the boost python3 library. If installed as libboost_python-xxx.so, use python-xxx.")
+  list(APPEND Boost_Python_Names "${RDK_BOOST_PYTHON3_NAME}" "python-py3${PYTHON_VERSION_MINOR}" "python3")
+  
   # Boost 1.67+ uses a version suffix like "python36" or "python27"
   list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
 
@@ -348,7 +341,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       # Determine correct installation directory for Python bindings
       execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "import sys; import sysconfig; \
+        ${Python_EXECUTABLE} -c "import sys; import sysconfig; \
           base_key = 'base' if sys.platform == 'win32' else 'platbase'; \
           schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
           print(sysconfig.get_path('platlib', schema, vars={base_key: '${CMAKE_INSTALL_PREFIX}'}))"
@@ -388,7 +381,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     # We strip off the first word though (which will be the compiler name).
     execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
+        ${Python_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
         OUTPUT_VARIABLE PYTHON_LDSHARED
         OUTPUT_STRIP_TRAILING_WHITESPACE
      )
@@ -402,7 +395,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   # check to see if we can find nbval,
   execute_process(
     COMMAND
-    ${PYTHON_EXECUTABLE} -c "import nbval"
+    ${Python_EXECUTABLE} -c "import nbval"
     ERROR_VARIABLE nbvalERR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT nbvalERR)
