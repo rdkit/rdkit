@@ -290,7 +290,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   #-------
   # pull in python:
   find_package(Python COMPONENTS Interpreter Development NumPy REQUIRED)
-  message("=== ${Python_SOABI}")
+
   if(Python_VERSION_MAJOR EQUAL 2)
     message(FATAL_ERROR "ERROR: The RDKit no longer supports Python 2.\nIf you have Python 3 installed, you can tell cmake where to find it using the -DPython_ROOT_DIR argument.")
   endif()
@@ -306,7 +306,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   )
 
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-    target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
+    target_link_libraries(rdkit_py_base INTERFACE ${Python_LIBRARIES} )
   endif()
 
   target_include_directories(rdkit_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
