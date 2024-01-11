@@ -233,6 +233,64 @@ class MolAtropTest {
   }
 };
 
+void testLookForAtropisomersInSDdfFiles(std::string fileName,
+                                        unsigned int expectedHits,
+                                        unsigned int expectedMisses) {
+  BOOST_LOG(rdInfoLog) << "Looking for atropisomers in " << fileName
+                       << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/atropisomers/" + fileName;
+
+  std::ifstream in;
+  in.open(fName);
+  std::string line;
+  unsigned int foundCount = 0;
+  unsigned int notFoundCount = 0;
+  while (!in.eof()) {
+    std::string molBlock = "";
+    while (std::getline(in, line)) {
+      if (line.find("$$$$") != std::string::npos) {
+        break;
+      }
+
+      molBlock += line + "\n";
+    }
+
+    if (molBlock.length() < 10) {
+      continue;  // try for another;
+    }
+
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock, false, false, false));
+    TEST_ASSERT(mol != nullptr);
+
+    auto hasAtropisomers = RDKit::Atropisomers::doesMolHaveAtropisomers(*mol);
+
+    if (hasAtropisomers) {
+      BOOST_LOG(rdInfoLog) << "Found atropisomers in " << fileName << std::endl;
+      foundCount++;
+      printf("Atropisomers- %d hits   %d misses\r", foundCount, notFoundCount);
+      std::flush(std::cout);
+      std::ofstream out;
+      out.open(fName + "_" + std::to_string(foundCount) + ".sdf");
+      out << molBlock << std::endl;
+    } else {
+      notFoundCount++;
+      if (notFoundCount % 100 == 0) {
+        printf("Atropisomers- %d hits   %d misses\r", foundCount,
+               notFoundCount);
+        std::flush(std::cout);
+      }
+    }
+  }
+  printf("\nFinal results:\nFound atropisomers in %s - %d hits   %d misses\n",
+         fileName.c_str(), foundCount, notFoundCount);
+
+  TEST_ASSERT(foundCount == expectedHits);
+  TEST_ASSERT(notFoundCount == expectedMisses);
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -254,6 +312,7 @@ int main(int argc, char *argv[]) {
   BOOST_LOG(rdInfoLog) << " ---- Running with POSIX locale ----- " << std::endl;
 
   molAtropTest.RunTests();
+  testLookForAtropisomersInSDdfFiles("TestMultInSDF.sdf", 1, 4);
 
   return 0;
 }
