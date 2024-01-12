@@ -681,7 +681,6 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
     RWMol *molPtr = trwmol.get();
     trwmol = canonicalizeStereoGroups(*molPtr);
   }
-  // RWMol trwmol(romol);
 
   bool doingCXSmiles = true;
 

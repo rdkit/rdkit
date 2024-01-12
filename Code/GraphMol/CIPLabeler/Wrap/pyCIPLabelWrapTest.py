@@ -1,7 +1,6 @@
 import unittest
-import os
-from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
-from rdkit.Chem import AllChem
+
+from rdkit import Chem
 
 class TestCase(unittest.TestCase):
 

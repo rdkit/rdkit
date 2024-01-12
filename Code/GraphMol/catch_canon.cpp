@@ -271,6 +271,14 @@ TEST_CASE("enhanced stereo canonicalization") {
 
   SECTION("pseudoTest1") {
     std::vector<std::pair<std::string, std::string>> tests = {
+        {"C[C@@H](Cl)C[C@H](C)Cl |a:1,4,|", "C[C@@H](Cl)C[C@H](C)Cl |o1:1,4,|"},
+        {"C[C@H](Cl)C[C@@H](C)Cl |a:1,4,|", "C[C@@H](Cl)C[C@H](C)Cl |&1:1,4,|"},
+
+        {"N[C@H]1CC[C@@H](O)CC1 |a:1,4|", "N[C@H]1CC[C@@H](O)CC1 |o1:1,4|"},
+        {"N[C@H]1CC[C@@H](O)CC1 |a:1,4|", "N[C@H]1CC[C@@H](O)CC1 |&1:1,4|"},
+        {"N[C@H]1CC[C@@H](O)CC1 |a:1,4|", "N[C@@H]1CC[C@H](O)CC1 |a:1,4|"},
+        {"N[C@H]1CC[C@@H](O)CC1 |a:1,4|", "N[C@@H]1CC[C@H](O)CC1 |o1:1,4|"},
+        {"N[C@H]1CC[C@@H](O)CC1 |a:1,4|", "N[C@@H]1CC[C@H](O)CC1 |&1:1,4|"},
 
         {"C[C@H]1C[C@@H](C)C[C@@H](C)C1 |o1:1,o2:6,o3:3|",
          "C[C@@H]1C[C@H](C)C[C@@H](C)C1 |a:3,o1:6,o3:1|"},
@@ -338,7 +346,7 @@ TEST_CASE("enhanced stereo canonicalization") {
       wps.canonical = true;
       wps.cleanStereo = false;
       wps.rigorousEnhancedStereo = true;
-      CHECK(2147483647U == SmilesWrite::CXSmilesFields::CX_ALL);
+
       auto outSmi1 = MolToCXSmiles(*mol1, wps);
       auto outSmi2 = MolToCXSmiles(*mol2, wps);
 

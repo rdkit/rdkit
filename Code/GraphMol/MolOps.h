@@ -390,9 +390,6 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
       false; /**<  sets non-ring single bonds between two aromatic or conjugated
                 atoms to SINGLE|AROMATIC */
 
-  bool setGenericQueryFromProperties =
-      false; /**< sets the generic queries from atom properties */
-
   //! \brief returns an AdjustQueryParameters object with all adjustments
   //! disabled
   static AdjustQueryParameters noAdjustments() {
