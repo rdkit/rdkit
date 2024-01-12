@@ -1026,32 +1026,6 @@ class ChiralItem {
   unsigned int id;
 };
 
-// std::vector<std::unique_ptr<ChiralItem>> getChiralItemsInSmilesOrder(
-//     const RDKit::RWMol *m) {
-//   std::vector<unsigned int> oranks(m->getNumAtoms(), 0);
-//   Canon::rankMolAtoms(*m, oranks);
-//   std::vector<Canon::AtomColors> colors(m->getNumAtoms());
-//   Canon::MolStack stack;
-//   std::vector<unsigned int> ranks(oranks.size());
-//   for (unsigned int i = 0; i < ranks.size(); ++i) {
-//     ranks[i] = oranks[i];
-//   }
-//   Canon::canonicalizeFragment(*m, 0, colors, ranks, stack);
-
-//   for (auto stackItem : stack) {
-//     if (stackItem.type == Canon::MolStackCode::ATOM) {
-//       auto atom = m->getAtomWithIdx(stackItem.atom);
-//       // qqq
-//       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
-//         auto chiralItem = new ChiralItem();
-//         chiralItem->chiralAtomType = atom->getChiralTag();
-//         chiralItem->id = stackItem.atom;
-//         chiralItems.push_back(chiralItem);
-//       }
-//     }
-//   }
-// }
-
 }  // namespace
 
 std::unique_ptr<RWMol> canonicalizeStereoGroups(const RDKit::RWMol &mol) {
@@ -1086,11 +1060,11 @@ std::unique_ptr<RWMol> canonicalizeStereoGroups(const RDKit::RWMol &mol) {
   //
   // Example:
   //          Cl[C@@H](Br)CC[C@@H](Cl)I |o1:5,o2:1|,   gives ONE of RR,
-  //          RS,,SR,
+  //          RS,SR
   // SS
   //     but   Cl[C@@H](Br)CC[C@@H](Cl)I |o1:5,&1:1|,
   //            if the AND is done first, gives:  (RR or RS )  AND (SR or
-  //            SS) if the OR is done first, gives:  (RR and SR )  OR (SR
+  //            SS) if the OR is done first, gives:  (RR and SR )  OR (RS
   //            and SS))
   //  so the order of appliction of the OR and AND gives different results.
   //
