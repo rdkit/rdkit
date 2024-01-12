@@ -59,6 +59,7 @@ The original code implementation can be found at: https://github.com/frog2000/Sp
 from rdkit import Chem
 
 # import rdkit.Chem.Descriptors as Desc
+from rdkit.Chem import rdmolops
 from rdkit.Chem.ChemUtils.DescriptorUtilities import setDescriptorVersion
 from collections import defaultdict
 
@@ -77,7 +78,9 @@ class _SpacialScore:
   def __init__(self, mol, normalize=True):
     if mol is None:
       raise ValueError("No valid molecule object found.")
-    self.mol = mol  # mol is supposed to be a valid RDKit Mol object
+    molCp = Chem.Mol(mol)
+    rdmolops.FindPotentialStereoBonds(molCp)
+    self.mol = molCp  # mol is supposed to be a valid RDKit Mol object
     self.normalize = normalize  # if true nSPS, otherwise SPS
     self.hyb_score = {}
     self.stereo_score = {}

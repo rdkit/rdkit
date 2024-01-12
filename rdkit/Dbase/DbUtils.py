@@ -355,12 +355,16 @@ def _AddDataToDb(dBase, table, user, password, colDefs, colTypes, data, nullMark
     block.append(tuple(entries))
     if len(block) >= blockSize:
       nDone += _insertBlock(cn, sqlStr, block)
-      if not hasattr(cn, 'autocommit') or not cn.autocommit:
+      # note: in Python 3.12 `cn.autocommit != True`
+      # is different from `not cn.autocommit` (GH #7009)
+      if not hasattr(cn, 'autocommit') or cn.autocommit != True:
         cn.commit()
       block = []
   if len(block):
     nDone += _insertBlock(cn, sqlStr, block)
-  if not hasattr(cn, 'autocommit') or not cn.autocommit:
+  # note: in Python 3.12 `cn.autocommit != True`
+  # is different from `not cn.autocommit` (GH #7009)
+  if not hasattr(cn, 'autocommit') or cn.autocommit != True:
     cn.commit()
 
 

@@ -3178,16 +3178,16 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
 
   boost::dynamic_bitset<> explicitAtoms;
   explicitAtoms.resize(mol.getNumAtoms(), 0);
-    for (auto bond : mol.bonds()) {
-      auto bondDir = bond->getBondDir();
-      if (bondDir == Bond::BondDir::BEGINWEDGE ||
-          bondDir == Bond::BondDir::BEGINDASH) {
+  for (auto bond : mol.bonds()) {
+    auto bondDir = bond->getBondDir();
+    if (bondDir == Bond::BondDir::BEGINWEDGE ||
+        bondDir == Bond::BondDir::BEGINDASH) {
       explicitAtoms[bond->getBeginAtom()->getIdx()] = 1;
-      }
     }
+  }
 
-    for (auto atom : mol.atoms()) {
-      if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
+  for (auto atom : mol.atoms()) {
+    if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
       explicitAtoms[atom->getIdx()] = 1;
     }
   }

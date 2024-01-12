@@ -313,7 +313,6 @@ int main(int argc, char *argv[]) {
 
   molAtropTest.RunTests();
   testLookForAtropisomersInSDdfFiles("TestMultInSDF.sdf", 1, 4);
-  // testLookForAtropisomersInSDdfFiles("AllVendors.sdf", 76, 1523042);
 
   return 0;
 }

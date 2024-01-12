@@ -405,7 +405,7 @@ void setAllowNontetrahedralChirality(bool);
   void pickBondsToWedge() {
     RDKit::Chirality::pickBondsToWedge(*($self));
   };
-
+  
   void ClearSingleBondDirFlags() {
     RDKit::ClearSingleBondDirFlags(*($self));
   };

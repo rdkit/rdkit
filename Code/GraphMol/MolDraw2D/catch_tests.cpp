@@ -8317,7 +8317,7 @@ TEST_CASE("Lasso highlights") {
     std::map<int, std::vector<DrawColour>> ha_map;
     std::map<int, std::vector<DrawColour>> hb_map;
 
-    for (size_t i = 0; i < smarts.size(); ++i) {
+       for (size_t i = 0; i < smarts.size(); ++i) {
       std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
       update_colour_map(hit_atoms, colours[i], ha_map);
     }

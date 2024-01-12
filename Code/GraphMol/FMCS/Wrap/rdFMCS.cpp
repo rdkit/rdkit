@@ -643,7 +643,7 @@ python::object degenerateSmartsQueryMolDictHelper(
   for (const auto &pair : self.DegenerateSmartsQueryMolDict) {
     res[pair.first] = pair.second;
   }
-  return std::move(res);
+  return res;
 }
 struct mcsresult_wrapper {
   static void wrap() {

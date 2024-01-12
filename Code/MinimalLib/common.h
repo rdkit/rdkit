@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #pragma once
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include <string>
 #include <RDGeneral/versions.h>
