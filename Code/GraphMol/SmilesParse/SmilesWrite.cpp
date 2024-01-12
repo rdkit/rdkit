@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "SmilesWrite.h"
+#include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
@@ -522,7 +523,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     if (params.doIsomericSmiles) {
       tmol->setProp(common_properties::_doIsoSmiles, 1);
       if (!mol.hasProp(common_properties::_StereochemDone)) {
-        MolOps::assignStereochemistry(*tmol, true);
+        MolOps::assignStereochemistry(*tmol, params.cleanStereo);
       }
     }
 
@@ -674,18 +675,24 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
 std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
                           std::uint32_t flags,
                           RestoreBondDirOption restoreBondDirs) {
-  RWMol trwmol(romol);
+  std::unique_ptr<RWMol> trwmol(new RWMol(romol));
+
+  if (params.rigorousEnhancedStereo) {
+    RWMol *molPtr = trwmol.get();
+    trwmol = canonicalizeStereoGroups(*molPtr);
+  }
+  // RWMol trwmol(romol);
 
   bool doingCXSmiles = true;
 
-  auto res = SmilesWrite::detail::MolToSmiles(trwmol, params, doingCXSmiles);
+  auto res = SmilesWrite::detail::MolToSmiles(*trwmol, params, doingCXSmiles);
   if (res.empty()) {
     return res;
   }
   if (restoreBondDirs == RestoreBondDirOptionTrue) {
-    RDKit::Chirality::reapplyMolBlockWedging(trwmol);
+    RDKit::Chirality::reapplyMolBlockWedging(*trwmol);
   } else if (restoreBondDirs == RestoreBondDirOptionClear) {
-    for (auto bond : trwmol.bonds()) {
+    for (auto bond : trwmol->bonds()) {
       if (!canHaveDirection(*bond)) {
         continue;
       }
@@ -705,7 +712,7 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
                SmilesWrite::CXSmilesFields::CX_BOND_CFG);
   }
 
-  auto cxext = SmilesWrite::getCXExtensions(trwmol, flags);
+  auto cxext = SmilesWrite::getCXExtensions(*trwmol, flags);
   if (!cxext.empty()) {
     res += " " + cxext;
   }
@@ -916,5 +923,390 @@ std::string MolFragmentToCXSmiles(const ROMol &mol,
     res += " " + cxext;
   }
   return res;
+}
+
+namespace {
+
+bool doesAtomChiralityVary(std::vector<std::unique_ptr<RWMol>> &allMols,
+                           unsigned int atomIndex) {
+  PRECONDITION(allMols.size() != 0, "bad allMols size");
+
+  auto firstChiralVal = allMols[0]->getAtomWithIdx(atomIndex)->getChiralTag();
+
+  for (auto &oneMol : allMols) {
+    auto atom = oneMol->getAtomWithIdx(atomIndex);
+    if (firstChiralVal != atom->getChiralTag()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool doesBondStereoVary(std::vector<std::unique_ptr<RWMol>> &allMols,
+                        unsigned int bondIndex) {
+  PRECONDITION(allMols.size() != 0, "bad allMols size");
+
+  auto firstStereoVal = allMols[0]->getBondWithIdx(bondIndex)->getStereo();
+
+  for (auto &oneMol : allMols) {
+    auto bond = oneMol->getBondWithIdx(bondIndex);
+    if (firstStereoVal != bond->getStereo()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool doTwoAtomsVaryTheSame(std::vector<std::unique_ptr<RWMol>> &allMols,
+                           unsigned int atomIndex1, unsigned int atomIndex2) {
+  PRECONDITION(allMols.size() != 0, "bad allMols size");
+
+  auto firstChiralVal1 = allMols[0]->getAtomWithIdx(atomIndex1)->getChiralTag();
+  auto firstChiralVal2 = allMols[0]->getAtomWithIdx(atomIndex2)->getChiralTag();
+
+  for (auto &oneMol : allMols) {
+    auto atom1 = oneMol->getAtomWithIdx(atomIndex1);
+    auto atom2 = oneMol->getAtomWithIdx(atomIndex2);
+    if ((firstChiralVal1 == atom1->getChiralTag()) !=
+        (firstChiralVal2 == atom2->getChiralTag())) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool doAtomAndBondVaryTheSame(std::vector<std::unique_ptr<RWMol>> &allMols,
+                              unsigned int atomIndex1,
+                              unsigned int bondIndex2) {
+  PRECONDITION(allMols.size() != 0, "bad allMols size");
+
+  auto firstChiralVal1 = allMols[0]->getAtomWithIdx(atomIndex1)->getChiralTag();
+  auto firstStereoVal2 = allMols[0]->getBondWithIdx(bondIndex2)->getStereo();
+
+  for (auto &oneMol : allMols) {
+    auto atom1 = oneMol->getAtomWithIdx(atomIndex1);
+    auto bond2 = oneMol->getBondWithIdx(bondIndex2);
+    if ((firstChiralVal1 == atom1->getChiralTag()) !=
+        (firstStereoVal2 == bond2->getStereo())) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool doTwoBondsVaryTheSame(std::vector<std::unique_ptr<RWMol>> &allMols,
+                           unsigned int bondIndex1, unsigned int bondIndex2) {
+  PRECONDITION(allMols.size() != 0, "bad allMols size");
+
+  auto firstStereoVal1 = allMols[0]->getBondWithIdx(bondIndex1)->getStereo();
+  auto firstStereoVal2 = allMols[0]->getBondWithIdx(bondIndex2)->getStereo();
+
+  for (auto &oneMol : allMols) {
+    auto bond1 = oneMol->getBondWithIdx(bondIndex1);
+    auto bond2 = oneMol->getBondWithIdx(bondIndex2);
+    if ((firstStereoVal1 == bond1->getStereo()) !=
+        (firstStereoVal2 == bond2->getStereo())) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+enum class ChiralItemType {
+  ATOM,
+  BOND,
+};
+class ChiralItem {
+ public:
+  ChiralItemType chiralAtomType;
+  unsigned int id;
+};
+
+// std::vector<std::unique_ptr<ChiralItem>> getChiralItemsInSmilesOrder(
+//     const RDKit::RWMol *m) {
+//   std::vector<unsigned int> oranks(m->getNumAtoms(), 0);
+//   Canon::rankMolAtoms(*m, oranks);
+//   std::vector<Canon::AtomColors> colors(m->getNumAtoms());
+//   Canon::MolStack stack;
+//   std::vector<unsigned int> ranks(oranks.size());
+//   for (unsigned int i = 0; i < ranks.size(); ++i) {
+//     ranks[i] = oranks[i];
+//   }
+//   Canon::canonicalizeFragment(*m, 0, colors, ranks, stack);
+
+//   for (auto stackItem : stack) {
+//     if (stackItem.type == Canon::MolStackCode::ATOM) {
+//       auto atom = m->getAtomWithIdx(stackItem.atom);
+//       // qqq
+//       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+//         auto chiralItem = new ChiralItem();
+//         chiralItem->chiralAtomType = atom->getChiralTag();
+//         chiralItem->id = stackItem.atom;
+//         chiralItems.push_back(chiralItem);
+//       }
+//     }
+//   }
+// }
+
+}  // namespace
+
+std::unique_ptr<RWMol> canonicalizeStereoGroups(const RDKit::RWMol &mol) {
+  // this expanded a mol with stereo groups to a vector of mols that have no
+  // stereo grouos
+
+  std::vector<std::string> allSmiles;
+  auto groupType = StereoGroupType::STEREO_ABSOLUTE;
+
+  SmilesWriteParams wps;
+  wps.canonical = true;
+  wps.cleanStereo = false;
+
+  SmilesParserParams rps;
+  rps.sanitize = false;
+  rps.removeHs = false;
+
+  // First see if anything needs doing
+
+  auto initSmi = MolToCXSmiles(mol, wps);
+
+  auto uMol = std::unique_ptr<RWMol>(SmilesToMol(initSmi, rps));
+
+  if (mol.getStereoGroups().empty()) {
+    return uMol;
+  }
+
+  // get all chiral atoms and atropisomer bonds to check from the stereo
+  // groups also get the stereoGroupType to use for the ultimate canonical
+  // smiles. if there is an OR type AND an AND type, the results are
+  // ambiguous, so we choose AND
+  //
+  // Example:
+  //          Cl[C@@H](Br)CC[C@@H](Cl)I |o1:5,o2:1|,   gives ONE of RR,
+  //          RS,,SR,
+  // SS
+  //     but   Cl[C@@H](Br)CC[C@@H](Cl)I |o1:5,&1:1|,
+  //            if the AND is done first, gives:  (RR or RS )  AND (SR or
+  //            SS) if the OR is done first, gives:  (RR and SR )  OR (SR
+  //            and SS))
+  //  so the order of appliction of the OR and AND gives different results.
+  //
+  //  Example:
+  //          CC[C@@H]1CC[C@H](C)CC1 |o1:2,o2:5|
+  //              gives (A) CC[C@@H]1CC[C@H](C)CC1 or
+  //              (B) CC[C@@H]1CC[C@@H](C)CC1
+  //     but    CC[C@@H]1CC[C@H](C)CC1 |o2:5,&1:2|
+  //            if the AND is done first gives (A and B) or A or B
+  //            if the OR is done first gives (A and B)
+
+  std::vector<RDKit::StereoGroup> orAndAndGroups;
+  for (auto &stg : uMol->getStereoGroups()) {
+    // for (auto &stg : mol.getStereoGroups()) {
+    if (stg.getGroupType() == StereoGroupType::STEREO_AND) {
+      orAndAndGroups.push_back(stg);
+      groupType = StereoGroupType::STEREO_AND;
+    } else if (stg.getGroupType() == StereoGroupType::STEREO_OR) {
+      orAndAndGroups.push_back(stg);
+      // if the overall type is NOT AND, set it to OR (AND takes precedence)
+      if (groupType == StereoGroupType::STEREO_ABSOLUTE) {
+        groupType = StereoGroupType::STEREO_OR;
+      }
+    }
+  }
+
+  RWMol protoMol(*uMol.get());
+  // RWMol protoMol(mol);
+  std::vector<RDKit::StereoGroup> emptyGroups;  // empty vector of new groups
+  // set the proto mol to have no stereo groups
+  protoMol.setStereoGroups(emptyGroups);
+
+  auto newMolCount = std::pow(2, orAndAndGroups.size());
+  for (unsigned int molIndex = 0; molIndex < newMolCount; ++molIndex) {
+    auto newMol = std::unique_ptr<RWMol>(new RWMol(protoMol));
+
+    for (unsigned int grpIndex = 0; grpIndex < orAndAndGroups.size();
+         ++grpIndex) {
+      if (molIndex & (1 << grpIndex)) {
+        for (auto atomPtr : orAndAndGroups.at(grpIndex).getAtoms()) {
+          if (atomPtr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+            newMol->getAtomWithIdx(atomPtr->getIdx())
+                ->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+          } else if (atomPtr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
+            newMol->getAtomWithIdx(atomPtr->getIdx())
+                ->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+          }
+          // do any  atropisomer bonds at this atom
+        }
+
+        for (auto bond : orAndAndGroups.at(grpIndex).getBonds()) {
+          if (bond->getStereo() == Bond::STEREOATROPCW) {
+            newMol->getBondWithIdx(bond->getIdx())
+                ->setStereo(Bond::Bond::STEREOATROPCCW);
+          } else if (bond->getStereo() == Bond::STEREOATROPCCW) {
+            newMol->getBondWithIdx(bond->getIdx())
+                ->setStereo(Bond::Bond::STEREOATROPCW);
+          }
+        }
+      }
+    }
+
+    allSmiles.push_back(MolToCXSmiles(*newMol.get(), wps));
+  }
+
+  std::sort(allSmiles.begin(), allSmiles.end());
+  auto last = std::unique(allSmiles.begin(), allSmiles.end());
+  allSmiles.erase(last, allSmiles.end());
+
+  // Now make the new stereo-enhanced canonical smiles
+
+  std::vector<std::unique_ptr<RWMol>> allMols;
+  for (auto smi : allSmiles) {
+    allMols.push_back(std::unique_ptr<RWMol>(SmilesToMol(smi, rps)));
+  }
+  if (allMols.size() == 1) {
+    // no variation - all stereo groups are abs
+
+    std::vector<Atom *> atomsToAdd;
+    std::vector<Bond *> bondsToAdd;
+    for (auto &grp : uMol->getStereoGroups()) {
+      // for (auto &grp : mol.getStereoGroups()) {
+      for (auto atomPtr : grp.getAtoms()) {
+        atomsToAdd.push_back(allMols[0]->getAtomWithIdx(atomPtr->getIdx()));
+      }
+      for (auto bondPtr : grp.getBonds()) {
+        bondsToAdd.push_back(allMols[0]->getBondWithIdx(bondPtr->getIdx()));
+      }
+    }
+    std::vector<StereoGroup> newGroups;  // empty vector of new groups
+    newGroups.push_back(StereoGroup(StereoGroupType::STEREO_ABSOLUTE,
+                                    atomsToAdd, bondsToAdd, 0));
+    allMols[0]->setStereoGroups(newGroups);
+
+    return std::move(allMols[0]);
+  }
+
+  std::vector<unsigned int> atomIndices;
+  std::vector<unsigned int> bondIndices;
+
+  for (auto &grp : uMol->getStereoGroups()) {
+    // for (auto &grp : mol.getStereoGroups()) {
+    for (auto atomPtr : grp.getAtoms()) {
+      atomIndices.push_back(atomPtr->getIdx());
+    }
+    for (auto bondPtr : grp.getBonds()) {
+      bondIndices.push_back(bondPtr->getIdx());
+    }
+  }
+
+  std::vector<bool> atomsDone(atomIndices.size(), false);
+  std::vector<bool> bondsDone(bondIndices.size(), false);
+  unsigned int groupCount = 0;
+  std::vector<StereoGroup> newGroups;
+
+  // set up the one ABS group
+
+  std::vector<Atom *> absGroupAtoms;  // nothing added to this one here
+  std::vector<Bond *> absGroupBonds;
+
+  for (unsigned int index1 = 0; index1 < atomIndices.size(); ++index1) {
+    if (atomsDone[index1]) {
+      continue;
+    }
+
+    unsigned int atomIndex1 = atomIndices[index1];
+
+    if (!doesAtomChiralityVary(allMols, atomIndex1)) {
+      absGroupAtoms.push_back(allMols[0]->getAtomWithIdx(atomIndex1));
+      atomsDone[index1] = true;
+
+      continue;
+    }
+
+    std::vector<Atom *> atomsToAdd;
+    std::vector<Bond *> bondsToAdd;
+    atomsToAdd.push_back(allMols[0]->getAtomWithIdx(atomIndex1));
+    atomsDone[index1] = true;
+
+    // now look through all other possible atoms and bonds to see if they
+    // vary the same way as the first one in the group
+
+    for (unsigned int index2 = index1 + 1; index2 < atomIndices.size();
+         ++index2) {
+      if (atomsDone[index2]) {
+        continue;
+      }
+      unsigned int atomIndex2 = atomIndices[index2];
+
+      if (doTwoAtomsVaryTheSame(allMols, atomIndex1, atomIndex2)) {
+        atomsToAdd.push_back(allMols[0]->getAtomWithIdx(atomIndex2));
+        atomsDone[index2] = true;
+      }
+    }
+
+    for (unsigned int index2 = 0; index2 < bondIndices.size(); ++index2) {
+      if (bondsDone[index2]) {
+        continue;
+      }
+
+      auto bondIndex2 = bondIndices[index2];
+
+      if (doAtomAndBondVaryTheSame(allMols, atomIndex1, bondIndex2)) {
+        bondsToAdd.push_back(allMols[0]->getBondWithIdx(bondIndex2));
+        bondsDone[index2] = true;
+      }
+    }
+    newGroups.emplace_back(groupType, atomsToAdd, bondsToAdd, ++groupCount);
+  }
+
+  // now any groups that only involve bonds
+
+  for (unsigned int index1 = 0; index1 < bondIndices.size(); ++index1) {
+    if (bondsDone[index1]) {
+      continue;
+    }
+
+    if (!doesBondStereoVary(allMols, index1)) {
+      absGroupBonds.push_back(allMols[0]->getBondWithIdx(bondIndices[index1]));
+      bondsDone[index1] = true;
+    }
+
+    std::vector<Atom *> atomsToAdd;  // nothing added to this one here
+    std::vector<Bond *> bondsToAdd;
+    bondsToAdd.push_back(allMols[0]->getBondWithIdx(bondIndices[index1]));
+    bondsDone[index1] = true;
+
+    // now look through all other possible bonds to see if they vary
+    // the same way as the first one in the group
+
+    for (unsigned int index2 = index1 + 1; index2 < bondIndices.size();
+         ++index2) {
+      if (bondsDone[index2]) {
+        continue;
+      }
+      unsigned int bondIndex2 = bondIndices[index2];
+
+      if (doTwoBondsVaryTheSame(allMols, bondIndices[index1], bondIndex2)) {
+        bondsToAdd.push_back(allMols[0]->getBondWithIdx(bondIndex2));
+        bondsDone[index2] = true;
+      }
+    }
+
+    newGroups.emplace_back(groupType, atomsToAdd, bondsToAdd, ++groupCount);
+  }
+
+  // if the abs group is not empty, add it
+
+  if (absGroupAtoms.size() != 0 || absGroupBonds.size() != 0) {
+    newGroups.emplace_back(StereoGroupType::STEREO_ABSOLUTE, absGroupAtoms,
+                           absGroupBonds, 0);
+  }
+
+  allMols[0]->setStereoGroups(newGroups);
+
+  return std::move(allMols[0]);
 }
 }  // namespace RDKit

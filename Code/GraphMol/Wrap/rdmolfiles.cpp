@@ -1411,6 +1411,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
           "this will thrown an exception if the molecule cannot be kekulized")
       .def_readwrite("canonical", &RDKit::SmilesWriteParams::canonical,
                      "generate canonical SMILES")
+      .def_readwrite("rigorousEnhancedStereo",
+                     &RDKit::SmilesWriteParams::rigorousEnhancedStereo,
+                     "Rigorous treatment of unique enhanced stereo groups")
+      .def_readwrite(
+          "cleanStereo", &RDKit::SmilesWriteParams::cleanStereo,
+          "chiral centers are removed if they have duplicate sidechains")
       .def_readwrite("allBondsExplicit",
                      &RDKit::SmilesWriteParams::allBondsExplicit,
                      "include symbols for all bonds")

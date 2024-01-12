@@ -16,6 +16,7 @@
 #include <memory>
 #include <cstdint>
 #include <limits>
+#include <GraphMol/RWMol.h>
 
 namespace RDKit {
 class Atom;
@@ -30,8 +31,12 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
                             is not canonical and that this will thrown an
                             exception if the molecule cannot be kekulized. */
   bool canonical = true; /**< generate canonical SMILES */
-  bool allBondsExplicit = false; /**< include symbols for all bonds */
-  bool allHsExplicit = false;    /**< provide hydrogen counts for every atom */
+  bool rigorousEnhancedStereo = false; /**< if true, use a more rigorous
+                                          treatment of enhanced stereochemisty
+                                          is performed */
+  bool cleanStereo = true;             /**< generate canonical SMILES */
+  bool allBondsExplicit = false;       /**< include symbols for all bonds */
+  bool allHsExplicit = false; /**< provide hydrogen counts for every atom */
   bool doRandom = false; /**< randomize the output order. The resulting SMILES
                             is not canonical */
   int rootedAtAtom = -1; /**< make sure the SMILES starts at the specified
@@ -300,6 +305,16 @@ inline std::string MolFragmentToCXSmiles(
   return MolFragmentToCXSmiles(mol, ps, atomsToUse, bondsToUse, atomSymbols,
                                bondSymbols);
 }
+
+// ! \brief returns canonical RWMol including rationalization of stereo groups
+/*!
+  \param mol : the molecule in question.
+
+
+ */
+
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> canonicalizeStereoGroups(
+    const RDKit::RWMol &mol);
 
 }  // namespace RDKit
 #endif
