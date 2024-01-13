@@ -9447,6 +9447,9 @@ TEST_CASE("Github7036 - triple bond to wedge not right") {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
+    std::ofstream outs("testGithub7036.svg");
+    outs << text;
+    outs.close();
 
     std::regex bond(
         "<path class='bond-8 atom-8 atom-9' d='M (-?\\d+.\\d+),(-?\\d+.\\d+)"
@@ -9465,9 +9468,6 @@ TEST_CASE("Github7036 - triple bond to wedge not right") {
     double dot = pts[0].directionVector(pts[1]).dotProduct(
         pts[2].directionVector(pts[3]));
     CHECK_THAT(fabs(dot), Catch::Matchers::WithinAbs(1.0, 0.001));
-    std::ofstream outs("testGithub7036.svg");
-    outs << text;
-    outs.close();
     check_file_hash("testGithub7036.svg");
   }
 }
