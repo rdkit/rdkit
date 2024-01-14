@@ -1663,12 +1663,13 @@ void testHasValenceViolation() {
       TEST_ASSERT(!atom->hasValenceViolation());
     }
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 // -------------------------------------------------------------------
 int main() {
   RDLog::InitLogs();
-  // boost::logging::enable_logs("rdApp.info");
+  boost::logging::enable_logs("rdApp.info");
   test1();
   testPropLeak();
   testMolProps();
