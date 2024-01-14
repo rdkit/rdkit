@@ -66,7 +66,7 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
   * [Wheels](https://pypi.org/project/rdkit/) at PyPi for all major platforms and python versions. Contributed by Christopher Kuenneth
 
 ## Projects using RDKit
-
+- [AQME] (https://github.com/jvalegre/aqme) - Automated Quantum Mechanical Environment
 - [chemprop](https://github.com/chemprop/chemprop) - message passing neural networks for molecular property prediction
 - [RMG](https://github.com/ReactionMechanismGenerator/RMG-Py) - Reaction Mechanism Generator
 - [RDMC](https://github.com/xiaoruiDong/RDMC) - Reaction Data and Molecular Conformers - package for dealing with reactions, molecules, conformers, mainly in 3D
