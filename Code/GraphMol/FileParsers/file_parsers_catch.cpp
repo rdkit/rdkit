@@ -36,6 +36,8 @@
 
 using namespace RDKit;
 
+bool generateExpectedFilesFlag = false;
+
 TEST_CASE("Basic SVG Parsing", "[SVG][reader]") {
   SECTION("basics") {
     std::string svg = R"SVG(<?xml version='1.0' encoding='iso-8859-1'?>
@@ -5873,6 +5875,7 @@ TEST_CASE("MaeWriter atom numbering chirality", "[mae][MaeWriter][writer]") {
     auto roundtrip = MaeMolSupplier(iss).next();
     CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
           Atom::CHI_TETRAHEDRAL_CW);
+    delete roundtrip;
   }
 
   SECTION("S") {
@@ -5885,6 +5888,7 @@ TEST_CASE("MaeWriter atom numbering chirality", "[mae][MaeWriter][writer]") {
     auto roundtrip = MaeMolSupplier(iss).next();
     CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
           Atom::CHI_TETRAHEDRAL_CCW);
+    delete roundtrip;
   }
 }
 
@@ -6928,4 +6932,124 @@ TEST_CASE(
     REQUIRE(nm);
     CHECK(MolToSmarts(*nm) == "[#6,#7,#8][#6][#6]*[$(C(=O)O)]");
   }
+}
+
+class FragTest {
+ public:
+  std::string fileName;
+  bool expectedResult;
+  bool reapplyMolBlockWedging;
+
+  FragTest(std::string fileNameInit, bool expectedResultInit,
+           bool reapplyMolBlockWedgingInit = true)
+      : fileName(fileNameInit),
+        expectedResult(expectedResultInit),
+        reapplyMolBlockWedging(reapplyMolBlockWedgingInit){};
+};
+
+void generateNewExpectedFilesIfSoSpecified(std::string filename,
+                                           std::string dataToWrite) {
+  if (generateExpectedFilesFlag) {
+    std::ofstream out;
+    out.open(filename);
+    out << dataToWrite;
+  }
+}
+
+std::string GetExpectedValue(std::string expectedFileName) {
+  std::stringstream expectedMolStr;
+  std::ifstream in;
+  in.open(expectedFileName);
+  expectedMolStr << in.rdbuf();
+  return expectedMolStr.str();
+}
+
+void testFragmetation(const FragTest &fragTest) {
+  INFO(fragTest.fileName);
+  std::string rdbase = getenv("RDBASE");
+
+  std::string fName = rdbase +
+                      "/Code/GraphMol/FileParsers/test_data/sgroupFragments/" +
+                      fragTest.fileName;
+  std::unique_ptr<RWMol> mol(MolFileToMol(fName, false));  // don't sanitize yet
+  REQUIRE(mol);
+
+  auto frags = MolOps::getMolFrags(*mol, true);
+  CHECK(frags.size() > 1);
+
+  // get the largest fragment
+
+  unsigned int largestFragSize = 0;
+  ROMol *largestFrag = nullptr;
+  for (auto frag : frags) {
+    if (frag->getNumAtoms() > largestFragSize) {
+      largestFragSize = frag->getNumAtoms();
+      largestFrag = frag.get();
+    }
+  }
+
+  CHECK(largestFrag);
+
+  {
+    std::string expectedName =
+        fName + (fragTest.reapplyMolBlockWedging ? "" : ".noReapply") +
+        ".expected.sdf";
+    std::string outMolStr = MolToMolBlock(*largestFrag, true, 0, true, true);
+
+    generateNewExpectedFilesIfSoSpecified(
+        fName + (fragTest.reapplyMolBlockWedging ? "" : ".noReapply") +
+            ".NEW.sdf",
+        outMolStr);
+
+    TEST_ASSERT(GetExpectedValue(expectedName) == outMolStr);
+  }
+}
+
+TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::vector<FragTest> tests = {
+        FragTest("copolymer_sgroup.sdf", true,
+                 true),  // fragmntation does not keep the sgroup for this one
+        FragTest("polymerSalt.mol", true, true),
+        FragTest("DataSgroup.sdf", true, true),
+        FragTest("DataSgroupMissingUnitsDisplayed.sdf", true, true),
+        FragTest("EmbeddedSGroupSUP_MUL.sdf", true, true),
+        FragTest("EmbeddedSgroupCOP_SUP.sdf", true, true),
+        FragTest("EmbeddedSgroupDAT_SUP.sdf", true, true),
+        FragTest("EmbeddedSgroupMUL_MUL.sdf", true, true),
+        FragTest("EmbeddedSgroupMUL_SUP.sdf", true, true),
+        FragTest("EmbeddedSgroupSRU_SUP.sdf", true, true),
+        FragTest("EmbeddedSgroupSUPEXP_SUP.sdf", true, true),
+        FragTest("EmbeddedSgroupSUPEXP_SUP2.sdf", true, true),
+        FragTest("EmbeddedSgroupSUP_SUP.sdf", true, true),
+        FragTest("EmbeddedSgroupSUP_SUP2.sdf", true, true),
+        FragTest("GenericSgroup.sdf", true, true),
+        FragTest("MarvinOldSuperGroupTest.sdf", true, true),
+        FragTest("MonomerSgroup.sdf", true, true),
+        FragTest("MultipleSgroup.sdf", true, true),
+        FragTest("MultipleSgroupParentInMiddleOfAtomBlock.sdf", true, true),
+        FragTest("SgroupExpanded.sdf", true, true),
+        FragTest("SgroupMultAttach.sdf", true, true),
+        FragTest("Sgroup_MUL_ParentInMiddle.sdf", true, true),
+        FragTest("modification_sgroup.sdf", true, true),
+        FragTest("polymerSalt.mol", true, true),
+    };
+    for (auto test : tests) {
+      testFragmetation(test);
+    }
+  };
+}
+
+int main(int argc, char *argv[]) {
+  Catch::Session session;
+
+  if (argc > 2 && std::string(argv[2]) == "generate") {
+    generateExpectedFilesFlag = true;
+    --argc;
+  }
+
+  int returnCode = session.applyCommandLine(argc, argv);
+  if (returnCode != 0) return returnCode;
+  return session.run();
 }
