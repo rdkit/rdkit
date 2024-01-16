@@ -356,13 +356,13 @@ void preprocessSmiles(const std::string &smiles, const T &params,
 }
 }  // namespace
 
-std::unique_ptr<Atom> SmilesToAtom(const std::string &smiles) {
+std::unique_ptr<Atom> AtomFromSmiles(const std::string &smiles) {
   yysmiles_debug = false;
 
   return toAtom(smiles, smiles_atom_parse);
 }
 
-std::unique_ptr<Bond> SmilesToBond(const std::string &smiles) {
+std::unique_ptr<Bond> BondFromSmiles(const std::string &smiles) {
   yysmiles_debug = false;
 
   return toBond(smiles, smiles_bond_parse);
@@ -401,9 +401,9 @@ void handleCXPartAndName(RWMol *res, const T &params, const std::string &cxPart,
 }
 }  // namespace
 
-std::unique_ptr<RWMol> SmilesToMol(const std::string &smiles,
+std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
                                    const SmilesParserParams &params) {
-  // Calling SmilesToMol in a multithreaded context is generally safe *unless*
+  // Calling MolFromSmiles in a multithreaded context is generally safe *unless*
   // the value of debugParse is different for different threads. The if
   // statement below avoids a TSAN warning in the case where multiple threads
   // all use the same value for debugParse.
@@ -512,21 +512,21 @@ std::unique_ptr<RWMol> SmilesToMol(const std::string &smiles,
   return res;
 };
 
-std::unique_ptr<Atom> SmartsToAtom(const std::string &smiles) {
+std::unique_ptr<Atom> AtomFromSmarts(const std::string &smiles) {
   yysmarts_debug = false;
 
   return toAtom(smiles, smarts_atom_parse);
 };
 
-std::unique_ptr<Bond> SmartsToBond(const std::string &smiles) {
+std::unique_ptr<Bond> BondFromSmarts(const std::string &smiles) {
   yysmarts_debug = false;
 
   return toBond(smiles, smarts_bond_parse);
 };
 
-std::unique_ptr<RWMol> SmartsToMol(const std::string &smarts,
+std::unique_ptr<RWMol> MolFromSmarts(const std::string &smarts,
                                    const SmartsParserParams &params) {
-  // Calling SmartsToMol in a multithreaded context is generally safe *unless*
+  // Calling MolFromSmarts in a multithreaded context is generally safe *unless*
   // the value of debugParse is different for different threads. The if
   // statement below avoids a TSAN warning in the case where multiple threads
   // all use the same value for debugParse.

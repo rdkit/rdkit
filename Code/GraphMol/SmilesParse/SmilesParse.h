@@ -68,21 +68,21 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
   bool debugParse = false; /**< enable debugging in the SMARTS parser*/
 };
 
-RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> SmilesToMol(
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSmiles(
     const std::string &smi,
     const SmilesParserParams &params = SmilesParserParams());
-RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> SmartsToMol(
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSmarts(
     const std::string &sma,
     const SmartsParserParams &params = SmartsParserParams());
 
-RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Atom> SmilesToAtom(
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Atom> AtomFromSmiles(
     const std::string &smi);
-RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Bond> SmilesToBond(
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Bond> BondFromSmiles(
     const std::string &smi);
 
-RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Atom> SmartsToAtom(
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Atom> AtomFromSmarts(
     const std::string &sma);
-RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Bond> SmartsToBond(
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::Bond> BondFromSmarts(
     const std::string &sma);
 
 }  // namespace SmilesParse
@@ -133,16 +133,16 @@ inline RDKit::RWMol *SmilesToMol(const std::string &smi,
   v2ps.parseName = ps.parseName;
   v2ps.removeHs = ps.removeHs;
   v2ps.skipCleanup = ps.skipCleanup;
-  return RDKit::v2::SmilesParse::SmilesToMol(smi, v2ps).release();
+  return RDKit::v2::SmilesParse::MolFromSmiles(smi, v2ps).release();
 }
 
 inline Atom *SmilesToAtom(const std::string &smi) {
-  auto res = RDKit::v2::SmilesParse::SmilesToAtom(smi).release();
+  auto res = RDKit::v2::SmilesParse::AtomFromSmiles(smi).release();
   return res;
 }
 
 inline Bond *SmilesToBond(const std::string &smi) {
-  return RDKit::v2::SmilesParse::SmilesToBond(smi).release();
+  return RDKit::v2::SmilesParse::BondFromSmiles(smi).release();
 }
 
 //! Construct a molecule from a SMILES string
@@ -187,7 +187,7 @@ inline RWMol *SmilesToMol(
     params.sanitize = false;
     params.removeHs = false;
   }
-  return RDKit::v2::SmilesParse::SmilesToMol(smi, params).release();
+  return RDKit::v2::SmilesParse::MolFromSmiles(smi, params).release();
 };
 
 inline RWMol *SmartsToMol(const std::string &sma,
@@ -203,7 +203,7 @@ inline RWMol *SmartsToMol(const std::string &sma,
   v2ps.mergeHs = ps.mergeHs;
   v2ps.skipCleanup = ps.skipCleanup;
 
-  return RDKit::v2::SmilesParse::SmartsToMol(sma, v2ps).release();
+  return RDKit::v2::SmilesParse::MolFromSmarts(sma, v2ps).release();
 }
 
 //! Construct a molecule from a SMARTS string
@@ -227,14 +227,14 @@ inline RWMol *SmartsToMol(
   if (replacements) {
     ps.replacements = *replacements;
   }
-  return RDKit::v2::SmilesParse::SmartsToMol(sma, ps).release();
+  return RDKit::v2::SmilesParse::MolFromSmarts(sma, ps).release();
 };
 
 inline Atom *SmartsToAtom(const std::string &sma) {
-  return RDKit::v2::SmilesParse::SmartsToAtom(sma).release();
+  return RDKit::v2::SmilesParse::AtomFromSmarts(sma).release();
 }
 inline Bond *SmartsToBond(const std::string &sma) {
-  return RDKit::v2::SmilesParse::SmartsToBond(sma).release();
+  return RDKit::v2::SmilesParse::BondFromSmarts(sma).release();
 }
 }  // namespace v1
 
@@ -242,7 +242,7 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text,
                                                         size_t len) {
   std::string smi(text, len);
   try {
-    return v2::SmilesParse::SmilesToMol(smi);
+    return v2::SmilesParse::MolFromSmiles(smi);
   } catch (const RDKit::MolSanitizeException &) {
     return nullptr;
   }
@@ -250,7 +250,7 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text,
 inline std::unique_ptr<RDKit::RWMol> operator"" _smarts(const char *text,
                                                         size_t len) {
   std::string smi(text, len);
-  return v2::SmilesParse::SmartsToMol(smi);
+  return v2::SmilesParse::MolFromSmarts(smi);
 }
 
 }  // namespace RDKit
