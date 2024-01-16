@@ -41,7 +41,6 @@ namespace SmilesParse {
 using RDKit::SmilesParse::SmilesParseException;
 
 struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
-  int debugParse = 0;   /**< enable debugging in the SMILES parser*/
   bool sanitize = true; /**< sanitize the molecule after building it */
   std::map<std::string, std::string>
       replacements;          /**< allows SMILES "macros" */
@@ -52,10 +51,10 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   bool removeHs = true;  /**< remove Hs after constructing the molecule */
   bool skipCleanup =
       false; /**<  skip the final cleanup stage (for internal use) */
+  bool debugParse = false; /**< enable debugging in the SMILES parser*/
 };
 
 struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
-  int debugParse = 0; /**< enable debugging in the SMARTS parser*/
   std::map<std::string, std::string>
       replacements;          /**< allows SMARTS "macros" */
   bool allowCXSMILES = true; /**< recognize and parse CXSMILES extensions */
@@ -66,6 +65,7 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
       false; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
   bool skipCleanup =
       false; /**<  skip the final cleanup stage (for internal use) */
+  bool debugParse = false; /**< enable debugging in the SMARTS parser*/
 };
 
 RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> SmilesToMol(
