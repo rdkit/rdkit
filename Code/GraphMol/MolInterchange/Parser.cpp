@@ -245,12 +245,13 @@ void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
 
     const auto &aids = sgVal["atoms"].GetArray();
     std::vector<Atom *> atoms;
+    std::vector<Bond *> bonds;
     for (const auto &aid : aids) {
       atoms.push_back(mol->getAtomWithIdx(aid.GetUint()));
     }
 
     if (!atoms.empty()) {
-      molSGs.emplace_back(typ, std::move(atoms), gId);
+      molSGs.emplace_back(typ, std::move(atoms), std::move(bonds), gId);
     }
   }
   mol->setStereoGroups(std::move(molSGs));

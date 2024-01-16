@@ -114,8 +114,12 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     for (auto &&otherAtom : otherGroup.getAtoms()) {
       atoms.push_back(getAtomWithIdx(otherAtom->getIdx()));
     }
+    std::vector<Bond *> bonds;
+    for (auto &&otherBond : otherGroup.getBonds()) {
+      bonds.push_back(getBondWithIdx(otherBond->getIdx()));
+    }
     d_stereo_groups.emplace_back(otherGroup.getGroupType(), std::move(atoms),
-                                 otherGroup.getReadId());
+                                 std::move(bonds), otherGroup.getReadId());
     d_stereo_groups.back().setWriteId(otherGroup.getWriteId());
   }
 

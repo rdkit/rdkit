@@ -388,6 +388,11 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
   }
 }
 
+void reapplyWedging(ROMol &mol) {
+  auto &wmol = static_cast<RWMol &>(mol);
+  RDKit::Chirality::reapplyMolBlockWedging(wmol);
+}
+
 MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
                                   bool catchErrors) {
   auto &wmol = static_cast<RWMol &>(mol);
@@ -1036,6 +1041,8 @@ struct molops_wrapper {
         .value("SANITIZE_SETCONJUGATION", MolOps::SANITIZE_SETCONJUGATION)
         .value("SANITIZE_SETHYBRIDIZATION", MolOps::SANITIZE_SETHYBRIDIZATION)
         .value("SANITIZE_CLEANUPCHIRALITY", MolOps::SANITIZE_CLEANUPCHIRALITY)
+        .value("SANITIZE_CLEANUPATROPISOMERS",
+               MolOps::SANITIZE_CLEANUPATROPISOMERS)
         .value("SANITIZE_ADJUSTHS", MolOps::SANITIZE_ADJUSTHS)
         .value("SANITIZE_CLEANUP_ORGANOMETALLICS",
                MolOps::SANITIZE_CLEANUP_ORGANOMETALLICS)
@@ -1057,9 +1064,7 @@ struct molops_wrapper {
                 (python::arg("mol"), python::arg("conformer")),
                 docString.c_str());
     docString =
-        "DEPRECATED, use SetDoubleBondNeighborDirections() instead\n\
-  ARGUMENTS:\n\
-  \n\
+        "\n\
     - mol: the molecule to be modified\n\
     - confId: Conformer to use for the coordinates\n\
 \n";
@@ -2430,8 +2435,22 @@ ARGUMENTS:\n\
             - molecule: the molecule to update\n\
         \n\
         \n";
-    python::def("ReapplyMolBlockWedging", Chirality::reapplyMolBlockWedging,
-                docString.c_str(), python::args("mol"));
+    python::def("ReapplyMolBlockWedging", reapplyWedging, (python::arg("mol")),
+                docString.c_str());
+
+    docString =
+        "Remove chiral markings that were derived from a 3D mol but were not \n\
+        explicity marked in the mol block. (wedge bond or CFG indication\n\
+        \n\
+          ARGUMENTS:\n\
+        \n\
+            - molecule: the molecule to update\n\
+        \n\
+        \n";
+    python::def("RemoveNonExplicit3DChirality",
+                Chirality::removeNonExplicit3DChirality, (python::arg("mol")),
+                docString.c_str());
+
     docString =
         R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";
     python::class_<StereoBondThresholds>("StereoBondThresholds",
@@ -2466,7 +2485,7 @@ ARGUMENTS:\n\
     - atom ID: the atom from which to do the wedging
     - conformer: the conformer to use to determine wedge direction
 )DOC";
-    python::def("WedgeBond", WedgeBond, docString.c_str(),
+    python::def("WedgeBond", Chirality::wedgeBond, docString.c_str(),
                 python::args("bond", "fromAtomIdx", "conf"));
 
     // ------------------------------------------------------------------------
@@ -2971,12 +2990,11 @@ A note on the flags controlling which atoms/bonds are modified:
                 "chirality from 3D structures is enabled");
     python::def("SetUseLegacyStereoPerception",
                 Chirality::setUseLegacyStereoPerception, python::args("val"),
-                "toggles usage of the legacy stereo perception code");
+                "sets usage of the legacy stereo perception code");
     python::def("GetUseLegacyStereoPerception",
                 Chirality::getUseLegacyStereoPerception,
                 "returns whether or not the legacy stereo perception code is "
                 "being used");
-
     python::def(
         "TranslateChiralFlagToStereoGroups", translateChiralFlagToStereoGroups,
         (python::arg("mol"),

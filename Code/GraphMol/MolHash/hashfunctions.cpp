@@ -323,6 +323,7 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
 
   for (auto bptr : mol->bonds()) {
     bptr->setBondType(Bond::SINGLE);
+    bptr->setIsAromatic(false); // clear aromatic flags
   }
   MolOps::assignRadicals(*mol);
 
@@ -773,7 +774,7 @@ bool HasNbrInScaffold(Atom *aptr, unsigned char *is_in_scaffold) {
 std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
                                    unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
-  if (!mol->getRingInfo()->isInitialized()) {
+  if (!mol->getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(*mol);
   }
 
@@ -994,7 +995,7 @@ std::string RegioisomerHash(RWMol *mol, bool useCXSmiles,
   // we need a copy of the molecule so that we can loop over the bonds of
   // something while modifying something else
   RDKit::ROMol molcpy(*mol);
-  if (molcpy.getRingInfo()->isInitialized()) {
+  if (molcpy.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(molcpy);
   }
   for (int i = molcpy.getNumBonds() - 1; i >= 0; --i) {

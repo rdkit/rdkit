@@ -307,21 +307,19 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
     } else if (ivi > ivj) {
       return 1;
     }
-    // use the atom-mapping numbers if they were assigned
-    /* boost::any_cast FILED here:
-            std::string molAtomMapNumber_i="";
-            std::string molAtomMapNumber_j="";
-    */
-    int molAtomMapNumber_i = 0;
-    int molAtomMapNumber_j = 0;
-    dp_atoms[i].atom->getPropIfPresent(common_properties::molAtomMapNumber,
-                                       molAtomMapNumber_i);
-    dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
-                                       molAtomMapNumber_j);
-    if (molAtomMapNumber_i < molAtomMapNumber_j) {
-      return -1;
-    } else if (molAtomMapNumber_i > molAtomMapNumber_j) {
-      return 1;
+    if (df_useAtomMaps) {
+      // use the atom-mapping numbers if they were assigned
+      int molAtomMapNumber_i = 0;
+      int molAtomMapNumber_j = 0;
+      dp_atoms[i].atom->getPropIfPresent(common_properties::molAtomMapNumber,
+                                         molAtomMapNumber_i);
+      dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
+                                         molAtomMapNumber_j);
+      if (molAtomMapNumber_i < molAtomMapNumber_j) {
+        return -1;
+      } else if (molAtomMapNumber_i > molAtomMapNumber_j) {
+        return 1;
+      }
     }
     // start by comparing degree
     ivi = dp_atoms[i].degree;
@@ -464,6 +462,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   bool df_useIsotopes{true};
   bool df_useChirality{true};
   bool df_useChiralityRings{true};
+  bool df_useAtomMaps{true};
 
   AtomCompareFunctor() {}
   AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
@@ -476,7 +475,8 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
         df_useNbrs(false),
         df_useIsotopes(true),
         df_useChirality(true),
-        df_useChiralityRings(true) {}
+        df_useChiralityRings(true),
+        df_useAtomMaps(true) {}
   int operator()(int i, int j) const {
     if (dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])) {
       return 0;
@@ -806,7 +806,8 @@ RDKIT_GRAPHMOL_EXPORT void rankMolAtoms(const ROMol &mol,
                                         std::vector<unsigned int> &res,
                                         bool breakTies = true,
                                         bool includeChirality = true,
-                                        bool includeIsotopes = true);
+                                        bool includeIsotopes = true,
+                                        bool includeAtomMaps = true);
 
 RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
     const ROMol &mol, std::vector<unsigned int> &res,
@@ -814,7 +815,7 @@ RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
     const boost::dynamic_bitset<> &bondsInPlay,
     const std::vector<std::string> *atomSymbols,
     const std::vector<std::string> *bondSymbols, bool breakTies,
-    bool includeChirality, bool includeIsotope);
+    bool includeChirality, bool includeIsotope, bool includeAtomMaps);
 
 inline void rankFragmentAtoms(
     const ROMol &mol, std::vector<unsigned int> &res,
@@ -822,9 +823,10 @@ inline void rankFragmentAtoms(
     const boost::dynamic_bitset<> &bondsInPlay,
     const std::vector<std::string> *atomSymbols = nullptr,
     bool breakTies = true, bool includeChirality = true,
-    bool includeIsotopes = true) {
+    bool includeIsotopes = true, bool includeAtomMaps = true) {
   rankFragmentAtoms(mol, res, atomsInPlay, bondsInPlay, atomSymbols, nullptr,
-                    breakTies, includeChirality, includeIsotopes);
+                    breakTies, includeChirality, includeIsotopes,
+                    includeAtomMaps);
 };
 
 RDKIT_GRAPHMOL_EXPORT void chiralRankMolAtoms(const ROMol &mol,

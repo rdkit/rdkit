@@ -59,7 +59,7 @@ void AtomFeatVector(const RDKit::Atom* atom, const ROMol* mol,
   }
 
   // initiate ring info if not already done
-  if (!mol->getRingInfo()->isInitialized()) {
+  if (!mol->getRingInfo()->isSssrOrBetter()) {
     RDKit::MolOps::findSSSR(*mol);
   }
 

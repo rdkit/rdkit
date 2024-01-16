@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
@@ -2423,6 +2424,46 @@ void testBulkFP() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testAtomPairFPDifference() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue #6958" << std::endl;
+  auto zinc36905137 = "Nc1nncc(-c2ccc(OC(F)F)cc2)n1"_smiles;
+  const unsigned int minLength = 1;
+  const unsigned int maxLength = 30;
+  const std::vector<std::uint32_t> fromAtoms{12, 13};
+  std::unique_ptr<SparseIntVect<std::int32_t>> fpFromFreeFunc(
+      RDKit::AtomPairs::getAtomPairFingerprint(*zinc36905137, minLength,
+                                               maxLength, &fromAtoms));
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> atomPairGenerator(
+      AtomPair::getAtomPairGenerator<std::uint32_t>(minLength, maxLength));
+  std::unique_ptr<SparseIntVect<std::uint32_t>> fpFromGenerator(
+      atomPairGenerator->getSparseCountFingerprint(*zinc36905137, &fromAtoms));
+  TEST_ASSERT(fpFromFreeFunc->size() == fpFromGenerator->size());
+  const auto &fpFromFreeFuncNonZero = fpFromFreeFunc->getNonzeroElements();
+  std::vector<std::pair<std::uint32_t, int>> fpFromFreeFuncAsVectOfPairs(
+      fpFromFreeFuncNonZero.begin(), fpFromFreeFuncNonZero.end());
+  std::sort(fpFromFreeFuncAsVectOfPairs.begin(),
+            fpFromFreeFuncAsVectOfPairs.end());
+  const auto &fpFromGeneratorNonZero = fpFromGenerator->getNonzeroElements();
+  std::vector<std::pair<std::uint32_t, int>> fpFromGeneratorAsVectOfPairs(
+      fpFromGeneratorNonZero.begin(), fpFromGeneratorNonZero.end());
+  std::sort(fpFromGeneratorAsVectOfPairs.begin(),
+            fpFromGeneratorAsVectOfPairs.end());
+  if (fpFromFreeFuncAsVectOfPairs != fpFromGeneratorAsVectOfPairs) {
+    for (auto i = 0u; i < fpFromFreeFuncAsVectOfPairs.size(); ++i) {
+      const auto &fpFromFreeFuncPair = fpFromFreeFuncAsVectOfPairs.at(i);
+      const auto &fpFromGeneratorPair = fpFromGeneratorAsVectOfPairs.at(i);
+      if (fpFromFreeFuncPair != fpFromGeneratorPair) {
+        BOOST_LOG(rdErrorLog) << "fpFromFreeFuncPair (" << fpFromFreeFuncPair.first << ", "
+                  << fpFromFreeFuncPair.second << ")"
+                  << "\nfpFromGeneratorPair (" << fpFromGeneratorPair.first
+                  << ", " << fpFromGeneratorPair.second << ")" << std::endl;
+      }
+    }
+  }
+  TEST_ASSERT(fpFromFreeFuncAsVectOfPairs == fpFromGeneratorAsVectOfPairs);
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -2462,6 +2503,7 @@ int main(int argc, char *argv[]) {
   testGitHubIssue334();
   testGitHubIssue811();
   testBulkFP();
+  testAtomPairFPDifference();
 
   return 0;
 }

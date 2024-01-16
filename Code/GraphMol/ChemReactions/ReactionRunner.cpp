@@ -1255,6 +1255,7 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
   std::vector<StereoGroup> new_stereo_groups;
   for (const auto &sg : reactant.getStereoGroups()) {
     std::vector<Atom *> atoms;
+    std::vector<Bond *> bonds;
     for (auto &&reactantAtom : sg.getAtoms()) {
       auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
       if (productAtoms == mapping.reactProdAtomMap.end()) {
@@ -1280,9 +1281,13 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
     }
     if (!atoms.empty()) {
       new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms),
-                                     sg.getReadId());
+                                     std::move(bonds), sg.getReadId());
     }
   }
+
+  // Although we have added storage, and canonicalization of Atropisomers,
+  // searching is not yet supported.  When it is, we will need to copy
+  // bond-part of the SG groups to the products as appropriate.
 
   if (!new_stereo_groups.empty()) {
     auto &existing_sg = product->getStereoGroups();

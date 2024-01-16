@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <catch2/catch_all.hpp>
+#include <numeric>
+#include <random>
 
 #include <GraphMol/RDKitBase.h>
 
@@ -320,7 +322,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub6685_2.svg", 116380465U},
     {"testGithub6685_3.svg", 409385402U},
     {"testGithub6685_4.svg", 1239628830U},
-    {"bad_lasso_1.svg", 726527516U}};
+    {"bad_lasso_1.svg", 726527516U},
+    {"AtropCanon1.svg", 1587179714U},
+    {"AtropManyChiralsEnhanced.svg", 3871032500U},
+    {"testGithub6968.svg", 1554428830U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -8312,7 +8317,7 @@ TEST_CASE("Lasso highlights") {
     std::map<int, std::vector<DrawColour>> ha_map;
     std::map<int, std::vector<DrawColour>> hb_map;
 
-    for (size_t i = 0; i < smarts.size(); ++i) {
+       for (size_t i = 0; i < smarts.size(); ++i) {
       std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
       update_colour_map(hit_atoms, colours[i], ha_map);
     }
@@ -9309,4 +9314,119 @@ TEST_CASE("Github 6749 : various bad things in the lasso highlighting") {
                     std::sregex_iterator()));
   CHECK(match_count == 3);
   check_file_hash(baseName + "1.svg");
+}
+
+TEST_CASE("atropisomers") {
+  {
+    auto mol =
+        "CC1=CC=C(Cl)C(C)=C1N1C=CC=C1Cl |(-0.7234,-1.1614,;-0.6697,0.3775,;0.69,1.1007,;0.7439,2.6396,;-0.5622,3.4557,;-0.5085,4.9947,;-1.9218,2.7328,;-3.2279,3.5487,;-1.9757,1.1937,;-3.3354,0.4706,;-3.8113,-0.994,;-5.3513,-0.994,;-5.8272,0.4706,;-4.5813,1.3758,;-4.5813,2.9158,),wD:8.8|"_smiles;
+    REQUIRE(mol);
+    bool kekulize = true;
+    bool addChiralHs = true;
+    bool wedgeBonds = true;
+    bool forceCoords = true;
+    bool wavyBonds = true;
+    MolDraw2DUtils::prepareMolForDrawing(*mol, kekulize, addChiralHs,
+                                         wedgeBonds, forceCoords, wavyBonds);
+    CHECK(mol->getBondWithIdx(8)->getBondDir() == Bond::BondDir::NONE);
+    CHECK(mol->getBondWithIdx(8)->getStereo() ==
+          Bond::BondStereo::STEREOATROPCW);
+
+    MOL_PTR_VECT ms{mol.get()};
+    {
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      // drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      std::vector<std::string> legends = {"AtropCanon1"};
+      drawer.drawMolecules(ms, &legends);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("AtropCanon1.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("AtropCanon1.svg");
+    }
+  }
+  {
+    auto mol =
+        "O=C1C=CNC(=O)N1C(=C)[C@]([C@H](C)Br)([C@@H](F)C)[C@H](Cl)C |(2.8625,1.0561,;2.2921,-0.5174,;3.4688,-1.0018,;3.6019,-2.4682,;2.3988,-3.3169,;1.0621,-2.6992,;0.1062,-3.9298,;0.9288,-1.2328,;-0.5563,-0.6124,;-1.5367,-1.8,;-0.8947,0.9647,;-0.8778,2.5678,;-0.1398,3.9298,;-1.9563,3.6407,;0.5974,1.3136,;1.1268,-0.0778,;1.9954,1.9251,;-2.4534,0.7177,;-3.6019,1.737,;-3.4495,-0.4655,),wD:14.15,wU:7.7,11.13,10.14,17.18,o1:7,10,14,&1:11,17|"_smiles;
+    REQUIRE(mol);
+    bool kekulize = true;
+    bool addChiralHs = true;
+    bool wedgeBonds = true;
+    bool forceCoords = true;
+    bool wavyBonds = true;
+    MolDraw2DUtils::prepareMolForDrawing(*mol, kekulize, addChiralHs,
+                                         wedgeBonds, forceCoords, wavyBonds);
+    CHECK(mol->getBondWithIdx(7)->getBondDir() == Bond::BondDir::NONE);
+    CHECK(mol->getBondWithIdx(7)->getStereo() ==
+          Bond::BondStereo::STEREOATROPCCW);
+
+    MOL_PTR_VECT ms{mol.get()};
+    {
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      // drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      std::vector<std::string> legends = {"AtropManyChiralsEnhanced"};
+      drawer.drawMolecules(ms, &legends);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("AtropManyChiralsEnhanced.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("AtropManyChiralsEnhanced.svg");
+    }
+  }
+}
+TEST_CASE("Github6968 - bad bond highlights with triple bonds") {
+  // The issue is that in the linear highlight across the triple bond,
+  // some of the highlights didn't appear, and others were
+  // triangular - the corners of the rectangle weren't all distinct.
+  auto m = "ClCC#CCOC(=O)Nc1cccc(c1)Cl"_smiles;
+  std::vector<unsigned int> atOrder(m->getNumAtoms(), 0);
+  std::iota(atOrder.begin(), atOrder.end(), 0);
+  REQUIRE(m);
+  {
+    // Because I worried about the atom order giving a non-general
+    // result, repeat it 10 times with atoms in random order.
+    for (int testNum = 0; testNum < 10; ++testNum) {
+      std::unique_ptr<ROMol> mol(MolOps::renumberAtoms(*m, atOrder));
+      MolDraw2DSVG drawer(350, 300);
+      std::vector<int> highlightAtoms = {};
+      // Helpfully, the atoms are scrambled but not the bonds.
+      std::vector<int> highlightBonds = {1, 2, 3};
+
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawOptions().addBondIndices = true;
+      drawer.drawMolecule(*mol, "", &highlightAtoms, &highlightBonds);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::regex bond(
+          "<path class='bond-(\\d+) atom-(\\d+) atom-(\\d+)' d='M (-?\\d+.\\d+),"
+          "(-?\\d+.\\d+) L (-?\\d+.\\d+),(-?\\d+.\\d+) L (-?\\d+.\\d+),"
+          "(-?\\d+.\\d+) L (-?\\d+.\\d+),(-?\\d+.\\d+) Z' style=");
+
+      auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond);
+      auto match_end = std::sregex_iterator();
+      for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+        std::smatch match = *i;
+        std::vector<Point2D> pts;
+        for (int j = 4; j < 12; j += 2) {
+          pts.push_back(Point2D(stod(match[j]), stod(match[j + 1])));
+        }
+        // None of the points should be on top of each other
+        for (size_t j = 0; j < 3; ++j) {
+          for (size_t k = j + 1; k < 4; ++k) {
+            CHECK((pts[j] - pts[k]).lengthSq() > 1.0e-4);
+          }
+        }
+      }
+      if (testNum == 0) {
+        std::ofstream outs("testGithub6968.svg");
+        outs << text;
+        outs.close();
+        check_file_hash("testGithub6968.svg");
+      }
+      std::shuffle(atOrder.begin(), atOrder.end(),
+                   std::mt19937{std::random_device{}()});
+    }
+  }
 }

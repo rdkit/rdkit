@@ -46,6 +46,8 @@
 #endif
 #endif
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
@@ -1949,7 +1951,7 @@ MoleculeDescriptors *calcMolecularDescriptorsReaction(
     des->nAtoms += begin->get()->getNumHeavyAtoms();
     des->nBonds += begin->get()->getNumBonds(true);
     des->MW = RDKit::Descriptors::calcAMW(*begin->get(), true);
-    if (!begin->get()->getRingInfo()->isInitialized()) {
+    if (!begin->get()->getRingInfo()->isSssrOrBetter()) {
       begin->get()->updatePropertyCache();
       RDKit::MolOps::findSSSR(*begin->get());
     }
@@ -2171,7 +2173,7 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
   while (*s && *s <= ' ') {
     s++;
   }
-  while (s<s_end && * s> ' ') {
+  while (s < s_end && *s > ' ') {
     len = 0;
     while (s[len] > ' ') {
       len++;

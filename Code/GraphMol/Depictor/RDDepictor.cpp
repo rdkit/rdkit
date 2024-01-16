@@ -947,19 +947,20 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
     if (bestPatternToRefMatch.empty()) {
       throw DepictException("Reference pattern does not map to reference.");
     }
-    // mapping of referencePattern atom indices to reference atom indices
-    int patternSize = patternToRefMapping.size();
     int numRefAtoms = reference.getNumAtoms();
     for (auto &pair : bestPatternToRefMatch) {
       // skip indices corresponding to added Hs
       if (p.allowRGroups && pair.second >= numRefAtoms) {
         continue;
       }
-      CHECK_INVARIANT(pair.first < patternSize, "");
+      CHECK_INVARIANT(
+          pair.first >= 0 &&
+              pair.first < static_cast<int>(patternToRefMapping.size()),
+          "");
       patternToRefMapping[pair.first] = pair.second;
     }
-    // 1-1 mapping as we use reference atom indices directly
   } else {
+    // 1-1 mapping as we use reference atom indices directly
     std::iota(patternToRefMapping.begin(), patternToRefMapping.end(), 0);
   }
   if (p.alignOnly) {
@@ -978,7 +979,6 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
         std::vector<RDKit::MatchVectType> prunedMatches;
         prunedMatches.reserve(matches.size());
         int numMolAtoms = mol.getNumAtoms();
-        int patternSize = patternToRefMapping.size();
         for (const auto &match : matches) {
           // we want to prune from the match any added hydrogens
           // as they were not originally part of the molecule
@@ -994,12 +994,11 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
               }
               ++nMatchedHeavies;
             }
-            CHECK_INVARIANT(pair.first < patternSize, "");
             auto refIdx = patternToRefMapping.at(pair.first);
             if (refIdx == -1) {
               continue;
             }
-            prunedMatch.emplace_back(refIdx, pair.second);
+            prunedMatch.push_back(std::move(pair));
           }
           if (nMatchedHeavies < maxMatchedHeavies) {
             break;
@@ -1018,10 +1017,18 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
       }
       // matches maps reference atom idx to mol atom idx
       // but getBestAlignmentTransform needs the reverse
-      std::for_each(matches.begin(), matches.end(), [](auto &match) {
-        std::for_each(match.begin(), match.end(),
-                      [](auto &pair) { std::swap(pair.first, pair.second); });
-      });
+      // while we do the swap, we also map pattern indices
+      // back to reference indices
+      std::for_each(
+          matches.begin(), matches.end(), [&patternToRefMapping](auto &match) {
+            std::for_each(match.begin(), match.end(),
+                          [&patternToRefMapping](auto &pair) {
+                            auto refIdx = patternToRefMapping.at(pair.first);
+                            CHECK_INVARIANT(refIdx != -1, "");
+                            pair.first = pair.second;
+                            pair.second = refIdx;
+                          });
+          });
       // if the molecule does not already have coordinates, we
       // need to generate some before attempting the alignment
       // and clear any existing wedging info if requested
@@ -1059,10 +1066,8 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
           reducedToFullMatches(*reducedQuery, *prbMol, matches);
         }
         int numMolAtoms = mol.getNumAtoms();
-        int patternSize = patternToRefMapping.size();
         for (const auto &pair :
              getMostSubstitutedCoreMatch(*prbMol, *queryAdj, matches)) {
-          CHECK_INVARIANT(pair.first < patternSize, "");
           if (pair.second < numMolAtoms &&
               patternToRefMapping.at(pair.first) != -1) {
             matchVect.push_back(std::move(pair));

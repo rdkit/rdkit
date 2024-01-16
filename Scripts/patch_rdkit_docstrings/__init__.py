@@ -10,6 +10,7 @@ the C++ sources accordingly.
 import sys
 import os
 import re
+import itertools
 import glob
 import json
 import importlib
@@ -22,6 +23,7 @@ import logging
 import tempfile
 from threading import Thread
 from pathlib import Path
+
 
 RDKIT_MODULE_NAME = "rdkit"
 CLANG_CPP_EXE = os.environ.get("CLANG_CPP_EXE", "clang++")
@@ -129,7 +131,8 @@ class CppFile(DictLike):
 
     QUOTED_FIELD_REGEX = re.compile(r"\"([^\"]*)\"")
     EXTRACT_BASE_CLASS_NAME_REGEX = re.compile(r"\s*(\S+)\s*<[^>]+>\s*$")
-    EXTRACT_INIT_ARGS = re.compile(r"^<(.*)>$")
+    EXTRACT_INIT_ARGS = re.compile(r"^<(.*)\s>+\s$")
+    IS_TEMPLATE_TYPE = re.compile(r"^T\d*$")
     SELF_LITERAL = "self"
 
     def __init__(self, cpp_path=None):
@@ -618,7 +621,22 @@ class CppFile(DictLike):
         return res
 
     @staticmethod
-    def num_matching_parameters(expected_params, params):
+    def have_param(param_list, param):
+        """If param is part of param_list return True and pop it from param_list.
+
+        Args:
+            param_list (list[str]): list of parameters
+            param (str): parameter
+
+        Returns:
+            bool: True if param is part of param_list, False if not
+        """
+        res = param in param_list
+        if res:
+            param_list.pop(param_list.index(param))
+        return res
+
+    def num_matching_parameters(self, expected_params, params):
         """Find the number of matching params between params
         (list of individual parameter typenames) and expected_params
         (concatenated string of expected parameter typenames)
@@ -627,10 +645,13 @@ class CppFile(DictLike):
             params (list[str]): list of individual parameter typenames
 
         Returns:
-            int: number of matching params
+            tuple[int, int]: number of matching params, number of non-matching params
         """
-        expected_params_concat = "".join(expected_params)
-        return [p in expected_params_concat for p in params].count(True)
+        expected_params_tok = [p.split("::")[-1] for p in expected_params.split()]
+        params_tok = [p.split("::")[-1] for p in " ".join(params).split()]
+        num_matched_params = [self.have_param(expected_params_tok, p) for p in params_tok].count(True)
+        num_non_matched_params = len(params_tok) - num_matched_params
+        return num_matched_params, -num_non_matched_params
 
     def find_cpp_func_params(self, cursor, is_staticmethod, cpp_class_name, func_name,
                              expected_cpp_params, expected_param_count):
@@ -656,10 +677,23 @@ class CppFile(DictLike):
             list[str]: list of parameter names
         """
         self.params = None
-        for cmp_func in (int.__eq__, int.__gt__):
-            self.find_cpp_func_params_r(cursor, cpp_class_name, func_name,
-                                        expected_cpp_params, expected_param_count, cmp_func)
+        assigned_overloads = None
+        if cpp_class_name == func_name:
+            key = f"{cpp_class_name}::{cpp_class_name}"
+            assigned_overloads = self.assigned_overloads.get(key, [])
+            if not assigned_overloads:
+                self.assigned_overloads[key] = assigned_overloads
+        self.assigned_overloads_for_func = assigned_overloads
+        for accept_params_no_type in (False, True):
+            self.accept_params_no_type = accept_params_no_type
+            for cmp_func in (int.__eq__, int.__gt__):
+                self.find_cpp_func_params_r(cursor, cpp_class_name, func_name,
+                                            expected_cpp_params, expected_param_count, cmp_func)
+                if self.params is not None:
+                    break
             if self.params is not None:
+                if assigned_overloads is not None and not self.has_template_type(self.params):
+                    assigned_overloads.append(self.get_params_hash(self.params))
                 break
         if self.params is None:
             params = [f"arg{i + 1}" for i in range(expected_param_count)]
@@ -667,6 +701,31 @@ class CppFile(DictLike):
                 params.insert(0, "self")
             return params
         return [p for p, _ in self.params]
+
+    def has_template_type(self, params):
+        """Find if any parameter in params is of template type.
+
+        Args:
+            params (list[tuple[str, str]]): list of (name, type) tuples
+
+        Returns:
+            bool: True if params contain parameters of template type
+            (i.e., T, optionally followed by a number)
+        """
+        return any(self.IS_TEMPLATE_TYPE.match(t) for _, t in params)
+
+    @staticmethod
+    def get_params_hash(params):
+        """Get a hash from function parameters.
+
+        Args:
+            params (list[tuple[str, str]]): list of function parameters
+            as (parameter name, paramater type) tuples
+
+        Returns:
+            tuple: a sorted tuple that can be used as a hash
+        """
+        return tuple(sorted(params))
 
     def find_cpp_func_params_r(self, cursor, cpp_class_name, func_name,
                                expected_cpp_params, expected_param_count, cmp_func):
@@ -695,16 +754,21 @@ class CppFile(DictLike):
                 accepted_kinds.append(CursorKind.CONSTRUCTOR)
         for child in cursor.get_children():
             if child.kind in accepted_kinds and child.spelling.split("<")[0] == func_name:
-                params = [(child2.spelling, "".join(child3.spelling for child3 in child2.get_children() if child3.kind == CursorKind.TYPE_REF))
-                          for child2 in child.get_children() if child2.kind == CursorKind.PARM_DECL]
+                params = [(child2.spelling, " ".join(child3.spelling for child3 in child2.get_children()
+                                                     if child3.kind in (CursorKind.TEMPLATE_REF, CursorKind.TYPE_REF)))
+                                                     for child2 in child.get_children() if child2.kind == CursorKind.PARM_DECL]
                 # certain C++ headers have only the type declaration but no variable name,
                 # in that case we replace "" with a dummy parameter name since python::args("")
                 # is not acceptable
                 params = [(p or f"arg{i + 1}", t) for i, (p, t) in enumerate(params)]
+                params_hash = self.get_params_hash(params)
+                if self.assigned_overloads_for_func is not None and params_hash in self.assigned_overloads_for_func:
+                    continue
                 if ((expected_param_count == -1 or cmp_func(len(params), expected_param_count))
-                    and (not expected_cpp_params or self.params is None or
-                         self.num_matching_parameters(expected_cpp_params, [t for _, t in params])
-                         > self.num_matching_parameters(expected_cpp_params, [t for _, t in self.params]))):
+                    and (not expected_cpp_params or (self.accept_params_no_type and self.params is None)
+                         or (self.params is not None and
+                             self.num_matching_parameters(expected_cpp_params, [t for _, t in params])
+                             > self.num_matching_parameters(expected_cpp_params, [t for _, t in self.params])))):
                     if expected_param_count != -1:
                         params = params[:expected_param_count]
                     self.params = params
@@ -892,7 +956,7 @@ class CppFile(DictLike):
                 open_bracket_count = t.spelling.count("<")
                 closed_bracket_count = t.spelling.count(">")
                 if open_bracket_count or bracket_count:
-                    init_args += t.spelling
+                    init_args += t.spelling + " "
                     bracket_count += (open_bracket_count - closed_bracket_count)
                     if bracket_count == 0:
                         if init_args:
@@ -901,7 +965,7 @@ class CppFile(DictLike):
                                 init_args = ""
                                 is_init = False
                             else:
-                                init_args = m.group(1)
+                                init_args = m.group(1).replace("<", "").strip()
                         if init_args:
                             cpp_func_name = f"{class_info.cpp_class_name}::{class_info.cpp_class_name}"
                             expected_param_count = 1 + init_args.count(",")
@@ -1115,6 +1179,7 @@ class CppFile(DictLike):
             that need fixing. Also free functions are included under class name
             FixSignatures.NO_CLASS_KEY
         """
+        self.assigned_overloads = {}
         try:
             translation_unit = TranslationUnit.from_ast_file(self.ast_path)
             out_path = self.cpp_path_noext + ".out"
@@ -1124,7 +1189,7 @@ class CppFile(DictLike):
             with open(log_path, "w") as hnd:
                 pass
             class_info_by_class_hash = self.find_nodes(translation_unit.cursor)
-            class_method_node_hashes = set(sum([[node.hash for node in class_info.parents] for class_info in class_info_by_class_hash.values()], []))
+            class_method_node_hashes = set(itertools.chain.from_iterable([node.hash for node in class_info.parents] for class_info in class_info_by_class_hash.values()))
             arg1_non_class_func_names = arg1_func_byclass_dict.get(FixSignatures.NO_CLASS_KEY, None)
             if arg1_non_class_func_names is not None:
                 non_class_defs = self.find_non_class_defs(translation_unit.cursor, class_method_node_hashes, arg1_non_class_func_names)
@@ -1483,7 +1548,7 @@ class FixSignatures:
         self.queue = queue.Queue()
         cpp_class_files = list(self.cpp_file_dict.values())
         # Uncomment the following to troubleshoot specific file(s)
-        # cpp_class_files = [f for f in cpp_class_files if os.path.basename(f.cpp_path).startswith("Validate")]
+        # cpp_class_files = [f for f in cpp_class_files if os.path.basename(f.cpp_path) == "Atom.cpp"]
         n_files = len(cpp_class_files)
         self.logger.debug(f"Number of files: {n_files}")
         n_workers = min(self.concurrency, n_files)

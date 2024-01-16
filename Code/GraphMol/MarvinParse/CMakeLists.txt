@@ -3,7 +3,7 @@ rdkit_library(MarvinParser
               MarvinParser.cpp
               MarvinWriter.cpp
               MarvinDefs.cpp
-              LINK_LIBRARIES GenericGroups Depictor GraphMol ChemReactions)
+              LINK_LIBRARIES GenericGroups Depictor GraphMol ChemReactions )
 target_compile_definitions(MarvinParser PRIVATE RDKIT_MARVINPARSER_BUILD)
 
 rdkit_headers(MarvinParser.h

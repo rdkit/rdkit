@@ -118,7 +118,7 @@ void Normalizer::normalizeInPlace(RWMol &mol) {
     }
   }
   // we might want ring info
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
   }
   for (unsigned int i = 0; i < MAX_RESTARTS; ++i) {
@@ -187,7 +187,7 @@ ROMOL_SPTR Normalizer::normalizeFragment(
     const ROMol &mol,
     const std::vector<std::shared_ptr<ChemicalReaction>> &transforms) const {
   ROMOL_SPTR nfrag(new ROMol(mol));
-  if (!nfrag->getRingInfo()->isInitialized()) {
+  if (!nfrag->getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(*nfrag);
   }
   std::set<std::string> seenProductSmiles;

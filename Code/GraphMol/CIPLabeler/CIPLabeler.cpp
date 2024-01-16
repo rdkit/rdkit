@@ -17,6 +17,8 @@
 #include "CIPMol.h"
 #include "configs/Sp2Bond.h"
 #include "configs/Tetrahedral.h"
+#include "configs/AtropisomerBond.h"
+#include <boost/algorithm/string.hpp>
 
 #include "rules/Rules.h"
 #include "rules/Rule1a.h"
@@ -28,6 +30,7 @@
 #include "rules/Rule4c.h"
 #include "rules/Rule5New.h"
 #include "rules/Rule6.h"
+#include <GraphMol/Chirality.h>
 
 namespace RDKit {
 namespace CIPLabeler {
@@ -61,23 +64,35 @@ std::vector<std::unique_ptr<Configuration>> findConfigs(
        index = bonds.find_next(index)) {
     auto bond = mol.getBond(index);
 
-    auto bond_cfg = Bond::STEREONONE;
-    switch (bond->getStereo()) {
+    auto bond_cfg = bond->getStereo();
+    switch (bond_cfg) {
       case Bond::STEREOE:
-      case Bond::STEREOTRANS:
         bond_cfg = Bond::STEREOTRANS;
         break;
       case Bond::STEREOZ:
-      case Bond::STEREOCIS:
         bond_cfg = Bond::STEREOCIS;
         break;
       default:
-        continue;
+        break;
     }
+    switch (bond_cfg) {
+      case Bond::STEREOTRANS:
+      case Bond::STEREOCIS: {
+        std::unique_ptr<Sp2Bond> cfg(new Sp2Bond(
+            mol, bond, bond->getBeginAtom(), bond->getEndAtom(), bond_cfg));
+        configs.push_back(std::move(cfg));
+      } break;
 
-    std::unique_ptr<Sp2Bond> cfg(new Sp2Bond(mol, bond, bond->getBeginAtom(),
-                                             bond->getEndAtom(), bond_cfg));
-    configs.push_back(std::move(cfg));
+      case Bond::STEREOATROPCCW:
+      case Bond::STEREOATROPCW: {
+        std::unique_ptr<AtropisomerBond> cfgAtrop(new AtropisomerBond(
+            mol, bond, bond->getBeginAtom(), bond->getEndAtom(), bond_cfg));
+        configs.push_back(std::move(cfgAtrop));
+      } break;
+
+      default:
+        break;
+    }
   }
 
   return configs;

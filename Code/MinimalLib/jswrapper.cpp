@@ -372,6 +372,17 @@ emscripten::val get_avalon_fp_as_uint8array(const JSMol &self) {
 }
 #endif
 
+#ifdef RDK_BUILD_MINIMAL_LIB_MMPA
+emscripten::val get_mmpa_frags_helper(const JSMol &self, unsigned int minCuts,
+                                      unsigned int maxCuts,
+                                      unsigned int maxCutBonds) {
+  auto obj = emscripten::val::object();
+  auto pairs = self.get_mmpa_frags(minCuts, maxCuts, maxCutBonds);
+  obj.set("cores", pairs.first);
+  obj.set("sidechains", pairs.second);
+  return obj;
+}
+#endif
 }  // namespace
 
 using namespace emscripten;
@@ -564,7 +575,13 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_num_atoms",
                 select_overload<unsigned int() const>(&JSMol::get_num_atoms))
       .function("get_num_bonds", &JSMol::get_num_bonds)
-  ;
+#ifdef RDK_BUILD_MINIMAL_LIB_MMPA
+      .function("get_mmpa_frags",
+                select_overload<emscripten::val(const JSMol &, unsigned int,
+                                                unsigned int, unsigned int)>(
+                    get_mmpa_frags_helper))
+#endif
+      ;
 
   class_<JSMolList>("MolList")
       .constructor<>()

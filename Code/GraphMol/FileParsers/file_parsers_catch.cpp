@@ -3255,7 +3255,7 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB"_ctab;
     REQUIRE(m);
-    WedgeMolBonds(*m, &m->getConformer());
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
     CHECK(m->getBondBetweenAtoms(2, 4)->getBondDir() != Bond::BondDir::NONE);
     CHECK(m->getBondBetweenAtoms(3, 6)->getBondDir() != Bond::BondDir::NONE);
     CHECK(m->getBondBetweenAtoms(2, 1)->getBondDir() == Bond::BondDir::NONE);
@@ -5075,7 +5075,7 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END)CTAB"_ctab;
       REQUIRE(m);
-      WedgeMolBonds(*m, &m->getConformer());
+      Chirality::wedgeMolBonds(*m, &m->getConformer());
       CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::BEGINWEDGE);
       CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::NONE);
       Chirality::reapplyMolBlockWedging(*m);
@@ -6448,6 +6448,107 @@ f_m_ct {
     CHECK_THROWS_AS(supplier.next(), FileParseException);
   }
 }
+
+TEST_CASE(
+    "GitHub issue #6153: MaeMolSupplier cannot read dummy atoms from Maestro files",
+    "[mae][MaeMolSupplier][MaeWriter]") {
+  std::string maeBlock = R"MAE(f_m_ct {
+ s_m_title
+ i_m_ct_stereo_status
+ i_m_ct_format
+ :::
+ COCH3
+  1
+  2
+ m_atom[7] {
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  s_m_atom_name
+  i_m_mass_number
+  :::
+  1 61 -0.536336 0.931891 -0.000000 10 -2 1EE11E  DU1  1
+  2 2 0.000000 0.000000 0.000000 2 6 A0A0A0  C2  <>
+  3 3 1.500000 0.000000 0.000000 2 6 A0A0A0  C3  <>
+  4 15 -0.623038 -1.078345 -0.000420 70 8 FF2F2F  O4  <>
+  5 41 1.863333 -1.027662 -0.000000 21 1 FFFFFF  H5  <>
+  6 41 1.863333 0.513831 -0.889981 21 1 FFFFFF  H6  <>
+  7 41 1.863333 0.513831 0.889981 21 1 FFFFFF  H7  <>
+  :::
+ }
+ m_bond[6] {
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 2 3 1
+  3 2 4 2
+  4 3 5 1
+  5 3 6 1
+  6 3 7 1
+  :::
+ }
+})MAE";
+  SECTION("Read dummy atoms") {
+    MaeMolSupplier supplier;
+    supplier.setData(maeBlock);
+
+    std::unique_ptr<ROMol> mol{supplier.next()};
+    CHECK(mol);
+    CHECK(mol->getNumAtoms() == 4);
+    CHECK(mol->getAtomWithIdx(0)->getAtomicNum() == 0);
+  }
+
+  SECTION("Read Mol with reserved atom type") {
+    const std::string dummyAtomicNum = " -2 ";
+    const std::string reservedAtomicNum = " 0 ";
+    size_t pos = maeBlock.find(dummyAtomicNum);
+    maeBlock.replace(pos, dummyAtomicNum.size(), reservedAtomicNum);
+
+    MaeMolSupplier supplier;
+    supplier.setData(maeBlock);
+
+    std::unique_ptr<ROMol> mol{supplier.next()};
+    CHECK(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getNumBonds() == 2);
+    CHECK(mol->getAtomWithIdx(0)->getAtomicNum() == 6);
+  }
+
+  SECTION("Write dummy atoms") {
+    auto m = "*CC"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getNumAtoms() == 3);
+    REQUIRE(m->getAtomWithIdx(0)->getAtomicNum() == 0);
+
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*m);
+    w.flush();
+
+    const auto mae = oss->str();
+    REQUIRE(!mae.empty());
+
+    auto atomBlockStart = mae.find("m_atom[3]");
+    REQUIRE(atomBlockStart != std::string::npos);
+
+    auto bondBlockStart = mae.find("m_bond[2]");
+    REQUIRE(bondBlockStart != std::string::npos);
+
+    const std::string_view atomBlock(&mae[atomBlockStart],
+                                     bondBlockStart - atomBlockStart);
+
+    CHECK(atomBlock.find(" -2 ") != std::string::npos);
+  }
+}
+
 #endif
 
 TEST_CASE("Chained bond stereo and wiggly bonds") {

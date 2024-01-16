@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/new_canon.h>
 
 #include <GraphMol/SmilesParse/SmilesParseOps.h>
 #include <GraphMol/RDKitQueries.h>
@@ -118,7 +119,8 @@ bool checkBondsInSameBranch(MolStack &molStack, Bond *dblBnd, Bond *dirBnd) {
 
 void switchBondDir(Bond *bond) {
   PRECONDITION(bond, "bad bond");
-  PRECONDITION(bond->getBondType() == Bond::SINGLE || bond->getIsAromatic(),
+  PRECONDITION(bond->getBondType() == Bond::SINGLE || bond->getIsAromatic() ||
+                   isDative(*bond),
                "bad bond type");
   switch (bond->getBondDir()) {
     case Bond::ENDUPRIGHT:
@@ -141,12 +143,6 @@ bool isClosingRingBond(Bond *bond) {
   auto endIdx = bond->getEndAtomIdx();
   return beginIdx > endIdx && beginIdx - endIdx > 1 &&
          bond->hasProp(common_properties::_TraversalRingClosureBond);
-}
-
-bool canHaveDirection(const Bond *bond) {
-  PRECONDITION(bond, "bad bond");
-  Bond::BondType bondType = bond->getBondType();
-  return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC);
 }
 
 }  // namespace
@@ -198,7 +194,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
                                auto atom, auto &firstNeighborBond,
                                auto &secondNeighborBond, auto &dirSet) {
     for (const auto bond : mol.atomBonds(atom)) {
-      if (bond == dblBond || !canHaveDirection(bond)) {
+      if (bond == dblBond || !canSetDoubleBondStereo(*bond)) {
         continue;
       }
 
@@ -915,10 +911,10 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
   bool nbrPossible = false, adjusted = false;
   while (beg != end) {
     Bond *oBond = mol[*beg];
-    // std::cerr<<"  >>"<<oBond->getIdx()<<" "<<canHaveDirection(oBond)<<"
+    // std::cerr<<"  >>"<<oBond->getIdx()<<" "<<canHaveDirection(*oBond)<<"
     // "<<bondDirCounts[oBond->getIdx()]<<"-"<<bondDirCounts[refBond->getIdx()]<<"
     // "<<atomDirCounts[oBond->getBeginAtomIdx()]<<"-"<<atomDirCounts[oBond->getEndAtomIdx()]<<std::endl;
-    if (oBond != refBond && canHaveDirection(oBond)) {
+    if (oBond != refBond && canHaveDirection(*oBond)) {
       nbrPossible = true;
       if ((bondDirCounts[oBond->getIdx()] >=
            bondDirCounts[refBond->getIdx()]) &&
@@ -972,7 +968,7 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
       const Atom *canonBeginAtom = mol.getAtomWithIdx(msI.number);
       const Atom *canonEndAtom =
           mol.getAtomWithIdx(tBond->getOtherAtomIdx(msI.number));
-      if (canHaveDirection(tBond) && bondDirCounts[tBond->getIdx()] >= 1) {
+      if (canHaveDirection(*tBond) && bondDirCounts[tBond->getIdx()] >= 1) {
         // start by finding the double bond that sets tBond's direction:
         const Atom *dblBondAtom = nullptr;
         ROMol::OEDGE_ITER beg, end;
@@ -1265,9 +1261,6 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     std::cerr<<"----------------------------------------->"<<std::endl;
 #endif
 }
-void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
-                  bool breakTies = true, bool includeChirality = true,
-                  bool includeIsotopes = true);
 void canonicalizeEnhancedStereo(ROMol &mol,
                                 const std::vector<unsigned int> *atomRanks) {
   const auto &sgs = mol.getStereoGroups();
@@ -1297,12 +1290,46 @@ void canonicalizeEnhancedStereo(ROMol &mol,
     };
     auto sgAtoms = sg.getAtoms();
     std::sort(sgAtoms.begin(), sgAtoms.end(), getAtomRank);
-    // find the reference (lowest-ranked) atom
-    auto refAtom = sgAtoms.front();
 
+    // sort the bonds by atom rank:
+    auto getBondRank = [&atomRanks](const Bond *bd1, const Bond *bd2) {
+      unsigned int bd1at1 = atomRanks->at(bd1->getBeginAtomIdx());
+      unsigned int bd1at2 = atomRanks->at(bd1->getEndAtomIdx());
+      unsigned int bd2at1 = atomRanks->at(bd2->getBeginAtomIdx());
+      unsigned int bd2at2 = atomRanks->at(bd2->getEndAtomIdx());
+      if (bd1at1 < bd1at2) {
+        std::swap(bd1at1, bd1at2);
+      }
+      if (bd2at1 < bd2at2) {
+        std::swap(bd2at1, bd2at2);
+      }
+      if (bd1at1 != bd2at1) {
+        return bd1at1 < bd2at1;
+      }
+      return bd1at2 < bd2at2;
+    };
+    auto sgBonds = sg.getBonds();
+    std::sort(sgBonds.begin(), sgBonds.end(), getBondRank);
+
+    // find the reference (lowest-ranked) atom (or lowest-ranked bond)
+
+    Atom::ChiralType foundRefState = Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
+    if (sgAtoms.size() > 0) {
+      foundRefState = sgAtoms.front()->getChiralTag();
+    } else if (sgBonds.size() > 0) {
+      if (sgBonds.front()->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+        foundRefState =
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW;  // convert atropisomer CCW
+                                                    // to atom CCW
+      } else {
+        foundRefState =
+            Atom::ChiralType::CHI_TETRAHEDRAL_CW;  // convert atropisomer CW to
+                                                   // atom CW
+      }
+    }
     // we will use CCW as the "canonical" state for chirality, so if the
-    // referenceAtom is already CCW then we don't need to do anything more with
-    // this stereogroup
+    // referenceAtom is already CCW then we don't need to do anything more
+    // with this stereogroup
     auto refState = Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
 #if 0
     INT_LIST nbrs;
@@ -1320,17 +1347,25 @@ void canonicalizeEnhancedStereo(ROMol &mol,
       refState = Atom::ChiralType::CHI_TETRAHEDRAL_CW;
     }
 #endif
-    if (refAtom->getChiralTag() != refState) {
-      // we need to flip everyone... so loop over the other atoms and flip them
-      // all:
-      std::for_each(sgAtoms.begin(), sgAtoms.end(),
-                    [](auto atom) { atom->invertChirality(); });
+    if (foundRefState != refState) {
+      // we need to flip everyone... so loop over the other atoms and bonds and
+      // flip them all:
+
+      for (auto atom : sgAtoms) {
+        atom->invertChirality();
+      }
+      for (auto bond : sgBonds) {
+        bond->invertChirality();
+      }
     }
+    newSgs.emplace_back(
+        StereoGroup(sg.getGroupType(), std::move(sgAtoms), std::move(sgBonds)));
 
     // note that we do not forward the Group Ids: this is intentional, so that
     // the Ids are reassigned based on the canonicalized order.
-    newSgs.emplace_back(sg.getGroupType(), std::move(sgAtoms), 0u);
-    refAtom->setProp("_stereoGroup", newSgs.size() - 1, true);
+    if (sgAtoms.size() > 0) {
+      sgAtoms.front()->setProp("_stereoGroup", newSgs.size() - 1, true);
+    }
   }
   mol.setStereoGroups(newSgs);
 }

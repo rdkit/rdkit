@@ -27,6 +27,15 @@
 using namespace RDKit;
 using namespace RDKit::GeneralizedSubstruct;
 
+bool fingerprintsMatch(const ROMol& target, const ExtendedQueryMol& xqm) {
+  const auto queryFingerprint = xqm.patternFingerprintQuery();
+  const auto targetFingerprint = patternFingerprintTargetMol(target);
+  CHECK(queryFingerprint->getNumOnBits() > 0);
+  CHECK(targetFingerprint->getNumOnBits() > 0);
+  const auto match = AllProbeBitsMatch(*queryFingerprint, *targetFingerprint);
+  return match;
+}
+
 TEST_CASE("molecule basics") {
   auto mol = "Cc1n[nH]c(F)c1"_smarts;
   REQUIRE(mol);
@@ -39,6 +48,7 @@ TEST_CASE("molecule basics") {
       CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq).empty());
       CHECK(hasSubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq));
       CHECK(!hasSubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq));
+      CHECK(fingerprintsMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq));
     }
   }
 }
@@ -57,6 +67,9 @@ TEST_CASE("enumeration basics") {
       CHECK(SubstructMatch(*"COOCC"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"COOOCC"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"COOOOCC"_smiles, *xq).empty());
+      CHECK(fingerprintsMatch(*"COCC"_smiles, *xq));
+      CHECK(fingerprintsMatch(*"COOCC"_smiles, *xq));
+      CHECK(fingerprintsMatch(*"COOOCC"_smiles, *xq));
     }
   }
 }
@@ -76,6 +89,9 @@ TEST_CASE("result counts") {
       CHECK(SubstructMatch(*"COOCC"_smiles, *xq, ps).size() == 2);
       CHECK(SubstructMatch(*"COOOCC"_smiles, *xq, ps).size() == 2);
       CHECK(SubstructMatch(*"COOOOCC"_smiles, *xq, ps).empty());
+      CHECK(fingerprintsMatch(*"COCC"_smiles, *xq));
+      CHECK(fingerprintsMatch(*"COOCC"_smiles, *xq));
+      CHECK(fingerprintsMatch(*"COOOCC"_smiles, *xq));
     }
   }
 }
@@ -93,6 +109,9 @@ TEST_CASE("tautomer basics") {
       CHECK(SubstructMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, *xq).empty());
+      CHECK(fingerprintsMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq));
+      CHECK(fingerprintsMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq));
+      CHECK(!fingerprintsMatch(*"CCc1[nH]ncc1"_smiles, *xq));
     }
   }
 }
@@ -119,6 +138,11 @@ TEST_CASE("tautomer bundle basics") {
       CHECK(SubstructMatch(*"CCc1[nH]ncc1F"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"CCc1n[nH]cc1F"_smiles, *xq).size() == 1);
       CHECK(SubstructMatch(*"CCc1[nH]ncc1"_smiles, *xq).empty());
+      CHECK(fingerprintsMatch(*"CCc1n[nH]c(F)c1"_smiles, *xq));
+      CHECK(fingerprintsMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq));
+      CHECK(fingerprintsMatch(*"CCc1[nH]ncc1F"_smiles, *xq));
+      CHECK(fingerprintsMatch(*"CCc1n[nH]cc1F"_smiles, *xq));
+      CHECK(!fingerprintsMatch(*"CCc1[nH]ncc1"_smiles, *xq));
     }
   }
 }
@@ -136,6 +160,8 @@ TEST_CASE("createExtendedQueryMol and copy ctors") {
       CHECK(std::holds_alternative<ExtendedQueryMol::RWMol_T>(xqm.xqmol));
       CHECK(SubstructMatch(*"COCC"_smiles, xqm).size() == 1);
       CHECK(SubstructMatch(*"COOCC"_smiles, xqm).empty());
+      CHECK(fingerprintsMatch(*"COCC"_smiles, xqm));
+      CHECK(!fingerprintsMatch(*"COOCC"_smiles, xqm));
     }
   }
   SECTION("MolBundle") {
@@ -152,6 +178,9 @@ TEST_CASE("createExtendedQueryMol and copy ctors") {
       CHECK(SubstructMatch(*"COOCC"_smiles, xqm).size() == 1);
       CHECK(SubstructMatch(*"COOOCC"_smiles, xqm).size() == 1);
       CHECK(SubstructMatch(*"COOOOCC"_smiles, xqm).empty());
+      CHECK(fingerprintsMatch(*"COCC"_smiles, xqm));
+      CHECK(fingerprintsMatch(*"COOCC"_smiles, xqm));
+      CHECK(fingerprintsMatch(*"COOOCC"_smiles, xqm));
     }
   }
   SECTION("TautomerQuery") {
@@ -169,6 +198,9 @@ TEST_CASE("createExtendedQueryMol and copy ctors") {
       CHECK(SubstructMatch(*"CCC1OC(=N)N1"_smiles, *mol1).empty());
       CHECK(SubstructMatch(*"CCC1OC(=N)N1"_smiles, xqm).size() == 1);
       CHECK(SubstructMatch(*"c1[nH]ncc1"_smiles, xqm).empty());
+      CHECK(fingerprintsMatch(*"CCC1OC(N)=N1"_smiles, xqm));
+      CHECK(fingerprintsMatch(*"CCC1OC(=N)N1"_smiles, xqm));
+      CHECK(!fingerprintsMatch(*"c1[nH]ncc1"_smiles, xqm));
     }
   }
   SECTION("TautomerBundle") {
@@ -186,6 +218,9 @@ TEST_CASE("createExtendedQueryMol and copy ctors") {
       CHECK(SubstructMatch(*"COOCC1(F)OC(=N)N1"_smiles, xqm).size() == 1);
       CHECK(SubstructMatch(*"COCC1OC(N)=N1"_smiles, xqm).size() == 1);
       CHECK(SubstructMatch(*"COOOOCC1OC(=N)N1"_smiles, xqm).empty());
+      CHECK(fingerprintsMatch(*"COCC1(F)OC(N)=N1"_smiles, xqm));
+      CHECK(fingerprintsMatch(*"COOCC1(F)OC(=N)N1"_smiles, xqm));
+      CHECK(fingerprintsMatch(*"COCC1OC(N)=N1"_smiles, xqm));
     }
   }
 }
@@ -200,6 +235,8 @@ TEST_CASE("test SRUs") {
     // we won't test limits here.
     CHECK(SubstructMatch(*"FCN(C)CC"_smiles, xqm).size() == 1);
     CHECK(SubstructMatch(*"FCN(O)N(C)CC"_smiles, xqm).size() == 1);
+    CHECK(fingerprintsMatch(*"FCN(C)CC"_smiles, xqm));
+    CHECK(fingerprintsMatch(*"FCN(O)N(C)CC"_smiles, xqm));
   }
 }
 
@@ -232,6 +269,14 @@ TEST_CASE("adjustQueryProperties") {
     CHECK(SubstructMatch(*"COC1OC1"_smiles, xqm1).empty());
     CHECK(SubstructMatch(*"COC1OC1"_smiles, xqm2).empty());
     CHECK(SubstructMatch(*"COC1OC1"_smiles, xqm3).size() == 1);
+    CHECK(fingerprintsMatch(*"COC1CC1"_smiles, xqm1));
+    CHECK(fingerprintsMatch(*"COC1CC1"_smiles, xqm2));
+    CHECK(fingerprintsMatch(*"COC1CC1"_smiles, xqm3));
+    CHECK(fingerprintsMatch(*"COC1C(C)C1"_smiles, xqm1));
+    CHECK(fingerprintsMatch(*"COC1C(C)C1"_smiles, xqm3));
+    CHECK(!fingerprintsMatch(*"COC1OC1"_smiles, xqm1));
+    CHECK(!fingerprintsMatch(*"COC1OC1"_smiles, xqm2));
+    CHECK(fingerprintsMatch(*"COC1OC1"_smiles, xqm3));
   }
   SECTION("MolBundle") {
     auto mol = "COCC |LN:1:1.3|"_smiles;
@@ -248,6 +293,10 @@ TEST_CASE("adjustQueryProperties") {
     CHECK(SubstructMatch(*"COOC=C"_smiles, xqm1).empty());
     CHECK(SubstructMatch(*"COC=C"_smiles, xqm2).size() == 1);
     CHECK(SubstructMatch(*"COOC=C"_smiles, xqm2).size() == 1);
+    CHECK(!fingerprintsMatch(*"COC=C"_smiles, xqm1));
+    CHECK(!fingerprintsMatch(*"COOC=C"_smiles, xqm1));
+    CHECK(fingerprintsMatch(*"COC=C"_smiles, xqm2));
+    CHECK(fingerprintsMatch(*"COOC=C"_smiles, xqm2));
   }
   SECTION("TautomerQuery") {
     auto mol1 = "CC1OC(N)=N1"_smiles;
@@ -266,6 +315,10 @@ TEST_CASE("adjustQueryProperties") {
     CHECK(SubstructMatch(*"CC1(F)OC(=N)N1"_smiles, xqm1).size() == 1);
     CHECK(SubstructMatch(*"CC1(F)OC(N)=N1"_smiles, xqm2).empty());
     CHECK(SubstructMatch(*"CC1(F)OC(=N)N1"_smiles, xqm2).empty());
+    CHECK(fingerprintsMatch(*"CC1OC(N)=N1"_smiles, xqm1));
+    CHECK(fingerprintsMatch(*"CC1OC(N)=N1"_smiles, xqm2));
+    CHECK(fingerprintsMatch(*"CC1(F)OC(N)=N1"_smiles, xqm1));
+    CHECK(fingerprintsMatch(*"CC1(F)OC(=N)N1"_smiles, xqm1));
   }
   SECTION("TautomerBundle") {
     auto mol1 = "COCC1OC(N)=N1 |LN:1:1.3|"_smiles;
@@ -283,6 +336,12 @@ TEST_CASE("adjustQueryProperties") {
     CHECK(SubstructMatch(*"COOCC1(F)OC(=N)N1"_smiles, xqm1).size() == 1);
     CHECK(SubstructMatch(*"COCC1(F)OC(N)=N1"_smiles, xqm2).empty());
     CHECK(SubstructMatch(*"COOCC1(F)OC(=N)N1"_smiles, xqm2).empty());
+    CHECK(fingerprintsMatch(*"COCC1OC(N)=N1"_smiles, xqm1));
+    CHECK(fingerprintsMatch(*"COOCC1OC(=N)N1"_smiles, xqm1));
+    CHECK(fingerprintsMatch(*"COCC1OC(N)=N1"_smiles, xqm2));
+    CHECK(fingerprintsMatch(*"COOCC1OC(=N)N1"_smiles, xqm2));
+    CHECK(fingerprintsMatch(*"COCC1(F)OC(N)=N1"_smiles, xqm1));
+    CHECK(fingerprintsMatch(*"COOCC1(F)OC(=N)N1"_smiles, xqm1));
   }
 }
 
