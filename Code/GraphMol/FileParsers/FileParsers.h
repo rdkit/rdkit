@@ -210,6 +210,10 @@ inline RWMol *TPLFileToMol(const std::string &fName, bool sanitize = true,
   return v2::FileParsers::MolFromTPLFile(fName, ps).release();
 }
 }  // namespace v1
+
+namespace v2 {
+namespace FileParsers {
+
 //-----
 //  MOL2 handling
 //-----
@@ -217,6 +221,30 @@ inline RWMol *TPLFileToMol(const std::string &fName, bool sanitize = true,
 typedef enum {
   CORINA = 0  //!< supports output from Corina and some dbtranslate output
 } Mol2Type;
+
+struct Mol2ParserParams {
+  bool sanitize = true; /**< sanitize the molecule after building it */
+  bool removeHs = true; /**< remove Hs after constructing the molecule */
+  Mol2Type variant = Mol2Type::CORINA; /**< the atom type definitions to use */
+  bool cleanupSubstructures =
+      true; /**< toggles recognition and cleanup of common substructures */
+};
+
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMol2DataStream(
+    std::istream &inStream,
+    const Mol2ParserParams &params = Mol2ParserParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMol2Block(
+    const std::string &molBlock,
+    const Mol2ParserParams &params = Mol2ParserParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMol2File(
+    const std::string &fName,
+    const Mol2ParserParams &params = Mol2ParserParams());
+
+}  // namespace FileParsers
+}  // namespace v2
+
+inline namespace v1 {
+using RDKit::v2::FileParsers::Mol2Type;
 
 // \brief construct a molecule from a Tripos mol2 file
 /*!
@@ -229,11 +257,17 @@ typedef enum {
  *   \param cleanupSubstructures - toggles recognition and cleanup of common
  *                                 substructures
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2FileToMol(const std::string &fName,
-                                              bool sanitize = true,
-                                              bool removeHs = true,
-                                              Mol2Type variant = CORINA,
-                                              bool cleanupSubstructures = true);
+inline RWMol *Mol2FileToMol(const std::string &fName, bool sanitize = true,
+                            bool removeHs = true,
+                            Mol2Type variant = Mol2Type::CORINA,
+                            bool cleanupSubstructures = true) {
+  v2::FileParsers::Mol2ParserParams ps;
+  ps.sanitize = sanitize;
+  ps.removeHs = removeHs;
+  ps.variant = variant;
+  ps.cleanupSubstructures = cleanupSubstructures;
+  return v2::FileParsers::MolFromMol2File(fName, ps).release();
+}
 
 // \brief construct a molecule from Tripos mol2 data in a stream
 /*!
@@ -245,13 +279,25 @@ RDKIT_FILEPARSERS_EXPORT RWMol *Mol2FileToMol(const std::string &fName,
  *   \param cleanupSubstructures - toggles recognition and cleanup of common
  *                                 substructures
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(
-    std::istream *inStream, bool sanitize = true, bool removeHs = true,
-    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
+inline RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize = true,
+                                  bool removeHs = true,
+                                  Mol2Type variant = Mol2Type::CORINA,
+                                  bool cleanupSubstructures = true) {
+  v2::FileParsers::Mol2ParserParams ps;
+  ps.sanitize = sanitize;
+  ps.removeHs = removeHs;
+  ps.variant = variant;
+  ps.cleanupSubstructures = cleanupSubstructures;
+  return v2::FileParsers::MolFromMol2DataStream(inStream, ps).release();
+}
 // \overload
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(
-    std::istream &inStream, bool sanitize = true, bool removeHs = true,
-    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
+inline RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize = true,
+                                  bool removeHs = true,
+                                  Mol2Type variant = Mol2Type::CORINA,
+                                  bool cleanupSubstructures = true) {
+  return Mol2DataStreamToMol(*inStream, sanitize, removeHs, variant,
+                             cleanupSubstructures);
+}
 
 // \brief construct a molecule from a Tripos mol2 block
 /*!
@@ -263,9 +309,18 @@ RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(
  *   \param cleanupSubstructures - toggles recognition and cleanup of common
  *                                 substructures
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2BlockToMol(
-    const std::string &molBlock, bool sanitize = true, bool removeHs = true,
-    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
+inline RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize = true,
+                             bool removeHs = true,
+                             Mol2Type variant = Mol2Type::CORINA,
+                             bool cleanupSubstructures = true) {
+  v2::FileParsers::Mol2ParserParams ps;
+  ps.sanitize = sanitize;
+  ps.removeHs = removeHs;
+  ps.variant = variant;
+  ps.cleanupSubstructures = cleanupSubstructures;
+  return v2::FileParsers::MolFromMol2Block(molBlock, ps).release();
+}
+}  // namespace v1
 
 RDKIT_FILEPARSERS_EXPORT RWMol *XYZDataStreamToMol(std::istream &inStream);
 // \brief construct a molecule from an xyz block
