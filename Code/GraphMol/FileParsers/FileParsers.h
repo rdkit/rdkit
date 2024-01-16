@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2002-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,7 @@
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/FileParsers/FileWriters.h>
 #include "CDXMLParser.h"
 #include <string>
 #include <string_view>
@@ -139,89 +140,28 @@ inline RWMol *MolFileToMol(const std::string &fName, bool sanitize = true,
 };
 }  // namespace v1
 
-// \brief generates an MDL mol block for a molecule
-/*!
- *   \param mol           - the molecule in question
- *   \param includeStereo - toggles inclusion of stereochemistry information
- *                          (default=true)
- *   \param confId        - selects the conformer to be used
- *                          (default=-1 - find first in mol)
- *   \param kekulize      - triggers kekulization
- *                          of the molecule before it is written (default=true)
- *   \param forceV3000    - force generation a V3000 mol block (happens
- *                          automatically with more than 999 atoms or
- *                          bonds)(default=false)
- */
-RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol,
-                                                   bool includeStereo = true,
-                                                   int confId = -1,
-                                                   bool kekulize = true,
-                                                   bool forceV3000 = false);
-
-// \brief generates an MDL v3000 mol block for a molecule
-/*!
- *   \param mol           - the molecule in question
- *   \param includeStereo - toggles inclusion of stereochemistry information
- *   \param confId        - selects the conformer to be used
- *   \param kekulize      - triggers kekulization of the molecule before it is
- *                        - written
- */
-inline std::string MolToV3KMolBlock(const ROMol &mol, bool includeStereo = true,
-                                    int confId = -1, bool kekulize = true) {
-  return MolToMolBlock(mol, includeStereo, confId, kekulize, true);
-}
-
-// \brief Writes a molecule to an MDL mol file
-/*!
- *   \param mol           - the molecule in question
- *   \param fName         - the name of the file to use
- *   \param includeStereo - toggles inclusion of stereochemistry information
- *   \param confId        - selects the conformer to be used
- *   \param kekulize      - triggers kekulization of the molecule before it is
- * written
- *   \param forceV3000    - force generation a V3000 mol block (happens
- * automatically with
- *                          more than 999 atoms or bonds)
- */
-RDKIT_FILEPARSERS_EXPORT void MolToMolFile(
-    const ROMol &mol, const std::string &fName, bool includeStereo = true,
-    int confId = -1, bool kekulize = true, bool forceV3000 = false);
-
-// \brief Writes a molecule to an MDL V3000 mol file
-/*!
- *   \param mol           - the molecule in question
- *   \param fName         - the name of the file to use
- *   \param includeStereo - toggles inclusion of stereochemistry information
- *   \param confId        - selects the conformer to be used
- *   \param kekulize      - triggers kekulization of the molecule before it is
- * written
- */
-inline void MolToV3KMolFile(const ROMol &mol, const std::string &fName,
-                            bool includeStereo = true, int confId = -1,
-                            bool kekulize = true) {
-  MolToMolFile(mol, fName, includeStereo, confId, kekulize, true);
-}
-
-RDKIT_FILEPARSERS_EXPORT std::string MolToCMLBlock(const ROMol &mol,
-                                                   int confId = -1,
-                                                   bool kekulize = true);
-
-RDKIT_FILEPARSERS_EXPORT void MolToCMLFile(const ROMol &mol,
-                                           const std::string &fName,
-                                           int confId = -1,
-                                           bool kekulize = true);
-
-RDKIT_FILEPARSERS_EXPORT std::string MolToXYZBlock(const ROMol &mol,
-                                                   int confId = -1);
-
-RDKIT_FILEPARSERS_EXPORT void MolToXYZFile(const ROMol &mol,
-                                           const std::string &fName,
-                                           int confId = -1);
-
 //-----
 //  TPL handling:
 //-----
 
+namespace v2 {
+namespace FileParsers {
+struct RDKIT_FILEPARSERS_EXPORT TPLParserParams {
+  bool sanitize = true; /**< sanitize the molecule after building it */
+  bool skipFirstConf =
+      false; /**< if set to true, the first conformer will be skipped */
+};
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromTPLDataStream(
+    std::istream &inStream, unsigned int &line,
+    const TPLParserParams &params = TPLParserParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromTPLFile(
+    const std::string &fName,
+    const TPLParserParams &params = TPLParserParams());
+
+}  // namespace FileParsers
+}  // namespace v2
+
+inline namespace v1 {
 //! \brief translate TPL data (BioCad format) into a multi-conf molecule
 /*!
   \param inStream:      the stream from which to read
@@ -238,10 +178,14 @@ RDKIT_FILEPARSERS_EXPORT void MolToXYZFile(const ROMol &mol,
   mis-feature
                         to be parsed when this flag is set.
 */
-RDKIT_FILEPARSERS_EXPORT RWMol *TPLDataStreamToMol(std::istream *inStream,
-                                                   unsigned int &line,
-                                                   bool sanitize = true,
-                                                   bool skipFirstConf = false);
+inline RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
+                                 bool sanitize = true,
+                                 bool skipFirstConf = false) {
+  v2::FileParsers::TPLParserParams ps;
+  ps.sanitize = sanitize;
+  ps.skipFirstConf = skipFirstConf;
+  return v2::FileParsers::MolFromTPLDataStream(*inStream, line, ps).release();
+}
 
 //! \brief construct a multi-conf molecule from a TPL (BioCad format) file
 /*!
@@ -258,18 +202,14 @@ RDKIT_FILEPARSERS_EXPORT RWMol *TPLDataStreamToMol(std::istream *inStream,
   mis-feature
                         to be parsed when this flag is set.
 */
-RDKIT_FILEPARSERS_EXPORT RWMol *TPLFileToMol(const std::string &fName,
-                                             bool sanitize = true,
-                                             bool skipFirstConf = false);
-
-RDKIT_FILEPARSERS_EXPORT std::string MolToTPLText(
-    const ROMol &mol, const std::string &partialChargeProp = "_GasteigerCharge",
-    bool writeFirstConfTwice = false);
-RDKIT_FILEPARSERS_EXPORT void MolToTPLFile(
-    const ROMol &mol, const std::string &fName,
-    const std::string &partialChargeProp = "_GasteigerCharge",
-    bool writeFirstConfTwice = false);
-
+inline RWMol *TPLFileToMol(const std::string &fName, bool sanitize = true,
+                           bool skipFirstConf = false) {
+  v2::FileParsers::TPLParserParams ps;
+  ps.sanitize = sanitize;
+  ps.skipFirstConf = skipFirstConf;
+  return v2::FileParsers::MolFromTPLFile(fName, ps).release();
+}
+}  // namespace v1
 //-----
 //  MOL2 handling
 //-----
@@ -361,39 +301,6 @@ RDKIT_FILEPARSERS_EXPORT RWMol *PDBFileToMol(const std::string &fname,
                                              bool removeHs = true,
                                              unsigned int flavor = 0,
                                              bool proximityBonding = true);
-
-// \brief generates an PDB block for a molecule
-/*!
- *   \param mol           - the molecule in question
- *   \param confId        - selects the conformer to be used
- *   \param flavor        - controls what gets written:
- *         flavor & 1 : Write MODEL/ENDMDL lines around each record
- *         flavor & 2 : Don't write single CONECT records
- *         flavor & 4 : Write CONECT records in both directions
- *         flavor & 8 : Don't use multiple CONECTs to encode bond order
- *         flavor & 16 : Write MASTER record
- *         flavor & 32 : Write TER record
- */
-RDKIT_FILEPARSERS_EXPORT std::string MolToPDBBlock(const ROMol &mol,
-                                                   int confId = -1,
-                                                   unsigned int flavor = 0);
-// \brief Writes a molecule to an MDL mol file
-/*!
- *   \param mol           - the molecule in question
- *   \param fName         - the name of the file to use
- *   \param confId        - selects the conformer to be used
- *   \param flavor        - controls what gets written:
- *         flavor & 1 : Write MODEL/ENDMDL lines around each record
- *         flavor & 2 : Don't write single CONECT records
- *         flavor & 4 : Write CONECT records in both directions
- *         flavor & 8 : Don't use multiple CONECTs to encode bond order
- *         flavor & 16 : Write MASTER record
- *         flavor & 32 : Write TER record
- */
-RDKIT_FILEPARSERS_EXPORT void MolToPDBFile(const ROMol &mol,
-                                           const std::string &fname,
-                                           int confId = -1,
-                                           unsigned int flavor = 0);
 
 // \brief reads a molecule from the metadata in an RDKit-generated SVG file
 /*!
