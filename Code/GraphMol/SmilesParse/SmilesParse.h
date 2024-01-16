@@ -50,7 +50,7 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   bool parseName = true; /**< parse (and set) the molecule name as well */
   bool removeHs = true;  /**< remove Hs after constructing the molecule */
   bool skipCleanup =
-      false; /**<  skip the final cleanup stage (for internal use) */
+      false; /**<  skip the final cleanup stage */
   bool debugParse = false; /**< enable debugging in the SMILES parser*/
 };
 
@@ -64,7 +64,7 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
   bool mergeHs =
       false; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
   bool skipCleanup =
-      false; /**<  skip the final cleanup stage (for internal use) */
+      false; /**<  skip the final cleanup stage */
   bool debugParse = false; /**< enable debugging in the SMARTS parser*/
 };
 
@@ -102,7 +102,7 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   bool parseName = true; /**< parse (and set) the molecule name as well */
   bool removeHs = true;  /**< remove Hs after constructing the molecule */
   bool skipCleanup =
-      false; /**<  skip the final cleanup stage (for internal use) */
+      false; /**<  skip the final cleanup stage */
 };
 
 struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
@@ -116,7 +116,7 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
   bool mergeHs =
       false; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
   bool skipCleanup =
-      false; /**<  skip the final cleanup stage (for internal use) */
+      false; /**<  skip the final cleanup stage */
 };
 
 inline RDKit::RWMol *SmilesToMol(const std::string &smi,
@@ -241,12 +241,11 @@ inline Bond *SmartsToBond(const std::string &sma) {
 inline std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text,
                                                         size_t len) {
   std::string smi(text, len);
-  std::unique_ptr<RDKit::RWMol> ptr;
   try {
-    ptr = v2::SmilesParse::SmilesToMol(smi);
+    return v2::SmilesParse::SmilesToMol(smi);
   } catch (const RDKit::MolSanitizeException &) {
+    return nullptr;
   }
-  return ptr;
 }
 inline std::unique_ptr<RDKit::RWMol> operator"" _smarts(const char *text,
                                                         size_t len) {
