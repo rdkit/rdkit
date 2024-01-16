@@ -322,17 +322,45 @@ inline RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize = true,
 }
 }  // namespace v1
 
-RDKIT_FILEPARSERS_EXPORT RWMol *XYZDataStreamToMol(std::istream &inStream);
+namespace v2 {
+namespace FileParsers {
+
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromXYZDataStream(
+    std::istream &inStream);
 // \brief construct a molecule from an xyz block
 /*!
  *   \param xyzBlock    - string containing the xyz block
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *XYZBlockToMol(const std::string &xyzBlock);
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromXYZBlock(
+    const std::string &xyzBlock);
 // \brief construct a molecule from an xyz file
 /*!
  *   \param fName    - string containing the file name
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *XYZFileToMol(const std::string &fName);
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromXYZFile(
+    const std::string &fName);
+}  // namespace FileParsers
+}  // namespace v2
+inline namespace v1 {
+inline RWMol *XYZDataStreamToMol(std::istream &inStream) {
+  return v2::FileParsers::MolFromXYZDataStream(inStream).release();
+}
+// \brief construct a molecule from an xyz block
+/*!
+ *   \param xyzBlock    - string containing the xyz block
+ */
+inline RWMol *XYZBlockToMol(const std::string &xyzBlock) {
+  return v2::FileParsers::MolFromXYZBlock(xyzBlock).release();
+}
+// \brief construct a molecule from an xyz file
+/*!
+ *   \param fName    - string containing the file name
+ */
+inline RWMol *XYZFileToMol(const std::string &fName) {
+  return v2::FileParsers::MolFromXYZFile(fName).release();
+}
+
+}  // namespace v1
 
 RDKIT_FILEPARSERS_EXPORT RWMol *PDBBlockToMol(const char *str,
                                               bool sanitize = true,
