@@ -23,9 +23,10 @@
 #include <boost/shared_ptr.hpp>
 
 namespace RDKit {
-const int MOLFILE_MAXLINE = 256;
+
 RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
 
+namespace FileParsers {
 class RDKIT_FILEPARSERS_EXPORT MolFileUnhandledFeatureException
     : public std::exception {
  public:
@@ -41,11 +42,36 @@ class RDKIT_FILEPARSERS_EXPORT MolFileUnhandledFeatureException
  private:
   std::string _msg;
 };
+}  // namespace FileParsers
 
+namespace v2 {
+namespace FileParsers {
+using RDKit::FileParsers::MolFileUnhandledFeatureException;
+
+struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
+  bool sanitize = true;      /**< sanitize the molecule after building it */
+  bool removeHs = true;      /**< remove Hs after constructing the molecule */
+  bool strictParsing = true; /**< if set to false, the parser is more lax about
+                                correctness of the contents. */
+};
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolDataStream(
+    std::istream &inStream, unsigned int &line,
+    const MolFileParserParams &params = MolFileParserParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolBlock(
+    const std::string &molBlock,
+    const MolFileParserParams &params = MolFileParserParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolFile(
+    const std::string &fName,
+    const MolFileParserParams &params = MolFileParserParams());
+
+}  // namespace FileParsers
+}  // namespace v2
+
+inline namespace v1 {
+using RDKit::FileParsers::MolFileUnhandledFeatureException;
 //-----
 // mol files
 //-----
-typedef std::vector<RWMOL_SPTR> RWMOL_SPTR_VECT;
 // \brief construct a molecule from MDL mol data in a stream
 /*!
  *   \param inStream - stream containing the data
@@ -59,17 +85,21 @@ typedef std::vector<RWMOL_SPTR> RWMOL_SPTR_VECT;
  * correctness of the contents.
  *
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *MolDataStreamToMol(std::istream *inStream,
-                                                   unsigned int &line,
-                                                   bool sanitize = true,
-                                                   bool removeHs = true,
-                                                   bool strictParsing = true);
+inline RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
+                                 bool sanitize = true, bool removeHs = true,
+                                 bool strictParsing = true) {
+  v2::FileParsers::MolFileParserParams ps;
+  ps.sanitize = sanitize;
+  ps.removeHs = removeHs;
+  ps.strictParsing = strictParsing;
+  return v2::FileParsers::MolFromMolDataStream(*inStream, line, ps).release();
+};
 // \overload
-RDKIT_FILEPARSERS_EXPORT RWMol *MolDataStreamToMol(std::istream &inStream,
-                                                   unsigned int &line,
-                                                   bool sanitize = true,
-                                                   bool removeHs = true,
-                                                   bool strictParsing = true);
+inline RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
+                                 bool sanitize = true, bool removeHs = true,
+                                 bool strictParsing = true) {
+  return MolDataStreamToMol(&inStream, line, sanitize, removeHs, strictParsing);
+};
 // \brief construct a molecule from an MDL mol block
 /*!
  *   \param molBlock - string containing the mol block
@@ -80,10 +110,14 @@ RDKIT_FILEPARSERS_EXPORT RWMol *MolDataStreamToMol(std::istream &inStream,
  *   \param strictParsing - if set to false, the parser is more lax about
  * correctness of the contents.
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *MolBlockToMol(const std::string &molBlock,
-                                              bool sanitize = true,
-                                              bool removeHs = true,
-                                              bool strictParsing = true);
+inline RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize = true,
+                            bool removeHs = true, bool strictParsing = true) {
+  v2::FileParsers::MolFileParserParams ps;
+  ps.sanitize = sanitize;
+  ps.removeHs = removeHs;
+  ps.strictParsing = strictParsing;
+  return v2::FileParsers::MolFromMolBlock(molBlock, ps).release();
+};
 
 // \brief construct a molecule from an MDL mol file
 /*!
@@ -95,10 +129,15 @@ RDKIT_FILEPARSERS_EXPORT RWMol *MolBlockToMol(const std::string &molBlock,
  *   \param strictParsing - if set to false, the parser is more lax about
  * correctness of the contents.
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *MolFileToMol(const std::string &fName,
-                                             bool sanitize = true,
-                                             bool removeHs = true,
-                                             bool strictParsing = true);
+inline RWMol *MolFileToMol(const std::string &fName, bool sanitize = true,
+                           bool removeHs = true, bool strictParsing = true) {
+  v2::FileParsers::MolFileParserParams ps;
+  ps.sanitize = sanitize;
+  ps.removeHs = removeHs;
+  ps.strictParsing = strictParsing;
+  return v2::FileParsers::MolFromMolFile(fName, ps).release();
+};
+}  // namespace v1
 
 // \brief generates an MDL mol block for a molecule
 /*!
@@ -377,13 +416,11 @@ RDKIT_FILEPARSERS_EXPORT RWMol *RDKitSVGToMol(std::istream *instream,
 inline std::unique_ptr<RDKit::RWMol> operator"" _ctab(const char *text,
                                                       size_t len) {
   std::string data(text, len);
-  RWMol *ptr = nullptr;
   try {
-    ptr = MolBlockToMol(data);
+    return v2::FileParsers::MolFromMolBlock(data);
   } catch (const RDKit::MolSanitizeException &) {
-    ptr = nullptr;
+    return nullptr;
   }
-  return std::unique_ptr<RWMol>(ptr);
 }
 inline std::unique_ptr<RDKit::RWMol> operator"" _mol2(const char *text,
                                                       size_t len) {
