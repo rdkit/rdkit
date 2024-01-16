@@ -314,6 +314,8 @@ unsigned int Atom::getTotalValence() const {
   return getExplicitValence() + getImplicitValence();
 }
 
+namespace {
+
 int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   unsigned int res;
   // FIX: contributions of bonds to valence are being done at best
@@ -602,6 +604,8 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   }
   return res;
 }
+
+}  // unnamed namespace
 
 int Atom::calcExplicitValence(bool strict) {
   bool checkIt = false;
