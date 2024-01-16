@@ -838,101 +838,98 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
       }
     }
 
-    bool copySgroups = true;
-    if (copySgroups) {
-      for (auto &sgroup : getSubstanceGroups(mol)) {
-        // see if all atoms in one fragment
+    for (auto &sgroup : getSubstanceGroups(mol)) {
+      // see if all atoms in one fragment
 
-        int inFragIndex = nFrags;
-        for (auto atom : sgroup.getAtoms()) {
-          if (inFragIndex == nFrags) {
-            inFragIndex = (*mapping)[atom];
-          } else if (inFragIndex != (*mapping)[atom]) {
-            inFragIndex = nFrags;
-            break;
-          }
-        }
-
+      int inFragIndex = nFrags;
+      for (auto atom : sgroup.getAtoms()) {
         if (inFragIndex == nFrags) {
-          continue;  // not all atoms in one fragment - cannot copy
+          inFragIndex = (*mapping)[atom];
+        } else if (inFragIndex != (*mapping)[atom]) {
+          inFragIndex = nFrags;
+          break;
         }
-        // get a copy of the sgroup
-
-        auto newGroup = std::unique_ptr<SubstanceGroup>(new SubstanceGroup(
-            res[inFragIndex].get(), sgroup.getProp<std::string>("TYPE")));
-
-        std::vector<unsigned int> newAtoms;
-
-        // fix the atoms and bonds
-
-        for (auto atom : sgroup.getAtoms()) {
-          newGroup->addAtomWithIdx(ids[atom]);
-        }
-
-        for (auto bondId : sgroup.getBonds()) {
-          auto bond = mol.getBondWithIdx(bondId);
-          auto newAtom1 = ids[bond->getBeginAtomIdx()];
-          auto newAtom2 = ids[bond->getEndAtomIdx()];
-          Bond *newBond =
-              res[inFragIndex]->getBondBetweenAtoms(newAtom1, newAtom2);
-
-          newGroup->addBondWithIdx(newBond->getIdx());
-        }
-
-        for (auto atom : sgroup.getParentAtoms()) {
-          newGroup->addParentAtomWithIdx(ids[atom]);
-        }
-        std::vector<std::string> stringProps = {
-            "LABEL",     "FIELDNAME", "QUERYTYPE",      "QUERYOP",
-            "FIELDDISP", "UNITS",     "UNITSDISPLAYED", "CONTEXT",
-            "PLACEMENT", "CONNECT",   "FIELDDISP",
-        };
-
-        std::vector<std::string> doubleProps = {
-            "X",
-            "Y",
-        };
-
-        std::vector<std::string> stringArrayProps = {
-            "DATAFIELDS",
-        };
-
-        std::vector<std::string> intProps = {
-            "index",
-        };
-
-        for (auto stringProp : stringProps) {
-          std::string value;
-          if (sgroup.getPropIfPresent<std::string>(stringProp, value)) {
-            newGroup->setProp(stringProp, value);
-          }
-        }
-
-        for (auto doubleProp : doubleProps) {
-          double value;
-          if (sgroup.getPropIfPresent<double>(doubleProp, value)) {
-            newGroup->setProp(doubleProp, value);
-          }
-        }
-
-        for (auto intProp : intProps) {
-          int value;
-          if (sgroup.getPropIfPresent<int>(intProp, value)) {
-            newGroup->setProp(intProp, value);
-          }
-        }
-
-        for (auto stringArrayProp : stringArrayProps) {
-          std::vector<std::string> value;
-          if (sgroup.getPropIfPresent<std::vector<std::string>>(stringArrayProp,
-                                                                value)) {
-            newGroup->setProp(stringArrayProp, value);
-          }
-        }
-
-        ROMol *re = res[inFragIndex].get();
-        addSubstanceGroup(*re, *newGroup.get());
       }
+
+      if (inFragIndex == nFrags) {
+        continue;  // not all atoms in one fragment - cannot copy
+      }
+      // get a copy of the sgroup
+
+      auto newGroup = std::unique_ptr<SubstanceGroup>(new SubstanceGroup(
+          res[inFragIndex].get(), sgroup.getProp<std::string>("TYPE")));
+
+      std::vector<unsigned int> newAtoms;
+
+      // fix the atoms and bonds
+
+      for (auto atom : sgroup.getAtoms()) {
+        newGroup->addAtomWithIdx(ids[atom]);
+      }
+
+      for (auto bondId : sgroup.getBonds()) {
+        auto bond = mol.getBondWithIdx(bondId);
+        auto newAtom1 = ids[bond->getBeginAtomIdx()];
+        auto newAtom2 = ids[bond->getEndAtomIdx()];
+        Bond *newBond =
+            res[inFragIndex]->getBondBetweenAtoms(newAtom1, newAtom2);
+
+        newGroup->addBondWithIdx(newBond->getIdx());
+      }
+
+      for (auto atom : sgroup.getParentAtoms()) {
+        newGroup->addParentAtomWithIdx(ids[atom]);
+      }
+      std::vector<std::string> stringProps = {
+          "LABEL",     "FIELDNAME", "QUERYTYPE",      "QUERYOP",
+          "FIELDDISP", "UNITS",     "UNITSDISPLAYED", "CONTEXT",
+          "PLACEMENT", "CONNECT",   "FIELDDISP",
+      };
+
+      std::vector<std::string> doubleProps = {
+          "X",
+          "Y",
+      };
+
+      std::vector<std::string> stringArrayProps = {
+          "DATAFIELDS",
+      };
+
+      std::vector<std::string> intProps = {
+          "index",
+      };
+
+      for (auto stringProp : stringProps) {
+        std::string value;
+        if (sgroup.getPropIfPresent<std::string>(stringProp, value)) {
+          newGroup->setProp(stringProp, value);
+        }
+      }
+
+      for (auto doubleProp : doubleProps) {
+        double value;
+        if (sgroup.getPropIfPresent<double>(doubleProp, value)) {
+          newGroup->setProp(doubleProp, value);
+        }
+      }
+
+      for (auto intProp : intProps) {
+        int value;
+        if (sgroup.getPropIfPresent<int>(intProp, value)) {
+          newGroup->setProp(intProp, value);
+        }
+      }
+
+      for (auto stringArrayProp : stringArrayProps) {
+        std::vector<std::string> value;
+        if (sgroup.getPropIfPresent<std::vector<std::string>>(stringArrayProp,
+                                                              value)) {
+          newGroup->setProp(stringArrayProp, value);
+        }
+      }
+
+      ROMol *re = res[inFragIndex].get();
+      addSubstanceGroup(*re, *newGroup.get());
     }
   }
 
