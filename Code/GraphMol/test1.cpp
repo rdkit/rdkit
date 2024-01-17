@@ -14,7 +14,6 @@
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
-// #include <boost/log/functions.hpp>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
