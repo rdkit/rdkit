@@ -310,6 +310,22 @@ uint8_t getTwiceBondType(const Bond &b) {
       UNDER_CONSTRUCTION("Bad bond type");
   }
 }
+
+bool Bond::invertChirality() {
+  switch (getStereo()) {
+    case STEREOATROPCW:
+      setStereo(STEREOATROPCCW);
+      return true;
+    case STEREOATROPCCW:
+      setStereo(STEREOATROPCW);
+      return true;
+
+    default:
+      break;
+  }
+  return false;
+}
+
 };  // namespace RDKit
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {

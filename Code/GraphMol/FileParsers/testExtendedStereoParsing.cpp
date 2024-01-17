@@ -10,7 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/StereoGroup.h>
 #include "FileParsers.h"
-#include "MolFileStereochem.h"
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <clocale>

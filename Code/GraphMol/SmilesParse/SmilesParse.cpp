@@ -31,6 +31,10 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Atropisomers.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/Chirality.h>
 
 #include "SmilesParseOps.h"
 #include <RDGeneral/RDLog.h>
@@ -412,24 +416,59 @@ RWMol *SmilesToMol(const std::string &smiles,
   // boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
   RWMol *res = nullptr;
   res = toMol(lsmiles, smiles_parse, lsmiles);
+
+  if (!res) {
+    return nullptr;
+  }
   handleCXPartAndName(res, params, cxPart, name);
-  if (res && (params.sanitize || params.removeHs)) {
-    if (res->hasProp(SmilesParseOps::detail::_needsDetectAtomStereo)) {
-      // we encountered a wedged bond in the CXSMILES,
-      // these need to be handled the same way they were in mol files
-      res->clearProp(SmilesParseOps::detail::_needsDetectAtomStereo);
-      if (res->getNumConformers()) {
-        const auto &conf = res->getConformer();
-        if (!conf.is3D()) {
-          MolOps::assignChiralTypesFromBondDirs(*res, conf.getId());
+
+  const Conformer *conf = nullptr, *conf3d = nullptr;
+  // get a conformer
+
+  if (res && res->getNumConformers() > 0) {
+    for (unsigned int confId = 0; confId < res->getNumConformers(); ++confId) {
+      Conformer *testConf = &res->getConformer(confId);
+      if (!testConf->is3D()) {
+        if (conf == nullptr) {  // only take the first 2d conf
+          conf = testConf;
+        }
+      } else {
+        if (conf3d == nullptr) {  // only take the first 3d conf
+          conf3d = testConf;
         }
       }
+      if (conf != nullptr && conf3d != nullptr) {
+        break;
+      }
     }
-    // if we read a 3D conformer, set the stereo:
-    if (res->getNumConformers() && res->getConformer().is3D()) {
-      res->updatePropertyCache(false);
-      MolOps::assignChiralTypesFrom3D(*res, res->getConformer().getId(), true);
+  }
+
+  if (res->hasProp(SmilesParseOps::detail::_needsDetectAtomStereo)) {
+    // we encountered a wedged bond in the CXSMILES,
+    // these need to be handled the same way they were in mol files
+    res->clearProp(SmilesParseOps::detail::_needsDetectAtomStereo);
+
+    if (conf) {
+      MolOps::assignChiralTypesFromBondDirs(*res, conf->getId());
     }
+  }
+
+  // if we read a 3D conformer, set the stereo:
+  // if (res->getNumConformers() && res->getConformer().is3D()) {
+  if (!conf && conf3d) {
+    res->updatePropertyCache(false);
+    MolOps::assignChiralTypesFrom3D(*res, conf3d->getId(), true);
+  }
+  if (conf || conf3d) {
+    try {
+      Atropisomers::detectAtropisomerChirality(*res, conf ? conf : conf3d);
+    } catch (...) {
+      delete res;
+      throw;
+    }
+  }
+
+  if (res && (params.sanitize || params.removeHs)) {
     try {
       if (params.removeHs) {
         bool implicitOnly = false, updateExplicitCount = true;
@@ -442,17 +481,28 @@ RWMol *SmilesToMol(const std::string &smiles,
       delete res;
       throw;
     }
+
     if (res->hasProp(SmilesParseOps::detail::_needsDetectBondStereo)) {
       // we encountered either wiggly bond in the CXSMILES,
       // these need to be handled the same way they were in mol files
+
       res->clearProp(SmilesParseOps::detail::_needsDetectBondStereo);
+
       MolOps::clearSingleBondDirFlags(*res);
       MolOps::detectBondStereochemistry(*res);
     }
     // figure out stereochemistry:
     bool cleanIt = true, force = true, flagPossible = true;
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
+  } else {
+    //  we still need to do something about double bond stereochemistry
+    //  (was github issue 337)
+    //  now that atom stereochem has been perceived, the wedging
+    //  information is no longer needed, so we clear
+    //  single bond dir flags:
+    MolOps::clearSingleBondDirFlags(*res, true);
   }
+
   if (res && res->hasProp(common_properties::_NeedsQueryScan)) {
     res->clearProp(common_properties::_NeedsQueryScan);
     if (!params.sanitize) {

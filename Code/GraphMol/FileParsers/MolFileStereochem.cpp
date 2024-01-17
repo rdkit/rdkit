@@ -11,17 +11,16 @@
 #include <list>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/Chirality.h>
-#include "MolFileStereochem.h"
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <Geometry/point.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <algorithm>
 #include <RDGeneral/Ranking.h>
+#include <RDGeneral/FileParseException.h>
 
 namespace RDKit {
-
-void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
-                              const Conformer *conf, int &dirCode,
-                              bool &reverse);
 
 void WedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
   Chirality::wedgeBond(bond, fromAtomIdx, conf);
@@ -29,10 +28,6 @@ void WedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
 
 void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
   return Chirality::wedgeMolBonds(mol, conf);
-}
-
-INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
-  return Chirality::pickBondsToWedge(mol);
 }
 
 std::vector<Bond *> getBondNeighbors(ROMol &mol, const Bond &bond) {
@@ -192,14 +187,17 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
                                       const Conformer *conf) {
   return Chirality::detail::determineBondWedgeState(bond, fromAtomIdx, conf);
 }
-Bond::BondDir DetermineBondWedgeState(const Bond *bond,
-                                      const INT_MAP_INT &wedgeBonds,
-                                      const Conformer *conf) {
+Bond::BondDir DetermineBondWedgeState(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf) {
   return Chirality::detail::determineBondWedgeState(bond, wedgeBonds, conf);
 }
 
 // handles stereochem markers set by the Mol file parser and
 // converts them to the RD standard:
+
 void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
   PRECONDITION(&(conf->getOwningMol()) == &mol,
@@ -217,12 +215,11 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
                "conformer does not belong to molecule");
   MolOps::detectBondStereochemistry(mol, conf->getId());
 }
-
-void reapplyMolBlockWedging(ROMol &mol) {
-  Chirality::reapplyMolBlockWedging(mol);
+void reapplyMolBlockWedging(RWMol &mol) {
+  RDKit::Chirality::reapplyMolBlockWedging(mol);
 }
 
-void clearMolBlockWedgingInfo(ROMol &mol) {
+void clearMolBlockWedgingInfo(RWMol &mol) {
   Chirality::clearMolBlockWedgingInfo(mol);
 }
 
@@ -231,13 +228,14 @@ void invertMolBlockWedgingInfo(ROMol &mol) {
 }
 
 void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
-  INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
+  auto wedgeBonds = RDKit::Chirality::pickBondsToWedge(mol);
   const auto conf = mol.getConformer(confId);
   for (auto b : mol.bonds()) {
     if (b->getBondType() == Bond::DOUBLE) {
       int dirCode;
       bool reverse;
-      GetMolFileBondStereoInfo(b, wedgeBonds, &conf, dirCode, reverse);
+      RDKit::Chirality::GetMolFileBondStereoInfo(b, wedgeBonds, &conf, dirCode,
+                                                 reverse);
       if (dirCode == 3) {
         b->setStereo(Bond::STEREOANY);
       }
@@ -254,7 +252,8 @@ void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
           i.specified == Chirality::StereoSpecified::Unspecified) {
         i.specified = Chirality::StereoSpecified::Unknown;
         auto atom = mol.getAtomWithIdx(i.centeredOn);
-        INT_MAP_INT resSoFar;
+        std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+            resSoFar;
         int bndIdx = Chirality::detail::pickBondToWedge(atom, mol, nChiralNbrs,
                                                         resSoFar, noNbrs);
         auto bond = mol.getBondWithIdx(bndIdx);
@@ -279,10 +278,14 @@ void translateChiralFlagToStereoGroups(ROMol &mol,
   auto sgs = mol.getStereoGroups();
 
   boost::dynamic_bitset<> sgAtoms(mol.getNumAtoms());
+  boost::dynamic_bitset<> sgBonds(mol.getNumBonds());
   const StereoGroup *absGroup = nullptr;
   for (const auto &sg : sgs) {
     for (const auto aptr : sg.getAtoms()) {
       sgAtoms.set(aptr->getIdx());
+    }
+    for (const auto bptr : sg.getBonds()) {
+      sgBonds.set(bptr->getIdx());
     }
     // if we already have an ABS group, we'll add to it
     if (sgType == StereoGroupType::STEREO_ABSOLUTE && !absGroup &&
@@ -291,6 +294,7 @@ void translateChiralFlagToStereoGroups(ROMol &mol,
     }
   }
   ROMol::ATOM_PTR_VECT stereoAts;
+  ROMol::BOND_PTR_VECT stereoBds;
   for (const auto atom : mol.atoms()) {
     if (!sgAtoms[atom->getIdx()] &&
         (atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
@@ -298,9 +302,16 @@ void translateChiralFlagToStereoGroups(ROMol &mol,
       stereoAts.push_back(atom);
     }
   }
-  if (!stereoAts.empty()) {
+  for (const auto bond : mol.bonds()) {
+    if (!sgBonds[bond->getIdx()] &&
+        (bond->getStereo() == Bond::BondStereo::STEREOATROPCCW ||
+         bond->getStereo() == Bond::BondStereo::STEREOATROPCW)) {
+      stereoBds.push_back(bond);
+    }
+  }
+  if (!stereoAts.empty() || !stereoBds.empty()) {
     if (!absGroup) {
-      sgs.emplace_back(sgType, stereoAts);
+      sgs.emplace_back(sgType, stereoAts, stereoBds, 0);
       mol.setStereoGroups(sgs);
     } else {
       std::vector<StereoGroup> newSgs;
@@ -311,12 +322,16 @@ void translateChiralFlagToStereoGroups(ROMol &mol,
           ROMol::ATOM_PTR_VECT newStereoAtoms = sg.getAtoms();
           newStereoAtoms.insert(newStereoAtoms.end(), stereoAts.begin(),
                                 stereoAts.end());
-          newSgs.emplace_back(StereoGroupType::STEREO_ABSOLUTE, newStereoAtoms);
+          ROMol::BOND_PTR_VECT newStereoBonds = sg.getBonds();
+          newStereoBonds.insert(newStereoBonds.end(), stereoBds.begin(),
+                                stereoBds.end());
+
+          newSgs.emplace_back(StereoGroupType::STEREO_ABSOLUTE, newStereoAtoms,
+                              newStereoBonds, 0);
         }
       }
       mol.setStereoGroups(newSgs);
     }
   }
 }
-
 }  // namespace RDKit

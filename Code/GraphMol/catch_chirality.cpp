@@ -1491,22 +1491,22 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
   SECTION("simplest") {
     auto mol = "OC=C[C@H](C1CC1)C2CCC2"_smiles;
     REQUIRE(mol);
-    auto wedgedBonds = pickBondsToWedge(*mol);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 3);
-    CHECK(head->second == 3);
+    CHECK(head->second->getIdx() == 3);
   }
   SECTION("simplest, specified double bond") {
     auto mol = "OC=C[C@H](C1CC1)C2CCC2"_smiles;
     REQUIRE(mol);
     mol->getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
     mol->getBondBetweenAtoms(1, 2)->setStereo(Bond::BondStereo::STEREOCIS);
-    auto wedgedBonds = pickBondsToWedge(*mol);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 3);
-    CHECK(head->second == 3);
+    CHECK(head->second->getIdx() == 3);
   }
   SECTION("prefer unspecified bond stereo") {
     auto mol = "OC=C[C@H](C=CF)(C=CC)"_smiles;
@@ -1515,11 +1515,11 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
     mol->getBondBetweenAtoms(1, 2)->setStereo(Bond::BondStereo::STEREOCIS);
     mol->getBondBetweenAtoms(4, 5)->setStereoAtoms(3, 6);
     mol->getBondBetweenAtoms(4, 5)->setStereo(Bond::BondStereo::STEREOANY);
-    auto wedgedBonds = pickBondsToWedge(*mol);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
     CHECK(head->first == 6);
-    CHECK(head->second == 3);
+    CHECK(head->second->getIdx() == 3);
   }
 }
 
@@ -2780,14 +2780,14 @@ M  END
 
   SECTION("details: pickBondsWedge()") {
     // this is with aromatic bonds
-    auto bnds = pickBondsToWedge(*m);
-    CHECK(bnds.at(3) == 3);
+    auto wedgedBonds = Chirality::pickBondsToWedge(*m);
+    CHECK(wedgedBonds.at(3)->getIdx() == 3);
     RWMol cp(*m);
 
     // now try kekulized:
     MolOps::Kekulize(cp);
-    bnds = pickBondsToWedge(cp);
-    CHECK(bnds.at(3) == 3);
+    wedgedBonds = Chirality::pickBondsToWedge(cp);
+    CHECK(wedgedBonds.at(3)->getIdx() == 3);
   }
 }
 
@@ -4969,4 +4969,41 @@ TEST_CASE("github #6931: atom maps influencing chirality perception") {
     CHECK(
         !m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
   }
+}
+
+TEST_CASE(
+    "Github Issue #6981: Parsing a Mol leaks the \"_needsDetectBondStereo\" property",
+    "[bug][stereo]") {
+  // Parametrize test to run under legacy and new stereo perception
+  const auto legacy_stereo = GENERATE(true, false);
+  INFO("Legacy stereo perception == " << legacy_stereo);
+
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+  Chirality::setUseLegacyStereoPerception(legacy_stereo);
+
+  auto m = R"CTAB(
+  Mrv2311 12122315472D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -9.2083 1.8333 0 0
+M  V30 2 C -8.0639 0.8029 0 0
+M  V30 3 C -6.5239 0.8029 0 0
+M  V30 4 C -5.7539 -0.5308 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 4);
+
+  CHECK(m->hasProp("_needsDetectBondStereo") == false);
 }

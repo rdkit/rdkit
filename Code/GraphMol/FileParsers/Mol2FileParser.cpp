@@ -188,7 +188,9 @@ void guessFormalCharges(RWMol *res) {
       // FIX: do we need make sure this only happens for atoms in ring?
       std::string tATT;
       at->getProp(common_properties::_TriposAtomType, tATT);
+      if (!res->getRingInfo()->isSssrOrBetter()) {
       MolOps::findSSSR(*res);
+      }
       if (tATT.find("ar") == std::string::npos && at->getIsAromatic() &&
           res->getRingInfo()->isAtomInRingOfSize(at->getIdx(), 5)) {
         continue;
@@ -435,7 +437,9 @@ bool cleanUpMol2Substructures(RWMol *res) {
             }
           } else {
             // perceive the rings
+            if (!res->getRingInfo()->isSssrOrBetter()) {
             MolOps::findSSSR(*res);
+            }
             // then we check if both atoms are in a ring
             unsigned int rIdx1 = res->getRingInfo()->numAtomRings((*idxIt1));
             unsigned int rIdx2 = res->getRingInfo()->numAtomRings((*idxIt2));

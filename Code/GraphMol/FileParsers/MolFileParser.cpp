@@ -18,12 +18,12 @@
 #include "FileParsers.h"
 #include "FileParserUtils.h"
 #include "MolSGroupParsing.h"
-#include "MolFileStereochem.h"
-
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/SubstanceGroup.h>
+#include <GraphMol/Atropisomers.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/GenericGroups/GenericGroups.h>
@@ -235,7 +235,9 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
         // atoms are 1 indexed in molfiles
         atoms.push_back(mol->getAtomWithIdx(index - 1));
       }
-      groups.emplace_back(grouptype, std::move(atoms), groupid);
+      std::vector<Bond *> newBonds;
+      groups.emplace_back(grouptype, std::move(atoms), std::move(newBonds),
+                          groupid);
     } else {
       // skip collection types we don't know how to read. Only one documented
       // is MDLV30/HILITE
@@ -3193,6 +3195,7 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
                     unsigned int &nAtoms, unsigned int &nBonds,
                     bool strictParsing) {
   conf = new Conformer(nAtoms);
+
   if (nAtoms == 0) {
     conf->set3D(false);
   } else {
@@ -3244,6 +3247,8 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
       MolOps::assignChiralTypesFrom3D(*res, conf.getId(), true);
     }
   }
+
+  Atropisomers::detectAtropisomerChirality(*res, &conf);
 
   // now that atom stereochem has been perceived, the wedging
   // information is no longer needed, so we clear

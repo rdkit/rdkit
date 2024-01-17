@@ -189,7 +189,6 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _MolFileBondStereo;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _MolFileBondCfg;  // unsigned int
-
 RDKIT_RDGENERAL_EXPORT extern const std::string
     MRV_SMA;  // smarts string from Marvin
 RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;  // atom string

@@ -77,7 +77,7 @@ bool AllAtomsMatch(const ROMol &mol, const Atom &atom,
 
 bool GroupAtomMatcher(const ROMol &mol, const Atom &atom,
                       boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   auto atomMatcher = nullptr;
@@ -101,7 +101,7 @@ bool GroupHAtomMatcher(const ROMol &mol, const Atom &atom,
 
 bool GroupStarAtomMatcher(const ROMol &mol, const Atom &atom,
                           boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   auto atomMatcher = nullptr;
@@ -127,7 +127,7 @@ bool GroupStarHAtomMatcher(const ROMol &mol, const Atom &atom,
 
 bool AlkylAtomMatcher(const ROMol &mol, const Atom &atom,
                       boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   auto atomMatcher = [](const Atom &at) -> bool {
@@ -147,7 +147,7 @@ bool AlkylAtomMatcher(const ROMol &mol, const Atom &atom,
 
 bool AlkylHAtomMatcher(const ROMol &mol, const Atom &atom,
                        boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   auto atomMatcher = [](const Atom &at) -> bool {
@@ -164,7 +164,7 @@ bool AlkylHAtomMatcher(const ROMol &mol, const Atom &atom,
 
 bool AcyclicAtomMatcher(const ROMol &mol, const Atom &atom,
                         boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   auto atomMatcher = [](const Atom &at) -> bool {
@@ -180,7 +180,7 @@ bool AcyclicAtomMatcher(const ROMol &mol, const Atom &atom,
 
 bool AcyclicHAtomMatcher(const ROMol &mol, const Atom &atom,
                          boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   auto atomMatcher = [](const Atom &at) -> bool {
@@ -191,7 +191,7 @@ bool AcyclicHAtomMatcher(const ROMol &mol, const Atom &atom,
 
 bool CarboacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
                              boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   auto atomMatcher = [](const Atom &at) -> bool {
@@ -206,7 +206,7 @@ bool CarboacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
 
 bool CarboacyclicHAtomMatcher(const ROMol &mol, const Atom &atom,
                               boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   auto atomMatcher = [](const Atom &at) -> bool {
@@ -218,7 +218,7 @@ bool CarboacyclicHAtomMatcher(const ROMol &mol, const Atom &atom,
 
 bool HeteroacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
                               boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   auto atomMatcher = [](const Atom &at) -> bool {
@@ -243,7 +243,7 @@ bool HeteroacyclicHAtomMatcher(const ROMol &mol, const Atom &atom,
 
 bool AlkoxyacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
                               boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   if (atom.getDegree() != 2 || atom.getAtomicNum() != 8) {
@@ -290,7 +290,7 @@ bool UnsatAlkXAtomMatcher(const ROMol &mol, const Atom &atom,
   // nominally requires at least two Cs, but since it can only
   // contain Cs and Hs and since a multiple bond is required, that condition is
   // redundant
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   auto atomMatcher = [](const Atom &at) -> bool {
@@ -593,7 +593,7 @@ bool HeteroarylHAtomMatcher(const ROMol &mol, const Atom &atom,
 
 bool CyclicAtomMatcher(const ROMol &mol, const Atom &atom,
                        boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
   auto atomMatcher = [](const Atom &at) -> bool {

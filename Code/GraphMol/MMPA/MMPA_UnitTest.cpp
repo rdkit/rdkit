@@ -50,6 +50,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/test_fixtures.h>
 #include "../RDKitBase.h"
 #include "../FileParsers/FileParsers.h"  //MOL single molecule !
 #include "../FileParsers/MolSupplier.h"  //SDF
@@ -247,7 +248,7 @@ void test1() {
 
       "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]CCO.[*:1]NC(=O)"
       "c1c(C)n([O-])c2ccccc2[n+]1=O",
-      //#10
+      // #10
       "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]CO.[*:1]CNC(=O)"
       "c1c(C)n([O-])c2ccccc2[n+]1=O",
       "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]O.[*:1]CCNC(=O)"
@@ -691,13 +692,12 @@ std::endl;
 //====================================================================================================
 //====================================================================================================
 
-void testGithub6900 () {
-  RDKit::Chirality::setUseLegacyStereoPerception(false);
-  //auto mol = "CN1CCCN=C1/C=C/c1cccs1"_smiles;
+void testGithub6900() {
+  UseLegacyStereoPerceptionFixture useLegacy(false);
+  // auto mol = "CN1CCCN=C1/C=C/c1cccs1"_smiles;
   auto mol = "N/C=C/C"_smiles;
   std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> res;
   RDKit::MMPA::fragmentMol(*mol, res, 3);
-  RDKit::Chirality::setUseLegacyStereoPerception(true);
 }
 int main() {
   BOOST_LOG(rdInfoLog)
@@ -720,7 +720,7 @@ int main() {
   // /*
   test2();
   test3();
-    
+
   //    test4();
   // */
   //    debugTest1("C[*:1].O=C(NCCO)c1c([*:1])n([O-])c2ccccc2[n+]1=O");

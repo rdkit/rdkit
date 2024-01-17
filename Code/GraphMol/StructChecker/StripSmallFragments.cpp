@@ -13,7 +13,7 @@
 #include "../Descriptors/MolDescriptors.h"
 #include "StripSmallFragments.h"
 #include "../SmilesParse/SmilesWrite.h"
-#include "../FileParsers/MolFileStereochem.h"
+#include "../MolFileStereochem.h"
 
 // define snprintf for msvc
 #if _MSC_VER

@@ -204,7 +204,7 @@ void updatePatternFingerprint(const ROMol &mol, ExplicitBitVect &fp,
     patts.push_back(matcher);
   }
 
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
 
