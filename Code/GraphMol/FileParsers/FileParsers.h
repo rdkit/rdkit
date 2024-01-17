@@ -362,28 +362,71 @@ inline RWMol *XYZFileToMol(const std::string &fName) {
 
 }  // namespace v1
 
-RDKIT_FILEPARSERS_EXPORT RWMol *PDBBlockToMol(const char *str,
-                                              bool sanitize = true,
-                                              bool removeHs = true,
-                                              unsigned int flavor = 0,
-                                              bool proximityBonding = true);
+namespace v2 {
+namespace FileParsers {
+struct RDKIT_FILEPARSERS_EXPORT PDBParserParams {
+  bool sanitize = true; /**< sanitize the molecule after building it */
+  bool removeHs = true; /**< remove Hs after constructing the molecule */
+  bool proximityBonding = true; /**< if set to true, proximity bonding will be
+                                   performed */
+  unsigned int flavor = 0;      /**< flavor to use */
+};
 
-RDKIT_FILEPARSERS_EXPORT RWMol *PDBBlockToMol(const std::string &str,
-                                              bool sanitize = true,
-                                              bool removeHs = true,
-                                              unsigned int flavor = 0,
-                                              bool proximityBonding = true);
-RDKIT_FILEPARSERS_EXPORT RWMol *PDBDataStreamToMol(
-    std::istream *inStream, bool sanitize = true, bool removeHs = true,
-    unsigned int flavor = 0, bool proximityBonding = true);
-RDKIT_FILEPARSERS_EXPORT RWMol *PDBDataStreamToMol(
-    std::istream &inStream, bool sanitize = true, bool removeHs = true,
-    unsigned int flavor = 0, bool proximityBonding = true);
-RDKIT_FILEPARSERS_EXPORT RWMol *PDBFileToMol(const std::string &fname,
-                                             bool sanitize = true,
-                                             bool removeHs = true,
-                                             unsigned int flavor = 0,
-                                             bool proximityBonding = true);
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromPDBDataStream(
+    std::istream &inStream, const PDBParserParams &params = PDBParserParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromPDBFile(
+    const std::string &fname,
+    const PDBParserParams &params = PDBParserParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromPDBBlock(
+    const std::string &str, const PDBParserParams &params = PDBParserParams());
+}  // namespace FileParsers
+}  // namespace v2
+
+namespace v1 {
+using RDKit::v2::FileParsers::PDBParserParams;
+inline RWMol *PDBBlockToMol(const std::string &str, bool sanitize = true,
+                            bool removeHs = true, unsigned int flavor = 0,
+                            bool proximityBonding = true) {
+  v2::FileParsers::PDBParserParams ps;
+  ps.sanitize = sanitize;
+  ps.removeHs = removeHs;
+  ps.flavor = flavor;
+  ps.proximityBonding = proximityBonding;
+  return v2::FileParsers::MolFromPDBBlock(str, ps).release();
+}
+inline RWMol *PDBBlockToMol(const char *str, bool sanitize = true,
+                            bool removeHs = true, unsigned int flavor = 0,
+                            bool proximityBonding = true) {
+  return PDBBlockToMol(std::string(str), sanitize, removeHs, flavor,
+                       proximityBonding);
+}
+inline RWMol *PDBFileToMol(const std::string &fname, bool sanitize = true,
+                           bool removeHs = true, unsigned int flavor = 0,
+                           bool proximityBonding = true) {
+  v2::FileParsers::PDBParserParams ps;
+  ps.sanitize = sanitize;
+  ps.removeHs = removeHs;
+  ps.flavor = flavor;
+  ps.proximityBonding = proximityBonding;
+  return v2::FileParsers::MolFromPDBFile(fname, ps).release();
+}
+inline RWMol *PDBDataStreamToMol(std::istream &inStream, bool sanitize = true,
+                                 bool removeHs = true, unsigned int flavor = 0,
+                                 bool proximityBonding = true) {
+  v2::FileParsers::PDBParserParams ps;
+  ps.sanitize = sanitize;
+  ps.removeHs = removeHs;
+  ps.flavor = flavor;
+  ps.proximityBonding = proximityBonding;
+  return v2::FileParsers::MolFromPDBDataStream(inStream, ps).release();
+}
+inline RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize = true,
+                                 bool removeHs = true, unsigned int flavor = 0,
+                                 bool proximityBonding = true) {
+  return PDBDataStreamToMol(*inStream, sanitize, removeHs, flavor,
+                            proximityBonding);
+}
+}  // namespace v1
 
 // \brief reads a molecule from the metadata in an RDKit-generated SVG file
 /*!
@@ -415,25 +458,21 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _ctab(const char *text,
 inline std::unique_ptr<RDKit::RWMol> operator"" _mol2(const char *text,
                                                       size_t len) {
   std::string data(text, len);
-  RWMol *ptr = nullptr;
   try {
-    ptr = Mol2BlockToMol(data);
+    return v2::FileParsers::MolFromMol2Block(data);
   } catch (const RDKit::MolSanitizeException &) {
-    ptr = nullptr;
+    return nullptr;
   }
-  return std::unique_ptr<RWMol>(ptr);
 }
 
 inline std::unique_ptr<RDKit::RWMol> operator"" _pdb(const char *text,
                                                      size_t len) {
   std::string data(text, len);
-  RWMol *ptr = nullptr;
   try {
-    ptr = PDBBlockToMol(data);
+    return v2::FileParsers::MolFromPDBBlock(data);
   } catch (const RDKit::MolSanitizeException &) {
-    ptr = nullptr;
+    return nullptr;
   }
-  return std::unique_ptr<RWMol>(ptr);
 }
 
 }  // namespace RDKit
