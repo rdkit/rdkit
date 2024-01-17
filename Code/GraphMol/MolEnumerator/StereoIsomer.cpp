@@ -12,7 +12,7 @@
 namespace RDKit {
 namespace MolEnumerator {
 
-inline namespace detail {
+namespace detail {
 class StereoFlipper {
  public:
   StereoFlipper() = default;
@@ -24,7 +24,7 @@ class StereoFlipper {
 
 namespace {
 
-class AtomStereoFlipper : public StereoFlipper {
+class AtomStereoFlipper : public detail::StereoFlipper {
  public:
   AtomStereoFlipper(Atom* atom) : d_atom(atom->getIdx()) {}
 
@@ -33,9 +33,9 @@ class AtomStereoFlipper : public StereoFlipper {
                                  : Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
     mol.getAtomWithIdx(d_atom)->setChiralTag(next_atom_stereo);
   }
-  static void add_flippers_from_mol(const ROMol& mol,
+  static void addFlippersFromMol(const ROMol& mol,
                                     const StereoEnumerationOptions& options,
-                                    std::vector<stereo_flipper_t>& flippers) {
+                                    std::vector<StereoFlipperSP>& flippers) {
     if (options.onlyStereoGroups) {
       return;
     }
@@ -56,7 +56,7 @@ class AtomStereoFlipper : public StereoFlipper {
   int d_atom;
 };
 
-class BondStereoFlipper : public StereoFlipper {
+class BondStereoFlipper : public detail::StereoFlipper {
  public:
   BondStereoFlipper(Bond* bond) : d_bond(bond->getIdx()) {}
 
@@ -65,9 +65,9 @@ class BondStereoFlipper : public StereoFlipper {
         flag ? Bond::BondStereo::STEREOCIS : Bond::BondStereo::STEREOTRANS;
     mol.getBondWithIdx(d_bond)->setStereo(next_bond_stereo);
   }
-  static void add_flippers_from_mol(const ROMol& mol,
+  static void addFlippersFromMol(const ROMol& mol,
                                     const StereoEnumerationOptions& options,
-                                    std::vector<stereo_flipper_t>& flippers) {
+                                    std::vector<StereoFlipperSP>& flippers) {
     if (options.onlyStereoGroups) {
       return;
     }
@@ -88,7 +88,7 @@ class BondStereoFlipper : public StereoFlipper {
   int d_bond;
 };
 
-class StereoGroupFlipper : public StereoFlipper {
+class StereoGroupFlipper : public detail::StereoFlipper {
  public:
   StereoGroupFlipper(StereoGroup* group) {
     auto& stereo_group_atoms = group->getAtoms();
@@ -117,9 +117,9 @@ class StereoGroupFlipper : public StereoFlipper {
     }
   }
 
-  static void add_flippers_from_mol(const ROMol& mol,
+  static void addFlippersFromMol(const ROMol& mol,
                                     const StereoEnumerationOptions& options,
-                                    std::vector<stereo_flipper_t>& flippers) {
+                                    std::vector<StereoFlipperSP>& flippers) {
     if (!options.onlyUnassigned) {
       return;
     }
@@ -139,7 +139,7 @@ class StereoGroupFlipper : public StereoFlipper {
 
 namespace {
 
-void preprocess_mol_for_stereoisomer_enumeration(ROMol& mol) {
+void preprocessMolForStereoisomerEnumeration(ROMol& mol) {
   for (auto* atom : mol.atoms()) {
     atom->clearProp(common_properties::_CIPCode);
   }
@@ -151,31 +151,31 @@ void preprocess_mol_for_stereoisomer_enumeration(ROMol& mol) {
   }
 }
 
-std::vector<stereo_flipper_t> get_flippers(
+std::vector<StereoFlipperSP> getFlippers(
     ROMol& mol, const StereoEnumerationOptions& options = {}) {
-  std::vector<stereo_flipper_t> flippers;
+  std::vector<StereoFlipperSP> flippers;
 
-  preprocess_mol_for_stereoisomer_enumeration(mol);
+  preprocessMolForStereoisomerEnumeration(mol);
 
   RDKit::MolOps::findPotentialStereoBonds(mol, false);
 
-  AtomStereoFlipper::add_flippers_from_mol(mol, options, flippers);
-  BondStereoFlipper::add_flippers_from_mol(mol, options, flippers);
-  StereoGroupFlipper::add_flippers_from_mol(mol, options, flippers);
+  AtomStereoFlipper::addFlippersFromMol(mol, options, flippers);
+  BondStereoFlipper::addFlippersFromMol(mol, options, flippers);
+  StereoGroupFlipper::addFlippersFromMol(mol, options, flippers);
 
   return flippers;
 };
 
 }  // namespace
 
-[[nodiscard]] unsigned int get_stereoisomer_count(
+[[nodiscard]] unsigned int getStereoisomerCount(
     const ROMol& input_mol, const StereoEnumerationOptions options) {
   ROMol mol(input_mol);
-  auto flippers = get_flippers(mol, options);
+  auto flippers = getFlippers(mol, options);
   return std::pow(2, flippers.size());
 }
 
-[[nodiscard]] MolBundle enumerate_stereoisomers(
+[[nodiscard]] MolBundle enumerateStereoisomers(
     const ROMol& mol, const StereoEnumerationOptions options) {
   std::vector<MolEnumeratorParams> paramsList;
 
@@ -249,7 +249,7 @@ void StereoIsomerOp::initFromMol() {
     detail::preserveOrigIndices(*dp_mol);
   }
 
-  d_variationPoints = get_flippers(*dp_mol, d_options);
+  d_variationPoints = getFlippers(*dp_mol, d_options);
 }
 
 std::vector<size_t> StereoIsomerOp::getVariationCounts() const {

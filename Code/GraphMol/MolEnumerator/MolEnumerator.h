@@ -24,7 +24,7 @@ namespace RDKit {
 class ChemicalReaction;
 namespace MolEnumerator {
 
-inline namespace detail {
+namespace detail {
 extern const std::string idxPropName;
 void preserveOrigIndices(ROMol &mol);
 void removeOrigIndices(ROMol &mol);
@@ -240,8 +240,37 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
   void initFromMol();
 };
 
-using stereo_flipper_t = std::shared_ptr<StereoFlipper>;
+using StereoFlipperSP = std::shared_ptr<detail::StereoFlipper>;
 
+/*
+ * Parameters for enumerating stereoisomers
+ *
+ * @param tryEmbedding if set, the process attempts to generate a standard
+ *                     RDKit distance geometry conformation for the
+ *                     stereoisomer. If this fails, we assume that the
+ *                     stereoisomer is non-physical and don't return it.
+ *
+ *                     NOTE: that this is computationally expensive and is
+ *                     just a heuristic that could result in stereoisomers
+ *                     being lost.
+ *
+ * @param onlyUnassigned if set (the default), stereocenters which have
+ *                       specified stereochemistry will not be perturbed
+ *                       unless they are part of a relative stereo group.
+ *
+ * @param maxIsomers the maximum number of isomers to yield, if the
+ *              number of possible isomers is greater than maxIsomers, a
+ *              random subset will be yielded. If 0, all isomers are
+ *              yielded. Since every additional stereo center doubles the
+ *              number of results (and execution time) it's important to
+ *              keep an eye on this.
+ *
+ * @param unique: if set, duplicate instances of the same structure are removed
+ *                from the output
+ *
+ * @param onlyStereoGroups Only find stereoisomers that differ at the
+ *                         StereoGroups associated with the molecule.
+ */
 struct RDKIT_MOLENUMERATOR_EXPORT StereoEnumerationOptions {
   bool tryEmbedding = false;
   bool onlyUnassigned = true;
@@ -250,10 +279,10 @@ struct RDKIT_MOLENUMERATOR_EXPORT StereoEnumerationOptions {
   unsigned int maxIsomers = 1024;
 };
 
-RDKIT_MOLENUMERATOR_EXPORT unsigned int get_stereoisomer_count(
+RDKIT_MOLENUMERATOR_EXPORT unsigned int getStereoisomerCount(
     const ROMol &mol, const StereoEnumerationOptions options = {});
 
-RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate_stereoisomers(
+RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerateStereoisomers(
     const ROMol &mol, const StereoEnumerationOptions options = {});
 
 class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
@@ -274,7 +303,8 @@ class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
       const std::vector<size_t> &which) const final;
 
   //! \override
-  void initFromMol(const ROMol &mol) final;;
+  void initFromMol(const ROMol &mol) final;
+  ;
 
   //! \override
   std::unique_ptr<MolEnumeratorOp> copy() const final;
@@ -283,7 +313,7 @@ class RDKIT_MOLENUMERATOR_EXPORT StereoIsomerOp : public MolEnumeratorOp {
 
  private:
   std::shared_ptr<ROMol> dp_mol;
-  std::vector<stereo_flipper_t> d_variationPoints;
+  std::vector<StereoFlipperSP> d_variationPoints;
   StereoEnumerationOptions d_options;
 
   void initFromMol();

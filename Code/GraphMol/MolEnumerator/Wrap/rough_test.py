@@ -11,7 +11,6 @@
 import unittest
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import AllChem
 from rdkit.Chem import rdMolEnumerator
 
 

@@ -48,7 +48,7 @@ void enumerateVariations(std::vector<std::vector<size_t>> &variations,
 
 }  // namespace
 
-inline namespace detail {
+namespace detail {
 const std::string idxPropName = "_enumeratorOrigIdx";
 void preserveOrigIndices(ROMol &mol) {
   mol.setProp(idxPropName, 1);

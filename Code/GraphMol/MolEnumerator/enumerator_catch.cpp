@@ -1754,27 +1754,35 @@ TEST_CASE("Basic stereoisomer enumeration") {
   auto mol = "CC(F)=CC(Cl)C"_smiles;
   REQUIRE(mol);
 
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
-  CHECK(getNumUniqueMols(bundle) == 4);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol);
+  CHECK(bundle.size() == 4);
+  CHECK(MolEnumerator::getStereoisomerCount(*mol) == 4);
 }
 
+namespace {
+    std::string operator*(const std::string& val1, int val2) {
+        std::string result;
+        for (auto i = 0;  i < val2; ++i) {
+            result += val1;
+        }
+        return result;
+    }
+}
 TEST_CASE("Test enumeration with large isomer sample") {
-  std::vector<std::string> tokens(31, "CC(F)=CC(Cl)C");
-  auto mol = SmilesToMol(boost::algorithm::join(tokens, ""));
+  auto mol = SmilesToMol(std::string{"CC(F)=CC(Cl)C"} * 31);
   REQUIRE(mol);
 
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol);
   CHECK(bundle.size() == 1024);
 }
 
 TEST_CASE("Test StereoEnumerationOptions::maxIsomers option") {
-  std::vector<std::string> tokens(101, "CC(F)=CC(Cl)C");
-  auto mol = SmilesToMol(boost::algorithm::join(tokens, ""));
+  auto mol = SmilesToMol(std::string{"CC(F)=CC(Cl)C"} * 101);
   REQUIRE(mol);
 
   MolEnumerator::StereoEnumerationOptions options;
   options.maxIsomers = 13;
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol, options);
   CHECK(bundle.size() == 13);
 }
 
@@ -1785,7 +1793,7 @@ TEST_CASE("Basic test of StereoEnumerationOptions::tryEmbedding option") {
   MolEnumerator::StereoEnumerationOptions options;
   options.maxIsomers = 8;
   options.tryEmbedding = true;
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol, options);
   CHECK(bundle.size() == 8);
 }
 
@@ -1798,7 +1806,7 @@ TEST_CASE(
   MolEnumerator::StereoEnumerationOptions options;
   options.maxIsomers = 1024;
   options.tryEmbedding = true;
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol, options);
   CHECK(bundle.size() == 8);
 
   //
@@ -1819,11 +1827,11 @@ TEST_CASE("Test StereoEnumerationOptions::onlyUnassigned option") {
   REQUIRE(mol);
 
   // there is nothing to enumerate
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol);
   CHECK(bundle.size() == 0);
 
   mol = "CC(F)=C[C@@H](C)Cl"_smiles;
-  bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  bundle = MolEnumerator::enumerateStereoisomers(*mol);
   CHECK(bundle.size() == 2);
   CHECK(std::unordered_set<std::string>{
             MolToSmiles(*bundle[0]),
@@ -1834,7 +1842,7 @@ TEST_CASE("Test StereoEnumerationOptions::onlyUnassigned option") {
   mol = "C/C(F)=C/[C@@H](C)Cl"_smiles;
   MolEnumerator::StereoEnumerationOptions options;
   options.onlyUnassigned = false;
-  bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  bundle = MolEnumerator::enumerateStereoisomers(*mol, options);
   CHECK(bundle.size() == 4);
   CHECK(std::unordered_set<std::string>{
             MolToSmiles(*bundle[0]),
@@ -1862,12 +1870,12 @@ TEST_CASE("Test StereoEnumerationOptions::unique option") {
 
     MolEnumerator::StereoEnumerationOptions options;
     options.unique = false;
-    auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+    auto bundle = MolEnumerator::enumerateStereoisomers(*mol, options);
     CHECK(bundle.size() == num_expected);
     CHECK(getNumUniqueMols(bundle) == num_unique);
 
     options.unique = true;
-    bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+    bundle = MolEnumerator::enumerateStereoisomers(*mol, options);
     CHECK(bundle.size() == num_unique);
     CHECK(getNumUniqueMols(bundle) == num_unique);
   }
@@ -1887,7 +1895,7 @@ TEST_CASE("Test enhanced stereo feature") {
   auto mol = MolFileToMol(fpath);
   REQUIRE(mol);
 
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol);
   CHECK(bundle.size() == 2);
 
   std::unordered_set<std::string> expected_smiles{
@@ -1910,7 +1918,7 @@ TEST_CASE("Test StereoEnumerationOptions::onlyStereoGroups option") {
   MolEnumerator::StereoEnumerationOptions options;
   options.onlyStereoGroups = true;
 
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol, options);
   CHECK(bundle.size() == 2);
   CHECK(bundle.size() == getNumUniqueMols(bundle));
 }
@@ -1925,7 +1933,7 @@ TEST_CASE("Test no duplication of enhanced stereo groups") {
 
   // If the onlyUnassigned option is False, make sure that enhanced stereo
   // groups aren't double-counted.
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol, options);
   CHECK(bundle.size() == 8);
   CHECK(bundle.size() == getNumUniqueMols(bundle));
 }
@@ -1934,7 +1942,7 @@ TEST_CASE("Test issue #2890") {
   auto mol = "CC=CC"_smiles;
   mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
 
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol);
   CHECK(bundle.size() == 2);
 }
 
@@ -1942,7 +1950,7 @@ TEST_CASE("Test issue #3505") {
   auto mol = "CCC(C)Br"_smiles;
   REQUIRE(mol);
 
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol);
   CHECK(bundle.size() == 2);
 
   for (size_t i = 0; i < bundle.size(); ++i) {
@@ -1960,7 +1968,7 @@ TEST_CASE("Test enumerating double bond stereo") {
   auto mol = MolFileToMol(fpath);
   REQUIRE(mol);
 
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol);
   CHECK(bundle.size() == 2);
   CHECK(std::unordered_set<std::string>{
             MolToSmiles(*bundle[0]),
@@ -1969,17 +1977,13 @@ TEST_CASE("Test enumerating double bond stereo") {
 }
 
 TEST_CASE("Test embedding many chirals") {
-  std::vector<std::string> tokens(42, "C(Cl)(Br)");
-  tokens[0] = "C1";
-  tokens[41] = "C1";
-
-  auto mol = SmilesToMol(boost::algorithm::join(tokens, ""));
+  auto mol = SmilesToMol("C1" + std::string{"CC(F)=CC(Cl)C"} * 40 + "C1");
   REQUIRE(mol);
 
   MolEnumerator::StereoEnumerationOptions options;
   options.tryEmbedding = true;
   options.maxIsomers = 2;
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol, options);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol, options);
   CHECK(bundle.size() == 2);
 }
 
@@ -1987,7 +1991,7 @@ TEST_CASE("Test issue #6045") {
   auto mol = "O[C@H](Br)[C@H](F)C |&1:1,3|"_smiles;
   REQUIRE(mol);
 
-  auto bundle = MolEnumerator::enumerate_stereoisomers(*mol);
+  auto bundle = MolEnumerator::enumerateStereoisomers(*mol);
   CHECK(bundle.size() == 2);
 
   CHECK(bundle[0]->getStereoGroups().size() == 0);

@@ -63,9 +63,9 @@ MolBundle *enumerateHelper2(const ROMol &mol,
   return new MolBundle(res);
 }
 
-MolBundle *enumerate_stereoisomers_helper(
+MolBundle *enumerateStereoisomersHelper(
     const ROMol &mol, const MolEnumerator::StereoEnumerationOptions &options) {
-  return new MolBundle(MolEnumerator::enumerate_stereoisomers(mol, options));
+  return new MolBundle(MolEnumerator::enumerateStereoisomers(mol, options));
 }
 
 }  // namespace
@@ -156,13 +156,13 @@ Limitations:
       "GetStereoisomerCountV2",
       (unsigned int (*)(const ROMol &,
                         const MolEnumerator::StereoEnumerationOptions))
-          MolEnumerator::get_stereoisomer_count,
+          MolEnumerator::getStereoisomerCount,
       (python::arg("mol"),
        python::arg("options") = MolEnumerator::StereoEnumerationOptions()),
       R"DOC(get the total number of non-unique stereoisomers that can be be generated from mol.)DOC");
 
   python::def(
-      "EnumerateStereoisomersV2", &enumerate_stereoisomers_helper,
+      "EnumerateStereoisomersV2", &enumerateStereoisomersHelper,
       (python::arg("mol"),
        python::arg("options") = MolEnumerator::StereoEnumerationOptions()),
       python::return_value_policy<python::manage_new_object>(),
