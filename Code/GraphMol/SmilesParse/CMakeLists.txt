@@ -18,7 +18,7 @@ endif()
 if(FLEX_EXECUTABLE)
   FLEX_TARGET(SmilesL smiles.ll
               ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp
-             COMPILE_FLAGS "-Pyysmiles_" )
+              COMPILE_FLAGS "-Pyysmiles_" )
   FLEX_TARGET(SmartsL smarts.ll
               ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp
               COMPILE_FLAGS "-Pyysmarts_" )
@@ -48,6 +48,8 @@ else(BISON_EXECUTABLE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp COPYONLY)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smiles_location.tab.hpp.cmake
+                 ${CMAKE_CURRENT_SOURCE_DIR}/smiles_location.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.hpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp.cmake
@@ -55,10 +57,13 @@ else(BISON_EXECUTABLE)
   FILE(GLOB BISON_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.tab.?pp")
 endif(BISON_EXECUTABLE)
 
+# do this to make FlexLexer.h discoverable
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 rdkit_library(SmilesParse
               SmilesParse.cpp SmilesParseOps.cpp
               SmilesWrite.cpp SmartsWrite.cpp CXSmilesOps.cpp
+              SmilesASTParser.cpp SmilesMolBuilder.cpp
               ${BISON_OUTPUT_FILES}
               ${FLEX_OUTPUT_FILES}
               LINK_LIBRARIES GraphMol RDGeneral)

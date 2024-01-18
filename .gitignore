@@ -54,6 +54,7 @@ __pycache__/
 /Code/GraphMol/SmilesParse/smarts.tab.hpp
 /Code/GraphMol/SmilesParse/smiles.tab.cpp
 /Code/GraphMol/SmilesParse/smiles.tab.hpp
+/Code/GraphMol/SmilesParse/smiles_location.tab.hpp
 
 /External/**/*.tar.gz
 /External/**/*.zip
@@ -68,6 +69,7 @@ __pycache__/
 /External/YAeHMOP/yaehmop/
 /External/catch/catch/
 /External/rapidjson*/
+/External/flex/*
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
