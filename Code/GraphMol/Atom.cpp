@@ -301,31 +301,43 @@ int Atom::getExplicitValence() const {
   return d_explicitValence;
 }
 
+int Atom::getImplicitValence() const {
+  PRECONDITION(dp_mol,
+               "valence not defined for atoms not associated with molecules");
+  if (df_noImplicit) {
+    return 0;
+  }
+  return d_implicitValence;
+}
+
 unsigned int Atom::getTotalValence() const {
   return getExplicitValence() + getImplicitValence();
 }
 
-int Atom::calcExplicitValence(bool strict) {
+namespace {
+
+int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   unsigned int res;
   // FIX: contributions of bonds to valence are being done at best
   // approximately
   double accum = 0;
-  for (const auto bnd : getOwningMol().atomBonds(this)) {
-    accum += bnd->getValenceContrib(this);
+  for (const auto bnd : atom.getOwningMol().atomBonds(&atom)) {
+    accum += bnd->getValenceContrib(&atom);
   }
-  accum += getNumExplicitHs();
+  accum += atom.getNumExplicitHs();
 
   // check accum is greater than the default valence
-  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
-  int chr = getFormalCharge();
-  if (isEarlyAtom(d_atomicNum)) {
+  auto atomicNum = atom.getAtomicNum();
+  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(atomicNum);
+  int chr = atom.getFormalCharge();
+  if (isEarlyAtom(atomicNum)) {
     chr *= -1;  // <- the usual correction for early atoms
   }
   // special case for carbon - see GitHub #539
-  if (d_atomicNum == 6 && chr > 0) {
+  if (atomicNum == 6 && chr > 0) {
     chr = -chr;
   }
-  if (accum > (dv + chr) && isAromaticAtom(*this)) {
+  if (accum > (dv + chr) && isAromaticAtom(atom)) {
     // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
     // to this atom.  We set x = (v + chr) such that x is the
@@ -338,7 +350,7 @@ int Atom::calcExplicitValence(bool strict) {
 
     int pval = dv + chr;
     const INT_VECT &valens =
-        PeriodicTable::getTable()->getValenceList(d_atomicNum);
+        PeriodicTable::getTable()->getValenceList(atomicNum);
     for (auto val : valens) {
       if (val == -1) {
         break;
@@ -376,84 +388,80 @@ int Atom::calcExplicitValence(bool strict) {
 
   res = static_cast<int>(std::round(accum));
 
-  if (strict) {
+  if (strict || checkIt) {
     int effectiveValence;
-    if (PeriodicTable::getTable()->getNouterElecs(d_atomicNum) >= 4) {
-      effectiveValence = res - getFormalCharge();
+    if (PeriodicTable::getTable()->getNouterElecs(atomicNum) >= 4) {
+      effectiveValence = res - atom.getFormalCharge();
     } else {
       // for boron and co, we move to the right in the PT, so adding
       // extra valences means adding negative charge
-      effectiveValence = res + getFormalCharge();
+      effectiveValence = res + atom.getFormalCharge();
     }
     const INT_VECT &valens =
-        PeriodicTable::getTable()->getValenceList(d_atomicNum);
+        PeriodicTable::getTable()->getValenceList(atomicNum);
 
     int maxValence = valens.back();
     // maxValence == -1 signifies that we'll take anything at the high end
     if (maxValence > 0 && effectiveValence > maxValence) {
       // the explicit valence is greater than any
-      // allowed valence for the atoms - raise an error
-      std::ostringstream errout;
-      errout << "Explicit valence for atom # " << getIdx() << " "
-             << PeriodicTable::getTable()->getElementSymbol(d_atomicNum) << ", "
-             << effectiveValence << ", is greater than permitted";
-      std::string msg = errout.str();
-      BOOST_LOG(rdErrorLog) << msg << std::endl;
-      throw AtomValenceException(msg, getIdx());
+      // allowed valence for the atoms
+      if (strict) {
+        // raise an error
+        std::ostringstream errout;
+        errout << "Explicit valence for atom # " << atom.getIdx() << " "
+               << PeriodicTable::getTable()->getElementSymbol(atomicNum) << ", "
+               << effectiveValence << ", is greater than permitted";
+        std::string msg = errout.str();
+        BOOST_LOG(rdErrorLog) << msg << std::endl;
+        throw AtomValenceException(msg, atom.getIdx());
+      } else {
+        return -1;
+      }
     }
   }
-  d_explicitValence = res;
-
   return res;
 }
 
-int Atom::getImplicitValence() const {
-  PRECONDITION(dp_mol,
-               "valence not defined for atoms not associated with molecules");
-  if (df_noImplicit) {
-    return 0;
-  }
-  return d_implicitValence;
-}
-
 // NOTE: this uses the explicitValence, so it will call
-// calcExplictValence() if it hasn't already been called
-int Atom::calcImplicitValence(bool strict) {
-  if (df_noImplicit) {
+// calculateExplicitValence if it is not set on the given atom
+int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
+  if (atom.getNoImplicit()) {
     return 0;
   }
-  if (d_explicitValence == -1) {
-    this->calcExplicitValence(strict);
+  auto explicitValence = atom.getExplicitValence();
+  if (explicitValence == -1) {
+    explicitValence = calculateExplicitValence(atom, strict, checkIt);
   }
   // special cases
-  if (d_atomicNum == 0) {
-    d_implicitValence = 0;
+  auto atomic_num = atom.getAtomicNum();
+  if (atomic_num == 0) {
     return 0;
   }
-  for (const auto bnd : getOwningMol().atomBonds(this)) {
+  for (const auto &nbri :
+       boost::make_iterator_range(atom.getOwningMol().getAtomBonds(&atom))) {
+    const auto bnd = atom.getOwningMol()[nbri];
     if (QueryOps::hasComplexBondTypeQuery(*bnd)) {
-      d_implicitValence = 0;
       return 0;
     }
   }
-  if (d_explicitValence == 0 && d_atomicNum == 1 &&
-      d_numRadicalElectrons == 0) {
-    if (d_formalCharge == 1 || d_formalCharge == -1) {
-      d_implicitValence = 0;
+  auto formal_charge = atom.getFormalCharge();
+  auto num_radical_electrons = atom.getNumRadicalElectrons();
+  if (explicitValence == 0 && atomic_num == 1 && num_radical_electrons == 0) {
+    if (formal_charge == 1 || formal_charge == -1) {
       return 0;
-    } else if (d_formalCharge == 0) {
-      d_implicitValence = 1;
+    } else if (formal_charge == 0) {
       return 1;
     } else {
       if (strict) {
         std::ostringstream errout;
-        errout << "Unreasonable formal charge on hydrogen # " << getIdx()
+        errout << "Unreasonable formal charge on hydrogen # " << atom.getIdx()
                << ".";
         std::string msg = errout.str();
         BOOST_LOG(rdErrorLog) << msg << std::endl;
-        throw AtomValenceException(msg, getIdx());
+        throw AtomValenceException(msg, atom.getIdx());
+      } else if (checkIt) {
+        return -1;
       } else {
-        d_implicitValence = 0;
         return 0;
       }
     }
@@ -467,9 +475,8 @@ int Atom::calcImplicitValence(bool strict) {
 
   // The d-block and f-block of the periodic table (i.e. transition metals,
   // lanthanoids and actinoids) have no default valence.
-  int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
+  int dv = PeriodicTable::getTable()->getDefaultValence(atomic_num);
   if (dv == -1) {
-    d_implicitValence = 0;
     return 0;
   }
 
@@ -485,10 +492,11 @@ int Atom::calcImplicitValence(bool strict) {
   // finally aromatic cases are dealt with differently - these atoms are allowed
   // only default valences
   const INT_VECT &valens =
-      PeriodicTable::getTable()->getValenceList(d_atomicNum);
+      PeriodicTable::getTable()->getValenceList(atomic_num);
 
-  int explicitPlusRadV = getExplicitValence() + getNumRadicalElectrons();
-  int chg = getFormalCharge();
+  int explicitPlusRadV =
+      atom.getExplicitValence() + atom.getNumRadicalElectrons();
+  int chg = atom.getFormalCharge();
 
   // NOTE: this is here to take care of the difference in element on
   // the right side of the carbon vs left side of carbon
@@ -519,16 +527,16 @@ int Atom::calcImplicitValence(bool strict) {
   //
   // So assuming you read all the above stuff - you know why we are
   // changing signs for "chg" here
-  if (isEarlyAtom(d_atomicNum)) {
+  if (isEarlyAtom(atomic_num)) {
     chg *= -1;
   }
   // special case for carbon - see GitHub #539
-  if (d_atomicNum == 6 && chg > 0) {
+  if (atomic_num == 6 && chg > 0) {
     chg = -chg;
   }
 
   // if we have an aromatic case treat it differently
-  if (isAromaticAtom(*this)) {
+  if (isAromaticAtom(atom)) {
     if (explicitPlusRadV <= (static_cast<int>(dv) + chg)) {
       res = dv + chg - explicitPlusRadV;
     } else {
@@ -548,13 +556,17 @@ int Atom::calcImplicitValence(bool strict) {
           break;
         }
       }
-      if (strict && !satis) {
-        std::ostringstream errout;
-        errout << "Explicit valence for aromatic atom # " << getIdx()
-               << " not equal to any accepted valence\n";
-        std::string msg = errout.str();
-        BOOST_LOG(rdErrorLog) << msg << std::endl;
-        throw AtomValenceException(msg, getIdx());
+      if (!satis && (strict || checkIt)) {
+        if (strict) {
+          std::ostringstream errout;
+          errout << "Explicit valence for aromatic atom # " << atom.getIdx()
+                 << " not equal to any accepted valence\n";
+          std::string msg = errout.str();
+          BOOST_LOG(rdErrorLog) << msg << std::endl;
+          throw AtomValenceException(msg, atom.getIdx());
+        } else {
+          return -1;
+        }
       }
       res = 0;
     }
@@ -570,24 +582,44 @@ int Atom::calcImplicitValence(bool strict) {
       }
     }
     if (res < 0) {
-      if (strict && valens.back() != -1) {
+      if ((strict || checkIt) && valens.back() != -1) {
         // this means that the explicit valence is greater than any
-        // allowed valence for the atoms - raise an error
-        std::ostringstream errout;
-        errout << "Explicit valence for atom # " << getIdx() << " "
-               << PeriodicTable::getTable()->getElementSymbol(d_atomicNum)
-               << " greater than permitted";
-        std::string msg = errout.str();
-        BOOST_LOG(rdErrorLog) << msg << std::endl;
-        throw AtomValenceException(msg, getIdx());
+        // allowed valence for the atoms
+        if (strict) {
+          // raise an error
+          std::ostringstream errout;
+          errout << "Explicit valence for atom # " << atom.getIdx() << " "
+                 << PeriodicTable::getTable()->getElementSymbol(atomic_num)
+                 << " greater than permitted";
+          std::string msg = errout.str();
+          BOOST_LOG(rdErrorLog) << msg << std::endl;
+          throw AtomValenceException(msg, atom.getIdx());
+        } else {
+          return -1;
+        }
       } else {
         res = 0;
       }
     }
   }
-
-  d_implicitValence = res;
   return res;
+}
+
+}  // unnamed namespace
+
+int Atom::calcExplicitValence(bool strict) {
+  bool checkIt = false;
+  d_explicitValence = calculateExplicitValence(*this, strict, checkIt);
+  return d_explicitValence;
+}
+
+int Atom::calcImplicitValence(bool strict) {
+  if (d_explicitValence == -1) {
+    calcExplicitValence(strict);
+  }
+  bool checkIt = false;
+  d_implicitValence = calculateImplicitValence(*this, strict, checkIt);
+  return d_implicitValence;
 }
 
 void Atom::setIsotope(unsigned int what) { d_isotope = what; }
@@ -603,6 +635,23 @@ double Atom::getMass() const {
   } else {
     return PeriodicTable::getTable()->getAtomicWeight(d_atomicNum);
   }
+}
+
+bool Atom::hasValenceViolation() const {
+  // Ignore dummy atoms, query atoms, or atoms attached to query bonds
+  auto bonds = getOwningMol().atomBonds(this);
+  auto is_query = [](auto b) { return b->hasQuery(); };
+  if (getAtomicNum() == 0 || hasQuery() ||
+      std::any_of(bonds.begin(), bonds.end(), is_query)) {
+    return false;
+  }
+  bool strict = false;
+  bool checkIt = true;
+  if (calculateExplicitValence(*this, strict, checkIt) == -1 ||
+      calculateImplicitValence(*this, strict, checkIt) == -1) {
+    return true;
+  }
+  return false;
 }
 
 void Atom::setQuery(Atom::QUERYATOM_QUERY *) {
