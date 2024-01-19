@@ -6964,7 +6964,7 @@ std::string GetExpectedValue(std::string expectedFileName) {
   return expectedMolStr.str();
 }
 
-void testFragmetation(const FragTest &fragTest) {
+void testFragmentation(const FragTest &fragTest) {
   INFO(fragTest.fileName);
   std::string rdbase = getenv("RDBASE");
 
@@ -7000,8 +7000,10 @@ void testFragmetation(const FragTest &fragTest) {
         fName + (fragTest.reapplyMolBlockWedging ? "" : ".noReapply") +
             ".NEW.sdf",
         outMolStr);
-
-    TEST_ASSERT(GetExpectedValue(expectedName) == outMolStr);
+    // if (outMolStr != GetExpectedValue(expectedName)) {
+    //   std::cerr << outMolStr << std::endl;
+    // }
+    CHECK(GetExpectedValue(expectedName) == outMolStr);
   }
 }
 
@@ -7036,7 +7038,7 @@ TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
         FragTest("polymerSalt.mol", true, true),
     };
     for (auto test : tests) {
-      testFragmetation(test);
+      testFragmentation(test);
     }
   };
 }
