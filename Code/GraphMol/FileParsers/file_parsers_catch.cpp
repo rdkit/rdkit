@@ -506,7 +506,7 @@ M  STY  1   1 SUP
 M  SAL   1  4   7   8   9  10
 M  SBL   1  1   7
 M  SMT   1 CF3
-M  SAP   1  1   8   6
+M  SAP   1  1   8   6   
 M  END
 )CTAB";
     std::unique_ptr<ROMol> mol;
@@ -693,11 +693,11 @@ M  STY  2   1 SUP   2 SUP
 M  SAL   1  4   7   8   9  10
 M  SBL   1  1   7
 M  SMT   1 CF3
-M  SAP   1  1   8   6
+M  SAP   1  1   8   6   
 M  SAL   2  3  11  12  13
 M  SBL   2  1   8
 M  SMT   2 COOH
-M  SAP   2  1  12   3
+M  SAP   2  1  12   3   
 M  END
 )CTAB";
     std::unique_ptr<ROMol> mol;
@@ -822,7 +822,7 @@ M  STY  1   1 SUP
 M  SAL   1  3  11  12  13
 M  SBL   1  1   8
 M  SMT   1 COOH
-M  SAP   1  1  12   3
+M  SAP   1  1  12   3   
 M  END
 )CTAB";
     std::unique_ptr<ROMol> mol;
@@ -5426,7 +5426,7 @@ M  END
   1  0  1  0  0  0            999 V2000
    -1.6293    3.3366    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
   1 T    1   7
-M  ALS   1  1 T N
+M  ALS   1  1 T N   
 M  END
 )CTAB"_ctab;
     REQUIRE(m);
