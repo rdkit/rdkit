@@ -2781,9 +2781,13 @@ void testStereoGroupUpdating() {
 
   TEST_ASSERT(m->getStereoGroups().size() == 2);
   m->removeAtom(3);
-  TEST_ASSERT(m->getStereoGroups().size() == 1);
+  TEST_ASSERT(m->getStereoGroups().size() == 2);
+  TEST_ASSERT(m->getStereoGroups()[1].getGroupType() ==
+              RDKit::StereoGroupType::STEREO_OR);
+  TEST_ASSERT(m->getStereoGroups()[1].getAtoms().size() == 1)
+
   m->removeAtom(m->getAtomWithIdx(0));
-  TEST_ASSERT(m->getStereoGroups().size() == 0u);
+  TEST_ASSERT(m->getStereoGroups().size() == 1);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
