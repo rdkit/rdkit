@@ -146,20 +146,6 @@ class TestCase(unittest.TestCase):
       self.assertEqual(expClusSize, len(clus))
 
   def testMaxBondMatchPairs(self):
-
-    def rascal_wrapper(mola, molb, opts):
-      results = rdRascalMCES.FindMCES(mola, molb, opts)
-      print(f'Results {results}')
-      print(f"N Results: {len(results)}")
-
-      print("tier1sim:", results[0].tier1Sim, "tier2sim:", results[0].tier2Sim)
-
-      for i, res in enumerate(results):
-        print(f"Res {i}")
-        print(f'MCES SMARTS : {res.smartsString}')
-        print(f'Matching Bonds : {res.bondMatches()}')
-        print(f'Matching Atoms : {res.atomMatches()}')
-
     opts = rdRascalMCES.RascalOptions()
     opts.similarityThreshold = 0.0
     opts.returnEmptyMCES = True
@@ -168,16 +154,14 @@ class TestCase(unittest.TestCase):
     opts.completeAromaticRings = False
     opts.timeout = -1
 
-    gets_results_1 = Chem.MolFromSmiles('CCCC=CCCCC=CCCCCCCCCCCCCCCCCCCCC1CNCCC1')
-    gets_results_2 = Chem.MolFromSmiles('CCCC=CCCCCC=CCCCCCCCCCCCCCCCCCCC1CNCCC1')
-    rascal_wrapper(gets_results_1, gets_results_2, opts)
-
     too_long_1 =  Chem.MolFromSmiles('CCCC=CCCCC=CCCCCCCCCCCCCCCCCCCCCC1CNCCC1')
     too_long_2 =  Chem.MolFromSmiles('CCCC=CCCCCC=CCCCCCCCCCCCCCCCCCCCC1CNCCC1')
-    rascal_wrapper(too_long_1,too_long_2)
+    results = rdRascalMCES.FindMCES(too_long_1, too_long_2, opts)
+    self.assertEqual(len(results[0].bondMatches()), 0)
 
     opts.maxBondMatchPairs = 1200
-    rascal_wrapper(too_long_1, too_long_2)
+    results = rdRascalMCES.FindMCES(too_long_1, too_long_2, opts)
+    self.assertEqual(len(results[0].bondMatches()), 26)
 
 
 if __name__ == "__main__":
