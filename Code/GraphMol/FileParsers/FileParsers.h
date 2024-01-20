@@ -382,7 +382,7 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromPDBBlock(
 }  // namespace FileParsers
 }  // namespace v2
 
-namespace v1 {
+inline namespace v1 {
 using RDKit::v2::FileParsers::PDBParserParams;
 inline RWMol *PDBBlockToMol(const std::string &str, bool sanitize = true,
                             bool removeHs = true, unsigned int flavor = 0,
