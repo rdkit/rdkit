@@ -746,3 +746,30 @@ TEST_CASE("Sequential random seeds") {
     compareConfs(mol.get(), &mol2, 5, 0);
   }
 }
+
+TEST_CASE("Macrocycle bounds matrix") {
+  SECTION("basics") {
+    auto mol = "C1/C=C/C=C/CCCCCCCCC1"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm, true, false, true);
+    CHECK(bm->getLowerBound(1, 18) > 2.6);
+    CHECK(bm->getLowerBound(1, 18) < 2.7);
+    CHECK(bm->getLowerBound(4, 17) > 2.6);
+    CHECK(bm->getLowerBound(4, 17) < 2.7);
+
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0;
+
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid >= 0);
+    const auto conf = mol->getConformer(cid);
+    RDGeom::Point3D pos_1 = conf.getAtomPos(1);
+    RDGeom::Point3D pos_4 = conf.getAtomPos(4);
+    CHECK((pos_1 - pos_4).length() < 3.6);
+    CHECK((pos_1 - pos_4).length() > 3.5);
+  }
+}

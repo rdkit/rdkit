@@ -377,3 +377,49 @@ TEST_CASE("Test segv reported in #6890") {
                     FileParseException);
   }
 }
+
+TEST_CASE("github #5923: add more error checking to substance groups") {
+  SECTION("basics") {
+    std::string moljson =
+        R"JSON({"rdkitjson":{"version":11},"defaults":{"atom":{"z":6,"impHs":0,"chg":0,"nRad":0,"isotope":0,"stereo":"unspecified"},"bond":{"bo":1,"stereo":"unspecified"}},
+        "molecules":[{"name":"","atoms":[{"z":0},{"impHs":1},{"z":8},{"z":0},{"impHs":3}],
+        "bonds":[{"atoms":[0,1]},{"atoms":[1,2]},{"atoms":[2,3]},{"atoms":[1,4]}],
+        "substanceGroups":[{"properties":{"TYPE":"SRU","index":1,"CONNECT":"HT","LABEL":"n","DATAFIELDS":"[]"},
+           "atoms":[2,1,4],"bonds":[2,0],"parentAtoms":[0,3],
+           "brackets":[[[-3.9538,4.3256,0.0],[-3.0298,2.7252,0.0],[0.0,0.0,0.0]],[[-5.4618,2.8611,0.0],[-6.3858,4.4615,0.0],[0.0,0.0,0.0]]]}],
+        "conformers":[{"dim":2,"coords":[[-6.7083,3.2083],[-5.3747,3.9783],[-4.041,3.2083],[-2.7073,3.9783],[-5.3747,5.5183]]}],"extensions":[{"name":"rdkitRepresentation","formatVersion":2,"toolkitVersion":"2023.09.4","cipRanks":[0,3,4,1,2]},{"name":"rdkitQueries","formatVersion":10,"toolkitVersion":"2023.09.4","atomQueries":[{"descr":"AtomNull","tag":40},{},{},{"descr":"AtomNull","tag":40},{}]}]}]})JSON";
+    // everything ok
+    {
+      auto mols = MolInterchange::JSONDataToMols(moljson);
+      REQUIRE(mols.size() == 1);
+      CHECK(getSubstanceGroups(*mols[0]).size() == 1);
+    }
+    // bad atom index
+    {
+      std::string badjson = moljson;
+      std::string lookFor = R"JSON("atoms":[2,1,4])JSON";
+      badjson.replace(badjson.find(lookFor), lookFor.size(),
+                      R"JSON("atoms":[2,1,9])JSON");
+      CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
+                      ValueErrorException);
+    }
+    // bad parentAtom index
+    {
+      std::string badjson = moljson;
+      std::string lookFor = R"JSON("parentAtoms":[0,3])JSON";
+      badjson.replace(badjson.find(lookFor), lookFor.size(),
+                      R"JSON("parentAtoms":[8,3])JSON");
+      CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
+                      ValueErrorException);
+    }
+    // bad bond index
+    {
+      std::string badjson = moljson;
+      std::string lookFor = R"JSON("bonds":[2,0])JSON";
+      badjson.replace(badjson.find(lookFor), lookFor.size(),
+                      R"JSON("bonds":[2,7])JSON");
+      CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
+                      ValueErrorException);
+    }
+  }
+}
