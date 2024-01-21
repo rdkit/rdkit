@@ -77,39 +77,47 @@
       std::string err="ChemicalReactionException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
     catch (RDKit::ChemicalReactionParserException &e) {
       std::string err="ChemicalReactionParserException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
     catch (RDKit::ConformerException &e) {
       std::string err="ConformerException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
     catch (RDKit::MolPicklerException &e) {
       std::string err="MolPicklerException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
     catch (RDKit::MolSanitizeException &e) {
       std::string err="MolSanitizeException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
     catch (RDKit::SmilesParseException e) {
       std::string err="SmilesParseException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
     catch (KeyErrorException e) {
       std::string err="KeyError: ";
       err+=e.key();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
     catch (std::exception e) {
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, "error");
+      return $null;
     }
 }
 
