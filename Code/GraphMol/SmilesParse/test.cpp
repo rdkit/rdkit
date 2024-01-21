@@ -4390,15 +4390,14 @@ void testGithub6349() {
 
   auto checkSmartsToSmiles = [](const std::string &sma,
                                 const std::string &refSmi) {
-    ROMol *molFromSmarts = SmartsToMol(sma);
+    std::unique_ptr<ROMol> molFromSmarts(SmartsToMol(sma));
     {
       std::string smi = MolToSmiles(*molFromSmarts);
       TEST_ASSERT(smi == refSmi);
     }
 
     std::string molBlock = MolToMolBlock(*molFromSmarts);
-    ROMol *molFromBlock =
-        MolBlockToMol(molBlock, /*sanitize =*/false, /*removeHs =*/false);
+    std::unique_ptr<ROMol> molFromBlock(MolBlockToMol(molBlock, /*sanitize =*/false, /*removeHs =*/false));
     {
       std::string smi = MolToSmiles(*molFromBlock);
       TEST_ASSERT(smi == refSmi);
