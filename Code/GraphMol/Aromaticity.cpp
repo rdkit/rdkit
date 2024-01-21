@@ -809,18 +809,12 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       continue;
     }
 
-    auto isDummyAtom = [](const Atom &atom) {
-      return (!atom.hasQuery() && atom.getAtomicNum() == 0) ||
-             (atom.hasQuery() &&
-              atom.getQuery()->getDescription() == "AtomNull");
-    };
-
     bool allAromatic = true;
     bool allDummy = true;
     for (auto firstIdx : sring) {
       const auto at = mol.getAtomWithIdx(firstIdx);
 
-      if (allDummy && !isDummyAtom(*at)) {
+      if (allDummy && !isAtomDummy(at)) {
         allDummy = false;
       }
 
