@@ -12,7 +12,7 @@ steps:
     conda create --name rdkit_build $(python) cmake \
         libboost=$(boost_version) libboost-devel=$(boost_version) \
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
-        numpy pillow eigen pandas \
+        numpy pillow eigen pandas=2.1 \
         qt pytest
     conda activate rdkit_build
   displayName: Setup build environment

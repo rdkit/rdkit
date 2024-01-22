@@ -9,10 +9,10 @@ steps:
     conda create --name rdkit_build -c conda-forge $(python) cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
-        numpy=1.24.3 pillow eigen pandas matplotlib-base \
+        numpy=1.24.3 pillow eigen pandas=2.1 matplotlib-base=3.8 \
         cairo
     conda activate rdkit_build
-    conda install -c conda-forge nbval ipykernel>=6.0
+    conda install -c conda-forge ipython=8.20 jupyter nbval ipykernel>=6.0
   displayName: Setup build environment (no Qt due to versioning problems)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -66,7 +66,6 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda install ipython matplotlib-base
     conda install -c conda-forge sphinx myst-parser
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}

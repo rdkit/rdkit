@@ -166,7 +166,7 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(RDKit::AtomValenceException)
 %shared_ptr(RDKit::AtomKekulizeException)
 %shared_ptr(RDKit::KekulizeException)
-%shared_ptr(RDKit::SmilesParseException)
+%shared_ptr(RDKit::SmilesParse::SmilesParseException)
 %shared_ptr(RDKit::RingInfo)
 %shared_ptr(RDKit::ChemicalReaction)
 %shared_ptr(ForceFields::ForceFieldContrib);

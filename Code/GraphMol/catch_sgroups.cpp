@@ -16,6 +16,7 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include "GraphMol/FileParsers/FileParsers.h"
+#include "GraphMol/MolInterchange/MolInterchange.h"
 
 using namespace RDKit;
 
@@ -507,4 +508,16 @@ M  END
       TEST_ASSERT(index == count);
     }
   }
+}
+
+TEST_CASE("github #5923: add more error checking to substance groups") {
+  auto mol = "CCCO"_smiles;
+  REQUIRE(mol);
+  SubstanceGroup sg(mol.get(), "SUP");
+  CHECK_THROWS_AS(sg.addAtomWithIdx(4), ValueErrorException);
+  CHECK_THROWS_AS(sg.addParentAtomWithIdx(4), ValueErrorException);
+  CHECK_THROWS_AS(sg.addBondWithIdx(4), ValueErrorException);
+  CHECK_THROWS_AS(sg.setAtoms({1, 4}), ValueErrorException);
+  CHECK_THROWS_AS(sg.setParentAtoms({1, 4}), ValueErrorException);
+  CHECK_THROWS_AS(sg.setBonds({1, 4}), ValueErrorException);
 }
