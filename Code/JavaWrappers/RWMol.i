@@ -68,6 +68,8 @@
 %javaconst(1);
 #endif
 %include <GraphMol/FileParsers/FileParsers.h>
+%ignore RDKit::v2;
+%ignore RDKit::v2::SmilesParse;
 %include <GraphMol/SmilesParse/SmilesParse.h>
 %include <GraphMol/RWMol.h>
 
@@ -76,7 +78,7 @@
                                          std::map<std::string,std::string> *replacements=0){
     return RDKit::RWMOL_SPTR(RDKit::SmilesToMol(smi, debugParse, sanitize,replacements));
   }
-  static RDKit::RWMOL_SPTR MolFromSmiles(const std::string &smi, const RDKit::SmilesParserParams &params){
+  static RDKit::RWMOL_SPTR MolFromSmiles(const std::string &smi, const RDKit::v1::SmilesParserParams &params){
     return RDKit::RWMOL_SPTR(RDKit::SmilesToMol(smi, params));
   }
   static RDKit::RWMOL_SPTR MolFromSmarts(const std::string &sma,int debugParse=0,bool mergeHs=false,
