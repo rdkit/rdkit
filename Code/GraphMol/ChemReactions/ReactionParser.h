@@ -44,6 +44,7 @@
 #include <boost/format.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 namespace RDKit {
 class ChemicalReaction;
@@ -65,6 +66,27 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
   std::string _msg;
 };
 
+namespace v2 {
+namespace ReactionParser {
+struct RDKIT_CHEMREACTIONS_EXPORT ReactionSmartsParserParams {
+  bool sanitize = false; /**< sanitize the molecules after building them */
+  std::map<std::string, std::string>
+      replacements;          /**< allows SMILES "macros" */
+  bool allowCXSMILES = true; /**< recognize and parse CXSMILES*/
+  bool strictCXSMILES =
+      true; /**< throw an exception if the CXSMILES parsing fails */
+};
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction> ReactionFromSmarts(
+    const std::string &smarts,
+    const ReactionSmartsParserParams &params = ReactionSmartsParserParams());
+
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction> ReactionFromSmiles(
+    const std::string &smarts,
+    const ReactionSmartsParserParams &params = ReactionSmartsParserParams());
+}  // namespace ReactionParser
+}  // namespace v2
+
+inline namespace v1 {
 //---------------------------------------------------------------------------
 //! \name Reaction SMARTS/SMILES Support
 //! @{
@@ -86,11 +108,22 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
    \param allowCXSMILES     if set, any CXSMILES extensions present will be
    parsed, otherwise it will be ignored
  */
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnSmartsToChemicalReaction(
+inline ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &text,
     std::map<std::string, std::string> *replacements = nullptr,
-    bool useSmiles = false, bool allowCXSMILES = true);
-
+    bool useSmiles = false, bool allowCXSMILES = true) {
+  v2::ReactionParser::ReactionSmartsParserParams params;
+  if (replacements) {
+    params.replacements = *replacements;
+  }
+  params.allowCXSMILES = allowCXSMILES;
+  if (useSmiles) {
+    return v2::ReactionParser::ReactionFromSmiles(text, params).release();
+  } else {
+    return v2::ReactionParser::ReactionFromSmarts(text, params).release();
+  }
+}
+}  // namespace v1
 //! returns the reaction SMARTS for a reaction
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmarts(
     const ChemicalReaction &rxn);
@@ -123,19 +156,59 @@ RDKIT_CHEMREACTIONS_EXPORT ROMol *ChemicalReactionToRxnMol(
 //---------------------------------------------------------------------------
 //! \name MDL rxn Support
 //! @{
+namespace v2 {
+namespace ReactionParser {
 
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction>
+ReactionFromRxnBlock(const std::string &rxnBlock,
+                     const FileParsers::MolFileParserParams &params =
+                         FileParsers::MolFileParserParams());
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction>
+ReactionFromRxnFile(const std::string &fileName,
+                    const FileParsers::MolFileParserParams &params =
+                        FileParsers::MolFileParserParams());
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction>
+ReactionFromRxnDataStream(std::istream &rxnStream, unsigned int &line,
+                          const FileParsers::MolFileParserParams &params =
+                              FileParsers::MolFileParserParams());
+
+}  // namespace ReactionParser
+}  // namespace v2
+inline namespace v1 {
 //! Parse a text block in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnBlockToChemicalReaction(
-    const std::string &rxnBlock, bool sanitize = false, bool removeHs = false,
-    bool strictParsing = true);
+inline ChemicalReaction *RxnBlockToChemicalReaction(const std::string &rxnBlock,
+                                                    bool sanitize = false,
+                                                    bool removeHs = false,
+                                                    bool strictParsing = true) {
+  v2::FileParsers::MolFileParserParams params;
+  params.sanitize = sanitize;
+  params.removeHs = removeHs;
+  params.strictParsing = strictParsing;
+  return v2::ReactionParser::ReactionFromRxnBlock(rxnBlock, params).release();
+}
 //! Parse a file in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnFileToChemicalReaction(
-    const std::string &fileName, bool sanitize = false, bool removeHs = false,
-    bool strictParsing = true);
+inline ChemicalReaction *RxnFileToChemicalReaction(const std::string &fileName,
+                                                   bool sanitize = false,
+                                                   bool removeHs = false,
+                                                   bool strictParsing = true) {
+  v2::FileParsers::MolFileParserParams params;
+  params.sanitize = sanitize;
+  params.removeHs = removeHs;
+  params.strictParsing = strictParsing;
+  return v2::ReactionParser::ReactionFromRxnFile(fileName, params).release();
+}
 //! Parse a text stream in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnDataStreamToChemicalReaction(
+inline ChemicalReaction *RxnDataStreamToChemicalReaction(
     std::istream &rxnStream, unsigned int &line, bool sanitize = false,
-    bool removeHs = false, bool strictParsing = true);
+    bool removeHs = false, bool strictParsing = true) {
+  v2::FileParsers::MolFileParserParams params;
+  params.sanitize = sanitize;
+  params.removeHs = removeHs;
+  params.strictParsing = strictParsing;
+  return v2::ReactionParser::ReactionFromRxnDataStream(rxnStream, line, params)
+      .release();
+}
+}  // namespace v1
 //! returns an rxn block for a reaction
 /*!
    \param rxn            chemical reaction
