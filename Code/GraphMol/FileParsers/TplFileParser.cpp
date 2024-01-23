@@ -15,7 +15,7 @@
 
 #include "FileParsers.h"
 #include "FileParserUtils.h"
-#include "MolFileStereochem.h"
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/StreamOps.h>
 
 #include <fstream>

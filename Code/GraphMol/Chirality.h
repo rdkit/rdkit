@@ -43,6 +43,8 @@ RDKIT_GRAPHMOL_EXPORT extern bool getAllowNontetrahedralChirality();
 RDKIT_GRAPHMOL_EXPORT extern void setUseLegacyStereoPerception(bool val);
 RDKIT_GRAPHMOL_EXPORT extern bool getUseLegacyStereoPerception();
 
+RDKIT_GRAPHMOL_EXPORT void removeNonExplicit3DChirality(ROMol &mol);
+
 RDKIT_GRAPHMOL_EXPORT extern bool
     useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
                                 //!< perception code
@@ -66,12 +68,6 @@ RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol,
                                               UINT_VECT &ranks);
 
 RDKIT_GRAPHMOL_EXPORT bool hasStereoBondDir(const Bond *bond);
-
-// this routine removes chiral markers and stereo indications that should not be
-// present this is only called when the molecule has not been sanitized and when
-// the new stereo (not legacy) is in use
-
-RDKIT_GRAPHMOL_EXPORT void removeBadStereo(ROMol &mol);
 
 /**
  *  Returns the first neighboring bond that can be found which has a stereo
@@ -101,7 +97,15 @@ enum class StereoType {
   Bond_Atropisomer
 };
 
-enum class StereoDescriptor { None, Tet_CW, Tet_CCW, Bond_Cis, Bond_Trans };
+enum class StereoDescriptor {
+  None,
+  Tet_CW,
+  Tet_CCW,
+  Bond_Cis,
+  Bond_Trans,
+  Bond_AtropCW,
+  Bond_AtropCCW
+};
 
 enum class StereoSpecified {
   Unspecified,  // no information provided
@@ -223,34 +227,88 @@ struct RDKIT_GRAPHMOL_EXPORT BondWedgingParameters {
               //!<      wedged
 };
 
+enum class WedgeInfoType {
+  WedgeInfoTypeChiral,
+  WedgeInfoTypeAtropisomer,
+};
+
+class WedgeInfoBase {
+ public:
+  WedgeInfoBase(int idxInit) : idx(idxInit){};
+  virtual ~WedgeInfoBase(){};
+
+  virtual WedgeInfoType getType() const = 0;
+  virtual Bond::BondDir getDir() const = 0;
+
+  int getIdx() const { return idx; }
+
+ private:
+  int idx = -1;
+};
+
+class WedgeInfoChiral : public WedgeInfoBase {
+ public:
+  WedgeInfoChiral(int atomId) : WedgeInfoBase(atomId){};
+  ~WedgeInfoChiral(){};
+
+  WedgeInfoType getType() const override {
+    return Chirality::WedgeInfoType::WedgeInfoTypeChiral;
+  }
+  Bond::BondDir getDir() const override {
+    throw std::runtime_error(
+        "BondDir is not stored/used in Chiral type WedgInfos");
+  }
+};
+
+class WedgeInfoAtropisomer : public WedgeInfoBase {
+ public:
+  WedgeInfoAtropisomer(int bondId, RDKit::Bond::BondDir dirInit)
+      : WedgeInfoBase(bondId) {
+    dir = dirInit;
+  };
+  ~WedgeInfoAtropisomer(){};
+
+  RDKit::Bond::BondDir dir = RDKit::Bond::BondDir::NONE;
+
+  WedgeInfoType getType() const override {
+    return Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer;
+  }
+
+  Bond::BondDir getDir() const override { return dir; }
+};
+
 namespace detail {
 RDKIT_GRAPHMOL_EXPORT Bond::BondDir determineBondWedgeState(
     const Bond *bond, unsigned int fromAtomIdx, const Conformer *conf);
 RDKIT_GRAPHMOL_EXPORT Bond::BondDir determineBondWedgeState(
-    const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf);
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf);
+
 RDKIT_GRAPHMOL_EXPORT std::pair<bool, INT_VECT> countChiralNbrs(
     const ROMol &mol, int noNbrs);
-RDKIT_GRAPHMOL_EXPORT int pickBondToWedge(const Atom *atom, const ROMol &mol,
-                                          const INT_VECT &nChiralNbrs,
-                                          const INT_MAP_INT &resSoFar,
-                                          int noNbrs);
-RDKIT_GRAPHMOL_EXPORT void setStereoanyFromSquiggleBond(ROMol &mol, Bond *bond,
-							Bond::BondStereo stereo=Bond::STEREOANY);
+RDKIT_GRAPHMOL_EXPORT int pickBondToWedge(
+    const Atom *atom, const ROMol &mol, const INT_VECT &nChiralNbrs,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &resSoFar,
+    int noNbrs);
+RDKIT_GRAPHMOL_EXPORT void setStereoForBond(ROMol &mol, Bond *bond,
+                                            Bond::BondStereo stereo);
 }  // namespace detail
 
 //! picks the bonds which should be wedged
-/// \returns a map from bond idx -> controlling atom idx
-RDKIT_GRAPHMOL_EXPORT INT_MAP_INT pickBondsToWedge(
-    const ROMol &mol, const BondWedgingParameters *params = nullptr);
+/// returns a map from bond idx -> controlling atom idx
+RDKIT_GRAPHMOL_EXPORT
+std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
+    const ROMol &mol, const BondWedgingParameters *params = nullptr,
+    const Conformer *conf = nullptr);
 
 RDKIT_GRAPHMOL_EXPORT void wedgeMolBonds(
     ROMol &mol, const Conformer *conf = nullptr,
     const BondWedgingParameters *params = nullptr);
 RDKIT_GRAPHMOL_EXPORT void wedgeBond(Bond *bond, unsigned int fromAtomIdx,
                                      const Conformer *conf);
-
-//! Returns whether or not a bond is a candidate for bond stereo
-RDKIT_GRAPHMOL_EXPORT bool canBeStereoBond(const Bond *bond);
 
 //! Returns true for double bonds which should be shown as a crossed bonds.
 // It always returns false if any adjacent bond is a squiggle bond.
@@ -271,6 +329,28 @@ RDKIT_GRAPHMOL_EXPORT void clearMolBlockWedgingInfo(ROMol &mol);
  \param mol: molecule to modify
  */
 RDKIT_GRAPHMOL_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
+
+//! gets stereo info for a bond
+/*!
+ \param bond: bond to check
+ \param wedgeBonds - the list of bonds to have wedges
+ \param conf -  Conformer to use
+ \param dirCode - receives the dircode for the bond
+ \param reverse - receives the reverse flag
+ only returned if it was exlicility set witha wiggle bond
+ */
+
+RDKIT_GRAPHMOL_EXPORT void GetMolFileBondStereoInfo(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf, int &dirCode, bool &reverse);
+
+RDKIT_GRAPHMOL_EXPORT void GetMolFileBondStereoInfo(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf, Bond::BondDir &dir, bool &reverse);
 
 }  // namespace Chirality
 }  // namespace RDKit

@@ -13,11 +13,12 @@
 #include "FileParsers.h"
 #include "FileParserUtils.h"
 #include "MolSGroupWriting.h"
-#include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SubstanceGroup.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Atropisomers.h>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
@@ -719,106 +720,16 @@ int BondGetMolFileSymbol(const Bond *bond) {
   // return res.c_str();
 }
 
-// only valid for single bonds
-int BondGetDirCode(const Bond::BondDir dir) {
-  int res = 0;
-  switch (dir) {
-    case Bond::NONE:
-      res = 0;
-      break;
-    case Bond::BEGINWEDGE:
-      res = 1;
-      break;
-    case Bond::BEGINDASH:
-      res = 6;
-      break;
-    case Bond::UNKNOWN:
-      res = 4;
-      break;
-    default:
-      break;
-  }
-  return res;
-}
-
-void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
-                              const Conformer *conf, int &dirCode,
-                              bool &reverse) {
-  PRECONDITION(bond, "");
-  dirCode = 0;
-  reverse = false;
-  Bond::BondDir dir = Bond::NONE;
-  if (bond->getBondType() == Bond::SINGLE) {
-    // single bond stereo chemistry
-    dir = DetermineBondWedgeState(bond, wedgeBonds, conf);
-    dirCode = BondGetDirCode(dir);
-    // if this bond needs to be wedged it is possible that this
-    // wedging was determined by a chiral atom at the end of the
-    // bond (instead of at the beginning). In this case we need to
-    // reverse the begin and end atoms for the bond when we write
-    // the mol file
-    if ((dirCode == 1) || (dirCode == 6)) {
-      auto wbi = wedgeBonds.find(bond->getIdx());
-      if (wbi != wedgeBonds.end() &&
-          static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
-        reverse = true;
-      }
-    }
-  } else if (bond->getBondType() == Bond::DOUBLE) {
-    // double bond stereochemistry -
-    // if the bond isn't specified, then it should go in the mol block
-    // as "any", this was sf.net issue 2963522.
-    // two caveats to this:
-    // 1) if it's a ring bond, we'll only put the "any"
-    //    in the mol block if the ring size is >=
-    //    Chirality::minRingSizeForDoubleBondStereo.
-    ///   Constantly seeing crossed
-    //    bonds in rings, though maybe technically correct, is irritating.
-    // 2) if it's a terminal bond (where there's no chance of
-    //    stereochemistry anyway), we also skip the any.
-    //    this was sf.net issue 3009756
-    if (bond->getStereo() <= Bond::STEREOANY) {
-      if (bond->getStereo() == Bond::STEREOANY) {
-        dirCode = 3;
-      } else if (Chirality::detail::isBondPotentialStereoBond(bond)) {
-        // we don't know that it's explicitly unspecified (covered above with
-        // the ==STEREOANY check)
-
-        // look to see if one of the atoms has a bond with direction set
-        if (bond->getBondDir() == Bond::EITHERDOUBLE) {
-          dirCode = 3;
-        } else {
-          const auto beginAtom = bond->getBeginAtom();
-          const auto endAtom = bond->getEndAtom();
-          // Both ends of the bond must have at least one neighbor other than
-          // the one in the double bond for dirCode=3 (except if explicitly
-          // marked, which has already been checked)
-          if (beginAtom->getDegree() > 1 && endAtom->getDegree() > 1 &&
-              (beginAtom->getTotalValence() - beginAtom->getTotalDegree()) ==
-                  1 &&
-              (endAtom->getTotalValence() - endAtom->getTotalDegree()) == 1) {
-            // we only do this if each atom only has one unsaturation
-            // FIX: this is the fix for github #2649, but we will need to change
-            // it once we start handling allenes properly
-
-            if (Chirality::canBeStereoBond(bond)) {
-              dirCode = 3;
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-const std::string GetMolFileBondLine(const Bond *bond,
-                                     const INT_MAP_INT &wedgeBonds,
-                                     const Conformer *conf) {
+const std::string GetMolFileBondLine(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
+    const Conformer *conf) {
   PRECONDITION(bond, "");
 
   int dirCode;
   bool reverse;
-  GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode, reverse);
+  RDKit::Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode,
+                                             reverse);
   int symbol = BondGetMolFileSymbol(bond);
 
   std::stringstream ss;
@@ -1086,14 +997,16 @@ void moveAdditionalPropertiesToSGroups(RWMol &mol) {
   createSMARTSQSubstanceGroups(mol);
 }
 }  // namespace FileParserUtils
-const std::string GetV3000MolFileBondLine(const Bond *bond,
-                                          const INT_MAP_INT &wedgeBonds,
-                                          const Conformer *conf) {
+const std::string GetV3000MolFileBondLine(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
+    const Conformer *conf) {
   PRECONDITION(bond, "");
 
   int dirCode;
   bool reverse;
-  GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode, reverse);
+  RDKit::Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode,
+                                             reverse);
 
   std::stringstream ss;
   ss << "M  V30 " << bond->getIdx() + 1;
@@ -1143,7 +1056,9 @@ const std::string GetV3000MolFileBondLine(const Bond *bond,
   return ss.str();
 }
 
-void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
+void appendEnhancedStereoGroups(
+    std::string &res, const RWMol &tmol,
+    std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds) {
   if (!tmol.getStereoGroups().empty()) {
     auto stereo_groups = tmol.getStereoGroups();
     assignStereoGroupIds(stereo_groups);
@@ -1164,13 +1079,18 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
           break;
       }
       res += " ATOMS=(";
-      auto &atoms = group.getAtoms();
-      res += std::to_string(atoms.size());
-      for (auto &&atom : atoms) {
+
+      std::vector<unsigned int> atomIds;
+      Atropisomers::getAllAtomIdsForStereoGroup(tmol, group, atomIds,
+                                                wedgeBonds);
+
+      res += std::to_string(atomIds.size());
+      for (auto &&atom : atomIds) {
         res += ' ';
         // atoms are 1 indexed in molfiles
-        res += std::to_string(atom->getIdx() + 1);
+        res += std::to_string(atom + 1);
       }
+
       res += ")\n";
     }
     res += "M  V30 END COLLECTION\n";
@@ -1208,9 +1128,10 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
   }
   res += "M  V30 END ATOM\n";
 
+  auto wedgeBonds = Chirality::pickBondsToWedge(tmol, nullptr, conf);
   if (tmol.getNumBonds()) {
     res += "M  V30 BEGIN BOND\n";
-    INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
+
     for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
          bondIt != tmol.endBonds(); ++bondIt) {
       res += GetV3000MolFileBondLine(*bondIt, wedgeBonds, conf);
@@ -1237,7 +1158,7 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
       res += "M  V30 LINKNODE " + linknode + "\n";
     }
   }
-  appendEnhancedStereoGroups(res, tmol);
+  appendEnhancedStereoGroups(res, tmol, wedgeBonds);
 
   res += "M  V30 END CTAB\n";
   return res;
@@ -1348,7 +1269,8 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
       res += "\n";
     }
 
-    INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
+    auto wedgeBonds = Chirality::pickBondsToWedge(tmol, nullptr, conf);
+
     for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
          bondIt != tmol.endBonds(); ++bondIt) {
       res += GetMolFileBondLine(*bondIt, wedgeBonds, conf);

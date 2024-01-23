@@ -68,6 +68,10 @@ struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol {
   ContainedType xqmol;
   std::string toBinary() const;
   std::string toJSON() const;
+
+  // Query fingerprint
+  std::unique_ptr<ExplicitBitVect> patternFingerprintQuery(
+      unsigned int fpSize = 2048U) const;
 };
 
 //! Creates an ExtendedQueryMol from the input molecule
@@ -101,6 +105,10 @@ RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol createExtendedQueryMol(
 RDKIT_GENERALIZEDSUBSTRUCT_EXPORT std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ExtendedQueryMol &query,
     const SubstructMatchParameters &params = SubstructMatchParameters());
+
+//! Fingerprints a target molecule
+RDKIT_GENERALIZEDSUBSTRUCT_EXPORT std::unique_ptr<ExplicitBitVect>
+patternFingerprintTargetMol(const ROMol &mol, unsigned int fpSize = 2048U);
 
 //! checks if a molecule has a match to an ExtendedQueryMol
 inline bool hasSubstructMatch(

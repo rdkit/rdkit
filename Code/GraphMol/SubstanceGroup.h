@@ -171,11 +171,9 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   const std::vector<unsigned int> &getParentAtoms() const { return d_patoms; }
   const std::vector<unsigned int> &getBonds() const { return d_bonds; }
 
-  void setAtoms(std::vector<unsigned int> atoms) { d_atoms = std::move(atoms); }
-  void setParentAtoms(std::vector<unsigned int> patoms) {
-    d_patoms = std::move(patoms);
-  }
-  void setBonds(std::vector<unsigned int> bonds) { d_bonds = std::move(bonds); }
+  void setAtoms(std::vector<unsigned int> atoms);
+  void setParentAtoms(std::vector<unsigned int> patoms);
+  void setBonds(std::vector<unsigned int> bonds);
 
   const std::vector<Bracket> &getBrackets() const { return d_brackets; }
   const std::vector<CState> &getCStates() const { return d_cstates; }
@@ -241,6 +239,17 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
 };  // namespace RDKit
 
 namespace SubstanceGroupChecks {
+
+const std::vector<std::string> sGroupTypes = {
+    // polymer sgroups:
+    "SRU", "MON", "COP", "CRO", "GRA", "MOD", "MER", "ANY",
+    // formulations/mixtures:
+    "COM", "MIX", "FOR",
+    // other
+    "SUP", "MUL", "DAT", "GEN"};
+
+const std::vector<std::string> sGroupSubtypes = {"ALT", "RAN", "BLO"};
+const std::vector<std::string> sGroupConnectTypes = {"HH", "HT", "EU"};
 
 RDKIT_GRAPHMOL_EXPORT bool isValidType(const std::string &type);
 

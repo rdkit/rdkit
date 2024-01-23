@@ -67,7 +67,7 @@ struct EBV_wrapper {
     python::class_<ExplicitBitVect, boost::shared_ptr<ExplicitBitVect>>(
         "ExplicitBitVect", ebvClassDoc.c_str(),
         python::init<unsigned int>(python::args("self", "size")))
-        .def(python::init<std::string>(python::args("self", "size")))
+        .def(python::init<std::string>(python::args("self", "pkl")))
         .def(python::init<unsigned int, bool>(
             python::args("self", "size", "bitsSet")))
         .def("SetBit", (bool(EBV::*)(unsigned int)) & EBV::setBit,

@@ -60,15 +60,25 @@ void copyStereoGroups(const std::map<const Atom *, Atom *> &molAtomMap,
     std::vector<StereoGroup> newStereoGroups;
     for (auto &stereoGroup : mol.getStereoGroups()) {
       std::vector<Atom *> newStereoAtoms;
+      std::vector<Bond *> newStereoBonds;
       for (const auto stereoGroupAtom : stereoGroup.getAtoms()) {
         if (auto found = molAtomMap.find(stereoGroupAtom);
             found != molAtomMap.end()) {
           newStereoAtoms.push_back(found->second);
         }
       }
+      for (const auto stereoGroupBond : stereoGroup.getBonds()) {
+        auto foundFirst = molAtomMap.find(stereoGroupBond->getBeginAtom());
+        auto foundSecond = molAtomMap.find(stereoGroupBond->getEndAtom());
+
+        if (foundFirst != molAtomMap.end() && foundSecond != molAtomMap.end()) {
+          newStereoBonds.push_back(newMol.getBondBetweenAtoms(
+              foundFirst->second->getIdx(), foundSecond->second->getIdx()));
+        }
+      }
       if (!newStereoAtoms.empty()) {
         newStereoGroups.emplace_back(stereoGroup.getGroupType(), newStereoAtoms,
-                                     stereoGroup.getReadId());
+                                     newStereoBonds, stereoGroup.getReadId());
       }
     }
     newMol.setStereoGroups(std::move(newStereoGroups));

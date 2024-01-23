@@ -1716,7 +1716,7 @@ void testGithub2570() {
     const auto query = R"([C@H](O)(F)Cl)"_smarts;
     std::vector<MatchVectType> matches;
     TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                              recursionPossible, useChirality));
+                               recursionPossible, useChirality));
   }
   {
     const auto mol = R"([H][C@](O)(F)Cl)"_smiles;
@@ -1740,7 +1740,7 @@ void testGithub2570() {
     const auto query = R"([C@H](O)(F)Cl)"_smarts;
     std::vector<MatchVectType> matches;
     TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                              recursionPossible, useChirality));
+                               recursionPossible, useChirality));
   }
   {
     const auto mol = R"([C@H](O)(F)Cl)"_smiles;

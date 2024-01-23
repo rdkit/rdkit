@@ -210,8 +210,7 @@ class TestCase(unittest.TestCase):
     ]
 
     nconfs = []
-    expected = [4, 5, 5, 4, 5, 4]
-    expected = [3, 3, 5, 4, 4, 4]
+    expected = [4, 3, 6, 6, 4, 4]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, maxAttempts=30, randomSeed=100,
@@ -588,8 +587,9 @@ class TestCase(unittest.TestCase):
 
       conf1 = m1.GetConformer()
       conf2 = m2.GetConformer()
-      self.assertTrue((conf2.GetAtomPosition(3) - conf2.GetAtomPosition(0)).Length() > (
-        conf1.GetAtomPosition(3) - conf1.GetAtomPosition(0)).Length())
+      self.assertTrue((conf2.GetAtomPosition(3) -
+                       conf2.GetAtomPosition(0)).Length() > (conf1.GetAtomPosition(3) -
+                                                             conf1.GetAtomPosition(0)).Length())
 
   def testScaleBoundsMatForce(self):
     """
@@ -649,7 +649,7 @@ class TestCase(unittest.TestCase):
     smiles_mol = Chem.MolFromSmiles(smiles)
     mol = Chem.AddHs(smiles_mol)
     params = AllChem.ETKDGv3()
-    params.seed = 42
+    params.randomSeed = 0
     AllChem.EmbedMolecule(mol, params)
     conf = mol.GetConformer(0)
     for torsion in get_atom_mapping(mol):

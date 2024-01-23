@@ -96,7 +96,7 @@ RDKit::VECT_INT_VECT HierarchicalClusterPicker::cluster(
   RDKit::VECT_INT_VECT res;
   unsigned int j = 0;
   for (unsigned int i = 0; i < poolSize; i++) {
-    if (static_cast<int>(i) == removed[j]) {
+    if (j < removed.size() && static_cast<int>(i) == removed[j]) {
       j++;
       continue;
     }

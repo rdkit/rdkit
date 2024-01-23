@@ -323,7 +323,9 @@ molecule before generating the conformer. This is essential to get good structur
 .. doctest::
 
   >>> m3 = Chem.AddHs(m2)
-  >>> AllChem.EmbedMolecule(m3,randomSeed=0xf00d)   # optional random seed for reproducibility)
+  >>> params = AllChem.ETKDGv3()
+  >>> params.randomSeed = 0xf00d # optional random seed for reproducibility
+  >>> AllChem.EmbedMolecule(m3, params)   
   0
   >>> print(Chem.MolToMolBlock(m3))    # doctest: +NORMALIZE_WHITESPACE
   cyclobutane
@@ -691,7 +693,8 @@ minimisation step to clean up the structures.
 More detailed information about the conformer generator and the parameters
 controlling it can be found in the "RDKit Book".
 
-Since the 2018.09 release of the RDKit, ETKDG is the default conformer generation method.
+Since the 2018.09 release of the RDKit, ETKDG is the default conformer
+generation method. Since the 2024.03 release ETKDGv3 is the default.
 
 The full process of embedding a molecule is easier than all the above verbiage makes it sound:
 
@@ -771,7 +774,9 @@ via the `numThreads` argument:
 
 .. doctest::
 
-  >>> cids = AllChem.EmbedMultipleConfs(m2, numThreads=0)
+  >>> params = AllChem.ETKDGv3()
+  >>> params.numThreads = 0
+  >>> cids = AllChem.EmbedMultipleConfs(m2, 10, params)
   >>> res = AllChem.MMFFOptimizeMoleculeConfs(m2, numThreads=0)
 
 Setting `numThreads` to zero causes the software to use the maximum number

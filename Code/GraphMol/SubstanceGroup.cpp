@@ -60,10 +60,48 @@ unsigned int SubstanceGroup::getIndexInMol() const {
   return sgroupItr - sgroups.begin();
 }
 
+void SubstanceGroup::setAtoms(std::vector<unsigned int> atoms) {
+  PRECONDITION(dp_mol, "bad mol");
+  auto natoms = dp_mol->getNumAtoms();
+  for (auto atomIdx : atoms) {
+    if (atomIdx >= natoms) {
+      std::ostringstream errout;
+      errout << "Atom index " << atomIdx << " is out of range";
+      throw ValueErrorException(errout.str());
+    }
+  }
+  d_atoms = std::move(atoms);
+}
+void SubstanceGroup::setParentAtoms(std::vector<unsigned int> patoms) {
+  PRECONDITION(dp_mol, "bad mol");
+  auto natoms = dp_mol->getNumAtoms();
+  for (auto atomIdx : patoms) {
+    if (atomIdx >= natoms) {
+      std::ostringstream errout;
+      errout << "Atom index " << atomIdx << " is out of range";
+      throw ValueErrorException(errout.str());
+    }
+  }
+  d_patoms = std::move(patoms);
+}
+void SubstanceGroup::setBonds(std::vector<unsigned int> bonds) {
+  PRECONDITION(dp_mol, "bad mol");
+  auto nbonds = dp_mol->getNumBonds();
+  for (auto bondIdx : bonds) {
+    if (bondIdx >= nbonds) {
+      std::ostringstream errout;
+      errout << "Bond index " << bondIdx << " is out of range";
+      throw ValueErrorException(errout.str());
+    }
+  }
+  d_bonds = std::move(bonds);
+}
+
 void SubstanceGroup::addAtomWithIdx(unsigned int idx) {
   PRECONDITION(dp_mol, "bad mol");
-  PRECONDITION(dp_mol->getAtomWithIdx(idx), "wrong atom index");
-
+  if (idx >= dp_mol->getNumAtoms()) {
+    throw ValueErrorException("Atom index out of range");
+  }
   d_atoms.push_back(idx);
 }
 
@@ -76,7 +114,9 @@ void SubstanceGroup::addAtomWithBookmark(int mark) {
 
 void SubstanceGroup::addParentAtomWithIdx(unsigned int idx) {
   PRECONDITION(dp_mol, "bad mol");
-
+  if (idx >= dp_mol->getNumAtoms()) {
+    throw ValueErrorException("Atom index out of range");
+  }
   if (std::find(d_atoms.begin(), d_atoms.end(), idx) == d_atoms.end()) {
     std::ostringstream errout;
     errout << "Atom " << idx << " is not a member of current SubstanceGroup";
@@ -103,7 +143,9 @@ void SubstanceGroup::addParentAtomWithBookmark(int mark) {
 
 void SubstanceGroup::addBondWithIdx(unsigned int idx) {
   PRECONDITION(dp_mol, "bad mol");
-  PRECONDITION(dp_mol->getBondWithIdx(idx), "wrong bond index");
+  if (idx >= dp_mol->getNumBonds()) {
+    throw ValueErrorException("Bond index out of range");
+  }
 
   d_bonds.push_back(idx);
 }
@@ -275,29 +317,26 @@ bool SubstanceGroup::includesBond(unsigned int bondIdx) const {
   return false;
 }
 
-namespace SubstanceGroupChecks {
-const std::vector<const char *> sGroupTypes = {
-    // polymer sgroups:
-    "SRU", "MON", "COP", "CRO", "GRA", "MOD", "MER", "ANY",
-    // formulations/mixtures:
-    "COM", "MIX", "FOR",
-    // other
-    "SUP", "MUL", "DAT", "GEN"};
-
-bool isValidType(const std::string &type) {
-  return std::find(sGroupTypes.begin(), sGroupTypes.end(), type) !=
-         sGroupTypes.end();
+bool SubstanceGroupChecks::isValidType(const std::string &type) {
+  return std::find(SubstanceGroupChecks::sGroupTypes.begin(),
+                   SubstanceGroupChecks::sGroupTypes.end(),
+                   type) != SubstanceGroupChecks::sGroupTypes.end();
 }
 
-bool isValidSubType(const std::string &type) {
-  return type == "ALT" || type == "RAN" || type == "BLO";
+bool SubstanceGroupChecks::isValidSubType(const std::string &type) {
+  return std::find(SubstanceGroupChecks::sGroupSubtypes.begin(),
+                   SubstanceGroupChecks::sGroupSubtypes.end(),
+                   type) != SubstanceGroupChecks::sGroupSubtypes.end();
 }
 
-bool isValidConnectType(const std::string &type) {
-  return type == "HH" || type == "HT" || type == "EU";
+bool SubstanceGroupChecks::isValidConnectType(const std::string &type) {
+  return std::find(SubstanceGroupChecks::sGroupConnectTypes.begin(),
+                   SubstanceGroupChecks::sGroupConnectTypes.end(),
+                   type) != SubstanceGroupChecks::sGroupConnectTypes.end();
 }
 
-bool isSubstanceGroupIdFree(const ROMol &mol, unsigned int id) {
+bool SubstanceGroupChecks::isSubstanceGroupIdFree(const ROMol &mol,
+                                                  unsigned int id) {
   auto match_sgroup = [id](const SubstanceGroup &sg) {
     unsigned int storedId;
     return sg.getPropIfPresent("ID", storedId) && id == storedId;
@@ -307,7 +346,6 @@ bool isSubstanceGroupIdFree(const ROMol &mol, unsigned int id) {
   return std::find_if(sgroups.begin(), sgroups.end(), match_sgroup) ==
          sgroups.end();
 }
-}  // namespace SubstanceGroupChecks
 
 std::vector<SubstanceGroup> &getSubstanceGroups(ROMol &mol) {
   return mol.d_sgroups;

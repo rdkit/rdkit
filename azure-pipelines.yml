@@ -70,7 +70,7 @@ jobs:
   pool:
     vmImage: ubuntu-20.04
   variables:
-    boost_version: 1.67.0
+    boost_version: 1.84.0
     number_of_cores: nproc
     python_name: python37
     compiler: gxx_linux-64
@@ -84,8 +84,8 @@ jobs:
     vmImage: macos-latest
   variables:
     compiler: clangxx_osx-64
-    compiler_version: 12.0
-    boost_version: 1.71.0
+    compiler_version: 15.0
+    boost_version: 1.84.0
     number_of_cores: sysctl -n hw.ncpu
     python_name: python38
     target_platform: 10.13

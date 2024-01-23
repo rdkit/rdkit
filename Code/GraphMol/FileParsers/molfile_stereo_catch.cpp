@@ -32,7 +32,7 @@ TEST_CASE("Github #5863: failure in WedgeMolBonds") {
     auto env = findAtomEnvironmentOfRadiusN(*mol, radius + 1, atomId);
     std::unique_ptr<ROMol> frag(Subgraphs::pathToSubmol(*mol, env));
     REQUIRE(frag);
-    WedgeMolBonds(*frag, &frag->getConformer());
+    Chirality::wedgeMolBonds(*frag, &frag->getConformer());
     INFO(MolToV3KMolBlock(*frag));
     CHECK(frag->getBondBetweenAtoms(9, 10)->getBondDir() !=
           Bond::BondDir::NONE);

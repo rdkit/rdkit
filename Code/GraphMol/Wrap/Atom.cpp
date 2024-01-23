@@ -77,13 +77,13 @@ python::tuple AtomGetBonds(Atom *atom) {
 }
 
 bool AtomIsInRing(const Atom *atom) {
-  if (!atom->getOwningMol().getRingInfo()->isInitialized()) {
+  if (!atom->getOwningMol().getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(atom->getOwningMol());
   }
   return atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx()) != 0;
 }
 bool AtomIsInRingSize(const Atom *atom, int size) {
-  if (!atom->getOwningMol().getRingInfo()->isInitialized()) {
+  if (!atom->getOwningMol().getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(atom->getOwningMol());
   }
   return atom->getOwningMol().getRingInfo()->isAtomInRingOfSize(atom->getIdx(),
@@ -140,13 +140,13 @@ Note that, though it is possible to create one, having an Atom on its own\n\
 (i.e not associated with a molecule) is not particularly useful.\n";
 struct atom_wrapper {
   static void wrap() {
-    python::class_<Atom>("Atom", atomClassDoc.c_str(),
-                         python::init<std::string>(python::args("self", "num")))
+    python::class_<Atom>(
+        "Atom", atomClassDoc.c_str(),
+        python::init<std::string>(python::args("self", "what")))
 
-        .def(python::init<const Atom &>(python::args("self", "num")))
-        .def(python::init<unsigned int>(
-            python::args("self", "num"),
-            "Constructor, takes the atomic number"))
+        .def(python::init<const Atom &>(python::args("self", "other")))
+        .def(python::init<unsigned int>(python::args("self", "num"),
+                                        "Constructor, takes the atomic number"))
 
         .def("__copy__", &Atom::copy,
              python::return_value_policy<
@@ -198,6 +198,8 @@ struct atom_wrapper {
              "Returns the number of implicit Hs on the atom.\n")
         .def("GetTotalValence", &Atom::getTotalValence, python::args("self"),
              "Returns the total valence (explicit + implicit) of the atom.\n\n")
+        .def("HasValenceViolation", &Atom::hasValenceViolation,
+             "Returns whether the atom has a valence violation or not.\n\n")
 
         .def("GetFormalCharge", &Atom::getFormalCharge, python::args("self"))
         .def("SetFormalCharge", &Atom::setFormalCharge,

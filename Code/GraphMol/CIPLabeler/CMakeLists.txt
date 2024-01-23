@@ -2,7 +2,8 @@
 set(configs_src
     configs/Configuration.cpp
     configs/Sp2Bond.cpp
-    configs/Tetrahedral.cpp)
+    configs/Tetrahedral.cpp
+    configs/AtropisomerBond.cpp)
 
 set(rules_src
     rules/Rule1a.cpp
@@ -32,7 +33,7 @@ rdkit_catch_test(testCIPLabeler catch_tests.cpp
                  CIPMol.cpp CIPLabeler.cpp
                  Mancude.cpp Digraph.cpp Node.cpp Edge.cpp Sort.cpp
                  ${configs_src} ${rules_src}
-                 LINK_LIBRARIES SmilesParse GraphMol FileParsers)
+                 LINK_LIBRARIES SmilesParse GraphMol FileParsers MarvinParser)
 
 # Set the BUILD macro to keep dll linkage consistency, since, in order
 # to test private, unexported functions, we are building the test from

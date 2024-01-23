@@ -18,8 +18,9 @@
 #include <RDGeneral/BadFileException.h>
 #include <fstream>
 #include <sstream>
-#include "MolFileStereochem.h"
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/FileParseException.h>
+#include <GraphMol/Atropisomers.h>
 
 using boost::property_tree::ptree;
 namespace RDKit {
@@ -479,8 +480,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           sgroup.second.sgroup > 0) {
         gId = sgroup.second.sgroup;
       }
+      std::vector<Bond *> newBonds;
       stereo_groups.emplace_back(sgroup.second.grouptype, sgroup.second.atoms,
-                                 gId);
+                                 newBonds, gId);
     }
     mol.setStereoGroups(std::move(stereo_groups));
   }
@@ -599,6 +601,9 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                 scaleBonds(*res, *conf, RDKIT_DEPICT_BONDLENGTH, bondLength);
                 auto confidx = res->addConformer(conf.release());
                 DetectAtomStereoChemistry(*res, &res->getConformer(confidx));
+
+                Atropisomers::detectAtropisomerChirality(
+                    *res, &res->getConformer(confidx));
               }
 
               // now that atom stereochem has been perceived, the wedging

@@ -35,6 +35,7 @@
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SanitException.h>
+#include <string.h>
 
 namespace python = boost::python;
 using namespace RDKit;
@@ -125,8 +126,8 @@ ROMol *MolFromTPLBlock(python::object itplBlock, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,
-                      bool strictParsing) {
+ROMol *MolFromMolFileHelper(const char *molFilename, bool sanitize,
+                            bool removeHs, bool strictParsing) {
   RWMol *newM = nullptr;
   try {
     newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
@@ -148,6 +149,21 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
   try {
     newM =
         MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return static_cast<ROMol *>(newM);
+}
+
+ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,
+                      bool strictParsing) {
+  RWMol *newM = nullptr;
+  try {
+    newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
@@ -397,18 +413,19 @@ std::string MolFragmentToSmilesHelper2(
 std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
                                              bool breakTies = true,
                                              bool includeChirality = true,
-                                             bool includeIsotopes = true) {
+                                             bool includeIsotopes = true,
+                                             bool includeAtomMaps = true) {
   std::vector<unsigned int> ranks(mol.getNumAtoms());
-  Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes);
+  Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes,
+                      includeAtomMaps);
   return ranks;
 }
 
 std::vector<int> CanonicalRankAtomsInFragment(
     const ROMol &mol, python::object atomsToUse, python::object bondsToUse,
     python::object atomSymbols, bool breakTies = true,
-    bool includeChirality = true, bool includeIsotopes = true)
-
-{
+    bool includeChirality = true, bool includeIsotopes = true,
+    bool includeAtomMaps = true) {
   std::unique_ptr<std::vector<int>> avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
@@ -798,7 +815,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a Mol object, None on failure.\n\
 \n";
   python::def(
-      "MolFromMolFile", RDKit::MolFromMolFile,
+      "MolFromMolFile", RDKit::MolFromMolFileHelper,
       (python::arg("molFileName"), python::arg("sanitize") = true,
        python::arg("removeHs") = true, python::arg("strictParsing") = true),
       docString.c_str(),
@@ -1526,16 +1543,26 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .value("CX_SGROUPS", RDKit::SmilesWrite::CXSmilesFields::CX_SGROUPS)
       .value("CX_POLYMER", RDKit::SmilesWrite::CXSmilesFields::CX_POLYMER)
       .value("CX_BOND_CFG", RDKit::SmilesWrite::CXSmilesFields::CX_BOND_CFG)
+      .value("CX_BOND_ATROPISOMER",
+             RDKit::SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER)
       .value("CX_ALL", RDKit::SmilesWrite::CXSmilesFields::CX_ALL)
       .value("CX_ALL_BUT_COORDS",
              RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
 
+  python::enum_<RDKit::RestoreBondDirOption>("RestoreBondDirOption")
+      .value("RestoreBondDirOptionClear",
+             RDKit::RestoreBondDirOption::RestoreBondDirOptionClear)
+      .value("RestoreBondDirOptionTrue",
+             RDKit::RestoreBondDirOption::RestoreBondDirOptionTrue);
+
   python::def(
       "MolToCXSmiles",
-      (std::string(*)(const ROMol &, const SmilesWriteParams &,
-                      std::uint32_t))RDKit::MolToCXSmiles,
+      (std::string(*)(const ROMol &, const SmilesWriteParams &, std::uint32_t,
+                      RestoreBondDirOption))RDKit::MolToCXSmiles,
       (python::arg("mol"), python::arg("params"),
-       python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
+       python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
+       python::arg("restoreBondDirs") =
+           RDKit::RestoreBondDirOption::RestoreBondDirOptionClear),
       "Returns the CXSMILES string for a molecule");
 
   docString =
@@ -1991,6 +2018,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - breakTies: (optional) force breaking of ranked ties [default=True]\n\
     - includeChirality: (optional) use chiral information when computing rank [default=True]\n\
     - includeIsotopes: (optional) use isotope information when computing rank [default=True]\n\
+    - includeAtomMaps: (optional) use atom map information when computing rank [default=True]\n\
 \n\
   RETURNS:\n\
 \n\
@@ -1999,7 +2027,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def("CanonicalRankAtoms", CanonicalRankAtoms,
               (python::arg("mol"), python::arg("breakTies") = true,
                python::arg("includeChirality") = true,
-               python::arg("includeIsotopes") = true),
+               python::arg("includeIsotopes") = true,
+               python::arg("includeAtomMaps") = true),
               docString.c_str());
 
   docString =
@@ -2024,6 +2053,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - breakTies: (optional) force breaking of ranked ties\n\
     - includeChirality: (optional) use chiral information when computing rank [default=True]\n\
     - includeIsotopes: (optional) use isotope information when computing rank [default=True]\n\
+    - includeAtomMaps: (optional) use atom map information when computing rank [default=True]\n\
 \n\
   RETURNS:\n\
 \n\
@@ -2034,7 +2064,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       (python::arg("mol"), python::arg("atomsToUse"),
        python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
        python::arg("breakTies") = true, python::arg("includeChirality") = true,
-       python::arg("includeIsotopes") = true),
+       python::arg("includeIsotopes") = true,
+       python::arg("includeAtomMaps") = true),
       docString.c_str());
 
   python::def("CanonicalizeEnhancedStereo", CanonicalizeEnhancedStereo,
