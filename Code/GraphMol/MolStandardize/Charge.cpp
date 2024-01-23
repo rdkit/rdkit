@@ -308,15 +308,6 @@ Uncharger::Uncharger()
           // tetrazole
           "$([n-]1nnnc1),$([n-]1ncnn1)]")){};
 
-Uncharger::Uncharger(const Uncharger &other) {
-  pos_h = other.pos_h;
-  pos_noh = other.pos_noh;
-  neg = other.neg;
-  neg_acid = other.neg_acid;
-};
-
-Uncharger::~Uncharger(){};
-
 void neutralizeNeg(Atom *atom, int hDelta = 1) {
   atom->setNumExplicitHs(atom->getTotalNumHs() + hDelta);
   atom->setNoImplicit(true);
@@ -372,7 +363,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
       [](const auto atom) { return (atom->getFormalCharge() < 0); });
 
   bool needsNeutralization =
-      (q_matched > 0 && (n_matched > 0 || a_matched > 0));
+      (!df_force && q_matched > 0 && (n_matched > 0 || a_matched > 0));
   std::vector<unsigned int> atomRanks(mol.getNumAtoms());
   if (df_canonicalOrdering && needsNeutralization) {
     Canon::rankMolAtoms(mol, atomRanks);

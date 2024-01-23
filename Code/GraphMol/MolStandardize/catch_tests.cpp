@@ -91,6 +91,25 @@ TEST_CASE("symmetry in the uncharger", "[uncharger]") {
   }
 }
 
+TEST_CASE("uncharger 'force' option") {
+  SECTION("force=false (default)") {
+    auto m = "C[N+](C)(C)CC([O-])C[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC([O-])CO");
+  }
+  SECTION("force=true") {
+    auto m = "C[N+](C)(C)CC([O-])C[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger(false, true);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(O)CO");
+  }
+}
+
 TEST_CASE("uncharger bug with duplicates", "[uncharger]") {
   SECTION("case 1") {
     auto m = "[NH3+]CC([O-])C[O-]"_smiles;

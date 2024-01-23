@@ -130,14 +130,17 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
   Uncharger(bool canonicalOrdering) : Uncharger() {
     df_canonicalOrdering = canonicalOrdering;
   }
-  Uncharger(const Uncharger &other);
-  ~Uncharger();
+  Uncharger(bool canonicalOrdering, bool force) : Uncharger() {
+    df_canonicalOrdering = canonicalOrdering;
+    df_force = force;
+  }
 
   ROMol *uncharge(const ROMol &mol);
   void unchargeInPlace(RWMol &mol);
 
  private:
   bool df_canonicalOrdering = true;
+  bool df_force = false;
   std::shared_ptr<ROMol> pos_h;
   std::shared_ptr<ROMol> pos_noh;
   std::shared_ptr<ROMol> neg;
