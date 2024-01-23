@@ -388,9 +388,8 @@ void adjustHs(RWMol &mol) {
 void assignRadicals(RWMol &mol) {
   for (auto atom : mol.atoms()) {
     // we only put automatically assign radicals to things that
-    // don't have them already and don't have implicit Hs:
-    if (!atom->getNoImplicit() || atom->getNumRadicalElectrons() ||
-        !atom->getAtomicNum()) {
+    // don't have implicit Hs:
+    if (!atom->getNoImplicit() || !atom->getAtomicNum()) {
       continue;
     }
     const auto &valens =

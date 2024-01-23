@@ -10,7 +10,7 @@ GitHub)
 
 ## Backwards incompatible changes
 - Two changes to improve the defaults for conformer generation: the functions EmbedMolecule() and EmbedMultipleConfis() now use ETKDGv3 by default (previously they were using ETKDGV1) and only consider heavy atoms when calculating RMSD for conformer pruning (previously Hs were alos considered).
-
+- The way that the number of radical electrons is calculated for atoms coming from mol blocks has been changed. Systems like a `[CH]` marked as a `DOUBLET` will now have three radical electrons assigned. This is consistent with the value from SMILES.
 
 ## New Features and Enhancements:
 
