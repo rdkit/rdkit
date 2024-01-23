@@ -145,6 +145,24 @@ class TestCase(unittest.TestCase):
     for clus, expClusSize in zip(clusters, expClusters):
       self.assertEqual(expClusSize, len(clus))
 
+  def testMaxBondMatchPairs(self):
+    opts = rdRascalMCES.RascalOptions()
+    opts.similarityThreshold = 0.0
+    opts.returnEmptyMCES = True
+    opts.singleLargestFrag = True
+    opts.allBestMCESs = True
+    opts.completeAromaticRings = False
+    opts.timeout = -1
+
+    too_long_1 =  Chem.MolFromSmiles('CCCC=CCCCC=CCCCCCCCCCCCCCCCCCCCCC1CNCCC1')
+    too_long_2 =  Chem.MolFromSmiles('CCCC=CCCCCC=CCCCCCCCCCCCCCCCCCCCC1CNCCC1')
+    results = rdRascalMCES.FindMCES(too_long_1, too_long_2, opts)
+    self.assertEqual(len(results[0].bondMatches()), 0)
+
+    opts.maxBondMatchPairs = 1200
+    results = rdRascalMCES.FindMCES(too_long_1, too_long_2, opts)
+    self.assertEqual(len(results[0].bondMatches()), 26)
+
 
 if __name__ == "__main__":
   unittest.main()
