@@ -259,15 +259,20 @@ python::tuple getExpTorsHelperWithParams(
                           ps.useBasicKnowledge, ps.ETversion, ps.verbose);
 }
 
-void setCoordMap(DGeomHelpers::EmbedParameters &self,python::dict cmap) {
-  // NOTE that this leaks core.
+void setCoordMap(DGeomHelpers::EmbedParameters &self, python::dict cmap) {
+  // the EmbedParameters object doesn't own the memory for the coordMap, so we
+  // have to take ownership here.
+  static std::map<size_t, std::unique_ptr<std::map<int, RDGeom::Point3D>>>
+      coordMapHolder;
   auto coordMap = new std::map<int, RDGeom::Point3D>();
   for (unsigned int i = 0;
        i < python::extract<unsigned int>(cmap.keys().attr("__len__")()); ++i) {
-    (*coordMap)[python::extract<int>(cmap.keys()[i])] = 
-    python::extract<RDGeom::Point3D>(cmap.values()[i]);
+    (*coordMap)[python::extract<int>(cmap.keys()[i])] =
+        python::extract<RDGeom::Point3D>(cmap.values()[i]);
   }
   self.coordMap = coordMap;
+  coordMapHolder[reinterpret_cast<size_t>(&self)] =
+      std::unique_ptr<std::map<int, RDGeom::Point3D>>(coordMap);
 }
 
 }  // namespace RDKit
@@ -556,7 +561,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "enableSequentialRandomSeeds",
           &RDKit::DGeomHelpers::EmbedParameters::enableSequentialRandomSeeds,
           "handle random number seeds so that conformer generation can be restarted")
-      .def("SetCoordMap",&RDKit::setCoordMap,"sets the coordmap to be used");
+      .def("SetCoordMap", &RDKit::setCoordMap, "sets the coordmap to be used");
 
   docString =
       "Use distance geometry to obtain multiple sets of \n\

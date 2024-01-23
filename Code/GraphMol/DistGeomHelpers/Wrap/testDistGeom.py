@@ -692,7 +692,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.AddHs(Chem.MolFromSmiles("OCCC"))
     ps = rdDistGeom.EmbedParameters()
     coordMap = {0: geom.Point3D(0, 0, 0), \
-                1: geom.Point3D(0, 0, 1.5), 
+                1: geom.Point3D(0, 0, 1.5),
                 2: geom.Point3D(0, 1.5, 1.5)
                 }
     ps.SetCoordMap(coordMap)
@@ -703,8 +703,22 @@ class TestCase(unittest.TestCase):
     v1 = conf.GetAtomPosition(0) - conf.GetAtomPosition(1)
     v2 = conf.GetAtomPosition(2) - conf.GetAtomPosition(1)
     angle = v1.AngleTo(v2)
-    self.assertAlmostEqual(angle, math.pi / 2.0,delta = 0.15 )
-    
+    self.assertAlmostEqual(angle, math.pi / 2.0, delta=0.15)
+
+    # make sure that we can call that a second time
+    coordMap = {0: geom.Point3D(0, 0, 0), \
+                1: geom.Point3D(1.5, 0, 0),
+                2: geom.Point3D(1.5, 1.5, 0)
+                }
+    ps.SetCoordMap(coordMap)
+    ps.randomSeed = 42
+    rdDistGeom.EmbedMolecule(mol, ps)
+
+    conf = mol.GetConformer()
+    v1 = conf.GetAtomPosition(0) - conf.GetAtomPosition(1)
+    v2 = conf.GetAtomPosition(2) - conf.GetAtomPosition(1)
+    angle = v1.AngleTo(v2)
+    self.assertAlmostEqual(angle, math.pi / 2.0, delta=0.15)
 
 
 if __name__ == '__main__':
