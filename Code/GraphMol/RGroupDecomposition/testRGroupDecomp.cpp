@@ -2510,6 +2510,8 @@ M  ALS   6  2 F C   N
 M  END
 )CTAB"_ctab;
   TEST_ASSERT(core);
+  std::string sma = MolToSmarts(*core);
+  TEST_ASSERT(sma == "[#6,#7]1:[#6,#7]:[#6,#7]:[#6,#7]:[#6,#7]:[#6,#7]:1");
 
   auto structure = "ClC1=CN=C(C=C1)N1CCCC1"_smiles;
   RGroupDecomposition decomp(*core);

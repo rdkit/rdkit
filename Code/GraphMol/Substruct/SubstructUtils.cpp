@@ -246,11 +246,10 @@ std::vector<MatchVectType> sortMatchesByDegreeOfCoreSubstitution(
 }
 
 bool isAtomTerminalRGroupOrQueryHydrogen(const Atom *atom) {
-  return atom->getDegree() == 1 &&
-         (atom->getAtomicNum() == 0 ||
-          (atom->hasQuery() &&
-           describeQuery(atom).find("AtomAtomicNum 1 = val") !=
-               std::string::npos));
+  return (atom->getDegree() == 1 && isAtomDummy(atom)) ||
+         (atom->hasQuery() &&
+          describeQuery(atom).find("AtomAtomicNum 1 = val") !=
+              std::string::npos);
 }
 
 #define PT_OPT_GET(opt) params.opt = pt.get(#opt, params.opt)
