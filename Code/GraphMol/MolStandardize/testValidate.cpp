@@ -191,8 +191,8 @@ void testMolVSValidation() {
 void testMolVSOptions() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing MolVS Options"
                        << std::endl;
-  vector<boost::shared_ptr<MolVSValidations>> validations = {
-      boost::make_shared<IsotopeValidation>()};
+  vector<std::shared_ptr<ValidationMethod>> validations = {
+      std::make_shared<IsotopeValidation>()};
   MolVSValidation vm(validations);
 
   // testing MolVSDefault
