@@ -117,10 +117,13 @@ inline Reionizer *reionizerFromParams(const CleanupParameters &params) {
   <b>Notes:</b>
     - This class uncharges molecules by adding and/or removing hydrogens.
           - For zwitterions, hydrogens are moved to eliminate charges where
-  possible.
-          - In cases where there is a positive charge that is not neutralizable,
-                an	attempt is made to also preserve the corresponding
-  negative charge.
+            possible.
+          - By default, in cases where there is a positive charge that is not
+            neutralizable, an attempt is made to also preserve the corresponding
+            negative charge.
+          - When the `force` option is set, all neutralizable sites are
+            uncharged, also when not-neutralizable positive charges are present
+            and the resulting overall charge is therefore not null.
 
 */
 
