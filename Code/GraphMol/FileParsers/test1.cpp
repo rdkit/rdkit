@@ -47,8 +47,12 @@ void test1() {
   TEST_ASSERT(m);
 
   TEST_ASSERT(m->getNumAtoms() == 6);
+
+  std::string sma = MolToSmarts(*m);
+  TEST_ASSERT(sma == "[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1");
+
   std::string smi = MolToSmiles(*m);
-  TEST_ASSERT(smi == "C1=CC=CC=C1");
+  TEST_ASSERT(smi == "*1=CC=CC=C1");
 
   m->updatePropertyCache();
   smi = MolToSmarts(*m);
