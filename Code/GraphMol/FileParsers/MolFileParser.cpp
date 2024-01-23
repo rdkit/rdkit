@@ -1172,6 +1172,9 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
       a->setQuery(makeAtomNumQuery(atNum));
     } else {
       a->expandQuery(makeAtomNumQuery(atNum), Queries::COMPOSITE_OR, true);
+      // For COMPOSITE_OR query atoms, reset atomic num to 0 such that they are
+      // exported as "*" in SMILES
+      a->setAtomicNum(0);
     }
   }
   ASSERT_INVARIANT(a, "no atom built");

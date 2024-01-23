@@ -31,7 +31,8 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
                   bool ignoreSmoothingFailures, bool enforceChirality,
                   bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
                   bool printExpTorsionAngles, bool useSmallRingTorsions,
-                  bool useMacrocycleTorsions, unsigned int ETversion) {
+                  bool useMacrocycleTorsions, unsigned int ETversion,
+                  bool useMacrocycle14config) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -54,7 +55,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
       randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
       enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
       basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS, ETversion, nullptr,
-      true, useSmallRingTorsions, useMacrocycleTorsions);
+      true, useSmallRingTorsions, useMacrocycleTorsions, useMacrocycle14config);
 
   int res;
   {
@@ -80,7 +81,8 @@ INT_VECT EmbedMultipleConfs(
     double forceTol, bool ignoreSmoothingFailures, bool enforceChirality,
     int numThreads, bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
     bool printExpTorsionAngles, bool useSmallRingTorsions,
-    bool useMacrocycleTorsions, unsigned int ETversion) {
+    bool useMacrocycleTorsions, unsigned int ETversion,
+    bool useMacrocycle14config) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -100,7 +102,7 @@ INT_VECT EmbedMultipleConfs(
       randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
       enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
       basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS, ETversion, nullptr,
-      true, useSmallRingTorsions, useMacrocycleTorsions);
+      true, useSmallRingTorsions, useMacrocycleTorsions, useMacrocycle14config);
 
   INT_VECT res;
   {
@@ -295,7 +297,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - clearConfs : clear all existing conformations on the molecule\n\
     - useRandomCoords : Start the embedding from random coordinates instead of\n\
                         using eigenvalues of the distance matrix.\n\
-    - boxSizeMult    Determines the size of the box that is used for\n\
+    - boxSizeMult :  Determines the size of the box that is used for\n\
                      random coordinates. If this is a positive number, the \n\
                      side length will equal the largest element of the distance\n\
                      matrix times boxSizeMult. If this is a negative number,\n\
@@ -316,6 +318,11 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
     - useBasicKnowledge : impose basic knowledge such as flat rings\n\
     - printExpTorsionAngles : print the output from the experimental torsion angles\n\
+    - useMacrocycleTorsions : use additional torsion profiles for macrocycles\n\
+    - ETversion : version of the standard torsion definitions to use. NOTE for both\n\
+                  ETKDGv2 and ETKDGv3 this should be 2 since ETKDGv3 uses the ETKDGv2\n\
+                  definitions for standard torsions\n\
+    - useMacrocycle14config : use the 1-4 distance bounds from ETKDGv3\n\
 \n\
  RETURNS:\n\n\
     ID of the new conformation added to the molecule \n\
@@ -334,7 +341,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("printExpTorsionAngles") = false,
        python::arg("useSmallRingTorsions") = false,
        python::arg("useMacrocycleTorsions") = true,
-       python::arg("ETversion") = 2),
+       python::arg("ETversion") = 2,
+       python::arg("useMacrocycle14config") = true),
       docString.c_str());
 
   docString =
@@ -403,7 +411,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("printExpTorsionAngles") = false,
        python::arg("useSmallRingTorsions") = false,
        python::arg("useMacrocycleTorsions") = true,
-       python::arg("ETversion") = 2),
+       python::arg("ETversion") = 2,
+       python::arg("useMacrocycle14config") = true),
       docString.c_str());
 
   python::enum_<RDKit::DGeomHelpers::EmbedFailureCauses>("EmbedFailureCauses")
@@ -503,6 +512,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "useMacrocycleTorsions",
           &RDKit::DGeomHelpers::EmbedParameters::useMacrocycleTorsions,
           "impose macrocycle torsion angle preferences")
+      .def_readwrite(
+          "useMacrocycle14config",
+          &RDKit::DGeomHelpers::EmbedParameters::useMacrocycle14config,
+          "use the 1-4 distance bounds from ETKDGv3")
       .def_readwrite(
           "boundsMatForceScaling",
           &RDKit::DGeomHelpers::EmbedParameters::boundsMatForceScaling,

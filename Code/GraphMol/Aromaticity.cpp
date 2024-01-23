@@ -814,7 +814,7 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
     for (auto firstIdx : sring) {
       const auto at = mol.getAtomWithIdx(firstIdx);
 
-      if (allDummy && at->getAtomicNum() != 0) {
+      if (allDummy && !isAtomDummy(at)) {
         allDummy = false;
       }
 

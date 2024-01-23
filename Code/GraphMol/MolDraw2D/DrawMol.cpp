@@ -3231,6 +3231,14 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
           otherNeighbor(bond->getEndAtom(), bond->getBeginAtom(), 0, *drawMol_);
       auto bond1 = drawMol_->getBondBetweenAtoms(bond->getEndAtomIdx(),
                                                  thirdAtom->getIdx());
+      // If the bonds a co-linear, don't do anything (Github7036)
+      auto b1 = atCds_[bond->getEndAtomIdx()].directionVector(
+          atCds_[bond->getBeginAtomIdx()]);
+      auto b2 = atCds_[bond1->getEndAtomIdx()].directionVector(
+          atCds_[bond1->getBeginAtomIdx()]);
+      if (fabs(1.0 - b1.dotProduct(b2)) < 0.001) {
+        continue;
+      }
       DrawShape *wedge = nullptr;
       DrawShape *bondLine = nullptr;
       double closestDist = 1.0;

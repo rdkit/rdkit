@@ -80,7 +80,7 @@ struct RascalResult_wrapper {
 namespace RDKit {
 
 python::list findMCESWrapper(const ROMol &mol1, const ROMol &mol2,
-                             python::object py_opts) {
+                             const python::object &py_opts) {
   RascalMCES::RascalOptions opts;
   if (!py_opts.is_none()) {
     opts = python::extract<RascalMCES::RascalOptions>(py_opts);
@@ -123,7 +123,8 @@ python::list packOutputMols(
   return pyres;
 }
 
-python::list rascalClusterWrapper(python::object mols, python::object py_opts) {
+python::list rascalClusterWrapper(python::object mols,
+                                  const python::object &py_opts) {
   RascalMCES::RascalClusterOptions opts;
   if (!py_opts.is_none()) {
     opts = python::extract<RascalMCES::RascalClusterOptions>(py_opts);
@@ -138,7 +139,7 @@ python::list rascalClusterWrapper(python::object mols, python::object py_opts) {
 }
 
 python::list rascalButinaClusterWrapper(python::object mols,
-                                        python::object py_opts) {
+                                        const python::object &py_opts) {
   RascalMCES::RascalClusterOptions opts;
   if (!py_opts.is_none()) {
     opts = python::extract<RascalMCES::RascalClusterOptions>(py_opts);
@@ -191,7 +192,13 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
           " estimates were, set this to True, and examine the tier1Sim and tier2Sim properties of the result then returned.")
       .def_readwrite(
           "timeout", &RDKit::RascalMCES::RascalOptions::timeout,
-          "Maximum time (in seconds) to spend on an individual MCESs determination.  Default 60, -1 means no limit.");
+          "Maximum time (in seconds) to spend on an individual MCESs determination.  Default 60, -1 means no limit.")
+      .def_readwrite(
+          "maxBondMatchPairs",
+          &RDKit::RascalMCES::RascalOptions::maxBondMatchPairs,
+          "Too many matching bond (vertex) pairs can cause the process to run out of memory."
+          "  The default of 1000 is fairly safe.  Increase with caution, as memory use increases"
+          " with the square of this number.  ");
 
   docString =
       "Find one or more MCESs between the 2 molecules given.  Returns a list of "

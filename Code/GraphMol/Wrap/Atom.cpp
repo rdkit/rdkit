@@ -198,6 +198,8 @@ struct atom_wrapper {
              "Returns the number of implicit Hs on the atom.\n")
         .def("GetTotalValence", &Atom::getTotalValence, python::args("self"),
              "Returns the total valence (explicit + implicit) of the atom.\n\n")
+        .def("HasValenceViolation", &Atom::hasValenceViolation,
+             "Returns whether the atom has a valence violation or not.\n\n")
 
         .def("GetFormalCharge", &Atom::getFormalCharge, python::args("self"))
         .def("SetFormalCharge", &Atom::setFormalCharge,
