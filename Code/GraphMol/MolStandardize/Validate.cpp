@@ -29,6 +29,22 @@ class ROMol;
 
 namespace MolStandardize {
 
+std::vector<ValidationErrorInfo> CompositeValidation::validate(
+  const ROMol &mol, bool reportAllFailures) const
+{
+  std::vector<ValidationErrorInfo> errors;
+  for (const auto & method : validations) {
+    auto partial = method->validate(mol, reportAllFailures);
+    if (!partial.empty()) {
+      std::copy(partial.begin(), partial.end(), std::back_inserter(errors));
+      if (!reportAllFailures) {
+        break;
+      }
+    }
+  }
+  return errors;
+}
+
 std::vector<ValidationErrorInfo> RDKitValidation::validate(
     const ROMol &mol, bool reportAllFailures) const {
   ROMol molCopy = mol;
@@ -51,23 +67,25 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
     try {
       atom->calcExplicitValence();
     } catch (const MolSanitizeException &e) {
-      errors.emplace_back("INFO: [ValenceValidation] " + std::string(e.what()));
+      errors.push_back("INFO: [ValenceValidation] " + std::string(e.what()));
     }
   }
   return errors;
 }
 
-void NoAtomValidation::run(const ROMol &mol, bool,
-                           std::vector<ValidationErrorInfo> &errors) const {
+std::vector<ValidationErrorInfo>
+NoAtomValidation::validate(const ROMol &mol, bool /*reportAllFailures*/) const {
+  std::vector<ValidationErrorInfo> errors;
   unsigned int na = mol.getNumAtoms();
-
   if (!na) {
     errors.emplace_back("ERROR: [NoAtomValidation] Molecule has no atoms");
   }
+  return errors;
 }
 
-void FragmentValidation::run(const ROMol &mol, bool reportAllFailures,
-                             std::vector<ValidationErrorInfo> &errors) const {
+std::vector<ValidationErrorInfo>
+FragmentValidation::validate(const ROMol &mol, bool reportAllFailures) const {
+  std::vector<ValidationErrorInfo> errors;
   // REVIEW: reportAllFailures is not being used here. is that correct?
   RDUNUSED_PARAM(reportAllFailures);
   std::shared_ptr<FragmentCatalogParams> fparams(new FragmentCatalogParams(""));
@@ -117,17 +135,19 @@ void FragmentValidation::run(const ROMol &mol, bool reportAllFailures,
           //					//
           if ((molfragidx == substructidx) && !fpresent) {
             std::string msg = fname + " is present";
-            errors.emplace_back("INFO: [FragmentValidation] " + msg);
+            errors.push_back("INFO: [FragmentValidation] " + msg);
             fpresent = true;
           }
         }
       }
     }
   }
+  return errors;
 }
 
-void NeutralValidation::run(const ROMol &mol, bool,
-                            std::vector<ValidationErrorInfo> &errors) const {
+std::vector<ValidationErrorInfo>
+NeutralValidation::validate(const ROMol &mol, bool /*reportAllFailures*/) const {
+  std::vector<ValidationErrorInfo> errors;
   int charge = RDKit::MolOps::getFormalCharge(mol);
   if (charge != 0) {
     std::string charge_str;
@@ -137,12 +157,14 @@ void NeutralValidation::run(const ROMol &mol, bool,
       charge_str = std::to_string(charge);
     }
     std::string msg = "Not an overall neutral system (" + charge_str + ')';
-    errors.emplace_back("INFO: [NeutralValidation] " + msg);
+    errors.push_back("INFO: [NeutralValidation] " + msg);
   }
+  return errors;
 }
 
-void IsotopeValidation::run(const ROMol &mol, bool reportAllFailures,
-                            std::vector<ValidationErrorInfo> &errors) const {
+std::vector<ValidationErrorInfo>
+IsotopeValidation::validate(const ROMol &mol, bool reportAllFailures) const {
+  std::vector<ValidationErrorInfo> errors;
   unsigned int na = mol.getNumAtoms();
   std::set<string> isotopes;
 
@@ -162,43 +184,28 @@ void IsotopeValidation::run(const ROMol &mol, bool reportAllFailures,
   }
 
   for (auto &isotope : isotopes) {
-    errors.emplace_back("INFO: [IsotopeValidation] Molecule contains isotope " +
-                        isotope);
+    errors.push_back("INFO: [IsotopeValidation] Molecule contains isotope " +
+                     isotope);
   }
+  return errors;
 }
 
 // constructor
-MolVSValidation::MolVSValidation() {
-  std::vector<boost::shared_ptr<MolVSValidations>> validations = {
-      boost::make_shared<NoAtomValidation>(),
-      boost::make_shared<FragmentValidation>(),
-      boost::make_shared<NeutralValidation>(),
-      boost::make_shared<IsotopeValidation>()};
-  this->d_validations = validations;
+MolVSValidation::MolVSValidation()
+  : CompositeValidation({
+      std::make_shared<NoAtomValidation>(),
+      std::make_shared<FragmentValidation>(),
+      std::make_shared<NeutralValidation>(),
+      std::make_shared<IsotopeValidation>()
+      })
+{
 }
 
 // overloaded constructor
 MolVSValidation::MolVSValidation(
-    const std::vector<boost::shared_ptr<MolVSValidations>> validations) {
-  this->d_validations = validations;
-}
-
-// copy constructor
-MolVSValidation::MolVSValidation(const MolVSValidation &other) {
-  d_validations = other.d_validations;
-}
-
-MolVSValidation::~MolVSValidation(){};
-
-std::vector<ValidationErrorInfo> MolVSValidation::validate(
-    const ROMol &mol, bool reportAllFailures) const {
-  std::vector<ValidationErrorInfo> errors;
-
-  for (const auto &method : this->d_validations) {
-    method->run(mol, reportAllFailures, errors);
-  }
-
-  return errors;
+    const std::vector<std::shared_ptr<ValidationMethod>> & validations)
+  : CompositeValidation(validations)
+{
 }
 
 std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(
@@ -224,8 +231,8 @@ std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(
     // if no match, append to list of errors.
     if (!match) {
       std::string symbol = qatom->getSymbol();
-      errors.emplace_back("INFO: [AllowedAtomsValidation] Atom " + symbol +
-                          " is not in allowedAtoms list");
+      errors.push_back("INFO: [AllowedAtomsValidation] Atom " + symbol +
+                       " is not in allowedAtoms list");
     }
   }
   return errors;
@@ -253,8 +260,8 @@ std::vector<ValidationErrorInfo> DisallowedAtomsValidation::validate(
     // if no match, append to list of errors.
     if (match) {
       std::string symbol = qatom->getSymbol();
-      errors.emplace_back("INFO: [DisallowedAtomsValidation] Atom " + symbol +
-                          " is in disallowedAtoms list");
+      errors.push_back("INFO: [DisallowedAtomsValidation] Atom " + symbol +
+                       " is in disallowedAtoms list");
     }
   }
   return errors;
