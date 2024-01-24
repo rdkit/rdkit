@@ -36,8 +36,6 @@
 
 using namespace RDKit;
 
-bool generateExpectedFilesFlag = false;
-
 TEST_CASE("Basic SVG Parsing", "[SVG][reader]") {
   SECTION("basics") {
     std::string svg = R"SVG(<?xml version='1.0' encoding='iso-8859-1'?>
@@ -7026,17 +7024,4 @@ TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
       testFragmentation(test);
     }
   };
-}
-
-int main(int argc, char *argv[]) {
-  Catch::Session session;
-
-  if (argc > 2 && std::string(argv[2]) == "generate") {
-    generateExpectedFilesFlag = true;
-    --argc;
-  }
-
-  int returnCode = session.applyCommandLine(argc, argv);
-  if (returnCode != 0) return returnCode;
-  return session.run();
 }
