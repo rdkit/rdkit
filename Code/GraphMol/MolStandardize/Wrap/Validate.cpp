@@ -39,8 +39,7 @@ python::list pythonValidateMethod(
   python::list res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
-  for (auto &query : errout) {
-    std::string msg = query.what();
+  for (const auto &msg : errout) {
     res.append(msg);
   }
   return res;
@@ -92,8 +91,7 @@ python::list standardizeSmilesHelper(const std::string &smiles) {
   python::list res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       MolStandardize::validateSmiles(smiles);
-  for (auto &query : errout) {
-    std::string msg = query.what();
+  for (const auto &msg : errout) {
     res.append(msg);
   }
   return res;

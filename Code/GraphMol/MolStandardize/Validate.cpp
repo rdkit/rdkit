@@ -67,7 +67,7 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
     try {
       atom->calcExplicitValence();
     } catch (const MolSanitizeException &e) {
-      errors.emplace_back("INFO: [ValenceValidation] " + std::string(e.what()));
+      errors.push_back("INFO: [ValenceValidation] " + std::string(e.what()));
     }
   }
   return errors;
@@ -135,7 +135,7 @@ FragmentValidation::validate(const ROMol &mol, bool reportAllFailures) const {
           //					//
           if ((molfragidx == substructidx) && !fpresent) {
             std::string msg = fname + " is present";
-            errors.emplace_back("INFO: [FragmentValidation] " + msg);
+            errors.push_back("INFO: [FragmentValidation] " + msg);
             fpresent = true;
           }
         }
@@ -157,7 +157,7 @@ NeutralValidation::validate(const ROMol &mol, bool /*reportAllFailures*/) const 
       charge_str = std::to_string(charge);
     }
     std::string msg = "Not an overall neutral system (" + charge_str + ')';
-    errors.emplace_back("INFO: [NeutralValidation] " + msg);
+    errors.push_back("INFO: [NeutralValidation] " + msg);
   }
   return errors;
 }
@@ -184,8 +184,8 @@ IsotopeValidation::validate(const ROMol &mol, bool reportAllFailures) const {
   }
 
   for (auto &isotope : isotopes) {
-    errors.emplace_back("INFO: [IsotopeValidation] Molecule contains isotope " +
-                        isotope);
+    errors.push_back("INFO: [IsotopeValidation] Molecule contains isotope " +
+                     isotope);
   }
   return errors;
 }
@@ -231,8 +231,8 @@ std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(
     // if no match, append to list of errors.
     if (!match) {
       std::string symbol = qatom->getSymbol();
-      errors.emplace_back("INFO: [AllowedAtomsValidation] Atom " + symbol +
-                          " is not in allowedAtoms list");
+      errors.push_back("INFO: [AllowedAtomsValidation] Atom " + symbol +
+                       " is not in allowedAtoms list");
     }
   }
   return errors;
@@ -260,8 +260,8 @@ std::vector<ValidationErrorInfo> DisallowedAtomsValidation::validate(
     // if no match, append to list of errors.
     if (match) {
       std::string symbol = qatom->getSymbol();
-      errors.emplace_back("INFO: [DisallowedAtomsValidation] Atom " + symbol +
-                          " is in disallowedAtoms list");
+      errors.push_back("INFO: [DisallowedAtomsValidation] Atom " + symbol +
+                       " is in disallowedAtoms list");
     }
   }
   return errors;

@@ -35,17 +35,7 @@ namespace MolStandardize {
 
 //! The ValidationErrorInfo class is used to store the information returned by a
 /// ValidationMethod validate.
-class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
- public:
-  ValidationErrorInfo(std::string msg) : d_msg(std::move(msg)) {
-    BOOST_LOG(rdInfoLog) << d_msg << std::endl;
-  }
-  const char *what() const noexcept override { return d_msg.c_str(); }
-  ~ValidationErrorInfo() noexcept override = default;
-
- private:
-  std::string d_msg;
-};  // class ValidationErrorInfo
+using ValidationErrorInfo = std::string;
 
 //! The ValidationMethod class is the abstract base class upon which all the
 /// four different ValidationMethods inherit from.
