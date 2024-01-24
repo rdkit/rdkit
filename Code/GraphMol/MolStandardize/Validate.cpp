@@ -35,7 +35,7 @@ std::vector<ValidationErrorInfo> CompositeValidation::validate(
   std::vector<ValidationErrorInfo> errors;
   for (const auto & method : validations) {
     auto partial = method->validate(mol, reportAllFailures);
-    if (partial.size()) {
+    if (!partial.empty()) {
       std::copy(partial.begin(), partial.end(), std::back_inserter(errors));
       if (!reportAllFailures) {
         break;
