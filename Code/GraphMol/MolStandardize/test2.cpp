@@ -65,8 +65,7 @@ void testValidate() {
     std::string smi = "CO(C)C";
     RWMOL_SPTR m(SmilesToMol(smi, 0, false));
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
-    for (auto &query : errout) {
-      std::string msg = query.what();
+    for (const auto &msg : errout) {
       TEST_ASSERT(
           msg ==
           "INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, "
@@ -79,8 +78,7 @@ void testValidate() {
     std::string smi = "O=C([O-])c1ccccc1";
     RWMOL_SPTR m(SmilesToMol(smi, 0, false));
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
-    for (auto &query : errout) {
-      std::string msg = query.what();
+    for (const auto &msg : errout) {
       TEST_ASSERT(
           msg ==
           "INFO: [NeutralValidation] Not an overall neutral system (-1)");
@@ -99,8 +97,7 @@ void testValidate() {
     AllowedAtomsValidation vm(atomList);
     RWMOL_SPTR m = "CC(=O)CF"_smiles;
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
-    for (auto &query : errout) {
-      std::string msg = query.what();
+    for (const auto &msg : errout) {
       TEST_ASSERT(
           msg ==
           "INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list");
@@ -119,8 +116,7 @@ void testValidate() {
     DisallowedAtomsValidation vm(atomList);
     RWMOL_SPTR m = "CC(=O)CF"_smiles;
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
-    for (auto &query : errout) {
-      std::string msg = query.what();
+    for (const auto &msg : errout) {
       TEST_ASSERT(msg ==
                   "INFO: [DisallowedAtomsValidation] Atom F is in "
                   "disallowedAtoms list");
@@ -134,8 +130,7 @@ void testValidate() {
     std::string smi = "ClCCCl.c1ccccc1O";
     RWMOL_SPTR m(SmilesToMol(smi, 0, false));
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
-    for (auto &query : errout) {
-      std::string msg = query.what();
+    for (const auto &msg : errout) {
       TEST_ASSERT(msg ==
                   "INFO: [FragmentValidation] 1,2-dichloroethane is present");
     }
