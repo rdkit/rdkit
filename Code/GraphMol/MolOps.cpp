@@ -651,15 +651,12 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
                                     INT_VECT *frags,
                                     VECT_INT_VECT *fragsMolAtomMapping,
                                     bool copyConformers) {
-  bool ownIt = false;
-  INT_VECT *mapping;
-  if (frags) {
-    mapping = frags;
-  } else {
-    mapping = new INT_VECT;
-    ownIt = true;
+  std::unique_ptr<INT_VECT> mappingStorage;
+  if (!frags) {
+    mappingStorage.reset(new INT_VECT);
+    frags = mappingStorage.get();
   }
-  unsigned int nFrags = getMolFrags(mol, *mapping);
+  int nFrags = getMolFrags(mol, *frags);
   std::vector<RWMOL_SPTR> res;
   if (nFrags == 1) {
     auto *tmp = new RWMol(mol);
@@ -673,180 +670,42 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
       (*fragsMolAtomMapping).push_back(comp);
     }
   } else {
-    std::vector<int> ids(mol.getNumAtoms(), -1);
-    std::vector<int> bondIds(mol.getNumBonds(), -1);
-    boost::dynamic_bitset<> copiedAtoms(mol.getNumAtoms(), 0);
-    boost::dynamic_bitset<> copiedBonds(mol.getNumBonds(), 0);
     res.reserve(nFrags);
-    for (unsigned int frag = 0; frag < nFrags; ++frag) {
-      auto *tmp = new RWMol();
-      RWMOL_SPTR sptr(tmp);
-      res.push_back(sptr);
-    }
-
-    // copy atoms
-    INT_INT_VECT_MAP comMap;
-    for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
-      const Atom *oAtm = mol.getAtomWithIdx(idx);
-      ids[idx] = res[(*mapping)[idx]]->addAtom(oAtm->copy(), false, true);
-      copiedAtoms[idx] = 1;
+    for (int i = 0; i < nFrags; ++i) {
+      RWMOL_SPTR frag(new RWMol(mol));
+      res.push_back(frag);
+      frag->beginBatchEdit();
+      boost::dynamic_bitset<> atomsInFrag(mol.getNumAtoms());
+      INT_VECT comp;
+      for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
+        if ((*frags)[idx] == i) {
+          comp.push_back(idx);
+          atomsInFrag.set(idx);
+        }
+      }
+      for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
+        if (!atomsInFrag[idx]) {
+          frag->removeAtom(idx);
+        }
+      }
       if (fragsMolAtomMapping) {
-        if (comMap.find((*mapping)[idx]) == comMap.end()) {
-          INT_VECT comp;
-          comMap[(*mapping)[idx]] = comp;
-        }
-        comMap[(*mapping)[idx]].push_back(idx);
+        (*fragsMolAtomMapping).push_back(comp);
       }
-      // loop over neighbors and add bonds in the fragment to all atoms
-      // that are already in the same fragment
-      for (const auto nbr : mol.atomNeighbors(oAtm)) {
-        if (copiedAtoms[nbr->getIdx()]) {
-          copiedBonds[mol.getBondBetweenAtoms(idx, nbr->getIdx())->getIdx()] =
-              1;
-        }
-      }
+      frag->commitBatchEdit();
     }
-    // update ring stereochemistry information
-    for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
-      const Atom *oAtm = mol.getAtomWithIdx(idx);
-      INT_VECT ringStereoAtomsMol;
-      if (oAtm->getPropIfPresent(common_properties::_ringStereoAtoms,
-                                 ringStereoAtomsMol)) {
-        INT_VECT ringStereoAtomsCopied;
-        for (int rnbr : ringStereoAtomsMol) {
-          int ori_ridx = abs(rnbr) - 1;
-          int ridx = ids[ori_ridx] + 1;
-          if (rnbr < 0) {
-            ridx *= -1;
-          }
-          ringStereoAtomsCopied.push_back(ridx);
-        }
-        res[(*mapping)[idx]]->getAtomWithIdx(ids[idx])->setProp(
-            common_properties::_ringStereoAtoms, ringStereoAtomsCopied);
-      }
-    }
-
-    // copy bonds and bond stereochemistry information
-    ROMol::EDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getEdges();
-    while (beg != end) {
-      const Bond *bond = (mol)[*beg];
-      ++beg;
-      if (!copiedBonds[bond->getIdx()]) {
-        continue;
-      }
-      Bond *nBond = bond->copy();
-      RWMol *tmp = res[(*mapping)[nBond->getBeginAtomIdx()]].get();
-      nBond->setOwningMol(tmp);
-      nBond->setBeginAtomIdx(ids[nBond->getBeginAtomIdx()]);
-      nBond->setEndAtomIdx(ids[nBond->getEndAtomIdx()]);
-      nBond->getStereoAtoms().clear();
-      INT_VECT stereoAtoms = bond->getStereoAtoms();
-      for (int stereoAtom : stereoAtoms) {
-        nBond->getStereoAtoms().push_back(ids[stereoAtom]);
-      }
-      bondIds[bond->getIdx()] =
-          tmp->addBond(nBond, true) - 1;  // addBond returns the number of bonds
-    }
-
-    // copy RingInfo
-    if (mol.getRingInfo()->isInitialized()) {
-      for (const auto &i : mol.getRingInfo()->atomRings()) {
-        INT_VECT aids;
-        auto tmp = res[(*mapping)[i[0]]].get();
-        if (!tmp->getRingInfo()->isInitialized()) {
-          tmp->getRingInfo()->initialize();
-        }
-        for (int j : i) {
-          aids.push_back(ids[j]);
-        }
-        INT_VECT bids;
-        INT_VECT_CI lastRai = aids.begin();
-        for (INT_VECT_CI rai = aids.begin() + 1; rai != aids.end(); ++rai) {
-          const Bond *bnd = tmp->getBondBetweenAtoms(*rai, *lastRai);
-          if (!bnd) {
-            throw ValueErrorException("expected bond not found");
-          }
-          bids.push_back(bnd->getIdx());
-          lastRai = rai;
-        }
-        const Bond *bnd = tmp->getBondBetweenAtoms(*lastRai, *(aids.begin()));
-        if (!bnd) {
-          throw ValueErrorException("expected bond not found");
-        }
-        bids.push_back(bnd->getIdx());
-        tmp->getRingInfo()->addRing(aids, bids);
-      }
-    }
-
-    if (copyConformers) {
-      // copy conformers
-      for (auto cit = mol.beginConformers(); cit != mol.endConformers();
-           ++cit) {
-        for (auto &re : res) {
-          ROMol *newM = re.get();
-          auto *conf = new Conformer(newM->getNumAtoms());
-          conf->setId((*cit)->getId());
-          conf->set3D((*cit)->is3D());
-          newM->addConformer(conf);
-        }
-        for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-          if (ids[i] < 0) {
-            continue;
-          }
-          res[(*mapping)[i]]
-              ->getConformer((*cit)->getId())
-              .setAtomPos(ids[i], (*cit)->getAtomPos(i));
-        }
-      }
-    }
-
-    if (fragsMolAtomMapping) {
-      for (INT_INT_VECT_MAP_CI mci = comMap.begin(); mci != comMap.end();
-           mci++) {
-        (*fragsMolAtomMapping).push_back((*mci).second);
-      }
-    }
-    // copy stereoGroups (if present)
-    if (!mol.getStereoGroups().empty()) {
-      for (unsigned int frag = 0; frag < nFrags; ++frag) {
-        auto re = res[frag];
-        std::vector<StereoGroup> fragsgs;
-        for (auto &sg : mol.getStereoGroups()) {
-          std::vector<Atom *> sgats;
-          std::vector<Bond *> sgbds;
-          for (auto sga : sg.getAtoms()) {
-            if ((*mapping)[sga->getIdx()] == static_cast<int>(frag)) {
-              sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
-            }
-          }
-          for (auto sgb : sg.getBonds()) {
-            if ((*mapping)[sgb->getBeginAtom()->getIdx()] ==
-                static_cast<int>(frag)) {
-              sgbds.push_back(re->getBondWithIdx(bondIds[sgb->getIdx()]));
-            }
-          }
-          if (!sgats.empty()) {
-            fragsgs.emplace_back(sg.getGroupType(), sgats, sgbds,
-                                 sg.getReadId());
-          }
-        }
-        if (!fragsgs.empty()) {
-          re->setStereoGroups(std::move(fragsgs));
-        }
-      }
+  }
+  if (!copyConformers) {
+    for (auto &frag : res) {
+      frag->clearConformers();
     }
   }
 
   if (sanitizeFrags) {
-    for (auto &re : res) {
-      sanitizeMol(*re);
+    for (auto &frag : res) {
+      sanitizeMol(*frag);
     }
   }
 
-  if (ownIt) {
-    delete mapping;
-  }
   return std::vector<ROMOL_SPTR>(res.begin(), res.end());
 }
 
