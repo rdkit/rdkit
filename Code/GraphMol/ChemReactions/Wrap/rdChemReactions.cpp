@@ -1016,7 +1016,7 @@ of the replacements argument.",
 )DOC";
   python::def(
       "Compute2DCoordsForReaction", RDKit::Compute2DCoordsForReaction,
-      (python::arg("reaction"), python::arg("spacing") = 2.0,
+      (python::arg("reaction"), python::arg("spacing") = 1.0,
        python::arg("updateProps") = true, python::arg("canonOrient") = true,
        python::arg("nFlipsPerSample") = 0, python::arg("nSample") = 0,
        python::arg("sampleSeed") = 0, python::arg("permuteDeg4Nodes") = false,
