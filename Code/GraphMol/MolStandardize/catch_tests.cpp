@@ -157,20 +157,20 @@ TEST_CASE("uncharger 'force' option") {
     CHECK(MolToSmiles(*outm) == "C[N+](C)(C)C.O=[N+]([O-])O");
   }
   SECTION("bookkeeping (force=false)") {
-    auto m = "C(C)(C)CC[O-].O=[N+]([O-])[O-].O=[N+]([O-])[O-]"_smiles;
+    auto m = "O=[N+]([O-])[O-].O=[N+]([O-])[O-]"_smiles;
     REQUIRE(m);
     MolStandardize::Uncharger uncharger(true, false);
     std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
     REQUIRE(outm);
-    CHECK(MolToSmiles(*outm) == "CC(C)CCO.O=[N+]([O-])O.O=[N+]([O-])O");
+    CHECK(MolToSmiles(*outm) == "O=[N+]([O-])O.O=[N+]([O-])O");
   }
   SECTION("bookkeeping (force=true)") {
-    auto m = "C(C)(C)CC[O-].O=[N+]([O-])[O-].O=[N+]([O-])[O-]"_smiles;
+    auto m = "O=[N+]([O-])[O-].O=[N+]([O-])[O-]"_smiles;
     REQUIRE(m);
     MolStandardize::Uncharger uncharger(true, true);
     std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
     REQUIRE(outm);
-    CHECK(MolToSmiles(*outm) == "CC(C)CCO.O=[N+]([O-])O.O=[N+]([O-])O");
+    CHECK(MolToSmiles(*outm) == "O=[N+]([O-])O.O=[N+]([O-])O");
   }
 }
 

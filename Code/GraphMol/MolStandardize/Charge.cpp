@@ -363,7 +363,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
       [](const auto atom) { return (atom->getFormalCharge() < 0); });
 
   bool needsNeutralization =
-      (!df_force && q_matched > 0 && (n_matched > 0 || a_matched > 0));
+      (q_matched > 0 && (n_matched > 0 || a_matched > 0));
   std::vector<unsigned int> atomRanks(mol.getNumAtoms());
   if (df_canonicalOrdering && needsNeutralization) {
     Canon::rankMolAtoms(mol, atomRanks);
@@ -390,7 +390,10 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
   // Neutralize negative charges
   if (needsNeutralization) {
     // Surplus negative charges more than non-neutralizable positive charges
-    int neg_surplus = n_neg - q_matched;
+    int neg_surplus = n_neg;
+    if (!df_force) {
+      neg_surplus -= q_matched;
+    }
     if (neg_surplus > 0 && n_matched) {
       boost::dynamic_bitset<> nonAcids(mol.getNumAtoms());
       nonAcids.set();
@@ -412,10 +415,9 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     }
 
     // now do the other negative groups if we still have charges left:
-    neg_surplus = a_matched - q_matched;
     if (neg_surplus > 0) {
       boost::dynamic_bitset<> skipChargeSep(mol.getNumAtoms());
-      for (const auto &pair : n_atoms) {
+      for (const auto &pair : a_atoms) {
         unsigned int idx = pair.second;
         Atom *atom = mol.getAtomWithIdx(idx);
         for (const auto &nbri :
