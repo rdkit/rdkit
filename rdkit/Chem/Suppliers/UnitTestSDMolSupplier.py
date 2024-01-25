@@ -12,6 +12,7 @@
 unit testing code for the SD file handling stuff
 """
 import os
+from pathlib import Path
 import tempfile
 import unittest
 
@@ -92,6 +93,25 @@ class TestCase(unittest.TestCase):
         pass
     self.assertEqual(self.nMolecules, outD.count('$$$$'), 'bad nMols in output')
 
+  def test_pathlib_compatibility(self):
+    """Test whether paths can be passed as pathlib.Path instead of str"""
+    # read mols using pathlib.Path
+    supp = Chem.SDMolSupplier(Path(self.fName))
+    self.assertEqual(len(supp), self.nMolecules, 'bad supplier length')
+
+    # write mols using pathlib.Path
+    outPath = Path(tempfile.NamedTemporaryFile(suffix='.sdf', delete=False).name)
+    writer = Chem.SDWriter(outPath)
+    m1 = next(supp)
+    writer.SetProps(m1.GetPropNames())
+    for m in supp:
+      writer.write(m)
+    writer.flush()
+    writer.close()
+
+    with open(outPath, 'r') as inf:
+      outD = inf.read()
+    self.assertEqual(self.nMolecules, outD.count('$$$$'), 'bad nMols in output')
 
 #   def _testStreamRoundtrip(self):
 #     inD = open(self.fName).read()
