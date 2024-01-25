@@ -1084,6 +1084,18 @@ RDKIT_GRAPHMOL_EXPORT bool isAtomListQuery(const Atom *a);
 RDKIT_GRAPHMOL_EXPORT void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
                                                 std::vector<int> &vals);
 
+// Checks if an atom is dummy or not.
+// 1. A dummy non-query atom (e.g., "*" in SMILES) is defined by its zero atomic
+//    number. This rule breaks for query atoms because a COMPOSITE_OR query atom
+//    also has a zero atomic number (#6349).
+// 2. A dummy query atom (e.g., "*" in SMARTS) is defined by its explicit
+//    description: "AtomNull".
+inline bool isAtomDummy(const Atom *a) {
+  return (!a->hasQuery() && a->getAtomicNum() == 0) ||
+         (a->hasQuery() && !a->getQuery()->getNegation() &&
+          a->getQuery()->getDescription() == "AtomNull");
+}
+
 namespace QueryOps {
 RDKIT_GRAPHMOL_EXPORT void completeMolQueries(
     RWMol *mol, unsigned int magicVal = 0xDEADBEEF);

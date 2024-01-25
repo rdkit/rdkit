@@ -71,6 +71,23 @@ void removeGroupsWithAtom(const Atom *atom, std::vector<StereoGroup> &groups) {
                groups.end());
 }
 
+void removeAtomFromGroups(const Atom *atom, std::vector<StereoGroup> &groups) {
+  auto findAtom = [atom](StereoGroup &group) {
+    return std::find(group.getAtoms().begin(), group.getAtoms().end(), atom);
+  };
+  for (auto &group : groups) {
+    auto atomPos = findAtom(group);
+    if (atomPos != group.d_atoms.end()) {
+      group.d_atoms.erase(atomPos);
+    }
+  }
+  // now remove any empty groups:
+  groups.erase(
+      std::remove_if(groups.begin(), groups.end(),
+                     [](const auto &gp) { return gp.getAtoms().empty(); }),
+      groups.end());
+}
+
 void removeGroupsWithBond(const Bond *bond, std::vector<StereoGroup> &groups) {
   auto containsBond = [bond](const StereoGroup &group) {
     return std::find(group.getBonds().cbegin(), group.getBonds().cend(),

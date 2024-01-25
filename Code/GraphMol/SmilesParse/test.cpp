@@ -4382,6 +4382,35 @@ void testGithub3967() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub6349() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github Issue 6349: Different SMARTS input formats lead to different SMILES outputs."
+      << std::endl;
+
+  auto checkSmartsToSmiles = [](const std::string &sma,
+                                const std::string &refSmi) {
+    std::unique_ptr<ROMol> molFromSmarts(SmartsToMol(sma));
+    {
+      std::string smi = MolToSmiles(*molFromSmarts);
+      TEST_ASSERT(smi == refSmi);
+    }
+
+    std::string molBlock = MolToMolBlock(*molFromSmarts);
+    std::unique_ptr<ROMol> molFromBlock(MolBlockToMol(molBlock, /*sanitize =*/false, /*removeHs =*/false));
+    {
+      std::string smi = MolToSmiles(*molFromBlock);
+      TEST_ASSERT(smi == refSmi);
+    }
+  };
+  checkSmartsToSmiles("[C]", "C");
+  checkSmartsToSmiles("[C,N]", "*");
+  checkSmartsToSmiles("[C,N]~[O,S]", "*~*");
+  checkSmartsToSmiles("C-C(-[Cl,F,Br])-C", "*C(C)C");
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4461,6 +4490,7 @@ int main(int argc, char *argv[]) {
   testGithub1028();
   testGithub3139();
   testGithub3967();
+  testGithub6349();
 #endif
   testOSSFuzzFailures();
 }

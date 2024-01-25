@@ -83,7 +83,11 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
     return (d_grouptype != other.d_grouptype) || (d_atoms != other.d_atoms) ||
            (d_bonds != other.d_bonds);
   }
+  friend RDKIT_GRAPHMOL_EXPORT void removeAtomFromGroups(
+      const Atom* atom, std::vector<StereoGroup>& groups);
 };
+RDKIT_GRAPHMOL_EXPORT void removeAtomFromGroups(
+    const Atom* atom, std::vector<StereoGroup>& groups);
 RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtom(
     const Atom* atom, std::vector<StereoGroup>& groups);
 RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtoms(

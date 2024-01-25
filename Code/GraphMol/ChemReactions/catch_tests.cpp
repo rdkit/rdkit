@@ -1656,3 +1656,24 @@ M  END
 
 }
 }
+
+TEST_CASE("Github #6492: In place transforms incorrectly change atomic numbers") {
+  SECTION("minimal"){
+    auto rxn = "[O-:1]>>[*-0:1]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    auto m = "[O-]C"_smiles;
+    REQUIRE(m);
+    rxn->runReactant(*m);
+    CHECK(MolToSmiles(*m)=="CO");
+  }
+  SECTION("as reported"){
+    auto rxn = "[n;+0!H0:1]:[a:2]:[a:3]:[c:4]=[N!$(*[O-]),O;+1H0:5]>>[n+1:1]:[*:2]:[*:3]:[*:4]-[*+0:5]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    auto m = "[nH]1ccc(=[N+](C)C)cc1"_smiles;
+    REQUIRE(m);
+    rxn->runReactant(*m);
+    CHECK(MolToSmiles(*m)=="CN(C)c1cc[nH+]cc1");
+  }
+}

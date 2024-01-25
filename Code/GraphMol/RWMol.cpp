@@ -358,8 +358,8 @@ void RWMol::removeAtom(Atom *atom) {
 
   removeSubstanceGroupsReferencingAtom(*this, idx);
 
-  // Remove any stereo group which includes the atom being deleted
-  removeGroupsWithAtom(atom, d_stereo_groups);
+  // Remove this atom from any stereo group
+  removeAtomFromGroups(atom, d_stereo_groups);
 
   // clear computed properties and reset our ring info structure
   // they are pretty likely to be wrong now:
@@ -474,8 +474,8 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
       // github #6900 if we remove stereo atoms we need to remove
       //  the CIS and or TRANS since this requires stereo atoms
       if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-          obnd->getStereo() == Bond::BondStereo::STEREOTRANS ) {
-          obnd->setStereo(Bond::BondStereo::STEREONONE);
+          obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
+        obnd->setStereo(Bond::BondStereo::STEREONONE);
       }
       obnd->getStereoAtoms().clear();
     }
@@ -496,7 +496,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
       // github #6900 if we remove stereo atoms we need to remove
       //  the CIS and or TRANS since this requires stereo atoms
       if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-        obnd->getStereo() == Bond::BondStereo::STEREOTRANS ) {
+          obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
         obnd->setStereo(Bond::BondStereo::STEREONONE);
       }
       obnd->getStereoAtoms().clear();
