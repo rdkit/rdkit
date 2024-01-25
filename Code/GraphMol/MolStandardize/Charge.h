@@ -137,7 +137,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
     df_canonicalOrdering = canonicalOrdering;
     df_force = force;
   }
-
+  Uncharger(const Uncharger &) = default;
+  ~Uncharger() = default;
+  
   ROMol *uncharge(const ROMol &mol);
   void unchargeInPlace(RWMol &mol);
 
