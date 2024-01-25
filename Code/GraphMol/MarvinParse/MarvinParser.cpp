@@ -1072,8 +1072,8 @@ ChemicalReaction *MrvDataStreamToChemicalReaction(std::istream &inStream,
 //  Read a ChemicalReaction from a string
 //
 //------------------------------------------------
-ChemicalReaction *MrvStringToChemicalReaction(const std::string &molmrvText,
-                                              bool sanitize, bool removeHs) {
+ChemicalReaction *MrvBlockToChemicalReaction(const std::string &molmrvText,
+                                             bool sanitize, bool removeHs) {
   std::istringstream inStream(molmrvText);
   return MrvDataStreamToChemicalReaction(inStream, sanitize, removeHs);
 }
