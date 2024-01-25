@@ -504,7 +504,7 @@ namespace RDDepict {
 
 */
 RDKIT_CHEMREACTIONS_EXPORT void compute2DCoordsForReaction(
-    RDKit::ChemicalReaction &rxn, double spacing = 2.0, bool updateProps = true,
+    RDKit::ChemicalReaction &rxn, double spacing = 1.0, bool updateProps = true,
     bool canonOrient = false, unsigned int nFlipsPerSample = 0,
     unsigned int nSamples = 0, int sampleSeed = 0,
     bool permuteDeg4Nodes = false);
