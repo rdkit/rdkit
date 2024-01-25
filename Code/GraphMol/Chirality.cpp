@@ -3358,7 +3358,8 @@ void clearSingleBondDirFlags(ROMol &mol, bool retainCisTransInfo) {
 void setBondStereoFromDirections(ROMol &mol) {
   mol.clearProp("_needsDetectBondStereo");
   for (Bond *bond : mol.bonds()) {
-    if (bond->getBondType() == Bond::DOUBLE) {
+    if (bond->getBondType() == Bond::DOUBLE &&
+        bond->getStereo() != Bond::STEREOANY) {
       const Atom *stereoBondBeginAtom = bond->getBeginAtom();
       const Atom *stereoBondEndAtom = bond->getEndAtom();
 

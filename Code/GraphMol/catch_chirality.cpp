@@ -5007,3 +5007,153 @@ M  END
 
   CHECK(m->hasProp("_needsDetectBondStereo") == false);
 }
+
+TEST_CASE(
+    "Github Issue #7076: new stereo code not properly handling crossed double bonds") {
+  // Parametrize test to run under legacy and new stereo perception
+  SECTION("second part") {
+    const auto legacy_stereo = GENERATE(true, false);
+    INFO("Legacy stereo perception == " << legacy_stereo);
+
+    UseLegacyStereoPerceptionFixture reset_stereo_perception;
+    Chirality::setUseLegacyStereoPerception(legacy_stereo);
+
+    auto m = R"CTAB(
+  Mrv2211 01252410552D          
+
+ 10  9  0  0  0  0            999 V2000
+    0.0000   -1.4364    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7108   -3.4884    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -3.8988    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8208   -1.4364    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -2.2572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7108   -2.6676    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4217   -2.2572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -4.7196    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2439   -5.4378    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7108   -5.1300    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0  0  0  0
+  1  5  2  0  0  0  0
+  2  3  1  0  0  0  0
+  2  6  2  3  0  0  0
+  3  8  2  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+M  END)CTAB"_ctab;
+
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(3)->getStereo() == Bond::BondStereo::STEREOANY);
+  }
+  SECTION("original") {
+    std::string ctab = R"CTAB(7630532
+     RDKit          2D
+
+ 37 41  0  0  0  0  0  0  0  0999 V2000
+    0.0000   -1.7500    0.0000 P   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8660   -4.2500    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -4.7500    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7500   -1.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0000   -1.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -2.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8675    0.4975    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2475   -0.8825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4975   -2.6175    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8675    0.4975    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2475   -2.6175    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4975   -0.8825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8660   -3.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8675    1.5027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2527   -0.8825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5027   -2.6175    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8675    1.5027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2527   -2.6175    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5027   -0.8825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0000    2.0104    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7604   -1.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0104   -1.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7321   -2.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -5.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5155   -6.6250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8660   -6.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3801   -6.1225    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8631   -7.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5126   -7.6250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7306   -5.7475    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2507   -6.6251    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7337   -7.7526    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3832   -8.1276    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6012   -6.2501    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2566   -7.6302    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6071   -7.2552    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0
+  1  5  1  0
+  1  6  1  0
+  1  7  2  0
+  2  3  1  0
+  2 14  2  3
+  3 25  2  0
+  4  8  2  0
+  4 11  1  0
+  5  9  2  0
+  5 12  1  0
+  6 10  2  0
+  6 13  1  0
+  7 14  1  0
+  8 15  1  0
+  9 16  1  0
+ 10 17  1  0
+ 11 18  2  0
+ 12 19  2  0
+ 13 20  2  0
+ 14 24  1  0
+ 15 21  2  0
+ 16 22  2  0
+ 17 23  2  0
+ 18 21  1  0
+ 19 22  1  0
+ 20 23  1  0
+ 25 26  1  0
+ 25 27  1  0
+ 26 28  2  0
+ 26 30  1  0
+ 27 29  2  0
+ 27 31  1  0
+ 28 32  1  0
+ 29 33  1  0
+ 30 34  2  0
+ 31 35  2  0
+ 32 36  2  0
+ 33 37  2  0
+ 34 36  1  0
+ 35 37  1  0
+M  END)CTAB";
+    const auto legacy_stereo = GENERATE(true, false);
+    INFO("Legacy stereo perception == " << legacy_stereo);
+
+    UseLegacyStereoPerceptionFixture reset_stereo_perception;
+    Chirality::setUseLegacyStereoPerception(legacy_stereo);
+    {
+      // normal file parsing
+      auto m = std::unique_ptr<RWMol>(MolBlockToMol(ctab));
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(5)->getStereo() == Bond::BondStereo::STEREOANY);
+      CHECK(m->getBondWithIdx(6)->getStereo() == Bond::BondStereo::STEREONONE);
+    }
+    {
+      // no sanitization during parsing
+      bool sanitize = false;
+      bool removeHs = false;
+      auto m = std::unique_ptr<RWMol>(MolBlockToMol(ctab, sanitize, removeHs));
+      REQUIRE(m);
+      MolOps::sanitizeMol(*m);
+      bool cleanIt = true;
+      bool force = true;
+      MolOps::assignStereochemistry(*m, cleanIt, force);
+      CHECK(m->getBondWithIdx(5)->getStereo() == Bond::BondStereo::STEREOANY);
+      CHECK(m->getBondWithIdx(6)->getStereo() == Bond::BondStereo::STEREONONE);
+    }
+  }
+}
