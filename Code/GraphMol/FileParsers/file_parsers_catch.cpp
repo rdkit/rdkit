@@ -6276,7 +6276,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     auto ctBlockStart = mae.find("f_m_ct");
     REQUIRE(ctBlockStart != std::string::npos);
 
-    std::string_view ctBlock(&mae[ctBlockStart]);
+    std::string ctBlock(&mae[ctBlockStart]);
 
     CHECK(ctBlock == MaeWriter::getText(*mol));
   }
