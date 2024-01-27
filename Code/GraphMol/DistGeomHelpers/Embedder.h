@@ -33,6 +33,7 @@ enum EmbedFailureCauses {
   FINAL_CENTER_IN_VOLUME = 7,
   LINEAR_DOUBLE_BOND = 8,
   BAD_DOUBLE_BOND_STEREO = 9,
+  CHECK_CHIRAL_CENTERS2 = 10,
 };
 
 //! Parameter object for controlling embedding
@@ -287,10 +288,10 @@ inline int EmbedMolecule(ROMol &mol, EmbedParameters &params) {
   \param useSmallRingTorsions	optional torsions to improve small ring
                               conformer sampling
   \param useMacrocycleTorsions	optional torsions to improve macrocycle
-                                conformer sampling 
-  \param useMacrocycle14config  If 1-4 distances bound heuristics for macrocycles 
-                                is used 
-  
+                                conformer sampling
+  \param useMacrocycle14config  If 1-4 distances bound heuristics for
+  macrocycles is used
+
   \return ID of the conformer added to the molecule, -1 if the emdedding failed
 */
 inline int EmbedMolecule(
@@ -386,9 +387,9 @@ inline int EmbedMolecule(
   \param useSmallRingTorsions	optional torsions to improve small ring
                               conformer sampling
   \param useMacrocycleTorsions	optional torsions to improve macrocycle
-                                conformer sampling 
-  \param useMacrocycle14config  If 1-4 distances bound heuristics for macrocycles 
-                                is used 
+                                conformer sampling
+  \param useMacrocycle14config  If 1-4 distances bound heuristics for
+  macrocycles is used
 
 */
 inline void EmbedMultipleConfs(
