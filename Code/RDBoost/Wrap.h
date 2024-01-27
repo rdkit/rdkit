@@ -334,7 +334,7 @@ struct path_converter {
     return nullptr;
   }
 
-  /// Construct a std::string form pathlib.Path using its own __str__ attribute
+  /// Construct a std::string from pathlib.Path using its own __str__ attribute
   static void construct(
       PyObject *object,
       boost::python::converter::rvalue_from_python_stage1_data* data
