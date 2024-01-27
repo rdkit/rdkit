@@ -866,8 +866,6 @@ TEST_CASE("atropisomers bulk") {
 
   auto params = DGeomHelpers::ETKDGv3;
   params.randomSeed = 0xf00d + 1;
-  params.useExpTorsionAnglePrefs = true;
-  params.useBasicKnowledge = true;
 
   for (auto i = 0u; i < sdsup.length(); ++i) {
     std::unique_ptr<RWMol> mol(static_cast<RWMol *>(sdsup[i]));
