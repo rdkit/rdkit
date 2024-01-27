@@ -3722,7 +3722,7 @@ Lipinski's "Rule of 5" [#lipinski]_ was introduced to estimate the oral bioavail
 * Molecular Weight <= 500 Da
 * No. Hydrogen Bond Donors <= 5
 * No. Hydrogen Bond Acceptors <= 10
-* LogP <= 5 OR MLogP <= 4.15
+* LogP <= 5
 
 .. doctest::
 
