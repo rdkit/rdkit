@@ -1082,16 +1082,33 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
     // at least one side
     if (atomsAndBonds[0].second.size() != 2 &&
         atomsAndBonds[1].second.size() != 2) {
+      BOOST_LOG(rdWarningLog)
+          << "Atropisomer bond stereochemistry not used for bond "
+          << bond->getIdx()
+          << ", which does not have two exo substituents on at least one side."
+          << std::endl;
       continue;
     }
     int idx0 = atomsAndBonds[0].first->getIdx();
     int idx1 = atomsAndBonds[1].first->getIdx();
 
     int nbr1 = atomsAndBonds[0].second[0]->getOtherAtomIdx(idx0);
-    int nbr2 = atomsAndBonds[0].second[1]->getOtherAtomIdx(idx0);
-    int nbr3 = atomsAndBonds[1].second[0]->getOtherAtomIdx(idx1);
-    int nbr4 = atomsAndBonds[1].second[1]->getOtherAtomIdx(idx1);
-
+    int nbr2 = 0;
+    int nbr3 = 0;
+    int nbr4 = 0;
+    if (atomsAndBonds[0].second.size() == 2) {
+      nbr2 = atomsAndBonds[0].second[1]->getOtherAtomIdx(idx0);
+      nbr3 = atomsAndBonds[1].second[0]->getOtherAtomIdx(idx1);
+      if (atomsAndBonds[1].second.size() == 2) {
+        nbr4 = atomsAndBonds[1].second[1]->getOtherAtomIdx(idx1);
+      } else {
+        nbr4 = idx0;
+      }
+    } else {
+      nbr2 = atomsAndBonds[1].second[0]->getOtherAtomIdx(idx1);
+      nbr3 = atomsAndBonds[1].second[1]->getOtherAtomIdx(idx1);
+      nbr4 = idx0;
+    }
     INT_VECT nbrs = {nbr1, nbr2, nbr3, nbr4};
 
     // FIX: these numbers are empirical and should be revisited
