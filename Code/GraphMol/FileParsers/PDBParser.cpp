@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013-2014 Greg Landrum and NextMove Software
+//  Copyright (C) 2013-2024 Greg Landrum and NextMove Software
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -668,32 +668,23 @@ void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
 }
 }  // namespace
 
-RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
-                     unsigned int flavor, bool proximityBonding) {
-  RWMol *mol = nullptr;
-  try {
-    parsePdbBlock(mol, str, sanitize, removeHs, flavor, proximityBonding);
-  } catch (...) {
-    delete mol;
-    throw;
-  }
+namespace v2 {
+namespace FileParsers {
 
-  return mol;
+std::unique_ptr<RWMol> MolFromPDBBlock(const std::string &str,
+                                       const PDBParserParams &params) {
+  RWMol *res = nullptr;
+  parsePdbBlock(res, str.c_str(), params.sanitize, params.removeHs,
+                params.flavor, params.proximityBonding);
+  return std::unique_ptr<RWMol>(res);
 }
 
-RWMol *PDBBlockToMol(const std::string &str, bool sanitize, bool removeHs,
-                     unsigned int flavor, bool proximityBonding) {
-  return PDBBlockToMol(str.c_str(), sanitize, removeHs, flavor,
-                       proximityBonding);
-}
-
-RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
-                          unsigned int flavor, bool proximityBonding) {
-  PRECONDITION(inStream, "bad stream");
+std::unique_ptr<RWMol> MolFromPDBDataStream(std::istream &inStream,
+                                            const PDBParserParams &params) {
   std::string buffer;
-  while (!inStream->eof() && !inStream->fail()) {
+  while (!inStream.eof() && !inStream.fail()) {
     std::string line;
-    std::getline(*inStream, line);
+    std::getline(inStream, line);
     buffer += line;
     buffer += '\n';
     auto ptr = line.c_str();
@@ -703,29 +694,24 @@ RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
       break;
     }
     // Check for ENDMDL
-    if ((flavor & 2) != 0 && ptr[0] == 'E' && ptr[1] == 'N' && ptr[2] == 'D' &&
-        ptr[3] == 'M' && ptr[4] == 'D' && ptr[5] == 'L') {
+    if ((params.flavor & 2) != 0 && ptr[0] == 'E' && ptr[1] == 'N' &&
+        ptr[2] == 'D' && ptr[3] == 'M' && ptr[4] == 'D' && ptr[5] == 'L') {
       break;
     }
   }
-  return PDBBlockToMol(buffer.c_str(), sanitize, removeHs, flavor,
-                       proximityBonding);
-}
-RWMol *PDBDataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
-                          unsigned int flavor, bool proximityBonding) {
-  return PDBDataStreamToMol(&inStream, sanitize, removeHs, flavor,
-                            proximityBonding);
+  return MolFromPDBBlock(buffer, params);
 }
 
-RWMol *PDBFileToMol(const std::string &fileName, bool sanitize, bool removeHs,
-                    unsigned int flavor, bool proximityBonding) {
+std::unique_ptr<RWMol> MolFromPDBFile(const std::string &fileName,
+                                      const PDBParserParams &params) {
   std::ifstream ifs(fileName.c_str(), std::ios_base::binary);
   if (!ifs || ifs.bad()) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
     throw BadFileException(errout.str());
   }
-  return PDBDataStreamToMol(static_cast<std::istream *>(&ifs), sanitize,
-                            removeHs, flavor, proximityBonding);
+  return MolFromPDBDataStream(ifs, params);
 }
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit

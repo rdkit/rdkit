@@ -27,7 +27,7 @@ target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 rdkit_headers(CDXMLParser.h
               FileParsers.h
               FileParserUtils.h
-            
+              FileWriters.h
               MolSupplier.h
               MolWriters.h
               SequenceParsers.h SequenceWriters.h
