@@ -147,8 +147,9 @@ rdkit_test(graphmoltestPicklerGlobalSetting testPicklerGlobalSettings.cpp
 
 rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol)
 
+find_package(Boost COMPONENTS timer REQUIRED)
 rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES
-        SubstructMatch SmilesParse FileParsers GraphMol
+        SubstructMatch SmilesParse FileParsers GraphMol Boost::timer
         )
 
 rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol)
