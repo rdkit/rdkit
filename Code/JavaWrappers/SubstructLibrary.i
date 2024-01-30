@@ -77,7 +77,7 @@ using RDKit::GeneralizedSubstruct::ExtendedQueryMol;
     return new RDKit::SubstructLibrary(str);
   }
 
-  bool canSerialize() const {
+  static bool canSerialize() {
     return RDKit::SubstructLibraryCanSerialize();
   }
 }

@@ -41,41 +41,41 @@ void compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn, double spacing,
                                 unsigned int nSamples, int sampleSeed,
                                 bool permuteDeg4Nodes) {
   double xOffset = 0.0;
-  for (auto templIt = rxn.beginReactantTemplates();
-       templIt != rxn.endReactantTemplates(); ++templIt) {
+  for (auto &reactant : rxn.getReactants()) {
     if (updateProps) {
-      (*templIt)->updatePropertyCache(false);
-      RDKit::MolOps::setConjugation(**templIt);
-      RDKit::MolOps::setHybridization(**templIt);
+      reactant->updatePropertyCache(false);
+      RDKit::MolOps::setConjugation(*reactant);
+      RDKit::MolOps::setHybridization(*reactant);
     }
-    compute2DCoords(**templIt, nullptr, canonOrient, true, nFlipsPerSample,
+    compute2DCoords(*reactant, nullptr, canonOrient, true, nFlipsPerSample,
                     nSamples, sampleSeed, permuteDeg4Nodes);
-    double minX = 100., maxX = -100.;
-    for (auto &pt : (*templIt)->getConformer().getPositions()) {
+    double minX = 1e8, maxX = -1e8;
+    for (auto &pt : reactant->getConformer().getPositions()) {
       minX = std::min(pt.x, minX);
+      maxX = std::max(pt.x, maxX);
     }
-    xOffset += minX;
-    for (auto &pt : (*templIt)->getConformer().getPositions()) {
+    xOffset += (maxX - minX) / 2;
+    for (auto &pt : reactant->getConformer().getPositions()) {
       pt.x += xOffset;
       maxX = std::max(pt.x, maxX);
     }
     xOffset = maxX + spacing;
   }
-  for (auto templIt = rxn.beginProductTemplates();
-       templIt != rxn.endProductTemplates(); ++templIt) {
+  for (auto &product : rxn.getProducts()) {
     if (updateProps) {
-      (*templIt)->updatePropertyCache(false);
-      RDKit::MolOps::setConjugation(**templIt);
-      RDKit::MolOps::setHybridization(**templIt);
+      product->updatePropertyCache(false);
+      RDKit::MolOps::setConjugation(*product);
+      RDKit::MolOps::setHybridization(*product);
     }
-    compute2DCoords(**templIt, nullptr, canonOrient, true, nFlipsPerSample,
+    compute2DCoords(*product, nullptr, canonOrient, true, nFlipsPerSample,
                     nSamples, sampleSeed, permuteDeg4Nodes);
     double minX = 100., maxX = -100.;
-    for (auto &pt : (*templIt)->getConformer().getPositions()) {
+    for (auto &pt : product->getConformer().getPositions()) {
       minX = std::min(pt.x, minX);
+      maxX = std::max(pt.x, maxX);
     }
-    xOffset += minX;
-    for (auto &pt : (*templIt)->getConformer().getPositions()) {
+    xOffset += (maxX - minX) / 2;
+    for (auto &pt : product->getConformer().getPositions()) {
       pt.x += xOffset;
       maxX = std::max(pt.x, maxX);
     }

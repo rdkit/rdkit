@@ -3720,8 +3720,8 @@ Lipinski Rule of 5
 Lipinski's "Rule of 5" [#lipinski]_ was introduced to estimate the oral bioavailability of molecules. Poor absorption is likely if the molecule violates more than one of the following conditions: 
 
 * Molecular Weight <= 500 Da
-* No. Hydrogen Bond Donors <= 10
-* No. Hydrogen Bond Acceptors <= 5
+* No. Hydrogen Bond Donors <= 5
+* No. Hydrogen Bond Acceptors <= 10
 * LogP <= 5
 
 .. doctest::

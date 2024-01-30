@@ -1677,3 +1677,40 @@ TEST_CASE("Github #6492: In place transforms incorrectly change atomic numbers")
     CHECK(MolToSmiles(*m)=="CN(C)c1cc[nH+]cc1");
   }
 }
+
+
+TEST_CASE("Github #7028: Spacing bug in compute2DCoordsForReaction") {
+  SECTION("minimal"){
+    auto rxn = "C1CCCCC1.C1CCCCC1.C1CCCCC1>>C1CCCCC1.C1CCCCC1"_rxnsmiles;
+    REQUIRE(rxn);
+    RDDepict::compute2DCoordsForReaction(*rxn);
+    std::vector<std::pair<double,double>> xbounds;
+    for(const auto &reactant : rxn->getReactants()){
+      REQUIRE(reactant->getNumConformers()==1);
+      std::pair<double,double> bounds={1e8,-1e8};
+      auto conf = reactant->getConformer();
+      for(unsigned int i=0;i<conf.getNumAtoms();++i){
+        auto pos = conf.getAtomPos(i);
+        bounds.first = std::min(bounds.first,pos.x);
+        bounds.second = std::max(bounds.second,pos.x);
+      }
+      xbounds.push_back(bounds);
+    }
+    for(const auto &product : rxn->getProducts()){
+      REQUIRE(product->getNumConformers()==1);
+      std::pair<double,double> bounds={1e8,-1e8};
+      auto conf = product->getConformer();
+      for(unsigned int i=0;i<conf.getNumAtoms();++i){
+        auto pos = conf.getAtomPos(i);
+        bounds.first = std::min(bounds.first,pos.x);
+        bounds.second = std::max(bounds.second,pos.x);
+      }
+      xbounds.push_back(bounds);
+    }
+    REQUIRE(xbounds.size()==5);
+    CHECK(xbounds[0].second < xbounds[1].first);
+    CHECK(xbounds[1].second < xbounds[2].first);
+    CHECK(xbounds[2].second < xbounds[3].first);
+    CHECK(xbounds[3].second < xbounds[4].first);
+  }   
+}

@@ -235,7 +235,7 @@ TEST_CASE(
 TEST_CASE("preserve mol file properties on bonds", "[reader][ctab]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(
-  Mrv1810 02111915042D          
+  Mrv1810 02111915042D
 
   4  3  0  0  0  0            999 V2000
    -1.5625    1.6071    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -258,7 +258,7 @@ M  END
   }
   SECTION("basics-v3k") {
     std::string molblock = R"CTAB(
-  Mrv1810 02111915102D          
+  Mrv1810 02111915102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -291,7 +291,7 @@ M  END
 TEST_CASE("github #2277 : Failure when parsing mol block with M PXA",
           "[reader][ctab]") {
   std::string molblock = R"CTAB(
-  Mrv1810 02151911552D          
+  Mrv1810 02151911552D
 
  13 12  0  0  1  0            999 V2000
    -3.6588  -26.0592    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
@@ -446,7 +446,7 @@ TEST_CASE("workaround for broken MJ2009-MJ2011 molblocks",
           "[feature][sgroups]") {
   SECTION("molblock1 strictParsing true/false") {
     std::string molblock1 = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  10 10  0  0  0  0  0  0  0  0999 V2000
    -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -515,7 +515,7 @@ M  END
   }
   SECTION("molblock1 strictParsing true/false no/bad SBL group") {
     std::string molblock1NoSBL = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  10 10  0  0  0  0  0  0  0  0999 V2000
    -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -545,7 +545,7 @@ M  SAP   1  1   8
 M  END
 )CTAB";
     std::string molblock1BadSBL = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  10 10  0  0  0  0  0  0  0  0999 V2000
    -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -617,7 +617,7 @@ M  END
   }
   SECTION("molblock2 strictParsing true/false") {
     std::string molblock2 = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  13 13  0  0  0  0  0  0  0  0999 V2000
    -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -706,7 +706,7 @@ M  END
   }
   SECTION("molblock2 strictParsing true/false no/bad SBL group1") {
     std::string molblock2NoSBL = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  13 13  0  0  0  0  0  0  0  0999 V2000
    -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -746,7 +746,7 @@ M  SAP   2  1  12
 M  END
 )CTAB";
     std::string molblock2BadSBL = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  13 13  0  0  0  0  0  0  0  0999 V2000
    -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -863,22 +863,22 @@ TEST_CASE(
    -1.4289    1.3406    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
    -0.7145    1.7531    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
    -0.7145    2.5781    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
- 11 12  1  0      
- 11 13  1  0      
- 10 11  1  0      
-  8  9  2  0      
-  8 10  1  0      
-  4  8  1  0      
- 15 16  1  0      
- 14 15  1  0      
-  6 14  1  0      
-  7 16  1  0      
-  1  2  2  0      
-  2  3  1  0      
-  3  4  2  0      
-  4  5  1  0      
-  5  6  2  0      
-  6  1  1  0      
+ 11 12  1  0
+ 11 13  1  0
+ 10 11  1  0
+  8  9  2  0
+  8 10  1  0
+  4  8  1  0
+ 15 16  1  0
+ 14 15  1  0
+  6 14  1  0
+  7 16  1  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
 M  STY  1   1 SUP
 M  SLB  1   1   1
 M  SAL   1  6   8   9  10  11  12  13
@@ -1330,7 +1330,7 @@ M  END
 
 TEST_CASE("Github #2527: handling of \"R\" in CTABs", "[rgroups]") {
   std::string molblock = R"CTAB(example
-  Mrv1902 07031913362D          
+  Mrv1902 07031913362D
 
   2  1  0  0  0  0            999 V2000
    -1.1418    0.0687    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
@@ -1432,7 +1432,7 @@ TEST_CASE("CML writer", "[CML][writer]") {
 
   SECTION("chirality1") {
     auto mol = R"CTAB(
-  Mrv1921 04232106262D          
+  Mrv1921 04232106262D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1481,7 +1481,7 @@ M  END
   }
   SECTION("chirality2") {
     auto mol = R"CTAB(
-  Mrv1921 04232106262D          
+  Mrv1921 04232106262D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1639,7 +1639,7 @@ TEST_CASE("Github #2695: Error when a squiggle bond is in an aromatic ring",
           "[bug][reader]") {
   SECTION("reported") {
     auto ctab = R"CTAB(
-  -ISIS-  -- StrEd -- 
+  -ISIS-  -- StrEd --
 
  19 22  0  0  0  0  0  0  0  0999 V2000
    -3.1355   -0.9331    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1692,7 +1692,7 @@ M  END)CTAB";
 TEST_CASE("Github #2917: _ctab _mol2 and _pdb support", "[feature][reader]") {
   SECTION("_ctab") {
     auto mol = R"CTAB(
-  Mrv1810 01292008292D          
+  Mrv1810 01292008292D
 
   4  3  0  0  0  0            999 V2000
    -3.7669    1.1053    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1709,7 +1709,7 @@ M  END
   }
   SECTION("_ctab failure") {
     auto mol = R"CTAB(
-  Mrv1810 01292008292D          
+  Mrv1810 01292008292D
 
   4  3  0  0  0  0            999 V2000
    -3.7669    1.1053    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1748,10 +1748,10 @@ END
     auto mol_ok = R"DATA(HEADER    TEST
 COMPND    ACY
 REMARK    invented
-HETATM 2779  C   ACY A 404      15.911  -4.912  26.073  1.00 30.04           C  
-HETATM 2780  O   ACY A 404      15.855  -4.063  25.124  1.00 24.12           O  
-HETATM 2781  OXT ACY A 404      16.514  -4.578  27.173  1.00 34.44           O  
-HETATM 2782  CH3 ACY A 404      15.319  -6.258  25.820  1.00 30.60           C  
+HETATM 2779  C   ACY A 404      15.911  -4.912  26.073  1.00 30.04           C
+HETATM 2780  O   ACY A 404      15.855  -4.063  25.124  1.00 24.12           O
+HETATM 2781  OXT ACY A 404      16.514  -4.578  27.173  1.00 34.44           O
+HETATM 2782  CH3 ACY A 404      15.319  -6.258  25.820  1.00 30.60           C
 CONECT 2780 2781
 END
 )DATA"_pdb;
@@ -1762,10 +1762,10 @@ END
     auto mol_fail = R"DATA(HEADER    TEST
 COMPND    ACY
 REMARK    invented
-HETATM 2779  C   ACY A 404      15.911  -4.912  26.073  1.00 30.04           C  
-HETATM 2780  O   ACY A 404      15.855  -4.063  25.124  1.00 24.12           O  
-HETATM 2781  OXT ACY A 404      16.514  -4.578  27.173  1.00 34.44           O  
-HETATM 2782  CH3 ACY A 404      15.319  -6.258  25.820  1.00 30.60           C  
+HETATM 2779  C   ACY A 404      15.911  -4.912  26.073  1.00 30.04           C
+HETATM 2780  O   ACY A 404      15.855  -4.063  25.124  1.00 24.12           O
+HETATM 2781  OXT ACY A 404      16.514  -4.578  27.173  1.00 34.44           O
+HETATM 2782  CH3 ACY A 404      15.319  -6.258  25.820  1.00 30.60           C
 CONECT 2780 2781
 CONECT 2780 2779
 CONECT 2780 2782
@@ -1824,7 +1824,7 @@ GASTEIGER
 TEST_CASE("handling STBOX properties from v3k ctabs", "[feature][v3k]") {
   SECTION("atoms and bonds") {
     auto mol = R"CTAB(basic test
-  Mrv1810 01292006422D          
+  Mrv1810 01292006422D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1860,7 +1860,7 @@ M  END
   }
   SECTION("bonds set if the atoms are also set 1") {
     auto mol = R"CTAB(basic test
-  Mrv1810 01292006422D          
+  Mrv1810 01292006422D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1889,7 +1889,7 @@ M  END
   }
   SECTION("bonds set if the atoms are also set 2") {
     auto mol = R"CTAB(basic test
-  Mrv1810 01292006422D          
+  Mrv1810 01292006422D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1916,7 +1916,7 @@ M  END
   }
   SECTION("bonds set if the atoms are also set 2") {
     auto mol = R"CTAB(basic test
-  Mrv1810 01292006422D          
+  Mrv1810 01292006422D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1943,7 +1943,7 @@ M  END
   }
   SECTION("bonds set if the atoms are also set v2k") {
     auto mol = R"CTAB(basic test
-  Mrv1810 01292015042D          
+  Mrv1810 01292015042D
 
   4  3  0  0  0  0            999 V2000
    -3.7669    1.1053    0.0000 C   0  0  0  0  1  0  0  0  0  0  0  0
@@ -1968,8 +1968,8 @@ M  END
 TEST_CASE("github #2829: support MRV_IMPLICIT_H", "[feature][sgroups]") {
   SECTION("basics v2k") {
     auto mol = R"CTAB(
-  Mrv1810 01302015262D          
- 
+  Mrv1810 01302015262D
+
   5  5  0  0  0  0            999 V2000
     1.1387   -1.3654    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.6538   -0.6979    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1983,8 +1983,8 @@ TEST_CASE("github #2829: support MRV_IMPLICIT_H", "[feature][sgroups]") {
   4  5  4  0  0  0  0
 M  STY  1   1 DAT
 M  SAL   1  1   3
-M  SDT   1 MRV_IMPLICIT_H                                        
-M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   1 MRV_IMPLICIT_H
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0
 M  SED   1 IMPL_H1
 M  END
 )CTAB"_ctab;
@@ -1993,8 +1993,8 @@ M  END
   }
   SECTION("basics v3k") {
     auto mol = R"CTAB(
-  Mrv1810 01302015452D          
- 
+  Mrv1810 01302015452D
+
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 5 5 1 0 0
@@ -2027,8 +2027,8 @@ M  END
   }
   SECTION("v3k two groups") {
     auto mol = R"CTAB(
-  Mrv1810 01302016392D          
- 
+  Mrv1810 01302016392D
+
  12 14  0  0  0  0            999 V2000
     1.1387   -1.3654    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.6538   -0.6979    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2058,12 +2058,12 @@ M  END
   8  9  4  0  0  0  0
 M  STY  2   1 DAT   2 DAT
 M  SAL   1  1   3
-M  SDT   1 MRV_IMPLICIT_H                                        
-M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   1 MRV_IMPLICIT_H
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0
 M  SED   1 IMPL_H1
 M  SAL   2  1  10
-M  SDT   2 MRV_IMPLICIT_H                                        
-M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   2 MRV_IMPLICIT_H
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0
 M  SED   2 IMPL_H1
 M  END
 )CTAB"_ctab;
@@ -2074,8 +2074,8 @@ M  END
   }
   SECTION("removal leaves other s groups intact") {
     auto mol = R"CTAB(
-  Mrv1810 02022006062D          
- 
+  Mrv1810 02022006062D
+
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 6 6 2 0 0
@@ -2115,7 +2115,7 @@ M  END
 TEST_CASE("extra v3k mol file properties", "[ctab][v3k]") {
   SECTION("ATTCHPT") {
     auto mol = R"CTAB(
-  Mrv2007 03132014352D          
+  Mrv2007 03132014352D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2145,7 +2145,7 @@ M  END
     // this is not reasonable; just there to ensure that the reading/writing is
     // working
     auto mol = R"CTAB(really fake
-  Mrv2007 03132015062D          
+  Mrv2007 03132015062D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2186,7 +2186,7 @@ M  END
   }
   SECTION("SUBST") {
     auto mol = R"CTAB(test
-  Mrv2007 03132018122D          
+  Mrv2007 03132018122D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2217,7 +2217,7 @@ M  END
   }
   SECTION("bond props") {
     auto mol = R"CTAB(bogus example
-  Mrv2007 03132017102D          
+  Mrv2007 03132017102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2237,7 +2237,7 @@ M  V30 1 1 1 2
 M  V30 2 2 2 3
 M  V30 3 1 3 4
 M  V30 4 2 4 5
-M  V30 5 1 5 6 
+M  V30 5 1 5 6
 M  V30 6 2 1 6 RXCTR=1
 M  V30 7 1 7 8 ENDPTS=(3 1 2 3) ATTACH=ANY
 M  V30 END BOND
@@ -2280,7 +2280,7 @@ TEST_CASE(
     "[ctab][bug]") {
   SECTION("ATTCHPT") {
     auto mol = R"CTAB(
-  Mrv1824 06092009122D          
+  Mrv1824 06092009122D
 
   3  2  0  0  0  0            999 V2000
    -8.9061    3.8393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2302,7 +2302,7 @@ M  END
   }
   SECTION("Val=-1") {
     auto mol = R"CTAB(
-  Mrv1824 06092009122D          
+  Mrv1824 06092009122D
 
   3  2  0  0  0  0            999 V2000
    -8.9061    3.8393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2353,7 +2353,7 @@ TEST_CASE("XBHEAD and XBCORR causing parser failures", "[bug][reader]") {
 TEST_CASE("LINKNODE information being ignored", "[ctab][bug]") {
   SECTION("v3000") {
     auto mol = R"CTAB(
-  Mrv2007 06212005162D          
+  Mrv2007 06212005162D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2386,7 +2386,7 @@ M  END
   }
   SECTION("v2000") {
     auto mol = R"CTAB(
-  Mrv2007 06222015182D          
+  Mrv2007 06222015182D
 
   5  5  0  0  0  0            999 V2000
    -1.7411    6.5723    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2413,7 +2413,7 @@ M  END
 TEST_CASE("more complex queries in CTAB parsers", "[ctab]") {
   SECTION("v3000") {
     auto mol = R"CTAB(*.*.*.*.*.*.*.* |$;Q_e;M_p;X_p;AH_p;QH_p;MH_p;XH_p$|
-  manual  06272007272D          
+  manual  06272007272D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2457,7 +2457,7 @@ M  END
   }
   SECTION("v2000") {
     auto mol = R"CTAB(*.*.*.*.*.*.*.* |$;Q_e;M_p;X_p;AH_p;QH_p;MH_p;XH_p$|
-  manual  06272007272D          
+  manual  06272007272D
 
   8  0  0  0  0  0            999 V2000
    -3.2083    5.2500    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2797,7 +2797,7 @@ M  END)CTAB"_ctab;
 TEST_CASE("github #3415: problem parsing SGroup data containing \" ", "[bug]") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2014 09172018222D          
+  Mrv2014 09172018222D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2837,7 +2837,7 @@ M  END
   }
   SECTION("empty string") {
     auto m = R"CTAB(
-  Mrv2014 09172018222D          
+  Mrv2014 09172018222D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2880,7 +2880,7 @@ M  END
 TEST_CASE("github #3597: Scientific notation in SDF V3000 files", "[bug]") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2020 11302014062D          
+  Mrv2020 11302014062D
 
   2  1  0  0  0  0            999 V2000
    -2.8125    1.9196    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2896,7 +2896,7 @@ M  END
   }
   SECTION("toosmall") {
     auto m = R"CTAB(
-  Mrv2020 11302014062D          
+  Mrv2020 11302014062D
 
   2  1  0  0  0  0            999 V2000
    -2.8125    1.9196    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2918,7 +2918,7 @@ TEST_CASE("github #3620: V3K mol block parser not saving the chiral flag",
           "[bug]") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2014 12082009582D          
+  Mrv2014 12082009582D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2983,7 +2983,7 @@ TEST_CASE(
     "[feature]") {
   SECTION("basics V3K") {
     auto m = R"CTAB(
-  Mrv2014 11302009242D          
+  Mrv2014 11302009242D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3040,7 +3040,7 @@ M  END
   }
   SECTION("basics V2K") {
     auto m = R"CTAB(
-  Mrv2014 11302009442D          
+  Mrv2014 11302009442D
 
   6  6  0  0  0  0            999 V2000
     2.0313   -1.5857    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3193,7 +3193,7 @@ M  END
   }
   SECTION("parens and quote not at beginning") {
     auto m = R"CTAB(
-  Mrv2014 01292104542D          
+  Mrv2014 01292104542D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3228,8 +3228,8 @@ M  END
 TEST_CASE("github #3216: WedgeMolBonds() should prefer degree-1 atoms") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2007 06082008522D          
- 
+  Mrv2007 06082008522D
+
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 8 7 0 0 0
@@ -3267,7 +3267,7 @@ M  END)CTAB"_ctab;
 TEST_CASE("Hydrogen bonds in CTABs") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2014 03022114422D          
+  Mrv2014 03022114422D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3310,7 +3310,7 @@ M  END
 TEST_CASE("Support empty FIELDNAMES in SDT lines") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2014 03112117322D          
+  Mrv2014 03112117322D
 
   6  6  0  0  0  0            999 V2000
    -1.8270   -1.5114    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3327,8 +3327,8 @@ TEST_CASE("Support empty FIELDNAMES in SDT lines") {
   1  6  1  0  0  0  0
 M  STY  1   1 DAT
 M  SAL   1  6   1   2   3   4   5   6
-M  SDT   1                                                       
-M  SDD   1    -2.4921   -3.0466    DA    ALL  1       5  
+M  SDT   1
+M  SDD   1    -2.4921   -3.0466    DA    ALL  1       5
 M  SED   1 foo: 1234.6
 M  END
 )CTAB"_ctab;
@@ -3359,10 +3359,10 @@ M  END
 TEST_CASE("Support reading unambiguous short atom lines") {
   SECTION("basics") {
     std::string mb = R"CTAB(
-  Mrv2014 03112117322D          
+  Mrv2014 03112117322D
 
   2  1  0  0  0  0            999 V2000
-   -1.8270   -1.5114    0.0000 C 
+   -1.8270   -1.5114    0.0000 C
    -2.2764   -0.8194    0.0000 C
   1  2  1  0  0  0  0
 M  END
@@ -3383,10 +3383,10 @@ M  END
   }
   SECTION("too short") {
     std::string mb = R"CTAB(
-  Mrv2014 03112117322D          
+  Mrv2014 03112117322D
 
   2  1  0  0  0  0            999 V2000
-   -1.8270   -1.5114    0.0000  
+   -1.8270   -1.5114    0.0000
    -2.2764   -0.8194    0.0000 C
   1  2  1  0  0  0  0
 M  END
@@ -3423,7 +3423,7 @@ M  END)CTAB"_ctab;
 TEST_CASE("Github #4131: HCOUNT from v3000 CTABS incorrectly interpreted") {
   SECTION("basics") {
     auto mol = R"CTAB(
-  Mrv2108 05122108272D          
+  Mrv2108 05122108272D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3448,7 +3448,7 @@ M  END
 TEST_CASE("sgroups and strict parsing") {
   SECTION("everything ok") {
     std::string ctab = R"CTAB(
-  Mrv2108 06052107052D          
+  Mrv2108 06052107052D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3476,7 +3476,7 @@ M  END
   }
   SECTION("SGroups totally missing") {
     std::string ctab = R"CTAB(
-  Mrv2108 06052107052D          
+  Mrv2108 06052107052D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3501,7 +3501,7 @@ M  END
   }
   SECTION("one SGroup missing") {
     std::string ctab = R"CTAB(
-  Mrv2108 06052107052D          
+  Mrv2108 06052107052D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3534,7 +3534,7 @@ M  END
 
   SECTION("END SGROUPS missing") {
     std::string ctab = R"CTAB(
-  Mrv2108 06052107052D          
+  Mrv2108 06052107052D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3589,7 +3589,7 @@ TEST_CASE("Handle MRV_COORDINATE_BOND_TYPE data Substance Groups") {
       "Convert SDF V2000 MRV_COORDINATE_BOND_TYPE data Substance Groups "
       "into coordinate bonds") {
     auto m = R"CTAB(
-  Mrv2111 06302118332D          
+  Mrv2111 06302118332D
 
   9  9  0  0  0  0            999 V2000
    -2.9465    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3612,16 +3612,16 @@ TEST_CASE("Handle MRV_COORDINATE_BOND_TYPE data Substance Groups") {
   2  9  8  0  0  0  0
 M  STY  3   1 DAT   2 DAT   3 DAT
 M  SAL   1  2   6   7
-M  SDT   1 MRV_COORDINATE_BOND_TYPE                              
-M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   1 MRV_COORDINATE_BOND_TYPE
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0
 M  SED   1 7
 M  SAL   2  2   4   8
-M  SDT   2 MRV_COORDINATE_BOND_TYPE                              
-M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   2 MRV_COORDINATE_BOND_TYPE
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0
 M  SED   2 8
 M  SAL   3  2   2   9
-M  SDT   3 MRV_COORDINATE_BOND_TYPE                              
-M  SDD   3     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   3 MRV_COORDINATE_BOND_TYPE
+M  SDD   3     0.0000    0.0000    DR    ALL  0       0
 M  SED   3 9
 M  END
 )CTAB"_ctab;
@@ -3647,7 +3647,7 @@ M  END
     // the indexes in the SGroups
 
     auto m1 = R"CTAB(
-  Mrv2111 06302118332D          
+  Mrv2111 06302118332D
 
   9  9  0  0  0  0            999 V2000
    -2.9465    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3670,16 +3670,16 @@ M  END
   6  1  1  0  0  0  0
 M  STY  3   1 DAT   2 DAT   3 DAT
 M  SAL   1  2   6   7
-M  SDT   1 MRV_COORDINATE_BOND_TYPE                              
-M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   1 MRV_COORDINATE_BOND_TYPE
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0
 M  SED   1 1
 M  SAL   2  2   4   8
-M  SDT   2 MRV_COORDINATE_BOND_TYPE                              
-M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   2 MRV_COORDINATE_BOND_TYPE
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0
 M  SED   2 2
 M  SAL   3  2   2   9
-M  SDT   3 MRV_COORDINATE_BOND_TYPE                              
-M  SDD   3     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   3 MRV_COORDINATE_BOND_TYPE
+M  SDD   3     0.0000    0.0000    DR    ALL  0       0
 M  SED   3 3
 M  END
 )CTAB"_ctab;
@@ -3687,7 +3687,7 @@ M  END
     // Same input, but changing the type of 2 of the bonds, and giving
     // a random value to the other SGroup to check that we fail
     auto m2 = R"CTAB(
-  Mrv2111 06302118332D          
+  Mrv2111 06302118332D
 
   9  9  0  0  0  0            999 V2000
    -2.9465    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3710,16 +3710,16 @@ M  END
   6  1  1  0  0  0  0
 M  STY  3   1 DAT   2 DAT   3 DAT
 M  SAL   1  2   6   7
-M  SDT   1 MRV_COORDINATE_BOND_TYPE                              
-M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   1 MRV_COORDINATE_BOND_TYPE
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0
 M  SED   1 1
 M  SAL   2  2   4   8
-M  SDT   2 MRV_COORDINATE_BOND_TYPE                              
-M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   2 MRV_COORDINATE_BOND_TYPE
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0
 M  SED   2 2
 M  SAL   3  2   2   9
-M  SDT   3 MRV_COORDINATE_BOND_TYPE                              
-M  SDD   3     0.0000    0.0000    DR    ALL  0       0  
+M  SDT   3 MRV_COORDINATE_BOND_TYPE
+M  SDD   3     0.0000    0.0000    DR    ALL  0       0
 M  SED   3 100
 M  END
 )CTAB"_ctab;
@@ -3750,7 +3750,7 @@ TEST_CASE(
     "incorrectly") {
   SECTION("V3000") {
     std::string ctab = R"CTAB(
-  Mrv2108 06172117542D          
+  Mrv2108 06172117542D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3780,7 +3780,7 @@ M  END)CTAB";
   SECTION("V2000 1") {  // Marvin doesn't actually do this, but might as well
                         // test for it anyway
     std::string ctab = R"CTAB(
-  Mrv2108 06212115462D          
+  Mrv2108 06212115462D
 
   2  1  0  0  0  0            999 V2000
    -2.5894    1.8751    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3793,7 +3793,7 @@ M  END
   SECTION("V2000 2") {  // Marvin doesn't actually do this, but might as well
                         // test for it anyway
     std::string ctab = R"CTAB(
-  Mrv2108 06212115482D          
+  Mrv2108 06212115482D
 
   2  1  0  0  0  0            999 V2000
    -2.5894    1.8751    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3809,7 +3809,7 @@ M  END
 TEST_CASE("Long lines in V3000 mol blocks") {
   SECTION("basics") {
     auto m = R"CTAB(query
-  Mrv2108 07152116102D          
+  Mrv2108 07152116102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3837,7 +3837,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("long data elements") {
     auto m = R"CTAB(query with bogus sgroups
-  Mrv2108 07152116102D          
+  Mrv2108 07152116102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3894,7 +3894,7 @@ M  END)CTAB"_ctab;
       "GitHub Issue #4471: SDF SGroups may be missing the final space in the "
       "\"M V30 \" prefix") {
     auto m = R"CTAB(bogus mol with unspaced SGroup field
-  Mrv2114 09022123382D          
+  Mrv2114 09022123382D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4022,7 +4022,7 @@ TEST_CASE(
     "empty") {
   SECTION("basics") {
     auto m = R"CTAB(query
-  Mrv2102 09032106302D          
+  Mrv2102 09032106302D
 
   2  1  0  0  0  0            999 V2000
    -0.4464    2.4334    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -4031,7 +4031,7 @@ TEST_CASE(
 M  STY  1   1 DAT
 M  SAL   1  1   2
 M  SDT   1                                                     PQ=
-M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0
 M  SED   1 [#6;R]
 M  END
 )CTAB"_ctab;
@@ -4048,7 +4048,7 @@ M  END
 TEST_CASE("github #4468: decode SMARTS in SGroups") {
   SECTION("parsing v3000") {
     auto m = R"CTAB(query
-  Mrv2108 07152116012D          
+  Mrv2108 07152116012D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4075,7 +4075,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("ensure bad SMARTS don't break things") {
     auto m = R"CTAB(query
-  Mrv2108 07152116012D          
+  Mrv2108 07152116012D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4100,7 +4100,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("empty SMARTS") {
     auto m = R"CTAB(query
-  Mrv2108 07152116012D          
+  Mrv2108 07152116012D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4125,7 +4125,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("bad operator") {
     auto m = R"CTAB(query
-  Mrv2108 07152116012D          
+  Mrv2108 07152116012D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4150,7 +4150,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("SMARTS with multiple atoms become recursive") {
     auto m = R"CTAB(query
-  Mrv2108 07152116012D          
+  Mrv2108 07152116012D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4177,7 +4177,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("parsing v3000, v2000 compatibility version") {
     auto m = R"CTAB(query
-  Mrv2108 07152116012D          
+  Mrv2108 07152116012D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4204,7 +4204,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("parsing v2000") {
     auto m = R"CTAB(query
-  Mrv2102 09032106302D          
+  Mrv2102 09032106302D
 
   2  1  0  0  0  0            999 V2000
    -0.4464    2.4334    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -4213,7 +4213,7 @@ M  END)CTAB"_ctab;
 M  STY  1   1 DAT
 M  SAL   1  1   2
 M  SDT   1                                                     SQ=
-M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0
 M  SED   1 [#6;R]
 M  END
 )CTAB"_ctab;
@@ -4228,7 +4228,7 @@ M  END
 TEST_CASE("Github #4561: failure to parse CTAB with LINKNODE and SGROUP") {
   SECTION("BASICS") {
     auto mol1 = R"CTAB(
-  Mrv2108 09252106182D          
+  Mrv2108 09252106182D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4271,7 +4271,7 @@ TEST_CASE(
     "even though they are not in an aromatic ring") {
   SECTION("benzene") {
     auto mol = R"CTAB(
-  Mrv2108 12102110572D          
+  Mrv2108 12102110572D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4301,7 +4301,7 @@ M  END
   }
   SECTION("non-kekulizeable") {
     auto mol = R"CTAB(
-  Mrv2108 12102110572D          
+  Mrv2108 12102110572D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4327,7 +4327,7 @@ M  END
   }
   SECTION("as reported1") {
     auto mol = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   2  1  0  0  0  0  0  0  0  0999 V2000
    -0.3538    0.6163    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -4340,7 +4340,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("as reported2") {
     auto mol = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   2  1  0  0  0  0  0  0  0  0999 V2000
    -0.3538    0.6163    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
@@ -4372,7 +4372,7 @@ M  END
 TEST_CASE("checking array bounds") {
   SECTION("XBONDS") {
     auto mb = R"CTAB(
-  Mrv2108 01202214292D          
+  Mrv2108 01202214292D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4401,7 +4401,7 @@ M  END
   }
   SECTION("ATOMS") {
     auto mb = R"CTAB(
-  Mrv2108 01202214292D          
+  Mrv2108 01202214292D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4433,7 +4433,7 @@ M  END
 TEST_CASE("Github #5108: Wiggly bonds don't override wedged bonds") {
   SECTION("as reported") {
     auto m = R"CTAB(
-  Mrv2102 03212207042D          
+  Mrv2102 03212207042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4460,7 +4460,7 @@ M  END
   }
   SECTION("as reported, bond ordering changed") {
     auto m = R"CTAB(
-  Mrv2102 03212207042D          
+  Mrv2102 03212207042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4487,7 +4487,7 @@ M  END
   }
   SECTION("assignChiralTypesFromBondDirs details") {
     auto m = R"CTAB(
-  Mrv2102 03212207042D          
+  Mrv2102 03212207042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4640,7 +4640,7 @@ TEST_CASE(
 TEST_CASE("POL atoms in CTABS") {
   SECTION("V3000") {
     auto mol = R"CTAB(
-  Mrv2102 05042219282D          
+  Mrv2102 05042219282D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4671,7 +4671,7 @@ M  END
   }
   SECTION("V2000") {
     auto mol = R"CTAB(
-  Mrv2102 05042219412D          
+  Mrv2102 05042219412D
 
   3  2  0  0  0  0            999 V2000
    -3.3482    1.8080    0.0000 Mod 0  0  0  0  0  0  0  0  0  0  0  0
@@ -4930,7 +4930,7 @@ M  END
   }
   SECTION("non-tetrahedral") {
     auto m = R"CTAB(
-  Mrv2108 05252216313D          
+  Mrv2108 05252216313D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4960,7 +4960,7 @@ M  END
   }
   SECTION("non-tetrahedral, wiggly") {
     auto m = R"CTAB(
-  Mrv2108 05252216313D          
+  Mrv2108 05252216313D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -5131,7 +5131,7 @@ M  END)CTAB"_ctab;
 TEST_CASE("Github #5765: R label information lost") {
   SECTION("just R") {
     auto m = R"CTAB(
-  MJ221900                      
+  MJ221900
 
   4  3  0  0  0  0  0  0  0  0999 V2000
     2.1433    1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5149,7 +5149,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("R with number") {
     auto m = R"CTAB(
-  MJ221900                      
+  MJ221900
 
   4  3  0  0  0  0  0  0  0  0999 V2000
     2.1433    1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5167,7 +5167,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("V3000") {
     auto m = R"CTAB(
-  Mrv1810 02111915102D          
+  Mrv1810 02111915102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -5190,7 +5190,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("V3000 with number") {
     auto m = R"CTAB(
-  Mrv1810 02111915102D          
+  Mrv1810 02111915102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -5213,7 +5213,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("R# also gets the tag (was #5810)") {
     auto m = R"CTAB(
-  Mrv1810 02111915102D          
+  Mrv1810 02111915102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -5256,7 +5256,7 @@ TEST_CASE("github #5718: ") {
   SECTION("as reported") {
     auto m = R"CTAB(
 
-  Mrv2108 07152116012D          
+  Mrv2108 07152116012D
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 2 1 1 0 0
@@ -5285,7 +5285,7 @@ M  END")CTAB"_ctab;
 
 TEST_CASE("github #5827: do not write properties with new lines to SDF") {
   auto m = R"CTAB(
-  Mrv2211 12152210292D          
+  Mrv2211 12152210292D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -5323,7 +5323,7 @@ TEST_CASE(
     "accept unrecognized atom names in CTABs when strictParsing is false") {
   SECTION("V3000") {
     std::string mb = R"CTAB(
-  Mrv2211 12152210292D          
+  Mrv2211 12152210292D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -5351,7 +5351,7 @@ M  END
 
   SECTION("V2000") {
     std::string mb = R"CTAB(
-  Mrv1810 02111915042D          
+  Mrv1810 02111915042D
 
   2  1  0  0  0  0            999 V2000
    -1.5625    1.6071    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5375,7 +5375,7 @@ TEST_CASE(
     "Github #5930: single-element atom list queries not output to mol blocks") {
   SECTION("as reported") {
     auto m = R"CTAB(
-  Mrv2211 01052305042D          
+  Mrv2211 01052305042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -5397,7 +5397,7 @@ M  END
   }
   SECTION("don't output the query if it's not negated") {
     auto m = R"CTAB(
-  Mrv2211 01052305042D          
+  Mrv2211 01052305042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -5419,7 +5419,7 @@ M  END
   }
   SECTION("v2000") {
     auto m = R"CTAB(
-  Mrv2211 01052305142D          
+  Mrv2211 01052305142D
 
   1  0  1  0  0  0            999 V2000
    -1.6293    3.3366    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5453,7 +5453,7 @@ M  END
 TEST_CASE("Github #6395: Mol Unsaturated Query Not Parsed Correctly") {
   SECTION("as reported") {
     auto m = R"CTAB(
-MOESketch           2D                              
+MOESketch           2D
 
   5  5  0  0  1  0            999 V2000
    13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
@@ -5474,7 +5474,7 @@ M  END
   }
   SECTION("test that queries exist for only nonzero unsaturated values") {
     auto m = R"CTAB(
-MOESketch           2D                              
+MOESketch           2D
 
   5  5  0  0  1  0            999 V2000
    13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
@@ -5498,7 +5498,7 @@ M  END
   }
   SECTION("test that isotope properties parse correctly") {
     auto m = R"CTAB(
-MOESketch           2D                              
+MOESketch           2D
 
   5  5  0  0  1  0            999 V2000
    13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
@@ -5521,7 +5521,7 @@ M  END
   }
   SECTION("test that substitution properties parse correctly") {
     auto m = R"CTAB(
-MOESketch           2D                              
+MOESketch           2D
 
   5  5  0  0  1  0            999 V2000
    13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
@@ -5545,7 +5545,7 @@ M  END
   }
   SECTION("test that ring bond count properties parse correctly") {
     auto m = R"CTAB(
-MOESketch           2D                              
+MOESketch           2D
 
   5  5  0  0  1  0            999 V2000
    13.5413    2.8394    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
@@ -5873,6 +5873,7 @@ TEST_CASE("MaeWriter atom numbering chirality", "[mae][MaeWriter][writer]") {
     auto roundtrip = MaeMolSupplier(iss).next();
     CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
           Atom::CHI_TETRAHEDRAL_CW);
+    delete roundtrip;
   }
 
   SECTION("S") {
@@ -5885,6 +5886,7 @@ TEST_CASE("MaeWriter atom numbering chirality", "[mae][MaeWriter][writer]") {
     auto roundtrip = MaeMolSupplier(iss).next();
     CHECK(roundtrip->getAtomWithIdx(3)->getChiralTag() ==
           Atom::CHI_TETRAHEDRAL_CCW);
+    delete roundtrip;
   }
 }
 
@@ -6649,21 +6651,21 @@ USER_CHARGES
 
 
 @<TRIPOS>ATOM
-      1 C1         -5.6250    1.1481    0.0000 C.3       1 UNK         0.0000 
-      2 C2         -6.2924    0.6631    0.0000 C.3       1 UNK         0.0000 
-      3 C3         -6.0375   -0.1214    0.0000 C.3       1 UNK         0.0000 
-      4 O4         -5.2125   -0.1214    0.0000 O.3       1 UNK         0.0000 
-      5 C5         -4.9576    0.6631    0.0000 C.2       1 UNK         0.0000 
-      6 N6         -4.1729    0.9181    0.0000 N.2       1 UNK         0.0000 
-      7 H7         -4.0014    1.7250    0.0000 H         1 UNK         0.0000 
+      1 C1         -5.6250    1.1481    0.0000 C.3       1 UNK         0.0000
+      2 C2         -6.2924    0.6631    0.0000 C.3       1 UNK         0.0000
+      3 C3         -6.0375   -0.1214    0.0000 C.3       1 UNK         0.0000
+      4 O4         -5.2125   -0.1214    0.0000 O.3       1 UNK         0.0000
+      5 C5         -4.9576    0.6631    0.0000 C.2       1 UNK         0.0000
+      6 N6         -4.1729    0.9181    0.0000 N.2       1 UNK         0.0000
+      7 H7         -4.0014    1.7250    0.0000 H         1 UNK         0.0000
 @<TRIPOS>BOND
-     1    1    2 1    
-     2    1    5 1    
-     3    2    3 1    
-     4    3    4 1    
-     5    4    5 1    
-     6    5    6 2    
-     7    6    7 1    
+     1    1    2 1
+     2    1    5 1
+     3    2    3 1
+     4    3    4 1
+     5    4    5 1
+     6    5    6 2
+     7    6    7 1
   )MOL2"_mol2;
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 7);
@@ -6928,4 +6930,98 @@ TEST_CASE(
     REQUIRE(nm);
     CHECK(MolToSmarts(*nm) == "[#6,#7,#8][#6][#6]*[$(C(=O)O)]");
   }
+}
+
+class FragTest {
+ public:
+  std::string fileName;
+  bool expectedResult;
+  bool reapplyMolBlockWedging;
+  unsigned int origSgroupCount;
+  unsigned int newSgroupCount;
+
+  FragTest(std::string fileNameInit, bool expectedResultInit,
+           bool reapplyMolBlockWedgingInit, unsigned int origSgroupCountInit,
+           unsigned int newSgroupCountInit)
+      : fileName(fileNameInit),
+        expectedResult(expectedResultInit),
+        reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
+        origSgroupCount(origSgroupCountInit),
+        newSgroupCount(newSgroupCountInit){};
+};
+
+void testFragmentation(const FragTest &fragTest) {
+  INFO(fragTest.fileName);
+  std::string rdbase = getenv("RDBASE");
+
+  std::string fName = rdbase +
+                      "/Code/GraphMol/FileParsers/test_data/sgroupFragments/" +
+                      fragTest.fileName;
+  std::unique_ptr<RWMol> mol(MolFileToMol(fName, false));  // don't sanitize yet
+  REQUIRE(mol);
+  CHECK(getSubstanceGroups(*mol).size() == fragTest.origSgroupCount);
+
+  auto frags = MolOps::getMolFrags(*mol, true);
+  CHECK(frags.size() > 1);
+
+  // get the largest fragment
+
+  unsigned int largestFragSize = 0;
+  ROMol *largestFrag = nullptr;
+  for (auto frag : frags) {
+    if (frag->getNumAtoms() > largestFragSize) {
+      largestFragSize = frag->getNumAtoms();
+      largestFrag = frag.get();
+    }
+  }
+
+  CHECK(largestFrag);
+  CHECK(getSubstanceGroups(*largestFrag).size() == fragTest.newSgroupCount);
+
+  if (fragTest.origSgroupCount == fragTest.newSgroupCount) {
+    // if the number of sgroups is the same, then the sgroups should be the
+    // same
+    for (unsigned int sgIndex = 0;
+         sgIndex < getSubstanceGroups(*largestFrag).size(); ++sgIndex) {
+      CHECK(getSubstanceGroups(*largestFrag)[sgIndex].getProp<std::string>(
+                "TYPE") ==
+            getSubstanceGroups(*mol)[sgIndex].getProp<std::string>("TYPE"));
+    }
+  }
+}
+
+TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::vector<FragTest> tests = {
+        FragTest("polymerSalt.mol", true, true, 1, 1),
+        FragTest("copolymer_sgroup.sdf", true, true, 1,
+                 0),  // fragmntation does not keep the sgroup for this one
+        FragTest("DataSgroup.sdf", true, true, 2, 2),
+        FragTest("DataSgroupMissingUnitsDisplayed.sdf", true, true, 1, 1),
+        FragTest("EmbeddedSGroupSUP_MUL.sdf", true, true, 2, 2),
+        FragTest("EmbeddedSgroupCOP_SUP.sdf", true, true, 2, 2),
+        FragTest("EmbeddedSgroupDAT_SUP.sdf", true, true, 2, 2),
+        FragTest("EmbeddedSgroupMUL_MUL.sdf", true, true, 3, 3),
+        FragTest("EmbeddedSgroupMUL_SUP.sdf", true, true, 2, 2),
+        FragTest("EmbeddedSgroupSRU_SUP.sdf", true, true, 2, 2),
+        FragTest("EmbeddedSgroupSUPEXP_SUP.sdf", true, true, 2, 2),
+        FragTest("EmbeddedSgroupSUPEXP_SUP2.sdf", true, true, 2, 2),
+        FragTest("EmbeddedSgroupSUP_SUP.sdf", true, true, 2, 2),
+        FragTest("EmbeddedSgroupSUP_SUP2.sdf", true, true, 2, 2),
+        FragTest("GenericSgroup.sdf", true, true, 1, 1),
+        FragTest("MarvinOldSuperGroupTest.sdf", true, true, 9, 5),
+        FragTest("MonomerSgroup.sdf", true, true, 1, 1),
+        FragTest("MultipleSgroup.sdf", true, true, 1, 1),
+        FragTest("MultipleSgroupParentInMiddleOfAtomBlock.sdf", true, true, 1,
+                 1),
+        FragTest("SgroupExpanded.sdf", true, true, 1, 1),
+        FragTest("SgroupMultAttach.sdf", true, true, 4, 4),
+        FragTest("Sgroup_MUL_ParentInMiddle.sdf", true, true, 1, 1),
+        FragTest("modification_sgroup.sdf", true, true, 2, 1),
+    };
+    for (auto test : tests) {
+      testFragmentation(test);
+    }
+  };
 }
