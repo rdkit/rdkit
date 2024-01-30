@@ -73,7 +73,7 @@
     RDKit::markConjAtomBonds(($self));
   }
   int numBondsPlusLonePairs() {
-    RDKit::numBondsPlusLonePairs(($self));
+    return RDKit::numBondsPlusLonePairs(($self));
   }
   bool atomHasConjugatedBond() {
     return RDKit::MolOps::atomHasConjugatedBond(($self));
