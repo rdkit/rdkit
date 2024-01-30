@@ -103,19 +103,19 @@
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
       return $null;
     }
-    catch (RDKit::SmilesParseException e) {
+    catch (RDKit::SmilesParseException &e) {
       std::string err="SmilesParseException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
       return $null;
     }
-    catch (KeyErrorException e) {
+    catch (KeyErrorException &e) {
       std::string err="KeyError: ";
       err+=e.key();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
       return $null;
     }
-    catch (std::exception e) {
+    catch (std::exception &e) {
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, "error");
       return $null;
     }
@@ -158,6 +158,7 @@ typedef unsigned long long int	uintmax_t;
 
 %shared_ptr(std::exception)
 %shared_ptr(RDKit::RDProps)
+%shared_ptr(RDKit::Conformer)
 %shared_ptr(RDKit::ROMol)
 %shared_ptr(RDKit::RWMol)
 %shared_ptr(RDKit::Atom)
@@ -317,7 +318,7 @@ typedef unsigned long long int	uintmax_t;
   double getElement(int i) {
     return (*($self))[i];
   }
-  double setElement(int i, double value) {
+  void setElement(int i, double value) {
     (*($self))[i] = value;
   }
 }
@@ -325,7 +326,7 @@ typedef unsigned long long int	uintmax_t;
   int getElement(int i) {
     return (*($self))[i];
   }
-  int setElement(int i, int value) {
+  void setElement(int i, int value) {
     (*($self))[i] = value;
   }
 }
@@ -344,4 +345,9 @@ typedef unsigned long long int	uintmax_t;
 %{
 #include <RDGeneral/versions.h>
 %}
+
+%immutable RDKit::rdkitVersion;
+%immutable RDKit::boostVersion;
+%immutable RDKit::rdkitBuild;
+
 %include <RDGeneral/versions.h>

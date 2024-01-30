@@ -60,7 +60,7 @@
   /* Methods from MolFileStereoChem.h */
   Bond::BondDir DetermineBondWedgeState(const RDKit::INT_MAP_INT &wedgeBonds,
                                         const RDKit::Conformer *conf) {
-    RDKit::DetermineBondWedgeState(($self), wedgeBonds, conf);
+    return RDKit::DetermineBondWedgeState(($self), wedgeBonds, conf);
   }
   
   /* Based on corresponding methods in Atom.i */
