@@ -366,11 +366,10 @@ void fixHs(ChemicalReaction &rxn) {
   }
 }
 
-void adjustTemplates(ChemicalReaction &rxn,
+void adjustTemplates(const MOL_SPTR_VECT &templates,
                      const MolOps::AdjustQueryParameters &params) {
-  for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
-       ++it) {
-    auto *rw = dynamic_cast<RWMol *>(it->get());
+  for (auto &templ : templates) {
+    auto *rw = dynamic_cast<RWMol *>(templ.get());
     if (rw) {
       adjustQueryProperties(*rw, &params);
     } else
@@ -391,10 +390,13 @@ void sanitizeRxn(ChemicalReaction &rxn, unsigned int &operationsThatFailed,
     operationsThatFailed = SANITIZE_ATOM_MAPS;
     fixAtomMaps(rxn);
   }
-
   if (ops & SANITIZE_ADJUST_REACTANTS) {
     operationsThatFailed = SANITIZE_ADJUST_REACTANTS;
-    adjustTemplates(rxn, params);
+    adjustTemplates(rxn.getReactants(), params);
+  }
+  if (ops & SANITIZE_ADJUST_PRODUCTS) {
+    operationsThatFailed = SANITIZE_ADJUST_PRODUCTS;
+    adjustTemplates(rxn.getProducts(), params);
   }
   if (ops & SANITIZE_MERGEHS) {
     operationsThatFailed = SANITIZE_MERGEHS;

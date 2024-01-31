@@ -66,7 +66,8 @@ RDKIT_CHEMREACTIONS_EXPORT void fixAtomMaps(ChemicalReaction &rxn);
 
 //! Adjusts the reactant templates to properly match reagents
 RDKIT_CHEMREACTIONS_EXPORT void adjustTemplates(
-    ChemicalReaction &rxn, const MolOps::AdjustQueryParameters &params);
+    const MOL_SPTR_VECT &templates,
+    const MolOps::AdjustQueryParameters &params);
 
 //! merge query Hs if appropriate
 RDKIT_CHEMREACTIONS_EXPORT void fixHs(ChemicalReaction &rxn);
@@ -117,6 +118,7 @@ typedef enum {
   SANITIZE_ATOM_MAPS = 0x2,
   SANITIZE_ADJUST_REACTANTS = 0x4,
   SANITIZE_MERGEHS = 0x8,
+  SANITIZE_ADJUST_PRODUCTS = 0x10,
   SANITIZE_ALL = 0xFFFFFFFF
 } SanitizeRxnFlags;
 

@@ -87,8 +87,10 @@ CDXMLDataStreamToChemicalReactions(std::istream &inStream, bool sanitize,
     if (!sanitize) {  // we still need to fix the reaction for smarts style
                       // matching
       unsigned int failed;
-      sanitizeRxn(*res, failed, RxnOps::SANITIZE_ADJUST_REACTANTS,
-                  RxnOps::ChemDrawRxnAdjustParams());
+      RxnOps::sanitizeRxn(
+          *res, failed,
+          RxnOps::SANITIZE_ADJUST_REACTANTS | RxnOps::SANITIZE_ADJUST_PRODUCTS,
+          RxnOps::MatchOnlyAtRgroupsAdjustParams());
     }
   }
   return result;
