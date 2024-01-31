@@ -1171,6 +1171,29 @@ M  END
     rxns = AllChem.ReactionsFromCDXMLBlock('')
     self.assertEqual(len(rxns), 0)
 
+  def testSanitizeRxnAsMols(self):
+    rxn = AllChem.ReactionFromSmarts("C1=CC=CC=C1>CN(=O)=O>C1=CC=CC=N1", useSmiles=True)
+    self.assertIsNotNone(rxn)
+    self.assertFalse(rxn.GetReactantTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(rxn.GetProductTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertEqual(rxn.GetAgentTemplate(0).GetAtomWithIdx(1).GetFormalCharge(), 0)
+
+    AllChem.SanitizeRxnAsMols(rxn)
+    self.assertTrue(rxn.GetReactantTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertTrue(rxn.GetProductTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertEqual(rxn.GetAgentTemplate(0).GetAtomWithIdx(1).GetFormalCharge(), 1)
+
+    rxn = AllChem.ReactionFromSmarts("C1=CC=CC=C1>CN(=O)=O>C1=CC=CC=N1", useSmiles=True)
+    self.assertIsNotNone(rxn)
+    self.assertFalse(rxn.GetReactantTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(rxn.GetProductTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertEqual(rxn.GetAgentTemplate(0).GetAtomWithIdx(1).GetFormalCharge(), 0)
+
+    AllChem.SanitizeRxnAsMols(rxn, Chem.SanitizeFlags.SANITIZE_CLEANUP)
+    self.assertFalse(rxn.GetReactantTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(rxn.GetProductTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertEqual(rxn.GetAgentTemplate(0).GetAtomWithIdx(1).GetFormalCharge(), 1)
+
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)

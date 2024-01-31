@@ -1742,3 +1742,49 @@ TEST_CASE("allow sanitization of reaction products") {
 
   }
 }
+
+TEST_CASE("sanitizeRxnAsMols") {
+  SECTION("basics"){
+    // silly example for testing
+    auto rxn = "C1=CC=CC=C1>CN(=O)=O>C1=CC=CC=N1"_rxnsmiles;
+    REQUIRE(rxn);
+    CHECK(!rxn->getReactants()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(!rxn->getProducts()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(rxn->getAgents()[0]->getAtomWithIdx(1)->getFormalCharge()==0);
+
+    RxnOps::sanitizeRxnAsMols(*rxn);
+    CHECK(rxn->getReactants()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(rxn->getProducts()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(rxn->getAgents()[0]->getAtomWithIdx(1)->getFormalCharge()==1);
+  }
+  SECTION("sanitization options"){
+    // silly example for testing
+    auto rxn = "C1=CC=CC=C1>CN(=O)=O>C1=CC=CC=N1"_rxnsmiles;
+    REQUIRE(rxn);
+    CHECK(!rxn->getReactants()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(!rxn->getProducts()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(rxn->getAgents()[0]->getAtomWithIdx(1)->getFormalCharge()==0);
+
+    RxnOps::sanitizeRxnAsMols(*rxn,MolOps::SanitizeFlags::SANITIZE_CLEANUP);
+    CHECK(!rxn->getReactants()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(!rxn->getProducts()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(rxn->getAgents()[0]->getAtomWithIdx(1)->getFormalCharge()==1);
+  }
+  SECTION("sanitization failures"){
+    { // reactant
+      auto rxn = "c1cccc1>CN(=O)=O>CC"_rxnsmiles;
+      REQUIRE(rxn);
+      CHECK_THROWS_AS(RxnOps::sanitizeRxnAsMols(*rxn),MolSanitizeException);
+    }
+    { // product
+      auto rxn = "CC>CN(=O)=O>c1cccn1"_rxnsmiles;
+      REQUIRE(rxn);
+      CHECK_THROWS_AS(RxnOps::sanitizeRxnAsMols(*rxn),MolSanitizeException);
+    }
+    { // agent
+      auto rxn = "CC>CO(=O)=O>CC"_rxnsmiles;
+      REQUIRE(rxn);
+      CHECK_THROWS_AS(RxnOps::sanitizeRxnAsMols(*rxn),MolSanitizeException);
+    }
+  }
+}
