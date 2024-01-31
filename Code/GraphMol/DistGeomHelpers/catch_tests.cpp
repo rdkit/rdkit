@@ -934,3 +934,32 @@ TEST_CASE("atropisomers bulk") {
     }
   }
 }
+
+TEST_CASE(
+    "Github #7109: wrong stereochemistry in ring from stereospecific SMILES") {
+  SECTION("basics") {
+    auto m = "C1[C@H](C#CC#C)CC[C@H](C#CC#C)C1"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    REQUIRE(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    REQUIRE(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::KDG;
+    {  // this always worked
+      ps.randomSeed = 0xC0FFEE;
+      auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+      CHECK(cid >= 0);
+      MolOps::assignStereochemistryFrom3D(*m, cid);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+      CHECK(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    }
+    {  // this failed
+      ps.randomSeed = 0xC0FFEE + 123;
+      auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+      CHECK(cid >= 0);
+      MolOps::assignStereochemistryFrom3D(*m, cid);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+      CHECK(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    }
+  }
+}
