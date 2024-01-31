@@ -798,19 +798,6 @@ TEST_CASE("atropisomers and embedding") {
       Atropisomers::AtropAtomAndBondVec abvs[2];
       REQUIRE(Atropisomers::getAtropisomerAtomsAndBonds(mol->getBondWithIdx(7),
                                                         abvs, *mol));
-      // std::cerr << "!!! " << abvs[0].first->getIdx() << " ";
-      // for (const auto &bi : abvs[0].second) {
-      //   std::cerr << bi->getIdx() << "-"
-      //             << bi->getOtherAtomIdx(abvs[0].first->getIdx()) << " ";
-      // }
-      // std::cerr << std::endl;
-      // std::cerr << "!!! " << abvs[1].first->getIdx() << " ";
-      // for (const auto &bi : abvs[1].second) {
-      //   std::cerr << bi->getIdx() << "-"
-      //             << bi->getOtherAtomIdx(abvs[1].first->getIdx()) << " ";
-      // }
-      // std::cerr << std::endl;
-
       auto pos_1 = conf.getAtomPos(7);
       auto pos_2 = conf.getAtomPos(8);
       auto pos_3 = conf.getAtomPos(1);
@@ -832,19 +819,6 @@ TEST_CASE("atropisomers and embedding") {
       Atropisomers::AtropAtomAndBondVec abvs[2];
       REQUIRE(Atropisomers::getAtropisomerAtomsAndBonds(mol2.getBondWithIdx(7),
                                                         abvs, mol2));
-      // std::cerr << "!!! " << abvs[0].first->getIdx() << " ";
-      // for (const auto &bi : abvs[0].second) {
-      //   std::cerr << bi->getIdx() << "-"
-      //             << bi->getOtherAtomIdx(abvs[0].first->getIdx()) << " ";
-      // }
-      // std::cerr << std::endl;
-      // std::cerr << "!!! " << abvs[1].first->getIdx() << " ";
-      // for (const auto &bi : abvs[1].second) {
-      //   std::cerr << bi->getIdx() << "-"
-      //             << bi->getOtherAtomIdx(abvs[1].first->getIdx()) << " ";
-      // }
-      // std::cerr << std::endl;
-
       auto pos_1 = conf.getAtomPos(7);
       auto pos_2 = conf.getAtomPos(8);
       auto pos_3 = conf.getAtomPos(1);
@@ -900,10 +874,7 @@ TEST_CASE("atropisomers bulk") {
         auto v3 = pts[2] - pts[0];
         auto v4 = pts[3] - pts[0];
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
-        if (chiralVol * vol < 0) {
-          std::cerr << cid;
-          std::cerr << MolToV3KMolBlock(*mol, true, cid) << std::endl;
-        }
+        INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol > 0);
       }
     }  // now swap the stereo and see if it still works
@@ -925,10 +896,7 @@ TEST_CASE("atropisomers bulk") {
         auto v3 = pts[2] - pts[0];
         auto v4 = pts[3] - pts[0];
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
-        if (chiralVol * vol > 0) {
-          std::cerr << cid;
-          std::cerr << MolToV3KMolBlock(*mol, true, cid) << std::endl;
-        }
+        INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol < 0);
       }
     }
