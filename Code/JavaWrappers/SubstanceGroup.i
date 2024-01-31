@@ -74,13 +74,13 @@ unsigned int getSubstanceGroupCount(RDKit::ROMol &mol);
     auto &attachPoints = $self->getAttachPoints();
     return &(attachPoints[idx]);
   }
-  const getBracketCount() {
+  size_t getBracketCount() {
     return $self->getBrackets().size();
   }
-  const getCStateCount() {
+  size_t getCStateCount() {
     return $self->getCStates().size();
   }
-  const getAttachPointCount() {
+  size_t getAttachPointCount() {
     return $self->getAttachPoints().size();
   }
 }

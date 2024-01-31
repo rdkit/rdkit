@@ -652,7 +652,7 @@ void setAllowNontetrahedralChirality(bool);
     return RDKit::MolAlign::alignMol(*($self), refMol, prbCid, refCid, atomMap, weights, reflect, maxIters);
   }
 
-  void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds=0,
+  void alignMolConformers(const std::vector<unsigned int> *atomIds=0,
                           const std::vector<unsigned int> *confIds=0,
                           const RDNumeric::DoubleVector  *weights=0,
                           bool reflect=false, unsigned int maxIters=50) {
@@ -711,13 +711,12 @@ void setAllowNontetrahedralChirality(bool);
     return std::make_pair(rmsd,score);
   }
 
-  void computeGasteigerCharges(const RDKit::ROMol *mol,int nIter=12,bool throwOnParamFailure=false){
-    RDKit::computeGasteigerCharges(*mol,nIter,throwOnParamFailure);
+  void computeGasteigerCharges(int nIter=12,bool throwOnParamFailure=false){
+    RDKit::computeGasteigerCharges(*($self),nIter,throwOnParamFailure);
   }
-  void computeGasteigerCharges(const RDKit::ROMol *mol,
-                               std::vector<double> &charges,
+  void computeGasteigerCharges(std::vector<double> &charges,
                                int nIter=12,bool throwOnParamFailure=false){
-    RDKit::computeGasteigerCharges(*mol,charges,nIter,throwOnParamFailure);
+    RDKit::computeGasteigerCharges(*($self),charges,nIter,throwOnParamFailure);
   }
 
   /* From new_canon.h*/
