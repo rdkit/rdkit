@@ -621,6 +621,13 @@ void test8() {
   // BOOST_LOG(rdInfoLog) << "1" << std::endl;
   m2 = MolOps::addHs(*m);
   CHECK_INVARIANT(m2->getNumAtoms() == 11, "");
+
+  // addHs should not set the noImplicit flag.
+  // This was Github Issue #7123
+  for (auto at : m2->atoms()) {
+    TEST_ASSERT(at->getNoImplicit() == false);
+  }
+
   delete m;
   delete m2;
 
