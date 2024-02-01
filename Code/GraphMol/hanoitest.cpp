@@ -12,7 +12,6 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/hanoiSort.h>
-#include <boost/timer/timer.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -1520,15 +1519,15 @@ void test12() {
         rdbase + "/Code/GraphMol/FileParsers/test_data/2FVD.pdb";
     ROMol *m = PDBFileToMol(fName);
     TEST_ASSERT(m);
-    // std::string smi1 = MolToSmiles(*m, true);
+    std::string smi1 = MolToSmiles(*m, true);
     delete m;
 
-    // m = SmilesToMol(smi1);
-    // TEST_ASSERT(m);
-    // std::string smi2 = MolToSmiles(*m, true);
-    // delete m;
-    // // std::cout << smi1 << "\n" << smi2 << std::endl;
-    // TEST_ASSERT(smi1 == smi2);
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2 = MolToSmiles(*m, true);
+    delete m;
+    // std::cout << smi1 << "\n" << smi2 << std::endl;
+    TEST_ASSERT(smi1 == smi2);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -1605,70 +1604,23 @@ int main() {
   RDLog::InitLogs();
   boost::logging::enable_logs("rdApp.info");
 #if 1
-  {
-    boost::timer::auto_cpu_timer t;
-    test1();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test2();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test3();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test4();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test5();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test6();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test7a();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test9();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test10();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test11();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test12();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test7();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    test8();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    testGithub1567();
+  test1();
+  test2();
+  test3();
+  test4();
+  test5();
+  test6();
+  test7a();
+  test9();
+  test10();
+  test11();
+  test12();
+  test7();
+  test8();
+  testGithub1567();
 #endif
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    testRingsAndDoubleBonds();
-  }
-  {
-    boost::timer::auto_cpu_timer t;
-    testCanonicalDiastereomers();
-  }
+  testRingsAndDoubleBonds();
+  testCanonicalDiastereomers();
+
   return 0;
 }
