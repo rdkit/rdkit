@@ -1368,7 +1368,7 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
       //   in a ring of size 3  (from InChI)
       // OR
       //   a bridgehead (RDKit extension)
-      if (atom->getAtomicNum() == 7 && atom->getDegree() == 3 &&
+      if (atom->getAtomicNum() == 7 && atom->getTotalDegree() == 3 &&
           !ringInfo->isAtomInRingOfSize(atom->getIdx(), 3) &&
           !queryIsAtomBridgehead(atom)) {
         return false;
