@@ -2644,9 +2644,9 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(static_cast<size_t>(!sssparams.useChirality)));
     CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(static_cast<size_t>(!sssparams.useChirality)));
   }
 
   SECTION("chiral center w/ implicit H in linear mol") {
@@ -2665,9 +2665,9 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(static_cast<size_t>(!sssparams.useChirality)));
     CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(static_cast<size_t>(!sssparams.useChirality)));
   }
 
   SECTION("fully substituted, asymmetric chiral atoms (2) in ring") {
@@ -2686,9 +2686,9 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(!sssparams.useChirality));
     CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(!sssparams.useChirality));
   }
 
   SECTION("partially substituted, asymmetric chiral atoms (2) in ring") {
@@ -2707,8 +2707,8 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(!sssparams.useChirality));
     CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(!sssparams.useChirality));
   }
 }
