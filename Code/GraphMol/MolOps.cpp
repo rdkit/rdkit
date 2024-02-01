@@ -724,8 +724,12 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         return false;
       };
       if (comp.size() == 1 ||
-          !fragmentHasChallengingFeatures(comp, atomsInFrag)) {
-        // special case for very small fragments
+          (nFrags > 3 && !fragmentHasChallengingFeatures(comp, atomsInFrag))) {
+        // special case for a small, simple fragments when a bunch of fragments
+        // are present. The check on the number of fragments is purely
+        // empirical. This is mainly intended to catch situations like proteins
+        // where you have a bunch of single-atom fragments (waters); the
+        // standard approach below ends up being horribly inefficient there
         RWMOL_SPTR frag(new RWMol());
         res.push_back(frag);
         std::map<unsigned int, unsigned int> atomIdxMap;
