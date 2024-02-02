@@ -29,7 +29,7 @@
 ## Web presence
 
   * [RDKit web page](https://rdkit.org)
-  * [Blog](https://rdkit.blogspot.com)
+  * [Blog](https://greglandrum.github.io/rdkit-blog/)
   * [Documentation](https://www.rdkit.org/docs/index.html)
 
 #### Materials from user group meetings
