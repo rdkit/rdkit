@@ -165,6 +165,12 @@ RDKIT_CHEMREACTIONS_EXPORT void sanitizeRxn(
     ChemicalReaction &rxn,
     const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
 
+//! Does the usual molecular sanitization on each reactant, agent, and product
+///  of the reaction
+RDKIT_CHEMREACTIONS_EXPORT void sanitizeRxnAsMols(
+    ChemicalReaction &rxn,
+    unsigned int sanitizeOps = MolOps::SanitizeFlags::SANITIZE_ALL);
+
 }  // namespace RxnOps
 }  // namespace RDKit
 
