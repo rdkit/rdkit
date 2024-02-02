@@ -515,8 +515,11 @@ void set_reaction_data(std::string type, std::string prop, SchemeInfo &scheme,
 }
 }  // namespace
 
-std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
-    std::istream &inStream, bool sanitize, bool removeHs) {
+namespace v2 {
+namespace CDXMLParser {
+
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
+    std::istream &inStream, const CDXMLParserParams &params) {
   // populate tree structure pt
   using boost::property_tree::ptree;
   ptree pt;
@@ -611,9 +614,9 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
               // single bond dir flags:
               MolOps::clearSingleBondDirFlags(*res);
 
-              if (sanitize) {
+              if (params.sanitize) {
                 try {
-                  if (removeHs) {
+                  if (params.removeHs) {
                     // Bond stereo detection must happen before H removal, or
                     // else we might be removing stereogenic H atoms in double
                     // bonds (e.g. imines). But before we run stereo detection,
@@ -748,22 +751,22 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
   return mols;
 }
 
-std::vector<std::unique_ptr<RWMol>> CDXMLFileToMols(const std::string &fileName,
-                                                    bool sanitize,
-                                                    bool removeHs) {
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
+    const std::string &fileName, const CDXMLParserParams &params) {
   std::ifstream ifs(fileName);
   if (!ifs || ifs.bad()) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
     throw BadFileException(errout.str());
   }
-  return CDXMLDataStreamToMols(ifs, sanitize, removeHs);
+  return MolsFromCDXMLDataStream(ifs, params);
 }
 
-std::vector<std::unique_ptr<RWMol>> CDXMLToMols(const std::string &cdxml,
-                                                bool sanitize, bool removeHs) {
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
+    const std::string &cdxml, const CDXMLParserParams &params) {
   std::stringstream iss(cdxml);
-  return CDXMLDataStreamToMols(iss, sanitize, removeHs);
+  return MolsFromCDXMLDataStream(iss, params);
 }
-
+}  // namespace CDXMLParser
+}  // namespace v2
 }  // namespace RDKit
