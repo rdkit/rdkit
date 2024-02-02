@@ -411,5 +411,24 @@ void sanitizeRxn(ChemicalReaction &rxn,
   unsigned int ops = 0;
   return sanitizeRxn(rxn, ops, SANITIZE_ALL, params);
 }
+
+void sanitizeRxnAsMols(ChemicalReaction &rxn, unsigned int sanitizeOps) {
+  for (auto &mol : rxn.getReactants()) {
+    unsigned int operationThatFailed;
+    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(mol.get()), operationThatFailed,
+                        sanitizeOps);
+  }
+  for (auto &mol : rxn.getAgents()) {
+    unsigned int operationThatFailed;
+    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(mol.get()), operationThatFailed,
+                        sanitizeOps);
+  }
+  for (auto &mol : rxn.getProducts()) {
+    unsigned int operationThatFailed;
+    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(mol.get()), operationThatFailed,
+                        sanitizeOps);
+  }
+}
+
 }  // namespace RxnOps
 }  // namespace RDKit
