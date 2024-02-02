@@ -20,8 +20,8 @@ namespace RDKit {
 
 //! A single rgroup attached to a given core.
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupData {
-  boost::shared_ptr<RWMol> combinedMol;
-  std::vector<boost::shared_ptr<ROMol>> mols;  // All the mols in the rgroup
+  RWMOL_SPTR combinedMol;
+  std::vector<ROMOL_SPTR> mols;  // All the mols in the rgroup
   std::vector<std::string> smilesVect;         // used for rgroup equivalence
   std::string
       smiles;  // smiles for all the mols in the rgroup (with attachments)
@@ -37,7 +37,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupData {
  public:
   RGroupData() {}
 
-  void add(boost::shared_ptr<ROMol> newMol,
+  void add(const ROMOL_SPTR &newMol,
            const std::vector<int> &rlabel_attachments);
 
   std::map<int, int> getNumBondsToRlabels() const;
@@ -47,7 +47,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupData {
  private:
   void computeIsHydrogen();
 
-  bool isMolHydrogen(ROMol &mol);
+  bool isMolHydrogen(const ROMol &mol) const;
 
   //! compute the canonical smiles for the attachments (bug: removes dupes since
   //! we are using a set...)
