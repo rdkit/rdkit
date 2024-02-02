@@ -51,24 +51,25 @@ std::string addChemicalReactionToPNGStream(const ChemicalReaction &rxn,
   return addMetadataToPNGStream(iStream, metadata);
 };
 
-ChemicalReaction *PNGStreamToChemicalReaction(std::istream &inStream) {
-  ChemicalReaction *res = nullptr;
+namespace v2 {
+namespace ReactionParser {
+std::unique_ptr<ChemicalReaction> ReactionFromPNGStream(
+    std::istream &inStream) {
+  std::unique_ptr<ChemicalReaction> res;
   auto metadata = PNGStreamToMetadata(inStream);
   bool formatFound = false;
   for (const auto &pr : metadata) {
     if (boost::starts_with(pr.first, PNGData::rxnPklTag)) {
-      res = new ChemicalReaction(pr.second);
+      res.reset(new ChemicalReaction(pr.second));
       formatFound = true;
     } else if (boost::starts_with(pr.first, PNGData::rxnSmilesTag)) {
-      std::map<std::string, std::string> *replacements = nullptr;
-      bool useSmiles = true;
-      res = RxnSmartsToChemicalReaction(pr.second, replacements, useSmiles);
+      ReactionFromSmiles(pr.second).swap(res);
       formatFound = true;
     } else if (boost::starts_with(pr.first, PNGData::rxnSmartsTag)) {
-      res = RxnSmartsToChemicalReaction(pr.second);
+      ReactionFromSmarts(pr.second).swap(res);
       formatFound = true;
     } else if (boost::starts_with(pr.first, PNGData::rxnRxnTag)) {
-      res = RxnBlockToChemicalReaction(pr.second);
+      ReactionFromRxnBlock(pr.second).swap(res);
       formatFound = true;
     }
     if (formatFound) {
@@ -80,5 +81,6 @@ ChemicalReaction *PNGStreamToChemicalReaction(std::istream &inStream) {
   }
   return res;
 }
-
+}  // namespace ReactionParser
+}  // namespace v2
 }  // namespace RDKit

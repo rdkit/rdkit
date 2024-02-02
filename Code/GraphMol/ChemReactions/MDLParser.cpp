@@ -52,6 +52,8 @@
 
 namespace RDKit {
 
+using namespace v2::FileParsers;
+
 namespace {
 void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
                         bool sanitize, bool removeHs, bool strictParsing,
@@ -97,6 +99,11 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     errout << "Cannot convert " << tempStr.substr(spos, 3) << " to int";
     throw ChemicalReactionParserException(errout.str());
   }
+  MolFileParserParams params;
+  params.sanitize = sanitize;
+  params.removeHs = removeHs;
+  params.strictParsing = strictParsing;
+
   for (unsigned int i = 0; i < nReacts; ++i) {
     line++;
     tempStr = getLine(inStream);
@@ -108,8 +115,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     }
     ROMol *react;
     try {
-      react =
-          MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+      react = MolFromMolDataStream(inStream, line, params).release();
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse reactant " << i << ". The error was:\n\t"
@@ -132,8 +138,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     }
     ROMol *prod;
     try {
-      prod =
-          MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+      prod = MolFromMolDataStream(inStream, line, params).release();
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse product " << i << ". The error was:\n\t"
@@ -155,9 +160,14 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     if (tempStr.substr(0, 4) != "$MOL") {
       throw ChemicalReactionParserException("$MOL header not found");
     }
+    // we don't sanitize or remove Hs from agents
+    MolFileParserParams agentParams;
+    agentParams.sanitize = false;
+    agentParams.removeHs = false;
+    agentParams.strictParsing = strictParsing;
     ROMol *agent;
     try {
-      agent = MolDataStreamToMol(inStream, line, false);
+      agent = MolFromMolDataStream(inStream, line, agentParams).release();
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse agent " << i << ". The error was:\n\t"
@@ -314,7 +324,7 @@ namespace ReactionParser {
 //! Parse a text stream in MDL rxn format into a ChemicalReaction
 std::unique_ptr<ChemicalReaction> ReactionFromRxnDataStream(
     std::istream &inStream, unsigned int &line,
-    const FileParsers::MolFileParserParams &params) {
+    const MolFileParserParams &params) {
   std::string tempStr;
 
   // header line
@@ -370,15 +380,14 @@ std::unique_ptr<ChemicalReaction> ReactionFromRxnDataStream(
 };
 
 std::unique_ptr<ChemicalReaction> ReactionFromRxnBlock(
-    const std::string &rxnBlock,
-    const FileParsers::MolFileParserParams &params) {
+    const std::string &rxnBlock, const MolFileParserParams &params) {
   std::istringstream inStream(rxnBlock);
   unsigned int line = 0;
   return ReactionFromRxnDataStream(inStream, line, params);
 };
 
 std::unique_ptr<ChemicalReaction> ReactionFromRxnFile(
-    const std::string &fName, const FileParsers::MolFileParserParams &params) {
+    const std::string &fName, const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || inStream.eof()) {
     return nullptr;

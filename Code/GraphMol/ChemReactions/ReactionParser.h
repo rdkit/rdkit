@@ -248,34 +248,66 @@ RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnRxnTag;
 RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnPklTag;
 }  // namespace PNGData
 
+namespace v2 {
+namespace ReactionParser {
+
 //! \brief constructs a ChemicalReaction from the metadata in a PNG stream
 /*!
 
 Looks through the metadata in the PNG to find the first tag that matches one of
-the tags in \c RDKit::PNGData. A molecule is constructed from this chunk.
+the tags in \c RDKit::PNGData. A reaction is constructed from this chunk.
+
+Throws a \c FileParseException if no suitable tag is found.
+
+ */
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction>
+ReactionFromPNGStream(std::istream &pngStream);
+//! \brief constructs a ChemicalReaction from the metadata in a PNG string
+//! See \c PNGStreamToChemicalReaction() for more details
+inline std::unique_ptr<ChemicalReaction> ReactionFromPNGString(
+    const std::string &data) {
+  std::stringstream inStream(data);
+  return ReactionFromPNGStream(inStream);
+};
+//! \brief constructs a ChemicalReaction from the metadata in a PNG file
+//! See \c PNGStreamToChemicalReaction() for more details
+inline std::unique_ptr<ChemicalReaction> ReactionFromPNGFile(
+    const std::string &fname) {
+  std::ifstream inStream(fname.c_str(), std::ios::binary);
+  if (!inStream || (inStream.bad())) {
+    throw BadFileException((boost::format("Bad input file %s") % fname).str());
+  }
+  return ReactionFromPNGStream(inStream);
+};
+}  // namespace ReactionParser
+}  // namespace v2
+
+inline namespace v1 {
+//! \brief constructs a ChemicalReaction from the metadata in a PNG stream
+/*!
+
+Looks through the metadata in the PNG to find the first tag that matches one of
+the tags in \c RDKit::PNGData. A reaction is constructed from this chunk.
 
 Throws a \c FileParseException if no suitable tag is found.
 
 The caller is responsible for the returned pointer.
 
  */
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *PNGStreamToChemicalReaction(
-    std::istream &pngStream);
+inline ChemicalReaction *PNGStreamToChemicalReaction(std::istream &pngStream) {
+  return v2::ReactionParser::ReactionFromPNGStream(pngStream).release();
+}
 //! \brief constructs a ChemicalReaction from the metadata in a PNG string
 //! See \c PNGStreamToChemicalReaction() for more details
 inline ChemicalReaction *PNGStringToChemicalReaction(const std::string &data) {
-  std::stringstream inStream(data);
-  return PNGStreamToChemicalReaction(inStream);
-};
+  return v2::ReactionParser::ReactionFromPNGString(data).release();
+}
 //! \brief constructs a ChemicalReaction from the metadata in a PNG file
 //! See \c PNGStreamToChemicalReaction() for more details
 inline ChemicalReaction *PNGFileToChemicalReaction(const std::string &fname) {
-  std::ifstream inStream(fname.c_str(), std::ios::binary);
-  if (!inStream || (inStream.bad())) {
-    throw BadFileException((boost::format("Bad input file %s") % fname).str());
-  }
-  return PNGStreamToChemicalReaction(inStream);
-};
+  return v2::ReactionParser::ReactionFromPNGFile(fname).release();
+}
+}  // namespace v1
 
 //! \brief adds metadata for a ChemicalReaction to the data from a PNG stream.
 //! The modified PNG data is returned.
@@ -322,24 +354,24 @@ inline std::string addChemicalReactionToPNGFile(const ChemicalReaction &rxn,
 inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmarts(const char *text,
                                                                size_t len) {
   std::string sma(text, len);
-  ChemicalReaction *ptr = nullptr;
+  std::unique_ptr<ChemicalReaction> ptr;
   try {
-    ptr = RxnSmartsToChemicalReaction(sma);
+    ptr = v2::ReactionParser::ReactionFromSmarts(sma);
   } catch (...) {
     ptr = nullptr;
   }
-  return std::unique_ptr<ChemicalReaction>(ptr);
+  return ptr;
 }
 inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmiles(const char *text,
                                                                size_t len) {
   std::string sma(text, len);
-  ChemicalReaction *ptr = nullptr;
+  std::unique_ptr<ChemicalReaction> ptr;
   try {
-    ptr = RxnSmartsToChemicalReaction(sma, nullptr, true);
+    ptr = v2::ReactionParser::ReactionFromSmiles(sma);
   } catch (...) {
     ptr = nullptr;
   }
-  return std::unique_ptr<ChemicalReaction>(ptr);
+  return ptr;
 }
 
 //---------------------------------------------------------------------------
