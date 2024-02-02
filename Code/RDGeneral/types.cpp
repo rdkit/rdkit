@@ -112,7 +112,6 @@ const std::string molRxnRole = "molRxnRole";
 const std::string molTotValence = "molTotValence";
 const std::string molFileLinkNodes = "_molLinkNodes";
 const std::string numArom = "numArom";
-const std::string origNoImplicit = "origNoImplicit";
 const std::string ringMembership = "ringMembership";
 const std::string smilesSymbol = "smilesSymbol";
 const std::string atomLabel = "atomLabel";

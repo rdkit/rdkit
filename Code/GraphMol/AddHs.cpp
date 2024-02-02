@@ -566,11 +566,6 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
           ++isoH;
         }
       }
-      // be very clear about implicits not being allowed in this
-      // representation
-      newAt->setProp(common_properties::origNoImplicit, newAt->getNoImplicit(),
-                     true);
-      newAt->setNoImplicit(true);
     }
     // update the atom's derived properties (valence count, etc.)
     // no sense in being strict here (was github #2782)
