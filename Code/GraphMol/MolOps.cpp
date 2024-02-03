@@ -387,7 +387,7 @@ void adjustHs(RWMol &mol) {
 
 void assignRadicals(RWMol &mol) {
   for (auto atom : mol.atoms()) {
-    // we only put automatically assign radicals to things that
+    // we only automatically assign radicals to atoms that
     // don't have implicit Hs:
     if (!atom->getNoImplicit() || !atom->getAtomicNum()) {
       continue;
@@ -435,18 +435,24 @@ void assignRadicals(RWMol &mol) {
       }
       atom->setNumRadicalElectrons(numRadicals);
     } else {
-      //  if this is an atom where we have no preferred valence info at all,
-      //  e.g. for transition metals, then we shouldn't be guessing. This was
-      //  #3330
-      auto nValence = nOuter - chg;
-      if (nValence < 0) {
-        // this was github #5462
-        nValence = 0;
-        BOOST_LOG(rdWarningLog)
-            << "Unusual charge on atom " << atom->getIdx()
-            << " number of radical electrons set to zero" << std::endl;
+      // #7122: if there's a bond to the metal center, then don't assign
+      // radicals:
+      if (atom->getDegree() > 0) {
+        atom->setNumRadicalElectrons(0);
+      } else {
+        auto nValence = nOuter - chg;
+        //  if this is an atom where we have no preferred valence info at all,
+        //  e.g. for transition metals, then we shouldn't be guessing. This was
+        //  #3330
+        if (nValence < 0) {
+          // this was github #5462
+          nValence = 0;
+          BOOST_LOG(rdWarningLog)
+              << "Unusual charge on atom " << atom->getIdx()
+              << " number of radical electrons set to zero" << std::endl;
+        }
+        atom->setNumRadicalElectrons(nValence % 2);
       }
-      atom->setNumRadicalElectrons(nValence % 2);
     }
   }
 }

@@ -1511,8 +1511,19 @@ TEST_CASE(
     "[chemistry][metals]") {
   SECTION("basics") {
     std::vector<std::pair<std::string, unsigned int>> data = {
-        {"[Mn+2]", 1}, {"[Mn+1]", 0}, {"[Mn]", 1}, {"[Mn-1]", 0},
-        {"[C]", 4},    {"[C+1]", 3},  {"[C-1]", 3}};
+        {"[Mn+2]", 1},
+        {"[Mn+1]", 0},
+        {"[Mn]", 1},
+        {"[Mn-1]", 0},
+        {"[C]", 4},
+        {"[C+1]", 3},
+        {"[C-1]", 3},
+        // this next set are from #7122
+        {"[Fe]", 0},
+        {"[Fe+1]", 1},
+        {"[Fe]C", 0},
+        {"[Nb](I)(I)(I)(I)I", 0},
+        {"[Zn+]C1=CC=CC=C1", 0}};
     for (const auto &pr : data) {
       std::unique_ptr<ROMol> m(SmilesToMol(pr.first));
       REQUIRE(m);
