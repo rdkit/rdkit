@@ -295,6 +295,7 @@ class TestLoadSDF(unittest.TestCase):
     df = PandasTools.LoadSDF(sio, sanitize=False)
     self.assertEqual(len(df), 3)
     self.assertEqual(df.iloc[1]["ROMol"].GetNumAtoms(), 6)
+    self.assertEqual(df.iloc[1]["ROMol"].GetAtomWithIdx(5).GetDegree(), 5)
 
 
 @unittest.skipIf((not hasattr(PandasTools, 'pd')) or PandasTools.pd is None,
