@@ -286,6 +286,17 @@ class TestLoadSDF(unittest.TestCase):
     df = PandasTools.LoadSDF(sio, molColName=None)
     self.assertEqual(set(df.columns), set("ID prop1 prop2 prop3".split()))
 
+  def test_sanitize_flag(self) -> None:
+    sio: BytesIO = getStreamIO(methane + pentavalentCarbon + peroxide)
+    df = PandasTools.LoadSDF(sio, sanitize=True)
+    self.assertEqual(len(df), 2)
+
+    sio: BytesIO = getStreamIO(methane + pentavalentCarbon + peroxide)
+    df = PandasTools.LoadSDF(sio, sanitize=False)
+    self.assertEqual(len(df), 3)
+    self.assertEqual(df.iloc[1]["ROMol"].GetNumAtoms(), 6)
+    self.assertEqual(df.iloc[1]["ROMol"].GetAtomWithIdx(5).GetDegree(), 5)
+
 
 @unittest.skipIf((not hasattr(PandasTools, 'pd')) or PandasTools.pd is None,
                  'Pandas not installed, skipping')
@@ -440,6 +451,32 @@ rtz
 
 > <prop3>
 yxcv
+
+$$$$
+"""
+
+pentavalentCarbon = """\
+PentavalentCarbon
+     RDKit          2D
+
+  6  5  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    2.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981    1.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    0.7500    0.0000 C   0  0  0  0  0  5  0  0  0  0  0  0
+  1  6  1  0
+  2  6  1  0
+  3  6  1  0
+  4  6  1  0
+  5  6  1  0
+M  END
+> <prop2>
+uio
+
+> <prop4>
+lkjh
 
 $$$$
 """

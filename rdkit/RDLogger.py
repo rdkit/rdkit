@@ -12,7 +12,7 @@
 import sys
 import traceback
 
-from rdkit.rdBase import AttachFileToLog, DisableLog, EnableLog, LogMessage
+from rdkit.rdBase import DisableLog, EnableLog, LogMessage
 
 _levels = ['rdApp.debug', 'rdApp.info', 'rdApp.warning', 'rdApp.error']
 DEBUG = 0
