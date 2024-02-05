@@ -212,6 +212,15 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
         secondNeighborBond = bond;
       }
     }
+    if (!firstNeighborBond) {
+      // allene
+      for (const auto bond : mol.atomBonds(atom)) {
+        if (bond == dblBond) {
+          continue;
+        }
+        firstNeighborBond = bond;
+      }
+    }
   };
 
   findNeighborBonds(atom1, firstFromAtom1, secondFromAtom1, dir1Set);
