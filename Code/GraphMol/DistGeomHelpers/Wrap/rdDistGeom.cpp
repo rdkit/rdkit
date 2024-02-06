@@ -453,6 +453,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
              RDKit::DGeomHelpers::EmbedFailureCauses::LINEAR_DOUBLE_BOND)
       .value("BAD_DOUBLE_BOND_STEREO",
              RDKit::DGeomHelpers::EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO)
+      .value("CHECK_CHIRAL_CENTERS2",
+             RDKit::DGeomHelpers::EmbedFailureCauses::CHECK_CHIRAL_CENTERS2)
       .export_values();
 
   python::class_<PyEmbedParameters, boost::noncopyable>(
