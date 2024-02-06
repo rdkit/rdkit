@@ -48,8 +48,8 @@ const RDGeom::POINT3D_VECT &Conformer::getPositions() const {
   return d_positions;
 }
 
-RDGeom::POINT3D_VECT &Conformer::getPositions() {
-  if (dp_mol) {
+RDGeom::POINT3D_VECT &Conformer::getPositions(bool force) {
+  if (dp_mol && !force) {
     PRECONDITION(dp_mol->getNumAtoms() == d_positions.size(), "");
   }
   return d_positions;
