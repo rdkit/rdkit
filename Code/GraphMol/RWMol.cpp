@@ -70,6 +70,50 @@ void insertStereoGroups(RWMol &mol, const ROMol &other,
   mol.setStereoGroups(new_groups);
 }
 
+void insertSubstanceGroups(RWMol &mol, const RWMol &other,
+                           const std::vector<unsigned int> &newAtomIds,
+                           const std::vector<unsigned int> &newBondIds) {
+  for (auto sgroup : getSubstanceGroups(other)) {
+    // update the sgroup's atom and bond indices
+    auto atom_indices = sgroup.getAtoms();
+    std::transform(atom_indices.begin(), atom_indices.end(),
+                   atom_indices.begin(), [&newAtomIds](unsigned int old_index) {
+                     return newAtomIds[old_index];
+                   });
+    sgroup.setAtoms(atom_indices);
+
+    auto bond_indices = sgroup.getBonds();
+    std::transform(bond_indices.begin(), bond_indices.end(),
+                   bond_indices.begin(), [&newBondIds](unsigned int old_index) {
+                     return newBondIds[old_index];
+                   });
+    sgroup.setBonds(bond_indices);
+
+    // patoms
+    auto patom_indices = sgroup.getParentAtoms();
+    std::transform(patom_indices.begin(), patom_indices.end(),
+                   patom_indices.begin(),
+                   [&newAtomIds](unsigned int old_index) {
+                     return newAtomIds[old_index];
+                   });
+    sgroup.setParentAtoms(patom_indices);
+
+    // cstates (these are references, can be updated in place)
+    for (auto &cstate : sgroup.getCStates()) {
+      cstate.bondIdx = newBondIds[cstate.bondIdx];
+    }
+
+    // attachment points (can also be updated in place)
+    for (auto &sap : sgroup.getAttachPoints()) {
+      sap.aIdx = newAtomIds[sap.aIdx];
+      if (sap.lvIdx != -1) {
+        sap.lvIdx = static_cast<int>(newAtomIds[sap.lvIdx]);
+      }
+    }
+
+    addSubstanceGroup(mol, sgroup);
+  }
+}
 }  // namespace
 
 RWMol &RWMol::operator=(const RWMol &other) {
@@ -162,6 +206,9 @@ void RWMol::insertMol(const ROMol &other) {
 
   // add stereo groups
   insertStereoGroups(*this, other, newAtomIds, newBondIds);
+
+  // add substance groups
+  insertSubstanceGroups(*this, other, newAtomIds, newBondIds);
 }
 
 unsigned int RWMol::addAtom(bool updateLabel) {
