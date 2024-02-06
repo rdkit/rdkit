@@ -19,6 +19,7 @@
 #include <GraphMol/Atom.h>
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/RingInfo.h>
+#include <GraphMol/Atropisomers.h>
 
 #include <GraphMol/Conformer.h>
 #include <RDGeneral/types.h>
@@ -543,8 +544,8 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
         chiralSet->d_idx4, *positions);
     double lb = chiralSet->getLowerVolumeBound();
     double ub = chiralSet->getUpperVolumeBound();
-    if ((lb > 0 && vol < lb && (lb - vol) / lb > .2) ||
-        (ub < 0 && vol > ub && (vol - ub) / ub > .2)) {
+    if ((lb > 0 && vol < lb && ((lb - vol) / lb > .2 || vol * lb < 0)) ||
+        (ub < 0 && vol > ub && ((vol - ub) / ub > .2 || vol * ub < 0))) {
 #ifdef DEBUG_EMBEDDING
       std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: "
                 << " " << vol << " " << lb << "-" << ub << std::endl;
@@ -733,6 +734,17 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
 bool finalChiralChecks(RDGeom::PointPtrVect *positions,
                        const detail::EmbedArgs &eargs,
                        EmbedParameters &embedParams) {
+  // confirm chiral volumes
+  if (!checkChiralCenters(positions, eargs, embedParams)) {
+    if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+      std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+      embedParams.failures[EmbedFailureCauses::CHECK_CHIRAL_CENTERS2]++;
+    }
+    return false;
+  }
+
   // "distance matrix" chirality test
   std::set<int> atoms;
   for (const auto &chiralSet : *eargs.chiralCenters) {
@@ -780,6 +792,8 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
       return false;
     }
   }
+  // FIX: do we need some kind of sanity check here for the non-atomic
+  // situations (e.g. atropisomers)?
 
   return true;
 }
@@ -1054,7 +1068,63 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
       }  // if block -chirality check
     }    // if block - heavy atom check
   }      // for loop over atoms
-}  // end of _findChiralSets
+
+  // now do atropisomers
+  for (const auto &bond : mol.bonds()) {
+    if (bond->getStereo() != Bond::BondStereo::STEREOATROPCCW &&
+        bond->getStereo() != Bond::BondStereo::STEREOATROPCW) {
+      continue;
+    }
+    Atropisomers::AtropAtomAndBondVec atomsAndBonds[2];
+    Atropisomers::getAtropisomerAtomsAndBonds(bond, atomsAndBonds, mol);
+    // make a chiral set for the atropisomeric bond
+    // we start with only managing cases where there are two exo-substituents on
+    // at least one side
+    if (atomsAndBonds[0].second.size() != 2 &&
+        atomsAndBonds[1].second.size() != 2) {
+      BOOST_LOG(rdWarningLog)
+          << "Atropisomer bond stereochemistry not used for bond "
+          << bond->getIdx()
+          << ", which does not have two exo substituents on at least one side."
+          << std::endl;
+      continue;
+    }
+    int idx0 = atomsAndBonds[0].first->getIdx();
+    int idx1 = atomsAndBonds[1].first->getIdx();
+
+    int nbr1 = atomsAndBonds[0].second[0]->getOtherAtomIdx(idx0);
+    int nbr2 = 0;
+    int nbr3 = 0;
+    int nbr4 = 0;
+    if (atomsAndBonds[0].second.size() == 2) {
+      nbr2 = atomsAndBonds[0].second[1]->getOtherAtomIdx(idx0);
+      nbr3 = atomsAndBonds[1].second[0]->getOtherAtomIdx(idx1);
+      if (atomsAndBonds[1].second.size() == 2) {
+        nbr4 = atomsAndBonds[1].second[1]->getOtherAtomIdx(idx1);
+      } else {
+        nbr4 = idx0;
+      }
+    } else {
+      nbr2 = atomsAndBonds[1].second[0]->getOtherAtomIdx(idx1);
+      nbr3 = atomsAndBonds[1].second[1]->getOtherAtomIdx(idx1);
+      nbr4 = idx0;
+    }
+    INT_VECT nbrs = {nbr1, nbr2, nbr3, nbr4};
+
+    // FIX: these numbers are empirical and should be revisited
+    double volLowerBound = 1.0;
+    double volUpperBound = 100.0;
+    if (bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+      std::swap(volLowerBound, volUpperBound);
+      volLowerBound *= -1;
+      volUpperBound *= -1;
+    }
+    auto *cset = new DistGeom::ChiralSet(idx0, nbrs[0], nbrs[1], nbrs[2],
+                                         nbrs[3], volLowerBound, volUpperBound);
+    DistGeom::ChiralSetPtr cptr(cset);
+    chiralCenters.push_back(cptr);
+  }
+}
 
 void adjustBoundsMatFromCoordMap(
     DistGeom::BoundsMatPtr mmat, unsigned int,

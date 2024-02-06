@@ -235,11 +235,14 @@ else:
 
   def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
               isomericSmiles=True, smilesName=None, embedProps=False, removeHs=True,
-              strictParsing=True):
+              strictParsing=True, sanitize=True):
     '''Read file in SDF format and return as Pandas data frame.
       If embedProps=True all properties also get embedded in Mol objects in the molecule column.
       If molColName=None molecules would not be present in resulting DataFrame (only properties
       would be read).
+      
+      Sanitize boolean is passed on to Chem.ForwardSDMolSupplier sanitize. 
+      If neither molColName nor smilesName are set, sanitize=false.
       '''
     if isinstance(filename, str):
       if filename.lower()[-3:] == ".gz":
@@ -253,7 +256,8 @@ else:
       close = None  # don't close an open file that was passed in
     records = []
     indices = []
-    sanitize = bool(molColName is not None or smilesName is not None)
+    if molColName is None and smilesName is None:
+      sanitize = False
     for i, mol in enumerate(
         Chem.ForwardSDMolSupplier(f, sanitize=sanitize, removeHs=removeHs,
                                   strictParsing=strictParsing)):

@@ -621,6 +621,13 @@ void test8() {
   // BOOST_LOG(rdInfoLog) << "1" << std::endl;
   m2 = MolOps::addHs(*m);
   CHECK_INVARIANT(m2->getNumAtoms() == 11, "");
+
+  // addHs should not set the noImplicit flag.
+  // This was Github Issue #7123
+  for (auto at : m2->atoms()) {
+    TEST_ASSERT(at->getNoImplicit() == false);
+  }
+
   delete m;
   delete m2;
 
@@ -8006,8 +8013,8 @@ void testRemoveAndTrackIsotopes() {
   TEST_ASSERT(SubstructMatch(*m, *mH2, matchH2));
   TEST_ASSERT(matchH2.size() == m->getNumAtoms());
   TEST_ASSERT(mH2_isotopicHsPerHeavy->total() == 12);
-  TEST_ASSERT(mH2_numExplicitHs == 28);
-  TEST_ASSERT(mH2_numImplicitHs == 0);
+  TEST_ASSERT(mH2_numExplicitHs == 0);
+  TEST_ASSERT(mH2_numImplicitHs == 28);
   for (auto p : matchH2) {
     TEST_ASSERT(mH2_isotopicHsPerHeavy->at(p.first) ==
                 m_isotopicHsPerHeavy->at(p.second));
@@ -8040,8 +8047,8 @@ void testRemoveAndTrackIsotopes() {
   TEST_ASSERT(matchH2 != matchH2Ren);
   TEST_ASSERT(matchH2.size() == matchH2Ren.size());
   TEST_ASSERT(mH2_isotopicHsPerHeavy->total() == 12);
-  TEST_ASSERT(mH2_numExplicitHs == 28);
-  TEST_ASSERT(mH2_numImplicitHs == 0);
+  TEST_ASSERT(mH2_numExplicitHs == 0);
+  TEST_ASSERT(mH2_numImplicitHs == 28);
   for (auto p : matchH2Ren) {
     TEST_ASSERT(mH2_isotopicHsPerHeavy->at(p.first) ==
                 m_isotopicHsPerHeavy->at(p.second));

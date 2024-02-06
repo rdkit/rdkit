@@ -123,8 +123,11 @@ void controllingBondFromAtom(const ROMol &mol,
     if (tBond == dblBond) {
       continue;
     }
-    if (tBond->getBondType() == Bond::SINGLE ||
-        tBond->getBondType() == Bond::AROMATIC) {
+    if ((tBond->getBondType() == Bond::SINGLE ||
+         tBond->getBondType() == Bond::AROMATIC) &&
+        (tBond->getBondDir() == Bond::BondDir::NONE ||
+         tBond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
+         tBond->getBondDir() == Bond::BondDir::ENDUPRIGHT)) {
       // prefer bonds that already have their directionality set
       // or that are adjacent to more double bonds:
       if (!bond) {
@@ -1368,7 +1371,7 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
       //   in a ring of size 3  (from InChI)
       // OR
       //   a bridgehead (RDKit extension)
-      if (atom->getAtomicNum() == 7 && atom->getDegree() == 3 &&
+      if (atom->getAtomicNum() == 7 && atom->getTotalDegree() == 3 &&
           !ringInfo->isAtomInRingOfSize(atom->getIdx(), 3) &&
           !queryIsAtomBridgehead(atom)) {
         return false;
@@ -3381,21 +3384,21 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
               // candidate for stereo
               isCandidate = false;
             } else {
+              needsDir[bond->getIdx()] = 1;
               if (nbrDir == Bond::BondDir::NONE ||
                   nbrDir == Bond::BondDir::ENDDOWNRIGHT ||
                   nbrDir == Bond::BondDir::ENDUPRIGHT) {
                 needsDir[nbrBond->getIdx()] = 1;
-              }
-              needsDir[bond->getIdx()] = 1;
-              dblBondNbrs[bond->getIdx()].push_back(nbrBond->getIdx());
-              // the search may seem inefficient, but these vectors are going to
-              // be at most 2 long (with very few exceptions). It's just not
-              // worth using a different data structure
-              if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
-                            singleBondNbrs[nbrBond->getIdx()].end(),
-                            bond->getIdx()) ==
-                  singleBondNbrs[nbrBond->getIdx()].end()) {
-                singleBondNbrs[nbrBond->getIdx()].push_back(bond->getIdx());
+                dblBondNbrs[bond->getIdx()].push_back(nbrBond->getIdx());
+                // the search may seem inefficient, but these vectors are going
+                // to be at most 2 long (with very few exceptions). It's just
+                // not worth using a different data structure
+                if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
+                              singleBondNbrs[nbrBond->getIdx()].end(),
+                              bond->getIdx()) ==
+                    singleBondNbrs[nbrBond->getIdx()].end()) {
+                  singleBondNbrs[nbrBond->getIdx()].push_back(bond->getIdx());
+                }
               }
             }
           }

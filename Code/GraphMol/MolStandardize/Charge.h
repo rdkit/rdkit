@@ -117,10 +117,13 @@ inline Reionizer *reionizerFromParams(const CleanupParameters &params) {
   <b>Notes:</b>
     - This class uncharges molecules by adding and/or removing hydrogens.
           - For zwitterions, hydrogens are moved to eliminate charges where
-  possible.
-          - In cases where there is a positive charge that is not neutralizable,
-                an	attempt is made to also preserve the corresponding
-  negative charge.
+            possible.
+          - By default, in cases where there is a positive charge that is not
+            neutralizable, an attempt is made to also preserve the corresponding
+            negative charge.
+          - When the `force` option is set, all neutralizable sites are
+            uncharged, also when not-neutralizable positive charges are present
+            and the resulting overall charge is therefore not null.
 
 */
 
@@ -130,14 +133,19 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
   Uncharger(bool canonicalOrdering) : Uncharger() {
     df_canonicalOrdering = canonicalOrdering;
   }
-  Uncharger(const Uncharger &other);
-  ~Uncharger();
-
+  Uncharger(bool canonicalOrdering, bool force) : Uncharger() {
+    df_canonicalOrdering = canonicalOrdering;
+    df_force = force;
+  }
+  Uncharger(const Uncharger &) = default;
+  ~Uncharger() = default;
+  
   ROMol *uncharge(const ROMol &mol);
   void unchargeInPlace(RWMol &mol);
 
  private:
   bool df_canonicalOrdering = true;
+  bool df_force = false;
   std::shared_ptr<ROMol> pos_h;
   std::shared_ptr<ROMol> pos_noh;
   std::shared_ptr<ROMol> neg;

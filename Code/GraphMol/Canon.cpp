@@ -291,17 +291,6 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
       atom2Dir = firstFromAtom2->getBondDir();
       bondDirCounts[firstFromAtom2->getIdx()] += 1;
       atomDirCounts[atom2->getIdx()] += 1;
-      if (secondFromAtom2) {
-        // both bonds have their directionalities set, make sure
-        // they are compatible:
-        if (firstFromAtom2->getBondDir() == secondFromAtom2->getBondDir() &&
-            bondDirCounts[firstFromAtom1->getIdx()]) {
-          CHECK_INVARIANT(
-              ((firstFromAtom2->getBeginAtomIdx() == atom2->getIdx()) ^
-               (secondFromAtom2->getBeginAtomIdx() == atom2->getIdx())),
-              "inconsistent state");
-        }
-      }
     } else {
       // the second bond must be present and setting the direction:
       CHECK_INVARIANT(secondFromAtom2, "inconsistent state");
