@@ -565,9 +565,10 @@ void RWMol::beginBatchEdit() {
 }
 
 void RWMol::commitBatchEdit() {
-    if (!dp_delBonds || !dp_delAtoms) {
+    if (!(dp_delBonds || dp_delAtoms)) {
         return;
     }
+
     batchRemoveBonds();
     batchRemoveAtoms();
     
@@ -576,6 +577,15 @@ void RWMol::commitBatchEdit() {
     
     // fix properties
     clearComputedProps(true);
+    dp_delBonds.reset();
+    dp_delAtoms.reset();
+    
+    if (dp_delAtoms || dp_delBonds) {
+      BOOST_LOG(rdWarningLog) << "batchEdit mode already enabled, ignoring "
+                                 "additional call to beginBatchEdit()"
+                              << std::endl;
+      throw ValueErrorException("Attempt to re-enter batchEdit mode");
+    }
 }
 
 void RWMol::batchRemoveBonds() {
