@@ -676,18 +676,49 @@ class TestCase(unittest.TestCase):
     self.assertEqual(list(ts[0]["signs"]), [1, 1, 1, 1, 1, 1])
     self.assertEqual(list(ts[0]["atomIndices"]), [0, 1, 2, 3])
 
+  def testTrackFailures(self):
+    params = AllChem.ETKDGv3()
+    params.trackFailures = True
+    params.maxIterations = 50
+    params.randomSeed = 42
+    mol = Chem.MolFromSmiles('C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC')
+    mol = Chem.AddHs(mol)
+    AllChem.EmbedMolecule(mol, params)
+    cnts = params.GetFailureCounts()
+    self.assertGreater(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 5)
+    self.assertGreater(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION], 10)
 
-def testTrackFailures(self):
-  params = AllChem.ETKDGv3()
-  params.trackFailures = True
-  params.maxIterations = 50
-  params.randomSeed = 42
-  mol = Chem.MolFromSmiles('C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC')
-  mol = Chem.AddHs(mol)
-  AllChem.EmbedMolecule(mol, params)
-  cnts = params.GetFailureCounts()
-  self.assertGreater(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 5)
-  self.assertGreater(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION], 10)
+  def testCoordMap(self):
+    mol = Chem.AddHs(Chem.MolFromSmiles("OCCC"))
+    ps = rdDistGeom.EmbedParameters()
+    coordMap = {0: geom.Point3D(0, 0, 0), \
+                1: geom.Point3D(0, 0, 1.5),
+                2: geom.Point3D(0, 1.5, 1.5)
+                }
+    ps.SetCoordMap(coordMap)
+    ps.randomSeed = 42
+    rdDistGeom.EmbedMolecule(mol, ps)
+
+    conf = mol.GetConformer()
+    v1 = conf.GetAtomPosition(0) - conf.GetAtomPosition(1)
+    v2 = conf.GetAtomPosition(2) - conf.GetAtomPosition(1)
+    angle = v1.AngleTo(v2)
+    self.assertAlmostEqual(angle, math.pi / 2.0, delta=0.15)
+
+    # make sure that we can call that a second time
+    coordMap = {0: geom.Point3D(0, 0, 0), \
+                1: geom.Point3D(1.5, 0, 0),
+                2: geom.Point3D(1.5, 1.5, 0)
+                }
+    ps.SetCoordMap(coordMap)
+    ps.randomSeed = 42
+    rdDistGeom.EmbedMolecule(mol, ps)
+
+    conf = mol.GetConformer()
+    v1 = conf.GetAtomPosition(0) - conf.GetAtomPosition(1)
+    v2 = conf.GetAtomPosition(2) - conf.GetAtomPosition(1)
+    angle = v1.AngleTo(v2)
+    self.assertAlmostEqual(angle, math.pi / 2.0, delta=0.15)
 
 
 if __name__ == '__main__':
