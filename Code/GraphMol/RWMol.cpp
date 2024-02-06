@@ -184,6 +184,19 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps,
   bond_p->setIdx(idx);
   bond_p->setBeginAtomIdx(obond->getBeginAtomIdx());
   bond_p->setEndAtomIdx(obond->getEndAtomIdx());
+
+  // Update explicit Hs, if set, on both ends. This was github #7128
+  auto orderDifference =
+      bond_p->getBondTypeAsDouble() - obond->getBondTypeAsDouble();
+  if (orderDifference > 0) {
+    for (auto atom : {bond_p->getBeginAtom(), bond_p->getEndAtom()}) {
+      if (auto explicit_hs = atom->getNumExplicitHs(); explicit_hs > 0) {
+        auto new_hs = static_cast<int>(explicit_hs - orderDifference);
+        atom->setNumExplicitHs(std::max(new_hs, 0));
+      }
+    }
+  }
+
   if (preserveProps) {
     const bool replaceExistingData = false;
     bond_p->updateProps(*d_graph[*(bIter.first)], replaceExistingData);

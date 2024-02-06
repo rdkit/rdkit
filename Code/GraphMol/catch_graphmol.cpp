@@ -1511,8 +1511,19 @@ TEST_CASE(
     "[chemistry][metals]") {
   SECTION("basics") {
     std::vector<std::pair<std::string, unsigned int>> data = {
-        {"[Mn+2]", 1}, {"[Mn+1]", 0}, {"[Mn]", 1}, {"[Mn-1]", 0},
-        {"[C]", 4},    {"[C+1]", 3},  {"[C-1]", 3}};
+        {"[Mn+2]", 1},
+        {"[Mn+1]", 0},
+        {"[Mn]", 1},
+        {"[Mn-1]", 0},
+        {"[C]", 4},
+        {"[C+1]", 3},
+        {"[C-1]", 3},
+        // this next set are from #7122
+        {"[Fe]", 0},
+        {"[Fe+1]", 1},
+        {"[Fe]C", 0},
+        {"[Nb](I)(I)(I)(I)I", 0},
+        {"[Zn+]C1=CC=CC=C1", 0}};
     for (const auto &pr : data) {
       std::unique_ptr<ROMol> m(SmilesToMol(pr.first));
       REQUIRE(m);
@@ -3462,4 +3473,72 @@ TEST_CASE(
   REQUIRE(bnd->getBondType() == Bond::BondType::DOUBLE);
   CHECK(bnd->getStereo() == Bond::BondStereo::STEREONONE);
   CHECK(bnd->getStereoAtoms().empty());
+}
+
+TEST_CASE(
+    "Github Issue #7128: ReplaceBond may cause valence issues in specific edge cases",
+    "[bug][RWMol]") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.787879 0.909091 0.000000 0
+M  V30 2 C 3.287879 0.909091 0.000000 0
+M  V30 3 N 1.037879 2.208129 0.000000 0
+M  V30 4 O 1.037879 -0.389947 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2 CFG=3
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+  REQUIRE(m);
+
+  // This bond was a dashed bond (dash is removed when parity is resolved)
+  auto bond = m->getBondWithIdx(0);
+  int bond_dir = 0;
+  REQUIRE(bond->getPropIfPresent("_MolFileBondCfg", bond_dir) == true);
+  REQUIRE(bond_dir == 3);  // dashed bond
+
+  auto begin_atom = bond->getBeginAtom();
+  REQUIRE(begin_atom->getNumExplicitHs() == 1);
+  REQUIRE(begin_atom->getTotalValence() == 4);
+
+  auto end_atom = bond->getEndAtom();
+  REQUIRE(end_atom->getNumExplicitHs() == 0);
+  REQUIRE(end_atom->getTotalValence() == 4);
+
+  bool strict_valences = false;
+
+  SECTION("replace with a double bond") {
+    m->replaceBond(1, new Bond(Bond::BondType::DOUBLE));
+    m->updatePropertyCache(strict_valences);
+    CHECK(begin_atom->getNumExplicitHs() == 0);
+    CHECK(begin_atom->getTotalValence() == 4);
+    CHECK(end_atom->getNumExplicitHs() == 0);
+    CHECK(end_atom->getTotalValence() == 4);
+  }
+  SECTION("replace with a triple bond") {
+    m->replaceBond(1, new Bond(Bond::BondType::TRIPLE));
+    m->updatePropertyCache(strict_valences);
+    CHECK(begin_atom->getNumExplicitHs() == 0);
+    CHECK(begin_atom->getTotalValence() == 5);  // Yeah, this is expected
+    CHECK(end_atom->getNumExplicitHs() == 0);
+    CHECK(end_atom->getTotalValence() == 4);
+  }
+  SECTION("replace with a dative bond") {
+    m->replaceBond(1, new Bond(Bond::BondType::DATIVE));
+    m->updatePropertyCache(strict_valences);
+    CHECK(begin_atom->getNumExplicitHs() == 1);
+    CHECK(begin_atom->getTotalValence() == 4);
+    CHECK(end_atom->getNumExplicitHs() == 0);
+    CHECK(end_atom->getTotalValence() == 4);
+  }
 }

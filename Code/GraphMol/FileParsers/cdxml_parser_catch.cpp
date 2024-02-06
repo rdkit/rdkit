@@ -20,6 +20,8 @@
 #include <RDGeneral/BadFileException.h>
 
 using namespace RDKit;
+using namespace RDKit::v2::CDXMLParser;
+
 std::string canon(const std::string &smi) {
   auto *m = SmilesToMol(smi);
   auto res = MolToSmiles(*m);
@@ -294,26 +296,46 @@ TEST_CASE("CDXML") {
          BS="N"
         /></fragment></page></CDXML>)";
     std::stringstream iss(cdxml1);
-    auto mols = CDXMLDataStreamToMols(iss);
-    for (auto &mol : mols) {
-      CHECK(MolToSmiles(*mol) == "CC(C)(C)OC(=O)C1CCCCCC1");
+    {
+      auto mols = MolsFromCDXMLDataStream(iss);
+      for (auto &mol : mols) {
+        CHECK(MolToSmiles(*mol) == "CC(C)(C)OC(=O)C1CCCCCC1");
+      }
+    }
+    {
+      // v1 api
+      auto mols = CDXMLDataStreamToMols(iss);
+      for (auto &mol : mols) {
+        CHECK(MolToSmiles(*mol) == "CC(C)(C)OC(=O)C1CCCCCC1");
+      }
     }
   }
   SECTION("REACTION") {
     std::string fname = cdxmlbase + "reaction-with-boc.cdxml";
     std::vector<std::string> expected = {"CC(C)(C)OC(=O)C1CCCCCC1[*:1]",
                                          "c1ccc([*:1])cc1", "C1CC1", "C1CCC1"};
-    auto mols = CDXMLFileToMols(fname);
-    CHECK(mols.size() == expected.size());
-    int i = 0;
-    for (auto &mol : mols) {
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+    {
+      auto mols = MolsFromCDXMLFile(fname);
+      CHECK(mols.size() == expected.size());
+      int i = 0;
+      for (auto &mol : mols) {
+        CHECK(MolToSmiles(*mol) == expected[i++]);
+      }
+    }
+    {
+      // v1 api
+      auto mols = CDXMLFileToMols(fname);
+      CHECK(mols.size() == expected.size());
+      int i = 0;
+      for (auto &mol : mols) {
+        CHECK(MolToSmiles(*mol) == expected[i++]);
+      }
     }
   }
   SECTION("RING CHIRALITY") {
     std::string fname = cdxmlbase + "ring-stereo1.cdxml";
     std::vector<std::string> expected = {"C1CC[C@H]2CCCC[C@H]2C1"};
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -323,7 +345,7 @@ TEST_CASE("CDXML") {
   SECTION("SIMPLE CHIRAL") {
     std::string fname = cdxmlbase + "chirality1.cdxml";
     std::vector<std::string> expected = {"C[C@H](N)C[C@H](C)N"};
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -333,7 +355,7 @@ TEST_CASE("CDXML") {
   SECTION("CDXML-CISTRANS") {
     auto fname = cdxmlbase + "cistrans1.cdxml";
     std::vector<std::string> expected = {"F/C(I)=C(\\Cl)Br"};
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -346,7 +368,7 @@ TEST_CASE("CDXML") {
         "Cl[c:1]1[cH:4][cH:3][cH:2][cH:6][cH:5]1",
         "OC(O)B[c:7]1[cH:8][cH:9][cH:10][cH:11][cH:12]1",
         "[cH:1]1[cH:4][cH:3][cH:2][c:6](-[c:7]2[cH:8][cH:9][cH:10][cH:11][cH:12]2)[cH:5]1"};
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     int i = 0;
     for (auto &mol : mols) {
       CHECK(mol->getProp<unsigned int>("CDX_SCHEME_ID") == 397);
@@ -366,7 +388,7 @@ TEST_CASE("CDXML") {
     {
       std::vector<std::string> expected = {
           "[2H]c1c([2H])c([2H])c([2H])c([2H])c1[2H]"};
-      auto mols = CDXMLFileToMols(fname);
+      auto mols = MolsFromCDXMLFile(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -376,7 +398,10 @@ TEST_CASE("CDXML") {
     {
       std::vector<std::string> expected = {
           "[2H]C1=C([2H])C([2H])=C([2H])C([2H])=C1[2H]"};
-      auto mols = CDXMLFileToMols(fname, false, false);
+      CDXMLParserParams params;
+      params.sanitize = false;
+      params.removeHs = false;
+      auto mols = MolsFromCDXMLFile(fname, params);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -386,7 +411,10 @@ TEST_CASE("CDXML") {
     {
       std::vector<std::string> expected = {
           "[2H]C1=C([2H])C([2H])=C([2H])C([2H])=C1[2H]"};
-      auto mols = CDXMLFileToMols(fname, false, true);
+      CDXMLParserParams params;
+      params.sanitize = false;
+      params.removeHs = true;
+      auto mols = MolsFromCDXMLFile(fname, params);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -402,7 +430,7 @@ TEST_CASE("CDXML") {
         "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
         "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#1]",
         "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#6&!#1]"};
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -415,7 +443,7 @@ TEST_CASE("CDXML") {
 
     std::vector<std::string> expected = {"[C]CC"};
     std::vector<std::string> expected_smarts = {"[#6]-[#6]-[#6,#7,#8,#16]"};
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -429,7 +457,7 @@ TEST_CASE("CDXML") {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
     std::vector<std::string> expected_cx = {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |&1:3,&2:8,12|"};
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -444,7 +472,7 @@ TEST_CASE("CDXML") {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
     std::vector<std::string> expected_cx = {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |o1:8,12|"};
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -461,7 +489,7 @@ TEST_CASE("CDXML") {
       std::vector<std::string> expected_smarts = {
           "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
       };
-      auto mols = CDXMLFileToMols(fname);
+      auto mols = MolsFromCDXMLFile(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -476,7 +504,9 @@ TEST_CASE("CDXML") {
         "[#6]1(=[#6](-[#6](=[#6](-[#6](=[#6]-1-*)-[H])-[H])-[H])-[H])-[H]",
         "[#6]1(=[#6](-[#6](=[#7](-[#6](=[#6]-1-[!#1])-[H])-[H])-[H])-[H])-[H]",
     };
-    auto mols = CDXMLFileToMols(fname, false);
+    CDXMLParserParams params;
+    params.sanitize = false;
+    auto mols = MolsFromCDXMLFile(fname, params);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -487,7 +517,7 @@ TEST_CASE("CDXML") {
 
   SECTION("Fusion with chirality") {
     auto fname = cdxmlbase + "fusion-chiral.cdxml";
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     std::vector<std::string> expected = {"C[C@@H](O)[C@@H](C)O"};
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -499,7 +529,7 @@ TEST_CASE("CDXML") {
   SECTION("ChemDraw Template from the synthesis-workshop") {
     // this was hella fun to validate the stereo-chemistry...
     auto fname = cdxmlbase + "chemdraw_template1.cdxml";
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     std::vector<std::string> expected = {
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
         "[B]",
@@ -523,7 +553,10 @@ TEST_CASE("CDXML") {
 
   SECTION("deuterium atom") {
     auto fname = cdxmlbase + "deuterium-atom.cdxml";
-    auto mols = CDXMLFileToMols(fname, false, false);
+    CDXMLParserParams params;
+    params.sanitize = false;
+    params.removeHs = false;
+    auto mols = MolsFromCDXMLFile(fname, params);
     std::vector<std::string> expected = {"[2H]"};
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -537,7 +570,7 @@ TEST_CASE("CDXML") {
     //   assume
     //    the rdkit is correct here...
     auto fname = cdxmlbase + "chemdraw_template2.cdxml";
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     std::vector<std::string> expected = {
         "CCN1CC2(COC)CCC(OC)C34C5CC6C(OC)CC(O)(C(CC23)C14)C5C6O",
         "*",
@@ -622,7 +655,7 @@ TEST_CASE("CDXML") {
     //   assume
     //    the rdkit is correct here...
     auto fname = cdxmlbase + "chemdraw_template3.cdxml";
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     std::vector<std::string> expected = {
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
         "[B]",
@@ -654,7 +687,7 @@ TEST_CASE("CDXML") {
   }
   SECTION("protecting group") {
     auto fname = cdxmlbase + "protecting-groups.cdxml";
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     std::vector<std::string> expected = {"CC[Si](C)(CC)CC", "CC"};
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -664,7 +697,7 @@ TEST_CASE("CDXML") {
   }
   SECTION("protecting group 2") {
     auto fname = cdxmlbase + "protecting-groups2.cdxml";
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     std::vector<std::string> expected = {"CC[Si](C)(CC)CC", "CC"};
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -678,7 +711,7 @@ TEST_CASE("CDXML") {
     // This is a weird one, chemdraw simply ignores the error that causes the
     // bond issue, we should probably drop the floating fragment here if
     //  we are sanitizing
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     std::vector<std::string> expected = {
         "*",
         "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
@@ -693,7 +726,7 @@ TEST_CASE("CDXML") {
 
   SECTION("Missing File Name") {
     try {
-      auto mols = CDXMLFileToMols("missing file");
+      auto mols = MolsFromCDXMLFile("missing file");
       CHECK(0);  // Bad file exception not caught
     } catch (RDKit::BadFileException &) {
     }
@@ -701,7 +734,7 @@ TEST_CASE("CDXML") {
 
   SECTION("Aromatic ring (bondorder==4") {
     auto fname = cdxmlbase + "aromatic.cdxml";
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     std::vector<std::string> expected = {"c1ccccc1"};
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -712,7 +745,7 @@ TEST_CASE("CDXML") {
   SECTION("Malformed") {
     auto fname = cdxmlbase + "malformed.cdxml";
     try {
-      auto mols = CDXMLFileToMols(fname);
+      auto mols = MolsFromCDXMLFile(fname);
       CHECK(0);
     } catch (FileParseException &e) {
       CHECK(std::string(e.what()) == "expected > at line: 373");
@@ -723,7 +756,7 @@ TEST_CASE("CDXML") {
       auto fname = cdxmlbase + "stereo.cdxml";
       std::vector<std::string> expected = {
           "C[C@@H](Cl)[C@H](N)O.C[C@@H](F)[C@H](N)O.C[C@H](Br)[C@@H](N)O.C[C@H](I)[C@@H](N)O"};
-      auto mols = CDXMLFileToMols(fname);
+      auto mols = MolsFromCDXMLFile(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -740,7 +773,7 @@ TEST_CASE("CDXML") {
 
       for (auto i = 0u; i < filenames.size(); ++i) {
         auto fname = cdxmlbase + filenames[i];
-        auto mols = CDXMLFileToMols(fname);
+        auto mols = MolsFromCDXMLFile(fname);
         CHECK(mols.size() == 1);
         auto &m = *mols.back();
         check_smiles_and_roundtrip(m, expected[i]);
@@ -751,7 +784,7 @@ TEST_CASE("CDXML") {
       auto fname = cdxmlbase + "wavy.cdxml";
       std::vector<std::string> expected = {"Cc1cccc(C)c1NC(=O)N=C1CCCN1C",
                                            "Cc1cccc(C)c1NC(=O)/N=C1\\CCCN1C"};
-      auto mols = CDXMLFileToMols(fname);
+      auto mols = MolsFromCDXMLFile(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -765,7 +798,7 @@ TEST_CASE("CDXML") {
     {
       auto fname = cdxmlbase + "wavy-single.cdxml";
       std::vector<std::string> expected = {"CCCC"};
-      auto mols = CDXMLFileToMols(fname);
+      auto mols = MolsFromCDXMLFile(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -779,22 +812,22 @@ TEST_CASE("CDXML") {
   SECTION("Lots of bad stereo") {
     {
       auto fname = cdxmlbase + "bad-id.cdxml";
-      auto mols = CDXMLFileToMols(fname);
+      auto mols = MolsFromCDXMLFile(fname);
       CHECK(mols.size() == 0);
     }
     {
       auto fname = cdxmlbase + "bad-coords.cdxml";
-      auto mols = CDXMLFileToMols(fname);
+      auto mols = MolsFromCDXMLFile(fname);
       CHECK(mols.size() == 0);
     }
     {
       auto fname = cdxmlbase + "bad-bondorder.cdxml";
-      auto mols = CDXMLFileToMols(fname);
+      auto mols = MolsFromCDXMLFile(fname);
       CHECK(mols.size() == 0);
     }
     {
       auto fname = cdxmlbase + "bad-bondorder2.cdxml";
-      auto mols = CDXMLFileToMols(fname);
+      auto mols = MolsFromCDXMLFile(fname);
       CHECK(mols.size() == 0);
     }
   }
@@ -811,7 +844,7 @@ TEST_CASE("atropisomers") {
           "C[C]1[C][CH]C(Cl)C(C)=C1c1c(C)ccc(Cl)c1C |(-2.936,-0.12,;-2.936,-1.66,;-1.602,-2.43,;-1.602,-3.97,;-2.936,-4.74,;-2.93,-6.28,;-4.27,-3.97,;-5.603,-4.74,;-4.27,-2.43,;-5.603,-1.66,;-5.603,-0.12,;-4.27,0.64,;-6.937,0.64,;-8.271,-0.12,;-8.271,-1.66,;-9.604,-2.43,;-6.937,-2.43,;-6.937,-3.97,),^1:1,3,^2:2,wU:8.8|"};
       for (auto i = 0u; i < filenames.size(); ++i) {
         auto fname = cdxmlbase + filenames[i];
-        auto mol = CDXMLFileToMols(fname);
+        auto mol = MolsFromCDXMLFile(fname);
 
         SmilesWriteParams ps;
         auto smi = MolToCXSmiles(*(mol[0].get()), ps,
@@ -827,7 +860,7 @@ TEST_CASE("bad stereo in a natural product") {
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
   SECTION("case 1") {
     auto fname = cdxmlbase + "stereo5.cdxml";
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     REQUIRE(mols.size() == 1);
     CHECK(
         MolToSmiles(*mols[0]) ==
@@ -840,7 +873,7 @@ TEST_CASE("Github #6262: preserve bond wedging") {
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
   SECTION("case 1") {
     auto fname = cdxmlbase + "stereo6.cdxml";
-    auto mols = CDXMLFileToMols(fname);
+    auto mols = MolsFromCDXMLFile(fname);
     REQUIRE(mols.size() == 1);
     {
       REQUIRE(mols[0]->getBondBetweenAtoms(2, 5));
@@ -1127,8 +1160,7 @@ TEST_CASE("Github #6887: and1 or1 in same mol") {
  BS="N"
 /></fragment></page></CDXML>
 )";
-    std::stringstream iss(cdxml1);
-    auto mols = CDXMLDataStreamToMols(iss);
+    auto mols = MolsFromCDXML(cdxml1);
     mols[0]->clearConformers();
     CHECK(MolToCXSmiles(*mols[0]) ==
           "CO[C@H](C)C[C@H](Cl)C[C@H](C)Br |o1:5,o2:8,&1:2|");

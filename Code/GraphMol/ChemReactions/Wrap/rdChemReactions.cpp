@@ -1255,5 +1255,13 @@ One unrecognized group type in a comma-separated list makes the whole thing fail
                python::arg("catchErrors") = false),
               docString.c_str());
 
+  docString =
+      R"DOC(Does the usual molecular sanitization on each reactant, agent, and product of the reaction)DOC";
+  python::def("SanitizeRxnAsMols", RDKit::RxnOps::sanitizeRxnAsMols,
+              (python::arg("rxn"),
+               python::arg("sanitizeOps") =
+                   rdcast<unsigned int>(RDKit::MolOps::SANITIZE_ALL)),
+              docString.c_str());
+
   wrap_enumeration();
 }
