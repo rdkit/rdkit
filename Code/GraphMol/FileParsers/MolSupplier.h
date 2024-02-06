@@ -35,6 +35,8 @@ class Block;
 namespace RDKit {
 RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
 
+namespace v2 {
+namespace FileParsers {
 /*!
 //
 //  Here are a couple of ways one can interact with MolSuppliers:
@@ -449,6 +451,10 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   unsigned d_length;
 };
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
+}
+
 }  // namespace RDKit
+
+#include "MolSupplier.v1API.h"
 
 #endif
