@@ -3709,7 +3709,7 @@ M  END
       [](const std::vector<SubstanceGroup> &sgs, int sg_idx,
          const std::vector<unsigned int> &atoms,
          const std::vector<unsigned int> &bonds, const unsigned int &cstateBond,
-         const std::pair<unsigned int, unsigned int> &attachPtAtoms) {
+         const std::pair<unsigned int, int> &attachPtAtoms) {
         INFO("Checking Substance Group " << sg_idx);
 
         const auto &sg = sgs[sg_idx];
