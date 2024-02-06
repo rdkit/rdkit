@@ -74,6 +74,8 @@ void insertSubstanceGroups(RWMol &mol, const RWMol &other,
                            const std::vector<unsigned int> &newAtomIds,
                            const std::vector<unsigned int> &newBondIds) {
   for (auto sgroup : getSubstanceGroups(other)) {
+    sgroup.setOwningMol(&mol);
+
     // update the sgroup's atom and bond indices
     auto atom_indices = sgroup.getAtoms();
     std::transform(atom_indices.begin(), atom_indices.end(),
@@ -166,7 +168,7 @@ void RWMol::insertMol(const ROMol &other) {
       v = newAtomIds[v];
     }
     auto bond_count = addBond(bond_p, true);
-    newBondIds[bond_p->getIdx()] = bond_count - 1;
+    newBondIds[other.d_graph[*firstB]->getIdx()] = bond_count - 1;
     ++firstB;
   }
 
