@@ -91,6 +91,89 @@ TEST_CASE("symmetry in the uncharger", "[uncharger]") {
   }
 }
 
+TEST_CASE("uncharger 'force' option") {
+  SECTION("force=false (default)") {
+    auto m = "C[N+](C)(C)CC([O-])C[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC([O-])CO");
+  }
+  SECTION("force=true") {
+    auto m = "C[N+](C)(C)CC([O-])C[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger(false, true);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(O)CO");
+  }
+  SECTION("force=true doesn't alter nitro groups") {
+    auto m = "CCC[N+](=O)[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger(false, true);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "CCC[N+](=O)[O-]");
+  }
+  SECTION("force=true doesn't alter n-oxides") {
+    auto m = "[O-][n+]1ccccc1"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger(false, true);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "[O-][n+]1ccccc1");
+  }
+  SECTION("tetramethylammonium acetate (force=false)") {
+    auto m = "C[N+](C)(C)C.CC(=O)[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger(true, false);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "CC(=O)[O-].C[N+](C)(C)C");
+  }
+  SECTION("tetramethylammonium acetate (force=true)") {
+    auto m = "C[N+](C)(C)C.CC(=O)[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger(true, true);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "CC(=O)O.C[N+](C)(C)C");
+  }
+  SECTION("tetramethylammonium nitrate (force=false)") {
+    auto m = "C[N+](C)(C)C.O=[N+]([O-])[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger(true, false);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)C.O=[N+]([O-])[O-]");
+  }
+  SECTION("tetramethylammonium nitrate (force=true)") {
+    auto m = "C[N+](C)(C)C.O=[N+]([O-])[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger(true, true);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)C.O=[N+]([O-])O");
+  }
+  SECTION("bookkeeping (force=false)") {
+    auto m = "O=[N+]([O-])[O-].O=[N+]([O-])[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger(true, false);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "O=[N+]([O-])O.O=[N+]([O-])O");
+  }
+  SECTION("bookkeeping (force=true)") {
+    auto m = "O=[N+]([O-])[O-].O=[N+]([O-])[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger(true, true);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "O=[N+]([O-])O.O=[N+]([O-])O");
+  }
+}
+
 TEST_CASE("uncharger bug with duplicates", "[uncharger]") {
   SECTION("case 1") {
     auto m = "[NH3+]CC([O-])C[O-]"_smiles;
@@ -239,6 +322,15 @@ TEST_CASE("github #2610: Uncharger incorrectly modifying a zwitterion.",
     CHECK(outm->getAtomWithIdx(5)->getFormalCharge() == 1);
     CHECK(outm->getAtomWithIdx(6)->getFormalCharge() == -1);
     CHECK(MolToSmiles(*outm) == "[O-][NH+]1C=CC=CC1");
+  }
+  SECTION("zwitterion also including an N-oxide") {
+    auto m = "C[N+](C)(C)C(C(=O)[O-])c1cc[n+]([O-])cc1"_smiles;
+    REQUIRE(m);
+    bool canonicalOrdering = true;
+    MolStandardize::Uncharger uncharger(canonicalOrdering);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)C(C(=O)[O-])c1cc[n+]([O-])cc1");
   }
 }
 
