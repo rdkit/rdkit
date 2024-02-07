@@ -719,12 +719,10 @@ void RWMol::batchRemoveAtoms() {
     }
     
     auto &delAtoms = *dp_delAtoms;
-    unsigned int min_idx =  rdcast<unsigned int>(delAtoms.size());
     for (unsigned int i = rdcast<unsigned int>(delAtoms.size()); i > 0; --i) {
         if( !delAtoms[i-1] )
             continue;
         unsigned int idx = i-1;
-        min_idx = idx;
         Atom * atom = getAtomWithIdx(idx);
         if (!atom)
             continue;
