@@ -51,7 +51,6 @@
 namespace {
 constexpr double M_PI_2 = 1.57079632679489661923;
 constexpr double ERROR_TOL = 0.00001;
-constexpr size_t MAX_TRACKED_FAILURES = 10;
 // these tolerances, all to detect and filter out bogus conformations, are a
 // delicate balance between sensitive enough to detect obviously bad
 // conformations but not so sensitive that a bunch of ok conformations get
@@ -1399,7 +1398,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 #ifdef RDK_BUILD_THREADSAFE_SSS
     std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
-    params.failures.resize(MAX_TRACKED_FAILURES);
+    params.failures.resize(EmbedFailureCauses::END_OF_ENUM);
     std::fill(params.failures.begin(), params.failures.end(), 0);
   }
   if (!mol.getNumAtoms()) {
