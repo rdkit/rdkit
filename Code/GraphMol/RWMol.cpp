@@ -797,11 +797,6 @@ void RWMol::batchRemoveAtoms() {
         
         // Remove this atom from any stereo group
         removeAtomFromGroups(atom, d_stereo_groups);
-        
-        // clear computed properties and reset our ring info structure
-        // they are pretty likely to be wrong now:
-        clearComputedProps(true);
-        
         atom->setOwningMol(nullptr);
         
         // remove all connections to the atom:
@@ -829,6 +824,16 @@ void RWMol::batchRemoveAtoms() {
         CHECK_INVARIANT(end, "Atom mapping failed");
         bond->setBeginAtomIdx(bgn->getIdx());
         bond->setEndAtomIdx(end->getIdx());
+        INT_VECT stereoAtoms;
+        INT_VECT &oldStereoAtoms = bond->getStereoAtoms();
+        if(oldStereoAtoms.size()) {
+            for(auto &idx: oldStereoAtoms) {
+                if(oldIndices[idx]) {
+                    stereoAtoms.push_back(oldIndices[idx]->getIdx());
+                }
+            }
+            bond->getStereoAtoms().swap(stereoAtoms);
+        }
     }
     
     // do the same with the coordinates in the conformations
