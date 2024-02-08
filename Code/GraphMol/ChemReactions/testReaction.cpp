@@ -7848,6 +7848,38 @@ void testReactionWithChiralAgent() {
   }
 }
 
+void testGithub5890() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Github Issue 5890: Testing reaction with radicals"
+                       << std::endl;
+
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName;
+
+    fName =
+        rdbase +
+        "/Code/GraphMol/ChemReactions/testData/v3k.radicals.rxn";
+    ChemicalReaction *rxn =
+        RxnFileToChemicalReaction(fName, false, false, false);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+
+    std::string pkl;
+    ReactionPickler::pickleReaction(rxn, pkl);
+    delete rxn;
+    rxn = new ChemicalReaction();
+    ReactionPickler::reactionFromPickle(pkl, rxn);
+
+    auto outputRxn = ChemicalReactionToRxnSmiles(*rxn);
+    BOOST_LOG(rdInfoLog) << outputRxn << std::endl;
+    TEST_ASSERT(outputRxn == "[CH]1[CH][CH]1>>C");
+
+    delete rxn;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -7949,6 +7981,7 @@ int main() {
   testChemicalReactionCopyAssignment();
   testGithub6138();
   testReactionWithChiralAgent();
+  testGithub5890();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
