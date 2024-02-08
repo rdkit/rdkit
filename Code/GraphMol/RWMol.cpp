@@ -599,7 +599,7 @@ void RWMol::batchRemoveBonds() {
         return;
     
     auto &delBonds = *dp_delBonds;
-    unsigned int min_idx = rdcast<unsigned int>(getNumBonds());
+    unsigned int min_idx = getNumBonds();
     for (unsigned int i = rdcast<unsigned int>(delBonds.size()); i > 0; --i) {
         if( !delBonds[i-1] )
             continue;
