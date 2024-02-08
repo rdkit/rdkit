@@ -1,3 +1,72 @@
+# Release_2023.09.5
+(Changes relative to Release_2023.09.4)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Christopher Von Bargen, Jonathan Bisson, James Davidson, Hussein Faara,
+Christoph Hillisch, Gareth Jones, Kevin Keating, Brian Kelley, Joos Kiener,
+Marta Pasquini, Patrick Penner, Ricardo Rodriguez-Schmidt, Nate Russell,
+Riccardo Vianello
+
+
+## New Features and Enhancements:
+  - add more error checking to substance groups
+ (github issue #5923 from greglandrum)
+  - Allow sanitization to be disabled in PandasTools.LoadSDF
+ (github issue #7019 from christophhillisch)
+  - Add Atom::hasValenceViolation (Take 2)
+ (github pull #7030 from cdvonbargen)
+  - Please consider exposing maxBondMatchPairs param in rdRascalMCES.RascalOptions()
+ (github issue #7054 from nate-russell)
+  - expose EmbedParameters::coordMap to Python
+ (github pull #7086 from greglandrum)
+   - Add a 'force' option to MolStandardizer::Uncharger
+ (github pull #7088 from rvianello)
+  - support sanitization of reaction product templates
+ (github pull #7095 from greglandrum)
+  - Compatibility with pathlib.Path
+ (github pull #7100 from PatrickPenner)
+  - Add option to sanitize reaction components like molecules
+ (github issue #7108 from MartaPasquini)
+ 
+## Bug Fixes:
+  - Query Features: Different input format leads to a different molecule
+ (github issue #6349 from kienerj)
+  - Unexpected non-matching ElementGraph hashes
+ (github issue #6472 from jepdavidson)
+  - PositionVariationOp::getVariationCounts() does unnecessary copies of vectors
+ (github issue #6906 from whosayn)
+  - "Inconsistent state" when manually sanitizing and assigning stereo when using the new stereo algorithm
+ (github issue #7023 from ricrogz)
+  - Spacing bug in compute2DCoordsForReaction
+ (github issue #7028 from KevKeating)
+  - Middle line in triple bond drawn to incorrect point when a wedged bond is present
+ (github issue #7036 from greglandrum)
+  - CSharp Wrapper ExtendedQueryMol  Read Access Violation
+ (github issue #7069 from jones-gareth)
+  - Sanitizing and assigning stereo twice can change bond stereo with new stereo
+ (github issue #7076 from ricrogz)
+  - testConrec.cpp:130 fails on ARM64
+ (github issue #7083 from bjonnh-work)
+  - Quaternary nitrogens with hydrogens are not a candidate for stereo
+ (github issue #7115 from bp-kelley)
+  - ReplaceBond may cause valence issues in specific edge cases
+ (github issue #7128 from ricrogz)
+
+## Cleanup work:
+  - fix GCC 13.2 warnings about redundant move in return statement
+ (github pull #7029 from rvianello)
+  - fix check of python version when updating Filters.cpp
+ (github pull #7035 from rvianello)
+  - fix several warnings originating from the swig wrappers
+ (github pull #7063 from rvianello)
+  - lock the versions of a bunch of stuff used in the CI builds
+ (github pull #7082 from greglandrum)
+
+
 # Release_2023.09.4
 (Changes relative to Release_2023.09.3)
 
