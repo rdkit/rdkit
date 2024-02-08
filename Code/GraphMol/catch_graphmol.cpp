@@ -3578,3 +3578,39 @@ $$$$)CTAB"_ctab;
 
   CHECK(b->getBondDir() == Bond::BondDir::BEGINDASH);
 }
+
+TEST_CASE("expandAttachmentPoints") {
+  SECTION("basics") {
+    auto m = "CO"_smiles;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    for (int val : {1, 2}) {
+      INFO(val);
+      RWMol mcp(*m);
+      mcp.getAtomWithIdx(1)->setProp(common_properties::molAttachPoint, val);
+      MolOps::expandAttachmentPoints(mcp);
+      CHECK(mcp.getNumAtoms() == 3);
+      CHECK(!mcp.getAtomWithIdx(1)->hasProp(common_properties::molAttachPoint));
+      int value = 0;
+      CHECK(mcp.getAtomWithIdx(2)->getPropIfPresent(
+          common_properties::_fromAttachPoint, value));
+      CHECK(value == val);
+    }
+    {
+      int val = -1;
+      INFO(val);
+      RWMol mcp(*m);
+      mcp.getAtomWithIdx(1)->setProp(common_properties::molAttachPoint, val);
+      MolOps::expandAttachmentPoints(mcp);
+      CHECK(mcp.getNumAtoms() == 4);
+      CHECK(!mcp.getAtomWithIdx(1)->hasProp(common_properties::molAttachPoint));
+      int value = 0;
+      CHECK(mcp.getAtomWithIdx(2)->getPropIfPresent(
+          common_properties::_fromAttachPoint, value));
+      CHECK(value == 1);
+      CHECK(mcp.getAtomWithIdx(3)->getPropIfPresent(
+          common_properties::_fromAttachPoint, value));
+      CHECK(value == 2);
+    }
+  }
+}

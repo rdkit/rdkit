@@ -1138,6 +1138,10 @@ RDKIT_GRAPHMOL_EXPORT ROMol *dativeBondsToHaptic(const ROMol &mol);
 //! \overload modifies molecule in place.
 RDKIT_GRAPHMOL_EXPORT void dativeBondsToHaptic(RWMol &mol);
 
+//! attachment points encoded as attachPt properties are added to the graph as
+/// dummy atoms
+RDKIT_GRAPHMOL_EXPORT void expandAttachmentPoints(RWMol &mol);
+
 namespace details {
 //! not recommended for use in other code
 RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(

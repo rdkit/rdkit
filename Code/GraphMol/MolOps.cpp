@@ -1168,5 +1168,29 @@ std::vector<int> hapticBondEndpoints(const Bond *bond) {
   return oats;
 }
 }  // end of namespace details
-};  // end of namespace MolOps
-};  // end of namespace RDKit
+
+void expandAttachmentPoints(RWMol &mol) {
+  for (auto atom : mol.atoms()) {
+    int value;
+    if (atom->getPropIfPresent(common_properties::molAttachPoint, value)) {
+      std::vector<int> tgtVals;
+      if (value == 1 || value == -1) {
+        tgtVals.push_back(1);
+      }
+      if (value == 2 || value == -1) {
+        tgtVals.push_back(2);
+      }
+      for (auto tval : tgtVals) {
+        atom->clearProp(common_properties::molAttachPoint);
+        auto newAtom = new Atom(0);
+        newAtom->setProp(common_properties::_fromAttachPoint, tval);
+        bool updateLabel = false;
+        bool takeOwnwership = true;
+        auto idx = mol.addAtom(newAtom, updateLabel, takeOwnwership);
+        mol.addBond(atom->getIdx(), idx, Bond::SINGLE);
+      }
+    }
+  }
+}
+}  // end of namespace MolOps
+}  // end of namespace RDKit
