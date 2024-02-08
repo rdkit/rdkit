@@ -167,8 +167,9 @@ void RWMol::insertMol(const ROMol &other) {
     for (auto &v : bond_p->getStereoAtoms()) {
       v = newAtomIds[v];
     }
-    auto bond_count = addBond(bond_p, true);
-    newBondIds[other.d_graph[*firstB]->getIdx()] = bond_count - 1;
+    const bool takeOwnership = true;
+    addBond(bond_p, takeOwnership);
+    newBondIds[other.d_graph[*firstB]->getIdx()] = bond_p->getIdx();
     ++firstB;
   }
 
