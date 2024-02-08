@@ -230,7 +230,7 @@ ROMol *MolFromMol2File(const char *molFilename, bool sanitize = true,
                        bool removeHs = true, bool cleanupSubstructures = true) {
   RWMol *newM;
   try {
-    newM = Mol2FileToMol(molFilename, sanitize, removeHs, CORINA,
+    newM = Mol2FileToMol(molFilename, sanitize, removeHs, Mol2Type::CORINA,
                          cleanupSubstructures);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
@@ -247,7 +247,7 @@ ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize = true,
   std::istringstream inStream(mol2Block);
   RWMol *newM;
   try {
-    newM = Mol2DataStreamToMol(inStream, sanitize, removeHs, CORINA,
+    newM = Mol2DataStreamToMol(inStream, sanitize, removeHs, Mol2Type::CORINA,
                                cleanupSubstructures);
   } catch (...) {
     newM = nullptr;

@@ -1016,7 +1016,7 @@ of the replacements argument.",
 )DOC";
   python::def(
       "Compute2DCoordsForReaction", RDKit::Compute2DCoordsForReaction,
-      (python::arg("reaction"), python::arg("spacing") = 2.0,
+      (python::arg("reaction"), python::arg("spacing") = 1.0,
        python::arg("updateProps") = true, python::arg("canonOrient") = true,
        python::arg("nFlipsPerSample") = 0, python::arg("nSample") = 0,
        python::arg("sampleSeed") = 0, python::arg("permuteDeg4Nodes") = false,
@@ -1253,6 +1253,14 @@ One unrecognized group type in a comma-separated list makes the whole thing fail
                    rdcast<unsigned int>(RDKit::RxnOps::SANITIZE_ALL),
                python::arg("params") = RDKit::RxnOps::DefaultRxnAdjustParams(),
                python::arg("catchErrors") = false),
+              docString.c_str());
+
+  docString =
+      R"DOC(Does the usual molecular sanitization on each reactant, agent, and product of the reaction)DOC";
+  python::def("SanitizeRxnAsMols", RDKit::RxnOps::sanitizeRxnAsMols,
+              (python::arg("rxn"),
+               python::arg("sanitizeOps") =
+                   rdcast<unsigned int>(RDKit::MolOps::SANITIZE_ALL)),
               docString.c_str());
 
   wrap_enumeration();

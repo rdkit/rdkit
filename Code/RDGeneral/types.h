@@ -71,7 +71,6 @@ RDKIT_RDGENERAL_EXPORT extern const std::string _NeedsQueryScan;  // int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string _fragSMARTS;      // std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string
     maxAttachIdx;  // int TemplEnumTools.cpp
-RDKIT_RDGENERAL_EXPORT extern const std::string origNoImplicit;  // int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string
     ringMembership;  //? unused (molopstest.cpp)
 

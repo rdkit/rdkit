@@ -108,7 +108,7 @@ typedef std::vector<std::string> STR_VECT;
     return new RDKit::FilterCatalog(str);
   }
 
-  bool canSerialize() const {
+  static bool canSerialize() {
     return RDKit::FilterCatalogCanSerialize();
   }
 
@@ -183,7 +183,9 @@ typedef std::vector<std::string> STR_VECT;
 #ifdef SWIGCSHARP
 %typemap(csbase) RDKit::FilterCatalogParams::FilterCatalogs "uint"
 #endif
-  
+
+%immutable RDKit::DEFAULT_FILTERMATCHERBASE_NAME;
+
 %include <GraphMol/FilterCatalog/FilterMatcherBase.h>
 %include <GraphMol/FilterCatalog/FilterCatalogEntry.h>
 %include <GraphMol/FilterCatalog/FilterCatalog.h>

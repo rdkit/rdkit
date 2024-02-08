@@ -86,8 +86,9 @@ struct charge_wrapper {
                 "and a list of charge corrections",
                 python::return_value_policy<python::manage_new_object>());
     python::class_<MolStandardize::Uncharger, boost::noncopyable>(
-        "Uncharger", python::init<bool>((python::arg("self"),
-                                         python::arg("canonicalOrder") = true)))
+        "Uncharger", python::init<bool, bool>((python::arg("self"),
+                                         python::arg("canonicalOrder") = true,
+                                         python::arg("force") = false)))
         .def("uncharge", &MolStandardize::Uncharger::uncharge,
              (python::arg("self"), python::arg("mol")), "",
              python::return_value_policy<python::manage_new_object>())

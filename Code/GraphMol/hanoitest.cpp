@@ -1602,6 +1602,7 @@ void testRingsAndDoubleBonds() {
 
 int main() {
   RDLog::InitLogs();
+  boost::logging::enable_logs("rdApp.info");
 #if 1
   test1();
   test2();
@@ -1620,5 +1621,6 @@ int main() {
 #endif
   testRingsAndDoubleBonds();
   testCanonicalDiastereomers();
+
   return 0;
 }
