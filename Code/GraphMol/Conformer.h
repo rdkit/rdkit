@@ -103,7 +103,7 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
   const RDGeom::POINT3D_VECT &getPositions() const;
 
   //! Get a reference to the atom positions
-  RDGeom::POINT3D_VECT &getPositions(bool force=false);
+  RDGeom::POINT3D_VECT &getPositions();
 
   //! Get the position of the specified atom
   const RDGeom::Point3D &getAtomPos(unsigned int atomId) const;

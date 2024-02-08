@@ -705,8 +705,7 @@ void RWMol::batchRemoveBonds() {
 void RWMol::batchRemoveAtoms() {
     if(!dp_delAtoms)
         return;
-    std::vector<Atom*> oldIndices;
-    oldIndices.reserve(getNumAtoms());
+    std::vector<Atom*> oldIndices(getNumAtoms());
     for(auto *atom: atoms()) {
         oldIndices[atom->getIdx()] = atom;
     }
@@ -832,9 +831,9 @@ void RWMol::batchRemoveAtoms() {
     // do the same with the coordinates in the conformations
     const bool force=true;
     for (auto conf : d_confs) {
-        RDGeom::POINT3D_VECT &positions = conf->getPositions(force);
+        RDGeom::POINT3D_VECT &positions = conf->getPositions();
         RDGeom::POINT3D_VECT newPositions;
-        positions.reserve(getNumAtoms());
+        newPositions.reserve(getNumAtoms());
         
         for(RDGeom::POINT3D_VECT::size_type i=0; i< positions.size(); ++i) {
             if(oldIndices[i] != nullptr) {
