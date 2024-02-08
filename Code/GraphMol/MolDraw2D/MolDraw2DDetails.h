@@ -56,9 +56,9 @@ RDKIT_MOLDRAW2D_EXPORT void arcPoints(const Point2D &cds1, const Point2D &cds2,
                                       std::vector<Point2D> &res,
                                       float startAng = 0, float extent = 360);
 
-//! add R/S, relative stereo, and E/Z annotations to atoms and bonds
-RDKIT_MOLDRAW2D_EXPORT void addStereoAnnotation(
-    const ROMol &mol, bool includeRelativeCIP = false);
+[[deprecated(
+    "please use Chirality::addStereoAnnotations instead")]] RDKIT_MOLDRAW2D_EXPORT void
+addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP = false);
 
 //! add annotations with atom indices.
 RDKIT_MOLDRAW2D_EXPORT inline void addAtomIndices(const ROMol &mol) {

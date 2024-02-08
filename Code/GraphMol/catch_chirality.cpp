@@ -25,6 +25,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
 
 using namespace RDKit;
 
@@ -5155,5 +5156,56 @@ M  END)CTAB";
       CHECK(m->getBondWithIdx(5)->getStereo() == Bond::BondStereo::STEREOANY);
       CHECK(m->getBondWithIdx(6)->getStereo() == Bond::BondStereo::STEREONONE);
     }
+  }
+}
+
+TEST_CASE(
+    "github #3369: support new CIP code and StereoGroups in addStereoAnnotations()") {
+  auto m1 =
+      "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"_smiles;
+  REQUIRE(m1);
+  SECTION("defaults") {
+    ROMol m2(*m1);
+    Chirality::addStereoAnnotations(m2);
+
+    std::string txt;
+    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "abs (S)");
+    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "and2");
+  }
+  SECTION("including CIP with relative stereo") {
+    ROMol m2(*m1);
+    bool includeRelativeCIP = true;
+    Chirality::addStereoAnnotations(m2, includeRelativeCIP);
+
+    std::string txt;
+    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "abs (S)");
+    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "and2 (R)");
+  }
+  SECTION("new CIP labels") {
+    ROMol m2(*m1);
+    REQUIRE(m2.getBondBetweenAtoms(20, 21));
+    m2.getBondBetweenAtoms(20, 21)->setStereo(Bond::BondStereo::STEREOTRANS);
+    // initially no label is assigned since we have TRANS
+    Chirality::addStereoAnnotations(m2);
+    CHECK(
+        !m2.getBondBetweenAtoms(20, 21)->hasProp(common_properties::bondNote));
+
+    CIPLabeler::assignCIPLabels(m2);
+    std::string txt;
+    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
+        common_properties::_CIPCode, txt));
+    CHECK(txt == "E");
+    Chirality::addStereoAnnotations(m2);
+    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
+        common_properties::bondNote, txt));
+    CHECK(txt == "(E)");
   }
 }

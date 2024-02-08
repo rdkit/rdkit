@@ -22,6 +22,7 @@
 #include <RDGeneral/utils.h>
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/format.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -2655,6 +2656,71 @@ void removeNonExplicit3DChirality(ROMol &mol) {
     if (atom->hasProp(Chirality::_NonExplicit3DChirality)) {
       atom->clearProp(Chirality::_NonExplicit3DChirality);
       atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+    }
+  }
+}
+
+void addStereoAnnotations(ROMol &mol, bool includeRelativeCIP) {
+  auto sgs = mol.getStereoGroups();
+  assignStereoGroupIds(sgs);
+  std::vector<unsigned int> doneAts(mol.getNumAtoms(), 0);
+  for (const auto &sg : sgs) {
+    for (const auto atom : sg.getAtoms()) {
+      if (doneAts[atom->getIdx()]) {
+        BOOST_LOG(rdWarningLog) << "Warning: atom " << atom->getIdx()
+                                << " is in more than one stereogroup. Only the "
+                                   "label from the first group will be used."
+                                << std::endl;
+        continue;
+      }
+      std::string lab;
+      std::string cip;
+      if (includeRelativeCIP ||
+          sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+        atom->getPropIfPresent(common_properties::_CIPCode, cip);
+      }
+      switch (sg.getGroupType()) {
+        case StereoGroupType::STEREO_ABSOLUTE:
+          lab = "abs";
+          break;
+        case StereoGroupType::STEREO_OR:
+          lab = (boost::format("or%d") % sg.getWriteId()).str();
+          break;
+        case StereoGroupType::STEREO_AND:
+          lab = (boost::format("and%d") % sg.getWriteId()).str();
+          break;
+        default:
+          break;
+      }
+      if (!lab.empty()) {
+        doneAts[atom->getIdx()] = 1;
+        if (!cip.empty()) {
+          lab += " (" + cip + ")";
+        }
+        atom->setProp(common_properties::atomNote, lab);
+      }
+    }
+  }
+  for (auto atom : mol.atoms()) {
+    std::string cip;
+    if (!doneAts[atom->getIdx()] &&
+        atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+      std::string lab = "(" + cip + ")";
+      atom->setProp(common_properties::atomNote, lab);
+    }
+  }
+  for (auto bond : mol.bonds()) {
+    std::string cip;
+    if (!bond->getPropIfPresent(common_properties::_CIPCode, cip)) {
+      if (bond->getStereo() == Bond::STEREOE) {
+        cip = "E";
+      } else if (bond->getStereo() == Bond::STEREOZ) {
+        cip = "Z";
+      }
+    }
+    if (!cip.empty()) {
+      std::string lab = "(" + cip + ")";
+      bond->setProp(common_properties::bondNote, lab);
     }
   }
 }
