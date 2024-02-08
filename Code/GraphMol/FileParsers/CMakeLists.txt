@@ -87,3 +87,7 @@ rdkit_catch_test(molfileStereoCatchTest molfile_stereo_catch.cpp
 
 rdkit_catch_test(connectTheDotsTest connectTheDots_catch.cpp
     LINK_LIBRARIES FileParsers)
+
+rdkit_catch_test(v2FileParsersCatchTest v2_file_parsers_catch.cpp
+    LINK_LIBRARIES FileParsers)
+
