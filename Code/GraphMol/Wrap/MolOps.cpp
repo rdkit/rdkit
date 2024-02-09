@@ -1027,6 +1027,15 @@ void testSetProps(ROMol &mol) {
                   "conf_" + std::to_string(conf_idx));
   }
 }
+
+void expandAttachmentPointsHelper(ROMol &mol, bool addAsQueries) {
+  MolOps::expandAttachmentPoints(static_cast<RWMol &>(mol), addAsQueries);
+}
+
+void collapseAttachmentPointsHelper(ROMol &mol, bool markedOnly) {
+  MolOps::collapseAttachmentPoints(static_cast<RWMol &>(mol), markedOnly);
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -3015,6 +3024,32 @@ A note on the flags controlling which atoms/bonds are modified:
 
   If there is no chiral flag set (i.e. the property is not present), the
   molecule will not be modified.)DOC");
+
+    python::def(
+        "ExpandAttachmentPoints", expandAttachmentPointsHelper,
+        (python::arg("mol"), python::arg("addAsQueries") = true),
+        R"DOC(attachment points encoded as attachPt properties are added to the graph as dummy atoms
+
+  Arguments:
+   - mol: molecule to be modified
+   - addAsQueries: if true, the dummy atoms will be added as null queries
+        (i.e. they will match any atom in a substructure search)
+)DOC");
+    python::def(
+        "CollapseAttachmentPoints", collapseAttachmentPointsHelper,
+        (python::arg("mol"), python::arg("markedOnly") = true),
+        R"DOC(dummy atoms in the graph are removed and replaced with attachment point annotations on the attached atoms
+
+  Arguments:
+   - mol: molecule to be modified
+   - markedOnly: if true, only dummy atoms with the _fromAttachPoint
+     property will be collapsed
+
+  In order for a dummy atom to be considered for collapsing it must have:
+   - degree 1 with a single or unspecified bond
+   - the bond to it can not be wedged
+   - either no query or be an AtomNullQuery
+)DOC");
 
     python::def("_TestSetProps", testSetProps, python::arg("mol"));
   }

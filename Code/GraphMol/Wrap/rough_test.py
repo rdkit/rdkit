@@ -8002,6 +8002,23 @@ CAS<~>
     ranks = Chem.CanonicalRankAtoms(mol,breakTies=False,includeAtomMaps=False)
     self.assertEqual(ranks[0],ranks[2])
 
+  def testExpandAndCollapseAttachmentPoints(self):
+    mol = Chem.MolFromSmarts("*CO")
+    self.assertEqual(mol.GetNumAtoms(), 3)
+    mol.GetAtomWithIdx(2).SetIntProp("molAttchpt", 1)
+    Chem.ExpandAttachmentPoints(mol)
+    self.assertEqual(mol.GetNumAtoms(), 4)
+    self.assertTrue(mol.GetAtomWithIdx(3).HasQuery())
+
+    Chem.CollapseAttachmentPoints(mol)
+    self.assertEqual(mol.GetNumAtoms(), 3)
+
+    Chem.ExpandAttachmentPoints(mol,addAsQueries=False)
+    self.assertEqual(mol.GetNumAtoms(), 4)
+    self.assertFalse(mol.GetAtomWithIdx(3).HasQuery())
+    Chem.CollapseAttachmentPoints(mol,markedOnly=False)
+    self.assertEqual(mol.GetNumAtoms(), 2)
+
 
 
 if __name__ == '__main__':
