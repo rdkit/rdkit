@@ -1169,7 +1169,7 @@ std::vector<int> hapticBondEndpoints(const Bond *bond) {
 }
 }  // end of namespace details
 
-void expandAttachmentPoints(RWMol &mol) {
+void expandAttachmentPoints(RWMol &mol, bool addAsQueries) {
   for (auto atom : mol.atoms()) {
     int value;
     if (atom->getPropIfPresent(common_properties::molAttachPoint, value)) {
@@ -1180,16 +1180,89 @@ void expandAttachmentPoints(RWMol &mol) {
       if (value == 2 || value == -1) {
         tgtVals.push_back(2);
       }
+      if (tgtVals.empty()) {
+        BOOST_LOG(rdWarningLog)
+            << "Invalid value for molAttachPoint: " << value << " on atom "
+            << atom->getIdx() << ". Not expanding this atttachment point."
+            << std::endl;
+        continue;
+      }
       for (auto tval : tgtVals) {
         atom->clearProp(common_properties::molAttachPoint);
-        auto newAtom = new Atom(0);
+        Atom *newAtom = nullptr;
+        if (addAsQueries) {
+          newAtom = new QueryAtom(0);
+          newAtom->setQuery(RDKit::makeAtomNullQuery());
+        } else {
+          newAtom = new Atom(0);
+        }
         newAtom->setProp(common_properties::_fromAttachPoint, tval);
         bool updateLabel = false;
-        bool takeOwnwership = true;
-        auto idx = mol.addAtom(newAtom, updateLabel, takeOwnwership);
+        bool takeOwnership = true;
+        auto idx = mol.addAtom(newAtom, updateLabel, takeOwnership);
         mol.addBond(atom->getIdx(), idx, Bond::SINGLE);
       }
     }
+  }
+}
+
+void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
+  bool removedAny = false;
+  std::vector<int> attachLabels(mol.getNumAtoms(), 0);
+  for (auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() == 0) {
+      int value = 0;
+      atom->getPropIfPresent(common_properties::_fromAttachPoint, value);
+      if (markedOnly && !value) {
+        continue;
+      }
+      if (markedOnly && (value < 0 || value > 2)) {
+        BOOST_LOG(rdWarningLog)
+            << "Invalid value for _fromAttachPoint: " << value << " on atom "
+            << atom->getIdx() << ". Not collapsing this atom" << std::endl;
+        continue;
+      }
+
+      if (atom->getDegree() != 1 ||
+          (atom->hasQuery() &&
+           atom->getQuery()->getDescription() != "AtomNull")) {
+        continue;
+      }
+      auto bond = *mol.atomBonds(atom).begin();
+      if ((bond->getBondType() != Bond::BondType::SINGLE &&
+           bond->getBondType() != Bond::BondType::UNSPECIFIED) ||
+          bond->getBondDir() != Bond::BondDir::NONE) {
+        continue;
+      }
+      auto oAtomIdx = bond->getOtherAtom(atom)->getIdx();
+      if (attachLabels[oAtomIdx]) {
+        if (attachLabels[oAtomIdx] != -1) {
+          value = -1;
+        } else {
+          BOOST_LOG(rdWarningLog)
+              << "More than two attachment points on atom " << oAtomIdx
+              << ". Attachment point " << atom->getIdx()
+              << " will not be collapsed." << std::endl;
+          continue;
+        }
+      }
+      if (!removedAny) {
+        mol.beginBatchEdit();
+        removedAny = true;
+      }
+      attachLabels[oAtomIdx] = value;
+      mol.removeAtom(atom);
+    }
+  }
+  // set the attachment point labels
+  for (auto atom : mol.atoms()) {
+    if (attachLabels[atom->getIdx()]) {
+      atom->setProp(common_properties::molAttachPoint,
+                    attachLabels[atom->getIdx()]);
+    }
+  }
+  if (removedAny) {
+    mol.commitBatchEdit();
   }
 }
 }  // end of namespace MolOps
