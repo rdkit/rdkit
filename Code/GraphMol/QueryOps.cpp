@@ -1116,6 +1116,8 @@ void finalizeQueryFromDescription(
     query->setMatchFunc(nullQueryFun);
   } else if (descr == "AtomType") {
     query->setDataFunc(queryAtomType);
+  } else if (descr == "AtomNumRadicalElectrons") {
+    query->setDataFunc(queryAtomNumRadicalElectrons);
   } else if (descr == "AtomInNRings" || descr == "RecursiveStructure") {
     // don't need to do anything here because the classes
     // automatically have everything set
