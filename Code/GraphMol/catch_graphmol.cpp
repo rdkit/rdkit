@@ -3713,6 +3713,16 @@ TEST_CASE("expand and remove AttachmentPoints") {
           common_properties::molAttachPoint, value));
       CHECK(value == tgt);
     }
+    {
+      RWMol mcp(*m);
+      bool markedOnly = false;
+      MolOps::collapseAttachmentPoints(mcp, markedOnly);
+      CHECK(mcp.getNumAtoms() == 2);
+      int value = 0;
+      CHECK(mcp.getAtomWithIdx(0)->getPropIfPresent(
+          common_properties::molAttachPoint, value));
+      CHECK(value == 1);
+    }
   }
   SECTION("collapse two dummies") {
     auto m = "*CO"_smarts;

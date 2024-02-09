@@ -1222,6 +1222,9 @@ void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
             << atom->getIdx() << ". Not collapsing this atom" << std::endl;
         continue;
       }
+      if (!markedOnly && !value) {
+        value = 1;
+      }
 
       if (atom->getDegree() != 1 ||
           (atom->hasQuery() &&

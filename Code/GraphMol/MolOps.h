@@ -1138,6 +1138,19 @@ RDKIT_GRAPHMOL_EXPORT ROMol *dativeBondsToHaptic(const ROMol &mol);
 //! \overload modifies molecule in place.
 RDKIT_GRAPHMOL_EXPORT void dativeBondsToHaptic(RWMol &mol);
 
+namespace details {
+//! not recommended for use in other code
+RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
+    RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
+    boost::dynamic_bitset<> bondsToUse, bool markAtomsBonds = true,
+    unsigned int maxBackTracks = 100);
+
+// If the bond is dative, and it has a common_properties::MolFileBondEndPts
+// prop, returns a vector of the indices of the atoms mentioned in the prop.
+RDKIT_GRAPHMOL_EXPORT std::vector<int> hapticBondEndpoints(const Bond *bond);
+
+}  // namespace details
+
 //! attachment points encoded as attachPt properties are added to the graph as
 /// dummy atoms
 /*!
@@ -1154,9 +1167,9 @@ RDKIT_GRAPHMOL_EXPORT void expandAttachmentPoints(RWMol &mol,
  *
  * @param mol the molecule of interest
  * @param markedOnly if true, only dummy atoms with the _fromAttachPoint
- *    property will be removed
+ *    property will be collapsed
  *
- * In order for a dummy atom to be considered for removal it must have:
+ * In order for a dummy atom to be considered for collapsing it must have:
  * - degree 1 with a single or unspecified bond
  * - the bond to it can not be wedged
  * - either no query or be an AtomNullQuery
@@ -1164,19 +1177,6 @@ RDKIT_GRAPHMOL_EXPORT void expandAttachmentPoints(RWMol &mol,
  */
 RDKIT_GRAPHMOL_EXPORT void collapseAttachmentPoints(RWMol &mol,
                                                     bool markedOnly = true);
-
-namespace details {
-//! not recommended for use in other code
-RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
-    RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
-    boost::dynamic_bitset<> bondsToUse, bool markAtomsBonds = true,
-    unsigned int maxBackTracks = 100);
-
-// If the bond is dative, and it has a common_properties::MolFileBondEndPts
-// prop, returns a vector of the indices of the atoms mentioned in the prop.
-RDKIT_GRAPHMOL_EXPORT std::vector<int> hapticBondEndpoints(const Bond *bond);
-
-}  // namespace details
 
 }  // namespace MolOps
 }  // namespace RDKit
