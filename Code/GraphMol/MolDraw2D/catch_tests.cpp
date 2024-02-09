@@ -83,7 +83,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3226_1.svg", 831257877U},
     {"testGithub3226_2.svg", 3517325227U},
     {"testGithub3226_3.svg", 3609721552U},
-    {"testGithub3369_1.svg", 3091976328U},
+    {"testGithub3369_1.svg", 2194263901U},
     {"testIncludeRadicals_1a.svg", 1829641340U},
     {"testIncludeRadicals_1b.svg", 4184066907U},
     {"testLegendsAndDrawing-1.svg", 3563802758U},
@@ -1310,8 +1310,7 @@ TEST_CASE(
   SECTION("works with the drawing code") {
     MolDraw2DSVG drawer(300, 250);
     RWMol dm1(*m1);
-    bool includeRelativeCIP = true;
-    Chirality::addStereoAnnotations(dm1, includeRelativeCIP);
+    Chirality::addStereoAnnotations(dm1);
     drawer.drawMolecule(dm1);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();

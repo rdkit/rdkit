@@ -47,10 +47,6 @@ void arcPoints(const Point2D &cds1, const Point2D &cds2,
   }
 }
 
-void addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP) {
-  Chirality::addStereoAnnotations(const_cast<ROMol &>(mol), includeRelativeCIP);
-}
-
 namespace {
 // note, this is approximate since we're just using it for drawing
 bool lineSegmentsIntersect(const Point2D &s1, const Point2D &s2,

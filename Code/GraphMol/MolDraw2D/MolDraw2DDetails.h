@@ -56,10 +56,6 @@ RDKIT_MOLDRAW2D_EXPORT void arcPoints(const Point2D &cds1, const Point2D &cds2,
                                       std::vector<Point2D> &res,
                                       float startAng = 0, float extent = 360);
 
-[[deprecated(
-    "please use Chirality::addStereoAnnotations instead")]] RDKIT_MOLDRAW2D_EXPORT void
-addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP = false);
-
 //! add annotations with atom indices.
 RDKIT_MOLDRAW2D_EXPORT inline void addAtomIndices(const ROMol &mol) {
   // we don't need this in the global set of tags since it will only be used

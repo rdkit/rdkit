@@ -3018,12 +3018,8 @@ A note on the flags controlling which atoms/bonds are modified:
 
     python::def(
         "AddStereoAnnotations", Chirality::addStereoAnnotations,
-        (python::arg("mol"), python::arg("includeRelativeCIP") = false),
+        (python::arg("mol")),
         R"DOC(add R/S, relative stereo, and E/Z annotations to atoms and bonds
-
-  Arguments:
-   - mol: molecule to modify
-   - includeRelativeCIP: include CIP labels on AND and OR stereo groups.
 
   Note that CIP labels will only be added if CIP stereochemistry has been
   assigned to the molecule.)DOC");

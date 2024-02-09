@@ -5176,19 +5176,6 @@ TEST_CASE(
                                                  txt));
     CHECK(txt == "and2");
   }
-  SECTION("including CIP with relative stereo") {
-    ROMol m2(*m1);
-    bool includeRelativeCIP = true;
-    Chirality::addStereoAnnotations(m2, includeRelativeCIP);
-
-    std::string txt;
-    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
-                                                 txt));
-    CHECK(txt == "abs (S)");
-    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
-                                                 txt));
-    CHECK(txt == "and2 (R)");
-  }
   SECTION("new CIP labels") {
     ROMol m2(*m1);
     REQUIRE(m2.getBondBetweenAtoms(20, 21));

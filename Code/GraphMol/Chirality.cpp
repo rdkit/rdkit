@@ -2660,7 +2660,7 @@ void removeNonExplicit3DChirality(ROMol &mol) {
   }
 }
 
-void addStereoAnnotations(ROMol &mol, bool includeRelativeCIP) {
+void addStereoAnnotations(ROMol &mol) {
   auto sgs = mol.getStereoGroups();
   assignStereoGroupIds(sgs);
   std::vector<unsigned int> doneAts(mol.getNumAtoms(), 0);
@@ -2675,8 +2675,7 @@ void addStereoAnnotations(ROMol &mol, bool includeRelativeCIP) {
       }
       std::string lab;
       std::string cip;
-      if (includeRelativeCIP ||
-          sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+      if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
         atom->getPropIfPresent(common_properties::_CIPCode, cip);
       }
       switch (sg.getGroupType()) {

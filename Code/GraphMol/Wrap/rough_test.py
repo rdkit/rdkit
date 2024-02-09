@@ -8012,11 +8012,6 @@ CAS<~>
     self.assertEqual(mol.GetAtomWithIdx(5).GetProp("atomNote"), "abs (S)")
     self.assertEqual(mol.GetAtomWithIdx(3).GetProp("atomNote"), "and2")
 
-    Chem.AddStereoAnnotations(mol, includeRelativeCIP=True)
-    self.assertEqual(mol.GetAtomWithIdx(5).GetProp("atomNote"), "abs (S)")
-    self.assertEqual(mol.GetAtomWithIdx(3).GetProp("atomNote"), "and2 (R)")
-
-
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
