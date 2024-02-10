@@ -55,7 +55,7 @@ struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
   bool strictParsing = true; /**< if set to false, the parser is more lax about
                                 correctness of the contents. */
   bool expandAttachmentPoints =
-      false; /**< toggle convertion of attachment points into dummy atoms */
+      false; /**< toggle conversion of attachment points into dummy atoms */
 };
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolDataStream(
     std::istream &inStream, unsigned int &line,
