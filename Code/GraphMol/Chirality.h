@@ -360,7 +360,9 @@ RDKIT_GRAPHMOL_EXPORT void GetMolFileBondStereoInfo(
  assigned to the molecule.
 
  */
-RDKIT_GRAPHMOL_EXPORT void addStereoAnnotations(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void addStereoAnnotations(
+    ROMol &mol, std::string absLabel = "abs (%s)", std::string orLabel = "or%d",
+    std::string andLabel = "and%d");
 
 }  // namespace Chirality
 }  // namespace RDKit

@@ -2660,7 +2660,8 @@ void removeNonExplicit3DChirality(ROMol &mol) {
   }
 }
 
-void addStereoAnnotations(ROMol &mol) {
+void addStereoAnnotations(ROMol &mol, std::string absLabel, std::string orLabel,
+                          std::string andLabel) {
   auto sgs = mol.getStereoGroups();
   assignStereoGroupIds(sgs);
   std::vector<unsigned int> doneAts(mol.getNumAtoms(), 0);
@@ -2680,21 +2681,26 @@ void addStereoAnnotations(ROMol &mol) {
       }
       switch (sg.getGroupType()) {
         case StereoGroupType::STEREO_ABSOLUTE:
-          lab = "abs";
+          lab = absLabel;
           break;
         case StereoGroupType::STEREO_OR:
-          lab = (boost::format("or%d") % sg.getWriteId()).str();
+          lab = orLabel;
+          if (lab.find("%d") != std::string::npos) {
+            lab = (boost::format(lab) % sg.getWriteId()).str();
+          }
           break;
         case StereoGroupType::STEREO_AND:
-          lab = (boost::format("and%d") % sg.getWriteId()).str();
-          break;
+          lab = andLabel;
+          if (lab.find("%d") != std::string::npos) {
+            lab = (boost::format(lab) % sg.getWriteId()).str();
+          }
         default:
           break;
       }
       if (!lab.empty()) {
         doneAts[atom->getIdx()] = 1;
-        if (!cip.empty()) {
-          lab += " (" + cip + ")";
+        if (!cip.empty() && lab.find("%s") != std::string::npos) {
+          lab = (boost::format(lab) % cip).str();
         }
         atom->setProp(common_properties::atomNote, lab);
       }
