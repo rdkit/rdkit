@@ -22,7 +22,7 @@
 #include <RDGeneral/utils.h>
 
 #include <boost/dynamic_bitset.hpp>
-#include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -2661,11 +2661,13 @@ void removeNonExplicit3DChirality(ROMol &mol) {
 }
 
 void addStereoAnnotations(ROMol &mol, std::string absLabel, std::string orLabel,
-                          std::string andLabel) {
+                          std::string andLabel, std::string cipLabel,
+                          std::string bondLabel) {
   auto sgs = mol.getStereoGroups();
   assignStereoGroupIds(sgs);
-  std::vector<unsigned int> doneAts(mol.getNumAtoms(), 0);
+  boost::dynamic_bitset<> doneAts(mol.getNumAtoms());
   for (const auto &sg : sgs) {
+    std::string gid = std::to_string(sg.getWriteId());
     for (const auto atom : sg.getAtoms()) {
       if (doneAts[atom->getIdx()]) {
         BOOST_LOG(rdWarningLog) << "Warning: atom " << atom->getIdx()
@@ -2674,58 +2676,62 @@ void addStereoAnnotations(ROMol &mol, std::string absLabel, std::string orLabel,
                                 << std::endl;
         continue;
       }
-      std::string lab;
       std::string cip;
-      if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
-        atom->getPropIfPresent(common_properties::_CIPCode, cip);
-      }
+      atom->getPropIfPresent(common_properties::_CIPCode, cip);
+
+      std::string lab;
       switch (sg.getGroupType()) {
         case StereoGroupType::STEREO_ABSOLUTE:
           lab = absLabel;
+          doneAts.set(atom->getIdx());
           break;
         case StereoGroupType::STEREO_OR:
           lab = orLabel;
-          if (lab.find("%d") != std::string::npos) {
-            lab = (boost::format(lab) % sg.getWriteId()).str();
-          }
+          doneAts.set(atom->getIdx());
           break;
         case StereoGroupType::STEREO_AND:
           lab = andLabel;
-          if (lab.find("%d") != std::string::npos) {
-            lab = (boost::format(lab) % sg.getWriteId()).str();
-          }
+          doneAts.set(atom->getIdx());
+          break;
         default:
           break;
       }
+
       if (!lab.empty()) {
-        doneAts[atom->getIdx()] = 1;
-        if (!cip.empty() && lab.find("%s") != std::string::npos) {
-          lab = (boost::format(lab) % cip).str();
+        boost::algorithm::replace_all(lab, "{id}", gid);
+        if (!cip.empty()) {
+          boost::algorithm::replace_all(lab, "{cip}", cip);
         }
         atom->setProp(common_properties::atomNote, lab);
       }
     }
   }
-  for (auto atom : mol.atoms()) {
-    std::string cip;
-    if (!doneAts[atom->getIdx()] &&
-        atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
-      std::string lab = "(" + cip + ")";
-      atom->setProp(common_properties::atomNote, lab);
-    }
-  }
-  for (auto bond : mol.bonds()) {
-    std::string cip;
-    if (!bond->getPropIfPresent(common_properties::_CIPCode, cip)) {
-      if (bond->getStereo() == Bond::STEREOE) {
-        cip = "E";
-      } else if (bond->getStereo() == Bond::STEREOZ) {
-        cip = "Z";
+  if (!cipLabel.empty()) {
+    for (auto atom : mol.atoms()) {
+      std::string cip;
+      if (!doneAts[atom->getIdx()] &&
+          atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+        std::string lab = cipLabel;
+        boost::algorithm::replace_all(lab, "{cip}", cip);
+        atom->setProp(common_properties::atomNote, lab);
       }
     }
-    if (!cip.empty()) {
-      std::string lab = "(" + cip + ")";
-      bond->setProp(common_properties::bondNote, lab);
+  }
+  if (!bondLabel.empty()) {
+    for (auto bond : mol.bonds()) {
+      std::string cip;
+      if (!bond->getPropIfPresent(common_properties::_CIPCode, cip)) {
+        if (bond->getStereo() == Bond::STEREOE) {
+          cip = "E";
+        } else if (bond->getStereo() == Bond::STEREOZ) {
+          cip = "Z";
+        }
+      }
+      if (!cip.empty()) {
+        std::string lab = bondLabel;
+        boost::algorithm::replace_all(lab, "{cip}", cip);
+        bond->setProp(common_properties::bondNote, lab);
+      }
     }
   }
 }

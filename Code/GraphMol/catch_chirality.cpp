@@ -5162,7 +5162,7 @@ M  END)CTAB";
 TEST_CASE(
     "github #3369: support new CIP code and StereoGroups in addStereoAnnotations()") {
   auto m1 =
-      "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"_smiles;
+      "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:18,&2:3,6,r|"_smiles;
   REQUIRE(m1);
   SECTION("defaults") {
     ROMol m2(*m1);
@@ -5176,7 +5176,7 @@ TEST_CASE(
                                                  txt));
     CHECK(txt == "and2");
   }
-  SECTION("new CIP labels") {
+  SECTION("double bonds") {
     ROMol m2(*m1);
     REQUIRE(m2.getBondBetweenAtoms(20, 21));
     m2.getBondBetweenAtoms(20, 21)->setStereo(Bond::BondStereo::STEREOTRANS);
@@ -5194,5 +5194,73 @@ TEST_CASE(
     CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
         common_properties::bondNote, txt));
     CHECK(txt == "(E)");
+  }
+
+  SECTION("custom labels") {
+    ROMol m2(*m1);
+    CIPLabeler::assignCIPLabels(m2);
+
+    std::string absLabel = "abs [{cip}]";
+    std::string orLabel = "o{id} ({cip})";
+    std::string andLabel = "&{id} ({cip})";
+    std::string cipLabel = "[{cip}]";
+    std::string bondLabel = "[{cip}]";
+    Chirality::addStereoAnnotations(m2, absLabel, orLabel, andLabel, cipLabel,
+                                    bondLabel);
+
+    std::string txt;
+
+    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "abs [S]");
+
+    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "&2 (R)");
+
+    CHECK(m2.getAtomWithIdx(1)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "o1 (S)");
+
+    CHECK(m2.getAtomWithIdx(11)->getPropIfPresent(common_properties::atomNote,
+                                                  txt));
+    CHECK(txt == "[R]");
+
+    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
+        common_properties::bondNote, txt));
+    CHECK(txt == "[E]");
+  }
+
+  SECTION("empty labels") {
+    ROMol m2(*m1);
+    CIPLabeler::assignCIPLabels(m2);
+
+    std::string absLabel = "";
+    std::string orLabel = "o{id} ({cip})";
+    std::string andLabel = "&{id} ({cip})";
+    std::string cipLabel = "[{cip}]";
+    std::string bondLabel = "";
+    Chirality::addStereoAnnotations(m2, absLabel, orLabel, andLabel, cipLabel,
+                                    bondLabel);
+
+    std::string txt;
+
+    CHECK(!m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
+                                                  txt));
+
+    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "&2 (R)");
+
+    CHECK(m2.getAtomWithIdx(1)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "o1 (S)");
+
+    CHECK(m2.getAtomWithIdx(11)->getPropIfPresent(common_properties::atomNote,
+                                                  txt));
+    CHECK(txt == "[R]");
+
+    CHECK(!m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
+        common_properties::bondNote, txt));
   }
 }
