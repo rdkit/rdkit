@@ -1069,6 +1069,37 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
 
+  python::class_<RDKit::MolWriteParams, boost::noncopyable>(
+      "MolWriteParams", "Parameters controlling Mol writing")
+      .def_readwrite("includeStereo",
+                     &RDKit::MolWriteParams::includeStereo,
+                     "toggles inclusion of stereochemistry information (default=True)")
+      .def_readwrite("kekulize",
+                     &RDKit::MolWriteParams::kekulize,
+                     "triggers kekulization of the molecule before it is written (default=True)")
+      .def_readwrite("forceV3000",
+                     &RDKit::MolWriteParams::forceV3000,
+                     "force generation a V3000 mol block (happens automatically with more than 999 atoms or bonds)(default=False)")
+      .def_readwrite("highPrecision",
+                     &RDKit::MolWriteParams::highPrecision,
+                     "write double precision coordinates (only available in V3000)(default=false)");
+
+  docString =
+      "Returns a Mol block for a molecule\n\
+  Arguments:\n\
+    - mol: the molecule\n\
+    - params: the MolWriteParams\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def("MolToMolBlock",
+              (std::string(*)(const ROMol &, const MolWriteParams &, int))RDKit::MolToMolBlock,
+              (python::arg("mol"), python::arg("params"), python::arg("confId") = -1),
+              docString.c_str());
+
   docString =
       "Returns a Mol block for a molecule\n\
   ARGUMENTS:\n\
@@ -1086,30 +1117,51 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     a string\n\
 \n";
-  python::def("MolToMolBlock", RDKit::MolToMolBlock,
+  python::def("MolToMolBlock",
+              (std::string(*)(const ROMol &, bool, int, bool, bool))RDKit::MolToMolBlock,
               (python::arg("mol"), python::arg("includeStereo") = true,
                python::arg("confId") = -1, python::arg("kekulize") = true,
                python::arg("forceV3000") = false),
               docString.c_str());
+
   docString =
-      "Returns a V3000 Mol block for a molecule\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule\n\
-    - includeStereo: (optional) toggles inclusion of stereochemical\n\
-      information in the output\n\
-    - confId: (optional) selects which conformation to output (-1 = default)\n\
-    - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
-      as suggested by the MDL spec.\n\
-\n\
-  RETURNS:\n\
-\n\
-    a string\n\
-\n";
-  python::def("MolToV3KMolBlock", RDKit::MolToV3KMolBlock,
-              (python::arg("mol"), python::arg("includeStereo") = true,
-               python::arg("confId") = -1, python::arg("kekulize") = true),
-              docString.c_str());
+       "Returns a V3000 Mol block for a molecule\n\
+   ARGUMENTS:\n\
+\n \
+     - mol: the molecule\n\
+     - params: the MolWriteParams\n\
+     - confId: (optional) selects which conformation to output (-1 = default)\n\
+\n \
+   RETURNS:\n\
+\n \
+     a string\n\
+\n ";
+  python::def("MolToV3KMolBlock",
+               (std::string(*)(const ROMol &, const MolWriteParams &, int))RDKit::MolToV3KMolBlock,
+               (python::arg("mol"), python::arg("params"), python::arg("confId") = -1),
+               docString.c_str());
+
+  docString =
+       "Returns a V3000 Mol block for a molecule\n\
+   ARGUMENTS:\n\
+\n \
+     - mol: the molecule\n\
+     - includeStereo: (optional) toggles inclusion of stereochemical\n\
+       information in the output\n\
+     - confId: (optional) selects which conformation to output (-1 = default)\n\
+     - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
+       as suggested by the MDL spec.\n\
+\n \
+   RETURNS:\n\
+\n \
+     a string\n\
+\n ";
+
+  python::def("MolToV3KMolBlock",
+              (std::string(*)(const ROMol &, bool, int, bool))RDKit::MolToV3KMolBlock,
+               (python::arg("mol"), python::arg("includeStereo") = true,
+                python::arg("confId") = -1, python::arg("kekulize") = true),
+               docString.c_str());
 
   docString =
       "Writes a Mol file for a molecule\n\
