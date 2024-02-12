@@ -22,6 +22,7 @@
 #include <RDGeneral/utils.h>
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -2655,6 +2656,82 @@ void removeNonExplicit3DChirality(ROMol &mol) {
     if (atom->hasProp(Chirality::_NonExplicit3DChirality)) {
       atom->clearProp(Chirality::_NonExplicit3DChirality);
       atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+    }
+  }
+}
+
+void addStereoAnnotations(ROMol &mol, std::string absLabel, std::string orLabel,
+                          std::string andLabel, std::string cipLabel,
+                          std::string bondLabel) {
+  auto sgs = mol.getStereoGroups();
+  assignStereoGroupIds(sgs);
+  boost::dynamic_bitset<> doneAts(mol.getNumAtoms());
+  for (const auto &sg : sgs) {
+    std::string gid = std::to_string(sg.getWriteId());
+    for (const auto atom : sg.getAtoms()) {
+      if (doneAts[atom->getIdx()]) {
+        BOOST_LOG(rdWarningLog) << "Warning: atom " << atom->getIdx()
+                                << " is in more than one stereogroup. Only the "
+                                   "label from the first group will be used."
+                                << std::endl;
+        continue;
+      }
+      std::string cip;
+      atom->getPropIfPresent(common_properties::_CIPCode, cip);
+
+      std::string lab;
+      switch (sg.getGroupType()) {
+        case StereoGroupType::STEREO_ABSOLUTE:
+          lab = absLabel;
+          doneAts.set(atom->getIdx());
+          break;
+        case StereoGroupType::STEREO_OR:
+          lab = orLabel;
+          doneAts.set(atom->getIdx());
+          break;
+        case StereoGroupType::STEREO_AND:
+          lab = andLabel;
+          doneAts.set(atom->getIdx());
+          break;
+        default:
+          break;
+      }
+
+      if (!lab.empty()) {
+        boost::algorithm::replace_all(lab, "{id}", gid);
+        if (!cip.empty()) {
+          boost::algorithm::replace_all(lab, "{cip}", cip);
+        }
+        atom->setProp(common_properties::atomNote, lab);
+      }
+    }
+  }
+  if (!cipLabel.empty()) {
+    for (auto atom : mol.atoms()) {
+      std::string cip;
+      if (!doneAts[atom->getIdx()] &&
+          atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+        std::string lab = cipLabel;
+        boost::algorithm::replace_all(lab, "{cip}", cip);
+        atom->setProp(common_properties::atomNote, lab);
+      }
+    }
+  }
+  if (!bondLabel.empty()) {
+    for (auto bond : mol.bonds()) {
+      std::string cip;
+      if (!bond->getPropIfPresent(common_properties::_CIPCode, cip)) {
+        if (bond->getStereo() == Bond::STEREOE) {
+          cip = "E";
+        } else if (bond->getStereo() == Bond::STEREOZ) {
+          cip = "Z";
+        }
+      }
+      if (!cip.empty()) {
+        std::string lab = bondLabel;
+        boost::algorithm::replace_all(lab, "{cip}", cip);
+        bond->setProp(common_properties::bondNote, lab);
+      }
     }
   }
 }
