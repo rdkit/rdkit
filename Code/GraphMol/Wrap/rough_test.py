@@ -8002,6 +8002,15 @@ CAS<~>
     ranks = Chem.CanonicalRankAtoms(mol,breakTies=False,includeAtomMaps=False)
     self.assertEqual(ranks[0],ranks[2])
 
+  def testAddStereoAnnotations(self):
+    mol = Chem.MolFromSmiles(
+      "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"
+    )
+    self.assertIsNotNone(mol)
+    Chem.rdCIPLabeler.AssignCIPLabels(mol)
+    Chem.AddStereoAnnotations(mol)
+    self.assertEqual(mol.GetAtomWithIdx(5).GetProp("atomNote"), "abs (S)")
+    self.assertEqual(mol.GetAtomWithIdx(3).GetProp("atomNote"), "and2")
 
 
 if __name__ == '__main__':

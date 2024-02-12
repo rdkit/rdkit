@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 
 #include <RDGeneral/hash/hash.hpp>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
@@ -82,7 +83,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3226_1.svg", 831257877U},
     {"testGithub3226_2.svg", 3517325227U},
     {"testGithub3226_3.svg", 3609721552U},
-    {"testGithub3369_1.svg", 3091976328U},
+    {"testGithub3369_1.svg", 2194263901U},
     {"testIncludeRadicals_1a.svg", 1829641340U},
     {"testIncludeRadicals_1b.svg", 4184066907U},
     {"testLegendsAndDrawing-1.svg", 3563802758U},
@@ -1301,61 +1302,15 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "github #3369: support new CIP code and StereoGroups in "
-    "addStereoAnnotation()",
-    "[chirality]") {
+    "github #3369: support new CIP code and StereoGroups in addStereoAnnotations()") {
   auto m1 =
       "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"_smiles;
   REQUIRE(m1);
-  SECTION("defaults") {
-    ROMol m2(*m1);
-    MolDraw2D_detail::addStereoAnnotation(m2);
 
-    std::string txt;
-    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
-                                                 txt));
-    CHECK(txt == "abs (S)");
-    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
-                                                 txt));
-    CHECK(txt == "and2");
-  }
-  SECTION("including CIP with relative stereo") {
-    ROMol m2(*m1);
-    bool includeRelativeCIP = true;
-    MolDraw2D_detail::addStereoAnnotation(m2, includeRelativeCIP);
-
-    std::string txt;
-    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
-                                                 txt));
-    CHECK(txt == "abs (S)");
-    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
-                                                 txt));
-    CHECK(txt == "and2 (R)");
-  }
-  SECTION("new CIP labels") {
-    ROMol m2(*m1);
-    REQUIRE(m2.getBondBetweenAtoms(20, 21));
-    m2.getBondBetweenAtoms(20, 21)->setStereo(Bond::BondStereo::STEREOTRANS);
-    // initially no label is assigned since we have TRANS
-    MolDraw2D_detail::addStereoAnnotation(m2);
-    CHECK(
-        !m2.getBondBetweenAtoms(20, 21)->hasProp(common_properties::bondNote));
-
-    CIPLabeler::assignCIPLabels(m2);
-    std::string txt;
-    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
-        common_properties::_CIPCode, txt));
-    CHECK(txt == "E");
-    MolDraw2D_detail::addStereoAnnotation(m2);
-    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
-        common_properties::bondNote, txt));
-    CHECK(txt == "(E)");
-  }
   SECTION("works with the drawing code") {
     MolDraw2DSVG drawer(300, 250);
     RWMol dm1(*m1);
-    bool includeRelativeCIP = true;
-    MolDraw2D_detail::addStereoAnnotation(dm1, includeRelativeCIP);
+    Chirality::addStereoAnnotations(dm1);
     drawer.drawMolecule(dm1);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();

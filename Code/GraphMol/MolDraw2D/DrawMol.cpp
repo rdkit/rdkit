@@ -195,7 +195,7 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
     prepareStereoGroups(*drawMol_);
   }
   if (drawOptions_.addStereoAnnotation) {
-    addStereoAnnotation(*drawMol_);
+    Chirality::addStereoAnnotations(*drawMol_);
   }
   if (drawOptions_.addAtomIndices) {
     addAtomIndices(*drawMol_);
