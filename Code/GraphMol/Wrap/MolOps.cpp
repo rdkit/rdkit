@@ -1028,8 +1028,10 @@ void testSetProps(ROMol &mol) {
   }
 }
 
-void expandAttachmentPointsHelper(ROMol &mol, bool addAsQueries) {
-  MolOps::expandAttachmentPoints(static_cast<RWMol &>(mol), addAsQueries);
+void expandAttachmentPointsHelper(ROMol &mol, bool addAsQueries,
+                                  bool addCoords) {
+  MolOps::expandAttachmentPoints(static_cast<RWMol &>(mol), addAsQueries,
+                                 addCoords);
 }
 
 void collapseAttachmentPointsHelper(ROMol &mol, bool markedOnly) {
@@ -3027,13 +3029,16 @@ A note on the flags controlling which atoms/bonds are modified:
 
     python::def(
         "ExpandAttachmentPoints", expandAttachmentPointsHelper,
-        (python::arg("mol"), python::arg("addAsQueries") = true),
+        (python::arg("mol"), python::arg("addAsQueries") = true,
+         python::arg("addCoords") = true),
         R"DOC(attachment points encoded as attachPt properties are added to the graph as dummy atoms
 
   Arguments:
    - mol: molecule to be modified
    - addAsQueries: if true, the dummy atoms will be added as null queries
         (i.e. they will match any atom in a substructure search)
+   - addCoords: if true and the molecule has one or more conformers, 
+        positions for the attachment points will be added to the conformer(s)
 )DOC");
     python::def(
         "CollapseAttachmentPoints", collapseAttachmentPointsHelper,

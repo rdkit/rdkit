@@ -1169,7 +1169,66 @@ std::vector<int> hapticBondEndpoints(const Bond *bond) {
 }
 }  // end of namespace details
 
-void expandAttachmentPoints(RWMol &mol, bool addAsQueries) {
+namespace details {
+unsigned int addExplicitAttachmentPoint(RWMol &mol, unsigned int atomIdx,
+                                        unsigned int val, bool addAsQuery,
+                                        bool addCoords) {
+  Atom *newAtom = nullptr;
+  if (addAsQuery) {
+    newAtom = new QueryAtom(0);
+    newAtom->setQuery(RDKit::makeAtomNullQuery());
+  } else {
+    newAtom = new Atom(0);
+  }
+  newAtom->setProp(common_properties::_fromAttachPoint, val);
+  bool updateLabel = false;
+  bool takeOwnership = true;
+  auto idx = mol.addAtom(newAtom, updateLabel, takeOwnership);
+  mol.addBond(atomIdx, idx, Bond::SINGLE);
+  if (addCoords) {
+    setTerminalAtomCoords(mol, idx, atomIdx);
+  }
+  return idx;
+}
+
+bool isAttachmentPoint(const Atom *atom, bool markedOnly) {
+  PRECONDITION(atom, "bad atom");
+  PRECONDITION(atom->hasOwningMol(), "atom not associated with a molecule");
+  if (atom->getAtomicNum() != 0 || atom->getDegree() != 1) {
+    return false;
+  }
+  if (markedOnly && !atom->hasProp(common_properties::_fromAttachPoint)) {
+    return false;
+  }
+  // we know that the atom is degree 1
+  const auto bond = *atom->getOwningMol().atomBonds(atom).begin();
+  if ((bond->getBondType() != Bond::BondType::SINGLE &&
+       bond->getBondType() != Bond::BondType::UNSPECIFIED) ||
+      bond->getBondDir() != Bond::BondDir::NONE) {
+    return false;
+  }
+
+  if (atom->hasQuery()) {
+    // a * from SMARTS
+    if (!atom->getQuery()->getNegation() &&
+        atom->getQuery()->getDescription() == "AtomNull") {
+      return true;
+    }
+    // a * from CXSMILES
+    if (atom->getQuery()->getNegation() &&
+        atom->getQuery()->getDescription() == "AtomAtomicNum" &&
+        static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())->getVal() == 1) {
+      return true;
+    }
+    return false;
+  }
+
+  return true;
+}
+
+}  // namespace details
+
+void expandAttachmentPoints(RWMol &mol, bool addAsQueries, bool addCoords) {
   for (auto atom : mol.atoms()) {
     int value;
     if (atom->getPropIfPresent(common_properties::molAttachPoint, value)) {
@@ -1189,18 +1248,8 @@ void expandAttachmentPoints(RWMol &mol, bool addAsQueries) {
       }
       for (auto tval : tgtVals) {
         atom->clearProp(common_properties::molAttachPoint);
-        Atom *newAtom = nullptr;
-        if (addAsQueries) {
-          newAtom = new QueryAtom(0);
-          newAtom->setQuery(RDKit::makeAtomNullQuery());
-        } else {
-          newAtom = new Atom(0);
-        }
-        newAtom->setProp(common_properties::_fromAttachPoint, tval);
-        bool updateLabel = false;
-        bool takeOwnership = true;
-        auto idx = mol.addAtom(newAtom, updateLabel, takeOwnership);
-        mol.addBond(atom->getIdx(), idx, Bond::SINGLE);
+        details::addExplicitAttachmentPoint(mol, atom->getIdx(), tval,
+                                            addAsQueries, addCoords);
       }
     }
   }
@@ -1209,13 +1258,11 @@ void expandAttachmentPoints(RWMol &mol, bool addAsQueries) {
 void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
   bool removedAny = false;
   std::vector<int> attachLabels(mol.getNumAtoms(), 0);
+
   for (auto atom : mol.atoms()) {
-    if (atom->getAtomicNum() == 0) {
+    if (details::isAttachmentPoint(atom, markedOnly)) {
       int value = 0;
       atom->getPropIfPresent(common_properties::_fromAttachPoint, value);
-      if (markedOnly && !value) {
-        continue;
-      }
       if (markedOnly && (value < 0 || value > 2)) {
         BOOST_LOG(rdWarningLog)
             << "Invalid value for _fromAttachPoint: " << value << " on atom "
@@ -1224,12 +1271,6 @@ void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
       }
       if (!markedOnly && !value) {
         value = 1;
-      }
-
-      if (atom->getDegree() != 1 ||
-          (atom->hasQuery() &&
-           atom->getQuery()->getDescription() != "AtomNull")) {
-        continue;
       }
       auto bond = *mol.atomBonds(atom).begin();
       if ((bond->getBondType() != Bond::BondType::SINGLE &&

@@ -17,6 +17,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 using namespace RDKit;
 
@@ -48,5 +49,12 @@ M  END
     auto mol2{MolFromMolBlock(mb, ps)};
     REQUIRE(mol2);
     CHECK(mol2->getNumAtoms() == 3);
+    SmilesWriteParams sps;
+    CHECK(MolToCXSmiles(*mol2, sps,
+                        SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) ==
+          "*OC |$_AP1;;$|");
+    // verify coords too
+    CHECK(MolToCXSmiles(*mol2) ==
+          "*OC |(-2.50869,4.52002,;-3.3747,4.02,;-4.7083,3.25,),$_AP1;;$|");
   }
 }

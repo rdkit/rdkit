@@ -3599,7 +3599,7 @@ TEST_CASE("expand and remove AttachmentPoints") {
         CHECK(value == val);
         CHECK(mcp.getAtomWithIdx(2)->getAtomicNum() == 0);
         CHECK(mcp.getAtomWithIdx(2)->hasQuery() == asQueries);
-
+        CHECK(MolOps::details::isAttachmentPoint(mcp.getAtomWithIdx(2)));
         MolOps::collapseAttachmentPoints(mcp);
         CHECK(mcp.getNumAtoms() == 2);
       }
@@ -3617,10 +3617,12 @@ TEST_CASE("expand and remove AttachmentPoints") {
             common_properties::_fromAttachPoint, value));
         CHECK(value == 1);
         CHECK(mcp.getAtomWithIdx(2)->hasQuery() == asQueries);
+        CHECK(MolOps::details::isAttachmentPoint(mcp.getAtomWithIdx(2)));
         CHECK(mcp.getAtomWithIdx(3)->getPropIfPresent(
             common_properties::_fromAttachPoint, value));
         CHECK(value == 2);
         CHECK(mcp.getAtomWithIdx(3)->hasQuery() == asQueries);
+        CHECK(MolOps::details::isAttachmentPoint(mcp.getAtomWithIdx(3)));
 
         MolOps::collapseAttachmentPoints(mcp);
         CHECK(mcp.getNumAtoms() == 2);
@@ -3704,8 +3706,12 @@ TEST_CASE("expand and remove AttachmentPoints") {
     CHECK(m->getNumAtoms() == 3);
     for (int tgt : {1, 2}) {
       m->getAtomWithIdx(2)->setProp(common_properties::molAttachPoint, tgt);
+      CHECK(!MolOps::details::isAttachmentPoint(m->getAtomWithIdx(0)));
+      CHECK(MolOps::details::isAttachmentPoint(m->getAtomWithIdx(0), false));
+
       MolOps::expandAttachmentPoints(*m);
       CHECK(m->getNumAtoms() == 4);
+      CHECK(MolOps::details::isAttachmentPoint(m->getAtomWithIdx(3)));
       MolOps::collapseAttachmentPoints(*m);
       CHECK(m->getNumAtoms() == 3);
       int value = 0;
@@ -3763,5 +3769,46 @@ TEST_CASE("expand and remove AttachmentPoints") {
       MolOps::collapseAttachmentPoints(mcp);
       CHECK(mcp.getNumAtoms() == 3);
     }
+  }
+  SECTION("from cxsmiles") {
+    auto mol = "*CC(*)* |$;;;_AP1;_AP2$|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 5);
+
+    {
+      RWMol molcp(*mol);
+      bool markedOnly = true;
+      MolOps::collapseAttachmentPoints(molcp, markedOnly);
+      CHECK(molcp.getNumAtoms() == 3);
+    }
+    {
+      RWMol molcp(*mol);
+      bool markedOnly = false;
+      MolOps::collapseAttachmentPoints(molcp, markedOnly);
+      CHECK(molcp.getNumAtoms() == 2);
+    }
+  }
+  SECTION("add attachment point") {
+    auto mol = "CC"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 2);
+    unsigned int atomIdx = 1;
+    unsigned int val = 2;
+    CHECK(MolOps::details::addExplicitAttachmentPoint(*mol, atomIdx, val) == 2);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(2)->getAtomicNum() == 0);
+    CHECK(mol->getBondBetweenAtoms(1, 2));
+  }
+  SECTION("isAttachmentPoint edge cases") {
+    auto mol = "*CC(*)=* |$;;;_AP1;_AP2$|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 5);
+    mol->getBondBetweenAtoms(2, 3)->setBondDir(Bond::BondDir::BEGINWEDGE);
+    CHECK(!MolOps::details::isAttachmentPoint(mol->getAtomWithIdx(0)));
+    CHECK(MolOps::details::isAttachmentPoint(mol->getAtomWithIdx(0), false));
+    // marked as an attachment point, but at end of a wedged bond
+    CHECK(!MolOps::details::isAttachmentPoint(mol->getAtomWithIdx(3)));
+    // marked as an attachment point, but at end of a double bond
+    CHECK(!MolOps::details::isAttachmentPoint(mol->getAtomWithIdx(4)));
   }
 }
