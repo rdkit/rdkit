@@ -3542,3 +3542,39 @@ $$$$
     CHECK(end_atom->getTotalValence() == 4);
   }
 }
+
+TEST_CASE(
+    "GitHub Issue #7131: Adding Wedge/Dash bond neighboring a stereo double bond causes a Precondition Violation",
+    "[stereochemistry][bug]") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.942857 2.885714 0.000000 0
+M  V30 2 C -5.705678 2.171429 0.000000 0
+M  V30 3 C -5.705678 0.742857 0.000000 0
+M  V30 4 C -4.468499 0.028571 0.000000 0
+M  V30 5 N -4.468499 2.885714 0.000000 0
+M  V30 6 N -6.942857 0.028571 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 1 2 5
+M  V30 5 1 3 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$)CTAB"_ctab;
+  REQUIRE(m);
+  auto b = m->getBondWithIdx(0);
+  b->setBondDir(Bond::BondDir::BEGINDASH);
+
+  MolOps::setDoubleBondNeighborDirections(*m);
+
+  CHECK(b->getBondDir() == Bond::BondDir::BEGINDASH);
+}

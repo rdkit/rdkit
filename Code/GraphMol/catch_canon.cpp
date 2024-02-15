@@ -16,6 +16,7 @@
 #include <GraphMol/new_canon.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/test_fixtures.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
@@ -557,4 +558,124 @@ TEST_CASE("atom mapping in canonicalization") {
                         includeAtomMaps);
     CHECK(ranks[0] == ranks[2]);
   }
+}
+
+TEST_CASE(
+    "GitHub Issue #7023: \"Inconsistent state\" when manually sanitizing and assigning stereo when using the new stereo algorithm",
+    "[bug]") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+
+  const auto molb = R"CTAB("
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 40 47 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -1.412000 -2.520800 0.000000 0
+M  V30 2 N -2.236600 -2.495700 0.000000 0
+M  V30 3 N -3.801500 -2.612400 0.000000 0
+M  V30 4 C -4.626200 -2.587400 0.000000 0
+M  V30 5 C -4.904800 -3.363900 0.000000 0
+M  V30 6 C -5.696800 -3.595000 0.000000 0
+M  V30 7 C -4.966800 -0.807100 0.000000 0
+M  V30 8 N -4.155000 -0.660100 0.000000 0
+M  V30 9 C -4.044000 0.157400 0.000000 0
+M  V30 10 C -3.039200 0.506000 0.000000 0
+M  V30 11 C -2.237800 0.310100 0.000000 0
+M  V30 12 N -2.176500 -0.512600 0.000000 0
+M  V30 13 C -1.375100 -0.708600 0.000000 0
+M  V30 14 C -0.941100 -0.006900 0.000000 0
+M  V30 15 C -0.118400 0.054400 0.000000 0
+M  V30 16 C -1.474300 0.622600 0.000000 0
+M  V30 17 C -0.910300 1.224700 0.000000 0
+M  V30 18 C -1.697100 1.417000 0.000000 0
+M  V30 19 C -5.077900 -1.624600 0.000000 0
+M  V30 20 C -5.893400 -1.749400 0.000000 0
+M  V30 21 C -1.133400 -1.744200 0.000000 0
+M  V30 22 C -0.309800 -1.791700 0.000000 0
+M  V30 23 C -2.515200 -3.272300 0.000000 0
+M  V30 24 C -3.570500 -3.404400 0.000000 0
+M  V30 25 C -3.278900 -4.176100 0.000000 0
+M  V30 26 C 0.225100 -3.058100 0.000000 0
+M  V30 27 C -0.404400 -3.591300 0.000000 0
+M  V30 28 C -1.181000 -3.312700 0.000000 0
+M  V30 29 C -1.076700 -4.131100 0.000000 0
+M  V30 30 Co -0.633100 -1.614100 0.000000 0 CHG=1 VAL=6
+M  V30 31 C -4.787100 0.515600 0.000000 0
+M  V30 32 C -4.934100 1.327400 0.000000 0
+M  V30 33 C -1.862800 -3.777200 0.000000 0
+M  V30 34 C -1.887800 -4.601800 0.000000 0
+M  V30 35 C -4.252300 -3.868900 0.000000 0
+M  V30 36 C -4.678900 -4.575000 0.000000 0
+M  V30 37 C -3.869300 -4.599600 0.000000 0
+M  V30 38 C -5.357500 -0.080500 0.000000 0
+M  V30 39 C -6.124200 -0.385000 0.000000 0
+M  V30 40 C -6.015200 0.417600 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 21 1
+M  V30 2 1 1 2
+M  V30 3 1 28 1
+M  V30 4 1 23 2 CFG=3
+M  V30 5 1 2 30
+M  V30 6 1 23 33
+M  V30 7 1 23 24
+M  V30 8 1 33 28
+M  V30 9 1 24 3
+M  V30 10 1 24 35
+M  V30 11 2 3 4
+M  V30 12 1 5 4
+M  V30 13 1 4 19
+M  V30 14 1 5 6 CFG=3
+M  V30 15 1 35 5
+M  V30 16 2 19 7
+M  V30 17 1 7 8
+M  V30 18 1 38 7
+M  V30 19 2 8 9
+M  V30 20 1 9 10
+M  V30 21 1 31 9
+M  V30 22 2 10 11
+M  V30 23 1 11 12
+M  V30 24 1 11 16
+M  V30 25 2 12 13
+M  V30 26 1 14 13
+M  V30 27 1 14 15 CFG=3
+M  V30 28 1 14 16
+M  V30 29 1 16 17
+M  V30 30 1 16 18
+M  V30 31 1 31 38
+M  V30 32 9 8 30
+M  V30 33 9 3 30
+M  V30 34 9 12 30
+M  V30 35 1 19 20
+M  V30 36 1 21 22
+M  V30 37 1 24 25 CFG=3
+M  V30 38 1 27 26
+M  V30 39 1 28 27
+M  V30 40 1 28 29 CFG=1
+M  V30 41 1 21 13
+M  V30 42 1 31 32 CFG=3
+M  V30 43 1 33 34 CFG=1
+M  V30 44 1 35 36
+M  V30 45 1 35 37
+M  V30 46 1 38 39
+M  V30 47 1 38 40
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+
+  bool sanitize = false;
+  bool removeHs = false;
+  std::unique_ptr<RWMol> m(MolBlockToMol(molb, sanitize, removeHs));
+
+  MolOps::sanitizeMol(*m);
+  MolOps::assignStereochemistry(*m);
+
+  // This should not throw an invariant violation
+  auto smiles = MolToSmiles(*m);
+  CHECK(
+      smiles ==
+      R"SMI(CC[C@@]1(C)/C2=C(C)/C3=N4->[CoH2+]56N2[C@H]([C@@H]1C)[C@]1(C)N->5=C(/C(C)=C2N->6=C(/C=C4/C(C)(C)[C@@H]3C)[C@@H](C)C\2(C)C)[C@@H](C)C1(C)C)SMI");
 }

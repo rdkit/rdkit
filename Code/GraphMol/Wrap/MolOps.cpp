@@ -3016,6 +3016,32 @@ A note on the flags controlling which atoms/bonds are modified:
   If there is no chiral flag set (i.e. the property is not present), the
   molecule will not be modified.)DOC");
 
+    python::def(
+        "AddStereoAnnotations", Chirality::addStereoAnnotations,
+        (python::arg("mol"), python::arg("absLabel") = "abs ({cip})",
+         python::arg("orLabel") = "or{id}", python::arg("andLabel") = "and{id}",
+         python::arg("cipLabel") = "({cip})",
+         python::arg("cipLabel") = "({cip})"),
+        R"DOC(add R/S, relative stereo, and E/Z annotations to atoms and bonds
+
+  Arguments:
+   - mol: molecule to modify
+   - absLabel: label for atoms in an ABS stereo group
+   - orLabel: label for atoms in an OR stereo group
+   - andLabel: label for atoms in an AND stereo group
+   - cipLabel: label for chiral atoms that aren't in a stereo group.
+   - bondLabel: label for CIP stereochemistry on bonds
+
+ If any label is empty, the corresponding annotations will not be added.
+
+ The labels can contain the following placeholders:
+   - {id} - the stereo group's index
+   - {cip} - the atom or bond's CIP stereochemistry
+
+ Note that CIP labels will only be added if CIP stereochemistry has been
+ assigned to the molecule.
+)DOC");
+
     python::def("_TestSetProps", testSetProps, python::arg("mol"));
   }
 };
