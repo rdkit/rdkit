@@ -12,28 +12,12 @@
 #include <emscripten/val.h>
 #include <emscripten/bind.h>
 #include "minilib.h"
+#include "common_defs.h"
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolDraw2D/MolDraw2DJS.h>
 
 using namespace RDKit;
-
-namespace RDKit {
-namespace MinimalLib {
-extern std::string process_mol_details(
-    const std::string &details, int &width, int &height, int &offsetx,
-    int &offsety, std::string &legend, std::vector<int> &atomIds,
-    std::vector<int> &bondIds, std::map<int, DrawColour> &atomMap,
-    std::map<int, DrawColour> &bondMap, std::map<int, double> &radiiMap,
-    bool &kekulize, bool &addChiralHs, bool &wedgeBonds, bool &forceCoords,
-    bool &wavyBonds);
-extern std::string process_rxn_details(
-    const std::string &details, int &width, int &height, int &offsetx,
-    int &offsety, std::string &legend, std::vector<int> &atomIds,
-    std::vector<int> &bondIds, bool &kekulize, bool &highlightByReactant,
-    std::vector<DrawColour> &highlightColorsReactants);
-}  // namespace MinimalLib
-}  // namespace RDKit
 
 namespace {
 std::string draw_to_canvas_with_offset(JSMol &self, emscripten::val canvas,
@@ -67,43 +51,35 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
   }
 
   auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
-  int w = canvas["width"].as<int>();
-  int h = canvas["height"].as<int>();
-  std::vector<int> atomIds;
-  std::vector<int> bondIds;
-  std::map<int, DrawColour> atomMap;
-  std::map<int, DrawColour> bondMap;
-  std::map<int, double> radiiMap;
-  std::string legend = "";
-  int offsetx = 0;
-  int offsety = 0;
-  bool kekulize = true;
-  bool addChiralHs = true;
-  bool wedgeBonds = true;
-  bool forceCoords = false;
-  bool wavyBonds = false;
+  MinimalLib::MolDrawingDetails molDrawingDetails;
+  molDrawingDetails.width = canvas["width"].as<int>();
+  molDrawingDetails.height = canvas["height"].as<int>();
   if (!details.empty()) {
-    auto problems = MinimalLib::process_mol_details(
-        details, w, h, offsetx, offsety, legend, atomIds, bondIds, atomMap,
-        bondMap, radiiMap, kekulize, addChiralHs, wedgeBonds, forceCoords,
-        wavyBonds);
+    auto problems = MinimalLib::process_mol_details(details, molDrawingDetails);
     if (!problems.empty()) {
       return problems;
     }
   }
 
-  std::unique_ptr<MolDraw2DJS> d2d(new MolDraw2DJS(w, h, ctx));
+  std::unique_ptr<MolDraw2DJS> d2d(new MolDraw2DJS(
+      molDrawingDetails.width, molDrawingDetails.height, ctx,
+      molDrawingDetails.panelWidth, molDrawingDetails.panelHeight,
+      molDrawingDetails.noFreetype));
   if (!details.empty()) {
     MolDraw2DUtils::updateDrawerParamsFromJSON(*d2d, details);
   }
-  d2d->setOffset(offsetx, offsety);
+  d2d->setOffset(molDrawingDetails.offsetx, molDrawingDetails.offsety);
 
   MolDraw2DUtils::prepareAndDrawMolecule(
-      *d2d, *self.d_mol, legend, &atomIds, &bondIds,
-      atomMap.empty() ? nullptr : &atomMap,
-      bondMap.empty() ? nullptr : &bondMap,
-      radiiMap.empty() ? nullptr : &radiiMap, -1, kekulize, addChiralHs,
-      wedgeBonds, forceCoords, wavyBonds);
+      *d2d, *self.d_mol, molDrawingDetails.legend, &molDrawingDetails.atomIds,
+      &molDrawingDetails.bondIds,
+      molDrawingDetails.atomMap.empty() ? nullptr : &molDrawingDetails.atomMap,
+      molDrawingDetails.bondMap.empty() ? nullptr : &molDrawingDetails.bondMap,
+      molDrawingDetails.radiiMap.empty() ? nullptr
+                                         : &molDrawingDetails.radiiMap,
+      -1, molDrawingDetails.kekulize, molDrawingDetails.addChiralHs,
+      molDrawingDetails.wedgeBonds, molDrawingDetails.forceCoords,
+      molDrawingDetails.wavyBonds);
   return "";
 }
 
@@ -142,18 +118,9 @@ std::string draw_rxn_to_canvas_with_highlights(JSReaction &self,
   auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
   int w = canvas["width"].as<int>();
   int h = canvas["height"].as<int>();
-  std::vector<int> atomIds;
-  std::vector<int> bondIds;
-  std::string legend = "";
-  int offsetx = 0;
-  int offsety = 0;
-  bool kekulize = true;
-  bool highlightByReactant = false;
-  std::vector<DrawColour> highlightColorsReactants;
+  MinimalLib::RxnDrawingDetails rxnDrawingDetails;
   if (!details.empty()) {
-    auto problems = MinimalLib::process_rxn_details(
-        details, w, h, offsetx, offsety, legend, atomIds, bondIds, kekulize,
-        highlightByReactant, highlightColorsReactants);
+    auto problems = MinimalLib::process_rxn_details(details, rxnDrawingDetails);
     if (!problems.empty()) {
       return problems;
     }
@@ -163,14 +130,15 @@ std::string draw_rxn_to_canvas_with_highlights(JSReaction &self,
   if (!details.empty()) {
     MolDraw2DUtils::updateDrawerParamsFromJSON(*d2d, details);
   }
-  d2d->setOffset(offsetx, offsety);
-  if (!kekulize) {
+  d2d->setOffset(rxnDrawingDetails.offsetx, rxnDrawingDetails.offsety);
+  if (!rxnDrawingDetails.kekulize) {
     d2d->drawOptions().prepareMolsBeforeDrawing = false;
   }
-  d2d->drawReaction(*self.d_rxn, highlightByReactant,
-                    !highlightByReactant || highlightColorsReactants.empty()
+  d2d->drawReaction(*self.d_rxn, rxnDrawingDetails.highlightByReactant,
+                    !rxnDrawingDetails.highlightByReactant ||
+                            rxnDrawingDetails.highlightColorsReactants.empty()
                         ? nullptr
-                        : &highlightColorsReactants);
+                        : &rxnDrawingDetails.highlightColorsReactants);
   return "";
 }
 #endif
