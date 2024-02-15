@@ -51,6 +51,8 @@ for get_adjustment_module_name in ("format", "printing"):
       if hasattr(get_adjustment_module, get_adjustment_name):
         orig_get_adjustment = getattr(get_adjustment_module, get_adjustment_name)
         break
+    if orig_get_adjustment is not None:
+        break
 if orig_get_adjustment is None:
   log.warning("Failed to find the pandas get_adjustment() function to patch")
   raise AttributeError
