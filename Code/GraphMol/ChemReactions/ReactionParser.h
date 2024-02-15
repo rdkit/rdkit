@@ -36,9 +36,11 @@
 #ifndef RD_REACTIONPARSER_H_21Aug2006
 #define RD_REACTIONPARSER_H_21Aug2006
 
+#include <GraphMol/ROMol.h>
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <utility>
 #include <boost/format.hpp>
