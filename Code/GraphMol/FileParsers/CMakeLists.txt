@@ -9,7 +9,7 @@ rdkit_library(FileParsers
     MolSGroupParsing.cpp MolSGroupWriting.cpp
     MolFileStereochem.cpp MolFileWriter.cpp
     ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
-    # SmilesMolSupplier.cpp 
+    SmilesMolSupplier.cpp 
     SmilesWriter.cpp
     # TDTMolSupplier.cpp 
     TDTWriter.cpp

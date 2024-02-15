@@ -50,3 +50,20 @@ TEST_CASE("SDMolSupplier") {
     }
   }
 }
+
+TEST_CASE("SmilesMolSupplier") {
+  SECTION("basics") {
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/NCI/first_200.tpsa.csv";
+    {
+      std::ifstream inStream(fName);
+      FileParsers::SmilesMolSupplierParams params;
+      params.delimiter = ',';
+      FileParsers::SmilesMolSupplier smsup(&inStream, false, params);
+      auto mol = smsup.next();
+      REQUIRE(mol);
+      auto mol2 = smsup[10];
+      REQUIRE(mol2);
+    }
+  }
+}

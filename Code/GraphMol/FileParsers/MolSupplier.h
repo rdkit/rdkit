@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2022 greg landrum and other RDKit contributors
+//  Copyright (C) 2002-2024 greg landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -23,6 +23,7 @@
 #include <GraphMol/ROMol.h>
 #include <RDGeneral/BadFileException.h>
 #include "FileParsers.h"
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 namespace schrodinger {
@@ -225,7 +226,23 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   int d_last = 0;  // the molecule we are ready to read
   std::vector<std::streampos> d_molpos;
 };
-#if 0
+
+struct SmilesMolSupplierParams {
+  std::string delimiter = " \t";
+  int smilesColumn = 0;
+  int nameColumn = 1;
+  bool titleLine = true;
+  v2::SmilesParse::SmilesParserParams parseParameters = {
+      true,   // sanitize
+      false,  // allowCXSMILES
+      true,   // strictCXSMILES
+      false,  // parseName
+      true,   // removeHs
+      false,  // skipCleanup
+      false,  // debugParse
+      {}      // replacements
+  };
+};
 
 //! lazy file parser for Smiles tables
 class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
@@ -261,20 +278,17 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
    *     the column number
    *   \param sanitize - if true sanitize the molecule before returning it
    */
-  explicit SmilesMolSupplier(const std::string &fileName,
-                             const std::string &delimiter = " \t",
-                             int smilesColumn = 0, int nameColumn = 1,
-                             bool titleLine = true, bool sanitize = true);
+  explicit SmilesMolSupplier(
+      const std::string &fileName,
+      const SmilesMolSupplierParams &params = SmilesMolSupplierParams());
   SmilesMolSupplier();
-  explicit SmilesMolSupplier(std::istream *inStream, bool takeOwnership = true,
-                             const std::string &delimiter = " \t",
-                             int smilesColumn = 0, int nameColumn = 1,
-                             bool titleLine = true, bool sanitize = true);
+  explicit SmilesMolSupplier(
+      std::istream *inStream, bool takeOwnership = true,
+      const SmilesMolSupplierParams &params = SmilesMolSupplierParams());
 
   ~SmilesMolSupplier() override { close(); }
-  void setData(const std::string &text, const std::string &delimiter = " ",
-               int smilesColumn = 0, int nameColumn = 1, bool titleLine = true,
-               bool sanitize = true);
+  void setData(const std::string &text, const SmilesMolSupplierParams &params =
+                                            SmilesMolSupplierParams());
   void init() override;
   void reset() override;
   std::unique_ptr<RWMol> next() override;
@@ -289,7 +303,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   unsigned int length();
 
  private:
-  ROMol *processLine(std::string inLine);
+  std::unique_ptr<RWMol> processLine(std::string inLine);
   void processTitleLine();
   std::string nextLine();
   long int skipComments();
@@ -299,17 +313,14 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   long d_len = 0;       // total number of smiles in the file
   long d_next = 0;      // the  molecule we are ready to read
   size_t d_line = 0;    // line number we are currently on
+  SmilesMolSupplierParams d_params;
   std::vector<std::streampos>
       d_molpos;  // vector of positions in the file for molecules
   std::vector<int> d_lineNums;
-  std::string d_delim;      // the delimiter string
-  bool df_sanitize = true;  // sanitize molecules before returning them?
-  STR_VECT d_props;         // vector of property names
-  bool df_title = true;     // do we have a title line?
-  int d_smi = 0;            // column id for the smile string
-  int d_name = 1;           // column id for the name
+  STR_VECT d_props;  // vector of property names
 };
 
+#if 0
 //! lazy file parser for TDT files
 class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   /**************************************************************************
