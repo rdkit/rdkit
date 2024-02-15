@@ -73,6 +73,8 @@ class RDKIT_FILEPARSERS_EXPORT MolSupplier {
   // for disaster.
   MolSupplier(const MolSupplier &);
   MolSupplier &operator=(const MolSupplier &);
+
+ protected:
   std::unique_ptr<v2::FileParsers::MolSupplier> dp_supplier;
 };
 
@@ -95,7 +97,7 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
 
   void setProcessPropertyLists(bool val) {
     PRECONDITION(dp_supplier, "no supplier");
-    dp_supplier->setProcessPropertyLists(df_processPropertyLists);
+    dp_supplier->setProcessPropertyLists(val);
   }
   bool getProcessPropertyLists() const {
     if (dp_supplier) {
@@ -110,8 +112,11 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
     }
     return false;
   }
-};
 
+ protected:
+  std::unique_ptr<v2::FileParsers::ForwardSDMolSupplier> dp_supplier;
+};
+#if 0
 // \brief a lazy supplier from an SD file
 class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   /*************************************************************************
@@ -407,6 +412,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   unsigned d_length;
 };
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
+#endif
 }  // namespace v1
 }  // namespace RDKit
 

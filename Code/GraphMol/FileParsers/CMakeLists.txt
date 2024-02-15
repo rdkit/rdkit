@@ -8,19 +8,25 @@ rdkit_library(FileParsers
               Mol2FileParser.cpp MolFileParser.cpp
               MolSGroupParsing.cpp MolSGroupWriting.cpp
               MolFileStereochem.cpp MolFileWriter.cpp
-              ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
-              SmilesMolSupplier.cpp SmilesWriter.cpp
-              TDTMolSupplier.cpp TDTWriter.cpp
-              TplFileParser.cpp TplFileWriter.cpp
-              PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp
+              ForwardSDMolSupplier.cpp 
+              SDMolSupplier.cpp
+              SDWriter.cpp
+            #   SmilesMolSupplier.cpp 
+              SmilesWriter.cpp
+            #   TDTMolSupplier.cpp 
+              TDTWriter.cpp
+            #   TplFileParser.cpp 
+              TplFileWriter.cpp
+              PDBParser.cpp PDBWriter.cpp 
+            #   PDBSupplier.cpp
               CMLWriter.cpp XYZFileWriter.cpp XYZFileParser.cpp
-              ${maesupplier}
+            #   ${maesupplier}
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
               SVGParser.cpp PNGParser.cpp
-              MultithreadedMolSupplier.cpp
-              MultithreadedSmilesMolSupplier.cpp
-              MultithreadedSDMolSupplier.cpp
+            #   MultithreadedMolSupplier.cpp
+            #   MultithreadedSmilesMolSupplier.cpp
+            #   MultithreadedSDMolSupplier.cpp
               LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol  ${RDK_MAEPARSER_LIBS})
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
@@ -85,6 +91,9 @@ rdkit_catch_test(molfileStereoCatchTest molfile_stereo_catch.cpp
            LINK_LIBRARIES FileParsers CIPLabeler Subgraphs)
 
 rdkit_catch_test(connectTheDotsTest connectTheDots_catch.cpp
+           LINK_LIBRARIES FileParsers)
+
+rdkit_catch_test(v2MolSuppliers v2_suppliers_catch.cpp
            LINK_LIBRARIES FileParsers)
 
 
