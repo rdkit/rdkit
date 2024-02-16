@@ -33,6 +33,12 @@ TEST_CASE("ForwardSDMolSupplier") {
       auto mol = sdsup.next();
       REQUIRE(mol);
     }
+    {  // v1
+      std::ifstream inStream(fName);
+      ForwardSDMolSupplier sdsup(&inStream, false);
+      std::unique_ptr<ROMol> mol{sdsup.next()};
+      REQUIRE(mol);
+    }
   }
 }
 
@@ -47,6 +53,12 @@ TEST_CASE("SDMolSupplier") {
       REQUIRE(mol);
       auto mol2 = sdsup[10];
       REQUIRE(mol2);
+    }
+    {  // v1
+      std::ifstream inStream(fName);
+      SDMolSupplier sdsup(&inStream, false);
+      std::unique_ptr<ROMol> mol{sdsup.next()};
+      REQUIRE(mol);
     }
   }
 }
@@ -64,6 +76,34 @@ TEST_CASE("SmilesMolSupplier") {
       REQUIRE(mol);
       auto mol2 = smsup[10];
       REQUIRE(mol2);
+    }
+    {  // v1
+      std::ifstream inStream(fName);
+      SmilesMolSupplier smsup(&inStream, false, ",");
+      std::unique_ptr<ROMol> mol{smsup.next()};
+      REQUIRE(mol);
+    }
+  }
+}
+
+TEST_CASE("TDTMolSupplier") {
+  SECTION("basics") {
+    std::string fName = getenv("RDBASE");
+    fName += "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
+    {
+      std::ifstream inStream(fName);
+      FileParsers::TDTMolSupplier smsup(&inStream, false);
+      auto mol = smsup.next();
+      REQUIRE(mol);
+      CHECK(smsup.length() == 10);
+      auto mol2 = smsup[8];
+      REQUIRE(mol2);
+    }
+    {  // v1
+      std::ifstream inStream(fName);
+      TDTMolSupplier smsup(&inStream, false, ",");
+      std::unique_ptr<ROMol> mol{smsup.next()};
+      REQUIRE(mol);
     }
   }
 }

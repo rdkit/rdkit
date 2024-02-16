@@ -320,7 +320,22 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   STR_VECT d_props;  // vector of property names
 };
 
-#if 0
+struct TDTMolSupplierParams {
+  std::string nameRecord = "";
+  int confId2D = -1;
+  int confId3D = -1;
+  v2::SmilesParse::SmilesParserParams parseParameters = {
+      true,   // sanitize
+      false,  // allowCXSMILES
+      true,   // strictCXSMILES
+      false,  // parseName
+      true,   // removeHs
+      false,  // skipCleanup
+      false,  // debugParse
+      {}      // replacements
+  };
+};
+
 //! lazy file parser for TDT files
 class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   /**************************************************************************
@@ -347,22 +362,22 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
    *                   corresponding conformer id.
    *   \param sanitize - if true sanitize the molecule before returning it
    */
-  explicit TDTMolSupplier(const std::string &fileName,
-                          const std::string &nameRecord = "", int confId2D = -1,
-                          int confId3D = 0, bool sanitize = true);
-  explicit TDTMolSupplier(std::istream *inStream, bool takeOwnership = true,
-                          const std::string &nameRecord = "", int confId2D = -1,
-                          int confId3D = 0, bool sanitize = true);
+  explicit TDTMolSupplier(
+      const std::string &fileName,
+      const TDTMolSupplierParams &params = TDTMolSupplierParams());
+  explicit TDTMolSupplier(
+      std::istream *inStream, bool takeOwnership = true,
+      const TDTMolSupplierParams &params = TDTMolSupplierParams());
   TDTMolSupplier();
   ~TDTMolSupplier() override { close(); }
-  void setData(const std::string &text, const std::string &nameRecord = "",
-               int confId2D = -1, int confId3D = 0, bool sanitize = true);
+  void setData(const std::string &text,
+               const TDTMolSupplierParams &params = TDTMolSupplierParams());
   void init() override;
   void reset() override;
-  ROMol *next() override;
+  std::unique_ptr<RWMol> next() override;
   bool atEnd() override;
   void moveTo(unsigned int idx);
-  ROMol *operator[](unsigned int idx);
+  std::unique_ptr<RWMol> operator[](unsigned int idx);
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
@@ -373,20 +388,17 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
  private:
   bool advanceToNextRecord();
   void checkForEnd();
-  ROMol *parseMol(std::string inLine);
+  std::unique_ptr<RWMol> parseMol(std::string inLine);
 
   bool df_end = false;  // have we reached the end of the file?
   int d_len = 0;        // total number of mols in the file
   int d_last = 0;       // the molecule we are ready to read
   int d_line = 0;       // line number we are currently on
-  int d_confId2D = -1;  // id to use for 2D conformers
-  int d_confId3D = 0;   // id to use for 3D conformers
   std::vector<std::streampos>
-      d_molpos;             // vector of positions in the file for molecules
-  bool df_sanitize = true;  // sanitize molecules before returning them?
-  std::string d_nameProp =
-      "";  // local storage for the property providing mol names
+      d_molpos;  // vector of positions in the file for molecules
+  TDTMolSupplierParams d_params;
 };
+#if 0
 
 //! lazy file parser for PDB files
 class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {

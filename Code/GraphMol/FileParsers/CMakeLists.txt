@@ -11,7 +11,7 @@ rdkit_library(FileParsers
     ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
     SmilesMolSupplier.cpp 
     SmilesWriter.cpp
-    # TDTMolSupplier.cpp 
+    TDTMolSupplier.cpp 
     TDTWriter.cpp
     TplFileParser.cpp TplFileWriter.cpp
     PDBParser.cpp PDBWriter.cpp 

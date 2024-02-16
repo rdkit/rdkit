@@ -86,37 +86,44 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
    *noted.
    ***********************************************************************************/
  public:
+  using ContainedType = v2::FileParsers::ForwardSDMolSupplier;
   ForwardSDMolSupplier() {}
 
   explicit ForwardSDMolSupplier(std::istream *inStream,
                                 bool takeOwnership = true, bool sanitize = true,
                                 bool removeHs = true,
-                                bool strictParsing = false);
+                                bool strictParsing = false) {
+    v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = strictParsing;
+    dp_supplier.reset(new v2::FileParsers::ForwardSDMolSupplier(
+        inStream, takeOwnership, params));
+  };
 
   ~ForwardSDMolSupplier() override {}
 
   void setProcessPropertyLists(bool val) {
     PRECONDITION(dp_supplier, "no supplier");
-    dp_supplier->setProcessPropertyLists(val);
+    static_cast<ContainedType *>(dp_supplier.get())
+        ->setProcessPropertyLists(val);
   }
   bool getProcessPropertyLists() const {
     if (dp_supplier) {
-      return dp_supplier->getProcessPropertyLists();
+      return static_cast<ContainedType *>(dp_supplier.get())
+          ->getProcessPropertyLists();
     }
     return false;
   }
 
   bool getEOFHitOnRead() const {
     if (dp_supplier) {
-      return dp_supplier->getEOFHitOnRead();
+      return static_cast<ContainedType *>(dp_supplier.get())->getEOFHitOnRead();
     }
     return false;
   }
-
- protected:
-  std::unique_ptr<v2::FileParsers::ForwardSDMolSupplier> dp_supplier;
 };
-#if 0
+
 // \brief a lazy supplier from an SD file
 class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   /*************************************************************************
@@ -132,7 +139,8 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
    ***********************************************************************************/
 
  public:
-  SDMolSupplier() { init(); }
+  using ContainedType = v2::FileParsers::SDMolSupplier;
+  SDMolSupplier() { dp_supplier.reset(new ContainedType()); }
 
   /*!
    *   \param fileName - the name of the SD file
@@ -144,30 +152,60 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
    *                          of the contents.
    */
   explicit SDMolSupplier(const std::string &fileName, bool sanitize = true,
-                         bool removeHs = true, bool strictParsing = true);
+                         bool removeHs = true, bool strictParsing = true) {
+    v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = strictParsing;
+    dp_supplier.reset(new v2::FileParsers::SDMolSupplier(fileName, params));
+  }
 
   explicit SDMolSupplier(std::istream *inStream, bool takeOwnership = true,
                          bool sanitize = true, bool removeHs = true,
-                         bool strictParsing = true);
+                         bool strictParsing = true) {
+    v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = strictParsing;
+    dp_supplier.reset(
+        new v2::FileParsers::SDMolSupplier(inStream, takeOwnership, params));
+  }
 
-  ~SDMolSupplier() override { close(); }
-  void init() override;
-  void reset() override;
-  ROMol *next() override;
-  bool atEnd() override;
-  void moveTo(unsigned int idx);
-  ROMol *operator[](unsigned int idx);
+  ROMol *operator[](unsigned int idx) {
+    PRECONDITION(dp_supplier, "no supplier");
+    return static_cast<ContainedType *>(dp_supplier.get())
+        ->
+        operator[](idx)
+        .release();
+  }
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
    */
-  std::string getItemText(unsigned int idx);
-  unsigned int length();
+  std::string getItemText(unsigned int idx) {
+    PRECONDITION(dp_supplier, "no supplier");
+    return static_cast<ContainedType *>(dp_supplier.get())->getItemText(idx);
+  }
+  unsigned int length() {
+    PRECONDITION(dp_supplier, "no supplier");
+    return static_cast<ContainedType *>(dp_supplier.get())->length();
+  }
   void setData(const std::string &text, bool sanitize = true,
-               bool removeHs = true);
+               bool removeHs = true) {
+    PRECONDITION(dp_supplier, "no supplier");
+    v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    dp_supplier.reset(new v2::FileParsers::SDMolSupplier(text, params));
+  }
   void setData(const std::string &text, bool sanitize, bool removeHs,
-               bool strictParsing);
-
+               bool strictParsing) {
+    v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = strictParsing;
+    dp_supplier.reset(new v2::FileParsers::SDMolSupplier(text, params));
+  }
   /*! Resets our internal state and sets the indices of molecules in the stream.
    *  The client should be *very* careful about calling this method, as it's
    *trivial
@@ -180,14 +218,10 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
    *  large SD file much faster, but it can also allow subsetting an SD file or
    *  rearranging the order of the molecules.
    */
-  void setStreamIndices(const std::vector<std::streampos> &locs);
-
- private:
-  void checkForEnd() override;
-  void setDataCommon(const std::string &text, bool sanitize, bool removeHs);
-  int d_len = 0;   // total number of mol blocks in the file (initialized to -1)
-  int d_last = 0;  // the molecule we are ready to read
-  std::vector<std::streampos> d_molpos;
+  void setStreamIndices(const std::vector<std::streampos> &locs) {
+    PRECONDITION(dp_supplier, "no supplier");
+    static_cast<ContainedType *>(dp_supplier.get())->setStreamIndices(locs);
+  }
 };
 
 //! lazy file parser for Smiles tables
@@ -204,6 +238,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
    *    "idx"
    ***************************************************************************/
  public:
+  using ContainedType = v2::FileParsers::SmilesMolSupplier;
   /*!
    *   \param fileName - the name of smiles table file
    *   \param delimiter - delimiting characters between records on a each
@@ -227,50 +262,61 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   explicit SmilesMolSupplier(const std::string &fileName,
                              const std::string &delimiter = " \t",
                              int smilesColumn = 0, int nameColumn = 1,
-                             bool titleLine = true, bool sanitize = true);
-  SmilesMolSupplier();
+                             bool titleLine = true, bool sanitize = true) {
+    v2::FileParsers::SmilesMolSupplierParams params;
+    params.delimiter = delimiter;
+    params.smilesColumn = smilesColumn;
+    params.nameColumn = nameColumn;
+    params.titleLine = titleLine;
+    params.parseParameters.sanitize = sanitize;
+    dp_supplier.reset(new v2::FileParsers::SmilesMolSupplier(fileName, params));
+  }
   explicit SmilesMolSupplier(std::istream *inStream, bool takeOwnership = true,
                              const std::string &delimiter = " \t",
                              int smilesColumn = 0, int nameColumn = 1,
-                             bool titleLine = true, bool sanitize = true);
+                             bool titleLine = true, bool sanitize = true) {
+    v2::FileParsers::SmilesMolSupplierParams params;
+    params.delimiter = delimiter;
+    params.smilesColumn = smilesColumn;
+    params.nameColumn = nameColumn;
+    params.titleLine = titleLine;
+    params.parseParameters.sanitize = sanitize;
+    dp_supplier.reset(new v2::FileParsers::SmilesMolSupplier(
+        inStream, takeOwnership, params));
+  }
+  SmilesMolSupplier() { dp_supplier.reset(new ContainedType()); }
 
-  ~SmilesMolSupplier() override { close(); }
   void setData(const std::string &text, const std::string &delimiter = " ",
                int smilesColumn = 0, int nameColumn = 1, bool titleLine = true,
-               bool sanitize = true);
-  void init() override;
-  void reset() override;
-  ROMol *next() override;
-  bool atEnd() override;
-  void moveTo(unsigned int idx);
-  ROMol *operator[](unsigned int idx);
+               bool sanitize = true) {
+    PRECONDITION(dp_supplier, "no supplier");
+    v2::FileParsers::SmilesMolSupplierParams params;
+    params.delimiter = delimiter;
+    params.smilesColumn = smilesColumn;
+    params.nameColumn = nameColumn;
+    params.titleLine = titleLine;
+    params.parseParameters.sanitize = sanitize;
+    dp_supplier.reset(new v2::FileParsers::SmilesMolSupplier(text, params));
+  }
+  ROMol *operator[](unsigned int idx) {
+    PRECONDITION(dp_supplier, "no supplier");
+    return static_cast<ContainedType *>(dp_supplier.get())
+        ->
+        operator[](idx)
+        .release();
+  }
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
    */
-  std::string getItemText(unsigned int idx);
-  unsigned int length();
-
- private:
-  ROMol *processLine(std::string inLine);
-  void processTitleLine();
-  std::string nextLine();
-  long int skipComments();
-  void checkForEnd();
-
-  bool df_end = false;  // have we reached the end of the file?
-  long d_len = 0;       // total number of smiles in the file
-  long d_next = 0;      // the  molecule we are ready to read
-  size_t d_line = 0;    // line number we are currently on
-  std::vector<std::streampos>
-      d_molpos;  // vector of positions in the file for molecules
-  std::vector<int> d_lineNums;
-  std::string d_delim;      // the delimiter string
-  bool df_sanitize = true;  // sanitize molecules before returning them?
-  STR_VECT d_props;         // vector of property names
-  bool df_title = true;     // do we have a title line?
-  int d_smi = 0;            // column id for the smile string
-  int d_name = 1;           // column id for the name
+  std::string getItemText(unsigned int idx) {
+    PRECONDITION(dp_supplier, "no supplier");
+    return static_cast<ContainedType *>(dp_supplier.get())->getItemText(idx);
+  }
+  unsigned int length() {
+    PRECONDITION(dp_supplier, "no supplier")
+    return static_cast<ContainedType *>(dp_supplier.get())->length();
+  }
 };
 
 //! lazy file parser for TDT files
@@ -287,6 +333,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
    *    "idx"
    ***************************************************************************/
  public:
+  using ContainedType = v2::FileParsers::TDTMolSupplier;
   /*!
    *   \param fileName - the name of the TDT file
    *   \param nameRecord - property name for the molecule name.
@@ -301,44 +348,57 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
    */
   explicit TDTMolSupplier(const std::string &fileName,
                           const std::string &nameRecord = "", int confId2D = -1,
-                          int confId3D = 0, bool sanitize = true);
+                          int confId3D = 0, bool sanitize = true) {
+    v2::FileParsers::TDTMolSupplierParams params;
+    params.nameRecord = nameRecord;
+    params.confId2D = confId2D;
+    params.confId3D = confId3D;
+    params.parseParameters.sanitize = sanitize;
+    dp_supplier.reset(new v2::FileParsers::TDTMolSupplier(fileName, params));
+  }
   explicit TDTMolSupplier(std::istream *inStream, bool takeOwnership = true,
                           const std::string &nameRecord = "", int confId2D = -1,
-                          int confId3D = 0, bool sanitize = true);
-  TDTMolSupplier();
-  ~TDTMolSupplier() override { close(); }
+                          int confId3D = 0, bool sanitize = true) {
+    v2::FileParsers::TDTMolSupplierParams params;
+    params.nameRecord = nameRecord;
+    params.confId2D = confId2D;
+    params.confId3D = confId3D;
+    params.parseParameters.sanitize = sanitize;
+    dp_supplier.reset(
+        new v2::FileParsers::TDTMolSupplier(inStream, takeOwnership, params));
+  }
+  TDTMolSupplier() { dp_supplier.reset(new ContainedType()); }
   void setData(const std::string &text, const std::string &nameRecord = "",
-               int confId2D = -1, int confId3D = 0, bool sanitize = true);
-  void init() override;
-  void reset() override;
-  ROMol *next() override;
-  bool atEnd() override;
-  void moveTo(unsigned int idx);
-  ROMol *operator[](unsigned int idx);
+               int confId2D = -1, int confId3D = 0, bool sanitize = true) {
+    PRECONDITION(dp_supplier, "no supplier");
+    v2::FileParsers::TDTMolSupplierParams params;
+    params.nameRecord = nameRecord;
+    params.confId2D = confId2D;
+    params.confId3D = confId3D;
+    params.parseParameters.sanitize = sanitize;
+    dp_supplier.reset(new v2::FileParsers::TDTMolSupplier(text, params));
+  }
+  ROMol *operator[](unsigned int idx) {
+    PRECONDITION(dp_supplier, "no supplier");
+    return static_cast<ContainedType *>(dp_supplier.get())
+        ->
+        operator[](idx)
+        .release();
+  }
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
    */
-  std::string getItemText(unsigned int idx);
-  unsigned int length();
-
- private:
-  bool advanceToNextRecord();
-  void checkForEnd();
-  ROMol *parseMol(std::string inLine);
-
-  bool df_end = false;  // have we reached the end of the file?
-  int d_len = 0;        // total number of mols in the file
-  int d_last = 0;       // the molecule we are ready to read
-  int d_line = 0;       // line number we are currently on
-  int d_confId2D = -1;  // id to use for 2D conformers
-  int d_confId3D = 0;   // id to use for 3D conformers
-  std::vector<std::streampos>
-      d_molpos;             // vector of positions in the file for molecules
-  bool df_sanitize = true;  // sanitize molecules before returning them?
-  std::string d_nameProp =
-      "";  // local storage for the property providing mol names
+  std::string getItemText(unsigned int idx) {
+    PRECONDITION(dp_supplier, "no supplier");
+    return static_cast<ContainedType *>(dp_supplier.get())->getItemText(idx);
+  }
+  unsigned int length() {
+    PRECONDITION(dp_supplier, "no supplier");
+    return static_cast<ContainedType *>(dp_supplier.get())->length();
+  }
 };
+#if 0
 
 //! lazy file parser for PDB files
 class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
@@ -362,6 +422,7 @@ class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
   bool df_sanitize, df_removeHs, df_proximityBonding;
   unsigned int d_flavor;
 };
+
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 //! lazy file parser for MAE files
 class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
