@@ -2235,6 +2235,23 @@ void test_relabel_mapped_dummies() {
   free(mpkl);
 }
 
+unsigned int count_matches(const char *svg, const char **stereo_array,
+                           size_t stereo_array_len) {
+  char *svg_copy = strdup(svg);
+  unsigned int i = 0;
+  char *line = strtok(svg_copy, "\n");
+  while (line && i < stereo_array_len) {
+    if (strstr(line, stereo_array[i])) {
+      ++i;
+    } else if (i) {
+      break;
+    }
+    line = strtok(NULL, "\n");
+  }
+  free(svg_copy);
+  return i;
+}
+
 void test_assign_cip_labels() {
   printf("--------------------------\n");
   printf("  test_assign_cip_labels\n");
@@ -2244,22 +2261,6 @@ void test_assign_cip_labels() {
   static const char *STEREO_SMI = "C/C=C/c1ccccc1[S@@](C)=O";
   static const char *S_STEREO[3] = {">(<", ">S<", ">)<"};
   static const char *R_STEREO[3] = {">(<", ">R<", ">)<"};
-  unsigned int count_matches(const char *svg, const char **stereo_array,
-                             size_t stereo_array_len) {
-    char *svg_copy = strdup(svg);
-    unsigned int i = 0;
-    char *line = strtok(svg_copy, "\n");
-    while (line && i < stereo_array_len) {
-      if (strstr(line, stereo_array[i])) {
-        ++i;
-      } else if (i) {
-        break;
-      }
-      line = strtok(NULL, "\n");
-    }
-    free(svg_copy);
-    return i;
-  }
   short orig_setting = use_legacy_stereo_perception(1);
   mpkl = get_mol(STEREO_SMI, &mpkl_size, "");
   svg = get_svg(mpkl, mpkl_size,
