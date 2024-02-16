@@ -107,3 +107,14 @@ TEST_CASE("TDTMolSupplier") {
     }
   }
 }
+
+TEST_CASE("MaeMolSupplier") {
+  SECTION("basics") {
+    std::string fName = getenv("RDBASE");
+    fName += "/Code/GraphMol/FileParsers/test_data/props_test.mae";
+
+    MaeMolSupplier maesup(fName);
+    auto nmol = maesup.next();
+    TEST_ASSERT(nmol);
+  }
+}

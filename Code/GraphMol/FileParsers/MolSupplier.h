@@ -398,31 +398,30 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
       d_molpos;  // vector of positions in the file for molecules
   TDTMolSupplierParams d_params;
 };
-#if 0
 
-//! lazy file parser for PDB files
+//! Deprectead, will be removed in 2024.09 release
 class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
  public:
   explicit PDBMolSupplier(std::istream *inStream, bool takeOwnership = true,
-                          bool sanitize = true, bool removeHs = true,
-                          unsigned int flavor = 0,
-                          bool proximityBonding = true);
-  explicit PDBMolSupplier(const std::string &fname, bool sanitize = true,
-                          bool removeHs = true, unsigned int flavor = 0,
-                          bool proximityBonding = true);
+                          const PDBParserParams &params = PDBParserParams());
+  explicit PDBMolSupplier(const std::string &fname,
+                          const PDBParserParams &params = PDBParserParams());
 
   ~PDBMolSupplier() override { close(); }
 
   void init() override;
   void reset() override;
-  ROMol *next() override;
+  std::unique_ptr<RWMol> next() override;
   bool atEnd() override;
 
  protected:
-  bool df_sanitize, df_removeHs, df_proximityBonding;
-  unsigned int d_flavor;
+  PDBParserParams d_params;
 };
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
+struct MaeMolSupplierParams {
+  bool sanitize = true;
+  bool removeHs = true;
+};
 //! lazy file parser for MAE files
 class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   /**
@@ -434,36 +433,38 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
  public:
   MaeMolSupplier() {}
 
-  explicit MaeMolSupplier(std::shared_ptr<std::istream> inStream,
-                          bool sanitize = true, bool removeHs = true);
+  explicit MaeMolSupplier(
+      std::shared_ptr<std::istream> inStream,
+      const MaeMolSupplierParams &params = MaeMolSupplierParams());
 
-  explicit MaeMolSupplier(std::istream *inStream, bool takeOwnership = true,
-                          bool sanitize = true, bool removeHs = true);
+  explicit MaeMolSupplier(
+      std::istream *inStream, bool takeOwnership = true,
+      const MaeMolSupplierParams &params = MaeMolSupplierParams());
 
-  explicit MaeMolSupplier(const std::string &fname, bool sanitize = true,
-                          bool removeHs = true);
+  explicit MaeMolSupplier(
+      const std::string &fname,
+      const MaeMolSupplierParams &params = MaeMolSupplierParams());
 
   ~MaeMolSupplier() override {}
 
   void init() override;
   void reset() override;
-  ROMol *next() override;
+  std::unique_ptr<RWMol> next() override;
   bool atEnd() override;
   void moveTo(unsigned int idx);
-  ROMol *operator[](unsigned int idx);
+  std::unique_ptr<RWMol> operator[](unsigned int idx);
   unsigned int length();
 
   void close() override { dp_sInStream.reset(); }
 
-  void setData(const std::string &text, bool sanitize = true,
-               bool removeHs = true);
+  void setData(const std::string &text,
+               const MaeMolSupplierParams &params = MaeMolSupplierParams());
 
  private:
   void moveToNextBlock();
 
  protected:
-  bool df_sanitize;
-  bool df_removeHs;
+  MaeMolSupplierParams d_params;
   std::shared_ptr<schrodinger::mae::Reader> d_reader;
   std::shared_ptr<schrodinger::mae::Block> d_next_struct;
   std::shared_ptr<std::istream> dp_sInStream;
@@ -472,8 +473,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   unsigned d_length;
 };
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
-}
-#endif
+
 }  // namespace FileParsers
 }  // namespace v2
 }  // namespace RDKit

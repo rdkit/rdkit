@@ -196,7 +196,7 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
     v2::FileParsers::MolFileParserParams params;
     params.sanitize = sanitize;
     params.removeHs = removeHs;
-    dp_supplier.reset(new v2::FileParsers::SDMolSupplier(text, params));
+    static_cast<ContainedType *>(dp_supplier.get())->setData(text, params);
   }
   void setData(const std::string &text, bool sanitize, bool removeHs,
                bool strictParsing) {
@@ -204,7 +204,7 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = strictParsing;
-    dp_supplier.reset(new v2::FileParsers::SDMolSupplier(text, params));
+    static_cast<ContainedType *>(dp_supplier.get())->setData(text, params);
   }
   /*! Resets our internal state and sets the indices of molecules in the stream.
    *  The client should be *very* careful about calling this method, as it's
@@ -296,7 +296,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
     params.nameColumn = nameColumn;
     params.titleLine = titleLine;
     params.parseParameters.sanitize = sanitize;
-    dp_supplier.reset(new v2::FileParsers::SmilesMolSupplier(text, params));
+    static_cast<ContainedType *>(dp_supplier.get())->setData(text, params);
   }
   ROMol *operator[](unsigned int idx) {
     PRECONDITION(dp_supplier, "no supplier");
@@ -376,7 +376,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
     params.confId2D = confId2D;
     params.confId3D = confId3D;
     params.parseParameters.sanitize = sanitize;
-    dp_supplier.reset(new v2::FileParsers::TDTMolSupplier(text, params));
+    static_cast<ContainedType *>(dp_supplier.get())->setData(text, params);
   }
   ROMol *operator[](unsigned int idx) {
     PRECONDITION(dp_supplier, "no supplier");
@@ -398,29 +398,32 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
     return static_cast<ContainedType *>(dp_supplier.get())->length();
   }
 };
-#if 0
 
-//! lazy file parser for PDB files
+//! Deprectead, will be removed in 2024.09 release
 class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
  public:
   explicit PDBMolSupplier(std::istream *inStream, bool takeOwnership = true,
                           bool sanitize = true, bool removeHs = true,
                           unsigned int flavor = 0,
-                          bool proximityBonding = true);
+                          bool proximityBonding = true) {
+    v2::FileParsers::PDBParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.flavor = flavor;
+    params.proximityBonding = proximityBonding;
+    dp_supplier.reset(
+        new v2::FileParsers::PDBMolSupplier(inStream, takeOwnership, params));
+  }
   explicit PDBMolSupplier(const std::string &fname, bool sanitize = true,
                           bool removeHs = true, unsigned int flavor = 0,
-                          bool proximityBonding = true);
-
-  ~PDBMolSupplier() override { close(); }
-
-  void init() override;
-  void reset() override;
-  ROMol *next() override;
-  bool atEnd() override;
-
- protected:
-  bool df_sanitize, df_removeHs, df_proximityBonding;
-  unsigned int d_flavor;
+                          bool proximityBonding = true) {
+    v2::FileParsers::PDBParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.flavor = flavor;
+    params.proximityBonding = proximityBonding;
+    dp_supplier.reset(new v2::FileParsers::PDBMolSupplier(fname, params));
+  }
 };
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
@@ -432,48 +435,56 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
    * always clear it upon destruction.
    */
 
+  using ContainedType = v2::FileParsers::MaeMolSupplier;
+
  public:
-  MaeMolSupplier() {}
+  MaeMolSupplier() { dp_supplier.reset(new ContainedType()); }
 
   explicit MaeMolSupplier(std::shared_ptr<std::istream> inStream,
-                          bool sanitize = true, bool removeHs = true);
+                          bool sanitize = true, bool removeHs = true) {
+    v2::FileParsers::MaeMolSupplierParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    dp_supplier.reset(new ContainedType(inStream, params));
+  }
 
   explicit MaeMolSupplier(std::istream *inStream, bool takeOwnership = true,
-                          bool sanitize = true, bool removeHs = true);
+                          bool sanitize = true, bool removeHs = true) {
+    v2::FileParsers::MaeMolSupplierParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    dp_supplier.reset(new ContainedType(inStream, takeOwnership, params));
+  }
 
   explicit MaeMolSupplier(const std::string &fname, bool sanitize = true,
-                          bool removeHs = true);
-
-  ~MaeMolSupplier() override {}
-
-  void init() override;
-  void reset() override;
-  ROMol *next() override;
-  bool atEnd() override;
-  void moveTo(unsigned int idx);
-  ROMol *operator[](unsigned int idx);
-  unsigned int length();
-
-  void close() override { dp_sInStream.reset(); }
+                          bool removeHs = true) {
+    v2::FileParsers::MaeMolSupplierParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    dp_supplier.reset(new ContainedType(fname, params));
+  }
+  RWMol *operator[](unsigned int idx) {
+    PRECONDITION(dp_supplier, "no supplier");
+    return static_cast<ContainedType *>(dp_supplier.get())
+        ->
+        operator[](idx)
+        .release();
+  }
+  unsigned int length() {
+    PRECONDITION(dp_supplier, "no supplier");
+    return static_cast<ContainedType *>(dp_supplier.get())->length();
+  }
 
   void setData(const std::string &text, bool sanitize = true,
-               bool removeHs = true);
-
- private:
-  void moveToNextBlock();
-
- protected:
-  bool df_sanitize;
-  bool df_removeHs;
-  std::shared_ptr<schrodinger::mae::Reader> d_reader;
-  std::shared_ptr<schrodinger::mae::Block> d_next_struct;
-  std::shared_ptr<std::istream> dp_sInStream;
-  std::string d_stored_exc;
-  unsigned d_position;
-  unsigned d_length;
+               bool removeHs = true) {
+    PRECONDITION(dp_supplier, "no supplier");
+    v2::FileParsers::MaeMolSupplierParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    static_cast<ContainedType *>(dp_supplier.get())->setData(text, params);
+  }
 };
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
-#endif
 }  // namespace v1
 }  // namespace RDKit
 
