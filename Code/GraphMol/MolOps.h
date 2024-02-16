@@ -1025,11 +1025,15 @@ RDKIT_GRAPHMOL_EXPORT void clearDirFlags(ROMol &mol,
 //! directions
 RDKIT_GRAPHMOL_EXPORT void setBondStereoFromDirections(ROMol &mol);
 
-//! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
+//! Assign stereochemistry tags to atoms and bonds.
 /*!
-  Does the CIP stereochemistry assignment for the molecule's atoms
-  (R/S) and double bond (Z/E). Chiral atoms will have a property
-  '_CIPCode' indicating their chiral code.
+  If useLegacyStereoPerception is true, it also does the CIP stereochemistry
+  assignment for the molecule's atoms (R/S) and double bonds (Z/E).
+  This assignment is based on legacy code which is fast, but is
+  known to incorrectly assign CIP labels in some cases.
+  instead, to assign CIP labels based on an accurate, though slower,
+  implementation of the CIP rules, call CIPLabeler::assignCIPLabels().
+  Chiral atoms will have a property '_CIPCode' indicating their chiral code.
 
   \param mol     the molecule to use
   \param cleanIt if true, any existing values of the property `_CIPCode`
