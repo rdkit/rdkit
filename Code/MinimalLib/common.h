@@ -473,9 +473,21 @@ std::string process_mol_details(const std::string &details,
                         bool &wavyBonds) {
   MolDrawingDetails molDrawingDetails;
   auto problems = process_mol_details(details, molDrawingDetails);
+  width = molDrawingDetails.width;
+  height = molDrawingDetails.height;
+  offsetx = molDrawingDetails.offsetx;
+  offsety = molDrawingDetails.offsety;
+  legend = molDrawingDetails.legend;
+  atomIds = molDrawingDetails.atomIds;
+  bondIds = molDrawingDetails.bondIds;
   atomMap = molDrawingDetails.atomMap;
   bondMap = molDrawingDetails.bondMap;
   radiiMap = molDrawingDetails.radiiMap;
+  kekulize = molDrawingDetails.kekulize;
+  addChiralHs = molDrawingDetails.addChiralHs;
+  wedgeBonds = molDrawingDetails.wedgeBonds;
+  forceCoords = molDrawingDetails.forceCoords;
+  wavyBonds = molDrawingDetails.wavyBonds;
   return problems;
 }
 
