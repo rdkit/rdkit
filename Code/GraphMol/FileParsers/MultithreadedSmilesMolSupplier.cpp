@@ -11,39 +11,34 @@
 #include "MultithreadedSmilesMolSupplier.h"
 
 namespace RDKit {
+namespace v2 {
+namespace FileParsers {
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
-    const std::string &fileName, const std::string &delimiter, int smilesColumn,
-    int nameColumn, bool titleLine, bool sanitize,
-    unsigned int numWriterThreads, size_t sizeInputQueue,
-    size_t sizeOutputQueue) {
+    const std::string &fileName, const Parameters &params,
+    const SmilesMolSupplierParams &parseParams) {
   dp_inStream = openAndCheckStream(fileName);
   CHECK_INVARIANT(dp_inStream, "bad instream");
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
   // set df_takeOwnership = true
-  initFromSettings(true, delimiter, smilesColumn, nameColumn, titleLine,
-                   sanitize, numWriterThreads, sizeInputQueue, sizeOutputQueue);
+  initFromSettings(true, params, parseParams);
   startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
-    std::istream *inStream, bool takeOwnership, const std::string &delimiter,
-    int smilesColumn, int nameColumn, bool titleLine, bool sanitize,
-    unsigned int numWriterThreads, size_t sizeInputQueue,
-    size_t sizeOutputQueue) {
+    std::istream *inStream, bool takeOwnership, const Parameters &params,
+    const SmilesMolSupplierParams &parseParams) {
   CHECK_INVARIANT(inStream, "bad instream");
   CHECK_INVARIANT(!(inStream->eof()), "early EOF");
   dp_inStream = inStream;
-  initFromSettings(takeOwnership, delimiter, smilesColumn, nameColumn,
-                   titleLine, sanitize, numWriterThreads, sizeInputQueue,
-                   sizeOutputQueue);
+  initFromSettings(takeOwnership, params, parseParams);
   startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() {
   dp_inStream = nullptr;
-  initFromSettings(true, "", 0, 1, true, true, 1, 5, 5);
+  initFromSettings(true, d_params, d_parseParams);
   startThreads();
 }
 
@@ -56,25 +51,18 @@ MultithreadedSmilesMolSupplier::~MultithreadedSmilesMolSupplier() {
 }
 
 void MultithreadedSmilesMolSupplier::initFromSettings(
-    bool takeOwnership, const std::string &delimiter, int smilesColumn,
-    int nameColumn, bool titleLine, bool sanitize,
-    unsigned int numWriterThreads, size_t sizeInputQueue,
-    size_t sizeOutputQueue) {
+    bool takeOwnership, const Parameters &params,
+    const SmilesMolSupplierParams &parseParams) {
   df_owner = takeOwnership;
-  d_delim = delimiter;
-  d_smi = smilesColumn;
-  d_name = nameColumn;
-  df_title = titleLine;
-  df_sanitize = sanitize;
-  d_numWriterThreads = getNumThreadsToUse(numWriterThreads);
-  d_sizeInputQueue = sizeInputQueue;
-  d_sizeOutputQueue = sizeOutputQueue;
+  d_params = params;
+  d_parseParams = parseParams;
+  d_params.numWriterThreads = getNumThreadsToUse(d_params.numWriterThreads);
   d_inputQueue =
       new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
-          d_sizeInputQueue);
+          d_params.sizeInputQueue);
   d_outputQueue =
-      new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
-          d_sizeOutputQueue);
+      new ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>(
+          d_params.sizeOutputQueue);
   df_end = false;
   d_line = -1;
 }
@@ -96,7 +84,7 @@ void MultithreadedSmilesMolSupplier::processTitleLine() {
          ((tempStr[0] == '#') || (strip(tempStr).size() == 0))) {
     tempStr = getLine(dp_inStream);
   }
-  boost::char_separator<char> sep(d_delim.c_str(), "",
+  boost::char_separator<char> sep(d_parseParams.delimiter.c_str(), "",
                                   boost::keep_empty_tokens);
   tokenizer tokens(tempStr, sep);
   for (tokenizer::iterator tokIter = tokens.begin(); tokIter != tokens.end();
@@ -119,7 +107,7 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
   // if we have not called next yet and the current record id = 1
   // then we are seeking the first record
   if (d_lastRecordId == 0 && d_currentRecordId == 1) {
-    if (df_title) {
+    if (d_parseParams.titleLine) {
       this->processTitleLine();
     }
   }
@@ -137,14 +125,12 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
   return true;
 }
 
-ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
+RWMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
     const std::string &record, unsigned int lineNum) {
-  ROMol *res = nullptr;
-
   // -----------
   // tokenize the input line:
   // -----------
-  boost::char_separator<char> sep(d_delim.c_str(), "",
+  boost::char_separator<char> sep(d_parseParams.delimiter.c_str(), "",
                                   boost::keep_empty_tokens);
   tokenizer tokens(record, sep);
   STR_VECT recs;
@@ -153,7 +139,7 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
     std::string rec = strip(*tokIter);
     recs.push_back(rec);
   }
-  if (recs.size() <= static_cast<unsigned int>(d_smi)) {
+  if (recs.size() <= static_cast<unsigned int>(d_parseParams.smilesColumn)) {
     std::ostringstream errout;
     errout << "ERROR: line #" << lineNum << "does not contain enough tokens\n";
     throw FileParseException(errout.str());
@@ -162,32 +148,30 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
   // -----------
   // get the smiles and create a molecule
   // -----------
-  SmilesParserParams params;
-  params.sanitize = df_sanitize;
-  params.allowCXSMILES = false;
-  params.parseName = false;
-  res = SmilesToMol(recs[d_smi], params);
+  auto res = MolFromSmiles(recs[d_parseParams.smilesColumn],
+                           d_parseParams.parseParameters);
   if (!res) {
     std::stringstream errout;
-    errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
+    errout << "Cannot create molecule from : '"
+           << recs[d_parseParams.smilesColumn] << "'";
     throw SmilesParseException(errout.str());
   }
 
   // -----------
   // get the name (if there's a name column)
   // -----------
-  if (d_name == -1) {
+  if (d_parseParams.nameColumn == -1) {
     // if no name defaults it to the line number we read it from string
     std::ostringstream tstr;
     tstr << lineNum;
     std::string mname = tstr.str();
     res->setProp(common_properties::_Name, mname);
   } else {
-    if (d_name >= static_cast<int>(recs.size())) {
+    if (d_parseParams.nameColumn >= static_cast<int>(recs.size())) {
       BOOST_LOG(rdWarningLog)
           << "WARNING: no name column found on line " << lineNum << std::endl;
     } else {
-      res->setProp(common_properties::_Name, recs[d_name]);
+      res->setProp(common_properties::_Name, recs[d_parseParams.nameColumn]);
     }
   }
 
@@ -195,7 +179,8 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
   // read in the properties
   // -----------
   for (unsigned int col = 0; col < recs.size(); col++) {
-    if (static_cast<int>(col) == d_smi || static_cast<int>(col) == d_name) {
+    if (static_cast<int>(col) == d_parseParams.smilesColumn ||
+        static_cast<int>(col) == d_parseParams.nameColumn) {
       continue;
     }
     std::string pname, pval;
@@ -211,8 +196,10 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
     pval = recs[col];
     res->setProp(pname, pval);
   }
-  return res;
+  return res.release();
 }
 
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit
 #endif

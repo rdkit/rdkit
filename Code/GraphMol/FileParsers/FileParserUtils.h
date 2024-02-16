@@ -18,7 +18,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#include "FileParserUtils.h"
 #include <string_view>
 
 namespace RDKit {

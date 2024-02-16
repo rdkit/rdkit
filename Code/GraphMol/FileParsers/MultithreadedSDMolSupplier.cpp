@@ -13,54 +13,46 @@
 #include "FileParserUtils.h"
 
 namespace RDKit {
+namespace v2 {
+namespace FileParsers {
 MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
-    const std::string &fileName, bool sanitize, bool removeHs,
-    bool strictParsing, unsigned int numWriterThreads, size_t sizeInputQueue,
-    size_t sizeOutputQueue) {
+    const std::string &fileName, const Parameters &params,
+    const MolFileParserParams &parseParams) {
   dp_inStream = openAndCheckStream(fileName);
-  initFromSettings(true, sanitize, removeHs, strictParsing, numWriterThreads,
-                   sizeInputQueue, sizeOutputQueue);
+  initFromSettings(true, params, parseParams);
   POSTCONDITION(dp_inStream, "bad instream");
   startThreads();
 }
 
 MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
-    std::istream *inStream, bool takeOwnership, bool sanitize, bool removeHs,
-    bool strictParsing, unsigned int numWriterThreads, size_t sizeInputQueue,
-    size_t sizeOutputQueue) {
+    std::istream *inStream, bool takeOwnership, const Parameters &params,
+    const MolFileParserParams &parseParams) {
   PRECONDITION(inStream, "bad stream");
   dp_inStream = inStream;
-  initFromSettings(takeOwnership, sanitize, removeHs, strictParsing,
-                   numWriterThreads, sizeInputQueue, sizeOutputQueue);
+  initFromSettings(takeOwnership, params, parseParams);
   POSTCONDITION(dp_inStream, "bad instream");
   startThreads();
 }
 
 MultithreadedSDMolSupplier::MultithreadedSDMolSupplier() {
   dp_inStream = nullptr;
-  initFromSettings(false, true, true, true, 2, 5, 5);
+  initFromSettings(false, d_params, d_parseParams);
   startThreads();
 }
 
-void MultithreadedSDMolSupplier::initFromSettings(bool takeOwnership,
-                                                  bool sanitize, bool removeHs,
-                                                  bool strictParsing,
-                                                  unsigned int numWriterThreads,
-                                                  size_t sizeInputQueue,
-                                                  size_t sizeOutputQueue) {
+void MultithreadedSDMolSupplier::initFromSettings(
+    bool takeOwnership, const Parameters &params,
+    const MolFileParserParams &parseParams) {
   df_owner = takeOwnership;
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
-  df_strictParsing = strictParsing;
-  d_numWriterThreads = getNumThreadsToUse(numWriterThreads);
-  d_sizeInputQueue = sizeInputQueue;
-  d_sizeOutputQueue = sizeOutputQueue;
+  d_params = params;
+  d_parseParams = parseParams;
+  d_params.numWriterThreads = getNumThreadsToUse(params.numWriterThreads);
   d_inputQueue =
       new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
-          d_sizeInputQueue);
+          d_params.sizeInputQueue);
   d_outputQueue =
-      new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
-          d_sizeOutputQueue);
+      new ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>(
+          d_params.sizeOutputQueue);
 
   df_end = false;
   d_line = 0;
@@ -147,7 +139,7 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
   return true;
 }
 
-void MultithreadedSDMolSupplier::readMolProps(ROMol *mol,
+void MultithreadedSDMolSupplier::readMolProps(RWMol *mol,
                                               std::istringstream &inStream) {
   PRECONDITION(inStream, "no stream");
   PRECONDITION(mol, "no molecule");
@@ -224,7 +216,7 @@ void MultithreadedSDMolSupplier::readMolProps(ROMol *mol,
           }
         }
       } else {
-        if (df_strictParsing) {
+        if (d_parseParams.strictParsing) {
           // at this point we should always be at a line starting with '>'
           // following a blank line. If this is not true and df_strictParsing
           // is true, then throw an exception, otherwise truncate the rest of
@@ -255,17 +247,19 @@ void MultithreadedSDMolSupplier::readMolProps(ROMol *mol,
   }
 }
 
-ROMol *MultithreadedSDMolSupplier::processMoleculeRecord(
+RWMol *MultithreadedSDMolSupplier::processMoleculeRecord(
     const std::string &record, unsigned int lineNum) {
   PRECONDITION(dp_inStream, "no stream");
   std::istringstream inStream(record);
-  auto res = MolDataStreamToMol(inStream, lineNum, df_sanitize, df_removeHs,
-                                df_strictParsing);
+  auto res =
+      v2::FileParsers::MolFromMolDataStream(inStream, lineNum, d_parseParams)
+          .release();
   if (res) {
     this->readMolProps(res, inStream);
   }
   return res;
 }
-
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit
 #endif

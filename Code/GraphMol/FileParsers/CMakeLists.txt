@@ -21,9 +21,9 @@ rdkit_library(FileParsers
     ProximityBonds.cpp
     SequenceParsers.cpp SequenceWriters.cpp
     SVGParser.cpp PNGParser.cpp
-    # MultithreadedMolSupplier.cpp
-    # MultithreadedSmilesMolSupplier.cpp
-    # MultithreadedSDMolSupplier.cpp
+    MultithreadedMolSupplier.cpp
+    MultithreadedSmilesMolSupplier.cpp
+    MultithreadedSDMolSupplier.cpp
     LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol ${RDK_MAEPARSER_LIBS})
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
