@@ -34,6 +34,12 @@
 %include "std_pair.i"
 %include "std_string.i"
 %include "std_vector.i"
+
+#ifdef SWIGCSHARP
+%include <std_unique_ptr.i>
+%unique_ptr(RDKit::RWMol)
+#endif
+
 %{
 #include <RDGeneral/types.h>
 #include <GraphMol/ROMol.h>
