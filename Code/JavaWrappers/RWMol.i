@@ -48,19 +48,10 @@
 %ignore RDKit::RWMol::addAtom(Atom *atom,bool updateLabel,bool takeOwnership);
 %ignore RDKit::RWMol::addBond(Bond *bond,bool takeOwnership);
 
-%newobject RDKit::SmilesToMol;
-%newobject RDKit::SmartsToMol;
-%newobject RDKit::MolBlockToMol;
-%newobject RDKit::MolFileToMol;
-%newobject RDKit::MolFromMolFile;
-%newobject RDKit::MolFromTPLFIle;
-%newobject RDKit::MolFromMol2File;
-%newobject RDKit::MolFromMol2Block;
-%newobject RDKit::MolFromPDBBlock;
-%newobject RDKit::MolFromPDBFile;
-%newobject RDKit::MolFromSequence;
-%newobject RDKit::MolFromFasta;
-
+%newobject RDKit::v1::SmilesToMol;
+%newobject RDKit::v1::SmartsToMol;
+%newobject RDKit::v1::MolBlockToMol;
+%newobject RDKit::v1::MolFileToMol;
 
 %shared_ptr(RDKit::RWMol)
 %include "enums.swg"
