@@ -44,10 +44,15 @@ if (hasattr(pandas_formats.format, "DataFrameFormatter")
 if orig_get_formatter is None:
   log.warning("Failed to find the pandas _get_formatter() function to patch")
 orig_get_adjustment = None
-for get_adjustment_name in ("get_adjustment", "_get_adjustment"):
-  if hasattr(pandas_formats.format, get_adjustment_name):
-    orig_get_adjustment = getattr(pandas_formats.format, get_adjustment_name)
-    break
+for get_adjustment_module_name in ("format", "printing"):
+  if hasattr(pandas_formats, get_adjustment_module_name):
+    get_adjustment_module = getattr(pandas_formats, get_adjustment_module_name)
+    for get_adjustment_name in ("get_adjustment", "_get_adjustment"):
+      if hasattr(get_adjustment_module, get_adjustment_name):
+        orig_get_adjustment = getattr(get_adjustment_module, get_adjustment_name)
+        break
+    if orig_get_adjustment is not None:
+        break
 if orig_get_adjustment is None:
   log.warning("Failed to find the pandas get_adjustment() function to patch")
   raise AttributeError
