@@ -108,6 +108,7 @@ TEST_CASE("TDTMolSupplier") {
   }
 }
 
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
 TEST_CASE("MaeMolSupplier") {
   SECTION("basics") {
     std::string fName = getenv("RDBASE");
@@ -118,3 +119,4 @@ TEST_CASE("MaeMolSupplier") {
     TEST_ASSERT(nmol);
   }
 }
+#endif
