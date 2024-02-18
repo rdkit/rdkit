@@ -3620,13 +3620,47 @@ TEST_CASE("bond output") {
     m->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOCIS);
     // this is, of course, silly
     m->getBondWithIdx(4)->setStereo(Bond::BondStereo::STEREOATROPCCW);
-    m->debugMol(std::cerr);
     std::stringstream ss;
     ss << *m->getBondWithIdx(1);
     CHECK(ss.str() == "1 1->2 order: 2 stereo: CIS ats: (0 3) conj?: 1");
     ss.str("");
     ss << *m->getBondWithIdx(4);
     CHECK(ss.str() == "4 3->5 order: 1 stereo: CCW bonds: (2 3 5 10) conj?: 1");
+    ss.str("");
+  }
+}
+TEST_CASE("atom output") {
+  SECTION("basics") {
+    auto m = "[C]c1ccc[nH]1"_smiles;
+    REQUIRE(m);
+    std::stringstream ss;
+    ss << *m->getAtomWithIdx(0);
+    CHECK(ss.str() == "0 6 C chg: 0  deg: 1 exp: 1 imp: 0 hyb: SP3 rad: 3");
+    ss.str("");
+    ss << *m->getAtomWithIdx(2);
+    CHECK(ss.str() == "2 6 C chg: 0  deg: 2 exp: 3 imp: 1 hyb: SP2 arom?: 1");
+    ss.str("");
+    ss << *m->getAtomWithIdx(5);
+    CHECK(ss.str() == "5 7 N chg: 0  deg: 2 exp: 3 imp: 0 hyb: SP2 arom?: 1");
+    ss.str("");
+  }
+  SECTION("chirality 1") {
+    auto m = "C[C@H](F)Cl"_smiles;
+    REQUIRE(m);
+    std::stringstream ss;
+    ss << *m->getAtomWithIdx(1);
+    CHECK(ss.str() ==
+          "1 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP3 chi: CCW nbrs:[0 2 3]");
+    ss.str("");
+  }
+  SECTION("chirality 2") {
+    auto m = "C[Pt@SP2H](F)Cl"_smiles;
+    REQUIRE(m);
+    std::stringstream ss;
+    ss << *m->getAtomWithIdx(1);
+    CHECK(
+        ss.str() ==
+        "1 78 Pt chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2D chi: SqP(2) nbrs:[0 2 3]");
     ss.str("");
   }
 }
