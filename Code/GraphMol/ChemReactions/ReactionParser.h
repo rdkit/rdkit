@@ -36,7 +36,6 @@
 #ifndef RD_REACTIONPARSER_H_21Aug2006
 #define RD_REACTIONPARSER_H_21Aug2006
 
-#include <GraphMol/ROMol.h>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -49,6 +48,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 
 namespace RDKit {
+class ROMol;
 class ChemicalReaction;
 
 //! used to indicate an error in parsing reaction data
