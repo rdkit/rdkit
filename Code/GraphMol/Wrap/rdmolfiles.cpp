@@ -1169,6 +1169,22 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     - mol: the molecule\n\
     - filename: the file to write to\n\
+    - params: the MolWriteParams\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+\n";
+  python::def(
+      "MolToMolFile",
+      (void(*)(const ROMol &, const std::string &, const MolWriteParams &, int))RDKit::MolToMolFile,
+      (python::arg("mol"), python::arg("filename"), python::arg("params"),
+       python::arg("confId") = -1),
+      docString.c_str());
+
+  docString =
+      "Writes a Mol file for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - filename: the file to write to\n\
     - includeStereo: (optional) toggles inclusion of stereochemical\n\
       information in the output\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
@@ -1176,17 +1192,29 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       as suggested by the MDL spec.\n\
     - forceV3000 (optional) force generation a V3000 mol block (happens automatically with \n\
       more than 999 atoms or bonds)\n\
-\n\
-  RETURNS:\n\
-\n\
-    a string\n\
 \n";
   python::def(
-      "MolToMolFile", RDKit::MolToMolFile,
+      "MolToMolFile",
+      (void(*)(const ROMol &, const std::string &, bool, int, bool, bool))RDKit::MolToMolFile,
       (python::arg("mol"), python::arg("filename"),
        python::arg("includeStereo") = true, python::arg("confId") = -1,
        python::arg("kekulize") = true, python::arg("forceV3000") = false),
       docString.c_str());
+
+  docString =
+      "Writes a V3000 Mol file for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - filename: the file to write to\n\
+    - params: the MolWriteParams\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+\n";
+  python::def("MolToV3KMolFile",
+              (void(*)(const ROMol &, const std::string &, const MolWriteParams &, int))RDKit::MolToV3KMolFile,
+              (python::arg("mol"), python::arg("filename"),
+               python::arg("params") = true, python::arg("confId") = -1),
+              docString.c_str());
 
   docString =
       "Writes a V3000 Mol file for a molecule\n\
@@ -1199,12 +1227,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
       as suggested by the MDL spec.\n\
-\n\
-  RETURNS:\n\
-\n\
-    a string\n\
 \n";
-  python::def("MolToV3KMolFile", RDKit::MolToV3KMolFile,
+  python::def("MolToV3KMolFile",
+              (void(*)(const ROMol &, const std::string &, bool, int, bool))RDKit::MolToV3KMolFile,
               (python::arg("mol"), python::arg("filename"),
                python::arg("includeStereo") = true, python::arg("confId") = -1,
                python::arg("kekulize") = true),

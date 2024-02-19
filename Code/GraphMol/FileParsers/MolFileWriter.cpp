@@ -1346,9 +1346,10 @@ std::string MolToMolBlock(const ROMol &mol,
 //  Dump a molecule to a file
 //
 //------------------------------------------------
-void MolToMolFile(const ROMol &mol, const std::string &fName,
-                  bool includeStereo, int confId, bool kekulize,
-                  bool forceV3000) {
+void MolToMolFile(const ROMol &mol,
+                  const std::string &fName,
+                  const MolWriteParams &params,
+                  int confId) {
   auto *outStream = new std::ofstream(fName.c_str());
   if (!(*outStream) || outStream->bad()) {
     delete outStream;
@@ -1357,7 +1358,7 @@ void MolToMolFile(const ROMol &mol, const std::string &fName,
     throw BadFileException(errout.str());
   }
   std::string outString =
-      MolToMolBlock(mol, includeStereo, confId, kekulize, forceV3000);
+      MolToMolBlock(mol, params, confId);
   *outStream << outString;
   delete outStream;
 }
