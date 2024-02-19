@@ -1069,26 +1069,26 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
 
-  python::class_<RDKit::MolWriteParams, boost::noncopyable>(
-      "MolWriteParams", "Parameters controlling Mol writing")
+  python::class_<RDKit::MolWriterParams, boost::noncopyable>(
+      "MolWriterParams", "Parameters controlling Mol writing")
       .def_readwrite("includeStereo",
-                     &RDKit::MolWriteParams::includeStereo,
+                     &RDKit::MolWriterParams::includeStereo,
                      "toggles inclusion of stereochemistry information (default=True)")
       .def_readwrite("kekulize",
-                     &RDKit::MolWriteParams::kekulize,
+                     &RDKit::MolWriterParams::kekulize,
                      "triggers kekulization of the molecule before it is written (default=True)")
       .def_readwrite("forceV3000",
-                     &RDKit::MolWriteParams::forceV3000,
+                     &RDKit::MolWriterParams::forceV3000,
                      "force generation a V3000 mol block (happens automatically with more than 999 atoms or bonds)(default=False)")
       .def_readwrite("highPrecision",
-                     &RDKit::MolWriteParams::highPrecision,
+                     &RDKit::MolWriterParams::highPrecision,
                      "write double precision coordinates (only available in V3000)(default=false)");
 
   docString =
       "Returns a Mol block for a molecule\n\
   Arguments:\n\
     - mol: the molecule\n\
-    - params: the MolWriteParams\n\
+    - params: the MolWriterParams\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
 \n\
   RETURNS:\n\
@@ -1096,7 +1096,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a string\n\
 \n";
   python::def("MolToMolBlock",
-              (std::string(*)(const ROMol &, const MolWriteParams &, int))RDKit::MolToMolBlock,
+              (std::string(*)(const ROMol &, const MolWriterParams &, int))RDKit::MolToMolBlock,
               (python::arg("mol"), python::arg("params"), python::arg("confId") = -1),
               docString.c_str());
 
@@ -1129,7 +1129,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
    ARGUMENTS:\n\
 \n \
      - mol: the molecule\n\
-     - params: the MolWriteParams\n\
+     - params: the MolWriterParams\n\
      - confId: (optional) selects which conformation to output (-1 = default)\n\
 \n \
    RETURNS:\n\
@@ -1137,7 +1137,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
      a string\n\
 \n ";
   python::def("MolToV3KMolBlock",
-               (std::string(*)(const ROMol &, const MolWriteParams &, int))RDKit::MolToV3KMolBlock,
+               (std::string(*)(const ROMol &, const MolWriterParams &, int))RDKit::MolToV3KMolBlock,
                (python::arg("mol"), python::arg("params"), python::arg("confId") = -1),
                docString.c_str());
 
@@ -1169,12 +1169,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     - mol: the molecule\n\
     - filename: the file to write to\n\
-    - params: the MolWriteParams\n\
+    - params: the MolWriterParams\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
 \n";
   python::def(
       "MolToMolFile",
-      (void(*)(const ROMol &, const std::string &, const MolWriteParams &, int))RDKit::MolToMolFile,
+      (void(*)(const ROMol &, const std::string &, const MolWriterParams &, int))RDKit::MolToMolFile,
       (python::arg("mol"), python::arg("filename"), python::arg("params"),
        python::arg("confId") = -1),
       docString.c_str());
@@ -1207,11 +1207,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     - mol: the molecule\n\
     - filename: the file to write to\n\
-    - params: the MolWriteParams\n\
+    - params: the MolWriterParams\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
 \n";
   python::def("MolToV3KMolFile",
-              (void(*)(const ROMol &, const std::string &, const MolWriteParams &, int))RDKit::MolToV3KMolFile,
+              (void(*)(const ROMol &, const std::string &, const MolWriterParams &, int))RDKit::MolToV3KMolFile,
               (python::arg("mol"), python::arg("filename"),
                python::arg("params") = true, python::arg("confId") = -1),
               docString.c_str());

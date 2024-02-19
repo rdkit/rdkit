@@ -791,12 +791,13 @@ const std::string GetV3000MolFileAtomLine(
   }
 
   ss << std::fixed;
+  std::streamsize currentPrecision = ss.precision();
   if (highPrecision) {
     ss << std::setprecision(15);
   }
   ss << " " << x << " " << y << " " << z;
   if (highPrecision) {
-    ss << std::setprecision(6);
+    ss << std::setprecision(currentPrecision);
   }
   ss << std::defaultfloat;
   ss << " " << atomMapNumber;
@@ -1304,7 +1305,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
 }
 
 std::string MolToMolBlock(const ROMol &mol,
-                          const MolWriteParams& params,
+                          const MolWriterParams& params,
                           int confId) {
   RDKit::Utils::LocaleSwitcher switcher;
   RWMol trwmol(mol);
@@ -1348,7 +1349,7 @@ std::string MolToMolBlock(const ROMol &mol,
 //------------------------------------------------
 void MolToMolFile(const ROMol &mol,
                   const std::string &fName,
-                  const MolWriteParams &params,
+                  const MolWriterParams &params,
                   int confId) {
   auto *outStream = new std::ofstream(fName.c_str());
   if (!(*outStream) || outStream->bad()) {

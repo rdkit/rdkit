@@ -1099,7 +1099,7 @@ void testV3000DoublePrecision() {
     TEST_ASSERT(mol);
     size_t numAtoms = mol->getNumAtoms();
     TEST_ASSERT(numAtoms == 7);
-    MolWriteParams params{true, true, true, true};
+    MolWriterParams params{true, true, true, true};
     std::string molBlock = MolToMolBlock(*mol, params, -1);
     RWMol *readMol = MolBlockToMol(molBlock);
     TEST_ASSERT(numAtoms == readMol->getNumAtoms());
