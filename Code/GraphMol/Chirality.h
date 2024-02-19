@@ -352,6 +352,30 @@ RDKIT_GRAPHMOL_EXPORT void GetMolFileBondStereoInfo(
         &wedgeBonds,
     const Conformer *conf, Bond::BondDir &dir, bool &reverse);
 
+//! add R/S, relative stereo, and E/Z annotations to atoms and bonds
+/*!
+ \param mol: molecule to modify
+ \param absLabel: label for atoms in an ABS stereo group
+ \param orLabel: label for atoms in an OR stereo group
+ \param andLabel: label for atoms in an AND stereo group
+ \param cipLabel: label for chiral atoms that aren't in a stereo group.
+ \param bondLabel: label for CIP stereochemistry on bonds
+
+ If any label is empty, the corresponding annotations will not be added.
+
+ The labels can contain the following placeholders:
+   {id} - the stereo group's index
+   {cip} - the atom or bond's CIP stereochemistry
+
+ Note that CIP labels will only be added if CIP stereochemistry has been
+ assigned to the molecule.
+
+ */
+RDKIT_GRAPHMOL_EXPORT void addStereoAnnotations(
+    ROMol &mol, std::string absLabel = "abs ({cip})",
+    std::string orLabel = "or{id}", std::string andLabel = "and{id}",
+    std::string cipLabel = "({cip})", std::string bondLabel = "({cip})");
+
 }  // namespace Chirality
 }  // namespace RDKit
 #endif
