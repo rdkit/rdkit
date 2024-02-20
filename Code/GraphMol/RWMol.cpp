@@ -31,9 +31,15 @@ void insertStereoGroups(RWMol &mol, const ROMol &other,
   std::vector<RDKit::StereoGroup> new_groups;
   new_groups.reserve(mol.getStereoGroups().size());
   for (const auto &sg : mol.getStereoGroups()) {
+    // The sdf specification forbids more than one ABS stereo group, but we
+    // don't enforce that in our code. But if we see more than one ABS groups
+    // here, just merge the atoms and bonds in them into one group. Other stereo
+    // groups are just forwarded.
     if (sg.getGroupType() == RDKit::StereoGroupType::STEREO_ABSOLUTE) {
-      abs_atoms = sg.getAtoms();
-      abs_bonds = sg.getBonds();
+      auto &atoms = sg.getAtoms();
+      auto &bonds = sg.getBonds();
+      abs_atoms.insert(abs_atoms.end(), atoms.begin(), atoms.end());
+      abs_bonds.insert(abs_bonds.end(), bonds.begin(), bonds.end());
     } else {
       new_groups.emplace_back(sg);
     }
