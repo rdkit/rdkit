@@ -13,7 +13,6 @@
 #include "../Descriptors/MolDescriptors.h"
 #include "StripSmallFragments.h"
 #include "../SmilesParse/SmilesWrite.h"
-#include "../MolFileStereochem.h"
 
 // define snprintf for msvc
 #if _MSC_VER
@@ -97,7 +96,7 @@ bool StripSmallFragments(RWMol &mol, bool verbose) {
     RWMol copy(mol);
     try {
       MolOps::sanitizeMol(copy);
-      ClearSingleBondDirFlags(copy);
+      MolOps::clearSingleBondDirFlags(copy);
       MolOps::detectBondStereochemistry(copy);
       MolOps::assignStereochemistry(copy, true, true, true);
       for (ROMol::AtomIterator atIt = copy.beginAtoms();
