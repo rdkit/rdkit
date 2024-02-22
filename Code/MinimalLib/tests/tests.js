@@ -2770,6 +2770,40 @@ function test_relabel_mapped_dummies() {
     core.delete();
 }
 
+function test_assign_cip_labels() {
+    var origSetting;
+    const getTextSection = (svg) => (
+      svg.split('\n').map((line) => line.replace(/^<text.+>([^<]*)<\/text>$/, '$1')).join('')
+    );
+    try {
+        origSetting = RDKitModule.use_legacy_stereo_perception(true);
+        {
+            var mol = RDKitModule.get_mol('C/C=C/c1ccccc1[S@@](C)=O');
+            var svg = mol.get_svg_with_highlights(JSON.stringify({noFreetype: true, addStereoAnnotation: true}));
+            assert(getTextSection(svg).includes("(S)"));
+            assert(!getTextSection(svg).includes("(R)"));
+            mol.delete();
+        }
+        RDKitModule.use_legacy_stereo_perception(false);
+        {
+            var mol = RDKitModule.get_mol('C/C=C/c1ccccc1[S@@](C)=O');
+            var svg = mol.get_svg_with_highlights(JSON.stringify({noFreetype: true, addStereoAnnotation: true}));
+            assert(!getTextSection(svg).includes("(S)"));
+            assert(!getTextSection(svg).includes("(R)"));
+            mol.delete();
+        }
+        {
+            var mol = RDKitModule.get_mol('C/C=C/c1ccccc1[S@@](C)=O', JSON.stringify({assignCIPLabels: true}));
+            var svg = mol.get_svg_with_highlights(JSON.stringify({noFreetype: true, addStereoAnnotation: true}));
+            assert(!getTextSection(svg).includes("(S)"));
+            assert(getTextSection(svg).includes("(R)"));
+            mol.delete();
+        }
+    } finally {
+        RDKitModule.use_legacy_stereo_perception(origSetting);
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -2843,6 +2877,7 @@ initRDKitModule().then(function(instance) {
     test_rgroup_match_heavy_hydro_none_charged();
     test_get_sss_json();
     test_relabel_mapped_dummies();
+    test_assign_cip_labels();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
