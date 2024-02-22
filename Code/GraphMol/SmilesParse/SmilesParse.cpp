@@ -256,10 +256,11 @@ std::unique_ptr<RWMol> toMol(const std::string &inp,
     }
     BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
                           << " for input: '" << origInp << "'" << std::endl;
-    res.reset();
-    if (!molVect.empty()) {
-      molVect[0] = nullptr;
-    }
+
+    // reset res so that we return a nullptr. We don't want to reset(),
+    // because that would delete the mol and leak any unmatched
+    // ring closure bonds. These will be cleaned up in the loop below.
+    res.release();
   }
   for (auto *molPtr : molVect) {
     if (molPtr) {
@@ -402,7 +403,7 @@ void handleCXPartAndName(RWMol *res, const T &params, const std::string &cxPart,
 }  // namespace
 
 std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
-                                   const SmilesParserParams &params) {
+                                     const SmilesParserParams &params) {
   // Calling MolFromSmiles in a multithreaded context is generally safe *unless*
   // the value of debugParse is different for different threads. The if
   // statement below avoids a TSAN warning in the case where multiple threads
@@ -525,7 +526,7 @@ std::unique_ptr<Bond> BondFromSmarts(const std::string &smiles) {
 };
 
 std::unique_ptr<RWMol> MolFromSmarts(const std::string &smarts,
-                                   const SmartsParserParams &params) {
+                                     const SmartsParserParams &params) {
   // Calling MolFromSmarts in a multithreaded context is generally safe *unless*
   // the value of debugParse is different for different threads. The if
   // statement below avoids a TSAN warning in the case where multiple threads
