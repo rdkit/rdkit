@@ -317,8 +317,8 @@ void testEnumerator() {
                             "C=CCC(C)=O", "CC=CC(C)=O"});
 
   // // Remove stereochemistry from conjugated double bonds to nitro
-  // checkAns("c1ccnc(c1)/C=C/[N+](=O)[O-]", {"O=[N+]([O-])C=Cc1ccccn1",
-  //                                          "[O-][N+](O)=C=Cc1ccccn1"});
+  checkAns("c1ccnc(c1)/C=C/[N+](=O)[O-]", {"O=[N+]([O-])C=Cc1ccccn1",
+                                           "[O-][N+](O)=C=Cc1ccccn1"});
 
   // Remove stereochemistry from mobile double bonds
   std::string smi66 = "C/C=C\\C(C)=O";
