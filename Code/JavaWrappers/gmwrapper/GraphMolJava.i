@@ -101,6 +101,7 @@ typedef unsigned long long int	uintmax_t;
 
 %shared_ptr(std::exception)
 %shared_ptr(RDKit::RDProps)
+%shared_ptr(RDKit::Conformer)
 %shared_ptr(RDKit::ROMol)
 %shared_ptr(RDKit::RWMol)
 %shared_ptr(RDKit::Atom)
@@ -286,7 +287,7 @@ typedef unsigned long long int	uintmax_t;
   double getElement(int i) {
     return (*($self))[i];
   }
-  double setElement(int i, double value) {
+  void setElement(int i, double value) {
     (*($self))[i] = value;
   }
 }
@@ -294,7 +295,7 @@ typedef unsigned long long int	uintmax_t;
   int getElement(int i) {
     return (*($self))[i];
   }
-  int setElement(int i, int value) {
+  void setElement(int i, int value) {
     (*($self))[i] = value;
   }
 }
@@ -313,4 +314,9 @@ typedef unsigned long long int	uintmax_t;
 %{
 #include <RDGeneral/versions.h>
 %}
+
+%immutable RDKit::rdkitVersion;
+%immutable RDKit::boostVersion;
+%immutable RDKit::rdkitBuild;
+
 %include <RDGeneral/versions.h>

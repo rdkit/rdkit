@@ -214,3 +214,18 @@ M  END
               common_properties::_MolFileBondEndPts) == "(3 1 2 3)");
   }
 }
+
+TEST_CASE("parsing old pickles with many features") {
+  std::string pklName = getenv("RDBASE");
+  pklName += "/Code/GraphMol/test_data/mol_with_sgroups_and_stereo.pkl";
+
+  auto m =
+      "C/C=C/C[C@H](O)[C@@H](C)F |a:6,o2:4,r,SgD:5:data_pt:4.5::::|"_smiles;
+  REQUIRE(m);
+  std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
+  RWMol m2;
+  // if the mol can be read, the primary problem was addressed
+  MolPickler::molFromPickle(inStream, m2);
+  CHECK(m2.getNumAtoms() == m->getNumAtoms());
+  CHECK(MolToCXSmiles(*m) == MolToCXSmiles(m2));
+}

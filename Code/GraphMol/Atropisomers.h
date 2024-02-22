@@ -17,10 +17,9 @@
 #include <string>
 #include <stdexcept>
 
-#define AtropAtomAndBondVec std::pair<Atom *, std::vector<Bond *>>
-
 namespace RDKit {
 namespace Atropisomers {
+using AtropAtomAndBondVec = std::pair<Atom *, std::vector<Bond *>>;
 RDKIT_GRAPHMOL_EXPORT void detectAtropisomerChirality(ROMol &mol,
                                                       const Conformer *conf);
 RDKIT_GRAPHMOL_EXPORT void wedgeBondsFromAtropisomers(
