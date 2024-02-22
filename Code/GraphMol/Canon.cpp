@@ -220,7 +220,8 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
 
   // Make sure we found everything we need to find.
   //   This really shouldn't be a problem, but molecules can end up in odd
-  //   states
+  //   states; for example, allenes can end up here. Instead of checking for them
+  //   explicitly, exit early in any such possible state.
   if (!firstFromAtom1 || !firstFromAtom2) {
     return;
   }
