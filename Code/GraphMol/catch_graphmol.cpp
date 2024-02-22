@@ -3463,3 +3463,16 @@ TEST_CASE(
   CHECK(bnd->getStereo() == Bond::BondStereo::STEREONONE);
   CHECK(bnd->getStereoAtoms().empty());
 }
+
+TEST_CASE(
+    "github #7044: canonicalization error when allenes have specified stereo") {
+  SECTION("basics") {
+    auto m = "CC=C=CC"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(2)->setStereoAtoms(1, 4);
+    m->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "CC=C=CC");
+  }
+}
