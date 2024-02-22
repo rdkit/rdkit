@@ -82,6 +82,8 @@ Include an Atom Index
    
 .. image:: images/RDKitCB_0_im1.png
 
+In contrast to the approach below, the atom index zero is not displayed.
+
 A simpler way to add atom indices is to adjust the IPythonConsole properties.
 This produces a similar image to the example above, the difference being that the atom 
 indices are now near the atom, rather than at the atom position.
