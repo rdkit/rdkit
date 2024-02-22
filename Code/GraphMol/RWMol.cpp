@@ -22,6 +22,108 @@
 
 namespace RDKit {
 
+namespace {
+void insertStereoGroups(RWMol &mol, const ROMol &other,
+                        const std::vector<unsigned int> &newAtomIds,
+                        const std::vector<unsigned int> &newBondIds) {
+  std::vector<RDKit::Atom *> abs_atoms;
+  std::vector<RDKit::Bond *> abs_bonds;
+  std::vector<RDKit::StereoGroup> new_groups;
+  new_groups.reserve(mol.getStereoGroups().size());
+  for (const auto &sg : mol.getStereoGroups()) {
+    // The sdf specification forbids more than one ABS stereo group, but we
+    // don't enforce that in our code. But if we see more than one ABS groups
+    // here, just merge the atoms and bonds in them into one group. Other stereo
+    // groups are just forwarded.
+    if (sg.getGroupType() == RDKit::StereoGroupType::STEREO_ABSOLUTE) {
+      auto &atoms = sg.getAtoms();
+      auto &bonds = sg.getBonds();
+      abs_atoms.insert(abs_atoms.end(), atoms.begin(), atoms.end());
+      abs_bonds.insert(abs_bonds.end(), bonds.begin(), bonds.end());
+    } else {
+      new_groups.emplace_back(sg);
+    }
+  }
+
+  for (const auto &sg : other.getStereoGroups()) {
+    // update the stereo group's atom and bond indices
+    std::vector<RDKit::Atom *> new_atoms;
+    std::vector<RDKit::Bond *> new_bonds;
+    for (auto atom : sg.getAtoms()) {
+      auto idx = newAtomIds[atom->getIdx()];
+      new_atoms.push_back(mol.getAtomWithIdx(idx));
+    }
+    for (auto bond : sg.getBonds()) {
+      auto idx = newBondIds[bond->getIdx()];
+      new_bonds.push_back(mol.getBondWithIdx(idx));
+    }
+
+    // Collect all ABS atoms and bonds so they are added as a single group
+    if (sg.getGroupType() == RDKit::StereoGroupType::STEREO_ABSOLUTE) {
+      abs_atoms.insert(abs_atoms.end(), new_atoms.begin(), new_atoms.end());
+      abs_bonds.insert(abs_bonds.end(), new_bonds.begin(), new_bonds.end());
+    } else {
+      RDKit::StereoGroup new_group(sg.getGroupType(), new_atoms, new_bonds,
+                                   sg.getReadId());
+      // default write ID to 0 to avoid id clashes. We can use
+      // assignStereoGroupIds() later on to assign new IDs
+      new_group.setWriteId(0);
+      new_groups.push_back(new_group);
+    }
+  }
+  new_groups.emplace_back(RDKit::StereoGroupType::STEREO_ABSOLUTE, abs_atoms,
+                          abs_bonds);
+  mol.setStereoGroups(new_groups);
+}
+
+void insertSubstanceGroups(RWMol &mol, const RWMol &other,
+                           const std::vector<unsigned int> &newAtomIds,
+                           const std::vector<unsigned int> &newBondIds) {
+  for (auto sgroup : getSubstanceGroups(other)) {
+    sgroup.setOwningMol(&mol);
+
+    // update the sgroup's atom and bond indices
+    auto atom_indices = sgroup.getAtoms();
+    std::transform(atom_indices.begin(), atom_indices.end(),
+                   atom_indices.begin(), [&newAtomIds](unsigned int old_index) {
+                     return newAtomIds[old_index];
+                   });
+    sgroup.setAtoms(atom_indices);
+
+    auto bond_indices = sgroup.getBonds();
+    std::transform(bond_indices.begin(), bond_indices.end(),
+                   bond_indices.begin(), [&newBondIds](unsigned int old_index) {
+                     return newBondIds[old_index];
+                   });
+    sgroup.setBonds(bond_indices);
+
+    // patoms
+    auto patom_indices = sgroup.getParentAtoms();
+    std::transform(patom_indices.begin(), patom_indices.end(),
+                   patom_indices.begin(),
+                   [&newAtomIds](unsigned int old_index) {
+                     return newAtomIds[old_index];
+                   });
+    sgroup.setParentAtoms(patom_indices);
+
+    // cstates (these are references, can be updated in place)
+    for (auto &cstate : sgroup.getCStates()) {
+      cstate.bondIdx = newBondIds[cstate.bondIdx];
+    }
+
+    // attachment points (can also be updated in place)
+    for (auto &sap : sgroup.getAttachPoints()) {
+      sap.aIdx = newAtomIds[sap.aIdx];
+      if (sap.lvIdx != -1) {
+        sap.lvIdx = static_cast<int>(newAtomIds[sap.lvIdx]);
+      }
+    }
+
+    addSubstanceGroup(mol, sgroup);
+  }
+}
+}  // namespace
+
 RWMol &RWMol::operator=(const RWMol &other) {
   if (this != &other) {
     this->clear();
@@ -33,6 +135,7 @@ RWMol &RWMol::operator=(const RWMol &other) {
 
 void RWMol::insertMol(const ROMol &other) {
   std::vector<unsigned int> newAtomIds(other.getNumAtoms());
+  std::vector<unsigned int> newBondIds(other.getNumBonds());
   VERTEX_ITER firstA, lastA;
   boost::tie(firstA, lastA) = boost::vertices(other.d_graph);
   while (firstA != lastA) {
@@ -70,7 +173,9 @@ void RWMol::insertMol(const ROMol &other) {
     for (auto &v : bond_p->getStereoAtoms()) {
       v = newAtomIds[v];
     }
-    addBond(bond_p, true);
+    const bool takeOwnership = true;
+    addBond(bond_p, takeOwnership);
+    newBondIds[other.d_graph[*firstB]->getIdx()] = bond_p->getIdx();
     ++firstB;
   }
 
@@ -107,6 +212,12 @@ void RWMol::insertMol(const ROMol &other) {
       }
     }
   }
+
+  // add stereo groups
+  insertStereoGroups(*this, other, newAtomIds, newBondIds);
+
+  // add substance groups
+  insertSubstanceGroups(*this, other, newAtomIds, newBondIds);
 }
 
 unsigned int RWMol::addAtom(bool updateLabel) {

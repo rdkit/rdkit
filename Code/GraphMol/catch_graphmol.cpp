@@ -3578,3 +3578,190 @@ $$$$)CTAB"_ctab;
 
   CHECK(b->getBondDir() == Bond::BondDir::BEGINDASH);
 }
+
+TEST_CASE(
+    "Github Issue #7064: Copy stereo and substance groups during insertMol",
+    "[RWMol]") {
+  // This mols is made up, it probably doesn't make sense at all.
+  auto m1 = R"CTAB(
+  Mrv2311 02062417062D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 34 35 1 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 0.004 0.7623 0 0
+M  V30 2 C 1.0927 1.8587 0 0
+M  V30 3 N 0.004 2.9396 0 0
+M  V30 4 C -1.0927 1.8587 0 0
+M  V30 5 C -1.0927 -0.3187 0 0
+M  V30 6 N 0.004 -1.4155 0 0
+M  V30 7 C 1.0927 -0.3187 0 0
+M  V30 8 C 0.004 -2.9396 0 0
+M  V30 9 C 2.4264 0.4513 0 0 CFG=2
+M  V30 10 C 3.7601 -0.3187 0 0 CFG=1
+M  V30 11 C 5.0937 0.4513 0 0 CFG=2
+M  V30 12 C 6.4274 -0.3187 0 0 CFG=1
+M  V30 13 C 7.7611 0.4513 0 0 CFG=2
+M  V30 14 C 9.0948 -0.3187 0 0
+M  V30 15 C -2.4264 1.0887 0 0 CFG=2
+M  V30 16 C -3.7601 1.8587 0 0 CFG=1
+M  V30 17 C -5.0937 1.0887 0 0 CFG=2
+M  V30 18 C -6.4274 1.8587 0 0 CFG=1
+M  V30 19 C -7.7611 1.0887 0 0
+M  V30 20 O 7.7611 1.9913 0 0
+M  V30 21 C 6.4274 -1.8587 0 0
+M  V30 22 C 5.0937 1.9913 0 0
+M  V30 23 C 3.7601 -1.8587 0 0
+M  V30 24 C 2.4264 1.9913 0 0
+M  V30 25 C -2.4264 -0.4513 0 0
+M  V30 26 C -3.7601 3.3987 0 0
+M  V30 27 C -5.0937 -0.4513 0 0
+M  V30 28 O -6.4274 3.3987 0 0
+M  V30 29 C -1.323 -5.2511 0 0
+M  V30 30 C -2.8705 -5.2532 0 0
+M  V30 31 C 0.2093 -5.2568 0 0
+M  V30 32 C -1.321 -6.7911 0 0
+M  V30 33 O -1.325 -3.7113 0 0
+M  V30 34 O 1.327 -3.7079 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 1
+M  V30 5 1 1 5
+M  V30 6 1 5 6
+M  V30 7 1 6 7
+M  V30 8 1 7 1
+M  V30 9 1 6 8
+M  V30 10 1 7 9
+M  V30 11 1 9 10
+M  V30 12 1 10 11
+M  V30 13 1 11 12
+M  V30 14 1 12 13
+M  V30 15 1 13 14
+M  V30 16 1 4 15
+M  V30 17 1 15 16
+M  V30 18 1 16 17
+M  V30 19 1 17 18
+M  V30 20 1 18 19
+M  V30 21 1 12 21 CFG=1
+M  V30 22 1 11 22 CFG=1
+M  V30 23 1 10 23 CFG=1
+M  V30 24 1 9 24 CFG=1
+M  V30 25 1 15 25 CFG=1
+M  V30 26 1 16 26 CFG=1
+M  V30 27 1 17 27 CFG=1
+M  V30 28 1 18 28 CFG=1
+M  V30 29 1 13 20 CFG=1
+M  V30 30 1 33 29
+M  V30 31 1 29 30
+M  V30 32 1 29 31
+M  V30 33 1 29 32
+M  V30 34 2 8 34
+M  V30 35 1 33 8
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(7 8 9 10 11 12 13 14) XBONDS=(1 9) BRKXYZ=(9 6.24 -2.9 0 -
+M  V30 6.24 -2.9 0 0 0 0) CSTATE=(4 9 0 0.82 0) LABEL=Boc SAP=(3 13 6 1)
+M  V30 END SGROUP
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(2 17 18)
+M  V30 MDLV30/STEREL4 ATOMS=(2 9 10)
+M  V30 MDLV30/STERAC2 ATOMS=(2 15 16)
+M  V30 MDLV30/STERAC6 ATOMS=(2 11 12)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m1);
+
+  const auto numAtoms = m1->getNumAtoms();
+  const auto numBonds = m1->getNumBonds();
+  REQUIRE(numAtoms == 34);
+  REQUIRE(numBonds == 35);
+
+  auto m2 = RWMol(*m1);
+  m2.insertMol(*m1);
+
+  REQUIRE(m2.getNumAtoms() == 2 * numAtoms);
+  REQUIRE(m2.getNumBonds() == 2 * numBonds);
+
+  auto checkStereoGroup = [](const std::vector<StereoGroup> &stgs, int stg_idx,
+                             const StereoGroupType type,
+                             const std::vector<unsigned int> &atoms) {
+    INFO("Checking StereoGroup " << stg_idx);
+
+    const auto &stg = stgs[stg_idx];
+
+    CHECK(stg.getGroupType() == type);
+
+    std::vector<unsigned int> actualAtoms;
+    for (const auto atom : stg.getAtoms()) {
+      actualAtoms.push_back(atom->getIdx());
+    }
+
+    CHECK(actualAtoms == atoms);
+  };
+
+  auto checkSubstanceGroup =
+      [](const std::vector<SubstanceGroup> &sgs, int sg_idx,
+         const std::vector<unsigned int> &atoms,
+         const std::vector<unsigned int> &bonds, const unsigned int &cstateBond,
+         const std::pair<unsigned int, int> &attachPtAtoms) {
+        INFO("Checking Substance Group " << sg_idx);
+
+        const auto &sg = sgs[sg_idx];
+
+        CHECK(sg.getProp<std::string>("TYPE") == "SUP");
+        CHECK(sg.getAtoms() == atoms);
+        CHECK(sg.getBonds() == bonds);
+
+        auto cstates = sg.getCStates();
+        REQUIRE(cstates.size() == 1);
+        CHECK(cstates[0].bondIdx == cstateBond);
+
+        auto saps = sg.getAttachPoints();
+        REQUIRE(saps.size() == 1);
+        CHECK(saps[0].aIdx == attachPtAtoms.first);
+        CHECK(saps[0].lvIdx == attachPtAtoms.second);
+      };
+
+  // Check that the original Stereo Groups haven't changed
+  {
+    const auto stgs1 = m1->getStereoGroups();
+    REQUIRE(stgs1.size() == 4);
+
+    checkStereoGroup(stgs1, 0, StereoGroupType::STEREO_ABSOLUTE, {16, 17});
+    checkStereoGroup(stgs1, 1, StereoGroupType::STEREO_OR, {8, 9});
+    checkStereoGroup(stgs1, 2, StereoGroupType::STEREO_AND, {14, 15});
+    checkStereoGroup(stgs1, 3, StereoGroupType::STEREO_AND, {10, 11});
+
+    const auto sgs1 = getSubstanceGroups(*m1);
+    REQUIRE(sgs1.size() == 1);
+
+    checkSubstanceGroup(sgs1, 0, {7, 8, 9, 10, 11, 12, 13}, {8}, 8, {12, 5});
+  }
+  // Check that the insertion was successful
+  {
+    const auto stgs2 = m2.getStereoGroups();
+    REQUIRE(stgs2.size() == 7);
+
+    checkStereoGroup(stgs2, 0, StereoGroupType::STEREO_OR, {8, 9});
+    checkStereoGroup(stgs2, 1, StereoGroupType::STEREO_AND, {14, 15});
+    checkStereoGroup(stgs2, 2, StereoGroupType::STEREO_AND, {10, 11});
+    checkStereoGroup(stgs2, 3, StereoGroupType::STEREO_OR, {42, 43});
+    checkStereoGroup(stgs2, 4, StereoGroupType::STEREO_AND, {48, 49});
+    checkStereoGroup(stgs2, 5, StereoGroupType::STEREO_AND, {44, 45});
+    checkStereoGroup(stgs2, 6, StereoGroupType::STEREO_ABSOLUTE,
+                     {16, 17, 50, 51});
+
+    const auto sgs2 = getSubstanceGroups(m2);
+    REQUIRE(sgs2.size() == 2);
+
+    checkSubstanceGroup(sgs2, 0, {7, 8, 9, 10, 11, 12, 13}, {8}, 8, {12, 5});
+    checkSubstanceGroup(sgs2, 1, {41, 42, 43, 44, 45, 46, 47}, {43}, 43,
+                        {46, 39});
+  }
+}
