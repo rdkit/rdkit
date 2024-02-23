@@ -1,4 +1,4 @@
-#  Copyright (C) 2014 Sereina Riniker
+#  Copyright (C) 2014-2024 Sereina Riniker and other RDKit contributors
 #
 #  This file is part of the RDKit.
 #  The contents are covered by the terms of the BSD license
@@ -14,7 +14,7 @@ import os
 
 from rdkit import Chem, Geometry, RDConfig, rdBase
 from rdkit.Chem import rdchem, rdMolDescriptors
-
+from rdkit.Chem import rdFingerprintGenerator
 
 def _doMatch(inv, atoms):
   """ Helper function to check if all atoms in the list are the same
@@ -88,12 +88,17 @@ def _getAtomInvariantsWithRadius(mol, radius):
       Return: list of atom invariants
   """
   inv = []
-  for i in range(mol.GetNumAtoms()):
-    info = {}
-    fp = rdMolDescriptors.GetMorganFingerprint(mol, radius, fromAtoms=[i], bitInfo=info)
-    for k in info.keys():
-      if info[k][0][1] == radius:
-        inv.append(k)
+  fpg = rdFingerprintGenerator.GetMorganGenerator(radius,includeRedundantEnvironments=True)
+  ao = rdFingerprintGenerator.AdditionalOutput()
+  ao.AllocateBitInfoMap()
+
+  fp = fpg.GetSparseCountFingerprint(mol, additionalOutput=ao)
+  bim = ao.GetBitInfoMap()
+  inv = [0]*mol.GetNumAtoms()
+  for k,vs in bim.items():
+    for (aid,r) in vs:
+      if r == radius:
+        inv[aid] = k
   return inv
 
 
