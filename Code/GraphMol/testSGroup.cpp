@@ -475,13 +475,13 @@ void testModifyMol() {
   const auto &sgroups = getSubstanceGroups(mol);
   TEST_ASSERT(sgroups.size() == 3);
 
-  {  // insertion does not affect SubstanceGroups
+  {  // insertion also inserts SubstanceGroups
     const auto &sgroups = getSubstanceGroups(mol_copy);
     TEST_ASSERT(sgroups.size() == 3);
 
     mol_copy.insertMol(mol);
 
-    TEST_ASSERT(sgroups.size() == 3);
+    TEST_ASSERT(sgroups.size() == 6);
   }
   {
     // adding an atom does not affect SubstanceGroups

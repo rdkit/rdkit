@@ -4,15 +4,22 @@
 # 1. cd to Code/MinimalLib/docker
 # cd Code/MinimalLib/docker
 #
-# 2. generate an image of the build-stage from the main Dockerfile
-#    (the build-arg arguments are all optional)
+# 2. generate an image of the build-stage from the main Dockerfile.
+#    The build-arg arguments are all optional and have appropriate
+#    defaults. Regarding EMSDK_VERSION, 3.1.50 is the last
+#    emsdk version that supports the MIN_IE_VERSION=11 flag.
 # docker build --target build-stage -t rdkit-minimallib-build-stage --network=host \
+#  --build-arg "EMSDK_VERSION=3.1.50" \
 #  --build-arg "RDKIT_GIT_URL=https://github.com/myfork/rdkit.git" \
 #  --build-arg "RDKIT_BRANCH=mybranch" .
 #
 # 3. build the JS-only version of MinimalLib for legacy browsers
-#    (requires the rdkit-minimallib-build-stage image built in step 2)
-# docker build -t rdkit-minimallib-legacy --network=host -f Dockerfile_legacy_browsers .
+#    (requires the rdkit-minimallib-build-stage image built in step 2).
+#    The build-arg arguments are all optional and have appropriate
+#    defaults.
+# docker build -t rdkit-minimallib-legacy --network=host \
+#   --build-arg "EXTRA_CMAKE_EXE_LINKER_FLAGS=-s MIN_IE_VERSION=11" \
+#   -f Dockerfile_legacy_browsers .
 #
 # 4. create a temporary container and copy built libraries
 #    from the container to your local filesystem, then destroy
@@ -27,10 +34,11 @@
 
 
 FROM rdkit-minimallib-build-stage as build-stage-legacy
+ARG EXTRA_CMAKE_EXE_LINKER_FLAGS=""
 
 WORKDIR $RDBASE/build
 RUN emcmake cmake -DRDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS=ON \
-  -DCMAKE_EXE_LINKER_FLAGS="-s SINGLE_FILE=1 -s LEGACY_VM_SUPPORT=1 -s MIN_IE_VERSION=11 -s WASM=0 --memory-init-file 0 -s MODULARIZE=1 -s EXPORT_NAME=\"'initRDKitModule'\"" ..
+  -DCMAKE_EXE_LINKER_FLAGS="-s SINGLE_FILE=1 -s LEGACY_VM_SUPPORT=1 ${EXTRA_CMAKE_EXE_LINKER_FLAGS} -s WASM=0 --memory-init-file 0 -s MODULARIZE=1 -s EXPORT_NAME=\"'initRDKitModule'\"" ..
 
 # build and "install"
 RUN make -j2 RDKit_minimal && echo -e '\
