@@ -68,7 +68,7 @@ if __name__ == "__main__":
                     args.module_name]
         pybind11_stubgen.main()
     except Exception as e:
-        if isinstance(e, AssertionError):
+        if isinstance(e, AssertionError) or isinstance(e, ImportError):
             raise
         else:
             print(str(e))

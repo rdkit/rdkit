@@ -356,6 +356,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
         OUTPUT_STRIP_TRAILING_WHITESPACE
       )
     endif (NOT PYTHON_INSTDIR)
+    string(REGEX REPLACE "\\\\" "/" PYTHON_INSTDIR ${PYTHON_INSTDIR})
     message("Python Install directory ${PYTHON_INSTDIR}")
     set(RDKit_PythonDir "${PYTHON_INSTDIR}/rdkit")
     if(RDK_INSTALL_PYTHON_TESTS)
