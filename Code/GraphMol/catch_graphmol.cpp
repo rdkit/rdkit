@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2018-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -3577,6 +3577,92 @@ $$$$)CTAB"_ctab;
   MolOps::setDoubleBondNeighborDirections(*m);
 
   CHECK(b->getBondDir() == Bond::BondDir::BEGINDASH);
+}
+
+TEST_CASE("bond output") {
+  SECTION("order") {
+    auto m = "C-C=C-C#N->[Fe]"_smiles;
+    REQUIRE(m);
+    std::stringstream ss;
+    ss << *m->getBondWithIdx(0);
+    CHECK(ss.str() == "0 0->1 order: 1");
+    ss.str("");
+    ss << *m->getBondWithIdx(3);
+    CHECK(ss.str() == "3 3->4 order: 3 conj?: 1");
+    ss.str("");
+    ss << *m->getBondWithIdx(4);
+    CHECK(ss.str() == "4 4->5 order: D");
+    ss.str("");
+  }
+  SECTION("dir") {
+    auto m = "CC=CC(F)Cl"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setBondDir(Bond::BondDir::EITHERDOUBLE);
+    m->getBondWithIdx(3)->setBondDir(Bond::BondDir::BEGINDASH);
+    m->getBondWithIdx(4)->setBondDir(Bond::BondDir::BEGINWEDGE);
+
+    std::stringstream ss;
+    ss << *m->getBondWithIdx(1);
+    CHECK(ss.str() == "1 1->2 order: 2 dir: x");
+    ss.str("");
+    ss << *m->getBondWithIdx(3);
+    CHECK(ss.str() == "3 3->4 order: 1 dir: dash");
+    ss.str("");
+    ss << *m->getBondWithIdx(4);
+    CHECK(ss.str() == "4 3->5 order: 1 dir: wedge");
+    ss.str("");
+  }
+
+  SECTION("stereo") {
+    auto m = "CC=CC(=O)c1cnccc1"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    m->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOCIS);
+    // this is, of course, silly
+    m->getBondWithIdx(4)->setStereo(Bond::BondStereo::STEREOATROPCCW);
+    std::stringstream ss;
+    ss << *m->getBondWithIdx(1);
+    CHECK(ss.str() == "1 1->2 order: 2 stereo: CIS ats: (0 3) conj?: 1");
+    ss.str("");
+    ss << *m->getBondWithIdx(4);
+    CHECK(ss.str() == "4 3->5 order: 1 stereo: CCW bonds: (2 3 5 10) conj?: 1");
+    ss.str("");
+  }
+}
+TEST_CASE("atom output") {
+  SECTION("basics") {
+    auto m = "[C]c1ccc[nH]1"_smiles;
+    REQUIRE(m);
+    std::stringstream ss;
+    ss << *m->getAtomWithIdx(0);
+    CHECK(ss.str() == "0 6 C chg: 0  deg: 1 exp: 1 imp: 0 hyb: SP3 rad: 3");
+    ss.str("");
+    ss << *m->getAtomWithIdx(2);
+    CHECK(ss.str() == "2 6 C chg: 0  deg: 2 exp: 3 imp: 1 hyb: SP2 arom?: 1");
+    ss.str("");
+    ss << *m->getAtomWithIdx(5);
+    CHECK(ss.str() == "5 7 N chg: 0  deg: 2 exp: 3 imp: 0 hyb: SP2 arom?: 1");
+    ss.str("");
+  }
+  SECTION("chirality 1") {
+    auto m = "C[C@H](F)Cl"_smiles;
+    REQUIRE(m);
+    std::stringstream ss;
+    ss << *m->getAtomWithIdx(1);
+    CHECK(ss.str() ==
+          "1 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP3 chi: CCW nbrs:[0 2 3]");
+    ss.str("");
+  }
+  SECTION("chirality 2") {
+    auto m = "C[Pt@SP2H](F)Cl"_smiles;
+    REQUIRE(m);
+    std::stringstream ss;
+    ss << *m->getAtomWithIdx(1);
+    CHECK(
+        ss.str() ==
+        "1 78 Pt chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2D chi: SqP(2) nbrs:[0 2 3]");
+    ss.str("");
+  }
 }
 
 TEST_CASE(
