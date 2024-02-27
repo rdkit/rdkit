@@ -1087,10 +1087,29 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
     }
   }
 
+  if(decomposition.empty())
+    return nullptr;
+
+  // When the rgroup decomposition splits a ring, it puts it in both
+  //  rgroups, so remove these
+  std::vector<ROMOL_SPTR> mols;
+  mols.push_back(decomposition[0]);
+  {
+    std::set<std::string> existing_smiles;
+    for(auto idx=1; idx<decomposition.size(); ++idx) {
+      auto &mol = decomposition[idx];
+      auto smiles = MolToSmiles(*mol);
+      if(params.label != MolzipLabel::FragmentOnBonds && existing_smiles.find(smiles) == existing_smiles.end()) {
+          mols.push_back(mol);
+          existing_smiles.insert(smiles);
+      }
+    }
+  }
+
   const auto combinedMol = std::accumulate(
-      decomposition.begin() + 1, decomposition.end(), decomposition[0],
+      mols.begin() + 1, mols.end(), mols[0],
       [](const auto &combined, const auto &mol) {
-        auto c = combineMols(*combined, *mol);
+	auto c = combineMols(*combined, *mol);
         ROMOL_SPTR ptr(c);
         return ptr;
       });
