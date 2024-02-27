@@ -889,27 +889,94 @@ std::string getSupplementalSmilesLabel(const Atom *atom) {
 
 }  // namespace RDKit
 
+namespace {
+constexpr const char *hybridizationToString(
+    RDKit::Atom::HybridizationType type) {
+  switch (type) {
+    case RDKit::Atom::HybridizationType::UNSPECIFIED:
+      return "";
+    case RDKit::Atom::HybridizationType::S:
+      return "S";
+    case RDKit::Atom::HybridizationType::SP:
+      return "SP";
+    case RDKit::Atom::HybridizationType::SP2:
+      return "SP2";
+    case RDKit::Atom::HybridizationType::SP3:
+      return "SP3";
+    case RDKit::Atom::HybridizationType::SP3D:
+      return "SP3D";
+    case RDKit::Atom::HybridizationType::SP2D:
+      return "SP2D";
+    case RDKit::Atom::HybridizationType::SP3D2:
+      return "SP3D2";
+    case RDKit::Atom::HybridizationType::OTHER:
+      return "OTHER";
+  }
+  return "";
+}
+constexpr const char *chiralityToString(RDKit::Atom::ChiralType type) {
+  switch (type) {
+    case RDKit::Atom::ChiralType::CHI_UNSPECIFIED:
+      return "Unspecified";
+    case RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CW:
+      return "CW";
+    case RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
+      return "CCW";
+    case RDKit::Atom::ChiralType::CHI_OTHER:
+      return "Other";
+    case RDKit::Atom::ChiralType::CHI_TETRAHEDRAL:
+      return "Td";
+    case RDKit::Atom::ChiralType::CHI_ALLENE:
+      return "Allene";
+    case RDKit::Atom::ChiralType::CHI_SQUAREPLANAR:
+      return "SqP";
+    case RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
+      return "Tbp";
+    case RDKit::Atom::ChiralType::CHI_OCTAHEDRAL:
+      return "Oh";
+  }
+  return "";
+}
+}  // namespace
+
 std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   target << at.getIdx() << " " << at.getAtomicNum() << " " << at.getSymbol();
   target << " chg: " << at.getFormalCharge();
   target << "  deg: " << at.getDegree();
   target << " exp: ";
-  try {
-    int explicitValence = at.getExplicitValence();
-    target << explicitValence;
-  } catch (...) {
-    target << "N/A";
-  }
+  target << (at.d_explicitValence >= 0 ? std::to_string(at.d_explicitValence)
+                                       : "N/A");
+
   target << " imp: ";
-  try {
-    int implicitValence = at.getImplicitValence();
-    target << implicitValence;
-  } catch (...) {
-    target << "N/A";
+  if (at.df_noImplicit) {
+    target << "0";
+  } else {
+    target << (at.d_implicitValence >= 0 ? std::to_string(at.d_implicitValence)
+                                         : "N/A");
   }
-  target << " hyb: " << at.getHybridization();
-  target << " arom?: " << at.getIsAromatic();
-  target << " chi: " << at.getChiralTag();
+  target << " hyb: " << hybridizationToString(at.getHybridization());
+  if (at.getIsAromatic()) {
+    target << " arom?: " << at.getIsAromatic();
+  }
+  if (at.getChiralTag() != RDKit::Atom::CHI_UNSPECIFIED) {
+    target << " chi: " << chiralityToString(at.getChiralTag());
+    int perm;
+    if (at.getPropIfPresent(RDKit::common_properties::_chiralPermutation,
+                            perm)) {
+      target << "(" << perm << ")";
+    }
+    target << " nbrs:[";
+    bool first = true;
+    for (const auto nbr : at.getOwningMol().atomNeighbors(&at)) {
+      if (!first) {
+        target << " ";
+      } else {
+        first = false;
+      }
+      target << nbr->getIdx();
+    }
+    target << "]";
+  }
   if (at.getNumRadicalElectrons()) {
     target << " rad: " << at.getNumRadicalElectrons();
   }
@@ -918,6 +985,9 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   }
   if (at.getAtomMapNum()) {
     target << " mapno: " << at.getAtomMapNum();
+  }
+  if (at.hasQuery()) {
+    target << " query: " << at.getQuery()->getDescription();
   }
   return target;
 };

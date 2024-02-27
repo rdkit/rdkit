@@ -177,7 +177,7 @@ std::ostream &operator<<(std::ostream &target, const RDKit::StereoGroup &stg) {
       break;
   }
   target << " rId: " << stg.getReadId();
-  target << " wRd: " << stg.getWriteId();
+  target << " wId: " << stg.getWriteId();
   target << " atoms: { ";
   for (auto atom : stg.getAtoms()) {
     target << atom->getIdx() << ' ';
