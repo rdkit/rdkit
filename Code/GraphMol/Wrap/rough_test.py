@@ -8002,6 +8002,23 @@ CAS<~>
     ranks = Chem.CanonicalRankAtoms(mol,breakTies=False,includeAtomMaps=False)
     self.assertEqual(ranks[0],ranks[2])
 
+  def testExpandAndCollapseAttachmentPoints(self):
+    mol = Chem.MolFromSmarts("*CO")
+    self.assertEqual(mol.GetNumAtoms(), 3)
+    mol.GetAtomWithIdx(2).SetIntProp("molAttchpt", 1)
+    Chem.ExpandAttachmentPoints(mol)
+    self.assertEqual(mol.GetNumAtoms(), 4)
+    self.assertTrue(mol.GetAtomWithIdx(3).HasQuery())
+
+    Chem.CollapseAttachmentPoints(mol)
+    self.assertEqual(mol.GetNumAtoms(), 3)
+
+    Chem.ExpandAttachmentPoints(mol,addAsQueries=False)
+    self.assertEqual(mol.GetNumAtoms(), 4)
+    self.assertFalse(mol.GetAtomWithIdx(3).HasQuery())
+    Chem.CollapseAttachmentPoints(mol,markedOnly=False)
+    self.assertEqual(mol.GetNumAtoms(), 2)
+
   def testAddStereoAnnotations(self):
     mol = Chem.MolFromSmiles(
       "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"
