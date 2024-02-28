@@ -61,9 +61,8 @@ void ForwardSDMolSupplier::reset() {
   UNDER_CONSTRUCTION("reset() not supported for ForwardSDMolSuppliers();");
 }
 
-void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
+void ForwardSDMolSupplier::readMolProps(ROMol &mol) {
   PRECONDITION(dp_inStream, "no stream");
-  PRECONDITION(mol, "no molecule");
   d_line++;
   bool hasProp = false;
   bool warningIssued = false;
@@ -137,10 +136,10 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
             tempStr = inl;
             stmp = FileParserUtils::strip(tempStr);
           }
-          mol->setProp(dlabel, prop);
+          mol.setProp(dlabel, prop);
           if (df_processPropertyLists) {
             // apply this as an atom property list if that's appropriate
-            FileParserUtils::processMolPropertyList(*mol, dlabel);
+            FileParserUtils::processMolPropertyList(mol, dlabel);
           }
         }
       } else {
@@ -210,7 +209,7 @@ std::unique_ptr<RWMol> ForwardSDMolSupplier::_next() {
     }
     d_line = line;
     if (res) {
-      this->readMolProps(res.get());
+      this->readMolProps(*res);
     } else if (!dp_inStream->eof()) {
       // FIX: report files missing the $$$$ marker
       std::getline(*dp_inStream, tempStr);

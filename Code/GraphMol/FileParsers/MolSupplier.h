@@ -149,7 +149,7 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
  protected:
   virtual void checkForEnd();
   std::unique_ptr<RWMol> _next();
-  virtual void readMolProps(ROMol *);
+  virtual void readMolProps(ROMol &);
   bool df_end = false;
   int d_line = 0;  // line number we are currently on
   MolFileParserParams d_params;

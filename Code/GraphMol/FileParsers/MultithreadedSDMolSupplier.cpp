@@ -139,10 +139,9 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
   return true;
 }
 
-void MultithreadedSDMolSupplier::readMolProps(RWMol *mol,
+void MultithreadedSDMolSupplier::readMolProps(RWMol &mol,
                                               std::istringstream &inStream) {
   PRECONDITION(inStream, "no stream");
-  PRECONDITION(mol, "no molecule");
   bool hasProp = false;
   bool warningIssued = false;
   std::string tempStr;
@@ -176,9 +175,6 @@ void MultithreadedSDMolSupplier::readMolProps(RWMol *mol,
           while (stmp.length() != 0) {
             std::getline(inStream, tempStr);
             if (inStream.eof()) {
-              if (mol) {
-                delete mol;
-              }
               throw FileParseException("End of data field name not found");
             }
           }
@@ -209,10 +205,10 @@ void MultithreadedSDMolSupplier::readMolProps(RWMol *mol,
             std::getline(inStream, tempStr);
             stmp = strip(tempStr);
           }
-          mol->setProp(dlabel, prop);
+          mol.setProp(dlabel, prop);
           if (df_processPropertyLists) {
             // apply this as an atom property list if that's appropriate
-            FileParserUtils::processMolPropertyList(*mol, dlabel);
+            FileParserUtils::processMolPropertyList(mol, dlabel);
           }
         }
       } else {
@@ -224,9 +220,6 @@ void MultithreadedSDMolSupplier::readMolProps(RWMol *mol,
           // and issue a warning
           // FIX: should we be deleting the molecule (which is probably fine)
           // because we couldn't read the data ???
-          if (mol) {
-            delete mol;
-          }
           throw FileParseException("Problems encountered parsing data fields");
         } else {
           if (!warningIssued) {
@@ -252,12 +245,12 @@ RWMol *MultithreadedSDMolSupplier::processMoleculeRecord(
   PRECONDITION(dp_inStream, "no stream");
   std::istringstream inStream(record);
   auto res =
-      v2::FileParsers::MolFromMolDataStream(inStream, lineNum, d_parseParams)
-          .release();
+      v2::FileParsers::MolFromMolDataStream(inStream, lineNum, d_parseParams);
   if (res) {
-    this->readMolProps(res, inStream);
+    this->readMolProps(*res, inStream);
+    return res.release();
   }
-  return res;
+  return nullptr;
 }
 }  // namespace FileParsers
 }  // namespace v2
