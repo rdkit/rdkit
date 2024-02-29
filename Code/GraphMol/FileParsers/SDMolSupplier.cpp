@@ -23,16 +23,16 @@
 #include <string>
 
 namespace RDKit {
+namespace v2 {
+namespace FileParsers {
 
-SDMolSupplier::SDMolSupplier(const std::string &fileName, bool sanitize,
-                             bool removeHs, bool strictParsing) {
+SDMolSupplier::SDMolSupplier(const std::string &fileName,
+                             const MolFileParserParams &params) {
   init();
   dp_inStream = openAndCheckStream(fileName);
   df_owner = true;
   d_molpos.push_back(dp_inStream->tellg());
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
-  df_strictParsing = strictParsing;
+  d_params = params;
   this->checkForEnd();
   if (df_end) {
     // checkForEnd() sets d_len if we're at EOF. undo that (was GitHub issue
@@ -43,15 +43,13 @@ SDMolSupplier::SDMolSupplier(const std::string &fileName, bool sanitize,
 }
 
 SDMolSupplier::SDMolSupplier(std::istream *inStream, bool takeOwnership,
-                             bool sanitize, bool removeHs, bool strictParsing) {
+                             const MolFileParserParams &params) {
   PRECONDITION(inStream, "bad stream");
   init();
   dp_inStream = inStream;
   df_owner = takeOwnership;
   d_molpos.push_back(dp_inStream->tellg());
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
-  df_strictParsing = strictParsing;
+  d_params = params;
   this->checkForEnd();
   if (df_end) {
     // checkForEnd() sets d_len if we're at EOF. undo that (was GitHub issue
@@ -67,8 +65,7 @@ void SDMolSupplier::init() {
   d_last = 0;
 }
 
-void SDMolSupplier::setDataCommon(const std::string &text, bool sanitize,
-                                  bool removeHs) {
+void SDMolSupplier::setData(const std::string &text) {
   if (dp_inStream && df_owner) {
     delete dp_inStream;
   }
@@ -79,8 +76,6 @@ void SDMolSupplier::setDataCommon(const std::string &text, bool sanitize,
   dp_inStream = tmpStream;
   df_owner = true;
   d_molpos.push_back(dp_inStream->tellg());
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
   this->checkForEnd();
   if (df_end) {
     // checkForEnd() sets d_len if we're at EOF. undo that (was GitHub issue
@@ -90,16 +85,10 @@ void SDMolSupplier::setDataCommon(const std::string &text, bool sanitize,
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
-void SDMolSupplier::setData(const std::string &text, bool sanitize,
-                            bool removeHs) {
-  df_strictParsing = true;
-  setDataCommon(text, sanitize, removeHs);
-}
-
-void SDMolSupplier::setData(const std::string &text, bool sanitize,
-                            bool removeHs, bool strictParsing) {
-  df_strictParsing = strictParsing;
-  setDataCommon(text, sanitize, removeHs);
+void SDMolSupplier::setData(const std::string &text,
+                            const MolFileParserParams &params) {
+  d_params = params;
+  setData(text);
 }
 
 void SDMolSupplier::checkForEnd() {
@@ -140,7 +129,7 @@ void SDMolSupplier::reset() {
   d_line = 0;
 }
 
-ROMol *SDMolSupplier::next() {
+std::unique_ptr<RWMol> SDMolSupplier::next() {
   PRECONDITION(dp_inStream, "no stream");
   if (df_end && d_last >= d_len) {
     throw FileParseException("EOF hit.");
@@ -150,16 +139,15 @@ ROMol *SDMolSupplier::next() {
   dp_inStream->seekg(d_molpos[d_last]);
 
   std::string tempStr;
-  ROMol *res = nullptr;
   // finally if we reached the end of the file set end to be true
   if (dp_inStream->eof()) {
     // FIX: we should probably be throwing an exception here
     df_end = true;
     d_len = rdcast<int>(d_molpos.size());
-    return res;
+    return nullptr;
   }
 
-  res = _next();
+  auto res = _next();
 
   ++d_last;
   std::streampos posHold = dp_inStream->tellg();
@@ -234,7 +222,7 @@ void SDMolSupplier::moveTo(unsigned int idx) {
   }
 }
 
-ROMol *SDMolSupplier::operator[](unsigned int idx) {
+std::unique_ptr<RWMol> SDMolSupplier::operator[](unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
   // get the molecule with index idx
   moveTo(idx);
@@ -283,4 +271,6 @@ void SDMolSupplier::setStreamIndices(const std::vector<std::streampos> &locs) {
   this->reset();
   d_len = rdcast<int>(d_molpos.size());
 }
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit

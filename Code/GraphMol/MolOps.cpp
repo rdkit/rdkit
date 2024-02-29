@@ -1168,5 +1168,146 @@ std::vector<int> hapticBondEndpoints(const Bond *bond) {
   return oats;
 }
 }  // end of namespace details
-};  // end of namespace MolOps
-};  // end of namespace RDKit
+
+namespace details {
+unsigned int addExplicitAttachmentPoint(RWMol &mol, unsigned int atomIdx,
+                                        unsigned int val, bool addAsQuery,
+                                        bool addCoords) {
+  Atom *newAtom = nullptr;
+  if (addAsQuery) {
+    newAtom = new QueryAtom(0);
+    newAtom->setQuery(RDKit::makeAtomNullQuery());
+  } else {
+    newAtom = new Atom(0);
+  }
+  newAtom->setProp(common_properties::_fromAttachPoint, val);
+  bool updateLabel = false;
+  bool takeOwnership = true;
+  auto idx = mol.addAtom(newAtom, updateLabel, takeOwnership);
+  mol.addBond(atomIdx, idx, Bond::SINGLE);
+  if (addCoords) {
+    setTerminalAtomCoords(mol, idx, atomIdx);
+  }
+  return idx;
+}
+
+bool isAttachmentPoint(const Atom *atom, bool markedOnly) {
+  PRECONDITION(atom, "bad atom");
+  PRECONDITION(atom->hasOwningMol(), "atom not associated with a molecule");
+  if (atom->getAtomicNum() != 0 || atom->getDegree() != 1) {
+    return false;
+  }
+  if (markedOnly && !atom->hasProp(common_properties::_fromAttachPoint)) {
+    return false;
+  }
+  // we know that the atom is degree 1
+  const auto bond = *atom->getOwningMol().atomBonds(atom).begin();
+  if ((bond->getBondType() != Bond::BondType::SINGLE &&
+       bond->getBondType() != Bond::BondType::UNSPECIFIED) ||
+      bond->getBondDir() != Bond::BondDir::NONE) {
+    return false;
+  }
+
+  if (atom->hasQuery()) {
+    // a * from SMARTS
+    if (!atom->getQuery()->getNegation() &&
+        atom->getQuery()->getDescription() == "AtomNull") {
+      return true;
+    }
+    // a * from CXSMILES
+    if (atom->getQuery()->getNegation() &&
+        atom->getQuery()->getDescription() == "AtomAtomicNum" &&
+        static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())->getVal() == 1) {
+      return true;
+    }
+    return false;
+  }
+
+  return true;
+}
+
+}  // namespace details
+
+void expandAttachmentPoints(RWMol &mol, bool addAsQueries, bool addCoords) {
+  for (auto atom : mol.atoms()) {
+    int value;
+    if (atom->getPropIfPresent(common_properties::molAttachPoint, value)) {
+      std::vector<int> tgtVals;
+      if (value == 1 || value == -1) {
+        tgtVals.push_back(1);
+      }
+      if (value == 2 || value == -1) {
+        tgtVals.push_back(2);
+      }
+      if (tgtVals.empty()) {
+        BOOST_LOG(rdWarningLog)
+            << "Invalid value for molAttachPoint: " << value << " on atom "
+            << atom->getIdx() << ". Not expanding this atttachment point."
+            << std::endl;
+        continue;
+      }
+      for (auto tval : tgtVals) {
+        atom->clearProp(common_properties::molAttachPoint);
+        details::addExplicitAttachmentPoint(mol, atom->getIdx(), tval,
+                                            addAsQueries, addCoords);
+      }
+    }
+  }
+}
+
+void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
+  bool removedAny = false;
+  std::vector<int> attachLabels(mol.getNumAtoms(), 0);
+
+  for (auto atom : mol.atoms()) {
+    if (details::isAttachmentPoint(atom, markedOnly)) {
+      int value = 0;
+      atom->getPropIfPresent(common_properties::_fromAttachPoint, value);
+      if (markedOnly && (value < 0 || value > 2)) {
+        BOOST_LOG(rdWarningLog)
+            << "Invalid value for _fromAttachPoint: " << value << " on atom "
+            << atom->getIdx() << ". Not collapsing this atom" << std::endl;
+        continue;
+      }
+      if (!markedOnly && !value) {
+        value = 1;
+      }
+      auto bond = *mol.atomBonds(atom).begin();
+      if ((bond->getBondType() != Bond::BondType::SINGLE &&
+           bond->getBondType() != Bond::BondType::UNSPECIFIED) ||
+          bond->getBondDir() != Bond::BondDir::NONE) {
+        continue;
+      }
+      auto oAtomIdx = bond->getOtherAtom(atom)->getIdx();
+      if (attachLabels[oAtomIdx]) {
+        if (attachLabels[oAtomIdx] != -1) {
+          value = -1;
+        } else {
+          BOOST_LOG(rdWarningLog)
+              << "More than two attachment points on atom " << oAtomIdx
+              << ". Attachment point " << atom->getIdx()
+              << " will not be collapsed." << std::endl;
+          continue;
+        }
+      }
+      if (!removedAny) {
+        mol.beginBatchEdit();
+        removedAny = true;
+      }
+      attachLabels[oAtomIdx] = value;
+      mol.removeAtom(atom);
+    }
+  }
+  // set the attachment point labels
+  for (auto atom : mol.atoms()) {
+    if (attachLabels[atom->getIdx()]) {
+      atom->setProp(common_properties::molAttachPoint,
+                    attachLabels[atom->getIdx()]);
+    }
+  }
+  if (removedAny) {
+    mol.commitBatchEdit();
+  }
+}
+}  // end of namespace MolOps
+}  // end of namespace RDKit

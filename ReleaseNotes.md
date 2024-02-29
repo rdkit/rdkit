@@ -32,7 +32,7 @@ GitHub)
   rdkit.ML.EnrichPlot
 
 ## Deprecated code (to be removed in a future release):
-
+- The PDBMolSupplier class has been deprecated and will be removed in the next release
 
 # Release_2023.09.1
 (Changes relative to Release_2023.03.1)

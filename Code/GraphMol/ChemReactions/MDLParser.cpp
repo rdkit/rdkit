@@ -56,7 +56,7 @@ using namespace v2::FileParsers;
 
 namespace {
 void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
-                        bool sanitize, bool removeHs, bool strictParsing,
+                        const MolFileParserParams &params,
                         std::unique_ptr<ChemicalReaction> &rxn) {
   std::string tempStr;
   // FIX: parse name and comment fields
@@ -99,10 +99,6 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     errout << "Cannot convert " << tempStr.substr(spos, 3) << " to int";
     throw ChemicalReactionParserException(errout.str());
   }
-  MolFileParserParams params;
-  params.sanitize = sanitize;
-  params.removeHs = removeHs;
-  params.strictParsing = strictParsing;
 
   for (unsigned int i = 0; i < nReacts; ++i) {
     line++;
@@ -164,7 +160,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     MolFileParserParams agentParams;
     agentParams.sanitize = false;
     agentParams.removeHs = false;
-    agentParams.strictParsing = strictParsing;
+    agentParams.strictParsing = params.strictParsing;
     ROMol *agent;
     try {
       agent = MolFromMolDataStream(inStream, line, agentParams).release();
@@ -179,7 +175,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
 }
 
 void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
-                        bool sanitize, bool removeHs, bool strictParsing,
+                        const MolFileParserParams &params,
                         std::unique_ptr<ChemicalReaction> &rxn) {
   std::string tempStr;
 
@@ -224,9 +220,8 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     try {
       FileParserUtils::ParseV3000CTAB(&inStream, line, react, conf,
                                       chiralityPossible, natoms, nbonds,
-                                      strictParsing, expectMEND);
-      FileParserUtils::finishMolProcessing(react, chiralityPossible, sanitize,
-                                           removeHs);
+                                      params.strictParsing, expectMEND);
+      FileParserUtils::finishMolProcessing(react, chiralityPossible, params);
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse reactant " << i << ". The error was:\n\t"
@@ -258,9 +253,8 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     try {
       FileParserUtils::ParseV3000CTAB(&inStream, line, prod, conf,
                                       chiralityPossible, natoms, nbonds,
-                                      strictParsing, expectMEND);
-      FileParserUtils::finishMolProcessing(prod, chiralityPossible, sanitize,
-                                           removeHs);
+                                      params.strictParsing, expectMEND);
+      FileParserUtils::finishMolProcessing(prod, chiralityPossible, params);
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse product " << i << ". The error was:\n\t"
@@ -296,8 +290,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
       FileParserUtils::ParseV3000CTAB(&inStream, line, agent, conf,
                                       chiralityPossible, natoms, nbonds, true,
                                       false);
-      FileParserUtils::finishMolProcessing(agent, chiralityPossible, sanitize,
-                                           removeHs);
+      FileParserUtils::finishMolProcessing(agent, chiralityPossible, params);
 
     } catch (FileParseException &e) {
       std::ostringstream errout;
@@ -344,11 +337,9 @@ std::unique_ptr<ChemicalReaction> ReactionFromRxnDataStream(
   std::unique_ptr<ChemicalReaction> res;
   try {
     if (version == 2000) {
-      ParseV2000RxnBlock(inStream, line, params.sanitize, params.removeHs,
-                         params.strictParsing, res);
+      ParseV2000RxnBlock(inStream, line, params, res);
     } else {
-      ParseV3000RxnBlock(inStream, line, params.sanitize, params.removeHs,
-                         params.strictParsing, res);
+      ParseV3000RxnBlock(inStream, line, params, res);
     }
   } catch (ChemicalReactionParserException &e) {
     // catch our exceptions and throw them back after cleanup
