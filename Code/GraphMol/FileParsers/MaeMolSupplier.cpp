@@ -31,6 +31,8 @@ using RDKit::MolInterchange::bolookup;
 
 namespace RDKit {
 
+namespace v2 {
+namespace FileParsers {
 namespace {
 
 const std::string PDB_ATOM_NAME = "s_m_pdb_atom_name";
@@ -477,37 +479,34 @@ void throw_idx_error(unsigned idx) {
 }  // namespace
 
 MaeMolSupplier::MaeMolSupplier(std::shared_ptr<std::istream> inStream,
-                               bool sanitize, bool removeHs) {
+                               const MaeMolSupplierParams &params) {
   PRECONDITION(inStream, "bad stream");
   dp_sInStream = inStream;
   dp_inStream = inStream.get();
   df_owner = true;
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
+  d_params = params;
 
   init();
 }
 
 MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
-                               bool sanitize, bool removeHs) {
+                               const MaeMolSupplierParams &params) {
   PRECONDITION(inStream, "bad stream");
   PRECONDITION(takeOwnership, "takeOwnership is required for MaeMolSupplier");
   dp_inStream = inStream;
   dp_sInStream.reset(dp_inStream);
   df_owner = takeOwnership;  // always true
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
+  d_params = params;
 
   init();
 }
 
-MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
-                               bool removeHs) {
+MaeMolSupplier::MaeMolSupplier(const std::string &fileName,
+                               const MaeMolSupplierParams &params) {
   df_owner = true;
   dp_inStream = openAndCheckStream(fileName);
   dp_sInStream.reset(dp_inStream);
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
+  d_params = params;
 
   init();
 }
@@ -535,19 +534,17 @@ void MaeMolSupplier::reset() {
   d_length = length;
 }
 
-void MaeMolSupplier::setData(const std::string &text, bool sanitize,
-                             bool removeHs) {
+void MaeMolSupplier::setData(const std::string &text,
+                             const MaeMolSupplierParams &params) {
   dp_inStream = static_cast<std::istream *>(
       new std::istringstream(text, std::ios_base::binary));
   dp_sInStream.reset(dp_inStream);
   df_owner = true;  // maeparser requires ownership
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
-
+  d_params = params;
   init();
 }
 
-ROMol *MaeMolSupplier::next() {
+std::unique_ptr<RWMol> MaeMolSupplier::next() {
   PRECONDITION(dp_sInStream != nullptr, "no stream");
   if (!d_stored_exc.empty()) {
     throw FileParseException(d_stored_exc);
@@ -555,19 +552,18 @@ ROMol *MaeMolSupplier::next() {
     throw FileParseException("All structures read from Maestro file");
   }
 
-  auto mol = new RWMol;
+  auto mol = std::make_unique<RWMol>();
 
   try {
-    build_mol(*mol, *d_next_struct, df_sanitize, df_removeHs);
+    build_mol(*mol, *d_next_struct, d_params.sanitize, d_params.removeHs);
   } catch (const std::exception &e) {
-    delete mol;
     moveToNextBlock();
     throw FileParseException(e.what());
   }
 
   moveToNextBlock();
 
-  return static_cast<ROMol *>(mol);
+  return mol;
 }
 
 void MaeMolSupplier::moveToNextBlock() {
@@ -635,10 +631,12 @@ void MaeMolSupplier::moveTo(unsigned int idx) {
   }
 }
 
-ROMol *MaeMolSupplier::operator[](unsigned int idx) {
+std::unique_ptr<RWMol> MaeMolSupplier::operator[](unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
   moveTo(idx);
   return next();
 }
 
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit
