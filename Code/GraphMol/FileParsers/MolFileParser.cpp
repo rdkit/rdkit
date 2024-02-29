@@ -3215,18 +3215,22 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   return fileComplete;
 }
 
-void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
-                         bool removeHs) {
+void finishMolProcessing(
+    RWMol *res, bool chiralityPossible,
+    const RDKit::v2::FileParsers::MolFileParserParams &params) {
   if (!res) {
     return;
   }
   res->clearAllAtomBookmarks();
   res->clearAllBondBookmarks();
 
+  if (params.expandAttachmentPoints) {
+    MolOps::expandAttachmentPoints(*res);
+  }
+
   // calculate explicit valence on each atom:
-  for (RWMol::AtomIterator atomIt = res->beginAtoms();
-       atomIt != res->endAtoms(); ++atomIt) {
-    (*atomIt)->calcExplicitValence(false);
+  for (auto atom : res->atoms()) {
+    atom->calcExplicitValence(false);
   }
 
   // postprocess mol file flags
@@ -3257,8 +3261,8 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
   // single bond dir flags:
   MolOps::clearSingleBondDirFlags(*res);
 
-  if (sanitize) {
-    if (removeHs) {
+  if (params.sanitize) {
+    if (params.removeHs) {
       // Bond stereo detection must happen before H removal, or
       // else we might be removing stereogenic H atoms in double
       // bonds (e.g. imines). But before we run stereo detection,
@@ -3491,8 +3495,7 @@ std::unique_ptr<RWMol> MolFromMolDataStream(std::istream &inStream,
   }
 
   if (res) {
-    FileParserUtils::finishMolProcessing(res.get(), chiralityPossible,
-                                         params.sanitize, params.removeHs);
+    FileParserUtils::finishMolProcessing(res.get(), chiralityPossible, params);
   }
   return res;
 }
