@@ -180,6 +180,17 @@ int RGroupDecomposition::getMatchingCoreInternal(
     size_t i = 0;
     for (const auto &mv : tmatches) {
       bool passes_filter = data->params.onlyMatchAtRGroups;
+      // targetToCoreIndices maps each atom idx in the molecule to a vector
+      // of atom indices. This vector may be empty (if the atom in the molecule
+      // has no match with core) or not. When not empty, it will most often
+      // contain a single atom idx, corresponding to the matching index in the
+      // core, as usually a core atom can only match a single molecule atom.
+      // However, there is an important exception to this rule, i.e. when
+      // the core bears a single R-group dummy at a certain position, while
+      // the molecule has multiple substituents at the corresponding
+      // position; in this case, the vector will contain the indices of the
+      // root atom in all substituents which match a single R-group dummy on
+      // the core.
       std::vector<std::vector<int>> targetToCoreIndices(mol.getNumAtoms());
       for (const auto &match : mv) {
         targetToCoreIndices[match.second].push_back(match.first);
@@ -226,7 +237,10 @@ int RGroupDecomposition::getMatchingCoreInternal(
       ++i;
     }
     if (!data->params.onlyMatchAtRGroups) {
-      CHECK_INVARIANT(!tmatches_heavy_nbrs.empty(), "");
+      // tmatches_heavy_nbrs.size() = tmatches.size(), and
+      // tmatches.size() cannot be empty, otherwise we should not be here
+      // but let's check it in case something changes upstream
+      CHECK_INVARIANT(!tmatches_heavy_nbrs.empty(), "tmatches_heavy_nbrs must not be empty");
       int min_heavy_nbrs = *std::min_element(tmatches_heavy_nbrs.begin(),
                                              tmatches_heavy_nbrs.end());
       if (!rcore || (min_heavy_nbrs < global_min_heavy_nbrs &&
