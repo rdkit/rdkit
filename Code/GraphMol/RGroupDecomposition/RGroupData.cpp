@@ -21,7 +21,7 @@ void RGroupData::add(const ROMOL_SPTR &newMol,
                      const std::vector<int> &rlabel_attachments) {
   // some fragments can be added multiple times if they are cyclic
   if (std::any_of(mols.begin(), mols.end(), [&newMol](const auto &mol) {
-    return newMol.get() == mol.get();
+    return newMol == mol;
   })) {
     return;
   }
