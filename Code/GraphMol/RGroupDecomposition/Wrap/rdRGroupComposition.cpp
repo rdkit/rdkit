@@ -198,7 +198,7 @@ void relabelMappedDummiesHelper(ROMol &mol, unsigned int inputLabels,
 ROMol *rgroupRowZipHelper(python::dict row, const MolzipParams &p) {
   RGroupRow rgroup_row;
   python::list items = row.items();
-  for(ssize_t i = 0; i < python::len(items); ++i) {
+  for(size_t i = 0; i < (size_t) python::len(items); ++i) {
     python::object key = items[i][0];
     python::object value = items[i][1];
     python::extract<std::string> rgroup_key(key);
