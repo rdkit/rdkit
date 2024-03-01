@@ -23,6 +23,7 @@
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
+#include <GraphMol/Fingerprints/NAMS.h>
 #include <DataStructs/BitVects.h>
 
 #include <GraphMol/Descriptors/USRDescriptor.h>
@@ -1069,6 +1070,80 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol")), docString.c_str());
   python::scope().attr("_FeatureInvariants_version") =
       RDKit::MorganFingerprints::morganFeatureInvariantVersion;
+
+  python::class_<RDKit::NAMS::NAMSParameters, boost::noncopyable>(
+      "NAMSParameters", "Parameters for the NAMS (Noncontiguous Atom Matching Structural Similarity) algorithm" )
+      .def_readwrite("BS_ALPHA", &RDKit::NAMS::NAMSParameters::BS_ALPHA, "Bond distance importance alpha factor")
+      .def_readwrite("ANRINGS_FAC", &RDKit::NAMS::NAMSParameters::ANRINGS_FAC, "Atomic number of rings difference factor")
+      .def_readwrite("ACHIR_FAC", &RDKit::NAMS::NAMSParameters::ACHIR_FAC, "Atom chirality difference factor")
+      .def_readwrite("DBSTEREO_FAC", &RDKit::NAMS::NAMSParameters::DBSTEREO_FAC, "Bond stereo difference factor")
+      .def_readwrite("BRING_FAC", &RDKit::NAMS::NAMSParameters::BRING_FAC, "Bond-in-ring difference factor")
+      .def_readwrite("BAROM_FAC", &RDKit::NAMS::NAMSParameters::BAROM_FAC, "Bond aromaticity difference factor")
+      .def_readwrite("BORDER_FAC", &RDKit::NAMS::NAMSParameters::BORDER_FAC, "Bond order difference factor")
+      .def_readwrite("PEN", &RDKit::NAMS::NAMSParameters::PEN, "Unmatched bond penalty factor")
+      .def_readwrite("ADM", &RDKit::NAMS::NAMSParameters::ADM, "Atom distance matrix selection code: 0,1,2,3,4");
+  python::class_<RDKit::NAMS::NAMSMolInfo, boost::noncopyable>(
+      "NAMSMolInfo", "A pre-processed molecular representation for the NAMS (Noncontiguous Atom Matching Structural Similarity) algorithm",
+      python::init<RDKit::ROMol>())
+      .def_readonly("self_similarity", &RDKit::NAMS::NAMSMolInfo::self_similarity, "The self-similarity metric for the molecule. Will be -1 if not computed yet");
+  python::class_<RDKit::NAMS::NAMSResult, boost::noncopyable>(
+      "NAMSResult", "Result for the NAMS (Noncontiguous Atom Matching Structural Similarity) comparison" )
+      .def_readonly("self_similarity1", &RDKit::NAMS::NAMSResult::self_similarity1, "The self-similarity metric for the first molecule.")
+      .def_readonly("self_similarity2", &RDKit::NAMS::NAMSResult::self_similarity2, "The self-similarity metric for the second molecule.")
+      .def_readonly("similarity", &RDKit::NAMS::NAMSResult::similarity, "The similarity metric for the comparision.")
+      .def_readonly("jaccard", &RDKit::NAMS::NAMSResult::jaccard, "The similarity score on a 0.0-1.0 scale.")
+      .def_readonly("mapping1to2", &RDKit::NAMS::NAMSResult::mapping1to2, "A list-like object indexed by first molecule atom number, giving the corresponding second molecule atom number. (-1 if no match)")
+      .def_readonly("atom_scores", &RDKit::NAMS::NAMSResult::atom_scores, "A list-like object indexed by first molecule atom number, giving the per-atom similarity comparison metric.");
+  docString = "Returns a MolInfo object (precomputed 'fingerprint'), for the NAMS (Noncontiguous Atom Matching Structural Similarity) algorithm.\nPassing a NAMSParameter will pre-compute self-similarity.";
+  python::def(
+      "GetNAMSMolInfo", static_cast<RDKit::NAMS::NAMSMolInfo *(*)(const RDKit::ROMol &mol)>(&RDKit::NAMS::getNAMSMolInfo),
+      (python::arg("mol")),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "GetNAMSMolInfo", static_cast<RDKit::NAMS::NAMSMolInfo *(*)(const RDKit::ROMol &mol, const RDKit::NAMS::NAMSParameters & parms)>(&RDKit::NAMS::getNAMSMolInfo),
+      (python::arg("mol"), python::arg("params")),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
+  docString = "Return the NAMS (Noncontiguous Atom Matching Structural Similarity) similarity for two NAMSMolInfo objects, on a scale of 0.0 (no match) to 1.0 (best match)\n"
+      "Omitting the NAMSParameters object will use default parameters.\n\n"
+      "Teixeira & Falcao (http://dx.doi.org/10.1021/ci400324u)";
+  python::def(
+      "GetNAMSSimilarity", static_cast<double(*)(const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSMolInfo &)>(&RDKit::NAMS::getNAMSSimilarity),
+      (python::arg("molinfo1"),python::arg("molinfo2")),
+      docString.c_str());
+  python::def(
+      "GetNAMSSimilarity", static_cast<double(*)(const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSParameters & parms)>(&RDKit::NAMS::getNAMSSimilarity),
+      (python::arg("molinfo1"),python::arg("molinfo2"),python::arg("params")),
+      docString.c_str());
+  docString = "Return a more detailed NAMS (Noncontiguous Atom Matching Structural Similarity) result object for two NAMSMolInfo objects.\n"
+      "Omitting the NAMSParameters object will use default parameters.\n\n"
+      "Teixeira & Falcao (http://dx.doi.org/10.1021/ci400324u)";
+  python::def(
+      "GetNAMSResult", static_cast<RDKit::NAMS::NAMSResult *(*)(const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSMolInfo &)>(&RDKit::NAMS::getNAMSResult),
+      (python::arg("molinfo1"),python::arg("molinfo2")),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "GetNAMSResult", static_cast<RDKit::NAMS::NAMSResult *(*)(const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSParameters & parms)>(&RDKit::NAMS::getNAMSResult),
+      (python::arg("molinfo1"),python::arg("molinfo2"),python::arg("params")),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
+  docString = "Use the NAMS (Noncontiguous Atom Matching Structural Similarity) algorithm to compute a mapping of the second molecule onto the first.\n"
+      "The returned list-like object is indexed by the atom number of the query molecule, and contains the corresponding index of the second.\n"
+      "Atoms in the query which are unmapped to the second get a value of -1\n"
+      "Omitting the NAMSParameters object will use default parameters.\n\n"
+      "Teixeira & Falcao (http://dx.doi.org/10.1021/ci400324u)";
+  python::def(
+      "GetNAMSMapping", static_cast<std::vector<int>(*)(const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSMolInfo &)>(&RDKit::NAMS::getNAMSMapping),
+      (python::arg("query"),python::arg("molinfo2")),
+      docString.c_str(),
+      python::return_value_policy<python::return_by_value>());
+  python::def(
+      "GetNAMSMapping", static_cast<std::vector<int>(*)(const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSMolInfo &, const RDKit::NAMS::NAMSParameters & parms)>(&RDKit::NAMS::getNAMSMapping),
+      (python::arg("query"),python::arg("molinfo2"),python::arg("params")),
+      docString.c_str(),
+      python::return_value_policy<python::return_by_value>());
 
   // USR descriptor
   docString = "Returns a USR descriptor for one conformer of a molecule";

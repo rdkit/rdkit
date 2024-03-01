@@ -254,6 +254,41 @@ class TestCase(unittest.TestCase):
     fp1 = rdMD.GetMorganFingerprint(mol, 2, bitInfo=info2)
     self.assertEqual(len(info2), 14)
 
+  def testNAMS(self):
+    smiles = [ 'c1ccccc1', 'Cc1ccccc1O', 'NCCc1c[nH]c2ccccc12', 'CN(Cl)CCc1c[nH]c2ccccc12', 'c(c[nH]1)(CCN(C)Cl)c(cc2)c1cc2', 'c1ccc(O)c(C)c1']
+    mols = [ Chem.MolFromSmiles(s) for s in smiles ]
+
+    params = rdMD.NAMSParameters()
+
+    mis = [ rdMD.GetNAMSMolInfo(m,params) for m in mols ]
+
+
+    self.assertEqual(rdMD.GetNAMSSimilarity(mis[3], mis[3], params), 1.0) # Self comparison yields 1.0
+    self.assertEqual(rdMD.GetNAMSSimilarity(mis[1], mis[5], params), 1.0) # Even if we reorder atoms
+
+    sim1 = rdMD.GetNAMSSimilarity( mis[0], mis[1], params )
+    self.assertAlmostEqual(sim1, 0.5759, places=4)
+    self.assertEqual(rdMD.GetNAMSSimilarity(mis[1], mis[0], params), sim1) # Order of parameters doesn't matter
+
+    nams_result23 = rdMD.GetNAMSResult( mis[2], mis[3], params )
+    self.assertAlmostEqual(nams_result23.self_similarity1, 125.859, places=3)
+    self.assertAlmostEqual(nams_result23.self_similarity2, 161.679, places=3)
+    self.assertEqual(nams_result23.self_similarity1, mis[2].self_similarity)
+    self.assertEqual(nams_result23.self_similarity2, mis[3].self_similarity)
+    self.assertAlmostEqual(nams_result23.similarity, 125.619, places=3)
+    self.assertAlmostEqual(nams_result23.jaccard, 0.7758, places=4)
+
+    nams_result15 = rdMD.GetNAMSResult( mis[1], mis[5], params )
+    self.assertAlmostEqual(nams_result15.similarity, 55.719, places=3)
+    score_reference = [6.62, 7.27, 7.07, 6.90, 6.90, 7.07, 7.27, 6.62 ]
+    self.assertEqual( len(nams_result15.atom_scores), len(score_reference) )
+    for ii in range(len(score_reference)):
+        self.assertAlmostEqual( nams_result15.atom_scores[ii], score_reference[ii], places=2, msg="Atom Score place " + str(ii) )
+
+    mapping34 = rdMD.GetNAMSMapping( mis[3], mis[4], params )
+    self.assertEqual(list(mapping34), [6, 5, 7, 4, 3, 0, 1, 2, 11, 12, 13, 10, 9, 8 ] )
+
+
   def testCrippen(self):
     mol = Chem.MolFromSmiles("n1ccccc1CO")
     contribs = rdMD._CalcCrippenContribs(mol)
