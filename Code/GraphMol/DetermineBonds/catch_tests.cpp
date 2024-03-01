@@ -194,7 +194,7 @@ TEST_CASE("Determine Connectivity") {
       params.canonical = true;
       params.allBondsExplicit = false;
       params.allHsExplicit = false;
-      PARAMS.doRandom = false;
+      params.doRandom = false;
       params.rootedAtAtom = -1;
       std::string canonSmiles = MolToSmiles(*orig, params);
       int charge = MolOps::getFormalCharge(*orig);
