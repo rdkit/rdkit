@@ -146,6 +146,9 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
           newDummy->clearComputedProps();
           const auto newDummyIdx =
               extractedCore->addAtom(newDummy, false, true);
+          if (newDummyIdx >= atomIndicesToKeep.size()) {
+            atomIndicesToKeep.resize(newDummyIdx + 1);
+          }
           atomIndicesToKeep.set(newDummyIdx);
           auto connectingBond =
               extractedCore
@@ -221,7 +224,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
 
   // Now delete atom's that are not in the core.
   extractedCore->beginBatchEdit();
-  boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
+  boost::dynamic_bitset<> removedAtoms(extractedCore->getNumAtoms());
   for (const auto atom : extractedCore->atoms()) {
     if (!atomIndicesToKeep.test(atom->getIdx())) {
       extractedCore->removeAtom(atom);
