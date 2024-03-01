@@ -68,7 +68,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
     const ROMol &mol, const MatchVectType &match,
     const RGroupDecompositionParameters &params) const {
   auto extractedCore = boost::make_shared<RWMol>(mol);
-  std::set<int> atomIndicesToKeep;
+  boost::dynamic_bitset<> atomIndicesToKeep(mol.getNumAtoms());
   std::vector<Bond *> newBonds;
   std::map<Atom *, int> dummyAtomMap;
   std::map<const Atom *, Atom *> molAtomMap;
@@ -86,7 +86,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
         queryAtom->getDegree() == 1) {
       continue;
     } else {
-      atomIndicesToKeep.insert(pair.second);
+      atomIndicesToKeep.set(pair.second);
       molAtomMap[mol.getAtomWithIdx(pair.second)] = targetAtom;
       int neighborNumber = -1;
 #ifdef VERBOSE
@@ -146,7 +146,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
           newDummy->clearComputedProps();
           const auto newDummyIdx =
               extractedCore->addAtom(newDummy, false, true);
-          atomIndicesToKeep.insert(static_cast<int>(newDummyIdx));
+          atomIndicesToKeep.set(newDummyIdx);
           auto connectingBond =
               extractedCore
                   ->getBondBetweenAtoms(pair.second, targetNeighborIndex)
@@ -206,8 +206,8 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
           }
         }
       }
-      for (const int index : hydrogensToAdd) {
-        atomIndicesToKeep.insert(index);
+      for (const auto index : hydrogensToAdd) {
+        atomIndicesToKeep.set(index);
       }
 #ifdef VERBOSE
       std::cerr << "Atom Chirality Out " << targetAtom->getChiralTag()
@@ -223,7 +223,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
   extractedCore->beginBatchEdit();
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
   for (const auto atom : extractedCore->atoms()) {
-    if (atomIndicesToKeep.find(atom->getIdx()) == atomIndicesToKeep.end()) {
+    if (!atomIndicesToKeep.test(atom->getIdx())) {
       extractedCore->removeAtom(atom);
       removedAtoms.set(atom->getIdx());
     }
@@ -447,12 +447,11 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     return allMappings;
   }
 
-  // build a set of target atoms currently mapped
-  std::set<int> mappedTargetIdx;
-  std::transform(
-      match.cbegin(), match.cend(),
-      std::inserter(mappedTargetIdx, mappedTargetIdx.begin()),
-      [](const std::pair<int, int> &mapping) { return mapping.second; });
+  // build a dynamic_bitset of target atoms currently mapped
+  boost::dynamic_bitset<> mappedTargetIdx(target.getNumAtoms());
+  for (const auto &pair : match) {
+    mappedTargetIdx.set(pair.second);
+  }
 
   // Dummy atoms/r group attachments that cannot be mapped to target atoms
   std::vector<int> missingDummies;
@@ -460,7 +459,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   // target atoms that the R group can map to
   std::map<int, std::vector<int>> availableMappingsForDummyMap;
 
-  std::set<int> symmetricHydrogens;
+  boost::dynamic_bitset<> symmetricHydrogens(target.getNumAtoms());
 
   // keep a count of target atoms and the number of connections to the core
   std::map<int, int> targetAtomBondsToCoreCounts;
@@ -500,22 +499,20 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       // find the atom in the target mapped to the neighbor in the core
       const int targetIdx = matchMap[neighborIdx];
       const auto targetAtom = target.getAtomWithIdx(targetIdx);
-      ROMol::ADJ_ITER nbrIter, endNbrs;
       std::vector<int> available;
       // now look for neighbors of that target atom that are not mapped to a
       // core atom- the dummy atom can potentially be mapped to each of those
-      boost::tie(nbrIter, endNbrs) = target.getAtomNeighbors(targetAtom);
-      while (nbrIter != endNbrs) {
-        if (mappedTargetIdx.find(*nbrIter) == mappedTargetIdx.end()) {
+      for (const auto &nbrIdx :
+          boost::make_iterator_range(target.getAtomNeighbors(targetAtom))) {
+        if (!mappedTargetIdx.test(nbrIdx)) {
           const auto targetBond =
-              target.getBondBetweenAtoms(targetIdx, *nbrIter);
+              target.getBondBetweenAtoms(targetIdx, nbrIdx);
           // check for bond compatibility
           if (bondCompat(coreBond, targetBond, sssParams)) {
-            available.push_back(*nbrIter);
-            targetAtomBondsToCoreCounts[*nbrIter]++;
+            available.push_back(nbrIdx);
+            ++targetAtomBondsToCoreCounts[nbrIdx];
           }
         }
-        ++nbrIter;
       }
 
       if (available.size() > 1) {
@@ -529,14 +526,12 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
           // symmetric groups in general
           auto hydrogen = std::find_if(available.begin(), available.end(),
                                        [&symmetricHydrogens](const int idx) {
-                                         return symmetricHydrogens.find(idx) ==
-                                                symmetricHydrogens.end();
+                                         return !symmetricHydrogens.test(idx);
                                        });
           int singleHydrogen =
               hydrogen == available.end() ? *available.begin() : *hydrogen;
-          std::vector<int> hydrogenVec{singleHydrogen};
-          available = hydrogenVec;
-          symmetricHydrogens.insert(singleHydrogen);
+          available = std::vector<int>{singleHydrogen};
+          symmetricHydrogens.set(singleHydrogen);
         }
       }
       neighborDummyLists.push_back(available);
