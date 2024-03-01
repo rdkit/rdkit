@@ -1096,7 +1096,7 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
   mols.push_back(decomposition[0]);
   {
     std::set<std::string> existing_smiles;
-    for(auto idx=1; idx<decomposition.size(); ++idx) {
+    for(size_t idx=1; idx<decomposition.size(); ++idx) {
       auto &mol = decomposition[idx];
       auto smiles = MolToSmiles(*mol);
       if(params.label != MolzipLabel::FragmentOnBonds && existing_smiles.find(smiles) == existing_smiles.end()) {
