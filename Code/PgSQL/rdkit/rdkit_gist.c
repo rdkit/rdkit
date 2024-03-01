@@ -119,7 +119,7 @@ PGDLLEXPORT Datum gmol_decompress(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gmol_decompress);
 Datum gmol_decompress(PG_FUNCTION_ARGS) {
   GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
-  bytea *key = (bytea *)DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+  bytea *key = (bytea *)PG_DETOAST_DATUM(entry->key);
 
   if (key != (bytea *)DatumGetPointer(entry->key)) {
     GISTENTRY *retval = (GISTENTRY *)palloc(sizeof(GISTENTRY));
@@ -546,8 +546,8 @@ static int
 gmol_cmp(Datum x, Datum y, SortSupport ssup)
 {
   /* establish order between x and y */
-  bytea *a = (bytea*)DatumGetPointer(PG_DETOAST_DATUM(x));
-  bytea *b = (bytea*)DatumGetPointer(PG_DETOAST_DATUM(y));
+  bytea *a = (bytea*)PG_DETOAST_DATUM(x);
+  bytea *b = (bytea*)PG_DETOAST_DATUM(y);
 
   Assert(!ISALLTRUE(a));
   Assert(!ISALLTRUE(b));
