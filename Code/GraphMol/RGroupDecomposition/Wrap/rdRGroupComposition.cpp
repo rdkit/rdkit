@@ -470,8 +470,8 @@ struct rgroupdecomp_wrapper {
       "  >>> core = Chem.MolFromSmiles('CO')\n"
       "  >>> mols = [Chem.MolFromSmiles('C1NNO1')]\n"
       "  >>> rgroups, unmatched = rgd.RGroupDecompose(core, mols)\n"
-      "  >>> for rgroups in rgroups:\n"
-      "  ...     mol = rgd.molzip(rgroups)\n"
+      "  >>> for rgroup in rgroups:\n"
+      "  ...     mol = rgd.molzip(rgroup)\n"
       "\n";
     python::def("molzip",
 		(ROMol * (*)(python::dict, const MolzipParams &)) & rgroupRowZipHelper,

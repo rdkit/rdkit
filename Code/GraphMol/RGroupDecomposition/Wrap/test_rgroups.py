@@ -845,8 +845,8 @@ M  END
     core = Chem.MolFromSmiles("CO")
     mols = [Chem.MolFromSmiles("C1NNO1")]
     rgroups, unmatched = RGroupDecompose(core, mols)
-    for rgroups in rgroups:
-      self.assertEqual(Chem.MolToSmiles(molzip(rgroups)), Chem.CanonSmiles("C1NNO1"))
+    for rgroup in rgroups:
+      self.assertEqual(Chem.MolToSmiles(molzip(rgroup)), Chem.CanonSmiles("C1NNO1"))
 
 if __name__ == '__main__':
   rdBase.DisableLog("rdApp.debug")
