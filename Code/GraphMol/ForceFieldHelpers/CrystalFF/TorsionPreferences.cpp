@@ -230,6 +230,15 @@ void getExperimentalTorsions(
           doneBonds[bid2] = 1;
         }
         if (!doneBonds[bid2]) {
+          // do not add ET terms between constrained atoms
+          // REVIEW: do we really need to check all 4 atoms?
+          if (!details.constrainedAtoms.empty() &&
+              details.constrainedAtoms[aid1] &&
+              details.constrainedAtoms[aid2] &&
+              details.constrainedAtoms[aid3] &&
+              details.constrainedAtoms[aid4]) {
+            continue;
+          }
           std::vector<unsigned int> aids{aid1, aid2, aid3, aid4};
           torsionBonds.emplace_back(bid2, aids, &param);
           doneBonds[bid2] = 1;
