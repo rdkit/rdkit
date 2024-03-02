@@ -7,7 +7,7 @@ steps:
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba
     conda create --name rdkit_build -c conda-forge ^
-        libcxx=$(compiler_version) cmake=3.26 ^
+        cmake=3.26 ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
         cairo eigen swig=4.1
