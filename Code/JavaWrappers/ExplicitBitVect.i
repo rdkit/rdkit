@@ -86,6 +86,22 @@
     ($self)->getOnBits(*bits);
     return bits;
   }
+
+  void andOperator(const ExplicitBitVect & other) {
+    *($self) &= other;
+  }
+
+  void orOperator(const ExplicitBitVect & other) {
+    *($self) |= other;
+  }
+
+  void xorOperator(const ExplicitBitVect & other) {
+    *($self) ^= other;
+  }
+
+  void copy(const ExplicitBitVect &other) {
+    *($self) = other;
+  }
 }
 
 #ifdef SWIGJAVA
