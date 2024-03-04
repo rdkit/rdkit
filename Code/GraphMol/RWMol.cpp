@@ -595,8 +595,9 @@ void RWMol::commitBatchEdit() {
 }
 
 void RWMol::batchRemoveBonds() {
-    if(!dp_delBonds)
+    if(!dp_delBonds) {
         return;
+    }
     
     auto &delBonds = *dp_delBonds;
     unsigned int min_idx = getNumBonds();
@@ -703,8 +704,9 @@ void RWMol::batchRemoveBonds() {
 }
 
 void RWMol::batchRemoveAtoms() {
-    if(!dp_delAtoms)
+    if(!dp_delAtoms) {
         return;
+    }
     std::vector<Atom*> oldIndices(getNumAtoms());
     for(auto *atom: atoms()) {
         oldIndices[atom->getIdx()] = atom;
