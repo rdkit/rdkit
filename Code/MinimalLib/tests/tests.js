@@ -1099,6 +1099,19 @@ function test_flexicanvas() {
     assert(svg.search("height='19px'")>0);
 }
 
+function test_run_reaction() {
+    var rxn1 = RDKitModule.get_rxn('[#6:1][O:2]>>[#6:1]=[O:2]');
+    var molList = molListFromSmiArray(['CC(C)O',]);
+    try {
+        var reactants = rxn1.run_reactants(molList, 10000);
+        for (let i = 0; i < reactants.size(); i++) {
+            const element = reactants.get(i);
+            assert(element.next().get_smiles() === "CC(C)=O");
+        }
+    } catch (e) {
+        console.log(e);
+    }
+}
 function test_rxn_drawing() {
     {
         var rxn = RDKitModule.get_rxn("[CH3:1][OH:2]>>[CH2:1]=[OH0:2]");
@@ -2849,6 +2862,7 @@ initRDKitModule().then(function(instance) {
     test_flexicanvas();
     if (RDKitModule.get_rxn)  {
         test_rxn_drawing();
+        test_run_reaction();
     }
     test_legacy_stereochem();
     test_allow_non_tetrahedral_chirality();
