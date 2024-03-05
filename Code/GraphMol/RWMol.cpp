@@ -133,6 +133,10 @@ RWMol &RWMol::operator=(const RWMol &other) {
   return *this;
 }
 
+RWMol::~RWMol() {
+  clear();
+}
+
 void RWMol::insertMol(const ROMol &other) {
   std::vector<unsigned int> newAtomIds(other.getNumAtoms());
   std::vector<unsigned int> newBondIds(other.getNumBonds());
