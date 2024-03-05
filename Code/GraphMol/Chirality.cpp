@@ -3196,8 +3196,6 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
   }
 
   for (auto atom : mol.atoms()) {
-    // see if only the explicitly wedged atoms are to be used
-
     // if we aren't replacing existing tags and the atom is already tagged,
     // punt:
     if (!replaceExistingTags && atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
