@@ -11,7 +11,6 @@
 #include "Atom.h"
 #include "ROMol.h"
 #include <RDGeneral/Invariant.h>
-#include "Atropisomers.h"
 
 namespace RDKit {
 
@@ -396,10 +395,6 @@ constexpr const char *bondStereoToString(RDKit::Bond::BondStereo d) {
       return "CIS";
     case RDKit::Bond::BondStereo::STEREOTRANS:
       return "TRANS";
-    case RDKit::Bond::BondStereo::STEREOATROPCW:
-      return "CW";
-    case RDKit::Bond::BondStereo::STEREOATROPCCW:
-      return "CCW";
   }
   return ("");
 }
@@ -417,24 +412,6 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {
     if (bond.getStereoAtoms().size() == 2) {
       const auto &ats = bond.getStereoAtoms();
       target << " ats: (" << ats[0] << " " << ats[1] << ")";
-    }
-    if (bond.getStereo() == RDKit::Bond::BondStereo::STEREOATROPCCW ||
-        bond.getStereo() == RDKit::Bond::BondStereo::STEREOATROPCW) {
-      RDKit::Atropisomers::AtropAtomAndBondVec atomAndBonds[2];
-      if (RDKit::Atropisomers::getAtropisomerAtomsAndBonds(
-              &bond, atomAndBonds, bond.getOwningMol())) {
-        target << " bonds: (";
-        for (auto i = 0u; i < atomAndBonds[0].second.size(); ++i) {
-          if (i) {
-            target << " ";
-          }
-          target << atomAndBonds[0].second[i]->getIdx();
-        }
-        for (auto i = 0u; i < atomAndBonds[1].second.size(); ++i) {
-          target << " " << atomAndBonds[1].second[i]->getIdx();
-        }
-        target << ")";
-      }
     }
   }
   if (bond.getIsConjugated()) {

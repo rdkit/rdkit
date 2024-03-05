@@ -1,4 +1,4 @@
-a//
+//
 //  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
@@ -204,7 +204,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
   if (squiggleBondSeen) {
-      Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond);
+    Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond);
     return;
   }
   if (!bond2) {
@@ -263,7 +263,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
       }
     }
     if (linear) {
-        Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond);
+      Chirality::detail::setStereoanyFromSquiggleBond(mol, dblBond);
       return;
     }
 
@@ -924,39 +924,39 @@ bool has_protium_neighbor(const ROMol &mol, const Atom *atom) {
 }
 
 void setStereoanyFromSquiggleBond(ROMol &mol, Bond *bond,
-				  Bond::BondStereo stereo) {
-    // NOTE:  moved from parse_doublebond_stereo CXSmilesOps
-    // the cis/trans/unknown marker is relative to the lowest numbered atom
-    // connected to the lowest numbered double bond atom and the
-    // highest-numbered atom connected to the highest-numbered double bond
-    // atom find those
-    auto begAtom = bond->getBeginAtom();
-    auto endAtom = bond->getEndAtom();
-    if (begAtom->getIdx() > endAtom->getIdx()) {
-        std::swap(begAtom, endAtom);
+                                  Bond::BondStereo stereo) {
+  // NOTE:  moved from parse_doublebond_stereo CXSmilesOps
+  // the cis/trans/unknown marker is relative to the lowest numbered atom
+  // connected to the lowest numbered double bond atom and the
+  // highest-numbered atom connected to the highest-numbered double bond
+  // atom find those
+  auto begAtom = bond->getBeginAtom();
+  auto endAtom = bond->getEndAtom();
+  if (begAtom->getIdx() > endAtom->getIdx()) {
+    std::swap(begAtom, endAtom);
+  }
+  if (begAtom->getDegree() > 1 && endAtom->getDegree() > 1) {
+    unsigned int begControl = mol.getNumAtoms();
+    for (auto nbr : mol.atomNeighbors(begAtom)) {
+      if (nbr == endAtom) {
+        continue;
+      }
+      begControl = std::min(nbr->getIdx(), begControl);
     }
-    if (begAtom->getDegree() > 1 && endAtom->getDegree() > 1) {
-        unsigned int begControl = mol.getNumAtoms();
-        for (auto nbr : mol.atomNeighbors(begAtom)) {
-            if (nbr == endAtom) {
-                continue;
-            }
-            begControl = std::min(nbr->getIdx(), begControl);
-        }
-        unsigned int endControl = 0;
-        for (auto nbr : mol.atomNeighbors(endAtom)) {
-            if (nbr == begAtom) {
-                continue;
-            }
-            endControl = std::max(nbr->getIdx(), endControl);
-        }
-        if (begAtom != bond->getBeginAtom()) {
-            std::swap(begControl, endControl);
-        }
-        bond->setStereoAtoms(begControl, endControl);
-        bond->setStereo(stereo);
-        mol.setProp("_needsDetectBondStereo", 1);
+    unsigned int endControl = 0;
+    for (auto nbr : mol.atomNeighbors(endAtom)) {
+      if (nbr == begAtom) {
+        continue;
+      }
+      endControl = std::max(nbr->getIdx(), endControl);
     }
+    if (begAtom != bond->getBeginAtom()) {
+      std::swap(begControl, endControl);
+    }
+    bond->setStereoAtoms(begControl, endControl);
+    bond->setStereo(stereo);
+    mol.setProp("_needsDetectBondStereo", 1);
+  }
 }
 }  // namespace detail
 

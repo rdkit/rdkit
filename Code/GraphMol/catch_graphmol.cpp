@@ -3601,22 +3601,6 @@ TEST_CASE("bond output") {
     CHECK(ss.str() == "4 3->5 order: 1 dir: wedge");
     ss.str("");
   }
-
-  SECTION("stereo") {
-    auto m = "CC=CC(=O)c1cnccc1"_smiles;
-    REQUIRE(m);
-    m->getBondWithIdx(1)->setStereoAtoms(0, 3);
-    m->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOCIS);
-    // this is, of course, silly
-    m->getBondWithIdx(4)->setStereo(Bond::BondStereo::STEREOATROPCCW);
-    std::stringstream ss;
-    ss << *m->getBondWithIdx(1);
-    CHECK(ss.str() == "1 1->2 order: 2 stereo: CIS ats: (0 3) conj?: 1");
-    ss.str("");
-    ss << *m->getBondWithIdx(4);
-    CHECK(ss.str() == "4 3->5 order: 1 stereo: CCW bonds: (2 3 5 10) conj?: 1");
-    ss.str("");
-  }
 }
 TEST_CASE("atom output") {
   SECTION("basics") {

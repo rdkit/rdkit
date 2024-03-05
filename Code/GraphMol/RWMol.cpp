@@ -24,8 +24,7 @@ namespace RDKit {
 
 namespace {
 void insertStereoGroups(RWMol &mol, const ROMol &other,
-                        const std::vector<unsigned int> &newAtomIds,
-                        const std::vector<unsigned int> &newBondIds) {
+                        const std::vector<unsigned int> &newAtomIds) {
   std::vector<RDKit::Atom *> abs_atoms;
   std::vector<RDKit::Bond *> abs_bonds;
   std::vector<RDKit::StereoGroup> new_groups;
@@ -37,9 +36,7 @@ void insertStereoGroups(RWMol &mol, const ROMol &other,
     // groups are just forwarded.
     if (sg.getGroupType() == RDKit::StereoGroupType::STEREO_ABSOLUTE) {
       auto &atoms = sg.getAtoms();
-      auto &bonds = sg.getBonds();
       abs_atoms.insert(abs_atoms.end(), atoms.begin(), atoms.end());
-      abs_bonds.insert(abs_bonds.end(), bonds.begin(), bonds.end());
     } else {
       new_groups.emplace_back(sg);
     }
@@ -48,22 +45,16 @@ void insertStereoGroups(RWMol &mol, const ROMol &other,
   for (const auto &sg : other.getStereoGroups()) {
     // update the stereo group's atom and bond indices
     std::vector<RDKit::Atom *> new_atoms;
-    std::vector<RDKit::Bond *> new_bonds;
     for (auto atom : sg.getAtoms()) {
       auto idx = newAtomIds[atom->getIdx()];
       new_atoms.push_back(mol.getAtomWithIdx(idx));
-    }
-    for (auto bond : sg.getBonds()) {
-      auto idx = newBondIds[bond->getIdx()];
-      new_bonds.push_back(mol.getBondWithIdx(idx));
     }
 
     // Collect all ABS atoms and bonds so they are added as a single group
     if (sg.getGroupType() == RDKit::StereoGroupType::STEREO_ABSOLUTE) {
       abs_atoms.insert(abs_atoms.end(), new_atoms.begin(), new_atoms.end());
-      abs_bonds.insert(abs_bonds.end(), new_bonds.begin(), new_bonds.end());
     } else {
-      RDKit::StereoGroup new_group(sg.getGroupType(), new_atoms, new_bonds,
+      RDKit::StereoGroup new_group(sg.getGroupType(), new_atoms,
                                    sg.getReadId());
       // default write ID to 0 to avoid id clashes. We can use
       // assignStereoGroupIds() later on to assign new IDs
@@ -71,8 +62,7 @@ void insertStereoGroups(RWMol &mol, const ROMol &other,
       new_groups.push_back(new_group);
     }
   }
-  new_groups.emplace_back(RDKit::StereoGroupType::STEREO_ABSOLUTE, abs_atoms,
-                          abs_bonds);
+  new_groups.emplace_back(RDKit::StereoGroupType::STEREO_ABSOLUTE, abs_atoms);
   mol.setStereoGroups(new_groups);
 }
 
@@ -214,7 +204,7 @@ void RWMol::insertMol(const ROMol &other) {
   }
 
   // add stereo groups
-  insertStereoGroups(*this, other, newAtomIds, newBondIds);
+  insertStereoGroups(*this, other, newAtomIds);
 
   // add substance groups
   insertSubstanceGroups(*this, other, newAtomIds, newBondIds);
@@ -595,8 +585,8 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
       // github #6900 if we remove stereo atoms we need to remove
       //  the CIS and or TRANS since this requires stereo atoms
       if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-          obnd->getStereo() == Bond::BondStereo::STEREOTRANS ) {
-          obnd->setStereo(Bond::BondStereo::STEREONONE);
+          obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
+        obnd->setStereo(Bond::BondStereo::STEREONONE);
       }
       obnd->getStereoAtoms().clear();
     }
@@ -617,7 +607,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
       // github #6900 if we remove stereo atoms we need to remove
       //  the CIS and or TRANS since this requires stereo atoms
       if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-        obnd->getStereo() == Bond::BondStereo::STEREOTRANS ) {
+          obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
         obnd->setStereo(Bond::BondStereo::STEREONONE);
       }
       obnd->getStereoAtoms().clear();
