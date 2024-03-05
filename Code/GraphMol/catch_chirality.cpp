@@ -5213,59 +5213,69 @@ TEST_CASE(
   }
 }
 
-TEST_CASE("T-shaped three-coordinate chiral atoms") {
-  {  // four-coordinate case
+TEST_CASE("do not wedge bonds to attachment points") {
+  SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2211 02222413042D          
+     RDKit          2D
 
-  0  0  0     0  0            999 V3000
+  0  0  0  0  0  0  0  0  0  0999 V3000
 M  V30 BEGIN CTAB
-M  V30 COUNTS 5 4 0 0 0
+M  V30 COUNTS 4 3 0 0 0
 M  V30 BEGIN ATOM
-M  V30 1 N -1.1667 5.7483 0 0
-M  V30 2 C -1.1667 4.2083 0 0
-M  V30 3 F -2.7067 4.2083 0 0
-M  V30 4 O 0.3733 4.2083 0 0
-M  V30 5 C -1.1667 2.6683 0 0
+M  V30 1 C 0.000000 0.000000 0.000000 0 ATTCHPT=1
+M  V30 2 F -1.299038 0.750000 0.000000 0
+M  V30 3 Cl -0.000000 -1.500000 0.000000 0
+M  V30 4 O 1.299038 0.750000 0.000000 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
-M  V30 1 1 2 1 CFG=3
-M  V30 2 1 2 3
-M  V30 3 1 2 4
-M  V30 3 1 2 5
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4 CFG=1
 M  V30 END BOND
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
     REQUIRE(m);
-    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
-          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    CHECK(m->getNumAtoms() == 4);
+    MolOps::expandAttachmentPoints(*m);
+    CHECK(m->getNumAtoms() == 5);
+    CHECK(m->getAtomWithIdx(4)->getTotalValence() == 1);
+    Chirality::wedgeMolBonds(*m);
+    CHECK(m->getBondBetweenAtoms(0, 4)->getBondDir() == Bond::BondDir::NONE);
   }
-  {  // three coordinate, same coordinates, same wedging should produce the same
-     // chirality
+  SECTION("cage") {
     auto m = R"CTAB(
-  Mrv2211 02222413042D          
+  Mrv2305 03052406362D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
-M  V30 COUNTS 5 3 0 0 0
+M  V30 COUNTS 8 9 0 0 0
 M  V30 BEGIN ATOM
-M  V30 1 N -1.1667 5.7483 0 0
-M  V30 2 C -1.1667 4.2083 0 0
-M  V30 3 F -2.7067 4.2083 0 0
-M  V30 4 O 0.3733 4.2083 0 0
-M  V30 5 C -1.1667 2.6683 0 0
+M  V30 1 C -3.125 2.5817 0 0 CFG=1
+M  V30 2 C -4.4587 1.8117 0 0
+M  V30 3 C -4.4587 0.2716 0 0
+M  V30 4 C -3.125 -0.4984 0 0
+M  V30 5 C -1.7913 0.2716 0 0
+M  V30 6 N -1.7913 1.8117 0 0
+M  V30 7 O -2.5357 1.1589 0 0
+M  V30 8 * -3.125 4.1217 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
-M  V30 1 1 2 1 CFG=3
+M  V30 1 1 1 2
 M  V30 2 1 2 3
-M  V30 3 1 2 4
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 1 7
+M  V30 7 1 7 4
+M  V30 8 1 1 8
+M  V30 9 1 1 6 CFG=1
 M  V30 END BOND
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-    REQUIRE(m);
-    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
-          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    m->getAtomWithIdx(7)->setProp(common_properties::_fromAttachPoint, 1);
+    Chirality::wedgeMolBonds(*m);
+    CHECK(m->getBondBetweenAtoms(0, 7)->getBondDir() == Bond::BondDir::NONE);
   }
 }
