@@ -211,6 +211,9 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     dp_delBonds.reset();
   }
   void commitBatchEdit();
+private:
+  void batchRemoveBonds();
+  void batchRemoveAtoms();
 };
 
 typedef boost::shared_ptr<RWMol> RWMOL_SPTR;

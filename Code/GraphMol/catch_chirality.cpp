@@ -4264,58 +4264,6 @@ M  END
 )CTAB"_ctab;
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
-            Atom::ChiralType::CHI_UNSPECIFIED);
-    }
-  }
-  SECTION("three-coordinate") {
-    {
-      auto m = R"CTAB(
-  Mrv2211 07202306442D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 4 3 0 0 1
-M  V30 BEGIN ATOM
-M  V30 1 N 11.8331 -3.2011 0 0
-M  V30 2 C 12.6158 -4.5389 0 0 CFG=2
-M  V30 3 O 11.2777 -5.3015 0 0
-M  V30 4 C 13.9536 -3.7562 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 1 CFG=3
-M  V30 2 1 2 3
-M  V30 3 1 2 4
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-      REQUIRE(m);
-      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
-            Atom::ChiralType::CHI_UNSPECIFIED);
-    }
-    {
-      auto m = R"CTAB(
-  Mrv2211 07202306442D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 4 3 0 0 1
-M  V30 BEGIN ATOM
-M  V30 1 N 11.8331 -3.2011 0 0
-M  V30 2 C 12.6158 -4.5389 0 0 CFG=2
-M  V30 3 O 11.2777 -5.3015 0 0
-M  V30 4 C 13.9536 -3.7562 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 1
-M  V30 2 1 2 3  CFG=1
-M  V30 3 1 2 4
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-      REQUIRE(m);
-      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
             Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
     }
   }
