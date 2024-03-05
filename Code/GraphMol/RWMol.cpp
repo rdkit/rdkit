@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -472,52 +472,27 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
 
   // loop over neighboring double bonds and remove their stereo atom
   //  information. This is definitely now invalid (was github issue 8)
-  ADJ_ITER a1, a2;
-  boost::tie(a1, a2) = boost::adjacent_vertices(aid1, d_graph);
-  while (a1 != a2) {
-    auto oIdx = rdcast<unsigned int>(*a1);
-    ++a1;
-    if (oIdx == aid2) {
-      continue;
-    }
-    Bond *obnd = getBondBetweenAtoms(aid1, oIdx);
-    if (!obnd) {
-      continue;
-    }
-    if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
-                  aid2) != obnd->getStereoAtoms().end()) {
-      // github #6900 if we remove stereo atoms we need to remove
-      //  the CIS and or TRANS since this requires stereo atoms
-      if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-          obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
-        obnd->setStereo(Bond::BondStereo::STEREONONE);
-      }
-      obnd->getStereoAtoms().clear();
+  auto beginAtm = bnd->getBeginAtom();
+  auto endAtm = bnd->getEndAtom();
+  std::vector<std::vector<Atom*>> bond_atoms = {{beginAtm, endAtm}, {endAtm, beginAtm}};
+  for(auto atoms : bond_atoms) {
+    for(auto obnd : this->atomBonds(atoms[0])) {
+        if(obnd == bnd) {
+            continue;
+        }
+        if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
+                            atoms[1]->getIdx()) != obnd->getStereoAtoms().end()) {
+            // github #6900 if we remove stereo atoms we need to remove
+            //  the CIS and or TRANS since this requires stereo atoms
+            if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
+                obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
+                    obnd->setStereo(Bond::BondStereo::STEREONONE);
+                }
+	    
+            obnd->getStereoAtoms().clear();
+	}
     }
   }
-  boost::tie(a1, a2) = boost::adjacent_vertices(aid2, d_graph);
-  while (a1 != a2) {
-    auto oIdx = rdcast<unsigned int>(*a1);
-    ++a1;
-    if (oIdx == aid1) {
-      continue;
-    }
-    Bond *obnd = getBondBetweenAtoms(aid2, oIdx);
-    if (!obnd) {
-      continue;
-    }
-    if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
-                  aid1) != obnd->getStereoAtoms().end()) {
-      // github #6900 if we remove stereo atoms we need to remove
-      //  the CIS and or TRANS since this requires stereo atoms
-      if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-          obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
-        obnd->setStereo(Bond::BondStereo::STEREONONE);
-      }
-      obnd->getStereoAtoms().clear();
-    }
-  }
-
   // reset our ring info structure, because it is pretty likely
   // to be wrong now:
   dp_ringInfo->reset();
@@ -536,8 +511,8 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   }
   bnd->setOwningMol(nullptr);
 
-  MolGraph::vertex_descriptor vd1 = boost::vertex(aid1, d_graph);
-  MolGraph::vertex_descriptor vd2 = boost::vertex(aid2, d_graph);
+  MolGraph::vertex_descriptor vd1 = boost::vertex(bnd->getBeginAtomIdx(), d_graph);
+  MolGraph::vertex_descriptor vd2 = boost::vertex(bnd->getEndAtomIdx(), d_graph);
   boost::remove_edge(vd1, vd2, d_graph);
   delete bnd;
   --numBonds;
@@ -625,66 +600,36 @@ void RWMol::batchRemoveBonds() {
                 clearBondBookmark(tmpI->first, bnd);
             }
         }
-        
+
         // loop over neighboring double bonds and remove their stereo atom
         //  information. This is definitely now invalid (was github issue 8)
-        ADJ_ITER a1, a2;
-        auto aid1 = bnd->getBeginAtomIdx();
-        auto aid2 = bnd->getEndAtomIdx();
-        boost::tie(a1, a2) = boost::adjacent_vertices(aid1, d_graph);
-        while (a1 != a2) {
-            auto oIdx = rdcast<unsigned int>(*a1);
-            ++a1;
-            if (oIdx == aid2) {
-                continue;
-            }
-            Bond *obnd = getBondBetweenAtoms(aid1, oIdx);
-            
-            // See if the bond is already gone or if we are going to delete the nbrbond anyway.
-            if (!obnd || delBonds[obnd->getIdx()]) {
-                continue;
+        auto beginAtm = bnd->getBeginAtom();
+        auto endAtm = bnd->getEndAtom();
+        std::vector<std::vector<Atom*>> bond_atoms = {{beginAtm, endAtm}, {endAtm, beginAtm}};
+        for(auto atoms : bond_atoms) {
+          for(auto obnd : atomBonds(atoms[0])) {
+            if(obnd == bnd) {
+              continue;
             }
             if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
-                          aid2) != obnd->getStereoAtoms().end()) {
-                // github #6900 if we remove stereo atoms we need to remove
-                //  the CIS and or TRANS since this requires stereo atoms
-                if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-                    obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
-                    obnd->setStereo(Bond::BondStereo::STEREONONE);
-                }
-                obnd->getStereoAtoms().clear();
+                  atoms[1]->getIdx()) != obnd->getStereoAtoms().end()) {
+              // github #6900 if we remove stereo atoms we need to remove
+              //  the CIS and or TRANS since this requires stereo atoms
+              if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
+              obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
+		obnd->setStereo(Bond::BondStereo::STEREONONE);
+              }
+              obnd->getStereoAtoms().clear();
             }
-        }
-        boost::tie(a1, a2) = boost::adjacent_vertices(aid2, d_graph);
-        while (a1 != a2) {
-            auto oIdx = rdcast<unsigned int>(*a1);
-            ++a1;
-            if (oIdx == aid1) {
-                continue;
-            }
-            Bond *obnd = getBondBetweenAtoms(aid2, oIdx);
-            // See if the bond is already gone or if we are going to delete the nbrbond anyway.
-            if (!obnd || delBonds[obnd->getIdx()]) {
-                continue;
-            }
-            if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
-                          aid1) != obnd->getStereoAtoms().end()) {
-                // github #6900 if we remove stereo atoms we need to remove
-                //  the CIS and or TRANS since this requires stereo atoms
-                if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-                    obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
-                    obnd->setStereo(Bond::BondStereo::STEREONONE);
-                }
-                obnd->getStereoAtoms().clear();
-            }
+          }
         }
         
         removeSubstanceGroupsReferencingBond(*this, idx);
         
         bnd->setOwningMol(nullptr);
         
-        MolGraph::vertex_descriptor vd1 = boost::vertex(aid1, d_graph);
-        MolGraph::vertex_descriptor vd2 = boost::vertex(aid2, d_graph);
+        MolGraph::vertex_descriptor vd1 = boost::vertex(bnd->getBeginAtomIdx(), d_graph);
+        MolGraph::vertex_descriptor vd2 = boost::vertex(bnd->getEndAtomIdx(), d_graph);
         boost::remove_edge(vd1, vd2, d_graph);
         delete bnd;
         --numBonds;
