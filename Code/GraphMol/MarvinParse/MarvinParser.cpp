@@ -1051,7 +1051,7 @@ std::unique_ptr<ChemicalReaction> ReactionFromMrvDataStream(
 //  Read a ChemicalReaction from a string
 //
 //------------------------------------------------
-std::unique_ptr<ChemicalReaction> ReactionFromMrvString(
+std::unique_ptr<ChemicalReaction> ReactionFromMrvBlock(
     const std::string &molmrvText, const MrvParserParams &params) {
   std::istringstream inStream(molmrvText);
   return ReactionFromMrvDataStream(inStream, params);
