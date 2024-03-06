@@ -64,7 +64,8 @@ void DrawTextSVG::drawChar(char c, const Point2D &cds) {
        << "fill:" << col << "'";
   oss_ << " >";
   oss_ << cs;
-  oss_ << "</text>" << std::endl;
+  oss_ << "</text>"
+       << "\n";
 }
 
 // ****************************************************************************

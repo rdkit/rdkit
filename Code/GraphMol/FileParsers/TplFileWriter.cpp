@@ -48,7 +48,7 @@ void writeAtom(const ROMol &mol, unsigned int atomId,
   dest << " "
        << "U";
 
-  dest << std::endl;
+  dest << "\n";
 }
 
 void writeBond(const ROMol &mol, unsigned int bondId,
@@ -97,7 +97,7 @@ void writeBond(const ROMol &mol, unsigned int bondId,
        << " "
        << "0";
 
-  dest << std::endl;
+  dest << "\n";
 }
 }  // namespace TPLWriter
 
@@ -110,8 +110,10 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
   }
   std::ostringstream res;
   std::string tempStr;
-  res << "BioCAD format, all rights reserved" << std::endl;
-  res << "Output from RDKit" << std::endl;
+  res << "BioCAD format, all rights reserved"
+      << "\n";
+  res << "Output from RDKit"
+      << "\n";
   if (!mol.hasProp(common_properties::_Name)) {
     BOOST_LOG(rdWarningLog)
         << "Molecule has no name; arbitrary name assigned.\n";
@@ -119,9 +121,10 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
   } else {
     mol.getProp(common_properties::_Name, tempStr);
   }
-  res << "NAME " << tempStr << std::endl;
-  res << "PROP 7 1" << std::endl;
-  res << mol.getNumAtoms() << " " << mol.getNumBonds() << std::endl;
+  res << "NAME " << tempStr << "\n";
+  res << "PROP 7 1"
+      << "\n";
+  res << mol.getNumAtoms() << " " << mol.getNumBonds() << "\n";
 
   auto confIt = mol.beginConformers();
   // write the atoms:
@@ -135,7 +138,7 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
   }
 
   // write the additional conformations:
-  res << "CONFS " << mol.getNumConformers() - 1 << std::endl;
+  res << "CONFS " << mol.getNumConformers() - 1 << "\n";
   if (!writeFirstConfTwice) {
     ++confIt;
   }
@@ -145,16 +148,16 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
 
     tmpStrm << "conformer_" << (*confIt)->getId();
     confName = tmpStrm.str();
-    res << "NAME " << confName << std::endl;
+    res << "NAME " << confName << "\n";
 
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       const RDGeom::Point3D &pos = (*confIt)->getAtomPos(i);
       res << " " << 100. * pos.x << " " << 100. * pos.y << " " << 100. * pos.z
-          << std::endl;
+          << "\n";
     }
     ++confIt;
     if (confIt != mol.endConformers()) {
-      res << std::endl;
+      res << "\n";
     }
   }
 
