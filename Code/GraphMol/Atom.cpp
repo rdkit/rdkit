@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -230,11 +230,7 @@ void Atom::initAtom() {
   d_explicitValence = -1;
 }
 
-Atom::~Atom() {
-  if (dp_monomerInfo) {
-    delete dp_monomerInfo;
-  }
-}
+Atom::~Atom() { delete dp_monomerInfo; }
 
 Atom *Atom::copy() const {
   auto *res = new Atom(*this);
@@ -317,7 +313,6 @@ unsigned int Atom::getTotalValence() const {
 namespace {
 
 int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
-  unsigned int res;
   // FIX: contributions of bonds to valence are being done at best
   // approximately
   double accum = 0;
@@ -349,8 +344,7 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
     //    nitrogen here : c1cccn1C
 
     int pval = dv + chr;
-    const INT_VECT &valens =
-        PeriodicTable::getTable()->getValenceList(atomicNum);
+    const auto &valens = PeriodicTable::getTable()->getValenceList(atomicNum);
     for (auto val : valens) {
       if (val == -1) {
         break;
@@ -386,7 +380,7 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // correctly.
   accum += 0.1;
 
-  res = static_cast<int>(std::round(accum));
+  auto res = static_cast<int>(std::round(accum));
 
   if (strict || checkIt) {
     int effectiveValence;
@@ -397,8 +391,7 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
       // extra valences means adding negative charge
       effectiveValence = res + atom.getFormalCharge();
     }
-    const INT_VECT &valens =
-        PeriodicTable::getTable()->getValenceList(atomicNum);
+    const auto &valens = PeriodicTable::getTable()->getValenceList(atomicNum);
 
     int maxValence = valens.back();
     // maxValence == -1 signifies that we'll take anything at the high end
@@ -437,9 +430,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   if (atomic_num == 0) {
     return 0;
   }
-  for (const auto &nbri :
-       boost::make_iterator_range(atom.getOwningMol().getAtomBonds(&atom))) {
-    const auto bnd = atom.getOwningMol()[nbri];
+  for (const auto bnd : atom.getOwningMol().atomBonds(&atom)) {
     if (QueryOps::hasComplexBondTypeQuery(*bnd)) {
       return 0;
     }
@@ -471,7 +462,6 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // the atom and the explicit valence already specified - tells how
   // many Hs to add
   //
-  int res;
 
   // The d-block and f-block of the periodic table (i.e. transition metals,
   // lanthanoids and actinoids) have no default valence.
@@ -491,8 +481,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // exception
   // finally aromatic cases are dealt with differently - these atoms are allowed
   // only default valences
-  const INT_VECT &valens =
-      PeriodicTable::getTable()->getValenceList(atomic_num);
+  const auto &valens = PeriodicTable::getTable()->getValenceList(atomic_num);
 
   int explicitPlusRadV =
       atom.getExplicitValence() + atom.getNumRadicalElectrons();
@@ -535,6 +524,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
     chg = -chg;
   }
 
+  int res = 0;
   // if we have an aromatic case treat it differently
   if (isAromaticAtom(atom)) {
     if (explicitPlusRadV <= (static_cast<int>(dv) + chg)) {
