@@ -1,3 +1,46 @@
+# Release_2023.09.6
+(Changes relative to Release_2023.09.6)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Armin Ariamajd, Chris Von Bargen, Théophile Gaudin, Gareth Jones, Brian Kelley,
+David Lounsbrough Paolo Tosco, Ricardo Rodriguez-Schmidt, Riccardo Vianello,
+Rachel Walker, sitanshubhunia, nbehrnd,
+
+## New Features and Enhancements:
+  - Copy stereo and substance groups during insertMol
+ (github issue #7064 from cdvonbargen)
+  - Make addStereoAnnotation public
+ (github issue #7140 from cdvonbargen)
+  - Improve output of debugMol
+ (github pull #7172 from greglandrum)
+  - update cookbook, draw molecule with atom indices
+ (github pull #7173 from nbehrnd)
+  - Update MinimalLib Dockerfiles
+ (github pull #7182 from ptosco)
+  - Don't reset computed properties if already empty
+ (github pull #7188 from rachelnwalker)
+  - Add some ExplicitBitVect operations to Swig
+ (github pull #7204 from jones-gareth)
+
+## Bug Fixes:
+  - Chemical reactions with radicals cannot be pickled and unpickled.
+ (github issue #5890 from sitanshubhunia)
+  - Stereo Annotation Appears Incorrect
+ (github issue #7157 from lounsbrough)
+  - Adding missing headers in ReactionParser.h
+ (github pull #7163 from tgaudin)
+  - fix: add PandasTools support for pandas 2.2
+ (github pull #7165 from AAriam)
+  - Fix leaking Bonds on unmatched ring closures
+ (github pull #7178 from ricrogz)
+  - Fix Uncharger applying to already neutralized perhalic groups
+ (github pull #7211 from rvianello)
+
+
 # Release_2023.09.5
 (Changes relative to Release_2023.09.4)
 
