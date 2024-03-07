@@ -503,9 +503,7 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
     getAtomWithIdx(atomIdx1)->setIsAromatic(1);
     getAtomWithIdx(atomIdx2)->setIsAromatic(1);
   }
-  bool ok;
-  MolGraph::edge_descriptor which;
-  boost::tie(which, ok) = boost::add_edge(atomIdx1, atomIdx2, d_graph);
+  auto [which, ok] = boost::add_edge(atomIdx1, atomIdx2, d_graph);
   d_graph[which] = b;
   // unsigned int res = rdcast<unsigned int>(boost::num_edges(d_graph));
   ++numBonds;
@@ -532,11 +530,11 @@ unsigned int RWMol::addBond(Atom *atom1, Atom *atom2, Bond::BondType bondType) {
 void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   URANGE_CHECK(aid1, getNumAtoms());
   URANGE_CHECK(aid2, getNumAtoms());
-  Bond *bnd = getBondBetweenAtoms(aid1, aid2);
+  auto *bnd = getBondBetweenAtoms(aid1, aid2);
   if (!bnd) {
     return;
   }
-  unsigned int idx = bnd->getIdx();
+  auto idx = bnd->getIdx();
   if (dp_delBonds) {
     // we're in a batch edit
     // if bonds have been added since we started, resize dp_delBonds
@@ -594,21 +592,15 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   removeSubstanceGroupsReferencingBond(*this, idx);
 
   // loop over all bonds with higher indices and update their indices
-  ROMol::EDGE_ITER firstB, lastB;
-  boost::tie(firstB, lastB) = this->getEdges();
-  while (firstB != lastB) {
-    Bond *bond = (*this)[*firstB];
+  for (auto bond : bonds()) {
     if (bond->getIdx() > idx) {
       bond->setIdx(bond->getIdx() - 1);
     }
-    ++firstB;
   }
   bnd->setOwningMol(nullptr);
 
-  MolGraph::vertex_descriptor vd1 =
-      boost::vertex(bnd->getBeginAtomIdx(), d_graph);
-  MolGraph::vertex_descriptor vd2 =
-      boost::vertex(bnd->getEndAtomIdx(), d_graph);
+  auto vd1 = boost::vertex(bnd->getBeginAtomIdx(), d_graph);
+  auto vd2 = boost::vertex(bnd->getEndAtomIdx(), d_graph);
   boost::remove_edge(vd1, vd2, d_graph);
   delete bnd;
   --numBonds;
@@ -629,7 +621,7 @@ unsigned int RWMol::finishPartialBond(unsigned int atomIdx2, int bondBookmark,
   PRECONDITION(hasBondBookmark(bondBookmark), "no such partial bond");
   URANGE_CHECK(atomIdx2, getNumAtoms());
 
-  Bond *bsp = getBondWithBookmark(bondBookmark);
+  auto *bsp = getBondWithBookmark(bondBookmark);
   if (bondType == Bond::UNSPECIFIED) {
     bondType = bsp->getBondType();
   }
@@ -639,9 +631,6 @@ unsigned int RWMol::finishPartialBond(unsigned int atomIdx2, int bondBookmark,
 
 void RWMol::beginBatchEdit() {
   if (dp_delAtoms || dp_delBonds) {
-    BOOST_LOG(rdWarningLog) << "batchEdit mode already enabled, ignoring "
-                               "additional call to beginBatchEdit()"
-                            << std::endl;
     throw ValueErrorException("Attempt to re-enter batchEdit mode");
   }
   dp_delAtoms.reset(new boost::dynamic_bitset<>(getNumAtoms()));
