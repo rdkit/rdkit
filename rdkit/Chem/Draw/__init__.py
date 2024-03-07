@@ -94,9 +94,9 @@ def _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas
             use 'matplotlib.colors.to_rgb()' to convert string and
             HTML color codes into the RGB tuple representation, eg.
 
-              from matplotlib.colors import ColorConverter
-              img = Draw.MolToImage(m, highlightAtoms=[1,2], highlightColor=ColorConverter().to_rgb('aqua'))
-              img.save("molecule.png")
+              >>> from matplotlib.colors import ColorConverter
+              >>> img = Draw.MolToImage(m, highlightAtoms=[1,2], highlightColor=ColorConverter().to_rgb('aqua'))
+              >>> img.save("molecule.png")
 
       RETURNS:
 
@@ -729,40 +729,38 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
 
       EXAMPLES:
 
-        from rdkit import Chem
-        from rdkit.Chem.Draw import MolsMatrixToGridImage, rdMolDraw2D
-        FCl = Chem.MolFromSmiles("FCl")
-        molsMatrix = [[FCl, FCl], [FCl, None, FCl]]
+        >>> from rdkit import Chem
+        >>> from rdkit.Chem.Draw import MolsMatrixToGridImage, rdMolDraw2D
+        >>> FCl = Chem.MolFromSmiles("FCl")
+        >>> molsMatrix = [[FCl, FCl], [FCl, None, FCl]]
 
-        # Minimal example: Only molsMatrix is supplied,
-        # result will be a drawing containing (where each row contains molecules):
-        # F-Cl    F-Cl
-        # F-Cl            F-Cl
-        img = MolsMatrixToGridImage(molsMatrix)
-        img.save("MolsMatrixToGridImageMinimal.png")
-        # img is a PIL object for a PNG image file like:
-        # <PIL.PngImagePlugin.PngImageFile image mode=RGB size=600x200 at 0x1648CC390>
-        # Drawing will be saved as PNG file MolsMatrixToGridImageMinimal.png
+        >>> # Minimal example: Only molsMatrix is supplied,
+        >>> # result will be a drawing containing (where each row contains molecules):
+        >>> # F-Cl    F-Cl
+        >>> # F-Cl            F-Cl
+        >>> img = MolsMatrixToGridImage(molsMatrix)
+        >>> img.save("MolsMatrixToGridImageMinimal.png")
+        >>> # img is a PIL object for a PNG image file like:
+        >>> # <PIL.PngImagePlugin.PngImageFile image mode=RGB size=600x200 at 0x1648CC390>
+        >>> # Drawing will be saved as PNG file MolsMatrixToGridImageMinimal.png
 
-        # Exhaustive example: All parameters are supplied,
-        # result will be a drawing containing (where each row of molecules is followed by a row of legends):
-        # 1 F-Cl 0              1 F-Cl 0
-        # no highlighting       bond highlighted         
-        # 1 F-Cl 0                                  1 F-Cl 0
-        # sodium highlighted                        chloride and bond highlighted
-        legendsMatrix = [["no highlighting", "bond highlighted"], 
-        ["F highlighted", "", "Cl and bond highlighted"]]
-        highlightAtomListsMatrix = [[[],[]], [[0], None, [1]]]
-        highlightBondListsMatrix = [[[],[0]], [[], None, [0]]]
+        >>> # Exhaustive example: All parameters are supplied,
+        >>> # result will be a drawing containing (where each row of molecules is followed by a row of legends):
+        >>> # 1 F-Cl 0              1 F-Cl 0
+        >>> # no highlighting       bond highlighted         
+        >>> # 1 F-Cl 0                                  1 F-Cl 0
+        >>> # sodium highlighted                        chloride and bond highlighted
+        >>> legendsMatrix = [["no highlighting", "bond highlighted"], 
+        >>> ["F highlighted", "", "Cl and bond highlighted"]]
+        >>> highlightAtomListsMatrix = [[[],[]], [[0], None, [1]]]
+        >>> highlightBondListsMatrix = [[[],[0]], [[], None, [0]]]
 
-        dopts = rdMolDraw2D.MolDrawOptions()
-        dopts.addAtomIndices = True
+        >>> dopts = rdMolDraw2D.MolDrawOptions()
+        >>> dopts.addAtomIndices = True
 
-        img_binary = MolsMatrixToGridImage(molsMatrix=molsMatrix, subImgSize=(300, 400), 
-        legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, 
-        highlightBondListsMatrix=highlightBondListsMatrix, useSVG=False, returnPNG=True, drawOptions=dopts)
-        print(img_binary[:20])
-        # Prints a binary string: b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x03\x84'
+        >>> img_exhaustive = MolsMatrixToGridImage(molsMatrix=molsMatrix, subImgSize=(300, 400), legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, highlightBondListsMatrix=highlightBondListsMatrix, useSVG=False, returnPNG=False, drawOptions=dopts)
+        >>> img.save("MolsMatrixToGridImageExhaustive.png")
+        >>> # Drawing will be saved as PNG file MolsMatrixToGridImageExhaustive.png
   """
   mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsNestedToLinear(
     molsMatrix, legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix)
