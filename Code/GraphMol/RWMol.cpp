@@ -173,8 +173,7 @@ void RWMol::insertMol(const ROMol &other) {
 
   // add atom to any conformers as well, if we have any
   if (other.getNumConformers() && !getNumConformers()) {
-    for (const auto &oconf : boost::make_iterator_range(
-             other.beginConformers(), other.endConformers())) {
+    for (const auto &oconf : other.d_confs) {
       auto *nconf = new Conformer(getNumAtoms());
       nconf->set3D(oconf->is3D());
       nconf->setId(oconf->getId());
@@ -190,17 +189,8 @@ void RWMol::insertMol(const ROMol &other) {
       ConstConformerIterator ocfi;
       for (cfi = beginConformers(), ocfi = other.beginConformers();
            cfi != endConformers(); ++cfi, ++ocfi) {
-        (*cfi)->resize(getNumAtoms());
         for (unsigned int i = 0; i < (*ocfi)->getNumAtoms(); ++i) {
           (*cfi)->setAtomPos(i + origNumAtoms, (*ocfi)->getAtomPos(i));
-        }
-      }
-    } else {
-      for (const auto &conf : boost::make_iterator_range(
-               this->beginConformers(), this->endConformers())) {
-        conf->resize(getNumAtoms());
-        for (unsigned int i = 0; i < other.getNumAtoms(); ++i) {
-          conf->setAtomPos(i + origNumAtoms, RDGeom::Point3D(0.0, 0.0, 0.0));
         }
       }
     }
@@ -215,7 +205,7 @@ void RWMol::insertMol(const ROMol &other) {
 unsigned int RWMol::addAtom(bool updateLabel) {
   auto *atom_p = new Atom();
   atom_p->setOwningMol(this);
-  MolGraph::vertex_descriptor which = boost::add_vertex(d_graph);
+  auto which = boost::add_vertex(d_graph);
   d_graph[which] = atom_p;
   atom_p->setIdx(which);
   if (updateLabel) {
@@ -224,9 +214,8 @@ unsigned int RWMol::addAtom(bool updateLabel) {
   }
 
   // add atom to any conformers as well, if we have any
-  for (auto cfi = this->beginConformers(); cfi != this->endConformers();
-       ++cfi) {
-    (*cfi)->setAtomPos(which, RDGeom::Point3D(0.0, 0.0, 0.0));
+  for (auto &conf : d_confs) {
+    conf->setAtomPos(which, RDGeom::Point3D(0.0, 0.0, 0.0));
   }
   return rdcast<unsigned int>(which);
 }
@@ -235,10 +224,10 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool,
                         bool preserveProps) {
   PRECONDITION(atom_pin, "bad atom passed to replaceAtom");
   URANGE_CHECK(idx, getNumAtoms());
-  Atom *atom_p = atom_pin->copy();
+  auto atom_p = atom_pin->copy();
   atom_p->setOwningMol(this);
   atom_p->setIdx(idx);
-  MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
+  auto vd = boost::vertex(idx, d_graph);
   if (preserveProps) {
     const bool replaceExistingData = false;
     atom_p->updateProps(*d_graph[vd], replaceExistingData);
@@ -277,12 +266,12 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps,
                         bool keepSGroups) {
   PRECONDITION(bond_pin, "bad bond passed to replaceBond");
   URANGE_CHECK(idx, getNumBonds());
-  BOND_ITER_PAIR bIter = getEdges();
+  auto bIter = getEdges();
   for (unsigned int i = 0; i < idx; i++) {
     ++bIter.first;
   }
-  Bond *obond = d_graph[*(bIter.first)];
-  Bond *bond_p = bond_pin->copy();
+  const auto *obond = d_graph[*(bIter.first)];
+  auto *bond_p = bond_pin->copy();
   bond_p->setOwningMol(this);
   bond_p->setIdx(idx);
   bond_p->setBeginAtomIdx(obond->getBeginAtomIdx());
