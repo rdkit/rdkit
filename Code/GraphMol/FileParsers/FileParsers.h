@@ -27,6 +27,7 @@ namespace RDKit {
 
 RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
 
+namespace v2 {
 namespace FileParsers {
 class RDKIT_FILEPARSERS_EXPORT MolFileUnhandledFeatureException
     : public std::exception {
@@ -43,11 +44,6 @@ class RDKIT_FILEPARSERS_EXPORT MolFileUnhandledFeatureException
  private:
   std::string _msg;
 };
-}  // namespace FileParsers
-
-namespace v2 {
-namespace FileParsers {
-using RDKit::FileParsers::MolFileUnhandledFeatureException;
 
 struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
   bool sanitize = true;      /**< sanitize the molecule after building it */
@@ -71,7 +67,7 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolFile(
 }  // namespace v2
 
 inline namespace v1 {
-using RDKit::FileParsers::MolFileUnhandledFeatureException;
+using RDKit::v2::FileParsers::MolFileUnhandledFeatureException;
 //-----
 // mol files
 //-----

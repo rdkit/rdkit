@@ -35,16 +35,17 @@ std::string strip(const std::string &orig) {
   return res;
 }
 
+namespace v2 {
+namespace FileParsers {
+
 ForwardSDMolSupplier::ForwardSDMolSupplier(std::istream *inStream,
-                                           bool takeOwnership, bool sanitize,
-                                           bool removeHs, bool strictParsing) {
+                                           bool takeOwnership,
+                                           const MolFileParserParams &params) {
   PRECONDITION(inStream, "bad stream");
   init();
   dp_inStream = inStream;
   df_owner = takeOwnership;
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
-  df_strictParsing = strictParsing;
+  d_params = params;
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
@@ -60,9 +61,8 @@ void ForwardSDMolSupplier::reset() {
   UNDER_CONSTRUCTION("reset() not supported for ForwardSDMolSuppliers();");
 }
 
-void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
+void ForwardSDMolSupplier::readMolProps(ROMol &mol) {
   PRECONDITION(dp_inStream, "no stream");
-  PRECONDITION(mol, "no molecule");
   d_line++;
   bool hasProp = false;
   bool warningIssued = false;
@@ -136,14 +136,14 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
             tempStr = inl;
             stmp = FileParserUtils::strip(tempStr);
           }
-          mol->setProp(dlabel, prop);
+          mol.setProp(dlabel, prop);
           if (df_processPropertyLists) {
             // apply this as an atom property list if that's appropriate
-            FileParserUtils::processMolPropertyList(*mol, dlabel);
+            FileParserUtils::processMolPropertyList(mol, dlabel);
           }
         }
       } else {
-        if (df_strictParsing) {
+        if (d_params.strictParsing) {
           // at this point we should always be at a line starting with '>'
           // following a blank line. If this is not true and df_strictParsing
           // is true, then throw an exception, otherwise truncate the rest of
@@ -175,25 +175,23 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
   }
 }
 
-ROMol *ForwardSDMolSupplier::next() {
+std::unique_ptr<RWMol> ForwardSDMolSupplier::next() {
   PRECONDITION(dp_inStream, "no stream");
-  ROMol *res = nullptr;
 
   if (dp_inStream->eof()) {
     // FIX: we should probably be throwing an exception here
     df_end = true;
-    return res;
+    return nullptr;
   }
 
-  res = _next();
-  return res;
+  return _next();
 }
 
-ROMol *ForwardSDMolSupplier::_next() {
+std::unique_ptr<RWMol> ForwardSDMolSupplier::_next() {
   PRECONDITION(dp_inStream, "no stream");
 
   std::string tempStr;
-  ROMol *res = nullptr;
+  std::unique_ptr<RWMol> res;
   if (dp_inStream->eof()) {
     df_end = true;
     return res;
@@ -202,8 +200,7 @@ ROMol *ForwardSDMolSupplier::_next() {
   df_eofHitOnRead = false;
   unsigned int line = d_line;
   try {
-    res = MolDataStreamToMol(dp_inStream, line, df_sanitize, df_removeHs,
-                             df_strictParsing);
+    MolFromMolDataStream(*dp_inStream, line, d_params).swap(res);
     // there's a special case when trying to read an empty string that
     // we get an empty molecule after only reading a single line without any
     // additional error state.
@@ -212,7 +209,7 @@ ROMol *ForwardSDMolSupplier::_next() {
     }
     d_line = line;
     if (res) {
-      this->readMolProps(res);
+      this->readMolProps(*res);
     } else if (!dp_inStream->eof()) {
       // FIX: report files missing the $$$$ marker
       std::getline(*dp_inStream, tempStr);
@@ -325,4 +322,6 @@ bool ForwardSDMolSupplier::atEnd() {
   PRECONDITION(dp_inStream, "no stream");
   return df_end;
 }
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit

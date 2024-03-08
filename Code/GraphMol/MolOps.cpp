@@ -1185,6 +1185,7 @@ unsigned int addExplicitAttachmentPoint(RWMol &mol, unsigned int atomIdx,
   bool takeOwnership = true;
   auto idx = mol.addAtom(newAtom, updateLabel, takeOwnership);
   mol.addBond(atomIdx, idx, Bond::SINGLE);
+  mol.getAtomWithIdx(idx)->updatePropertyCache(false);
   if (addCoords) {
     setTerminalAtomCoords(mol, idx, atomIdx);
   }

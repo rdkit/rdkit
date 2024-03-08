@@ -10,15 +10,19 @@
 //
 #include "MultithreadedMolSupplier.h"
 namespace RDKit {
+
+namespace v2 {
+namespace FileParsers {
+
 MultithreadedMolSupplier::~MultithreadedMolSupplier() {
   endThreads();
   // destroy all objects in the input queue
   d_inputQueue->clear();
   // delete the pointer to the input queue
   delete d_inputQueue;
-  std::tuple<ROMol*, std::string, unsigned int> r;
+  std::tuple<RWMol*, std::string, unsigned int> r;
   while (d_outputQueue->pop(r)) {
-    ROMol* m = std::get<0>(r);
+    RWMol* m = std::get<0>(r);
     delete m;
   }
   // destroy all objects in the output queue
@@ -42,32 +46,31 @@ void MultithreadedMolSupplier::writer() {
   std::tuple<std::string, unsigned int, unsigned int> r;
   while (d_inputQueue->pop(r)) {
     try {
-      ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
-      auto temp = std::tuple<ROMol*, std::string, unsigned int>{
+      auto mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
+      auto temp = std::tuple<RWMol*, std::string, unsigned int>{
           mol, std::get<0>(r), std::get<2>(r)};
       d_outputQueue->push(temp);
     } catch (...) {
       // fill the queue wih a null value
-      auto nullValue = std::tuple<ROMol*, std::string, unsigned int>{
+      auto nullValue = std::tuple<RWMol*, std::string, unsigned int>{
           nullptr, std::get<0>(r), std::get<2>(r)};
       d_outputQueue->push(nullValue);
     }
   }
-
-  if (d_threadCounter != d_numWriterThreads) {
+  if (d_threadCounter != d_params.numWriterThreads) {
     ++d_threadCounter;
   } else {
     d_outputQueue->setDone();
   }
 }
 
-ROMol* MultithreadedMolSupplier::next() {
-  std::tuple<ROMol*, std::string, unsigned int> r;
+std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
+  std::tuple<RWMol*, std::string, unsigned int> r;
   if (d_outputQueue->pop(r)) {
-    ROMol* mol = std::get<0>(r);
     d_lastItemText = std::get<1>(r);
     d_lastRecordId = std::get<2>(r);
-    return mol;
+    std::unique_ptr<RWMol> res{std::get<0>(r)};
+    return res;
   }
   return nullptr;
 }
@@ -83,7 +86,7 @@ void MultithreadedMolSupplier::startThreads() {
   // run the reader function in a seperate thread
   d_readerThread = std::thread(&MultithreadedMolSupplier::reader, this);
   // run the writer function in seperate threads
-  for (unsigned int i = 0; i < d_numWriterThreads; i++) {
+  for (unsigned int i = 0; i < d_params.numWriterThreads; i++) {
     d_writerThreads.emplace_back(
         std::thread(&MultithreadedMolSupplier::writer, this));
   }
@@ -104,6 +107,7 @@ std::string MultithreadedMolSupplier::getLastItemText() const {
 void MultithreadedMolSupplier::reset() {
   UNDER_CONSTRUCTION("reset() not supported for MultithreadedMolSupplier();");
 }
-
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit
 #endif

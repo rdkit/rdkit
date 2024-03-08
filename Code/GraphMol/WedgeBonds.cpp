@@ -283,14 +283,14 @@ int pickBondToWedge(
     int bid = bond->getIdx();
     if (wedgeBonds.find(bid) == wedgeBonds.end()) {
       // very strong preference for Hs:
-      if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
+      auto *oatom = bond->getOtherAtom(atom);
+      if (oatom->getAtomicNum() == 1) {
         nbrScores.emplace_back(-1000000,
                                bid);  // lower than anything else can be
         continue;
       }
       // prefer lower atomic numbers with lower degrees and no specified
       // chirality:
-      auto *oatom = bond->getOtherAtom(atom);
       int nbrScore = oatom->getAtomicNum() + 100 * oatom->getDegree() +
                      1000 * ((oatom->getChiralTag() != Atom::CHI_UNSPECIFIED));
       // prefer neighbors that are nonchiral or have as few chiral neighbors
@@ -311,6 +311,11 @@ int pickBondToWedge(
       nbrScore += 12000 * hasKnownDoubleBond;
       nbrScore += 23000 * hasAnyDoubleBond;
 
+      // if at all possible, do not go to marked attachment points
+      // since they may well be removed when we write a mol block
+      if (oatom->hasProp(common_properties::_fromAttachPoint)) {
+        nbrScore += 500000;
+      }
       // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
       //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
       //           << std::endl;
