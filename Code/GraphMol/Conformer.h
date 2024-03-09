@@ -69,8 +69,8 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
     }
     RDProps::operator=(std::move(o));
     df_is3D = o.df_is3D;
-    d_id = d_id;
-    dp_mol = dp_mol;
+    d_id = o.d_id;
+    dp_mol = o.dp_mol;
     d_positions = std::move(o.d_positions);
     return *this;
   }
