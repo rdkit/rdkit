@@ -31,6 +31,7 @@ GitHub)
   rdkit.ML.KNN, rdkit.ML.ModelPackage, rdkit.ML.NaiveBayes, rdkit.ML.Neural
   rdkit.ML.{Analyze,Screen,Grow,Build}Composite, rdkit.ML.CompositeRun,
   rdkit.ML.EnrichPlot
+- The Dbase.DbReport package was no longer working and has been removed.
 
 ## Deprecated code (to be removed in a future release):
 - The PDBMolSupplier class has been deprecated and will be removed in the next release
