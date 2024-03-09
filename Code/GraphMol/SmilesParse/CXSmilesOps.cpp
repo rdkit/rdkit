@@ -1867,6 +1867,7 @@ std::string get_atomlabel_block(const ROMol &mol,
       res += ";";
     }
     std::string lbl;
+    int val;
     const auto atom = mol.getAtomWithIdx(idx);
     if (atom->getPropIfPresent(common_properties::_QueryAtomGenericLabel,
                                lbl)) {
@@ -1877,6 +1878,11 @@ std::string get_atomlabel_block(const ROMol &mol,
                          SmilesParseOps::pseudoatoms.end(),
                          lbl) != SmilesParseOps::pseudoatoms.end()) {
       res += quote_string(lbl + "_p");
+    } else if (!atom->getAtomicNum() &&
+               atom->getPropIfPresent(common_properties::_fromAttachPoint,
+                                      val) &&
+               (val == 1 || val == 2)) {
+      res += quote_string("_AP" + std::to_string(val));
     } else if (atom->getPropIfPresent(common_properties::atomLabel, lbl)) {
       res += quote_string(lbl);
     }
@@ -1980,15 +1986,18 @@ std::string get_atom_props_block(const ROMol &mol,
   unsigned int which = 0;
   for (auto idx : atomOrder) {
     const auto atom = mol.getAtomWithIdx(idx);
+    bool isAttachmentPoint = !atom->getAtomicNum() &&
+                             atom->hasProp(common_properties::_fromAttachPoint);
     bool includePrivate = false, includeComputed = false;
     for (const auto &pn : atom->getPropList(includePrivate, includeComputed)) {
       if (std::find(skip.begin(), skip.end(), pn) == skip.end()) {
         std::string pv = atom->getProp<std::string>(pn);
         if (pn == "dummyLabel" &&
-            std::find(SmilesParseOps::pseudoatoms.begin(),
-                      SmilesParseOps::pseudoatoms.end(),
-                      pv) != SmilesParseOps::pseudoatoms.end()) {
-          // it's a pseudoatom, skip it
+            (isAttachmentPoint ||
+             std::find(SmilesParseOps::pseudoatoms.begin(),
+                       SmilesParseOps::pseudoatoms.end(),
+                       pv) != SmilesParseOps::pseudoatoms.end())) {
+          // it's a pseudoatom or attachment point, skip it
           continue;
         }
         if (res.empty()) {
@@ -2278,7 +2287,8 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     const auto at = mol.getAtomWithIdx(idx);
     if (at->hasProp(common_properties::atomLabel) ||
         at->hasProp(common_properties::_QueryAtomGenericLabel) ||
-        at->hasProp(common_properties::dummyLabel)) {
+        at->hasProp(common_properties::dummyLabel) ||
+        at->hasProp(common_properties::_fromAttachPoint)) {
       needLabels = true;
     }
     if (at->hasProp(common_properties::molFileValue)) {

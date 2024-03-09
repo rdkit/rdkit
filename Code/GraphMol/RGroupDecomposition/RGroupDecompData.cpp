@@ -672,19 +672,18 @@ RGroupDecompositionProcessResult RGroupDecompData::process(bool pruneMatches,
       offset = previousMatchSize;
     }
     previousMatchSize = matches.size();
+    permutations.reserve(matches.size() - offset);
     std::transform(matches.begin() + offset, matches.end(),
                    std::back_inserter(permutations),
                    [](const std::vector<RGroupMatch> &m) { return m.size(); });
     permutation = std::vector<size_t>(permutations.size(), 0);
 
-    // run through all possible matches and score each
-    //  set
+    // run through all possible matches and score each set
     size_t count = 0;
 #ifdef DEBUG
     std::cerr << "Processing" << std::endl;
 #endif
-    std::unique_ptr<CartesianProduct> it(new CartesianProduct(permutations));
-    iterator = std::move(it);
+    iterator.reset(new CartesianProduct(permutations));
     // Iterates through the permutation idx, i.e.
     //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
 

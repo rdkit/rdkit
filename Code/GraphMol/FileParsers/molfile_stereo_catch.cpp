@@ -582,7 +582,7 @@ M  END
 
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
-            Atom::ChiralType::CHI_UNSPECIFIED);
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
     }
   }
 }

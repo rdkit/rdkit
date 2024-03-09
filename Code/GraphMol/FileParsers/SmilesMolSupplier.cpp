@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,7 +13,6 @@
 #include <RDGeneral/RDLog.h>
 #include "MolSupplier.h"
 #include "FileParsers.h"
-#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
@@ -25,44 +23,35 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <cstdlib>
 
 namespace RDKit {
+
+namespace v2 {
+namespace FileParsers {
+
 SmilesMolSupplier::SmilesMolSupplier() { init(); }
 
 SmilesMolSupplier::SmilesMolSupplier(const std::string &fileName,
-                                     const std::string &delimiter,
-                                     int smilesColumn, int nameColumn,
-                                     bool titleLine, bool sanitize) {
+                                     const SmilesMolSupplierParams &params) {
   init();
   dp_inStream = openAndCheckStream(fileName);
   CHECK_INVARIANT(dp_inStream, "bad instream");
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
 
-  d_delim = delimiter;
-  df_sanitize = sanitize;
-  df_title = titleLine;
-  d_smi = smilesColumn;
-  d_name = nameColumn;
+  d_params = params;
   df_end = false;
 
-  // if(d_title) processTitleLine();
   this->checkForEnd();
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
 SmilesMolSupplier::SmilesMolSupplier(std::istream *inStream, bool takeOwnership,
-                                     const std::string &delimiter,
-                                     int smilesColumn, int nameColumn,
-                                     bool titleLine, bool sanitize) {
+                                     const SmilesMolSupplierParams &params) {
   CHECK_INVARIANT(inStream, "bad instream");
   CHECK_INVARIANT(!(inStream->eof()), "early EOF");
 
   init();
   dp_inStream = inStream;
   df_owner = takeOwnership;
-  d_delim = delimiter;
-  df_sanitize = sanitize;
-  df_title = titleLine;
-  d_smi = smilesColumn;
-  d_name = nameColumn;
+  d_params = params;
   df_end = false;
   this->checkForEnd();
   POSTCONDITION(dp_inStream, "bad instream");
@@ -81,8 +70,7 @@ void SmilesMolSupplier::init() {
 }
 
 void SmilesMolSupplier::setData(const std::string &text,
-                                const std::string &delimiter, int smilesColumn,
-                                int nameColumn, bool titleLine, bool sanitize) {
+                                const SmilesMolSupplierParams &params) {
   if (dp_inStream && df_owner) {
     delete dp_inStream;
   }
@@ -90,11 +78,7 @@ void SmilesMolSupplier::setData(const std::string &text,
 
   dp_inStream = new std::stringstream(text);
 
-  d_delim = delimiter;
-  df_sanitize = sanitize;
-  df_title = titleLine;
-  d_smi = smilesColumn;
-  d_name = nameColumn;
+  d_params = params;
   df_end = false;
 
   this->checkForEnd();
@@ -129,14 +113,14 @@ void SmilesMolSupplier::reset() {
   }
 }
 
-ROMol *SmilesMolSupplier::processLine(std::string inLine) {
-  ROMol *res = nullptr;
+std::unique_ptr<RWMol> SmilesMolSupplier::processLine(std::string inLine) {
+  std::unique_ptr<RWMol> res;
 
   try {
     // -----------
     // tokenize the input line:
     // -----------
-    boost::char_separator<char> sep(d_delim.c_str(), "",
+    boost::char_separator<char> sep(d_params.delimiter.c_str(), "",
                                     boost::keep_empty_tokens);
     tokenizer tokens(inLine, sep);
     STR_VECT recs;
@@ -145,7 +129,7 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
       std::string rec = strip(*tokIter);
       recs.push_back(rec);
     }
-    if (recs.size() <= static_cast<unsigned int>(d_smi)) {
+    if (recs.size() <= static_cast<unsigned int>(d_params.smilesColumn)) {
       std::ostringstream errout;
       errout << "ERROR: line #" << d_line << "does not contain enough tokens\n";
       throw FileParseException(errout.str());
@@ -154,32 +138,29 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // -----------
     // get the smiles and create a molecule
     // -----------
-    SmilesParserParams params;
-    params.sanitize = df_sanitize;
-    params.allowCXSMILES = false;
-    params.parseName = false;
-    res = SmilesToMol(recs[d_smi], params);
+    res = MolFromSmiles(recs[d_params.smilesColumn], d_params.parseParameters);
     if (!res) {
       std::stringstream errout;
-      errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
+      errout << "Cannot create molecule from : '" << recs[d_params.smilesColumn]
+             << "'";
       throw SmilesParseException(errout.str());
     }
 
     // -----------
     // get the name (if there's a name column)
     // -----------
-    if (d_name == -1) {
+    if (d_params.nameColumn == -1) {
       // if no name defaults it to the line number we read it from string
       std::ostringstream tstr;
       tstr << d_line;
       std::string mname = tstr.str();
       res->setProp(common_properties::_Name, mname);
     } else {
-      if (d_name >= static_cast<int>(recs.size())) {
+      if (d_params.nameColumn >= static_cast<int>(recs.size())) {
         BOOST_LOG(rdWarningLog)
             << "WARNING: no name column found on line " << d_line << std::endl;
       } else {
-        res->setProp(common_properties::_Name, recs[d_name]);
+        res->setProp(common_properties::_Name, recs[d_params.nameColumn]);
       }
     }
 
@@ -187,7 +168,8 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // read in the properties
     // -----------
     for (unsigned int col = 0; col < recs.size(); col++) {
-      if (static_cast<int>(col) == d_smi || static_cast<int>(col) == d_name) {
+      if (static_cast<int>(col) == d_params.smilesColumn ||
+          static_cast<int>(col) == d_params.nameColumn) {
         continue;
       }
       std::string pname, pval;
@@ -210,19 +192,19 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << d_line
                           << "\n";
     BOOST_LOG(rdErrorLog) << "ERROR: " << pe.what() << "\n";
-    res = nullptr;
+    res.reset();
   } catch (const MolSanitizeException &se) {
     // We couldn't sanitize the molecule
     //  write out an error message
     BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule on line "
                           << d_line << std::endl;
     BOOST_LOG(rdErrorLog) << "ERROR: " << se.what() << "\n";
-    res = nullptr;
+    res.reset();
   } catch (...) {
     //  write out an error message
     BOOST_LOG(rdErrorLog) << "ERROR: Could not process molecule on line "
                           << d_line << std::endl;
-    res = nullptr;
+    res.reset();
   }
 
   return res;
@@ -308,7 +290,7 @@ void SmilesMolSupplier::processTitleLine() {
     dp_inStream->seekg(pos);
 
     std::string tempStr = getLine(dp_inStream);
-    boost::char_separator<char> sep(d_delim.c_str(), "",
+    boost::char_separator<char> sep(d_params.delimiter.c_str(), "",
                                     boost::keep_empty_tokens);
     tokenizer tokens(tempStr, sep);
     for (tokenizer::iterator tokIter = tokens.begin(); tokIter != tokens.end();
@@ -376,7 +358,7 @@ void SmilesMolSupplier::moveTo(unsigned int idx) {
   if (d_molpos.empty()) {
     // if we are just starting out, process the title line
     dp_inStream->seekg(0);
-    if (df_title) {
+    if (d_params.titleLine) {
       this->processTitleLine();
     }
   } else {
@@ -423,9 +405,8 @@ void SmilesMolSupplier::moveTo(unsigned int idx) {
 //
 //  Throws a FileParseException if EOF has already been hit.
 //
-ROMol *SmilesMolSupplier::next() {
+std::unique_ptr<RWMol> SmilesMolSupplier::next() {
   PRECONDITION(dp_inStream, "no stream");
-  ROMol *res = nullptr;
 
   if (d_next < 0) {
     d_next = 0;
@@ -446,7 +427,7 @@ ROMol *SmilesMolSupplier::next() {
   // grab the line:
   std::string inLine = getLine(dp_inStream);
   // and process it:
-  res = this->processLine(inLine);
+  auto res = this->processLine(inLine);
   // if we don't already know the length of the supplier,
   // check if we can read another line:
   if (d_len < 0 && this->skipComments() < 0) {
@@ -472,7 +453,7 @@ ROMol *SmilesMolSupplier::next() {
 //
 //  Raises a FileParseException on failure.
 //
-ROMol *SmilesMolSupplier::operator[](unsigned int idx) {
+std::unique_ptr<RWMol> SmilesMolSupplier::operator[](unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
 
   // ---------
@@ -483,7 +464,7 @@ ROMol *SmilesMolSupplier::operator[](unsigned int idx) {
   // ---------
   // and then pull the molecule:
   // ---------
-  ROMol *res = next();
+  auto res = next();
 
   return res;
 }
@@ -507,7 +488,7 @@ unsigned int SmilesMolSupplier::length() {
       this->skipComments();
     } else {
       // process the title line if need be:
-      if (df_title) {
+      if (d_params.titleLine) {
         this->processTitleLine();
       }
     }
@@ -525,4 +506,6 @@ unsigned int SmilesMolSupplier::length() {
 }
 
 bool SmilesMolSupplier::atEnd() { return df_end; }
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit
