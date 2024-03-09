@@ -171,6 +171,10 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
         new v2::FileParsers::SDMolSupplier(inStream, takeOwnership, params));
   }
 
+  void moveTo(unsigned int idx) {
+    PRECONDITION(dp_supplier, "no supplier");
+    static_cast<ContainedType *>(dp_supplier.get())->moveTo(idx);
+  }
   ROMol *operator[](unsigned int idx) {
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())
@@ -231,7 +235,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
    * file parser above
    * - As an when new molecules are read using "next" their
    *    positions in the file are noted.
-   *  - A call to the "length" will autamatically parse the entire
+   *  - A call to the "length" will automatically parse the entire
    *    file and cache all the mol block positions
    *  - [] operator is used to access a molecule at "idx", calling
    *    next following this will result in the next molecule after
@@ -298,6 +302,10 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
     params.parseParameters.sanitize = sanitize;
     static_cast<ContainedType *>(dp_supplier.get())->setData(text, params);
   }
+  void moveTo(unsigned int idx) {
+    PRECONDITION(dp_supplier, "no supplier");
+    static_cast<ContainedType *>(dp_supplier.get())->moveTo(idx);
+  }
   ROMol *operator[](unsigned int idx) {
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())
@@ -326,7 +334,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
    * file parser above
    * - As an when new molecules are read using "next" their
    *    positions in the file are noted.
-   *  - A call to the "length" will autamatically parse the entire
+   *  - A call to the "length" will automatically parse the entire
    *    file and cache all the mol block positions
    *  - [] operator is used to access a molecule at "idx", calling
    *    next following this will result in the next molecule after
@@ -378,6 +386,10 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
     params.parseParameters.sanitize = sanitize;
     static_cast<ContainedType *>(dp_supplier.get())->setData(text, params);
   }
+  void moveTo(unsigned int idx) {
+    PRECONDITION(dp_supplier, "no supplier");
+    static_cast<ContainedType *>(dp_supplier.get())->moveTo(idx);
+  }
   ROMol *operator[](unsigned int idx) {
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())
@@ -399,7 +411,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   }
 };
 
-//! Deprectead, will be removed in 2024.09 release
+//! Deprecated, will be removed in 2024.09 release
 class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
  public:
   explicit PDBMolSupplier(std::istream *inStream, bool takeOwnership = true,
@@ -461,6 +473,10 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     dp_supplier.reset(new ContainedType(fname, params));
+  }
+  void moveTo(unsigned int idx) {
+    PRECONDITION(dp_supplier, "no supplier");
+    static_cast<ContainedType *>(dp_supplier.get())->moveTo(idx);
   }
   RWMol *operator[](unsigned int idx) {
     PRECONDITION(dp_supplier, "no supplier");
