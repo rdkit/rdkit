@@ -1590,6 +1590,40 @@ H      0.635000    0.635000    0.635000
 )XYZ";
     CHECK(xyzblock == xyzblock_expected);
   }
+  SECTION("precistion") {
+    std::unique_ptr<RWMol> mol{new RWMol{}};
+    mol->setProp(common_properties::_Name, "CHEMBL506259");
+
+    for (unsigned z : {8, 6, 8, 6, 9, 9, 9}) {
+      auto *a = new Atom{z};
+      mol->addAtom(a, false, true);
+    }
+
+    auto *conf = new Conformer{7};
+    conf->setId(0);
+    conf->setAtomPos(0, RDGeom::Point3D{0.402012650000000, -0.132994360000000, 1.000000170000000});
+    conf->setAtomPos(1, RDGeom::Point3D{0.876222600000000, 0.997390900000000,  1.000000030000000});
+    conf->setAtomPos(2, RDGeom::Point3D{0.366137990000000, 2.110718500000000,  0.999999820000000});
+    conf->setAtomPos(3, RDGeom::Point3D{2.486961570000000, 1.004799350000000,  0.999999990000000});
+    conf->setAtomPos(4, RDGeom::Point3D{3.033118410000000, 2.237399550000000,  1.000000100000000});
+    conf->setAtomPos(5, RDGeom::Point3D{3.007723370000000, 0.373992940000000,  2.077133250000000});
+    conf->setAtomPos(6, RDGeom::Point3D{3.007723400000000, 0.373993120000000,  -0.077133360000000});
+    mol->addConformer(conf);
+
+    const std::string xyzblock = MolToXYZBlock(*mol, 0, 15);
+    std::cout << xyzblock << std::endl;
+    std::string xyzblock_expected = R"XYZ(7
+CHEMBL506259
+O   0.402012650000000 -0.132994360000000 1.000000170000000
+C   0.876222600000000 0.997390900000000 1.000000030000000
+O   0.366137990000000 2.110718500000000 0.999999820000000
+C   2.486961570000000 1.004799350000000 0.999999990000000
+F   3.033118410000000 2.237399550000000 1.000000100000000
+F   3.007723370000000 0.373992940000000 2.077133250000000
+F   3.007723400000000 0.373993120000000 -0.077133360000000
+)XYZ";
+    CHECK(xyzblock == xyzblock_expected);
+  }
 }
 
 TEST_CASE("valence writing 1", "[bug][writer]") {

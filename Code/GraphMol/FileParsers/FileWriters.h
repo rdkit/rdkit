@@ -26,8 +26,8 @@ struct RDKIT_FILEPARSERS_EXPORT MolWriterParams {
   bool forceV3000 = false;    /**< force generation a V3000 mol block (happens
                                    automatically with more than 999 atoms or
                                    bonds)(default=false)*/
-  bool highPrecision = false; /**< write double precision coordinates (only
-                                   available in V3000)(default=false)*/
+  unsigned int precision = 6; /**< precision of coordinates (only available in
+                                   V3000)(default=false)*/
 };
 
 // \brief generates an MDL mol block for a molecule
@@ -167,12 +167,27 @@ RDKIT_FILEPARSERS_EXPORT void MolToCMLFile(const ROMol &mol,
                                            int confId = -1,
                                            bool kekulize = true);
 
+// \brief Writes a molecule to an XYZ block
+/*!
+ *   \param mol       - the molecule in question
+ *   \param confId    - selects which conformation to output
+ *   \param precision - precision of the coordinates
+ */
 RDKIT_FILEPARSERS_EXPORT std::string MolToXYZBlock(const ROMol &mol,
-                                                   int confId = -1);
+                                                   int confId = -1,
+                                                   unsigned int precision = 6);
 
+// \brief Writes a molecule to an XYZ block
+/*!
+ *   \param mol       - the molecule in question
+ *   \param fName     - the file to write to
+ *   \param confId    - selects which conformation to output
+ *   \param precision - precision of the coordinates
+ */
 RDKIT_FILEPARSERS_EXPORT void MolToXYZFile(const ROMol &mol,
                                            const std::string &fName,
-                                           int confId = -1);
+                                           int confId = -1,
+                                           unsigned int precision = 6);
 
 RDKIT_FILEPARSERS_EXPORT std::string MolToTPLText(
     const ROMol &mol, const std::string &partialChargeProp = "_GasteigerCharge",

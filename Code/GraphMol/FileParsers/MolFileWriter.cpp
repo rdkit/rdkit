@@ -756,7 +756,7 @@ const std::string GetMolFileBondLine(
 
 const std::string GetV3000MolFileAtomLine(
     const Atom *atom, const Conformer *conf,
-    boost::dynamic_bitset<> &queryListAtoms, bool highPrecision) {
+    boost::dynamic_bitset<> &queryListAtoms, unsigned int precision) {
   PRECONDITION(atom, "");
   int totValence, atomMapNumber;
   unsigned int parityFlag;
@@ -790,15 +790,11 @@ const std::string GetV3000MolFileAtomLine(
     }
   }
 
-  ss << std::fixed;
   std::streamsize currentPrecision = ss.precision();
-  if (highPrecision) {
-    ss << std::setprecision(15);
-  }
+  ss << std::fixed;
+  ss << std::setprecision(precision);
   ss << " " << x << " " << y << " " << z;
-  if (highPrecision) {
-    ss << std::setprecision(currentPrecision);
-  }
+  ss << std::setprecision(currentPrecision);
   ss << std::defaultfloat;
   ss << " " << atomMapNumber;
 
@@ -1106,7 +1102,7 @@ void appendEnhancedStereoGroups(
   }
 }
 namespace FileParserUtils {
-std::string getV3000CTAB(const ROMol &tmol, int confId, bool highPrecision) {
+std::string getV3000CTAB(const ROMol &tmol, int confId, unsigned int precision) {
   auto nAtoms = tmol.getNumAtoms();
   auto nBonds = tmol.getNumBonds();
   const auto &sgroups = getSubstanceGroups(tmol);
@@ -1132,7 +1128,7 @@ std::string getV3000CTAB(const ROMol &tmol, int confId, bool highPrecision) {
   res += "M  V30 BEGIN ATOM\n";
   for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
        atomIt != tmol.endAtoms(); ++atomIt) {
-    res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms, highPrecision);
+    res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms, precision);
     res += "\n";
   }
   res += "M  V30 END ATOM\n";
@@ -1179,7 +1175,7 @@ std::string getV3000CTAB(const ROMol &tmol, int confId, bool highPrecision) {
 //
 //------------------------------------------------
 std::string outputMolToMolBlock(const RWMol &tmol, int confId,
-                                bool forceV3000, bool highPrecision) {
+                                bool forceV3000, unsigned int precision) {
   std::string res;
   bool isV3000;
   unsigned int nAtoms, nBonds, nLists, chiralFlag, nsText, nRxnComponents;
@@ -1298,7 +1294,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     // FIX: R-group logic, SGroups and 3D features etc.
   } else {
     // V3000 output.
-    res += FileParserUtils::getV3000CTAB(tmol, confId, highPrecision);
+    res += FileParserUtils::getV3000CTAB(tmol, confId, precision);
   }
   res += "M  END\n";
   return res;
@@ -1336,9 +1332,9 @@ std::string MolToMolBlock(const ROMol &mol,
   FileParserUtils::moveAdditionalPropertiesToSGroups(trwmol);
 
   try {
-    return outputMolToMolBlock(trwmol, confId, params.forceV3000, params.highPrecision);
+    return outputMolToMolBlock(trwmol, confId, params.forceV3000, params.precision);
   } catch (RequiresV3000Exception &) {
-    return outputMolToMolBlock(trwmol, confId, true, params.highPrecision);
+    return outputMolToMolBlock(trwmol, confId, true, params.precision);
   }
 }
 
