@@ -125,6 +125,7 @@ const std::string molAtomClass = "molClass";
 const std::string molAtomSeqId = "molSeqid";
 const std::string molRxnExactChange = "molRxnExachg";
 const std::string molReactStatus = "molReactStatus";
+const std::string _fromAttachPoint = "_fromAttchpt";
 
 const std::string molNote = "molNote";
 const std::string atomNote = "atomNote";

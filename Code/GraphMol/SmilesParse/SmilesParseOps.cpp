@@ -603,6 +603,18 @@ void CleanupAfterParsing(RWMol *mol) {
   for (auto atom : mol->atoms()) {
     atom->clearProp(common_properties::_RingClosures);
     atom->clearProp(common_properties::_SmilesStart);
+    std::string label;
+    if (atom->getAtomicNum() == 0 &&
+        atom->getPropIfPresent(common_properties::atomLabel, label)) {
+      // marvinsketch can output higher labels than _AP1 and _AP2, but they
+      // aren't part of the MOL file spec so we don't treat them as attachment
+      // points
+      if (label == "_AP1") {
+        atom->setProp(common_properties::_fromAttachPoint, 1);
+      } else if (label == "_AP2") {
+        atom->setProp(common_properties::_fromAttachPoint, 2);
+      }
+    }
   }
   for (auto bond : mol->bonds()) {
     bond->clearProp(common_properties::_unspecifiedOrder);

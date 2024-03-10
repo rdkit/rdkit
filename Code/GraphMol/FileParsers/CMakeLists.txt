@@ -9,10 +9,13 @@ rdkit_library(FileParsers
     MolSGroupParsing.cpp MolSGroupWriting.cpp
     MolFileStereochem.cpp MolFileWriter.cpp
     ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
-    SmilesMolSupplier.cpp SmilesWriter.cpp
-    TDTMolSupplier.cpp TDTWriter.cpp
+    SmilesMolSupplier.cpp 
+    SmilesWriter.cpp
+    TDTMolSupplier.cpp 
+    TDTWriter.cpp
     TplFileParser.cpp TplFileWriter.cpp
-    PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp
+    PDBParser.cpp PDBWriter.cpp 
+    PDBSupplier.cpp
     CMLWriter.cpp XYZFileWriter.cpp XYZFileParser.cpp
     ${maesupplier}
     ProximityBonds.cpp
@@ -29,7 +32,7 @@ rdkit_headers(CDXMLParser.h
     FileParserUtils.h
     MolFileStereochem.h
     FileWriters.h
-    MolSupplier.h
+    MolSupplier.h MolSupplier.v1API.h
     MolWriters.h
     SequenceParsers.h SequenceWriters.h
     GeneralFileReader.h
@@ -87,3 +90,10 @@ rdkit_catch_test(molfileStereoCatchTest molfile_stereo_catch.cpp
 
 rdkit_catch_test(connectTheDotsTest connectTheDots_catch.cpp
     LINK_LIBRARIES FileParsers)
+
+rdkit_catch_test(v2MolSuppliers v2_suppliers_catch.cpp
+    LINK_LIBRARIES FileParsers)
+
+rdkit_catch_test(v2FileParsersCatchTest v2_file_parsers_catch.cpp
+    LINK_LIBRARIES FileParsers)
+

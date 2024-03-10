@@ -41,31 +41,29 @@ namespace SmilesParse {
 using RDKit::SmilesParse::SmilesParseException;
 
 struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
-  bool sanitize = true; /**< sanitize the molecule after building it */
-  std::map<std::string, std::string>
-      replacements;          /**< allows SMILES "macros" */
+  bool sanitize = true;      /**< sanitize the molecule after building it */
   bool allowCXSMILES = true; /**< recognize and parse CXSMILES*/
   bool strictCXSMILES =
       true; /**< throw an exception if the CXSMILES parsing fails */
-  bool parseName = true; /**< parse (and set) the molecule name as well */
-  bool removeHs = true;  /**< remove Hs after constructing the molecule */
-  bool skipCleanup =
-      false; /**<  skip the final cleanup stage */
-  bool debugParse = false; /**< enable debugging in the SMILES parser*/
+  bool parseName = true;    /**< parse (and set) the molecule name as well */
+  bool removeHs = true;     /**< remove Hs after constructing the molecule */
+  bool skipCleanup = false; /**<  skip the final cleanup stage */
+  bool debugParse = false;  /**< enable debugging in the SMILES parser*/
+  std::map<std::string, std::string>
+      replacements; /**< allows SMILES "macros" */
 };
 
 struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
-  std::map<std::string, std::string>
-      replacements;          /**< allows SMARTS "macros" */
   bool allowCXSMILES = true; /**< recognize and parse CXSMILES extensions */
   bool strictCXSMILES =
       true; /**< throw an exception if the CXSMILES parsing fails */
   bool parseName = true; /**< parse (and set) the molecule name as well */
   bool mergeHs =
       false; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
-  bool skipCleanup =
-      false; /**<  skip the final cleanup stage */
-  bool debugParse = false; /**< enable debugging in the SMARTS parser*/
+  bool skipCleanup = false; /**<  skip the final cleanup stage */
+  bool debugParse = false;  /**< enable debugging in the SMARTS parser*/
+  std::map<std::string, std::string>
+      replacements; /**< allows SMARTS "macros" */
 };
 
 RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSmiles(
@@ -99,10 +97,9 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   bool allowCXSMILES = true; /**< recognize and parse CXSMILES*/
   bool strictCXSMILES =
       true; /**< throw an exception if the CXSMILES parsing fails */
-  bool parseName = true; /**< parse (and set) the molecule name as well */
-  bool removeHs = true;  /**< remove Hs after constructing the molecule */
-  bool skipCleanup =
-      false; /**<  skip the final cleanup stage */
+  bool parseName = true;    /**< parse (and set) the molecule name as well */
+  bool removeHs = true;     /**< remove Hs after constructing the molecule */
+  bool skipCleanup = false; /**<  skip the final cleanup stage */
 };
 
 struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
@@ -115,8 +112,7 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
   bool parseName = true; /**< parse (and set) the molecule name as well */
   bool mergeHs =
       false; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
-  bool skipCleanup =
-      false; /**<  skip the final cleanup stage */
+  bool skipCleanup = false; /**<  skip the final cleanup stage */
 };
 
 inline RDKit::RWMol *SmilesToMol(const std::string &smi,

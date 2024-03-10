@@ -1027,6 +1027,17 @@ void testSetProps(ROMol &mol) {
                   "conf_" + std::to_string(conf_idx));
   }
 }
+
+void expandAttachmentPointsHelper(ROMol &mol, bool addAsQueries,
+                                  bool addCoords) {
+  MolOps::expandAttachmentPoints(static_cast<RWMol &>(mol), addAsQueries,
+                                 addCoords);
+}
+
+void collapseAttachmentPointsHelper(ROMol &mol, bool markedOnly) {
+  MolOps::collapseAttachmentPoints(static_cast<RWMol &>(mol), markedOnly);
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -3021,11 +3032,39 @@ A note on the flags controlling which atoms/bonds are modified:
   molecule will not be modified.)DOC");
 
     python::def(
+        "ExpandAttachmentPoints", expandAttachmentPointsHelper,
+        (python::arg("mol"), python::arg("addAsQueries") = true,
+         python::arg("addCoords") = true),
+        R"DOC(attachment points encoded as attachPt properties are added to the graph as dummy atoms
+
+  Arguments:
+   - mol: molecule to be modified
+   - addAsQueries: if true, the dummy atoms will be added as null queries
+        (i.e. they will match any atom in a substructure search)
+   - addCoords: if true and the molecule has one or more conformers, 
+        positions for the attachment points will be added to the conformer(s)
+)DOC");
+    python::def(
+        "CollapseAttachmentPoints", collapseAttachmentPointsHelper,
+        (python::arg("mol"), python::arg("markedOnly") = true),
+        R"DOC(dummy atoms in the graph are removed and replaced with attachment point annotations on the attached atoms
+
+  Arguments:
+   - mol: molecule to be modified
+   - markedOnly: if true, only dummy atoms with the _fromAttachPoint
+     property will be collapsed
+
+  In order for a dummy atom to be considered for collapsing it must have:
+   - degree 1 with a single or unspecified bond
+   - the bond to it can not be wedged
+   - either no query or be an AtomNullQuery
+)DOC");
+    python::def(
         "AddStereoAnnotations", Chirality::addStereoAnnotations,
         (python::arg("mol"), python::arg("absLabel") = "abs ({cip})",
          python::arg("orLabel") = "or{id}", python::arg("andLabel") = "and{id}",
          python::arg("cipLabel") = "({cip})",
-         python::arg("cipLabel") = "({cip})"),
+         python::arg("bondLabel") = "({cip})"),
         R"DOC(add R/S, relative stereo, and E/Z annotations to atoms and bonds
 
   Arguments:

@@ -49,9 +49,6 @@ const RDGeom::POINT3D_VECT &Conformer::getPositions() const {
 }
 
 RDGeom::POINT3D_VECT &Conformer::getPositions() {
-  if (dp_mol) {
-    PRECONDITION(dp_mol->getNumAtoms() == d_positions.size(), "");
-  }
   return d_positions;
 }
 

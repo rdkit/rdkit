@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -355,6 +355,20 @@ void RWMol::removeAtom(Atom *atom) {
   PRECONDITION(static_cast<RWMol *>(&atom->getOwningMol()) == this,
                "atom not owned by this molecule");
   unsigned int idx = atom->getIdx();
+
+  // remove bonds attached to the atom
+  //  In batch mode this will schedule bond removal
+  std::vector<std::pair<unsigned int, unsigned int>> nbrs;
+  ADJ_ITER b1, b2;
+  boost::tie(b1, b2) = getAtomNeighbors(atom);
+  while (b1 != b2) {
+      nbrs.emplace_back(atom->getIdx(), rdcast<unsigned int>(*b1));
+      ++b1;
+  }
+  for (auto &nbr : nbrs) {
+     removeBond(nbr.first, nbr.second);
+  }
+    
   if (dp_delAtoms) {
     // we're in a batch edit
     // if atoms have been added since we started, resize dp_delAtoms
@@ -378,18 +392,6 @@ void RWMol::removeAtom(Atom *atom) {
     if (std::find(atoms.begin(), atoms.end(), atom) != atoms.end()) {
       clearAtomBookmark(tmpI->first, atom);
     }
-  }
-
-  // remove bonds attached to the atom
-  std::vector<std::pair<unsigned int, unsigned int>> nbrs;
-  ADJ_ITER b1, b2;
-  boost::tie(b1, b2) = getAtomNeighbors(atom);
-  while (b1 != b2) {
-    nbrs.emplace_back(atom->getIdx(), rdcast<unsigned int>(*b1));
-    ++b1;
-  }
-  for (auto &nbr : nbrs) {
-    removeBond(nbr.first, nbr.second);
   }
 
   // loop over all atoms with higher indices and update their indices
@@ -581,52 +583,27 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
 
   // loop over neighboring double bonds and remove their stereo atom
   //  information. This is definitely now invalid (was github issue 8)
-  ADJ_ITER a1, a2;
-  boost::tie(a1, a2) = boost::adjacent_vertices(aid1, d_graph);
-  while (a1 != a2) {
-    auto oIdx = rdcast<unsigned int>(*a1);
-    ++a1;
-    if (oIdx == aid2) {
-      continue;
-    }
-    Bond *obnd = getBondBetweenAtoms(aid1, oIdx);
-    if (!obnd) {
-      continue;
-    }
-    if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
-                  aid2) != obnd->getStereoAtoms().end()) {
-      // github #6900 if we remove stereo atoms we need to remove
-      //  the CIS and or TRANS since this requires stereo atoms
-      if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-          obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
-        obnd->setStereo(Bond::BondStereo::STEREONONE);
-      }
-      obnd->getStereoAtoms().clear();
+  auto beginAtm = bnd->getBeginAtom();
+  auto endAtm = bnd->getEndAtom();
+  std::vector<std::vector<Atom*>> bond_atoms = {{beginAtm, endAtm}, {endAtm, beginAtm}};
+  for(auto atoms : bond_atoms) {
+    for(auto obnd : this->atomBonds(atoms[0])) {
+        if(obnd == bnd) {
+            continue;
+        }
+        if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
+                            atoms[1]->getIdx()) != obnd->getStereoAtoms().end()) {
+            // github #6900 if we remove stereo atoms we need to remove
+            //  the CIS and or TRANS since this requires stereo atoms
+            if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
+                obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
+                    obnd->setStereo(Bond::BondStereo::STEREONONE);
+                }
+	    
+            obnd->getStereoAtoms().clear();
+	}
     }
   }
-  boost::tie(a1, a2) = boost::adjacent_vertices(aid2, d_graph);
-  while (a1 != a2) {
-    auto oIdx = rdcast<unsigned int>(*a1);
-    ++a1;
-    if (oIdx == aid1) {
-      continue;
-    }
-    Bond *obnd = getBondBetweenAtoms(aid2, oIdx);
-    if (!obnd) {
-      continue;
-    }
-    if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
-                  aid1) != obnd->getStereoAtoms().end()) {
-      // github #6900 if we remove stereo atoms we need to remove
-      //  the CIS and or TRANS since this requires stereo atoms
-      if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-          obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
-        obnd->setStereo(Bond::BondStereo::STEREONONE);
-      }
-      obnd->getStereoAtoms().clear();
-    }
-  }
-
   // reset our ring info structure, because it is pretty likely
   // to be wrong now:
   dp_ringInfo->reset();
@@ -645,8 +622,8 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   }
   bnd->setOwningMol(nullptr);
 
-  MolGraph::vertex_descriptor vd1 = boost::vertex(aid1, d_graph);
-  MolGraph::vertex_descriptor vd2 = boost::vertex(aid2, d_graph);
+  MolGraph::vertex_descriptor vd1 = boost::vertex(bnd->getBeginAtomIdx(), d_graph);
+  MolGraph::vertex_descriptor vd2 = boost::vertex(bnd->getEndAtomIdx(), d_graph);
   boost::remove_edge(vd1, vd2, d_graph);
   delete bnd;
   --numBonds;
@@ -685,26 +662,244 @@ void RWMol::beginBatchEdit() {
   dp_delAtoms.reset(new boost::dynamic_bitset<>(getNumAtoms()));
   dp_delBonds.reset(new boost::dynamic_bitset<>(getNumBonds()));
 }
+
 void RWMol::commitBatchEdit() {
-  if (!dp_delBonds || !dp_delAtoms) {
-    return;
-  }
-  auto delBonds = *dp_delBonds;
-  dp_delBonds.reset();
-  for (unsigned int i = delBonds.size(); i > 0; --i) {
-    if (delBonds[i - 1]) {
-      const auto bnd = getBondWithIdx(i - 1);
-      CHECK_INVARIANT(bnd, "bond not found");
-      removeBond(bnd->getBeginAtomIdx(), bnd->getEndAtomIdx());
+    if (!(dp_delBonds || dp_delAtoms)) {
+        return;
     }
-  }
-  auto delAtoms = *dp_delAtoms;
-  dp_delAtoms.reset();
-  for (unsigned int i = delAtoms.size(); i > 0; --i) {
-    if (delAtoms[i - 1]) {
-      removeAtom(i - 1);
+
+    batchRemoveBonds();
+    batchRemoveAtoms();
+    
+    // remove ring info
+    dp_ringInfo->reset();
+    
+    // fix properties
+    clearComputedProps(true);
+    dp_delBonds.reset();
+    dp_delAtoms.reset();
+}
+
+void RWMol::batchRemoveBonds() {
+    if(!dp_delBonds) {
+        return;
     }
-  }
+    
+    auto &delBonds = *dp_delBonds;
+    unsigned int min_idx = getNumBonds();
+    for (unsigned int i = rdcast<unsigned int>(delBonds.size()); i > 0; --i) {
+        if( !delBonds[i-1] )
+            continue;
+        unsigned int idx = rdcast<unsigned int>(i-1);
+        Bond *bnd = getBondWithIdx(idx);
+        if(!bnd) {
+            continue;
+        }
+        
+        min_idx = idx;
+        // remove any bookmarks which point to this bond:
+        BOND_BOOKMARK_MAP *marks = getBondBookmarks();
+        auto markI = marks->begin();
+        while (markI != marks->end()) {
+            BOND_PTR_LIST &bonds = markI->second;
+            // we need to copy the iterator then increment it, because the
+            // deletion we're going to do in clearBondBookmark will invalidate
+            // it.
+            auto tmpI = markI;
+            ++markI;
+            if (std::find(bonds.begin(), bonds.end(), bnd) != bonds.end()) {
+                clearBondBookmark(tmpI->first, bnd);
+            }
+        }
+
+        // loop over neighboring double bonds and remove their stereo atom
+        //  information. This is definitely now invalid (was github issue 8)
+        auto beginAtm = bnd->getBeginAtom();
+        auto endAtm = bnd->getEndAtom();
+        std::vector<std::vector<Atom*>> bond_atoms = {{beginAtm, endAtm}, {endAtm, beginAtm}};
+        for(auto atoms : bond_atoms) {
+          for(auto obnd : atomBonds(atoms[0])) {
+            if(obnd == bnd) {
+              continue;
+            }
+            if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
+                  atoms[1]->getIdx()) != obnd->getStereoAtoms().end()) {
+              // github #6900 if we remove stereo atoms we need to remove
+              //  the CIS and or TRANS since this requires stereo atoms
+              if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
+              obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
+		obnd->setStereo(Bond::BondStereo::STEREONONE);
+              }
+              obnd->getStereoAtoms().clear();
+            }
+          }
+        }
+        
+        removeSubstanceGroupsReferencingBond(*this, idx);
+        
+        bnd->setOwningMol(nullptr);
+        
+        MolGraph::vertex_descriptor vd1 = boost::vertex(bnd->getBeginAtomIdx(), d_graph);
+        MolGraph::vertex_descriptor vd2 = boost::vertex(bnd->getEndAtomIdx(), d_graph);
+        boost::remove_edge(vd1, vd2, d_graph);
+        delete bnd;
+        --numBonds;
+    }
+    
+    // loop over all bonds with higher indices than the minimum modified and update their indices
+    ROMol::EDGE_ITER firstB, lastB;
+    boost::tie(firstB, lastB) = this->getEdges();
+    unsigned int next_idx = min_idx;
+    while (firstB != lastB) {
+        Bond *bond = (*this)[*firstB];
+        if (bond->getIdx() > min_idx) {
+            bond->setIdx(next_idx++);
+        }
+        ++firstB;
+    }
+}
+
+void RWMol::batchRemoveAtoms() {
+    if(!dp_delAtoms) {
+        return;
+    }
+    std::vector<Atom*> oldIndices(getNumAtoms());
+    for(auto *atom: atoms()) {
+        oldIndices[atom->getIdx()] = atom;
+    }
+    
+    auto &delAtoms = *dp_delAtoms;
+    for (unsigned int i = rdcast<unsigned int>(delAtoms.size()); i > 0; --i) {
+        if( !delAtoms[i-1] )
+            continue;
+        unsigned int idx = i-1;
+        Atom * atom = getAtomWithIdx(idx);
+        if (!atom)
+            continue;
+        
+        // remove any bookmarks which point to this atom:
+        ATOM_BOOKMARK_MAP *marks = getAtomBookmarks();
+        auto markI = marks->begin();
+        while (markI != marks->end()) {
+            const ATOM_PTR_LIST &atoms = markI->second;
+            // we need to copy the iterator then increment it, because the
+            // deletion we're going to do in clearAtomBookmark will invalidate
+            // it.
+            auto tmpI = markI;
+            ++markI;
+            if (std::find(atoms.begin(), atoms.end(), atom) != atoms.end()) {
+                clearAtomBookmark(tmpI->first, atom);
+            }
+        }
+        
+        // now deal with bonds:
+        //   their end indices may need to be decremented and their
+        //   indices will need to be handled and if they have an
+        //   ENDPTS prop that includes idx, it will need updating.
+        EDGE_ITER beg, end;
+        boost::tie(beg, end) = getEdges();
+        std::string sprop;
+        while (beg != end) {
+            Bond *bond = d_graph[*beg++];
+            if (bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
+                                       sprop)) {
+                // This would ideally use ParseV3000Array but I'm buggered if I can get
+                // the linker to find it.
+                //      std::vector<unsigned int> oats =
+                //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(sprop);
+                if ('(' == sprop.front() && ')' == sprop.back()) {
+                    sprop = sprop.substr(1, sprop.length() - 2);
+                    
+                    // This is doing what ParseV3000Array would do.
+                    boost::char_separator<char> sep(" ");
+                    boost::tokenizer<boost::char_separator<char>> tokens(sprop, sep);
+                    unsigned int num_ats = std::stod(*tokens.begin());
+                    std::vector<unsigned int> oats;
+                    auto beg = tokens.begin();
+                    ++beg;
+                    std::transform(beg, tokens.end(), std::back_inserter(oats),
+                                   [](const std::string &a) { return std::stod(a); });
+                    
+                    auto idx_pos = std::find(oats.begin(), oats.end(), idx + 1);
+                    if (idx_pos != oats.end()) {
+                        oats.erase(idx_pos);
+                        --num_ats;
+                    }
+                    if (!num_ats) {
+                        bond->clearProp(RDKit::common_properties::_MolFileBondEndPts);
+                        bond->clearProp(common_properties::_MolFileBondAttach);
+                    } else {
+                        sprop = "(" + std::to_string(num_ats) + " ";
+                        for (auto &i : oats) {
+                            if (i > idx + 1) {
+                                --i;
+                            }
+                            sprop += std::to_string(i) + " ";
+                        }
+                        sprop[sprop.length() - 1] = ')';
+                        bond->setProp(RDKit::common_properties::_MolFileBondEndPts, sprop);
+                    }
+                }
+            }
+        }
+        
+        removeSubstanceGroupsReferencingAtom(*this, idx);
+        
+        // Remove this atom from any stereo group
+        removeAtomFromGroups(atom, d_stereo_groups);
+        atom->setOwningMol(nullptr);
+        
+        // remove all connections to the atom:
+        MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
+        boost::clear_vertex(vd, d_graph);
+        // finally remove the vertex itself
+        boost::remove_vertex(vd, d_graph);
+        delete atom;
+        oldIndices[idx] = nullptr;
+    }
+    
+    // reassign atom indices
+    for (unsigned int i = 0; i < getNumAtoms(); i++) {
+        Atom *atm = getAtomWithIdx(i);
+        atm->setIdx(i);
+    }
+    
+    // reassign atom indices in bonds
+    for(auto bond: bonds()) {
+        auto bgnidx = bond->getBeginAtomIdx();
+        auto endidx = bond->getEndAtomIdx();
+        Atom *bgn = oldIndices[bgnidx];
+        Atom *end = oldIndices[endidx];
+        CHECK_INVARIANT(bgn, "Atom mapping failed");
+        CHECK_INVARIANT(end, "Atom mapping failed");
+        bond->setBeginAtomIdx(bgn->getIdx());
+        bond->setEndAtomIdx(end->getIdx());
+        INT_VECT stereoAtoms;
+        INT_VECT &oldStereoAtoms = bond->getStereoAtoms();
+        if(oldStereoAtoms.size()) {
+            for(auto &idx: oldStereoAtoms) {
+                if(oldIndices[idx]) {
+                    stereoAtoms.push_back(oldIndices[idx]->getIdx());
+                }
+            }
+            bond->getStereoAtoms().swap(stereoAtoms);
+        }
+    }
+    
+    // do the same with the coordinates in the conformations
+    for (auto conf : d_confs) {
+        RDGeom::POINT3D_VECT &positions = conf->getPositions();
+        RDGeom::POINT3D_VECT newPositions;
+        newPositions.reserve(getNumAtoms());
+        
+        for(RDGeom::POINT3D_VECT::size_type i=0; i< positions.size(); ++i) {
+            if(oldIndices[i] != nullptr) {
+                newPositions.push_back(positions[i]);
+            }
+        }
+        CHECK_INVARIANT(newPositions.size() == getNumAtoms(), "Lost coordinates!");
+        positions.swap(newPositions);
+    }
 }
 
 }  // namespace RDKit

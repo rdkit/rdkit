@@ -175,6 +175,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string molAtomSeqId;       // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnExactChange;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molReactStatus;     // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molFileLinkNodes;   // string
+RDKIT_RDGENERAL_EXPORT extern const std::string _fromAttachPoint;   // int
 
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileChiralFlag;  // int
