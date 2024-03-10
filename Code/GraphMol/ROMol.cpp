@@ -33,9 +33,9 @@ namespace RDKit {
 class QueryAtom;
 class QueryBond;
 
-constexpr int ci_RIGHTMOST_ATOM = -0xBADBEEF;
-constexpr int ci_LEADING_BOND = -0xBADBEEF + 1;
-constexpr int ci_ATOM_HOLDER = -0xDEADD06;
+const int ci_RIGHTMOST_ATOM = -0xBADBEEF;
+const int ci_LEADING_BOND = -0xBADBEEF + 1;
+const int ci_ATOM_HOLDER = -0xDEADD06;
 
 void ROMol::destroy() {
   d_atomBookmarks.clear();
