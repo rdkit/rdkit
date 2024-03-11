@@ -355,7 +355,7 @@ ForceFields::ForceField *construct3DForceField(
         fdist = etkdgDetails.boundsMatForceScaling * 10.0;
         double l = mmat.getLowerBound(i, j);
         double u = mmat.getUpperBound(i, j);
-        if (etkdgDetails.constrainedAtoms.size() &&
+        if (!etkdgDetails.constrainedAtoms.empty() &&
             etkdgDetails.constrainedAtoms[i] &&
             etkdgDetails.constrainedAtoms[j]) {
           // we're constrained, so use very tight bounds
