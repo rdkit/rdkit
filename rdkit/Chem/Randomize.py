@@ -23,7 +23,7 @@ def RandomizeMolBlock(molblock):
     atom_indices = [atom.GetIdx() for atom in mol.GetAtoms()]
     atom_indices_randomized = _shuffle(atom_indices)
     if len(atom_indices) > 1:
-        # Enforce randomization.
+        # Enforce different permutation of atom indices.
         while atom_indices_randomized == atom_indices:
             atom_indices_randomized = _shuffle(atom_indices)
 
