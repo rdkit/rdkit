@@ -20,6 +20,11 @@ def _shuffle(indices):
 
 def RandomizeMolBlock(molblock):
     mol = Chem.MolFromMolBlock(molblock, sanitize=False, removeHs=False)
+
+    return Chem.MolToMolBlock(RandomizeMol(mol))
+
+
+def RandomizeMol(mol):
     atom_indices = [atom.GetIdx() for atom in mol.GetAtoms()]
     atom_indices_randomized = _shuffle(atom_indices)
     if len(atom_indices) > 1:
@@ -27,11 +32,4 @@ def RandomizeMolBlock(molblock):
         while atom_indices_randomized == atom_indices:
             atom_indices_randomized = _shuffle(atom_indices)
 
-    return Chem.MolToMolBlock(Chem.RenumberAtoms(mol, atom_indices_randomized))
-
-
-def RandomizeMol(mol):
-    molblock = Chem.MolToMolBlock(mol)
-    molblock_randomized = RandomizeMolBlock(molblock)
-
-    return Chem.MolFromMolBlock(molblock_randomized)
+    return Chem.RenumberAtoms(mol, atom_indices_randomized)
