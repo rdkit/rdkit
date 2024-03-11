@@ -12,13 +12,13 @@ import random
 from rdkit import Chem
 
 
-def _shuffle(indices: list[int]) -> list[int]:
+def _shuffle(indices):
     # Shuffle without in-place mutation.
     # See https://docs.python.org/3/library/random.html#random.shuffle.
     return random.sample(indices, len(indices))
 
 
-def RandomizeMolBlock(molblock: str) -> str:
+def RandomizeMolBlock(molblock):
     mol = Chem.MolFromMolBlock(molblock, sanitize=False, removeHs=False)
     atom_indices = [atom.GetIdx() for atom in mol.GetAtoms()]
     atom_indices_randomized = _shuffle(atom_indices)
@@ -30,7 +30,7 @@ def RandomizeMolBlock(molblock: str) -> str:
     return Chem.MolToMolBlock(Chem.RenumberAtoms(mol, atom_indices_randomized))
 
 
-def RandomizeMol(mol: Chem.Mol) -> Chem.Mol:
+def RandomizeMol(mol):
     molblock = Chem.MolToMolBlock(mol)
     molblock_randomized = RandomizeMolBlock(molblock)
 

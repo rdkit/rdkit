@@ -5,7 +5,7 @@ from rdkit.Chem import Randomize
 from rdkit import RDRandom as random
 
 
-def _get_bond_indices(mol: Chem.Mol) -> list[tuple[int, int]]:
+def _get_bond_indices(mol):
     return [(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()) for bond in mol.GetBonds()]
 
 
