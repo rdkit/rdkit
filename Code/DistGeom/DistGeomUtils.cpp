@@ -360,8 +360,9 @@ ForceFields::ForceField *construct3DForceField(
             etkdgDetails.constrainedAtoms[j]) {
           // we're constrained, so use very tight bounds
           l = u = ((*positions[i]) - (*positions[j])).length();
-          l -= 0.01;
-          u += 0.01;
+          constexpr double INCR = 0.01;
+          l -= INCR;
+          u += INCR;
           fdist = knownDistanceConstraintForce;
         }
         auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
