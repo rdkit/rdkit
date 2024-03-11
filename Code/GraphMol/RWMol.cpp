@@ -350,7 +350,7 @@ void RWMol::setActiveAtom(unsigned int idx) {
 
 void RWMol::removeAtom(unsigned int idx) { removeAtom(getAtomWithIdx(idx)); }
 
-void RWMol::removeAtom(Atom *atom) {
+void RWMol::removeAtom(Atom *atom, bool clearProps) {
   PRECONDITION(atom, "NULL atom provided");
   PRECONDITION(static_cast<RWMol *>(&atom->getOwningMol()) == this,
                "atom not owned by this molecule");
@@ -489,7 +489,9 @@ void RWMol::removeAtom(Atom *atom) {
 
   // clear computed properties and reset our ring info structure
   // they are pretty likely to be wrong now:
-  clearComputedProps(true);
+  if (clearProps) {
+    clearComputedProps(true);
+  }
 
   atom->setOwningMol(nullptr);
 
@@ -500,6 +502,8 @@ void RWMol::removeAtom(Atom *atom) {
   boost::remove_vertex(vd, d_graph);
   delete atom;
 }
+
+void RWMol::removeAtom(Atom *atom) { removeAtom(atom, true); }
 
 unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
                             Bond::BondType bondType) {
