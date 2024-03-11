@@ -8,64 +8,30 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+import random
 from rdkit import Chem
-from rdkit import RDRandom as random
 
 
-def RandomizeMolBlock(molB):
-  splitB = molB.split('\n')
-  res = []
-  res.extend(splitB[0:3])
-  idx = 3
-  inL = splitB[idx]
-  res.append(inL)
-  nAts = int(inL[0:3])
-  nBonds = int(inL[3:6])
-
-  idx += 1
-  atLines = splitB[idx:idx + nAts]
-
-  order = list(range(nAts))
-  random.shuffle(order, random=random.random)
-
-  for i in order:
-    res.append(atLines[i])
-
-  # print 'ORDER:',order
-  idx += nAts
-  for i in range(nBonds):
-    inL = splitB[idx]
-    idx1 = int(inL[0:3]) - 1
-    idx2 = int(inL[3:6]) - 1
-    idx1 = order.index(idx1)
-    idx2 = order.index(idx2)
-    inL = '% 3d% 3d' % (idx1 + 1, idx2 + 1) + inL[6:]
-    res.append(inL)
-    idx += 1
-  res.append('M  END')
-  return '\n'.join(res)
+def _shuffle(indices: list[int]) -> list[int]:
+    # Shuffle without in-place mutation.
+    # See https://docs.python.org/3/library/random.html#random.shuffle.
+    return random.sample(indices, len(indices))
 
 
-def RandomizeMol(mol):
-  mb = Chem.MolToMolBlock(mol)
-  # print '-----------------'
-  # print mb
-  mb = RandomizeMolBlock(mb)
-  # print mb
-  return Chem.MolFromMolBlock(mb)
+def RandomizeMolBlock(molblock: str) -> str:
+    mol = Chem.MolFromMolBlock(molblock, sanitize=False, removeHs=False)
+    atom_indices = [atom.GetIdx() for atom in mol.GetAtoms()]
+    atom_indices_randomized = _shuffle(atom_indices)
+    if len(atom_indices) > 1:
+        # Enforce randomization.
+        while atom_indices_randomized == atom_indices:
+            atom_indices_randomized = _shuffle(atom_indices)
+
+    return Chem.MolToMolBlock(Chem.RenumberAtoms(mol, atom_indices_randomized))
 
 
-def CheckCanonicalization(mol, nReps=10):
-  refSmi = Chem.MolToSmiles(mol, False)
-  for i in range(nReps):
-    m2 = RandomizeMol(mol)
-    smi = Chem.MolToSmiles(m2, False)
-    if smi != refSmi:
-      raise ValueError('\nRef: %s\n   : %s' % (refSmi, smi))
+def RandomizeMol(mol: Chem.Mol) -> Chem.Mol:
+    molblock = Chem.MolToMolBlock(mol)
+    molblock_randomized = RandomizeMolBlock(molblock)
 
-
-if __name__ == '__main__':
-  from rdkit.Chem import Randomize
-  CheckCanonicalization(Chem.MolFromSmiles('CON'))
-  CheckCanonicalization(Chem.MolFromSmiles('c1ccccn1'))
-  CheckCanonicalization(Chem.MolFromSmiles('C/C=C/F'))
+    return Chem.MolFromMolBlock(molblock_randomized)
