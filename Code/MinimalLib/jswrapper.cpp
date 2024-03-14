@@ -360,10 +360,26 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   class_<JSMol>("Mol")
       .function("is_valid", &JSMol::is_valid)
       .function("has_coords", &JSMol::has_coords)
-      .function("get_smiles", &JSMol::get_smiles)
-      .function("get_cxsmiles", &JSMol::get_cxsmiles)
-      .function("get_smarts", &JSMol::get_smarts)
-      .function("get_cxsmarts", &JSMol::get_cxsmarts)
+      .function("get_smiles",
+                select_overload<std::string() const>(&JSMol::get_smiles))
+      .function("get_smiles",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMol::get_smiles))
+      .function("get_cxsmiles",
+                select_overload<std::string() const>(&JSMol::get_cxsmiles))
+      .function("get_cxsmiles",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMol::get_cxsmiles))
+      .function("get_smarts",
+                select_overload<std::string() const>(&JSMol::get_smarts))
+      .function("get_smarts",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMol::get_smarts))
+      .function("get_cxsmarts",
+                select_overload<std::string() const>(&JSMol::get_cxsmarts))
+      .function("get_cxsmarts",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMol::get_cxsmarts))
       .function("get_molblock",
                 select_overload<std::string() const>(&JSMol::get_molblock))
       .function("get_molblock",

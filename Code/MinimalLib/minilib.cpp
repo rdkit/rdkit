@@ -86,17 +86,46 @@ std::string JSMol::get_smiles() const {
   assert(d_mol);
   return MolToSmiles(*d_mol);
 }
+std::string JSMol::get_smiles(const std::string &details) const {
+  assert(d_mol);
+  SmilesWriteParams params;
+  updateSmilesWriteParamsFromJSON(params, details);
+  return MolToCXSmiles(*d_mol, params);
+}
 std::string JSMol::get_cxsmiles() const {
   assert(d_mol);
   return MolToCXSmiles(*d_mol);
+}
+std::string JSMol::get_cxsmiles(const std::string &details) const {
+  assert(d_mol);
+  SmilesWriteParams params;
+  updateSmilesWriteParamsFromJSON(params, details);
+  SmilesWrite::CXSmilesFields cxSmilesFields =
+      SmilesWrite::CXSmilesFields::CX_ALL;
+  RestoreBondDirOption restoreBondDirs = RestoreBondDirOptionClear;
+  updateCXSmilesFieldsAndRestoreBondDirOptionFromJSON(cxSmilesFields,
+                                                      restoreBondDirs, details);
+  return MolToCXSmiles(*d_mol, params, cxSmilesFields, restoreBondDirs);
 }
 std::string JSMol::get_smarts() const {
   assert(d_mol);
   return MolToSmarts(*d_mol);
 }
+std::string JSMol::get_smarts(const std::string &details) const {
+  assert(d_mol);
+  SmilesWriteParams params;
+  updateSmilesWriteParamsFromJSON(params, details);
+  return MolToSmarts(*d_mol, params.doIsomericSmiles, params.rootedAtAtom);
+}
 std::string JSMol::get_cxsmarts() const {
   assert(d_mol);
   return MolToCXSmarts(*d_mol);
+}
+std::string JSMol::get_cxsmarts(const std::string &details) const {
+  assert(d_mol);
+  SmilesWriteParams params;
+  updateSmilesWriteParamsFromJSON(params, details);
+  return MolToCXSmarts(*d_mol, params.doIsomericSmiles);
 }
 std::string JSMol::get_svg(int w, int h) const {
   assert(d_mol);

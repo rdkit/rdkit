@@ -35,6 +35,8 @@ RDKIT_RDKITCFFI_EXPORT char *get_smarts(const char *pkl, size_t pkl_sz,
                                         const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_cxsmiles(const char *pkl, size_t pkl_sz,
                                           const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_cxsmarts(const char *pkl, size_t pkl_sz,
+                                          const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_json(const char *pkl, size_t pkl_sz,
                                       const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_inchi(const char *pkl, size_t pkl_sz,
