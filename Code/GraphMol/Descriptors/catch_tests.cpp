@@ -548,3 +548,38 @@ TEST_CASE("Oxidation numbers") {
     }
   }
 }
+
+
+TEST_CASE("Topological Steric Effect Index") {
+  SECTION("propane") {
+    auto m = "CCC"_smiles;
+    REQUIRE(m);
+    std::vector<double> expected{1.125, 2., 1.125};
+    auto res = Descriptors::calcTSEI(*m);
+    CHECK(res.size() == expected.size());
+    for(auto i = 0; i < res.size(); ++i) {
+      CHECK(expected[i] == Approx(res[i]).epsilon(0.0001));
+    }
+  }
+  SECTION("straight chain alkanes") {
+    std::vector<std::pair<std::string, double>> data = {
+        // table 1 from the paper
+        {"CC", 1.0000},
+        {"CCC", 1.1250},
+        {"CCCC", 1.1620},
+        {"CCCCC", 1.1777},
+        {"CCCCCC", 1.1857},
+        {"CCCCCCC", 1.1903},
+        {"CCCCCCCC", 1.1932},
+        {"CCCCCCCCC", 1.1952},
+        {"CCCCCCCCCC", 1.1965},
+        {"CCCCCCCCCCC", 1.1975}
+    };
+    for(auto molData : data) {
+      std::unique_ptr<ROMol> m(SmilesToMol(molData.first));
+      REQUIRE(m);
+      CHECK(molData.second == Approx(Descriptors::calcTSEI(*m).front()).epsilon(0.0001));
+    }
+
+  }
+}
