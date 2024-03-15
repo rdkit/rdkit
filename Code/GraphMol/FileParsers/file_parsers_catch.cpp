@@ -7025,3 +7025,34 @@ TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
     }
   };
 }
+
+TEST_CASE(
+    "GitHub Issue #7259: Writing StereoGroups to Mol files should break lines at 80 characters",
+    "[bug]") {
+  auto run_checks = [](const auto &mol) {
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 77);
+
+    const auto stgs = mol->getStereoGroups();
+    REQUIRE(stgs.size() == 1);
+    CHECK(stgs[0].getAtoms().size() == 35);
+  };
+
+  // Just some long chain with (a lot of) random up and down side branches
+  const auto m =
+      ("CC(C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H]"
+       "(C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@H]1C[C@@H]([C@H]"
+       "(C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)"
+       "[C@@H](C)[C@H](C)[C@@H](C)C(C)C)[C@@H](C)[C@H]1C |a:1,3,5,7,9,11,13,15,17,19,21,23,25,27,"
+       "29,31,33,35,39,41,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,73,75|"_smiles);
+  run_checks(m);
+
+  const auto mb = MolToMolBlock(*m);
+  const auto steAbsPos = mb.find("M  V30 MDLV30/STEABS ATOMS=(35 ");
+  REQUIRE(steAbsPos != std::string::npos);
+  const auto endOfLine = mb.find("\nM  V30 ", steAbsPos + 1);
+  REQUIRE(endOfLine != std::string::npos);
+  CHECK(mb[endOfLine - 1] == '-');
+
+  run_checks(v2::FileParsers::MolFromMolBlock(mb));
+}
