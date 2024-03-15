@@ -323,7 +323,7 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
 
   for (auto bptr : mol->bonds()) {
     bptr->setBondType(Bond::SINGLE);
-    bptr->setIsAromatic(false); // clear aromatic flags
+    bptr->setIsAromatic(false);  // clear aromatic flags
   }
   MolOps::assignRadicals(*mol);
 
@@ -1206,6 +1206,9 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles,
       break;
     case HashFunction::HetAtomProtomer:
       result = TautomerHash(mol, true, useCXSmiles, cxFlagsToSkip);
+      break;
+    case HashFunction::HetAtomProtomerv2:
+      result = TautomerHashv2(mol, true, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::MolFormula:
       result = NMMolecularFormula(mol);

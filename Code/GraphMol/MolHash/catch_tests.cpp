@@ -782,7 +782,7 @@ TEST_CASE("Github Issue #6472 non-matching element and anononymous graph") {
       CHECK(hsh == "*1***(*2****2)**1");
     }
   }
-   SECTION("Anonymous graph test 2") {
+  SECTION("Anonymous graph test 2") {
     auto mol = "C1CC(N=CN1)C1=CC=CO1"_smiles;
     REQUIRE(mol);
 
@@ -794,3 +794,41 @@ TEST_CASE("Github Issue #6472 non-matching element and anononymous graph") {
   }
 }
 
+TEST_CASE("HetAtomProtomerv2") {
+  SECTION("matches") {
+    // pairs of {molecules with the same hash} {molecules with different hashes
+    // from those}
+    std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>>
+        data = {
+            // example from the NextMove documentation
+            {{"Cc1c[nH]cn1", "Cc1cnc[nH]1", "Cc1c[nH]c[nH+]1"}, {}},
+            {{"CC=CO", "CCC=O"}, {"C=CCO"}},
+
+        };
+    for (const auto &[same, diff] : data) {
+      std::unique_ptr<RWMol> m{SmilesToMol(same[0])};
+      REQUIRE(m);
+      RWMol cp(*m);
+      auto ref =
+          MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomProtomerv2);
+      for (auto i = 1u; i < same.size(); ++i) {
+        INFO(same[0] + "->" + same[i]);
+        std::unique_ptr<RWMol> m2{SmilesToMol(same[i])};
+        REQUIRE(m2);
+        RWMol cp(*m2);
+        auto hsh =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomProtomerv2);
+        CHECK(hsh == ref);
+      }
+      for (auto i = 0u; i < diff.size(); ++i) {
+        INFO(same[0] + "->" + diff[i]);
+        std::unique_ptr<RWMol> m2{SmilesToMol(diff[i])};
+        REQUIRE(m2);
+        RWMol cp(*m2);
+        auto hsh =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomProtomerv2);
+        CHECK(hsh != ref);
+      }
+    }
+  }
+}

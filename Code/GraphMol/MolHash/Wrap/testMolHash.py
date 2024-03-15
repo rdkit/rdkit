@@ -47,6 +47,16 @@ class TestCase(unittest.TestCase):
     self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomTautomerv2),
                      "[CH3]-[C]:[C]:[O]_3_0")
 
+  def testProtomerV2(self):
+    m = Chem.MolFromSmiles('CCC=O')
+    self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomProtomer), "CC[CH][O]_0")
+    self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomProtomerv2),
+                     "[CH3]-[C]:[C]:[O]_3")
+    m = Chem.MolFromSmiles('CC=CO')
+    self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomProtomer), "C[CH][CH][O]_1")
+    self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomProtomerv2),
+                     "[CH3]-[C]:[C]:[O]_3")
+
   def testCxSmiles(self):
     m = Chem.MolFromSmiles(
       'C[C@@H](O)[C@@H](C)[C@@H](C)C[C@H](C1=CN=CN1)C1=CNC=N1 |o1:8,5,&1:1,3,r,c:11,18,t:9,15|')
