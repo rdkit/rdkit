@@ -1097,7 +1097,8 @@ void appendEnhancedStereoGroups(
         }
         tmp += idxStr;
       }
-      tmp += ")\n";
+      res += tmp + ")\n";
+      tmp.clear();
     }
     res += tmp + "M  V30 END COLLECTION\n";
   }
