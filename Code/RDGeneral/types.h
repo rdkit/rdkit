@@ -191,6 +191,10 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _MolFileBondCfg;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string
     MRV_SMA;  // smarts string from Marvin
+
+// flag indicating that the chirality wasn't specified in the input,
+// but was calculated from 3D coordinates in the input
+RDKIT_RDGENERAL_EXPORT extern const std::string _NonExplicit3DChirality;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;  // atom string
 
 RDKIT_RDGENERAL_EXPORT extern const std::string
