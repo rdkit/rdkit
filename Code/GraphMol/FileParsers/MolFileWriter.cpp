@@ -1063,37 +1063,46 @@ void appendEnhancedStereoGroups(
     auto stereo_groups = tmol.getStereoGroups();
     assignStereoGroupIds(stereo_groups);
     res += "M  V30 BEGIN COLLECTION\n";
+    std::string tmp;
     for (auto &&group : stereo_groups) {
-      res += "M  V30 MDLV30/";
+      tmp += "M  V30 MDLV30/";
       switch (group.getGroupType()) {
         case RDKit::StereoGroupType::STEREO_ABSOLUTE:
-          res += "STEABS";
+          tmp += "STEABS";
           break;
         case RDKit::StereoGroupType::STEREO_OR:
-          res += "STEREL";
-          res += std::to_string(group.getWriteId());
+          tmp += "STEREL";
+          tmp += std::to_string(group.getWriteId());
           break;
         case RDKit::StereoGroupType::STEREO_AND:
-          res += "STERAC";
-          res += std::to_string(group.getWriteId());
+          tmp += "STERAC";
+          tmp += std::to_string(group.getWriteId());
           break;
       }
-      res += " ATOMS=(";
+      tmp += " ATOMS=(";
 
       std::vector<unsigned int> atomIds;
       Atropisomers::getAllAtomIdsForStereoGroup(tmol, group, atomIds,
                                                 wedgeBonds);
 
-      res += std::to_string(atomIds.size());
+      tmp += std::to_string(atomIds.size());
+      auto lineSz = tmp.size();
       for (auto &&atom : atomIds) {
-        res += ' ';
+        tmp += ' ';
+        ++lineSz;
         // atoms are 1 indexed in molfiles
-        res += std::to_string(atom + 1);
+        auto idxStr = std::to_string(atom + 1);
+        if (lineSz + idxStr.size() >= 78) {
+          tmp += "-\nM  V30 ";
+          lineSz = 7;  // M  V30
+        }
+        tmp += idxStr;
+        lineSz += idxStr.size();
       }
 
-      res += ")\n";
+      tmp += ")\n";
     }
-    res += "M  V30 END COLLECTION\n";
+    res += tmp + "M  V30 END COLLECTION\n";
   }
 }
 namespace FileParserUtils {
