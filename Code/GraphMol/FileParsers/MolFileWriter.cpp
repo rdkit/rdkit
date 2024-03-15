@@ -1064,6 +1064,7 @@ void appendEnhancedStereoGroups(
     assignStereoGroupIds(stereo_groups);
     res += "M  V30 BEGIN COLLECTION\n";
     std::string tmp;
+    tmp.reserve(80);
     for (auto &&group : stereo_groups) {
       tmp += "M  V30 MDLV30/";
       switch (group.getGroupType()) {
@@ -1086,20 +1087,16 @@ void appendEnhancedStereoGroups(
                                                 wedgeBonds);
 
       tmp += std::to_string(atomIds.size());
-      auto lineSz = tmp.size();
       for (auto &&atom : atomIds) {
         tmp += ' ';
-        ++lineSz;
         // atoms are 1 indexed in molfiles
         auto idxStr = std::to_string(atom + 1);
-        if (lineSz + idxStr.size() >= 78) {
-          tmp += "-\nM  V30 ";
-          lineSz = 7;  // M  V30
+        if (tmp.size() + idxStr.size() >= 78) {
+          res += tmp + "-\n";
+          tmp = "M  V30 ";
         }
         tmp += idxStr;
-        lineSz += idxStr.size();
       }
-
       tmp += ")\n";
     }
     res += tmp + "M  V30 END COLLECTION\n";
