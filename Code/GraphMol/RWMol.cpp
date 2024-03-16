@@ -718,10 +718,8 @@ void RWMol::batchRemoveBonds() {
 
     bnd->setOwningMol(nullptr);
 
-    MolGraph::vertex_descriptor vd1 =
-        boost::vertex(bnd->getBeginAtomIdx(), d_graph);
-    MolGraph::vertex_descriptor vd2 =
-        boost::vertex(bnd->getEndAtomIdx(), d_graph);
+    auto vd1 = boost::vertex(bnd->getBeginAtomIdx(), d_graph);
+    auto vd2 = boost::vertex(bnd->getEndAtomIdx(), d_graph);
     boost::remove_edge(vd1, vd2, d_graph);
     delete bnd;
     --numBonds;
@@ -729,8 +727,7 @@ void RWMol::batchRemoveBonds() {
 
   // loop over all bonds with higher indices than the minimum modified and
   // update their indices
-  ROMol::EDGE_ITER firstB, lastB;
-  boost::tie(firstB, lastB) = this->getEdges();
+  auto [firstB, lastB] = this->getEdges();
   unsigned int next_idx = min_idx;
   while (firstB != lastB) {
     Bond *bond = (*this)[*firstB];
