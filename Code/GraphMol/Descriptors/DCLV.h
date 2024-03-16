@@ -12,17 +12,26 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/export.h>
 
-#define maxDepth 8
-#define maxDensity 1000
-
-#define HetAtmFlag 0x01
-#define WaterFlag 0x10
-
 namespace RDKit {
 namespace Descriptors {
 
 class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
  public:
+  /*!
+
+    \param mol: input molecule or protein
+    \param isProtein: flag to identify input as protein vs unbound ligand
+    (default=true, Protein as input)
+    \param includeLigand: flag to trigger
+    inclusion of bound ligand in surface area and volume calculations where
+    molecule is a protein [default false]
+    \param probeRadius: radius of the
+    sphere representing the probe solvent atom
+    \param depth: controls the number
+    of dots per atom
+    \param dotDensity: controls density of dots per atom
+
+  */
   DoubleCubicLatticeVolume(const ROMol* mol, bool isProtein = true,
                            bool includeLigand = false, double probeRadius = 1.4,
                            int depth = 2, int dotDensity = 0);
@@ -34,19 +43,6 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   //! to Numerical Integration of Surface Area and Volume and to Dot Surface
   //! Contouring of Molecular Assemblies", Journal of Computational Chemistry,
   //! Vol. 16, No. 3, pp. 273-284, 1995.
-
-  /*!
-
-    \param mol: input molecule or protein
-    \param isProtein: flag to identify input as protein vs unbound ligand
-    (default=true, Protein as input) \param includeLigand: flag to trigger
-    inclusion of bound ligand in surface area and volume calculations where
-    molecule is a protein [default false] \param probeRadius: radius of the
-    sphere representing the probe solvent atom \param depth: controls the number
-    of dots per atom \param dotDensity: controls density of dots per atom
-    \return class
-    object
-  */
 
   // value returns
   double getSurfaceArea() {

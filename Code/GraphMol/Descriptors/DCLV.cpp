@@ -15,14 +15,19 @@
 
 #include "DCLV.h"
 
-#define VOXORDER 16
-#define CHECKMAX 20
-#define ATOMPOOL 16
-#define HetAtmFlag 0x01
-#define WaterFlag 0x10
+using RDGeom::Point3D;
 
 namespace RDKit {
 namespace Descriptors {
+
+constexpr int VOXORDER = 16;
+constexpr int CHECKMAX = 20;
+constexpr int ATOMPOOL = 16;
+constexpr int maxDepth = 8;
+constexpr int maxDensity = 1000;
+
+constexpr unsigned int HetAtmFlag = 0x01;
+constexpr unsigned int WaterFlag = 0x10;
 
 struct CheckType {
   const char* name;
@@ -53,7 +58,7 @@ static const CheckType residueCheck[CHECKMAX] = {
 };
 
 struct DotStruct {
-  double v[3];
+  Point3D v;
   double area;
 };
 
@@ -70,7 +75,7 @@ class AtomRecord {
   unsigned short atmSerNo;
   unsigned short resSerNo;
   float bFactor;
-  float x, y, z;
+  Point3D pos;
   std::string atmName;
   std::string resName;
   std::string insert;
@@ -128,9 +133,7 @@ class AtomRecord {
 
       atmSerNo = ((AtomPDBResidueInfo*)info)->getSerialNumber();
       resSerNo = ((AtomPDBResidueInfo*)info)->getResidueNumber();
-      x = cnf.getAtomPos(atm->getIdx()).x;
-      y = cnf.getAtomPos(atm->getIdx()).y;
-      z = cnf.getAtomPos(atm->getIdx()).z;
+      pos = cnf.getAtomPos(atm->getIdx());
       insert = ((AtomPDBResidueInfo*)info)->getInsertionCode();
       chain = ((AtomPDBResidueInfo*)info)->getChainId();
 
@@ -151,9 +154,7 @@ class AtomRecord {
 
       atmSerNo = 1 + atm->getIdx();
       resSerNo = 0;
-      x = cnf.getAtomPos(atm->getIdx()).x;
-      y = cnf.getAtomPos(atm->getIdx()).y;
-      z = cnf.getAtomPos(atm->getIdx()).z;
+      pos = cnf.getAtomPos(atm->getIdx());
       hetAtmFlag = 1;
     }
   }
@@ -174,29 +175,16 @@ static void normalise(double* v) {
   v[2] /= len;
 }
 
-static double triangleArea(const double* p, const double* q, const double* r) {
-  double a[3], b[3], c[3];
-
-  a[0] = q[0] - p[0];
-  b[0] = r[0] - p[0];
-  a[1] = q[1] - p[1];
-  b[1] = r[1] - p[1];
-  a[2] = q[2] - p[2];
-  b[2] = r[2] - p[2];
-
-  c[0] = a[1] * b[2] - b[1] * a[2];
-  c[1] = a[2] * b[0] - b[2] * a[0];
-  c[2] = a[0] * b[1] - b[0] * a[1];
-
-  double len = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-  return (0.5 * len);
+static double triangleArea(const Point3D& p, const Point3D& q,
+                           const Point3D& r) {
+  auto a = q - p;
+  auto b = r - p;
+  auto c = a.crossProduct(b);
+  return (0.5 * c.length());
 }
 
 static int within(const AtomRecord& src, const AtomRecord* dst, double dist) {
-  double dx = src.x - dst->x;
-  double dy = src.y - dst->y;
-  double dz = src.z - dst->z;
-  return ((dx * dx + dy * dy + dz * dz) < (dist * dist));
+  return (src.pos - dst->pos).lengthSq() < dist * dist;
 }
 
 static void checkResidue(const AtomRecord* ptr, unsigned int count) {
@@ -253,24 +241,17 @@ struct State {
   double cenY;
   double cenZ;
 
-  void tesselate(const double* p, const double* q, const double* r,
+  void tesselate(const Point3D& p, const Point3D& q, const Point3D& r,
                  unsigned int d) {
-    double u[3], v[3], w[3];
-    double* n;
+    Point3D u, v, w;
 
     if (d--) {
-      u[0] = p[0] + q[0];
-      v[0] = q[0] + r[0];
-      w[0] = r[0] + p[0];
-      u[1] = p[1] + q[1];
-      v[1] = q[1] + r[1];
-      w[1] = r[1] + p[1];
-      u[2] = p[2] + q[2];
-      v[2] = q[2] + r[2];
-      w[2] = r[2] + p[2];
-      normalise(u);
-      normalise(v);
-      normalise(w);
+      u = p + q;
+      v = q + r;
+      w = r + p;
+      u.normalize();
+      v.normalize();
+      w.normalize();
 
       tesselate(u, v, w, d);
       tesselate(p, u, w, d);
@@ -279,13 +260,11 @@ struct State {
     } else {
       double area = triangleArea(p, q, r);
       standardDots.dots[standardDots.count].area = area;
-      n = standardDots.dots[standardDots.count++].v;
       standardArea += area;
+      auto& n = standardDots.dots[standardDots.count++].v;
 
-      n[0] = p[0] + q[0] + r[0];
-      n[1] = p[1] + q[1] + r[1];
-      n[2] = p[2] + q[2] + r[2];
-      normalise(n);
+      n = p + q + r;
+      n.normalize();
     }
   }
 
@@ -320,9 +299,9 @@ struct State {
           x = xy * sin(q);
           y = xy * cos(q);
 
-          dots[i].v[0] = rad * x;
-          dots[i].v[1] = rad * y;
-          dots[i].v[2] = rad * z;
+          dots[i].v.x = rad * x;
+          dots[i].v.y = rad * y;
+          dots[i].v.z = rad * z;
           i++;
         }
       }
@@ -403,28 +382,28 @@ struct State {
     double maxRadius = 1.87;
     double maxDist = range + maxRadius;
 
-    int lx = voxX * (atom.x - maxDist - voxU);
+    int lx = voxX * (atom.pos.x - maxDist - voxU);
     if (lx < 0) {
       lx = 0;
     }
-    int ly = voxY * (atom.y - maxDist - voxV);
+    int ly = voxY * (atom.pos.y - maxDist - voxV);
     if (ly < 0) {
       ly = 0;
     }
-    int lz = voxZ * (atom.z - maxDist - voxW);
+    int lz = voxZ * (atom.pos.z - maxDist - voxW);
     if (lz < 0) {
       lz = 0;
     }
 
-    int ux = voxX * (atom.x + maxDist - voxU);
+    int ux = voxX * (atom.pos.x + maxDist - voxU);
     if (ux >= VOXORDER) {
       ux = VOXORDER - 1;
     }
-    int uy = voxY * (atom.y + maxDist - voxV);
+    int uy = voxY * (atom.pos.y + maxDist - voxV);
     if (uy >= VOXORDER) {
       uy = VOXORDER - 1;
     }
-    int uz = voxZ * (atom.z + maxDist - voxW);
+    int uz = voxZ * (atom.pos.z + maxDist - voxW);
     if (uz >= VOXORDER) {
       uz = VOXORDER - 1;
     }
@@ -454,9 +433,9 @@ struct State {
   bool testPoint(double* vect, double solvrad) {
     if (recordCache) {
       double dist = recordCache->radius + solvrad;
-      double dx = recordCache->x - vect[0];
-      double dy = recordCache->y - vect[1];
-      double dz = recordCache->z - vect[2];
+      double dx = recordCache->pos.x - vect[0];
+      double dy = recordCache->pos.y - vect[1];
+      double dz = recordCache->pos.z - vect[2];
       if ((dx * dx + dy * dy + dz * dz) < (dist * dist)) {
         return false;
       }
@@ -467,9 +446,9 @@ struct State {
       for (unsigned int i = 0; i < list->count; i++) {
         const AtomRecord* ptr = list->ptr[i];
         double dist = ptr->radius + solvrad;
-        double dx = ptr->x - vect[0];
-        double dy = ptr->y - vect[1];
-        double dz = ptr->z - vect[2];
+        double dx = ptr->pos.x - vect[0];
+        double dy = ptr->pos.y - vect[1];
+        double dz = ptr->pos.z - vect[2];
 
         if ((dx * dx + dy * dy + dz * dz) < (dist * dist)) {
           recordCache = ptr;
@@ -487,9 +466,9 @@ struct State {
 
     cx = cy = cz = 0.0;
     for (const AtomRecord& atom : memberAtoms) {
-      cx += atom.x;
-      cy += atom.y;
-      cz += atom.z;
+      cx += atom.pos.x;
+      cy += atom.pos.y;
+      cz += atom.pos.z;
     }
 
     unsigned int atomCount = memberAtoms.size();
@@ -500,19 +479,18 @@ struct State {
 
   void generateStandardDots(int depth) {
     // Vertex co-ordinates of a unit icosahedron
-    static const double Vertices[12][3] = {
-        {0.00000000, -0.85065081, -0.52573111},
-        {-0.52573111, 0.00000000, -0.85065081},
-        {-0.85065081, -0.52573111, 0.00000000},
-        {0.00000000, -0.85065081, 0.52573111},
-        {0.52573111, 0.00000000, -0.85065081},
-        {-0.85065081, 0.52573111, 0.00000000},
-        {0.00000000, 0.85065081, -0.52573111},
-        {-0.52573111, 0.00000000, 0.85065081},
-        {0.85065081, -0.52573111, 0.00000000},
-        {0.00000000, 0.85065081, 0.52573111},
-        {0.52573111, 0.00000000, 0.85065081},
-        {0.85065081, 0.52573111, 0.00000000}};
+    static const Point3D Vertices[12] = {{0.00000000, -0.85065081, -0.52573111},
+                                         {-0.52573111, 0.00000000, -0.85065081},
+                                         {-0.85065081, -0.52573111, 0.00000000},
+                                         {0.00000000, -0.85065081, 0.52573111},
+                                         {0.52573111, 0.00000000, -0.85065081},
+                                         {-0.85065081, 0.52573111, 0.00000000},
+                                         {0.00000000, 0.85065081, -0.52573111},
+                                         {-0.52573111, 0.00000000, 0.85065081},
+                                         {0.85065081, -0.52573111, 0.00000000},
+                                         {0.00000000, 0.85065081, 0.52573111},
+                                         {0.52573111, 0.00000000, 0.85065081},
+                                         {0.85065081, 0.52573111, 0.00000000}};
 
     // Face list of a unit icosahedron
     static const int Faces[20][4] = {
@@ -531,8 +509,8 @@ struct State {
 
     standardArea = 0.0;
     for (unsigned int i = 0; i < 20; i++)
-      tesselate(&Vertices[Faces[i][0]][0], &Vertices[Faces[i][1]][0],
-                &Vertices[Faces[i][2]][0], depth);
+      tesselate(Vertices[Faces[i][0]], Vertices[Faces[i][1]],
+                Vertices[Faces[i][2]], depth);
   }
 
   void generateSurfacePoints(int depth, bool typeFlag, double probeRadius,
@@ -576,27 +554,27 @@ struct State {
     for (const AtomRecord& atom : memberAtoms) {
       if (!(atom.flag & mask)) {
         if (init) {
-          if (atom.x > maxx) {
-            maxx = atom.x;
-          } else if (atom.x < minx) {
-            minx = atom.x;
+          if (atom.pos.x > maxx) {
+            maxx = atom.pos.x;
+          } else if (atom.pos.x < minx) {
+            minx = atom.pos.x;
           }
 
-          if (atom.y > maxy) {
-            maxy = atom.y;
-          } else if (atom.y < miny) {
-            miny = atom.y;
+          if (atom.pos.y > maxy) {
+            maxy = atom.pos.y;
+          } else if (atom.pos.y < miny) {
+            miny = atom.pos.y;
           }
 
-          if (atom.z > maxz) {
-            maxz = atom.z;
-          } else if (atom.z < minz) {
-            minz = atom.z;
+          if (atom.pos.z > maxz) {
+            maxz = atom.pos.z;
+          } else if (atom.pos.z < minz) {
+            minz = atom.pos.z;
           }
         } else {
-          maxx = minx = atom.x;
-          maxy = miny = atom.y;
-          maxz = minz = atom.z;
+          maxx = minx = atom.pos.x;
+          maxy = miny = atom.pos.y;
+          maxz = minz = atom.pos.z;
           init = true;
         }
       }
@@ -615,9 +593,9 @@ struct State {
       if ((atom.flag & mask)) continue;
 
       // get grid positions and add to list
-      unsigned int x = voxX * (atom.x - voxU);
-      unsigned int y = voxY * (atom.y - voxV);
-      unsigned int z = voxZ * (atom.z - voxW);
+      unsigned int x = voxX * (atom.pos.x - voxU);
+      unsigned int y = voxY * (atom.pos.y - voxV);
+      unsigned int z = voxZ * (atom.pos.z - voxW);
       insertAtomList(&grid[x][y][z], &atom);
     }
   }
@@ -632,9 +610,9 @@ struct State {
 
     if (dotDensity) {
       for (const DotStruct& dot : atom.elem->dots) {
-        vect[0] = atom.x + dot.v[0];
-        vect[1] = atom.y + dot.v[1];
-        vect[2] = atom.z + dot.v[2];
+        vect[0] = atom.pos.x + dot.v.x;
+        vect[1] = atom.pos.y + dot.v.y;
+        vect[2] = atom.pos.z + dot.v.z;
         if (testPoint(vect, solvrad)) {
           surfacearea += dot.area;
         }
@@ -642,9 +620,9 @@ struct State {
     } else {
       double factor = atom.elem->radius + solvrad;
       for (const DotStruct& dot : atom.elem->dots) {
-        vect[0] = atom.x + factor * dot.v[0];
-        vect[1] = atom.y + factor * dot.v[1];
-        vect[2] = atom.z + factor * dot.v[2];
+        vect[0] = atom.pos.x + factor * dot.v.x;
+        vect[1] = atom.pos.y + factor * dot.v.y;
+        vect[2] = atom.pos.z + factor * dot.v.z;
         if (testPoint(vect, solvrad)) {
           surfacearea += dot.area;
         }
@@ -757,21 +735,21 @@ struct State {
 
     double vect[3];
     for (const DotStruct& dot : atom.elem->dots) {
-      vect[0] = atom.x + rad * dot.v[0];
-      vect[1] = atom.y + rad * dot.v[1];
-      vect[2] = atom.z + rad * dot.v[2];
+      vect[0] = atom.pos.x + rad * dot.v.x;
+      vect[1] = atom.pos.y + rad * dot.v.y;
+      vect[2] = atom.pos.z + rad * dot.v.z;
       if (testPoint(vect, solvrad)) {
-        px += dot.v[0];
-        py += dot.v[1];
-        pz += dot.v[2];
+        px += dot.v.x;
+        py += dot.v.y;
+        pz += dot.v.z;
         count++;
       }
     }
     freeAtomList(neighbours);
 
     /* Calculate Volume with Gauss-Ostrogradskii Theorem */
-    double partialvol =
-        (atom.x - cenX) * px + (atom.y - cenY) * py + (atom.z - cenZ) * pz;
+    double partialvol = (atom.pos.x - cenX) * px + (atom.pos.y - cenY) * py +
+                        (atom.pos.z - cenZ) * pz;
     partialvol = rad * rad * (partialvol + rad * count);
 
     return partialvol;
