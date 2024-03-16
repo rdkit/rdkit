@@ -1087,8 +1087,9 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
     }
   }
 
-  if(decomposition.empty())
+  if(decomposition.empty()) {
     return nullptr;
+  }
 
   // When the rgroup decomposition splits a ring, it puts it in both
   //  rgroups, so remove these
