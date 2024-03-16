@@ -357,13 +357,13 @@ double hkAlphaHelper(const RDKit::ROMol &mol, python::object atomContribs) {
   return kappaHelper(RDKit::Descriptors::calcHallKierAlpha, mol, atomContribs);
 }
 
-[[deprecated(
-    "please use MorganGenerator")]] RDKit::SparseIntVect<std::uint32_t> *
-MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
-                        python::object invariants, python::object fromAtoms,
-                        bool useChirality, bool useBondTypes, bool useFeatures,
-                        bool useCounts, python::object bitInfo,
-                        bool includeRedundantEnvironments) {
+[[deprecated("please use MorganGenerator")]] RDKit::SparseIntVect<std::uint32_t>
+    *MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius,
+                             int nBits, python::object invariants,
+                             python::object fromAtoms, bool useChirality,
+                             bool useBondTypes, bool useFeatures,
+                             bool useCounts, python::object bitInfo,
+                             bool includeRedundantEnvironments) {
   RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
@@ -1654,45 +1654,40 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
+  docString =
+      R"DOC(ARGUMENTS:
+      "   - mol: molecule or protein under consideration
+      "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=False)
+      "   - probeRadius: radius of the solvent probe (default=1.4)
+      "   - depth: control of number of dots per atom (default=2)
+      "   - dotDensity: control of accuracy (default=0)
+      ")DOC";
   python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume>(
-      "DoubleCubicLatticeVolume", docString.c_str(),
-      python::init<const RDKit::ROMol*,
+      "DoubleCubicLatticeVolume",
+      "Class for the Double Cubic Lattice Volume method",
+      python::init<const RDKit::ROMol &,
                    python::optional<bool, bool, double, int, int>>(
           (python::args("self", "mol"), python::args("isProtein") = true,
            python::args("includeLigand") = false,
            python::args("probeRadius") = 1.4, python::args("depth") = 2,
-           python::args("dotDensity") = 0)))
+           python::args("dotDensity") = 0),
+          docString.c_str()))
       .def("GetSurfaceArea",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
-           "Get the Surface Area of the Molecule or Protein\n")
+           "Get the Surface Area of the Molecule or Protein")
       .def("GetVolume",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getVolume,
-           "Get the Total Volume of the Molecule or Protein\n")
+           "Get the Total Volume of the Molecule or Protein")
       .def("GetVDWVolume",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getVDWVolume,
-           "Get the van der Waals Volume of the Molecule or Protein\n")
+           "Get the van der Waals Volume of the Molecule or Protein")
       .def("GetCompactness",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getCompactness,
-           "Get the Compactness of the Protein\n")
+           "Get the Compactness of the Protein")
       .def("GetPackingDensity",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getPackingDensity,
-           "Get the PackingDensity of the Protein\n");
+           "Get the PackingDensity of the Protein");
 
-  docString =
-      "Class for the Double Cubic Lattice Volume method \n"
-      "ARGUMENTS:\n"
-      "   - mol: molecule or protein under consideration\n"
-      "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=False)\n "
-      "   - probeRadius: radius of the solvent probe (default=1.4)\n"
-      "   - depth: control of number of dots per atom (default=2)\n"
-      "   - dotDensity: control of accuracy (default-0)\n"
-      "METHODS:\n"
-      "   - getSurfaceArea(): returns calculated surface area\n"
-      "   - getVolume(): returns the volume enclosed by the probe solvent\n"
-      "   - getVDWVolume(): returns the van der Waals volume\n"
-      "   - getCompactness(): returns the compactness metric (protein only)\n"
-      "   - getPackingDensity(): returns the packing density metric\n"
-      "\n";
 #ifdef RDK_BUILD_DESCRIPTORS3D
   python::scope().attr("_CalcCoulombMat_version") =
       RDKit::Descriptors::CoulombMatVersion;
