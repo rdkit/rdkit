@@ -1559,7 +1559,8 @@ Molecule Hash Strings
     'SmallWorldIndexBR': rdkit.Chem.rdMolHash.HashFunction.SmallWorldIndexBR,
     'SmallWorldIndexBRL': rdkit.Chem.rdMolHash.HashFunction.SmallWorldIndexBRL,
     'ArthorSubstructureOrder': rdkit.Chem.rdMolHash.HashFunction.ArthorSubstructureOrder,
-    'HetAtomTautomerv2': rdkit.Chem.rdMolHash.HashFunction.HetAtomTautomerv2}
+    'HetAtomTautomerv2': rdkit.Chem.rdMolHash.HashFunction.HetAtomTautomerv2,
+    'HetAtomProtomerv2': rdkit.Chem.rdMolHash.HashFunction.HetAtomProtomerv2}
 
 .. testcode::
 
@@ -1588,6 +1589,7 @@ Molecule Hash Strings
    SmallWorldIndexBRL B25R2L10
    ArthorSubstructureOrder 00180019010012000600009b000000
    HetAtomTautomerv2 [CH3]-[CH](-[CH](-[OH])-[C]1:[C]:[C]:[C](:[O]):[C](:[O]):[C]:1)-[N](-[CH3])-[C](=[O])-[O]-[CH2]-[c]1:[cH]:[cH]:[cH]:[cH]:[cH]:1_5_0
+   HetAtomProtomerv2 [CH3]-[CH](-[CH](-[OH])-[C]1:[C]:[C]:[C](:[O]):[C](:[O]):[C]:1)-[N](-[CH3])-[C](=[O])-[O]-[CH2]-[c]1:[cH]:[cH]:[cH]:[cH]:[cH]:1_5
 
 .. testcode::
   
