@@ -32,7 +32,7 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
     \param dotDensity: controls density of dots per atom
 
   */
-  DoubleCubicLatticeVolume(const ROMol* mol, bool isProtein = true,
+  DoubleCubicLatticeVolume(const ROMol& mol, bool isProtein = true,
                            bool includeLigand = false, double probeRadius = 1.4,
                            int depth = 2, int dotDensity = 0);
   //! Class for calculation of the Shrake and Rupley surface area and volume

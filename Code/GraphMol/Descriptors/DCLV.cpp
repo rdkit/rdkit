@@ -117,8 +117,8 @@ class AtomRecord {
   };
 
   // constructor to populate record
-  AtomRecord(const Atom* atm, const Conformer cnf) {
-    const AtomMonomerInfo* info = atm->getMonomerInfo();
+  AtomRecord(const Atom& atm, const Conformer cnf) {
+    const AtomMonomerInfo* info = atm.getMonomerInfo();
     unsigned int i;
     solventFlag = false;
 
@@ -133,7 +133,7 @@ class AtomRecord {
 
       atmSerNo = ((AtomPDBResidueInfo*)info)->getSerialNumber();
       resSerNo = ((AtomPDBResidueInfo*)info)->getResidueNumber();
-      pos = cnf.getAtomPos(atm->getIdx());
+      pos = cnf.getAtomPos(atm.getIdx());
       insert = ((AtomPDBResidueInfo*)info)->getInsertionCode();
       chain = ((AtomPDBResidueInfo*)info)->getChainId();
 
@@ -144,7 +144,7 @@ class AtomRecord {
         }
       }
     } else {  // Molecule not from PDB (Ligand only)
-      atmName = " " + atm->getSymbol();
+      atmName = " " + atm.getSymbol();
       resName = "UNK";
 
       if (isSolvent()) {
@@ -152,9 +152,9 @@ class AtomRecord {
         return;
       }
 
-      atmSerNo = 1 + atm->getIdx();
+      atmSerNo = 1 + atm.getIdx();
       resSerNo = 0;
-      pos = cnf.getAtomPos(atm->getIdx());
+      pos = cnf.getAtomPos(atm.getIdx());
       hetAtmFlag = 1;
     }
   }
@@ -768,7 +768,7 @@ struct State {
 };
 
 // constructor definition
-DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol* mol,
+DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol& mol,
                                                    bool isProtein,
                                                    bool includeLigand,
                                                    double probeRadius,
@@ -818,17 +818,17 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol* mol,
     depth = 4;  // 5120 faces, ligand
   }
 
-  mol = MolOps::removeAllHs(*mol, false);
+  std::unique_ptr<ROMol> nmol{MolOps::removeAllHs(mol, false)};
 
   State s;
   s.generateSurfacePoints(depth, isProtein, probeRadius, dotDensity);
 
-  const Conformer& conf = mol->getConformer();
+  const Conformer& conf = nmol->getConformer();
 
   std::vector<AtomRecord> memberAtoms;
 
-  for (const Atom* atom : mol->atoms()) {
-    AtomRecord curr_atom(atom, conf);
+  for (const auto atom : nmol->atoms()) {
+    AtomRecord curr_atom(*atom, conf);
     curr_atom.initFlag();
     if (!curr_atom.solventFlag) {
       curr_atom.elem = s.getAtomElem(curr_atom.atmName, isProtein);
