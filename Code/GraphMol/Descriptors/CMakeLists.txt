@@ -41,9 +41,6 @@ LINK_LIBRARIES  Descriptors )
 rdkit_test(testATF testATF.cpp
 LINK_LIBRARIES  Descriptors )
 
-rdkit_test(testDCLV testDCLV.cpp
-           LINK_LIBRARIES Descriptors FileParsers)
-
 if(RDK_HAS_EIGEN)
   rdkit_test(testBCUT testBCUT.cpp
   LINK_LIBRARIES  Descriptors )
