@@ -418,7 +418,8 @@ std::vector<std::pair<Bond *, std::vector<int>>> getNbrBondStereo(
     RWMol &mol, const Bond *bnd) {
   PRECONDITION(bnd, "null bond");
   // loop over neighboring double bonds and remove their stereo atom
-  std::vector<std::pair<Bond *, std::vector<int>>> res;
+  std::vector<std::pair<Bond *, std::vector<int
+    res;
   const auto bgn = bnd->getBeginAtom();
   const auto end = bnd->getEndAtom();
   for (const auto *atom : {bgn, end}) {
@@ -1087,34 +1088,35 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
     }
   }
 
-  if(decomposition.empty()) {
+  if (decomposition.empty()) {
     return nullptr;
   }
 
   // When the rgroup decomposition splits a ring, it puts it in both
   //  rgroups, so remove these
   std::vector<ROMOL_SPTR> mols;
-  mols.push_back(decomposition[0]);
-  {
-    std::set<std::string> existing_smiles;
-    for(size_t idx=1; idx<decomposition.size(); ++idx) {
+  if (params.label != MolzipLabel::FragmentOnBonds &&
+      decomposition.size() > 1) {
+    std::vector<std::string> existing_smiles;
+    for (size_t idx = 1; idx < decomposition.size(); ++idx) {
       auto &mol = decomposition[idx];
       auto smiles = MolToSmiles(*mol);
-      if(params.label != MolzipLabel::FragmentOnBonds && existing_smiles.find(smiles) == existing_smiles.end()) {
-          mols.push_back(mol);
-          existing_smiles.insert(smiles);
+      if (std::find(existing_smiles.begin(), existing_smiles.end(), smiles) ==
+          existing_smiles.end()) {
+        mols.push_back(mol);
+        existing_smiles.push_back(smiles);
       }
     }
   }
 
-  const auto combinedMol = std::accumulate(
-      mols.begin() + 1, mols.end(), mols[0],
-      [](const auto &combined, const auto &mol) {
-	auto c = combineMols(*combined, *mol);
-        ROMOL_SPTR ptr(c);
-        return ptr;
-      });
-
+  auto combinedMol = decomposition[0];
+  if (!mols.empty()) {
+    combinedMol.reset(
+        std::accumulate(mols.begin(), mols.end(), decomposition[0].get(),
+                        [](const auto *combined, const auto &mol) {
+                          return combineMols(*combined, *mol);
+                        }));
+  }
   const static ROMol b;
   std::optional attachmentMappingOption = std::map<int, int>();
   auto zippedMol = molzip(*combinedMol, b, params, attachmentMappingOption);

@@ -250,15 +250,16 @@ void relabelMappedDummies(ROMol &mol, unsigned int inputLabels,
 
 std::unique_ptr<ROMol> molzip(const RGroupRow &row,
                               const MolzipParams &params) {
-    auto core = row.find("Core");
-    PRECONDITION(core != row.end(), "RGroup has no Core, cannot molzip");
-    std::vector<ROMOL_SPTR> mols;
-    mols.push_back(core->second);
-    for(auto it:row) {
-        if(it.first != "Core")
-            mols.push_back(it.second);
+  auto core = row.find("Core");
+  PRECONDITION(core != row.end(), "RGroup has no Core, cannot molzip");
+  std::vector<ROMOL_SPTR> mols;
+  mols.push_back(core->second);
+  for (auto it : row) {
+    if (it.first != "Core") {
+      mols.push_back(it.second);
     }
-                   
-    return molzip(mols, params);
+  }
+
+  return molzip(mols, params);
 }
 }  // namespace RDKit
