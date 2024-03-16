@@ -21,6 +21,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include <tuple>
@@ -929,5 +930,36 @@ TEST_CASE(
       CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
       CHECK(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
     }
+  }
+}
+
+TEST_CASE("Github #7181: ET terms applied to constrained atoms") {
+  SECTION("basics") {
+    auto templ =
+        "CNc1ccc(OC)cc1 |(-3.3363,0.129414,1.28582;-2.44714,-0.687978,0.507453;-1.11383,-0.29452,0.197587;-0.622766,0.911164,0.645083;0.652332,1.29026,0.350281;1.45603,0.462513,-0.400278;2.7718,0.891528,-0.684446;3.83908,0.0736652,-0.224516;0.984393,-0.734112,-0.850528;-0.300532,-1.12218,-0.556656)|"_smiles;
+    REQUIRE(templ);
+    auto mol = "COc1ccc(NC(C)C)cc1"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    auto matches = SubstructMatch(*mol, *templ);
+    REQUIRE(matches.size() == 1);
+
+    auto tconf = templ->getConformer();
+    std::map<int, RDGeom::Point3D> cmap;
+    for (auto [ti, mi] : matches[0]) {
+      cmap[mi] = tconf.getAtomPos(ti);
+    }
+
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xC0FFEE;
+    ps.coordMap = &cmap;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid >= 0);
+    auto imatch = matches[0];
+    for (auto &[ti, mi] : imatch) {
+      std::swap(ti, mi);
+    }
+    auto rmsd = MolAlign::alignMol(*mol, *templ, cid, -1, &imatch);
+    CHECK(rmsd < 0.2);
   }
 }

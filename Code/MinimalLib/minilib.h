@@ -33,7 +33,8 @@ class JSMol {
   std::string get_v3Kmolblock(const std::string &details) const;
   std::string get_v3Kmolblock() const { return get_v3Kmolblock("{}"); }
   std::string get_pickle() const;
-  std::string get_inchi() const;
+  std::string get_inchi(const std::string &options) const;
+  std::string get_inchi() const { return get_inchi(""); }
   std::string get_json() const;
   std::string get_svg(int width, int height) const;
   std::string get_svg() const {

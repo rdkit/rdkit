@@ -406,7 +406,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
   // insert the elements from a_atoms, but make sure that
   // the anions of monoprotic acids are not protonated multiple
   // times
-  boost::dynamic_bitset<> skipChargeSep(mol.getNumAtoms());
+  std::vector<int> skipChargeSep(mol.getNumAtoms());
   for (const auto &pair : a_atoms) {
     unsigned int idx = pair.second;
     Atom *atom = mol.getAtomWithIdx(idx);
@@ -415,12 +415,14 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
       const auto &nbr = (mol)[nbri];
       auto nbrIdx = nbr->getIdx();
       // if the neighbor has a positive charge,
-      // neutralize only once (e.g., NO3-)
-      if (nbr->getFormalCharge() > 0) {
-        if (!skipChargeSep.test(nbrIdx)) {
-          skipChargeSep.set(nbrIdx);
-        } else {
-          skipChargeSep.set(idx);
+      // neutralize only the negative charges that are not
+      // already balanced within the functional group
+      // (normally, at most once e.g., NO3-)
+      auto nbrFormalCharge = nbr->getFormalCharge();
+      if (nbrFormalCharge > 0) {
+        if (skipChargeSep[nbrIdx] < nbrFormalCharge) {
+          skipChargeSep[nbrIdx] += 1;
+          skipChargeSep[idx] = 1;
         }
         break;
       }
@@ -428,7 +430,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
   }
   for (const auto &pair : a_atoms) {
     unsigned int idx = pair.second;
-    if (skipChargeSep.test(idx)) {
+    if (skipChargeSep[idx]) {
       continue;
     }
     neg_atoms.push_back(pair);

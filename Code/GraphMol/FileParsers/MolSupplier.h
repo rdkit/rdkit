@@ -251,7 +251,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
    * file parser above
    * - As an when new molecules are read using "next" their
    *    positions in the file are noted.
-   *  - A call to the "length" will autamatically parse the entire
+   *  - A call to the "length" will automatically parse the entire
    *    file and cache all the mol block positions
    *  - [] operator is used to access a molecule at "idx", calling
    *    next following this will result in the next molecule after
@@ -343,7 +343,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
    * file parser above
    * - As an when new molecules are read using "next" their
    *    positions in the file are noted.
-   *  - A call to the "length" will autamatically parse the entire
+   *  - A call to the "length" will automatically parse the entire
    *    file and cache all the mol block positions
    *  - [] operator is used to access a molecule at "idx", calling
    *    next following this will result in the next molecule after
@@ -399,7 +399,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   TDTMolSupplierParams d_params;
 };
 
-//! Deprectead, will be removed in 2024.09 release
+//! Deprecated, will be removed in 2024.09 release
 class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
  public:
   explicit PDBMolSupplier(std::istream *inStream, bool takeOwnership = true,

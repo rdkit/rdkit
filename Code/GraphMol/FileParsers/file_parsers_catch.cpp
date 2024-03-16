@@ -7025,3 +7025,22 @@ TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
     }
   };
 }
+
+TEST_CASE(
+    "GitHub Issue #7256: RDKit fails to parse \"M RAD\" lines with were radical is 0",
+    "[bug]") {
+  const auto mb = R"CTAB(
+     RDKit          2D
+
+  1  0  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+M  RAD  1   1   0
+M  END
+)CTAB";
+
+  std::unique_ptr<RWMol> mol(MolBlockToMol(mb));
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 1);
+  const auto at = mol->getAtomWithIdx(0);
+  CHECK(at->getNumRadicalElectrons() == 0);
+}

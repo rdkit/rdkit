@@ -135,6 +135,7 @@ SmilesWriteParams getParamsFromJSON(const char *details_json) {
   }
   return params;
 }
+
 std::string smiles_helper(const char *pkl, size_t pkl_sz,
                           const char *details_json) {
   if (!pkl || !pkl_sz) {
@@ -235,20 +236,8 @@ extern "C" char *get_inchi(const char *pkl, size_t pkl_sz,
   }
   auto mol = mol_from_pkl(pkl, pkl_sz);
   ExtraInchiReturnValues rv;
-  std::string options;
-  if (details_json && strlen(details_json)) {
-    boost::property_tree::ptree pt;
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::read_json(ss, pt);
-    PT_OPT_GET(options);
-  }
-
-  const char *opts = nullptr;
-  if (!options.empty()) {
-    opts = options.c_str();
-  }
-  return str_to_c(MolToInchi(mol, rv, opts));
+  auto options = MinimalLib::parse_inchi_options(details_json);
+  return str_to_c(MolToInchi(mol, rv, !options.empty() ? options.c_str() : nullptr));
 }
 
 extern "C" char *get_inchi_for_molblock(const char *ctab,
@@ -256,21 +245,9 @@ extern "C" char *get_inchi_for_molblock(const char *ctab,
   if (!ctab) {
     return str_to_c("");
   }
-  std::string options;
-  if (details_json && strlen(details_json)) {
-    boost::property_tree::ptree pt;
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::read_json(ss, pt);
-    PT_OPT_GET(options);
-  }
-
   ExtraInchiReturnValues rv;
-  const char *opts = nullptr;
-  if (!options.empty()) {
-    opts = options.c_str();
-  }
-  return str_to_c(MolBlockToInchi(ctab, rv, opts));
+  auto options = MinimalLib::parse_inchi_options(details_json);
+  return str_to_c(MolBlockToInchi(ctab, rv, !options.empty() ? options.c_str() : nullptr));
 }
 
 extern "C" char *get_inchikey_for_inchi(const char *inchi) {

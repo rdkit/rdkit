@@ -304,7 +304,8 @@ ForceFields::ForceField *construct3DForceField(
     }
   }
 
-  double fdist = 100.0;  // force constant
+  constexpr double knownDistanceConstraintForce = 100.0;
+  double fdist = knownDistanceConstraintForce;  // force constant
   // 1,2 distance constraints
   for (const auto &bnd : etkdgDetails.bonds) {
     unsigned int i = bnd.first;
@@ -347,13 +348,23 @@ ForceFields::ForceField *construct3DForceField(
     }
   }
 
-  // minimum distance for all other atom pairs
-  fdist = etkdgDetails.boundsMatForceScaling * 10.0;
+  // minimum distance for all other atom pairs that aren't constrained
   for (unsigned int i = 1; i < N; ++i) {
     for (unsigned int j = 0; j < i; ++j) {
       if (!atomPairs[j * N + i]) {
+        fdist = etkdgDetails.boundsMatForceScaling * 10.0;
         double l = mmat.getLowerBound(i, j);
         double u = mmat.getUpperBound(i, j);
+        if (!etkdgDetails.constrainedAtoms.empty() &&
+            etkdgDetails.constrainedAtoms[i] &&
+            etkdgDetails.constrainedAtoms[j]) {
+          // we're constrained, so use very tight bounds
+          l = u = ((*positions[i]) - (*positions[j])).length();
+          constexpr double INCR = 0.01;
+          l -= INCR;
+          u += INCR;
+          fdist = knownDistanceConstraintForce;
+        }
         auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
             field, i, j, l, u, fdist);
         field->contribs().push_back(ForceFields::ContribPtr(contrib));

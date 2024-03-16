@@ -1447,6 +1447,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         << std::endl;
     coordMap = nullptr;
   }
+  boost::dynamic_bitset<> constrainedAtoms(mol.getNumAtoms());
+  if (coordMap) {
+    for (const auto &entry : *coordMap) {
+      constrainedAtoms.set(entry.first);
+    }
+  }
 
   if (molFrags.size() > 1 && params.boundsMat != nullptr) {
     BOOST_LOG(rdWarningLog)
@@ -1465,6 +1471,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     unsigned int nAtoms = piece->getNumAtoms();
 
     ForceFields::CrystalFF::CrystalFFDetails etkdgDetails;
+    etkdgDetails.constrainedAtoms = constrainedAtoms;
     EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
 
     DistGeom::BoundsMatPtr mmat;
