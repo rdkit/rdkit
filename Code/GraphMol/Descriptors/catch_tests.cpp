@@ -19,6 +19,7 @@
 #include <GraphMol/Descriptors/ConnectivityDescriptors.h>
 #include <GraphMol/Descriptors/OxidationNumbers.h>
 #include <GraphMol/Descriptors/PMI.h>
+#include <GraphMol/Descriptors/DCLV.h>
 
 using namespace RDKit;
 
@@ -546,5 +547,59 @@ TEST_CASE("Oxidation numbers") {
               expected.second);
       }
     }
+  }
+}
+
+TEST_CASE("DCLV") {
+  std::string pathName = getenv("RDBASE");
+  std::string pdbName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/1mup.pdb";
+  auto m = v2::FileParsers::MolFromPDBFile(pdbName);
+  REQUIRE(m);
+  SECTION("defaults") {
+    Descriptors::DoubleCubicLatticeVolume dclv(*m);
+    CHECK(dclv.getSurfaceArea() == Catch::Approx(8330.59).epsilon(0.05));
+    CHECK(dclv.getVolume() == Catch::Approx(31789.6).epsilon(0.05));
+    CHECK(dclv.getVDWVolume() == Catch::Approx(15355.3).epsilon(0.05));
+    CHECK(dclv.getCompactness() == Catch::Approx(1.7166).epsilon(0.05));
+    CHECK(dclv.getPackingDensity() == Catch::Approx(0.48303).epsilon(0.05));
+  }
+  SECTION("depth and radius") {
+    double probeRadius = 1.6;
+    int depth = 6;
+    bool isProtein = true;
+    bool includeLigand = false;
+    Descriptors::DoubleCubicLatticeVolume dclv(*m, isProtein, includeLigand,
+                                               probeRadius, depth);
+    CHECK(dclv.getSurfaceArea() == Catch::Approx(8186.06).epsilon(0.05));
+    CHECK(dclv.getVolume() == Catch::Approx(33464.5).epsilon(0.05));
+    CHECK(dclv.getVDWVolume() == Catch::Approx(15350.7).epsilon(0.05));
+    CHECK(dclv.getCompactness() == Catch::Approx(1.63005).epsilon(0.05));
+    CHECK(dclv.getPackingDensity() == Catch::Approx(0.458717).epsilon(0.05));
+  }
+  SECTION("ligand") {
+    bool isProtein = true;
+    bool includeLigand = true;
+    Descriptors::DoubleCubicLatticeVolume dclv(*m, isProtein, includeLigand);
+    CHECK(dclv.getSurfaceArea() == Catch::Approx(8010.56).epsilon(0.05));
+    CHECK(dclv.getVolume() == Catch::Approx(31228.4).epsilon(0.05));
+    CHECK(dclv.getVDWVolume() == Catch::Approx(15155.7).epsilon(0.05));
+    CHECK(dclv.getCompactness() == Catch::Approx(1.67037).epsilon(0.05));
+    CHECK(dclv.getPackingDensity() == Catch::Approx(0.48532).epsilon(0.05));
+  }
+  SECTION("SDF") {
+    std::string sdfName =
+        pathName + "/Code/GraphMol/Descriptors/test_data/TZL_model.sdf";
+    auto m = v2::FileParsers::MolFromMolFile(sdfName);
+    REQUIRE(m);
+    bool isProtein = false;
+    Descriptors::DoubleCubicLatticeVolume dclv(*m, isProtein);
+    // NOTE - expected values generated from Roger's original C code
+    // Original did not return surface area for Ligand only
+    // so no check for Surface Area or Compactness
+
+    CHECK(dclv.getVolume() == Catch::Approx(1048.53).epsilon(0.05));
+    CHECK(dclv.getVDWVolume() == Catch::Approx(231.971).epsilon(0.05));
+    CHECK(dclv.getPackingDensity() == Catch::Approx(0.221234).epsilon(0.05));
   }
 }
