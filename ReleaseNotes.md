@@ -14,6 +14,7 @@ GitHub)
 - The validation classes in MolStandardize were refactored in order to offer a simpler and more consistent API. In the C++ implementation, the `MolVSValidations` base class was removed and consolidated into `ValidationMethod`. Consequently, the `validate` method replaced `run` in the subclasses related to MolVS (namely `NoAtomValidation`, `FragmentValidation`, `NeutralValidation`, and `IsotopeValidation`) and all subclasses of `ValidationMethod` are now required to implement a `copy` method. Moreover, `MolStandardize::ValidationErrorInfo` was redefined as an alias for `std::string`. The changes related to the MolVS validation methods were similarly implemented in the Python API.
 - Metal atoms (really any atom which has a default valence of -1) now have their radical electron count set to zero if they form any bonds. Metal atoms/ions without bonds will continue to be assigned a radical count of either 1 or 0 if they do/do not have an odd number of valence electrons. It is not possible in a cheminformatics system to generally answer what the spin state of a metal atom should be, so we are taking a simple and easily explainable approach. If you know the spin state of your species, you can directly provide that information by calling SetNumRadicalElectrons().
 - Chirality will now be perceived for three-coordinate atoms with a T-shaped coordination environment and the wedge in the stem of the T. If we are perceiving tetrahedral stereo, it's possible to interpret this unambiguously.
+- Bug fixes in the v2 tautomer hash algorithm will change the output for some molecules. Look at PR #7200 for more details: https://github.com/rdkit/rdkit/pull/7200
 
 ## New Features and Enhancements:
 
@@ -31,6 +32,7 @@ GitHub)
   rdkit.ML.KNN, rdkit.ML.ModelPackage, rdkit.ML.NaiveBayes, rdkit.ML.Neural
   rdkit.ML.{Analyze,Screen,Grow,Build}Composite, rdkit.ML.CompositeRun,
   rdkit.ML.EnrichPlot
+- The Dbase.DbReport package was no longer working and has been removed.
 
 ## Deprecated code (to be removed in a future release):
 - The PDBMolSupplier class has been deprecated and will be removed in the next release

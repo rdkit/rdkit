@@ -422,6 +422,10 @@ void ParseRadicalLine(RWMol *mol, const std::string &text, bool firstCall,
       spos += 4;
 
       switch (rad) {
+        case 0:
+          // This shouldn't be required, but let's make sure.
+          mol->getAtomWithIdx(aid - 1)->setNumRadicalElectrons(0);
+          break;
         case 1:
           mol->getAtomWithIdx(aid - 1)->setNumRadicalElectrons(2);
           break;

@@ -375,7 +375,8 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<std::string(const std::string &) const>(
                     &JSMol::get_v3Kmolblock))
       .function("get_as_uint8array", &get_as_uint8array)
-      .function("get_inchi", &JSMol::get_inchi)
+      .function("get_inchi", select_overload<std::string(const std::string&) const>(&JSMol::get_inchi))
+      .function("get_inchi", select_overload<std::string() const>(&JSMol::get_inchi))
       .function("get_json", &JSMol::get_json)
       .function("get_svg",
                 select_overload<std::string() const>(&JSMol::get_svg))

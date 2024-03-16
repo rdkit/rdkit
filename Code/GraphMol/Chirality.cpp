@@ -450,9 +450,6 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 
 namespace Chirality {
 
-const std::string _NonExplicit3DChirality =
-    "_NonExplicit3DChirality";  // set if the molecule has explicit 3D
-                                // stereochemistry
 std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     const ROMol &mol, const Bond *bond, const Conformer *conf,
     double pseudo3DOffset = 0.1, double volumeTolerance = 0.01) {
@@ -2664,8 +2661,8 @@ void GetMolFileBondStereoInfo(
 
 void removeNonExplicit3DChirality(ROMol &mol) {
   for (auto atom : mol.atoms()) {
-    if (atom->hasProp(Chirality::_NonExplicit3DChirality)) {
-      atom->clearProp(Chirality::_NonExplicit3DChirality);
+    if (atom->hasProp(common_properties::_NonExplicit3DChirality)) {
+      atom->clearProp(common_properties::_NonExplicit3DChirality);
       atom->setChiralTag(Atom::CHI_UNSPECIFIED);
     }
   }
@@ -3302,7 +3299,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     if (allowNontetrahedralStereo &&
         assignNontetrahedralChiralTypeFrom3D(mol, conf, atom)) {
       if (explicitAtoms[atom->getIdx()] == 0) {
-        atom->setProp(Chirality::_NonExplicit3DChirality, 1);
+        atom->setProp(common_properties::_NonExplicit3DChirality, 1);
       }
       continue;
     }
@@ -3356,7 +3353,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     }
 
     if (chiralitySet && explicitAtoms[atom->getIdx()] == 0) {
-      atom->setProp<int>(Chirality::_NonExplicit3DChirality, 1);
+      atom->setProp<int>(common_properties::_NonExplicit3DChirality, 1);
     }
   }
 }
