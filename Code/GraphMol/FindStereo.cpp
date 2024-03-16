@@ -585,8 +585,8 @@ void initBondInfo(ROMol &mol, bool flagPossible, bool cleanIt,
       if (currentStereo != Bond::BondStereo::STEREOATROPCW &&
           currentStereo != Bond::BondStereo::STEREOATROPCCW) {
         if (cleanIt) {
-      bond->setStereo(Bond::BondStereo::STEREONONE);
-    }
+          bond->setStereo(Bond::BondStereo::STEREONONE);
+        }
       } else {
         knownBonds.set(bidx);
         if (currentStereo == Bond::BondStereo::STEREOATROPCW) {
@@ -919,9 +919,9 @@ void cleanMolStereo(ROMol &mol, const boost::dynamic_bitset<> &fixedAtoms,
                     const boost::dynamic_bitset<> &knownAtoms,
                     const boost::dynamic_bitset<> &fixedBonds,
                     const boost::dynamic_bitset<> &knownBonds) {
-  for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
+  for (auto atom : mol.atoms()) {
+    const auto i = atom->getIdx();
     if (!fixedAtoms[i] && knownAtoms[i]) {
-      auto atom = mol.getAtomWithIdx(i);
       switch (atom->getChiralTag()) {
         case Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
         case Atom::ChiralType::CHI_TETRAHEDRAL_CW:
@@ -938,8 +938,7 @@ void cleanMolStereo(ROMol &mol, const boost::dynamic_bitset<> &fixedAtoms,
         case Atom::ChiralType::CHI_SQUAREPLANAR:
         case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
         case Atom::ChiralType::CHI_OCTAHEDRAL:
-          mol.getAtomWithIdx(i)->setProp(common_properties::_chiralPermutation,
-                                         0);
+          atom->setProp(common_properties::_chiralPermutation, 0);
           break;
         default:
           break;
@@ -948,8 +947,8 @@ void cleanMolStereo(ROMol &mol, const boost::dynamic_bitset<> &fixedAtoms,
   }
 
   bool removedStereo = false;
-  for (auto i = 0u; i < mol.getNumBonds(); ++i) {
-    auto bond = mol.getBondWithIdx(i);
+  for (auto bond : mol.bonds()) {
+    const auto i = bond->getIdx();
     if (!fixedBonds[i] && knownBonds[i]) {
       bond->setStereo(Bond::BondStereo::STEREONONE);
       bond->setBondDir(Bond::BondDir::NONE);
