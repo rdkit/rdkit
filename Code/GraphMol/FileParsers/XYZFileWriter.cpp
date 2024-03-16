@@ -28,8 +28,11 @@ std::string MolToXYZBlock(const ROMol& mol, int confId, unsigned int precision) 
   std::stringstream ss;
   ss << nAtoms << '\n';
 
+  unsigned fieldWidth = 5 + precision;
   std::stringstream formatString;
-  formatString << "%-3s %11." << precision << "f %11." << precision << "f %11." << precision << "f\n";
+  formatString << "%-3s %" << fieldWidth << "." << precision
+               << "f %" << fieldWidth << "." << precision
+               << "f %" << fieldWidth << "." << precision << "f\n";
 
   std::string name;
   if (mol.getPropIfPresent(common_properties::_Name, name)) {

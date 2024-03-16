@@ -20,14 +20,14 @@ namespace RDKit {
 
 struct RDKIT_FILEPARSERS_EXPORT MolWriterParams {
   bool includeStereo = true;  /**< toggles inclusion of stereochemistry
-                                   information (default=true)*/
+                                   information*/
   bool kekulize = true;       /**< triggers kekulization of the molecule before
-                                   it is written (default=true)*/
+                                   it is written*/
   bool forceV3000 = false;    /**< force generation a V3000 mol block (happens
                                    automatically with more than 999 atoms or
-                                   bonds)(default=false)*/
+                                   bonds)*/
   unsigned int precision = 6; /**< precision of coordinates (only available in
-                                   V3000)(default=false)*/
+                                   V3000)*/
 };
 
 // \brief generates an MDL mol block for a molecule
