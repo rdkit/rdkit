@@ -113,6 +113,8 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   void removeAtom(unsigned int idx);
   //! \overload
   void removeAtom(Atom *atom);
+  //! \overload
+  void removeAtom(Atom *atom, bool clearProps);
 
   //! @}
 
