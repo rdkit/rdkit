@@ -756,7 +756,7 @@ const std::string GetMolFileBondLine(
 
 const std::string GetV3000MolFileAtomLine(
     const Atom *atom, const Conformer *conf,
-    boost::dynamic_bitset<> &queryListAtoms) {
+    boost::dynamic_bitset<> &queryListAtoms, unsigned int precision) {
   PRECONDITION(atom, "");
   int totValence, atomMapNumber;
   unsigned int parityFlag;
@@ -790,7 +790,12 @@ const std::string GetV3000MolFileAtomLine(
     }
   }
 
-  ss << std::fixed << " " << x << " " << y << " " << z << std::defaultfloat;
+  std::streamsize currentPrecision = ss.precision();
+  ss << std::fixed;
+  ss << std::setprecision(precision);
+  ss << " " << x << " " << y << " " << z;
+  ss << std::setprecision(currentPrecision);
+  ss << std::defaultfloat;
   ss << " " << atomMapNumber;
 
   // Extra atom properties.
@@ -1104,7 +1109,7 @@ void appendEnhancedStereoGroups(
   }
 }
 namespace FileParserUtils {
-std::string getV3000CTAB(const ROMol &tmol, int confId) {
+std::string getV3000CTAB(const ROMol &tmol, int confId, unsigned int precision) {
   auto nAtoms = tmol.getNumAtoms();
   auto nBonds = tmol.getNumBonds();
   const auto &sgroups = getSubstanceGroups(tmol);
@@ -1130,7 +1135,7 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
   res += "M  V30 BEGIN ATOM\n";
   for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
        atomIt != tmol.endAtoms(); ++atomIt) {
-    res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms);
+    res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms, precision);
     res += "\n";
   }
   res += "M  V30 END ATOM\n";
@@ -1177,7 +1182,7 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
 //
 //------------------------------------------------
 std::string outputMolToMolBlock(const RWMol &tmol, int confId,
-                                bool forceV3000) {
+                                bool forceV3000, unsigned int precision) {
   std::string res;
   bool isV3000;
   unsigned int nAtoms, nBonds, nLists, chiralFlag, nsText, nRxnComponents;
@@ -1296,14 +1301,15 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     // FIX: R-group logic, SGroups and 3D features etc.
   } else {
     // V3000 output.
-    res += FileParserUtils::getV3000CTAB(tmol, confId);
+    res += FileParserUtils::getV3000CTAB(tmol, confId, precision);
   }
   res += "M  END\n";
   return res;
 }
 
-std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
-                          bool kekulize, bool forceV3000) {
+std::string MolToMolBlock(const ROMol &mol,
+                          const MolWriterParams& params,
+                          int confId) {
   RDKit::Utils::LocaleSwitcher switcher;
   RWMol trwmol(mol);
   // NOTE: kekulize the molecule before writing it out
@@ -1311,11 +1317,11 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
   if (trwmol.needsUpdatePropertyCache()) {
     trwmol.updatePropertyCache(false);
   }
-  if (kekulize && mol.getNumBonds()) {
+  if (params.kekulize && mol.getNumBonds()) {
     MolOps::Kekulize(trwmol);
   }
 
-  if (includeStereo && !trwmol.getNumConformers()) {
+  if (params.includeStereo && !trwmol.getNumConformers()) {
     // generate coordinates so that the stereo we generate makes sense
     RDDepict::compute2DCoords(trwmol);
   }
@@ -1333,9 +1339,9 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
   FileParserUtils::moveAdditionalPropertiesToSGroups(trwmol);
 
   try {
-    return outputMolToMolBlock(trwmol, confId, forceV3000);
+    return outputMolToMolBlock(trwmol, confId, params.forceV3000, params.precision);
   } catch (RequiresV3000Exception &) {
-    return outputMolToMolBlock(trwmol, confId, true);
+    return outputMolToMolBlock(trwmol, confId, true, params.precision);
   }
 }
 
@@ -1344,9 +1350,10 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
 //  Dump a molecule to a file
 //
 //------------------------------------------------
-void MolToMolFile(const ROMol &mol, const std::string &fName,
-                  bool includeStereo, int confId, bool kekulize,
-                  bool forceV3000) {
+void MolToMolFile(const ROMol &mol,
+                  const std::string &fName,
+                  const MolWriterParams &params,
+                  int confId) {
   auto *outStream = new std::ofstream(fName.c_str());
   if (!(*outStream) || outStream->bad()) {
     delete outStream;
@@ -1355,7 +1362,7 @@ void MolToMolFile(const ROMol &mol, const std::string &fName,
     throw BadFileException(errout.str());
   }
   std::string outString =
-      MolToMolBlock(mol, includeStereo, confId, kekulize, forceV3000);
+      MolToMolBlock(mol, params, confId);
   *outStream << outString;
   delete outStream;
 }
