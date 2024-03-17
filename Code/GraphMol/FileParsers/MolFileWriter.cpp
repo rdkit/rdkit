@@ -157,7 +157,7 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
       chgss << boost::format(" %3d %3d") % (atom->getIdx() + 1) %
                    atom->getFormalCharge();
       if (nChgs == 8) {
-        res << boost::format("M  CHG%3d") % nChgs << chgss.str() << std::endl;
+        res << boost::format("M  CHG%3d") % nChgs << chgss.str() << "\n";
         chgss.str("");
         nChgs = 0;
       }
@@ -172,7 +172,7 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
       }
       radss << boost::format(" %3d %3d") % (atom->getIdx() + 1) % nRadEs;
       if (nRads == 8) {
-        res << boost::format("M  RAD%3d") % nRads << radss.str() << std::endl;
+        res << boost::format("M  RAD%3d") % nRads << radss.str() << "\n";
         radss.str("");
         nRads = 0;
       }
@@ -185,7 +185,7 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
                           isotope;
         if (nMassDiffs == 8) {
           res << boost::format("M  ISO%3d") % nMassDiffs << massdiffss.str()
-              << std::endl;
+              << "\n";
           massdiffss.str("");
           nMassDiffs = 0;
         }
@@ -193,14 +193,13 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
     }
   }
   if (nChgs) {
-    res << boost::format("M  CHG%3d") % nChgs << chgss.str() << std::endl;
+    res << boost::format("M  CHG%3d") % nChgs << chgss.str() << "\n";
   }
   if (nRads) {
-    res << boost::format("M  RAD%3d") % nRads << radss.str() << std::endl;
+    res << boost::format("M  RAD%3d") % nRads << radss.str() << "\n";
   }
   if (nMassDiffs) {
-    res << boost::format("M  ISO%3d") % nMassDiffs << massdiffss.str()
-        << std::endl;
+    res << boost::format("M  ISO%3d") % nMassDiffs << massdiffss.str() << "\n";
   }
   return res.str();
 }
@@ -243,15 +242,14 @@ const std::string GetMolFileQueryInfo(
         hasComplexQuery(atom)) {
       std::string sma =
           SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
-      ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << sma
-         << std::endl;
+      ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << sma << "\n";
       wrote_query = true;
     }
     std::string molFileValue;
     if (!wrote_query &&
         atom->getPropIfPresent(common_properties::molFileValue, molFileValue)) {
       ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << molFileValue
-         << std::endl;
+         << "\n";
     }
   }
   for (const auto atom : mol.atoms()) {
@@ -289,7 +287,7 @@ const std::string GetMolFileRGroupInfo(const RWMol &mol) {
   }
   std::stringstream ss2;
   if (nEntries) {
-    ss2 << "M  RGP" << std::setw(3) << nEntries << ss.str() << std::endl;
+    ss2 << "M  RGP" << std::setw(3) << nEntries << ss.str() << "\n";
   }
   return ss2.str();
 }
@@ -332,7 +330,7 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
       ss << " " << std::setw(3) << (*bondIt)->getIdx() + 1 << " "
          << std::setw(3) << 0;
       if (nEntries == 8) {
-        res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << std::endl;
+        res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << "\n";
         nEntries = 0;
         ss.str("");
       }
@@ -341,7 +339,7 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
     }
   }
   if (nEntries) {
-    res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << std::endl;
+    res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << "\n";
   }
   if (atomsAffected.count()) {
     std::stringstream hydss;
@@ -357,7 +355,7 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
       hydss << boost::format(" %3d %3d") % (atom->getIdx() + 1) %
                    atom->getTotalNumHs();
       if (nhyd == 8) {
-        res << boost::format("M  HYD%3d") % nhyd << hydss.str() << std::endl;
+        res << boost::format("M  HYD%3d") % nhyd << hydss.str() << "\n";
         hydss.str("");
         nhyd = 0;
       }
@@ -366,17 +364,17 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
         zchss << boost::format(" %3d %3d") % (atom->getIdx() + 1) %
                      atom->getFormalCharge();
         if (nzch == 8) {
-          res << boost::format("M  ZCH%3d") % nzch << zchss.str() << std::endl;
+          res << boost::format("M  ZCH%3d") % nzch << zchss.str() << "\n";
           zchss.str("");
           nzch = 0;
         }
       }
     }
     if (nhyd) {
-      res << boost::format("M  HYD%3d") % nhyd << hydss.str() << std::endl;
+      res << boost::format("M  HYD%3d") % nhyd << hydss.str() << "\n";
     }
     if (nzch) {
-      res << boost::format("M  ZCH%3d") % nzch << zchss.str() << std::endl;
+      res << boost::format("M  ZCH%3d") % nzch << zchss.str() << "\n";
     }
   }
   return res.str();
