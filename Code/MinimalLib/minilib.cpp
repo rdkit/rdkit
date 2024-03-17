@@ -643,36 +643,23 @@ std::string JSReaction::get_svg_with_highlights(
 }
 bool JSReaction::is_valid() const { return true; }
 
-std::vector<JSMolList> JSReaction::run_reactants(const JSMolList &reactants,
-                                                unsigned int maxProducts) const {
-  if (!d_rxn) {
-    std::cerr << "Error: d_rxn is null\n";
-    return {};
-  }
+std::vector<JSMolList *> JSReaction::run_reactants(
+    const JSMolList &reactants, unsigned int maxProducts) const {
   d_rxn->initReactantMatchers();
   RDKit::MOL_SPTR_VECT reactant_vec;
 
   for (const auto &reactant : reactants.mols()) {
     if (!reactant) {
-      std::cerr << "Error: reactant is null\n";
-      continue;
+      throw ValueErrorException("Reactant must not be null");
     }
-    reactant_vec.push_back(RDKit::ROMOL_SPTR(reactant));
+    reactant_vec.push_back(reactant);
   }
 
   std::vector<RDKit::MOL_SPTR_VECT> prods;
-  try {
-    prods = d_rxn->runReactants(reactant_vec, maxProducts);
-  } catch (const std::exception& e) {
-    std::cerr << "Error running reactants: " << e.what() << '\n';
-    return {};
-  }
-  std::vector<JSMolList> newResults;
-  for (auto &mol_array: prods) {
-    if (mol_array.empty()) {
-      std::cerr << "Warning: mol_array is empty\n";
-    }
-    newResults.push_back(JSMolList(mol_array));
+  prods = d_rxn->runReactants(reactant_vec, maxProducts);
+  std::vector<JSMolList *> newResults;
+  for (auto &mol_array : prods) {
+    newResults.push_back(new JSMolList(mol_array));
   }
   return newResults;
 }

@@ -205,8 +205,9 @@ class JSReaction {
       [deprecated("please check the get_rxn return value for non-nullness "
                   "instead")]] bool
   is_valid() const;
-  
-  std::vector<JSMolList> run_reactants(const JSMolList &reactants, unsigned int maxProducts) const;
+
+  std::vector<JSMolList *> run_reactants(const JSMolList &reactants,
+                                         unsigned int maxProducts) const;
   static constexpr int maxProducts = 1000;
   std::string get_svg(int width, int height) const;
   std::string get_svg() const {

@@ -1103,18 +1103,48 @@ function test_flexicanvas() {
 }
 
 function test_run_reaction() {
-    var rxn1 = RDKitModule.get_rxn('[#6:1][O:2]>>[#6:1]=[O:2]');
-    var molList = molListFromSmiArray(['CC(C)O',]);
+    let rxn1;
+    let molList;
     try {
-        var reactants = rxn1.run_reactants(molList, 10000);
-        for (let i = 0; i < reactants.size(); i++) {
-            const element = reactants.get(i);
-            assert(element.next().get_smiles() === "CC(C)=O");
+        rxn1 = RDKitModule.get_rxn('[#6:1][O:2]>>[#6:1]=[O:2]');
+        molList = molListFromSmiArray(['CC(C)O',]);
+        let products;
+        try {
+            products = rxn1.run_reactants(molList, 10000);
+            for (let i = 0; i < products.size(); i++) {
+                let element;
+                try {
+                    element = products.get(i);
+                    let mol;
+                    try {
+                        mol = element.next();
+                        assert(mol && mol.get_smiles() === "CC(C)=O");
+                    } finally {
+                        if (mol) {
+                            mol.delete();
+                        }
+                    }
+                } finally {
+                    if (element) {
+                        element.delete();
+                    }
+                }
+            }
+        } finally {
+            if (products) {
+                products.delete();
+            }
         }
-    } catch (e) {
-        console.log(e);
+    } finally {
+        if (rxn1) {
+            rxn1.delete();
+        }
+        if (molList) {
+            molList.delete();
+        }
     }
 }
+
 function test_rxn_drawing() {
     {
         var rxn = RDKitModule.get_rxn("[CH3:1][OH:2]>>[CH2:1]=[OH0:2]");
