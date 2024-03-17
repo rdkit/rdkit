@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2013-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -29,11 +29,10 @@ class RDKIT_GRAPHMOL_EXPORT AtomMonomerInfo {
 
   virtual ~AtomMonomerInfo() {}
 
-  AtomMonomerInfo() : d_name("") {}
+  AtomMonomerInfo() = default;
   AtomMonomerInfo(AtomMonomerType typ, std::string nm = "")
       : d_monomerType(typ), d_name(std::move(nm)) {}
-  AtomMonomerInfo(const AtomMonomerInfo &other)
-      : d_monomerType(other.d_monomerType), d_name(other.d_name) {}
+  AtomMonomerInfo(const AtomMonomerInfo &other) = default;
 
   const std::string &getName() const { return d_name; }
   void setName(const std::string &nm) { d_name = nm; }
@@ -44,26 +43,14 @@ class RDKIT_GRAPHMOL_EXPORT AtomMonomerInfo {
 
  private:
   AtomMonomerType d_monomerType{UNKNOWN};
-  std::string d_name;
+  std::string d_name{""};
 };
 
 //! Captures atom-level information about peptide residues
 class RDKIT_GRAPHMOL_EXPORT AtomPDBResidueInfo : public AtomMonomerInfo {
  public:
   AtomPDBResidueInfo() : AtomMonomerInfo(PDBRESIDUE) {}
-  AtomPDBResidueInfo(const AtomPDBResidueInfo &other)
-      : AtomMonomerInfo(other),
-        d_serialNumber(other.d_serialNumber),
-        d_altLoc(other.d_altLoc),
-        d_residueName(other.d_residueName),
-        d_residueNumber(other.d_residueNumber),
-        d_chainId(other.d_chainId),
-        d_insertionCode(other.d_insertionCode),
-        d_occupancy(other.d_occupancy),
-        d_tempFactor(other.d_tempFactor),
-        df_heteroAtom(other.df_heteroAtom),
-        d_secondaryStructure(other.d_secondaryStructure),
-        d_segmentNumber(other.d_segmentNumber) {}
+  AtomPDBResidueInfo(const AtomPDBResidueInfo &other) = default;
 
   AtomPDBResidueInfo(const std::string &atomName, int serialNumber = 0,
                      std::string altLoc = "", std::string residueName = "",
