@@ -39,7 +39,8 @@ double DrawTextFTSVG::extractOutline() {
   }
 
   double adv = DrawTextFT::extractOutline();
-  oss_ << "' fill='" << col << "'/>" << std::endl;
+  oss_ << "' fill='" << col << "'/>"
+       << "\n";
 
   return adv;
 }
@@ -49,7 +50,7 @@ int DrawTextFTSVG::MoveToFunctionImpl(const FT_Vector *to) {
   double dx, dy;
   fontPosToDrawPos(to->x, to->y, dx, dy);
   oss_ << "M " << MolDraw2D_detail::formatDouble(dx) << ' '
-       << MolDraw2D_detail::formatDouble(dy) << std::endl;
+       << MolDraw2D_detail::formatDouble(dy) << "\n";
 
   return 0;
 }
@@ -59,7 +60,7 @@ int DrawTextFTSVG::LineToFunctionImpl(const FT_Vector *to) {
   double dx, dy;
   fontPosToDrawPos(to->x, to->y, dx, dy);
   oss_ << "L " << MolDraw2D_detail::formatDouble(dx) << ' '
-       << MolDraw2D_detail::formatDouble(dy) << std::endl;
+       << MolDraw2D_detail::formatDouble(dy) << "\n";
 
   return 0;
 }
@@ -76,7 +77,7 @@ int DrawTextFTSVG::ConicToFunctionImpl(const FT_Vector *control,
   oss_ << "Q " << MolDraw2D_detail::formatDouble(controlX) << ' '
        << MolDraw2D_detail::formatDouble(controlY) << ", "
        << MolDraw2D_detail::formatDouble(dx) << ' '
-       << MolDraw2D_detail::formatDouble(dy) << std::endl;
+       << MolDraw2D_detail::formatDouble(dy) << "\n";
 
   return 0;
 }
@@ -98,7 +99,7 @@ int DrawTextFTSVG::CubicToFunctionImpl(const FT_Vector *controlOne,
        << MolDraw2D_detail::formatDouble(controlTwoX) << ' '
        << MolDraw2D_detail::formatDouble(controlTwoY) << ", "
        << MolDraw2D_detail::formatDouble(dx) << ' '
-       << MolDraw2D_detail::formatDouble(dy) << std::endl;
+       << MolDraw2D_detail::formatDouble(dy) << "\n";
 
   return 0;
 }

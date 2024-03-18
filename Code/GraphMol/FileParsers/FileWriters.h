@@ -18,6 +18,29 @@
 
 namespace RDKit {
 
+struct RDKIT_FILEPARSERS_EXPORT MolWriterParams {
+  bool includeStereo = true;  /**< toggles inclusion of stereochemistry
+                                   information*/
+  bool kekulize = true;       /**< triggers kekulization of the molecule before
+                                   it is written*/
+  bool forceV3000 = false;    /**< force generation a V3000 mol block (happens
+                                   automatically with more than 999 atoms or
+                                   bonds)*/
+  unsigned int precision = 6; /**< precision of coordinates (only available in
+                                   V3000)*/
+};
+
+// \brief generates an MDL mol block for a molecule
+/*!
+ *   \param mol             - the molecule in question
+ *   \param MolWriterParams - parmeter struct with write options
+ *   \param confId          - selects the conformer to be used
+ *                            (default=-1 - find first in mol)
+ */
+RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol,
+                                                   const MolWriterParams &params,
+                                                   int confId = -1);
+
 // \brief generates an MDL mol block for a molecule
 /*!
  *   \param mol           - the molecule in question
@@ -31,24 +54,57 @@ namespace RDKit {
  *                          automatically with more than 999 atoms or
  *                          bonds)(default=false)
  */
-RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol,
-                                                   bool includeStereo = true,
-                                                   int confId = -1,
-                                                   bool kekulize = true,
-                                                   bool forceV3000 = false);
+inline std::string MolToMolBlock(const ROMol &mol,
+                                 bool includeStereo = true,
+                                 int confId = -1,
+                                 bool kekulize = true,
+                                 bool forceV3000 = false) {
+  MolWriterParams params{includeStereo, kekulize, forceV3000};
+  return MolToMolBlock(mol, params, confId);
+}
+
+// \brief generates an MDL v3000 mol block for a molecule
+/*!
+ *   \param mol             - the molecule in question
+ *   \param MolWriterParams - parameter struct with write options
+ *   \param confId          - selects the conformer to be used
+ *                            (default=-1 - find first in mol)
+ */
+inline std::string MolToV3KMolBlock(const ROMol &mol,
+                                    const MolWriterParams &params,
+                                    int confId = -1) {
+  // have to set forceV300, prefer copy over mutable params argument
+  MolWriterParams v3KParams{params};
+  v3KParams.forceV3000 = true;
+  return MolToMolBlock(mol, v3KParams, confId);
+}
 
 // \brief generates an MDL v3000 mol block for a molecule
 /*!
  *   \param mol           - the molecule in question
  *   \param includeStereo - toggles inclusion of stereochemistry information
  *   \param confId        - selects the conformer to be used
+ *                          (default=-1 - find first in mol)
  *   \param kekulize      - triggers kekulization of the molecule before it is
  *                        - written
  */
 inline std::string MolToV3KMolBlock(const ROMol &mol, bool includeStereo = true,
                                     int confId = -1, bool kekulize = true) {
-  return MolToMolBlock(mol, includeStereo, confId, kekulize, true);
+  MolWriterParams params{includeStereo, kekulize, true};
+  return MolToMolBlock(mol, params, confId);
 }
+
+// \brief Writes a molecule to an MDL mol file
+/*!
+ *   \param mol             - the molecule in question
+ *   \param fName           - the name of the file to use
+ *   \param MolWriterParams - parameter struct with write options
+ *   \param confId          - selects the conformer to be used
+ */
+RDKIT_FILEPARSERS_EXPORT void MolToMolFile(const ROMol &mol,
+                                           const std::string &fName,
+                                           const MolWriterParams &params,
+                                           int confId = -1);
 
 // \brief Writes a molecule to an MDL mol file
 /*!
@@ -62,9 +118,29 @@ inline std::string MolToV3KMolBlock(const ROMol &mol, bool includeStereo = true,
  * automatically with
  *                          more than 999 atoms or bonds)
  */
-RDKIT_FILEPARSERS_EXPORT void MolToMolFile(
+inline void MolToMolFile(
     const ROMol &mol, const std::string &fName, bool includeStereo = true,
-    int confId = -1, bool kekulize = true, bool forceV3000 = false);
+    int confId = -1, bool kekulize = true, bool forceV3000 = false) {
+  MolWriterParams params{includeStereo, kekulize, forceV3000};
+  MolToMolFile(mol, fName, params, confId);
+}
+
+// \brief Writes a molecule to an MDL V3000 mol file
+/*!
+ *   \param mol             - the molecule in question
+ *   \param fName           - the name of the file to use
+ *   \param MolWriterParams - parameter struct with write options
+ *   \param confId          - selects the conformer to be used
+ */
+inline void MolToV3KMolFile(const ROMol &mol,
+                            const std::string &fName,
+                            const MolWriterParams &params,
+                            int confId = -1) {
+  // have to set forceV300, prefer copy over mutable params argument
+  MolWriterParams v3KParams{params};
+  v3KParams.forceV3000 = true;
+  MolToMolFile(mol, fName, v3KParams, confId);
+}
 
 // \brief Writes a molecule to an MDL V3000 mol file
 /*!
@@ -78,7 +154,8 @@ RDKIT_FILEPARSERS_EXPORT void MolToMolFile(
 inline void MolToV3KMolFile(const ROMol &mol, const std::string &fName,
                             bool includeStereo = true, int confId = -1,
                             bool kekulize = true) {
-  MolToMolFile(mol, fName, includeStereo, confId, kekulize, true);
+  MolWriterParams params{includeStereo, kekulize, true};
+  MolToMolFile(mol, fName, params, confId);
 }
 
 RDKIT_FILEPARSERS_EXPORT std::string MolToCMLBlock(const ROMol &mol,
@@ -90,12 +167,27 @@ RDKIT_FILEPARSERS_EXPORT void MolToCMLFile(const ROMol &mol,
                                            int confId = -1,
                                            bool kekulize = true);
 
+// \brief Writes a molecule to an XYZ block
+/*!
+ *   \param mol       - the molecule in question
+ *   \param confId    - selects which conformation to output
+ *   \param precision - precision of the coordinates
+ */
 RDKIT_FILEPARSERS_EXPORT std::string MolToXYZBlock(const ROMol &mol,
-                                                   int confId = -1);
+                                                   int confId = -1,
+                                                   unsigned int precision = 6);
 
+// \brief Writes a molecule to an XYZ block
+/*!
+ *   \param mol       - the molecule in question
+ *   \param fName     - the file to write to
+ *   \param confId    - selects which conformation to output
+ *   \param precision - precision of the coordinates
+ */
 RDKIT_FILEPARSERS_EXPORT void MolToXYZFile(const ROMol &mol,
                                            const std::string &fName,
-                                           int confId = -1);
+                                           int confId = -1,
+                                           unsigned int precision = 6);
 
 RDKIT_FILEPARSERS_EXPORT std::string MolToTPLText(
     const ROMol &mol, const std::string &partialChargeProp = "_GasteigerCharge",

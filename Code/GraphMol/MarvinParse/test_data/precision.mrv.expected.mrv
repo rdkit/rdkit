@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cml xmlns="http://www.chemaxon.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.chemaxon.com http://www.chemaxon.com/marvin/schema/mrvSchema_20_20_0.xsd">
+  <MDocument>
+    <MChemicalStruct>
+      <molecule molID="m1">
+        <atomArray>
+          <atom id="a1" elementType="O" x3="0.402012650000001" y3="-0.132994360000000" z3="1.000000170000000"/>
+          <atom id="a2" elementType="C" x3="0.876222600000000" y3="0.997390900000000" z3="1.000000030000000"/>
+          <atom id="a3" elementType="O" x3="0.366137990000000" y3="2.110718500000000" z3="0.999999820000000" formalCharge="-1"/>
+          <atom id="a4" elementType="C" x3="2.486961570000000" y3="1.004799350000000" z3="0.999999990000000"/>
+          <atom id="a5" elementType="F" x3="3.033118410000000" y3="2.237399550000000" z3="1.000000100000000"/>
+          <atom id="a6" elementType="F" x3="3.007723370000000" y3="0.373992940000000" z3="2.077133250000000"/>
+          <atom id="a7" elementType="F" x3="3.007723400000000" y3="0.373993120000000" z3="-0.077133360000000"/>
+        </atomArray>
+        <bondArray>
+          <bond id="b1" atomRefs2="a1 a2" order="2"/>
+          <bond id="b2" atomRefs2="a2 a3" order="1"/>
+          <bond id="b3" atomRefs2="a2 a4" order="1"/>
+          <bond id="b4" atomRefs2="a4 a5" order="1"/>
+          <bond id="b5" atomRefs2="a4 a6" order="1"/>
+          <bond id="b6" atomRefs2="a4 a7" order="1"/>
+        </bondArray>
+      </molecule>
+    </MChemicalStruct>
+  </MDocument>
+</cml>
