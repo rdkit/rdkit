@@ -990,11 +990,51 @@ void createSMARTSQSubstanceGroups(ROMol &mol) {
     }
   }
 }
+
+void createZBOSubstanceGroups(ROMol &mol) {
+  SubstanceGroup bsg(&mol, "DAT");
+  bsg.setProp("FIELDNAME", "ZBO");
+  boost::dynamic_bitset<> atomsAffected(mol.getNumAtoms(), 0);
+  for (const auto bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::ZERO) {
+      bsg.addBondWithIdx(bond->getIdx());
+      atomsAffected[bond->getBeginAtomIdx()] = 1;
+      atomsAffected[bond->getEndAtomIdx()] = 1;
+    }
+  }
+  if (atomsAffected.any()) {
+    for (auto i = 0u; i < atomsAffected.size(); ++i) {
+      if (atomsAffected[i]) {
+        bsg.addAtomWithIdx(i);
+      }
+    }
+    addSubstanceGroup(mol, bsg);
+    SubstanceGroup asg(&mol, "DAT");
+    asg.setProp("FIELDNAME", "HYD");
+    std::string sgText;
+    for (auto i = 0u; i < atomsAffected.size(); ++i) {
+      if (atomsAffected[i]) {
+        const Atom *atom = mol.getAtomWithIdx(i);
+        asg.addAtomWithIdx(i);
+        if (!sgText.empty()) {
+          sgText += ";";
+        }
+        sgText += std::to_string(atom->getTotalNumHs());
+      }
+    }
+
+    std::vector<std::string> dataFields{sgText};
+    asg.setProp("DATAFIELDS", dataFields);
+
+    addSubstanceGroup(mol, asg);
+  }
+}
 }  // namespace
 namespace FileParserUtils {
 void moveAdditionalPropertiesToSGroups(RWMol &mol) {
   GenericGroups::convertGenericQueriesToSubstanceGroups(mol);
   createSMARTSQSubstanceGroups(mol);
+  createZBOSubstanceGroups(mol);
 }
 }  // namespace FileParserUtils
 const std::string GetV3000MolFileBondLine(

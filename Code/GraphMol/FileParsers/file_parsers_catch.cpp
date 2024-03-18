@@ -7025,3 +7025,35 @@ TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
     }
   };
 }
+
+TEST_CASE("ZBOs in V3K blocks") {
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  SECTION("basics") {
+    std::string fName;
+    fName = rdbase + "H3BNH3.mol";
+    auto m = v2::FileParsers::MolFromMolFile(fName);
+    REQUIRE(m);
+    auto run_tests = [](auto &m) {
+      CHECK(m->getNumAtoms() == 2);
+      CHECK(m->getNumBonds() == 1);
+      CHECK(m->getBondWithIdx(0)->getBondType() == Bond::ZERO);
+      CHECK(m->getAtomWithIdx(0)->getFormalCharge() == 0);
+      CHECK(m->getAtomWithIdx(1)->getFormalCharge() == 0);
+      CHECK(m->getAtomWithIdx(0)->getNumExplicitHs() == 3);
+      CHECK(m->getAtomWithIdx(1)->getNumExplicitHs() == 0);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 3);
+      CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == 3);
+    };
+    run_tests(m);
+    auto mb = MolToV3KMolBlock(*m);
+    std::cerr << "!!!!" << mb << std::endl;
+    CHECK(mb.find("ZBO") != std::string::npos);
+    CHECK(mb.find("HYD") != std::string::npos);
+    CHECK(mb.find("ZCH") != std::string::npos);
+    auto m2 = v2::FileParsers::MolFromMolBlock(mb);
+    REQUIRE(m2);
+    run_tests(m2);
+  }
+}
