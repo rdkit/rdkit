@@ -3656,6 +3656,10 @@ These all require the molecule to have a 3D conformer.
 |                                                     |reproduce values from DRAGON for these descriptors. We       |          |
 |                                                     |believe that this is close.                                  |          |
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
+|DCLV                                                 |New in 2024.03 release.  Eisenhaber et al.                   | C++      |
+|                                                     |J. of Comp. Chem, Vol. 16, pp. 273-284, 1995.                |          |
+|                                                     |https://doi.org/10.1002/jcc.540160303                        |          |
++-----------------------------------------------------+-------------------------------------------------------------+----------+
 
 
 
