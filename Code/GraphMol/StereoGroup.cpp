@@ -149,7 +149,7 @@ void assignStereoGroupIds(std::vector<StereoGroup> &groups) {
     if (sg.getGroupType() == StereoGroupType::STEREO_AND) {
       assignMissingIds(andIds, andId, sg);
     } else if (sg.getGroupType() == StereoGroupType::STEREO_OR) {
-      assignMissingIds(andIds, orId, sg);
+      assignMissingIds(orIds, orId, sg);
     }
   }
 }

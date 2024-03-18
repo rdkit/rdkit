@@ -765,7 +765,7 @@ void updateAtomNeighborNumSwaps(
 
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                   bool breakTies, bool includeChirality, bool includeIsotopes,
-                  bool includeAtomMaps) {
+                  bool includeAtomMaps, bool useNonStereoRanks) {
   if (!mol.getNumAtoms()) {
     return;
   }
@@ -784,6 +784,7 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   ftor.df_useChirality = includeChirality;
   ftor.df_useChiralityRings = includeChirality;
   ftor.df_useAtomMaps = includeAtomMaps;
+  ftor.df_useNonStereoRanks = useNonStereoRanks;
 
   auto order = std::make_unique<int[]>(mol.getNumAtoms());
   detail::rankWithFunctor(ftor, breakTies, order.get(), true, includeChirality);

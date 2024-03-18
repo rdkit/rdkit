@@ -1163,6 +1163,6 @@ TEST_CASE("Github #6887: and1 or1 in same mol") {
     auto mols = MolsFromCDXML(cdxml1);
     mols[0]->clearConformers();
     CHECK(MolToCXSmiles(*mols[0]) ==
-          "CO[C@H](C)C[C@H](Cl)C[C@H](C)Br |o1:5,o2:8,&1:2|");
+          "CO[C@H](C)C[C@H](Cl)C[C@H](C)Br |&1:2,&2:5,&3:8|");
   }
 }

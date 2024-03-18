@@ -31,16 +31,19 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
                             is not canonical and that this will thrown an
                             exception if the molecule cannot be kekulized. */
   bool canonical = true; /**< generate canonical SMILES */
-  bool rigorousEnhancedStereo = false; /**< if true, use a more rigorous
-                                          treatment of enhanced stereochemisty
-                                          is performed */
-  bool cleanStereo = true;             /**< generate canonical SMILES */
-  bool allBondsExplicit = false;       /**< include symbols for all bonds */
-  bool allHsExplicit = false; /**< provide hydrogen counts for every atom */
+  bool cleanStereo = true;       /**< generate canonical SMILES */
+  bool allBondsExplicit = false; /**< include symbols for all bonds */
+  bool allHsExplicit = false;    /**< provide hydrogen counts for every atom */
   bool doRandom = false; /**< randomize the output order. The resulting SMILES
                             is not canonical */
   int rootedAtAtom = -1; /**< make sure the SMILES starts at the specified
                              atom. The resulting SMILES is not canonical */
+  bool rigorousEnhancedStereo = true; /**< if true, use a more rigorous
+             treatment of enhanced stereochemisty
+             is performed */
+  bool useStereoToBreakTies =
+      false; /**< if true, ranks are determined without stereo,
+then again using the previous ranks and the stereo information */
 };
 namespace SmilesWrite {
 
@@ -57,8 +60,11 @@ enum CXSmilesFields : uint32_t {
   CX_POLYMER = 1 << 8,
   CX_BOND_CFG = 1 << 9,
   CX_BOND_ATROPISOMER = 1 << 10,
-  CX_ALL = 0x7fffffff,
-  CX_ALL_BUT_COORDS = CX_ALL ^ CX_COORDS
+  CX_BOND_ATROPISOMER_PARITY =
+      1 << 11,  // NOTE::this places the atropisomerparity in the CXSmiels, but
+                // THIS IS NOT SUPPORTED BY THE CHEMAXON!
+  CX_ALL = 0x7fffffff ^ CX_BOND_ATROPISOMER_PARITY,
+  CX_ALL_BUT_COORDS = CX_ALL ^ CX_COORDS ^ CX_BOND_ATROPISOMER_PARITY
 };
 
 //! \brief returns the cxsmiles data for a molecule
@@ -313,8 +319,8 @@ inline std::string MolFragmentToCXSmiles(
 
  */
 
-RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> canonicalizeStereoGroups(
-    const RDKit::RWMol &mol);
+RDKIT_SMILESPARSE_EXPORT void canonicalizeStereoGroups(
+    std::unique_ptr<RDKit::RWMol> &mol);
 
 }  // namespace RDKit
 #endif

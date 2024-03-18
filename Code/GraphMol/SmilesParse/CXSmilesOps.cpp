@@ -1161,6 +1161,46 @@ bool parse_doublebond_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
 }
 
 template <typename Iterator>
+bool parse_atropisomer_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                              unsigned int, unsigned int startBondIdx,
+                              Bond::BondStereo stereo) {
+  // these look like: C1CCCC/C=C/CCC1 |ctu:5|
+  // also c and t for cis or trans
+  //
+  while (first < last && *first != ':') {
+    ++first;
+  }
+  if (first >= last || *first != ':') {
+    return false;
+  }
+  ++first;
+
+  while (first < last && *first >= '0' && *first <= '9') {
+    unsigned int bondIdx;
+    if (!read_int(first, last, bondIdx)) {
+      return false;
+    }
+    if (VALID_BNDIDX(bondIdx)) {
+      auto bond = get_bond_with_smiles_idx(mol, bondIdx - startBondIdx);
+
+      if (!bond) {
+        BOOST_LOG(rdWarningLog)
+            << "bond " << bondIdx
+            << " not found, cannot mark as stereo double bond." << std::endl;
+        return false;
+      }
+
+      bond->setStereo(stereo);
+      mol.setProp("_needsDetectBondStereo", 1);
+    }
+    if (first < last && *first == ',') {
+      ++first;
+    }
+  }
+  return true;
+}
+
+template <typename Iterator>
 bool parse_substitution(Iterator &first, Iterator last, RDKit::RWMol &mol,
                         unsigned int startAtomIdx) {
   if (first >= last || *first != 's' || first + 1 >= last ||
@@ -1465,6 +1505,19 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
     } else if (*first == 't') {
       if (!parse_doublebond_stereo(first, last, mol, startAtomIdx, startBondIdx,
                                    Bond::BondStereo::STEREOTRANS)) {
+        return false;
+      }
+    } else if (*first == 'b' && first + 2 < last && first[1] == '@' &&
+               first[2] == '@') {
+      if (!parse_atropisomer_stereo(first, last, mol, startAtomIdx,
+                                    startBondIdx,
+                                    Bond::BondStereo::STEREOATROPCW)) {
+        return false;
+      }
+    } else if (*first == 'b' && first + 1 < last && first[1] == '@') {
+      if (!parse_atropisomer_stereo(first, last, mol, startAtomIdx,
+                                    startBondIdx,
+                                    Bond::BondStereo::STEREOATROPCCW)) {
         return false;
       }
     } else {
@@ -2129,6 +2182,75 @@ std::string get_bond_config_block(
   return res;
 }
 
+std::string get_atropisomer_parity_block(
+    const ROMol &mol, const std::vector<unsigned int> &atomOrder,
+    const std::vector<unsigned int> &bondOrder) {
+  std::string bCw = "", bCcw = "";
+  for (unsigned int i = 0; i < bondOrder.size(); ++i) {
+    auto idx = bondOrder[i];
+    const auto bond = mol.getBondWithIdx(idx);
+    if (bond->getBondType() != Bond::BondType::SINGLE) {
+      continue;
+    }
+    Bond::BondStereo bstereo = bond->getStereo();
+    if (bstereo != Bond::BondStereo::STEREOATROPCW &&
+        bstereo != Bond::BondStereo::STEREOATROPCCW) {
+      continue;
+    }
+
+    auto label = std::to_string(i);
+
+    Atom *begAtom = bond->getBeginAtom();
+    Atom *endAtom = bond->getEndAtom();
+    bool needSwap = false;
+    if (begAtom->getDegree() > 2) {
+      unsigned int o1 = UINT_MAX;
+      for (const auto nbr : mol.atomNeighbors(begAtom)) {
+        if (nbr == endAtom) {
+          continue;
+        }
+        if (o1 == UINT_MAX) {
+          o1 = atomOrder[nbr->getIdx()];
+        } else if (atomOrder[nbr->getIdx()] < o1) {
+          // this neighbor came first, we need to swap:
+          needSwap = !needSwap;
+        }
+      }
+    }
+    if (endAtom->getDegree() > 2) {
+      unsigned int o1 = UINT_MAX;
+      for (const auto nbr : mol.atomNeighbors(endAtom)) {
+        if (nbr == endAtom) {
+          continue;
+        }
+        if (o1 == UINT_MAX) {
+          o1 = atomOrder[nbr->getIdx()];
+        } else if (atomOrder[nbr->getIdx()] < o1) {
+          // this neighbor came first, we need to swap:
+          needSwap = !needSwap;
+        }
+      }
+    }
+
+    if (bstereo == Bond::BondStereo::STEREOATROPCW || needSwap) {
+      if (bCw.empty()) {
+        bCw += "b@@:";
+      } else {
+        bCw += ",";
+      }
+      bCw += label;
+    } else {
+      if (bCcw.empty()) {
+        bCcw += "b@:";
+      } else {
+        bCcw += ",";
+      }
+      bCcw += label;
+    }
+  }
+  return bCw + bCcw;
+}
+
 std::string get_ringbond_cistrans_block(
     const ROMol &mol, const std::vector<unsigned int> &atomOrder,
     const std::vector<unsigned int> &bondOrder) {
@@ -2339,6 +2461,12 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     const auto cistransblock =
         get_ringbond_cistrans_block(mol, atomOrder, bondOrder);
     appendToCXExtension(cistransblock, res);
+  }
+
+  if (flags & SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER_PARITY) {
+    const auto atropisomerParityBlock =
+        get_atropisomer_parity_block(mol, atomOrder, bondOrder);
+    appendToCXExtension(atropisomerParityBlock, res);
   }
 
   // do the CX_BOND_ATROPISOMER only if CX_BOND_CFG s not done.  CX_BOND_CFG

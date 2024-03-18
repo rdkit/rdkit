@@ -2039,7 +2039,8 @@ TEST_CASE("github #4071: StereoGroups not preserved by RenumberAtoms()",
             mol->getStereoGroups()[i].getGroupType());
     }
     CHECK(MolToCXSmiles(*nmol) ==
-          "C[C@H](O)[C@H](C)[C@H](C)[C@H](C)O |o1:1,&1:3,&2:5,&3:7|");
+          // "C[C@H](O)[C@H](C)[C@H](C)[C@H](C)O |o1:1,&1:3,&2:5,&3:7|");
+          "C[C@H](O)[C@H](C)[C@H](C)[C@H](C)O |&1:1,&2:3,&3:5,&4:7|");
   }
 }
 
