@@ -1216,6 +1216,9 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles,
     case HashFunction::HetAtomProtomer:
       result = TautomerHash(mol, true, useCXSmiles, cxFlagsToSkip);
       break;
+    case HashFunction::HetAtomProtomerv2:
+      result = TautomerHashv2(mol, true, useCXSmiles, cxFlagsToSkip);
+      break;
     case HashFunction::MolFormula:
       result = NMMolecularFormula(mol);
       break;

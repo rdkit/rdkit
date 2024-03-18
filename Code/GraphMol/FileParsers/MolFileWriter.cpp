@@ -157,7 +157,7 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
       chgss << boost::format(" %3d %3d") % (atom->getIdx() + 1) %
                    atom->getFormalCharge();
       if (nChgs == 8) {
-        res << boost::format("M  CHG%3d") % nChgs << chgss.str() << std::endl;
+        res << boost::format("M  CHG%3d") % nChgs << chgss.str() << "\n";
         chgss.str("");
         nChgs = 0;
       }
@@ -172,7 +172,7 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
       }
       radss << boost::format(" %3d %3d") % (atom->getIdx() + 1) % nRadEs;
       if (nRads == 8) {
-        res << boost::format("M  RAD%3d") % nRads << radss.str() << std::endl;
+        res << boost::format("M  RAD%3d") % nRads << radss.str() << "\n";
         radss.str("");
         nRads = 0;
       }
@@ -185,7 +185,7 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
                           isotope;
         if (nMassDiffs == 8) {
           res << boost::format("M  ISO%3d") % nMassDiffs << massdiffss.str()
-              << std::endl;
+              << "\n";
           massdiffss.str("");
           nMassDiffs = 0;
         }
@@ -193,14 +193,13 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
     }
   }
   if (nChgs) {
-    res << boost::format("M  CHG%3d") % nChgs << chgss.str() << std::endl;
+    res << boost::format("M  CHG%3d") % nChgs << chgss.str() << "\n";
   }
   if (nRads) {
-    res << boost::format("M  RAD%3d") % nRads << radss.str() << std::endl;
+    res << boost::format("M  RAD%3d") % nRads << radss.str() << "\n";
   }
   if (nMassDiffs) {
-    res << boost::format("M  ISO%3d") % nMassDiffs << massdiffss.str()
-        << std::endl;
+    res << boost::format("M  ISO%3d") % nMassDiffs << massdiffss.str() << "\n";
   }
   return res.str();
 }
@@ -243,15 +242,14 @@ const std::string GetMolFileQueryInfo(
         hasComplexQuery(atom)) {
       std::string sma =
           SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
-      ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << sma
-         << std::endl;
+      ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << sma << "\n";
       wrote_query = true;
     }
     std::string molFileValue;
     if (!wrote_query &&
         atom->getPropIfPresent(common_properties::molFileValue, molFileValue)) {
       ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << molFileValue
-         << std::endl;
+         << "\n";
     }
   }
   for (const auto atom : mol.atoms()) {
@@ -289,7 +287,7 @@ const std::string GetMolFileRGroupInfo(const RWMol &mol) {
   }
   std::stringstream ss2;
   if (nEntries) {
-    ss2 << "M  RGP" << std::setw(3) << nEntries << ss.str() << std::endl;
+    ss2 << "M  RGP" << std::setw(3) << nEntries << ss.str() << "\n";
   }
   return ss2.str();
 }
@@ -332,7 +330,7 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
       ss << " " << std::setw(3) << (*bondIt)->getIdx() + 1 << " "
          << std::setw(3) << 0;
       if (nEntries == 8) {
-        res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << std::endl;
+        res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << "\n";
         nEntries = 0;
         ss.str("");
       }
@@ -341,7 +339,7 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
     }
   }
   if (nEntries) {
-    res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << std::endl;
+    res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << "\n";
   }
   if (atomsAffected.count()) {
     std::stringstream hydss;
@@ -357,7 +355,7 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
       hydss << boost::format(" %3d %3d") % (atom->getIdx() + 1) %
                    atom->getTotalNumHs();
       if (nhyd == 8) {
-        res << boost::format("M  HYD%3d") % nhyd << hydss.str() << std::endl;
+        res << boost::format("M  HYD%3d") % nhyd << hydss.str() << "\n";
         hydss.str("");
         nhyd = 0;
       }
@@ -366,17 +364,17 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
         zchss << boost::format(" %3d %3d") % (atom->getIdx() + 1) %
                      atom->getFormalCharge();
         if (nzch == 8) {
-          res << boost::format("M  ZCH%3d") % nzch << zchss.str() << std::endl;
+          res << boost::format("M  ZCH%3d") % nzch << zchss.str() << "\n";
           zchss.str("");
           nzch = 0;
         }
       }
     }
     if (nhyd) {
-      res << boost::format("M  HYD%3d") % nhyd << hydss.str() << std::endl;
+      res << boost::format("M  HYD%3d") % nhyd << hydss.str() << "\n";
     }
     if (nzch) {
-      res << boost::format("M  ZCH%3d") % nzch << zchss.str() << std::endl;
+      res << boost::format("M  ZCH%3d") % nzch << zchss.str() << "\n";
     }
   }
   return res.str();
@@ -756,7 +754,7 @@ const std::string GetMolFileBondLine(
 
 const std::string GetV3000MolFileAtomLine(
     const Atom *atom, const Conformer *conf,
-    boost::dynamic_bitset<> &queryListAtoms) {
+    boost::dynamic_bitset<> &queryListAtoms, unsigned int precision) {
   PRECONDITION(atom, "");
   int totValence, atomMapNumber;
   unsigned int parityFlag;
@@ -790,7 +788,12 @@ const std::string GetV3000MolFileAtomLine(
     }
   }
 
-  ss << std::fixed << " " << x << " " << y << " " << z << std::defaultfloat;
+  std::streamsize currentPrecision = ss.precision();
+  ss << std::fixed;
+  ss << std::setprecision(precision);
+  ss << " " << x << " " << y << " " << z;
+  ss << std::setprecision(currentPrecision);
+  ss << std::defaultfloat;
   ss << " " << atomMapNumber;
 
   // Extra atom properties.
@@ -1063,41 +1066,48 @@ void appendEnhancedStereoGroups(
     auto stereo_groups = tmol.getStereoGroups();
     assignStereoGroupIds(stereo_groups);
     res += "M  V30 BEGIN COLLECTION\n";
+    std::string tmp;
+    tmp.reserve(80);
     for (auto &&group : stereo_groups) {
-      res += "M  V30 MDLV30/";
+      tmp += "M  V30 MDLV30/";
       switch (group.getGroupType()) {
         case RDKit::StereoGroupType::STEREO_ABSOLUTE:
-          res += "STEABS";
+          tmp += "STEABS";
           break;
         case RDKit::StereoGroupType::STEREO_OR:
-          res += "STEREL";
-          res += std::to_string(group.getWriteId());
+          tmp += "STEREL";
+          tmp += std::to_string(group.getWriteId());
           break;
         case RDKit::StereoGroupType::STEREO_AND:
-          res += "STERAC";
-          res += std::to_string(group.getWriteId());
+          tmp += "STERAC";
+          tmp += std::to_string(group.getWriteId());
           break;
       }
-      res += " ATOMS=(";
+      tmp += " ATOMS=(";
 
       std::vector<unsigned int> atomIds;
       Atropisomers::getAllAtomIdsForStereoGroup(tmol, group, atomIds,
                                                 wedgeBonds);
 
-      res += std::to_string(atomIds.size());
+      tmp += std::to_string(atomIds.size());
       for (auto &&atom : atomIds) {
-        res += ' ';
+        tmp += ' ';
         // atoms are 1 indexed in molfiles
-        res += std::to_string(atom + 1);
+        auto idxStr = std::to_string(atom + 1);
+        if (tmp.size() + idxStr.size() >= 78) {
+          res += tmp + "-\n";
+          tmp = "M  V30 ";
+        }
+        tmp += idxStr;
       }
-
-      res += ")\n";
+      res += tmp + ")\n";
+      tmp.clear();
     }
-    res += "M  V30 END COLLECTION\n";
+    res += tmp + "M  V30 END COLLECTION\n";
   }
 }
 namespace FileParserUtils {
-std::string getV3000CTAB(const ROMol &tmol, int confId) {
+std::string getV3000CTAB(const ROMol &tmol, int confId, unsigned int precision) {
   auto nAtoms = tmol.getNumAtoms();
   auto nBonds = tmol.getNumBonds();
   const auto &sgroups = getSubstanceGroups(tmol);
@@ -1123,7 +1133,7 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
   res += "M  V30 BEGIN ATOM\n";
   for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
        atomIt != tmol.endAtoms(); ++atomIt) {
-    res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms);
+    res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms, precision);
     res += "\n";
   }
   res += "M  V30 END ATOM\n";
@@ -1170,7 +1180,7 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
 //
 //------------------------------------------------
 std::string outputMolToMolBlock(const RWMol &tmol, int confId,
-                                bool forceV3000) {
+                                bool forceV3000, unsigned int precision) {
   std::string res;
   bool isV3000;
   unsigned int nAtoms, nBonds, nLists, chiralFlag, nsText, nRxnComponents;
@@ -1289,14 +1299,15 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     // FIX: R-group logic, SGroups and 3D features etc.
   } else {
     // V3000 output.
-    res += FileParserUtils::getV3000CTAB(tmol, confId);
+    res += FileParserUtils::getV3000CTAB(tmol, confId, precision);
   }
   res += "M  END\n";
   return res;
 }
 
-std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
-                          bool kekulize, bool forceV3000) {
+std::string MolToMolBlock(const ROMol &mol,
+                          const MolWriterParams& params,
+                          int confId) {
   RDKit::Utils::LocaleSwitcher switcher;
   RWMol trwmol(mol);
   // NOTE: kekulize the molecule before writing it out
@@ -1304,11 +1315,11 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
   if (trwmol.needsUpdatePropertyCache()) {
     trwmol.updatePropertyCache(false);
   }
-  if (kekulize && mol.getNumBonds()) {
+  if (params.kekulize && mol.getNumBonds()) {
     MolOps::Kekulize(trwmol);
   }
 
-  if (includeStereo && !trwmol.getNumConformers()) {
+  if (params.includeStereo && !trwmol.getNumConformers()) {
     // generate coordinates so that the stereo we generate makes sense
     RDDepict::compute2DCoords(trwmol);
   }
@@ -1326,9 +1337,9 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
   FileParserUtils::moveAdditionalPropertiesToSGroups(trwmol);
 
   try {
-    return outputMolToMolBlock(trwmol, confId, forceV3000);
+    return outputMolToMolBlock(trwmol, confId, params.forceV3000, params.precision);
   } catch (RequiresV3000Exception &) {
-    return outputMolToMolBlock(trwmol, confId, true);
+    return outputMolToMolBlock(trwmol, confId, true, params.precision);
   }
 }
 
@@ -1337,9 +1348,10 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
 //  Dump a molecule to a file
 //
 //------------------------------------------------
-void MolToMolFile(const ROMol &mol, const std::string &fName,
-                  bool includeStereo, int confId, bool kekulize,
-                  bool forceV3000) {
+void MolToMolFile(const ROMol &mol,
+                  const std::string &fName,
+                  const MolWriterParams &params,
+                  int confId) {
   auto *outStream = new std::ofstream(fName.c_str());
   if (!(*outStream) || outStream->bad()) {
     delete outStream;
@@ -1348,7 +1360,7 @@ void MolToMolFile(const ROMol &mol, const std::string &fName,
     throw BadFileException(errout.str());
   }
   std::string outString =
-      MolToMolBlock(mol, includeStereo, confId, kekulize, forceV3000);
+      MolToMolBlock(mol, params, confId);
   *outStream << outString;
   delete outStream;
 }
