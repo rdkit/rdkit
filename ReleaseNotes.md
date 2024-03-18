@@ -15,6 +15,7 @@ GitHub)
 - Metal atoms (really any atom which has a default valence of -1) now have their radical electron count set to zero if they form any bonds. Metal atoms/ions without bonds will continue to be assigned a radical count of either 1 or 0 if they do/do not have an odd number of valence electrons. It is not possible in a cheminformatics system to generally answer what the spin state of a metal atom should be, so we are taking a simple and easily explainable approach. If you know the spin state of your species, you can directly provide that information by calling SetNumRadicalElectrons().
 - Chirality will now be perceived for three-coordinate atoms with a T-shaped coordination environment and the wedge in the stem of the T. If we are perceiving tetrahedral stereo, it's possible to interpret this unambiguously.
 - Bug fixes in the v2 tautomer hash algorithm will change the output for some molecules. Look at PR #7200 for more details: https://github.com/rdkit/rdkit/pull/7200
+- RMS pruning during conformer generation now symmetrizes conjugated terminal groups by default. This can be disabled with the parameter "symmetrizeConjugatedTerminalGroupsForPruning"
 
 ## New Features and Enhancements:
 
