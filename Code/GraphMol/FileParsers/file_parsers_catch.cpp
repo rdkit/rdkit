@@ -7122,24 +7122,25 @@ TEST_CASE("ZBOs in V3K blocks") {
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
 
   SECTION("basics") {
-    std::string fName;
-    fName = rdbase + "H3BNH3.mol";
-    auto m = v2::FileParsers::MolFromMolFile(fName);
-    REQUIRE(m);
     auto run_tests = [](auto &m) {
       CHECK(m->getNumAtoms() == 2);
       CHECK(m->getNumBonds() == 1);
       CHECK(m->getBondWithIdx(0)->getBondType() == Bond::ZERO);
       CHECK(m->getAtomWithIdx(0)->getFormalCharge() == 0);
       CHECK(m->getAtomWithIdx(1)->getFormalCharge() == 0);
-      CHECK(m->getAtomWithIdx(0)->getNumExplicitHs() == 3);
-      CHECK(m->getAtomWithIdx(1)->getNumExplicitHs() == 0);
       CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 3);
       CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == 3);
+      CHECK(m->getAtomWithIdx(0)->hasProp("_ZBO_H"));
     };
-    run_tests(m);
+    std::string fName;
+    fName = rdbase + "H3BNH3.mol";
+    auto m = v2::FileParsers::MolFromMolFile(fName);
+    REQUIRE(m);
+    {
+      INFO("v2000");
+      run_tests(m);
+    }
     auto mb = MolToV3KMolBlock(*m);
-    std::cerr << "!!!!" << mb << std::endl;
     CHECK(mb.find("M  V30 1 0 1 2") == std::string::npos);
     CHECK(mb.find("M  V30 1 1 1 2") != std::string::npos);
     CHECK(mb.find("ZBO") != std::string::npos);
@@ -7147,6 +7148,59 @@ TEST_CASE("ZBOs in V3K blocks") {
     CHECK(mb.find("ZCH") != std::string::npos);
     auto m2 = v2::FileParsers::MolFromMolBlock(mb);
     REQUIRE(m2);
-    run_tests(m2);
+    {
+      INFO("v3000");
+      run_tests(m2);
+    }
+  }
+  SECTION("example") {
+    // from SI of Alex Clark's ZBO paper
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Cl 2.121320 1.060660 0.000000 0
+M  V30 2 I 1.060660 0.000000 0.000000 0
+M  V30 3 Cl 2.121320 -1.060660 0.000000 0
+M  V30 4 Cl -0.000000 -1.060660 0.000000 0
+M  V30 5 Cl 0.000000 1.060660 0.000000 0
+M  V30 6 I -1.060660 0.000000 0.000000 0
+M  V30 7 Cl -2.121320 -1.060660 0.000000 0
+M  V30 8 Cl -2.121320 1.060660 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 1 6 8
+M  V30 8 1 6 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(4 2 5 6 4) CBONDS=(2 4 8) FIELDNAME=ZBO
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 8);
+    CHECK(m->getNumBonds() == 8);
+    CHECK(m->getBondWithIdx(3)->getBondType() == Bond::ZERO);
+    CHECK(m->getBondWithIdx(7)->getBondType() == Bond::ZERO);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("ZBO") != std::string::npos);
+    CHECK(mb.find("HYD") != std::string::npos);
+    CHECK(mb.find("ZCH") != std::string::npos);
+    auto m2 = v2::FileParsers::MolFromMolBlock(mb);
+    REQUIRE(m2);
+    CHECK(m2->getNumAtoms() == 8);
+    CHECK(m2->getNumBonds() == 8);
+    CHECK(m2->getBondWithIdx(3)->getBondType() == Bond::ZERO);
+    CHECK(m2->getBondWithIdx(7)->getBondType() == Bond::ZERO);
   }
 }
