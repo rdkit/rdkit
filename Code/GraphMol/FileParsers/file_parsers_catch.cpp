@@ -31,6 +31,7 @@
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/MonomerInfo.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 
@@ -3015,6 +3016,36 @@ TEST_CASE("test bond flavors when writing PDBs", "[bug]") {
       int flavor = 2 | 8;
       auto pdb = MolToPDBBlock(*m, confId, flavor);
       CHECK(pdb.find("CONECT") == std::string::npos);
+    }
+  }
+}
+
+TEST_CASE("test output with incomplete monomer info", "[bug][writer]") {
+  SECTION("basics") {
+    {
+      std::unique_ptr<RWMol> m{SmilesToMol("Cl")};
+      REQUIRE(m);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("HETATM    1 CL1  UNL     1") != std::string::npos);
+    }
+    {
+      std::unique_ptr<RWMol> m{SmilesToMol("Cl")};
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setResidueName("HCL");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("ATOM      1 CL1  HCL     0") != std::string::npos);
+    }
+    {
+      std::unique_ptr<RWMol> m{SmilesToMol("Cl")};
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setResidueName("HCL");
+      info->setName("Cl1");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("ATOM      1  Cl1 HCL     0") != std::string::npos);
     }
   }
 }
