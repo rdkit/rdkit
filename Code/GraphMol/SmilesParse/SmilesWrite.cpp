@@ -1064,27 +1064,27 @@ void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol) {
   // this expanded a mol with stereo groups to a vector of mols that have no
   // stereo grouos
   //
-  // NOTE: it might seem that we could skip this routine if there was only
-  // one stereo group and it is an abs group, but that's not the case.
-  // this routine uniques the individual possible components without the
-  // stereo groups, and the atom order will not be altered if there are two
-  // stereo centers that vary only in the stereo value.  For instance:
-  // "C[C@H](Cl)C[C@@H](C)Cl |a:1,4,|"
-  // and
-  // "C[C@@H](Cl)C[C@H](C)Cl |a:1,4,|"
-  // should give the same canonical restult, but do not without this routine.
 
   if (mol->getStereoGroups().empty()) {
     return;
   }
 
-  // if there is only one stereo gropu and it has only one atom or bond, the
+  // if there is only one stereo group and it has only one atom or bond, the
   // specification is unambiguous - simply return
-  if (mol.get()->getStereoGroups().size() == 1 &&
-      mol.get()->getStereoGroups()[0].getAtoms().size() +
-              mol.get()->getStereoGroups()[0].getBonds().size() ==
-          1) {
-    return;
+  //
+  // likewise, if there is only one groups and it is absolute,
+  // simply return
+
+  if (mol.get()->getStereoGroups().size() == 1) {
+    if (mol.get()->getStereoGroups()[0].getAtoms().size() +
+            mol.get()->getStereoGroups()[0].getBonds().size() ==
+        1) {
+      return;
+    }
+    if (mol.get()->getStereoGroups()[0].getGroupType() ==
+        StereoGroupType::STEREO_ABSOLUTE) {
+      return;
+    }
   }
 
   std::set<std::string> allSmiles;
