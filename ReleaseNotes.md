@@ -324,6 +324,7 @@ levineds-meta
  (github pull #7233 from greglandrum)
   - Avoid rebuilding FreeSASA at every build for no good reason
  (github pull #7245 from ptosco)
+
 ## Code removed in this release:
 - The python implementations of MolStandardize has been removed.
   Please use the implementation in `rdkit.Chem.MolStandardize.rdMolStandardize` instead.
@@ -338,6 +339,7 @@ levineds-meta
 
 ## Deprecated code (to be removed in a future release):
 - The PDBMolSupplier class has been deprecated and will be removed in the next release
+- The legacy Python code for drawing molecules has been deprecated and will be removed in the next release. This includes the following modules in rdkit.Chem.Draw: aggCanvas, cairoCanvas, canvasbase, MolDrawing, mplCanvas, qtCanvas, spingCanvas; the functions Draw.MolToImageFile(), Draw.MolToMPL(), and Draw.MolToQPixmap(); the "canvas" argument to the function Draw.MolToImage(); and calling Draw.MolToFile() with imageTypes other than PNG or SVG, 
 
 # Release_2023.09.1
 (Changes relative to Release_2023.03.1)
