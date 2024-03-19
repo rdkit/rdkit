@@ -8029,6 +8029,45 @@ CAS<~>
     self.assertEqual(mol.GetAtomWithIdx(5).GetProp("atomNote"), "abs (S)")
     self.assertEqual(mol.GetAtomWithIdx(3).GetProp("atomNote"), "and2")
 
+  def testIsRingFused(self):
+    molOrig = Chem.MolFromSmiles("C1C(C2CC3CCCCC3C12)C1CCCCC1")
+    mol = Chem.RWMol(molOrig)
+    ri = mol.GetRingInfo()
+    self.assertEqual(ri.NumRings(), 4)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 3)
+    self.assertEqual(fusedRings.count(False), 1)
+    atoms = mol.GetSubstructMatch(Chem.MolFromSmarts("[$(C1CCC1)]-@[$(C1CCCCC1)]"))
+    mol.RemoveBond(*atoms)
+    Chem.SanitizeMol(mol)
+    self.assertEqual(Chem.MolToSmiles(mol), "C1CCC(CC2CCC2C2CCCCC2)CC1")
+    self.assertEqual(ri.NumRings(), 3)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 0)
+    self.assertEqual(fusedRings.count(False), 3)
+    mol = Chem.RWMol(molOrig)
+    ri = mol.GetRingInfo()
+    self.assertEqual(ri.NumRings(), 4)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 3)
+    self.assertEqual(fusedRings.count(False), 1)
+    fusedBonds = [ri.NumFusedBonds(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedBonds.count(0), 1)
+    self.assertEqual(fusedBonds.count(1), 2)
+    self.assertEqual(fusedBonds.count(2), 1)
+    atoms = mol.GetSubstructMatch(Chem.MolFromSmarts("[$(C1CCCCC1-!@[CX4;R1;r4])].[$(C1C(-!@[CX4;R1;r6])CC1)]"))
+    mol.AddBond(*atoms, Chem.BondType.SINGLE)
+    Chem.SanitizeMol(mol)
+    self.assertEqual(Chem.MolToSmiles(mol), "C1CCC2C(C1)CC1C2C2C3CCCCC3C12")
+    self.assertEqual(ri.NumRings(), 5)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 5)
+    self.assertEqual(fusedRings.count(False), 0)
+    fusedBonds = [ri.NumFusedBonds(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedBonds.count(0), 0)
+    self.assertEqual(fusedBonds.count(1), 2)
+    self.assertEqual(fusedBonds.count(2), 3)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
