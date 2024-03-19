@@ -108,11 +108,6 @@ RDKIT_RGROUPDECOMPOSITION_EXPORT void relabelMappedDummies(
     ROMol &mol, unsigned int inputLabels = AtomMap | Isotope | MDLRGroup,
     unsigned int outputLabels = MDLRGroup);
 
-/// Molzip an RGroupRow back into the original molecule if possible
-///  This correctly handles broken cycles that can happend during arbitrary
-///  RGroup Decomposition.
-RDKIT_RGROUPDECOMPOSITION_EXPORT std::unique_ptr<ROMol> molzip(const RGroupRow &row,
-                                                               const MolzipParams &params=MolzipParams());
 }  // namespace RDKit
 
 #endif

@@ -1157,4 +1157,20 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
   return zippedMol;
 }
 
+std::unique_ptr<ROMol> molzip(const std::map<std::string, ROMOL_SPTR> &row,
+                              const MolzipParams &params) {
+  auto core = row.find("Core");
+  PRECONDITION(core != row.end(), "RGroup has no Core, cannot molzip");
+  std::vector<ROMOL_SPTR> mols;
+  mols.push_back(core->second);
+  for (auto it : row) {
+    if (it.first != "Core") {
+      mols.push_back(it.second);
+    }
+  }
+
+  return molzip(mols, params);
+}
+
 }  // end of namespace RDKit
+

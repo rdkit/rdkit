@@ -195,26 +195,6 @@ void relabelMappedDummiesHelper(ROMol &mol, unsigned int inputLabels,
                        static_cast<RGroupLabelling>(outputLabels));
 }
 
-ROMol *rgroupRowZipHelper(python::dict row, const MolzipParams &p) {
-  RGroupRow rgroup_row;
-  python::list items = row.items();
-  for(size_t i = 0; i < (size_t) python::len(items); ++i) {
-    python::object key = items[i][0];
-    python::object value = items[i][1];
-    python::extract<std::string> rgroup_key(key);
-    python::extract<ROMOL_SPTR> mol(value);
-    if(rgroup_key.check() && mol.check()) {
-      rgroup_row[rgroup_key] = mol;
-    } else {
-      // raise value error
-      throw ValueErrorException("Unable to retrieve rgroup key and molecule from dictionary");
-    }
-  }
-
-  return molzip(rgroup_row, p).release();
-}
-  
-  
 struct rgroupdecomp_wrapper {
   static void wrap() {
     bool noproxy = true;
@@ -460,24 +440,6 @@ struct rgroupdecomp_wrapper {
                      AtomMap | Isotope | MDLRGroup),
                  python::arg("outputLabels") = MDLRGroup),
                 docString.c_str());
-
-    docString =
-      "zip an RGroupRow together to recreate the original molecule.  This correctly handles\n"
-      "broken cycles that can occur in decompositions.\n"
-      " example:\n\n"
-      "  >>> from rdkit import Chem\n"
-      "  >>> from rdkit.Chem import rdRGroupDecomposition as rgd\n"
-      "  >>> core = Chem.MolFromSmiles('CO')\n"
-      "  >>> mols = [Chem.MolFromSmiles('C1NNO1')]\n"
-      "  >>> rgroups, unmatched = rgd.RGroupDecompose(core, mols)\n"
-      "  >>> for rgroup in rgroups:\n"
-      "  ...     mol = rgd.molzip(rgroup)\n"
-      "\n";
-    python::def("molzip",
-		(ROMol * (*)(python::dict, const MolzipParams &)) & rgroupRowZipHelper,
-		(python::arg("row"), python::arg("params") = MolzipParams()),
-		docString.c_str(),
-		python::return_value_policy<python::manage_new_object>());	
   };
 };
 }  // namespace RDKit

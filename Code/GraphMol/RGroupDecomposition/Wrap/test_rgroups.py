@@ -35,8 +35,7 @@ from collections import OrderedDict
 
 # the RGD code can generate a lot of warnings. disable them
 from rdkit import Chem, RDLogger, rdBase
-from rdkit.Chem.rdRGroupDecomposition import (molzip,
-                                              RGroupCoreAlignment,
+from rdkit.Chem.rdRGroupDecomposition import (RGroupCoreAlignment,
                                               RGroupDecompose,
                                               RGroupDecomposition,
                                               RGroupDecompositionParameters,
@@ -846,7 +845,8 @@ M  END
     mols = [Chem.MolFromSmiles("C1NNO1")]
     rgroups, unmatched = RGroupDecompose(core, mols)
     for rgroup in rgroups:
-      self.assertEqual(Chem.MolToSmiles(molzip(rgroup)), Chem.CanonSmiles("C1NNO1"))
+      self.assertEqual(Chem.MolToSmiles(Chem.molzip(rgroup)),
+                       Chem.CanonSmiles("C1NNO1"))
 
 if __name__ == '__main__':
   rdBase.DisableLog("rdApp.debug")
