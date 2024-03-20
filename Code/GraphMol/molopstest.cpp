@@ -8475,6 +8475,78 @@ void testHasQueryHs() {
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+
+void testIsRingFused() {
+  BOOST_LOG(rdWarningLog) << "-----------------------\n Testing isRingFused "
+                       << std::endl;
+  auto molOrig = "C1C(C2CC3CCCCC3C12)C1CCCCC1"_smiles;
+  {
+    RWMol mol(*molOrig);
+    auto ri = mol.getRingInfo();
+    TEST_ASSERT(ri->numRings() == 4);
+    boost::dynamic_bitset<> fusedRings(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedRings.set(i, ri->isRingFused(i));
+    }
+    TEST_ASSERT(fusedRings.count() == 3);
+    TEST_ASSERT(fusedRings.size() - fusedRings.count() == 1);
+    auto query = "[$(C1CCC1)]-@[$(C1CCCCC1)]"_smarts;
+    MatchVectType matchVect;
+    SubstructMatch(mol, *query, matchVect);
+    TEST_ASSERT(matchVect.size() == 2);
+    mol.removeBond(matchVect.at(0).second, matchVect.at(1).second);
+    MolOps::sanitizeMol(mol);
+    TEST_ASSERT(MolToSmiles(mol) == "C1CCC(CC2CCC2C2CCCCC2)CC1");
+    TEST_ASSERT(ri->numRings() == 3);
+    fusedRings.resize(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedRings.set(i, ri->isRingFused(i));
+    }
+    TEST_ASSERT(fusedRings.count() == 0);
+    TEST_ASSERT(fusedRings.size() - fusedRings.count() == 3);
+  }
+  {
+    RWMol mol(*molOrig);
+    auto ri = mol.getRingInfo();
+    TEST_ASSERT(ri->numRings() == 4);
+    boost::dynamic_bitset<> fusedRings(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedRings.set(i, ri->isRingFused(i));
+    }
+    TEST_ASSERT(fusedRings.count() == 3);
+    TEST_ASSERT(fusedRings.size() - fusedRings.count() == 1);
+    std::vector<unsigned int> fusedBonds(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedBonds[i] = ri->numFusedBonds(i);
+    }
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 0) == 1);
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 1) == 2);
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 1);
+    auto query =
+        "[$(C1CCCCC1-!@[CX4;R1;r4])].[$(C1C(-!@[CX4;R1;r6])CC1)]"_smarts;
+    MatchVectType matchVect;
+    SubstructMatch(mol, *query, matchVect);
+    TEST_ASSERT(matchVect.size() == 2);
+    mol.addBond(matchVect.at(0).second, matchVect.at(1).second, Bond::SINGLE);
+    MolOps::sanitizeMol(mol);
+    TEST_ASSERT(MolToSmiles(mol) == "C1CCC2C(C1)CC1C2C2C3CCCCC3C12");
+    TEST_ASSERT(ri->numRings() == 5);
+    fusedRings.resize(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedRings.set(i, ri->isRingFused(i));
+    }
+    TEST_ASSERT(fusedRings.count() == 5);
+    TEST_ASSERT(fusedRings.size() - fusedRings.count() == 0);
+    fusedBonds.resize(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedBonds[i] = ri->numFusedBonds(i);
+    }
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 0) == 0);
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 1) == 2);
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 3);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -8592,5 +8664,6 @@ int main() {
   testGet3DDistanceMatrix();
   testGithub5099();
   testHasQueryHs();
+  testIsRingFused();
   return 0;
 }

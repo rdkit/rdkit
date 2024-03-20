@@ -23,7 +23,7 @@
 namespace RDKit {
 namespace MolAlign {
 
-namespace {
+namespace details {
 void symmetrizeTerminalAtoms(RWMol &mol) {
   // clang-format off
   static const std::string qsmarts =
@@ -50,7 +50,8 @@ void symmetrizeTerminalAtoms(RWMol &mol) {
     mol.replaceBond(obond->getIdx(), &qb);
   }
 }
-
+}  // namespace details
+namespace {
 double alignConfsOnAtomMap(const Conformer &prbCnf, const Conformer &refCnf,
                            const MatchVectType &atomMap,
                            RDGeom::Transform3D &trans,
@@ -77,7 +78,7 @@ void getAllMatchesPrbRef(const ROMol &prbMol, const ROMol &refMol,
   std::unique_ptr<RWMol> prbMolSymm;
   if (symmetrizeConjugatedTerminalGroups) {
     prbMolSymm.reset(new RWMol(prbMol));
-    symmetrizeTerminalAtoms(*prbMolSymm);
+    details::symmetrizeTerminalAtoms(*prbMolSymm);
   }
   const auto &prbMolForMatch = prbMolSymm ? *prbMolSymm : prbMol;
   SubstructMatch(refMol, prbMolForMatch, matches, uniquify, recursionPossible,

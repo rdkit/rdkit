@@ -963,3 +963,26 @@ TEST_CASE("Github #7181: ET terms applied to constrained atoms") {
     CHECK(rmsd < 0.2);
   }
 }
+
+TEST_CASE("terminal groups in pruning") {
+  SECTION("basics") {
+    std::vector<std::string> smiles = {"FCC(=O)O", "FCC(=O)[O-]",
+                                       "FCC(=N)[NH-]", "FCS(=O)(=O)O",
+                                       "FCP(=O)(O)O"};
+    for (const auto &smi : smiles) {
+      auto mol = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(mol);
+      MolOps::addHs(*mol);
+      DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+      ps.randomSeed = 0xc0ffee;
+      ps.pruneRmsThresh = 0.5;
+
+      auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, ps);
+      CHECK(cids.size() == 1);
+
+      ps.symmetrizeConjugatedTerminalGroupsForPruning = false;
+      cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, ps);
+      CHECK(cids.size() >= 2);
+    }
+  }
+}

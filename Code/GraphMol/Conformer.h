@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -48,35 +48,29 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
   friend class ROMol;
 
   //! Constructor
-  Conformer() { d_positions.clear(); }
+  Conformer() = default;
 
   //! Constructor with number of atoms specified ID specification
-  Conformer(unsigned int numAtoms) {
-    if (numAtoms) {
-      d_positions.resize(numAtoms, RDGeom::Point3D(0.0, 0.0, 0.0));
-    } else {
-      d_positions.resize(0);
-      d_positions.clear();
-    }
-  }
+  Conformer(unsigned int numAtoms)
+      : d_positions(numAtoms, RDGeom::Point3D(0.0, 0.0, 0.0)) {}
 
   //! Copy Constructor: initialize from a second conformation.
-  Conformer(const Conformer &other);
-  Conformer &operator=(const Conformer &other);
+  Conformer(const Conformer &other) = default;
+  Conformer &operator=(const Conformer &other) = default;
   Conformer(Conformer &&o) noexcept
-      : RDProps(std::move(o)),
-        df_is3D(std::move(o.df_is3D)),
-        d_id(std::move(o.d_id)),
-        dp_mol(std::move(o.dp_mol)),
-        d_positions(std::move(o.d_positions)){};
+      : RDProps(o),
+        df_is3D(o.df_is3D),
+        d_id(o.d_id),
+        dp_mol(o.dp_mol),
+        d_positions(std::move(o.d_positions)) {}
   Conformer &operator=(Conformer &&o) noexcept {
     if (this == &o) {
       return *this;
     }
     RDProps::operator=(std::move(o));
-    df_is3D = std::move(o.df_is3D);
-    d_id = std::move(o.d_id);
-    dp_mol = std::move(o.dp_mol);
+    df_is3D = o.df_is3D;
+    d_id = o.d_id;
+    dp_mol = o.dp_mol;
     d_positions = std::move(o.d_positions);
     return *this;
   }
@@ -161,7 +155,6 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
   unsigned int d_id{0};              // id is the conformation
   ROMol *dp_mol{nullptr};            // owning molecule
   RDGeom::POINT3D_VECT d_positions;  // positions of the atoms
-  void initFromOther(const Conformer &conf);
 };
 
 typedef boost::shared_ptr<Conformer> CONFORMER_SPTR;

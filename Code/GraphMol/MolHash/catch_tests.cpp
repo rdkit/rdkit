@@ -415,8 +415,8 @@ TEST_CASE("tautomer v2") {
               "C=C(O)C=C(O)C", "C=C(O)CC(O)=C"},
              {}},
             {{"CN=CF", "C=NCF"}, {"CNCF"}},
-            {{"CN=C(C)F", "C=NC(C)F", "CNC(=C)F"}, {}},
-            {{"Cc1n[nH]cc1", "Cc1[nH][n]cc1", "CC1N=NCC=1", "CC1=NN=CC1"}, {}},
+            {{"CN=C(C)F", "CNC(=C)F"}, {"C=NC(C)F"}},
+            {{"Cc1n[nH]cc1", "Cc1[nH][n]cc1", "CC1=NN=CC1", "CC1N=NCC=1"}, {}},
             {{"O=C1C=CC(=O)C=C1"}, {"Oc1ccc(O)cc1", "O=C1C=CC(O)C=C1"}},
             {{"CC(=O)CCC(=O)C", "CC(=O)CCC(O)=C", "C=C(O)CCC(O)=C"},
              {"CC(O)C=CC(=O)C", "CC(=O)C=CC(O)C"}},
@@ -435,9 +435,10 @@ TEST_CASE("tautomer v2") {
             {{"S=C1N=CN=C2NC=NC12", "S=C1NC=NC2N=CNC1=2"}, {}},
             {{"CC1=CN=CN1", "CC1CN=CN=1"}, {}},
             {{"N1C(=O)NC(=O)C2C=NNC=21", "N1C(=O)NC(=O)C2=CNNC2=1",
-              "N1C(=O)NC(=O)C2CN=NC=21", "N1C(=O)NC(=O)C2=CNNC2=1",
-              "N1C(=O)NC(=O)C2CN=NC2=1"},
-             {}},
+              "N1C(=O)NC(=O)C2=CNNC2=1", "N1C(=O)NC(=O)C2CN=NC2=1"},
+             {
+                 "N1C(=O)NC(=O)C2CN=NC=21",
+             }},
             // ---------------------------
             // more stereochemistry
             // ---------------------------
@@ -446,12 +447,12 @@ TEST_CASE("tautomer v2") {
             {{"C/C=C/O", "C/C=C\\O", "CC=CO"}, {}},
             {{"C/C=C/C=O", "C/C=C\\C=O", "CC=CC=O"}, {}},
             {{"C/C=C/CC=O"}, {"C/C=C\\CC=O", "CC=CCC=O"}},
+            {{"C1C=CC=C2C=C(O)NC=12", "C1C=CC=C2CC(=O)NC=12"}, {}},
             // ---------------------------
             // some areas for potential improvement
             // ---------------------------
             // these two are tautomers, but the current algorithm does not catch
             // them
-            {{"C1C=CC=C2C=C(O)NC=12"}, {"C1C=CC=C2CC(=O)NC=12"}},
             // problematic because pyridine is recognized as tautomeric
             {{"c1ccccc1/C=C/c1ncccc1", "c1ccccc1/C=C\\c1ncccc1",
               "c1ccccc1C=Cc1ncccc1"},
@@ -464,7 +465,7 @@ TEST_CASE("tautomer v2") {
       auto ref =
           MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
       for (auto i = 1u; i < same.size(); ++i) {
-        INFO(same[0] + "->" + same[i]);
+        INFO(same[0] + "." + same[i]);
         std::unique_ptr<RWMol> m2{SmilesToMol(same[i])};
         REQUIRE(m2);
         RWMol cp(*m2);
@@ -473,7 +474,7 @@ TEST_CASE("tautomer v2") {
         CHECK(hsh == ref);
       }
       for (auto i = 0u; i < diff.size(); ++i) {
-        INFO(same[0] + "->" + diff[i]);
+        INFO(same[0] + "." + diff[i]);
         std::unique_ptr<RWMol> m2{SmilesToMol(diff[i])};
         REQUIRE(m2);
         RWMol cp(*m2);
@@ -782,7 +783,7 @@ TEST_CASE("Github Issue #6472 non-matching element and anononymous graph") {
       CHECK(hsh == "*1***(*2****2)**1");
     }
   }
-   SECTION("Anonymous graph test 2") {
+  SECTION("Anonymous graph test 2") {
     auto mol = "C1CC(N=CN1)C1=CC=CO1"_smiles;
     REQUIRE(mol);
 
@@ -794,3 +795,68 @@ TEST_CASE("Github Issue #6472 non-matching element and anononymous graph") {
   }
 }
 
+TEST_CASE("tautomer overreach") {
+  SECTION("as reported") {
+    auto mol = "C1=CN(C[C@H]2CNCCO2)N=C1"_smiles;
+    REQUIRE(mol);
+    {
+      RWMol cp(*mol);
+      auto hsh =
+          MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(
+          hsh ==
+          "[C]1:[C]:[N]:[N](-[CH2]-[C@H]2-[CH2]-[NH]-[CH2]-[CH2]-[O]-2):[C]:1_3_0");
+    }
+  }
+  SECTION("dbw example") {
+    auto mol = "c1cccn1C[C@H](C)COC"_smiles;
+    REQUIRE(mol);
+    {
+      RWMol cp(*mol);
+      auto hsh =
+          MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(
+          hsh ==
+          "[CH3]-[O]-[CH2]-[C@@H](-[CH3])-[CH2]-[n]1:[cH]:[cH]:[cH]:[cH]:1_0_0");
+    }
+  }
+}
+
+TEST_CASE("HetAtomProtomerv2") {
+  SECTION("matches") {
+    // pairs of {molecules with the same hash} {molecules with different hashes
+    // from those}
+    std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>>
+        data = {
+            // example from the NextMove documentation
+            {{"Cc1c[nH]cn1", "Cc1cnc[nH]1", "Cc1c[nH]c[nH+]1"}, {}},
+            {{"CC=CO", "CCC=O"}, {"C=CCO"}},
+
+        };
+    for (const auto &[same, diff] : data) {
+      std::unique_ptr<RWMol> m{SmilesToMol(same[0])};
+      REQUIRE(m);
+      RWMol cp(*m);
+      auto ref =
+          MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomProtomerv2);
+      for (auto i = 1u; i < same.size(); ++i) {
+        INFO(same[0] + "->" + same[i]);
+        std::unique_ptr<RWMol> m2{SmilesToMol(same[i])};
+        REQUIRE(m2);
+        RWMol cp(*m2);
+        auto hsh =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomProtomerv2);
+        CHECK(hsh == ref);
+      }
+      for (auto i = 0u; i < diff.size(); ++i) {
+        INFO(same[0] + "->" + diff[i]);
+        std::unique_ptr<RWMol> m2{SmilesToMol(diff[i])};
+        REQUIRE(m2);
+        RWMol cp(*m2);
+        auto hsh =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomProtomerv2);
+        CHECK(hsh != ref);
+      }
+    }
+  }
+}
