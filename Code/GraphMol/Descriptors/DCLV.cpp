@@ -1,3 +1,13 @@
+/*=================================================================*/
+/* Copyright (C)  2024  Greg Landrum and other RDKit contributors  */
+/* Contributed by NextMove Software, Cambridge, UK.                */
+/*                                                                 */
+/*                                                                 */
+/* @@ All Rights Reserved @@                                       */
+/* The contents are covered by the terms of the                    */
+/* BSD license, which is included in the file                      */
+/* license.txt.                                                    */
+/*=================================================================*/
 #define _USE_MATH_DEFINES
 
 #include <iostream>
