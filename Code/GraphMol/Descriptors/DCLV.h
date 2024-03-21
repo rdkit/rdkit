@@ -32,7 +32,8 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
 
     \param mol: input molecule or protein
     \param isProtein: flag to identify input as protein vs unbound ligand
-    (default=true, Protein as input)
+    (default=true, Protein as input) NOTE that the results for isProtein=false
+    are currently not correct
     \param includeLigand: flag to trigger
     inclusion of bound ligand in surface area and volume calculations where
     molecule is a protein [default false]
