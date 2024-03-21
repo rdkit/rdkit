@@ -91,7 +91,7 @@ fr_lactone	"Number of cyclic esters (lactones)"	[C&R1](=O)[O&R1][C&R1]
 #fr_intrahbonds	"Number of intramolecular H-bonds (o-OH and -C=O) + (o-NH2 and -COOH) + 8-OH/NH2 in quinolones"		"c1([OH])c(C(=O))aaaa1 or c1([OH])c([NH2])aaaa1 or c1([NH2])c(C(=O)[OH])aaaa1 or n1c2c([OH])cccc2ccc1 or n1c2c([NH2])cccc2ccc1"	"This is just a guess and may be missing other possible examples"
 fr_tetrazole	"Number of tetrazole rings"	c1nnnn1	c1nnnn1	
 fr_epoxide	"Number of epoxide rings"	O1CC1	O1CC1	
-fr_unbrch_alkane	"Number of unbranched alkanes  of at least 4 members (excludes halogenated alkanes)"	[R0;D2][R0;D2][R0;D2][R0;D2]
+fr_unbrch_alkane	"Number of unbranched alkanes  of at least 4 members (excludes halogenated alkanes)"	[CR0;D2,D1][CR0;D2][CR0;D2][CR0;D2,D1]
 fr_bicyclic	"Bicyclic"	[R2][R2]
 fr_benzene	"Number of benzene rings"	c1ccccc1
 
