@@ -3047,6 +3047,17 @@ TEST_CASE("test output with incomplete monomer info", "[bug][writer]") {
       std::string pdb = MolToPDBBlock(*m, -1);
       CHECK(pdb.find("ATOM      1  Cl1 HCL     0") != std::string::npos);
     }
+    {
+      // 1. should add spaces for padding if the atom name is too short
+      // 2. should add spaces for missing residue name.
+      std::unique_ptr<RWMol> m{SmilesToMol("Cl")};
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setName("CL");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("ATOM      1 Cl           0") != std::string::npos);
+    }
   }
 }
 
