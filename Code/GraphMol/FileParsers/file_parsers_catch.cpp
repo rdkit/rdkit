@@ -3056,7 +3056,7 @@ TEST_CASE("test output with incomplete monomer info", "[bug][writer]") {
       info->setName("CL");
       m->getAtomWithIdx(0)->setMonomerInfo(info);
       std::string pdb = MolToPDBBlock(*m, -1);
-      CHECK(pdb.find("ATOM      1 Cl           0") != std::string::npos);
+      CHECK(pdb.find("ATOM      1   CL         0") != std::string::npos);
     }
   }
 }
