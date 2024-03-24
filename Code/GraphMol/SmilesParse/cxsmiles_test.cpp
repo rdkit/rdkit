@@ -102,12 +102,18 @@ TEST_CASE("reading Atom Labels") {
               common_properties::atomLabel) == "_AP1");
     // we used to set an atom map for attachment points. This was github #3393
     CHECK(m->getAtomWithIdx(3)->getAtomMapNum() == 0);
+    // check the _fromAttachPoint property, added as part of github #7078
+    CHECK(m->getAtomWithIdx(3)->getProp<int>(
+              common_properties::_fromAttachPoint) == 1);
 
     CHECK(m->getAtomWithIdx(5)->getAtomicNum() == 0);
     CHECK(m->getAtomWithIdx(5)->getProp<std::string>(
               common_properties::atomLabel) == "_AP2");
     // we used to set an atom map for attachment points. This was github #3393
     CHECK(m->getAtomWithIdx(5)->getAtomMapNum() == 0);
+    // check the _fromAttachPoint property, added as part of github #7078
+    CHECK(m->getAtomWithIdx(5)->getProp<int>(
+              common_properties::_fromAttachPoint) == 2);
 
     delete m;
   }
@@ -1453,4 +1459,12 @@ TEST_CASE(
       CHECK(MolToCXSmiles(*m).find("atomProp") == std::string::npos);
     }
   }
+}
+
+TEST_CASE("write attachment points") {
+  auto m = "C[C@H](N*)C(*)=O"_smiles;
+  REQUIRE(m);
+  m->getAtomWithIdx(3)->setProp(common_properties::_fromAttachPoint, 1);
+  m->getAtomWithIdx(5)->setProp(common_properties::_fromAttachPoint, 2);
+  CHECK(MolToCXSmiles(*m) == "*N[C@@H](C)C(*)=O |$_AP1;;;;;_AP2;$|");
 }

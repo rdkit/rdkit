@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2013 Greg Landrum and NextMove Software
+//  Copyright (C) 2013-2024 Greg Landrum, NextMove Software,
+//    and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,34 +16,27 @@
 
 namespace RDKit {
 
+namespace v2 {
+namespace FileParsers {
 PDBMolSupplier::PDBMolSupplier(std::istream *inStream, bool takeOwnership,
-                               bool sanitize, bool removeHs,
-                               unsigned int flavor, bool proximityBonding) {
+                               const PDBParserParams &params) {
   dp_inStream = inStream;
   df_owner = takeOwnership;
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
-  d_flavor = flavor;
-  df_proximityBonding = proximityBonding;
+  d_params = params;
 }
 
-PDBMolSupplier::PDBMolSupplier(const std::string &fileName, bool sanitize,
-                               bool removeHs, unsigned int flavor,
-                               bool proximityBonding) {
+PDBMolSupplier::PDBMolSupplier(const std::string &fileName,
+                               const PDBParserParams &params) {
   dp_inStream = openAndCheckStream(fileName);
   df_owner = true;
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
-  d_flavor = flavor;
-  df_proximityBonding = proximityBonding;
+  d_params = params;
 }
 
 void PDBMolSupplier::init() {}
 void PDBMolSupplier::reset() {}
 
-ROMol *PDBMolSupplier::next() {
-  return (ROMol *)PDBDataStreamToMol(dp_inStream, df_sanitize, df_removeHs,
-                                     d_flavor, df_proximityBonding);
+std::unique_ptr<RWMol> PDBMolSupplier::next() {
+  return MolFromPDBDataStream(*dp_inStream, d_params);
 }
 
 bool PDBMolSupplier::atEnd() {
@@ -52,4 +46,6 @@ bool PDBMolSupplier::atEnd() {
   int ch = dp_inStream->peek();
   return ch == -1;
 }
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit

@@ -150,6 +150,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool trackFailures{false};
   std::vector<unsigned int> failures;
   bool enableSequentialRandomSeeds{false};
+  bool symmetrizeConjugatedTerminalGroupsForPruning{true};
 
   EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
   EmbedParameters(

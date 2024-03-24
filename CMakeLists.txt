@@ -137,7 +137,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 set(RDKit_Year "2024")
 set(RDKit_Month "03")
 set(RDKit_Revision "1")
-set(RDKit_RevisionModifier "pre")
+set(RDKit_RevisionModifier "b1")
 set(RDKit_ABI "1")
 
 # we need an integer version of the month later, so remove the zero padding
@@ -356,6 +356,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
         OUTPUT_STRIP_TRAILING_WHITESPACE
       )
     endif (NOT PYTHON_INSTDIR)
+    string(REGEX REPLACE "\\\\" "/" PYTHON_INSTDIR ${PYTHON_INSTDIR})
     message("Python Install directory ${PYTHON_INSTDIR}")
     set(RDKit_PythonDir "${PYTHON_INSTDIR}/rdkit")
     if(RDK_INSTALL_PYTHON_TESTS)

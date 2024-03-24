@@ -68,7 +68,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
     const ROMol &mol, const MatchVectType &match,
     const RGroupDecompositionParameters &params) const {
   auto extractedCore = boost::make_shared<RWMol>(mol);
-  std::set<int> atomIndicesToKeep;
+  boost::dynamic_bitset<> atomIndicesToKeep(mol.getNumAtoms());
   std::vector<Bond *> newBonds;
   std::map<Atom *, int> dummyAtomMap;
   std::map<const Atom *, Atom *> molAtomMap;
@@ -86,7 +86,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
         queryAtom->getDegree() == 1) {
       continue;
     } else {
-      atomIndicesToKeep.insert(pair.second);
+      atomIndicesToKeep.set(pair.second);
       molAtomMap[mol.getAtomWithIdx(pair.second)] = targetAtom;
       int neighborNumber = -1;
 #ifdef VERBOSE
@@ -146,7 +146,10 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
           newDummy->clearComputedProps();
           const auto newDummyIdx =
               extractedCore->addAtom(newDummy, false, true);
-          atomIndicesToKeep.insert(static_cast<int>(newDummyIdx));
+          if (newDummyIdx >= atomIndicesToKeep.size()) {
+            atomIndicesToKeep.resize(newDummyIdx + 1);
+          }
+          atomIndicesToKeep.set(newDummyIdx);
           auto connectingBond =
               extractedCore
                   ->getBondBetweenAtoms(pair.second, targetNeighborIndex)
@@ -206,8 +209,8 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
           }
         }
       }
-      for (const int index : hydrogensToAdd) {
-        atomIndicesToKeep.insert(index);
+      for (const auto index : hydrogensToAdd) {
+        atomIndicesToKeep.set(index);
       }
 #ifdef VERBOSE
       std::cerr << "Atom Chirality Out " << targetAtom->getChiralTag()
@@ -221,9 +224,9 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
 
   // Now delete atom's that are not in the core.
   extractedCore->beginBatchEdit();
-  boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
+  boost::dynamic_bitset<> removedAtoms(extractedCore->getNumAtoms());
   for (const auto atom : extractedCore->atoms()) {
-    if (atomIndicesToKeep.find(atom->getIdx()) == atomIndicesToKeep.end()) {
+    if (!atomIndicesToKeep.test(atom->getIdx())) {
       extractedCore->removeAtom(atom);
       removedAtoms.set(atom->getIdx());
     }
@@ -406,9 +409,8 @@ void RCore::replaceCoreAtom(RWMol &mol, Atom &atom, const Atom &other) const {
 // removed Also creates the data structures used in matching the R groups
 void RCore::buildMatchingMol() {
   matchingMol = boost::make_shared<RWMol>(*core);
-  terminalRGroupDummyAtoms.clear();
   terminalRGroupAtomToNeighbor.clear();
-  RWMol::ATOM_PTR_VECT atomsToRemove;
+  matchingMol->beginBatchEdit();
   for (auto atom : matchingMol->atoms()) {
     // keep track of the original core index in the matching molecule atom
     atom->setProp<int>(RLABEL_CORE_INDEX, atom->getIdx());
@@ -416,18 +418,14 @@ void RCore::buildMatchingMol() {
     // then keep one attachment
     if (atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
         isDummyRGroupAttachment(*atom)) {
-      // remove terminal user R groups and save core atom index and mapping to
-      // heavy neighbor
-      atomsToRemove.push_back(atom);
-      terminalRGroupDummyAtoms.insert(atom->getIdx());
+      // remove terminal user R groups and map the index of the core neighbor
+      // atom to the index of the removed terminal R group
       const int neighborIdx = *matchingMol->getAtomNeighbors(atom).first;
       terminalRGroupAtomToNeighbor.emplace(atom->getIdx(), neighborIdx);
+      matchingMol->removeAtom(atom);
     }
   }
-
-  for (auto atom : atomsToRemove) {
-    matchingMol->removeAtom(atom);
-  }
+  matchingMol->commitBatchEdit();
 }
 
 // Given a matching molecule substructure match to a target molecule, return
@@ -447,17 +445,16 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   std::map<int, int> matchMap(match.cbegin(), match.cend());
 
   std::vector<MatchVectType> allMappings;
-  if (terminalRGroupDummyAtoms.empty()) {
-    allMappings.push_back(match);
+  if (terminalRGroupAtomToNeighbor.empty()) {
+    allMappings.push_back(std::move(match));
     return allMappings;
   }
 
-  // build a set of target atoms currently mapped
-  std::set<int> mappedTargetIdx;
-  std::transform(
-      match.cbegin(), match.cend(),
-      std::inserter(mappedTargetIdx, mappedTargetIdx.begin()),
-      [](const std::pair<int, int> &mapping) { return mapping.second; });
+  // build a dynamic_bitset of target atoms currently mapped
+  boost::dynamic_bitset<> mappedTargetIdx(target.getNumAtoms());
+  for (const auto &pair : match) {
+    mappedTargetIdx.set(pair.second);
+  }
 
   // Dummy atoms/r group attachments that cannot be mapped to target atoms
   std::vector<int> missingDummies;
@@ -465,7 +462,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   // target atoms that the R group can map to
   std::map<int, std::vector<int>> availableMappingsForDummyMap;
 
-  std::set<int> symmetricHydrogens;
+  boost::dynamic_bitset<> symmetricHydrogens(target.getNumAtoms());
 
   // keep a count of target atoms and the number of connections to the core
   std::map<int, int> targetAtomBondsToCoreCounts;
@@ -473,14 +470,12 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     if (coreAtom->getAtomicNum() == 1) {
       continue;
     }
-    if (terminalRGroupDummyAtoms.find(coreAtom->getIdx()) !=
-        terminalRGroupDummyAtoms.end()) {
+    if (isTerminalRGroupWithUserLabel(coreAtom->getIdx())) {
       continue;
     }
     std::vector<int> dummyIndexes;
     for (auto neighbor : core->atomNeighbors(coreAtom)) {
-      if (terminalRGroupDummyAtoms.find(neighbor->getIdx()) !=
-          terminalRGroupDummyAtoms.end()) {
+      if (isTerminalRGroupWithUserLabel(neighbor->getIdx())) {
         dummyIndexes.push_back(neighbor->getIdx());
       }
     }
@@ -502,27 +497,25 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     std::vector<std::vector<int>> neighborDummyLists;
     for (auto dummyIndex : dummyIndexes) {
       const int neighborIdx =
-          terminalRGroupAtomToNeighbor.find(dummyIndex)->second;
+          terminalRGroupAtomToNeighbor.at(dummyIndex);
       const auto coreBond = core->getBondBetweenAtoms(dummyIndex, neighborIdx);
       // find the atom in the target mapped to the neighbor in the core
       const int targetIdx = matchMap[neighborIdx];
       const auto targetAtom = target.getAtomWithIdx(targetIdx);
-      ROMol::ADJ_ITER nbrIter, endNbrs;
       std::vector<int> available;
       // now look for neighbors of that target atom that are not mapped to a
       // core atom- the dummy atom can potentially be mapped to each of those
-      boost::tie(nbrIter, endNbrs) = target.getAtomNeighbors(targetAtom);
-      while (nbrIter != endNbrs) {
-        if (mappedTargetIdx.find(*nbrIter) == mappedTargetIdx.end()) {
+      for (const auto &nbrIdx :
+          boost::make_iterator_range(target.getAtomNeighbors(targetAtom))) {
+        if (!mappedTargetIdx.test(nbrIdx)) {
           const auto targetBond =
-              target.getBondBetweenAtoms(targetIdx, *nbrIter);
+              target.getBondBetweenAtoms(targetIdx, nbrIdx);
           // check for bond compatibility
           if (bondCompat(coreBond, targetBond, sssParams)) {
-            available.push_back(*nbrIter);
-            targetAtomBondsToCoreCounts[*nbrIter]++;
+            available.push_back(nbrIdx);
+            ++targetAtomBondsToCoreCounts[nbrIdx];
           }
         }
-        ++nbrIter;
       }
 
       if (available.size() > 1) {
@@ -536,14 +529,12 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
           // symmetric groups in general
           auto hydrogen = std::find_if(available.begin(), available.end(),
                                        [&symmetricHydrogens](const int idx) {
-                                         return symmetricHydrogens.find(idx) ==
-                                                symmetricHydrogens.end();
+                                         return !symmetricHydrogens.test(idx);
                                        });
           int singleHydrogen =
               hydrogen == available.end() ? *available.begin() : *hydrogen;
-          std::vector<int> hydrogenVec{singleHydrogen};
-          available = hydrogenVec;
-          symmetricHydrogens.insert(singleHydrogen);
+          available = std::vector<int>{singleHydrogen};
+          symmetricHydrogens.set(singleHydrogen);
         }
       }
       neighborDummyLists.push_back(available);
@@ -626,7 +617,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     }
   }
   if (availableMappingsForDummyMap.empty()) {
-    allMappings.push_back(match);
+    allMappings.push_back(std::move(match));
     return allMappings;
   }
 
@@ -648,7 +639,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   const auto allAvailableMappings =
       cartesianProduct(availableMappingsForDummy, allowDuplicates);
   if (allAvailableMappings.empty()) {
-    allMappings.push_back(match);
+    allMappings.push_back(std::move(match));
     return allMappings;
   }
   // the size of the final mapping
@@ -715,7 +706,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       targetIndices[position] = dummyMapping[i];
       if (allowDuplicates) {
         const int neighborIdx =
-            terminalRGroupAtomToNeighbor.find(dummiesWithMapping[i])->second;
+            terminalRGroupAtomToNeighbor.at(dummiesWithMapping[i]);
         const int targetNeighborIdx = matchMap[neighborIdx];
         const auto targetBond =
             target.getBondBetweenAtoms(dummyMapping[i], targetNeighborIdx);
@@ -736,7 +727,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       for (size_t i = 0; i < dummyMapping.size(); i++) {
         matchWithDummy.emplace_back(dummiesWithMapping[i], dummyMapping[i]);
       }
-      allMappings.push_back(matchWithDummy);
+      allMappings.push_back(std::move(matchWithDummy));
     }
   }
 
@@ -746,74 +737,66 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
 }
 
 // This function checks the bond environment is valid when onlyMatchAtRGroups
-// is set.  When this function is called attachmentIdx is the index of an atom
+// is set.  When this function is called targetRGroupIdx is the index of an atom
 // in the target that is mapped to an R group.  Validates that all core bonds to
-// the attachment point are present - in certain circumstances there may be two
-// core bonds to a target attachment point and when onlyMatchAtRGroups is set
-// both bonds should be present.
-bool RCore::checkAllBondsToAttachmentPointPresent(
-    const ROMol &mol, const int attachmentIdx,
-    const MatchVectType &mapping) const {
-  const auto atom = mol.getAtomWithIdx(attachmentIdx);
-  std::set<int> coreNeighbors;
+// the R group are present - in certain circumstances there may be two
+// core bonds to a target R group and when onlyMatchAtRGroups is set
+// both bonds should be present (#4002).
+bool RCore::checkAllBondsToRGroupPresent(
+    const ROMol &mol, const int targetRGroupIdx,
+    const std::vector<std::vector<int>> &targetToCoreIndices) const {
+  const auto targetRGroupAtom = mol.getAtomWithIdx(targetRGroupIdx);
+  std::set<int> coreNeighborIndices;
   for (const auto &nbri :
-       boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+       boost::make_iterator_range(mol.getAtomNeighbors(targetRGroupAtom))) {
     const auto &nbr = mol[nbri];
     // could a neighbor to an r group attachment match another r group
     // attachment?  I don't think so.
     if (nbr->getAtomicNum() >= 1) {
-      const auto match = std::find_if(
-          mapping.cbegin(), mapping.cend(), [nbri](std::pair<int, int> p) {
-            return p.second == static_cast<int>(nbri);
-          });
-      if (match != mapping.end()) {
-        auto coreAtom = core->getAtomWithIdx(match->first);
-        // don't need to match a non terminal user R group
-        // if (!(coreAtom->getDegree() > 1 && isUserRLabel(*coreAtom))) {
-        if (!(coreAtom->getAtomicNum() == 0 && isUserRLabel(*coreAtom))) {
-          coreNeighbors.insert(match->first);
-        }
+      const auto &coreAtomIndices = targetToCoreIndices.at(nbri);
+      if (coreAtomIndices.empty()) {
+        continue;
+      }
+      CHECK_INVARIANT(coreAtomIndices.size() == 1,
+        "Target atom neighboring R group should have exactly one match in core");
+      auto coreAtomIdx = coreAtomIndices.front();
+      const auto coreAtom = core->getAtomWithIdx(coreAtomIdx);
+      // don't need to match a non terminal user R group
+      // if (!(coreAtom->getDegree() > 1 && isUserRLabel(*coreAtom))) {
+      if (!(coreAtom->getAtomicNum() == 0 && isUserRLabel(*coreAtom))) {
+        coreNeighborIndices.insert(coreAtomIdx);
       }
     }
   }
 
   CHECK_INVARIANT(
-      coreNeighbors.size() >= 1,
+      coreNeighborIndices.size() >= 1,
       "Unable to find target atom(s) matching core for attachment point");
-  if (coreNeighbors.size() == 1) {
+  if (coreNeighborIndices.size() == 1) {
     // currently this routine is only called when we know the attachment to
     // one core atom exists.
     return true;
   }
 
   // at this point we know the target atom is connected to two or more core
-  // atoms.  Now check we have attachment points for each.
-  //  There should be a map entry for a different attachment point for each of
-  //  the core atoms.
-  std::vector<int> coreDummyIndices;
-  std::for_each(mapping.cbegin(), mapping.cend(),
-                [&coreDummyIndices, attachmentIdx](std::pair<int, int> p) {
-                  if (p.second == attachmentIdx) {
-                    coreDummyIndices.push_back(p.first);
-                  }
-                });
-  if (coreDummyIndices.size() != coreNeighbors.size()) {
+  // atoms.  Now check we have core R groups for each.
+  // There should be a map entry for a different R group for each of
+  // the core atoms.
+  const auto &coreRGroupIndices = targetToCoreIndices.at(targetRGroupIdx);
+  if (coreRGroupIndices.size() != coreNeighborIndices.size()) {
     return false;
   }
   // check that there is a bond to an attachment point for every neighbor
-  for (const auto neighborIdx : coreNeighbors) {
-    bool foundBond = false;
-    for (const auto dummyIdx : coreDummyIndices) {
-      if (core->getBondBetweenAtoms(neighborIdx, dummyIdx) != nullptr) {
-        foundBond = true;
-        break;
+  std::set<int> bondIndices;
+  for (const auto coreNeighborIdx : coreNeighborIndices) {
+    for (const auto coreRGroupIdx : coreRGroupIndices) {
+      const auto bond = core->getBondBetweenAtoms(coreNeighborIdx, coreRGroupIdx);
+      if (bond) {
+        bondIndices.insert(bond->getIdx());
       }
     }
-    if (!foundBond) {
-      return false;
-    }
   }
-  return true;
+  return bondIndices.size() == coreNeighborIndices.size();
 }
 
 // Convert a matching molecule index to a core index

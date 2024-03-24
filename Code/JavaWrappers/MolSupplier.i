@@ -38,12 +38,13 @@
 
 %{
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolSupplier.v1API.h>
 #include <GraphMol/Resonance.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 %}
 
 %include "Streams.i"
-
+%ignore RDKit::v2;
 %newobject RDKit::ForwardSDMolSupplier::next;
 %newobject RDKit::ResonanceMolSupplier::next;
 %newobject RDKit::SDMolSupplier::next;
@@ -53,9 +54,10 @@
 
 
 %include <GraphMol/FileParsers/MolSupplier.h>
+%include <GraphMol/FileParsers/MolSupplier.v1API.h>
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
-%extend RDKit::ForwardSDMolSupplier {
+%extend RDKit::v1::ForwardSDMolSupplier {
     ForwardSDMolSupplier(RDKit::gzstream *strm, bool sanitize=true, bool removeHs = true,
                   bool strictParsing = true) {
     const bool takeOwnership = false;

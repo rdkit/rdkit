@@ -113,6 +113,8 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   void removeAtom(unsigned int idx);
   //! \overload
   void removeAtom(Atom *atom);
+  //! \overload
+  void removeAtom(Atom *atom, bool clearProps);
 
   //! @}
 
@@ -211,6 +213,9 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     dp_delBonds.reset();
   }
   void commitBatchEdit();
+private:
+  void batchRemoveBonds();
+  void batchRemoveAtoms();
 };
 
 typedef boost::shared_ptr<RWMol> RWMOL_SPTR;

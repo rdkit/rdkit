@@ -1017,6 +1017,18 @@ std::string get_mol_frags_mappings(
   return buffer.GetString();
 }
 
+std::string parse_inchi_options(const char *details_json) {
+  std::string options;
+  if (details_json && strlen(details_json)) {
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(options);
+  }
+  return options;
+}
+
 struct LogHandle {
  public:
   LogHandle(const std::string &logName) : d_logName(logName) {

@@ -969,6 +969,25 @@ ROMol *molzipHelper(python::object &pmols, const MolzipParams &p) {
   return molzip(*mols, p).release();
 }
 
+ROMol *rgroupRowZipHelper(python::dict row, const MolzipParams &p) {
+  std::map<std::string, ROMOL_SPTR>  rgroup_row;
+  python::list items = row.items();
+  for(size_t i = 0; i < (size_t) python::len(items); ++i) {
+    python::object key = items[i][0];
+    python::object value = items[i][1];
+    python::extract<std::string> rgroup_key(key);
+    python::extract<ROMOL_SPTR> mol(value);
+    if(rgroup_key.check() && mol.check()) {
+      rgroup_row[rgroup_key] = mol;
+    } else {
+      // raise value error
+      throw ValueErrorException("Unable to retrieve rgroup key and molecule from dictionary");
+    }
+  }
+
+  return molzip(rgroup_row, p).release();
+}  
+
 python::tuple hasQueryHsHelper(const ROMol &m) {
   python::list res;
   auto hashs = MolOps::hasQueryHs(m);
@@ -1027,6 +1046,17 @@ void testSetProps(ROMol &mol) {
                   "conf_" + std::to_string(conf_idx));
   }
 }
+
+void expandAttachmentPointsHelper(ROMol &mol, bool addAsQueries,
+                                  bool addCoords) {
+  MolOps::expandAttachmentPoints(static_cast<RWMol &>(mol), addAsQueries,
+                                 addCoords);
+}
+
+void collapseAttachmentPointsHelper(ROMol &mol, bool markedOnly) {
+  MolOps::collapseAttachmentPoints(static_cast<RWMol &>(mol), markedOnly);
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -2803,6 +2833,24 @@ using the given matching parameters.  The first molecule in the list\n\
 must be the core",
         python::return_value_policy<python::manage_new_object>());
 
+    docString =
+      "zip an RGroupRow together to recreate the original molecule.  This correctly handles\n"
+      "broken cycles that can occur in decompositions.\n"
+      " example:\n\n"
+      "  >>> from rdkit import Chem\n"
+      "  >>> from rdkit.Chem import rdRGroupDecomposition as rgd\n"
+      "  >>> core = Chem.MolFromSmiles('CO')\n"
+      "  >>> mols = [Chem.MolFromSmiles('C1NNO1')]\n"
+      "  >>> rgroups, unmatched = rgd.RGroupDecompose(core, mols)\n"
+      "  >>> for rgroup in rgroups:\n"
+      "  ...     mol = rgd.molzip(rgroup)\n"
+      "\n";
+    python::def("molzip",
+		(ROMol * (*)(python::dict, const MolzipParams &)) & rgroupRowZipHelper,
+		(python::arg("row"), python::arg("params") = MolzipParams()),
+		docString.c_str(),
+		python::return_value_policy<python::manage_new_object>());	
+    
     // ------------------------------------------------------------------------
     docString =
         "Adds a recursive query to an atom\n\
@@ -3021,11 +3069,39 @@ A note on the flags controlling which atoms/bonds are modified:
   molecule will not be modified.)DOC");
 
     python::def(
+        "ExpandAttachmentPoints", expandAttachmentPointsHelper,
+        (python::arg("mol"), python::arg("addAsQueries") = true,
+         python::arg("addCoords") = true),
+        R"DOC(attachment points encoded as attachPt properties are added to the graph as dummy atoms
+
+  Arguments:
+   - mol: molecule to be modified
+   - addAsQueries: if true, the dummy atoms will be added as null queries
+        (i.e. they will match any atom in a substructure search)
+   - addCoords: if true and the molecule has one or more conformers, 
+        positions for the attachment points will be added to the conformer(s)
+)DOC");
+    python::def(
+        "CollapseAttachmentPoints", collapseAttachmentPointsHelper,
+        (python::arg("mol"), python::arg("markedOnly") = true),
+        R"DOC(dummy atoms in the graph are removed and replaced with attachment point annotations on the attached atoms
+
+  Arguments:
+   - mol: molecule to be modified
+   - markedOnly: if true, only dummy atoms with the _fromAttachPoint
+     property will be collapsed
+
+  In order for a dummy atom to be considered for collapsing it must have:
+   - degree 1 with a single or unspecified bond
+   - the bond to it can not be wedged
+   - either no query or be an AtomNullQuery
+)DOC");
+    python::def(
         "AddStereoAnnotations", Chirality::addStereoAnnotations,
         (python::arg("mol"), python::arg("absLabel") = "abs ({cip})",
          python::arg("orLabel") = "or{id}", python::arg("andLabel") = "and{id}",
          python::arg("cipLabel") = "({cip})",
-         python::arg("cipLabel") = "({cip})"),
+         python::arg("bondLabel") = "({cip})"),
         R"DOC(add R/S, relative stereo, and E/Z annotations to atoms and bonds
 
   Arguments:

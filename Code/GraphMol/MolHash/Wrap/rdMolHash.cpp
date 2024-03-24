@@ -47,7 +47,8 @@ BOOST_PYTHON_MODULE(rdMolHash) {
       .value("SmallWorldIndexBRL", MolHash::HashFunction::SmallWorldIndexBRL)
       .value("ArthorSubstructureOrder",
              MolHash::HashFunction::ArthorSubstructureOrder)
-      .value("HetAtomTautomerv2", MolHash::HashFunction::HetAtomTautomerv2);
+      .value("HetAtomTautomerv2", MolHash::HashFunction::HetAtomTautomerv2)
+      .value("HetAtomProtomerv2", MolHash::HashFunction::HetAtomProtomerv2);
 
   python::def(
       "MolHash", MolHashHelper,
