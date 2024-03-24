@@ -316,8 +316,12 @@ void testEnumerator() {
   checkAns("C/C=C/C(C)=O", {"C=C(O)C=CC", "C=CC=C(C)O", "C=CCC(=C)O",
                             "C=CCC(C)=O", "CC=CC(C)=O"});
 
-  // // Remove stereochemistry from conjugated double bonds to nitro
-  checkAns("c1ccnc(c1)/C=C/[N+](=O)[O-]", {"O=[N+]([O-])C=Cc1ccccn1",
+  // No stereochemistry in conjugated double bonds to nitro
+  checkAns("c1ccnc(c1)C=C[N+](=O)[O-]", {"O=[N+]([O-])C=Cc1ccccn1",
+                                         "[O-][N+](O)=C=Cc1ccccn1"});
+
+  // Retain stereochemistry in conjugated double bonds to nitro
+  checkAns("c1ccnc(c1)/C=C/[N+](=O)[O-]", {"O=[N+]([O-])/C=C/c1ccccn1",
                                            "[O-][N+](O)=C=Cc1ccccn1"});
 
   // Remove stereochemistry from mobile double bonds
