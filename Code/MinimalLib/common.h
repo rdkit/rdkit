@@ -106,6 +106,7 @@ RWMol *mol_from_input(const std::string &input,
   bool assignStereo = true;
   bool assignCIPLabels = false;
   bool mappedDummiesAreRGroups = false;
+  bool makeDummiesQueries = false;
   RWMol *res = nullptr;
   boost::property_tree::ptree pt;
   if (!details_json.empty()) {
@@ -121,6 +122,7 @@ RWMol *mol_from_input(const std::string &input,
     LPT_OPT_GET(assignStereo);
     LPT_OPT_GET(assignCIPLabels);
     LPT_OPT_GET(mappedDummiesAreRGroups);
+    LPT_OPT_GET(makeDummiesQueries);
   }
   try {
     if (input.find("M  END") != std::string::npos) {
@@ -179,6 +181,11 @@ RWMol *mol_from_input(const std::string &input,
       }
       if (mappedDummiesAreRGroups) {
         relabelMappedDummies(*res);
+      }
+      if (makeDummiesQueries) {
+        auto ps = MolOps::AdjustQueryParameters::noAdjustments();
+        ps.makeDummiesQueries = true;
+        MolOps::adjustQueryProperties(*res, &ps);
       }
     } catch (...) {
       delete res;
@@ -344,6 +351,41 @@ std::string parse_rgba_array(const rj::Value &val, DrawColour &color,
   return "";
 }
 
+std::string parse_highlight_multi_colors(
+    const rj::Document &doc, std::map<int, std::vector<DrawColour>> &colorMap,
+    const std::string &keyName, bool &haveMultiColors) {
+  const auto it = doc.FindMember(keyName.c_str());
+  haveMultiColors = (it != doc.MemberEnd());
+  if (!haveMultiColors) {
+    return "";
+  }
+  if (!it->value.IsObject()) {
+    return "JSON contains '" + keyName + "' field, but it is not an object";
+  }
+  for (const auto &entry : it->value.GetObject()) {
+    int idx = std::atoi(entry.name.GetString());
+    auto &drawColorVect = colorMap[idx];
+    if (entry.value.IsArray()) {
+      const auto &arr = entry.value.GetArray();
+      if (std::all_of(arr.begin(), arr.end(),
+                      [](const auto &item) { return item.IsArray(); })) {
+        for (const auto &item : arr) {
+          DrawColour color;
+          auto problems = parse_rgba_array(item, color, keyName);
+          if (!problems.empty()) {
+            return problems;
+          }
+          drawColorVect.push_back(std::move(color));
+        }
+        continue;
+      }
+    }
+    return "JSON contains '" + keyName +
+           "' field, but it is not an array of R,G,B[,A] arrays";
+  }
+  return "";
+}
+
 std::string parse_highlight_colors(const rj::Document &doc,
                                    std::map<int, DrawColour> &colorMap,
                                    const std::string &keyName) {
@@ -430,19 +472,48 @@ std::string process_mol_details(const std::string &details,
   if (!problems.empty()) {
     return problems;
   }
-
-  problems = parse_highlight_colors(doc, molDrawingDetails.atomMap,
-                                    "highlightAtomColors");
+  bool haveAtomMultiColors;
+  problems = parse_highlight_multi_colors(doc, molDrawingDetails.atomMultiMap,
+                                          "highlightAtomMultipleColors",
+                                          haveAtomMultiColors);
   if (!problems.empty()) {
     return problems;
   }
-
-  problems = parse_highlight_colors(doc, molDrawingDetails.bondMap,
-                                    "highlightBondColors");
+  bool haveBondMultiColors;
+  problems = parse_highlight_multi_colors(doc, molDrawingDetails.bondMultiMap,
+                                          "highlightBondMultipleColors",
+                                          haveBondMultiColors);
   if (!problems.empty()) {
     return problems;
   }
-
+  if (haveAtomMultiColors || haveBondMultiColors) {
+    const auto lineWidthMultiplierMapit =
+        doc.FindMember("highlightLineWidthMultipliers");
+    if (lineWidthMultiplierMapit != doc.MemberEnd()) {
+      if (!lineWidthMultiplierMapit->value.IsObject()) {
+        return "JSON contains 'highlightLineWidthMultipliers' field, but it is not an object";
+      }
+      for (const auto &entry : lineWidthMultiplierMapit->value.GetObject()) {
+        if (!entry.value.IsInt()) {
+          return "JSON contains 'highlightLineWidthMultipliers' field, but the multipliers"
+                 "are not ints";
+        }
+        int idx = std::atoi(entry.name.GetString());
+        molDrawingDetails.lineWidthMultiplierMap[idx] = entry.value.GetInt();
+      }
+    }
+  } else {
+    problems = parse_highlight_colors(doc, molDrawingDetails.atomMap,
+                                      "highlightAtomColors");
+    if (!problems.empty()) {
+      return problems;
+    }
+    problems = parse_highlight_colors(doc, molDrawingDetails.bondMap,
+                                      "highlightBondColors");
+    if (!problems.empty()) {
+      return problems;
+    }
+  }
   const auto radiiMapit = doc.FindMember("highlightAtomRadii");
   if (radiiMapit != doc.MemberEnd()) {
     if (!radiiMapit->value.IsObject()) {
@@ -615,16 +686,31 @@ std::string mol_to_svg(const ROMol &m, int w = -1, int h = -1,
   }
   drawer.setOffset(molDrawingDetails.offsetx, molDrawingDetails.offsety);
 
-  MolDraw2DUtils::prepareAndDrawMolecule(
-      drawer, m, molDrawingDetails.legend, &molDrawingDetails.atomIds,
-      &molDrawingDetails.bondIds,
-      molDrawingDetails.atomMap.empty() ? nullptr : &molDrawingDetails.atomMap,
-      molDrawingDetails.bondMap.empty() ? nullptr : &molDrawingDetails.bondMap,
-      molDrawingDetails.radiiMap.empty() ? nullptr
-                                         : &molDrawingDetails.radiiMap,
-      -1, molDrawingDetails.kekulize, molDrawingDetails.addChiralHs,
-      molDrawingDetails.wedgeBonds, molDrawingDetails.forceCoords,
-      molDrawingDetails.wavyBonds);
+  if (molDrawingDetails.atomMultiMap.empty() &&
+      molDrawingDetails.bondMultiMap.empty()) {
+    MolDraw2DUtils::prepareAndDrawMolecule(
+        drawer, m, molDrawingDetails.legend, &molDrawingDetails.atomIds,
+        &molDrawingDetails.bondIds,
+        molDrawingDetails.atomMap.empty() ? nullptr
+                                          : &molDrawingDetails.atomMap,
+        molDrawingDetails.bondMap.empty() ? nullptr
+                                          : &molDrawingDetails.bondMap,
+        molDrawingDetails.radiiMap.empty() ? nullptr
+                                           : &molDrawingDetails.radiiMap,
+        -1, molDrawingDetails.kekulize, molDrawingDetails.addChiralHs,
+        molDrawingDetails.wedgeBonds, molDrawingDetails.forceCoords,
+        molDrawingDetails.wavyBonds);
+  } else {
+    RWMol drawMol(m);
+    MolDraw2DUtils::prepareMolForDrawing(
+        drawMol, molDrawingDetails.kekulize, molDrawingDetails.addChiralHs,
+        molDrawingDetails.wedgeBonds, molDrawingDetails.forceCoords,
+        molDrawingDetails.wavyBonds);
+    drawer.drawMoleculeWithHighlights(
+        drawMol, molDrawingDetails.legend, molDrawingDetails.atomMultiMap,
+        molDrawingDetails.bondMultiMap, molDrawingDetails.radiiMap,
+        molDrawingDetails.lineWidthMultiplierMap);
+  }
   drawer.finishDrawing();
 
   return drawer.getDrawingText();
