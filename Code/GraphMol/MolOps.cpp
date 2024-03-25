@@ -494,15 +494,24 @@ void cleanupAtropisomers(RWMol &mol) {
 }
 
 void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
+  const RingInfo *ri = mol.getRingInfo();
   for (auto bond : mol.bonds()) {
     switch (bond->getStereo()) {
       case Bond::BondStereo::STEREOATROPCW:
       case Bond::BondStereo::STEREOATROPCCW:
-        if (hybs[bond->getBeginAtom()->getIdx()] != Atom::SP2 ||
-            hybs[bond->getEndAtom()->getIdx()] != Atom::SP2) {
+        if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
+            hybs[bond->getEndAtomIdx()] != Atom::SP2) {
           bond->setStereo(Bond::BondStereo::STEREONONE);
+        } else if (ri->numBondRings(bond->getIdx()) > 0) {
+          // if the atropisomeric bond is in a ring, it might not be
+          // truly an atropisomeric bond, unless it is in a large macrocycle
+          // so we check that the atoms of the bond are in other rings
+          auto bondRingCount = ri->numBondRings(bond->getIdx());
+          if (!(bondRingCount < ri->numAtomRings(bond->getBeginAtomIdx()) &&
+                bondRingCount < ri->numAtomRings(bond->getEndAtomIdx()))) {
+            bond->setStereo(Bond::BondStereo::STEREONONE);
+          }
         }
-
         break;
 
       default:
