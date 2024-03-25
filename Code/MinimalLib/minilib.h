@@ -17,13 +17,18 @@
 #ifdef RDK_BUILD_MINIMAL_LIB_MMPA
 #include <GraphMol/MMPA/MMPA.h>
 #endif
+#ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
+#include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
+#endif
 
 class JSMolList;
 
-class JSMol {
+class JSMolBase {
  public:
-  JSMol() : d_mol(new RDKit::RWMol()) {}
-  JSMol(RDKit::RWMol *mol) : d_mol(mol) { assert(d_mol); }
+  JSMolBase(const JSMolBase &) = delete;
+  JSMolBase &operator=(const JSMolBase &) = delete;
+  virtual ~JSMolBase(){};
+  virtual RDKit::RWMol& get() const = 0;
   std::string get_smiles() const;
   std::string get_cxsmiles() const;
   std::string get_smarts() const;
@@ -41,8 +46,8 @@ class JSMol {
     return get_svg(d_defaultWidth, d_defaultHeight);
   }
   std::string get_svg_with_highlights(const std::string &details) const;
-  std::string get_substruct_match(const JSMol &q) const;
-  std::string get_substruct_matches(const JSMol &q) const;
+  std::string get_substruct_match(const JSMolBase &q) const;
+  std::string get_substruct_matches(const JSMolBase &q) const;
   std::string get_descriptors() const;
   std::string get_morgan_fp(const std::string &details) const;
   std::string get_morgan_fp() const { return get_morgan_fp("{}"); }
@@ -94,9 +99,9 @@ class JSMol {
   std::string condense_abbreviations_from_defs(const std::string &definitions,
                                                double maxCoverage,
                                                bool areLinkers);
-  std::string generate_aligned_coords(const JSMol &templateMol,
+  std::string generate_aligned_coords(const JSMolBase &templateMol,
                                       const std::string &details);
-  std::string generate_aligned_coords(const JSMol &templateMol) {
+  std::string generate_aligned_coords(const JSMolBase &templateMol) {
     return generate_aligned_coords(templateMol, "{}");
   }
   [[deprecated(
@@ -141,10 +146,8 @@ class JSMol {
   void straighten_depiction(bool minimizeRotation);
   void straighten_depiction() { straighten_depiction(false); }
   std::pair<JSMolList *, std::string> get_frags(
-      const std::string &details_json);
-  std::pair<JSMolList *, std::string> get_frags() {
-    return get_frags("{}");
-  }
+      const std::string &details_json) const;
+  std::pair<JSMolList *, std::string> get_frags() const { return get_frags("{}"); }
   unsigned int get_num_atoms(bool heavyOnly) const;
   unsigned int get_num_atoms() const { return get_num_atoms(false); };
   unsigned int get_num_bonds() const;
@@ -154,9 +157,53 @@ class JSMol {
       unsigned int maxCutBonds) const;
 #endif
 
-  std::unique_ptr<RDKit::RWMol> d_mol;
   static constexpr int d_defaultWidth = 250;
   static constexpr int d_defaultHeight = 200;
+ protected:
+  JSMolBase() = default;
+};
+
+class JSMol : public JSMolBase {
+ public:
+  JSMol() : d_mol(new RDKit::RWMol()) {}
+  JSMol(RDKit::RWMol *mol) : d_mol(mol) { checkNotNull(); }
+  JSMol(const JSMol &other) {
+    d_mol.reset(new RDKit::RWMol(other.get()));
+  }
+  JSMol &operator=(const JSMol &other) {
+    d_mol.reset(new RDKit::RWMol(other.get()));
+    return *this;
+  }
+  RDKit::RWMol& get() const {
+    checkNotNull();
+    return *d_mol.get();
+  }
+
+ private:
+  void checkNotNull() const { CHECK_INVARIANT(d_mol, "d_mol cannot be null"); }
+  std::unique_ptr<RDKit::RWMol> d_mol;
+};
+
+class JSMolShared : public JSMolBase {
+ public:
+  JSMolShared() = delete;
+  JSMolShared(const RDKit::ROMOL_SPTR &mol) : d_mol(mol) { checkNotNull(); }
+  JSMolShared(const JSMolShared &other) { d_mol = other.d_mol; }
+  JSMolShared &operator=(const JSMolShared &other) {
+    d_mol = other.d_mol;
+    return *this;
+  }
+  RDKit::RWMol& get() const {
+    checkNotNull();
+    return static_cast<RDKit::RWMol &>(*d_mol.get());
+  }
+  const RDKit::ROMOL_SPTR& get_sptr() const {
+    return d_mol;
+  }
+
+ private:
+  void checkNotNull() const { CHECK_INVARIANT(d_mol, "d_mol cannot be null"); }
+  RDKit::ROMOL_SPTR d_mol;
 };
 
 class JSMolList {
@@ -164,11 +211,11 @@ class JSMolList {
   JSMolList(const std::vector<RDKit::ROMOL_SPTR> &mols)
       : d_mols(mols), d_idx(0){};
   JSMolList() : d_idx(0){};
-  JSMol *next();
-  size_t append(const JSMol &mol);
-  size_t insert(size_t idx, const JSMol &mol);
-  JSMol *at(size_t idx) const;
-  JSMol *pop(size_t idx);
+  JSMolBase *next();
+  size_t append(const JSMolBase &mol);
+  size_t insert(size_t idx, const JSMolBase &mol);
+  JSMolBase *at(size_t idx) const;
+  JSMolBase *pop(size_t idx);
   void reset() { d_idx = 0; }
   bool at_end() const { return d_idx == d_mols.size(); }
   size_t size() const { return d_mols.size(); }
@@ -201,9 +248,9 @@ class JSReaction {
  public:
   JSReaction() : d_rxn(new RDKit::ChemicalReaction()) {}
   JSReaction(RDKit::ChemicalReaction *rxn) : d_rxn(rxn) { assert(d_rxn); }
-  [
-      [deprecated("please check the get_rxn return value for non-nullness "
-                  "instead")]] bool
+  [[deprecated(
+      "please check the get_rxn return value for non-nullness "
+      "instead")]] bool
   is_valid() const;
 
   std::string get_svg(int width, int height) const;
@@ -223,30 +270,30 @@ class JSSubstructLibrary {
  public:
   JSSubstructLibrary(unsigned int num_bits);
   JSSubstructLibrary() : JSSubstructLibrary(d_defaultNumBits) {}
-  int add_mol(const JSMol &m);
+  int add_mol(const JSMolBase &m);
   int add_smiles(const std::string &smi);
   int add_trusted_smiles(const std::string &smi);
   int add_trusted_smiles_and_pattern_fp(const std::string &smi,
                                         const std::string &patternFp);
   std::string get_trusted_smiles(unsigned int i) const;
   std::string get_pattern_fp(unsigned int i) const;
-  JSMol *get_mol(unsigned int i);
-  std::string get_matches(const JSMol &q, bool useChirality, int numThreads,
+  JSMolBase *get_mol(unsigned int i);
+  std::string get_matches(const JSMolBase &q, bool useChirality, int numThreads,
                           int maxResults) const;
-  std::string get_matches(const JSMol &q, int maxResults) const {
+  std::string get_matches(const JSMolBase &q, int maxResults) const {
     return get_matches(q, d_defaultUseChirality, d_defaultNumThreads,
                        maxResults);
   }
-  std::string get_matches(const JSMol &q) const {
+  std::string get_matches(const JSMolBase &q) const {
     return get_matches(q, d_defaultUseChirality, d_defaultNumThreads,
                        d_defaultMaxResults);
   }
-  unsigned int count_matches(const JSMol &q, bool useChirality,
+  unsigned int count_matches(const JSMolBase &q, bool useChirality,
                              int numThreads) const;
-  unsigned int count_matches(const JSMol &q, bool useChirality) const {
+  unsigned int count_matches(const JSMolBase &q, bool useChirality) const {
     return count_matches(q, useChirality, d_defaultNumThreads);
   }
-  unsigned int count_matches(const JSMol &q) const {
+  unsigned int count_matches(const JSMolBase &q) const {
     return count_matches(q, d_defaultUseChirality, d_defaultNumThreads);
   }
   unsigned int size() const { return d_sslib->size(); }
@@ -266,10 +313,10 @@ class JSSubstructLibrary {
 #endif
 
 std::string get_inchikey_for_inchi(const std::string &input);
-JSMol *get_mol(const std::string &input, const std::string &details_json);
-JSMol *get_mol_from_pickle(const std::string &pkl);
-JSMol *get_mol_copy(const JSMol &other);
-JSMol *get_qmol(const std::string &input);
+JSMolBase *get_mol(const std::string &input, const std::string &details_json);
+JSMolBase *get_mol_from_pickle(const std::string &pkl);
+JSMolBase *get_mol_copy(const JSMolBase &other);
+JSMolBase *get_qmol(const std::string &input);
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
 JSReaction *get_rxn(const std::string &input, const std::string &details_json);
 #endif
@@ -282,7 +329,30 @@ void disable_logging();
 JSLog *set_log_tee(const std::string &log_name);
 JSLog *set_log_capture(const std::string &log_name);
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
-std::string get_mcs_as_json(const JSMolList &mols, const std::string &details_json);
-std::string get_mcs_as_smarts(const JSMolList &mols, const std::string &details_json);
-JSMol *get_mcs_as_mol(const JSMolList &mols, const std::string &details_json);
+std::string get_mcs_as_json(const JSMolList &mols,
+                            const std::string &details_json);
+std::string get_mcs_as_smarts(const JSMolList &mols,
+                              const std::string &details_json);
+JSMolBase *get_mcs_as_mol(const JSMolList &mols, const std::string &details_json);
+#endif
+
+#ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
+class JSRGroupDecomposition {
+ public:
+  JSRGroupDecomposition(const JSMolBase &core, const std::string &details_json);
+  JSRGroupDecomposition(const JSMolBase &core) : JSRGroupDecomposition(core, ""){};
+  JSRGroupDecomposition(const JSMolList &cores,
+                        const std::string &details_json);
+  JSRGroupDecomposition(const JSMolList &cores)
+      : JSRGroupDecomposition(cores, ""){};
+  int add(const JSMolBase &mol);
+  bool process();
+  std::map<std::string, std::unique_ptr<JSMolList>> getRGroupsAsColumns() const;
+  std::vector<std::map<std::string, std::unique_ptr<JSMolBase>>> getRGroupsAsRows()
+      const;
+
+ private:
+  std::unique_ptr<RDKit::RGroupDecomposition> d_decomp;
+  std::vector<unsigned int> d_unmatched;
+};
 #endif

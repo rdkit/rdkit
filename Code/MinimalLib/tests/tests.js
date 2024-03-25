@@ -2281,19 +2281,31 @@ function test_mol_list() {
             }
         }
         assert.equal(molList.size(), 2);
-        let i = 0;
-        while (!molList.at_end()) {
-            try {
-                mol = molList.next();
-            } finally {
-                if (mol) {
-                    ++i;
-                    mol.delete();
+        // Modifications to molecules in the molList should persist
+        // as the underlying C++ object is a shared_ptr
+        [0, 1].forEach((loopIdx) => {
+            let i = 0;
+            molList.reset();
+            while (!molList.at_end()) {
+                try {
+                    mol = molList.next();
+                    assert(mol);
+                    if (loopIdx == 0) {
+                        assert(!mol.has_prop('molIdx'));
+                        mol.set_prop('molIdx', `${++i}`);
+                    } else {
+                        assert(mol.has_prop('molIdx'));
+                        i = parseInt(mol.get_prop('molIdx'));
+                    }
+                } finally {
+                    if (mol) {
+                        mol.delete();
+                    }
                 }
             }
-        }
-        assert.equal(i, 2);
-        assert(molList.at_end());
+            assert.equal(i, 2);
+            assert(molList.at_end());
+        });
         try {
             mol = molList.pop(0);
             assert.equal(mol.get_num_atoms(), 4);
@@ -2807,6 +2819,206 @@ function test_assign_cip_labels() {
     }
 }
 
+const getFoundRgdRowAsMap = (row) => Object.fromEntries(Object.entries(row).map(([rlabel, mol]) => {
+    try {
+        assert(mol);
+        assert(mol instanceof RDKitModule.Mol);
+        const smi = mol.get_smiles();
+        return [rlabel, smi];
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+    }
+}));
+
+const getExpectedRgdRowAsMap = (row) => Object.fromEntries(row.split(' ').map((rgroup) => {
+    const match = rgroup.match(/^([^:]+):(.+)$/);
+    assert(match);
+    return match.slice(1);
+}));
+
+const getExpectedRgdAsCols = (rowArray) => {
+    const res = {};
+    rowArray.forEach((row, i) => {
+        const rgroupToSmiMap = getExpectedRgdRowAsMap(row);
+        Object.entries(rgroupToSmiMap).forEach(([rlabel, smi]) => {
+            if (!i) {
+                res[rlabel] = [];
+            }
+            const arr = res[rlabel];
+            assert(Array.isArray(arr));
+            arr.push(smi);
+        });
+    });
+    return res;
+};
+
+function test_singlecore_rgd() {
+    const ringData3 = ['c1cocc1CCl', 'c1c[nH]cc1CI', 'c1cscc1CF'];
+    const expectedRingData3Rgd = ['Core:c1cc([*:1])co1 R1:ClC[*:1]',
+                                  'Core:c1cc([*:1])c[nH]1 R1:IC[*:1]',
+                                  'Core:c1cc([*:1])cs1 R1:FC[*:1]'];
+    const expectedRingData3RgdAsCols = getExpectedRgdAsCols(expectedRingData3Rgd);
+    const core = RDKitModule.get_qmol('*1***[*:1]1');
+    assert(core);
+    try {
+        const scoreMethods = ['Match', 'FingerprintVariance'];
+        scoreMethods.forEach((scoreMethod) => {
+            const params = {
+                scoreMethod,
+                allowNonTerminalRGroups: true,
+            };
+            const rgd = RDKitModule.get_rgd(core, JSON.stringify(params));
+            ringData3.forEach((ringData, i) => {
+                const mol = RDKitModule.get_mol(ringData);
+                assert(mol);
+                try {
+                    const res = rgd.add(mol);
+                    assert(res === i);
+                } finally {
+                    mol.delete();
+                }
+            });
+            rgd.process();
+            const rows = rgd.get_rgroups_as_rows();
+            assert(Array.isArray(rows));
+            assert(rows.length === ringData3.length);
+            rows.forEach((row, i) => {
+                const expectedRowMapping = getExpectedRgdRowAsMap(expectedRingData3Rgd[i]);
+                const foundMapping = getFoundRgdRowAsMap(row);
+                assert(Object.keys(foundMapping).length === Object.keys(expectedRowMapping).length);
+                Object.entries(foundMapping).forEach(([rlabel, smi]) => {
+                    assert(expectedRowMapping[rlabel] && expectedRowMapping[rlabel] === smi);
+                });
+            })
+            const cols = rgd.get_rgroups_as_columns();
+            assert(typeof cols === 'object');
+            assert(Object.keys(cols).length === Object.keys(expectedRingData3RgdAsCols).length);
+            Object.keys(cols).forEach((rlabel) => {
+                const expectedRGroupsAsSmiles = expectedRingData3RgdAsCols[rlabel];
+                assert(Array.isArray(expectedRGroupsAsSmiles));
+                const rgroupsAsMolList = cols[rlabel];
+                assert(rgroupsAsMolList);
+                assert(rgroupsAsMolList instanceof RDKitModule.MolList);
+                try {
+                    assert(expectedRGroupsAsSmiles.length === rgroupsAsMolList.size());
+                    let i = 0;
+                    while (!rgroupsAsMolList.at_end()) {
+                        const mol = rgroupsAsMolList.next();
+                        assert(mol);
+                        try {
+                            assert(mol.get_smiles() === expectedRGroupsAsSmiles[i++]);
+                        } finally {
+                            mol.delete();
+                        }
+                    }
+                } finally {
+                    rgroupsAsMolList.delete();
+                }
+            });
+        });
+    } finally {
+        core.delete();
+    }
+}
+
+function test_multicore_rgd() {
+    const smiArray = [
+        'C1CCNC(Cl)CC1', 'C1CC(Cl)NCCC1', 'C1CCNC(I)CC1', 'C1CC(I)NCCC1',
+        'C1CCSC(Cl)CC1', 'C1CC(Cl)SCCC1', 'C1CCSC(I)CC1', 'C1CC(I)SCCC1',
+        'C1CCOC(Cl)CC1', 'C1CC(Cl)OCCC1', 'C1CCOC(I)CC1', 'C1CC(I)OCCC1'
+    ];
+    const expectedRgd = [
+        'Core:C1CCNC([*:1])CC1 R1:Cl[*:1]', 'Core:C1CCNC([*:1])CC1 R1:Cl[*:1]',
+        'Core:C1CCNC([*:1])CC1 R1:I[*:1]',  'Core:C1CCNC([*:1])CC1 R1:I[*:1]',
+        'Core:C1CCSC([*:1])CC1 R1:Cl[*:1]', 'Core:C1CCSC([*:1])CC1 R1:Cl[*:1]',
+        'Core:C1CCSC([*:1])CC1 R1:I[*:1]',  'Core:C1CCSC([*:1])CC1 R1:I[*:1]',
+        'Core:C1CCOC([*:1])CC1 R1:Cl[*:1]', 'Core:C1CCOC([*:1])CC1 R1:Cl[*:1]',
+        'Core:C1CCOC([*:1])CC1 R1:I[*:1]',  'Core:C1CCOC([*:1])CC1 R1:I[*:1]'
+    ];
+    const expectedRgdAsCols = getExpectedRgdAsCols(expectedRgd);
+
+    const cores = molListFromSmiArray(['C1CCNCCC1', 'C1CCOCCC1', 'C1CCSCCC1']);
+    try {
+        const rgd = RDKitModule.get_rgd(cores);
+        smiArray.forEach((smi, i) => {
+            const mol = RDKitModule.get_mol(smi);
+            assert(mol);
+            try {
+                assert(rgd.add(mol) === i);
+            } finally {
+                mol.delete();
+            }
+        });
+        assert(rgd.process());
+        const rows = rgd.get_rgroups_as_rows();
+        assert(Array.isArray(rows));
+        assert(rows.length === smiArray.length);
+        rows.forEach((row, i) => {
+            const expectedRowMapping = getExpectedRgdRowAsMap(expectedRgd[i]);
+            const foundMapping = getFoundRgdRowAsMap(row);
+            assert(Object.keys(foundMapping).length === Object.keys(expectedRowMapping).length);
+            Object.entries(foundMapping).forEach(([rlabel, smi]) => {
+                assert(expectedRowMapping[rlabel] && expectedRowMapping[rlabel] === smi);
+            });
+        })
+        const cols = rgd.get_rgroups_as_columns();
+        assert(typeof cols === 'object');
+        assert(Object.keys(cols).length === Object.keys(expectedRgdAsCols).length);
+        Object.keys(cols).forEach((rlabel) => {
+            const expectedRGroupsAsSmiles = expectedRgdAsCols[rlabel];
+            assert(Array.isArray(expectedRGroupsAsSmiles));
+            const rgroupsAsMolList = cols[rlabel];
+            assert(rgroupsAsMolList);
+            assert(rgroupsAsMolList instanceof RDKitModule.MolList);
+            try {
+                assert(expectedRGroupsAsSmiles.length === rgroupsAsMolList.size());
+                let i = 0;
+                while (!rgroupsAsMolList.at_end()) {
+                    const mol = rgroupsAsMolList.next();
+                    assert(mol);
+                    try {
+                        assert(mol.get_smiles() === expectedRGroupsAsSmiles[i++]);
+                    } finally {
+                        mol.delete();
+                    }
+                }
+            } finally {
+                rgroupsAsMolList.delete();
+            }
+        });
+    } finally {
+        cores.delete();
+    }
+}
+
+function test_get_mol_copy() {
+    let mol;
+    let mol_copy1;
+    let mol_copy2;
+    try {
+        mol = RDKitModule.get_mol('c1ccccn1');
+        assert(mol);
+        mol_copy1 = RDKitModule.get_mol_copy(mol);
+        assert(mol_copy1);
+        mol_copy2 = mol.copy();
+        assert(mol_copy2);
+        assert(mol.get_molblock() === mol_copy1.get_molblock());
+        assert(mol.get_molblock() === mol_copy2.get_molblock());
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+        if (mol_copy1) {
+            mol_copy1.delete();
+        }
+        if (mol_copy2) {
+            mol_copy2.delete();
+        }
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -2881,6 +3093,11 @@ initRDKitModule().then(function(instance) {
     test_get_sss_json();
     test_relabel_mapped_dummies();
     test_assign_cip_labels();
+    if (RDKitModule.RGroupDecomposition)  {
+        test_singlecore_rgd();
+        test_multicore_rgd();
+    }
+    test_get_mol_copy();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

@@ -35,7 +35,10 @@ struct DrawingDetails {
 struct MolDrawingDetails : public DrawingDetails {
   std::map<int, DrawColour> atomMap;
   std::map<int, DrawColour> bondMap;
+  std::map<int, std::vector<DrawColour>> atomMultiMap;
+  std::map<int, std::vector<DrawColour>> bondMultiMap;
   std::map<int, double> radiiMap;
+  std::map<int, int> lineWidthMultiplierMap;
 };
 
 struct RxnDrawingDetails : public DrawingDetails {
