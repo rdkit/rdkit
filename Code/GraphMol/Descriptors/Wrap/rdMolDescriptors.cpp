@@ -23,6 +23,7 @@
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
+#include <GraphMol/Descriptors/DCLV.h>
 #include <DataStructs/BitVects.h>
 
 #include <GraphMol/Descriptors/USRDescriptor.h>
@@ -356,12 +357,13 @@ double hkAlphaHelper(const RDKit::ROMol &mol, python::object atomContribs) {
   return kappaHelper(RDKit::Descriptors::calcHallKierAlpha, mol, atomContribs);
 }
 
-[[deprecated("please use MorganGenerator")]]
-RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
-    const RDKit::ROMol &mol, unsigned int radius, int nBits,
-    python::object invariants, python::object fromAtoms, bool useChirality,
-    bool useBondTypes, bool useFeatures, bool useCounts, python::object bitInfo,
-    bool includeRedundantEnvironments) {
+[[deprecated("please use MorganGenerator")]] RDKit::SparseIntVect<std::uint32_t>
+    *MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius,
+                             int nBits, python::object invariants,
+                             python::object fromAtoms, bool useChirality,
+                             bool useBondTypes, bool useFeatures,
+                             bool useCounts, python::object bitInfo,
+                             bool includeRedundantEnvironments) {
   RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
@@ -498,12 +500,13 @@ RDKit::SparseIntVect<std::uint32_t> *GetHashedMorganFingerprint(
                                  bitInfo, includeRedundantEnvironments);
 }
 
-[[deprecated("please use MorganGenerator")]]
-ExplicitBitVect *GetMorganFingerprintBV(
-    const RDKit::ROMol &mol, unsigned int radius, unsigned int nBits,
-    python::object invariants, python::object fromAtoms, bool useChirality,
-    bool useBondTypes, bool useFeatures, python::object bitInfo,
-    bool includeRedundantEnvironments) {
+[[deprecated("please use MorganGenerator")]] ExplicitBitVect *
+GetMorganFingerprintBV(const RDKit::ROMol &mol, unsigned int radius,
+                       unsigned int nBits, python::object invariants,
+                       python::object fromAtoms, bool useChirality,
+                       bool useBondTypes, bool useFeatures,
+                       python::object bitInfo,
+                       bool includeRedundantEnvironments) {
   RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
@@ -1650,6 +1653,41 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("name"), python::arg("min"), python::arg("max")),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      R"DOC(ARGUMENTS:
+      "   - mol: molecule or protein under consideration
+      "   - isProtein: flag to indicate if the input is a protein (default=True). NOTE that results with isProtein=False are currently not correct.
+      "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=False)
+      "   - probeRadius: radius of the solvent probe (default=1.4)
+      "   - depth: control of number of dots per atom (default=2)
+      "   - dotDensity: control of accuracy (default=0)
+      ")DOC";
+  python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume>(
+      "DoubleCubicLatticeVolume",
+      "Class for the Double Cubic Lattice Volume method",
+      python::init<const RDKit::ROMol &,
+                   python::optional<bool, bool, double, int, int>>(
+          (python::args("self", "mol"), python::args("isProtein") = true,
+           python::args("includeLigand") = false,
+           python::args("probeRadius") = 1.4, python::args("depth") = 2,
+           python::args("dotDensity") = 0),
+          docString.c_str()))
+      .def("GetSurfaceArea",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
+           "Get the Surface Area of the Molecule or Protein")
+      .def("GetVolume",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getVolume,
+           "Get the Total Volume of the Molecule or Protein")
+      .def("GetVDWVolume",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getVDWVolume,
+           "Get the van der Waals Volume of the Molecule or Protein")
+      .def("GetCompactness",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getCompactness,
+           "Get the Compactness of the Protein")
+      .def("GetPackingDensity",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getPackingDensity,
+           "Get the PackingDensity of the Protein");
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
   python::scope().attr("_CalcCoulombMat_version") =

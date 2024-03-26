@@ -450,9 +450,6 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 
 namespace Chirality {
 
-const std::string _NonExplicit3DChirality =
-    "_NonExplicit3DChirality";  // set if the molecule has explicit 3D
-                                // stereochemistry
 std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     const ROMol &mol, const Bond *bond, const Conformer *conf,
     double pseudo3DOffset = 0.1, double volumeTolerance = 0.01) {
@@ -769,16 +766,27 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     bv1.z = 0;
     auto bv2 = bondVects[order[2]];
     bv2.z = 0;
-    const auto crossp1 = bv1.crossProduct(bv2);
+    auto crossp1 = bv1.crossProduct(bv2);
     // catch linear arrangements
     if (nNbrs == 3) {
       if (crossp1.lengthSq() < 5 * zeroTol) {
-        // nothing we can do in a linear arrangement if there are only three
-        // neighbors
-        BOOST_LOG(rdWarningLog)
-            << "Warning: ambiguous stereochemistry - linear bond arrangement - at atom "
-            << atom->getIdx() << " ignored" << std::endl;
-        return std::nullopt;
+        // in a linear relationship with three neighbors we assume that the
+        // two perpendicular bonds are wedged in the other direction from the
+        // one that was provided.
+        // that's this situation:
+        //
+        //              0
+        //              |   <- wedged up
+        //           1--C--2
+        //
+        //  here we assume that bonds C-1 and C-2 are wedged down
+        //
+        // ST-1.2.12 of the IUPAC guidelines says that this form is wrong since
+        // it's for a "T-shaped" configuration instead of a tetrahedron, but it
+        // shows up fairly frequently, particularly with fused ring systems
+        bv1.z = -bondVects[order[0]].z;
+        bv2.z = -bondVects[order[0]].z;
+        crossp1 = bv1.crossProduct(bv2);
       }
     } else if (crossp1.lengthSq() < 10 * zeroTol) {
       // if the other bond is flat:
@@ -2653,8 +2661,8 @@ void GetMolFileBondStereoInfo(
 
 void removeNonExplicit3DChirality(ROMol &mol) {
   for (auto atom : mol.atoms()) {
-    if (atom->hasProp(Chirality::_NonExplicit3DChirality)) {
-      atom->clearProp(Chirality::_NonExplicit3DChirality);
+    if (atom->hasProp(common_properties::_NonExplicit3DChirality)) {
+      atom->clearProp(common_properties::_NonExplicit3DChirality);
       atom->setChiralTag(Atom::CHI_UNSPECIFIED);
     }
   }
@@ -3291,7 +3299,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     if (allowNontetrahedralStereo &&
         assignNontetrahedralChiralTypeFrom3D(mol, conf, atom)) {
       if (explicitAtoms[atom->getIdx()] == 0) {
-        atom->setProp(Chirality::_NonExplicit3DChirality, 1);
+        atom->setProp(common_properties::_NonExplicit3DChirality, 1);
       }
       continue;
     }
@@ -3345,7 +3353,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     }
 
     if (chiralitySet && explicitAtoms[atom->getIdx()] == 0) {
-      atom->setProp<int>(Chirality::_NonExplicit3DChirality, 1);
+      atom->setProp<int>(common_properties::_NonExplicit3DChirality, 1);
     }
   }
 }

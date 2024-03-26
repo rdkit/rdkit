@@ -192,3 +192,6 @@ rdkit_catch_test(molbundleTestsCatch catch_molbundle.cpp
 
 rdkit_catch_test(pickleTestsCatch catch_pickles.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
+
+rdkit_catch_test(tableTestsCatch catch_periodictable.cpp
+        LINK_LIBRARIES GraphMol)

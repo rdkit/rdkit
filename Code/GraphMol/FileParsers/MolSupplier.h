@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2022 greg landrum and other RDKit contributors
+//  Copyright (C) 2002-2024 greg landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,6 +22,8 @@
 #include <fstream>
 #include <GraphMol/ROMol.h>
 #include <RDGeneral/BadFileException.h>
+#include "FileParsers.h"
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 namespace schrodinger {
@@ -35,6 +37,8 @@ class Block;
 namespace RDKit {
 RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
 
+namespace v2 {
+namespace FileParsers {
 /*!
 //
 //  Here are a couple of ways one can interact with MolSuppliers:
@@ -64,7 +68,7 @@ class RDKIT_FILEPARSERS_EXPORT MolSupplier {
   virtual void init() = 0;
   virtual void reset() = 0;
   virtual bool atEnd() = 0;
-  virtual ROMol *next() = 0;
+  virtual std::unique_ptr<RWMol> next() = 0;
 
   virtual void close() {
     if (df_owner) {
@@ -126,16 +130,15 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
  public:
   ForwardSDMolSupplier() { init(); }
 
-  explicit ForwardSDMolSupplier(std::istream *inStream,
-                                bool takeOwnership = true, bool sanitize = true,
-                                bool removeHs = true,
-                                bool strictParsing = false);
+  explicit ForwardSDMolSupplier(
+      std::istream *inStream, bool takeOwnership = true,
+      const MolFileParserParams &params = MolFileParserParams());
 
   ~ForwardSDMolSupplier() override { close(); }
 
   void init() override;
   void reset() override;
-  ROMol *next() override;
+  std::unique_ptr<RWMol> next() override;
   bool atEnd() override;
 
   void setProcessPropertyLists(bool val) { df_processPropertyLists = val; }
@@ -145,15 +148,14 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
 
  protected:
   virtual void checkForEnd();
-  ROMol *_next();
-  virtual void readMolProps(ROMol *);
+  std::unique_ptr<RWMol> _next();
+  virtual void readMolProps(ROMol &);
   bool df_end = false;
   int d_line = 0;  // line number we are currently on
-  bool df_sanitize = true, df_removeHs = true, df_strictParsing = true;
+  MolFileParserParams d_params;
   bool df_processPropertyLists = true;
   bool df_eofHitOnRead = false;
 };
-
 // \brief a lazy supplier from an SD file
 class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   /*************************************************************************
@@ -180,30 +182,29 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
    * correctness
    *                          of the contents.
    */
-  explicit SDMolSupplier(const std::string &fileName, bool sanitize = true,
-                         bool removeHs = true, bool strictParsing = true);
+  explicit SDMolSupplier(
+      const std::string &fileName,
+      const MolFileParserParams &params = MolFileParserParams());
 
-  explicit SDMolSupplier(std::istream *inStream, bool takeOwnership = true,
-                         bool sanitize = true, bool removeHs = true,
-                         bool strictParsing = true);
+  explicit SDMolSupplier(
+      std::istream *inStream, bool takeOwnership = true,
+      const MolFileParserParams &params = MolFileParserParams());
 
   ~SDMolSupplier() override { close(); }
   void init() override;
   void reset() override;
-  ROMol *next() override;
+  std::unique_ptr<RWMol> next() override;
   bool atEnd() override;
   void moveTo(unsigned int idx);
-  ROMol *operator[](unsigned int idx);
+  std::unique_ptr<RWMol> operator[](unsigned int idx);
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
    */
   std::string getItemText(unsigned int idx);
   unsigned int length();
-  void setData(const std::string &text, bool sanitize = true,
-               bool removeHs = true);
-  void setData(const std::string &text, bool sanitize, bool removeHs,
-               bool strictParsing);
+  void setData(const std::string &text);
+  void setData(const std::string &text, const MolFileParserParams &params);
 
   /*! Resets our internal state and sets the indices of molecules in the stream.
    *  The client should be *very* careful about calling this method, as it's
@@ -221,10 +222,26 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
 
  private:
   void checkForEnd() override;
-  void setDataCommon(const std::string &text, bool sanitize, bool removeHs);
   int d_len = 0;   // total number of mol blocks in the file (initialized to -1)
   int d_last = 0;  // the molecule we are ready to read
   std::vector<std::streampos> d_molpos;
+};
+
+struct SmilesMolSupplierParams {
+  std::string delimiter = " \t";
+  int smilesColumn = 0;
+  int nameColumn = 1;
+  bool titleLine = true;
+  v2::SmilesParse::SmilesParserParams parseParameters = {
+      true,   // sanitize
+      false,  // allowCXSMILES
+      true,   // strictCXSMILES
+      false,  // parseName
+      true,   // removeHs
+      false,  // skipCleanup
+      false,  // debugParse
+      {}      // replacements
+  };
 };
 
 //! lazy file parser for Smiles tables
@@ -234,7 +251,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
    * file parser above
    * - As an when new molecules are read using "next" their
    *    positions in the file are noted.
-   *  - A call to the "length" will autamatically parse the entire
+   *  - A call to the "length" will automatically parse the entire
    *    file and cache all the mol block positions
    *  - [] operator is used to access a molecule at "idx", calling
    *    next following this will result in the next molecule after
@@ -261,26 +278,23 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
    *     the column number
    *   \param sanitize - if true sanitize the molecule before returning it
    */
-  explicit SmilesMolSupplier(const std::string &fileName,
-                             const std::string &delimiter = " \t",
-                             int smilesColumn = 0, int nameColumn = 1,
-                             bool titleLine = true, bool sanitize = true);
+  explicit SmilesMolSupplier(
+      const std::string &fileName,
+      const SmilesMolSupplierParams &params = SmilesMolSupplierParams());
   SmilesMolSupplier();
-  explicit SmilesMolSupplier(std::istream *inStream, bool takeOwnership = true,
-                             const std::string &delimiter = " \t",
-                             int smilesColumn = 0, int nameColumn = 1,
-                             bool titleLine = true, bool sanitize = true);
+  explicit SmilesMolSupplier(
+      std::istream *inStream, bool takeOwnership = true,
+      const SmilesMolSupplierParams &params = SmilesMolSupplierParams());
 
   ~SmilesMolSupplier() override { close(); }
-  void setData(const std::string &text, const std::string &delimiter = " ",
-               int smilesColumn = 0, int nameColumn = 1, bool titleLine = true,
-               bool sanitize = true);
+  void setData(const std::string &text, const SmilesMolSupplierParams &params =
+                                            SmilesMolSupplierParams());
   void init() override;
   void reset() override;
-  ROMol *next() override;
+  std::unique_ptr<RWMol> next() override;
   bool atEnd() override;
   void moveTo(unsigned int idx);
-  ROMol *operator[](unsigned int idx);
+  std::unique_ptr<RWMol> operator[](unsigned int idx);
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
@@ -289,7 +303,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   unsigned int length();
 
  private:
-  ROMol *processLine(std::string inLine);
+  std::unique_ptr<RWMol> processLine(std::string inLine);
   void processTitleLine();
   std::string nextLine();
   long int skipComments();
@@ -299,15 +313,27 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   long d_len = 0;       // total number of smiles in the file
   long d_next = 0;      // the  molecule we are ready to read
   size_t d_line = 0;    // line number we are currently on
+  SmilesMolSupplierParams d_params;
   std::vector<std::streampos>
       d_molpos;  // vector of positions in the file for molecules
   std::vector<int> d_lineNums;
-  std::string d_delim;      // the delimiter string
-  bool df_sanitize = true;  // sanitize molecules before returning them?
-  STR_VECT d_props;         // vector of property names
-  bool df_title = true;     // do we have a title line?
-  int d_smi = 0;            // column id for the smile string
-  int d_name = 1;           // column id for the name
+  STR_VECT d_props;  // vector of property names
+};
+
+struct TDTMolSupplierParams {
+  std::string nameRecord = "";
+  int confId2D = -1;
+  int confId3D = -1;
+  v2::SmilesParse::SmilesParserParams parseParameters = {
+      true,   // sanitize
+      false,  // allowCXSMILES
+      true,   // strictCXSMILES
+      false,  // parseName
+      true,   // removeHs
+      false,  // skipCleanup
+      false,  // debugParse
+      {}      // replacements
+  };
 };
 
 //! lazy file parser for TDT files
@@ -317,7 +343,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
    * file parser above
    * - As an when new molecules are read using "next" their
    *    positions in the file are noted.
-   *  - A call to the "length" will autamatically parse the entire
+   *  - A call to the "length" will automatically parse the entire
    *    file and cache all the mol block positions
    *  - [] operator is used to access a molecule at "idx", calling
    *    next following this will result in the next molecule after
@@ -336,22 +362,22 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
    *                   corresponding conformer id.
    *   \param sanitize - if true sanitize the molecule before returning it
    */
-  explicit TDTMolSupplier(const std::string &fileName,
-                          const std::string &nameRecord = "", int confId2D = -1,
-                          int confId3D = 0, bool sanitize = true);
-  explicit TDTMolSupplier(std::istream *inStream, bool takeOwnership = true,
-                          const std::string &nameRecord = "", int confId2D = -1,
-                          int confId3D = 0, bool sanitize = true);
+  explicit TDTMolSupplier(
+      const std::string &fileName,
+      const TDTMolSupplierParams &params = TDTMolSupplierParams());
+  explicit TDTMolSupplier(
+      std::istream *inStream, bool takeOwnership = true,
+      const TDTMolSupplierParams &params = TDTMolSupplierParams());
   TDTMolSupplier();
   ~TDTMolSupplier() override { close(); }
-  void setData(const std::string &text, const std::string &nameRecord = "",
-               int confId2D = -1, int confId3D = 0, bool sanitize = true);
+  void setData(const std::string &text,
+               const TDTMolSupplierParams &params = TDTMolSupplierParams());
   void init() override;
   void reset() override;
-  ROMol *next() override;
+  std::unique_ptr<RWMol> next() override;
   bool atEnd() override;
   void moveTo(unsigned int idx);
-  ROMol *operator[](unsigned int idx);
+  std::unique_ptr<RWMol> operator[](unsigned int idx);
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
@@ -362,44 +388,40 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
  private:
   bool advanceToNextRecord();
   void checkForEnd();
-  ROMol *parseMol(std::string inLine);
+  std::unique_ptr<RWMol> parseMol(std::string inLine);
 
   bool df_end = false;  // have we reached the end of the file?
   int d_len = 0;        // total number of mols in the file
   int d_last = 0;       // the molecule we are ready to read
   int d_line = 0;       // line number we are currently on
-  int d_confId2D = -1;  // id to use for 2D conformers
-  int d_confId3D = 0;   // id to use for 3D conformers
   std::vector<std::streampos>
-      d_molpos;             // vector of positions in the file for molecules
-  bool df_sanitize = true;  // sanitize molecules before returning them?
-  std::string d_nameProp =
-      "";  // local storage for the property providing mol names
+      d_molpos;  // vector of positions in the file for molecules
+  TDTMolSupplierParams d_params;
 };
 
-//! lazy file parser for PDB files
+//! Deprecated, will be removed in 2024.09 release
 class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
  public:
   explicit PDBMolSupplier(std::istream *inStream, bool takeOwnership = true,
-                          bool sanitize = true, bool removeHs = true,
-                          unsigned int flavor = 0,
-                          bool proximityBonding = true);
-  explicit PDBMolSupplier(const std::string &fname, bool sanitize = true,
-                          bool removeHs = true, unsigned int flavor = 0,
-                          bool proximityBonding = true);
+                          const PDBParserParams &params = PDBParserParams());
+  explicit PDBMolSupplier(const std::string &fname,
+                          const PDBParserParams &params = PDBParserParams());
 
   ~PDBMolSupplier() override { close(); }
 
   void init() override;
   void reset() override;
-  ROMol *next() override;
+  std::unique_ptr<RWMol> next() override;
   bool atEnd() override;
 
  protected:
-  bool df_sanitize, df_removeHs, df_proximityBonding;
-  unsigned int d_flavor;
+  PDBParserParams d_params;
 };
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
+struct MaeMolSupplierParams {
+  bool sanitize = true;
+  bool removeHs = true;
+};
 //! lazy file parser for MAE files
 class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   /**
@@ -411,36 +433,38 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
  public:
   MaeMolSupplier() {}
 
-  explicit MaeMolSupplier(std::shared_ptr<std::istream> inStream,
-                          bool sanitize = true, bool removeHs = true);
+  explicit MaeMolSupplier(
+      std::shared_ptr<std::istream> inStream,
+      const MaeMolSupplierParams &params = MaeMolSupplierParams());
 
-  explicit MaeMolSupplier(std::istream *inStream, bool takeOwnership = true,
-                          bool sanitize = true, bool removeHs = true);
+  explicit MaeMolSupplier(
+      std::istream *inStream, bool takeOwnership = true,
+      const MaeMolSupplierParams &params = MaeMolSupplierParams());
 
-  explicit MaeMolSupplier(const std::string &fname, bool sanitize = true,
-                          bool removeHs = true);
+  explicit MaeMolSupplier(
+      const std::string &fname,
+      const MaeMolSupplierParams &params = MaeMolSupplierParams());
 
   ~MaeMolSupplier() override {}
 
   void init() override;
   void reset() override;
-  ROMol *next() override;
+  std::unique_ptr<RWMol> next() override;
   bool atEnd() override;
   void moveTo(unsigned int idx);
-  ROMol *operator[](unsigned int idx);
+  std::unique_ptr<RWMol> operator[](unsigned int idx);
   unsigned int length();
 
   void close() override { dp_sInStream.reset(); }
 
-  void setData(const std::string &text, bool sanitize = true,
-               bool removeHs = true);
+  void setData(const std::string &text,
+               const MaeMolSupplierParams &params = MaeMolSupplierParams());
 
  private:
   void moveToNextBlock();
 
  protected:
-  bool df_sanitize;
-  bool df_removeHs;
+  MaeMolSupplierParams d_params;
   std::shared_ptr<schrodinger::mae::Reader> d_reader;
   std::shared_ptr<schrodinger::mae::Block> d_next_struct;
   std::shared_ptr<std::istream> dp_sInStream;
@@ -449,6 +473,11 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   unsigned d_length;
 };
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
+
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit
+
+#include "MolSupplier.v1API.h"
 
 #endif

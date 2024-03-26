@@ -30,26 +30,36 @@ using boost_adaptbx::python::streambuf;
 namespace {
 
 class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
+ private:
+  std::unique_ptr<streambuf> dp_streambuf;
+
  public:
   LocalForwardSDMolSupplier(python::object &input, bool sanitize, bool removeHs,
                             bool strictParsing) {
-    // FIX: minor leak here
-    auto *sb = new streambuf(input, 'b');
-    dp_inStream = new streambuf::istream(*sb);
-    df_owner = true;
-    df_sanitize = sanitize;
-    df_removeHs = removeHs;
-    df_strictParsing = strictParsing;
-    POSTCONDITION(dp_inStream, "bad instream");
+    dp_streambuf.reset(new streambuf(input, 'b'));
+    auto sbis = new streambuf::istream(*dp_streambuf);
+    bool owner = true;
+
+    RDKit::v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = strictParsing;
+    dp_supplier.reset(
+        new RDKit::v2::FileParsers::ForwardSDMolSupplier(sbis, owner, params));
+    POSTCONDITION(sbis, "bad instream");
   }
   LocalForwardSDMolSupplier(streambuf &input, bool sanitize, bool removeHs,
                             bool strictParsing) {
-    dp_inStream = new streambuf::istream(input);
-    df_owner = true;
-    df_sanitize = sanitize;
-    df_removeHs = removeHs;
-    df_strictParsing = strictParsing;
-    POSTCONDITION(dp_inStream, "bad instream");
+    auto sbis = new streambuf::istream(input);
+    bool owner = true;
+
+    RDKit::v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = strictParsing;
+    dp_supplier.reset(
+        new RDKit::v2::FileParsers::ForwardSDMolSupplier(sbis, owner, params));
+    POSTCONDITION(sbis, "bad instream");
   }
   LocalForwardSDMolSupplier(std::string filename, bool sanitize, bool removeHs,
                             bool strictParsing) {
@@ -62,12 +72,14 @@ class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
       errout << "Bad input file " << filename;
       throw RDKit::BadFileException(errout.str());
     }
-    dp_inStream = tmpStream;
-    df_owner = true;
-    df_sanitize = sanitize;
-    df_removeHs = removeHs;
-    df_strictParsing = strictParsing;
-    POSTCONDITION(dp_inStream, "bad instream");
+    bool owner = true;
+    RDKit::v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = strictParsing;
+    dp_supplier.reset(new RDKit::v2::FileParsers::ForwardSDMolSupplier(
+        tmpStream, owner, params));
+    POSTCONDITION(tmpStream, "bad instream");
   }
 };
 

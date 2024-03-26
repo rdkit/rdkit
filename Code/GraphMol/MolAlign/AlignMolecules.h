@@ -20,6 +20,7 @@ typedef std::vector<std::pair<int, int>> MatchVectType;
 
 class Conformer;
 class ROMol;
+class RWMol;
 namespace MolAlign {
 class RDKIT_MOLALIGN_EXPORT MolAlignException : public std::exception {
  public:
@@ -177,7 +178,8 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
     const RDNumeric::DoubleVector *weights = nullptr, int numThreads = 1);
 
-//! Returns the symmetric distance matrix between the conformers of a molecule.
+//! Returns the symmetric distance matrix between the conformers of a
+//! molecule.
 /// getBestRMS() is used to calculate the inter-conformer distances
 /*!
   This function will attempt to align all permutations of matching atom
@@ -228,9 +230,9 @@ RDKIT_MOLALIGN_EXPORT std::vector<double> getAllConformerBestRMS(
   \param maxMatches (optional) if map is empty, this will be the max number of
                     matches found in a SubstructMatch().
   \param symmetrizeConjugatedTerminalGroups (optional) if set, conjugated
-                    terminal functional groups (like nitro or carboxylate) will
-                    be considered symmetrically
-  \param weights    (optional) weights for each pair of atoms.
+                    terminal functional groups (like nitro or carboxylate)
+  will be considered symmetrically \param weights    (optional) weights for
+  each pair of atoms.
 
   <b>Returns</b>
   Best RMSD value found
@@ -292,6 +294,12 @@ RDKIT_MOLALIGN_EXPORT void alignMolConformers(
     const std::vector<unsigned int> *confIds = nullptr,
     const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
     unsigned int maxIters = 50, std::vector<double> *RMSlist = nullptr);
+
+namespace details {
+//! Converts terminal atoms in groups like nitro or carboxylate to be symmetry
+/// equivalent
+RDKIT_MOLALIGN_EXPORT void symmetrizeTerminalAtoms(RWMol &mol);
+}  // namespace details
 }  // namespace MolAlign
 }  // namespace RDKit
 #endif

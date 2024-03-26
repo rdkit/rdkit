@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2005-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2005-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -69,38 +69,32 @@ void ParseNumberList(std::string inLine, std::vector<T> &res,
 
 }  // end of namespace TDTParseUtils
 
+namespace v2 {
+namespace FileParsers {
 TDTMolSupplier::TDTMolSupplier() { init(); }
 
 TDTMolSupplier::TDTMolSupplier(const std::string &fileName,
-                               const std::string &nameRecord, int confId2D,
-                               int confId3D, bool sanitize) {
+                               const TDTMolSupplierParams &params) {
+  d_params = params;
   init();
-  d_confId2D = confId2D;
-  d_confId3D = confId3D;
-  d_nameProp = nameRecord;
   dp_inStream = openAndCheckStream(fileName);
   df_owner = true;
 
   this->advanceToNextRecord();
   d_molpos.push_back(dp_inStream->tellg());
-  df_sanitize = sanitize;
   this->checkForEnd();
 }
 
 TDTMolSupplier::TDTMolSupplier(std::istream *inStream, bool takeOwnership,
-                               const std::string &nameRecord, int confId2D,
-                               int confId3D, bool sanitize) {
+                               const TDTMolSupplierParams &params) {
   CHECK_INVARIANT(inStream, "bad instream");
   CHECK_INVARIANT(!(inStream->eof()), "early EOF");
+  d_params = params;
   init();
   dp_inStream = inStream;
   df_owner = takeOwnership;
-  d_confId2D = confId2D;
-  d_confId3D = confId3D;
-  d_nameProp = nameRecord;
   this->advanceToNextRecord();
   d_molpos.push_back(dp_inStream->tellg());
-  df_sanitize = sanitize;
   this->checkForEnd();
 }
 
@@ -114,15 +108,12 @@ void TDTMolSupplier::init() {
 }
 
 void TDTMolSupplier::setData(const std::string &text,
-                             const std::string &nameRecord, int confId2D,
-                             int confId3D, bool sanitize) {
+                             const TDTMolSupplierParams &params) {
   if (dp_inStream && df_owner) {
     delete dp_inStream;
   }
+  d_params = params;
   init();
-  d_confId2D = confId2D;
-  d_confId3D = confId3D;
-  d_nameProp = nameRecord;
   std::istream *tmpStream = nullptr;
   tmpStream = static_cast<std::istream *>(
       new std::istringstream(text, std::ios_base::binary));
@@ -130,7 +121,6 @@ void TDTMolSupplier::setData(const std::string &text,
   df_owner = true;
   this->advanceToNextRecord();
   d_molpos.push_back(dp_inStream->tellg());
-  df_sanitize = sanitize;
   this->checkForEnd();
   POSTCONDITION(dp_inStream, "bad instream");
 }
@@ -193,13 +183,13 @@ void TDTMolSupplier::reset() {
   d_line = 0;
 }
 
-ROMol *TDTMolSupplier::parseMol(std::string inLine) {
+std::unique_ptr<RWMol> TDTMolSupplier::parseMol(std::string inLine) {
   PRECONDITION(dp_inStream, "no stream");
   Utils::LocaleSwitcher ls;
   std::size_t startP = inLine.find("<");
   std::size_t endP = inLine.find_last_of(">");
   std::string smiles = inLine.substr(startP + 1, endP - startP - 1);
-  ROMol *res = SmilesToMol(smiles, 0, df_sanitize);
+  auto res = v2::SmilesParse::MolFromSmiles(smiles, d_params.parseParameters);
 
   if (res && res->getNumAtoms() > 0) {
     // -----------
@@ -213,12 +203,12 @@ ROMol *TDTMolSupplier::parseMol(std::string inLine) {
       boost::trim_if(propName, boost::is_any_of(" \t"));
       startP = endP + 1;
 
-      if (propName == common_properties::TWOD && d_confId2D >= 0) {
+      if (propName == common_properties::TWOD && d_params.confId2D >= 0) {
         std::string rest = inLine.substr(startP, inLine.size() - startP);
         std::vector<double> coords;
         TDTParseUtils::ParseNumberList(rest, coords, dp_inStream);
         auto *conf = new Conformer(res->getNumAtoms());
-        conf->setId(d_confId2D);
+        conf->setId(d_params.confId2D);
         conf->set3D(false);
         for (unsigned int atIdx = 0; atIdx < res->getNumAtoms(); atIdx++) {
           if (2 * atIdx + 1 < coords.size()) {
@@ -231,12 +221,12 @@ ROMol *TDTMolSupplier::parseMol(std::string inLine) {
           }
         }
         res->addConformer(conf, false);
-      } else if (propName == "3D" && d_confId3D >= 0) {
+      } else if (propName == "3D" && d_params.confId3D >= 0) {
         std::string rest = inLine.substr(startP, inLine.size() - startP);
         std::vector<double> coords;
         TDTParseUtils::ParseNumberList(rest, coords, dp_inStream);
         auto *conf = new Conformer(res->getNumAtoms());
-        conf->setId(d_confId3D);
+        conf->setId(d_params.confId3D);
         conf->set3D(true);
         for (unsigned int atIdx = 0; atIdx < res->getNumAtoms(); atIdx++) {
           if (3 * atIdx + 2 < coords.size()) {
@@ -258,7 +248,7 @@ ROMol *TDTMolSupplier::parseMol(std::string inLine) {
         } else {
           std::string propVal = inLine.substr(startP, endP - startP);
           res->setProp(propName, propVal);
-          if (propName == d_nameProp) {
+          if (propName == d_params.nameRecord) {
             res->setProp(common_properties::_Name, propVal);
           }
         }
@@ -270,19 +260,17 @@ ROMol *TDTMolSupplier::parseMol(std::string inLine) {
   return res;
 }
 
-ROMol *TDTMolSupplier::next() {
+std::unique_ptr<RWMol> TDTMolSupplier::next() {
   PRECONDITION(dp_inStream, "no stream");
   // set the stream to the appropriate position
   dp_inStream->seekg(d_molpos[d_last]);
 
-  std::string tempStr;
-  ROMol *res = nullptr;
   // finally if we reached the end of the file set end to be true
   if (dp_inStream->eof()) {
     // FIX: we should probably be throwing an exception here
     df_end = true;
     d_len = d_molpos.size();
-    return res;
+    return nullptr;
   }
 
   // start by finding the $SMI element (we're assuming that this starts the
@@ -295,9 +283,10 @@ ROMol *TDTMolSupplier::next() {
     d_line++;
     std::getline(*dp_inStream, tempp);
   }
+  std::unique_ptr<RWMol> res;
   if (tempp.find("$SMI<") == 0) {
     try {
-      res = parseMol(tempp);
+      parseMol(tempp).swap(res);
     } catch (MolSanitizeException &se) {
       // We couldn't sanitize a molecule we got - write out an error message and
       // move to
@@ -305,6 +294,7 @@ ROMol *TDTMolSupplier::next() {
           << "ERROR: Could not sanitize molecule ending on line " << d_line
           << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: " << se.what() << "\n";
+      std::string tempStr;
       while (!dp_inStream->eof() && !dp_inStream->fail() &&
              tempStr.find("|") != 0) {
         d_line++;
@@ -381,7 +371,7 @@ void TDTMolSupplier::moveTo(unsigned int idx) {
   }
 }
 
-ROMol *TDTMolSupplier::operator[](unsigned int idx) {
+std::unique_ptr<RWMol> TDTMolSupplier::operator[](unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
   // get the molecule with index idx
   moveTo(idx);
@@ -415,4 +405,6 @@ bool TDTMolSupplier::atEnd() {
   PRECONDITION(dp_inStream, "no stream");
   return df_end;
 }
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit

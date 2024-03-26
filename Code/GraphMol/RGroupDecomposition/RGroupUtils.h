@@ -11,6 +11,7 @@
 #define RGROUP_UTILS
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include "RGroupDecomp.h"
 
 #include <map>

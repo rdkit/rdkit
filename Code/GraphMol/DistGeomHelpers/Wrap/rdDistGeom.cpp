@@ -564,7 +564,12 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "enableSequentialRandomSeeds",
           &PyEmbedParameters::enableSequentialRandomSeeds,
           "handle random number seeds so that conformer generation can be restarted")
-      .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"), "sets the coordmap to be used");
+      .def_readwrite(
+          "symmetrizeConjugatedTerminalGroupsForPruning",
+          &PyEmbedParameters::symmetrizeConjugatedTerminalGroupsForPruning,
+          "symmetrize terminal conjugated groups for RMSD pruning")
+      .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
+           "sets the coordmap to be used");
 
   docString =
       "Use distance geometry to obtain multiple sets of \n\

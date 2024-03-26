@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -230,11 +230,7 @@ void Atom::initAtom() {
   d_explicitValence = -1;
 }
 
-Atom::~Atom() {
-  if (dp_monomerInfo) {
-    delete dp_monomerInfo;
-  }
-}
+Atom::~Atom() { delete dp_monomerInfo; }
 
 Atom *Atom::copy() const {
   auto *res = new Atom(*this);
@@ -317,7 +313,6 @@ unsigned int Atom::getTotalValence() const {
 namespace {
 
 int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
-  unsigned int res;
   // FIX: contributions of bonds to valence are being done at best
   // approximately
   double accum = 0;
@@ -349,8 +344,7 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
     //    nitrogen here : c1cccn1C
 
     int pval = dv + chr;
-    const INT_VECT &valens =
-        PeriodicTable::getTable()->getValenceList(atomicNum);
+    const auto &valens = PeriodicTable::getTable()->getValenceList(atomicNum);
     for (auto val : valens) {
       if (val == -1) {
         break;
@@ -386,7 +380,7 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // correctly.
   accum += 0.1;
 
-  res = static_cast<int>(std::round(accum));
+  auto res = static_cast<int>(std::round(accum));
 
   if (strict || checkIt) {
     int effectiveValence;
@@ -397,8 +391,7 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
       // extra valences means adding negative charge
       effectiveValence = res + atom.getFormalCharge();
     }
-    const INT_VECT &valens =
-        PeriodicTable::getTable()->getValenceList(atomicNum);
+    const auto &valens = PeriodicTable::getTable()->getValenceList(atomicNum);
 
     int maxValence = valens.back();
     // maxValence == -1 signifies that we'll take anything at the high end
@@ -437,9 +430,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   if (atomic_num == 0) {
     return 0;
   }
-  for (const auto &nbri :
-       boost::make_iterator_range(atom.getOwningMol().getAtomBonds(&atom))) {
-    const auto bnd = atom.getOwningMol()[nbri];
+  for (const auto bnd : atom.getOwningMol().atomBonds(&atom)) {
     if (QueryOps::hasComplexBondTypeQuery(*bnd)) {
       return 0;
     }
@@ -471,7 +462,6 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // the atom and the explicit valence already specified - tells how
   // many Hs to add
   //
-  int res;
 
   // The d-block and f-block of the periodic table (i.e. transition metals,
   // lanthanoids and actinoids) have no default valence.
@@ -491,8 +481,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // exception
   // finally aromatic cases are dealt with differently - these atoms are allowed
   // only default valences
-  const INT_VECT &valens =
-      PeriodicTable::getTable()->getValenceList(atomic_num);
+  const auto &valens = PeriodicTable::getTable()->getValenceList(atomic_num);
 
   int explicitPlusRadV =
       atom.getExplicitValence() + atom.getNumRadicalElectrons();
@@ -535,6 +524,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
     chg = -chg;
   }
 
+  int res = 0;
   // if we have an aromatic case treat it differently
   if (isAromaticAtom(atom)) {
     if (explicitPlusRadV <= (static_cast<int>(dv) + chg)) {
@@ -889,27 +879,94 @@ std::string getSupplementalSmilesLabel(const Atom *atom) {
 
 }  // namespace RDKit
 
+namespace {
+constexpr const char *hybridizationToString(
+    RDKit::Atom::HybridizationType type) {
+  switch (type) {
+    case RDKit::Atom::HybridizationType::UNSPECIFIED:
+      return "";
+    case RDKit::Atom::HybridizationType::S:
+      return "S";
+    case RDKit::Atom::HybridizationType::SP:
+      return "SP";
+    case RDKit::Atom::HybridizationType::SP2:
+      return "SP2";
+    case RDKit::Atom::HybridizationType::SP3:
+      return "SP3";
+    case RDKit::Atom::HybridizationType::SP3D:
+      return "SP3D";
+    case RDKit::Atom::HybridizationType::SP2D:
+      return "SP2D";
+    case RDKit::Atom::HybridizationType::SP3D2:
+      return "SP3D2";
+    case RDKit::Atom::HybridizationType::OTHER:
+      return "OTHER";
+  }
+  return "";
+}
+constexpr const char *chiralityToString(RDKit::Atom::ChiralType type) {
+  switch (type) {
+    case RDKit::Atom::ChiralType::CHI_UNSPECIFIED:
+      return "Unspecified";
+    case RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CW:
+      return "CW";
+    case RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
+      return "CCW";
+    case RDKit::Atom::ChiralType::CHI_OTHER:
+      return "Other";
+    case RDKit::Atom::ChiralType::CHI_TETRAHEDRAL:
+      return "Td";
+    case RDKit::Atom::ChiralType::CHI_ALLENE:
+      return "Allene";
+    case RDKit::Atom::ChiralType::CHI_SQUAREPLANAR:
+      return "SqP";
+    case RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
+      return "Tbp";
+    case RDKit::Atom::ChiralType::CHI_OCTAHEDRAL:
+      return "Oh";
+  }
+  return "";
+}
+}  // namespace
+
 std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   target << at.getIdx() << " " << at.getAtomicNum() << " " << at.getSymbol();
   target << " chg: " << at.getFormalCharge();
   target << "  deg: " << at.getDegree();
   target << " exp: ";
-  try {
-    int explicitValence = at.getExplicitValence();
-    target << explicitValence;
-  } catch (...) {
-    target << "N/A";
-  }
+  target << (at.d_explicitValence >= 0 ? std::to_string(at.d_explicitValence)
+                                       : "N/A");
+
   target << " imp: ";
-  try {
-    int implicitValence = at.getImplicitValence();
-    target << implicitValence;
-  } catch (...) {
-    target << "N/A";
+  if (at.df_noImplicit) {
+    target << "0";
+  } else {
+    target << (at.d_implicitValence >= 0 ? std::to_string(at.d_implicitValence)
+                                         : "N/A");
   }
-  target << " hyb: " << at.getHybridization();
-  target << " arom?: " << at.getIsAromatic();
-  target << " chi: " << at.getChiralTag();
+  target << " hyb: " << hybridizationToString(at.getHybridization());
+  if (at.getIsAromatic()) {
+    target << " arom?: " << at.getIsAromatic();
+  }
+  if (at.getChiralTag() != RDKit::Atom::CHI_UNSPECIFIED) {
+    target << " chi: " << chiralityToString(at.getChiralTag());
+    int perm;
+    if (at.getPropIfPresent(RDKit::common_properties::_chiralPermutation,
+                            perm)) {
+      target << "(" << perm << ")";
+    }
+    target << " nbrs:[";
+    bool first = true;
+    for (const auto nbr : at.getOwningMol().atomNeighbors(&at)) {
+      if (!first) {
+        target << " ";
+      } else {
+        first = false;
+      }
+      target << nbr->getIdx();
+    }
+    target << "]";
+  }
   if (at.getNumRadicalElectrons()) {
     target << " rad: " << at.getNumRadicalElectrons();
   }
@@ -918,6 +975,9 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   }
   if (at.getAtomMapNum()) {
     target << " mapno: " << at.getAtomMapNum();
+  }
+  if (at.hasQuery()) {
+    target << " query: " << at.getQuery()->getDescription();
   }
   return target;
 };

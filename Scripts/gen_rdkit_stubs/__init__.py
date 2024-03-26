@@ -153,7 +153,11 @@ def clear_stubs(outer_dir):
         outer_dir (_type_): _description_
     """
     for entry in os.listdir(outer_dir):
-        if entry == "CMakeLists.txt":
+        if entry in (
+            "CMakeLists.txt",
+            "gen_rdkit_stubs.out",
+            "gen_rdkit_stubs.err"
+        ):
             continue
         entry = os.path.join(outer_dir, entry)
         if os.path.isdir(entry):
@@ -538,7 +542,7 @@ class ProcessDocLines:
                     self.top_signature = src_line
                 if overload_prefix:
                     src_line = overload_prefix + src_line
-        return src_line
+        return src_line.replace("\\", "\\\\")
 
     def process_doc_lines(self, doc_lines):
         """Process the raw docstring lines.

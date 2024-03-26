@@ -1106,7 +1106,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
         streamWrite(ss, BEGINFASTFIND);
         break;
       case RDKit::FIND_RING_TYPE::FIND_RING_TYPE_SSSR:
-    streamWrite(ss, BEGINSSSR);
+        streamWrite(ss, BEGINSSSR);
         break;
       case RDKit::FIND_RING_TYPE::FIND_RING_TYPE_SYMM_SSSR:
         streamWrite(ss, BEGINSYMMSSSR);
@@ -2417,16 +2417,17 @@ void MolPickler::_depickleStereo(std::istream &ss, ROMol *mol, int version) {
         atoms.push_back(mol->getAtomWithIdx(tmpT));
       }
 
-      streamRead(ss, tmpT, version);
-      const auto numBonds = static_cast<unsigned>(tmpT);
-
       std::vector<Bond *> bonds;
-      bonds.reserve(numBonds);
-      for (unsigned i = 0u; i < numBonds; ++i) {
+      if (version > 16000) {
         streamRead(ss, tmpT, version);
-        bonds.push_back(mol->getBondWithIdx(tmpT));
-      }
+        const auto numBonds = static_cast<unsigned>(tmpT);
 
+        bonds.reserve(numBonds);
+        for (unsigned i = 0u; i < numBonds; ++i) {
+          streamRead(ss, tmpT, version);
+          bonds.push_back(mol->getBondWithIdx(tmpT));
+        }
+      }
       groups.emplace_back(groupType, std::move(atoms), std::move(bonds), gId);
     }
 

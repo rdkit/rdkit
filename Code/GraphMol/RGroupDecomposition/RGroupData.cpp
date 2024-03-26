@@ -17,16 +17,16 @@
 
 namespace RDKit {
 
-void RGroupData::add(boost::shared_ptr<ROMol> newMol,
+void RGroupData::add(const ROMOL_SPTR &newMol,
                      const std::vector<int> &rlabel_attachments) {
-  // some fragments can be add multiple times if they are cyclic
-  for (auto &mol : mols) {
-    if (newMol.get() == mol.get()) {
-      return;
-    }
+  // some fragments can be added multiple times if they are cyclic
+  if (std::any_of(mols.begin(), mols.end(), [&newMol](const auto &mol) {
+    return newMol == mol;
+  })) {
+    return;
   }
 
-  if (mols.size() > 0) {
+  if (!mols.empty()) {
     // don't add extraneous hydrogens
     if (isMolHydrogen(*newMol)) {
       return;
@@ -94,26 +94,16 @@ std::string RGroupData::toString() const {
 }
 
 void RGroupData::computeIsHydrogen() {  // is the rgroup all Hs
-  for (const auto &mol : mols) {
-    if (!isMolHydrogen(*mol)) {
-      is_hydrogen = false;
-      return;
-    }
-  }
-  is_hydrogen = true;
+  is_hydrogen = std::all_of(mols.begin(), mols.end(), [this](const auto &mol) {
+    return isMolHydrogen(*mol);
+  });
 }
 
-bool RGroupData::isMolHydrogen(ROMol &mol) {
-  for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-       ++atIt) {
-    auto atom = *atIt;
-    if (atom->getAtomicNum() > 1) {
-      return false;
-    } else if (atom->getAtomicNum() == 0 && !atom->hasProp(SIDECHAIN_RLABELS)) {
-      return false;
-    }
-  }
-  return true;
+bool RGroupData::isMolHydrogen(const ROMol &mol) const {
+  auto atoms = mol.atoms();
+  return std::all_of(atoms.begin(), atoms.end(), [](const auto &atom) {
+    return (atom->getAtomicNum() == 1 || (atom->getAtomicNum() == 0 && atom->hasProp(SIDECHAIN_RLABELS)));
+  });
 }
 
 //! compute the canonical smiles for the attachments (bug: removes dupes since
