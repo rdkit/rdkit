@@ -790,7 +790,8 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
           MolToCXSmiles(*smilesMol, ps, flags, RestoreBondDirOptionClear);
 
       generateNewExpectedFilesIfSoSpecified(fName + ".NEW3.cxsmi", smilesOut);
-      CHECK(getExpectedValue(expectedFileName) == smilesOut);
+      auto expected = getExpectedValue(expectedFileName);
+      CHECK(expected == smilesOut);
     }
 
     smilesMol =
@@ -1023,6 +1024,7 @@ void testOne3dChiral(const SmilesTest *smilesTest) {
 TEST_CASE("testAtropisomersInCXSmiles") {
   {
     std::list<SmilesTest> smiTests{
+        SmilesTest("ShortAtropisomerNoCoords.cxsmi", true, 14, 15),
         SmilesTest("ShortAtropisomer.cxsmi", true, 14, 15),
         SmilesTest("ShortAtropisomerArom.cxsmi", true, 14, 15),
         SmilesTest("AtropManyChirals.cxsmi", true, 20, 20),
