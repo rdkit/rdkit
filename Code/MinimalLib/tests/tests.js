@@ -3090,6 +3090,32 @@ M  END
     }
 }
 
+function test_make_dummies_queries() {
+    let mol;
+    let query;
+    let match;
+    try {
+        mol = RDKitModule.get_mol('CN');
+        assert(mol);
+        query = RDKitModule.get_mol('*N');
+        assert(query);
+        match = JSON.parse(mol.get_substruct_match(query));
+        assert(!match.atoms);
+        query.delete();
+        query = RDKitModule.get_mol('*N', JSON.stringify(({ makeDummiesQueries: true })));
+        assert(query);
+        match = JSON.parse(mol.get_substruct_match(query));
+        assert(match.atoms.toString() === [0, 1].toString());
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+        if (query) {
+            query.delete();
+        }
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -3170,6 +3196,7 @@ initRDKitModule().then(function(instance) {
     }
     test_get_mol_copy();
     test_assign_chiral_tags_from_mol_parity();
+    test_make_dummies_queries();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
