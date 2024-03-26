@@ -60,11 +60,8 @@ enum CXSmilesFields : uint32_t {
   CX_POLYMER = 1 << 8,
   CX_BOND_CFG = 1 << 9,
   CX_BOND_ATROPISOMER = 1 << 10,
-  CX_BOND_ATROPISOMER_PARITY =
-      1 << 11,  // NOTE::this places the atropisomerparity in the CXSmiels, but
-                // THIS IS NOT SUPPORTED BY THE CHEMAXON!
-  CX_ALL = 0x7fffffff ^ CX_BOND_ATROPISOMER_PARITY,
-  CX_ALL_BUT_COORDS = CX_ALL ^ CX_COORDS ^ CX_BOND_ATROPISOMER_PARITY
+  CX_ALL = 0x7fffffff,
+  CX_ALL_BUT_COORDS = CX_ALL ^ CX_COORDS
 };
 
 //! \brief returns the cxsmiles data for a molecule
@@ -319,8 +316,9 @@ inline std::string MolFragmentToCXSmiles(
 
  */
 
-RDKIT_SMILESPARSE_EXPORT void canonicalizeStereoGroups(
-    std::unique_ptr<RDKit::RWMol> &mol);
+RDKIT_SMILESPARSE_EXPORT std::string canonicalizeStereoGroups(
+    const std::unique_ptr<RWMol> &molIn, const SmilesWriteParams &params,
+    std::uint32_t flags, RestoreBondDirOption restoreBondDirs);
 
 }  // namespace RDKit
 #endif

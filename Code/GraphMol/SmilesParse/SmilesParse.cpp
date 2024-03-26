@@ -402,7 +402,7 @@ void handleCXPartAndName(RWMol *res, const T &params, const std::string &cxPart,
 }  // namespace
 
 std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
-                                   const SmilesParserParams &params) {
+                                     const SmilesParserParams &params) {
   // Calling MolFromSmiles in a multithreaded context is generally safe *unless*
   // the value of debugParse is different for different threads. The if
   // statement below avoids a TSAN warning in the case where multiple threads
@@ -457,8 +457,13 @@ std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
     res->updatePropertyCache(false);
     MolOps::assignChiralTypesFrom3D(*res, conf3d->getId(), true);
   }
-  if (conf || conf3d) {
-    Atropisomers::detectAtropisomerChirality(*res, conf ? conf : conf3d);
+
+  if (conf) {
+    Atropisomers::detectAtropisomerChirality(*res, conf);
+  } else if (conf3d) {
+    Atropisomers::detectAtropisomerChirality(*res, conf3d);
+  } else {
+    Atropisomers::detectAtropisomerChirality(*res, nullptr);
   }
 
   if (res && (params.sanitize || params.removeHs)) {
@@ -525,7 +530,7 @@ std::unique_ptr<Bond> BondFromSmarts(const std::string &smiles) {
 };
 
 std::unique_ptr<RWMol> MolFromSmarts(const std::string &smarts,
-                                   const SmartsParserParams &params) {
+                                     const SmartsParserParams &params) {
   // Calling MolFromSmarts in a multithreaded context is generally safe *unless*
   // the value of debugParse is different for different threads. The if
   // statement below avoids a TSAN warning in the case where multiple threads

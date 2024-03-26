@@ -1018,6 +1018,7 @@ void testOne3dChiral(const SmilesTest *smilesTest) {
 TEST_CASE("testAtropisomersInCXSmiles") {
   {
     std::list<SmilesTest> smiTests{
+        SmilesTest("ShortAtropisomerNoCoords.cxsmi", true, 14, 15),
         SmilesTest("ShortAtropisomer.cxsmi", true, 14, 15),
         SmilesTest("ShortAtropisomerArom.cxsmi", true, 14, 15),
         SmilesTest("AtropManyChirals.cxsmi", true, 20, 20),
