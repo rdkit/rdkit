@@ -103,6 +103,7 @@ RWMol *mol_from_input(const std::string &input,
   bool mergeQueryHs = false;
   bool setAromaticity = true;
   bool fastFindRings = true;
+  bool assignChiralTypesFromMolParity = false;
   bool assignStereo = true;
   bool assignCIPLabels = false;
   bool mappedDummiesAreRGroups = false;
@@ -119,6 +120,7 @@ RWMol *mol_from_input(const std::string &input,
     LPT_OPT_GET(mergeQueryHs);
     LPT_OPT_GET(setAromaticity);
     LPT_OPT_GET(fastFindRings);
+    LPT_OPT_GET(assignChiralTypesFromMolParity);
     LPT_OPT_GET(assignStereo);
     LPT_OPT_GET(assignCIPLabels);
     LPT_OPT_GET(mappedDummiesAreRGroups);
@@ -169,6 +171,9 @@ RWMol *mol_from_input(const std::string &input,
         if (fastFindRings) {
           MolOps::fastFindRings(*res);
         }
+      }
+      if (assignChiralTypesFromMolParity) {
+        MolOps::assignChiralTypesFromMolParity(*res);
       }
       if (assignStereo) {
         MolOps::assignStereochemistry(*res, true, true, true);
