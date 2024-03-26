@@ -228,8 +228,8 @@ void invertMolBlockWedgingInfo(ROMol &mol) {
 }
 
 void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
-  auto wedgeBonds = RDKit::Chirality::pickBondsToWedge(mol);
   const auto conf = mol.getConformer(confId);
+  auto wedgeBonds = RDKit::Chirality::pickBondsToWedge(mol, nullptr, &conf);
   for (auto b : mol.bonds()) {
     if (b->getBondType() == Bond::DOUBLE) {
       int dirCode;

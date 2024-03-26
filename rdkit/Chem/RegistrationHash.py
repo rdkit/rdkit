@@ -36,6 +36,7 @@ ATOM_PROP_MAP_NUMBER = 'molAtomMapNumber'
 logger = logging.getLogger(__name__)
 
 DEFAULT_CXFLAG = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+# DEFAULT_SMILES_WRITE_PARAMS = Chem.SmilesWriteParams()
 
 ENHANCED_STEREO_GROUP_REGEX = re.compile(r'((?:a|[&o]\d+):\d+(?:,\d+)*)')
 
@@ -115,6 +116,7 @@ def GetMolHash(all_layers, hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> s
 def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[Iterable] = None,
                  escape: Optional[str] = None, cxflag=DEFAULT_CXFLAG,
                  enable_tautomer_hash_v2=False) -> set(HashLayer):
+                #  enable_tautomer_hash_v2=False, writeParams=DEFAULT_SMILES_WRITE_PARAMS) -> set(HashLayer):
   """
     Generate layers of data about that could be used to identify a molecule
 
@@ -134,6 +136,7 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
 
   ps = Chem.SmilesWriteParams()
+  # cxsmiles = Chem.MolToCXSmiles(mol, writeParams, cxflag)
   cxsmiles = Chem.MolToCXSmiles(mol, ps, cxflag)
 
   tautomer_hash = GetStereoTautomerHash(mol, cxflag=cxflag,

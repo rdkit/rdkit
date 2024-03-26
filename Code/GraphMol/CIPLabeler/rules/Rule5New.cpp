@@ -58,7 +58,7 @@ int Rule5New::compare(const Edge *a, const Edge *b) const {
     fillPairs(bEnd, listSB);
     int cmpR = listRA.compareTo(listRB);
     int cmpS = listSA.compareTo(listSB);
-    // -2/+2 for psuedo-asymetric
+    // -2/+2 for pseudo-asymetric
     // -1/+1 if not (e.g. the R > R and S > S lists)
     if (cmpR < 0) {
       return cmpS < 0 ? -1 : -2;

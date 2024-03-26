@@ -458,8 +458,13 @@ std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
     res->updatePropertyCache(false);
     MolOps::assignChiralTypesFrom3D(*res, conf3d->getId(), true);
   }
-  if (conf || conf3d) {
-    Atropisomers::detectAtropisomerChirality(*res, conf ? conf : conf3d);
+
+  if (conf) {
+    Atropisomers::detectAtropisomerChirality(*res, conf);
+  } else if (conf3d) {
+    Atropisomers::detectAtropisomerChirality(*res, conf3d);
+  } else {
+    Atropisomers::detectAtropisomerChirality(*res, nullptr);
   }
 
   if (res && (params.sanitize || params.removeHs)) {

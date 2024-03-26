@@ -607,6 +607,8 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
 
                 Atropisomers::detectAtropisomerChirality(
                     *res, &res->getConformer(confidx));
+              } else {  // no Conformer
+                Atropisomers::detectAtropisomerChirality(*res, nullptr);
               }
 
               // now that atom stereochem has been perceived, the wedging

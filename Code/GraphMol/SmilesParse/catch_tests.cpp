@@ -284,7 +284,7 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
     auto smi = MolToCXSmiles(*mol);
     CHECK(
         smi ==
-        "C[C@H]1N[C@H](C)[C@H](C2[C@H](C)O[C@H](C)[C@H](C)[C@@H]2C)[C@H](C)[C@H]1C |a:5,o1:1,18,o2:10,12,&1:3,16,&2:7,14|");
+        "C[C@H]1O[C@H](C)[C@H](C)[C@@H](C)C1[C@H]1[C@H](C)N[C@H](C)[C@H](C)[C@@H]1C |a:10,&1:1,7,&2:3,5,&3:11,18,&4:14,16|");
   }
 
   SECTION("enhanced stereo 4") {
