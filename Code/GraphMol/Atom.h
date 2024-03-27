@@ -27,6 +27,13 @@
 #include <GraphMol/details.h>
 
 namespace RDKit {
+class Atom;
+}
+//! allows Atom objects to be dumped to streams
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
+                                               const RDKit::Atom &at);
+
+namespace RDKit {
 class ROMol;
 class RWMol;
 class AtomMonomerInfo;
@@ -69,6 +76,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   friend class MolPickler;  //!< the pickler needs access to our privates
   friend class ROMol;
   friend class RWMol;
+  friend std::ostream &(::operator<<)(std::ostream &target, const Atom &at);
 
  public:
   // FIX: grn...
@@ -448,6 +456,7 @@ RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom,
                                                       const std::string &label);
 RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);
 };  // namespace RDKit
+
 //! allows Atom objects to be dumped to streams
 RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
                                                const RDKit::Atom &at);

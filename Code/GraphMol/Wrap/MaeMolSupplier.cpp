@@ -44,22 +44,23 @@ class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
 
   LocalMaeMolSupplier(python::object &input, bool sanitize, bool removeHs)
       : dp_streambuf(new streambuf(input)) {
-    dp_inStream = new streambuf::istream(*dp_streambuf);
-    dp_sInStream.reset(dp_inStream);
-    df_owner = true;
-    df_sanitize = sanitize;
-    df_removeHs = removeHs;
-
-    init();
+    auto inStream = new streambuf::istream(*dp_streambuf);
+    bool owner = true;
+    RDKit::v2::FileParsers::MaeMolSupplierParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    dp_supplier.reset(
+        new RDKit::v2::FileParsers::MaeMolSupplier(inStream, owner, params));
   }
   LocalMaeMolSupplier(streambuf &input, bool sanitize, bool removeHs) {
-    dp_inStream = new streambuf::istream(input);
-    dp_sInStream.reset(dp_inStream);
-    df_owner = true;
-    df_sanitize = sanitize;
-    df_removeHs = removeHs;
+    auto inStream = new streambuf::istream(input);
 
-    init();
+    bool owner = true;
+    RDKit::v2::FileParsers::MaeMolSupplierParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    dp_supplier.reset(
+        new RDKit::v2::FileParsers::MaeMolSupplier(inStream, owner, params));
   }
 
   LocalMaeMolSupplier(const std::string &fname, bool sanitize = true,

@@ -521,3 +521,37 @@ TEST_CASE("github #5923: add more error checking to substance groups") {
   CHECK_THROWS_AS(sg.setParentAtoms({1, 4}), ValueErrorException);
   CHECK_THROWS_AS(sg.setBonds({1, 4}), ValueErrorException);
 }
+
+TEST_CASE("GitHub Issue #7246: SGroup fields without values cause weird properties", "[bug]") {
+  auto mol = R"CTAB(example1
+  Mrv2311 02012418192D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 3.2743 -5.6944 0 0
+M  V30 END ATOM
+M  V30 BEGIN SGROUP
+M  V30 2 DAT 0 ATOMS=(1 1) FIELDNAME= -
+M  V30 FIELDDISP="    3.8241   -7.7842    DA    ALL  1       5" -
+M  V30 FIELDDATA=[IV]
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(mol);
+
+  const auto sgs = getSubstanceGroups(*mol);
+  REQUIRE(sgs.size() == 1);
+  const auto &sg = sgs[0];
+  REQUIRE(sg.getProp<std::string>("TYPE") == "DAT");
+  REQUIRE(sg.getAtoms() == std::vector<unsigned int>{0});
+  CHECK(sg.getProp<std::string>("FIELDNAME") == "");
+  CHECK(sg.getProp<std::string>("FIELDDISP") ==
+        "    3.8241   -7.7842    DA    ALL  1       5");
+  CHECK(sg.getProp<std::string>("index") == "2");
+
+  const auto dataFields = sg.getProp<STR_VECT>("DATAFIELDS");
+  REQUIRE(dataFields.size() == 1);
+  CHECK(dataFields[0] == "[IV]");
+}

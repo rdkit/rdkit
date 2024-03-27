@@ -25,6 +25,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
 
 using namespace RDKit;
 
@@ -4263,58 +4264,6 @@ M  END
 )CTAB"_ctab;
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
-            Atom::ChiralType::CHI_UNSPECIFIED);
-    }
-  }
-  SECTION("three-coordinate") {
-    {
-      auto m = R"CTAB(
-  Mrv2211 07202306442D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 4 3 0 0 1
-M  V30 BEGIN ATOM
-M  V30 1 N 11.8331 -3.2011 0 0
-M  V30 2 C 12.6158 -4.5389 0 0 CFG=2
-M  V30 3 O 11.2777 -5.3015 0 0
-M  V30 4 C 13.9536 -3.7562 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 1 CFG=3
-M  V30 2 1 2 3
-M  V30 3 1 2 4
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-      REQUIRE(m);
-      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
-            Atom::ChiralType::CHI_UNSPECIFIED);
-    }
-    {
-      auto m = R"CTAB(
-  Mrv2211 07202306442D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 4 3 0 0 1
-M  V30 BEGIN ATOM
-M  V30 1 N 11.8331 -3.2011 0 0
-M  V30 2 C 12.6158 -4.5389 0 0 CFG=2
-M  V30 3 O 11.2777 -5.3015 0 0
-M  V30 4 C 13.9536 -3.7562 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 1
-M  V30 2 1 2 3  CFG=1
-M  V30 3 1 2 4
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-      REQUIRE(m);
-      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
             Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
     }
   }
@@ -5154,6 +5103,224 @@ M  END)CTAB";
       MolOps::assignStereochemistry(*m, cleanIt, force);
       CHECK(m->getBondWithIdx(5)->getStereo() == Bond::BondStereo::STEREOANY);
       CHECK(m->getBondWithIdx(6)->getStereo() == Bond::BondStereo::STEREONONE);
+    }
+  }
+}
+
+TEST_CASE(
+    "github #3369: support new CIP code and StereoGroups in addStereoAnnotations()") {
+  auto m1 =
+      "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:18,&2:3,6,r|"_smiles;
+  REQUIRE(m1);
+  SECTION("defaults") {
+    ROMol m2(*m1);
+    Chirality::addStereoAnnotations(m2);
+
+    std::string txt;
+    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "abs (S)");
+    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "and2");
+  }
+  SECTION("double bonds") {
+    ROMol m2(*m1);
+    REQUIRE(m2.getBondBetweenAtoms(20, 21));
+    m2.getBondBetweenAtoms(20, 21)->setStereo(Bond::BondStereo::STEREOTRANS);
+    // initially no label is assigned since we have TRANS
+    Chirality::addStereoAnnotations(m2);
+    CHECK(
+        !m2.getBondBetweenAtoms(20, 21)->hasProp(common_properties::bondNote));
+
+    CIPLabeler::assignCIPLabels(m2);
+    std::string txt;
+    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
+        common_properties::_CIPCode, txt));
+    CHECK(txt == "E");
+    Chirality::addStereoAnnotations(m2);
+    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
+        common_properties::bondNote, txt));
+    CHECK(txt == "(E)");
+  }
+
+  SECTION("custom labels") {
+    ROMol m2(*m1);
+    CIPLabeler::assignCIPLabels(m2);
+
+    std::string absLabel = "abs [{cip}]";
+    std::string orLabel = "o{id} ({cip})";
+    std::string andLabel = "&{id} ({cip})";
+    std::string cipLabel = "[{cip}]";
+    std::string bondLabel = "[{cip}]";
+    Chirality::addStereoAnnotations(m2, absLabel, orLabel, andLabel, cipLabel,
+                                    bondLabel);
+
+    std::string txt;
+
+    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "abs [S]");
+
+    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "&2 (R)");
+
+    CHECK(m2.getAtomWithIdx(1)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "o1 (S)");
+
+    CHECK(m2.getAtomWithIdx(11)->getPropIfPresent(common_properties::atomNote,
+                                                  txt));
+    CHECK(txt == "[R]");
+
+    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
+        common_properties::bondNote, txt));
+    CHECK(txt == "[E]");
+  }
+
+  SECTION("empty labels") {
+    ROMol m2(*m1);
+    CIPLabeler::assignCIPLabels(m2);
+
+    std::string absLabel = "";
+    std::string orLabel = "o{id} ({cip})";
+    std::string andLabel = "&{id} ({cip})";
+    std::string cipLabel = "[{cip}]";
+    std::string bondLabel = "";
+    Chirality::addStereoAnnotations(m2, absLabel, orLabel, andLabel, cipLabel,
+                                    bondLabel);
+
+    std::string txt;
+
+    CHECK(!m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
+                                                  txt));
+
+    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "&2 (R)");
+
+    CHECK(m2.getAtomWithIdx(1)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "o1 (S)");
+
+    CHECK(m2.getAtomWithIdx(11)->getPropIfPresent(common_properties::atomNote,
+                                                  txt));
+    CHECK(txt == "[R]");
+
+    CHECK(!m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
+        common_properties::bondNote, txt));
+  }
+}
+
+TEST_CASE("do not wedge bonds to attachment points") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0 ATTCHPT=1
+M  V30 2 F -1.299038 0.750000 0.000000 0
+M  V30 3 Cl -0.000000 -1.500000 0.000000 0
+M  V30 4 O 1.299038 0.750000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 4);
+    MolOps::expandAttachmentPoints(*m);
+    CHECK(m->getNumAtoms() == 5);
+    CHECK(m->getAtomWithIdx(4)->getTotalValence() == 1);
+    Chirality::wedgeMolBonds(*m);
+    CHECK(m->getBondBetweenAtoms(0, 4)->getBondDir() == Bond::BondDir::NONE);
+  }
+  SECTION("cage") {
+    auto m = R"CTAB(
+  Mrv2305 03052406362D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 9 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -3.125 2.5817 0 0 CFG=1
+M  V30 2 C -4.4587 1.8117 0 0
+M  V30 3 C -4.4587 0.2716 0 0
+M  V30 4 C -3.125 -0.4984 0 0
+M  V30 5 C -1.7913 0.2716 0 0
+M  V30 6 N -1.7913 1.8117 0 0
+M  V30 7 O -2.5357 1.1589 0 0
+M  V30 8 * -3.125 4.1217 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 1 7
+M  V30 7 1 7 4
+M  V30 8 1 1 8
+M  V30 9 1 1 6 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    m->getAtomWithIdx(7)->setProp(common_properties::_fromAttachPoint, 1);
+    Chirality::wedgeMolBonds(*m);
+    CHECK(m->getBondBetweenAtoms(0, 7)->getBondDir() == Bond::BondDir::NONE);
+  }
+}
+
+TEST_CASE(
+    "github #7203: Remove invalid stereo groups on MolOps::assignStereochemistry") {
+  SECTION("single-atom groups") {
+    UseLegacyStereoPerceptionFixture reset_stereo_perception;
+
+    for (auto use_legacy : {false, true}) {
+      Chirality::setUseLegacyStereoPerception(use_legacy);
+      INFO(use_legacy);
+      auto m = "C[C@H](N)[C@@H](C)C |o1:1,o2:3|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+      CHECK(m->getAtomWithIdx(3)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(m->getStereoGroups().size() == 1);
+    }
+  }
+  SECTION("two-atom groups") {
+    for (auto use_legacy : {false, true}) {
+      Chirality::setUseLegacyStereoPerception(use_legacy);
+      INFO(use_legacy);
+      {  // no removal necessary
+        auto m = "C[C@H](N)[C@@H](F)C |o1:1,3|"_smiles;
+        REQUIRE(m);
+        CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+              Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+        CHECK(m->getAtomWithIdx(3)->getChiralTag() ==
+              Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+        CHECK(m->getStereoGroups().size() == 1);
+        CHECK(m->getStereoGroups()[0].getAtoms().size() == 2);
+      }
+      {  // removal
+        auto m = "C[C@H](N)[C@@H](C)C |o1:1,3|"_smiles;
+        REQUIRE(m);
+        CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+              Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+        CHECK(m->getAtomWithIdx(3)->getChiralTag() ==
+              Atom::ChiralType::CHI_UNSPECIFIED);
+        CHECK(m->getStereoGroups().size() == 1);
+        CHECK(m->getStereoGroups()[0].getAtoms().size() == 1);
+      }
     }
   }
 }

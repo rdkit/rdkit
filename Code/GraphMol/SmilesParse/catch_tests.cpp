@@ -2769,3 +2769,25 @@ M  END)CTAB";
     CHECK(MolToSmiles(*m2) == osmi);
   }
 }
+
+TEST_CASE("leaks on unclosed rings") {
+  // These are Ok except for the unmatched ring closures
+  SECTION("Ok SMARTS") {
+    auto m = "C1.C2.C3.C4.C5"_smarts;
+    REQUIRE(!m);
+  }
+  SECTION("Ok SMILES") {
+    auto m = "C1.C2.C3.C4.C5"_smiles;
+    REQUIRE(!m);
+  }
+  // These are bogus, but fail parsing AFTER we've seen
+  // the unmatched ring closure
+  SECTION("Bad SMARTS") {
+    auto m = "C1C)foo"_smarts;
+    REQUIRE(!m);
+  }
+  SECTION("Bad SMILES") {
+    auto m = "C1C)foo"_smiles;
+    REQUIRE(!m);
+  }
+}

@@ -39,6 +39,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <utility>
 #include <boost/format.hpp>
@@ -47,6 +48,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 
 namespace RDKit {
+class ROMol;
 class ChemicalReaction;
 
 //! used to indicate an error in parsing reaction data

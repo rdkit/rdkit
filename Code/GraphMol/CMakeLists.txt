@@ -176,7 +176,7 @@ rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp
         LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol)
 
 rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp
-        LINK_LIBRARIES FileParsers SmilesParse GraphMol)
+        LINK_LIBRARIES CIPLabeler FileParsers SmilesParse GraphMol)
 
 rdkit_catch_test(canonTestsCatch catch_canon.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
@@ -192,3 +192,6 @@ rdkit_catch_test(molbundleTestsCatch catch_molbundle.cpp
 
 rdkit_catch_test(pickleTestsCatch catch_pickles.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
+
+rdkit_catch_test(tableTestsCatch catch_periodictable.cpp
+        LINK_LIBRARIES GraphMol)

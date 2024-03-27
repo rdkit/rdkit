@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2018-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -3578,4 +3578,511 @@ $$$$)CTAB"_ctab;
   MolOps::setDoubleBondNeighborDirections(*m);
 
   CHECK(b->getBondDir() == Bond::BondDir::BEGINDASH);
+}
+
+TEST_CASE("expand and remove AttachmentPoints") {
+  SECTION("basics") {
+    auto m = "CO"_smiles;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    for (bool asQueries : {true, false}) {
+      for (int val : {1, 2}) {
+        INFO(val);
+        RWMol mcp(*m);
+        mcp.getAtomWithIdx(1)->setProp(common_properties::molAttachPoint, val);
+        MolOps::expandAttachmentPoints(mcp, asQueries);
+        CHECK(mcp.getNumAtoms() == 3);
+        CHECK(
+            !mcp.getAtomWithIdx(1)->hasProp(common_properties::molAttachPoint));
+        int value = 0;
+        CHECK(mcp.getAtomWithIdx(2)->getPropIfPresent(
+            common_properties::_fromAttachPoint, value));
+        CHECK(value == val);
+        CHECK(mcp.getAtomWithIdx(2)->getAtomicNum() == 0);
+        CHECK(mcp.getAtomWithIdx(2)->hasQuery() == asQueries);
+        CHECK(MolOps::details::isAttachmentPoint(mcp.getAtomWithIdx(2)));
+        MolOps::collapseAttachmentPoints(mcp);
+        CHECK(mcp.getNumAtoms() == 2);
+      }
+      {
+        int val = -1;
+        INFO(val);
+        RWMol mcp(*m);
+        mcp.getAtomWithIdx(1)->setProp(common_properties::molAttachPoint, val);
+        MolOps::expandAttachmentPoints(mcp, asQueries);
+        CHECK(mcp.getNumAtoms() == 4);
+        CHECK(
+            !mcp.getAtomWithIdx(1)->hasProp(common_properties::molAttachPoint));
+        int value = 0;
+        CHECK(mcp.getAtomWithIdx(2)->getPropIfPresent(
+            common_properties::_fromAttachPoint, value));
+        CHECK(value == 1);
+        CHECK(mcp.getAtomWithIdx(2)->hasQuery() == asQueries);
+        CHECK(MolOps::details::isAttachmentPoint(mcp.getAtomWithIdx(2)));
+        CHECK(mcp.getAtomWithIdx(3)->getPropIfPresent(
+            common_properties::_fromAttachPoint, value));
+        CHECK(value == 2);
+        CHECK(mcp.getAtomWithIdx(3)->hasQuery() == asQueries);
+        CHECK(MolOps::details::isAttachmentPoint(mcp.getAtomWithIdx(3)));
+
+        MolOps::collapseAttachmentPoints(mcp);
+        CHECK(mcp.getNumAtoms() == 2);
+      }
+    }
+    {
+      // bogus values are not expanded
+      RWMol mcp(*m);
+      mcp.getAtomWithIdx(1)->setProp(common_properties::molAttachPoint, 4);
+      MolOps::expandAttachmentPoints(mcp);
+      CHECK(mcp.getNumAtoms() == 2);
+    }
+  }
+  SECTION("collapse options and edges") {
+    auto m = "*CO"_smarts;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    m->getAtomWithIdx(2)->setProp(common_properties::molAttachPoint, 1);
+    MolOps::expandAttachmentPoints(*m);
+    CHECK(m->getNumAtoms() == 4);
+    {
+      RWMol mcp(*m);
+      MolOps::collapseAttachmentPoints(mcp);
+      CHECK(mcp.getNumAtoms() == 3);
+    }
+    {
+      RWMol mcp(*m);
+      bool markedOnly = false;
+      MolOps::collapseAttachmentPoints(mcp, markedOnly);
+      CHECK(mcp.getNumAtoms() == 2);
+    }
+    {
+      RWMol mcp(*m);
+      mcp.getAtomWithIdx(0)->setQuery(makeAtomNumQuery(0));
+      bool markedOnly = false;
+      MolOps::collapseAttachmentPoints(mcp, markedOnly);
+      CHECK(mcp.getNumAtoms() == 3);
+    }
+    {
+      RWMol mcp(*m);
+      mcp.getBondWithIdx(0)->setBondDir(Bond::BondDir::BEGINWEDGE);
+      bool markedOnly = false;
+      MolOps::collapseAttachmentPoints(mcp, markedOnly);
+      CHECK(mcp.getNumAtoms() == 3);
+    }
+    {
+      RWMol mcp(*m);
+      mcp.addAtom(new Atom(6), false, true);
+      mcp.addBond(0, 4, Bond::SINGLE);
+      CHECK(mcp.getNumAtoms() == 5);
+      bool markedOnly = false;
+      MolOps::collapseAttachmentPoints(mcp, markedOnly);
+      CHECK(mcp.getNumAtoms() == 4);
+    }
+    /* now a block with mods to the attachment point dummy to make it no
+     * longer removable */
+    {
+      RWMol mcp(*m);
+      mcp.getAtomWithIdx(3)->setQuery(makeAtomNumQuery(0));
+      MolOps::collapseAttachmentPoints(mcp);
+      CHECK(mcp.getNumAtoms() == 4);
+    }
+    {
+      RWMol mcp(*m);
+      mcp.getBondWithIdx(2)->setBondDir(Bond::BondDir::BEGINWEDGE);
+      MolOps::collapseAttachmentPoints(mcp);
+      CHECK(mcp.getNumAtoms() == 4);
+    }
+    {
+      RWMol mcp(*m);
+      mcp.addAtom(new Atom(6), false, true);
+      mcp.addBond(3, 4, Bond::SINGLE);
+      CHECK(mcp.getNumAtoms() == 5);
+      MolOps::collapseAttachmentPoints(mcp);
+      CHECK(mcp.getNumAtoms() == 5);
+    }
+  }
+  SECTION("collapse sets the correct property") {
+    auto m = "*CO"_smarts;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    for (int tgt : {1, 2}) {
+      m->getAtomWithIdx(2)->setProp(common_properties::molAttachPoint, tgt);
+      CHECK(!MolOps::details::isAttachmentPoint(m->getAtomWithIdx(0)));
+      CHECK(MolOps::details::isAttachmentPoint(m->getAtomWithIdx(0), false));
+
+      MolOps::expandAttachmentPoints(*m);
+      CHECK(m->getNumAtoms() == 4);
+      CHECK(MolOps::details::isAttachmentPoint(m->getAtomWithIdx(3)));
+      MolOps::collapseAttachmentPoints(*m);
+      CHECK(m->getNumAtoms() == 3);
+      int value = 0;
+      CHECK(m->getAtomWithIdx(2)->getPropIfPresent(
+          common_properties::molAttachPoint, value));
+      CHECK(value == tgt);
+    }
+    {
+      RWMol mcp(*m);
+      bool markedOnly = false;
+      MolOps::collapseAttachmentPoints(mcp, markedOnly);
+      CHECK(mcp.getNumAtoms() == 2);
+      int value = 0;
+      CHECK(mcp.getAtomWithIdx(0)->getPropIfPresent(
+          common_properties::molAttachPoint, value));
+      CHECK(value == 1);
+    }
+  }
+  SECTION("collapse two dummies") {
+    auto m = "*CO"_smarts;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    m->getAtomWithIdx(2)->setProp(common_properties::molAttachPoint, -1);
+    MolOps::expandAttachmentPoints(*m);
+    CHECK(m->getNumAtoms() == 5);
+    MolOps::collapseAttachmentPoints(*m);
+    CHECK(m->getNumAtoms() == 3);
+    int value = 0;
+    CHECK(m->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::molAttachPoint, value));
+    CHECK(value == -1);
+  }
+  SECTION("invalid attachment points not collapsed") {
+    auto m = "*CO"_smarts;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    {
+      // this one is ok:
+      RWMol mcp(*m);
+      mcp.getAtomWithIdx(0)->setProp(common_properties::_fromAttachPoint, 1);
+      MolOps::collapseAttachmentPoints(mcp);
+      CHECK(mcp.getNumAtoms() == 2);
+    }
+    {
+      // not ok:
+      RWMol mcp(*m);
+      mcp.getAtomWithIdx(0)->setProp(common_properties::_fromAttachPoint, -1);
+      MolOps::collapseAttachmentPoints(mcp);
+      CHECK(mcp.getNumAtoms() == 3);
+    }
+    {
+      // not ok:
+      RWMol mcp(*m);
+      mcp.getAtomWithIdx(0)->setProp(common_properties::_fromAttachPoint, 4);
+      MolOps::collapseAttachmentPoints(mcp);
+      CHECK(mcp.getNumAtoms() == 3);
+    }
+  }
+  SECTION("from cxsmiles") {
+    auto mol = "*CC(*)* |$;;;_AP1;_AP2$|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 5);
+
+    {
+      RWMol molcp(*mol);
+      bool markedOnly = true;
+      MolOps::collapseAttachmentPoints(molcp, markedOnly);
+      CHECK(molcp.getNumAtoms() == 3);
+    }
+    {
+      RWMol molcp(*mol);
+      bool markedOnly = false;
+      MolOps::collapseAttachmentPoints(molcp, markedOnly);
+      CHECK(molcp.getNumAtoms() == 2);
+    }
+  }
+  SECTION("add attachment point") {
+    auto mol = "CC"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 2);
+    unsigned int atomIdx = 1;
+    unsigned int val = 2;
+    CHECK(MolOps::details::addExplicitAttachmentPoint(*mol, atomIdx, val) == 2);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(2)->getAtomicNum() == 0);
+    CHECK(mol->getBondBetweenAtoms(1, 2));
+  }
+  SECTION("isAttachmentPoint edge cases") {
+    auto mol = "*CC(*)=* |$;;;_AP1;_AP2$|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 5);
+    mol->getBondBetweenAtoms(2, 3)->setBondDir(Bond::BondDir::BEGINWEDGE);
+    CHECK(!MolOps::details::isAttachmentPoint(mol->getAtomWithIdx(0)));
+    CHECK(MolOps::details::isAttachmentPoint(mol->getAtomWithIdx(0), false));
+    // marked as an attachment point, but at end of a wedged bond
+    CHECK(!MolOps::details::isAttachmentPoint(mol->getAtomWithIdx(3)));
+    // marked as an attachment point, but at end of a double bond
+    CHECK(!MolOps::details::isAttachmentPoint(mol->getAtomWithIdx(4)));
+  }
+}
+
+TEST_CASE("bond output") {
+  SECTION("order") {
+    auto m = "C-C=C-C#N->[Fe]"_smiles;
+    REQUIRE(m);
+    std::stringstream ss;
+    ss << *m->getBondWithIdx(0);
+    CHECK(ss.str() == "0 0->1 order: 1");
+    ss.str("");
+    ss << *m->getBondWithIdx(3);
+    CHECK(ss.str() == "3 3->4 order: 3 conj?: 1");
+    ss.str("");
+    ss << *m->getBondWithIdx(4);
+    CHECK(ss.str() == "4 4->5 order: D");
+    ss.str("");
+  }
+  SECTION("dir") {
+    auto m = "CC=CC(F)Cl"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setBondDir(Bond::BondDir::EITHERDOUBLE);
+    m->getBondWithIdx(3)->setBondDir(Bond::BondDir::BEGINDASH);
+    m->getBondWithIdx(4)->setBondDir(Bond::BondDir::BEGINWEDGE);
+
+    std::stringstream ss;
+    ss << *m->getBondWithIdx(1);
+    CHECK(ss.str() == "1 1->2 order: 2 dir: x");
+    ss.str("");
+    ss << *m->getBondWithIdx(3);
+    CHECK(ss.str() == "3 3->4 order: 1 dir: dash");
+    ss.str("");
+    ss << *m->getBondWithIdx(4);
+    CHECK(ss.str() == "4 3->5 order: 1 dir: wedge");
+    ss.str("");
+  }
+
+  SECTION("stereo") {
+    auto m = "CC=CC(=O)c1cnccc1"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    m->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOCIS);
+    // this is, of course, silly
+    m->getBondWithIdx(4)->setStereo(Bond::BondStereo::STEREOATROPCCW);
+    std::stringstream ss;
+    ss << *m->getBondWithIdx(1);
+    CHECK(ss.str() == "1 1->2 order: 2 stereo: CIS ats: (0 3) conj?: 1");
+    ss.str("");
+    ss << *m->getBondWithIdx(4);
+    CHECK(ss.str() == "4 3->5 order: 1 stereo: CCW bonds: (2 3 5 10) conj?: 1");
+    ss.str("");
+  }
+}
+TEST_CASE("atom output") {
+  SECTION("basics") {
+    auto m = "[C]c1ccc[nH]1"_smiles;
+    REQUIRE(m);
+    std::stringstream ss;
+    ss << *m->getAtomWithIdx(0);
+    CHECK(ss.str() == "0 6 C chg: 0  deg: 1 exp: 1 imp: 0 hyb: SP3 rad: 3");
+    ss.str("");
+    ss << *m->getAtomWithIdx(2);
+    CHECK(ss.str() == "2 6 C chg: 0  deg: 2 exp: 3 imp: 1 hyb: SP2 arom?: 1");
+    ss.str("");
+    ss << *m->getAtomWithIdx(5);
+    CHECK(ss.str() == "5 7 N chg: 0  deg: 2 exp: 3 imp: 0 hyb: SP2 arom?: 1");
+    ss.str("");
+  }
+  SECTION("chirality 1") {
+    auto m = "C[C@H](F)Cl"_smiles;
+    REQUIRE(m);
+    std::stringstream ss;
+    ss << *m->getAtomWithIdx(1);
+    CHECK(ss.str() ==
+          "1 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP3 chi: CCW nbrs:[0 2 3]");
+    ss.str("");
+  }
+  SECTION("chirality 2") {
+    auto m = "C[Pt@SP2H](F)Cl"_smiles;
+    REQUIRE(m);
+    std::stringstream ss;
+    ss << *m->getAtomWithIdx(1);
+    CHECK(
+        ss.str() ==
+        "1 78 Pt chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2D chi: SqP(2) nbrs:[0 2 3]");
+    ss.str("");
+  }
+}
+
+TEST_CASE(
+    "Github Issue #7064: Copy stereo and substance groups during insertMol",
+    "[RWMol]") {
+  // This mols is made up, it probably doesn't make sense at all.
+  auto m1 = R"CTAB(
+  Mrv2311 02062417062D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 34 35 1 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 0.004 0.7623 0 0
+M  V30 2 C 1.0927 1.8587 0 0
+M  V30 3 N 0.004 2.9396 0 0
+M  V30 4 C -1.0927 1.8587 0 0
+M  V30 5 C -1.0927 -0.3187 0 0
+M  V30 6 N 0.004 -1.4155 0 0
+M  V30 7 C 1.0927 -0.3187 0 0
+M  V30 8 C 0.004 -2.9396 0 0
+M  V30 9 C 2.4264 0.4513 0 0 CFG=2
+M  V30 10 C 3.7601 -0.3187 0 0 CFG=1
+M  V30 11 C 5.0937 0.4513 0 0 CFG=2
+M  V30 12 C 6.4274 -0.3187 0 0 CFG=1
+M  V30 13 C 7.7611 0.4513 0 0 CFG=2
+M  V30 14 C 9.0948 -0.3187 0 0
+M  V30 15 C -2.4264 1.0887 0 0 CFG=2
+M  V30 16 C -3.7601 1.8587 0 0 CFG=1
+M  V30 17 C -5.0937 1.0887 0 0 CFG=2
+M  V30 18 C -6.4274 1.8587 0 0 CFG=1
+M  V30 19 C -7.7611 1.0887 0 0
+M  V30 20 O 7.7611 1.9913 0 0
+M  V30 21 C 6.4274 -1.8587 0 0
+M  V30 22 C 5.0937 1.9913 0 0
+M  V30 23 C 3.7601 -1.8587 0 0
+M  V30 24 C 2.4264 1.9913 0 0
+M  V30 25 C -2.4264 -0.4513 0 0
+M  V30 26 C -3.7601 3.3987 0 0
+M  V30 27 C -5.0937 -0.4513 0 0
+M  V30 28 O -6.4274 3.3987 0 0
+M  V30 29 C -1.323 -5.2511 0 0
+M  V30 30 C -2.8705 -5.2532 0 0
+M  V30 31 C 0.2093 -5.2568 0 0
+M  V30 32 C -1.321 -6.7911 0 0
+M  V30 33 O -1.325 -3.7113 0 0
+M  V30 34 O 1.327 -3.7079 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 1
+M  V30 5 1 1 5
+M  V30 6 1 5 6
+M  V30 7 1 6 7
+M  V30 8 1 7 1
+M  V30 9 1 6 8
+M  V30 10 1 7 9
+M  V30 11 1 9 10
+M  V30 12 1 10 11
+M  V30 13 1 11 12
+M  V30 14 1 12 13
+M  V30 15 1 13 14
+M  V30 16 1 4 15
+M  V30 17 1 15 16
+M  V30 18 1 16 17
+M  V30 19 1 17 18
+M  V30 20 1 18 19
+M  V30 21 1 12 21 CFG=1
+M  V30 22 1 11 22 CFG=1
+M  V30 23 1 10 23 CFG=1
+M  V30 24 1 9 24 CFG=1
+M  V30 25 1 15 25 CFG=1
+M  V30 26 1 16 26 CFG=1
+M  V30 27 1 17 27 CFG=1
+M  V30 28 1 18 28 CFG=1
+M  V30 29 1 13 20 CFG=1
+M  V30 30 1 33 29
+M  V30 31 1 29 30
+M  V30 32 1 29 31
+M  V30 33 1 29 32
+M  V30 34 2 8 34
+M  V30 35 1 33 8
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(7 8 9 10 11 12 13 14) XBONDS=(1 9) BRKXYZ=(9 6.24 -2.9 0 -
+M  V30 6.24 -2.9 0 0 0 0) CSTATE=(4 9 0 0.82 0) LABEL=Boc SAP=(3 13 6 1)
+M  V30 END SGROUP
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(2 17 18)
+M  V30 MDLV30/STEREL4 ATOMS=(2 9 10)
+M  V30 MDLV30/STERAC2 ATOMS=(2 15 16)
+M  V30 MDLV30/STERAC6 ATOMS=(2 11 12)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m1);
+
+  const auto numAtoms = m1->getNumAtoms();
+  const auto numBonds = m1->getNumBonds();
+  REQUIRE(numAtoms == 34);
+  REQUIRE(numBonds == 35);
+
+  auto m2 = RWMol(*m1);
+  m2.insertMol(*m1);
+
+  REQUIRE(m2.getNumAtoms() == 2 * numAtoms);
+  REQUIRE(m2.getNumBonds() == 2 * numBonds);
+
+  auto checkStereoGroup = [](const std::vector<StereoGroup> &stgs, int stg_idx,
+                             const StereoGroupType type,
+                             const std::vector<unsigned int> &atoms) {
+    INFO("Checking StereoGroup " << stg_idx);
+
+    const auto &stg = stgs[stg_idx];
+
+    CHECK(stg.getGroupType() == type);
+
+    std::vector<unsigned int> actualAtoms;
+    for (const auto atom : stg.getAtoms()) {
+      actualAtoms.push_back(atom->getIdx());
+    }
+
+    CHECK(actualAtoms == atoms);
+  };
+
+  auto checkSubstanceGroup =
+      [](const std::vector<SubstanceGroup> &sgs, int sg_idx,
+         const std::vector<unsigned int> &atoms,
+         const std::vector<unsigned int> &bonds, const unsigned int &cstateBond,
+         const std::pair<unsigned int, int> &attachPtAtoms) {
+        INFO("Checking Substance Group " << sg_idx);
+
+        const auto &sg = sgs[sg_idx];
+
+        CHECK(sg.getProp<std::string>("TYPE") == "SUP");
+        CHECK(sg.getAtoms() == atoms);
+        CHECK(sg.getBonds() == bonds);
+
+        auto cstates = sg.getCStates();
+        REQUIRE(cstates.size() == 1);
+        CHECK(cstates[0].bondIdx == cstateBond);
+
+        auto saps = sg.getAttachPoints();
+        REQUIRE(saps.size() == 1);
+        CHECK(saps[0].aIdx == attachPtAtoms.first);
+        CHECK(saps[0].lvIdx == attachPtAtoms.second);
+      };
+
+  // Check that the original Stereo Groups haven't changed
+  {
+    const auto stgs1 = m1->getStereoGroups();
+    REQUIRE(stgs1.size() == 4);
+
+    checkStereoGroup(stgs1, 0, StereoGroupType::STEREO_ABSOLUTE, {16, 17});
+    checkStereoGroup(stgs1, 1, StereoGroupType::STEREO_OR, {8, 9});
+    checkStereoGroup(stgs1, 2, StereoGroupType::STEREO_AND, {14, 15});
+    checkStereoGroup(stgs1, 3, StereoGroupType::STEREO_AND, {10, 11});
+
+    const auto sgs1 = getSubstanceGroups(*m1);
+    REQUIRE(sgs1.size() == 1);
+
+    checkSubstanceGroup(sgs1, 0, {7, 8, 9, 10, 11, 12, 13}, {8}, 8, {12, 5});
+  }
+  // Check that the insertion was successful
+  {
+    const auto stgs2 = m2.getStereoGroups();
+    REQUIRE(stgs2.size() == 7);
+
+    checkStereoGroup(stgs2, 0, StereoGroupType::STEREO_OR, {8, 9});
+    checkStereoGroup(stgs2, 1, StereoGroupType::STEREO_AND, {14, 15});
+    checkStereoGroup(stgs2, 2, StereoGroupType::STEREO_AND, {10, 11});
+    checkStereoGroup(stgs2, 3, StereoGroupType::STEREO_OR, {42, 43});
+    checkStereoGroup(stgs2, 4, StereoGroupType::STEREO_AND, {48, 49});
+    checkStereoGroup(stgs2, 5, StereoGroupType::STEREO_AND, {44, 45});
+    checkStereoGroup(stgs2, 6, StereoGroupType::STEREO_ABSOLUTE,
+                     {16, 17, 50, 51});
+
+    const auto sgs2 = getSubstanceGroups(m2);
+    REQUIRE(sgs2.size() == 2);
+
+    checkSubstanceGroup(sgs2, 0, {7, 8, 9, 10, 11, 12, 13}, {8}, 8, {12, 5});
+    checkSubstanceGroup(sgs2, 1, {41, 42, 43, 44, 45, 46, 47}, {43}, 43,
+                        {46, 39});
+  }
 }

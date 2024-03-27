@@ -256,10 +256,11 @@ std::unique_ptr<RWMol> toMol(const std::string &inp,
     }
     BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
                           << " for input: '" << origInp << "'" << std::endl;
-    res.reset();
-    if (!molVect.empty()) {
-      molVect[0] = nullptr;
-    }
+
+    // reset res so that we return a nullptr. We don't want to reset(),
+    // because that would delete the mol and leak any unmatched
+    // ring closure bonds. These will be cleaned up in the loop below.
+    res.release();
   }
   for (auto *molPtr : molVect) {
     if (molPtr) {

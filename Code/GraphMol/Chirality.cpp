@@ -22,6 +22,7 @@
 #include <RDGeneral/utils.h>
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -449,9 +450,6 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 
 namespace Chirality {
 
-const std::string _NonExplicit3DChirality =
-    "_NonExplicit3DChirality";  // set if the molecule has explicit 3D
-                                // stereochemistry
 std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     const ROMol &mol, const Bond *bond, const Conformer *conf,
     double pseudo3DOffset = 0.1, double volumeTolerance = 0.01) {
@@ -768,16 +766,27 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     bv1.z = 0;
     auto bv2 = bondVects[order[2]];
     bv2.z = 0;
-    const auto crossp1 = bv1.crossProduct(bv2);
+    auto crossp1 = bv1.crossProduct(bv2);
     // catch linear arrangements
     if (nNbrs == 3) {
       if (crossp1.lengthSq() < 5 * zeroTol) {
-        // nothing we can do in a linear arrangement if there are only three
-        // neighbors
-        BOOST_LOG(rdWarningLog)
-            << "Warning: ambiguous stereochemistry - linear bond arrangement - at atom "
-            << atom->getIdx() << " ignored" << std::endl;
-        return std::nullopt;
+        // in a linear relationship with three neighbors we assume that the
+        // two perpendicular bonds are wedged in the other direction from the
+        // one that was provided.
+        // that's this situation:
+        //
+        //              0
+        //              |   <- wedged up
+        //           1--C--2
+        //
+        //  here we assume that bonds C-1 and C-2 are wedged down
+        //
+        // ST-1.2.12 of the IUPAC guidelines says that this form is wrong since
+        // it's for a "T-shaped" configuration instead of a tetrahedron, but it
+        // shows up fairly frequently, particularly with fused ring systems
+        bv1.z = -bondVects[order[0]].z;
+        bv2.z = -bondVects[order[0]].z;
+        crossp1 = bv1.crossProduct(bv2);
       }
     } else if (crossp1.lengthSq() < 10 * zeroTol) {
       // if the other bond is flat:
@@ -2652,9 +2661,85 @@ void GetMolFileBondStereoInfo(
 
 void removeNonExplicit3DChirality(ROMol &mol) {
   for (auto atom : mol.atoms()) {
-    if (atom->hasProp(Chirality::_NonExplicit3DChirality)) {
-      atom->clearProp(Chirality::_NonExplicit3DChirality);
+    if (atom->hasProp(common_properties::_NonExplicit3DChirality)) {
+      atom->clearProp(common_properties::_NonExplicit3DChirality);
       atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+    }
+  }
+}
+
+void addStereoAnnotations(ROMol &mol, std::string absLabel, std::string orLabel,
+                          std::string andLabel, std::string cipLabel,
+                          std::string bondLabel) {
+  auto sgs = mol.getStereoGroups();
+  assignStereoGroupIds(sgs);
+  boost::dynamic_bitset<> doneAts(mol.getNumAtoms());
+  for (const auto &sg : sgs) {
+    std::string gid = std::to_string(sg.getWriteId());
+    for (const auto atom : sg.getAtoms()) {
+      if (doneAts[atom->getIdx()]) {
+        BOOST_LOG(rdWarningLog) << "Warning: atom " << atom->getIdx()
+                                << " is in more than one stereogroup. Only the "
+                                   "label from the first group will be used."
+                                << std::endl;
+        continue;
+      }
+      std::string cip;
+      atom->getPropIfPresent(common_properties::_CIPCode, cip);
+
+      std::string lab;
+      switch (sg.getGroupType()) {
+        case StereoGroupType::STEREO_ABSOLUTE:
+          lab = absLabel;
+          doneAts.set(atom->getIdx());
+          break;
+        case StereoGroupType::STEREO_OR:
+          lab = orLabel;
+          doneAts.set(atom->getIdx());
+          break;
+        case StereoGroupType::STEREO_AND:
+          lab = andLabel;
+          doneAts.set(atom->getIdx());
+          break;
+        default:
+          break;
+      }
+
+      if (!lab.empty()) {
+        boost::algorithm::replace_all(lab, "{id}", gid);
+        if (!cip.empty()) {
+          boost::algorithm::replace_all(lab, "{cip}", cip);
+        }
+        atom->setProp(common_properties::atomNote, lab);
+      }
+    }
+  }
+  if (!cipLabel.empty()) {
+    for (auto atom : mol.atoms()) {
+      std::string cip;
+      if (!doneAts[atom->getIdx()] &&
+          atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+        std::string lab = cipLabel;
+        boost::algorithm::replace_all(lab, "{cip}", cip);
+        atom->setProp(common_properties::atomNote, lab);
+      }
+    }
+  }
+  if (!bondLabel.empty()) {
+    for (auto bond : mol.bonds()) {
+      std::string cip;
+      if (!bond->getPropIfPresent(common_properties::_CIPCode, cip)) {
+        if (bond->getStereo() == Bond::STEREOE) {
+          cip = "E";
+        } else if (bond->getStereo() == Bond::STEREOZ) {
+          cip = "Z";
+        }
+      }
+      if (!cip.empty()) {
+        std::string lab = bondLabel;
+        boost::algorithm::replace_all(lab, "{cip}", cip);
+        bond->setProp(common_properties::bondNote, lab);
+      }
     }
   }
 }
@@ -3212,7 +3297,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     if (allowNontetrahedralStereo &&
         assignNontetrahedralChiralTypeFrom3D(mol, conf, atom)) {
       if (explicitAtoms[atom->getIdx()] == 0) {
-        atom->setProp(Chirality::_NonExplicit3DChirality, 1);
+        atom->setProp(common_properties::_NonExplicit3DChirality, 1);
       }
       continue;
     }
@@ -3266,7 +3351,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     }
 
     if (chiralitySet && explicitAtoms[atom->getIdx()] == 0) {
-      atom->setProp<int>(Chirality::_NonExplicit3DChirality, 1);
+      atom->setProp<int>(common_properties::_NonExplicit3DChirality, 1);
     }
   }
 }

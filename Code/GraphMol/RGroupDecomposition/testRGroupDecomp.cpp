@@ -39,6 +39,7 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecompData.h>
+#include <GraphMol/RGroupDecomposition/RGroupUtils.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <RDGeneral/Exceptions.h>
@@ -4114,6 +4115,41 @@ void testNotEnumeratedCore() {
   CHECK_RGROUP(it, expected);
 }
 
+void testRgroupDecompZipping() {
+    BOOST_LOG(rdInfoLog)
+        << "********************************************************\n";
+    BOOST_LOG(rdInfoLog) << "Test we can reconstruct rgroup decomps that break rings"
+                         << std::endl;
+    
+    const auto core = "N1OCC1"_smiles;
+    const auto mol = "C1CC2ONC12"_smiles;
+    RGroupDecompositionParameters params;
+    params.matchingStrategy = GreedyChunks;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    params.onlyMatchAtRGroups = false;
+    params.doEnumeration = true;
+    params.doTautomers = false;
+    RGroupDecomposition decomp(*core, params);
+    const auto add11 = decomp.add(*mol);
+    TEST_ASSERT(add11 == 0);
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1);
+    RGroupRows::const_iterator it = rows.begin();
+    std::vector<ROMOL_SPTR> mols;
+    for (auto rgroups = it->begin(); rgroups != it->end(); ++rgroups) {
+        mols.push_back(rgroups->second);
+    }
+    auto res = molzip(mols);
+    TEST_ASSERT(MolToSmiles(*res) == "C1CC2ONC12")
+    
+    for(RGroupRow &rgroup: rows) {
+        res = molzip(rgroup);
+        TEST_ASSERT(MolToSmiles(*res) == "C1CC2ONC12")
+    }
+
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -4179,6 +4215,7 @@ int main() {
   testEnumeratedCore();
   testStereoBondBug();
   testNotEnumeratedCore();
+  testRgroupDecompZipping();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

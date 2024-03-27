@@ -49,6 +49,9 @@ function test_basics() {
     assert.equal(mol.get_smiles(),"Oc1ccccc1");
     assert.equal(mol.get_inchi(),"InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
     assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi()),"ISWSIDIOOBJBQZ-UHFFFAOYSA-N");
+    
+    assert.equal(mol.get_inchi("-FixedH"),"InChI=1/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
+    assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi("-FixedH")),"ISWSIDIOOBJBQZ-UHFFFAOYNA-N");
 
     var mb = mol.get_molblock();
     assert(mb.search("M  END")>0);
@@ -2770,6 +2773,40 @@ function test_relabel_mapped_dummies() {
     core.delete();
 }
 
+function test_assign_cip_labels() {
+    var origSetting;
+    const getTextSection = (svg) => (
+      svg.split('\n').map((line) => line.replace(/^<text.+>([^<]*)<\/text>$/, '$1')).join('')
+    );
+    try {
+        origSetting = RDKitModule.use_legacy_stereo_perception(true);
+        {
+            var mol = RDKitModule.get_mol('C/C=C/c1ccccc1[S@@](C)=O');
+            var svg = mol.get_svg_with_highlights(JSON.stringify({noFreetype: true, addStereoAnnotation: true}));
+            assert(getTextSection(svg).includes("(S)"));
+            assert(!getTextSection(svg).includes("(R)"));
+            mol.delete();
+        }
+        RDKitModule.use_legacy_stereo_perception(false);
+        {
+            var mol = RDKitModule.get_mol('C/C=C/c1ccccc1[S@@](C)=O');
+            var svg = mol.get_svg_with_highlights(JSON.stringify({noFreetype: true, addStereoAnnotation: true}));
+            assert(!getTextSection(svg).includes("(S)"));
+            assert(!getTextSection(svg).includes("(R)"));
+            mol.delete();
+        }
+        {
+            var mol = RDKitModule.get_mol('C/C=C/c1ccccc1[S@@](C)=O', JSON.stringify({assignCIPLabels: true}));
+            var svg = mol.get_svg_with_highlights(JSON.stringify({noFreetype: true, addStereoAnnotation: true}));
+            assert(!getTextSection(svg).includes("(S)"));
+            assert(getTextSection(svg).includes("(R)"));
+            mol.delete();
+        }
+    } finally {
+        RDKitModule.use_legacy_stereo_perception(origSetting);
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -2843,6 +2880,7 @@ initRDKitModule().then(function(instance) {
     test_rgroup_match_heavy_hydro_none_charged();
     test_get_sss_json();
     test_relabel_mapped_dummies();
+    test_assign_cip_labels();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

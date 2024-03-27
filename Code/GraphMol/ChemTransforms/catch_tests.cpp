@@ -555,6 +555,21 @@ TEST_CASE("Molzip with 2D coordinates", "[molzip]") {
   }
 }
 
+TEST_CASE("Molzip with split rings from rgroup", "[molzip]") {
+  std::vector<std::string> frags = {"[*:1]CC[*:2]",
+                                    "[*:1]NN[*:2]",
+				    "[*:1]NN[*:2]"
+  };
+  std::vector<ROMOL_SPTR> mols;
+  for (auto smi: frags) {
+    mols.push_back(ROMOL_SPTR(SmilesToMol(smi)));
+  }
+  const auto zippedMol = molzip(mols);
+  CHECK(MolToSmiles(*zippedMol) == "C1CNN1");
+}
+  
+
+
 TEST_CASE("Github #6034: FragmentOnBonds may create unexpected radicals") {
   auto m = "C[C@H](Cl)c1ccccc1"_smiles;
 

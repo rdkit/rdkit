@@ -1025,11 +1025,15 @@ RDKIT_GRAPHMOL_EXPORT void clearDirFlags(ROMol &mol,
 //! directions
 RDKIT_GRAPHMOL_EXPORT void setBondStereoFromDirections(ROMol &mol);
 
-//! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
+//! Assign stereochemistry tags to atoms and bonds.
 /*!
-  Does the CIP stereochemistry assignment for the molecule's atoms
-  (R/S) and double bond (Z/E). Chiral atoms will have a property
-  '_CIPCode' indicating their chiral code.
+  If useLegacyStereoPerception is true, it also does the CIP stereochemistry
+  assignment for the molecule's atoms (R/S) and double bonds (Z/E).
+  This assignment is based on legacy code which is fast, but is
+  known to incorrectly assign CIP labels in some cases.
+  instead, to assign CIP labels based on an accurate, though slower,
+  implementation of the CIP rules, call CIPLabeler::assignCIPLabels().
+  Chiral atoms will have a property '_CIPCode' indicating their chiral code.
 
   \param mol     the molecule to use
   \param cleanIt if true, any existing values of the property `_CIPCode`
@@ -1148,6 +1152,74 @@ RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
 // If the bond is dative, and it has a common_properties::MolFileBondEndPts
 // prop, returns a vector of the indices of the atoms mentioned in the prop.
 RDKIT_GRAPHMOL_EXPORT std::vector<int> hapticBondEndpoints(const Bond *bond);
+
+}  // namespace details
+
+//! attachment points encoded as attachPt properties are added to the graph as
+/// dummy atoms
+/*!
+ *
+ * @param mol the molecule of interest
+ * @param addAsQueries if true, the dummy atoms will be added as null queries
+ *       (i.e. they will match any atom in a substructure search)
+ * @param addCoords if true and the molecule has one or more conformers,
+ *    positions for the attachment points will be added to the conformer(s).
+ *
+ */
+RDKIT_GRAPHMOL_EXPORT void expandAttachmentPoints(RWMol &mol,
+                                                  bool addAsQueries = true,
+                                                  bool addCoords = true);
+//! dummy atoms in the graph are removed and replaced with attachment point
+//! annotations on the attached atoms
+/*!
+ *
+ * @param mol the molecule of interest
+ * @param markedOnly if true, only dummy atoms with the _fromAttachPoint
+ *    property will be collapsed
+ *
+ * In order for a dummy atom to be considered for collapsing it must have:
+ * - degree 1 with a single or unspecified bond
+ * - the bond to it can not be wedged
+ * - either no query or be an AtomNullQuery
+ *
+ */
+RDKIT_GRAPHMOL_EXPORT void collapseAttachmentPoints(RWMol &mol,
+                                                    bool markedOnly = true);
+
+namespace details {
+//! attachment points encoded as attachPt properties are added to the graph as
+/// dummy atoms
+/*!
+ *
+ * @param mol the molecule of interest
+ * @param atomIdx the index of the atom to which the attachment point should be
+ *       added
+ * @param val the attachment point value. Should be 1 or 2
+ * @param addAsQueries if true, the dummy atoms will be added as null queries
+ *       (i.e. they will match any atom in a substructure search)
+ * @param addCoords if true and the molecule has one or more conformers,
+ *    positions for the attachment points will be added to the conformer(s).
+ *
+ */
+RDKIT_GRAPHMOL_EXPORT unsigned int addExplicitAttachmentPoint(
+    RWMol &mol, unsigned int atomIdx, unsigned int val, bool addAsQuery = true,
+    bool addCoords = true);
+
+//! returns whether or not an atom is an attachment point
+/*!
+ *
+ * @param mol the molecule of interest
+ * @param markedOnly if true, only dummy atoms with the _fromAttachPoint
+ *    property will be collapsed
+ *
+ * In order for a dummy atom to be considered for collapsing it must have:
+ * - degree 1 with a single or unspecified bond
+ * - the bond to it can not be wedged
+ * - either no query or be an AtomNullQuery
+ *
+ */
+RDKIT_GRAPHMOL_EXPORT bool isAttachmentPoint(const Atom *atom,
+                                             bool markedOnly = true);
 
 }  // namespace details
 
