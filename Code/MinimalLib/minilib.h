@@ -18,6 +18,8 @@
 #include <GraphMol/MMPA/MMPA.h>
 #endif
 
+#include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>
+
 class JSMolList;
 
 class JSMol {
@@ -159,6 +161,8 @@ class JSMol {
   static constexpr int d_defaultHeight = 200;
 };
 
+
+
 class JSMolList {
  public:
   JSMolList(const std::vector<RDKit::ROMOL_SPTR> &mols)
@@ -206,9 +210,6 @@ class JSReaction {
                   "instead")]] bool
   is_valid() const;
 
-  std::vector<JSMolList *> run_reactants(const JSMolList &reactants,
-                                         unsigned int maxProducts) const;
-  static constexpr int maxProducts = 1000;
   std::string get_svg(int width, int height) const;
   std::string get_svg() const {
     return get_svg(d_defaultWidth, d_defaultHeight);
@@ -220,6 +221,19 @@ class JSReaction {
   static constexpr int d_defaultHeight = 200;
 };
 #endif
+
+class JSScaffoldNetwork {
+ public:
+  JSScaffoldNetwork() : 
+    d_scaffparams(new RDKit::ScaffoldNetwork::ScaffoldNetworkParams), d_network(new RDKit::ScaffoldNetwork::ScaffoldNetwork) {}
+
+  RDKit::ScaffoldNetwork::ScaffoldNetwork update_scaffold_network(
+      const JSMolList &scaffmols);
+
+ private:
+  RDKit::ScaffoldNetwork::ScaffoldNetworkParams* d_scaffparams;
+  RDKit::ScaffoldNetwork::ScaffoldNetwork* d_network;
+};
 
 #ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 class JSSubstructLibrary {
