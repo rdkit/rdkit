@@ -55,8 +55,7 @@ namespace rj = rapidjson;
 using namespace RDKit;
 
 namespace {
-static const char *NO_SUPPORT_FOR_PATTERN_FPS =
-    "This SubstructLibrary was built without support for pattern fps";
+static const char *NO_SUPPORT_FOR_PATTERN_FPS = "This SubstructLibrary was built without support for pattern fps";
 
 std::string mappingToJsonArray(const ROMol &mol) {
   std::vector<unsigned int> atomMapping;
@@ -594,7 +593,9 @@ void JSMol::straighten_depiction(bool minimizeRotation) {
   RDDepict::straightenDepiction(*d_mol, -1, minimizeRotation);
 }
 
-bool JSMol::is_valid() const { return true; }
+bool JSMol::is_valid() const {
+  return true;
+}
 
 std::pair<JSMolList *, std::string> JSMol::get_frags(
     const std::string &details_json) {
@@ -673,27 +674,9 @@ std::string JSReaction::get_svg_with_highlights(
   int h = d_defaultHeight;
   return MinimalLib::rxn_to_svg(*d_rxn, w, h, details);
 }
-bool JSReaction::is_valid() const { return true; }
 
-std::vector<JSMolList *> JSReaction::run_reactants(
-    const JSMolList &reactants, unsigned int maxProducts) const {
-  d_rxn->initReactantMatchers();
-  RDKit::MOL_SPTR_VECT reactant_vec;
-
-  for (const auto &reactant : reactants.mols()) {
-    if (!reactant) {
-      throw ValueErrorException("Reactant must not be null");
-    }
-    reactant_vec.push_back(reactant);
-  }
-
-  std::vector<RDKit::MOL_SPTR_VECT> prods;
-  prods = d_rxn->runReactants(reactant_vec, maxProducts);
-  std::vector<JSMolList *> newResults;
-  for (auto &mol_array : prods) {
-    newResults.push_back(new JSMolList(mol_array));
-  }
-  return newResults;
+bool JSReaction::is_valid() const {
+  return true;
 }
 #endif
 
@@ -809,10 +792,9 @@ void JSScaffoldNetwork::set_scaffold_params(const std::string &params) {
 #endif
 
 #ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
-JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
-    : d_fpHolder(nullptr) {
-  boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolderSptr(
-      new CachedTrustedSmilesMolHolder());
+JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits) :
+  d_fpHolder(nullptr) {
+  boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolderSptr(new CachedTrustedSmilesMolHolder());
   boost::shared_ptr<PatternHolder> fpHolderSptr;
   d_molHolder = molHolderSptr.get();
   if (num_bits) {
@@ -926,6 +908,16 @@ unsigned int JSSubstructLibrary::count_matches(const JSMol &q,
 }
 #endif
 
+// RDKit::ScaffoldNetwork::ScaffoldNetwork JSScaffoldNetwork::update_scaffold_network(const JSMolList &scaffmols) {
+//   std::vector<ROMOL_SPTR> mols;
+//   for (const auto &reactant : scaffmols.mols()) {
+//     mols.push_back(RDKit::ROMOL_SPTR(reactant));
+//   }
+//   RDKit::ScaffoldNetwork::updateScaffoldNetwork(mols, *d_network, *d_scaffparams);
+//   return *d_network;
+// }
+
+
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
 }
@@ -988,17 +980,16 @@ bool allow_non_tetrahedral_chirality(bool value) {
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
 namespace {
 MCSResult getMcsResult(const JSMolList &molList,
-                       const std::string &details_json) {
+               const std::string &details_json) {
   MCSParameters p;
   if (!details_json.empty()) {
     parseMCSParametersJSON(details_json.c_str(), &p);
   }
   return RDKit::findMCS(molList.mols(), &p);
 }
-}  // namespace
+} // namespace
 
-std::string get_mcs_as_json(const JSMolList &molList,
-                            const std::string &details_json) {
+std::string get_mcs_as_json(const JSMolList &molList, const std::string &details_json) {
   auto mcsResult = getMcsResult(molList, details_json);
   rj::Document doc;
   doc.SetObject();
@@ -1032,13 +1023,13 @@ std::string get_mcs_as_json(const JSMolList &molList,
 }
 
 std::string get_mcs_as_smarts(const JSMolList &molList,
-                              const std::string &details_json) {
+               const std::string &details_json) {
   auto res = getMcsResult(molList, details_json);
   return res.SmartsString;
 }
 
 JSMol *get_mcs_as_mol(const JSMolList &molList,
-                      const std::string &details_json) {
+               const std::string &details_json) {
   auto res = getMcsResult(molList, details_json);
   return new JSMol(new RWMol(*res.QueryMol));
 }
