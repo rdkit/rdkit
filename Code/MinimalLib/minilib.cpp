@@ -704,9 +704,48 @@ RDKit::ScaffoldNetwork::ScaffoldNetwork JSScaffoldNetwork::update_scaffold_netwo
   return *d_network;
 }
 
-// void JSScaffoldNetwork::set_scaffold_params(const std::string &params) {
-//   d_scaffparams.reset(new RDKit::ScaffoldNetworkParams(params));
-// }
+void JSScaffoldNetwork::set_scaffold_params(const std::string &params) {
+  if (params.empty()) {
+  return;
+  }
+  rj::Document d;
+  if (d.Parse(params.c_str()).HasParseError()) {
+    return;
+  }
+  if (d.HasMember("includeGenericScaffolds")) {
+    d_scaffparams->includeGenericScaffolds = d["includeGenericScaffolds"].GetBool();
+  }
+  if (d.HasMember("includeGenericBondScaffolds")) {
+    d_scaffparams->includeGenericBondScaffolds = d["includeGenericBondScaffolds"].GetBool();
+  }
+  if (d.HasMember("includeScaffoldsWithoutAttachments")) {
+    d_scaffparams->includeScaffoldsWithoutAttachments = d["includeScaffoldsWithoutAttachments"].GetBool();
+  }
+  if (d.HasMember("includeScaffoldsWithAttachments")) {
+    d_scaffparams->includeScaffoldsWithAttachments = d["includeScaffoldsWithAttachments"].GetBool();
+  }
+  if (d.HasMember("keepOnlyFirstFragment")) {
+    d_scaffparams->keepOnlyFirstFragment = d["keepOnlyFirstFragment"].GetBool();
+  }
+  if (d.HasMember("pruneBeforeFragmenting")) {
+    d_scaffparams->pruneBeforeFragmenting = d["pruneBeforeFragmenting"].GetBool();
+  }
+  if (d.HasMember("flattenIsotopes")) {
+    d_scaffparams->flattenIsotopes = d["flattenIsotopes"].GetBool();
+  }
+  if (d.HasMember("flattenChirality")) {
+    d_scaffparams->flattenChirality = d["flattenChirality"].GetBool();
+  }
+  if (d.HasMember("flattenKeepLargest")) {
+    d_scaffparams->flattenKeepLargest = d["flattenKeepLargest"].GetBool();
+  }
+  if (d.HasMember("collectMolCounts")) {
+    d_scaffparams->collectMolCounts = d["collectMolCounts"].GetBool();
+  }
+  // if (d.HasMember("bondBreakersRxns")) {
+  //   d_scaffparams->bondBreakersRxns = d["bondBreakersRxns"];
+  // }
+}
 
 #ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits) :

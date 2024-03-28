@@ -629,7 +629,8 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
 
 class_<JSScaffoldNetwork>("ScaffoldNetwork")
     .constructor<>()
-    .function("update_scaffold_network", select_overload<emscripten::val(JSScaffoldNetwork &self, const JSMolList &)>(update_scaffold_network_wrapper));
+    .function("update_scaffold_network", select_overload<emscripten::val(JSScaffoldNetwork &self, const JSMolList &)>(update_scaffold_network_wrapper))
+    .function("get_scaffold_network", &JSScaffoldNetwork::set_scaffold_params);
 
 #ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
   class_<JSSubstructLibrary>("SubstructLibrary")

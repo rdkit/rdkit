@@ -6,7 +6,7 @@ if(RDK_BUILD_MINIMAL_LIB)
         "CIPLabeler_static;MolDraw2D_static;Depictor_static;RDInchiLib_static;"
         "SubstructMatch_static;FileParsers_static;"
         "SmilesParse_static;GraphMol_static;RDGeometryLib_static;"
-        "RDGeneral_static;RGroupDecomposition_static")
+        "RDGeneral_static;RGroupDecomposition_static;ScaffoldNetwork_static")
     if(RDK_BUILD_MINIMAL_LIB_RXN)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_RXN)
         set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ChemReactions_static")

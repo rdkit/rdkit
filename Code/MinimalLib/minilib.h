@@ -230,9 +230,11 @@ class JSScaffoldNetwork {
   RDKit::ScaffoldNetwork::ScaffoldNetwork update_scaffold_network(
       const JSMolList &scaffmols);
 
+  void set_scaffold_params(const std::string &params);
+
  private:
-  RDKit::ScaffoldNetwork::ScaffoldNetworkParams* d_scaffparams;
-  RDKit::ScaffoldNetwork::ScaffoldNetwork* d_network;
+  RDKit::ScaffoldNetwork::ScaffoldNetworkParams *d_scaffparams;
+  RDKit::ScaffoldNetwork::ScaffoldNetwork *d_network;
 };
 
 #ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
