@@ -80,11 +80,11 @@ inline std::pair<int, double> MMFFOptimizeMolecule(
 
 */
 inline void MMFFOptimizeMoleculeConfs(ROMol &mol,
-                               std::vector<std::pair<int, double>> &res,
-                               int numThreads = 1, int maxIters = 1000,
-                               std::string mmffVariant = "MMFF94",
-                               double nonBondedThresh = 10.0,
-                               bool ignoreInterfragInteractions = true) {
+                                      std::vector<std::pair<int, double>> &res,
+                                      int numThreads = 1, int maxIters = 1000,
+                                      std::string mmffVariant = "MMFF94",
+                                      double nonBondedThresh = 10.0,
+                                      bool ignoreInterfragInteractions = true) {
   MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
   if (mmffMolProperties.isValid()) {
     ForceFields::ForceField *ff =

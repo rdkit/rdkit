@@ -42,7 +42,13 @@
  * Deconstructed values cache
  */
 
-typedef enum EntryKind { MolKind, BfpKind, SfpKind, ReactionKind, XQMolKind } EntryKind;
+typedef enum EntryKind {
+  MolKind,
+  BfpKind,
+  SfpKind,
+  ReactionKind,
+  XQMolKind
+} EntryKind;
 
 typedef struct ValueCacheEntry {
   Datum toastedValue;
@@ -421,7 +427,8 @@ static void fetchData(ValueCache *ac, ValueCacheEntry *entry, void **detoasted,
       if (internal) {
         if (entry->detoasted.xqmol.mol == NULL) {
           fetchData(ac, entry, &_tmp, NULL, NULL);
-          entry->detoasted.mol.mol = constructXQMol(entry->detoasted.xqmol.value);
+          entry->detoasted.mol.mol =
+              constructXQMol(entry->detoasted.xqmol.value);
         }
         *internal = entry->detoasted.xqmol.mol;
       }
@@ -649,7 +656,7 @@ void *searchMolCache(void *cache, struct MemoryContextData *ctx, Datum a,
 }
 
 void *searchXQMolCache(void *cache, struct MemoryContextData *ctx, Datum a,
-                     XQMol **m, CXQMol *mol, bytea **val) {
+                       XQMol **m, CXQMol *mol, bytea **val) {
   return SearchValueCache(cache, ctx,
                           /*  in: */ a, XQMolKind,
                           /* out: */ (void **)m, (void **)mol, (void **)val);

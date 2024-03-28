@@ -17,7 +17,7 @@
 
 #ifndef __BGL_VF2_SUB_STATE_H__
 #define __BGL_VF2_SUB_STATE_H__
-//#define RDK_VF2_PRUNING
+// #define RDK_VF2_PRUNING
 #define RDK_ADJ_ITER typename Graph::adjacency_iterator
 
 namespace boost {

@@ -195,8 +195,7 @@ template <typename FUNCTYPE>
 void mtinPlaceHelper2(python::object pymols, int numThreads,
                       python::object params, bool skip_standardize,
                       FUNCTYPE func) {
-  const auto *ps =
-      &RDKit::MolStandardize::defaultCleanupParameters;
+  const auto *ps = &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
     ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
   }

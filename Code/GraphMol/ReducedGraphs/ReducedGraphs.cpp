@@ -23,7 +23,7 @@
 #include <boost/ref.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-//#define VERBOSE_FINGERPRINTING 1
+// #define VERBOSE_FINGERPRINTING 1
 
 namespace RDKit {
 

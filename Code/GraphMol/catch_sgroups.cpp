@@ -522,7 +522,9 @@ TEST_CASE("github #5923: add more error checking to substance groups") {
   CHECK_THROWS_AS(sg.setBonds({1, 4}), ValueErrorException);
 }
 
-TEST_CASE("GitHub Issue #7246: SGroup fields without values cause weird properties", "[bug]") {
+TEST_CASE(
+    "GitHub Issue #7246: SGroup fields without values cause weird properties",
+    "[bug]") {
   auto mol = R"CTAB(example1
   Mrv2311 02012418192D
 

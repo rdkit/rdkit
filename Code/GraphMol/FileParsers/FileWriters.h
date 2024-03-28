@@ -37,9 +37,8 @@ struct RDKIT_FILEPARSERS_EXPORT MolWriterParams {
  *   \param confId          - selects the conformer to be used
  *                            (default=-1 - find first in mol)
  */
-RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol,
-                                                   const MolWriterParams &params,
-                                                   int confId = -1);
+RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(
+    const ROMol &mol, const MolWriterParams &params, int confId = -1);
 
 // \brief generates an MDL mol block for a molecule
 /*!
@@ -54,10 +53,8 @@ RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol,
  *                          automatically with more than 999 atoms or
  *                          bonds)(default=false)
  */
-inline std::string MolToMolBlock(const ROMol &mol,
-                                 bool includeStereo = true,
-                                 int confId = -1,
-                                 bool kekulize = true,
+inline std::string MolToMolBlock(const ROMol &mol, bool includeStereo = true,
+                                 int confId = -1, bool kekulize = true,
                                  bool forceV3000 = false) {
   MolWriterParams params{includeStereo, kekulize, forceV3000};
   return MolToMolBlock(mol, params, confId);
@@ -118,9 +115,9 @@ RDKIT_FILEPARSERS_EXPORT void MolToMolFile(const ROMol &mol,
  * automatically with
  *                          more than 999 atoms or bonds)
  */
-inline void MolToMolFile(
-    const ROMol &mol, const std::string &fName, bool includeStereo = true,
-    int confId = -1, bool kekulize = true, bool forceV3000 = false) {
+inline void MolToMolFile(const ROMol &mol, const std::string &fName,
+                         bool includeStereo = true, int confId = -1,
+                         bool kekulize = true, bool forceV3000 = false) {
   MolWriterParams params{includeStereo, kekulize, forceV3000};
   MolToMolFile(mol, fName, params, confId);
 }
@@ -132,10 +129,8 @@ inline void MolToMolFile(
  *   \param MolWriterParams - parameter struct with write options
  *   \param confId          - selects the conformer to be used
  */
-inline void MolToV3KMolFile(const ROMol &mol,
-                            const std::string &fName,
-                            const MolWriterParams &params,
-                            int confId = -1) {
+inline void MolToV3KMolFile(const ROMol &mol, const std::string &fName,
+                            const MolWriterParams &params, int confId = -1) {
   // have to set forceV300, prefer copy over mutable params argument
   MolWriterParams v3KParams{params};
   v3KParams.forceV3000 = true;

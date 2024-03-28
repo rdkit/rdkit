@@ -1070,13 +1070,13 @@ void testMurckoDecomp() {
       {"OC2C(C)C21C(N)C1C", "C2CC12CC1"},  // Spiro
       {"C1CC1C(=O)OC", "C1CC1"},           // Carbonyl outside scaffold
       {"C1CC1C=C", "C1CC1"},               // Double bond outside scaffold
-      {"C1CC1C=CC1CC1C=CNNCO", "C1CC1C=CC1CC1"},      // Double bond in scaffold
+      {"C1CC1C=CC1CC1C=CNNCO", "C1CC1C=CC1CC1"},  // Double bond in scaffold
       {"CC1CC1C(N)C1C(N)C1", "C1CC1CC1CC1"},
       {"C1CC1S(=O)C1CC1C=CNNCO", "C1CC1S(=O)C1CC1"},  // S=O group in scaffold
       {"O=SCNC1CC1S(=O)C1CC1C=CNNCO",
-       "C1CC1S(=O)C1CC1"},                        // S=O group outside scaffold
+       "C1CC1S(=O)C1CC1"},  // S=O group outside scaffold
       {"C1CC1S(=O)(=O)C1CC1C=CNNCO",
-       "C1CC1S(=O)(=O)C1CC1"},                    // SO2 group in scaffold
+       "C1CC1S(=O)(=O)C1CC1"},  // SO2 group in scaffold
       {"O=S(CNCNC)(=O)CNC1CC1S(=O)(=O)C1CC1C=CNNCO",
        "C1CC1S(=O)(=O)C1CC1"},                    // SO2 group outside scaffold
       {"C1CC1C=NO", "C1CC1"},                     // Hydroxamide

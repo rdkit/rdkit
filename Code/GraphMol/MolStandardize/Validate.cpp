@@ -30,10 +30,9 @@ class ROMol;
 namespace MolStandardize {
 
 std::vector<ValidationErrorInfo> CompositeValidation::validate(
-  const ROMol &mol, bool reportAllFailures) const
-{
+    const ROMol &mol, bool reportAllFailures) const {
   std::vector<ValidationErrorInfo> errors;
-  for (const auto & method : validations) {
+  for (const auto &method : validations) {
     auto partial = method->validate(mol, reportAllFailures);
     if (!partial.empty()) {
       std::copy(partial.begin(), partial.end(), std::back_inserter(errors));
@@ -73,8 +72,8 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
   return errors;
 }
 
-std::vector<ValidationErrorInfo>
-NoAtomValidation::validate(const ROMol &mol, bool /*reportAllFailures*/) const {
+std::vector<ValidationErrorInfo> NoAtomValidation::validate(
+    const ROMol &mol, bool /*reportAllFailures*/) const {
   std::vector<ValidationErrorInfo> errors;
   unsigned int na = mol.getNumAtoms();
   if (!na) {
@@ -83,8 +82,8 @@ NoAtomValidation::validate(const ROMol &mol, bool /*reportAllFailures*/) const {
   return errors;
 }
 
-std::vector<ValidationErrorInfo>
-FragmentValidation::validate(const ROMol &mol, bool reportAllFailures) const {
+std::vector<ValidationErrorInfo> FragmentValidation::validate(
+    const ROMol &mol, bool reportAllFailures) const {
   std::vector<ValidationErrorInfo> errors;
   // REVIEW: reportAllFailures is not being used here. is that correct?
   RDUNUSED_PARAM(reportAllFailures);
@@ -145,8 +144,8 @@ FragmentValidation::validate(const ROMol &mol, bool reportAllFailures) const {
   return errors;
 }
 
-std::vector<ValidationErrorInfo>
-NeutralValidation::validate(const ROMol &mol, bool /*reportAllFailures*/) const {
+std::vector<ValidationErrorInfo> NeutralValidation::validate(
+    const ROMol &mol, bool /*reportAllFailures*/) const {
   std::vector<ValidationErrorInfo> errors;
   int charge = RDKit::MolOps::getFormalCharge(mol);
   if (charge != 0) {
@@ -162,8 +161,8 @@ NeutralValidation::validate(const ROMol &mol, bool /*reportAllFailures*/) const 
   return errors;
 }
 
-std::vector<ValidationErrorInfo>
-IsotopeValidation::validate(const ROMol &mol, bool reportAllFailures) const {
+std::vector<ValidationErrorInfo> IsotopeValidation::validate(
+    const ROMol &mol, bool reportAllFailures) const {
   std::vector<ValidationErrorInfo> errors;
   unsigned int na = mol.getNumAtoms();
   std::set<string> isotopes;
@@ -192,21 +191,15 @@ IsotopeValidation::validate(const ROMol &mol, bool reportAllFailures) const {
 
 // constructor
 MolVSValidation::MolVSValidation()
-  : CompositeValidation({
-      std::make_shared<NoAtomValidation>(),
-      std::make_shared<FragmentValidation>(),
-      std::make_shared<NeutralValidation>(),
-      std::make_shared<IsotopeValidation>()
-      })
-{
-}
+    : CompositeValidation({std::make_shared<NoAtomValidation>(),
+                           std::make_shared<FragmentValidation>(),
+                           std::make_shared<NeutralValidation>(),
+                           std::make_shared<IsotopeValidation>()}) {}
 
 // overloaded constructor
 MolVSValidation::MolVSValidation(
-    const std::vector<std::shared_ptr<ValidationMethod>> & validations)
-  : CompositeValidation(validations)
-{
-}
+    const std::vector<std::shared_ptr<ValidationMethod>> &validations)
+    : CompositeValidation(validations) {}
 
 std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(
     const ROMol &mol, bool reportAllFailures) const {

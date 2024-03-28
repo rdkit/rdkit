@@ -147,7 +147,9 @@ void RDKitSVMainWindow::parse_args(int argc, char **argv) {
 
   vector<string> mol_files = s.mol_files();
   if (!mol_files.empty()) {
-    BOOST_FOREACH (string mf, mol_files) { read_mols(mf); }
+    BOOST_FOREACH (string mf, mol_files) {
+      read_mols(mf);
+    }
   }
 
   string smarts_file = s.smarts_file();
@@ -357,7 +359,9 @@ void RDKitSVMainWindow::write_mols(RDKitSVPanel &panel,
     return;
   }
 
-  BOOST_FOREACH (RDKit::ROMOL_SPTR mol, mols) { mw->write(*mol); }
+  BOOST_FOREACH (RDKit::ROMOL_SPTR mol, mols) {
+    mw->write(*mol);
+  }
 
   delete mw;
 }

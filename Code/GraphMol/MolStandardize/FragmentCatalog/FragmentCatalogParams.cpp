@@ -51,8 +51,8 @@ FragmentCatalogParams::FragmentCatalogParams(
 
 FragmentCatalogParams::~FragmentCatalogParams() {}
 
-const std::vector<std::shared_ptr<ROMol>>
-    &FragmentCatalogParams::getFuncGroups() const {
+const std::vector<std::shared_ptr<ROMol>> &
+FragmentCatalogParams::getFuncGroups() const {
   return d_funcGroups;
 }
 

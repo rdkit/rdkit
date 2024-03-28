@@ -32,7 +32,7 @@
 #ifndef RDKIT_RDVALUE_H
 #define RDKIT_RDVALUE_H
 
-//#define UNSAFE_RDVALUE
+// #define UNSAFE_RDVALUE
 #ifdef UNSAFE_RDVALUE
 #include "RDValue-doublemagic.h"
 #else

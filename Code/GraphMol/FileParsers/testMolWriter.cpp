@@ -1089,8 +1089,9 @@ void testV3000WriterDetails() {
 }
 
 void testV3000DoublePrecision() {
-  BOOST_LOG(rdInfoLog) << "testing V3000 outputs coordinates at maximum robust double precision"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing V3000 outputs coordinates at maximum robust double precision"
+      << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   {
@@ -1106,12 +1107,21 @@ void testV3000DoublePrecision() {
     const Conformer &conformer = mol->getConformer();
     const Conformer &readConformer = readMol->getConformer();
     for (size_t i = 0; i < numAtoms; i++) {
-      std::cout << std::setprecision(15) << conformer.getAtomPos(i).x << ' ' << readConformer.getAtomPos(i).x << std::setprecision(6) << std::endl;
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).x - readConformer.getAtomPos(i).x) < 1e-15);
-      std::cout << std::setprecision(15) << conformer.getAtomPos(i).y << ' ' << readConformer.getAtomPos(i).y << std::setprecision(6) << std::endl;
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).y - readConformer.getAtomPos(i).y) < 1e-15);
-      std::cout << std::setprecision(15) << conformer.getAtomPos(i).z << ' ' << readConformer.getAtomPos(i).z << std::setprecision(6) << std::endl;
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).z - readConformer.getAtomPos(i).z) < 1e-15);
+      std::cout << std::setprecision(15) << conformer.getAtomPos(i).x << ' '
+                << readConformer.getAtomPos(i).x << std::setprecision(6)
+                << std::endl;
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).x -
+                           readConformer.getAtomPos(i).x) < 1e-15);
+      std::cout << std::setprecision(15) << conformer.getAtomPos(i).y << ' '
+                << readConformer.getAtomPos(i).y << std::setprecision(6)
+                << std::endl;
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).y -
+                           readConformer.getAtomPos(i).y) < 1e-15);
+      std::cout << std::setprecision(15) << conformer.getAtomPos(i).z << ' '
+                << readConformer.getAtomPos(i).z << std::setprecision(6)
+                << std::endl;
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).z -
+                           readConformer.getAtomPos(i).z) < 1e-15);
     }
   }
 }

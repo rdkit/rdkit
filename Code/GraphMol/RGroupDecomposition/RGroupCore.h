@@ -69,7 +69,8 @@ struct RCore {
   std::shared_ptr<TautomerQuery> getMatchingTautomerQuery();
 
   inline bool isTerminalRGroupWithUserLabel(const int idx) const {
-    return terminalRGroupAtomToNeighbor.find(idx) != terminalRGroupAtomToNeighbor.end();
+    return terminalRGroupAtomToNeighbor.find(idx) !=
+           terminalRGroupAtomToNeighbor.end();
   }
 
   /*
@@ -77,10 +78,10 @@ struct RCore {
    * attachment points. Including when two user defined attachment points can
    * match the same target atom.
    */
-  [[deprecated("please use checkAllBondsToRGroupPresent")]]
-  bool checkAllBondsToAttachmentPointPresent(
-      const ROMol &mol, const int attachmentIdx,
-      const MatchVectType &mapping) const;
+  [[deprecated("please use checkAllBondsToRGroupPresent")]] bool
+  checkAllBondsToAttachmentPointPresent(const ROMol &mol,
+                                        const int attachmentIdx,
+                                        const MatchVectType &mapping) const;
 
   /*
    * For when onlyMatchAtRGroups = true.  Checks the query core can satisfy all

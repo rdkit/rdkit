@@ -7857,9 +7857,7 @@ void testGithub5890() {
     std::string rdbase = getenv("RDBASE");
     std::string fName;
 
-    fName =
-        rdbase +
-        "/Code/GraphMol/ChemReactions/testData/v3k.radicals.rxn";
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/v3k.radicals.rxn";
     ChemicalReaction *rxn =
         RxnFileToChemicalReaction(fName, false, false, false);
     TEST_ASSERT(rxn);

@@ -598,7 +598,8 @@ RDKIT_GRAPHMOL_EXPORT ATOM_OR_QUERY *makeMHAtomQuery();
 // CXSMILES
 const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
                                                  "X", "XH", "M", "MH"};
-RDKIT_GRAPHMOL_EXPORT void convertComplexNameToQuery(Atom *query, std::string_view symb);
+RDKIT_GRAPHMOL_EXPORT void convertComplexNameToQuery(Atom *query,
+                                                     std::string_view symb);
 
 //! returns a Query for matching atoms that have ring bonds
 template <class T>

@@ -97,11 +97,11 @@ void test2() {
 }
 
 void test3() {
-    BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-    BOOST_LOG(rdErrorLog) << "    Test empty molecule BCUT." << std::endl;
-    RWMol m;
-    std::vector<double> bcuts = Descriptors::BCUT2D(m);
-    TEST_ASSERT(bcuts == std::vector<double>(8, 0.0));    
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test empty molecule BCUT." << std::endl;
+  RWMol m;
+  std::vector<double> bcuts = Descriptors::BCUT2D(m);
+  TEST_ASSERT(bcuts == std::vector<double>(8, 0.0));
 }
 int main() {
   RDLog::InitLogs();

@@ -32,7 +32,7 @@
 // written the code for std::map, so the two methods
 // can be toggled defining RDKIT_MMFF_PARAMS_USE_STD_MAP
 
-//#define RDKIT_MMFF_PARAMS_USE_STD_MAP 1
+// #define RDKIT_MMFF_PARAMS_USE_STD_MAP 1
 
 namespace ForceFields {
 namespace MMFF {

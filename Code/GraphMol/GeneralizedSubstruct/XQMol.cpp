@@ -58,20 +58,24 @@ void ExtendedQueryMol::initFromOther(const ExtendedQueryMol &other) {
 std::unique_ptr<ExplicitBitVect> ExtendedQueryMol::patternFingerprintQuery(
     unsigned fpSize) const {
   if (std::holds_alternative<RWMol_T>(xqmol)) {
-    const auto raw =  PatternFingerprintMol(*std::get<RWMol_T>(xqmol), fpSize, nullptr,
-                                 nullptr, true);
+    const auto raw = PatternFingerprintMol(*std::get<RWMol_T>(xqmol), fpSize,
+                                           nullptr, nullptr, true);
     std::unique_ptr<ExplicitBitVect> ptr(raw);
     return ptr;
-  } if (std::holds_alternative<MolBundle_T>(xqmol)) {
-    const auto raw = PatternFingerprintMol(*std::get<MolBundle_T>(xqmol), fpSize, nullptr,
-                                 true);
+  }
+  if (std::holds_alternative<MolBundle_T>(xqmol)) {
+    const auto raw = PatternFingerprintMol(*std::get<MolBundle_T>(xqmol),
+                                           fpSize, nullptr, true);
     std::unique_ptr<ExplicitBitVect> ptr(raw);
     return ptr;
-  } if (std::holds_alternative<TautomerQuery_T>(xqmol)) {
-    const auto raw = std::get<TautomerQuery_T>(xqmol)->patternFingerprintTemplate(fpSize);
+  }
+  if (std::holds_alternative<TautomerQuery_T>(xqmol)) {
+    const auto raw =
+        std::get<TautomerQuery_T>(xqmol)->patternFingerprintTemplate(fpSize);
     std::unique_ptr<ExplicitBitVect> ptr(raw);
     return ptr;
-  } if (std::holds_alternative<TautomerBundle_T>(xqmol)) {
+  }
+  if (std::holds_alternative<TautomerBundle_T>(xqmol)) {
     const auto &tautomerBundle = std::get<TautomerBundle_T>(xqmol);
     ExplicitBitVect *res = nullptr;
     for (const auto &tautomer : *tautomerBundle) {
@@ -89,7 +93,6 @@ std::unique_ptr<ExplicitBitVect> ExtendedQueryMol::patternFingerprintQuery(
 
   throw std::invalid_argument("Unknown extended query molecule type");
 }
-
 
 std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ExtendedQueryMol &query,
@@ -191,9 +194,9 @@ ExtendedQueryMol createExtendedQueryMol(const RWMol &mol, bool doEnumeration,
   }
 }
 
-std::unique_ptr<ExplicitBitVect> patternFingerprintTargetMol(
-  const ROMol& mol, unsigned fpSize) {
-  const auto raw= PatternFingerprintMol(mol, fpSize, nullptr, nullptr, true);
+std::unique_ptr<ExplicitBitVect> patternFingerprintTargetMol(const ROMol &mol,
+                                                             unsigned fpSize) {
+  const auto raw = PatternFingerprintMol(mol, fpSize, nullptr, nullptr, true);
   std::unique_ptr<ExplicitBitVect> ptr(raw);
   return ptr;
 }

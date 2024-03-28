@@ -21,8 +21,8 @@ namespace RDKit {
 //! A single rgroup attached to a given core.
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupData {
   RWMOL_SPTR combinedMol;
-  std::vector<ROMOL_SPTR> mols;  // All the mols in the rgroup
-  std::vector<std::string> smilesVect;         // used for rgroup equivalence
+  std::vector<ROMOL_SPTR> mols;         // All the mols in the rgroup
+  std::vector<std::string> smilesVect;  // used for rgroup equivalence
   std::string
       smiles;  // smiles for all the mols in the rgroup (with attachments)
   std::set<int> attachments;  // core attachment points

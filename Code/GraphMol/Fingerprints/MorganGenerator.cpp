@@ -33,7 +33,8 @@ MorganAtomInvGenerator::MorganAtomInvGenerator(const bool includeRingMembership)
 std::vector<std::uint32_t> *MorganAtomInvGenerator::getAtomInvariants(
     const ROMol &mol) const {
   unsigned int nAtoms = mol.getNumAtoms();
-  std::unique_ptr<std::vector<std::uint32_t>> atomInvariants(new std::vector<std::uint32_t>(nAtoms));
+  std::unique_ptr<std::vector<std::uint32_t>> atomInvariants(
+      new std::vector<std::uint32_t>(nAtoms));
   getConnectivityInvariants(mol, *atomInvariants, df_includeRingMembership);
   return atomInvariants.release();
 }

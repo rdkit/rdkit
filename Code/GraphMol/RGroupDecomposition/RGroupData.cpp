@@ -20,9 +20,8 @@ namespace RDKit {
 void RGroupData::add(const ROMOL_SPTR &newMol,
                      const std::vector<int> &rlabel_attachments) {
   // some fragments can be added multiple times if they are cyclic
-  if (std::any_of(mols.begin(), mols.end(), [&newMol](const auto &mol) {
-    return newMol == mol;
-  })) {
+  if (std::any_of(mols.begin(), mols.end(),
+                  [&newMol](const auto &mol) { return newMol == mol; })) {
     return;
   }
 
@@ -102,7 +101,8 @@ void RGroupData::computeIsHydrogen() {  // is the rgroup all Hs
 bool RGroupData::isMolHydrogen(const ROMol &mol) const {
   auto atoms = mol.atoms();
   return std::all_of(atoms.begin(), atoms.end(), [](const auto &atom) {
-    return (atom->getAtomicNum() == 1 || (atom->getAtomicNum() == 0 && atom->hasProp(SIDECHAIN_RLABELS)));
+    return (atom->getAtomicNum() == 1 ||
+            (atom->getAtomicNum() == 0 && atom->hasProp(SIDECHAIN_RLABELS)));
   });
 }
 

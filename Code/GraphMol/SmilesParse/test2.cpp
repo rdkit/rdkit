@@ -15,7 +15,7 @@
 #include "SmilesWrite.h"
 #include "SmartsWrite.h"
 #include <RDGeneral/RDLog.h>
-//#include <boost/log/functions.hpp>
+// #include <boost/log/functions.hpp>
 using namespace RDKit;
 using namespace std;
 

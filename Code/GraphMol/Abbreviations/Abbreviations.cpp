@@ -227,7 +227,7 @@ void condenseMolAbbreviations(
   if (sanitize) {
     auto ringInfo = mol.getRingInfo();
     if (!ringInfo->isSymmSssr()) {
-    MolOps::symmetrizeSSSR(mol);
+      MolOps::symmetrizeSSSR(mol);
     }
   }
 };

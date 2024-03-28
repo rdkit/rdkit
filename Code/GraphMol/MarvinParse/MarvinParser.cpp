@@ -57,7 +57,8 @@ class MarvinCMLReader {
   ~MarvinCMLReader(){};
 
   std::unique_ptr<RWMol> parseMolecule(boost::property_tree::ptree molTree,
-                       bool sanitize = false, bool removeHs = false) {
+                                       bool sanitize = false,
+                                       bool removeHs = false) {
     boost::property_tree::ptree molSection;
 
     try {
