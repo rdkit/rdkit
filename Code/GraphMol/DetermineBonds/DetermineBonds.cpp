@@ -321,8 +321,10 @@ void addBondOrdering(RWMol &mol,
 
   for (unsigned int i = 0; i < numAtoms; i++) {
     for (unsigned int j = i + 1; j < numAtoms; j++) {
-      if (ordMat[i][j] == 0 || ordMat[i][j] == 1) {
+      if (ordMat[i][j] == 0) {
         continue;
+      } else if (ordMat[i][j] == 1) {
+        mol.getBondBetweenAtoms(i, j)->setBondType(Bond::BondType::SINGLE);
       } else if (ordMat[i][j] == 2) {
         mol.getBondBetweenAtoms(i, j)->setBondType(Bond::BondType::DOUBLE);
       } else if (ordMat[i][j] == 3) {

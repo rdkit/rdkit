@@ -411,3 +411,32 @@ H 10.5976057038625981 8.9661452278177478 10.7170086192680003)XYZ";
     CHECK(m->getBondBetweenAtoms(0, 3));
   }
 }
+
+TEST_CASE(
+    "github #7299: DetermineBondOrders() does not assign single bonds correctly") {
+  SECTION("as reported") {
+    RWMol m;
+    m.addAtom(new Atom(6));
+    m.addAtom(new Atom(8));
+    m.addAtom(new Atom(8));
+    m.addAtom(new Atom(8));
+    m.addAtom(new Atom(1));
+    m.addAtom(new Atom(1));
+    m.addBond(0, 1, Bond::UNSPECIFIED);
+    m.addBond(0, 2, Bond::UNSPECIFIED);
+    m.addBond(0, 3, Bond::UNSPECIFIED);
+    m.addBond(2, 4, Bond::UNSPECIFIED);
+    m.addBond(3, 5, Bond::UNSPECIFIED);
+    int charge = 0;
+    bool allowChargedFragments = true;
+    bool embedChiral = false;
+    determineBondOrders(m, charge, allowChargedFragments, embedChiral);
+    for (auto bnd : m.bonds()) {
+      if (bnd->getIdx()) {
+        CHECK(bnd->getBondType() == Bond::SINGLE);
+      } else {
+        CHECK(bnd->getBondType() == Bond::DOUBLE);
+      }
+    }
+  }
+}
