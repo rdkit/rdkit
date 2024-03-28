@@ -2791,3 +2791,19 @@ TEST_CASE("leaks on unclosed rings") {
     REQUIRE(!m);
   }
 }
+
+TEST_CASE("Github #7295") {
+  SECTION("basics") {
+    auto m = "C[C@@H]1CC[C@@H](C(=O)O)CC1.Cl"_smiles;
+    REQUIRE(m);
+    auto smi1 = MolToSmiles(*m);
+    m->clearComputedProps();
+    auto smi2 = MolToSmiles(*m);
+    CHECK(smi1 == smi2);
+    auto m2(*m);
+    bool cleanIt=true;
+    MolOps::assignStereochemistry(m2, cleanIt);
+    auto smi3 = MolToSmiles(m2);
+    CHECK(smi1 == smi3);
+  }
+}
