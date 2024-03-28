@@ -720,6 +720,17 @@ class TestCase(unittest.TestCase):
     angle = v1.AngleTo(v2)
     self.assertAlmostEqual(angle, math.pi / 2.0, delta=0.15)
 
+  def testSymmetrizeTerminal(self):
+    mol = Chem.AddHs(Chem.MolFromSmiles("FCC(=O)O"))
+    ps = rdDistGeom.ETKDGv3()
+    ps.randomSeed = 0xc0ffee
+    ps.pruneRmsThresh = 0.5
+    cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
+    self.assertEqual(len(cids), 1)
+    ps.symmetrizeConjugatedTerminalGroupsForPruning = False
+    cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
+    self.assertGreater(len(cids), 1)
+
 
 if __name__ == '__main__':
   unittest.main()

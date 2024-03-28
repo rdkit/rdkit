@@ -5279,3 +5279,48 @@ M  END
     CHECK(m->getBondBetweenAtoms(0, 7)->getBondDir() == Bond::BondDir::NONE);
   }
 }
+
+TEST_CASE(
+    "github #7203: Remove invalid stereo groups on MolOps::assignStereochemistry") {
+  SECTION("single-atom groups") {
+    UseLegacyStereoPerceptionFixture reset_stereo_perception;
+
+    for (auto use_legacy : {false, true}) {
+      Chirality::setUseLegacyStereoPerception(use_legacy);
+      INFO(use_legacy);
+      auto m = "C[C@H](N)[C@@H](C)C |o1:1,o2:3|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+      CHECK(m->getAtomWithIdx(3)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(m->getStereoGroups().size() == 1);
+    }
+  }
+  SECTION("two-atom groups") {
+    for (auto use_legacy : {false, true}) {
+      Chirality::setUseLegacyStereoPerception(use_legacy);
+      INFO(use_legacy);
+      {  // no removal necessary
+        auto m = "C[C@H](N)[C@@H](F)C |o1:1,3|"_smiles;
+        REQUIRE(m);
+        CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+              Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+        CHECK(m->getAtomWithIdx(3)->getChiralTag() ==
+              Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+        CHECK(m->getStereoGroups().size() == 1);
+        CHECK(m->getStereoGroups()[0].getAtoms().size() == 2);
+      }
+      {  // removal
+        auto m = "C[C@H](N)[C@@H](C)C |o1:1,3|"_smiles;
+        REQUIRE(m);
+        CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+              Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+        CHECK(m->getAtomWithIdx(3)->getChiralTag() ==
+              Atom::ChiralType::CHI_UNSPECIFIED);
+        CHECK(m->getStereoGroups().size() == 1);
+        CHECK(m->getStereoGroups()[0].getAtoms().size() == 1);
+      }
+    }
+  }
+}
