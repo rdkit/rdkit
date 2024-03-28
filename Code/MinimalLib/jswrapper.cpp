@@ -17,7 +17,9 @@
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolDraw2D/MolDraw2DJS.h>
 
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
 #include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>
+#endif
 
 using namespace RDKit;
 
@@ -342,7 +344,7 @@ emscripten::val get_avalon_fp_as_uint8array(const JSMol &self) {
 }
 #endif
 
-
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
 std::string EdgeTypeToString(RDKit::ScaffoldNetwork::EdgeType edgeType) {
   switch (edgeType) {
     case RDKit::ScaffoldNetwork::EdgeType::Fragment:
@@ -384,8 +386,7 @@ emscripten::val update_scaffold_network_wrapper(JSScaffoldNetwork& js_scaffold_n
 
   return network_obj;
 }
-
-
+#endif
 
 #ifdef RDK_BUILD_MINIMAL_LIB_MMPA
 emscripten::val get_mmpa_frags_helper(const JSMol &self, unsigned int minCuts,
@@ -403,6 +404,8 @@ emscripten::val get_mmpa_frags_helper(const JSMol &self, unsigned int minCuts,
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   register_vector<std::string>("StringList");
+  register_vector<emscripten::val>("JSObjectList");
+  register_vector<unsigned int>("UnsignedIntList");
 
   class_<JSMol>("Mol")
       .function("is_valid", &JSMol::is_valid)
@@ -627,10 +630,12 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 &JSReaction::get_svg_with_highlights);
 #endif
 
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
 class_<JSScaffoldNetwork>("ScaffoldNetwork")
     .constructor<>()
     .function("update_scaffold_network", select_overload<emscripten::val(JSScaffoldNetwork &self, const JSMolList &)>(update_scaffold_network_wrapper))
-    .function("get_scaffold_network", &JSScaffoldNetwork::set_scaffold_params);
+    .function("set_scaffold_params", &JSScaffoldNetwork::set_scaffold_params);
+#endif
 
 #ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
   class_<JSSubstructLibrary>("SubstructLibrary")

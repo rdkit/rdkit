@@ -18,7 +18,9 @@
 #include <GraphMol/MMPA/MMPA.h>
 #endif
 
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
 #include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>
+#endif
 
 class JSMolList;
 
@@ -222,6 +224,7 @@ class JSReaction {
 };
 #endif
 
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
 class JSScaffoldNetwork {
  public:
   JSScaffoldNetwork() : 
@@ -236,6 +239,7 @@ class JSScaffoldNetwork {
   RDKit::ScaffoldNetwork::ScaffoldNetworkParams *d_scaffparams;
   RDKit::ScaffoldNetwork::ScaffoldNetwork *d_network;
 };
+#endif
 
 #ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 class JSSubstructLibrary {
