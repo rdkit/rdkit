@@ -19,18 +19,12 @@ if (RDK_BUILD_FREETYPE_SUPPORT AND RDK_INSTALL_COMIC_FONTS)
     if (needDownload)
         # we started having problems with constantly changing MD5s on the zip file,
         # so now we just check the MD5 of the target file
-        downloadAndCheckMD5("https://fonts.google.com/download?family=Comic%20Neue"
-                "${CMAKE_CURRENT_SOURCE_DIR}/Comic_Neue.zip"
+        downloadAndCheckMD5("https://github.com/google/fonts/raw/main/ofl/comicneue/ComicNeue-Regular.ttf"
+                "${RDKit_DataDir}/Fonts/ComicNeue-Regular.ttf"
+                "fc1eac54b325542d4c133732658f823b")
+        downloadAndCheckMD5("https://github.com/google/fonts/raw/main/ofl/comicneue/OFL.txt"
+                "${RDKit_DataDir}/Fonts/OFL.txt"
                 "")
-        execute_process(COMMAND ${CMAKE_COMMAND} -E tar x
-                ${CMAKE_CURRENT_SOURCE_DIR}/Comic_Neue.zip --format=zip
-                WORKING_DIRECTORY ${RDKit_DataDir}/Fonts)
-        set(target "${RDKit_DataDir}/Fonts/ComicNeue-Regular.ttf")
-        set(md5chksum "26d37a6883b56cb83fd73b8bc16de513")
-        computeMD5(${target} md5)
-        if (NOT md5 STREQUAL ${md5chksum})
-        MESSAGE(FATAL_ERROR "The md5 checksum for ${target} is incorrect; expected: ${md5chksum}, found: ${md5}")
-        endif()
     endif (needDownload)
 
 endif ()
