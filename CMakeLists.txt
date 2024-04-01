@@ -224,12 +224,12 @@ if(RDK_USE_URF)
 endif()
 
 if(RDK_BUILD_XYZ2MOL_SUPPORT)
-    if(NOT RDK_BUILD_YAEHMOP_SUPPORT)
-        message("Enabling YAeHMOP support because xyz2mol is being built")
-        set(RDK_BUILD_YAEHMOP_SUPPORT ON)
-    endif()
     add_definitions(-DRDK_BUILD_XYZ2MOL_SUPPORT)
     include_directories(${RDKit_ExternalDir})
+endif()
+
+if(RDK_BUILD_YAEHMOP_SUPPORT)
+    add_definitions(-DRDK_BUILD_YAEHMOP_SUPPORT)
 endif()
 
 # Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
