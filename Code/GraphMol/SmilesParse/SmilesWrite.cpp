@@ -741,235 +741,6 @@ std::string MolToCXSmiles_internal(const ROMol &romol,
   return res;
 }
 
-}  // namespace detail
-}  // namespace SmilesWrite
-
-std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
-  bool doingCXSmiles = false;
-  return SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
-}
-
-std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
-                          std::uint32_t flags,
-                          RestoreBondDirOption restoreBondDirs) {
-  std::unique_ptr<RWMol> trwmol(new RWMol(romol));
-
-  if (params.canonical && params.rigorousEnhancedStereo) {
-    return canonicalizeStereoGroups(trwmol, params, flags, restoreBondDirs);
-  }
-
-  return SmilesWrite::detail::MolToCXSmiles_internal(romol, params, flags,
-                                                     restoreBondDirs);
-}
-
-std::vector<std::string> MolToRandomSmilesVect(
-    const ROMol &mol, unsigned int numSmiles, unsigned int randomSeed,
-    bool doIsomericSmiles, bool doKekule, bool allBondsExplicit,
-    bool allHsExplicit) {
-  if (randomSeed > 0) {
-    getRandomGenerator(rdcast<int>(randomSeed));
-  }
-  std::vector<std::string> res;
-  res.reserve(numSmiles);
-  for (unsigned int i = 0; i < numSmiles; ++i) {
-    bool canonical = false;
-    int rootedAtAtom = -1;
-    bool doRandom = true;
-    res.push_back(MolToSmiles(mol, doIsomericSmiles, doKekule, rootedAtAtom,
-                              canonical, allBondsExplicit, allHsExplicit,
-                              doRandom));
-  }
-  return res;
-};
-std::string MolFragmentToSmiles(const ROMol &mol,
-                                const SmilesWriteParams &params,
-                                const std::vector<int> &atomsToUse,
-                                const std::vector<int> *bondsToUse,
-                                const std::vector<std::string> *atomSymbols,
-                                const std::vector<std::string> *bondSymbols) {
-  PRECONDITION(atomsToUse.size(), "no atoms provided");
-  PRECONDITION(
-      params.rootedAtAtom < 0 ||
-          static_cast<unsigned int>(params.rootedAtAtom) < mol.getNumAtoms(),
-      "rootedAtomAtom must be less than the number of atoms");
-  PRECONDITION(params.rootedAtAtom < 0 ||
-                   std::find(atomsToUse.begin(), atomsToUse.end(),
-                             params.rootedAtAtom) != atomsToUse.end(),
-               "rootedAtAtom not found in atomsToUse");
-  PRECONDITION(!atomSymbols || atomSymbols->size() >= mol.getNumAtoms(),
-               "bad atomSymbols vector");
-  PRECONDITION(!bondSymbols || bondSymbols->size() >= mol.getNumBonds(),
-               "bad bondSymbols vector");
-  if (!mol.getNumAtoms()) {
-    return "";
-  }
-  int rootedAtAtom = params.rootedAtAtom;
-
-  ROMol tmol(mol, true);
-  if (params.doIsomericSmiles) {
-    tmol.setProp(common_properties::_doIsoSmiles, 1);
-  }
-  std::string res;
-
-  boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms(), 0);
-  for (auto aidx : atomsToUse) {
-    atomsInPlay.set(aidx);
-  }
-  // figure out which bonds are actually in play:
-  boost::dynamic_bitset<> bondsInPlay(mol.getNumBonds(), 0);
-  if (bondsToUse) {
-    for (auto bidx : *bondsToUse) {
-      bondsInPlay.set(bidx);
-    }
-  } else {
-    for (auto aidx : atomsToUse) {
-      for (const auto &bndi : boost::make_iterator_range(
-               mol.getAtomBonds(mol.getAtomWithIdx(aidx)))) {
-        const Bond *bond = mol[bndi];
-        if (atomsInPlay[bond->getOtherAtomIdx(aidx)]) {
-          bondsInPlay.set(bond->getIdx());
-        }
-      }
-    }
-  }
-
-  // copy over the rings that only involve atoms/bonds in this fragment:
-  if (mol.getRingInfo()->isInitialized()) {
-    tmol.getRingInfo()->reset();
-    tmol.getRingInfo()->initialize();
-    for (unsigned int ridx = 0; ridx < mol.getRingInfo()->numRings(); ++ridx) {
-      const INT_VECT &aring = mol.getRingInfo()->atomRings()[ridx];
-      bool keepIt = true;
-      for (auto aidx : aring) {
-        if (!atomsInPlay[aidx]) {
-          keepIt = false;
-          break;
-        }
-      }
-      if (keepIt) {
-        const INT_VECT &bring = mol.getRingInfo()->bondRings()[ridx];
-        for (auto bidx : bring) {
-          if (!bondsInPlay[bidx]) {
-            keepIt = false;
-            break;
-          }
-        }
-        if (keepIt) {
-          tmol.getRingInfo()->addRing(aring, bring);
-        }
-      }
-    }
-  }
-  if (tmol.needsUpdatePropertyCache()) {
-    for (auto atom : tmol.atoms()) {
-      atom->updatePropertyCache(false);
-    }
-  }
-
-  UINT_VECT ranks(tmol.getNumAtoms());
-
-  std::vector<unsigned int> atomOrdering;
-  std::vector<unsigned int> bondOrdering;
-
-  // clean up the chirality on any atom that is marked as chiral,
-  // but that should not be:
-  if (params.doIsomericSmiles) {
-    if (!mol.hasProp(common_properties::_StereochemDone)) {
-      MolOps::assignStereochemistry(tmol, true);
-    } else {
-      tmol.setProp(common_properties::_StereochemDone, 1);
-      // we need the CIP codes:
-      for (auto aidx : atomsToUse) {
-        const Atom *oAt = mol.getAtomWithIdx(aidx);
-        std::string cipCode;
-        if (oAt->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
-          tmol.getAtomWithIdx(aidx)->setProp(common_properties::_CIPCode,
-                                             cipCode);
-        }
-      }
-    }
-  }
-  if (params.canonical) {
-    bool breakTies = true;
-    Canon::rankFragmentAtoms(tmol, ranks, atomsInPlay, bondsInPlay, atomSymbols,
-                             breakTies, params.doIsomericSmiles,
-                             params.doIsomericSmiles);
-    // std::cerr << "RANKS: ";
-    // std::copy(ranks.begin(), ranks.end(),
-    //           std::ostream_iterator<int>(std::cerr, " "));
-    // std::cerr << std::endl;
-    // MolOps::rankAtomsInFragment(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,bondSymbols);
-  } else {
-    for (unsigned int i = 0; i < tmol.getNumAtoms(); ++i) {
-      ranks[i] = i;
-    }
-  }
-#ifdef VERBOSE_CANON
-  for (unsigned int tmpI = 0; tmpI < ranks.size(); tmpI++) {
-    std::cout << tmpI << " " << ranks[tmpI] << " "
-              << *(tmol.getAtomWithIdx(tmpI)) << std::endl;
-  }
-#endif
-
-  std::vector<Canon::AtomColors> colors(tmol.getNumAtoms(), Canon::BLACK_NODE);
-  for (auto aidx : atomsToUse) {
-    colors[aidx] = Canon::WHITE_NODE;
-  }
-  std::vector<Canon::AtomColors>::iterator colorIt;
-  colorIt = colors.begin();
-  // loop to deal with the possibility that there might be disconnected
-  // fragments
-  while (colorIt != colors.end()) {
-    int nextAtomIdx = -1;
-
-    // find the next atom for a traverse
-    if (rootedAtAtom >= 0) {
-      nextAtomIdx = rootedAtAtom;
-      rootedAtAtom = -1;
-    } else {
-      unsigned int nextRank = rdcast<unsigned int>(tmol.getNumAtoms()) + 1;
-      for (auto i : atomsToUse) {
-        if (colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank) {
-          nextRank = ranks[i];
-          nextAtomIdx = i;
-        }
-      }
-    }
-    CHECK_INVARIANT(nextAtomIdx >= 0, "no start atom found");
-    auto subSmi = SmilesWrite::FragmentSmilesConstruct(
-        tmol, nextAtomIdx, colors, ranks, params, atomOrdering, bondOrdering,
-        &atomsInPlay, &bondsInPlay, atomSymbols, bondSymbols);
-
-    res += subSmi;
-    colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
-    if (colorIt != colors.end()) {
-      res += ".";
-    }
-  }
-
-  mol.setProp(common_properties::_smilesAtomOutputOrder, atomOrdering, true);
-  mol.setProp(common_properties::_smilesBondOutputOrder, bondOrdering, true);
-
-  return res;
-}  // end of MolFragmentToSmiles()
-
-std::string MolFragmentToCXSmiles(const ROMol &mol,
-                                  const SmilesWriteParams &params,
-                                  const std::vector<int> &atomsToUse,
-                                  const std::vector<int> *bondsToUse,
-                                  const std::vector<std::string> *atomSymbols,
-                                  const std::vector<std::string> *bondSymbols) {
-  auto res = MolFragmentToSmiles(mol, params, atomsToUse, bondsToUse,
-                                 atomSymbols, bondSymbols);
-  auto cxext = SmilesWrite::getCXExtensions(mol);
-  if (!cxext.empty()) {
-    res += " " + cxext;
-  }
-  return res;
-}
-
-namespace {
-
 bool doesAtomChiralityVary(std::vector<std::unique_ptr<RWMol>> &allMols,
                            unsigned int atomIndex) {
   PRECONDITION(allMols.size() != 0, "bad allMols size");
@@ -1060,18 +831,6 @@ bool doTwoBondsVaryTheSame(std::vector<std::unique_ptr<RWMol>> &allMols,
   return true;
 }
 
-enum class ChiralItemType {
-  ATOM,
-  BOND,
-};
-class ChiralItem {
- public:
-  ChiralItemType chiralAtomType;
-  unsigned int id;
-};
-
-}  // namespace
-
 std::unique_ptr<RWMol> canonicalizeStereoGroups_internal(
     const std::unique_ptr<RWMol> &mol, SmilesWriteParams params,
     std::uint32_t flags, RestoreBondDirOption restoreBondDirs,
@@ -1152,7 +911,7 @@ std::unique_ptr<RWMol> canonicalizeStereoGroups_internal(
 
     std::string newSmi;
     if (groupsToKeep != nullptr && groupsToKeep->size() > 0) {
-      newMol = canonicalizeStereoGroups_internal(
+      newMol = SmilesWrite::detail::canonicalizeStereoGroups_internal(
           newMol, params, flags, restoreBondDirs, &newMol->getStereoGroups(),
           nullptr, false);
     }
@@ -1389,6 +1148,247 @@ std::unique_ptr<RWMol> canonicalizeStereoGroups_internal(
   return molToReturn;
 }
 
+}  // namespace detail
+}  // namespace SmilesWrite
+
+std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
+  bool doingCXSmiles = false;
+  return SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
+}
+
+std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
+                          std::uint32_t flags,
+                          RestoreBondDirOption restoreBondDirs) {
+  std::unique_ptr<RWMol> trwmol(new RWMol(romol));
+
+  if (params.canonical && params.rigorousEnhancedStereo) {
+    return canonicalizeStereoGroups(trwmol, params, flags, restoreBondDirs);
+  }
+
+  return SmilesWrite::detail::MolToCXSmiles_internal(romol, params, flags,
+                                                     restoreBondDirs);
+}
+
+std::vector<std::string> MolToRandomSmilesVect(
+    const ROMol &mol, unsigned int numSmiles, unsigned int randomSeed,
+    bool doIsomericSmiles, bool doKekule, bool allBondsExplicit,
+    bool allHsExplicit) {
+  if (randomSeed > 0) {
+    getRandomGenerator(rdcast<int>(randomSeed));
+  }
+  std::vector<std::string> res;
+  res.reserve(numSmiles);
+  for (unsigned int i = 0; i < numSmiles; ++i) {
+    bool canonical = false;
+    int rootedAtAtom = -1;
+    bool doRandom = true;
+    res.push_back(MolToSmiles(mol, doIsomericSmiles, doKekule, rootedAtAtom,
+                              canonical, allBondsExplicit, allHsExplicit,
+                              doRandom));
+  }
+  return res;
+};
+std::string MolFragmentToSmiles(const ROMol &mol,
+                                const SmilesWriteParams &params,
+                                const std::vector<int> &atomsToUse,
+                                const std::vector<int> *bondsToUse,
+                                const std::vector<std::string> *atomSymbols,
+                                const std::vector<std::string> *bondSymbols) {
+  PRECONDITION(atomsToUse.size(), "no atoms provided");
+  PRECONDITION(
+      params.rootedAtAtom < 0 ||
+          static_cast<unsigned int>(params.rootedAtAtom) < mol.getNumAtoms(),
+      "rootedAtomAtom must be less than the number of atoms");
+  PRECONDITION(params.rootedAtAtom < 0 ||
+                   std::find(atomsToUse.begin(), atomsToUse.end(),
+                             params.rootedAtAtom) != atomsToUse.end(),
+               "rootedAtAtom not found in atomsToUse");
+  PRECONDITION(!atomSymbols || atomSymbols->size() >= mol.getNumAtoms(),
+               "bad atomSymbols vector");
+  PRECONDITION(!bondSymbols || bondSymbols->size() >= mol.getNumBonds(),
+               "bad bondSymbols vector");
+  if (!mol.getNumAtoms()) {
+    return "";
+  }
+  int rootedAtAtom = params.rootedAtAtom;
+
+  ROMol tmol(mol, true);
+  if (params.doIsomericSmiles) {
+    tmol.setProp(common_properties::_doIsoSmiles, 1);
+  }
+  std::string res;
+
+  boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms(), 0);
+  for (auto aidx : atomsToUse) {
+    atomsInPlay.set(aidx);
+  }
+  // figure out which bonds are actually in play:
+  boost::dynamic_bitset<> bondsInPlay(mol.getNumBonds(), 0);
+  if (bondsToUse) {
+    for (auto bidx : *bondsToUse) {
+      bondsInPlay.set(bidx);
+    }
+  } else {
+    for (auto aidx : atomsToUse) {
+      for (const auto &bndi : boost::make_iterator_range(
+               mol.getAtomBonds(mol.getAtomWithIdx(aidx)))) {
+        const Bond *bond = mol[bndi];
+        if (atomsInPlay[bond->getOtherAtomIdx(aidx)]) {
+          bondsInPlay.set(bond->getIdx());
+        }
+      }
+    }
+  }
+
+  // copy over the rings that only involve atoms/bonds in this fragment:
+  if (mol.getRingInfo()->isInitialized()) {
+    tmol.getRingInfo()->reset();
+    tmol.getRingInfo()->initialize();
+    for (unsigned int ridx = 0; ridx < mol.getRingInfo()->numRings(); ++ridx) {
+      const INT_VECT &aring = mol.getRingInfo()->atomRings()[ridx];
+      bool keepIt = true;
+      for (auto aidx : aring) {
+        if (!atomsInPlay[aidx]) {
+          keepIt = false;
+          break;
+        }
+      }
+      if (keepIt) {
+        const INT_VECT &bring = mol.getRingInfo()->bondRings()[ridx];
+        for (auto bidx : bring) {
+          if (!bondsInPlay[bidx]) {
+            keepIt = false;
+            break;
+          }
+        }
+        if (keepIt) {
+          tmol.getRingInfo()->addRing(aring, bring);
+        }
+      }
+    }
+  }
+  if (tmol.needsUpdatePropertyCache()) {
+    for (auto atom : tmol.atoms()) {
+      atom->updatePropertyCache(false);
+    }
+  }
+
+  UINT_VECT ranks(tmol.getNumAtoms());
+
+  std::vector<unsigned int> atomOrdering;
+  std::vector<unsigned int> bondOrdering;
+
+  // clean up the chirality on any atom that is marked as chiral,
+  // but that should not be:
+  if (params.doIsomericSmiles) {
+    if (!mol.hasProp(common_properties::_StereochemDone)) {
+      MolOps::assignStereochemistry(tmol, true);
+    } else {
+      tmol.setProp(common_properties::_StereochemDone, 1);
+      // we need the CIP codes:
+      for (auto aidx : atomsToUse) {
+        const Atom *oAt = mol.getAtomWithIdx(aidx);
+        std::string cipCode;
+        if (oAt->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
+          tmol.getAtomWithIdx(aidx)->setProp(common_properties::_CIPCode,
+                                             cipCode);
+        }
+      }
+    }
+  }
+  if (params.canonical) {
+    bool breakTies = true;
+    Canon::rankFragmentAtoms(tmol, ranks, atomsInPlay, bondsInPlay, atomSymbols,
+                             breakTies, params.doIsomericSmiles,
+                             params.doIsomericSmiles);
+    // std::cerr << "RANKS: ";
+    // std::copy(ranks.begin(), ranks.end(),
+    //           std::ostream_iterator<int>(std::cerr, " "));
+    // std::cerr << std::endl;
+    // MolOps::rankAtomsInFragment(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,bondSymbols);
+  } else {
+    for (unsigned int i = 0; i < tmol.getNumAtoms(); ++i) {
+      ranks[i] = i;
+    }
+  }
+#ifdef VERBOSE_CANON
+  for (unsigned int tmpI = 0; tmpI < ranks.size(); tmpI++) {
+    std::cout << tmpI << " " << ranks[tmpI] << " "
+              << *(tmol.getAtomWithIdx(tmpI)) << std::endl;
+  }
+#endif
+
+  std::vector<Canon::AtomColors> colors(tmol.getNumAtoms(), Canon::BLACK_NODE);
+  for (auto aidx : atomsToUse) {
+    colors[aidx] = Canon::WHITE_NODE;
+  }
+  std::vector<Canon::AtomColors>::iterator colorIt;
+  colorIt = colors.begin();
+  // loop to deal with the possibility that there might be disconnected
+  // fragments
+  while (colorIt != colors.end()) {
+    int nextAtomIdx = -1;
+
+    // find the next atom for a traverse
+    if (rootedAtAtom >= 0) {
+      nextAtomIdx = rootedAtAtom;
+      rootedAtAtom = -1;
+    } else {
+      unsigned int nextRank = rdcast<unsigned int>(tmol.getNumAtoms()) + 1;
+      for (auto i : atomsToUse) {
+        if (colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank) {
+          nextRank = ranks[i];
+          nextAtomIdx = i;
+        }
+      }
+    }
+    CHECK_INVARIANT(nextAtomIdx >= 0, "no start atom found");
+    auto subSmi = SmilesWrite::FragmentSmilesConstruct(
+        tmol, nextAtomIdx, colors, ranks, params, atomOrdering, bondOrdering,
+        &atomsInPlay, &bondsInPlay, atomSymbols, bondSymbols);
+
+    res += subSmi;
+    colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
+    if (colorIt != colors.end()) {
+      res += ".";
+    }
+  }
+
+  mol.setProp(common_properties::_smilesAtomOutputOrder, atomOrdering, true);
+  mol.setProp(common_properties::_smilesBondOutputOrder, bondOrdering, true);
+
+  return res;
+}  // end of MolFragmentToSmiles()
+
+std::string MolFragmentToCXSmiles(const ROMol &mol,
+                                  const SmilesWriteParams &params,
+                                  const std::vector<int> &atomsToUse,
+                                  const std::vector<int> *bondsToUse,
+                                  const std::vector<std::string> *atomSymbols,
+                                  const std::vector<std::string> *bondSymbols) {
+  auto res = MolFragmentToSmiles(mol, params, atomsToUse, bondsToUse,
+                                 atomSymbols, bondSymbols);
+  auto cxext = SmilesWrite::getCXExtensions(mol);
+  if (!cxext.empty()) {
+    res += " " + cxext;
+  }
+  return res;
+}
+
+namespace {
+
+enum class ChiralItemType {
+  ATOM,
+  BOND,
+};
+class ChiralItem {
+ public:
+  ChiralItemType chiralAtomType;
+  unsigned int id;
+};
+
+}  // namespace
+
 std::string canonicalizeStereoGroups(const std::unique_ptr<RWMol> &mol,
                                      const SmilesWriteParams &params,
                                      std::uint32_t flags,
@@ -1426,10 +1426,10 @@ std::string canonicalizeStereoGroups(const std::unique_ptr<RWMol> &mol,
 
   std::unique_ptr<RWMol> canonMol;
   if (orGroups.size() == 0) {
-    canonMol = canonicalizeStereoGroups_internal(
+    canonMol = SmilesWrite::detail::canonicalizeStereoGroups_internal(
         mol, params, flags, restoreBondDirs, &andGroups, nullptr, true);
   } else {
-    canonMol = canonicalizeStereoGroups_internal(
+    canonMol = SmilesWrite::detail::canonicalizeStereoGroups_internal(
         mol, params, flags, restoreBondDirs, &orGroups, &andGroups, true);
   }
   return SmilesWrite::detail::MolToCXSmiles_internal(*canonMol, params, flags,
