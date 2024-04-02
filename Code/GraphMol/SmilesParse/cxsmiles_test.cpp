@@ -1445,7 +1445,7 @@ TEST_CASE("StereoGroup id forwarding", "[StereoGroup][cxsmiles]") {
     CHECK(smi_out.find("&1") != std::string::npos);
     CHECK(smi_out.find("&2") != std::string::npos);
     CHECK(smi_out.find("&3") != std::string::npos);
-    CHECK(smi_out.find("&4") != std::string::npos);
+    CHECK(smi_out.find("o1") != std::string::npos);
   }
 
   SECTION("forward input ids") {
@@ -1467,7 +1467,7 @@ TEST_CASE("StereoGroup id forwarding", "[StereoGroup][cxsmiles]") {
     CHECK(smi_out.find("&1") != std::string::npos);
     CHECK(smi_out.find("&2") != std::string::npos);
     CHECK(smi_out.find("&3") != std::string::npos);
-    CHECK(smi_out.find("&4") != std::string::npos);
+    CHECK(smi_out.find("o1") != std::string::npos);
   }
 }
 

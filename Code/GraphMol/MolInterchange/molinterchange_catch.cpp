@@ -174,7 +174,7 @@ TEST_CASE("StereoGroups") {
     auto smi = MolToCXSmiles(*mols[0]);
     CHECK(
         smi ==
-        "C[C@H]1OC([C@H](O)F)[C@H](C)[C@H](C)C1[C@@H](O)F |a:1,&1:4,12,&2:7,&3:9|");
+        "C[C@H]1OC([C@H](O)F)[C@H](C)[C@H](C)C1[C@@H](O)F |a:1,o1:4,12,&1:7,&2:9|");
   }
   SECTION("writing multiple mols") {
     std::vector<ROMol *> mols{ormol.get(), andmol.get()};

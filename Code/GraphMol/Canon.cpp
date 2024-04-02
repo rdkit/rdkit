@@ -1358,5 +1358,6 @@ void canonicalizeEnhancedStereo(ROMol &mol,
   }
   mol.setStereoGroups(newSgs);
 }
+
 }  // namespace Canon
 }  // namespace RDKit

@@ -317,7 +317,7 @@ inline std::string MolFragmentToCXSmiles(
  */
 
 RDKIT_SMILESPARSE_EXPORT std::string canonicalizeStereoGroups(
-    const std::unique_ptr<RWMol> &molIn, const SmilesWriteParams &params,
+    const std::unique_ptr<RWMol> &mol, const SmilesWriteParams &params,
     std::uint32_t flags, RestoreBondDirOption restoreBondDirs);
 
 }  // namespace RDKit

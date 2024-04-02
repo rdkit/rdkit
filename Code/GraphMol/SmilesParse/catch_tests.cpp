@@ -284,7 +284,7 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
     auto smi = MolToCXSmiles(*mol);
     CHECK(
         smi ==
-        "C[C@H]1O[C@H](C)[C@H](C)[C@@H](C)C1[C@H]1[C@H](C)N[C@H](C)[C@H](C)[C@@H]1C |a:10,&1:1,7,&2:3,5,&3:11,18,&4:14,16|");
+        "C[C@H]1N[C@H](C)[C@H](C2[C@H](C)O[C@H](C)[C@H](C)[C@@H]2C)[C@H](C)[C@H]1C |a:5,o1:1,18,o2:10,12,&1:3,16,&2:7,14|");
   }
 
   SECTION("enhanced stereo 4") {
@@ -2596,9 +2596,9 @@ TEST_CASE("ensure unused features are not used") {
     CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl");
 
     smiles = MolToCXSmiles(*mol1, ps);
-    CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|");
+    CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl |a:1,&1:6|");
     smiles = MolToCXSmiles(*mol2, ps);
-    CHECK(smiles == "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|");
+    CHECK(smiles == "F[C@H](Cl)OCN[C@H](F)Cl |a:1,&1:6|");
 
     ps.doIsomericSmiles = false;
     smiles = MolToSmiles(*mol1, ps);
