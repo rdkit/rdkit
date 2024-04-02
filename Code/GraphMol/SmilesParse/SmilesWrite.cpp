@@ -374,7 +374,6 @@ std::string FragmentSmilesConstruct(
   if (params.canonical && params.doIsomericSmiles) {
     Canon::canonicalizeEnhancedStereo(mol, &ranks);
   }
-
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
                               bondsInPlay, bondSymbols, params.doIsomericSmiles,
                               params.doRandom);
@@ -524,11 +523,11 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     // but that should not be:
     if (params.doIsomericSmiles) {
       tmol->setProp(common_properties::_doIsoSmiles, 1);
+
       if (!mol.hasProp(common_properties::_StereochemDone)) {
         MolOps::assignStereochemistry(*tmol, params.cleanStereo);
       }
     }
-
     if (!doingCXSmiles) {
       // remove any stereo groups that may be present. Otherwise they will be
       // used in the canonicalization
