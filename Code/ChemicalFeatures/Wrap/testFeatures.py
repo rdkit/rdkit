@@ -21,10 +21,10 @@ def feq(v1, v2, tol2=1e-4):
 
 
 def lstFeq(l1, l2, tol=1.e-4):
-  if (len(l1) != len(l2)):
+  if len(l1) != len(l2):
     return 0
-  for i in range(len(l1)):
-    if not feq(l1[i], l2[i], tol):
+  for ll1, ll2 in zip(l1, l2):
+    if not feq(ll1, ll2, tol):
       return 0
   return 1
 
