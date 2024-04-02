@@ -32,8 +32,8 @@ class TestCase(unittest.TestCase):
     self.assertRaises(ValueError, lambda: v1.__setitem__(5, 2))
 
     v1 = ds.DiscreteValueVect(ds.DiscreteValueType.TWOBITVALUE, 30)
-    for i, vv1 in enumerate(v1):
-      vv1 = i % 4
+    for i in range(len(v1)):
+      v1[i] = i % 4
 
     self.assertTrue(len(v1) == 30)
     for i, vv1 in enumerate(v1):
@@ -42,8 +42,8 @@ class TestCase(unittest.TestCase):
     self.assertRaises(ValueError, lambda: v1.__setitem__(10, 6))
 
     v1 = ds.DiscreteValueVect(ds.DiscreteValueType.FOURBITVALUE, 30)
-    for i, vv1 in enumerate(v1):
-      vv1 = i % 16
+    for i in range(len(v1)):
+      v1[i] = i % 16
 
     self.assertTrue(len(v1) == 30)
     self.assertTrue(v1.GetTotalVal() == 211)
@@ -53,8 +53,8 @@ class TestCase(unittest.TestCase):
     self.assertRaises(ValueError, lambda: v1.__setitem__(10, 16))
 
     v1 = ds.DiscreteValueVect(ds.DiscreteValueType.EIGHTBITVALUE, 32)
-    for i, vv1 in enumerate(v1):
-      vv1 = i % 256
+    for i in range(len(v1)):
+      v1[i] = i % 256
 
     self.assertTrue(len(v1) == 32)
     self.assertTrue(v1.GetTotalVal() == 496)
@@ -64,8 +64,8 @@ class TestCase(unittest.TestCase):
     self.assertRaises(ValueError, lambda: v1.__setitem__(10, 256))
 
     v1 = ds.DiscreteValueVect(ds.DiscreteValueType.SIXTEENBITVALUE, 300)
-    for i, vv1 in enumerate(v1):
-      vv1 = i % 300
+    for i in range(len(v1)):
+      v1[i] = i % 300
 
     self.assertTrue(len(v1) == 300)
     self.assertTrue(v1.GetTotalVal() == 44850)
