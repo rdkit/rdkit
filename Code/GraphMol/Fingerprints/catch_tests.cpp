@@ -788,9 +788,9 @@ TEST_CASE(
     CHECK(atom->getHybridization() == Atom::SP2);
 
     if (atom->getAtomicNum() == 8) {
-      CHECK(RDKit::AtomPair::numPiElectrons(atom) == 0);
+      CHECK(numPiElectrons(atom) == 0);
     } else {
-      CHECK(RDKit::AtomPair::numPiElectrons(atom) == 1);
+      CHECK(numPiElectrons(atom) == 1);
     }
   }
 }

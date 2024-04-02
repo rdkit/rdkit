@@ -1021,11 +1021,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
        python::arg("includeChirality") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
-
-  docString = "Returns the number of electrons an atom is using for pi bonding";
-  python::def("GetNumPiElectrons", RDKit::AtomPairs::numPiElectrons,
-              (python::arg("atom")), docString.c_str());
-
   docString = "Returns a Morgan fingerprint for a molecule";
   python::def(
       "GetMorganFingerprint", GetMorganFingerprint,
