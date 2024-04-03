@@ -98,26 +98,6 @@ SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
 INSTALL(TARGETS RDKFuncs
         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )
 
-
-if(NOT MSVC)
-   # code adapted from the wrapper code for
-   # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup
-   ADD_CUSTOM_COMMAND(
-     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
-
-     COMMAND ${CMAKE_COMMAND} -E make_directory swig_csharp
-
-     ## 1. run this custom command only after swig has been run.
-     COMMAND ${GMCS_EXE} -platform:${PLATFORM} -out:RDKit2DotNet.dll -t:library "swig_csharp/*.cs"
-       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-     DEPENDS "${swig_generated_file_fullname}"
-   )
-   ADD_CUSTOM_TARGET(RDKFuncsDLL ALL
-     DEPENDS RDKFuncs ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
-     COMMENT "building mono dll"
-   )
-endif(NOT MSVC)
-
 ADD_CUSTOM_COMMAND(
   OUTPUT RDKitDotNetLib SYMBOLIC
 
