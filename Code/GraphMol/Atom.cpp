@@ -877,17 +877,16 @@ std::string getSupplementalSmilesLabel(const Atom *atom) {
   return label;
 }
 
-unsigned int numPiElectrons(const Atom *atom) {
-  PRECONDITION(atom, "no atom");
+unsigned int numPiElectrons(const Atom &atom) {
   unsigned int res = 0;
-  if (atom->getIsAromatic()) {
+  if (atom.getIsAromatic()) {
     res = 1;
-  } else if (atom->getHybridization() != Atom::SP3) {
-    auto val = static_cast<unsigned int>(atom->getExplicitValence());
-    unsigned int physical_bonds = atom->getNumExplicitHs();
-    const auto &mol = atom->getOwningMol();
-    for (const auto bond : mol.atomBonds(atom)) {
-      if (bond->getValenceContrib(atom) != 0.0) {
+  } else if (atom.getHybridization() != Atom::SP3) {
+    auto val = static_cast<unsigned int>(atom.getExplicitValence());
+    unsigned int physical_bonds = atom.getNumExplicitHs();
+    const auto &mol = atom.getOwningMol();
+    for (const auto bond : mol.atomBonds(&atom)) {
+      if (bond->getValenceContrib(&atom) != 0.0) {
         ++physical_bonds;
       }
     }

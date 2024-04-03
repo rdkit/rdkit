@@ -51,7 +51,7 @@ std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
   }
 
   code = numBranches % maxNumBranches;
-  unsigned int nPi = numPiElectrons(atom) % maxNumPi;
+  unsigned int nPi = numPiElectrons(*atom) % maxNumPi;
   code |= nPi << numBranchBits;
 
   unsigned int typeIdx = 0;

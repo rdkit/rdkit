@@ -461,7 +461,7 @@ RDKIT_GRAPHMOL_EXPORT bool isEarlyAtom(int atomicNum);
 //! returns true if the atom is aromatic or has an aromatic bond
 RDKIT_GRAPHMOL_EXPORT bool isAromaticAtom(const Atom &atom);
 //! returns the number of pi electrons on the atom
-RDKIT_GRAPHMOL_EXPORT unsigned int numPiElectrons(const Atom *atom);
+RDKIT_GRAPHMOL_EXPORT unsigned int numPiElectrons(const Atom &atom);
 };  // namespace RDKit
 
 //! allows Atom objects to be dumped to streams
