@@ -523,6 +523,9 @@ These cannot currently be constructed directly from Python\n";
         ">>> Chem.SetSupplementalSmilesLabel(m.GetAtomWithIdx(0), '<xxx>')\n"
         ">>> Chem.MolToSmiles(m)\n"
         "'C<xxx>'\n");
+    python::def(
+        "GetNumPiElectrons", numPiElectrons, (python::arg("atom")),
+        "Returns the number of electrons an atom is using for pi bonding");
   }
 };
 }  // namespace RDKit

@@ -67,12 +67,36 @@ class TestCase(unittest.TestCase):
 
   def testGithub334(self):
     m1 = Chem.MolFromSmiles('N#C')
-    self.assertEqual(Utils.NumPiElectrons(m1.GetAtomWithIdx(0)), 2)
-    self.assertEqual(Utils.NumPiElectrons(m1.GetAtomWithIdx(1)), 2)
+    self.assertEqual(Chem.GetNumPiElectrons(m1.GetAtomWithIdx(0)), 2)
+    self.assertEqual(Chem.GetNumPiElectrons(m1.GetAtomWithIdx(1)), 2)
 
     m1 = Chem.MolFromSmiles('N#[CH]')
-    self.assertEqual(Utils.NumPiElectrons(m1.GetAtomWithIdx(0)), 2)
-    self.assertEqual(Utils.NumPiElectrons(m1.GetAtomWithIdx(1)), 2)
+    self.assertEqual(Chem.GetNumPiElectrons(m1.GetAtomWithIdx(0)), 2)
+    self.assertEqual(Chem.GetNumPiElectrons(m1.GetAtomWithIdx(1)), 2)
+
+    m = Chem.MolFromSmiles('C=C')
+    self.assertEqual(Chem.GetNumPiElectrons(m.GetAtomWithIdx(0)), 1)
+
+    m = Chem.MolFromSmiles('C#CC')
+    self.assertEqual(Chem.GetNumPiElectrons(m.GetAtomWithIdx(0)), 2)
+    self.assertEqual(Chem.GetNumPiElectrons(m.GetAtomWithIdx(1)), 2)
+
+    m = Chem.MolFromSmiles('O=C=CC')
+    self.assertEqual(Chem.GetNumPiElectrons(m.GetAtomWithIdx(0)), 1)
+    self.assertEqual(Chem.GetNumPiElectrons(m.GetAtomWithIdx(1)), 2)
+    self.assertEqual(Chem.GetNumPiElectrons(m.GetAtomWithIdx(2)), 1)
+    self.assertEqual(Chem.GetNumPiElectrons(m.GetAtomWithIdx(3)), 0)
+
+    m = Chem.MolFromSmiles('c1ccccc1')
+    self.assertEqual(Chem.GetNumPiElectrons(m.GetAtomWithIdx(0)), 1)
+
+    # FIX: this behaves oddly in these cases:
+
+    m = Chem.MolFromSmiles('S(=O)(=O)')
+    self.assertEqual(Chem.GetNumPiElectrons(m.GetAtomWithIdx(0)), 2)
+
+    m = Chem.MolFromSmiles('S(=O)(=O)(O)O')
+    self.assertEqual(Chem.GetNumPiElectrons(m.GetAtomWithIdx(0)), 0)
 
 
 def debugFingerprint(mol, fpCalc, fpExpected):  # pragma: nocover
