@@ -612,11 +612,16 @@ bool WedgeBondFromAtropisomerOneBond2d(
       if (bondToTry->getBondDir() != Bond::BondDir::NONE) {
         if (bondToTry->getBeginAtom()->getIdx() ==
             atomAndBondVecs[whichEnd].first->getIdx()) {
-          BOOST_LOG(rdWarningLog)
-              << "Wedge or hash bond found on atropisomer where not expected - atoms are: "
-              << bond->getBeginAtomIdx() << " " << bond->getEndAtomIdx()
-              << std::endl;
-          return false;
+          if (bondToTry->getBondDir() == Bond::BEGINWEDGE ||
+              bondToTry->getBondDir() == Bond::BEGINDASH) {
+            BOOST_LOG(rdWarningLog)
+                << "Wedge or hash bond found on atropisomer where not expected - atoms are: "
+                << bond->getBeginAtomIdx() << " " << bond->getEndAtomIdx()
+                << std::endl;
+            return false;
+          } else {
+            continue;  // probably a slash up or down for a double bond
+          }
         } else {
           continue;  // wedge or hash bond affecting the OTHER atom
                      // = perhaps a chiral center
