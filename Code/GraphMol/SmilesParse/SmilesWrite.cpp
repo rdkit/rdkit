@@ -524,7 +524,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     if (params.doIsomericSmiles) {
       tmol->setProp(common_properties::_doIsoSmiles, 1);
 
-      if (!mol.hasProp(common_properties::_StereochemDone)) {
+      if (!tmol->hasProp(common_properties::_StereochemDone)) {
         MolOps::assignStereochemistry(*tmol, params.cleanStereo);
       }
     }
