@@ -82,6 +82,58 @@ void test1() {
   TEST_ASSERT(MolToSmiles(*normalized8) ==
               "O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12");
 
+  // Test normalization of 1,3-conjugated cations
+  std::string smi9 = "C[N+](C)=CN";
+  std::shared_ptr<ROMol> m9(SmilesToMol(smi9));
+  ROMOL_SPTR normalized9(normalizer.normalize(*m9));
+  TEST_ASSERT(MolToSmiles(*normalized9) == "CN(C)C=[NH2+]");
+
+  // Test normalization of 1,3-conjugated cations doesn't
+  // affect diazo groups
+  std::string smi10 = "[N-]=[N+]=CN";
+  std::shared_ptr<ROMol> m10(SmilesToMol(smi10));
+  ROMOL_SPTR normalized10(normalizer.normalize(*m10));
+  TEST_ASSERT(MolToSmiles(*normalized10) == "[N-]=[N+]=CN");
+
+  // Test normalization of 1,5-conjugated cations
+  std::string smi11 = "C[N+](C)=CC=CN";
+  std::shared_ptr<ROMol> m11(SmilesToMol(smi11));
+  ROMOL_SPTR normalized11(normalizer.normalize(*m11));
+  TEST_ASSERT(MolToSmiles(*normalized11) == "CN(C)C=CC=[NH2+]");
+
+  // Test normalization of 1,5-conjugated cations doesn't
+  // affect diazo groups
+  std::string smi12 = "[N-]=[N+]=CC=CN";
+  std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
+  ROMOL_SPTR normalized12(normalizer.normalize(*m12));
+  TEST_ASSERT(MolToSmiles(*normalized12) == "[N-]=[N+]=CC=CN");
+
+  // Test normalization of 1,3-conjugated cations
+  std::string smi13 = "C[N+](C)=c1cccc[nH]1";
+  std::shared_ptr<ROMol> m13(SmilesToMol(smi13));
+  ROMOL_SPTR normalized13(normalizer.normalize(*m13));
+  TEST_ASSERT(MolToSmiles(*normalized13) == "CN(C)c1cccc[nH+]1");
+
+  // Test normalization of 1,3-conjugated cations doesn't
+  // affect diazo groups
+  std::string smi14 = "[N-]=[N+]=c1cccc[nH]1";
+  std::shared_ptr<ROMol> m14(SmilesToMol(smi14));
+  ROMOL_SPTR normalized14(normalizer.normalize(*m14));
+  TEST_ASSERT(MolToSmiles(*normalized14) == "[N-]=[N+]=c1cccc[nH]1");
+
+  // Test normalization of 1,5-conjugated cations
+  std::string smi15 = "C[N+](C)=c1cc[nH]cc1";
+  std::shared_ptr<ROMol> m15(SmilesToMol(smi15));
+  ROMOL_SPTR normalized15(normalizer.normalize(*m15));
+  TEST_ASSERT(MolToSmiles(*normalized15) == "CN(C)c1cc[nH+]cc1");
+
+  // Test normalization of 1,5-conjugated cations doesn't
+  // affect diazo groups
+  std::string smi16 = "[N-]=[N+]=c1cc[nH]cc1";
+  std::shared_ptr<ROMol> m16(SmilesToMol(smi16));
+  ROMOL_SPTR normalized16(normalizer.normalize(*m16));
+  TEST_ASSERT(MolToSmiles(*normalized16) == "[N-]=[N+]=c1cc[nH]cc1");
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
