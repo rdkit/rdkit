@@ -236,9 +236,7 @@ class TestCase(unittest.TestCase):
     for i in range(15):
       v1[2 * i] = 1
     l1 = list(v1)
-    self.assertTrue(len(l1) == len(v1))
-    for v, l in zip(v1, l1):
-      self.assertTrue(l == v)
+    self.assertEqual(l1, v1)
     self.assertRaises(IndexError, lambda: v1[40])
 
   def test9ToNumpy(self):
@@ -251,8 +249,7 @@ class TestCase(unittest.TestCase):
     bv[31] = 12
     arr = numpy.zeros((3, ), 'i')
     ds.ConvertToNumpyArray(bv, arr)
-    for bbv, aarr in zip(bv, arr):
-      self.assertEqual(bbv, aarr)
+    self.assertTrue(numpy.all(bv == arr))
 
 
 if __name__ == '__main__':
