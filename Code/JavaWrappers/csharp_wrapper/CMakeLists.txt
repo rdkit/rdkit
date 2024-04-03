@@ -11,6 +11,12 @@ if(NOT MSVC)
   endif (NOT GMCS_EXE)
 endif(NOT MSVC)
 
+find_program(DOTNET_EXE dotnet)
+if (NOT DOTNET_EXE)
+  MESSAGE("dotnet (executable) is not found.  Pleae add it to PATH and rerun cmake.")
+  MESSAGE(FATAL_ERROR "Cannot find required executable dotnet")
+endif (NOT DOTNET_EXE)
+
 
 SET_SOURCE_FILES_PROPERTIES(GraphMolCSharp.i PROPERTIES CPLUSPLUS ON )
 
@@ -111,3 +117,23 @@ if(NOT MSVC)
      COMMENT "building mono dll"
    )
 endif(NOT MSVC)
+
+ADD_CUSTOM_COMMAND(
+  OUTPUT RDKitDotNetLib SYMBOLIC
+
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RDKFuncs> ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND ${DOTNET_EXE} build RDKitDotNetCore.sln
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  DEPENDS RDKFuncs
+)
+
+ADD_CUSTOM_TARGET(RDKitDotNet ALL
+   DEPENDS RDKFuncs RDKitDotNetLib
+   COMMENT "Building RDKit DotNet project"
+)
+
+ADD_TEST(
+  NAME CSharpTests
+  COMMAND ${DOTNET_EXE} test RDKitDotNetCore.sln "-l:console$<SEMICOLON>verbosity=normal" 
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)

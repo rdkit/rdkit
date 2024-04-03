@@ -25,9 +25,12 @@
     <ProjectReference Include="..\swig_csharp\RDKitDotNetCoreWrapper.csproj" />
   </ItemGroup>
 
-  <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
-    <Copy SourceFiles="../RDKFuncs.dll" DestinationFolder="$(OutDir)" />
+  <Target Name="CopyCustomContent1" AfterTargets="AfterBuild" Condition=" '$(OS)' == 'Windows_NT' ">
+          <Copy SourceFiles="../RDKFuncs.dll" DestinationFolder="$(OutDir)" />
   </Target>
+  <Target Name="CopyCustomContent2" AfterTargets="CopyCustomContent1" Condition=" '$(OS)' != 'Windows_NT' ">
+          <Copy SourceFiles="../RDKFuncs.so" DestinationFolder="$(OutDir)" />
+  </Target>	  
 
   <ItemGroup>
     <None Update="xunit.runner.json">
