@@ -236,7 +236,9 @@ class TestCase(unittest.TestCase):
     for i in range(15):
       v1[2 * i] = 1
     l1 = list(v1)
-    self.assertEqual(l1, v1)
+    self.assertTrue(len(l1) == len(v1))
+    for v, l in zip(v1, l1):
+      self.assertTrue(l == v)
     self.assertRaises(IndexError, lambda: v1[40])
 
   def test9ToNumpy(self):
