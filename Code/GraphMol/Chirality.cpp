@@ -3427,8 +3427,6 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
   }
 }
 
-constexpr const char *isStereoAny = "_isStereoAny";
-
 void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
   // used to store the number of single bonds a given
   // single bond is adjacent to
@@ -3539,12 +3537,6 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
   }
   const Conformer &conf = mol.getConformer(confId);
   setDoubleBondNeighborDirections(mol, &conf);
-  for (auto bond : mol.bonds()) {
-    if (bond->hasProp(isStereoAny)) {
-      bond->setStereo(Bond::BondStereo::STEREOANY);
-      bond->clearProp(isStereoAny);
-    }
-  }
 }
 
 void clearSingleBondDirFlags(ROMol &mol, bool onlyWedgeFlags) {
