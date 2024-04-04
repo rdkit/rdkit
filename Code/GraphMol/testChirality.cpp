@@ -2651,8 +2651,8 @@ void stereochemTester(RWMol *m, std::string expectedCIP,
   TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   TEST_ASSERT(m->getBondWithIdx(3)->getStereo() == Bond::STEREONONE);
   // the mol file parser assigned bond dirs, get rid of them
-  for (const auto bond : m->bonds()){
-	  bond->setBondDir(Bond::NONE);
+  for (const auto bond : m->bonds()) {
+    bond->setBondDir(Bond::NONE);
   }
   MolOps::assignStereochemistryFrom3D(*m);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
@@ -2825,11 +2825,11 @@ class TestAssignChiralTypesFromMolParity {
     }
   }
   void fillBondDefVect() {
-	for (const auto bond : d_rwMol->bonds()) {
-		d_bondDefVect.emplace_back(BondDef((bond)->getBeginAtomIdx(),
-                                       		(bond)->getEndAtomIdx(),
-                                       		(bond)->getBondType()));
-	}
+    for (const auto bond : d_rwMol->bonds()) {
+      d_bondDefVect.emplace_back(BondDef((bond)->getBeginAtomIdx(),
+                                         (bond)->getEndAtomIdx(),
+                                         (bond)->getBondType()));
+    }
   }
   void stripBonds() {
     for (unsigned int i = d_rwMol->getNumBonds(); i--;) {
@@ -3204,32 +3204,32 @@ M  END)CTAB";
 }
 
 void testGithub7115() {
-    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-    BOOST_LOG(rdInfoLog)
-    << "GitHub #7115: Quaternary nitrogens with hydrogens are not a candidate for stereo."
-    << std::endl;
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "GitHub #7115: Quaternary nitrogens with hydrogens are not a candidate for stereo."
+      << std::endl;
 
-    {
-        auto s = "C[C@]1(F)C[N@H+](O)C1"_smiles;
-        auto smi = MolToSmiles(*s);
-        TEST_ASSERT(smi == "C[C@]1(F)C[N@H+](O)C1");
-    }
-    {
-        auto s = "C[C@]1(F)C[N@+]([H])(O)C1"_smiles;
-        auto smi = MolToSmiles(*s);
-        TEST_ASSERT(smi == "C[C@]1(F)C[N@H+](O)C1");
-    }
-    {
-        auto insmi = "C[C@]1(F)C[N@+]([H])(O)C1";
-        SmilesParserParams params;
-        params.removeHs = false;
-        std::unique_ptr<RWMol> s(SmilesToMol(insmi, params));
-        auto smi = MolToSmiles(*s);
-        TEST_ASSERT(smi == "[H][N@+]1(O)C[C@](C)(F)C1");
-        // round trip
-        std::unique_ptr<RWMol> s2(SmilesToMol(smi));
-        TEST_ASSERT(MolToSmiles(*s2) == "C[C@]1(F)C[N@H+](O)C1");
-    }
+  {
+    auto s = "C[C@]1(F)C[N@H+](O)C1"_smiles;
+    auto smi = MolToSmiles(*s);
+    TEST_ASSERT(smi == "C[C@]1(F)C[N@H+](O)C1");
+  }
+  {
+    auto s = "C[C@]1(F)C[N@+]([H])(O)C1"_smiles;
+    auto smi = MolToSmiles(*s);
+    TEST_ASSERT(smi == "C[C@]1(F)C[N@H+](O)C1");
+  }
+  {
+    auto insmi = "C[C@]1(F)C[N@+]([H])(O)C1";
+    SmilesParserParams params;
+    params.removeHs = false;
+    std::unique_ptr<RWMol> s(SmilesToMol(insmi, params));
+    auto smi = MolToSmiles(*s);
+    TEST_ASSERT(smi == "[H][N@+]1(O)C[C@](C)(F)C1");
+    // round trip
+    std::unique_ptr<RWMol> s2(SmilesToMol(smi));
+    TEST_ASSERT(MolToSmiles(*s2) == "C[C@]1(F)C[N@H+](O)C1");
+  }
 }
 
 int main() {
