@@ -2819,7 +2819,7 @@ class TestAssignChiralTypesFromMolParity {
         {Atom::CHI_OTHER, 0}};
     MolOps::assignChiralTypesFrom3D(*d_rwMol);
     for (const auto atom : d_rwMol->atoms()) {
-      int parity = parityMap.at((atom)->getChiralTag());
+      int parity = parityMap.at(atom->getChiralTag());
       (atom)->setProp(common_properties::molParity, parity);
       (atom)->setChiralTag(Atom::CHI_UNSPECIFIED);
     }
