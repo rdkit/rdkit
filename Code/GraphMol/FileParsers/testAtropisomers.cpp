@@ -162,6 +162,7 @@ class MolAtropTest {
 
     if (testToRun == "" || testToRun == "sdfTests") {
       std::list<MolTest> sdfTests{
+          MolTest("atropWedgeTest.sdf", true, 16, 16),
           MolTest("AtropTest.sdf", true, 38, 41),
           MolTest("AtropManyChiralsEnhanced.sdf", true, 20, 20),
           MolTest("AtropManyChiralsEnhanced2.sdf", true, 20, 20),
