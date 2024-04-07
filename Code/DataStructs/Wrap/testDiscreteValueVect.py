@@ -26,8 +26,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(v1) == 30)
     self.assertTrue(v1.GetTotalVal() == 15)
 
-    for i in range(len(v1)):
-      self.assertTrue(v1[i] == (i + 1) % 2)
+    for i, vv1 in enumerate(v1):
+      self.assertTrue(vv1 == (i + 1) % 2)
 
     self.assertRaises(ValueError, lambda: v1.__setitem__(5, 2))
 
@@ -36,8 +36,8 @@ class TestCase(unittest.TestCase):
       v1[i] = i % 4
 
     self.assertTrue(len(v1) == 30)
-    for i in range(len(v1)):
-      self.assertTrue(v1[i] == i % 4)
+    for i, vv1 in enumerate(v1):
+      self.assertTrue(vv1 == i % 4)
 
     self.assertRaises(ValueError, lambda: v1.__setitem__(10, 6))
 
@@ -47,8 +47,8 @@ class TestCase(unittest.TestCase):
 
     self.assertTrue(len(v1) == 30)
     self.assertTrue(v1.GetTotalVal() == 211)
-    for i in range(len(v1)):
-      self.assertTrue(v1[i] == i % 16)
+    for i, vv1 in enumerate(v1):
+      self.assertTrue(vv1 == i % 16)
 
     self.assertRaises(ValueError, lambda: v1.__setitem__(10, 16))
 
@@ -58,8 +58,8 @@ class TestCase(unittest.TestCase):
 
     self.assertTrue(len(v1) == 32)
     self.assertTrue(v1.GetTotalVal() == 496)
-    for i in range(len(v1)):
-      self.assertTrue(v1[i] == i % 256)
+    for i, vv1 in enumerate(v1):
+      self.assertTrue(vv1 == i % 256)
 
     self.assertRaises(ValueError, lambda: v1.__setitem__(10, 256))
 
@@ -237,8 +237,8 @@ class TestCase(unittest.TestCase):
       v1[2 * i] = 1
     l1 = list(v1)
     self.assertTrue(len(l1) == len(v1))
-    for i, v in enumerate(v1):
-      self.assertTrue(l1[i] == v)
+    for v, l in zip(v1, l1):
+      self.assertTrue(l == v)
     self.assertRaises(IndexError, lambda: v1[40])
 
   def test9ToNumpy(self):
@@ -251,8 +251,7 @@ class TestCase(unittest.TestCase):
     bv[31] = 12
     arr = numpy.zeros((3, ), 'i')
     ds.ConvertToNumpyArray(bv, arr)
-    for i in range(len(bv)):
-      self.assertEqual(bv[i], arr[i])
+    self.assertTrue(numpy.all(bv == arr))
 
 
 if __name__ == '__main__':
