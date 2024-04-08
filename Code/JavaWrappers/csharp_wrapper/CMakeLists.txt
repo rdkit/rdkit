@@ -1,23 +1,6 @@
 project (GraphMolCSharp)
 
 include_directories( ${RDKit_ExternalDir} )
-
-# find the mcs executables on non-windows systems:
-if(NOT MSVC)
-  find_program(GMCS_EXE mcs)
-  if (NOT GMCS_EXE)
-	MESSAGE ("mcs (executable) is not found. Please add it to PATH and rerun cmake.")
-	MESSAGE(FATAL_ERROR "Cannot find required executable mcs")
-  endif (NOT GMCS_EXE)
-endif(NOT MSVC)
-
-find_program(DOTNET_EXE dotnet)
-if (NOT DOTNET_EXE)
-  MESSAGE("dotnet (executable) is not found.  Pleae add it to PATH and rerun cmake.")
-  MESSAGE(FATAL_ERROR "Cannot find required executable dotnet")
-endif (NOT DOTNET_EXE)
-
-
 SET_SOURCE_FILES_PROPERTIES(GraphMolCSharp.i PROPERTIES CPLUSPLUS ON )
 
 # Setup a few variables for environment-specific things
@@ -98,22 +81,32 @@ SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
 INSTALL(TARGETS RDKFuncs
         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )
 
-ADD_CUSTOM_COMMAND(
-  OUTPUT RDKitDotNetLib SYMBOLIC
+if (RDK_BUILD_DOTNET_CSHARP_TESTS)
 
-  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RDKFuncs> ${CMAKE_CURRENT_SOURCE_DIR}
-  COMMAND ${DOTNET_EXE} build RDKitDotNetCore.sln
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  DEPENDS RDKFuncs
-)
+  find_program(DOTNET_EXE dotnet)
+  if (NOT DOTNET_EXE)
+    MESSAGE("dotnet (executable) is not found.  Pleae add it to PATH and rerun cmake.")
+    MESSAGE(FATAL_ERROR "Cannot find required executable dotnet")
+  endif (NOT DOTNET_EXE)
 
-ADD_CUSTOM_TARGET(RDKitDotNet ALL
-   DEPENDS RDKFuncs RDKitDotNetLib
-   COMMENT "Building RDKit DotNet project"
-)
+  ADD_CUSTOM_COMMAND(
+    OUTPUT RDKitDotNetLib SYMBOLIC
+  
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RDKFuncs> ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${DOTNET_EXE} build RDKitDotNetCore.sln
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS RDKFuncs
+  )
+  
+  ADD_CUSTOM_TARGET(RDKitDotNet ALL
+     DEPENDS RDKFuncs RDKitDotNetLib
+     COMMENT "Building RDKit DotNet project"
+  )
+  
+  ADD_TEST(
+    NAME CSharpTests
+    COMMAND ${DOTNET_EXE} test RDKitDotNetCore.sln "-l:console$<SEMICOLON>verbosity=normal" 
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 
-ADD_TEST(
-  NAME CSharpTests
-  COMMAND ${DOTNET_EXE} test RDKitDotNetCore.sln "-l:console$<SEMICOLON>verbosity=normal" 
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
+endif()
