@@ -556,19 +556,15 @@ TEST_CASE("Molzip with 2D coordinates", "[molzip]") {
 }
 
 TEST_CASE("Molzip with split rings from rgroup", "[molzip]") {
-  std::vector<std::string> frags = {"[*:1]CC[*:2]",
-                                    "[*:1]NN[*:2]",
-				    "[*:1]NN[*:2]"
-  };
+  std::vector<std::string> frags = {"[*:1]CC[*:2]", "[*:1]NN[*:2]",
+                                    "[*:1]NN[*:2]"};
   std::vector<ROMOL_SPTR> mols;
-  for (auto smi: frags) {
+  for (auto smi : frags) {
     mols.push_back(ROMOL_SPTR(SmilesToMol(smi)));
   }
   const auto zippedMol = molzip(mols);
   CHECK(MolToSmiles(*zippedMol) == "C1CNN1");
 }
-  
-
 
 TEST_CASE("Github #6034: FragmentOnBonds may create unexpected radicals") {
   auto m = "C[C@H](Cl)c1ccccc1"_smiles;
@@ -595,4 +591,21 @@ TEST_CASE("Github #6034: FragmentOnBonds may create unexpected radicals") {
       CHECK(at->getTotalValence() == 4);
     }
   }
+}
+
+TEST_CASE(
+    "GitHub #7327: SaltRemover may clear computed properties even if no atoms are removed",
+    "[bug]") {
+  auto m = "C=CC=O"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getRingInfo()->isSymmSssr());
+
+  auto q = "[O,N]"_smarts;
+  REQUIRE(q);
+
+  bool onlyFrags = true;
+  std::unique_ptr<ROMol> m2{deleteSubstructs(*m, *q, onlyFrags)};
+  REQUIRE(m2);
+  CHECK(m2->getNumAtoms() == m->getNumAtoms());  // No atoms removed
+  CHECK(m2->getRingInfo()->isSymmSssr());
 }
