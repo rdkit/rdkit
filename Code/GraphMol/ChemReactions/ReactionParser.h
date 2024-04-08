@@ -128,7 +128,7 @@ inline ChemicalReaction *RxnSmartsToChemicalReaction(
 }  // namespace v1
 //! returns the reaction SMARTS for a reaction
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmarts(
-    const ChemicalReaction &rxn);
+    const ChemicalReaction &rxn, bool includeCX = false);
 
 //! returns the reaction SMILES for a reaction
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(
