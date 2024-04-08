@@ -104,10 +104,6 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
                         bool useChirality) {
   auto *res = new RWMol(mol, false);
   std::vector<MatchVectType> fgpMatches;
-  std::vector<MatchVectType>::const_iterator mati;
-  VECT_INT_VECT
-  matches;  // all matches on the molecule - list of list of atom ids
-  MatchVectType::const_iterator mi;
   // do the substructure matching and get the atoms that match the query
   const bool uniquify = true;
   const bool recursionPossible = true;
@@ -116,48 +112,52 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
 
   // if didn't find any matches nothing to be done here
   // simply return a copy of the molecule
-  if (fgpMatches.size() == 0) {
+  if (fgpMatches.empty()) {
     return res;
   }
 
-  for (mati = fgpMatches.begin(); mati != fgpMatches.end(); mati++) {
+  // all matches on the molecule - list of list of atom ids
+  VECT_INT_VECT matches;
+  matches.reserve(fgpMatches.size());
+  for (auto mati : fgpMatches) {
     INT_VECT match;  // each match onto the molecule - list of atoms ids
-    for (mi = mati->begin(); mi != mati->end(); mi++) {
-      match.push_back(mi->second);
+    match.reserve(mati.size());
+    for (auto mi : mati) {
+      match.push_back(mi.second);
     }
     matches.push_back(match);
   }
 
   // now loop over the list of matches and check if we can delete any of them
   INT_VECT delList;
-
-  VECT_INT_VECT_I mxi, fi;
   if (onlyFrags) {
     VECT_INT_VECT frags;
-
     MolOps::getMolFrags(*res, frags);
-    for (fi = frags.begin(); fi != frags.end(); fi++) {
-      std::sort(fi->begin(), fi->end());
-      for (mxi = matches.begin(); mxi != matches.end(); mxi++) {
-        std::sort(mxi->begin(), mxi->end());
-        if ((*fi) == (*mxi)) {
+    for (auto fi : frags) {
+      std::sort(fi.begin(), fi.end());
+      for (auto mxi : matches) {
+        std::sort(mxi.begin(), mxi.end());
+        if (fi == mxi) {
           INT_VECT tmp;
-          Union((*mxi), delList, tmp);
+          Union(mxi, delList, tmp);
           delList = tmp;
           break;
         }  // end of if we found a matching fragment
-      }    // endof loop over matches
+      }    // end of loop over matches
     }      // end of loop over fragments
-  }        // end of if onlyFrags
-  else {
+  } else {
     // in this case we want to delete any matches we find
     // simply loop over the matches and collect the atoms that need to
     // be removed
-    for (mxi = matches.begin(); mxi != matches.end(); mxi++) {
+    for (auto mxi : matches) {
       INT_VECT tmp;
-      Union((*mxi), delList, tmp);
+      Union(mxi, delList, tmp);
       delList = tmp;
     }
+  }
+
+  if (delList.empty()) {
+    return res;
   }
 
   // now loop over the union list and delete the atoms
@@ -168,14 +168,13 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
     res->removeAtom(idx);
   }
   res->commitBatchEdit();
-  // if we removed any atoms, clear the computed properties:
-  if (delList.size()) {
-    details::updateSubMolConfs(mol, *res, removedAtoms);
 
-    res->clearComputedProps(true);
-    // update our properties, but allow unhappiness:
-    res->updatePropertyCache(false);
-  }
+  details::updateSubMolConfs(mol, *res, removedAtoms);
+
+  res->clearComputedProps(true);
+  // update our properties, but allow unhappiness:
+  res->updatePropertyCache(false);
+
   return res;
 }
 
@@ -206,7 +205,7 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
   INT_VECT delList;
 
   // now loop over the list of matches and replace them:
-  for (const auto& fgpMatche : fgpMatches) {
+  for (const auto &fgpMatche : fgpMatches) {
     INT_VECT match;  // each match onto the molecule - list of atoms ids
     for (const auto &mi : fgpMatche) {
       match.push_back(mi.second);
@@ -612,7 +611,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           dummyAtomMap[newAt] = nbrIdx;
           keepList.push_back(newAt);
           Bond *bnd = connectingBond->copy();
-          // If the connecting bond has stereo settings those cannot be preserved
+          // If the connecting bond has stereo settings those cannot be
+          // preserved
           if (bnd->getStereo() > Bond::STEREOANY) {
             bnd->setStereo(Bond::STEREOANY);
           }
@@ -625,8 +625,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           newBonds.push_back(bnd);
           allNewBonds.push_back(bnd);
 
-          // Check to see if we are breaking a stereo bond definition, by removing one of the stereo atoms
-          // If so, set to the new atom
+          // Check to see if we are breaking a stereo bond definition, by
+          // removing one of the stereo atoms If so, set to the new atom
           for (const auto bond : newMol->atomBonds(sidechainAtom)) {
             if (bond->getIdx() == connectingBond->getIdx()) {
               continue;
@@ -634,7 +634,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
             if (bond->getStereo() > Bond::STEREOANY) {
               auto &stereoAtoms = bond->getStereoAtoms();
-              for (int& stereoAtom : stereoAtoms) {
+              for (int &stereoAtom : stereoAtoms) {
                 if (stereoAtom == static_cast<int>(nbrIdx)) {
                   stereoAtom = static_cast<int>(newAt->getIdx());
                 }
@@ -757,7 +757,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   for (auto citer = mol.beginConformers(); citer != mol.endConformers();
        ++citer) {
     Conformer &newConf = newMol->getConformer((*citer)->getId());
-    for (auto& iter : dummyAtomMap) {
+    for (auto &iter : dummyAtomMap) {
       newConf.setAtomPos(iter.first->getIdx(),
                          (*citer)->getAtomPos(iter.second));
     }
