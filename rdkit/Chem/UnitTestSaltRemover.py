@@ -76,6 +76,22 @@ class TestCase(unittest.TestCase):
     res = saltstrip.StripMol(m, sanitize=False)
     self.assertEqual(Chem.MolToSmiles(res), 'CN1=CC=CC=C1')
 
+  def test_github_7327(self):
+    m = Chem.MolFromSmiles('C=CC=O')
+    assert m
+
+    saltstrip = SaltRemover()
+    m = saltstrip.StripMol(m)
+
+    # No atoms removed
+    assert m.GetNumAtoms() == 4
+
+    # Rotatable bond definition from mmpdb
+    q = Chem.MolFromSmarts('[!$([NH]!@C(=O))&!D1&!$(*#*)]-&!@[!$([NH]!@C(=O))&!D1&!$(*#*)]')
+    assert q
+
+    assert m.GetSubstructMatches(q) == ((1, 2), )
+
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()
