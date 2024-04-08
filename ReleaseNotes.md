@@ -20,6 +20,7 @@ GitHub)
 ## Code removed in this release:
 
 ## Deprecated code (to be removed in a future release):
+
 - AtomPairs.Utils.NumPiElectrons is deprecated in favor of Chem.GetNumPiElectrons.
 AtomPairs.Utils.NumPiElectrons failed if the atom had outgoing dative bonds (see Issue #7318).
 
