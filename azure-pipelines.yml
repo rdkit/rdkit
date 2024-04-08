@@ -126,6 +126,19 @@ jobs:
     python_name: python38
   steps:
   - template: .azure-pipelines/vs_build_swig.yml
+- job: Ubuntu_x64_ubsan
+  timeoutInMinutes: 90
+  pool:
+    vmImage: latest
+  variables:
+    boost_version: 1.84.0
+    compiler: gxx_linux-64
+    cc: gcc-10
+    cxx: g++-10
+    number_of_cores: nproc
+    python_name: python311
+  steps:
+  - template: .azure-pipelines/linux_build_ubsan.yml
 
 # - job: Ubuntu_18_04_x64_fuzzer
 #  timeoutInMinutes: 90
