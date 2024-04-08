@@ -70,31 +70,31 @@ void test1() {
 
   // Test normalization of 1,3-conjugated cations
   TEST_ASSERT(normalize("C[N+](C)=CN") == "CN(C)C=[NH2+]");
-
-  // Test normalization of 1,3-conjugated cations doesn't
-  // affect diazo groups
+  // verify it doesn't affect diazo groups
   TEST_ASSERT(normalize("[N-]=[N+]=CN") == "[N-]=[N+]=CN");
+  // but still applies if the adjacent heteroatom is neutral
+  TEST_ASSERT(normalize("C[N+](N)=CN") == "CN(N)C=[NH2+]");
 
   // Test normalization of 1,5-conjugated cations
   TEST_ASSERT(normalize("C[N+](C)=CC=CN") == "CN(C)C=CC=[NH2+]");
-
-  // Test normalization of 1,5-conjugated cations doesn't
-  // affect diazo groups
+  // verify it doesn't affect diazo groups
   TEST_ASSERT(normalize("[N-]=[N+]=CC=CN") == "[N-]=[N+]=CC=CN");
+  // but still applies if the adjacent heteroatom is neutral
+  TEST_ASSERT(normalize("C[N+](N)=CC=CN") == "CN(N)C=CC=[NH2+]");
 
   // Test normalization of 1,3-conjugated cations
   TEST_ASSERT(normalize("C[N+](C)=c1cccc[nH]1") == "CN(C)c1cccc[nH+]1");
-
-  // Test normalization of 1,3-conjugated cations doesn't
-  // affect diazo groups
+  // verify it doesn't affect diazo groups
   TEST_ASSERT(normalize("[N-]=[N+]=c1cccc[nH]1") == "[N-]=[N+]=c1cccc[nH]1");
+  // but still applies if the adjacent heteroatom is neutral
+  TEST_ASSERT(normalize("C[N+](N)=c1cccc[nH]1") == "CN(N)c1cccc[nH+]1");
 
   // Test normalization of 1,5-conjugated cations
   TEST_ASSERT(normalize("C[N+](C)=c1cc[nH]cc1") == "CN(C)c1cc[nH+]cc1");
-
-  // Test normalization of 1,5-conjugated cations doesn't
-  // affect diazo groups
+  // verify it doesn't affect diazo groups
   TEST_ASSERT(normalize("[N-]=[N+]=c1cc[nH]cc1") == "[N-]=[N+]=c1cc[nH]cc1");
+  // but still applies if the adjacent heteroatom is neutral
+  TEST_ASSERT(normalize("C[N+](N)=c1cc[nH]cc1") == "CN(N)c1cc[nH+]cc1");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
