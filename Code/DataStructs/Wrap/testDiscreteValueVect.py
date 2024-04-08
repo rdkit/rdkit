@@ -251,8 +251,7 @@ class TestCase(unittest.TestCase):
     bv[31] = 12
     arr = numpy.zeros((3, ), 'i')
     ds.ConvertToNumpyArray(bv, arr)
-    for bbv, aarr in zip(bv, arr):
-      self.assertEqual(bbv, aarr)
+    self.assertTrue(numpy.all(bv == arr))
 
 
 if __name__ == '__main__':
