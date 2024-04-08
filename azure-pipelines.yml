@@ -24,7 +24,7 @@ jobs:
     vmImage: ubuntu-20.04
   variables:
     python: python=3.11
-    boost_version: 1.80.0
+    boost_version: 1.82.0
     compiler: gxx_linux-64
     cc: gcc-10
     cxx: g++-10
