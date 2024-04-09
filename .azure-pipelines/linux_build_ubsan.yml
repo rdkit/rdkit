@@ -37,7 +37,7 @@ steps:
     -DRDK_SWIG_STATIC=OFF \
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
-    -DRDK_BUILD_CFFI_LIB=ON
+    -DRDK_BUILD_CFFI_LIB=OFF
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
