@@ -165,15 +165,19 @@ class TestCase(unittest.TestCase):
 
   def testExactConnectionsMatch(self):
     opts = rdRascalMCES.RascalOptions()
-    mol1 = Chem.MolFromSmiles('c1ccccc1C(C)C')
-    mol2 = Chem.MolFromSmiles('c1ccccc1CCC')
+    opts.similarityThreshold = 0.5
+    opts.allBestMCESs = True
+    mol1 = Chem.MolFromSmiles('c1ccccc1C1CCC(C(C)C)C1')
+    mol2 = Chem.MolFromSmiles('c1ccccc1C(C)C')
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)
-    self.assertEqual(results[0].numFragments, 2)
+    self.assertEqual(results[0].numFragments, 1)
+    self.assertEqual(results[0].smartsString, 'c1:c:c:c:c:c:1-C(-C)-C')
 
     opts.exactConnectionsMatch = True
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)
-    self.assertEqual(results[0].numFragments, 1)
-
+    self.assertEqual(results[0].numFragments, 2)
+    self.assertEqual(results[0].smartsString,
+                     '[#6&a&D2]1:[#6&a&D2]:[#6&a&D2]:[#6&a&D2]:[#6&a&D2]:[#6&a&D3]:1.[#6&A&D3](-[#6&A&D1])-[#6&A&D1]')
 
 
 if __name__ == "__main__":
