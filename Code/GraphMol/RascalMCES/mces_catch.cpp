@@ -1207,3 +1207,24 @@ TEST_CASE("Trim small frags") {
   REQUIRE(res.front().getNumFrags() == 2);
   REQUIRE(res.front().getSmarts() == "CCCC(=O)-NCCC-[#6].Cc1:c:c:c:c:c:1");
 }
+
+TEST_CASE("Exact Connection Matches", "[basics]") {
+  {
+    auto m1 = "c1ccccc1CC(=O)C(N)N"_smiles;
+    REQUIRE(m1);
+    auto m2 = "c1ccccc1CC(=O)C2NCC(CN2)C(=O)C(N)N"_smiles;
+    REQUIRE(m2);
+
+    RascalOptions opts;
+    opts.similarityThreshold = 0.5;
+    auto res1 = rascalMCES(*m1, *m2, opts);
+    CHECK(res1.front().getNumFrags() == 1);
+    CHECK(res1.front().getSmarts() == "c1:c:c:c:c:c:1-CC(=O)-C(-N)-N");
+    opts.exactConnectionsMatch = true;
+    auto res2 = rascalMCES(*m1, *m2, opts);
+    CHECK(res2.front().getNumFrags() == 2);
+    CHECK(res2.front().getSmarts() ==
+          "[#6&a&D2]1:[#6&a&D2]:[#6&a&D2]:[#6&a&D2]:[#6&a&D2]:[#6&a&D3]:1"
+          "-[#6&A&D2]-[#6&A&D3]=[#8&A&D1].[#6&A&D3](-[#7&A&D1])-[#7&A&D1]");
+  }
+}
