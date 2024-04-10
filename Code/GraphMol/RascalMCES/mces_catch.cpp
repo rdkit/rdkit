@@ -36,7 +36,7 @@ using namespace RDKit::RascalMCES::details;
 
 void check_smarts_ok(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                      const RascalResult &res) {
-  std::unique_ptr<RDKit::ROMol> qmol(RDKit::SmartsToMol(res.getSmarts()));
+  auto qmol = v2::SmilesParse::MolFromSmarts(res.getSmarts());
   RDKit::MatchVectType dont_care;
   REQUIRE(RDKit::SubstructMatch(mol1, *qmol, dont_care));
   REQUIRE(RDKit::SubstructMatch(mol2, *qmol, dont_care));
@@ -1210,21 +1210,37 @@ TEST_CASE("Trim small frags") {
 
 TEST_CASE("Exact Connection Matches", "[basics]") {
   {
-    auto m1 = "c1ccccc1CC(=O)C(N)N"_smiles;
+    auto m1 = "c1ccccc1OC(=O)C(N)N"_smiles;
     REQUIRE(m1);
-    auto m2 = "c1ccccc1CC(=O)C2NCC(CN2)C(=O)C(N)N"_smiles;
+    auto m2 = "c1ccccc1SC(=O)C2NCC(CN2)C(=O)C(N)N"_smiles;
     REQUIRE(m2);
 
     RascalOptions opts;
-    opts.similarityThreshold = 0.5;
+    opts.similarityThreshold = 0.1;
+    opts.allBestMCESs = true;
     auto res1 = rascalMCES(*m1, *m2, opts);
-    CHECK(res1.front().getNumFrags() == 1);
-    CHECK(res1.front().getSmarts() == "c1:c:c:c:c:c:1-CC(=O)-C(-N)-N");
+    CHECK(res1.front().getNumFrags() == 2);
+    CHECK(res1.front().getSmarts() == "c1:c:c:c:c:c:1.C(=O)-C(-N)-N");
+    auto q1 = v2::SmilesParse::MolFromSmarts(res1.front().getSmarts());
+    std::vector<MatchVectType> smarts_res;
+    SubstructMatch(*m1, *q1, smarts_res);
+    CHECK(smarts_res.size() == 1);
+    // There are 2 equivalent MCESs for the 2nd molecule, so 2 SMARTS matches.
+    SubstructMatch(*m2, *q1, smarts_res);
+    CHECK(smarts_res.size() == 2);
+
     opts.exactConnectionsMatch = true;
     auto res2 = rascalMCES(*m1, *m2, opts);
     CHECK(res2.front().getNumFrags() == 2);
     CHECK(res2.front().getSmarts() ==
-          "[#6&a&D2]1:[#6&a&D2]:[#6&a&D2]:[#6&a&D2]:[#6&a&D2]:[#6&a&D3]:1"
-          "-[#6&A&D2]-[#6&A&D3]=[#8&A&D1].[#6&A&D3](-[#7&A&D1])-[#7&A&D1]");
+          "[#6&a&D2]1:[#6&a&D2]:[#6&a&D2]:[#6&a&D2]:[#6&a&D2]:[#6&a&D3]:1."
+          "[#6&A&D3](=[#8&A&D1])-[#6&A&D3](-[#7&A&D1])-[#7&A&D1]");
+    auto q2 = v2::SmilesParse::MolFromSmarts(res2.front().getSmarts());
+    SubstructMatch(*m1, *q2, smarts_res);
+    CHECK(smarts_res.size() == 1);
+    // With the exactConnectionsMatch option, only the amide group
+    // furthest from the phenyl is a match.
+    SubstructMatch(*m2, *q2, smarts_res);
+    CHECK(smarts_res.size() == 1);
   }
 }
