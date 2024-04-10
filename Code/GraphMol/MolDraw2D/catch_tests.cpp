@@ -9493,7 +9493,6 @@ M  END)CTAB"_ctab;
   std::vector<Point2D> pts8;
   pts8.push_back(Point2D(stod(match8[1]), stod(match8[2])));
   pts8.push_back(Point2D(stod(match8[3]), stod(match8[4])));
-  ++match_begin8;
 
   // pts3[3] and pts3[7] are the atom 10 ends of bond3, pts8[1] is
   // the atom 10 end of bond 8.  They should be close to each other.
