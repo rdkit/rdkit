@@ -2041,21 +2041,21 @@ std::string get_bond_config_block(
     }
 
     if (atropisomerOnly && bd == Bond::BondDir::NONE) {
-        continue;
-      }
+      continue;
+    }
 
     // see if this one is an atropisomer
 
     bool isAnAtropisomer = false;
 
-      const Atom *firstAtom = bond->getBeginAtom();
-      for (auto bondNbr : mol.atomBonds(firstAtom)) {
-        if (bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCW ||
-            bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+    const Atom *firstAtom = bond->getBeginAtom();
+    for (auto bondNbr : mol.atomBonds(firstAtom)) {
+      if (bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+          bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
         isAnAtropisomer = true;
-          break;
-        }
+        break;
       }
+    }
 
     if (atropisomerOnly) {
       // one of the bonds on the beginning atom of this bond must be an
