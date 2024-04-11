@@ -448,11 +448,14 @@ TEST_CASE(
     std::vector<std::string> smiles = {
         "O=NO[Cl+][O-]",
         "[O-][I+3]([O-])([O-])[O-]",
+        "[O-][I+2]([O-])[O-]",
         "F[P-](F)(F)(F)(F)F",
         "F[C+](F)F",
         "F[C-](F)F",
         "F[N+](F)(F)F",
         "F[N-]F",
+        "F[Cl+]F",
+        "F[Br+]F",
     };
     for (const auto &smi : smiles) {
       INFO(smi);

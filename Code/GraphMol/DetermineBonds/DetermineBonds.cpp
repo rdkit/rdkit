@@ -78,17 +78,19 @@ std::vector<unsigned int> possibleValences(
   auto atomNum = atom->getAtomicNum() - atom->getFormalCharge();
   auto numBonds = atom->getDegree();
 
+  std::vector<unsigned int> avalences;
   auto valences = atomicValence.find(atomNum);
-  if (valences == atomicValence.end()) {
-    std::stringstream ss;
-    ss << "determineBondOrdering() does not work with element "
-       << RDKit::PeriodicTable::getTable()->getElementSymbol(
-              atomNum + atom->getFormalCharge())
-       << " with charge " << atom->getFormalCharge();
-    throw ValueErrorException(ss.str());
+  if (valences != atomicValence.end()) {
+    avalences = valences->second;
+  } else {
+    for (auto v : RDKit::PeriodicTable::getTable()->getValenceList(atomNum)) {
+      if (v >= 0) {
+        avalences.push_back(v);
+      }
+    }
   }
   std::vector<unsigned int> possible;
-  for (const auto &valence : valences->second) {
+  for (const auto &valence : avalences) {
     if (numBonds <= valence) {
       possible.push_back(valence);
     }
@@ -102,7 +104,7 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
   const std::unordered_map<int, std::vector<unsigned int>> atomicValence = {
       {1, {1}},  {5, {3, 4}}, {6, {4}},     {7, {3, 4}},     {8, {2, 1, 3}},
       {9, {1}},  {14, {4}},   {15, {5, 3}}, {16, {6, 3, 2}}, {17, {1}},
-      {32, {4}}, {35, {1}},   {50, {2, 4}}, {53, {1}}};
+      {32, {4}}, {35, {1}},   {53, {1}}};
   std::vector<std::vector<unsigned int>> possible(numAtoms);
   for (unsigned int i = 0; i < numAtoms; i++) {
     possible[i] = possibleValences(mol.getAtomWithIdx(i), atomicValence);
