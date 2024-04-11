@@ -3316,7 +3316,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     }
 
     const auto &p0 = conf.getAtomPos(atom->getIdx());
-    const RDGeom::Point3D *nbrs[3];
+    const RDGeom::Point3D *nbrs[4];
     unsigned int nbrIdx = 0;
     int hasWigglyBond = 0;
     for (const auto bond : mol.atomBonds(atom)) {
@@ -3328,9 +3328,6 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
         continue;
       }
       nbrs[nbrIdx++] = &conf.getAtomPos(bond->getOtherAtomIdx(atom->getIdx()));
-      if (nbrIdx == 3) {
-        break;
-      }
     }
     if (hasWigglyBond) {
       continue;
@@ -3347,7 +3344,23 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     } else if (chiralVol > ZERO_VOLUME_TOL) {
       atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
       chiralitySet = true;
+    } else if (nbrIdx == 4) {
+      // The first three neighbors are on the same plane as the chiral atom (or
+      // very close to it). If a 4th neighbor is present, let's see if this one
+      // determines a chiral volume
 
+      auto v4 = *nbrs[3] - p0;
+      // v4 would be in the opposite direction to v3
+      chiralVol = -v1.dotProduct(v2.crossProduct(v4));
+      if (chiralVol < -ZERO_VOLUME_TOL) {
+        atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+        chiralitySet = true;
+      } else if (chiralVol > ZERO_VOLUME_TOL) {
+        atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+        chiralitySet = true;
+      } else {
+        atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+      }
     } else {
       atom->setChiralTag(Atom::CHI_UNSPECIFIED);
     }
@@ -3473,9 +3486,9 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
                   nbrDir == Bond::BondDir::ENDUPRIGHT) {
                 needsDir[nbrBond->getIdx()] = 1;
                 dblBondNbrs[bond->getIdx()].push_back(nbrBond->getIdx());
-                // the search may seem inefficient, but these vectors are going
-                // to be at most 2 long (with very few exceptions). It's just
-                // not worth using a different data structure
+                // the search may seem inefficient, but these vectors are
+                // going to be at most 2 long (with very few exceptions). It's
+                // just not worth using a different data structure
                 if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
                               singleBondNbrs[nbrBond->getIdx()].end(),
                               bond->getIdx()) ==
