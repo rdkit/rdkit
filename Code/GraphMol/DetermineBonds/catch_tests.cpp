@@ -456,6 +456,7 @@ TEST_CASE(
         "F[N-]F",
         "F[Cl+]F",
         "F[Br+]F",
+        "O=[Cl+]",
     };
     for (const auto &smi : smiles) {
       INFO(smi);
