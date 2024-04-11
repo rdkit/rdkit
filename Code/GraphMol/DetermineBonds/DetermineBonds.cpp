@@ -75,14 +75,16 @@ std::vector<T> LazyCartesianProduct<T>::entryAt(uint1024_t pos) const {
 std::vector<unsigned int> possibleValences(
     const RDKit::Atom *atom,
     const std::unordered_map<int, std::vector<unsigned int>> &atomicValence) {
-  auto atomNum = atom->getAtomicNum();
+  auto atomNum = atom->getAtomicNum() - atom->getFormalCharge();
   auto numBonds = atom->getDegree();
 
   auto valences = atomicValence.find(atomNum);
   if (valences == atomicValence.end()) {
     std::stringstream ss;
     ss << "determineBondOrdering() does not work with element "
-       << RDKit::PeriodicTable::getTable()->getElementSymbol(atomNum);
+       << RDKit::PeriodicTable::getTable()->getElementSymbol(
+              atomNum + atom->getFormalCharge())
+       << " with charge " << atom->getFormalCharge();
     throw ValueErrorException(ss.str());
   }
   std::vector<unsigned int> possible;
@@ -100,7 +102,7 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
   const std::unordered_map<int, std::vector<unsigned int>> atomicValence = {
       {1, {1}},  {5, {3, 4}}, {6, {4}},     {7, {3, 4}},     {8, {2, 1, 3}},
       {9, {1}},  {14, {4}},   {15, {5, 3}}, {16, {6, 3, 2}}, {17, {1}},
-      {32, {4}}, {35, {1}},   {53, {1}}};
+      {32, {4}}, {35, {1}},   {50, {2, 4}}, {53, {1}}};
   std::vector<std::vector<unsigned int>> possible(numAtoms);
   for (unsigned int i = 0; i < numAtoms; i++) {
     possible[i] = possibleValences(mol.getAtomWithIdx(i), atomicValence);
@@ -264,7 +266,8 @@ void setAtomicCharges(RWMol &mol, const std::vector<unsigned int> &valency,
   int molCharge = 0;
   for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
     auto atom = mol.getAtomWithIdx(i);
-    int atomCharge = getAtomicCharge(atom->getAtomicNum(), valency[i]);
+    int atomCharge = getAtomicCharge(
+        atom->getAtomicNum() - atom->getFormalCharge(), valency[i]);
     molCharge += atomCharge;
     if (atom->getAtomicNum() == 6) {
       if (atom->getDegree() == 2 && valency[i] == 2) {
@@ -342,8 +345,11 @@ void addBondOrdering(RWMol &mol,
   }
 
   if (MolOps::getFormalCharge(mol) != charge) {
+    mol.debugMol(std::cerr);
     std::stringstream ss;
-    ss << "Final molecular charge does not match input; could not find valid bond ordering";
+    ss << "Final molecular charge (" << charge << ") does not match input ("
+       << MolOps::getFormalCharge(mol)
+       << "); could not find valid bond ordering";
     throw ValueErrorException(ss.str());
   }
 
