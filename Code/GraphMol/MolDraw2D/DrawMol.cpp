@@ -3135,8 +3135,8 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     // If at1->at2->at3 is a straight line, l2f may have ended up on the
     // wrong side of the other bond from l2s because there is no inner
     // side of the bond.  Do it again with a negative offset if so.
-    if (fabs(l1s.directionVector(l1f).dotProduct(l2s.directionVector(l2f)) <
-             0.9999)) {
+    if (fabs(l1s.directionVector(l1f).dotProduct(l2s.directionVector(l2f))) <
+        0.9999) {
       l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
                           -offset, true);
     }
