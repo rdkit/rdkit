@@ -177,6 +177,12 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
                      &RDKit::RascalMCES::RascalOptions::ringMatchesRingOnly,
                      "If True (default), ring bonds won't match ring bonds.")
       .def_readwrite(
+          "exactConnectionsMatch",
+          &RDKit::RascalMCES::RascalOptions::exactConnectionsMatch,
+          "If True (default is False), atoms will only match atoms if they have the same\n"
+          " number of explicit connections.  E.g. the central atom of\n"
+          " C(C)(C) won't match either atom in CC")
+      .def_readwrite(
           "minFragSize", &RDKit::RascalMCES::RascalOptions::minFragSize,
           "Imposes a minimum on the number of atoms in a fragment that may be part of the MCES.  Default -1 means no minimum.")
       .def_readwrite(
