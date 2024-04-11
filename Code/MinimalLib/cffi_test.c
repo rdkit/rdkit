@@ -2182,7 +2182,7 @@ void test_capture_logs() {
   } capture_test;
   capture_test tests[] = {{"tee", set_log_tee}, {"capture", set_log_capture}};
   for (size_t i = 0; i < sizeof(tests) / sizeof(capture_test); ++i) {
-    printf("%d. %s\n", i + 1, tests[i].type);
+    printf("%zu. %s\n", i + 1, tests[i].type);
     log_handle = tests[i].func("dummy");
     assert(!log_handle);
     log_handle = tests[i].func("rdApp.*");

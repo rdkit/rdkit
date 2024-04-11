@@ -32,7 +32,7 @@ steps:
     conda activate rdkit_build
     export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
     export CONDA_BUILD_SYSROOT=${SDKROOT}
-    export CXXFLAGS="${CXXFLAGS} -Wall -Werror"
+    export CXXFLAGS="${CXXFLAGS} -Wall -Wextra -Werror"
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
