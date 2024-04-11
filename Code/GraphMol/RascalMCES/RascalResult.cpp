@@ -34,12 +34,14 @@ RascalResult::RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                            const std::vector<std::pair<int, int>> &vtx_pairs,
                            bool timedOut, bool swapped, double tier1Sim,
                            double tier2Sim, bool ringMatchesRingOnly,
-                           bool singleLargestFrag, int maxFragSep)
+                           bool singleLargestFrag, int maxFragSep,
+                           bool exactConnectionsMatch)
     : d_timedOut(timedOut),
       d_tier1Sim(tier1Sim),
       d_tier2Sim(tier2Sim),
       d_ringMatchesRingOnly(ringMatchesRingOnly),
-      d_maxFragSep(maxFragSep) {
+      d_maxFragSep(maxFragSep),
+      d_exactConnectionsMatch(exactConnectionsMatch) {
   const std::vector<std::vector<int>> *mol1AdjMatrix;
   if (swapped) {
     d_mol1.reset(new RDKit::ROMol(mol2));
@@ -226,6 +228,10 @@ std::string RascalResult::createSmartsString() const {
         mol1Rings->numAtomRings(mol1Atom->getIdx()) &&
         mol2Rings->numAtomRings(mol2Atom->getIdx())) {
       a.expandQuery(RDKit::makeAtomInRingQuery(), Queries::COMPOSITE_AND, true);
+    }
+    if (d_exactConnectionsMatch) {
+      a.expandQuery(RDKit::makeAtomExplicitDegreeQuery(mol1Atom->getDegree()),
+                    Queries::COMPOSITE_AND, true);
     }
     auto ai = smartsMol.addAtom(&a);
     atomMap.insert(std::make_pair(am.first, ai));
