@@ -16,7 +16,6 @@
 #include <DataStructs/DiscreteValueVect.h>
 #include <DataStructs/SparseIntVect.h>
 
-#include "DataStructs.h"
 #include <RDBoost/boost_numpy.h>
 #include <numpy/npy_common.h>
 #include <RDBoost/import_array.h>

@@ -5324,3 +5324,59 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE(
+    "GitHub Issue #7346: Trigonal Pyramid Carbon may or not have a parity depending on atom ordering",
+    "[bug]") {
+  // First atom not in the same plane as the rest
+  const auto m0 = R"CTAB(
+                    3D
+
+  5  4  0  0  1  0            999 V2000
+   -0.2052    0.0804   -0.7454 F   0  0  0  0  0  0
+   -0.5696    0.2231   -2.0688 C   0  0  0  0  0  0
+   -2.2748   -0.0294   -1.1593 Br  0  0  0  0  0  0
+    0.2659   -1.3655   -2.0764 Cl  0  0  0  0  0  0
+   -0.1867    1.1526   -2.4961 D   0  0  0  0  0  0
+  1  2  1  0  0  0
+  2  3  1  0  0  0
+  2  4  1  0  0  0
+  2  5  1  0  0  0
+M  END)CTAB"_ctab;
+
+  // All atoms in the same plane except the rest
+  const auto m1 = R"CTAB(
+                    3D
+
+  5  4  0  0  1  0            999 V2000
+   -0.1867    1.1526   -2.4961 D   0  0  0  0  0  0
+   -0.5696    0.2231   -2.0688 C   0  0  0  0  0  0
+   -2.2748   -0.0294   -1.1593 Br  0  0  0  0  0  0
+    0.2659   -1.3655   -2.0764 Cl  0  0  0  0  0  0
+   -0.2052    0.0804   -0.7454 F   0  0  0  0  0  0
+  1  2  1  0  0  0
+  2  3  1  0  0  0
+  2  4  1  0  0  0
+  2  5  1  0  0  0
+M  END)CTAB"_ctab;
+
+  REQUIRE(m0);
+  REQUIRE(m1);
+
+  const auto cAt0 = m0->getAtomWithIdx(1);
+  const auto cAt1 = m1->getAtomWithIdx(1);
+  REQUIRE(cAt0->getAtomicNum() == 6);
+  REQUIRE(cAt1->getAtomicNum() == 6);
+
+  // Two atoms changes positions in the molblocks, but their coordinates
+  // didn't change, so they must have opposite parities in order to
+  // preserve the absolute chirality
+  CHECK(cAt0->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  CHECK(cAt1->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+
+  CIPLabeler::assignCIPLabels(*m0);
+  CIPLabeler::assignCIPLabels(*m1);
+
+  CHECK(cAt0->getProp<std::string>(common_properties::_CIPCode) ==
+        cAt1->getProp<std::string>(common_properties::_CIPCode));
+}

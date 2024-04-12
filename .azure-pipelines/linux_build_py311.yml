@@ -17,6 +17,7 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    export CXXFLAGS="${CXXFLAGS} -Wall -Werror -Wextra"
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
