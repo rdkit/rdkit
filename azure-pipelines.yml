@@ -127,7 +127,7 @@ jobs:
   steps:
   - template: .azure-pipelines/vs_build_swig.yml
 - job: Ubuntu_x64_ubsan
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
   pool:
     vmImage: ubuntu-latest
   variables:
