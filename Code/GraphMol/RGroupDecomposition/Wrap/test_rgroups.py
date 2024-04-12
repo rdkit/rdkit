@@ -840,6 +840,13 @@ M  END
     RelabelMappedDummies(core, inputLabels=RGroupLabelling.MDLRGroup, outputLabels=RGroupLabelling.Isotope)
     self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([2*])c([1*])cn1")
 
+  def testRgroupMolZip(self):
+    core = Chem.MolFromSmiles("CO")
+    mols = [Chem.MolFromSmiles("C1NNO1")]
+    rgroups, unmatched = RGroupDecompose(core, mols)
+    for rgroup in rgroups:
+      self.assertEqual(Chem.MolToSmiles(Chem.molzip(rgroup)),
+                       Chem.CanonSmiles("C1NNO1"))
 
 if __name__ == '__main__':
   rdBase.DisableLog("rdApp.debug")

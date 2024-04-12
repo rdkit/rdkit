@@ -3656,6 +3656,10 @@ These all require the molecule to have a 3D conformer.
 |                                                     |reproduce values from DRAGON for these descriptors. We       |          |
 |                                                     |believe that this is close.                                  |          |
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
+|DCLV                                                 |New in 2024.03 release.  Eisenhaber et al.                   | C++      |
+|                                                     |J. of Comp. Chem, Vol. 16, pp. 273-284, 1995.                |          |
+|                                                     |https://doi.org/10.1002/jcc.540160303                        |          |
++-----------------------------------------------------+-------------------------------------------------------------+----------+
 
 
 
@@ -3720,8 +3724,8 @@ Lipinski Rule of 5
 Lipinski's "Rule of 5" [#lipinski]_ was introduced to estimate the oral bioavailability of molecules. Poor absorption is likely if the molecule violates more than one of the following conditions: 
 
 * Molecular Weight <= 500 Da
-* No. Hydrogen Bond Donors <= 10
-* No. Hydrogen Bond Acceptors <= 5
+* No. Hydrogen Bond Donors <= 5
+* No. Hydrogen Bond Acceptors <= 10
 * LogP <= 5
 
 .. doctest::

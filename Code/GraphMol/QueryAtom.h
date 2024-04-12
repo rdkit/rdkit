@@ -132,16 +132,16 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
 };  // end o' class
 
 namespace detail {
-inline std::string qhelper(Atom::QUERYATOM_QUERY *q, unsigned int depth) {
+inline std::string qhelper(const Atom::QUERYATOM_QUERY *q, unsigned int depth) {
   std::string res = "";
   if (q) {
     for (unsigned int i = 0; i < depth; ++i) {
       res += "  ";
     }
     res += q->getFullDescription() + "\n";
-    for (Atom::QUERYATOM_QUERY::CHILD_VECT_CI ci = q->beginChildren();
-         ci != q->endChildren(); ++ci) {
-      res += qhelper((*ci).get(), depth + 1);
+    for (const auto &child :
+         boost::make_iterator_range(q->beginChildren(), q->endChildren())) {
+      res += qhelper(child.get(), depth + 1);
     }
   }
   return res;

@@ -285,6 +285,12 @@ void testInorganicAcids() {
     TEST_ASSERT(perhalate);
     res.reset(uncharger.uncharge(*perhalate));
     TEST_ASSERT(MolToSmiles(*res) == "[O-][" + halogen + "+3]([O-])([O-])O");
+    // also test uncharging the already neutralized acid
+    std::unique_ptr<ROMol> perhalic_acid(
+        SmilesToMol("[" + halogen + "](=O)(=O)(=O)O"));
+    TEST_ASSERT(perhalic_acid);
+    res.reset(uncharger.uncharge(*perhalic_acid));
+    TEST_ASSERT(MolToSmiles(*res) == "[O-][" + halogen + "+3]([O-])([O-])O");
   }
   {
     auto hyponitrite = "[O-]N=N[O-]"_smiles;

@@ -1147,8 +1147,7 @@ class MarvinCMLWriter {
   }
 };
 
-std::string MolToMrvBlock(const ROMol &mol, bool includeStereo, int confId,
-                          bool kekulize, bool prettyPrint) {
+std::string MolToMrvBlock(const ROMol &mol, const MrvWriterParams& params, int confId) {
   Utils::LocaleSwitcher ls;
 
   RWMol trwmol(mol);
@@ -1157,11 +1156,11 @@ std::string MolToMrvBlock(const ROMol &mol, bool includeStereo, int confId,
   if (trwmol.needsUpdatePropertyCache()) {
     trwmol.updatePropertyCache(false);
   }
-  if (kekulize) {
+  if (params.kekulize) {
     MolOps::Kekulize(trwmol);
   }
 
-  if (includeStereo && !trwmol.getNumConformers()) {
+  if (params.includeStereo && !trwmol.getNumConformers()) {
     // generate coordinates so that the stereo we generate makes sense
     RDDepict::compute2DCoords(trwmol);
   }
@@ -1171,9 +1170,10 @@ std::string MolToMrvBlock(const ROMol &mol, bool includeStereo, int confId,
   MarvinCMLWriter marvinCMLWriter;
 
   auto marvinMol = marvinCMLWriter.MolToMarvinMol(&trwmol, confId);
+  marvinMol->setPrecision(params.precision);
   ptree pt = marvinMol->toMolPtree();
   std::ostringstream out;
-  if (prettyPrint) {
+  if (params.prettyPrint) {
     write_xml(out, pt,
               boost::property_tree::xml_writer_make_settings<std::string>(
                   '\t', 1, "windows-1252"));
@@ -1191,8 +1191,7 @@ std::string MolToMrvBlock(const ROMol &mol, bool includeStereo, int confId,
 //
 //------------------------------------------------
 void MolToMrvFile(const ROMol &mol, const std::string &fName,
-                  bool includeStereo, int confId, bool kekulize,
-                  bool prettyPrint) {
+                  const MrvWriterParams &params, int confId) {
   auto *outStream = new std::ofstream(fName.c_str());
   if (!(*outStream) || outStream->bad()) {
     delete outStream;
@@ -1201,7 +1200,7 @@ void MolToMrvFile(const ROMol &mol, const std::string &fName,
     throw BadFileException(errout.str());
   }
   std::string outString =
-      MolToMrvBlock(mol, includeStereo, confId, kekulize, prettyPrint);
+      MolToMrvBlock(mol, params, confId);
   *outStream << outString;
   delete outStream;
 }

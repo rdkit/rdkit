@@ -24,6 +24,7 @@
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
+#include <GraphMol/ChemReactions/SanitizeRxn.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 
@@ -1276,7 +1277,7 @@ TEST_CASE("CDXML Parser") {
       auto fname = cdxmlbase + "rxn2.cdxml";
       std::vector<std::string> expected = {"Cl[c:1]1[cH:4][cH:3][cH:2][cH:6][cH:5]1",
            "OC(O)B[c:7]1[cH:8][cH:9][cH:10][cH:11][cH:12]1",
-           "[CH:1]1=[CH:5][C:6]([C:7]2=[CH:12][CH:11]=[CH:10][CH:9]=[CH:8]2)=[CH:2][CH:3]=[CH:4]1"};
+           "[cH:1]1[cH:4][cH:3][cH:2][c:6](-[c:7]2[cH:8][cH:9][cH:10][cH:11][cH:12]2)[cH:5]1"};
       
        auto rxns = CDXMLFileToChemicalReactions(fname);
        CHECK(rxns.size() == 1);
@@ -1297,7 +1298,7 @@ TEST_CASE("CDXML Parser") {
        }
    
        auto smarts = ChemicalReactionToRxnSmarts(*rxns[0]);
-       CHECK(smarts == "[#6&D2:2]1:[#6&D2:3]:[#6&D2:4]:[#6&D3:1](:[#6&D2:5]:[#6&D2:6]:1)-[#17&D1].[#6&D3](-[#5&D2]-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1)(-[#8&D1])-[#8&D1]>>[#6:1]1=[#6:5]-[#6:6](=[#6:2]-[#6:3]=[#6:4]-1)-[#6:7]1-[#6:8]=[#6:9]-[#6:10]=[#6:11]-[#6:12]=1");
+       CHECK(smarts == "[#6&D2:2]1:[#6&D2:3]:[#6&D2:4]:[#6&D3:1](:[#6&D2:5]:[#6&D2:6]:1)-[#17&D1].[#6&D3](-[#5&D2]-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1)(-[#8&D1])-[#8&D1]>>[#6&D2:1]1:[#6&D2:5]:[#6&D3:6](:[#6&D2:2]:[#6&D2:3]:[#6&D2:4]:1)-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1");
   }
 }
 
@@ -1655,4 +1656,135 @@ M  END
   CHECK(ctab.find("SMARTSQ") == std::string::npos);
 
 }
+}
+
+TEST_CASE("Github #6492: In place transforms incorrectly change atomic numbers") {
+  SECTION("minimal"){
+    auto rxn = "[O-:1]>>[*-0:1]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    auto m = "[O-]C"_smiles;
+    REQUIRE(m);
+    rxn->runReactant(*m);
+    CHECK(MolToSmiles(*m)=="CO");
+  }
+  SECTION("as reported"){
+    auto rxn = "[n;+0!H0:1]:[a:2]:[a:3]:[c:4]=[N!$(*[O-]),O;+1H0:5]>>[n+1:1]:[*:2]:[*:3]:[*:4]-[*+0:5]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    auto m = "[nH]1ccc(=[N+](C)C)cc1"_smiles;
+    REQUIRE(m);
+    rxn->runReactant(*m);
+    CHECK(MolToSmiles(*m)=="CN(C)c1cc[nH+]cc1");
+  }
+}
+
+TEST_CASE("Github #7028: Spacing bug in compute2DCoordsForReaction") {
+  SECTION("minimal"){
+    auto rxn = "C1CCCCC1.C1CCCCC1.C1CCCCC1>>C1CCCCC1.C1CCCCC1"_rxnsmiles;
+    REQUIRE(rxn);
+    RDDepict::compute2DCoordsForReaction(*rxn);
+    std::vector<std::pair<double,double>> xbounds;
+    for(const auto &reactant : rxn->getReactants()){
+      REQUIRE(reactant->getNumConformers()==1);
+      std::pair<double,double> bounds={1e8,-1e8};
+      auto conf = reactant->getConformer();
+      for(unsigned int i=0;i<conf.getNumAtoms();++i){
+        auto pos = conf.getAtomPos(i);
+        bounds.first = std::min(bounds.first,pos.x);
+        bounds.second = std::max(bounds.second,pos.x);
+      }
+      xbounds.push_back(bounds);
+    }
+    for(const auto &product : rxn->getProducts()){
+      REQUIRE(product->getNumConformers()==1);
+      std::pair<double,double> bounds={1e8,-1e8};
+      auto conf = product->getConformer();
+      for(unsigned int i=0;i<conf.getNumAtoms();++i){
+        auto pos = conf.getAtomPos(i);
+        bounds.first = std::min(bounds.first,pos.x);
+        bounds.second = std::max(bounds.second,pos.x);
+      }
+      xbounds.push_back(bounds);
+    }
+    REQUIRE(xbounds.size()==5);
+    CHECK(xbounds[0].second < xbounds[1].first);
+    CHECK(xbounds[1].second < xbounds[2].first);
+    CHECK(xbounds[2].second < xbounds[3].first);
+    CHECK(xbounds[3].second < xbounds[4].first);
+  }   
+}
+
+TEST_CASE("allow sanitization of reaction products") {
+  std::string smi="C1=CC=CC=C1>>C1=CC=CC=N1";
+  bool useSmiles=true;
+  auto rxn = std::unique_ptr<ChemicalReaction>(RxnSmartsToChemicalReaction(smi,nullptr,useSmiles));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+  CHECK(rxn->getReactants()[0]->getBondWithIdx(0)->getIsAromatic()==false);
+  CHECK(rxn->getProducts()[0]->getBondWithIdx(0)->getIsAromatic()==false);
+  {
+    // by default we do product sanitization
+    ChemicalReaction rxncp(*rxn);
+    RxnOps::sanitizeRxn(rxncp);
+    CHECK(rxncp.getReactants()[0]->getBondWithIdx(0)->getIsAromatic()==true);
+    CHECK(rxncp.getProducts()[0]->getBondWithIdx(0)->getIsAromatic()==true);
+
+  }
+  {
+    // but we can turn it off
+    ChemicalReaction rxncp(*rxn);
+    unsigned int sanitizeOps = RxnOps::SANITIZE_ALL ^ RxnOps::SANITIZE_ADJUST_PRODUCTS;
+    unsigned int failed;
+    RxnOps::sanitizeRxn(rxncp,failed,sanitizeOps);
+    CHECK(rxncp.getReactants()[0]->getBondWithIdx(0)->getIsAromatic()==true);
+    CHECK(rxncp.getProducts()[0]->getBondWithIdx(0)->getIsAromatic()==false);
+
+  }
+}
+
+TEST_CASE("sanitizeRxnAsMols") {
+  SECTION("basics"){
+    // silly example for testing
+    auto rxn = "C1=CC=CC=C1>CN(=O)=O>C1=CC=CC=N1"_rxnsmiles;
+    REQUIRE(rxn);
+    CHECK(!rxn->getReactants()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(!rxn->getProducts()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(rxn->getAgents()[0]->getAtomWithIdx(1)->getFormalCharge()==0);
+
+    RxnOps::sanitizeRxnAsMols(*rxn);
+    CHECK(rxn->getReactants()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(rxn->getProducts()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(rxn->getAgents()[0]->getAtomWithIdx(1)->getFormalCharge()==1);
+  }
+  SECTION("sanitization options"){
+    // silly example for testing
+    auto rxn = "C1=CC=CC=C1>CN(=O)=O>C1=CC=CC=N1"_rxnsmiles;
+    REQUIRE(rxn);
+    CHECK(!rxn->getReactants()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(!rxn->getProducts()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(rxn->getAgents()[0]->getAtomWithIdx(1)->getFormalCharge()==0);
+
+    RxnOps::sanitizeRxnAsMols(*rxn,MolOps::SanitizeFlags::SANITIZE_CLEANUP);
+    CHECK(!rxn->getReactants()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(!rxn->getProducts()[0]->getBondWithIdx(0)->getIsAromatic());
+    CHECK(rxn->getAgents()[0]->getAtomWithIdx(1)->getFormalCharge()==1);
+  }
+  SECTION("sanitization failures"){
+    { // reactant
+      auto rxn = "c1cccc1>CN(=O)=O>CC"_rxnsmiles;
+      REQUIRE(rxn);
+      CHECK_THROWS_AS(RxnOps::sanitizeRxnAsMols(*rxn),MolSanitizeException);
+    }
+    { // product
+      auto rxn = "CC>CN(=O)=O>c1cccn1"_rxnsmiles;
+      REQUIRE(rxn);
+      CHECK_THROWS_AS(RxnOps::sanitizeRxnAsMols(*rxn),MolSanitizeException);
+    }
+    { // agent
+      auto rxn = "CC>CO(=O)=O>CC"_rxnsmiles;
+      REQUIRE(rxn);
+      CHECK_THROWS_AS(RxnOps::sanitizeRxnAsMols(*rxn),MolSanitizeException);
+    }
+  }
 }

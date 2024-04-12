@@ -1,6 +1,7 @@
-// $Id$
 //
-//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2024, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,10 +52,12 @@
 
 namespace RDKit {
 
+using namespace v2::FileParsers;
+
 namespace {
 void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
-                        bool sanitize, bool removeHs, bool strictParsing,
-                        ChemicalReaction *&rxn) {
+                        const MolFileParserParams &params,
+                        std::unique_ptr<ChemicalReaction> &rxn) {
   std::string tempStr;
   // FIX: parse name and comment fields
   line++;
@@ -74,7 +77,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
   if (tempStr.size() < 6) {
     throw ChemicalReactionParserException("rxn counts line is too short");
   }
-  rxn = new ChemicalReaction();
+  rxn.reset(new ChemicalReaction());
   try {
     nReacts =
         FileParserUtils::stripSpacesAndCast<unsigned int>(tempStr.substr(0, 3));
@@ -96,6 +99,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     errout << "Cannot convert " << tempStr.substr(spos, 3) << " to int";
     throw ChemicalReactionParserException(errout.str());
   }
+
   for (unsigned int i = 0; i < nReacts; ++i) {
     line++;
     tempStr = getLine(inStream);
@@ -107,8 +111,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     }
     ROMol *react;
     try {
-      react =
-          MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+      react = MolFromMolDataStream(inStream, line, params).release();
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse reactant " << i << ". The error was:\n\t"
@@ -131,8 +134,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     }
     ROMol *prod;
     try {
-      prod =
-          MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+      prod = MolFromMolDataStream(inStream, line, params).release();
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse product " << i << ". The error was:\n\t"
@@ -154,9 +156,14 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     if (tempStr.substr(0, 4) != "$MOL") {
       throw ChemicalReactionParserException("$MOL header not found");
     }
+    // we don't sanitize or remove Hs from agents
+    MolFileParserParams agentParams;
+    agentParams.sanitize = false;
+    agentParams.removeHs = false;
+    agentParams.strictParsing = params.strictParsing;
     ROMol *agent;
     try {
-      agent = MolDataStreamToMol(inStream, line, false);
+      agent = MolFromMolDataStream(inStream, line, agentParams).release();
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse agent " << i << ". The error was:\n\t"
@@ -168,8 +175,8 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
 }
 
 void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
-                        bool sanitize, bool removeHs, bool strictParsing,
-                        ChemicalReaction *&rxn) {
+                        const MolFileParserParams &params,
+                        std::unique_ptr<ChemicalReaction> &rxn) {
   std::string tempStr;
 
   // skip the header block:
@@ -202,7 +209,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   if (tempStr.length() < 14 || tempStr.substr(0, 14) != "BEGIN REACTANT") {
     throw FileParseException("BEGIN REACTANT line not found");
   }
-  rxn = new ChemicalReaction();
+  rxn.reset(new ChemicalReaction());
   const bool expectMEND = false;
   for (unsigned int i = 0; i < nReacts; ++i) {
     RWMol *react;
@@ -213,9 +220,8 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     try {
       FileParserUtils::ParseV3000CTAB(&inStream, line, react, conf,
                                       chiralityPossible, natoms, nbonds,
-                                      strictParsing, expectMEND);
-      FileParserUtils::finishMolProcessing(react, chiralityPossible, sanitize,
-                                           removeHs);
+                                      params.strictParsing, expectMEND);
+      FileParserUtils::finishMolProcessing(react, chiralityPossible, params);
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse reactant " << i << ". The error was:\n\t"
@@ -231,13 +237,11 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   tempStr = FileParserUtils::getV3000Line(&inStream, line);
   boost::to_upper(tempStr);
   if (tempStr.length() < 12 || tempStr.substr(0, 12) != "END REACTANT") {
-    delete rxn;
     throw FileParseException("END REACTANT line not found");
   }
   tempStr = FileParserUtils::getV3000Line(&inStream, line);
   boost::to_upper(tempStr);
   if (tempStr.length() < 13 || tempStr.substr(0, 13) != "BEGIN PRODUCT") {
-    delete rxn;
     throw FileParseException("BEGIN PRODUCT line not found");
   }
   for (unsigned int i = 0; i < nProds; ++i) {
@@ -249,9 +253,8 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     try {
       FileParserUtils::ParseV3000CTAB(&inStream, line, prod, conf,
                                       chiralityPossible, natoms, nbonds,
-                                      strictParsing, expectMEND);
-      FileParserUtils::finishMolProcessing(prod, chiralityPossible, sanitize,
-                                           removeHs);
+                                      params.strictParsing, expectMEND);
+      FileParserUtils::finishMolProcessing(prod, chiralityPossible, params);
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse product " << i << ". The error was:\n\t"
@@ -267,7 +270,6 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   tempStr = FileParserUtils::getV3000Line(&inStream, line);
   boost::to_upper(tempStr);
   if (tempStr.length() < 11 || tempStr.substr(0, 11) != "END PRODUCT") {
-    delete rxn;
     throw FileParseException("END PRODUCT line not found");
   }
 
@@ -275,7 +277,6 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     tempStr = FileParserUtils::getV3000Line(&inStream, line);
     boost::to_upper(tempStr);
     if (tempStr.length() < 11 || tempStr.substr(0, 11) != "BEGIN AGENT") {
-      delete rxn;
       throw FileParseException("BEGIN AGENT line not found");
     }
   }
@@ -289,8 +290,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
       FileParserUtils::ParseV3000CTAB(&inStream, line, agent, conf,
                                       chiralityPossible, natoms, nbonds, true,
                                       false);
-      FileParserUtils::finishMolProcessing(agent, chiralityPossible, sanitize,
-                                           removeHs);
+      FileParserUtils::finishMolProcessing(agent, chiralityPossible, params);
 
     } catch (FileParseException &e) {
       std::ostringstream errout;
@@ -305,18 +305,19 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     tempStr = FileParserUtils::getV3000Line(&inStream, line);
     boost::to_upper(tempStr);
     if (tempStr.length() < 9 || tempStr.substr(0, 9) != "END AGENT") {
-      delete rxn;
       throw FileParseException("END AGENT line not found");
     }
   }
 }
 }  // namespace
 
+namespace v2 {
+namespace ReactionParser {
+
 //! Parse a text stream in MDL rxn format into a ChemicalReaction
-ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &inStream,
-                                                  unsigned int &line,
-                                                  bool sanitize, bool removeHs,
-                                                  bool strictParsing) {
+std::unique_ptr<ChemicalReaction> ReactionFromRxnDataStream(
+    std::istream &inStream, unsigned int &line,
+    const MolFileParserParams &params) {
   std::string tempStr;
 
   // header line
@@ -333,19 +334,16 @@ ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &inStream,
     version = 3000;
   }
 
-  ChemicalReaction *res = nullptr;
+  std::unique_ptr<ChemicalReaction> res;
   try {
     if (version == 2000) {
-      ParseV2000RxnBlock(inStream, line, sanitize, removeHs, strictParsing,
-                         res);
+      ParseV2000RxnBlock(inStream, line, params, res);
     } else {
-      ParseV3000RxnBlock(inStream, line, sanitize, removeHs, strictParsing,
-                         res);
+      ParseV3000RxnBlock(inStream, line, params, res);
     }
   } catch (ChemicalReactionParserException &e) {
     // catch our exceptions and throw them back after cleanup
-    delete res;
-    res = nullptr;
+    res.reset();
     throw e;
   }
   // convert atoms to queries:
@@ -365,35 +363,29 @@ ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &inStream,
       QueryOps::replaceAtomWithQueryAtom((RWMol *)iter->get(), (*atomIt));
     }
   }
-  updateProductsStereochem(res);
+  updateProductsStereochem(res.get());
 
   // RXN-based reactions do not have implicit properties
   res->setImplicitPropertiesFlag(false);
   return res;
 };
 
-ChemicalReaction *RxnBlockToChemicalReaction(const std::string &rxnBlock,
-                                             bool sanitize, bool removeHs,
-                                             bool strictParsing) {
+std::unique_ptr<ChemicalReaction> ReactionFromRxnBlock(
+    const std::string &rxnBlock, const MolFileParserParams &params) {
   std::istringstream inStream(rxnBlock);
   unsigned int line = 0;
-  return RxnDataStreamToChemicalReaction(inStream, line, sanitize, removeHs,
-                                         strictParsing);
+  return ReactionFromRxnDataStream(inStream, line, params);
 };
 
-ChemicalReaction *RxnFileToChemicalReaction(const std::string &fName,
-                                            bool sanitize, bool removeHs,
-                                            bool strictParsing) {
+std::unique_ptr<ChemicalReaction> ReactionFromRxnFile(
+    const std::string &fName, const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
-  if (!inStream) {
+  if (!inStream || inStream.eof()) {
     return nullptr;
   }
-  ChemicalReaction *res = nullptr;
-  if (!inStream.eof()) {
-    unsigned int line = 0;
-    res = RxnDataStreamToChemicalReaction(inStream, line, sanitize, removeHs,
-                                          strictParsing);
-  }
-  return res;
+  unsigned int line = 0;
+  return ReactionFromRxnDataStream(inStream, line, params);
 };
+}  // namespace ReactionParser
+}  // namespace v2
 }  // namespace RDKit

@@ -9,9 +9,9 @@ steps:
     conda create --name rdkit_build ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
         py-boost=$(boost_version) libboost=$(boost_version) ^
-        numpy matplotlib cairo pillow eigen pandas jupyter
+        numpy matplotlib=3.8 cairo pillow eigen pandas=2.1
     call activate rdkit_build
-    conda install -c conda-forge sphinx myst-parser jupyter pytest nbval
+    conda install -c conda-forge sphinx myst-parser ipython=8.20 jupyter pytest nbval
     conda install -c conda-forge cmake
   displayName: Install dependencies
 - script: |

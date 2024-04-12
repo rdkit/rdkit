@@ -26,7 +26,7 @@ AtropisomerBond::AtropisomerBond(const CIPMol &mol, Bond *bond, Atom *startAtom,
   CHECK_INVARIANT(d_cfg == Bond::STEREOATROPCW || d_cfg == Bond::STEREOATROPCCW,
                   "bad config")
 
-  AtropAtomAndBondVec atomAndBondVecs[2];
+  Atropisomers::AtropAtomAndBondVec atomAndBondVecs[2];
   if (!Atropisomers::getAtropisomerAtomsAndBonds(bond, atomAndBondVecs,
                                                  bond->getOwningMol())) {
     return;  // not an atropisomer

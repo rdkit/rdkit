@@ -27,6 +27,13 @@
 #include <GraphMol/details.h>
 
 namespace RDKit {
+class Atom;
+}
+//! allows Atom objects to be dumped to streams
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
+                                               const RDKit::Atom &at);
+
+namespace RDKit {
 class ROMol;
 class RWMol;
 class AtomMonomerInfo;
@@ -69,6 +76,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   friend class MolPickler;  //!< the pickler needs access to our privates
   friend class ROMol;
   friend class RWMol;
+  friend std::ostream &(::operator<<)(std::ostream &target, const Atom &at);
 
  public:
   // FIX: grn...
@@ -201,6 +209,13 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
       - requires an owning molecule
   */
   int getImplicitValence() const;
+
+  //! returns whether the atom has a valency violation or not
+  /*!
+    <b>Notes:</b>
+      - requires an owning molecule
+  */
+  bool hasValenceViolation() const;
 
   //! returns the number of radical electrons for this Atom
   /*!
@@ -440,16 +455,16 @@ RDKIT_GRAPHMOL_EXPORT std::string getAtomValue(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom,
                                                       const std::string &label);
 RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);
-};  // namespace RDKit
-//! allows Atom objects to be dumped to streams
-RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
-                                               const RDKit::Atom &at);
 
-namespace RDKit {
 //! returns true if the atom is to the left of C
 RDKIT_GRAPHMOL_EXPORT bool isEarlyAtom(int atomicNum);
 //! returns true if the atom is aromatic or has an aromatic bond
 RDKIT_GRAPHMOL_EXPORT bool isAromaticAtom(const Atom &atom);
+//! returns the number of pi electrons on the atom
+RDKIT_GRAPHMOL_EXPORT unsigned int numPiElectrons(const Atom &atom);
+};  // namespace RDKit
 
-}  // namespace RDKit
+//! allows Atom objects to be dumped to streams
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
+                                               const RDKit::Atom &at);
 #endif

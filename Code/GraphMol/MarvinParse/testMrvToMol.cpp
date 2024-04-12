@@ -110,7 +110,7 @@ class MrvTests {
           bondCount(bondCountInit){};
   };
 
-  RWMol *GetMol(const MolTest *molTest) {
+  RWMol *GetMolv1(const MolTest *molTest) {
     std::string rdbase = getenv("RDBASE");
     std::string fName =
         rdbase + "/Code/GraphMol/MarvinParse/test_data/" + molTest->fileName;
@@ -123,13 +123,45 @@ class MrvTests {
     }
   }
 
-  ChemicalReaction *GetReaction(const RxnTest *rxnTest) {
+  ChemicalReaction *GetReactionv1(const RxnTest *rxnTest) {
     std::string rdbase = getenv("RDBASE");
     std::string fName =
         rdbase + "/Code/GraphMol/MarvinParse/test_data/" + rxnTest->fileName;
 
     try {
       return MrvFileToChemicalReaction(fName, true, false);
+    } catch (const std::exception &e) {
+      std::cerr << e.what() << '\n';
+    }
+    throw BadFileException("Could not parse the MRV block");
+  }
+
+  std::unique_ptr<RWMol> GetMolv2(const MolTest *molTest) {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/MarvinParse/test_data/" + molTest->fileName;
+
+    v2::MarvinParser::MrvParserParams params;
+    params.removeHs = false;
+    params.sanitize = molTest->sanitizeFlag;
+    try {
+      return v2::MarvinParser::MolFromMrvFile(fName, params);
+    } catch (const std::exception &e) {
+      std::cerr << e.what() << '\n';
+      throw BadFileException("Could not parse the MRV block");
+    }
+  }
+
+  std::unique_ptr<ChemicalReaction> GetReactionv2(const RxnTest *rxnTest) {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/MarvinParse/test_data/" + rxnTest->fileName;
+
+    v2::MarvinParser::MrvParserParams params;
+    params.removeHs = false;
+    params.sanitize = true;
+    try {
+      return ReactionFromMrvFile(fName, params);
     } catch (const std::exception &e) {
       std::cerr << e.what() << '\n';
     }
@@ -212,7 +244,7 @@ class MrvTests {
         std::string outMolStr = "";
         try {
           outMolStr = MolToMrvBlock(*smilesMol, true, -1, true, false);
-        } catch (const RDKit::KekulizeException &e) {
+        } catch (const RDKit::KekulizeException &) {
           outMolStr = "";
 
           if (outMolStr == "") {
@@ -228,7 +260,7 @@ class MrvTests {
         }
         BOOST_LOG(rdInfoLog) << "done" << std::endl;
       }
-    } catch (const std::exception &e) {
+    } catch (const std::exception &) {
       if (smilesTest->expectedResult != false) {
         throw;
       }
@@ -251,25 +283,36 @@ class MrvTests {
         return;
       }
 
-      std::unique_ptr<RWMol> mol(GetMol(molTest));
+      {
+        // make sure the v1 API still works, this calls the v2 API, so we don't
+        // need to do serious correctness testing here, we'll let the v2 tests
+        // below handle that
+        std::unique_ptr<RWMol> mol2(GetMolv1(molTest));
+        TEST_ASSERT(mol2 != nullptr);
+        TEST_ASSERT(mol2->getNumAtoms() == molTest->atomCount)
+        TEST_ASSERT(mol2->getNumBonds() == molTest->bondCount)
+      }
+
+      auto mol = GetMolv2(molTest);
+      TEST_ASSERT(mol != nullptr);
       RDKit::Chirality::removeNonExplicit3DChirality(*mol);
 
       if (molTest->reapplyMolBlockWedging) {
         Chirality::reapplyMolBlockWedging(*mol);
       }
 
-      TEST_ASSERT(mol != nullptr);
-
-      TEST_ASSERT(mol->getNumAtoms() == molTest->atomCount)
-      TEST_ASSERT(mol->getNumBonds() == molTest->bondCount)
+      TEST_ASSERT(mol->getNumAtoms() == molTest->atomCount);
+      TEST_ASSERT(mol->getNumBonds() == molTest->bondCount);
 
       {
         std::string expectedMrvName =
-            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".expected.sdf";
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") +
+            (molTest->reapplyMolBlockWedging ? "" : ".noreapply") +
+            ".expected.sdf";
         std::string outMolStr = "";
         try {
           outMolStr = MolToMolBlock(*mol, true, 0, true, true);
-        } catch (const RDKit::KekulizeException &e) {
+        } catch (const RDKit::KekulizeException &) {
           outMolStr = "";
         }
         if (outMolStr == "") {
@@ -278,7 +321,9 @@ class MrvTests {
         }
 
         generateNewExpectedFilesIfSoSpecified(
-            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".NEW.sdf",
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") +
+                (molTest->reapplyMolBlockWedging ? "" : ".noreapply") +
+                ".NEW.sdf",
             outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
@@ -286,12 +331,14 @@ class MrvTests {
 
       {
         std::string expectedMrvName =
-            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".expected.mrv";
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") +
+            (molTest->reapplyMolBlockWedging ? "" : ".noreapply") +
+            ".expected.mrv";
 
         std::string outMolStr = "";
         try {
           outMolStr = MolToMrvBlock(*mol, true, -1, true, false);
-        } catch (const RDKit::KekulizeException &e) {
+        } catch (const RDKit::KekulizeException &) {
           outMolStr = "";
         }
         if (outMolStr == "") {
@@ -299,14 +346,16 @@ class MrvTests {
                                     false);  // try without kekule'ing
         }
         generateNewExpectedFilesIfSoSpecified(
-            fName + (molTest->sanitizeFlag ? "" : ".nosan") + ".NEW.mrv",
+            fName + (molTest->sanitizeFlag ? "" : ".nosan") +
+                (molTest->reapplyMolBlockWedging ? "" : ".noreapply") +
+                ".NEW.mrv",
             outMolStr);
 
         TEST_ASSERT(GetExpectedValue(expectedMrvName) == outMolStr);
 
         BOOST_LOG(rdInfoLog) << "done" << std::endl;
       }
-    } catch (const std::exception &e) {
+    } catch (const std::exception &) {
       if (molTest->expectedResult != false) {
         throw;
       }
@@ -331,7 +380,7 @@ class MrvTests {
       }
 
       // reaction test
-      std::unique_ptr<ChemicalReaction> rxn(GetReaction(rxnTest));
+      std::unique_ptr<ChemicalReaction> rxn(GetReactionv1(rxnTest));
 
       // check for errors
 
@@ -400,7 +449,7 @@ class MrvTests {
       }
 
       BOOST_LOG(rdInfoLog) << "done" << std::endl;
-    } catch (const std::exception &e) {
+    } catch (const std::exception &) {
       if (rxnTest->expectedResult != false) {
         throw;
       }
@@ -443,7 +492,7 @@ class MrvTests {
       }
       BOOST_LOG(rdInfoLog) << "done" << std::endl;
       BOOST_LOG(rdInfoLog) << "done" << std::endl;
-    } catch (const std::exception &e) {
+    } catch (const std::exception &) {
       if (rxnTest->expectedResult != false) {
         throw;
       }
@@ -469,12 +518,11 @@ class MrvTests {
         return;
       }
 
-      std::unique_ptr<RWMol> mol(GetMol(molTest));
+      auto mol = GetMolv2(molTest);
+      TEST_ASSERT(mol != nullptr);
       RDKit::Chirality::removeNonExplicit3DChirality(*mol);
 
       Chirality::reapplyMolBlockWedging(*mol);
-
-      TEST_ASSERT(mol != nullptr);
 
       TEST_ASSERT(mol->getNumAtoms() == molTest->atomCount)
       TEST_ASSERT(mol->getNumBonds() == molTest->bondCount)
@@ -484,7 +532,7 @@ class MrvTests {
         std::string outMolStr = "";
         try {
           outMolStr = MolToMolBlock(*mol, true, 0, true, true);
-        } catch (const RDKit::KekulizeException &e) {
+        } catch (const RDKit::KekulizeException &) {
           outMolStr = "";
         } catch (...) {
           throw;  // re-trhow the error if not a kekule error
@@ -507,7 +555,7 @@ class MrvTests {
           outMolStr = MolToMrvBlock(*mol, true, -1, true, false);
           RDKit::Chirality::removeNonExplicit3DChirality(*mol);
 
-        } catch (const RDKit::KekulizeException &e) {
+        } catch (const RDKit::KekulizeException &) {
           outMolStr = "";
         } catch (...) {
           throw;  // re-throw the error if not a kekule error
@@ -522,7 +570,7 @@ class MrvTests {
 
         BOOST_LOG(rdInfoLog) << "done" << std::endl;
       }
-    } catch (const std::exception &e) {
+    } catch (const std::exception &) {
       if (molTest->expectedResult != false) {
         throw;
       }
@@ -539,14 +587,14 @@ class MrvTests {
     std::string rdbase = getenv("RDBASE");
     std::string fName =
         rdbase + "/Code/GraphMol/MarvinParse/test_data/" + molTest->fileName;
+    v2::MarvinParser::MrvParserParams params;
+    params.removeHs = false;
+    params.sanitize = molTest->sanitizeFlag;
     try {
-      std::unique_ptr<RWMol> mol(
-          MrvFileToMol(fName, molTest->sanitizeFlag, false));
-      RDKit::Chirality::removeNonExplicit3DChirality(*mol);
-
+      auto mol = MolFromMrvFile(fName, params);
       // mol  test
-
       TEST_ASSERT(mol != nullptr);
+      RDKit::Chirality::removeNonExplicit3DChirality(*mol);
 
       TEST_ASSERT(mol->getNumAtoms() == molTest->atomCount)
       TEST_ASSERT(mol->getNumBonds() == molTest->bondCount)
@@ -590,7 +638,7 @@ class MrvTests {
       }
 
       BOOST_LOG(rdInfoLog) << "done" << std::endl;
-    } catch (const std::exception &e) {
+    } catch (const std::exception &) {
       if (molTest->expectedResult != false) {
         throw;
       }
@@ -627,7 +675,7 @@ class MrvTests {
         std::string outMolStr = "";
         try {
           outMolStr = MolToMolBlock(*mol, true, 0, true, true);
-        } catch (const RDKit::KekulizeException &e) {
+        } catch (const RDKit::KekulizeException &) {
           outMolStr = "";
         }
         if (outMolStr == "") {
@@ -650,7 +698,7 @@ class MrvTests {
         std::string outMolStr = "";
         try {
           outMolStr = MolToMrvBlock(*mol, true, -1, true, false);
-        } catch (const RDKit::KekulizeException &e) {
+        } catch (const RDKit::KekulizeException &) {
           outMolStr = "";
         }
         if (outMolStr == "") {
@@ -695,7 +743,7 @@ class MrvTests {
       }
 
       BOOST_LOG(rdInfoLog) << "done" << std::endl;
-    } catch (const std::exception &e) {
+    } catch (const std::exception &) {
       if (molFileTest->expectedResult != false) {
         throw;
       }
@@ -774,7 +822,7 @@ class MrvTests {
         TEST_ASSERT(GetExpectedValue(expectedRxnName) == outMolStr);
       }
       BOOST_LOG(rdInfoLog) << "done" << std::endl;
-    } catch (const std::exception &e) {
+    } catch (const std::exception &) {
       if (rxnTest->expectedResult != false) {
         throw;
       }
@@ -786,10 +834,40 @@ class MrvTests {
     return;
   }
 
+  void testPrecision() {
+    BOOST_LOG(rdInfoLog) << "testing marvin writing" << std::endl;
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase + "/Code/GraphMol/MarvinParse/test_data/precision.mrv.expected.mrv";
+
+    std::unique_ptr<ROMol> mol{v2::MarvinParser::MolFromMrvFile(fName)};
+
+    TEST_ASSERT(mol != nullptr);
+    unsigned numAtoms = mol->getNumAtoms();
+    TEST_ASSERT(numAtoms == 7);
+
+    MrvWriterParams params{true, true, true, 15};
+    std::string outMolStr = MolToMrvBlock(*mol, params, -1);
+    std::unique_ptr<ROMol> readMol{RDKit::v2::MarvinParser::MolFromMrvBlock(outMolStr)};
+    TEST_ASSERT(numAtoms == readMol->getNumAtoms());
+    const Conformer &conformer = mol->getConformer();
+    const Conformer &readConformer = readMol->getConformer();
+    for (size_t i = 0; i < numAtoms; i++) {
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).x - readConformer.getAtomPos(i).x) < 1e-15);
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).y - readConformer.getAtomPos(i).y) < 1e-15);
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).z - readConformer.getAtomPos(i).z) < 1e-15);
+    }
+    BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  }
+
  public:
   void RunTests() {
     UseLegacyStereoPerceptionFixture useLegacy(false);
     printf("Using new chirality perception\n");
+
+    auto sanitizeOff = false;
+    auto reapplyWedgesOn = true;
+    auto sanitizeOn = true;
+    auto reapplyWedgesOff = false;
 
     // rxn test returning a single mol
 
@@ -859,6 +937,11 @@ class MrvTests {
 
     if (testToRun == "" || testToRun == "molFileTests") {
       std::list<MolTest> molFileTests{
+          MolTest("FalseChiral.mrv", true, 4, 3, sanitizeOff,
+                  reapplyWedgesOff),  // not sanitized, wedges NOT reapplied
+          MolTest("FalseChiral.mrv", true, 4, 3, sanitizeOn,
+                  reapplyWedgesOff),  // sanitized, wedges NOT reapplied
+
           MolTest("Cubane.mrv", true, 16, 20),
           MolTest("NewChiralTest.mrv", true, 13, 14, true,
                   false),  // wedges NOT reapplied
@@ -981,7 +1064,7 @@ class MrvTests {
           MolTest("Cubane.mrv", true, 16, 20),
       };
 
-      for (auto molFileTest : chiral3dFileTests) {
+      for (auto &molFileTest : chiral3dFileTests) {
         BOOST_LOG(rdInfoLog) << "Test: " << molFileTest.fileName << std::endl;
 
         printf("Test\n\n %s\n\n", molFileTest.fileName.c_str());
@@ -991,11 +1074,6 @@ class MrvTests {
 
     // atropisomer tests
     if (testToRun == "" || testToRun == "atropisomerTests") {
-      auto sanitizeOff = false;
-      auto reapplyWedgesOn = true;
-      auto sanitizeOn = true;
-      auto reapplyWedgesOff = false;
-
       std::vector<MolTest> atropisomerTests{
           // first the tests with sanitize off,
           // and reapplyMolBlockWedging on
@@ -1209,7 +1287,7 @@ class MrvTests {
                   reapplyWedgesOff),
       };
 
-      for (auto atropisomerTest : atropisomerTests) {
+      for (auto &atropisomerTest : atropisomerTests) {
         BOOST_LOG(rdInfoLog)
             << "Test: " << atropisomerTest.fileName << std::endl;
 
@@ -1293,10 +1371,13 @@ class MrvTests {
               true, 48, 48),
           SmilesTest("Smiles1", "N[C@@H]([O-])c1cc[13c]cc1", true, 9, 9)};
 
-      for (auto smiTest : smiTests) {
+      for (auto &smiTest : smiTests) {
         printf("Test\n\n %s\n\n", smiTest.name.c_str());
         testSmilesToMarvin(&smiTest);
       }
+    }
+    if (testToRun == "" || testToRun == "precision") {
+      testPrecision();
     }
   }
 };

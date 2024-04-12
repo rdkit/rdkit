@@ -1076,8 +1076,8 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
           path14.type = Path14Configuration::TRANS;
-          transPaths[static_cast<unsigned long>(bid1)*nb*nb + bid2*nb + bid3] = 1;
-          transPaths[static_cast<unsigned long>(bid3)*nb*nb + bid2*nb + bid1] = 1;
+          accumData.transPaths[static_cast<unsigned long>(bid1)*nb*nb + bid2*nb + bid3] = 1;
+          accumData.transPaths[static_cast<unsigned long>(bid3)*nb*nb + bid2*nb + bid1] = 1;
         } else
 #endif
       if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16)) {
@@ -1304,9 +1304,6 @@ void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
     return;
   }
 
-  Atom::HybridizationType ahyb3 = atm3->getHybridization();
-  Atom::HybridizationType ahyb2 = atm2->getHybridization();
-
   double bl1 = accumData.bondLengths[bid1];
   double bl2 = accumData.bondLengths[bid2];
   double bl3 = accumData.bondLengths[bid3];
@@ -1333,18 +1330,6 @@ void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
     du = dl;
     dl -= GEN_DIST_TOL;
     du += GEN_DIST_TOL;
-  } else if ((ahyb2 == Atom::SP2) &&
-             (ahyb3 == Atom::SP2)) {  // FIX: check for trans
-    // here we will assume 180 degrees: basically flat ring with an external
-    // substituent
-    dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-    du = dl;
-    dl -= GEN_DIST_TOL;
-    du += GEN_DIST_TOL;
-    path14.type = Path14Configuration::TRANS;
-    accumData.transPaths[bid1 * nb * nb + bid2 * nb + bid3] = 1;
-    accumData.transPaths[bid3 * nb * nb + bid2 * nb + bid1] = 1;
-
   } else {
     // here we will assume anything is possible
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
@@ -1479,8 +1464,8 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
           path14.type = Path14Configuration::TRANS;
-          transPaths[static_cast<unsigned long>(bid1)*nb*nb + bid2*nb + bid3] = 1;
-          transPaths[static_cast<unsigned long>(bid3)*nb*nb + bid2*nb + bid1] = 1;
+          accumData.transPaths[static_cast<unsigned long>(bid1)*nb*nb + bid2*nb + bid3] = 1;
+          accumData.transPaths[static_cast<unsigned long>(bid3)*nb*nb + bid2*nb + bid1] = 1;
         } else
 #endif
 

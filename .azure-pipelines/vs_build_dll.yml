@@ -9,9 +9,9 @@ steps:
     conda create --name rdkit_build ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
         libboost=$(boost_version) ^
-        cairo eigen
+        numpy matplotlib=3.8 cairo pillow eigen pandas=2.1
     call activate rdkit_build
-    conda install -c conda-forge cmake pytest nbval
+    conda install -c conda-forge cmake ipython=8.20 pytest nbval
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=

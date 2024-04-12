@@ -18,7 +18,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#include "FileParserUtils.h"
+#include "FileParsers.h"
 #include <string_view>
 
 namespace RDKit {
@@ -67,7 +67,8 @@ RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string_view input,
 
 // parses info from a V3000 CTAB into a molecule
 RDKIT_FILEPARSERS_EXPORT std::string getV3000CTAB(const ROMol &tmol,
-                                                  int confId = -1);
+                                                  int confId = -1,
+                                                  unsigned int precision = 6);
 // reads a line from an MDL v3K CTAB
 RDKIT_FILEPARSERS_EXPORT std::string getV3000Line(std::istream *inStream,
                                                   unsigned int &line);
@@ -86,9 +87,17 @@ RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(
 
 //! finishes up the processing (sanitization, etc.) of a molecule read from
 //! CTAB
-RDKIT_FILEPARSERS_EXPORT void finishMolProcessing(RWMol *res,
-                                                  bool chiralityPossible,
-                                                  bool sanitize, bool removeHs);
+RDKIT_FILEPARSERS_EXPORT void finishMolProcessing(
+    RWMol *res, bool chiralityPossible,
+    const v2::FileParsers::MolFileParserParams &ps);
+//! \overload
+inline void finishMolProcessing(RWMol *res, bool chiralityPossible,
+                                bool sanitize, bool removeHs) {
+  v2::FileParsers::MolFileParserParams ps;
+  ps.sanitize = sanitize;
+  ps.removeHs = removeHs;
+  finishMolProcessing(res, chiralityPossible, ps);
+}
 
 //! Deprecated, please use QueryOps::replaceAtomWithQueryAtom instead
 RDKIT_FILEPARSERS_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);

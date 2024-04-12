@@ -371,7 +371,6 @@ std::string FragmentSmilesConstruct(
   if (params.canonical && params.doIsomericSmiles) {
     Canon::canonicalizeEnhancedStereo(mol, &ranks);
   }
-
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
                               bondsInPlay, bondSymbols, params.doIsomericSmiles,
                               params.doRandom);
@@ -521,16 +520,25 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     // but that should not be:
     if (params.doIsomericSmiles) {
       tmol->setProp(common_properties::_doIsoSmiles, 1);
-      if (!mol.hasProp(common_properties::_StereochemDone)) {
+      if (!tmol->hasProp(common_properties::_StereochemDone)) {
         MolOps::assignStereochemistry(*tmol, true);
       }
     }
-
     if (!doingCXSmiles) {
       // remove any stereo groups that may be present. Otherwise they will be
       // used in the canonicalization
       std::vector<StereoGroup> noStereoGroups;
       tmol->setStereoGroups(noStereoGroups);
+      // remove any wiggle bonds or unspecified double bond stereochemistry
+      for (auto bond : tmol->bonds()) {
+        if (bond->getBondDir() == Bond::BondDir::UNKNOWN ||
+            bond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
+          bond->setBondDir(Bond::BondDir::NONE);
+        }
+        if (bond->getStereo() == Bond::BondStereo::STEREOANY) {
+          bond->setStereo(Bond::BondStereo::STEREONONE);
+        }
+      }
 
       // if other CXSMILES features are added to the canonicalization code
       // in the future, they should be removed here.

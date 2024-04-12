@@ -621,6 +621,13 @@ void test8() {
   // BOOST_LOG(rdInfoLog) << "1" << std::endl;
   m2 = MolOps::addHs(*m);
   CHECK_INVARIANT(m2->getNumAtoms() == 11, "");
+
+  // addHs should not set the noImplicit flag.
+  // This was Github Issue #7123
+  for (auto at : m2->atoms()) {
+    TEST_ASSERT(at->getNoImplicit() == false);
+  }
+
   delete m;
   delete m2;
 
@@ -8006,8 +8013,8 @@ void testRemoveAndTrackIsotopes() {
   TEST_ASSERT(SubstructMatch(*m, *mH2, matchH2));
   TEST_ASSERT(matchH2.size() == m->getNumAtoms());
   TEST_ASSERT(mH2_isotopicHsPerHeavy->total() == 12);
-  TEST_ASSERT(mH2_numExplicitHs == 28);
-  TEST_ASSERT(mH2_numImplicitHs == 0);
+  TEST_ASSERT(mH2_numExplicitHs == 0);
+  TEST_ASSERT(mH2_numImplicitHs == 28);
   for (auto p : matchH2) {
     TEST_ASSERT(mH2_isotopicHsPerHeavy->at(p.first) ==
                 m_isotopicHsPerHeavy->at(p.second));
@@ -8040,8 +8047,8 @@ void testRemoveAndTrackIsotopes() {
   TEST_ASSERT(matchH2 != matchH2Ren);
   TEST_ASSERT(matchH2.size() == matchH2Ren.size());
   TEST_ASSERT(mH2_isotopicHsPerHeavy->total() == 12);
-  TEST_ASSERT(mH2_numExplicitHs == 28);
-  TEST_ASSERT(mH2_numImplicitHs == 0);
+  TEST_ASSERT(mH2_numExplicitHs == 0);
+  TEST_ASSERT(mH2_numImplicitHs == 28);
   for (auto p : matchH2Ren) {
     TEST_ASSERT(mH2_isotopicHsPerHeavy->at(p.first) ==
                 m_isotopicHsPerHeavy->at(p.second));
@@ -8438,36 +8445,108 @@ void testGithub5099() {
 }
 
 void testHasQueryHs() {
-    BOOST_LOG(rdInfoLog)
-      << "-----------------------\n Testing hasQueryHs "
-      << std::endl;
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing hasQueryHs "
+                       << std::endl;
   const auto has_no_query_hs = std::make_pair(false, false);
   const auto has_only_query_hs = std::make_pair(true, false);
   const auto has_unmergeable_hs = std::make_pair(true, true);
-    
+
   auto m0 = "CCCC"_smarts;
   TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m0) == has_no_query_hs);
-    
+
   auto m = "[#1]"_smarts;
   TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m) == has_only_query_hs);
-  
+
   auto m2 = "[#1,N]"_smarts;
   TEST_ASSERT(RDKit::MolOps::hasQueryHs(*m2) == has_unmergeable_hs);
-  
-  //remove the negation
+
+  // remove the negation
   auto recursive = "[$(C-[H])]"_smarts;
   TEST_ASSERT(RDKit::MolOps::hasQueryHs(*recursive) == has_only_query_hs);
 
   auto recursive_or = "[$([C,#1])]"_smarts;
   TEST_ASSERT(RDKit::MolOps::hasQueryHs(*recursive_or) == has_unmergeable_hs);
-    
+
   // from rd_filters for something bigger
-  auto keto_def_heterocycle = "[$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naaaa1),$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naa[n,s,o]1)]"_smarts;
-  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*keto_def_heterocycle) == has_only_query_hs);
+  auto keto_def_heterocycle =
+      "[$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naaaa1),$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naa[n,s,o]1)]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*keto_def_heterocycle) ==
+              has_only_query_hs);
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-
 }
+
+void testIsRingFused() {
+  BOOST_LOG(rdWarningLog) << "-----------------------\n Testing isRingFused "
+                       << std::endl;
+  auto molOrig = "C1C(C2CC3CCCCC3C12)C1CCCCC1"_smiles;
+  {
+    RWMol mol(*molOrig);
+    auto ri = mol.getRingInfo();
+    TEST_ASSERT(ri->numRings() == 4);
+    boost::dynamic_bitset<> fusedRings(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedRings.set(i, ri->isRingFused(i));
+    }
+    TEST_ASSERT(fusedRings.count() == 3);
+    TEST_ASSERT(fusedRings.size() - fusedRings.count() == 1);
+    auto query = "[$(C1CCC1)]-@[$(C1CCCCC1)]"_smarts;
+    MatchVectType matchVect;
+    SubstructMatch(mol, *query, matchVect);
+    TEST_ASSERT(matchVect.size() == 2);
+    mol.removeBond(matchVect.at(0).second, matchVect.at(1).second);
+    MolOps::sanitizeMol(mol);
+    TEST_ASSERT(MolToSmiles(mol) == "C1CCC(CC2CCC2C2CCCCC2)CC1");
+    TEST_ASSERT(ri->numRings() == 3);
+    fusedRings.resize(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedRings.set(i, ri->isRingFused(i));
+    }
+    TEST_ASSERT(fusedRings.count() == 0);
+    TEST_ASSERT(fusedRings.size() - fusedRings.count() == 3);
+  }
+  {
+    RWMol mol(*molOrig);
+    auto ri = mol.getRingInfo();
+    TEST_ASSERT(ri->numRings() == 4);
+    boost::dynamic_bitset<> fusedRings(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedRings.set(i, ri->isRingFused(i));
+    }
+    TEST_ASSERT(fusedRings.count() == 3);
+    TEST_ASSERT(fusedRings.size() - fusedRings.count() == 1);
+    std::vector<unsigned int> fusedBonds(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedBonds[i] = ri->numFusedBonds(i);
+    }
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 0) == 1);
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 1) == 2);
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 1);
+    auto query =
+        "[$(C1CCCCC1-!@[CX4;R1;r4])].[$(C1C(-!@[CX4;R1;r6])CC1)]"_smarts;
+    MatchVectType matchVect;
+    SubstructMatch(mol, *query, matchVect);
+    TEST_ASSERT(matchVect.size() == 2);
+    mol.addBond(matchVect.at(0).second, matchVect.at(1).second, Bond::SINGLE);
+    MolOps::sanitizeMol(mol);
+    TEST_ASSERT(MolToSmiles(mol) == "C1CCC2C(C1)CC1C2C2C3CCCCC3C12");
+    TEST_ASSERT(ri->numRings() == 5);
+    fusedRings.resize(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedRings.set(i, ri->isRingFused(i));
+    }
+    TEST_ASSERT(fusedRings.count() == 5);
+    TEST_ASSERT(fusedRings.size() - fusedRings.count() == 0);
+    fusedBonds.resize(ri->numRings());
+    for (size_t i = 0; i < ri->numRings(); ++i) {
+      fusedBonds[i] = ri->numFusedBonds(i);
+    }
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 0) == 0);
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 1) == 2);
+    TEST_ASSERT(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 3);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -8585,5 +8664,6 @@ int main() {
   testGet3DDistanceMatrix();
   testGithub5099();
   testHasQueryHs();
+  testIsRingFused();
   return 0;
 }

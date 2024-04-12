@@ -293,7 +293,7 @@ std::pair<unsigned int, std::vector<unsigned int>> *Reionizer::weakestIonized(
 
 Uncharger::Uncharger()
     : pos_h(SmartsToMol("[+,+2,+3,+4;!h0;!$(*~[-]),$(*(~[-])~[-])]")),
-      pos_noh(SmartsToMol("[+,+2,+3,+4;h0;!$(*~[-]),$(*(~[-])~[-])]")),
+      pos_noh(SmartsToMol("[+,+2,+3,+4;h0;!$(*~[-])]")),
       neg(SmartsToMol("[-!$(*~[+,+2,+3,+4])]")),
       neg_acid(SmartsToMol(
           // carboxylate, carbonate, sulfi(a)te,
@@ -307,15 +307,6 @@ Uncharger::Uncharger()
           "$([O-][Cl,Br,I;+,+2,+3][O-]),"
           // tetrazole
           "$([n-]1nnnc1),$([n-]1ncnn1)]")){};
-
-Uncharger::Uncharger(const Uncharger &other) {
-  pos_h = other.pos_h;
-  pos_noh = other.pos_noh;
-  neg = other.neg;
-  neg_acid = other.neg_acid;
-};
-
-Uncharger::~Uncharger(){};
 
 void neutralizeNeg(Atom *atom, int hDelta = 1) {
   atom->setNumExplicitHs(atom->getTotalNumHs() + hDelta);
@@ -366,11 +357,6 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
   unsigned int n_matched = SubstructMatch(mol, *(this->neg), n_matches);
   unsigned int a_matched = SubstructMatch(mol, *(this->neg_acid), a_matches);
 
-  // count the total number of negative atoms
-  unsigned int n_neg = std::count_if(
-      mol.atoms().begin(), mol.atoms().end(),
-      [](const auto atom) { return (atom->getFormalCharge() < 0); });
-
   bool needsNeutralization =
       (q_matched > 0 && (n_matched > 0 || a_matched > 0));
   std::vector<unsigned int> atomRanks(mol.getNumAtoms());
@@ -396,78 +382,78 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     std::sort(a_atoms.begin(), a_atoms.end());
   }
 
-  // Neutralize negative charges
-  if (needsNeutralization) {
-    // Surplus negative charges more than non-neutralizable positive charges
-    int neg_surplus = n_neg - q_matched;
-    if (neg_surplus > 0 && n_matched) {
-      boost::dynamic_bitset<> nonAcids(mol.getNumAtoms());
-      nonAcids.set();
-      for (const auto &pair : a_atoms) {
-        nonAcids.reset(pair.second);
-      }
-      // zwitterion with more negative charges than quaternary positive
-      // centres
-      for (const auto &pair : n_atoms) {
-        unsigned int idx = pair.second;
-        if (!nonAcids[idx]) {
-          continue;
+  // merge n_atoms and a_atoms into one single list of 
+  // negatively charged sites that will be neutralized in
+  // sequence
+  std::vector<std::pair<int, int>> neg_atoms;
+  neg_atoms.reserve(n_atoms.size() + a_atoms.size());
+
+  // insert the elements from n_atoms first, but skip those
+  // that also appear in a_atoms and will be considered next
+  boost::dynamic_bitset<> nonAcids(mol.getNumAtoms());
+  nonAcids.set();
+  for (const auto &pair : a_atoms) {
+    nonAcids.reset(pair.second);
+  }
+  for (const auto &pair : n_atoms) {
+    unsigned int idx = pair.second;
+    if (!nonAcids[idx]) {
+      continue;
+    }
+    neg_atoms.push_back(pair);
+  }
+
+  // insert the elements from a_atoms, but make sure that
+  // the anions of monoprotic acids are not protonated multiple
+  // times
+  std::vector<int> skipChargeSep(mol.getNumAtoms());
+  for (const auto &pair : a_atoms) {
+    unsigned int idx = pair.second;
+    Atom *atom = mol.getAtomWithIdx(idx);
+    for (const auto &nbri :
+          boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+      const auto &nbr = (mol)[nbri];
+      auto nbrIdx = nbr->getIdx();
+      // if the neighbor has a positive charge,
+      // neutralize only the negative charges that are not
+      // already balanced within the functional group
+      // (normally, at most once e.g., NO3-)
+      auto nbrFormalCharge = nbr->getFormalCharge();
+      if (nbrFormalCharge > 0) {
+        if (skipChargeSep[nbrIdx] < nbrFormalCharge) {
+          skipChargeSep[nbrIdx] += 1;
+          skipChargeSep[idx] = 1;
         }
-        Atom *atom = mol.getAtomWithIdx(idx);
-        if (neutralizeNegIfPossible(atom) && !--neg_surplus) {
-          break;
-        }
+        break;
       }
     }
-
-    // now do the other negative groups if we still have charges left:
-    neg_surplus = a_matched - q_matched;
-    if (neg_surplus > 0) {
-      boost::dynamic_bitset<> skipChargeSep(mol.getNumAtoms());
-      for (const auto &pair : n_atoms) {
-        unsigned int idx = pair.second;
-        Atom *atom = mol.getAtomWithIdx(idx);
-        for (const auto &nbri :
-             boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
-          const auto &nbr = (mol)[nbri];
-          auto nbrIdx = nbr->getIdx();
-          // if the neighbor has a positive charge,
-          // neutralize only once (e.g., NO3-)
-          if (nbr->getFormalCharge() > 0) {
-            if (!skipChargeSep.test(nbrIdx)) {
-              skipChargeSep.set(nbrIdx);
-            } else {
-              skipChargeSep.set(idx);
-            }
-            break;
-          }
-        }
-      }
-      // zwitterion with more negative charges than quaternary positive
-      // centres
-      for (const auto &pair : a_atoms) {
-        // Add hydrogen to first negative acidic atom, increase formal charge
-        // Until quaternary positive == negative total or no more negative
-        // atoms
-        unsigned int idx = pair.second;
-        Atom *atom = mol.getAtomWithIdx(idx);
-        // skip ahead if we already neutralized this or if it is part of a
-        // zwitterion
-        if (atom->getFormalCharge() >= 0 || skipChargeSep.test(idx)) {
-          continue;
-        }
-        neutralizeNeg(atom);
-        if (!--neg_surplus) {
-          break;
-        }
-      }
+  }
+  for (const auto &pair : a_atoms) {
+    unsigned int idx = pair.second;
+    if (skipChargeSep[idx]) {
+      continue;
     }
+    neg_atoms.push_back(pair);
+  }
 
-  } else {
-    for (const auto &pair : n_atoms) {
-      auto idx = pair.second;
+  // Surplus negative charges (initially estimated as the total amount of
+  // neutralizable negative charge).
+  int neg_surplus = neg_atoms.size();
+  if (!df_force) {
+    // unless we want to fully uncharge the compound, the estimated surplus must
+    // be deduced the amount of positive charge that is not possible to neutralize
+    // and must be balanced.
+    neg_surplus -= q_matched;
+  }
+
+  // Neutralize surplus negative charges
+  if (neg_surplus) {
+    for (const auto &pair : neg_atoms) {
+      unsigned int idx = pair.second;
       Atom *atom = mol.getAtomWithIdx(idx);
-      neutralizeNegIfPossible(atom);
+      if (neutralizeNegIfPossible(atom) && !--neg_surplus) {
+        break;
+      }
     }
   }
 
