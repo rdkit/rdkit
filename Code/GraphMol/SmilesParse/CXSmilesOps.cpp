@@ -1097,7 +1097,9 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
         if (atom->getIdx() != bond->getEndAtomIdx()) {
           BOOST_LOG(rdWarningLog)
               << "atom " << atomIdx << " is not associated with bond "
-              << bondIdx << " in w block" << std::endl;
+              << bondIdx << "(" << bond->getBeginAtomIdx() + startAtomIdx << "-"
+              << bond->getEndAtomIdx() + startAtomIdx << ")"
+              << " in w block" << std::endl;
           return false;
         }
         auto eidx = bond->getBeginAtomIdx();
@@ -2039,21 +2041,21 @@ std::string get_bond_config_block(
     }
 
     if (atropisomerOnly && bd == Bond::BondDir::NONE) {
-        continue;
-      }
+      continue;
+    }
 
     // see if this one is an atropisomer
 
     bool isAnAtropisomer = false;
 
-      const Atom *firstAtom = bond->getBeginAtom();
-      for (auto bondNbr : mol.atomBonds(firstAtom)) {
-        if (bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCW ||
-            bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+    const Atom *firstAtom = bond->getBeginAtom();
+    for (auto bondNbr : mol.atomBonds(firstAtom)) {
+      if (bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+          bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
         isAnAtropisomer = true;
-          break;
-        }
+        break;
       }
+    }
 
     if (atropisomerOnly) {
       // one of the bonds on the beginning atom of this bond must be an
