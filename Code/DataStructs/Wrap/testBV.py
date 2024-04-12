@@ -142,9 +142,9 @@ class TestCase(unittest.TestCase):
   def test6BulkOps(self):
     nbits = 10000
     bvs = []
-    for bvi in range(10):
+    for _ in range(10):
       bv = DataStructs.ExplicitBitVect(nbits)
-      for j in range(nbits):
+      for _ in range(nbits):
         x = random.randrange(0, nbits)
         bv.SetBit(x)
       bvs.append(bv)
@@ -153,9 +153,9 @@ class TestCase(unittest.TestCase):
   def test10BulkOps2(self):
     nbits = 10000
     bvs = []
-    for bvi in range(10):
+    for _ in range(10):
       bv = DataStructs.ExplicitBitVect(nbits)
-      for j in range(nbits):
+      for _ in range(nbits):
         x = random.randrange(0, nbits)
         bv.SetBit(x)
       bvs.append(bv)
@@ -167,7 +167,7 @@ class TestCase(unittest.TestCase):
     bvs = numpy.empty((10, ), DataStructs.ExplicitBitVect)
     for bvi in range(10):
       bv = DataStructs.ExplicitBitVect(nbits)
-      for j in range(nbits):
+      for _ in range(nbits):
         x = random.randrange(0, nbits)
         bv.SetBit(x)
       bvs[bvi] = bv
@@ -234,9 +234,9 @@ class TestCase(unittest.TestCase):
   def test11BulkNeighbors(self):
     nbits = 2048
     bvs = []
-    for bvi in range(1000):
+    for _ in range(1000):
       bv = DataStructs.ExplicitBitVect(nbits)
-      for j in range(nbits):
+      for _ in range(nbits):
         x = random.randrange(0, nbits)
         bv.SetBit(x)
       bvs.append(bv)
@@ -268,7 +268,7 @@ class TestCase(unittest.TestCase):
       self.assertEqual(l, l2)
       self.assertEqual(l, l3)
 
-      for j in range(nbits):
+      for _ in range(nbits):
         x = random.randrange(0, nbits)
         l[x] = 1
         bv.SetBit(x)
@@ -282,7 +282,7 @@ class TestCase(unittest.TestCase):
     nbits = 2048
     for cls in [DataStructs.ExplicitBitVect, DataStructs.SparseBitVect]:
       bv = cls(nbits)
-      for j in range(nbits):
+      for _ in range(nbits):
         x = random.randrange(0, nbits)
         bv.SetBit(x)
 
@@ -295,7 +295,7 @@ class TestCase(unittest.TestCase):
     for cls in [DataStructs.ExplicitBitVect, DataStructs.SparseBitVect]:
       bv = cls(nbits)
       bv2 = cls(nbits)
-      for j in range(nbits):
+      for _ in range(nbits):
         x = random.randrange(0, nbits)
         bv.SetBit(x)
         bv2[-(nbits - x)] = 1

@@ -1021,7 +1021,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
        python::arg("includeChirality") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
-
   docString = "Returns a Morgan fingerprint for a molecule";
   python::def(
       "GetMorganFingerprint", GetMorganFingerprint,
@@ -1657,6 +1656,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString =
       R"DOC(ARGUMENTS:
       "   - mol: molecule or protein under consideration
+      "   - isProtein: flag to indicate if the input is a protein (default=True). NOTE that results with isProtein=False are currently not correct.
       "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=False)
       "   - probeRadius: radius of the solvent probe (default=1.4)
       "   - depth: control of number of dots per atom (default=2)

@@ -40,6 +40,7 @@ option(RDK_BUILD_SLN_SUPPORT "include support for the SLN format" ON )
 option(RDK_TEST_MULTITHREADED "run some tests of multithreading" ON )
 option(RDK_BUILD_SWIG_JAVA_WRAPPER "build the SWIG JAVA wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" ON )
 option(RDK_BUILD_SWIG_CSHARP_WRAPPER "build the experimental SWIG C# wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" OFF )
+option(RDK_BUILD_DOTNET_CSHARP_TESTS "build the DotNet Core tests for C# wrappers (does nothing if RDK_BUILD_SWIG_CSHARP_WRAPPER is not set)" OFF )
 option(RDK_SWIG_STATIC "statically link rdkit libraries into the SWIG wrappers" ON )
 option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" ON )
 option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" ON)
@@ -135,9 +136,9 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 #-------
 # Config variables:
 set(RDKit_Year "2024")
-set(RDKit_Month "03")
+set(RDKit_Month "09")
 set(RDKit_Revision "1")
-set(RDKit_RevisionModifier "b1")
+set(RDKit_RevisionModifier "pre")
 set(RDKit_ABI "1")
 
 # we need an integer version of the month later, so remove the zero padding
@@ -224,12 +225,12 @@ if(RDK_USE_URF)
 endif()
 
 if(RDK_BUILD_XYZ2MOL_SUPPORT)
-    if(NOT RDK_BUILD_YAEHMOP_SUPPORT)
-        message("Enabling YAeHMOP support because xyz2mol is being built")
-        set(RDK_BUILD_YAEHMOP_SUPPORT ON)
-    endif()
     add_definitions(-DRDK_BUILD_XYZ2MOL_SUPPORT)
     include_directories(${RDKit_ExternalDir})
+endif()
+
+if(RDK_BUILD_YAEHMOP_SUPPORT)
+    add_definitions(-DRDK_BUILD_YAEHMOP_SUPPORT)
 endif()
 
 # Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to

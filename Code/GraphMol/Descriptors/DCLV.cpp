@@ -352,9 +352,24 @@ struct State {
   void freeAtomList(AtomList* ptr) {
     while (ptr) {
       AtomList* next = ptr->next;
+#if 0
       ptr->next = freeList;
       freeList = ptr;
+#else
+      free(ptr);
+#endif
       ptr = next;
+    }
+  }
+
+  void freeGrid() {
+    for (unsigned int x = 0; x < VOXORDER; x++) {
+      for (unsigned int y = 0; y < VOXORDER; y++) {
+        for (unsigned int z = 0; z < VOXORDER; z++) {
+          freeAtomList(grid[x][y][z]);
+          grid[x][y][z] = nullptr;
+        }
+      }
     }
   }
 
@@ -856,6 +871,7 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol& mol,
   vdwVolume = s.calculateVolume(0.0, memberAtoms);
   compactness = calculateCompactness(surfaceArea, totalVolume);
   packingDensity = (vdwVolume / totalVolume);
+  s.freeGrid();
 }
 
 }  // namespace Descriptors

@@ -1,4 +1,32 @@
-# Release_2024.03.1b1
+# Release_2024.09.1
+(Changes relative to Release_2024.03.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+
+## Highlights
+
+## Backwards incompatible changes
+- The SMARTS for the unbranched alkanes in the fragment descriptors has been corrected. This descriptor will now frequently return different results.
+
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+  
+## Cleanup work:
+ 
+## Code removed in this release:
+
+## Deprecated code (to be removed in a future release):
+
+- AtomPairs.Utils.NumPiElectrons is deprecated in favor of Chem.GetNumPiElectrons.
+AtomPairs.Utils.NumPiElectrons failed if the atom had outgoing dative bonds (see Issue #7318).
+
+# Release_2024.03.1
 (Changes relative to Release_2023.09.1)
 
 ## Acknowledgements
@@ -11,12 +39,15 @@ Jan C. Brammer, Jessica Braun, Benoît Claveau, David Cosgrove, James Davidson,
 Hussein Faara, Théophile Gaudin, Gareth Jones, Christoph Hillisch, Tad Hurst,
 Kevin Keating, Brian Kelley, Joos Kiener, David Lounsbrough, Jeremy Monat, Dan
 Nealschneider, Yoshinobu Ogura, Marta Pasquini, Yakov Pechersky, Patrick Penner,
-Ricardo Rodriguez-Schmidt, Nate Russell, Ivan Tubert-Brohman, Matthew Seddon,
-Leonid Stolbov, Paolo Tosco, Riccardo Vianello, Franz Waibl, Rachel Walker,
-sitanshubhunia, skystreet8, dehaenw, dhibbit, vslashg, nbehrnd, MarioAndWario,
-levineds-meta
+Rachael Pirie, Ricardo Rodriguez-Schmidt, Nate Russell, Ivan Tubert-Brohman,
+Matthew Seddon, Leonid Stolbov, Paolo Tosco, Riccardo Vianello, Franz Waibl,
+Rachel Walker, sitanshubhunia, skystreet8, dehaenw, dhibbit, vslashg, nbehrnd,
+MarioAndWario, levineds-meta
 
 ## Highlights
+- An initial version of support for atropisomers has been added; this will be expanded in future releases.
+- Support for using multiple threads has been added in a few more places: many operations in rdMolStandardize, the fingerprint generators, and GetBestRMS()/GetAllConformerBestRMS()
+- The initial release of version 2 of the RDKit C++ API; we will continue to expand this in future releases. The new API makes it easier to write correct and memory safe code. The current API is still supported and will remain so for the forseeable future, but we encourage C++ developers to start using v2 of the API in their code.
 
 ## Backwards incompatible changes
 - Two changes to improve the defaults for conformer generation: the functions EmbedMolecule() and EmbedMultipleConfis() now use ETKDGv3 by default (previously they were using ETKDGV1) and only consider heavy atoms when calculating RMSD for conformer pruning (previously Hs were alos considered).
@@ -24,7 +55,6 @@ levineds-meta
 - The validation classes in MolStandardize were refactored in order to offer a simpler and more consistent API. In the C++ implementation, the `MolVSValidations` base class was removed and consolidated into `ValidationMethod`. Consequently, the `validate` method replaced `run` in the subclasses related to MolVS (namely `NoAtomValidation`, `FragmentValidation`, `NeutralValidation`, and `IsotopeValidation`) and all subclasses of `ValidationMethod` are now required to implement a `copy` method. Moreover, `MolStandardize::ValidationErrorInfo` was redefined as an alias for `std::string`. The changes related to the MolVS validation methods were similarly implemented in the Python API.
 - Metal atoms (really any atom which has a default valence of -1) now have their radical electron count set to zero if they form any bonds. Metal atoms/ions without bonds will continue to be assigned a radical count of either 1 or 0 if they do/do not have an odd number of valence electrons. It is not possible in a cheminformatics system to generally answer what the spin state of a metal atom should be, so we are taking a simple and easily explainable approach. If you know the spin state of your species, you can directly provide that information by calling SetNumRadicalElectrons().
 - Chirality will now be perceived for three-coordinate atoms with a T-shaped coordination environment and the wedge in the stem of the T. If we are perceiving tetrahedral stereo, it's possible to interpret this unambiguously.
-- After a correction to the unbranched alkanes SMARTS used by Descriptor, it will now report only carbon alkanes and terminal alkanes will also be reported.
 - Bug fixes in the v2 tautomer hash algorithm will change the output for some molecules. Look at PR #7200 for more details: https://github.com/rdkit/rdkit/pull/7200
 - RMS pruning during conformer generation now symmetrizes conjugated terminal groups by default. This can be disabled with the parameter "symmetrizeConjugatedTerminalGroupsForPruning"
 
@@ -123,12 +153,16 @@ levineds-meta
  (github pull #7187 from greglandrum)
   - Don't reset computed properties if already empty
  (github pull #7188 from rachelnwalker)
+   - Enhance molzip to properly handle RGroupDecompositions
+ (github pull #7202 from bp-kelley)
   - Add some ExplicitBitVect operations to Swig
  (github pull #7204 from jones-gareth)
   - Some modernization of core GraphMol classes
  (github pull #7228 from greglandrum)
   - Custom decimal precision
  (github pull #7229 from PatrickPenner)
+  - Add Double Cubic Lattice Volume (DCLV).
+ (github pull #7234 from RPirie96)
   - feat(minilib): expose the options parameter in get_inchi
  (github pull #7240 from BenoitClaveau)
   - Postpone clearing computed properties until after all Hs removed
@@ -279,7 +313,11 @@ levineds-meta
  (github issue #7256 from ricrogz)
   - Writing StereoGroups to Mol files should break lines at 80 characters
  (github issue #7259 from ricrogz)
-
+  - Update ring fusion cache when needed
+ (github pull #7274 from ptosco)
+  - Ring stereo in SMILES inverted after sanitization in molecule with fragments
+ (github issue #7295 from greglandrum)
+  
 ## Cleanup work:
   - Switch over to using pytest to run the python tests
  (github pull #5916 from greglandrum)

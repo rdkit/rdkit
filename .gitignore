@@ -3,7 +3,12 @@
 /Code/JavaWrappers/gmwrapper/doc/*
 /Code/JavaWrappers/gmwrapper/build/*
 /Code/JavaWrappers/gmwrapper/build-test/*
-/Code/JavaWrappers/csharp_wrapper/swig_csharp
+/Code/JavaWrappers/csharp_wrapper/swig_csharp/*.cs
+/Code/JavaWrappers/csharp_wrapper/swig_csharp/*.cxx
+/Code/JavaWrappers/csharp_wrapper/swig_csharp/bin
+/Code/JavaWrappers/csharp_wrapper/swig_csharp/obj
+/Code/JavaWrappers/csharp_wrapper/RdkitTests/bin
+/Code/JavaWrappers/csharp_wrapper/RdkitTests/obj
 /Data/Fonts/ComicNeue-*
 /Data/Fonts/OFL.txt
 /vcpkg/*
