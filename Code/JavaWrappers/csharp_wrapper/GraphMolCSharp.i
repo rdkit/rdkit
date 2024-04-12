@@ -245,6 +245,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../MolDraw2D.i"
 %include "../FilterCatalog.i"
 %include "../Trajectory.i"
+%include "../MolStandardize.i"
 %include "../RGroupDecomposition.i"
 %include "../SubstructLibrary.i"
 %include "../ScaffoldNetwork.i"

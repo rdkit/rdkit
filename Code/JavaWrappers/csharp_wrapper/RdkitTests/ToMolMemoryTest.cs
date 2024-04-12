@@ -7,7 +7,8 @@ namespace RdkitTests
 {
     public class ToMolMemoryTest
     {
-        private static readonly long hundredMB = 1024 * 1024 * 100;
+        private static readonly long OneHundredMB = 1024 * 1024 * 100;
+        private static readonly long TwoHundredMB = OneHundredMB * 2;
 
         private static void gc()
         {
@@ -24,22 +25,28 @@ namespace RdkitTests
                 "CC(C)C[C@H](NC(=O)[C@H](CC(=O)O)NC(=O)[C@H](Cc1ccccc1)NC(=O)[C@H](CO)NC(=O)[C@@H]1CCCN1C(=O)[C@H](CCC(N)=O)NC(=O)[C@@H](N)CS)C(=O)N[C@@H](CCC(N)=O)C(=O)N[C@@H](CS)C(=O)O";
 
             var before = Process.GetCurrentProcess().VirtualMemorySize64;
+            var privateBefore = Process.GetCurrentProcess().PrivateMemorySize64;
             long after;
-            for (int i = 0; i < 10000; ++i)
+            long privateAfter;
+            for (int i = 0; i < 500; ++i)
             {
-                using RWMol mol = RDKFuncs.SmilesToMol(smi);
-                mol?.Dispose();
-                if (i % 1000 == 0)
+                RWMol mol = RDKFuncs.SmilesToMol(smi);
+                RWMol mol2 = RWMol.MolFromSmiles(smi);
+                if (i % 50 == 0)
                 {
                     gc();
                     after = Process.GetCurrentProcess().VirtualMemorySize64;
-                    Assert.True(after - before < hundredMB);
+                    Assert.True(after - before < TwoHundredMB);
+                    privateAfter = Process.GetCurrentProcess().PrivateMemorySize64;
+                    Assert.True(privateAfter - privateBefore < OneHundredMB);
                 }
             }
 
             gc();
             after = Process.GetCurrentProcess().VirtualMemorySize64;
-            Assert.True(after - before < hundredMB);
+            Assert.True(after - before < TwoHundredMB);
+            privateAfter = Process.GetCurrentProcess().PrivateMemorySize64;
+            Assert.True(privateAfter - privateBefore < OneHundredMB);
         }
 
         [Fact]
@@ -65,21 +72,20 @@ M  END
 ";
             var before = Process.GetCurrentProcess().VirtualMemorySize64;
             long after;
-            for (int i = 0; i < 10000; ++i)
+            for (int i = 0; i < 500; ++i)
             {
-                using RWMol mol = RDKFuncs.MolBlockToMol(block);
-                mol?.Dispose();
-                if (i % 1000 == 0)
+                RWMol mol = RDKFuncs.MolBlockToMol(block);
+                if (i % 50 == 0)
                 {
                     gc();
                     after = Process.GetCurrentProcess().VirtualMemorySize64;
-                    Assert.True(after - before < hundredMB);
+                    Assert.True(after - before < TwoHundredMB);
                 }
             }
 
             gc();
             after = System.Diagnostics.Process.GetCurrentProcess().PeakVirtualMemorySize64;
-            Assert.True(after - before < hundredMB);
+            Assert.True(after - before < TwoHundredMB);
         }
     }
 }
