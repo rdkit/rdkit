@@ -455,17 +455,16 @@ RDKIT_GRAPHMOL_EXPORT std::string getAtomValue(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom,
                                                       const std::string &label);
 RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);
+
+//! returns true if the atom is to the left of C
+RDKIT_GRAPHMOL_EXPORT bool isEarlyAtom(int atomicNum);
+//! returns true if the atom is aromatic or has an aromatic bond
+RDKIT_GRAPHMOL_EXPORT bool isAromaticAtom(const Atom &atom);
+//! returns the number of pi electrons on the atom
+RDKIT_GRAPHMOL_EXPORT unsigned int numPiElectrons(const Atom &atom);
 };  // namespace RDKit
 
 //! allows Atom objects to be dumped to streams
 RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
                                                const RDKit::Atom &at);
-
-namespace RDKit {
-//! returns true if the atom is to the left of C
-RDKIT_GRAPHMOL_EXPORT bool isEarlyAtom(int atomicNum);
-//! returns true if the atom is aromatic or has an aromatic bond
-RDKIT_GRAPHMOL_EXPORT bool isAromaticAtom(const Atom &atom);
-
-}  // namespace RDKit
 #endif

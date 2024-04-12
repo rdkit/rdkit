@@ -7537,19 +7537,19 @@ CAS<~>
     with open(fileNoWedges, 'r') as inF:
       inNoWedges = inF.read()
 
-    m1 = Chem.MolFromMolBlock(inD, sanitize:=False, removeHs:=False, strictParsing:=True)
+    m1 = Chem.MolFromMolBlock(inD, sanitize=False, removeHs=False, strictParsing=True)
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inWedges)
 
-    m1 = Chem.MolFromMolFile(fileN, sanitize:=False, removeHs:=False, strictParsing:=True)
+    m1 = Chem.MolFromMolFile(fileN, sanitize=False, removeHs=False, strictParsing=True)
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inWedges)
 
-    m1 = Chem.MolFromMolBlock(inD, sanitize:=False, removeHs:=False, strictParsing:=True)
+    m1 = Chem.MolFromMolBlock(inD, sanitize=False, removeHs=False, strictParsing=True)
     Chem.RemoveNonExplicit3DChirality(m1)
 
     self.assertTrue(m1 is not None)
@@ -7557,7 +7557,7 @@ CAS<~>
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inNoWedges)
 
-    m1 = Chem.MolFromMolFile(fileN, sanitize:=False, removeHs:=False, strictParsing:=True)
+    m1 = Chem.MolFromMolFile(fileN, sanitize=False, removeHs=False, strictParsing=True)
     Chem.RemoveNonExplicit3DChirality(m1)
 
     self.assertTrue(m1 is not None)
@@ -7582,7 +7582,7 @@ CAS<~>
       inNoWedges = inF.read()
 
 
-    m1 = Chem.MolFromMrvBlock(inD, sanitize:=False, removeHs:=False)
+    m1 = Chem.MolFromMrvBlock(inD, sanitize=False, removeHs=False)
 
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
@@ -7590,14 +7590,14 @@ CAS<~>
     sys.stdout.flush()
     self.assertTrue(smi == inWedges)
 
-    m1 = Chem.MolFromMrvFile(fileN, sanitize:=False, removeHs:=False)
+    m1 = Chem.MolFromMrvFile(fileN, sanitize=False, removeHs=False)
 
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inWedges)
 
-    m1 = Chem.MolFromMrvBlock(inD, sanitize:=False, removeHs:=False)
+    m1 = Chem.MolFromMrvBlock(inD, sanitize=False, removeHs=False)
     Chem.RemoveNonExplicit3DChirality(m1)
 
     self.assertTrue(m1 is not None)
@@ -7605,7 +7605,7 @@ CAS<~>
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inNoWedges)
 
-    m1 = Chem.MolFromMrvFile(fileN, sanitize:=False, removeHs:=False)
+    m1 = Chem.MolFromMrvFile(fileN, sanitize=False, removeHs=False)
     Chem.RemoveNonExplicit3DChirality(m1)
 
     self.assertTrue(m1 is not None)
