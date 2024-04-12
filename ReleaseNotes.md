@@ -10,6 +10,8 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes
+- The SMARTS for the unbranched alkanes in the fragment descriptors has been corrected. This descriptor will now frequently return different results.
+
 
 ## New Features and Enhancements:
 
