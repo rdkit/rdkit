@@ -450,9 +450,6 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 
 namespace Chirality {
 
-const std::string _NonExplicit3DChirality =
-    "_NonExplicit3DChirality";  // set if the molecule has explicit 3D
-                                // stereochemistry
 std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     const ROMol &mol, const Bond *bond, const Conformer *conf,
     double pseudo3DOffset = 0.1, double volumeTolerance = 0.01) {
@@ -2664,8 +2661,8 @@ void GetMolFileBondStereoInfo(
 
 void removeNonExplicit3DChirality(ROMol &mol) {
   for (auto atom : mol.atoms()) {
-    if (atom->hasProp(Chirality::_NonExplicit3DChirality)) {
-      atom->clearProp(Chirality::_NonExplicit3DChirality);
+    if (atom->hasProp(common_properties::_NonExplicit3DChirality)) {
+      atom->clearProp(common_properties::_NonExplicit3DChirality);
       atom->setChiralTag(Atom::CHI_UNSPECIFIED);
     }
   }
@@ -3302,7 +3299,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     if (allowNontetrahedralStereo &&
         assignNontetrahedralChiralTypeFrom3D(mol, conf, atom)) {
       if (explicitAtoms[atom->getIdx()] == 0) {
-        atom->setProp(Chirality::_NonExplicit3DChirality, 1);
+        atom->setProp(common_properties::_NonExplicit3DChirality, 1);
       }
       continue;
     }
@@ -3319,7 +3316,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     }
 
     const auto &p0 = conf.getAtomPos(atom->getIdx());
-    const RDGeom::Point3D *nbrs[3];
+    const RDGeom::Point3D *nbrs[4];
     unsigned int nbrIdx = 0;
     int hasWigglyBond = 0;
     for (const auto bond : mol.atomBonds(atom)) {
@@ -3331,9 +3328,6 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
         continue;
       }
       nbrs[nbrIdx++] = &conf.getAtomPos(bond->getOtherAtomIdx(atom->getIdx()));
-      if (nbrIdx == 3) {
-        break;
-      }
     }
     if (hasWigglyBond) {
       continue;
@@ -3350,13 +3344,29 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     } else if (chiralVol > ZERO_VOLUME_TOL) {
       atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
       chiralitySet = true;
+    } else if (nbrIdx == 4) {
+      // The first three neighbors are on the same plane as the chiral atom (or
+      // very close to it). If a 4th neighbor is present, let's see if this one
+      // determines a chiral volume
 
+      auto v4 = *nbrs[3] - p0;
+      // v4 would be in the opposite direction to v3
+      chiralVol = -v1.dotProduct(v2.crossProduct(v4));
+      if (chiralVol < -ZERO_VOLUME_TOL) {
+        atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+        chiralitySet = true;
+      } else if (chiralVol > ZERO_VOLUME_TOL) {
+        atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+        chiralitySet = true;
+      } else {
+        atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+      }
     } else {
       atom->setChiralTag(Atom::CHI_UNSPECIFIED);
     }
 
     if (chiralitySet && explicitAtoms[atom->getIdx()] == 0) {
-      atom->setProp<int>(Chirality::_NonExplicit3DChirality, 1);
+      atom->setProp<int>(common_properties::_NonExplicit3DChirality, 1);
     }
   }
 }
@@ -3430,8 +3440,6 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
   }
 }
 
-constexpr const char *isStereoAny = "_isStereoAny";
-
 void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
   // used to store the number of single bonds a given
   // single bond is adjacent to
@@ -3478,9 +3486,9 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
                   nbrDir == Bond::BondDir::ENDUPRIGHT) {
                 needsDir[nbrBond->getIdx()] = 1;
                 dblBondNbrs[bond->getIdx()].push_back(nbrBond->getIdx());
-                // the search may seem inefficient, but these vectors are going
-                // to be at most 2 long (with very few exceptions). It's just
-                // not worth using a different data structure
+                // the search may seem inefficient, but these vectors are
+                // going to be at most 2 long (with very few exceptions). It's
+                // just not worth using a different data structure
                 if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
                               singleBondNbrs[nbrBond->getIdx()].end(),
                               bond->getIdx()) ==
@@ -3542,12 +3550,6 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
   }
   const Conformer &conf = mol.getConformer(confId);
   setDoubleBondNeighborDirections(mol, &conf);
-  for (auto bond : mol.bonds()) {
-    if (bond->hasProp(isStereoAny)) {
-      bond->setStereo(Bond::BondStereo::STEREOANY);
-      bond->clearProp(isStereoAny);
-    }
-  }
 }
 
 void clearSingleBondDirFlags(ROMol &mol, bool onlyWedgeFlags) {

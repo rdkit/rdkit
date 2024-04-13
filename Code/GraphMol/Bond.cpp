@@ -249,7 +249,7 @@ void Bond::setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx) {
       getOwningMol().getBondBetweenAtoms(getEndAtomIdx(), endIdx) != nullptr,
       "endIdx not connected to end atom of bond");
 
-  INT_VECT &atoms = getStereoAtoms();
+  auto &atoms = getStereoAtoms();
   atoms.clear();
   atoms.push_back(bgnIdx);
   atoms.push_back(endIdx);

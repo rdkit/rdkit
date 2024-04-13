@@ -3108,10 +3108,11 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     l2f = at2_cds - perp;
     // extend the two bond lines so they will intersect with the other bonds
     // from at2
+    auto bl = std::max((l1s - l1f).length(), (l2s - l2f).length());
     Point2D l1 = l1s.directionVector(l1f);
-    l1f = l1s + l1 * 2.0;
+    l1f = l1s + l1 * 2.0 * bl;
     Point2D l2 = l2s.directionVector(l2f);
-    l2f = l2s + l2 * 2.0;
+    l2f = l2s + l2 * 2.0 * bl;
     Point2D ip;
     for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(at2))) {
       auto nbr_cds = atCds_[nbr];
@@ -3135,8 +3136,8 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     // If at1->at2->at3 is a straight line, l2f may have ended up on the
     // wrong side of the other bond from l2s because there is no inner
     // side of the bond.  Do it again with a negative offset if so.
-    if (fabs(l1s.directionVector(l1f).dotProduct(l2s.directionVector(l2f)) <
-             0.9999)) {
+    if (fabs(l1s.directionVector(l1f).dotProduct(l2s.directionVector(l2f))) <
+        0.9999) {
       l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
                           -offset, true);
     }

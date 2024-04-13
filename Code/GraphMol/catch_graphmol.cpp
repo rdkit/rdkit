@@ -4085,3 +4085,30 @@ M  END
                         {46, 39});
   }
 }
+
+TEST_CASE("Hybridization of dative bonded atoms") {
+  const std::vector<Atom::HybridizationType> ref_hybridizations = {
+      Atom::HybridizationType::SP3, Atom::HybridizationType::SP3,
+      Atom::HybridizationType::SP2, Atom::HybridizationType::SP2,
+      Atom::HybridizationType::SP2, Atom::HybridizationType::SP3D2};
+
+  SECTION("Base mol") {
+    auto m = "CCC(=O)O"_smiles;
+    REQUIRE(m);
+
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      CHECK(m->getAtomWithIdx(i)->getHybridization() == ref_hybridizations[i]);
+    }
+  }
+  SECTION("Dative bonded") {
+    auto m = "CCC(=O)O->[Cu]"_smiles;
+    REQUIRE(m);
+
+    auto dBond = m->getBondWithIdx(4);
+    REQUIRE(dBond->getBondType() == Bond::BondType::DATIVE);
+
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      CHECK(m->getAtomWithIdx(i)->getHybridization() == ref_hybridizations[i]);
+    }
+  }
+}

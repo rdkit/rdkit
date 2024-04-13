@@ -1044,7 +1044,10 @@ std::string ParseV3000StringPropLabel(std::stringstream &stream) {
   std::string strValue;
 
   auto nextChar = stream.peek();
-  if (nextChar == '"') {
+  if (nextChar == ' ') {
+    // empty value, we peeked at the next field's separator
+    return strValue;
+  } else if (nextChar == '"') {
     // skip the opening quote:
     stream.get();
 

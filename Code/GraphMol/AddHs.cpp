@@ -780,8 +780,9 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       }
     }
   }
-
-  mol.removeAtom(atom);
+  // computed properties will be cleared after all hydrogens are removed
+  bool clearProps = false;
+  mol.removeAtom(atom, clearProps);
 }
 
 bool shouldRemoveH(const RWMol &mol, const Atom *atom,
@@ -1002,6 +1003,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
       molRemoveH(mol, idx, ps.updateExplicitCount);
     }
   }
+  mol.clearComputedProps(true);
   //
   //  If we didn't only remove implicit Hs, which are guaranteed to
   //  be the highest numbered atoms, we may have altered atom indices.

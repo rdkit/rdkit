@@ -32,6 +32,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <boost/dynamic_bitset.hpp>
 #include <iomanip>
 #include <RDGeneral/RDThreads.h>
@@ -1356,16 +1357,24 @@ std::vector<std::vector<unsigned int>> getMolSelfMatches(
     MolOps::RemoveHsParameters ps;
     bool sanitize = false;
     MolOps::removeHs(tmol, ps, sanitize);
+
+    std::unique_ptr<RWMol> prbMolSymm;
+    if (params.symmetrizeConjugatedTerminalGroupsForPruning) {
+      prbMolSymm.reset(new RWMol(tmol));
+      MolAlign::details::symmetrizeTerminalAtoms(*prbMolSymm);
+    }
+    const auto &prbMolForMatch = prbMolSymm ? *prbMolSymm : tmol;
+
     SubstructMatchParameters sssps;
     sssps.maxMatches = 1;
     // provides the atom indices in the molecule corresponding
     // to the indices in the H-stripped version
-    auto strippedMatch = SubstructMatch(mol, tmol, sssps);
+    auto strippedMatch = SubstructMatch(mol, prbMolForMatch, sssps);
     CHECK_INVARIANT(strippedMatch.size() == 1, "expected match not found");
 
     sssps.maxMatches = 1000;
     sssps.uniquify = false;
-    auto heavyAtomMatches = SubstructMatch(tmol, tmol, sssps);
+    auto heavyAtomMatches = SubstructMatch(tmol, prbMolForMatch, sssps);
     for (const auto &match : heavyAtomMatches) {
       res.emplace_back(0);
       res.back().reserve(match.size());
@@ -1447,6 +1456,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         << std::endl;
     coordMap = nullptr;
   }
+  boost::dynamic_bitset<> constrainedAtoms(mol.getNumAtoms());
+  if (coordMap) {
+    for (const auto &entry : *coordMap) {
+      constrainedAtoms.set(entry.first);
+    }
+  }
 
   if (molFrags.size() > 1 && params.boundsMat != nullptr) {
     BOOST_LOG(rdWarningLog)
@@ -1465,6 +1480,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     unsigned int nAtoms = piece->getNumAtoms();
 
     ForceFields::CrystalFF::CrystalFFDetails etkdgDetails;
+    etkdgDetails.constrainedAtoms = constrainedAtoms;
     EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
 
     DistGeom::BoundsMatPtr mmat;
@@ -1539,6 +1555,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 #endif
   }
   auto selfMatches = detail::getMolSelfMatches(mol, params);
+
   for (unsigned int ci = 0; ci < confs.size(); ++ci) {
     auto &conf = confs[ci];
     if (confsOk[ci]) {

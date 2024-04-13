@@ -1590,6 +1590,47 @@ H      0.635000    0.635000    0.635000
 )XYZ";
     CHECK(xyzblock == xyzblock_expected);
   }
+  SECTION("precistion") {
+    std::unique_ptr<RWMol> mol{new RWMol{}};
+    mol->setProp(common_properties::_Name, "CHEMBL506259");
+
+    for (unsigned z : {8, 6, 8, 6, 9, 9, 9}) {
+      auto *a = new Atom{z};
+      mol->addAtom(a, false, true);
+    }
+
+    auto *conf = new Conformer{7};
+    conf->setId(0);
+    conf->setAtomPos(0, RDGeom::Point3D{0.402012650000000, -0.132994360000000,
+                                        1.000000170000000});
+    conf->setAtomPos(1, RDGeom::Point3D{0.876222600000000, 0.997390900000000,
+                                        1.000000030000000});
+    conf->setAtomPos(2, RDGeom::Point3D{0.366137990000000, 2.110718500000000,
+                                        0.999999820000000});
+    conf->setAtomPos(3, RDGeom::Point3D{2.486961570000000, 1.004799350000000,
+                                        0.999999990000000});
+    conf->setAtomPos(4, RDGeom::Point3D{3.033118410000000, 2.237399550000000,
+                                        1.000000100000000});
+    conf->setAtomPos(5, RDGeom::Point3D{3.007723370000000, 0.373992940000000,
+                                        2.077133250000000});
+    conf->setAtomPos(6, RDGeom::Point3D{3.007723400000000, 0.373993120000000,
+                                        -0.077133360000000});
+    mol->addConformer(conf);
+
+    const std::string xyzblock = MolToXYZBlock(*mol, 0, 15);
+    std::cout << xyzblock << std::endl;
+    std::string xyzblock_expected = R"XYZ(7
+CHEMBL506259
+O      0.402012650000000   -0.132994360000000    1.000000170000000
+C      0.876222600000000    0.997390900000000    1.000000030000000
+O      0.366137990000000    2.110718500000000    0.999999820000000
+C      2.486961570000000    1.004799350000000    0.999999990000000
+F      3.033118410000000    2.237399550000000    1.000000100000000
+F      3.007723370000000    0.373992940000000    2.077133250000000
+F      3.007723400000000    0.373993120000000   -0.077133360000000
+)XYZ";
+    CHECK(xyzblock == xyzblock_expected);
+  }
 }
 
 TEST_CASE("valence writing 1", "[bug][writer]") {
@@ -7024,4 +7065,142 @@ TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
       testFragmentation(test);
     }
   };
+}
+
+TEST_CASE(
+    "GitHub Issue #7259: Writing StereoGroups to Mol files should break lines at 80 characters",
+    "[bug]") {
+  auto run_checks = [](const auto &mol) {
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 77);
+
+    const auto stgs = mol->getStereoGroups();
+    REQUIRE(stgs.size() == 1);
+    CHECK(stgs[0].getAtoms().size() == 35);
+  };
+
+  // Just some long chain with (a lot of) random up and down side branches
+  const auto m =
+      ("CC(C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H]"
+       "(C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@H]1C[C@@H]([C@H]"
+       "(C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)[C@@H](C)[C@H](C)"
+       "[C@@H](C)[C@H](C)[C@@H](C)C(C)C)[C@@H](C)[C@H]1C |a:1,3,5,7,9,11,13,15,17,19,21,23,25,27,"
+       "29,31,33,35,39,41,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,73,75|"_smiles);
+  run_checks(m);
+
+  const auto mb = MolToMolBlock(*m);
+  const auto steAbsPos = mb.find("M  V30 MDLV30/STEABS ATOMS=(35 ");
+  REQUIRE(steAbsPos != std::string::npos);
+  const auto endOfLine = mb.find("\nM  V30 ", steAbsPos + 1);
+  REQUIRE(endOfLine != std::string::npos);
+  CHECK(mb[endOfLine - 1] == '-');
+
+  run_checks(v2::FileParsers::MolFromMolBlock(mb));
+}
+
+TEST_CASE(
+    "GitHub Issue #7256: RDKit fails to parse \"M RAD\" lines where radical is 0",
+    "[bug]") {
+  const auto mb = R"CTAB(
+     RDKit          2D
+
+  1  0  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+M  RAD  1   1   0
+M  END
+)CTAB";
+
+  std::unique_ptr<RWMol> mol(MolBlockToMol(mb));
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 1);
+  const auto at = mol->getAtomWithIdx(0);
+  CHECK(at->getNumRadicalElectrons() == 0);
+}
+
+TEST_CASE("ZBOs in V3K blocks") {
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  SECTION("basics") {
+    auto run_tests = [](auto &m) {
+      CHECK(m->getNumAtoms() == 2);
+      CHECK(m->getNumBonds() == 1);
+      CHECK(m->getBondWithIdx(0)->getBondType() == Bond::ZERO);
+      CHECK(m->getAtomWithIdx(0)->getFormalCharge() == 0);
+      CHECK(m->getAtomWithIdx(1)->getFormalCharge() == 0);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 3);
+      CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == 3);
+      CHECK(m->getAtomWithIdx(0)->hasProp("_ZBO_H"));
+    };
+    std::string fName;
+    fName = rdbase + "H3BNH3.mol";
+    auto m = v2::FileParsers::MolFromMolFile(fName);
+    REQUIRE(m);
+    {
+      INFO("v2000");
+      run_tests(m);
+    }
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("M  V30 1 0 1 2") == std::string::npos);
+    CHECK(mb.find("M  V30 1 1 1 2") != std::string::npos);
+    CHECK(mb.find("ZBO") != std::string::npos);
+    CHECK(mb.find("HYD") != std::string::npos);
+    CHECK(mb.find("ZCH") != std::string::npos);
+    auto m2 = v2::FileParsers::MolFromMolBlock(mb);
+    REQUIRE(m2);
+    {
+      INFO("v3000");
+      run_tests(m2);
+    }
+  }
+  SECTION("example") {
+    // from SI of Alex Clark's ZBO paper
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Cl 2.121320 1.060660 0.000000 0
+M  V30 2 I 1.060660 0.000000 0.000000 0
+M  V30 3 Cl 2.121320 -1.060660 0.000000 0
+M  V30 4 Cl -0.000000 -1.060660 0.000000 0
+M  V30 5 Cl 0.000000 1.060660 0.000000 0
+M  V30 6 I -1.060660 0.000000 0.000000 0
+M  V30 7 Cl -2.121320 -1.060660 0.000000 0
+M  V30 8 Cl -2.121320 1.060660 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 1 6 8
+M  V30 8 1 6 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(4 2 5 6 4) CBONDS=(2 4 8) FIELDNAME=ZBO
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 8);
+    CHECK(m->getNumBonds() == 8);
+    CHECK(m->getBondWithIdx(3)->getBondType() == Bond::ZERO);
+    CHECK(m->getBondWithIdx(7)->getBondType() == Bond::ZERO);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("ZBO") != std::string::npos);
+    CHECK(mb.find("HYD") != std::string::npos);
+    CHECK(mb.find("ZCH") != std::string::npos);
+    auto m2 = v2::FileParsers::MolFromMolBlock(mb);
+    REQUIRE(m2);
+    CHECK(m2->getNumAtoms() == 8);
+    CHECK(m2->getNumBonds() == 8);
+    CHECK(m2->getBondWithIdx(3)->getBondType() == Bond::ZERO);
+    CHECK(m2->getBondWithIdx(7)->getBondType() == Bond::ZERO);
+  }
 }

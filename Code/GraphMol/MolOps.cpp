@@ -494,17 +494,24 @@ void cleanupAtropisomers(RWMol &mol) {
 }
 
 void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
+  // make sure that ring info is available
+  // (defensive, current calls have it available)
+  if (!mol.getRingInfo()->isSssrOrBetter()) {
+    RDKit::MolOps::findSSSR(mol);
+  }
   const RingInfo *ri = mol.getRingInfo();
   for (auto bond : mol.bonds()) {
     switch (bond->getStereo()) {
       case Bond::BondStereo::STEREOATROPCW:
       case Bond::BondStereo::STEREOATROPCCW:
-        if (ri->numBondRings(bond->getIdx()) > 0 ||
-            hybs[bond->getBeginAtom()->getIdx()] != Atom::SP2 ||
-            hybs[bond->getEndAtom()->getIdx()] != Atom::SP2) {
+        if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
+            hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
+            // do not clear bonds that part of a macrocycle
+            // because they can be linking actual atropisomeric portions
+            (ri->numBondRings(bond->getIdx()) > 0 &&
+             ri->minBondRingSize(bond->getIdx()) < 8)) {
           bond->setStereo(Bond::BondStereo::STEREONONE);
         }
-
         break;
 
       default:

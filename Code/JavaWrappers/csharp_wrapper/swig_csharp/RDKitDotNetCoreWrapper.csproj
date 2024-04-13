@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <Target Name="CopyCustomContent1" AfterTargets="AfterBuild" Condition=" '$(OS)' == 'Windows_NT' ">
+	  <Copy SourceFiles="../RDKFuncs.dll" DestinationFolder="$(OutDir)" />
+  </Target>
+  <Target Name="CopyCustomContent2" AfterTargets="CopyCustomContent1" Condition=" '$(OS)' != 'Windows_NT' ">
+	  <Copy SourceFiles="../RDKFuncs.so" DestinationFolder="$(OutDir)" />
+  </Target>
+</Project>

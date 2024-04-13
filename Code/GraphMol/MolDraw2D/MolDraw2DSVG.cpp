@@ -335,11 +335,13 @@ void MolDraw2DSVG::clearDrawing() {
 static const char *RDKIT_SVG_VERSION = "0.9";
 void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
   PRECONDITION(d_os, "no output stream");
-  d_os << "<metadata>" << std::endl;
+  d_os << "<metadata>"
+       << "\n";
   d_os << "<rdkit:mol"
        << " xmlns:rdkit = \"http://www.rdkit.org/xml\""
        << " version=\"" << RDKIT_SVG_VERSION << "\""
-       << ">" << std::endl;
+       << ">"
+       << "\n";
   for (const auto atom : mol.atoms()) {
     d_os << "<rdkit:atom idx=\"" << atom->getIdx() + 1 << "\"";
     bool doKekule = false, allHsExplicit = true, isomericSmiles = true;
@@ -366,7 +368,8 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
 
     outputMetaData(atom, d_os);
 
-    d_os << " />" << std::endl;
+    d_os << " />"
+         << "\n";
   }
   for (const auto bond : mol.bonds()) {
     d_os << "<rdkit:bond idx=\"" << bond->getIdx() + 1 << "\"";
@@ -379,9 +382,11 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
 
     outputMetaData(bond, d_os);
 
-    d_os << " />" << std::endl;
+    d_os << " />"
+         << "\n";
   }
-  d_os << "</rdkit:mol></metadata>" << std::endl;
+  d_os << "</rdkit:mol></metadata>"
+       << "\n";
 }
 
 // ****************************************************************************

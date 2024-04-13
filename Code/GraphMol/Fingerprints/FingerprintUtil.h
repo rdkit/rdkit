@@ -79,6 +79,7 @@ RDKIT_FINGERPRINTS_EXPORT std::uint64_t getTopologicalTorsionCode(
 
 RDKIT_FINGERPRINTS_EXPORT std::uint32_t getTopologicalTorsionHash(
     const std::vector<std::uint32_t> &pathCodes);
+
 }  // namespace AtomPairs
 
 namespace MorganFingerprints {
