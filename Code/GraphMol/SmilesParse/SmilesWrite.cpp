@@ -56,13 +56,12 @@ void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
   updateSmilesWriteParamsFromJSON(params, details_json.c_str());
 }
 
-void updateCXSmilesFieldsAndRestoreBondDirOptionFromJSON(
-    SmilesWrite::CXSmilesFields &cxSmilesFields,
-    RestoreBondDirOption &restoreBondDirs, const char *details_json) {
-  static const std::map<std::string, SmilesWrite::CXSmilesFields>
-      cxSmilesFieldsKeyValuePairs{CXSMILESFIELDS_ENUM_ITEMS};
-  static const std::map<std::string, RestoreBondDirOption>
-      restoreBondDirOptionKeyValuePairs{RESTOREBONDDIROPTION_ENUM_ITEMS};
+void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
+                                  RestoreBondDirOption &restoreBondDirs,
+                                  const char *details_json) {
+  static const auto cxSmilesFieldsKeyValuePairs = CXSMILESFIELDS_ITEMS_MAP;
+  static const auto restoreBondDirOptionKeyValuePairs =
+      RESTOREBONDDIROPTION_ITEMS_MAP;
   if (details_json && strlen(details_json)) {
     boost::property_tree::ptree pt;
     std::istringstream ss;
@@ -89,11 +88,11 @@ void updateCXSmilesFieldsAndRestoreBondDirOptionFromJSON(
   }
 }
 
-void updateCXSmilesFieldsAndRestoreBondDirOptionFromJSON(
-    SmilesWrite::CXSmilesFields &cxSmilesFields,
-    RestoreBondDirOption &restoreBondDirs, const std::string &details_json) {
-  updateCXSmilesFieldsAndRestoreBondDirOptionFromJSON(
-      cxSmilesFields, restoreBondDirs, details_json.c_str());
+void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
+                                  RestoreBondDirOption &restoreBondDirs,
+                                  const std::string &details_json) {
+  updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
+                               details_json.c_str());
 }
 
 namespace SmilesWrite {

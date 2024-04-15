@@ -131,8 +131,7 @@ std::string cxsmiles_helper(const char *pkl, size_t pkl_sz,
   SmilesWrite::CXSmilesFields cxSmilesFields =
       SmilesWrite::CXSmilesFields::CX_ALL;
   RestoreBondDirOption restoreBondDirs = RestoreBondDirOptionClear;
-  updateCXSmilesFieldsAndRestoreBondDirOptionFromJSON(
-      cxSmilesFields, restoreBondDirs, details_json);
+  updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, details_json);
   return MolToCXSmiles(mol, params, cxSmilesFields, restoreBondDirs);
 }
 }  // namespace
@@ -433,11 +432,11 @@ extern "C" char *get_morgan_fp(const char *mol_pkl, size_t mol_pkl_sz,
     return nullptr;
   }
   try {
-    auto fp = MinimalLib::morgan_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
-                                               details_json);
+    auto fp = MinimalLib::morgan_fp_as_bitvect(
+        mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
     auto res = BitVectToText(*fp);
     return str_to_c(res);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -449,11 +448,11 @@ extern "C" char *get_morgan_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
     return nullptr;
   }
   try {
-    auto fp = MinimalLib::morgan_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
-                                               details_json);
+    auto fp = MinimalLib::morgan_fp_as_bitvect(
+        mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
     auto res = BitVectToBinaryText(*fp);
     return str_to_c(res, nbytes);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -468,7 +467,7 @@ extern "C" char *get_rdkit_fp(const char *mol_pkl, size_t mol_pkl_sz,
                                               details_json);
     auto res = BitVectToText(*fp);
     return str_to_c(res);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -484,7 +483,7 @@ extern "C" char *get_rdkit_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
                                               details_json);
     auto res = BitVectToBinaryText(*fp);
     return str_to_c(res, nbytes);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -495,11 +494,11 @@ extern "C" char *get_pattern_fp(const char *mol_pkl, size_t mol_pkl_sz,
     return nullptr;
   }
   try {
-    auto fp = MinimalLib::pattern_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
-                                                details_json);
+    auto fp = MinimalLib::pattern_fp_as_bitvect(
+        mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
     auto res = BitVectToText(*fp);
     return str_to_c(res);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -511,11 +510,11 @@ extern "C" char *get_pattern_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
     return nullptr;
   }
   try {
-    auto fp = MinimalLib::pattern_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
-                                                details_json);
+    auto fp = MinimalLib::pattern_fp_as_bitvect(
+        mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
     auto res = BitVectToBinaryText(*fp);
     return str_to_c(res, nbytes);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -531,7 +530,7 @@ extern "C" char *get_topological_torsion_fp(const char *mol_pkl,
         mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
     auto res = BitVectToText(*fp);
     return str_to_c(res);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -548,7 +547,7 @@ extern "C" char *get_topological_torsion_fp_as_bytes(const char *mol_pkl,
         mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
     auto res = BitVectToBinaryText(*fp);
     return str_to_c(res, nbytes);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -563,7 +562,7 @@ extern "C" char *get_atom_pair_fp(const char *mol_pkl, size_t mol_pkl_sz,
         mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
     auto res = BitVectToText(*fp);
     return str_to_c(res);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -579,7 +578,7 @@ extern "C" char *get_atom_pair_fp_as_bytes(const char *mol_pkl,
         mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
     auto res = BitVectToBinaryText(*fp);
     return str_to_c(res, nbytes);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -589,10 +588,11 @@ extern "C" char *get_maccs_fp(const char *mol_pkl, size_t mol_pkl_sz) {
     return nullptr;
   }
   try {
-    auto fp = MinimalLib::maccs_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz));
+    auto fp =
+        MinimalLib::maccs_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz));
     auto res = BitVectToText(*fp);
     return str_to_c(res);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -603,10 +603,11 @@ extern "C" char *get_maccs_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
     return nullptr;
   }
   try {
-    auto fp = MinimalLib::maccs_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz));
+    auto fp =
+        MinimalLib::maccs_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz));
     auto res = BitVectToBinaryText(*fp);
     return str_to_c(res, nbytes);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -618,11 +619,11 @@ extern "C" char *get_avalon_fp(const char *mol_pkl, size_t mol_pkl_sz,
     return nullptr;
   }
   try {
-    auto fp = MinimalLib::avalon_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
-                                              details_json);
+    auto fp = MinimalLib::avalon_fp_as_bitvect(
+        mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
     auto res = BitVectToText(*fp);
     return str_to_c(res);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }
@@ -634,11 +635,11 @@ extern "C" char *get_avalon_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
     return nullptr;
   }
   try {
-    auto fp = MinimalLib::avalon_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
-                                              details_json);
+    auto fp = MinimalLib::avalon_fp_as_bitvect(
+        mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
     auto res = BitVectToBinaryText(*fp);
     return str_to_c(res, nbytes);
-  } catch(...) {
+  } catch (...) {
     return nullptr;
   }
 }

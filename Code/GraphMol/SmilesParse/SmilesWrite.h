@@ -56,11 +56,15 @@ namespace SmilesWrite {
   CXSMILESFIELDS_ENUM_ITEM(CX_ALL, 0x7fffffff)           \
   CXSMILESFIELDS_ENUM_ITEM(CX_ALL_BUT_COORDS, CX_ALL ^ CX_COORDS)
 
-#define CXSMILESFIELDS_ENUM_ITEM(k, v) k = v,
+#define CXSMILESFIELDS_ENUM_ITEM(k, v) k = (v),
 enum CXSmilesFields : uint32_t { CXSMILESFIELDS_ENUM_ITEMS };
 #undef CXSMILESFIELDS_ENUM_ITEM
 #define CXSMILESFIELDS_STD_MAP_ITEM(k) {#k, SmilesWrite::CXSmilesFields::k},
 #define CXSMILESFIELDS_ENUM_ITEM(k, v) CXSMILESFIELDS_STD_MAP_ITEM(k)
+#define CXSMILESFIELDS_ITEMS_MAP                       \
+  std::map<std::string, SmilesWrite::CXSmilesFields> { \
+    CXSMILESFIELDS_ENUM_ITEMS                          \
+  }
 
 //! \brief returns the cxsmiles data for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(
@@ -225,6 +229,10 @@ enum RestoreBondDirOption { RESTOREBONDDIROPTION_ENUM_ITEMS };
 #define RESTOREBONDDIROPTION_STD_MAP_ITEM(k) {#k, k},
 #define RESTOREBONDDIROPTION_ENUM_ITEM(k, v) \
   RESTOREBONDDIROPTION_STD_MAP_ITEM(k)
+#define RESTOREBONDDIROPTION_ITEMS_MAP          \
+  std::map<std::string, RestoreBondDirOption> { \
+    RESTOREBONDDIROPTION_ENUM_ITEMS             \
+  }
 
 //! \brief returns canonical CXSMILES for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(
@@ -319,12 +327,12 @@ void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
                                      const std::string &details_json);
 void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
                                      const char *details_json);
-void updateCXSmilesFieldsAndRestoreBondDirOptionFromJSON(
-    SmilesWrite::CXSmilesFields &cxSmilesFields,
-    RestoreBondDirOption &restoreBondDirs, const std::string &details_json);
-void updateCXSmilesFieldsAndRestoreBondDirOptionFromJSON(
-    SmilesWrite::CXSmilesFields &cxSmilesFields,
-    RestoreBondDirOption &restoreBondDirs, const char *details_json);
+void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
+                                  RestoreBondDirOption &restoreBondDirs,
+                                  const std::string &details_json);
+void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
+                                  RestoreBondDirOption &restoreBondDirs,
+                                  const char *details_json);
 
 }  // namespace RDKit
 #endif
