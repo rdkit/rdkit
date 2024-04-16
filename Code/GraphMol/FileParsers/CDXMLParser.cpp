@@ -12,6 +12,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryBond.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -365,7 +366,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           } else if (attr.first == "Order") {
             if (attr.second.data() == "1.5") {
               order = Bond::BondType::AROMATIC;
-            } else {
+            } else if (attr.second.data() == "any") {
+	      order = Bond::BondType::UNSPECIFIED;
+	    } else {
               int bond_order = stoi(attr.second.data());
 
               switch (bond_order) {
@@ -444,6 +447,11 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         bnd->setIsAromatic(true);
         ids[bond.end]->setIsAromatic(true);
         ids[bond.start]->setIsAromatic(true);
+      } else if (bond.order == Bond::BondType::UNSPECIFIED) {
+        auto qb = new QueryBond();
+        qb->setQuery(makeBondNullQuery());
+        mol.replaceBond(bond_idx, qb);
+        bnd = mol.getBondWithIdx(bond_idx);
       }
       bnd->setProp("CDX_BOND_ID", bond.bond_id);
       if (bond.display == "WedgeBegin") {
