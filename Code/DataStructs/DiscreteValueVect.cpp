@@ -267,7 +267,7 @@ DiscreteValueVect &DiscreteValueVect::operator-=(
   for (unsigned int i = 0; i < d_length; i++) {
     unsigned int v1 = getVal(i);
     unsigned int v2 = other.getVal(i);
-    setVal(i, std::max(0, v1 - v2));
+    setVal(i, std::max(0u, v1 - v2));
   }
   return *this;
 }
