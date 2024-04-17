@@ -34,7 +34,8 @@ void BitVect::initFromText(const char *data, const unsigned int dataLen,
     ss.write(data, dataLen);
   }
 
-  std::int32_t format = 0, nOn = 0, version = 0;
+  std::int32_t format = 0, version = 0;
+  std::uint32_t nOn = 0;
   std::int32_t size;
 
   // earlier versions of the code did not have the version number encoded, so
@@ -65,19 +66,19 @@ void BitVect::initFromText(const char *data, const unsigned int dataLen,
   if ((format == 0) ||
       ((format == 1) && (size >= std::numeric_limits<unsigned short>::max()))) {
     std::uint32_t tmp;
-    for (int i = 0; i < nOn; i++) {
+    for (unsigned int i = 0; i < nOn; i++) {
       RDKit::streamRead(ss, tmp);
       setBit(tmp);
     }
   } else if (format == 1) {  // version 16 and on bits stored as short ints
     std::uint16_t tmp;
-    for (int i = 0; i < nOn; i++) {
+    for (unsigned int i = 0; i < nOn; i++) {
       RDKit::streamRead(ss, tmp);
       setBit(tmp);
     }
   } else if (format == 2) {  // run length encoded format
     std::uint32_t curr = 0;
-    for (int i = 0; i < nOn; i++) {
+    for (unsigned int i = 0; i < nOn; i++) {
       curr += RDKit::readPackedIntFromStream(ss);
       setBit(curr);
       curr++;
