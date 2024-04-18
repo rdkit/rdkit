@@ -5,9 +5,11 @@ Focus is on molecules that have differing SMILES, but
 are actually the same.
 """
 
+import os
 import unittest
 
 from rdkit import Chem
+from rdkit import RDConfig
 from rdkit.Chem import RegistrationHash
 from rdkit.Chem.RegistrationHash import HashLayer
 
@@ -805,6 +807,35 @@ $$$$
         enol_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS),
       RegistrationHash.GetMolHash(
         keto_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+
+
+  def testAtropisomer(self):
+    atropTestFile = os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/FileParsers/test_data/atropisomers/RP-6306_atrop1.sdf')
+    mol = Chem.MolFromMolFile(atropTestFile)
+
+    bond = mol.GetBondWithIdx(3)
+    self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREOATROPCW)
+
+    layersCw = RegistrationHash.GetMolLayers(mol)
+    self.assertTrue(layersCw[HashLayer.CANONICAL_SMILES].endswith(' |wU:10.9|'))
+    self.assertTrue(layersCw[HashLayer.TAUTOMER_HASH].endswith(' |wU:10.9|'))
+
+    mol2Cw = Chem.MolFromSmiles(layersCw[HashLayer.CANONICAL_SMILES])
+    layersCw2 = RegistrationHash.GetMolLayers(mol2Cw)
+    self.assertEqual(layersCw, layersCw2)
+
+    bond.SetStereo(Chem.BondStereo.STEREOATROPCCW)
+
+    layersCcw = RegistrationHash.GetMolLayers(mol)
+    self.assertNotEqual(layersCw, layersCcw)
+
+    self.assertTrue(layersCcw[HashLayer.CANONICAL_SMILES].endswith(' |wU:10.20|'))
+    self.assertTrue(layersCcw[HashLayer.TAUTOMER_HASH].endswith(' |wU:10.20|'))
+
+    mol2Ccw = Chem.MolFromSmiles(layersCcw[HashLayer.CANONICAL_SMILES])
+    layersCcw2 = RegistrationHash.GetMolLayers(mol2Ccw)
+    self.assertEqual(layersCcw, layersCcw2)
+
 
 
 if __name__ == '__main__':  # pragma: nocover

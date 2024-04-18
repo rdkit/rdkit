@@ -2830,5 +2830,5 @@ TEST_CASE("CX_BOND_ATROPISOMER option requires ring info", "[bug][cxsmiles]") {
 
   // This will fail if there's no ring information
   auto smi = MolToCXSmiles(*m, ps, flags);
-  CHECK(smi == "Cc1cc2c(C(N)=O)c(N)n(-c3c(C)ccc(O)c3C)c2nc1C |wU:10.9|");
+  CHECK(smi == "Cc1cc2c(C(N)=O)c(N)n(-c3c(C)ccc(O)c3C)c2nc1C |wD:10.9|");
 }
