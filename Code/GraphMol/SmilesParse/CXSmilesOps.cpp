@@ -1097,7 +1097,9 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
         if (atom->getIdx() != bond->getEndAtomIdx()) {
           BOOST_LOG(rdWarningLog)
               << "atom " << atomIdx << " is not associated with bond "
-              << bondIdx << " in w block" << std::endl;
+              << bondIdx << "(" << bond->getBeginAtomIdx() + startAtomIdx << "-"
+              << bond->getEndAtomIdx() + startAtomIdx << ")"
+              << " in w block" << std::endl;
           return false;
         }
         auto eidx = bond->getBeginAtomIdx();
@@ -2038,23 +2040,28 @@ std::string get_bond_config_block(
         bd = Bond::BondDir::NONE;
     }
 
+    if (atropisomerOnly && bd == Bond::BondDir::NONE) {
+      continue;
+    }
+
+    // see if this one is an atropisomer
+
+    bool isAnAtropisomer = false;
+
+    const Atom *firstAtom = bond->getBeginAtom();
+    for (auto bondNbr : mol.atomBonds(firstAtom)) {
+      if (bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+          bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+        isAnAtropisomer = true;
+        break;
+      }
+    }
+
     if (atropisomerOnly) {
-      // on of the bonds on the beging atom of this bond must be an atropisomer
+      // one of the bonds on the beginning atom of this bond must be an
+      // atropisomer
 
-      if (bd == Bond::BondDir::NONE) {
-        continue;
-      }
-      bool foundAtropisomer = false;
-
-      const Atom *firstAtom = bond->getBeginAtom();
-      for (auto bondNbr : mol.atomBonds(firstAtom)) {
-        if (bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCW ||
-            bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
-          foundAtropisomer = true;
-          break;
-        }
-      }
-      if (!foundAtropisomer) {
+      if (!isAnAtropisomer) {
         continue;
       }
     } else {  //  atropisomeronly is FALSE - check for a wedging caused by
@@ -2109,8 +2116,9 @@ std::string get_bond_config_block(
     std::string wType = "";
     if (bd == Bond::BondDir::UNKNOWN) {
       wType = "w";
-    } else if (coordsIncluded) {
+    } else if (coordsIncluded || isAnAtropisomer) {
       // we only do wedgeUp and wedgeDown if coordinates are being output
+      // or its an atropisomer
       if (bd == Bond::BondDir::BEGINWEDGE) {
         wType = "wU";
       } else if (bd == Bond::BondDir::BEGINDASH) {
@@ -2354,12 +2362,13 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   // do the CX_BOND_ATROPISOMER only if CX_BOND_CFG s not done.  CX_BOND_CFG
   // includes the atropisomer wedging
   else if (flags & SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER) {
-    if (conf) {
-      Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeBonds);
-    }
-
     bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&
                          mol.getNumConformers();
+    if (includeCoords) {
+      Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeBonds);
+    } else {
+      Atropisomers::wedgeBondsFromAtropisomers(mol, nullptr, wedgeBonds);
+    }
     const auto cfgblock = get_bond_config_block(
         mol, atomOrder, bondOrder, includeCoords, wedgeBonds, true);
     appendToCXExtension(cfgblock, res);

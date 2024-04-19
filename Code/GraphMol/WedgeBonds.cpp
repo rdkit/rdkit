@@ -341,6 +341,16 @@ int pickBondToWedge(
 
 // returns map of bondIdx -> bond begin atom for those bonds that
 // need wedging.
+
+std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
+    const ROMol &mol, const BondWedgingParameters *params) {
+  const Conformer *conf = nullptr;
+  if (mol.getNumConformers()) {
+    conf = &mol.getConformer();
+  }
+  return pickBondsToWedge(mol, params, conf);
+}
+
 std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
     const ROMol &mol, const BondWedgingParameters *params,
     const Conformer *conf) {
@@ -388,15 +398,7 @@ std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
       wedgeInfo[bnd1] = std::move(wi);
     }
   }
-
-  if (conf == nullptr) {
-    if (mol.getNumConformers()) {
-      conf = &mol.getConformer();
-    }
-  }
-  if (conf) {
-    RDKit::Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeInfo);
-  }
+  RDKit::Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeInfo);
 
   return wedgeInfo;
 }
@@ -472,7 +474,7 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
     MolOps::findSSSR(mol);
   }
 
-  auto wedgeBonds = Chirality::pickBondsToWedge(mol, params);
+  auto wedgeBonds = Chirality::pickBondsToWedge(mol, params, conf);
 
   // loop over the bonds we need to wedge:
   for (const auto &[wbi, wedgeInfo] : wedgeBonds) {

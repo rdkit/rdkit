@@ -301,8 +301,12 @@ RDKIT_GRAPHMOL_EXPORT void setStereoForBond(ROMol &mol, Bond *bond,
 /// returns a map from bond idx -> controlling atom idx
 RDKIT_GRAPHMOL_EXPORT
 std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
-    const ROMol &mol, const BondWedgingParameters *params = nullptr,
-    const Conformer *conf = nullptr);
+    const ROMol &mol, const BondWedgingParameters *params = nullptr);
+
+RDKIT_GRAPHMOL_EXPORT
+std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
+    const ROMol &mol, const BondWedgingParameters *params,
+    const Conformer *conf);
 
 RDKIT_GRAPHMOL_EXPORT void wedgeMolBonds(
     ROMol &mol, const Conformer *conf = nullptr,
