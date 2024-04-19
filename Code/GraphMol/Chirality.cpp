@@ -452,7 +452,7 @@ namespace Chirality {
 
 std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     const ROMol &mol, const Bond *bond, const Conformer *conf,
-    double pseudo3DOffset = 0.1, double volumeTolerance = 0.01) {
+    double pseudo3DOffset = 0.1, double volumeTolerance = 1e-3) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(conf, "no conformer");
   auto bondDir = bond->getBondDir();

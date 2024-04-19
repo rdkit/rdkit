@@ -5380,3 +5380,51 @@ M  END)CTAB"_ctab;
   CHECK(cAt0->getProp<std::string>(common_properties::_CIPCode) ==
         cAt1->getProp<std::string>(common_properties::_CIPCode));
 }
+
+TEST_CASE(
+    "GitHub Issue #7070: zero final chiral volume on scaled molecules") {
+  const auto mlarge = R"CTAB(
+  MM V3K  01017000002D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 264.49 -311.16 0 0
+M  V30 2 C 278.9 -311.16 0 0
+M  V30 3 O 286.1 -298.69 0 0
+M  V30 4 C 286.1 -323.63 0 0
+M  V30 5 C 278.9 -336.1 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3 CFG=3
+M  V30 3 1 2 4
+M  V30 4 1 4 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  const auto mscaled = R"CTAB(
+  MM V3K  01017000002D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 26.449 -31.116 0 0
+M  V30 2 C 27.89 -31.116 0 0
+M  V30 3 O 28.61 -29.869 0 0
+M  V30 4 C 28.61 -32.363 0 0
+M  V30 5 C 27.89 -33.61 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3 CFG=3
+M  V30 3 1 2 4
+M  V30 4 1 4 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  CHECK(MolToSmiles(*mlarge) == "CC[C@H](C)O");
+  CHECK(MolToSmiles(*mscaled) == "CC[C@H](C)O");
+}
