@@ -801,11 +801,12 @@ bool WedgeBondFromAtropisomerOneBond3d(
         }
       }
       auto ringCount = ri->numBondRings(bondToTry->getIdx());
+      if (!ringCount) {
+        ringCount = 10;
+      }
       if (ringCount > bestRingCount) {
         continue;
-      }
-
-      else if (ringCount < bestRingCount) {
+      } else if (ringCount < bestRingCount) {
         bestBond = bondToTry;
         bestBondEnd = whichEnd;
         bestRingCount = ringCount;
@@ -838,7 +839,8 @@ bool WedgeBondFromAtropisomerOneBond3d(
     }
   }
 
-  if (bestBond != nullptr) {  // we found a good one
+  if (bestBond != nullptr) {
+    // we found a good one
 
     // make sure the atoms on the bond are in the right order for the
     // wedge/hash the atom on the end of the main bond must be listed
@@ -848,7 +850,6 @@ bool WedgeBondFromAtropisomerOneBond3d(
       bestBond->setEndAtom(bestBond->getBeginAtom());
       bestBond->setBeginAtom(atomAndBondVecs[bestBondEnd].first);
     }
-    // bestBond->setBondDir(bestBondDir);
     auto newWedgeInfo = std::unique_ptr<RDKit::Chirality::WedgeInfoBase>(
         new RDKit::Chirality::WedgeInfoAtropisomer(bond->getIdx(),
                                                    bestBondDir));

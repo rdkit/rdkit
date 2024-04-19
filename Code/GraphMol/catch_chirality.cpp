@@ -5454,4 +5454,77 @@ M  END)CTAB"_ctab;
       }
     }
   }
+  SECTION("3d") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 20 21 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 0.382755 -0.645531 -2.970173 0
+M  V30 2 C 1.191902 -0.080895 -1.951313 0
+M  V30 3 O 2.258061 0.469395 -2.326427 0
+M  V30 4 N 0.799020 -0.142115 -0.557889 0
+M  V30 5 C -0.412487 -0.780398 -0.245786 0
+M  V30 6 C -0.494802 -2.127175 0.018641 0
+M  V30 7 C 0.666160 -3.010952 -0.001627 0
+M  V30 8 C -1.739073 -2.694470 0.315567 0
+M  V30 9 C -2.888797 -1.963937 0.355103 0
+M  V30 10 N -2.786157 -0.648937 0.093334 0
+M  V30 11 C -1.586505 -0.059517 -0.200695 0
+M  V30 12 C -1.679580 1.394735 -0.453406 0
+M  V30 13 C -1.637015 2.096392 0.888082 0
+M  V30 14 C -3.022840 1.757751 -1.085608 0
+M  V30 15 C 1.696224 0.471157 0.348870 0
+M  V30 16 N 1.608949 1.758263 0.730152 0
+M  V30 17 C 2.457188 2.346328 1.581612 0
+M  V30 18 C 3.501956 1.626784 2.127981 0
+M  V30 19 C 3.644663 0.298166 1.774403 0
+M  V30 20 C 2.724579 -0.259689 0.878536 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 4 2
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 7
+M  V30 7 1 6 8
+M  V30 8 2 8 9
+M  V30 9 1 9 10
+M  V30 10 2 10 11
+M  V30 11 1 11 12
+M  V30 12 1 12 13
+M  V30 13 1 12 14
+M  V30 14 1 4 15
+M  V30 15 2 15 16
+M  V30 16 1 16 17
+M  V30 17 2 17 18
+M  V30 18 1 18 19
+M  V30 19 2 19 20
+M  V30 20 1 5 11 CFG=1
+M  V30 21 1 20 15
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(3)->getStereo() == Bond::BondStereo::STEREOATROPCW);
+    // after reading in, there's no bond wedging:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+    }
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+    // now there is:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      if (bnd->getIdx() != 4) {
+        CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+      } else {
+        CHECK(bnd->getBondDir() == Bond::BondDir::BEGINWEDGE);
+      }
+    }
+  }
 }
