@@ -590,7 +590,12 @@ bool WedgeBondFromAtropisomerOneBond2d(
   }
 
   // did not find a good bond dir - pick one to use
-  // we would like to have one that is not in a ring, and will be a wedge
+  // we would like to have one that is in a ring, and will favor it being a
+  // wedge
+
+  // We favor rings here because wedging non-ring bonds makes it too likely that
+  // we'll end up accidentally creating new atropisomeric bonds. This was github
+  // issue 7371
 
   const RingInfo *ri = bond->getOwningMol().getRingInfo();
 
@@ -628,11 +633,12 @@ bool WedgeBondFromAtropisomerOneBond2d(
         }
       }
       auto ringCount = ri->numBondRings(bondToTry->getIdx());
+      if (!ringCount) {
+        ringCount = 10;
+      }
       if (ringCount > bestRingCount) {
         continue;
-      }
-
-      else if (ringCount < bestRingCount) {
+      } else if (ringCount < bestRingCount) {
         bestBondEnd = whichEnd;
         bestBondNumber = whichBond;
         bestRingCount = ringCount;
@@ -669,8 +675,8 @@ bool WedgeBondFromAtropisomerOneBond2d(
     }
   }
 
-  if (bestBondEnd >= 0)  // we found a good one
-  {
+  if (bestBondEnd >= 0) {
+    // we found a good one
     // make sure the atoms on the bond are in the right order for the
     // wedge/hash the atom on the end of the main bond must be listed
     // first for the wedge/has bond
@@ -680,7 +686,6 @@ bool WedgeBondFromAtropisomerOneBond2d(
       bestBond->setEndAtom(bestBond->getBeginAtom());
       bestBond->setBeginAtom(atomAndBondVecs[bestBondEnd].first);
     }
-    // bonds[bestBondEnd][bestBondNumber]->setBondDir(bestBondDir);
     auto newWedgeInfo = std::unique_ptr<RDKit::Chirality::WedgeInfoBase>(
         new RDKit::Chirality::WedgeInfoAtropisomer(bond->getIdx(),
                                                    bestBondDir));
