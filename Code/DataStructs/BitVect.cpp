@@ -34,7 +34,8 @@ void BitVect::initFromText(const char *data, const unsigned int dataLen,
     ss.write(data, dataLen);
   }
 
-  std::int32_t format = 0, version = 0;
+  std::int32_t format = 0;
+  std::int32_t version = 0;
   std::uint32_t nOn = 0;
   std::int32_t size;
 
