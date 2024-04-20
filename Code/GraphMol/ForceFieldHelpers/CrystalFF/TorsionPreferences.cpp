@@ -317,7 +317,7 @@ void getExperimentalTorsions(
     // torsions for flat rings
     const RingInfo *rinfo = mol.getRingInfo();
     CHECK_INVARIANT(rinfo, "no ring info");
-    CHECK_INVARIANT(rinfo->isInitialized(), "ring info not initialized");
+    CHECK_INVARIANT(rinfo->isSssrOrBetter(), "sssr ring info not initialized");
     for (const auto &atomRing : rinfo->atomRings()) {
       unsigned int rSize = atomRing.size();
       // we don't need to deal with 3 membered rings

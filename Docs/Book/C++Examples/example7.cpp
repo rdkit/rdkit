@@ -10,7 +10,7 @@
 int main(int argc, char **argv) {
   std::shared_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol("OC1C2C1CC2"));
 
-  if (!mol->getRingInfo()->isInitialized()) {
+  if (!mol->getRingInfo()->isSssrOrBetter()) {
     RDKit::MolOps::findSSSR(*mol);
   }
   for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {

@@ -220,7 +220,7 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     if (bond->getIsConjugated() &&
         (bond->getBeginAtom()->getAtomicNum() > 10 ||
          bond->getEndAtom()->getAtomicNum() > 10) &&
-        mol.getRingInfo() && mol.getRingInfo()->isInitialized() &&
+        mol.getRingInfo() && mol.getRingInfo()->isSssrOrBetter() &&
         mol.getRingInfo()->isBondInRingOfSize(bond->getIdx(), 5)) {
       squishAtoms.set(bond->getBeginAtomIdx());
       squishAtoms.set(bond->getEndAtomIdx());

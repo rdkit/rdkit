@@ -1375,7 +1375,7 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
   std::set<unsigned int> nbrRanks;
   if (!atom->getPropIfPresent(common_properties::_ringStereochemCand, res)) {
     const RingInfo *ringInfo = mol.getRingInfo();
-    if (ringInfo->isInitialized() && ringInfo->numAtomRings(atom->getIdx())) {
+    if (ringInfo->isSssrOrBetter() && ringInfo->numAtomRings(atom->getIdx())) {
       // three-coordinate N additional requirements:
       //   in a ring of size 3  (from InChI)
       // OR
@@ -1438,7 +1438,7 @@ void findChiralAtomSpecialCases(ROMol &mol,
   PRECONDITION(possibleSpecialCases.size() >= mol.getNumAtoms(),
                "bit vector too small");
   possibleSpecialCases.reset();
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     VECT_INT_VECT sssrs;
     MolOps::symmetrizeSSSR(mol, sssrs);
   }
@@ -2181,7 +2181,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
 
   // later we're going to need ring information, get it now if we don't
   // have it already:
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
 

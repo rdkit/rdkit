@@ -912,7 +912,7 @@ int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
 
   // first find the all the simple rings in the molecule
   VECT_INT_VECT srings;
-  if (mol.getRingInfo()->isInitialized()) {
+  if (mol.getRingInfo()->isSymmSssr()) {
     srings = mol.getRingInfo()->atomRings();
   } else {
     MolOps::symmetrizeSSSR(mol, srings);

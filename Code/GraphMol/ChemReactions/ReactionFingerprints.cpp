@@ -69,8 +69,8 @@ RDKit::SparseIntVect<std::uint32_t> *generateFingerprint(
       delete tmp2;
     } break;
     case RDKit::MorganFP: {
-      if (!mol.getRingInfo()->isInitialized()) {
-        mol.updatePropertyCache();
+      if (!mol.getRingInfo()->isSssrOrBetter()) {
+        mol.updatePropertyCache(false);
         RDKit::MolOps::findSSSR(mol);
       }
       res = RDKit::MorganFingerprints::getHashedFingerprint(mol, 2, fpSize);
@@ -101,8 +101,8 @@ ExplicitBitVect *generateFingerprintAsBitVect(RDKit::ROMol &mol,
           mol, fpSize);
       break;
     case RDKit::MorganFP: {
-      if (!mol.getRingInfo()->isInitialized()) {
-        mol.updatePropertyCache();
+      if (!mol.getRingInfo()->isSssrOrBetter()) {
+        mol.updatePropertyCache(false);
         RDKit::MolOps::findSSSR(mol);
       }
       res = RDKit::MorganFingerprints::getFingerprintAsBitVect(mol, 2, fpSize);

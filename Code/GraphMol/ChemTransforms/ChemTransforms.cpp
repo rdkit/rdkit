@@ -407,8 +407,8 @@ int findNbrBond(RWMol &mol, Bond *bond, Atom *bondAtom, const INT_VECT &bring,
 
 void setSubMolBrokenRingStereo(RWMol &mol,
                                const boost::dynamic_bitset<> &removedAtoms) {
-  PRECONDITION(mol.getRingInfo() && mol.getRingInfo()->isInitialized(),
-               "bad ringinfo");
+  PRECONDITION(mol.getRingInfo() && mol.getRingInfo()->isSssrOrBetter(),
+               "insufficient ringinfo");
 
   for (const auto &bring : mol.getRingInfo()->bondRings()) {
     // check whether or not this bond ring is affected by the removal
@@ -718,7 +718,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       newMol->removeAtom(at);
       removedAtoms.set(at->getIdx());
       if (!removedRingAtom && mol.getRingInfo() &&
-          mol.getRingInfo()->isInitialized() &&
+          mol.getRingInfo()->isSssrOrBetter() &&
           mol.getRingInfo()->numAtomRings(at->getIdx())) {
         removedRingAtom = true;
       }
