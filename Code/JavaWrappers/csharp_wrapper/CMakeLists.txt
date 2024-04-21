@@ -108,6 +108,7 @@ if (RDK_BUILD_DOTNET_CSHARP_TESTS)
     COMMAND ${DOTNET_EXE} test RDKitDotNetCore.sln "-l:console$<SEMICOLON>verbosity=normal" 
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
+endif()
 
 # find the mcs executable on non-windows systems:
 if(NOT MSVC)
@@ -135,4 +136,3 @@ if(NOT MSVC)
    )
 endif(NOT MSVC)
 
-endif()
