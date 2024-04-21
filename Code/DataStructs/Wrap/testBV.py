@@ -115,28 +115,28 @@ class TestCase(unittest.TestCase):
       bulk = getattr(DataStructs, f'Bulk{metric}Similarity')
       single = getattr(DataStructs, f'{metric}Similarity')
     sims = bulk(bvs[0], bvs)
-    for i in range(len(bvs)):
-      sim = single(bvs[0], bvs[i])
+    for i, bbvs in enumerate(bvs):
+      sim = single(bvs[0], bbvs)
       self.assertEqual(sim, sims[i])
-      self.assertEqual(sim, single(bvs[0], bvs[i].ToBinary()))
+      self.assertEqual(sim, single(bvs[0], bbvs.ToBinary()))
     dists = bulk(bvs[0], bvs, returnDistance=True)
-    for i in range(len(bvs)):
-      dist = single(bvs[0], bvs[i], returnDistance=True)
+    for i, bbvs in enumerate(bvs):
+      dist = single(bvs[0], bbvs, returnDistance=True)
       self.assertEqual(dist, dists[i])
-      self.assertEqual(dist, single(bvs[0], bvs[i].ToBinary(), returnDistance=True))
+      self.assertEqual(dist, single(bvs[0], bbvs.ToBinary(), returnDistance=True))
 
     sims = DataStructs.BulkTverskySimilarity(bvs[0], bvs, 1, 1)
-    for i in range(len(bvs)):
-      sim = DataStructs.TverskySimilarity(bvs[0], bvs[i], 1, 1)
+    for i, bbvs in enumerate(bvs):
+      sim = DataStructs.TverskySimilarity(bvs[0], bbvs, 1, 1)
       self.assertEqual(sim, sims[i])
-      sim = DataStructs.TanimotoSimilarity(bvs[0], bvs[i])
+      sim = DataStructs.TanimotoSimilarity(bvs[0], bbvs)
       self.assertEqual(sim, sims[i])
 
     sims = DataStructs.BulkTverskySimilarity(bvs[0], bvs, 1, 1, returnDistance=True)
-    for i in range(len(bvs)):
-      sim = DataStructs.TverskySimilarity(bvs[0], bvs[i], 1, 1, returnDistance=True)
+    for i, bbvs in enumerate(bvs):
+      sim = DataStructs.TverskySimilarity(bvs[0], bbvs, 1, 1, returnDistance=True)
       self.assertEqual(sim, sims[i])
-      sim = DataStructs.TanimotoSimilarity(bvs[0], bvs[i], returnDistance=True)
+      sim = DataStructs.TanimotoSimilarity(bvs[0], bbvs, returnDistance=True)
       self.assertEqual(sim, sims[i])
 
   def test6BulkOps(self):
