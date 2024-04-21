@@ -117,22 +117,19 @@ if(NOT MSVC)
 	MESSAGE ("mcs (executable) is not found. Please add it to PATH and rerun cmake.")
 	MESSAGE(FATAL_ERROR "Cannot find required executable mcs")
   endif (NOT GMCS_EXE)
-endif(NOT MSVC)
 
-
-if(NOT MSVC)
-   # code adapted from the wrapper code for
-   # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup
-   ADD_CUSTOM_COMMAND(
-     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
-     ## 1. run this custom command only after swig has been run.
-     COMMAND ${GMCS_EXE} -platform:${PLATFORM} -out:RDKit2DotNet.dll -t:library "swig_csharp/*.cs"
-       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-     DEPENDS "${swig_generated_file_fullname}"
-   )
-   ADD_CUSTOM_TARGET(RDKFuncsDLL ALL
-     DEPENDS RDKFuncs ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
-     COMMENT "building mono dll"
-   )
+  # code adapted from the wrapper code for
+  # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
+    ## 1. run this custom command only after swig has been run.
+    COMMAND ${GMCS_EXE} -platform:${PLATFORM} -out:RDKit2DotNet.dll -t:library "swig_csharp/*.cs"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS "${swig_generated_file_fullname}"
+  )
+  ADD_CUSTOM_TARGET(RDKFuncsDLL ALL
+    DEPENDS RDKFuncs ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
+    COMMENT "building mono dll"
+  )
 endif(NOT MSVC)
 
