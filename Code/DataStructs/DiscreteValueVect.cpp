@@ -15,6 +15,7 @@
 #include "DiscreteDistMat.h"
 #include <RDGeneral/Exceptions.h>
 #include <cstdint>
+#include <algorithm>
 
 namespace RDKit {
 const int ci_DISCRETEVALUEVECTPICKLE_VERSION = 0x1;
@@ -227,11 +228,7 @@ DiscreteValueVect DiscreteValueVect::operator&(
   for (unsigned int i = 0; i < d_length; ++i) {
     unsigned int v1 = getVal(i);
     unsigned int v2 = other.getVal(i);
-    if (v1 < v2) {
-      ans.setVal(i, v1);
-    } else {
-      ans.setVal(i, v2);
-    }
+    ans.setVal(i, std::min(v2, v1));
   }
   return (ans);
 };
@@ -247,11 +244,7 @@ DiscreteValueVect DiscreteValueVect::operator|(
   for (unsigned int i = 0; i < d_length; ++i) {
     unsigned int v1 = getVal(i);
     unsigned int v2 = other.getVal(i);
-    if (v1 > v2) {
-      ans.setVal(i, v1);
-    } else {
-      ans.setVal(i, v2);
-    }
+    ans.setVal(i, std::max(v2, v1));
   }
   return (ans);
 };
@@ -263,10 +256,7 @@ DiscreteValueVect &DiscreteValueVect::operator+=(
 
   for (unsigned int i = 0; i < d_length; i++) {
     unsigned int v = getVal(i) + other.getVal(i);
-    if (v > maxVal) {
-      v = maxVal;
-    }
-    setVal(i, v);
+    setVal(i, std::min(v, maxVal));
   }
   return *this;
 }
@@ -277,11 +267,7 @@ DiscreteValueVect &DiscreteValueVect::operator-=(
   for (unsigned int i = 0; i < d_length; i++) {
     unsigned int v1 = getVal(i);
     unsigned int v2 = other.getVal(i);
-    if (v1 > v2) {
-      setVal(i, v1 - v2);
-    } else {
-      setVal(i, 0);
-    }
+    setVal(i, v1 > v2 ? (v1 - v2) : 0);
   }
   return *this;
 }

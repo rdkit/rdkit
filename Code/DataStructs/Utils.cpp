@@ -330,16 +330,21 @@ void a2b(const char *a4, char *b3) {
     *** b3: |000000111111222222333333
     ***     |=====+=====+=====+=====|
     *********************************************/
-    if (i == 0) {
-      b3[0] = (byte << 2); /*** 6 bits into 1st byte ***/
-    } else if (i == 1) {
-      b3[0] |= ((b = byte) >> 4); /*** 2 bits into 1st byte ***/
-      b3[1] = ((b = byte) << 4);  /*** 4 bits into 2nd byte ***/
-    } else if (i == 2) {
-      b3[1] |= ((b = byte) >> 2); /*** 4 bits into 2nd byte ***/
-      b3[2] = ((b = byte) << 6);  /*** 2 bits into 3rd byte ***/
-    } else if (i == 3) {
-      b3[2] |= byte; /*** 6 bits into 3rd byte ***/
+    switch (i) {
+      case 0:
+        b3[0] = (byte << 2); /*** 6 bits into 1st byte ***/
+        break;
+      case 1:
+        b3[0] |= ((b = byte) >> 4); /*** 2 bits into 1st byte ***/
+        b3[1] = ((b = byte) << 4);  /*** 4 bits into 2nd byte ***/
+        break;
+      case 2:
+        b3[1] |= ((b = byte) >> 2); /*** 4 bits into 2nd byte ***/
+        b3[2] = ((b = byte) << 6);  /*** 2 bits into 3rd byte ***/
+        break;
+      case 3:
+        b3[2] |= byte; /*** 6 bits into 3rd byte ***/
+        break;
     }
   }
   return;
