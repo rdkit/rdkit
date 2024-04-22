@@ -58,7 +58,7 @@ steps:
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
     cd build
-    ctest -R CSharpTests -C Release -T test --verbose 
+    ctest -R CSharpTests -C Release -T test --output-on-failure --verbose 
   displayName: Run tests
 - task: PublishTestResults@2
   inputs:
