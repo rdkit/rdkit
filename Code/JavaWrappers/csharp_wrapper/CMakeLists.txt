@@ -81,7 +81,7 @@ SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
 INSTALL(TARGETS RDKFuncs
         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )
 
-if (RDK_BUILD_DOTNET_CSHARP_TESTS)
+if (RDK_BUILD_DOTNET_CSHARP_TESTS OR MSVC)
 
   find_program(DOTNET_EXE dotnet)
   if (NOT DOTNET_EXE)
@@ -108,10 +108,8 @@ if (RDK_BUILD_DOTNET_CSHARP_TESTS)
     COMMAND ${DOTNET_EXE} test RDKitDotNetCore.sln "-l:console$<SEMICOLON>verbosity=normal" 
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
-endif()
-
-# find the mcs executable on non-windows systems, if dotnet is not used:
-if(NOT MSVC AND NOT RDK_BUILD_DOTNET_CSHARP_TESTS)
+else(RDK_BUILD_DOTNET_CSHARP_TESTS OR MSVC)
+  # find the mcs executable on non-windows systems, if dotnet is not used:
   find_program(GMCS_EXE mcs)
   if (NOT GMCS_EXE)
 	MESSAGE ("mcs (executable) is not found. Please add it to PATH and rerun cmake.")
@@ -131,5 +129,5 @@ if(NOT MSVC AND NOT RDK_BUILD_DOTNET_CSHARP_TESTS)
     DEPENDS RDKFuncs ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
     COMMENT "building mono dll"
   )
-endif(NOT MSVC)
+endif(RDK_BUILD_DOTNET_CSHARP_TESTS OR MSVC)
 
