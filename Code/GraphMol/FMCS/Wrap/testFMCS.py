@@ -1234,7 +1234,7 @@ class TestCase(unittest.TestCase):
     mcs = rdFMCS.FindMCS(mols1, params)
     self.assertEqual(mcs.numAtoms, 11)
     self.assertEqual(mcs.numBonds, 12)
-    self.assertEqual(mcs.smartsString, "[#6]1:&@[#6]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6](:&@[#6]:&@1)-&!@[#0,#6]")
+    self.assertEqual(mcs.smartsString, "[#6]1:&@[#6]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6](-&!@[#0,#6]):&@[#6]:&@1")
     self.assertGreater(params.ProgressCallback.callCount, 0)
     self.assertGreater(params.FinalMatchChecker.callCount, 0)
     params.AtomCompareParameters.RingMatchesRingOnly = True
