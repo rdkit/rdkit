@@ -3933,7 +3933,7 @@ CAS<~>
     matches = mol.GetSubstructMatches(qmol)
     self.assertEqual(((1,),), matches)
 
-def testGithubIssue579(self):
+  def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
     inf = gzip.open(fileN)
