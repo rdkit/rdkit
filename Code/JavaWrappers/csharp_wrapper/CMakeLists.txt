@@ -110,8 +110,8 @@ if (RDK_BUILD_DOTNET_CSHARP_TESTS)
   )
 endif()
 
-# find the mcs executable on non-windows systems:
-if(NOT MSVC)
+# find the mcs executable on non-windows systems, if dotnet is not used:
+if(NOT MSVC AND NOT RDK_BUILD_DOTNET_CSHARP_TESTS)
   find_program(GMCS_EXE mcs)
   if (NOT GMCS_EXE)
 	MESSAGE ("mcs (executable) is not found. Please add it to PATH and rerun cmake.")
