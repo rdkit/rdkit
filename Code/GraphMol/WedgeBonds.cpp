@@ -540,7 +540,7 @@ void wedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
   }
 }
 
-void reapplyMolBlockWedging(ROMol &mol) {
+void reapplyMolBlockWedging(ROMol &mol, bool allBondTypes) {
   MolOps::clearDirFlags(mol, true);
   for (auto b : mol.bonds()) {
     int explicit_unknown_stereo = -1;
@@ -552,7 +552,7 @@ void reapplyMolBlockWedging(ROMol &mol) {
     int bond_dir = -1;
     if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
                                  bond_dir)) {
-      if (canHaveDirection(*b)) {
+      if (allBondTypes || canHaveDirection(*b)) {
         if (bond_dir == 1) {
           b->setBondDir(Bond::BEGINWEDGE);
         } else if (bond_dir == 6) {
@@ -573,7 +573,7 @@ void reapplyMolBlockWedging(ROMol &mol) {
     b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg);
     switch (cfg) {
       case 1:
-        if (canHaveDirection(*b)) {
+        if (allBondTypes || canHaveDirection(*b)) {
           b->setBondDir(Bond::BEGINWEDGE);
         }
         break;
@@ -586,7 +586,7 @@ void reapplyMolBlockWedging(ROMol &mol) {
         }
         break;
       case 3:
-        if (canHaveDirection(*b)) {
+        if (allBondTypes || canHaveDirection(*b)) {
           b->setBondDir(Bond::BEGINDASH);
         }
         break;
