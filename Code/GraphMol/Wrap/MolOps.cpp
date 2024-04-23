@@ -388,9 +388,9 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
   }
 }
 
-void reapplyWedging(ROMol &mol) {
+void reapplyWedging(ROMol &mol, bool allBondTypes) {
   auto &wmol = static_cast<RWMol &>(mol);
-  RDKit::Chirality::reapplyMolBlockWedging(wmol);
+  RDKit::Chirality::reapplyMolBlockWedging(wmol, allBondTypes);
 }
 
 MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
@@ -2469,7 +2469,8 @@ ARGUMENTS:\n\
             - molecule: the molecule to update\n\
         \n\
         \n";
-    python::def("ReapplyMolBlockWedging", reapplyWedging, (python::arg("mol")),
+    python::def("ReapplyMolBlockWedging", reapplyWedging,
+                (python::arg("mol"), python::arg("allBondTypes") = false),
                 docString.c_str());
 
     docString =
