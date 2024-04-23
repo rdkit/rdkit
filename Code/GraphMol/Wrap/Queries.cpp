@@ -145,10 +145,10 @@ Ret *PropQueryWithTol(const std::string &propname, const ExplicitBitVect &v,
 }
 
 namespace {
-  Atom *replaceAtomWithQueryAtomHelper(ROMol &mol, Atom &atom) {
-    return QueryOps::replaceAtomWithQueryAtom(static_cast<RWMol *>(&mol), &atom);
-  }
+Atom *replaceAtomWithQueryAtomHelper(ROMol &mol, Atom &atom) {
+  return QueryOps::replaceAtomWithQueryAtom(static_cast<RWMol *>(&mol), &atom);
 }
+}  // namespace
 
 struct queries_wrapper {
   static void wrap() {
@@ -321,10 +321,12 @@ struct queries_wrapper {
 
     std::string docString = R"DOC(Changes the given atom in the molecule to
 a query atom and returns the atom which can then be modified, for example
-with additional query contstraints added.)DOC";
-    python::def("ReplaceAtomWithQueryAtom", replaceAtomWithQueryAtomHelper,
-                (python::arg("mol"), python::arg("atom")), docString.c_str(),
-                python::return_value_policy<python::reference_existing_object>());
+with additional query constraints added.  The new atom is otherwise a copy
+of the old.)DOC";
+    python::def(
+        "ReplaceAtomWithQueryAtom", replaceAtomWithQueryAtomHelper,
+        (python::arg("mol"), python::arg("atom")), docString.c_str(),
+        python::return_value_policy<python::reference_existing_object>());
   };
 };
 }  // namespace RDKit
