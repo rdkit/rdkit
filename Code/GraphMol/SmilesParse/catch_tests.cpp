@@ -2801,9 +2801,26 @@ TEST_CASE("Github #7295") {
     auto smi2 = MolToSmiles(*m);
     CHECK(smi1 == smi2);
     auto m2(*m);
-    bool cleanIt=true;
+    bool cleanIt = true;
     MolOps::assignStereochemistry(m2, cleanIt);
     auto smi3 = MolToSmiles(m2);
     CHECK(smi1 == smi3);
+  }
+}
+
+TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
+  SECTION("basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "N[Fe]<-N");
+    SmilesWriteParams ps;
+    ps.includeDativeBonds = false;
+    auto newSmi = MolToSmiles(*m, ps);
+    CHECK(newSmi == "N[Fe][NH3]");
+    // ensure that representation round trips:
+    auto m2 = v2::SmilesParse::MolFromSmiles(newSmi);
+    REQUIRE(m2);
+    CHECK(MolToSmiles(*m2) == smi);
   }
 }
