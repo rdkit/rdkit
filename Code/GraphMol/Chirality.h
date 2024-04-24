@@ -318,7 +318,7 @@ RDKIT_GRAPHMOL_EXPORT bool shouldBeACrossedBond(const Bond *bond);
 /*!
  \param mol: molecule to have its wedges altered
  */
-RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol, bool allBondTypes=false);
+RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol, bool allBondTypes=true);
 //! Remove MolBlock bond wedging information from molecule.
 /*!
  \param mol: molecule to modify

@@ -5101,9 +5101,9 @@ M  END
     REQUIRE(m);
     CHECK(m->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
     Chirality::reapplyMolBlockWedging(*m);
-    CHECK(m->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
-    Chirality::reapplyMolBlockWedging(*m, true);
     CHECK(m->getBondWithIdx(3)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+    Chirality::reapplyMolBlockWedging(*m, false);
+    CHECK(m->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
   }
   SECTION("GitHub5448") {
     {

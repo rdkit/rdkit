@@ -2470,7 +2470,7 @@ ARGUMENTS:\n\
         \n\
         \n";
     python::def("ReapplyMolBlockWedging", reapplyWedging,
-                (python::arg("mol"), python::arg("allBondTypes") = false),
+                (python::arg("mol"), python::arg("allBondTypes") = true),
                 docString.c_str());
 
     docString =
