@@ -4112,3 +4112,17 @@ TEST_CASE("Hybridization of dative bonded atoms") {
     }
   }
 }
+
+TEST_CASE("Try not to set wedged bonds as double in the kekulization") {
+  SECTION("basics") {
+    auto m = "c1nccc(C)c1-c1c(C)cccc1"_smiles;
+    REQUIRE(m);
+    m->getBondBetweenAtoms(7, 8)->setBondDir(Bond::BondDir::BEGINWEDGE);
+    MolOps::Kekulize(*m);
+    m->debugMol(std::cerr);
+    CHECK(m->getBondBetweenAtoms(7, 8)->getBondType() ==
+          Bond::BondType::SINGLE);
+    CHECK(m->getBondBetweenAtoms(7, 13)->getBondType() ==
+          Bond::BondType::DOUBLE);
+  }
+}
