@@ -169,9 +169,7 @@ std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
 
   // check for atomic stereochemistry
   std::string atString;
-  if (params.doIsomericSmiles ||
-      (atom->hasOwningMol() &&
-       atom->getOwningMol().hasProp(common_properties::_doIsoSmiles))) {
+  if (params.doIsomericSmiles) {
     if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
         !atom->hasProp(common_properties::_brokenChirality)) {
       atString = getAtomChiralityInfo(atom);
@@ -207,11 +205,7 @@ std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
     if (fc || nonStandard ||
         atom->hasProp(common_properties::molAtomMapNumber)) {
       needsBracket = true;
-    } else if ((params.doIsomericSmiles ||
-                (atom->hasOwningMol() &&
-                 atom->getOwningMol().hasProp(
-                     common_properties::_doIsoSmiles))) &&
-               (isotope || atString != "")) {
+    } else if (params.doIsomericSmiles && (isotope || atString != "")) {
       needsBracket = true;
     }
   } else {
@@ -221,10 +215,7 @@ std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
     res += "[";
   }
 
-  if (isotope &&
-      (params.doIsomericSmiles ||
-       (atom->hasOwningMol() &&
-        atom->getOwningMol().hasProp(common_properties::_doIsoSmiles)))) {
+  if (isotope && params.doIsomericSmiles) {
     res += std::to_string(isotope);
   }
   // this was originally only done for the organic subset,
@@ -311,18 +302,12 @@ std::string GetBondSmiles(const Bond *bond, const SmilesWriteParams &params,
       if (dir != Bond::NONE && dir != Bond::UNKNOWN) {
         switch (dir) {
           case Bond::ENDDOWNRIGHT:
-            if (params.allBondsExplicit ||
-                (bond->hasOwningMol() &&
-                 bond->getOwningMol().hasProp(
-                     common_properties::_doIsoSmiles))) {
+            if (params.allBondsExplicit || params.doIsomericSmiles) {
               res = "\\";
             }
             break;
           case Bond::ENDUPRIGHT:
-            if (params.allBondsExplicit ||
-                (bond->hasOwningMol() &&
-                 bond->getOwningMol().hasProp(
-                     common_properties::_doIsoSmiles))) {
+            if (params.allBondsExplicit || params.doIsomericSmiles) {
               res = "/";
             }
             break;
@@ -362,18 +347,12 @@ std::string GetBondSmiles(const Bond *bond, const SmilesWriteParams &params,
       if (dir != Bond::NONE && dir != Bond::UNKNOWN) {
         switch (dir) {
           case Bond::ENDDOWNRIGHT:
-            if (params.allBondsExplicit ||
-                (bond->hasOwningMol() &&
-                 bond->getOwningMol().hasProp(
-                     common_properties::_doIsoSmiles))) {
+            if (params.allBondsExplicit || params.doIsomericSmiles) {
               res = "\\";
             }
             break;
           case Bond::ENDUPRIGHT:
-            if (params.allBondsExplicit ||
-                (bond->hasOwningMol() &&
-                 bond->getOwningMol().hasProp(
-                     common_properties::_doIsoSmiles))) {
+            if (params.allBondsExplicit || params.doIsomericSmiles) {
               res = "/";
             }
             break;

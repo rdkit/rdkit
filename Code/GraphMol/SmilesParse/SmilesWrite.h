@@ -132,6 +132,7 @@ inline std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx = -1,
   SmilesWriteParams ps;
   ps.doKekule = doKekule;
   ps.allBondsExplicit = allBondsExplicit;
+  ps.doIsomericSmiles = false;
   return GetBondSmiles(bond, ps, atomToLeftIdx);
 };
 
