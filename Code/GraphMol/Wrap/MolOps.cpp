@@ -2467,6 +2467,8 @@ ARGUMENTS:\n\
           ARGUMENTS:\n\
         \n\
             - molecule: the molecule to update\n\
+            - allBondTypes: reapply the wedging also on bonds other\n\
+              than single and aromatic ones\n\
         \n\
         \n";
     python::def("ReapplyMolBlockWedging", reapplyWedging,
