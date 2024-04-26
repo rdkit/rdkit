@@ -602,6 +602,7 @@ bool WedgeBondFromAtropisomerOneBond2d(
   int bestBondEnd = -1, bestBondNumber = -1;
   bool bestBondIsSingle = false;
   unsigned int bestRingCount = INT_MAX;
+  unsigned int largestRingSize = 0;
   Bond::BondDir bestBondDir = Bond::BondDir::NONE;
   for (unsigned int whichEnd = 0; whichEnd < 2; ++whichEnd) {
     for (unsigned int whichBond = 0;
@@ -633,15 +634,19 @@ bool WedgeBondFromAtropisomerOneBond2d(
         }
       }
       auto ringCount = ri->numBondRings(bondToTry->getIdx());
+      unsigned int ringSize = 0;
       if (!ringCount) {
         ringCount = 10;
+      } else {
+        ringSize = ri->minBondRingSize(bondToTry->getIdx());
       }
       if (ringCount > bestRingCount) {
         continue;
-      } else if (ringCount < bestRingCount) {
+      } else if (ringCount < bestRingCount || ringSize > largestRingSize) {
         bestBondEnd = whichEnd;
         bestBondNumber = whichBond;
         bestRingCount = ringCount;
+        largestRingSize = ringSize;
         bestBondIsSingle = (bondToTry->getBondType() == Bond::BondType::SINGLE);
         bestBondDir = getBondDirForAtropisomer2d(bondVecs, bond->getStereo(),
                                                  whichEnd, whichBond);
