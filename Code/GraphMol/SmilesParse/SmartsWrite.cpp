@@ -374,10 +374,14 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
       res = ":";
       break;
     case Bond::DATIVE:
-      if (reverseDative) {
-        res = "<-";
+      if (params.includeDativeBonds) {
+        if (reverseDative) {
+          res = "<-";
+        } else {
+          res = "->";
+        }
       } else {
-        res = "->";
+        res = "-";
       }
       break;
     case Bond::ZERO:
@@ -1009,7 +1013,9 @@ std::string MolFragmentToSmarts(const ROMol &mol,
 }
 
 std::string MolToCXSmarts(const ROMol &mol, const SmilesWriteParams &params) {
-  auto res = MolToSmarts(mol, params);
+  SmilesWriteParams ps(params);
+  ps.includeDativeBonds = false;
+  auto res = MolToSmarts(mol, ps);
   if (!res.empty()) {
     auto cxext = SmilesWrite::getCXExtensions(mol);
     if (!cxext.empty()) {

@@ -2823,4 +2823,14 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     REQUIRE(m2);
     CHECK(MolToSmiles(*m2) == smi);
   }
+  SECTION("SMARTS basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToSmarts(*m);
+    CHECK(smi == "[#7H3]->[Fe]-[#7H2]N");
+    SmilesWriteParams ps;
+    ps.includeDativeBonds = false;
+    auto newSmi = MolToSmarts(*m, ps);
+    CHECK(newSmi == "[#7H3]-[Fe]-[#7H2]");
+  }
 }
