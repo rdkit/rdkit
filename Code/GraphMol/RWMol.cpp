@@ -570,7 +570,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   auto endAtm = bnd->getEndAtom();
   std::vector<std::vector<Atom *>> bond_atoms = {{beginAtm, endAtm},
                                                  {endAtm, beginAtm}};
-  for (auto atoms : bond_atoms) {
+  for (const auto &atoms : bond_atoms) {
     for (auto obnd : this->atomBonds(atoms[0])) {
       if (obnd == bnd) {
         continue;
@@ -642,7 +642,8 @@ void RWMol::beginBatchEdit() {
 }
 
 void RWMol::commitBatchEdit() {
-  if (!(dp_delBonds || dp_delAtoms)) {
+  if ((!dp_delBonds || dp_delBonds->none()) &&
+      (!dp_delAtoms || dp_delAtoms->none())) {
     return;
   }
 
@@ -659,7 +660,7 @@ void RWMol::commitBatchEdit() {
 }
 
 void RWMol::batchRemoveBonds() {
-  if (!dp_delBonds) {
+  if (!dp_delBonds || dp_delBonds->none()) {
     return;
   }
 
@@ -695,7 +696,7 @@ void RWMol::batchRemoveBonds() {
     auto endAtm = bnd->getEndAtom();
     std::vector<std::vector<Atom *>> bond_atoms = {{beginAtm, endAtm},
                                                    {endAtm, beginAtm}};
-    for (auto atoms : bond_atoms) {
+    for (const auto &atoms : bond_atoms) {
       for (auto obnd : atomBonds(atoms[0])) {
         if (obnd == bnd) {
           continue;
@@ -739,7 +740,7 @@ void RWMol::batchRemoveBonds() {
 }
 
 void RWMol::batchRemoveAtoms() {
-  if (!dp_delAtoms) {
+  if (!dp_delAtoms || dp_delAtoms->none()) {
     return;
   }
   std::vector<Atom *> oldIndices(getNumAtoms());
