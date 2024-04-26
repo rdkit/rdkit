@@ -1,3 +1,12 @@
+//
+//  Copyright (C) 2020 Gareth Jones, Glysade LLC
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 
 %include "std_vector.i"
 
@@ -8,17 +17,49 @@
 #include <GraphMol/RascalMCES/RascalMCES.h>
 %}
 
-#if SWIGCSHARP
-SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Uint_Vect_Vect, std::vector<std::vector<unsigned int> >);
-SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Uint_Vect, std::vector<unsigned int>);
-#else
-%template(Uint_Vect_Vect) std::vector<std::vector<unsigned int> >;
-%template(Uint_Vect2) std::vector<unsigned int>;
-#endif
-%template(Int_Vect_Vect) std::vector<std::vector<int> >;
-
 %include <GraphMol/RascalMCES/RascalClusterOptions.h>
 %include <GraphMol/RascalMCES/RascalOptions.h>
+%ignore RDKit::RascalMCES::RascalResult::getMcesMol;
 %include <GraphMol/RascalMCES/RascalResult.h>
+%ignore RDKit::RascalMCES::rascalCluster;
+%ignore RDKit::RascalMCES::rascalButinaCluster;
 %include <GraphMol/RascalMCES/RascalMCES.h>
+// The extra functions in extend_std_vector.i do not play well with RascalResult
+%ignore std::vector<RDKit::RascalMCES::RascalResult>::equals;
+%ignore std::vector<RDKit::RascalMCES::RascalResult>::vector(size_type);
+%template(RascalResult_Vect) std::vector<RDKit::RascalMCES::RascalResult>;
 
+// The Rascal code uses std::shared_ptr rather than boost::shared_ptr
+
+%extend RDKit::RascalMCES::RascalResult {
+	RDKit::ROMol *getMCESMol() {
+		auto shared_ptr = ($self)->getMcesMol();
+		return shared_ptr.get();
+	}
+}
+
+%inline %{
+	namespace RDKit {
+		namespace RascalMCES {
+		   class RascalApp {
+		   };
+		}
+	}
+%}
+
+%extend RDKit::RascalMCES::RascalApp {
+    static std::vector<std::vector<unsigned int> > RascalCluster(std::vector<boost::shared_ptr<RDKit::ROMol> >& mols, RDKit::RascalMCES::RascalClusterOptions& clusterOptions=RascalClusterOptions()) {
+		std::vector<std::shared_ptr<RDKit::ROMol> > rascalMolecules;
+		for (auto molIn: mols) {
+			rascalMolecules.push_back(std::make_shared<RDKit::ROMol>(*molIn));
+		}
+		return RDKit::RascalMCES::rascalCluster(rascalMolecules, clusterOptions);
+	}
+    static std::vector<std::vector<unsigned int> > RascalButinaCluster(std::vector<boost::shared_ptr<RDKit::ROMol> >& mols, RDKit::RascalMCES::RascalClusterOptions& clusterOptions=RascalClusterOptions()) {
+		std::vector<std::shared_ptr<RDKit::ROMol> > rascalMolecules;
+		for (auto molIn: mols) {
+			rascalMolecules.push_back(std::make_shared<RDKit::ROMol>(*molIn));
+		}
+		return RDKit::RascalMCES::rascalButinaCluster(rascalMolecules, clusterOptions);
+	}
+}

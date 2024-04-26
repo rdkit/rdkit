@@ -302,6 +302,7 @@ typedef unsigned long long int	uintmax_t;
 
 /* vector vector */
 %template(Int_Vect_Vect) std::vector<std::vector<int> >;
+%template(Uint_Vect_Vect) std::vector<std::vector<unsigned int> >;
 
 /* list */
 %template(Int_Vect_List) std::list<std::vector<int> >;
