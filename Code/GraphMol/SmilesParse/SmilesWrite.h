@@ -37,24 +37,34 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
   int rootedAtAtom = -1; /**< make sure the SMILES starts at the specified
                              atom. The resulting SMILES is not canonical */
 };
+
 namespace SmilesWrite {
 
-enum CXSmilesFields : uint32_t {
-  CX_NONE = 0,
-  CX_ATOM_LABELS = 1 << 0,
-  CX_MOLFILE_VALUES = 1 << 1,
-  CX_COORDS = 1 << 2,
-  CX_RADICALS = 1 << 3,
-  CX_ATOM_PROPS = 1 << 4,
-  CX_LINKNODES = 1 << 5,
-  CX_ENHANCEDSTEREO = 1 << 6,
-  CX_SGROUPS = 1 << 7,
-  CX_POLYMER = 1 << 8,
-  CX_BOND_CFG = 1 << 9,
-  CX_BOND_ATROPISOMER = 1 << 10,
-  CX_ALL = 0x7fffffff,
-  CX_ALL_BUT_COORDS = CX_ALL ^ CX_COORDS
-};
+#define CXSMILESFIELDS_ENUM_ITEMS                        \
+  CXSMILESFIELDS_ENUM_ITEM(CX_NONE, 0)                   \
+  CXSMILESFIELDS_ENUM_ITEM(CX_ATOM_LABELS, 1 << 0)       \
+  CXSMILESFIELDS_ENUM_ITEM(CX_MOLFILE_VALUES, 1 << 1)    \
+  CXSMILESFIELDS_ENUM_ITEM(CX_COORDS, 1 << 2)            \
+  CXSMILESFIELDS_ENUM_ITEM(CX_RADICALS, 1 << 3)          \
+  CXSMILESFIELDS_ENUM_ITEM(CX_ATOM_PROPS, 1 << 4)        \
+  CXSMILESFIELDS_ENUM_ITEM(CX_LINKNODES, 1 << 5)         \
+  CXSMILESFIELDS_ENUM_ITEM(CX_ENHANCEDSTEREO, 1 << 6)    \
+  CXSMILESFIELDS_ENUM_ITEM(CX_SGROUPS, 1 << 7)           \
+  CXSMILESFIELDS_ENUM_ITEM(CX_POLYMER, 1 << 8)           \
+  CXSMILESFIELDS_ENUM_ITEM(CX_BOND_CFG, 1 << 9)          \
+  CXSMILESFIELDS_ENUM_ITEM(CX_BOND_ATROPISOMER, 1 << 10) \
+  CXSMILESFIELDS_ENUM_ITEM(CX_ALL, 0x7fffffff)           \
+  CXSMILESFIELDS_ENUM_ITEM(CX_ALL_BUT_COORDS, CX_ALL ^ CX_COORDS)
+
+#define CXSMILESFIELDS_ENUM_ITEM(k, v) k = (v),
+enum CXSmilesFields : uint32_t { CXSMILESFIELDS_ENUM_ITEMS };
+#undef CXSMILESFIELDS_ENUM_ITEM
+#define CXSMILESFIELDS_STD_MAP_ITEM(k) {#k, SmilesWrite::CXSmilesFields::k},
+#define CXSMILESFIELDS_ENUM_ITEM(k, v) CXSMILESFIELDS_STD_MAP_ITEM(k)
+#define CXSMILESFIELDS_ITEMS_MAP                       \
+  std::map<std::string, SmilesWrite::CXSmilesFields> { \
+    CXSMILESFIELDS_ENUM_ITEMS                          \
+  }
 
 //! \brief returns the cxsmiles data for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(
@@ -207,10 +217,22 @@ inline std::string MolFragmentToSmiles(
                              bondSymbols);
 }
 
-enum RestoreBondDirOption {
-  RestoreBondDirOptionTrue = 0,  //<!DO restore bond dirs
-  RestoreBondDirOptionClear = 1  //<! clear all bond dir information
-};
+#define RESTOREBONDDIROPTION_ENUM_ITEMS                          \
+  RESTOREBONDDIROPTION_ENUM_ITEM(RestoreBondDirOptionTrue,       \
+                                 0) /*!< DO restore bond dirs */ \
+  RESTOREBONDDIROPTION_ENUM_ITEM(RestoreBondDirOptionClear,      \
+                                 1) /*!< clear all bond dir information */
+
+#define RESTOREBONDDIROPTION_ENUM_ITEM(k, v) k = v,
+enum RestoreBondDirOption { RESTOREBONDDIROPTION_ENUM_ITEMS };
+#undef RESTOREBONDDIROPTION_ENUM_ITEM
+#define RESTOREBONDDIROPTION_STD_MAP_ITEM(k) {#k, k},
+#define RESTOREBONDDIROPTION_ENUM_ITEM(k, v) \
+  RESTOREBONDDIROPTION_STD_MAP_ITEM(k)
+#define RESTOREBONDDIROPTION_ITEMS_MAP          \
+  std::map<std::string, RestoreBondDirOption> { \
+    RESTOREBONDDIROPTION_ENUM_ITEMS             \
+  }
 
 //! \brief returns canonical CXSMILES for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(
@@ -300,6 +322,17 @@ inline std::string MolFragmentToCXSmiles(
   return MolFragmentToCXSmiles(mol, ps, atomsToUse, bondsToUse, atomSymbols,
                                bondSymbols);
 }
+
+void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
+                                     const std::string &details_json);
+void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
+                                     const char *details_json);
+void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
+                                  RestoreBondDirOption &restoreBondDirs,
+                                  const std::string &details_json);
+void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
+                                  RestoreBondDirOption &restoreBondDirs,
+                                  const char *details_json);
 
 }  // namespace RDKit
 #endif

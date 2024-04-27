@@ -440,3 +440,40 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE(
+    "github #7331: DetermineBondOrders() makes incorrect assumptions about valence") {
+  SECTION("as reported") {
+    // do not anything here that needs implicit Hs
+    std::vector<std::string> smiles = {
+        "O=NO[Cl+][O-]",
+        "[O-][I+3]([O-])([O-])[O-]",
+        "[O-][I+2]([O-])[O-]",
+        "F[P-](F)(F)(F)(F)F",
+        "F[C+](F)F",
+        "F[C-](F)F",
+        "F[N+](F)(F)F",
+        "F[N-]F",
+        "F[Cl+]F",
+        "F[Br+]F",
+        "O=[Cl+]",
+    };
+    for (const auto &smi : smiles) {
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      int charge = 0;
+      for (auto atom : m->atoms()) {
+        charge += atom->getFormalCharge();
+      }
+      bool allowChargedFragments = true;
+      bool embedChiral = false;
+      RWMol m2(*m);
+      determineBondOrders(m2, charge, allowChargedFragments, embedChiral);
+      for (auto bnd : m2.bonds()) {
+        CHECK(bnd->getBondType() ==
+              m->getBondWithIdx(bnd->getIdx())->getBondType());
+      }
+    }
+  }
+}

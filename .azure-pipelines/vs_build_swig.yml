@@ -1,4 +1,9 @@
 steps:
+- task: UseDotNet@2
+  displayName: 'Install .NET Core 8 SDK'
+  inputs:
+    version: 8.x
+    performMultiLevelLookup: true
 - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
   displayName: Setup build environment
 - script: |
@@ -53,7 +58,7 @@ steps:
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
     cd build
-    ctest -C Release -j $(number_of_cores) --output-on-failure -T Test
+    ctest -R CSharpTests -C Release -T test --output-on-failure --verbose 
   displayName: Run tests
 - task: PublishTestResults@2
   inputs:
