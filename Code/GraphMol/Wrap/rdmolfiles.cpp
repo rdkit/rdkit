@@ -1808,6 +1808,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - mol: the molecule\n\
     - isomericSmiles: (optional) include information about stereochemistry in\n\
       the SMARTS.  Defaults to true.\n\
+    - rootedAtomAtom: (optional) the atom index to start the SMARTS from.\n\
 \n\
   RETURNS:\n\
 \n\
@@ -1818,6 +1819,21 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg("mol"), python::arg("isomericSmiles") = true,
                python::arg("rootedAtAtom") = -1),
               docString.c_str());
+  docString =
+      "Returns a SMARTS string for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - params: SmilesWriteParams controlling the SMARTS generation\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def("MolToSmarts",
+              (std::string(*)(const ROMol &,
+                              const SmilesWriteParams &))RDKit::MolToSmarts,
+              (python::arg("mol"), python::arg("params")), docString.c_str());
 
   docString =
       "Returns a SMARTS string for a fragment of a molecule\n\
