@@ -7680,6 +7680,35 @@ CAS<~>
 
     self.assertTrue(mBlock == isReapplied)
 
+  def testReapplyMolBlockWedgingAllBondTypes(self):
+    m = Chem.MolFromMolBlock('''
+  Mrv2311 04232413302D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 S -11.583 11.3533 0 0
+M  V30 2 C -12.9167 10.5833 0 0
+M  V30 3 O -11.583 12.8933 0 0
+M  V30 4 C -10.2493 10.5833 0 0
+M  V30 5 C -10.2493 9.0433 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 4 5
+M  V30 2 1 2 1
+M  V30 3 1 1 4
+M  V30 4 2 1 3 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+''')
+    self.assertEqual(m.GetBondWithIdx(3).GetBondType(), Chem.BondType.DOUBLE)
+    Chem.ReapplyMolBlockWedging(m)
+    self.assertEqual(m.GetBondWithIdx(3).GetBondDir(), Chem.BondDir.BEGINWEDGE)
+    Chem.ReapplyMolBlockWedging(m, False)
+    self.assertEqual(m.GetBondWithIdx(3).GetBondDir(), Chem.BondDir.NONE)
+
   def testAtropisomerWedging(self):
     m =Chem.MolFromSmiles('CC1=C(N2C=CC=C2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|')
     self.assertTrue(m is  not None)
