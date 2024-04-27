@@ -642,8 +642,12 @@ void RWMol::beginBatchEdit() {
 }
 
 void RWMol::commitBatchEdit() {
-  if ((!dp_delBonds || dp_delBonds->none()) &&
-      (!dp_delAtoms || dp_delAtoms->none())) {
+  if (!(dp_delBonds || dp_delAtoms)) {
+    return;
+  } else if (dp_delBonds->none() && dp_delAtoms->none()) {
+    // no need to reset, since nothing is removed
+    dp_delBonds.reset();
+    dp_delAtoms.reset();
     return;
   }
 
