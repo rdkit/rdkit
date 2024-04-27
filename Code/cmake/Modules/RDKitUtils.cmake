@@ -215,7 +215,7 @@ endfunction(add_jupytertest)
 
 function(add_pythonpytest testname workingdir)
   if(RDK_BUILD_PYTHON_WRAPPERS)
-    add_test(NAME ${testname}  COMMAND ${Python_EXECUTABLE} -m pytest 
+    add_test(NAME ${testname}  COMMAND ${Python_EXECUTABLE} -m pytest
        WORKING_DIRECTORY ${workingdir} )
     SET(RDKIT_PYTHONTEST_CACHE "${testname};${RDKIT_PYTHONTEST_CACHE}" CACHE INTERNAL "Global list of pytest tests")
   endif()

@@ -315,7 +315,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   # Find boost-python3 using name specified as command line option then fall back to commonly used names
   set(RDK_BOOST_PYTHON3_NAME "python3" CACHE STRING "Name of the boost python3 library. If installed as libboost_python-xxx.so, use python-xxx.")
   list(APPEND Boost_Python_Names "${RDK_BOOST_PYTHON3_NAME}" "python-py3${PYTHON_VERSION_MINOR}" "python3")
-  
+
   # Boost 1.67+ uses a version suffix like "python36" or "python27"
   list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
 
