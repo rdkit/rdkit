@@ -675,7 +675,7 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix=None, highlightAtomListsMatrix
 def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
                           highlightAtomListsMatrix=None, highlightBondListsMatrix=None,
                           useSVG=False, returnPNG=False, **kwargs):
-  """Creates a mol grid image from a nested data structure (where each data substructure represents a row),
+  r"""Creates a mol grid image from a nested data structure (where each data substructure represents a row),
   padding rows as needed so all rows are the length of the longest row
           ARGUMENTS:
 
