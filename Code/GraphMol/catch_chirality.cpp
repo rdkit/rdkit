@@ -5576,11 +5576,70 @@ M  END
       CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
     }
     Chirality::wedgeMolBonds(*m, &m->getConformer());
-    m->debugMol(std::cerr);
     // now there is:
     for (const auto bnd : m->bonds()) {
       INFO(bnd->getIdx());
       if (bnd->getIdx() != 13) {
+        CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+      } else {
+        CHECK(bnd->getBondDir() == Bond::BondDir::BEGINWEDGE);
+      }
+    }
+  }
+  SECTION("favor larger rings 3D") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 13 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.472629 -1.845227 -0.264711 0
+M  V30 2 N 2.829375 -1.724790 -0.334942 0
+M  V30 3 N 3.127980 -0.437811 -0.267564 0
+M  V30 4 C 1.973684 0.284699 -0.153598 0
+M  V30 5 C 1.905135 1.771086 -0.051971 0
+M  V30 6 C 0.912735 -0.591792 -0.150090 0
+M  V30 7 C -0.495016 -0.243797 -0.046092 0
+M  V30 8 C -1.102614 -0.154763 1.189160 0
+M  V30 9 Cl -0.084572 -0.483042 2.603743 0
+M  V30 10 C -2.434893 0.170808 1.361855 0
+M  V30 11 C -3.202022 0.420663 0.247454 0
+M  V30 12 C -2.626093 0.340227 -1.000486 0
+M  V30 13 C -1.279199 0.010190 -1.157641 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 1 6 4 CFG=3
+M  V30 6 2 1 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 8 9
+M  V30 10 1 8 10
+M  V30 11 2 10 11
+M  V30 12 1 11 12
+M  V30 13 2 12 13
+M  V30 14 1 7 13
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getBondBetweenAtoms(5, 6)->getStereo() ==
+          Bond::BondStereo::STEREOATROPCW);
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+    }
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+    // now there is:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      if (bnd->getIdx() != 7) {
         CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
       } else {
         CHECK(bnd->getBondDir() == Bond::BondDir::BEGINWEDGE);
