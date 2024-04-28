@@ -312,30 +312,63 @@ unsigned int Atom::getTotalValence() const {
 
 namespace {
 
+unsigned int calcAtomChg(const Atom &atom, int &chg, int &effectiveChg, int &effectiveValenceChgContrib, bool addDativeBondContrib) {
+  auto atomicNum = atom.getAtomicNum();
+  int dativeNbrChg = 0;
+  int nElectronRichNbrs = 0;
+  int nOuterElecs = PeriodicTable::getTable()->getNouterElecs(atomicNum);
+  for (const auto bnd : atom.getOwningMol().atomBonds(&atom)) {
+    auto nbrAtom = bnd->getOtherAtom(&atom);
+    // dative bonds from nbr to atom contribute neighbor formal charge to atom
+    bool isBondDative = (bnd->getBondType() == Bond::DATIVE ||
+         bnd->getBondType() == Bond::DATIVEONE);
+    if (addDativeBondContrib && isBondDative &&
+        bnd->getEndAtom() == &atom) {
+      dativeNbrChg += nbrAtom->getFormalCharge();
+    }
+    auto nbrAtomicNum = nbrAtom->getAtomicNum();
+    if (!(isBondDative && bnd->getBeginAtom() == &atom) && PeriodicTable::getTable()->getNouterElecs(nbrAtomicNum) > nOuterElecs) {
+      ++nElectronRichNbrs;
+    }
+  }
+  chg = atom.getFormalCharge() + dativeNbrChg;
+  effectiveChg = chg;
+  auto atomIsEarly = isEarlyAtom(atomicNum);
+  if (atomIsEarly) {
+    effectiveChg = -chg;  // <- the usual correction for early atoms
+  }
+  // special case for carbon - see GitHub #539
+  if (atomicNum == 6 && effectiveChg > 0) {
+    effectiveChg = -chg;
+  }
+  effectiveValenceChgContrib = chg;
+  if (nOuterElecs >= 4 && !atomIsEarly &&
+      (atomicNum <= 10 || chg > 0 || nElectronRichNbrs < -chg)) {
+    effectiveValenceChgContrib = -chg;
+  }
+  return atomicNum;
+}
+
 int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // FIX: contributions of bonds to valence are being done at best
   // approximately
-  double accum = 0;
+  double accum = 0.0;
+  int chg;
+  int effectiveChg;
+  int effectiveValenceChgContrib;
+  auto atomicNum = calcAtomChg(atom, chg, effectiveChg, effectiveValenceChgContrib, true);
   for (const auto bnd : atom.getOwningMol().atomBonds(&atom)) {
     accum += bnd->getValenceContrib(&atom);
   }
   accum += atom.getNumExplicitHs();
 
   // check accum is greater than the default valence
-  auto atomicNum = atom.getAtomicNum();
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(atomicNum);
-  int chr = atom.getFormalCharge();
-  if (isEarlyAtom(atomicNum)) {
-    chr *= -1;  // <- the usual correction for early atoms
-  }
-  // special case for carbon - see GitHub #539
-  if (atomicNum == 6 && chr > 0) {
-    chr = -chr;
-  }
-  if (accum > (dv + chr) && isAromaticAtom(atom)) {
+
+  if (accum > (dv + effectiveChg) && isAromaticAtom(atom)) {
     // this needs some explanation : if the atom is aromatic and
-    // accum > (dv + chr) we assume that no hydrogen can be added
-    // to this atom.  We set x = (v + chr) such that x is the
+    // accum > (dv + effectiveChg) we assume that no hydrogen can be added
+    // to this atom.  We set x = (v + effectiveChg) such that x is the
     // closest possible integer to "accum" but less than
     // "accum".
     //
@@ -343,13 +376,13 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
     //    sulfur here : O=c1ccs(=O)cc1
     //    nitrogen here : c1cccn1C
 
-    int pval = dv + chr;
+    int pval = dv + effectiveChg;
     const auto &valens = PeriodicTable::getTable()->getValenceList(atomicNum);
     for (auto val : valens) {
       if (val == -1) {
         break;
       }
-      val += chr;
+      val += effectiveChg;
       if (val > accum) {
         break;
       } else {
@@ -383,14 +416,23 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   auto res = static_cast<int>(std::round(accum));
 
   if (strict || checkIt) {
-    int effectiveValence;
-    if (PeriodicTable::getTable()->getNouterElecs(atomicNum) >= 4) {
-      effectiveValence = res - atom.getFormalCharge();
-    } else {
-      // for boron and co, we move to the right in the PT, so adding
-      // extra valences means adding negative charge
-      effectiveValence = res + atom.getFormalCharge();
-    }
+    // For carbon and elements to its right, extra valences can be
+    // accommodated by establishing covalent bonds through available
+    // lone electron pairs (e.g., ammonium, phosphonium, oxonium salts)
+    // Establishing such bonds comes at the expense of adding
+    // positive formal charge. Therefore, the positive formal
+    // charge needs to be subtracted to the atom valence to
+    // obtain the number of valence electrons actually engaged
+    // in covalent bonds, neglecting the contribution from
+    // lone pairs.
+    // However, starting from the 3rd period elements can also
+    // accommodate lone electrons pairs donated by atoms in
+    // higher groups (e.g., chalcogens and halogens),
+    // similarly to boron in [BF4]- and aluminum in
+    // [AlF6]3-, and therefore gain negative formal charge
+    // (e.g., hexafluorophosphate [PF6]-, hexafluorosilicate [SiF6]2-,
+    // hexafluoroantimonate [AsF6]-, bismuthate [BiO3]-)
+    int effectiveValence = res + effectiveValenceChgContrib;
     const auto &valens = PeriodicTable::getTable()->getValenceList(atomicNum);
 
     int maxValence = valens.back();
@@ -426,8 +468,11 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
     explicitValence = calculateExplicitValence(atom, strict, checkIt);
   }
   // special cases
-  auto atomic_num = atom.getAtomicNum();
-  if (atomic_num == 0) {
+  int chg;
+  int effectiveChg;
+  int effectiveValenceChgContrib;
+  auto atomicNum = calcAtomChg(atom, chg, effectiveChg, effectiveValenceChgContrib, false);
+  if (atomicNum == 0) {
     return 0;
   }
   for (const auto bnd : atom.getOwningMol().atomBonds(&atom)) {
@@ -435,12 +480,10 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
       return 0;
     }
   }
-  auto formal_charge = atom.getFormalCharge();
-  auto num_radical_electrons = atom.getNumRadicalElectrons();
-  if (explicitValence == 0 && atomic_num == 1 && num_radical_electrons == 0) {
-    if (formal_charge == 1 || formal_charge == -1) {
+  if (explicitValence == 0 && atomicNum == 1 && atom.getNumRadicalElectrons() == 0) {
+    if (chg == 1 || chg == -1) {
       return 0;
-    } else if (formal_charge == 0) {
+    } else if (chg == 0) {
       return 1;
     } else {
       if (strict) {
@@ -465,7 +508,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
 
   // The d-block and f-block of the periodic table (i.e. transition metals,
   // lanthanoids and actinoids) have no default valence.
-  int dv = PeriodicTable::getTable()->getDefaultValence(atomic_num);
+  int dv = PeriodicTable::getTable()->getDefaultValence(atomicNum);
   if (dv == -1) {
     return 0;
   }
@@ -481,11 +524,10 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // exception
   // finally aromatic cases are dealt with differently - these atoms are allowed
   // only default valences
-  const auto &valens = PeriodicTable::getTable()->getValenceList(atomic_num);
+  const auto &valens = PeriodicTable::getTable()->getValenceList(atomicNum);
 
   int explicitPlusRadV =
       atom.getExplicitValence() + atom.getNumRadicalElectrons();
-  int chg = atom.getFormalCharge();
 
   // NOTE: this is here to take care of the difference in element on
   // the right side of the carbon vs left side of carbon
@@ -516,19 +558,12 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   //
   // So assuming you read all the above stuff - you know why we are
   // changing signs for "chg" here
-  if (isEarlyAtom(atomic_num)) {
-    chg *= -1;
-  }
-  // special case for carbon - see GitHub #539
-  if (atomic_num == 6 && chg > 0) {
-    chg = -chg;
-  }
 
   int res = 0;
   // if we have an aromatic case treat it differently
   if (isAromaticAtom(atom)) {
-    if (explicitPlusRadV <= (static_cast<int>(dv) + chg)) {
-      res = dv + chg - explicitPlusRadV;
+    if (explicitPlusRadV <= (static_cast<int>(dv) + effectiveChg)) {
+      res = dv + effectiveChg - explicitPlusRadV;
     } else {
       // As we assume when finding the explicitPlusRadValence if we are
       // aromatic we should not be adding any hydrogen and already
@@ -541,7 +576,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
       // formal charge here vs the explicit valence function.
       bool satis = false;
       for (auto vi = valens.begin(); vi != valens.end() && *vi > 0; ++vi) {
-        if (explicitPlusRadV == ((*vi) + chg)) {
+        if (explicitPlusRadV == (*vi + effectiveChg)) {
           satis = true;
           break;
         }
@@ -565,7 +600,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
     // and be able to add hydrogens
     res = -1;
     for (auto vi = valens.begin(); vi != valens.end() && *vi >= 0; ++vi) {
-      int tot = (*vi) + chg;
+      int tot = *vi - effectiveValenceChgContrib;
       if (explicitPlusRadV <= tot) {
         res = tot - explicitPlusRadV;
         break;
@@ -579,7 +614,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
           // raise an error
           std::ostringstream errout;
           errout << "Explicit valence for atom # " << atom.getIdx() << " "
-                 << PeriodicTable::getTable()->getElementSymbol(atomic_num)
+                 << PeriodicTable::getTable()->getElementSymbol(atomicNum)
                  << " greater than permitted";
           std::string msg = errout.str();
           BOOST_LOG(rdErrorLog) << msg << std::endl;

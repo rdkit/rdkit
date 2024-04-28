@@ -4112,3 +4112,36 @@ TEST_CASE("Hybridization of dative bonded atoms") {
     }
   }
 }
+
+TEST_CASE("Valences on Al, Si, P, As, Sb, Bi") {
+  SECTION("Should fail with AtomValenceException") {
+    std::vector<std::pair<std::string, unsigned int>> smiles = {
+        {"[Al](Cl)(Cl)(Cl)(Cl)(Cl)Cl", 0}, {"F[Si](F)(F)(F)(F)F", 1},
+        {"[P](F)(F)(F)(F)(F)F", 0},        {"P(=O)(O)(O)(O)(O)O", 0},
+        {"F[As](F)(F)(F)(F)F", 1},         {"O[As](=O)(O)(O)(O)O", 1},
+        {"[Sb](F)(F)(F)(F)(F)F", 0},       {"[Sb](=O)(O)(O)(O)(O)O", 0},
+        {"F[Bi](F)(F)(F)(F)F", 1},         {"O[Bi](=O)(O)(O)(O)(O)O", 1},
+    };
+    for (auto pr : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(pr.first), AtomValenceException);
+      try {
+        ROMOL_SPTR m(SmilesToMol(pr.first));
+        RDUNUSED_PARAM(m);
+      } catch (const AtomValenceException &e) {
+        CHECK(e.getType() == "AtomValenceException");
+        CHECK(e.getAtomIdx() == pr.second);
+      }
+    }
+  }
+  SECTION("Should not fail") {
+    std::vector<std::string> smiles = {
+        "[Al-3](Cl)(Cl)(Cl)(Cl)(Cl)Cl", "F[Si-2](F)(F)(F)(F)F",
+        "[P-](F)(F)(F)(F)(F)F",         "F[As-](F)(F)(F)(F)F",
+        "F[Sb-](F)(F)(F)(F)F",          "[Bi-](F)(F)(F)(F)(F)F",
+    };
+    for (auto smi : smiles) {
+      ROMOL_SPTR m(SmilesToMol(smi));
+      CHECK(m);
+    }
+  }
+}
