@@ -17,6 +17,8 @@
 #include <GraphMol/RascalMCES/RascalMCES.h>
 %}
 
+
+
 %include <GraphMol/RascalMCES/RascalClusterOptions.h>
 %include <GraphMol/RascalMCES/RascalOptions.h>
 %ignore RDKit::RascalMCES::RascalResult::getMcesMol;
@@ -28,6 +30,7 @@
 %ignore std::vector<RDKit::RascalMCES::RascalResult>::equals;
 %ignore std::vector<RDKit::RascalMCES::RascalResult>::vector(size_type);
 %template(RascalResult_Vect) std::vector<RDKit::RascalMCES::RascalResult>;
+%template(Unsigned_Vect_Vect) std::vector<std::vector<unsigned int>>;
 
 // The Rascal code uses std::shared_ptr rather than boost::shared_ptr
 
@@ -47,15 +50,16 @@
 	}
 %}
 
+
 %extend RDKit::RascalMCES::RascalApp {
-    static std::vector<std::vector<unsigned int> > RascalCluster(std::vector<boost::shared_ptr<RDKit::ROMol> >& mols, RDKit::RascalMCES::RascalClusterOptions& clusterOptions=RascalClusterOptions()) {
+    static std::vector<std::vector<unsigned int> > RascalCluster(const std::vector<boost::shared_ptr<RDKit::ROMol> >& mols, const RDKit::RascalMCES::RascalClusterOptions& clusterOptions=RascalClusterOptions()) {
 		std::vector<std::shared_ptr<RDKit::ROMol> > rascalMolecules;
 		for (auto molIn: mols) {
 			rascalMolecules.push_back(std::make_shared<RDKit::ROMol>(*molIn));
 		}
 		return RDKit::RascalMCES::rascalCluster(rascalMolecules, clusterOptions);
 	}
-    static std::vector<std::vector<unsigned int> > RascalButinaCluster(std::vector<boost::shared_ptr<RDKit::ROMol> >& mols, RDKit::RascalMCES::RascalClusterOptions& clusterOptions=RascalClusterOptions()) {
+    static std::vector<std::vector<unsigned int> > RascalButinaCluster(const std::vector<boost::shared_ptr<RDKit::ROMol> >& mols, const RDKit::RascalMCES::RascalClusterOptions& clusterOptions=RascalClusterOptions()) {
 		std::vector<std::shared_ptr<RDKit::ROMol> > rascalMolecules;
 		for (auto molIn: mols) {
 			rascalMolecules.push_back(std::make_shared<RDKit::ROMol>(*molIn));
