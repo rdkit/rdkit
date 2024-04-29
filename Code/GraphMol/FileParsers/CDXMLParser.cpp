@@ -367,8 +367,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
             if (attr.second.data() == "1.5") {
               order = Bond::BondType::AROMATIC;
             } else if (attr.second.data() == "any") {
-	      order = Bond::BondType::UNSPECIFIED;
-	    } else {
+              order = Bond::BondType::UNSPECIFIED;
+            } else {
               int bond_order = stoi(attr.second.data());
 
               switch (bond_order) {
@@ -420,7 +420,6 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   // add bonds
   if (!skip_fragment) {
     for (auto &bond : bonds) {
-      unsigned int bond_idx;
       bool swap = false;
       if (bond.display == "WedgeEnd") {
         swap = true;
@@ -431,27 +430,26 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         bond.display = "WedgedHashBegin";
       }
 
+      auto startIdx = ids[bond.start]->getIdx();
+      auto endIdx = ids[bond.end]->getIdx();
       if (swap) {
-        // here The "END" of the bond is really our Beginning.
-        // swap atom direction
-        bond_idx = mol.addBond(ids[bond.end]->getIdx(),
-                               ids[bond.start]->getIdx(), bond.getBondType()) -
-                   1;
-      } else {
-        bond_idx = mol.addBond(ids[bond.start]->getIdx(),
-                               ids[bond.end]->getIdx(), bond.getBondType()) -
-                   1;
+        std::swap(startIdx, endIdx);
       }
-      Bond *bnd = mol.getBondWithIdx(bond_idx);
+      unsigned bondIdx = 0;
+      if (bond.order == Bond::BondType::UNSPECIFIED) {
+        auto qb = new QueryBond();
+        qb->setQuery(makeBondNullQuery());
+        qb->setBeginAtomIdx(startIdx);
+        qb->setEndAtomIdx(endIdx);
+        bondIdx = mol.addBond(qb, true) - 1;
+      } else {
+        bondIdx = mol.addBond(startIdx, endIdx, bond.getBondType()) - 1;
+      }
+      Bond *bnd = mol.getBondWithIdx(bondIdx);
       if (bond.order == Bond::BondType::AROMATIC) {
         bnd->setIsAromatic(true);
         ids[bond.end]->setIsAromatic(true);
         ids[bond.start]->setIsAromatic(true);
-      } else if (bond.order == Bond::BondType::UNSPECIFIED) {
-        auto qb = new QueryBond();
-        qb->setQuery(makeBondNullQuery());
-        mol.replaceBond(bond_idx, qb);
-        bnd = mol.getBondWithIdx(bond_idx);
       }
       bnd->setProp("CDX_BOND_ID", bond.bond_id);
       if (bond.display == "WedgeBegin") {
