@@ -111,6 +111,18 @@ SELECT mol_to_smiles(mol_from_smiles(''));
  
 (1 row)
 
+SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br'));
+         mol_to_smiles         
+-------------------------------
+ C[C@@H]([C@H](C)F)[C@@H](C)Br
+(1 row)
+
+SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br'), false);
+  mol_to_smiles  
+-----------------
+ CC(F)C(C)C(C)Br
+(1 row)
+
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
 CREATE UNIQUE INDEX mol_ididx ON pgmol (id);
@@ -1349,6 +1361,12 @@ SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5
               mol_to_cxsmiles              
 -------------------------------------------
  C[C@H](F)[C@@H](C)[C@H](C)Br |a:1,o1:3,5|
+(1 row)
+
+SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'), false);
+ mol_to_cxsmiles 
+-----------------
+ CC(F)C(C)C(C)Br
 (1 row)
 
 SELECT mol_to_cxsmarts(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
