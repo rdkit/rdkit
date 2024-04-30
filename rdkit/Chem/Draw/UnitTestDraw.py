@@ -121,6 +121,7 @@ class TestCase(unittest.TestCase):
     os.environ['RDKIT_CANVAS'] = 'cairo'
     self._testMolToImage(kekulize=False)
 
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Skipping test requiring cairo')
   def testSpecialCases(self):
     options = rdMolDraw2D.MolDrawOptions()
     options.atomLabelDeuteriumTritium = True
@@ -138,6 +139,7 @@ class TestCase(unittest.TestCase):
                          highlightBonds=(0, 2, 4, 6, 8, 10))
     self._testMolToImage(mol=Chem.MolFromSmiles('c1ccccc1c1ccc(cc1)c1ccc(cc1)c1ccc(cc1)'))
 
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Skipping test requiring cairo')
   def testGithubIssue86(self):
     # Assert that drawing code doesn't modify wedge bonds
     mol = Chem.MolFromSmiles('F[C@H](Cl)Br')
@@ -299,6 +301,8 @@ class TestCase(unittest.TestCase):
     # by parametrizing tests: In addition to supplying molsMatrix, supply 0-3 other matrices
     for (legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix) in self.paramSets:
       for useSVG in (True, False):
+        if not (useSVG or hasattr(rdMolDraw2D, 'MolDraw2DCairo')):
+          continue
         for returnPNG in (True, False):
           dwgSubImgSizeNokwargs = Draw.MolsMatrixToGridImage(
             self.molsMatrix, subImgSize, legendsMatrix=legendsMatrix,
@@ -383,7 +387,7 @@ class TestCase(unittest.TestCase):
     rxn = AllChem.ReactionFromSmarts(
       "[c;H1:3]1:[c:4]:[c:5]:[c;H1:6]:[c:7]2:[nH:8]:[c:9]:[c;H1:1]:[c:2]:1:2.O=[C:10]1[#6;H2:11][#6;H2:12][N:13][#6;H2:14][#6;H2:15]1>>[#6;H2:12]3[#6;H1:11]=[C:10]([c:1]1:[c:9]:[n:8]:[c:7]2:[c:6]:[c:5]:[c:4]:[c:3]:[c:2]:1:2)[#6;H2:15][#6;H2:14][N:13]3"
     )
-    _ = Draw.ReactionToImage(rxn)
+    _ = Draw.ReactionToImage(rxn, useSVG=True)
 
   def testGithub3762(self):
     m = Chem.MolFromSmiles('CC(=O)O')

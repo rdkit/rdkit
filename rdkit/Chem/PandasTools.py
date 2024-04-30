@@ -113,6 +113,7 @@ The standard ForwardSDMolSupplier keywords are also available:
 
 Conversion to html is quite easy:
 
+>>> PandasTools.molRepresentation = 'svg' #< the default is 'png', for png representation
 >>> htm = frame.to_html()
 ...
 >>> str(htm[:36])
