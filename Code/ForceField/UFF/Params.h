@@ -29,7 +29,7 @@ const double RAD2DEG = 180.0 / M_PI;
 inline bool isDoubleZero(const double x) {
   return ((x < 1.0e-10) && (x > -1.0e-10));
 }
-inline void clipToOne(double &x) { std::clamp(x, -1.0, 1.0); }
+inline void clipToOne(double &x) { x = std::clamp(x, -1.0, 1.0); }
 
 //! class to store UFF parameters for bond stretching
 class RDKIT_FORCEFIELD_EXPORT UFFBond {
