@@ -87,15 +87,10 @@ UniformGrid3D::~UniformGrid3D() {
 
 int UniformGrid3D::getGridIndex(unsigned int xi, unsigned int yi,
                                 unsigned int zi) const {
-  if (xi >= d_numX) {
+  if (xi >= d_numX || yi >= d_numY || zi >= d_numZ) {
     return -1;
   }
-  if (yi >= d_numY) {
-    return -1;
-  }
-  if (zi >= d_numZ) {
-    return -1;
-  }
+
   return (zi * d_numX * d_numY + yi * d_numX + xi);
 }
 
@@ -416,7 +411,7 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
           << " " << outX1 << " " << outX2 << " " << outY1 << " " << outY2 << " "
           << outZ1 << " " << outZ2 << "\n";
   unsigned int i, nPts = grid.getSize();
-  for (unsigned int i = 0; i < nPts; i++) {
+  for (i = 0; i < nPts; i++) {
     outStrm << static_cast<double>(grid.getVal(i)) << std::endl;
   }
 }
