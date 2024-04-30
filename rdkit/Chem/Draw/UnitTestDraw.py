@@ -304,20 +304,28 @@ class TestCase(unittest.TestCase):
             self.molsMatrix, subImgSize, legendsMatrix=legendsMatrix,
             highlightAtomListsMatrix=highlightAtomListsMatrix,
             highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG)
+          if useSVG:
+            self.assertIn('<svg', dwgSubImgSizeNokwargs)
           dwgSubImgSizeKwargs = Draw.MolsMatrixToGridImage(
             self.molsMatrix, subImgSize, legendsMatrix=legendsMatrix,
             highlightAtomListsMatrix=highlightAtomListsMatrix,
             highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG,
             drawOptions=kwargsValue)
+          if useSVG:
+            self.assertIn('<svg', dwgSubImgSizeKwargs)
           dwgNosubImgSizeNokwargs = Draw.MolsMatrixToGridImage(
             self.molsMatrix, legendsMatrix=legendsMatrix,
             highlightAtomListsMatrix=highlightAtomListsMatrix,
             highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG)
+          if useSVG:
+            self.assertIn('<svg', dwgNosubImgSizeNokwargs)
           dwgNosubImgSizeKwargs = Draw.MolsMatrixToGridImage(
             self.molsMatrix, legendsMatrix=legendsMatrix,
             highlightAtomListsMatrix=highlightAtomListsMatrix,
             highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG,
             drawOptions=kwargsValue)
+          if useSVG:
+            self.assertIn('<svg', dwgNosubImgSizeKwargs)
 
   def testDrawMorgan(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')

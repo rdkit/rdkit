@@ -531,7 +531,7 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
     molsMatrix, legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix)
 
   return MolsToGridImage(mols, molsPerRow=molsPerRow, subImgSize=subImgSize, legends=legends,
-                         highlightAtomLists=highlightAtomLists,
+                         highlightAtomLists=highlightAtomLists, useSVG=useSVG, returnPNG=returnPNG,
                          highlightBondLists=highlightBondLists, **kwargs)
 
 
