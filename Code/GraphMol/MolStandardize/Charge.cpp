@@ -457,13 +457,17 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     }
   }
 
-  // Neutralize cations until there is no longer a net charge remaining:
+  // Compute the overall net charge for the molecule after
+  // neutralizing the negatively charged sites.
   int netCharge = 0;
   for (const auto &at : mol.atoms()) {
     netCharge += at->getFormalCharge();
   }
 
-  if (netCharge > 0) {
+  // Neutralize the protonated sites. Stop when there is no longer a
+  // net charge remaining, unless we are requested to fully neutralize
+  // the ionized sites:
+  if (netCharge > 0 || df_force) {
     // Neutralize positive charges where H counts can be adjusted
     std::vector<unsigned int> p_idx_matches;
     for (const auto &match : p_matches) {
@@ -476,7 +480,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
       // atoms from places like Mol blocks are normally missing explicit Hs:
       atom->setNumExplicitHs(atom->getTotalNumHs());
       atom->setNoImplicit(true);
-      while (atom->getFormalCharge() > 0 && netCharge > 0) {
+      while (atom->getFormalCharge() > 0 && (netCharge > 0 || df_force)) {
         atom->setFormalCharge(atom->getFormalCharge() - 1);
         --netCharge;
         // the special case for C here was github #2792
@@ -497,7 +501,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
         // other valence parameters
         atom->updatePropertyCache(false);
       }
-      if (!netCharge) {
+      if (!netCharge && !df_force) {
         break;
       }
     }

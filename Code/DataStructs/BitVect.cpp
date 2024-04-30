@@ -35,21 +35,25 @@ void BitVect::initFromText(const char *data, const unsigned int dataLen,
   }
 
   std::int32_t format = 0;
+  std::int32_t version = 0;
   std::uint32_t nOn = 0;
   std::int32_t size;
-  std::int32_t version = 0;
 
   // earlier versions of the code did not have the version number encoded, so
   //  we'll use that to distinguish version 0
   RDKit::streamRead(ss, size);
   if (size < 0) {
     version = -1 * size;
-    if (version == 16) {
-      format = 1;
-    } else if (version == 32) {
-      format = 2;
-    } else {
-      throw ValueErrorException("bad version in BitVect pickle");
+    switch (version) {
+      case 16:
+        format = 1;
+        break;
+      case 32:
+        format = 2;
+        break;
+      default:
+        throw ValueErrorException("bad version in BitVect pickle");
+        break;
     }
     RDKit::streamRead(ss, size);
   } else if (!allowOldFormat) {

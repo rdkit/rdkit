@@ -18,6 +18,7 @@
 #include <RDGeneral/Exceptions.h>
 #include <sstream>
 #include <cstdlib>
+#include <algorithm>
 
 #include <boost/lexical_cast.hpp>
 
@@ -32,14 +33,14 @@ int getBitId(const char*& text, int format, int size, int curr) {
   int res = -1;
   if ((format == 0) ||
       ((format == 1) && (size >= std::numeric_limits<unsigned short>::max()))) {
-    int tmp;
-    tmp = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)text);
+    int tmp =
+        EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)text);
     text += sizeof(tmp);
     res = tmp;
   } else if (format == 1) {  // version 16 and on bits sorted as short ints
-    unsigned short tmp;
-    tmp = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(
-        *(unsigned short*)text);
+    unsigned short tmp =
+        EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(
+            *(unsigned short*)text);
     text += sizeof(tmp);
     res = tmp;
   } else if (format == 2) {  // run length encoded format
@@ -64,12 +65,16 @@ bool AllProbeBitsMatch(const char* probe, const char* ref) {
   probe += sizeof(probeSize);
   if (probeSize < 0) {
     version = -1 * probeSize;
-    if (version == 16) {
-      probeFormat = 1;
-    } else if (version == 32) {
-      probeFormat = 2;
-    } else {
-      throw("Unknown version type for the encode bit vect");
+    switch (version) {
+      case 16:
+        probeFormat = 1;
+        break;
+      case 32:
+        probeFormat = 2;
+        break;
+      default:
+        throw ValueErrorException("Unknown version type for the encode bit vect");
+        break;
     }
     probeSize =
         EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)probe);
@@ -81,12 +86,16 @@ bool AllProbeBitsMatch(const char* probe, const char* ref) {
   ref += sizeof(refSize);
   if (refSize < 0) {
     version = -1 * refSize;
-    if (version == 16) {
-      refFormat = 1;
-    } else if (version == 32) {
-      refFormat = 2;
-    } else {
-      throw("Unknown version type for the encode bit vect");
+    switch (version) {
+      case 16:
+        refFormat = 1;
+        break;
+      case 32:
+        refFormat = 2;
+        break;
+      default:
+        throw ValueErrorException("Unknown version type for the encode bit vect");
+        break;
     }
     refSize =
         EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)ref);
@@ -137,12 +146,16 @@ bool AllProbeBitsMatch(const T1& probe, const std::string& pkl) {
   text += sizeof(size);
   if (size < 0) {
     version = -1 * size;
-    if (version == 16) {
-      format = 1;
-    } else if (version == 32) {
-      format = 2;
-    } else {
-      throw("Unknown version type for the encode bit vect");
+    switch (version) {
+      case 16:
+        format = 1;
+        break;
+      case 32:
+        format = 2;
+        break;
+      default:
+        throw ValueErrorException("Unknown version type for the encode bit vect");
+        break;
     }
     size = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)text);
     text += sizeof(size);
@@ -375,18 +388,12 @@ double McConnaugheySimilarity(const T1& bv1, const T2& bv2) {
 
 template <typename T>
 inline T tmin(T v1, T v2) {
-  if (v1 < v2) {
-    return v1;
-  }
-  return v2;
+  return std::min(v2, v1);
 }
 
 template <typename T>
 inline T tmax(T v1, T v2) {
-  if (v1 > v2) {
-    return v1;
-  }
-  return v2;
+  return std::max(v2, v1);
 }
 
 template <typename T1, typename T2>
@@ -398,8 +405,9 @@ double AsymmetricSimilarity(const T1& bv1, const T2& bv2) {
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
 
-  if (tmin(y, z) > 0) {
-    return x / tmin(y, z);
+  double min = tmin(y, z);
+  if (min > 0.0) {
+    return x / min;
   } else {
     return 0.0;
   }
@@ -414,8 +422,9 @@ double BraunBlanquetSimilarity(const T1& bv1, const T2& bv2) {
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
 
-  if (tmax(y, z) > 0) {
-    return x / tmax(y, z);
+  double max = tmax(y, z);
+  if (max > 0.0) {
+    return x / max;
   } else {
     return 0.0;
   }
@@ -440,8 +449,13 @@ double RogotGoldbergSimilarity(const T1& bv1, const T2& bv2) {
   double z = bv2.getNumOnBits();
   double l = bv1.getNumBits();
   double d = l - y - z + x;
+
+  double denom1 = y + z;
+  double denom2 = 2 * l - y - z;
   if ((x == l) || (d == l)) {
     return 1.0;
+  } else if (denom1 == 0 || denom2 == 0) {
+    return 0.0;
   } else {
     return (x / (y + z) + (d) / (2 * l - y - z));
   }
