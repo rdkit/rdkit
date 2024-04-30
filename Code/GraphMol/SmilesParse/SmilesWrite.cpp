@@ -651,7 +651,10 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       tmp[ti] = std::make_tuple(vfragsmi[ti], allAtomOrdering[ti],
                                 allBondOrdering[ti]);
     }
-    std::sort(tmp.begin(), tmp.end());
+
+    if (!params.doNotSortFragments) {
+      std::sort(tmp.begin(), tmp.end());
+    }
 
     for (unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
       result += std::get<0>(tmp[ti]);
@@ -731,6 +734,14 @@ std::string MolToCXSmiles_internal(const ROMol &romol,
   if (!params.doIsomericSmiles) {
     flags &= ~(SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO |
                SmilesWrite::CXSmilesFields::CX_BOND_CFG);
+  }
+
+  if (params.cleanStereo) {
+    if (trwmol->needsUpdatePropertyCache()) {
+      trwmol->updatePropertyCache();
+    }
+    MolOps::assignStereochemistry(*trwmol, true);
+    Chirality::cleanupStereoGroups(*trwmol);
   }
 
   auto cxext = SmilesWrite::getCXExtensions(*trwmol, flags);
@@ -847,8 +858,9 @@ std::unique_ptr<RWMol> canonicalizeStereoGroups_internal(
   wps.canonical = true;
   wps.cleanStereo = false;
   wps.useStereoToBreakTies = true;
+  wps.doNotSortFragments = true;
 
-  params.rigorousEnhancedStereo = false;  // avoid innfinite loop
+  params.rigorousEnhancedStereo = false;  // avoid infinite loop
   params.canonical = true;
   params.cleanStereo = false;
   params.useStereoToBreakTies = true;
@@ -915,7 +927,9 @@ std::unique_ptr<RWMol> canonicalizeStereoGroups_internal(
           nullptr, false);
     }
 
-    newSmi = MolToCXSmiles(*newMol.get(), wps, SmilesWrite::CX_ALL_BUT_COORDS);
+    newSmi = MolToCXSmiles_internal(
+        *newMol.get(), wps, SmilesWrite::CX_ALL_BUT_COORDS,
+        RestoreBondDirOption::RestoreBondDirOptionClear);
 
     auto insertResult = allSmiles.insert(newSmi);
     if (insertResult.second && newSmi == *allSmiles.begin()) {
@@ -923,6 +937,12 @@ std::unique_ptr<RWMol> canonicalizeStereoGroups_internal(
     }
 
     boost::erase_all(newSmi, "@");
+    boost::erase_all(newSmi, "/");
+    boost::erase_all(newSmi, "\\");
+    boost::erase_all(newSmi, "[");
+    boost::erase_all(newSmi, "H3]");
+    boost::erase_all(newSmi, "H2]");
+    boost::erase_all(newSmi, "H]");
 
     auto pos = newSmi.find(" |");
     if (pos) {
@@ -933,22 +953,22 @@ std::unique_ptr<RWMol> canonicalizeStereoGroups_internal(
 
     } else {
       if (firstSmiles != newSmi) {
-        throw ValueErrorException("smiles are not the same");
+        throw RigorousEnhancedStereoException("smiles are not the same");
       }
     }
   }
 
   // get the mol to return, including all info from the original mol
 
+  params.doNotSortFragments = true;
   auto bestFullSmiles =
       // MolToCXSmiles(*bestNewMol, params, flags, restoreBondDirs);
       MolToCXSmiles(*bestNewMol, params, flags, RestoreBondDirOptionClear);
+  params.doNotSortFragments = false;
   std::unique_ptr<RWMol> molToReturn(SmilesToMol(bestFullSmiles, rps));
-
-  // first get all atoms and bonds in stereo groups - these will not be checked
-  // in this pass in the second pass, there should be none
-  // also while we are at it, copy the stereo groups to the new stereoGroups
-  // vector
+  // first get all atoms and bonds in stereo groups - these will not be
+  // checked in this pass.   In the second pass, there should be none also
+  // while we are at it, copy the stereo groups to the new stereoGroups vector
 
   std::vector<unsigned int> atomIndices;
   std::vector<unsigned int> bondIndices;
@@ -1394,7 +1414,6 @@ std::string canonicalizeStereoGroups(const std::unique_ptr<RWMol> &mol,
                                      RestoreBondDirOption restoreBondDirs) {
   // this expanded a mol with stereo groups to a vector of mols that have no
   // stereo grouos
-  //
 
   if (mol->getStereoGroups().empty()) {
     return SmilesWrite::detail::MolToCXSmiles_internal(*mol, params, flags,
@@ -1411,8 +1430,6 @@ std::string canonicalizeStereoGroups(const std::unique_ptr<RWMol> &mol,
                                                        restoreBondDirs);
   }
 
-  // get all the groups to process
-
   std::vector<RDKit::StereoGroup> orGroups;  // empty vector of new groups
   std::vector<RDKit::StereoGroup> andGroups;
   for (auto &stg : mol->getStereoGroups()) {
@@ -1423,16 +1440,24 @@ std::string canonicalizeStereoGroups(const std::unique_ptr<RWMol> &mol,
     }
   }
 
-  std::unique_ptr<RWMol> canonMol;
-  if (orGroups.size() == 0) {
-    canonMol = SmilesWrite::detail::canonicalizeStereoGroups_internal(
-        mol, params, flags, restoreBondDirs, &andGroups, nullptr, true);
-  } else {
-    canonMol = SmilesWrite::detail::canonicalizeStereoGroups_internal(
-        mol, params, flags, restoreBondDirs, &orGroups, &andGroups, true);
+  try {
+    std::unique_ptr<RWMol> canonMol;
+    if (orGroups.size() == 0) {
+      canonMol = SmilesWrite::detail::canonicalizeStereoGroups_internal(
+          mol, params, flags, restoreBondDirs, &andGroups, nullptr, true);
+    } else {
+      canonMol = SmilesWrite::detail::canonicalizeStereoGroups_internal(
+          mol, params, flags, restoreBondDirs, &orGroups, &andGroups, true);
+    }
+
+    return SmilesWrite::detail::MolToCXSmiles_internal(*canonMol, params, flags,
+                                                       restoreBondDirs);
+  } catch (const RigorousEnhancedStereoException &e) {
+    SmilesWriteParams newParams(params);
+    newParams.rigorousEnhancedStereo = false;
+    return SmilesWrite::detail::MolToCXSmiles_internal(*mol, newParams, flags,
+                                                       restoreBondDirs);
   }
-  return SmilesWrite::detail::MolToCXSmiles_internal(*canonMol, params, flags,
-                                                     restoreBondDirs);
 }
 
 }  // namespace RDKit

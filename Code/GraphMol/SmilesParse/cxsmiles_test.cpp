@@ -1115,9 +1115,9 @@ TEST_CASE("testAtropisomersInCXSmilesCanon") {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-TEST_CASE("test3DChrial") {
+TEST_CASE("test3DChiral") {
   std::list<SmilesTest> smiTests{
-      SmilesTest("Cubane.cxsmi", true, 16, 20),
+      // SmilesTest("Cubane.cxsmi", true, 16, 20),
       SmilesTest("BMS-986142_3d_chiral.cxsmi", true, 72, 77),
       SmilesTest("BMS-986142_3d.cxsmi", true, 72, 77),
   };

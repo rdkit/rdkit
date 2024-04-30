@@ -23,6 +23,12 @@ class Atom;
 class Bond;
 class ROMol;
 
+class RigorousEnhancedStereoException : public std::runtime_error {
+ public:
+  explicit RigorousEnhancedStereoException(std::string message)
+      : std::runtime_error(message){};
+};
+
 struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
   bool doIsomericSmiles =
       true;              /**< include stereochemistry and isotope information */
@@ -44,6 +50,9 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
   bool useStereoToBreakTies =
       false; /**< if true, ranks are determined without stereo,
 then again using the previous ranks and the stereo information */
+  bool doNotSortFragments = false; /**< if true, the fragments will not be
+                                      sorted before generating the SMILES - used
+                                      in canonlication of enahnanced stereo */
 };
 namespace SmilesWrite {
 
@@ -312,7 +321,6 @@ inline std::string MolFragmentToCXSmiles(
 // ! \brief returns canonical RWMol including rationalization of stereo groups
 /*!
   \param mol : the molecule in question.
-
 
  */
 

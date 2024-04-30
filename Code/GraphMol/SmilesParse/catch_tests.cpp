@@ -2801,9 +2801,18 @@ TEST_CASE("Github #7295") {
     auto smi2 = MolToSmiles(*m);
     CHECK(smi1 == smi2);
     auto m2(*m);
-    bool cleanIt=true;
+    bool cleanIt = true;
     MolOps::assignStereochemistry(m2, cleanIt);
     auto smi3 = MolToSmiles(m2);
     CHECK(smi1 == smi3);
+  }
+}
+
+TEST_CASE("simpleSmiles") {
+  SECTION("basics") {
+    auto m = "CCN(CCO)CCCCC[C@H]1CC[C@H](N(C)C(=O)Oc2ccc(Cl)cc2)CC1.Cl"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) ==
+          "CCN(CCO)CCCCC[C@H]1CC[C@H](N(C)C(=O)Oc2ccc(Cl)cc2)CC1.Cl");
   }
 }

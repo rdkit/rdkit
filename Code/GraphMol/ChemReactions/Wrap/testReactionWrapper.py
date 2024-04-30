@@ -792,7 +792,10 @@ def _getProductCXSMILES(product):
   for a in product.GetAtoms():
     for k in a.GetPropsAsDict():
       a.ClearProp(k)
-  return Chem.MolToCXSmiles(product)
+  wp = Chem.SmilesWriteParams()
+  wp.rigorousEnhancedStereo = False
+
+  return Chem.MolToCXSmiles(product, wp)
 
 
 def _reactAndSummarize(rxn_smarts, *smiles):
@@ -867,6 +870,7 @@ class StereoGroupTests(unittest.TestCase):
 
     reaction = '[C@:1]F>>[C:1]F'
     # Reaction destroys stereo (but preserves unaffected group
+
     products = _reactAndSummarize(reaction, 'F[C@H](Cl)[C@@H](Cl)Br |o1:1,&2:3|')
     self.assertEqual(products, 'FC(Cl)[C@H](Cl)Br |&1:3|')
     # Reaction destroys stereo (but preserves the rest of the group
@@ -889,11 +893,11 @@ class StereoGroupTests(unittest.TestCase):
 
     # Remove group with defined stereo
     products = _reactAndSummarize('[C:1]F>>[C@@:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:1,&2:3|')
-    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |a:1,&1:3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |&1:3|')
 
     # Remove atoms with defined stereo from group
     products = _reactAndSummarize('[C:1]F>>[C@@:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:1,3|')
-    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |a:1,o1:3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |o1:3|')
 
   def test_stereogroup_is_spectator_to_reaction(self):
     """
@@ -902,19 +906,19 @@ class StereoGroupTests(unittest.TestCase):
     """
     # 5a. Reaction preserves unrelated stereo
     products = _reactAndSummarize('[C@:1]F>>[C@:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
-    self.assertEqual(products, 'F[C@H](Cl)[C@H](Cl)Br |a:1,o1:3|')
+    self.assertEqual(products, 'F[C@H](Cl)[C@H](Cl)Br |o1:3|')
     # 5b. Reaction ignores unrelated stereo'
     products = _reactAndSummarize('[C:1]F>>[C:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
-    self.assertEqual(products, 'F[C@H](Cl)[C@H](Cl)Br |a:1,o1:3|')
+    self.assertEqual(products, 'F[C@H](Cl)[C@H](Cl)Br |o1:3|')
     # 5c. Reaction inverts unrelated stereo'
     products = _reactAndSummarize('[C@:1]F>>[C@@:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
-    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |a:1,o1:3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |o1:3|')
     # 5d. Reaction destroys unrelated stereo' 1:3|
     products = _reactAndSummarize('[C@:1]F>>[C:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
     self.assertEqual(products, 'FC(Cl)[C@H](Cl)Br |o1:3|')
     # 5e. Reaction assigns unrelated stereo'
     products = _reactAndSummarize('[C:1]F>>[C@@:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
-    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |a:1,o1:3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |o1:3|')
 
   def test_reaction_splits_stereogroup(self):
     """

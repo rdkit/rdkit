@@ -272,6 +272,18 @@ TEST_CASE("enhanced stereo canonicalization") {
 
   SECTION("pseudoTest1") {
     std::vector<std::pair<std::string, std::string>> tests = {
+        {"CC1=CC[C@H]2[C@H](C1)c1c(O)cc(C=C3C4CC5CC(C4)CC3C5)cc1OC2(C)C |&1:4,5|",
+         "CC1=CC[C@@H]2[C@@H](C1)c1c(O)cc(C=C3C4CC5CC(C4)CC3C5)cc1OC2(C)C |&1:4,5|"},
+        {"O=C(O)C(F)(F)F.O=C(O)[C@@]1(N(CCn2cnc3ncncc32)S(=O)(=O)c2ccc(-c3ccc(Cl)cc3)cc2)C[C@H]1c1ccccc1 |o1:10,40|",
+         "O=C(O)[C@@]1(N(CCn2cnc3ncncc32)S(=O)(=O)c2ccc(-c3ccc(Cl)cc3)cc2)C[C@H]1c1ccccc1.O=C(O)C(F)(F)F |o1:3,33|"},
+        {"CCCCNC1N[C@H](CO)[C@@H](O)[C@@H](O)[C@H](CO)N1 |a:12,&2:10,&1:7,14|",
+         "CCCCNC1N[C@@H](CO)[C@H](O)[C@H](O)[C@@H](CO)N1 |a:7,14,&1:10,&2:12|"},
+        {"CCCCNC1N[C@H](CO)[C@@H](O)[C@@H](O)[C@H](CO)N1 |a:10,12,&1:7,14|",
+         "CCCCNC1N[C@@H](CO)[C@@H](O)[C@@H](O)[C@@H](CO)N1 |a:10,12,&1:7,14|"},
+        {"CCCCNC1N[C@H](CO)C(O)[C@@H](O)[C@H](CO)N1 |a:12,&1:7,14|",
+         "CCCCNC1N[C@@H](CO)C(O)[C@@H](O)[C@@H](CO)N1 |a:12,&1:7,14|"},
+        {"CCNC(=O)c1ccc(/C(=C2/C[C@H]3CC[C@@H](C2)N3CCc2ccccc2)c2ccccc2)cc1 |&1:12,15|",
+         "CCNC(=O)c1ccc(/C(=C2/C[C@@H]3CC[C@H](C2)N3CCc2ccccc2)c2ccccc2)cc1 |&1:12,15|"},
         {"C[C@H](O)[C@@H](C)[C@H](C)[C@H](C)O |&1:1,&2:3,5,&3:7|",
          "C[C@H](O)[C@H](C)[C@@H](C)[C@H](C)O |&1:1,&2:3,5,&3:7|"},
 
@@ -331,6 +343,9 @@ TEST_CASE("enhanced stereo canonicalization") {
          "CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,&1:11,&2:14|"},
 
     };
+
+    UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+
     for (const auto& [smi1, smi2] : tests) {
       INFO(smi1 + " : " + smi2);
 
@@ -348,7 +363,7 @@ TEST_CASE("enhanced stereo canonicalization") {
 
       SmilesWriteParams wps;
       wps.canonical = true;
-      wps.cleanStereo = false;
+      wps.cleanStereo = true;
       wps.rigorousEnhancedStereo = true;
 
       auto outSmi1 = MolToCXSmiles(*mol1, wps);
