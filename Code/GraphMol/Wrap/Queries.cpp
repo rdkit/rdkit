@@ -322,7 +322,8 @@ struct queries_wrapper {
     std::string docString = R"DOC(Changes the given atom in the molecule to
 a query atom and returns the atom which can then be modified, for example
 with additional query constraints added.  The new atom is otherwise a copy
-of the old.)DOC";
+of the old.
+If the atom already has a query, nothing will be changed.)DOC";
     python::def(
         "ReplaceAtomWithQueryAtom", replaceAtomWithQueryAtomHelper,
         (python::arg("mol"), python::arg("atom")), docString.c_str(),

@@ -1102,6 +1102,7 @@ RDKIT_GRAPHMOL_EXPORT void completeMolQueries(
     RWMol *mol, unsigned int magicVal = 0xDEADBEEF);
 // Replaces the given atom in the molecule with a QueryAtom that is otherwise
 // a copy of the given atom.  Returns a pointer to that atom.
+// if the atom already has a query, nothing will be changed
 RDKIT_GRAPHMOL_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
 
 RDKIT_GRAPHMOL_EXPORT void finalizeQueryFromDescription(
