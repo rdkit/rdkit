@@ -113,11 +113,10 @@ int UniformGrid3D::getGridPointIndex(const Point3D &point) const {
   Point3D tPt(point);
   tPt -= d_offSet;  // d_origin;
   tPt /= d_spacing;
-  int xi, yi, zi;
   double move = 0.5;
-  xi = static_cast<int>(floor(tPt.x + move));
-  yi = static_cast<int>(floor(tPt.y + move));
-  zi = static_cast<int>(floor(tPt.z + move));
+  int xi = static_cast<int>(floor(tPt.x + move));
+  int yi = static_cast<int>(floor(tPt.y + move));
+  int zi = static_cast<int>(floor(tPt.z + move));
 
   if ((xi < 0) || (xi >= static_cast<int>(d_numX))) {
     return -1;
@@ -171,15 +170,11 @@ void UniformGrid3D::setVal(unsigned int pointId, unsigned int val) {
 }
 
 bool UniformGrid3D::compareParams(const UniformGrid3D &other) const {
-  if (d_numX != other.getNumX()) {
+  if (d_numX != other.getNumX() || d_numY != other.getNumY() ||
+      d_numZ != other.getNumZ()) {
     return false;
   }
-  if (d_numY != other.getNumY()) {
-    return false;
-  }
-  if (d_numZ != other.getNumZ()) {
-    return false;
-  }
+
   if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) {
     return false;
   }
@@ -196,7 +191,7 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
     if (ignoreOutOfBound) {
       return;
     } else {
-      throw GridException("Center outside the grdi boundary");
+      throw GridException("Center outside the grid boundary");
     }
   }
   Point3D gPt(center);  // point on the grid
@@ -222,25 +217,23 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
       bgRad + nLayers * gStepSize;  // largest radius in grid coords
   double gRad2 = gRadius * gRadius;
   double bgRad2 = bgRad * bgRad;
-  int i, j, k;
   double dx, dy, dz, d, d2, dy2z2, dz2;
-  int xmin, xmax, ymin, ymax, zmin, zmax;
-  xmax = (int)floor(gPt.x + gRadius);
-  xmin = (int)ceil(gPt.x - gRadius);
-  ymax = (int)floor(gPt.y + gRadius);
-  ymin = (int)ceil(gPt.y - gRadius);
-  zmax = (int)floor(gPt.z + gRadius);
-  zmin = (int)ceil(gPt.z - gRadius);
+  int xmax = (int)floor(gPt.x + gRadius);
+  int xmin = (int)ceil(gPt.x - gRadius);
+  int ymax = (int)floor(gPt.y + gRadius);
+  int ymin = (int)ceil(gPt.y - gRadius);
+  int zmax = (int)floor(gPt.z + gRadius);
+  int zmin = (int)ceil(gPt.z - gRadius);
 
   unsigned int oval, val, valChange;
   int ptId1, ptId2;
-  for (k = zmin; k <= zmax; ++k) {
+  for (int k = zmin; k <= zmax; ++k) {
     if ((k >= 0) &&
         (k < (int)d_numZ)) {  // we are inside the grid in the z-direction
       dz = static_cast<double>(k) - gPt.z;
       dz2 = dz * dz;
       ptId1 = k * d_numX * d_numY;
-      for (j = ymin; j <= ymax; ++j) {
+      for (int j = ymin; j <= ymax; ++j) {
         if ((j >= 0) &&
             (j < (int)d_numY)) {  // inside the grid in the y-direction
           dy = static_cast<double>(j) - gPt.y;
@@ -248,7 +241,7 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
           if (dy2z2 < gRad2) {  // we are within the radius at least from the
                                 // y,z coordinates
             ptId2 = ptId1 + j * d_numX;
-            for (i = xmin; i <= xmax; ++i) {
+            for (int i = xmin; i <= xmax; ++i) {
               if ((i >= 0) && (i < (int)d_numX)) {
                 oval = dp_storage->getVal((unsigned int)(ptId2 + i));
                 if (oval < maxVal) {  // if we are already at maxVal we will not
@@ -423,7 +416,7 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
           << " " << outX1 << " " << outX2 << " " << outY1 << " " << outY2 << " "
           << outZ1 << " " << outZ2 << "\n";
   unsigned int i, nPts = grid.getSize();
-  for (i = 0; i < nPts; i++) {
+  for (unsigned int i = 0; i < nPts; i++) {
     outStrm << static_cast<double>(grid.getVal(i)) << std::endl;
   }
 }
