@@ -542,7 +542,7 @@ class ProcessDocLines:
                     self.top_signature = src_line
                 if overload_prefix:
                     src_line = overload_prefix + src_line
-        return src_line.replace("\\", "\\\\")
+        return src_line
 
     def process_doc_lines(self, doc_lines):
         """Process the raw docstring lines.

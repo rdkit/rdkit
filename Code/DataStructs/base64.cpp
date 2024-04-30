@@ -47,13 +47,11 @@ char *Base64Encode(const unsigned char *inText, const unsigned int inLen) {
       'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
 
-  char *res;
-  int resSize;
-  resSize = (4 * inLen) / 3;
+  int resSize = (4 * inLen) / 3;
   while (resSize % 4) {
     resSize++;
   }
-  res = new char[resSize + 1];
+  char *res = new char[resSize + 1];
   unsigned int i = 0;
   int pos = 0;
   while (i < inLen) {

@@ -423,20 +423,29 @@ TEST_CASE("CDXML") {
     }
   }
   SECTION("Queries") {
-    auto fname = cdxmlbase + "query-atoms.cdxml";
-
-    std::vector<std::string> expected = {"*c1ccccc1", "*c1ccccc1", "*c1ccccc1"};
-    std::vector<std::string> expected_smarts = {
-        "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
-        "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#1]",
-        "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#6&!#1]"};
-    auto mols = MolsFromCDXMLFile(fname);
-    CHECK(mols.size() == expected.size());
-    int i = 0;
-    for (auto &mol : mols) {
-      CHECK(MolToSmarts(*mol) == expected_smarts[i]);
-      CHECK(MolToSmiles(*mol) == expected[i++]);
-    }
+      {
+          auto fname = cdxmlbase + "query-atoms.cdxml";
+          
+          std::vector<std::string> expected = {"*c1ccccc1", "*c1ccccc1", "*c1ccccc1"};
+          std::vector<std::string> expected_smarts = {
+              "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
+              "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#1]",
+              "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#6&!#1]"};
+          auto mols = MolsFromCDXMLFile(fname);
+          CHECK(mols.size() == expected.size());
+          int i = 0;
+          for (auto &mol : mols) {
+              CHECK(MolToSmarts(*mol) == expected_smarts[i]);
+              CHECK(MolToSmiles(*mol) == expected[i++]);
+          }
+      }
+      {
+          auto fname = cdxmlbase + "anybond.cdxml";
+          auto mols = MolsFromCDXMLFile(fname);
+          CHECK(mols.size() == 1);
+          CHECK(MolToSmiles(*mols[0]) == "C1CCC~CC1");
+          CHECK(MolToSmarts(*mols[0]) == "[#6]1~[#6]-[#6]-[#6]-[#6]-[#6]-1");
+      }
   }
   SECTION("ElementList") {
     auto fname = cdxmlbase + "element-list.cdxml";

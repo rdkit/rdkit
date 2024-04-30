@@ -2807,6 +2807,101 @@ function test_assign_cip_labels() {
     }
 }
 
+function test_smiles_smarts_params() {
+    {
+        const amoxicillinPubChem = 'CC1([C@@H](N2[C@H](S1)[C@@H](C2=O)NC(=O)[C@@H](C3=CC=C(C=C3)O)N)C(=O)O)C';
+        const mol = RDKitModule.get_mol(amoxicillinPubChem);
+        {
+            const canonicalSmiles = mol.get_smiles();
+            assert(canonicalSmiles === 'CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccc(O)cc3)C(=O)N2[C@H]1C(=O)O');
+        }
+        ['{}', ''].forEach((emptyJson) => {
+            const canonicalSmiles = mol.get_smiles(emptyJson);
+            assert(canonicalSmiles === 'CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccc(O)cc3)C(=O)N2[C@H]1C(=O)O');
+        });
+        const nonCanonicalSmiles = mol.get_smiles(JSON.stringify({canonical: false}));
+        assert(nonCanonicalSmiles === 'CC1(C)[C@H](C(=O)O)N2[C@H](S1)[C@H](NC(=O)[C@@H](c1ccc(O)cc1)N)C2=O');
+        const canonicalSmilesNoStereo = mol.get_smiles(JSON.stringify({doIsomericSmiles: false}));
+        assert(canonicalSmilesNoStereo === 'CC1(C)SC2C(NC(=O)C(N)c3ccc(O)cc3)C(=O)N2C1C(=O)O');
+        const nonCanonicalSmilesNoStereo = mol.get_smiles(JSON.stringify({doIsomericSmiles: false, canonical: false}));
+        assert(nonCanonicalSmilesNoStereo === 'CC1(C)C(C(=O)O)N2C(S1)C(NC(=O)C(c1ccc(O)cc1)N)C2=O');
+        mol.delete();
+    }
+    {
+        const bicyclo221heptane = `
+     RDKit          2D
+
+  9 10  0  0  1  0  0  0  0  0999 V2000
+   -2.8237   -1.3088    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5723   -0.3996    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5723    1.1473    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1011    1.6253    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3701    1.1474    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3701   -0.3995    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6217   -1.3087    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1009   -0.8775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8083    0.3739    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  2  3  1  0
+  4  3  1  0
+  4  5  1  0
+  6  5  1  0
+  6  7  1  1
+  6  8  1  0
+  8  9  1  1
+  8  2  1  0
+  4  9  1  1
+M  END
+`;
+        const mol = RDKitModule.get_mol(bicyclo221heptane, JSON.stringify({useMolBlockWedging: true}));
+        {
+            const canonicalCXSmiles = mol.get_cxsmiles();
+            const [_, canonicalSmiles, wedging] = canonicalCXSmiles.match(/^(\S+) \|\([^\)]+\),([^\|]+)\|$/);
+            assert(canonicalSmiles === 'N[C@@H]1C[C@@H]2C[C@H]1[C@@H](O)C2');
+            assert(wedging === 'wD:3.9,wU:1.0,5.4,6.7');
+        }
+        ['{}', ''].forEach((emptyJson) => {
+            const canonicalCXSmiles = mol.get_cxsmiles(emptyJson);
+            const [_, canonicalSmiles, wedging] = canonicalCXSmiles.match(/^(\S+) \|\([^\)]+\),([^\|]+)\|$/);
+            assert(canonicalSmiles === 'N[C@@H]1C[C@@H]2C[C@H]1[C@@H](O)C2');
+            assert(wedging === 'wD:3.9,wU:1.0,5.4,6.7');
+        });
+        {
+            const canonicalCXSmiles = mol.get_cxsmiles(JSON.stringify({restoreBondDirOption: 'RestoreBondDirOptionTrue'}));
+            const [_, canonicalSmiles, wedging] = canonicalCXSmiles.match(/^(\S+) \|\([^\)]+\),([^\|]+)\|$/);
+            assert(canonicalSmiles === 'N[C@@H]1C[C@@H]2C[C@H]1[C@@H](O)C2');
+            assert(wedging === 'wU:1.0,3.3,5.4,6.7');
+        }
+        {
+            const nonCanonicalCXSmilesNoStereo = mol.get_cxsmiles(JSON.stringify({doIsomericSmiles: false, canonical: false, CX_ALL_BUT_COORDS: true}));
+            assert(nonCanonicalCXSmilesNoStereo === 'OC1CC2CC(N)C1C2');
+            const nonCanonicalCXSmilesNoStereoAtomProp = `${nonCanonicalCXSmilesNoStereo} |atomProp:1.atomProp.1&#46;234|`;
+            const molWithAtomProp = RDKitModule.get_mol(nonCanonicalCXSmilesNoStereoAtomProp);
+            assert(molWithAtomProp);
+            const cxSmilesWithAtomProp = molWithAtomProp.get_cxsmiles(JSON.stringify({CX_ALL_BUT_COORDS: true}));
+            assert(cxSmilesWithAtomProp === 'NC1CC2CC(O)C1C2 |atomProp:5.atomProp.1&#46;234|');
+            molWithAtomProp.delete();
+        }
+        mol.delete();
+    }
+    {
+        const chiralQuery = RDKitModule.get_qmol('N-[C@H](-C(-O)=O)-C(-C)-C');
+        assert(chiralQuery.get_smarts() === 'N-[C@&H1](-C(-O)=O)-C(-C)-C');
+        ['', '{}'].forEach((emptyJson) => {
+            assert(chiralQuery.get_smarts(emptyJson) === 'N-[C@&H1](-C(-O)=O)-C(-C)-C');
+        });
+        assert(chiralQuery.get_smarts(JSON.stringify({doIsomericSmiles: false})) === 'N-[C&H1](-C(-O)=O)-C(-C)-C');
+    }
+    {
+        const chiralQuery = RDKitModule.get_qmol('N-[C@H](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|');
+        assert(chiralQuery.get_cxsmarts() === 'N-[C@&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|');
+        ['', '{}'].forEach((emptyJson) => {
+            assert(chiralQuery.get_cxsmarts(emptyJson) === 'N-[C@&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|');
+        });
+        assert(chiralQuery.get_cxsmarts(JSON.stringify({doIsomericSmiles: false})) === 'N-[C&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|');
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -2881,6 +2976,7 @@ initRDKitModule().then(function(instance) {
     test_get_sss_json();
     test_relabel_mapped_dummies();
     test_assign_cip_labels();
+    test_smiles_smarts_params();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
