@@ -30,9 +30,9 @@ struct chemfeat_pickle_suite : rdkit_pickle_suite {
 };
 
 std::string featClassDoc =
-    "Class to represent a free chemical features.\n\
+    "Class to represent free chemical features.\n\
     These chemical features are not associated with a molecule, though they can be matched \n\
-    to molecular featufres\n";
+    to molecular features\n";
 struct freefeat_wrapper {
   static void wrap() {
     python::class_<FreeChemicalFeature>(

@@ -21,10 +21,10 @@ jobs:
 - job: Ubuntu_x64_py311
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-latest
   variables:
     python: python=3.11
-    boost_version: 1.80.0
+    boost_version: 1.82.0
     compiler: gxx_linux-64
     cc: gcc-10
     cxx: g++-10
@@ -126,6 +126,20 @@ jobs:
     python_name: python38
   steps:
   - template: .azure-pipelines/vs_build_swig.yml
+- job: Ubuntu_x64_ubsan
+  timeoutInMinutes: 120
+  pool:
+    vmImage: ubuntu-latest
+  variables:
+    python: python=3.11
+    boost_version: 1.82.0
+    compiler: gxx_linux-64
+    cc: gcc-10
+    cxx: g++-10
+    number_of_cores: nproc
+    python_name: python311
+  steps:
+  - template: .azure-pipelines/linux_build_ubsan.yml
 
 # - job: Ubuntu_18_04_x64_fuzzer
 #  timeoutInMinutes: 90

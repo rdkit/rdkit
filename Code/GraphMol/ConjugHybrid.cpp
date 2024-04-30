@@ -76,9 +76,9 @@ int numBondsPlusLonePairs(Atom *at) {
   int deg = at->getTotalDegree();
 
   auto &mol = at->getOwningMol();
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    auto bond = mol[nbri];
-    if (bond->getBondType() == Bond::ZERO) {
+  for (const auto bond : mol.atomBonds(at)) {
+    if (bond->getBondType() == Bond::ZERO ||
+        (isDative(*bond) && at->getIdx() != bond->getEndAtomIdx())) {
       --deg;
     }
   }

@@ -2173,10 +2173,11 @@ a restricted rotation bond.
 
 The requirements for a bond to be eligible for atropisomerism in the RDKit are:
 
-- It bond must be a single bond between SP2 hybridized atoms.
+- The bond must be a single bond between SP2 hybridized atoms.
 - The neighboring bonds must be single, double or aromatic. 
 - If there are two groups on either end, those groups must be different as per CIP rules. 
-- Currently the RDKit does not consider ring bonds as potential atropisomer bonds. 
+- Currently RDKit considers ring bonds as potential atropisomer bonds only if the
+  ring in which the bond appears is 8 atoms or larger (thus allowing macrocycles).
 - The molecule must have coordinates for atropisomer bonds to be interpreted.
 
 The definition of potential atropisomer bonds is based on the wedging of
