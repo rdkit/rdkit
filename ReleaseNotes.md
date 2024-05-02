@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-=======
-# Release_2024.09.1
+# Release_2024.03.2
 (Changes relative to Release_2024.03.1)
 
 ## Acknowledgements
@@ -8,27 +6,83 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
-
-## Highlights
+Christoph Berg, Anna Brünisholz, Michael Cho, David Cosgrove, Andrew Dalke,
+Peter Eastman, Tad Hurst, Gareth Jones, Brian Kelley, Daniel Levine, Yakov
+Pechersky, Ricardo Rodriguez, Matt Swain, Paolo Tosco, Riccardo Vianello
 
 ## Backwards incompatible changes
-- The SMARTS for the unbranched alkanes in the fragment descriptors has been corrected. This descriptor will now frequently return different results.
-
+- The SMARTS for the unbranched alkanes in the fragment descriptors has been
+  corrected. This descriptor will now frequently return different results.
 
 ## New Features and Enhancements:
+  - Added JSON parameters to MinimalLib get_(cx)?sm(ile|art)s() functions
+ (github pull #7194 from ptosco)
+  - Include macrocycles in atropisomer calculation by not sanitizing them away
+ (github pull #7291 from pechersky)
+  - C# Build Net6 library and tests using cmake
+ (github pull #7326 from jones-gareth)
+  - Add option for RASCAL to restrict atom matching to atoms of same degree
+ (github pull #7344 from DavidACosgrove)
+  - Add MolStandardize to C# wrappers
+ (github pull #7351 from jones-gareth)
+  - CDXML parser doesn't recognize any bonds
+ (github issue #7357 from bp-kelley)
+  - Allow reapplyMolBlockWedging() to restore the original wedging regardless the bond type
+ (github pull #7386 from rvianello)
+  - Add option for non-isomeric SMILES creation in the PostgreSQL cartridge
+ (github pull #7395 from rvianello)
 
 ## Bug Fixes:
-  
+  - Correct unbranched alkane SMARTS to match the description given
+ (github  #7255 from levineds)
+  - restrict the application of 1,3- 1,5- conjugated cation normalization
+ (github pull #7287 from rvianello)
+  - DetermineBondOrders() does not assign single bonds correctly
+ (github issue #7299 from peastman)
+  - re-enable yaehmop support in DetermineBonds
+ (github pull #7316 from greglandrum)
+  - AtomPairs.Utils.NumPiElectrons fails on atoms with dative bonds
+ (github issue #7318 from ricrogz)
+  - Wedge bond from atrop error
+ (github pull #7321 from tadhurst-cdd)
+  - Remove misleading walrus operators
+ (github pull #7323 from mcs07)
+  - SaltRemover may clear computed properties even if no atoms are removed
+ (github issue #7327 from ricrogz)
+  - DetermineBondOrders() makes incorrect assumptions about valence
+ (github issue #7331 from peastman)
+  - remove some warnings with -Wextra
+ (github pull #7339 from greglandrum)
+  - Fixes problem from discussion 7317
+ (github pull #7345 from DavidACosgrove)
+  - Trigonal Pyramid Carbon may or not have a parity depending on atom ordering
+ (github issue #7346 from ricrogz)
+  - fixes bug with overly large count_bounds
+ (github pull #7368 from greglandrum)
+  - Fix the Uncharger 'force' option w/ non-neutralizable negatively charged sites
+ (github pull #7382 from rvianello)
+  - Do not apply the normalization of conjugated cations to the oxime oxygen
+ (github pull #7403 from rvianello)
+
 ## Cleanup work:
- 
-## Code removed in this release:
+  - Code/PgSQL: Fix Pointer vs Datum (Compatibility with PG16)
+ (github pull #6733 from df7cb)
+  - switch to range-based for loops
+ (github pull #7278 from AnnaBruenisholz)
+  - Cleaner forloops, deleting of empty header file
+ (github pull #7320 from AnnaBruenisholz)
+  - Make ctest run installed tests if RDK_INSTALL_PYTHON_TESTS
+ (github pull #7325 from mcs07)
+  - cleanup RDKit::MolOps::detectBondStereochemistry
+ (github pull #7329 from rvianello)
+  - Cleanup of Code/DataStructs
+ (github pull #7365 from AnnaBruenisholz)
+  - Fixes #7378, raw docstring to escape null chars
+ (github pull #7379 from pechersky)
+  - Include header for boost::numeric_cast
+ (github pull #7389 from cho-m)
 
-## Deprecated code (to be removed in a future release):
 
-- AtomPairs.Utils.NumPiElectrons is deprecated in favor of Chem.GetNumPiElectrons.
-AtomPairs.Utils.NumPiElectrons failed if the atom had outgoing dative bonds (see Issue #7318).
-
->>>>>>> 82dbf4c66 (switch to range-based for loops (#7278))
 # Release_2024.03.1
 (Changes relative to Release_2023.09.1)
 
