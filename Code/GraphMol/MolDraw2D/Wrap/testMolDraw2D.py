@@ -831,6 +831,7 @@ M  END''')
         text = d2d.GetDrawingText()
         self.assertTrue("#7F7F7F" not in text)
 
+    @unittest.skipUnless(hasattr(Draw, 'MolDraw2DCairo'), 'Cairo support not enabled')
     def testGithub7409(self):
         m = Chem.MolFromSmiles('CC |(-0.75,0,;0.75,0,)|')
         m.GetConformer().SetId(5)
