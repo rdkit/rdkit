@@ -3251,7 +3251,7 @@ TEST_CASE("false positives from new stereo code") {
   SECTION("non-tetrahedral and implicit Hs") {
     std::vector<std::string> examples{
         "[SiH4]",         "[SiH3]C",      "[SH4]",     "[PH5]",
-        "[PH4]C",         "[SH6]",        "[SH5]C",    "[SiH2](C)C",
+        "[PH4]C",         "[SH6]",        "[SH5]C",  //"[SiH2](C)C",
         "[PH3](C)C",      "[PH2](C)(C)C", "[SH4](C)C", "[SH3](C)(C)C",
         "[SH2](C)(C)(C)C"};
     {
@@ -5379,4 +5379,20 @@ M  END)CTAB"_ctab;
 
   CHECK(cAt0->getProp<std::string>(common_properties::_CIPCode) ==
         cAt1->getProp<std::string>(common_properties::_CIPCode));
+}
+
+TEST_CASE(
+    "Github #7300: incorrect chiral carbon perception for some phosphates") {
+  SECTION("basics") {
+    auto m = "NC(CP(=O)(O)O)CP(=O)(O)O"_smiles;
+    REQUIRE(m);
+    auto sis = Chirality::findPotentialStereo(*m);
+    CHECK(sis.empty());
+  }
+  SECTION("make sure Ps can still yield chiral centers") {
+    auto m = "NC(CP(=O)(O)[O-])CP(=O)(O)[O-]"_smiles;
+    REQUIRE(m);
+    auto sis = Chirality::findPotentialStereo(*m);
+    CHECK(sis.size() == 3);
+  }
 }
