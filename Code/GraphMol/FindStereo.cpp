@@ -326,7 +326,8 @@ StereoInfo getStereoInfo(const Atom *atom) {
       if (stereo == Atom::CHI_UNSPECIFIED) {
         switch (atom->getTotalDegree()) {
           case 4:
-            stereo = Atom::ChiralType::CHI_SQUAREPLANAR;
+            // don't assume non-tetrahedral chirality
+            stereo = Atom::ChiralType::CHI_TETRAHEDRAL;
             break;
           case 5:
             stereo = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL;
@@ -340,6 +341,9 @@ StereoInfo getStereoInfo(const Atom *atom) {
       }
       sinfo.descriptor = StereoDescriptor::None;
       switch (stereo) {
+        case Atom::ChiralType::CHI_TETRAHEDRAL:
+          sinfo.type = StereoType::Atom_Tetrahedral;
+          break;
         case Atom::ChiralType::CHI_SQUAREPLANAR:
           sinfo.type = StereoType::Atom_SquarePlanar;
           break;

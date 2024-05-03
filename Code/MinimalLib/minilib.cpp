@@ -91,7 +91,7 @@ std::string JSMol::get_smiles(const std::string &details) const {
   assert(d_mol);
   SmilesWriteParams params;
   updateSmilesWriteParamsFromJSON(params, details);
-  return MolToCXSmiles(*d_mol, params);
+  return MolToSmiles(*d_mol, params);
 }
 std::string JSMol::get_cxsmiles() const {
   assert(d_mol);
