@@ -111,8 +111,22 @@ bool getBondFrameOfReference(const Bond *bond, const Conformer *conf,
 Bond::BondDir getBondDirForAtropisomerNoConf(Bond::BondStereo bondStereo,
                                              unsigned int whichEnd,
                                              unsigned int whichBond) {
-  // the convention is that the lowest number atoms on each end is
-  // considered to be on the same side of the bond
+  // the convention is that in the absence of coords, the coordiates are choosen
+  // with the lowest numbered atom of the atrop bond down, and the other atom
+  // straight up.
+  // On each end, the lowest numbered connecting atom is on the left
+  //
+  //              a      b
+  //               \   /
+  //                 c
+  //                 |
+  //                 d
+  //               /   \     aaa
+  //              e      f
+  //
+  // where  c < d
+  //        a < b
+  //        e < f
 
   PRECONDITION(whichEnd <= 1, "whichEnd must be 0 or 1");
   PRECONDITION(whichBond <= 1, "whichBond must be 0 or 1");
@@ -306,9 +320,22 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
     }
   }
 
-  // if there are no coordinates, we use wedge/hash bonds assumeing, as a
-  // convention, that the lowest numbers atoms on each end ofthe atrop bond are
-  // on the same side of the bond.
+  // the convention is that in the absence of coords, the coordiates are choosen
+  // with the lowest numbered atom of the atrop bond down, and the other atom
+  // straight up.
+  // On each end, the lowest numbered connecting atom is on the left
+  //
+  //              a      b
+  //               \   /
+  //                 c
+  //                 |
+  //                 d
+  //               /   \     aaa
+  //              e      f
+  //
+  // where  c < d
+  //        a < b
+  //        e < f
 
   if (conf == nullptr) {
     std::pair<bool, Bond::BondDir> bond1DirResult;
@@ -328,10 +355,6 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
           << std::endl;
       return false;
     }
-
-    // by convention, assumes the
-    // lowest numbered atoms are on
-    // the same side
     if (bond1DirResult.second == Bond::BEGINWEDGE ||
         bond2DirResult.second == Bond::BEGINDASH) {
       bond->setStereo(Bond::BondStereo::STEREOATROPCCW);
@@ -1129,10 +1152,10 @@ void wedgeBondsFromAtropisomers(
     }
 
     if (conf) {
-    if (conf->is3D()) {
-      WedgeBondFromAtropisomerOneBond3d(bond, mol, conf, wedgeBonds);
-    } else {
-      WedgeBondFromAtropisomerOneBond2d(bond, mol, conf, wedgeBonds);
+      if (conf->is3D()) {
+        WedgeBondFromAtropisomerOneBond3d(bond, mol, conf, wedgeBonds);
+      } else {
+        WedgeBondFromAtropisomerOneBond2d(bond, mol, conf, wedgeBonds);
       }
     } else {  // no conformer
       WedgeBondFromAtropisomerOneBondNoConf(bond, mol, wedgeBonds);
