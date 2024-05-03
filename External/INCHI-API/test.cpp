@@ -575,6 +575,7 @@ void testGithubIssue614() {
     m->removeAtom(3);
     ExtraInchiReturnValues tmp;
     std::string inchi = MolToInchi(*m, tmp);
+    std::cerr << " inchi: " << inchi << std::endl;
     TEST_ASSERT(inchi == "InChI=1S/C3H6/c1-3-2/h3H,1H2,2H3");
     delete m;
   }
@@ -896,6 +897,22 @@ void testGithub6172() {
     std::unique_ptr<ROMol> m{InchiToMol(inchi, tmp)};
     TEST_ASSERT(!m);
   }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub5311() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing github #5311" << std::endl;
+
+  {
+    auto m = "O[PH2]=O"_smiles;
+    TEST_ASSERT(m);
+    ExtraInchiReturnValues tmp;
+    auto inchi = MolToInchi(*m, tmp);
+    std::cerr << "!!! " << inchi << std::endl;
+    TEST_ASSERT(inchi == "InChI=1S/H3O2P/c1-3-2/h3H2,(H,1,2)");
+    BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  }
 }
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -920,4 +937,5 @@ int main() {
   testGithub3645();
   test_clean_up_on_kekulization_error();
   testGithub6172();
+  testGithub5311();
 }
