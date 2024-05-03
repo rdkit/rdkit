@@ -5646,4 +5646,21 @@ M  END
       }
     }
   }
+
+  SECTION("avoid macrocycles") {
+    auto m =
+        "C1=C(C2=CCCCCCCCCCC2)CCC1 |(-1.71835,-1.22732,;-1.61655,-0.232318,;-0.751953,0.270082,;-0.754753,1.27008,;0.109847,1.77248,;0.977247,1.27488,;1.84185,1.77728,;2.70925,1.27968,;2.71205,0.279682,;1.84745,-0.222718,;1.85025,-1.22272,;0.985647,-1.72512,;0.118247,-1.22752,;0.115447,-0.227518,;-2.53135,0.171882,;-3.19835,-0.573118,;-2.69595,-1.43772,)|"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOATROPCW);
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+    // now there is:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      if (bnd->getIdx() != 13) {
+        CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+      } else {
+        CHECK(bnd->getBondDir() == Bond::BondDir::BEGINWEDGE);
+      }
+    }
+  }
 }

@@ -638,7 +638,12 @@ bool WedgeBondFromAtropisomerOneBond2d(
       if (!ringCount) {
         ringCount = 10;
       } else {
+        // we're going to prefer to put wedges in larger rings, but don't want
+        // to end up wedging macrocyles if it's avoidable.
         ringSize = ri->minBondRingSize(bondToTry->getIdx());
+        if (ringSize > 8) {
+          ringSize = 0;
+        }
       }
       if (ringCount > bestRingCount) {
         continue;
@@ -811,7 +816,12 @@ bool WedgeBondFromAtropisomerOneBond3d(
       if (!ringCount) {
         ringCount = 10;
       } else {
+        // we're going to prefer to put wedges in larger rings, but don't want
+        // to end up wedging macrocyles if it's avoidable.
         ringSize = ri->minBondRingSize(bondToTry->getIdx());
+        if (ringSize > 8) {
+          ringSize = 0;
+        }
       }
       if (ringCount > bestRingCount) {
         continue;
