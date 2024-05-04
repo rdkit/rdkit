@@ -62,7 +62,7 @@
     static std::vector<std::vector<unsigned int> > RascalButinaCluster(const std::vector<boost::shared_ptr<RDKit::ROMol> >& mols, const RDKit::RascalMCES::RascalClusterOptions& clusterOptions=RascalClusterOptions()) {
 		std::vector<std::shared_ptr<RDKit::ROMol> > rascalMolecules;
 		for (auto molIn: mols) {
-			rascalMolecules.push_back(std::make_shared<RDKit::ROMol>(*molIn));
+			rascalMolecules.emplace_back(new RDKit::ROMol(*molIn));
 		}
 		return RDKit::RascalMCES::rascalButinaCluster(rascalMolecules, clusterOptions);
 	}
