@@ -2296,7 +2296,8 @@ specification of the fingerprint function and optionally the similarity metric.
 The default for the latter is the Dice similarity. Using all the default arguments
 of the Morgan fingerprint function, the similarity map can be generated like this:
 
-  >>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
+  >>> d2d = Draw.MolDraw2DCairo(400, 400)
+  >>> _, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint, d2d)
 
 Producing this image:
 
@@ -2306,7 +2307,7 @@ For a different type of Morgan (e.g. count) and radius = 1 instead of 2, as well
 similarity metric (e.g. Tanimoto), the call becomes:
 
   >>> from rdkit import DataStructs
-  >>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, lambda m,idx: SimilarityMaps.GetMorganFingerprint(m, atomId=idx, radius=1, fpType='count'), metric=DataStructs.TanimotoSimilarity)
+  >>> _, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, lambda m,idx: SimilarityMaps.GetMorganFingerprint(m, atomId=idx, radius=1, fpType='count'), d2d, metric=DataStructs.TanimotoSimilarity)
 
 Producing this image:
 
@@ -2324,7 +2325,7 @@ If one does not want the normalisation step, the map can be created like:
   >>> weights = SimilarityMaps.GetAtomicWeightsForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
   >>> print(["%.2f " % w for w in weights])
   ['0.05 ', ...
-  >>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, weights)
+  >>> _ = SimilarityMaps.GetSimilarityMapFromWeights(mol, weights, d2d)
 
 Producing this image:
 
@@ -2399,11 +2400,13 @@ The Gasteiger partial charges can be visualized as (using a different color sche
 
 .. doctest::
 
+  >>> from rdkit.Chem import Draw
   >>> from rdkit.Chem.Draw import SimilarityMaps
   >>> mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
   >>> AllChem.ComputeGasteigerCharges(mol)
   >>> contribs = [mol.GetAtomWithIdx(i).GetDoubleProp('_GasteigerCharge') for i in range(mol.GetNumAtoms())]
-  >>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, contribs, colorMap='jet', contourLines=10)
+  >>> d2d = Draw.MolDraw2DCairo(400, 400)
+  >>> _ = SimilarityMaps.GetSimilarityMapFromWeights(mol, contribs, d2d, colorMap='jet', contourLines=10)
 
 Producing this image:
 
@@ -2415,7 +2418,7 @@ Or for the Crippen contributions to logP:
 
   >>> from rdkit.Chem import rdMolDescriptors
   >>> contribs = rdMolDescriptors._CalcCrippenContribs(mol)
-  >>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol,[x for x,y in contribs], colorMap='jet', contourLines=10)
+  >>> _ = SimilarityMaps.GetSimilarityMapFromWeights(mol,[x for x,y in contribs], d2d, colorMap='jet', contourLines=10)
 
 Producing this image:
 
