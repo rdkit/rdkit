@@ -93,20 +93,30 @@ TEST_CASE("symmetry in the uncharger", "[uncharger]") {
 
 TEST_CASE("uncharger 'force' option") {
   SECTION("force=false (default)") {
-    auto m = "C[N+](C)(C)CC([O-])C[O-]"_smiles;
-    REQUIRE(m);
     MolStandardize::Uncharger uncharger;
-    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
-    REQUIRE(outm);
-    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC([O-])CO");
+    auto m1 = "C[N+](C)(C)CC([O-])C[O-]"_smiles;
+    REQUIRE(m1);
+    std::unique_ptr<ROMol> outm1(uncharger.uncharge(*m1));
+    REQUIRE(outm1);
+    CHECK(MolToSmiles(*outm1) == "C[N+](C)(C)CC([O-])CO");
+    auto m2 = "C[B-](C)(C)CC([NH3+])C[NH3+]"_smiles;
+    REQUIRE(m2);
+    std::unique_ptr<ROMol> outm2(uncharger.uncharge(*m2));
+    REQUIRE(outm2);
+    CHECK(MolToSmiles(*outm2) == "C[B-](C)(C)CC(N)C[NH3+]");
   }
   SECTION("force=true") {
-    auto m = "C[N+](C)(C)CC([O-])C[O-]"_smiles;
-    REQUIRE(m);
     MolStandardize::Uncharger uncharger(false, true);
-    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
-    REQUIRE(outm);
-    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(O)CO");
+    auto m1 = "C[N+](C)(C)CC([O-])C[O-]"_smiles;
+    REQUIRE(m1);
+    std::unique_ptr<ROMol> outm1(uncharger.uncharge(*m1));
+    REQUIRE(outm1);
+    CHECK(MolToSmiles(*outm1) == "C[N+](C)(C)CC(O)CO");
+    auto m2 = "C[B-](C)(C)CC([NH3+])C[NH3+]"_smiles;
+    REQUIRE(m2);
+    std::unique_ptr<ROMol> outm2(uncharger.uncharge(*m2));
+    REQUIRE(outm2);
+    CHECK(MolToSmiles(*outm2) == "C[B-](C)(C)CC(N)CN");
   }
   SECTION("force=true doesn't alter nitro groups") {
     auto m = "CCC[N+](=O)[O-]"_smiles;

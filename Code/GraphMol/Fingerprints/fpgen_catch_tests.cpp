@@ -337,3 +337,46 @@ TEST_CASE("multithreaded fp generation") {
 #endif
   }
 }
+
+TEST_CASE("countBounds edge cases") {
+  auto mol = "CC"_smiles;
+  REQUIRE(mol);
+  SECTION("just zeros") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    REQUIRE(fpGenerator);
+    fpGenerator->getOptions()->df_countSimulation = true;
+    fpGenerator->getOptions()->d_countBounds = {0, 0, 0, 0};
+    std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(*mol));
+    REQUIRE(fp);
+    CHECK(fp->getNumBits() == 2048);
+  }
+  SECTION("empty bounds") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    REQUIRE(fpGenerator);
+    fpGenerator->getOptions()->df_countSimulation = true;
+    fpGenerator->getOptions()->d_countBounds.clear();
+    REQUIRE_THROWS_AS(fpGenerator->getFingerprint(*mol), ValueErrorException);
+  }
+  SECTION("really big") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    REQUIRE(fpGenerator);
+    fpGenerator->getOptions()->df_countSimulation = true;
+    fpGenerator->getOptions()->d_countBounds =
+        std::vector<unsigned int>((1 << 11) + 1, 0);
+    REQUIRE_THROWS_AS(fpGenerator->getFingerprint(*mol), ValueErrorException);
+  }
+  SECTION("edge case") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    REQUIRE(fpGenerator);
+    fpGenerator->getOptions()->df_countSimulation = true;
+    fpGenerator->getOptions()->d_countBounds =
+        std::vector<unsigned int>(2047, 0);
+    std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(*mol));
+    REQUIRE(fp);
+    CHECK(fp->getNumBits() == 2048);
+  }
+}

@@ -5074,6 +5074,37 @@ M  END
     Chirality::reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
   }
+  SECTION("Reapply the original wedging, regardless the bond type of wedged bonds") {
+    auto m = R"CTAB(
+  Mrv2311 04232413302D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 S -11.583 11.3533 0 0
+M  V30 2 C -12.9167 10.5833 0 0
+M  V30 3 O -11.583 12.8933 0 0
+M  V30 4 C -10.2493 10.5833 0 0
+M  V30 5 C -10.2493 9.0433 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 4 5
+M  V30 2 1 2 1
+M  V30 3 1 1 4
+M  V30 4 2 1 3 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
+    Chirality::reapplyMolBlockWedging(*m);
+    CHECK(m->getBondWithIdx(3)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+    Chirality::reapplyMolBlockWedging(*m, false);
+    CHECK(m->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
+  }
   SECTION("GitHub5448") {
     {
       auto m = R"CTAB(
