@@ -858,7 +858,6 @@ TEST_CASE("atropisomers", "[basic]") {
         "ZM374979_atrop2.sdf"};
 
     for (auto file : files) {
-      std::cout << "File: " << file << std::endl;
       auto fName =
           rdbase + "/Code/GraphMol/FileParsers/test_data/atropisomers/" + file;
 

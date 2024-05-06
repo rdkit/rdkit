@@ -124,7 +124,7 @@ Bond::BondDir getBondDirForAtropisomerNoConf(Bond::BondStereo bondStereo,
   //               /   \     aaa
   //              e      f
   //
-  // where  c < d
+  // where  c > d
   //        a < b
   //        e < f
 
@@ -333,7 +333,7 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
   //               /   \     aaa
   //              e      f
   //
-  // where  c < d
+  // where  c > d
   //        a < b
   //        e < f
 

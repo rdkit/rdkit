@@ -2064,8 +2064,7 @@ std::string get_bond_config_block(
             Atropisomers::AtropAtomAndBondVec atomAndBondVecs[2];
             if (!Atropisomers::getAtropisomerAtomsAndBonds(
                     bondNbr, atomAndBondVecs, mol)) {
-              throw RDKit::SmilesParseException(
-                  "Internal error - should not occur");
+              throw ValueErrorException("Internal error - should not occur");
               // should not happend
             } else {
               unsigned int swaps = 0;
