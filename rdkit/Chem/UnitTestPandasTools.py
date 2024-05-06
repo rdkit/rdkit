@@ -10,6 +10,7 @@ import numpy
 
 from rdkit import Chem, RDConfig, rdBase
 from rdkit.Chem import PandasTools
+from rdkit.Chem.Draw import rdMolDraw2D
 
 try:
   import IPython
@@ -48,6 +49,7 @@ class TestPandasTools(unittest.TestCase):
     PandasTools.highlightSubstructures = self._highlightSubstructures
     PandasTools.UninstallPandasTools()
 
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Cairo not available')
   def test_RestoreMonkeyPatch(self):
     sio = getStreamIO(methane + peroxide)
     df = PandasTools.LoadSDF(sio)
@@ -72,6 +74,7 @@ class TestPandasTools(unittest.TestCase):
     self.assertIn('rdkit.Chem.rdchem.Mol', html)
     self.assertIn('table', html)
 
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Cairo not available')
   def test_FrameToGridImage(self):
     # This test only makes sure that we get no exception. To see the created images, set
     # interactive to True
@@ -121,8 +124,9 @@ class TestPandasTools(unittest.TestCase):
   @unittest.skipIf(IPython is None, 'Package IPython required for testing')
   def test_svgRendering(self):
     df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))
-    self.assertIn('image/png', df.to_html())
-    self.assertNotIn('svg', df.to_html())
+    if hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+      self.assertIn('image/png', df.to_html())
+      self.assertNotIn('svg', df.to_html())
 
     PandasTools.molRepresentation = 'svg'
     self.assertIn('svg', df.to_html())
@@ -130,8 +134,9 @@ class TestPandasTools(unittest.TestCase):
 
     # we can use upper case for the molRepresentation
     PandasTools.molRepresentation = 'PNG'
-    self.assertNotIn('svg', df.to_html())
-    self.assertIn('image/png', df.to_html())
+    if hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+      self.assertNotIn('svg', df.to_html())
+      self.assertIn('image/png', df.to_html())
 
   def test_patchHeadFrame(self):
     df = self.df.copy()
@@ -205,6 +210,7 @@ class TestPandasTools(unittest.TestCase):
     self.assertEqual([Chem.MolToSmiles(x) for x in df.R2],
                      ['F[*:2]', 'Cl[*:2]', 'O[*:2]', 'F[*:2]', 'F[*:2]'])
 
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Cairo not available')
   def testPandasShouldShowMoleculesWhenTruncating(self):
     csv_data = '''"Molecule ChEMBL ID";"Molecule Name";"Molecule Max Phase";"Molecular Weight";"#RO5 Violations";"AlogP";"Compound Key";"Smiles";"Standard Type";"Standard Relation";"Standard Value";"Standard Units";"pChEMBL Value";"Data Validity Comment";"Comment";"Uo Units";"Ligand Efficiency BEI";"Ligand Efficiency LE";"Ligand Efficiency LLE";"Ligand Efficiency SEI";"Potential Duplicate";"Assay ChEMBL ID";"Assay Description";"Assay Type";"BAO Format ID";"BAO Label";"Assay Organism";"Assay Tissue ChEMBL ID";"Assay Tissue Name";"Assay Cell Type";"Assay Subcellular Fraction";"Target ChEMBL ID";"Target Name";"Target Organism";"Target Type";"Document ChEMBL ID";"Source ID";"Source Description";"Document Journal";"Document Year";"Cell ChEMBL ID"
   "CHEMBL543779";"";"0";"341.86";"0";"2.60";"1w";"CCN(CC)CCS/C(=N\O)C(=O)c1ccc(C#N)cc1.Cl";"IC50";"'='";"180000.0";"nM";"";"Outside typical range";"";"UO_0000065";"";"";"";"";"False";"CHEMBL644102";"Reversible inhibition of Human AchE";"B";"BAO_0000357";"single protein format";"None";"None";"None";"None";"None";"CHEMBL220";"Acetylcholinesterase";"Homo sapiens";"SINGLE PROTEIN";"CHEMBL1123431";"1";"Scientific Literature";"J. Med. Chem.";"1986";"None"
