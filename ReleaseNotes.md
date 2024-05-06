@@ -11,7 +11,7 @@ GitHub)
 
 ## Backwards incompatible changes
 - The SMARTS for the unbranched alkanes in the fragment descriptors has been corrected. This descriptor will now frequently return different results.
-
+- The SimilarityMap functions GetSimilarityMapFromWeights(), GetSimilarityMapForFingerprint(), and GetSimilarityMapForModel() all now require an rdMolDraw2D drawing object to be passed in.
 
 ## New Features and Enhancements:
 
@@ -20,6 +20,7 @@ GitHub)
 ## Cleanup work:
  
 ## Code removed in this release:
+- The legacy Python code for drawing molecules was removed in this release. This includes the following modules in rdkit.Chem.Draw: aggCanvas, cairoCanvas, canvasbase, MolDrawing, mplCanvas, qtCanvas, spingCanvas; the functions Draw.MolToImageFile(), Draw.MolToMPL(), and Draw.MolToQPixmap(); the "canvas" argument to the function Draw.MolToImage(); and calling Draw.MolToFile() with imageTypes other than PNG or SVG, 
 
 ## Deprecated code (to be removed in a future release):
 
@@ -55,6 +56,7 @@ MarioAndWario, levineds-meta
 - The validation classes in MolStandardize were refactored in order to offer a simpler and more consistent API. In the C++ implementation, the `MolVSValidations` base class was removed and consolidated into `ValidationMethod`. Consequently, the `validate` method replaced `run` in the subclasses related to MolVS (namely `NoAtomValidation`, `FragmentValidation`, `NeutralValidation`, and `IsotopeValidation`) and all subclasses of `ValidationMethod` are now required to implement a `copy` method. Moreover, `MolStandardize::ValidationErrorInfo` was redefined as an alias for `std::string`. The changes related to the MolVS validation methods were similarly implemented in the Python API.
 - Metal atoms (really any atom which has a default valence of -1) now have their radical electron count set to zero if they form any bonds. Metal atoms/ions without bonds will continue to be assigned a radical count of either 1 or 0 if they do/do not have an odd number of valence electrons. It is not possible in a cheminformatics system to generally answer what the spin state of a metal atom should be, so we are taking a simple and easily explainable approach. If you know the spin state of your species, you can directly provide that information by calling SetNumRadicalElectrons().
 - Chirality will now be perceived for three-coordinate atoms with a T-shaped coordination environment and the wedge in the stem of the T. If we are perceiving tetrahedral stereo, it's possible to interpret this unambiguously.
+- The CFFI MinimalLib function get_qmol() returns NULL rather than the "Error!" const char[] string for consistency with get_mol() and get_rxn().
 - Bug fixes in the v2 tautomer hash algorithm will change the output for some molecules. Look at PR #7200 for more details: https://github.com/rdkit/rdkit/pull/7200
 - RMS pruning during conformer generation now symmetrizes conjugated terminal groups by default. This can be disabled with the parameter "symmetrizeConjugatedTerminalGroupsForPruning"
 

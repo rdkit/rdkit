@@ -411,33 +411,6 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   }
 };
 
-//! Deprecated, will be removed in 2024.09 release
-class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
- public:
-  explicit PDBMolSupplier(std::istream *inStream, bool takeOwnership = true,
-                          bool sanitize = true, bool removeHs = true,
-                          unsigned int flavor = 0,
-                          bool proximityBonding = true) {
-    v2::FileParsers::PDBParserParams params;
-    params.sanitize = sanitize;
-    params.removeHs = removeHs;
-    params.flavor = flavor;
-    params.proximityBonding = proximityBonding;
-    dp_supplier.reset(
-        new v2::FileParsers::PDBMolSupplier(inStream, takeOwnership, params));
-  }
-  explicit PDBMolSupplier(const std::string &fname, bool sanitize = true,
-                          bool removeHs = true, unsigned int flavor = 0,
-                          bool proximityBonding = true) {
-    v2::FileParsers::PDBParserParams params;
-    params.sanitize = sanitize;
-    params.removeHs = removeHs;
-    params.flavor = flavor;
-    params.proximityBonding = proximityBonding;
-    dp_supplier.reset(new v2::FileParsers::PDBMolSupplier(fname, params));
-  }
-};
-
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 //! lazy file parser for MAE files
 class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
