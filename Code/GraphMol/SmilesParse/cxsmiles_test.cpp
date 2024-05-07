@@ -792,7 +792,8 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
           MolToCXSmiles(*smilesMol, ps, flags, RestoreBondDirOptionClear);
 
       generateNewExpectedFilesIfSoSpecified(fName + ".NEW3.cxsmi", smilesOut);
-      CHECK(getExpectedValue(expectedFileName) == smilesOut);
+      auto expected = getExpectedValue(expectedFileName);
+      CHECK(expected == smilesOut);
     }
 
     smilesMol =
@@ -827,7 +828,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
       } catch (const RDKit::KekulizeException &e) {
         outMolStr = "";
       } catch (...) {
-        throw;  // re-trhow the error if not a kekule error
+        throw;  // re-throw the error if not a kekule error
       }
       if (outMolStr == "") {
         RDKit::Chirality::reapplyMolBlockWedging(*smilesMol);
@@ -1024,6 +1025,7 @@ void testOne3dChiral(const SmilesTest *smilesTest) {
 TEST_CASE("testAtropisomersInCXSmiles") {
   {
     std::list<SmilesTest> smiTests{
+        SmilesTest("ShortAtropisomerNoCoords.cxsmi", true, 14, 15),
         SmilesTest("ShortAtropisomer.cxsmi", true, 14, 15),
         SmilesTest("ShortAtropisomerArom.cxsmi", true, 14, 15),
         SmilesTest("AtropManyChirals.cxsmi", true, 20, 20),
@@ -1345,15 +1347,11 @@ TEST_CASE("SMILES CANONICALIZATION") {
       }
       molCount++;
 
-      try {
-        if (molBlock.length() > 25) {
-          std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock));
-          std::string smiles = MolToCXSmiles(*mol);
+      if (molBlock.length() > 25) {
+        std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock));
+        std::string smiles = MolToCXSmiles(*mol);
 
-          testSmilesCanonicalization(smiles);
-        }
-      } catch (...) {
-        std::cout << "failed on mol " << molCount << std::endl;
+        testSmilesCanonicalization(smiles);
       }
     }
   }

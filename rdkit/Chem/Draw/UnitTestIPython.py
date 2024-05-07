@@ -37,9 +37,10 @@ class TestCase(unittest.TestCase):
   def testGithub1089(self):
     m = Chem.MolFromSmiles('CCCC')
 
-    IPythonConsole.ipython_useSVG = False
-    res = Draw.MolsToGridImage((m, m))
-    self.assertFalse(isinstance(res, SVG))
+    if hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+      IPythonConsole.ipython_useSVG = False
+      res = Draw.MolsToGridImage((m, m))
+      self.assertFalse(isinstance(res, SVG))
 
     res = Draw.MolsToGridImage((m, m), useSVG=True)
     self.assertTrue(isinstance(res, SVG))
@@ -124,7 +125,7 @@ class TestCase(unittest.TestCase):
                   for row in repeats]
 
     legendsMatrix = [[str(count) + " unit(s)" for count in row] for row in repeats]
-    d = Draw.MolsMatrixToGridImage(molsMatrix, legendsMatrix=legendsMatrix)
+    d = Draw.MolsMatrixToGridImage(molsMatrix, useSVG=True, legendsMatrix=legendsMatrix)
     self.assertIsNotNone(d)
 
 

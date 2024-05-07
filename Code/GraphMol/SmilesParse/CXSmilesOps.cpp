@@ -1097,7 +1097,9 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
         if (atom->getIdx() != bond->getEndAtomIdx()) {
           BOOST_LOG(rdWarningLog)
               << "atom " << atomIdx << " is not associated with bond "
-              << bondIdx << " in w block" << std::endl;
+              << bondIdx << "(" << bond->getBeginAtomIdx() + startAtomIdx << "-"
+              << bond->getEndAtomIdx() + startAtomIdx << ")"
+              << " in w block" << std::endl;
           return false;
         }
         auto eidx = bond->getBeginAtomIdx();
@@ -2038,23 +2040,96 @@ std::string get_bond_config_block(
         bd = Bond::BondDir::NONE;
     }
 
-    if (atropisomerOnly) {
-      // on of the bonds on the beging atom of this bond must be an atropisomer
+    if (atropisomerOnly && bd == Bond::BondDir::NONE) {
+      continue;
+    }
 
-      if (bd == Bond::BondDir::NONE) {
-        continue;
-      }
-      bool foundAtropisomer = false;
+    // see if this one is an atropisomer
 
-      const Atom *firstAtom = bond->getBeginAtom();
+    bool isAnAtropisomer = false;
+
+    const Atom *firstAtom = bond->getBeginAtom();
+    if (bd == Bond::BondDir::BEGINDASH || bd == Bond::BondDir::BEGINWEDGE) {
       for (auto bondNbr : mol.atomBonds(firstAtom)) {
+        if (bondNbr->getIdx() == bond->getIdx()) {
+          continue;  // a bond is not its own neighbor
+        }
         if (bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCW ||
             bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
-          foundAtropisomer = true;
+          isAnAtropisomer = true;
+
+          // if it is for an atropisomer and there are no coords, check to see
+          // if the wedge needs to be flipped based on the smiles reordering
+          if (!coordsIncluded && isAnAtropisomer) {
+            Atropisomers::AtropAtomAndBondVec atomAndBondVecs[2];
+            if (!Atropisomers::getAtropisomerAtomsAndBonds(
+                    bondNbr, atomAndBondVecs, mol)) {
+              throw ValueErrorException("Internal error - should not occur");
+              // should not happend
+            } else {
+              unsigned int swaps = 0;
+
+              unsigned int firstReorderedIdx =
+                  std::find(atomOrder.begin(), atomOrder.end(),
+                            bondNbr->getBeginAtom()->getIdx()) -
+                  atomOrder.begin();
+              unsigned int secondReorderedIdx =
+                  std::find(atomOrder.begin(), atomOrder.end(),
+                            bondNbr->getEndAtom()->getIdx()) -
+                  atomOrder.begin();
+              if (firstReorderedIdx > secondReorderedIdx) {
+                ++swaps;
+              }
+
+              for (unsigned int bondAtomIndex = 0; bondAtomIndex < 2;
+                   ++bondAtomIndex) {
+                if (atomAndBondVecs[bondAtomIndex].first == firstAtom)
+                  continue;  // swapped atoms on the side where the wedge bond
+                             // is does NOT change the wedge bond
+                if (atomAndBondVecs[bondAtomIndex].second.size() == 2) {
+                  unsigned int firstOtherAtomIdx =
+                      atomAndBondVecs[bondAtomIndex]
+                          .second[0]
+                          ->getOtherAtom(atomAndBondVecs[bondAtomIndex].first)
+                          ->getIdx();
+                  unsigned int secondOtherAtomIdx =
+                      atomAndBondVecs[bondAtomIndex]
+                          .second[1]
+                          ->getOtherAtom(atomAndBondVecs[bondAtomIndex].first)
+                          ->getIdx();
+
+                  unsigned int firstReorderedAtomIdx =
+                      std::find(atomOrder.begin(), atomOrder.end(),
+                                firstOtherAtomIdx) -
+                      atomOrder.begin();
+                  unsigned int secondReorderedAtomIdx =
+                      std::find(atomOrder.begin(), atomOrder.end(),
+                                secondOtherAtomIdx) -
+                      atomOrder.begin();
+
+                  if (firstReorderedAtomIdx > secondReorderedAtomIdx) {
+                    ++swaps;
+                  }
+                }
+              }
+              if (swaps % 2) {
+                bd = (bd == Bond::BondDir::BEGINWEDGE)
+                         ? Bond::BondDir::BEGINDASH
+                         : Bond::BondDir::BEGINWEDGE;
+              }
+            }
+          }
+
           break;
         }
       }
-      if (!foundAtropisomer) {
+    }
+
+    if (atropisomerOnly) {
+      // one of the bonds on the beginning atom of this bond must be an
+      // atropisomer
+
+      if (!isAnAtropisomer) {
         continue;
       }
     } else {  //  atropisomeronly is FALSE - check for a wedging caused by
@@ -2109,8 +2184,9 @@ std::string get_bond_config_block(
     std::string wType = "";
     if (bd == Bond::BondDir::UNKNOWN) {
       wType = "w";
-    } else if (coordsIncluded) {
+    } else if (coordsIncluded || isAnAtropisomer) {
       // we only do wedgeUp and wedgeDown if coordinates are being output
+      // or its an atropisomer
       if (bd == Bond::BondDir::BEGINWEDGE) {
         wType = "wU";
       } else if (bd == Bond::BondDir::BEGINDASH) {
@@ -2354,12 +2430,13 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   // do the CX_BOND_ATROPISOMER only if CX_BOND_CFG s not done.  CX_BOND_CFG
   // includes the atropisomer wedging
   else if (flags & SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER) {
-    if (conf) {
-      Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeBonds);
-    }
-
     bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&
                          mol.getNumConformers();
+    if (includeCoords) {
+      Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeBonds);
+    } else {
+      Atropisomers::wedgeBondsFromAtropisomers(mol, nullptr, wedgeBonds);
+    }
     const auto cfgblock = get_bond_config_block(
         mol, atomOrder, bondOrder, includeCoords, wedgeBonds, true);
     appendToCXExtension(cfgblock, res);
