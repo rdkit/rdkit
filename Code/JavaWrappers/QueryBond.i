@@ -35,6 +35,7 @@
 #include <GraphMol/QueryBond.h>
 %}
 
-
+%ignore RDKit::QueryBond::expandQuery;
+%ignore RDKit::QueryBond::setQuery;
 
 %include <GraphMol/QueryBond.h>

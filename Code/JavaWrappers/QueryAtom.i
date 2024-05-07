@@ -36,5 +36,6 @@
 %}
 
 %ignore RDKit::QueryAtom::expandQuery;
+%ignore RDKit::QueryAtom::setQuery;
 
 %include <GraphMol/QueryAtom.h>
