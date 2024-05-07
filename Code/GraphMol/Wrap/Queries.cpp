@@ -144,6 +144,12 @@ Ret *PropQueryWithTol(const std::string &propname, const ExplicitBitVect &v,
   return res;
 }
 
+namespace {
+Atom *replaceAtomWithQueryAtomHelper(ROMol &mol, Atom &atom) {
+  return QueryOps::replaceAtomWithQueryAtom(static_cast<RWMol *>(&mol), &atom);
+}
+}  // namespace
+
 struct queries_wrapper {
   static void wrap() {
 #define QADEF1(_funcname_)                                                     \
@@ -210,13 +216,13 @@ struct queries_wrapper {
 
     python::def("HasPropQueryAtom", HasPropQueryAtom,
                 (python::arg("propname"), python::arg("negate") = false),
-                "Returns a QueryAtom that matches when the propery 'propname' "
+                "Returns a QueryAtom that matches when the property 'propname' "
                 "exists in the atom.",
                 python::return_value_policy<python::manage_new_object>());
 
     python::def("HasPropQueryBond", HasPropQueryBond,
                 (python::arg("propname"), python::arg("negate") = false),
-                "Returns a QueryBond that matches when the propery 'propname' "
+                "Returns a QueryBond that matches when the property 'propname' "
                 "exists in the bond.",
                 python::return_value_policy<python::manage_new_object>());
 
@@ -224,7 +230,7 @@ struct queries_wrapper {
                 PropQueryWithTol<Atom, QueryAtom, int>,
                 (python::arg("propname"), python::arg("val"),
                  python::arg("negate") = false, python::arg("tolerance") = 0),
-                "Returns a QueryAtom that matches when the propery 'propname' "
+                "Returns a QueryAtom that matches when the property 'propname' "
                 "has the specified int value.",
                 python::return_value_policy<python::manage_new_object>());
 
@@ -232,7 +238,7 @@ struct queries_wrapper {
                 PropQuery<Atom, QueryAtom, bool>,
                 (python::arg("propname"), python::arg("val"),
                  python::arg("negate") = false),
-                "Returns a QueryAtom that matches when the propery 'propname' "
+                "Returns a QueryAtom that matches when the property 'propname' "
                 "has the specified boolean"
                 " value.",
                 python::return_value_policy<python::manage_new_object>());
@@ -241,7 +247,7 @@ struct queries_wrapper {
                 PropQuery<Atom, QueryAtom, std::string>,
                 (python::arg("propname"), python::arg("val"),
                  python::arg("negate") = false),
-                "Returns a QueryAtom that matches when the propery 'propname' "
+                "Returns a QueryAtom that matches when the property 'propname' "
                 "has the specified string "
                 "value.",
                 python::return_value_policy<python::manage_new_object>());
@@ -250,7 +256,7 @@ struct queries_wrapper {
                 PropQueryWithTol<Atom, QueryAtom, double>,
                 (python::arg("propname"), python::arg("val"),
                  python::arg("negate") = false, python::arg("tolerance") = 0.0),
-                "Returns a QueryAtom that matches when the propery 'propname' "
+                "Returns a QueryAtom that matches when the property 'propname' "
                 "has the specified "
                 "value +- tolerance",
                 python::return_value_policy<python::manage_new_object>());
@@ -259,7 +265,7 @@ struct queries_wrapper {
                 PropQueryWithTol<Atom, QueryAtom>,
                 (python::arg("propname"), python::arg("val"),
                  python::arg("negate") = false, python::arg("tolerance") = 0),
-                "Returns a QueryAtom that matches when the propery 'propname' "
+                "Returns a QueryAtom that matches when the property 'propname' "
                 "has the specified explicit bit vector"
                 " value.  The Tolerance is the allowed Tanimoto difference",
                 python::return_value_policy<python::manage_new_object>());
@@ -268,13 +274,13 @@ struct queries_wrapper {
     //  Bond Queries
     python::def("HasPropQueryBond", HasPropQueryBond,
                 (python::arg("propname"), python::arg("negate") = false),
-                "Returns a QueryBond that matches when the propery 'propname' "
+                "Returns a QueryBond that matches when the property 'propname' "
                 "exists in the bond.",
                 python::return_value_policy<python::manage_new_object>());
 
     python::def("HasPropQueryBond", HasPropQueryBond,
                 (python::arg("propname"), python::arg("negate") = false),
-                "Returns a QueryBond that matches when the propery 'propname' "
+                "Returns a QueryBond that matches when the property 'propname' "
                 "exists in the bond.",
                 python::return_value_policy<python::manage_new_object>());
 
@@ -282,7 +288,7 @@ struct queries_wrapper {
                 PropQueryWithTol<Bond, QueryBond, int>,
                 (python::arg("propname"), python::arg("val"),
                  python::arg("negate") = false, python::arg("tolerance") = 0),
-                "Returns a QueryBond that matches when the propery 'propname' "
+                "Returns a QueryBond that matches when the property 'propname' "
                 "has the specified int value.",
                 python::return_value_policy<python::manage_new_object>());
 
@@ -290,7 +296,7 @@ struct queries_wrapper {
                 PropQuery<Bond, QueryBond, bool>,
                 (python::arg("propname"), python::arg("val"),
                  python::arg("negate") = false),
-                "Returns a QueryBond that matches when the propery 'propname' "
+                "Returns a QueryBond that matches when the property 'propname' "
                 "has the specified boolean"
                 " value.",
                 python::return_value_policy<python::manage_new_object>());
@@ -299,7 +305,7 @@ struct queries_wrapper {
                 PropQuery<Bond, QueryBond, std::string>,
                 (python::arg("propname"), python::arg("val"),
                  python::arg("negate") = false),
-                "Returns a QueryBond that matches when the propery 'propname' "
+                "Returns a QueryBond that matches when the property 'propname' "
                 "has the specified string "
                 "value.",
                 python::return_value_policy<python::manage_new_object>());
@@ -308,10 +314,20 @@ struct queries_wrapper {
                 PropQueryWithTol<Bond, QueryBond, double>,
                 (python::arg("propname"), python::arg("val"),
                  python::arg("negate") = false, python::arg("tolerance") = 0.0),
-                "Returns a QueryBond that matches when the propery 'propname' "
+                "Returns a QueryBond that matches when the property 'propname' "
                 "has the specified "
                 "value +- tolerance",
                 python::return_value_policy<python::manage_new_object>());
+
+    std::string docString = R"DOC(Changes the given atom in the molecule to
+a query atom and returns the atom which can then be modified, for example
+with additional query constraints added.  The new atom is otherwise a copy
+of the old.
+If the atom already has a query, nothing will be changed.)DOC";
+    python::def(
+        "ReplaceAtomWithQueryAtom", replaceAtomWithQueryAtomHelper,
+        (python::arg("mol"), python::arg("atom")), docString.c_str(),
+        python::return_value_policy<python::reference_existing_object>());
   };
 };
 }  // namespace RDKit
