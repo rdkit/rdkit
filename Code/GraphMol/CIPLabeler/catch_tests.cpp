@@ -931,18 +931,9 @@ TEST_CASE("atropisomers", "[basic]") {
         if (a1match > a2match) {
           std::swap(a1match, a2match);
         }
-        if (CIPVals[std::make_pair(a1match, a2match)] !=
-            newCIPVals[std::make_pair(a1, a2)]) {
-          std::cout << "Bond " << thisBond->getBeginAtomIdx() << " - "
-                    << thisBond->getEndAtomIdx() << " has changed from "
-                    << CIPVals[std::make_pair(a1match, a2match)] << " to "
-                    << newCIPVals[std::make_pair(a1, a2)] << std::endl;
-        }
         CHECK(CIPVals[std::make_pair(a1match, a2match)] ==
               newCIPVals[std::make_pair(a1, a2)]);
       }
-
-      std::cout << "Done" << std::endl;
     }
   }
 }

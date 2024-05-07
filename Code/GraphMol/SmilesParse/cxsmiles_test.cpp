@@ -827,7 +827,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
       } catch (const RDKit::KekulizeException &e) {
         outMolStr = "";
       } catch (...) {
-        throw;  // re-trhow the error if not a kekule error
+        throw;  // re-throw the error if not a kekule error
       }
       if (outMolStr == "") {
         RDKit::Chirality::reapplyMolBlockWedging(*smilesMol);
@@ -1346,15 +1346,11 @@ TEST_CASE("SMILES CANONICALIZATION") {
       }
       molCount++;
 
-      try {
-        if (molBlock.length() > 25) {
-          std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock));
-          std::string smiles = MolToCXSmiles(*mol);
+      if (molBlock.length() > 25) {
+        std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock));
+        std::string smiles = MolToCXSmiles(*mol);
 
-          testSmilesCanonicalization(smiles);
-        }
-      } catch (...) {
-        std::cout << "failed on mol " << molCount << std::endl;
+        testSmilesCanonicalization(smiles);
       }
     }
   }
