@@ -11,7 +11,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <string_view>
+// #include <string_view>
 #include <streambuf>
 
 #include "RDGeneral/test.h"
@@ -1618,7 +1618,6 @@ H      0.635000    0.635000    0.635000
     mol->addConformer(conf);
 
     const std::string xyzblock = MolToXYZBlock(*mol, 0, 15);
-    std::cout << xyzblock << std::endl;
     std::string xyzblock_expected = R"XYZ(7
 CHEMBL506259
 O      0.402012650000000   -0.132994360000000    1.000000170000000
@@ -5074,7 +5073,8 @@ M  END
     Chirality::reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
   }
-  SECTION("Reapply the original wedging, regardless the bond type of wedged bonds") {
+  SECTION(
+      "Reapply the original wedging, regardless the bond type of wedged bonds") {
     auto m = R"CTAB(
   Mrv2311 04232413302D          
 
@@ -6041,10 +6041,10 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     auto bondBlockStart = mae.find("m_bond[6]");
     REQUIRE(bondBlockStart != std::string::npos);
 
-    std::string_view ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
-    std::string_view atomBlock(&mae[atomBlockStart],
-                               bondBlockStart - atomBlockStart);
-    std::string_view bondBlock(&mae[bondBlockStart]);
+    std::string ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
+    std::string atomBlock(&mae[atomBlockStart],
+                          bondBlockStart - atomBlockStart);
+    std::string bondBlock(&mae[bondBlockStart]);
 
     // Check mol properties
     CHECK(ctBlock.find("s_m_title") != std::string::npos);
@@ -6173,10 +6173,10 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     auto bondBlockStart = mae.find("m_bond[6]");
     REQUIRE(bondBlockStart != std::string::npos);
 
-    std::string_view ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
-    std::string_view atomBlock(&mae[atomBlockStart],
-                               bondBlockStart - atomBlockStart);
-    std::string_view bondBlock(&mae[bondBlockStart]);
+    std::string ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
+    std::string atomBlock(&mae[atomBlockStart],
+                          bondBlockStart - atomBlockStart);
+    std::string bondBlock(&mae[bondBlockStart]);
 
     // Check mol properties
     CHECK(ctBlock.find("s_m_title") != std::string::npos);
@@ -6258,7 +6258,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     // Maeparser does not parse bond properties, so don't check them.
   }
   SECTION("Check reverse roundtrip") {
-    constexpr std::string_view maeBlock = R"MAE(f_m_ct {
+    std::string maeBlock = R"MAE(f_m_ct {
   s_m_title
   :::
   ""
@@ -6348,7 +6348,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     auto ctBlockStart = mae.find("f_m_ct");
     REQUIRE(ctBlockStart != std::string::npos);
 
-    std::string_view ctBlock(&mae[ctBlockStart]);
+    std::string ctBlock(&mae[ctBlockStart]);
 
     CHECK(ctBlock == MaeWriter::getText(*mol));
   }
@@ -6616,8 +6616,8 @@ TEST_CASE(
     auto bondBlockStart = mae.find("m_bond[2]");
     REQUIRE(bondBlockStart != std::string::npos);
 
-    const std::string_view atomBlock(&mae[atomBlockStart],
-                                     bondBlockStart - atomBlockStart);
+    const std::string atomBlock(&mae[atomBlockStart],
+                                bondBlockStart - atomBlockStart);
 
     CHECK(atomBlock.find(" -2 ") != std::string::npos);
   }
