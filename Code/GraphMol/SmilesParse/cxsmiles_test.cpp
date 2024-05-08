@@ -708,6 +708,8 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
   inputSmiles = inputSmilesStr.str();
 
   try {
+    INFO(fName);
+
     SmilesParserParams smilesParserParams;
     smilesParserParams.sanitize = true;
     smilesParserParams.removeHs = false;
@@ -809,7 +811,6 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
         outMolStr = MolToMolBlock(*smilesMol, true, 0, false,
                                   true);  // try without kekule'ing
       }
-
       generateNewExpectedFilesIfSoSpecified(fName + ".NEW.sdf", outMolStr);
       CHECK(getExpectedValue(expectedFileName) == outMolStr);
     }
