@@ -199,7 +199,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
   */
   const MMFFProp *operator()(const unsigned int atomType) const {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int, MMFFProp>::const_iterator res =
+    const auto res =
         d_params.find(atomType);
 
     return ((res != d_params.end()) ? &((*res).second) : NULL);
