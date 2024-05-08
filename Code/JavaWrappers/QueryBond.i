@@ -39,3 +39,11 @@
 %ignore RDKit::QueryBond::setQuery;
 
 %include <GraphMol/QueryBond.h>
+
+%extend RDKit::QueryBond {
+	bool MatchBond(RDKit::Bond const *what) {
+		return ($self)->Match(what);
+	}
+}
+
+

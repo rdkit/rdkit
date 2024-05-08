@@ -39,3 +39,10 @@
 %ignore RDKit::QueryAtom::setQuery;
 
 %include <GraphMol/QueryAtom.h>
+
+%extend RDKit::QueryAtom {
+	bool MatchAtom(RDKit::Atom const *what) {
+		return ($self)->Match(what);
+	}
+}
+
