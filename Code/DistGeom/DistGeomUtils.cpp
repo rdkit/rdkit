@@ -246,12 +246,15 @@ ForceFields::ForceField *construct3DForceField(
                       etkdgDetails.expTorsionAngles.size(),
                   "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
-  for (unsigned int i = 0; i < N; ++i) {
-    field->positions().push_back(positions[i]);
+  for (auto position : positions) {
+    field->positions().push_back(position);
   }
 
   // keep track which atoms are 1,2- or 1,3-restrained
   boost::dynamic_bitset<> atomPairs(N * N);
+
+  // dont restrain these in K, since they will break the algorithm
+  boost::dynamic_bitset<> dont13Constrain(N);
 
   // torsion constraints
   for (unsigned int t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
@@ -301,6 +304,7 @@ ForceFields::ForceField *construct3DForceField(
           improperAtom[n[3]], improperAtom[4],
           static_cast<bool>(improperAtom[5]), oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      dont13Constrain[improperAtom[n[1]]] = 1;
     }
   }
 
@@ -338,7 +342,7 @@ ForceFields::ForceField *construct3DForceField(
       auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
           field, i, j, k, 179.0, 180.0, fdist);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
-    } else {
+    } else if (!dont13Constrain.test(j)) {
       double d = ((*positions[i]) - (*positions[k])).length();
       double l = d - 0.01;
       double u = d + 0.01;
@@ -484,12 +488,12 @@ ForceFields::ForceField *construct3DImproperForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const std::vector<std::vector<int>> &improperAtoms,
     const std::vector<int> &atomNums) {
-  (void)atomNums;
+  RDUNUSED_PARAM(atomNums);
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
-  for (unsigned int i = 0; i < N; ++i) {
-    field->positions().push_back(positions[i]);
+  for (auto position : positions) {
+    field->positions().push_back(position);
   }
 
   // improper torsions / out-of-plane bend / inversion
