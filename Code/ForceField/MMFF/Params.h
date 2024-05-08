@@ -172,8 +172,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDefCollection {
   */
   const MMFFDef *operator()(const unsigned int atomType) const {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int, MMFFDef>::const_iterator res =
-        d_params.find(atomType);
+    const auto res = d_params.find(atomType);
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
     return ((atomType && (atomType <= d_params.size()))
@@ -199,16 +198,12 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
   */
   const MMFFProp *operator()(const unsigned int atomType) const {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    const auto res =
-        d_params.find(atomType);
+    const auto res = d_params.find(atomType);
 
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds =
-            std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), atomType);
-
+    auto bounds =
+        std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), atomType);
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_iAtomType.begin()]
                 : nullptr);
@@ -270,9 +265,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
       sign = 1;
     }
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int,
-             std::map<const unsigned int, MMFFChg>>::const_iterator res1 =
-        d_params[bondType].find(canIAtomType);
+    const auto res1 = d_params[bondType].find(canIAtomType);
     std::map<const unsigned int, MMFFChg>::const_iterator res2;
     if (res1 != d_params[bondType].end()) {
       res2 = ((*res1).second).find(canJAtomType);
@@ -281,10 +274,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
       }
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds = std::equal_range(d_iAtomType.begin(), d_iAtomType.end(),
-                                  canIAtomType);
+    auto bounds =
+        std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), canIAtomType);
     if (bounds.first != bounds.second) {
       bounds = std::equal_range(
           d_jAtomType.begin() + (bounds.first - d_iAtomType.begin()),
@@ -354,10 +345,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
       }
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds = std::equal_range(d_iAtomType.begin(), d_iAtomType.end(),
-                                  canAtomType);
+    auto bounds =
+        std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), canAtomType);
     if (bounds.first != bounds.second) {
       bounds = std::equal_range(
           d_jAtomType.begin() + (bounds.first - d_iAtomType.begin()),
@@ -418,10 +407,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
       }
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds = std::equal_range(d_iAtomicNum.begin(), d_iAtomicNum.end(),
-                                  canAtomicNum);
+    auto bounds = std::equal_range(d_iAtomicNum.begin(), d_iAtomicNum.end(),
+                                   canAtomicNum);
     if (bounds.first != bounds.second) {
       bounds = std::equal_range(
           d_jAtomicNum.begin() + (bounds.first - d_iAtomicNum.begin()),
@@ -473,9 +460,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
       }
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds = std::equal_range(d_iRow.begin(), d_iRow.end(), canIRow);
+    auto bounds = std::equal_range(d_iRow.begin(), d_iRow.end(), canIRow);
     if (bounds.first != bounds.second) {
       bounds = std::equal_range(
           d_jRow.begin() + (bounds.first - d_iRow.begin()),
@@ -515,11 +500,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
 
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds =
-            std::equal_range(d_atomicNum.begin(), d_atomicNum.end(), atomicNum);
-
+    auto bounds =
+        std::equal_range(d_atomicNum.begin(), d_atomicNum.end(), atomicNum);
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomicNum.begin()]
                 : nullptr);
@@ -591,10 +573,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
       ++iter;
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        jBounds =
-            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
+    auto jBounds =
+        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     std::pair<std::vector<std::uint8_t>::const_iterator,
               std::vector<std::uint8_t>::const_iterator>
         bounds;
@@ -699,10 +679,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
       }
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        jBounds =
-            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
+    auto jBounds =
+        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     std::pair<std::vector<std::uint8_t>::const_iterator,
               std::vector<std::uint8_t>::const_iterator>
         bounds;
@@ -849,10 +827,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
       ++iter;
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        jBounds =
-            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
+    auto jBounds =
+        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     std::pair<std::vector<std::uint8_t>::const_iterator,
               std::vector<std::uint8_t>::const_iterator>
         bounds;
@@ -1093,11 +1069,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFVdWCollection {
         d_params.find(atomType);
     return (res != d_params.end() ? &((*res).second) : NULL);
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds =
-            std::equal_range(d_atomType.begin(), d_atomType.end(), atomType);
-
+    auto bounds =
+        std::equal_range(d_atomType.begin(), d_atomType.end(), atomType);
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomType.begin()]
                 : nullptr);
