@@ -2157,7 +2157,7 @@ std::string get_bond_config_block(
         int dirCode;
         bool reverse;
         Chirality::GetMolFileBondStereoInfo(
-            bond, wedgeBonds, &mol.getConformer(0), dirCode, reverse);
+            bond, wedgeBonds, &mol.getConformer(), dirCode, reverse);
         switch (dirCode) {
           case 1:
             bd = Bond::BondDir::BEGINWEDGE;
