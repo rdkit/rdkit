@@ -1467,3 +1467,13 @@ TEST_CASE("write attachment points") {
   m->getAtomWithIdx(5)->setProp(common_properties::_fromAttachPoint, 2);
   CHECK(MolToCXSmiles(*m) == "*N[C@@H](C)C(*)=O |$_AP1;;;;;_AP2;$|");
 }
+
+TEST_CASE("github #7414: CXSmiles writer does not use default conformer ID") {
+  SECTION("basics") {
+    auto m = "CC |(-0.75,0,;0.75,0,)|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getNumConformers() == 1);
+    m->getConformer().setId(5);
+    CHECK(MolToCXSmiles(*m) == "CC |(-0.75,0,;0.75,0,)|");
+  }
+}
