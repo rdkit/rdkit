@@ -9506,3 +9506,18 @@ M  END)CTAB"_ctab;
     outs.close();
   }
 }
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+TEST_CASE(
+    "github #7409: drawing mol with a non zero confID results in bad confID error") {
+  SECTION("basics") {
+    auto m = "CC |(-0.75,0,;0.75,0,)|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getNumConformers() == 1);
+    m->getConformer().setId(5);
+    MolDraw2DCairo drawer(350, 300);
+    // it's enough to test that this doesn't throw
+    drawer.drawMolecule(*m);
+  }
+}
+#endif
