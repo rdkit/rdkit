@@ -91,8 +91,35 @@ std::string chemicalReactionTemplatesToString(
   return res;
 }
 
+void insertTemplates(const RDKit::ChemicalReaction &rxn,
+                    RDKit::RWMol &rwmol, std::vector<unsigned int> &atomOrdering,
+                    std::vector<unsigned int> &bondOrdering, RDKit::ReactionMoleculeType type) {
+  auto at_count = rwmol.getNumAtoms();
+  auto bnd_count = rwmol.getNumBonds();
+  std::vector<unsigned int> prevAtomOrdering;
+  std::vector<unsigned int> prevBondOrdering;
+
+  for (auto begin = getStartIterator(rxn, type);
+        begin != getEndIterator(rxn, type); ++begin) {
+    rwmol.insertMol(**begin);
+
+    std::vector<unsigned int> prevAtomOrdering;
+    std::vector<unsigned int> prevBondOrdering;
+    (*begin)->getProp(RDKit::common_properties::_smilesAtomOutputOrder, prevAtomOrdering);
+    (*begin)->getProp(RDKit::common_properties::_smilesBondOutputOrder, prevBondOrdering);
+    for (auto i : prevAtomOrdering) {
+      atomOrdering.push_back(i + at_count);
+    }
+    for (auto i : prevBondOrdering) {
+      bondOrdering.push_back(i + bnd_count);
+    }
+    at_count = rwmol.getNumAtoms();
+    bnd_count = rwmol.getNumBonds();
+  }
+}
+
 std::string chemicalReactionToRxnToString(const RDKit::ChemicalReaction &rxn,
-                                          bool toSmiles, bool canonical) {
+                                          bool toSmiles, bool canonical, bool includeCX) {
   std::string res = "";
   res += chemicalReactionTemplatesToString(rxn, RDKit::Reactant, toSmiles,
                                            canonical);
@@ -102,6 +129,32 @@ std::string chemicalReactionToRxnToString(const RDKit::ChemicalReaction &rxn,
   res += ">";
   res += chemicalReactionTemplatesToString(rxn, RDKit::Product, toSmiles,
                                            canonical);
+
+  if (includeCX) {
+    // I think this will work? combine reactants, agents and products into a
+    // single molecule and get the cxextension for that
+    // blank rwmol
+    RDKit::RWMol rwmol;
+    std::vector<unsigned int> atomOrdering;
+    std::vector<unsigned int> bondOrdering;
+
+    insertTemplates(rxn, rwmol, atomOrdering, bondOrdering, RDKit::Reactant);
+    insertTemplates(rxn, rwmol, atomOrdering, bondOrdering, RDKit::Agent);
+    insertTemplates(rxn, rwmol, atomOrdering, bondOrdering, RDKit::Product);
+
+    rwmol.setProp(RDKit::common_properties::_smilesAtomOutputOrder, atomOrdering, true);
+    rwmol.setProp(RDKit::common_properties::_smilesBondOutputOrder, bondOrdering, true);
+
+    // ignore atom properties -- really this is to avoid the atom map numbers, maybe we just want to remove
+    // those
+    auto flags = RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS ^ RDKit::SmilesWrite::CXSmilesFields::CX_ALL;
+    auto ext = RDKit::SmilesWrite::getCXExtensions(rwmol, flags);
+    if (!ext.empty()) {
+      res += " ";
+      res += ext;
+    }
+  }
+
   return res;
 }
 
@@ -121,14 +174,14 @@ void write_template(std::ostringstream &res, RDKit::ROMol &tpl) {
 namespace RDKit {
 
 //! returns the reaction SMARTS for a reaction
-std::string ChemicalReactionToRxnSmarts(const ChemicalReaction &rxn) {
-  return chemicalReactionToRxnToString(rxn, false, false);
+std::string ChemicalReactionToRxnSmarts(const ChemicalReaction &rxn, bool includeCX) {
+  return chemicalReactionToRxnToString(rxn, false, false, includeCX);
 };
 
 //! returns the reaction SMILES for a reaction
 std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
                                         bool canonical) {
-  return chemicalReactionToRxnToString(rxn, true, canonical);
+  return chemicalReactionToRxnToString(rxn, true, canonical, false);
 };
 
 //! returns an RXN block for a reaction

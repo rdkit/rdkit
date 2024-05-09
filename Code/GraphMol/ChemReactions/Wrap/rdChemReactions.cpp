@@ -885,7 +885,7 @@ see the documentation for rdkit.Chem.MolFromSmiles for an explanation\n\
 of the replacements argument.",
       python::return_value_policy<python::manage_new_object>());
   python::def("ReactionToSmarts", RDKit::ChemicalReactionToRxnSmarts,
-              (python::arg("reaction")),
+              (python::arg("reaction"), python::arg("includeCX") = false),
               "construct a reaction SMARTS string for a ChemicalReaction");
   python::def("ReactionToSmiles", RDKit::ChemicalReactionToRxnSmiles,
               (python::arg("reaction"), python::arg("canonical") = true),
