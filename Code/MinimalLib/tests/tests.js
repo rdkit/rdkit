@@ -1102,6 +1102,49 @@ function test_flexicanvas() {
     assert(svg.search("height='19px'")>0);
 }
 
+function test_run_reaction() {
+    let rxn1;
+    let molList;
+    try {
+        rxn1 = RDKitModule.get_rxn('[#6:1][O:2]>>[#6:1]=[O:2]');
+        molList = molListFromSmiArray(['CC(C)O',]);
+        let products;
+        try {
+            products = rxn1.run_reactants(molList, 10000);
+            for (let i = 0; i < products.size(); i++) {
+                let element;
+                try {
+                    element = products.get(i);
+                    let mol;
+                    try {
+                        mol = element.next();
+                        assert(mol && mol.get_smiles() === "CC(C)=O");
+                    } finally {
+                        if (mol) {
+                            mol.delete();
+                        }
+                    }
+                } finally {
+                    if (element) {
+                        element.delete();
+                    }
+                }
+            }
+        } finally {
+            if (products) {
+                products.delete();
+            }
+        }
+    } finally {
+        if (rxn1) {
+            rxn1.delete();
+        }
+        if (molList) {
+            molList.delete();
+        }
+    }
+}
+
 function test_rxn_drawing() {
     {
         var rxn = RDKitModule.get_rxn("[CH3:1][OH:2]>>[CH2:1]=[OH0:2]");
@@ -2947,6 +2990,7 @@ initRDKitModule().then(function(instance) {
     test_flexicanvas();
     if (RDKitModule.get_rxn)  {
         test_rxn_drawing();
+        test_run_reaction();
     }
     test_legacy_stereochem();
     test_allow_non_tetrahedral_chirality();
