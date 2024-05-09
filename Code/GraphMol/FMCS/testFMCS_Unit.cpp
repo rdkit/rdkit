@@ -2035,7 +2035,7 @@ void testGitHub2731_comment546175466() {
       TEST_ASSERT(res.NumBonds == 14);
       TEST_ASSERT(
           res.SmartsString ==
-          "[#6;r6,!R1]1:&@[#6;r6,!R1]:&@[#6]2:&@[#6;r6,!R1]:&@[#6](:&@[#6]:&@[#6]):&@[#6](:&@[#6]):&@[#7;r6,!R1]:&@[#6]:&@2:&@[#6;r6,!R1]:&@[#6;r6,!R1]:&@1");
+          "[#6;r6,!R1]1:&@[#6;r6,!R1]:&@[#6]2:&@[#6;r6,!R1]:&@[#6](:&@[#6]:&@[#6]):&@[#6](:&@[#7;r6,!R1]:&@[#6]:&@2:&@[#6;r6,!R1]:&@[#6;r6,!R1]:&@1):&@[#6]");
     }
     {
       MCSParameters p;
@@ -2329,7 +2329,7 @@ void testGitHub3458() {
       TEST_ASSERT(res.NumBonds == 18);
       TEST_ASSERT(
           res.SmartsString ==
-          "[#6&R]:&@[#6&R]:&@[#6]1:&@[#6](-&!@[#7&!R]-&!@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6](-&!@[#35&!R]):&@[#6]:&@2):&@[#7]:&@[#6]:&@[#7]:&@[#6]:&@1:&@[#6&R]");
+          "[#6&R]:&@[#6&R]:&@[#6]1:&@[#6](-&!@[#7&!R]-&!@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6](:&@[#6]:&@2)-&!@[#35&!R]):&@[#7]:&@[#6]:&@[#7]:&@[#6]:&@1:&@[#6&R]");
     }
     {
       MCSParameters p;
@@ -2682,7 +2682,7 @@ void testCustomShouldAcceptMCS() {
   TEST_ASSERT(mcs.NumBonds == 12);
   TEST_ASSERT(
       mcs.SmartsString ==
-      "[#6]1:&@[#6]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6](-&!@[#0,#6]):&@[#6]:&@1");
+      "[#6]1:&@[#6]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6](:&@[#6]:&@1)-&!@[#0,#6]");
 }
 
 void testGitHub5510() {
@@ -2958,7 +2958,7 @@ void testGitHub6578() {
     TEST_ASSERT(mcs.NumBonds == 33);
     TEST_ASSERT(
         mcs.SmartsString ==
-        "[#6]-[#6]1:[#6]:[#6]:[#6]2:[#7](:[#7]:1):[#7]:[#6](-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1):[#6]:2-[#6]1:[#6]:[#6]:[#7]:[#6](-[#7]-[#6]2:[#6]:[#6]:[#6]:[#6]:[#6]:2):[#7]:1");
+        "[#6]-[#6]1:[#6]:[#6]:[#6]2:[#7](:[#7]:1):[#7]:[#6](:[#6]:2-[#6]1:[#6]:[#6]:[#7]:[#6](:[#7]:1)-[#7]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1)-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1");
   }
   {
     std::vector<ROMOL_SPTR> mols{
@@ -2972,7 +2972,7 @@ void testGitHub6578() {
     TEST_ASSERT(mcs.NumBonds == 33);
     TEST_ASSERT(
         mcs.SmartsString ==
-        "[#6]-[#6]1:[#6]:[#6]:[#6]2:[#7](:[#7]:1):[#7]:[#6](-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1):[#6]:2-[#6]1:[#6]:[#6]:[#7]:[#6](-[#7]-[#6]2:[#6]:[#6]:[#6]:[#6]:[#6]:2):[#7]:1");
+        "[#6]-[#6]1:[#6]:[#6]:[#6]2:[#7](:[#7]:1):[#7]:[#6](:[#6]:2-[#6]1:[#6]:[#6]:[#7]:[#6](:[#7]:1)-[#7]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1)-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1");
   }
   {
     std::vector<ROMOL_SPTR> mols{""_smiles, ""_smiles, ""_smiles, ""_smiles};
@@ -3002,7 +3002,7 @@ void testGitHub6773() {
       TEST_ASSERT(mcs.NumBonds == 11);
       TEST_ASSERT(
           mcs.SmartsString ==
-          "[#8&!R]-&!@[#6;r6,!R1]1-&@[#6;r6,!R1]-&@[#6;r6,!R1]-&@[#6]-&@[#6](-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@[#6&R])-&@[#6;r6,!R1]-&@1");
+          "[#8&!R]-&!@[#6;r6,!R1]1-&@[#6;r6,!R1]-&@[#6;r6,!R1]-&@[#6]-&@[#6](-&@[#6;r6,!R1]-&@1)-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@[#6&R]");
     }
     {
       MCSParameters p;
@@ -3044,8 +3044,7 @@ void testGitHub6773() {
       TEST_ASSERT(mcs.NumBonds == 1);
       TEST_ASSERT(mcs.SmartsString == "[#8&!R]-&!@[#6&R]");
     }
-    mols = std::vector<ROMOL_SPTR>{"C1CC2CCC3CC2C(C1)CCCCCC3"_smiles,
-                                   "C1CC2CCC3CCCC4CCC(C1)C2C34"_smiles};
+    mols = std::vector<ROMOL_SPTR>{"C1CC2CCC3CC2C(C1)CCCCCC3"_smiles, "C1CC2CCC3CCCC4CCC(C1)C2C34"_smiles};
     {
       MCSParameters p;
       p.BondCompareParameters.MatchFusedRingsStrict = true;
@@ -3054,7 +3053,7 @@ void testGitHub6773() {
       TEST_ASSERT(mcs.NumBonds == 16);
       TEST_ASSERT(
           mcs.SmartsString ==
-          "[#6;r6,!R1]1-&@[#6;r6,!R1]-&@[#6]2-&@[#6;r6,!R1]-&@[#6;r6,!R1]-&@[#6](-&@[#6]-&@[#6]-&@[#6])-&@[#6]-&@[#6]-&@2-&@[#6](-&@[#6]-&@[#6])-&@[#6;r6,!R1]-&@1");
+          "[#6;r6,!R1]1-&@[#6;r6,!R1]-&@[#6]2-&@[#6;r6,!R1]-&@[#6;r6,!R1]-&@[#6](-&@[#6]-&@[#6]-&@2-&@[#6](-&@[#6;r6,!R1]-&@1)-&@[#6]-&@[#6])-&@[#6]-&@[#6]-&@[#6]");
     }
     {
       MCSParameters p;
@@ -3079,10 +3078,9 @@ void testGitHub6773() {
 
 void testBondCompareCompleteRingsOnly() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
-      << "test CompleteRingsOnly should work also on unsubstituted fused systems"
-      << std::endl;
-  std::vector<ROMOL_SPTR> mols{"C1CCCC2CCCCC12"_smiles, "C1CCC2CCCC12"_smiles};
+  BOOST_LOG(rdInfoLog) << "test CompleteRingsOnly should work also on unsubstituted fused systems" << std::endl;
+  std::vector<ROMOL_SPTR> mols{"C1CCCC2CCCCC12"_smiles,
+                                "C1CCC2CCCC12"_smiles};
   MCSParameters p;
   p.BondCompareParameters.CompleteRingsOnly = true;
   auto mcs = findMCS(mols, &p);

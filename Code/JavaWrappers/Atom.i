@@ -85,14 +85,14 @@
 
   /* Based on Python wrappers and unit tests */
   bool IsInRing(){
-    if(!($self)->getOwningMol().getRingInfo()->isSssrOrBetter()){
+    if(!($self)->getOwningMol().getRingInfo()->isInitialized()){
       RDKit::MolOps::findSSSR(($self)->getOwningMol());
     }
     return ($self)->getOwningMol().getRingInfo()->numAtomRings(($self)->getIdx())!=0;
   }
 
   bool IsInRingSize(int size){
-    if(!($self)->getOwningMol().getRingInfo()->isSssrOrBetter()){
+    if(!($self)->getOwningMol().getRingInfo()->isInitialized()){
       RDKit::MolOps::findSSSR(($self)->getOwningMol());
     }
     return ($self)->getOwningMol().getRingInfo()->isAtomInRingOfSize(($self)->getIdx(),size);

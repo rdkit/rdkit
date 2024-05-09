@@ -3076,7 +3076,7 @@ M  END
           "DoubleOrAromaticBond");
 
     auto smarts = MolToSmarts(*m);
-    CHECK(smarts == "[#7]1-[#6][#6]-[#6]=,:[#8]-[#6]-,=1");
+    CHECK(smarts == "[#7]1-,=[#6]-[#8]=,:[#6]-[#6][#6]-1");
   }
   SECTION("basics V2K") {
     auto m = R"CTAB(

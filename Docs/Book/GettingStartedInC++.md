@@ -679,7 +679,7 @@ It is relatively easy to obtain ring information for atoms and bonds
 .
 std::shared_ptr<RDKit::ROMol> mol( RDKit::SmilesToMol( "OC1C2C1CC2" ) );
 
-if( !mol->getRingInfo()->isSssrOrBetter() ) {
+if( !mol->getRingInfo()->isInitialized() ) {
   RDKit::MolOps::findSSSR( *mol );
 }
 for( unsigned int i = 0; i < mol->getNumAtoms() ; ++i ) {

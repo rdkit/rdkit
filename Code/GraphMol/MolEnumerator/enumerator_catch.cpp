@@ -625,7 +625,7 @@ M  END
     auto bundle = MolEnumerator::enumerate(*mol1);
     CHECK(bundle.size() == 2);
     std::vector<std::string> tsmas = {"[#6]1-[#6]-[#7]=[#6]-[#7]-1-[!#1]",
-                                      "[#6]1-[#6]-[#7](-[!#1])=[#6]-[#7]-1"};
+                                      "[#6]1-[#6]-[#7](=[#6]-[#7]-1)-[!#1]"};
     for (const auto &molp : bundle.getMols()) {
       auto smarts = MolToSmarts(*molp);
       CHECK(std::find(tsmas.begin(), tsmas.end(), smarts) != tsmas.end());
@@ -663,7 +663,7 @@ M  END
     auto bundle = MolEnumerator::enumerate(*mol1);
     CHECK(bundle.size() == 2);
     std::vector<std::string> tsmas = {"[#6]1-[#6]-[#7]=[#6]-[#7]-1-[!#1]",
-                                      "[#6]1-[#6]-[#7](-[!#1])=[#6]-[#7]-1"};
+                                      "[#6]1-[#6]-[#7](=[#6]-[#7]-1)-[!#1]"};
     for (const auto &molp : bundle.getMols()) {
       auto smarts = MolToSmarts(*molp);
       CHECK(std::find(tsmas.begin(), tsmas.end(), smarts) != tsmas.end());
@@ -701,7 +701,7 @@ M  END
     auto bundle = MolEnumerator::enumerate(*mol1);
     CHECK(bundle.size() == 2);
     std::vector<std::string> tsmas = {"[#6]1-[#6]-[#7]=[#6]-[#7]-1-*",
-                                      "[#6]1-[#6]-[#7](-*)=[#6]-[#7]-1"};
+                                      "[#6]1-[#6]-[#7](=[#6]-[#7]-1)-*"};
     for (const auto &molp : bundle.getMols()) {
       auto smarts = MolToSmarts(*molp);
       CHECK(std::find(tsmas.begin(), tsmas.end(), smarts) != tsmas.end());
@@ -742,7 +742,7 @@ M  END
     auto bundle = MolEnumerator::enumerate(*mol1);
     CHECK(bundle.size() == 2);
     std::vector<std::string> tsmas = {"[#6]1:[#6]:[#7]:[#6]:[#7]:1-[#6]",
-                                      "[#6]1:[#6]:[#7](-[#6]):[#6]:[#7]:1"};
+                                      "[#6]1:[#6]:[#7](:[#6]:[#7]:1)-[#6]"};
     for (const auto &molp : bundle.getMols()) {
       auto smarts = MolToSmarts(*molp);
       CHECK(std::find(tsmas.begin(), tsmas.end(), smarts) != tsmas.end());

@@ -510,8 +510,8 @@ TEST_CASE("CDXML") {
     std::vector<std::string> expected = {"*C1=C([H])C([H])=C([H])C([H])=C1[H]",
                                          "*C1=C([H])N([H])=C([H])C([H])=C1[H]"};
     std::vector<std::string> expected_smarts = {
-        "[#6]1(-[H])=[#6](-[H])-[#6](-[H])=[#6](-[H])-[#6](-[H])=[#6]-1-*",
-        "[#6]1(-[H])=[#6](-[H])-[#6](-[H])=[#7](-[H])-[#6](-[H])=[#6]-1-[!#1]",
+        "[#6]1(=[#6](-[#6](=[#6](-[#6](=[#6]-1-*)-[H])-[H])-[H])-[H])-[H]",
+        "[#6]1(=[#6](-[#6](=[#7](-[#6](=[#6]-1-[!#1])-[H])-[H])-[H])-[H])-[H]",
     };
     CDXMLParserParams params;
     params.sanitize = false;

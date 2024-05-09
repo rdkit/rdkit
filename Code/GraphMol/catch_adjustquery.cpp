@@ -192,7 +192,7 @@ M  END
 M  V30 BEGIN CTAB
 M  V30 COUNTS 4 3 0 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C -7.0316 2.0632 0 0
+M  V30 1 C -7.0316 2.0632 0 0 
 M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
 M  V30 3 O -4.3642 2.0632 0 0
 M  V30 4 F -8.3653 2.8332 0 0
@@ -470,7 +470,7 @@ TEST_CASE("MDL five-rings") {
       qbnd->setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
       qry->replaceBond(0, qbnd.get());
       MolOps::adjustQueryProperties(*qry, &ps);
-      CHECK(MolToSmarts(*qry) == "[!#1]1:[#6]:[#6]:[#6]:[#6]-1");
+      CHECK(MolToSmarts(*qry) == "[!#1]1-[#6]:[#6]:[#6]:[#6]:1");
     }
   }
 }

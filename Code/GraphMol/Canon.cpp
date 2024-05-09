@@ -1028,7 +1028,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
   // we need ring information; make sure findSSSR has been called before
   // if not call now
-  if (!mol.getRingInfo()->isSssrOrBetter()) {
+  if (!mol.getRingInfo()->isInitialized()) {
     MolOps::findSSSR(mol);
   }
   mol.getAtomWithIdx(atomIdx)->setProp(common_properties::_TraversalStartPoint,

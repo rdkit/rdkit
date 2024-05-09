@@ -1052,7 +1052,7 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           chiralCenters.push_back(cptr);
         } else {
           if ((coordMap && coordMap->find(atom->getIdx()) != coordMap->end()) ||
-              (mol.getRingInfo()->isSssrOrBetter() &&
+              (mol.getRingInfo()->isInitialized() &&
                (mol.getRingInfo()->numAtomRings(atom->getIdx()) < 2 ||
                 mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)))) {
             // we only want to these tests for ring atoms that are not part of

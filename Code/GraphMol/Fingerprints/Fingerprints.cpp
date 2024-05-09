@@ -262,7 +262,7 @@ ExplicitBitVect *LayeredFingerprintMol(
   PRECONDITION(!setOnlyBits || setOnlyBits->getNumBits() == fpSize,
                "bad setOnlyBits size");
 
-  if (!mol.getRingInfo()->isSssrOrBetter()) {
+  if (!mol.getRingInfo()->isInitialized()) {
     MolOps::findSSSR(mol);
   }
 

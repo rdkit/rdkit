@@ -382,7 +382,7 @@ bool FusedRingMatch(const ROMol &mol, const Atom &atom,
     return false;
   }
 
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isSssrOrBetter()) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
     MolOps::findSSSR(mol);
   }
   if (!mol.getRingInfo()->numAtomRings(atom.getIdx())) {

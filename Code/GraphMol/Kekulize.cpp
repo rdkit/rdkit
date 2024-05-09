@@ -566,7 +566,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     // first find all the simple rings in the molecule that are not
     // completely composed of dummy atoms
     VECT_INT_VECT allringsSSSR;
-    if (!mol.getRingInfo()->isSssrOrBetter()) {
+    if (!mol.getRingInfo()->isInitialized()) {
       MolOps::findSSSR(mol, allringsSSSR);
     }
     const VECT_INT_VECT &allrings =
@@ -640,7 +640,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   if (markAtomsBonds) {
     // if we want the atoms and bonds to be marked non-aromatic do
     // that here.
-    if (!mol.getRingInfo()->isSssrOrBetter()) {
+    if (!mol.getRingInfo()->isInitialized()) {
       MolOps::findSSSR(mol);
     }
     for (auto bond : mol.bonds()) {
