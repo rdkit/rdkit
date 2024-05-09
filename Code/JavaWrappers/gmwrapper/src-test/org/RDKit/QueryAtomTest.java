@@ -22,7 +22,7 @@ public class QueryAtomTest extends GraphMolTest {
     public void testChemdrawBlock() {
         // smiles c1[nH]ccc1
         // Chemdraw will convert explicit hydrogens in aromatic compounds to query hydrogen count
-        var block = String.join("\n",
+        String block = String.join("\n",
                 "ChemDraw05012418152D",
                 "",
                 "0 0 0 0 0 0 V3000",
@@ -48,18 +48,18 @@ public class QueryAtomTest extends GraphMolTest {
         RWMol mol = RWMol.MolFromMolBlock(block, false);
         assertNotNull(mol);
         assertEquals(5, mol.getNumAtoms());
-        var queryAtom = mol.getAtomWithIdx(4);
+        Atom queryAtom = mol.getAtomWithIdx(4);
         assertTrue(queryAtom.hasQuery());
-        var smarts = queryAtom.AtomGetSmarts();
-        var expected = "[#7&h{1-}]";
+        String smarts = queryAtom.AtomGetSmarts();
+        String expected = "[#7&h{1-}]";
         assertEquals(expected, smarts);
-        var description = queryAtom.describeQuery();
+        String description = queryAtom.describeQuery();
         expected = "AtomAnd\n  AtomAtomicNum 7 = val\n  less_AtomImplicitHCount 1 <= \n";
         assertEquals(expected, description);
 
-        var molSmiles = mol.MolToSmiles();
+        String molSmiles = mol.MolToSmiles();
 
-        var atom = new Atom(7);
+        Atom atom = new Atom(7);
         atom.setNumExplicitHs(1);
         mol.replaceAtom(4, atom);
         mol.clearComputedProps(true);
@@ -74,29 +74,29 @@ public class QueryAtomTest extends GraphMolTest {
 
     @Test
     public void testReplaceQuerySimple() {
-        var query = RWMol.MolFromSmiles("c1[nH]ccc1");
-        var nitrogen = query.getAtomWithIdx(2);
-        var imp = nitrogen.getNumImplicitHs();
+        RWMol query = RWMol.MolFromSmiles("c1[nH]ccc1");
+        Atom nitrogen = query.getAtomWithIdx(2);
+        long imp = nitrogen.getNumImplicitHs();
         assertEquals(1, imp);
-        var queryAtom = RDKFuncs.replaceAtomWithQueryAtom(query, nitrogen);
+        Atom queryAtom = RDKFuncs.replaceAtomWithQueryAtom(query, nitrogen);
         queryAtom.ExpandQuery(RDKFuncs.ExplicitDegreeEqualsQueryAtom(3));
-        var mol1 = RWMol.MolFromSmiles("Cc1[nH]ccc1");
+        RWMol mol1 = RWMol.MolFromSmiles("Cc1[nH]ccc1");
         assertTrue(mol1.hasSubstructMatch(query));
-        var mol2 = RWMol.MolFromSmiles("c1[nH]ccc1");
+        RWMol mol2 = RWMol.MolFromSmiles("c1[nH]ccc1");
         assertFalse(mol2.hasSubstructMatch(query));
     }
 
     @Test
     public void testExpandQuerySimple() {
-        var query = RWMol.MolFromSmarts("c1nccc1");
-        var mol1 = RWMol.MolFromSmiles("c1[nH]ccc1");
+        RWMol query = RWMol.MolFromSmarts("c1nccc1");
+        RWMol mol1 = RWMol.MolFromSmiles("c1[nH]ccc1");
         assertTrue(mol1.hasSubstructMatch(query));
-        var atom = query.getAtomWithIdx(0);
+        Atom atom = query.getAtomWithIdx(0);
         assertTrue(atom.hasQuery());
-        var queryAtom = RDKFuncs.ExplicitDegreeEqualsQueryAtom(3);
+        QueryAtom queryAtom = RDKFuncs.ExplicitDegreeEqualsQueryAtom(3);
         atom.ExpandQuery(queryAtom, CompositeQueryType.COMPOSITE_AND);
         assertFalse(mol1.hasSubstructMatch(query));
-        var mol2 = RWMol.MolFromSmiles("Cc1[nH]ccc1");
+        RWMol mol2 = RWMol.MolFromSmiles("Cc1[nH]ccc1");
         assertTrue(mol2.hasSubstructMatch(query));
     }
 
@@ -105,7 +105,7 @@ public class QueryAtomTest extends GraphMolTest {
     private int[] GetAtomIdxsMatchingQuery(ROMol mol, QueryAtom qa) {
         List<Integer> indices = new ArrayList<Integer>();
         for (int i =0; i< mol.getNumAtoms(); i++) {
-            var atom = mol.getAtomWithIdx(i);
+            Atom atom = mol.getAtomWithIdx(i);
             if (qa.MatchAtom(atom)) {
                 indices.add(i);
             }
@@ -119,9 +119,9 @@ public class QueryAtomTest extends GraphMolTest {
 
     @Test
     public void testQueryAtoms() {
-        var m = RWMol.MolFromSmiles("c1nc(C)n(CC)c1");
-        var qa = RDKFuncs.ExplicitDegreeEqualsQueryAtom(3);
-        var matches = GetAtomIdxsMatchingQuery(m, qa);
+        RWMol m = RWMol.MolFromSmiles("c1nc(C)n(CC)c1");
+        QueryAtom qa = RDKFuncs.ExplicitDegreeEqualsQueryAtom(3);
+        int[] matches = GetAtomIdxsMatchingQuery(m, qa);
         assertArrayEquals(new int[] {2, 4}, matches);
 
         qa.ExpandQuery(RDKFuncs.AtomNumEqualsQueryAtom(6, true));
@@ -193,7 +193,7 @@ public class QueryAtomTest extends GraphMolTest {
     private int[] GetBondIdxsMatchingQuery(ROMol mol, QueryBond qa) {
         List<Integer> indices = new ArrayList<Integer>();
         for (int i =0; i< mol.getNumBonds(); i++) {
-            var atom = mol.getBondWithIdx(i);
+            Bond atom = mol.getBondWithIdx(i);
             if (qa.MatchBond(atom)) {
                 indices.add(i);
             }
@@ -207,8 +207,8 @@ public class QueryAtomTest extends GraphMolTest {
 
     @Test
     public void TestBondPropQueries() {
-        var m = RWMol.MolFromSmiles("CCCCCCCCCCCCCC");
-        var bonds = m.getBonds();
+        RWMol m = RWMol.MolFromSmiles("CCCCCCCCCCCCCC");
+        Bond_Vect bonds = m.getBonds();
         bonds.get(0).setProp("hah", "hah");
         bonds.get(1).setIntProp("bar", 1);
         bonds.get(2).setIntProp("bar", 2);
@@ -221,8 +221,8 @@ public class QueryAtomTest extends GraphMolTest {
         bonds.get(9).setDoubleProp("number", 4.0);
         bonds.get(10).setIntProp("number", 4);
 
-        var qb = RDKFuncs.HasIntPropWithValueQueryBond("bar", 1);
-        var matches = GetBondIdxsMatchingQuery(m, qb);
+        QueryBond qb = RDKFuncs.HasIntPropWithValueQueryBond("bar", 1);
+        int[] matches = GetBondIdxsMatchingQuery(m, qb);
         assertArrayEquals(new int[] {1}, matches);
 
         qb = RDKFuncs.HasIntPropWithValueQueryBond("bar", 2);
