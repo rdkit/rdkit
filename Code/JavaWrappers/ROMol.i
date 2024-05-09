@@ -198,6 +198,7 @@
 %newobject replaceSidechains;
 %newobject deleteSubstructs;
 %newobject getAtoms;
+%newobject getBonds;
 %newobject getAtomNeighbors;
 %newobject getAtomBonds;
 
@@ -571,6 +572,17 @@ void setAllowNontetrahedralChirality(bool);
     }
     return atoms;
   }
+  std::vector<RDKit::Bond*> *getBonds() {
+    int c = ($self)->getNumBonds();
+    std::vector<RDKit::Bond*> *bonds = new std::vector<RDKit::Bond*>;
+    for (int i = 0; i < c; i++) {
+      auto b = ($self)->getBondWithIdx(i);
+      bonds->push_back(b);
+    }
+    return bonds;
+  }
+
+
 
   std::vector<RDKit::Atom*> *getAtomNeighbors(RDKit::Atom *at) {
     std::vector<RDKit::Atom*> *atoms = new std::vector<RDKit::Atom*>;

@@ -59,7 +59,7 @@
 
 %define QAFUNC2(funcname, func, type)          
 %inline %{
-  RDKit::QueryAtom* funcname(bool negate) {              
+  RDKit::QueryAtom* funcname(bool negate=false) {              
     auto *res = new RDKit::QueryAtom();               
     res->setQuery(RDKit:: ## func());                        
     if (negate) res->getQuery()->setNegation(true); 
