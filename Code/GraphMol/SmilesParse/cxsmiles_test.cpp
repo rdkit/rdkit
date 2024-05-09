@@ -1470,16 +1470,6 @@ TEST_CASE("write attachment points") {
   CHECK(MolToCXSmiles(*m) == "*N[C@@H](C)C(*)=O |$_AP1;;;;;_AP2;$|");
 }
 
-TEST_CASE("github #7414: CXSmiles writer does not use default conformer ID") {
-  SECTION("basics") {
-    auto m = "CC |(-0.75,0,;0.75,0,)|"_smiles;
-    REQUIRE(m);
-    CHECK(m->getNumConformers() == 1);
-    m->getConformer().setId(5);
-    CHECK(MolToCXSmiles(*m) == "CC |(-0.75,0,;0.75,0,)|");
-  }
-}
-
 TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
   SECTION("basics") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;
@@ -1511,5 +1501,15 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     REQUIRE(m);
     auto smi = MolToCXSmarts(*m);
     CHECK(smi == "[#7H3]-[Fe]-[#7H3] |C:0.0,2.1|");
+  }
+}
+
+TEST_CASE("github #7414: CXSmiles writer does not use default conformer ID") {
+  SECTION("basics") {
+    auto m = "CC |(-0.75,0,;0.75,0,)|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getNumConformers() == 1);
+    m->getConformer().setId(5);
+    CHECK(MolToCXSmiles(*m) == "CC |(-0.75,0,;0.75,0,)|");
   }
 }
