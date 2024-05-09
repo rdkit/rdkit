@@ -19,27 +19,12 @@ from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
 from rdkit.Chem import rdDepictor
 from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem.Draw import rdMolDraw2D
 
 try:
   from rdkit.Chem.Draw import IPythonConsole
 except ImportError:
   IPythonConsole = None
-try:
-  from rdkit.Chem.Draw import cairoCanvas
-except ImportError:
-  cairoCanvas = None
-try:
-  from rdkit.Chem.Draw import spingCanvas
-except ImportError:
-  spingCanvas = None
-try:
-  from rdkit.Chem.Draw import aggCanvas
-except ImportError:
-  aggCanvas = None
-try:
-  from rdkit.Chem.Draw import qtCanvas
-except ImportError:
-  qtCanvas = None
 
 
 class TestCase(unittest.TestCase):
@@ -62,38 +47,41 @@ class TestCase(unittest.TestCase):
     #                                NC(C)C(=O)NC(C)C(=O)
     # NC(C)C(=O)NC(C)C(=O)NC(C)C(=O)                      NC(C)C(=O)NC(C)C(=O)NC(C)C(=O)NC(C)C(=O)
     repeats = [[1], [0, 2], [3, 0, 4]]
-    
+
     # Create molecule if there are 1 or more oligomers;
     # otherwise, use None for molecule because drawing is distorted if use Chem.MolFromSmiles("")
-    self.molsMatrix = [[Chem.MolFromSmiles(s * count) if count else None for count in row] for row in repeats]
-            
+    self.molsMatrix = [[Chem.MolFromSmiles(s * count) if count else None for count in row]
+                       for row in repeats]
+
     self.legendsMatrix = [[str(count) + " unit(s)" for count in row] for row in repeats]
 
     def ithItemList(nunits, itemsPerUnit, i=0):
-        return [((n * itemsPerUnit) + i) for n in range(nunits)]
+      return [((n * itemsPerUnit) + i) for n in range(nunits)]
 
-    self.highlightAtomListsMatrix = [[ithItemList(count, natoms, 0) for count in row] for row in repeats]
+    self.highlightAtomListsMatrix = [[ithItemList(count, natoms, 0) for count in row]
+                                     for row in repeats]
 
     # Another bond is created when molecule is oligomerized, so to keep the bond type consistent,
     #   make items per unit one more than the number of bonds
-    self.highlightBondListsMatrix = [[ithItemList(count, nbonds + 1, 1) for count in row] for row in repeats]
+    self.highlightBondListsMatrix = [[ithItemList(count, nbonds + 1, 1) for count in row]
+                                     for row in repeats]
 
     # Parametrize tests: In addition to supplying molsMatrix, supply 0-3 other matrices
-    # col labels: legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix      
+    # col labels: legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix
     # Zero other matrices: 1 parameter set
-    self.paramSets = [(None, None, None), 
-                  # One other matrix: 3 parameter sets
-                  (self.legendsMatrix, None, None),
-                  (None, self.highlightAtomListsMatrix, None),
-                  (None, None, self.highlightBondListsMatrix),
-                  # Two other matrices: 3 parameter sets
-                  (self.legendsMatrix, self.highlightAtomListsMatrix, None),
-                  (self.legendsMatrix, None, self.highlightBondListsMatrix),
-                  (None, self.highlightAtomListsMatrix, self.highlightBondListsMatrix),
-                  # All three other matrices: 1 parameter set
-                  (self.legendsMatrix, self.highlightAtomListsMatrix, self.highlightBondListsMatrix),
-                  ]
-
+    self.paramSets = [
+      (None, None, None),
+      # One other matrix: 3 parameter sets
+      (self.legendsMatrix, None, None),
+      (None, self.highlightAtomListsMatrix, None),
+      (None, None, self.highlightBondListsMatrix),
+      # Two other matrices: 3 parameter sets
+      (self.legendsMatrix, self.highlightAtomListsMatrix, None),
+      (self.legendsMatrix, None, self.highlightBondListsMatrix),
+      (None, self.highlightAtomListsMatrix, self.highlightBondListsMatrix),
+      # All three other matrices: 1 parameter set
+      (self.legendsMatrix, self.highlightAtomListsMatrix, self.highlightBondListsMatrix),
+    ]
 
   def test_interactive(self):
     # We avoid checking in the code with development flag set
@@ -111,19 +99,8 @@ class TestCase(unittest.TestCase):
     finally:
       os.remove(fn)
 
-  @unittest.skipIf(cairoCanvas is None, 'Skipping cairo test')
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Skipping cairo test')
   def testCairoFile(self):
-    os.environ['RDKIT_CANVAS'] = 'cairo'
-    self._testMolToFile()
-
-  @unittest.skipIf(aggCanvas is None, 'Skipping agg test')
-  def testAggFile(self):
-    os.environ['RDKIT_CANVAS'] = 'agg'
-    self._testMolToFile()
-
-  @unittest.skipIf(spingCanvas is None, 'Skipping sping test')
-  def testSpingFile(self):
-    os.environ['RDKIT_CANVAS'] = 'sping'
     self._testMolToFile()
 
   def _testMolToImage(self, mol=None, kekulize=True, options=None, showImage=False, **kwargs):
@@ -135,73 +112,18 @@ class TestCase(unittest.TestCase):
     if self.showAllImages or showImage:
       img.show()
 
-  @unittest.skipIf(cairoCanvas is None, 'Skipping cairo test')
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Skipping cairo test')
   def testCairoImage(self):
-    os.environ['RDKIT_CANVAS'] = 'cairo'
     self._testMolToImage()
 
-  @unittest.skipIf(aggCanvas is None, 'Skipping agg test')
-  def testAggImage(self):
-    os.environ['RDKIT_CANVAS'] = 'agg'
-    self._testMolToImage()
-
-  @unittest.skipIf(spingCanvas is None, 'Skipping sping test')
-  def testSpingImage(self):
-    os.environ['RDKIT_CANVAS'] = 'sping'
-    self._testMolToImage()
-
-  @unittest.skipIf(qtCanvas is None, 'Skipping Qt test')
-  def testQtImage(self):
-    from rdkit.Chem.Draw.rdMolDraw2DQt import rdkitQtVersion
-    if rdkitQtVersion.startswith('6'):
-      try:
-        from PyQt6 import QtGui
-      except ImportError:
-        # PySide version numbers leapt at Qt6
-        from PySide6 import QtGui
-    else:
-      try:
-        from PyQt5 import QtGui
-      except ImportError:
-        try:
-          from PySide import QtGui
-        except ImportError:
-          # PySide2 supports Qt >= 5.12
-          from PySide2 import QtGui
-
-    _ = QtGui.QGuiApplication(sys.argv)
-    img = Draw.MolToQPixmap(self.mol, size=(300, 300))
-    self.assertTrue(img)
-    self.assertEqual(img.size().height(), 300)
-    self.assertEqual(img.size().width(), 300)
-    # img.save('/tmp/D_me.png')
-
-  @unittest.skipIf(cairoCanvas is None, 'Skipping cairo test')
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Skipping cairo test')
   def testCairoImageDash(self):
     os.environ['RDKIT_CANVAS'] = 'cairo'
     self._testMolToImage(kekulize=False)
 
-  @unittest.skipIf(aggCanvas is None, 'Skipping agg test')
-  def testAggImageDash(self):
-    os.environ['RDKIT_CANVAS'] = 'agg'
-    self._testMolToImage(kekulize=False)
-
-  @unittest.skipIf(spingCanvas is None, 'Skipping sping test')
-  def testSpingImageDash(self):
-    os.environ['RDKIT_CANVAS'] = 'sping'
-    self._testMolToImage(kekulize=False, showImage=False)
-
-  @unittest.skipIf(spingCanvas is None, 'Skipping sping test')
-  def testGithubIssue54(self):
-    # Assert that radicals depict with PIL
-    os.environ['RDKIT_CANVAS'] = 'sping'
-    mol = Chem.MolFromSmiles('c1([O])ccc(O)cc1')
-    img = Draw.MolToImage(mol)
-    self.assertTrue(img)
-    # img.show()
-
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Skipping test requiring cairo')
   def testSpecialCases(self):
-    options = Draw.DrawingOptions()
+    options = rdMolDraw2D.MolDrawOptions()
     options.atomLabelDeuteriumTritium = True
     self._testMolToImage(mol=Chem.MolFromSmiles('[2H][C@]([3H])(C)F'), options=options)
     # shared rings
@@ -217,6 +139,7 @@ class TestCase(unittest.TestCase):
                          highlightBonds=(0, 2, 4, 6, 8, 10))
     self._testMolToImage(mol=Chem.MolFromSmiles('c1ccccc1c1ccc(cc1)c1ccc(cc1)c1ccc(cc1)'))
 
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Skipping test requiring cairo')
   def testGithubIssue86(self):
     # Assert that drawing code doesn't modify wedge bonds
     mol = Chem.MolFromSmiles('F[C@H](Cl)Br')
@@ -260,49 +183,51 @@ class TestCase(unittest.TestCase):
 
   def testMolsMatrixToLinear(self):
     mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = Draw._MolsNestedToLinear(
-        self.molsMatrix, self.legendsMatrix, self.highlightAtomListsMatrix, self.highlightBondListsMatrix)
+      self.molsMatrix, self.legendsMatrix, self.highlightAtomListsMatrix,
+      self.highlightBondListsMatrix)
 
     nrows = len(self.molsMatrix)
 
-    def _nestedOrder(self, molsMatrix, legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix):
+    def _nestedOrder(self, molsMatrix, legendsMatrix, highlightAtomListsMatrix,
+                     highlightBondListsMatrix):
       for r, row in enumerate(molsMatrix):
-          for c, item in enumerate(row):
-              linearIndex = (r * molsPerRow) + c
-              # Test that items in 2D list are in correct position in 1D list
-              self.assertTrue(mols[linearIndex] == item)
-              # Test that 1D list items are not lists
-              self.assertFalse(isinstance(item, list))
+        for c, item in enumerate(row):
+          linearIndex = (r * molsPerRow) + c
+          # Test that items in 2D list are in correct position in 1D list
+          self.assertTrue(mols[linearIndex] == item)
+          # Test that 1D list items are not lists
+          self.assertFalse(isinstance(item, list))
 
       # Other three matrices (legends; atom and bond highlighting) need not be supplied;
       #   only test each if it's supplied
       if legendsMatrix is not None:
-          for r, row in enumerate(legendsMatrix):
-              for c, item in enumerate(row):
-                  linearIndex = (r * molsPerRow) + c
-                  # Test that items in 2D list are in correct position in 1D list
-                  self.assertTrue(legends[linearIndex] == item)
-                  # Test that 1D list items are not lists
-                  self.assertFalse(isinstance(item, list))
+        for r, row in enumerate(legendsMatrix):
+          for c, item in enumerate(row):
+            linearIndex = (r * molsPerRow) + c
+            # Test that items in 2D list are in correct position in 1D list
+            self.assertTrue(legends[linearIndex] == item)
+            # Test that 1D list items are not lists
+            self.assertFalse(isinstance(item, list))
 
       if highlightAtomListsMatrix is not None:
-          for r, row in enumerate(highlightAtomListsMatrix):
-              for c, item in enumerate(row):
-                  linearIndex = (r * molsPerRow) + c
-                  # Test that items in 2D list are in correct position in 1D list
-                  self.assertTrue(highlightAtomLists[linearIndex] == item)
-                  # For highlight parameters, entries are lists, so check that sub-items are not lists
-                  for subitem in item:
-                      self.assertFalse(isinstance(subitem, list))
+        for r, row in enumerate(highlightAtomListsMatrix):
+          for c, item in enumerate(row):
+            linearIndex = (r * molsPerRow) + c
+            # Test that items in 2D list are in correct position in 1D list
+            self.assertTrue(highlightAtomLists[linearIndex] == item)
+            # For highlight parameters, entries are lists, so check that sub-items are not lists
+            for subitem in item:
+              self.assertFalse(isinstance(subitem, list))
 
       if highlightBondListsMatrix is not None:
-          for r, row in enumerate(highlightBondListsMatrix):
-              for c, item in enumerate(row):
-                  linearIndex = (r * molsPerRow) + c
-                  # Test that items in 2D list are in correct position in 1D list
-                  self.assertTrue(highlightBondLists[linearIndex] == item)
-                  # For highlight parameters, entries are lists, so check that sub-items are not lists
-                  for subitem in item:
-                      self.assertFalse(isinstance(subitem, list))
+        for r, row in enumerate(highlightBondListsMatrix):
+          for c, item in enumerate(row):
+            linearIndex = (r * molsPerRow) + c
+            # Test that items in 2D list are in correct position in 1D list
+            self.assertTrue(highlightBondLists[linearIndex] == item)
+            # For highlight parameters, entries are lists, so check that sub-items are not lists
+            for subitem in item:
+              self.assertFalse(isinstance(subitem, list))
 
       # Test that 1D list has the correct length
       self.assertTrue(len(mols) == nrows * molsPerRow)
@@ -327,36 +252,43 @@ class TestCase(unittest.TestCase):
       Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix, legendsMatrix=legendsNotNested)
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix, highlightAtomListsMatrix=highlightAtomListsNotNested)
+      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix,
+                               highlightAtomListsMatrix=highlightAtomListsNotNested)
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix, highlightBondListsMatrix=highlightBondListsNotNested)
+      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix,
+                               highlightBondListsMatrix=highlightBondListsNotNested)
 
     # Test that raises ValueError if other matrices aren't same size (# rows) as molsMatrix
     with self.assertRaises(ValueError):
       Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix, legendsMatrix=self.legendsMatrix[0:1])
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix, highlightAtomListsMatrix=self.highlightAtomListsMatrix[0:1])
+      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix,
+                               highlightAtomListsMatrix=self.highlightAtomListsMatrix[0:1])
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix, highlightBondListsMatrix=self.highlightBondListsMatrix[0:1])
+      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix,
+                               highlightBondListsMatrix=self.highlightBondListsMatrix[0:1])
 
     # Test that raises ValueError if other matrices' rows aren't same length as molsMatrix's corresponding row
     # Remove last element from first row of each other matrix
     legendsMatrixShortRow0 = [self.legendsMatrix[0][0:-1]] + [self.legendsMatrix[1:]]
-    highlightAtomListsMatrixShortRow0 = [self.highlightAtomListsMatrix[0][0:-1]] + [self.highlightAtomListsMatrix[1:]]
-    highlightBondListsMatrixShortRow0 = [self.highlightBondListsMatrix[0][0:-1]] + [self.highlightBondListsMatrix[1:]]
+    highlightAtomListsMatrixShortRow0 = [self.highlightAtomListsMatrix[0][0:-1]
+                                         ] + [self.highlightAtomListsMatrix[1:]]
+    highlightBondListsMatrixShortRow0 = [self.highlightBondListsMatrix[0][0:-1]
+                                         ] + [self.highlightBondListsMatrix[1:]]
 
     with self.assertRaises(ValueError):
       Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix, legendsMatrix=legendsMatrixShortRow0)
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrixShortRow0)
+      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix,
+                               highlightAtomListsMatrix=highlightAtomListsMatrixShortRow0)
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix, highlightBondListsMatrix=highlightBondListsMatrixShortRow0)
-
+      Draw._MolsNestedToLinear(molsMatrix=self.molsMatrix,
+                               highlightBondListsMatrix=highlightBondListsMatrixShortRow0)
 
   def testMolsMatrixToGridImage(self):
     subImgSize = (200, 200)
@@ -369,12 +301,36 @@ class TestCase(unittest.TestCase):
     # by parametrizing tests: In addition to supplying molsMatrix, supply 0-3 other matrices
     for (legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix) in self.paramSets:
       for useSVG in (True, False):
+        if not (useSVG or hasattr(rdMolDraw2D, 'MolDraw2DCairo')):
+          continue
         for returnPNG in (True, False):
-          dwgSubImgSizeNokwargs = Draw.MolsMatrixToGridImage(self.molsMatrix, subImgSize, legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG)
-          dwgSubImgSizeKwargs = Draw.MolsMatrixToGridImage(self.molsMatrix, subImgSize, legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG, drawOptions=kwargsValue)
-          dwgNosubImgSizeNokwargs = Draw.MolsMatrixToGridImage(self.molsMatrix, legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG)
-          dwgNosubImgSizeKwargs = Draw.MolsMatrixToGridImage(self.molsMatrix, legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG, drawOptions=kwargsValue)
-    
+          dwgSubImgSizeNokwargs = Draw.MolsMatrixToGridImage(
+            self.molsMatrix, subImgSize, legendsMatrix=legendsMatrix,
+            highlightAtomListsMatrix=highlightAtomListsMatrix,
+            highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG)
+          if useSVG:
+            self.assertIn('<svg', dwgSubImgSizeNokwargs)
+          dwgSubImgSizeKwargs = Draw.MolsMatrixToGridImage(
+            self.molsMatrix, subImgSize, legendsMatrix=legendsMatrix,
+            highlightAtomListsMatrix=highlightAtomListsMatrix,
+            highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG,
+            drawOptions=kwargsValue)
+          if useSVG:
+            self.assertIn('<svg', dwgSubImgSizeKwargs)
+          dwgNosubImgSizeNokwargs = Draw.MolsMatrixToGridImage(
+            self.molsMatrix, legendsMatrix=legendsMatrix,
+            highlightAtomListsMatrix=highlightAtomListsMatrix,
+            highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG)
+          if useSVG:
+            self.assertIn('<svg', dwgNosubImgSizeNokwargs)
+          dwgNosubImgSizeKwargs = Draw.MolsMatrixToGridImage(
+            self.molsMatrix, legendsMatrix=legendsMatrix,
+            highlightAtomListsMatrix=highlightAtomListsMatrix,
+            highlightBondListsMatrix=highlightBondListsMatrix, useSVG=useSVG, returnPNG=returnPNG,
+            drawOptions=kwargsValue)
+          if useSVG:
+            self.assertIn('<svg', dwgNosubImgSizeKwargs)
+
   def testDrawMorgan(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
@@ -399,7 +355,7 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(KeyError):
       Draw.DrawMorganBit(m, 32, bi)
 
-    if hasattr(Draw, 'MolDraw2DCairo') and hasattr(Draw,'MolFromPNGString'):
+    if hasattr(Draw, 'MolDraw2DCairo') and hasattr(Draw, 'MolFromPNGString'):
       # Github #3796: make sure we aren't trying to generate metadata:
       png = Draw.DrawMorganBit(m, 872, bi, useSVG=False)
       self.assertIn(b'PNG', png)
@@ -420,7 +376,7 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(KeyError):
       Draw.DrawRDKitBit(m, 32, bi)
 
-    if hasattr(Draw, 'MolDraw2DCairo') and hasattr(Draw,'MolFromPNGString'):
+    if hasattr(Draw, 'MolDraw2DCairo') and hasattr(Draw, 'MolFromPNGString'):
       # Github #3796: make sure we aren't trying to generate metadata:
       png = Draw.DrawRDKitBit(m, 1553, bi, useSVG=False)
       self.assertIn(b'PNG', png)
@@ -431,7 +387,7 @@ class TestCase(unittest.TestCase):
     rxn = AllChem.ReactionFromSmarts(
       "[c;H1:3]1:[c:4]:[c:5]:[c;H1:6]:[c:7]2:[nH:8]:[c:9]:[c;H1:1]:[c:2]:1:2.O=[C:10]1[#6;H2:11][#6;H2:12][N:13][#6;H2:14][#6;H2:15]1>>[#6;H2:12]3[#6;H1:11]=[C:10]([c:1]1:[c:9]:[n:8]:[c:7]2:[c:6]:[c:5]:[c:4]:[c:3]:[c:2]:1:2)[#6;H2:15][#6;H2:14][N:13]3"
     )
-    _ = Draw.ReactionToImage(rxn)
+    _ = Draw.ReactionToImage(rxn, useSVG=True)
 
   def testGithub3762(self):
     m = Chem.MolFromSmiles('CC(=O)O')
@@ -447,10 +403,10 @@ class TestCase(unittest.TestCase):
     patt = re.compile(re_str)
     self.assertEqual(len(patt.findall(svg1)), 2)
     self.assertEqual(len(patt.findall(svg2)), 0)
-    
+
     pathlib.Path('testGithub_3762_1.svg').unlink()
     pathlib.Path('testGithub_3762_2.svg').unlink()
-    
+
   def testGithub5863(self):
     smiles = "C[C@]12C[C@H](O)[C@H]3[C@@H](CCC4=CC(=O)C=C[C@@]43C)[C@@H]1CC[C@]2(O)C(=O)CO"
     mol = Chem.MolFromSmiles(smiles)

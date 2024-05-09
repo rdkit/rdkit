@@ -2917,6 +2917,80 @@ void processMrvImplicitH(RWMol &mol, const SubstanceGroup &sg) {
   }
 }
 
+void processZBO(RWMol &mol, const SubstanceGroup &sg) {
+  for (auto bidx : sg.getBonds()) {
+    auto bond = mol.getBondWithIdx(bidx);
+    bond->setBondType(Bond::BondType::ZERO);
+  }
+}
+
+void processZCH(RWMol &mol, const SubstanceGroup &sg) {
+  RDUNUSED_PARAM(mol);
+  std::vector<std::string> dataFields;
+  if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
+    if (dataFields.empty()) {
+      BOOST_LOG(rdWarningLog)
+          << "ignoring ZCHG SGroup without data fields." << std::endl;
+      return;
+    }
+    for (const auto &df : dataFields) {
+      std::string trimmed = boost::trim_copy(df);
+      std::vector<std::string> splitLine;
+      boost::split(splitLine, trimmed, boost::is_any_of(";"),
+                   boost::token_compress_off);
+      const auto &aids = sg.getAtoms();
+      if (splitLine.size() < aids.size()) {
+        BOOST_LOG(rdWarningLog)
+            << "DATAFIELDS in ZCH SGroup is shorter than the number of atoms in the SGroup. Ignoring it."
+            << std::endl;
+        continue;
+      }
+      for (auto i = 0u; i < aids.size(); ++i) {
+        auto aid = aids[i];
+        auto atom = mol.getAtomWithIdx(aid);
+        auto val = 0;
+        if (!splitLine[i].empty()) {
+          val = FileParserUtils::toInt(splitLine[i]);
+        }
+        atom->setFormalCharge(val);
+      }
+    }
+  }
+}
+void processHYD(RWMol &mol, const SubstanceGroup &sg) {
+  std::vector<std::string> dataFields;
+  if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
+    if (dataFields.empty()) {
+      BOOST_LOG(rdWarningLog)
+          << "ignoring HYD SGroup without data fields." << std::endl;
+      return;
+    }
+    for (const auto &df : dataFields) {
+      std::string trimmed = boost::trim_copy(df);
+      std::vector<std::string> splitLine;
+      boost::split(splitLine, trimmed, boost::is_any_of(";"),
+                   boost::token_compress_off);
+      const auto &aids = sg.getAtoms();
+      if (splitLine.size() < aids.size()) {
+        BOOST_LOG(rdWarningLog)
+            << "DATAFIELDS in HYD SGroup is shorter than the number of atoms in the SGroup. Ignoring it."
+            << std::endl;
+        continue;
+      }
+      for (auto i = 0u; i < aids.size(); ++i) {
+        auto aid = aids[i];
+        auto atom = mol.getAtomWithIdx(aid);
+        auto val = 0;
+        if (!splitLine[i].empty()) {
+          val = FileParserUtils::toInt(splitLine[i]);
+        }
+        atom->setProp("_ZBO_H", true);
+        atom->setNumExplicitHs(val);
+      }
+    }
+  }
+}
+
 // process (and remove) SGroups which modify the structure
 // and which we can unambiguously apply
 void processSGroups(RWMol *mol) {
@@ -2934,6 +3008,22 @@ void processSGroups(RWMol *mol) {
         } else if (field == "MRV_IMPLICIT_H") {
           // CXN extension to specify implicit Hs, used for aromatic rings
           processMrvImplicitH(*mol, sg);
+          sgsToRemove.push_back(sgIdx);
+          continue;
+        } else if (field == "ZBO") {
+          // RDKit extension for zero-order bonds
+          processZBO(*mol, sg);
+          sgsToRemove.push_back(sgIdx);
+          continue;
+        } else if (field == "ZCH") {
+          // RDKit extension for charge on atoms involved in zero-order bonds
+          processZCH(*mol, sg);
+          sgsToRemove.push_back(sgIdx);
+          continue;
+        } else if (field == "HYD") {
+          // RDKit extension for hydrogen-count on atoms involved in
+          // zero-order bonds
+          processHYD(*mol, sg);
           sgsToRemove.push_back(sgIdx);
           continue;
         }

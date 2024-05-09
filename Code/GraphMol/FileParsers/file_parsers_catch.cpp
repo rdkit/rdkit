@@ -11,7 +11,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <string_view>
+// #include <string_view>
 #include <streambuf>
 
 #include "RDGeneral/test.h"
@@ -1601,17 +1601,23 @@ H      0.635000    0.635000    0.635000
 
     auto *conf = new Conformer{7};
     conf->setId(0);
-    conf->setAtomPos(0, RDGeom::Point3D{0.402012650000000, -0.132994360000000, 1.000000170000000});
-    conf->setAtomPos(1, RDGeom::Point3D{0.876222600000000, 0.997390900000000,  1.000000030000000});
-    conf->setAtomPos(2, RDGeom::Point3D{0.366137990000000, 2.110718500000000,  0.999999820000000});
-    conf->setAtomPos(3, RDGeom::Point3D{2.486961570000000, 1.004799350000000,  0.999999990000000});
-    conf->setAtomPos(4, RDGeom::Point3D{3.033118410000000, 2.237399550000000,  1.000000100000000});
-    conf->setAtomPos(5, RDGeom::Point3D{3.007723370000000, 0.373992940000000,  2.077133250000000});
-    conf->setAtomPos(6, RDGeom::Point3D{3.007723400000000, 0.373993120000000,  -0.077133360000000});
+    conf->setAtomPos(0, RDGeom::Point3D{0.402012650000000, -0.132994360000000,
+                                        1.000000170000000});
+    conf->setAtomPos(1, RDGeom::Point3D{0.876222600000000, 0.997390900000000,
+                                        1.000000030000000});
+    conf->setAtomPos(2, RDGeom::Point3D{0.366137990000000, 2.110718500000000,
+                                        0.999999820000000});
+    conf->setAtomPos(3, RDGeom::Point3D{2.486961570000000, 1.004799350000000,
+                                        0.999999990000000});
+    conf->setAtomPos(4, RDGeom::Point3D{3.033118410000000, 2.237399550000000,
+                                        1.000000100000000});
+    conf->setAtomPos(5, RDGeom::Point3D{3.007723370000000, 0.373992940000000,
+                                        2.077133250000000});
+    conf->setAtomPos(6, RDGeom::Point3D{3.007723400000000, 0.373993120000000,
+                                        -0.077133360000000});
     mol->addConformer(conf);
 
     const std::string xyzblock = MolToXYZBlock(*mol, 0, 15);
-    std::cout << xyzblock << std::endl;
     std::string xyzblock_expected = R"XYZ(7
 CHEMBL506259
 O      0.402012650000000   -0.132994360000000    1.000000170000000
@@ -5067,6 +5073,38 @@ M  END
     Chirality::reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
   }
+  SECTION(
+      "Reapply the original wedging, regardless the bond type of wedged bonds") {
+    auto m = R"CTAB(
+  Mrv2311 04232413302D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 S -11.583 11.3533 0 0
+M  V30 2 C -12.9167 10.5833 0 0
+M  V30 3 O -11.583 12.8933 0 0
+M  V30 4 C -10.2493 10.5833 0 0
+M  V30 5 C -10.2493 9.0433 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 4 5
+M  V30 2 1 2 1
+M  V30 3 1 1 4
+M  V30 4 2 1 3 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
+    Chirality::reapplyMolBlockWedging(*m);
+    CHECK(m->getBondWithIdx(3)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+    Chirality::reapplyMolBlockWedging(*m, false);
+    CHECK(m->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
+  }
   SECTION("GitHub5448") {
     {
       auto m = R"CTAB(
@@ -6003,10 +6041,10 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     auto bondBlockStart = mae.find("m_bond[6]");
     REQUIRE(bondBlockStart != std::string::npos);
 
-    std::string_view ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
-    std::string_view atomBlock(&mae[atomBlockStart],
-                               bondBlockStart - atomBlockStart);
-    std::string_view bondBlock(&mae[bondBlockStart]);
+    std::string ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
+    std::string atomBlock(&mae[atomBlockStart],
+                          bondBlockStart - atomBlockStart);
+    std::string bondBlock(&mae[bondBlockStart]);
 
     // Check mol properties
     CHECK(ctBlock.find("s_m_title") != std::string::npos);
@@ -6135,10 +6173,10 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     auto bondBlockStart = mae.find("m_bond[6]");
     REQUIRE(bondBlockStart != std::string::npos);
 
-    std::string_view ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
-    std::string_view atomBlock(&mae[atomBlockStart],
-                               bondBlockStart - atomBlockStart);
-    std::string_view bondBlock(&mae[bondBlockStart]);
+    std::string ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
+    std::string atomBlock(&mae[atomBlockStart],
+                          bondBlockStart - atomBlockStart);
+    std::string bondBlock(&mae[bondBlockStart]);
 
     // Check mol properties
     CHECK(ctBlock.find("s_m_title") != std::string::npos);
@@ -6220,7 +6258,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     // Maeparser does not parse bond properties, so don't check them.
   }
   SECTION("Check reverse roundtrip") {
-    constexpr std::string_view maeBlock = R"MAE(f_m_ct {
+    std::string maeBlock = R"MAE(f_m_ct {
   s_m_title
   :::
   ""
@@ -6310,7 +6348,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     auto ctBlockStart = mae.find("f_m_ct");
     REQUIRE(ctBlockStart != std::string::npos);
 
-    std::string_view ctBlock(&mae[ctBlockStart]);
+    std::string ctBlock(&mae[ctBlockStart]);
 
     CHECK(ctBlock == MaeWriter::getText(*mol));
   }
@@ -6578,8 +6616,8 @@ TEST_CASE(
     auto bondBlockStart = mae.find("m_bond[2]");
     REQUIRE(bondBlockStart != std::string::npos);
 
-    const std::string_view atomBlock(&mae[atomBlockStart],
-                                     bondBlockStart - atomBlockStart);
+    const std::string atomBlock(&mae[atomBlockStart],
+                                bondBlockStart - atomBlockStart);
 
     CHECK(atomBlock.find(" -2 ") != std::string::npos);
   }
@@ -7092,7 +7130,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "GitHub Issue #7256: RDKit fails to parse \"M RAD\" lines with were radical is 0",
+    "GitHub Issue #7256: RDKit fails to parse \"M RAD\" lines where radical is 0",
     "[bug]") {
   const auto mb = R"CTAB(
      RDKit          2D
@@ -7108,4 +7146,92 @@ M  END
   REQUIRE(mol->getNumAtoms() == 1);
   const auto at = mol->getAtomWithIdx(0);
   CHECK(at->getNumRadicalElectrons() == 0);
+}
+
+TEST_CASE("ZBOs in V3K blocks") {
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  SECTION("basics") {
+    auto run_tests = [](auto &m) {
+      CHECK(m->getNumAtoms() == 2);
+      CHECK(m->getNumBonds() == 1);
+      CHECK(m->getBondWithIdx(0)->getBondType() == Bond::ZERO);
+      CHECK(m->getAtomWithIdx(0)->getFormalCharge() == 0);
+      CHECK(m->getAtomWithIdx(1)->getFormalCharge() == 0);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 3);
+      CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == 3);
+      CHECK(m->getAtomWithIdx(0)->hasProp("_ZBO_H"));
+    };
+    std::string fName;
+    fName = rdbase + "H3BNH3.mol";
+    auto m = v2::FileParsers::MolFromMolFile(fName);
+    REQUIRE(m);
+    {
+      INFO("v2000");
+      run_tests(m);
+    }
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("M  V30 1 0 1 2") == std::string::npos);
+    CHECK(mb.find("M  V30 1 1 1 2") != std::string::npos);
+    CHECK(mb.find("ZBO") != std::string::npos);
+    CHECK(mb.find("HYD") != std::string::npos);
+    CHECK(mb.find("ZCH") != std::string::npos);
+    auto m2 = v2::FileParsers::MolFromMolBlock(mb);
+    REQUIRE(m2);
+    {
+      INFO("v3000");
+      run_tests(m2);
+    }
+  }
+  SECTION("example") {
+    // from SI of Alex Clark's ZBO paper
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Cl 2.121320 1.060660 0.000000 0
+M  V30 2 I 1.060660 0.000000 0.000000 0
+M  V30 3 Cl 2.121320 -1.060660 0.000000 0
+M  V30 4 Cl -0.000000 -1.060660 0.000000 0
+M  V30 5 Cl 0.000000 1.060660 0.000000 0
+M  V30 6 I -1.060660 0.000000 0.000000 0
+M  V30 7 Cl -2.121320 -1.060660 0.000000 0
+M  V30 8 Cl -2.121320 1.060660 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 1 6 8
+M  V30 8 1 6 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(4 2 5 6 4) CBONDS=(2 4 8) FIELDNAME=ZBO
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 8);
+    CHECK(m->getNumBonds() == 8);
+    CHECK(m->getBondWithIdx(3)->getBondType() == Bond::ZERO);
+    CHECK(m->getBondWithIdx(7)->getBondType() == Bond::ZERO);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("ZBO") != std::string::npos);
+    CHECK(mb.find("HYD") != std::string::npos);
+    CHECK(mb.find("ZCH") != std::string::npos);
+    auto m2 = v2::FileParsers::MolFromMolBlock(mb);
+    REQUIRE(m2);
+    CHECK(m2->getNumAtoms() == 8);
+    CHECK(m2->getNumBonds() == 8);
+    CHECK(m2->getBondWithIdx(3)->getBondType() == Bond::ZERO);
+    CHECK(m2->getBondWithIdx(7)->getBondType() == Bond::ZERO);
+  }
 }

@@ -35,6 +35,7 @@ import copy
 import math
 
 try:
+  import matplotlib
   from matplotlib import cm
   from matplotlib.colors import LinearSegmentedColormap
 except ImportError:
@@ -126,14 +127,16 @@ def GetStandardizedWeights(weights):
   return weights, maxAbsWeight
 
 
-def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250, 250), sigma=None,
-                                coordScale=1.5, step=0.01, colors='k', contourLines=10, alpha=0.5,
-                                draw2d=None, **kwargs):
+def GetSimilarityMapFromWeights(mol, weights, draw2d, colorMap=None, scale=-1, size=(250, 250),
+                                sigma=None, coordScale=1.5, step=0.01, colors='k', contourLines=10,
+                                alpha=0.5, **kwargs):
   """
     Generates the similarity map for a molecule given the atomic weights.
 
     Parameters:
       mol -- the molecule of interest
+      weights -- the weights to use
+      draw2d -- the RDKit drawing object
       colorMap -- the matplotlib color map scheme, default is custom PiWG color map
       scale -- the scaling: scale < 0 -> the absolute maximum weight is used as maximum scale
                             scale = double -> this is the maximum scale
@@ -150,96 +153,54 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
   if mol.GetNumAtoms() < 2:
     raise ValueError("too few atoms")
 
-  if draw2d is not None:
-    mol = rdMolDraw2D.PrepareMolForDrawing(mol, addChiralHs=False)
-    if not mol.GetNumConformers():
-      rdDepictor.Compute2DCoords(mol)
-    if sigma is None:
-      if mol.GetNumBonds() > 0:
-        bond = mol.GetBondWithIdx(0)
-        idx1 = bond.GetBeginAtomIdx()
-        idx2 = bond.GetEndAtomIdx()
-        sigma = 0.3 * (mol.GetConformer().GetAtomPosition(idx1) -
-                       mol.GetConformer().GetAtomPosition(idx2)).Length()
-      else:
-        sigma = 0.3 * (mol.GetConformer().GetAtomPosition(0) -
-                       mol.GetConformer().GetAtomPosition(1)).Length()
-      sigma = round(sigma, 2)
-
-    sigmas = [sigma] * mol.GetNumAtoms()
-    locs = []
-    for i in range(mol.GetNumAtoms()):
-      p = mol.GetConformer().GetAtomPosition(i)
-      locs.append(Geometry.Point2D(p.x, p.y))
-    draw2d.ClearDrawing()
-    ps = Draw.ContourParams()
-    ps.fillGrid = True
-    ps.gridResolution = 0.1
-    ps.extraGridPadding = 0.5
-
-    if colorMap is not None:
-      if cm is not None and isinstance(colorMap, type(cm.Blues)):
-        # it's a matplotlib colormap:
-        clrs = [tuple(x) for x in colorMap([0, 0.5, 1])]
-      elif type(colorMap) == str:
-        if cm is None:
-          raise ValueError("cannot provide named colormaps unless matplotlib is installed")
-        clrs = [tuple(x) for x in cm.get_cmap(colorMap)([0, 0.5, 1])]
-      else:
-        clrs = [colorMap[0], colorMap[1], colorMap[2]]
-      ps.setColourMap(clrs)
-
-    Draw.ContourAndDrawGaussians(draw2d, locs, weights, sigmas, nContours=contourLines, params=ps)
-    draw2d.drawOptions().clearBackground = False
-    draw2d.DrawMolecule(mol)
-    return draw2d
-
-  fig = Draw.MolToMPL(mol, coordScale=coordScale, size=size, **kwargs)
+  if draw2d is None:
+    raise ValueError("the draw2d argument must be provided")
+  mol = rdMolDraw2D.PrepareMolForDrawing(mol, addChiralHs=False)
+  if not mol.GetNumConformers():
+    rdDepictor.Compute2DCoords(mol)
   if sigma is None:
     if mol.GetNumBonds() > 0:
       bond = mol.GetBondWithIdx(0)
       idx1 = bond.GetBeginAtomIdx()
       idx2 = bond.GetEndAtomIdx()
-      sigma = 0.3 * math.sqrt(
-        sum([(mol._atomPs[idx1][i] - mol._atomPs[idx2][i])**2 for i in range(2)]))
+      sigma = 0.3 * (mol.GetConformer().GetAtomPosition(idx1) -
+                     mol.GetConformer().GetAtomPosition(idx2)).Length()
     else:
-      sigma = 0.3 * \
-          math.sqrt(sum([(mol._atomPs[0][i] - mol._atomPs[1][i])**2 for i in range(2)]))
+      sigma = 0.3 * (mol.GetConformer().GetAtomPosition(0) -
+                     mol.GetConformer().GetAtomPosition(1)).Length()
     sigma = round(sigma, 2)
-  x, y, z = Draw.calcAtomGaussians(mol, sigma, weights=weights, step=step)
 
-  # scaling
-  if scale <= 0.0:
-    maxScale = max(math.fabs(numpy.min(z)), math.fabs(numpy.max(z)))
-  else:
-    maxScale = scale
+  sigmas = [sigma] * mol.GetNumAtoms()
+  locs = []
+  for i in range(mol.GetNumAtoms()):
+    p = mol.GetConformer().GetAtomPosition(i)
+    locs.append(Geometry.Point2D(p.x, p.y))
+  draw2d.ClearDrawing()
+  ps = Draw.ContourParams()
+  ps.fillGrid = True
+  ps.gridResolution = 0.1
+  ps.extraGridPadding = 0.5
 
-  # coloring
-  if colorMap is None:
-    if cm is None:
-      raise RuntimeError("matplotlib failed to import")
-    PiYG_cmap = cm.get_cmap('PiYG', 2)
-    colorMap = LinearSegmentedColormap.from_list(
-      'PiWG', [PiYG_cmap(0), (1.0, 1.0, 1.0), PiYG_cmap(1)], N=255)
+  if colorMap is not None:
+    if cm is not None and isinstance(colorMap, type(cm.Blues)):
+      # it's a matplotlib colormap:
+      clrs = [tuple(x) for x in colorMap([0, 0.5, 1])]
+    elif type(colorMap) == str:
+      if cm is None:
+        raise ValueError("cannot provide named colormaps unless matplotlib is installed")
+      clrs = [tuple(x) for x in matplotlib.colormaps[colorMap]([0, 0.5, 1])]
+    else:
+      clrs = [colorMap[0], colorMap[1], colorMap[2]]
+    ps.setColourMap(clrs)
 
-  fig.axes[0].imshow(z, cmap=colorMap, interpolation='bilinear', origin='lower',
-                     extent=(0, 1, 0, 1), vmin=-maxScale, vmax=maxScale)
-  # contour lines
-  # only draw them when at least one weight is not zero
-  if len([w for w in weights if w != 0.0]):
-    contourset = fig.axes[0].contour(x, y, z, contourLines, colors=colors, alpha=alpha, **kwargs)
-    for j, c in enumerate(contourset.collections):
-      if contourset.levels[j] == 0.0:
-        c.set_linewidth(0.0)
-      elif contourset.levels[j] < 0:
-        c.set_dashes([(0, (3.0, 3.0))])
-  fig.axes[0].set_axis_off()
-
-  return fig
+  Draw.ContourAndDrawGaussians(draw2d, locs, weights, sigmas, nContours=contourLines, params=ps)
+  draw2d.drawOptions().clearBackground = False
+  draw2d.DrawMolecule(mol)
+  return draw2d
 
 
-def GetSimilarityMapForFingerprint(refMol, probeMol, fpFunction, metric=DataStructs.DiceSimilarity,
-                                   **kwargs):
+def GetSimilarityMapForFingerprint(refMol, probeMol, fpFunction, draw2d,
+                                   metric=DataStructs.DiceSimilarity, **kwargs):
   """
     Generates the similarity map for a given reference and probe molecule,
     fingerprint function and similarity metric.
@@ -254,11 +215,11 @@ def GetSimilarityMapForFingerprint(refMol, probeMol, fpFunction, metric=DataStru
 
   weights = GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric)
   weights, maxWeight = GetStandardizedWeights(weights)
-  fig = GetSimilarityMapFromWeights(probeMol, weights, **kwargs)
-  return fig, maxWeight
+  draw2d = GetSimilarityMapFromWeights(probeMol, weights, draw2d, **kwargs)
+  return draw2d, maxWeight
 
 
-def GetSimilarityMapForModel(probeMol, fpFunction, predictionFunction, **kwargs):
+def GetSimilarityMapForModel(probeMol, fpFunction, predictionFunction, draw2d, **kwargs):
   """
     Generates the similarity map for a given ML model and probe molecule,
     and fingerprint function.
@@ -272,7 +233,7 @@ def GetSimilarityMapForModel(probeMol, fpFunction, predictionFunction, **kwargs)
 
   weights = GetAtomicWeightsForModel(probeMol, fpFunction, predictionFunction)
   weights, maxWeight = GetStandardizedWeights(weights)
-  fig = GetSimilarityMapFromWeights(probeMol, weights, **kwargs)
+  fig = GetSimilarityMapFromWeights(probeMol, weights, draw2d, **kwargs)
   return fig, maxWeight
 
 

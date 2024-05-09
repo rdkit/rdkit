@@ -388,9 +388,9 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
   }
 }
 
-void reapplyWedging(ROMol &mol) {
+void reapplyWedging(ROMol &mol, bool allBondTypes) {
   auto &wmol = static_cast<RWMol &>(mol);
-  RDKit::Chirality::reapplyMolBlockWedging(wmol);
+  RDKit::Chirality::reapplyMolBlockWedging(wmol, allBondTypes);
 }
 
 MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
@@ -968,6 +968,25 @@ ROMol *molzipHelper(python::object &pmols, const MolzipParams &p) {
   }
   return molzip(*mols, p).release();
 }
+
+ROMol *rgroupRowZipHelper(python::dict row, const MolzipParams &p) {
+  std::map<std::string, ROMOL_SPTR>  rgroup_row;
+  python::list items = row.items();
+  for(size_t i = 0; i < (size_t) python::len(items); ++i) {
+    python::object key = items[i][0];
+    python::object value = items[i][1];
+    python::extract<std::string> rgroup_key(key);
+    python::extract<ROMOL_SPTR> mol(value);
+    if(rgroup_key.check() && mol.check()) {
+      rgroup_row[rgroup_key] = mol;
+    } else {
+      // raise value error
+      throw ValueErrorException("Unable to retrieve rgroup key and molecule from dictionary");
+    }
+  }
+
+  return molzip(rgroup_row, p).release();
+}  
 
 python::tuple hasQueryHsHelper(const ROMol &m) {
   python::list res;
@@ -2448,9 +2467,12 @@ ARGUMENTS:\n\
           ARGUMENTS:\n\
         \n\
             - molecule: the molecule to update\n\
+            - allBondTypes: reapply the wedging also on bonds other\n\
+              than single and aromatic ones\n\
         \n\
         \n";
-    python::def("ReapplyMolBlockWedging", reapplyWedging, (python::arg("mol")),
+    python::def("ReapplyMolBlockWedging", reapplyWedging,
+                (python::arg("mol"), python::arg("allBondTypes") = true),
                 docString.c_str());
 
     docString =
@@ -2814,6 +2836,24 @@ using the given matching parameters.  The first molecule in the list\n\
 must be the core",
         python::return_value_policy<python::manage_new_object>());
 
+    docString =
+      "zip an RGroupRow together to recreate the original molecule.  This correctly handles\n"
+      "broken cycles that can occur in decompositions.\n"
+      " example:\n\n"
+      "  >>> from rdkit import Chem\n"
+      "  >>> from rdkit.Chem import rdRGroupDecomposition as rgd\n"
+      "  >>> core = Chem.MolFromSmiles('CO')\n"
+      "  >>> mols = [Chem.MolFromSmiles('C1NNO1')]\n"
+      "  >>> rgroups, unmatched = rgd.RGroupDecompose(core, mols)\n"
+      "  >>> for rgroup in rgroups:\n"
+      "  ...     mol = rgd.molzip(rgroup)\n"
+      "\n";
+    python::def("molzip",
+		(ROMol * (*)(python::dict, const MolzipParams &)) & rgroupRowZipHelper,
+		(python::arg("row"), python::arg("params") = MolzipParams()),
+		docString.c_str(),
+		python::return_value_policy<python::manage_new_object>());	
+    
     // ------------------------------------------------------------------------
     docString =
         "Adds a recursive query to an atom\n\

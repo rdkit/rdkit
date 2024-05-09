@@ -771,3 +771,26 @@ TEST_CASE("topological torsions shorted paths") {
     CHECK(fp->getNumOnBits() == 1);
   }
 }
+
+TEST_CASE(
+    "GitHub #7318: Utils.AtomPairs.NumPiElectrons fails on atoms with dative bonds",
+    "[bug]") {
+  auto mol =
+      "O=C1[O-]->[Cr+3]23(<-[O-]C(=O)C4=CC=CC=N->24)(<-[O-]C(=O)C2=CC=CC=N->32)<-N2=CC=CC=C12"_smiles;
+  REQUIRE(mol);
+
+  for (auto bond_idx : {2, 3, 12, 21, 28, 31}) {
+    INFO("bond = " << bond_idx);
+    auto bond = mol->getBondWithIdx(bond_idx);
+    REQUIRE(bond->getBondType() == Bond::DATIVE);
+
+    const auto atom = bond->getBeginAtom();
+    CHECK(atom->getHybridization() == Atom::SP2);
+
+    if (atom->getAtomicNum() == 8) {
+      CHECK(numPiElectrons(*atom) == 0);
+    } else {
+      CHECK(numPiElectrons(*atom) == 1);
+    }
+  }
+}

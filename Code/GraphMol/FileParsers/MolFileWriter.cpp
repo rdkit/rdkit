@@ -923,6 +923,9 @@ int GetV3000BondCode(const Bond *bond) {
       case Bond::HYDROGEN:
         res = 10;
         break;
+      case Bond::ZERO:
+        res = 1;
+        break;
       default:
         res = 0;
         break;
@@ -993,11 +996,62 @@ void createSMARTSQSubstanceGroups(ROMol &mol) {
     }
   }
 }
+
+void createZBOSubstanceGroups(ROMol &mol) {
+  SubstanceGroup bsg(&mol, "DAT");
+  bsg.setProp("FIELDNAME", "ZBO");
+  boost::dynamic_bitset<> atomsAffected(mol.getNumAtoms(), 0);
+  for (const auto bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::ZERO) {
+      bsg.addBondWithIdx(bond->getIdx());
+      atomsAffected[bond->getBeginAtomIdx()] = 1;
+      atomsAffected[bond->getEndAtomIdx()] = 1;
+    }
+  }
+  if (atomsAffected.any()) {
+    for (auto i = 0u; i < atomsAffected.size(); ++i) {
+      if (atomsAffected[i]) {
+        bsg.addAtomWithIdx(i);
+      }
+    }
+    SubstanceGroup asg(&mol, "DAT");
+    asg.setProp("FIELDNAME", "HYD");
+    SubstanceGroup zsg(&mol, "DAT");
+    zsg.setProp("FIELDNAME", "ZCH");
+    std::string asgText;
+    std::string zsgText;
+    for (auto i = 0u; i < atomsAffected.size(); ++i) {
+      if (atomsAffected[i]) {
+        const Atom *atom = mol.getAtomWithIdx(i);
+        asg.addAtomWithIdx(i);
+        if (!asgText.empty()) {
+          asgText += ";";
+        }
+        asgText += std::to_string(atom->getTotalNumHs());
+        zsg.addAtomWithIdx(i);
+        if (!zsgText.empty()) {
+          zsgText += ";";
+        }
+        zsgText += std::to_string(atom->getFormalCharge());
+      }
+    }
+    addSubstanceGroup(mol, bsg);
+
+    std::vector<std::string> aDataFields{asgText};
+
+    asg.setProp("DATAFIELDS", aDataFields);
+    addSubstanceGroup(mol, asg);
+    std::vector<std::string> zDataFields{zsgText};
+    zsg.setProp("DATAFIELDS", zDataFields);
+    addSubstanceGroup(mol, zsg);
+  }
+}
 }  // namespace
 namespace FileParserUtils {
 void moveAdditionalPropertiesToSGroups(RWMol &mol) {
   GenericGroups::convertGenericQueriesToSubstanceGroups(mol);
   createSMARTSQSubstanceGroups(mol);
+  createZBOSubstanceGroups(mol);
 }
 }  // namespace FileParserUtils
 const std::string GetV3000MolFileBondLine(
@@ -1107,7 +1161,8 @@ void appendEnhancedStereoGroups(
   }
 }
 namespace FileParserUtils {
-std::string getV3000CTAB(const ROMol &tmol, int confId, unsigned int precision) {
+std::string getV3000CTAB(const ROMol &tmol, int confId,
+                         unsigned int precision) {
   auto nAtoms = tmol.getNumAtoms();
   auto nBonds = tmol.getNumBonds();
   const auto &sgroups = getSubstanceGroups(tmol);
@@ -1179,8 +1234,8 @@ std::string getV3000CTAB(const ROMol &tmol, int confId, unsigned int precision) 
 //  gets a mol block as a string
 //
 //------------------------------------------------
-std::string outputMolToMolBlock(const RWMol &tmol, int confId,
-                                bool forceV3000, unsigned int precision) {
+std::string outputMolToMolBlock(const RWMol &tmol, int confId, bool forceV3000,
+                                unsigned int precision) {
   std::string res;
   bool isV3000;
   unsigned int nAtoms, nBonds, nLists, chiralFlag, nsText, nRxnComponents;
@@ -1305,8 +1360,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   return res;
 }
 
-std::string MolToMolBlock(const ROMol &mol,
-                          const MolWriterParams& params,
+std::string MolToMolBlock(const ROMol &mol, const MolWriterParams &params,
                           int confId) {
   RDKit::Utils::LocaleSwitcher switcher;
   RWMol trwmol(mol);
@@ -1337,7 +1391,8 @@ std::string MolToMolBlock(const ROMol &mol,
   FileParserUtils::moveAdditionalPropertiesToSGroups(trwmol);
 
   try {
-    return outputMolToMolBlock(trwmol, confId, params.forceV3000, params.precision);
+    return outputMolToMolBlock(trwmol, confId, params.forceV3000,
+                               params.precision);
   } catch (RequiresV3000Exception &) {
     return outputMolToMolBlock(trwmol, confId, true, params.precision);
   }
@@ -1348,10 +1403,8 @@ std::string MolToMolBlock(const ROMol &mol,
 //  Dump a molecule to a file
 //
 //------------------------------------------------
-void MolToMolFile(const ROMol &mol,
-                  const std::string &fName,
-                  const MolWriterParams &params,
-                  int confId) {
+void MolToMolFile(const ROMol &mol, const std::string &fName,
+                  const MolWriterParams &params, int confId) {
   auto *outStream = new std::ofstream(fName.c_str());
   if (!(*outStream) || outStream->bad()) {
     delete outStream;
@@ -1359,8 +1412,7 @@ void MolToMolFile(const ROMol &mol,
     errout << "Bad output file " << fName;
     throw BadFileException(errout.str());
   }
-  std::string outString =
-      MolToMolBlock(mol, params, confId);
+  std::string outString = MolToMolBlock(mol, params, confId);
   *outStream << outString;
   delete outStream;
 }

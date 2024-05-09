@@ -1,0 +1,63 @@
+steps:
+- bash: |
+    sudo apt-get install g++ wget make libgl1-mesa-dev mesa-common-dev
+    source ${CONDA}/etc/profile.d/conda.sh
+    sudo chown -R ${USER} ${CONDA}
+    conda config --set always_yes yes --set changeps1 no
+    conda update -q conda
+    conda info -a
+    conda create --name rdkit_build -c conda-forge $(python) cmake \
+        libboost=$(boost_version) \
+        libboost-devel=$(boost_version) \
+        eigen cairo freetype
+    conda activate rdkit_build
+  displayName: Setup build environment (no Qt due to versioning problems)
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    export CXXFLAGS="${CXXFLAGS} -Wall -Werror -Wextra --sanitize=undefined"
+    mkdir build && cd build && \
+    cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DRDK_INSTALL_INTREE=ON \
+    -DRDK_INSTALL_STATIC_LIBS=OFF \
+    -DRDK_BUILD_CPP_TESTS=ON \
+    -DRDK_BUILD_PYTHON_WRAPPERS=OFF \
+    -DRDK_BUILD_COORDGEN_SUPPORT=ON \
+    -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
+    -DRDK_OPTIMIZE_POPCNT=ON \
+    -DRDK_BUILD_TEST_GZIP=ON \
+    -DRDK_BUILD_FREESASA_SUPPORT=ON \
+    -DRDK_BUILD_AVALON_SUPPORT=ON \
+    -DRDK_BUILD_INCHI_SUPPORT=ON \
+    -DRDK_BUILD_YAEHMOP_SUPPORT=ON \
+    -DRDK_BUILD_XYZ2MOL_SUPPORT=ON \
+    -DRDK_BUILD_CAIRO_SUPPORT=ON \
+    -DRDK_BUILD_SWIG_WRAPPERS=OFF \
+    -DRDK_SWIG_STATIC=OFF \
+    -DRDK_BUILD_THREADSAFE_SSS=ON \
+    -DRDK_TEST_MULTITHREADED=ON \
+    -DRDK_CFFI_STATIC=OFF \
+    -DRDK_BUILD_CFFI_LIB=ON
+  displayName: Configure build (Run CMake)
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    cd build
+    make -j $( $(number_of_cores) ) install
+  displayName: Build
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    export RDBASE=`pwd`
+    export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
+    echo "LD_LIBRARY_PATH: " $LD_LIBRARY_PATH
+    export QT_QPA_PLATFORM='offscreen'
+    cd build
+    ctest -j $( $(number_of_cores) ) --output-on-failure -T Test
+  displayName: Run tests
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'CTest'
+    testResultsFiles: 'build/Testing/*/Test.xml'
+    testRunTitle: $(system.phasedisplayname) CTest Test Run

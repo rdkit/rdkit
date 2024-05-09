@@ -19,139 +19,7 @@ from rdkit import RDConfig
 from rdkit import rdBase
 from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
-from rdkit.Chem.Draw.MolDrawing import DrawingOptions
-from rdkit.Chem.Draw.MolDrawing import MolDrawing
 from rdkit.Chem.Draw.rdMolDraw2D import *
-
-
-def _getCanvas():
-  useAGG = False
-  useCairo = False
-  useSping = False
-  Canvas = None
-  if not os.environ.get('RDKIT_CANVAS', ''):
-    try:
-      from rdkit.Chem.Draw.cairoCanvas import Canvas
-      useCairo = True
-    except ImportError:
-      try:
-        from rdkit.Chem.Draw.aggCanvas import Canvas
-        useAGG = True
-      except ImportError:
-        from rdkit.Chem.Draw.spingCanvas import Canvas
-        useSping = True
-  else:
-    canv = os.environ['RDKIT_CANVAS'].lower()
-    if canv == 'cairo':
-      from rdkit.Chem.Draw.cairoCanvas import Canvas
-      useCairo = True
-    elif canv == 'agg':
-      from rdkit.Chem.Draw.aggCanvas import Canvas
-      useAGG = True
-    else:
-      from rdkit.Chem.Draw.spingCanvas import Canvas
-      useSping = True
-  if useSping:
-    # <- the sping canvas doesn't support unicode well
-    DrawingOptions.radicalSymbol = '.'
-  return useAGG, useCairo, Canvas
-
-
-def _createCanvas(size):
-  useAGG, useCairo, Canvas = _getCanvas()
-  if useAGG or useCairo:
-    from PIL import Image
-    img = Image.new("RGBA", size, (0, 0, 0, 0))
-    canvas = Canvas(img)
-  else:
-    from rdkit.Chem.Draw.spingCanvas import Canvas
-    canvas = Canvas(size=size, name='MolToImageFile')
-    img = canvas._image
-  return img, canvas
-
-
-def _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas, **kwargs):
-  """Returns a PIL image containing a drawing of the molecule using the legacy drawing code
-
-      ARGUMENTS:
-
-        - kekulize: run kekulization routine on input `mol` (default True)
-
-        - size: final image size, in pixel (default (300,300))
-
-        - wedgeBonds: draw wedge (stereo) bonds (default True)
-
-        - highlightAtoms: list of atoms to highlight (default [])
-
-        - highlightMap: dictionary of (atom, color) pairs (default None)
-
-        - highlightBonds: list of bonds to highlight (default [])
-
-        - highlightColor: RGB color as tuple (default [1, 0, 0])
-
-      NOTE:
-
-            use 'matplotlib.colors.to_rgb()' to convert string and
-            HTML color codes into the RGB tuple representation, eg.
-
-              from matplotlib.colors import ColorConverter
-              img = Draw.MolToImage(m, highlightAtoms=[1,2], highlightColor=ColorConverter().to_rgb('aqua'))
-              img.save("molecule.png")
-
-      RETURNS:
-
-        a PIL Image object
-  """
-  if not mol:
-    raise ValueError('Null molecule provided')
-  if canvas is None:
-    img, canvas = _createCanvas(size)
-  else:
-    img = None
-
-  options = options or DrawingOptions()
-  if fitImage:
-    options.dotsPerAngstrom = int(min(size) / 10)
-  options.wedgeDashedBonds = wedgeBonds
-  if 'highlightColor' in kwargs:
-    color = kwargs.pop('highlightColor', (1, 0, 0))
-    options.selectColor = color
-
-  drawer = MolDrawing(canvas=canvas, drawingOptions=options)
-
-  if kekulize:
-    from rdkit import Chem
-    mol = Chem.Mol(mol.ToBinary())
-    Chem.Kekulize(mol)
-
-  if not mol.GetNumConformers():
-    from rdkit.Chem import AllChem
-    AllChem.Compute2DCoords(mol)
-
-  if 'legend' in kwargs:
-    legend = kwargs['legend']
-    del kwargs['legend']
-  else:
-    legend = ''
-
-  drawer.AddMol(mol, **kwargs)
-
-  if legend:
-    from rdkit.Chem.Draw.MolDrawing import Font
-    bbox = drawer.boundingBoxes[mol]
-    pos = size[0] / 2, int(.94 * size[1]), 0  # the 0.94 is extremely empirical
-    # canvas.addCanvasPolygon(((bbox[0],bbox[1]),(bbox[2],bbox[1]),(bbox[2],bbox[3]),(bbox[0],bbox[3])),
-    #                         color=(1,0,0),fill=False,stroke=True)
-    # canvas.addCanvasPolygon(((0,0),(0,size[1]),(size[0],size[1]),(size[0],0)   ),
-    #                         color=(0,0,1),fill=False,stroke=True)
-    font = Font(face='sans', size=12)
-    canvas.addCanvasText(legend, pos, font)
-
-  if kwargs.get('returnCanvas', False):
-    return img, canvas, drawer
-  else:
-    canvas.flush()
-    return img
 
 
 def _sip_available():
@@ -199,7 +67,7 @@ if _sip_available():
 
 
 def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
-               canvas=None, **kwargs):
+               **kwargs):
   """Returns a PIL image containing a drawing of the molecule
 
       ARGUMENTS:
@@ -231,49 +99,12 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
   """
   if not mol:
     raise ValueError('Null molecule provided')
-  if canvas is not None or not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-    return _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas, **kwargs)
-  if type(options) == DrawingOptions:
-    warnings.warn(
-      "legacy DrawingOptions not translated for new drawing code, please update manually",
-      DeprecationWarning)
-    options = None
+  if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+    raise RuntimeError("MolToImage requires that the RDKit be built with Cairo support")
   return _moltoimg(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''),
                    highlightBonds=kwargs.get('highlightBonds',
                                              []), drawOptions=options, kekulize=kekulize,
                    wedgeBonds=wedgeBonds, highlightColor=kwargs.get('highlightColor', None))
-
-
-def _legacyMolToFile(mol, fileName, size, kekulize, wedgeBonds, imageType, fitImage, options,
-                     **kwargs):
-  """ Generates a drawing of a molecule and writes it to a file
-  """
-  if options is None:
-    options = DrawingOptions()
-  useAGG, useCairo, Canvas = _getCanvas()
-  if fitImage:
-    options.dotsPerAngstrom = int(min(size) / 10)
-  options.wedgeDashedBonds = wedgeBonds
-  if useCairo or useAGG:
-    canvas = Canvas(size=size, imageType=imageType, fileName=fileName)
-  else:
-    options.radicalSymbol = '.'  # <- the sping canvas doesn't support unicode well
-    canvas = Canvas(size=size, name=fileName, imageType=imageType)
-  drawer = MolDrawing(canvas=canvas, drawingOptions=options)
-  if kekulize:
-    from rdkit import Chem
-    mol = Chem.Mol(mol.ToBinary())
-    Chem.Kekulize(mol)
-
-  if not mol.GetNumConformers():
-    from rdkit.Chem import AllChem
-    AllChem.Compute2DCoords(mol)
-
-  drawer.AddMol(mol, **kwargs)
-  if useCairo or useAGG:
-    canvas.flush()
-  else:
-    canvas.save()
 
 
 def MolToFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=None,
@@ -290,14 +121,8 @@ def MolToFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, im
     imageType = os.path.splitext(filename)[1][1:]
 
   if imageType not in ('svg', 'png'):
-    _legacyMolToFile(mol, filename, size, kekulize, wedgeBonds, imageType, fitImage, options,
-                     **kwargs)
+    raise ValueError('only PNG and SVG image types are supported')
 
-  if type(options) == DrawingOptions:
-    warnings.warn(
-      "legacy DrawingOptions not translated for new drawing code, please update manually",
-      DeprecationWarning)
-    options = None
   if imageType == 'png':
     drawfn = _moltoimg
     mode = 'b'
@@ -312,15 +137,6 @@ def MolToFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, im
   with open(filename, 'w+' + mode) as outf:
     outf.write(data)
     outf.close()
-
-
-def MolToImageFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, **kwargs):
-  """  DEPRECATED:  please use MolToFile instead
-
-  """
-  warnings.warn("MolToImageFile is deprecated, please use MolToFile instead", DeprecationWarning)
-  img = MolToImage(mol, size=size, kekulize=kekulize, wedgeBonds=wedgeBonds, **kwargs)
-  img.save(filename)
 
 
 def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit Molecule',
@@ -343,39 +159,6 @@ def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit M
   if stayInFront:
     tkRoot.attributes('-topmost', True)
   tkRoot.mainloop()
-
-
-def MolToMPL(mol, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=None, fitImage=False,
-             options=None, **kwargs):
-  """ Generates a drawing of a molecule on a matplotlib canvas
-  """
-  if not mol:
-    raise ValueError('Null molecule provided')
-  from rdkit.Chem.Draw.mplCanvas import Canvas
-  canvas = Canvas(size)
-  if options is None:
-    options = DrawingOptions()
-    options.bgColor = None
-  if fitImage:
-    options.dotsPerAngstrom = int(min(size) / 10)
-  options.wedgeDashedBonds = wedgeBonds
-  drawer = MolDrawing(canvas=canvas, drawingOptions=options)
-  omol = mol
-  if kekulize:
-    from rdkit import Chem
-    mol = Chem.Mol(mol.ToBinary())
-    Chem.Kekulize(mol)
-
-  if not mol.GetNumConformers():
-    from rdkit.Chem import AllChem
-    AllChem.Compute2DCoords(mol)
-
-  drawer.AddMol(mol, **kwargs)
-  omol._atomPs = drawer.atomPs[mol]
-  for k, v in omol._atomPs.items():
-    omol._atomPs[k] = canvas.rescalePt(v)
-  canvas._figure.set_size_inches(float(size[0]) / 100, float(size[1]) / 100)
-  return canvas._figure
 
 
 def _bivariate_normal(X, Y, sigmax=1.0, sigmay=1.0, mux=0.0, muy=0.0, sigmaxy=0.0):
@@ -468,31 +251,24 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
         mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
     except ValueError:  # <- can happen on a kekulization failure
       mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
-  if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-    img = MolToImage(mol, sz, legend=legend, highlightAtoms=highlights, **kwargs)
-    if returnPNG:
-      bio = BytesIO()
-      img.save(bio, format='PNG')
-      img = bio.getvalue()
+  d2d = rdMolDraw2D.MolDraw2DCairo(sz[0], sz[1])
+  if drawOptions is not None:
+    d2d.SetDrawOptions(drawOptions)
+  if 'highlightColor' in kwargs and kwargs['highlightColor']:
+    d2d.drawOptions().setHighlightColour(kwargs['highlightColor'])
+  # we already prepared the molecule:
+  d2d.drawOptions().prepareMolsBeforeDrawing = False
+  bondHighlights = kwargs.get('highlightBonds', None)
+  if bondHighlights is not None:
+    d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [],
+                     highlightBonds=bondHighlights)
   else:
-    d2d = rdMolDraw2D.MolDraw2DCairo(sz[0], sz[1])
-    if drawOptions is not None:
-      d2d.SetDrawOptions(drawOptions)
-    if 'highlightColor' in kwargs and kwargs['highlightColor']:
-      d2d.drawOptions().setHighlightColour(kwargs['highlightColor'])
-    # we already prepared the molecule:
-    d2d.drawOptions().prepareMolsBeforeDrawing = False
-    bondHighlights = kwargs.get('highlightBonds', None)
-    if bondHighlights is not None:
-      d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [],
-                       highlightBonds=bondHighlights)
-    else:
-      d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [])
-    d2d.FinishDrawing()
-    if returnPNG:
-      img = d2d.GetDrawingText()
-    else:
-      img = _drawerToImage(d2d)
+    d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [])
+  d2d.FinishDrawing()
+  if returnPNG:
+    img = d2d.GetDrawingText()
+  else:
+    img = _drawerToImage(d2d)
   return img
 
 
@@ -540,37 +316,24 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
     nRows += 1
 
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-    from PIL import Image
-    res = Image.new("RGBA", (molsPerRow * subImgSize[0], nRows * subImgSize[1]), (255, 255, 255, 0))
-    for i, mol in enumerate(mols):
-      row = i // molsPerRow
-      col = i % molsPerRow
-      highlights = None
-      if highlightAtomLists and highlightAtomLists[i]:
-        highlights = highlightAtomLists[i]
-      if highlightBondLists and highlightBondLists[i]:
-        kwargs["highlightBonds"] = highlightBondLists[i]
-      if mol is not None:
-        img = _moltoimg(mol, subImgSize, highlights, legends[i], **kwargs)
-        res.paste(img, (col * subImgSize[0], row * subImgSize[1]))
+    raise RuntimeError("MolsToGridImage requires that the RDKit be built with Cairo support")
+  fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
+  d2d = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+  if drawOptions is not None:
+    d2d.SetDrawOptions(drawOptions)
   else:
-    fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
-    d2d = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
-    if drawOptions is not None:
-      d2d.SetDrawOptions(drawOptions)
-    else:
-      dops = d2d.drawOptions()
-      for k, v in list(kwargs.items()):
-        if hasattr(dops, k):
-          setattr(dops, k, v)
-          del kwargs[k]
-    d2d.DrawMolecules(list(mols), legends=legends or None, highlightAtoms=highlightAtomLists,
-                      highlightBonds=highlightBondLists, **kwargs)
-    d2d.FinishDrawing()
-    if not returnPNG:
-      res = _drawerToImage(d2d)
-    else:
-      res = d2d.GetDrawingText()
+    dops = d2d.drawOptions()
+    for k, v in list(kwargs.items()):
+      if hasattr(dops, k):
+        setattr(dops, k, v)
+        del kwargs[k]
+  d2d.DrawMolecules(list(mols), legends=legends or None, highlightAtoms=highlightAtomLists,
+                    highlightBonds=highlightBondLists, **kwargs)
+  d2d.FinishDrawing()
+  if not returnPNG:
+    res = _drawerToImage(d2d)
+  else:
+    res = d2d.GetDrawingText()
 
   return res
 
@@ -675,7 +438,7 @@ def _MolsNestedToLinear(molsMatrix, legendsMatrix=None, highlightAtomListsMatrix
 def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
                           highlightAtomListsMatrix=None, highlightBondListsMatrix=None,
                           useSVG=False, returnPNG=False, **kwargs):
-  """Creates a mol grid image from a nested data structure (where each data substructure represents a row),
+  r"""Creates a mol grid image from a nested data structure (where each data substructure represents a row),
   padding rows as needed so all rows are the length of the longest row
           ARGUMENTS:
 
@@ -768,7 +531,7 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
     molsMatrix, legendsMatrix, highlightAtomListsMatrix, highlightBondListsMatrix)
 
   return MolsToGridImage(mols, molsPerRow=molsPerRow, subImgSize=subImgSize, legends=legends,
-                         highlightAtomLists=highlightAtomLists,
+                         highlightAtomLists=highlightAtomLists, useSVG=useSVG, returnPNG=returnPNG,
                          highlightBondLists=highlightBondLists, **kwargs)
 
 
@@ -823,86 +586,23 @@ def MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
                             highlightBondLists=highlightBondLists, returnPNG=returnPNG, **kwargs)
 
 
-def _legacyReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
-  from PIL import Image
-
-  mols = []
-  for i in range(rxn.GetNumReactantTemplates()):
-    tmpl = rxn.GetReactantTemplate(i)
-    tmpl.UpdatePropertyCache(False)
-    mols.append(tmpl)
-  mols.append(None)
-  for i in range(rxn.GetNumProductTemplates()):
-    tmpl = rxn.GetProductTemplate(i)
-    tmpl.UpdatePropertyCache(False)
-    mols.append(tmpl)
-
-  res = Image.new("RGBA", (subImgSize[0] * len(mols), subImgSize[1]), (255, 255, 255, 0))
-  for i, mol in enumerate(mols):
-    if mol is not None:
-      nimg = MolToImage(mol, subImgSize, kekulize=False, **kwargs)
-    else:
-      nimg, canvas = _createCanvas(subImgSize)
-      p0 = (10, subImgSize[1] // 2)
-      p1 = (subImgSize[0] - 10, subImgSize[1] // 2)
-      p3 = (subImgSize[0] - 20, subImgSize[1] // 2 - 10)
-      p4 = (subImgSize[0] - 20, subImgSize[1] // 2 + 10)
-      canvas.addCanvasLine(p0, p1, lineWidth=2, color=(0, 0, 0))
-      canvas.addCanvasLine(p3, p1, lineWidth=2, color=(0, 0, 0))
-      canvas.addCanvasLine(p4, p1, lineWidth=2, color=(0, 0, 0))
-      if hasattr(canvas, 'flush'):
-        canvas.flush()
-      else:
-        canvas.save()
-    res.paste(nimg, (i * subImgSize[0], 0))
-  return res
-
-
 def ReactionToImage(rxn, subImgSize=(200, 200), useSVG=False, drawOptions=None, returnPNG=False,
                     **kwargs):
   if not useSVG and not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-    return _legacyReactionToImage(rxn, subImgSize=subImgSize, **kwargs)
+    raise RuntimeError("PNG output requires that the RDKit be built with Cairo support")
+  width = subImgSize[0] * (rxn.GetNumReactantTemplates() + rxn.GetNumProductTemplates() + 1)
+  if useSVG:
+    d = rdMolDraw2D.MolDraw2DSVG(width, subImgSize[1])
   else:
-    width = subImgSize[0] * (rxn.GetNumReactantTemplates() + rxn.GetNumProductTemplates() + 1)
-    if useSVG:
-      d = rdMolDraw2D.MolDraw2DSVG(width, subImgSize[1])
-    else:
-      d = rdMolDraw2D.MolDraw2DCairo(width, subImgSize[1])
-    if drawOptions is not None:
-      d.SetDrawOptions(drawOptions)
-    d.DrawReaction(rxn, **kwargs)
-    d.FinishDrawing()
-    if useSVG or returnPNG:
-      return d.GetDrawingText()
-    else:
-      return _drawerToImage(d)
-
-
-def MolToQPixmap(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
-                 **kwargs):
-  """ Generates a drawing of a molecule on a Qt QPixmap
-    """
-  if not mol:
-    raise ValueError('Null molecule provided')
-  from rdkit.Chem.Draw.qtCanvas import Canvas
-  canvas = Canvas(size)
-  if options is None:
-    options = DrawingOptions()
-  options.bgColor = None
-  if fitImage:
-    options.dotsPerAngstrom = int(min(size) / 10)
-  options.wedgeDashedBonds = wedgeBonds
-  if kekulize:
-    from rdkit import Chem
-    mol = Chem.Mol(mol.ToBinary())
-    Chem.Kekulize(mol)
-  if not mol.GetNumConformers():
-    from rdkit.Chem import AllChem
-    AllChem.Compute2DCoords(mol)
-  drawer = MolDrawing(canvas=canvas, drawingOptions=options)
-  drawer.AddMol(mol, **kwargs)
-  canvas.flush()
-  return canvas.pixmap
+    d = rdMolDraw2D.MolDraw2DCairo(width, subImgSize[1])
+  if drawOptions is not None:
+    d.SetDrawOptions(drawOptions)
+  d.DrawReaction(rxn, **kwargs)
+  d.FinishDrawing()
+  if useSVG or returnPNG:
+    return d.GetDrawingText()
+  else:
+    return _drawerToImage(d)
 
 
 def DebugDraw(mol, size=(350, 350), drawer=None, asSVG=True, useBW=True, includeHLabels=True,

@@ -3920,6 +3920,19 @@ CAS<~>
     self.assertEqual(ap.GetAtomWithIdx(0).GetPropsAsDict()["foo"], "bar")
     self.assertEqual(ap.GetAtomWithIdx(1).GetPropsAsDict()["foo"], "bar")
 
+  def testReplaceAtomWithQueryAtom(self):
+    mol = Chem.MolFromSmiles("CC(C)C")
+    qmol = Chem.MolFromSmiles("C")
+    matches = mol.GetSubstructMatches(qmol)
+    self.assertEqual(((0,), (1,), (2,), (3,)), matches)
+
+    atom = qmol.GetAtomWithIdx(0)
+    natom = rdqueries.ReplaceAtomWithQueryAtom(qmol, atom)
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    natom.ExpandQuery(qa, Chem.CompositeQueryType.COMPOSITE_AND)
+    matches = mol.GetSubstructMatches(qmol)
+    self.assertEqual(((1,),), matches)
+
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
@@ -7535,19 +7548,19 @@ CAS<~>
     with open(fileNoWedges, 'r') as inF:
       inNoWedges = inF.read()
 
-    m1 = Chem.MolFromMolBlock(inD, sanitize:=False, removeHs:=False, strictParsing:=True)
+    m1 = Chem.MolFromMolBlock(inD, sanitize=False, removeHs=False, strictParsing=True)
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inWedges)
 
-    m1 = Chem.MolFromMolFile(fileN, sanitize:=False, removeHs:=False, strictParsing:=True)
+    m1 = Chem.MolFromMolFile(fileN, sanitize=False, removeHs=False, strictParsing=True)
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inWedges)
 
-    m1 = Chem.MolFromMolBlock(inD, sanitize:=False, removeHs:=False, strictParsing:=True)
+    m1 = Chem.MolFromMolBlock(inD, sanitize=False, removeHs=False, strictParsing=True)
     Chem.RemoveNonExplicit3DChirality(m1)
 
     self.assertTrue(m1 is not None)
@@ -7555,7 +7568,7 @@ CAS<~>
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inNoWedges)
 
-    m1 = Chem.MolFromMolFile(fileN, sanitize:=False, removeHs:=False, strictParsing:=True)
+    m1 = Chem.MolFromMolFile(fileN, sanitize=False, removeHs=False, strictParsing=True)
     Chem.RemoveNonExplicit3DChirality(m1)
 
     self.assertTrue(m1 is not None)
@@ -7580,7 +7593,7 @@ CAS<~>
       inNoWedges = inF.read()
 
 
-    m1 = Chem.MolFromMrvBlock(inD, sanitize:=False, removeHs:=False)
+    m1 = Chem.MolFromMrvBlock(inD, sanitize=False, removeHs=False)
 
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
@@ -7588,14 +7601,14 @@ CAS<~>
     sys.stdout.flush()
     self.assertTrue(smi == inWedges)
 
-    m1 = Chem.MolFromMrvFile(fileN, sanitize:=False, removeHs:=False)
+    m1 = Chem.MolFromMrvFile(fileN, sanitize=False, removeHs=False)
 
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inWedges)
 
-    m1 = Chem.MolFromMrvBlock(inD, sanitize:=False, removeHs:=False)
+    m1 = Chem.MolFromMrvBlock(inD, sanitize=False, removeHs=False)
     Chem.RemoveNonExplicit3DChirality(m1)
 
     self.assertTrue(m1 is not None)
@@ -7603,7 +7616,7 @@ CAS<~>
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inNoWedges)
 
-    m1 = Chem.MolFromMrvFile(fileN, sanitize:=False, removeHs:=False)
+    m1 = Chem.MolFromMrvFile(fileN, sanitize=False, removeHs=False)
     Chem.RemoveNonExplicit3DChirality(m1)
 
     self.assertTrue(m1 is not None)
@@ -7679,6 +7692,35 @@ CAS<~>
     sys.stdout.flush()
 
     self.assertTrue(mBlock == isReapplied)
+
+  def testReapplyMolBlockWedgingAllBondTypes(self):
+    m = Chem.MolFromMolBlock('''
+  Mrv2311 04232413302D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 S -11.583 11.3533 0 0
+M  V30 2 C -12.9167 10.5833 0 0
+M  V30 3 O -11.583 12.8933 0 0
+M  V30 4 C -10.2493 10.5833 0 0
+M  V30 5 C -10.2493 9.0433 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 4 5
+M  V30 2 1 2 1
+M  V30 3 1 1 4
+M  V30 4 2 1 3 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+''')
+    self.assertEqual(m.GetBondWithIdx(3).GetBondType(), Chem.BondType.DOUBLE)
+    Chem.ReapplyMolBlockWedging(m)
+    self.assertEqual(m.GetBondWithIdx(3).GetBondDir(), Chem.BondDir.BEGINWEDGE)
+    Chem.ReapplyMolBlockWedging(m, False)
+    self.assertEqual(m.GetBondWithIdx(3).GetBondDir(), Chem.BondDir.NONE)
 
   def testAtropisomerWedging(self):
     m =Chem.MolFromSmiles('CC1=C(N2C=CC=C2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|')
@@ -8028,6 +8070,45 @@ CAS<~>
     Chem.AddStereoAnnotations(mol)
     self.assertEqual(mol.GetAtomWithIdx(5).GetProp("atomNote"), "abs (S)")
     self.assertEqual(mol.GetAtomWithIdx(3).GetProp("atomNote"), "and2")
+
+  def testIsRingFused(self):
+    molOrig = Chem.MolFromSmiles("C1C(C2CC3CCCCC3C12)C1CCCCC1")
+    mol = Chem.RWMol(molOrig)
+    ri = mol.GetRingInfo()
+    self.assertEqual(ri.NumRings(), 4)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 3)
+    self.assertEqual(fusedRings.count(False), 1)
+    atoms = mol.GetSubstructMatch(Chem.MolFromSmarts("[$(C1CCC1)]-@[$(C1CCCCC1)]"))
+    mol.RemoveBond(*atoms)
+    Chem.SanitizeMol(mol)
+    self.assertEqual(Chem.MolToSmiles(mol), "C1CCC(CC2CCC2C2CCCCC2)CC1")
+    self.assertEqual(ri.NumRings(), 3)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 0)
+    self.assertEqual(fusedRings.count(False), 3)
+    mol = Chem.RWMol(molOrig)
+    ri = mol.GetRingInfo()
+    self.assertEqual(ri.NumRings(), 4)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 3)
+    self.assertEqual(fusedRings.count(False), 1)
+    fusedBonds = [ri.NumFusedBonds(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedBonds.count(0), 1)
+    self.assertEqual(fusedBonds.count(1), 2)
+    self.assertEqual(fusedBonds.count(2), 1)
+    atoms = mol.GetSubstructMatch(Chem.MolFromSmarts("[$(C1CCCCC1-!@[CX4;R1;r4])].[$(C1C(-!@[CX4;R1;r6])CC1)]"))
+    mol.AddBond(*atoms, Chem.BondType.SINGLE)
+    Chem.SanitizeMol(mol)
+    self.assertEqual(Chem.MolToSmiles(mol), "C1CCC2C(C1)CC1C2C2C3CCCCC3C12")
+    self.assertEqual(ri.NumRings(), 5)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 5)
+    self.assertEqual(fusedRings.count(False), 0)
+    fusedBonds = [ri.NumFusedBonds(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedBonds.count(0), 0)
+    self.assertEqual(fusedBonds.count(1), 2)
+    self.assertEqual(fusedBonds.count(2), 3)
 
 
 if __name__ == '__main__':

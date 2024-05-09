@@ -44,6 +44,7 @@
 #include <any>
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 #include <boost/type_traits/is_floating_point.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include "LocaleSwitcher.h"

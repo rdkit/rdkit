@@ -19,6 +19,8 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/utils.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <boost/format.hpp>
 
@@ -29,6 +31,69 @@
 // #define VERBOSE_CANON 1
 
 namespace RDKit {
+
+void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
+                                     const char *details_json) {
+  if (details_json && strlen(details_json)) {
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    params.doIsomericSmiles =
+        pt.get("doIsomericSmiles", params.doIsomericSmiles);
+    params.doKekule = pt.get("doKekule", params.doKekule);
+    params.rootedAtAtom = pt.get("rootedAtAtom", params.rootedAtAtom);
+    params.canonical = pt.get("canonical", params.canonical);
+    params.allBondsExplicit =
+        pt.get("allBondsExplicit", params.allBondsExplicit);
+    params.allHsExplicit = pt.get("allHsExplicit", params.allHsExplicit);
+    params.doRandom = pt.get("doRandom", params.doRandom);
+  }
+}
+
+void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
+                                     const std::string &details_json) {
+  updateSmilesWriteParamsFromJSON(params, details_json.c_str());
+}
+
+void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
+                                  RestoreBondDirOption &restoreBondDirs,
+                                  const char *details_json) {
+  static const auto cxSmilesFieldsKeyValuePairs = CXSMILESFIELDS_ITEMS_MAP;
+  static const auto restoreBondDirOptionKeyValuePairs =
+      RESTOREBONDDIROPTION_ITEMS_MAP;
+  if (details_json && strlen(details_json)) {
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    auto cxSmilesFieldsFromJson =
+        static_cast<std::underlying_type<SmilesWrite::CXSmilesFields>::type>(
+            SmilesWrite::CXSmilesFields::CX_NONE);
+    for (const auto &keyValuePair : cxSmilesFieldsKeyValuePairs) {
+      cxSmilesFieldsFromJson |= (pt.get(keyValuePair.first, false)
+                                     ? keyValuePair.second
+                                     : SmilesWrite::CXSmilesFields::CX_NONE);
+    }
+    if (cxSmilesFieldsFromJson) {
+      cxSmilesFields =
+          static_cast<SmilesWrite::CXSmilesFields>(cxSmilesFieldsFromJson);
+    }
+    std::string restoreBondDirOption;
+    restoreBondDirOption = pt.get("restoreBondDirOption", restoreBondDirOption);
+    auto it = restoreBondDirOptionKeyValuePairs.find(restoreBondDirOption);
+    if (it != restoreBondDirOptionKeyValuePairs.end()) {
+      restoreBondDirs = it->second;
+    }
+  }
+}
+
+void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
+                                  RestoreBondDirOption &restoreBondDirs,
+                                  const std::string &details_json) {
+  updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
+                               details_json.c_str());
+}
 
 namespace SmilesWrite {
 const int atomicSmiles[] = {0, 5, 6, 7, 8, 9, 15, 16, 17, 35, 53, -1};
@@ -371,7 +436,6 @@ std::string FragmentSmilesConstruct(
   if (params.canonical && params.doIsomericSmiles) {
     Canon::canonicalizeEnhancedStereo(mol, &ranks);
   }
-
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
                               bondsInPlay, bondSymbols, params.doIsomericSmiles,
                               params.doRandom);
@@ -521,11 +585,10 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     // but that should not be:
     if (params.doIsomericSmiles) {
       tmol->setProp(common_properties::_doIsoSmiles, 1);
-      if (!mol.hasProp(common_properties::_StereochemDone)) {
+      if (!tmol->hasProp(common_properties::_StereochemDone)) {
         MolOps::assignStereochemistry(*tmol, true);
       }
     }
-
     if (!doingCXSmiles) {
       // remove any stereo groups that may be present. Otherwise they will be
       // used in the canonicalization

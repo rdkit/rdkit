@@ -1806,7 +1806,21 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
     inchiAtoms[i].charge = atom->getFormalCharge();
 
     // number of iso H
-    inchiAtoms[i].num_iso_H[0] = -1;
+    int nHs = -1;
+    switch (atom->getAtomicNum()) {
+      case 6:
+      case 7:
+      case 8:
+      case 9:
+      case 17:
+      case 35:
+      case 53:
+        nHs = -1;
+        break;
+      default:
+        nHs = atom->getTotalNumHs();
+    }
+    inchiAtoms[i].num_iso_H[0] = nHs;
     inchiAtoms[i].num_iso_H[1] = 0;
     inchiAtoms[i].num_iso_H[2] = 0;
     inchiAtoms[i].num_iso_H[3] = 0;

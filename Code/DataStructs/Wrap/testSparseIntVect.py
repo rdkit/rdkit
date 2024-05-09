@@ -174,16 +174,16 @@ class TestCase(unittest.TestCase):
     nVs = 6
     import random
     vs = []
-    for i in range(nVs):
+    for _ in range(nVs):
       v = ds.IntSparseIntVect(sz)
-      for j in range(nToSet):
+      for _ in range(nToSet):
         v[random.randint(0, sz - 1)] = random.randint(1, 10)
       vs.append(v)
 
     baseDs = [ds.DiceSimilarity(vs[0], vs[x]) for x in range(1, nVs)]
     bulkDs = ds.BulkDiceSimilarity(vs[0], vs[1:])
-    for i in range(len(baseDs)):
-      self.assertTrue(feq(baseDs[i], bulkDs[i]))
+    for bbaseDs, bbulkDs in zip(baseDs, bulkDs):
+      self.assertTrue(feq(bbaseDs, bbulkDs))
 
   def test6BulkTversky(self):
     """
@@ -194,32 +194,33 @@ class TestCase(unittest.TestCase):
     nVs = 6
     import random
     vs = []
-    for i in range(nVs):
+    for _ in range(nVs):
       v = ds.IntSparseIntVect(sz)
-      for j in range(nToSet):
+      for _ in range(nToSet):
         v[random.randint(0, sz - 1)] = random.randint(1, 10)
       vs.append(v)
 
     baseDs = [ds.TverskySimilarity(vs[0], vs[x], .5, .5) for x in range(1, nVs)]
     bulkDs = ds.BulkTverskySimilarity(vs[0], vs[1:], 0.5, 0.5)
     diceDs = [ds.DiceSimilarity(vs[0], vs[x]) for x in range(1, nVs)]
-    for i in range(len(baseDs)):
-      self.assertTrue(feq(baseDs[i], bulkDs[i]))
-      self.assertTrue(feq(baseDs[i], diceDs[i]))
+    for bbaseDs, bbulkDs, ddiceDs in zip(baseDs, bulkDs, diceDs):
+      self.assertTrue(feq(bbaseDs, bbulkDs))
+      self.assertTrue(feq(bbaseDs, ddiceDs))
+      self.assertTrue(feq(bbulkDs, ddiceDs))
 
     bulkDs = ds.BulkTverskySimilarity(vs[0], vs[1:], 1.0, 1.0)
     taniDs = [ds.TanimotoSimilarity(vs[0], vs[x]) for x in range(1, nVs)]
-    for i in range(len(bulkDs)):
-      self.assertTrue(feq(bulkDs[i], taniDs[i]))
+    for bbulkDs, ttaniDs in zip(bulkDs, taniDs):
+      self.assertTrue(feq(bbulkDs, ttaniDs))
     taniDs = ds.BulkTanimotoSimilarity(vs[0], vs[1:])
-    for i in range(len(bulkDs)):
-      self.assertTrue(feq(bulkDs[i], taniDs[i]))
+    for bbulkDs, ttaniDs in zip(bulkDs, taniDs):
+      self.assertTrue(feq(bbulkDs, ttaniDs))
 
   def test7ToList(self):
     l = [0] * 2048
     nbits = 2048
     bv = ds.IntSparseIntVect(nbits)
-    for j in range(nbits):
+    for _ in range(nbits):
       x = random.randrange(0, nbits)
       l[x] = x
       bv[x] = x
