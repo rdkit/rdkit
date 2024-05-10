@@ -106,8 +106,7 @@ void StretchBendContrib::getGrad(double *pos, double *grad) const {
   double cosTheta = p12.dotProduct(p32);
   clipToOne(cosTheta);
   double sinThetaSq = 1.0 - cosTheta * cosTheta;
-  double sinTheta =
-      std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
+  double sinTheta = std::max(sqrt(sinThetaSq), 1.0e-8);
   double angleTerm = RAD2DEG * acos(cosTheta) - d_theta0;
   double distTerm = RAD2DEG * (d_forceConstants.first * (dist1 - d_restLen1) +
                                d_forceConstants.second * (dist2 - d_restLen2));
