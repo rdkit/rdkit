@@ -113,7 +113,7 @@ Point3D computeGridCentroid(const UniformGrid3D &grid, const Point3D &pt,
 
   unsigned int idxI = grid.getGridPointIndex(pt);
   std::vector<int> indicesInSphere = computeGridIndices(grid, windowRadius);
-  for (auto it : indicesInSphere) {
+  for (const auto it : indicesInSphere) {
     int idx = idxI + it;
     if (idx >= 0 && static_cast<unsigned int>(idx) < v1->getLength()) {
       unsigned int wt = v1->getVal(idx);
@@ -140,7 +140,7 @@ std::vector<Point3D> findGridTerminalPoints(const UniformGrid3D &grid,
     // compute the weighted volume of the shape inside the sphere:
     double volInSphere = 0.0;
     unsigned int nPtsHere = 0;
-    for (auto it : indicesInSphere) {
+    for (const auto it : indicesInSphere) {
       int idx = i + it;
       if (idx >= 0 && static_cast<unsigned int>(idx) < storage->getLength()) {
         volInSphere += storage->getVal(static_cast<unsigned int>(idx));
