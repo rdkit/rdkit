@@ -22,6 +22,7 @@
 #include <maeparser/Writer.hpp>
 
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/FileParsers/MaestroProperties.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/RDKitBase.h>
@@ -30,20 +31,11 @@
 #include <RDGeneral/RDLog.h>
 
 using namespace schrodinger;
+using namespace RDKit::FileParsers::schrodinger;
 
 namespace RDKit {
 
 namespace {
-const std::string MAE_BOND_DATIVE_MARK = "b_sPrivate_dative_bond";
-const std::string MAE_BOND_PARITY = "i_sd_original_parity";
-const std::string MAE_STEREO_STATUS = "i_m_ct_stereo_status";
-const std::string PDB_ATOM_NAME = "s_m_pdb_atom_name";
-const std::string PDB_RESIDUE_NAME = "s_m_pdb_residue_name";
-const std::string PDB_CHAIN_NAME = "s_m_chain_name";
-const std::string PDB_INSERTION_CODE = "s_m_insertion_code";
-const std::string PDB_RESIDUE_NUMBER = "i_m_residue_number";
-const std::string PDB_OCCUPANCY = "r_m_pdb_occupancy";
-const std::string PDB_TFACTOR = "r_m_pdb_tfactor";
 
 template <typename T>
 std::shared_ptr<mae::IndexedProperty<T>> getIndexedProperty(
