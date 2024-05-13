@@ -1097,7 +1097,9 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
         if (atom->getIdx() != bond->getEndAtomIdx()) {
           BOOST_LOG(rdWarningLog)
               << "atom " << atomIdx << " is not associated with bond "
-              << bondIdx << " in w block" << std::endl;
+              << bondIdx << "(" << bond->getBeginAtomIdx() + startAtomIdx << "-"
+              << bond->getEndAtomIdx() + startAtomIdx << ")"
+              << " in w block" << std::endl;
           return false;
         }
         auto eidx = bond->getBeginAtomIdx();
@@ -2047,11 +2049,79 @@ std::string get_bond_config_block(
     bool isAnAtropisomer = false;
 
     const Atom *firstAtom = bond->getBeginAtom();
-    for (auto bondNbr : mol.atomBonds(firstAtom)) {
-      if (bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCW ||
-          bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
-        isAnAtropisomer = true;
-        break;
+    if (bd == Bond::BondDir::BEGINDASH || bd == Bond::BondDir::BEGINWEDGE) {
+      for (auto bondNbr : mol.atomBonds(firstAtom)) {
+        if (bondNbr->getIdx() == bond->getIdx()) {
+          continue;  // a bond is not its own neighbor
+        }
+        if (bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+            bondNbr->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+          isAnAtropisomer = true;
+
+          // if it is for an atropisomer and there are no coords, check to see
+          // if the wedge needs to be flipped based on the smiles reordering
+          if (!coordsIncluded && isAnAtropisomer) {
+            Atropisomers::AtropAtomAndBondVec atomAndBondVecs[2];
+            if (!Atropisomers::getAtropisomerAtomsAndBonds(
+                    bondNbr, atomAndBondVecs, mol)) {
+              throw ValueErrorException("Internal error - should not occur");
+              // should not happend
+            } else {
+              unsigned int swaps = 0;
+
+              unsigned int firstReorderedIdx =
+                  std::find(atomOrder.begin(), atomOrder.end(),
+                            bondNbr->getBeginAtom()->getIdx()) -
+                  atomOrder.begin();
+              unsigned int secondReorderedIdx =
+                  std::find(atomOrder.begin(), atomOrder.end(),
+                            bondNbr->getEndAtom()->getIdx()) -
+                  atomOrder.begin();
+              if (firstReorderedIdx > secondReorderedIdx) {
+                ++swaps;
+              }
+
+              for (unsigned int bondAtomIndex = 0; bondAtomIndex < 2;
+                   ++bondAtomIndex) {
+                if (atomAndBondVecs[bondAtomIndex].first == firstAtom)
+                  continue;  // swapped atoms on the side where the wedge bond
+                             // is does NOT change the wedge bond
+                if (atomAndBondVecs[bondAtomIndex].second.size() == 2) {
+                  unsigned int firstOtherAtomIdx =
+                      atomAndBondVecs[bondAtomIndex]
+                          .second[0]
+                          ->getOtherAtom(atomAndBondVecs[bondAtomIndex].first)
+                          ->getIdx();
+                  unsigned int secondOtherAtomIdx =
+                      atomAndBondVecs[bondAtomIndex]
+                          .second[1]
+                          ->getOtherAtom(atomAndBondVecs[bondAtomIndex].first)
+                          ->getIdx();
+
+                  unsigned int firstReorderedAtomIdx =
+                      std::find(atomOrder.begin(), atomOrder.end(),
+                                firstOtherAtomIdx) -
+                      atomOrder.begin();
+                  unsigned int secondReorderedAtomIdx =
+                      std::find(atomOrder.begin(), atomOrder.end(),
+                                secondOtherAtomIdx) -
+                      atomOrder.begin();
+
+                  if (firstReorderedAtomIdx > secondReorderedAtomIdx) {
+                    ++swaps;
+                  }
+                }
+              }
+              if (swaps % 2) {
+                bd = (bd == Bond::BondDir::BEGINWEDGE)
+                         ? Bond::BondDir::BEGINDASH
+                         : Bond::BondDir::BEGINWEDGE;
+              }
+            }
+          }
+
+          break;
+        }
       }
     }
 
@@ -2087,7 +2157,7 @@ std::string get_bond_config_block(
         int dirCode;
         bool reverse;
         Chirality::GetMolFileBondStereoInfo(
-            bond, wedgeBonds, &mol.getConformer(0), dirCode, reverse);
+            bond, wedgeBonds, &mol.getConformer(), dirCode, reverse);
         switch (dirCode) {
           case 1:
             bd = Bond::BondDir::BEGINWEDGE;

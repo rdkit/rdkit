@@ -24,6 +24,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/test_fixtures.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 #include "CIPLabeler.h"
 #include "Digraph.h"
@@ -838,5 +839,101 @@ TEST_CASE("upsertTest", "[basic]") {
     auto smilesOut =
         MolToCXSmiles(*m, smilesWriteParams, flags, RestoreBondDirOptionClear);
     CHECK(smilesOut != "");
+  }
+}
+
+TEST_CASE("atropisomers", "[basic]") {
+  SECTION("atropisomers1") {
+    UseLegacyStereoPerceptionFixture useLegacy(false);
+
+    std::string rdbase = getenv("RDBASE");
+
+    std::vector<std::string> files = {
+        "BMS-986142_atrop5.sdf", "BMS-986142_atrop1.sdf",
+        "BMS-986142_atrop2.sdf", "JDQ443_atrop1.sdf",
+        "JDQ443_atrop2.sdf",     "Mrtx1719_atrop1.sdf",
+        "Mrtx1719_atrop2.sdf",   "RP-6306_atrop1.sdf",
+        "RP-6306_atrop2.sdf",    "Sotorasib_atrop1.sdf",
+        "Sotorasib_atrop2.sdf",  "ZM374979_atrop1.sdf",
+        "ZM374979_atrop2.sdf"};
+
+    for (auto file : files) {
+      auto fName =
+          rdbase + "/Code/GraphMol/FileParsers/test_data/atropisomers/" + file;
+
+      auto molsdf = MolFileToMol(fName, true, true, true);
+      REQUIRE(molsdf);
+      CIPLabeler::assignCIPLabels(*molsdf, 100000);
+
+      std::map<std::pair<unsigned int, unsigned int>, std::string> CIPVals;
+      for (auto bond : molsdf->bonds()) {
+        auto a1 = bond->getBeginAtomIdx();
+        auto a2 = bond->getEndAtomIdx();
+        if (a1 > a2) {
+          std::swap(a1, a2);
+        }
+
+        if (bond->hasProp(common_properties::_CIPCode)) {
+          CIPVals[std::make_pair(a1, a2)] =
+              bond->getProp<std::string>(common_properties::_CIPCode);
+        } else {
+          CIPVals[std::make_pair(a1, a2)] = "N/A";
+        }
+      }
+
+      molsdf->clearConformers();
+
+      SmilesWriteParams wp;
+      wp.canonical = false;
+      wp.doKekule = false;
+      unsigned int flags =
+          RDKit::SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
+          RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS |
+          RDKit::SmilesWrite::CXSmilesFields::CX_BOND_CFG |
+          RDKit::SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER;
+      SmilesParserParams pp;
+      pp.allowCXSMILES = true;
+      pp.sanitize = true;
+
+      auto smi = MolToCXSmiles(*molsdf, wp, flags);
+      auto newMol = SmilesToMol(smi, pp);
+      CIPLabeler::assignCIPLabels(*newMol, 100000);
+
+      std::map<std::pair<unsigned int, unsigned int>, std::string> newCIPVals;
+      for (auto bond : newMol->bonds()) {
+        auto a1 = bond->getBeginAtomIdx();
+        auto a2 = bond->getEndAtomIdx();
+        if (a1 > a2) {
+          std::swap(a1, a2);
+        }
+        if (bond->hasProp(common_properties::_CIPCode)) {
+          newCIPVals[std::make_pair(a1, a2)] =
+              bond->getProp<std::string>(common_properties::_CIPCode);
+        } else {
+          newCIPVals[std::make_pair(a1, a2)] = "N/A";
+        }
+      }
+
+      RDKit::SubstructMatchParameters params;
+
+      auto match = RDKit::SubstructMatch(*molsdf, *newMol, params);
+
+      for (auto thisBond : newMol->bonds()) {
+        unsigned int a1 = thisBond->getBeginAtomIdx();
+        unsigned int a2 = thisBond->getEndAtomIdx();
+        if (a1 > a2) {
+          std::swap(a1, a2);
+        }
+
+        unsigned int a1match = match[0][a1].second;
+        unsigned int a2match = match[0][a2].second;
+
+        if (a1match > a2match) {
+          std::swap(a1match, a2match);
+        }
+        CHECK(CIPVals[std::make_pair(a1match, a2match)] ==
+              newCIPVals[std::make_pair(a1, a2)]);
+      }
+    }
   }
 }

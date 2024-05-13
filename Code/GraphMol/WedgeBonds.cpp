@@ -343,12 +343,15 @@ int pickBondToWedge(
 // need wedging.
 
 std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
-    const ROMol &mol) {
+    const ROMol &mol, const BondWedgingParameters *params) {
+
   const Conformer *conf = nullptr;
   if (mol.getNumConformers()) {
     conf = &mol.getConformer();
   }
-  return pickBondsToWedge(mol, nullptr, conf);
+
+  return pickBondsToWedge(mol, params, conf);
+
 }
 
 std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(

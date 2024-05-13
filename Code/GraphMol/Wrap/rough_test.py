@@ -3920,6 +3920,19 @@ CAS<~>
     self.assertEqual(ap.GetAtomWithIdx(0).GetPropsAsDict()["foo"], "bar")
     self.assertEqual(ap.GetAtomWithIdx(1).GetPropsAsDict()["foo"], "bar")
 
+  def testReplaceAtomWithQueryAtom(self):
+    mol = Chem.MolFromSmiles("CC(C)C")
+    qmol = Chem.MolFromSmiles("C")
+    matches = mol.GetSubstructMatches(qmol)
+    self.assertEqual(((0,), (1,), (2,), (3,)), matches)
+
+    atom = qmol.GetAtomWithIdx(0)
+    natom = rdqueries.ReplaceAtomWithQueryAtom(qmol, atom)
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    natom.ExpandQuery(qa, Chem.CompositeQueryType.COMPOSITE_AND)
+    matches = mol.GetSubstructMatches(qmol)
+    self.assertEqual(((1,),), matches)
+
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
