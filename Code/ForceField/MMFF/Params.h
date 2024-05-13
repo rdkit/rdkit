@@ -263,11 +263,9 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
       sign = 1;
     }
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map < const unsigned int,
-        const auto res1 = d_params[bondType].find(canIAtomType);
-    std::map<const unsigned int, MMFFChg>::const_iterator res2;
+    const auto res1 = d_params[bondType].find(canIAtomType);
     if (res1 != d_params[bondType].end()) {
-      res2 = ((*res1).second).find(canJAtomType);
+      const auto res2 = ((*res1).second).find(canJAtomType);
       if (res2 != ((*res1).second).end()) {
         mmffChgParams = &((*res2).second);
       }
@@ -532,9 +530,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
       unsigned int canIAtomType = (*mmffDef)(iAtomType)->eqLevel[iter];
       unsigned int canKAtomType = (*mmffDef)(kAtomType)->eqLevel[iter];
       if (canIAtomType > canKAtomType) {
-        unsigned int temp = canIAtomType;
-        canIAtomType = canKAtomType;
-        canKAtomType = temp;
+        std::swap(canIAtomType, canKAtomType);
       }
       const auto res1 = d_params.find(angleType);
       if (res1 != d_params.end()) {
@@ -559,9 +555,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
         unsigned int canIAtomType = (*mmffDef)(iAtomType)->eqLevel[iter];
         unsigned int canKAtomType = (*mmffDef)(kAtomType)->eqLevel[iter];
         if (canIAtomType > canKAtomType) {
-          unsigned int temp = canIAtomType;
-          canIAtomType = canKAtomType;
-          canKAtomType = temp;
+          std::swap(canIAtomType, canKAtomType);
         }
 
         auto bounds = std::equal_range(
