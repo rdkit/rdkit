@@ -598,7 +598,8 @@ RDKIT_GRAPHMOL_EXPORT ATOM_OR_QUERY *makeMHAtomQuery();
 // CXSMILES
 const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
                                                  "X", "XH", "M", "MH"};
-RDKIT_GRAPHMOL_EXPORT void convertComplexNameToQuery(Atom *query, std::string_view symb);
+RDKIT_GRAPHMOL_EXPORT void convertComplexNameToQuery(Atom *query,
+                                                     std::string_view symb);
 
 //! returns a Query for matching atoms that have ring bonds
 template <class T>
@@ -1099,6 +1100,9 @@ inline bool isAtomDummy(const Atom *a) {
 namespace QueryOps {
 RDKIT_GRAPHMOL_EXPORT void completeMolQueries(
     RWMol *mol, unsigned int magicVal = 0xDEADBEEF);
+// Replaces the given atom in the molecule with a QueryAtom that is otherwise
+// a copy of the given atom.  Returns a pointer to that atom.
+// if the atom already has a query, nothing will be changed
 RDKIT_GRAPHMOL_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
 
 RDKIT_GRAPHMOL_EXPORT void finalizeQueryFromDescription(

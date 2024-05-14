@@ -92,8 +92,7 @@ void DistanceConstraintContrib::getGrad(double *pos, double *grad) const {
   double *end1Coords = &(pos[3 * d_end1Idx]);
   double *end2Coords = &(pos[3 * d_end2Idx]);
   for (unsigned int i = 0; i < 3; ++i) {
-    double dGrad;
-    dGrad =
+    double dGrad =
         preFactor * (end1Coords[i] - end2Coords[i]) / std::max(dist, 1.0e-8);
     grad[3 * d_end1Idx + i] += dGrad;
     grad[3 * d_end2Idx + i] -= dGrad;
