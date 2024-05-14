@@ -5396,3 +5396,287 @@ TEST_CASE(
     CHECK(sis.size() == 3);
   }
 }
+
+TEST_CASE("github 7371") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 20 21 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N -0.024300 -1.051200 0.000000 0
+M  V30 2 C 0.690200 -1.463700 0.000000 0
+M  V30 3 O 0.690200 -2.288700 0.000000 0
+M  V30 4 N 1.404500 -1.051200 0.000000 0
+M  V30 5 C 2.119100 -1.463700 0.000000 0
+M  V30 6 C 2.119100 -2.288700 0.000000 0
+M  V30 7 C 1.404500 -2.701200 0.000000 0
+M  V30 8 C 2.833500 -2.701200 0.000000 0
+M  V30 9 C 3.547900 -2.288700 0.000000 0
+M  V30 10 N 3.547900 -1.463700 0.000000 0
+M  V30 11 C 2.833600 -1.051200 0.000000 0
+M  V30 12 C 3.363800 -0.419100 0.000000 0
+M  V30 13 C 4.176300 -0.562300 0.000000 0
+M  V30 14 C 3.081600 0.356100 0.000000 0
+M  V30 15 C 1.404500 -0.226000 0.000000 0
+M  V30 16 N 2.155300 0.191900 0.000000 0
+M  V30 17 C 2.161900 1.051300 0.000000 0
+M  V30 18 C 1.417800 1.480900 0.000000 0
+M  V30 19 C 0.676800 1.045500 0.000000 0
+M  V30 20 C 0.690200 0.186400 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 4 2
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 7
+M  V30 7 1 6 8
+M  V30 8 2 8 9
+M  V30 9 1 9 10
+M  V30 10 2 10 11
+M  V30 11 1 11 12
+M  V30 12 1 12 13
+M  V30 13 1 12 14
+M  V30 14 1 4 15
+M  V30 15 2 15 16
+M  V30 16 1 16 17
+M  V30 17 2 17 18
+M  V30 18 1 18 19
+M  V30 19 2 19 20
+M  V30 20 1 5 11 CFG=1
+M  V30 21 1 20 15
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(3)->getStereo() == Bond::BondStereo::STEREOATROPCW);
+    // after reading in, there's no bond wedging:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+    }
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+    // now there is:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      if (bnd->getIdx() != 19) {
+        CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+      } else {
+        CHECK(bnd->getBondDir() == Bond::BondDir::BEGINWEDGE);
+      }
+    }
+  }
+  SECTION("3d") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 20 21 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 0.382755 -0.645531 -2.970173 0
+M  V30 2 C 1.191902 -0.080895 -1.951313 0
+M  V30 3 O 2.258061 0.469395 -2.326427 0
+M  V30 4 N 0.799020 -0.142115 -0.557889 0
+M  V30 5 C -0.412487 -0.780398 -0.245786 0
+M  V30 6 C -0.494802 -2.127175 0.018641 0
+M  V30 7 C 0.666160 -3.010952 -0.001627 0
+M  V30 8 C -1.739073 -2.694470 0.315567 0
+M  V30 9 C -2.888797 -1.963937 0.355103 0
+M  V30 10 N -2.786157 -0.648937 0.093334 0
+M  V30 11 C -1.586505 -0.059517 -0.200695 0
+M  V30 12 C -1.679580 1.394735 -0.453406 0
+M  V30 13 C -1.637015 2.096392 0.888082 0
+M  V30 14 C -3.022840 1.757751 -1.085608 0
+M  V30 15 C 1.696224 0.471157 0.348870 0
+M  V30 16 N 1.608949 1.758263 0.730152 0
+M  V30 17 C 2.457188 2.346328 1.581612 0
+M  V30 18 C 3.501956 1.626784 2.127981 0
+M  V30 19 C 3.644663 0.298166 1.774403 0
+M  V30 20 C 2.724579 -0.259689 0.878536 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 4 2
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 7
+M  V30 7 1 6 8
+M  V30 8 2 8 9
+M  V30 9 1 9 10
+M  V30 10 2 10 11
+M  V30 11 1 11 12
+M  V30 12 1 12 13
+M  V30 13 1 12 14
+M  V30 14 1 4 15
+M  V30 15 2 15 16
+M  V30 16 1 16 17
+M  V30 17 2 17 18
+M  V30 18 1 18 19
+M  V30 19 2 19 20
+M  V30 20 1 5 11 CFG=1
+M  V30 21 1 20 15
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(3)->getStereo() == Bond::BondStereo::STEREOATROPCW);
+    // after reading in, there's no bond wedging:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+    }
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+    // now there is:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      if (bnd->getIdx() != 4) {
+        CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+      } else {
+        CHECK(bnd->getBondDir() == Bond::BondDir::BEGINWEDGE);
+      }
+    }
+  }
+  SECTION("favor larger rings") {
+    auto m = R"CTAB(
+  Mrv2401 04262410272D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 13 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.5796 -3.2152 0 0
+M  V30 2 N 2.1037 -4.6798 0 0
+M  V30 3 N 0.5637 -4.6798 0 0
+M  V30 4 C 0.0878 -3.2152 0 0
+M  V30 5 C -1.3768 -2.7393 0 0
+M  V30 6 C 1.3337 -2.31 0 0
+M  V30 7 C 1.3337 -0.77 0 0
+M  V30 8 C 0 0 0 0
+M  V30 9 Cl -1.3337 -0.77 0 0
+M  V30 10 C 0 1.54 0 0
+M  V30 11 C 1.3337 2.31 0 0
+M  V30 12 C 2.6674 1.54 0 0
+M  V30 13 C 2.6674 -0 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 1 6 4 CFG=1
+M  V30 6 2 1 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 8 9
+M  V30 10 1 8 10
+M  V30 11 2 10 11
+M  V30 12 1 11 12
+M  V30 13 2 12 13
+M  V30 14 1 7 13
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getBondBetweenAtoms(5, 6)->getStereo() ==
+          Bond::BondStereo::STEREOATROPCW);
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+    }
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+    // now there is:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      if (bnd->getIdx() != 13) {
+        CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+      } else {
+        CHECK(bnd->getBondDir() == Bond::BondDir::BEGINWEDGE);
+      }
+    }
+  }
+  SECTION("favor larger rings 3D") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 13 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.472629 -1.845227 -0.264711 0
+M  V30 2 N 2.829375 -1.724790 -0.334942 0
+M  V30 3 N 3.127980 -0.437811 -0.267564 0
+M  V30 4 C 1.973684 0.284699 -0.153598 0
+M  V30 5 C 1.905135 1.771086 -0.051971 0
+M  V30 6 C 0.912735 -0.591792 -0.150090 0
+M  V30 7 C -0.495016 -0.243797 -0.046092 0
+M  V30 8 C -1.102614 -0.154763 1.189160 0
+M  V30 9 Cl -0.084572 -0.483042 2.603743 0
+M  V30 10 C -2.434893 0.170808 1.361855 0
+M  V30 11 C -3.202022 0.420663 0.247454 0
+M  V30 12 C -2.626093 0.340227 -1.000486 0
+M  V30 13 C -1.279199 0.010190 -1.157641 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 1 6 4 CFG=3
+M  V30 6 2 1 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 8 9
+M  V30 10 1 8 10
+M  V30 11 2 10 11
+M  V30 12 1 11 12
+M  V30 13 2 12 13
+M  V30 14 1 7 13
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getBondBetweenAtoms(5, 6)->getStereo() ==
+          Bond::BondStereo::STEREOATROPCW);
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+    }
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+    // now there is:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      if (bnd->getIdx() != 7) {
+        CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+      } else {
+        CHECK(bnd->getBondDir() == Bond::BondDir::BEGINWEDGE);
+      }
+    }
+  }
+
+  SECTION("avoid macrocycles") {
+    auto m =
+        "C1=C(C2=CCCCCCCCCCC2)CCC1 |(-1.71835,-1.22732,;-1.61655,-0.232318,;-0.751953,0.270082,;-0.754753,1.27008,;0.109847,1.77248,;0.977247,1.27488,;1.84185,1.77728,;2.70925,1.27968,;2.71205,0.279682,;1.84745,-0.222718,;1.85025,-1.22272,;0.985647,-1.72512,;0.118247,-1.22752,;0.115447,-0.227518,;-2.53135,0.171882,;-3.19835,-0.573118,;-2.69595,-1.43772,)|"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOATROPCW);
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+    // now there is:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      if (bnd->getIdx() != 13) {
+        CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+      } else {
+        CHECK(bnd->getBondDir() == Bond::BondDir::BEGINWEDGE);
+      }
+    }
+  }
+}

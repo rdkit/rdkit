@@ -111,8 +111,22 @@ bool getBondFrameOfReference(const Bond *bond, const Conformer *conf,
 Bond::BondDir getBondDirForAtropisomerNoConf(Bond::BondStereo bondStereo,
                                              unsigned int whichEnd,
                                              unsigned int whichBond) {
-  // the convention is that the lowest number atoms on each end is
-  // considered to be on the same side of the bond
+  // the convention is that in the absence of coords, the coordiates are choosen
+  // with the lowest numbered atom of the atrop bond down, and the other atom
+  // straight up.
+  // On each end, the lowest numbered connecting atom is on the left
+  //
+  //              a      b
+  //               \   /
+  //                 c
+  //                 |
+  //                 d
+  //               /   \     aaa
+  //              e      f
+  //
+  // where  c > d
+  //        a < b
+  //        e < f
 
   PRECONDITION(whichEnd <= 1, "whichEnd must be 0 or 1");
   PRECONDITION(whichBond <= 1, "whichBond must be 0 or 1");
@@ -306,9 +320,23 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
     }
   }
 
-  // if there are no coordinates, we use wedge/hash bonds assumeing, as a
-  // convention, that the lowest numbers atoms on each end ofthe atrop bond are
-  // on the same side of the bond.
+
+  // the convention is that in the absence of coords, the coordiates are choosen
+  // with the lowest numbered atom of the atrop bond down, and the other atom
+  // straight up.
+  // On each end, the lowest numbered connecting atom is on the left
+  //
+  //              a      b
+  //               \   /
+  //                 c
+  //                 |
+  //                 d
+  //               /   \     aaa
+  //              e      f
+  //
+  // where  c > d
+  //        a < b
+  //        e < f
 
   if (conf == nullptr) {
     std::pair<bool, Bond::BondDir> bond1DirResult;
@@ -329,9 +357,6 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
       return false;
     }
 
-    // by convention, assumes the
-    // lowest numbered atoms are on
-    // the same side
     if (bond1DirResult.second == Bond::BEGINWEDGE ||
         bond2DirResult.second == Bond::BEGINDASH) {
       bond->setStereo(Bond::BondStereo::STEREOATROPCCW);
@@ -837,13 +862,19 @@ bool WedgeBondFromAtropisomerOneBond2d(
   }
 
   // did not find a good bond dir - pick one to use
-  // we would like to have one that is not in a ring, and will be a wedge
+  // we would like to have one that is in a ring, and will favor it being a
+  // wedge
+
+  // We favor rings here because wedging non-ring bonds makes it too likely that
+  // we'll end up accidentally creating new atropisomeric bonds. This was github
+  // issue 7371
 
   const RingInfo *ri = bond->getOwningMol().getRingInfo();
 
   int bestBondEnd = -1, bestBondNumber = -1;
   bool bestBondIsSingle = false;
   unsigned int bestRingCount = INT_MAX;
+  unsigned int largestRingSize = 0;
   Bond::BondDir bestBondDir = Bond::BondDir::NONE;
   for (unsigned int whichEnd = 0; whichEnd < 2; ++whichEnd) {
     for (unsigned int whichBond = 0;
@@ -875,14 +906,24 @@ bool WedgeBondFromAtropisomerOneBond2d(
         }
       }
       auto ringCount = ri->numBondRings(bondToTry->getIdx());
+      unsigned int ringSize = 0;
+      if (!ringCount) {
+        ringCount = 10;
+      } else {
+        // we're going to prefer to put wedges in larger rings, but don't want
+        // to end up wedging macrocyles if it's avoidable.
+        ringSize = ri->minBondRingSize(bondToTry->getIdx());
+        if (ringSize > 8) {
+          ringSize = 0;
+        }
+      }
       if (ringCount > bestRingCount) {
         continue;
-      }
-
-      else if (ringCount < bestRingCount) {
+      } else if (ringCount < bestRingCount || ringSize > largestRingSize) {
         bestBondEnd = whichEnd;
         bestBondNumber = whichBond;
         bestRingCount = ringCount;
+        largestRingSize = ringSize;
         bestBondIsSingle = (bondToTry->getBondType() == Bond::BondType::SINGLE);
         bestBondDir = getBondDirForAtropisomer2d(bondVecs, bond->getStereo(),
                                                  whichEnd, whichBond);
@@ -916,8 +957,8 @@ bool WedgeBondFromAtropisomerOneBond2d(
     }
   }
 
-  if (bestBondEnd >= 0)  // we found a good one
-  {
+  if (bestBondEnd >= 0) {
+    // we found a good one
     // make sure the atoms on the bond are in the right order for the
     // wedge/hash the atom on the end of the main bond must be listed
     // first for the wedge/has bond
@@ -1007,6 +1048,7 @@ bool WedgeBondFromAtropisomerOneBond3d(
   Bond *bestBond = nullptr;
   int bestBondEnd = -1;
   unsigned int bestRingCount = UINT_MAX;
+  unsigned int largestRingSize = 0;
   Bond::BondDir bestBondDir = Bond::BondDir::NONE;
   bool bestBondIsSingle = false;
   for (unsigned int whichEnd = 0; whichEnd < 2; ++whichEnd) {
@@ -1046,14 +1088,24 @@ bool WedgeBondFromAtropisomerOneBond3d(
         }
       }
       auto ringCount = ri->numBondRings(bondToTry->getIdx());
+      unsigned int ringSize = 0;
+      if (!ringCount) {
+        ringCount = 10;
+      } else {
+        // we're going to prefer to put wedges in larger rings, but don't want
+        // to end up wedging macrocyles if it's avoidable.
+        ringSize = ri->minBondRingSize(bondToTry->getIdx());
+        if (ringSize > 8) {
+          ringSize = 0;
+        }
+      }
       if (ringCount > bestRingCount) {
         continue;
-      }
-
-      else if (ringCount < bestRingCount) {
+      } else if (ringCount < bestRingCount || ringSize > largestRingSize) {
         bestBond = bondToTry;
         bestBondEnd = whichEnd;
         bestRingCount = ringCount;
+        largestRingSize = ringSize;
         bestBondIsSingle = (bondToTry->getBondType() == Bond::BondType::SINGLE);
         bestBondDir = getBondDirForAtropisomer3d(bondToTry, conf);
       } else if (bestBondIsSingle &&
@@ -1083,7 +1135,8 @@ bool WedgeBondFromAtropisomerOneBond3d(
     }
   }
 
-  if (bestBond != nullptr) {  // we found a good one
+  if (bestBond != nullptr) {
+    // we found a good one
 
     // make sure the atoms on the bond are in the right order for the
     // wedge/hash the atom on the end of the main bond must be listed
