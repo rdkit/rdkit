@@ -7,12 +7,12 @@ steps:
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba
     conda create --name rdkit_build ^
+        cmake ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
         py-boost=$(boost_version) libboost=$(boost_version) ^
         numpy matplotlib=3.8 cairo pillow eigen pandas=2.1
     call activate rdkit_build
     conda install -c conda-forge sphinx myst-parser ipython=8.20 jupyter pytest nbval
-    conda install -c conda-forge cmake
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=
