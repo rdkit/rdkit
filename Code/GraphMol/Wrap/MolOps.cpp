@@ -3126,6 +3126,8 @@ A note on the flags controlling which atoms/bonds are modified:
 )DOC");
 
     python::def("_TestSetProps", testSetProps, python::arg("mol"));
+    python::def("NeedsHs", MolOps::needsHs, (python::arg("mol")),
+                "returns whether or not the molecule needs to have Hs added");
   }
 };
 }  // namespace RDKit
