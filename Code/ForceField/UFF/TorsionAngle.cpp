@@ -192,10 +192,11 @@ double TorsionAngleContrib::getEnergy(double *pos) const {
   double cosNPhi = 0.0;
   switch (d_order) {
     case 2:
-      cosNPhi = cosPhi * cosPhi - sinPhiSq;
+      // cos(2x) = 1 - 2sin^2(x)
+      cosNPhi = 1 - 2 * sinPhiSq;
       break;
     case 3:
-      // cos(3x) = cos^3(x) - 3*cos(x)*sin^2(x)
+      // cos(3x) = cos^3(x) - 3*cos(x)*sin^2(x) = 4cos^3(x) -3cos(x)
       cosNPhi = cosPhi * (cosPhi * cosPhi - 3. * sinPhiSq);
       break;
     case 6:

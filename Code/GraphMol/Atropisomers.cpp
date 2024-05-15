@@ -108,6 +108,46 @@ bool getBondFrameOfReference(const Bond *bond, const Conformer *conf,
   return true;
 }
 
+Bond::BondDir getBondDirForAtropisomerNoConf(Bond::BondStereo bondStereo,
+                                             unsigned int whichEnd,
+                                             unsigned int whichBond) {
+  // the convention is that in the absence of coords, the coordiates are choosen
+  // with the lowest numbered atom of the atrop bond down, and the other atom
+  // straight up.
+  // On each end, the lowest numbered connecting atom is on the left
+  //
+  //              a      b
+  //               \   /
+  //                 c
+  //                 |
+  //                 d
+  //               /   \     aaa
+  //              e      f
+  //
+  // where  c > d
+  //        a < b
+  //        e < f
+
+  PRECONDITION(whichEnd <= 1, "whichEnd must be 0 or 1");
+  PRECONDITION(whichBond <= 1, "whichBond must be 0 or 1");
+  PRECONDITION(bondStereo == Bond::BondStereo::STEREOATROPCW ||
+                   bondStereo == Bond::BondStereo::STEREOATROPCCW,
+               "bondStereo must be BondAtropisomerCW or BondAtropisomerCCW");
+
+  int flips = 0;
+  if (bondStereo == Bond::BondStereo::STEREOATROPCW) {
+    ++flips;
+  }
+  if (whichBond == 1) {
+    ++flips;
+  }
+  if (whichEnd == 1) {
+    ++flips;
+  }
+
+  return flips % 2 ? Bond::BEGINDASH : Bond::BEGINWEDGE;
+}
+
 Bond::BondDir getBondDirForAtropisomer2d(RDGeom::Point3D bondVecs[2],
                                          Bond::BondStereo bondStereo,
                                          unsigned int whichEnd,
@@ -129,12 +169,13 @@ Bond::BondDir getBondDirForAtropisomer2d(RDGeom::Point3D bondVecs[2],
     ++flips;
   }
   if (bondVecs[1 - whichEnd].y < 0) {
-    ++flips;  // if the OTHER end if negative for the low index bond vec, it
+    ++flips;  // if the OTHER end is negative for the low index bond vec, it
               // is a flip
   }
 
   return flips % 2 ? Bond::BEGINWEDGE : Bond::BEGINDASH;
 }
+
 Bond::BondDir getBondDirForAtropisomer3d(Bond *whichBond,
                                          const Conformer *conf) {
   // for 3D we mark it as wedge or hash depending on the z-value of the bond
@@ -204,6 +245,44 @@ bool getAtropIsomerEndVect(const AtropAtomAndBondVec &atomAndBondVec,
   return true;
 }
 
+std::pair<bool, Bond::BondDir> getBondDir(
+    const Bond *bond, const AtropAtomAndBondVec &atomAndBondVec) {
+  // get the wedge dir for this end of the bond
+  // if the first bond 1 has a bondDir, use it
+  // if the second bond has a bond dir use the opposite of if
+  // if both bonds have a dir, make sure they are different
+
+  auto bond1Dir = atomAndBondVec.second[0]->getBondDir();
+  if (bond1Dir != Bond::BEGINWEDGE && bond1Dir != Bond::BEGINDASH) {
+    bond1Dir = Bond::NONE;  //  we dont care if it any thing else
+  }
+  auto bond2Dir = atomAndBondVec.second.size() == 2
+                      ? atomAndBondVec.second[1]->getBondDir()
+                      : Bond::NONE;
+  if (bond2Dir != Bond::BEGINWEDGE && bond2Dir != Bond::BEGINDASH) {
+    bond2Dir = Bond::NONE;
+  }
+
+  // if both are set to a direction, they must NOT be the same - one
+  // must be a dash and the other a hash
+
+  if (bond1Dir != Bond::NONE && bond2Dir != Bond::NONE &&
+      bond1Dir == bond2Dir) {
+    BOOST_LOG(rdWarningLog)
+        << "The bonds on one end of an atropisomer are both UP or both DOWN - atoms are: "
+        << bond->getBeginAtomIdx() << " " << bond->getEndAtomIdx() << std::endl;
+    return {false, Bond::BondDir::NONE};
+  }
+
+  if (bond1Dir == Bond::BEGINWEDGE || bond2Dir == Bond::BEGINDASH) {
+    return {true, Bond::BondDir::BEGINWEDGE};
+  }
+  if (bond1Dir == Bond::BEGINDASH || bond2Dir == Bond::BEGINWEDGE) {
+    return {true, Bond::BondDir::BEGINDASH};
+  }
+  return {true, Bond::BondDir::NONE};
+}
+
 bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
                                        const Conformer *conf) {
   // the approach is this:
@@ -217,11 +296,11 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
   //  atrop bond. for each end of the main bond, we find a vector to reprent
   //  the neighbor atom with the smallest index as its projection onto the
   //  x=0 plane.
-  // (In 2d, this projection is on the y-AXIS for the end that does NOT have a
-  // wedge/hash bond, and  on the z axis - out of the plane - for the end that
-  // does have a wedge/hash). The chirality is recorded as the direction we
-  // rotate from, atom 1's projection to atom2's proejection - either
-  // clockwise or counter clockwise
+  // (In 2d, this projection is on the y-AXIS for the end that does NOT have
+  // a wedge/hash bond, and  on the z axis - out of the plane - for the end
+  // that does have a wedge/hash). The chirality is recorded as the
+  // direction we rotate from, atom 1's projection to atom2's proejection -
+  // either clockwise or counter clockwise
 
   PRECONDITION(bond, "bad bond");
 
@@ -239,6 +318,52 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
         return false;  // not an atropisomer
       }
     }
+  }
+
+  // the convention is that in the absence of coords, the coordiates are choosen
+  // with the lowest numbered atom of the atrop bond down, and the other atom
+  // straight up.
+  // On each end, the lowest numbered connecting atom is on the left
+  //
+  //              a      b
+  //               \   /
+  //                 c
+  //                 |
+  //                 d
+  //               /   \     aaa
+  //              e      f
+  //
+  // where  c > d
+  //        a < b
+  //        e < f
+
+  if (conf == nullptr) {
+    std::pair<bool, Bond::BondDir> bond1DirResult;
+    bond1DirResult = getBondDir(bond, atomAndBondVecs[0]);
+    if (!bond1DirResult.first) {
+      return false;
+    }
+    std::pair<bool, Bond::BondDir> bond2DirResult;
+    bond2DirResult = getBondDir(bond, atomAndBondVecs[1]);
+    if (!bond2DirResult.first) {
+      return false;
+    }
+    if (bond1DirResult.second == bond2DirResult.second) {
+      BOOST_LOG(rdWarningLog)
+          << "inconsistent bond wedging for an atropisomer.  Atoms are: "
+          << bond->getBeginAtomIdx() << " " << bond->getEndAtomIdx()
+          << std::endl;
+      return false;
+    }
+    if (bond1DirResult.second == Bond::BEGINWEDGE ||
+        bond2DirResult.second == Bond::BEGINDASH) {
+      bond->setStereo(Bond::BondStereo::STEREOATROPCCW);
+    } else if (bond1DirResult.second == Bond::BEGINDASH ||
+               bond2DirResult.second == Bond::BEGINWEDGE) {
+      bond->setStereo(Bond::BondStereo::STEREOATROPCW);
+    }
+
+    return true;
   }
 
   // create a frame of reference that has its X-axis along the atrop bond
@@ -265,27 +390,10 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
       // if the second bond has a bond dir use the opposite of if
       // if both bonds have a dir, make sure they are different
 
-      auto bond1Dir = atomAndBondVecs[bondAtomIndex].second[0]->getBondDir();
-      if (bond1Dir != Bond::BEGINWEDGE && bond1Dir != Bond::BEGINDASH) {
-        bond1Dir = Bond::NONE;  //  we dont care if it any thing else
-      }
-      auto bond2Dir =
-          atomAndBondVecs[bondAtomIndex].second.size() == 2
-              ? atomAndBondVecs[bondAtomIndex].second[1]->getBondDir()
-              : Bond::NONE;
-      if (bond2Dir != Bond::BEGINWEDGE && bond2Dir != Bond::BEGINDASH) {
-        bond2Dir = Bond::NONE;
-      }
+      std::pair<bool, Bond::BondDir> bondDirResult;
 
-      // if both are set to a direction, they must NOT be the same - one
-      // must be a dash and the other a hash
-
-      if (bond1Dir != Bond::NONE && bond2Dir != Bond::NONE &&
-          bond1Dir == bond2Dir) {
-        BOOST_LOG(rdWarningLog)
-            << "The bonds on one end of an atropisomer are both UP or both DOWN - atoms are: "
-            << bond->getBeginAtomIdx() << " " << bond->getEndAtomIdx()
-            << std::endl;
+      bondDirResult = getBondDir(bond, atomAndBondVecs[bondAtomIndex]);
+      if (!bondDirResult.first) {
         return false;
       }
 
@@ -294,10 +402,10 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
         return false;
       }
 
-      if (bond1Dir == Bond::BEGINWEDGE || bond2Dir == Bond::BEGINDASH) {
+      if (bondDirResult.second == Bond::BEGINWEDGE) {
         bondVecs[bondAtomIndex].y *= 0.707;
         bondVecs[bondAtomIndex].z = fabs(bondVecs[bondAtomIndex].y);
-      } else if (bond1Dir == Bond::BEGINDASH || bond2Dir == Bond::BEGINWEDGE) {
+      } else if (bondDirResult.second == Bond::BEGINDASH) {
         bondVecs[bondAtomIndex].y *= 0.707;
         bondVecs[bondAtomIndex].z = -fabs(bondVecs[bondAtomIndex].y);
       }
@@ -410,8 +518,7 @@ void cleanupAtropisomerStereoGroups(ROMol &mol) {
 }
 
 void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
-  PRECONDITION(conf, "no conformer");
-  PRECONDITION(&(conf->getOwningMol()) == &mol,
+  PRECONDITION(conf == nullptr || &(conf->getOwningMol()) == &mol,
                "conformer does not belong to molecule");
 
   std::set<Bond *> bondsToTry;
@@ -490,6 +597,169 @@ void getAllAtomIdsForStereoGroup(
       }
     }
   }
+}
+
+bool WedgeBondFromAtropisomerOneBondNoConf(
+    Bond *bond, const ROMol &mol,
+    std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds) {
+  PRECONDITION(bond, "no bond");
+
+  AtropAtomAndBondVec atomAndBondVecs[2];
+  if (!getAtropisomerAtomsAndBonds(bond, atomAndBondVecs, mol)) {
+    return false;  // not an atropisomer
+  }
+
+  //  make sure we do not have wiggle bonds
+
+  for (auto atomAndBondVec : atomAndBondVecs) {
+    for (auto endBond : atomAndBondVec.second) {
+      if (endBond->getBondDir() == Bond::UNKNOWN) {
+        return false;  // not an atropisomer)
+      }
+    }
+  }
+
+  // first see if any candidate bond is already set to a wedge or hash
+  // if so, we will use that bond as a wedge or hash
+
+  std::vector<int> useBondsAtEnd[2];
+  bool foundBondDir = false;
+
+  for (unsigned int whichEnd = 0; whichEnd < 2; ++whichEnd) {
+    for (unsigned int whichBond = 0;
+         whichBond < atomAndBondVecs[whichEnd].second.size(); ++whichBond) {
+      auto bondDir = atomAndBondVecs[whichEnd].second[whichBond]->getBondDir();
+
+      // see if it is a wedge or hash and its origin is the atom in the
+      // main bond
+
+      if ((bondDir == Bond::BEGINWEDGE || bondDir == Bond::BEGINDASH) &&
+          atomAndBondVecs[whichEnd].second[whichBond]->getBeginAtom() ==
+              atomAndBondVecs[whichEnd].first &&
+          canHaveDirection(*bond)) {
+        useBondsAtEnd[whichEnd].push_back(whichBond);
+        foundBondDir = true;
+      }
+    }
+  }
+
+  if (foundBondDir) {
+    for (unsigned int whichEnd = 0; whichEnd < 2; ++whichEnd) {
+      for (unsigned int whichBondIndex = 0;
+           whichBondIndex < useBondsAtEnd[whichEnd].size(); ++whichBondIndex) {
+        atomAndBondVecs[whichEnd]
+            .second[useBondsAtEnd[whichEnd][whichBondIndex]]
+            ->setBondDir(getBondDirForAtropisomerNoConf(
+                bond->getStereo(), whichEnd,
+                useBondsAtEnd[whichEnd][whichBondIndex]));
+      }
+    }
+
+    return true;
+  }
+
+  // did not find a good bond dir - pick one to use
+  // we would like to have one that is not in a ring, and will be a wedge
+
+  const RingInfo *ri = bond->getOwningMol().getRingInfo();
+
+  int bestBondEnd = -1, bestBondNumber = -1;
+  bool bestBondIsSingle = false;
+  unsigned int bestRingCount = INT_MAX;
+  Bond::BondDir bestBondDir = Bond::BondDir::NONE;
+  for (unsigned int whichEnd = 0; whichEnd < 2; ++whichEnd) {
+    for (unsigned int whichBond = 0;
+         whichBond < atomAndBondVecs[whichEnd].second.size(); ++whichBond) {
+      auto bondToTry = atomAndBondVecs[whichEnd].second[whichBond];
+
+      if (!canHaveDirection(*bondToTry) ||
+          wedgeBonds.find(bondToTry->getIdx()) != wedgeBonds.end()) {
+        continue;  // must be a single OR aromatic bond and not already
+                   // spoken for by a chiral center
+      }
+
+      if (bondToTry->getBondDir() != Bond::BondDir::NONE) {
+        if (bondToTry->getBeginAtom()->getIdx() ==
+            atomAndBondVecs[whichEnd].first->getIdx()) {
+          BOOST_LOG(rdWarningLog)
+              << "Wedge or hash bond found on atropisomer where not expected - atoms are: "
+              << bond->getBeginAtomIdx() << " " << bond->getEndAtomIdx()
+              << std::endl;
+          return false;
+        } else {
+          continue;  // wedge or hash bond affecting the OTHER atom
+                     // = perhaps a chiral center
+        }
+      }
+      auto ringCount = ri->numBondRings(bondToTry->getIdx());
+      if (ringCount > bestRingCount) {
+        continue;
+      }
+
+      else if (ringCount < bestRingCount) {
+        bestBondEnd = whichEnd;
+        bestBondNumber = whichBond;
+        bestRingCount = ringCount;
+        bestBondIsSingle = (bondToTry->getBondType() == Bond::BondType::SINGLE);
+        bestBondDir = getBondDirForAtropisomerNoConf(bond->getStereo(),
+                                                     whichEnd, whichBond);
+      } else if (bestBondIsSingle &&
+                 bondToTry->getBondType() != Bond::BondType::SINGLE) {
+        continue;
+
+      } else if (!bestBondIsSingle &&
+                 bondToTry->getBondType() == Bond::BondType::SINGLE) {
+        bestBondEnd = whichEnd;
+        bestBondNumber = whichBond;
+        bestRingCount = ringCount;
+        bestBondIsSingle = true;
+        bestBondDir = getBondDirForAtropisomerNoConf(bond->getStereo(),
+                                                     whichEnd, whichBond);
+
+      } else {
+        auto bondDir = getBondDirForAtropisomerNoConf(bond->getStereo(),
+                                                      whichEnd, whichBond);
+        if (bestBondDir == Bond::BondDir::NONE ||
+            (bestBondDir == Bond::BondDir::BEGINDASH &&
+             bondDir == Bond::BondDir::BEGINWEDGE)) {
+          bestBondEnd = whichEnd;
+          bestBondNumber = whichBond;
+          bestRingCount = ringCount;
+          bestBondIsSingle =
+              (bondToTry->getBondType() == Bond::BondType::SINGLE);
+          bestBondDir = bondDir;
+        }
+      }
+    }
+  }
+
+  if (bestBondEnd >= 0)  // we found a good one
+  {
+    // make sure the atoms on the bond are in the right order for the
+    // wedge/hash the atom on the end of the main bond must be listed
+    // first for the wedge/has bond
+
+    auto bestBond = atomAndBondVecs[bestBondEnd].second[bestBondNumber];
+    if (bestBond->getBeginAtom() != atomAndBondVecs[bestBondEnd].first) {
+      bestBond->setEndAtom(bestBond->getBeginAtom());
+      bestBond->setBeginAtom(atomAndBondVecs[bestBondEnd].first);
+    }
+
+    bestBond->setBondDir(bestBondDir);
+
+    auto newWedgeInfo = std::unique_ptr<RDKit::Chirality::WedgeInfoBase>(
+        new RDKit::Chirality::WedgeInfoAtropisomer(bond->getIdx(),
+                                                   bestBondDir));
+    wedgeBonds[bestBond->getIdx()] = std::move(newWedgeInfo);
+  } else {
+    BOOST_LOG(rdWarningLog)
+        << "Failed to find a good bond to set as UP or DOWN for an atropisomer - atoms are: "
+        << bond->getBeginAtomIdx() << " " << bond->getEndAtomIdx() << std::endl;
+    return false;
+  }
+
+  return true;
 }
 
 bool WedgeBondFromAtropisomerOneBond2d(
@@ -590,13 +860,19 @@ bool WedgeBondFromAtropisomerOneBond2d(
   }
 
   // did not find a good bond dir - pick one to use
-  // we would like to have one that is not in a ring, and will be a wedge
+  // we would like to have one that is in a ring, and will favor it being a
+  // wedge
+
+  // We favor rings here because wedging non-ring bonds makes it too likely that
+  // we'll end up accidentally creating new atropisomeric bonds. This was github
+  // issue 7371
 
   const RingInfo *ri = bond->getOwningMol().getRingInfo();
 
   int bestBondEnd = -1, bestBondNumber = -1;
   bool bestBondIsSingle = false;
   unsigned int bestRingCount = INT_MAX;
+  unsigned int largestRingSize = 0;
   Bond::BondDir bestBondDir = Bond::BondDir::NONE;
   for (unsigned int whichEnd = 0; whichEnd < 2; ++whichEnd) {
     for (unsigned int whichBond = 0;
@@ -605,8 +881,8 @@ bool WedgeBondFromAtropisomerOneBond2d(
 
       if (!canHaveDirection(*bondToTry) ||
           wedgeBonds.find(bondToTry->getIdx()) != wedgeBonds.end()) {
-        continue;  // must be a single OR aromatic bond and not already spoken
-                   // for by a chiral center
+        continue;  // must be a single OR aromatic bond and not already
+                   // spoken for by a chiral center
       }
 
       if (bondToTry->getBondDir() != Bond::BondDir::NONE) {
@@ -628,14 +904,24 @@ bool WedgeBondFromAtropisomerOneBond2d(
         }
       }
       auto ringCount = ri->numBondRings(bondToTry->getIdx());
+      unsigned int ringSize = 0;
+      if (!ringCount) {
+        ringCount = 10;
+      } else {
+        // we're going to prefer to put wedges in larger rings, but don't want
+        // to end up wedging macrocyles if it's avoidable.
+        ringSize = ri->minBondRingSize(bondToTry->getIdx());
+        if (ringSize > 8) {
+          ringSize = 0;
+        }
+      }
       if (ringCount > bestRingCount) {
         continue;
-      }
-
-      else if (ringCount < bestRingCount) {
+      } else if (ringCount < bestRingCount || ringSize > largestRingSize) {
         bestBondEnd = whichEnd;
         bestBondNumber = whichBond;
         bestRingCount = ringCount;
+        largestRingSize = ringSize;
         bestBondIsSingle = (bondToTry->getBondType() == Bond::BondType::SINGLE);
         bestBondDir = getBondDirForAtropisomer2d(bondVecs, bond->getStereo(),
                                                  whichEnd, whichBond);
@@ -669,8 +955,8 @@ bool WedgeBondFromAtropisomerOneBond2d(
     }
   }
 
-  if (bestBondEnd >= 0)  // we found a good one
-  {
+  if (bestBondEnd >= 0) {
+    // we found a good one
     // make sure the atoms on the bond are in the right order for the
     // wedge/hash the atom on the end of the main bond must be listed
     // first for the wedge/has bond
@@ -680,11 +966,13 @@ bool WedgeBondFromAtropisomerOneBond2d(
       bestBond->setEndAtom(bestBond->getBeginAtom());
       bestBond->setBeginAtom(atomAndBondVecs[bestBondEnd].first);
     }
-    // bonds[bestBondEnd][bestBondNumber]->setBondDir(bestBondDir);
+    bestBond->setBondDir(bestBondDir);
+
     auto newWedgeInfo = std::unique_ptr<RDKit::Chirality::WedgeInfoBase>(
         new RDKit::Chirality::WedgeInfoAtropisomer(bond->getIdx(),
                                                    bestBondDir));
     wedgeBonds[bestBond->getIdx()] = std::move(newWedgeInfo);
+
   } else {
     BOOST_LOG(rdWarningLog)
         << "Failed to find a good bond to set as UP or DOWN for an atropisomer - atoms are: "
@@ -738,8 +1026,9 @@ bool WedgeBondFromAtropisomerOneBond3d(
     }
   }
 
-  // the following may seem redundant, since we just found the useBonds based
-  // on their bond dir PRESENCE, but this endures that the values are correct.
+  // the following may seem redundant, since we just found the useBonds
+  // based on their bond dir PRESENCE, but this endures that the values are
+  // correct.
 
   if (useBonds.size() > 0) {
     for (auto useBond : useBonds) {
@@ -757,6 +1046,7 @@ bool WedgeBondFromAtropisomerOneBond3d(
   Bond *bestBond = nullptr;
   int bestBondEnd = -1;
   unsigned int bestRingCount = UINT_MAX;
+  unsigned int largestRingSize = 0;
   Bond::BondDir bestBondDir = Bond::BondDir::NONE;
   bool bestBondIsSingle = false;
   for (unsigned int whichEnd = 0; whichEnd < 2; ++whichEnd) {
@@ -796,14 +1086,24 @@ bool WedgeBondFromAtropisomerOneBond3d(
         }
       }
       auto ringCount = ri->numBondRings(bondToTry->getIdx());
+      unsigned int ringSize = 0;
+      if (!ringCount) {
+        ringCount = 10;
+      } else {
+        // we're going to prefer to put wedges in larger rings, but don't want
+        // to end up wedging macrocyles if it's avoidable.
+        ringSize = ri->minBondRingSize(bondToTry->getIdx());
+        if (ringSize > 8) {
+          ringSize = 0;
+        }
+      }
       if (ringCount > bestRingCount) {
         continue;
-      }
-
-      else if (ringCount < bestRingCount) {
+      } else if (ringCount < bestRingCount || ringSize > largestRingSize) {
         bestBond = bondToTry;
         bestBondEnd = whichEnd;
         bestRingCount = ringCount;
+        largestRingSize = ringSize;
         bestBondIsSingle = (bondToTry->getBondType() == Bond::BondType::SINGLE);
         bestBondDir = getBondDirForAtropisomer3d(bondToTry, conf);
       } else if (bestBondIsSingle &&
@@ -833,7 +1133,8 @@ bool WedgeBondFromAtropisomerOneBond3d(
     }
   }
 
-  if (bestBond != nullptr) {  // we found a good one
+  if (bestBond != nullptr) {
+    // we found a good one
 
     // make sure the atoms on the bond are in the right order for the
     // wedge/hash the atom on the end of the main bond must be listed
@@ -843,10 +1144,11 @@ bool WedgeBondFromAtropisomerOneBond3d(
       bestBond->setEndAtom(bestBond->getBeginAtom());
       bestBond->setBeginAtom(atomAndBondVecs[bestBondEnd].first);
     }
-    // bestBond->setBondDir(bestBondDir);
+    bestBond->setBondDir(bestBondDir);
     auto newWedgeInfo = std::unique_ptr<RDKit::Chirality::WedgeInfoBase>(
         new RDKit::Chirality::WedgeInfoAtropisomer(bond->getIdx(),
                                                    bestBondDir));
+
     wedgeBonds[bestBond->getIdx()] = std::move(newWedgeInfo);
   } else {
     BOOST_LOG(rdWarningLog)
@@ -862,8 +1164,7 @@ void wedgeBondsFromAtropisomers(
     const ROMol &mol, const Conformer *conf,
     std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
         &wedgeBonds) {
-  PRECONDITION(conf, "no conformer");
-  PRECONDITION(&(conf->getOwningMol()) == &mol,
+  PRECONDITION(conf == nullptr || &(conf->getOwningMol()) == &mol,
                "conformer does not belong to molecule");
   for (auto bond : mol.bonds()) {
     auto bondStereo = bond->getStereo();
@@ -878,10 +1179,14 @@ void wedgeBondsFromAtropisomers(
       continue;
     }
 
-    if (conf->is3D()) {
-      WedgeBondFromAtropisomerOneBond3d(bond, mol, conf, wedgeBonds);
-    } else {
-      WedgeBondFromAtropisomerOneBond2d(bond, mol, conf, wedgeBonds);
+    if (conf) {
+      if (conf->is3D()) {
+        WedgeBondFromAtropisomerOneBond3d(bond, mol, conf, wedgeBonds);
+      } else {
+        WedgeBondFromAtropisomerOneBond2d(bond, mol, conf, wedgeBonds);
+      }
+    } else {  // no conformer
+      WedgeBondFromAtropisomerOneBondNoConf(bond, mol, wedgeBonds);
     }
   }
 }

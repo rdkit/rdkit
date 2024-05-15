@@ -1618,7 +1618,6 @@ H      0.635000    0.635000    0.635000
     mol->addConformer(conf);
 
     const std::string xyzblock = MolToXYZBlock(*mol, 0, 15);
-    std::cout << xyzblock << std::endl;
     std::string xyzblock_expected = R"XYZ(7
 CHEMBL506259
 O      0.402012650000000   -0.132994360000000    1.000000170000000
@@ -5074,7 +5073,8 @@ M  END
     Chirality::reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
   }
-  SECTION("Reapply the original wedging, regardless the bond type of wedged bonds") {
+  SECTION(
+      "Reapply the original wedging, regardless the bond type of wedged bonds") {
     auto m = R"CTAB(
   Mrv2311 04232413302D          
 

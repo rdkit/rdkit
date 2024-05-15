@@ -611,9 +611,12 @@ class MarvinCMLReader {
         MolOps::assignChiralTypesFrom3D(*mol, conf3d->getId(), true);
       }
 
-      if (conf || conf3d) {
-        Atropisomers::detectAtropisomerChirality(
-            *mol, conf != nullptr ? conf : conf3d);
+      if (conf) {
+        Atropisomers::detectAtropisomerChirality(*mol, conf);
+      } else if (conf3d) {
+        Atropisomers::detectAtropisomerChirality(*mol, conf3d);
+      } else {
+        Atropisomers::detectAtropisomerChirality(*mol, nullptr);
       }
 
       ClearSingleBondDirFlags(*mol);
