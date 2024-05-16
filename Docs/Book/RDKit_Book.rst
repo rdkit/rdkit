@@ -630,8 +630,9 @@ The following atom types are potential tetrahedral stereogenic atoms:
   - atoms with degree 4
   - atoms with degree 3 and one implicit H
   - P or As with degree 3 or 4
-  - N with degree 3 which is in a ring of size 3 or which is shared between at
-    least 3 rings (this last condition is an extension to the InChI rules) 
+  - An SP3 hybridized N with degree 3 that is not involved in any conjugated
+    bonds and that is in a ring of size 3 or that is shared between at least 3
+    rings (this last condition is an extension to the InChI rules).
   - S or Se with degree 3 and a total valence of 4 or a total valence of 3 and a
     net charge of +1.
 
