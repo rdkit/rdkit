@@ -893,6 +893,12 @@ void wedgeBondsFromAtropisomers(
   PRECONDITION(conf, "no conformer");
   PRECONDITION(&(conf->getOwningMol()) == &mol,
                "conformer does not belong to molecule");
+
+  // WedgeBondFromAtropisomerOneBond 2d/3d requires ring bond counts
+  if (!mol.getRingInfo()->isSssrOrBetter()) {
+    RDKit::MolOps::findSSSR(mol);
+  }
+
   for (auto bond : mol.bonds()) {
     auto bondStereo = bond->getStereo();
 

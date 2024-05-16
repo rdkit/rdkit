@@ -5,9 +5,11 @@ Focus is on molecules that have differing SMILES, but
 are actually the same.
 """
 
+import os
 import unittest
 
 from rdkit import Chem
+from rdkit import RDConfig
 from rdkit.Chem import RegistrationHash
 from rdkit.Chem.RegistrationHash import HashLayer
 
@@ -805,6 +807,42 @@ $$$$
         enol_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS),
       RegistrationHash.GetMolHash(
         keto_layers, hash_scheme=RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+
+  def testAtropisomer(self):
+    atropTestFile = os.path.join(
+      RDConfig.RDBaseDir, 'Code/GraphMol/FileParsers/test_data/atropisomers/RP-6306_atrop1.sdf')
+    mol = Chem.MolFromMolFile(atropTestFile)
+
+    bond = mol.GetBondWithIdx(3)
+    self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREOATROPCW)
+
+    layersCw = RegistrationHash.GetMolLayers(mol)
+
+    smiles1, smiExt1 = layersCw[HashLayer.CANONICAL_SMILES].split()
+    taut1, tautExt1 = layersCw[HashLayer.TAUTOMER_HASH].split()
+    self.assertEqual(smiles1, 'Cc1cc2c(C(N)=O)c(N)n(-c3c(C)ccc(O)c3C)c2nc1C')
+    self.assertEqual(
+      taut1,
+      'C[C]1[CH][C]2[C]([C]([N])[O])[C]([N])N([C]3[C](C)[CH][CH][C]([O])[C]3C)[C]2[N][C]1C_5_0')
+    self.assertEqual(smiExt1, '|wD:10.9|')
+    self.assertEqual(smiExt1, tautExt1)
+
+    # Now look at the other atropisomer
+    bond = mol.GetBondWithIdx(3)
+    bond.SetStereo(Chem.BondStereo.STEREOATROPCCW)
+
+    # Hashes should not match
+    layersCcw = RegistrationHash.GetMolLayers(mol)
+    self.assertNotEqual(layersCw, layersCcw)
+
+    smiles2, smiExt2 = layersCcw[HashLayer.CANONICAL_SMILES].split()
+    taut2, tautExt2 = layersCcw[HashLayer.TAUTOMER_HASH].split()
+
+    # SMILES and tautomer hash should be the same, but the extensions must be different
+    self.assertEqual(smiles2, smiles1)
+    self.assertEqual(taut2, taut1)
+    self.assertEqual(smiExt2, '|wD:10.20|')  # same atom, but "down" wedge on a different bond
+    self.assertEqual(smiExt2, tautExt2)
 
 
 if __name__ == '__main__':  # pragma: nocover

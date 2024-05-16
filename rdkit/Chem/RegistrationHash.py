@@ -35,7 +35,8 @@ ATOM_PROP_MAP_NUMBER = 'molAtomMapNumber'
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_CXFLAG = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+DEFAULT_CXFLAG = (Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+                  | Chem.CXSmilesFields.CX_BOND_ATROPISOMER)
 
 ENHANCED_STEREO_GROUP_REGEX = re.compile(r'((?:a|[&o]\d+):\d+(?:,\d+)*)')
 
