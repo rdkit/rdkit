@@ -98,8 +98,12 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
           //   in a ring of size 3  (from InChI)
           // OR
           /// is a bridgehead atom (RDKit extension)
-          if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
-              queryIsAtomBridgehead(atom)) {
+          // Also: cannot be SP2 hybridized or have a conjugated bond
+          //   (this was Github #7434)
+          if (atom->getHybridization() == Atom::HybridizationType::SP3 &&
+              !MolOps::atomHasConjugatedBond(atom) &&
+              (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
+               queryIsAtomBridgehead(atom))) {
             legalCenter = true;
           }
         }

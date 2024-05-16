@@ -5680,3 +5680,55 @@ M  END
     }
   }
 }
+
+TEST_CASE(
+    "github #7434: planar amide nitrogen incorrectly flagged as _ChiralityPossible") {
+  SECTION("as reported") {
+    auto m1 = "O=C1CCCCC[C@@H]2CN1CCO2"_smiles;
+    REQUIRE(m1);
+    // new stereo
+    CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m1->getAtomWithIdx(7)));
+    CHECK(!Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m1->getAtomWithIdx(9)));
+
+    // force old stereo
+    UseLegacyStereoPerceptionFixture resetStereoPerception{true};
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto si = Chirality::findPotentialStereo(*m1, cleanIt, flagPossible);
+    CHECK(si.size() == 1);
+  }
+  SECTION("details") {
+    auto m1 = "C1CCCCC[C@@H]2CN1CCO2"_smiles;
+    REQUIRE(m1);
+    CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m1->getAtomWithIdx(6)));
+    CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m1->getAtomWithIdx(8)));
+
+    // force old stereo
+    UseLegacyStereoPerceptionFixture resetStereoPerception{true};
+    bool cleanIt = true;
+    bool flagPossible = true;
+    {
+      auto si = Chirality::findPotentialStereo(*m1, cleanIt, flagPossible);
+      CHECK(si.size() == 2);
+    }
+    m1->getAtomWithIdx(8)->setHybridization(Atom::HybridizationType::SP2);
+    CHECK(!Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m1->getAtomWithIdx(8)));
+    {
+      auto si = Chirality::findPotentialStereo(*m1, cleanIt, flagPossible);
+      CHECK(si.size() == 1);
+    }
+    m1->getAtomWithIdx(8)->setHybridization(Atom::HybridizationType::SP3);
+    m1->getBondBetweenAtoms(0, 8)->setIsConjugated(true);
+    CHECK(!Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m1->getAtomWithIdx(8)));
+    {
+      auto si = Chirality::findPotentialStereo(*m1, cleanIt, flagPossible);
+      CHECK(si.size() == 1);
+    }
+  }
+}
