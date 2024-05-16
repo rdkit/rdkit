@@ -167,19 +167,20 @@
       }
     }
   }
-  public byte[] ToByteArray() {
-    UChar_Vect vec = null;
-    try {
-      vec = toUCharVect();
-      byte[] res = new byte[vec.Count];
-      vec.CopyTo(res);
-      return res;
-    } finally {
-      if (vec != null) {
-        vec.Dispose();
-      }
-    }
-  }
+  public
+   byte[] ToByteArray(int propertyFlags = -1) {
+     UChar_Vect vec = null;
+     try {
+       vec = toUCharVect(propertyFlags);
+       byte[] res = new byte[vec.Count];
+       vec.CopyTo(res);
+       return res;
+     } finally {
+       if (vec != null) {
+         vec.Dispose();
+       }
+     }
+   }
 %}
 %include <GraphMol/ROMol.h>
 
