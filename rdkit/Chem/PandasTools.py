@@ -113,10 +113,13 @@ The standard ForwardSDMolSupplier keywords are also available:
 
 Conversion to html is quite easy:
 
+>>> PandasTools.molRepresentation = 'svg' #< the default is 'png', for png representation
 >>> htm = frame.to_html()
 ...
 >>> str(htm[:36])
 '<table border="1" class="dataframe">'
+>>> PandasTools.molRepresentation = 'png' #< switch back to the default
+
 
 In order to support rendering the molecules as images in the HTML export of the
 dataframe, we use a custom formatter for columns containing RDKit molecules,

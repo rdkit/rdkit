@@ -162,8 +162,7 @@ void AngleBendContrib::getGrad(double *pos, double *grad) const {
   double cosTheta = r[0].dotProduct(r[1]);
   clipToOne(cosTheta);
   double sinThetaSq = 1.0 - cosTheta * cosTheta;
-  double sinTheta =
-      std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
+  double sinTheta = std::max(sqrt(sinThetaSq), 1.0e-8);
 
   // std::cerr << "GRAD: " << cosTheta << " (" << acos(cosTheta)<< "), ";
   // std::cerr << sinTheta << " (" << asin(sinTheta)<< ")" << std::endl;

@@ -669,8 +669,28 @@ std::string JSReaction::get_svg_with_highlights(
   int h = d_defaultHeight;
   return MinimalLib::rxn_to_svg(*d_rxn, w, h, details);
 }
-
 bool JSReaction::is_valid() const { return true; }
+
+std::vector<JSMolList *> JSReaction::run_reactants(
+    const JSMolList &reactants, unsigned int maxProducts) const {
+  d_rxn->initReactantMatchers();
+  RDKit::MOL_SPTR_VECT reactant_vec;
+
+  for (const auto &reactant : reactants.mols()) {
+    if (!reactant) {
+      throw ValueErrorException("Reactant must not be null");
+    }
+    reactant_vec.push_back(reactant);
+  }
+
+  std::vector<RDKit::MOL_SPTR_VECT> prods;
+  prods = d_rxn->runReactants(reactant_vec, maxProducts);
+  std::vector<JSMolList *> newResults;
+  for (auto &mol_array : prods) {
+    newResults.push_back(new JSMolList(mol_array));
+  }
+  return newResults;
+}
 #endif
 
 JSMol *JSMolList::next() {
