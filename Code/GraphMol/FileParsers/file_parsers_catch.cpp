@@ -6623,6 +6623,46 @@ TEST_CASE(
   }
 }
 
+TEST_CASE("MaeWriter should not prefix Maestro-formatted properties") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+
+  v2::FileParsers::MaeMolSupplier supplier(fname1);
+  auto mol = supplier.next();
+  REQUIRE(mol);
+
+  // MaeMolSupplier should ignore the i_m_ct_enhanced_stereo_status property
+  // (it's meaningless to the RDKit)
+  CHECK(mol->hasProp("i_m_ct_enhanced_stereo_status") == false);
+
+  std::string mae_block;
+  {
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+    mae_block = oss->str();
+  }
+
+  // properties that already match the Maestro format should not be prefixed
+  // with "[birs]_rdk_"
+  CHECK(mae_block.find("b_rdk_b_m_subgroup_collapsed") == std::string::npos);
+  CHECK(mae_block.find("b_m_subgroup_collapsed") != std::string::npos);
+
+  CHECK(mae_block.find("b_rdk_b_sd_chiral_flag") == std::string::npos);
+  CHECK(mae_block.find("b_sd_chiral_flag") != std::string::npos);
+
+  CHECK(mae_block.find("i_rdk_i_m_Source_File_Index") == std::string::npos);
+  CHECK(mae_block.find("i_m_Source_File_Index") != std::string::npos);
+
+  CHECK(mae_block.find("i_rdk_i_m_ct_format") == std::string::npos);
+  CHECK(mae_block.find("i_m_ct_format") != std::string::npos);
+
+  CHECK(mae_block.find("s_rdk_s_m_entry_name") == std::string::npos);
+  CHECK(mae_block.find("s_m_entry_name") != std::string::npos);
+}
+
 #endif
 
 TEST_CASE("Chained bond stereo and wiggly bonds") {
