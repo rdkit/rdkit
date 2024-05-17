@@ -52,7 +52,7 @@
 
 // from Python wrapper
 std::string describeQueryHelper(const RDKit::Atom::QUERYATOM_QUERY *q, unsigned int depth) {
-  std::string res = "";
+  std::string res;
   if (q) {
     for (unsigned int i = 0; i < depth; ++i) {
       res += "  ";
@@ -156,11 +156,8 @@ std::string describeQueryHelper(const RDKit::Atom::QUERYATOM_QUERY *q, unsigned 
 
   // from Python Wrapper
   std::string describeQuery() {
-	PRECONDITION(($self), "bad atom");
 	std::string res = "";
-	if (($self)->hasQuery()) {
 	  res = describeQueryHelper(($self)->getQuery(), 0);
-	}
 	return res;
   }
 

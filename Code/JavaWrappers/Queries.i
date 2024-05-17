@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Gareth Jones, Glysade LLC
+//  Copyright (C) 2024 Gareth Jones, Glysade LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -40,19 +40,23 @@
   }
   
   RDKit::QueryAtom* funcname ## LessQueryAtom(type val, bool negate=false) {           
-    auto *res = new RDKit::QueryAtom();                                      
+    std::unique_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
     res->setQuery(                                                         
         RDKit:: ## func <RDKit::ATOM_GREATER_QUERY>(val, std::string( # funcname "Less"))); 
-    if (negate) res->getQuery()->setNegation(true);                        
-    return res;                                                            
+    if (negate) {
+      res->getQuery()->setNegation(true);                        
+    }
+    return res.release();
   }                                                                        
 
   RDKit::QueryAtom* funcname ## GreaterQueryAtom(type val, bool negate=false) {        
-    auto *res = new RDKit::QueryAtom();                                      
+    std::unique_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
     res->setQuery(                                                         
         RDKit:: ## func <RDKit::ATOM_LESS_QUERY>(val, std::string(# funcname "Greater"))); 
-    if (negate) res->getQuery()->setNegation(true);                        
-    return res;                                                            
+    if (negate) {
+      res->getQuery()->setNegation(true);
+    }
+    return res.release();                      
   }
 %}
 %enddef
@@ -60,10 +64,12 @@
 %define QAFUNC2(funcname, func, type)          
 %inline %{
   RDKit::QueryAtom* funcname(bool negate=false) {              
-    auto *res = new RDKit::QueryAtom();               
+    std::unique_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
     res->setQuery(RDKit:: ## func());                        
-    if (negate) res->getQuery()->setNegation(true); 
-    return res;                                     
+    if (negate) {
+      res->getQuery()->setNegation(true); 
+    }
+    return res.release();
   }
 %}
 %enddef
@@ -203,43 +209,43 @@ QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
 
   template <class Ob, class Ret, class T>
   Ret *PropQuery(const std::string &propname, const T &v, bool negate) {
-	auto *res = new Ret();
+	std::unique_ptr<Ret> res(new Ret());
 	res->setQuery(RDKit::makePropQuery<Ob, T>(propname, v));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
 	}
-	return res;
+	return res.release();
   }
 
   template <class Ob, class Ret, class T>
   Ret *PropQueryWithTol(const std::string &propname, const T &v, bool negate,
 						const T &tol = T()) {
-	auto *res = new Ret();
+	std::unique_ptr<Ret> res(new Ret());
 	res->setQuery(RDKit::makePropQuery<Ob, T>(propname, v, tol));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
 	}
-	return res;
+	return res.release();
   }
 
   template <class Ob, class Ret>
   Ret *PropQueryWithTol(const std::string &propname, const ExplicitBitVect &v,
 						bool negate=false, float tol = 0.0) {
-	auto *res = new Ret();
+	std::unique_ptr<Ret> res(new Ret());
 	res->setQuery(RDKit::makePropQuery<Ob>(propname, v, tol));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
 	}
-	return res;
+	return res.release();
   }
 
   RDKit::QueryAtom *HasPropQueryAtom(const std::string &propname, bool negate=false) {
-	auto *res = new RDKit::QueryAtom();
+	std::unique_ptr<Ret> res(new Ret());
 	res->setQuery(RDKit::makeHasPropQuery<RDKit::Atom>(propname));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
 	}
-	return res;
+	return res.release();
   }
 
   RDKit::QueryAtom *HasIntPropWithValueQueryAtom(const std::string &propname, int val, bool negate=false) {
@@ -263,12 +269,12 @@ QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
   }
 
   RDKit::QueryBond *HasPropQueryBond(const std::string &propname, bool negate=false) {
-	auto *res = new RDKit::QueryBond();
+	std::unique_ptr<QueryBond> res(new RDKit::QueryBond());
 	res->setQuery(RDKit::makeHasPropQuery<RDKit::Bond>(propname));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
 	}
-	return res;
+	return res.release();
   }
 
   RDKit::QueryBond *HasIntPropWithValueQueryBond(const std::string &propname, int val, bool negate=false) {
@@ -327,6 +333,7 @@ RDKit::QueryBond *HasDoublePropWithValueQueryBond(const std::string &propname, d
 
 %extend RDKit::QueryAtom {
   void ExpandQuery(const RDKit::QueryAtom *other, Queries::CompositeQueryType how=Queries::COMPOSITE_AND, bool maintainOrder=true) {
+	PRECONDITION(other, "bad atoms");
 	if (other->hasQuery()) {
 	  const RDKit::QueryAtom::QUERYATOM_QUERY *qry = other->getQuery();
 	  ($self)->expandQuery(qry->copy(), how, maintainOrder);
@@ -334,6 +341,7 @@ RDKit::QueryBond *HasDoublePropWithValueQueryBond(const std::string &propname, d
   }
 
   void setQuery(const RDKit::QueryAtom *other) {
+	PRECONDITION(other, "bad atoms");
 	if (other->hasQuery()) {
 	  ($self)->setQuery(other->getQuery()->copy());
 	}
@@ -342,6 +350,7 @@ RDKit::QueryBond *HasDoublePropWithValueQueryBond(const std::string &propname, d
 
 %extend RDKit::Atom {
   void ExpandQuery(const RDKit::QueryAtom *other, Queries::CompositeQueryType how=Queries::COMPOSITE_AND, bool maintainOrder=true) {
+  PRECONDITION(other, "bad atoms");
   if (other->hasQuery()) {
 	  const RDKit::QueryAtom::QUERYATOM_QUERY *qry = other->getQuery();
 	  ($self)->expandQuery(qry->copy(), how, maintainOrder);
@@ -349,6 +358,7 @@ RDKit::QueryBond *HasDoublePropWithValueQueryBond(const std::string &propname, d
   }
 
   void setQuery(const RDKit::QueryAtom *other) {
+	PRECONDITION(other, "bad atoms");
 	if (other->hasQuery()) {
 	  ($self)->setQuery(other->getQuery()->copy());
 	}
@@ -357,6 +367,7 @@ RDKit::QueryBond *HasDoublePropWithValueQueryBond(const std::string &propname, d
 
 %extend RDKit::QueryBond {
   void ExpandQuery(const RDKit::QueryBond *other, Queries::CompositeQueryType how=Queries::COMPOSITE_AND, bool maintainOrder=true) {
+	PRECONDITION(other, "bad bonds");
 	if (other->hasQuery()) {
 	  const RDKit::QueryBond::QUERYBOND_QUERY *qry = other->getQuery();
 	  ($self)->expandQuery(qry->copy(), how, maintainOrder);
@@ -364,6 +375,7 @@ RDKit::QueryBond *HasDoublePropWithValueQueryBond(const std::string &propname, d
   }
 
   void SetQuery(const RDKit::QueryBond *other) {
+	PRECONDITION(other, "bad bonds");
 	if (other->hasQuery()) {
 	  ($self)->setQuery(other->getQuery()->copy());
 	}
@@ -372,6 +384,7 @@ RDKit::QueryBond *HasDoublePropWithValueQueryBond(const std::string &propname, d
 
 %extend RDKit::Bond {
   void ExpandQuery(const RDKit::QueryBond *other, Queries::CompositeQueryType how=Queries::COMPOSITE_AND, bool maintainOrder=true) {
+	PRECONDITION(other, "bad bonds");
 	if (other->hasQuery()) {
 	  const RDKit::QueryBond::QUERYBOND_QUERY *qry = other->getQuery();
 	  ($self)->expandQuery(qry->copy(), how, maintainOrder);
@@ -379,6 +392,7 @@ RDKit::QueryBond *HasDoublePropWithValueQueryBond(const std::string &propname, d
   }
 
   void SetQuery(const RDKit::QueryBond *other) {
+	PRECONDITION(other, "bad bonds");
 	if (other->hasQuery()) {
 	  ($self)->setQuery(other->getQuery()->copy());
 	}
