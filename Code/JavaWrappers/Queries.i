@@ -242,7 +242,7 @@ QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
   }
 
   RDKit::QueryAtom *HasPropQueryAtom(const std::string &propname, bool negate=false) {
-	std::unique_ptr<Ret> res(new Ret());
+	std::unique_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
 	res->setQuery(RDKit::makeHasPropQuery<RDKit::Atom>(propname));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
@@ -271,7 +271,7 @@ QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
   }
 
   RDKit::QueryBond *HasPropQueryBond(const std::string &propname, bool negate=false) {
-	std::unique_ptr<QueryBond> res(new RDKit::QueryBond());
+	std::unique_ptr<RDKit::QueryBond> res(new RDKit::QueryBond());
 	res->setQuery(RDKit::makeHasPropQuery<RDKit::Bond>(propname));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
