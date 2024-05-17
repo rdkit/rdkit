@@ -35,7 +35,9 @@
    RDKit::QueryAtom* funcname ## EqualsQueryAtom(type val, bool negate=false) {         
     auto *res = new RDKit::QueryAtom();                                      
     res->setQuery(RDKit:: ## func(val));                                            
-    if (negate) res->getQuery()->setNegation(true);                        
+    if (negate) {
+      res->getQuery()->setNegation(true);
+    }
     return res;                                                            
   }
   
