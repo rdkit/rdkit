@@ -33,12 +33,12 @@
  %inline %{
 
    RDKit::QueryAtom* funcname ## EqualsQueryAtom(type val, bool negate=false) {         
-    auto *res = new RDKit::QueryAtom();                                      
+    std::unique_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
     res->setQuery(RDKit:: ## func(val));                                            
     if (negate) {
       res->getQuery()->setNegation(true);
     }
-    return res;                                                            
+    return res.release();
   }
   
   RDKit::QueryAtom* funcname ## LessQueryAtom(type val, bool negate=false) {           
