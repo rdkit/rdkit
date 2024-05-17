@@ -32,44 +32,44 @@
  %define QAFUNC1(funcname, func, type)
  %inline %{
 
-   RDKit::QueryAtom* funcname ## EqualsQueryAtom(type val, bool negate=false) {         
+   RDKit::QueryAtom* funcname ## EqualsQueryAtom(type val, bool negate=false) {
     std::unique_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
-    res->setQuery(RDKit:: ## func(val));                                            
+    res->setQuery(RDKit:: ## func(val));
     if (negate) {
       res->getQuery()->setNegation(true);
     }
     return res.release();
   }
-  
-  RDKit::QueryAtom* funcname ## LessQueryAtom(type val, bool negate=false) {           
-    std::unique_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
-    res->setQuery(                                                         
-        RDKit:: ## func <RDKit::ATOM_GREATER_QUERY>(val, std::string( # funcname "Less"))); 
-    if (negate) {
-      res->getQuery()->setNegation(true);                        
-    }
-    return res.release();
-  }                                                                        
 
-  RDKit::QueryAtom* funcname ## GreaterQueryAtom(type val, bool negate=false) {        
+  RDKit::QueryAtom* funcname ## LessQueryAtom(type val, bool negate=false) {
     std::unique_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
-    res->setQuery(                                                         
-        RDKit:: ## func <RDKit::ATOM_LESS_QUERY>(val, std::string(# funcname "Greater"))); 
+    res->setQuery(
+        RDKit:: ## func <RDKit::ATOM_GREATER_QUERY>(val, std::string( # funcname "Less")));
     if (negate) {
       res->getQuery()->setNegation(true);
     }
-    return res.release();                      
+    return res.release();
+  }
+
+  RDKit::QueryAtom* funcname ## GreaterQueryAtom(type val, bool negate=false) {
+    std::unique_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
+    res->setQuery(
+        RDKit:: ## func <RDKit::ATOM_LESS_QUERY>(val, std::string(# funcname "Greater")));
+    if (negate) {
+      res->getQuery()->setNegation(true);
+    }
+    return res.release();
   }
 %}
 %enddef
 
-%define QAFUNC2(funcname, func, type)          
+%define QAFUNC2(funcname, func, type)
 %inline %{
-  RDKit::QueryAtom* funcname(bool negate=false) {              
+  RDKit::QueryAtom* funcname(bool negate=false) {
     std::unique_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
-    res->setQuery(RDKit:: ## func());                        
+    res->setQuery(RDKit:: ## func());
     if (negate) {
-      res->getQuery()->setNegation(true); 
+      res->getQuery()->setNegation(true);
     }
     return res.release();
   }
@@ -251,7 +251,7 @@ QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
   }
 
   RDKit::QueryAtom *HasIntPropWithValueQueryAtom(const std::string &propname, int val, bool negate=false) {
- 	return PropQuery<RDKit::Atom, RDKit::QueryAtom, int>(propname, val, negate); 
+ 	return PropQuery<RDKit::Atom, RDKit::QueryAtom, int>(propname, val, negate);
   }
 
   RDKit::QueryAtom *HasBoolPropWithValueQueryAtom(const std::string &propname, bool val, bool negate=false) {
