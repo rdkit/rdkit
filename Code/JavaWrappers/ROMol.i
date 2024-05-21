@@ -574,19 +574,13 @@ void setAllowNontetrahedralChirality(bool);
   }
 
   std::vector<RDKit::Atom*> *getAtomNeighbors(RDKit::Atom *at) {
-    auto atoms = new std::vector<RDKit::Atom*>;
-    for(const auto &nbr : ($self)->atomNeighbors(at)){
-      atoms->push_back(nbr);
-    }
-    return atoms;
+    auto atomNbrs = ($self)->atomNeighbors(at);
+    return new std::vector<RDKit::Atom*>(atomNbrs.begin(), atomNbrs.end());
   }
 
   std::vector<RDKit::Bond*> *getAtomBonds(RDKit::Atom *at) {
-    auto bonds = new std::vector<RDKit::Bond*>;
-    for(const auto &nbr : ($self)->atomBonds(at)){
-      bonds->push_back(nbr);
-    }
-    return bonds;
+    auto bondNbrs = ($self)->atomBonds(at);
+    return new std::vector<RDKit::Bond*>(bondNbrs.begin(), bondNbrs.end());
   }
 
   /* From MolPickler.h */
