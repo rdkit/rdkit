@@ -207,10 +207,15 @@ void parseStereoBondLabel(RWMol &mol, const std::string &stereo_prop) {
 }
 
 std::string strip_prefix_from_mae_property(const std::string &propName) {
-  const char &first = propName[0];
-  if ((first == 'b' || first == 'i' || first == 'r' || first == 's') &&
-      (strncmp(&propName.c_str()[1], "_rdk_", 5) == 0)) {
-    return propName.substr(6);
+  const char *propNamePtr = propName.c_str();
+  if (*propNamePtr == 'b' || *propNamePtr == 'i' || *propNamePtr == 'r' ||
+      *propNamePtr == 's') {
+    ++propNamePtr;
+    if (strncmp(propNamePtr, "_rdk_", 5) == 0) {
+      return propName.substr(6);
+    } else if (strncmp(propNamePtr, "_rdkit_", 7) == 0) {
+      return propName.substr(8);
+    }
   }
   return propName;
 }
@@ -317,6 +322,10 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
     if (prop.first == mae::ATOM_FORMAL_CHARGE) {
       // Formal charge has a specific setter
       atom.setFormalCharge(prop.second->at(i));
+    } else if (prop.first == MAE_RGROUP_LABEL) {
+      // Schrodinger adopted RDKit's Group label property,
+      // but with a "i_sd_" prefix instead of the usual "i_rdkit_"
+      atom.setProp(common_properties::_MolFileRLabel, prop.second->at(i));
     } else {
       auto propName = strip_prefix_from_mae_property(prop.first);
       atom.setProp(propName, prop.second->at(i));
