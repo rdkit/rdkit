@@ -575,16 +575,16 @@ void setAllowNontetrahedralChirality(bool);
 
   std::vector<RDKit::Atom*> *getAtomNeighbors(RDKit::Atom *at) {
     auto atoms = new std::vector<RDKit::Atom*>;
-    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomNeighbors(at))){
-      atoms->push_back((*($self))[nbri]);
+    for(const auto &nbr : ($self)->atomNeighbors(at)){
+      atoms->push_back(nbr);
     }
     return atoms;
   }
 
   std::vector<RDKit::Bond*> *getAtomBonds(RDKit::Atom *at) {
     auto bonds = new std::vector<RDKit::Bond*>;
-    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomBonds(at))){
-      bonds->push_back((*($self))[nbri]);
+    for(const auto &nbr : ($self)->atomBonds(at)){
+      bonds->push_back(nbr);
     }
     return bonds;
   }
