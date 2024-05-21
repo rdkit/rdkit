@@ -308,28 +308,41 @@ Uncharger::Uncharger()
           // tetrazole
           "$([n-]1nnnc1),$([n-]1ncnn1)]")){};
 
-void neutralizeNeg(Atom *atom, int hDelta = 1) {
+namespace {
+void removeCharge(Atom *atom, int charge, int hDelta) {
   atom->setNumExplicitHs(atom->getTotalNumHs() + hDelta);
   atom->setNoImplicit(true);
-  atom->setFormalCharge(atom->getFormalCharge() + 1);
-  BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
+  atom->setFormalCharge(atom->getFormalCharge() - charge);
+  BOOST_LOG(rdInfoLog)
+    << "Removed " << ((charge > 0) ? "positive" : "negative") << " charge.\n";
   // since we changed the number of explicit Hs, we need to update the
   // other valence parameters
   atom->updatePropertyCache(false);
 }
 
-bool neutralizeNegIfPossible(Atom *atom) {
+bool removeNegIfPossible(Atom *atom) {
   bool is_early_atom = isEarlyAtom(atom->getAtomicNum());
   bool has_hs = atom->getTotalNumHs();
   if (is_early_atom && !has_hs) {
     return false;
   }
   int hDelta = (is_early_atom ? -1 : 1);
-  // Add hydrogen to negative atom, increase formal charge
-  // Until quaternary positive == negative total or no more negative
-  // acid
-  neutralizeNeg(atom, hDelta);
+  removeCharge(atom, -1, hDelta);
   return true;
+}
+
+bool removePosIfPossible(Atom *atom) {
+  bool is_carbon_or_early_atom = (
+    // the special case for C here was github #2792
+    atom->getAtomicNum() == 6 || isEarlyAtom(atom->getAtomicNum()));
+  bool has_hs = atom->getTotalNumHs();
+  if (!is_carbon_or_early_atom && !has_hs) {
+    return false;
+  }
+  int hDelta = (is_carbon_or_early_atom ? 1 : -1);
+  removeCharge(atom, +1, hDelta);
+  return true;
+}
 }
 
 ROMol *Uncharger::uncharge(const ROMol &mol) {
@@ -451,7 +464,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     for (const auto &pair : neg_atoms) {
       unsigned int idx = pair.second;
       Atom *atom = mol.getAtomWithIdx(idx);
-      if (neutralizeNegIfPossible(atom) && !--neg_surplus) {
+      if (removeNegIfPossible(atom) && !--neg_surplus) {
         break;
       }
     }
@@ -477,29 +490,8 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     }
     for (const auto &idx : p_idx_matches) {
       Atom *atom = mol.getAtomWithIdx(idx);
-      // atoms from places like Mol blocks are normally missing explicit Hs:
-      atom->setNumExplicitHs(atom->getTotalNumHs());
-      atom->setNoImplicit(true);
-      while (atom->getFormalCharge() > 0 && (netCharge > 0 || df_force)) {
-        atom->setFormalCharge(atom->getFormalCharge() - 1);
+      if (removePosIfPossible(atom)) {
         --netCharge;
-        // the special case for C here was github #2792
-        if (atom->getAtomicNum() != 6 && !isEarlyAtom(atom->getAtomicNum())) {
-          auto nExplicit = atom->getNumExplicitHs();
-          if (nExplicit >= 1) {
-            atom->setNumExplicitHs(nExplicit - 1);
-          }
-          if (nExplicit == 1) {
-            // we just removed the last one:
-            break;
-          }
-        } else {
-          atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
-        }
-        BOOST_LOG(rdInfoLog) << "Removed positive charge.\n";
-        // since we changed the number of explicit Hs, we need to update the
-        // other valence parameters
-        atom->updatePropertyCache(false);
       }
       if (!netCharge && !df_force) {
         break;
