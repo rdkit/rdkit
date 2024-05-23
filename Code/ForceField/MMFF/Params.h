@@ -32,7 +32,7 @@
 // written the code for std::map, so the two methods
 // can be toggled defining RDKIT_MMFF_PARAMS_USE_STD_MAP
 
-//#define RDKIT_MMFF_PARAMS_USE_STD_MAP 1
+// #define RDKIT_MMFF_PARAMS_USE_STD_MAP 1
 
 namespace ForceFields {
 namespace MMFF {
@@ -43,13 +43,7 @@ const double MDYNE_A_TO_KCAL_MOL = 143.9325;
 inline bool isDoubleZero(const double x) {
   return ((x < 1.0e-10) && (x > -1.0e-10));
 }
-inline void clipToOne(double &x) {
-  if (x > 1.0) {
-    x = 1.0;
-  } else if (x < -1.0) {
-    x = -1.0;
-  }
-}
+inline void clipToOne(double &x) { x = std::clamp(x, -1.0, 1.0); }
 
 //! class to store MMFF atom type equivalence levels
 class RDKIT_FORCEFIELD_EXPORT MMFFDef {
@@ -178,9 +172,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDefCollection {
   */
   const MMFFDef *operator()(const unsigned int atomType) const {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int, MMFFDef>::const_iterator res;
-    res = d_params.find(atomType);
-
+    const auto res = d_params.find(atomType);
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
     return ((atomType && (atomType <= d_params.size()))
@@ -206,16 +198,11 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
   */
   const MMFFProp *operator()(const unsigned int atomType) const {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int, MMFFProp>::const_iterator res;
-    res = d_params.find(atomType);
-
+    const auto res = d_params.find(atomType);
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds =
-            std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), atomType);
-
+    auto bounds =
+        std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), atomType);
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_iAtomType.begin()]
                 : nullptr);
@@ -239,9 +226,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPBCICollection {
   */
   const MMFFPBCI *operator()(const unsigned int atomType) const {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int, MMFFPBCI>::const_iterator res;
-    res = d_params.find(atomType);
-
+    const auto res = d_params.find(atomType);
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
     return ((atomType && (atomType <= d_params.size()))
@@ -278,22 +263,15 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
       sign = 1;
     }
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int,
-             std::map<const unsigned int, MMFFChg>>::const_iterator res1;
-    std::map<const unsigned int, MMFFChg>::const_iterator res2;
-    res1 = d_params[bondType].find(canIAtomType);
+    const auto res1 = d_params[bondType].find(canIAtomType);
     if (res1 != d_params[bondType].end()) {
-      res2 = ((*res1).second).find(canJAtomType);
+      const auto res2 = ((*res1).second).find(canJAtomType);
       if (res2 != ((*res1).second).end()) {
         mmffChgParams = &((*res2).second);
       }
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds;
-
-    bounds =
+    auto bounds =
         std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), canIAtomType);
     if (bounds.first != bounds.second) {
       bounds = std::equal_range(
@@ -347,14 +325,10 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
       canNbrAtomType = atomType;
     }
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int,
-             std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFBond>>>::const_iterator
-        res1;
+    const auto res1 = d_params.find(bondType);
     std::map<const unsigned int,
              std::map<const unsigned int, MMFFBond>>::const_iterator res2;
     std::map<const unsigned int, MMFFBond>::const_iterator res3;
-    res1 = d_params.find(bondType);
     if (res1 != d_params.end()) {
       res2 = ((*res1).second).find(canAtomType);
       if (res2 != ((*res1).second).end()) {
@@ -365,10 +339,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
       }
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds;
-    bounds =
+    auto bounds =
         std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), canAtomType);
     if (bounds.first != bounds.second) {
       bounds = std::equal_range(
@@ -419,10 +390,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
       canNbrAtomicNum = atomicNum;
     }
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int,
-             std::map<const unsigned int, MMFFBond>>::const_iterator res1;
+    const auto res1 = d_params.find(canAtomicNum);
     std::map<const unsigned int, MMFFBond>::const_iterator res2;
-    res1 = d_params.find(canAtomicNum);
     if (res1 != d_params.end()) {
       res2 = ((*res1).second).find(canNbrAtomicNum);
       if (res2 != ((*res1).second).end()) {
@@ -430,11 +399,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
       }
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds;
-    bounds = std::equal_range(d_iAtomicNum.begin(), d_iAtomicNum.end(),
-                              canAtomicNum);
+    auto bounds = std::equal_range(d_iAtomicNum.begin(), d_iAtomicNum.end(),
+                                   canAtomicNum);
     if (bounds.first != bounds.second) {
       bounds = std::equal_range(
           d_jAtomicNum.begin() + (bounds.first - d_iAtomicNum.begin()),
@@ -475,11 +441,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
       canJRow = iRow;
     }
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int,
-             std::map<const unsigned int, MMFFHerschbachLaurie>>::const_iterator
-        res1;
+    const auto res1 = d_params.find(canIRow);
     std::map<const unsigned int, MMFFHerschbachLaurie>::const_iterator res2;
-    res1 = d_params.find(canIRow);
     if (res1 != d_params.end()) {
       res2 = ((*res1).second).find(canJRow);
       if (res2 != ((*res1).second).end()) {
@@ -487,10 +450,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
       }
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds;
-    bounds = std::equal_range(d_iRow.begin(), d_iRow.end(), canIRow);
+    auto bounds = std::equal_range(d_iRow.begin(), d_iRow.end(), canIRow);
     if (bounds.first != bounds.second) {
       bounds = std::equal_range(
           d_jRow.begin() + (bounds.first - d_iRow.begin()),
@@ -525,16 +485,12 @@ class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
   */
   const MMFFCovRadPauEle *operator()(const unsigned int atomicNum) const {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int, MMFFCovRadPauEle>::const_iterator res;
-    res = d_params.find(atomicNum);
+    const auto res = d_params.find(atomicNum);
 
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds =
-            std::equal_range(d_atomicNum.begin(), d_atomicNum.end(), atomicNum);
-
+    auto bounds =
+        std::equal_range(d_atomicNum.begin(), d_atomicNum.end(), atomicNum);
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomicNum.begin()]
                 : nullptr);
@@ -570,33 +526,19 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
 // 5-2-5 is used. (MMFF.I, note 68, page 519)
 // We skip 1-1-1 since Level 2 === Level 1
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int,
-             std::map<const unsigned int,
-                      std::map<const unsigned int,
-                               std::map<const unsigned int, MMFFAngle>>>>::
-        const_iterator res1;
-    std::map<const unsigned int,
-             std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFAngle>>>::const_iterator
-        res2;
-    std::map<const unsigned int,
-             std::map<const unsigned int, MMFFAngle>>::const_iterator res3;
-    std::map<const unsigned int, MMFFAngle>::const_iterator res4;
     while ((iter < 4) && (!mmffAngleParams)) {
       unsigned int canIAtomType = (*mmffDef)(iAtomType)->eqLevel[iter];
       unsigned int canKAtomType = (*mmffDef)(kAtomType)->eqLevel[iter];
       if (canIAtomType > canKAtomType) {
-        unsigned int temp = canKAtomType;
-        canKAtomType = canIAtomType;
-        canIAtomType = temp;
+        std::swap(canIAtomType, canKAtomType);
       }
-      res1 = d_params.find(angleType);
+      const auto res1 = d_params.find(angleType);
       if (res1 != d_params.end()) {
-        res2 = ((*res1).second).find(canIAtomType);
+        const auto res2 = ((*res1).second).find(canIAtomType);
         if (res2 != ((*res1).second).end()) {
-          res3 = ((*res2).second).find(jAtomType);
+          const auto res3 = ((*res2).second).find(jAtomType);
           if (res3 != ((*res2).second).end()) {
-            res4 = ((*res3).second).find(canKAtomType);
+            const auto res4 = ((*res3).second).find(canKAtomType);
             if (res4 != ((*res3).second).end()) {
               mmffAngleParams = &((*res4).second);
             }
@@ -606,23 +548,17 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
       ++iter;
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        jBounds =
-            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds;
+    auto jBounds =
+        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     if (jBounds.first != jBounds.second) {
       while ((iter < 4) && (!mmffAngleParams)) {
         unsigned int canIAtomType = (*mmffDef)(iAtomType)->eqLevel[iter];
         unsigned int canKAtomType = (*mmffDef)(kAtomType)->eqLevel[iter];
         if (canIAtomType > canKAtomType) {
-          unsigned int temp = canKAtomType;
-          canKAtomType = canIAtomType;
-          canIAtomType = temp;
+          std::swap(canIAtomType, canKAtomType);
         }
-        bounds = std::equal_range(
+
+        auto bounds = std::equal_range(
             d_iAtomType.begin() + (jBounds.first - d_jAtomType.begin()),
             d_iAtomType.begin() + (jBounds.second - d_jAtomType.begin()),
             canIAtomType);
@@ -688,25 +624,13 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
       swap = (bondType1 < bondType2);
     }
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int,
-             std::map<const unsigned int,
-                      std::map<const unsigned int,
-                               std::map<const unsigned int, MMFFStbn>>>>::
-        const_iterator res1;
-    std::map<const unsigned int,
-             std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFStbn>>>::const_iterator
-        res2;
-    std::map<const unsigned int,
-             std::map<const unsigned int, MMFFStbn>>::const_iterator res3;
-    std::map<const unsigned int, MMFFStbn>::const_iterator res4;
-    res1 = d_params.find(canStretchBendType);
+    const auto res1 = d_params.find(canStretchBendType);
     if (res1 != d_params.end()) {
-      res2 = ((*res1).second).find(canIAtomType);
+      const auto res2 = ((*res1).second).find(canIAtomType);
       if (res2 != ((*res1).second).end()) {
-        res3 = ((*res2).second).find(jAtomType);
+        const auto res3 = ((*res2).second).find(jAtomType);
         if (res3 != ((*res2).second).end()) {
-          res4 = ((*res3).second).find(canKAtomType);
+          const auto res4 = ((*res3).second).find(canKAtomType);
           if (res4 != ((*res3).second).end()) {
             mmffStbnParams = &((*res4).second);
           }
@@ -714,15 +638,10 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
       }
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        jBounds =
-            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds;
+    auto jBounds =
+        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     if (jBounds.first != jBounds.second) {
-      bounds = std::equal_range(
+      auto bounds = std::equal_range(
           d_iAtomType.begin() + (jBounds.first - d_jAtomType.begin()),
           d_iAtomType.begin() + (jBounds.second - d_jAtomType.begin()),
           canIAtomType);
@@ -775,13 +694,6 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
       const unsigned int periodicTableRow1,
       const unsigned int periodicTableRow2,
       const unsigned int periodicTableRow3) const {
-    std::map<const unsigned int,
-             std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFStbn>>>::const_iterator
-        res1;
-    std::map<const unsigned int,
-             std::map<const unsigned int, MMFFStbn>>::const_iterator res2;
-    std::map<const unsigned int, MMFFStbn>::const_iterator res3;
     const MMFFStbn *mmffDfsbParams = nullptr;
     bool swap = false;
     unsigned int canPeriodicTableRow1 = periodicTableRow1;
@@ -791,11 +703,11 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
       canPeriodicTableRow3 = periodicTableRow1;
       swap = true;
     }
-    res1 = d_params.find(canPeriodicTableRow1);
+    const auto res1 = d_params.find(canPeriodicTableRow1);
     if (res1 != d_params.end()) {
-      res2 = ((*res1).second).find(periodicTableRow2);
+      const auto res2 = ((*res1).second).find(periodicTableRow2);
       if (res2 != ((*res1).second).end()) {
-        res3 = ((*res2).second).find(canPeriodicTableRow3);
+        const auto res3 = ((*res2).second).find(canPeriodicTableRow3);
         if (res3 != ((*res2).second).end()) {
           mmffDfsbParams = &((*res3).second);
         }
@@ -830,31 +742,19 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
 // 3-2-3;3, 4-2-4;4, 5-2-5;5 is used. The final stage provides
 // wild-card defaults for all except the central atom.
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int,
-             std::map<const unsigned int,
-                      std::map<const unsigned int,
-                               std::map<const unsigned int, MMFFOop>>>>::
-        const_iterator res1;
-    std::map<const unsigned int,
-             std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFOop>>>::const_iterator
-        res2;
-    std::map<const unsigned int,
-             std::map<const unsigned int, MMFFOop>>::const_iterator res3;
-    std::map<const unsigned int, MMFFOop>::const_iterator res4;
     while ((iter < 4) && (!mmffOopParams)) {
       canIKLAtomType[0] = (*mmffDef)(iAtomType)->eqLevel[iter];
       unsigned int canJAtomType = jAtomType;
       canIKLAtomType[1] = (*mmffDef)(kAtomType)->eqLevel[iter];
       canIKLAtomType[2] = (*mmffDef)(lAtomType)->eqLevel[iter];
       std::sort(canIKLAtomType.begin(), canIKLAtomType.end());
-      res1 = d_params.find(canIKLAtomType[0]);
+      const auto res1 = d_params.find(canIKLAtomType[0]);
       if (res1 != d_params.end()) {
-        res2 = ((*res1).second).find(canJAtomType);
+        const auto res2 = ((*res1).second).find(canJAtomType);
         if (res2 != ((*res1).second).end()) {
-          res3 = ((*res2).second).find(canIKLAtomType[1]);
+          const auto res3 = ((*res2).second).find(canIKLAtomType[1]);
           if (res3 != ((*res2).second).end()) {
-            res4 = ((*res3).second).find(canIKLAtomType[2]);
+            const auto res4 = ((*res3).second).find(canIKLAtomType[2]);
             if (res4 != ((*res3).second).end()) {
               mmffOopParams = &((*res4).second);
             }
@@ -864,20 +764,15 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
       ++iter;
     }
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        jBounds =
-            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds;
+    auto jBounds =
+        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     if (jBounds.first != jBounds.second) {
       while ((iter < 4) && (!mmffOopParams)) {
         canIKLAtomType[0] = (*mmffDef)(iAtomType)->eqLevel[iter];
         canIKLAtomType[1] = (*mmffDef)(kAtomType)->eqLevel[iter];
         canIKLAtomType[2] = (*mmffDef)(lAtomType)->eqLevel[iter];
         std::sort(canIKLAtomType.begin(), canIKLAtomType.end());
-        bounds = std::equal_range(
+        auto bounds = std::equal_range(
             d_iAtomType.begin() + (jBounds.first - d_jAtomType.begin()),
             d_iAtomType.begin() + (jBounds.second - d_jAtomType.begin()),
             canIKLAtomType[0]);
@@ -943,32 +838,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
 // 3-2-2-5, 5-2-2-3, and 5-2-2-5 is used, where stages 3
 // and 4 correspond to "half-default" or "half-wild-card" entries.
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<
-        const unsigned int,
-        std::map<const unsigned int,
-                 std::map<const unsigned int,
-                          std::map<const unsigned int,
-                                   std::map<const unsigned int, MMFFTor>>>>>::
-        const_iterator res1;
-    std::map<const unsigned int,
-             std::map<const unsigned int,
-                      std::map<const unsigned int,
-                               std::map<const unsigned int, MMFFTor>>>>::
-        const_iterator res2;
-    std::map<const unsigned int,
-             std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFTor>>>::const_iterator
-        res3;
-    std::map<const unsigned int,
-             std::map<const unsigned int, MMFFTor>>::const_iterator res4;
-    std::map<const unsigned int, MMFFTor>::const_iterator res5;
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        jBounds;
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds;
 #endif
 
     while (((iter < maxIter) && ((!mmffTorParams) || (maxIter == 4))) ||
@@ -1010,15 +880,15 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
         canIAtomType = temp;
       }
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-      res1 = d_params.find(canTorType);
+      const auto res1 = d_params.find(canTorType);
       if (res1 != d_params.end()) {
-        res2 = ((*res1).second).find(canIAtomType);
+        const auto res2 = ((*res1).second).find(canIAtomType);
         if (res2 != ((*res1).second).end()) {
-          res3 = ((*res2).second).find(canJAtomType);
+          const auto res3 = ((*res2).second).find(canJAtomType);
           if (res3 != ((*res2).second).end()) {
-            res4 = ((*res3).second).find(canKAtomType);
+            const auto res4 = ((*res3).second).find(canKAtomType);
             if (res4 != ((*res3).second).end()) {
-              res5 = ((*res4).second).find(canLAtomType);
+              const auto res5 = ((*res4).second).find(canLAtomType);
               if (res5 != ((*res4).second).end()) {
                 mmffTorParams = &((*res5).second);
                 if (maxIter == 4) {
@@ -1030,10 +900,10 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
         }
       }
 #else
-      jBounds = std::equal_range(d_jAtomType.begin(), d_jAtomType.end(),
-                                 canJAtomType);
+      auto jBounds = std::equal_range(d_jAtomType.begin(), d_jAtomType.end(),
+                                      canJAtomType);
       if (jBounds.first != jBounds.second) {
-        bounds = std::equal_range(
+        auto bounds = std::equal_range(
             d_kAtomType.begin() + (jBounds.first - d_jAtomType.begin()),
             d_kAtomType.begin() + (jBounds.second - d_jAtomType.begin()),
             canKAtomType);
@@ -1104,16 +974,11 @@ class RDKIT_FORCEFIELD_EXPORT MMFFVdWCollection {
   */
   const MMFFVdW *operator()(const unsigned int atomType) const {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-    std::map<const unsigned int, MMFFVdW>::const_iterator res;
-    res = d_params.find(atomType);
-
+    const auto res = d_params.find(atomType);
     return (res != d_params.end() ? &((*res).second) : NULL);
 #else
-    std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator>
-        bounds =
-            std::equal_range(d_atomType.begin(), d_atomType.end(), atomType);
-
+    auto bounds =
+        std::equal_range(d_atomType.begin(), d_atomType.end(), atomType);
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomType.begin()]
                 : nullptr);

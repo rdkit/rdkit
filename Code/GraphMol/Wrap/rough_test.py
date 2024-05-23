@@ -3920,6 +3920,19 @@ CAS<~>
     self.assertEqual(ap.GetAtomWithIdx(0).GetPropsAsDict()["foo"], "bar")
     self.assertEqual(ap.GetAtomWithIdx(1).GetPropsAsDict()["foo"], "bar")
 
+  def testReplaceAtomWithQueryAtom(self):
+    mol = Chem.MolFromSmiles("CC(C)C")
+    qmol = Chem.MolFromSmiles("C")
+    matches = mol.GetSubstructMatches(qmol)
+    self.assertEqual(((0,), (1,), (2,), (3,)), matches)
+
+    atom = qmol.GetAtomWithIdx(0)
+    natom = rdqueries.ReplaceAtomWithQueryAtom(qmol, atom)
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    natom.ExpandQuery(qa, Chem.CompositeQueryType.COMPOSITE_AND)
+    matches = mol.GetSubstructMatches(qmol)
+    self.assertEqual(((1,),), matches)
+
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
@@ -7680,6 +7693,35 @@ CAS<~>
 
     self.assertTrue(mBlock == isReapplied)
 
+  def testReapplyMolBlockWedgingAllBondTypes(self):
+    m = Chem.MolFromMolBlock('''
+  Mrv2311 04232413302D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 S -11.583 11.3533 0 0
+M  V30 2 C -12.9167 10.5833 0 0
+M  V30 3 O -11.583 12.8933 0 0
+M  V30 4 C -10.2493 10.5833 0 0
+M  V30 5 C -10.2493 9.0433 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 4 5
+M  V30 2 1 2 1
+M  V30 3 1 1 4
+M  V30 4 2 1 3 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+''')
+    self.assertEqual(m.GetBondWithIdx(3).GetBondType(), Chem.BondType.DOUBLE)
+    Chem.ReapplyMolBlockWedging(m)
+    self.assertEqual(m.GetBondWithIdx(3).GetBondDir(), Chem.BondDir.BEGINWEDGE)
+    Chem.ReapplyMolBlockWedging(m, False)
+    self.assertEqual(m.GetBondWithIdx(3).GetBondDir(), Chem.BondDir.NONE)
+
   def testAtropisomerWedging(self):
     m =Chem.MolFromSmiles('CC1=C(N2C=CC=C2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|')
     self.assertTrue(m is  not None)
@@ -8067,6 +8109,27 @@ CAS<~>
     self.assertEqual(fusedBonds.count(0), 0)
     self.assertEqual(fusedBonds.count(1), 2)
     self.assertEqual(fusedBonds.count(2), 3)
+
+  def testNeedsHs(self):
+    m = Chem.MolFromSmiles("CO")
+    self.failUnless(Chem.NeedsHs(m))
+    mh = Chem.AddHs(m)
+    self.failIf(Chem.NeedsHs(mh))
+    nm = Chem.RWMol(mh)
+    nm.RemoveAtom(3)
+    self.failUnless(Chem.NeedsHs(m))
+
+  def testCountAtomElec(self):
+    m = Chem.MolFromSmiles("c1n(C)ccc1")
+    self.failUnlessEqual(Chem.CountAtomElec(m.GetAtomWithIdx(0)),1)
+    self.failUnlessEqual(Chem.CountAtomElec(m.GetAtomWithIdx(1)),2)
+
+  def testAtomHasConjugatedBond(self):
+    m = Chem.MolFromSmiles("c1n(C)ccc1")
+    self.failUnless(Chem.AtomHasConjugatedBond(m.GetAtomWithIdx(1)))
+    self.failIf(Chem.AtomHasConjugatedBond(m.GetAtomWithIdx(2)))
+
+
 
 
 if __name__ == '__main__':

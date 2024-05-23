@@ -70,6 +70,8 @@ void test1() {
 
   // Test normalization of 1,3-conjugated cations
   TEST_ASSERT(normalize("C[N+](C)=CN") == "CN(C)C=[NH2+]");
+  // verify it doesn't apply to oximes
+  TEST_ASSERT(normalize("C[N+](C)=NO") == "C[N+](C)=NO");
   // verify it doesn't affect diazo groups
   TEST_ASSERT(normalize("[N-]=[N+]=CN") == "[N-]=[N+]=CN");
   // but still applies if the adjacent heteroatom is neutral
@@ -77,6 +79,8 @@ void test1() {
 
   // Test normalization of 1,5-conjugated cations
   TEST_ASSERT(normalize("C[N+](C)=CC=CN") == "CN(C)C=CC=[NH2+]");
+  // verify it doesn't apply to oximes
+  TEST_ASSERT(normalize("C[N+](C)=CC=NO") == "C[N+](C)=CC=NO");
   // verify it doesn't affect diazo groups
   TEST_ASSERT(normalize("[N-]=[N+]=CC=CN") == "[N-]=[N+]=CC=CN");
   // but still applies if the adjacent heteroatom is neutral

@@ -98,8 +98,12 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
           //   in a ring of size 3  (from InChI)
           // OR
           /// is a bridgehead atom (RDKit extension)
-          if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
-              queryIsAtomBridgehead(atom)) {
+          // Also: cannot be SP2 hybridized or have a conjugated bond
+          //   (this was Github #7434)
+          if (atom->getHybridization() == Atom::HybridizationType::SP3 &&
+              !MolOps::atomHasConjugatedBond(atom) &&
+              (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
+               queryIsAtomBridgehead(atom))) {
             legalCenter = true;
           }
         }
@@ -326,7 +330,8 @@ StereoInfo getStereoInfo(const Atom *atom) {
       if (stereo == Atom::CHI_UNSPECIFIED) {
         switch (atom->getTotalDegree()) {
           case 4:
-            stereo = Atom::ChiralType::CHI_SQUAREPLANAR;
+            // don't assume non-tetrahedral chirality
+            stereo = Atom::ChiralType::CHI_TETRAHEDRAL;
             break;
           case 5:
             stereo = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL;
@@ -340,6 +345,9 @@ StereoInfo getStereoInfo(const Atom *atom) {
       }
       sinfo.descriptor = StereoDescriptor::None;
       switch (stereo) {
+        case Atom::ChiralType::CHI_TETRAHEDRAL:
+          sinfo.type = StereoType::Atom_Tetrahedral;
+          break;
         case Atom::ChiralType::CHI_SQUAREPLANAR:
           sinfo.type = StereoType::Atom_SquarePlanar;
           break;
