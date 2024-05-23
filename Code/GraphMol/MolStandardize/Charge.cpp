@@ -319,11 +319,12 @@ void removeCharge(Atom *atom, int charge, int hDelta) {
   // other valence parameters
   atom->updatePropertyCache(false);
 }
+}
 
-bool removeNegIfPossible(Atom *atom) {
+bool Uncharger::removeNegIfPossible(Atom *atom) {
   bool is_early_atom = isEarlyAtom(atom->getAtomicNum());
   bool has_hs = atom->getTotalNumHs();
-  if (is_early_atom && !has_hs) {
+  if (is_early_atom && (!has_hs || df_protonationOnly)) {
     return false;
   }
   int hDelta = (is_early_atom ? -1 : 1);
@@ -331,18 +332,20 @@ bool removeNegIfPossible(Atom *atom) {
   return true;
 }
 
-bool removePosIfPossible(Atom *atom) {
+bool Uncharger::removePosIfPossible(Atom *atom) {
   bool is_carbon_or_early_atom = (
     // the special case for C here was github #2792
     atom->getAtomicNum() == 6 || isEarlyAtom(atom->getAtomicNum()));
   bool has_hs = atom->getTotalNumHs();
+  if (is_carbon_or_early_atom && df_protonationOnly) {
+    return false;
+  }
   if (!is_carbon_or_early_atom && !has_hs) {
     return false;
   }
   int hDelta = (is_carbon_or_early_atom ? 1 : -1);
   removeCharge(atom, +1, hDelta);
   return true;
-}
 }
 
 ROMol *Uncharger::uncharge(const ROMol &mol) {
@@ -490,8 +493,13 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     }
     for (const auto &idx : p_idx_matches) {
       Atom *atom = mol.getAtomWithIdx(idx);
-      if (removePosIfPossible(atom)) {
-        --netCharge;
+      while (atom->getFormalCharge() > 0 && (netCharge > 0 || df_force)) {
+        if (removePosIfPossible(atom)) {
+          --netCharge;
+        }
+        else {
+          break;
+        }
       }
       if (!netCharge && !df_force) {
         break;

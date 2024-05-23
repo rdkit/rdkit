@@ -137,6 +137,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
     df_canonicalOrdering = canonicalOrdering;
     df_force = force;
   }
+  Uncharger(bool canonicalOrdering, bool force, bool protonationOnly) : Uncharger() {
+    df_canonicalOrdering = canonicalOrdering;
+    df_force = force;
+    df_protonationOnly = protonationOnly;
+  }
   Uncharger(const Uncharger &) = default;
   ~Uncharger() = default;
   
@@ -144,8 +149,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
   void unchargeInPlace(RWMol &mol);
 
  private:
+  bool removePosIfPossible(Atom *atom);
+  bool removeNegIfPossible(Atom *atom);
   bool df_canonicalOrdering = true;
   bool df_force = false;
+  bool df_protonationOnly = false;
   std::shared_ptr<ROMol> pos_h;
   std::shared_ptr<ROMol> pos_noh;
   std::shared_ptr<ROMol> neg;
