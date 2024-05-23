@@ -198,6 +198,7 @@
 %newobject replaceSidechains;
 %newobject deleteSubstructs;
 %newobject getAtoms;
+%newobject getBonds;
 %newobject getAtomNeighbors;
 %newobject getAtomBonds;
 
@@ -563,29 +564,23 @@ void setAllowNontetrahedralChirality(bool);
 
   /* From Python wrappers -- implied functionality */
   std::vector<RDKit::Atom*> *getAtoms() {
-    int c = ($self)->getNumAtoms();
-    std::vector<RDKit::Atom*> *atoms = new std::vector<RDKit::Atom*>;
-    for (int i = 0; i < c; i++) {
-      RDKit::Atom* a = ($self)->getAtomWithIdx(i);
-      atoms->push_back(a);
-    }
-    return atoms;
+    auto atoms = ($self)->atoms();
+    return new std::vector<RDKit::Atom*>(atoms.begin(), atoms.end());
+  }
+
+  std::vector<RDKit::Bond*> *getBonds() {
+    auto bonds = ($self)->bonds();
+    return new std::vector<RDKit::Bond*>(bonds.begin(), bonds.end());
   }
 
   std::vector<RDKit::Atom*> *getAtomNeighbors(RDKit::Atom *at) {
-    std::vector<RDKit::Atom*> *atoms = new std::vector<RDKit::Atom*>;
-    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomNeighbors(at))){
-      atoms->push_back((*($self))[nbri]);
-    }
-    return atoms;
+    auto atomNbrs = ($self)->atomNeighbors(at);
+    return new std::vector<RDKit::Atom*>(atomNbrs.begin(), atomNbrs.end());
   }
 
   std::vector<RDKit::Bond*> *getAtomBonds(RDKit::Atom *at) {
-    std::vector<RDKit::Bond*> *bonds = new std::vector<RDKit::Bond*>;
-    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomBonds(at))){
-      bonds->push_back((*($self))[nbri]);
-    }
-    return bonds;
+    auto bondNbrs = ($self)->atomBonds(at);
+    return new std::vector<RDKit::Bond*>(bondNbrs.begin(), bondNbrs.end());
   }
 
   /* From MolPickler.h */
