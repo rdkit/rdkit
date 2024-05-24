@@ -277,6 +277,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
       CHECK_INVARIANT(opts.size() > 0, "");
     } else {
       INT_DEQUE lstack;
+      INT_DEQUE wedgedOpts;
       for (const auto &nbrIdx : boost::make_iterator_range(
                mol.getAtomNeighbors(mol.getAtomWithIdx(curr)))) {
         // ignore if the neighbor has already been dealt with before
@@ -292,15 +293,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
 
         // if the neighbor is not on the stack add it
         if (std::find(astack.begin(), astack.end(), nbrIdx) == astack.end()) {
-          // in order to try and avoid making wedged bonds double, we will put
-          // this neighbor at the back of the stack if the bond is wedged.
-          // otherwise we go at the front of the stack
-          if (nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
-              nbrBond->getBondDir() == Bond::BondDir::BEGINDASH) {
-            lstack.push_back(nbrIdx);
-          } else {
-            lstack.push_front(nbrIdx);
-          }
+          lstack.push_front(nbrIdx);
         }
 
         // check if the neighbor is also a candidate for a double bond
@@ -316,9 +309,22 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
             (nbrBond->getIsAromatic() ||
              mol.getAtomWithIdx(curr)->getAtomicNum() == 0 ||
              mol.getAtomWithIdx(nbrIdx)->getAtomicNum() == 0)) {
-          opts.push_back(nbrIdx);
+          // in order to try and avoid making wedged bonds double, we will add
+          // this neighbor at the back of the options after this loop if the bond
+          // is wedged. otherwise we append it to the options directly
+          if (nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
+              nbrBond->getBondDir() == Bond::BondDir::BEGINDASH) {
+            wedgedOpts.push_back(nbrIdx);
+          } else {
+            opts.push_back(nbrIdx);
+          }
         }  // end of curr atoms can have a double bond
       }    // end of looping over neighbors
+      // now append to opts the neighbors connected via wedged bonds,
+      // if any were found
+      for (auto wedgedNbrIdx : wedgedOpts) {
+        opts.push_back(wedgedNbrIdx);
+      }
       astack.insert(astack.end(), lstack.begin(), lstack.end());
     }
     // now add a double bond from current to one of the neighbors if we can
@@ -607,14 +613,14 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
       return ringOk;
     };
     // we can't just copy the rings over: we're going to rearrange them so that
-    // we try to avoid starting the traversal of any ring from an atom that is
+    // we try to favor starting the traversal of any ring from an atom that is
     // at the end of a wedged ring bond. This is part of our attempt to avoid
     // assigning double bonds to bonds with wedging
     for (const auto &ring : allrings) {
       if (containsNonDummy(ring)) {
         unsigned int startPos = 0;
         for (auto ri = 0u; ri < ring.size(); ++ri) {
-          if (!wedgedAtoms[ring[ri]]) {
+          if (wedgedAtoms[ring[ri]]) {
             startPos = ri;
             break;
           }
