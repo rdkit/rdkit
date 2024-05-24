@@ -1492,10 +1492,22 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
                             SmilesWrite::CXSmilesFields::CX_COORDINATE_BONDS);
     CHECK(smi == "N[Fe][NH3]");
   }
+  SECTION("basics, SMARTS output") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToCXSmarts(*m);
+    CHECK(smi == "[#7H3]-[Fe]-[#7H2] |C:0.0|");
+  }
   SECTION("two dative bonds") {
     auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
     REQUIRE(m);
     auto smi = MolToCXSmiles(*m);
     CHECK(smi == "[NH3][Fe][NH3] |C:0.0,2.1|");
+  }
+  SECTION("two dative bonds, SMARTS output") {
+    auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
+    REQUIRE(m);
+    auto smi = MolToCXSmarts(*m);
+    CHECK(smi == "[#7H3]-[Fe]-[#7H3] |C:0.0,2.1|");
   }
 }
