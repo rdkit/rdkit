@@ -256,6 +256,8 @@ typedef unsigned long long int	uintmax_t;
 %include "../Abbreviations.i"
 %include "../Streams.i"
 %include "../GeneralizedSubstruct.i"
+%include "../RascalMCES.i"
+%include "../Queries.i"
 
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java

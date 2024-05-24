@@ -84,7 +84,7 @@ Datum mol_out(PG_FUNCTION_ARGS) {
   fcinfo->flinfo->fn_extra =
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
-  str = makeMolText(mol, &len, false, true);
+  str = makeMolText(mol, &len, false, true, true);
 
   PG_RETURN_CSTRING(pnstrdup(str, len));
 }
@@ -242,7 +242,8 @@ Datum mol_to_smiles(PG_FUNCTION_ARGS) {
   fcinfo->flinfo->fn_extra =
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
-  str = makeMolText(mol, &len, false, false);
+  bool doIsomeric = PG_GETARG_BOOL(1);
+  str = makeMolText(mol, &len, false, false, doIsomeric);
 
   PG_RETURN_CSTRING(pnstrdup(str, len));
 }
@@ -257,7 +258,8 @@ Datum mol_to_cxsmiles(PG_FUNCTION_ARGS) {
   fcinfo->flinfo->fn_extra =
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
-  str = makeMolText(mol, &len, false, true);
+  bool doIsomeric = PG_GETARG_BOOL(1);
+  str = makeMolText(mol, &len, false, true, doIsomeric);
 
   PG_RETURN_CSTRING(pnstrdup(str, len));
 }
@@ -272,7 +274,8 @@ Datum mol_to_smarts(PG_FUNCTION_ARGS) {
   fcinfo->flinfo->fn_extra =
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
-  str = makeMolText(mol, &len, true, false);
+  bool dummy = false; // arg is ignored by makeMolText for smarts output
+  str = makeMolText(mol, &len, true, false, dummy);
 
   PG_RETURN_CSTRING(pnstrdup(str, len));
 }
@@ -287,7 +290,8 @@ Datum mol_to_cxsmarts(PG_FUNCTION_ARGS) {
   fcinfo->flinfo->fn_extra =
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
-  str = makeMolText(mol, &len, true, true);
+  bool dummy = true; // arg is ignored by makeMolText for cxsmarts output
+  str = makeMolText(mol, &len, true, true, dummy);
 
   PG_RETURN_CSTRING(pnstrdup(str, len));
 }
@@ -392,7 +396,8 @@ Datum qmol_out(PG_FUNCTION_ARGS) {
   fcinfo->flinfo->fn_extra =
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
-  str = makeMolText(mol, &len, true, false);
+  bool dummy = false; // arg is ignored by makeMolText for smarts output
+  str = makeMolText(mol, &len, true, false, dummy);
 
   PG_RETURN_CSTRING(pnstrdup(str, len));
 }

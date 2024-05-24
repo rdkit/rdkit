@@ -1,6 +1,5 @@
 //
-//  Copyright (C) 2001-2021 Greg Landrum and Rational Discovery LLC
-//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (C) 2001-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_MOL_OPS_H_
-#define _RD_MOL_OPS_H_
+#ifndef RD_MOL_OPS_H
+#define RD_MOL_OPS_H
 
 #include <vector>
 #include <map>
@@ -952,10 +951,13 @@ class Hybridizations {
   std::vector<int> d_hybridizations;
 };
 
-//! removes bogus chirality markers (those on non-sp3 centers):
+//! removes bogus chirality markers (e.g. tetrahedral flags on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 
+//! \overload
 RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
+//! removes bogus atropisomeric markers (e.g. those without sp2 begin and end
+//! atoms):
 RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &mol,
                                                Hybridizations &hybridizations);
 

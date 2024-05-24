@@ -45,6 +45,7 @@ except ImportError:
   matplotlib = None
 
 from rdkit.Chem import Draw
+from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.Draw import SimilarityMaps as sm
 
 logger = logger()
@@ -65,8 +66,9 @@ class TestCase(unittest.TestCase):
     for w, r in zip(weights, refWeights):
       self.assertEqual(w, r)
 
+    d2d = rdMolDraw2D.MolDraw2DSVG(400, 400)
     _, maxWeight = sm.GetSimilarityMapForFingerprint(
-      self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'))
+      self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'), d2d)
     self.assertEqual(maxWeight, 0.5)
 
     weights, maxWeight = sm.GetStandardizedWeights(weights)

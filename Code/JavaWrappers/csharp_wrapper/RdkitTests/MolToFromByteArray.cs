@@ -32,5 +32,32 @@ namespace RdkitTests
                 File.Delete(pklFileName);
             }
         }
+        [Fact]
+        public void TestPickleOptions()
+        {
+            string smi = "c1ccccc1[C@](F)(Cl)Br";
+            ROMol mol = RWMol.MolFromSmiles(smi);
+    		mol.setProp("_MolFileChiralFlag", "1");
+            {
+                byte[] pkl = mol.ToByteArray();
+                ROMol mol2 = ROMol.FromByteArray(pkl);
+                Assert.False(mol2.hasProp("_MolFileChiralFlag"));
+            }
+            {
+                byte[] pkl = mol.ToByteArray((int)PropertyPickleOptions.AllProps);
+                ROMol mol2 = ROMol.FromByteArray(pkl);
+                Assert.True(mol2.hasProp("_MolFileChiralFlag"));
+            }
+
+            {
+			    uint val = RDKFuncs.getDefaultPickleProperties();
+			    RDKFuncs.setDefaultPickleProperties((int)PropertyPickleOptions.AllProps);
+                byte[] pkl = mol.ToByteArray();
+			    RDKFuncs.setDefaultPickleProperties(val);
+                ROMol mol2 = ROMol.FromByteArray(pkl);
+                Assert.True(mol2.hasProp("_MolFileChiralFlag"));
+            }
+
+        }
     }
 }

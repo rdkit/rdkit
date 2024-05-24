@@ -12,6 +12,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryBond.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -365,6 +366,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           } else if (attr.first == "Order") {
             if (attr.second.data() == "1.5") {
               order = Bond::BondType::AROMATIC;
+            } else if (attr.second.data() == "any") {
+              order = Bond::BondType::UNSPECIFIED;
             } else {
               int bond_order = stoi(attr.second.data());
 
@@ -417,7 +420,6 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   // add bonds
   if (!skip_fragment) {
     for (auto &bond : bonds) {
-      unsigned int bond_idx;
       bool swap = false;
       if (bond.display == "WedgeEnd") {
         swap = true;
@@ -428,18 +430,22 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         bond.display = "WedgedHashBegin";
       }
 
+      auto startIdx = ids[bond.start]->getIdx();
+      auto endIdx = ids[bond.end]->getIdx();
       if (swap) {
-        // here The "END" of the bond is really our Beginning.
-        // swap atom direction
-        bond_idx = mol.addBond(ids[bond.end]->getIdx(),
-                               ids[bond.start]->getIdx(), bond.getBondType()) -
-                   1;
-      } else {
-        bond_idx = mol.addBond(ids[bond.start]->getIdx(),
-                               ids[bond.end]->getIdx(), bond.getBondType()) -
-                   1;
+        std::swap(startIdx, endIdx);
       }
-      Bond *bnd = mol.getBondWithIdx(bond_idx);
+      unsigned bondIdx = 0;
+      if (bond.order == Bond::BondType::UNSPECIFIED) {
+        auto qb = new QueryBond();
+        qb->setQuery(makeBondNullQuery());
+        qb->setBeginAtomIdx(startIdx);
+        qb->setEndAtomIdx(endIdx);
+        bondIdx = mol.addBond(qb, true) - 1;
+      } else {
+        bondIdx = mol.addBond(startIdx, endIdx, bond.getBondType()) - 1;
+      }
+      Bond *bnd = mol.getBondWithIdx(bondIdx);
       if (bond.order == Bond::BondType::AROMATIC) {
         bnd->setIsAromatic(true);
         ids[bond.end]->setIsAromatic(true);
@@ -607,6 +613,8 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
 
                 Atropisomers::detectAtropisomerChirality(
                     *res, &res->getConformer(confidx));
+              } else {  // no Conformer
+                Atropisomers::detectAtropisomerChirality(*res, nullptr);
               }
 
               // now that atom stereochem has been perceived, the wedging

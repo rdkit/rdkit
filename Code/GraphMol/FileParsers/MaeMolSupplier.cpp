@@ -10,7 +10,8 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
-#include <map>
+
+#include <boost/unordered_set.hpp>
 
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
@@ -18,6 +19,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/RWMol.h>
+#include <GraphMol/FileParsers/MaestroProperties.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 
@@ -27,6 +29,7 @@
 #include <maeparser/Reader.hpp>
 
 using namespace schrodinger;
+using namespace RDKit::FileParsers::schrodinger;
 using RDKit::MolInterchange::bolookup;
 
 namespace RDKit {
@@ -34,14 +37,6 @@ namespace RDKit {
 namespace v2 {
 namespace FileParsers {
 namespace {
-
-const std::string PDB_ATOM_NAME = "s_m_pdb_atom_name";
-const std::string PDB_RESIDUE_NAME = "s_m_pdb_residue_name";
-const std::string PDB_CHAIN_NAME = "s_m_chain_name";
-const std::string PDB_INSERTION_CODE = "s_m_insertion_code";
-const std::string PDB_RESIDUE_NUMBER = "i_m_residue_number";
-const std::string PDB_OCCUPANCY = "r_m_pdb_occupancy";
-const std::string PDB_TFACTOR = "r_m_pdb_tfactor";
 
 class PDBInfo {
  public:
@@ -220,9 +215,22 @@ std::string strip_prefix_from_mae_property(const std::string &propName) {
   return propName;
 }
 
+bool is_ignored_property(const std::string &prop) {
+  static const boost::unordered_set<std::string> ignored_properties = {
+      MAE_ENHANCED_STEREO_STATUS,
+      MAE_STEREO_STATUS,
+  };
+
+  return ignored_properties.find(prop) != ignored_properties.end();
+}
+
 //! Copy over the structure properties, including stereochemistry.
 void set_mol_properties(RWMol &mol, const mae::Block &ct_block) {
   for (const auto &prop : ct_block.getProperties<std::string>()) {
+    if (is_ignored_property(prop.first)) {
+      continue;
+    }
+
     if (prop.first == mae::CT_TITLE) {
       mol.setProp(common_properties::_Name, prop.second);
     } else if (prop.first.find(mae::CT_CHIRALITY_PROP_PREFIX) == 0 ||
@@ -236,14 +244,26 @@ void set_mol_properties(RWMol &mol, const mae::Block &ct_block) {
     }
   }
   for (const auto &prop : ct_block.getProperties<double>()) {
+    if (is_ignored_property(prop.first)) {
+      continue;
+    }
+
     auto propName = strip_prefix_from_mae_property(prop.first);
     mol.setProp(propName, prop.second);
   }
   for (const auto &prop : ct_block.getProperties<int>()) {
+    if (is_ignored_property(prop.first)) {
+      continue;
+    }
+
     auto propName = strip_prefix_from_mae_property(prop.first);
     mol.setProp(propName, prop.second);
   }
   for (const auto &prop : ct_block.getProperties<mae::BoolProperty>()) {
+    if (is_ignored_property(prop.first)) {
+      continue;
+    }
+
     auto propName = strip_prefix_from_mae_property(prop.first);
     mol.setProp(propName, static_cast<bool>(prop.second));
   }
