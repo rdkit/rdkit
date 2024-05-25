@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2018-2021 Greg Landrum and other RDKit contributors
+//  Copyright (c) 2018-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1795,5 +1795,22 @@ TEST_CASE("sanitizeRxnAsMols") {
       REQUIRE(rxn);
       CHECK_THROWS_AS(RxnOps::sanitizeRxnAsMols(*rxn), MolSanitizeException);
     }
+  }
+}
+
+TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
+  SECTION("basics") {
+    auto rxn = "[C:1]-[C:2].[NH3:3]->[Fe:4]-[NH2:5]>>[C:1]=[C:2].[NH3:3]->[Fe:4]-[NH2:5]"_rxnsmarts;
+    REQUIRE(rxn);
+    auto smi = ChemicalReactionToRxnSmiles(*rxn);
+    CHECK(smi == "[CH3:1][CH3:2].[NH3:3]->[Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3]->[Fe:4][NH2:5]");
+    smi = ChemicalReactionToRxnSmarts(*rxn);
+    CHECK(smi == "[C:1]-[C:2].[N&H3:3]->[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]->[#26:4]-[N&H2:5]");
+    SmilesWriteParams ps;
+    ps.includeDativeBonds = false;
+    smi = ChemicalReactionToRxnSmiles(*rxn,ps);
+    CHECK(smi == "[CH3:1][CH3:2].[NH3:3][Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3][Fe:4][NH2:5]");
+    smi = ChemicalReactionToRxnSmarts(*rxn,ps);
+    CHECK(smi == "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]");
   }
 }
