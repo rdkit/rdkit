@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2010-2022, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2024, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
 //
 //  All rights reserved.
@@ -38,7 +38,6 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
@@ -55,12 +54,13 @@ void setRXNRoleOfAllMoleculeAtoms(RDKit::ROMol &mol, int role) {
   }
 }
 
-std::string molToString(RDKit::ROMol &mol, bool toSmiles) {
+std::string molToString(RDKit::ROMol &mol, bool toSmiles,
+                        const RDKit::SmilesWriteParams &params) {
   std::string res = "";
   if (toSmiles) {
-    res = MolToSmiles(mol, true);
+    res = MolToSmiles(mol, params);
   } else {
-    res = MolToSmarts(mol, true);
+    res = MolToSmarts(mol, params);
   }
   std::vector<int> mapping;
   if (RDKit::MolOps::getMolFrags(mol, mapping) > 1) {
@@ -71,15 +71,15 @@ std::string molToString(RDKit::ROMol &mol, bool toSmiles) {
 
 std::string chemicalReactionTemplatesToString(
     const RDKit::ChemicalReaction &rxn, RDKit::ReactionMoleculeType type,
-    bool toSmiles, bool canonical) {
+    bool toSmiles, const RDKit::SmilesWriteParams &params) {
   std::string res = "";
   std::vector<std::string> vfragsmi;
   auto begin = getStartIterator(rxn, type);
   auto end = getEndIterator(rxn, type);
   for (; begin != end; ++begin) {
-    vfragsmi.push_back(molToString(**begin, toSmiles));
+    vfragsmi.push_back(molToString(**begin, toSmiles, params));
   }
-  if (canonical) {
+  if (params.canonical) {
     std::sort(vfragsmi.begin(), vfragsmi.end());
   }
   for (unsigned i = 0; i < vfragsmi.size(); ++i) {
@@ -91,17 +91,17 @@ std::string chemicalReactionTemplatesToString(
   return res;
 }
 
-std::string chemicalReactionToRxnToString(const RDKit::ChemicalReaction &rxn,
-                                          bool toSmiles, bool canonical) {
+std::string chemicalReactionToRxnToString(
+    const RDKit::ChemicalReaction &rxn, bool toSmiles,
+    const RDKit::SmilesWriteParams &params) {
   std::string res = "";
-  res += chemicalReactionTemplatesToString(rxn, RDKit::Reactant, toSmiles,
-                                           canonical);
+  res +=
+      chemicalReactionTemplatesToString(rxn, RDKit::Reactant, toSmiles, params);
+  res += ">";
+  res += chemicalReactionTemplatesToString(rxn, RDKit::Agent, toSmiles, params);
   res += ">";
   res +=
-      chemicalReactionTemplatesToString(rxn, RDKit::Agent, toSmiles, canonical);
-  res += ">";
-  res += chemicalReactionTemplatesToString(rxn, RDKit::Product, toSmiles,
-                                           canonical);
+      chemicalReactionTemplatesToString(rxn, RDKit::Product, toSmiles, params);
   return res;
 }
 
@@ -121,14 +121,15 @@ void write_template(std::ostringstream &res, RDKit::ROMol &tpl) {
 namespace RDKit {
 
 //! returns the reaction SMARTS for a reaction
-std::string ChemicalReactionToRxnSmarts(const ChemicalReaction &rxn) {
-  return chemicalReactionToRxnToString(rxn, false, false);
+std::string ChemicalReactionToRxnSmarts(const ChemicalReaction &rxn,
+                                        const SmilesWriteParams &params) {
+  return chemicalReactionToRxnToString(rxn, false, params);
 };
 
 //! returns the reaction SMILES for a reaction
 std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
-                                        bool canonical) {
-  return chemicalReactionToRxnToString(rxn, true, canonical);
+                                        const SmilesWriteParams &params) {
+  return chemicalReactionToRxnToString(rxn, true, params);
 };
 
 //! returns an RXN block for a reaction

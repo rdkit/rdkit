@@ -2832,3 +2832,30 @@ TEST_CASE("CX_BOND_ATROPISOMER option requires ring info", "[bug][cxsmiles]") {
   auto smi = MolToCXSmiles(*m, ps, flags);
   CHECK(smi == "Cc1cc2c(C(N)=O)c(N)n(-c3c(C)ccc(O)c3C)c2nc1C |wD:10.9|");
 }
+
+TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
+  SECTION("basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "N[Fe]<-N");
+    SmilesWriteParams ps;
+    ps.includeDativeBonds = false;
+    auto newSmi = MolToSmiles(*m, ps);
+    CHECK(newSmi == "N[Fe][NH3]");
+    // ensure that representation round trips:
+    auto m2 = v2::SmilesParse::MolFromSmiles(newSmi);
+    REQUIRE(m2);
+    CHECK(MolToSmiles(*m2) == smi);
+  }
+  SECTION("SMARTS basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToSmarts(*m);
+    CHECK(smi == "[#7H3]->[Fe]-[#7H2]");
+    SmilesWriteParams ps;
+    ps.includeDativeBonds = false;
+    auto newSmi = MolToSmarts(*m, ps);
+    CHECK(newSmi == "[#7H3]-[Fe]-[#7H2]");
+  }
+}

@@ -251,7 +251,7 @@ The features which are parsed include:
 - atomic labels/aliases ``$`` (recognized aliases are ``_AP``, ``star_e``,
   ``Q_e``, ``QH_p``, ``AH_P``, ``X_p``, ``XH_p``, ``M_p``, ``MH_p``, ``*``)
 - atomic properties ``atomprop``
-- coordinate bonds ``C`` (these are translated into double bonds)
+- coordinate/dative bonds ``C`` (these are translated into dative bonds)
 - radicals ``^``
 - enhanced stereo (these are converted into ``StereoGroups``)
 - linknodes ``LN``
@@ -274,6 +274,7 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - atomic values
 - atomic labels
 - atomic properties
+- dative bonds (only if dative bonds are not also being written to the SMILES/SMARTS)
 - radicals
 - enhanced stereo
 - linknodes
