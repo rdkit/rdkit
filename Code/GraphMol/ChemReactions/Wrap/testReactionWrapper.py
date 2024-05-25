@@ -1194,6 +1194,24 @@ M  END
     self.assertFalse(rxn.GetProductTemplate(0).GetBondWithIdx(0).GetIsAromatic())
     self.assertEqual(rxn.GetAgentTemplate(0).GetAtomWithIdx(1).GetFormalCharge(), 1)
 
+  def testSmilesWriteParams(self):
+    rxn = AllChem.ReactionFromSmarts(
+      "[C:1]-[C:2].[NH3:3]->[Fe:4]-[NH2:5]>>[C:1]=[C:2].[NH3:3]->[Fe:4]-[NH2:5]")
+    self.assertIsNotNone(rxn)
+    params = AllChem.SmilesWriteParams()
+    self.assertEqual(
+      AllChem.ReactionToSmiles(rxn, params),
+      "[CH3:1][CH3:2].[NH3:3]->[Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3]->[Fe:4][NH2:5]")
+    self.assertEqual(
+      AllChem.ReactionToSmarts(rxn, params),
+      "[C:1]-[C:2].[N&H3:3]->[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]->[#26:4]-[N&H2:5]")
+    params.includeDativeBonds = False
+    self.assertEqual(AllChem.ReactionToSmiles(rxn, params),
+                     "[CH3:1][CH3:2].[NH3:3][Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3][Fe:4][NH2:5]")
+    self.assertEqual(
+      AllChem.ReactionToSmarts(rxn, params),
+      "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]")
+
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)
