@@ -743,8 +743,7 @@ struct substructlibrary_wrapper {
         python::init<>(python::args("self")))
         .def(python::init<unsigned int>(python::args("self", "numBits")));
 
-    python::class_<SubstructLibraryWrap, SubstructLibraryWrap *,
-                   const SubstructLibraryWrap *>(
+    python::class_<SubstructLibraryWrap>(
         "SubstructLibrary", SubstructLibraryDoc,
         python::init<>(python::args("self")))
         .def(python::init<boost::shared_ptr<MolHolderBase>>(
@@ -833,7 +832,8 @@ struct substructlibrary_wrapper {
 
         .def("Serialize", &SubstructLibrary_Serialize, python::args("self"))
         // enable pickle support
-        .def_pickle(substructlibrary_pickle_suite());
+        .def_pickle(substructlibrary_pickle_suite()
+		    );
 
     python::def("SubstructLibraryCanSerialize", SubstructLibraryCanSerialize,
                 "Returns True if the SubstructLibrary is serializable "
