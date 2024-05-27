@@ -38,5 +38,8 @@
 
 %include <RDGeneral/RDProps.h>
 
-/* For the time being, assume all properties will be strings */
 %template(setProp)  RDKit::RDProps::setProp<std::string>;
+%template(setIntProp) RDKit::RDProps::setProp<int>;
+%template(setBoolProp) RDKit::RDProps::setProp<bool>;
+%template(setDoubleProp) RDKit::RDProps::setProp<double>;
+

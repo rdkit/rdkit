@@ -36,6 +36,9 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
                             is not canonical */
   int rootedAtAtom = -1; /**< make sure the SMILES starts at the specified
                              atom. The resulting SMILES is not canonical */
+  bool includeDativeBonds =
+      true; /**< include the RDKit extension for dative bonds. Otherwise dative
+               bonds will be written as single bonds*/
 };
 
 namespace SmilesWrite {
@@ -53,6 +56,7 @@ namespace SmilesWrite {
   CXSMILESFIELDS_ENUM_ITEM(CX_POLYMER, 1 << 8)           \
   CXSMILESFIELDS_ENUM_ITEM(CX_BOND_CFG, 1 << 9)          \
   CXSMILESFIELDS_ENUM_ITEM(CX_BOND_ATROPISOMER, 1 << 10) \
+  CXSMILESFIELDS_ENUM_ITEM(CX_COORDINATE_BONDS, 1 << 11) \
   CXSMILESFIELDS_ENUM_ITEM(CX_ALL, 0x7fffffff)           \
   CXSMILESFIELDS_ENUM_ITEM(CX_ALL_BUT_COORDS, CX_ALL ^ CX_COORDS)
 
@@ -76,6 +80,14 @@ RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);
 //! \brief returns the SMILES for an atom
 /*!
   \param atom : the atom to work with
+  \param ps : the parameters controlling the SMILES generation
+*/
+RDKIT_SMILESPARSE_EXPORT std::string GetAtomSmiles(const Atom *atom,
+                                                   const SmilesWriteParams &ps);
+
+//! \brief returns the SMILES for an atom
+/*!
+  \param atom : the atom to work with
   \param doKekule : we're doing kekulized smiles (e.g. don't use
     lower case for the atom label)
   \param bondIn : the bond we came into the atom on (unused)
@@ -83,12 +95,28 @@ RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);
   atom.
   \param isomericSmiles : if true, isomeric SMILES will be generated
 */
-RDKIT_SMILESPARSE_EXPORT std::string GetAtomSmiles(const Atom *atom,
-                                                   bool doKekule = false,
-                                                   const Bond *bondIn = nullptr,
-                                                   bool allHsExplicit = false,
-                                                   bool isomericSmiles = true);
+inline std::string GetAtomSmiles(const Atom *atom, bool doKekule = false,
+                                 const Bond * = nullptr,
+                                 bool allHsExplicit = false,
+                                 bool isomericSmiles = true) {
+  // RDUNUSED_PARAM(bondIn);
+  SmilesWriteParams ps;
+  ps.doIsomericSmiles = isomericSmiles;
+  ps.doKekule = doKekule;
+  ps.allHsExplicit = allHsExplicit;
+  return GetAtomSmiles(atom, ps);
+};
 
+//! \brief returns the SMILES for a bond
+/*!
+  \param bond : the bond to work with
+  \param ps : the parameters controlling the SMILES generation
+  \param atomToLeftIdx : the index of the atom preceding \c bond
+    in the SMILES
+*/
+RDKIT_SMILESPARSE_EXPORT std::string GetBondSmiles(const Bond *bond,
+                                                   const SmilesWriteParams &ps,
+                                                   int atomToLeftIdx = -1);
 //! \brief returns the SMILES for a bond
 /*!
   \param bond : the bond to work with
@@ -98,9 +126,15 @@ RDKIT_SMILESPARSE_EXPORT std::string GetAtomSmiles(const Atom *atom,
     bond orders for aromatic bonds)
   \param allBondsExplicit : if true, symbols will be included for all bonds.
 */
-RDKIT_SMILESPARSE_EXPORT std::string GetBondSmiles(
-    const Bond *bond, int atomToLeftIdx = -1, bool doKekule = false,
-    bool allBondsExplicit = false);
+inline std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx = -1,
+                                 bool doKekule = false,
+                                 bool allBondsExplicit = false) {
+  SmilesWriteParams ps;
+  ps.doKekule = doKekule;
+  ps.allBondsExplicit = allBondsExplicit;
+  ps.doIsomericSmiles = false;
+  return GetBondSmiles(bond, ps, atomToLeftIdx);
+};
 
 namespace detail {
 RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
