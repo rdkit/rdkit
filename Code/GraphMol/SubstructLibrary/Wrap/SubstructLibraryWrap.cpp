@@ -832,8 +832,7 @@ struct substructlibrary_wrapper {
 
         .def("Serialize", &SubstructLibrary_Serialize, python::args("self"))
         // enable pickle support
-        .def_pickle(substructlibrary_pickle_suite()
-		    );
+        .def_pickle(substructlibrary_pickle_suite());
 
     python::def("SubstructLibraryCanSerialize", SubstructLibraryCanSerialize,
                 "Returns True if the SubstructLibrary is serializable "
