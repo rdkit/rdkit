@@ -193,6 +193,61 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
   return res;
 }
 
+RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
+                                   RDKit::INT_VECT &coreRingsIds) {
+  // simplify the fused rings to a set of core rings by iteratively removing
+  // rings that share only one or two atoms with at max one other ring. These
+  // are trivial to embed after the core rings have been embedded and will make
+  // template matching more powerful since it will not be affected by the side
+  // rings
+
+  RDKit::INT_VECT removedRings;
+  bool removedARing = false;
+  do {
+    removedARing = false;
+    for (unsigned int currRingId = 0; currRingId < fusedRings.size();
+         currRingId++) {
+      if (std::find(removedRings.begin(), removedRings.end(), currRingId) !=
+              removedRings.end() ||
+          removedARing) {
+        continue;
+      }
+      int neighborRingsCount = 0;
+      int totalIntersectingAtoms = 0;
+      RDKit::INT_VECT commmonAtoms;
+      for (unsigned int otherRingId = 0; otherRingId < fusedRings.size();
+           otherRingId++) {
+        if (currRingId == otherRingId ||
+            (std::find(removedRings.begin(), removedRings.end(), otherRingId) !=
+             removedRings.end())) {
+          continue;
+        }
+        RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
+                         commmonAtoms);
+        if (commmonAtoms.size() > 0) {
+          neighborRingsCount++;
+          totalIntersectingAtoms += commmonAtoms.size();
+        }
+      }
+      if (neighborRingsCount == 1 &&
+          (totalIntersectingAtoms == 1 || totalIntersectingAtoms == 2)) {
+        removedRings.push_back(currRingId);
+        removedARing = true;
+      }
+    }
+  } while (removedARing);
+  RDKit::VECT_INT_VECT res;
+  for (unsigned int currRingId = 0; currRingId < fusedRings.size();
+       currRingId++) {
+    if (std::find(removedRings.begin(), removedRings.end(), currRingId) ==
+        removedRings.end()) {
+      res.push_back(fusedRings[currRingId]);
+      coreRingsIds.push_back(currRingId);
+    }
+  }
+  return res;
+}
+
 RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
                                     const RDKit::VECT_INT_VECT &fusedRings,
                                     int &nextId) {
