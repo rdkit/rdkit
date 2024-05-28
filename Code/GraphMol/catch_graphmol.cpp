@@ -4251,4 +4251,133 @@ M  END
     CHECK(m2->getBondBetweenAtoms(4, 6)->getBondDir() ==
           Bond::BondDir::BEGINDASH);
   }
+  SECTION("preserve wedged bonds from ctab input - fused rings") {
+    // consider two equivalent structures, with the same numbering
+    // of atoms and bonds, but different arrangement of single and
+    // double bonds in the aromatic ring that includes a wedged bond.
+    // verify that in both cases the kekulization results in assigning
+    // a single bond order to the wedged bonds.
+    //
+    // similar to the previous test case, but adding fused rings and
+    // an O atom that wouldn't accept double bonds
+    auto mblock1 = R"(
+  Mrv2311 05282412322D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 17 19 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -13.0418 12.1443 0 0
+M  V30 2 C -14.3753 11.3743 0 0
+M  V30 3 C -14.3753 9.8341 0 0
+M  V30 4 C -13.0418 9.0641 0 0
+M  V30 5 C -11.708 9.8341 0 0
+M  V30 6 C -11.708 11.3743 0 0
+M  V30 7 C -13.0418 7.5241 0 0
+M  V30 8 C -10.3744 9.0641 0 0
+M  V30 9 C -14.3754 6.7541 0 0
+M  V30 10 C -14.3754 5.2139 0 0
+M  V30 11 C -13.0419 4.4439 0 0
+M  V30 12 C -11.7081 5.2138 0 0
+M  V30 13 C -11.7081 6.754 0 0
+M  V30 14 C -15.8399 7.2302 0 0
+M  V30 15 C -16.7452 5.9844 0 0
+M  V30 16 O -15.8402 4.7385 0 0
+M  V30 17 C -10.3744 7.524 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 1 4 7
+M  V30 8 1 5 8
+M  V30 9 1 9 10
+M  V30 10 2 10 11
+M  V30 11 1 11 12
+M  V30 12 2 12 13
+M  V30 13 2 7 9
+M  V30 14 1 7 13 CFG=1
+M  V30 15 2 14 15
+M  V30 16 1 9 14
+M  V30 17 1 13 17
+M  V30 18 1 15 16
+M  V30 19 1 10 16
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)";
+    std::unique_ptr<RWMol> m1(MolBlockToMol(mblock1));
+    REQUIRE(m1);
+    Chirality::reapplyMolBlockWedging(*m1);
+    MolOps::Kekulize(*m1);
+    CHECK(m1->getBondBetweenAtoms(6, 12)->getBondType() ==
+          Bond::BondType::SINGLE);
+    CHECK(m1->getBondBetweenAtoms(6, 12)->getBondDir() ==
+          Bond::BondDir::BEGINWEDGE);
+    CHECK(m1->getBondBetweenAtoms(6, 8)->getBondType() ==
+          Bond::BondType::DOUBLE);
+
+    auto mblock2 = R"(
+  Mrv2311 05282412342D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 17 19 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -13.0418 12.1443 0 0
+M  V30 2 C -14.3753 11.3743 0 0
+M  V30 3 C -14.3753 9.8341 0 0
+M  V30 4 C -13.0418 9.0641 0 0
+M  V30 5 C -11.708 9.8341 0 0
+M  V30 6 C -11.708 11.3743 0 0
+M  V30 7 C -13.0418 7.5241 0 0
+M  V30 8 C -10.3744 9.0641 0 0
+M  V30 9 C -14.3754 6.7541 0 0
+M  V30 10 C -14.3754 5.2139 0 0
+M  V30 11 C -13.0419 4.4439 0 0
+M  V30 12 C -11.7081 5.2138 0 0
+M  V30 13 C -11.7081 6.754 0 0
+M  V30 14 C -15.8399 7.2302 0 0
+M  V30 15 C -16.7452 5.9844 0 0
+M  V30 16 O -15.8402 4.7385 0 0
+M  V30 17 C -10.3744 7.524 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 1 4 7
+M  V30 8 1 5 8
+M  V30 9 2 9 10
+M  V30 10 1 10 11
+M  V30 11 2 11 12
+M  V30 12 1 12 13
+M  V30 13 1 7 9 CFG=3
+M  V30 14 2 7 13
+M  V30 15 2 14 15
+M  V30 16 1 9 14
+M  V30 17 1 13 17
+M  V30 18 1 15 16
+M  V30 19 1 10 16
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)";
+    std::unique_ptr<RWMol> m2(MolBlockToMol(mblock2));
+    REQUIRE(m2);
+    Chirality::reapplyMolBlockWedging(*m2);
+    MolOps::Kekulize(*m2);
+    CHECK(m2->getBondBetweenAtoms(6, 12)->getBondType() ==
+          Bond::BondType::DOUBLE);
+    CHECK(m2->getBondBetweenAtoms(6, 8)->getBondType() ==
+          Bond::BondType::SINGLE);
+    CHECK(m2->getBondBetweenAtoms(6, 8)->getBondDir() ==
+          Bond::BondDir::BEGINDASH);
+  }
 }
