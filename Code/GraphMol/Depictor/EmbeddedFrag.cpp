@@ -487,11 +487,20 @@ static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
 void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                                    bool useRingTemplates) {
   PRECONDITION(dp_mol, "");
-  // ok this is what we are going to do here
-  // embed each of the individual rings. Then
-  // find the largest ring , leave that at the origin
-  // and fuse each of remaining rings
+  // Look for a template for the whole system. Failing that simplify the system
+  // to a set of core atoms and  look for a template for those. If that fails,
+  // start from a single ring. Then add rings one by one
 
+  RDKit::INT_VECT funion;
+  // look for a template that matches the entire fused ring system
+  if (useRingTemplates && fusedRings.size() > 1) {
+    RDKit::Union(fusedRings, funion);
+    bool found_template = matchToTemplate(funion, fusedRings.size());
+    if (found_template) {
+      // we are done
+      return;
+    }
+  }
   std::vector<RDGeom::INT_POINT2D_MAP> coords;
   coords.reserve(fusedRings.size());
 
@@ -505,7 +514,6 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
   // embed the core rings. Try first with a template if available
   RDKit::INT_VECT coreRingsIds;
   auto coreRings = findCoreRings(fusedRings, coreRingsIds);
-  RDKit::INT_VECT funion;
   if (useRingTemplates && coreRings.size() > 1) {
     RDKit::Union(coreRings, funion);
     bool found_template = matchToTemplate(funion, coreRings.size());

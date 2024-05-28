@@ -196,7 +196,7 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
 RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
                                    RDKit::INT_VECT &coreRingsIds) {
   // simplify the fused rings to a set of core rings by iteratively removing
-  // rings that share only one or two atoms with at max one other ring. These
+  // rings that share only one or two consecutive atoms. These
   // are trivial to embed after the core rings have been embedded and will make
   // template matching more powerful since it will not be affected by the side
   // rings
@@ -212,8 +212,7 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
           removedARing) {
         continue;
       }
-      int neighborRingsCount = 0;
-      int totalIntersectingAtoms = 0;
+      std::set<int> allIntersectingAtoms;
       RDKit::INT_VECT commmonAtoms;
       for (unsigned int otherRingId = 0; otherRingId < fusedRings.size();
            otherRingId++) {
@@ -225,12 +224,40 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
         RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
                          commmonAtoms);
         if (commmonAtoms.size() > 0) {
-          neighborRingsCount++;
-          totalIntersectingAtoms += commmonAtoms.size();
+          for (auto rii : commmonAtoms) {
+            allIntersectingAtoms.insert(rii);
+          }
         }
       }
-      if (neighborRingsCount == 1 &&
-          (totalIntersectingAtoms == 1 || totalIntersectingAtoms == 2)) {
+      // note that the set of ring is not SSSR because we use symmetrizeSSSR, so
+      // we cannot force a check for only one fused ring. Instead we make sure
+      // that this ring shares only one atom or one bond (two consecutive atoms)
+      auto hasOneOrTwoConsecutiveAtoms =
+          [fusedRings, currRingId](const RDKit::INT_VECT &vec) {
+            if (vec.size() == 1) {
+              return true;
+            }
+            if (vec.size() == 2) {
+              auto ring = fusedRings[currRingId];
+              auto pos1 = find(ring.begin(), ring.end(), vec[0]);
+              auto pos2 = find(ring.begin(), ring.end(), vec[1]);
+
+              if (pos1 == ring.end() || pos2 == ring.end()) {
+                return false;
+              }
+              int pos1I = pos1 - ring.begin();
+              int pos2I = pos2 - ring.begin();
+              // check if the positions in the ring vector of the two
+              // elements are consecutive
+              return (abs(pos1I - pos2I) == 1 ||
+                      (pos1I == 0 && pos2I == ring.size() - 1) ||
+                      (pos2I == 0 && pos1I == ring.size() - 1));
+            }
+            return false;
+          };
+      RDKit::INT_VECT allIntersectingAtomsVec(allIntersectingAtoms.begin(),
+                                              allIntersectingAtoms.end());
+      if (hasOneOrTwoConsecutiveAtoms(allIntersectingAtomsVec)) {
         removedRings.push_back(currRingId);
         removedARing = true;
       }
@@ -256,18 +283,13 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
   // atoms
   // that have already been embedded will be the ring that will get embedded.
   // But
-  // if we can find a ring with two atoms in common with the embedded atoms, we
-  // will
-  // choose that first before systems with more than 2 atoms in common. Cases
-  // with two atoms
-  // in common are in general flat systems to start with and can be embedded
-  // cleanly.
-  // when there are more than 2 atoms in common, these are most likely bridged
-  // systems, which are
-  // screwed up anyway, might as well screw them up later
-  // if we do not have a system with two rings in common then we will return the
-  // ring with max,
-  // common atoms
+  // if we can find a ring with two atoms in common with the embedded atoms,
+  // we will choose that first before systems with more than 2 atoms in
+  // common. Cases with two atoms in common are in general flat systems to
+  // start with and can be embedded cleanly. when there are more than 2 atoms
+  // in common, these are most likely bridged systems, which are screwed up
+  // anyway, might as well screw them up later if we do not have a system with
+  // two rings in common then we will return the ring with max, common atoms
   PRECONDITION(doneRings.size() > 0, "");
   PRECONDITION(fusedRings.size() > 1, "");
 
@@ -301,7 +323,8 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
     if (numCommonAtoms == 2) {
       // if we found a ring with two atoms in common get out
       nextId = currRingId;
-      return commonAtoms;  // FIX: this causes the rendering to be non-canonical
+      return commonAtoms;  // FIX: this causes the rendering to be
+                           // non-canonical
     }
     if (numCommonAtoms > maxCommonAtoms) {
       maxCommonAtoms = numCommonAtoms;
@@ -310,21 +333,20 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
     }
     ++currRingId;
   }
-  // here is an additional constrain we will put on the common atoms it is quite
-  // likely that the common atoms form a chain (it is possible we can construct
-  // some weird cases where this does not hold true - but for now we will assume
-  // this is true. However the IDs in the res may not be in the order of going
-  // from one end of the chain to the other -
+  // here is an additional constrain we will put on the common atoms it is
+  // quite likely that the common atoms form a chain (it is possible we can
+  // construct some weird cases where this does not hold true - but for now we
+  // will assume this is true. However the IDs in the res may not be in the
+  // order of going from one end of the chain to the other -
   //  here is an example C1CCC(CC12)CCC2
   // - two rings here with three atoms in common
   // let ring1:(0,1,2,3,4,5) be a ring that is already embedded, then let
-  // ring2:(4,3,6,7,8,5) be the ring that we found to be the next ring we should
-  // embed.
-  // The commonAtoms are (4,3,5) - note that they will be in this order since
-  // the rings are always traversed in order. Now we would like these common
-  // atoms to be returned in the order (5,4,3) - then we have a continuous
-  // chain, we can do this by simply looking at the original ring order
-  // (4,3,6,7,8,5) and observing that 5 need to come to the front
+  // ring2:(4,3,6,7,8,5) be the ring that we found to be the next ring we
+  // should embed. The commonAtoms are (4,3,5) - note that they will be in
+  // this order since the rings are always traversed in order. Now we would
+  // like these common atoms to be returned in the order (5,4,3) - then we
+  // have a continuous chain, we can do this by simply looking at the original
+  // ring order (4,3,6,7,8,5) and observing that 5 need to come to the front
 
   // find out how many atoms from the end we need to move to the front
   unsigned int cmnLst = 0;
@@ -424,9 +446,9 @@ void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,
 //       b4
 //       |
 //       E
-// For example in the above situation on the pairs (b1, b3) and (b1, b4) will be
-// returned
-// All other permutations can be achieved via a rotatable bond flip.
+// For example in the above situation on the pairs (b1, b3) and (b1, b4) will
+// be returned All other permutations can be achieved via a rotatable bond
+// flip.
 INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center,
                                           const RDKit::INT_VECT &nbrBids,
                                           const VECT_C_POINT &nbrLocs) {
@@ -445,13 +467,12 @@ INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center,
 
   // now find the lay out of the bonds and return the bonds that are 90deg to
   // the
-  // the bond to the first neighbor; i.e. we want to find b3 and b4 in the above
-  // picture
+  // the bond to the first neighbor; i.e. we want to find b3 and b4 in the
+  // above picture
   double dp1 = nbrPts[0].dotProduct(nbrPts[1]);
   if (fabs(dp1) < 1.e-3) {
-    // the first two vectors are perpendicular to each other. We now have b1 and
-    // b3 we need to
-    // find b4
+    // the first two vectors are perpendicular to each other. We now have b1
+    // and b3 we need to find b4
     INT_PAIR p1(nbrBids[0], nbrBids[1]);
     res.push_back(p1);
 
