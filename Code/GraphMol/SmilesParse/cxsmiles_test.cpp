@@ -1467,3 +1467,47 @@ TEST_CASE("write attachment points") {
   m->getAtomWithIdx(5)->setProp(common_properties::_fromAttachPoint, 2);
   CHECK(MolToCXSmiles(*m) == "*N[C@@H](C)C(*)=O |$_AP1;;;;;_AP2;$|");
 }
+
+TEST_CASE("github #7414: CXSmiles writer does not use default conformer ID") {
+  SECTION("basics") {
+    auto m = "CC |(-0.75,0,;0.75,0,)|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getNumConformers() == 1);
+    m->getConformer().setId(5);
+    CHECK(MolToCXSmiles(*m) == "CC |(-0.75,0,;0.75,0,)|");
+  }
+}
+
+TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
+  SECTION("basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi == "N[Fe][NH3] |C:2.1|");
+
+    // disable the dative bond output
+    SmilesWriteParams ps;
+    smi = MolToCXSmiles(*m, ps,
+                        SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS ^
+                            SmilesWrite::CXSmilesFields::CX_COORDINATE_BONDS);
+    CHECK(smi == "N[Fe][NH3]");
+  }
+  SECTION("basics, SMARTS output") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToCXSmarts(*m);
+    CHECK(smi == "[#7H3]-[Fe]-[#7H2] |C:0.0|");
+  }
+  SECTION("two dative bonds") {
+    auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
+    REQUIRE(m);
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi == "[NH3][Fe][NH3] |C:0.0,2.1|");
+  }
+  SECTION("two dative bonds, SMARTS output") {
+    auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
+    REQUIRE(m);
+    auto smi = MolToCXSmarts(*m);
+    CHECK(smi == "[#7H3]-[Fe]-[#7H3] |C:0.0,2.1|");
+  }
+}

@@ -15,6 +15,7 @@
 #include <string>
 #include <cmath>
 #include <map>
+#include <algorithm>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -28,13 +29,7 @@ const double RAD2DEG = 180.0 / M_PI;
 inline bool isDoubleZero(const double x) {
   return ((x < 1.0e-10) && (x > -1.0e-10));
 }
-inline void clipToOne(double &x) {
-  if (x > 1.0) {
-    x = 1.0;
-  } else if (x < -1.0) {
-    x = -1.0;
-  }
-}
+inline void clipToOne(double &x) { x = std::clamp(x, -1.0, 1.0); }
 
 //! class to store UFF parameters for bond stretching
 class RDKIT_FORCEFIELD_EXPORT UFFBond {

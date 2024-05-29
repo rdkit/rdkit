@@ -11,6 +11,7 @@
 //  of the RDKit source tree.
 //
 #include "PositionConstraint.h"
+#include <algorithm>
 #include <cmath>
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
@@ -39,7 +40,7 @@ double PositionConstraintContrib::getEnergy(double *pos) const {
   RDGeom::Point3D p(pos[3 * d_atIdx], pos[3 * d_atIdx + 1],
                     pos[3 * d_atIdx + 2]);
   double dist = (p - d_pos0).length();
-  double distTerm = (dist > d_maxDispl) ? dist - d_maxDispl : 0.0;
+  double distTerm = std::max(dist - d_maxDispl, 0.0);
   double res = 0.5 * d_forceConstant * distTerm * distTerm;
 
   return res;

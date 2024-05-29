@@ -167,19 +167,20 @@
       }
     }
   }
-  public byte[] ToByteArray() {
-    UChar_Vect vec = null;
-    try {
-      vec = toUCharVect();
-      byte[] res = new byte[vec.Count];
-      vec.CopyTo(res);
-      return res;
-    } finally {
-      if (vec != null) {
-        vec.Dispose();
-      }
-    }
-  }
+  public
+   byte[] ToByteArray(int propertyFlags = -1) {
+     UChar_Vect vec = null;
+     try {
+       vec = toUCharVect(propertyFlags);
+       byte[] res = new byte[vec.Count];
+       vec.CopyTo(res);
+       return res;
+     } finally {
+       if (vec != null) {
+         vec.Dispose();
+       }
+     }
+   }
 %}
 %include <GraphMol/ROMol.h>
 
@@ -187,7 +188,14 @@
 %include <GraphMol/Substruct/SubstructMatch.h>
 
 %ignore RDKit::MolPickler;
+#ifdef SWIGJAVA
+%include "enums.swg"
+%javaconst(1);
+#endif
 %include <GraphMol/MolPickler.h>
+#ifdef SWIGJAVA
+%javaconst(0);
+#endif
 
 
 
@@ -198,6 +206,7 @@
 %newobject replaceSidechains;
 %newobject deleteSubstructs;
 %newobject getAtoms;
+%newobject getBonds;
 %newobject getAtomNeighbors;
 %newobject getAtomBonds;
 
@@ -248,6 +257,19 @@ void setAllowNontetrahedralChirality(bool);
 %csmethodmodifiers RDKit::ROMol::fromUCharVect "private";
 %csmethodmodifiers RDKit::ROMol::toUCharVect "private";
 #endif
+
+%{
+  /* From MolPickler.h */
+void setDefaultPickleProperties(unsigned int propertyFlags) {
+  RDKit::MolPickler::setDefaultPickleProperties(propertyFlags);
+}
+unsigned int getDefaultPickleProperties() {
+  return RDKit::MolPickler::getDefaultPickleProperties();
+}
+%}
+
+void setDefaultPickleProperties(unsigned int propertyFlags);
+unsigned int getDefaultPickleProperties();
 
 %extend RDKit::ROMol {
   std::string getProp(const std::string key){
@@ -563,35 +585,32 @@ void setAllowNontetrahedralChirality(bool);
 
   /* From Python wrappers -- implied functionality */
   std::vector<RDKit::Atom*> *getAtoms() {
-    int c = ($self)->getNumAtoms();
-    std::vector<RDKit::Atom*> *atoms = new std::vector<RDKit::Atom*>;
-    for (int i = 0; i < c; i++) {
-      RDKit::Atom* a = ($self)->getAtomWithIdx(i);
-      atoms->push_back(a);
-    }
-    return atoms;
+    auto atoms = ($self)->atoms();
+    return new std::vector<RDKit::Atom*>(atoms.begin(), atoms.end());
+  }
+
+  std::vector<RDKit::Bond*> *getBonds() {
+    auto bonds = ($self)->bonds();
+    return new std::vector<RDKit::Bond*>(bonds.begin(), bonds.end());
   }
 
   std::vector<RDKit::Atom*> *getAtomNeighbors(RDKit::Atom *at) {
-    std::vector<RDKit::Atom*> *atoms = new std::vector<RDKit::Atom*>;
-    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomNeighbors(at))){
-      atoms->push_back((*($self))[nbri]);
-    }
-    return atoms;
+    auto atomNbrs = ($self)->atomNeighbors(at);
+    return new std::vector<RDKit::Atom*>(atomNbrs.begin(), atomNbrs.end());
   }
 
   std::vector<RDKit::Bond*> *getAtomBonds(RDKit::Atom *at) {
-    std::vector<RDKit::Bond*> *bonds = new std::vector<RDKit::Bond*>;
-    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomBonds(at))){
-      bonds->push_back((*($self))[nbri]);
-    }
-    return bonds;
+    auto bondNbrs = ($self)->atomBonds(at);
+    return new std::vector<RDKit::Bond*>(bondNbrs.begin(), bondNbrs.end());
   }
 
-  /* From MolPickler.h */
-  std::vector<int> ToBinary(){
+  std::vector<int> ToBinary(int propertyFlags=-1){
     std::string sres;
-    RDKit::MolPickler::pickleMol(*($self),sres);
+    if(propertyFlags>=0) {
+      RDKit::MolPickler::pickleMol(*($self),sres,propertyFlags);
+    } else {
+      RDKit::MolPickler::pickleMol(*($self),sres);
+    }
     std::vector<int> res(sres.length());
     std::copy(sres.begin(),sres.end(),res.begin());
     return res;
@@ -610,16 +629,24 @@ void setAllowNontetrahedralChirality(bool);
     return RDKit::ROMOL_SPTR(res);
   }
 #ifdef SWIGJAVA
-  const std::string toByteArray() {
+  const std::string toByteArray(int propertyFlags=-1) {
     std::string sres;
-    RDKit::MolPickler::pickleMol(*($self), sres);
+    if(propertyFlags>=0) {
+      RDKit::MolPickler::pickleMol(*($self),sres,propertyFlags);
+    } else {
+      RDKit::MolPickler::pickleMol(*($self),sres);
+    }
     return sres;
   }
 #endif
 #ifdef SWIGCSHARP
-  const std::vector<unsigned char> toUCharVect() {
+  const std::vector<unsigned char> toUCharVect(int propertyFlags=-1) {
     std::string sres;
-    RDKit::MolPickler::pickleMol(*($self), sres);
+    if(propertyFlags>=0) {
+      RDKit::MolPickler::pickleMol(*($self),sres,propertyFlags);
+    } else {
+      RDKit::MolPickler::pickleMol(*($self),sres);
+    }
     const std::vector<unsigned char> vec(sres.begin(), sres.end());
     return vec;
   }

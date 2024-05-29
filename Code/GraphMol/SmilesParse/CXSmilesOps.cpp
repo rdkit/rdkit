@@ -2157,7 +2157,7 @@ std::string get_bond_config_block(
         int dirCode;
         bool reverse;
         Chirality::GetMolFileBondStereoInfo(
-            bond, wedgeBonds, &mol.getConformer(0), dirCode, reverse);
+            bond, wedgeBonds, &mol.getConformer(), dirCode, reverse);
         switch (dirCode) {
           case 1:
             bd = Bond::BondDir::BEGINWEDGE;
@@ -2211,6 +2211,29 @@ std::string get_bond_config_block(
     res += wPart.first + ":" + boost::algorithm::join(wPart.second, ",");
   }
 
+  return res;
+}
+
+std::string get_coordbonds_block(const ROMol &mol,
+                                 const std::vector<unsigned int> &atomOrder,
+                                 const std::vector<unsigned int> &bondOrder) {
+  std::string res = "";
+  for (unsigned int i = 0; i < bondOrder.size(); ++i) {
+    auto idx = bondOrder[i];
+    const auto bond = mol.getBondWithIdx(idx);
+    if (bond->getBondType() != Bond::BondType::DATIVE) {
+      continue;
+    }
+    auto begAtomOrder =
+        std::find(atomOrder.begin(), atomOrder.end(), bond->getBeginAtomIdx()) -
+        atomOrder.begin();
+    if (!res.empty()) {
+      res += ",";
+    } else {
+      res = "C:";
+    }
+    res += boost::str(boost::format("%d.%d") % begAtomOrder % i);
+  }
   return res;
 }
 
@@ -2440,6 +2463,11 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     const auto cfgblock = get_bond_config_block(
         mol, atomOrder, bondOrder, includeCoords, wedgeBonds, true);
     appendToCXExtension(cfgblock, res);
+  }
+
+  if (flags & SmilesWrite::CXSmilesFields::CX_COORDINATE_BONDS) {
+    const auto block = get_coordbonds_block(mol, atomOrder, bondOrder);
+    appendToCXExtension(block, res);
   }
 
   if (flags & SmilesWrite::CXSmilesFields::CX_LINKNODES) {
