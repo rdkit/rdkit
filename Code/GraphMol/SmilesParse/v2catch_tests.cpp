@@ -66,4 +66,10 @@ TEST_CASE("v2 basics") {
     auto bnd = SmilesParse::BondFromSmarts("@");
     REQUIRE(bnd);
   }
+  {
+    auto mol = SmilesParse::MolFromSmiles("[Al+]1cccccccccc1");
+    REQUIRE(mol);
+    auto smi = RDKit::MolToSmiles(*mol);
+    CHECK(smi.find("Al") != std::string::npos);
+  }
 }
