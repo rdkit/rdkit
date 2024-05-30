@@ -1,3 +1,72 @@
+# Release_2024.03.3
+(Changes relative to Release_2024.03.2)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Anna Brünisholz, David Cosgrove, Eloy Félix, Tad Hurst, Gareth Jones, Brian
+Kelley, Yuanyue Li, Mark Mackey, Syed Zayyan Masud, Ricardo Rodriguez, Philip  
+Ullmann, kekulai-fredchang,
+
+## New Features and Enhancements:
+  - Update MinimalLib for Function Exposure: runReactants
+ (github pull #7210 from syedzayyan)
+  - Expose replaceAtomWithQueryAtom to Python
+ (github pull #7380 from DavidACosgrove)
+  - C sharp rascal mcs wrapper
+ (github pull #7390 from jones-gareth)
+  - No coords atropisomers - fix smiles output of atrop wedges after reordering
+ (github pull #7418 from tadhurst-cdd)
+  - Handle query atoms and bonds in SWIG wrappers
+ (github pull #7431 from jones-gareth)
+  - Expose a couple of additional functions to Python
+ (github pull #7444 from greglandrum)
+  - Expose the property pickle options to SWIG
+ (github pull #7448 from greglandrum)
+
+## Bug Fixes:
+  - Mistake in converting Phosphinic acid to InChI
+ (github issue #5311 from YuanyueLi)
+  - Rountripping through MaeWriter and MaeMolSupplier leaks stereo status property
+ (github issue #7153 from ricrogz)
+  - incorrect chiral carbon perception in `Chem.FindMolChiralCenters` new implementation
+ (github issue #7300 from eloyfelix)
+  - Wedge bond from atrop error
+ (github pull #7355 from tadhurst-cdd)
+  - RegistrationHash.GetMolLayers does not distinguish atropisomers
+ (github issue #7367 from ricrogz)
+  - Atropisomeric bond wedging should favor ring bonds
+ (github issue #7371 from greglandrum)
+  - DetectChemistryProblems fails with traceback when run on mols coming from aromatic SMARTS
+ (github issue #7375 from ricrogz)
+  - Allow disabling output of dative bonds to SMILES
+ (github pull #7384 from greglandrum)
+  - fix a lifetime bug in the fingerprint generator
+ (github pull #7408 from greglandrum)
+  - drawing mol with a non zero confID results in bad confID error
+ (github issue #7409 from kekulai-fredchang)
+  - CXSmiles writer does not use default conformer ID
+ (github issue #7414 from greglandrum)
+  - allow static builds to work with clang and no coordgen
+ (github pull #7416 from greglandrum)
+  - fixStructureCheckerBuildError - fix location of MolFileSterechem.h
+ (github pull #7420 from tadhurst-cdd)
+  - Planar amide nitrogen incorrectly flagged as _ChiralityPossible
+ (github issue #7434 from mark-mackey-cresset)
+  - MaeWriter: handle the R group label property and update the Maestro property prefixing
+ (github pull #7454 from ricrogz)
+  - Memory leakage in CachedSmilesMolHolder
+ (github issue #7457 from philipullmann)
+  - Remove unnecessary wrapped pointers
+ (github pull #7465 from bp-kelley)
+
+## Cleanup work:
+  - Cleanup: Force field
+ (github pull #7406 from AnnaBruenisholz)
+
+
 # Release_2024.03.2
 (Changes relative to Release_2024.03.1)
 
