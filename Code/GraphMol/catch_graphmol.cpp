@@ -4133,7 +4133,6 @@ TEST_CASE("Try not to set wedged bonds as double in the kekulization") {
     REQUIRE(m);
     m->getBondBetweenAtoms(7, 8)->setBondDir(Bond::BondDir::BEGINWEDGE);
     MolOps::Kekulize(*m);
-    m->debugMol(std::cerr);
     CHECK(m->getBondBetweenAtoms(7, 8)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m->getBondBetweenAtoms(7, 13)->getBondType() ==
@@ -4379,5 +4378,144 @@ M  END
           Bond::BondType::SINGLE);
     CHECK(m2->getBondBetweenAtoms(6, 8)->getBondDir() ==
           Bond::BondDir::BEGINDASH);
+  }
+
+  SECTION("bulk") {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/atropisomers/";
+
+    std::vector<std::pair<std::string, int>> prs = {
+#if 1
+      {"BMS-986142_atrop8.sdf", 8},
+      {"Mrtx1719_atrop3.sdf", 21},
+      {"AtropManyChiralsEnhanced2.sdf", 7},
+      {"JDQ443_atrop2.sdf", 26},
+      {"BMS-986142_atrop2.sdf", 8},
+      {"macrocycle-6-meta-broken-hash.sdf", 14},
+      {"BMS-986142_3d.sdf", 8},
+      {"Mrtx1719_atrop2.sdf", 21},
+      {"Sotorasib_atrop3.sdf", 12},
+      {"macrocycle-5-meta-Cl-ortho-wedge.sdf", 15},
+      {"ZM374979_atrop2.sdf", 33},
+      {"RP-6306_3d.sdf", 3},
+      {"macrocycle-5-meta-Cl-ortho-hash.sdf", 15},
+      {"macrocycle-6-meta-hash.sdf", 15},
+      {"macrocycle-8-ortho-broken-wedge.sdf", 14},
+      {"RP-6306_atrop2.sdf", 3},
+      {"Sotorasib_3d.sdf", 12},
+      {"RP-6306_atrop5.sdf", 3},
+      {"AtropManyChiralsEnhanced.sdf", 7},
+      {"RP-6306_atrop4.sdf", 3},
+      {"BMS-986142_atrop3.sdf", 8},
+      {"BMS-986142_atrop7.sdf", 8},
+      {"Sotorasib_atrop1.sdf", 12},
+      {"Mrtx1719_3d.sdf", 21},
+      {"Sotorasib_atrop2.sdf", 12},
+      {"Sotorasib_atrop5.sdf", 12},
+      {"AtropManyChirals.sdf", 7},
+      {"BMS-986142_atrop5.sdf", 8},
+      {"macrocycle-7-meta-Cl-ortho-hash.sdf", 15},
+      {"RP-6306_atrop1.sdf", 3},
+      {"BMS-986142_3d_chiral.sdf", 8},
+      {"Mrtx1719_atrop1.sdf", 21},
+      {"macrocycle-9-meta-Cl-ortho-wedge.sdf", 15},
+      {"macrocycle-8-ortho-wedge.sdf", 15},
+      {"TestMultInSDF.sdf_1.sdf", 33},
+      {"macrocycle-9-ortho-broken-wedge.sdf", 14},
+      {"Sotorasib_atrop4.sdf", 12},
+      {"macrocycle-8-meta-Cl-ortho-hash.sdf", 15},
+      {"macrocycle-6-meta-Cl-ortho-wedge.sdf", 15},
+      {"macrocycle-9-ortho-wedge.sdf", 15},
+      {"BMS-986142_atrop6.sdf", 8},
+      {"ZM374979_atrop1.sdf", 33},
+      {"macrocycle-6-meta-Cl-ortho-hash.sdf", 15},
+      {"macrocycle-6-meta-wedge.sdf", 15},
+      {"macrocycle-9-meta-Cl-ortho-hash.sdf", 15},
+      {"BMS-986142_atrop4.sdf", 8},
+      {"macrocycle-8-meta-Cl-ortho-wedge.sdf", 15},
+      {"macrocycle-9-ortho-broken-hash.sdf", 14},
+      {"JDQ443_atrop1.sdf", 26},
+      {"macrocycle-9-ortho-hash.sdf", 15},
+      {"macrocycle-7-meta-Cl-ortho-wedge.sdf", 15},
+      {"ZM374979_atrop3.sdf", 33},
+      {"BMS-986142_atrop1.sdf", 8},
+      {"macrocycle-6-meta-broken-wedge.sdf", 14},
+      {"macrocycle-8-ortho-hash.sdf", 15},
+      {"RP-6306_atrop3.sdf", 3},
+      {"macrocycle-8-ortho-broken-hash.sdf", 14},
+      {"JDQ443_atrop3.sdf", 26},
+#endif
+      {"JDQ443_3d.sdf", 26},
+      // keep
+    };
+    for (const auto &[nm, idx] : prs) {
+      INFO(nm);
+      auto m = v2::FileParsers::MolFromMolFile(pathName + nm);
+      REQUIRE(m);
+      const auto bnd = m->getBondWithIdx(idx);
+      REQUIRE((bnd->getStereo() == Bond::BondStereo::STEREOATROPCCW ||
+               bnd->getStereo() == Bond::BondStereo::STEREOATROPCW));
+      Chirality::wedgeMolBonds(*m, &m->getConformer());
+      bool clearAromaticFlags = false;
+      MolOps::Kekulize(*m, clearAromaticFlags);
+      // m->debugMol(std::cerr);
+      Bond *wedgedBond = nullptr;
+      Bond *dblBond = nullptr;
+      for (auto atm : {bnd->getBeginAtom(), bnd->getEndAtom()}) {
+        if (!atm->getIsAromatic()) {
+          continue;
+        }
+        for (auto nbrBnd : m->atomBonds(atm)) {
+          if (nbrBnd->getBondType() == Bond::BondType::DOUBLE) {
+            dblBond = nbrBnd;
+            CHECK(nbrBnd->getBondDir() == Bond::BondDir::NONE);
+            if (nbrBnd->getBondDir() != Bond::BondDir::NONE) {
+              m->debugMol(std::cerr);
+            }
+          } else if (nbrBnd->getBondDir() != Bond::BondDir::NONE) {
+            wedgedBond = nbrBnd;
+          }
+        }
+      }
+      // if we aren't in a five-ring (where the results of kekulize are normally
+      // fixed), wedge the double bond and flatten the other one
+      if (wedgedBond && dblBond &&
+          !m->getRingInfo()->isBondInRingOfSize(dblBond->getIdx(), 5) &&
+          !m->getRingInfo()->isBondInRingOfSize(wedgedBond->getIdx(), 5)) {
+        if (wedgedBond->getBondDir() == Bond::BondDir::BEGINWEDGE) {
+          dblBond->setBondDir(Bond::BondDir::BEGINDASH);
+        } else {
+          dblBond->setBondDir(Bond::BondDir::BEGINWEDGE);
+        }
+        wedgedBond->setBondDir(Bond::BondDir::NONE);
+        // re-aromatize:
+        for (auto bnd : m->bonds()) {
+          if (bnd->getIsAromatic()) {
+            bnd->setBondType(Bond::BondType::AROMATIC);
+          }
+          // }
+          // std::cerr << "\n\nbefore kekulize:" << std::endl;
+          // m->debugMol(std::cerr);
+          // kekulize again now that we wedged the bonds that were set to double
+          // before
+          MolOps::Kekulize(*m, clearAromaticFlags);
+          // and make sure that those didn't end up double again:
+          for (auto atm : {bnd->getBeginAtom(), bnd->getEndAtom()}) {
+            if (!atm->getIsAromatic()) {
+              continue;
+            }
+            for (auto nbrBnd : m->atomBonds(atm)) {
+              if (nbrBnd->getBondType() == Bond::BondType::DOUBLE) {
+                CHECK(nbrBnd->getBondDir() == Bond::BondDir::NONE);
+                if (nbrBnd->getBondDir() != Bond::BondDir::NONE) {
+                  // m->debugMol(std::cerr);
+                  // std::cerr << MolToV3KMolBlock(*m);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

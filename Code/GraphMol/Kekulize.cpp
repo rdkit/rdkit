@@ -310,8 +310,8 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
              mol.getAtomWithIdx(curr)->getAtomicNum() == 0 ||
              mol.getAtomWithIdx(nbrIdx)->getAtomicNum() == 0)) {
           // in order to try and avoid making wedged bonds double, we will add
-          // this neighbor at the back of the options after this loop if the bond
-          // is wedged. otherwise we append it to the options directly
+          // this neighbor at the back of the options after this loop if the
+          // bond is wedged. otherwise we append it to the options directly
           if (nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
               nbrBond->getBondDir() == Bond::BondDir::BEGINDASH) {
             wedgedOpts.push_back(nbrIdx);
@@ -482,7 +482,6 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
   auto nbnds = mol.getNumBonds();
   boost::dynamic_bitset<> dBndCands(nats);
   boost::dynamic_bitset<> dBndAdds(nbnds);
-
   markDbondCands(mol, allAtms, dBndCands, questions, done);
 #if 0
       std::cerr << "candidates: ";
@@ -571,13 +570,13 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   }
   // if any bonds to kekulize then give it a try:
   if (bondsToUse.any()) {
-    // mark atoms at the end of wedged bonds
+    // mark atoms at the beginning of wedged bonds
     boost::dynamic_bitset<> wedgedAtoms(numAtoms);
     for (const auto bond : mol.bonds()) {
       if (bondsToUse[bond->getIdx()] &&
           (bond->getBondDir() == Bond::BEGINWEDGE ||
            bond->getBondDir() == Bond::BEGINDASH)) {
-        wedgedAtoms.set(bond->getEndAtomIdx());
+        wedgedAtoms.set(bond->getBeginAtomIdx());
       }
     }
 
@@ -598,8 +597,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     }
     const VECT_INT_VECT &allrings =
         allringsSSSR.empty() ? mol.getRingInfo()->atomRings() : allringsSSSR;
-    VECT_INT_VECT arings;
-    arings.reserve(allrings.size());
+    std::deque<INT_VECT> tmpRings;
     auto containsNonDummy = [&atomsToUse, &dummyAts](const INT_VECT &ring) {
       bool ringOk = false;
       for (auto ai : ring) {
@@ -619,9 +617,11 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     for (const auto &ring : allrings) {
       if (containsNonDummy(ring)) {
         unsigned int startPos = 0;
+        bool hasWedge = false;
         for (auto ri = 0u; ri < ring.size(); ++ri) {
           if (wedgedAtoms[ring[ri]]) {
             startPos = ri;
+            hasWedge = true;
             break;
           }
         }
@@ -629,10 +629,16 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
         for (auto ri = 0u; ri < ring.size(); ++ri) {
           nring[ri] = ring[(ri + startPos) % ring.size()];
         }
-        arings.push_back(nring);
+        if (!hasWedge) {
+          tmpRings.push_back(nring);
+        } else {
+          tmpRings.push_front(nring);
+        }
       }
     }
-
+    VECT_INT_VECT arings;
+    arings.reserve(allrings.size());
+    arings.insert(arings.end(), tmpRings.begin(), tmpRings.end());
     VECT_INT_VECT allbrings;
     RingUtils::convertToBonds(arings, allbrings, mol);
     VECT_INT_VECT brings;
