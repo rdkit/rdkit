@@ -1557,7 +1557,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "See rdkit.Chem.rdMolDescriptor.Properties.GetProperty and \n"
       "rdkit.Chem.Descriptor.Properties.PropertyFunctor for creating new ones";
   python::class_<RDKit::Descriptors::PropertyFunctor,
-                 RDKit::Descriptors::PropertyFunctor *,
                  boost::shared_ptr<RDKit::Descriptors::PropertyFunctor>,
                  boost::noncopyable>("PropertyFunctor", docString.c_str(),
                                      python::no_init)
