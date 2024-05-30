@@ -154,7 +154,7 @@ void copyProperties(
       case RDTypeTag::BoolTag: {
         auto propName = prop.key;
         if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
-          propName.insert(0, "b_rdk_");
+          propName.insert(0, "b_rdkit_");
         }
 
         boolSetter(propName, idx, rdvalue_cast<bool>(prop.val));
@@ -164,8 +164,10 @@ void copyProperties(
       case RDTypeTag::IntTag:
       case RDTypeTag::UnsignedIntTag: {
         auto propName = prop.key;
-        if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
-          propName.insert(0, "i_rdk_");
+        if (prop.key == common_properties::_MolFileRLabel) {
+          propName = MAE_RGROUP_LABEL;
+        } else if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+          propName.insert(0, "i_rdkit_");
         }
 
         intSetter(propName, idx, rdvalue_cast<int>(prop.val));
@@ -176,7 +178,7 @@ void copyProperties(
       case RDTypeTag::FloatTag: {
         auto propName = prop.key;
         if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
-          propName.insert(0, "r_rdk_");
+          propName.insert(0, "r_rdkit_");
         }
 
         realSetter(propName, idx, rdvalue_cast<double>(prop.val));
@@ -186,7 +188,7 @@ void copyProperties(
       case RDTypeTag::StringTag: {
         auto propName = prop.key;
         if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
-          propName.insert(0, "s_rdk_");
+          propName.insert(0, "s_rdkit_");
         }
 
         stringSetter(propName, idx, rdvalue_cast<std::string>(prop.val));
