@@ -3724,4 +3724,42 @@ void removeStereochemistry(ROMol &mol) {
 }
 
 }  // namespace MolOps
+
+namespace Chirality {
+
+void simplifyEnhancedStereo(ROMol &mol, bool removeAffectedStereoGroups) {
+  auto sgs = mol.getStereoGroups();
+  if (sgs.size() == 1) {
+    boost::dynamic_bitset<> chiralAts(mol.getNumAtoms());
+    for (const auto atom : mol.atoms()) {
+      if (atom->getChiralTag() > Atom::ChiralType::CHI_UNSPECIFIED &&
+          atom->getChiralTag() < Atom::ChiralType::CHI_OTHER) {
+        chiralAts.set(atom->getIdx(), 1);
+      }
+    }
+    for (const auto atm : sgs[0].getAtoms()) {
+      chiralAts.set(atm->getIdx(), 0);
+    }
+    if (chiralAts.none()) {
+      // all specified chiral centers are accounted for by this StereoGroup.
+      if (sgs[0].getGroupType() == StereoGroupType::STEREO_OR ||
+          sgs[0].getGroupType() == StereoGroupType::STEREO_AND) {
+        if (removeAffectedStereoGroups) {
+          std::vector<StereoGroup> empty;
+          mol.setStereoGroups(std::move(empty));
+        }
+        std::string label = sgs[0].getGroupType() == StereoGroupType::STEREO_OR
+                                ? "OR enantiomer"
+                                : "AND enantiomer";
+        mol.setProp(common_properties::molNote, label);
+        // clear the chiral codes on the atoms in the group
+        for (const auto atm : sgs[0].getAtoms()) {
+          mol.getAtomWithIdx(atm->getIdx())
+              ->clearProp(common_properties::_CIPCode);
+        }
+      }
+    }
+  }
+}
+}  // namespace Chirality
 }  // namespace RDKit

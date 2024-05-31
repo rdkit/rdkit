@@ -192,7 +192,8 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
   }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
-    prepareStereoGroups(*drawMol_);
+    bool removeAffectedStereoGroups = true;
+    Chirality::simplifyEnhancedStereo(*drawMol_, removeAffectedStereoGroups);
   }
   if (drawOptions_.addStereoAnnotation) {
     Chirality::addStereoAnnotations(*drawMol_);
@@ -3540,41 +3541,6 @@ void centerMolForDrawing(RWMol &mol, int confId) {
   tf.SetTranslation(centroid);
   MolTransforms::transformConformer(conf, tf);
   MolTransforms::transformMolSubstanceGroups(mol, tf);
-}
-
-// ****************************************************************************
-void prepareStereoGroups(RWMol &mol) {
-  auto sgs = mol.getStereoGroups();
-  if (sgs.size() == 1) {
-    boost::dynamic_bitset<> chiralAts(mol.getNumAtoms());
-    for (const auto atom : mol.atoms()) {
-      if (atom->getChiralTag() > Atom::ChiralType::CHI_UNSPECIFIED &&
-          atom->getChiralTag() < Atom::ChiralType::CHI_OTHER) {
-        chiralAts.set(atom->getIdx(), 1);
-      }
-    }
-    for (const auto atm : sgs[0].getAtoms()) {
-      chiralAts.set(atm->getIdx(), 0);
-    }
-    if (chiralAts.none()) {
-      // all specified chiral centers are accounted for by this StereoGroup.
-      if (sgs[0].getGroupType() == StereoGroupType::STEREO_OR ||
-          sgs[0].getGroupType() == StereoGroupType::STEREO_AND) {
-        std::vector<StereoGroup> empty;
-        mol.setStereoGroups(std::move(empty));
-        std::string label = sgs[0].getGroupType() == StereoGroupType::STEREO_OR
-                                ? "OR enantiomer"
-                                : "AND enantiomer";
-        mol.setProp(common_properties::molNote, label);
-      }
-      // clear the chiral codes on the atoms so that we don't
-      // inadvertently draw them later
-      for (const auto atm : sgs[0].getAtoms()) {
-        mol.getAtomWithIdx(atm->getIdx())
-            ->clearProp(common_properties::_CIPCode);
-      }
-    }
-  }
 }
 
 // ****************************************************************************
