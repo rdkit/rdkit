@@ -5732,3 +5732,61 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE("github #7438: expose code for simplified stereo labels") {
+  SECTION("basics") {
+    {
+      auto m = "C[C@H](N)[C@@H](C)F |o1:1,3|"_smiles;
+      REQUIRE(m);
+      {
+        ROMol m2(*m);
+        Chirality::simplifyEnhancedStereo(m2);
+        std::string note;
+        CHECK(m2.getPropIfPresent(common_properties::molNote, note));
+        CHECK(note == "OR enantiomer");
+        CHECK(m2.getStereoGroups().empty());
+      }
+      {
+        ROMol m2(*m);
+        bool removeAffectedStereoGroups = false;
+        Chirality::simplifyEnhancedStereo(m2, removeAffectedStereoGroups);
+        std::string note;
+        CHECK(m2.getPropIfPresent(common_properties::molNote, note));
+        CHECK(note == "OR enantiomer");
+        CHECK(m2.getStereoGroups().size() == 1);
+      }
+    }
+    {
+      auto m = "C[C@H](N)[C@@H](C)F |&1:1,3|"_smiles;
+      REQUIRE(m);
+      {
+        ROMol m2(*m);
+        Chirality::simplifyEnhancedStereo(m2);
+        std::string note;
+        CHECK(m2.getPropIfPresent(common_properties::molNote, note));
+        CHECK(note == "AND enantiomer");
+        CHECK(m2.getStereoGroups().empty());
+      }
+      {
+        ROMol m2(*m);
+        bool removeAffectedStereoGroups = false;
+        Chirality::simplifyEnhancedStereo(m2, removeAffectedStereoGroups);
+        std::string note;
+        CHECK(m2.getPropIfPresent(common_properties::molNote, note));
+        CHECK(note == "AND enantiomer");
+        CHECK(m2.getStereoGroups().size() == 1);
+      }
+    }
+  }
+
+  SECTION("incomplete") {
+    auto m = "C[C@H](N)[C@@H](C)F |o1:1|"_smiles;
+    REQUIRE(m);
+    {
+      ROMol m2(*m);
+      Chirality::simplifyEnhancedStereo(m2);
+      CHECK(!m2.hasProp(common_properties::molNote));
+      CHECK(m2.getStereoGroups().size() == 1);
+    }
+  }
+}
