@@ -322,9 +322,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
       }    // end of looping over neighbors
       // now append to opts the neighbors connected via wedged bonds,
       // if any were found
-      for (auto wedgedNbrIdx : wedgedOpts) {
-        opts.push_back(wedgedNbrIdx);
-      }
+      opts.insert(opts.end(), wedgedOpts.begin(), wedgedOpts.end());
       astack.insert(astack.end(), lstack.begin(), lstack.end());
     }
     // now add a double bond from current to one of the neighbors if we can
@@ -627,7 +625,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
         }
         INT_VECT nring(ring.size());
         for (auto ri = 0u; ri < ring.size(); ++ri) {
-          nring[ri] = ring[(ri + startPos) % ring.size()];
+          nring[ri] = ring.at((ri + startPos) % ring.size());
         }
         if (!hasWedge) {
           tmpRings.push_back(nring);
