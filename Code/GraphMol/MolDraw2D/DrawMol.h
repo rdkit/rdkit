@@ -316,7 +316,6 @@ class DrawMol {
 };
 
 void centerMolForDrawing(RWMol &mol, int confId = 1);
-void prepareStereoGroups(RWMol &mol);
 bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds);
 std::string getAtomListText(const Atom &atom);
 DrawColour getColourByAtomicNum(int atomicNum,

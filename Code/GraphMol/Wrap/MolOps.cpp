@@ -3165,6 +3165,21 @@ A note on the flags controlling which atoms/bonds are modified:
  assigned to the molecule.
 )DOC");
 
+    python::def(
+        "SimplifyEnhancedStereo", Chirality::simplifyEnhancedStereo,
+        (python::arg("mol"), python::arg("removeAffectedStereoGroups") = true),
+        R"DOC(Simplifies the stereochemical representation of a molecule where all
+specified stereocenters are in the same StereoGroup
+
+  Arguments:
+   - mol: molecule to modify
+   - removeAffectedStereoGroups: if set then the affected StereoGroups will be removed
+
+If all specified stereocenters are in the same AND or OR stereogroup, a
+moleculeNote property will be set on the molecule with the value "AND
+enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
+)DOC");
+
     python::def("_TestSetProps", testSetProps, python::arg("mol"));
     python::def("NeedsHs", MolOps::needsHs, (python::arg("mol")),
                 "returns whether or not the molecule needs to have Hs added");
