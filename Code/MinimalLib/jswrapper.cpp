@@ -401,6 +401,7 @@ emscripten::val get_mmpa_frags_helper(const JSMol &self, unsigned int minCuts,
 #endif
 
 
+
 }  // namespace
 
 using namespace emscripten;
@@ -408,6 +409,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   register_vector<std::string>("StringList");
   register_vector<emscripten::val>("JSObjectList");
   register_vector<unsigned int>("UnsignedIntList");
+  register_vector<JSMolList *>("JSMolListList");
 
   class_<JSMol>("Mol")
       .function("is_valid", &JSMol::is_valid)
