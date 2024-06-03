@@ -14,6 +14,7 @@
 #include <limits>
 #include <fstream>
 #include <random>
+#include <string>
 #include <boost/format.hpp>
 
 #include <GraphMol/RDKitBase.h>
@@ -4111,4 +4112,17 @@ TEST_CASE("Hybridization of dative bonded atoms") {
       CHECK(m->getAtomWithIdx(i)->getHybridization() == ref_hybridizations[i]);
     }
   }
+}
+
+TEST_CASE(
+    "GitHub Issue #7375: DetectChemistryProblems fails with traceback when run on mols coming from aromatic SMARTS",
+    "[bug][molops]") {
+  auto m = "c"_smarts;
+  REQUIRE(m);
+
+  auto res = MolOps::detectChemistryProblems(*m);
+
+  REQUIRE(res.size() == 1);
+  CHECK(dynamic_cast<AtomKekulizeException *>(res[0].get()) != nullptr);
+  CHECK(std::string{"non-ring atom 0 marked aromatic"} == res[0]->what());
 }

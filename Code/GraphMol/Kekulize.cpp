@@ -640,6 +640,9 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   if (markAtomsBonds) {
     // if we want the atoms and bonds to be marked non-aromatic do
     // that here.
+    if (!mol.getRingInfo()->isInitialized()) {
+      MolOps::findSSSR(mol);
+    }
     for (auto bond : mol.bonds()) {
       if (bondsToUse[bond->getIdx()]) {
         bond->setIsAromatic(false);

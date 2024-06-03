@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -469,6 +469,16 @@ ROMol *dativeBondsToHapticHelper(const ROMol &mol) {
 void setHybridizationMol(ROMol &mol) {
   auto &wmol = static_cast<RWMol &>(mol);
   MolOps::setHybridization(wmol);
+}
+
+void cleanupChiralityMol(ROMol &mol) {
+  auto &rwmol = static_cast<RWMol &>(mol);
+  MolOps::cleanupChirality(rwmol);
+}
+
+void cleanupAtropisomersMol(ROMol &mol) {
+  auto &rwmol = static_cast<RWMol &>(mol);
+  MolOps::cleanupAtropisomers(rwmol);
 }
 
 VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds) {
@@ -970,23 +980,24 @@ ROMol *molzipHelper(python::object &pmols, const MolzipParams &p) {
 }
 
 ROMol *rgroupRowZipHelper(python::dict row, const MolzipParams &p) {
-  std::map<std::string, ROMOL_SPTR>  rgroup_row;
+  std::map<std::string, ROMOL_SPTR> rgroup_row;
   python::list items = row.items();
-  for(size_t i = 0; i < (size_t) python::len(items); ++i) {
+  for (size_t i = 0; i < (size_t)python::len(items); ++i) {
     python::object key = items[i][0];
     python::object value = items[i][1];
     python::extract<std::string> rgroup_key(key);
     python::extract<ROMOL_SPTR> mol(value);
-    if(rgroup_key.check() && mol.check()) {
+    if (rgroup_key.check() && mol.check()) {
       rgroup_row[rgroup_key] = mol;
     } else {
       // raise value error
-      throw ValueErrorException("Unable to retrieve rgroup key and molecule from dictionary");
+      throw ValueErrorException(
+          "Unable to retrieve rgroup key and molecule from dictionary");
     }
   }
 
   return molzip(rgroup_row, p).release();
-}  
+}
 
 python::tuple hasQueryHsHelper(const ROMol &m) {
   python::list res;
@@ -1094,7 +1105,7 @@ struct molops_wrapper {
                 (python::arg("mol"), python::arg("conformer")),
                 docString.c_str());
     docString =
-        "\n\
+        "DEPRECATED\n\
     - mol: the molecule to be modified\n\
     - confId: Conformer to use for the coordinates\n\
 \n";
@@ -1379,11 +1390,11 @@ struct molops_wrapper {
 
     docString =
         "Check to see if the molecule has query Hs, this is normally used on query molecules\n\
-such as thos returned from MolFromSmarts\n\
+such as those returned from MolFromSmarts\n\
 Example: \n\
-      (hasQueryHs, hasUnmergableQueryHs) = HasQueryHs(mol)\n\
+      (hasQueryHs, hasUnmergeableQueryHs) = HasQueryHs(mol)\n\
 \n\
-if hasUnmergableQueryHs, these query hs cannot be removed by calling\n\
+if hasUnmergeableQueryHs, these query hs cannot be removed by calling\n\
 MergeQueryHs";
     python::def("HasQueryHs", hasQueryHsHelper, python::arg("mol"),
                 docString.c_str());
@@ -1688,17 +1699,45 @@ to the terminal dummy atoms.\n\
                 docString.c_str());
     // ------------------------------------------------------------------------
     docString =
-        "cleans up certain common bad functionalities in the molecule\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-\n\
-  NOTES:\n\
-\n\
-    - The molecule is modified in place.\n\
-\n";
+        R"DOC(cleans up certain common bad functionalities in the molecule
+
+  ARGUMENTS:
+
+    - mol: the molecule to use
+
+  NOTES:
+
+    - The molecule is modified in place.
+)DOC";
     python::def("Cleanup", cleanupMol, (python::arg("mol")), docString.c_str());
+    // ------------------------------------------------------------------------
+    docString =
+        R"DOC(removes bogus chirality markers (e.g. tetrahedral flags on non-sp3 centers)
+
+  ARGUMENTS:
+
+    - mol: the molecule to use
+
+  NOTES:
+
+    - The molecule is modified in place.
+)DOC";
+    python::def("CleanupChirality", cleanupChiralityMol, (python::arg("mol")),
+                docString.c_str());
+    // ------------------------------------------------------------------------
+    docString =
+        R"DOC(removes bogus atropisomeric markers (e.g. those without sp2 begin and end atoms)
+
+  ARGUMENTS:
+
+    - mol: the molecule to use
+
+  NOTES:
+
+    - The molecule is modified in place.
+)DOC";
+    python::def("CleanupAtropisomers", cleanupAtropisomersMol,
+                (python::arg("mol")), docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
@@ -2837,23 +2876,24 @@ must be the core",
         python::return_value_policy<python::manage_new_object>());
 
     docString =
-      "zip an RGroupRow together to recreate the original molecule.  This correctly handles\n"
-      "broken cycles that can occur in decompositions.\n"
-      " example:\n\n"
-      "  >>> from rdkit import Chem\n"
-      "  >>> from rdkit.Chem import rdRGroupDecomposition as rgd\n"
-      "  >>> core = Chem.MolFromSmiles('CO')\n"
-      "  >>> mols = [Chem.MolFromSmiles('C1NNO1')]\n"
-      "  >>> rgroups, unmatched = rgd.RGroupDecompose(core, mols)\n"
-      "  >>> for rgroup in rgroups:\n"
-      "  ...     mol = rgd.molzip(rgroup)\n"
-      "\n";
-    python::def("molzip",
-		(ROMol * (*)(python::dict, const MolzipParams &)) & rgroupRowZipHelper,
-		(python::arg("row"), python::arg("params") = MolzipParams()),
-		docString.c_str(),
-		python::return_value_policy<python::manage_new_object>());	
-    
+        "zip an RGroupRow together to recreate the original molecule.  This correctly handles\n"
+        "broken cycles that can occur in decompositions.\n"
+        " example:\n\n"
+        "  >>> from rdkit import Chem\n"
+        "  >>> from rdkit.Chem import rdRGroupDecomposition as rgd\n"
+        "  >>> core = Chem.MolFromSmiles('CO')\n"
+        "  >>> mols = [Chem.MolFromSmiles('C1NNO1')]\n"
+        "  >>> rgroups, unmatched = rgd.RGroupDecompose(core, mols)\n"
+        "  >>> for rgroup in rgroups:\n"
+        "  ...     mol = rgd.molzip(rgroup)\n"
+        "\n";
+    python::def(
+        "molzip",
+        (ROMol * (*)(python::dict, const MolzipParams &)) & rgroupRowZipHelper,
+        (python::arg("row"), python::arg("params") = MolzipParams()),
+        docString.c_str(),
+        python::return_value_policy<python::manage_new_object>());
+
     // ------------------------------------------------------------------------
     docString =
         "Adds a recursive query to an atom\n\
@@ -3125,7 +3165,31 @@ A note on the flags controlling which atoms/bonds are modified:
  assigned to the molecule.
 )DOC");
 
+    python::def(
+        "SimplifyEnhancedStereo", Chirality::simplifyEnhancedStereo,
+        (python::arg("mol"), python::arg("removeAffectedStereoGroups") = true),
+        R"DOC(Simplifies the stereochemical representation of a molecule where all
+specified stereocenters are in the same StereoGroup
+
+  Arguments:
+   - mol: molecule to modify
+   - removeAffectedStereoGroups: if set then the affected StereoGroups will be removed
+
+If all specified stereocenters are in the same AND or OR stereogroup, a
+moleculeNote property will be set on the molecule with the value "AND
+enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
+)DOC");
+
     python::def("_TestSetProps", testSetProps, python::arg("mol"));
+    python::def("NeedsHs", MolOps::needsHs, (python::arg("mol")),
+                "returns whether or not the molecule needs to have Hs added");
+    python::def(
+        "CountAtomElec", MolOps::countAtomElec, (python::arg("atom")),
+        "returns the number of electrons available on an atom to donate for aromaticity");
+    python::def(
+        "AtomHasConjugatedBond", MolOps::atomHasConjugatedBond,
+        (python::arg("atom")),
+        "returns whether or not the atom is involved in a conjugated bond");
   }
 };
 }  // namespace RDKit

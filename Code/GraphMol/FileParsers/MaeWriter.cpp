@@ -13,6 +13,7 @@
 #include <fstream>
 #include <functional>
 #include <memory>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -22,6 +23,7 @@
 #include <maeparser/Writer.hpp>
 
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/FileParsers/MaestroProperties.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/RDKitBase.h>
@@ -30,20 +32,13 @@
 #include <RDGeneral/RDLog.h>
 
 using namespace schrodinger;
+using namespace RDKit::FileParsers::schrodinger;
 
 namespace RDKit {
 
 namespace {
-const std::string MAE_BOND_DATIVE_MARK = "b_sPrivate_dative_bond";
-const std::string MAE_BOND_PARITY = "i_sd_original_parity";
-const std::string MAE_STEREO_STATUS = "i_m_ct_stereo_status";
-const std::string PDB_ATOM_NAME = "s_m_pdb_atom_name";
-const std::string PDB_RESIDUE_NAME = "s_m_pdb_residue_name";
-const std::string PDB_CHAIN_NAME = "s_m_chain_name";
-const std::string PDB_INSERTION_CODE = "s_m_insertion_code";
-const std::string PDB_RESIDUE_NUMBER = "i_m_residue_number";
-const std::string PDB_OCCUPANCY = "r_m_pdb_occupancy";
-const std::string PDB_TFACTOR = "r_m_pdb_tfactor";
+
+static const std::regex MMCT_PROP_REGEX("[birs]_[^_ ]+_.+");
 
 template <typename T>
 std::shared_ptr<mae::IndexedProperty<T>> getIndexedProperty(
@@ -157,27 +152,45 @@ void copyProperties(
 
     switch (prop.val.getTag()) {
       case RDTypeTag::BoolTag: {
-        auto propName = std::string("b_rdk_") + prop.key;
+        auto propName = prop.key;
+        if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+          propName.insert(0, "b_rdkit_");
+        }
+
         boolSetter(propName, idx, rdvalue_cast<bool>(prop.val));
         break;
       }
 
       case RDTypeTag::IntTag:
       case RDTypeTag::UnsignedIntTag: {
-        auto propName = std::string("i_rdk_") + prop.key;
+        auto propName = prop.key;
+        if (prop.key == common_properties::_MolFileRLabel) {
+          propName = MAE_RGROUP_LABEL;
+        } else if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+          propName.insert(0, "i_rdkit_");
+        }
+
         intSetter(propName, idx, rdvalue_cast<int>(prop.val));
         break;
       }
 
       case RDTypeTag::DoubleTag:
       case RDTypeTag::FloatTag: {
-        auto propName = std::string("r_rdk_") + prop.key;
+        auto propName = prop.key;
+        if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+          propName.insert(0, "r_rdkit_");
+        }
+
         realSetter(propName, idx, rdvalue_cast<double>(prop.val));
         break;
       }
 
       case RDTypeTag::StringTag: {
-        auto propName = std::string("s_rdk_") + prop.key;
+        auto propName = prop.key;
+        if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+          propName.insert(0, "s_rdkit_");
+        }
+
         stringSetter(propName, idx, rdvalue_cast<std::string>(prop.val));
         break;
       }
