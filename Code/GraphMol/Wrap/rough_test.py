@@ -8110,6 +8110,27 @@ M  END
     self.assertEqual(fusedBonds.count(1), 2)
     self.assertEqual(fusedBonds.count(2), 3)
 
+  def testNeedsHs(self):
+    m = Chem.MolFromSmiles("CO")
+    self.failUnless(Chem.NeedsHs(m))
+    mh = Chem.AddHs(m)
+    self.failIf(Chem.NeedsHs(mh))
+    nm = Chem.RWMol(mh)
+    nm.RemoveAtom(3)
+    self.failUnless(Chem.NeedsHs(m))
+
+  def testCountAtomElec(self):
+    m = Chem.MolFromSmiles("c1n(C)ccc1")
+    self.failUnlessEqual(Chem.CountAtomElec(m.GetAtomWithIdx(0)),1)
+    self.failUnlessEqual(Chem.CountAtomElec(m.GetAtomWithIdx(1)),2)
+
+  def testAtomHasConjugatedBond(self):
+    m = Chem.MolFromSmiles("c1n(C)ccc1")
+    self.failUnless(Chem.AtomHasConjugatedBond(m.GetAtomWithIdx(1)))
+    self.failIf(Chem.AtomHasConjugatedBond(m.GetAtomWithIdx(2)))
+
+
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
