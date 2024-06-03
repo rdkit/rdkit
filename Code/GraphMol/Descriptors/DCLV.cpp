@@ -614,8 +614,9 @@ struct State {
     voxW = minz;
 
     for (AtomRecord& atom : memberAtoms) {
-      if ((atom.flag & mask)){
-       continue;}
+      if (atom.flag & mask) {
+        continue;
+      }
 
       // get grid positions and add to list
       unsigned int x = voxX * (atom.pos.x - voxU);
