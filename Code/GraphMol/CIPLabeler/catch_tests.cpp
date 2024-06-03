@@ -946,7 +946,6 @@ TEST_CASE("atropisomers", "[basic]") {
 
 std::string cipLabels(std::string molBlock,
                       unsigned int maxRecursiveIterations) {
-  std::cout << "cipLabels - using new stereo" << std::endl;
   RDKit::Chirality::setUseLegacyStereoPerception(false);
 
   RDKit::ROMol *mol = nullptr;
