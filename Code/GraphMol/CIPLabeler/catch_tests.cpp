@@ -998,7 +998,7 @@ std::string cipLabels(std::string molBlock,
     delete mol;
     mol = nullptr;
     return "";
-  } catch (const std::exception e) {
+  } catch (const std::exception &e) {
     delete mol;
     mol = nullptr;
     return e.what();
