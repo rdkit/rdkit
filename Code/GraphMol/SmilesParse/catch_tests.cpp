@@ -2801,9 +2801,61 @@ TEST_CASE("Github #7295") {
     auto smi2 = MolToSmiles(*m);
     CHECK(smi1 == smi2);
     auto m2(*m);
-    bool cleanIt=true;
+    bool cleanIt = true;
     MolOps::assignStereochemistry(m2, cleanIt);
     auto smi3 = MolToSmiles(m2);
     CHECK(smi1 == smi3);
+  }
+}
+
+TEST_CASE("CX_BOND_ATROPISOMER option requires ring info", "[bug][cxsmiles]") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase +
+      "/Code/GraphMol/FileParsers/test_data/atropisomers/RP-6306_atrop1.sdf";
+
+  auto m = v2::FileParsers::MolFromMolFile(fName);
+  REQUIRE(m);
+
+  auto atropBond = m->getBondWithIdx(3);
+  REQUIRE(atropBond->getStereo() == Bond::STEREOATROPCW);
+
+  // Clear ring info to check that atropisomer wedging doesn't fail
+  // if the info is not present
+  bool includeRingInfo = true;
+  m->clearComputedProps(includeRingInfo);
+
+  auto ps = SmilesWriteParams();
+  auto flags = SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER;
+
+  // This will fail if there's no ring information
+  auto smi = MolToCXSmiles(*m, ps, flags);
+  CHECK(smi == "Cc1cc2c(C(N)=O)c(N)n(-c3c(C)ccc(O)c3C)c2nc1C |wD:10.9|");
+}
+
+TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
+  SECTION("basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "N[Fe]<-N");
+    SmilesWriteParams ps;
+    ps.includeDativeBonds = false;
+    auto newSmi = MolToSmiles(*m, ps);
+    CHECK(newSmi == "N[Fe][NH3]");
+    // ensure that representation round trips:
+    auto m2 = v2::SmilesParse::MolFromSmiles(newSmi);
+    REQUIRE(m2);
+    CHECK(MolToSmiles(*m2) == smi);
+  }
+  SECTION("SMARTS basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToSmarts(*m);
+    CHECK(smi == "[#7H3]->[Fe]-[#7H2]");
+    SmilesWriteParams ps;
+    ps.includeDativeBonds = false;
+    auto newSmi = MolToSmarts(*m, ps);
+    CHECK(newSmi == "[#7H3]-[Fe]-[#7H2]");
   }
 }

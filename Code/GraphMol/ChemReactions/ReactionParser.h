@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2007-2022, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2024, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
 //
 //  All rights reserved.
@@ -46,6 +46,7 @@
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 namespace RDKit {
 class ROMol;
@@ -128,11 +129,25 @@ inline ChemicalReaction *RxnSmartsToChemicalReaction(
 }  // namespace v1
 //! returns the reaction SMARTS for a reaction
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmarts(
-    const ChemicalReaction &rxn);
+    const ChemicalReaction &rxn, const SmilesWriteParams &params);
+//! \overload
+inline std::string ChemicalReactionToRxnSmarts(const ChemicalReaction &rxn) {
+  SmilesWriteParams params;
+  params.canonical = false;
+  return ChemicalReactionToRxnSmarts(rxn, params);
+}
 
 //! returns the reaction SMILES for a reaction
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(
-    const ChemicalReaction &rxn, bool canonical = true);
+    const ChemicalReaction &rxn,
+    const SmilesWriteParams &params = SmilesWriteParams());
+//! \overload
+inline std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
+                                               bool canonical) {
+  SmilesWriteParams params;
+  params.canonical = canonical;
+  return ChemicalReactionToRxnSmiles(rxn, params);
+}
 //! @}
 
 //---------------------------------------------------------------------------
@@ -256,8 +271,8 @@ namespace ReactionParser {
 //! \brief constructs a ChemicalReaction from the metadata in a PNG stream
 /*!
 
-Looks through the metadata in the PNG to find the first tag that matches one of
-the tags in \c RDKit::PNGData. A reaction is constructed from this chunk.
+Looks through the metadata in the PNG to find the first tag that matches one
+of the tags in \c RDKit::PNGData. A reaction is constructed from this chunk.
 
 Throws a \c FileParseException if no suitable tag is found.
 
@@ -288,8 +303,8 @@ inline namespace v1 {
 //! \brief constructs a ChemicalReaction from the metadata in a PNG stream
 /*!
 
-Looks through the metadata in the PNG to find the first tag that matches one of
-the tags in \c RDKit::PNGData. A reaction is constructed from this chunk.
+Looks through the metadata in the PNG to find the first tag that matches one
+of the tags in \c RDKit::PNGData. A reaction is constructed from this chunk.
 
 Throws a \c FileParseException if no suitable tag is found.
 

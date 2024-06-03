@@ -351,11 +351,13 @@ emscripten::val get_mmpa_frags_helper(const JSMol &self, unsigned int minCuts,
   return obj;
 }
 #endif
+
 }  // namespace
 
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   register_vector<std::string>("StringList");
+  register_vector<JSMolList *>("JSMolListList");
 
   class_<JSMol>("Mol")
       .function("is_valid", &JSMol::is_valid)
@@ -582,6 +584,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
   class_<JSReaction>("Reaction")
 #ifdef __EMSCRIPTEN__
+      .function("run_reactants", select_overload<std::vector<JSMolList *>(
+                                     const JSMolList &, unsigned int) const>(
+                                     &JSReaction::run_reactants))
       .function("draw_to_canvas_with_offset", &draw_rxn_to_canvas_with_offset)
       .function("draw_to_canvas", &draw_rxn_to_canvas)
       .function("draw_to_canvas_with_highlights",
