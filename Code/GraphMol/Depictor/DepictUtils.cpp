@@ -232,29 +232,29 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
       // note that the set of ring is not SSSR because we use symmetrizeSSSR, so
       // we cannot force a check for only one fused ring. Instead we make sure
       // that this ring shares only one atom or one bond (two consecutive atoms)
-      auto hasOneOrTwoConsecutiveAtoms =
-          [fusedRings, currRingId](const RDKit::INT_VECT &vec) {
-            if (vec.size() == 1) {
-              return true;
-            }
-            if (vec.size() == 2) {
-              auto ring = fusedRings[currRingId];
-              auto pos1 = find(ring.begin(), ring.end(), vec[0]);
-              auto pos2 = find(ring.begin(), ring.end(), vec[1]);
+      auto hasOneOrTwoConsecutiveAtoms = [fusedRings, currRingId](
+                                             const RDKit::INT_VECT &vec) {
+        if (vec.size() == 1) {
+          return true;
+        }
+        if (vec.size() == 2) {
+          auto ring = fusedRings[currRingId];
+          auto pos1 = find(ring.begin(), ring.end(), vec[0]);
+          auto pos2 = find(ring.begin(), ring.end(), vec[1]);
 
-              if (pos1 == ring.end() || pos2 == ring.end()) {
-                return false;
-              }
-              int pos1I = pos1 - ring.begin();
-              int pos2I = pos2 - ring.begin();
-              // check if the positions in the ring vector of the two
-              // elements are consecutive
-              return (abs(pos1I - pos2I) == 1 ||
-                      (pos1I == 0 && pos2I == ring.size() - 1) ||
-                      (pos2I == 0 && pos1I == ring.size() - 1));
-            }
+          if (pos1 == ring.end() || pos2 == ring.end()) {
             return false;
-          };
+          }
+          int pos1I = pos1 - ring.begin();
+          int pos2I = pos2 - ring.begin();
+          // check if the positions in the ring vector of the two
+          // elements are consecutive
+          return (abs(pos1I - pos2I) == 1 ||
+                  (pos1I == 0 && pos2I == static_cast<int>(ring.size()) - 1) ||
+                  (pos2I == 0 && pos1I == static_cast<int>(ring.size()) - 1));
+        }
+        return false;
+      };
       RDKit::INT_VECT allIntersectingAtomsVec(allIntersectingAtoms.begin(),
                                               allIntersectingAtoms.end());
       if (hasOneOrTwoConsecutiveAtoms(allIntersectingAtomsVec)) {
