@@ -15,6 +15,7 @@
 #include <ForceField/ForceField.h>
 #include <ForceField/Wrap/PyForceField.h>
 #include <ForceField/UFF/Params.h>
+#include <GraphMol/ForceFieldHelpers/emptyFF.h>
 #include <GraphMol/ForceFieldHelpers/FFConvenience.h>
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
@@ -84,6 +85,13 @@ python::object FFConfsHelper(ROMol &mol, ForceFields::PyForceField &ff,
     pyres.append(python::make_tuple(itm.first, itm.second));
   }
   return pyres;
+}
+
+ForceFields::PyForceField *GetEmptyForceField(ROMol &mol) {
+  ForceFields::ForceField *ff = constructEmptyForceField(mol);
+  auto *res = new ForceFields::PyForceField(ff);
+  res->initialize();
+  return res;
 }
 
 ForceFields::PyForceField *UFFGetMoleculeForceField(
@@ -382,6 +390,17 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
        python::arg("ignoreInterfragInteractions") = true),
       python::return_value_policy<python::manage_new_object>(),
       docString.c_str());
+
+  docString =
+      "Get An empty Force Field, with only the positions of the atoms but no Contributions.\n\n\
+  \n\
+  ARGUMENTS :\n\n\
+      - mol : the molecule of interest\n\
+\n";
+  python::def("GetEmptyForceField", RDKit::GetEmptyForceField,
+              (python::arg("mol")),
+              python::return_value_policy<python::manage_new_object>(),
+              docString.c_str());
 
   docString =
       "checks if MMFF parameters are available for all of a molecule's atoms\n\n\
