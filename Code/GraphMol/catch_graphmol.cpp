@@ -4126,3 +4126,61 @@ TEST_CASE(
   CHECK(dynamic_cast<AtomKekulizeException *>(res[0].get()) != nullptr);
   CHECK(std::string{"non-ring atom 0 marked aromatic"} == res[0]->what());
 }
+
+TEST_CASE("getMaxAtomicNumber") {
+  CHECK(PeriodicTable::getTable()->getMaxAtomicNumber() == 118);
+}
+
+TEST_CASE("explicit valence handling of transition metals") {
+  SECTION("basics") {
+    // some of these examples are quite silly
+    std::vector<std::string> smileses = {"[Ti]C", "[Ti+2]C", "[Ti+4]C",
+                                         "[Ti+5]C"};
+    for (const auto &smiles : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getExplicitValence() == 1);
+      CHECK(m->getAtomWithIdx(0)->getImplicitValence() == 0);
+    }
+  }
+}
+
+TEST_CASE("valence handling of atoms with multiple possible valence states") {
+  SECTION("basics") {
+    // some of these examples are quite silly
+    std::vector<std::pair<std::string, int>> smileses = {
+        {"C[S-](=O)=O", 5},
+        {"C[P-2](C)C", 3},
+        {"C[Se-](=O)=O", 5},
+        {"C[As-2](C)C", 3},
+    };
+    for (const auto &[smiles, val] : smileses) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      CHECK(m);
+      CHECK(val == m->getAtomWithIdx(1)->getExplicitValence());
+      // now try figuring out the implicit valence
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      m->getAtomWithIdx(1)->calcImplicitValence(true);  // <- should not throw
+      CHECK(!m->getAtomWithIdx(1)->hasValenceViolation());
+    }
+  }
+  SECTION("mols which should fail") {
+    // some of these examples are quite silly
+    std::vector<std::string> smileses = {
+        "C[S-2](=O)=O",
+        "C[P-3](C)(C)(C)C",
+        "C[Se-2](=O)=O",
+        "C[As-3](C)(C)(C)C",
+    };
+    for (const auto &smiles : smileses) {
+      INFO(smiles);
+      v2::SmilesParse::SmilesParserParams ps;
+      ps.sanitize = false;
+      auto m = v2::SmilesParse::MolFromSmiles(smiles, ps);
+      CHECK(m);
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      CHECK(m->getAtomWithIdx(1)->hasValenceViolation());
+    }
+  }
+}

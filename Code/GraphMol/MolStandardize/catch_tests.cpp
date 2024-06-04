@@ -308,7 +308,10 @@ TEST_CASE(
     CHECK(MolToSmiles(*outm) == "F[B-](F)(F)F.NCC=C[NH3+]");
   }
   SECTION("make sure we don't go too far") {
-    auto m = "F[B-](F)(F)F.[NH4+2]CCC"_smiles;  // totally bogus structure
+    v2::SmilesParse::SmilesParserParams ps;
+    ps.sanitize = false;
+    auto m = v2::SmilesParse::MolFromSmiles("F[B-](F)(F)F.[NH4+2]CCC",
+                                            ps);  // totally bogus structure
     REQUIRE(m);
     bool canonicalOrdering = true;
     MolStandardize::Uncharger uncharger(canonicalOrdering);

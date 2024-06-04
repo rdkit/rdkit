@@ -3023,7 +3023,7 @@ void testAromaticityEdges() {
   TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
   delete m;
 
-  smi = "C=[C+]1=CNC=N1";
+  smi = "[C+]1=CNC=N1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   TEST_ASSERT(!m->getAtomWithIdx(1)->getIsAromatic());
@@ -3815,13 +3815,6 @@ void testSFNetIssue2952255() {
   }
   {
     std::string smi = "[C-](C)C";
-    RWMol *m = SmilesToMol(smi);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
-    delete m;
-  }
-  {
-    std::string smi = "[C+](C)(C)(C)C";
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
@@ -8478,7 +8471,7 @@ void testHasQueryHs() {
 
 void testIsRingFused() {
   BOOST_LOG(rdWarningLog) << "-----------------------\n Testing isRingFused "
-                       << std::endl;
+                          << std::endl;
   auto molOrig = "C1C(C2CC3CCCCC3C12)C1CCCCC1"_smiles;
   {
     RWMol mol(*molOrig);
