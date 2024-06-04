@@ -220,9 +220,21 @@ std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
   }
   // this was originally only done for the organic subset,
   // applying it to other atom-types is a fix for Issue 3152751:
-  if (!params.doKekule && atom->getIsAromatic() && symb[0] >= 'A' &&
-      symb[0] <= 'Z') {
-    symb[0] -= ('A' - 'a');
+  // Only accept for atom->getAtomicNum() in [5, 6, 7, 8, 14, 15, 16, 33, 34, 52]
+  if (!params.doKekule && atom->getIsAromatic() && symb[0] >= 'A' && symb[0] <= 'Z') {
+    switch (atom->getAtomicNum()) {
+      case 5:
+      case 6:
+      case 7:
+      case 8:
+      case 14:
+      case 15:
+      case 16:
+      case 33:
+      case 34:
+      case 52:
+        symb[0] -= ('A' - 'a');
+    }
   }
   res += symb;
 
