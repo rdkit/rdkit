@@ -153,13 +153,16 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
   void unchargeInPlace(RWMol &mol);
 
  private:
+  int hDeltaRemovingPos(const Atom *atom);
+  bool canRemovePos(const Atom *atom);
   bool removePosIfPossible(Atom *atom);
+  int hDeltaRemovingNeg(const Atom *atom);
+  bool canRemoveNeg(const Atom *atom);
   bool removeNegIfPossible(Atom *atom);
   bool df_canonicalOrdering = true;
   bool df_force = false;
   bool df_protonationOnly = false;
-  std::shared_ptr<ROMol> pos_h;
-  std::shared_ptr<ROMol> pos_noh;
+  std::shared_ptr<ROMol> pos;
   std::shared_ptr<ROMol> neg;
   std::shared_ptr<ROMol> neg_acid;
 };  // Uncharger class

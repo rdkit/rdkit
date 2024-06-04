@@ -320,6 +320,53 @@ void testUnchargerProtonationOnly() {
     TEST_ASSERT(res.get());
     TEST_ASSERT(MolToSmiles(*res) == "[BH4-]");
   }
+  {
+    // Uncharger options
+    bool canonicalOrdering {false};
+    bool force;
+    bool protonationOnly {true};
+
+    // Test the neutralization of a zwitterion, where the positive charge is a
+    // carbocation and not possible to remove when protonationOnly is enabled
+    auto m = "[CH2+]c1ccc([O-])cc1"_smiles;
+    TEST_ASSERT(m);
+
+    // with force=false the zwitterion should stay unmodified
+    force = false;
+    MolStandardize::Uncharger uncharger1(canonicalOrdering, force, protonationOnly);
+    std::unique_ptr<ROMol> res1(uncharger1.uncharge(*m));
+    TEST_ASSERT(res1.get());
+    TEST_ASSERT(MolToSmiles(*res1) == "[CH2+]c1ccc([O-])cc1");
+    // with force=true the oxygen should be neutralized
+    force = true;
+    MolStandardize::Uncharger uncharger2(canonicalOrdering, force, protonationOnly);
+    std::unique_ptr<ROMol> res2(uncharger2.uncharge(*m));
+    TEST_ASSERT(res2.get());
+    TEST_ASSERT(MolToSmiles(*res2) == "[CH2+]c1ccc(O)cc1");
+  }
+  {
+    // Uncharger options
+    bool canonicalOrdering {false};
+    bool force {false};
+    bool protonationOnly;
+
+    // Verify that tertiary carbocataions are uncharged if protonationOnly
+    // is not enabled
+    auto m = "C[C+](C)c1ccccc1"_smiles;
+    TEST_ASSERT(m);
+
+    protonationOnly = false;
+    MolStandardize::Uncharger uncharger1(canonicalOrdering, force, protonationOnly);
+    std::unique_ptr<ROMol> res1(uncharger1.uncharge(*m));
+    TEST_ASSERT(res1.get());
+    TEST_ASSERT(MolToSmiles(*res1) == "CC(C)c1ccccc1");
+
+    protonationOnly = true;
+    MolStandardize::Uncharger uncharger2(canonicalOrdering, force, protonationOnly);
+    std::unique_ptr<ROMol> res2(uncharger2.uncharge(*m));
+    TEST_ASSERT(res2.get());
+    TEST_ASSERT(MolToSmiles(*res2) == "C[C+](C)c1ccccc1");
+  }
   BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 

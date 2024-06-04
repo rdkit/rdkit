@@ -292,8 +292,7 @@ std::pair<unsigned int, std::vector<unsigned int>> *Reionizer::weakestIonized(
 }
 
 Uncharger::Uncharger()
-    : pos_h(SmartsToMol("[+,+2,+3,+4;!h0;!$(*~[-]),$(*(~[-])~[-])]")),
-      pos_noh(SmartsToMol("[+,+2,+3,+4;h0;!$(*~[-])]")),
+    : pos(SmartsToMol("[+,+2,+3,+4;!$(*~[-])]")),
       neg(SmartsToMol("[-!$(*~[+,+2,+3,+4])]")),
       neg_acid(SmartsToMol(
           // carboxylate, carbonate, sulfi(a)te,
@@ -321,31 +320,65 @@ void removeCharge(Atom *atom, int charge, int hDelta) {
 }
 }
 
-bool Uncharger::removeNegIfPossible(Atom *atom) {
-  bool is_early_atom = isEarlyAtom(atom->getAtomicNum());
-  bool has_hs = atom->getTotalNumHs();
-  if (is_early_atom && (!has_hs || df_protonationOnly)) {
-    return false;
+int Uncharger::hDeltaRemovingNeg(const Atom *atom) {
+  bool earlyAtom = isEarlyAtom(atom->getAtomicNum());
+  bool hasHs = atom->getTotalNumHs();
+  if (earlyAtom && (!hasHs || df_protonationOnly)) {
+    return 0;
   }
-  int hDelta = (is_early_atom ? -1 : 1);
-  removeCharge(atom, -1, hDelta);
-  return true;
+  return earlyAtom ? -1 : 1;
+}
+
+bool Uncharger::canRemoveNeg(const Atom *atom) {
+  return hDeltaRemovingNeg(atom) != 0;
+}
+
+bool Uncharger::removeNegIfPossible(Atom *atom) {
+  int hDelta = hDeltaRemovingNeg(atom);
+  if (hDelta != 0) {
+    removeCharge(atom, -1, hDelta);
+    return true;
+  }
+  return false;
+}
+
+int Uncharger::hDeltaRemovingPos(const Atom *atom) {
+  int atomicNum = atom->getAtomicNum();
+  switch (atomicNum) {
+  case 3:  // Li
+  case 11: // Na
+  case 19: // K
+  case 12: // Mg
+  case 20: // Ca
+    // don't uncharge
+    return 0;
+  default:
+    ;
+  };
+  bool carbonOrEarlyAtom = (
+    // the special case for C here was github #2792
+    atomicNum == 6 || isEarlyAtom(atom->getAtomicNum()));
+  if (carbonOrEarlyAtom && df_protonationOnly) {
+    return 0;
+  }
+  bool hasHs = atom->getTotalNumHs();
+  if (!carbonOrEarlyAtom && !hasHs) {
+    return 0;
+  }
+  return carbonOrEarlyAtom ? 1 : -1;
+}
+
+bool Uncharger::canRemovePos(const Atom *atom) {
+  return hDeltaRemovingPos(atom) != 0;
 }
 
 bool Uncharger::removePosIfPossible(Atom *atom) {
-  bool is_carbon_or_early_atom = (
-    // the special case for C here was github #2792
-    atom->getAtomicNum() == 6 || isEarlyAtom(atom->getAtomicNum()));
-  bool has_hs = atom->getTotalNumHs();
-  if (is_carbon_or_early_atom && df_protonationOnly) {
-    return false;
+  int hDelta = hDeltaRemovingPos(atom);
+  if (hDelta != 0) {
+    removeCharge(atom, +1, hDelta);
+    return true;
   }
-  if (!is_carbon_or_early_atom && !has_hs) {
-    return false;
-  }
-  int hDelta = (is_carbon_or_early_atom ? 1 : -1);
-  removeCharge(atom, +1, hDelta);
-  return true;
+  return false;
 }
 
 ROMol *Uncharger::uncharge(const ROMol &mol) {
@@ -359,19 +392,23 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     mol.updatePropertyCache(false);
   }
   std::vector<MatchVectType> p_matches;
-  std::vector<MatchVectType> q_matches;
   std::vector<MatchVectType> n_matches;
   std::vector<MatchVectType> a_matches;
 
   // Get atom ids for matches
-  SubstructMatch(mol, *(this->pos_h), p_matches);
-  SubstructMatch(mol, *(this->pos_noh), q_matches);
-  unsigned int q_matched = 0;
-  for (const auto &match : q_matches) {
-    q_matched += mol.getAtomWithIdx(match[0].second)->getFormalCharge();
-  }
+  SubstructMatch(mol, *(this->pos), p_matches);
   unsigned int n_matched = SubstructMatch(mol, *(this->neg), n_matches);
   unsigned int a_matched = SubstructMatch(mol, *(this->neg_acid), a_matches);
+
+  // Determine the amount of positive charge that is not
+  // possible to remove
+  unsigned int q_matched = 0;
+  for (const auto &match : p_matches) {
+    const auto atom = mol.getAtomWithIdx(match[0].second);
+    if (!canRemovePos(atom)) {
+      q_matched += atom->getFormalCharge();
+    }
+  }
 
   bool needsNeutralization =
       (q_matched > 0 && (n_matched > 0 || a_matched > 0));
