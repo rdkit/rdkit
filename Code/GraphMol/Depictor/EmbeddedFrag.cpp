@@ -346,14 +346,154 @@ void EmbeddedFrag::setupAttachmentPoints() {
   }
 }
 
-bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
+bool crossing(const RDGeom::Point2D &v1pt1, const RDGeom::Point2D &v1pt2,
+              const RDGeom::Point2D &v2pt1, const RDGeom::Point2D &v2pt2) {
+  // adapted from:
+  // https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
+  float d1, d2;
+  float a1, a2, b1, b2, c1, c2;
+  auto v1x1 = v1pt1.x;
+  auto v1y1 = v1pt1.y;
+  auto v1x2 = v1pt2.x;
+  auto v1y2 = v1pt2.y;
+  auto v2x1 = v2pt1.x;
+  auto v2y1 = v2pt1.y;
+  auto v2x2 = v2pt2.x;
+  auto v2y2 = v2pt2.y;
+
+  // Convert vector 1 to a line (line 1) of infinite length.
+  // We want the line in linear equation standard form: A*x + B*y + C = 0
+  // See: http://en.wikipedia.org/wiki/Linear_equation
+  a1 = v1y2 - v1y1;
+  b1 = v1x1 - v1x2;
+  c1 = (v1x2 * v1y1) - (v1x1 * v1y2);
+
+  // Every point (x,y), that solves the equation above, is on the line,
+  // every point that does not solve it, is not. The equation will have a
+  // positive result if it is on one side of the line and a negative one
+  // if is on the other side of it. We insert (x1,y1) and (x2,y2) of vector
+  // 2 into the equation above.
+  d1 = (a1 * v2x1) + (b1 * v2y1) + c1;
+  d2 = (a1 * v2x2) + (b1 * v2y2) + c1;
+
+  // If d1 and d2 both have the same sign, they are both on the same side
+  // of our line 1 and in that case no intersection is possible. Careful,
+  // 0 is a special case, that's why we don't test ">=" and "<=",
+  // but "<" and ">".
+  if (d1 > 0 && d2 > 0) return false;
+  if (d1 < 0 && d2 < 0) return false;
+
+  // The fact that vector 2 intersected the infinite line 1 above doesn't
+  // mean it also intersects the vector 1. Vector 1 is only a subset of that
+  // infinite line 1, so it may have intersected that line before the vector
+  // started or after it ended. To know for sure, we have to repeat the
+  // the same test the other way round. We start by calculating the
+  // infinite line 2 in linear equation standard form.
+  a2 = v2y2 - v2y1;
+  b2 = v2x1 - v2x2;
+  c2 = (v2x2 * v2y1) - (v2x1 * v2y2);
+
+  // Calculate d1 and d2 again, this time using points of vector 1.
+  d1 = (a2 * v1x1) + (b2 * v1y1) + c2;
+  d2 = (a2 * v1x2) + (b2 * v1y2) + c2;
+
+  // Again, if both have the same sign (and neither one is 0),
+  // no intersection is possible.
+  if (d1 > 0 && d2 > 0) return false;
+  if (d1 < 0 && d2 < 0) return false;
+
+  // If they are not collinear, they must intersect in exactly one point.
+  return true;
+}
+
+static bool pointInsideRing(const RDGeom::Point2D &pt,
+                            const RDGeom::INT_POINT2D_MAP &coords,
+                            const RDKit::INT_VECT &ring) {
+  // check if a point is inside a ring
+  // bounding box check
+  RDGeom::Point2D minPt(1e8, 1e8);
+  RDGeom::Point2D maxPt(-1e8, -1e8);
+  for (auto atom : ring) {
+    const auto &loc = coords.at(atom);
+    minPt.x = std::min(minPt.x, loc.x);
+    minPt.y = std::min(minPt.y, loc.y);
+    maxPt.x = std::max(maxPt.x, loc.x);
+    maxPt.y = std::max(maxPt.y, loc.y);
+  }
+  if (pt.x < minPt.x || pt.x > maxPt.x || pt.y < minPt.y || pt.y > maxPt.y) {
+    return false;
+  }
+  // ray casting : check how many times a ray to the point crosses the ring. If
+  // it crosses an odd number of times, the point is inside the ring
+  float outsideX = minPt.x - 0.1;
+  int intersections = 0;
+  for (size_t i = 0; i < ring.size(); ++i) {
+    RDGeom::Point2D p1 = coords.at(ring[(i)]);
+    RDGeom::Point2D p2 = coords.at(ring[(i + 1) % ring.size()]);
+    if (crossing(p1, p2, pt, RDGeom::Point2D(outsideX, pt.y))) {
+      ++intersections;
+    }
+  }
+  return (intersections % 2) == 1;
+}
+
+static float scoreMatch(const RDKit::VECT_INT_VECT &fusedRings,
+                        const RDKit::INT_VECT &ringSystemAtoms,
+                        const RDGeom::INT_POINT2D_MAP &ringSystemAtomsCoords,
+                        const RDKit::ROMol *mol) {
+  // for each atom in rs_mol that has neighbors that are not in the match, add a
+  // penalty if the corresponding atom in the template points inside a ring.
+  int result = 0;
+  for (auto index : ringSystemAtoms) {
+    auto neighbors = mol->atomNeighbors(mol->getAtomWithIdx(index));
+    int neighborsOutsideTemplate = 0;
+    RDKit::INT_VECT neighborsInsideTemplate;
+    for (auto neighbor : neighbors) {
+      if (std::find(ringSystemAtoms.begin(), ringSystemAtoms.end(),
+                    neighbor->getIdx()) == ringSystemAtoms.end()) {
+        neighborsOutsideTemplate++;
+      } else {
+        neighborsInsideTemplate.push_back(neighbor->getIdx());
+      }
+    }
+    // if the atom has more than one neighbor outside the template and exactly
+    // two matched by it, there's a chance it's a substitution point, so we
+    // should check if it's pointing inside a ring
+    if (neighborsOutsideTemplate >= 1 && neighborsInsideTemplate.size() == 2) {
+      auto coords = ringSystemAtomsCoords.at(index);
+      auto averageCoords = [ringSystemAtomsCoords](const RDKit::INT_VECT &vec) {
+        RDGeom::Point2D average(0, 0);
+        for (auto atom : vec) {
+          average += ringSystemAtomsCoords.at(atom);
+        }
+        average /= vec.size();
+        return average;
+      };
+      auto averageNeighborCoords = averageCoords(neighborsInsideTemplate);
+      auto substitutionV = (averageNeighborCoords - coords);
+      substitutionV.normalize();
+      substitutionV *= -0.4;
+      for (auto ring : fusedRings) {
+        if (pointInsideRing(coords + substitutionV, ringSystemAtomsCoords,
+                            ring)) {
+          for (auto atom : ring) {
+          }
+
+          result += neighborsOutsideTemplate;
+          break;
+        }
+      }
+    }
+  }
+  return result;
+}
+
+bool EmbeddedFrag::matchToTemplate(const RDKit::VECT_INT_VECT &fusedRings,
+                                   const RDKit::INT_VECT &ringSystemAtoms,
                                    unsigned int ring_count) {
   CoordinateTemplates &coordinate_templates =
       CoordinateTemplates::getRingSystemTemplates();
 
-  // only look for an exact match to the ring system because our method of
-  // completing rings from a template isn't reliably better than not using
-  // a template at all
   if (!coordinate_templates.hasTemplateOfSize(ringSystemAtoms.size())) {
     return false;
   }
@@ -382,6 +522,7 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
   // find template that this mol matches to, if any
   RDKit::MatchVectType match;
   std::shared_ptr<RDKit::ROMol> template_mol(nullptr);
+  int best_score = -1;
   for (const auto &mol :
        coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
     // To reduce how often we have to do substructure matches, check ring info
@@ -396,11 +537,27 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     auto matches = RDKit::SubstructMatch(RDKit::ROMol(rs_mol), *mol, params);
     if (!matches.empty()) {
       match = matches[0];
-      template_mol = mol;
-      break;
+
+      RDGeom::INT_POINT2D_MAP ringSystemAtomsCoords;
+      for (auto &[template_aidx, rs_aidx] : match) {
+        auto coords = mol->getConformer().getAtomPos(template_aidx);
+        auto mol_aidx = rs_mol.getAtomWithIdx(rs_aidx)->getAtomMapNum();
+        ringSystemAtomsCoords[mol_aidx] = coords;
+      }
+      // score the match. The score is the number of atoms in the ring system
+      // that would connect to the template in a bad way (inside a ring), so we
+      // want it to be 0 or as low as possible
+      auto score = scoreMatch(fusedRings, ringSystemAtoms,
+                              ringSystemAtomsCoords, dp_mol);
+      if (best_score == -1 || score < best_score) {
+        best_score = score;
+        template_mol = mol;
+      }
+      if (best_score == 0) {
+        break;
+      }
     }
   }
-
   if (!template_mol) {
     return false;
   }
@@ -419,8 +576,8 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
   return true;
 }
 
-// find any atoms in the ring that are in trans double bonds
-// and mirror them into the ring
+// find any atoms in the ring that are in trans double bonds and mirror them
+// into the ring
 static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
                                  const RDKit::INT_VECT &ring,
                                  RDGeom::INT_POINT2D_MAP &coords) {
@@ -487,15 +644,16 @@ static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
 void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                                    bool useRingTemplates) {
   PRECONDITION(dp_mol, "");
-  // Look for a template for the whole system. Failing that simplify the system
-  // to a set of core atoms and  look for a template for those. If that fails,
-  // start from a single ring. Then add rings one by one
+  // Look for a template for the whole system. Failing that simplify the
+  // system to a set of core atoms and  look for a template for those. If that
+  // fails, start from a single ring. Then add rings one by one
 
   RDKit::INT_VECT funion;
   // look for a template that matches the entire fused ring system
   if (useRingTemplates && fusedRings.size() > 1) {
     RDKit::Union(fusedRings, funion);
-    bool found_template = matchToTemplate(funion, fusedRings.size());
+    bool found_template =
+        matchToTemplate(fusedRings, funion, fusedRings.size());
     if (found_template) {
       // we are done
       return;
@@ -516,7 +674,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
   auto coreRings = findCoreRings(fusedRings, coreRingsIds);
   if (useRingTemplates && coreRings.size() > 1) {
     RDKit::Union(coreRings, funion);
-    bool found_template = matchToTemplate(funion, coreRings.size());
+    bool found_template = matchToTemplate(coreRings, funion, coreRings.size());
     if (found_template) {
       doneRings = coreRingsIds;
     }
@@ -531,30 +689,30 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
     doneRings.push_back(firstRingId);
   }
   RDKit::Union(fusedRings, funion);
-  // now loop over the remaining rings and attach them one at a time
-  // the order is determined by how many atoms a ring has in common with
-  // the atoms already embedded
+  // now loop over the remaining rings and attach them one at a time the order
+  // is determined by how many atoms a ring has in common with the atoms
+  // already embedded
   while (d_eatoms.size() < funion.size()) {  // ) {
     int nextId;
-    // we will take the ring with maximum number of common atoms with
-    // with atoms already done
+    // we will take the ring with maximum number of common atoms with  atoms
+    // already done
     auto commonAtomIds = findNextRingToEmbed(doneRings, fusedRings, nextId);
 
     RDGeom::Transform2D trans;
     EmbeddedFrag embRing;
     embRing.initFromRingCoords(fusedRings[nextId], coords[nextId]);
     RDKit::INT_VECT pinAtoms;
-    // REVIEW: using the average position of the shared atoms and the
-    // centroid vector, we can make this a single case.
+    // REVIEW: using the average position of the shared atoms and the centroid
+    // vector, we can make this a single case.
     if (commonAtomIds.size() == 1) {
       trans.assign(this->computeOneAtomTrans(commonAtomIds[0], embRing));
       embRing.Transform(trans);
       pinAtoms.push_back(commonAtomIds.front());
     } else {
-      // if the common atoms form a chain they are going to be in order - we try
-      // to do that in findNextRingToEmbed we will therefore try to use the last
-      // and the first atoms in the chain to fuse the rings - will hopefully fix
-      // issue 177
+      // if the common atoms form a chain they are going to be in order - we
+      // try to do that in findNextRingToEmbed we will therefore try to use
+      // the last and the first atoms in the chain to fuse the rings - will
+      // hopefully fix issue 177
       auto aid1 = commonAtomIds.front();
       auto aid2 = commonAtomIds.back();
       pinAtoms.push_back(aid1);
@@ -594,9 +752,9 @@ RDGeom::Transform2D EmbeddedFrag::computeOneAtomTrans(
 
   auto bpt = computeBisectPoint(rcr, largestAngle, nbp1, nbp2);
 
-  // now that we have the bisect point compute the transform that will take ccr
-  // to coincide with rcr and the mid point between the neighbors of ccr to fall
-  // on the line from rcr to bpt
+  // now that we have the bisect point compute the transform that will take
+  // ccr to coincide with rcr and the mid point between the neighbors of ccr
+  // to fall on the line from rcr to bpt
   RDGeom::Transform2D trans;
   trans.SetTransform(rcr, bpt, ccr, midPt);
   return trans;
@@ -617,7 +775,8 @@ RDGeom::Transform2D EmbeddedFrag::computeTwoAtomTrans(
   const auto &loc1 = nringCor.at(aid1);
   const auto &loc2 = nringCor.at(aid2);
 
-  // get the coordinates for the same atoms in the already embedded ring system
+  // get the coordinates for the same atoms in the already embedded ring
+  // system
   const auto &ref1 = d_eatoms.at(aid1).loc;
   const auto &ref2 = d_eatoms.at(aid2).loc;
   RDGeom::Transform2D trans;
@@ -642,8 +801,9 @@ void EmbeddedFrag::reflectIfNecessaryCisTrans(EmbeddedFrag &embFrag,
   const auto &p1Loc = d_eatoms[aid1].loc;
   RDGeom::Point2D rAtmLoc, p1norm;
   if (ctCase == 1) {
-    // embObj is the cis/trans case - find the normal at aid1 - this should tell
-    // us where the ring single bond in the cis/trans system should have gone
+    // embObj is the cis/trans case - find the normal at aid1 - this should
+    // tell us where the ring single bond in the cis/trans system should
+    // have gone
     p1norm = embFrag.d_eatoms[aid1].normal;
     auto ringAtm = embFrag.d_eatoms[aid1].CisTransNbr;
     if (d_eatoms.find(ringAtm) != d_eatoms.end()) {
@@ -686,8 +846,8 @@ void EmbeddedFrag::reflectIfNecessaryThirdPt(EmbeddedFrag &embFrag,
   auto dot1 = normal.dotProduct(pt3);
   auto dot2 = normal.dotProduct(oth3);
   if (dot1 * dot2 < 0.0) {
-    // the third atom is on either sides of the line between aid1 and aid2 in
-    // the two fragment - let us reflect to correct it
+    // the third atom is on either sides of the line between aid1 and aid2
+    // in the two fragment - let us reflect to correct it
     embFrag.Reflect(pt1, pt2);
   }
 }
@@ -759,8 +919,9 @@ void EmbeddedFrag::mergeRing(const EmbeddedFrag &embRing, unsigned int nCommon,
       d_eatoms[aid] = ori.second;
     } else {
       // update the neighbor only on atoms that were used to compute the
-      // transform to merge the and only if the two are the only common atoms
-      // i.e. we are doing bridged systems we will leave the nbrs untouched
+      // transform to merge the and only if the two are the only common
+      // atoms i.e. we are doing bridged systems we will leave the nbrs
+      // untouched
       if (nCommon <= 2) {
         if (std::find(pinAtoms.begin(), pinAtoms.end(), aid) !=
             pinAtoms.end()) {
@@ -848,9 +1009,9 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   eatm.nbr1 = toAid;
   eatm.angle = -1.0;
 
-  // now compute the normal at this atom - which gives the direction in which we
-  // want to add the next atom. We will go in the direction that seem to be
-  // least explored
+  // now compute the normal at this atom - which gives the direction in
+  // which we want to add the next atom. We will go in the direction that
+  // seem to be least explored
   auto tpt = currLoc - refLoc;
   RDGeom::Point2D norm(-tpt.y, tpt.x);
   auto tp1 = currLoc + norm;
@@ -916,11 +1077,11 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
     // We'll be here for the first atom in a system with no rings, we have
     // nothing
     // else set up, so we will deal with this case carefully.
-    //  - if the angle is 120 deg we will add the first atom at 30 deg angle to
-    //  the x-axis
+    //  - if the angle is 120 deg we will add the first atom at 30 deg angle
+    //  to the x-axis
     //  - for any other angle we will use the x-axis to add the new atom
-    //  - we will set the normal perpendicular to this first bond in the counter
-    //  clockwise direction
+    //  - we will set the normal perpendicular to this first bond in the
+    //  counter clockwise direction
     //
     // RDGeom::Point2D norm;
 
@@ -978,11 +1139,11 @@ RDKit::INT_VECT EmbeddedFrag::findCommonAtoms(const EmbeddedFrag &efrag2) {
 
 void EmbeddedFrag::mergeNoCommon(EmbeddedFrag &embObj, unsigned int toAid,
                                  unsigned int nbrAid) {
-  // merge embObj to this fragment when there are no common atoms between the
-  // two fragments
+  // merge embObj to this fragment when there are no common atoms between
+  // the two fragments
   PRECONDITION(dp_mol, "");
-  // check that both this fragment and the one we are merging with belong to the
-  // same molecule
+  // check that both this fragment and the one we are merging with belong to
+  // the same molecule
   PRECONDITION(dp_mol == embObj.getMol(), "Molecule mismatch");
   RDKit::INT_VECT commAtms;
   this->addNonRingAtom(nbrAid, toAid);
@@ -998,16 +1159,17 @@ void EmbeddedFrag::mergeWithCommon(EmbeddedFrag &embObj,
   PRECONDITION(dp_mol == embObj.getMol(), "Molecule mismatch");
   PRECONDITION(commAtms.size() >= 1, "");
 
-  // we already have one or more common atoms between this fragment One atom in
-  // common can happen (look at issue 173)
+  // we already have one or more common atoms between this fragment One atom
+  // in common can happen (look at issue 173)
   // - for cases where a cis/trans double bond is being merged with a ring
   //   system that shares one of atoms on the double bond.
-  // - or if 'this' fragment was created by user specified coordinates - where
+  // - or if 'this' fragment was created by user specified coordinates -
+  // where
   //   only part of a fused ring system or cis/trans system was specified
 
   // if we have one atom in common, we have to deal with it carefully -
-  unsigned int ctCase =
-      0;  // book-keeper - if we have to merge a ring with a cis/trans dbl bond
+  unsigned int ctCase = 0;  // book-keeper - if we have to merge a ring with
+                            // a cis/trans dbl bond
   // what kind is it
   //    0 - if we are doing a cis/trans merge,
   //    1 - cis/trans and embObj is the dblBond,
@@ -1016,8 +1178,10 @@ void EmbeddedFrag::mergeWithCommon(EmbeddedFrag &embObj,
   if (commAtms.size() == 1) {
     // couple of possibilities here
     // 1. we are merging a ring system with a cis/trans dbl bond
-    // 2. We are merging with a fused ring system out of which one of the atoms
-    //    has already been embedded because the user specified its coordinates
+    // 2. We are merging with a fused ring system out of which one of the
+    // atoms
+    //    has already been embedded because the user specified its
+    //    coordinates
     // First deal with the cis/trans case
     auto commAid = commAtms.front();
     int otherAtom = -1;
@@ -1087,8 +1251,8 @@ void EmbeddedFrag::mergeWithCommon(EmbeddedFrag &embObj,
     auto aid = ori.first;
     if (std::find(commAtms.begin(), commAtms.end(), aid) == commAtms.end()) {
       d_eatoms[aid] = ori.second;
-      // also if any of these atoms have unattached neighbors add them to the
-      // queue
+      // also if any of these atoms have unattached neighbors add them to
+      // the queue
       if (!ori.second.neighs.empty()) {
         if (std::find(d_attachPts.begin(), d_attachPts.end(), aid) ==
             d_attachPts.end()) {
@@ -1199,8 +1363,8 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms,
     // ok we are done with this atom forever
     d_attachPts.pop_front();
     d_eatoms[aid].neighs.clear();
-    // now that we added new atoms to the this fragments - check if there are
-    // new fragment we have common atoms with and merge with them
+    // now that we added new atoms to the this fragments - check if there
+    // are new fragment we have common atoms with and merge with them
     this->mergeFragsWithComm(efrags);  //, mol);
   }
 }
@@ -1245,8 +1409,8 @@ void EmbeddedFrag::canonicalizeOrientation() {
   double xy = 0.0;
   double yy = 0.0;
 
-  // shift the center of the fragment to the origin and compute the covariance
-  // matrix
+  // shift the center of the fragment to the origin and compute the
+  // covariance matrix
   for (auto &elem : d_eatoms) {
     elem.second.loc -= cent;
     xx += (elem.second.loc.x) * (elem.second.loc.x);
@@ -1399,7 +1563,8 @@ double EmbeddedFrag::mimicDistMatAndDensityCostFunc(
 // Note that everything attached to B and A are also effected. This is what
 // happens here
 // 1. Find the line "l" bisecting the angle BCA
-// 2. Find the atoms in the fragment generated by breaking the bond between C
+// 2. Find the atoms in the fragment generated by breaking the bond between
+// C
 //    and A that includes A. Lets call is Fa
 // 3. Similarly find the fragment Fb that includes B by breaking the bond CB
 // 4. Reflect Fb and Fa through "l"
@@ -1449,8 +1614,8 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
           (!(dp_mol->getRingInfo()->numAtomRings(caid)))) {
         RDKit::INT_VECT aids, bids;
         getNbrAtomAndBondIds(caid, dp_mol, aids, bids);
-        // make sure all the atoms in aids are in this embeddedfrag and can be
-        // perturbed
+        // make sure all the atoms in aids are in this embeddedfrag and can
+        // be perturbed
         bool allin = true;
         for (auto aid : aids) {
           auto nbrIter = d_eatoms.find(aid);
@@ -1489,8 +1654,8 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
     // randomly pick nPerSample bonds and flip them
     for (auto fi = 0u; fi < nPerSample; ++fi) {
       unsigned int ri = intRandomSrc();
-      // if ri is less than the number of rotatable bonds (nb), we will flip a
-      // rot bond
+      // if ri is less than the number of rotatable bonds (nb), we will flip
+      // a rot bond
       if (ri < nb) {
         this->flipAboutBond(rotBonds.at(ri));
       } else {  // ri is >= nb we permute the bonds at a deg 4 node
@@ -1668,7 +1833,8 @@ unsigned int _anyNonRingBonds(unsigned int aid, RDKit::INT_LIST path,
 void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
   PRECONDITION(dp_mol, "");
   PRECONDITION(bondId < dp_mol->getNumBonds(), "");
-  // reflect all the atoms on one side of a bond using the bond as the mirror
+  // reflect all the atoms on one side of a bond using the bond as the
+  // mirror
   const auto bond = dp_mol->getBondWithIdx(bondId);
 
   // we should not be flip things around a ring bond
@@ -1755,21 +1921,21 @@ unsigned int _findClosestNeighbor(const RDKit::ROMol *mol, const double *dmat,
 
 void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
                               unsigned int aid2) {
-  // Assuming that either aid1, and/or aid2 are degree 1 atoms, we will open up
-  // the angles
+  // Assuming that either aid1, and/or aid2 are degree 1 atoms, we will open
+  // up the angles
   //
   //     1 2
   //    /   \                                                   this space
-  //   /     \                                       intentionally left blank
+  //   /     \                                       intentionally left
+  //   blank
   //  a-------b
   //
   // If 1 and 2 are too close to each other we open up angle(1ab) if 1 is a
   // degree 1 node and
-  // angle(2ba) if 2 is a degree 1 node. Say 1 is a degree 1 node but 2 is not.
-  // Then from the neighbors of 2 we need to choose which one should be b. Also
-  // keep in mind
-  // that a need not be a neighbor of b. In this case we will pick b to be the
-  // closest neighbor of a
+  // angle(2ba) if 2 is a degree 1 node. Say 1 is a degree 1 node but 2 is
+  // not. Then from the neighbors of 2 we need to choose which one should be
+  // b. Also keep in mind that a need not be a neighbor of b. In this case
+  // we will pick b to be the closest neighbor of a
 
   PRECONDITION(dp_mol, "");
   PRECONDITION(dmat, "");
@@ -1835,10 +2001,10 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
 }
 
 void EmbeddedFrag::removeCollisionsBondFlip() {
-  // try to remove collisions in a structure by flipping rotatable bonds along
-  // the shortest path between the colliding atoms. we will limit the number of
-  // times we are going to do this since we may fall into spiral where removing
-  // a collision may create a new one
+  // try to remove collisions in a structure by flipping rotatable bonds
+  // along the shortest path between the colliding atoms. we will limit the
+  // number of times we are going to do this since we may fall into spiral
+  // where removing a collision may create a new one
   auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
   auto colls = this->findCollisions(dmat);
   std::map<int, unsigned int> doneBonds;
@@ -1905,8 +2071,8 @@ void EmbeddedFrag::removeCollisionsOpenAngles() {
 
 void EmbeddedFrag::removeCollisionsShortenBonds() {
   auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
-  // if there are still some collision points left - flipping rotatable bonds
-  // and opening angles is not doing it - we will try two last things
+  // if there are still some collision points left - flipping rotatable
+  // bonds and opening angles is not doing it - we will try two last things
   //  - if all the bonds between the colliding atoms are rings bonds,
   //    we most likely have a collision within a bridged system (Issue 199).
   //    In this case we will try to find a path of colliding atoms (in one
