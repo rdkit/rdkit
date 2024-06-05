@@ -7,13 +7,15 @@ rdkit_library(ForceFieldHelpers UFF/AtomTyper.cpp UFF/Builder.cpp
 target_compile_definitions(ForceFieldHelpers PRIVATE RDKIT_FORCEFIELDHELPERS_BUILD)
 
 rdkit_headers(FFConvenience.h DEST GraphMol/ForceFieldHelpers)
-rdkit_headers(emptyFF.h DEST GraphMol/ForceFieldHelpers)
 rdkit_headers(UFF/AtomTyper.h
               UFF/Builder.h UFF/UFF.h DEST GraphMol/ForceFieldHelpers/UFF)
 rdkit_headers(MMFF/AtomTyper.h
               MMFF/Builder.h MMFF/MMFF.h DEST GraphMol/ForceFieldHelpers/MMFF)
 rdkit_headers(CrystalFF/TorsionAngleM6.h CrystalFF/TorsionPreferences.h
               DEST GraphMol/ForceFieldHelpers/CrystalFF)
+
+rdkit_catch_test(forceFieldHelpersCatch catch_tests.cpp 
+LINK_LIBRARIES ForceFieldHelpers SmilesParse DistGeomHelpers ForceField )
 
 add_subdirectory(MMFF)
 add_subdirectory(UFF)

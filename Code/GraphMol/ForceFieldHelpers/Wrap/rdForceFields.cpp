@@ -15,7 +15,6 @@
 #include <ForceField/ForceField.h>
 #include <ForceField/Wrap/PyForceField.h>
 #include <ForceField/UFF/Params.h>
-#include <GraphMol/ForceFieldHelpers/emptyFF.h>
 #include <GraphMol/ForceFieldHelpers/FFConvenience.h>
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
@@ -88,7 +87,8 @@ python::object FFConfsHelper(ROMol &mol, ForceFields::PyForceField &ff,
 }
 
 ForceFields::PyForceField *GetEmptyForceField(ROMol &mol) {
-  ForceFields::ForceField *ff = constructEmptyForceField(mol);
+  ForceFields::ForceField *ff =
+      ForceFieldsHelper::constructEmptyForceField(mol);
   auto *res = new ForceFields::PyForceField(ff);
   res->initialize();
   return res;

@@ -440,19 +440,28 @@ M  END"""
         rdDistGeom.EmbedMolecule(m)
         self.assertIsNotNone(m)
         ff = ChemicalForceFields.GetEmptyForceField(m)
-        assert not ff.Initialize()
-        assert ff.CalcEnergy() == 0.0
-        assert all(v == 0.0 for v in ff.CalcGrad())
-        assert not ff.Minimize()
-        assert ff.NumPoints() == m.GetNumAtoms()
-        assert len(ff.Positions()) / 3 == m.GetNumAtoms()
+        self.assertTrue(ff)
+        self.assertFalse(ff.Initialize())
+        self.assertEqual(ff.CalcEnergy(), 0.0)
+        self.assertTrue(all(v == 0.0 for v in ff.CalcGrad()))
+        self.assertEqual(ff.NumPoints(), m.GetNumAtoms())
+        self.assertEqual(len(ff.Positions()) / 3, m.GetNumAtoms())
+        self.assertFalse(ff.Minimize())
+
         ff.MMFFAddDistanceConstraint(0, 1, False, 100, 100, 100)
-        ff.Minimize()
+        self.assertFalse(ff.Minimize())
         pos = ff.Positions()
         dist = (
             (pos[0] - pos[3]) ** 2 + (pos[1] - pos[4]) ** 2 + (pos[2] - pos[5]) ** 2
         ) ** 0.5
-        print(dist)
+        self.assertAlmostEqual(dist, 100, delta=10e-5)
+        posa = m.GetConformer().GetAtomPosition(0)
+        posb = m.GetConformer().GetAtomPosition(1)
+        dist = (
+            (posa[0] - posb[0]) ** 2
+            + (posa[1] - posb[1]) ** 2
+            + (posa[2] - posb[2]) ** 2
+        ) ** 0.5
         self.assertAlmostEqual(dist, 100, delta=10e-5)
 
 
