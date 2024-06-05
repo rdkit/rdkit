@@ -4184,3 +4184,41 @@ TEST_CASE("valence handling of atoms with multiple possible valence states") {
     }
   }
 }
+
+TEST_CASE(
+    "testing for valence states which were removed when introducing the isoelectronic valence calculation") {
+  SECTION("mols which should pass") {
+    std::vector<std::pair<std::string, unsigned int>> smileses = {
+        {"F[Si-2](F)(F)(F)(F)F", 0},
+        {"F[P-](F)(F)(F)(F)F", 0},
+        {"F[As-](F)(F)(F)(F)F", 0},
+    };
+    for (const auto &[smiles, val] : smileses) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      CHECK(m);
+      // now try figuring out the implicit valence
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      m->getAtomWithIdx(1)->calcImplicitValence(true);  // <- should not throw
+      CHECK(!m->getAtomWithIdx(1)->hasValenceViolation());
+      CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == val);
+    }
+  }
+  SECTION("mols which should fail") {
+    std::vector<std::string> smileses = {
+        "F[Al](F)(F)(F)(F)F",
+        "F[Si](F)(F)(F)(F)F",
+        "F[P](F)(F)(F)(F)(F)F",
+        "F[As](F)(F)(F)(F)(F)F",
+    };
+    for (const auto &smiles : smileses) {
+      INFO(smiles);
+      v2::SmilesParse::SmilesParserParams ps;
+      ps.sanitize = false;
+      auto m = v2::SmilesParse::MolFromSmiles(smiles, ps);
+      CHECK(m);
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      CHECK(m->getAtomWithIdx(1)->hasValenceViolation());
+    }
+  }
+}
