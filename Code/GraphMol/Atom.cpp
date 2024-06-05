@@ -402,9 +402,10 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
     // we have to include a special case here for negatively charged P, S, As,
     // and Se, which all support "hypervalent" forms, but which can be
     // isoelectronic to Cl/Ar or Br/Kr, which do not support hypervalent forms.
-    if (atom.getFormalCharge() < 0 &&
-        (atom.getAtomicNum() == 15 || atom.getAtomicNum() == 16 ||
-         atom.getAtomicNum() == 33 || atom.getAtomicNum() == 34)) {
+    if ((effectiveAtomicNum > 16 &&
+         (atom.getAtomicNum() == 15 || atom.getAtomicNum() == 16)) ||
+        (effectiveAtomicNum > 34 &&
+         (atom.getAtomicNum() == 33 || atom.getAtomicNum() == 34))) {
       maxValence = ovalens.back();
       offset -= atom.getFormalCharge();
     }
@@ -518,9 +519,10 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // we have to include a special case here for negatively charged P, S, As,
   // and Se, which all support "hypervalent" forms, but which can be
   // isoelectronic to Cl/Ar or Br/Kr, which do not support hypervalent forms.
-  if (atom.getFormalCharge() < 0 &&
-      (atom.getAtomicNum() == 15 || atom.getAtomicNum() == 16 ||
-       atom.getAtomicNum() == 33 || atom.getAtomicNum() == 34)) {
+  if ((effectiveAtomicNum > 16 &&
+       (atom.getAtomicNum() == 15 || atom.getAtomicNum() == 16)) ||
+      (effectiveAtomicNum > 34 &&
+       (atom.getAtomicNum() == 33 || atom.getAtomicNum() == 34))) {
     effectiveAtomicNum = atomicNum;
     explicitPlusRadV -= atom.getFormalCharge();
   }
