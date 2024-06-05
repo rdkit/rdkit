@@ -327,7 +327,16 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"AtropCanon1.svg", 1587179714U},
     {"AtropManyChiralsEnhanced.svg", 3871032500U},
     {"testGithub6968.svg", 1554428830U},
-    {"testGithub7036.svg", 2355702607U}};
+    {"testGithub7036.svg", 2355702607U},
+    {"testWedgeNonSingleBonds-1.svg", 865601717U},
+    {"testWedgeNonSingleBonds-2.svg", 2960559495U},
+    {"testWedgeNonSingleBonds-3.svg", 1428196589U},
+    {"testWedgeNonSingleBonds-4.svg", 3897680387U},
+    {"testWedgeNonSingleBonds-5.svg", 2183530217U},
+    {"testWedgeNonSingleBonds-6.svg", 238313010U},
+    {"testWedgeNonSingleBonds-7.svg", 3641456570U},
+    {"testWedgeNonSingleBonds-8.svg", 3209701539U},
+};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -9523,13 +9532,22 @@ TEST_CASE(
 #endif
 
 TEST_CASE("wedge non-single bonds") {
+  int panelHeight = -1;
+  int panelWidth = -1;
+  bool noFreeType = false;
+  MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
+  drawer.drawOptions().prepareMolsBeforeDrawing = false;
+
   SECTION("basics 1: aromatic bonds") {
     auto m =
         "CC(=O)C1=CC=CC=C1C |wU:1.0, (-0.954,-1.74918,;-0.9532,-0.74918,;-1.8188,-0.24858,;-0.0868,-0.24998,;0.7788,-0.75058,;1.6452,-0.25138,;1.646,0.74862,;0.7804,1.24942,;-0.086,0.75002,;-0.9516,1.25082,)|"_smiles;
     REQUIRE(m);
     m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINWEDGE);
     {
-      MolDraw2DSVG drawer(350, 300);
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       drawer.drawOptions().prepareMolsBeforeDrawing = false;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
@@ -9542,7 +9560,10 @@ TEST_CASE("wedge non-single bonds") {
 
     m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINDASH);
     {
-      MolDraw2DSVG drawer(350, 300);
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       drawer.drawOptions().prepareMolsBeforeDrawing = false;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
@@ -9559,7 +9580,10 @@ TEST_CASE("wedge non-single bonds") {
     REQUIRE(m);
     m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINWEDGE);
     {
-      MolDraw2DSVG drawer(350, 300);
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       drawer.drawOptions().prepareMolsBeforeDrawing = false;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
@@ -9572,7 +9596,10 @@ TEST_CASE("wedge non-single bonds") {
 
     m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINDASH);
     {
-      MolDraw2DSVG drawer(350, 300);
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       drawer.drawOptions().prepareMolsBeforeDrawing = false;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
@@ -9593,7 +9620,10 @@ TEST_CASE("wedge non-single bonds") {
           Bond::BondType::DOUBLE);
     m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINWEDGE);
     {
-      MolDraw2DSVG drawer(350, 300);
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       drawer.drawOptions().prepareMolsBeforeDrawing = false;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
@@ -9606,7 +9636,10 @@ TEST_CASE("wedge non-single bonds") {
 
     m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINDASH);
     {
-      MolDraw2DSVG drawer(350, 300);
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       drawer.drawOptions().prepareMolsBeforeDrawing = false;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
@@ -9626,7 +9659,10 @@ TEST_CASE("wedge non-single bonds") {
           Bond::BondType::DOUBLE);
     m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINWEDGE);
     {
-      MolDraw2DSVG drawer(350, 300);
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       drawer.drawOptions().prepareMolsBeforeDrawing = false;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
@@ -9639,7 +9675,10 @@ TEST_CASE("wedge non-single bonds") {
 
     m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINDASH);
     {
-      MolDraw2DSVG drawer(350, 300);
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       drawer.drawOptions().prepareMolsBeforeDrawing = false;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
