@@ -980,8 +980,9 @@ public class SmilesDetailsTests extends GraphMolTest {
 		Bond bond;
 		String smi;
 
+
 		smi = "C1CC[C+]1=1CCC1";
-		mol = RWMol.MolFromSmiles(smi);
+		mol = RWMol.MolFromSmiles(smi, 0, false);
 		assertNotNull(mol);
 		bond = mol.getBondBetweenAtoms(3, 0);
 		assertNotNull(bond);
@@ -991,7 +992,7 @@ public class SmilesDetailsTests extends GraphMolTest {
 		assertEquals(Bond.BondType.DOUBLE, bond.getBondType());
 
 		smi = "C1CC[C+]=11CCC1";
-		mol = RWMol.MolFromSmiles(smi);
+		mol = RWMol.MolFromSmiles(smi, 0, false);
 		assertNotNull(mol);
 		bond = mol.getBondBetweenAtoms(3, 0);
 		assertNotNull(bond);
