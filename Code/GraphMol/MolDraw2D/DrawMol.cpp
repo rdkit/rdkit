@@ -1862,11 +1862,11 @@ void DrawMol::makeDoubleBondLines(
   int at2Idx = bond->getEndAtomIdx();
   adjustBondEndsForLabels(at1Idx, at2Idx, end1, end2);
 
-  bool skipFirstLine = false;
+  bool skipOuterLine = false;
   if (bond->getBondDir() == Bond::BEGINWEDGE ||
       bond->getBondDir() == Bond::BEGINDASH) {
     makeWedgedBond(bond, cols);
-    skipFirstLine = true;
+    skipOuterLine = true;
   }
 
   Point2D l1s, l1f, l2s, l2f, sat1, sat2;
@@ -1876,7 +1876,7 @@ void DrawMol::makeDoubleBondLines(
   atCds_[at2Idx] = end2;
   calcDoubleBondLines(doubleBondOffset, *bond, l1s, l1f, l2s, l2f);
   int bondIdx = bond->getIdx();
-  if (!skipFirstLine) {
+  if (!skipOuterLine) {
     newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
                 noDash);
   }
