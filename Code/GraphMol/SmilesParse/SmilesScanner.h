@@ -14,12 +14,12 @@ namespace ast_parser {
 class [[nodiscard]] Scanner : public smilesFlexLexer {
  public:
   [[nodiscard]] Scanner(std::istream& input_stream, std::string_view ss)
-      : smilesFlexLexer(&input_stream), d_input(ss) {}
+      : smilesFlexLexer(&input_stream), d_input(std::move(ss)) {}
 
   [[nodiscard]] int lex(Parser::semantic_type* const lval,
                         Parser::location_type* location);
 
-  [[nodiscard]] std::string_view input() { return d_input; }
+  [[nodiscard]] const std::string_view& input() { return d_input; }
 
  private:
   std::string_view d_input;
