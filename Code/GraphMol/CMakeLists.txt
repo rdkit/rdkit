@@ -10,7 +10,7 @@ rdkit_library(GraphMol
               NontetrahedralStereo.cpp Atropisomers.cpp
               WedgeBonds.cpp
         SHARED
-              LINK_LIBRARIES RDGeometryLib RDGeneral  )
+              LINK_LIBRARIES RDGeometryLib RDGeneral )
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 if (RDK_USE_URF)
     target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
@@ -22,6 +22,7 @@ endif ()
 rdkit_headers(Atom.h
         atomic_data.h
         AtomIterators.h
+        Atropisomers.h
         Bond.h
         BondIterators.h
         Canon.h
@@ -161,7 +162,7 @@ rdkit_test(molBundleTest testMolBundle.cpp
 
 rdkit_test(testSGroup testSGroup.cpp LINK_LIBRARIES FileParsers GraphMol)
 
-rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse GraphMol)
+rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse FileParsers GraphMol)
 
 rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp
         LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol)
@@ -176,7 +177,7 @@ rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp
         LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol)
 
 rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp
-        LINK_LIBRARIES FileParsers SmilesParse GraphMol)
+        LINK_LIBRARIES CIPLabeler FileParsers SmilesParse GraphMol)
 
 rdkit_catch_test(canonTestsCatch catch_canon.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
@@ -192,3 +193,6 @@ rdkit_catch_test(molbundleTestsCatch catch_molbundle.cpp
 
 rdkit_catch_test(pickleTestsCatch catch_pickles.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
+
+rdkit_catch_test(tableTestsCatch catch_periodictable.cpp
+        LINK_LIBRARIES GraphMol)

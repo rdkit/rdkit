@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 
 #include <RDGeneral/hash/hash.hpp>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
@@ -47,12 +48,12 @@ namespace {
 // The hand-drawn pictures will fail this frequently due to the use
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
-static const bool DELETE_WITH_GOOD_HASH = true;
+const bool DELETE_WITH_GOOD_HASH = true;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
 // These values are for a build with FreeType, so expect them all to be
 // wrong when building without.
-static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
+const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testAtomTags_1.svg", 3187798125U},
     {"testAtomTags_2.svg", 822910240U},
     {"testAtomTags_3.svg", 2244078420U},
@@ -61,9 +62,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"contourMol_3.svg", 936771429U},
     {"contourMol_4.svg", 3302971362U},
     {"contourMol_5.svg", 2230414999U},
-    {"testDativeBonds_1.svg", 2877255976U},
+    {"testDativeBonds_1.svg", 3550231997U},
     {"testDativeBonds_2.svg", 2510476717U},
-    {"testDativeBonds_3.svg", 3256011686U},
+    {"testDativeBonds_3.svg", 1742381275U},
     {"testDativeBonds_2a.svg", 3936523099U},
     {"testDativeBonds_2b.svg", 1652957675U},
     {"testDativeBonds_2c.svg", 630355005U},
@@ -82,7 +83,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3226_1.svg", 831257877U},
     {"testGithub3226_2.svg", 3517325227U},
     {"testGithub3226_3.svg", 3609721552U},
-    {"testGithub3369_1.svg", 3091976328U},
+    {"testGithub3369_1.svg", 2194263901U},
     {"testIncludeRadicals_1a.svg", 1829641340U},
     {"testIncludeRadicals_1b.svg", 4184066907U},
     {"testLegendsAndDrawing-1.svg", 3563802758U},
@@ -325,7 +326,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"bad_lasso_1.svg", 726527516U},
     {"AtropCanon1.svg", 1587179714U},
     {"AtropManyChiralsEnhanced.svg", 3871032500U},
-    {"testGithub6968.svg", 1554428830U}};
+    {"testGithub6968.svg", 1554428830U},
+    {"testGithub7036.svg", 2355702607U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -334,7 +336,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // give different results on my MBP and Ubuntu 20.04 VM.  The SVGs work
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
-static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
+const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testGithub3226_1.png", 2350054896U},
     {"testGithub3226_2.png", 606206725U},
     {"testGithub3226_3.png", 2282880418U},
@@ -771,10 +773,10 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     std::regex d1(
         "<path class='bond-0 atom-0 atom-1' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
     auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(122.3, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(88.5, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(85.7, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(88.5, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(78.2, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(88.0, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(113.4, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(88.0, 0.1));
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -815,9 +817,9 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     std::regex d1(
         "<path class='bond-2 atom-3 atom-4' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
     auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(50.9, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(53.5, 0.1));
     CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(140.2, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(78.1, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(80.7, 0.1));
     CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(149.0, 0.1));
   }
   SECTION("dative series") {
@@ -1300,61 +1302,15 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "github #3369: support new CIP code and StereoGroups in "
-    "addStereoAnnotation()",
-    "[chirality]") {
+    "github #3369: support new CIP code and StereoGroups in addStereoAnnotations()") {
   auto m1 =
       "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"_smiles;
   REQUIRE(m1);
-  SECTION("defaults") {
-    ROMol m2(*m1);
-    MolDraw2D_detail::addStereoAnnotation(m2);
 
-    std::string txt;
-    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
-                                                 txt));
-    CHECK(txt == "abs (S)");
-    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
-                                                 txt));
-    CHECK(txt == "and2");
-  }
-  SECTION("including CIP with relative stereo") {
-    ROMol m2(*m1);
-    bool includeRelativeCIP = true;
-    MolDraw2D_detail::addStereoAnnotation(m2, includeRelativeCIP);
-
-    std::string txt;
-    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
-                                                 txt));
-    CHECK(txt == "abs (S)");
-    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
-                                                 txt));
-    CHECK(txt == "and2 (R)");
-  }
-  SECTION("new CIP labels") {
-    ROMol m2(*m1);
-    REQUIRE(m2.getBondBetweenAtoms(20, 21));
-    m2.getBondBetweenAtoms(20, 21)->setStereo(Bond::BondStereo::STEREOTRANS);
-    // initially no label is assigned since we have TRANS
-    MolDraw2D_detail::addStereoAnnotation(m2);
-    CHECK(
-        !m2.getBondBetweenAtoms(20, 21)->hasProp(common_properties::bondNote));
-
-    CIPLabeler::assignCIPLabels(m2);
-    std::string txt;
-    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
-        common_properties::_CIPCode, txt));
-    CHECK(txt == "E");
-    MolDraw2D_detail::addStereoAnnotation(m2);
-    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
-        common_properties::bondNote, txt));
-    CHECK(txt == "(E)");
-  }
   SECTION("works with the drawing code") {
     MolDraw2DSVG drawer(300, 250);
     RWMol dm1(*m1);
-    bool includeRelativeCIP = true;
-    MolDraw2D_detail::addStereoAnnotation(dm1, includeRelativeCIP);
+    Chirality::addStereoAnnotations(dm1);
     drawer.drawMolecule(dm1);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
@@ -8317,7 +8273,7 @@ TEST_CASE("Lasso highlights") {
     std::map<int, std::vector<DrawColour>> ha_map;
     std::map<int, std::vector<DrawColour>> hb_map;
 
-       for (size_t i = 0; i < smarts.size(); ++i) {
+    for (size_t i = 0; i < smarts.size(); ++i) {
       std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
       update_colour_map(hit_atoms, colours[i], ha_map);
     }
@@ -9376,6 +9332,7 @@ TEST_CASE("atropisomers") {
     }
   }
 }
+
 TEST_CASE("Github6968 - bad bond highlights with triple bonds") {
   // The issue is that in the linear highlight across the triple bond,
   // some of the highlights didn't appear, and others were
@@ -9430,3 +9387,137 @@ TEST_CASE("Github6968 - bad bond highlights with triple bonds") {
     }
   }
 }
+
+TEST_CASE("Github7036 - triple bond to wedge not right") {
+  // The issue is that the middle line of a triple bond
+  // ends in the wrong place when the incident bond is
+  // a wedge.  Wedge to single bond included for visual
+  // check that that isn't broken in the fix.
+  auto m = "C1[C@@H](CN)CCN[C@H]1C#N"_smiles;
+  REQUIRE(m);
+  {
+    MolDraw2DSVG drawer(350, 300);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testGithub7036.svg");
+    outs << text;
+    outs.close();
+
+    std::regex bond(
+        "<path class='bond-8 atom-8 atom-9' d='M (-?\\d+.\\d+),(-?\\d+.\\d+)"
+        " L (-?\\d+.\\d+),(-?\\d+.\\d+)' style=");
+    // The problem is the first line in the bond, which comes in 2 parts
+    // that should be co-linear.
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond);
+    std::smatch match = *match_begin;
+    std::vector<Point2D> pts;
+    pts.push_back(Point2D(stod(match[1]), stod(match[2])));
+    pts.push_back(Point2D(stod(match[3]), stod(match[4])));
+    ++match_begin;
+    match = *match_begin;
+    pts.push_back(Point2D(stod(match[1]), stod(match[2])));
+    pts.push_back(Point2D(stod(match[3]), stod(match[4])));
+    double dot = pts[0].directionVector(pts[1]).dotProduct(
+        pts[2].directionVector(pts[3]));
+    CHECK_THAT(fabs(dot), Catch::Matchers::WithinAbs(1.0, 0.001));
+    check_file_hash("testGithub7036.svg");
+  }
+}
+
+TEST_CASE("Github7317 - very long bond not drawn to both atoms") {
+  auto m1 = R"CTAB(2244
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 13 13 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 O 2.598085 -1.499986 0.000000 0
+M  V30 2 O -1.299010 -3.749995 0.000000 0
+M  V30 3 O 9.923686 -6.081460 0.000000 0
+M  V30 4 O 3.897122 0.750042 0.000000 0
+M  V30 5 C 1.299042 -0.749993 0.000000 0
+M  V30 6 C 0.000027 -1.499967 0.000000 0
+M  V30 7 C 1.299015 0.749974 0.000000 0
+M  V30 8 C -1.299015 -0.749974 0.000000 0
+M  V30 9 C -0.000027 1.499967 0.000000 0
+M  V30 10 C -1.299042 0.749993 0.000000 0
+M  V30 11 C 0.000005 -3.000021 0.000000 0
+M  V30 12 C 3.897099 -0.750011 0.000000 0
+M  V30 13 C 5.196142 -1.500004 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 5
+M  V30 2 1 1 12
+M  V30 3 1 2 11
+M  V30 4 2 3 11
+M  V30 5 2 4 12
+M  V30 6 2 5 6
+M  V30 7 1 5 7
+M  V30 8 1 6 8
+M  V30 9 1 6 11
+M  V30 10 2 7 9
+M  V30 11 2 8 10
+M  V30 12 1 9 10
+M  V30 13 1 12 13
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(m1);
+  MolDraw2DSVG drawer(350, 300);
+  drawer.drawOptions().addAtomIndices = true;
+  drawer.drawOptions().addBondIndices = true;
+  drawer.drawMolecule(*m1);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::regex bond3(
+      "<path class='bond-3 atom-2 atom-10' d='M (-?\\d+.\\d+),(-?\\d+.\\d+)"
+      " L (-?\\d+.\\d+),(-?\\d+.\\d+)' style=");
+  auto match3_begin = std::sregex_iterator(text.begin(), text.end(), bond3);
+  auto match3_end = std::sregex_iterator();
+  std::vector<Point2D> pts3;
+  for (std::sregex_iterator i = match3_begin; i != match3_end; ++i) {
+    std::smatch match = *i;
+    pts3.push_back(Point2D(stod(match[1]), stod(match[2])));
+    pts3.push_back(Point2D(stod(match[3]), stod(match[4])));
+  }
+
+  std::regex bond8(
+      "<path class='bond-8 atom-5 atom-10' d='M (-?\\d+.\\d+),(-?\\d+.\\d+)"
+      " L (-?\\d+.\\d+),(-?\\d+.\\d+)' style=");
+  auto match_begin8 = std::sregex_iterator(text.begin(), text.end(), bond8);
+  std::smatch match8 = *match_begin8;
+  std::vector<Point2D> pts8;
+  pts8.push_back(Point2D(stod(match8[1]), stod(match8[2])));
+  pts8.push_back(Point2D(stod(match8[3]), stod(match8[4])));
+
+  // pts3[3] and pts3[7] are the atom 10 ends of bond3, pts8[1] is
+  // the atom 10 end of bond 8.  They should be close to each other.
+  CHECK((pts8[1] - pts3[3]).length() < 10.0);
+  CHECK((pts8[1] - pts3[7]).length() < 10.0);
+  if ((pts8[1] - pts3[3]).length() >= 10.0 ||
+      (pts8[1] - pts3[7]).length() >= 10.0) {
+    // Someone will want to have a look at it.
+    std::ofstream outs("testGithub7317.svg");
+    outs << text;
+    outs.close();
+  }
+}
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+TEST_CASE(
+    "github #7409: drawing mol with a non zero confID results in bad confID error") {
+  SECTION("basics") {
+    auto m = "CC |(-0.75,0,;0.75,0,)|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getNumConformers() == 1);
+    m->getConformer().setId(5);
+    MolDraw2DCairo drawer(350, 300);
+    // it's enough to test that this doesn't throw
+    drawer.drawMolecule(*m);
+  }
+}
+#endif

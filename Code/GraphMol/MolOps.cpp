@@ -387,10 +387,9 @@ void adjustHs(RWMol &mol) {
 
 void assignRadicals(RWMol &mol) {
   for (auto atom : mol.atoms()) {
-    // we only put automatically assign radicals to things that
-    // don't have them already and don't have implicit Hs:
-    if (!atom->getNoImplicit() || atom->getNumRadicalElectrons() ||
-        !atom->getAtomicNum()) {
+    // we only automatically assign radicals to atoms that
+    // don't have implicit Hs:
+    if (!atom->getNoImplicit() || !atom->getAtomicNum()) {
       continue;
     }
     const auto &valens =
@@ -436,18 +435,24 @@ void assignRadicals(RWMol &mol) {
       }
       atom->setNumRadicalElectrons(numRadicals);
     } else {
-      //  if this is an atom where we have no preferred valence info at all,
-      //  e.g. for transition metals, then we shouldn't be guessing. This was
-      //  #3330
-      auto nValence = nOuter - chg;
-      if (nValence < 0) {
-        // this was github #5462
-        nValence = 0;
-        BOOST_LOG(rdWarningLog)
-            << "Unusual charge on atom " << atom->getIdx()
-            << " number of radical electrons set to zero" << std::endl;
+      // #7122: if there's a bond to the metal center, then don't assign
+      // radicals:
+      if (atom->getDegree() > 0) {
+        atom->setNumRadicalElectrons(0);
+      } else {
+        auto nValence = nOuter - chg;
+        //  if this is an atom where we have no preferred valence info at all,
+        //  e.g. for transition metals, then we shouldn't be guessing. This was
+        //  #3330
+        if (nValence < 0) {
+          // this was github #5462
+          nValence = 0;
+          BOOST_LOG(rdWarningLog)
+              << "Unusual charge on atom " << atom->getIdx()
+              << " number of radical electrons set to zero" << std::endl;
+        }
+        atom->setNumRadicalElectrons(nValence % 2);
       }
-      atom->setNumRadicalElectrons(nValence % 2);
     }
   }
 }
@@ -489,17 +494,24 @@ void cleanupAtropisomers(RWMol &mol) {
 }
 
 void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
+  // make sure that ring info is available
+  // (defensive, current calls have it available)
+  if (!mol.getRingInfo()->isSssrOrBetter()) {
+    RDKit::MolOps::findSSSR(mol);
+  }
   const RingInfo *ri = mol.getRingInfo();
   for (auto bond : mol.bonds()) {
     switch (bond->getStereo()) {
       case Bond::BondStereo::STEREOATROPCW:
       case Bond::BondStereo::STEREOATROPCCW:
-        if (ri->numBondRings(bond->getIdx()) > 0 ||
-            hybs[bond->getBeginAtom()->getIdx()] != Atom::SP2 ||
-            hybs[bond->getEndAtom()->getIdx()] != Atom::SP2) {
+        if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
+            hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
+            // do not clear bonds that part of a macrocycle
+            // because they can be linking actual atropisomeric portions
+            (ri->numBondRings(bond->getIdx()) > 0 &&
+             ri->minBondRingSize(bond->getIdx()) < 8)) {
           bond->setStereo(Bond::BondStereo::STEREONONE);
         }
-
         break;
 
       default:
@@ -652,15 +664,12 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
                                     INT_VECT *frags,
                                     VECT_INT_VECT *fragsMolAtomMapping,
                                     bool copyConformers) {
-  bool ownIt = false;
-  INT_VECT *mapping;
-  if (frags) {
-    mapping = frags;
-  } else {
-    mapping = new INT_VECT;
-    ownIt = true;
+  std::unique_ptr<INT_VECT> mappingStorage;
+  if (!frags) {
+    mappingStorage.reset(new INT_VECT);
+    frags = mappingStorage.get();
   }
-  unsigned int nFrags = getMolFrags(mol, *mapping);
+  int nFrags = getMolFrags(mol, *frags);
   std::vector<RWMOL_SPTR> res;
   if (nFrags == 1) {
     auto *tmp = new RWMol(mol);
@@ -674,180 +683,123 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
       (*fragsMolAtomMapping).push_back(comp);
     }
   } else {
-    std::vector<int> ids(mol.getNumAtoms(), -1);
-    std::vector<int> bondIds(mol.getNumBonds(), -1);
-    boost::dynamic_bitset<> copiedAtoms(mol.getNumAtoms(), 0);
-    boost::dynamic_bitset<> copiedBonds(mol.getNumBonds(), 0);
     res.reserve(nFrags);
-    for (unsigned int frag = 0; frag < nFrags; ++frag) {
-      auto *tmp = new RWMol();
-      RWMOL_SPTR sptr(tmp);
-      res.push_back(sptr);
-    }
-
-    // copy atoms
-    INT_INT_VECT_MAP comMap;
-    for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
-      const Atom *oAtm = mol.getAtomWithIdx(idx);
-      ids[idx] = res[(*mapping)[idx]]->addAtom(oAtm->copy(), false, true);
-      copiedAtoms[idx] = 1;
+    for (int i = 0; i < nFrags; ++i) {
+      boost::dynamic_bitset<> atomsInFrag(mol.getNumAtoms());
+      INT_VECT comp;
+      for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
+        if ((*frags)[idx] == i) {
+          comp.push_back(idx);
+          atomsInFrag.set(idx);
+        }
+      }
+      auto fragmentHasChallengingFeatures =
+          [&](const INT_VECT &comp,
+              const boost::dynamic_bitset<> &atomsInFrag) -> bool {
+        for (auto idx : comp) {
+          // check for atoms with stereochem:
+          const auto atom = mol.getAtomWithIdx(idx);
+          if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED &&
+              atom->getChiralTag() != Atom::ChiralType::CHI_OTHER) {
+            return true;
+          }
+          for (auto bnd : mol.atomBonds(atom)) {
+            if (atomsInFrag[bnd->getOtherAtomIdx(idx)]) {
+              if (bnd->getStereo() != Bond::BondStereo::STEREONONE &&
+                  bnd->getStereo() != Bond::BondStereo::STEREOANY) {
+                return true;
+              }
+            }
+          }
+        }
+        for (auto sgroup : getSubstanceGroups(mol)) {
+          for (auto aid : sgroup.getAtoms()) {
+            if (atomsInFrag[aid]) {
+              return true;
+            }
+          }
+          for (auto aid : sgroup.getParentAtoms()) {
+            if (atomsInFrag[aid]) {
+              return true;
+            }
+          }
+        }
+        // doesn't seem like this should be necessary, but in case
+        // we ever need stereogroups where the atoms aren't marked
+        // with stereo...
+        for (auto stereoGroup : mol.getStereoGroups()) {
+          for (auto atom : stereoGroup.getAtoms()) {
+            if (atomsInFrag[atom->getIdx()]) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+      if (comp.size() == 1 ||
+          (nFrags > 3 && !fragmentHasChallengingFeatures(comp, atomsInFrag))) {
+        // special case for a small, simple fragments when a bunch of fragments
+        // are present. The check on the number of fragments is purely
+        // empirical. This is mainly intended to catch situations like proteins
+        // where you have a bunch of single-atom fragments (waters); the
+        // standard approach below ends up being horribly inefficient there
+        RWMOL_SPTR frag(new RWMol());
+        res.push_back(frag);
+        std::map<unsigned int, unsigned int> atomIdxMap;
+        for (auto aid : comp) {
+          atomIdxMap[aid] =
+              frag->addAtom(mol.getAtomWithIdx(aid)->copy(), false, true);
+        }
+        for (auto bond : mol.bonds()) {
+          if (atomsInFrag[bond->getBeginAtomIdx()] &&
+              atomsInFrag[bond->getEndAtomIdx()]) {
+            auto bondCopy = bond->copy();
+            bondCopy->setBeginAtomIdx(atomIdxMap[bond->getBeginAtomIdx()]);
+            bondCopy->setEndAtomIdx(atomIdxMap[bond->getEndAtomIdx()]);
+            frag->addBond(bondCopy, true);
+          }
+        }
+        if (copyConformers) {
+          for (auto cit = mol.beginConformers(); cit != mol.endConformers();
+               ++cit) {
+            auto *conf = new Conformer(frag->getNumAtoms());
+            conf->setId((*cit)->getId());
+            conf->set3D((*cit)->is3D());
+            unsigned int cidx = 0;
+            for (auto ai : comp) {
+              conf->setAtomPos(cidx++, (*cit)->getAtomPos(ai));
+            }
+            frag->addConformer(conf);
+          }
+        }
+      } else {
+        RWMOL_SPTR frag(new RWMol(mol));
+        res.push_back(frag);
+        frag->beginBatchEdit();
+        for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
+          if (!atomsInFrag[idx]) {
+            frag->removeAtom(idx);
+          }
+        }
+        frag->commitBatchEdit();
+      }
       if (fragsMolAtomMapping) {
-        if (comMap.find((*mapping)[idx]) == comMap.end()) {
-          INT_VECT comp;
-          comMap[(*mapping)[idx]] = comp;
-        }
-        comMap[(*mapping)[idx]].push_back(idx);
-      }
-      // loop over neighbors and add bonds in the fragment to all atoms
-      // that are already in the same fragment
-      for (const auto nbr : mol.atomNeighbors(oAtm)) {
-        if (copiedAtoms[nbr->getIdx()]) {
-          copiedBonds[mol.getBondBetweenAtoms(idx, nbr->getIdx())->getIdx()] =
-              1;
-        }
+        (*fragsMolAtomMapping).push_back(comp);
       }
     }
-    // update ring stereochemistry information
-    for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
-      const Atom *oAtm = mol.getAtomWithIdx(idx);
-      INT_VECT ringStereoAtomsMol;
-      if (oAtm->getPropIfPresent(common_properties::_ringStereoAtoms,
-                                 ringStereoAtomsMol)) {
-        INT_VECT ringStereoAtomsCopied;
-        for (int rnbr : ringStereoAtomsMol) {
-          int ori_ridx = abs(rnbr) - 1;
-          int ridx = ids[ori_ridx] + 1;
-          if (rnbr < 0) {
-            ridx *= -1;
-          }
-          ringStereoAtomsCopied.push_back(ridx);
-        }
-        res[(*mapping)[idx]]->getAtomWithIdx(ids[idx])->setProp(
-            common_properties::_ringStereoAtoms, ringStereoAtomsCopied);
-      }
-    }
-
-    // copy bonds and bond stereochemistry information
-    ROMol::EDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getEdges();
-    while (beg != end) {
-      const Bond *bond = (mol)[*beg];
-      ++beg;
-      if (!copiedBonds[bond->getIdx()]) {
-        continue;
-      }
-      Bond *nBond = bond->copy();
-      RWMol *tmp = res[(*mapping)[nBond->getBeginAtomIdx()]].get();
-      nBond->setOwningMol(tmp);
-      nBond->setBeginAtomIdx(ids[nBond->getBeginAtomIdx()]);
-      nBond->setEndAtomIdx(ids[nBond->getEndAtomIdx()]);
-      nBond->getStereoAtoms().clear();
-      INT_VECT stereoAtoms = bond->getStereoAtoms();
-      for (int stereoAtom : stereoAtoms) {
-        nBond->getStereoAtoms().push_back(ids[stereoAtom]);
-      }
-      bondIds[bond->getIdx()] =
-          tmp->addBond(nBond, true) - 1;  // addBond returns the number of bonds
-    }
-
-    // copy RingInfo
-    if (mol.getRingInfo()->isInitialized()) {
-      for (const auto &i : mol.getRingInfo()->atomRings()) {
-        INT_VECT aids;
-        auto tmp = res[(*mapping)[i[0]]].get();
-        if (!tmp->getRingInfo()->isInitialized()) {
-          tmp->getRingInfo()->initialize();
-        }
-        for (int j : i) {
-          aids.push_back(ids[j]);
-        }
-        INT_VECT bids;
-        INT_VECT_CI lastRai = aids.begin();
-        for (INT_VECT_CI rai = aids.begin() + 1; rai != aids.end(); ++rai) {
-          const Bond *bnd = tmp->getBondBetweenAtoms(*rai, *lastRai);
-          if (!bnd) {
-            throw ValueErrorException("expected bond not found");
-          }
-          bids.push_back(bnd->getIdx());
-          lastRai = rai;
-        }
-        const Bond *bnd = tmp->getBondBetweenAtoms(*lastRai, *(aids.begin()));
-        if (!bnd) {
-          throw ValueErrorException("expected bond not found");
-        }
-        bids.push_back(bnd->getIdx());
-        tmp->getRingInfo()->addRing(aids, bids);
-      }
-    }
-
-    if (copyConformers) {
-      // copy conformers
-      for (auto cit = mol.beginConformers(); cit != mol.endConformers();
-           ++cit) {
-        for (auto &re : res) {
-          ROMol *newM = re.get();
-          auto *conf = new Conformer(newM->getNumAtoms());
-          conf->setId((*cit)->getId());
-          conf->set3D((*cit)->is3D());
-          newM->addConformer(conf);
-        }
-        for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-          if (ids[i] < 0) {
-            continue;
-          }
-          res[(*mapping)[i]]
-              ->getConformer((*cit)->getId())
-              .setAtomPos(ids[i], (*cit)->getAtomPos(i));
-        }
-      }
-    }
-
-    if (fragsMolAtomMapping) {
-      for (INT_INT_VECT_MAP_CI mci = comMap.begin(); mci != comMap.end();
-           mci++) {
-        (*fragsMolAtomMapping).push_back((*mci).second);
-      }
-    }
-    // copy stereoGroups (if present)
-    if (!mol.getStereoGroups().empty()) {
-      for (unsigned int frag = 0; frag < nFrags; ++frag) {
-        auto re = res[frag];
-        std::vector<StereoGroup> fragsgs;
-        for (auto &sg : mol.getStereoGroups()) {
-          std::vector<Atom *> sgats;
-          std::vector<Bond *> sgbds;
-          for (auto sga : sg.getAtoms()) {
-            if ((*mapping)[sga->getIdx()] == static_cast<int>(frag)) {
-              sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
-            }
-          }
-          for (auto sgb : sg.getBonds()) {
-            if ((*mapping)[sgb->getBeginAtom()->getIdx()] ==
-                static_cast<int>(frag)) {
-              sgbds.push_back(re->getBondWithIdx(bondIds[sgb->getIdx()]));
-            }
-          }
-          if (!sgats.empty()) {
-            fragsgs.emplace_back(sg.getGroupType(), sgats, sgbds,
-                                 sg.getReadId());
-          }
-        }
-        if (!fragsgs.empty()) {
-          re->setStereoGroups(std::move(fragsgs));
-        }
-      }
+  }
+  if (!copyConformers) {
+    for (auto &frag : res) {
+      frag->clearConformers();
     }
   }
 
   if (sanitizeFrags) {
-    for (auto &re : res) {
-      sanitizeMol(*re);
+    for (auto &frag : res) {
+      sanitizeMol(*frag);
     }
   }
 
-  if (ownIt) {
-    delete mapping;
-  }
   return std::vector<ROMOL_SPTR>(res.begin(), res.end());
 }
 
@@ -1223,5 +1175,147 @@ std::vector<int> hapticBondEndpoints(const Bond *bond) {
   return oats;
 }
 }  // end of namespace details
-};  // end of namespace MolOps
-};  // end of namespace RDKit
+
+namespace details {
+unsigned int addExplicitAttachmentPoint(RWMol &mol, unsigned int atomIdx,
+                                        unsigned int val, bool addAsQuery,
+                                        bool addCoords) {
+  Atom *newAtom = nullptr;
+  if (addAsQuery) {
+    newAtom = new QueryAtom(0);
+    newAtom->setQuery(RDKit::makeAtomNullQuery());
+  } else {
+    newAtom = new Atom(0);
+  }
+  newAtom->setProp(common_properties::_fromAttachPoint, val);
+  bool updateLabel = false;
+  bool takeOwnership = true;
+  auto idx = mol.addAtom(newAtom, updateLabel, takeOwnership);
+  mol.addBond(atomIdx, idx, Bond::SINGLE);
+  mol.getAtomWithIdx(idx)->updatePropertyCache(false);
+  if (addCoords) {
+    setTerminalAtomCoords(mol, idx, atomIdx);
+  }
+  return idx;
+}
+
+bool isAttachmentPoint(const Atom *atom, bool markedOnly) {
+  PRECONDITION(atom, "bad atom");
+  PRECONDITION(atom->hasOwningMol(), "atom not associated with a molecule");
+  if (atom->getAtomicNum() != 0 || atom->getDegree() != 1) {
+    return false;
+  }
+  if (markedOnly && !atom->hasProp(common_properties::_fromAttachPoint)) {
+    return false;
+  }
+  // we know that the atom is degree 1
+  const auto bond = *atom->getOwningMol().atomBonds(atom).begin();
+  if ((bond->getBondType() != Bond::BondType::SINGLE &&
+       bond->getBondType() != Bond::BondType::UNSPECIFIED) ||
+      bond->getBondDir() != Bond::BondDir::NONE) {
+    return false;
+  }
+
+  if (atom->hasQuery()) {
+    // a * from SMARTS
+    if (!atom->getQuery()->getNegation() &&
+        atom->getQuery()->getDescription() == "AtomNull") {
+      return true;
+    }
+    // a * from CXSMILES
+    if (atom->getQuery()->getNegation() &&
+        atom->getQuery()->getDescription() == "AtomAtomicNum" &&
+        static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())->getVal() == 1) {
+      return true;
+    }
+    return false;
+  }
+
+  return true;
+}
+
+}  // namespace details
+
+void expandAttachmentPoints(RWMol &mol, bool addAsQueries, bool addCoords) {
+  for (auto atom : mol.atoms()) {
+    int value;
+    if (atom->getPropIfPresent(common_properties::molAttachPoint, value)) {
+      std::vector<int> tgtVals;
+      if (value == 1 || value == -1) {
+        tgtVals.push_back(1);
+      }
+      if (value == 2 || value == -1) {
+        tgtVals.push_back(2);
+      }
+      if (tgtVals.empty()) {
+        BOOST_LOG(rdWarningLog)
+            << "Invalid value for molAttachPoint: " << value << " on atom "
+            << atom->getIdx() << ". Not expanding this atttachment point."
+            << std::endl;
+        continue;
+      }
+      for (auto tval : tgtVals) {
+        atom->clearProp(common_properties::molAttachPoint);
+        details::addExplicitAttachmentPoint(mol, atom->getIdx(), tval,
+                                            addAsQueries, addCoords);
+      }
+    }
+  }
+}
+
+void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
+  bool removedAny = false;
+  std::vector<int> attachLabels(mol.getNumAtoms(), 0);
+
+  for (auto atom : mol.atoms()) {
+    if (details::isAttachmentPoint(atom, markedOnly)) {
+      int value = 0;
+      atom->getPropIfPresent(common_properties::_fromAttachPoint, value);
+      if (markedOnly && (value < 0 || value > 2)) {
+        BOOST_LOG(rdWarningLog)
+            << "Invalid value for _fromAttachPoint: " << value << " on atom "
+            << atom->getIdx() << ". Not collapsing this atom" << std::endl;
+        continue;
+      }
+      if (!markedOnly && !value) {
+        value = 1;
+      }
+      auto bond = *mol.atomBonds(atom).begin();
+      if ((bond->getBondType() != Bond::BondType::SINGLE &&
+           bond->getBondType() != Bond::BondType::UNSPECIFIED) ||
+          bond->getBondDir() != Bond::BondDir::NONE) {
+        continue;
+      }
+      auto oAtomIdx = bond->getOtherAtom(atom)->getIdx();
+      if (attachLabels[oAtomIdx]) {
+        if (attachLabels[oAtomIdx] != -1) {
+          value = -1;
+        } else {
+          BOOST_LOG(rdWarningLog)
+              << "More than two attachment points on atom " << oAtomIdx
+              << ". Attachment point " << atom->getIdx()
+              << " will not be collapsed." << std::endl;
+          continue;
+        }
+      }
+      if (!removedAny) {
+        mol.beginBatchEdit();
+        removedAny = true;
+      }
+      attachLabels[oAtomIdx] = value;
+      mol.removeAtom(atom);
+    }
+  }
+  // set the attachment point labels
+  for (auto atom : mol.atoms()) {
+    if (attachLabels[atom->getIdx()]) {
+      atom->setProp(common_properties::molAttachPoint,
+                    attachLabels[atom->getIdx()]);
+    }
+  }
+  if (removedAny) {
+    mol.commitBatchEdit();
+  }
+}
+}  // end of namespace MolOps
+}  // end of namespace RDKit

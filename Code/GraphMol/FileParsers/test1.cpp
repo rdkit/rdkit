@@ -47,8 +47,12 @@ void test1() {
   TEST_ASSERT(m);
 
   TEST_ASSERT(m->getNumAtoms() == 6);
+
+  std::string sma = MolToSmarts(*m);
+  TEST_ASSERT(sma == "[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1");
+
   std::string smi = MolToSmiles(*m);
-  TEST_ASSERT(smi == "C1=CC=CC=C1");
+  TEST_ASSERT(smi == "*1=CC=CC=C1");
 
   m->updatePropertyCache();
   smi = MolToSmarts(*m);
@@ -2475,12 +2479,12 @@ void test3V3K() {
   {
     // radical and valence
     fName = rdbase + "CH.v3k.mol";
-    RWMol *m = MolFileToMol(fName);
+    RWMol *m = MolFileToMol(fName);  // cxsmiles = "[CH] |(0,0,),^5:0|"
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 1);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit());
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     std::string mb = MolToMolBlock(*m, true, -1, true, true);
     delete m;
@@ -2494,7 +2498,7 @@ void test3V3K() {
     TEST_ASSERT(m->getNumAtoms() == 1);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit());
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     delete m;
   }
@@ -3007,10 +3011,7 @@ void testIssue3359739() {
   delete m;
   m = MolBlockToMol(molBlock);
   TEST_ASSERT(m);
-  // NOTE: the following is correct according to the current
-  // state of the code and what the CTAB format supports,
-  // but it's definitely not chemically correct
-  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
   delete m;
 
   BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
@@ -3528,12 +3529,12 @@ void testMolFileTotalValence() {
     RWMol *m1;
     std::string fName;
     fName = rdbase + "CH.mol";
-    m1 = MolFileToMol(fName);
+    m1 = MolFileToMol(fName);  // cxsmi = "[CH] |(-1.2375,2.1509,),^5:0|"
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getNumAtoms() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs() == 1);
-    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     delete m1;
   }
@@ -3566,12 +3567,12 @@ void testMolFileTotalValence() {
     RWMol *m1;
     std::string fName;
     fName = rdbase + "CH.v3k.mol";
-    m1 = MolFileToMol(fName);
+    m1 = MolFileToMol(fName);  // cxsmiles = "[CH] |(0,0,),^5:0|"
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getNumAtoms() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs() == 1);
-    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     delete m1;
   }
@@ -5313,6 +5314,88 @@ void testGithub2000() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testAtomQueries() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing atom queries contains HCOUNT, RBCOUNT, UNSAT"
+                       << std::endl;
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    std::unique_ptr<RWMol> testQuery(
+        MolFileToMol(pathName + "AtomQuery1.mol", true, false, true));
+    TEST_ASSERT(testQuery);
+
+    std::unique_ptr<RWMol> testMol(
+        SmilesToMol("[H]C([H])([H])C1=CN=C(C=C)C(C2CCCCC2)=C1C"));
+    TEST_ASSERT(testMol);
+
+    MatchVectType mv;
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() > 0);
+
+    testMol.reset(SmilesToMol("[H]CC1=CN=C(C=C)C(C2CCCCC2)=C1C"));
+    TEST_ASSERT(testMol);
+
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() > 0);
+
+    testMol.reset(SmilesToMol("CCC1=CN=C(C=C)C(C2CCCCC2)=C1C"));
+    TEST_ASSERT(testMol);
+
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() == 0);  // search fails
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    std::unique_ptr<RWMol> testQuery(
+        MolFileToMol(pathName + "AtomQuery2.mol", true, false, true));
+    TEST_ASSERT(testQuery);
+
+    std::unique_ptr<RWMol> testMol(SmilesToMol("C1(C)C(C)=CN=C(C)C=1C1CCCCC1"));
+    TEST_ASSERT(testMol);
+
+    MatchVectType mv;
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() > 0);
+
+    testMol.reset(SmilesToMol("C1(C)C(C)=CN=C(C)C=1C12CCC(CC1)CC2"));
+    TEST_ASSERT(testMol);
+
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() == 0);  // search fails
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    std::unique_ptr<RWMol> testQuery(
+        MolFileToMol(pathName + "AtomQuery3.mol", true, false, true));
+    TEST_ASSERT(testQuery);
+
+    std::unique_ptr<RWMol> testMol(
+        SmilesToMol("CCC1=CN=C(C=C)C(C2CCCCC2)=C1C"));
+    TEST_ASSERT(testMol);
+
+    MatchVectType mv;
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() > 0);
+
+    testMol.reset(SmilesToMol("CCC1=CN=C(C3=CC=CC=C3)C(C2CCCCC2)=C1C"));
+    TEST_ASSERT(testMol);
+
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() > 0);
+
+    testMol.reset(SmilesToMol("CCC1=CN=C(C3CCCCC3)C(C2CCCCC2)=C1C"));
+    TEST_ASSERT(testMol);
+
+    SubstructMatch(*testMol, *testQuery, mv);
+    TEST_ASSERT(mv.size() == 0);
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -5411,6 +5494,7 @@ void RunTests() {
   testWedgeBondToDoublebond();
   testGithub1615();
   testGithub2000();
+  testAtomQueries();
 #endif
 }
 

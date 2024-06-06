@@ -374,7 +374,7 @@ void testDisableCleanup(std::string rdbase) {
     std::string fName =
         rdbase + "/Code/GraphMol/FileParsers/test_data/3505.mol2";
     bool sanitize = true, removeHs = true;
-    Mol2Type variant = CORINA;
+    Mol2Type variant = Mol2Type::CORINA;
     {
       bool cleanupSubstructures = true;  // the default
       std::unique_ptr<ROMol> mol(Mol2FileToMol(fName, sanitize, removeHs,

@@ -162,6 +162,7 @@ class MolAtropTest {
 
     if (testToRun == "" || testToRun == "sdfTests") {
       std::list<MolTest> sdfTests{
+          MolTest("atropWedgeTest.sdf", true, 16, 16),
           MolTest("AtropTest.sdf", true, 38, 41),
           MolTest("AtropManyChiralsEnhanced.sdf", true, 20, 20),
           MolTest("AtropManyChiralsEnhanced2.sdf", true, 20, 20),
@@ -222,6 +223,57 @@ class MolAtropTest {
           MolTest("Mrtx1719_atrop2.sdf", true, 33, 37),
           MolTest("Mrtx1719_atrop3.sdf", true, 33, 37),
           MolTest("Mrtx1719_atropBad1.sdf", true, 33, 37),
+          // macrocycles
+          MolTest("macrocycle-9-meta-wedge.sdf", true, 24, 26),
+          MolTest("macrocycle-9-ortho-wedge.sdf", true, 24, 26),
+          MolTest("macrocycle-8-meta-wedge.sdf", true, 23, 25),
+          MolTest("macrocycle-8-ortho-wedge.sdf", true, 23, 25),
+          MolTest("macrocycle-7-meta-wedge.sdf", true, 22, 24),
+          MolTest("macrocycle-7-ortho-wedge.sdf", true, 22, 24),
+          MolTest("macrocycle-6-meta-wedge.sdf", true, 21, 23),
+          MolTest("macrocycle-6-ortho-wedge.sdf", true, 21, 23),
+          MolTest("macrocycle-5-meta-wedge.sdf", true, 20, 22),
+          MolTest("macrocycle-5-ortho-wedge.sdf", true, 20, 22),
+          MolTest("macrocycle-9-meta-Cl-ortho-wedge.sdf", true, 25, 27),
+          MolTest("macrocycle-8-meta-Cl-ortho-wedge.sdf", true, 24, 26),
+          MolTest("macrocycle-7-meta-Cl-ortho-wedge.sdf", true, 23, 25),
+          MolTest("macrocycle-6-meta-Cl-ortho-wedge.sdf", true, 22, 24),
+          MolTest("macrocycle-5-meta-Cl-ortho-wedge.sdf", true, 21, 23),
+          MolTest("macrocycle-9-meta-broken-wedge.sdf", true, 24, 25),
+          MolTest("macrocycle-9-ortho-broken-wedge.sdf", true, 24, 25),
+          MolTest("macrocycle-8-meta-broken-wedge.sdf", true, 23, 24),
+          MolTest("macrocycle-8-ortho-broken-wedge.sdf", true, 23, 24),
+          MolTest("macrocycle-7-meta-broken-wedge.sdf", true, 22, 23),
+          MolTest("macrocycle-7-ortho-broken-wedge.sdf", true, 22, 23),
+          MolTest("macrocycle-6-meta-broken-wedge.sdf", true, 21, 22),
+          MolTest("macrocycle-6-ortho-broken-wedge.sdf", true, 21, 22),
+          MolTest("macrocycle-5-meta-broken-wedge.sdf", true, 20, 21),
+          MolTest("macrocycle-5-ortho-broken-wedge.sdf", true, 20, 21),
+          MolTest("macrocycle-9-meta-hash.sdf", true, 24, 26),
+          MolTest("macrocycle-9-ortho-hash.sdf", true, 24, 26),
+          MolTest("macrocycle-8-meta-hash.sdf", true, 23, 25),
+          MolTest("macrocycle-8-ortho-hash.sdf", true, 23, 25),
+          MolTest("macrocycle-7-meta-hash.sdf", true, 22, 24),
+          MolTest("macrocycle-7-ortho-hash.sdf", true, 22, 24),
+          MolTest("macrocycle-6-meta-hash.sdf", true, 21, 23),
+          MolTest("macrocycle-6-ortho-hash.sdf", true, 21, 23),
+          MolTest("macrocycle-5-meta-hash.sdf", true, 20, 22),
+          MolTest("macrocycle-5-ortho-hash.sdf", true, 20, 22),
+          MolTest("macrocycle-9-meta-Cl-ortho-hash.sdf", true, 25, 27),
+          MolTest("macrocycle-8-meta-Cl-ortho-hash.sdf", true, 24, 26),
+          MolTest("macrocycle-7-meta-Cl-ortho-hash.sdf", true, 23, 25),
+          MolTest("macrocycle-6-meta-Cl-ortho-hash.sdf", true, 22, 24),
+          MolTest("macrocycle-5-meta-Cl-ortho-hash.sdf", true, 21, 23),
+          MolTest("macrocycle-9-meta-broken-hash.sdf", true, 24, 25),
+          MolTest("macrocycle-9-ortho-broken-hash.sdf", true, 24, 25),
+          MolTest("macrocycle-8-meta-broken-hash.sdf", true, 23, 24),
+          MolTest("macrocycle-8-ortho-broken-hash.sdf", true, 23, 24),
+          MolTest("macrocycle-7-meta-broken-hash.sdf", true, 22, 23),
+          MolTest("macrocycle-7-ortho-broken-hash.sdf", true, 22, 23),
+          MolTest("macrocycle-6-meta-broken-hash.sdf", true, 21, 22),
+          MolTest("macrocycle-6-ortho-broken-hash.sdf", true, 21, 22),
+          MolTest("macrocycle-5-meta-broken-hash.sdf", true, 20, 21),
+          MolTest("macrocycle-5-ortho-broken-hash.sdf", true, 20, 21),
       };
 
       for (auto sdfTest : sdfTests) {
@@ -232,6 +284,64 @@ class MolAtropTest {
     }
   }
 };
+
+void testLookForAtropisomersInSDdfFiles(std::string fileName,
+                                        unsigned int expectedHits,
+                                        unsigned int expectedMisses) {
+  BOOST_LOG(rdInfoLog) << "Looking for atropisomers in " << fileName
+                       << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/atropisomers/" + fileName;
+
+  std::ifstream in;
+  in.open(fName);
+  std::string line;
+  unsigned int foundCount = 0;
+  unsigned int notFoundCount = 0;
+  while (!in.eof()) {
+    std::string molBlock = "";
+    while (std::getline(in, line)) {
+      if (line.find("$$$$") != std::string::npos) {
+        break;
+      }
+
+      molBlock += line + "\n";
+    }
+
+    if (molBlock.length() < 10) {
+      continue;  // try for another;
+    }
+
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock, false, false, false));
+    TEST_ASSERT(mol != nullptr);
+
+    auto hasAtropisomers = RDKit::Atropisomers::doesMolHaveAtropisomers(*mol);
+
+    if (hasAtropisomers) {
+      BOOST_LOG(rdInfoLog) << "Found atropisomers in " << fileName << std::endl;
+      foundCount++;
+      printf("Atropisomers- %d hits   %d misses\r", foundCount, notFoundCount);
+      std::flush(std::cout);
+      std::ofstream out;
+      out.open(fName + "_" + std::to_string(foundCount) + ".sdf");
+      out << molBlock << std::endl;
+    } else {
+      notFoundCount++;
+      if (notFoundCount % 100 == 0) {
+        printf("Atropisomers- %d hits   %d misses\r", foundCount,
+               notFoundCount);
+        std::flush(std::cout);
+      }
+    }
+  }
+  printf("\nFinal results:\nFound atropisomers in %s - %d hits   %d misses\n",
+         fileName.c_str(), foundCount, notFoundCount);
+
+  TEST_ASSERT(foundCount == expectedHits);
+  TEST_ASSERT(notFoundCount == expectedMisses);
+}
 
 int main(int argc, char *argv[]) {
   (void)argc;
@@ -254,6 +364,7 @@ int main(int argc, char *argv[]) {
   BOOST_LOG(rdInfoLog) << " ---- Running with POSIX locale ----- " << std::endl;
 
   molAtropTest.RunTests();
+  testLookForAtropisomersInSDdfFiles("TestMultInSDF.sdf", 1, 4);
 
   return 0;
 }

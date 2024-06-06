@@ -29,7 +29,7 @@
 ## Web presence
 
   * [RDKit web page](https://rdkit.org)
-  * [Blog](https://rdkit.blogspot.com)
+  * [Blog](https://greglandrum.github.io/rdkit-blog/)
   * [Documentation](https://www.rdkit.org/docs/index.html)
 
 #### Materials from user group meetings
@@ -67,6 +67,8 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
 
 ## Projects using RDKit
 
+- [ROBERT](https://github.com/jvalegre/robert) - Automated Machine Learning Protocols
+- [AQME](https://github.com/jvalegre/aqme) - Automated Quantum Mechanical Environment
 - [chemprop](https://github.com/chemprop/chemprop) - message passing neural networks for molecular property prediction
 - [RMG](https://github.com/ReactionMechanismGenerator/RMG-Py) - Reaction Mechanism Generator
 - [RDMC](https://github.com/xiaoruiDong/RDMC) - Reaction Data and Molecular Conformers - package for dealing with reactions, molecules, conformers, mainly in 3D

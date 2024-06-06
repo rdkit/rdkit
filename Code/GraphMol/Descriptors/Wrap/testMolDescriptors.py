@@ -726,6 +726,49 @@ class TestCase(unittest.TestCase):
     rdMD.CalcOxidationNumbers(ferrocene)
     self.assertEqual(ferrocene.GetAtomWithIdx(10).GetProp('OxidationNumber'), '2')
 
+  def testDCLV(self):
+    rdbase = environ["RDBASE"]
+    fname1 = str(Path(rdbase) / 'Code' / 'GraphMol' / 'Descriptors' / 'test_data' / '1mup.pdb')
+    mol1 = Chem.MolFromPDBFile(fname1, sanitize=False, removeHs=False)
+
+    # test default params
+    default = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=False)
+
+    self.assertTrue(abs(default.GetSurfaceArea() - 8330.59) < 0.05)
+    self.assertTrue(abs(default.GetVolume() - 31789.6) < 0.05)
+    self.assertTrue(abs(default.GetVDWVolume() - 15355.3) < 0.05)
+    self.assertTrue(abs(default.GetCompactness() - 1.7166) < 0.05)
+    self.assertTrue(abs(default.GetPackingDensity() - 0.48303) < 0.05)
+
+    # test set depth and radius
+    depthrad = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=False, probeRadius=1.6, depth=6)
+
+    self.assertTrue(abs(depthrad.GetSurfaceArea() - 8186.06) < 0.05)
+    self.assertTrue(abs(depthrad.GetVolume() - 33464.5) < 0.05)
+    self.assertTrue(abs(depthrad.GetVDWVolume() - 15350.7) < 0.05)
+    self.assertTrue(abs(depthrad.GetCompactness() - 1.63005) < 0.05)
+    self.assertTrue(abs(depthrad.GetPackingDensity() - 0.458717) < 0.05)
+
+    # test include ligand
+    withlig = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=True)
+
+    self.assertTrue(abs(withlig.GetSurfaceArea() - 8010.56) < 0.05)
+    self.assertTrue(abs(withlig.GetVolume() - 31228.4) < 0.05)
+    self.assertTrue(abs(withlig.GetVDWVolume() - 15155.7) < 0.05)
+    self.assertTrue(abs(withlig.GetCompactness() - 1.67037) < 0.05)
+    self.assertTrue(abs(withlig.GetPackingDensity() - 0.48532) < 0.05)
+    
+    fname2 = str(Path(rdbase) / 'Code' / 'GraphMol' / 'Descriptors' / 'test_data' / 'TZL_model.sdf')
+    suppl = Chem.SDMolSupplier(fname2)
+    for mol in suppl:
+        mol2 = mol
+
+    # test from SDF file with defaults
+    sdf = rdMD.DoubleCubicLatticeVolume(mol2, isProtein=False)
+
+    self.assertTrue(abs(sdf.GetSurfaceArea() - 296.466) < 0.05)
+    self.assertTrue(abs(sdf.GetVolume() - 411.972) < 0.05)
+    self.assertTrue(abs(sdf.GetVDWVolume() - 139.97) < 0.05)
 
 if __name__ == '__main__':
   unittest.main()

@@ -75,18 +75,22 @@ std::vector<T> LazyCartesianProduct<T>::entryAt(uint1024_t pos) const {
 std::vector<unsigned int> possibleValences(
     const RDKit::Atom *atom,
     const std::unordered_map<int, std::vector<unsigned int>> &atomicValence) {
-  auto atomNum = atom->getAtomicNum();
+  auto atomNum = atom->getAtomicNum() - atom->getFormalCharge();
   auto numBonds = atom->getDegree();
 
+  std::vector<unsigned int> avalences;
   auto valences = atomicValence.find(atomNum);
-  if (valences == atomicValence.end()) {
-    std::stringstream ss;
-    ss << "determineBondOrdering() does not work with element "
-       << RDKit::PeriodicTable::getTable()->getElementSymbol(atomNum);
-    throw ValueErrorException(ss.str());
+  if (valences != atomicValence.end()) {
+    avalences = valences->second;
+  } else {
+    for (auto v : RDKit::PeriodicTable::getTable()->getValenceList(atomNum)) {
+      if (v >= 0) {
+        avalences.push_back(v);
+      }
+    }
   }
   std::vector<unsigned int> possible;
-  for (const auto &valence : valences->second) {
+  for (const auto &valence : avalences) {
     if (numBonds <= valence) {
       possible.push_back(valence);
     }
@@ -264,7 +268,8 @@ void setAtomicCharges(RWMol &mol, const std::vector<unsigned int> &valency,
   int molCharge = 0;
   for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
     auto atom = mol.getAtomWithIdx(i);
-    int atomCharge = getAtomicCharge(atom->getAtomicNum(), valency[i]);
+    int atomCharge = getAtomicCharge(
+        atom->getAtomicNum() - atom->getFormalCharge(), valency[i]);
     molCharge += atomCharge;
     if (atom->getAtomicNum() == 6) {
       if (atom->getDegree() == 2 && valency[i] == 2) {
@@ -321,8 +326,10 @@ void addBondOrdering(RWMol &mol,
 
   for (unsigned int i = 0; i < numAtoms; i++) {
     for (unsigned int j = i + 1; j < numAtoms; j++) {
-      if (ordMat[i][j] == 0 || ordMat[i][j] == 1) {
+      if (ordMat[i][j] == 0) {
         continue;
+      } else if (ordMat[i][j] == 1) {
+        mol.getBondBetweenAtoms(i, j)->setBondType(Bond::BondType::SINGLE);
       } else if (ordMat[i][j] == 2) {
         mol.getBondBetweenAtoms(i, j)->setBondType(Bond::BondType::DOUBLE);
       } else if (ordMat[i][j] == 3) {
@@ -340,8 +347,11 @@ void addBondOrdering(RWMol &mol,
   }
 
   if (MolOps::getFormalCharge(mol) != charge) {
+    mol.debugMol(std::cerr);
     std::stringstream ss;
-    ss << "Final molecular charge does not match input; could not find valid bond ordering";
+    ss << "Final molecular charge (" << charge << ") does not match input ("
+       << MolOps::getFormalCharge(mol)
+       << "); could not find valid bond ordering";
     throw ValueErrorException(ss.str());
   }
 

@@ -149,7 +149,7 @@ class MarvinAtom {
   bool isElement() const;
 
   std::string toString() const;
-  ptree toPtree() const;
+  ptree toPtree(unsigned int coordinatePrecision = 6) const;
 };
 
 class MarvinBondStereo {
@@ -246,6 +246,7 @@ class MarvinMolBase {
  public:
   std::string molID;
   std::string id;  // used in all sGroups
+  unsigned int coordinatePrecision = 6;
   std::vector<MarvinAtom *> atoms;  // owned by parent MarvinMol
   std::vector<MarvinBond *> bonds;  // owned by parent MarvinMol
   std::vector<std::unique_ptr<MarvinMolBase>> sgroups;
@@ -263,6 +264,8 @@ class MarvinMolBase {
 
   virtual void removeOwnedAtom(MarvinAtom *atom);
   virtual void removeOwnedBond(MarvinBond *bond);
+
+  void setPrecision(unsigned int precision);
 
   int getExplicitValence(const MarvinAtom &marvinAtom) const;
 

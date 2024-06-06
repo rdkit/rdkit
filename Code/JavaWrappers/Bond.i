@@ -47,6 +47,8 @@
 %ignore RDKit::Bond::setBeginAtom(Atom *at);
 %ignore RDKit::Bond::setEndAtom(Atom *at);
 %ignore RDKit::getTwiceBondType(const RDKit::Bond &b);
+%ignore RDKit::Bond::setQuery;
+%ignore RDKit::Bond::expandQuery;
 
 %include <GraphMol/Bond.h>
 
@@ -60,7 +62,7 @@
   /* Methods from MolFileStereoChem.h */
   Bond::BondDir DetermineBondWedgeState(const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>> &wedgeBonds,
                                         const RDKit::Conformer *conf) {
-    RDKit::DetermineBondWedgeState(($self), wedgeBonds, conf);
+    return RDKit::DetermineBondWedgeState(($self), wedgeBonds, conf);
   }
   
   /* Based on corresponding methods in Atom.i */

@@ -2644,9 +2644,9 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(static_cast<size_t>(!sssparams.useChirality)));
     CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(static_cast<size_t>(!sssparams.useChirality)));
   }
 
   SECTION("chiral center w/ implicit H in linear mol") {
@@ -2665,9 +2665,9 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(static_cast<size_t>(!sssparams.useChirality)));
     CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(static_cast<size_t>(!sssparams.useChirality)));
   }
 
   SECTION("fully substituted, asymmetric chiral atoms (2) in ring") {
@@ -2686,9 +2686,9 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(!sssparams.useChirality));
     CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(!sssparams.useChirality));
   }
 
   SECTION("partially substituted, asymmetric chiral atoms (2) in ring") {
@@ -2707,8 +2707,155 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     CHECK(SubstructMatch(*mol1, *qmol1, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol2, sssparams).size() == 1);
     CHECK(SubstructMatch(*mol2, *qmol1, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(!sssparams.useChirality));
     CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
-          !sssparams.useChirality);
+          static_cast<size_t>(!sssparams.useChirality));
+  }
+}
+
+TEST_CASE(
+    "Github #5499: STEREOANY bonds lead to non-stable SMILES/SMARTS strings") {
+  SECTION("as reported") {
+    std::string mb = R"CTAB(7643724
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 2.776307 0.296081 0.000000 0
+M  V30 2 N 2.708144 -1.320684 0.000000 0
+M  V30 3 N 2.976836 -2.283790 0.000000 0
+M  V30 4 N 4.328520 -0.579106 0.000000 0
+M  V30 5 C 1.812993 0.027197 0.000000 0
+M  V30 6 C 1.770944 -0.971719 0.000000 0
+M  V30 7 C 3.329205 -0.537040 0.000000 0
+M  V30 8 C 3.124872 1.233298 0.000000 0
+M  V30 9 C 0.968792 0.563284 0.000000 0
+M  V30 10 C 0.884677 -1.434947 0.000000 0
+M  V30 11 C 0.082334 0.100263 0.000000 0
+M  V30 12 C 0.040268 -0.899052 0.000000 0
+M  V30 13 C 2.487521 2.003850 0.000000 0
+M  V30 14 C 2.836086 2.941066 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 5
+M  V30 2 1 1 7
+M  V30 3 1 1 8
+M  V30 4 1 2 3
+M  V30 5 1 2 6
+M  V30 6 1 2 7
+M  V30 7 2 4 7 CFG=2
+M  V30 8 2 5 6
+M  V30 9 1 5 9
+M  V30 10 1 6 10
+M  V30 11 1 8 13
+M  V30 12 2 9 11
+M  V30 13 2 10 12
+M  V30 14 1 11 12
+M  V30 15 2 13 14
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB";
+    auto params = v2::FileParsers::MolFileParserParams();
+    params.sanitize = false;
+    auto m = v2::FileParsers::MolFromMolBlock(mb, params);
+    REQUIRE(m);
+    auto osmi = MolToSmiles(*m);
+    auto smiparams = v2::SmilesParse::SmilesParserParams();
+    smiparams.sanitize = false;
+    auto m2 = v2::SmilesParse::MolFromSmiles(osmi, smiparams);
+    REQUIRE(m2);
+    CHECK(MolToSmiles(*m2) == osmi);
+  }
+}
+
+TEST_CASE("leaks on unclosed rings") {
+  // These are Ok except for the unmatched ring closures
+  SECTION("Ok SMARTS") {
+    auto m = "C1.C2.C3.C4.C5"_smarts;
+    REQUIRE(!m);
+  }
+  SECTION("Ok SMILES") {
+    auto m = "C1.C2.C3.C4.C5"_smiles;
+    REQUIRE(!m);
+  }
+  // These are bogus, but fail parsing AFTER we've seen
+  // the unmatched ring closure
+  SECTION("Bad SMARTS") {
+    auto m = "C1C)foo"_smarts;
+    REQUIRE(!m);
+  }
+  SECTION("Bad SMILES") {
+    auto m = "C1C)foo"_smiles;
+    REQUIRE(!m);
+  }
+}
+
+TEST_CASE("Github #7295") {
+  SECTION("basics") {
+    auto m = "C[C@@H]1CC[C@@H](C(=O)O)CC1.Cl"_smiles;
+    REQUIRE(m);
+    auto smi1 = MolToSmiles(*m);
+    m->clearComputedProps();
+    auto smi2 = MolToSmiles(*m);
+    CHECK(smi1 == smi2);
+    auto m2(*m);
+    bool cleanIt = true;
+    MolOps::assignStereochemistry(m2, cleanIt);
+    auto smi3 = MolToSmiles(m2);
+    CHECK(smi1 == smi3);
+  }
+}
+
+TEST_CASE("CX_BOND_ATROPISOMER option requires ring info", "[bug][cxsmiles]") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase +
+      "/Code/GraphMol/FileParsers/test_data/atropisomers/RP-6306_atrop1.sdf";
+
+  auto m = v2::FileParsers::MolFromMolFile(fName);
+  REQUIRE(m);
+
+  auto atropBond = m->getBondWithIdx(3);
+  REQUIRE(atropBond->getStereo() == Bond::STEREOATROPCW);
+
+  // Clear ring info to check that atropisomer wedging doesn't fail
+  // if the info is not present
+  bool includeRingInfo = true;
+  m->clearComputedProps(includeRingInfo);
+
+  auto ps = SmilesWriteParams();
+  auto flags = SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER;
+
+  // This will fail if there's no ring information
+  auto smi = MolToCXSmiles(*m, ps, flags);
+  CHECK(smi == "Cc1cc2c(C(N)=O)c(N)n(-c3c(C)ccc(O)c3C)c2nc1C |wD:10.9|");
+}
+
+TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
+  SECTION("basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "N[Fe]<-N");
+    SmilesWriteParams ps;
+    ps.includeDativeBonds = false;
+    auto newSmi = MolToSmiles(*m, ps);
+    CHECK(newSmi == "N[Fe][NH3]");
+    // ensure that representation round trips:
+    auto m2 = v2::SmilesParse::MolFromSmiles(newSmi);
+    REQUIRE(m2);
+    CHECK(MolToSmiles(*m2) == smi);
+  }
+  SECTION("SMARTS basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToSmarts(*m);
+    CHECK(smi == "[#7H3]->[Fe]-[#7H2]");
+    SmilesWriteParams ps;
+    ps.includeDativeBonds = false;
+    auto newSmi = MolToSmarts(*m, ps);
+    CHECK(newSmi == "[#7H3]-[Fe]-[#7H2]");
   }
 }

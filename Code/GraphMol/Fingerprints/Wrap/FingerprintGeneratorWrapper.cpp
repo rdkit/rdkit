@@ -449,7 +449,7 @@ python::object getBitPathsHelper(const AdditionalOutput &ao) {
     }
     res[pr.first] = python::tuple(local);
   }
-  return std::move(res);
+  return res;
 }
 python::object getBitInfoMapHelper(const AdditionalOutput &ao) {
   if (!ao.bitInfoMap) {
@@ -464,7 +464,7 @@ python::object getBitInfoMapHelper(const AdditionalOutput &ao) {
     }
     res[pr.first] = python::tuple(local);
   }
-  return std::move(res);
+  return res;
 }
 
 namespace {
@@ -657,7 +657,8 @@ void wrapGenerator(const std::string &nm) {
            "generator\n\n"
            "  RETURNS: an information string\n\n")
       .def("GetOptions", getOptions<T>,
-           python::return_value_policy<python::reference_existing_object>(),
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>(),
            python::args("self"), "return the fingerprint options object");
 }
 

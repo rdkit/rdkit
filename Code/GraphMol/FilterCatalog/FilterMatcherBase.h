@@ -60,9 +60,6 @@ struct RDKIT_FILTERCATALOG_EXPORT FilterMatch {
               MatchVectType atomPairs)
       : filterMatch(std::move(filter)), atomPairs(std::move(atomPairs)) {}
 
-  FilterMatch(const FilterMatch &rhs)
-      : filterMatch(rhs.filterMatch), atomPairs(rhs.atomPairs) {}
-
   bool operator==(const FilterMatch &rhs) const {
     return (filterMatch.get() == rhs.filterMatch.get() &&
             atomPairs == rhs.atomPairs);

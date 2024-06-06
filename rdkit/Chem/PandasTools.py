@@ -113,10 +113,13 @@ The standard ForwardSDMolSupplier keywords are also available:
 
 Conversion to html is quite easy:
 
+>>> PandasTools.molRepresentation = 'svg' #< the default is 'png', for png representation
 >>> htm = frame.to_html()
 ...
 >>> str(htm[:36])
 '<table border="1" class="dataframe">'
+>>> PandasTools.molRepresentation = 'png' #< switch back to the default
+
 
 In order to support rendering the molecules as images in the HTML export of the
 dataframe, we use a custom formatter for columns containing RDKit molecules,
@@ -235,11 +238,14 @@ else:
 
   def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
               isomericSmiles=True, smilesName=None, embedProps=False, removeHs=True,
-              strictParsing=True):
+              strictParsing=True, sanitize=True):
     '''Read file in SDF format and return as Pandas data frame.
       If embedProps=True all properties also get embedded in Mol objects in the molecule column.
       If molColName=None molecules would not be present in resulting DataFrame (only properties
       would be read).
+      
+      Sanitize boolean is passed on to Chem.ForwardSDMolSupplier sanitize. 
+      If neither molColName nor smilesName are set, sanitize=false.
       '''
     if isinstance(filename, str):
       if filename.lower()[-3:] == ".gz":
@@ -253,7 +259,8 @@ else:
       close = None  # don't close an open file that was passed in
     records = []
     indices = []
-    sanitize = bool(molColName is not None or smilesName is not None)
+    if molColName is None and smilesName is None:
+      sanitize = False
     for i, mol in enumerate(
         Chem.ForwardSDMolSupplier(f, sanitize=sanitize, removeHs=removeHs,
                                   strictParsing=strictParsing)):

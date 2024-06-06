@@ -198,6 +198,8 @@ struct atom_wrapper {
              "Returns the number of implicit Hs on the atom.\n")
         .def("GetTotalValence", &Atom::getTotalValence, python::args("self"),
              "Returns the total valence (explicit + implicit) of the atom.\n\n")
+        .def("HasValenceViolation", &Atom::hasValenceViolation,
+             "Returns whether the atom has a valence violation or not.\n\n")
 
         .def("GetFormalCharge", &Atom::getFormalCharge, python::args("self"))
         .def("SetFormalCharge", &Atom::setFormalCharge,
@@ -521,6 +523,9 @@ These cannot currently be constructed directly from Python\n";
         ">>> Chem.SetSupplementalSmilesLabel(m.GetAtomWithIdx(0), '<xxx>')\n"
         ">>> Chem.MolToSmiles(m)\n"
         "'C<xxx>'\n");
+    python::def(
+        "GetNumPiElectrons", numPiElectrons, (python::arg("atom")),
+        "Returns the number of electrons an atom is using for pi bonding");
   }
 };
 }  // namespace RDKit

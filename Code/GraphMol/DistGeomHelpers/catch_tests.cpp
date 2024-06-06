@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2021-2024 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -13,15 +13,20 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/test_fixtures.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include <tuple>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 using namespace RDKit;
 
@@ -744,5 +749,240 @@ TEST_CASE("Sequential random seeds") {
     CHECK(cids2.size() == 5);
 
     compareConfs(mol.get(), &mol2, 5, 0);
+  }
+}
+
+TEST_CASE("Macrocycle bounds matrix") {
+  SECTION("basics") {
+    auto mol = "C1/C=C/C=C/CCCCCCCCC1"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm, true, false, true);
+    CHECK(bm->getLowerBound(1, 18) > 2.6);
+    CHECK(bm->getLowerBound(1, 18) < 2.7);
+    CHECK(bm->getLowerBound(4, 17) > 2.6);
+    CHECK(bm->getLowerBound(4, 17) < 2.7);
+
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0;
+
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid >= 0);
+    const auto conf = mol->getConformer(cid);
+    RDGeom::Point3D pos_1 = conf.getAtomPos(1);
+    RDGeom::Point3D pos_4 = conf.getAtomPos(4);
+    CHECK((pos_1 - pos_4).length() < 3.6);
+    CHECK((pos_1 - pos_4).length() > 3.5);
+  }
+}
+
+TEST_CASE("atropisomers and embedding") {
+  SECTION("basics") {
+    auto mol =
+        "Cc1cccc(O)c1-c1c(N)cccc1Cl |(-8.88571,2.09707,;-8.17143,3.33425,;-6.74286,3.33425,;-6.02857,4.57143,;-6.74286,5.80861,;-8.17143,5.80861,;-8.88571,7.04579,;-8.88571,4.57143,;-10.3143,4.57143,;-11.0286,5.80861,;-10.3143,7.04579,;-12.4571,5.80861,;-13.1714,4.57143,;-12.4571,3.33425,;-11.0286,3.33425,;-10.3143,2.09707,),wU:8.15|"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondWithIdx(7)->getBondType() == Bond::BondType::SINGLE);
+    REQUIRE(mol->getBondWithIdx(7)->getStereo() ==
+            Bond::BondStereo::STEREOATROPCCW);
+    MolOps::addHs(*mol);
+    // mol->debugMol(std::cerr);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    {
+      auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+      REQUIRE(cid >= 0);
+      const auto conf = mol->getConformer(cid);
+
+      Atropisomers::AtropAtomAndBondVec abvs[2];
+      REQUIRE(Atropisomers::getAtropisomerAtomsAndBonds(mol->getBondWithIdx(7),
+                                                        abvs, *mol));
+      auto pos_1 = conf.getAtomPos(7);
+      auto pos_2 = conf.getAtomPos(8);
+      auto pos_3 = conf.getAtomPos(1);
+      auto pos_4 = conf.getAtomPos(9);
+      auto v2 = pos_2 - pos_1;
+      auto v3 = pos_3 - pos_1;
+      auto v4 = pos_4 - pos_1;
+      auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
+      CHECK(chiralVol < 0);
+    }
+    {
+      RWMol mol2(*mol);
+      mol2.getBondWithIdx(7)->setStereo(Bond::BondStereo::STEREOATROPCW);
+
+      auto cid = DGeomHelpers::EmbedMolecule(mol2, ps);
+      REQUIRE(cid >= 0);
+      const auto conf = mol2.getConformer(cid);
+
+      Atropisomers::AtropAtomAndBondVec abvs[2];
+      REQUIRE(Atropisomers::getAtropisomerAtomsAndBonds(mol2.getBondWithIdx(7),
+                                                        abvs, mol2));
+      auto pos_1 = conf.getAtomPos(7);
+      auto pos_2 = conf.getAtomPos(8);
+      auto pos_3 = conf.getAtomPos(1);
+      auto pos_4 = conf.getAtomPos(9);
+      auto v2 = pos_2 - pos_1;
+      auto v3 = pos_3 - pos_1;
+      auto v4 = pos_4 - pos_1;
+      auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
+      CHECK(chiralVol > 0);
+    }
+  }
+}
+
+TEST_CASE("atropisomers bulk") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/atropisomers.sdf";
+  SDMolSupplier sdsup(fname);
+
+  auto params = DGeomHelpers::ETKDGv3;
+  params.randomSeed = 0xf00d + 1;
+
+  for (auto i = 0u; i < sdsup.length(); ++i) {
+    std::unique_ptr<RWMol> mol(static_cast<RWMol *>(sdsup[i]));
+    REQUIRE(mol);
+    auto bondIdx = mol->getProp<unsigned int>("atrop bond");
+    REQUIRE((mol->getBondWithIdx(bondIdx)->getStereo() ==
+                 Bond::BondStereo::STEREOATROPCCW ||
+             mol->getBondWithIdx(bondIdx)->getStereo() ==
+                 Bond::BondStereo::STEREOATROPCW));
+    auto atropInfo = mol->getProp<std::string>("atrop volume");
+    std::vector<std::string> tokens;
+    boost::split(tokens, atropInfo, boost::is_any_of(" \t"));
+    REQUIRE(tokens.size() == 5);
+    std::vector<unsigned int> atropAtoms(4);
+    for (auto j = 0u; j < 4u; ++j) {
+      atropAtoms[j] = std::stol(tokens[j]);
+    }
+    int vol = std::stol(tokens[4]);
+
+    MolOps::addHs(*mol);
+    unsigned int nconfs = 20;
+    {
+      auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, nconfs, params);
+      CHECK(cids.size() == nconfs);
+      for (auto cid : cids) {
+        const auto conf = mol->getConformer(cid);
+        std::vector<RDGeom::Point3D> pts;
+        for (auto idx : atropAtoms) {
+          pts.push_back(conf.getAtomPos(idx));
+        }
+        auto v2 = pts[1] - pts[0];
+        auto v3 = pts[2] - pts[0];
+        auto v4 = pts[3] - pts[0];
+        auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
+        INFO(cid << MolToV3KMolBlock(*mol, true, cid));
+        CHECK(chiralVol * vol > 0);
+      }
+    }  // now swap the stereo and see if it still works
+    mol->getBondWithIdx(bondIdx)->setStereo(
+        mol->getBondWithIdx(bondIdx)->getStereo() ==
+                Bond::BondStereo::STEREOATROPCCW
+            ? Bond::BondStereo::STEREOATROPCW
+            : Bond::BondStereo::STEREOATROPCCW);
+    {
+      auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, nconfs, params);
+      CHECK(cids.size() == nconfs);
+      for (auto cid : cids) {
+        const auto conf = mol->getConformer(cid);
+        std::vector<RDGeom::Point3D> pts;
+        for (auto idx : atropAtoms) {
+          pts.push_back(conf.getAtomPos(idx));
+        }
+        auto v2 = pts[1] - pts[0];
+        auto v3 = pts[2] - pts[0];
+        auto v4 = pts[3] - pts[0];
+        auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
+        INFO(cid << MolToV3KMolBlock(*mol, true, cid));
+        CHECK(chiralVol * vol < 0);
+      }
+    }
+  }
+}
+
+TEST_CASE(
+    "Github #7109: wrong stereochemistry in ring from stereospecific SMILES") {
+  SECTION("basics") {
+    auto m = "C1[C@H](C#CC#C)CC[C@H](C#CC#C)C1"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    REQUIRE(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    REQUIRE(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::KDG;
+    {  // this always worked
+      ps.randomSeed = 0xC0FFEE;
+      auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+      CHECK(cid >= 0);
+      MolOps::assignStereochemistryFrom3D(*m, cid);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+      CHECK(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    }
+    {  // this failed
+      ps.randomSeed = 0xC0FFEE + 123;
+      auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+      CHECK(cid >= 0);
+      MolOps::assignStereochemistryFrom3D(*m, cid);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+      CHECK(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    }
+  }
+}
+
+TEST_CASE("Github #7181: ET terms applied to constrained atoms") {
+  SECTION("basics") {
+    auto templ =
+        "CNc1ccc(OC)cc1 |(-3.3363,0.129414,1.28582;-2.44714,-0.687978,0.507453;-1.11383,-0.29452,0.197587;-0.622766,0.911164,0.645083;0.652332,1.29026,0.350281;1.45603,0.462513,-0.400278;2.7718,0.891528,-0.684446;3.83908,0.0736652,-0.224516;0.984393,-0.734112,-0.850528;-0.300532,-1.12218,-0.556656)|"_smiles;
+    REQUIRE(templ);
+    auto mol = "COc1ccc(NC(C)C)cc1"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    auto matches = SubstructMatch(*mol, *templ);
+    REQUIRE(matches.size() == 1);
+
+    auto tconf = templ->getConformer();
+    std::map<int, RDGeom::Point3D> cmap;
+    for (auto [ti, mi] : matches[0]) {
+      cmap[mi] = tconf.getAtomPos(ti);
+    }
+
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xC0FFEE;
+    ps.coordMap = &cmap;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid >= 0);
+    auto imatch = matches[0];
+    for (auto &[ti, mi] : imatch) {
+      std::swap(ti, mi);
+    }
+    auto rmsd = MolAlign::alignMol(*mol, *templ, cid, -1, &imatch);
+    CHECK(rmsd < 0.2);
+  }
+}
+
+TEST_CASE("terminal groups in pruning") {
+  SECTION("basics") {
+    std::vector<std::string> smiles = {"FCC(=O)O", "FCC(=O)[O-]",
+                                       "FCC(=N)[NH-]", "FCS(=O)(=O)O",
+                                       "FCP(=O)(O)O"};
+    for (const auto &smi : smiles) {
+      auto mol = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(mol);
+      MolOps::addHs(*mol);
+      DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+      ps.randomSeed = 0xc0ffee;
+      ps.pruneRmsThresh = 0.5;
+
+      auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, ps);
+      CHECK(cids.size() == 1);
+
+      ps.symmetrizeConjugatedTerminalGroupsForPruning = false;
+      cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, ps);
+      CHECK(cids.size() >= 2);
+    }
   }
 }

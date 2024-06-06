@@ -301,8 +301,12 @@ RDKIT_GRAPHMOL_EXPORT void setStereoForBond(ROMol &mol, Bond *bond,
 /// returns a map from bond idx -> controlling atom idx
 RDKIT_GRAPHMOL_EXPORT
 std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
-    const ROMol &mol, const BondWedgingParameters *params = nullptr,
-    const Conformer *conf = nullptr);
+    const ROMol &mol, const BondWedgingParameters *params = nullptr);
+
+RDKIT_GRAPHMOL_EXPORT
+std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
+    const ROMol &mol, const BondWedgingParameters *params,
+    const Conformer *conf);
 
 RDKIT_GRAPHMOL_EXPORT void wedgeMolBonds(
     ROMol &mol, const Conformer *conf = nullptr,
@@ -317,8 +321,11 @@ RDKIT_GRAPHMOL_EXPORT bool shouldBeACrossedBond(const Bond *bond);
 //! Clears existing bond wedging and forces use of atom wedging from MolBlock.
 /*!
  \param mol: molecule to have its wedges altered
+ \param allBondTypes: reapply the wedging also on bonds other than single and
+ aromatic ones
  */
-RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol,
+                                                  bool allBondTypes = true);
 //! Remove MolBlock bond wedging information from molecule.
 /*!
  \param mol: molecule to modify
@@ -351,6 +358,45 @@ RDKIT_GRAPHMOL_EXPORT void GetMolFileBondStereoInfo(
     const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
         &wedgeBonds,
     const Conformer *conf, Bond::BondDir &dir, bool &reverse);
+
+//! add R/S, relative stereo, and E/Z annotations to atoms and bonds
+/*!
+ \param mol: molecule to modify
+ \param absLabel: label for atoms in an ABS stereo group
+ \param orLabel: label for atoms in an OR stereo group
+ \param andLabel: label for atoms in an AND stereo group
+ \param cipLabel: label for chiral atoms that aren't in a stereo group.
+ \param bondLabel: label for CIP stereochemistry on bonds
+
+ If any label is empty, the corresponding annotations will not be added.
+
+ The labels can contain the following placeholders:
+   {id} - the stereo group's index
+   {cip} - the atom or bond's CIP stereochemistry
+
+ Note that CIP labels will only be added if CIP stereochemistry has been
+ assigned to the molecule.
+
+ */
+RDKIT_GRAPHMOL_EXPORT void addStereoAnnotations(
+    ROMol &mol, std::string absLabel = "abs ({cip})",
+    std::string orLabel = "or{id}", std::string andLabel = "and{id}",
+    std::string cipLabel = "({cip})", std::string bondLabel = "({cip})");
+
+//! simplifies the stereochemical representation of a molecule where all
+//! specified stereocenters are in the same StereoGroup
+/*!
+ \param mol: molecule to modify
+ \param removeAffectedStereoGroups: if set then the affected StereoGroups will
+ be removed
+
+If all specified stereocenters are in the same AND or OR stereogroup, a
+moleculeNote property will be set on the molecule with the value "AND
+enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
+
+*/
+RDKIT_GRAPHMOL_EXPORT void simplifyEnhancedStereo(
+    ROMol &mol, bool removeAffectedStereoGroups = true);
 
 }  // namespace Chirality
 }  // namespace RDKit

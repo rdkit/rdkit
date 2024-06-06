@@ -400,15 +400,15 @@ extern "C" bool isValidMolBlob(char *data, int len) {
 }
 
 extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
-                             bool cxSmiles) {
+                             bool cxSmiles, bool doIsomeric) {
   auto *mol = (ROMol *)data;
 
   try {
     if (!asSmarts) {
       if (!cxSmiles) {
-        StringData = MolToSmiles(*mol);
+        StringData = MolToSmiles(*mol, doIsomeric);
       } else {
-        StringData = MolToCXSmiles(*mol);
+        StringData = MolToCXSmiles(*mol, doIsomeric);
       }
     } else {
       if (!cxSmiles) {

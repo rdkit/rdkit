@@ -49,7 +49,6 @@ using std::regex;
 using std::regex_match;
 using std::smatch;
 
-
 namespace RDKit {
 
 namespace FileParserUtils {
@@ -423,6 +422,10 @@ void ParseRadicalLine(RWMol *mol, const std::string &text, bool firstCall,
       spos += 4;
 
       switch (rad) {
+        case 0:
+          // This shouldn't be required, but let's make sure.
+          mol->getAtomWithIdx(aid - 1)->setNumRadicalElectrons(0);
+          break;
         case 1:
           mol->getAtomWithIdx(aid - 1)->setNumRadicalElectrons(2);
           break;
@@ -1172,6 +1175,9 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
       a->setQuery(makeAtomNumQuery(atNum));
     } else {
       a->expandQuery(makeAtomNumQuery(atNum), Queries::COMPOSITE_OR, true);
+      // For COMPOSITE_OR query atoms, reset atomic num to 0 such that they are
+      // exported as "*" in SMILES
+      a->setAtomicNum(0);
     }
   }
   ASSERT_INVARIANT(a, "no atom built");
@@ -2911,6 +2917,80 @@ void processMrvImplicitH(RWMol &mol, const SubstanceGroup &sg) {
   }
 }
 
+void processZBO(RWMol &mol, const SubstanceGroup &sg) {
+  for (auto bidx : sg.getBonds()) {
+    auto bond = mol.getBondWithIdx(bidx);
+    bond->setBondType(Bond::BondType::ZERO);
+  }
+}
+
+void processZCH(RWMol &mol, const SubstanceGroup &sg) {
+  RDUNUSED_PARAM(mol);
+  std::vector<std::string> dataFields;
+  if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
+    if (dataFields.empty()) {
+      BOOST_LOG(rdWarningLog)
+          << "ignoring ZCHG SGroup without data fields." << std::endl;
+      return;
+    }
+    for (const auto &df : dataFields) {
+      std::string trimmed = boost::trim_copy(df);
+      std::vector<std::string> splitLine;
+      boost::split(splitLine, trimmed, boost::is_any_of(";"),
+                   boost::token_compress_off);
+      const auto &aids = sg.getAtoms();
+      if (splitLine.size() < aids.size()) {
+        BOOST_LOG(rdWarningLog)
+            << "DATAFIELDS in ZCH SGroup is shorter than the number of atoms in the SGroup. Ignoring it."
+            << std::endl;
+        continue;
+      }
+      for (auto i = 0u; i < aids.size(); ++i) {
+        auto aid = aids[i];
+        auto atom = mol.getAtomWithIdx(aid);
+        auto val = 0;
+        if (!splitLine[i].empty()) {
+          val = FileParserUtils::toInt(splitLine[i]);
+        }
+        atom->setFormalCharge(val);
+      }
+    }
+  }
+}
+void processHYD(RWMol &mol, const SubstanceGroup &sg) {
+  std::vector<std::string> dataFields;
+  if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
+    if (dataFields.empty()) {
+      BOOST_LOG(rdWarningLog)
+          << "ignoring HYD SGroup without data fields." << std::endl;
+      return;
+    }
+    for (const auto &df : dataFields) {
+      std::string trimmed = boost::trim_copy(df);
+      std::vector<std::string> splitLine;
+      boost::split(splitLine, trimmed, boost::is_any_of(";"),
+                   boost::token_compress_off);
+      const auto &aids = sg.getAtoms();
+      if (splitLine.size() < aids.size()) {
+        BOOST_LOG(rdWarningLog)
+            << "DATAFIELDS in HYD SGroup is shorter than the number of atoms in the SGroup. Ignoring it."
+            << std::endl;
+        continue;
+      }
+      for (auto i = 0u; i < aids.size(); ++i) {
+        auto aid = aids[i];
+        auto atom = mol.getAtomWithIdx(aid);
+        auto val = 0;
+        if (!splitLine[i].empty()) {
+          val = FileParserUtils::toInt(splitLine[i]);
+        }
+        atom->setProp("_ZBO_H", true);
+        atom->setNumExplicitHs(val);
+      }
+    }
+  }
+}
+
 // process (and remove) SGroups which modify the structure
 // and which we can unambiguously apply
 void processSGroups(RWMol *mol) {
@@ -2928,6 +3008,22 @@ void processSGroups(RWMol *mol) {
         } else if (field == "MRV_IMPLICIT_H") {
           // CXN extension to specify implicit Hs, used for aromatic rings
           processMrvImplicitH(*mol, sg);
+          sgsToRemove.push_back(sgIdx);
+          continue;
+        } else if (field == "ZBO") {
+          // RDKit extension for zero-order bonds
+          processZBO(*mol, sg);
+          sgsToRemove.push_back(sgIdx);
+          continue;
+        } else if (field == "ZCH") {
+          // RDKit extension for charge on atoms involved in zero-order bonds
+          processZCH(*mol, sg);
+          sgsToRemove.push_back(sgIdx);
+          continue;
+        } else if (field == "HYD") {
+          // RDKit extension for hydrogen-count on atoms involved in
+          // zero-order bonds
+          processHYD(*mol, sg);
           sgsToRemove.push_back(sgIdx);
           continue;
         }
@@ -3213,18 +3309,22 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   return fileComplete;
 }
 
-void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
-                         bool removeHs) {
+void finishMolProcessing(
+    RWMol *res, bool chiralityPossible,
+    const RDKit::v2::FileParsers::MolFileParserParams &params) {
   if (!res) {
     return;
   }
   res->clearAllAtomBookmarks();
   res->clearAllBondBookmarks();
 
+  if (params.expandAttachmentPoints) {
+    MolOps::expandAttachmentPoints(*res);
+  }
+
   // calculate explicit valence on each atom:
-  for (RWMol::AtomIterator atomIt = res->beginAtoms();
-       atomIt != res->endAtoms(); ++atomIt) {
-    (*atomIt)->calcExplicitValence(false);
+  for (auto atom : res->atoms()) {
+    atom->calcExplicitValence(false);
   }
 
   // postprocess mol file flags
@@ -3255,31 +3355,25 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
   // single bond dir flags:
   MolOps::clearSingleBondDirFlags(*res);
 
-  if (sanitize) {
-    try {
-      if (removeHs) {
-        // Bond stereo detection must happen before H removal, or
-        // else we might be removing stereogenic H atoms in double
-        // bonds (e.g. imines). But before we run stereo detection,
-        // we need to run mol cleanup so don't have trouble with
-        // e.g. nitro groups. Sadly, this a;; means we will find
-        // run both cleanup and ring finding twice (a fast find
-        // rings in bond stereo detection, and another in
-        // sanitization's SSSR symmetrization).
-        unsigned int failedOp = 0;
-        MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
-        MolOps::detectBondStereochemistry(*res);
-        MolOps::removeHs(*res, false, false);
-      } else {
-        MolOps::sanitizeMol(*res);
-        MolOps::detectBondStereochemistry(*res);
-      }
-
-    } catch (...) {
-      delete res;
-      res = nullptr;
-      throw;
+  if (params.sanitize) {
+    if (params.removeHs) {
+      // Bond stereo detection must happen before H removal, or
+      // else we might be removing stereogenic H atoms in double
+      // bonds (e.g. imines). But before we run stereo detection,
+      // we need to run mol cleanup so don't have trouble with
+      // e.g. nitro groups. Sadly, this a;; means we will find
+      // run both cleanup and ring finding twice (a fast find
+      // rings in bond stereo detection, and another in
+      // sanitization's SSSR symmetrization).
+      unsigned int failedOp = 0;
+      MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
+      MolOps::detectBondStereochemistry(*res);
+      MolOps::removeHs(*res, false, false);
+    } else {
+      MolOps::sanitizeMol(*res);
+      MolOps::detectBondStereochemistry(*res);
     }
+
     MolOps::assignStereochemistry(*res, true, true, true);
   } else {
     MolOps::detectBondStereochemistry(*res);
@@ -3292,14 +3386,16 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
 }
 }  // namespace FileParserUtils
 
+namespace v2 {
+namespace FileParsers {
 //------------------------------------------------
 //
 //  Read a molecule from a stream
 //
 //------------------------------------------------
-RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
-                          bool sanitize, bool removeHs, bool strictParsing) {
-  PRECONDITION(inStream, "no stream");
+std::unique_ptr<RWMol> MolFromMolDataStream(std::istream &inStream,
+                                            unsigned int &line,
+                                            const MolFileParserParams &params) {
   std::string tempStr;
   bool fileComplete = false;
   bool chiralityPossible = false;
@@ -3307,10 +3403,10 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   // mol name
   line++;
   tempStr = getLine(inStream);
-  if (inStream->eof()) {
+  if (inStream.eof()) {
     return nullptr;
   }
-  auto *res = new RWMol();
+  auto res = std::make_unique<RWMol>();
   res->setProp(common_properties::_Name, tempStr);
 
   // info
@@ -3344,7 +3440,6 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
 
   if (tempStr.size() < 6) {
     if (res) {
-      delete res;
       res = nullptr;
     }
     std::ostringstream errout;
@@ -3354,17 +3449,13 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
 
   unsigned int spos = 0;
   // this needs to go into a try block because if the lexical_cast throws an
-  // exception we want to catch and delete mol before leaving this function
+  // exception we want to catch throw a different exception
   try {
     nAtoms = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     spos = 3;
     nBonds = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     spos = 6;
   } catch (boost::bad_lexical_cast &) {
-    if (res) {
-      delete res;
-      res = nullptr;
-    }
     std::ostringstream errout;
     errout << "Cannot convert '" << tempStr.substr(spos, 3)
            << "' to unsigned int on line " << line;
@@ -3418,9 +3509,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     if (tempStr.size() < 39 || tempStr[34] != 'V') {
       std::ostringstream errout;
       errout << "CTAB version string invalid at line " << line;
-      if (strictParsing) {
-        delete res;
-        res = nullptr;
+      if (params.strictParsing) {
         throw FileParseException(errout.str());
       } else {
         BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
@@ -3431,9 +3520,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
       std::ostringstream errout;
       errout << "Unsupported CTAB version: '" << tempStr.substr(34, 5)
              << "' at line " << line;
-      if (strictParsing) {
-        delete res;
-        res = nullptr;
+      if (params.strictParsing) {
         throw FileParseException(errout.str());
       } else {
         BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
@@ -3446,60 +3533,53 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   Conformer *conf = nullptr;
   try {
     if (ctabVersion == 2000) {
-      fileComplete = FileParserUtils::ParseV2000CTAB(inStream, line, res, conf,
-                                                     chiralityPossible, nAtoms,
-                                                     nBonds, strictParsing);
+      fileComplete = FileParserUtils::ParseV2000CTAB(
+          &inStream, line, res.get(), conf, chiralityPossible, nAtoms, nBonds,
+          params.strictParsing);
     } else {
       if (nAtoms != 0 || nBonds != 0) {
         std::ostringstream errout;
         errout << "V3000 mol blocks should have 0s in the initial counts line. "
                   "(line: "
                << line << ")";
-        if (strictParsing) {
-          delete res;
-          res = nullptr;
+        if (params.strictParsing) {
           throw FileParseException(errout.str());
         } else {
           BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
         }
       }
-      fileComplete = FileParserUtils::ParseV3000CTAB(inStream, line, res, conf,
-                                                     chiralityPossible, nAtoms,
-                                                     nBonds, strictParsing);
+      fileComplete = FileParserUtils::ParseV3000CTAB(
+          &inStream, line, res.get(), conf, chiralityPossible, nAtoms, nBonds,
+          params.strictParsing);
     }
   } catch (MolFileUnhandledFeatureException &e) {
-    // unhandled mol file feature, just delete the result
-    delete res;
+    // unhandled mol file feature, show an error
+    res.reset();
     delete conf;
-    res = nullptr;
     conf = nullptr;
     BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: '" << e.what()
                           << "'. Molecule skipped." << std::endl;
 
-    if (!inStream->eof()) {
+    if (!inStream.eof()) {
       tempStr = getLine(inStream);
     }
     ++line;
-    while (!inStream->eof() && !inStream->fail() &&
+    while (!inStream.eof() && !inStream.fail() &&
            tempStr.substr(0, 6) != "M  END" && tempStr.substr(0, 4) != "$$$$") {
       tempStr = getLine(inStream);
       ++line;
     }
-    fileComplete = !inStream->eof() || tempStr.substr(0, 6) == "M  END" ||
+    fileComplete = !inStream.eof() || tempStr.substr(0, 6) == "M  END" ||
                    tempStr.substr(0, 4) == "$$$$";
   } catch (FileParseException &e) {
     // catch our exceptions and throw them back after cleanup
-    delete res;
     delete conf;
-    res = nullptr;
     conf = nullptr;
     throw e;
   }
 
   if (!fileComplete) {
-    delete res;
     delete conf;
-    res = nullptr;
     conf = nullptr;
     std::ostringstream errout;
     errout
@@ -3509,26 +3589,21 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   }
 
   if (res) {
-    FileParserUtils::finishMolProcessing(res, chiralityPossible, sanitize,
-                                         removeHs);
+    FileParserUtils::finishMolProcessing(res.get(), chiralityPossible, params);
   }
   return res;
 }
 
-RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
-                          bool sanitize, bool removeHs, bool strictParsing) {
-  return MolDataStreamToMol(&inStream, line, sanitize, removeHs, strictParsing);
-}
 //------------------------------------------------
 //
 //  Read a molecule from a string
 //
 //------------------------------------------------
-RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
-                     bool strictParsing) {
+std::unique_ptr<RWMol> MolFromMolBlock(const std::string &molBlock,
+                                       const MolFileParserParams &params) {
   std::istringstream inStream(molBlock);
   unsigned int line = 0;
-  return MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+  return MolFromMolDataStream(inStream, line, params);
 }
 
 //------------------------------------------------
@@ -3536,19 +3611,21 @@ RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
 //  Read a molecule from a file
 //
 //------------------------------------------------
-RWMol *MolFileToMol(const std::string &fName, bool sanitize, bool removeHs,
-                    bool strictParsing) {
+std::unique_ptr<RWMol> MolFromMolFile(const std::string &fName,
+                                      const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  RWMol *res = nullptr;
   if (!inStream.eof()) {
     unsigned int line = 0;
-    res = MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+    return MolFromMolDataStream(inStream, line, params);
+  } else {
+    return std::unique_ptr<RWMol>();
   }
-  return res;
 }
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit
