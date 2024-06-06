@@ -434,7 +434,7 @@ std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
       res->setProp(common_properties::_Name, name);
     }
   }
-  return res.release();
+  return res;
 };
 
 std::unique_ptr<Atom> AtomFromSmarts(const std::string &smiles) {
