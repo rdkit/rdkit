@@ -1,3 +1,15 @@
+# Release_2024.03.4
+(Changes relative to Release_2024.03.3)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+## Backwards incompatible changes
+- A bug fix in v2 of the tautomer and protomer hashes can lead to different results for these hashes. One less bond is now included in the tautomeric zone for systems like enamines/imines, so the v2 tautomer hash of the molecules CN=CC and CNC=C is now [C]:[C]:[N]-[CH3]_4_0 instead of [C]:[C]:[N]:[C]_7_0
+
+
 # Release_2024.03.3
 (Changes relative to Release_2024.03.2)
 
