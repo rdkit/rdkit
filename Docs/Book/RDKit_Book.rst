@@ -145,8 +145,6 @@ Neutral carbons with radicals, however, are still considered:
   1
 
 
-
-
 The Simple Aromaticity Model
 ----------------------------
 
@@ -167,6 +165,7 @@ This isn't well documented (at least not publicly), so we tried to reproduce wha
 
 
 **Note:** For reasons of computational expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
+
 
 SMILES Support and Extensions
 =============================
@@ -1670,6 +1669,29 @@ Here are the steps involved, in order.
 
 The individual steps can be toggled on or off when calling
 ``MolOps::sanitizeMol`` or ``Chem.SanitizeMol``.
+
+Valence calculation and allowed valences
+========================================
+
+The RDKit is, by default, fairly strict in the way it enforces allowed valences when sanitizing structures (this is done during the `updatePropertyCache` step of sanitization): atoms which have an explicit valence (sum of the specified bond orders + specified H count) exceeding the maximum allowed valence for the element will raise an exception. 
+
+Allowed valences of the elements (as of 2024.09.1):
+
+  =======  =======  =====  ======  ======  ========  ========  ==========
+  H 1                                                          He 0 
+  Li 1 -1  Be 2     B 3    C 4     N 3     O 2       F 1       Ne 0      
+  Na 1,-1  Mg 2,-1  Al 3   Si 4    P 3,5   S 2,4,6   Cl 1      Ar 0      
+  K  1,-1  Ca 2,-1  Ga 3   Ge 4    As 3,5  Se 2,4,6  Br 1      Kr 0      
+  Rb 1,-1  Sr 2,-1  In 3   Sn 2,4  Sb 3,5  Te 2,4,6  I  1,3,5  Xe 0,2,4,6
+  Cs 1,-1  Ba 2,-1  Tl -1  Pb 2,4  Bi 3,5  Po 2,4,6  At 1,3,5  Rn 0
+  =======  =======  =====  ======  ======  ========  ========  ==========
+
+Elements not listed in the table have a valence of `-1`.
+
+An allowed valence of `-1` indicates that the element can have any valence value. Implicit Hs will not be added to atoms with a possible valence of `-1` when the explicit valence exceeds the highest specified value. So, for example, an Mg atom with a single bond to it (explicit valence = 1) will have one implicit H added to it, while an Mg atom with three bonds to it will have no implicit Hs added. Atoms where the only allowed valence is `-1` will never have implicit Hs added.
+
+The allowed valences of charged atoms are calculated by looking at the isoelectronic element's allowed valences. For example, `N+` has the same allowed valences as `C`, while `N-` has the same allowed valences as `O`. `P-2`, `S-`, `As-2`, and `Se-` are special cases: they all have allowed valences of 1, 3 and 5.
+
 
 JSON Support
 ************
