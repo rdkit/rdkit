@@ -137,8 +137,8 @@ inline ForceFields::ForceField *constructEmptyForceField(ROMol &mol,
                                                          int confID = -1) {
   auto *res = new ForceFields::ForceField();
   auto &conf = mol.getConformer(confID);
-  for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
-    res->positions().push_back(&(conf.getAtomPos(i)));
+  for (auto pt : conf.getPositions()) {
+    res->positions().push_back(pt);
   }
   return res;
 }
