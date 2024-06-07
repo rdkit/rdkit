@@ -1862,6 +1862,13 @@ void DrawMol::makeDoubleBondLines(
   int at2Idx = bond->getEndAtomIdx();
   adjustBondEndsForLabels(at1Idx, at2Idx, end1, end2);
 
+  bool skipOuterLine = false;
+  if (bond->getBondDir() == Bond::BEGINWEDGE ||
+      bond->getBondDir() == Bond::BEGINDASH) {
+    makeWedgedBond(bond, cols);
+    skipOuterLine = true;
+  }
+
   Point2D l1s, l1f, l2s, l2f, sat1, sat2;
   sat1 = atCds_[at1Idx];
   atCds_[at1Idx] = end1;
@@ -1869,8 +1876,10 @@ void DrawMol::makeDoubleBondLines(
   atCds_[at2Idx] = end2;
   calcDoubleBondLines(doubleBondOffset, *bond, l1s, l1f, l2s, l2f);
   int bondIdx = bond->getIdx();
-  newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
-              noDash);
+  if (!skipOuterLine) {
+    newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+                noDash);
+  }
   if (bond->getBondType() == Bond::AROMATIC) {
     newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
                 dashes);
@@ -2859,6 +2868,7 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
   Atom *at1 = bond.getBeginAtom();
   Atom *at2 = bond.getEndAtom();
   Point2D perp;
+
   if (isLinearAtom(*at1, atCds_) || isLinearAtom(*at2, atCds_) ||
       (at1->getDegree() == 1 && at2->getDegree() == 1)) {
     const Point2D &at1_cds = atCds_[at1->getIdx()];
