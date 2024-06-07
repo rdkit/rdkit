@@ -14,17 +14,11 @@ def feq(v1, v2, tol2=1e-4):
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    self.dirName = os.path.join(
-      RDConfig.RDBaseDir,
-      "Code",
-      "GraphMol",
-      "ForceFieldHelpers",
-      "UFF",
-      "test_data",
-    )
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
+                                'test_data')
 
   def test1(self):
-    fName = os.path.join(self.dirName, "benzene.mol")
+    fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName)
     self.assertFalse(ChemicalForceFields.UFFOptimizeMolecule(m))
     # make sure that keyword arguments work:
@@ -41,7 +35,7 @@ class TestCase(unittest.TestCase):
     self.assertRaises(ValueError, lambda: ChemicalForceFields.UFFOptimizeMolecule(m, confId=1))
 
   def test2(self):
-    fName = os.path.join(self.dirName, "benzene.mol")
+    fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.assertTrue(ff)
@@ -84,14 +78,14 @@ M  END"""
     self.assertTrue(e2 < e1)
 
   def test4(self):
-    m = Chem.MolFromSmiles("[Cu](C)(C)(C)(C)C")
+    m = Chem.MolFromSmiles('[Cu](C)(C)(C)(C)C')
     self.assertFalse(ChemicalForceFields.UFFHasAllMoleculeParams(m))
 
-    m = Chem.MolFromSmiles("C(C)(C)(C)C")
+    m = Chem.MolFromSmiles('C(C)(C)(C)C')
     self.assertTrue(ChemicalForceFields.UFFHasAllMoleculeParams(m))
 
   def test5(self):
-    fName = os.path.join(self.dirName, "benzene.mol")
+    fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName)
     self.assertFalse(ChemicalForceFields.MMFFOptimizeMolecule(m))
     # make sure that keyword arguments work:
@@ -108,7 +102,7 @@ M  END"""
     self.assertRaises(ValueError, lambda: ChemicalForceFields.MMFFOptimizeMolecule(m, confId=1))
 
   def test6(self):
-    fName = os.path.join(self.dirName, "benzene.mol")
+    fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
@@ -153,14 +147,14 @@ M  END"""
     self.assertTrue(e2 < e1)
 
   def test8(self):
-    m = Chem.MolFromSmiles("[Cu](C)(C)(C)(C)C")
+    m = Chem.MolFromSmiles('[Cu](C)(C)(C)(C)C')
     self.assertFalse(ChemicalForceFields.MMFFHasAllMoleculeParams(m))
 
-    m = Chem.MolFromSmiles("C(C)(C)(C)C")
+    m = Chem.MolFromSmiles('C(C)(C)(C)C')
     self.assertTrue(ChemicalForceFields.MMFFHasAllMoleculeParams(m))
 
   def test9(self):
-    m = Chem.MolFromSmiles("c1ccccc1CCNN")
+    m = Chem.MolFromSmiles('c1ccccc1CCNN')
     m = Chem.AddHs(m)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     mmffBondStretchParams = mp.GetMMFFBondStretchParams(m, 6, 7)
@@ -196,7 +190,7 @@ M  END"""
     self.assertTrue(int(round(mmffOopBendParams * 1000)) == 40)
     mmffOopBendParams = mp.GetMMFFOopBendParams(m, 6, 5, 4, 1)
     self.assertFalse(mmffOopBendParams)
-    sub1 = m.GetSubstructMatch(Chem.MolFromSmarts("NN[H]"))
+    sub1 = m.GetSubstructMatch(Chem.MolFromSmarts('NN[H]'))
     self.assertTrue(len(sub1) == 3)
     nIdx = sub1[0]
     hIdx = sub1[2]
@@ -208,7 +202,7 @@ M  END"""
                     and (int(round(mmffVdWParams[3] * 1000)) == 17))
 
   def test10(self):
-    m = Chem.MolFromSmiles("c1ccccc1CCNN")
+    m = Chem.MolFromSmiles('c1ccccc1CCNN')
     m = Chem.AddHs(m)
     uffBondStretchParams = ChemicalForceFields.GetUFFBondStretchParams(m, 6, 7)
     self.assertTrue(uffBondStretchParams)
@@ -238,36 +232,30 @@ M  END"""
                     and (int(round(uffVdWParams[1] * 1000)) == 85))
 
   def test11(self):
-    query = Chem.MolFromSmarts("c1cccn1")
+    query = Chem.MolFromSmarts('c1cccn1')
     for i in [0, 1]:
-      m = Chem.MolFromSmiles("Cc1nc(=O)c(C[NH3+])c(-c2c[nH]c3ccccc23)[nH]1")
+      m = Chem.MolFromSmiles('Cc1nc(=O)c(C[NH3+])c(-c2c[nH]c3ccccc23)[nH]1')
       aromaticFlagsBefore = []
       for a in m.GetAtoms():
         aromaticFlagsBefore.append(a.GetIsAromatic())
-      if i:
+      if (i):
         self.assertTrue(ChemicalForceFields.MMFFGetMoleculeProperties(m))
       else:
         self.assertTrue(ChemicalForceFields.MMFFHasAllMoleculeParams(m))
       aromaticFlagsAfter = []
       for a in m.GetAtoms():
         aromaticFlagsAfter.append(a.GetIsAromatic())
-      res = aromaticFlagsBefore == aromaticFlagsAfter
-      if i:
+      res = (aromaticFlagsBefore == aromaticFlagsAfter)
+      if (i):
         res = not res
       self.assertTrue(res)
       pyrroleNIdx = m.GetSubstructMatch(query)[-1]
       self.assertTrue(m.GetAtomWithIdx(pyrroleNIdx).GetTotalDegree() == 3)
 
   def test12(self):
-    self.dirName = os.path.join(
-      RDConfig.RDBaseDir,
-      "Code",
-      "GraphMol",
-      "ForceFieldHelpers",
-      "UFF",
-      "test_data",
-    )
-    fName = os.path.join(self.dirName, "Issue239.mol")
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
+                                'test_data')
+    fName = os.path.join(self.dirName, 'Issue239.mol')
     m = Chem.MolFromMolFile(fName)
     self.assertIsNotNone(m)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
@@ -288,15 +276,9 @@ M  END"""
     self.assertAlmostEqual(e3, e1, 2)
 
   def test13(self):
-    self.dirName = os.path.join(
-      RDConfig.RDBaseDir,
-      "Code",
-      "GraphMol",
-      "ForceFieldHelpers",
-      "UFF",
-      "test_data",
-    )
-    fName = os.path.join(self.dirName, "Issue239.mol")
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
+                                'test_data')
+    fName = os.path.join(self.dirName, 'Issue239.mol')
     m = Chem.MolFromMolFile(fName)
     self.assertIsNotNone(m)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
@@ -312,15 +294,9 @@ M  END"""
     self.assertAlmostEqual(e3, e1, 2)
 
   def test14(self):
-    self.dirName = os.path.join(
-      RDConfig.RDBaseDir,
-      "Code",
-      "GraphMol",
-      "ForceFieldHelpers",
-      "UFF",
-      "test_data",
-    )
-    fName = os.path.join(self.dirName, "Issue239.mol")
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
+                                'test_data')
+    fName = os.path.join(self.dirName, 'Issue239.mol')
     m = Chem.MolFromMolFile(fName)
     self.assertIsNotNone(m)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
@@ -341,15 +317,9 @@ M  END"""
       self.assertAlmostEqual(grad1[i], grad2[i], 3)
 
   def test15(self):
-    self.dirName = os.path.join(
-      RDConfig.RDBaseDir,
-      "Code",
-      "GraphMol",
-      "ForceFieldHelpers",
-      "UFF",
-      "test_data",
-    )
-    fName = os.path.join(self.dirName, "Issue239.mol")
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
+                                'test_data')
+    fName = os.path.join(self.dirName, 'Issue239.mol')
     m = Chem.MolFromMolFile(fName)
     self.assertIsNotNone(m)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
