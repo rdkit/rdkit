@@ -2868,3 +2868,29 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     CHECK(newSmi == "[#7H3]-[Fe]-[#7H2]");
   }
 }
+
+void strip_atom_properties(RWMol * molecule)
+{
+  for (auto atom : molecule->atoms())
+  {
+    for (auto property : atom->getPropList(false, false))
+    {
+      atom->clearProp(property);
+    }
+  }
+
+ // return molecule;
+}
+
+TEST_CASE("Remove CX extension from SMILES", "[cxsmiles]") {
+  SECTION("basics") {
+    std::unique_ptr<RWMol> molecule(RDKit::SmilesToMol("N[C@@H]([O-])C1=[CH:1]C(=[13CH]C(=C1)N(=O)=O)C(N)[O-] |$_AV:;bar;;foo;;;;;;;;;;;$,c:5,7,t:3|", 0, false));
+    REQUIRE(molecule);
+    strip_atom_properties(molecule.get());
+    std::string stripped_smiles = RDKit::MolToCXSmiles(*molecule);
+
+    CHECK(stripped_smiles == "NC([O-])C1=[13CH]C(N(=O)=O)=CC([C@@H](N)[O-])=C1");
+  }
+}
+    
+

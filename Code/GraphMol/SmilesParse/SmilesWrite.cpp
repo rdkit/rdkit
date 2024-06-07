@@ -814,7 +814,7 @@ std::string MolToCXSmiles_internal(const ROMol &romol,
 
   if (params.cleanStereo) {
     if (trwmol->needsUpdatePropertyCache()) {
-      trwmol->updatePropertyCache();
+      trwmol->updatePropertyCache(false);
     }
     MolOps::assignStereochemistry(*trwmol, true);
     Chirality::cleanupStereoGroups(*trwmol);
