@@ -8,6 +8,7 @@
 //
 
 #include "SmilesScanner.h"
+#include "smiles.tab.hpp"
 
 using smiles_parser::ast_parser::Parser;
 using smiles_parser::ast_parser::Scanner;
