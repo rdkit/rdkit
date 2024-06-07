@@ -28,14 +28,14 @@ TEST_CASE("Test empty force field") {
     auto forceField = ForceFieldsHelper::createEmptyForceFieldForMol(*mol);
     REQUIRE(forceField);
     forceField->initialize();
-    TEST_ASSERT(forceField->minimize() == 0);
-    TEST_ASSERT(forceField->calcEnergy() == 0.0);
-    TEST_ASSERT(forceField->numPoints() == mol->getNumAtoms());
-    TEST_ASSERT(forceField->positions().size() == mol->getNumAtoms());
+    CHECK(forceField->minimize() == 0);
+    CHECK(forceField->calcEnergy() == 0.0);
+    REQUIRE(forceField->numPoints() == mol->getNumAtoms());
+    REQUIRE(forceField->positions().size() == mol->getNumAtoms());
     auto dist = forceField->distance(0, 1);
     auto pos1 = mol->getConformer().getAtomPos(0);
     auto pos2 = mol->getConformer().getAtomPos(1);
-    TEST_ASSERT(dist == (pos2 - pos1).length());
+    CHECK(dist == (pos2 - pos1).length());
   }
   SECTION("add contrib and minimize") {
     auto forceField = ForceFieldsHelper::createEmptyForceFieldForMol(*mol);
@@ -44,11 +44,11 @@ TEST_CASE("Test empty force field") {
     auto *contrib = new ForceFields::MMFF::BondStretchContrib(forceField.get(),
                                                               0, 1, &params);
     forceField->contribs().push_back(ForceFields::ContribPtr(contrib));
-    TEST_ASSERT(forceField->minimize() == 0);
-    TEST_ASSERT(std::round(forceField->distance(0, 1)) == 100);
+    CHECK(forceField->minimize() == 0);
+    CHECK(std::round(forceField->distance(0, 1)) == 100);
     auto pos1 = mol->getConformer().getAtomPos(0);
     auto pos2 = mol->getConformer().getAtomPos(1);
     auto dist = (pos2 - pos1).length();
-    TEST_ASSERT(std::round(dist) == 100);
+    CHECK(std::round(dist) == 100);
   }
 }
