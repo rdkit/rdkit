@@ -86,10 +86,10 @@ python::object FFConfsHelper(ROMol &mol, ForceFields::PyForceField &ff,
   return pyres;
 }
 
-ForceFields::PyForceField *GetEmptyForceField(ROMol &mol) {
-  ForceFields::ForceField *ff =
-      ForceFieldsHelper::constructEmptyForceField(mol);
-  auto *res = new ForceFields::PyForceField(ff);
+ForceFields::PyForceField *CreateEmptyForceFieldForMol(ROMol &mol,
+                                                       int confId = -1) {
+  auto ff = ForceFieldsHelper::createEmptyForceFieldForMol(mol, confId);
+  auto *res = new ForceFields::PyForceField(ff.release());
   res->initialize();
   return res;
 }
@@ -396,9 +396,10 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
   \n\
   ARGUMENTS :\n\n\
       - mol : the molecule of interest\n\
-\n";
-  python::def("GetEmptyForceField", RDKit::GetEmptyForceField,
-              (python::arg("mol")),
+      - confId: the conformer which positions should be added to the force field.\n\
+\n ";
+  python::def("CreateEmptyForceFieldForMol", RDKit::CreateEmptyForceFieldForMol,
+              (python::arg("mol"), python::arg("confId") = -1),
               python::return_value_policy<python::manage_new_object>(),
               docString.c_str());
 

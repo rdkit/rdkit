@@ -131,14 +131,15 @@ inline void OptimizeMoleculeConfs(ROMol &mol, ForceFields::ForceField &ff,
 /// the molecules' atoms position.
 /*
   \param mol  The molecule which positions should be added to the force field.
+  \param confId Id of the conformer which positions are used in the force field.
 
 */
-inline ForceFields::ForceField *constructEmptyForceField(ROMol &mol,
-                                                         int confID = -1) {
-  auto *res = new ForceFields::ForceField();
-  auto &conf = mol.getConformer(confID);
-  for (auto pt : conf.getPositions()) {
-    res->positions().push_back(pt);
+inline std::unique_ptr<ForceFields::ForceField> createEmptyForceFieldForMol(
+    ROMol &mol, int confId = -1) {
+  auto res = std::make_unique<ForceFields::ForceField>();
+  auto &conf = mol.getConformer(confId);
+  for (auto &pt : conf.getPositions()) {
+    res->positions().push_back(&pt);
   }
   return res;
 }
