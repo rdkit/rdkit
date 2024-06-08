@@ -378,6 +378,35 @@ M  END"""
     self.assertTrue(all(map(lambda i: i == 0, res)))
     self.assertTrue(all(after[i] < b for i, b in enumerate(before)))
 
+  def testEmptyFF(self) -> None:
+    m = Chem.MolFromSmiles(
+      'CCCO |(-1.28533,-0.0567758,0.434662;-0.175447,0.695786,-0.299881;0.918409,-0.342619,-0.555572;1.30936,-0.801512,0.71705)|'
+    )
+    self.assertIsNotNone(m)
+    ff = ChemicalForceFields.CreateEmptyForceFieldForMol(m)
+    posa = m.GetConformer().GetAtomPosition(0)
+    posb = m.GetConformer().GetAtomPosition(1)
+    dist = (posa - posb).Length()
+    self.assertTrue(ff)
+    self.assertFalse(ff.Initialize())
+    self.assertEqual(ff.CalcEnergy(), 0.0)
+    self.assertTrue(all(v == 0.0 for v in ff.CalcGrad()))
+    self.assertEqual(ff.NumPoints(), m.GetNumAtoms())
+    self.assertEqual(len(ff.Positions()) / 3, m.GetNumAtoms())
+    self.assertFalse(ff.Minimize())
+    posa = m.GetConformer().GetAtomPosition(0)
+    posb = m.GetConformer().GetAtomPosition(1)
+    self.assertEqual((posa - posb).Length(), dist)
 
-if __name__ == '__main__':
+    ff.MMFFAddDistanceConstraint(0, 1, False, 100, 100, 100)
+    self.assertFalse(ff.Minimize())
+    pos = ff.Positions()
+    dist = ((pos[0] - pos[3])**2 + (pos[1] - pos[4])**2 + (pos[2] - pos[5])**2)**0.5
+    self.assertAlmostEqual(dist, 100, delta=10e-5)
+    posa = m.GetConformer().GetAtomPosition(0)
+    posb = m.GetConformer().GetAtomPosition(1)
+    self.assertAlmostEqual((posa - posb).Length(), 100, delta=10e-5)
+
+
+if __name__ == "__main__":
   unittest.main()
