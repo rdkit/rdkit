@@ -139,6 +139,11 @@ int getQueryBondSymbol(const Bond *bond) {
   }
   return res;
 }
+
+bool isAtomRGroup(const Atom &atom) {
+  return atom.getAtomicNum() == 0 &&
+         atom.hasProp(common_properties::_MolFileRLabel);
+}
 }  // namespace
 
 const std::string GetMolFileChargeInfo(const RWMol &mol) {
@@ -177,7 +182,7 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
         nRads = 0;
       }
     }
-    if (!atom->hasQuery()) {
+    if (!isAtomRGroup(*atom)) {
       int isotope = atom->getIsotope();
       if (isotope != 0) {
         ++nMassDiffs;
@@ -805,7 +810,7 @@ const std::string GetV3000MolFileAtomLine(
   if (chg != 0) {
     ss << " CHG=" << chg;
   }
-  if (isotope != 0) {
+  if (isotope != 0 && !isAtomRGroup(*atom)) {
     // the documentation for V3000 CTABs says that this should contain the
     // "absolute atomic weight" (whatever that means).
     // Online examples seem to have integer (isotope) values and Marvin won't
