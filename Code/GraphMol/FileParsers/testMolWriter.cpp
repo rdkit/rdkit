@@ -1557,6 +1557,50 @@ void testMolFileWriterDativeBonds() {
   }
 }
 
+void testRGPMolFileWriterV2KV3K() {
+  BOOST_LOG(rdInfoLog)
+      << "testing that R groups do not lead either to M  ISO or MASS records"
+      << std::endl;
+  {
+    auto m = R"CTAB(
+
+     RDKit          2D
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    2.4750    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    2.0625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4289    2.4750    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  2  4  1  0
+M  RGP  1   1   2
+M  END)CTAB"_ctab;
+    auto mbV2K = MolToMolBlock(*m);
+    TEST_ASSERT(mbV2K.find("M  ISO") == std::string::npos);
+    TEST_ASSERT(mbV2K.find("M  RGP") != std::string::npos);
+    auto mbV3K = MolToV3KMolBlock(*m);
+    TEST_ASSERT(mbV3K.find("MASS") == std::string::npos);
+    TEST_ASSERT(mbV3K.find("RGROUPS") != std::string::npos);
+  }
+  {
+    auto m = R"CTAB(
+  MJ201100                      
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+   -1.5623    1.6625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2767    1.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5623    2.4875    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+  1  3  1  0  0  0  0
+M  ISO  1   3   3
+M  END)CTAB"_ctab;
+    auto mbV2K = MolToMolBlock(*m);
+    TEST_ASSERT(mbV2K.find("M  ISO") != std::string::npos);
+    auto mbV3K = MolToV3KMolBlock(*m);
+    TEST_ASSERT(mbV3K.find("MASS") != std::string::npos);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1709,5 +1753,9 @@ int main() {
 
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
   testMolFileWriterDativeBonds();
+  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  testRGPMolFileWriterV2KV3K();
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
 }
