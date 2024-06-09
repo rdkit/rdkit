@@ -113,7 +113,8 @@ void write_template(std::ostringstream &res, RDKit::ROMol &tpl) {
   }
   RDKit::FileParserUtils::moveAdditionalPropertiesToSGroups(trwmol);
 
-  res << RDKit::FileParserUtils::getV3000CTAB(trwmol, -1);
+  boost::dynamic_bitset<> wasAromatic(trwmol.getNumBonds());
+  res << RDKit::FileParserUtils::getV3000CTAB(trwmol, wasAromatic, -1);
 }
 
 }  // namespace

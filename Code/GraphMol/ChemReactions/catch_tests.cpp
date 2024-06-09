@@ -1262,7 +1262,8 @@ TEST_CASE("V3K rxn blocks") {
     // Test sgroup in a ring - this example failed with improperr tail crossings
     auto mol = "C-1-C-C-C-C-O-1 |Sg:n:4:n:ht|"_smarts;
     MolOps::findSSSR(*mol);
-    auto mbk = FileParserUtils::getV3000CTAB(*mol, -1);
+    boost::dynamic_bitset<> wasAromatic(mol->getNumBonds());
+    auto mbk = FileParserUtils::getV3000CTAB(*mol, wasAromatic, -1);
     CHECK(mbk.find("ATOMS=(1 5) XBONDS=(2 4 5) XBHEAD=(1 4) XBCORR=(2 4 5)") !=
           std::string::npos);
     std::unique_ptr<ChemicalReaction> rxn(
@@ -1800,17 +1801,26 @@ TEST_CASE("sanitizeRxnAsMols") {
 
 TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
   SECTION("basics") {
-    auto rxn = "[C:1]-[C:2].[NH3:3]->[Fe:4]-[NH2:5]>>[C:1]=[C:2].[NH3:3]->[Fe:4]-[NH2:5]"_rxnsmarts;
+    auto rxn =
+        "[C:1]-[C:2].[NH3:3]->[Fe:4]-[NH2:5]>>[C:1]=[C:2].[NH3:3]->[Fe:4]-[NH2:5]"_rxnsmarts;
     REQUIRE(rxn);
     auto smi = ChemicalReactionToRxnSmiles(*rxn);
-    CHECK(smi == "[CH3:1][CH3:2].[NH3:3]->[Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3]->[Fe:4][NH2:5]");
+    CHECK(
+        smi ==
+        "[CH3:1][CH3:2].[NH3:3]->[Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3]->[Fe:4][NH2:5]");
     smi = ChemicalReactionToRxnSmarts(*rxn);
-    CHECK(smi == "[C:1]-[C:2].[N&H3:3]->[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]->[#26:4]-[N&H2:5]");
+    CHECK(
+        smi ==
+        "[C:1]-[C:2].[N&H3:3]->[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]->[#26:4]-[N&H2:5]");
     SmilesWriteParams ps;
     ps.includeDativeBonds = false;
-    smi = ChemicalReactionToRxnSmiles(*rxn,ps);
-    CHECK(smi == "[CH3:1][CH3:2].[NH3:3][Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3][Fe:4][NH2:5]");
-    smi = ChemicalReactionToRxnSmarts(*rxn,ps);
-    CHECK(smi == "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]");
+    smi = ChemicalReactionToRxnSmiles(*rxn, ps);
+    CHECK(
+        smi ==
+        "[CH3:1][CH3:2].[NH3:3][Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3][Fe:4][NH2:5]");
+    smi = ChemicalReactionToRxnSmarts(*rxn, ps);
+    CHECK(
+        smi ==
+        "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]");
   }
 }
