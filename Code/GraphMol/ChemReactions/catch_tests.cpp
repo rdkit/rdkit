@@ -1262,8 +1262,7 @@ TEST_CASE("V3K rxn blocks") {
     // Test sgroup in a ring - this example failed with improperr tail crossings
     auto mol = "C-1-C-C-C-C-O-1 |Sg:n:4:n:ht|"_smarts;
     MolOps::findSSSR(*mol);
-    boost::dynamic_bitset<> wasAromatic(mol->getNumBonds());
-    auto mbk = FileParserUtils::getV3000CTAB(*mol, wasAromatic, -1);
+    auto mbk = FileParserUtils::getV3000CTAB(*mol, -1);
     CHECK(mbk.find("ATOMS=(1 5) XBONDS=(2 4 5) XBHEAD=(1 4) XBCORR=(2 4 5)") !=
           std::string::npos);
     std::unique_ptr<ChemicalReaction> rxn(
