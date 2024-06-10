@@ -153,12 +153,6 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
   void unchargeInPlace(RWMol &mol);
 
  private:
-  int hDeltaRemovingPos(const Atom *atom);
-  bool canRemovePos(const Atom *atom);
-  bool removePosIfPossible(Atom *atom);
-  int hDeltaRemovingNeg(const Atom *atom);
-  bool canRemoveNeg(const Atom *atom);
-  bool removeNegIfPossible(Atom *atom);
   bool df_canonicalOrdering = true;
   bool df_force = false;
   bool df_protonationOnly = false;

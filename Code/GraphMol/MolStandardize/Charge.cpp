@@ -318,23 +318,22 @@ void removeCharge(Atom *atom, int charge, int hDelta) {
   // other valence parameters
   atom->updatePropertyCache(false);
 }
-}
 
-int Uncharger::hDeltaRemovingNeg(const Atom *atom) {
+int hDeltaRemovingNeg(const Atom *atom, bool protonationOnly) {
   bool earlyAtom = isEarlyAtom(atom->getAtomicNum());
   bool hasHs = atom->getTotalNumHs();
-  if (earlyAtom && (!hasHs || df_protonationOnly)) {
+  if (earlyAtom && (!hasHs || protonationOnly)) {
     return 0;
   }
   return earlyAtom ? -1 : 1;
 }
 
-bool Uncharger::canRemoveNeg(const Atom *atom) {
-  return hDeltaRemovingNeg(atom) != 0;
+bool canRemoveNeg(const Atom *atom, bool protonationOnly) {
+  return hDeltaRemovingNeg(atom, protonationOnly) != 0;
 }
 
-bool Uncharger::removeNegIfPossible(Atom *atom) {
-  int hDelta = hDeltaRemovingNeg(atom);
+bool removeNegIfPossible(Atom *atom, bool protonationOnly) {
+  int hDelta = hDeltaRemovingNeg(atom, protonationOnly);
   if (hDelta != 0) {
     removeCharge(atom, -1, hDelta);
     return true;
@@ -342,7 +341,7 @@ bool Uncharger::removeNegIfPossible(Atom *atom) {
   return false;
 }
 
-int Uncharger::hDeltaRemovingPos(const Atom *atom) {
+int hDeltaRemovingPos(const Atom *atom, bool protonationOnly) {
   int atomicNum = atom->getAtomicNum();
   switch (atomicNum) {
   case 3:  // Li
@@ -358,7 +357,7 @@ int Uncharger::hDeltaRemovingPos(const Atom *atom) {
   bool carbonOrEarlyAtom = (
     // the special case for C here was github #2792
     atomicNum == 6 || isEarlyAtom(atom->getAtomicNum()));
-  if (carbonOrEarlyAtom && df_protonationOnly) {
+  if (carbonOrEarlyAtom && protonationOnly) {
     return 0;
   }
   bool hasHs = atom->getTotalNumHs();
@@ -368,17 +367,19 @@ int Uncharger::hDeltaRemovingPos(const Atom *atom) {
   return carbonOrEarlyAtom ? 1 : -1;
 }
 
-bool Uncharger::canRemovePos(const Atom *atom) {
-  return hDeltaRemovingPos(atom) != 0;
+bool canRemovePos(const Atom *atom, bool protonationOnly) {
+  return hDeltaRemovingPos(atom, protonationOnly) != 0;
 }
 
-bool Uncharger::removePosIfPossible(Atom *atom) {
-  int hDelta = hDeltaRemovingPos(atom);
+bool removePosIfPossible(Atom *atom, bool protonationOnly) {
+  int hDelta = hDeltaRemovingPos(atom, protonationOnly);
   if (hDelta != 0) {
     removeCharge(atom, +1, hDelta);
     return true;
   }
   return false;
+}
+
 }
 
 ROMol *Uncharger::uncharge(const ROMol &mol) {
@@ -405,7 +406,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
   unsigned int q_matched = 0;
   for (const auto &match : p_matches) {
     const auto atom = mol.getAtomWithIdx(match[0].second);
-    if (!canRemovePos(atom)) {
+    if (!canRemovePos(atom, df_protonationOnly)) {
       q_matched += atom->getFormalCharge();
     }
   }
@@ -504,7 +505,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     for (const auto &pair : neg_atoms) {
       unsigned int idx = pair.second;
       Atom *atom = mol.getAtomWithIdx(idx);
-      if (removeNegIfPossible(atom) && !--neg_surplus) {
+      if (removeNegIfPossible(atom, df_protonationOnly) && !--neg_surplus) {
         break;
       }
     }
@@ -531,7 +532,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     for (const auto &idx : p_idx_matches) {
       Atom *atom = mol.getAtomWithIdx(idx);
       while (atom->getFormalCharge() > 0 && (netCharge > 0 || df_force)) {
-        if (removePosIfPossible(atom)) {
+        if (removePosIfPossible(atom, df_protonationOnly)) {
           --netCharge;
         }
         else {
