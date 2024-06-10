@@ -196,7 +196,10 @@ TEST_CASE("uncharger bug with duplicates", "[uncharger]") {
   SECTION("case 2") {
     auto m = "CC([O-])C[O-].[Na+]"_smiles;
     REQUIRE(m);
-    MolStandardize::Uncharger uncharger;
+    bool canonicalOrdering {true};
+    bool force {false};
+    bool protonationOnly {true};
+    MolStandardize::Uncharger uncharger(canonicalOrdering, force, protonationOnly);
     std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
     REQUIRE(outm);
     CHECK(MolToSmiles(*outm) == "CC([O-])CO.[Na+]");
@@ -266,11 +269,25 @@ TEST_CASE(
 }
 
 TEST_CASE("github #2602: Uncharger ignores dications", "[uncharger]") {
-  SECTION("demo") {
+  SECTION("default behavior") {
     auto m = "[O-]CCC[O-].[Ca+2]"_smiles;
     REQUIRE(m);
     bool canonicalOrdering = true;
     MolStandardize::Uncharger uncharger(canonicalOrdering);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(outm->getAtomWithIdx(5)->getFormalCharge() == 0);
+    CHECK(outm->getAtomWithIdx(0)->getFormalCharge() == 0);
+    CHECK(outm->getAtomWithIdx(4)->getFormalCharge() == 0);
+    CHECK(MolToSmiles(*outm) == "OCCCO.[CaH2]");
+  }
+  SECTION("protonation only") {
+    auto m = "[O-]CCC[O-].[Ca+2]"_smiles;
+    REQUIRE(m);
+    bool canonicalOrdering {true};
+    bool force {false};
+    bool protonationOnly {true};
+    MolStandardize::Uncharger uncharger(canonicalOrdering, force, protonationOnly);
     std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
     REQUIRE(outm);
     CHECK(outm->getAtomWithIdx(5)->getFormalCharge() == 2);
@@ -1025,9 +1042,14 @@ TEST_CASE("Github 5317: standardization failing with zwitterionic sulfone") {
     CHECK(MolToSmiles(*res) == "C[S+2]([O-])([O-])C(O)C(=O)O");
   }
   SECTION("don't overdo it") {
+    // verify that other negative charges in the molecule are not
+    // neutralized if there are permanent positive charges balancing them.
     auto m = "C[S+2]([O-])([O-])C([O-])C(=O)O.[Na+]"_smiles;
     REQUIRE(m);
-    MolStandardize::Uncharger uc;
+    bool canonicalOrdering {true};
+    bool force {false};
+    bool protonationOnly {true};
+    MolStandardize::Uncharger uc(canonicalOrdering, force, protonationOnly);
     std::unique_ptr<ROMol> res{uc.uncharge(*m)};
     REQUIRE(res);
     CHECK(MolToSmiles(*res) == "C[S+2]([O-])([O-])C([O-])C(=O)O.[Na+]");

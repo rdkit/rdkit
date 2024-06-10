@@ -367,6 +367,43 @@ void testUnchargerProtonationOnly() {
     TEST_ASSERT(res2.get());
     TEST_ASSERT(MolToSmiles(*res2) == "C[C+](C)c1ccccc1");
   }
+  {
+    // Uncharger options
+    bool canonicalOrdering {false};
+    bool force {false};
+    bool protonationOnly;
+
+    auto m1 = "[Na+]"_smiles;
+    TEST_ASSERT(m1);
+    auto m2 = "[Ca+2]"_smiles;
+    TEST_ASSERT(m2);
+    std::unique_ptr<ROMol> res;
+
+    // Verify that cations from groups I and II are not uncharged if protonationOnly
+    // is enabled
+
+    protonationOnly = false;
+    MolStandardize::Uncharger uncharger1(canonicalOrdering, force, protonationOnly);
+
+    res.reset(uncharger1.uncharge(*m1));
+    TEST_ASSERT(res.get());
+    TEST_ASSERT(MolToSmiles(*res) == "[NaH]");
+
+    res.reset(uncharger1.uncharge(*m2));
+    TEST_ASSERT(res.get());
+    TEST_ASSERT(MolToSmiles(*res) == "[CaH2]");
+
+    protonationOnly = true;
+    MolStandardize::Uncharger uncharger2(canonicalOrdering, force, protonationOnly);
+
+    res.reset(uncharger2.uncharge(*m1));
+    TEST_ASSERT(res.get());
+    TEST_ASSERT(MolToSmiles(*res) == "[Na+]");
+
+    res.reset(uncharger2.uncharge(*m2));
+    TEST_ASSERT(res.get());
+    TEST_ASSERT(MolToSmiles(*res) == "[Ca+2]");
+  }
   BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 

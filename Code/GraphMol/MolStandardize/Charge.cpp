@@ -342,21 +342,9 @@ bool removeNegIfPossible(Atom *atom, bool protonationOnly) {
 }
 
 int hDeltaRemovingPos(const Atom *atom, bool protonationOnly) {
-  int atomicNum = atom->getAtomicNum();
-  switch (atomicNum) {
-  case 3:  // Li
-  case 11: // Na
-  case 19: // K
-  case 12: // Mg
-  case 20: // Ca
-    // don't uncharge
-    return 0;
-  default:
-    ;
-  };
   bool carbonOrEarlyAtom = (
     // the special case for C here was github #2792
-    atomicNum == 6 || isEarlyAtom(atom->getAtomicNum()));
+    atom->getAtomicNum() == 6 || isEarlyAtom(atom->getAtomicNum()));
   if (carbonOrEarlyAtom && protonationOnly) {
     return 0;
   }
