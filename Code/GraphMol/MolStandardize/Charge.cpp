@@ -292,7 +292,8 @@ std::pair<unsigned int, std::vector<unsigned int>> *Reionizer::weakestIonized(
 }
 
 Uncharger::Uncharger()
-    : pos(SmartsToMol("[+,+2,+3,+4;!$(*~[-])]")),
+    : pos_h(SmartsToMol("[+,+2,+3,+4;!h0;!$(*~[-]),$(*(~[-])~[-])]")),
+      pos_noh(SmartsToMol("[+,+2,+3,+4;h0;!$(*~[-])]")),
       neg(SmartsToMol("[-!$(*~[+,+2,+3,+4])]")),
       neg_acid(SmartsToMol(
           // carboxylate, carbonate, sulfi(a)te,
@@ -342,21 +343,9 @@ bool removeNegIfPossible(Atom *atom, bool protonationOnly) {
 }
 
 int hDeltaRemovingPos(const Atom *atom, bool protonationOnly) {
-  int atomicNum = atom->getAtomicNum();
-  switch (atomicNum) {
-  case 3:  // Li
-  case 11: // Na
-  case 19: // K
-  case 12: // Mg
-  case 20: // Ca
-    // don't uncharge
-    return 0;
-  default:
-    ;
-  };
   bool carbonOrEarlyAtom = (
     // the special case for C here was github #2792
-    atomicNum == 6 || isEarlyAtom(atom->getAtomicNum()));
+    atom->getAtomicNum() == 6 || isEarlyAtom(atom->getAtomicNum()));
   if (carbonOrEarlyAtom && protonationOnly) {
     return 0;
   }
@@ -393,17 +382,22 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     mol.updatePropertyCache(false);
   }
   std::vector<MatchVectType> p_matches;
+  std::vector<MatchVectType> q_matches;
   std::vector<MatchVectType> n_matches;
   std::vector<MatchVectType> a_matches;
 
   // Get atom ids for matches
-  SubstructMatch(mol, *(this->pos), p_matches);
+  SubstructMatch(mol, *(this->pos_h), p_matches);
+  SubstructMatch(mol, *(this->pos_noh), q_matches);
   unsigned int n_matched = SubstructMatch(mol, *(this->neg), n_matches);
   unsigned int a_matched = SubstructMatch(mol, *(this->neg_acid), a_matches);
 
   // Determine the amount of positive charge that is not
   // possible to remove
   unsigned int q_matched = 0;
+  for (const auto &match : q_matches) {
+    q_matched += mol.getAtomWithIdx(match[0].second)->getFormalCharge();
+  }
   for (const auto &match : p_matches) {
     const auto atom = mol.getAtomWithIdx(match[0].second);
     if (!canRemovePos(atom, df_protonationOnly)) {

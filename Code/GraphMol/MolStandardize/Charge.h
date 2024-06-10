@@ -156,7 +156,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
   bool df_canonicalOrdering = true;
   bool df_force = false;
   bool df_protonationOnly = false;
-  std::shared_ptr<ROMol> pos;
+  std::shared_ptr<ROMol> pos_h;
+  std::shared_ptr<ROMol> pos_noh;
   std::shared_ptr<ROMol> neg;
   std::shared_ptr<ROMol> neg_acid;
 };  // Uncharger class
