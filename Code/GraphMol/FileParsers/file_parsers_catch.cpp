@@ -7277,3 +7277,16 @@ M  END
     CHECK(m2->getBondWithIdx(7)->getBondType() == Bond::ZERO);
   }
 }
+
+TEST_CASE("MolToV2KMolBlock") {
+  auto m = "[NH3]->[Pt]"_smiles;
+  REQUIRE(m);
+  // by default we get a V3K block since there is a dative bond present
+  auto mb = MolToMolBlock(*m);
+  CHECK(mb.find("V3000") != std::string::npos);
+  CHECK(mb.find("V30 1 9 1 2") != std::string::npos);
+  // but we can ask for a V2K block
+  mb = MolToV2KMolBlock(*m);
+  CHECK(mb.find("V2000") != std::string::npos);
+  CHECK(mb.find("  1  2  9  0") != std::string::npos);
+}
