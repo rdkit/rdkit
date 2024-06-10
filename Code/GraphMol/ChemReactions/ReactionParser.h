@@ -388,8 +388,8 @@ inline std::string addChemicalReactionToPNGFile(const ChemicalReaction &rxn,
 }
 //! @}
 
-inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmarts(const char *text,
-                                                               size_t len) {
+inline std::unique_ptr<ChemicalReaction> operator""_rxnsmarts(const char *text,
+                                                              size_t len) {
   std::string sma(text, len);
   std::unique_ptr<ChemicalReaction> ptr;
   try {
@@ -399,8 +399,8 @@ inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmarts(const char *text,
   }
   return ptr;
 }
-inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmiles(const char *text,
-                                                               size_t len) {
+inline std::unique_ptr<ChemicalReaction> operator""_rxnsmiles(const char *text,
+                                                              size_t len) {
   std::string sma(text, len);
   std::unique_ptr<ChemicalReaction> ptr;
   try {
