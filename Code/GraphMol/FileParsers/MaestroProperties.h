@@ -18,6 +18,7 @@ static const std::string MAE_BOND_DATIVE_MARK = "b_sPrivate_dative_bond";
 static const std::string MAE_BOND_PARITY = "i_sd_original_parity";
 static const std::string MAE_ENHANCED_STEREO_STATUS =
     "i_m_ct_enhanced_stereo_status";
+static const std::string MAE_RGROUP_LABEL = "i_sd__MolFileRLabel";
 static const std::string MAE_STEREO_STATUS = "i_m_ct_stereo_status";
 static const std::string PDB_ATOM_NAME = "s_m_pdb_atom_name";
 static const std::string PDB_CHAIN_NAME = "s_m_chain_name";
