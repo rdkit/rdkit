@@ -321,9 +321,11 @@ RDKIT_GRAPHMOL_EXPORT bool shouldBeACrossedBond(const Bond *bond);
 //! Clears existing bond wedging and forces use of atom wedging from MolBlock.
 /*!
  \param mol: molecule to have its wedges altered
- \param allBondTypes: reapply the wedging also on bonds other than single and aromatic ones
+ \param allBondTypes: reapply the wedging also on bonds other than single and
+ aromatic ones
  */
-RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol, bool allBondTypes=true);
+RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol,
+                                                  bool allBondTypes = true);
 //! Remove MolBlock bond wedging information from molecule.
 /*!
  \param mol: molecule to modify
@@ -380,6 +382,21 @@ RDKIT_GRAPHMOL_EXPORT void addStereoAnnotations(
     ROMol &mol, std::string absLabel = "abs ({cip})",
     std::string orLabel = "or{id}", std::string andLabel = "and{id}",
     std::string cipLabel = "({cip})", std::string bondLabel = "({cip})");
+
+//! simplifies the stereochemical representation of a molecule where all
+//! specified stereocenters are in the same StereoGroup
+/*!
+ \param mol: molecule to modify
+ \param removeAffectedStereoGroups: if set then the affected StereoGroups will
+ be removed
+
+If all specified stereocenters are in the same AND or OR stereogroup, a
+moleculeNote property will be set on the molecule with the value "AND
+enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
+
+*/
+RDKIT_GRAPHMOL_EXPORT void simplifyEnhancedStereo(
+    ROMol &mol, bool removeAffectedStereoGroups = true);
 
 }  // namespace Chirality
 }  // namespace RDKit

@@ -679,12 +679,15 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
       doneRings = coreRingsIds;
     }
   }
+
   // if not embed find a ring as a starting point
   if (doneRings.empty()) {
     // FIX for issue 197
     // find the ring with the max substituents
     // If there are multiple pick the largest
-    auto firstRingId = pickFirstRingToEmbed(*dp_mol, coreRings);
+    // auto firstRingId = pickFirstRingToEmbed(*dp_mol, coreRings);
+    auto firstRingId = pickFirstRingToEmbed(*dp_mol, fusedRings);
+
     this->initFromRingCoords(fusedRings[firstRingId], coords[firstRingId]);
     doneRings.push_back(firstRingId);
   }

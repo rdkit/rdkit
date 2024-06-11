@@ -1557,7 +1557,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "See rdkit.Chem.rdMolDescriptor.Properties.GetProperty and \n"
       "rdkit.Chem.Descriptor.Properties.PropertyFunctor for creating new ones";
   python::class_<RDKit::Descriptors::PropertyFunctor,
-                 RDKit::Descriptors::PropertyFunctor *,
                  boost::shared_ptr<RDKit::Descriptors::PropertyFunctor>,
                  boost::noncopyable>("PropertyFunctor", docString.c_str(),
                                      python::no_init)
@@ -1656,10 +1655,10 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString =
       R"DOC(ARGUMENTS:
       "   - mol: molecule or protein under consideration
-      "   - isProtein: flag to indicate if the input is a protein (default=True). NOTE that results with isProtein=False are currently not correct.
-      "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=False)
-      "   - probeRadius: radius of the solvent probe (default=1.4)
-      "   - depth: control of number of dots per atom (default=2)
+      "   - isProtein: flag to indicate if the input is a protein (default=False, free ligand).
+      "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=True)
+      "   - probeRadius: radius of the solvent probe (default=1.2)
+      "   - depth: control of number of dots per atom (default=4)
       "   - dotDensity: control of accuracy (default=0)
       ")DOC";
   python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume>(
@@ -1667,9 +1666,9 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "Class for the Double Cubic Lattice Volume method",
       python::init<const RDKit::ROMol &,
                    python::optional<bool, bool, double, int, int>>(
-          (python::args("self", "mol"), python::args("isProtein") = true,
-           python::args("includeLigand") = false,
-           python::args("probeRadius") = 1.4, python::args("depth") = 2,
+          (python::args("self", "mol"), python::args("isProtein") = false,
+           python::args("includeLigand") = true,
+           python::args("probeRadius") = 1.2, python::args("depth") = 4,
            python::args("dotDensity") = 0),
           docString.c_str()))
       .def("GetSurfaceArea",
