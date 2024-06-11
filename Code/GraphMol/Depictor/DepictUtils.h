@@ -155,11 +155,11 @@ RDKIT_DEPICTOR_EXPORT RDKit::VECT_INT_VECT findCoreRings(
 //! \brief From a given set of rings find the ring the largest common elements
 /// with other rings
 /*
-  Bit of a weird function - this is typically called once we have embedded
-  some of the rings in a fused system and we are looking for the ring that
-  must be embedded (or merged) next. The heuristic used here is to pick the
-  rings with the maximum number of atoms in common with the rings that are
-  already embedded.
+  Bit of a weird function - this is typically called once we have embedded some
+  of the rings in a fused system and we are looking for the ring that must be
+  embedded (or merged) next. The heuristic used here is to pick the rings with
+  the maximum number of atoms in common with the rings that are already
+  embedded.
 
   \param doneRings    a vector of ring IDs that have been embedded already
   \param fusedRings   list of all the rings in the fused system \param nextId
@@ -225,17 +225,17 @@ inline double computeSubAngle(unsigned int degree,
 
      v2 = loc2 - center
 
-  If remaining angle(v1, v2) is < 180 and corss(v1, v2) > 0.0 then the
-  rotation dir is +1.0
-
-  else if remAngle(v1, v2) is > 180 and cross(v1, v2) < 0.0 then rotation dir
-  is -1.0
-
-  else if remAngle(v1, v2) is < 180 and cross(v1, v2) < 0.0 then rotation dir
-  is -1.0
-
-  finally if remAngle(v1, v2) is > 180 and cross(v1, v2) < 0.0 then rotation
+  If remaining angle(v1, v2) is < 180 and corss(v1, v2) > 0.0 then the rotation
   dir is +1.0
+
+  else if remAngle(v1, v2) is > 180 and cross(v1, v2) < 0.0 then rotation dir is
+  -1.0
+
+  else if remAngle(v1, v2) is < 180 and cross(v1, v2) < 0.0 then rotation dir is
+  -1.0
+
+  finally if remAngle(v1, v2) is > 180 and cross(v1, v2) < 0.0 then rotation dir
+  is +1.0
 
   \param center     the common point
   \param loc1       endpoint 1
@@ -352,9 +352,9 @@ RDKIT_DEPICTOR_EXPORT void getNbrAtomAndBondIds(unsigned int aid,
          b4
          |
          E
-   For example in the above situation on the pairs (b1, b3) and (b1, b4) will
-  be returned All other permutations can be achieved via a rotatable bond
-  flip.
+   For example in the above situation on the pairs (b1, b3) and (b1, b4) will be
+  returned
+  // All other permutations can be achieved via a rotatable bond flip.
 
    ARGUMENTS:
    \param center - location of the central atom
