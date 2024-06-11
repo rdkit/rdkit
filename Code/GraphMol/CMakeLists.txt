@@ -22,6 +22,7 @@ endif ()
 rdkit_headers(Atom.h
         atomic_data.h
         AtomIterators.h
+        Atropisomers.h
         Bond.h
         BondIterators.h
         Canon.h
