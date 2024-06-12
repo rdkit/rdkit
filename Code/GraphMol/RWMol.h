@@ -51,6 +51,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     ROMol::operator=(std::move(other));
     return *this;
   }
+  ~RWMol() final;
 
   //! insert the atoms and bonds from \c other into this molecule
   void insertMol(const ROMol &other);
@@ -200,7 +201,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   //! @}
 
   //! removes all atoms, bonds, properties, bookmarks, etc.
-  void clear() {
+  void clear() final {
     destroy();
     d_confs.clear();
     ROMol::initMol();  // make sure we have a "fresh" ready to go copy
