@@ -162,6 +162,7 @@ TEST_CASE("update parameters from JSON") {
     "ETversion":2})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
     compareConfs(ref.get(), mol.get());
   }
 
