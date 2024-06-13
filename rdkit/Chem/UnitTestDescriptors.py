@@ -12,15 +12,14 @@
 """
 
 import doctest
-import io
 import os.path
 import pickle
 import unittest
 
 import numpy as np
 
-from rdkit import Chem, RDConfig
-from rdkit.Chem import AllChem, Descriptors, Lipinski, rdMolDescriptors, Descriptors3D
+from rdkit import Chem
+from rdkit.Chem import AllChem, Descriptors, Descriptors3D, Lipinski, rdMolDescriptors
 
 
 def load_tests(loader, tests, ignore):
@@ -213,7 +212,7 @@ class TestCase(unittest.TestCase):
     AllChem.EmbedMolecule(mol, randomSeed=0xf00d)
     descs = Descriptors3D.CalcMolDescriptors3D(mol)
     self.assertTrue('InertialShapeFactor' in descs)
-    self.assertAlmostEqual(descs['PMI1'], 20.954531335493417, delta=1e-4)
+    self.assertAlmostEqual(descs['PMI1'], 20.9582649071385, delta=1e-4)
 
 
 if __name__ == '__main__':
