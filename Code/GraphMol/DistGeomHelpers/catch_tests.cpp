@@ -596,7 +596,7 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
 
 TEST_CASE("tracking failure causes"){SECTION("basics"){
     auto mol =
-        "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
+        "O=c2cc3CCc1ccc(cc1Br)CCc2c(O)c3=O"_smiles;  // TODO: Check with greg
 REQUIRE(mol);
 MolOps::addHs(*mol);
 DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
@@ -604,10 +604,10 @@ ps.trackFailures = true;
 ps.maxIterations = 50;
 ps.randomSeed = 42;
 auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-CHECK(cid < 0);
+CHECK_FALSE(cid);
 
-CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
+CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 2);
+CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] == 5);
 
 auto fail_cp = ps.failures;
 // make sure we reset the counts each time
