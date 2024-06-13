@@ -26,6 +26,10 @@
 #include <GraphMol/test_fixtures.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include "CIPLabeler.h"
 #include "Digraph.h"
 #include "rules/Pairlist.h"
@@ -805,6 +809,8 @@ TEST_CASE("AssignMandP", "[accurateCIP]") {
         "0-31=P:");
   }
   SECTION("two atropisomers") {
+    UseLegacyStereoPerceptionFixture(false);
+
     // auto m = MolFileToMol(
     testOneAtropIomerMandP(
         "C1(N2C(C)=CC=C2Br)=C(C)C(C)=C(N2C(C)=CC=C2Br)C(C)=C1C |(-0.0002,1.5403,;-0.0002,3.0805,;-1.334,3.8508,;-2.6678,3.0807,;-1.334,5.391,;1.3338,5.391,;1.3338,3.8508,;2.6676,3.0807,;-1.3338,0.7702,;-2.6678,1.5403,;-1.3338,-0.7702,;-2.6678,-1.5401,;-0.0002,-1.5403,;-0.0002,-3.0805,;1.3338,-3.8508,;2.6676,-3.0805,;1.3338,-5.391,;-1.334,-5.391,;-1.334,-3.8508,;-2.6678,-3.0805,;1.3338,-0.7702,;2.6678,-1.5403,;1.3338,0.7702,;2.6678,1.5404,),wU:1.6,13.14|",

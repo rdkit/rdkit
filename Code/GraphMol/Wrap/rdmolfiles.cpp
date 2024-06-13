@@ -706,6 +706,15 @@ void CanonicalizeEnhancedStereo(ROMol &mol) {
   Canon::canonicalizeEnhancedStereo(mol);
 }
 
+std::string MolToV2KMolBlockHelper(const ROMol &mol, python::object pyParams,
+                                   int confId) {
+  MolWriterParams params;
+  if (pyParams) {
+    params = python::extract<MolWriterParams>(pyParams);
+  }
+  return MolToV2KMolBlock(mol, params, confId);
+}
+
 }  // namespace RDKit
 
 // MolSupplier stuff
@@ -1168,6 +1177,25 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       (python::arg("mol"), python::arg("includeStereo") = true,
        python::arg("confId") = -1, python::arg("kekulize") = true),
       docString.c_str());
+
+  docString =
+      R"DOC(Returns a V2000 Mol block for a molecule
+   ARGUMENTS:
+
+     - mol: the molecule
+     - params: the MolWriterParams
+     - confId: (optional) selects which conformation to output (-1 = default)
+
+   RETURNS:
+
+     a string
+
+   NOTE: this function throws a ValueError if the molecule has more than 999 atoms, bonds, or SGroups
+)DOC";
+  python::def("MolToV2KMolBlock", MolToV2KMolBlockHelper,
+              (python::arg("mol"), python::arg("params") = python::object(),
+               python::arg("confId") = -1),
+              docString.c_str());
 
   docString =
       "Writes a Mol file for a molecule\n\

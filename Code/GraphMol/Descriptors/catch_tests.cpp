@@ -557,7 +557,9 @@ TEST_CASE("DCLV") {
   auto m = v2::FileParsers::MolFromPDBFile(pdbName);
   REQUIRE(m);
   SECTION("defaults") {
-    Descriptors::DoubleCubicLatticeVolume dclv(*m);
+    bool isProtein = true;
+    bool includeLigand = false;
+    Descriptors::DoubleCubicLatticeVolume dclv(*m, isProtein, includeLigand);
     CHECK(dclv.getSurfaceArea() == Catch::Approx(8330.59).epsilon(0.05));
     CHECK(dclv.getVolume() == Catch::Approx(31789.6).epsilon(0.05));
     CHECK(dclv.getVDWVolume() == Catch::Approx(15355.3).epsilon(0.05));
@@ -598,8 +600,8 @@ TEST_CASE("DCLV") {
     // Original did not return surface area for Ligand only
     // so no check for Surface Area or Compactness
 
-    CHECK(dclv.getVolume() == Catch::Approx(1048.53).epsilon(0.05));
-    CHECK(dclv.getVDWVolume() == Catch::Approx(231.971).epsilon(0.05));
-    CHECK(dclv.getPackingDensity() == Catch::Approx(0.221234).epsilon(0.05));
+    CHECK(dclv.getSurfaceArea() == Catch::Approx(296.466).epsilon(0.05));
+    CHECK(dclv.getVolume() == Catch::Approx(411.972).epsilon(0.05));
+    CHECK(dclv.getVDWVolume() == Catch::Approx(139.97).epsilon(0.05));
   }
 }

@@ -12,6 +12,7 @@ GitHub)
 ## Backwards incompatible changes
 - The SMARTS for the unbranched alkanes in the fragment descriptors has been corrected. This descriptor will now frequently return different results.
 - The SimilarityMap functions GetSimilarityMapFromWeights(), GetSimilarityMapForFingerprint(), and GetSimilarityMapForModel() all now require an rdMolDraw2D drawing object to be passed in.
+- A bug fix in v2 of the tautomer and protomer hashes can lead to different results for these hashes. One less bond is now included in the tautomeric zone for systems like enamines/imines, so the v2 tautomer hash of the molecules CN=CC and CNC=C is now [C]:[C]:[N]-[CH3]_4_0 instead of [C]:[C]:[N]:[C]_7_0
 
 ## New Features and Enhancements:
 
