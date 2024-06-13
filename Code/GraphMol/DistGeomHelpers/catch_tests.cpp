@@ -600,7 +600,6 @@ TEST_CASE("tracking failure causes"){SECTION("basics"){
 REQUIRE(mol);
 MolOps::addHs(*mol);
 DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-ps.randomSeed = 0xf00d;
 ps.trackFailures = true;
 ps.maxIterations = 50;
 ps.randomSeed = 42;
@@ -662,7 +661,6 @@ SECTION("multithreaded") {
   REQUIRE(mol);
   MolOps::addHs(*mol);
   DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-  ps.randomSeed = 0xf00d;
   ps.trackFailures = true;
   ps.maxIterations = 10;
   ps.randomSeed = 42;
