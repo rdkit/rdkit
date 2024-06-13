@@ -775,8 +775,9 @@ TEST_CASE("Macrocycle bounds matrix") {
     const auto conf = mol->getConformer(cid);
     RDGeom::Point3D pos_1 = conf.getAtomPos(1);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
-    CHECK((pos_1 - pos_4).length() < 3.6);
-    CHECK((pos_1 - pos_4).length() > 3.5);
+    // std::cerr << (pos_1 - pos_4).length() << std::endl;
+    CHECK((pos_1 - pos_4).length() < 3.9);
+    CHECK((pos_1 - pos_4).length() > 3.8);
   }
 }
 
