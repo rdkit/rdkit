@@ -244,7 +244,8 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
     }
 
     {
-      auto m = "Cl[Pt@SP1]([35Cl])[36Cl]"_smiles;
+      // Cl[Pt@SP1]([35Cl])([36Cl])* => Cl[Pt@SP3](*)([35Cl])[36Cl]
+      auto m = "Cl[Pt@SP3]([35Cl])[36Cl]"_smiles;
       REQUIRE(m);
       CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
                                            m->getAtomWithIdx(0))
