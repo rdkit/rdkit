@@ -1179,17 +1179,19 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       docString.c_str());
 
   docString =
-      "Returns a V2000 Mol block for a molecule\n\
-   ARGUMENTS:\n\
-\n \
-     - mol: the molecule\n\
-     - params: the MolWriterParams\n\
-     - confId: (optional) selects which conformation to output (-1 = default)\n\
-\n \
-   RETURNS:\n\
-\n \
-     a string\n\
-\n ";
+      R"DOC(Returns a V2000 Mol block for a molecule
+   ARGUMENTS:
+
+     - mol: the molecule
+     - params: the MolWriterParams
+     - confId: (optional) selects which conformation to output (-1 = default)
+
+   RETURNS:
+
+     a string
+
+   NOTE: this function throws a ValueError if the molecule has more than 999 atoms, bonds, or SGroups
+)DOC";
   python::def("MolToV2KMolBlock", MolToV2KMolBlockHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("confId") = -1),

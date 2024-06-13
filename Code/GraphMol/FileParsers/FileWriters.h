@@ -97,6 +97,9 @@ inline std::string MolToV3KMolBlock(const ROMol &mol, bool includeStereo = true,
  *   \param MolWriterParams - parameter struct with write options
  *   \param confId          - selects the conformer to be used
  *                            (default=-1 - find first in mol)
+ *
+ *  \note This function will throw a ValueError exception if the molecule has
+ *   more than 999 atoms, bonds, or SGroups.
  */
 RDKIT_FILEPARSERS_EXPORT std::string MolToV2KMolBlock(
     const ROMol &mol, const MolWriterParams &params = MolWriterParams(),

@@ -1233,6 +1233,12 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   const auto &sgroups = getSubstanceGroups(tmol);
   unsigned int nSGroups = sgroups.size();
 
+  if (whichFormat == MolFileFormat::V2000 &&
+      (nAtoms > 999 || nBonds > 999 || nSGroups > 999)) {
+    throw ValueErrorException(
+        "V2000 format does not support more than 999 atoms, bonds or SGroups.");
+  }
+
   chiralFlag = 0;
   nsText = 0;
   nRxnComponents = 0;
