@@ -3924,14 +3924,14 @@ CAS<~>
     mol = Chem.MolFromSmiles("CC(C)C")
     qmol = Chem.MolFromSmiles("C")
     matches = mol.GetSubstructMatches(qmol)
-    self.assertEqual(((0,), (1,), (2,), (3,)), matches)
+    self.assertEqual(((0, ), (1, ), (2, ), (3, )), matches)
 
     atom = qmol.GetAtomWithIdx(0)
     natom = rdqueries.ReplaceAtomWithQueryAtom(qmol, atom)
     qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
     natom.ExpandQuery(qa, Chem.CompositeQueryType.COMPOSITE_AND)
     matches = mol.GetSubstructMatches(qmol)
-    self.assertEqual(((1,),), matches)
+    self.assertEqual(((1, ), ), matches)
 
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -8140,8 +8140,8 @@ M  END
 
   def testCountAtomElec(self):
     m = Chem.MolFromSmiles("c1n(C)ccc1")
-    self.assertEqual(Chem.CountAtomElec(m.GetAtomWithIdx(0)),1)
-    self.assertEqual(Chem.CountAtomElec(m.GetAtomWithIdx(1)),2)
+    self.assertEqual(Chem.CountAtomElec(m.GetAtomWithIdx(0)), 1)
+    self.assertEqual(Chem.CountAtomElec(m.GetAtomWithIdx(1)), 2)
 
   def testAtomHasConjugatedBond(self):
     m = Chem.MolFromSmiles("c1n(C)ccc1")
@@ -8157,6 +8157,13 @@ M  END
     ps.includeDativeBonds = False
     sma = Chem.MolToSmarts(mol, ps)
     self.assertEqual(sma, '[#7H3]-[Fe]-[#7]')
+
+  def testMolToV2KMolBlock(self):
+    mol = Chem.MolFromSmiles('[NH3]->[Fe]')
+    self.assertIsNotNone(mol)
+    mb = Chem.MolToV2KMolBlock(mol)
+    self.assertTrue('V2000' in mb)
+    self.assertTrue('  1  2  9  0' in mb)
 
 
 if __name__ == '__main__':
