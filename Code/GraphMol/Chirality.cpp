@@ -477,8 +477,16 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   auto centerLoc = conf->getAtomPos(atom->getIdx());
   centerLoc.z = 0.0;
   auto refPt = conf->getAtomPos(bondAtom->getIdx());
+
+  // Github #7305: in some odd cases, we get conformers with
+  // weird scalings. In these, we need to scale the 3d offset
+  // or it might be irrelevant or dominate over the coordinates.
+  auto refLength = (centerLoc - refPt).length();
   refPt.z =
       bondDir == Bond::BondDir::BEGINWEDGE ? pseudo3DOffset : -pseudo3DOffset;
+  if (refLength) {
+    refPt.z *= refLength;
+  }
 
   //----------------------------------------------------------
   //
@@ -512,9 +520,14 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       if (nbrBond->getBeginAtomIdx() == atom->getIdx() &&
           (nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
            nbrBond->getBondDir() == Bond::BondDir::BEGINDASH)) {
+        // scale the 3d offset based on the reference bond here too
         tmpPt.z = nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE
                       ? pseudo3DOffset
                       : -pseudo3DOffset;
+        if (refLength) {
+          tmpPt.z *= refLength;
+        }
+
       } else {
         tmpPt.z = 0;
       }

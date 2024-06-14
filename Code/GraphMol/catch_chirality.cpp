@@ -5841,3 +5841,39 @@ M  END
           Bond::BondStereo::STEREOATROPCCW);
   }
 }
+
+TEST_CASE(
+    "GitHub #7509: atomChiralTypeFromBondDirPseudo3D fails for poorly scaled molecular coordinates") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+   -2.0785    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7794    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5196   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8187    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5196   -1.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  1
+  3  5  1  0
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+
+  auto at = m->getAtomWithIdx(2);
+  REQUIRE(at->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+
+  auto &pos = m->getConformer().getPositions();
+  std::for_each(pos.begin(), pos.end(),
+                [](RDGeom::Point3D &pos) { pos *= 6.0; });
+
+  // Reset chirality and the original bond direction
+  // (it was stripper after parsing m for the first time)
+  at->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+  m->getBondBetweenAtoms(2, 3)->setBondDir(Bond::BondDir::BEGINWEDGE);
+
+  MolOps::assignChiralTypesFromBondDirs(*m);
+
+  CHECK(at->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+}
