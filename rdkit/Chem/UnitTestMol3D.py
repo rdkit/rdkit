@@ -481,6 +481,14 @@ class TestCase(unittest.TestCase):
     self.assertEqual(Chem.MolToSmiles(sis[0]), 'C[C@H]1C[C@@H](C)C1')
     self.assertEqual(Chem.MolToSmiles(sis[1]), 'C[C@H]1C[C@H](C)C1')
 
+    m = Chem.MolFromSmiles('COC(=O)C1CC(NC(N)=O)C1')
+    sis = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(sis), 2)
+
+    m = Chem.MolFromSmiles('O=C(NC1CC2[NH+](C(C1)CC2)Cc3ccccc3)N')
+    sis = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(sis), 8)
+
 
 if __name__ == '__main__':
   unittest.main()
