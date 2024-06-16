@@ -534,15 +534,26 @@ void set_reaction_data(
   }
 }
 
+// The parsing of fragments needed to be moved to a recursive function since they may be
+//  embedded further in the documentation, i.e. a group may hold multiple fragments
+//
+// Additionally, a grouped_fragments map is included to group fragments together for the
+// purposes of reactions.
+//
+// Ungrouped fragments will end up as vectors of size 1 in the grouped_fragement list.
+// The reaction schemes in the CDXML docs appear to use the fragment id for ungrouped
+// fragments and the grouped id for grouped fragments, so the grouped_fragments
+// holds both for ease of bookkeeping.
 template <class T>
 void visit_children(T &node, std::map<unsigned int, Atom *> &ids,
-                    std::vector<std::unique_ptr<RWMol>> &mols,
-                    std::map<unsigned int, size_t> &fragment_lookup,
-                    std::map<unsigned int, std::vector<int>> &grouped_fragments,
-                    std::vector<SchemeInfo> &schemes, int &missing_frag_id,
-                    double bondLength,
-                    const v2::CDXMLParser::CDXMLParserParams &params,
-                    int group_id = -1) {
+                    std::vector<std::unique_ptr<RWMol>> &mols, // All molecules found in the doc
+                    std::map<unsigned int, size_t> &fragment_lookup, // fragment.id->molecule index
+                    std::map<unsigned int, std::vector<int>> &grouped_fragments, //grouped.id -> [fragment.id]
+                    std::vector<SchemeInfo> &schemes, // reaction schemes found
+                    int &missing_frag_id, // if we don't have a fragment id, start at -1 and decrement
+                    double bondLength, // bond length of the document for assigning coordinates
+                    const v2::CDXMLParser::CDXMLParserParams &params, // parser parameters
+                    int group_id = -1) { // current group id for this set of subnodes
   MolzipParams molzip_params;
   molzip_params.label = MolzipLabel::AtomProperty;
   molzip_params.atomProperty = FUSE_LABEL;
@@ -707,11 +718,11 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
 
     throw FileParseException(e.what());
   }
-  std::map<unsigned int, Atom *> ids;
-  std::vector<std::unique_ptr<RWMol>> mols;
-  std::map<unsigned int, size_t> fragment_lookup;
-  std::map<unsigned int, std::vector<int>> grouped_fragments;
-  std::vector<SchemeInfo> schemes;
+  std::map<unsigned int, Atom *> ids; // atom.id to atom in fragment (used for linkages)
+  std::vector<std::unique_ptr<RWMol>> mols; // All molecules found in the doc
+  std::map<unsigned int, size_t> fragment_lookup; // fragment.id->molecule index
+  std::map<unsigned int, std::vector<int>> grouped_fragments; //grouped.id -> [fragment.id]
+  std::vector<SchemeInfo> schemes; // reaction schemes found
 
   int missing_frag_id = -1;
   for (auto &cdxml : pt) {
