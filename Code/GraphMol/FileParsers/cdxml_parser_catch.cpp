@@ -1176,7 +1176,7 @@ TEST_CASE("Github #6887: and1 or1 in same mol") {
   }
 }
 
-TEST_CASE("Github #7467 - read fragments in groups") {
+TEST_CASE("Github #7528 - read fragments in groups") {
   std::string cdxmlbase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
   SECTION("case 1") {
