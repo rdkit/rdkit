@@ -507,10 +507,10 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     >>> p0 = conf.GetAtomPosition(0)
     >>> p3 = conf.GetAtomPosition(3)
     >>> d03 = p0.Distance(p3)
-    >>> d03 >= pcophore.getLowerBound(0,1) - 0.01
-    np.True_
-    >>> d03 <= pcophore.getUpperBound(0,1) + 0.01
-    np.True_
+    >>> bool(d03 >= pcophore.getLowerBound(0,1) - 0.01)
+    True
+    >>> bool(d03 <= pcophore.getUpperBound(0,1) + 0.01)
+    True
 
     If we optimize without the distance constraints (provided via the atomMatches
     argument) we're not guaranteed to get the same results, particularly in a case
@@ -525,10 +525,10 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     >>> p0 = conf.GetAtomPosition(0)
     >>> p3 = conf.GetAtomPosition(3)
     >>> d03 = p0.Distance(p3)
-    >>> d03 >= pcophore.getLowerBound(0, 1) - 0.01
-    np.True_
-    >>> d03 <= pcophore.getUpperBound(0, 1) + 0.01
-    np.False_
+    >>> bool(d03 >= pcophore.getLowerBound(0, 1) - 0.01)
+    True
+    >>> bool(d03 <= pcophore.getUpperBound(0, 1) + 0.01)
+    False
 
   """
   try:
