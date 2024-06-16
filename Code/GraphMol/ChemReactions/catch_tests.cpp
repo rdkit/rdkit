@@ -1306,13 +1306,15 @@ TEST_CASE("CDXML Parser") {
         smarts ==
         "[#6&D2:2]1:[#6&D2:3]:[#6&D2:4]:[#6&D3:1](:[#6&D2:5]:[#6&D2:6]:1)-[#17&D1].[#6&D3](-[#5&D2]-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1)(-[#8&D1])-[#8&D1]>>[#6&D2:1]1:[#6&D2:5]:[#6&D3:6](:[#6&D2:2]:[#6&D2:3]:[#6&D2:4]:1)-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1");
   }
-    
+
   SECTION("Github #7467 CDXML Grouped Agents in Reactions") {
     auto fname = cdxmlbase + "github7467-grouped-fragments.cdxml";
     auto rxns = CDXMLFileToChemicalReactions(fname);
     CHECK(rxns.size() == 1);
     auto smarts = ChemicalReactionToRxnSmarts(*rxns[0]);
-    CHECK(smarts == "[#14&D2]1-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3]-1-[#6&D1])-[#6&D1])-[#6&D1])-[#6&D1].[#14&D2]1-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3]-1-[#6&D1])-[#6&D1])-[#6&D1])-[#6&D1]>>");
+    CHECK(
+        smarts ==
+        "[#14&D2]1-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3]-1-[#6&D1])-[#6&D1])-[#6&D1])-[#6&D1].[#14&D2]1-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3]-1-[#6&D1])-[#6&D1])-[#6&D1])-[#6&D1]>>");
   }
 }
 
@@ -1808,17 +1810,26 @@ TEST_CASE("sanitizeRxnAsMols") {
 
 TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
   SECTION("basics") {
-    auto rxn = "[C:1]-[C:2].[NH3:3]->[Fe:4]-[NH2:5]>>[C:1]=[C:2].[NH3:3]->[Fe:4]-[NH2:5]"_rxnsmarts;
+    auto rxn =
+        "[C:1]-[C:2].[NH3:3]->[Fe:4]-[NH2:5]>>[C:1]=[C:2].[NH3:3]->[Fe:4]-[NH2:5]"_rxnsmarts;
     REQUIRE(rxn);
     auto smi = ChemicalReactionToRxnSmiles(*rxn);
-    CHECK(smi == "[CH3:1][CH3:2].[NH3:3]->[Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3]->[Fe:4][NH2:5]");
+    CHECK(
+        smi ==
+        "[CH3:1][CH3:2].[NH3:3]->[Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3]->[Fe:4][NH2:5]");
     smi = ChemicalReactionToRxnSmarts(*rxn);
-    CHECK(smi == "[C:1]-[C:2].[N&H3:3]->[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]->[#26:4]-[N&H2:5]");
+    CHECK(
+        smi ==
+        "[C:1]-[C:2].[N&H3:3]->[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]->[#26:4]-[N&H2:5]");
     SmilesWriteParams ps;
     ps.includeDativeBonds = false;
-    smi = ChemicalReactionToRxnSmiles(*rxn,ps);
-    CHECK(smi == "[CH3:1][CH3:2].[NH3:3][Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3][Fe:4][NH2:5]");
-    smi = ChemicalReactionToRxnSmarts(*rxn,ps);
-    CHECK(smi == "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]");
+    smi = ChemicalReactionToRxnSmiles(*rxn, ps);
+    CHECK(
+        smi ==
+        "[CH3:1][CH3:2].[NH3:3][Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3][Fe:4][NH2:5]");
+    smi = ChemicalReactionToRxnSmarts(*rxn, ps);
+    CHECK(
+        smi ==
+        "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]");
   }
 }
