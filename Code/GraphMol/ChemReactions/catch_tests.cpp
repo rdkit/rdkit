@@ -1306,6 +1306,14 @@ TEST_CASE("CDXML Parser") {
         smarts ==
         "[#6&D2:2]1:[#6&D2:3]:[#6&D2:4]:[#6&D3:1](:[#6&D2:5]:[#6&D2:6]:1)-[#17&D1].[#6&D3](-[#5&D2]-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1)(-[#8&D1])-[#8&D1]>>[#6&D2:1]1:[#6&D2:5]:[#6&D3:6](:[#6&D2:2]:[#6&D2:3]:[#6&D2:4]:1)-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1");
   }
+    
+  SECTION("Github #7467 CDXML Grouped Agents in Reactions") {
+    auto fname = cdxmlbase + "github7467-grouped-fragments.cdxml";
+    auto rxns = CDXMLFileToChemicalReactions(fname);
+    CHECK(rxns.size() == 1);
+    auto smarts = ChemicalReactionToRxnSmarts(*rxns[0]);
+    CHECK(smarts == "[#14&D2]1-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3]-1-[#6&D1])-[#6&D1])-[#6&D1])-[#6&D1].[#14&D2]1-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3](-[#14&D2]-[#8&D3]-1-[#6&D1])-[#6&D1])-[#6&D1])-[#6&D1]>>");
+  }
 }
 
 TEST_CASE("Github #5785: separateAgents ignored for V3000 RXN files") {

@@ -29,6 +29,7 @@ namespace RDKit {
 namespace {
 const std::string NEEDS_FUSE("CDXML_NEEDS_FUSE");
 const std::string CDXML_FRAG_ID("CDXML_FRAG_ID");
+const std::string CDXML_GROUP_ID("CDXML_GROUP_ID");
 const std::string FUSE_LABEL("CDXML_NODE_ID");
 const std::string CDX_SCHEME_ID("CDX_SCHEME_ID");
 const std::string CDX_STEP_ID("CDX_STEP_ID");
@@ -498,25 +499,37 @@ bool parse_fragment(RWMol &mol, ptree &frag,
 void set_reaction_data(std::string type, std::string prop, SchemeInfo &scheme,
                        const std::vector<unsigned int> &frag_ids,
                        const std::map<unsigned int, size_t> &fragments,
+                       std::map<unsigned int, std::vector<int>> &grouped_fragments,
                        const std::vector<std::unique_ptr<RWMol>> &mols) {
   unsigned int reagent_idx = 0;
   for (auto idx : frag_ids) {
-    auto iter = fragments.find(idx);
-    if (iter == fragments.end()) {
+    auto iter = grouped_fragments.find(idx);
+    if (iter == grouped_fragments.end()) {
       BOOST_LOG(rdWarningLog)
           << "CDXMLParser: Schema " << scheme.scheme_id << " step "
-          << scheme.step_id << " " << type << " fragment " << idx
+          << scheme.step_id << " " << type << " reaction fragment " << idx
           << " not found in document." << std::endl;
       continue;
     }
-    if (iter->second >= mols.size()) {
+    /*if (iter->second >= mols.size()) {
       // shouldn't get here
       continue;
+    }*/
+    for(auto reaction_fragment_id : iter->second) {
+        auto fragment = fragments.find(reaction_fragment_id);
+        if (fragment == fragments.end()) {
+            BOOST_LOG(rdWarningLog)
+                << "CDXMLParser: Schema " << scheme.scheme_id << " step "
+                << scheme.step_id << " " << type << " fragment " << idx
+                << " not found in document." << std::endl;
+            continue;
+        }
+        auto &mol = mols[fragment->second];
+        mol->setProp(CDX_SCHEME_ID, scheme.scheme_id);
+        mol->setProp(CDX_STEP_ID, scheme.step_id);
+        mol->setProp(prop, reagent_idx);
     }
-    auto &mol = mols[iter->second];
-    mol->setProp(CDX_SCHEME_ID, scheme.scheme_id);
-    mol->setProp(CDX_STEP_ID, scheme.step_id);
-    mol->setProp(prop, reagent_idx++);
+    reagent_idx += 1;
   }
 }
 
@@ -525,16 +538,17 @@ void visit_children(T &node,
 		    std::map<unsigned int, Atom *> &ids,
 		    std::vector<std::unique_ptr<RWMol>> &mols,
 		    std::map<unsigned int, size_t> &fragment_lookup,
+            std::map<unsigned int, std::vector<int>> &grouped_fragments,
 		    std::vector<SchemeInfo> &schemes,
 		    int &missing_frag_id,
 		    double bondLength,
-		    const v2::CDXMLParser::CDXMLParserParams &params
+		    const v2::CDXMLParser::CDXMLParserParams &params,
+            int group_id = -1
 		    ) {
   MolzipParams molzip_params;
   molzip_params.label = MolzipLabel::AtomProperty;
   molzip_params.atomProperty = FUSE_LABEL;
   molzip_params.enforceValenceRules = false;
-
   for (auto &frag : node.second) {
     if (frag.first == "fragment") {  // chemical matter
       std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
@@ -543,6 +557,11 @@ void visit_children(T &node,
       }
       unsigned int frag_id = mol->getProp<int>(CDXML_FRAG_ID);
       fragment_lookup[frag_id] = mols.size();
+      if(group_id != -1) {
+           grouped_fragments[group_id].push_back(frag_id);
+      } else {
+          grouped_fragments[frag_id].push_back(frag_id);
+      }
       if (mol->hasProp(NEEDS_FUSE)) {
 	mol->clearProp(NEEDS_FUSE);
 	std::unique_ptr<ROMol> fused;
@@ -663,7 +682,11 @@ void visit_children(T &node,
 	}
       }
     } else {
-      visit_children(frag, ids, mols, fragment_lookup, schemes, missing_frag_id, bondLength, params);
+      if(frag.first == "group") {
+          group_id = frag.second.template get<int>("<xmlattr>.id");
+      }
+      visit_children(frag, ids, mols, fragment_lookup, grouped_fragments,
+                     schemes, missing_frag_id, bondLength, params, group_id);
     }
   }
 }  
@@ -693,6 +716,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   std::map<unsigned int, Atom *> ids;
   std::vector<std::unique_ptr<RWMol>> mols;
   std::map<unsigned int, size_t> fragment_lookup;
+  std::map<unsigned int, std::vector<int>> grouped_fragments;
   std::vector<SchemeInfo> schemes;
 
   int missing_frag_id = -1;
@@ -701,7 +725,8 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
       double bondLength = cdxml.second.get<double>("<xmlattr>.BondLength");
       for (auto &node : cdxml.second) {
         if (node.first == "page") {
-	  visit_children(node, ids, mols, fragment_lookup, schemes, missing_frag_id, bondLength, params);
+	  visit_children(node, ids, mols, fragment_lookup, grouped_fragments,
+                     schemes, missing_frag_id, bondLength, params);
 	}
       }
     }
@@ -724,15 +749,15 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
       for (auto &scheme : schemes) {
         // Set the molecule properties
         set_reaction_data("ReactionStepReactants", CDX_REAGENT_ID, scheme,
-                          scheme.ReactionStepReactants, fragments, mols);
+                          scheme.ReactionStepReactants, fragments, grouped_fragments, mols);
         set_reaction_data("ReactionStepProducts", CDX_PRODUCT_ID, scheme,
-                          scheme.ReactionStepProducts, fragments, mols);
+                          scheme.ReactionStepProducts, fragments, grouped_fragments, mols);
         auto agents = scheme.ReactionStepObjectsAboveArrow;
         agents.insert(agents.end(),
                       scheme.ReactionStepObjectsBelowArrow.begin(),
                       scheme.ReactionStepObjectsBelowArrow.end());
         set_reaction_data("ReactionStepAgents", CDX_AGENT_ID, scheme, agents,
-                          fragments, mols);
+                          fragments, grouped_fragments, mols);
         // Set the Atom Maps
         int sz = scheme.ReactionStepAtomMap.size();
         if (sz % 2) {
