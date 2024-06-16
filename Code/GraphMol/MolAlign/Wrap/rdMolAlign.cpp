@@ -747,7 +747,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                        terminal functional groups (like nitro or carboxylate)
                        will be considered symmetrically
         - weights:     (optional) weights for mapping
-       
+
       RETURNS
       A tuple with the best RMSDS. The ordering is [(1,0),(2,0),(2,1),(3,0),... etc]
   )DOC";

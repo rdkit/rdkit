@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build -c conda-forge $(python) cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
-        numpy=1.24.3 pillow eigen pandas=2.1 matplotlib-base=3.8 \
+        numpy=2.0 pillow eigen pandas=2.1 matplotlib-base=3.8 \
         cairo
     conda activate rdkit_build
     conda install -c conda-forge ipython=8.20 jupyter nbval ipykernel>=6.0
