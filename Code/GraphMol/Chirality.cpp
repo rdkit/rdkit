@@ -3774,5 +3774,51 @@ void simplifyEnhancedStereo(ROMol &mol, bool removeAffectedStereoGroups) {
     }
   }
 }
+
+std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
+    const ROMol &mol, bool includeIsotopes, bool includeAtomMaps) {
+  std::vector<std::pair<unsigned int, unsigned int>> res;
+  boost::dynamic_bitset<> specifiedChiralAts(mol.getNumAtoms());
+  for (const auto atom : mol.atoms()) {
+    if (atom->getChiralTag() > Atom::ChiralType::CHI_UNSPECIFIED)
+      specifiedChiralAts.set(atom->getIdx(), 1);
+  }
+  // easy case: no atoms with specified chirality
+  if (specifiedChiralAts.none()) {
+    return res;
+  }
+
+  // we will compare the atom ranks with chirality and with only chiral presence
+  // (so that we can distinguish centers with chirality specified and those
+  // without)
+  const bool breakTies = false;
+  const bool includeChiralPresence = true;
+  bool includeChirality = true;
+  std::vector<unsigned int> chiralRanks;
+  Canon::rankMolAtoms(mol, chiralRanks, breakTies, includeChirality,
+                      includeIsotopes, includeAtomMaps, includeChiralPresence);
+  includeChirality = false;
+  std::vector<unsigned int> presenceRanks;
+  Canon::rankMolAtoms(mol, presenceRanks, breakTies, includeChirality,
+                      includeIsotopes, includeAtomMaps, includeChiralPresence);
+
+  for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
+    if (!specifiedChiralAts[i]) {
+      continue;
+    }
+    for (auto j = i + 1; j < mol.getNumAtoms(); ++j) {
+      if (!specifiedChiralAts[j]) {
+        continue;
+      }
+      if (chiralRanks[i] != chiralRanks[j] &&
+          presenceRanks[i] == presenceRanks[j]) {
+        res.emplace_back(i, j);
+      }
+    }
+  }
+
+  return res;
+}
+
 }  // namespace Chirality
 }  // namespace RDKit

@@ -5869,11 +5869,53 @@ M  END
                 [](RDGeom::Point3D &pos) { pos *= 6.0; });
 
   // Reset chirality and the original bond direction
-  // (it was stripper after parsing m for the first time)
+  // (it was stripped after parsing m for the first time)
   at->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
   m->getBondBetweenAtoms(2, 3)->setBondDir(Bond::BondDir::BEGINWEDGE);
 
   MolOps::assignChiralTypesFromBondDirs(*m);
 
   CHECK(at->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+}
+
+TEST_CASE("findMesoCenters") {
+  SECTION("basics") {
+    std::vector<std::pair<std::string,
+                          std::vector<std::pair<unsigned int, unsigned int>>>>
+        cases{{"C[C@@H](Cl)C[C@H](C)Cl", {{1, 4}}},
+              {"C[C@@H](Cl)C[C@@H](Cl)C", {{1, 4}}},
+              {"C[C@H](Cl)C[C@H](C)Cl", {}},
+              {"OC(F)C([C@H](F)O)[C@@H](F)O", {{4, 7}}}};
+    for (auto &[smi, expected] : cases) {
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      auto res = Chirality::findMesoCenters(*m);
+      REQUIRE(res.size() == expected.size());
+      CHECK(res == expected);
+    }
+  }
+  SECTION("options") {
+    {
+      auto m = "[13CH3][C@@H](C)C[C@@H](C)[13CH3]"_smiles;
+      REQUIRE(m);
+      auto res = Chirality::findMesoCenters(*m);
+      REQUIRE(res.size() == 1);
+      CHECK(res == std::vector<std::pair<unsigned int, unsigned int>>{{1, 4}});
+      bool includeIsotopes = false;
+      res = Chirality::findMesoCenters(*m, includeIsotopes);
+      REQUIRE(res.empty());
+    }
+    {
+      auto m = "[CH3:1][C@@H](C)C[C@@H](C)[CH3:1]"_smiles;
+      REQUIRE(m);
+      auto res = Chirality::findMesoCenters(*m);
+      REQUIRE(res.empty());
+      bool includeIsotopes = true;
+      bool includeAtomMaps = true;
+      res = Chirality::findMesoCenters(*m, includeIsotopes, includeAtomMaps);
+      REQUIRE(res.size() == 1);
+      CHECK(res == std::vector<std::pair<unsigned int, unsigned int>>{{1, 4}});
+    }
+  }
 }
