@@ -393,6 +393,8 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     }
     RDKit::SubstructMatchParameters params;
     params.maxMatches = 1;
+    params.useChirality = true;  // for cis/trans in macrocycles
+
     auto matches = RDKit::SubstructMatch(RDKit::ROMol(rs_mol), *mol, params);
     if (!matches.empty()) {
       match = matches[0];
@@ -511,14 +513,16 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
   }
   RDKit::INT_VECT doneRings;
 
-  // embed the core rings. Try first with a template if available
-  RDKit::INT_VECT coreRingsIds;
-  auto coreRings = findCoreRings(fusedRings, coreRingsIds);
-  if (useRingTemplates && coreRings.size() > 1) {
-    RDKit::Union(coreRings, funion);
-    bool found_template = matchToTemplate(funion, coreRings.size());
-    if (found_template) {
-      doneRings = coreRingsIds;
+  if (useRingTemplates) {
+    RDKit::INT_VECT coreRingsIds;
+    auto coreRings = findCoreRings(fusedRings, coreRingsIds, *dp_mol);
+    if (coreRings.size() > 1) {
+      // look for a template that matches the core ring system
+      RDKit::Union(coreRings, funion);
+      bool found_template = matchToTemplate(funion, coreRings.size());
+      if (found_template) {
+        doneRings = coreRingsIds;
+      }
     }
   }
 
@@ -527,7 +531,6 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
     // FIX for issue 197
     // find the ring with the max substituents
     // If there are multiple pick the largest
-    // auto firstRingId = pickFirstRingToEmbed(*dp_mol, coreRings);
     auto firstRingId = pickFirstRingToEmbed(*dp_mol, fusedRings);
 
     this->initFromRingCoords(fusedRings[firstRingId], coords[firstRingId]);

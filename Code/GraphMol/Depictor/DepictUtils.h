@@ -146,11 +146,13 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid,
 /*
   \param fusedRings   list of all the rings in the fused system
   \param coreRingsIds this is where the IDs of the core rings are written
+    \param mol          the molecule of interest
 
   \return list of rings that represent the core
 */
 RDKIT_DEPICTOR_EXPORT RDKit::VECT_INT_VECT findCoreRings(
-    const RDKit::VECT_INT_VECT &fusedRings, RDKit::INT_VECT &coreRingsIds);
+    const RDKit::VECT_INT_VECT &fusedRings, RDKit::INT_VECT &coreRingsIds,
+    const RDKit::ROMol &mol);
 
 //! \brief From a given set of rings find the ring the largest common elements
 /// with other rings

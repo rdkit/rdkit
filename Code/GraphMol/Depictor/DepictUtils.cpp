@@ -194,7 +194,8 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
 }
 
 RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
-                                   RDKit::INT_VECT &coreRingsIds) {
+                                   RDKit::INT_VECT &coreRingsIds,
+                                   const RDKit::ROMol &mol) {
   // simplify the fused rings to a set of core rings by iteratively removing
   // rings that share only one or two consecutive atoms. These
   // are trivial to embed after the core rings have been embedded and will make
@@ -232,26 +233,11 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
       // note that the set of ring is not SSSR because we use symmetrizeSSSR, so
       // we cannot force a check for only one fused ring. Instead we make sure
       // that this ring shares only one atom or one bond (two consecutive atoms)
-      auto hasOneOrTwoConsecutiveAtoms = [fusedRings, currRingId](
-                                             const RDKit::INT_VECT &vec) {
+      auto hasOneOrTwoConsecutiveAtoms = [mol](const RDKit::INT_VECT &vec) {
         if (vec.size() == 1) {
           return true;
-        }
-        if (vec.size() == 2) {
-          auto ring = fusedRings[currRingId];
-          auto pos1 = find(ring.begin(), ring.end(), vec[0]);
-          auto pos2 = find(ring.begin(), ring.end(), vec[1]);
-
-          if (pos1 == ring.end() || pos2 == ring.end()) {
-            return false;
-          }
-          int pos1I = pos1 - ring.begin();
-          int pos2I = pos2 - ring.begin();
-          // check if the positions in the ring vector of the two
-          // elements are consecutive
-          return (abs(pos1I - pos2I) == 1 ||
-                  (pos1I == 0 && pos2I == static_cast<int>(ring.size()) - 1) ||
-                  (pos2I == 0 && pos1I == static_cast<int>(ring.size()) - 1));
+        } else if (vec.size() == 2) {
+          return mol.getBondBetweenAtoms(vec[0], vec[1]) != nullptr;
         }
         return false;
       };
