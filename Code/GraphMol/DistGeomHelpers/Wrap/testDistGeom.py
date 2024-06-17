@@ -681,7 +681,7 @@ class TestCase(unittest.TestCase):
     params.trackFailures = True
     params.maxIterations = 50
     params.randomSeed = 42
-    mol = Chem.MolFromSmiles('O=c2cc3CCc1ccc(cc1Br)CCc2c(O)c3=O')  # TODO: Check with greg
+    mol = Chem.MolFromSmiles('O=c2cc3CCc1ccc(cc1Br)CCc2c(O)c3=O')
     mol = Chem.AddHs(mol)
     AllChem.EmbedMolecule(mol, params)
     cnts = params.GetFailureCounts()

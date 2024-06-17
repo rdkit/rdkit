@@ -2394,7 +2394,7 @@ void testForceTransAmides() {
       TEST_ASSERT(cid >= 0);
       auto conf = mol->getConformer(cid);
       auto tors = MolTransforms::getDihedralDeg(conf, 0, 1, 3, 4);
-      TEST_ASSERT(fabs(fabs(tors) - 180) < 35);  // TODO: Check with greg!!
+      TEST_ASSERT(fabs(fabs(tors) - 180) < 35);
     }
   }
   {  // make sure we can find at least one non-trans
