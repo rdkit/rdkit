@@ -306,12 +306,6 @@ ForceFields::ForceField *construct3DForceField(
           static_cast<bool>(improperAtom[5]), oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
       dont13Constrain[improperAtom[n[1]]] = 1;
-      //   std::cout << improperAtom[n[0]] << ", " << improperAtom[n[1]] <<
-      // ", "
-      //             << improperAtom[n[2]] << ", " << improperAtom[n[3]]
-      //             << std::endl;
-      //   std::cout << "dontconstrain constrain: " << improperAtom[n[1]]
-      //             << std::endl;
     }
   }
 
