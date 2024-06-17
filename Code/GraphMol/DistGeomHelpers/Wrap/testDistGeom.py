@@ -210,7 +210,7 @@ class TestCase(unittest.TestCase):
     ]
 
     nconfs = []
-    expected = [3, 2, 7, 6, 3, 3]  # TODO: Check with greg
+    expected = [3, 2, 7, 6, 3, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, maxAttempts=30, randomSeed=100,
@@ -228,7 +228,7 @@ class TestCase(unittest.TestCase):
     params.pruneRmsThresh = 1.5
     params.useSymmetryForPruning = False
     nconfs = []
-    expected = [4, 5, 5, 7, 5, 3]  # TODO: Check with greg
+    expected = [4, 5, 5, 7, 5, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
