@@ -2461,6 +2461,136 @@ M  END\n\
   free(mpkl);
 }
 
+void test_wedged_bond_atropisomer() {
+  printf("--------------------------\n");
+  printf("  test_wedged_bond_atropisomer\n");
+  const char *atropisomer =
+      "\n\
+  Mrv2311 05242408162D          \n\
+\n\
+  0  0  0     0  0            999 V3000\n\
+M  V30 BEGIN CTAB\n\
+M  V30 COUNTS 14 15 0 0 0\n\
+M  V30 BEGIN ATOM\n\
+M  V30 1 C 2.0006 -1.54 0 0\n\
+M  V30 2 N 2.0006 -3.08 0 0\n\
+M  V30 3 C 0.6669 -3.85 0 0\n\
+M  V30 4 C -0.6668 -3.08 0 0\n\
+M  V30 5 C -0.6668 -1.54 0 0\n\
+M  V30 6 C -2.0006 -0.77 0 0\n\
+M  V30 7 C 0.6669 -0.77 0 0\n\
+M  V30 8 C 0.6669 0.77 0 0\n\
+M  V30 9 C -0.6668 1.54 0 0\n\
+M  V30 10 C -2.0006 0.77 0 0\n\
+M  V30 11 C -0.6668 3.08 0 0\n\
+M  V30 12 C 0.6669 3.85 0 0\n\
+M  V30 13 C 2.0006 3.08 0 0\n\
+M  V30 14 C 2.0006 1.54 0 0\n\
+M  V30 END ATOM\n\
+M  V30 BEGIN BOND\n\
+M  V30 1 1 1 2\n\
+M  V30 2 2 2 3\n\
+M  V30 3 1 3 4\n\
+M  V30 4 2 4 5\n\
+M  V30 5 1 5 6\n\
+M  V30 6 1 7 5 CFG=3\n\
+M  V30 7 2 7 1\n\
+M  V30 8 1 7 8\n\
+M  V30 9 2 8 9\n\
+M  V30 10 1 9 10\n\
+M  V30 11 1 9 11\n\
+M  V30 12 2 11 12\n\
+M  V30 13 1 12 13\n\
+M  V30 14 2 13 14\n\
+M  V30 15 1 8 14\n\
+M  V30 END BOND\n\
+M  V30 END CTAB\n\
+M  END\n";
+  char *mpkl;
+  size_t mpkl_size;
+  char *svg;
+  mpkl = get_mol(atropisomer, &mpkl_size, "");
+  assert(mpkl);
+  svg = get_svg(mpkl, mpkl_size,
+                "{\"useMolBlockWedging\":true,\"noFreetype\":true}");
+  assert(svg);
+  char *line = strtok(svg, "\n");
+  char *str = NULL;
+  int n_matches = 0;
+  while (line) {
+    str = strstr(line, "<path class='bond-5 atom-6 atom-4'");
+    if (str) {
+      ++n_matches;
+      assert(strstr(
+          str,
+          "style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />"));
+      assert(!strstr(
+          str,
+          "style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />"));
+    }
+    line = strtok(NULL, "\n");
+  }
+  assert(n_matches > 6);
+  free(svg);
+  free(mpkl);
+}
+
+void test_get_molblock_use_molblock_wedging() {
+  printf("--------------------------\n");
+  printf("  test_get_molblock_use_molblock_wedging\n");
+  const char *mb =
+      "\n\
+     RDKit          2D\n\
+\n\
+  9 10  0  0  1  0  0  0  0  0999 V2000\n\
+    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  1\n\
+  2  3  1  0\n\
+  4  3  1  0\n\
+  4  5  1  0\n\
+  6  5  1  0\n\
+  6  7  1  1\n\
+  6  8  1  0\n\
+  8  9  1  1\n\
+  8  2  1  0\n\
+  4  9  1  1\n\
+M  END\n\
+";
+  char *mpkl;
+  char *mpkl_copy;
+  size_t mpkl_size;
+  const char *mb_rdkit_wedging;
+  const char *mb_rdkit_wedging_post_orig;
+  const char *mb_orig_wedging;
+  mpkl = get_mol(mb, &mpkl_size, "");
+  assert(mpkl && mpkl_size);
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  mb_rdkit_wedging = get_molblock(mpkl, mpkl_size, NULL);
+  assert(strcmp(mb, mb_rdkit_wedging));
+  mb_orig_wedging =
+      get_molblock(mpkl, mpkl_size, "{\"useMolBlockWedging\":true}");
+  assert(!memcmp(mpkl, mpkl_copy, mpkl_size));
+  assert(!strcmp(mb, mb_orig_wedging));
+  mb_rdkit_wedging_post_orig = get_molblock(mpkl, mpkl_size, NULL);
+  assert(strcmp(mb, mb_rdkit_wedging_post_orig));
+  assert(!strcmp(mb_rdkit_wedging, mb_rdkit_wedging_post_orig));
+  free(mb_rdkit_wedging);
+  free(mb_rdkit_wedging_post_orig);
+  free(mb_orig_wedging);
+  free(mpkl);
+  free(mpkl_copy);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -2491,5 +2621,7 @@ int main() {
   test_relabel_mapped_dummies();
   test_assign_cip_labels();
   test_smiles_smarts_params();
+  test_wedged_bond_atropisomer();
+  test_get_molblock_use_molblock_wedging();
   return 0;
 }
