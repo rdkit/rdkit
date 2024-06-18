@@ -78,7 +78,6 @@ namespace {
       if (nrows <= 0) {
         throw_value_error("The array has to have a nonzero size");
       }
-
       if (PyArray_DESCR(boundsMat)->type_num != NPY_DOUBLE) {
         throw_value_error("Only double arrays are currently supported");
       }
