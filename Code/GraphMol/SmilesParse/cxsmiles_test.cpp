@@ -708,6 +708,8 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
   inputSmiles = inputSmilesStr.str();
 
   try {
+    INFO(fName);
+
     SmilesParserParams smilesParserParams;
     smilesParserParams.sanitize = true;
     smilesParserParams.removeHs = false;
@@ -790,7 +792,8 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
           MolToCXSmiles(*smilesMol, ps, flags, RestoreBondDirOptionClear);
 
       generateNewExpectedFilesIfSoSpecified(fName + ".NEW3.cxsmi", smilesOut);
-      CHECK(getExpectedValue(expectedFileName) == smilesOut);
+      auto expected = getExpectedValue(expectedFileName);
+      CHECK(expected == smilesOut);
     }
 
     smilesMol =
@@ -809,7 +812,6 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
         outMolStr = MolToMolBlock(*smilesMol, true, 0, false,
                                   true);  // try without kekule'ing
       }
-
       generateNewExpectedFilesIfSoSpecified(fName + ".NEW.sdf", outMolStr);
       CHECK(getExpectedValue(expectedFileName) == outMolStr);
     }
@@ -826,7 +828,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
       } catch (const RDKit::KekulizeException &e) {
         outMolStr = "";
       } catch (...) {
-        throw;  // re-trhow the error if not a kekule error
+        throw;  // re-throw the error if not a kekule error
       }
       if (outMolStr == "") {
         RDKit::Chirality::reapplyMolBlockWedging(*smilesMol);
@@ -1023,6 +1025,7 @@ void testOne3dChiral(const SmilesTest *smilesTest) {
 TEST_CASE("testAtropisomersInCXSmiles") {
   {
     std::list<SmilesTest> smiTests{
+        SmilesTest("ShortAtropisomerNoCoords.cxsmi", true, 14, 15),
         SmilesTest("ShortAtropisomer.cxsmi", true, 14, 15),
         SmilesTest("ShortAtropisomerArom.cxsmi", true, 14, 15),
         SmilesTest("AtropManyChirals.cxsmi", true, 20, 20),
@@ -1344,15 +1347,11 @@ TEST_CASE("SMILES CANONICALIZATION") {
       }
       molCount++;
 
-      try {
-        if (molBlock.length() > 25) {
-          std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock));
-          std::string smiles = MolToCXSmiles(*mol);
+      if (molBlock.length() > 25) {
+        std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock));
+        std::string smiles = MolToCXSmiles(*mol);
 
-          testSmilesCanonicalization(smiles);
-        }
-      } catch (...) {
-        std::cout << "failed on mol " << molCount << std::endl;
+        testSmilesCanonicalization(smiles);
       }
     }
   }
@@ -1467,4 +1466,48 @@ TEST_CASE("write attachment points") {
   m->getAtomWithIdx(3)->setProp(common_properties::_fromAttachPoint, 1);
   m->getAtomWithIdx(5)->setProp(common_properties::_fromAttachPoint, 2);
   CHECK(MolToCXSmiles(*m) == "*N[C@@H](C)C(*)=O |$_AP1;;;;;_AP2;$|");
+}
+
+TEST_CASE("github #7414: CXSmiles writer does not use default conformer ID") {
+  SECTION("basics") {
+    auto m = "CC |(-0.75,0,;0.75,0,)|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getNumConformers() == 1);
+    m->getConformer().setId(5);
+    CHECK(MolToCXSmiles(*m) == "CC |(-0.75,0,;0.75,0,)|");
+  }
+}
+
+TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
+  SECTION("basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi == "N[Fe][NH3] |C:2.1|");
+
+    // disable the dative bond output
+    SmilesWriteParams ps;
+    smi = MolToCXSmiles(*m, ps,
+                        SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS ^
+                            SmilesWrite::CXSmilesFields::CX_COORDINATE_BONDS);
+    CHECK(smi == "N[Fe][NH3]");
+  }
+  SECTION("basics, SMARTS output") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToCXSmarts(*m);
+    CHECK(smi == "[#7H3]-[Fe]-[#7H2] |C:0.0|");
+  }
+  SECTION("two dative bonds") {
+    auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
+    REQUIRE(m);
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi == "[NH3][Fe][NH3] |C:0.0,2.1|");
+  }
+  SECTION("two dative bonds, SMARTS output") {
+    auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
+    REQUIRE(m);
+    auto smi = MolToCXSmarts(*m);
+    CHECK(smi == "[#7H3]-[Fe]-[#7H3] |C:0.0,2.1|");
+  }
 }

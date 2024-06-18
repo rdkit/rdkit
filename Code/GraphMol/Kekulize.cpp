@@ -247,7 +247,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
   int curr = -1;
   INT_DEQUE btmoves;
   unsigned int numBT = 0;  // number of back tracks so far
-  while ((done.size() < allAtms.size()) || (astack.size() > 0)) {
+  while ((done.size() < allAtms.size()) || !astack.empty()) {
     // pick a curr atom to work with
     if (astack.size() > 0) {
       curr = astack.front();
@@ -276,6 +276,8 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
       opts = options[curr];
       CHECK_INVARIANT(opts.size() > 0, "");
     } else {
+      INT_DEQUE lstack;
+      INT_DEQUE wedgedOpts;
       for (const auto &nbrIdx : boost::make_iterator_range(
                mol.getAtomNeighbors(mol.getAtomWithIdx(curr)))) {
         // ignore if the neighbor has already been dealt with before
@@ -287,10 +289,11 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
             allAtms.end()) {
           continue;
         }
+        auto nbrBond = mol.getBondBetweenAtoms(curr, nbrIdx);
 
         // if the neighbor is not on the stack add it
         if (std::find(astack.begin(), astack.end(), nbrIdx) == astack.end()) {
-          astack.push_back(nbrIdx);
+          lstack.push_front(nbrIdx);
         }
 
         // check if the neighbor is also a candidate for a double bond
@@ -303,12 +306,24 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
         // a fairly detailed analysis of all bonds in the molecule to determine
         // which of them is eligible to be converted.
         if (cCand && dBndCands[nbrIdx] &&
-            (mol.getBondBetweenAtoms(curr, nbrIdx)->getIsAromatic() ||
+            (nbrBond->getIsAromatic() ||
              mol.getAtomWithIdx(curr)->getAtomicNum() == 0 ||
              mol.getAtomWithIdx(nbrIdx)->getAtomicNum() == 0)) {
-          opts.push_back(nbrIdx);
+          // in order to try and avoid making wedged bonds double, we will add
+          // this neighbor at the back of the options after this loop if the
+          // bond is wedged. otherwise we append it to the options directly
+          if (nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
+              nbrBond->getBondDir() == Bond::BondDir::BEGINDASH) {
+            wedgedOpts.push_back(nbrIdx);
+          } else {
+            opts.push_back(nbrIdx);
+          }
         }  // end of curr atoms can have a double bond
       }    // end of looping over neighbors
+      // now append to opts the neighbors connected via wedged bonds,
+      // if any were found
+      opts.insert(opts.end(), wedgedOpts.begin(), wedgedOpts.end());
+      astack.insert(astack.end(), lstack.begin(), lstack.end());
     }
     // now add a double bond from current to one of the neighbors if we can
     if (cCand) {
@@ -465,7 +480,6 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
   auto nbnds = mol.getNumBonds();
   boost::dynamic_bitset<> dBndCands(nats);
   boost::dynamic_bitset<> dBndAdds(nbnds);
-
   markDbondCands(mol, allAtms, dBndCands, questions, done);
 #if 0
       std::cerr << "candidates: ";
@@ -554,6 +568,16 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   }
   // if any bonds to kekulize then give it a try:
   if (bondsToUse.any()) {
+    // mark atoms at the beginning of wedged bonds
+    boost::dynamic_bitset<> wedgedAtoms(numAtoms);
+    for (const auto bond : mol.bonds()) {
+      if (bondsToUse[bond->getIdx()] &&
+          (bond->getBondDir() == Bond::BEGINWEDGE ||
+           bond->getBondDir() == Bond::BEGINDASH)) {
+        wedgedAtoms.set(bond->getBeginAtomIdx());
+      }
+    }
+
     // A bit on the state of the molecule at this point
     // - aromatic and non aromatic atoms and bonds may be mixed up
 
@@ -571,24 +595,48 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     }
     const VECT_INT_VECT &allrings =
         allringsSSSR.empty() ? mol.getRingInfo()->atomRings() : allringsSSSR;
+    std::deque<INT_VECT> tmpRings;
+    auto containsNonDummy = [&atomsToUse, &dummyAts](const INT_VECT &ring) {
+      bool ringOk = false;
+      for (auto ai : ring) {
+        if (!atomsToUse[ai]) {
+          return false;
+        }
+        if (!dummyAts[ai]) {
+          ringOk = true;
+        }
+      }
+      return ringOk;
+    };
+    // we can't just copy the rings over: we're going to rearrange them so that
+    // we try to favor starting the traversal of any ring from an atom that is
+    // at the end of a wedged ring bond. This is part of our attempt to avoid
+    // assigning double bonds to bonds with wedging
+    for (const auto &ring : allrings) {
+      if (containsNonDummy(ring)) {
+        unsigned int startPos = 0;
+        bool hasWedge = false;
+        for (auto ri = 0u; ri < ring.size(); ++ri) {
+          if (wedgedAtoms[ring[ri]]) {
+            startPos = ri;
+            hasWedge = true;
+            break;
+          }
+        }
+        INT_VECT nring(ring.size());
+        for (auto ri = 0u; ri < ring.size(); ++ri) {
+          nring[ri] = ring.at((ri + startPos) % ring.size());
+        }
+        if (!hasWedge) {
+          tmpRings.push_back(nring);
+        } else {
+          tmpRings.push_front(nring);
+        }
+      }
+    }
     VECT_INT_VECT arings;
     arings.reserve(allrings.size());
-    auto copyAtomRingsWithinFragmentUnlessAllDummy =
-        [&atomsToUse, &dummyAts](const INT_VECT &ring) {
-          bool ringOk = false;
-          for (auto ai : ring) {
-            if (!atomsToUse[ai]) {
-              return false;
-            }
-            if (!dummyAts[ai]) {
-              ringOk = true;
-            }
-          }
-          return ringOk;
-        };
-    std::copy_if(allrings.begin(), allrings.end(), std::back_inserter(arings),
-                 copyAtomRingsWithinFragmentUnlessAllDummy);
-
+    arings.insert(arings.end(), tmpRings.begin(), tmpRings.end());
     VECT_INT_VECT allbrings;
     RingUtils::convertToBonds(arings, allbrings, mol);
     VECT_INT_VECT brings;
@@ -640,6 +688,9 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   if (markAtomsBonds) {
     // if we want the atoms and bonds to be marked non-aromatic do
     // that here.
+    if (!mol.getRingInfo()->isInitialized()) {
+      MolOps::findSSSR(mol);
+    }
     for (auto bond : mol.bonds()) {
       if (bondsToUse[bond->getIdx()]) {
         bond->setIsAromatic(false);

@@ -445,14 +445,16 @@ bool DrawShapeSolidWedge::doesRectClash(const StringRect &rect,
                             padding)) {
     return true;
   }
-  if (points_.size() > 3) {
+  if (points_.size() >= 6) {
     if (doesTriangleIntersect(rect, points_[3], points_[4], points_[5],
                               padding)) {
       return true;
     }
-    if (doesTriangleIntersect(rect, points_[6], points_[7], points_[8],
-                              padding)) {
-      return true;
+    if (points_.size() >= 9) {
+      if (doesTriangleIntersect(rect, points_[6], points_[7], points_[8],
+                                padding)) {
+        return true;
+      }
     }
   }
   return false;

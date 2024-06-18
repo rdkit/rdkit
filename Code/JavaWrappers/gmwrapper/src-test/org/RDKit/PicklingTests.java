@@ -176,6 +176,35 @@ public class PicklingTests extends GraphMolTest {
 		}
 	}
 
+	@Test
+	public void testPickleProperties() {
+		ROMol mol = RWMol.MolFromSmiles("c1ccccc1[C@](F)(Cl)Br");
+		mol.setProp("foo", "bar");
+		mol.setProp("_MolFileChiralFlag", "1");
+		{ 
+			Int_Vect pkl = mol.ToBinary();
+			ROMol mol2 = ROMol.MolFromBinary(pkl);
+			assertFalse(mol2.hasProp("_MolFileChiralFlag"));
+			assertFalse(mol2.hasProp("foo"));
+		}
+		{ 
+			Int_Vect pkl = mol.ToBinary(PropertyPickleOptions.AllProps.swigValue());
+			ROMol mol2 = ROMol.MolFromBinary(pkl);
+			assertTrue(mol2.hasProp("_MolFileChiralFlag"));
+			assertTrue(mol2.hasProp("foo"));
+		}
+		{ 
+			long val = RDKFuncs.getDefaultPickleProperties();
+			RDKFuncs.setDefaultPickleProperties(PropertyPickleOptions.AllProps.swigValue());
+			Int_Vect pkl = mol.ToBinary();
+			RDKFuncs.setDefaultPickleProperties(val);
+			ROMol mol2 = ROMol.MolFromBinary(pkl);
+			assertTrue(mol2.hasProp("_MolFileChiralFlag"));
+			assertTrue(mol2.hasProp("foo"));
+		}
+
+	}
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.PicklingTests");
 	}

@@ -414,7 +414,7 @@ TEST_CASE("tautomer v2") {
             {{"CC(=O)CC(=O)C", "C=C(O)CC(=O)C", "CC(=O)C=C(O)C",
               "C=C(O)C=C(O)C", "C=C(O)CC(O)=C"},
              {}},
-            {{"CN=CF", "C=NCF"}, {"CNCF"}},
+            {{"CN=CCF", "CNC=CF"}, {"C=NCCF", "CNCCF"}},
             {{"CN=C(C)F", "CNC(=C)F"}, {"C=NC(C)F"}},
             {{"Cc1n[nH]cc1", "Cc1[nH][n]cc1", "CC1=NN=CC1", "CC1N=NCC=1"}, {}},
             {{"O=C1C=CC(=O)C=C1"}, {"Oc1ccc(O)cc1", "O=C1C=CC(O)C=C1"}},
@@ -501,7 +501,7 @@ TEST_CASE("tautomer v2") {
          "[CH3]-[C](-[CH3])(-[CH3])-[CH]=[O]_0_0"},
         {"CC(C)=CO", "C[C](C)[CH][O]_1_0", "[CH3]-[C](-[CH3]):[C]:[O]_2_0"},
         {"COC=O", "CO[CH][O]_0_0", "[CH3]-[O]:[C]:[O]_1_0"},
-        {"CNC=O", "C[N][CH][O]_1_0", "[C]:[N]:[C]:[O]_5_0"},
+        {"CNC=O", "C[N][CH][O]_1_0", "[CH3]-[N]:[C]:[O]_2_0"},
         {"CN(C)C=O", "CN(C)[CH][O]_0_0", "[CH3]-[N](-[CH3]):[C]:[O]_1_0"},
         {"CC(C)(C)NC=O", "CC(C)(C)[N][CH][O]_1_0",
          "[CH3]-[C](-[CH3])(-[CH3])-[N]:[C]:[O]_2_0"},
@@ -511,7 +511,7 @@ TEST_CASE("tautomer v2") {
         {"CC=CC(=O)C", "C[CH][CH][C](C)[O]_0_0",
          "[C]:[C](:[O]):[C]:[C]-[CH3]_5_0"},
         {"N1C=CCC(F)C1", "FC1C[CH][CH][N]C1_1_0",
-         "[F]-[CH]1-[C]:[N]:[C]:[C]-[CH2]-1_5_0"},
+         "[F]-[CH]1-[CH2]-[C]:[C]:[N]-[CH2]-1_3_0"},
         {"CCC=C(O)C", "CC[CH][C](C)[O]_1_0",
          "[C]:[C](:[O]):[C]-[CH2]-[CH3]_5_0"},
         {"CCCC(=O)C", "CCC[C](C)[O]_0_0", "[C]:[C](:[O]):[C]-[CH2]-[CH3]_5_0"},
@@ -857,6 +857,21 @@ TEST_CASE("HetAtomProtomerv2") {
             MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomProtomerv2);
         CHECK(hsh != ref);
       }
+    }
+  }
+}
+
+TEST_CASE("overreach with v2 tautomer hashes and imines") {
+  SECTION("basics") {
+    std::vector<std::string> smileses = {"C[C@H](F)NC1=CCCCC1",
+                                         "C[C@H](F)N=C1CCCCC1"};
+    for (const auto &smiles : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh ==
+            "[CH3]-[C@H](-[F])-[N]:[C]1:[C]-[CH2]-[CH2]-[CH2]-[C]:1_4_0");
     }
   }
 }

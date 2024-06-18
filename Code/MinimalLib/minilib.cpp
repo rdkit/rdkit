@@ -84,9 +84,33 @@ std::string mappingToJsonArray(const ROMol &mol) {
 }  // end of anonymous namespace
 
 std::string JSMolBase::get_smiles() const { return MolToSmiles(get()); }
+std::string JSMolBase::get_smiles(const std::string &details) const {
+  SmilesWriteParams params;
+  updateSmilesWriteParamsFromJSON(params, details);
+  return MolToSmiles(get(), params);
+}
 std::string JSMolBase::get_cxsmiles() const { return MolToCXSmiles(get()); }
+std::string JSMolBase::get_cxsmiles(const std::string &details) const {
+  SmilesWriteParams params;
+  updateSmilesWriteParamsFromJSON(params, details);
+  SmilesWrite::CXSmilesFields cxSmilesFields =
+      SmilesWrite::CXSmilesFields::CX_ALL;
+  RestoreBondDirOption restoreBondDirs = RestoreBondDirOptionClear;
+  updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, details);
+  return MolToCXSmiles(get(), params, cxSmilesFields, restoreBondDirs);
+}
 std::string JSMolBase::get_smarts() const { return MolToSmarts(get()); }
+std::string JSMolBase::get_smarts(const std::string &details) const {
+  SmilesWriteParams params;
+  updateSmilesWriteParamsFromJSON(params, details);
+  return MolToSmarts(get(), params.doIsomericSmiles, params.rootedAtAtom);
+}
 std::string JSMolBase::get_cxsmarts() const { return MolToCXSmarts(get()); }
+std::string JSMolBase::get_cxsmarts(const std::string &details) const {
+  SmilesWriteParams params;
+  updateSmilesWriteParamsFromJSON(params, details);
+  return MolToCXSmarts(get(), params.doIsomericSmiles);
+}
 std::string JSMolBase::get_svg(int w, int h) const {
   return MinimalLib::mol_to_svg(get(), w, h);
 }
@@ -566,8 +590,28 @@ std::string JSReaction::get_svg_with_highlights(
   int h = d_defaultHeight;
   return MinimalLib::rxn_to_svg(*d_rxn, w, h, details);
 }
-
 bool JSReaction::is_valid() const { return true; }
+
+std::vector<JSMolList *> JSReaction::run_reactants(
+    const JSMolList &reactants, unsigned int maxProducts) const {
+  d_rxn->initReactantMatchers();
+  RDKit::MOL_SPTR_VECT reactant_vec;
+
+  for (const auto &reactant : reactants.mols()) {
+    if (!reactant) {
+      throw ValueErrorException("Reactant must not be null");
+    }
+    reactant_vec.push_back(reactant);
+  }
+
+  std::vector<RDKit::MOL_SPTR_VECT> prods;
+  prods = d_rxn->runReactants(reactant_vec, maxProducts);
+  std::vector<JSMolList *> newResults;
+  for (auto &mol_array : prods) {
+    newResults.push_back(new JSMolList(mol_array));
+  }
+  return newResults;
+}
 #endif
 
 JSMolBase *JSMolList::next() {

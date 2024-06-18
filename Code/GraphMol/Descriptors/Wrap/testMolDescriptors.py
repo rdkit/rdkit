@@ -732,7 +732,7 @@ class TestCase(unittest.TestCase):
     mol1 = Chem.MolFromPDBFile(fname1, sanitize=False, removeHs=False)
 
     # test default params
-    default = rdMD.DoubleCubicLatticeVolume(mol1)
+    default = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=False)
 
     self.assertTrue(abs(default.GetSurfaceArea() - 8330.59) < 0.05)
     self.assertTrue(abs(default.GetVolume() - 31789.6) < 0.05)
@@ -741,7 +741,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(abs(default.GetPackingDensity() - 0.48303) < 0.05)
 
     # test set depth and radius
-    depthrad = rdMD.DoubleCubicLatticeVolume(mol1, probeRadius=1.6, depth=6)
+    depthrad = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=False, probeRadius=1.6, depth=6)
 
     self.assertTrue(abs(depthrad.GetSurfaceArea() - 8186.06) < 0.05)
     self.assertTrue(abs(depthrad.GetVolume() - 33464.5) < 0.05)
@@ -750,7 +750,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(abs(depthrad.GetPackingDensity() - 0.458717) < 0.05)
 
     # test include ligand
-    withlig = rdMD.DoubleCubicLatticeVolume(mol1, includeLigand=True)
+    withlig = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=True)
 
     self.assertTrue(abs(withlig.GetSurfaceArea() - 8010.56) < 0.05)
     self.assertTrue(abs(withlig.GetVolume() - 31228.4) < 0.05)
@@ -766,9 +766,9 @@ class TestCase(unittest.TestCase):
     # test from SDF file with defaults
     sdf = rdMD.DoubleCubicLatticeVolume(mol2, isProtein=False)
 
-    self.assertTrue(abs(sdf.GetVolume() - 1048.53) < 0.05)
-    self.assertTrue(abs(sdf.GetVDWVolume() - 231.971) < 0.05)
-    self.assertTrue(abs(sdf.GetPackingDensity() - 0.221234) < 0.05)
+    self.assertTrue(abs(sdf.GetSurfaceArea() - 296.466) < 0.05)
+    self.assertTrue(abs(sdf.GetVolume() - 411.972) < 0.05)
+    self.assertTrue(abs(sdf.GetVDWVolume() - 139.97) < 0.05)
 
 if __name__ == '__main__':
   unittest.main()

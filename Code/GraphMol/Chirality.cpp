@@ -477,8 +477,16 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   auto centerLoc = conf->getAtomPos(atom->getIdx());
   centerLoc.z = 0.0;
   auto refPt = conf->getAtomPos(bondAtom->getIdx());
+
+  // Github #7305: in some odd cases, we get conformers with
+  // weird scalings. In these, we need to scale the 3d offset
+  // or it might be irrelevant or dominate over the coordinates.
+  auto refLength = (centerLoc - refPt).length();
   refPt.z =
       bondDir == Bond::BondDir::BEGINWEDGE ? pseudo3DOffset : -pseudo3DOffset;
+  if (refLength) {
+    refPt.z *= refLength;
+  }
 
   //----------------------------------------------------------
   //
@@ -512,9 +520,14 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       if (nbrBond->getBeginAtomIdx() == atom->getIdx() &&
           (nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
            nbrBond->getBondDir() == Bond::BondDir::BEGINDASH)) {
+        // scale the 3d offset based on the reference bond here too
         tmpPt.z = nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE
                       ? pseudo3DOffset
                       : -pseudo3DOffset;
+        if (refLength) {
+          tmpPt.z *= refLength;
+        }
+
       } else {
         tmpPt.z = 0;
       }
@@ -1599,9 +1612,13 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
           // three-coordinate N additional requirements:
           //   in a ring of size 3  (from InChI)
           // OR
-          /// is a bridgehead atom (RDKit extension)
-          if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
-              queryIsAtomBridgehead(atom)) {
+          //   is a bridgehead atom (RDKit extension)
+          // Also: cannot be SP2 hybridized or have a conjugated bond
+          //   (this was Github #7434)
+          if (atom->getHybridization() == Atom::HybridizationType::SP3 &&
+              !MolOps::atomHasConjugatedBond(atom) &&
+              (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
+               queryIsAtomBridgehead(atom))) {
             legalCenter = true;
           }
         } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
@@ -3316,7 +3333,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     }
 
     const auto &p0 = conf.getAtomPos(atom->getIdx());
-    const RDGeom::Point3D *nbrs[3];
+    const RDGeom::Point3D *nbrs[4];
     unsigned int nbrIdx = 0;
     int hasWigglyBond = 0;
     for (const auto bond : mol.atomBonds(atom)) {
@@ -3328,9 +3345,6 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
         continue;
       }
       nbrs[nbrIdx++] = &conf.getAtomPos(bond->getOtherAtomIdx(atom->getIdx()));
-      if (nbrIdx == 3) {
-        break;
-      }
     }
     if (hasWigglyBond) {
       continue;
@@ -3347,7 +3361,23 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     } else if (chiralVol > ZERO_VOLUME_TOL) {
       atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
       chiralitySet = true;
+    } else if (nbrIdx == 4) {
+      // The first three neighbors are on the same plane as the chiral atom (or
+      // very close to it). If a 4th neighbor is present, let's see if this one
+      // determines a chiral volume
 
+      auto v4 = *nbrs[3] - p0;
+      // v4 would be in the opposite direction to v3
+      chiralVol = -v1.dotProduct(v2.crossProduct(v4));
+      if (chiralVol < -ZERO_VOLUME_TOL) {
+        atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+        chiralitySet = true;
+      } else if (chiralVol > ZERO_VOLUME_TOL) {
+        atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+        chiralitySet = true;
+      } else {
+        atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+      }
     } else {
       atom->setChiralTag(Atom::CHI_UNSPECIFIED);
     }
@@ -3427,8 +3457,6 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
   }
 }
 
-constexpr const char *isStereoAny = "_isStereoAny";
-
 void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
   // used to store the number of single bonds a given
   // single bond is adjacent to
@@ -3475,9 +3503,9 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
                   nbrDir == Bond::BondDir::ENDUPRIGHT) {
                 needsDir[nbrBond->getIdx()] = 1;
                 dblBondNbrs[bond->getIdx()].push_back(nbrBond->getIdx());
-                // the search may seem inefficient, but these vectors are going
-                // to be at most 2 long (with very few exceptions). It's just
-                // not worth using a different data structure
+                // the search may seem inefficient, but these vectors are
+                // going to be at most 2 long (with very few exceptions). It's
+                // just not worth using a different data structure
                 if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
                               singleBondNbrs[nbrBond->getIdx()].end(),
                               bond->getIdx()) ==
@@ -3539,12 +3567,6 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
   }
   const Conformer &conf = mol.getConformer(confId);
   setDoubleBondNeighborDirections(mol, &conf);
-  for (auto bond : mol.bonds()) {
-    if (bond->hasProp(isStereoAny)) {
-      bond->setStereo(Bond::BondStereo::STEREOANY);
-      bond->clearProp(isStereoAny);
-    }
-  }
 }
 
 void clearSingleBondDirFlags(ROMol &mol, bool onlyWedgeFlags) {
@@ -3715,4 +3737,42 @@ void removeStereochemistry(ROMol &mol) {
 }
 
 }  // namespace MolOps
+
+namespace Chirality {
+
+void simplifyEnhancedStereo(ROMol &mol, bool removeAffectedStereoGroups) {
+  auto sgs = mol.getStereoGroups();
+  if (sgs.size() == 1) {
+    boost::dynamic_bitset<> chiralAts(mol.getNumAtoms());
+    for (const auto atom : mol.atoms()) {
+      if (atom->getChiralTag() > Atom::ChiralType::CHI_UNSPECIFIED &&
+          atom->getChiralTag() < Atom::ChiralType::CHI_OTHER) {
+        chiralAts.set(atom->getIdx(), 1);
+      }
+    }
+    for (const auto atm : sgs[0].getAtoms()) {
+      chiralAts.set(atm->getIdx(), 0);
+    }
+    if (chiralAts.none()) {
+      // all specified chiral centers are accounted for by this StereoGroup.
+      if (sgs[0].getGroupType() == StereoGroupType::STEREO_OR ||
+          sgs[0].getGroupType() == StereoGroupType::STEREO_AND) {
+        if (removeAffectedStereoGroups) {
+          std::vector<StereoGroup> empty;
+          mol.setStereoGroups(std::move(empty));
+        }
+        std::string label = sgs[0].getGroupType() == StereoGroupType::STEREO_OR
+                                ? "OR enantiomer"
+                                : "AND enantiomer";
+        mol.setProp(common_properties::molNote, label);
+        // clear the chiral codes on the atoms in the group
+        for (const auto atm : sgs[0].getAtoms()) {
+          mol.getAtomWithIdx(atm->getIdx())
+              ->clearProp(common_properties::_CIPCode);
+        }
+      }
+    }
+  }
+}
+}  // namespace Chirality
 }  // namespace RDKit

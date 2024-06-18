@@ -400,6 +400,14 @@ FingerprintGenerator<OutputType>::getFingerprint(
     const ROMol &mol, FingerprintFuncArguments &args) const {
   std::uint32_t effectiveSize = dp_fingerprintArguments->d_fpSize;
   if (dp_fingerprintArguments->df_countSimulation) {
+    if (dp_fingerprintArguments->d_countBounds.empty()) {
+      throw ValueErrorException("Count bounds are empty");
+    }
+
+    if (dp_fingerprintArguments->d_countBounds.size() >= effectiveSize) {
+      throw ValueErrorException("Count bounds size is >= fingerprint size");
+    }
+
     // effective size needs to be smaller than result size to compensate for
     // count simulation
     effectiveSize /= dp_fingerprintArguments->d_countBounds.size();

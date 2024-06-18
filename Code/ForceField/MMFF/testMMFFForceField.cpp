@@ -31,6 +31,7 @@
 #include <sstream>
 #include <string>
 #include "testMMFFForceField.h"
+#include <utility>
 
 #define FCON_TOLERANCE 0.05
 #define ENERGY_TOLERANCE 0.025
@@ -181,46 +182,29 @@ bool sortTorsionInstanceVec(TorsionInstance *a, TorsionInstance *b) {
 
 void fixBondStretchInstance(BondStretchInstance *bondStretchInstance) {
   if (bondStretchInstance->iAtomType > bondStretchInstance->jAtomType) {
-    unsigned int temp;
-    temp = bondStretchInstance->iAtomType;
-    bondStretchInstance->iAtomType = bondStretchInstance->jAtomType;
-    bondStretchInstance->jAtomType = temp;
+    std::swap(bondStretchInstance->iAtomType, bondStretchInstance->jAtomType);
   }
 }
 
 void fixAngleBendInstance(AngleBendInstance *angleBendInstance) {
   if (angleBendInstance->iAtomType > angleBendInstance->kAtomType) {
-    unsigned int temp;
-    temp = angleBendInstance->iAtomType;
-    angleBendInstance->iAtomType = angleBendInstance->kAtomType;
-    angleBendInstance->kAtomType = temp;
+    std::swap(angleBendInstance->iAtomType, angleBendInstance->kAtomType);
   }
 }
 
 void fixOopBendInstance(OopBendInstance *oopBendInstance) {
   if (oopBendInstance->iAtomType > oopBendInstance->kAtomType) {
-    unsigned int temp;
-    temp = oopBendInstance->iAtomType;
-    oopBendInstance->iAtomType = oopBendInstance->kAtomType;
-    oopBendInstance->kAtomType = temp;
+    std::swap(oopBendInstance->iAtomType, oopBendInstance->kAtomType);
   }
 }
 
 void fixTorsionInstance(TorsionInstance *torsionInstance) {
   if (torsionInstance->jAtomType > torsionInstance->kAtomType) {
-    unsigned int temp;
-    temp = torsionInstance->jAtomType;
-    torsionInstance->jAtomType = torsionInstance->kAtomType;
-    torsionInstance->kAtomType = temp;
-    temp = torsionInstance->iAtomType;
-    torsionInstance->iAtomType = torsionInstance->lAtomType;
-    torsionInstance->lAtomType = temp;
+    std::swap(torsionInstance->jAtomType, torsionInstance->kAtomType);
+    std::swap(torsionInstance->iAtomType, torsionInstance->lAtomType);
   } else if (torsionInstance->jAtomType == torsionInstance->kAtomType) {
-    unsigned int temp;
     if (torsionInstance->iAtomType > torsionInstance->lAtomType) {
-      temp = torsionInstance->iAtomType;
-      torsionInstance->iAtomType = torsionInstance->lAtomType;
-      torsionInstance->lAtomType = temp;
+      std::swap(torsionInstance->iAtomType, torsionInstance->lAtomType);
     }
   }
 }

@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <memory>
 
 using namespace RDKit;
 using namespace MolStandardize;
@@ -31,108 +32,73 @@ void test1() {
   std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7;
 
   Normalizer normalizer;
+  auto normalize = [&normalizer](const std::string & smiles) -> std::string {
+    std::unique_ptr<ROMol> molecule(SmilesToMol(smiles));
+    std::unique_ptr<ROMol> normalized(normalizer.normalize(*molecule));
+    return MolToSmiles(*normalized);
+  };
 
   // Test sulfoxide normalization.
-  smi1 = "CS(C)=O";
-  std::shared_ptr<ROMol> m1(SmilesToMol(smi1));
-  ROMOL_SPTR normalized(normalizer.normalize(*m1));
-  TEST_ASSERT(MolToSmiles(*normalized) == "C[S+](C)[O-]");
+  TEST_ASSERT(normalize("CS(C)=O") == "C[S+](C)[O-]");
 
   // Test sulfone
-  smi2 = "C[S+2]([O-])([O-])O";
-  std::shared_ptr<ROMol> m2(SmilesToMol(smi2));
-  ROMOL_SPTR normalized2(normalizer.normalize(*m2));
-  TEST_ASSERT(MolToSmiles(*normalized2) == "CS(=O)(=O)O");
+  TEST_ASSERT(normalize("C[S+2]([O-])([O-])O") == "CS(=O)(=O)O");
 
   // Test 1,3-separated charges are recombined.
-  smi3 = "CC([O-])=[N+](C)C";
-  std::shared_ptr<ROMol> m3(SmilesToMol(smi3));
-  ROMOL_SPTR normalized3(normalizer.normalize(*m3));
-  TEST_ASSERT(MolToSmiles(*normalized3) == "CC(=O)N(C)C");
+  TEST_ASSERT(normalize("CC([O-])=[N+](C)C") == "CC(=O)N(C)C");
 
   // Test 1,3-separated charges are recombined.
-  smi4 = "C[n+]1ccccc1[O-]";
-  std::shared_ptr<ROMol> m4(SmilesToMol(smi4));
-  ROMOL_SPTR normalized4(normalizer.normalize(*m4));
-  TEST_ASSERT(MolToSmiles(*normalized4) == "Cn1ccccc1=O");
+  TEST_ASSERT(normalize("C[n+]1ccccc1[O-]") == "Cn1ccccc1=O");
 
   // Test a case where 1,3-separated charges should not be recombined.
-  smi5 = "CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]";
-  std::shared_ptr<ROMol> m5(SmilesToMol(smi5));
-  ROMOL_SPTR normalized5(normalizer.normalize(*m5));
-  TEST_ASSERT(MolToSmiles(*normalized5) ==
-              "CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]");
+  TEST_ASSERT(
+    normalize("CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]")
+    == "CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]");
 
   // Test 1,5-separated charges are recombined.
-  smi6 = R"(C[N+](C)=C\C=C\[O-])";
-  std::shared_ptr<ROMol> m6(SmilesToMol(smi6));
-  ROMOL_SPTR normalized6(normalizer.normalize(*m6));
-  TEST_ASSERT(MolToSmiles(*normalized6) == "CN(C)C=CC=O");
+  TEST_ASSERT(normalize(R"(C[N+](C)=C\C=C\[O-])") == "CN(C)C=CC=O");
 
   // Test a case where 1,5-separated charges should not be recombined.
-  smi7 = "C[N+]1=C2C=[N+]([O-])C=CN2CCC1";
-  std::shared_ptr<ROMol> m7(SmilesToMol(smi7));
-  ROMOL_SPTR normalized7(normalizer.normalize(*m7));
-  TEST_ASSERT(MolToSmiles(*normalized7) == "C[N+]1=C2C=[N+]([O-])C=CN2CCC1");
+  TEST_ASSERT(
+    normalize("C[N+]1=C2C=[N+]([O-])C=CN2CCC1")
+    == "C[N+]1=C2C=[N+]([O-])C=CN2CCC1");
 
   // Failed on 1k normalize test sanitizeMol step
-  std::string smi8 = "O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12";
-  std::shared_ptr<ROMol> m8(SmilesToMol(smi8));
-  ROMOL_SPTR normalized8(normalizer.normalize(*m8));
-  TEST_ASSERT(MolToSmiles(*normalized8) ==
-              "O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12");
+  TEST_ASSERT(
+    normalize("O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12")
+    == "O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12");
 
   // Test normalization of 1,3-conjugated cations
-  std::string smi9 = "C[N+](C)=CN";
-  std::shared_ptr<ROMol> m9(SmilesToMol(smi9));
-  ROMOL_SPTR normalized9(normalizer.normalize(*m9));
-  TEST_ASSERT(MolToSmiles(*normalized9) == "CN(C)C=[NH2+]");
-
-  // Test normalization of 1,3-conjugated cations doesn't
-  // affect diazo groups
-  std::string smi10 = "[N-]=[N+]=CN";
-  std::shared_ptr<ROMol> m10(SmilesToMol(smi10));
-  ROMOL_SPTR normalized10(normalizer.normalize(*m10));
-  TEST_ASSERT(MolToSmiles(*normalized10) == "[N-]=[N+]=CN");
+  TEST_ASSERT(normalize("C[N+](C)=CN") == "CN(C)C=[NH2+]");
+  // verify it doesn't apply to oximes
+  TEST_ASSERT(normalize("C[N+](C)=NO") == "C[N+](C)=NO");
+  // verify it doesn't affect diazo groups
+  TEST_ASSERT(normalize("[N-]=[N+]=CN") == "[N-]=[N+]=CN");
+  // but still applies if the adjacent heteroatom is neutral
+  TEST_ASSERT(normalize("C[N+](N)=CN") == "CN(N)C=[NH2+]");
 
   // Test normalization of 1,5-conjugated cations
-  std::string smi11 = "C[N+](C)=CC=CN";
-  std::shared_ptr<ROMol> m11(SmilesToMol(smi11));
-  ROMOL_SPTR normalized11(normalizer.normalize(*m11));
-  TEST_ASSERT(MolToSmiles(*normalized11) == "CN(C)C=CC=[NH2+]");
-
-  // Test normalization of 1,5-conjugated cations doesn't
-  // affect diazo groups
-  std::string smi12 = "[N-]=[N+]=CC=CN";
-  std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
-  ROMOL_SPTR normalized12(normalizer.normalize(*m12));
-  TEST_ASSERT(MolToSmiles(*normalized12) == "[N-]=[N+]=CC=CN");
+  TEST_ASSERT(normalize("C[N+](C)=CC=CN") == "CN(C)C=CC=[NH2+]");
+  // verify it doesn't apply to oximes
+  TEST_ASSERT(normalize("C[N+](C)=CC=NO") == "C[N+](C)=CC=NO");
+  // verify it doesn't affect diazo groups
+  TEST_ASSERT(normalize("[N-]=[N+]=CC=CN") == "[N-]=[N+]=CC=CN");
+  // but still applies if the adjacent heteroatom is neutral
+  TEST_ASSERT(normalize("C[N+](N)=CC=CN") == "CN(N)C=CC=[NH2+]");
 
   // Test normalization of 1,3-conjugated cations
-  std::string smi13 = "C[N+](C)=c1cccc[nH]1";
-  std::shared_ptr<ROMol> m13(SmilesToMol(smi13));
-  ROMOL_SPTR normalized13(normalizer.normalize(*m13));
-  TEST_ASSERT(MolToSmiles(*normalized13) == "CN(C)c1cccc[nH+]1");
-
-  // Test normalization of 1,3-conjugated cations doesn't
-  // affect diazo groups
-  std::string smi14 = "[N-]=[N+]=c1cccc[nH]1";
-  std::shared_ptr<ROMol> m14(SmilesToMol(smi14));
-  ROMOL_SPTR normalized14(normalizer.normalize(*m14));
-  TEST_ASSERT(MolToSmiles(*normalized14) == "[N-]=[N+]=c1cccc[nH]1");
+  TEST_ASSERT(normalize("C[N+](C)=c1cccc[nH]1") == "CN(C)c1cccc[nH+]1");
+  // verify it doesn't affect diazo groups
+  TEST_ASSERT(normalize("[N-]=[N+]=c1cccc[nH]1") == "[N-]=[N+]=c1cccc[nH]1");
+  // but still applies if the adjacent heteroatom is neutral
+  TEST_ASSERT(normalize("C[N+](N)=c1cccc[nH]1") == "CN(N)c1cccc[nH+]1");
 
   // Test normalization of 1,5-conjugated cations
-  std::string smi15 = "C[N+](C)=c1cc[nH]cc1";
-  std::shared_ptr<ROMol> m15(SmilesToMol(smi15));
-  ROMOL_SPTR normalized15(normalizer.normalize(*m15));
-  TEST_ASSERT(MolToSmiles(*normalized15) == "CN(C)c1cc[nH+]cc1");
-
-  // Test normalization of 1,5-conjugated cations doesn't
-  // affect diazo groups
-  std::string smi16 = "[N-]=[N+]=c1cc[nH]cc1";
-  std::shared_ptr<ROMol> m16(SmilesToMol(smi16));
-  ROMOL_SPTR normalized16(normalizer.normalize(*m16));
-  TEST_ASSERT(MolToSmiles(*normalized16) == "[N-]=[N+]=c1cc[nH]cc1");
+  TEST_ASSERT(normalize("C[N+](C)=c1cc[nH]cc1") == "CN(C)c1cc[nH+]cc1");
+  // verify it doesn't affect diazo groups
+  TEST_ASSERT(normalize("[N-]=[N+]=c1cc[nH]cc1") == "[N-]=[N+]=c1cc[nH]cc1");
+  // but still applies if the adjacent heteroatom is neutral
+  TEST_ASSERT(normalize("C[N+](N)=c1cc[nH]cc1") == "CN(N)c1cc[nH+]cc1");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }

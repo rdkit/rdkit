@@ -194,9 +194,8 @@ python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq,
   int resInt = this->field->minimize(snapshotFreq, &snapshotVect, maxIts,
                                      forceTol, energyTol);
   python::list l;
-  for (RDKit::SnapshotVect::const_iterator it = snapshotVect.begin();
-       it != snapshotVect.end(); ++it) {
-    l.append(new RDKit::Snapshot(*it));
+  for (const auto &it : snapshotVect) {
+    l.append(new RDKit::Snapshot(it));
   }
   return python::make_tuple(resInt, l);
 }

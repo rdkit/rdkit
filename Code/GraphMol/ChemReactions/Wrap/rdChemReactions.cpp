@@ -884,11 +884,27 @@ Sample Usage:
 see the documentation for rdkit.Chem.MolFromSmiles for an explanation\n\
 of the replacements argument.",
       python::return_value_policy<python::manage_new_object>());
-  python::def("ReactionToSmarts", RDKit::ChemicalReactionToRxnSmarts,
+  python::def("ReactionToSmarts",
+              (std::string(*)(const RDKit::ChemicalReaction &))
+                  RDKit::ChemicalReactionToRxnSmarts,
               (python::arg("reaction")),
               "construct a reaction SMARTS string for a ChemicalReaction");
-  python::def("ReactionToSmiles", RDKit::ChemicalReactionToRxnSmiles,
+  python::def("ReactionToSmiles",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              bool))RDKit::ChemicalReactionToRxnSmiles,
               (python::arg("reaction"), python::arg("canonical") = true),
+              "construct a reaction SMILES string for a ChemicalReaction");
+  python::def("ReactionToSmarts",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              const RDKit::SmilesWriteParams &))
+                  RDKit::ChemicalReactionToRxnSmarts,
+              (python::arg("reaction"), python::arg("params")),
+              "construct a reaction SMARTS string for a ChemicalReaction");
+  python::def("ReactionToSmiles",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              const RDKit::SmilesWriteParams &))
+                  RDKit::ChemicalReactionToRxnSmiles,
+              (python::arg("reaction"), python::arg("params")),
               "construct a reaction SMILES string for a ChemicalReaction");
 
   python::def(

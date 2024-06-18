@@ -423,14 +423,31 @@ emscripten::val get_rgroups_as_rows_helper(const JSRGroupDecomposition &self) {
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   register_vector<std::string>("StringList");
+  register_vector<JSMolList *>("JSMolListList");
 
   class_<JSMolBase>("Mol")
       .function("is_valid", &JSMolBase::is_valid)
       .function("has_coords", &JSMolBase::has_coords)
-      .function("get_smiles", &JSMolBase::get_smiles)
-      .function("get_cxsmiles", &JSMolBase::get_cxsmiles)
-      .function("get_smarts", &JSMolBase::get_smarts)
-      .function("get_cxsmarts", &JSMolBase::get_cxsmarts)
+      .function("get_smiles",
+                select_overload<std::string() const>(&JSMolBase::get_smiles))
+      .function("get_smiles",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMolBase::get_smiles))
+      .function("get_cxsmiles",
+                select_overload<std::string() const>(&JSMolBase::get_cxsmiles))
+      .function("get_cxsmiles",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMolBase::get_cxsmiles))
+      .function("get_smarts",
+                select_overload<std::string() const>(&JSMolBase::get_smarts))
+      .function("get_smarts",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMolBase::get_smarts))
+      .function("get_cxsmarts",
+                select_overload<std::string() const>(&JSMolBase::get_cxsmarts))
+      .function("get_cxsmarts",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMolBase::get_cxsmarts))
       .function("get_molblock",
                 select_overload<std::string() const>(&JSMolBase::get_molblock))
       .function("get_molblock",
@@ -628,6 +645,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
   class_<JSReaction>("Reaction")
 #ifdef __EMSCRIPTEN__
+      .function("run_reactants", select_overload<std::vector<JSMolList *>(
+                                     const JSMolList &, unsigned int) const>(
+                                     &JSReaction::run_reactants))
       .function("draw_to_canvas_with_offset", &draw_rxn_to_canvas_with_offset)
       .function("draw_to_canvas", &draw_rxn_to_canvas)
       .function("draw_to_canvas_with_highlights",

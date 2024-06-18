@@ -30,9 +30,13 @@ class JSMolBase {
   virtual ~JSMolBase(){};
   virtual RDKit::RWMol& get() const = 0;
   std::string get_smiles() const;
+  std::string get_smiles(const std::string &details) const;
   std::string get_cxsmiles() const;
+  std::string get_cxsmiles(const std::string &details) const;
   std::string get_smarts() const;
+  std::string get_smarts(const std::string &details) const;
   std::string get_cxsmarts() const;
+  std::string get_cxsmarts(const std::string &details) const;
   std::string get_molblock(const std::string &details) const;
   std::string get_molblock() const { return get_molblock("{}"); }
   std::string get_v3Kmolblock(const std::string &details) const;
@@ -253,6 +257,9 @@ class JSReaction {
       "instead")]] bool
   is_valid() const;
 
+  std::vector<JSMolList *> run_reactants(const JSMolList &reactants,
+                                         unsigned int maxProducts) const;
+  static constexpr int maxProducts = 1000;
   std::string get_svg(int width, int height) const;
   std::string get_svg() const {
     return get_svg(d_defaultWidth, d_defaultHeight);

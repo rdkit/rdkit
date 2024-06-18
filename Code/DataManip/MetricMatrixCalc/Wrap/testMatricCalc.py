@@ -96,10 +96,7 @@ class TestCase(unittest.TestCase):
     n = 30
     m = 5
 
-    dscArr = numpy.zeros((n, m), 'd')
-    for i in range(n):
-      for j in range(m):
-        dscArr[i, j] = random.random()
+    dscArr = numpy.random.default_rng().random((n,m))
     dmatArr = rdmmc.GetEuclideanDistMat(dscArr)
 
     dscLL = []

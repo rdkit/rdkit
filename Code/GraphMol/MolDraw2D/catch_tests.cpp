@@ -62,7 +62,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"contourMol_3.svg", 936771429U},
     {"contourMol_4.svg", 3302971362U},
     {"contourMol_5.svg", 2230414999U},
-    {"testDativeBonds_1.svg", 2877255976U},
+    {"testDativeBonds_1.svg", 3550231997U},
     {"testDativeBonds_2.svg", 2510476717U},
     {"testDativeBonds_3.svg", 1742381275U},
     {"testDativeBonds_2a.svg", 3936523099U},
@@ -327,7 +327,16 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"AtropCanon1.svg", 1587179714U},
     {"AtropManyChiralsEnhanced.svg", 3871032500U},
     {"testGithub6968.svg", 1554428830U},
-    {"testGithub7036.svg", 2355702607U}};
+    {"testGithub7036.svg", 2355702607U},
+    {"testWedgeNonSingleBonds-1.svg", 865601717U},
+    {"testWedgeNonSingleBonds-2.svg", 2960559495U},
+    {"testWedgeNonSingleBonds-3.svg", 1428196589U},
+    {"testWedgeNonSingleBonds-4.svg", 3897680387U},
+    {"testWedgeNonSingleBonds-5.svg", 2183530217U},
+    {"testWedgeNonSingleBonds-6.svg", 238313010U},
+    {"testWedgeNonSingleBonds-7.svg", 3641456570U},
+    {"testWedgeNonSingleBonds-8.svg", 3209701539U},
+};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -773,10 +782,10 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     std::regex d1(
         "<path class='bond-0 atom-0 atom-1' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;fill-rule:evenodd;stroke:#0000FF");
     auto dat1 = *std::sregex_iterator(text.begin(), text.end(), d1);
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(122.3, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(88.5, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(85.7, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(88.5, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(78.2, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(88.0, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(113.4, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(88.0, 0.1));
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -9424,5 +9433,260 @@ TEST_CASE("Github7036 - triple bond to wedge not right") {
         pts[2].directionVector(pts[3]));
     CHECK_THAT(fabs(dot), Catch::Matchers::WithinAbs(1.0, 0.001));
     check_file_hash("testGithub7036.svg");
+  }
+}
+
+TEST_CASE("Github7317 - very long bond not drawn to both atoms") {
+  auto m1 = R"CTAB(2244
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 13 13 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 O 2.598085 -1.499986 0.000000 0
+M  V30 2 O -1.299010 -3.749995 0.000000 0
+M  V30 3 O 9.923686 -6.081460 0.000000 0
+M  V30 4 O 3.897122 0.750042 0.000000 0
+M  V30 5 C 1.299042 -0.749993 0.000000 0
+M  V30 6 C 0.000027 -1.499967 0.000000 0
+M  V30 7 C 1.299015 0.749974 0.000000 0
+M  V30 8 C -1.299015 -0.749974 0.000000 0
+M  V30 9 C -0.000027 1.499967 0.000000 0
+M  V30 10 C -1.299042 0.749993 0.000000 0
+M  V30 11 C 0.000005 -3.000021 0.000000 0
+M  V30 12 C 3.897099 -0.750011 0.000000 0
+M  V30 13 C 5.196142 -1.500004 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 5
+M  V30 2 1 1 12
+M  V30 3 1 2 11
+M  V30 4 2 3 11
+M  V30 5 2 4 12
+M  V30 6 2 5 6
+M  V30 7 1 5 7
+M  V30 8 1 6 8
+M  V30 9 1 6 11
+M  V30 10 2 7 9
+M  V30 11 2 8 10
+M  V30 12 1 9 10
+M  V30 13 1 12 13
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(m1);
+  MolDraw2DSVG drawer(350, 300);
+  drawer.drawOptions().addAtomIndices = true;
+  drawer.drawOptions().addBondIndices = true;
+  drawer.drawMolecule(*m1);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::regex bond3(
+      "<path class='bond-3 atom-2 atom-10' d='M (-?\\d+.\\d+),(-?\\d+.\\d+)"
+      " L (-?\\d+.\\d+),(-?\\d+.\\d+)' style=");
+  auto match3_begin = std::sregex_iterator(text.begin(), text.end(), bond3);
+  auto match3_end = std::sregex_iterator();
+  std::vector<Point2D> pts3;
+  for (std::sregex_iterator i = match3_begin; i != match3_end; ++i) {
+    std::smatch match = *i;
+    pts3.push_back(Point2D(stod(match[1]), stod(match[2])));
+    pts3.push_back(Point2D(stod(match[3]), stod(match[4])));
+  }
+
+  std::regex bond8(
+      "<path class='bond-8 atom-5 atom-10' d='M (-?\\d+.\\d+),(-?\\d+.\\d+)"
+      " L (-?\\d+.\\d+),(-?\\d+.\\d+)' style=");
+  auto match_begin8 = std::sregex_iterator(text.begin(), text.end(), bond8);
+  std::smatch match8 = *match_begin8;
+  std::vector<Point2D> pts8;
+  pts8.push_back(Point2D(stod(match8[1]), stod(match8[2])));
+  pts8.push_back(Point2D(stod(match8[3]), stod(match8[4])));
+
+  // pts3[3] and pts3[7] are the atom 10 ends of bond3, pts8[1] is
+  // the atom 10 end of bond 8.  They should be close to each other.
+  CHECK((pts8[1] - pts3[3]).length() < 10.0);
+  CHECK((pts8[1] - pts3[7]).length() < 10.0);
+  if ((pts8[1] - pts3[3]).length() >= 10.0 ||
+      (pts8[1] - pts3[7]).length() >= 10.0) {
+    // Someone will want to have a look at it.
+    std::ofstream outs("testGithub7317.svg");
+    outs << text;
+    outs.close();
+  }
+}
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+TEST_CASE(
+    "github #7409: drawing mol with a non zero confID results in bad confID error") {
+  SECTION("basics") {
+    auto m = "CC |(-0.75,0,;0.75,0,)|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getNumConformers() == 1);
+    m->getConformer().setId(5);
+    MolDraw2DCairo drawer(350, 300);
+    // it's enough to test that this doesn't throw
+    drawer.drawMolecule(*m);
+  }
+}
+#endif
+
+TEST_CASE("wedge non-single bonds") {
+  int panelHeight = -1;
+  int panelWidth = -1;
+  bool noFreeType = false;
+  MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
+  drawer.drawOptions().prepareMolsBeforeDrawing = false;
+
+  SECTION("basics 1: aromatic bonds") {
+    auto m =
+        "CC(=O)C1=CC=CC=C1C |wU:1.0, (-0.954,-1.74918,;-0.9532,-0.74918,;-1.8188,-0.24858,;-0.0868,-0.24998,;0.7788,-0.75058,;1.6452,-0.25138,;1.646,0.74862,;0.7804,1.24942,;-0.086,0.75002,;-0.9516,1.25082,)|"_smiles;
+    REQUIRE(m);
+    m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINWEDGE);
+    {
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testWedgeNonSingleBonds-1.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testWedgeNonSingleBonds-1.svg");
+    }
+
+    m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINDASH);
+    {
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testWedgeNonSingleBonds-2.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testWedgeNonSingleBonds-2.svg");
+    }
+  }
+  SECTION("basics 2 : aromatic bonds, draw to a heteroatom") {
+    auto m =
+        "CC(=O)C1=NC=CC=C1C |wU:1.0, (-0.954,-1.74918,;-0.9532,-0.74918,;-1.8188,-0.24858,;-0.0868,-0.24998,;0.7788,-0.75058,;1.6452,-0.25138,;1.646,0.74862,;0.7804,1.24942,;-0.086,0.75002,;-0.9516,1.25082,)|"_smiles;
+    REQUIRE(m);
+    m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINWEDGE);
+    {
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testWedgeNonSingleBonds-3.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testWedgeNonSingleBonds-3.svg");
+    }
+
+    m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINDASH);
+    {
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testWedgeNonSingleBonds-4.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testWedgeNonSingleBonds-4.svg");
+    }
+  }
+
+  SECTION("basics 3: double bonds") {
+    auto m =
+        "CC(=O)C1=CC=CC=C1C |wU:1.0, (-0.954,-1.74918,;-0.9532,-0.74918,;-1.8188,-0.24858,;-0.0868,-0.24998,;0.7788,-0.75058,;1.6452,-0.25138,;1.646,0.74862,;0.7804,1.24942,;-0.086,0.75002,;-0.9516,1.25082,)|"_smiles;
+    REQUIRE(m);
+    MolOps::Kekulize(*m);
+    CHECK(m->getBondBetweenAtoms(3, 4)->getBondType() ==
+          Bond::BondType::DOUBLE);
+    m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINWEDGE);
+    {
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testWedgeNonSingleBonds-5.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testWedgeNonSingleBonds-5.svg");
+    }
+
+    m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINDASH);
+    {
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testWedgeNonSingleBonds-6.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testWedgeNonSingleBonds-6.svg");
+    }
+  }
+  SECTION("basics 3: double bonds, draw to a heteroatom") {
+    auto m =
+        "CC(=O)C1=NC=CC=C1C |wU:1.0, (-0.954,-1.74918,;-0.9532,-0.74918,;-1.8188,-0.24858,;-0.0868,-0.24998,;0.7788,-0.75058,;1.6452,-0.25138,;1.646,0.74862,;0.7804,1.24942,;-0.086,0.75002,;-0.9516,1.25082,)|"_smiles;
+    REQUIRE(m);
+    MolOps::Kekulize(*m);
+    CHECK(m->getBondBetweenAtoms(3, 4)->getBondType() ==
+          Bond::BondType::DOUBLE);
+    m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINWEDGE);
+    {
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testWedgeNonSingleBonds-7.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testWedgeNonSingleBonds-7.svg");
+    }
+
+    m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::BondDir::BEGINDASH);
+    {
+      int panelHeight = -1;
+      int panelWidth = -1;
+      bool noFreeType = false;
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testWedgeNonSingleBonds-8.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testWedgeNonSingleBonds-8.svg");
+    }
   }
 }

@@ -192,7 +192,8 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
   }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
-    prepareStereoGroups(*drawMol_);
+    bool removeAffectedStereoGroups = true;
+    Chirality::simplifyEnhancedStereo(*drawMol_, removeAffectedStereoGroups);
   }
   if (drawOptions_.addStereoAnnotation) {
     Chirality::addStereoAnnotations(*drawMol_);
@@ -1861,6 +1862,13 @@ void DrawMol::makeDoubleBondLines(
   int at2Idx = bond->getEndAtomIdx();
   adjustBondEndsForLabels(at1Idx, at2Idx, end1, end2);
 
+  bool skipOuterLine = false;
+  if (bond->getBondDir() == Bond::BEGINWEDGE ||
+      bond->getBondDir() == Bond::BEGINDASH) {
+    makeWedgedBond(bond, cols);
+    skipOuterLine = true;
+  }
+
   Point2D l1s, l1f, l2s, l2f, sat1, sat2;
   sat1 = atCds_[at1Idx];
   atCds_[at1Idx] = end1;
@@ -1868,8 +1876,10 @@ void DrawMol::makeDoubleBondLines(
   atCds_[at2Idx] = end2;
   calcDoubleBondLines(doubleBondOffset, *bond, l1s, l1f, l2s, l2f);
   int bondIdx = bond->getIdx();
-  newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
-              noDash);
+  if (!skipOuterLine) {
+    newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+                noDash);
+  }
   if (bond->getBondType() == Bond::AROMATIC) {
     newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
                 dashes);
@@ -2858,6 +2868,7 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
   Atom *at1 = bond.getBeginAtom();
   Atom *at2 = bond.getEndAtom();
   Point2D perp;
+
   if (isLinearAtom(*at1, atCds_) || isLinearAtom(*at2, atCds_) ||
       (at1->getDegree() == 1 && at2->getDegree() == 1)) {
     const Point2D &at1_cds = atCds_[at1->getIdx()];
@@ -3108,10 +3119,11 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     l2f = at2_cds - perp;
     // extend the two bond lines so they will intersect with the other bonds
     // from at2
+    auto bl = std::max((l1s - l1f).length(), (l2s - l2f).length());
     Point2D l1 = l1s.directionVector(l1f);
-    l1f = l1s + l1 * 2.0;
+    l1f = l1s + l1 * 2.0 * bl;
     Point2D l2 = l2s.directionVector(l2f);
-    l2f = l2s + l2 * 2.0;
+    l2f = l2s + l2 * 2.0 * bl;
     Point2D ip;
     for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(at2))) {
       auto nbr_cds = atCds_[nbr];
@@ -3135,8 +3147,8 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     // If at1->at2->at3 is a straight line, l2f may have ended up on the
     // wrong side of the other bond from l2s because there is no inner
     // side of the bond.  Do it again with a negative offset if so.
-    if (fabs(l1s.directionVector(l1f).dotProduct(l2s.directionVector(l2f)) <
-             0.9999)) {
+    if (fabs(l1s.directionVector(l1f).dotProduct(l2s.directionVector(l2f))) <
+        0.9999) {
       l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
                           -offset, true);
     }
@@ -3539,41 +3551,6 @@ void centerMolForDrawing(RWMol &mol, int confId) {
   tf.SetTranslation(centroid);
   MolTransforms::transformConformer(conf, tf);
   MolTransforms::transformMolSubstanceGroups(mol, tf);
-}
-
-// ****************************************************************************
-void prepareStereoGroups(RWMol &mol) {
-  auto sgs = mol.getStereoGroups();
-  if (sgs.size() == 1) {
-    boost::dynamic_bitset<> chiralAts(mol.getNumAtoms());
-    for (const auto atom : mol.atoms()) {
-      if (atom->getChiralTag() > Atom::ChiralType::CHI_UNSPECIFIED &&
-          atom->getChiralTag() < Atom::ChiralType::CHI_OTHER) {
-        chiralAts.set(atom->getIdx(), 1);
-      }
-    }
-    for (const auto atm : sgs[0].getAtoms()) {
-      chiralAts.set(atm->getIdx(), 0);
-    }
-    if (chiralAts.none()) {
-      // all specified chiral centers are accounted for by this StereoGroup.
-      if (sgs[0].getGroupType() == StereoGroupType::STEREO_OR ||
-          sgs[0].getGroupType() == StereoGroupType::STEREO_AND) {
-        std::vector<StereoGroup> empty;
-        mol.setStereoGroups(std::move(empty));
-        std::string label = sgs[0].getGroupType() == StereoGroupType::STEREO_OR
-                                ? "OR enantiomer"
-                                : "AND enantiomer";
-        mol.setProp(common_properties::molNote, label);
-      }
-      // clear the chiral codes on the atoms so that we don't
-      // inadvertently draw them later
-      for (const auto atm : sgs[0].getAtoms()) {
-        mol.getAtomWithIdx(atm->getIdx())
-            ->clearProp(common_properties::_CIPCode);
-      }
-    }
-  }
 }
 
 // ****************************************************************************
