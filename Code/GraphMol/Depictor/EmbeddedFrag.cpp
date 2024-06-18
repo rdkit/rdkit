@@ -476,9 +476,6 @@ static float scoreMatch(const RDKit::VECT_INT_VECT &fusedRings,
       for (auto ring : fusedRings) {
         if (pointInsideRing(coords + substitutionV, ringSystemAtomsCoords,
                             ring)) {
-          for (auto atom : ring) {
-          }
-
           result += neighborsOutsideTemplate;
           break;
         }
