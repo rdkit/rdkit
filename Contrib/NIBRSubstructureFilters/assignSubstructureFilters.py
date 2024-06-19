@@ -48,7 +48,9 @@ def assignFilters(data, nameSmilesColumn='smiles'):
   sma = Chem.MolFromSmarts(NO_filter, mergeHs=True)
 
   for smi in data[nameSmilesColumn]:
-    qc, NO_filter, fracNO, co, sc, sm = [np.NaN] * 6
+    qc, NO_filter, fracNO, co, sc, sm = [np.nan] * 6
+
+# The following files require numpy and were explicitely checked for their compatibility.
 
     try:
       mol = Chem.MolFromSmiles(smi)
