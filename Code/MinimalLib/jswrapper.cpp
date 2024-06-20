@@ -30,7 +30,7 @@ class JSDrawerFromDetails : public MinimalLib::DrawerFromDetails {
 
  private:
   MolDraw2DJS &drawer() const {
-    CHECK_INVARIANT(d_drawer, "d_drawer must not be null");
+    PRECONDITION(d_drawer, "d_drawer must not be null");
     return *d_drawer;
   };
   void initDrawer(const MinimalLib::DrawingDetails &drawingDetails) {
