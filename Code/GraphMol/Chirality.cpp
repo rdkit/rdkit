@@ -2112,25 +2112,31 @@ void cleanupStereoGroups(ROMol &mol) {
     return;
   }
 
+  boost::dynamic_bitset<> mesoAtoms(mol.getNumAtoms());
   boost::dynamic_bitset<> skipStereoGroups(sgs.size());
-  // auto mesoGroups = findMesoCenters(mol);
-  // for (const auto &mg : mesoGroups) {
-  //   for (auto i = 0u; i < sgs.size(); ++i) {
-  //     if (skipStereoGroups[i]) {
-  //       continue;
-  //     }
-  //     const auto &atoms = sgs[i].getAtoms();
-  //     if (atoms.size() != 2) {
-  //       continue;
-  //     }
-  //     if ((atoms[0]->getIdx() == mg.first && atoms[1]->getIdx() == mg.second)
-  //     ||
-  //         (atoms[1]->getIdx() == mg.first && atoms[0]->getIdx() ==
-  //         mg.second)) {
-  //       skipStereoGroups[i] = true;
-  //     }
-  //   }
-  // }
+  auto mesoGroups = findMesoCenters(mol);
+  for (const auto &mg : mesoGroups) {
+    mesoAtoms.set(mg.first);
+    mesoAtoms.set(mg.second);
+    for (auto i = 0u; i < sgs.size(); ++i) {
+      if (skipStereoGroups[i]) {
+        continue;
+      }
+      const auto &atoms = sgs[i].getAtoms();
+      if (atoms.size() != 2) {
+        continue;
+      }
+      if ((atoms[0]->getIdx() == mg.first && atoms[1]->getIdx() == mg.second) ||
+          (atoms[1]->getIdx() == mg.first && atoms[0]->getIdx() == mg.second)) {
+        skipStereoGroups[i] = true;
+      }
+    }
+  }
+
+  // we will consolidate all ABS groups into one. Use these to track the
+  // atoms/bonds we need to manage
+  std::vector<Atom *> absAtoms;
+  std::vector<Bond *> absBonds;
 
   std::vector<StereoGroup> newsgs;
   for (auto i = 0u; i < sgs.size(); ++i) {
@@ -2138,6 +2144,22 @@ void cleanupStereoGroups(ROMol &mol) {
       continue;
     }
     const auto &sg = sgs[i];
+    if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+      for (const auto atom : sg.getAtoms()) {
+        if (!mesoAtoms[atom->getIdx()] &&
+            atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+          absAtoms.push_back(atom);
+        }
+      }
+      for (const auto bond : sg.getBonds()) {
+        if (bond->getStereo() != Bond::BondStereo::STEREOATROPCCW &&
+            bond->getStereo() != Bond::BondStereo::STEREOATROPCW) {
+          absBonds.push_back(bond);
+        }
+      }
+      continue;
+    }
+
     std::vector<Atom *> okatoms;
     std::vector<Bond *> okbonds;
     bool keep = true;
@@ -2163,6 +2185,11 @@ void cleanupStereoGroups(ROMol &mol) {
       newsgs.emplace_back(sg.getGroupType(), std::move(okatoms),
                           std::move(okbonds), sg.getReadId());
     }
+  }
+  if (!absAtoms.empty() || !absBonds.empty()) {
+    newsgs.insert(newsgs.begin(),
+                  {StereoGroupType::STEREO_ABSOLUTE, std::move(absAtoms),
+                   std::move(absBonds), 0});
   }
   mol.setStereoGroups(std::move(newsgs));
 }
@@ -3814,9 +3841,9 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
       specifiedChiralAts.set(atom->getIdx(), 1);
     }
     int otherIdx = -1;
-    if (atom->getPropIfPresent("_oppositeRingAtom", otherIdx) &&
+    if (atom->getPropIfPresent(common_properties::_ringStereoOtherAtom,
+                               otherIdx) &&
         otherIdx >= 0) {
-      std::cerr << "ORA:" << atom->getIdx() << " " << otherIdx << std::endl;
       ringStereoAts[atom->getIdx()] = static_cast<unsigned>(otherIdx);
     }
   }
@@ -3830,24 +3857,17 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
   // without)
   const bool breakTies = false;
   const bool includeChiralPresence = true;
+  const bool includeStereoGroups = false;
   bool includeChirality = true;
   std::vector<unsigned int> chiralRanks;
   Canon::rankMolAtoms(mol, chiralRanks, breakTies, includeChirality,
-                      includeIsotopes, includeAtomMaps, includeChiralPresence);
+                      includeIsotopes, includeAtomMaps, includeChiralPresence,
+                      includeStereoGroups);
   includeChirality = false;
   std::vector<unsigned int> presenceRanks;
   Canon::rankMolAtoms(mol, presenceRanks, breakTies, includeChirality,
-                      includeIsotopes, includeAtomMaps, includeChiralPresence);
-  std::cerr << "chiral ranks: ";
-  std::copy(chiralRanks.begin(), chiralRanks.end(),
-            std::ostream_iterator<unsigned int>(std::cerr, " "));
-  std::cerr << std::endl;
-
-  std::cerr << "presence ranks: ";
-  std::copy(presenceRanks.begin(), presenceRanks.end(),
-            std::ostream_iterator<unsigned int>(std::cerr, " "));
-  std::cerr << std::endl;
-
+                      includeIsotopes, includeAtomMaps, includeChiralPresence,
+                      includeStereoGroups);
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     if (!specifiedChiralAts[i]) {
       continue;
@@ -3856,11 +3876,6 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
       if (!specifiedChiralAts[j]) {
         continue;
       }
-      std::cerr << i << " " << j << " " << chiralRanks[i] << " "
-                << chiralRanks[j] << " " << presenceRanks[i] << " "
-                << presenceRanks[j] << std::endl;
-      std::cerr << "\t" << ringStereoAts[i] << " " << ringStereoAts[j]
-                << std::endl;
       if (chiralRanks[i] != chiralRanks[j] &&
           presenceRanks[i] == presenceRanks[j]) {
         res.emplace_back(i, j);

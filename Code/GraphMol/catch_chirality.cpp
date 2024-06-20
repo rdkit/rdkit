@@ -5896,24 +5896,18 @@ TEST_CASE("findMesoCenters") {
             {"N[C@H]1C[C@@H](N)C1", {{1, 3}}},
             {"N[C@H]1C[C@H](N)C1", {{1, 3}}},
             {"C1CC[C@H]2CCCC[C@H]2C1", {{3, 8}}},
-            // not sure if this next one is right, and it's not working at the
-            // moment anyway
-            //  {"N[C@H]1[C@H](F)[C@@H](N)[C@@H]1F", {{1, 4}, {2, 6}}},
             // multiple groups
             {"C[C@@H](Cl)C([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O",
              {{1, 4}, {8, 11}}},
             {"C1[C@H](F)C[C@H]1C[C@H]1C[C@H](N)C1", {{1, 4}, {6, 8}}},
+            // not sure if this next one is right:
+            {"N[C@H]1[C@H](F)[C@@H](N)[C@@H]1F", {{1, 4}, {2, 6}}},
         };
     for (auto &[smi, expected] : cases) {
       INFO(smi);
-      std::cerr << "---------------------\n" << smi << std::endl;
       auto m = v2::SmilesParse::MolFromSmiles(smi);
       REQUIRE(m);
       auto res = Chirality::findMesoCenters(*m);
-      for (const auto &r : res) {
-        std::cerr << "(" << r.first << "," << r.second << "), ";
-      }
-      std::cerr << std::endl;
       REQUIRE(res.size() == expected.size());
       CHECK(res == expected);
     }
@@ -5933,7 +5927,6 @@ TEST_CASE("findMesoCenters") {
   }
   SECTION("options") {
     {
-      std::cerr << "1 -----------------------------" << std::endl;
       auto m = "[13CH3][C@@H](C)C[C@@H](C)[13CH3]"_smiles;
       REQUIRE(m);
       auto res = Chirality::findMesoCenters(*m);
@@ -5946,18 +5939,31 @@ TEST_CASE("findMesoCenters") {
   }
 }
 
-// TEST_CASE("meso centers and stereo groups") {
-//   SECTION("basics") {
-//     std::vector<std::string> smileses = {
-//         "N[C@H]1CC[C@@H](O)CC1 |o1:1,4|",
-//         "N[C@H]1CC[C@@H](O)CC1 |&1:1,4|",
-//         "N[C@H]1CC[C@@H](O)CC1 |a:1,4|",
-//     };
-//     for (const auto &smiles : smileses) {
-//       INFO(smiles);
-//       auto m = v2::SmilesParse::MolFromSmiles(smiles);
-//       REQUIRE(m);
-//       CHECK(m->getStereoGroups().empty());
-//     }
-//   }
-// }
+TEST_CASE("meso centers and stereo groups") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+  SECTION("basics") {
+    std::vector<std::string> smileses = {
+        "N[C@H]1CC[C@@H](O)CC1 |o1:1,4|",
+        "N[C@H]1CC[C@@H](O)CC1 |&1:1,4|",
+        "N[C@H]1CC[C@@H](O)CC1 |a:1,4|",
+        "C[C@@H](Cl)C([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O |o1:8,11|",
+        "C[C@@H](Cl)[C@H]([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O |&1:1,4;o2:8,11|",
+    };
+    for (const auto &smiles : smileses) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      CHECK(m->getStereoGroups().empty());
+    }
+  }
+  SECTION("ABS edge cases") {
+    auto m =
+        "C[C@@H](Cl)[C@H]([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O |a:4,1,3|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getStereoGroups().size() == 1);
+    CHECK(m->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_ABSOLUTE);
+    CHECK(m->getStereoGroups()[0].getAtoms().size() == 1);
+    CHECK(m->getStereoGroups()[0].getAtoms()[0]->getIdx() == 3);
+  }
+}

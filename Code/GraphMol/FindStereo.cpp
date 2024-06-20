@@ -676,8 +676,8 @@ void flagRingStereo(ROMol &mol,
           nHere += 1 + toAtomOppositePossible;
           possibleAtomsInRing.set(aidx);
           possibleAtomsInRing.set(oppositeIdx);
-          std::cerr << "set ora " << aidx << " " << oppositeIdx << std::endl;
-          mol.getAtomWithIdx(aidx)->setProp("_oppositeRingAtom", oppositeIdx);
+          mol.getAtomWithIdx(aidx)->setProp(
+              common_properties::_ringStereoOtherAtom, oppositeIdx);
           continue;
         }
       }
@@ -700,6 +700,10 @@ void flagRingStereo(ROMol &mol,
             nHere += 2;
             possibleAtomsInRing.set(aidx);
             possibleAtomsInRing.set(otherIdx);
+            mol.getAtomWithIdx(aidx)->setProp(
+                common_properties::_ringStereoOtherAtom, otherIdx);
+            mol.getAtomWithIdx(otherIdx)->setProp(
+                common_properties::_ringStereoOtherAtom, aidx);
             break;
           }
           previousOtherIdx = otherIdx;

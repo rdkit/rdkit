@@ -813,7 +813,8 @@ RDKIT_GRAPHMOL_EXPORT void ActivatePartitions(unsigned int nAtoms, int *order,
 RDKIT_GRAPHMOL_EXPORT void rankMolAtoms(
     const ROMol &mol, std::vector<unsigned int> &res, bool breakTies = true,
     bool includeChirality = true, bool includeIsotopes = true,
-    bool includeAtomMaps = true, bool includeChiralPresence = false);
+    bool includeAtomMaps = true, bool includeChiralPresence = false,
+    bool includeStereoGroups = true);
 
 RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
     const ROMol &mol, std::vector<unsigned int> &res,
@@ -842,7 +843,8 @@ RDKIT_GRAPHMOL_EXPORT void chiralRankMolAtoms(const ROMol &mol,
 
 RDKIT_GRAPHMOL_EXPORT void initCanonAtoms(const ROMol &mol,
                                           std::vector<Canon::canon_atom> &atoms,
-                                          bool includeChirality = true);
+                                          bool includeChirality = true,
+                                          bool includeStereoGroups = true);
 
 namespace detail {
 void initFragmentCanonAtoms(const ROMol &mol,
