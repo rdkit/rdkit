@@ -711,3 +711,41 @@ TEST_CASE("chiral presence and ranking") {
     CHECK(ranks[4] == ranks[7]);
   }
 }
+TEST_CASE("meso impact on atom ranking") {
+  SECTION("basics") {
+    {
+      auto m = "C1[C@H](O)C[C@@H]1[C@H](F)[C@@H]1C[C@H](O)C1"_smiles;
+      REQUIRE(m);
+      std::vector<unsigned int> ranks;
+      bool breakTies = false;
+      Canon::rankMolAtoms(*m, ranks, breakTies);
+      CHECK(ranks[4] == ranks[7]);
+    }
+    {
+      auto m = "C1[C@H](O)C[C@@H]1[C@H](F)[C@@H]1C[C@@H](O)C1"_smiles;
+      REQUIRE(m);
+      std::vector<unsigned int> ranks;
+      bool breakTies = false;
+      Canon::rankMolAtoms(*m, ranks, breakTies);
+      CHECK(ranks[4] != ranks[7]);
+    }
+    {
+      auto m =
+          "C[C@@H](Cl)C1[C@H](C)Cl.C[C@@H](Cl)C2[C@H](C)Cl.[C@H]12F"_smiles;
+      REQUIRE(m);
+      std::vector<unsigned int> ranks;
+      bool breakTies = false;
+      Canon::rankMolAtoms(*m, ranks, breakTies);
+      CHECK(ranks[3] == ranks[10]);
+    }
+    {
+      auto m =
+          "C[C@@H](Cl)C1[C@@H](C)Cl.C[C@@H](Cl)C2[C@H](C)Cl.[C@H]12F"_smiles;
+      REQUIRE(m);
+      std::vector<unsigned int> ranks;
+      bool breakTies = false;
+      Canon::rankMolAtoms(*m, ranks, breakTies);
+      CHECK(ranks[3] != ranks[10]);
+    }
+  }
+}

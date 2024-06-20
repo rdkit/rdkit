@@ -5885,7 +5885,24 @@ TEST_CASE("findMesoCenters") {
         cases{{"C[C@@H](Cl)C[C@H](C)Cl", {{1, 4}}},
               {"C[C@@H](Cl)C[C@@H](Cl)C", {{1, 4}}},
               {"C[C@H](Cl)C[C@H](C)Cl", {}},
-              {"OC(F)C([C@H](F)O)[C@@H](F)O", {{4, 7}}}};
+              {"OC(F)C([C@H](F)O)[C@@H](F)O", {{4, 7}}},
+              {"N[C@H]1CC[C@@H](O)CC1", {{1, 4}}},
+              {"N[C@H]1CC[C@H](O)CC1", {{1, 4}}},
+              {"N[C@H]1CC[C@@H](N)CC1", {{1, 4}}},
+              {"N[C@H]1CC[C@H](N)CC1", {{1, 4}}}};
+    for (auto &[smi, expected] : cases) {
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      auto res = Chirality::findMesoCenters(*m);
+      REQUIRE(res.size() == expected.size());
+      CHECK(res == expected);
+    }
+  }
+  SECTION("with enhanced stereo") {
+    std::vector<std::pair<std::string,
+                          std::vector<std::pair<unsigned int, unsigned int>>>>
+        cases{{"N[C@H]1CC[C@@H](O)CC1 |o1:1,4|", {{1, 4}}}};
     for (auto &[smi, expected] : cases) {
       INFO(smi);
       auto m = v2::SmilesParse::MolFromSmiles(smi);
@@ -5916,6 +5933,21 @@ TEST_CASE("findMesoCenters") {
       res = Chirality::findMesoCenters(*m, includeIsotopes, includeAtomMaps);
       REQUIRE(res.size() == 1);
       CHECK(res == std::vector<std::pair<unsigned int, unsigned int>>{{1, 4}});
+    }
+  }
+}
+
+TEST_CASE("meso centers and stereo groups") {
+  SECTION("basics") {
+    std::vector<std::string> smileses = {
+        "N[C@H]1CC[C@@H](O)CC1 |o1:1,4|",
+        "N[C@H]1CC[C@@H](O)CC1 |&1:1,4|",
+        "N[C@H]1CC[C@@H](O)CC1 |a1:1,4|",
+    };
+    for (const auto &smiles : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      CHECK(m->getStereoGroups().empty());
     }
   }
 }
