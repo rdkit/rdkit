@@ -19,9 +19,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/FileParseException.h>
-#include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
-#include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/Descriptors/Property.h>
@@ -395,6 +393,7 @@ std::string process_details(rj::Document &doc, const std::string &details,
   GET_JSON_VALUE(doc, drawingDetails, wedgeBonds, Bool)
   GET_JSON_VALUE(doc, drawingDetails, forceCoords, Bool)
   GET_JSON_VALUE(doc, drawingDetails, wavyBonds, Bool)
+  GET_JSON_VALUE(doc, drawingDetails, useMolBlockWedging, Bool)
 
   return "";
 }
@@ -540,7 +539,7 @@ std::string process_rxn_details(const std::string &details,
   return problems;
 }
 
-std::string molblock_helper(RWMol &mol, const char *details_json,
+std::string molblock_helper(const RWMol &mol, const char *details_json,
                             bool forceV3000) {
   bool includeStereo = true;
   bool kekulize = true;
@@ -556,13 +555,20 @@ std::string molblock_helper(RWMol &mol, const char *details_json,
     LPT_OPT_GET(useMolBlockWedging);
     LPT_OPT_GET(addChiralHs);
   }
-  if (useMolBlockWedging) {
-    RDKit::Chirality::reapplyMolBlockWedging(mol);
+  const RWMol *molPtr = &mol;
+  std::unique_ptr<RWMol> molCopy;
+  if (useMolBlockWedging || addChiralHs) {
+    molCopy.reset(new RWMol(mol));
+    molPtr = molCopy.get();
+    if (useMolBlockWedging) {
+      RDKit::Chirality::reapplyMolBlockWedging(*molCopy);
+    }
+    if (addChiralHs) {
+      MolDraw2DUtils::prepareMolForDrawing(*molCopy, false, true, false, false,
+                                           false);
+    }
   }
-  if (addChiralHs) {
-    MolDraw2DUtils::prepareMolForDrawing(mol, false, true, false, false, false);
-  }
-  return MolToMolBlock(mol, includeStereo, -1, kekulize, forceV3000);
+  return MolToMolBlock(*molPtr, includeStereo, -1, kekulize, forceV3000);
 }
 
 void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
@@ -595,67 +601,44 @@ void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
   obj.AddMember("bonds", rjBonds, doc.GetAllocator());
 }
 
+namespace {
+class SVGDrawerFromDetails : public DrawerFromDetails {
+ public:
+  SVGDrawerFromDetails(int w = -1, int h = -1,
+                       const std::string &details = std::string()) {
+    init(w, h, details);
+  }
+
+ private:
+  MolDraw2DSVG &drawer() const {
+    CHECK_INVARIANT(d_drawer, "d_drawer must not be null");
+    return *d_drawer;
+  };
+  void initDrawer(const DrawingDetails &drawingDetails) {
+    d_drawer.reset(new MolDraw2DSVG(
+        drawingDetails.width, drawingDetails.height, drawingDetails.panelWidth,
+        drawingDetails.panelHeight, drawingDetails.noFreetype));
+    updateDrawerParamsFromJSON();
+  }
+  std::string finalizeDrawing() {
+    CHECK_INVARIANT(d_drawer, "d_drawer must not be null");
+    d_drawer->finishDrawing();
+    return d_drawer->getDrawingText();
+  }
+  std::unique_ptr<MolDraw2DSVG> d_drawer;
+};
+}  // end anonymous namespace
+
 std::string mol_to_svg(const ROMol &m, int w = -1, int h = -1,
                        const std::string &details = "") {
-  MolDrawingDetails molDrawingDetails;
-  molDrawingDetails.width = w;
-  molDrawingDetails.height = h;
-  if (!details.empty()) {
-    auto problems = process_mol_details(details, molDrawingDetails);
-    if (!problems.empty()) {
-      return problems;
-    }
-  }
-  MolDraw2DSVG drawer(molDrawingDetails.width, molDrawingDetails.height,
-                      molDrawingDetails.panelWidth,
-                      molDrawingDetails.panelHeight,
-                      molDrawingDetails.noFreetype);
-  if (!details.empty()) {
-    MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, details);
-  }
-  drawer.setOffset(molDrawingDetails.offsetx, molDrawingDetails.offsety);
-
-  MolDraw2DUtils::prepareAndDrawMolecule(
-      drawer, m, molDrawingDetails.legend, &molDrawingDetails.atomIds,
-      &molDrawingDetails.bondIds,
-      molDrawingDetails.atomMap.empty() ? nullptr : &molDrawingDetails.atomMap,
-      molDrawingDetails.bondMap.empty() ? nullptr : &molDrawingDetails.bondMap,
-      molDrawingDetails.radiiMap.empty() ? nullptr
-                                         : &molDrawingDetails.radiiMap,
-      -1, molDrawingDetails.kekulize, molDrawingDetails.addChiralHs,
-      molDrawingDetails.wedgeBonds, molDrawingDetails.forceCoords,
-      molDrawingDetails.wavyBonds);
-  drawer.finishDrawing();
-
-  return drawer.getDrawingText();
+  SVGDrawerFromDetails svgDrawer(w, h, details);
+  return svgDrawer.draw_mol(m);
 }
 
 std::string rxn_to_svg(const ChemicalReaction &rxn, int w = -1, int h = -1,
                        const std::string &details = "") {
-  RxnDrawingDetails rxnDrawingDetails;
-  rxnDrawingDetails.width = w;
-  rxnDrawingDetails.height = h;
-  if (!details.empty()) {
-    auto problems = process_rxn_details(details, rxnDrawingDetails);
-    if (!problems.empty()) {
-      return problems;
-    }
-  }
-
-  MolDraw2DSVG drawer(rxnDrawingDetails.width, rxnDrawingDetails.height,
-                      rxnDrawingDetails.panelWidth,
-                      rxnDrawingDetails.panelHeight,
-                      rxnDrawingDetails.noFreetype);
-  if (!rxnDrawingDetails.kekulize) {
-    drawer.drawOptions().prepareMolsBeforeDrawing = false;
-  }
-  drawer.drawReaction(rxn, rxnDrawingDetails.highlightByReactant,
-                      !rxnDrawingDetails.highlightByReactant ||
-                              rxnDrawingDetails.highlightColorsReactants.empty()
-                          ? nullptr
-                          : &rxnDrawingDetails.highlightColorsReactants);
-  drawer.finishDrawing();
-  return drawer.getDrawingText();
+  SVGDrawerFromDetails svgDrawer(w, h, details);
+  return svgDrawer.draw_rxn(rxn);
 }
 
 std::string get_descriptors(const ROMol &m) {
