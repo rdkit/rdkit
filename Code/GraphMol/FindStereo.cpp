@@ -676,6 +676,8 @@ void flagRingStereo(ROMol &mol,
           nHere += 1 + toAtomOppositePossible;
           possibleAtomsInRing.set(aidx);
           possibleAtomsInRing.set(oppositeIdx);
+          std::cerr << "set ora " << aidx << " " << oppositeIdx << std::endl;
+          mol.getAtomWithIdx(aidx)->setProp("_oppositeRingAtom", oppositeIdx);
           continue;
         }
       }

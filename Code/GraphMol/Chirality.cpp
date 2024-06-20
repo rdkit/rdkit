@@ -3808,13 +3808,16 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
     const ROMol &mol, bool includeIsotopes, bool includeAtomMaps) {
   std::vector<std::pair<unsigned int, unsigned int>> res;
   boost::dynamic_bitset<> specifiedChiralAts(mol.getNumAtoms());
-  boost::dynamic_bitset<> ringStereoAts(mol.getNumAtoms());
+  std::vector<unsigned> ringStereoAts(mol.getNumAtoms(), mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
     if (atom->getChiralTag() > Atom::ChiralType::CHI_UNSPECIFIED) {
       specifiedChiralAts.set(atom->getIdx(), 1);
     }
-    if (atom->hasProp(common_properties::_ringStereoAtoms)) {
-      ringStereoAts.set(atom->getIdx(), 1);
+    int otherIdx = -1;
+    if (atom->getPropIfPresent("_oppositeRingAtom", otherIdx) &&
+        otherIdx >= 0) {
+      std::cerr << "ORA:" << atom->getIdx() << " " << otherIdx << std::endl;
+      ringStereoAts[atom->getIdx()] = static_cast<unsigned>(otherIdx);
     }
   }
   // easy case: no atoms with specified chirality
@@ -3835,6 +3838,15 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
   std::vector<unsigned int> presenceRanks;
   Canon::rankMolAtoms(mol, presenceRanks, breakTies, includeChirality,
                       includeIsotopes, includeAtomMaps, includeChiralPresence);
+  std::cerr << "chiral ranks: ";
+  std::copy(chiralRanks.begin(), chiralRanks.end(),
+            std::ostream_iterator<unsigned int>(std::cerr, " "));
+  std::cerr << std::endl;
+
+  std::cerr << "presence ranks: ";
+  std::copy(presenceRanks.begin(), presenceRanks.end(),
+            std::ostream_iterator<unsigned int>(std::cerr, " "));
+  std::cerr << std::endl;
 
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     if (!specifiedChiralAts[i]) {
@@ -3844,11 +3856,15 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
       if (!specifiedChiralAts[j]) {
         continue;
       }
+      std::cerr << i << " " << j << " " << chiralRanks[i] << " "
+                << chiralRanks[j] << " " << presenceRanks[i] << " "
+                << presenceRanks[j] << std::endl;
+      std::cerr << "\t" << ringStereoAts[i] << " " << ringStereoAts[j]
+                << std::endl;
       if (chiralRanks[i] != chiralRanks[j] &&
           presenceRanks[i] == presenceRanks[j]) {
         res.emplace_back(i, j);
-      }
-      if (ringStereoAts[i] && ringStereoAts[j]) {
+      } else if (ringStereoAts[i] == j && ringStereoAts[j] == i) {
         // if both atoms are involved in ring stereo, they can have different
         // ranks but still be meso centers. The canonical example of this is
         // N[C@H]1CC[C@@H](O)CC1
@@ -3859,9 +3875,6 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
           iPresenceRanks.insert(presenceRanks[nbr->getIdx()]);
           iChiralRanks.insert(chiralRanks[nbr->getIdx()]);
         }
-        std::cerr << "!!!! " << i << " " << j << " " << iPresenceRanks.size()
-                  << " " << iChiralRanks.size() << " " << atomi->getDegree()
-                  << std::endl;
         if (iPresenceRanks.size() < atomi->getDegree()) {
           res.emplace_back(i, j);
         }
