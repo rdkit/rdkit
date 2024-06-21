@@ -512,10 +512,6 @@ void set_reaction_data(
           << " not found in document." << std::endl;
       continue;
     }
-    /*if (iter->second >= mols.size()) {
-      // shouldn't get here
-      continue;
-    }*/
     for (auto reaction_fragment_id : iter->second) {
       auto fragment = fragments.find(reaction_fragment_id);
       if (fragment == fragments.end()) {
