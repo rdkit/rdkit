@@ -20,6 +20,31 @@
 using namespace RDKit;
 
 namespace {
+class JSDrawerFromDetails : public MinimalLib::DrawerFromDetails {
+ public:
+  JSDrawerFromDetails(const emscripten::val &ctx, int w = -1, int h = -1,
+                      const std::string &details = std::string()) {
+    init(w, h, details);
+    d_ctx = ctx;
+  }
+
+ private:
+  MolDraw2DJS &drawer() const {
+    PRECONDITION(d_drawer, "d_drawer must not be null");
+    return *d_drawer;
+  };
+  void initDrawer(const MinimalLib::DrawingDetails &drawingDetails) {
+    d_drawer.reset(new MolDraw2DJS(drawingDetails.width, drawingDetails.height,
+                                   d_ctx, drawingDetails.panelWidth,
+                                   drawingDetails.panelHeight,
+                                   drawingDetails.noFreetype));
+    updateDrawerParamsFromJSON();
+  }
+  std::string finalizeDrawing() { return ""; }
+  std::unique_ptr<MolDraw2DJS> d_drawer;
+  emscripten::val d_ctx;
+};
+
 std::string draw_to_canvas_with_offset(JSMolBase &self, emscripten::val canvas,
                                        int offsetx, int offsety, int width,
                                        int height) {
@@ -44,51 +69,10 @@ std::string draw_to_canvas(JSMolBase &self, emscripten::val canvas, int width,
 std::string draw_to_canvas_with_highlights(JSMolBase &self, emscripten::val canvas,
                                            const std::string &details) {
   auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
-  MinimalLib::MolDrawingDetails molDrawingDetails;
-  molDrawingDetails.width = canvas["width"].as<int>();
-  molDrawingDetails.height = canvas["height"].as<int>();
-  if (!details.empty()) {
-    auto problems = MinimalLib::process_mol_details(details, molDrawingDetails);
-    if (!problems.empty()) {
-      return problems;
-    }
-  }
-
-  std::unique_ptr<MolDraw2DJS> d2d(new MolDraw2DJS(
-      molDrawingDetails.width, molDrawingDetails.height, ctx,
-      molDrawingDetails.panelWidth, molDrawingDetails.panelHeight,
-      molDrawingDetails.noFreetype));
-  if (!details.empty()) {
-    MolDraw2DUtils::updateDrawerParamsFromJSON(*d2d, details);
-  }
-  d2d->setOffset(molDrawingDetails.offsetx, molDrawingDetails.offsety);
-
-  if (molDrawingDetails.atomMultiMap.empty() &&
-      molDrawingDetails.bondMultiMap.empty()) {
-    MolDraw2DUtils::prepareAndDrawMolecule(
-        *d2d, self.get(), molDrawingDetails.legend, &molDrawingDetails.atomIds,
-        &molDrawingDetails.bondIds,
-        molDrawingDetails.atomMap.empty() ? nullptr
-                                          : &molDrawingDetails.atomMap,
-        molDrawingDetails.bondMap.empty() ? nullptr
-                                          : &molDrawingDetails.bondMap,
-        molDrawingDetails.radiiMap.empty() ? nullptr
-                                           : &molDrawingDetails.radiiMap,
-        -1, molDrawingDetails.kekulize, molDrawingDetails.addChiralHs,
-        molDrawingDetails.wedgeBonds, molDrawingDetails.forceCoords,
-        molDrawingDetails.wavyBonds);
-  } else {
-    RWMol drawMol(self.get());
-    MolDraw2DUtils::prepareMolForDrawing(
-        drawMol, molDrawingDetails.kekulize, molDrawingDetails.addChiralHs,
-        molDrawingDetails.wedgeBonds, molDrawingDetails.forceCoords,
-        molDrawingDetails.wavyBonds);
-    d2d->drawMoleculeWithHighlights(
-        drawMol, molDrawingDetails.legend, molDrawingDetails.atomMultiMap,
-        molDrawingDetails.bondMultiMap, molDrawingDetails.radiiMap,
-        molDrawingDetails.lineWidthMultiplierMap);
-  }
-  return "";
+  int width = canvas["width"].as<int>();
+  int height = canvas["height"].as<int>();
+  JSDrawerFromDetails jsDrawer(ctx, width, height, details);
+  return jsDrawer.draw_mol(self.get());
 }
 
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
@@ -126,28 +110,8 @@ std::string draw_rxn_to_canvas_with_highlights(JSReaction &self,
   auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
   int w = canvas["width"].as<int>();
   int h = canvas["height"].as<int>();
-  MinimalLib::RxnDrawingDetails rxnDrawingDetails;
-  if (!details.empty()) {
-    auto problems = MinimalLib::process_rxn_details(details, rxnDrawingDetails);
-    if (!problems.empty()) {
-      return problems;
-    }
-  }
-
-  std::unique_ptr<MolDraw2DJS> d2d(new MolDraw2DJS(w, h, ctx));
-  if (!details.empty()) {
-    MolDraw2DUtils::updateDrawerParamsFromJSON(*d2d, details);
-  }
-  d2d->setOffset(rxnDrawingDetails.offsetx, rxnDrawingDetails.offsety);
-  if (!rxnDrawingDetails.kekulize) {
-    d2d->drawOptions().prepareMolsBeforeDrawing = false;
-  }
-  d2d->drawReaction(*self.d_rxn, rxnDrawingDetails.highlightByReactant,
-                    !rxnDrawingDetails.highlightByReactant ||
-                            rxnDrawingDetails.highlightColorsReactants.empty()
-                        ? nullptr
-                        : &rxnDrawingDetails.highlightColorsReactants);
-  return "";
+  JSDrawerFromDetails jsDrawer(ctx, w, h, details);
+  return jsDrawer.draw_rxn(*self.d_rxn);
 }
 #endif
 
