@@ -1222,6 +1222,7 @@ std::string getV3000CTAB(const ROMol &tmol,
 }
 }  // namespace FileParserUtils
 enum class MolFileFormat { V2000, V3000, unspecified };
+
 //------------------------------------------------
 //
 //  gets a mol block as a string
