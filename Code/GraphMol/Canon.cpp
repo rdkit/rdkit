@@ -218,9 +218,13 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   firstVisitOrder = mol.getNumBonds() + 1;
   findNeighborBonds(atom2, firstFromAtom2, secondFromAtom2, dir2Set);
 
-  // make sure we found everything we need to find:
-  CHECK_INVARIANT(firstFromAtom1, "could not find atom1");
-  CHECK_INVARIANT(firstFromAtom2, "could not find atom2");
+  // Make sure we found everything we need to find.
+  //   This really shouldn't be a problem, but molecules can end up in odd
+  //   states; for example, allenes can end up here. Instead of checking for them
+  //   explicitly, exit early in any such possible state.
+  if (!firstFromAtom1 || !firstFromAtom2) {
+    return;
+  }
 
   bool setFromBond1 = true;
   Bond::BondDir atom1Dir = Bond::NONE;
