@@ -6715,12 +6715,7 @@ M  END
     self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
 
   def test_get_set_positions(self):
-    def read_smile(s):
-      m = Chem.MolFromSmiles(s)
-      rdkit.Chem.rdDepictor.Compute2DCoords(m)
-      return m
-
-    m = read_smile("CCC")
+    m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
     pos = np.zeros([3,3], np.double)
     pos[0][1] = 1
     pos[0][2] = 2
