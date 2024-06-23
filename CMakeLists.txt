@@ -340,7 +340,6 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     set(Boost_Python_Lib "python")
   endif()
 
-  # we require boost > 1.67 now which makes this a tad easier
   find_package(Boost COMPONENTS "numpy${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" REQUIRED)
   
   target_link_libraries(rdkit_py_base INTERFACE Boost::${Boost_Python_Lib} "Boost::numpy${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
