@@ -70,12 +70,12 @@ void SetPos(Conformer *conf, np::ndarray const & array) {
   }
 
   if(array.shape(0) != conf->getNumAtoms()) {
-    PyErr_SetString(PyExc_TypeError, "Position array shape doesn't equal the number of atoms in the conformer");
+    PyErr_SetString(PyExc_ValueError, "Position array shape doesn't equal the number of atoms in the conformer");
     python::throw_error_already_set();
   }
 
   if(array.shape(1) < 2 || array.shape(1) > 3) {
-    PyErr_SetString(PyExc_TypeError, "Position array point dimension must be 2 or 3 (2d or 3d)");
+    PyErr_SetString(PyExc_ValueError, "Position array point dimension must be 2 or 3 (2d or 3d)");
     python::throw_error_already_set();
   }
 
