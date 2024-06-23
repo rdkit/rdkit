@@ -40,7 +40,6 @@ void check_smiles_and_roundtrip(const RWMol &m, const std::string &expected) {
 TEST_CASE("CDXML") {
   std::string cdxmlbase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
-
   SECTION("SIMPLE") {
     std::string cdxml1 = R"(<?xml version="1.0" encoding="UTF-8" ?>
         <!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
@@ -423,29 +422,30 @@ TEST_CASE("CDXML") {
     }
   }
   SECTION("Queries") {
-      {
-          auto fname = cdxmlbase + "query-atoms.cdxml";
-          
-          std::vector<std::string> expected = {"*c1ccccc1", "*c1ccccc1", "*c1ccccc1"};
-          std::vector<std::string> expected_smarts = {
-              "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
-              "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#1]",
-              "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#6&!#1]"};
-          auto mols = MolsFromCDXMLFile(fname);
-          CHECK(mols.size() == expected.size());
-          int i = 0;
-          for (auto &mol : mols) {
-              CHECK(MolToSmarts(*mol) == expected_smarts[i]);
-              CHECK(MolToSmiles(*mol) == expected[i++]);
-          }
+    {
+      auto fname = cdxmlbase + "query-atoms.cdxml";
+
+      std::vector<std::string> expected = {"*c1ccccc1", "*c1ccccc1",
+                                           "*c1ccccc1"};
+      std::vector<std::string> expected_smarts = {
+          "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
+          "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#1]",
+          "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#6&!#1]"};
+      auto mols = MolsFromCDXMLFile(fname);
+      CHECK(mols.size() == expected.size());
+      int i = 0;
+      for (auto &mol : mols) {
+        CHECK(MolToSmarts(*mol) == expected_smarts[i]);
+        CHECK(MolToSmiles(*mol) == expected[i++]);
       }
-      {
-          auto fname = cdxmlbase + "anybond.cdxml";
-          auto mols = MolsFromCDXMLFile(fname);
-          CHECK(mols.size() == 1);
-          CHECK(MolToSmiles(*mols[0]) == "C1CCC~CC1");
-          CHECK(MolToSmarts(*mols[0]) == "[#6]1~[#6]-[#6]-[#6]-[#6]-[#6]-1");
-      }
+    }
+    {
+      auto fname = cdxmlbase + "anybond.cdxml";
+      auto mols = MolsFromCDXMLFile(fname);
+      CHECK(mols.size() == 1);
+      CHECK(MolToSmiles(*mols[0]) == "C1CCC~CC1");
+      CHECK(MolToSmarts(*mols[0]) == "[#6]1~[#6]-[#6]-[#6]-[#6]-[#6]-1");
+    }
   }
   SECTION("ElementList") {
     auto fname = cdxmlbase + "element-list.cdxml";
@@ -1173,5 +1173,17 @@ TEST_CASE("Github #6887: and1 or1 in same mol") {
     mols[0]->clearConformers();
     CHECK(MolToCXSmiles(*mols[0]) ==
           "CO[C@H](C)C[C@H](Cl)C[C@H](C)Br |o1:5,o2:8,&1:2|");
+  }
+}
+
+TEST_CASE("Github #7528 - read fragments in groups") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("case 1") {
+    auto fname = cdxmlbase + "github7467-grouped-fragments.cdxml";
+    CDXMLParserParams params;
+    params.sanitize = false;
+    auto mols = MolsFromCDXMLFile(fname, params);
+    REQUIRE(mols.size() == 2);
   }
 }
