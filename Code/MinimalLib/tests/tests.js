@@ -2896,7 +2896,7 @@ function test_smiles_smarts_params() {
   4  9  1  1
 M  END
 `;
-        const mol = RDKitModule.get_mol(bicyclo221heptane, JSON.stringify({useMolBlockWedging: true}));
+        const mol = RDKitModule.get_mol(bicyclo221heptane);
         {
             const canonicalCXSmiles = mol.get_cxsmiles();
             const [_, canonicalSmiles, wedging] = canonicalCXSmiles.match(/^(\S+) \|\([^\)]+\),([^\|]+)\|$/);
@@ -2943,6 +2943,99 @@ M  END
         });
         assert(chiralQuery.get_cxsmarts(JSON.stringify({doIsomericSmiles: false})) === 'N-[C&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|');
     }
+}
+
+function test_wedged_bond_atropisomer() {
+    var atropisomer = `
+  Mrv2311 05242408162D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.0006 -1.54 0 0
+M  V30 2 N 2.0006 -3.08 0 0
+M  V30 3 C 0.6669 -3.85 0 0
+M  V30 4 C -0.6668 -3.08 0 0
+M  V30 5 C -0.6668 -1.54 0 0
+M  V30 6 C -2.0006 -0.77 0 0
+M  V30 7 C 0.6669 -0.77 0 0
+M  V30 8 C 0.6669 0.77 0 0
+M  V30 9 C -0.6668 1.54 0 0
+M  V30 10 C -2.0006 0.77 0 0
+M  V30 11 C -0.6668 3.08 0 0
+M  V30 12 C 0.6669 3.85 0 0
+M  V30 13 C 2.0006 3.08 0 0
+M  V30 14 C 2.0006 1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 1 7 5 CFG=3
+M  V30 7 2 7 1
+M  V30 8 1 7 8
+M  V30 9 2 8 9
+M  V30 10 1 9 10
+M  V30 11 1 9 11
+M  V30 12 2 11 12
+M  V30 13 1 12 13
+M  V30 14 2 13 14
+M  V30 15 1 8 14
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+`;
+    var mol = RDKitModule.get_mol(atropisomer);
+    assert(mol);
+    var svg = mol.get_svg_with_highlights(JSON.stringify({
+        useMolBlockWedging: true, noFreetype: true
+    }));
+    assert(svg.match(/<path class='bond-5 atom-6 atom-4'.*style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1\.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' \/>/g).length > 6);
+    assert(!svg.match(/<path class='bond-5 atom-6 atom-4'.*style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2\.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' \/>/g));
+    mol.delete();
+}
+
+function test_get_molblock_use_molblock_wedging() {
+    var mb = `
+    RDKit          2D
+
+ 9 10  0  0  1  0  0  0  0  0999 V2000
+   1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+ 2  1  1  1
+ 2  3  1  0
+ 4  3  1  0
+ 4  5  1  0
+ 6  5  1  0
+ 6  7  1  1
+ 6  8  1  0
+ 8  9  1  1
+ 8  2  1  0
+ 4  9  1  1
+M  END
+`;
+    var mol = RDKitModule.get_mol(mb);
+    assert(mol);
+    var molCopy = RDKitModule.get_mol_copy(mol);
+    assert(molCopy);
+    var mbRDKitWedging = mol.get_molblock();
+    assert(mbRDKitWedging !== mb);
+    var mbOrigWedging = mol.get_molblock(JSON.stringify({useMolBlockWedging: true}));
+    assert(mb === mbOrigWedging);
+    var mbRDKitWedgingPostOrig = mol.get_molblock();
+    assert(mb !== mbRDKitWedgingPostOrig);
+    assert(mbRDKitWedging === mbRDKitWedgingPostOrig);
+    mol.delete();
 }
 
 initRDKitModule().then(function(instance) {
@@ -3021,6 +3114,7 @@ initRDKitModule().then(function(instance) {
     test_relabel_mapped_dummies();
     test_assign_cip_labels();
     test_smiles_smarts_params();
+    test_wedged_bond_atropisomer();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
