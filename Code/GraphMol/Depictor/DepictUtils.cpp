@@ -202,24 +202,20 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
   // template matching more powerful since it will not be affected by the side
   // rings
 
-  RDKit::INT_VECT removedRings;
+  boost::dynamic_bitset<> removedRings(fusedRings.size());
   bool removedARing = false;
   do {
     removedARing = false;
     for (unsigned int currRingId = 0; currRingId < fusedRings.size();
          currRingId++) {
-      if (std::find(removedRings.begin(), removedRings.end(), currRingId) !=
-              removedRings.end() ||
-          removedARing) {
+      if (removedRings[currRingId] || removedARing) {
         continue;
       }
       std::set<int> allIntersectingAtoms;
       RDKit::INT_VECT commmonAtoms;
       for (unsigned int otherRingId = 0; otherRingId < fusedRings.size();
            otherRingId++) {
-        if (currRingId == otherRingId ||
-            (std::find(removedRings.begin(), removedRings.end(), otherRingId) !=
-             removedRings.end())) {
+        if (currRingId == otherRingId || removedRings[otherRingId]) {
           continue;
         }
         RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
@@ -244,7 +240,7 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
       RDKit::INT_VECT allIntersectingAtomsVec(allIntersectingAtoms.begin(),
                                               allIntersectingAtoms.end());
       if (hasOneOrTwoConsecutiveAtoms(allIntersectingAtomsVec)) {
-        removedRings.push_back(currRingId);
+        removedRings[currRingId] = true;
         removedARing = true;
       }
     }
@@ -252,8 +248,7 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
   RDKit::VECT_INT_VECT res;
   for (unsigned int currRingId = 0; currRingId < fusedRings.size();
        currRingId++) {
-    if (std::find(removedRings.begin(), removedRings.end(), currRingId) ==
-        removedRings.end()) {
+    if (!removedRings[currRingId]) {
       res.push_back(fusedRings[currRingId]);
       coreRingsIds.push_back(currRingId);
     }

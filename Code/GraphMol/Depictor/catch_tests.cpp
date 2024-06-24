@@ -9,7 +9,7 @@
 //
 
 #include <catch2/catch_all.hpp>
-
+#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
 #include "RDDepictor.h"
@@ -225,6 +225,37 @@ TEST_CASE("use ring system templates") {
   diff =
       mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
   TEST_ASSERT(RDKit::feq(diff.length(), 1.0, .1))
+}
+
+TEST_CASE("find core rings") {
+  // perhydroanthracene and perhydrophenalene, and their
+  // expected number of core rings
+  std::map<std::string, unsigned int> examples = {
+      {"C1CCC2CC3CCCCC3CC2C1", 1u}, {"C1CC2CCCC3C2C(C1)CCC3", 3u}};
+  for (auto example : examples) {
+    auto mol = v2::SmilesParse::MolFromSmiles(example.first);
+    RDKit::VECT_INT_VECT arings;
+    bool includeDativeBonds = true;
+    RDKit::MolOps::symmetrizeSSSR(*mol, arings, includeDativeBonds);
+    CHECK(arings.size() == 3);
+    RDKit::INT_VECT coreRingsIds;
+    auto coreRings = RDDepict::findCoreRings(arings, coreRingsIds, *mol);
+    CHECK(coreRings.size() == example.second);
+  }
+}
+
+TEST_CASE("match template with added rings") {
+  // this is a molecule we have a template for
+  auto mol1 = "C1C2CC3CC1CC3C2"_smiles;
+  // and this is the same molecule with an extra ring added
+  auto mol2 = "C1C2CC3C1CC1(C2)NC31"_smiles;
+  // generate coordinates
+  RDDepict::compute2DCoords(*mol1);
+  RDDepict::compute2DCoords(*mol2);
+
+  // align the two molecules
+  auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
+  CHECK(rmsd < 0.2);
 }
 
 TEST_CASE("dative bonds and rings") {
@@ -1097,7 +1128,7 @@ M  END
 
 TEST_CASE("generate aligned coords R group match") {
   auto templateRef = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -0.5804    1.2045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1295,9 +1326,9 @@ M  END
     0.0000    0.6187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.7144    0.2062    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
    -0.7144   -0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  3      
-  2  3  1  4      
-  1  4  1  4      
+  1  2  2  3
+  2  3  1  4
+  1  4  1  4
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
@@ -1506,9 +1537,9 @@ M  END
     0.3572    0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     1.0716    0.6187    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
    -1.0716   -0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  3      
-  2  3  1  4      
-  1  4  1  4      
+  1  2  2  3
+  2  3  1  4
+  1  4  1  4
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
@@ -1757,13 +1788,13 @@ M  END
    -0.9971    1.0600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.7282    0.2855    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
     0.9971    1.0270    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0      
-  2  3  1  0      
-  3  4  1  0      
-  2  5  2  3      
-  5  6  1  4      
-  3  7  2  0      
-  7  8  1  4      
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  2  5  2  3
+  5  6  1  4
+  3  7  2  0
+  7  8  1  4
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
