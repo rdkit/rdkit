@@ -545,7 +545,7 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
     double lb = chiralSet->getLowerVolumeBound();
     double ub = chiralSet->getUpperVolumeBound();
     if ((lb > 0 && vol < lb && ((lb - vol) / lb > .2 || vol * lb < 0)) ||
-        (ub < 0 && vol > ub && ((vol - ub) / ub > .2 || vol * ub < 0))) {
+        (ub < 0 && vol > ub && ((vol - ub) / ub < -.2 || vol * ub < 0))) {
 #ifdef DEBUG_EMBEDDING
       std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: "
                 << " " << vol << " " << lb << "-" << ub << std::endl;

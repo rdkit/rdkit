@@ -651,7 +651,8 @@ M  END
   auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
   CHECK(cid < 0);
   CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] > 5);
+  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
+        5);
 }
 
 #ifdef RDK_TEST_MULTITHREADED
