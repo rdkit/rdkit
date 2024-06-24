@@ -336,6 +336,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testWedgeNonSingleBonds-6.svg", 238313010U},
     {"testWedgeNonSingleBonds-7.svg", 3641456570U},
     {"testWedgeNonSingleBonds-8.svg", 3209701539U},
+    {"testDuplicateEnhancedStereoLabelsAddAnnotationTrue.svg", 1462263453U},
+    {"testDuplicateEnhancedStereoLabelsAddAnnotationFalse.svg", 2980189527U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -9687,6 +9689,38 @@ TEST_CASE("wedge non-single bonds") {
       outs << text;
       outs.close();
       check_file_hash("testWedgeNonSingleBonds-8.svg");
+    }
+  }
+}
+
+TEST_CASE("avoid duplicate enhanced stereo labels") {
+  static const std::string AND1("and1");
+  auto m = "C[C@H](O)[C@H](C)F |&1:1,3,r|"_smiles;
+  REQUIRE(m);
+  for (bool addStereoAnnotation : {false, true}) {
+    int panelHeight = -1;
+    int panelWidth = -1;
+    bool noFreeType = true;
+    MolDraw2DSVG drawer(300, 300, panelWidth, panelHeight, noFreeType);
+    drawer.drawOptions().addStereoAnnotation = addStereoAnnotation;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::string svgFile(std::string(
+        "testDuplicateEnhancedStereoLabelsAddAnnotation" +
+        std::string(addStereoAnnotation ? "True" : "False") + ".svg"));
+    std::ofstream outs(svgFile);
+    outs << text;
+    outs.close();
+    check_file_hash(svgFile);
+    for (const char &c : AND1) {
+      std::regex regex(std::string("<text\\s+.*>") + c +
+                       std::string("</text>"));
+      size_t nOccurrences = std::distance(
+          std::sregex_token_iterator(text.begin(), text.end(), regex),
+          std::sregex_token_iterator());
+      // there should be only 2 "and1" labels, not 4
+      CHECK(nOccurrences == 2);
     }
   }
 }
