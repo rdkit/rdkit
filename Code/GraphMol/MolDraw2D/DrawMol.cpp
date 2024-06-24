@@ -220,7 +220,9 @@ void DrawMol::extractAll(double scale) {
   extractHighlights(scale);
   extractAttachments();
   extractAtomNotes();
-  extractStereoGroups();
+  if (!drawOptions_.addStereoAnnotation) {
+    extractStereoGroups();
+  }
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
