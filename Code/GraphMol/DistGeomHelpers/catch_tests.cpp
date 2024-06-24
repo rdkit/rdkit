@@ -878,6 +878,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol > 0);
+        CHECK(fabs(chiralVol) > 0.5);
       }
     }  // now swap the stereo and see if it still works
     mol->getBondWithIdx(bondIdx)->setStereo(
@@ -900,6 +901,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol < 0);
+        CHECK(fabs(chiralVol) > 0.5);
       }
     }
   }
