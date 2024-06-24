@@ -250,8 +250,10 @@ TEST_CASE("match template with added rings") {
   // and this is the same molecule with an extra ring added
   auto mol2 = "C1C2CC3C1CC1(C2)NC31"_smiles;
   // generate coordinates
-  RDDepict::compute2DCoords(*mol1);
-  RDDepict::compute2DCoords(*mol2);
+  RDDepict::Compute2DCoordParameters params;
+  params.useRingTemplates = true;
+  RDDepict::compute2DCoords(*mol1, params);
+  RDDepict::compute2DCoords(*mol2, params);
 
   // align the two molecules
   auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
