@@ -40,6 +40,10 @@
 #include <DataStructs/BitOps.h>
 #include <DataStructs/ExplicitBitVect.h>
 
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
+#include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>
+#endif
+
 #include <INCHI-API/inchi.h>
 
 #include <rapidjson/document.h>
@@ -738,6 +742,72 @@ size_t JSMolList::insert(size_t idx, const JSMol &mol) {
   return res;
 }
 
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
+RDKit::ScaffoldNetwork::ScaffoldNetwork JSScaffoldNetwork::update_scaffold_network(const JSMolList &scaffmols) {
+  std::vector<ROMOL_SPTR> mols;
+  for (const auto &reactant : scaffmols.mols()) {
+    mols.push_back(RDKit::ROMOL_SPTR(reactant));
+  }
+  RDKit::ScaffoldNetwork::updateScaffoldNetwork(mols, *d_network, *d_scaffparams);
+  return *d_network;
+}
+
+void JSScaffoldNetwork::set_scaffold_params(const std::string &params) {
+  if (params.empty()) {
+  return;
+  }
+  rj::Document d;
+  if (d.Parse(params.c_str()).HasParseError()) {
+    return;
+  }
+  if (d.HasMember("includeGenericScaffolds")) {
+    d_scaffparams->includeGenericScaffolds = d["includeGenericScaffolds"].GetBool();
+  }
+  if (d.HasMember("includeGenericBondScaffolds")) {
+    d_scaffparams->includeGenericBondScaffolds = d["includeGenericBondScaffolds"].GetBool();
+  }
+  if (d.HasMember("includeScaffoldsWithoutAttachments")) {
+    d_scaffparams->includeScaffoldsWithoutAttachments = d["includeScaffoldsWithoutAttachments"].GetBool();
+  }
+  if (d.HasMember("includeScaffoldsWithAttachments")) {
+    d_scaffparams->includeScaffoldsWithAttachments = d["includeScaffoldsWithAttachments"].GetBool();
+  }
+  if (d.HasMember("keepOnlyFirstFragment")) {
+    d_scaffparams->keepOnlyFirstFragment = d["keepOnlyFirstFragment"].GetBool();
+  }
+  if (d.HasMember("pruneBeforeFragmenting")) {
+    d_scaffparams->pruneBeforeFragmenting = d["pruneBeforeFragmenting"].GetBool();
+  }
+  if (d.HasMember("flattenIsotopes")) {
+    d_scaffparams->flattenIsotopes = d["flattenIsotopes"].GetBool();
+  }
+  if (d.HasMember("flattenChirality")) {
+    d_scaffparams->flattenChirality = d["flattenChirality"].GetBool();
+  }
+  if (d.HasMember("flattenKeepLargest")) {
+    d_scaffparams->flattenKeepLargest = d["flattenKeepLargest"].GetBool();
+  }
+  if (d.HasMember("collectMolCounts")) {
+    d_scaffparams->collectMolCounts = d["collectMolCounts"].GetBool();
+  }
+  if (d.HasMember("bondBreakersRxns") && d["bondBreakersRxns"].IsArray()) {
+      const rj::Value& bondBreakersRxnsStringArray = d["bondBreakersRxns"];
+      std::vector<std::shared_ptr<ChemicalReaction>> bondBreakersRxns;
+      
+      for (rj::SizeType i = 0; i < bondBreakersRxnsStringArray.Size(); i++) {
+          if (bondBreakersRxnsStringArray[i].IsString()) {
+              const std::string rxnStr = bondBreakersRxnsStringArray[i].GetString();
+              ChemicalReaction *rxn = MinimalLib::rxn_from_input(rxnStr);
+              rxn->initReactantMatchers();
+              bondBreakersRxns.emplace_back(rxn);
+          }
+      }
+      d_scaffparams->bondBreakersRxns.clear();
+      d_scaffparams->bondBreakersRxns = bondBreakersRxns;        
+  }
+}
+#endif
+
 #ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
     : d_fpHolder(nullptr) {
@@ -855,6 +925,16 @@ unsigned int JSSubstructLibrary::count_matches(const JSMol &q,
                          : 0;
 }
 #endif
+
+// RDKit::ScaffoldNetwork::ScaffoldNetwork JSScaffoldNetwork::update_scaffold_network(const JSMolList &scaffmols) {
+//   std::vector<ROMOL_SPTR> mols;
+//   for (const auto &reactant : scaffmols.mols()) {
+//     mols.push_back(RDKit::ROMOL_SPTR(reactant));
+//   }
+//   RDKit::ScaffoldNetwork::updateScaffoldNetwork(mols, *d_network, *d_scaffparams);
+//   return *d_network;
+// }
+
 
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
