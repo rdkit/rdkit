@@ -87,8 +87,8 @@ public class SmilesTests extends GraphMolTest {
 	// testing molecules which have been problematic
 	@Test
 	public void testProblems() {
-		testSpellings("[Al+3]CCC",
-				new String[] { "CCC[Al+3]", "C(C)(C[Al+3])"});
+		testSpellings("[Al+2]CCC",
+				new String[] { "CCC[Al+2]", "C(C)(C[Al+2])"});
 		testSpellings("C(=O)(Cl)CC(=O)Cl", 
 				new String[] { "ClC(CC(Cl)=O)=O", "C(Cl)(=O)CC(=O)Cl","C(Cl)(=O)CC(Cl)=O"});
 		testSpellings("C(=O)(Cl)c1ccc(C(=O)Cl)cc1",
