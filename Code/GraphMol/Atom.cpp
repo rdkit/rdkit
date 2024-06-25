@@ -348,7 +348,7 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // if we start with an atom that doesn't have specified valences, we stick
   // with that. otherwise we will use the effective valence
   unsigned int effectiveAtomicNum = atom.getAtomicNum();
-  if (ovalens.size() > 1 || ovalens.at(0) != -1) {
+  if (ovalens.size() > 1 || ovalens[0] != -1) {
     effectiveAtomicNum = getEffectiveAtomicNum(atom, checkIt);
   }
   unsigned int dv =
@@ -489,7 +489,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // with that. otherwise we will use the effective valence for the rest of
   // this.
   unsigned int effectiveAtomicNum = atom.getAtomicNum();
-  if (ovalens.size() > 1 || ovalens.at(0) != -1) {
+  if (ovalens.size() > 1 || ovalens[0] != -1) {
     effectiveAtomicNum = getEffectiveAtomicNum(atom, checkIt);
   }
   if (effectiveAtomicNum == 0) {
