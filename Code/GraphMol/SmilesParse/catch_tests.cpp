@@ -525,7 +525,7 @@ TEST_CASE("github #2604: support range-based charge queries from SMARTS",
       CHECK(SubstructMatch(*m1, *query).size() == 1);
     }
     {
-      auto m1 = "C[NH4+2]"_smiles;
+      auto m1 = "C[NH2+2]"_smiles;
       REQUIRE(m1);
       CHECK(SubstructMatch(*m1, *query).empty());
     }
