@@ -28,6 +28,8 @@ from rdkit.Chem import rdqueries
 from rdkit.Chem import AllChem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
+import numpy as np
+
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
 spec = importlib.util.spec_from_loader("TestReplaceCore", loader=None)
@@ -6711,6 +6713,24 @@ M  END
     self.assertIsNotNone(read_smile("CCC").GetConformers()[0].GetOwningMol())
     pos = read_smile("CCC").GetConformers()[0].GetPositions()
     self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
+
+  def test_get_set_positions(self):
+    m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
+    pos = np.zeros([3,3], np.double)
+    pos[0][1] = 1
+    pos[0][2] = 2
+    pos[1][0] = 3
+    pos[1][1] = 4
+    pos[1][2] = 5
+    pos[2][0] = 6
+    pos[2][1] = 6
+    pos[2][2] = 7
+
+    m.GetConformer(0).SetPositions(pos)
+    pos2 = m.GetConformer(0).GetPositions()
+
+    self.assertTrue( (pos==pos2).all())
+    
 
   def test_github3553(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
