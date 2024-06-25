@@ -55,6 +55,10 @@ void test1() {
     normalize("CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]")
     == "CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]");
 
+  // Test a case where 1,3-separated charges should not be recombined.
+  TEST_ASSERT(
+    normalize("[O-][n+]1cccc[n+]1[O-]") == "[O-][n+]1cccc[n+]1[O-]");
+
   // Test 1,5-separated charges are recombined.
   TEST_ASSERT(normalize(R"(C[N+](C)=C\C=C\[O-])") == "CN(C)C=CC=O");
 
