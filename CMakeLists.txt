@@ -85,7 +85,7 @@ if(NOT MSVC)
   endif()
 endif()
 
-if(NOT UNIX OR APPLE)
+if(NOT UNIX OR APPLE OR CYGWIN)
   if(RDK_USE_BOOST_STACKTRACE)
     MESSAGE("Disabling boost::stacktrace on non-linux platform")
     set(RDK_USE_BOOST_STACKTRACE OFF)
