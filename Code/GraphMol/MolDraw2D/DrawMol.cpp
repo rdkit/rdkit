@@ -1375,6 +1375,11 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     }
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
+    if (atom.hasProp("molAtomMapNumber")) {
+      std::string map_num = "";
+      atom.getProp("molAtomMapNumber", map_num);
+      symbol += ":" + map_num;
+    }
   } else if (drawOptions_.atomLabelDeuteriumTritium &&
              atom.getAtomicNum() == 1 && (iso == 2 || iso == 3)) {
     symbol = ((iso == 2) ? "D" : "T");
