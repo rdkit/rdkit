@@ -60,6 +60,10 @@ constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.05;
 constexpr double MAX_MINIMIZED_E_CONTRIB = 0.20;
 constexpr double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
 constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
+inline bool haveOppositeSign(double a, double b) {
+  return std::signbit(a) ^ std::signbit(b);
+}
+
 }  // namespace
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -544,8 +548,8 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
         chiralSet->d_idx4, *positions);
     double lb = chiralSet->getLowerVolumeBound();
     double ub = chiralSet->getUpperVolumeBound();
-    if ((lb > 0 && vol < lb && ((lb - vol) / lb > .2 || vol * lb < 0)) ||
-        (ub < 0 && vol > ub && ((vol - ub) / ub > .2 || vol * ub < 0))) {
+    if ((lb > 0 && vol < lb && (vol / lb < .8 || haveOppositeSign(vol, lb))) ||
+        (ub < 0 && vol > ub && (vol / ub < .8 || haveOppositeSign(vol, ub)))) {
 #ifdef DEBUG_EMBEDDING
       std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: "
                 << " " << vol << " " << lb << "-" << ub << std::endl;
