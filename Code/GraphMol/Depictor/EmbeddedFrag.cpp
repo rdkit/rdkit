@@ -351,6 +351,7 @@ void EmbeddedFrag::setupAttachmentPoints() {
 static bool checkStereoChemistry(const RDKit::ROMol &mol,
                                  const RDKit::ROMol &template_mol,
                                  RDKit::MatchVectType match) {
+  std::cerr << "checkStereoChemistry" << std::endl;
   for (auto bond : mol.bonds()) {
     if (bond->getBondType() != RDKit::Bond::DOUBLE ||
         bond->getStereo() == RDKit::Bond::STEREOANY ||
@@ -407,9 +408,11 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
     bool is_cis = cross1 * cross2 > 0;
     if (is_cis != (bond->getStereo() == RDKit::Bond::STEREOZ ||
                    bond->getStereo() == RDKit::Bond::STEREOCIS)) {
+      std::cerr << "checkStereoChemistry: false" << std::endl;
       return false;
     }
   }
+  std::cerr << "checkStereoChemistry: true" << std::endl;
   return true;
 }
 
