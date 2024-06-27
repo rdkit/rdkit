@@ -8195,11 +8195,11 @@ M  END
 
     mol = Chem.MolFromSmiles('[CH3:1][C@@H](C)C[C@@H](C)[CH3:1]')
     self.assertIsNotNone(mol)
-    centers = Chem.FindMesoCenters(mol)
+    centers = Chem.FindMesoCenters(mol, includeAtomMaps=True)
     self.assertEqual(len(centers), 1)
     expected = ((1, 4), )
     self.assertEqual(centers, expected)
-    centers = Chem.FindMesoCenters(mol, includeAtomMaps=False)
+    centers = Chem.FindMesoCenters(mol)
     self.assertEqual(centers, ())
 
     mol = Chem.MolFromSmiles('[13CH3][C@@H](C)C[C@@H](C)[13CH3]')

@@ -3779,7 +3779,7 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
     const ROMol &mol, bool includeIsotopes, bool includeAtomMaps) {
   std::vector<std::pair<unsigned int, unsigned int>> res;
   boost::dynamic_bitset<> specifiedChiralAts(mol.getNumAtoms());
-  std::vector<unsigned> ringStereoAts(mol.getNumAtoms(), mol.getNumAtoms());
+  std::vector<unsigned int> ringStereoAts(mol.getNumAtoms(), mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
     atom->clearProp(common_properties::_mesoOtherAtom);
     if (atom->getChiralTag() > Atom::ChiralType::CHI_UNSPECIFIED) {
@@ -3789,7 +3789,7 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
     if (atom->getPropIfPresent(common_properties::_ringStereoOtherAtom,
                                otherIdx) &&
         otherIdx >= 0) {
-      ringStereoAts[atom->getIdx()] = static_cast<unsigned>(otherIdx);
+      ringStereoAts[atom->getIdx()] = static_cast<unsigned int>(otherIdx);
     }
   }
   // easy case: no atoms with specified chirality
