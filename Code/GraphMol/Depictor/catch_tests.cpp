@@ -228,7 +228,6 @@ TEST_CASE("use ring system templates") {
 }
 
 TEST_CASE("templates are aware of E/Z stereochemistry") {
-  std::cerr << "cerr " << std::endl;
   // this is a molecule we have a template for
   auto mol1 =
       ""
