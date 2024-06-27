@@ -73,13 +73,10 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
     switch (i) {
       case 0:
         return x;
-        break;
       case 1:
         return y;
-        break;
       case 2:
         return z;
-        break;
       default:
         throw ValueErrorException("Invalid index on Point3D");
         break;
@@ -90,13 +87,10 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
     switch (i) {
       case 0:
         return x;
-        break;
       case 1:
         return y;
-        break;
       case 2:
         return z;
-        break;
       default:
         throw ValueErrorException("Invalid index on Point3D");
         break;
@@ -301,20 +295,27 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
   inline unsigned int dimension() const override { return 2; }
 
   inline double operator[](unsigned int i) const override {
-    PRECONDITION(i < 2, "Invalid index on Point2D");
-    if (i == 0) {
-      return x;
-    } else {
-      return y;
+    switch (i) {
+      case 0:
+        return x;
+      case 1:
+        return y;
+      default:
+        throw ValueErrorException("Invalid index on Point2D");
+        break;
     }
   }
 
   inline double &operator[](unsigned int i) override {
     PRECONDITION(i < 2, "Invalid index on Point2D");
-    if (i == 0) {
-      return x;
-    } else {
-      return y;
+    switch (i) {
+      case 0:
+        return x;
+      case 1:
+        return y;
+      default:
+        throw ValueErrorException("Invalid index on Point2D");
+        break;
     }
   }
 
