@@ -20,9 +20,8 @@ namespace RDGeom {
 void Transform2D::setToIdentity() {
   double *data = d_data.get();
   memset(static_cast<void *>(data), 0, d_dataSize * sizeof(double));
-  unsigned int id;
   for (unsigned int i = 0; i < DIM_2D; i++) {
-    id = i * (DIM_2D + 1);
+    unsigned int id = i * (DIM_2D + 1);
     data[id] = 1.0;
   }
 }

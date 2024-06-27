@@ -20,9 +20,8 @@ namespace RDGeom {
 void Transform3D::setToIdentity() {
   double *data = d_data.get();
   memset(static_cast<void *>(data), 0, d_dataSize * sizeof(double));
-  unsigned int id;
   for (unsigned int i = 0; i < DIM_3D; i++) {
-    id = i * (DIM_3D + 1);
+    unsigned int id = i * (DIM_3D + 1);
     data[id] = 1.0;
   }
 }
@@ -131,9 +130,8 @@ void Transform3D::SetRotationFromQuaternion(double quaternion[4]) {
 
 void Transform3D::Reflect() {
   double *data = d_data.get();
-  unsigned int id;
   for (unsigned int i = 0; i < DIM_3D - 1; i++) {
-    id = i * DIM_3D;
+    unsigned int id = i * DIM_3D;
     for (unsigned int j = 0; j < DIM_3D - 1; j++) {
       data[id + j] *= -1.0;
     }
