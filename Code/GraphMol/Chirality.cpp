@@ -3781,6 +3781,7 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
   boost::dynamic_bitset<> specifiedChiralAts(mol.getNumAtoms());
   std::vector<unsigned> ringStereoAts(mol.getNumAtoms(), mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
+    atom->clearProp(common_properties::_mesoOtherAtom);
     if (atom->getChiralTag() > Atom::ChiralType::CHI_UNSPECIFIED) {
       specifiedChiralAts.set(atom->getIdx(), 1);
     }
@@ -3841,6 +3842,12 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
     }
   }
 
+  for (const auto &[i, j] : res) {
+    mol.getAtomWithIdx(i)->setProp<unsigned int>(
+        common_properties::_mesoOtherAtom, j);
+    mol.getAtomWithIdx(j)->setProp<unsigned int>(
+        common_properties::_mesoOtherAtom, i);
+  }
   return res;
 }
 

@@ -134,6 +134,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereoWarning;  // obsolete ?
 RDKIT_RDGENERAL_EXPORT extern const std::string _chiralPermutation;    // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _ringStereoOtherAtom;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _mesoOtherAtom;        // int
 
 // Smiles parsing
 RDKIT_RDGENERAL_EXPORT extern const std::string _SmilesStart;  // int
