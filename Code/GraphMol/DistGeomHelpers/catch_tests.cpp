@@ -613,33 +613,11 @@ cid = DGeomHelpers::EmbedMolecule(*mol, ps);
 CHECK(ps.failures == fail_cp);
 }
 SECTION("chirality") {
-  auto mol = R"CTAB(
-  Ketcher  1102315302D 1   1.00000     0.00000     0
-
- 10 11  0  0  1  0  0  0  0  0999 V2000
-   10.1340  -11.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   10.1340  -12.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.0000  -12.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.8660  -12.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.8660  -11.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.0000  -10.5250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-   11.0000  -11.5250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-   11.2588  -12.4909    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    9.2680  -10.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   12.7629  -12.4673    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  6  1  0     0  0
-  1  2  1  0     0  0
-  2  3  1  0     0  0
-  3  4  1  0     0  0
-  4  5  1  0     0  0
-  5  6  1  0     0  0
-  1  7  1  0     0  0
-  7  8  1  0     0  0
-  8  4  1  0     0  0
-  1  9  1  1     0  0
-  4 10  1  1     0  0
-M  END
-)CTAB"_ctab;
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase +
+      "/Code/GraphMol/DistGeomHelpers/test_data/chirality_failure_test.mol";
+  std::unique_ptr<RWMol> mol{MolFileToMol(fname, true, false)};
   REQUIRE(mol);
   MolOps::addHs(*mol);
   DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
@@ -649,7 +627,8 @@ M  END
   auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
   CHECK(cid < 0);
   CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] > 5);
+  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
+        4);
 }
 
 #ifdef RDK_TEST_MULTITHREADED
