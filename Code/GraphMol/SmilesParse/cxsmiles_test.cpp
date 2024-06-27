@@ -455,19 +455,19 @@ TEST_CASE("enhanced stereo") {
     CHECK(stereo_groups.size() == 2);
 
     auto stg = stereo_groups.begin();
-    CHECK(stg->getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
-    {
-      auto &atoms = stg->getAtoms();
-      CHECK(atoms.size() == 1);
-      CHECK(atoms[0]->getIdx() == 1);
-    }
-    ++stg;
     CHECK(stg->getGroupType() == StereoGroupType::STEREO_AND);
     {
       auto &atoms = stg->getAtoms();
       CHECK(atoms.size() == 2);
       CHECK(atoms[0]->getIdx() == 3);
       CHECK(atoms[1]->getIdx() == 5);
+    }
+    ++stg;
+    CHECK(stg->getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+    {
+      auto &atoms = stg->getAtoms();
+      CHECK(atoms.size() == 1);
+      CHECK(atoms[0]->getIdx() == 1);
     }
     delete m;
   }
@@ -1510,28 +1510,5 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     REQUIRE(m);
     auto smi = MolToCXSmarts(*m);
     CHECK(smi == "[#7H3]-[Fe]-[#7H3] |C:0.0,2.1|");
-  }
-}
-
-TEST_CASE("Canonicalization of meso structures") {
-  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
-  SECTION("basics") {
-    std::vector<std::pair<std::vector<std::string>, std::string>> data = {
-        {{"N[C@H]1CC[C@@H](O)CC1 |o1:1,4|", "N[C@H]1CC[C@@H](O)CC1 |&1:1,4|",
-          "N[C@H]1CC[C@@H](O)CC1 |a:1,4|"},
-         "N[C@@H]1CC[C@H](O)CC1"},
-        {{"C[C@@H](Cl)C[C@H](C)Cl", "Cl[C@H](C)C[C@H](C)Cl",
-          "C[C@@H](Cl)C[C@@H](Cl)C", "C[C@H](Cl)C[C@@H](C)Cl"},
-         "C[C@H](Cl)C[C@@H](C)Cl"},
-    };
-    for (const auto &[smileses, expected] : data) {
-      for (const auto &smi : smileses) {
-        auto m = v2::SmilesParse::MolFromSmiles(smi);
-        REQUIRE(m);
-        auto osmi = MolToCXSmiles(*m);
-        INFO(smi);
-        CHECK(osmi == expected);
-      }
-    }
   }
 }
