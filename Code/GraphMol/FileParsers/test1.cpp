@@ -1914,7 +1914,7 @@ void testIssue2692246() {
   // basic writing test
   BOOST_LOG(rdInfoLog) << " Testing issue 2692246 " << std::endl;
   std::string smiles(120, 'C');
-  smiles += "[CH3+]";
+  smiles += "[CH2+]";
   RWMol *m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   std::string molBlock = MolToMolBlock(*m);
@@ -4658,13 +4658,13 @@ void testParseCHG() {
       "-1  13   1  14  -1  16  -1  18  -1  20  -1  22  -1  26  -1  27  -1  28  "
       " 4  29  -1  31   1  32  -1  34  -1  35   1  36  -1  38  -1\n"
       "M  END\n";
-
   const int charges[] = {1,  -1, 2,  -1, 5,  -1, 6,  -1, 8,  -1, 9,  4,  11,
                          1,  12, -1, 13, 1,  14, -1, 16, -1, 18, -1, 20, -1,
                          22, -1, 26, -1, 27, -1, 28, 4,  29, -1, 31, 1,  32,
                          -1, 34, -1, 35, 1,  36, -1, 38, -1, 0,  0};
   // Shouldn't seg fault, throw exception or have a null mol
-  std::unique_ptr<RWMol> m(MolBlockToMol(molblock_chg));
+  bool sanitize=false;
+  std::unique_ptr<RWMol> m(MolBlockToMol(molblock_chg, sanitize));
   size_t i = 0;
   while (1) {
     if (charges[i] == 0) {

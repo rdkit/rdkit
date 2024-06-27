@@ -98,7 +98,7 @@ class TestCase(unittest.TestCase):
   def testProblems(self):
     " testing molecules which have been problematic "
     smiList = [
-      ('[Al+3]CCC', ('CCC[Al+3]', 'C(C)(C[Al+3])')),
+      ('[Al+2]CCC', ('CCC[Al+2]', 'C(C)(C[Al+2])')),
       ('C(=O)(Cl)CC(=O)Cl', ('ClC(CC(Cl)=O)=O', 'C(Cl)(=O)CC(=O)Cl', 'C(Cl)(=O)CC(Cl)=O')),
       ('C(=O)(Cl)c1ccc(C(=O)Cl)cc1', ('O=C(Cl)c1ccc(cc1)C(Cl)=O', 'C(Cl)(=O)C1=CC=C(C=C1)C(Cl)=O',
                                       'ClC(=O)c1ccc(cc1)C(=O)Cl')),

@@ -255,14 +255,26 @@ void getBondLabels(const ROMol &mol, const RascalOptions &opts,
   getAtomLabels(mol, opts, atomLabels);
   bondLabels = std::vector<std::string>(mol.getNumBonds());
   for (const auto &b : mol.bonds()) {
-    if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
-      bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] +
-                                std::to_string(b->getBondType()) +
-                                atomLabels[b->getEndAtomIdx()];
+    if (b->getBeginAtom()->getAtomicNum() == b->getEndAtom()->getAtomicNum()) {
+      if (b->getEndAtom()->getDegree() < b->getBeginAtom()->getDegree()) {
+        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] +
+                                  std::to_string(b->getBondType()) +
+                                  atomLabels[b->getBeginAtomIdx()];
+      } else {
+        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] +
+                                  std::to_string(b->getBondType()) +
+                                  atomLabels[b->getEndAtomIdx()];
+      }
     } else {
-      bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] +
-                                std::to_string(b->getBondType()) +
-                                atomLabels[b->getBeginAtomIdx()];
+      if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
+        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] +
+                                  std::to_string(b->getBondType()) +
+                                  atomLabels[b->getEndAtomIdx()];
+      } else {
+        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] +
+                                  std::to_string(b->getBondType()) +
+                                  atomLabels[b->getBeginAtomIdx()];
+      }
     }
   }
 }

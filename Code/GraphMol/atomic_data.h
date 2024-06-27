@@ -60,6 +60,7 @@ class RDKIT_GRAPHMOL_EXPORT atomicData {
 
   double MostCommonIsotopeMass() const { return commonIsotopeMass; }
 
+  unsigned int Row() const { return row; }
   // maps isotope number -> mass
   std::map<unsigned int, std::pair<double, double>>
       d_isotopeInfoMap;  // available isotopes
@@ -74,7 +75,8 @@ class RDKIT_GRAPHMOL_EXPORT atomicData {
   double mass;               // atomic mass
   int nVal;                  // number of outer shell electrons
   int commonIsotope;         // most common isotope
-  double commonIsotopeMass;  // most common isotope
+  double commonIsotopeMass;  // most common isotopic mass
+  unsigned int row;          // row in the periodic table
 };
 };  // namespace RDKit
 #endif

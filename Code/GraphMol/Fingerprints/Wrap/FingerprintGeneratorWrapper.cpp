@@ -14,6 +14,7 @@
 #include <boost/python.hpp>
 #include <RDBoost/boost_numpy.h>
 #include <numpy/npy_common.h>
+#include <numpy/ndarrayobject.h>
 #include <RDBoost/import_array.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>

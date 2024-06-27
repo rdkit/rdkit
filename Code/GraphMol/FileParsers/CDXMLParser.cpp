@@ -29,6 +29,7 @@ namespace RDKit {
 namespace {
 const std::string NEEDS_FUSE("CDXML_NEEDS_FUSE");
 const std::string CDXML_FRAG_ID("CDXML_FRAG_ID");
+const std::string CDXML_GROUP_ID("CDXML_GROUP_ID");
 const std::string FUSE_LABEL("CDXML_NODE_ID");
 const std::string CDX_SCHEME_ID("CDX_SCHEME_ID");
 const std::string CDX_STEP_ID("CDX_STEP_ID");
@@ -495,28 +496,200 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   return !skip_fragment;
 }
 
-void set_reaction_data(std::string type, std::string prop, SchemeInfo &scheme,
-                       const std::vector<unsigned int> &frag_ids,
-                       const std::map<unsigned int, size_t> &fragments,
-                       const std::vector<std::unique_ptr<RWMol>> &mols) {
+void set_reaction_data(
+    std::string type, std::string prop, SchemeInfo &scheme,
+    const std::vector<unsigned int> &frag_ids,
+    const std::map<unsigned int, size_t> &fragments,
+    std::map<unsigned int, std::vector<int>> &grouped_fragments,
+    const std::vector<std::unique_ptr<RWMol>> &mols) {
   unsigned int reagent_idx = 0;
   for (auto idx : frag_ids) {
-    auto iter = fragments.find(idx);
-    if (iter == fragments.end()) {
+    auto iter = grouped_fragments.find(idx);
+    if (iter == grouped_fragments.end()) {
       BOOST_LOG(rdWarningLog)
           << "CDXMLParser: Schema " << scheme.scheme_id << " step "
-          << scheme.step_id << " " << type << " fragment " << idx
+          << scheme.step_id << " " << type << " reaction fragment " << idx
           << " not found in document." << std::endl;
       continue;
     }
-    if (iter->second >= mols.size()) {
-      // shouldn't get here
-      continue;
+    for (auto reaction_fragment_id : iter->second) {
+      auto fragment = fragments.find(reaction_fragment_id);
+      if (fragment == fragments.end()) {
+        BOOST_LOG(rdWarningLog)
+            << "CDXMLParser: Schema " << scheme.scheme_id << " step "
+            << scheme.step_id << " " << type << " fragment " << idx
+            << " not found in document." << std::endl;
+        continue;
+      }
+      auto &mol = mols[fragment->second];
+      mol->setProp(CDX_SCHEME_ID, scheme.scheme_id);
+      mol->setProp(CDX_STEP_ID, scheme.step_id);
+      mol->setProp(prop, reagent_idx);
     }
-    auto &mol = mols[iter->second];
-    mol->setProp(CDX_SCHEME_ID, scheme.scheme_id);
-    mol->setProp(CDX_STEP_ID, scheme.step_id);
-    mol->setProp(prop, reagent_idx++);
+    reagent_idx += 1;
+  }
+}
+
+// The parsing of fragments needed to be moved to a recursive function since they may be
+//  embedded further in the documentation, i.e. a group may hold multiple fragments
+//
+// Additionally, a grouped_fragments map is included to group fragments together for the
+// purposes of reactions.
+//
+// Ungrouped fragments will end up as vectors of size 1 in the grouped_fragement list.
+// The reaction schemes in the CDXML docs appear to use the fragment id for ungrouped
+// fragments and the grouped id for grouped fragments, so the grouped_fragments
+// holds both for ease of bookkeeping.
+template <class T>
+void visit_children(T &node, std::map<unsigned int, Atom *> &ids,
+                    std::vector<std::unique_ptr<RWMol>> &mols, // All molecules found in the doc
+                    std::map<unsigned int, size_t> &fragment_lookup, // fragment.id->molecule index
+                    std::map<unsigned int, std::vector<int>> &grouped_fragments, //grouped.id -> [fragment.id]
+                    std::vector<SchemeInfo> &schemes, // reaction schemes found
+                    int &missing_frag_id, // if we don't have a fragment id, start at -1 and decrement
+                    double bondLength, // bond length of the document for assigning coordinates
+                    const v2::CDXMLParser::CDXMLParserParams &params, // parser parameters
+                    int group_id = -1) { // current group id for this set of subnodes
+  MolzipParams molzip_params;
+  molzip_params.label = MolzipLabel::AtomProperty;
+  molzip_params.atomProperty = FUSE_LABEL;
+  molzip_params.enforceValenceRules = false;
+  for (auto &frag : node.second) {
+    if (frag.first == "fragment") {  // chemical matter
+      std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
+      if (!parse_fragment(*mol, frag.second, ids, missing_frag_id)) {
+        continue;
+      }
+      unsigned int frag_id = mol->getProp<int>(CDXML_FRAG_ID);
+      fragment_lookup[frag_id] = mols.size();
+      if (group_id != -1) {
+        grouped_fragments[group_id].push_back(frag_id);
+      } else {
+        grouped_fragments[frag_id].push_back(frag_id);
+      }
+      if (mol->hasProp(NEEDS_FUSE)) {
+        mol->clearProp(NEEDS_FUSE);
+        std::unique_ptr<ROMol> fused;
+        try {
+          fused = molzip(*mol, molzip_params);
+        } catch (Invar::Invariant &) {
+          BOOST_LOG(rdWarningLog) << "Failed fusion of fragment skipping... "
+                                  << frag_id << std::endl;
+          // perhaps have an option to extract all fragments?
+          // mols.push_back(std::move(mol));
+          continue;
+        }
+        fused->setProp<int>(CDXML_FRAG_ID, static_cast<int>(frag_id));
+        mols.emplace_back(dynamic_cast<RWMol *>(fused.release()));
+      } else {
+        mols.push_back(std::move(mol));
+      }
+      RWMol *res = mols.back().get();
+      auto conf = std::make_unique<Conformer>(res->getNumAtoms());
+      conf->set3D(false);
+
+      bool hasConf = false;
+      for (auto &atm : res->atoms()) {
+        RDGeom::Point3D p{0.0, 0.0, 0.0};
+
+        if (atm->hasProp(CDX_ATOM_POS)) {
+          hasConf = true;
+          const std::vector<double> coord =
+              atm->getProp<std::vector<double>>(CDX_ATOM_POS);
+
+          if (coord.size() == 2) {
+            p.x = coord[0];
+            p.y = -1 * coord[1];  // CDXML uses an inverted coordinate
+            // system, so we need to reverse that
+            p.z = 0.0;
+          }
+        }
+        conf->setAtomPos(atm->getIdx(), p);
+        atm->clearProp(CDX_ATOM_POS);
+      }
+
+      if (hasConf) {
+        scaleBonds(*res, *conf, RDKIT_DEPICT_BONDLENGTH, bondLength);
+        auto confidx = res->addConformer(conf.release());
+        DetectAtomStereoChemistry(*res, &res->getConformer(confidx));
+
+        Atropisomers::detectAtropisomerChirality(*res,
+                                                 &res->getConformer(confidx));
+      } else {  // no Conformer
+        Atropisomers::detectAtropisomerChirality(*res, nullptr);
+      }
+
+      // now that atom stereochem has been perceived, the wedging
+      // information is no longer needed, so we clear
+      // single bond dir flags:
+      MolOps::clearSingleBondDirFlags(*res);
+
+      if (params.sanitize) {
+        try {
+          if (params.removeHs) {
+            // Bond stereo detection must happen before H removal, or
+            // else we might be removing stereogenic H atoms in double
+            // bonds (e.g. imines). But before we run stereo detection,
+            // we need to run mol cleanup so don't have trouble with
+            // e.g. nitro groups. Sadly, this a;; means we will find
+            // run both cleanup and ring finding twice (a fast find
+            // rings in bond stereo detection, and another in
+            // sanitization's SSSR symmetrization).
+            unsigned int failedOp = 0;
+            MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
+            MolOps::detectBondStereochemistry(*res);
+            MolOps::removeHs(*res, false, false);
+          } else {
+            MolOps::sanitizeMol(*res);
+            MolOps::detectBondStereochemistry(*res);
+          }
+        } catch (...) {
+          BOOST_LOG(rdWarningLog)
+              << "CDXMLParser: failed sanitizing skipping fragment " << frag_id
+              << std::endl;
+          mols.pop_back();
+          continue;
+        }
+        MolOps::assignStereochemistry(*res, true, true, true);
+      } else {
+        MolOps::detectBondStereochemistry(*res);
+      }
+    } else if (frag.first == "scheme") {  // get the reaction info
+      int scheme_id = frag.second.template get<int>("<xmlattr>.id", -1);
+      for (auto &node : frag.second) {
+        if (node.first == "step") {
+          auto step_id = node.second.template get<int>("<xmlattr>.id", -1);
+          SchemeInfo scheme;
+          scheme.scheme_id = scheme_id;
+          scheme.step_id = step_id;
+          for (auto &attrib : node.second.get_child("<xmlattr>")) {
+            if (attrib.first == "ReactionStepProducts") {
+              scheme.ReactionStepProducts =
+                  to_vec<unsigned int>(attrib.second.data());
+            } else if (attrib.first == "ReactionStepReactants") {
+              scheme.ReactionStepReactants =
+                  to_vec<unsigned int>(attrib.second.data());
+            } else if (attrib.first == "ReactionStepObjectsAboveArrow") {
+              scheme.ReactionStepObjectsAboveArrow =
+                  to_vec<unsigned int>(attrib.second.data());
+            } else if (attrib.first == "ReactionStepObjectsBelowArrow") {
+              scheme.ReactionStepObjectsBelowArrow =
+                  to_vec<unsigned int>(attrib.second.data());
+            } else if (attrib.first == "ReactionStepAtomMap") {
+              scheme.ReactionStepAtomMap =
+                  to_vec<unsigned int>(attrib.second.data());
+            }
+          }
+          schemes.push_back(std::move(scheme));
+        }
+      }
+    } else {
+      if (frag.first == "group") {
+        group_id = frag.second.template get<int>("<xmlattr>.id");
+      }
+      visit_children(frag, ids, mols, fragment_lookup, grouped_fragments,
+                     schemes, missing_frag_id, bondLength, params, group_id);
+    }
   }
 }
 }  // namespace
@@ -541,151 +714,20 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
 
     throw FileParseException(e.what());
   }
-  std::map<unsigned int, Atom *> ids;
-  std::vector<std::unique_ptr<RWMol>> mols;
-  std::map<unsigned int, size_t> fragment_lookup;
-  std::vector<SchemeInfo> schemes;
+  std::map<unsigned int, Atom *> ids; // atom.id to atom in fragment (used for linkages)
+  std::vector<std::unique_ptr<RWMol>> mols; // All molecules found in the doc
+  std::map<unsigned int, size_t> fragment_lookup; // fragment.id->molecule index
+  std::map<unsigned int, std::vector<int>> grouped_fragments; //grouped.id -> [fragment.id]
+  std::vector<SchemeInfo> schemes; // reaction schemes found
 
-  MolzipParams molzip_params;
-  molzip_params.label = MolzipLabel::AtomProperty;
-  molzip_params.atomProperty = FUSE_LABEL;
-  molzip_params.enforceValenceRules = false;
   int missing_frag_id = -1;
   for (auto &cdxml : pt) {
     if (cdxml.first == "CDXML") {
       double bondLength = cdxml.second.get<double>("<xmlattr>.BondLength");
       for (auto &node : cdxml.second) {
         if (node.first == "page") {
-          for (auto &frag : node.second) {
-            if (frag.first == "fragment") {  // chemical matter
-              std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
-              if (!parse_fragment(*mol, frag.second, ids, missing_frag_id)) {
-                continue;
-              }
-              unsigned int frag_id = mol->getProp<int>(CDXML_FRAG_ID);
-              fragment_lookup[frag_id] = mols.size();
-              if (mol->hasProp(NEEDS_FUSE)) {
-                mol->clearProp(NEEDS_FUSE);
-                std::unique_ptr<ROMol> fused;
-                try {
-                  fused = molzip(*mol, molzip_params);
-                } catch (Invar::Invariant &) {
-                  BOOST_LOG(rdWarningLog)
-                      << "Failed fusion of fragment skipping... " << frag_id
-                      << std::endl;
-                  // perhaps have an option to extract all fragments?
-                  // mols.push_back(std::move(mol));
-                  continue;
-                }
-                fused->setProp<int>(CDXML_FRAG_ID, static_cast<int>(frag_id));
-                mols.emplace_back(dynamic_cast<RWMol *>(fused.release()));
-              } else {
-                mols.push_back(std::move(mol));
-              }
-              RWMol *res = mols.back().get();
-              auto conf = std::make_unique<Conformer>(res->getNumAtoms());
-              conf->set3D(false);
-
-              bool hasConf = false;
-              for (auto &atm : res->atoms()) {
-                RDGeom::Point3D p{0.0, 0.0, 0.0};
-
-                if (atm->hasProp(CDX_ATOM_POS)) {
-                  hasConf = true;
-                  const std::vector<double> coord =
-                      atm->getProp<std::vector<double>>(CDX_ATOM_POS);
-
-                  if (coord.size() == 2) {
-                    p.x = coord[0];
-                    p.y = -1 * coord[1];  // CDXML uses an inverted coordinate
-                                          // system, so we need to reverse that
-                    p.z = 0.0;
-                  }
-                }
-                conf->setAtomPos(atm->getIdx(), p);
-                atm->clearProp(CDX_ATOM_POS);
-              }
-
-              if (hasConf) {
-                scaleBonds(*res, *conf, RDKIT_DEPICT_BONDLENGTH, bondLength);
-                auto confidx = res->addConformer(conf.release());
-                DetectAtomStereoChemistry(*res, &res->getConformer(confidx));
-
-                Atropisomers::detectAtropisomerChirality(
-                    *res, &res->getConformer(confidx));
-              } else {  // no Conformer
-                Atropisomers::detectAtropisomerChirality(*res, nullptr);
-              }
-
-              // now that atom stereochem has been perceived, the wedging
-              // information is no longer needed, so we clear
-              // single bond dir flags:
-              MolOps::clearSingleBondDirFlags(*res);
-
-              if (params.sanitize) {
-                try {
-                  if (params.removeHs) {
-                    // Bond stereo detection must happen before H removal, or
-                    // else we might be removing stereogenic H atoms in double
-                    // bonds (e.g. imines). But before we run stereo detection,
-                    // we need to run mol cleanup so don't have trouble with
-                    // e.g. nitro groups. Sadly, this a;; means we will find
-                    // run both cleanup and ring finding twice (a fast find
-                    // rings in bond stereo detection, and another in
-                    // sanitization's SSSR symmetrization).
-                    unsigned int failedOp = 0;
-                    MolOps::sanitizeMol(*res, failedOp,
-                                        MolOps::SANITIZE_CLEANUP);
-                    MolOps::detectBondStereochemistry(*res);
-                    MolOps::removeHs(*res, false, false);
-                  } else {
-                    MolOps::sanitizeMol(*res);
-                    MolOps::detectBondStereochemistry(*res);
-                  }
-                } catch (...) {
-                  BOOST_LOG(rdWarningLog)
-                      << "CDXMLParser: failed sanitizing skipping fragment "
-                      << frag_id << std::endl;
-                  mols.pop_back();
-                  continue;
-                }
-                MolOps::assignStereochemistry(*res, true, true, true);
-              } else {
-                MolOps::detectBondStereochemistry(*res);
-              }
-            } else if (frag.first == "scheme") {  // get the reaction info
-              int scheme_id = frag.second.get<int>("<xmlattr>.id", -1);
-              for (auto &node : frag.second) {
-                if (node.first == "step") {
-                  auto step_id = node.second.get<int>("<xmlattr>.id", -1);
-                  SchemeInfo scheme;
-                  scheme.scheme_id = scheme_id;
-                  scheme.step_id = step_id;
-                  for (auto &attrib : node.second.get_child("<xmlattr>")) {
-                    if (attrib.first == "ReactionStepProducts") {
-                      scheme.ReactionStepProducts =
-                          to_vec<unsigned int>(attrib.second.data());
-                    } else if (attrib.first == "ReactionStepReactants") {
-                      scheme.ReactionStepReactants =
-                          to_vec<unsigned int>(attrib.second.data());
-                    } else if (attrib.first ==
-                               "ReactionStepObjectsAboveArrow") {
-                      scheme.ReactionStepObjectsAboveArrow =
-                          to_vec<unsigned int>(attrib.second.data());
-                    } else if (attrib.first ==
-                               "ReactionStepObjectsBelowArrow") {
-                      scheme.ReactionStepObjectsBelowArrow =
-                          to_vec<unsigned int>(attrib.second.data());
-                    } else if (attrib.first == "ReactionStepAtomMap") {
-                      scheme.ReactionStepAtomMap =
-                          to_vec<unsigned int>(attrib.second.data());
-                    }
-                  }
-                  schemes.push_back(std::move(scheme));
-                }
-              }
-            }
-          }
+          visit_children(node, ids, mols, fragment_lookup, grouped_fragments,
+                         schemes, missing_frag_id, bondLength, params);
         }
       }
     }
@@ -708,15 +750,17 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
       for (auto &scheme : schemes) {
         // Set the molecule properties
         set_reaction_data("ReactionStepReactants", CDX_REAGENT_ID, scheme,
-                          scheme.ReactionStepReactants, fragments, mols);
+                          scheme.ReactionStepReactants, fragments,
+                          grouped_fragments, mols);
         set_reaction_data("ReactionStepProducts", CDX_PRODUCT_ID, scheme,
-                          scheme.ReactionStepProducts, fragments, mols);
+                          scheme.ReactionStepProducts, fragments,
+                          grouped_fragments, mols);
         auto agents = scheme.ReactionStepObjectsAboveArrow;
         agents.insert(agents.end(),
                       scheme.ReactionStepObjectsBelowArrow.begin(),
                       scheme.ReactionStepObjectsBelowArrow.end());
         set_reaction_data("ReactionStepAgents", CDX_AGENT_ID, scheme, agents,
-                          fragments, mols);
+                          fragments, grouped_fragments, mols);
         // Set the Atom Maps
         int sz = scheme.ReactionStepAtomMap.size();
         if (sz % 2) {
