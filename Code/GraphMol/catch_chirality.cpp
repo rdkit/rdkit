@@ -5957,13 +5957,39 @@ TEST_CASE("meso centers and stereo groups") {
     }
   }
   SECTION("ABS edge cases") {
-    auto m =
-        "C[C@@H](Cl)[C@H]([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O |a:4,1,3|"_smiles;
-    REQUIRE(m);
-    CHECK(m->getStereoGroups().size() == 1);
-    CHECK(m->getStereoGroups()[0].getGroupType() ==
-          StereoGroupType::STEREO_ABSOLUTE);
-    CHECK(m->getStereoGroups()[0].getAtoms().size() == 1);
-    CHECK(m->getStereoGroups()[0].getAtoms()[0]->getIdx() == 3);
+    {
+      auto m =
+          "C[C@@H](Cl)[C@H]([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O |a:4,1,3|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getStereoGroups().size() == 1);
+      CHECK(m->getStereoGroups()[0].getGroupType() ==
+            StereoGroupType::STEREO_ABSOLUTE);
+      CHECK(m->getStereoGroups()[0].getAtoms().size() == 1);
+      CHECK(m->getStereoGroups()[0].getAtoms()[0]->getIdx() == 3);
+    }
+    {
+      // one of the meso atoms is ABS
+      auto m =
+          "C[C@@H](Cl)[C@H]([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O |a:4|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getStereoGroups().size() == 1);
+      CHECK(m->getStereoGroups()[0].getGroupType() ==
+            StereoGroupType::STEREO_ABSOLUTE);
+      CHECK(m->getStereoGroups()[0].getAtoms().size() == 1);
+      CHECK(m->getStereoGroups()[0].getAtoms()[0]->getIdx() == 4);
+    }
+  }
+  SECTION("mixed and partial groups are not removed") {
+    std::vector<std::pair<std::string, unsigned int>> data = {
+        {"N[C@H]1CC[C@@H](O)CC1 |a:4,o1:1|", 2},
+        {"N[C@H]1CC[C@@H](O)CC1 |&2:4,o1:1|", 2},
+        {"N[C@H]1CC[C@@H](O)CC1 |o1:1|", 1},
+    };
+    for (const auto &[smiles, sz] : data) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      CHECK(m->getStereoGroups().size() == sz);
+    }
   }
 }

@@ -2123,12 +2123,14 @@ void cleanupStereoGroups(ROMol &mol) {
         continue;
       }
       const auto &atoms = sgs[i].getAtoms();
-      if (atoms.size() != 2) {
-        continue;
-      }
-      if ((atoms[0]->getIdx() == mg.first && atoms[1]->getIdx() == mg.second) ||
-          (atoms[1]->getIdx() == mg.first && atoms[0]->getIdx() == mg.second)) {
-        skipStereoGroups[i] = true;
+
+      if (atoms.size() == 2) {
+        if ((atoms[0]->getIdx() == mg.first &&
+             atoms[1]->getIdx() == mg.second) ||
+            (atoms[1]->getIdx() == mg.first &&
+             atoms[0]->getIdx() == mg.second)) {
+          skipStereoGroups[i] = true;
+        }
       }
     }
   }
@@ -2145,8 +2147,9 @@ void cleanupStereoGroups(ROMol &mol) {
     }
     const auto &sg = sgs[i];
     if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+      const auto sz = sg.getAtoms().size();
       for (const auto atom : sg.getAtoms()) {
-        if (!mesoAtoms[atom->getIdx()] &&
+        if ((!mesoAtoms[atom->getIdx()] || sz == 1) &&
             atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
           absAtoms.push_back(atom);
         }
