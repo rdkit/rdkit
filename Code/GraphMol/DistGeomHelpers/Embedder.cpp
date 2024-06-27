@@ -60,6 +60,10 @@ constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.05;
 constexpr double MAX_MINIMIZED_E_CONTRIB = 0.20;
 constexpr double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
 constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
+inline bool haveOppositeSign(double a, double b) {
+  return std::signbit(a) ^ std::signbit(b);
+}
+
 }  // namespace
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -308,12 +312,21 @@ bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
   RDGeom::Point3D v4 = p0 - p4;
   v4.normalize();
 
+  // be more tolerant of tethrahedral centers that are involved in multiple
+  // small rings
+  double volScale = 1;
+  if (chiralSet->d_structureFlags &
+      static_cast<std::uint64_t>(
+          DistGeom::ChiralSetStructureFlags::IN_FUSED_SMALL_RINGS)) {
+    volScale = 0.25;
+  }
+
   RDGeom::Point3D crossp = v1.crossProduct(v2);
   double vol = crossp.dotProduct(v3);
   if (verbose) {
     std::cerr << "   " << fabs(vol) << std::endl;
   }
-  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) {
+  if (fabs(vol) < volScale * MIN_TETRAHEDRAL_CHIRAL_VOL) {
     return false;
   }
   crossp = v1.crossProduct(v2);
@@ -321,7 +334,7 @@ bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
   if (verbose) {
     std::cerr << "   " << fabs(vol) << std::endl;
   }
-  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) {
+  if (fabs(vol) < volScale * MIN_TETRAHEDRAL_CHIRAL_VOL) {
     return false;
   }
   crossp = v1.crossProduct(v3);
@@ -329,7 +342,7 @@ bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
   if (verbose) {
     std::cerr << "   " << fabs(vol) << std::endl;
   }
-  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) {
+  if (fabs(vol) < volScale * MIN_TETRAHEDRAL_CHIRAL_VOL) {
     return false;
   }
   crossp = v2.crossProduct(v3);
@@ -337,7 +350,7 @@ bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
   if (verbose) {
     std::cerr << "   " << fabs(vol) << std::endl;
   }
-  return fabs(vol) >= MIN_TETRAHEDRAL_CHIRAL_VOL;
+  return fabs(vol) >= volScale * MIN_TETRAHEDRAL_CHIRAL_VOL;
 }
 
 bool _sameSide(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
@@ -544,8 +557,8 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
         chiralSet->d_idx4, *positions);
     double lb = chiralSet->getLowerVolumeBound();
     double ub = chiralSet->getUpperVolumeBound();
-    if ((lb > 0 && vol < lb && ((lb - vol) / lb > .2 || vol * lb < 0)) ||
-        (ub < 0 && vol > ub && ((vol - ub) / ub > .2 || vol * ub < 0))) {
+    if ((lb > 0 && vol < lb && (vol / lb < .8 || haveOppositeSign(vol, lb))) ||
+        (ub < 0 && vol > ub && (vol / ub < .8 || haveOppositeSign(vol, ub)))) {
 #ifdef DEBUG_EMBEDDING
       std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: "
                 << " " << vol << " " << lb << "-" << ub << std::endl;
@@ -1035,19 +1048,33 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           nbrs.insert(nbrs.end(), atom->getIdx());
         }
 
+        // set a flag for tetrahedral centers that are in multiple small rings
+        auto numSmallRings = 0u;
+        constexpr int smallRingSize = 5;
+        for (const auto sz : mol.getRingInfo()->atomRingSizes(atom->getIdx())) {
+          if (sz < smallRingSize) {
+            ++numSmallRings;
+          }
+        }
+        std::uint64_t structureFlags = 0;
+        if (numSmallRings > 1) {
+          structureFlags = static_cast<std::uint64_t>(
+              DistGeom::ChiralSetStructureFlags::IN_FUSED_SMALL_RINGS);
+        }
+
         // now create a chiral set and set the upper and lower bound on the
         // volume
         if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
           // positive chiral volume
-          auto *cset =
-              new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1], nbrs[2],
-                                      nbrs[3], volLowerBound, volUpperBound);
+          auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1],
+                                               nbrs[2], nbrs[3], volLowerBound,
+                                               volUpperBound, structureFlags);
           DistGeom::ChiralSetPtr cptr(cset);
           chiralCenters.push_back(cptr);
         } else if (chiralType == Atom::CHI_TETRAHEDRAL_CW) {
-          auto *cset =
-              new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1], nbrs[2],
-                                      nbrs[3], -volUpperBound, -volLowerBound);
+          auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1],
+                                               nbrs[2], nbrs[3], -volUpperBound,
+                                               -volLowerBound, structureFlags);
           DistGeom::ChiralSetPtr cptr(cset);
           chiralCenters.push_back(cptr);
         } else {
@@ -1059,8 +1086,9 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
             // the coordMap
             // there's no sense doing 3-rings because those are a nightmare
           } else {
-            auto *cset = new DistGeom::ChiralSet(
-                atom->getIdx(), nbrs[0], nbrs[1], nbrs[2], nbrs[3], 0.0, 0.0);
+            auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0],
+                                                 nbrs[1], nbrs[2], nbrs[3], 0.0,
+                                                 0.0, structureFlags);
             DistGeom::ChiralSetPtr cptr(cset);
             tetrahedralCenters.push_back(cptr);
           }

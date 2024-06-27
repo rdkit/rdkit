@@ -50,6 +50,7 @@ public class AromaticTests extends GraphMolTest {
 	@Test
 	public void testNCIAromaticRegression() throws Exception {
 		String filePath = getFilePath("NCI_aromat_regress.txt");
+		// assertEquals(filePath,"foo");
 		performAromaticTest(filePath,0);
 	}
 

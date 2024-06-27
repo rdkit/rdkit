@@ -336,6 +336,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testWedgeNonSingleBonds-6.svg", 238313010U},
     {"testWedgeNonSingleBonds-7.svg", 3641456570U},
     {"testWedgeNonSingleBonds-8.svg", 3209701539U},
+    {"testWedgingShouldBeOnSingleBond.svg", 1002741488U},
+    {"testDuplicateEnhancedStereoLabelsAddAnnotationTrue.svg", 1462263453U},
+    {"testDuplicateEnhancedStereoLabelsAddAnnotationFalse.svg", 2980189527U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -9687,6 +9690,106 @@ TEST_CASE("wedge non-single bonds") {
       outs << text;
       outs.close();
       check_file_hash("testWedgeNonSingleBonds-8.svg");
+    }
+  }
+  SECTION(
+      "basics 3: make sure reapplyMolBlockWedging is called before prepareMolForDrawing") {
+    auto m = R"CTAB(
+  Mrv2311 05242408162D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.0006 -1.54 0 0
+M  V30 2 N 2.0006 -3.08 0 0
+M  V30 3 C 0.6669 -3.85 0 0
+M  V30 4 C -0.6668 -3.08 0 0
+M  V30 5 C -0.6668 -1.54 0 0
+M  V30 6 C -2.0006 -0.77 0 0
+M  V30 7 C 0.6669 -0.77 0 0
+M  V30 8 C 0.6669 0.77 0 0
+M  V30 9 C -0.6668 1.54 0 0
+M  V30 10 C -2.0006 0.77 0 0
+M  V30 11 C -0.6668 3.08 0 0
+M  V30 12 C 0.6669 3.85 0 0
+M  V30 13 C 2.0006 3.08 0 0
+M  V30 14 C 2.0006 1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 1 7 5 CFG=3
+M  V30 7 2 7 1
+M  V30 8 1 7 8
+M  V30 9 2 8 9
+M  V30 10 1 9 10
+M  V30 11 1 9 11
+M  V30 12 2 11 12
+M  V30 13 1 12 13
+M  V30 14 2 13 14
+M  V30 15 1 8 14
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    int panelHeight = -1;
+    int panelWidth = -1;
+    bool noFreeType = true;
+    MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
+    drawer.drawOptions().useMolBlockWedging = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testWedgingShouldBeOnSingleBond.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("testWedgingShouldBeOnSingleBond.svg");
+    std::regex regex1(
+        "<path class='bond-5 atom-6 atom-4'.*style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1\\.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />");
+    std::regex regex2(
+        "<path class='bond-5 atom-6 atom-4'.*style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2\\.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />");
+    size_t nRegex1Matches = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), regex1),
+        std::sregex_token_iterator());
+    CHECK(nRegex1Matches > 6);  // check the bond is hashed
+    auto dat2 = *std::sregex_iterator(text.begin(), text.end(), regex2);
+    CHECK(dat2.empty());  // check the bond is single
+  }
+}
+
+TEST_CASE("avoid duplicate enhanced stereo labels") {
+  static const std::string AND1("and1");
+  auto m = "C[C@H](O)[C@H](C)F |&1:1,3,r|"_smiles;
+  REQUIRE(m);
+  for (bool addStereoAnnotation : {false, true}) {
+    int panelHeight = -1;
+    int panelWidth = -1;
+    bool noFreeType = true;
+    MolDraw2DSVG drawer(300, 300, panelWidth, panelHeight, noFreeType);
+    drawer.drawOptions().addStereoAnnotation = addStereoAnnotation;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::string svgFile(std::string(
+        "testDuplicateEnhancedStereoLabelsAddAnnotation" +
+        std::string(addStereoAnnotation ? "True" : "False") + ".svg"));
+    std::ofstream outs(svgFile);
+    outs << text;
+    outs.close();
+    check_file_hash(svgFile);
+    for (const char &c : AND1) {
+      std::regex regex(std::string("<text\\s+.*>") + c +
+                       std::string("</text>"));
+      size_t nOccurrences = std::distance(
+          std::sregex_token_iterator(text.begin(), text.end(), regex),
+          std::sregex_token_iterator());
+      // there should be only 2 "and1" labels, not 4
+      CHECK(nOccurrences == 2);
     }
   }
 }

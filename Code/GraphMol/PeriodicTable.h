@@ -316,6 +316,14 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
     return false;
   }
 
+  //! returns the maximum recognized atomic number
+  UINT getMaxAtomicNumber() const { return byanum.size() - 1; }
+  //! returns the row of the periodic table
+  double getRow(UINT atomicNumber) const {
+    PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
+    return byanum[atomicNumber].Row();
+  }
+
  private:
   PeriodicTable();
   PeriodicTable &operator=(const PeriodicTable &);

@@ -91,6 +91,10 @@ class TestCase(unittest.TestCase):
     with open(refFile, 'rb') as intf:
       refData = pickle.load(intf)
     fn = os.path.join(os.path.dirname(__file__), 'test_data', 'aromat_regress.txt')
+    suppl = Chem.SmilesMolSupplier(fn, delimiter='\t')
+    for i, x in enumerate(suppl):
+      if x is None:
+        print(i, suppl.GetItemText(i))
     ms = [x for x in Chem.SmilesMolSupplier(fn, delimiter='\t')]
     for i, m in enumerate(ms):
       mqns = rdMolDescriptors.MQNs_(m)
@@ -108,11 +112,6 @@ class TestCase(unittest.TestCase):
         292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
       ]
     else:
-      tgt = [
-        42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24061,
-        17820, 1, 8314, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
-        292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
-      ]
       tgt = [
         42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24059,
         17822, 1, 8314, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,

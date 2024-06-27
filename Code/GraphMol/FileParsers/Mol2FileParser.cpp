@@ -155,14 +155,11 @@ void guessFormalCharges(RWMol *res) {
       // this will barf when I have e.g. an uncharged 4 valent nitrogen ...
       int noAromBonds = 0;
       double accum = 0;  // FIX: could this give non int values ?
-      ROMol::OEDGE_ITER beg, end;
-      boost::tie(beg, end) = res->getAtomBonds(at);
-      while (beg != end) {
-        accum += (*res)[*beg]->getValenceContrib(at);
-        if ((*res)[*beg]->getBondType() == Bond::AROMATIC) {
+      for (const auto bnd : res->atomBonds(at)) {
+        accum += bnd->getValenceContrib(at);
+        if (bnd->getBondType() == Bond::AROMATIC) {
           ++noAromBonds;
         }
-        ++beg;
       }
       // Assumption: if there is an aromatic bridge atom the accum will be 4.5
       //(three aromatic bonds), e.g. naphthalenes. However those are not charged
@@ -186,12 +183,11 @@ void guessFormalCharges(RWMol *res) {
       // e.g. 5ring with N.pl3 as NH atom or other atoms without ar
       // specification in aromatic ring
       // FIX: do we need make sure this only happens for atoms in ring?
-      std::string tATT;
-      at->getProp(common_properties::_TriposAtomType, tATT);
       if (!res->getRingInfo()->isSssrOrBetter()) {
         MolOps::findSSSR(*res);
       }
-      if (tATT.find("ar") == std::string::npos && at->getIsAromatic() &&
+      auto tATT = at->getProp<std::string>(common_properties::_TriposAtomType);
+      if (at->getIsAromatic() && tATT.find("ar") == std::string::npos &&
           res->getRingInfo()->isAtomInRingOfSize(at->getIdx(), 5)) {
         continue;
       }
@@ -202,8 +198,7 @@ void guessFormalCharges(RWMol *res) {
       // kekulized input for this
       //(at least in most cases) - anyway, throw a warning!
       if (noAromBonds == 3 && tATT == "N.ar") {
-        std::string nm;
-        res->getProp(common_properties::_Name, nm);
+        auto nm = res->getProp<std::string>(common_properties::_Name);
         BOOST_LOG(rdWarningLog)
             << nm
             << ": warning - aromatic N with 3 aromatic bonds - "
@@ -215,10 +210,9 @@ void guessFormalCharges(RWMol *res) {
       // sometimes things like benzimidazoles can have only one bond of the
       // imidazole ring as aromatic and the other one as a single bond ...
       // catch that this way - see also the trick from GL
-      int expVal = static_cast<int>(std::round(accum + 0.1));
-      const INT_VECT &valens =
+      auto expVal = static_cast<int>(std::round(accum + 0.1));
+      const auto &valens =
           PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
-      INT_VECT_CI vi;
 
       // check default valence and compare to expVal - chg
       // the hypothesis is that we prefer positively charged atoms over
@@ -230,22 +224,19 @@ void guessFormalCharges(RWMol *res) {
           PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
       int assignChg;
       if (nElectrons >= 4) {
-        assignChg = expVal - (*valens.begin());
+        assignChg = expVal - valens.front();
       } else {
-        assignChg = (*valens.begin()) - expVal;
+        assignChg = valens.front() - expVal;
       }
       if (assignChg > 0 && nElectrons >= 4) {
-        for (vi = valens.begin(); vi != valens.end(); ++vi) {
+        for (auto vi : valens) {
           // Since we do this only for nocharged atoms we can get away without
-          // including the
-          // charge into this
-          // apart from that we do not assign charges higher than +/- 1 for
-          // atoms with multiple valence states
+          // including the charge into this apart from that we do not assign
+          // charges higher than +/- 1 for atoms with multiple valence states
           // otherwise the early break would have to go away which in turn would
-          // result in things like [S+4] for
-          // sulfonamides
-          assignChg = expVal - (*vi);
-          if ((*vi) <= expVal && abs(assignChg) < 2) {
+          // result in things like [S+4] for sulfonamides
+          assignChg = expVal - vi;
+          if (vi <= expVal && assignChg < 2) {
             break;
           }
         }
@@ -296,12 +287,13 @@ unsigned int chkNoHNeighbNOx(RWMol *res, ROMol::ADJ_ITER atIdxIt,
 bool cleanUpMol2Substructures(RWMol *res) {
   // NOTE: check the nitro fix in guess formal charges!
   boost::dynamic_bitset<> isFixed(res->getNumAtoms());
-  for (ROMol::AtomIterator atIt = res->beginAtoms(); atIt != res->endAtoms();
-       ++atIt) {
-    std::string tAT;
-    Atom *at = *atIt;
+  for (auto at : res->atoms()) {
     unsigned int idx = at->getIdx();
-    at->getProp(common_properties::_TriposAtomType, tAT);
+    // make sure we haven't finished this atom already
+    if (isFixed[idx]) {
+      continue;
+    }
+    auto tAT = at->getProp<std::string>(common_properties::_TriposAtomType);
 
     if (tAT == "N.4") {
       at->setFormalCharge(1);
@@ -314,18 +306,38 @@ bool cleanUpMol2Substructures(RWMol *res) {
             << "Warning - O.co2 with degree >1." << std::endl;
         return false;
       }
-      ROMol::ADJ_ITER nbrIdxIt, endNbrsIdxIt;
-      // getAtomNeighbours returns 2 adjacency iterators (index iterators)
-      boost::tie(nbrIdxIt, endNbrsIdxIt) = res->getAtomNeighbors(at);
+      auto nbrs = res->atomNeighbors(at);
       // this should return only the C.2
-      Atom *nbr = res->getAtomWithIdx(*nbrIdxIt);
-      std::string tATT;
-      nbr->getProp(common_properties::_TriposAtomType, tATT);
-      // carboxylates
-      if (tATT == "C.2" || tATT == "S.o2" || tATT == "P.3") {
+      auto nbr = *nbrs.begin();
+      auto tATT = nbr->getProp<std::string>(common_properties::_TriposAtomType);
+      if (tATT == "P.3") {
+        // special case for phosphates
+        // we keep the first bond to O.co2 as double and make the rest single
+        Bond *b = res->getBondBetweenAtoms(idx, nbr->getIdx());
+        b->setBondType(Bond::DOUBLE);
+        b->setIsAromatic(false);
+        at->setIsAromatic(false);
+        isFixed[idx] = 1;
+        for (auto onbr : res->atomNeighbors(nbr)) {
+          if (onbr->getAtomicNum() == 8 && !isFixed[onbr->getIdx()] &&
+              onbr->getProp<std::string>(common_properties::_TriposAtomType) ==
+                  "O.co2") {
+            Bond *ob = res->getBondBetweenAtoms(nbr->getIdx(), onbr->getIdx());
+            ob->setBondType(Bond::SINGLE);
+            ob->setIsAromatic(false);
+            onbr->setFormalCharge(-1);
+            onbr->setIsAromatic(false);
+            isFixed[onbr->getIdx()] = 1;
+          }
+        }
+        nbr->setIsAromatic(false);
+        isFixed[nbr->getIdx()] = 1;
+
+      } else if (tATT == "C.2" || tATT == "S.o2") {
+        // carboxylates and sulfonates
         // this should return only the bond between C.2 and O.co2
-        Bond *b = res->getBondBetweenAtoms(idx, *nbrIdxIt);
-        if (!isFixed[*nbrIdxIt]) {
+        Bond *b = res->getBondBetweenAtoms(idx, nbr->getIdx());
+        if (!isFixed[nbr->getIdx()]) {
           // the first occurrence is negatively charged and has a single bond
           b->setBondType(Bond::SINGLE);
           b->setIsAromatic(false);
@@ -333,7 +345,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
           at->setIsAromatic(false);
           nbr->setIsAromatic(false);
           isFixed[idx] = 1;
-          isFixed[*nbrIdxIt] = 1;
+          isFixed[nbr->getIdx()] = 1;
         } else {
           // the other occurrences are not charged and have a double bond
           b->setBondType(Bond::DOUBLE);

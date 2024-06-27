@@ -164,7 +164,9 @@ struct table_wrapper {
         .def("GetMassForIsotope",
              (double(PeriodicTable::*)(const std::string &, UINT) const) &
                  PeriodicTable::getMassForIsotope,
-             python::args("self", "elementSymbol", "isotope"));
+             python::args("self", "elementSymbol", "isotope"))
+        .def("GetMaxAtomicNumber", &PeriodicTable::getMaxAtomicNumber,
+             python::args("self"));
 
     python::def(
         "GetPeriodicTable", GetTable,

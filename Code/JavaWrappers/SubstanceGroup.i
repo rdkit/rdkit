@@ -88,4 +88,5 @@ unsigned int getSubstanceGroupCount(RDKit::ROMol &mol);
 %template(getStringProp) RDKit::SubstanceGroup::getProp<std::string>;
 %template(getUIntProp) RDKit::SubstanceGroup::getProp<unsigned int>;
 %template(getStringVectProp) RDKit::SubstanceGroup::getProp<RDKit::STR_VECT>;
+%template(getUIntVectProp) RDKit::SubstanceGroup::getProp<RDKit::UINT_VECT>;
 

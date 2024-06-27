@@ -171,14 +171,6 @@ void DrawMol::finishCreateDrawObjects() {
 // ****************************************************************************
 void DrawMol::initDrawMolecule(const ROMol &mol) {
   drawMol_.reset(new RWMol(mol));
-  if (!isReactionMol_) {
-    if (drawOptions_.prepareMolsBeforeDrawing) {
-      MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
-    } else if (!mol.getNumConformers()) {
-      const bool canonOrient = true;
-      RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
-    }
-  }
   if (drawOptions_.centreMoleculesBeforeDrawing) {
     if (drawMol_->getNumConformers()) {
       centerMolForDrawing(*drawMol_, confId_);
@@ -189,6 +181,14 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
   }
   if (drawOptions_.useMolBlockWedging) {
     Chirality::reapplyMolBlockWedging(*drawMol_);
+  }
+  if (!isReactionMol_) {
+    if (drawOptions_.prepareMolsBeforeDrawing) {
+      MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
+    } else if (!mol.getNumConformers()) {
+      const bool canonOrient = true;
+      RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
+    }
   }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
@@ -220,7 +220,9 @@ void DrawMol::extractAll(double scale) {
   extractHighlights(scale);
   extractAttachments();
   extractAtomNotes();
-  extractStereoGroups();
+  if (!drawOptions_.addStereoAnnotation) {
+    extractStereoGroups();
+  }
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
