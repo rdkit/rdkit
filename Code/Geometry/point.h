@@ -385,8 +385,8 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
   }
 
   double angleTo(const Point2D &other) const {
-    Point2D t1 = *this;
-    Point2D t2 = other;
+    auto t1 = *this;
+    auto t2 = other;
     t1.normalize();
     t2.normalize();
     double dotProd = t1.dotProduct(t2);
