@@ -88,10 +88,10 @@ struct table_wrapper {
                  PeriodicTable::getElementName,
              python::args("self", "atomicNumber"))
         .def("GetRow",
-             (double(PeriodicTable::*)(UINT) const) & PeriodicTable::getRow,
+             (unsigned int(PeriodicTable::*)(UINT) const) & PeriodicTable::getRow,
              python::args("self", "atomicNumber"))
         .def("GetRow",
-             (double(PeriodicTable::*)(const std::string &) const) &
+             (unsigned int(PeriodicTable::*)(const std::string &) const) &
                  PeriodicTable::getRow,
              python::args("self", "elementSymbol"))
         .def("GetRvdw",
