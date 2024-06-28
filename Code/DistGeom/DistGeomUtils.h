@@ -176,9 +176,11 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructPlain3DForceField(
 
   \param mmat            Distance bounds matrix
   \param positions       A vector of pointers to 3D Points to write out the
-  resulting coordinates \param improperAtoms   A list of groups of 4 atom
-  indices for inversion terms \param atomNums        A list of atomic numbers
-  for all atoms in the molecule
+  resulting coordinates
+  \param improperAtoms   A list of groups of 4 atom indices for inversion terms
+  \param angles          List of lists with the three angle indices and whether
+  the center atom in the angle is SP hybridized for every angle in the molecule.
+  \param atomNums        A list of atomic numbers for all atoms in the molecule
 
   \return a pointer to a ForceField with improper terms
     <b>NOTE:</b> the caller is responsible for deleting this force field.
@@ -188,6 +190,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *
 construct3DImproperForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const std::vector<std::vector<int>> &improperAtoms,
+    const std::vector<std::vector<int>> &angles,
     const std::vector<int> &atomNums);
 
 }  // namespace DistGeom

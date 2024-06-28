@@ -210,7 +210,7 @@ class TestCase(unittest.TestCase):
     ]
 
     nconfs = []
-    expected = [4, 3, 6, 6, 4, 4]
+    expected = [3, 2, 7, 6, 3, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, maxAttempts=30, randomSeed=100,
@@ -228,7 +228,7 @@ class TestCase(unittest.TestCase):
     params.pruneRmsThresh = 1.5
     params.useSymmetryForPruning = False
     nconfs = []
-    expected = [4, 5, 5, 4, 5, 4]
+    expected = [4, 5, 5, 7, 5, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
@@ -681,12 +681,12 @@ class TestCase(unittest.TestCase):
     params.trackFailures = True
     params.maxIterations = 50
     params.randomSeed = 42
-    mol = Chem.MolFromSmiles('C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC')
+    mol = Chem.MolFromSmiles('O=c2cc3CCc1ccc(cc1Br)CCc2c(O)c3=O')
     mol = Chem.AddHs(mol)
     AllChem.EmbedMolecule(mol, params)
     cnts = params.GetFailureCounts()
-    self.assertGreater(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 5)
-    self.assertGreater(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION], 10)
+    self.assertEqual(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 2)
+    self.assertEqual(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION], 5)
 
   def testCoordMap(self):
     mol = Chem.AddHs(Chem.MolFromSmiles("OCCC"))
