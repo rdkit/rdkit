@@ -8187,6 +8187,32 @@ M  END
     self.assertTrue('V2000' in mb)
     self.assertTrue('  1  2  9  0' in mb)
 
+  def testFindMesoCenters(self):
+    mol = Chem.MolFromSmiles('C[C@@H](Cl)C[C@H](C)Cl')
+    self.assertIsNotNone(mol)
+    centers = Chem.FindMesoCenters(mol)
+    self.assertEqual(len(centers), 1)
+    expected = ((1, 4), )
+    self.assertEqual(centers, expected)
+
+    mol = Chem.MolFromSmiles('[CH3:1][C@@H](C)C[C@@H](C)[CH3:1]')
+    self.assertIsNotNone(mol)
+    centers = Chem.FindMesoCenters(mol, includeAtomMaps=True)
+    self.assertEqual(len(centers), 1)
+    expected = ((1, 4), )
+    self.assertEqual(centers, expected)
+    centers = Chem.FindMesoCenters(mol)
+    self.assertEqual(centers, ())
+
+    mol = Chem.MolFromSmiles('[13CH3][C@@H](C)C[C@@H](C)[13CH3]')
+    self.assertIsNotNone(mol)
+    centers = Chem.FindMesoCenters(mol)
+    self.assertEqual(len(centers), 1)
+    expected = ((1, 4), )
+    self.assertEqual(centers, expected)
+    centers = Chem.FindMesoCenters(mol, includeIsotopes=False)
+    self.assertEqual(centers, ())
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

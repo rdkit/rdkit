@@ -2859,3 +2859,24 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     CHECK(newSmi == "[#7H3]-[Fe]-[#7H2]");
   }
 }
+
+TEST_CASE("Canonicalization of meso structures") {
+  SECTION("basics") {
+    std::vector<std::pair<std::vector<std::string>, std::string>> data = {
+        {{"N[C@H]1CC[C@@H](O)CC1", "N[C@@H]1CC[C@H](O)CC1"},
+         "N[C@H]1CC[C@@H](O)CC1"},
+        {{"C[C@@H](Cl)C[C@H](C)Cl", "Cl[C@H](C)C[C@H](C)Cl",
+          "C[C@@H](Cl)C[C@@H](Cl)C", "C[C@H](Cl)C[C@@H](C)Cl"},
+         "C[C@H](Cl)C[C@@H](C)Cl"},
+    };
+    for (const auto &[smileses, expected] : data) {
+      for (const auto &smi : smileses) {
+        auto m = v2::SmilesParse::MolFromSmiles(smi);
+        REQUIRE(m);
+        auto osmi = MolToSmiles(*m);
+        INFO(smi);
+        CHECK(osmi == expected);
+      }
+    }
+  }
+}
