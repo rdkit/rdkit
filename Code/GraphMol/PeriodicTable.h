@@ -319,18 +319,18 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
   //! returns the maximum recognized atomic number
   UINT getMaxAtomicNumber() const { return byanum.size() - 1; }
   //! returns the row of the periodic table
-  unsigned int getRow(UINT atomicNumber) const {
+  UINT getRow(UINT atomicNumber) const {
     PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
     return byanum[atomicNumber].Row();
   }
   //! \overload
-  unsigned int getRow(const std::string &elementSymbol) const {
+  UINT getRow(const std::string &elementSymbol) const {
     PRECONDITION(byname.count(elementSymbol),
                  "Element '" + elementSymbol + "' not found");
     return getRow(byname.find(elementSymbol)->second);
   }
   //! \overload
-  unsigned int getRow(const char *elementSymbol) const {
+  UINT getRow(const char *elementSymbol) const {
     return getRow(std::string(elementSymbol));
   }
 
