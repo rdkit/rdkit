@@ -506,9 +506,8 @@ ForceFields::ForceField *construct3DImproperForceField(
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
-  for (auto position : positions) {
-    field->positions().push_back(position);
-  }
+  field->positions().insert(field->positions().begin(), positions.begin(),
+                            positions.end());
 
   // improper torsions / out-of-plane bend / inversion
   double oobForceScalingFactor = 10.0;
@@ -535,23 +534,20 @@ ForceFields::ForceField *construct3DImproperForceField(
           n[3] = 0;
           break;
       }
-      auto *contrib = new ForceFields::UFF::InversionContrib(
+      field->contribs().emplace_back(new ForceFields::UFF::InversionContrib(
           field, improperAtom[n[0]], improperAtom[n[1]], improperAtom[n[2]],
           improperAtom[n[3]], improperAtom[4],
-          static_cast<bool>(improperAtom[5]), oobForceScalingFactor);
-      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+          static_cast<bool>(improperAtom[5]), oobForceScalingFactor));
     }
   }
 
   // Check that SP Centers have an angle of 180 degrees.
   for (const auto &angle : angles) {
-    unsigned int i = angle[0];
-    unsigned int j = angle[1];
-    unsigned int k = angle[2];
     if (angle[3]) {
-      auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
-          field, i, j, k, 179.0, 180.0, oobForceScalingFactor);
-      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      field->contribs().emplace_back(
+          new ForceFields::UFF::AngleConstraintContrib(
+              field, angle[0], angle[1], angle[2], 179.0, 180.0,
+              oobForceScalingFactor));
     }
   }
   return field;
