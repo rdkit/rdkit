@@ -5910,6 +5910,15 @@ TEST_CASE("findMesoCenters") {
       auto res = Chirality::findMesoCenters(*m);
       REQUIRE(res.size() == expected.size());
       CHECK(res == expected);
+      for (auto [a1, a2] : res) {
+        unsigned int oa = m->getNumAtoms() + 1;
+        CHECK(m->getAtomWithIdx(a1)->getPropIfPresent(
+            common_properties::_mesoOtherAtom, oa));
+        CHECK(oa == a2);
+        CHECK(m->getAtomWithIdx(a2)->getPropIfPresent(
+            common_properties::_mesoOtherAtom, oa));
+        CHECK(oa == a1);
+      }
     }
   }
   SECTION("with enhanced stereo") {

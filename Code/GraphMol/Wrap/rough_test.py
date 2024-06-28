@@ -6716,7 +6716,7 @@ M  END
 
   def test_get_set_positions(self):
     m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
-    pos = np.zeros([3,3], np.double)
+    pos = np.zeros([3, 3], np.double)
     pos[0][1] = 1
     pos[0][2] = 2
     pos[1][0] = 3
@@ -6729,8 +6729,7 @@ M  END
     m.GetConformer(0).SetPositions(pos)
     pos2 = m.GetConformer(0).GetPositions()
 
-    self.assertTrue( (pos==pos2).all())
-    
+    self.assertTrue((pos == pos2).all())
 
   def test_github3553(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
@@ -8195,11 +8194,11 @@ M  END
 
     mol = Chem.MolFromSmiles('[CH3:1][C@@H](C)C[C@@H](C)[CH3:1]')
     self.assertIsNotNone(mol)
-    centers = Chem.FindMesoCenters(mol)
+    centers = Chem.FindMesoCenters(mol, includeAtomMaps=True)
     self.assertEqual(len(centers), 1)
     expected = ((1, 4), )
     self.assertEqual(centers, expected)
-    centers = Chem.FindMesoCenters(mol, includeAtomMaps=False)
+    centers = Chem.FindMesoCenters(mol)
     self.assertEqual(centers, ())
 
     mol = Chem.MolFromSmiles('[13CH3][C@@H](C)C[C@@H](C)[13CH3]')

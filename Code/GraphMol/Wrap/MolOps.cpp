@@ -2259,7 +2259,7 @@ RETURNS:
     )DOC";
     python::def("FindMesoCenters", findMesoHelper,
                 (python::arg("mol"), python::arg("includeIsotopes") = true,
-                 python::arg("includeAtomMaps") = true),
+                 python::arg("includeAtomMaps") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
