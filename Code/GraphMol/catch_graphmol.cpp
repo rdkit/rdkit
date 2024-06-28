@@ -2573,7 +2573,7 @@ void check_dest(RWMol *m1, const ROMol &m2) {
 }  // namespace
 TEST_CASE("moves") {
   auto m1 =
-      "C[C@H](O)[C@H](F)[C@@H](C)O |o2:1,5,&1:3,SgD:4:atom_data:foo::::|"_smiles;
+      "C[C@H](O)[C@H](F)[C@@H](C)F |o2:1,5,&1:3,SgD:4:atom_data:foo::::|"_smiles;
   REQUIRE(m1);
   CHECK(m1->getStereoGroups().size() == 2);
   m1->setProp("foo", 1u);
@@ -2619,7 +2619,7 @@ M  V30 3 O -0 2.6674 0 0
 M  V30 4 C 2.31 1.3337 0 0 CFG=1
 M  V30 5 F 3.85 1.3337 0 0
 M  V30 6 C 1.54 0 0 0 CFG=2
-M  V30 7 C 2.31 -1.3337 0 0
+M  V30 7 F 2.31 -1.3337 0 0
 M  V30 8 O 0 0 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND

@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/test_fixtures.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/MarvinParse/MarvinParser.h>
