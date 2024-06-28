@@ -29,7 +29,7 @@ TEST_CASE(
 }
 
 TEST_CASE("periodic table row") {
-  CHECK(PeriodicTable::getTable()->getRow(0) == 0);
+  CHECK(PeriodicTable::getTable()->getRow(0U) == 0);
   CHECK(PeriodicTable::getTable()->getRow(1) == 1);
   CHECK(PeriodicTable::getTable()->getRow(92) == 7);
 }
