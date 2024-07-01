@@ -6,8 +6,16 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/External/rapidjson-1.1.0")
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
       ${CMAKE_SOURCE_DIR}/External/rapidjson-1.1.0.tar.gz
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/External)
+    # comment out a line which causes a compilation error on some platforms
+    # (based on the change which has already been applied to the RapidJSON master branch, see
+    # https://github.com/Tencent/rapidjson/blob/ab1842a2dae061284c0a62dca1cc6d5e7e37e346/include/rapidjson/document.h#L414)
+    file(READ ${CMAKE_SOURCE_DIR}/External/rapidjson-1.1.0/include/rapidjson/document.h RAPIDJSON_DOCUMENT_H)
+    string(REGEX REPLACE
+           "( *)(GenericStringRef& operator=\\(const GenericStringRef& rhs\\) { s = rhs\\.s. length = rhs\\.length. })" "\\1//\\2"
+           RAPIDJSON_DOCUMENT_H "${RAPIDJSON_DOCUMENT_H}")
+    file(WRITE ${CMAKE_SOURCE_DIR}/External/rapidjson-1.1.0/include/rapidjson/document.h "${RAPIDJSON_DOCUMENT_H}")
 else()
-  message("-- Found RapidJSON source in ${CMAKE_SOURCE_DIR}/External")
+    message("-- Found RapidJSON source in ${CMAKE_SOURCE_DIR}/External")
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/External/rapidjson-1.1.0/include)

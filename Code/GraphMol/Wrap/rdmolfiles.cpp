@@ -410,14 +410,13 @@ std::string MolFragmentToSmilesHelper2(
   return MolFragmentToSmilesHelper1<F>(mol, ps, atomsToUse, bondsToUse,
                                        atomSymbols, bondSymbols);
 }
-std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
-                                             bool breakTies = true,
-                                             bool includeChirality = true,
-                                             bool includeIsotopes = true,
-                                             bool includeAtomMaps = true) {
+std::vector<unsigned int> CanonicalRankAtoms(
+    const ROMol &mol, bool breakTies = true, bool includeChirality = true,
+    bool includeIsotopes = true, bool includeAtomMaps = true,
+    bool includeChiralPresence = false) {
   std::vector<unsigned int> ranks(mol.getNumAtoms());
   Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes,
-                      includeAtomMaps);
+                      includeAtomMaps, includeChiralPresence);
   return ranks;
 }
 
@@ -425,7 +424,7 @@ std::vector<int> CanonicalRankAtomsInFragment(
     const ROMol &mol, python::object atomsToUse, python::object bondsToUse,
     python::object atomSymbols, bool breakTies = true,
     bool includeChirality = true, bool includeIsotopes = true,
-    bool includeAtomMaps = true) {
+    bool includeAtomMaps = true, bool includeChiralPresence = false) {
   std::unique_ptr<std::vector<int>> avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
@@ -451,7 +450,8 @@ std::vector<int> CanonicalRankAtomsInFragment(
 
   std::vector<unsigned int> ranks(mol.getNumAtoms());
   Canon::rankFragmentAtoms(mol, ranks, atoms, bonds, asymbols.get(), breakTies,
-                           includeChirality, includeIsotopes);
+                           includeChirality, includeIsotopes,
+                           includeChiralPresence);
 
   std::vector<int> resRanks(mol.getNumAtoms());
   // set unused ranks to -1 for the Python interface
@@ -2202,6 +2202,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - includeChirality: (optional) use chiral information when computing rank [default=True]\n\
     - includeIsotopes: (optional) use isotope information when computing rank [default=True]\n\
     - includeAtomMaps: (optional) use atom map information when computing rank [default=True]\n\
+    - includeChiralPresence: (optional) use information about whether or not chirality is specified when computing rank [default=False]\n\
 \n\
   RETURNS:\n\
 \n\
@@ -2211,7 +2212,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg("mol"), python::arg("breakTies") = true,
                python::arg("includeChirality") = true,
                python::arg("includeIsotopes") = true,
-               python::arg("includeAtomMaps") = true),
+               python::arg("includeAtomMaps") = true,
+               python::arg("includeChiralPresence") = false),
               docString.c_str());
 
   docString =
@@ -2237,6 +2239,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - includeChirality: (optional) use chiral information when computing rank [default=True]\n\
     - includeIsotopes: (optional) use isotope information when computing rank [default=True]\n\
     - includeAtomMaps: (optional) use atom map information when computing rank [default=True]\n\
+    - includeChiralPresence: (optional) use information about whether or not chirality is specified when computing rank [default=False]\n\
 \n\
   RETURNS:\n\
 \n\
@@ -2248,7 +2251,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
        python::arg("breakTies") = true, python::arg("includeChirality") = true,
        python::arg("includeIsotopes") = true,
-       python::arg("includeAtomMaps") = true),
+       python::arg("includeAtomMaps") = true,
+       python::arg("includeChiralPresence") = false),
       docString.c_str());
 
   python::def("CanonicalizeEnhancedStereo", CanonicalizeEnhancedStereo,
