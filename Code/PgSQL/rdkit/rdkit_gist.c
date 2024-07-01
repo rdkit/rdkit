@@ -188,8 +188,11 @@ Datum gmol_same(PG_FUNCTION_ARGS) {
   bytea *b = (bytea *)PG_GETARG_POINTER(1);
   bool *result = (bool *)PG_GETARG_POINTER(2);
 
-  *result = (VARSIZE(a) == VARSIZE(b)) /* alltrue ot not */
-            && (memcmp(VARDATA(a), VARDATA(b), VARSIZE(a) - VARHDRSZ) == 0);
+  if (SIGLEN(a) != SIGLEN(b)) {
+    elog(ERROR, "All fingerprints should be the same length");
+  }
+
+  *result = (memcmp(VARDATA(a), VARDATA(b), SIGLEN(a)) == 0);
 
   PG_RETURN_POINTER(result);
 }
@@ -800,13 +803,11 @@ Datum greaction_consistent(PG_FUNCTION_ARGS) {
         uint8 *k = (uint8 *)VARDATA(key);
         uint8 *q = (uint8 *)VARDATA(query);
 
-        res = bitstringContains(siglen, k, q)
-              /*
-              ** the original implementation also required the query to
-              ** contain the key, but (I think) this is only true on the
-              ** leaves (FIXME?)
-              */
-              && bitstringContains(siglen, q, k);
+       if (GIST_LEAF(entry)) {
+          res = (memcmp(k, q, siglen) == 0);
+        } else {
+          res = bitstringContains(siglen, k, q);
+        }
       }
       break;
     default:
