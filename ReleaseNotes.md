@@ -6,9 +6,83 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
+Jonathan Bisson, Anna Brünisholz, David Cosgrove, Tad Hurst, Gareth Jones, Brian
+Kelley, Dan Nealschneider, Yakov Pechersky, Rachael Pirie, Ricardo Rodriguez,
+Roger Sayle, Philippe Schwaller, Paolo Tosco, Riccardo Vianello Qiancheng Xia,
+Nic Zonta, AaronsonJames, hxu105, nmaeder, jakirkham,
+
 ## Backwards incompatible changes
 - A bug fix in v2 of the tautomer and protomer hashes can lead to different results for these hashes. One less bond is now included in the tautomeric zone for systems like enamines/imines, so the v2 tautomer hash of the molecules CN=CC and CNC=C is now [C]:[C]:[N]-[CH3]_4_0 instead of [C]:[C]:[N]:[C]_7_0
 
+## New Features and Enhancements:
+  - Please consider exposing code for simplified enhanced stereo labels
+ (github issue #7438 from ZontaNicola)
+  - Add python Conformer.SetPositions wrapper
+ (github pull #7449 from bp-kelley)
+  - Favor nonwedged bonds in kekulization
+ (github pull #7456 from greglandrum)
+  - Optionally limit the MolStandardize::Uncharger to only alter the protonation state
+ (github pull #7458 from rvianello)
+  - Support NumPy 2.0
+ (github issue #7477 from jakirkham)
+  - Allow creation of an empty forcefield
+ (github pull #7494 from nmaeder)
+  - Allow wedged double and aromatic bonds
+ (github pull #7495 from greglandrum)
+  - Add getUIntVectProp to SubstanceGroups in SWIG wrappers
+ (github pull #7507 from jones-gareth)
+  - add MolToV2KMolBlock()
+ (github pull #7511 from greglandrum)
+  - A collection of small improvements from Roger S
+ (github pull #7566 from greglandrum)
+  - add findMesoCenters
+ (github pull #7574 from greglandrum)
+
+## Bug Fixes:
+  - Lower case symbols in SMILES for bracket atoms in aromatic rings
+ (github issue #3697 from pschwllr)
+  - Parasubstituted chiral cyclobutyl causes "zero final chiral volume" warnings depending on 2D coords
+ (github issue #7070 from pechersky)
+  - The serialization of porphyrin to mol format introduces some double bonds with bond stereo 3/either
+ (github issue #7306 from rvianello)
+  - Rascal exactConnectionsMatch bug
+ (github pull #7359 from DavidACosgrove)
+  - fix DCLV calculation for ligands
+ (github pull #7480 from RPirie96)
+  - Problem with ring stereo and atropisomers and new stereo perception
+ (github pull #7486 from tadhurst-cdd)
+  - Install the atropisomer header
+ (github pull #7487 from ricrogz)
+  - Shrink the tautomeric zone for the v2 hash of things like imines
+ (github pull #7502 from greglandrum)
+  - Avoid inconsistency between V2K and V3K MDL output wrt isotopic labelling of R groups
+ (github pull #7504 from ptosco)
+  - atomChiralTypeFromBondDirPseudo3D fails for poorly scaled molecular coordinates
+ (github issue #7509 from d-b-w)
+  - EnumerateStereoisomers cannot give enumeration on certain rings and nitrogens
+ (github issue #7516 from qcxia20)
+  - CDXML Parsing Issue
+ (github issue #7528 from bp-kelley)
+  - IndexError with computing fingerprint
+ (github issue #7533 from AaronsonJames)
+  - Fix issues arising from useMolBlockWedging and the new atropisomer kekulization code
+ (github pull #7540 from ptosco) 
+  - Restore mol writing functions in the RDKFuncs module
+ (github pull #7544 from ptosco)
+  - Avoid duplicate enhanced stereo labels in drawing
+ (github pull #7546 from ptosco)
+  - AllChem.EmbedMolecule returns -1
+ (github issue #7552 from hxu105)
+  - ConfGen: fix a logic error in one of the chiral volume tests
+ (github pull #7560 from greglandrum)
+  - fix one case of undesired 1-3 charge recombination
+ (github pull #7561 from rvianello)
+  - Switch imp to importlib in nbtests
+ (github pull #7573 from bjonnh-work)
+
+## Cleanup work:
+  - Fix #7485 and #7530
+ (github pull #7550 from ptosco)
 
 # Release_2024.03.3
 (Changes relative to Release_2024.03.2)
