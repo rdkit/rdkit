@@ -152,6 +152,7 @@ public class Chemv2Tests extends GraphMolTest {
 
         // System.out.print(template.MolToMolBlock());
         // System.out.print(m.MolToMolBlock());
+        assertEquals(template.MolToMolBlock(), RDKFuncs.MolToMolBlock(template));
         Conformer c1 = template.getConformer();
         Conformer c2 = m.getConformer();
         assertEquals(c1.getAtomPos(0).getX(), c2.getAtomPos(6).getX(), defaultDoubleTol);

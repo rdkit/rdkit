@@ -399,6 +399,15 @@ enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
 RDKIT_GRAPHMOL_EXPORT void simplifyEnhancedStereo(
     ROMol &mol, bool removeAffectedStereoGroups = true);
 
+//! returns the meso centers in a molecule (if any)
+/*!
+ \param mol: molecule to work with
+
+*/
+RDKIT_GRAPHMOL_EXPORT std::vector<std::pair<unsigned int, unsigned int>>
+findMesoCenters(const ROMol &mol, bool includeIsotopes = true,
+                bool includeAtomMaps = false);
+
 }  // namespace Chirality
 }  // namespace RDKit
 #endif

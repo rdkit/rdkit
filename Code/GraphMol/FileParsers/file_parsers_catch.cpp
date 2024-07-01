@@ -5710,6 +5710,15 @@ NO_CHARGES
 #       End of record)MOL2";
     std::unique_ptr<RWMol> m(Mol2BlockToMol(mol2));
     REQUIRE(m);
+    CHECK(m->getAtomWithIdx(10)->getAtomicNum() == 15);
+    CHECK(m->getAtomWithIdx(10)->getFormalCharge() == 0);
+    CHECK(m->getAtomWithIdx(11)->getFormalCharge() == 0);
+    CHECK(m->getBondBetweenAtoms(10, 11)->getBondType() == Bond::DOUBLE);
+    CHECK(m->getAtomWithIdx(12)->getFormalCharge() == -1);
+    CHECK(m->getBondBetweenAtoms(10, 12)->getBondType() == Bond::SINGLE);
+    // CHECK: is this correct? Should both of the Os be negative or just one?
+    CHECK(m->getAtomWithIdx(13)->getFormalCharge() == -1);
+    CHECK(m->getBondBetweenAtoms(10, 13)->getBondType() == Bond::SINGLE);
   }
 }
 
@@ -7303,5 +7312,18 @@ TEST_CASE("MolToV2KMolBlock") {
       REQUIRE(m);
       CHECK_THROWS_AS(MolToV2KMolBlock(*m), ValueErrorException);
     }
+  }
+}
+
+TEST_CASE("Github #7306: bad crossed bonds in large aromatic rings") {
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  SECTION("as reported") {
+    auto m = v2::FileParsers::MolFromMolFile(rdbase + "github7306.mol");
+    REQUIRE(m);
+    auto ctab = MolToV3KMolBlock(*m);
+    CHECK(ctab.find("CFG=2") == std::string::npos);
+    ctab = MolToMolBlock(*m);
+    CHECK(ctab.find("2  3\n") == std::string::npos);
   }
 }

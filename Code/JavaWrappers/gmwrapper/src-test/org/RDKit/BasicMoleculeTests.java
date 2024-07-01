@@ -49,6 +49,8 @@ public class BasicMoleculeTests extends GraphMolTest {
 	@Test public void testSmilesWrite() {
 		String smi = mol1.MolToSmiles();
 		assertEquals(smi,smi,"c1ccccc1");
+		String smiRDKFuncs = RDKFuncs.MolToSmiles(mol1);
+		assertEquals(smiRDKFuncs,smiRDKFuncs,smi);
 	}
 	@Test public void testAtoms() {
 		assertEquals( mol1.getAtomWithIdx(0).getAtomicNum(),6);

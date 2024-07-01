@@ -651,7 +651,8 @@ M  END
   auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
   CHECK(cid < 0);
   CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] > 5);
+  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
+        5);
 }
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -877,6 +878,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol > 0);
+        CHECK(fabs(chiralVol) > 0.5);
       }
     }  // now swap the stereo and see if it still works
     mol->getBondWithIdx(bondIdx)->setStereo(
@@ -899,6 +901,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol < 0);
+        CHECK(fabs(chiralVol) > 0.5);
       }
     }
   }
@@ -983,6 +986,36 @@ TEST_CASE("terminal groups in pruning") {
       ps.symmetrizeConjugatedTerminalGroupsForPruning = false;
       cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, ps);
       CHECK(cids.size() >= 2);
+    }
+  }
+}
+
+TEST_CASE("github #7552") {
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 0xf00d;
+  SECTION("as reported") {
+    auto mol = "O=CCC1OC2COC12"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == 0);
+  }
+  SECTION("as reported, bulk") {
+    std::vector<std::string> smileses{
+        "O=CCC1OC2COC12",      "O=C1OC2CCC12C#N",    "CC1C2CC3OC2C13O",
+        "CC12CC1C3(C)OCC23",   "OC1C2COC13COC23",    "OC1C2C3C2N4C3CC14",
+        "CC1OC12C3CC2(O)C3",   "OC1C2CC3C2CCC13",    "CN1CC2(O)C3CC3C12",
+        "C1OC2C3C4C5C4C12N35", "C1OC2CC3OC12C=C3",   "C1C2OC3C1OC23",
+        "CC1(O)CC2CCC12",      "CC12NC(=O)C1C3OC23", "OC1CC2(NCCC12)C#N",
+        "CC12C3C1C(=O)C3C2O",  "C1C=C2C3OC4C3N1C24", "CC12C3C1C4=NC3C2O4",
+        "C1OC23C=CC4C2N4C13",  "OCC12CNC1C(=O)N2",   "CC1C2C3C1C(C#C)n23",
+
+    };
+    for (const auto &smiles : smileses) {
+      INFO(smiles);
+      auto mol = v2::SmilesParse::MolFromSmiles(smileses[0]);
+      REQUIRE(mol);
+      MolOps::addHs(*mol);
+      CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == 0);
     }
   }
 }

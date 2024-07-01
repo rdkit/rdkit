@@ -525,7 +525,7 @@ TEST_CASE("github #2604: support range-based charge queries from SMARTS",
       CHECK(SubstructMatch(*m1, *query).size() == 1);
     }
     {
-      auto m1 = "C[NH4+2]"_smiles;
+      auto m1 = "C[NH2+2]"_smiles;
       REQUIRE(m1);
       CHECK(SubstructMatch(*m1, *query).empty());
     }
@@ -2869,28 +2869,47 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
   }
 }
 
-void strip_atom_properties(RWMol * molecule)
-{
-  for (auto atom : molecule->atoms())
-  {
-    for (auto property : atom->getPropList(false, false))
-    {
+void strip_atom_properties(RWMol *molecule) {
+  for (auto atom : molecule->atoms()) {
+    for (auto property : atom->getPropList(false, false)) {
       atom->clearProp(property);
     }
   }
 
- // return molecule;
+  // return molecule;
 }
 
 TEST_CASE("Remove CX extension from SMILES", "[cxsmiles]") {
   SECTION("basics") {
-    std::unique_ptr<RWMol> molecule(RDKit::SmilesToMol("N[C@@H]([O-])C1=[CH:1]C(=[13CH]C(=C1)N(=O)=O)C(N)[O-] |$_AV:;bar;;foo;;;;;;;;;;;$,c:5,7,t:3|", 0, false));
+    std::unique_ptr<RWMol> molecule(RDKit::SmilesToMol(
+        "N[C@@H]([O-])C1=[CH:1]C(=[13CH]C(=C1)N(=O)=O)C(N)[O-] |$_AV:;bar;;foo;;;;;;;;;;;$,c:5,7,t:3|",
+        0, false));
     REQUIRE(molecule);
     strip_atom_properties(molecule.get());
     std::string stripped_smiles = RDKit::MolToCXSmiles(*molecule);
 
-    CHECK(stripped_smiles == "NC([O-])C1=[13CH]C(N(=O)=O)=CC([C@@H](N)[O-])=C1");
+    CHECK(stripped_smiles ==
+          "NC([O-])C1=[13CH]C(N(=O)=O)=CC([C@@H](N)[O-])=C1");
   }
 }
-    
 
+TEST_CASE("Canonicalization of meso structures") {
+  SECTION("basics") {
+    std::vector<std::pair<std::vector<std::string>, std::string>> data = {
+        {{"N[C@H]1CC[C@@H](O)CC1", "N[C@@H]1CC[C@H](O)CC1"},
+         "N[C@H]1CC[C@@H](O)CC1"},
+        {{"C[C@@H](Cl)C[C@H](C)Cl", "Cl[C@H](C)C[C@H](C)Cl",
+          "C[C@@H](Cl)C[C@@H](Cl)C", "C[C@H](Cl)C[C@@H](C)Cl"},
+         "C[C@H](Cl)C[C@@H](C)Cl"},
+    };
+    for (const auto &[smileses, expected] : data) {
+      for (const auto &smi : smileses) {
+        auto m = v2::SmilesParse::MolFromSmiles(smi);
+        REQUIRE(m);
+        auto osmi = MolToSmiles(*m);
+        INFO(smi);
+        CHECK(osmi == expected);
+      }
+    }
+  }
+}

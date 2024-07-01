@@ -1243,4 +1243,38 @@ TEST_CASE("Exact Connection Matches", "[basics]") {
     SubstructMatch(*m2, *q2, smarts_res);
     CHECK(smarts_res.size() == 1);
   }
+  {
+    // The original implementation had a crappy order-dependence bug such
+    // that m1, m2 gave 12 bonds in the MCES but m3, m2 gave 10.
+    // They are both the same molecules.
+    auto m1 = "c1cccc(Cc2cccnc2)c1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "c1ncccc1Oc1ccccc1"_smiles;
+    REQUIRE(m2);
+    RascalOptions opts;
+    opts.similarityThreshold = 0.5;
+    opts.allBestMCESs = false;
+    opts.exactConnectionsMatch = true;
+
+    auto res1 = rascalMCES(*m1, *m2, opts);
+    CHECK(res1.front().getBondMatches().size() == 12);
+
+    auto m3 = "c1ncccc1Cc1ccccc1"_smiles;
+    REQUIRE(m3);
+
+    auto res2 = rascalMCES(*m3, *m2, opts);
+    CHECK(res2.front().getBondMatches().size() == 12);
+
+    // and try really hard to break it.
+    SmilesWriteParams params;
+    params.doRandom = true;
+    for (int i = 0; i < 100; ++i) {
+      auto m3 = v2::SmilesParse::MolFromSmiles(MolToSmiles(*m1, params));
+      REQUIRE(m3);
+      auto m4 = v2::SmilesParse::MolFromSmiles(MolToSmiles(*m2, params));
+      REQUIRE(m4);
+      auto res2 = rascalMCES(*m3, *m4, opts);
+      CHECK(res2.front().getBondMatches().size() == 12);
+    }
+  }
 }

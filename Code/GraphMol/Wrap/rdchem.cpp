@@ -15,6 +15,10 @@
 #include <RDBoost/Wrap.h>
 #include <RDBoost/import_array.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/python/numpy.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <sstream>
 #include <utility>
 
@@ -98,6 +102,8 @@ T *next_ptr(O &self) {
 BOOST_PYTHON_MODULE(rdchem) {
   python::scope().attr("__doc__") =
       "Module containing the core chemistry functionality of the RDKit";
+  const bool register_scalar_converters=false;
+  boost::python::numpy::initialize(register_scalar_converters);
   RegisterListConverter<RDKit::Atom *>();
   RegisterListConverter<RDKit::Bond *>();
   RegisterListConverter<RDKit::CONFORMER_SPTR>();

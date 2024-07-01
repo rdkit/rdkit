@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2008 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2007-2024 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,6 +17,7 @@
 using std::set;
 #include <iterator>
 #include <algorithm>
+#include <limits>
 
 typedef set<int> IntSet;
 typedef IntSet::iterator IntSetIter;
@@ -96,6 +97,14 @@ class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
  private:
   unsigned int d_size{0};
   void _initForSize(const unsigned int size) override;
+  bool checkIndex(const unsigned int idx) const {
+    return idx < d_size || (idx == d_size &&
+                            d_size == std::numeric_limits<unsigned int>::max());
+  }
+  template <typename T>
+  bool checkIndex(const T which) const {
+    return *which >= 0 && static_cast<unsigned int>(*which) < d_size;
+  }
 };
 
 #endif

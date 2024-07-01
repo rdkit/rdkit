@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/QueryOps.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -34,6 +35,17 @@ void make_query_atoms(RWMol &mol) {
     QueryOps::replaceAtomWithQueryAtom(&mol, atom);
   }
 }
+
+void add_template(const std::string &prop, std::map<int, ROMOL_SPTR> &templates,
+                  std::unique_ptr<RWMol> &mol) {
+  auto reactant_idx = mol->getProp<int>(prop);
+  if (templates.find(reactant_idx) != templates.end()) {
+    templates[reactant_idx] =
+        ROMOL_SPTR(combineMols(*templates[reactant_idx], *mol));
+  } else {
+    templates[reactant_idx] = ROMOL_SPTR(std::move(mol));
+  }
+}
 }  // namespace
 
 //! Parse a text stream with CDXML data into a ChemicalReaction
@@ -46,6 +58,10 @@ CDXMLDataStreamToChemicalReactions(std::istream &inStream, bool sanitize,
   std::map<std::pair<unsigned int, unsigned int>, std::vector<unsigned int>>
       schemes;
   std::set<unsigned int> used;
+  std::map<int, ROMOL_SPTR> reactant_templates;
+  std::map<int, ROMOL_SPTR> product_templates;
+  std::map<int, ROMOL_SPTR> agent_templates;
+
   for (size_t i = 0; i < mols.size(); ++i) {
     unsigned int step = 0;
     unsigned int scheme = 0;
@@ -69,16 +85,25 @@ CDXMLDataStreamToChemicalReactions(std::istream &inStream, bool sanitize,
       if (mols[idx]->hasProp("CDX_REAGENT_ID")) {
         used.insert(idx);
         make_query_atoms(*mols[idx]);
-        res->addReactantTemplate(ROMOL_SPTR(std::move(mols[idx])));
+        add_template("CDX_REAGENT_ID", reactant_templates, mols[idx]);
       } else if (mols[idx]->hasProp("CDX_AGENT_ID")) {
         used.insert(idx);
         make_query_atoms(*mols[idx]);
-        res->addAgentTemplate(ROMOL_SPTR(std::move(mols[idx])));
+        add_template("CDX_AGENT_ID", agent_templates, mols[idx]);
       } else if (mols[idx]->hasProp("CDX_PRODUCT_ID")) {
         used.insert(idx);
         make_query_atoms(*mols[idx]);
-        res->addProductTemplate(ROMOL_SPTR(std::move(mols[idx])));
+        add_template("CDX_PRODUCT_ID", product_templates, mols[idx]);
       }
+    }
+    for (auto reactant : reactant_templates) {
+      res->addReactantTemplate(reactant.second);
+    }
+    for (auto reactant : agent_templates) {
+      res->addAgentTemplate(reactant.second);
+    }
+    for (auto reactant : product_templates) {
+      res->addProductTemplate(reactant.second);
     }
     updateProductsStereochem(res);
     // CDXML-based reactions do not have implicit properties
