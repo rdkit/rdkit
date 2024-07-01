@@ -18,21 +18,19 @@
 
 namespace RDGeom {
 void Transform3D::setToIdentity() {
-  unsigned int i, id;
   double *data = d_data.get();
   memset(static_cast<void *>(data), 0, d_dataSize * sizeof(double));
-  for (i = 0; i < DIM_3D; i++) {
-    id = i * (DIM_3D + 1);
+  for (unsigned int i = 0; i < DIM_3D; i++) {
+    unsigned int id = i * (DIM_3D + 1);
     data[id] = 1.0;
   }
 }
 
 void Transform3D::TransformPoint(Point3D &pt) const {
-  double x, y, z;
   double *data = d_data.get();
-  x = data[0] * pt.x + data[1] * pt.y + data[2] * pt.z + data[3];
-  y = data[4] * pt.x + data[5] * pt.y + data[6] * pt.z + data[7];
-  z = data[8] * pt.x + data[9] * pt.y + data[10] * pt.z + data[11];
+  double x = data[0] * pt.x + data[1] * pt.y + data[2] * pt.z + data[3];
+  double y = data[4] * pt.x + data[5] * pt.y + data[6] * pt.z + data[7];
+  double z = data[8] * pt.x + data[9] * pt.y + data[10] * pt.z + data[11];
   pt.x = x;
   pt.y = y;
   pt.z = z;
@@ -55,27 +53,33 @@ void Transform3D::SetRotation(double angle, AxisType axis) {
   double sinT = sin(angle);
   this->setToIdentity();
   double *data = d_data.get();
-  if (axis == Z_Axis) {
-    data[0] = cosT;
-    data[1] = -sinT;
-    data[4] = sinT;
-    data[5] = cosT;
-  } else if (axis == X_Axis) {
-    data[5] = cosT;
-    data[6] = -sinT;
-    data[9] = sinT;
-    data[10] = cosT;
-  } else if (axis == Y_Axis) {
-    data[0] = cosT;
-    data[2] = sinT;
-    data[8] = -sinT;
-    data[10] = cosT;
+  switch (axis) {
+    case X_Axis:
+      data[5] = cosT;
+      data[6] = -sinT;
+      data[9] = sinT;
+      data[10] = cosT;
+      break;
+    case Y_Axis:
+      data[0] = cosT;
+      data[2] = sinT;
+      data[8] = -sinT;
+      data[10] = cosT;
+      break;
+    case Z_Axis:
+      data[0] = cosT;
+      data[1] = -sinT;
+      data[4] = sinT;
+      data[5] = cosT;
+      break;
   }
 }
 
 void Transform3D::SetRotation(double cosT, double sinT, const Point3D &axis) {
   double t = 1 - cosT;
-  double X = axis.x, Y = axis.y, Z = axis.z;
+  double X = axis.x;
+  double Y = axis.y;
+  double Z = axis.z;
   double *data = d_data.get();
   data[0] = t * X * X + cosT;
   data[1] = t * X * Y - sinT * Z;
@@ -125,11 +129,10 @@ void Transform3D::SetRotationFromQuaternion(double quaternion[4]) {
 }
 
 void Transform3D::Reflect() {
-  unsigned int i, j, id;
   double *data = d_data.get();
-  for (i = 0; i < DIM_3D - 1; i++) {
-    id = i * DIM_3D;
-    for (j = 0; j < DIM_3D - 1; j++) {
+  for (unsigned int i = 0; i < DIM_3D - 1; i++) {
+    unsigned int id = i * DIM_3D;
+    for (unsigned int j = 0; j < DIM_3D - 1; j++) {
       data[id + j] *= -1.0;
     }
   }

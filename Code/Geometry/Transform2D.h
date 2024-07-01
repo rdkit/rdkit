@@ -37,9 +37,8 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform2D
             this_new(point) = this_old(other(point))
   */
   Transform2D() : RDNumeric::SquareMatrix<double>(DIM_2D, 0.0) {
-    unsigned int i, id;
-    for (i = 0; i < DIM_2D; i++) {
-      id = i * (DIM_2D + 1);
+    for (unsigned int i = 0; i < DIM_2D; i++) {
+      unsigned int id = i * (DIM_2D + 1);
       d_data[id] = 1.0;
     }
   }
@@ -83,3 +82,4 @@ RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Transform2D operator*(
     const RDGeom::Transform2D &t1, const RDGeom::Transform2D &t2);
 
 #endif
+

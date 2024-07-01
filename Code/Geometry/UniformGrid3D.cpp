@@ -87,15 +87,10 @@ UniformGrid3D::~UniformGrid3D() {
 
 int UniformGrid3D::getGridIndex(unsigned int xi, unsigned int yi,
                                 unsigned int zi) const {
-  if (xi >= d_numX) {
+  if (xi >= d_numX || yi >= d_numY || zi >= d_numZ) {
     return -1;
   }
-  if (yi >= d_numY) {
-    return -1;
-  }
-  if (zi >= d_numZ) {
-    return -1;
-  }
+
   return (zi * d_numX * d_numY + yi * d_numX + xi);
 }
 
@@ -113,11 +108,10 @@ int UniformGrid3D::getGridPointIndex(const Point3D &point) const {
   Point3D tPt(point);
   tPt -= d_offSet;  // d_origin;
   tPt /= d_spacing;
-  int xi, yi, zi;
   double move = 0.5;
-  xi = static_cast<int>(floor(tPt.x + move));
-  yi = static_cast<int>(floor(tPt.y + move));
-  zi = static_cast<int>(floor(tPt.z + move));
+  int xi = static_cast<int>(floor(tPt.x + move));
+  int yi = static_cast<int>(floor(tPt.y + move));
+  int zi = static_cast<int>(floor(tPt.z + move));
 
   if ((xi < 0) || (xi >= static_cast<int>(d_numX))) {
     return -1;
@@ -171,15 +165,11 @@ void UniformGrid3D::setVal(unsigned int pointId, unsigned int val) {
 }
 
 bool UniformGrid3D::compareParams(const UniformGrid3D &other) const {
-  if (d_numX != other.getNumX()) {
+  if (d_numX != other.getNumX() || d_numY != other.getNumY() ||
+      d_numZ != other.getNumZ()) {
     return false;
   }
-  if (d_numY != other.getNumY()) {
-    return false;
-  }
-  if (d_numZ != other.getNumZ()) {
-    return false;
-  }
+
   if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) {
     return false;
   }
@@ -196,7 +186,7 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
     if (ignoreOutOfBound) {
       return;
     } else {
-      throw GridException("Center outside the grdi boundary");
+      throw GridException("Center outside the grid boundary");
     }
   }
   Point3D gPt(center);  // point on the grid
@@ -222,35 +212,33 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
       bgRad + nLayers * gStepSize;  // largest radius in grid coords
   double gRad2 = gRadius * gRadius;
   double bgRad2 = bgRad * bgRad;
-  int i, j, k;
   double dx, dy, dz, d, d2, dy2z2, dz2;
-  int xmin, xmax, ymin, ymax, zmin, zmax;
-  xmax = (int)floor(gPt.x + gRadius);
-  xmin = (int)ceil(gPt.x - gRadius);
-  ymax = (int)floor(gPt.y + gRadius);
-  ymin = (int)ceil(gPt.y - gRadius);
-  zmax = (int)floor(gPt.z + gRadius);
-  zmin = (int)ceil(gPt.z - gRadius);
+  int xmax = static_cast<int>(floor(gPt.x + gRadius));
+  int xmin = static_cast<int>(ceil(gPt.x - gRadius));
+  int ymax = static_cast<int>(floor(gPt.y + gRadius));
+  int ymin = static_cast<int>(ceil(gPt.y - gRadius));
+  int zmax = static_cast<int>(floor(gPt.z + gRadius));
+  int zmin = static_cast<int>(ceil(gPt.z - gRadius));
 
   unsigned int oval, val, valChange;
   int ptId1, ptId2;
-  for (k = zmin; k <= zmax; ++k) {
+  for (int k = zmin; k <= zmax; ++k) {
     if ((k >= 0) &&
-        (k < (int)d_numZ)) {  // we are inside the grid in the z-direction
+        (k < static_cast<int>(d_numZ))) {  // we are inside the grid in the z-direction
       dz = static_cast<double>(k) - gPt.z;
       dz2 = dz * dz;
       ptId1 = k * d_numX * d_numY;
-      for (j = ymin; j <= ymax; ++j) {
+      for (int j = ymin; j <= ymax; ++j) {
         if ((j >= 0) &&
-            (j < (int)d_numY)) {  // inside the grid in the y-direction
+            (j < static_cast<int>(d_numY))) {  // inside the grid in the y-direction
           dy = static_cast<double>(j) - gPt.y;
           dy2z2 = dy * dy + dz2;
           if (dy2z2 < gRad2) {  // we are within the radius at least from the
                                 // y,z coordinates
             ptId2 = ptId1 + j * d_numX;
-            for (i = xmin; i <= xmax; ++i) {
-              if ((i >= 0) && (i < (int)d_numX)) {
-                oval = dp_storage->getVal((unsigned int)(ptId2 + i));
+            for (int i = xmin; i <= xmax; ++i) {
+              if ((i >= 0) && (i < static_cast<int>(d_numX))) {
+                oval = dp_storage->getVal(static_cast<unsigned int>(ptId2 + i));
                 if (oval < maxVal) {  // if we are already at maxVal we will not
                                       // change that
                   dx = static_cast<double>(i) - gPt.x;
@@ -389,9 +377,9 @@ void UniformGrid3D::initFromText(const char *pkl, const unsigned int length) {
 }
 
 void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
-  int dimX = (int)grid.getNumX();  //+2;
-  int dimY = (int)grid.getNumY();  //+2;
-  int dimZ = (int)grid.getNumZ();  //+2;
+  int dimX = static_cast<int>(grid.getNumX());  //+2;
+  int dimY = static_cast<int>(grid.getNumY());  //+2;
+  int dimZ = static_cast<int>(grid.getNumZ());  //+2;
   double spacing = grid.getSpacing();
   double lenX = dimX * spacing;
   double lenY = dimY * spacing;
@@ -403,8 +391,8 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
           << std::endl;
   outStrm << dimX - 1 << " " << dimY - 1 << " " << dimZ - 1 << std::endl;
 
-  int outX1 = (int)(floor(offSet.x + 0.5));
-  int outX2 = (int)(floor(offSet.x + 0.5)) + (int)(dimX - 1);
+  int outX1 = static_cast<int>(floor(offSet.x + 0.5));
+  int outX2 = static_cast<int>(floor(offSet.x + 0.5)) + static_cast<int>(dimX - 1);
   // REVIEW: ok - here is a fix to try and make the grid closer to the molecule
   // when displayed
   // (at least in PyMol). The difference between the pair of values (outX1,
@@ -414,10 +402,10 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
   // dimY and dimZ respectively. Not sure why this should be the case, but
   // almost always we get a
   // better display in PyMol.
-  int outY1 = (int)(floor(offSet.y + 0.5));
-  int outY2 = (int)(floor(offSet.y + 0.5)) + (int)(dimY);
-  int outZ1 = (int)(floor(offSet.z + 0.5));
-  int outZ2 = (int)(floor(offSet.z + 0.5)) + (int)(dimZ);
+  int outY1 = static_cast<int>(floor(offSet.y + 0.5));
+  int outY2 = static_cast<int>(floor(offSet.y + 0.5)) + static_cast<int>(dimY);
+  int outZ1 = static_cast<int>(floor(offSet.z + 0.5));
+  int outZ2 = static_cast<int>(floor(offSet.z + 0.5)) + static_cast<int>(dimZ);
 
   outStrm << "1"
           << " " << outX1 << " " << outX2 << " " << outY1 << " " << outY2 << " "

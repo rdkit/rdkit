@@ -18,20 +18,18 @@
 namespace RDGeom {
 
 void Transform2D::setToIdentity() {
-  unsigned int i, id;
   double *data = d_data.get();
   memset(static_cast<void *>(data), 0, d_dataSize * sizeof(double));
-  for (i = 0; i < DIM_2D; i++) {
-    id = i * (DIM_2D + 1);
+  for (unsigned int i = 0; i < DIM_2D; i++) {
+    unsigned int id = i * (DIM_2D + 1);
     data[id] = 1.0;
   }
 }
 
 void Transform2D::TransformPoint(Point2D &pt) const {
-  double x, y;
   double *data = d_data.get();
-  x = data[0] * pt.x + data[1] * pt.y + data[2];
-  y = data[3] * pt.x + data[4] * pt.y + data[5];
+  double x = data[0] * pt.x + data[1] * pt.y + data[2];
+  double y = data[3] * pt.x + data[4] * pt.y + data[5];
 
   pt.x = x;
   pt.y = y;

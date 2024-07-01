@@ -336,9 +336,8 @@ void testFromQuaternion() {
   Transform3D ntrans;
   ntrans.SetRotation(M_PI / 3, Point3D(1.0, 0.0, 0.0));
 
-  unsigned int i, j;
-  for (i = 0; i < 4; i++) {
-    for (j = 0; j < 4; j++) {
+  for (unsigned int i = 0; i < 4; i++) {
+    for (unsigned int j = 0; j < 4; j++) {
       CHECK_INVARIANT(RDKit::feq(trans.getVal(i, j), ntrans.getVal(i, j)), "");
     }
   }
