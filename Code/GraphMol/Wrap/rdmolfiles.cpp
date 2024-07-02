@@ -415,8 +415,12 @@ std::vector<unsigned int> CanonicalRankAtoms(
     bool includeIsotopes = true, bool includeAtomMaps = true,
     bool includeChiralPresence = false) {
   std::vector<unsigned int> ranks(mol.getNumAtoms());
+  const bool includeStereoGroups = true;
+  const bool useNonStereoRanks = includeChirality;
+
   Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes,
-                      includeAtomMaps, includeChiralPresence);
+                      includeAtomMaps, useNonStereoRanks, includeChiralPresence,
+                      includeStereoGroups);
   return ranks;
 }
 
@@ -1571,6 +1575,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
           "this will thrown an exception if the molecule cannot be kekulized")
       .def_readwrite("canonical", &RDKit::SmilesWriteParams::canonical,
                      "generate canonical SMILES")
+      .def_readwrite("rigorousEnhancedStereo",
+                     &RDKit::SmilesWriteParams::rigorousEnhancedStereo,
+                     "Rigorous treatment of unique enhanced stereo groups")
+      .def_readwrite(
+          "cleanStereo", &RDKit::SmilesWriteParams::cleanStereo,
+          "chiral centers are removed if they have duplicate sidechains")
       .def_readwrite("allBondsExplicit",
                      &RDKit::SmilesWriteParams::allBondsExplicit,
                      "include symbols for all bonds")

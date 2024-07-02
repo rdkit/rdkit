@@ -19,8 +19,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
-#include <RDGeneral/FileParseException.h>
-#include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
 #include <RDGeneral/BoostStartInclude.h>

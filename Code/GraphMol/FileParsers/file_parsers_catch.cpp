@@ -6361,7 +6361,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
 
     std::string ctBlock(&mae[ctBlockStart]);
 
-    CHECK(ctBlock == MaeWriter::getText(*mol));
+    CHECK((ctBlock == MaeWriter::getText(*mol)) == true);
   }
 }
 

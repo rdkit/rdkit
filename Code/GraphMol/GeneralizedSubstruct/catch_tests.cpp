@@ -27,7 +27,7 @@
 using namespace RDKit;
 using namespace RDKit::GeneralizedSubstruct;
 
-bool fingerprintsMatch(const ROMol& target, const ExtendedQueryMol& xqm) {
+bool fingerprintsMatch(const ROMol &target, const ExtendedQueryMol &xqm) {
   const auto queryFingerprint = xqm.patternFingerprintQuery();
   const auto targetFingerprint = patternFingerprintTargetMol(target);
   CHECK(queryFingerprint->getNumOnBits() > 0);
@@ -113,6 +113,34 @@ TEST_CASE("tautomer basics") {
       CHECK(fingerprintsMatch(*"CCc1[nH]nc(F)c1"_smiles, *xq));
       CHECK(!fingerprintsMatch(*"CCc1[nH]ncc1"_smiles, *xq));
     }
+  }
+}
+
+TEST_CASE("tautomer error") {
+  auto mol1 = "Cc1n[nH]c(F)c1"_smiles;
+  REQUIRE(mol1);
+
+  auto *im = (const ROMol *)mol1.get();
+  REQUIRE(im);
+
+  MolOps::AdjustQueryParameters p;
+  std::string params = "";
+  bool doEnumeration = true;
+  bool doTautomers = true;
+
+  if (params.length() > 0) {
+    MolOps::parseAdjustQueryParametersFromJSON(p, params);
+  }
+
+  ExtendedQueryMol *xqm = nullptr;
+  xqm = new ExtendedQueryMol(GeneralizedSubstruct::createExtendedQueryMol(
+      *im, doEnumeration, doTautomers));
+
+  SECTION("substructure matching and serialization") {
+    auto output = xqm->toJSON();
+    CHECK(
+        output ==
+        "{\n    \"xqm_type\": \"3\",\n    \"tautomers\": [\n        {\n            \"pkl\": \"776t3gAAAAAQAAAAAQAAAAAAAAAHAAAABwAAAIABBgBgAAAAAQMGQCgAAAADBAdAKAAAAAMDB0A4AAAAAwEDBkAoAAAAAwQJACAAAAABBkBoAAAAAwMBCwABAAECaAwCA2gMAwRoDAQFAAQGaAwGAWgMQgEAAAAFAQIDBAYXBAAAAAAAAAAW\",\n            \"smiles\": \"Cc1cc(F)[nH]n1\"\n        },\n        {\n            \"pkl\": \"776t3gAAAAAQAAAAAQAAAAAAAAAHAAAABwAAAIABBgBgAAAAAQMGQCgAAAADBAdAOAAAAAMBAwdgKAAAAAMDBkAoAAAAAwQJACAAAAABBkBoAAAAAwMBCwABAAECaAwCA2gMAwRoDAQFAAQGaAwGAWgMQgEAAAAFAQIDBAYXBAAAAAAAAAAW\",\n            \"smiles\": \"Cc1cc(F)n[nH]1\"\n        }\n    ],\n    \"template\": {\n        \"pkl\": \"776t3gAAAAAQAAAAAQAAAAAAAAAHAAAABwAAAIABBgBgAAAAAQMGQCgAAAADBAcQCAAAAAAZDQAAAEF0b21BdG9taWNOdW0hGgcAAAAAAAAAHAArBxAIAAAAABkNAAAAQXRvbUF0b21pY051bSEaBwAAAAAAAAAcACsGQCgAAAADBAkAIAAAAAEGQGgAAAADAwELAAEAAQIYABkcAAAAU2luZ2xlT3JEb3VibGVPckFyb21hdGljQm9uZEEJAAAAQm9uZE9yZGVyIRoBAAAAAAAAABwAKwIDaAwDBBgAGRwAAABTaW5nbGVPckRvdWJsZU9yQXJvbWF0aWNCb25kQQkAAABCb25kT3JkZXIhGgEAAAAAAAAAHAArBAUABAYYABkcAAAAU2luZ2xlT3JEb3VibGVPckFyb21hdGljQm9uZEEJAAAAQm9uZE9yZGVyIRoBAAAAAAAAABwAKwYBGAAZHAAAAFNpbmdsZU9yRG91YmxlT3JBcm9tYXRpY0JvbmRBCQAAAEJvbmRPcmRlciEaAQAAAAAAAAAcACtCAQAAAAUBAgMEBhcEAAAAAAAAABY=\",\n        \"smarts\": \"[#6]-[#6]1-,=,:[#7]:[#7]-,=,:[#6](-[#9])-,=,:[#6]-,=,:1\"\n    },\n    \"modifiedAtoms\": [\n        \"2\",\n        \"3\"\n    ],\n    \"modifiedBonds\": [\n        \"1\",\n        \"3\",\n        \"5\",\n        \"6\"\n    ]\n}\n");
   }
 }
 

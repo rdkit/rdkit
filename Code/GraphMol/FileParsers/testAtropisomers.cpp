@@ -76,6 +76,7 @@ class MolAtropTest {
 
   void testMolFiles(const MolTest *molFileTest) {
     BOOST_LOG(rdInfoLog) << "testing mol files with atropisomers" << std::endl;
+    std::cout << molFileTest->fileName << std::endl;
 
     std::string rdbase = getenv("RDBASE");
     std::string fName = rdbase +
@@ -127,6 +128,7 @@ class MolAtropTest {
         std::string expectedFileName = fName + ".expected.cxsmi";
         SmilesWriteParams ps;
         ps.canonical = false;
+        ps.cleanStereo = true;
         ps.doKekule = true;
 
         unsigned int flags = SmilesWrite::CXSmilesFields::CX_COORDS |

@@ -1028,7 +1028,9 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
   // we need ring information; make sure findSSSR has been called before
   // if not call now
-  if (!mol.getRingInfo()->isInitialized()) {
+  // NOTE: if called from the SMARTS code, the ring info with be set to DUMMY,
+  // and we do not use ringinfo
+  if (!mol.getRingInfo()->isSymmSssrOrDummy()) {
     MolOps::findSSSR(mol);
   }
   mol.getAtomWithIdx(atomIdx)->setProp(common_properties::_TraversalStartPoint,
@@ -1358,5 +1360,6 @@ void canonicalizeEnhancedStereo(ROMol &mol,
   }
   mol.setStereoGroups(newSgs);
 }
+
 }  // namespace Canon
 }  // namespace RDKit
