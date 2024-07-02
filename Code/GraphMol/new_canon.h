@@ -517,8 +517,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
         df_useChirality(true),
         df_useChiralityRings(true),
         df_useAtomMaps(true),
-        df_useNonStereoRanks(false),
-        dp_bondsInPlay(bondsInPlay) {}
+        df_useNonStereoRanks(false) {}
   int operator()(int i, int j) const {
     if (dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])) {
       return 0;

@@ -223,8 +223,10 @@ std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
   }
   // this was originally only done for the organic subset,
   // applying it to other atom-types is a fix for Issue 3152751:
-  // Only accept for atom->getAtomicNum() in [5, 6, 7, 8, 14, 15, 16, 33, 34, 52]
-  if (!params.doKekule && atom->getIsAromatic() && symb[0] >= 'A' && symb[0] <= 'Z') {
+  // Only accept for atom->getAtomicNum() in [5, 6, 7, 8, 14, 15, 16, 33, 34,
+  // 52]
+  if (!params.doKekule && atom->getIsAromatic() && symb[0] >= 'A' &&
+      symb[0] <= 'Z') {
     switch (atom->getAtomicNum()) {
       case 5:
       case 6:
@@ -648,22 +650,38 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
           unsigned int rankNum = 0;
           atom->getPropIfPresent("_canonicalRankingNumber", rankNum);
           ranks[atom->getIdx()] = rankNum;
-        }
+        };
       } else {
+        bool breakTies = false;
+        const bool includeChiralPresence = false;
+        bool includeIsotopes = false;
+        bool includeChirality = false;
+        bool includeStereoGroups = false;
+        bool useNonStereoRanks = false;
+        const bool includeAtomMaps = true;
         if (params.useStereoToBreakTies) {
           // get the ranking WITHOUT stereochemistry, and save them
           // this is used in RigourousEnhancedStereo to make sure all
           // smiles generatesd have the same basic smiles structure
           // except tot stereochemistry
-          Canon::rankMolAtoms(*tmol, ranks, false, false, true, true, false);
+
+          Canon::rankMolAtoms(*tmol, ranks, breakTies, includeChirality,
+                              includeIsotopes, includeAtomMaps,
+                              useNonStereoRanks, includeChiralPresence,
+                              includeStereoGroups);
           for (auto atom : tmol->atoms()) {
             atom->setProp("_canonicalRankingNumber", ranks[atom->getIdx()]);
           }
         }
-        bool breakTies = true;
-        Canon::rankMolAtoms(*tmol, ranks, breakTies, params.doIsomericSmiles,
-                            params.doIsomericSmiles, true,
-                            params.useStereoToBreakTies);
+        breakTies = true;
+        includeChirality = params.doIsomericSmiles;
+        useNonStereoRanks = params.useStereoToBreakTies;
+        includeIsotopes = params.doIsomericSmiles;
+        includeStereoGroups = params.doIsomericSmiles;
+
+        Canon::rankMolAtoms(*tmol, ranks, breakTies, includeChirality,
+                            includeIsotopes, includeAtomMaps, useNonStereoRanks,
+                            includeChiralPresence, includeStereoGroups);
       }
     } else {
       std::iota(ranks.begin(), ranks.end(), 0);

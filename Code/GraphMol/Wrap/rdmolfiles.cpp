@@ -415,8 +415,12 @@ std::vector<unsigned int> CanonicalRankAtoms(
     bool includeIsotopes = true, bool includeAtomMaps = true,
     bool includeChiralPresence = false) {
   std::vector<unsigned int> ranks(mol.getNumAtoms());
+  const bool includeStereoGroups = true;
+  const bool useNonStereoRanks = includeChirality;
+
   Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes,
-                      includeAtomMaps, includeChiralPresence);
+                      includeAtomMaps, useNonStereoRanks, includeChiralPresence,
+                      includeStereoGroups);
   return ranks;
 }
 

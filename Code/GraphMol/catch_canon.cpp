@@ -831,9 +831,12 @@ TEST_CASE("chiral presence and ranking") {
     bool includeChiralPresence = true;
     bool includeIsotopes = true;
     bool includeAtomMaps = true;
+    const bool includeStereoGroups = includeChirality;
+    const bool useNonStereoRanks = false;
+
     Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
-                        includeIsotopes, includeAtomMaps,
-                        includeChiralPresence);
+                        includeIsotopes, includeAtomMaps, useNonStereoRanks,
+                        includeChiralPresence, includeStereoGroups);
     CHECK(ranks[1] != ranks[4]);
     CHECK(ranks[1] != ranks[7]);
     CHECK(ranks[4] == ranks[7]);
