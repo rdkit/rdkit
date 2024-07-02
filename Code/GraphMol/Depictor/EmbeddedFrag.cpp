@@ -401,8 +401,6 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
       return degrees_count;
     };
     if (degreeCounts(rs_mol) != degreeCounts(*mol)) {
-      for (int i = 0; i < 4; ++i) {
-      }
       continue;
     }
 
