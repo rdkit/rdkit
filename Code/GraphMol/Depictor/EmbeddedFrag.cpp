@@ -391,10 +391,23 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     } else if (mol->getRingInfo()->numRings() != ring_count) {
       continue;
     }
+    // also check if the mol atoms have the same connectivity as the template
+    auto degreeCounts = [](const RDKit::ROMol &mol) {
+      std::array<int, 4> degrees_count({0, 0, 0, 0});
+      for (auto atom : mol.atoms()) {
+        auto degree = std::clamp(atom->getDegree(), 0u, 4u);
+        degrees_count[degree]++;
+      }
+      return degrees_count;
+    };
+    if (degreeCounts(rs_mol) != degreeCounts(*mol)) {
+      for (int i = 0; i < 4; ++i) {
+      }
+      continue;
+    }
+
     RDKit::SubstructMatchParameters params;
     params.maxMatches = 1;
-    params.useChirality = true;  // for cis/trans in macrocycles
-
     auto matches = RDKit::SubstructMatch(RDKit::ROMol(rs_mol), *mol, params);
     if (!matches.empty()) {
       match = matches[0];
@@ -402,7 +415,6 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
       break;
     }
   }
-
   if (!template_mol) {
     return false;
   }
@@ -516,7 +528,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
   if (useRingTemplates) {
     RDKit::INT_VECT coreRingsIds;
     auto coreRings = findCoreRings(fusedRings, coreRingsIds, *dp_mol);
-    if (coreRings.size() > 1) {
+    if (coreRings.size() > 1 && coreRings.size() < fusedRings.size()) {
       // look for a template that matches the core ring system
       RDKit::Union(coreRings, funion);
       bool found_template = matchToTemplate(funion, coreRings.size());
