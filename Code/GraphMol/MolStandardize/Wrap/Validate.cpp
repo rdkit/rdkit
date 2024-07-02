@@ -138,6 +138,7 @@ struct validate_wrapper {
       MolStandardize::IsotopeValidation,
       python::bases<MolStandardize::ValidationMethod>,
       boost::noncopyable>("IsotopeValidation")
+        .def(python::init<bool>())
       ;
 
     python::class_<
@@ -159,6 +160,44 @@ struct validate_wrapper {
       python::bases<MolStandardize::ValidationMethod>,
       boost::noncopyable>("DisallowedAtomsValidation", python::no_init)
         .def("__init__", python::make_constructor(&getDisallowedAtomsValidation))
+      ;
+
+    python::class_<
+      MolStandardize::FeaturesValidation,
+      python::bases<MolStandardize::ValidationMethod>,
+      boost::noncopyable>("FeaturesValidation")
+        .def(python::init<bool>())
+        .def(python::init<bool, bool>())
+      ;
+
+    python::class_<
+      MolStandardize::DisallowedRadicalValidation,
+      python::bases<MolStandardize::ValidationMethod>,
+      boost::noncopyable>("DisallowedRadicalValidation")
+      ;
+
+    python::class_<
+      MolStandardize::Is2DValidation,
+      python::bases<MolStandardize::ValidationMethod>,
+      boost::noncopyable>("Is2DValidation")
+        .def(python::init<double>())
+      ;
+
+    python::class_<
+      MolStandardize::Layout2DValidation,
+      python::bases<MolStandardize::ValidationMethod>,
+      boost::noncopyable>("Layout2DValidation")
+        .def(python::init<double>())
+        .def(python::init<double, double>())
+        .def(python::init<double, double, bool>())
+        .def(python::init<double, double, bool, double>())
+        .def(python::init<double, double, bool, bool, double>())
+      ;
+
+    python::class_<
+      MolStandardize::StereoValidation,
+      python::bases<MolStandardize::ValidationMethod>,
+      boost::noncopyable>("StereoValidation")
       ;
 
     python::def("ValidateSmiles", standardizeSmilesHelper, (python::arg("mol")),

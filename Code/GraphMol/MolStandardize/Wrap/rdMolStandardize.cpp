@@ -387,6 +387,7 @@ void wrap_metal();
 void wrap_fragment();
 void wrap_normalize();
 void wrap_tautomer();
+void wrap_pipeline();
 
 BOOST_PYTHON_MODULE(rdMolStandardize) {
   python::scope().attr("__doc__") =
@@ -668,4 +669,5 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
   wrap_fragment();
   wrap_normalize();
   wrap_tautomer();
+  wrap_pipeline();
 }
