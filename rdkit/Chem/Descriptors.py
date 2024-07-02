@@ -266,7 +266,7 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
     """
 
   def __init__(self, name, version):
-    rdMolDescriptors.PythonPropertyFunctor.__init__(self, self, name, version)
+    rdMolDescriptors.PythonPropertyFunctor.__init__(self, name, version)
 
   def __call__(self, mol):
     raise NotImplementedError("Please implement the __call__ method")
