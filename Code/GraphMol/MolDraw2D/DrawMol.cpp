@@ -1375,6 +1375,10 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     }
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
+    std::string mapNum;
+    if (atom.getPropIfPresent("molAtomMapNumber", mapNum)) {
+      symbol += ":" + mapNum;
+    }
   } else if (drawOptions_.atomLabelDeuteriumTritium &&
              atom.getAtomicNum() == 1 && (iso == 2 || iso == 3)) {
     symbol = ((iso == 2) ? "D" : "T");
@@ -1384,10 +1388,9 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     std::vector<std::string> preText, postText;
 
     // first thing after the symbol is the atom map
-    if (atom.hasProp("molAtomMapNumber")) {
-      std::string map_num = "";
-      atom.getProp("molAtomMapNumber", map_num);
-      postText.push_back(std::string(":") + map_num);
+    std::string mapNum;
+    if (atom.getPropIfPresent("molAtomMapNumber", mapNum)) {
+      postText.push_back(std::string(":") + mapNum);
     }
 
     if (0 != atom.getFormalCharge()) {

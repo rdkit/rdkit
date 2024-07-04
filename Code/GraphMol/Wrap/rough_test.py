@@ -171,6 +171,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(tbl.GetRb0("C"), 0.77))
     self.assertTrue(tbl.GetElementSymbol(6) == 'C')
     self.assertTrue(tbl.GetElementName(6) == 'Carbon')
+    self.assertTrue(tbl.GetRow(6) == 2)
+    self.assertTrue(tbl.GetRow("C") == 2)
 
   def test2Atom(self):
     atom = Chem.Atom(6)
