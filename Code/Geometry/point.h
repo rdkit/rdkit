@@ -307,7 +307,6 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
   }
 
   inline double &operator[](unsigned int i) override {
-    PRECONDITION(i < 2, "Invalid index on Point2D");
     switch (i) {
       case 0:
         return x;
