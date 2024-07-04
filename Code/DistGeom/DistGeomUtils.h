@@ -189,9 +189,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructPlain3DForceField(
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *
 construct3DImproperForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const std::vector<std::vector<int>> &improperAtoms,
-    const std::vector<std::vector<int>> &angles,
-    const std::vector<int> &atomNums);
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails);
 
 }  // namespace DistGeom
 
