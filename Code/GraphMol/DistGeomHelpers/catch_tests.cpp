@@ -593,89 +593,64 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
   }
 }
 
-TEST_CASE("tracking failure causes"){SECTION("basics"){
-    auto mol =
-        "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
-REQUIRE(mol);
-MolOps::addHs(*mol);
-DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-ps.randomSeed = 0xf00d;
-ps.trackFailures = true;
-ps.maxIterations = 50;
-ps.randomSeed = 42;
-auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-CHECK(cid < 0);
+TEST_CASE("tracking failure causes") {
+  SECTION("basics") {
+    auto mol = "O=c2cc3CCc1ccc(cc1Br)CCc2c(O)c3=O"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.trackFailures = true;
+    ps.maxIterations = 50;
+    ps.randomSeed = 42;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid == 0);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 2);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] == 5);
 
-CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
-
-auto fail_cp = ps.failures;
-// make sure we reset the counts each time
-cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-CHECK(ps.failures == fail_cp);
-}
-SECTION("chirality") {
-  auto mol = R"CTAB(
-  Ketcher  1102315302D 1   1.00000     0.00000     0
-
- 10 11  0  0  1  0  0  0  0  0999 V2000
-   10.1340  -11.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   10.1340  -12.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.0000  -12.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.8660  -12.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.8660  -11.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.0000  -10.5250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-   11.0000  -11.5250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-   11.2588  -12.4909    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    9.2680  -10.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   12.7629  -12.4673    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  6  1  0     0  0
-  1  2  1  0     0  0
-  2  3  1  0     0  0
-  3  4  1  0     0  0
-  4  5  1  0     0  0
-  5  6  1  0     0  0
-  1  7  1  0     0  0
-  7  8  1  0     0  0
-  8  4  1  0     0  0
-  1  9  1  1     0  0
-  4 10  1  1     0  0
-M  END
-)CTAB"_ctab;
-  REQUIRE(mol);
-  MolOps::addHs(*mol);
-  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-  ps.randomSeed = 0xf00d;
-  ps.trackFailures = true;
-  ps.maxIterations = 50;
-  auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-  CHECK(cid < 0);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
-        5);
-}
+    auto fail_cp = ps.failures;
+    // make sure we reset the counts each time
+    cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(ps.failures == fail_cp);
+  }
+  SECTION("chirality") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/chirality_failure_test.mol";
+    std::unique_ptr<RWMol> mol{MolFileToMol(fname, true, false)};
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    ps.trackFailures = true;
+    ps.maxIterations = 50;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid < 0);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
+          4);
+  }
 
 #ifdef RDK_TEST_MULTITHREADED
-SECTION("multithreaded") {
-  auto mol =
-      "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
-  REQUIRE(mol);
-  MolOps::addHs(*mol);
-  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-  ps.randomSeed = 0xf00d;
-  ps.trackFailures = true;
-  ps.maxIterations = 10;
-  ps.randomSeed = 42;
-  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
+  SECTION("multithreaded") {
+    auto mol =
+        "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.trackFailures = true;
+    ps.maxIterations = 10;
+    ps.randomSeed = 42;
+    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
 
-  DGeomHelpers::EmbedParameters ps2 = ps;
-  ps2.numThreads = 4;
+    DGeomHelpers::EmbedParameters ps2 = ps;
+    ps2.numThreads = 4;
 
-  auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
-  CHECK(cids2 == cids);
+    auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
+    CHECK(cids2 == cids);
 
-  CHECK(ps.failures == ps2.failures);
-}
+    CHECK(ps.failures == ps2.failures);
+  }
 #endif
 }
 
@@ -775,8 +750,8 @@ TEST_CASE("Macrocycle bounds matrix") {
     const auto conf = mol->getConformer(cid);
     RDGeom::Point3D pos_1 = conf.getAtomPos(1);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
-    CHECK((pos_1 - pos_4).length() < 3.6);
-    CHECK((pos_1 - pos_4).length() > 3.5);
+    CHECK((pos_1 - pos_4).length() < 3.9);
+    CHECK((pos_1 - pos_4).length() > 3.8);
   }
 }
 
