@@ -246,9 +246,8 @@ ForceFields::ForceField *construct3DForceField(
                       etkdgDetails.expTorsionAngles.size(),
                   "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
-  for (auto position : positions) {
-    field->positions().push_back(position);
-  }
+  field->positions().insert(field->positions().begin(), positions.begin(),
+                            positions.end());
 
   // keep track which atoms are 1,2- or 1,3-restrained
   boost::dynamic_bitset<> atomPairs(N * N);
@@ -409,9 +408,8 @@ ForceFields::ForceField *constructPlain3DForceField(
                       etkdgDetails.expTorsionAngles.size(),
                   "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
-  for (auto position : positions) {
-    field->positions().push_back(position);
-  }
+  field->positions().insert(field->positions().begin(), positions.begin(),
+                            positions.end());
 
   // keep track which atoms are 1,2- or 1,3-restrained
   boost::dynamic_bitset<> atomPairs(N * N);
@@ -534,20 +532,22 @@ ForceFields::ForceField *construct3DImproperForceField(
           n[3] = 0;
           break;
       }
-      field->contribs().emplace_back(new ForceFields::UFF::InversionContrib(
+      auto *contrib = new ForceFields::UFF::InversionContrib(
           field, improperAtom[n[0]], improperAtom[n[1]], improperAtom[n[2]],
           improperAtom[n[3]], improperAtom[4],
-          static_cast<bool>(improperAtom[5]), oobForceScalingFactor));
+          static_cast<bool>(improperAtom[5]), oobForceScalingFactor);
+
+      field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
 
   // Check that SP Centers have an angle of 180 degrees.
   for (const auto &angle : angles) {
     if (angle[3]) {
-      field->contribs().emplace_back(
-          new ForceFields::UFF::AngleConstraintContrib(
-              field, angle[0], angle[1], angle[2], 179.0, 180.0,
-              oobForceScalingFactor));
+      auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
+          field, angle[0], angle[1], angle[2], 179.0, 180.0,
+          oobForceScalingFactor);
+      field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
   return field;
