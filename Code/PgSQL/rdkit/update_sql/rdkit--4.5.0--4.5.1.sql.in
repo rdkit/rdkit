@@ -1,0 +1,29 @@
+ALTER OPERATOR @= (mol, mol) SET (
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>',
+);
+
+CREATE OPERATOR @<> (
+    LEFTARG = mol,
+    RIGHTARG = mol,
+    PROCEDURE = mol_ne,
+    COMMUTATOR = '@<>',
+    NEGATOR = '@=',
+    RESTRICT = neqsel,
+    JOIN = neqjoinsel
+);
+
+ALTER OPERATOR @= (reaction, reaction) SET (
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>',
+);
+
+CREATE OPERATOR @<> (
+    LEFTARG = reaction,
+    RIGHTARG = reaction,
+    PROCEDURE = reaction_ne,
+    COMMUTATOR = '@<>',
+    NEGATOR = '@=',
+    RESTRICT = neqsel,
+    JOIN = neqjoinsel
+);
