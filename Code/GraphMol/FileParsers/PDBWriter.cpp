@@ -39,7 +39,8 @@
 
 namespace RDKit {
 
-std::array<char, 2> GetDefaultAtomNumber(const Atom* atom,
+// Get the next atom number of an element, formatted as a 2-letter string.
+std::string GetDefaultAtomNumber(const Atom* atom,
         std::map<unsigned int, unsigned int> &elem);
 
 std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
@@ -73,18 +74,18 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
     ss << std::setw(5) << atom->getIdx() + 1;
     ss << ' ';
     const std::string& name = info->getName();
-    if (name.size() == 0) {
-      std::array<char, 2> atnum = GetDefaultAtomNumber(atom, elem);
-      ss << at1 << at2 << atnum[0] << atnum[1];
+    if (name.empty()) {
+      std::string atnum = GetDefaultAtomNumber(atom, elem);
+      ss << at1 << at2 << atnum;
     } else {
-      ss << std::setw(4) << name;
+      ss << std::setw(4) << name.substr(0, 4);
     }
     const char *ptr = info->getAltLoc().c_str();
     if (*ptr == '\0') {
       ptr = " ";
     }
     ss << *ptr;
-    ss << std::setw(3) << info->getResidueName();
+    ss << std::setw(3) << info->getResidueName().substr(0, 3);
     ss << ' ';
     ptr = info->getChainId().c_str();
     if (*ptr == '\0') {
@@ -100,11 +101,11 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
     ss << "   ";
   } else {
     info = (AtomPDBResidueInfo *)nullptr;
-    std::array<char, 2> atnum = GetDefaultAtomNumber(atom, elem);
+    std::string atnum = GetDefaultAtomNumber(atom, elem);
     ss << "HETATM";
     ss << std::setw(5) << atom->getIdx() + 1;
     ss << ' ';
-    ss << at1 << at2 << atnum[0] << atnum[1];
+    ss << at1 << at2 << atnum;
     ss << " UNL     1    ";
   }
 
@@ -138,19 +139,17 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
   return ss.str();
 }
 
-std::array<char, 2> GetDefaultAtomNumber(const Atom* atom, std::map<unsigned int, unsigned int> &elem) {
-  std::array<char, 2> ret;
+std::string GetDefaultAtomNumber(const Atom* atom, std::map<unsigned int, unsigned int> &elem) {
+  std::string ret = "  ";
   unsigned int atno = atom->getAtomicNum();
   if (elem.find(atno) == elem.end()) {
     elem[atno] = 1;
     ret[0] = '1';
-    ret[1] = ' ';
   } else {
     unsigned int tmp = elem[atno] + 1;
     elem[atno] = tmp;
     if (tmp < 10) {
       ret[0] = tmp + '0';
-      ret[1] = ' ';
     } else if (tmp < 100) {
       ret[0] = (tmp / 10) + '0';
       ret[1] = (tmp % 10) + '0';
@@ -160,9 +159,6 @@ std::array<char, 2> GetDefaultAtomNumber(const Atom* atom, std::map<unsigned int
     } else if (tmp < 1036) {
       ret[0] = ((tmp - 360) / 26) + 'A';
       ret[1] = ((tmp - 360) % 26) + 'A';
-    } else {
-      ret[0] = ' ';
-      ret[1] = ' ';
     }
   }
   return ret;

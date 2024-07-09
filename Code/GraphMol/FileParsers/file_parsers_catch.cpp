@@ -3023,13 +3023,13 @@ TEST_CASE("test bond flavors when writing PDBs", "[bug]") {
 TEST_CASE("test output with incomplete monomer info", "[bug][writer]") {
   SECTION("basics") {
     {
-      std::unique_ptr<RWMol> m{SmilesToMol("Cl")};
+      auto m = "Cl"_smiles;
       REQUIRE(m);
       std::string pdb = MolToPDBBlock(*m, -1);
       CHECK(pdb.find("HETATM    1 CL1  UNL     1") != std::string::npos);
     }
     {
-      std::unique_ptr<RWMol> m{SmilesToMol("Cl")};
+      auto m = "Cl"_smiles;
       // will get deleted by ~Atom()
       AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
       info->setResidueName("HCL");
@@ -3038,7 +3038,7 @@ TEST_CASE("test output with incomplete monomer info", "[bug][writer]") {
       CHECK(pdb.find("ATOM      1 CL1  HCL     0") != std::string::npos);
     }
     {
-      std::unique_ptr<RWMol> m{SmilesToMol("Cl")};
+      auto m = "Cl"_smiles;
       // will get deleted by ~Atom()
       AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
       info->setResidueName("HCL");
@@ -3050,13 +3050,26 @@ TEST_CASE("test output with incomplete monomer info", "[bug][writer]") {
     {
       // 1. should add spaces for padding if the atom name is too short
       // 2. should add spaces for missing residue name.
-      std::unique_ptr<RWMol> m{SmilesToMol("Cl")};
+      auto m = "Cl"_smiles;
       // will get deleted by ~Atom()
       AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
       info->setName("CL");
       m->getAtomWithIdx(0)->setMonomerInfo(info);
       std::string pdb = MolToPDBBlock(*m, -1);
       CHECK(pdb.find("ATOM      1   CL         0") != std::string::npos);
+    }
+    {
+      // 1. Test that atom names get truncated to 4 letters.
+      // 2. Test that residue names get truncated to 3 letters.
+      auto m = "Cl"_smiles;
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setName("CHLORINE_ATOM1");
+      info->setResidueName("CHLORINE_MOLECULE1");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      std::cout << pdb << std::endl;
+      CHECK(pdb.find("ATOM      1 CHLO CHL     0") != std::string::npos);
     }
   }
 }
