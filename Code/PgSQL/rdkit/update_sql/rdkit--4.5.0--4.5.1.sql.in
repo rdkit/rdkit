@@ -1,8 +1,3 @@
-ALTER OPERATOR @= (mol, mol) SET (
-    COMMUTATOR = '@=',
-    NEGATOR = '@<>',
-);
-
 CREATE OPERATOR @<> (
     LEFTARG = mol,
     RIGHTARG = mol,
@@ -13,10 +8,7 @@ CREATE OPERATOR @<> (
     JOIN = neqjoinsel
 );
 
-ALTER OPERATOR @= (reaction, reaction) SET (
-    COMMUTATOR = '@=',
-    NEGATOR = '@<>',
-);
+@RDKIT_PG_ALTER_OPERATOR_ATEQ_MOL@
 
 CREATE OPERATOR @<> (
     LEFTARG = reaction,
@@ -27,3 +19,5 @@ CREATE OPERATOR @<> (
     RESTRICT = neqsel,
     JOIN = neqjoinsel
 );
+
+@RDKIT_PG_ALTER_OPERATOR_ATEQ_MOL@
