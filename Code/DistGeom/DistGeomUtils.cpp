@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,7 +9,7 @@
 //
 #include "BoundsMatrix.h"
 #include "DistGeomUtils.h"
-#include "DistViolationContrib.h"
+#include "DistViolationContribs.h"
 #include "ChiralViolationContrib.h"
 #include "FourthDimContrib.h"
 #include <Numerics/Matrix.h>
@@ -191,6 +191,7 @@ ForceFields::ForceField *constructForceField(
     field->positions().push_back(positions[i]);
   }
 
+  auto contrib = new DistViolationContribs(field);
   for (unsigned int i = 1; i < N; i++) {
     for (unsigned int j = 0; j < i; j++) {
       if (fixedPts != nullptr && (*fixedPts)[i] && (*fixedPts)[j]) {
@@ -212,10 +213,14 @@ ForceFields::ForceField *constructForceField(
         includeIt = true;
       }
       if (includeIt) {
-        auto *contrib = new DistViolationContrib(field, i, j, u, l, w);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        contrib->addContrib(i, j, u, l, w);
       }
     }
+  }
+  if (!contrib->empty()) {
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  } else {
+    delete contrib;
   }
 
   // now add chiral constraints
