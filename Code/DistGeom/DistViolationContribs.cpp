@@ -19,13 +19,28 @@ DistViolationContribs::DistViolationContribs(ForceFields::ForceField *owner) {
   dp_forceField = owner;
 }
 
+auto distance2 = [](const unsigned int idx1, const unsigned int idx2,
+                    const double *pos, const unsigned int dim) {
+  const auto *end1Coords = &(pos[dim * idx1]);
+  const auto *end2Coords = &(pos[dim * idx2]);
+  double d2 = 0.0;
+  for (unsigned int i = 0; i < dim; i++) {
+    double d = end1Coords[i] - end2Coords[i];
+    d2 += d * d;
+  }
+  return d2;
+};
+auto distance = [](const unsigned int idx1, const unsigned int idx2,
+                   const double *pos, const unsigned int dim) {
+  return sqrt(distance2(idx1, idx2, pos, dim));
+};
 double DistViolationContribs::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
 
-  double res = 0.0;
-  for (const auto &c : d_contribs) {
-    double d2 = dp_forceField->distance2(c.idx1, c.idx2, pos);
+  double accum = 0.0;
+  auto contrib = [&](const auto &c) {
+    double d2 = distance2(c.idx1, c.idx2, pos, dp_forceField->dimension());
     double val = 0.0;
     if (d2 > c.ub * c.ub) {
       val = (d2 / (c.ub * c.ub)) - 1.0;
@@ -33,10 +48,13 @@ double DistViolationContribs::getEnergy(double *pos) const {
       val = ((2 * c.lb * c.lb) / (c.lb * c.lb + d2)) - 1.0;
     }
     if (val > 0.0) {
-      res += c.weight * val * val;
+      accum += c.weight * val * val;
     }
+  };
+  for (const auto &c : d_contribs) {
+    contrib(c);
   }
-  return res;
+  return accum;
 }
 
 void DistViolationContribs::getGrad(double *pos, double *grad) const {
@@ -44,36 +62,39 @@ void DistViolationContribs::getGrad(double *pos, double *grad) const {
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
   const unsigned int dim = this->dp_forceField->dimension();
-  for (const auto &contrib : d_contribs) {
-    double d = dp_forceField->distance(contrib.idx1, contrib.idx2, pos);
+
+  auto contrib = [&](const auto &c) {
+    double d = distance(c.idx1, c.idx2, pos, dp_forceField->dimension());
     double preFactor = 0.0;
-    if (d > contrib.ub) {
-      double u2 = contrib.ub * contrib.ub;
+    if (d > c.ub) {
+      double u2 = c.ub * c.ub;
       preFactor = 4. * (((d * d) / u2) - 1.0) * (d / u2);
-    } else if (d < contrib.lb) {
+    } else if (d < c.lb) {
       double d2 = d * d;
-      double l2 = contrib.lb * contrib.lb;
+      double l2 = c.lb * c.lb;
       double l2d2 = d2 + l2;
       preFactor = 8. * l2 * d * (1. - 2 * l2 / l2d2) / (l2d2 * l2d2);
     } else {
-      continue;
+      return;
     }
 
-    double *end1Coords = &(pos[dim * contrib.idx1]);
-    double *end2Coords = &(pos[dim * contrib.idx2]);
+    double *end1Coords = &(pos[dim * c.idx1]);
+    double *end2Coords = &(pos[dim * c.idx2]);
 
     for (unsigned int i = 0; i < dim; i++) {
       double dGrad;
       if (d > 0.0) {
-        dGrad =
-            contrib.weight * preFactor * (end1Coords[i] - end2Coords[i]) / d;
+        dGrad = c.weight * preFactor * (end1Coords[i] - end2Coords[i]) / d;
       } else {
         // FIX: this likely isn't right
-        dGrad = contrib.weight * preFactor * (end1Coords[i] - end2Coords[i]);
+        dGrad = c.weight * preFactor * (end1Coords[i] - end2Coords[i]);
       }
-      grad[dim * contrib.idx1 + i] += dGrad;
-      grad[dim * contrib.idx2 + i] -= dGrad;
+      grad[dim * c.idx1 + i] += dGrad;
+      grad[dim * c.idx2 + i] -= dGrad;
     }
+  };
+  for (const auto &c : d_contribs) {
+    contrib(c);
   }
 }
 }  // namespace DistGeom
