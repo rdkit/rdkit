@@ -9,7 +9,12 @@
 //
 #include "BoundsMatrix.h"
 #include "DistGeomUtils.h"
+// #define RDK_OLD_DISTGEOM_CONTRIBS 1
+#ifdef RDK_OLD_DISTGEOM_CONTRIBS
+#include "DistViolationContrib.h"
+#else
 #include "DistViolationContribs.h"
+#endif
 #include "ChiralViolationContrib.h"
 #include "FourthDimContrib.h"
 #include <Numerics/Matrix.h>
@@ -191,7 +196,9 @@ ForceFields::ForceField *constructForceField(
     field->positions().push_back(positions[i]);
   }
 
+#ifndef RDK_OLD_DISTGEOM_CONTRIBS
   auto contrib = new DistViolationContribs(field);
+#endif
   for (unsigned int i = 1; i < N; i++) {
     for (unsigned int j = 0; j < i; j++) {
       if (fixedPts != nullptr && (*fixedPts)[i] && (*fixedPts)[j]) {
@@ -213,16 +220,22 @@ ForceFields::ForceField *constructForceField(
         includeIt = true;
       }
       if (includeIt) {
+#ifdef RDK_OLD_DISTGEOM_CONTRIBS
+        auto *contrib = new DistViolationContrib(field, i, j, u, l, w);
+        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+#else
         contrib->addContrib(i, j, u, l, w);
+#endif
       }
     }
   }
+#ifndef RDK_OLD_DISTGEOM_CONTRIBS
   if (!contrib->empty()) {
     field->contribs().push_back(ForceFields::ContribPtr(contrib));
   } else {
     delete contrib;
   }
-
+#endif
   // now add chiral constraints
   if (weightChiral > 1.e-8) {
     for (const auto &cset : csets) {
