@@ -525,7 +525,7 @@ TEST_CASE("github #2604: support range-based charge queries from SMARTS",
       CHECK(SubstructMatch(*m1, *query).size() == 1);
     }
     {
-      auto m1 = "C[NH4+2]"_smiles;
+      auto m1 = "C[NH2+2]"_smiles;
       REQUIRE(m1);
       CHECK(SubstructMatch(*m1, *query).empty());
     }
@@ -2789,5 +2789,94 @@ TEST_CASE("leaks on unclosed rings") {
   SECTION("Bad SMILES") {
     auto m = "C1C)foo"_smiles;
     REQUIRE(!m);
+  }
+}
+
+TEST_CASE("Github #7295") {
+  SECTION("basics") {
+    auto m = "C[C@@H]1CC[C@@H](C(=O)O)CC1.Cl"_smiles;
+    REQUIRE(m);
+    auto smi1 = MolToSmiles(*m);
+    m->clearComputedProps();
+    auto smi2 = MolToSmiles(*m);
+    CHECK(smi1 == smi2);
+    auto m2(*m);
+    bool cleanIt = true;
+    MolOps::assignStereochemistry(m2, cleanIt);
+    auto smi3 = MolToSmiles(m2);
+    CHECK(smi1 == smi3);
+  }
+}
+
+TEST_CASE("CX_BOND_ATROPISOMER option requires ring info", "[bug][cxsmiles]") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase +
+      "/Code/GraphMol/FileParsers/test_data/atropisomers/RP-6306_atrop1.sdf";
+
+  auto m = v2::FileParsers::MolFromMolFile(fName);
+  REQUIRE(m);
+
+  auto atropBond = m->getBondWithIdx(3);
+  REQUIRE(atropBond->getStereo() == Bond::STEREOATROPCW);
+
+  // Clear ring info to check that atropisomer wedging doesn't fail
+  // if the info is not present
+  bool includeRingInfo = true;
+  m->clearComputedProps(includeRingInfo);
+
+  auto ps = SmilesWriteParams();
+  auto flags = SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER;
+
+  // This will fail if there's no ring information
+  auto smi = MolToCXSmiles(*m, ps, flags);
+  CHECK(smi == "Cc1cc2c(C(N)=O)c(N)n(-c3c(C)ccc(O)c3C)c2nc1C |wD:10.9|");
+}
+
+TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
+  SECTION("basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "N[Fe]<-N");
+    SmilesWriteParams ps;
+    ps.includeDativeBonds = false;
+    auto newSmi = MolToSmiles(*m, ps);
+    CHECK(newSmi == "N[Fe][NH3]");
+    // ensure that representation round trips:
+    auto m2 = v2::SmilesParse::MolFromSmiles(newSmi);
+    REQUIRE(m2);
+    CHECK(MolToSmiles(*m2) == smi);
+  }
+  SECTION("SMARTS basics") {
+    auto m = "[NH3]->[Fe]-[NH2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToSmarts(*m);
+    CHECK(smi == "[#7H3]->[Fe]-[#7H2]");
+    SmilesWriteParams ps;
+    ps.includeDativeBonds = false;
+    auto newSmi = MolToSmarts(*m, ps);
+    CHECK(newSmi == "[#7H3]-[Fe]-[#7H2]");
+  }
+}
+
+TEST_CASE("Canonicalization of meso structures") {
+  SECTION("basics") {
+    std::vector<std::pair<std::vector<std::string>, std::string>> data = {
+        {{"N[C@H]1CC[C@@H](O)CC1", "N[C@@H]1CC[C@H](O)CC1"},
+         "N[C@H]1CC[C@@H](O)CC1"},
+        {{"C[C@@H](Cl)C[C@H](C)Cl", "Cl[C@H](C)C[C@H](C)Cl",
+          "C[C@@H](Cl)C[C@@H](Cl)C", "C[C@H](Cl)C[C@@H](C)Cl"},
+         "C[C@H](Cl)C[C@@H](C)Cl"},
+    };
+    for (const auto &[smileses, expected] : data) {
+      for (const auto &smi : smileses) {
+        auto m = v2::SmilesParse::MolFromSmiles(smi);
+        REQUIRE(m);
+        auto osmi = MolToSmiles(*m);
+        INFO(smi);
+        CHECK(osmi == expected);
+      }
+    }
   }
 }

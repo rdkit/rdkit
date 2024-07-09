@@ -557,11 +557,11 @@ void testCharge() {
 
   // Reionization should not infinitely loop forever on these molecules.
   {
-    std::string smi = "CCCCCCCCCCCCCCCCCC(=O)CC(=C)C(=O)O[Ti](=O)(OC(C)C)C(C)C";
+    std::string smi = "CCCCCCCCCCCCCCCCCC(=O)CC(=C)C(=O)O[V](=O)(OC(C)C)C(C)C";
     std::string ss = MolStandardize::standardizeSmiles(smi);
     TEST_ASSERT(
         ss ==
-        "C=C(CC(=O)[CH-]CCCCCCCCCCCCCCCC)C(=O)[O-].CC(C)[O-].CCC.[O-2].[Ti+5]");
+        "C=C(CC(=O)[CH-]CCCCCCCCCCCCCCCC)C(=O)[O-].CC(C)[O-].CCC.[O-2].[V+5]");
   }
 
   // Reionization should not infinitely loop forever on these molecules.
@@ -1524,6 +1524,7 @@ void testOrganometallics() {
     bool takeOwnership = true;
     SDMolSupplier mol_supplier(full_file, takeOwnership);
     std::unique_ptr<ROMol> m(mol_supplier.next());
+    TEST_ASSERT(m);
     std::unique_ptr<ROMol> dm(MolStandardize::disconnectOrganometallics(*m));
     //    std::cout << test_file.first << " got : " << MolToSmiles(*dm)
     //              << " expected : " << test_file.second << std::endl;

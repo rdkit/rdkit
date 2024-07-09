@@ -27,3 +27,9 @@ TEST_CASE(
           Catch::Approx(222.01757).epsilon(1e-4));
   }
 }
+
+TEST_CASE("periodic table row") {
+  CHECK(PeriodicTable::getTable()->getRow(0U) == 0);
+  CHECK(PeriodicTable::getTable()->getRow(1) == 1);
+  CHECK(PeriodicTable::getTable()->getRow(92) == 7);
+}

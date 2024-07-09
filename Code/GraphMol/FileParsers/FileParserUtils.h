@@ -65,10 +65,16 @@ RDKIT_FILEPARSERS_EXPORT unsigned int toUnsigned(std::string_view input,
 RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string_view input,
                                          bool acceptSpaces = true);
 
-// parses info from a V3000 CTAB into a molecule
-RDKIT_FILEPARSERS_EXPORT std::string getV3000CTAB(const ROMol &tmol,
-                                                  int confId = -1,
-                                                  unsigned int precision = 6);
+// gets a V3000 CTAB for a molecule
+RDKIT_FILEPARSERS_EXPORT std::string getV3000CTAB(
+    const ROMol &tmol, const boost::dynamic_bitset<> &wasAromatic,
+    int confId = -1, unsigned int precision = 6);
+//! \overload
+inline std::string getV3000CTAB(const ROMol &tmol, int confId = -1,
+                                unsigned int precision = 6) {
+  boost::dynamic_bitset<> wasAromatic(tmol.getNumBonds());
+  return getV3000CTAB(tmol, wasAromatic, confId, precision);
+};
 // reads a line from an MDL v3K CTAB
 RDKIT_FILEPARSERS_EXPORT std::string getV3000Line(std::istream *inStream,
                                                   unsigned int &line);

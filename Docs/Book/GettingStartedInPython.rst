@@ -332,18 +332,18 @@ molecule before generating the conformer. This is essential to get good structur
        RDKit          3D
   <BLANKLINE>
    12 12  0  0  0  0  0  0  0  0999 V2000
-      1.0256    0.2491   -0.0964 C   0  0  0  0  0  0  0  0  0  0  0  0
+      1.0257    0.2442   -0.0991 C   0  0  0  0  0  0  0  0  0  0  0  0
      -0.2041    0.9236    0.4320 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -1.0435   -0.2466   -0.0266 C   0  0  0  0  0  0  0  0  0  0  0  0
-      0.2104   -0.9922   -0.3417 C   0  0  0  0  0  0  0  0  0  0  0  0
-      1.4182    0.7667   -0.9782 H   0  0  0  0  0  0  0  0  0  0  0  0
+     -1.0443   -0.2424   -0.0253 C   0  0  0  0  0  0  0  0  0  0  0  0
+      0.2102   -0.9939   -0.3417 C   0  0  0  0  0  0  0  0  0  0  0  0
+      1.4192    0.7683   -0.9787 H   0  0  0  0  0  0  0  0  0  0  0  0
       1.8181    0.1486    0.6820 H   0  0  0  0  0  0  0  0  0  0  0  0
      -0.1697    1.0826    1.5236 H   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.5336    1.8391   -0.1051 H   0  0  0  0  0  0  0  0  0  0  0  0
+     -0.5360    1.8377   -0.1050 H   0  0  0  0  0  0  0  0  0  0  0  0
      -1.6809   -0.0600   -0.8987 H   0  0  0  0  0  0  0  0  0  0  0  0
-     -1.6501   -0.6194    0.8220 H   0  0  0  0  0  0  0  0  0  0  0  0
+     -1.6510   -0.6193    0.8225 H   0  0  0  0  0  0  0  0  0  0  0  0
       0.4659   -1.7768    0.3858 H   0  0  0  0  0  0  0  0  0  0  0  0
-      0.3439   -1.3147   -1.3988 H   0  0  0  0  0  0  0  0  0  0  0  0
+      0.3467   -1.3126   -1.3975 H   0  0  0  0  0  0  0  0  0  0  0  0
     1  2  1  0
     2  3  1  0
     3  4  1  0
@@ -366,13 +366,13 @@ If we don't want the Hs in our later analysis, they are easy to remove:
   >>> m3 = Chem.RemoveHs(m3)
   >>> print(Chem.MolToMolBlock(m3))    # doctest: +NORMALIZE_WHITESPACE
   cyclobutane
-       RDKit          3D
+        RDKit          3D
   <BLANKLINE>
     4  4  0  0  0  0  0  0  0  0999 V2000
-      1.0256    0.2491   -0.0964 C   0  0  0  0  0  0  0  0  0  0  0  0
+      1.0257    0.2442   -0.0991 C   0  0  0  0  0  0  0  0  0  0  0  0
      -0.2041    0.9236    0.4320 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -1.0435   -0.2466   -0.0266 C   0  0  0  0  0  0  0  0  0  0  0  0
-      0.2104   -0.9922   -0.3417 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -1.0443   -0.2424   -0.0253 C   0  0  0  0  0  0  0  0  0  0  0  0
+      0.2102   -0.9939   -0.3417 C   0  0  0  0  0  0  0  0  0  0  0  0
     1  2  1  0
     2  3  1  0
     3  4  1  0
@@ -2296,7 +2296,8 @@ specification of the fingerprint function and optionally the similarity metric.
 The default for the latter is the Dice similarity. Using all the default arguments
 of the Morgan fingerprint function, the similarity map can be generated like this:
 
-  >>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
+  >>> d2d = Draw.MolDraw2DCairo(400, 400)
+  >>> _, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint, d2d)
 
 Producing this image:
 
@@ -2306,7 +2307,7 @@ For a different type of Morgan (e.g. count) and radius = 1 instead of 2, as well
 similarity metric (e.g. Tanimoto), the call becomes:
 
   >>> from rdkit import DataStructs
-  >>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, lambda m,idx: SimilarityMaps.GetMorganFingerprint(m, atomId=idx, radius=1, fpType='count'), metric=DataStructs.TanimotoSimilarity)
+  >>> _, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, lambda m,idx: SimilarityMaps.GetMorganFingerprint(m, atomId=idx, radius=1, fpType='count'), d2d, metric=DataStructs.TanimotoSimilarity)
 
 Producing this image:
 
@@ -2324,7 +2325,7 @@ If one does not want the normalisation step, the map can be created like:
   >>> weights = SimilarityMaps.GetAtomicWeightsForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
   >>> print(["%.2f " % w for w in weights])
   ['0.05 ', ...
-  >>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, weights)
+  >>> _ = SimilarityMaps.GetSimilarityMapFromWeights(mol, weights, d2d)
 
 Producing this image:
 
@@ -2399,11 +2400,13 @@ The Gasteiger partial charges can be visualized as (using a different color sche
 
 .. doctest::
 
+  >>> from rdkit.Chem import Draw
   >>> from rdkit.Chem.Draw import SimilarityMaps
   >>> mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
   >>> AllChem.ComputeGasteigerCharges(mol)
   >>> contribs = [mol.GetAtomWithIdx(i).GetDoubleProp('_GasteigerCharge') for i in range(mol.GetNumAtoms())]
-  >>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, contribs, colorMap='jet', contourLines=10)
+  >>> d2d = Draw.MolDraw2DCairo(400, 400)
+  >>> _ = SimilarityMaps.GetSimilarityMapFromWeights(mol, contribs, d2d, colorMap='jet', contourLines=10)
 
 Producing this image:
 
@@ -2415,7 +2418,7 @@ Or for the Crippen contributions to logP:
 
   >>> from rdkit.Chem import rdMolDescriptors
   >>> contribs = rdMolDescriptors._CalcCrippenContribs(mol)
-  >>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol,[x for x,y in contribs], colorMap='jet', contourLines=10)
+  >>> _ = SimilarityMaps.GetSimilarityMapFromWeights(mol,[x for x,y in contribs], d2d, colorMap='jet', contourLines=10)
 
 Producing this image:
 

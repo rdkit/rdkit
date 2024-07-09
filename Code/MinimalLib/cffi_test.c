@@ -2182,7 +2182,7 @@ void test_capture_logs() {
   } capture_test;
   capture_test tests[] = {{"tee", set_log_tee}, {"capture", set_log_capture}};
   for (size_t i = 0; i < sizeof(tests) / sizeof(capture_test); ++i) {
-    printf("%d. %s\n", i + 1, tests[i].type);
+    printf("%zu. %s\n", i + 1, tests[i].type);
     log_handle = tests[i].func("dummy");
     assert(!log_handle);
     log_handle = tests[i].func("rdApp.*");
@@ -2287,6 +2287,310 @@ void test_assign_cip_labels() {
   use_legacy_stereo_perception(orig_setting);
 }
 
+void test_smiles_smarts_params() {
+  printf("--------------------------\n");
+  printf("  test_smiles_smarts_params\n");
+  const char *amoxicillin_pub_chem =
+      "CC1([C@@H](N2[C@H](S1)[C@@H](C2=O)NC(=O)[C@@H](C3=CC=C(C=C3)O)N)C(=O)O)C";
+  const char *bicyclo221heptane =
+      "\n\
+     RDKit          2D\n\
+\n\
+  9 10  0  0  1  0  0  0  0  0999 V2000\n\
+   -2.8237   -1.3088    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.5723   -0.3996    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.5723    1.1473    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.1011    1.6253    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.3701    1.1474    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.3701   -0.3995    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.6217   -1.3087    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.1009   -0.8775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.8083    0.3739    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  1\n\
+  2  3  1  0\n\
+  4  3  1  0\n\
+  4  5  1  0\n\
+  6  5  1  0\n\
+  6  7  1  1\n\
+  6  8  1  0\n\
+  8  9  1  1\n\
+  8  2  1  0\n\
+  4  9  1  1\n\
+M  END\n\
+";
+  const char *atom_prop = " |atomProp:1.atomProp.1&#46;234|";
+  const char *chiral_smarts = "N-[C@H](-C(-O)=O)-C(-C)-C";
+  const char *chiral_smarts_with_atom_prop =
+      "N-[C@H](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|";
+  char *mpkl;
+  size_t mpkl_size;
+  char *mpkl_atom_prop;
+  size_t mpkl_atom_prop_size;
+  char *canonical_smiles;
+  char *non_canonical_smiles;
+  char *canonical_smiles_no_stereo;
+  char *non_canonical_smiles_no_stereo;
+  char *canonical_cxsmiles;
+  char *non_canonical_cxsmiles_no_stereo;
+  char *non_canonical_cxsmiles_no_stereo_atom_prop;
+  char *cxsmiles_with_atom_prop;
+  char *smarts;
+  char *ptr;
+  char *ptr_end;
+  unsigned int i;
+  mpkl = get_mol(amoxicillin_pub_chem, &mpkl_size, "");
+  assert(mpkl);
+  const char *empty_json[3] = {NULL, "", "{}"};
+  for (i = 0; i < 3; ++i) {
+    canonical_smiles = get_smiles(mpkl, mpkl_size, empty_json[i]);
+    assert(canonical_smiles);
+    assert(!strcmp(
+        canonical_smiles,
+        "CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccc(O)cc3)C(=O)N2[C@H]1C(=O)O"));
+    free(canonical_smiles);
+  }
+  non_canonical_smiles =
+      get_smiles(mpkl, mpkl_size, "{\"canonical\":\"false\"}");
+  assert(non_canonical_smiles);
+  assert(!strcmp(
+      non_canonical_smiles,
+      "CC1(C)[C@H](C(=O)O)N2[C@H](S1)[C@H](NC(=O)[C@@H](c1ccc(O)cc1)N)C2=O"));
+  free(non_canonical_smiles);
+  canonical_smiles_no_stereo =
+      get_smiles(mpkl, mpkl_size, "{\"doIsomericSmiles\":false}");
+  assert(canonical_smiles_no_stereo);
+  assert(!strcmp(canonical_smiles_no_stereo,
+                 "CC1(C)SC2C(NC(=O)C(N)c3ccc(O)cc3)C(=O)N2C1C(=O)O"));
+  free(canonical_smiles_no_stereo);
+  non_canonical_smiles_no_stereo = get_smiles(
+      mpkl, mpkl_size, "{\"doIsomericSmiles\":false,\"canonical\":false}");
+  assert(non_canonical_smiles_no_stereo);
+  assert(!strcmp(non_canonical_smiles_no_stereo,
+                 "CC1(C)C(C(=O)O)N2C(S1)C(NC(=O)C(c1ccc(O)cc1)N)C2=O"));
+  free(non_canonical_smiles_no_stereo);
+  free(mpkl);
+  mpkl =
+      get_mol(bicyclo221heptane, &mpkl_size, "{\"useMolBlockWedging\":true}");
+  assert(mpkl);
+  for (i = 0; i < 3; ++i) {
+    canonical_cxsmiles = get_cxsmiles(mpkl, mpkl_size, empty_json[i]);
+    assert(canonical_cxsmiles);
+    ptr = strstr(canonical_cxsmiles, " |");
+    assert(ptr);
+    *ptr = '\0';
+    assert(!strcmp(canonical_cxsmiles, "N[C@@H]1C[C@@H]2C[C@H]1[C@@H](O)C2"));
+    ++ptr;
+    assert(*ptr == '|');
+    ptr = strstr(ptr, "),");
+    assert(ptr);
+    ptr += 2;
+    ptr_end = strstr(ptr, "|");
+    assert(ptr_end);
+    *ptr_end = '\0';
+    assert(!strcmp(ptr, "wD:3.9,wU:1.0,5.4,6.7"));
+    free(canonical_cxsmiles);
+  }
+  canonical_cxsmiles =
+      get_cxsmiles(mpkl, mpkl_size,
+                   "{\"restoreBondDirOption\":\"RestoreBondDirOptionTrue\"}");
+  assert(canonical_cxsmiles);
+  ptr = strstr(canonical_cxsmiles, " |");
+  assert(ptr);
+  *ptr = '\0';
+  assert(!strcmp(canonical_cxsmiles, "N[C@@H]1C[C@@H]2C[C@H]1[C@@H](O)C2"));
+  ++ptr;
+  assert(*ptr == '|');
+  ptr = strstr(ptr, "),");
+  assert(ptr);
+  ptr += 2;
+  ptr_end = strstr(ptr, "|");
+  assert(ptr_end);
+  *ptr_end = '\0';
+  assert(!strcmp(ptr, "wU:1.0,3.3,5.4,6.7"));
+  free(canonical_cxsmiles);
+  non_canonical_cxsmiles_no_stereo = get_cxsmiles(
+      mpkl, mpkl_size,
+      "{\"doIsomericSmiles\":false,\"canonical\":false,\"CX_ALL_BUT_COORDS\":true}");
+  assert(non_canonical_cxsmiles_no_stereo);
+  assert(!strcmp(non_canonical_cxsmiles_no_stereo, "OC1CC2CC(N)C1C2"));
+  non_canonical_cxsmiles_no_stereo_atom_prop =
+      realloc(non_canonical_cxsmiles_no_stereo,
+              strlen(non_canonical_cxsmiles_no_stereo) + strlen(atom_prop) + 1);
+  assert(non_canonical_cxsmiles_no_stereo_atom_prop);
+  assert(strcat(non_canonical_cxsmiles_no_stereo_atom_prop, atom_prop) ==
+         non_canonical_cxsmiles_no_stereo_atom_prop);
+  mpkl_atom_prop = get_mol(non_canonical_cxsmiles_no_stereo_atom_prop,
+                           &mpkl_atom_prop_size, "");
+  assert(mpkl_atom_prop);
+  free(non_canonical_cxsmiles_no_stereo_atom_prop);
+  cxsmiles_with_atom_prop = get_cxsmiles(mpkl_atom_prop, mpkl_atom_prop_size,
+                                         "{\"CX_ALL_BUT_COORDS\":true}");
+  assert(cxsmiles_with_atom_prop);
+  assert(!strcmp(cxsmiles_with_atom_prop,
+                 "NC1CC2CC(O)C1C2 |atomProp:5.atomProp.1&#46;234|"));
+  free(cxsmiles_with_atom_prop);
+  free(mpkl_atom_prop);
+  free(mpkl);
+  mpkl = get_qmol(chiral_smarts, &mpkl_size, "");
+  assert(mpkl);
+  for (i = 0; i < 3; ++i) {
+    smarts = get_smarts(mpkl, mpkl_size, empty_json[i]);
+    assert(smarts);
+    assert(!strcmp(smarts, "N-[C@&H1](-C(-O)=O)-C(-C)-C"));
+    free(smarts);
+  }
+  smarts = get_smarts(mpkl, mpkl_size, "{\"doIsomericSmiles\":false}");
+  assert(smarts);
+  assert(!strcmp(smarts, "N-[C&H1](-C(-O)=O)-C(-C)-C"));
+  free(smarts);
+  free(mpkl);
+  mpkl = get_qmol(chiral_smarts_with_atom_prop, &mpkl_size, "");
+  assert(mpkl);
+  for (i = 0; i < 3; ++i) {
+    smarts = get_cxsmarts(mpkl, mpkl_size, empty_json[i]);
+    assert(smarts);
+    assert(!strcmp(
+        smarts, "N-[C@&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|"));
+    free(smarts);
+  }
+  smarts = get_cxsmarts(mpkl, mpkl_size, "{\"doIsomericSmiles\":false}");
+  assert(smarts);
+  assert(!strcmp(smarts,
+                 "N-[C&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|"));
+  free(smarts);
+  free(mpkl);
+}
+
+void test_wedged_bond_atropisomer() {
+  printf("--------------------------\n");
+  printf("  test_wedged_bond_atropisomer\n");
+  const char *atropisomer =
+      "\n\
+  Mrv2311 05242408162D          \n\
+\n\
+  0  0  0     0  0            999 V3000\n\
+M  V30 BEGIN CTAB\n\
+M  V30 COUNTS 14 15 0 0 0\n\
+M  V30 BEGIN ATOM\n\
+M  V30 1 C 2.0006 -1.54 0 0\n\
+M  V30 2 N 2.0006 -3.08 0 0\n\
+M  V30 3 C 0.6669 -3.85 0 0\n\
+M  V30 4 C -0.6668 -3.08 0 0\n\
+M  V30 5 C -0.6668 -1.54 0 0\n\
+M  V30 6 C -2.0006 -0.77 0 0\n\
+M  V30 7 C 0.6669 -0.77 0 0\n\
+M  V30 8 C 0.6669 0.77 0 0\n\
+M  V30 9 C -0.6668 1.54 0 0\n\
+M  V30 10 C -2.0006 0.77 0 0\n\
+M  V30 11 C -0.6668 3.08 0 0\n\
+M  V30 12 C 0.6669 3.85 0 0\n\
+M  V30 13 C 2.0006 3.08 0 0\n\
+M  V30 14 C 2.0006 1.54 0 0\n\
+M  V30 END ATOM\n\
+M  V30 BEGIN BOND\n\
+M  V30 1 1 1 2\n\
+M  V30 2 2 2 3\n\
+M  V30 3 1 3 4\n\
+M  V30 4 2 4 5\n\
+M  V30 5 1 5 6\n\
+M  V30 6 1 7 5 CFG=3\n\
+M  V30 7 2 7 1\n\
+M  V30 8 1 7 8\n\
+M  V30 9 2 8 9\n\
+M  V30 10 1 9 10\n\
+M  V30 11 1 9 11\n\
+M  V30 12 2 11 12\n\
+M  V30 13 1 12 13\n\
+M  V30 14 2 13 14\n\
+M  V30 15 1 8 14\n\
+M  V30 END BOND\n\
+M  V30 END CTAB\n\
+M  END\n";
+  char *mpkl;
+  size_t mpkl_size;
+  char *svg;
+  mpkl = get_mol(atropisomer, &mpkl_size, "");
+  assert(mpkl);
+  svg = get_svg(mpkl, mpkl_size,
+                "{\"useMolBlockWedging\":true,\"noFreetype\":true}");
+  assert(svg);
+  char *line = strtok(svg, "\n");
+  char *str = NULL;
+  int n_matches = 0;
+  while (line) {
+    str = strstr(line, "<path class='bond-5 atom-6 atom-4'");
+    if (str) {
+      ++n_matches;
+      assert(strstr(
+          str,
+          "style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />"));
+      assert(!strstr(
+          str,
+          "style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />"));
+    }
+    line = strtok(NULL, "\n");
+  }
+  assert(n_matches > 6);
+  free(svg);
+  free(mpkl);
+}
+
+void test_get_molblock_use_molblock_wedging() {
+  printf("--------------------------\n");
+  printf("  test_get_molblock_use_molblock_wedging\n");
+  const char *mb =
+      "\n\
+     RDKit          2D\n\
+\n\
+  9 10  0  0  1  0  0  0  0  0999 V2000\n\
+    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  1\n\
+  2  3  1  0\n\
+  4  3  1  0\n\
+  4  5  1  0\n\
+  6  5  1  0\n\
+  6  7  1  1\n\
+  6  8  1  0\n\
+  8  9  1  1\n\
+  8  2  1  0\n\
+  4  9  1  1\n\
+M  END\n\
+";
+  char *mpkl;
+  char *mpkl_copy;
+  size_t mpkl_size;
+  const char *mb_rdkit_wedging;
+  const char *mb_rdkit_wedging_post_orig;
+  const char *mb_orig_wedging;
+  mpkl = get_mol(mb, &mpkl_size, "");
+  assert(mpkl && mpkl_size);
+  mpkl_copy = malloc(mpkl_size);
+  assert(mpkl_copy);
+  memcpy(mpkl_copy, mpkl, mpkl_size);
+  mb_rdkit_wedging = get_molblock(mpkl, mpkl_size, NULL);
+  assert(strcmp(mb, mb_rdkit_wedging));
+  mb_orig_wedging =
+      get_molblock(mpkl, mpkl_size, "{\"useMolBlockWedging\":true}");
+  assert(!memcmp(mpkl, mpkl_copy, mpkl_size));
+  assert(!strcmp(mb, mb_orig_wedging));
+  mb_rdkit_wedging_post_orig = get_molblock(mpkl, mpkl_size, NULL);
+  assert(strcmp(mb, mb_rdkit_wedging_post_orig));
+  assert(!strcmp(mb_rdkit_wedging, mb_rdkit_wedging_post_orig));
+  free(mb_rdkit_wedging);
+  free(mb_rdkit_wedging_post_orig);
+  free(mb_orig_wedging);
+  free(mpkl);
+  free(mpkl_copy);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -2316,5 +2620,8 @@ int main() {
   test_capture_logs();
   test_relabel_mapped_dummies();
   test_assign_cip_labels();
+  test_smiles_smarts_params();
+  test_wedged_bond_atropisomer();
+  test_get_molblock_use_molblock_wedging();
   return 0;
 }

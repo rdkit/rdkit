@@ -14,6 +14,9 @@ rdkit_headers(MMFF/AtomTyper.h
 rdkit_headers(CrystalFF/TorsionAngleM6.h CrystalFF/TorsionPreferences.h
               DEST GraphMol/ForceFieldHelpers/CrystalFF)
 
+rdkit_catch_test(forceFieldHelpersCatch catch_tests.cpp 
+LINK_LIBRARIES ForceFieldHelpers SmilesParse ForceField )
+
 add_subdirectory(MMFF)
 add_subdirectory(UFF)
 add_subdirectory(CrystalFF)

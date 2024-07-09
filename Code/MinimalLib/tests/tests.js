@@ -1102,6 +1102,49 @@ function test_flexicanvas() {
     assert(svg.search("height='19px'")>0);
 }
 
+function test_run_reaction() {
+    let rxn1;
+    let molList;
+    try {
+        rxn1 = RDKitModule.get_rxn('[#6:1][O:2]>>[#6:1]=[O:2]');
+        molList = molListFromSmiArray(['CC(C)O',]);
+        let products;
+        try {
+            products = rxn1.run_reactants(molList, 10000);
+            for (let i = 0; i < products.size(); i++) {
+                let element;
+                try {
+                    element = products.get(i);
+                    let mol;
+                    try {
+                        mol = element.next();
+                        assert(mol && mol.get_smiles() === "CC(C)=O");
+                    } finally {
+                        if (mol) {
+                            mol.delete();
+                        }
+                    }
+                } finally {
+                    if (element) {
+                        element.delete();
+                    }
+                }
+            }
+        } finally {
+            if (products) {
+                products.delete();
+            }
+        }
+    } finally {
+        if (rxn1) {
+            rxn1.delete();
+        }
+        if (molList) {
+            molList.delete();
+        }
+    }
+}
+
 function test_rxn_drawing() {
     {
         var rxn = RDKitModule.get_rxn("[CH3:1][OH:2]>>[CH2:1]=[OH0:2]");
@@ -2807,6 +2850,194 @@ function test_assign_cip_labels() {
     }
 }
 
+function test_smiles_smarts_params() {
+    {
+        const amoxicillinPubChem = 'CC1([C@@H](N2[C@H](S1)[C@@H](C2=O)NC(=O)[C@@H](C3=CC=C(C=C3)O)N)C(=O)O)C';
+        const mol = RDKitModule.get_mol(amoxicillinPubChem);
+        {
+            const canonicalSmiles = mol.get_smiles();
+            assert(canonicalSmiles === 'CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccc(O)cc3)C(=O)N2[C@H]1C(=O)O');
+        }
+        ['{}', ''].forEach((emptyJson) => {
+            const canonicalSmiles = mol.get_smiles(emptyJson);
+            assert(canonicalSmiles === 'CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccc(O)cc3)C(=O)N2[C@H]1C(=O)O');
+        });
+        const nonCanonicalSmiles = mol.get_smiles(JSON.stringify({canonical: false}));
+        assert(nonCanonicalSmiles === 'CC1(C)[C@H](C(=O)O)N2[C@H](S1)[C@H](NC(=O)[C@@H](c1ccc(O)cc1)N)C2=O');
+        const canonicalSmilesNoStereo = mol.get_smiles(JSON.stringify({doIsomericSmiles: false}));
+        assert(canonicalSmilesNoStereo === 'CC1(C)SC2C(NC(=O)C(N)c3ccc(O)cc3)C(=O)N2C1C(=O)O');
+        const nonCanonicalSmilesNoStereo = mol.get_smiles(JSON.stringify({doIsomericSmiles: false, canonical: false}));
+        assert(nonCanonicalSmilesNoStereo === 'CC1(C)C(C(=O)O)N2C(S1)C(NC(=O)C(c1ccc(O)cc1)N)C2=O');
+        mol.delete();
+    }
+    {
+        const bicyclo221heptane = `
+     RDKit          2D
+
+  9 10  0  0  1  0  0  0  0  0999 V2000
+   -2.8237   -1.3088    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5723   -0.3996    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5723    1.1473    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1011    1.6253    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3701    1.1474    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3701   -0.3995    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6217   -1.3087    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1009   -0.8775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8083    0.3739    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  2  3  1  0
+  4  3  1  0
+  4  5  1  0
+  6  5  1  0
+  6  7  1  1
+  6  8  1  0
+  8  9  1  1
+  8  2  1  0
+  4  9  1  1
+M  END
+`;
+        const mol = RDKitModule.get_mol(bicyclo221heptane);
+        {
+            const canonicalCXSmiles = mol.get_cxsmiles();
+            const [_, canonicalSmiles, wedging] = canonicalCXSmiles.match(/^(\S+) \|\([^\)]+\),([^\|]+)\|$/);
+            assert(canonicalSmiles === 'N[C@@H]1C[C@@H]2C[C@H]1[C@@H](O)C2');
+            assert(wedging === 'wD:3.9,wU:1.0,5.4,6.7');
+        }
+        ['{}', ''].forEach((emptyJson) => {
+            const canonicalCXSmiles = mol.get_cxsmiles(emptyJson);
+            const [_, canonicalSmiles, wedging] = canonicalCXSmiles.match(/^(\S+) \|\([^\)]+\),([^\|]+)\|$/);
+            assert(canonicalSmiles === 'N[C@@H]1C[C@@H]2C[C@H]1[C@@H](O)C2');
+            assert(wedging === 'wD:3.9,wU:1.0,5.4,6.7');
+        });
+        {
+            const canonicalCXSmiles = mol.get_cxsmiles(JSON.stringify({restoreBondDirOption: 'RestoreBondDirOptionTrue'}));
+            const [_, canonicalSmiles, wedging] = canonicalCXSmiles.match(/^(\S+) \|\([^\)]+\),([^\|]+)\|$/);
+            assert(canonicalSmiles === 'N[C@@H]1C[C@@H]2C[C@H]1[C@@H](O)C2');
+            assert(wedging === 'wU:1.0,3.3,5.4,6.7');
+        }
+        {
+            const nonCanonicalCXSmilesNoStereo = mol.get_cxsmiles(JSON.stringify({doIsomericSmiles: false, canonical: false, CX_ALL_BUT_COORDS: true}));
+            assert(nonCanonicalCXSmilesNoStereo === 'OC1CC2CC(N)C1C2');
+            const nonCanonicalCXSmilesNoStereoAtomProp = `${nonCanonicalCXSmilesNoStereo} |atomProp:1.atomProp.1&#46;234|`;
+            const molWithAtomProp = RDKitModule.get_mol(nonCanonicalCXSmilesNoStereoAtomProp);
+            assert(molWithAtomProp);
+            const cxSmilesWithAtomProp = molWithAtomProp.get_cxsmiles(JSON.stringify({CX_ALL_BUT_COORDS: true}));
+            assert(cxSmilesWithAtomProp === 'NC1CC2CC(O)C1C2 |atomProp:5.atomProp.1&#46;234|');
+            molWithAtomProp.delete();
+        }
+        mol.delete();
+    }
+    {
+        const chiralQuery = RDKitModule.get_qmol('N-[C@H](-C(-O)=O)-C(-C)-C');
+        assert(chiralQuery.get_smarts() === 'N-[C@&H1](-C(-O)=O)-C(-C)-C');
+        ['', '{}'].forEach((emptyJson) => {
+            assert(chiralQuery.get_smarts(emptyJson) === 'N-[C@&H1](-C(-O)=O)-C(-C)-C');
+        });
+        assert(chiralQuery.get_smarts(JSON.stringify({doIsomericSmiles: false})) === 'N-[C&H1](-C(-O)=O)-C(-C)-C');
+    }
+    {
+        const chiralQuery = RDKitModule.get_qmol('N-[C@H](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|');
+        assert(chiralQuery.get_cxsmarts() === 'N-[C@&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|');
+        ['', '{}'].forEach((emptyJson) => {
+            assert(chiralQuery.get_cxsmarts(emptyJson) === 'N-[C@&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|');
+        });
+        assert(chiralQuery.get_cxsmarts(JSON.stringify({doIsomericSmiles: false})) === 'N-[C&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|');
+    }
+}
+
+function test_wedged_bond_atropisomer() {
+    var atropisomer = `
+  Mrv2311 05242408162D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.0006 -1.54 0 0
+M  V30 2 N 2.0006 -3.08 0 0
+M  V30 3 C 0.6669 -3.85 0 0
+M  V30 4 C -0.6668 -3.08 0 0
+M  V30 5 C -0.6668 -1.54 0 0
+M  V30 6 C -2.0006 -0.77 0 0
+M  V30 7 C 0.6669 -0.77 0 0
+M  V30 8 C 0.6669 0.77 0 0
+M  V30 9 C -0.6668 1.54 0 0
+M  V30 10 C -2.0006 0.77 0 0
+M  V30 11 C -0.6668 3.08 0 0
+M  V30 12 C 0.6669 3.85 0 0
+M  V30 13 C 2.0006 3.08 0 0
+M  V30 14 C 2.0006 1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 1 7 5 CFG=3
+M  V30 7 2 7 1
+M  V30 8 1 7 8
+M  V30 9 2 8 9
+M  V30 10 1 9 10
+M  V30 11 1 9 11
+M  V30 12 2 11 12
+M  V30 13 1 12 13
+M  V30 14 2 13 14
+M  V30 15 1 8 14
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+`;
+    var mol = RDKitModule.get_mol(atropisomer);
+    assert(mol);
+    var svg = mol.get_svg_with_highlights(JSON.stringify({
+        useMolBlockWedging: true, noFreetype: true
+    }));
+    assert(svg.match(/<path class='bond-5 atom-6 atom-4'.*style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1\.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' \/>/g).length > 6);
+    assert(!svg.match(/<path class='bond-5 atom-6 atom-4'.*style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2\.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' \/>/g));
+    mol.delete();
+}
+
+function test_get_molblock_use_molblock_wedging() {
+    var mb = `
+    RDKit          2D
+
+ 9 10  0  0  1  0  0  0  0  0999 V2000
+   1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+ 2  1  1  1
+ 2  3  1  0
+ 4  3  1  0
+ 4  5  1  0
+ 6  5  1  0
+ 6  7  1  1
+ 6  8  1  0
+ 8  9  1  1
+ 8  2  1  0
+ 4  9  1  1
+M  END
+`;
+    var mol = RDKitModule.get_mol(mb);
+    assert(mol);
+    var molCopy = RDKitModule.get_mol_copy(mol);
+    assert(molCopy);
+    var mbRDKitWedging = mol.get_molblock();
+    assert(mbRDKitWedging !== mb);
+    var mbOrigWedging = mol.get_molblock(JSON.stringify({useMolBlockWedging: true}));
+    assert(mb === mbOrigWedging);
+    var mbRDKitWedgingPostOrig = mol.get_molblock();
+    assert(mb !== mbRDKitWedgingPostOrig);
+    assert(mbRDKitWedging === mbRDKitWedgingPostOrig);
+    mol.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -2852,6 +3083,7 @@ initRDKitModule().then(function(instance) {
     test_flexicanvas();
     if (RDKitModule.get_rxn)  {
         test_rxn_drawing();
+        test_run_reaction();
     }
     test_legacy_stereochem();
     test_allow_non_tetrahedral_chirality();
@@ -2881,6 +3113,8 @@ initRDKitModule().then(function(instance) {
     test_get_sss_json();
     test_relabel_mapped_dummies();
     test_assign_cip_labels();
+    test_smiles_smarts_params();
+    test_wedged_bond_atropisomer();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

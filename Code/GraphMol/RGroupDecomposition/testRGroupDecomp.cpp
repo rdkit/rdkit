@@ -2988,7 +2988,7 @@ M  END
   auto p1 = conf.getAtomPos(dummy->getIdx());
   auto p2 = conf.getAtomPos(neighborIndex);
   auto length = (p1 - p2).length();
-  TEST_ASSERT(abs(length - 1.0) < 0.25);
+  TEST_ASSERT(fabs(length - 1.0) < 0.25);
 }
 
 void testMultipleGroupsToUnlabelledCoreAtomGithub5573() {
@@ -3522,9 +3522,9 @@ M  END
     auto &dummyPoint = conf.getAtomPos(dummy->getIdx());
     auto &neighborPoint = conf.getAtomPos(neighbor->getIdx());
     auto length = (dummyPoint - neighborPoint).length();
-    TEST_ASSERT(abs(length - 1.0) < 0.005);
+    TEST_ASSERT(fabs(length - 1.0) < 0.005);
     // R2 dummy should be directly above neighbor
-    TEST_ASSERT(abs(dummyPoint.x - neighborPoint.x) < 0.05);
+    TEST_ASSERT(fabs(dummyPoint.x - neighborPoint.x) < 0.05);
   }
 
   {
@@ -3540,8 +3540,8 @@ M  END
     // R2 dummy should be over input chiral oxygen, which is first oxygen of
     // degree 2 in input mol block
     auto &inputPoint = mol2->getConformer(0).getAtomPos(15);
-    TEST_ASSERT(abs(dummyPoint.x - inputPoint.x) < 0.05);
-    TEST_ASSERT(abs(dummyPoint.y - inputPoint.y) < 0.05);
+    TEST_ASSERT(fabs(dummyPoint.x - inputPoint.x) < 0.05);
+    TEST_ASSERT(fabs(dummyPoint.y - inputPoint.y) < 0.05);
   }
 }
 
@@ -3812,7 +3812,7 @@ void testEnumeratedCore() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Test that enumerated cores behave properly"
                        << std::endl;
-  
+
   auto core = R"CTAB(
   Mrv2008 08242317002D          
 
@@ -3854,9 +3854,8 @@ M  END
   params.onlyMatchAtRGroups = false;
   params.doEnumeration = true;
 
-  const char *expected[] = {
-      "Core:Fc1ccc([*:2])cc1Cl R2:C[*:2]",
-      "Core:Fc1ccc(Cl)cc1[*:1] R1:CC[*:1]"};
+  const char *expected[] = {"Core:Fc1ccc([*:2])cc1Cl R2:C[*:2]",
+                            "Core:Fc1ccc(Cl)cc1[*:1] R1:CC[*:1]"};
 
   RGroupDecomposition decomp(*core, params);
   const auto add11 = decomp.add(*mol1);
@@ -3969,8 +3968,9 @@ M  END
 void testStereoBondBug() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test that stereo bonds adjacent to the core or attachment atoms are handled correctly"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Test that stereo bonds adjacent to the core or attachment atoms are handled correctly"
+      << std::endl;
 
   const auto core = R"CTAB(ACS Document 1996
   ChemDraw10242316092D
@@ -4004,7 +4004,7 @@ M  END
   auto r1 = rows[0]["R1"];
   // Check to see that Stereo bond is present and defined
   bool foundStereo = false;
-  for (const auto bond: r1->bonds()) {
+  for (const auto bond : r1->bonds()) {
     if (bond->getStereo() > Bond::STEREOANY) {
       TEST_ASSERT(!foundStereo);
       foundStereo = true;
@@ -4041,7 +4041,7 @@ M  END
   r1 = rows[0]["R1"];
   // Check to see that Stereo bond is not present
   foundStereo = false;
-  for (const auto bond: r1->bonds()) {
+  for (const auto bond : r1->bonds()) {
     if (bond->getStereo() > Bond::STEREOANY) {
       foundStereo = true;
     }
@@ -4077,7 +4077,7 @@ M  END
   const auto c1 = rows[0]["Core"];
   // Check to see that Stereo bond is not present
   foundStereo = false;
-  for (const auto bond: c1->bonds()) {
+  for (const auto bond : c1->bonds()) {
     if (bond->getStereo() > Bond::STEREOANY) {
       TEST_ASSERT(!foundStereo);
       foundStereo = true;
@@ -4090,12 +4090,13 @@ M  END
 void testNotEnumeratedCore() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test that enumerated setting for non enumerated cores behaves properly"
-                       << std::endl;
-  
+  BOOST_LOG(rdInfoLog)
+      << "Test that enumerated setting for non enumerated cores behaves properly"
+      << std::endl;
+
   const auto core = "C1CCCCC1"_smarts;
-  const auto mol =  "C1CCCCC1C"_smiles;
-  
+  const auto mol = "C1CCCCC1C"_smiles;
+
   RGroupDecompositionParameters params;
   params.matchingStrategy = GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = true;
@@ -4116,38 +4117,37 @@ void testNotEnumeratedCore() {
 }
 
 void testRgroupDecompZipping() {
-    BOOST_LOG(rdInfoLog)
-        << "********************************************************\n";
-    BOOST_LOG(rdInfoLog) << "Test we can reconstruct rgroup decomps that break rings"
-                         << std::endl;
-    
-    const auto core = "N1OCC1"_smiles;
-    const auto mol = "C1CC2ONC12"_smiles;
-    RGroupDecompositionParameters params;
-    params.matchingStrategy = GreedyChunks;
-    params.allowMultipleRGroupsOnUnlabelled = true;
-    params.onlyMatchAtRGroups = false;
-    params.doEnumeration = true;
-    params.doTautomers = false;
-    RGroupDecomposition decomp(*core, params);
-    const auto add11 = decomp.add(*mol);
-    TEST_ASSERT(add11 == 0);
-    decomp.process();
-    RGroupRows rows = decomp.getRGroupsAsRows();
-    TEST_ASSERT(rows.size() == 1);
-    RGroupRows::const_iterator it = rows.begin();
-    std::vector<ROMOL_SPTR> mols;
-    for (auto rgroups = it->begin(); rgroups != it->end(); ++rgroups) {
-        mols.push_back(rgroups->second);
-    }
-    auto res = molzip(mols);
-    TEST_ASSERT(MolToSmiles(*res) == "C1CC2ONC12")
-    
-    for(RGroupRow &rgroup: rows) {
-        res = molzip(rgroup);
-        TEST_ASSERT(MolToSmiles(*res) == "C1CC2ONC12")
-    }
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test we can reconstruct rgroup decomps that break rings" << std::endl;
 
+  const auto core = "N1OCC1"_smiles;
+  const auto mol = "C1CC2ONC12"_smiles;
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  params.allowMultipleRGroupsOnUnlabelled = true;
+  params.onlyMatchAtRGroups = false;
+  params.doEnumeration = true;
+  params.doTautomers = false;
+  RGroupDecomposition decomp(*core, params);
+  const auto add11 = decomp.add(*mol);
+  TEST_ASSERT(add11 == 0);
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1);
+  RGroupRows::const_iterator it = rows.begin();
+  std::vector<ROMOL_SPTR> mols;
+  for (auto rgroups = it->begin(); rgroups != it->end(); ++rgroups) {
+    mols.push_back(rgroups->second);
+  }
+  auto res = molzip(mols);
+  TEST_ASSERT(MolToSmiles(*res) == "C1CC2ONC12")
+
+  for (RGroupRow &rgroup : rows) {
+    res = molzip(rgroup);
+    TEST_ASSERT(MolToSmiles(*res) == "C1CC2ONC12")
+  }
 }
 
 int main() {

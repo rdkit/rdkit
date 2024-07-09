@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2011-2022 NextMove Software and other RDKit contributors
+//  Copyright (C) 2011-2024 NextMove Software and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -509,12 +509,23 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                   << atm->getIdx() << "-" << oatom->getIdx() << std::endl;
         std::cerr << "    " << bondsConsidered[nbrBond->getIdx()] << " icao "
                   << isCandidateAtom(oatom) << " hsbo "
-                  << hasStartBond(oatom, startBonds) << " unsat "
+                  << hasStartBond(oatom, startBonds) << " atomunsato "
+                  << queryAtomUnsaturated(oatom) << " atomunsat "
+                  << queryAtomUnsaturated(atm) << " bondunsat "
                   << isUnsaturatedBond(nbrBond) << " icaa "
                   << isCandidateAtom(atm) << " hsba "
                   << hasStartBond(atm, startBonds) << std::endl;
 #endif
+        // special case to prevent "overreach" with things like enamines.
+        // the logic here prevents the first bond in CNC=C from being included
+        // in the tautomeric system. So we get: [CH3]-[N]:[C] instead of
+        // [C]:[N]:[C]
+        if (startBonds[bptr->getIdx()] && isHeteroAtom(atm) &&
+            !isUnsaturatedBond(nbrBond)) {
+          continue;
+        }
 
+        // if both bonds are not eligible, then we can skip this neighbor
         if (skipNeighborBond(atm, oatom, nbrBond, startBonds) &&
             skipNeighborBond(oatom, atm, nbrBond, startBonds)) {
           continue;

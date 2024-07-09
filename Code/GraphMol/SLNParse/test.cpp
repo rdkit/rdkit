@@ -277,16 +277,18 @@ void test3() {
 
   delete mol;
   sln = "C[1:+]H5";
-  mol = RDKit::SLNToMol(sln);
+  bool sanitize = false;
+  mol = RDKit::SLNToMol(sln, sanitize);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 1);
+  mol->debugMol(std::cerr);
+  TEST_ASSERT(mol->getNumAtoms() == 6);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getFormalCharge() == 1);
 
   delete mol;
   sln = "C[1:+2]H6";
-  mol = RDKit::SLNToMol(sln);
+  mol = RDKit::SLNToMol(sln, sanitize);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 1);
+  TEST_ASSERT(mol->getNumAtoms() == 7);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getFormalCharge() == 2);
 
   delete mol;
@@ -386,7 +388,9 @@ void test5() {
   TEST_ASSERT(patt->getAtomWithIdx(0)->getNumImplicitHs() == 0);
 
   smi = "C[CH2+](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  bool sanitize = false;
+  bool debugParse = false;
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 1);
 
@@ -398,7 +402,7 @@ void test5() {
 
   delete mol;
   smi = "C[CH3+2](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(!RDKit::SubstructMatch(*mol, *patt, mV));
 
@@ -456,12 +460,12 @@ void test5() {
   TEST_ASSERT(patt->getNumAtoms() == 1);
   delete mol;
   smi = "C[CH2+](C)[CH+2]";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 2);
   delete mol;
   smi = "C[CH2+](C)[N+2]";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 1);
   delete mol;
@@ -477,7 +481,7 @@ void test5() {
   TEST_ASSERT(patt->getNumAtoms() == 1);
   delete mol;
   smi = "C[CH2+](CC)[NH+]";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 1);
   TEST_ASSERT(mV[0][0].second == 1);
@@ -489,7 +493,7 @@ void test5() {
   TEST_ASSERT(patt->getNumAtoms() == 1);
   delete mol;
   smi = "C[CH2+](CC)[NH+]";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 1);
   TEST_ASSERT(mV[0][0].second == 1);
@@ -501,7 +505,7 @@ void test5() {
   TEST_ASSERT(patt->getNumAtoms() == 1);
   delete mol;
   smi = "C[CH2+](CC)[NH+]";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 1);
   TEST_ASSERT(mV[0][0].second == 4);
@@ -755,7 +759,9 @@ void test7() {
   TEST_ASSERT(patt->getNumAtoms() == 1);
 
   smi = "C[CH2+](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  bool debugParse = false;
+  bool sanitize = false;
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 1);
 
@@ -767,7 +773,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH2+](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 3);
 
@@ -779,7 +785,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH3+2](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 3);
 
@@ -790,7 +796,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH2+](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 4);
 
@@ -802,7 +808,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH3+2](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 3);
 
@@ -813,7 +819,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH2+](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 1);
 
@@ -825,7 +831,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH3+2](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 1);
 
@@ -836,7 +842,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH2+](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 0);
 
@@ -848,7 +854,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH3+2](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 1);
 
@@ -859,7 +865,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH2+](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 1);
 
@@ -871,7 +877,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH3+2](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 1);
 
@@ -882,7 +888,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH2+](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 3);
 
@@ -894,7 +900,7 @@ void test7() {
 
   delete mol;
   smi = "C[CH3+2](C)C";
-  mol = RDKit::SmilesToMol(smi);
+  mol = RDKit::SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 4);
 

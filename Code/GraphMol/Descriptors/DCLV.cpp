@@ -474,7 +474,6 @@ struct State {
         double dx = ptr->pos.x - vect[0];
         double dy = ptr->pos.y - vect[1];
         double dz = ptr->pos.z - vect[2];
-
         if ((dx * dx + dy * dy + dz * dz) < (dist * dist)) {
           recordCache = ptr;
           return false;
@@ -615,7 +614,9 @@ struct State {
     voxW = minz;
 
     for (AtomRecord& atom : memberAtoms) {
-      if ((atom.flag & mask)) continue;
+      if (atom.flag & mask) {
+        continue;
+      }
 
       // get grid positions and add to list
       unsigned int x = voxX * (atom.pos.x - voxU);
@@ -644,10 +645,12 @@ struct State {
       }
     } else {
       double factor = atom.elem->radius + solvrad;
+      
       for (const DotStruct& dot : atom.elem->dots) {
         vect[0] = atom.pos.x + factor * dot.v.x;
         vect[1] = atom.pos.y + factor * dot.v.y;
         vect[2] = atom.pos.z + factor * dot.v.z;
+        
         if (testPoint(vect, solvrad)) {
           surfacearea += dot.area;
         }
@@ -810,12 +813,15 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol& mol,
   /*!
 
     \param mol: input molecule or protein
-    \param includeLigand: flag to trigger inclusion of bound
-    ligand in surface area and volume calculations where molecule is a protein
-    [default false]
-    \param probeRadius: radius of the sphere representing the probe solvent
-    atom
-    \param depth: controls the number of dots per atom
+    \param isProtein: flag to calculate burried surface area of a protein ligand 
+    complex [default=false, free ligand]
+    \param includeLigand: flag to trigger
+    inclusion of bound ligand in surface area and volume calculations where
+    molecule is a protein [default=true]
+    \param probeRadius: radius of the
+    sphere representing the probe solvent atom
+    \param depth: controls the number
+    of dots per atom
     \param dotDensity: controls density of dots per atom
     \return class
     object
@@ -837,10 +843,15 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol& mol,
     probeRadius = (isProtein) ? 1.4 : 1.2;
   }
 
-  // default 320 faces, protein
-  if (!isProtein && probeRadius == 1.4 && depth == 2) {
-    probeRadius = 1.2;
-    depth = 4;  // 5120 faces, ligand
+  // if not protein, includeLigand should always be true
+  if (!isProtein){
+    includeLigand = true;
+  }
+
+  // default 5120 faces, ligand
+  if (isProtein && probeRadius == 1.2 && depth == 4) {
+    probeRadius = 1.4;
+    depth = 2;  // 320 faces, protein
   }
 
   std::unique_ptr<ROMol> nmol{MolOps::removeAllHs(mol, false)};

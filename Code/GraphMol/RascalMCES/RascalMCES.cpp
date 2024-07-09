@@ -19,7 +19,6 @@
 #include <iostream>
 #include <map>
 #include <regex>
-#include <set>
 #include <stdexcept>
 #include <unordered_set>
 #include <vector>
@@ -117,11 +116,14 @@ void sortedDegreeSeqs(
 }
 
 // Make labels for the atoms - by default the atomic symbol.
-void getAtomLabels(const ROMol &mol, const RascalOptions & /* opts */,
+void getAtomLabels(const ROMol &mol, const RascalOptions &opts,
                    std::vector<std::string> &atomLabels) {
   atomLabels.resize(mol.getNumAtoms());
   for (const auto &a : mol.atoms()) {
     std::string label = a->getSymbol();
+    if (opts.exactConnectionsMatch) {
+      label += "X" + std::to_string(a->getDegree());
+    }
     atomLabels[a->getIdx()] = label;
   }
 }
@@ -253,14 +255,26 @@ void getBondLabels(const ROMol &mol, const RascalOptions &opts,
   getAtomLabels(mol, opts, atomLabels);
   bondLabels = std::vector<std::string>(mol.getNumBonds());
   for (const auto &b : mol.bonds()) {
-    if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
-      bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] +
-                                std::to_string(b->getBondType()) +
-                                atomLabels[b->getEndAtomIdx()];
+    if (b->getBeginAtom()->getAtomicNum() == b->getEndAtom()->getAtomicNum()) {
+      if (b->getEndAtom()->getDegree() < b->getBeginAtom()->getDegree()) {
+        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] +
+                                  std::to_string(b->getBondType()) +
+                                  atomLabels[b->getBeginAtomIdx()];
+      } else {
+        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] +
+                                  std::to_string(b->getBondType()) +
+                                  atomLabels[b->getEndAtomIdx()];
+      }
     } else {
-      bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] +
-                                std::to_string(b->getBondType()) +
-                                atomLabels[b->getBeginAtomIdx()];
+      if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
+        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] +
+                                  std::to_string(b->getBondType()) +
+                                  atomLabels[b->getEndAtomIdx()];
+      } else {
+        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] +
+                                  std::to_string(b->getBondType()) +
+                                  atomLabels[b->getBeginAtomIdx()];
+      }
     }
   }
 }
@@ -1063,7 +1077,7 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
                      starter.d_adjMatrix2, c, starter.d_vtxPairs, timedOut,
                      starter.d_swapped, starter.d_tier1Sim, starter.d_tier2Sim,
                      opts.ringMatchesRingOnly, opts.singleLargestFrag,
-                     opts.maxFragSeparation));
+                     opts.maxFragSeparation, opts.exactConnectionsMatch));
   }
   std::sort(results.begin(), results.end(), details::resultCompare);
   return results;

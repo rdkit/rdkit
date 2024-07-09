@@ -324,7 +324,7 @@ struct filtercat_wrapper {
 
     RegisterVectorConverter<std::pair<int, int>>("MatchTypeVect");
 
-    python::class_<FilterMatch, FilterMatch *, boost::shared_ptr<FilterMatch>>(
+    python::class_<FilterMatch, boost::shared_ptr<FilterMatch>>(
         "FilterMatch", FilterMatchDoc,
         python::init<boost::shared_ptr<FilterMatcherBase>, MatchVectType>(
             python::args("self", "filter", "atomPairs")))
@@ -333,7 +333,7 @@ struct filtercat_wrapper {
 
     RegisterVectorConverter<FilterMatch>("VectFilterMatch");
 
-    python::class_<FilterMatcherBase, FilterMatcherBase *,
+    python::class_<FilterMatcherBase,
                    boost::shared_ptr<FilterMatcherBase>, boost::noncopyable>(
         "FilterMatcherBase", FilterMatcherBaseDoc, python::no_init)
         .def("IsValid", &FilterMatcherBase::isValid, python::args("self"),
@@ -350,7 +350,7 @@ struct filtercat_wrapper {
 
     python::register_ptr_to_python<boost::shared_ptr<FilterMatcherBase>>();
 
-    python::class_<SmartsMatcher, SmartsMatcher *,
+    python::class_<SmartsMatcher,
                    python::bases<FilterMatcherBase>>(
         "SmartsMatcher", SmartsMatcherDoc,
         python::init<const std::string &>(python::args("self", "name")))
@@ -400,7 +400,7 @@ struct filtercat_wrapper {
             ((python::arg("self"), python::arg("count"))),
             "Set the maximum times pattern can appear for the filter to match");
 
-    python::class_<ExclusionList, ExclusionList *,
+    python::class_<ExclusionList,
                    python::bases<FilterMatcherBase>>(
         "ExclusionList", python::init<>(python::args("self")))
         .def("SetExclusionPatterns", &SetOffPatterns,
@@ -432,7 +432,6 @@ struct filtercat_wrapper {
     RegisterVectorConverter<RDKit::ROMol *>("MolList", noproxy);
 
     python::class_<FilterCatalogEntry, FilterCatalogEntry *,
-                   const FilterCatalogEntry *,
                    boost::shared_ptr<const FilterCatalogEntry>>(
         "FilterCatalogEntry", FilterCatalogEntryDoc,
         python::init<>(python::args("self")))
@@ -593,17 +592,17 @@ struct filtercat_wrapper {
     python::scope().attr("FilterMatchOps") = nested_module;
     python::scope parent = nested_module;
 
-    python::class_<FilterMatchOps::And, FilterMatchOps::And *,
+    python::class_<FilterMatchOps::And,
                    python::bases<FilterMatcherBase>>(
         "And", python::init<FilterMatcherBase &, FilterMatcherBase &>(
                    python::args("self", "arg1", "arg2")));
 
-    python::class_<FilterMatchOps::Or, FilterMatchOps::Or *,
+    python::class_<FilterMatchOps::Or,
                    python::bases<FilterMatcherBase>>(
         "Or", python::init<FilterMatcherBase &, FilterMatcherBase &>(
                   python::args("self", "arg1", "arg2")));
 
-    python::class_<FilterMatchOps::Not, FilterMatchOps::Not *,
+    python::class_<FilterMatchOps::Not,
                    python::bases<FilterMatcherBase>>(
         "Not", python::init<FilterMatcherBase &>(python::args("self", "arg1")));
   };

@@ -14,6 +14,7 @@
 #include <boost/python.hpp>
 #include <RDBoost/boost_numpy.h>
 #include <numpy/npy_common.h>
+#include <numpy/ndarrayobject.h>
 #include <RDBoost/import_array.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
@@ -657,7 +658,8 @@ void wrapGenerator(const std::string &nm) {
            "generator\n\n"
            "  RETURNS: an information string\n\n")
       .def("GetOptions", getOptions<T>,
-           python::return_value_policy<python::reference_existing_object>(),
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>(),
            python::args("self"), "return the fingerprint options object");
 }
 
