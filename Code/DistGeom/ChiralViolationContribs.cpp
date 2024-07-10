@@ -13,9 +13,9 @@
 #include <ForceField/ForceField.h>
 
 namespace DistGeom {
-double calcChiralVolume(unsigned int idx1, unsigned int idx2, unsigned int idx3,
-                        unsigned int idx4, const double *pos,
-                        unsigned int dim) {
+double calcChiralVolume(const unsigned int idx1, const unsigned int idx2,
+                        const unsigned int idx3, const unsigned int idx4,
+                        const double *pos, const unsigned int dim) {
   // even if we are minimizing in higher dimension the chiral volume is
   // calculated using only the first 3 dimensions
   RDGeom::Point3D v1(pos[idx1 * dim] - pos[idx4 * dim],
@@ -64,11 +64,12 @@ double ChiralViolationContribs::getEnergy(double *pos) const {
   for (const auto &c : d_contribs) {
     double vol = calcChiralVolume(c.idx1, c.idx2, c.idx3, c.idx4, pos, dim);
     if (vol < c.volLower) {
-      res = c.weight * (vol - c.volLower) * (vol - c.volLower);
+      res += c.weight * (vol - c.volLower) * (vol - c.volLower);
     } else if (vol > c.volUpper) {
-      res = c.weight * (vol - c.volUpper) * (vol - c.volUpper);
+      res += c.weight * (vol - c.volUpper) * (vol - c.volUpper);
     }
   }
+
   // std::cerr<<"Chiral Violation vol: "<<vol<<" E: "<<res<<std::endl;
   return res;
 }
@@ -98,6 +99,11 @@ void ChiralViolationContribs::getGrad(double *pos, double *grad) const {
 
     double vol = v1.dotProduct(v2xv3);
     double preFactor;
+
+    // std::cerr << "Chiral Violation grad: " << " " << vol << " "
+    //           << "idxs: " << c.idx1 << " " << c.idx2 << " " << c.idx3 << " "
+    //           << c.idx4 << " " << c.volLower << " - " << c.volUpper
+    //           << std::endl;
 
     if (vol < c.volLower) {
       preFactor = c.weight * (vol - c.volLower);
@@ -141,7 +147,7 @@ void ChiralViolationContribs::getGrad(double *pos, double *grad) const {
         (pos[c.idx1 * dim + 1] * (pos[c.idx2 * dim] - pos[c.idx3 * dim]) +
          pos[c.idx2 * dim + 1] * (pos[c.idx3 * dim] - pos[c.idx1 * dim]) +
          pos[c.idx3 * dim + 1] * (pos[c.idx1 * dim] - pos[c.idx2 * dim]));
+    // std::cerr << "    " << preFactor << std::endl;
   }
-  // std::cerr<<"Chiral Violation grad: "<<preFactor<<std::endl;
 }
 }  // namespace DistGeom
