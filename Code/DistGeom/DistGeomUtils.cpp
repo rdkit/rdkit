@@ -275,7 +275,7 @@ void addImproperTorsionTerms(
   }
 }
 
-void addTorsionTerms(
+void addExperimentalTorsionTerms(
     ForceFields::ForceField *ff,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     boost::dynamic_bitset<> &atomPairs, unsigned int numRows) {
@@ -323,7 +323,7 @@ void add13Terms(ForceFields::ForceField *ff,
                 RDGeom::Point3DPtrVect &positions, double forceConstant,
                 boost::dynamic_bitset<> &atomPairs,
                 boost::dynamic_bitset<> &is13Constrained,
-                bool addSPLinearityConstraint, unsigned int numRows) {
+                bool useBasicKnowledge, unsigned int numRows) {
   for (const auto &angle : etkdgDetails.angles) {
     unsigned int i = angle[0];
     unsigned int j = angle[1];
@@ -335,7 +335,7 @@ void add13Terms(ForceFields::ForceField *ff,
       atomPairs[k * numRows + i] = 1;
     }
     // check for triple bonds
-    if (addSPLinearityConstraint && angle[3]) {
+    if (useBasicKnowledge && angle[3]) {
       auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
           ff, i, j, k, 179.0, 180.0, 1);
       ff->contribs().emplace_back(contrib);
@@ -350,7 +350,7 @@ void add13Terms(ForceFields::ForceField *ff,
   }
 }
 
-void addMinDistanceCosntraints(
+void addLongRangeDistanceCosntraints(
     ForceFields::ForceField *ff, unsigned int numRows,
     boost::dynamic_bitset<> atomPairs, RDGeom::Point3DPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
@@ -399,7 +399,7 @@ ForceFields::ForceField *construct3DForceField(
   boost::dynamic_bitset<> is13Constrained(N);
 
   // torsion constraints
-  addTorsionTerms(field, etkdgDetails, atomPairs, N);
+  addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
   addImproperTorsionTerms(field, 10.0, etkdgDetails, is13Constrained);
 
   constexpr double knownDistanceConstraintForce = 100.0;
@@ -410,8 +410,8 @@ ForceFields::ForceField *construct3DForceField(
   add13Terms(field, etkdgDetails, positions, knownDistanceConstraintForce,
              atomPairs, is13Constrained, true, N);
   // minimum distance for all other atom pairs that aren't constrained
-  addMinDistanceCosntraints(field, N, atomPairs, positions, etkdgDetails, mmat,
-                            knownDistanceConstraintForce);
+  addLongRangeDistanceCosntraints(field, N, atomPairs, positions, etkdgDetails,
+                                  mmat, knownDistanceConstraintForce);
   return field;
 }  // construct3DForceField
 
@@ -451,8 +451,7 @@ ForceFields::ForceField *constructPlain3DForceField(
   boost::dynamic_bitset<> is13Constrained(N);
 
   // torsion constraints
-  // torsion constraints
-  addTorsionTerms(field, etkdgDetails, atomPairs, N);
+  addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
 
   constexpr double knownDistanceConstraintForce = 100.0;
   // 1,2 distance constraints
@@ -462,8 +461,8 @@ ForceFields::ForceField *constructPlain3DForceField(
   add13Terms(field, etkdgDetails, positions, knownDistanceConstraintForce,
              atomPairs, is13Constrained, false, N);
   // minimum distance for all other atom pairs that aren't constrained
-  addMinDistanceCosntraints(field, N, atomPairs, positions, etkdgDetails, mmat,
-                            knownDistanceConstraintForce);
+  addLongRangeDistanceCosntraints(field, N, atomPairs, positions, etkdgDetails,
+                                  mmat, knownDistanceConstraintForce);
 
   return field;
 }  // constructPlain3DForceField
