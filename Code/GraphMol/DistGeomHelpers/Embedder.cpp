@@ -586,7 +586,7 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
   }
 
   field2->initialize();
-  // std::cerr<<"FIELD2 E: "<<field2->calcEnergy()<<std::endl;
+  std::cerr << "FIELD2 E: " << field2->calcEnergy() << std::endl;
   if (field2->calcEnergy() > ERROR_TOL) {
     int needMore = 1;
     while (needMore) {
@@ -899,6 +899,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       // or have started from random coords.
       if (gotCoords &&
           (eargs.chiralCenters->size() > 0 || embedParams.useRandomCoords)) {
+        std::cerr << "WOT" << std::endl;
         gotCoords = EmbeddingOps::minimizeFourthDimension(positions, eargs,
                                                           embedParams);
         if (!gotCoords) {
@@ -1094,8 +1095,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {

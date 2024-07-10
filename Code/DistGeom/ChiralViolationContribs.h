@@ -32,7 +32,7 @@ struct ChiralViolationContribsParams {
         idx4(i4),
         volUpper(u),
         volLower(l),
-        weight(w){};
+        weight(w) {};
 };
 //! A term to capture the violation of chirality at atom centers
 //!
@@ -72,7 +72,7 @@ class RDKIT_DISTGEOMETRY_EXPORT ChiralViolationContribs
     return new ChiralViolationContribs(*this);
   }
   bool empty() const { return d_contribs.empty(); }
-  bool size() const { return d_contribs.size(); }
+  unsigned int size() const { return d_contribs.size(); }
 
  private:
   std::vector<ChiralViolationContribsParams> d_contribs;
