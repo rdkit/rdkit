@@ -59,7 +59,7 @@ double ChiralViolationContribs::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
 
-  unsigned int dim = dp_forceField->dimension();
+  const unsigned int dim = dp_forceField->dimension();
   double res = 0.0;
   for (const auto &c : d_contribs) {
     double vol = calcChiralVolume(c.idx1, c.idx2, c.idx3, c.idx4, pos, dim);
@@ -78,7 +78,7 @@ void ChiralViolationContribs::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
 
-  unsigned int dim = dp_forceField->dimension();
+  const unsigned int dim = dp_forceField->dimension();
 
   for (const auto &c : d_contribs) {
     // even if we are minimizing in higher dimension the chiral volume is
