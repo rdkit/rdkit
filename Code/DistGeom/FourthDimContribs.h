@@ -55,9 +55,6 @@ class RDKIT_DISTGEOMETRY_EXPORT FourthDimContribs
     double res = 0.0;
     for (const auto &contrib : d_contribs) {
       unsigned int pid = contrib.idx * ffdim + 3;
-      if (!contrib.idx)
-        std::cerr << "!!! " << contrib.idx << " "
-                  << contrib.weight * pos[pid] * pos[pid] << std::endl;
       res += contrib.weight * pos[pid] * pos[pid];
     }
     return res;

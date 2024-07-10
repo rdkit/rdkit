@@ -508,10 +508,12 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
 
   // check that neither the energy nor any of the contributions to it are
   // too high (this is part of github #971)
-  if (local_e / positions->size() >= MAX_MINIMIZED_E_PER_ATOM ||
-      (e_contribs.size() &&
-       *(std::max_element(e_contribs.begin(), e_contribs.end())) >
-           MAX_MINIMIZED_E_CONTRIB)) {
+  if (local_e / positions->size() >= MAX_MINIMIZED_E_PER_ATOM
+      // ||
+      //     (e_contribs.size() &&
+      //      *(std::max_element(e_contribs.begin(), e_contribs.end())) >
+      //          MAX_MINIMIZED_E_CONTRIB)
+  ) {
 #ifdef DEBUG_EMBEDDING
     std::cerr << " Energy fail: " << local_e / positions->size() << " "
               << *(std::max_element(e_contribs.begin(), e_contribs.end()))
@@ -586,7 +588,7 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
   }
 
   field2->initialize();
-  std::cerr << "FIELD2 E: " << field2->calcEnergy() << std::endl;
+  // std::cerr << "FIELD2 E: " << field2->calcEnergy() << std::endl;
   if (field2->calcEnergy() > ERROR_TOL) {
     int needMore = 1;
     while (needMore) {
@@ -899,7 +901,6 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       // or have started from random coords.
       if (gotCoords &&
           (eargs.chiralCenters->size() > 0 || embedParams.useRandomCoords)) {
-        std::cerr << "WOT" << std::endl;
         gotCoords = EmbeddingOps::minimizeFourthDimension(positions, eargs,
                                                           embedParams);
         if (!gotCoords) {
