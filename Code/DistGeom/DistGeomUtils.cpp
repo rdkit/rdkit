@@ -212,9 +212,8 @@ ForceFields::ForceField *constructForceField(
         includeIt = true;
       }
       if (includeIt) {
-        auto contrib =
-            std::make_unique<DistViolationContrib>(field, i, j, u, l, w);
-        field->contribs().emplace_back(std::move(contrib));
+        auto *contrib = new DistViolationContrib(field, i, j, u, l, w);
+        field->contribs().emplace_back(contrib);
       }
     }
   }
@@ -222,18 +221,17 @@ ForceFields::ForceField *constructForceField(
   // now add chiral constraints
   if (weightChiral > 1.e-8) {
     for (const auto &cset : csets) {
-      auto contrib = std::make_unique<ChiralViolationContrib>(field, cset.get(),
-                                                              weightChiral);
-      field->contribs().emplace_back(std::move(contrib));
+      auto *contrib =
+          new ChiralViolationContrib(field, cset.get(), weightChiral);
+      field->contribs().emplace_back(contrib);
     }
   }
 
   // finally the contribution from the fourth dimension if we need to
   if ((field->dimension() == 4) && (weightFourthDim > 1.e-8)) {
     for (unsigned int i = 0; i < N; i++) {
-      auto contrib =
-          std::make_unique<FourthDimContrib>(field, i, weightFourthDim);
-      field->contribs().emplace_back(std::move(contrib));
+      auto *contrib = new FourthDimContrib(field, i, weightFourthDim);
+      field->contribs().emplace_back(contrib);
     }
   }
   return field;
@@ -267,11 +265,11 @@ void addImproperTorsionTerms(
           break;
       }
 
-      auto contrib = std::make_unique<ForceFields::UFF::InversionContrib>(
+      auto *contrib = new ForceFields::UFF::InversionContrib(
           ff, improperAtom[n[0]], improperAtom[n[1]], improperAtom[n[2]],
           improperAtom[n[3]], improperAtom[4],
           static_cast<bool>(improperAtom[5]), forceScalingFactor);
-      ff->contribs().emplace_back(std::move(contrib));
+      ff->contribs().emplace_back(contrib);
       is13Constrained[improperAtom[n[1]]] = 1;
     }
   }
@@ -291,11 +289,10 @@ void addTorsionTerms(
     } else {
       atomPairs[l * numRows + i] = 1;
     }
-    auto contrib =
-        std::make_unique<ForceFields::CrystalFF::TorsionAngleContribM6>(
-            ff, i, j, k, l, etkdgDetails.expTorsionAngles[t].second,
-            etkdgDetails.expTorsionAngles[t].first);
-    ff->contribs().emplace_back(std::move(contrib));
+    auto *contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(
+        ff, i, j, k, l, etkdgDetails.expTorsionAngles[t].second,
+        etkdgDetails.expTorsionAngles[t].first);
+    ff->contribs().emplace_back(contrib);
   }
 }
 
@@ -315,10 +312,9 @@ void add12Terms(ForceFields::ForceField *ff,
     double d = ((*positions[i]) - (*positions[j])).length();
     double l = d - MIN_TOLERANCE;
     double u = d + MIN_TOLERANCE;
-    auto contrib =
-        std::make_unique<ForceFields::UFF::DistanceConstraintContrib>(
-            ff, i, j, l, u, forceConstant);
-    ff->contribs().emplace_back();
+    auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
+        ff, i, j, l, u, forceConstant);
+    ff->contribs().emplace_back(contrib);
   }
 }
 
@@ -340,17 +336,16 @@ void add13Terms(ForceFields::ForceField *ff,
     }
     // check for triple bonds
     if (addSPLinearityConstraint && angle[3]) {
-      auto contrib = std::make_unique<ForceFields::UFF::AngleConstraintContrib>(
+      auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
           ff, i, j, k, 179.0, 180.0, 1);
-      ff->contribs().emplace_back(std::move(contrib));
+      ff->contribs().emplace_back(contrib);
     } else if (!is13Constrained.test(j)) {
       double d = ((*positions[i]) - (*positions[k])).length();
       double l = d - MIN_TOLERANCE;
       double u = d + MIN_TOLERANCE;
-      auto contrib =
-          std::make_unique<ForceFields::UFF::DistanceConstraintContrib>(
-              ff, i, k, l, u, forceConstant);
-      ff->contribs().emplace_back(std::move(contrib));
+      auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
+          ff, i, k, l, u, forceConstant);
+      ff->contribs().emplace_back(contrib);
     }
   }
 }
@@ -376,10 +371,9 @@ void addMinDistanceCosntraints(
           u += MIN_TOLERANCE;
           fdist = forceConstant;
         }
-        auto contrib =
-            std::make_unique<ForceFields::UFF::DistanceConstraintContrib>(
-                ff, i, j, l, u, fdist);
-        ff->contribs().emplace_back(std::move(contrib));
+        auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
+            ff, i, j, l, u, fdist);
+        ff->contribs().emplace_back(contrib);
       }
     }
   }
@@ -431,10 +425,10 @@ ForceFields::ForceField *construct3DForceField(
   // double dielConst = 1.0;
   boost::uint8_t dielModel = 1;
   for (const auto &charge : CPCI) {
-    auto contrib = std::make_unique<ForceFields::MMFF::EleContrib>(
+    auto *contrib = new ForceFields::MMFF::EleContrib(
         field, charge.first.first, charge.first.second, charge.second,
         dielModel, is1_4);
-    field->contribs().emplace_back(std::move(contrib));
+    field->contribs().emplace_back(contrib);
   }
 
   return field;
@@ -492,13 +486,12 @@ ForceFields::ForceField *construct3DImproperForceField(
   // Check that SP Centers have an angle of 180 degrees.
   for (const auto &angle : etkdgDetails.angles) {
     if (angle[3]) {
-      auto contrib = std::make_unique<ForceFields::UFF::AngleConstraintContrib>(
+      auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
           field, angle[0], angle[1], angle[2], 179.0, 180.0,
           oobForceScalingFactor);
-      field->contribs().emplace_back(std::move(contrib));
+      field->contribs().emplace_back(contrib);
     }
   }
   return field;
-
 }  // construct3DImproperForceField
 }  // namespace DistGeom
