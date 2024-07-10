@@ -15,7 +15,11 @@
 #else
 #include "DistViolationContribs.h"
 #endif
+#ifdef RDK_OLD_DISTGEOM_CONTRIBS
 #include "ChiralViolationContrib.h"
+#else
+#include "ChiralViolationContribs.h"
+#endif
 #include "FourthDimContrib.h"
 #include <Numerics/Matrix.h>
 #include <Numerics/SymmMatrix.h>
@@ -238,11 +242,26 @@ ForceFields::ForceField *constructForceField(
 #endif
   // now add chiral constraints
   if (weightChiral > 1.e-8) {
+#ifndef RDK_OLD_DISTGEOM_CONTRIBS
+    auto contrib = new ChiralViolationContribs(field);
+#endif
+
     for (const auto &cset : csets) {
+#ifdef RDK_OLD_DISTGEOM_CONTRIBS
       auto *contrib =
           new ChiralViolationContrib(field, cset.get(), weightChiral);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
+#else
+      contrib->addContrib(cset.get(), weightChiral);
+#endif
     }
+#ifndef RDK_OLD_DISTGEOM_CONTRIBS
+    if (!contrib->empty()) {
+      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+    } else {
+      delete contrib;
+    }
+#endif
   }
 
   // finally the contribution from the fourth dimension if we need to

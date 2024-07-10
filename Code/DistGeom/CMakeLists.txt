@@ -3,13 +3,14 @@
 
 rdkit_library(DistGeometry
               DistGeomUtils.cpp TriangleSmooth.cpp DistViolationContrib.cpp DistViolationContribs.cpp 
-              ChiralViolationContrib.cpp
+              ChiralViolationContrib.cpp ChiralViolationContribs.cpp
               LINK_LIBRARIES EigenSolvers ForceField ForceFieldHelpers)
 target_compile_definitions(DistGeometry PRIVATE RDKIT_DISTGEOMETRY_BUILD)
 
 rdkit_headers(BoundsMatrix.h
               ChiralSet.h
               ChiralViolationContrib.h
+              ChiralViolationContribs.h
               DistGeomUtils.h
               DistViolationContrib.h
               DistViolationContribs.h
