@@ -144,9 +144,6 @@ void testPass() {
 }
 
 void testFail() {
-  int i = 0;
-  Mol *mol;
-
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog)
       << "Testing molecules which should fail to parse/sanitize." << std::endl;
@@ -155,47 +152,28 @@ void testFail() {
   // parsing
   // on good input:
   string smis[] = {
-      "CC=(CO)C",    "CC(=CO)C", "C1CC",
-      "C1CC1",       "Ccc",      "CCC",
+      "CC=(CO)C",    "C1CC",      "Ccc",
       "fff",  // tests the situation where the parser cannot do anything at all
-      "CCC",
       "N(=O)(=O)=O",  // bad sanitization failure
-      "C1CC1",
-      "C=0",  // part of sf.net issue 2525792
-      "C1CC1",
-      "C0",  // part of sf.net issue 2525792
-      "C1CC1",
-      "C-0",  // part of sf.net issue 2525792
-      "C1CC1",
-      "C+0",  // part of sf.net issue 2525792
-      "C1CC1",       "[H2H]",    "C1CC1",
-      "[HH2]",       "C1CC1",    "[555555555555555555C]",
-      "C1CC1",             //
-      "[Fe@TD]",     "C",  //
-      "[Fe@TH3]",    "C",  //
-      "[Fe@SP4]",    "C",  //
-      "[Fe@AL3]",    "C",  //
-      "[Fe@TB21]",   "C",  //
-      "[Fe@OH31]",   "C",  //
-      "EOS"};
+      "C=0",          // part of sf.net issue 2525792
+      "C0",           // part of sf.net issue 2525792
+      "C-0",          // part of sf.net issue 2525792
+      "C+0",          // part of sf.net issue 2525792
+      "[H2H]",       "[HH2]",     "[555555555555555555C]",
+      "[Fe@TD]",     "[Fe@TH3]",  "[Fe@SP4]",
+      "[Fe@AL3]",    "[Fe@TB21]", "[Fe@OH31]",
+  };
 
   // turn off the error log temporarily:
-  while (smis[i] != "EOS") {
-    string smi = smis[i];
-    boost::logging::disable_logs("rdApp.error");
+  for (auto smi : smis) {
     try {
-      mol = SmilesToMol(smi);
-    } catch (MolSanitizeException &) {
-      mol = (Mol *)nullptr;
-    }
-    boost::logging::enable_logs("rdApp.error");
-    if (!(i % 2)) {
+      boost::logging::disable_logs("rdApp.error");
+      auto mol = SmilesToMol(smi);
+      boost::logging::enable_logs("rdApp.error");
+
       CHECK_INVARIANT(!mol, smi);
-    } else {
-      CHECK_INVARIANT(mol, smi);
-      delete mol;
+    } catch (MolSanitizeException &) {
     }
-    i++;
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }

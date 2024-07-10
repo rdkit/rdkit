@@ -18,65 +18,40 @@
 #include <GraphMol/SmilesParse/SmilesParseOps.h>
 #include <RDGeneral/RDLog.h>
 
-#define YYDEBUG 1
 #include "smiles.tab.hpp"
+#include "SmilesScanner.h"
 
-extern int yysmiles_lex(YYSTYPE *,void *,int &);
-
-using namespace RDKit;
-namespace {
- void yyErrorCleanup(std::vector<RDKit::RWMol *> *molList){
-  for(std::vector<RDKit::RWMol *>::iterator iter=molList->begin();
-      iter != molList->end(); ++iter){
-      SmilesParseOps::CleanupAfterParseError(*iter);
-      delete *iter;
-  }
-  molList->clear();
-  molList->resize(0);
- }
-}
-void
-yysmiles_error( const char *input,
-                std::vector<RDKit::RWMol *> *ms,
-                RDKit::Atom* &,
-                RDKit::Bond* &,
-                unsigned int &,unsigned int &,
-                std::list<unsigned int> *,
-		void *,int, const char * msg )
-{
-  yyErrorCleanup(ms);
-  BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << msg << " while parsing: " << input << std::endl;
-}
-
-void
-yysmiles_error( const char *input,
-                std::vector<RDKit::RWMol *> *ms,
-                std::list<unsigned int> *,
-		void *,int, const char * msg )
-{
-  yyErrorCleanup(ms);
-  BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << msg << " while parsing: " << input << std::endl;
-}
-
+#undef yylex
+#define yylex token_scanner.lex
 
 %}
 
-%define api.pure full
-%lex-param   {yyscan_t *scanner}
-%lex-param   {int& start_token}
-%parse-param {const char *input}
-%parse-param {std::vector<RDKit::RWMol *> *molList}
+%require "3.8.2"
+
+%debug
+%defines
+%define api.namespace {RDKit}
+%define api.parser.class {SmilesParser}
+%define api.location.file "smiles_location.tab.hpp"
+
+%lex-param {int& start_token}
+%initial-action { @$.begin.column = 0; };
+
+%parse-param { RDKit::SmilesScanner& token_scanner }
+%parse-param {std::vector<RDKit::RWMol *>& molList}
 %parse-param {RDKit::Atom* &lastAtom}
 %parse-param {RDKit::Bond* &lastBond}
-%parse-param {unsigned &numAtomsParsed}
 %parse-param {unsigned &numBondsParsed}
-%parse-param {std::list<unsigned int> *branchPoints}
-%parse-param {void *scanner}
+%parse-param {std::list<unsigned int>& branchPoints}
 %parse-param {int& start_token}
 
-%code provides {
-#define YY_DECL int yylex \
-               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+%language "c++"
+%locations
+
+%code requires {
+namespace RDKit {
+class SmilesScanner;
+}
 }
 
 %union {
@@ -91,14 +66,14 @@ yysmiles_error( const char *input,
 %token <atom> AROMATIC_ATOM_TOKEN ATOM_TOKEN ORGANIC_ATOM_TOKEN
 %token <ival> NONZERO_DIGIT_TOKEN ZERO_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN LOOP_CONNECTOR_TOKEN
-%token MINUS_TOKEN PLUS_TOKEN  
+%token MINUS_TOKEN PLUS_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN COLON_TOKEN HASH_TOKEN
 %token <bond> BOND_TOKEN
-%token <chiraltype> CHI_CLASS_TOKEN 
+%token <chiraltype> CHI_CLASS_TOKEN
 %type <moli> mol
 %type <atom> atomd element chiral_element h_element charge_element simple_atom
 %type <bond> bondd
-%type <ival> nonzero_number number ring_number digit 
+%type <ival> nonzero_number number ring_number digit
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
 %token EOS_TOKEN
 
@@ -134,7 +109,6 @@ START_MOL mol {
 }
 | meta_start error EOS_TOKEN{
   yyerrok;
-  yyErrorCleanup(molList);
   YYABORT;
 }
 | meta_start EOS_TOKEN {
@@ -142,7 +116,6 @@ START_MOL mol {
 }
 | error EOS_TOKEN {
   yyerrok;
-  yyErrorCleanup(molList);
   YYABORT;
 }
 ;
@@ -160,10 +133,10 @@ ATOM_OPEN_TOKEN bad_atom_def
 /* --------------------------------------------------------------- */
 // FIX: mol MINUS DIGIT
 mol: atomd {
-  int sz     = molList->size();
-  molList->resize( sz + 1);
-  (*molList)[ sz ] = new RWMol();
-  RDKit::RWMol *curMol = (*molList)[ sz ];
+  int sz     = molList.size();
+  molList.resize( sz + 1);
+  molList[ sz ] = new RWMol();
+  RDKit::RWMol *curMol = molList[ sz ];
   $1->setProp(RDKit::common_properties::_SmilesStart,1);
   curMol->addAtom($1, true, true);
   //delete $1;
@@ -171,7 +144,7 @@ mol: atomd {
 }
 
 | mol atomd       {
-  RWMol *mp = (*molList)[$$];
+  RWMol *mp = molList[$$];
   Atom *a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
   int atomIdx2=mp->addAtom($2,true,true);
@@ -182,7 +155,7 @@ mol: atomd {
 }
 
 | mol BOND_TOKEN atomd  {
-  RWMol *mp = (*molList)[$$];
+  RWMol *mp = molList[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($3,true,true);
   if( $2->getBondType() == Bond::DATIVER ){
@@ -203,7 +176,7 @@ mol: atomd {
 }
 
 | mol MINUS_TOKEN atomd {
-  RWMol *mp = (*molList)[$$];
+  RWMol *mp = molList[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($3,true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
@@ -212,13 +185,13 @@ mol: atomd {
 }
 
 | mol SEPARATOR_TOKEN atomd {
-  RWMol *mp = (*molList)[$$];
+  RWMol *mp = molList[$$];
   $3->setProp(RDKit::common_properties::_SmilesStart,1,true);
   mp->addAtom($3,true,true);
 }
 
 | mol ring_number {
-  RWMol * mp = (*molList)[$$];
+  RWMol * mp = molList[$$];
   Atom *atom=mp->getActiveAtom();
   mp->setAtomBookmark(atom,$2);
 
@@ -239,7 +212,7 @@ mol: atomd {
 }
 
 | mol BOND_TOKEN ring_number {
-  RWMol * mp = (*molList)[$$];
+  RWMol * mp = molList[$$];
   Atom *atom=mp->getActiveAtom();
   Bond *newB = mp->createPartialBond(atom->getIdx(),
 				     $2->getBondType());
@@ -263,7 +236,7 @@ mol: atomd {
 }
 
 | mol MINUS_TOKEN ring_number {
-  RWMol * mp = (*molList)[$$];
+  RWMol * mp = molList[$$];
   Atom *atom=mp->getActiveAtom();
   Bond *newB = mp->createPartialBond(atom->getIdx(),
 				     Bond::SINGLE);
@@ -282,18 +255,17 @@ mol: atomd {
 }
 
 | mol GROUP_OPEN_TOKEN atomd {
-  RWMol *mp = (*molList)[$$];
+  RWMol *mp = molList[$$];
   Atom *a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
   int atomIdx2=mp->addAtom($3,true,true);
   mp->addBond(atomIdx1,atomIdx2,
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
   mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
-  //delete $3;
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back(atomIdx1);
 }
 | mol GROUP_OPEN_TOKEN BOND_TOKEN atomd  {
-  RWMol *mp = (*molList)[$$];
+  RWMol *mp = molList[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($4,true,true);
   if( $3->getBondType() == Bond::DATIVER ){
@@ -311,27 +283,24 @@ mol: atomd {
   $3->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->addBond($3,true);
 
-  //delete $4;
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back(atomIdx1);
 }
 | mol GROUP_OPEN_TOKEN MINUS_TOKEN atomd {
-  RWMol *mp = (*molList)[$$];
+  RWMol *mp = molList[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($4,true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
   mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
-  //delete $4;
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back(atomIdx1);
 }
 | mol GROUP_CLOSE_TOKEN {
-  if(branchPoints->empty()){
-     yyerror(input,molList,branchPoints,scanner,start_token,"extra close parentheses");
-     yyErrorCleanup(molList);
+  if(branchPoints.empty()){
+     SmilesParser::error(@2, "extra close parentheses");
      YYABORT;
   }
-  RWMol *mp = (*molList)[$$];
-  mp->setActiveAtom(branchPoints->back());
-  branchPoints->pop_back();
+  RWMol *mp = molList[$$];
+  mp->setActiveAtom(branchPoints.back());
+  branchPoints.pop_back();
 }
 ;
 
@@ -418,14 +387,13 @@ number:  ZERO_TOKEN
 
 /* --------------------------------------------------------------- */
 nonzero_number:  NONZERO_DIGIT_TOKEN
-| nonzero_number digit { 
-  if($1 >= std::numeric_limits<std::int32_t>::max()/10 || 
+| nonzero_number digit {
+  if($1 >= std::numeric_limits<std::int32_t>::max()/10 ||
      $1*10 >= std::numeric_limits<std::int32_t>::max()-$2 ){
-     yyerror(input,molList,branchPoints,scanner,start_token,"number too large");
-     yyErrorCleanup(molList);
+     SmilesParser::error(@1, "number too large");
      YYABORT;
   }
-  $$ = $1*10 + $2; 
+  $$ = $1*10 + $2;
   }
 ;
 
@@ -433,11 +401,28 @@ digit: NONZERO_DIGIT_TOKEN
 | ZERO_TOKEN
 ;
 
-/*
-  chival:	CHI_CLASS_TOKEN DIGIT_TOKEN
-	| AT_TOKEN
-        ;
-*/
-
-
 %%
+
+static void free_allocated_mols(std::vector<RDKit::RWMol *>& molList) {
+    for (auto& mol : molList) {
+        if (mol) {
+            SmilesParseOps::CleanupAfterParseError(mol);
+            delete mol;
+        }
+    }
+    molList.clear();
+    molList.resize(0);
+}
+
+void RDKit::SmilesParser::error(const location& loc, const std::string& msg) {
+    // we should try to free allocated memory in error conditions
+    free_allocated_mols(molList);
+
+    // we should attempt to point to the general area of the bad token
+    auto bad_token_position = loc.begin.column;
+    BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << msg << " while parsing input:" << std::endl;
+    // NOTE: This may not be very useful for very long inputs
+    BOOST_LOG(rdErrorLog) << token_scanner.input() << std::endl;
+    BOOST_LOG(rdErrorLog) << std::string(bad_token_position - 1, '-') << '^' << std::endl;
+}
+
