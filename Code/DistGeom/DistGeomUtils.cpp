@@ -241,17 +241,19 @@ ForceFields::ForceField *constructForceField(
 /*!
 
   \param ff                 Force field to add contributions to
-  \param forceScalingFactor Force Constant to use for contrib
-  \param etkdgDetails       Contains information about the ETKDG force field
-  \param is13Constrained    The bit at every position where the atom with the
-  same index in the molecule is the center of an improper torsion is set to one.
+  \param forceScalingFactor Force constant to use for contrib
+  \param improperAtoms      Indices of atoms to be used in improper torsion
+  terms.
+  \param is13Constrained    The bit at every position where the atom with
+  the same index in the molecule is the center of an improper torsion is set to
+  one.
 
 */
-void addImproperTorsionTerms(
-    ForceFields::ForceField *ff, double forceScalingFactor,
-    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-    boost::dynamic_bitset<> &is13Constrained) {
-  for (const auto &improperAtom : etkdgDetails.improperAtoms) {
+void addImproperTorsionTerms(ForceFields::ForceField *ff,
+                             double forceScalingFactor,
+                             const std::vector<std::vector<int>> &improperAtoms,
+                             boost::dynamic_bitset<> &is13Constrained) {
+  for (const auto &improperAtom : improperAtoms) {
     std::vector<int> n(4);
     for (unsigned int i = 0; i < 3; ++i) {
       n[1] = 1;
@@ -288,11 +290,11 @@ void addImproperTorsionTerms(
 //! Add experimental torsion angle contributions to a force field
 /*!
 
-  \param ff Force field to add contributions to
+  \param ff           Force field to add contributions to
   \param etkdgDetails Contains information about the ETKDG force field
-  \param atomPairs bitset for which atom pairs will be set to one for all the
-  1-4 atom pairs that are part of an experimental torsion contribution
-  \param numAtoms number of atoms in the molecule
+  \param atomPairs    bitset for which atom pairs will be set to one for all
+  the 1-4 atom pairs that are part of an experimental torsion contribution
+  \param numAtoms     number of atoms in the molecule
 
  */
 void addExperimentalTorsionTerms(
@@ -465,7 +467,8 @@ ForceFields::ForceField *construct3DForceField(
 
   // torsion constraints
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
-  addImproperTorsionTerms(field, 10.0, etkdgDetails, is13Constrained);
+  addImproperTorsionTerms(field, 10.0, etkdgDetails.improperAtoms,
+                          is13Constrained);
 
   constexpr double knownDistanceConstraintForce = 100.0;
   // 1,2 distance constraints
@@ -534,7 +537,10 @@ ForceFields::ForceField *constructPlain3DForceField(
 
 ForceFields::ForceField *construct3DImproperForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
+    const std::vector<std::vector<int>> &improperAtoms,
+    const std::vector<std::vector<int>> &angles,
+    const std::vector<int> &atomNums) {
+  RDUNUSED_PARAM(atomNums);
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
@@ -544,11 +550,11 @@ ForceFields::ForceField *construct3DImproperForceField(
   // improper torsions / out-of-plane bend / inversion
   double oobForceScalingFactor = 10.0;
   boost::dynamic_bitset<> is13Constrained(N);
-  addImproperTorsionTerms(field, oobForceScalingFactor, etkdgDetails,
+  addImproperTorsionTerms(field, oobForceScalingFactor, improperAtoms,
                           is13Constrained);
 
   // Check that SP Centers have an angle of 180 degrees.
-  for (const auto &angle : etkdgDetails.angles) {
+  for (const auto &angle : angles) {
     if (angle[3]) {
       auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
           field, angle[0], angle[1], angle[2], 179.0, 180.0,
