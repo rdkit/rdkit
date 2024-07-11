@@ -29,7 +29,7 @@
 
 namespace DistGeom {
 const double EIGVAL_TOL = 0.001;
-const double MIN_TOLERANCE = 0.01;
+const double KNOWN_DIST_TOL = 0.01;
 
 double pickRandomDistMat(const BoundsMatrix &mmat,
                          RDNumeric::SymmMatrix<double> &distMat, int seed) {
@@ -356,8 +356,8 @@ void add12Terms(ForceFields::ForceField *ff,
       atomPairs[j * numAtoms + i] = 1;
     }
     double d = ((*positions[i]) - (*positions[j])).length();
-    double l = d - MIN_TOLERANCE;
-    double u = d + MIN_TOLERANCE;
+    double l = d - KNOWN_DIST_TOL;
+    double u = d + KNOWN_DIST_TOL;
     auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
         ff, i, j, l, u, forceConstant);
     ff->contribs().emplace_back(contrib);
@@ -402,8 +402,8 @@ void add13Terms(ForceFields::ForceField *ff,
       ff->contribs().emplace_back(contrib);
     } else if (!is13Constrained[j]) {
       double d = ((*positions[i]) - (*positions[k])).length();
-      double l = d - MIN_TOLERANCE;
-      double u = d + MIN_TOLERANCE;
+      double l = d - KNOWN_DIST_TOL;
+      double u = d + KNOWN_DIST_TOL;
       auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
           ff, i, k, l, u, forceConstant);
       ff->contribs().emplace_back(contrib);
@@ -445,8 +445,8 @@ void addLongRangeDistanceCosntraints(
             etkdgDetails.constrainedAtoms[j]) {
           // we're constrained, so use very tight bounds
           l = u = ((*positions[i]) - (*positions[j])).length();
-          l -= MIN_TOLERANCE;
-          u += MIN_TOLERANCE;
+          l -= KNOWN_DIST_TOL;
+          u += KNOWN_DIST_TOL;
           fdist = knownDistanceForceConstant;
         }
         auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
