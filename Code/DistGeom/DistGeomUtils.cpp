@@ -9,16 +9,9 @@
 //
 #include "BoundsMatrix.h"
 #include "DistGeomUtils.h"
-// #define RDK_OLD_DISTGEOM_CONTRIBS 1
-#ifdef RDK_OLD_DISTGEOM_CONTRIBS
-#include "DistViolationContrib.h"
-#include "ChiralViolationContrib.h"
-#include "FourthDimContrib.h"
-#else
 #include "DistViolationContribs.h"
 #include "ChiralViolationContribs.h"
 #include "FourthDimContribs.h"
-#endif
 #include <Numerics/Matrix.h>
 #include <Numerics/SymmMatrix.h>
 #include <Numerics/Vector.h>
@@ -198,9 +191,7 @@ ForceFields::ForceField *constructForceField(
     field->positions().push_back(positions[i]);
   }
 
-#ifndef RDK_OLD_DISTGEOM_CONTRIBS
   auto contrib = new DistViolationContribs(field);
-#endif
   for (unsigned int i = 1; i < N; i++) {
     for (unsigned int j = 0; j < i; j++) {
       if (fixedPts != nullptr && (*fixedPts)[i] && (*fixedPts)[j]) {
@@ -222,66 +213,40 @@ ForceFields::ForceField *constructForceField(
         includeIt = true;
       }
       if (includeIt) {
-#ifdef RDK_OLD_DISTGEOM_CONTRIBS
-        auto *contrib = new DistViolationContrib(field, i, j, u, l, w);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
-#else
         contrib->addContrib(i, j, u, l, w);
-#endif
       }
     }
   }
-#ifndef RDK_OLD_DISTGEOM_CONTRIBS
   if (!contrib->empty()) {
     field->contribs().push_back(ForceFields::ContribPtr(contrib));
   } else {
     delete contrib;
   }
-#endif
   // now add chiral constraints
   if (weightChiral > 1.e-8) {
-#ifndef RDK_OLD_DISTGEOM_CONTRIBS
     auto contrib = new ChiralViolationContribs(field);
-#endif
 
     for (const auto &cset : csets) {
-#ifdef RDK_OLD_DISTGEOM_CONTRIBS
-      auto *contrib =
-          new ChiralViolationContrib(field, cset.get(), weightChiral);
-      field->contribs().push_back(ForceFields::ContribPtr(contrib));
-#else
       contrib->addContrib(cset.get(), weightChiral);
-#endif
     }
-#ifndef RDK_OLD_DISTGEOM_CONTRIBS
     if (!contrib->empty()) {
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     } else {
       delete contrib;
     }
-#endif
   }
 
   // finally the contribution from the fourth dimension if we need to
   if ((field->dimension() == 4) && (weightFourthDim > 1.e-8)) {
-#ifndef RDK_OLD_DISTGEOM_CONTRIBS
     auto contrib = new FourthDimContribs(field);
-#endif
     for (unsigned int i = 0; i < N; i++) {
-#ifdef RDK_OLD_DISTGEOM_CONTRIBS
-      auto *contrib = new FourthDimContrib(field, i, weightFourthDim);
-      field->contribs().push_back(ForceFields::ContribPtr(contrib));
-#else
       contrib->addContrib(i, weightFourthDim);
-#endif
     }
-#ifndef RDK_OLD_DISTGEOM_CONTRIBS
     if (!contrib->empty()) {
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     } else {
       delete contrib;
     }
-#endif
   }
   return field;
 }  // constructForceField

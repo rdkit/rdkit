@@ -28,6 +28,7 @@ GitHub)
 
 - AtomPairs.Utils.NumPiElectrons is deprecated in favor of Chem.GetNumPiElectrons.
 AtomPairs.Utils.NumPiElectrons failed if the atom had outgoing dative bonds (see Issue #7318).
+- The classes DistViolationContrib, ChiralViolationContrib, and FourthDimContrib have been deprecated. Please use DistViolationContribs, ChiralViolationContribs, and FourthDimContribs instead.
 
 # Release_2024.03.1
 (Changes relative to Release_2023.09.1)
