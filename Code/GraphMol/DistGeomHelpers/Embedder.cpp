@@ -636,8 +636,9 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   if (embedParams.useBasicKnowledge) {
     // create a force field with only the impropers
     std::unique_ptr<ForceFields::ForceField> field2(
-        DistGeom::construct3DImproperForceField(*eargs.mmat, positions3D,
-                                                *eargs.etkdgDetails));
+        DistGeom::construct3DImproperForceField(
+            *eargs.mmat, positions3D, eargs.etkdgDetails->improperAtoms,
+            eargs.etkdgDetails->angles, eargs.etkdgDetails->atomNums));
     if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
       for (const auto &v : *embedParams.coordMap) {
         field2->fixedPoints().push_back(v.first);
