@@ -31,6 +31,7 @@
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/MonomerInfo.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 
@@ -3014,6 +3015,60 @@ TEST_CASE("test bond flavors when writing PDBs", "[bug]") {
       int flavor = 2 | 8;
       auto pdb = MolToPDBBlock(*m, confId, flavor);
       CHECK(pdb.find("CONECT") == std::string::npos);
+    }
+  }
+}
+
+TEST_CASE("test output with incomplete monomer info", "[bug][writer]") {
+  SECTION("basics") {
+    {
+      auto m = "Cl"_smiles;
+      REQUIRE(m);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("HETATM    1 CL1  UNL     1") != std::string::npos);
+    }
+    {
+      auto m = "Cl"_smiles;
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setResidueName("HCL");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("ATOM      1 CL1  HCL     0") != std::string::npos);
+    }
+    {
+      auto m = "Cl"_smiles;
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setResidueName("HCL");
+      info->setName("Cl1");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("ATOM      1  Cl1 HCL     0") != std::string::npos);
+    }
+    {
+      // 1. should add spaces for padding if the atom name is too short
+      // 2. should add spaces for missing residue name.
+      auto m = "Cl"_smiles;
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setName("CL");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("ATOM      1   CL         0") != std::string::npos);
+    }
+    {
+      // 1. Test that atom names get truncated to 4 letters.
+      // 2. Test that residue names get truncated to 3 letters.
+      auto m = "Cl"_smiles;
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setName("CHLORINE_ATOM1");
+      info->setResidueName("CHLORINE_MOLECULE1");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      std::cout << pdb << std::endl;
+      CHECK(pdb.find("ATOM      1 CHLO CHL     0") != std::string::npos);
     }
   }
 }
@@ -7312,5 +7367,18 @@ TEST_CASE("MolToV2KMolBlock") {
       REQUIRE(m);
       CHECK_THROWS_AS(MolToV2KMolBlock(*m), ValueErrorException);
     }
+  }
+}
+
+TEST_CASE("Github #7306: bad crossed bonds in large aromatic rings") {
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  SECTION("as reported") {
+    auto m = v2::FileParsers::MolFromMolFile(rdbase + "github7306.mol");
+    REQUIRE(m);
+    auto ctab = MolToV3KMolBlock(*m);
+    CHECK(ctab.find("CFG=2") == std::string::npos);
+    ctab = MolToMolBlock(*m);
+    CHECK(ctab.find("2  3\n") == std::string::npos);
   }
 }

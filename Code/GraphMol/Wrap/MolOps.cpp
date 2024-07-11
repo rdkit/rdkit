@@ -1068,6 +1068,19 @@ void collapseAttachmentPointsHelper(ROMol &mol, bool markedOnly) {
   MolOps::collapseAttachmentPoints(static_cast<RWMol &>(mol), markedOnly);
 }
 
+python::object findMesoHelper(const ROMol &mol, bool includeIsotopes,
+                              bool includeAtomMaps) {
+  auto meso = Chirality::findMesoCenters(mol, includeIsotopes, includeAtomMaps);
+  python::list res;
+  for (const auto &pr : meso) {
+    python::list tpl;
+    tpl.append(pr.first);
+    tpl.append(pr.second);
+    res.append(python::tuple(tpl));
+  }
+  return python::tuple(res);
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -2232,6 +2245,21 @@ RETURNS:
     python::def("AssignAtomChiralTagsFromMolParity",
                 MolOps::assignChiralTypesFromMolParity,
                 (python::arg("mol"), python::arg("replaceExistingTags") = true),
+                docString.c_str());
+
+    docString = R"DOC(returns the meso centers in a molecule (if any).
+    
+  ARGUMENTS:
+    
+    - mol: the molecule to use
+    - includeIsotopes: (optional) toggles whether or not isotopes should be included in the
+      calculation.
+    - includeAtomMaps: (optional) toggles whether or not atom maps should be included in the
+      calculation.
+    )DOC";
+    python::def("FindMesoCenters", findMesoHelper,
+                (python::arg("mol"), python::arg("includeIsotopes") = true,
+                 python::arg("includeAtomMaps") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------

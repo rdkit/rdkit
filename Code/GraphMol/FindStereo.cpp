@@ -676,6 +676,8 @@ void flagRingStereo(ROMol &mol,
           nHere += 1 + toAtomOppositePossible;
           possibleAtomsInRing.set(aidx);
           possibleAtomsInRing.set(oppositeIdx);
+          mol.getAtomWithIdx(aidx)->setProp(
+              common_properties::_ringStereoOtherAtom, oppositeIdx);
           continue;
         }
       }
@@ -698,6 +700,10 @@ void flagRingStereo(ROMol &mol,
             nHere += 2;
             possibleAtomsInRing.set(aidx);
             possibleAtomsInRing.set(otherIdx);
+            mol.getAtomWithIdx(aidx)->setProp(
+                common_properties::_ringStereoOtherAtom, otherIdx);
+            mol.getAtomWithIdx(otherIdx)->setProp(
+                common_properties::_ringStereoOtherAtom, aidx);
             break;
           }
           previousOtherIdx = otherIdx;
@@ -1099,12 +1105,14 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
     const bool includeIsotopes = false;
     const bool breakTies = false;
     const bool includeAtomMaps = false;
+    const bool includeChiralPresence = false;
     // Now apply the canonical atom ranking code with basic connectivity
     // invariants The necessary condition for chirality is that an atom's
     // neighbors must have unique ranks
-    Canon::rankFragmentAtoms(
-        mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
-        breakTies, includeChirality, includeIsotopes, includeAtomMaps);
+    Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
+                             &atomSymbols, &bondSymbols, breakTies,
+                             includeChirality, includeIsotopes, includeAtomMaps,
+                             includeChiralPresence);
 #endif
     // check if any new atoms definitely now have stereo; do another loop if
     // so
@@ -1185,9 +1193,11 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
         const bool includeChirality = false;
         const bool includeIsotopes = false;
         const bool includeAtomMaps = false;
-        Canon::rankFragmentAtoms(
-            mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
-            breakTies, includeChirality, includeIsotopes, includeAtomMaps);
+        const bool includeChiralPresence = false;
+        Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
+                                 &atomSymbols, &bondSymbols, breakTies,
+                                 includeChirality, includeIsotopes,
+                                 includeAtomMaps, includeChiralPresence);
 #endif
         // fixedAtoms.reset();
         // fixedBonds.reset();
