@@ -264,7 +264,7 @@ ForceFields::ForceField *constructForceField(
 void addImproperTorsionTerms(
     ForceFields::ForceField *ff, double forceScalingFactor,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-    boost::dynamic_bitset<> &is13Constrained) {
+    std::vector<bool> &is13Constrained) {
   for (const auto &improperAtom : etkdgDetails.improperAtoms) {
     std::vector<int> n(4);
     for (unsigned int i = 0; i < 3; ++i) {
@@ -312,7 +312,7 @@ void addImproperTorsionTerms(
 void addExperimentalTorsionTerms(
     ForceFields::ForceField *ff,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-    boost::dynamic_bitset<> &atomPairs, unsigned int numAtoms) {
+    std::vector<bool> &atomPairs, unsigned int numAtoms) {
   for (unsigned int t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
     int i = etkdgDetails.expTorsionAtoms[t][0];
     int j = etkdgDetails.expTorsionAtoms[t][1];
@@ -345,9 +345,8 @@ void addExperimentalTorsionTerms(
 */
 void add12Terms(ForceFields::ForceField *ff,
                 const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-                boost::dynamic_bitset<> &atomPairs,
-                RDGeom::Point3DPtrVect &positions, double forceConstant,
-                unsigned int numAtoms) {
+                std::vector<bool> &atomPairs, RDGeom::Point3DPtrVect &positions,
+                double forceConstant, unsigned int numAtoms) {
   for (const auto &bond : etkdgDetails.bonds) {
     unsigned int i = bond.first;
     unsigned int j = bond.second;
@@ -383,9 +382,8 @@ void add12Terms(ForceFields::ForceField *ff,
 */
 void add13Terms(ForceFields::ForceField *ff,
                 const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-                boost::dynamic_bitset<> &atomPairs,
-                RDGeom::Point3DPtrVect &positions, double forceConstant,
-                boost::dynamic_bitset<> &is13Constrained,
+                std::vector<bool> &atomPairs, RDGeom::Point3DPtrVect &positions,
+                double forceConstant, std::vector<bool> &is13Constrained,
                 bool useBasicKnowledge, unsigned int numAtoms) {
   for (const auto &angle : etkdgDetails.angles) {
     unsigned int i = angle[0];
@@ -402,7 +400,7 @@ void add13Terms(ForceFields::ForceField *ff,
       auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
           ff, i, j, k, 179.0, 180.0, 1);
       ff->contribs().emplace_back(contrib);
-    } else if (!is13Constrained.test(j)) {
+    } else if (!is13Constrained[j]) {
       double d = ((*positions[i]) - (*positions[k])).length();
       double l = d - MIN_TOLERANCE;
       double u = d + MIN_TOLERANCE;
@@ -432,7 +430,7 @@ void add13Terms(ForceFields::ForceField *ff,
 void addLongRangeDistanceCosntraints(
     ForceFields::ForceField *ff,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-    boost::dynamic_bitset<> atomPairs, RDGeom::Point3DPtrVect &positions,
+    std::vector<bool> &atomPairs, RDGeom::Point3DPtrVect &positions,
     double knownDistanceForceConstant, const BoundsMatrix &mmat,
     unsigned int numAtoms) {
   double fdist = knownDistanceForceConstant;
@@ -472,11 +470,10 @@ ForceFields::ForceField *construct3DForceField(
                             positions.end());
 
   // keep track which atoms are 1,2- or 1,3-restrained
-  boost::dynamic_bitset<> atomPairs(N * N);
-
   // don't add 1-3 Distances constraints for angles where the
   // central atom of the angle is the central atom of an improper torsion.
-  boost::dynamic_bitset<> is13Constrained(N);
+  std::vector<bool> atomPairs(N * N);
+  std::vector<bool> is13Constrained(N);
 
   // torsion constraints
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
@@ -527,8 +524,8 @@ ForceFields::ForceField *constructPlain3DForceField(
                             positions.end());
 
   // keep track which atoms are 1,2- or 1,3-restrained
-  boost::dynamic_bitset<> atomPairs(N * N);
-  boost::dynamic_bitset<> is13Constrained(N);
+  std::vector<bool> atomPairs(N * N);
+  std::vector<bool> is13Constrained(N);
 
   // torsion constraints
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
@@ -558,7 +555,7 @@ ForceFields::ForceField *construct3DImproperForceField(
 
   // improper torsions / out-of-plane bend / inversion
   double oobForceScalingFactor = 10.0;
-  boost::dynamic_bitset<> is13Constrained(N);
+  std::vector<bool> is13Constrained(N);
   addImproperTorsionTerms(field, oobForceScalingFactor, etkdgDetails,
                           is13Constrained);
 
