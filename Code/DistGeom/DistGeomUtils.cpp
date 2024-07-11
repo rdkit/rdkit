@@ -251,6 +251,16 @@ ForceFields::ForceField *constructForceField(
   return field;
 }  // constructForceField
 
+//! Add improper torsion contributions to a force field
+/*!
+
+  \param ff                 Force field to add contributions to
+  \param forceScalingFactor Force Constant to use for contrib
+  \param etkdgDetails       Contains information about the ETKDG force field
+  \param is13Constrained    The bit at every position where the atom with the
+  same index in the molecule is the center of an improper torsion is set to one.
+
+*/
 void addImproperTorsionTerms(
     ForceFields::ForceField *ff, double forceScalingFactor,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
@@ -289,19 +299,29 @@ void addImproperTorsionTerms(
   }
 }
 
+//! Add experimental torsion angle contributions to a force field
+/*!
+
+  \param ff Force field to add contributions to
+  \param etkdgDetails Contains information about the ETKDG force field
+  \param atomPairs bitset for which atom pairs will be set to one for all the
+  1-4 atom pairs that are part of an experimental torsion contribution
+  \param numAtoms number of atoms in the molecule
+
+ */
 void addExperimentalTorsionTerms(
     ForceFields::ForceField *ff,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-    boost::dynamic_bitset<> &atomPairs, unsigned int numRows) {
+    boost::dynamic_bitset<> &atomPairs, unsigned int numAtoms) {
   for (unsigned int t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
     int i = etkdgDetails.expTorsionAtoms[t][0];
     int j = etkdgDetails.expTorsionAtoms[t][1];
     int k = etkdgDetails.expTorsionAtoms[t][2];
     int l = etkdgDetails.expTorsionAtoms[t][3];
     if (i < l) {
-      atomPairs[i * numRows + l] = 1;
+      atomPairs[i * numAtoms + l] = 1;
     } else {
-      atomPairs[l * numRows + i] = 1;
+      atomPairs[l * numAtoms + i] = 1;
     }
     auto *contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(
         ff, i, j, k, l, etkdgDetails.expTorsionAngles[t].second,
@@ -310,18 +330,31 @@ void addExperimentalTorsionTerms(
   }
 }
 
+//! Add bond constraints with padding at current positions to force field
+/*!
+
+  \param ff Force field to add contributions to
+  \param etkdgDetails Contains information about the ETKDG force field
+  \param atomPairs bitset for which atom pairs will be set to one for all the
+  1-4 atom pairs that are part of an experimental torsion contribution
+  \param positions       A vector of pointers to 3D Points to write out the
+  resulting coordinates
+  \param forceConstant force constant with which to constrain bond distances
+  \param numAtoms number of atoms in molecule
+
+*/
 void add12Terms(ForceFields::ForceField *ff,
                 const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
                 boost::dynamic_bitset<> &atomPairs,
                 RDGeom::Point3DPtrVect &positions, double forceConstant,
-                unsigned int numRows) {
+                unsigned int numAtoms) {
   for (const auto &bond : etkdgDetails.bonds) {
     unsigned int i = bond.first;
     unsigned int j = bond.second;
     if (i < j) {
-      atomPairs[i * numRows + j] = 1;
+      atomPairs[i * numAtoms + j] = 1;
     } else {
-      atomPairs[j * numRows + i] = 1;
+      atomPairs[j * numAtoms + i] = 1;
     }
     double d = ((*positions[i]) - (*positions[j])).length();
     double l = d - MIN_TOLERANCE;
@@ -331,22 +364,38 @@ void add12Terms(ForceFields::ForceField *ff,
     ff->contribs().emplace_back(contrib);
   }
 }
+//! Add 1-3 distance constraints with padding at current positions to force
+/// field
+/*!
 
+  \param ff Force field to add contributions to
+  \param etkdgDetails Contains information about the ETKDG force field
+  \param atomPairs bitset for which atom pairs will be set to one for all the
+  1-4 atom pairs that are part of an experimental torsion contribution
+  \param positions       A vector of pointers to 3D Points to write out the
+  resulting coordinates
+  \param forceConstant force constant with which to constrain bond distances
+  \param is13Constrained  The bit at every position where the atom with the
+  same index in the molecule is the center of an improper torsion is set to one.
+  \param useBasicKnowledge whether to use basic knowledge terms
+  \param numAtoms number of atoms in molecule
+
+*/
 void add13Terms(ForceFields::ForceField *ff,
                 const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-                RDGeom::Point3DPtrVect &positions, double forceConstant,
                 boost::dynamic_bitset<> &atomPairs,
+                RDGeom::Point3DPtrVect &positions, double forceConstant,
                 boost::dynamic_bitset<> &is13Constrained,
-                bool useBasicKnowledge, unsigned int numRows) {
+                bool useBasicKnowledge, unsigned int numAtoms) {
   for (const auto &angle : etkdgDetails.angles) {
     unsigned int i = angle[0];
     unsigned int j = angle[1];
     unsigned int k = angle[2];
 
     if (i < k) {
-      atomPairs[i * numRows + k] = 1;
+      atomPairs[i * numAtoms + k] = 1;
     } else {
-      atomPairs[k * numRows + i] = 1;
+      atomPairs[k * numAtoms + i] = 1;
     }
     // check for triple bonds
     if (useBasicKnowledge && angle[3]) {
@@ -364,15 +413,32 @@ void add13Terms(ForceFields::ForceField *ff,
   }
 }
 
+//! Add long distance constraints to bounds matrix borders or constrained atoms
+/// when provideds
+/*!
+
+  \param ff Force field to add contributions to
+  \param etkdgDetails Contains information about the ETKDG force field
+  \param atomPairs bitset for which atom pairs will be set to one for all the
+  1-4 atom pairs that are part of an experimental torsion contribution
+  \param positions       A vector of pointers to 3D Points to write out the
+  resulting coordinates
+  \param knownDistanceForceConstant force constant with which to constrain bond
+  distances
+  \param mmat  Bounds matrix to use bounds from for constraints
+  \param numAtoms number of atoms in molecule
+
+*/
 void addLongRangeDistanceCosntraints(
-    ForceFields::ForceField *ff, unsigned int numRows,
-    boost::dynamic_bitset<> atomPairs, RDGeom::Point3DPtrVect &positions,
+    ForceFields::ForceField *ff,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-    const BoundsMatrix &mmat, double forceConstant) {
-  double fdist = forceConstant;
-  for (unsigned int i = 1; i < numRows; ++i) {
+    boost::dynamic_bitset<> atomPairs, RDGeom::Point3DPtrVect &positions,
+    double knownDistanceForceConstant, const BoundsMatrix &mmat,
+    unsigned int numAtoms) {
+  double fdist = knownDistanceForceConstant;
+  for (unsigned int i = 1; i < numAtoms; ++i) {
     for (unsigned int j = 0; j < i; ++j) {
-      if (!atomPairs[j * numRows + i]) {
+      if (!atomPairs[j * numAtoms + i]) {
         fdist = etkdgDetails.boundsMatForceScaling * 10.0;
         double l = mmat.getLowerBound(i, j);
         double u = mmat.getUpperBound(i, j);
@@ -383,7 +449,7 @@ void addLongRangeDistanceCosntraints(
           l = u = ((*positions[i]) - (*positions[j])).length();
           l -= MIN_TOLERANCE;
           u += MIN_TOLERANCE;
-          fdist = forceConstant;
+          fdist = knownDistanceForceConstant;
         }
         auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
             ff, i, j, l, u, fdist);
@@ -421,11 +487,11 @@ ForceFields::ForceField *construct3DForceField(
   add12Terms(field, etkdgDetails, atomPairs, positions,
              knownDistanceConstraintForce, N);
   // 1,3 distance constraints
-  add13Terms(field, etkdgDetails, positions, knownDistanceConstraintForce,
-             atomPairs, is13Constrained, true, N);
+  add13Terms(field, etkdgDetails, atomPairs, positions,
+             knownDistanceConstraintForce, is13Constrained, true, N);
   // minimum distance for all other atom pairs that aren't constrained
-  addLongRangeDistanceCosntraints(field, N, atomPairs, positions, etkdgDetails,
-                                  mmat, knownDistanceConstraintForce);
+  addLongRangeDistanceCosntraints(field, etkdgDetails, atomPairs, positions,
+                                  knownDistanceConstraintForce, mmat, N);
   return field;
 }  // construct3DForceField
 
@@ -472,11 +538,11 @@ ForceFields::ForceField *constructPlain3DForceField(
   add12Terms(field, etkdgDetails, atomPairs, positions,
              knownDistanceConstraintForce, N);
   // 1,3 distance constraints
-  add13Terms(field, etkdgDetails, positions, knownDistanceConstraintForce,
-             atomPairs, is13Constrained, false, N);
+  add13Terms(field, etkdgDetails, atomPairs, positions,
+             knownDistanceConstraintForce, is13Constrained, false, N);
   // minimum distance for all other atom pairs that aren't constrained
-  addLongRangeDistanceCosntraints(field, N, atomPairs, positions, etkdgDetails,
-                                  mmat, knownDistanceConstraintForce);
+  addLongRangeDistanceCosntraints(field, etkdgDetails, atomPairs, positions,
+                                  knownDistanceConstraintForce, mmat, N);
 
   return field;
 }  // constructPlain3DForceField
