@@ -171,7 +171,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructPlain3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails);
 
-//! Force field with only improper terms
+//! Force field with improper terms and SP linearity contributions
 /*!
 
   \param mmat            Distance bounds matrix
