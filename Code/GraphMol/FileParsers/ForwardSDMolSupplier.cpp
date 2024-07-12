@@ -116,8 +116,8 @@ void ForwardSDMolSupplier::readMolProps(ROMol &mol) {
           std::string prop = "";
           auto stmp = FileParserUtils::strip(tempStr);
           int nplines = 0;  // number of lines for this property
-          while (stmp.length() != 0 || tempStr[0] == ' ' ||
-                 tempStr[0] == '\t') {
+          while (stmp.length() != 0 || (tempStr.length() && (tempStr[0] == ' ' ||
+							     tempStr[0] == '\t'))) {
             nplines++;
             if (nplines > 1) {
               prop += "\n";
