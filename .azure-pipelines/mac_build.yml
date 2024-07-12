@@ -20,7 +20,7 @@ steps:
     conda config --set solver libmamba
     conda config --set channel_priority strict
     conda config --add channels conda-forge
-    conda create --name rdkit_build $(python) $(compiler) libcxx cmake \
+    conda create --name rdkit_build $(python) $(compiler)=$(compiler_version) libcxx cmake \
         libboost=$(boost_version) libboost-devel=$(boost_version) \
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         qt \
