@@ -78,19 +78,18 @@ void DistViolationContribs::getGrad(double *pos, double *grad) const {
       return;
     }
 
-    double *end1Coords = &(pos[dim * c.idx1]);
-    double *end2Coords = &(pos[dim * c.idx2]);
-
     for (unsigned int i = 0; i < dim; i++) {
+      const auto p1 = dim * c.idx1 + i;
+      const auto p2 = dim * c.idx2 + i;
       double dGrad;
       if (d > 0.0) {
-        dGrad = c.weight * preFactor * (end1Coords[i] - end2Coords[i]) / d;
+        dGrad = c.weight * preFactor * (pos[p1] - pos[p2]) / d;
       } else {
         // FIX: this likely isn't right
-        dGrad = c.weight * preFactor * (end1Coords[i] - end2Coords[i]);
+        dGrad = c.weight * preFactor * (pos[p1] - pos[p2]);
       }
-      grad[dim * c.idx1 + i] += dGrad;
-      grad[dim * c.idx2 + i] -= dGrad;
+      grad[p1] += dGrad;
+      grad[p2] -= dGrad;
     }
   };
   for (const auto &c : d_contribs) {

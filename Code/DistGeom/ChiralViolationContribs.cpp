@@ -70,7 +70,6 @@ double ChiralViolationContribs::getEnergy(double *pos) const {
     }
   }
 
-  // std::cerr<<"Chiral Violation vol: "<<vol<<" E: "<<res<<std::endl;
   return res;
 }
 
@@ -99,11 +98,6 @@ void ChiralViolationContribs::getGrad(double *pos, double *grad) const {
 
     double vol = v1.dotProduct(v2xv3);
     double preFactor;
-
-    // std::cerr << "Chiral Violation grad: " << " " << vol << " "
-    //           << "idxs: " << c.idx1 << " " << c.idx2 << " " << c.idx3 << " "
-    //           << c.idx4 << " " << c.volLower << " - " << c.volUpper
-    //           << std::endl;
 
     if (vol < c.volLower) {
       preFactor = c.weight * (vol - c.volLower);
@@ -147,7 +141,6 @@ void ChiralViolationContribs::getGrad(double *pos, double *grad) const {
         (pos[c.idx1 * dim + 1] * (pos[c.idx2 * dim] - pos[c.idx3 * dim]) +
          pos[c.idx2 * dim + 1] * (pos[c.idx3 * dim] - pos[c.idx1 * dim]) +
          pos[c.idx3 * dim + 1] * (pos[c.idx1 * dim] - pos[c.idx2 * dim]));
-    // std::cerr << "    " << preFactor << std::endl;
   }
 }
 }  // namespace DistGeom
