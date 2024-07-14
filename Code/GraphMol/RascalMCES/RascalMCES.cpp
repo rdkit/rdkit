@@ -991,13 +991,17 @@ void assignEquivalentAtoms(ROMol &mol, const std::string equivalentAtoms) {
     return;
   }
   std::vector<std::string> classSmarts;
-  boost::split(classSmarts, equivalentAtoms, boost::is_any_of(" "));
+  boost::split(classSmarts, equivalentAtoms, boost::is_any_of(" "),
+               boost::token_compress_on);
   if (classSmarts.size() > 9) {
     throw ValueErrorException(
         "Too many classes of equivalent atoms.  Maximum is 9.");
   }
   int atNum = 110;
   for (auto &smt : classSmarts) {
+    if (smt.empty()) {
+      continue;
+    }
     auto qmol = v2::SmilesParse::MolFromSmarts(smt);
     std::vector<RDKit::MatchVectType> hits_vect;
     if (RDKit::SubstructMatch(mol, *qmol, hits_vect)) {
