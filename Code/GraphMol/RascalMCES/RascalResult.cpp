@@ -76,6 +76,7 @@ RascalResult::RascalResult(const RascalResult &other)
       d_timedOut(other.d_timedOut),
       d_tier1Sim(other.d_tier1Sim),
       d_tier2Sim(other.d_tier2Sim),
+      d_equivalentAtoms(other.d_equivalentAtoms),
       d_numFrags(other.d_numFrags),
       d_ringNonRingBondScore(other.d_ringNonRingBondScore),
       d_atomMatchScore(other.d_atomMatchScore),
@@ -100,6 +101,7 @@ RascalResult &RascalResult::operator=(const RascalResult &other) {
   d_atomMatches = other.d_atomMatches;
   d_smarts = other.d_smarts;
   d_timedOut = other.d_timedOut;
+  d_equivalentAtoms = other.d_equivalentAtoms;
   d_numFrags = other.d_numFrags;
   d_ringNonRingBondScore = other.d_ringNonRingBondScore;
   d_atomMatchScore = other.d_atomMatchScore;
@@ -203,6 +205,7 @@ void RascalResult::rebuildFromFrags(
 }
 
 std::string RascalResult::createSmartsString() const {
+  std::cout << "createSmartsString : " << d_equivalentAtoms << std::endl;
   if (!d_mol1 || !d_mol2) {
     return "";
   }
@@ -746,6 +749,7 @@ void extractClique(const std::vector<unsigned int> &clique,
 }
 
 void cleanSmarts(std::string &smarts, const std::string &equivalentAtoms) {
+  std::cout << "cleanSmarts : XX" << equivalentAtoms << "YY" << std::endl;
   const static std::vector<std::pair<std::regex, std::string>> repls{
       {std::regex(R"(\[#6&A\])"), "C"},
       {std::regex(R"(\[#6&A&R\])"), "[C&R]"},
@@ -792,8 +796,6 @@ void cleanSmarts(std::string &smarts, const std::string &equivalentAtoms) {
     auto atNumStr = std::to_string(atNum);
     std::regex a1(R"(\[#)" + atNumStr + R"(&[Aa]\])");
     smarts = std::regex_replace(smarts, a1, smt);
-    //    std::regex a2(R"(\[#)" + atNumStr + R"(&a\])");
-    //    smarts = std::regex_replace(smarts, a2, smt);
     std::regex a3(R"(\[#)" + atNumStr + R"(\])");
     smarts = std::regex_replace(smarts, a3, smt);
     ++atNum;

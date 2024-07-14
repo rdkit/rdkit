@@ -1121,6 +1121,7 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
 // similarity threshold given.
 std::vector<RascalResult> rascalMCES(const ROMol &mol1, const ROMol &mol2,
                                      const RascalOptions &opts) {
+  std::cout << "equivalent atoms : " << opts.equivalentAtoms << "\n";
   auto starter = makeInitialPartitionSet(&mol1, &mol2, opts);
   if (!starter.d_partSet) {
     if (opts.returnEmptyMCES) {

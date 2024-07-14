@@ -50,9 +50,9 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
                                    is a reasonable default for my Mac. */
   std::string equivalentAtoms = ""; /* SMARTS strings defining atoms that should
                                        be considered equivalent. e.g.
-                                       [F,Cl,Br,I] so all halogens will match.
-                                       Space-separated list allowing more than 1
-                                       class of equivalent atoms.*/
+                                       [F,Cl,Br,I] so all halogens will match
+                                       each other. Space-separated list allowing
+                                       more than 1 class of equivalent atoms.*/
 };
 }  // namespace RascalMCES
 }  // namespace RDKit
