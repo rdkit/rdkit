@@ -1324,4 +1324,16 @@ TEST_CASE("Equivalent atoms") {
     CHECK(res.front().getAtomMatches().size() == 6);
     CHECK(res.front().getSmarts() == "[*]1:[*]:[*]:[*]:[*]:[*]:1");
   }
+  {
+    auto m1 = "c1ccccc1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "c1nc(I)ccc1Cl"_smiles;
+    REQUIRE(m2);
+
+    RascalOptions opts;
+    opts.similarityThreshold = 0.5;
+    // Nonsense options, to check that too many exits correctly.
+    opts.equivalentAtoms = "[*] [*] [*] [*] [*] [*] [*] [*] [*] [*] [*] ";
+    CHECK_THROWS_AS(rascalMCES(*m1, *m2, opts), ValueErrorException);
+  }
 }

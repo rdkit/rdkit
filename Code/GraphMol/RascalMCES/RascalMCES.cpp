@@ -992,6 +992,10 @@ void assignEquivalentAtoms(ROMol &mol, const std::string equivalentAtoms) {
   }
   std::vector<std::string> classSmarts;
   boost::split(classSmarts, equivalentAtoms, boost::is_any_of(" "));
+  if (classSmarts.size() > 9) {
+    throw ValueErrorException(
+        "Too many classes of equivalent atoms.  Maximum is 9.");
+  }
   int atNum = 110;
   for (auto &smt : classSmarts) {
     auto qmol = v2::SmilesParse::MolFromSmarts(smt);
