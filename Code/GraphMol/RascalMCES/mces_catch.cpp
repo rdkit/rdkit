@@ -1292,11 +1292,9 @@ TEST_CASE("Equivalent atoms") {
     auto res = rascalMCES(*m1, *m2, opts);
     CHECK(res.size() == 1);
     CHECK(res.front().getAtomMatches().size() == 8);
-    std::cout << res.front().getSmarts() << "\n";
     CHECK(res.front().getSmarts() ==
           "c1:c:c(-[F,Cl,Br,I]):c:c:c:1-[F,Cl,Br,I]");
   }
-#if 1
   {
     auto m1 = "c1cc(Br)ccc1F"_smiles;
     REQUIRE(m1);
@@ -1309,7 +1307,6 @@ TEST_CASE("Equivalent atoms") {
     auto res = rascalMCES(*m1, *m2, opts);
     CHECK(res.size() == 1);
     CHECK(res.front().getAtomMatches().size() == 7);
-    std::cout << res.front().getSmarts() << "\n";
     CHECK(res.front().getSmarts() ==
           "[c,n]1:[c,n]:[c,n]:[c,n]:[c,n]:[c,n]:1-[F,Cl,Br,I]");
   }
@@ -1325,8 +1322,6 @@ TEST_CASE("Equivalent atoms") {
     auto res = rascalMCES(*m1, *m2, opts);
     CHECK(res.size() == 1);
     CHECK(res.front().getAtomMatches().size() == 6);
-    std::cout << res.front().getSmarts() << "\n";
     CHECK(res.front().getSmarts() == "[*]1:[*]:[*]:[*]:[*]:[*]:1");
   }
-#endif
 }

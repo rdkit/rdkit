@@ -997,19 +997,15 @@ void assignEquivalentAtoms(ROMol &mol, const std::string equivalentAtoms) {
     auto qmol = v2::SmilesParse::MolFromSmarts(smt);
     std::vector<RDKit::MatchVectType> hits_vect;
     if (RDKit::SubstructMatch(mol, *qmol, hits_vect)) {
-      std::cout << "Pattern matched molecule" << std::endl;
-    }
-    for (const auto &hv : hits_vect) {
-      for (const auto &h : hv) {
-        std::cout << "(" << h.first << "," << h.second << ") ";
-        auto a = mol.getAtomWithIdx(h.second);
-        a->setAtomicNum(atNum);
+      for (const auto &hv : hits_vect) {
+        for (const auto &h : hv) {
+          auto a = mol.getAtomWithIdx(h.second);
+          a->setAtomicNum(atNum);
+        }
       }
-      std::cout << "\n";
     }
     ++atNum;
   }
-  std::cout << "New SMILES : " << MolToSmiles(mol) << "\n";
 }
 
 RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
@@ -1121,7 +1117,6 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
 // similarity threshold given.
 std::vector<RascalResult> rascalMCES(const ROMol &mol1, const ROMol &mol2,
                                      const RascalOptions &opts) {
-  std::cout << "equivalent atoms : " << opts.equivalentAtoms << "\n";
   auto starter = makeInitialPartitionSet(&mol1, &mol2, opts);
   if (!starter.d_partSet) {
     if (opts.returnEmptyMCES) {

@@ -205,7 +205,6 @@ void RascalResult::rebuildFromFrags(
 }
 
 std::string RascalResult::createSmartsString() const {
-  std::cout << "createSmartsString : " << d_equivalentAtoms << std::endl;
   if (!d_mol1 || !d_mol2) {
     return "";
   }
@@ -749,7 +748,6 @@ void extractClique(const std::vector<unsigned int> &clique,
 }
 
 void cleanSmarts(std::string &smarts, const std::string &equivalentAtoms) {
-  std::cout << "cleanSmarts : XX" << equivalentAtoms << "YY" << std::endl;
   const static std::vector<std::pair<std::regex, std::string>> repls{
       {std::regex(R"(\[#6&A\])"), "C"},
       {std::regex(R"(\[#6&A&R\])"), "[C&R]"},
@@ -781,12 +779,10 @@ void cleanSmarts(std::string &smarts, const std::string &equivalentAtoms) {
 
   // Convert the equivalent atoms from wierd atomic numbers to the
   // original SMARTS pattern
-  std::cout << "Interim SMARTS : " << smarts << "\n";
   std::vector<std::string> classSmarts;
   boost::split(classSmarts, equivalentAtoms, boost::is_any_of(" "));
   int atNum = 110;
   for (auto &smt : classSmarts) {
-    std::cout << "Converting atomic Num " << atNum << " to " << smt << "\n";
     // The SMARTS come out with &A or &a after the atomic number
     // depending on the aromaticity of the underlying atom but
     // the original SMARTS for the equivalent atom should take
@@ -796,11 +792,10 @@ void cleanSmarts(std::string &smarts, const std::string &equivalentAtoms) {
     auto atNumStr = std::to_string(atNum);
     std::regex a1(R"(\[#)" + atNumStr + R"(&[Aa]\])");
     smarts = std::regex_replace(smarts, a1, smt);
-    std::regex a3(R"(\[#)" + atNumStr + R"(\])");
-    smarts = std::regex_replace(smarts, a3, smt);
+    std::regex a2(R"(\[#)" + atNumStr + R"(\])");
+    smarts = std::regex_replace(smarts, a2, smt);
     ++atNum;
   }
-  std::cout << "Final smarts : " << smarts << "\n";
 }
 
 void printBondMatches(const RascalResult &res, std::ostream &os) {
