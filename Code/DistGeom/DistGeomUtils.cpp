@@ -345,10 +345,8 @@ void add12Terms(ForceFields::ForceField *ff,
       atomPairs[j * numAtoms + i] = 1;
     }
     double d = ((*positions[i]) - (*positions[j])).length();
-    double l = d - KNOWN_DIST_TOL;
-    double u = d + KNOWN_DIST_TOL;
     auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
-        ff, i, j, l, u, forceConstant);
+        ff, i, j, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL, forceConstant);
     ff->contribs().emplace_back(contrib);
   }
 }
@@ -392,10 +390,8 @@ void add13Terms(ForceFields::ForceField *ff,
       ff->contribs().emplace_back(contrib);
     } else if (!is13Constrained[j]) {
       double d = ((*positions[i]) - (*positions[k])).length();
-      double l = d - KNOWN_DIST_TOL;
-      double u = d + KNOWN_DIST_TOL;
       auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
-          ff, i, k, l, u, forceConstant);
+          ff, i, k, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL, forceConstant);
       ff->contribs().emplace_back(contrib);
     }
   }
@@ -465,18 +461,17 @@ ForceFields::ForceField *construct3DForceField(
   boost::dynamic_bitset<> atomPairs(N * N);
   boost::dynamic_bitset<> is13Constrained(N);
 
-  // torsion constraints
+  // ET/K torsion constraints
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
   addImproperTorsionTerms(field, 10.0, etkdgDetails.improperAtoms,
                           is13Constrained);
 
   constexpr double knownDistanceConstraintForce = 100.0;
-  // 1,2 distance constraints
   add12Terms(field, etkdgDetails, atomPairs, positions,
              knownDistanceConstraintForce, N);
-  // 1,3 distance constraints
   add13Terms(field, etkdgDetails, atomPairs, positions,
              knownDistanceConstraintForce, is13Constrained, true, N);
+
   // minimum distance for all other atom pairs that aren't constrained
   addLongRangeDistanceConstraints(field, etkdgDetails, atomPairs, positions,
                                   knownDistanceConstraintForce, mmat, N);
@@ -518,14 +513,12 @@ ForceFields::ForceField *constructPlain3DForceField(
   boost::dynamic_bitset<> atomPairs(N * N);
   boost::dynamic_bitset<> is13Constrained(N);
 
-  // torsion constraints
+  // ET torsion constraints
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
 
   constexpr double knownDistanceConstraintForce = 100.0;
-  // 1,2 distance constraints
   add12Terms(field, etkdgDetails, atomPairs, positions,
              knownDistanceConstraintForce, N);
-  // 1,3 distance constraints
   add13Terms(field, etkdgDetails, atomPairs, positions,
              knownDistanceConstraintForce, is13Constrained, false, N);
   // minimum distance for all other atom pairs that aren't constrained
