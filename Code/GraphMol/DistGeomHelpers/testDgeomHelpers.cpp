@@ -2477,6 +2477,7 @@ void testHydrogenBondBasics() {
 
 int main() {
   RDLog::InitLogs();
+  boost::logging::enable_logs("rdApp.info");
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";

@@ -11,6 +11,7 @@
 namespace DistGeom {
 class ChiralSet;
 
+//! DEPRECATED: use ChiralViolationContribs instead
 //! A term to capture the violation of chirality at an atom center
 //!
 class RDKIT_DISTGEOMETRY_EXPORT ChiralViolationContrib
