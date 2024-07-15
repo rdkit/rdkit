@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,9 +9,9 @@
 //
 #include "BoundsMatrix.h"
 #include "DistGeomUtils.h"
-#include "DistViolationContrib.h"
-#include "ChiralViolationContrib.h"
-#include "FourthDimContrib.h"
+#include "DistViolationContribs.h"
+#include "ChiralViolationContribs.h"
+#include "FourthDimContribs.h"
 #include <Numerics/Matrix.h>
 #include <Numerics/SymmMatrix.h>
 #include <Numerics/Vector.h>
@@ -191,6 +191,7 @@ ForceFields::ForceField *constructForceField(
     field->positions().push_back(positions[i]);
   }
 
+  auto contrib = new DistViolationContribs(field);
   for (unsigned int i = 1; i < N; i++) {
     for (unsigned int j = 0; j < i; j++) {
       if (fixedPts != nullptr && (*fixedPts)[i] && (*fixedPts)[j]) {
@@ -212,26 +213,39 @@ ForceFields::ForceField *constructForceField(
         includeIt = true;
       }
       if (includeIt) {
-        auto *contrib = new DistViolationContrib(field, i, j, u, l, w);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        contrib->addContrib(i, j, u, l, w);
       }
     }
   }
-
+  if (!contrib->empty()) {
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  } else {
+    delete contrib;
+  }
   // now add chiral constraints
   if (weightChiral > 1.e-8) {
+    auto contrib = new ChiralViolationContribs(field);
+
     for (const auto &cset : csets) {
-      auto *contrib =
-          new ChiralViolationContrib(field, cset.get(), weightChiral);
+      contrib->addContrib(cset.get(), weightChiral);
+    }
+    if (!contrib->empty()) {
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
+    } else {
+      delete contrib;
     }
   }
 
   // finally the contribution from the fourth dimension if we need to
   if ((field->dimension() == 4) && (weightFourthDim > 1.e-8)) {
+    auto contrib = new FourthDimContribs(field);
     for (unsigned int i = 0; i < N; i++) {
-      auto *contrib = new FourthDimContrib(field, i, weightFourthDim);
+      contrib->addContrib(i, weightFourthDim);
+    }
+    if (!contrib->empty()) {
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
+    } else {
+      delete contrib;
     }
   }
   return field;

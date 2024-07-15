@@ -10,6 +10,7 @@
 #include <ForceField/ForceField.h>
 
 namespace DistGeom {
+//! DEPRECATED: use FourthDimContribs instead
 //! A term used in penalizing chirality violations
 //!
 class RDKIT_DISTGEOMETRY_EXPORT FourthDimContrib
