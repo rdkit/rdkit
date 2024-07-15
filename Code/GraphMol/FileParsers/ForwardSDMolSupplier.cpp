@@ -242,7 +242,7 @@ std::unique_ptr<RWMol> ForwardSDMolSupplier::_next() {
     d_line++;
     std::getline(*dp_inStream, tempStr);
     while (!dp_inStream->eof() && !dp_inStream->fail() &&
-           (tempStr.at(0) != '$' || tempStr.substr(0, 4) != "$$$$")) {
+           (tempStr.empty() || tempStr.at(0) != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
@@ -264,7 +264,7 @@ std::unique_ptr<RWMol> ForwardSDMolSupplier::_next() {
       df_eofHitOnRead = true;
     }
     while (!dp_inStream->eof() && !dp_inStream->fail() &&
-           (tempStr.at(0) != '$' || tempStr.substr(0, 4) != "$$$$")) {
+           (tempStr.empty() || tempStr.at(0) != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
@@ -286,7 +286,7 @@ std::unique_ptr<RWMol> ForwardSDMolSupplier::_next() {
       df_eofHitOnRead = true;
     }
     while (!dp_inStream->eof() && !dp_inStream->fail() &&
-           (tempStr.at(0) != '$' || tempStr.substr(0, 4) != "$$$$")) {
+           (tempStr.empty() || tempStr.at(0) != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
