@@ -986,7 +986,7 @@ void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
 // Set the atomic number of the atoms that match the SMARTS in
 // RascalOptions.EquivalentAtoms to 110, 111 etc.  These will
 // be mapped back at the end.
-void assignEquivalentAtoms(ROMol &mol, const std::string equivalentAtoms) {
+void assignEquivalentAtoms(ROMol &mol, const std::string &equivalentAtoms) {
   if (equivalentAtoms.empty()) {
     return;
   }
