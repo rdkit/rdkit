@@ -20,7 +20,9 @@
 #include <RDGeneral/utils.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/UFF/DistanceConstraint.h>
+#include <ForceField/UFF/DistanceConstraints.h>
 #include <ForceField/UFF/AngleConstraint.h>
+#include <ForceField/UFF/AngleConstraints.h>
 #include <ForceField/UFF/Inversion.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleM6.h>
@@ -350,6 +352,7 @@ void add12Terms(ForceFields::ForceField *ff,
                 boost::dynamic_bitset<> &atomPairs,
                 RDGeom::Point3DPtrVect &positions, double forceConstant,
                 unsigned int numAtoms) {
+  auto contrib = new ForceFields::UFF::DistanceConstraintContribs(ff);
   for (const auto &bond : etkdgDetails.bonds) {
     unsigned int i = bond.first;
     unsigned int j = bond.second;
@@ -359,9 +362,13 @@ void add12Terms(ForceFields::ForceField *ff,
       atomPairs[j * numAtoms + i] = 1;
     }
     double d = ((*positions[i]) - (*positions[j])).length();
-    auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
-        ff, i, j, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL, forceConstant);
+    contrib->addContrib(i, j, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL,
+                        forceConstant);
+  }
+  if (!contrib->empty()) {
     ff->contribs().emplace_back(contrib);
+  } else {
+    delete contrib;
   }
 }
 //! Add 1-3 distance constraints with padding at current positions to force
@@ -387,6 +394,8 @@ void add13Terms(ForceFields::ForceField *ff,
                 RDGeom::Point3DPtrVect &positions, double forceConstant,
                 boost::dynamic_bitset<> &is13Constrained,
                 bool useBasicKnowledge, unsigned int numAtoms) {
+  auto contribDistance = new ForceFields::UFF::DistanceConstraintContribs(ff);
+  auto contribAngle = new ForceFields::UFF::AngleConstraintContribs(ff);
   for (const auto &angle : etkdgDetails.angles) {
     unsigned int i = angle[0];
     unsigned int j = angle[1];
@@ -399,15 +408,22 @@ void add13Terms(ForceFields::ForceField *ff,
     }
     // check for triple bonds
     if (useBasicKnowledge && angle[3]) {
-      auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
-          ff, i, j, k, 179.0, 180.0, 1);
-      ff->contribs().emplace_back(contrib);
+      contribAngle->addContrib(i, j, k, 179, 180, 1);
     } else if (!is13Constrained[j]) {
       double d = ((*positions[i]) - (*positions[k])).length();
-      auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
-          ff, i, k, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL, forceConstant);
-      ff->contribs().emplace_back(contrib);
+      contribDistance->addContrib(i, k, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL,
+                                  forceConstant);
     }
+  }
+  if (!contribDistance->empty()) {
+    ff->contribs().emplace_back(contribDistance);
+  } else {
+    delete contribDistance;
+  }
+  if (!contribAngle->empty()) {
+    ff->contribs().emplace_back(contribAngle);
+  } else {
+    delete contribAngle;
   }
 }
 
@@ -433,6 +449,7 @@ void addLongRangeDistanceConstraints(
     boost::dynamic_bitset<> &atomPairs, RDGeom::Point3DPtrVect &positions,
     double knownDistanceForceConstant, const BoundsMatrix &mmat,
     unsigned int numAtoms) {
+  auto contrib = new ForceFields::UFF::DistanceConstraintContribs(ff);
   double fdist = knownDistanceForceConstant;
   for (unsigned int i = 1; i < numAtoms; ++i) {
     for (unsigned int j = 0; j < i; ++j) {
@@ -449,11 +466,14 @@ void addLongRangeDistanceConstraints(
           u += KNOWN_DIST_TOL;
           fdist = knownDistanceForceConstant;
         }
-        auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
-            ff, i, j, l, u, fdist);
-        ff->contribs().emplace_back(contrib);
+        contrib->addContrib(i, j, l, u, fdist);
       }
     }
+  }
+  if (!contrib->empty()) {
+    ff->contribs().emplace_back(contrib);
+  } else {
+    delete contrib;
   }
 }
 
@@ -507,7 +527,6 @@ ForceFields::ForceField *construct3DForceField(
         dielModel, is1_4);
     field->contribs().emplace_back(contrib);
   }
-
   return field;
 }
 
@@ -561,13 +580,17 @@ ForceFields::ForceField *construct3DImproperForceField(
                           is13Constrained);
 
   // Check that SP Centers have an angle of 180 degrees.
+  auto contrib = new ForceFields::UFF::AngleConstraintContribs(field);
   for (const auto &angle : angles) {
     if (angle[3]) {
-      auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
-          field, angle[0], angle[1], angle[2], 179.0, 180.0,
-          oobForceScalingFactor);
-      field->contribs().emplace_back(contrib);
+      contrib->addContrib(angle[0], angle[1], angle[2], 179.0, 180.0,
+                          oobForceScalingFactor);
     }
+  }
+  if (!contrib->empty()) {
+    field->contribs().emplace_back(contrib);
+  } else {
+    delete contrib;
   }
   return field;
 }  // construct3DImproperForceField
