@@ -37,14 +37,16 @@ RascalResult::RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                            double tier2Sim, bool ringMatchesRingOnly,
                            bool singleLargestFrag, int maxFragSep,
                            bool exactConnectionsMatch,
-                           const std::string &equivalentAtoms)
+                           const std::string &equivalentAtoms,
+                           bool ignoreBondOrders)
     : d_timedOut(timedOut),
       d_tier1Sim(tier1Sim),
       d_tier2Sim(tier2Sim),
       d_ringMatchesRingOnly(ringMatchesRingOnly),
       d_maxFragSep(maxFragSep),
       d_exactConnectionsMatch(exactConnectionsMatch),
-      d_equivalentAtoms(equivalentAtoms) {
+      d_equivalentAtoms(equivalentAtoms),
+      d_ignoreBondOrders(ignoreBondOrders) {
   const std::vector<std::vector<int>> *mol1AdjMatrix;
   if (swapped) {
     d_mol1.reset(new RDKit::ROMol(mol2));
@@ -77,6 +79,7 @@ RascalResult::RascalResult(const RascalResult &other)
       d_tier1Sim(other.d_tier1Sim),
       d_tier2Sim(other.d_tier2Sim),
       d_equivalentAtoms(other.d_equivalentAtoms),
+      d_ignoreBondOrders(other.d_ignoreBondOrders),
       d_numFrags(other.d_numFrags),
       d_ringNonRingBondScore(other.d_ringNonRingBondScore),
       d_atomMatchScore(other.d_atomMatchScore),
@@ -245,13 +248,17 @@ std::string RascalResult::createSmartsString() const {
   for (const auto &bm : d_bondMatches) {
     RDKit::QueryBond b;
     auto mol1Bond = d_mol1->getBondWithIdx(bm.first);
+    auto mol2Bond = d_mol2->getBondWithIdx(bm.second);
     b.setBeginAtomIdx(atomMap[mol1Bond->getBeginAtomIdx()]);
     b.setEndAtomIdx(atomMap[mol1Bond->getEndAtomIdx()]);
-    b.setQuery(makeBondOrderEqualsQuery(mol1Bond->getBondType()));
-    auto mol2Bond = d_mol2->getBondWithIdx(bm.second);
-    if (mol1Bond->getBondType() != mol2Bond->getBondType()) {
-      b.expandQuery(makeBondOrderEqualsQuery(mol2Bond->getBondType()),
-                    Queries::COMPOSITE_OR);
+    if (d_ignoreBondOrders) {
+      b.setQuery(makeBondNullQuery());
+    } else {
+      b.setQuery(makeBondOrderEqualsQuery(mol1Bond->getBondType()));
+      if (mol1Bond->getBondType() != mol2Bond->getBondType()) {
+        b.expandQuery(makeBondOrderEqualsQuery(mol2Bond->getBondType()),
+                      Queries::COMPOSITE_OR);
+      }
     }
     if (d_ringMatchesRingOnly && !mol1Bond->getIsAromatic() &&
         !mol2Bond->getIsAromatic() &&

@@ -53,6 +53,8 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
                                        [F,Cl,Br,I] so all halogens will match
                                        each other. Space-separated list allowing
                                        more than 1 class of equivalent atoms.*/
+  bool ignoreBondOrders = false; /* If true, will treat all bonds as the same,
+                                    irrespective of order. */
 };
 }  // namespace RascalMCES
 }  // namespace RDKit

@@ -256,24 +256,26 @@ void getBondLabels(const ROMol &mol, const RascalOptions &opts,
   getAtomLabels(mol, opts, atomLabels);
   bondLabels = std::vector<std::string>(mol.getNumBonds());
   for (const auto &b : mol.bonds()) {
+    std::string bondType;
+    if (opts.ignoreBondOrders) {
+      bondType = "0";
+    } else {
+      bondType = std::to_string(b->getBondType());
+    }
     if (b->getBeginAtom()->getAtomicNum() == b->getEndAtom()->getAtomicNum()) {
       if (b->getEndAtom()->getDegree() < b->getBeginAtom()->getDegree()) {
-        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] +
-                                  std::to_string(b->getBondType()) +
+        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] + bondType +
                                   atomLabels[b->getBeginAtomIdx()];
       } else {
-        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] +
-                                  std::to_string(b->getBondType()) +
+        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] + bondType +
                                   atomLabels[b->getEndAtomIdx()];
       }
     } else {
       if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
-        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] +
-                                  std::to_string(b->getBondType()) +
+        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] + bondType +
                                   atomLabels[b->getEndAtomIdx()];
       } else {
-        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] +
-                                  std::to_string(b->getBondType()) +
+        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] + bondType +
                                   atomLabels[b->getBeginAtomIdx()];
       }
     }
@@ -1028,10 +1030,10 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
     starter.d_mol1.reset(new ROMol(*mol2));
     starter.d_mol2.reset(new ROMol(*mol1));
   }
-  std::map<int, std::vector<std::pair<int, int>>> degSeqs1, degSeqs2;
   assignEquivalentAtoms(*starter.d_mol1, opts.equivalentAtoms);
   assignEquivalentAtoms(*starter.d_mol2, opts.equivalentAtoms);
 
+  std::map<int, std::vector<std::pair<int, int>>> degSeqs1, degSeqs2;
   starter.d_tier1Sim =
       details::tier1Sim(*starter.d_mol1, *starter.d_mol2, degSeqs1, degSeqs2);
   if (starter.d_tier1Sim < opts.similarityThreshold) {
@@ -1115,7 +1117,7 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
                      starter.d_swapped, starter.d_tier1Sim, starter.d_tier2Sim,
                      opts.ringMatchesRingOnly, opts.singleLargestFrag,
                      opts.maxFragSeparation, opts.exactConnectionsMatch,
-                     opts.equivalentAtoms));
+                     opts.equivalentAtoms, opts.ignoreBondOrders));
   }
   std::sort(results.begin(), results.end(), details::resultCompare);
   return results;

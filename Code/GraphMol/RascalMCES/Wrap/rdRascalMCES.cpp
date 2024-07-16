@@ -211,7 +211,11 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
                      "be considered equivalent. e.g."
                      "[F,Cl,Br,I] so all halogens will match each other."
                      "Space-separated list allowing more than 1"
-                     "class of equivalent atoms.");
+                     "class of equivalent atoms.")
+      .def_readwrite("ignoreBondOrders",
+                     &RDKit::RascalMCES::RascalOptions::ignoreBondOrders,
+                     "If True, will treat all bonds as the same,\n"
+                     "irrespective of order.  Default=False.");
 
   docString =
       "Find one or more MCESs between the 2 molecules given.  Returns a list of "

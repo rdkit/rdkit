@@ -187,10 +187,18 @@ class TestCase(unittest.TestCase):
     mol2 = Chem.MolFromSmiles('c1ccccc1Br')
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)
     self.assertEqual(results[0].numFragments, 1)
-    print(results[0].smartsString)
     self.assertEqual(results[0].smartsString, 'c1:c:c:c:c:c:1-[F,Cl,Br,I]')
-    
-    
 
+  def testEquivalentBonds(self):
+    opts = rdRascalMCES.RascalOptions()
+    opts.similarityThreshold = 0.5
+    opts.ignoreBondOrders = True
+    mol1 = Chem.MolFromSmiles('CC=CC')
+    mol2 = Chem.MolFromSmiles('CCCC')
+    results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+    self.assertEqual(results[0].numFragments, 1)
+    self.assertEqual(results[0].smartsString, 'C~C~C~C')
+    
+    
 if __name__ == "__main__":
   unittest.main()
