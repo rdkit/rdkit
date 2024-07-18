@@ -8212,6 +8212,18 @@ M  END
     centers = Chem.FindMesoCenters(mol, includeIsotopes=False)
     self.assertEqual(centers, ())
 
+  def testCleanupStereoGroups(self):
+    origVal = Chem.GetUseLegacyStereoPerception()
+    Chem.SetUseLegacyStereoPerception(False)
+    mol = Chem.MolFromSmiles('N[C@H]1CC[C@@H](O)CC1')
+    mol = Chem.RWMol(mol)
+    group1 = Chem.CreateStereoGroup(Chem.StereoGroupType.STEREO_OR, mol, [1, 4])
+    mol.SetStereoGroups([group1])
+    self.assertEqual(len(mol.GetStereoGroups()), 1)
+    Chem.CleanupStereoGroups(mol)
+    self.assertEqual(len(mol.GetStereoGroups()), 0)
+    Chem.SetUseLegacyStereoPerception(origVal)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
