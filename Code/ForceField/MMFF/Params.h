@@ -486,7 +486,6 @@ class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
   const MMFFCovRadPauEle *operator()(const unsigned int atomicNum) const {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
     const auto res = d_params.find(atomicNum);
-
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
     auto bounds =
