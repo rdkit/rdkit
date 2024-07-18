@@ -3777,6 +3777,12 @@ void simplifyEnhancedStereo(ROMol &mol, bool removeAffectedStereoGroups) {
 
 std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
     const ROMol &mol, bool includeIsotopes, bool includeAtomMaps) {
+  if (getUseLegacyStereoPerception()) {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: findMesoCenters is not supported when legacy stereo perception is enabled."
+        << std::endl;
+    return {};
+  }
   std::vector<std::pair<unsigned int, unsigned int>> res;
   boost::dynamic_bitset<> specifiedChiralAts(mol.getNumAtoms());
   std::vector<unsigned int> ringStereoAts(mol.getNumAtoms(), mol.getNumAtoms());

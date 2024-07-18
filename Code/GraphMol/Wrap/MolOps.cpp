@@ -2256,6 +2256,10 @@ RETURNS:
       calculation.
     - includeAtomMaps: (optional) toggles whether or not atom maps should be included in the
       calculation.
+
+  **NOTE**: this function does nothing when the legacy stereo perception code is
+    being used.
+
     )DOC";
     python::def("FindMesoCenters", findMesoHelper,
                 (python::arg("mol"), python::arg("includeIsotopes") = true,

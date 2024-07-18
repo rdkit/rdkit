@@ -402,6 +402,9 @@ RDKIT_GRAPHMOL_EXPORT void simplifyEnhancedStereo(
 /*!
  \param mol: molecule to work with
 
+ **NOTE**: this function does nothing when the legacy stereo perception code is
+ being used.
+
 */
 RDKIT_GRAPHMOL_EXPORT std::vector<std::pair<unsigned int, unsigned int>>
 findMesoCenters(const ROMol &mol, bool includeIsotopes = true,
