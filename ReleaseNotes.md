@@ -1,3 +1,45 @@
+# Release_2024.03.5
+(Changes relative to Release_2024.03.4)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Jakub Adamczyk, Anna Brünisholz, David Cosgrove, Hussein Faara, Brian Kelley,
+Niels Maeder, Dan Nealschneider Franz Waibl, Xavier M
+
+## New Features and Enhancements:
+  - Add atom map number to complex query atom symbol.
+ (github pull #7571 from DavidACosgrove)
+  - Speed up GetPropsAsDict(), especially on Mac
+ (github pull #7584 from d-b-w)
+  - Update FindFLEX.cmake and FindBISON.cmake modules.
+ (github issue #7590 from whosayn)
+  - Optimizations of the DistanceGeometry forcefield
+ (github pull #7600 from greglandrum)
+
+## Bug Fixes:
+  - Improve PDB formatting with incomplete Monomer info
+ (github pull #7286 from fwaibl)
+  - Conformer generation fixes and enhancements
+ (github pull #7535 from nmaeder)
+  - PDBWriter offset bug
+ (github issue #7579 from nezix)
+  - Don't register FilterMatcherBase twice
+ (github pull #7589 from bp-kelley)
+  - FindPotentialStereo() missing some results if `cleanIt` is False
+ (github issue #7598 from greglandrum)
+  - `GetBPFingerprint` and `GetBTFingerprint` deprecation warning
+ (github issue #7602 from j-adamczyk)
+  - Fix an out of bounds access in ForwardMolSupplier
+ (github pull #7607 from bp-kelley)
+
+## Cleanup work:
+  - Geometry cleanups
+ (github pull #7433 from AnnaBruenisholz)
+
+
 # Release_2024.03.4
 (Changes relative to Release_2024.03.3)
 
