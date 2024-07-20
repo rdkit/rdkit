@@ -95,6 +95,14 @@ PyObject *EnumerateLibraryBase__next__(RDKit::EnumerateLibraryBase *base) {
   return res;
 }
 
+python::list EnumerateLibraryBase_GetPosition(RDKit::EnumerateLibraryBase *base) {
+  python::list position;
+  for(auto element : base->getPosition()) {
+    position.append(element);
+  }
+  return position;
+}
+
 python::object EnumerateLibraryBase_Serialize(const EnumerateLibraryBase &en) {
   std::string res = en.Serialize();
   python::object retval = python::object(
@@ -170,10 +178,8 @@ struct enumeration_wrapper {
              (python::arg("self"), python::arg("data")),
              "Inititialize the library from a binary string")
         .def(
-            "GetPosition", &RDKit::EnumerateLibraryBase::getPosition,
+	    "GetPosition", &EnumerateLibraryBase_GetPosition,
             "Returns the current enumeration position into the reagent vectors",
-            python::return_internal_reference<
-                1, python::with_custodian_and_ward_postcall<0, 1>>(),
             python::args("self"))
         .def(
             "GetState", &RDKit::EnumerateLibraryBase::getState,
