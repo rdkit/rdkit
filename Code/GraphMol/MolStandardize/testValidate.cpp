@@ -360,7 +360,48 @@ M  END
     cerr << msg << endl;
   }
   errmsg = errout[0];
-  TEST_ASSERT(errmsg == "ERROR: [FeaturesValidation] Query atom 0 is not allowed");
+  TEST_ASSERT(errmsg ==
+              "ERROR: [FeaturesValidation] Query atom 0 is not allowed");
+  {
+    FeaturesValidation featuresCopy(features);
+    featuresCopy.allowQueries = true;
+    errout = featuresCopy.validate(*mol, true);
+    TEST_ASSERT(errout.empty());
+  }
+
+  mblock = R"(
+                    2D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.8753 4.9367 0 0
+M  V30 2 C -0.4583 4.1667 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)";
+
+  mol.reset(MolBlockToMol(mblock, false, false));
+  mol->getAtomWithIdx(0)->setAtomicNum(0);
+  errout = features.validate(*mol, true);
+  TEST_ASSERT(errout.size() == 1);
+  for (auto msg : errout) {
+    cerr << msg << endl;
+  }
+  errmsg = errout[0];
+  TEST_ASSERT(errmsg ==
+              "ERROR: [FeaturesValidation] Dummy atom 0 is not allowed");
+  {
+    FeaturesValidation featuresCopy(features);
+    featuresCopy.allowDummies = true;
+    errout = featuresCopy.validate(*mol, true);
+    TEST_ASSERT(errout.empty());
+  }
 
   mblock = R"(
   Mrv2311 01162411522D          
@@ -382,11 +423,18 @@ M  END
   mol.reset(MolBlockToMol(mblock, false, false));
   errout = features.validate(*mol, true);
   TEST_ASSERT(errout.size() == 1);
-  for (auto msg: errout) {
+  for (auto msg : errout) {
     cerr << msg << endl;
   }
   errmsg = errout[0];
-  TEST_ASSERT(errmsg == "ERROR: [FeaturesValidation] Query bond 0 is not allowed");
+  TEST_ASSERT(errmsg ==
+              "ERROR: [FeaturesValidation] Query bond 0 is not allowed");
+  {
+    FeaturesValidation featuresCopy(features);
+    featuresCopy.allowQueries = true;
+    errout = featuresCopy.validate(*mol, true);
+    TEST_ASSERT(errout.empty());
+  }
 
   mblock = R"(
   Mrv2311 02272411562D          
@@ -416,15 +464,22 @@ M  V30 END CTAB
 M  END
 )";
 
-
   mol.reset(MolBlockToMol(mblock, false, false));
   errout = features.validate(*mol, true);
   TEST_ASSERT(errout.size() == 6);
-  for (auto msg: errout) {
+  for (auto msg : errout) {
     cerr << msg << endl;
   }
   errmsg = errout[0];
-  TEST_ASSERT(errmsg == "ERROR: [FeaturesValidation] Bond 0 of aromatic type is not allowed");
+  TEST_ASSERT(
+      errmsg ==
+      "ERROR: [FeaturesValidation] Bond 0 of aromatic type is not allowed");
+  {
+    FeaturesValidation featuresCopy(features);
+    featuresCopy.allowAromaticBondType = true;
+    errout = featuresCopy.validate(*mol, true);
+    TEST_ASSERT(errout.empty());
+  }
 
   mblock = R"(
   MJ231601                      
@@ -443,11 +498,19 @@ M  END
   mol.reset(MolBlockToMol(mblock, false, false));
   errout = features.validate(*mol, true);
   TEST_ASSERT(errout.size() == 1);
-  for (auto msg: errout) {
+  for (auto msg : errout) {
     cerr << msg << endl;
   }
   errmsg = errout[0];
-  TEST_ASSERT(errmsg == "ERROR: [FeaturesValidation] Atom 2 with alias 'CF3' is not allowed");
+  TEST_ASSERT(
+      errmsg ==
+      "ERROR: [FeaturesValidation] Atom 2 with alias 'CF3' is not allowed");
+  {
+    FeaturesValidation featuresCopy(features);
+    featuresCopy.allowAtomAliases = true;
+    errout = featuresCopy.validate(*mol, true);
+    TEST_ASSERT(errout.empty());
+  }
 
   mblock = R"(
   Mrv2311 01162411552D          
@@ -476,11 +539,19 @@ M  END
   mol.reset(MolBlockToMol(mblock, false, false));
   errout = features.validate(*mol, true);
   TEST_ASSERT(errout.size() == 1);
-  for (auto msg: errout) {
+  for (auto msg : errout) {
     cerr << msg << endl;
   }
   errmsg = errout[0];
-  TEST_ASSERT(errmsg == "ERROR: [FeaturesValidation] Enhanced stereochemistry features are not allowed");
+  TEST_ASSERT(
+      errmsg ==
+      "ERROR: [FeaturesValidation] Enhanced stereochemistry features are not allowed");
+  {
+    FeaturesValidation featuresCopy(features);
+    featuresCopy.allowEnhancedStereo = true;
+    errout = featuresCopy.validate(*mol, true);
+    TEST_ASSERT(errout.empty());
+  }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }

@@ -1184,6 +1184,10 @@ M  END
     errinfo = validator.validate(mol)
     self.assertEqual(len(errinfo), 1)
     self.assertEqual(errinfo[0], "ERROR: [FeaturesValidation] Query atom 0 is not allowed")
+    validator.allowDummies = True
+    validator.allowQueries = True
+    errinfo = validator.validate(mol)
+    self.assertEqual(len(errinfo), 0)
 
     mol = Chem.MolFromMolBlock('''
   Mrv2311 01162411552D          
@@ -1213,14 +1217,19 @@ M  END
     validator = rdMolStandardize.FeaturesValidation()
     errinfo = validator.validate(mol, True)
     self.assertEqual(len(errinfo), 1)
-    self.assertEqual(errinfo[0], "ERROR: [FeaturesValidation] Enhanced stereochemistry features are not allowed")
+    self.assertEqual(
+      errinfo[0], "ERROR: [FeaturesValidation] Enhanced stereochemistry features are not allowed")
 
     # allow enhanced stereo
     validator = rdMolStandardize.FeaturesValidation(True)
     errinfo = validator.validate(mol, True)
     self.assertEqual(len(errinfo), 0)
+    validator.allowEnhancedStereo = True
+    errinfo = validator.validate(mol)
+    self.assertEqual(len(errinfo), 0)
 
-    mol = Chem.MolFromMolBlock('''
+    mol = Chem.MolFromMolBlock(
+      '''
   Mrv2311 02272411562D          
 
   0  0  0     0  0            999 V3000
@@ -1252,7 +1261,11 @@ M  END
     validator = rdMolStandardize.FeaturesValidation()
     errinfo = validator.validate(mol, True)
     self.assertEqual(len(errinfo), 6)
-    self.assertEqual(errinfo[0], "ERROR: [FeaturesValidation] Bond 0 of aromatic type is not allowed")
+    self.assertEqual(errinfo[0],
+                     "ERROR: [FeaturesValidation] Bond 0 of aromatic type is not allowed")
+    validator.allowAromaticBondType = True
+    errinfo = validator.validate(mol)
+    self.assertEqual(len(errinfo), 0)
 
     # allow aromatic bonds
     validator = rdMolStandardize.FeaturesValidation(False, True)
