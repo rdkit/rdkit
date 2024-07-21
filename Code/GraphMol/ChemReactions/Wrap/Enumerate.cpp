@@ -96,11 +96,7 @@ PyObject *EnumerateLibraryBase__next__(RDKit::EnumerateLibraryBase *base) {
 }
 
 python::list EnumerateLibraryBase_GetPosition(RDKit::EnumerateLibraryBase *base) {
-  python::list position;
-  for(auto element : base->getPosition()) {
-    position.append(element);
-  }
-  return position;
+  return vectorToList(base->getPosition());
 }
 
 python::object EnumerateLibraryBase_Serialize(const EnumerateLibraryBase &en) {
