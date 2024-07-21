@@ -1081,14 +1081,14 @@ python::object findMesoHelper(const ROMol &mol, bool includeIsotopes,
   return python::tuple(res);
 }
   
-python::list findAllPathsOfLengthNHelper(const ROMol &mol,
+python::tuple findAllPathsOfLengthNHelper(const ROMol &mol,
 					 unsigned int targetLen,
 					 bool useBonds = true,
 					 bool useHs = false,
 					 int rootedAtAtom = -1,
 					 bool onlyShortestPaths = false) {
-  return sequenceToList(findAllPathsOfLengthN(mol, targetLen, useBonds, useHs,
-					      rootedAtAtom, onlyShortestPaths));
+  return sequenceToTuple(findAllPathsOfLengthN(mol, targetLen, useBonds, useHs,
+					       rootedAtAtom, onlyShortestPaths));
 }
 
 struct molops_wrapper {

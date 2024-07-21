@@ -416,6 +416,47 @@ python::list sequenceToList(const std::list<T> &v) {
   return result;
 }
 
+///////////////////////////////////////////////////////////////
+template<typename T>
+void addToTuple(python::list &l, const std::vector<T> &v) {
+  l.append(python::tuple(v));
+}
+
+template<typename T>
+void addToTuple(python::list &l, const std::list<T> &v) {
+  l.append(python::tuple(v));
+}
+
+template<typename T>
+void addToTuple(python::list &l, const std::vector<std::vector<T>> &v) {
+  for(auto &element: v) {
+    addToTuple(l, element);
+  }
+}
+
+template<typename T>
+void addToTuple(python::list &l, const std::list<std::vector<T>> &v) {
+  for(auto &element: v) {
+    addToTuple(l, element);
+  }
+}
+
+// For simple sequences, i.e. vectors of ints, use
+//  python::tuple(vect);
+// This is for vectors of vectors and more complicated objects
+template<class T>
+python::tuple sequenceToTuple(const std::vector<T> &v) {
+  python::list result;
+  addToTuple(result, v);
+  return python::tuple(result);
+}
+
+template<class T>
+python::tuple sequenceToTuple(const std::list<T> &v) {
+  python::list result;
+  addToTuple(result, v);
+  return python::tuple(result);
+}
 
 
 
