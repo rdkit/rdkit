@@ -95,8 +95,8 @@ PyObject *EnumerateLibraryBase__next__(RDKit::EnumerateLibraryBase *base) {
   return res;
 }
 
-python::list EnumerateLibraryBase_GetPosition(RDKit::EnumerateLibraryBase *base) {
-  return vectorToList(base->getPosition());
+python::tuple EnumerateLibraryBase_GetPosition(RDKit::EnumerateLibraryBase *base) {
+  return python::tuple(base->getPosition());
 }
 
 python::object EnumerateLibraryBase_Serialize(const EnumerateLibraryBase &en) {

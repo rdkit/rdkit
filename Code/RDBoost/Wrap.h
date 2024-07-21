@@ -370,4 +370,53 @@ struct rdkit_pickle_suite : python::pickle_suite {
   static bool getstate_manages_dict() { return true; }
 };
 
+template<typename T>
+void addToList(python::list &l, const T &v) {
+  l.append(v);
+}
+
+template<typename T>
+void addToList(python::list &l, const std::vector<T> &v) {
+  l.append(python::list(v));
+}
+
+template<typename T>
+void addToList(python::list &l, const std::list<T> &v) {
+  l.append(python::list(v));
+}
+
+template<typename T>
+void addToList(python::list &l, const std::vector<std::vector<T>> &v) {
+  for(auto &element: v) {
+    addToList(l, element);
+  }
+}
+
+template<typename T>
+void addToList(python::list &l, const std::list<std::vector<T>> &v) {
+  for(auto &element: v) {
+    addToList(l, element);
+  }
+}
+
+// For simple sequences, i.e. vectors of ints, use
+//  python::list(vect);
+// This is for vectors of vectors and more complicated objects
+template<class T>
+python::list sequenceToList(const std::vector<T> &v) {
+  python::list result;
+  addToList(result, v);
+  return result;
+}
+
+template<class T>
+python::list sequenceToList(const std::list<T> &v) {
+  python::list result;
+  addToList(result, v);
+  return result;
+}
+
+
+
+
 #endif
