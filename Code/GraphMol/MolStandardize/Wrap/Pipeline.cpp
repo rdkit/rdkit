@@ -37,6 +37,8 @@ void wrap_pipeline() {
                      &MolStandardize::PipelineOptions::allowEnhancedStereo)
       .def_readwrite("allowAromaticBondType",
                      &MolStandardize::PipelineOptions::allowAromaticBondType)
+      .def_readwrite("allowDativeBondType",
+                     &MolStandardize::PipelineOptions::allowDativeBondType)
       .def_readwrite("is2DZeroThreshold",
                      &MolStandardize::PipelineOptions::is2DZeroThreshold)
       .def_readwrite("atomClashLimit",
