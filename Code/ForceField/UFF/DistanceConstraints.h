@@ -46,7 +46,7 @@ class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContribs
   */
   DistanceConstraintContribs(ForceField *owner);
   ~DistanceConstraintContribs() override = default;
-  //! Constructor
+  //! Add contribution to this contrib.
   /*!
     \param idx1        index of atom1 in the ForceField's positions
     \param idx2        index of atom2 in the ForceField's positions
@@ -57,7 +57,7 @@ class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContribs
   */
   void addContrib(unsigned int idx1, unsigned int idx2, double minLen,
                   double maxLen, double forceConstant);
-  //! Constructor
+  //! Add contribution to this contrib.
   /*!
     \param idx1        index of atom1 in the ForceField's positions
     \param idx2        index of atom2 in the ForceField's positions
