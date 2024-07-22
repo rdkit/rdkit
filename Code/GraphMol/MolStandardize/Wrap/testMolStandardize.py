@@ -279,17 +279,14 @@ class TestCase(unittest.TestCase):
     mol2 = Chem.MolFromSmiles("COc1cccc(C=N[N-]C(N)=O)c1[O-].O.O.O.O=[U+2]=O")
     msg2 = vm2.validate(mol2)
     self.assertEqual(len(msg2), 1)
-    self.assertEqual(
-      """INFO: [FragmentValidation] water/hydroxide is present""", msg2[0])
+    self.assertEqual("""INFO: [FragmentValidation] water/hydroxide is present""", msg2[0])
 
     vm3 = rdMolStandardize.MolVSValidation()
     mol3 = Chem.MolFromSmiles("C1COCCO1.O=C(NO)NO")
     msg3 = vm3.validate(mol3)
     self.assertEqual(len(msg3), 2)
-    self.assertEqual(
-      """INFO: [FragmentValidation] 1,2-dimethoxyethane is present""", msg3[0])
-    self.assertEqual(
-      """INFO: [FragmentValidation] 1,4-dioxane is present""", msg3[1])
+    self.assertEqual("""INFO: [FragmentValidation] 1,2-dimethoxyethane is present""", msg3[0])
+    self.assertEqual("""INFO: [FragmentValidation] 1,4-dioxane is present""", msg3[1])
 
     atomic_no = [6, 7, 8]
     allowed_atoms = [Atom(i) for i in atomic_no]
@@ -297,8 +294,8 @@ class TestCase(unittest.TestCase):
     mol4 = Chem.MolFromSmiles("CC(=O)CF")
     msg4 = vm4.validate(mol4)
     self.assertEqual(len(msg4), 1)
-    self.assertEqual(
-      """INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list""", msg4[0])
+    self.assertEqual("""INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list""",
+                     msg4[0])
 
     atomic_no = [9, 17, 35]
     disallowed_atoms = [Atom(i) for i in atomic_no]
@@ -306,27 +303,23 @@ class TestCase(unittest.TestCase):
     mol5 = Chem.MolFromSmiles("CC(=O)CF")
     msg5 = vm5.validate(mol5)
     self.assertEqual(len(msg5), 1)
-    self.assertEqual(
-      """INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list""", msg5[0])
+    self.assertEqual("""INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list""",
+                     msg5[0])
 
     mol6 = Chem.MolFromSmiles("[3CH4]")
     vm6a = rdMolStandardize.IsotopeValidation()
     msg6a = vm6a.validate(mol6)
     self.assertEqual(len(msg6a), 1)
-    self.assertEqual(
-      "INFO: [IsotopeValidation] Molecule contains isotope 3C", msg6a[0]
-    )
+    self.assertEqual("INFO: [IsotopeValidation] Molecule contains isotope 3C", msg6a[0])
     vm6b = rdMolStandardize.IsotopeValidation(True)
     msg6b = vm6b.validate(mol6)
     self.assertEqual(len(msg6b), 1)
-    self.assertEqual(
-      "ERROR: [IsotopeValidation] The molecule contains an unknown isotope: 3C", msg6b[0]
-    )
+    self.assertEqual("ERROR: [IsotopeValidation] The molecule contains an unknown isotope: 3C",
+                     msg6b[0])
 
     msg999 = rdMolStandardize.ValidateSmiles("ClCCCl.c1ccccc1O")
     self.assertEqual(len(msg999), 1)
-    self.assertEqual(
-      """INFO: [FragmentValidation] 1,2-dichloroethane is present""", msg999[0])
+    self.assertEqual("""INFO: [FragmentValidation] 1,2-dichloroethane is present""", msg999[0])
 
   def test10NormalizeFromData(self):
     data = """//	Name	SMIRKS
@@ -1040,8 +1033,8 @@ chlorine	[Cl]
 
   def test24NormalizeInPlaceMT(self):
     ind = (("O=N(=O)-CC-N(=O)=O", "O=[N+]([O-])CC[N+](=O)[O-]"),
-           ("O=N(=O)-CCC-N(=O)=O", "O=[N+]([O-])CCC[N+](=O)[O-]"),
-           ("O=N(=O)-CCCC-N(=O)=O", "O=[N+]([O-])CCCC[N+](=O)[O-]"))
+           ("O=N(=O)-CCC-N(=O)=O", "O=[N+]([O-])CCC[N+](=O)[O-]"), ("O=N(=O)-CCCC-N(=O)=O",
+                                                                    "O=[N+]([O-])CCCC[N+](=O)[O-]"))
     for i in range(4):
       ind = ind + ind
     ms = [Chem.MolFromSmiles(x) for x, y in ind]
@@ -1050,8 +1043,8 @@ chlorine	[Cl]
 
   def test25ReionizeInPlaceMT(self):
     ind = (("c1cc([O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(O)c1"),
-           ("c1cc(C[O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(CO)c1"),
-           ("c1cc(CC[O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(CCO)c1"))
+           ("c1cc(C[O-])cc(C(=O)O)c1", "O=C([O-])c1cccc(CO)c1"), ("c1cc(CC[O-])cc(C(=O)O)c1",
+                                                                  "O=C([O-])c1cccc(CCO)c1"))
     for i in range(4):
       ind = ind + ind
     ms = [Chem.MolFromSmiles(x) for x, y in ind]
@@ -1163,7 +1156,8 @@ chlorine	[Cl]
 
   def test33MolBlockValidation(self):
     # featuresValidation
-    mol = Chem.MolFromMolBlock('''
+    mol = Chem.MolFromMolBlock(
+      '''
   Mrv2311 01162413552D          
 
   0  0  0     0  0            999 V3000
@@ -1273,7 +1267,8 @@ M  END
     self.assertEqual(len(errinfo), 0)
 
     # disallowedRadicalValidation
-    mol = Chem.MolFromMolBlock('''
+    mol = Chem.MolFromMolBlock(
+      '''
   Mrv2311 02082417212D          
 
   0  0  0     0  0            999 V3000
@@ -1293,10 +1288,12 @@ M  END
     validator = rdMolStandardize.DisallowedRadicalValidation()
     errinfo = validator.validate(mol)
     self.assertEqual(len(errinfo), 1)
-    self.assertEqual(errinfo[0], "ERROR: [DisallowedRadicalValidation] The radical at atom 0 is not allowed")
+    self.assertEqual(errinfo[0],
+                     "ERROR: [DisallowedRadicalValidation] The radical at atom 0 is not allowed")
 
     # is2DValidation
-    mol = Chem.MolFromMolBlock('''
+    mol = Chem.MolFromMolBlock(
+      '''
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -1326,13 +1323,15 @@ M  END
     validator = rdMolStandardize.Is2DValidation()
     errinfo = validator.validate(mol)
     self.assertEqual(len(errinfo), 1)
-    self.assertEqual(errinfo[0], "ERROR: [Is2DValidation] The molecule includes non-null Z coordinates")
+    self.assertEqual(errinfo[0],
+                     "ERROR: [Is2DValidation] The molecule includes non-null Z coordinates")
 
     validator = rdMolStandardize.Is2DValidation(0.2)
     errinfo = validator.validate(mol)
     self.assertEqual(len(errinfo), 0)
 
-    mol = Chem.MolFromMolBlock('''
+    mol = Chem.MolFromMolBlock(
+      '''
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -1351,10 +1350,12 @@ M  END
     validator = rdMolStandardize.Is2DValidation()
     errinfo = validator.validate(mol)
     self.assertEqual(len(errinfo), 1)
-    self.assertEqual(errinfo[0], "ERROR: [Is2DValidation] The molecule includes non-null Z coordinates")
+    self.assertEqual(errinfo[0],
+                     "ERROR: [Is2DValidation] The molecule includes non-null Z coordinates")
 
     # AtomClashValidation
-    mol = Chem.MolFromMolBlock('''
+    mol = Chem.MolFromMolBlock(
+      '''
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -1388,7 +1389,8 @@ M  END
     errinfo = validator.validate(mol)
     self.assertEqual(len(errinfo), 0)
 
-    mol = Chem.MolFromMolBlock('''
+    mol = Chem.MolFromMolBlock(
+      '''
           10052311582D          
 
   0  0  0     0  0            999 V3000
@@ -1416,7 +1418,10 @@ M  END
     validator = rdMolStandardize.StereoValidation()
     errinfo = validator.validate(mol)
     self.assertEqual(len(errinfo), 1)
-    self.assertEqual(errinfo[0], "ERROR: [StereoValidation] Atom 1 has opposing stereo bonds with different up/down orientation")
+    self.assertEqual(
+      errinfo[0],
+      "ERROR: [StereoValidation] Atom 1 has opposing stereo bonds with different up/down orientation"
+    )
 
   def test24Pipeline(self):
     pipeline = rdMolStandardize.Pipeline()
@@ -1498,10 +1503,12 @@ M  END
     self.assertNotEqual(result.status, rdMolStandardize.PipelineStatus.NO_EVENT)
     self.assertTrue(result.status & rdMolStandardize.PipelineStatus.VALIDATION_ERROR)
     #self.assertTrue(result.status & rdMolStandardize.PipelineStatus.STANDARDIZATION_ERROR)
-    self.assertEqual(result.status, (
-      rdMolStandardize.PipelineStatus.BASIC_VALIDATION_ERROR |
-      rdMolStandardize.PipelineStatus.PREPARE_FOR_STANDARDIZATION_ERROR #|
-      #rdMolStandardize.PipelineStatus.NORMALIZER_STANDARDIZATION_ERROR
+    self.assertEqual(
+      result.status,
+      (
+        rdMolStandardize.PipelineStatus.BASIC_VALIDATION_ERROR
+        | rdMolStandardize.PipelineStatus.PREPARE_FOR_STANDARDIZATION_ERROR  #|
+        #rdMolStandardize.PipelineStatus.NORMALIZER_STANDARDIZATION_ERROR
       ))
 
     molblock = '''
@@ -1581,9 +1588,9 @@ M  END
     self.assertEqual(result.stage, rdMolStandardize.PipelineStage.COMPLETED)
     self.assertNotEqual(result.status, rdMolStandardize.PipelineStatus.NO_EVENT)
     self.assertTrue(result.status & rdMolStandardize.PipelineStatus.VALIDATION_ERROR)
-    self.assertEqual(result.status,
-                     rdMolStandardize.PipelineStatus.IS2D_VALIDATION_ERROR
-                     | rdMolStandardize.PipelineStatus.STEREO_VALIDATION_ERROR)
+    self.assertEqual(
+      result.status, rdMolStandardize.PipelineStatus.IS2D_VALIDATION_ERROR
+      | rdMolStandardize.PipelineStatus.STEREO_VALIDATION_ERROR)
 
     molblock = '''
           10282320572D          
@@ -1610,16 +1617,14 @@ M  END
 
     result = pipeline.run(molblock)
     self.assertEqual(result.stage, rdMolStandardize.PipelineStage.COMPLETED)
-    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.PIPELINE_ERROR), rdMolStandardize.PipelineStatus.NO_EVENT)
-    self.assertNotEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION), rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION)
-    self.assertEqual(
-      (result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION),
-      (
-        rdMolStandardize.PipelineStatus.METALS_DISCONNECTED
-        | rdMolStandardize.PipelineStatus.FRAGMENTS_REMOVED
-        | rdMolStandardize.PipelineStatus.PROTONATION_CHANGED
-      )
-    )
+    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.PIPELINE_ERROR),
+                     rdMolStandardize.PipelineStatus.NO_EVENT)
+    self.assertNotEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION),
+                        rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION)
+    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION),
+                     (rdMolStandardize.PipelineStatus.METALS_DISCONNECTED
+                      | rdMolStandardize.PipelineStatus.FRAGMENTS_REMOVED
+                      | rdMolStandardize.PipelineStatus.PROTONATION_CHANGED))
 
     parentMol = Chem.MolFromMolBlock(result.parentMolBlock, sanitize=False)
     parentSmiles = Chem.MolToSmiles(parentMol)
@@ -1653,8 +1658,10 @@ M  END
     result = pipeline.run(molblock)
     self.assertEqual(result.stage, rdMolStandardize.PipelineStage.COMPLETED)
     # nitro groups are cleaned-up in a pre-standardization step
-    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.PIPELINE_ERROR), rdMolStandardize.PipelineStatus.NO_EVENT)
-    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION), rdMolStandardize.PipelineStatus.NO_EVENT)
+    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.PIPELINE_ERROR),
+                     rdMolStandardize.PipelineStatus.NO_EVENT)
+    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION),
+                     rdMolStandardize.PipelineStatus.NO_EVENT)
 
     parentMol = Chem.MolFromMolBlock(result.parentMolBlock, sanitize=False)
     parentSmiles = Chem.MolToSmiles(parentMol)
@@ -1691,15 +1698,13 @@ M  END
 
     result = pipeline.run(molblock)
     self.assertEqual(result.stage, rdMolStandardize.PipelineStage.COMPLETED)
-    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.PIPELINE_ERROR), rdMolStandardize.PipelineStatus.NO_EVENT)
-    self.assertNotEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION), rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION)
-    self.assertEqual(
-      (result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION),
-      (
-        rdMolStandardize.PipelineStatus.METALS_DISCONNECTED
-        | rdMolStandardize.PipelineStatus.FRAGMENTS_REMOVED
-      )
-    )
+    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.PIPELINE_ERROR),
+                     rdMolStandardize.PipelineStatus.NO_EVENT)
+    self.assertNotEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION),
+                        rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION)
+    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION),
+                     (rdMolStandardize.PipelineStatus.METALS_DISCONNECTED
+                      | rdMolStandardize.PipelineStatus.FRAGMENTS_REMOVED))
 
     parentMol = Chem.MolFromMolBlock(result.parentMolBlock, sanitize=False)
     parentSmiles = Chem.MolToSmiles(parentMol)
@@ -1737,9 +1742,12 @@ M  END
 '''
     result = pipeline.run(molblock)
     self.assertEqual(result.stage, rdMolStandardize.PipelineStage.COMPLETED)
-    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.PIPELINE_ERROR), rdMolStandardize.PipelineStatus.NO_EVENT)
-    self.assertNotEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION), rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION)
-    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION), rdMolStandardize.PipelineStatus.NORMALIZATION_APPLIED)
+    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.PIPELINE_ERROR),
+                     rdMolStandardize.PipelineStatus.NO_EVENT)
+    self.assertNotEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION),
+                        rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION)
+    self.assertEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION),
+                     rdMolStandardize.PipelineStatus.NORMALIZATION_APPLIED)
 
     outputMol = Chem.MolFromMolBlock(result.outputMolBlock, sanitize=False)
     outputSmiles = Chem.MolToSmiles(outputMol)
@@ -1763,6 +1771,7 @@ M  END
     result = pipeline.run(molblock)
     self.assertEqual(result.stage, rdMolStandardize.PipelineStage.COMPLETED)
     self.assertEqual(result.status, rdMolStandardize.PipelineStatus.NO_EVENT)
+
 
 if __name__ == "__main__":
   unittest.main()
