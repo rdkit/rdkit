@@ -209,6 +209,43 @@ M  END
     REQUIRE(result.status & MolStandardize::FEATURES_VALIDATION_ERROR);
   }
 
+  SECTION("failing features validation, dative bonds") {
+    const char* molblock = R"(
+  Mrv2311 07222412542D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Pt -17.4792 5.75 0 0
+M  V30 2 Cl -16.1042 6.8333 0 0
+M  V30 3 Cl -16.1875 4.7917 0 0
+M  V30 4 N -18.8958 6.8333 0 0
+M  V30 5 N -18.8125 4.5833 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 3 1
+M  V30 3 9 4 1
+M  V30 4 9 5 1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)";
+
+    MolStandardize::PipelineResult result = pipeline.run(molblock);
+
+    for (auto& info : result.log) {
+      std::cerr << info.status << " " << info.detail << std::endl;
+    }
+
+    REQUIRE(result.stage == MolStandardize::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
+    REQUIRE(result.status & MolStandardize::FEATURES_VALIDATION_ERROR);
+  }
+
   SECTION("failing features validation, enhanced stereo") {
     const char* molblock = R"(
   Mrv2311 01162411552D          

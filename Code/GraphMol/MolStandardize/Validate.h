@@ -210,17 +210,16 @@ class RDKIT_MOLSTANDARDIZE_EXPORT DisallowedRadicalValidation
 
 //! The FeaturesValidation class reports an error if the input
 /// molecule representation includes any undesired features.
-/// The list of undesired features currently includes query atoms
-/// and bonds, dummy atoms, atom aliases, and (optionally)
-/// enhanced stereochemistry.
 class RDKIT_MOLSTANDARDIZE_EXPORT FeaturesValidation : public ValidationMethod {
  public:
   FeaturesValidation(bool allowEnhancedStereo = false,
                      bool allowAromaticBondType = false,
+                     bool allowDativeBondType = false,
                      bool allowQueries = false, bool allowDummies = false,
                      bool allowAtomAliases = false)
       : allowEnhancedStereo(allowEnhancedStereo),
         allowAromaticBondType(allowAromaticBondType),
+        allowDativeBondType(allowDativeBondType),
         allowQueries(allowQueries),
         allowDummies(allowDummies),
         allowAtomAliases(allowAtomAliases){};
@@ -231,6 +230,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FeaturesValidation : public ValidationMethod {
   }
   bool allowEnhancedStereo;
   bool allowAromaticBondType;
+  bool allowDativeBondType;
   bool allowQueries;
   bool allowDummies;
   bool allowAtomAliases;

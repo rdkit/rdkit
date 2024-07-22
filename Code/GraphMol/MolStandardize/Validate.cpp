@@ -311,7 +311,7 @@ std::vector<ValidationErrorInfo> FeaturesValidation::validate(
     const ROMol &mol, bool reportAllFailures) const {
   std::vector<ValidationErrorInfo> errors;
 
-  // disallow query and dummy atoms, and aliases
+  // Optionally disallow query and dummy atoms, and aliases
   for (auto atom : mol.atoms()) {
     if (!allowQueries && atom->hasQuery()) {
       errors.push_back("ERROR: [FeaturesValidation] Query atom " +
@@ -339,7 +339,7 @@ std::vector<ValidationErrorInfo> FeaturesValidation::validate(
     }
   }
 
-  // disallow query and (optionally) aromatic bonds
+  // Optionally disallow query, aromatic or dative bonds
   for (auto bond : mol.bonds()) {
     if (!allowQueries && bond->hasQuery()) {
       errors.push_back("ERROR: [FeaturesValidation] Query bond " +
@@ -357,10 +357,18 @@ std::vector<ValidationErrorInfo> FeaturesValidation::validate(
         return errors;
       }
     }
+    if (!allowDativeBondType &&
+        bond->getBondType() == Bond::BondType::DATIVE) {
+      errors.push_back("ERROR: [FeaturesValidation] Bond " +
+                       std::to_string(bond->getIdx()) +
+                       " of dative type is not allowed");
+      if (!reportAllFailures) {
+        return errors;
+      }
+    }
   }
 
-  // disallow using the enahanced stereochemistry
-  // (based on configured options)
+  // Optionally disallow using the enahanced stereochemistry
   if (!allowEnhancedStereo && mol.getStereoGroups().size()) {
     errors.emplace_back(
         "ERROR: [FeaturesValidation] Enhanced stereochemistry features are not allowed");

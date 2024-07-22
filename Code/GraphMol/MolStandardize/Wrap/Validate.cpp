@@ -152,6 +152,7 @@ struct validate_wrapper {
         .def(python::init<bool, bool, bool, bool, bool>(
             (python::arg("allowEnhancedStereo") = false,
              python::arg("allowAromaticBondType") = false,
+             python::arg("allowDativeBondType") = false,
              python::arg("allowQueries") = false,
              python::arg("allowDummmies") = false,
              python::arg("allowAtomAliases") = false)))
@@ -160,6 +161,9 @@ struct validate_wrapper {
         .def_readwrite(
             "allowAromaticBondType",
             &MolStandardize::FeaturesValidation::allowAromaticBondType)
+        .def_readwrite(
+            "allowDativeBondType",
+            &MolStandardize::FeaturesValidation::allowDativeBondType)
         .def_readwrite("allowQueries",
                        &MolStandardize::FeaturesValidation::allowQueries)
         .def_readwrite("allowDummies",
