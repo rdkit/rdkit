@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2021 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -117,8 +117,7 @@ bool atomHasConjugatedBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
 
   auto &mol = at->getOwningMol();
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    auto bnd = mol[nbri];
+  for (const auto bnd : mol.atomBonds(at)) {
     if (bnd->getIsConjugated()) {
       return true;
     }
