@@ -127,8 +127,7 @@ struct validate_wrapper {
                    python::bases<MolStandardize::ValidationMethod>,
                    boost::noncopyable>("IsotopeValidation")
         .def(python::init<bool>(python::arg("strict") = false))
-        .def_readwrite("strict",
-                       &MolStandardize::IsotopeValidation::strict);
+        .def_readwrite("strict", &MolStandardize::IsotopeValidation::strict);
 
     python::class_<MolStandardize::MolVSValidation,
                    python::bases<MolStandardize::ValidationMethod>,
@@ -180,8 +179,7 @@ struct validate_wrapper {
                    python::bases<MolStandardize::ValidationMethod>,
                    boost::noncopyable>("Is2DValidation")
         .def(python::init<double>(python::arg("threshold") = 1e-3))
-        .def_readwrite("threshold",
-                       &MolStandardize::Is2DValidation::threshold);
+        .def_readwrite("threshold", &MolStandardize::Is2DValidation::threshold);
 
     python::class_<MolStandardize::Layout2DValidation,
                    python::bases<MolStandardize::ValidationMethod>,
@@ -196,12 +194,15 @@ struct validate_wrapper {
                        &MolStandardize::Layout2DValidation::clashLimit)
         .def_readwrite("bondLengthLimit",
                        &MolStandardize::Layout2DValidation::bondLengthLimit)
-        .def_readwrite("allowLongBondsInRings",
-                       &MolStandardize::Layout2DValidation::allowLongBondsInRings)
-        .def_readwrite("allowAtomBondClashExemption",
-                       &MolStandardize::Layout2DValidation::allowAtomBondClashExemption)
-        .def_readwrite("minMedianBondLength",
-                       &MolStandardize::Layout2DValidation::minMedianBondLength);
+        .def_readwrite(
+            "allowLongBondsInRings",
+            &MolStandardize::Layout2DValidation::allowLongBondsInRings)
+        .def_readwrite(
+            "allowAtomBondClashExemption",
+            &MolStandardize::Layout2DValidation::allowAtomBondClashExemption)
+        .def_readwrite(
+            "minMedianBondLength",
+            &MolStandardize::Layout2DValidation::minMedianBondLength);
 
     python::class_<MolStandardize::StereoValidation,
                    python::bases<MolStandardize::ValidationMethod>,
