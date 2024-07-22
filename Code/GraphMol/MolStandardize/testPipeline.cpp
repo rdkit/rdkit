@@ -21,28 +21,28 @@
 using namespace RDKit;
 
 TEST_CASE("VALIDATION_ERRORS_WITH_DEFAULT_OPTIONS") {
-
   MolStandardize::Pipeline pipeline;
 
   SECTION("parse error") {
-    const char * molblock = R"(
+    const char* molblock = R"(
              sldfj;ldskfj sldkjfsd;lkf 
 M  V30 BEGIN CTAB
 )";
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::PARSING_INPUT);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::INPUT_ERROR);
   }
 
   SECTION("failing RDKit validation, no atoms") {
-    const char * molblock = R"(
+    const char* molblock = R"(
           10052313452D          
 
   0  0  0     0  0            999 V3000
@@ -54,18 +54,19 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::BASIC_VALIDATION_ERROR);
   }
 
   SECTION("failing RDKit validation, bad valence status") {
-    const char * molblock = R"(
+    const char* molblock = R"(
           10242314442D          
 
   0  0  0     0  0            999 V3000
@@ -90,21 +91,21 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status == (
-      MolStandardize::BASIC_VALIDATION_ERROR |
-      MolStandardize::PREPARE_FOR_STANDARDIZATION_ERROR
-      ));
+    REQUIRE(result.status ==
+            (MolStandardize::BASIC_VALIDATION_ERROR |
+             MolStandardize::PREPARE_FOR_STANDARDIZATION_ERROR));
   }
 
   SECTION("failing Isotopes validation") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 01312409582D          
 
   0  0  0     0  0            999 V3000
@@ -123,18 +124,20 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::BASIC_VALIDATION_ERROR);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::BASIC_VALIDATION_ERROR);
   }
 
   SECTION("failing features validation, query atom") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 01162413552D          
 
   0  0  0     0  0            999 V3000
@@ -153,18 +156,19 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::FEATURES_VALIDATION_ERROR);
   }
 
   SECTION("failing features validation, aromatic bonds") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 02272411562D          
 
   0  0  0     0  0            999 V3000
@@ -194,18 +198,19 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::FEATURES_VALIDATION_ERROR);
   }
 
   SECTION("failing features validation, enhanced stereo") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 01162411552D          
 
   0  0  0     0  0            999 V3000
@@ -231,18 +236,19 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::FEATURES_VALIDATION_ERROR);
   }
 
   SECTION("failing radical validation, disallowed radical") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 02082417212D          
 
   0  0  0     0  0            999 V3000
@@ -261,18 +267,19 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::BASIC_VALIDATION_ERROR);
   }
 
   SECTION("failing 2D validation, non-null Z coords") {
-    const char * molblock = R"(
+    const char* molblock = R"(
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -291,18 +298,19 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::IS2D_VALIDATION_ERROR);
   }
 
   SECTION("failing validation, clashing atoms") {
-    const char * molblock = R"(
+    const char* molblock = R"(
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -325,18 +333,19 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::LAYOUT2D_VALIDATION_ERROR);
   }
 
   SECTION("failing validation, abnormally long bonds") {
-    const char * molblock = R"(
+    const char* molblock = R"(
           01112413352D          
 
   0  0  0     0  0            999 V3000
@@ -360,12 +369,13 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::LAYOUT2D_VALIDATION_ERROR);
 
@@ -419,17 +429,18 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
     // long bonds in rings are by defaul allowed
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
   }
 
   SECTION("failing stereo validation, too many stereo bonds (3 subst. case)") {
-    const char * molblock = R"(
+    const char* molblock = R"(
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -452,18 +463,20 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::STEREO_VALIDATION_ERROR);
   }
 
-  SECTION("failing stereo validation, adjacent stereo bonds w/ like direction (4 subst. case)") {
-    const char * molblock = R"(
+  SECTION(
+      "failing stereo validation, adjacent stereo bonds w/ like direction (4 subst. case)") {
+    const char* molblock = R"(
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -488,18 +501,20 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::STEREO_VALIDATION_ERROR);
   }
 
-  SECTION("failing validation, not 2D + adjacent stereo bonds w/ like direction (4 subst. case)") {
-    const char * molblock = R"(
+  SECTION(
+      "failing validation, not 2D + adjacent stereo bonds w/ like direction (4 subst. case)") {
+    const char* molblock = R"(
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -524,12 +539,13 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::IS2D_VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::STEREO_VALIDATION_ERROR);
@@ -537,13 +553,12 @@ M  END
 }
 
 TEST_CASE("VALIDATION_WITH_ALLOW_EMPTY_MOLS_OPTION") {
-
   MolStandardize::PipelineOptions options;
   options.allowEmptyMolecules = true;
   MolStandardize::Pipeline pipeline(options);
 
   SECTION("no atoms produces no error") {
-    const char * molblock = R"(
+    const char* molblock = R"(
           10052313452D          
 
   0  0  0     0  0            999 V3000
@@ -555,7 +570,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -565,14 +580,13 @@ M  END
 }
 
 TEST_CASE("VALIDATION_WITH_DISALLOWED_LONG_BONDS_IN_RINGS") {
-
   MolStandardize::PipelineOptions options;
-  options.bondLengthLimit = 10.; // adapted to test structure
+  options.bondLengthLimit = 10.;  // adapted to test structure
   options.allowLongBondsInRings = false;
   MolStandardize::Pipeline pipeline(options);
 
   SECTION("report long bonds in rings") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 02222409302D          
 
   0  0  0     0  0            999 V3000
@@ -622,23 +636,23 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
     REQUIRE(result.status & MolStandardize::LAYOUT2D_VALIDATION_ERROR);
   }
 }
 
 TEST_CASE("STANDARDIZATION") {
-
   MolStandardize::Pipeline pipeline;
 
   SECTION("disconnect metal") {
-    const char * molblock = R"(
+    const char* molblock = R"(
           10282320572D          
 
   0  0  0     0  0            999 V3000
@@ -663,31 +677,36 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::METALS_DISCONNECTED);
 
-    std::unique_ptr<RWMol> mol(MolBlockToMol(result.outputMolBlock, false, false));
+    std::unique_ptr<RWMol> mol(
+        MolBlockToMol(result.outputMolBlock, false, false));
     REQUIRE(mol);
 
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CC(=O)O");
 
-    std::unique_ptr<RWMol> outputMol(MolBlockToMol(result.outputMolBlock, false, false));
+    std::unique_ptr<RWMol> outputMol(
+        MolBlockToMol(result.outputMolBlock, false, false));
     REQUIRE(outputMol);
-    std::string outputSmiles {MolToSmiles(*outputMol)};
+    std::string outputSmiles{MolToSmiles(*outputMol)};
     REQUIRE(outputSmiles == "CC(=O)O");
   }
 
   SECTION("normalize nitro") {
-    const char * molblock = R"(
+    const char* molblock = R"(
           10282320572D          
 
   0  0  0     0  0            999 V3000
@@ -710,25 +729,27 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     // nitro groups are cleaned-up in a pre-standardization sanitization step.
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NO_EVENT);
 
-    std::unique_ptr<RWMol> mol(MolBlockToMol(result.outputMolBlock, false, false));
+    std::unique_ptr<RWMol> mol(
+        MolBlockToMol(result.outputMolBlock, false, false));
     REQUIRE(mol);
 
-    std::string smiles {MolToSmiles(*mol)};
+    std::string smiles{MolToSmiles(*mol)};
     REQUIRE(smiles == "C[N+](=O)[O-]");
   }
 
   SECTION("Phosphate normalization") {
-
-    const char * molblock_a = R"(
+    const char* molblock_a = R"(
   Mrv2311 04152413292D          
 
   0  0  0     0  0            999 V3000
@@ -753,24 +774,27 @@ M  END
 
     MolStandardize::PipelineResult result_a = pipeline.run(molblock_a);
 
-    for (auto & info : result_a.log) {
+    for (auto& info : result_a.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     // this test case is not expected to register any errors.
     REQUIRE(result_a.stage == MolStandardize::COMPLETED);
-    REQUIRE((result_a.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result_a.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
+    REQUIRE((result_a.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result_a.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result_a.status & MolStandardize::NORMALIZATION_APPLIED);
     REQUIRE(result_a.status & MolStandardize::PROTONATION_CHANGED);
 
-    std::unique_ptr<RWMol> mol_a(MolBlockToMol(result_a.outputMolBlock, false, false));
+    std::unique_ptr<RWMol> mol_a(
+        MolBlockToMol(result_a.outputMolBlock, false, false));
     REQUIRE(mol_a);
 
-    std::string smiles_a {MolToSmiles(*mol_a)};
+    std::string smiles_a{MolToSmiles(*mol_a)};
     REQUIRE(smiles_a == "CP(C)(=O)S");
 
-    const char * molblock_b = R"(
+    const char* molblock_b = R"(
   Mrv2311 04152413292D          
 
   0  0  0     0  0            999 V3000
@@ -795,26 +819,29 @@ M  END
 
     MolStandardize::PipelineResult result_b = pipeline.run(molblock_b);
 
-    for (auto & info : result_b.log) {
+    for (auto& info : result_b.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     // this test case is not expected to register any errors.
     REQUIRE(result_b.stage == MolStandardize::COMPLETED);
-    REQUIRE((result_b.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result_b.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
+    REQUIRE((result_b.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result_b.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result_b.status & MolStandardize::NORMALIZATION_APPLIED);
     REQUIRE(result_b.status & MolStandardize::PROTONATION_CHANGED);
 
-    std::unique_ptr<RWMol> mol_b(MolBlockToMol(result_b.outputMolBlock, false, false));
+    std::unique_ptr<RWMol> mol_b(
+        MolBlockToMol(result_b.outputMolBlock, false, false));
     REQUIRE(mol_b);
 
-    std::string smiles_b {MolToSmiles(*mol_b)};
+    std::string smiles_b{MolToSmiles(*mol_b)};
     REQUIRE(smiles_b == "CP(C)(=O)S");
   }
 
   SECTION("normalize w/ RDKit's default normalizer transformations") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 03112410152D          
 
   0  0  0     0  0            999 V3000
@@ -841,24 +868,28 @@ M  END
 
     MolStandardize::PipelineResult result = customizedPipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
     REQUIRE(result.status & MolStandardize::NORMALIZATION_APPLIED);
 
-    std::unique_ptr<RWMol> mol(MolBlockToMol(result.outputMolBlock, false, false));
+    std::unique_ptr<RWMol> mol(
+        MolBlockToMol(result.outputMolBlock, false, false));
     REQUIRE(mol);
 
-    std::string smiles {MolToSmiles(*mol)};
+    std::string smiles{MolToSmiles(*mol)};
     REQUIRE(smiles == "C[S+](C)[O-]");
   }
 
-  SECTION("normalization of 1,3- 1,5- conjugated systems favors application within rings") {
-    const char * molblock {};
+  SECTION(
+      "normalization of 1,3- 1,5- conjugated systems favors application within rings") {
+    const char* molblock{};
     MolStandardize::PipelineResult result;
     std::unique_ptr<RWMol> parentMol;
     std::string parentSmiles;
@@ -896,16 +927,16 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION)
-      == (MolStandardize::NORMALIZATION_APPLIED | MolStandardize::PROTONATION_CHANGED)
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::NORMALIZATION_APPLIED |
+             MolStandardize::PROTONATION_CHANGED));
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
@@ -945,16 +976,16 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION)
-      == (MolStandardize::NORMALIZATION_APPLIED | MolStandardize::PROTONATION_CHANGED)
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::NORMALIZATION_APPLIED |
+             MolStandardize::PROTONATION_CHANGED));
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
@@ -994,16 +1025,16 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION)
-      == (MolStandardize::NORMALIZATION_APPLIED | MolStandardize::PROTONATION_CHANGED)
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::NORMALIZATION_APPLIED |
+             MolStandardize::PROTONATION_CHANGED));
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
@@ -1043,16 +1074,16 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION)
-      == (MolStandardize::NORMALIZATION_APPLIED | MolStandardize::PROTONATION_CHANGED)
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::NORMALIZATION_APPLIED |
+             MolStandardize::PROTONATION_CHANGED));
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
@@ -1061,7 +1092,7 @@ M  END
   }
 
   SECTION("standardize zwitterion") {
-    const char * molblock = R"(
+    const char* molblock = R"(
           10282320572D          
 
   0  0  0     0  0            999 V3000
@@ -1088,31 +1119,34 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION)
-      == (MolStandardize::METALS_DISCONNECTED | MolStandardize::FRAGMENTS_REMOVED)
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::METALS_DISCONNECTED |
+             MolStandardize::FRAGMENTS_REMOVED));
 
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "NCC(=O)O");
 
-    std::unique_ptr<RWMol> outputMol(MolBlockToMol(result.outputMolBlock, false, false));
+    std::unique_ptr<RWMol> outputMol(
+        MolBlockToMol(result.outputMolBlock, false, false));
     REQUIRE(outputMol);
-    std::string outputSmiles {MolToSmiles(*outputMol)};
+    std::string outputSmiles{MolToSmiles(*outputMol)};
     REQUIRE(outputSmiles == "[NH3+]CC(=O)[O-]");
   }
 
   SECTION("standardize zwitterion with quaternary nitrogen") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 02052411472D          
 
   0  0  0     0  0            999 V3000
@@ -1143,27 +1177,31 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NO_EVENT);
 
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "C[N+](C)(C)CC(=O)O");
 
-    std::unique_ptr<RWMol> outputMol(MolBlockToMol(result.outputMolBlock, false, false));
+    std::unique_ptr<RWMol> outputMol(
+        MolBlockToMol(result.outputMolBlock, false, false));
     REQUIRE(outputMol);
-    std::string outputSmiles {MolToSmiles(*outputMol)};
+    std::string outputSmiles{MolToSmiles(*outputMol)};
     REQUIRE(outputSmiles == "C[N+](C)(C)CC(=O)[O-]");
   }
 
   SECTION("uncharge tertiary amine w/ explicit hydrogen") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 02012412352D          
 
   0  0  0     0  0            999 V3000
@@ -1188,23 +1226,26 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::PROTONATION_CHANGED);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PROTONATION_CHANGED);
     REQUIRE(result.parentMolBlock == result.outputMolBlock);
 
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CN(C)C");
   }
 
   SECTION("standardize preserves explicit Hs on chiral centers") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 03112410582D          
 
   0  0  0     0  0            999 V3000
@@ -1258,31 +1299,30 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION)
-      == (
-        MolStandardize::METALS_DISCONNECTED
-        | MolStandardize::FRAGMENTS_REMOVED
-        | MolStandardize::PROTONATION_CHANGED
-        )
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::METALS_DISCONNECTED |
+             MolStandardize::FRAGMENTS_REMOVED |
+             MolStandardize::PROTONATION_CHANGED));
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "[H][C@](C)(F)CCC[S+]([O-])C1=CC=C(C(=O)O)C=C1");
   }
 
   SECTION("standardize preserves isotopically marked explicit Hs") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 03112410572D          
 
   0  0  0     0  0            999 V3000
@@ -1332,32 +1372,31 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION)
-      == (
-        MolStandardize::METALS_DISCONNECTED
-        //| MolStandardize::NORMALIZATION_APPLIED
-        | MolStandardize::FRAGMENTS_REMOVED
-        | MolStandardize::PROTONATION_CHANGED
-        )
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::METALS_DISCONNECTED
+             //| MolStandardize::NORMALIZATION_APPLIED
+             | MolStandardize::FRAGMENTS_REMOVED |
+             MolStandardize::PROTONATION_CHANGED));
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "[2H]CCCC[S+]([O-])C1=CC=C(C(=O)O)C=C1");
   }
 
   SECTION("standardize preserves generic explicit Hs") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 03112410542D          
 
   0  0  0     0  0            999 V3000
@@ -1407,31 +1446,31 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION)
-      == (
-        MolStandardize::METALS_DISCONNECTED
-        | MolStandardize::FRAGMENTS_REMOVED
-        | MolStandardize::PROTONATION_CHANGED
-        )
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::METALS_DISCONNECTED |
+             MolStandardize::FRAGMENTS_REMOVED |
+             MolStandardize::PROTONATION_CHANGED));
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "[H]CCCC[S+]([O-])C1=CC=C(C(=O)O)C=C1");
   }
 
-  SECTION("standardize doesn't remove wedged bonds from non-stereogenic centers") {
-    const char * molblock = R"(
+  SECTION(
+      "standardize doesn't remove wedged bonds from non-stereogenic centers") {
+    const char* molblock = R"(
   Mrv2311 03112410512D          
 
   0  0  0     0  0            999 V3000
@@ -1479,32 +1518,31 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION)
-      == (
-        MolStandardize::METALS_DISCONNECTED
-        | MolStandardize::FRAGMENTS_REMOVED
-        | MolStandardize::PROTONATION_CHANGED
-        )
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::METALS_DISCONNECTED |
+             MolStandardize::FRAGMENTS_REMOVED |
+             MolStandardize::PROTONATION_CHANGED));
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CC(C)C[S+]([O-])C1=CC=C(C(=O)O)C=C1");
 
     Chirality::reapplyMolBlockWedging(*parentMol);
 
-    const Bond * wedged = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    const Bond* wedged = nullptr;
+    for (auto bond : parentMol->bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::BEGINWEDGE) {
         wedged = bond;
@@ -1522,7 +1560,7 @@ M  END
   }
 
   SECTION("standardize removes wavy bonds from tetrahedral centers") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 05172413472D          
 
   0  0  0     0  0            999 V3000
@@ -1549,28 +1587,30 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NORMALIZATION_APPLIED
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CCC(C)(F)Cl");
 
     Chirality::reapplyMolBlockWedging(*parentMol);
 
     // no wavy bond is expected to be found
-    const Bond * wavy = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    const Bond* wavy = nullptr;
+    for (auto bond : parentMol->bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::UNKNOWN) {
         wavy = bond;
@@ -1580,13 +1620,14 @@ M  END
     REQUIRE(wavy == nullptr);
   }
 
-  SECTION("standardize replaces wavy bonds with double bonds w/ stereo type 'either'") {
-    const char * molblock;
+  SECTION(
+      "standardize replaces wavy bonds with double bonds w/ stereo type 'either'") {
+    const char* molblock;
     MolStandardize::PipelineResult result;
     std::unique_ptr<RWMol> parentMol;
     std::string parentSmiles;
-    const Bond * wavy;
-    const Bond * doubleBond;
+    const Bond* wavy;
+    const Bond* doubleBond;
 
     // simplest case: wavy bond adjacent a double bond
     molblock = R"(
@@ -1612,16 +1653,17 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NORMALIZATION_APPLIED
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1633,7 +1675,7 @@ M  END
 
     // no wavy bond is expected to be found
     wavy = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    for (auto bond : parentMol->bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::UNKNOWN) {
         wavy = bond;
@@ -1644,7 +1686,7 @@ M  END
 
     // the double bond should have stereo type STEREOANY
     doubleBond = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    for (auto bond : parentMol->bonds()) {
       auto bondType = bond->getBondType();
       if (bondType == Bond::DOUBLE) {
         doubleBond = bond;
@@ -1684,16 +1726,17 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NORMALIZATION_APPLIED
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1705,7 +1748,7 @@ M  END
 
     // no wavy bond is expected to be found
     wavy = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    for (auto bond : parentMol->bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::UNKNOWN) {
         wavy = bond;
@@ -1716,7 +1759,7 @@ M  END
 
     // the double bond should have stereo type STEREOANY
     doubleBond = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    for (auto bond : parentMol->bonds()) {
       auto bondType = bond->getBondType();
       if (bondType == Bond::DOUBLE) {
         doubleBond = bond;
@@ -1759,16 +1802,17 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NORMALIZATION_APPLIED
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1780,7 +1824,7 @@ M  END
 
     // no wavy bond is expected to be found
     wavy = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    for (auto bond : parentMol->bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::UNKNOWN) {
         wavy = bond;
@@ -1791,7 +1835,7 @@ M  END
 
     // the double bond should have stereo type STEREOANY
     doubleBond = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    for (auto bond : parentMol->bonds()) {
       auto bondType = bond->getBondType();
       if (bondType == Bond::DOUBLE) {
         doubleBond = bond;
@@ -1836,16 +1880,17 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NORMALIZATION_APPLIED
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1857,7 +1902,7 @@ M  END
 
     // no wavy bond is expected to be found
     wavy = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    for (auto bond : parentMol->bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::UNKNOWN) {
         wavy = bond;
@@ -1868,7 +1913,7 @@ M  END
 
     // the double bond should have stereo type STEREONONE
     doubleBond = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    for (auto bond : parentMol->bonds()) {
       auto bondType = bond->getBondType();
       if (bondType == Bond::DOUBLE) {
         doubleBond = bond;
@@ -1906,16 +1951,17 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NORMALIZATION_APPLIED
-    );
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1927,7 +1973,7 @@ M  END
 
     // no wavy bond is expected to be found
     wavy = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    for (auto bond : parentMol->bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::UNKNOWN) {
         wavy = bond;
@@ -1938,7 +1984,7 @@ M  END
 
     // the double bond should have stereo type STEREOANY
     doubleBond = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    for (auto bond : parentMol->bonds()) {
       auto bondType = bond->getBondType();
       if (bondType == Bond::DOUBLE) {
         doubleBond = bond;
@@ -1950,7 +1996,7 @@ M  END
   }
 
   SECTION("pipeline doesn't remove stereo bonds from biaryls") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 02092409022D          
 
   0  0  0     0  0            999 V3000
@@ -1991,22 +2037,25 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NO_EVENT);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
 
     Chirality::reapplyMolBlockWedging(*parentMol);
 
-    const Bond * wedged = nullptr;
-    for (auto bond: parentMol->bonds()) {
+    const Bond* wedged = nullptr;
+    for (auto bond : parentMol->bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::BEGINWEDGE) {
         wedged = bond;
@@ -2022,7 +2071,7 @@ M  END
   }
 
   SECTION("SO2H normalization") {
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 03122408072D          
 
   0  0  0     0  0            999 V3000
@@ -2045,32 +2094,36 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) != MolStandardize::NO_EVENT);
-    REQUIRE(
-      (result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NORMALIZATION_APPLIED);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NORMALIZATION_APPLIED);
 
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
-    std::unique_ptr<RWMol> inputMol(MolBlockToMol(result.inputMolBlock, false, false));
+    std::unique_ptr<RWMol> inputMol(
+        MolBlockToMol(result.inputMolBlock, false, false));
     REQUIRE(inputMol);
-    std::string inputSmiles {MolToSmiles(*inputMol)};
+    std::string inputSmiles{MolToSmiles(*inputMol)};
     REQUIRE(inputSmiles == "C[SH](=O)=O");
 
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CS(=O)O");
   }
 
   SECTION("Neutralization of carbocations") {
     // verify that carbocations are not uncharged
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 06132416082D          
 
   0  0  0     0  0            999 V3000
@@ -2100,28 +2153,30 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NO_EVENT);
 
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
-    std::unique_ptr<RWMol> parentMol(MolBlockToMol(result.parentMolBlock, false, false));
+    std::unique_ptr<RWMol> parentMol(
+        MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
-    std::string parentSmiles {MolToSmiles(*parentMol)};
+    std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "C1=CC=C[CH+]C=C1");
   }
 
   SECTION("Handling of failing normalization") {
-
     // Test that the failing application of some normalization transform
     // doesn't result in unexpected changes to the input
     // (test case based on GitHub #7189)
-    const char * molblock = R"(
+    const char* molblock = R"(
   Mrv2311 05292413242D          
 
   0  0  0     0  0            999 V3000
@@ -2149,14 +2204,14 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto & info : result.log) {
+    for (auto& info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
     REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) == MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) == MolStandardize::NO_EVENT);
-
+    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
+            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
+            MolStandardize::NO_EVENT);
   }
 }
-

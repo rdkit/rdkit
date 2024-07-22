@@ -191,18 +191,18 @@ void testMolVSOptions() {
   string smi1 = "";
   unique_ptr<ROMol> m1(SmilesToMol(smi1, 0, false));
   vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
-  //for (const auto &msg : errout1) {
-  //  TEST_ASSERT(msg == "ERROR: [NoAtomValidation] Molecule has no atoms");
-  //}
+  // for (const auto &msg : errout1) {
+  //   TEST_ASSERT(msg == "ERROR: [NoAtomValidation] Molecule has no atoms");
+  // }
   TEST_ASSERT(errout1.empty());
 
   string smi2 = "O=C([O-])c1ccccc1";
   unique_ptr<ROMol> m2(SmilesToMol(smi2, 0, false));
   vector<ValidationErrorInfo> errout2 = vm.validate(*m2, true);
-  //for (const auto &msg : errout2) {
-  //  TEST_ASSERT(
-  //    msg == "INFO: [NeutralValidation] Not an overall neutral system (-1)");
-  //}
+  // for (const auto &msg : errout2) {
+  //   TEST_ASSERT(
+  //     msg == "INFO: [NeutralValidation] Not an overall neutral system (-1)");
+  // }
   TEST_ASSERT(errout2.empty());
 
   // test strict option of IsotopeValidation
@@ -218,7 +218,8 @@ void testMolVSOptions() {
   vector<ValidationErrorInfo> errout4 = isotopeValidation.validate(*m4, true);
   TEST_ASSERT(errout4.size() == 1);
   TEST_ASSERT(
-    errout4[0] == "ERROR: [IsotopeValidation] The molecule contains an unknown isotope: 3C");
+      errout4[0] ==
+      "ERROR: [IsotopeValidation] The molecule contains an unknown isotope: 3C");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -356,7 +357,7 @@ M  END
   mol.reset(MolBlockToMol(mblock, false, false));
   errout = features.validate(*mol, true);
   TEST_ASSERT(errout.size() == 1);
-  for (auto msg: errout) {
+  for (auto msg : errout) {
     cerr << msg << endl;
   }
   errmsg = errout[0];
@@ -557,14 +558,14 @@ M  END
 }
 
 void testDisallowedRadicalValidation() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing DisallowedRadicalValidation"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing DisallowedRadicalValidation"
+      << std::endl;
 
   unique_ptr<ROMol> mol;
   DisallowedRadicalValidation radicalValidation;
   string mblock, errmsg;
   vector<ValidationErrorInfo> errout;
-
 
   mblock = R"(
   Mrv2311 02082417202D          
@@ -608,9 +609,9 @@ M  END
   errout = radicalValidation.validate(*mol, true);
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
-  TEST_ASSERT(errmsg ==
-    "ERROR: [DisallowedRadicalValidation] The radical at atom 0 is not allowed");
-
+  TEST_ASSERT(
+      errmsg ==
+      "ERROR: [DisallowedRadicalValidation] The radical at atom 0 is not allowed");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -623,7 +624,6 @@ void testIs2DValidation() {
   Is2DValidation is2D;
   string mblock, errmsg;
   vector<ValidationErrorInfo> errout;
-
 
   mblock = R"(
                     2D          
@@ -667,8 +667,9 @@ M  END
   errout = is2D.validate(*mol, true);
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
-  TEST_ASSERT(errmsg ==
-    "ERROR: [Is2DValidation] The molecule includes non-null Z coordinates");
+  TEST_ASSERT(
+      errmsg ==
+      "ERROR: [Is2DValidation] The molecule includes non-null Z coordinates");
 
   mblock = R"(
                     2D          
@@ -691,7 +692,9 @@ M  END
   errout = is2D.validate(*mol, true);
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
-  TEST_ASSERT(errmsg == "ERROR: [Is2DValidation] All atoms have the same (x,y) coordinates");
+  TEST_ASSERT(
+      errmsg ==
+      "ERROR: [Is2DValidation] All atoms have the same (x,y) coordinates");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -759,7 +762,8 @@ M  END
   errout = layout2D.validate(*mol, true);
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
-  TEST_ASSERT(errmsg == "ERROR: [Layout2DValidation] Atom 4 is too close to atom 5");
+  TEST_ASSERT(errmsg ==
+              "ERROR: [Layout2DValidation] Atom 4 is too close to atom 5");
 
   mblock = R"(
                     2D          
@@ -790,7 +794,8 @@ M  END
   errout = layout2D.validate(*mol, true);
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
-  TEST_ASSERT(errmsg == "ERROR: [Layout2DValidation] Atom 5 too close to bond 4");
+  TEST_ASSERT(errmsg ==
+              "ERROR: [Layout2DValidation] Atom 5 too close to bond 4");
 
   mblock = R"(
           01112413352D          
@@ -818,7 +823,9 @@ M  END
   errout = layout2D.validate(*mol, true);
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
-  TEST_ASSERT(errmsg == "ERROR: [Layout2DValidation] The length of bond 3 between atoms 0 and 3 exceeds a configured limit");
+  TEST_ASSERT(
+      errmsg ==
+      "ERROR: [Layout2DValidation] The length of bond 3 between atoms 0 and 3 exceeds a configured limit");
 
   // Long bonds in rings
   mblock = R"(
@@ -877,7 +884,9 @@ M  END
   errout = customLayout2D.validate(*mol, true);
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
-  TEST_ASSERT(errmsg == "ERROR: [Layout2DValidation] The length of bond 16 between atoms 16 and 1 exceeds a configured limit");
+  TEST_ASSERT(
+      errmsg ==
+      "ERROR: [Layout2DValidation] The length of bond 16 between atoms 16 and 1 exceeds a configured limit");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -949,12 +958,12 @@ M  END
   TEST_ASSERT(errout.size() == 2);
   errmsg = errout[0];
   TEST_ASSERT(
-    errmsg ==
-    "ERROR: [StereoValidation] Atom 1 has too many stereo bonds with like orientation");
+      errmsg ==
+      "ERROR: [StereoValidation] Atom 1 has too many stereo bonds with like orientation");
   errmsg = errout[1];
   TEST_ASSERT(
-    errmsg ==
-    "ERROR: [StereoValidation] Atom 1 has adjacent stereo bonds with like orientation");
+      errmsg ==
+      "ERROR: [StereoValidation] Atom 1 has adjacent stereo bonds with like orientation");
 
   // 4 ligands - mismatching opposed wedge/dash bonds
   mblock = R"(
@@ -987,8 +996,8 @@ M  END
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
   TEST_ASSERT(
-    errmsg ==
-    "ERROR: [StereoValidation] Atom 1 has opposing stereo bonds with different up/down orientation")
+      errmsg ==
+      "ERROR: [StereoValidation] Atom 1 has opposing stereo bonds with different up/down orientation")
 
   // 4 ligands - potentially ambiguous umbrella configuration
   mblock = R"(
@@ -1020,8 +1029,8 @@ M  END
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
   TEST_ASSERT(
-    errmsg ==
-    "ERROR: [StereoValidation] Atom 1 has a potentially ambiguous representation: all non-stereo bonds opposite to the only stereo bond")
+      errmsg ==
+      "ERROR: [StereoValidation] Atom 1 has a potentially ambiguous representation: all non-stereo bonds opposite to the only stereo bond")
 
   // 4 ligands - colinearity / triangle rule violation
   mblock = R"(
@@ -1053,8 +1062,8 @@ M  END
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
   TEST_ASSERT(
-    errmsg ==
-    "ERROR: [StereoValidation] Colinearity or triangle rule violation of non-stereo bonds at atom 1")
+      errmsg ==
+      "ERROR: [StereoValidation] Colinearity or triangle rule violation of non-stereo bonds at atom 1")
 
   // 4 ligands - wavy bond is allowed
   mblock = R"(
@@ -1156,8 +1165,8 @@ M  END
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
   TEST_ASSERT(
-    errmsg ==
-    "ERROR: [StereoValidation] Atom 1 has 3 explicit substituents and multiple stereo bonds")
+      errmsg ==
+      "ERROR: [StereoValidation] Atom 1 has 3 explicit substituents and multiple stereo bonds")
 
   // 3 Ligands - colinearity violation
   mblock = R"(
@@ -1187,8 +1196,8 @@ M  END
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
   TEST_ASSERT(
-    errmsg ==
-    "ERROR: [StereoValidation] Colinearity of non-stereo bonds at atom 1");
+      errmsg ==
+      "ERROR: [StereoValidation] Colinearity of non-stereo bonds at atom 1");
 
   // 3 Ligands - either/unknown bond allowed
   mblock = R"(
@@ -1254,7 +1263,7 @@ M  END
   mol.reset(MolBlockToMol(mblock, false, false));
   Chirality::reapplyMolBlockWedging(*mol);
   errout = stereo.validate(*mol, true);
-  for (auto msg: errout) {
+  for (auto msg : errout) {
     cerr << msg << endl;
   }
   TEST_ASSERT(errout.size() == 0);
@@ -1291,14 +1300,14 @@ M  END
   mol.reset(MolBlockToMol(mblock, false, false));
   Chirality::reapplyMolBlockWedging(*mol);
   errout = stereo.validate(*mol, true);
-  for (auto msg: errout) {
+  for (auto msg : errout) {
     cerr << msg << endl;
   }
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
   TEST_ASSERT(
-    errmsg ==
-    "ERROR: [StereoValidation] Atom 3 has both unknown and wedged/dashed stereo bonds.");
+      errmsg ==
+      "ERROR: [StereoValidation] Atom 3 has both unknown and wedged/dashed stereo bonds.");
 
   // Non-single bond with stereo bond orientation
 
@@ -1329,15 +1338,15 @@ M  END
   Chirality::reapplyMolBlockWedging(*mol);
   errout = stereo.validate(*mol, true);
   cerr << "here" << endl;
-  for (auto msg: errout) {
+  for (auto msg : errout) {
     cerr << msg << endl;
   }
   cerr << "there" << endl;
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
   TEST_ASSERT(
-    errmsg ==
-    "ERROR: [StereoValidation] Bond 3 has assigned stereo type, but unexpected bond order.");
+      errmsg ==
+      "ERROR: [StereoValidation] Bond 3 has assigned stereo type, but unexpected bond order.");
 
   // Badly drawn perspective diagram
   mblock = R"(
@@ -1374,14 +1383,14 @@ M  END
   mol.reset(MolBlockToMol(mblock, false, false));
   Chirality::reapplyMolBlockWedging(*mol);
   errout = stereo.validate(*mol, true);
-  for (auto msg: errout) {
+  for (auto msg : errout) {
     cerr << msg << endl;
   }
   TEST_ASSERT(errout.size() == 1);
   errmsg = errout[0];
   TEST_ASSERT(
-    errmsg ==
-    "ERROR: [StereoValidation] Atom 0 has stereo bonds, but less than 3 explicit substituents.");
+      errmsg ==
+      "ERROR: [StereoValidation] Atom 0 has stereo bonds, but less than 3 explicit substituents.");
 
   // stereo bonds on allenes validate w/out errors
   mblock = R"(
@@ -1480,7 +1489,7 @@ M  END
   Chirality::reapplyMolBlockWedging(*mol);
   errout = stereo.validate(*mol, true);
 
-  for (auto msg: errout) {
+  for (auto msg : errout) {
     cerr << msg << endl;
   }
 
@@ -1490,10 +1499,11 @@ M  END
   // of each individual center.
   // Note: according to IUPAC guidelines stereo bonds between stereocenters
   // should be avoided. The validation doesn't doesn't restrict the positioning
-  // of stereo bonds on actual stereocenters and it would be complex to determine
-  // if better options were available. The intention here is just to try and make
-  // sure that in case any such stereo bonds are present, the stereochemistry can
-  // be still interpreted correctly, even if their use may be questionable.
+  // of stereo bonds on actual stereocenters and it would be complex to
+  // determine if better options were available. The intention here is just to
+  // try and make sure that in case any such stereo bonds are present, the
+  // stereochemistry can be still interpreted correctly, even if their use may
+  // be questionable.
 
   mblock = R"(
   Mrv2311 02142408012D          
@@ -1528,7 +1538,7 @@ M  END
   Chirality::reapplyMolBlockWedging(*mol);
   errout = stereo.validate(*mol, true);
 
-  for (auto msg: errout) {
+  for (auto msg : errout) {
     cerr << msg << endl;
   }
 

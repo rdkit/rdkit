@@ -52,11 +52,12 @@ class RDKIT_MOLSTANDARDIZE_EXPORT ValidationMethod {
 
 //! The CompositeValidation class provides a simple way to apply a collection of
 // ValidationMethod instances in sequence
-class RDKIT_MOLSTANDARDIZE_EXPORT CompositeValidation : public ValidationMethod {
+class RDKIT_MOLSTANDARDIZE_EXPORT CompositeValidation
+    : public ValidationMethod {
  public:
   CompositeValidation(
-    const std::vector<std::shared_ptr<ValidationMethod>> & validations)
-    : validations(validations) {};
+      const std::vector<std::shared_ptr<ValidationMethod>> &validations)
+      : validations(validations){};
 
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
@@ -66,7 +67,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT CompositeValidation : public ValidationMethod 
   }
 
  private:
-   std::vector<std::shared_ptr<ValidationMethod>> validations;
+  std::vector<std::shared_ptr<ValidationMethod>> validations;
 };
 
 //! The RDKitValidation class throws an error when there are no atoms in the
@@ -96,7 +97,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT RDKitValidation : public ValidationMethod {
 class RDKIT_MOLSTANDARDIZE_EXPORT NoAtomValidation : public ValidationMethod {
  public:
   std::vector<ValidationErrorInfo> validate(
-    const ROMol &mol, bool reportAllFailures) const override;
+      const ROMol &mol, bool reportAllFailures) const override;
 
   std::shared_ptr<ValidationMethod> copy() const override {
     return std::make_shared<NoAtomValidation>(*this);
@@ -107,7 +108,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NoAtomValidation : public ValidationMethod {
 class RDKIT_MOLSTANDARDIZE_EXPORT FragmentValidation : public ValidationMethod {
  public:
   std::vector<ValidationErrorInfo> validate(
-    const ROMol &mol, bool reportAllFailures) const override;
+      const ROMol &mol, bool reportAllFailures) const override;
 
   std::shared_ptr<ValidationMethod> copy() const override {
     return std::make_shared<FragmentValidation>(*this);
@@ -118,7 +119,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentValidation : public ValidationMethod {
 class RDKIT_MOLSTANDARDIZE_EXPORT NeutralValidation : public ValidationMethod {
  public:
   std::vector<ValidationErrorInfo> validate(
-    const ROMol &mol, bool reportAllFailures) const override;
+      const ROMol &mol, bool reportAllFailures) const override;
 
   std::shared_ptr<ValidationMethod> copy() const override {
     return std::make_shared<NeutralValidation>(*this);
@@ -128,13 +129,14 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NeutralValidation : public ValidationMethod {
 //! The IsotopeValidation class logs if molecule contains isotopes.
 class RDKIT_MOLSTANDARDIZE_EXPORT IsotopeValidation : public ValidationMethod {
  public:
-  IsotopeValidation(bool strict=false) : strict(strict) {};
+  IsotopeValidation(bool strict = false) : strict(strict){};
   std::vector<ValidationErrorInfo> validate(
-    const ROMol &mol, bool reportAllFailures) const override;
+      const ROMol &mol, bool reportAllFailures) const override;
 
   std::shared_ptr<ValidationMethod> copy() const override {
     return std::make_shared<IsotopeValidation>(*this);
   }
+
  private:
   bool strict;
 };
@@ -150,7 +152,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidation : public CompositeValidation {
   MolVSValidation();
   //! overloaded constructor to take in a user-defined list of ValidationMethod
   MolVSValidation(
-      const std::vector<std::shared_ptr<ValidationMethod>> & validations);
+      const std::vector<std::shared_ptr<ValidationMethod>> &validations);
 
   std::shared_ptr<ValidationMethod> copy() const override {
     return std::make_shared<MolVSValidation>(*this);
@@ -238,15 +240,15 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FeaturesValidation : public ValidationMethod {
 /// molecule representation is designated as 3D or if it includes
 /// non-null Z coordinates, and in case all atoms are assigned the
 /// same coordinates.
-class RDKIT_MOLSTANDARDIZE_EXPORT Is2DValidation
-    : public ValidationMethod {
+class RDKIT_MOLSTANDARDIZE_EXPORT Is2DValidation : public ValidationMethod {
  public:
-  Is2DValidation(double threshold=1.e-3) : threshold(threshold) {};
+  Is2DValidation(double threshold = 1.e-3) : threshold(threshold){};
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
   std::shared_ptr<ValidationMethod> copy() const override {
     return std::make_shared<Is2DValidation>(*this);
   }
+
  private:
   double threshold;
 };
@@ -254,23 +256,26 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Is2DValidation
 //! The Layout2DValidation class reports an error if any atoms are
 /// too close to any other atoms or bonds, and in case any bonds are
 /// too long.
-class RDKIT_MOLSTANDARDIZE_EXPORT Layout2DValidation
-    : public ValidationMethod {
+class RDKIT_MOLSTANDARDIZE_EXPORT Layout2DValidation : public ValidationMethod {
  public:
-  Layout2DValidation(
-    double clashLimit=0.15, double bondLengthLimit=25., bool allowLongBondsInRings=true,
-    bool allowAtomBondClashExemption=true, double minMedianBondLength=1e-3)
-    : clashLimit(clashLimit), bondLengthLimit(bondLengthLimit),
-      allowLongBondsInRings(allowLongBondsInRings),
-      allowAtomBondClashExemption(allowAtomBondClashExemption),
-      minMedianBondLength(minMedianBondLength) {};
+  Layout2DValidation(double clashLimit = 0.15, double bondLengthLimit = 25.,
+                     bool allowLongBondsInRings = true,
+                     bool allowAtomBondClashExemption = true,
+                     double minMedianBondLength = 1e-3)
+      : clashLimit(clashLimit),
+        bondLengthLimit(bondLengthLimit),
+        allowLongBondsInRings(allowLongBondsInRings),
+        allowAtomBondClashExemption(allowAtomBondClashExemption),
+        minMedianBondLength(minMedianBondLength){};
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
   std::shared_ptr<ValidationMethod> copy() const override {
     return std::make_shared<Layout2DValidation>(*this);
   }
 
-  static double squaredMedianBondLength(const ROMol &mol, const Conformer &conf);
+  static double squaredMedianBondLength(const ROMol &mol,
+                                        const Conformer &conf);
+
  private:
   double clashLimit;
   double bondLengthLimit;
@@ -284,8 +289,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Layout2DValidation
 /// in an attempt to ensure that the associated stereochemical configuration
 /// can be interpreted unambiguously.
 /// These validation criteria were ported from the AvalonTools STRUCHK software.
-class RDKIT_MOLSTANDARDIZE_EXPORT StereoValidation
-    : public ValidationMethod {
+class RDKIT_MOLSTANDARDIZE_EXPORT StereoValidation : public ValidationMethod {
  public:
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;

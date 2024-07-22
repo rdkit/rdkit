@@ -26,14 +26,12 @@
 namespace RDKit {
 namespace MolStandardize {
 
-void PipelineResult::append(PipelineStatus newStatus, const std::string & info)
-{
+void PipelineResult::append(PipelineStatus newStatus, const std::string &info) {
   status = static_cast<PipelineStatus>(status | newStatus);
   log.push_back({newStatus, info});
 }
 
-PipelineResult Pipeline::run(const std::string & molblock) const
-{
+PipelineResult Pipeline::run(const std::string &molblock) const {
   PipelineResult result;
   result.status = NO_EVENT;
   result.inputMolBlock = molblock;
@@ -41,7 +39,8 @@ PipelineResult Pipeline::run(const std::string & molblock) const
   // parse the molblock into an RWMol instance
   result.stage = PARSING_INPUT;
   RWMOL_SPTR mol = parse(molblock, result);
-  if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT && !options.reportAllFailures)) {
+  if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+               !options.reportAllFailures)) {
     return result;
   }
 
@@ -49,47 +48,53 @@ PipelineResult Pipeline::run(const std::string & molblock) const
 
   if (mol->getNumAtoms() == 0 && options.allowEmptyMolecules) {
     output = {mol, mol};
-  }
-  else {
+  } else {
     // input sanitization + cleanup
     result.stage = PREPARE_FOR_VALIDATION;
     mol = prepareForValidation(mol, result);
-    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT && !options.reportAllFailures)) {
+    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+                 !options.reportAllFailures)) {
       return result;
     }
 
     // validate the structure
     result.stage = VALIDATION;
     mol = validate(mol, result);
-    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT && !options.reportAllFailures)) {
+    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+                 !options.reportAllFailures)) {
       return result;
     }
 
     // re-read and sanitize the validated structure
-    // starting the standardization process from parsing the original input again is required
-    // because it's otherwise not always possible to fully preserve the original stereochemistry
-    // if reapplyMolBlockWedging() was called during the validation phase
+    // starting the standardization process from parsing the original input
+    // again is required because it's otherwise not always possible to fully
+    // preserve the original stereochemistry if reapplyMolBlockWedging() was
+    // called during the validation phase
     result.stage = PREPARE_FOR_STANDARDIZATION;
     mol = parse(molblock, result);
-    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT && !options.reportAllFailures)) {
+    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+                 !options.reportAllFailures)) {
       return result;
     }
     mol = prepareForStandardization(mol, result);
-    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT && !options.reportAllFailures)) {
+    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+                 !options.reportAllFailures)) {
       return result;
     }
 
     // standardize/normalize
     result.stage = STANDARDIZATION;
     mol = standardize(mol, result);
-    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT && !options.reportAllFailures)) {
+    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+                 !options.reportAllFailures)) {
       return result;
     }
     mol = reapplyWedging(mol, result);
     mol = cleanup2D(mol, result);
     output = makeParent(mol, result);
-    if (!output.first || !output.second
-        || ((result.status & PIPELINE_ERROR) != NO_EVENT && !options.reportAllFailures)) {
+    if (!output.first || !output.second ||
+        ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+         !options.reportAllFailures)) {
       return result;
     }
   }
@@ -97,7 +102,8 @@ PipelineResult Pipeline::run(const std::string & molblock) const
   // serialize as MolBlocks
   result.stage = SERIALIZING_OUTPUT;
   serialize(output, result);
-  if ((result.status & PIPELINE_ERROR) != NO_EVENT && !options.reportAllFailures) {
+  if ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+      !options.reportAllFailures) {
     return result;
   }
 
@@ -106,158 +112,161 @@ PipelineResult Pipeline::run(const std::string & molblock) const
   return result;
 }
 
-RWMOL_SPTR Pipeline::parse(const std::string & molblock, PipelineResult & result) const
-{
+RWMOL_SPTR Pipeline::parse(const std::string &molblock,
+                           PipelineResult &result) const {
   // we don't want to sanitize the molecule at this stage
-  static constexpr bool sanitize {false};
+  static constexpr bool sanitize{false};
   // Hs wouldn't be anyway removed if the mol is not sanitized
-  static constexpr bool removeHs {false};
+  static constexpr bool removeHs{false};
 
   // strict parsing is configurable via the pipeline options
-  const bool strictParsing {options.strictParsing};
+  const bool strictParsing{options.strictParsing};
 
-  RWMOL_SPTR mol {};
+  RWMOL_SPTR mol{};
 
   try {
     mol.reset(MolBlockToMol(molblock, sanitize, removeHs, strictParsing));
-  }
-  catch (FileParseException & e) {
+  } catch (FileParseException &e) {
     result.append(INPUT_ERROR, e.what());
   }
 
   if (!mol) {
-    result.append(
-      INPUT_ERROR,
-      "Could not instantiate a valid molecule from input"
-    );
+    result.append(INPUT_ERROR,
+                  "Could not instantiate a valid molecule from input");
   }
 
   return mol;
 }
 
-RWMOL_SPTR Pipeline::prepareForValidation(RWMOL_SPTR mol, PipelineResult & result) const
-{
+RWMOL_SPTR Pipeline::prepareForValidation(RWMOL_SPTR mol,
+                                          PipelineResult &result) const {
   // Prepare the mol for validation.
 
   try {
-    // The general intention is about validating the original input, and therefore
-    // limit the sanitization to the minimum, but it's not very useful to record a
-    // valence validation error for issues like a badly drawn nitro group that would
-    // be later fixed during by the normalization step.
+    // The general intention is about validating the original input, and
+    // therefore limit the sanitization to the minimum, but it's not very useful
+    // to record a valence validation error for issues like a badly drawn nitro
+    // group that would be later fixed during by the normalization step.
     //
-    // Some sanitization also needs to be performed in order to assign the stereochemistry
-    // (which needs to happen prior to reapplying the wedging, see below), and we need
-    // to find radicals, in order to support the corresponding validation criterion.
-    constexpr unsigned int sanitizeOps = (
-      MolOps::SANITIZE_CLEANUP
-      | MolOps::SANITIZE_SYMMRINGS
-      | MolOps::SANITIZE_CLEANUP_ORGANOMETALLICS
-      | MolOps::SANITIZE_FINDRADICALS
-    );
+    // Some sanitization also needs to be performed in order to assign the
+    // stereochemistry (which needs to happen prior to reapplying the wedging,
+    // see below), and we need to find radicals, in order to support the
+    // corresponding validation criterion.
+    constexpr unsigned int sanitizeOps =
+        (MolOps::SANITIZE_CLEANUP | MolOps::SANITIZE_SYMMRINGS |
+         MolOps::SANITIZE_CLEANUP_ORGANOMETALLICS |
+         MolOps::SANITIZE_FINDRADICALS);
     unsigned int failedOp = 0;
     MolOps::sanitizeMol(*mol, failedOp, sanitizeOps);
 
-    // We want to restore the original MolBlock wedging, but this step may in some cases overwrite the
-    // ENDDOWNRIGHT/ENDUPRIGHT info that describes the configuration of double bonds adjacent to stereocenters.
-    // We therefore first assign the stereochemistry, and then restore the wedging.
+    // We want to restore the original MolBlock wedging, but this step may in
+    // some cases overwrite the ENDDOWNRIGHT/ENDUPRIGHT info that describes the
+    // configuration of double bonds adjacent to stereocenters. We therefore
+    // first assign the stereochemistry, and then restore the wedging.
     MolOps::assignStereochemistry(*mol, true, true, true);
     Chirality::reapplyMolBlockWedging(*mol);
-  }
-  catch (MolSanitizeException &) {
+  } catch (MolSanitizeException &) {
     result.append(
-      PREPARE_FOR_VALIDATION_ERROR,
-      "An unexpected error occurred while preparing the molecule for validation.");
+        PREPARE_FOR_VALIDATION_ERROR,
+        "An unexpected error occurred while preparing the molecule for validation.");
   }
 
   return mol;
 }
 
 namespace {
-  // The error messages from the ValidationMethod classes include some metadata
-  // in a string prefix that are not particularly useful within the context of this
-  // Pipeline. The function below removes that prefix.
-  static const std::regex prefix("^(ERROR|INFO): \\[.+\\] ");
-  std::string removeErrorPrefix(const std::string & message) {
-    return std::regex_replace(message, prefix, "");
-  }
+// The error messages from the ValidationMethod classes include some metadata
+// in a string prefix that are not particularly useful within the context of
+// this Pipeline. The function below removes that prefix.
+static const std::regex prefix("^(ERROR|INFO): \\[.+\\] ");
+std::string removeErrorPrefix(const std::string &message) {
+  return std::regex_replace(message, prefix, "");
 }
+}  // namespace
 
-RWMOL_SPTR Pipeline::validate(RWMOL_SPTR mol, PipelineResult & result) const
-{
-  auto applyValidation = [&mol, &result, this](const ValidationMethod & v, PipelineStatus status) -> bool {
+RWMOL_SPTR Pipeline::validate(RWMOL_SPTR mol, PipelineResult &result) const {
+  auto applyValidation = [&mol, &result, this](const ValidationMethod &v,
+                                               PipelineStatus status) -> bool {
     auto errors = v.validate(*mol, options.reportAllFailures);
-    for (const auto & error : errors) {
+    for (const auto &error : errors) {
       result.append(status, removeErrorPrefix(error));
     }
     return errors.empty();
   };
 
-  // check for undesired features in the input molecule (e.g., query atoms/bonds)
-  FeaturesValidation featuresValidation(options.allowEnhancedStereo, options.allowAromaticBondType);
-  if (!applyValidation(featuresValidation, FEATURES_VALIDATION_ERROR) && !options.reportAllFailures) {
+  // check for undesired features in the input molecule (e.g., query
+  // atoms/bonds)
+  FeaturesValidation featuresValidation(options.allowEnhancedStereo,
+                                        options.allowAromaticBondType);
+  if (!applyValidation(featuresValidation, FEATURES_VALIDATION_ERROR) &&
+      !options.reportAllFailures) {
     return mol;
   }
 
   // check the number of atoms and valence status
   RDKitValidation rdkitValidation;
-  if (!applyValidation(rdkitValidation, BASIC_VALIDATION_ERROR) && !options.reportAllFailures) {
+  if (!applyValidation(rdkitValidation, BASIC_VALIDATION_ERROR) &&
+      !options.reportAllFailures) {
     return mol;
   }
 
   // disallow radicals
   DisallowedRadicalValidation radicalValidation;
-  if (!applyValidation(radicalValidation, BASIC_VALIDATION_ERROR) && !options.reportAllFailures) {
+  if (!applyValidation(radicalValidation, BASIC_VALIDATION_ERROR) &&
+      !options.reportAllFailures) {
     return mol;
   }
 
   // validate the isotopic numbers (if any are specified)
   IsotopeValidation isotopeValidation(true);
-  if (!applyValidation(isotopeValidation, BASIC_VALIDATION_ERROR) && !options.reportAllFailures) {
+  if (!applyValidation(isotopeValidation, BASIC_VALIDATION_ERROR) &&
+      !options.reportAllFailures) {
     return mol;
   }
 
   // verify that the input is a 2D structure
   Is2DValidation is2DValidation(options.is2DZeroThreshold);
-  if (!applyValidation(is2DValidation, IS2D_VALIDATION_ERROR) && !options.reportAllFailures) {
+  if (!applyValidation(is2DValidation, IS2D_VALIDATION_ERROR) &&
+      !options.reportAllFailures) {
     return mol;
   }
 
   // validate the 2D layout (check for clashing atoms and abnormally long bonds)
   Layout2DValidation layout2DValidation(
-    options.atomClashLimit, options.bondLengthLimit,
-    options.allowLongBondsInRings, options.allowAtomBondClashExemption,
-    options.minMedianBondLength);
-  if (!applyValidation(layout2DValidation, LAYOUT2D_VALIDATION_ERROR) && !options.reportAllFailures) {
+      options.atomClashLimit, options.bondLengthLimit,
+      options.allowLongBondsInRings, options.allowAtomBondClashExemption,
+      options.minMedianBondLength);
+  if (!applyValidation(layout2DValidation, LAYOUT2D_VALIDATION_ERROR) &&
+      !options.reportAllFailures) {
     return mol;
   }
 
   // verify that the specified stereochemistry is formally correct
   StereoValidation stereoValidation;
-  if (!applyValidation(stereoValidation, STEREO_VALIDATION_ERROR) && !options.reportAllFailures) {
+  if (!applyValidation(stereoValidation, STEREO_VALIDATION_ERROR) &&
+      !options.reportAllFailures) {
     return mol;
   }
 
   return mol;
 }
 
-RWMOL_SPTR Pipeline::prepareForStandardization(RWMOL_SPTR mol, PipelineResult & result) const
-{
+RWMOL_SPTR Pipeline::prepareForStandardization(RWMOL_SPTR mol,
+                                               PipelineResult &result) const {
   // Prepare the mol for standardization.
 
   try {
     MolOps::sanitizeMol(*mol);
-  }
-  catch (MolSanitizeException &) {
+  } catch (MolSanitizeException &) {
     result.append(
-      PREPARE_FOR_STANDARDIZATION_ERROR,
-      "An unexpected error occurred while preparing the molecule for standardization.");
+        PREPARE_FOR_STANDARDIZATION_ERROR,
+        "An unexpected error occurred while preparing the molecule for standardization.");
   }
 
   return mol;
 }
 
-RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult & result) const
-{
+RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult &result) const {
   auto smiles = MolToSmiles(*mol);
   auto reference = smiles;
 
@@ -265,32 +274,31 @@ RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult & result) const
   try {
     MetalDisconnectorOptions mdOpts;
     MetalDisconnector metalDisconnector(mdOpts);
-    std::unique_ptr<ROMol> metalNof {SmartsToMol(options.metalNof)};
+    std::unique_ptr<ROMol> metalNof{SmartsToMol(options.metalNof)};
     metalDisconnector.setMetalNof(*metalNof);
-    std::unique_ptr<ROMol> metalNon {SmartsToMol(options.metalNon)};
+    std::unique_ptr<ROMol> metalNon{SmartsToMol(options.metalNon)};
     metalDisconnector.setMetalNon(*metalNon);
     metalDisconnector.disconnectInPlace(*mol);
-  }
-  catch (...) {
+  } catch (...) {
     result.append(
-      METAL_STANDARDIZATION_ERROR,
-      "An unexpected error occurred while processing the bonding of metal species.");
+        METAL_STANDARDIZATION_ERROR,
+        "An unexpected error occurred while processing the bonding of metal species.");
     return mol;
   }
 
   smiles = MolToSmiles(*mol);
   if (smiles != reference) {
-    result.append(METALS_DISCONNECTED, "One or more metal atoms were disconnected.");
+    result.append(METALS_DISCONNECTED,
+                  "One or more metal atoms were disconnected.");
   }
   reference = smiles;
 
   // functional groups
   try {
-    std::unique_ptr<Normalizer> normalizer {};
+    std::unique_ptr<Normalizer> normalizer{};
     if (options.normalizerData.empty()) {
       normalizer.reset(new Normalizer);
-    }
-    else {
+    } else {
       std::istringstream sstr(options.normalizerData);
       normalizer.reset(new Normalizer(sstr, options.normalizerMaxRestarts));
     }
@@ -299,19 +307,17 @@ RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult & result) const
     // => use normalize() instead (also see GitHub #7189)
     mol.reset(static_cast<RWMol *>(normalizer->normalize(*mol)));
     mol->updatePropertyCache(false);
-  }
-  catch (...) {
+  } catch (...) {
     result.append(
-      NORMALIZER_STANDARDIZATION_ERROR,
-      "An unexpected error occurred while normalizing the representation of some functional groups");
+        NORMALIZER_STANDARDIZATION_ERROR,
+        "An unexpected error occurred while normalizing the representation of some functional groups");
     return mol;
   }
 
   smiles = MolToSmiles(*mol);
   if (smiles != reference) {
-    result.append(
-      NORMALIZATION_APPLIED,
-      "The representation of some functional groups was adjusted.");
+    result.append(NORMALIZATION_APPLIED,
+                  "The representation of some functional groups was adjusted.");
   }
   reference = smiles;
 
@@ -319,19 +325,18 @@ RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult & result) const
   try {
     LargestFragmentChooser fragmentChooser;
     fragmentChooser.chooseInPlace(*mol);
-  }
-  catch (...) {
+  } catch (...) {
     result.append(
-      FRAGMENT_STANDARDIZATION_ERROR,
-      "An unexpected error occurred while removing the disconnected fragments");
+        FRAGMENT_STANDARDIZATION_ERROR,
+        "An unexpected error occurred while removing the disconnected fragments");
     return mol;
   }
 
   smiles = MolToSmiles(*mol);
   if (smiles != reference) {
     result.append(
-      FRAGMENTS_REMOVED,
-      "One or more disconnected fragments (e.g., counterions) were removed.");
+        FRAGMENTS_REMOVED,
+        "One or more disconnected fragments (e.g., counterions) were removed.");
   }
 
   // The stereochemistry is not assigned until after we are done modifying the
@@ -341,22 +346,24 @@ RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult & result) const
   return mol;
 }
 
-RWMOL_SPTR Pipeline::reapplyWedging(RWMOL_SPTR mol, PipelineResult & result) const
-{
+RWMOL_SPTR Pipeline::reapplyWedging(RWMOL_SPTR mol,
+                                    PipelineResult &result) const {
   // in general, we want to restore the bond wedging from the input molblock,
   // but we prefer to not use any wavy bonds, because of their ambiguity
   // in some configurations.
 
-  // we therefore proceed in two steps, we first reapply the molblock wedging and then
-  // revert the changes related to double bonds with undefined/unknown stereochemistry
-  // and change single bonds with "unknown" direction into plain single bonds.
+  // we therefore proceed in two steps, we first reapply the molblock wedging
+  // and then revert the changes related to double bonds with undefined/unknown
+  // stereochemistry and change single bonds with "unknown" direction into plain
+  // single bonds.
 
-  // in order to do so, we need to keep track of the current bond configuration settings.
+  // in order to do so, we need to keep track of the current bond configuration
+  // settings.
   using BondInfo = std::tuple<Bond::BondType, Bond::BondDir, Bond::BondStereo>;
   std::map<unsigned int, BondInfo> oldBonds;
   for (auto bond : mol->bonds()) {
-    oldBonds[bond->getIdx()]
-      = {bond->getBondType(), bond->getBondDir(), bond->getStereo()};
+    oldBonds[bond->getIdx()] = {bond->getBondType(), bond->getBondDir(),
+                                bond->getStereo()};
   }
 
   // 1) restore the original wedging from the input MolBlock
@@ -371,7 +378,7 @@ RWMOL_SPTR Pipeline::reapplyWedging(RWMOL_SPTR mol, PipelineResult & result) con
     }
     Bond::BondStereo oldStereo = std::get<2>(oldBonds[bond->getIdx()]);
     Bond::BondStereo newStereo = bond->getStereo();
-    bool hasAdjacentWavy {false};
+    bool hasAdjacentWavy{false};
     for (auto atom : {bond->getBeginAtom(), bond->getEndAtom()}) {
       for (auto adjacentBond : mol->atomBonds(atom)) {
         if (adjacentBond == bond) {
@@ -382,12 +389,13 @@ RWMOL_SPTR Pipeline::reapplyWedging(RWMOL_SPTR mol, PipelineResult & result) con
         }
       }
     }
-    if (hasAdjacentWavy && oldStereo == Bond::STEREOANY && newStereo == Bond::STEREONONE) {
+    if (hasAdjacentWavy && oldStereo == Bond::STEREOANY &&
+        newStereo == Bond::STEREONONE) {
       bond->setStereo(Bond::STEREOANY);
       result.append(
-        NORMALIZATION_APPLIED,
-        "Double bond " + std::to_string(bond->getIdx())
-        + " was assigned an undefined/unknown stereochemical configuration");
+          NORMALIZATION_APPLIED,
+          "Double bond " + std::to_string(bond->getIdx()) +
+              " was assigned an undefined/unknown stereochemical configuration");
     }
   }
 
@@ -397,29 +405,30 @@ RWMOL_SPTR Pipeline::reapplyWedging(RWMOL_SPTR mol, PipelineResult & result) con
       continue;
     }
     bond->setBondDir(Bond::NONE);
-    result.append(
-      NORMALIZATION_APPLIED,
-      "The \"wavy\" style of bond " + std::to_string(bond->getIdx())
-      + " was removed");
+    result.append(NORMALIZATION_APPLIED, "The \"wavy\" style of bond " +
+                                             std::to_string(bond->getIdx()) +
+                                             " was removed");
   }
 
   return mol;
 }
 
-RWMOL_SPTR Pipeline::cleanup2D(RWMOL_SPTR mol, PipelineResult & /*result*/) const
-{
+RWMOL_SPTR Pipeline::cleanup2D(RWMOL_SPTR mol,
+                               PipelineResult & /*result*/) const {
   // scale the atoms coordinates
   // and make sure that z coords are set to 0 (some z coords may be non-null
-  // albeit smaller than the validation threshold - these noisy coords may in some cases
-  // also interfere with the perception of stereochemistry by some tools e.g., inchi)
+  // albeit smaller than the validation threshold - these noisy coords may in
+  // some cases also interfere with the perception of stereochemistry by some
+  // tools e.g., inchi)
   if (options.scaledMedianBondLength > 0. && mol->getNumConformers()) {
-    auto & conf = mol->getConformer();
-    double medianBondLength = sqrt(Layout2DValidation::squaredMedianBondLength(*mol, conf));
+    auto &conf = mol->getConformer();
+    double medianBondLength =
+        sqrt(Layout2DValidation::squaredMedianBondLength(*mol, conf));
     if (medianBondLength > options.minMedianBondLength) {
-      double scaleFactor = options.scaledMedianBondLength/medianBondLength;
+      double scaleFactor = options.scaledMedianBondLength / medianBondLength;
       unsigned int natoms = conf.getNumAtoms();
       for (unsigned int i = 0; i < natoms; ++i) {
-        auto pos = conf.getAtomPos(i)*scaleFactor;
+        auto pos = conf.getAtomPos(i) * scaleFactor;
         pos.z = 0.;
         conf.setAtomPos(i, pos);
       }
@@ -430,69 +439,72 @@ RWMOL_SPTR Pipeline::cleanup2D(RWMOL_SPTR mol, PipelineResult & /*result*/) cons
 }
 
 namespace {
-  void replaceDativeBonds(RWMOL_SPTR mol) {
-    bool modified {false};
-    for (auto bond : mol->bonds()) {
-      if (bond->getBondType() != Bond::BondType::DATIVE) {
-        continue;
-      }
-      auto donor = bond->getBeginAtom();
-      donor->setFormalCharge(donor->getFormalCharge()+1);
-      auto acceptor = bond->getEndAtom();
-      acceptor->setFormalCharge(acceptor->getFormalCharge()-1);
-      bond->setBondType(Bond::BondType::SINGLE);
-      modified = true;
+void replaceDativeBonds(RWMOL_SPTR mol) {
+  bool modified{false};
+  for (auto bond : mol->bonds()) {
+    if (bond->getBondType() != Bond::BondType::DATIVE) {
+      continue;
     }
-    if (modified) {
-      mol->updatePropertyCache(false);
-    }
+    auto donor = bond->getBeginAtom();
+    donor->setFormalCharge(donor->getFormalCharge() + 1);
+    auto acceptor = bond->getEndAtom();
+    acceptor->setFormalCharge(acceptor->getFormalCharge() - 1);
+    bond->setBondType(Bond::BondType::SINGLE);
+    modified = true;
   }
-
-  void removeHsAtProtonatedSites(RWMOL_SPTR mol) {
-    boost::dynamic_bitset<> protons{mol->getNumAtoms(), 0};
-    for (auto atom : mol->atoms()) {
-      if (atom->getAtomicNum() != 1 || atom->getDegree() != 1) {
-        continue;
-      }
-      for (auto neighbor : mol->atomNeighbors(atom)) {
-        if (neighbor->getFormalCharge() > 0) {
-          protons.set(atom->getIdx());
-        }
-      }
-    }
-    if (protons.any()) {
-      for (int idx = mol->getNumAtoms() - 1; idx >= 0; --idx) {
-        if (!protons[idx]) {
-          continue;
-        }
-        auto atom = mol->getAtomWithIdx(idx);
-        for (auto bond : mol->atomBonds(atom)) {
-          auto neighbor = bond->getOtherAtom(atom);
-          neighbor->setNumExplicitHs(neighbor->getNumExplicitHs() + 1);
-          break; // there are no other bonds anyways
-        }
-        mol->removeAtom(atom);
-      }
-      mol->updatePropertyCache(false);
-    }
+  if (modified) {
+    mol->updatePropertyCache(false);
   }
 }
 
-Pipeline::RWMOL_SPTR_PAIR Pipeline::makeParent(RWMOL_SPTR mol, PipelineResult & result) const
-{
+void removeHsAtProtonatedSites(RWMOL_SPTR mol) {
+  boost::dynamic_bitset<> protons{mol->getNumAtoms(), 0};
+  for (auto atom : mol->atoms()) {
+    if (atom->getAtomicNum() != 1 || atom->getDegree() != 1) {
+      continue;
+    }
+    for (auto neighbor : mol->atomNeighbors(atom)) {
+      if (neighbor->getFormalCharge() > 0) {
+        protons.set(atom->getIdx());
+      }
+    }
+  }
+  if (protons.any()) {
+    for (int idx = mol->getNumAtoms() - 1; idx >= 0; --idx) {
+      if (!protons[idx]) {
+        continue;
+      }
+      auto atom = mol->getAtomWithIdx(idx);
+      for (auto bond : mol->atomBonds(atom)) {
+        auto neighbor = bond->getOtherAtom(atom);
+        neighbor->setNumExplicitHs(neighbor->getNumExplicitHs() + 1);
+        break;  // there are no other bonds anyways
+      }
+      mol->removeAtom(atom);
+    }
+    mol->updatePropertyCache(false);
+  }
+}
+}  // namespace
+
+Pipeline::RWMOL_SPTR_PAIR Pipeline::makeParent(RWMOL_SPTR mol,
+                                               PipelineResult &result) const {
   auto reference = MolToSmiles(*mol);
 
-  RWMOL_SPTR parent {new RWMol(*mol)};
+  RWMOL_SPTR parent{new RWMol(*mol)};
 
-  // A "parent" structure is constructed here, in order to provide a representation of the
-  // original input that may be more suitable for identification purposes even though it may
-  // not reflect the most stable physical state or nicest representation for the compound.
+  // A "parent" structure is constructed here, in order to provide a
+  // representation of the original input that may be more suitable for
+  // identification purposes even though it may not reflect the most stable
+  // physical state or nicest representation for the compound.
   //
-  // The two steps that are currently implemented for this procedure consist in normalizing
-  // the overall charge status and replacing any explicit dative bonds.
+  // The two steps that are currently implemented for this procedure consist in
+  // normalizing the overall charge status and replacing any explicit dative
+  // bonds.
   //
-  // If the input was submitted in an unsuitable protonation status, the neutralized parent
-  // structure may become the actual output from the standardization.
+  // If the input was submitted in an unsuitable protonation status, the
+  // neutralized parent structure may become the actual output from the
+  // standardization.
 
   // overall charge status
   try {
@@ -510,22 +522,21 @@ Pipeline::RWMOL_SPTR_PAIR Pipeline::makeParent(RWMOL_SPTR mol, PipelineResult & 
     static const bool protonationOnly = true;
     Uncharger uncharger(canonicalOrdering, force, protonationOnly);
     uncharger.unchargeInPlace(*parent);
-  }
-  catch (...) {
+  } catch (...) {
     result.append(
-      CHARGE_STANDARDIZATION_ERROR,
-      "An unexpected error occurred while normalizing the compound's charge status");
+        CHARGE_STANDARDIZATION_ERROR,
+        "An unexpected error occurred while normalizing the compound's charge status");
     return {{}, {}};
   }
 
   // Check if `mol` was submitted in a suitable ionization state
-  int parentCharge {};
-  for (auto atom: parent->atoms()) {
+  int parentCharge{};
+  for (auto atom : parent->atoms()) {
     parentCharge += atom->getFormalCharge();
   }
 
-  int molCharge {};
-  for (auto atom: mol->atoms()) {
+  int molCharge{};
+  for (auto atom : mol->atoms()) {
     molCharge += atom->getFormalCharge();
   }
 
@@ -549,39 +560,33 @@ Pipeline::RWMOL_SPTR_PAIR Pipeline::makeParent(RWMOL_SPTR mol, PipelineResult & 
   return {mol, parent};
 }
 
-void Pipeline::serialize(RWMOL_SPTR_PAIR output, PipelineResult & result) const
-{
-  const ROMol & outputMol = *output.first;
-  const ROMol & parentMol = *output.second;
+void Pipeline::serialize(RWMOL_SPTR_PAIR output, PipelineResult &result) const {
+  const ROMol &outputMol = *output.first;
+  const ROMol &parentMol = *output.second;
 
   try {
     if (!options.outputV2000) {
       result.outputMolBlock = MolToV3KMolBlock(outputMol);
       result.parentMolBlock = MolToV3KMolBlock(parentMol);
-    }
-    else {
+    } else {
       try {
         result.outputMolBlock = MolToV2KMolBlock(outputMol);
         result.parentMolBlock = MolToV2KMolBlock(parentMol);
-      }
-      catch (ValueErrorException & e) {
-        result.append(
-          OUTPUT_ERROR,
-          "Can't write molecule to V2000 output format: " + std::string(e.what()));
+      } catch (ValueErrorException &e) {
+        result.append(OUTPUT_ERROR,
+                      "Can't write molecule to V2000 output format: " +
+                          std::string(e.what()));
       }
     }
-  }
-  catch (const std::exception & e) {
+  } catch (const std::exception &e) {
+    result.append(OUTPUT_ERROR, "Can't write molecule to output format: " +
+                                    std::string(e.what()));
+  } catch (...) {
     result.append(
-      OUTPUT_ERROR,
-      "Can't write molecule to output format: " + std::string(e.what()));
-  }
-  catch (...) {
-    result.append(
-      OUTPUT_ERROR,
-      "An unexpected error occurred while serializing the output structures.");
+        OUTPUT_ERROR,
+        "An unexpected error occurred while serializing the output structures.");
   }
 }
 
-}
-}
+}  // namespace MolStandardize
+}  // namespace RDKit
