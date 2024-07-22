@@ -11,6 +11,7 @@
 #include "Fragment.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogParams.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/PeriodicTable.h>
@@ -316,26 +317,26 @@ std::vector<ValidationErrorInfo> FeaturesValidation::validate(
 
   // disallow query and dummy atoms, and aliases
   for (auto atom : mol.atoms()) {
-    if (atom->hasQuery()) {
-      errors.push_back(
-        "ERROR: [FeaturesValidation] Query atom " + std::to_string(atom->getIdx()) + " is not allowed");
+    if (!allowQueries && atom->hasQuery()) {
+      errors.push_back("ERROR: [FeaturesValidation] Query atom " +
+                       std::to_string(atom->getIdx()) + " is not allowed");
       if (!reportAllFailures) {
         return errors;
       }
-    }
-    else if (atom->getAtomicNum() == 0) { // (atom->isDummyAtom()) { // GH PR # 6768
-      errors.push_back(
-        "ERROR: [FeaturesValidation] Dummy atom " + std::to_string(atom->getIdx()) + " is not allowed");
+    } else if (!allowDummies && isAtomDummy(atom)) {
+      errors.push_back("ERROR: [FeaturesValidation] Dummy atom " +
+                       std::to_string(atom->getIdx()) + " is not allowed");
       if (!reportAllFailures) {
         return errors;
       }
     }
 
-    if (atom->hasProp(common_properties::molFileAlias)) {
+    if (!allowAtomAliases && atom->hasProp(common_properties::molFileAlias)) {
       errors.push_back(
-        "ERROR: [FeaturesValidation] Atom " + std::to_string(atom->getIdx())
-        + " with alias '" + atom->getProp<std::string>(common_properties::molFileAlias)
-        + "' is not allowed");
+          "ERROR: [FeaturesValidation] Atom " + std::to_string(atom->getIdx()) +
+          " with alias '" +
+          atom->getProp<std::string>(common_properties::molFileAlias) +
+          "' is not allowed");
       if (!reportAllFailures) {
         return errors;
       }
@@ -344,16 +345,18 @@ std::vector<ValidationErrorInfo> FeaturesValidation::validate(
 
   // disallow query and (optionally) aromatic bonds
   for (auto bond : mol.bonds()) {
-    if (bond->hasQuery()) {
-      errors.push_back(
-        "ERROR: [FeaturesValidation] Query bond " + std::to_string(bond->getIdx()) + " is not allowed");
+    if (!allowQueries && bond->hasQuery()) {
+      errors.push_back("ERROR: [FeaturesValidation] Query bond " +
+                       std::to_string(bond->getIdx()) + " is not allowed");
       if (!reportAllFailures) {
         return errors;
       }
     }
-    if (!allowAromaticBondType && bond->getBondType() == Bond::BondType::AROMATIC) {
-      errors.push_back(
-        "ERROR: [FeaturesValidation] Bond " + std::to_string(bond->getIdx()) + " of aromatic type is not allowed");
+    if (!allowAromaticBondType &&
+        bond->getBondType() == Bond::BondType::AROMATIC) {
+      errors.push_back("ERROR: [FeaturesValidation] Bond " +
+                       std::to_string(bond->getIdx()) +
+                       " of aromatic type is not allowed");
       if (!reportAllFailures) {
         return errors;
       }

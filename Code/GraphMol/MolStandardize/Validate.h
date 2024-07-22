@@ -211,19 +211,27 @@ class RDKIT_MOLSTANDARDIZE_EXPORT DisallowedRadicalValidation
 /// The list of undesired features currently includes query atoms
 /// and bonds, dummy atoms, atom aliases, and (optionally)
 /// enhanced stereochemistry.
-class RDKIT_MOLSTANDARDIZE_EXPORT FeaturesValidation
-    : public ValidationMethod {
+class RDKIT_MOLSTANDARDIZE_EXPORT FeaturesValidation : public ValidationMethod {
  public:
-  FeaturesValidation(bool allowEnhancedStereo=false, bool allowAromaticBondType=false)
-    : allowEnhancedStereo(allowEnhancedStereo), allowAromaticBondType(allowAromaticBondType) {};
+  FeaturesValidation(bool allowEnhancedStereo = false,
+                     bool allowAromaticBondType = false,
+                     bool allowQueries = false, bool allowDummies = false,
+                     bool allowAtomAliases = false)
+      : allowEnhancedStereo(allowEnhancedStereo),
+        allowAromaticBondType(allowAromaticBondType),
+        allowQueries(allowQueries),
+        allowDummies(allowDummies),
+        allowAtomAliases(allowAtomAliases){};
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
   std::shared_ptr<ValidationMethod> copy() const override {
     return std::make_shared<FeaturesValidation>(*this);
   }
- private:
   bool allowEnhancedStereo;
   bool allowAromaticBondType;
+  bool allowQueries;
+  bool allowDummies;
+  bool allowAtomAliases;
 };
 
 //! The Is2DValidation class reports an error if the input
