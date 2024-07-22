@@ -21,7 +21,6 @@ namespace RDKit {
 namespace {
 bool isAtomConjugCand(const Atom *at) {
   PRECONDITION(at, "bad atom");
-  std::cerr << "  iacc: " << at->getIdx() << std::endl;
   // return false for neutral atoms where the current valence exceeds the
   // minimal valence for the atom. logic: if we're hypervalent we aren't
   // conjugated
@@ -29,7 +28,6 @@ bool isAtomConjugCand(const Atom *at) {
       PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
   if (!at->getFormalCharge() && vals.front() >= 0 &&
       at->getTotalValence() > static_cast<unsigned int>(vals.front())) {
-    std::cerr << "  no 1" << std::endl;
     return false;
   }
   // the second check here is for Issue211, where the c-P bonds in
@@ -39,15 +37,14 @@ bool isAtomConjugCand(const Atom *at) {
   // the first row of the periodic table.  (Conjugation in aromatic rings
   // has already been attended to, so this is safe.)
   int nouter = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
-  auto res = (at->getAtomicNum() <= 10) || (nouter != 5 && nouter != 6) ||
-             (nouter == 6 && at->getTotalDegree() < 2u);
-  std::cerr << "  no2 " << res << std::endl;
+  auto res = ((at->getAtomicNum() <= 10) || (nouter != 5 && nouter != 6) ||
+              (nouter == 6 && at->getTotalDegree() < 2u)) &&
+             MolOps::countAtomElec(at) > 0;
   return res;
 }
 
 void markConjAtomBonds(Atom *at) {
   PRECONDITION(at, "bad atom");
-  std::cerr << "macb: " << at->getIdx() << std::endl;
   if (!isAtomConjugCand(at)) {
     return;
   }
@@ -61,10 +58,10 @@ void markConjAtomBonds(Atom *at) {
   }
 
   for (const auto bnd1 : mol.atomBonds(at)) {
-    if (bnd1->getValenceContrib(at) < 1.5) {
+    if (bnd1->getValenceContrib(at) < 1.5 ||
+        !isAtomConjugCand(bnd1->getOtherAtom(at))) {
       continue;
     }
-
     for (const auto bnd2 : mol.atomBonds(at)) {
       if (bnd1 == bnd2) {
         continue;
@@ -75,7 +72,6 @@ void markConjAtomBonds(Atom *at) {
         continue;
       }
       if (isAtomConjugCand(at2)) {
-        std::cerr << "   MARK MARK MARK" << std::endl;
         bnd1->setIsConjugated(true);
         bnd2->setIsConjugated(true);
       }
