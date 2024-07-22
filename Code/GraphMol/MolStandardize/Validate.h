@@ -137,7 +137,6 @@ class RDKIT_MOLSTANDARDIZE_EXPORT IsotopeValidation : public ValidationMethod {
     return std::make_shared<IsotopeValidation>(*this);
   }
 
- private:
   bool strict;
 };
 
@@ -249,7 +248,6 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Is2DValidation : public ValidationMethod {
     return std::make_shared<Is2DValidation>(*this);
   }
 
- private:
   double threshold;
 };
 
@@ -276,7 +274,6 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Layout2DValidation : public ValidationMethod {
   static double squaredMedianBondLength(const ROMol &mol,
                                         const Conformer &conf);
 
- private:
   double clashLimit;
   double bondLengthLimit;
   bool allowLongBondsInRings;

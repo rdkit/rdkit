@@ -804,6 +804,12 @@ M  END
   errmsg = errout[0];
   TEST_ASSERT(errmsg ==
               "ERROR: [Layout2DValidation] Atom 4 is too close to atom 5");
+  {
+    Layout2DValidation layout2DCopy(layout2D);
+    layout2DCopy.clashLimit = 1e-2;
+    errout = layout2DCopy.validate(*mol, true);
+    TEST_ASSERT(errout.empty());
+  }
 
   mblock = R"(
                     2D          
@@ -836,6 +842,12 @@ M  END
   errmsg = errout[0];
   TEST_ASSERT(errmsg ==
               "ERROR: [Layout2DValidation] Atom 5 too close to bond 4");
+  {
+    Layout2DValidation layout2DCopy(layout2D);
+    layout2DCopy.clashLimit = 1e-2;
+    errout = layout2DCopy.validate(*mol, true);
+    TEST_ASSERT(errout.empty());
+  }
 
   mblock = R"(
           01112413352D          
@@ -866,6 +878,12 @@ M  END
   TEST_ASSERT(
       errmsg ==
       "ERROR: [Layout2DValidation] The length of bond 3 between atoms 0 and 3 exceeds a configured limit");
+  {
+    Layout2DValidation layout2DCopy(layout2D);
+    layout2DCopy.bondLengthLimit = 100.;
+    errout = layout2DCopy.validate(*mol, true);
+    TEST_ASSERT(errout.empty());
+  }
 
   // Long bonds in rings
   mblock = R"(

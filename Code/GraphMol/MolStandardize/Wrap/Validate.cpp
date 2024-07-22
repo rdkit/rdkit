@@ -126,7 +126,9 @@ struct validate_wrapper {
     python::class_<MolStandardize::IsotopeValidation,
                    python::bases<MolStandardize::ValidationMethod>,
                    boost::noncopyable>("IsotopeValidation")
-        .def(python::init<bool>());
+        .def(python::init<bool>(python::arg("strict") = false))
+        .def_readwrite("strict",
+                       &MolStandardize::IsotopeValidation::strict);
 
     python::class_<MolStandardize::MolVSValidation,
                    python::bases<MolStandardize::ValidationMethod>,
@@ -149,7 +151,7 @@ struct validate_wrapper {
     python::class_<MolStandardize::FeaturesValidation,
                    python::bases<MolStandardize::ValidationMethod>>(
         "FeaturesValidation")
-        .def(python::init<bool, bool, bool, bool, bool>(
+        .def(python::init<bool, bool, bool, bool, bool, bool>(
             (python::arg("allowEnhancedStereo") = false,
              python::arg("allowAromaticBondType") = false,
              python::arg("allowDativeBondType") = false,
@@ -177,16 +179,29 @@ struct validate_wrapper {
     python::class_<MolStandardize::Is2DValidation,
                    python::bases<MolStandardize::ValidationMethod>,
                    boost::noncopyable>("Is2DValidation")
-        .def(python::init<double>());
+        .def(python::init<double>(python::arg("threshold") = 1e-3))
+        .def_readwrite("threshold",
+                       &MolStandardize::Is2DValidation::threshold);
 
     python::class_<MolStandardize::Layout2DValidation,
                    python::bases<MolStandardize::ValidationMethod>,
                    boost::noncopyable>("Layout2DValidation")
-        .def(python::init<double>())
-        .def(python::init<double, double>())
-        .def(python::init<double, double, bool>())
-        .def(python::init<double, double, bool, double>())
-        .def(python::init<double, double, bool, bool, double>());
+        .def(python::init<double, double, bool, bool, double>(
+            (python::arg("clashLimit") = 0.15,
+             python::arg("bondLengthLimit") = 25.,
+             python::arg("allowLongBondsInRings") = true,
+             python::arg("allowAtomBondClashExemption") = true,
+             python::arg("minMedianBondLength") = false)))
+        .def_readwrite("clashLimit",
+                       &MolStandardize::Layout2DValidation::clashLimit)
+        .def_readwrite("bondLengthLimit",
+                       &MolStandardize::Layout2DValidation::bondLengthLimit)
+        .def_readwrite("allowLongBondsInRings",
+                       &MolStandardize::Layout2DValidation::allowLongBondsInRings)
+        .def_readwrite("allowAtomBondClashExemption",
+                       &MolStandardize::Layout2DValidation::allowAtomBondClashExemption)
+        .def_readwrite("minMedianBondLength",
+                       &MolStandardize::Layout2DValidation::minMedianBondLength);
 
     python::class_<MolStandardize::StereoValidation,
                    python::bases<MolStandardize::ValidationMethod>,
