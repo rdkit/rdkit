@@ -19,9 +19,7 @@
 #include <Numerics/EigenSolvers/PowerEigenSolver.h>
 #include <RDGeneral/utils.h>
 #include <ForceField/ForceField.h>
-#include <ForceField/UFF/DistanceConstraint.h>
 #include <ForceField/UFF/DistanceConstraints.h>
-#include <ForceField/UFF/AngleConstraint.h>
 #include <ForceField/UFF/AngleConstraints.h>
 #include <ForceField/UFF/Inversion.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
