@@ -161,9 +161,8 @@ struct validate_wrapper {
         .def_readwrite(
             "allowAromaticBondType",
             &MolStandardize::FeaturesValidation::allowAromaticBondType)
-        .def_readwrite(
-            "allowDativeBondType",
-            &MolStandardize::FeaturesValidation::allowDativeBondType)
+        .def_readwrite("allowDativeBondType",
+                       &MolStandardize::FeaturesValidation::allowDativeBondType)
         .def_readwrite("allowQueries",
                        &MolStandardize::FeaturesValidation::allowQueries)
         .def_readwrite("allowDummies",

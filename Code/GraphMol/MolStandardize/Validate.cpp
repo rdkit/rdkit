@@ -357,8 +357,7 @@ std::vector<ValidationErrorInfo> FeaturesValidation::validate(
         return errors;
       }
     }
-    if (!allowDativeBondType &&
-        bond->getBondType() == Bond::BondType::DATIVE) {
+    if (!allowDativeBondType && bond->getBondType() == Bond::BondType::DATIVE) {
       errors.push_back("ERROR: [FeaturesValidation] Bond " +
                        std::to_string(bond->getIdx()) +
                        " of dative type is not allowed");
