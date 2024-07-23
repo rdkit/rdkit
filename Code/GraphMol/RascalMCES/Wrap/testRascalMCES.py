@@ -179,6 +179,26 @@ class TestCase(unittest.TestCase):
     self.assertEqual(results[0].smartsString,
                      '[#6&a&D2]1:[#6&a&D2]:[#6&a&D2]:[#6&a&D2]:[#6&a&D2]:[#6&a&D3]:1.[#6&A&D3](-[#6&A&D1])-[#6&A&D1]')
 
+  def testEquivalentAtoms(self):
+    opts = rdRascalMCES.RascalOptions()
+    opts.similarityThreshold = 0.5
+    opts.equivalentAtoms = "[F,Cl,Br,I]"
+    mol1 = Chem.MolFromSmiles('c1ccccc1F')
+    mol2 = Chem.MolFromSmiles('c1ccccc1Br')
+    results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+    self.assertEqual(results[0].numFragments, 1)
+    self.assertEqual(results[0].smartsString, 'c1:c:c:c:c:c:1-[F,Cl,Br,I]')
 
+  def testEquivalentBonds(self):
+    opts = rdRascalMCES.RascalOptions()
+    opts.similarityThreshold = 0.5
+    opts.ignoreBondOrders = True
+    mol1 = Chem.MolFromSmiles('CC=CC')
+    mol2 = Chem.MolFromSmiles('CCCC')
+    results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+    self.assertEqual(results[0].numFragments, 1)
+    self.assertEqual(results[0].smartsString, 'C~C~C~C')
+    
+    
 if __name__ == "__main__":
   unittest.main()
