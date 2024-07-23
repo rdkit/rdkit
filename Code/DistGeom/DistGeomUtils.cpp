@@ -252,7 +252,7 @@ ForceFields::ForceField *constructForceField(
   return field;
 }  // constructForceField
 
-//! Add improper torsion contributions to a force field
+//! Add basic knowledge improper torsion contributions to a force field
 /*!
 
   \param ff                 Force field to add contributions to
@@ -471,13 +471,12 @@ ForceFields::ForceField *construct3DForceField(
   field->positions().insert(field->positions().begin(), positions.begin(),
                             positions.end());
 
-  // keep track which atoms are 1,2- or 1,3-restrained
+  // keep track which atoms are 1,2-, 1,3- or 1,4-restrained
+  boost::dynamic_bitset<> atomPairs(N * N);
   // don't add 1-3 Distances constraints for angles where the
   // central atom of the angle is the central atom of an improper torsion.
-  boost::dynamic_bitset<> atomPairs(N * N);
   boost::dynamic_bitset<> is13Constrained(N);
 
-  // ET/K torsion constraints
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
   addImproperTorsionTerms(field, 10.0, etkdgDetails.improperAtoms,
                           is13Constrained);
@@ -523,11 +522,12 @@ ForceFields::ForceField *constructPlain3DForceField(
   field->positions().insert(field->positions().begin(), positions.begin(),
                             positions.end());
 
-  // keep track which atoms are 1,2- or 1,3-restrained
+  // keep track which atoms are 1,2-, 1,3- or 1,4-restrained
   boost::dynamic_bitset<> atomPairs(N * N);
+  // don't add 1-3 Distances constraints for angles where the
+  // central atom of the angle is the central atom of an improper torsion.
   boost::dynamic_bitset<> is13Constrained(N);
 
-  // ET torsion constraints
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
   add12Terms(field, etkdgDetails, atomPairs, positions,
              KNOWN_DIST_FORCE_CONSTANT, N);
