@@ -119,7 +119,8 @@ enum RDKIT_MOLSTANDARDIZE_EXPORT PipelineStatus {
                             FRAGMENTS_REMOVED | PROTONATION_CHANGED)
 };
 
-enum class RDKIT_MOLSTANDARDIZE_EXPORT PipelineStage {
+enum class RDKIT_MOLSTANDARDIZE_EXPORT PipelineStage : std::uint32_t {
+  NOT_STARTED = 0,
   PARSING_INPUT,
   PREPARE_FOR_VALIDATION,
   VALIDATION,
@@ -141,7 +142,7 @@ using PipelineLog = std::vector<PipelineLogEntry>;
 
 struct RDKIT_MOLSTANDARDIZE_EXPORT PipelineResult {
   PipelineStatus status;
-  PipelineStage stage;
+  std::uint32_t stage;
   PipelineLog log;
   std::string inputMolBlock;
   std::string outputMolBlock;
@@ -177,19 +178,21 @@ using ParseOperation = decltype(&parse);
 using SerializeOperation = decltype(&serialize);
 using Operation = decltype(&prepareForValidation);
 using ParentOperation = decltype(&makeParent);
-using PipelineVector = std::vector<std::pair<PipelineStage, Operation>>;
+using PipelineVector = std::vector<std::pair<std::uint32_t, Operation>>;
 
 const PipelineVector validationSteps{
     // input sanitization and cleanup
-    {PipelineStage::PREPARE_FOR_VALIDATION, &prepareForValidation},
+    {static_cast<uint32_t>(PipelineStage::PREPARE_FOR_VALIDATION),
+     &prepareForValidation},
     //  validate the structure
-    {PipelineStage::VALIDATION, &validate}};
+    {static_cast<uint32_t>(PipelineStage::VALIDATION), &validate}};
 
 const PipelineVector standardizationSteps{
-    {PipelineStage::PREPARE_FOR_STANDARDIZATION, &prepareForStandardization},
-    {PipelineStage::STANDARDIZATION, &standardize},
-    {PipelineStage::REAPPLY_WEDGING, &reapplyWedging},
-    {PipelineStage::CLEANUP_2D, &cleanup2D}};
+    {static_cast<uint32_t>(PipelineStage::PREPARE_FOR_STANDARDIZATION),
+     &prepareForStandardization},
+    {static_cast<uint32_t>(PipelineStage::STANDARDIZATION), &standardize},
+    {static_cast<uint32_t>(PipelineStage::REAPPLY_WEDGING), &reapplyWedging},
+    {static_cast<uint32_t>(PipelineStage::CLEANUP_2D), &cleanup2D}};
 }  // namespace Operations
 
 class RDKIT_MOLSTANDARDIZE_EXPORT Pipeline {

@@ -37,7 +37,7 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
   result.inputMolBlock = molblock;
 
   // parse the molblock into an RWMol instance
-  result.stage = PipelineStage::PARSING_INPUT;
+  result.stage = static_cast<uint32_t>(PipelineStage::PARSING_INPUT);
   RWMOL_SPTR mol = parse(molblock, result, options);
   if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
                !options.reportAllFailures)) {
@@ -70,7 +70,7 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
       }
     }
     if (makeParent) {
-      result.stage = PipelineStage::MAKE_PARENT;
+      result.stage = static_cast<uint32_t>(PipelineStage::MAKE_PARENT);
       output = makeParent(mol, result, options);
       if (!output.first || !output.second ||
           ((result.status & PIPELINE_ERROR) != NO_EVENT &&
@@ -83,14 +83,14 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
   }
 
   // serialize as MolBlocks
-  result.stage = PipelineStage::SERIALIZING_OUTPUT;
+  result.stage = static_cast<uint32_t>(PipelineStage::SERIALIZING_OUTPUT);
   serialize(output, result, options);
   if ((result.status & PIPELINE_ERROR) != NO_EVENT &&
       !options.reportAllFailures) {
     return result;
   }
 
-  result.stage = PipelineStage::COMPLETED;
+  result.stage = static_cast<uint32_t>(PipelineStage::COMPLETED);
 
   return result;
 }

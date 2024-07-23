@@ -35,7 +35,8 @@ M  V30 BEGIN CTAB
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::PARSING_INPUT);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::PARSING_INPUT);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::INPUT_ERROR);
@@ -58,7 +59,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -96,7 +98,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -130,7 +133,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -162,7 +166,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -205,7 +210,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -243,7 +249,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -282,7 +289,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -314,7 +322,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -346,7 +355,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -382,7 +392,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -419,7 +430,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -480,7 +492,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     // long bonds in rings are by defaul allowed
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
@@ -514,7 +527,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -553,7 +567,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -592,7 +607,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -625,7 +641,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE(result.status == MolStandardize::PipelineStatus::NO_EVENT);
   }
 }
@@ -691,7 +708,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
@@ -733,7 +751,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -788,7 +807,8 @@ M  END
     }
 
     // nitro groups are cleaned-up in a pre-standardization sanitization step.
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -834,7 +854,8 @@ M  END
     }
 
     // this test case is not expected to register any errors.
-    REQUIRE(result_a.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result_a.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE(
         (result_a.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
         MolStandardize::PipelineStatus::NO_EVENT);
@@ -883,7 +904,8 @@ M  END
     }
 
     // this test case is not expected to register any errors.
-    REQUIRE(result_b.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result_b.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE(
         (result_b.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
         MolStandardize::PipelineStatus::NO_EVENT);
@@ -935,7 +957,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -996,7 +1019,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1046,7 +1070,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1096,7 +1121,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1146,7 +1172,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1192,7 +1219,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1252,7 +1280,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1302,7 +1331,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1376,7 +1406,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1451,7 +1482,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1527,7 +1559,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1601,7 +1634,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1672,7 +1706,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1740,7 +1775,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1815,7 +1851,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1893,7 +1930,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -1973,7 +2011,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -2046,7 +2085,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -2134,7 +2174,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -2192,7 +2233,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -2253,7 +2295,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
@@ -2305,7 +2348,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(static_cast<MolStandardize::PipelineStage>(result.stage) ==
+            MolStandardize::PipelineStage::COMPLETED);
     REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
             MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE((result.status &
