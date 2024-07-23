@@ -273,13 +273,7 @@ void DrawMol::extractAtomSymbols() {
         getAtomSymbolAndOrientation(*at1);
     atomSyms_.push_back(atSym);
     if (!atSym.first.empty()) {
-      DrawColour atCol;  // defaults to black
-      // If it's not a highlight atom, colour according to atomic number
-      // or whatever.
-      if (highlightAtoms_.end() ==
-          find(highlightAtoms_.begin(), highlightAtoms_.end(), at1->getIdx())) {
-        atCol = getColour(at1->getIdx());
-      }
+      DrawColour atCol = getColour(at1->getIdx());
       AtomSymbol *al =
           new AtomSymbol(atSym.first, at1->getIdx(), atSym.second,
                          atCds_[at1->getIdx()], atCol, textDrawer_);
@@ -3503,11 +3497,11 @@ DrawColour DrawMol::getColour(int atom_idx) const {
   PRECONDITION(rdcast<int>(atomicNums_.size()) > atom_idx, "bad atom_idx");
 
   DrawColour retval = getColourByAtomicNum(atomicNums_[atom_idx], drawOptions_);
-  bool highlightedAtom = false;
+  bool highlightedAtom =
+      highlightAtoms_.end() !=
+      find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx);
   if (!drawOptions_.circleAtoms && !drawOptions_.continuousHighlight) {
-    if (highlightAtoms_.end() !=
-        find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx)) {
-      highlightedAtom = true;
+    if (highlightedAtom) {
       retval = drawOptions_.highlightColour;
     }
     // over-ride with explicit colour from highlightMap if there is one
@@ -3548,6 +3542,13 @@ DrawColour DrawMol::getColour(int atom_idx) const {
       if (numBonds == numHighBonds && highCol) {
         retval = *highCol;
       }
+    }
+  } else {
+    // There's going to be a colour behind the atom, so if the
+    // atom has a symbol, it should be black and this should only
+    // be called if there is an atom symbol.
+    if (highlightedAtom) {
+      retval = DrawColour(0.0, 0.0, 0.0);
     }
   }
   return retval;
