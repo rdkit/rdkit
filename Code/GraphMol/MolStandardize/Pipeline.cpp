@@ -52,49 +52,33 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
     // we try sanitization and validation on a copy, because we want to preserve
     // the original input molecule for later
     RWMOL_SPTR molCopy{new RWMol(*mol)};
-    // input sanitization + cleanup
-    result.stage = PipelineStage::PREPARE_FOR_VALIDATION;
-    molCopy = prepareForValidation(molCopy, result);
-    if (!molCopy || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
-                     !options.reportAllFailures)) {
-      return result;
+    for (const auto &[stage, operation] : validationSteps) {
+      result.stage = stage;
+      molCopy = operation(molCopy, result, options);
+      if (!molCopy || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+                       !options.reportAllFailures)) {
+        return result;
+      }
     }
 
-    // validate the structure
-    result.stage = PipelineStage::VALIDATION;
-    molCopy = validate(molCopy, result);
-    if (!molCopy || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
-                     !options.reportAllFailures)) {
-      return result;
+    for (const auto &[stage, operation] : standardizationSteps) {
+      result.stage = stage;
+      mol = operation(mol, result, options);
+      if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+                   !options.reportAllFailures)) {
+        return result;
+      }
     }
-
-    // sanitize the validated structure
-    // starting the standardization process from parsing the original input
-    // again is required because it's otherwise not always possible to fully
-    // preserve the original stereochemistry if reapplyMolBlockWedging() was
-    // called during the validation phase
-    result.stage = PipelineStage::PREPARE_FOR_STANDARDIZATION;
-    mol = prepareForStandardization(mol, result);
-    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
-                 !options.reportAllFailures)) {
-      return result;
-    }
-
-    // standardize/normalize
-    result.stage = PipelineStage::STANDARDIZATION;
-    mol = standardize(mol, result);
-    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
-                 !options.reportAllFailures)) {
-      return result;
-    }
-    mol = reapplyWedging(mol, result);
-    mol = cleanup2D(mol, result);
-    result.stage = PipelineStage::MAKE_PARENT;
-    output = makeParent(mol, result);
-    if (!output.first || !output.second ||
-        ((result.status & PIPELINE_ERROR) != NO_EVENT &&
-         !options.reportAllFailures)) {
-      return result;
+    if (makeParent) {
+      result.stage = PipelineStage::MAKE_PARENT;
+      output = makeParent(mol, result, options);
+      if (!output.first || !output.second ||
+          ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+           !options.reportAllFailures)) {
+        return result;
+      }
+    } else {
+      output = {mol, mol};
     }
   }
 
@@ -137,8 +121,37 @@ RWMOL_SPTR Pipeline::parse(const std::string &molblock,
   return mol;
 }
 
-RWMOL_SPTR Pipeline::prepareForValidation(RWMOL_SPTR mol,
-                                          PipelineResult &result) const {
+void Pipeline::serialize(RWMOL_SPTR_PAIR output, PipelineResult &result) const {
+  const ROMol &outputMol = *output.first;
+  const ROMol &parentMol = *output.second;
+
+  try {
+    if (!options.outputV2000) {
+      result.outputMolBlock = MolToV3KMolBlock(outputMol);
+      result.parentMolBlock = MolToV3KMolBlock(parentMol);
+    } else {
+      try {
+        result.outputMolBlock = MolToV2KMolBlock(outputMol);
+        result.parentMolBlock = MolToV2KMolBlock(parentMol);
+      } catch (ValueErrorException &e) {
+        result.append(OUTPUT_ERROR,
+                      "Can't write molecule to V2000 output format: " +
+                          std::string(e.what()));
+      }
+    }
+  } catch (const std::exception &e) {
+    result.append(OUTPUT_ERROR, "Can't write molecule to output format: " +
+                                    std::string(e.what()));
+  } catch (...) {
+    result.append(
+        OUTPUT_ERROR,
+        "An unexpected error occurred while serializing the output structures.");
+  }
+}
+
+namespace Operations {
+RWMOL_SPTR prepareForValidation(RWMOL_SPTR mol, PipelineResult &result,
+                                const PipelineOptions &) {
   // Prepare the mol for validation.
 
   try {
@@ -186,9 +199,11 @@ std::string removeErrorPrefix(const std::string &message) {
 }
 }  // namespace
 
-RWMOL_SPTR Pipeline::validate(RWMOL_SPTR mol, PipelineResult &result) const {
-  auto applyValidation = [&mol, &result, this](const ValidationMethod &v,
-                                               PipelineStatus status) -> bool {
+RWMOL_SPTR validate(RWMOL_SPTR mol, PipelineResult &result,
+                    const PipelineOptions &options) {
+  auto applyValidation = [&mol, &result, &options](
+                             const ValidationMethod &v,
+                             PipelineStatus status) -> bool {
     auto errors = v.validate(*mol, options.reportAllFailures);
     for (const auto &error : errors) {
       result.append(status, removeErrorPrefix(error));
@@ -254,8 +269,8 @@ RWMOL_SPTR Pipeline::validate(RWMOL_SPTR mol, PipelineResult &result) const {
   return mol;
 }
 
-RWMOL_SPTR Pipeline::prepareForStandardization(RWMOL_SPTR mol,
-                                               PipelineResult &result) const {
+RWMOL_SPTR prepareForStandardization(RWMOL_SPTR mol, PipelineResult &result,
+                                     const PipelineOptions &) {
   // Prepare the mol for standardization.
 
   try {
@@ -269,7 +284,8 @@ RWMOL_SPTR Pipeline::prepareForStandardization(RWMOL_SPTR mol,
   return mol;
 }
 
-RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult &result) const {
+RWMOL_SPTR standardize(RWMOL_SPTR mol, PipelineResult &result,
+                       const PipelineOptions &options) {
   auto smiles = MolToSmiles(*mol);
   auto reference = smiles;
 
@@ -352,8 +368,8 @@ RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult &result) const {
   return mol;
 }
 
-RWMOL_SPTR Pipeline::reapplyWedging(RWMOL_SPTR mol,
-                                    PipelineResult &result) const {
+RWMOL_SPTR reapplyWedging(RWMOL_SPTR mol, PipelineResult &result,
+                          const PipelineOptions &) {
   // in general, we want to restore the bond wedging from the input molblock,
   // but we prefer to not use any wavy bonds, because of their ambiguity
   // in some configurations.
@@ -419,8 +435,8 @@ RWMOL_SPTR Pipeline::reapplyWedging(RWMOL_SPTR mol,
   return mol;
 }
 
-RWMOL_SPTR Pipeline::cleanup2D(RWMOL_SPTR mol,
-                               PipelineResult & /*result*/) const {
+RWMOL_SPTR cleanup2D(RWMOL_SPTR mol, PipelineResult & /*result*/,
+                     const PipelineOptions &options) {
   // scale the atoms coordinates
   // and make sure that z coords are set to 0 (some z coords may be non-null
   // albeit smaller than the validation threshold - these noisy coords may in
@@ -493,8 +509,8 @@ void removeHsAtProtonatedSites(RWMOL_SPTR mol) {
 }
 }  // namespace
 
-Pipeline::RWMOL_SPTR_PAIR Pipeline::makeParent(RWMOL_SPTR mol,
-                                               PipelineResult &result) const {
+RWMOL_SPTR_PAIR makeParent(RWMOL_SPTR mol, PipelineResult &result,
+                           const PipelineOptions &) {
   auto reference = MolToSmiles(*mol);
 
   RWMOL_SPTR parent{new RWMol(*mol)};
@@ -565,34 +581,7 @@ Pipeline::RWMOL_SPTR_PAIR Pipeline::makeParent(RWMOL_SPTR mol,
 
   return {mol, parent};
 }
-
-void Pipeline::serialize(RWMOL_SPTR_PAIR output, PipelineResult &result) const {
-  const ROMol &outputMol = *output.first;
-  const ROMol &parentMol = *output.second;
-
-  try {
-    if (!options.outputV2000) {
-      result.outputMolBlock = MolToV3KMolBlock(outputMol);
-      result.parentMolBlock = MolToV3KMolBlock(parentMol);
-    } else {
-      try {
-        result.outputMolBlock = MolToV2KMolBlock(outputMol);
-        result.parentMolBlock = MolToV2KMolBlock(parentMol);
-      } catch (ValueErrorException &e) {
-        result.append(OUTPUT_ERROR,
-                      "Can't write molecule to V2000 output format: " +
-                          std::string(e.what()));
-      }
-    }
-  } catch (const std::exception &e) {
-    result.append(OUTPUT_ERROR, "Can't write molecule to output format: " +
-                                    std::string(e.what()));
-  } catch (...) {
-    result.append(
-        OUTPUT_ERROR,
-        "An unexpected error occurred while serializing the output structures.");
-  }
-}
+}  // namespace Operations
 
 }  // namespace MolStandardize
 }  // namespace RDKit
