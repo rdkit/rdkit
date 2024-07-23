@@ -37,7 +37,7 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
   result.inputMolBlock = molblock;
 
   // parse the molblock into an RWMol instance
-  result.stage = PARSING_INPUT;
+  result.stage = PipelineStage::PARSING_INPUT;
   RWMOL_SPTR mol = parse(molblock, result);
   if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
                !options.reportAllFailures)) {
@@ -50,7 +50,7 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
     output = {mol, mol};
   } else {
     // input sanitization + cleanup
-    result.stage = PREPARE_FOR_VALIDATION;
+    result.stage = PipelineStage::PREPARE_FOR_VALIDATION;
     mol = prepareForValidation(mol, result);
     if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
                  !options.reportAllFailures)) {
@@ -58,7 +58,7 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
     }
 
     // validate the structure
-    result.stage = VALIDATION;
+    result.stage = PipelineStage::VALIDATION;
     mol = validate(mol, result);
     if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
                  !options.reportAllFailures)) {
@@ -70,7 +70,7 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
     // again is required because it's otherwise not always possible to fully
     // preserve the original stereochemistry if reapplyMolBlockWedging() was
     // called during the validation phase
-    result.stage = PREPARE_FOR_STANDARDIZATION;
+    result.stage = PipelineStage::PREPARE_FOR_STANDARDIZATION;
     mol = parse(molblock, result);
     if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
                  !options.reportAllFailures)) {
@@ -83,7 +83,7 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
     }
 
     // standardize/normalize
-    result.stage = STANDARDIZATION;
+    result.stage = PipelineStage::STANDARDIZATION;
     mol = standardize(mol, result);
     if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
                  !options.reportAllFailures)) {
@@ -91,6 +91,7 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
     }
     mol = reapplyWedging(mol, result);
     mol = cleanup2D(mol, result);
+    result.stage = PipelineStage::MAKE_PARENT;
     output = makeParent(mol, result);
     if (!output.first || !output.second ||
         ((result.status & PIPELINE_ERROR) != NO_EVENT &&
@@ -100,14 +101,14 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
   }
 
   // serialize as MolBlocks
-  result.stage = SERIALIZING_OUTPUT;
+  result.stage = PipelineStage::SERIALIZING_OUTPUT;
   serialize(output, result);
   if ((result.status & PIPELINE_ERROR) != NO_EVENT &&
       !options.reportAllFailures) {
     return result;
   }
 
-  result.stage = COMPLETED;
+  result.stage = PipelineStage::COMPLETED;
 
   return result;
 }

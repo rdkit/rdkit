@@ -35,10 +35,10 @@ M  V30 BEGIN CTAB
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::PARSING_INPUT);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::INPUT_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::PARSING_INPUT);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::INPUT_ERROR);
   }
 
   SECTION("failing RDKit validation, no atoms") {
@@ -58,11 +58,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::BASIC_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::BASIC_VALIDATION_ERROR);
   }
 
   SECTION("failing RDKit validation, bad valence status") {
@@ -95,13 +96,14 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status ==
-            (MolStandardize::BASIC_VALIDATION_ERROR |
-             MolStandardize::PREPARE_FOR_STANDARDIZATION_ERROR));
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(
+        result.status ==
+        (MolStandardize::PipelineStatus::BASIC_VALIDATION_ERROR |
+         MolStandardize::PipelineStatus::PREPARE_FOR_STANDARDIZATION_ERROR));
   }
 
   SECTION("failing Isotopes validation") {
@@ -128,12 +130,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::BASIC_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::BASIC_VALIDATION_ERROR);
   }
 
   SECTION("failing features validation, query atom") {
@@ -160,11 +162,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::FEATURES_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::FEATURES_VALIDATION_ERROR);
   }
 
   SECTION("failing features validation, aromatic bonds") {
@@ -202,11 +205,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::FEATURES_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::FEATURES_VALIDATION_ERROR);
   }
 
   SECTION("failing features validation, dative bonds") {
@@ -239,11 +243,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::FEATURES_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::FEATURES_VALIDATION_ERROR);
   }
 
   SECTION("failing features validation, enhanced stereo") {
@@ -277,11 +282,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::FEATURES_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::FEATURES_VALIDATION_ERROR);
   }
 
   SECTION("failing radical validation, disallowed radical") {
@@ -308,11 +314,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::BASIC_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::BASIC_VALIDATION_ERROR);
   }
 
   SECTION("failing 2D validation, non-null Z coords") {
@@ -339,11 +346,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::IS2D_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::IS2D_VALIDATION_ERROR);
   }
 
   SECTION("failing validation, clashing atoms") {
@@ -374,11 +382,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::LAYOUT2D_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::LAYOUT2D_VALIDATION_ERROR);
   }
 
   SECTION("failing validation, abnormally long bonds") {
@@ -410,11 +419,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::LAYOUT2D_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::LAYOUT2D_VALIDATION_ERROR);
 
     molblock = R"(
   Mrv2311 02222409302D          
@@ -470,10 +480,10 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
     // long bonds in rings are by defaul allowed
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
   }
 
   SECTION("failing stereo validation, too many stereo bonds (3 subst. case)") {
@@ -504,11 +514,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::STEREO_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::STEREO_VALIDATION_ERROR);
   }
 
   SECTION(
@@ -542,11 +553,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::STEREO_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::STEREO_VALIDATION_ERROR);
   }
 
   SECTION(
@@ -580,12 +592,14 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::IS2D_VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::STEREO_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::IS2D_VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::STEREO_VALIDATION_ERROR);
   }
 }
 
@@ -611,8 +625,8 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE(result.status == MolStandardize::NO_EVENT);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(result.status == MolStandardize::PipelineStatus::NO_EVENT);
   }
 }
 
@@ -677,11 +691,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::VALIDATION_ERROR);
-    REQUIRE(result.status & MolStandardize::LAYOUT2D_VALIDATION_ERROR);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status & MolStandardize::PipelineStatus::VALIDATION_ERROR);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::LAYOUT2D_VALIDATION_ERROR);
   }
 }
 
@@ -718,12 +733,14 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::METALS_DISCONNECTED);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::METALS_DISCONNECTED);
 
     std::unique_ptr<RWMol> mol(
         MolBlockToMol(result.outputMolBlock, false, false));
@@ -771,11 +788,12 @@ M  END
     }
 
     // nitro groups are cleaned-up in a pre-standardization sanitization step.
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NO_EVENT);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
 
     std::unique_ptr<RWMol> mol(
         MolBlockToMol(result.outputMolBlock, false, false));
@@ -816,13 +834,17 @@ M  END
     }
 
     // this test case is not expected to register any errors.
-    REQUIRE(result_a.stage == MolStandardize::COMPLETED);
-    REQUIRE((result_a.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result_a.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result_a.status & MolStandardize::NORMALIZATION_APPLIED);
-    REQUIRE(result_a.status & MolStandardize::PROTONATION_CHANGED);
+    REQUIRE(result_a.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(
+        (result_a.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+        MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result_a.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result_a.status &
+            MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
+    REQUIRE(result_a.status &
+            MolStandardize::PipelineStatus::PROTONATION_CHANGED);
 
     std::unique_ptr<RWMol> mol_a(
         MolBlockToMol(result_a.outputMolBlock, false, false));
@@ -861,13 +883,17 @@ M  END
     }
 
     // this test case is not expected to register any errors.
-    REQUIRE(result_b.stage == MolStandardize::COMPLETED);
-    REQUIRE((result_b.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result_b.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result_b.status & MolStandardize::NORMALIZATION_APPLIED);
-    REQUIRE(result_b.status & MolStandardize::PROTONATION_CHANGED);
+    REQUIRE(result_b.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE(
+        (result_b.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+        MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result_b.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result_b.status &
+            MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
+    REQUIRE(result_b.status &
+            MolStandardize::PipelineStatus::PROTONATION_CHANGED);
 
     std::unique_ptr<RWMol> mol_b(
         MolBlockToMol(result_b.outputMolBlock, false, false));
@@ -909,12 +935,14 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE(result.status & MolStandardize::NORMALIZATION_APPLIED);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE(result.status &
+            MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
 
     std::unique_ptr<RWMol> mol(
         MolBlockToMol(result.outputMolBlock, false, false));
@@ -968,12 +996,13 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            (MolStandardize::NORMALIZATION_APPLIED |
-             MolStandardize::PROTONATION_CHANGED));
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::PipelineStatus::NORMALIZATION_APPLIED |
+             MolStandardize::PipelineStatus::PROTONATION_CHANGED));
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
     REQUIRE(parentMol);
@@ -1017,11 +1046,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            (MolStandardize::NORMALIZATION_APPLIED |
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::PipelineStatus::NORMALIZATION_APPLIED |
              MolStandardize::PROTONATION_CHANGED));
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1066,11 +1096,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            (MolStandardize::NORMALIZATION_APPLIED |
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::PipelineStatus::NORMALIZATION_APPLIED |
              MolStandardize::PROTONATION_CHANGED));
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1115,11 +1146,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            (MolStandardize::NORMALIZATION_APPLIED |
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::PipelineStatus::NORMALIZATION_APPLIED |
              MolStandardize::PROTONATION_CHANGED));
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1160,14 +1192,16 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            (MolStandardize::METALS_DISCONNECTED |
-             MolStandardize::FRAGMENTS_REMOVED));
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::PipelineStatus::METALS_DISCONNECTED |
+             MolStandardize::PipelineStatus::FRAGMENTS_REMOVED));
 
     std::unique_ptr<RWMol> parentMol(
         MolBlockToMol(result.parentMolBlock, false, false));
@@ -1218,11 +1252,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NO_EVENT);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
 
     std::unique_ptr<RWMol> parentMol(
         MolBlockToMol(result.parentMolBlock, false, false));
@@ -1267,11 +1302,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::PROTONATION_CHANGED);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::PROTONATION_CHANGED);
     REQUIRE(result.parentMolBlock == result.outputMolBlock);
 
     std::unique_ptr<RWMol> parentMol(
@@ -1340,15 +1376,17 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            (MolStandardize::METALS_DISCONNECTED |
-             MolStandardize::FRAGMENTS_REMOVED |
-             MolStandardize::PROTONATION_CHANGED));
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::PipelineStatus::METALS_DISCONNECTED |
+             MolStandardize::PipelineStatus::FRAGMENTS_REMOVED |
+             MolStandardize::PipelineStatus::PROTONATION_CHANGED));
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     std::unique_ptr<RWMol> parentMol(
@@ -1413,16 +1451,18 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            (MolStandardize::METALS_DISCONNECTED
-             //| MolStandardize::NORMALIZATION_APPLIED
-             | MolStandardize::FRAGMENTS_REMOVED |
-             MolStandardize::PROTONATION_CHANGED));
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::PipelineStatus::METALS_DISCONNECTED
+             //| MolStandardize::PipelineStatus::NORMALIZATION_APPLIED
+             | MolStandardize::PipelineStatus::FRAGMENTS_REMOVED |
+             MolStandardize::PipelineStatus::PROTONATION_CHANGED));
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     std::unique_ptr<RWMol> parentMol(
@@ -1487,15 +1527,17 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            (MolStandardize::METALS_DISCONNECTED |
-             MolStandardize::FRAGMENTS_REMOVED |
-             MolStandardize::PROTONATION_CHANGED));
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::PipelineStatus::METALS_DISCONNECTED |
+             MolStandardize::PipelineStatus::FRAGMENTS_REMOVED |
+             MolStandardize::PipelineStatus::PROTONATION_CHANGED));
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     std::unique_ptr<RWMol> parentMol(
@@ -1559,15 +1601,17 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            (MolStandardize::METALS_DISCONNECTED |
-             MolStandardize::FRAGMENTS_REMOVED |
-             MolStandardize::PROTONATION_CHANGED));
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            (MolStandardize::PipelineStatus::METALS_DISCONNECTED |
+             MolStandardize::PipelineStatus::FRAGMENTS_REMOVED |
+             MolStandardize::PipelineStatus::PROTONATION_CHANGED));
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     std::unique_ptr<RWMol> parentMol(
@@ -1628,13 +1672,15 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NORMALIZATION_APPLIED);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     std::unique_ptr<RWMol> parentMol(
@@ -1694,13 +1740,15 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NORMALIZATION_APPLIED);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1767,13 +1815,15 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NORMALIZATION_APPLIED);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1843,13 +1893,15 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NORMALIZATION_APPLIED);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1921,13 +1973,15 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NORMALIZATION_APPLIED);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -1992,13 +2046,15 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NORMALIZATION_APPLIED);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
     parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
@@ -2078,11 +2134,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NO_EVENT);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
     std::unique_ptr<RWMol> parentMol(
         MolBlockToMol(result.parentMolBlock, false, false));
@@ -2135,13 +2192,15 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) !=
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NORMALIZATION_APPLIED);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) !=
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
 
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
@@ -2194,11 +2253,12 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NO_EVENT);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
 
     REQUIRE(result.outputMolBlock == result.parentMolBlock);
 
@@ -2245,10 +2305,11 @@ M  END
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
-    REQUIRE(result.stage == MolStandardize::COMPLETED);
-    REQUIRE((result.status & MolStandardize::PIPELINE_ERROR) ==
-            MolStandardize::NO_EVENT);
-    REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
-            MolStandardize::NO_EVENT);
+    REQUIRE(result.stage == MolStandardize::PipelineStage::COMPLETED);
+    REQUIRE((result.status & MolStandardize::PipelineStatus::PIPELINE_ERROR) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
+    REQUIRE((result.status &
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
+            MolStandardize::PipelineStatus::NO_EVENT);
   }
 }

@@ -64,46 +64,58 @@ void wrap_pipeline() {
                      &MolStandardize::PipelineOptions::outputV2000);
 
   python::enum_<MolStandardize::PipelineStatus>("PipelineStatus")
-      .value("NO_EVENT", MolStandardize::NO_EVENT)
-      .value("INPUT_ERROR", MolStandardize::INPUT_ERROR)
+      .value("NO_EVENT", MolStandardize::PipelineStatus::NO_EVENT)
+      .value("INPUT_ERROR", MolStandardize::PipelineStatus::INPUT_ERROR)
       .value("PREPARE_FOR_VALIDATION_ERROR",
-             MolStandardize::PREPARE_FOR_VALIDATION_ERROR)
+             MolStandardize::PipelineStatus::PREPARE_FOR_VALIDATION_ERROR)
       .value("FEATURES_VALIDATION_ERROR",
-             MolStandardize::FEATURES_VALIDATION_ERROR)
-      .value("BASIC_VALIDATION_ERROR", MolStandardize::BASIC_VALIDATION_ERROR)
-      .value("IS2D_VALIDATION_ERROR", MolStandardize::IS2D_VALIDATION_ERROR)
+             MolStandardize::PipelineStatus::FEATURES_VALIDATION_ERROR)
+      .value("BASIC_VALIDATION_ERROR",
+             MolStandardize::PipelineStatus::BASIC_VALIDATION_ERROR)
+      .value("IS2D_VALIDATION_ERROR",
+             MolStandardize::PipelineStatus::IS2D_VALIDATION_ERROR)
       .value("LAYOUT2D_VALIDATION_ERROR",
-             MolStandardize::LAYOUT2D_VALIDATION_ERROR)
-      .value("STEREO_VALIDATION_ERROR", MolStandardize::STEREO_VALIDATION_ERROR)
-      .value("VALIDATION_ERROR", MolStandardize::VALIDATION_ERROR)
+             MolStandardize::PipelineStatus::LAYOUT2D_VALIDATION_ERROR)
+      .value("STEREO_VALIDATION_ERROR",
+             MolStandardize::PipelineStatus::STEREO_VALIDATION_ERROR)
+      .value("VALIDATION_ERROR",
+             MolStandardize::PipelineStatus::VALIDATION_ERROR)
       .value("PREPARE_FOR_STANDARDIZATION_ERROR",
-             MolStandardize::PREPARE_FOR_STANDARDIZATION_ERROR)
+             MolStandardize::PipelineStatus::PREPARE_FOR_STANDARDIZATION_ERROR)
       .value("METAL_STANDARDIZATION_ERROR",
-             MolStandardize::METAL_STANDARDIZATION_ERROR)
+             MolStandardize::PipelineStatus::METAL_STANDARDIZATION_ERROR)
       .value("NORMALIZER_STANDARDIZATION_ERROR",
-             MolStandardize::NORMALIZER_STANDARDIZATION_ERROR)
+             MolStandardize::PipelineStatus::NORMALIZER_STANDARDIZATION_ERROR)
       .value("FRAGMENT_STANDARDIZATION_ERROR",
-             MolStandardize::FRAGMENT_STANDARDIZATION_ERROR)
+             MolStandardize::PipelineStatus::FRAGMENT_STANDARDIZATION_ERROR)
       .value("CHARGE_STANDARDIZATION_ERROR",
-             MolStandardize::CHARGE_STANDARDIZATION_ERROR)
-      .value("STANDARDIZATION_ERROR", MolStandardize::STANDARDIZATION_ERROR)
-      .value("OUTPUT_ERROR", MolStandardize::OUTPUT_ERROR)
-      .value("PIPELINE_ERROR", MolStandardize::PIPELINE_ERROR)
-      .value("METALS_DISCONNECTED", MolStandardize::METALS_DISCONNECTED)
-      .value("NORMALIZATION_APPLIED", MolStandardize::NORMALIZATION_APPLIED)
-      .value("FRAGMENTS_REMOVED", MolStandardize::FRAGMENTS_REMOVED)
-      .value("PROTONATION_CHANGED", MolStandardize::PROTONATION_CHANGED)
-      .value("STRUCTURE_MODIFICATION", MolStandardize::STRUCTURE_MODIFICATION);
+             MolStandardize::PipelineStatus::CHARGE_STANDARDIZATION_ERROR)
+      .value("STANDARDIZATION_ERROR",
+             MolStandardize::PipelineStatus::STANDARDIZATION_ERROR)
+      .value("OUTPUT_ERROR", MolStandardize::PipelineStatus::OUTPUT_ERROR)
+      .value("PIPELINE_ERROR", MolStandardize::PipelineStatus::PIPELINE_ERROR)
+      .value("METALS_DISCONNECTED",
+             MolStandardize::PipelineStatus::METALS_DISCONNECTED)
+      .value("NORMALIZATION_APPLIED",
+             MolStandardize::PipelineStatus::NORMALIZATION_APPLIED)
+      .value("FRAGMENTS_REMOVED",
+             MolStandardize::PipelineStatus::FRAGMENTS_REMOVED)
+      .value("PROTONATION_CHANGED",
+             MolStandardize::PipelineStatus::PROTONATION_CHANGED)
+      .value("STRUCTURE_MODIFICATION",
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION);
 
   python::enum_<MolStandardize::PipelineStage>("PipelineStage")
-      .value("PARSING_INPUT", MolStandardize::PARSING_INPUT)
-      .value("PREPARE_FOR_VALIDATION", MolStandardize::PREPARE_FOR_VALIDATION)
-      .value("VALIDATION", MolStandardize::VALIDATION)
+      .value("PARSING_INPUT", MolStandardize::PipelineStage::PARSING_INPUT)
+      .value("PREPARE_FOR_VALIDATION",
+             MolStandardize::PipelineStage::PREPARE_FOR_VALIDATION)
+      .value("VALIDATION", MolStandardize::PipelineStage::VALIDATION)
       .value("PREPARE_FOR_STANDARDIZATION",
-             MolStandardize::PREPARE_FOR_STANDARDIZATION)
-      .value("STANDARDIZATION", MolStandardize::STANDARDIZATION)
-      .value("SERIALIZING_OUTPUT", MolStandardize::SERIALIZING_OUTPUT)
-      .value("COMPLETED", MolStandardize::COMPLETED);
+             MolStandardize::PipelineStage::PREPARE_FOR_STANDARDIZATION)
+      .value("STANDARDIZATION", MolStandardize::PipelineStage::STANDARDIZATION)
+      .value("SERIALIZING_OUTPUT",
+             MolStandardize::PipelineStage::SERIALIZING_OUTPUT)
+      .value("COMPLETED", MolStandardize::PipelineStage::COMPLETED);
 
   python::class_<MolStandardize::PipelineLogEntry>("PipelineLogEntry",
                                                    python::no_init)
