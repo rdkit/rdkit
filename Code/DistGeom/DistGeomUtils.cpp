@@ -256,12 +256,11 @@ ForceFields::ForceField *constructForceField(
 /*!
 
   \param ff                 Force field to add contributions to
-  \param forceScalingFactor Force constant to use for contrib
+  \param forceScalingFactor Force scaling factor to use in inversion contrib
   \param improperAtoms      Indices of atoms to be used in improper torsion
   terms.
-  \param is13Constrained    The bit at every position where the atom with
-  the same index in the molecule is the center of an improper torsion is set to
-  one.
+  \param is13Constrained    bit vector with length of total num atoms of the
+  molecule where index of every central atom of improper torsion is set to one
 
 */
 void addImproperTorsionTerms(ForceFields::ForceField *ff,
@@ -307,8 +306,9 @@ void addImproperTorsionTerms(ForceFields::ForceField *ff,
 
   \param ff           Force field to add contributions to
   \param etkdgDetails Contains information about the ETKDG force field
-  \param atomPairs    bitset for which atom pairs will be set to one for all
-  the 1-4 atom pairs that are part of an experimental torsion contribution
+  \param atomPairs    bit set for every atom pair in the molecule where
+  a bit is set to one when the atom pair are the end atoms of a torsion
+  angle contribution
   \param numAtoms     number of atoms in the molecule
 
  */
@@ -338,8 +338,8 @@ void addExperimentalTorsionTerms(
 
   \param ff Force field to add contributions to
   \param etkdgDetails Contains information about the ETKDG force field
-  \param atomPairs bitset for which atom pairs will be set to one for all the
-  1-4 atom pairs that are part of an experimental torsion contribution
+  \param atomPairs bit set for every atom pair in the molecule where
+  a bit is set to one when the atom pair is a bond that is constrained here
   \param positions       A vector of pointers to 3D Points to write out the
   resulting coordinates
   \param forceConstant force constant with which to constrain bond distances
@@ -371,15 +371,15 @@ void add12Terms(ForceFields::ForceField *ff,
 
   \param ff Force field to add contributions to
   \param etkdgDetails Contains information about the ETKDG force field
-  \param atomPairs bitset for which atom pairs will be set to one for all the
-  1-4 atom pairs that are part of an experimental torsion contribution
-  \param positions       A vector of pointers to 3D Points to write out the
-  resulting coordinates
-  \param forceConstant force constant with which to constrain bond distances
-  \param is13Constrained  The bit at every position where the atom with the
-  same index in the molecule is the center of an improper torsion is set to one.
-  \param useBasicKnowledge whether to use basic knowledge terms
-  \param numAtoms number of atoms in molecule
+  \param atomPairs bit set for every atom pair in the molecule where
+  a bit is set to one when the atom pair is the both end atoms of a 13
+  contribution that is constrained here
+  \param positions A vector of pointers to 3D Points to write out the resulting
+  coordinates \param forceConstant force constant with which to constrain bond
+  distances \param is13Constrained bit vector with length of total num atoms of
+  the molecule where index of every central atom of improper torsion is set to
+  one \param useBasicKnowledge whether to use basic knowledge terms \param
+  numAtoms number of atoms in molecule
 
 */
 void add13Terms(ForceFields::ForceField *ff,
@@ -418,9 +418,10 @@ void add13Terms(ForceFields::ForceField *ff,
 
   \param ff Force field to add contributions to
   \param etkdgDetails Contains information about the ETKDG force field
-  \param atomPairs bitset for which atom pairs will be set to one for all the
-  1-4 atom pairs that are part of an experimental torsion contribution
-  \param positions       A vector of pointers to 3D Points to write out the
+  \param atomPairs bit set for every atom pair in the molecule where
+  a bit is set to one when the two atoms in the pair are distance constrained
+  with respect to each other
+  \param positions A vector of pointers to 3D Points to write out the
   resulting coordinates
   \param knownDistanceForceConstant force constant with which to constrain bond
   distances
