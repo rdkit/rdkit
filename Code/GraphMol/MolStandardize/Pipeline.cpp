@@ -113,18 +113,18 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
 
 RWMOL_SPTR Pipeline::parse(const std::string &molblock,
                            PipelineResult &result) const {
+  v2::FileParsers::MolFileParserParams params;
   // we don't want to sanitize the molecule at this stage
-  static constexpr bool sanitize{false};
+  params.sanitize = false;
   // Hs wouldn't be anyway removed if the mol is not sanitized
-  static constexpr bool removeHs{false};
-
+  params.removeHs = false;
   // strict parsing is configurable via the pipeline options
-  const bool strictParsing{options.strictParsing};
+  params.strictParsing = options.strictParsing;
 
   RWMOL_SPTR mol{};
 
   try {
-    mol.reset(MolBlockToMol(molblock, sanitize, removeHs, strictParsing));
+    mol.reset(v2::FileParsers::MolFromMolBlock(molblock, params).release());
   } catch (FileParseException &e) {
     result.append(INPUT_ERROR, e.what());
   }
@@ -162,7 +162,10 @@ RWMOL_SPTR Pipeline::prepareForValidation(RWMOL_SPTR mol,
     // some cases overwrite the ENDDOWNRIGHT/ENDUPRIGHT info that describes the
     // configuration of double bonds adjacent to stereocenters. We therefore
     // first assign the stereochemistry, and then restore the wedging.
-    MolOps::assignStereochemistry(*mol, true, true, true);
+    constexpr bool cleanIt = true;
+    constexpr bool force = true;
+    constexpr bool flagPossible = true;
+    MolOps::assignStereochemistry(*mol, cleanIt, force, flagPossible);
     Chirality::reapplyMolBlockWedging(*mol);
   } catch (MolSanitizeException &) {
     result.append(
@@ -341,7 +344,10 @@ RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult &result) const {
 
   // The stereochemistry is not assigned until after we are done modifying the
   // molecular graph:
-  MolOps::assignStereochemistry(*mol, true, true, true);
+  constexpr bool cleanIt = true;
+  constexpr bool force = true;
+  constexpr bool flagPossible = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force, flagPossible);
 
   return mol;
 }
