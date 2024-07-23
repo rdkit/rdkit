@@ -49,33 +49,31 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
   if (mol->getNumAtoms() == 0 && options.allowEmptyMolecules) {
     output = {mol, mol};
   } else {
+    // we try sanitization and validation on a copy, because we want to preserve
+    // the original input molecule for later
+    RWMOL_SPTR molCopy{new RWMol(*mol)};
     // input sanitization + cleanup
     result.stage = PipelineStage::PREPARE_FOR_VALIDATION;
-    mol = prepareForValidation(mol, result);
-    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
-                 !options.reportAllFailures)) {
+    molCopy = prepareForValidation(molCopy, result);
+    if (!molCopy || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+                     !options.reportAllFailures)) {
       return result;
     }
 
     // validate the structure
     result.stage = PipelineStage::VALIDATION;
-    mol = validate(mol, result);
-    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
-                 !options.reportAllFailures)) {
+    molCopy = validate(molCopy, result);
+    if (!molCopy || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+                     !options.reportAllFailures)) {
       return result;
     }
 
-    // re-read and sanitize the validated structure
+    // sanitize the validated structure
     // starting the standardization process from parsing the original input
     // again is required because it's otherwise not always possible to fully
     // preserve the original stereochemistry if reapplyMolBlockWedging() was
     // called during the validation phase
     result.stage = PipelineStage::PREPARE_FOR_STANDARDIZATION;
-    mol = parse(molblock, result);
-    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
-                 !options.reportAllFailures)) {
-      return result;
-    }
     mol = prepareForStandardization(mol, result);
     if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
                  !options.reportAllFailures)) {
