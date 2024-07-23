@@ -340,6 +340,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDuplicateEnhancedStereoLabelsAddAnnotationTrue.svg", 1462263453U},
     {"testDuplicateEnhancedStereoLabelsAddAnnotationFalse.svg", 2980189527U},
     {"testComplexQueryAtomMap.svg", 722421835U},
+    {"testHighlightHeteroAtoms.svg", 4252266230U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -9797,26 +9798,52 @@ TEST_CASE("avoid duplicate enhanced stereo labels") {
 
 TEST_CASE("Draw atom map numbers on complex query atoms") {
   std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
-    "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
-REQUIRE(rxn);
-{
-  // Use NO_FREETYPE so that the characters appear in an
-  // easily found manner in the SVG.
-  MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
-  drawer.drawReaction(*rxn);
+      "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  {
+    // Use NO_FREETYPE so that the characters appear in an
+    // easily found manner in the SVG.
+    MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::string svgFile = "testComplexQueryAtomMap.svg";
+    std::ofstream outs(svgFile);
+    outs << text;
+    outs.close();
+    check_file_hash(svgFile);
+    std::regex regex(std::string("<text\\s+.*>:</text>"));
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), regex),
+        std::sregex_token_iterator());
+    // there should be 6 colons drawn
+    CHECK(nOccurrences == 6);
+  }
+}
+
+TEST_CASE("Draw hetero atoms in black if highlighted") {
+  auto mol = "OC(=O)c1ccc(C(=O)O)cc1"_smiles;
+  REQUIRE(mol);
+  MolDraw2DSVG drawer(350, 300, 350, 300, NO_FREETYPE);
+  drawer.drawOptions().highlightColour = DrawColour(1, 0.0, 0.0);
+  std::vector<int> highlightAtoms = {0, 1, 2};
+  drawer.drawMolecule(*mol, "", &highlightAtoms);
   drawer.finishDrawing();
   auto text = drawer.getDrawingText();
-  std::string svgFile = "testComplexQueryAtomMap.svg";
-  std::ofstream outs(svgFile);
+  std::ofstream outs("testHighlightHeteroAtoms.svg");
   outs << text;
   outs.close();
-  check_file_hash(svgFile);
-  std::regex regex(std::string("<text\\s+.*>:</text>"));
-  size_t nOccurrences = std::distance(
-      std::sregex_token_iterator(text.begin(), text.end(), regex),
+  // there should be 3 black characters and 3 red
+  std::regex regex1("<text .*;fill:#000000.*</text>");
+  size_t nBlack = std::distance(
+      std::sregex_token_iterator(text.begin(), text.end(), regex1),
       std::sregex_token_iterator());
-  // there should be 6 colons drawn
-  CHECK(nOccurrences == 6);
+  CHECK(nBlack == 3);
+  std::regex regex2("<text .*;fill:#FF0000.*</text>");
+  size_t nRed = std::distance(
+      std::sregex_token_iterator(text.begin(), text.end(), regex2),
+      std::sregex_token_iterator());
+  CHECK(nRed == 3);
 
-}
+  //  check_file_hash("testHighlightHeteroAtoms.svg");
 }

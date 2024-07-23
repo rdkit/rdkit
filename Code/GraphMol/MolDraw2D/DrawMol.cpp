@@ -273,7 +273,13 @@ void DrawMol::extractAtomSymbols() {
         getAtomSymbolAndOrientation(*at1);
     atomSyms_.push_back(atSym);
     if (!atSym.first.empty()) {
-      DrawColour atCol = getColour(at1->getIdx());
+      DrawColour atCol;  // defaults to black
+      // If it's not a highlight atom, colour according to atomic number
+      // or whatever.
+      if (highlightAtoms_.end() ==
+          find(highlightAtoms_.begin(), highlightAtoms_.end(), at1->getIdx())) {
+        atCol = getColour(at1->getIdx());
+      }
       AtomSymbol *al =
           new AtomSymbol(atSym.first, at1->getIdx(), atSym.second,
                          atCds_[at1->getIdx()], atCol, textDrawer_);
