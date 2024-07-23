@@ -30,6 +30,7 @@
 namespace DistGeom {
 const double EIGVAL_TOL = 0.001;
 const double KNOWN_DIST_TOL = 0.01;
+const double KNOWN_DIST_FORCE_CONSTANT = 100;
 
 double pickRandomDistMat(const BoundsMatrix &mmat,
                          RDNumeric::SymmMatrix<double> &distMat, int seed) {
@@ -479,16 +480,14 @@ ForceFields::ForceField *construct3DForceField(
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
   addImproperTorsionTerms(field, 10.0, etkdgDetails.improperAtoms,
                           is13Constrained);
-
-  constexpr double knownDistanceConstraintForce = 100.0;
   add12Terms(field, etkdgDetails, atomPairs, positions,
-             knownDistanceConstraintForce, N);
+             KNOWN_DIST_FORCE_CONSTANT, N);
   add13Terms(field, etkdgDetails, atomPairs, positions,
-             knownDistanceConstraintForce, is13Constrained, true, N);
+             KNOWN_DIST_FORCE_CONSTANT, is13Constrained, true, N);
 
   // minimum distance for all other atom pairs that aren't constrained
   addLongRangeDistanceConstraints(field, etkdgDetails, atomPairs, positions,
-                                  knownDistanceConstraintForce, mmat, N);
+                                  KNOWN_DIST_FORCE_CONSTANT, mmat, N);
   return field;
 }  // construct3DForceField
 
@@ -529,15 +528,13 @@ ForceFields::ForceField *constructPlain3DForceField(
 
   // ET torsion constraints
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
-
-  constexpr double knownDistanceConstraintForce = 100.0;
   add12Terms(field, etkdgDetails, atomPairs, positions,
-             knownDistanceConstraintForce, N);
+             KNOWN_DIST_FORCE_CONSTANT, N);
   add13Terms(field, etkdgDetails, atomPairs, positions,
-             knownDistanceConstraintForce, is13Constrained, false, N);
+             KNOWN_DIST_FORCE_CONSTANT, is13Constrained, false, N);
   // minimum distance for all other atom pairs that aren't constrained
   addLongRangeDistanceConstraints(field, etkdgDetails, atomPairs, positions,
-                                  knownDistanceConstraintForce, mmat, N);
+                                  KNOWN_DIST_FORCE_CONSTANT, mmat, N);
 
   return field;
 }  // constructPlain3DForceField
