@@ -38,7 +38,7 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
 
   // parse the molblock into an RWMol instance
   result.stage = PipelineStage::PARSING_INPUT;
-  RWMOL_SPTR mol = parse(molblock, result);
+  RWMOL_SPTR mol = parse(molblock, result, options);
   if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
                !options.reportAllFailures)) {
     return result;
@@ -84,7 +84,7 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
 
   // serialize as MolBlocks
   result.stage = PipelineStage::SERIALIZING_OUTPUT;
-  serialize(output, result);
+  serialize(output, result, options);
   if ((result.status & PIPELINE_ERROR) != NO_EVENT &&
       !options.reportAllFailures) {
     return result;
@@ -95,8 +95,9 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
   return result;
 }
 
-RWMOL_SPTR Pipeline::parse(const std::string &molblock,
-                           PipelineResult &result) const {
+namespace Operations {
+RWMOL_SPTR parse(const std::string &molblock, PipelineResult &result,
+                 const PipelineOptions &options) {
   v2::FileParsers::MolFileParserParams params;
   // we don't want to sanitize the molecule at this stage
   params.sanitize = false;
@@ -121,7 +122,8 @@ RWMOL_SPTR Pipeline::parse(const std::string &molblock,
   return mol;
 }
 
-void Pipeline::serialize(RWMOL_SPTR_PAIR output, PipelineResult &result) const {
+void serialize(RWMOL_SPTR_PAIR output, PipelineResult &result,
+               const PipelineOptions &options) {
   const ROMol &outputMol = *output.first;
   const ROMol &parentMol = *output.second;
 
@@ -148,8 +150,6 @@ void Pipeline::serialize(RWMOL_SPTR_PAIR output, PipelineResult &result) const {
         "An unexpected error occurred while serializing the output structures.");
   }
 }
-
-namespace Operations {
 RWMOL_SPTR prepareForValidation(RWMOL_SPTR mol, PipelineResult &result,
                                 const PipelineOptions &) {
   // Prepare the mol for validation.

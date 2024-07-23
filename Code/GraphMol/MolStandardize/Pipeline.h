@@ -168,6 +168,13 @@ RWMOL_SPTR cleanup2D(RWMOL_SPTR mol, PipelineResult& result,
 RWMOL_SPTR_PAIR makeParent(RWMOL_SPTR mol, PipelineResult& result,
                            const PipelineOptions& options);
 
+RWMOL_SPTR parse(const std::string& molblock, PipelineResult& result,
+                 const PipelineOptions& options);
+void serialize(RWMOL_SPTR_PAIR output, PipelineResult& result,
+               const PipelineOptions& options);
+
+using ParseOperation = decltype(&parse);
+using SerializeOperation = decltype(&serialize);
 using Operation = decltype(&prepareForValidation);
 using ParentOperation = decltype(&makeParent);
 using PipelineVector = std::vector<std::pair<PipelineStage, Operation>>;
@@ -188,6 +195,8 @@ const PipelineVector standardizationSteps{
 class RDKIT_MOLSTANDARDIZE_EXPORT Pipeline {
  private:
   PipelineOptions options;
+  Operations::ParseOperation parse = Operations::parse;
+  Operations::SerializeOperation serialize = Operations::serialize;
   Operations::PipelineVector validationSteps = Operations::validationSteps;
   Operations::PipelineVector standardizationSteps =
       Operations::standardizationSteps;
@@ -198,6 +207,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Pipeline {
   explicit Pipeline(const PipelineOptions& o) : options(o){};
   ~Pipeline() = default;
 
+  PipelineResult run(const std::string& molblock) const;
+
   void setValidationSteps(const Operations::PipelineVector& steps) {
     validationSteps = steps;
   }
@@ -205,12 +216,10 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Pipeline {
     standardizationSteps = steps;
   }
   void setMakeParent(Operations::ParentOperation op) { makeParent = op; }
-
-  PipelineResult run(const std::string& molblock) const;
+  void setParse(Operations::ParseOperation op) { parse = op; }
+  void setSerialize(Operations::SerializeOperation op) { serialize = op; }
 
  private:
-  RWMOL_SPTR parse(const std::string& molblock, PipelineResult& result) const;
-  void serialize(RWMOL_SPTR_PAIR output, PipelineResult& result) const;
 };
 
 }  // namespace MolStandardize
