@@ -179,7 +179,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructPlain3DForceField(
   \param angles          List of lists with the three angle indices and whether
   the center atom in the angle is SP hybridized for every angle in the molecule.
   \param atomNums        A list of atomic numbers for all atoms in the molecule,
-  not used anymore!
+no longer used.
 
   \return a pointer to a ForceField with improper terms
     <b>NOTE:</b> the caller is responsible for deleting this force field.
