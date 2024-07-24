@@ -12,8 +12,10 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/MolStandardize/Pipeline.h>
+#include <GraphMol/MolStandardize/MolStandardize.h>
 #include <GraphMol/Chirality.h>
 #include <memory>
 #include <string>
@@ -2355,5 +2357,37 @@ M  END
     REQUIRE((result.status &
              MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
             MolStandardize::PipelineStatus::NO_EVENT);
+  }
+}
+
+namespace {
+RWMOL_SPTR chargeParentLocal(RWMOL_SPTR mol, MolStandardize::PipelineResult&,
+                             const MolStandardize::PipelineOptions&) {
+  RWMOL_SPTR res{MolStandardize::chargeParent(*mol)};
+  return res;
+};
+MolStandardize::RWMOL_SPTR_PAIR parentNoOp(
+    RWMOL_SPTR mol, MolStandardize::PipelineResult&,
+    const MolStandardize::PipelineOptions&) {
+  return {mol, mol};
+};
+
+}  // namespace
+
+TEST_CASE("custom pipeline stages") {
+  SECTION("basics") {
+    MolStandardize::PipelineOptions options;
+    MolStandardize::Pipeline pipeline(options);
+    MolStandardize::Operations::PipelineVector ops{{1, &chargeParentLocal}};
+    pipeline.setStandardizationSteps(ops);
+    pipeline.setMakeParent(&parentNoOp);
+    auto m = "CCC[O-]"_smiles;
+    REQUIRE(m);
+    auto mb = MolToMolBlock(*m);
+    auto res = pipeline.run(mb);
+    CHECK(res.status == MolStandardize::PipelineStatus::NO_EVENT);
+    CHECK(res.outputMolBlock == res.parentMolBlock);
+    CHECK(res.inputMolBlock.find("CHG") != std::string::npos);
+    CHECK(res.outputMolBlock.find("CHG") == std::string::npos);
   }
 }
