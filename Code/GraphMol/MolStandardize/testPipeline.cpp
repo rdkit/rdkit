@@ -2361,16 +2361,32 @@ M  END
 }
 
 namespace {
-RWMOL_SPTR chargeParentLocal(RWMOL_SPTR mol, MolStandardize::PipelineResult&,
-                             const MolStandardize::PipelineOptions&) {
+RWMOL_SPTR chargeParentLocal(RWMOL_SPTR mol, MolStandardize::PipelineResult &,
+                             const MolStandardize::PipelineOptions &) {
   RWMOL_SPTR res{MolStandardize::chargeParent(*mol)};
   return res;
 };
 MolStandardize::RWMOL_SPTR_PAIR parentNoOp(
-    RWMOL_SPTR mol, MolStandardize::PipelineResult&,
-    const MolStandardize::PipelineOptions&) {
+    RWMOL_SPTR mol, MolStandardize::PipelineResult &,
+    const MolStandardize::PipelineOptions &) {
   return {mol, mol};
 };
+
+RWMOL_SPTR smilesParse(const std::string &smiles,
+                       MolStandardize::PipelineResult &,
+                       const MolStandardize::PipelineOptions &) {
+  RWMOL_SPTR mol{SmilesToMol(smiles)};
+  return mol;
+}
+
+void smilesSerialize(MolStandardize::RWMOL_SPTR_PAIR output,
+                     MolStandardize::PipelineResult &result,
+                     const MolStandardize::PipelineOptions &) {
+  const ROMol &outputMol = *output.first;
+  const ROMol &parentMol = *output.second;
+  result.outputMolBlock = MolToSmiles(outputMol);
+  result.parentMolBlock = MolToSmiles(parentMol);
+}
 
 }  // namespace
 
@@ -2389,5 +2405,15 @@ TEST_CASE("custom pipeline stages") {
     CHECK(res.outputMolBlock == res.parentMolBlock);
     CHECK(res.inputMolBlock.find("CHG") != std::string::npos);
     CHECK(res.outputMolBlock.find("CHG") == std::string::npos);
+
+    // silly example, demonstrate that we can handle SMILES
+    pipeline.setValidationSteps({});  // no validation
+    pipeline.setParse(&smilesParse);
+    pipeline.setSerialize(&smilesSerialize);
+    res = pipeline.run("CCC[O-]");
+    CHECK(res.status == MolStandardize::PipelineStatus::NO_EVENT);
+    CHECK(res.outputMolBlock == res.parentMolBlock);
+    CHECK(res.outputMolBlock == "CCCO");
+    CHECK(res.inputMolBlock == "CCC[O-]");
   }
 }
