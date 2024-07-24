@@ -20,6 +20,7 @@
 #include <GraphMol/Descriptors/OxidationNumbers.h>
 #include <GraphMol/Descriptors/PMI.h>
 #include <GraphMol/Descriptors/DCLV.h>
+#include <GraphMol/Descriptors/BCUT.h>
 
 using namespace RDKit;
 
@@ -603,5 +604,18 @@ TEST_CASE("DCLV") {
     CHECK(dclv.getSurfaceArea() == Catch::Approx(296.466).epsilon(0.05));
     CHECK(dclv.getVolume() == Catch::Approx(411.972).epsilon(0.05));
     CHECK(dclv.getVDWVolume() == Catch::Approx(139.97).epsilon(0.05));
+  }
+}
+
+TEST_CASE("Github #7364: BCUT descriptors failing for moleucles with Hs") {
+  SECTION("as reported") {
+    auto m = "CCOC#CCC(C(=O)c1ccc(C)cc1)N1CCCC1"_smiles;
+    REQUIRE(m);
+    RWMol m2 = *m;
+    MolOps::addHs(m2);
+    auto ref = Descriptors::BCUT2D(*m);
+    auto val = Descriptors::BCUT2D(m2);
+    CHECK(ref.size() == val.size());
+    CHECK(ref == val);
   }
 }
