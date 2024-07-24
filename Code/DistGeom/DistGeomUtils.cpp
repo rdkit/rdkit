@@ -28,7 +28,7 @@
 #include <ForceField/MMFF/Nonbonded.h>
 
 namespace DistGeom {
-const double EIGVAL_TOL = 0.001;
+constexpr double EIGVAL_TOL = 0.001;
 constexpr double KNOWN_DIST_TOL = 0.01;
 constexpr double KNOWN_DIST_FORCE_CONSTANT = 100;
 
