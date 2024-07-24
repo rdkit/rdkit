@@ -29,8 +29,8 @@
 
 namespace DistGeom {
 const double EIGVAL_TOL = 0.001;
-const double KNOWN_DIST_TOL = 0.01;
-const double KNOWN_DIST_FORCE_CONSTANT = 100;
+constexpr double KNOWN_DIST_TOL = 0.01;
+constexpr double KNOWN_DIST_FORCE_CONSTANT = 100;
 
 double pickRandomDistMat(const BoundsMatrix &mmat,
                          RDNumeric::SymmMatrix<double> &distMat, int seed) {
@@ -255,18 +255,20 @@ ForceFields::ForceField *constructForceField(
 //! Add basic knowledge improper torsion contributions to a force field
 /*!
 
-  \param ff                 Force field to add contributions to
+  \param ff Force field to add contributions to
   \param forceScalingFactor Force scaling factor to use in inversion contrib
-  \param improperAtoms      Indices of atoms to be used in improper torsion
+  \param improperAtoms Indices of atoms to be used in improper torsion
   terms.
-  \param is13Constrained    bit vector with length of total num atoms of the
-  molecule where index of every central atom of improper torsion is set to one
+  \param isImproperConstrained bit vector with length of total num atoms of
+  the molecule where index of every central atom of improper torsion is set to
+  one
 
 */
 void addImproperTorsionTerms(ForceFields::ForceField *ff,
                              double forceScalingFactor,
                              const std::vector<std::vector<int>> &improperAtoms,
-                             boost::dynamic_bitset<> &is13Constrained) {
+                             boost::dynamic_bitset<> &isImproperConstrained) {
+  PRECONDITION(ff, "bad force field");
   for (const auto &improperAtom : improperAtoms) {
     std::vector<int> n(4);
     for (unsigned int i = 0; i < 3; ++i) {
@@ -296,7 +298,7 @@ void addImproperTorsionTerms(ForceFields::ForceField *ff,
           improperAtom[n[3]], improperAtom[4],
           static_cast<bool>(improperAtom[5]), forceScalingFactor);
       ff->contribs().emplace_back(contrib);
-      is13Constrained[improperAtom[n[1]]] = 1;
+      isImproperConstrained[improperAtom[n[1]]] = 1;
     }
   }
 }
@@ -304,18 +306,19 @@ void addImproperTorsionTerms(ForceFields::ForceField *ff,
 //! Add experimental torsion angle contributions to a force field
 /*!
 
-  \param ff           Force field to add contributions to
+  \param ff Force field to add contributions to
   \param etkdgDetails Contains information about the ETKDG force field
-  \param atomPairs    bit set for every atom pair in the molecule where
+  \param atomPairs bit set for every atom pair in the molecule where
   a bit is set to one when the atom pair are the end atoms of a torsion
   angle contribution
-  \param numAtoms     number of atoms in the molecule
+  \param numAtoms number of atoms in the molecule
 
  */
 void addExperimentalTorsionTerms(
     ForceFields::ForceField *ff,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     boost::dynamic_bitset<> &atomPairs, unsigned int numAtoms) {
+  PRECONDITION(ff, "bad force field");
   for (unsigned int t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
     int i = etkdgDetails.expTorsionAtoms[t][0];
     int j = etkdgDetails.expTorsionAtoms[t][1];
@@ -340,7 +343,7 @@ void addExperimentalTorsionTerms(
   \param etkdgDetails Contains information about the ETKDG force field
   \param atomPairs bit set for every atom pair in the molecule where
   a bit is set to one when the atom pair is a bond that is constrained here
-  \param positions       A vector of pointers to 3D Points to write out the
+  \param positions A vector of pointers to 3D Points to write out the
   resulting coordinates
   \param forceConstant force constant with which to constrain bond distances
   \param numAtoms number of atoms in molecule
@@ -351,6 +354,7 @@ void add12Terms(ForceFields::ForceField *ff,
                 boost::dynamic_bitset<> &atomPairs,
                 RDGeom::Point3DPtrVect &positions, double forceConstant,
                 unsigned int numAtoms) {
+  PRECONDITION(ff, "bad force field");
   for (const auto &bond : etkdgDetails.bonds) {
     unsigned int i = bond.first;
     unsigned int j = bond.second;
@@ -376,18 +380,19 @@ void add12Terms(ForceFields::ForceField *ff,
   contribution that is constrained here
   \param positions A vector of pointers to 3D Points to write out the resulting
   coordinates \param forceConstant force constant with which to constrain bond
-  distances \param is13Constrained bit vector with length of total num atoms of
-  the molecule where index of every central atom of improper torsion is set to
-  one \param useBasicKnowledge whether to use basic knowledge terms \param
-  numAtoms number of atoms in molecule
+  distances \param isImproperConstrained bit vector with length of total num
+  atoms of the molecule where index of every central atom of improper torsion is
+  set to one \param useBasicKnowledge whether to use basic knowledge terms
+  \param numAtoms number of atoms in molecule
 
 */
 void add13Terms(ForceFields::ForceField *ff,
                 const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
                 boost::dynamic_bitset<> &atomPairs,
                 RDGeom::Point3DPtrVect &positions, double forceConstant,
-                boost::dynamic_bitset<> &is13Constrained,
+                const boost::dynamic_bitset<> &isImproperConstrained,
                 bool useBasicKnowledge, unsigned int numAtoms) {
+  PRECONDITION(ff, "bad force field");
   for (const auto &angle : etkdgDetails.angles) {
     unsigned int i = angle[0];
     unsigned int j = angle[1];
@@ -403,7 +408,7 @@ void add13Terms(ForceFields::ForceField *ff,
       auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
           ff, i, j, k, 179.0, 180.0, 1);
       ff->contribs().emplace_back(contrib);
-    } else if (!is13Constrained[j]) {
+    } else if (!isImproperConstrained[j]) {
       double d = ((*positions[i]) - (*positions[k])).length();
       auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
           ff, i, k, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL, forceConstant);
@@ -432,9 +437,10 @@ void add13Terms(ForceFields::ForceField *ff,
 void addLongRangeDistanceConstraints(
     ForceFields::ForceField *ff,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-    boost::dynamic_bitset<> &atomPairs, RDGeom::Point3DPtrVect &positions,
+    const boost::dynamic_bitset<> &atomPairs, RDGeom::Point3DPtrVect &positions,
     double knownDistanceForceConstant, const BoundsMatrix &mmat,
     unsigned int numAtoms) {
+  PRECONDITION(ff, "bad force field");
   double fdist = knownDistanceForceConstant;
   for (unsigned int i = 1; i < numAtoms; ++i) {
     for (unsigned int j = 0; j < i; ++j) {
@@ -475,15 +481,15 @@ ForceFields::ForceField *construct3DForceField(
   boost::dynamic_bitset<> atomPairs(N * N);
   // don't add 1-3 Distances constraints for angles where the
   // central atom of the angle is the central atom of an improper torsion.
-  boost::dynamic_bitset<> is13Constrained(N);
+  boost::dynamic_bitset<> isImproperConstrained(N);
 
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
   addImproperTorsionTerms(field, 10.0, etkdgDetails.improperAtoms,
-                          is13Constrained);
+                          isImproperConstrained);
   add12Terms(field, etkdgDetails, atomPairs, positions,
              KNOWN_DIST_FORCE_CONSTANT, N);
   add13Terms(field, etkdgDetails, atomPairs, positions,
-             KNOWN_DIST_FORCE_CONSTANT, is13Constrained, true, N);
+             KNOWN_DIST_FORCE_CONSTANT, isImproperConstrained, true, N);
 
   // minimum distance for all other atom pairs that aren't constrained
   addLongRangeDistanceConstraints(field, etkdgDetails, atomPairs, positions,
@@ -526,13 +532,13 @@ ForceFields::ForceField *constructPlain3DForceField(
   boost::dynamic_bitset<> atomPairs(N * N);
   // don't add 1-3 Distances constraints for angles where the
   // central atom of the angle is the central atom of an improper torsion.
-  boost::dynamic_bitset<> is13Constrained(N);
+  boost::dynamic_bitset<> isImproperConstrained(N);
 
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
   add12Terms(field, etkdgDetails, atomPairs, positions,
              KNOWN_DIST_FORCE_CONSTANT, N);
   add13Terms(field, etkdgDetails, atomPairs, positions,
-             KNOWN_DIST_FORCE_CONSTANT, is13Constrained, false, N);
+             KNOWN_DIST_FORCE_CONSTANT, isImproperConstrained, false, N);
   // minimum distance for all other atom pairs that aren't constrained
   addLongRangeDistanceConstraints(field, etkdgDetails, atomPairs, positions,
                                   KNOWN_DIST_FORCE_CONSTANT, mmat, N);
@@ -554,9 +560,9 @@ ForceFields::ForceField *construct3DImproperForceField(
 
   // improper torsions / out-of-plane bend / inversion
   double oobForceScalingFactor = 10.0;
-  boost::dynamic_bitset<> is13Constrained(N);
+  boost::dynamic_bitset<> isImproperConstrained(N);
   addImproperTorsionTerms(field, oobForceScalingFactor, improperAtoms,
-                          is13Constrained);
+                          isImproperConstrained);
 
   // Check that SP Centers have an angle of 180 degrees.
   for (const auto &angle : angles) {
