@@ -17,6 +17,7 @@ rdkit_headers(Wrap.h PySequenceHolder.h
               python.h
               boost_numpy.h
               python_streambuf.h
+              pyint_api.h
               DEST RDBoost)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

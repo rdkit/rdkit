@@ -15,6 +15,7 @@ rdkit_headers(BoundsMatrix.h
               DistViolationContrib.h
               DistViolationContribs.h
               FourthDimContrib.h
+              FourthDimContribs.h
               TriangleSmooth.h DEST DistGeom)
 
 rdkit_test(testDistGeom testDistGeom.cpp 
