@@ -92,8 +92,6 @@ class DrawerFromDetails {
       origWedgingMol.reset(new ROMol(mol));
       Chirality::reapplyMolBlockWedging(*origWedgingMol);
       molPtr = origWedgingMol.get();
-    }
-    if (molDrawingDetails.useMolBlockWedging) {
       drawer().drawOptions().useMolBlockWedging = false;
     }
     drawer().setOffset(molDrawingDetails.offsetx, molDrawingDetails.offsety);

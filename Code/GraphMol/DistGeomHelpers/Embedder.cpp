@@ -57,7 +57,6 @@ constexpr double ERROR_TOL = 0.00001;
 // conformations but not so sensitive that a bunch of ok conformations get
 // filtered out, which slows down the whole conformation generation process
 constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.05;
-constexpr double MAX_MINIMIZED_E_CONTRIB = 0.20;
 constexpr double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
 constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
 inline bool haveOppositeSign(double a, double b) {
@@ -506,16 +505,10 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
             << std::endl;
 #endif
 
-  // check that neither the energy nor any of the contributions to it are
-  // too high (this is part of github #971)
-  if (local_e / positions->size() >= MAX_MINIMIZED_E_PER_ATOM ||
-      (e_contribs.size() &&
-       *(std::max_element(e_contribs.begin(), e_contribs.end())) >
-           MAX_MINIMIZED_E_CONTRIB)) {
+  // check that the energy is not too high (this is part of github #971)
+  if (local_e / positions->size() >= MAX_MINIMIZED_E_PER_ATOM) {
 #ifdef DEBUG_EMBEDDING
-    std::cerr << " Energy fail: " << local_e / positions->size() << " "
-              << *(std::max_element(e_contribs.begin(), e_contribs.end()))
-              << std::endl;
+    std::cerr << " Energy fail: " << local_e / positions->size() << std::endl;
 #endif
     gotCoords = false;
   }
@@ -586,7 +579,7 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
   }
 
   field2->initialize();
-  // std::cerr<<"FIELD2 E: "<<field2->calcEnergy()<<std::endl;
+  // std::cerr << "FIELD2 E: " << field2->calcEnergy() << std::endl;
   if (field2->calcEnergy() > ERROR_TOL) {
     int needMore = 1;
     while (needMore) {
@@ -643,9 +636,8 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   if (embedParams.useBasicKnowledge) {
     // create a force field with only the impropers
     std::unique_ptr<ForceFields::ForceField> field2(
-        DistGeom::construct3DImproperForceField(
-            *eargs.mmat, positions3D, eargs.etkdgDetails->improperAtoms,
-            eargs.etkdgDetails->angles, eargs.etkdgDetails->atomNums));
+        DistGeom::construct3DImproperForceField(*eargs.mmat, positions3D,
+                                                *eargs.etkdgDetails));
     if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
       for (const auto &v : *embedParams.coordMap) {
         field2->fixedPoints().push_back(v.first);

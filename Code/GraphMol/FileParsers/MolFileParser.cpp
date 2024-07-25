@@ -2324,8 +2324,15 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         if (!atom->hasQuery()) {
           atom = QueryOps::replaceAtomWithQueryAtom(mol, atom);
         }
+        atom->setProp(common_properties::molRingBondCount, rbcount);
         if (rbcount == -1) {
           rbcount = 0;
+        } else if (rbcount == -2) {
+          // Ring bonds can only be counted during post processing
+          mol->setProp(common_properties::_NeedsQueryScan, 1);
+          rbcount = 0xDEADBEEF;
+        } else if (rbcount > 4) {
+          rbcount = 4;
         }
         atom->expandQuery(makeAtomRingBondCountQuery(rbcount));
       }

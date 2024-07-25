@@ -14,6 +14,7 @@
 #include <ForceField/Contrib.h>
 
 namespace DistGeom {
+//! DEPRECATED: use DistViolationContribs instead
 //! A term to capture the violation of the upper and lower bounds by
 //! distance between two points
 class RDKIT_DISTGEOMETRY_EXPORT DistViolationContrib

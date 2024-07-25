@@ -861,6 +861,10 @@ const std::string GetV3000MolFileAtomLine(
         iprop) {
       ss << " SUBST=" << iprop;
     }
+    if (atom->getPropIfPresent(common_properties::molRingBondCount, iprop) &&
+        iprop) {
+      ss << " RBCNT=" << iprop;
+    }
   }
   {
     std::string sprop;

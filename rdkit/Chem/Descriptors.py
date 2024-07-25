@@ -15,10 +15,12 @@ from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 from rdkit.Chem import rdPartialCharges
-from rdkit.Chem.EState.EState import (MaxAbsEStateIndex, MaxEStateIndex,
-                                      MinAbsEStateIndex, MinEStateIndex)
+from rdkit.Chem import rdFingerprintGenerator
+from rdkit.Chem.EState.EState import (MaxAbsEStateIndex, MaxEStateIndex, MinAbsEStateIndex,
+                                      MinEStateIndex)
 from rdkit.Chem.QED import qed
 from rdkit.Chem.SpacialScore import SPS
+
 
 def _isCallable(thing):
   return isinstance(thing, abc.Callable) or \
@@ -30,8 +32,8 @@ _descList = []
 
 def _setupDescriptors(namespace):
   global _descList, descList
-  from rdkit.Chem import (Crippen, Descriptors3D, Fragments, GraphDescriptors,
-                          Lipinski, MolSurf, SpacialScore)
+  from rdkit.Chem import (Crippen, Descriptors3D, Fragments, GraphDescriptors, Lipinski, MolSurf,
+                          SpacialScore)
   from rdkit.Chem.EState import EState_VSA
   _descList.clear()
 
@@ -200,27 +202,39 @@ MinAbsPartialCharge.version = "1.0.0"
 
 
 def _FingerprintDensity(mol, func, *args, **kwargs):
-  fp = func(*((mol, ) + args), **kwargs)
+  aname = f'_{func.__name__}_{args}'
+  if hasattr(mol, aname):
+    fp = getattr(mol, aname)
+  else:
+    fp = func(*((mol, ) + args), **kwargs)
+    setattr(mol, aname, fp)
   if hasattr(fp, 'GetNumOnBits'):
     val = fp.GetNumOnBits()
   else:
     val = len(fp.GetNonzeroElements())
   num_heavy_atoms = mol.GetNumHeavyAtoms()
   if num_heavy_atoms == 0:
-    return 0
-  return float(val) / num_heavy_atoms
+    res = 0.0
+  else:
+    res = float(val) / num_heavy_atoms
+  return res
+
+
+def _getMorganCountFingerprint(mol, radius):
+  fpg = rdFingerprintGenerator.GetMorganGenerator(radius)
+  return fpg.GetSparseCountFingerprint(mol)
 
 
 def FpDensityMorgan1(x):
-  return _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 1)
+  return _FingerprintDensity(x, _getMorganCountFingerprint, 1)
 
 
 def FpDensityMorgan2(x):
-  return _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 2)
+  return _FingerprintDensity(x, _getMorganCountFingerprint, 2)
 
 
 def FpDensityMorgan3(x):
-  return _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 3)
+  return _FingerprintDensity(x, _getMorganCountFingerprint, 3)
 
 
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan1)
