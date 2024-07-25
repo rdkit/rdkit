@@ -1,9 +1,23 @@
+set(FLEX_VERSION 2.6.4)
+
 if (RDK_USE_FLEXBISON)
     FIND_PACKAGE(BISON 3.8.2 REQUIRED)
-    FIND_PACKAGE(FLEX 2.6.4 REQUIRED)
+    FIND_PACKAGE(FLEX ${FLEX_VERSION} REQUIRED)
 else(RDK_USE_FLEXBISON)
     set(FLEX_EXECUTABLE "")
     set(BISON_EXECUTABLE "")
+
+    # we need the FlexLexer.h header for the C++ Scanner if with or without the
+    # RDKIT_USE_FLEX_BISON option
+    Include(FetchContent)
+
+    FetchContent_Declare(flex
+                         GIT_REPOSITORY https://github.com/westes/flex.git
+                         GIT_TAG       v${FLEX_VERSION})
+    FetchContent_MakeAvailable(flex)
+
+    set(FLEX_INCLUDE_DIR ${flex_SOURCE_DIR}/src)
+
 endif(RDK_USE_FLEXBISON)
 
 if(MSVC)
@@ -24,8 +38,6 @@ if(FLEX_EXECUTABLE)
               COMPILE_FLAGS "-Pyysmarts_" )
   SET(FLEX_OUTPUT_FILES ${FLEX_SmilesL_OUTPUTS} ${FLEX_SmartsL_OUTPUTS})
 
-  # makes FlexLexer.h discoverable
-  include_directories(${FLEX_INCLUDE_DIR})
 else(FLEX_EXECUTABLE)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp COPYONLY)
@@ -33,9 +45,10 @@ else(FLEX_EXECUTABLE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp COPYONLY)
   FILE(GLOB FLEX_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/lex.*.cpp")
 
-  # makes FlexLexer.h discoverable
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 endif(FLEX_EXECUTABLE)
+
+# makes FlexLexer.h discoverable
+include_directories(${FLEX_INCLUDE_DIR})
 
 if(BISON_EXECUTABLE)
   BISON_TARGET(SmilesY smiles.yy
