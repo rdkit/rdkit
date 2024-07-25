@@ -626,7 +626,14 @@ TEST_CASE(
     auto m = "C[C@H](F)Cl"_smiles;
     REQUIRE(m);
     CHECK(Descriptors::numAtomStereoCenters(*m) == 1);
+    CHECK(Descriptors::numUnspecifiedAtomStereoCenters(*m) == 0);
     MolOps::sanitizeMol(*m);
     CHECK(Descriptors::numAtomStereoCenters(*m) == 1);
+  }
+  SECTION("expanded") {
+    auto m = "C[C@H](F)C(O)Cl"_smiles;
+    REQUIRE(m);
+    CHECK(Descriptors::numAtomStereoCenters(*m) == 2);
+    CHECK(Descriptors::numUnspecifiedAtomStereoCenters(*m) == 1);
   }
 }
