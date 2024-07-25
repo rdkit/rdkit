@@ -120,7 +120,7 @@ const std::string smilesSymbol = "smilesSymbol";
 const std::string atomLabel = "atomLabel";
 const std::string OxidationNumber = "OxidationNumber";
 const std::string internalRgroupSmiles = "internalRgroupSmiles";
-
+const std::string molRingBondCount = "molRingBondCount";
 const std::string molSubstCount = "molSubstCount";
 const std::string molAttachPoint = "molAttchpt";
 const std::string molAttachOrder = "molAttchord";
