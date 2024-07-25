@@ -157,6 +157,24 @@ void standardizeMultipleMolsInPlace(FuncType sfunc, std::vector<RWMol *> &mols,
   }
 #endif
 }
+
+void throwIfMolPtrListContainsDuplicates(const std::vector<RWMol *> &mols) {
+  // we could do this with an unordered set, but that requires memory allocation
+  //   and in the "normal" case where all elements are unique we *will* have to
+  //   insert all of them.
+  // This way is O(N^2) instead of O(NlogN) - actually closer to O(N) with an
+  //   unordered_set - but we're doing essentially no work inside the loop.
+  // And, when you get down to it, this code is going to be a vanishingly small
+  //   part of the runtime of any real standardization function, even for large
+  //   N
+  for (auto i = 1u; i < mols.size(); ++i) {
+    for (auto j = 0u; j < i; ++j) {
+      if (mols[i] == mols[j]) {
+        throw ValueErrorException("duplicate molecule in input list");
+      }
+    }
+  }
+}
 }  // namespace
 
 RWMol *cleanup(const RWMol *mol, const CleanupParameters &params) {
@@ -177,6 +195,7 @@ void cleanupInPlace(RWMol &mol, const CleanupParameters &params) {
 
 void cleanupInPlace(std::vector<RWMol *> &mols, int numThreads,
                     const CleanupParameters &params) {
+  throwIfMolPtrListContainsDuplicates(mols);
   standardizeMultipleMolsInPlace(
       static_cast<void (*)(RWMol &, const CleanupParameters &)>(cleanupInPlace),
       mols, numThreads, params);
@@ -195,6 +214,7 @@ void tautomerParentInPlace(RWMol &mol, const CleanupParameters &params,
 void tautomerParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                            const CleanupParameters &params,
                            bool skip_standardize) {
+  throwIfMolPtrListContainsDuplicates(mols);
   auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     tautomerParentInPlace(m, ps, skip_standardize);
   };
@@ -211,6 +231,7 @@ RWMol *tautomerParent(const RWMol &mol, const CleanupParameters &params,
 void fragmentParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                            const CleanupParameters &params,
                            bool skip_standardize) {
+  throwIfMolPtrListContainsDuplicates(mols);
   auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     fragmentParentInPlace(m, ps, skip_standardize);
   };
@@ -238,6 +259,7 @@ RWMol *fragmentParent(const RWMol &mol, const CleanupParameters &params,
 void stereoParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                          const CleanupParameters &params,
                          bool skip_standardize) {
+  throwIfMolPtrListContainsDuplicates(mols);
   auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     stereoParentInPlace(m, ps, skip_standardize);
   };
@@ -260,6 +282,7 @@ RWMol *stereoParent(const RWMol &mol, const CleanupParameters &params,
 void isotopeParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                           const CleanupParameters &params,
                           bool skip_standardize) {
+  throwIfMolPtrListContainsDuplicates(mols);
   auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     isotopeParentInPlace(m, ps, skip_standardize);
   };
@@ -286,6 +309,7 @@ RWMol *isotopeParent(const RWMol &mol, const CleanupParameters &params,
 void chargeParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                          const CleanupParameters &params,
                          bool skip_standardize) {
+  throwIfMolPtrListContainsDuplicates(mols);
   auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     chargeParentInPlace(m, ps, skip_standardize);
   };
@@ -323,6 +347,7 @@ void superParentInPlace(RWMol &mol, const CleanupParameters &params,
 void superParentInPlace(std::vector<RWMol *> &mols, int numThreads,
                         const CleanupParameters &params,
                         bool skip_standardize) {
+  throwIfMolPtrListContainsDuplicates(mols);
   auto sfunc = [skip_standardize](RWMol &m, const CleanupParameters &ps) {
     superParentInPlace(m, ps, skip_standardize);
   };
@@ -355,6 +380,7 @@ void normalizeInPlace(RWMol &mol, const CleanupParameters &params) {
 
 void normalizeInPlace(std::vector<RWMol *> &mols, int numThreads,
                       const CleanupParameters &params) {
+  throwIfMolPtrListContainsDuplicates(mols);
   std::unique_ptr<Normalizer> normalizer{normalizerFromParams(params)};
   auto sfunc = [&normalizer](RWMol &m, const CleanupParameters &) {
     normalizer->normalizeInPlace(m);
@@ -368,6 +394,7 @@ void reionizeInPlace(RWMol &mol, const CleanupParameters &params) {
 }
 void reionizeInPlace(std::vector<RWMol *> &mols, int numThreads,
                      const CleanupParameters &params) {
+  throwIfMolPtrListContainsDuplicates(mols);
   std::unique_ptr<Reionizer> reionizer{reionizerFromParams(params)};
   auto sfunc = [&reionizer](RWMol &m, const CleanupParameters &) {
     reionizer->reionizeInPlace(m);
@@ -388,6 +415,7 @@ void removeFragmentsInPlace(RWMol &mol, const CleanupParameters &params) {
 
 void removeFragmentsInPlace(std::vector<RWMol *> &mols, int numThreads,
                             const CleanupParameters &params) {
+  throwIfMolPtrListContainsDuplicates(mols);
   std::unique_ptr<FragmentRemover> remover{fragmentRemoverFromParams(params)};
   auto sfunc = [&remover](RWMol &m, const CleanupParameters &) {
     remover->removeInPlace(m);
