@@ -102,7 +102,7 @@ void smarts_atom_parse(const std::string &inp, Atom *&atom) {
 }
 
 void smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect,
-                  [[maybe_unused]] bool debugParse) {
+                  bool /* debugParse is unused */) {
   auto start_tok = static_cast<int>(START_MOL);
   Atom *atom = nullptr;
   Bond *bond = nullptr;
