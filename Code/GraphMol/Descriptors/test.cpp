@@ -1993,16 +1993,14 @@ void testStereoCounting() {
   names.emplace_back("NumUnspecifiedAtomStereoCenters");
   Properties prop(names);
 
-  try {
-    prop.computeProperties(*m);
-    TEST_ASSERT(0);  // didn't catch exception
-  } catch (ValueErrorException &) {
-    BOOST_LOG(rdErrorLog) << "---Caught stereo value error---" << std::endl;
-  }
+  // the stereo perception is done automatically:
+  std::vector<double> res = prop.computeProperties(*m);
+  TEST_ASSERT(res[0] == 1);
+  TEST_ASSERT(res[1] == 1);
 
   delete m;
   m = SmilesToMol("NC(C)(F)C(=O)O", sanitize);
-  std::vector<double> res = prop.computeProperties(*m);
+  res = prop.computeProperties(*m);
   TEST_ASSERT(res[0] == 1);
   TEST_ASSERT(res[1] == 1);
   delete m;

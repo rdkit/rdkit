@@ -619,3 +619,21 @@ TEST_CASE("Github #7364: BCUT descriptors failing for moleucles with Hs") {
     CHECK(ref == val);
   }
 }
+
+TEST_CASE(
+    "Github #6757: numAtomStereoCenters fails if molecule is sanitized a second time") {
+  SECTION("as reported") {
+    auto m = "C[C@H](F)Cl"_smiles;
+    REQUIRE(m);
+    CHECK(Descriptors::numAtomStereoCenters(*m) == 1);
+    CHECK(Descriptors::numUnspecifiedAtomStereoCenters(*m) == 0);
+    MolOps::sanitizeMol(*m);
+    CHECK(Descriptors::numAtomStereoCenters(*m) == 1);
+  }
+  SECTION("expanded") {
+    auto m = "C[C@H](F)C(O)Cl"_smiles;
+    REQUIRE(m);
+    CHECK(Descriptors::numAtomStereoCenters(*m) == 2);
+    CHECK(Descriptors::numUnspecifiedAtomStereoCenters(*m) == 1);
+  }
+}
