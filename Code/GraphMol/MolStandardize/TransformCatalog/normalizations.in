@@ -39,7 +39,7 @@ std::vector<std::pair<std::string, std::string>> defaultNormalizations = {
     {"Recombine 1,3-separated charges",
      "[n,o,p,s;-1:1]:[a:2]=[N,O,P,S;+1:3]>>[*-0:1]:[*:2]-[*+0:3]"},
     {"Recombine 1,3-separated charges",
-     "[N,O,P,S;-1:1]-[a:2]:[n,o,p,s;+1:3]>>[*-0:1]=[*:2]:[*+0:3]"},
+     "[N,O,P,S;-1:1]-[a+0:2]:[n,o,p,s;+1:3]>>[*-0:1]=[*:2]:[*+0:3]"},
     {"Recombine 1,5-separated charges",
      "[N,P,As,Sb,O,S,Se,Te;-1:1]-[A+0:2]=[A:3]-[A:4]=[N,P,As,Sb,O,S,Se,Te;+1:5]"
      ">>[*-0:1]=[*:2]-[*:3]=[*:4]-[*+0:5]"},

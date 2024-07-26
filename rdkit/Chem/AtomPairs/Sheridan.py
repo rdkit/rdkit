@@ -23,8 +23,7 @@ import re
 
 from rdkit import Chem, RDConfig
 from rdkit.Chem import rdMolDescriptors
-from rdkit.Chem.rdMolDescriptors import (GetAtomPairFingerprint,
-                                         GetTopologicalTorsionFingerprint)
+from rdkit.Chem import rdFingerprintGenerator
 
 numPathBits = rdMolDescriptors.AtomPairsParameters.numPathBits
 _maxPathLen = (1 << numPathBits) - 1  # Unused variable
@@ -72,8 +71,25 @@ def AssignPattyTypes(mol, defns=None):
 
 typMap = dict(CAT=1, ANI=2, POL=3, DON=4, ACC=5, HYD=6, OTH=7)
 
+_apFPG = None
+_ttFPG = None
 
-def GetBPFingerprint(mol, fpfn=GetAtomPairFingerprint):
+
+def _atomPairFingerprintFunc(mol, atomInvariants):
+  global _apFPG
+  if _apFPG is None:
+    _apFPG = rdFingerprintGenerator.GetAtomPairGenerator()
+  return _apFPG.GetSparseCountFingerprint(mol, customAtomInvariants=atomInvariants)
+
+
+def _topologicalTorsionsFingerprintFunc(mol, atomInvariants):
+  global _ttFPG
+  if _ttFPG is None:
+    _ttFPG = rdFingerprintGenerator.GetTopologicalTorsionGenerator()
+  return _ttFPG.GetSparseCountFingerprint(mol, customAtomInvariants=atomInvariants)
+
+
+def GetBPFingerprint(mol, fpfn=_atomPairFingerprintFunc):
   """
     >>> from rdkit import Chem
     >>> fp = GetBPFingerprint(Chem.MolFromSmiles('OCC(=O)O'))
@@ -85,10 +101,10 @@ def GetBPFingerprint(mol, fpfn=GetAtomPairFingerprint):
 
     """
   typs = [typMap[x] for x in AssignPattyTypes(mol)]
-  return fpfn(mol, atomInvariants=typs)
+  return fpfn(mol, typs)
 
 
-def GetBTFingerprint(mol, fpfn=GetTopologicalTorsionFingerprint):
+def GetBTFingerprint(mol, fpfn=_topologicalTorsionsFingerprintFunc):
   """
     >>> from rdkit import Chem
     >>> mol = Chem.MolFromSmiles('OCC(N)O')

@@ -28,6 +28,8 @@ from rdkit.Chem import rdqueries
 from rdkit.Chem import AllChem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
+import numpy as np
+
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
 spec = importlib.util.spec_from_loader("TestReplaceCore", loader=None)
@@ -169,6 +171,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(tbl.GetRb0("C"), 0.77))
     self.assertTrue(tbl.GetElementSymbol(6) == 'C')
     self.assertTrue(tbl.GetElementName(6) == 'Carbon')
+    self.assertTrue(tbl.GetRow(6) == 2)
+    self.assertTrue(tbl.GetRow("C") == 2)
 
   def test2Atom(self):
     atom = Chem.Atom(6)
@@ -3924,14 +3928,14 @@ CAS<~>
     mol = Chem.MolFromSmiles("CC(C)C")
     qmol = Chem.MolFromSmiles("C")
     matches = mol.GetSubstructMatches(qmol)
-    self.assertEqual(((0,), (1,), (2,), (3,)), matches)
+    self.assertEqual(((0, ), (1, ), (2, ), (3, )), matches)
 
     atom = qmol.GetAtomWithIdx(0)
     natom = rdqueries.ReplaceAtomWithQueryAtom(qmol, atom)
     qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
     natom.ExpandQuery(qa, Chem.CompositeQueryType.COMPOSITE_AND)
     matches = mol.GetSubstructMatches(qmol)
-    self.assertEqual(((1,),), matches)
+    self.assertEqual(((1, ), ), matches)
 
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -6712,6 +6716,24 @@ M  END
     pos = read_smile("CCC").GetConformers()[0].GetPositions()
     self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
 
+  def test_get_set_positions(self):
+    m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
+    pos = np.zeros([3,3], np.double)
+    pos[0][1] = 1
+    pos[0][2] = 2
+    pos[1][0] = 3
+    pos[1][1] = 4
+    pos[1][2] = 5
+    pos[2][0] = 6
+    pos[2][1] = 6
+    pos[2][2] = 7
+
+    m.GetConformer(0).SetPositions(pos)
+    pos2 = m.GetConformer(0).GetPositions()
+
+    self.assertTrue( (pos==pos2).all())
+    
+
   def test_github3553(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
                          'github3553.sdf')
@@ -8140,8 +8162,8 @@ M  END
 
   def testCountAtomElec(self):
     m = Chem.MolFromSmiles("c1n(C)ccc1")
-    self.assertEqual(Chem.CountAtomElec(m.GetAtomWithIdx(0)),1)
-    self.assertEqual(Chem.CountAtomElec(m.GetAtomWithIdx(1)),2)
+    self.assertEqual(Chem.CountAtomElec(m.GetAtomWithIdx(0)), 1)
+    self.assertEqual(Chem.CountAtomElec(m.GetAtomWithIdx(1)), 2)
 
   def testAtomHasConjugatedBond(self):
     m = Chem.MolFromSmiles("c1n(C)ccc1")
@@ -8157,6 +8179,39 @@ M  END
     ps.includeDativeBonds = False
     sma = Chem.MolToSmarts(mol, ps)
     self.assertEqual(sma, '[#7H3]-[Fe]-[#7]')
+
+  def testMolToV2KMolBlock(self):
+    mol = Chem.MolFromSmiles('[NH3]->[Fe]')
+    self.assertIsNotNone(mol)
+    mb = Chem.MolToV2KMolBlock(mol)
+    self.assertTrue('V2000' in mb)
+    self.assertTrue('  1  2  9  0' in mb)
+
+  def testFindMesoCenters(self):
+    mol = Chem.MolFromSmiles('C[C@@H](Cl)C[C@H](C)Cl')
+    self.assertIsNotNone(mol)
+    centers = Chem.FindMesoCenters(mol)
+    self.assertEqual(len(centers), 1)
+    expected = ((1, 4), )
+    self.assertEqual(centers, expected)
+
+    mol = Chem.MolFromSmiles('[CH3:1][C@@H](C)C[C@@H](C)[CH3:1]')
+    self.assertIsNotNone(mol)
+    centers = Chem.FindMesoCenters(mol, includeAtomMaps=True)
+    self.assertEqual(len(centers), 1)
+    expected = ((1, 4), )
+    self.assertEqual(centers, expected)
+    centers = Chem.FindMesoCenters(mol)
+    self.assertEqual(centers, ())
+
+    mol = Chem.MolFromSmiles('[13CH3][C@@H](C)C[C@@H](C)[13CH3]')
+    self.assertIsNotNone(mol)
+    centers = Chem.FindMesoCenters(mol)
+    self.assertEqual(len(centers), 1)
+    expected = ((1, 4), )
+    self.assertEqual(centers, expected)
+    centers = Chem.FindMesoCenters(mol, includeIsotopes=False)
+    self.assertEqual(centers, ())
 
 
 if __name__ == '__main__':

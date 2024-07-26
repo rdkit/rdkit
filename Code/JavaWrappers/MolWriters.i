@@ -32,9 +32,11 @@
 */
 
 %{
+#include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 %}
 
+%include <GraphMol/FileParsers/FileWriters.h>
 %include <GraphMol/FileParsers/MolWriters.h>
 
 

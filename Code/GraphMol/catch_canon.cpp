@@ -679,3 +679,73 @@ M  END
       smiles ==
       R"SMI(CC[C@@]1(C)/C2=C(C)/C3=N4->[CoH2+]56N2[C@H]([C@@H]1C)[C@]1(C)N->5=C(/C(C)=C2N->6=C(/C=C4/C(C)(C)[C@@H]3C)[C@@H](C)C\2(C)C)[C@@H](C)C1(C)C)SMI");
 }
+
+TEST_CASE("chiral presence and ranking") {
+  SECTION("basics") {
+    auto mol = "OC(F)C([C@H](F)O)[C@@H](F)O"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    // default: all three centers are different
+    Canon::rankMolAtoms(*mol, ranks, breakTies);
+    CHECK(ranks[1] != ranks[4]);
+    CHECK(ranks[1] != ranks[7]);
+    CHECK(ranks[4] != ranks[7]);
+
+    // if we don't include chirality, the ranks should be the same
+    bool includeChirality = false;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality);
+    CHECK(ranks[1] == ranks[4]);
+    CHECK(ranks[1] == ranks[7]);
+
+    // if we include chiral presence, 4 and 7 are the same, but 1 is different
+    includeChirality = false;
+    bool includeChiralPresence = true;
+    bool includeIsotopes = true;
+    bool includeAtomMaps = true;
+    Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                        includeIsotopes, includeAtomMaps,
+                        includeChiralPresence);
+    CHECK(ranks[1] != ranks[4]);
+    CHECK(ranks[1] != ranks[7]);
+    CHECK(ranks[4] == ranks[7]);
+  }
+}
+TEST_CASE("meso impact on atom ranking") {
+  SECTION("basics") {
+    {
+      auto m = "C1[C@H](O)C[C@@H]1[C@H](F)[C@@H]1C[C@H](O)C1"_smiles;
+      REQUIRE(m);
+      std::vector<unsigned int> ranks;
+      bool breakTies = false;
+      Canon::rankMolAtoms(*m, ranks, breakTies);
+      CHECK(ranks[4] == ranks[7]);
+    }
+    {
+      auto m = "C1[C@H](O)C[C@@H]1[C@H](F)[C@@H]1C[C@@H](O)C1"_smiles;
+      REQUIRE(m);
+      std::vector<unsigned int> ranks;
+      bool breakTies = false;
+      Canon::rankMolAtoms(*m, ranks, breakTies);
+      CHECK(ranks[4] != ranks[7]);
+    }
+    {
+      auto m =
+          "C[C@@H](Cl)C1[C@H](C)Cl.C[C@@H](Cl)C2[C@H](C)Cl.[C@H]12F"_smiles;
+      REQUIRE(m);
+      std::vector<unsigned int> ranks;
+      bool breakTies = false;
+      Canon::rankMolAtoms(*m, ranks, breakTies);
+      CHECK(ranks[3] == ranks[10]);
+    }
+    {
+      auto m =
+          "C[C@@H](Cl)C1[C@@H](C)Cl.C[C@@H](Cl)C2[C@H](C)Cl.[C@H]12F"_smiles;
+      REQUIRE(m);
+      std::vector<unsigned int> ranks;
+      bool breakTies = false;
+      Canon::rankMolAtoms(*m, ranks, breakTies);
+      CHECK(ranks[3] != ranks[10]);
+    }
+  }
+}

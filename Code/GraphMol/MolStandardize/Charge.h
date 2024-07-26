@@ -118,13 +118,17 @@ inline Reionizer *reionizerFromParams(const CleanupParameters &params) {
     - This class uncharges molecules by adding and/or removing hydrogens.
           - For zwitterions, hydrogens are moved to eliminate charges where
             possible.
-          - By default, in cases where there is a positive charge that is not
-            neutralizable, an attempt is made to also preserve the corresponding
-            negative charge.
-          - When the `force` option is set, all neutralizable sites are
-            uncharged, also when not-neutralizable positive charges are present
-            and the resulting overall charge is therefore not null.
-
+          - By default, in cases where there is a positive or negative charge that
+            is not possible to remove, an attempt is made to also preserve the corresponding
+            amount of opposite charge and result in an overall neutral output structure.
+          - When the `force` option is set, all neutralizable sites are uncharged, also when
+            not-removable charges are present and the resulting overall charge is therefore
+            not null.
+          - By default, the removal of the existing charges is performed with the addition or
+            subtraction of both protons and hydride ions as appropriate. If the `protonationOnly`
+            option is enabled, the transformations applying to the input structure are limited
+            to changes in its protonation state and charges that would otherwise require the
+            exchange of a hydride ion (e.g., carbocations) are handled as not-removable. 
 */
 
 class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
@@ -137,6 +141,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
     df_canonicalOrdering = canonicalOrdering;
     df_force = force;
   }
+  Uncharger(bool canonicalOrdering, bool force, bool protonationOnly) : Uncharger() {
+    df_canonicalOrdering = canonicalOrdering;
+    df_force = force;
+    df_protonationOnly = protonationOnly;
+  }
   Uncharger(const Uncharger &) = default;
   ~Uncharger() = default;
   
@@ -146,6 +155,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
  private:
   bool df_canonicalOrdering = true;
   bool df_force = false;
+  bool df_protonationOnly = false;
   std::shared_ptr<ROMol> pos_h;
   std::shared_ptr<ROMol> pos_noh;
   std::shared_ptr<ROMol> neg;

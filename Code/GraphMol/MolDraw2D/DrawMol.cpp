@@ -171,14 +171,6 @@ void DrawMol::finishCreateDrawObjects() {
 // ****************************************************************************
 void DrawMol::initDrawMolecule(const ROMol &mol) {
   drawMol_.reset(new RWMol(mol));
-  if (!isReactionMol_) {
-    if (drawOptions_.prepareMolsBeforeDrawing) {
-      MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
-    } else if (!mol.getNumConformers()) {
-      const bool canonOrient = true;
-      RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
-    }
-  }
   if (drawOptions_.centreMoleculesBeforeDrawing) {
     if (drawMol_->getNumConformers()) {
       centerMolForDrawing(*drawMol_, confId_);
@@ -189,6 +181,14 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
   }
   if (drawOptions_.useMolBlockWedging) {
     Chirality::reapplyMolBlockWedging(*drawMol_);
+  }
+  if (!isReactionMol_) {
+    if (drawOptions_.prepareMolsBeforeDrawing) {
+      MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
+    } else if (!mol.getNumConformers()) {
+      const bool canonOrient = true;
+      RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
+    }
   }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
@@ -220,7 +220,9 @@ void DrawMol::extractAll(double scale) {
   extractHighlights(scale);
   extractAttachments();
   extractAtomNotes();
-  extractStereoGroups();
+  if (!drawOptions_.addStereoAnnotation) {
+    extractStereoGroups();
+  }
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
@@ -1373,6 +1375,10 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     }
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
+    std::string mapNum;
+    if (atom.getPropIfPresent("molAtomMapNumber", mapNum)) {
+      symbol += ":" + mapNum;
+    }
   } else if (drawOptions_.atomLabelDeuteriumTritium &&
              atom.getAtomicNum() == 1 && (iso == 2 || iso == 3)) {
     symbol = ((iso == 2) ? "D" : "T");
@@ -1382,10 +1388,9 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     std::vector<std::string> preText, postText;
 
     // first thing after the symbol is the atom map
-    if (atom.hasProp("molAtomMapNumber")) {
-      std::string map_num = "";
-      atom.getProp("molAtomMapNumber", map_num);
-      postText.push_back(std::string(":") + map_num);
+    std::string mapNum;
+    if (atom.getPropIfPresent("molAtomMapNumber", mapNum)) {
+      postText.push_back(std::string(":") + mapNum);
     }
 
     if (0 != atom.getFormalCharge()) {
@@ -1862,6 +1867,13 @@ void DrawMol::makeDoubleBondLines(
   int at2Idx = bond->getEndAtomIdx();
   adjustBondEndsForLabels(at1Idx, at2Idx, end1, end2);
 
+  bool skipOuterLine = false;
+  if (bond->getBondDir() == Bond::BEGINWEDGE ||
+      bond->getBondDir() == Bond::BEGINDASH) {
+    makeWedgedBond(bond, cols);
+    skipOuterLine = true;
+  }
+
   Point2D l1s, l1f, l2s, l2f, sat1, sat2;
   sat1 = atCds_[at1Idx];
   atCds_[at1Idx] = end1;
@@ -1869,8 +1881,10 @@ void DrawMol::makeDoubleBondLines(
   atCds_[at2Idx] = end2;
   calcDoubleBondLines(doubleBondOffset, *bond, l1s, l1f, l2s, l2f);
   int bondIdx = bond->getIdx();
-  newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
-              noDash);
+  if (!skipOuterLine) {
+    newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+                noDash);
+  }
   if (bond->getBondType() == Bond::AROMATIC) {
     newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
                 dashes);
@@ -2859,6 +2873,7 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
   Atom *at1 = bond.getBeginAtom();
   Atom *at2 = bond.getEndAtom();
   Point2D perp;
+
   if (isLinearAtom(*at1, atCds_) || isLinearAtom(*at2, atCds_) ||
       (at1->getDegree() == 1 && at2->getDegree() == 1)) {
     const Point2D &at1_cds = atCds_[at1->getIdx()];

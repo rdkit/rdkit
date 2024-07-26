@@ -261,6 +261,92 @@ void testChargedAromatics() {
   BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
+void testUnchargerProtonationOnly() {
+  BOOST_LOG(rdDebugLog)
+      << "-----------------------\n Testing removal of formal charges limited to "
+         "changing the protonation state (disable the addition/removal of H-)"
+      << std::endl;
+  {
+    // Uncharger options
+    bool canonicalOrdering {false};
+    bool force;
+    bool protonationOnly {true};
+    // simple test verifying that for protic compounds the behavior
+    // doesn't change if the protonationOnly option is set
+    auto m1 = "C[N+](C)(C)CC[O-]"_smiles;
+    TEST_ASSERT(m1);
+    // with force=false the zwitterion should stay unmodified
+    force = false;
+    MolStandardize::Uncharger uncharger1(canonicalOrdering, force, protonationOnly);
+    std::unique_ptr<ROMol> res1(uncharger1.uncharge(*m1));
+    TEST_ASSERT(res1.get());
+    TEST_ASSERT(MolToSmiles(*res1) == "C[N+](C)(C)CC[O-]");
+    // with force=true the oxygen should be neutralized
+    force = true;
+    MolStandardize::Uncharger uncharger2(canonicalOrdering, force, protonationOnly);
+    std::unique_ptr<ROMol> res2(uncharger2.uncharge(*m1));
+    TEST_ASSERT(res2.get());
+    TEST_ASSERT(MolToSmiles(*res2) == "C[N+](C)(C)CCO");
+  }
+  {
+    // Uncharger options
+    bool canonicalOrdering {false};
+    bool force {true};
+    bool protonationOnly {true};
+
+    auto tropylium = "[cH+]1cccccc1"_smiles;
+    TEST_ASSERT(tropylium);
+    // try uncharging as much as possible, but only allow
+    // protonating/deprotonating.
+    MolStandardize::Uncharger uncharger(canonicalOrdering, force, protonationOnly);
+    // tropylium should stay unmodified
+    std::unique_ptr<ROMol> res(uncharger.uncharge(*tropylium));
+    TEST_ASSERT(res.get());
+    TEST_ASSERT(MolToSmiles(*res) == "c1ccc[cH+]cc1");
+  }
+  {
+    // Uncharger options
+    bool canonicalOrdering {false};
+    bool force {true};
+    bool protonationOnly {true};
+
+    auto boronhydride = "[BH4-]"_smiles;
+    TEST_ASSERT(boronhydride);
+    // try uncharging as much as possible, but only allow
+    // protonating/deprotonating.
+    MolStandardize::Uncharger uncharger(canonicalOrdering, force, protonationOnly);
+    // boronhydride should stay unmodified
+    std::unique_ptr<ROMol> res(uncharger.uncharge(*boronhydride));
+    TEST_ASSERT(res.get());
+    TEST_ASSERT(MolToSmiles(*res) == "[BH4-]");
+  }
+  {
+    // Uncharger options
+    bool canonicalOrdering {false};
+    bool force;
+    bool protonationOnly {true};
+
+    // Test the neutralization of a zwitterion, where the positive charge is a
+    // carbocation and not possible to remove when protonationOnly is enabled
+    auto m = "[CH2+]c1ccc([O-])cc1"_smiles;
+    TEST_ASSERT(m);
+
+    // with force=false the zwitterion should stay unmodified
+    force = false;
+    MolStandardize::Uncharger uncharger1(canonicalOrdering, force, protonationOnly);
+    std::unique_ptr<ROMol> res1(uncharger1.uncharge(*m));
+    TEST_ASSERT(res1.get());
+    TEST_ASSERT(MolToSmiles(*res1) == "[CH2+]c1ccc([O-])cc1");
+    // with force=true the oxygen should be neutralized
+    force = true;
+    MolStandardize::Uncharger uncharger2(canonicalOrdering, force, protonationOnly);
+    std::unique_ptr<ROMol> res2(uncharger2.uncharge(*m));
+    TEST_ASSERT(res2.get());
+    TEST_ASSERT(MolToSmiles(*res2) == "[CH2+]c1ccc(O)cc1");
+  }
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
+}
+
 void testInorganicAcids() {
   BOOST_LOG(rdDebugLog) << "-----------------------\n Testing inorganic acids"
                         << std::endl;
@@ -390,6 +476,7 @@ int main() {
   testGithub2144();
   testGithub2346();
   testChargedAromatics();
+  testUnchargerProtonationOnly();
   testInorganicAcids();
   testReionizerParams();
   return 0;

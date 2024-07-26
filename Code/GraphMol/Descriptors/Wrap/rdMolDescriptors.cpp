@@ -1625,7 +1625,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                  python::bases<RDKit::Descriptors::PropertyFunctor>>(
       "PythonPropertyFunctor", "",
       python::init<PyObject *, const std::string &, const std::string &>(
-          python::args("self", "name", "version")))
+          python::args("self", "callback", "name", "version")))
       .def("__call__", &PythonPropertyFunctor::operator(),
            python::args("self", "mol"),
            "Compute the property for the specified molecule");

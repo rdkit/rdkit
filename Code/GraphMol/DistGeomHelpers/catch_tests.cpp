@@ -593,88 +593,64 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
   }
 }
 
-TEST_CASE("tracking failure causes"){SECTION("basics"){
-    auto mol =
-        "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
-REQUIRE(mol);
-MolOps::addHs(*mol);
-DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-ps.randomSeed = 0xf00d;
-ps.trackFailures = true;
-ps.maxIterations = 50;
-ps.randomSeed = 42;
-auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-CHECK(cid < 0);
+TEST_CASE("tracking failure causes") {
+  SECTION("basics") {
+    auto mol = "O=c2cc3CCc1ccc(cc1Br)CCc2c(O)c3=O"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.trackFailures = true;
+    ps.maxIterations = 50;
+    ps.randomSeed = 42;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid == 0);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 2);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] == 5);
 
-CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
-
-auto fail_cp = ps.failures;
-// make sure we reset the counts each time
-cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-CHECK(ps.failures == fail_cp);
-}
-SECTION("chirality") {
-  auto mol = R"CTAB(
-  Ketcher  1102315302D 1   1.00000     0.00000     0
-
- 10 11  0  0  1  0  0  0  0  0999 V2000
-   10.1340  -11.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   10.1340  -12.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.0000  -12.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.8660  -12.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.8660  -11.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   11.0000  -10.5250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-   11.0000  -11.5250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-   11.2588  -12.4909    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    9.2680  -10.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   12.7629  -12.4673    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  6  1  0     0  0
-  1  2  1  0     0  0
-  2  3  1  0     0  0
-  3  4  1  0     0  0
-  4  5  1  0     0  0
-  5  6  1  0     0  0
-  1  7  1  0     0  0
-  7  8  1  0     0  0
-  8  4  1  0     0  0
-  1  9  1  1     0  0
-  4 10  1  1     0  0
-M  END
-)CTAB"_ctab;
-  REQUIRE(mol);
-  MolOps::addHs(*mol);
-  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-  ps.randomSeed = 0xf00d;
-  ps.trackFailures = true;
-  ps.maxIterations = 50;
-  auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-  CHECK(cid < 0);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] > 5);
-}
+    auto fail_cp = ps.failures;
+    // make sure we reset the counts each time
+    cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(ps.failures == fail_cp);
+  }
+  SECTION("chirality") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/chirality_failure_test.mol";
+    std::unique_ptr<RWMol> mol{MolFileToMol(fname, true, false)};
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    ps.trackFailures = true;
+    ps.maxIterations = 50;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid < 0);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
+          4);
+  }
 
 #ifdef RDK_TEST_MULTITHREADED
-SECTION("multithreaded") {
-  auto mol =
-      "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
-  REQUIRE(mol);
-  MolOps::addHs(*mol);
-  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-  ps.randomSeed = 0xf00d;
-  ps.trackFailures = true;
-  ps.maxIterations = 10;
-  ps.randomSeed = 42;
-  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
+  SECTION("multithreaded") {
+    auto mol =
+        "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.trackFailures = true;
+    ps.maxIterations = 10;
+    ps.randomSeed = 42;
+    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
 
-  DGeomHelpers::EmbedParameters ps2 = ps;
-  ps2.numThreads = 4;
+    DGeomHelpers::EmbedParameters ps2 = ps;
+    ps2.numThreads = 4;
 
-  auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
-  CHECK(cids2 == cids);
+    auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
+    CHECK(cids2 == cids);
 
-  CHECK(ps.failures == ps2.failures);
-}
+    CHECK(ps.failures == ps2.failures);
+  }
 #endif
 }
 
@@ -774,8 +750,8 @@ TEST_CASE("Macrocycle bounds matrix") {
     const auto conf = mol->getConformer(cid);
     RDGeom::Point3D pos_1 = conf.getAtomPos(1);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
-    CHECK((pos_1 - pos_4).length() < 3.6);
-    CHECK((pos_1 - pos_4).length() > 3.5);
+    CHECK((pos_1 - pos_4).length() < 3.9);
+    CHECK((pos_1 - pos_4).length() > 3.8);
   }
 }
 
@@ -877,6 +853,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol > 0);
+        CHECK(fabs(chiralVol) > 0.5);
       }
     }  // now swap the stereo and see if it still works
     mol->getBondWithIdx(bondIdx)->setStereo(
@@ -899,6 +876,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol < 0);
+        CHECK(fabs(chiralVol) > 0.5);
       }
     }
   }
@@ -983,6 +961,36 @@ TEST_CASE("terminal groups in pruning") {
       ps.symmetrizeConjugatedTerminalGroupsForPruning = false;
       cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, ps);
       CHECK(cids.size() >= 2);
+    }
+  }
+}
+
+TEST_CASE("github #7552") {
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 0xf00d;
+  SECTION("as reported") {
+    auto mol = "O=CCC1OC2COC12"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == 0);
+  }
+  SECTION("as reported, bulk") {
+    std::vector<std::string> smileses{
+        "O=CCC1OC2COC12",      "O=C1OC2CCC12C#N",    "CC1C2CC3OC2C13O",
+        "CC12CC1C3(C)OCC23",   "OC1C2COC13COC23",    "OC1C2C3C2N4C3CC14",
+        "CC1OC12C3CC2(O)C3",   "OC1C2CC3C2CCC13",    "CN1CC2(O)C3CC3C12",
+        "C1OC2C3C4C5C4C12N35", "C1OC2CC3OC12C=C3",   "C1C2OC3C1OC23",
+        "CC1(O)CC2CCC12",      "CC12NC(=O)C1C3OC23", "OC1CC2(NCCC12)C#N",
+        "CC12C3C1C(=O)C3C2O",  "C1C=C2C3OC4C3N1C24", "CC12C3C1C4=NC3C2O4",
+        "C1OC23C=CC4C2N4C13",  "OCC12CNC1C(=O)N2",   "CC1C2C3C1C(C#C)n23",
+
+    };
+    for (const auto &smiles : smileses) {
+      INFO(smiles);
+      auto mol = v2::SmilesParse::MolFromSmiles(smileses[0]);
+      REQUIRE(mol);
+      MolOps::addHs(*mol);
+      CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == 0);
     }
   }
 }

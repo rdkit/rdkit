@@ -70,24 +70,30 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
   inline unsigned int dimension() const override { return 3; }
 
   inline double operator[](unsigned int i) const override {
-    PRECONDITION(i < 3, "Invalid index on Point3D");
-    if (i == 0) {
-      return x;
-    } else if (i == 1) {
-      return y;
-    } else {
-      return z;
+    switch (i) {
+      case 0:
+        return x;
+      case 1:
+        return y;
+      case 2:
+        return z;
+      default:
+        throw ValueErrorException("Invalid index on Point3D");
+        break;
     }
   }
 
   inline double &operator[](unsigned int i) override {
-    PRECONDITION(i < 3, "Invalid index on Point3D");
-    if (i == 0) {
-      return x;
-    } else if (i == 1) {
-      return y;
-    } else {
-      return z;
+    switch (i) {
+      case 0:
+        return x;
+      case 1:
+        return y;
+      case 2:
+        return z;
+      default:
+        throw ValueErrorException("Invalid index on Point3D");
+        break;
     }
   }
 
@@ -289,20 +295,26 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
   inline unsigned int dimension() const override { return 2; }
 
   inline double operator[](unsigned int i) const override {
-    PRECONDITION(i < 2, "Invalid index on Point2D");
-    if (i == 0) {
-      return x;
-    } else {
-      return y;
+    switch (i) {
+      case 0:
+        return x;
+      case 1:
+        return y;
+      default:
+        throw ValueErrorException("Invalid index on Point2D");
+        break;
     }
   }
 
   inline double &operator[](unsigned int i) override {
-    PRECONDITION(i < 2, "Invalid index on Point2D");
-    if (i == 0) {
-      return x;
-    } else {
-      return y;
+    switch (i) {
+      case 0:
+        return x;
+      case 1:
+        return y;
+      default:
+        throw ValueErrorException("Invalid index on Point2D");
+        break;
     }
   }
 
@@ -372,9 +384,8 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
   }
 
   double angleTo(const Point2D &other) const {
-    Point2D t1, t2;
-    t1 = *this;
-    t2 = other;
+    auto t1 = *this;
+    auto t2 = other;
     t1.normalize();
     t2.normalize();
     double dotProd = t1.dotProduct(t2);

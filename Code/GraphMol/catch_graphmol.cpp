@@ -2573,7 +2573,7 @@ void check_dest(RWMol *m1, const ROMol &m2) {
 }  // namespace
 TEST_CASE("moves") {
   auto m1 =
-      "C[C@H](O)[C@H](F)[C@@H](C)O |o2:1,5,&1:3,SgD:4:atom_data:foo::::|"_smiles;
+      "C[C@H](O)[C@H](F)[C@@H](C)F |o2:1,5,&1:3,SgD:4:atom_data:foo::::|"_smiles;
   REQUIRE(m1);
   CHECK(m1->getStereoGroups().size() == 2);
   m1->setProp("foo", 1u);
@@ -2619,7 +2619,7 @@ M  V30 3 O -0 2.6674 0 0
 M  V30 4 C 2.31 1.3337 0 0 CFG=1
 M  V30 5 F 3.85 1.3337 0 0
 M  V30 6 C 1.54 0 0 0 CFG=2
-M  V30 7 C 2.31 -1.3337 0 0
+M  V30 7 F 2.31 -1.3337 0 0
 M  V30 8 O 0 0 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
@@ -4516,6 +4516,137 @@ M  END
           }
         }
       }
+    }
+  }
+}
+
+TEST_CASE("getMaxAtomicNumber") {
+  CHECK(PeriodicTable::getTable()->getMaxAtomicNumber() == 118);
+}
+
+TEST_CASE("explicit valence handling of transition metals") {
+  SECTION("basics") {
+    // some of these examples are quite silly
+    std::vector<std::string> smileses = {"[Ti]C", "[Ti+2]C", "[Ti+4]C",
+                                         "[Ti+5]C"};
+    for (const auto &smiles : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getExplicitValence() == 1);
+      CHECK(m->getAtomWithIdx(0)->getImplicitValence() == 0);
+    }
+  }
+}
+
+TEST_CASE("valence handling of atoms with multiple possible valence states") {
+  SECTION("basics") {
+    // some of these examples are quite silly
+    std::vector<std::pair<std::string, int>> smileses = {
+        {"C[S-](=O)=O", 5},
+        {"C[P-2](C)C", 3},
+        {"C[Se-](=O)=O", 5},
+        {"C[As-2](C)C", 3},
+    };
+    for (const auto &[smiles, val] : smileses) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      CHECK(m);
+      CHECK(val == m->getAtomWithIdx(1)->getExplicitValence());
+      // now try figuring out the implicit valence
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      m->getAtomWithIdx(1)->calcImplicitValence(true);  // <- should not throw
+      CHECK(!m->getAtomWithIdx(1)->hasValenceViolation());
+    }
+  }
+  SECTION("mols which should fail") {
+    // some of these examples are quite silly
+    std::vector<std::string> smileses = {
+        "C[S-2](=O)=O",
+        "C[P-3](C)(C)(C)C",
+        "C[Se-2](=O)=O",
+        "C[As-3](C)(C)(C)C",
+    };
+    for (const auto &smiles : smileses) {
+      INFO(smiles);
+      v2::SmilesParse::SmilesParserParams ps;
+      ps.sanitize = false;
+      auto m = v2::SmilesParse::MolFromSmiles(smiles, ps);
+      CHECK(m);
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      CHECK(m->getAtomWithIdx(1)->hasValenceViolation());
+    }
+  }
+}
+
+TEST_CASE(
+    "testing for valence states which were removed when introducing the isoelectronic valence calculation") {
+  SECTION("mols which should pass") {
+    std::vector<std::pair<std::string, unsigned int>> smileses = {
+        {"F[Si-2](F)(F)(F)(F)F", 0},
+        {"F[P-](F)(F)(F)(F)F", 0},
+        {"F[As-](F)(F)(F)(F)F", 0},
+    };
+    for (const auto &[smiles, val] : smileses) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      CHECK(m);
+      // now try figuring out the implicit valence
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      m->getAtomWithIdx(1)->calcImplicitValence(true);  // <- should not throw
+      CHECK(!m->getAtomWithIdx(1)->hasValenceViolation());
+      CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == val);
+    }
+  }
+  SECTION("mols which should fail") {
+    std::vector<std::string> smileses = {
+        "F[Al](F)(F)(F)(F)F",
+        "F[Si](F)(F)(F)(F)F",
+        "F[P](F)(F)(F)(F)(F)F",
+        "F[As](F)(F)(F)(F)(F)F",
+    };
+    for (const auto &smiles : smileses) {
+      INFO(smiles);
+      v2::SmilesParse::SmilesParserParams ps;
+      ps.sanitize = false;
+      auto m = v2::SmilesParse::MolFromSmiles(smiles, ps);
+      CHECK(m);
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      CHECK(m->getAtomWithIdx(1)->hasValenceViolation());
+    }
+  }
+}
+
+TEST_CASE("Valences on Al, Si, P, As, Sb, Bi") {
+  // tests added by Paolo Tosco in a separate PR
+  SECTION("Should fail with AtomValenceException") {
+    std::vector<std::pair<std::string, unsigned int>> smiles = {
+        {"[Al](Cl)(Cl)(Cl)(Cl)(Cl)Cl", 0}, {"F[Si](F)(F)(F)(F)F", 1},
+        {"[P](F)(F)(F)(F)(F)F", 0},        {"P(=O)(O)(O)(O)(O)O", 0},
+        {"F[As](F)(F)(F)(F)F", 1},         {"O[As](=O)(O)(O)(O)O", 1},
+        {"[Sb](F)(F)(F)(F)(F)F", 0},       {"[Sb](=O)(O)(O)(O)(O)O", 0},
+        {"F[Bi](F)(F)(F)(F)F", 1},         {"O[Bi](=O)(O)(O)(O)(O)O", 1},
+    };
+    for (auto &[smi, idx] : smiles) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), AtomValenceException);
+      try {
+        ROMOL_SPTR m(SmilesToMol(smi));
+        RDUNUSED_PARAM(m);
+      } catch (const AtomValenceException &e) {
+        CHECK(e.getType() == "AtomValenceException");
+        CHECK(e.getAtomIdx() == idx);
+      }
+    }
+  }
+  SECTION("Should not fail") {
+    std::vector<std::string> smiles = {
+        "[Al-3](Cl)(Cl)(Cl)(Cl)(Cl)Cl", "F[Si-2](F)(F)(F)(F)F",
+        "[P-](F)(F)(F)(F)(F)F",         "F[As-](F)(F)(F)(F)F",
+        "F[Sb-](F)(F)(F)(F)F",          "[Bi-](F)(F)(F)(F)(F)F",
+    };
+    for (auto smi : smiles) {
+      ROMOL_SPTR m(SmilesToMol(smi));
+      CHECK(m);
     }
   }
 }

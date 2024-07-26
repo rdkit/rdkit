@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2024 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1453,6 +1452,7 @@ void test17Github3994() {
 
 int main() {
   RDLog::InitLogs();
+  boost::logging::enable_logs("rdApp.info");
   try {
     throw IndexErrorException(3);
   } catch (IndexErrorException &) {

@@ -507,9 +507,9 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     >>> p0 = conf.GetAtomPosition(0)
     >>> p3 = conf.GetAtomPosition(3)
     >>> d03 = p0.Distance(p3)
-    >>> d03 >= pcophore.getLowerBound(0,1) - 0.01
+    >>> bool(d03 >= pcophore.getLowerBound(0,1) - 0.01)
     True
-    >>> d03 <= pcophore.getUpperBound(0,1) + 0.01
+    >>> bool(d03 <= pcophore.getUpperBound(0,1) + 0.01)
     True
 
     If we optimize without the distance constraints (provided via the atomMatches
@@ -525,9 +525,9 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     >>> p0 = conf.GetAtomPosition(0)
     >>> p3 = conf.GetAtomPosition(3)
     >>> d03 = p0.Distance(p3)
-    >>> d03 >= pcophore.getLowerBound(0, 1) - 0.01
+    >>> bool(d03 >= pcophore.getLowerBound(0, 1) - 0.01)
     True
-    >>> d03 <= pcophore.getUpperBound(0, 1) + 0.01
+    >>> bool(d03 <= pcophore.getUpperBound(0, 1) + 0.01)
     False
 
   """
@@ -862,7 +862,7 @@ def CombiEnum(sequence):
 
 
 def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
-  """ Removes rows from a bounds matrix that are that are greater 
+  """ Removes rows from a bounds matrix that are that are greater
   than a threshold value away from a set of other points
 
   Returns the modfied bounds matrix
@@ -992,10 +992,10 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
   >>> pcophore.setUpperBound(1,3, 1.9)
   >>> pcophore.setLowerBound(2,3, 1.1)
   >>> pcophore.setUpperBound(2,3, 1.9)
-  >>> bounds = numpy.array([[0, 3, 3, 3], 
-  ...                       [2, 0, 2, 2], 
-  ...                       [2, 1, 0, 2], 
-  ...                       [2, 1, 1, 0]], 
+  >>> bounds = numpy.array([[0, 3, 3, 3],
+  ...                       [2, 0, 2, 2],
+  ...                       [2, 1, 0, 2],
+  ...                       [2, 1, 1, 0]],
   ...                      dtype=numpy.float64)
 
   >>> CoarseScreenPharmacophore(((0, ), (1, ), (2, ), (3, )), bounds, pcophore)

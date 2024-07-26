@@ -87,6 +87,8 @@ const std::string _queryRootAtom = "_queryRootAtom";
 const std::string _ringStereoAtoms = "_ringStereoAtoms";
 const std::string _ringStereoWarning = "_ringStereoWarning";
 const std::string _ringStereochemCand = "_ringStereochemCand";
+const std::string _ringStereoOtherAtom = "_ringStereoOtherAtom";
+const std::string _mesoOtherAtom = "_mesoOtherAtom";
 const std::string _chiralPermutation = "_chiralPermutation";
 const std::string _smilesAtomOutputOrder = "_smilesAtomOutputOrder";
 const std::string _smilesBondOutputOrder = "_smilesBondOutputOrder";
@@ -118,7 +120,7 @@ const std::string smilesSymbol = "smilesSymbol";
 const std::string atomLabel = "atomLabel";
 const std::string OxidationNumber = "OxidationNumber";
 const std::string internalRgroupSmiles = "internalRgroupSmiles";
-
+const std::string molRingBondCount = "molRingBondCount";
 const std::string molSubstCount = "molSubstCount";
 const std::string molAttachPoint = "molAttchpt";
 const std::string molAttachOrder = "molAttchord";
