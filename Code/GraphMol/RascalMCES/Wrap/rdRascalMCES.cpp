@@ -204,7 +204,18 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
           &RDKit::RascalMCES::RascalOptions::maxBondMatchPairs,
           "Too many matching bond (vertex) pairs can cause the process to run out of memory."
           "  The default of 1000 is fairly safe.  Increase with caution, as memory use increases"
-          " with the square of this number.  ");
+          " with the square of this number.  ")
+      .def_readwrite("equivalentAtoms",
+                     &RDKit::RascalMCES::RascalOptions::equivalentAtoms,
+                     "SMARTS strings defining atoms that should"
+                     "be considered equivalent. e.g."
+                     "[F,Cl,Br,I] so all halogens will match each other."
+                     "Space-separated list allowing more than 1"
+                     "class of equivalent atoms.")
+      .def_readwrite("ignoreBondOrders",
+                     &RDKit::RascalMCES::RascalOptions::ignoreBondOrders,
+                     "If True, will treat all bonds as the same,\n"
+                     "irrespective of order.  Default=False.");
 
   docString =
       "Find one or more MCESs between the 2 molecules given.  Returns a list of "

@@ -2830,6 +2830,10 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
     return;
   }
 
+  if (mol.needsUpdatePropertyCache()) {
+    mol.updatePropertyCache(false);
+  }
+
   if (!Chirality::getUseLegacyStereoPerception()) {
     Chirality::stereoPerception(mol, cleanIt, flagPossibleStereoCenters);
   } else {
