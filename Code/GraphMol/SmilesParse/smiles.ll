@@ -24,6 +24,7 @@
 
 using namespace RDKit;
 
+#undef YY_FATAL_ERROR
 #define YY_FATAL_ERROR(msg) smiles_lexer_error(msg)
 
 void smiles_lexer_error(const char *msg) {
@@ -35,9 +36,11 @@ void smiles_lexer_error(const char *msg) {
 #define YY_DECL int SmilesScanner::lex(SmilesParser::semantic_type* const lval, SmilesParser::location_type* location, int& start_token)
 
 // we're doing this to track the position of the current token.
+#undef YY_USER_ACTION
 #define YY_USER_ACTION location->begin += yyleng; location->columns(yyleng);
 
 // using an alias since the C++ parser uses lval
+#undef yylval
 #define yylval lval
 
 using token = SmilesParser::token_kind_type;
