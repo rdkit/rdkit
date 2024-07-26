@@ -44,6 +44,7 @@
 #include <list>
 
 #include "SmilesMolBuilder.h"
+#include "SmilesScanner.h"
 
 int yysmarts_lex_init(void **);
 int yysmarts_lex_destroy(void *);
