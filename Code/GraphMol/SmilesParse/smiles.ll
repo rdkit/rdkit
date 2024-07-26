@@ -1,4 +1,4 @@
-%{
+%top{
 
 // $Id$
 //
@@ -19,10 +19,14 @@
 
 #include <string>
 #include <cstring>
-#include "smiles.tab.hpp"
-#include "SmilesScanner.h"
 
 using namespace RDKit;
+}
+
+
+%{
+#include "smiles.tab.hpp"
+#include "SmilesScanner.h"
 
 #undef YY_FATAL_ERROR
 #define YY_FATAL_ERROR(msg) smiles_lexer_error(msg)
