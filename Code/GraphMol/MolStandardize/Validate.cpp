@@ -688,9 +688,9 @@ NeighborsInfo::NeighborsInfo(const ROMol &mol, const Atom *atom) {
   // with the first one
   auto degree = bonds.size();
   for (unsigned int n = 1; n < degree; ++n) {
-    auto bondn = bonds[n].bond;
-    auto atomn = bondn->getOtherAtom(atom);
-    auto vn = conf.getAtomPos(atomn->getIdx()) - p;
+    const auto bondn = bonds[n].bond;
+    const auto atomn = bondn->getOtherAtom(atom);
+    const auto vn = conf.getAtomPos(atomn->getIdx()) - p;
     bonds[n].angle = v0.signedAngleTo(vn);
   }
 
