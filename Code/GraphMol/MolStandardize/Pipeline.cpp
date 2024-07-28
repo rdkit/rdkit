@@ -34,7 +34,7 @@ void PipelineResult::append(PipelineStatus newStatus, const std::string &info) {
 PipelineResult Pipeline::run(const std::string &molblock) const {
   PipelineResult result;
   result.status = NO_EVENT;
-  result.inputMolBlock = molblock;
+  result.inputMolData = molblock;
 
   // parse the molblock into an RWMol instance
   result.stage = PARSING_INPUT;
@@ -567,12 +567,12 @@ void Pipeline::serialize(RWMOL_SPTR_PAIR output, PipelineResult &result) const {
 
   try {
     if (!options.outputV2000) {
-      result.outputMolBlock = MolToV3KMolBlock(outputMol);
-      result.parentMolBlock = MolToV3KMolBlock(parentMol);
+      result.outputMolData = MolToV3KMolBlock(outputMol);
+      result.parentMolData = MolToV3KMolBlock(parentMol);
     } else {
       try {
-        result.outputMolBlock = MolToV2KMolBlock(outputMol);
-        result.parentMolBlock = MolToV2KMolBlock(parentMol);
+        result.outputMolData = MolToV2KMolBlock(outputMol);
+        result.parentMolData = MolToV2KMolBlock(parentMol);
       } catch (ValueErrorException &e) {
         result.append(OUTPUT_ERROR,
                       "Can't write molecule to V2000 output format: " +

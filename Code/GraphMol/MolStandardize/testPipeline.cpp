@@ -726,17 +726,17 @@ M  END
     REQUIRE(result.status & MolStandardize::METALS_DISCONNECTED);
 
     std::unique_ptr<RWMol> mol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(mol);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CC(=O)O");
 
     std::unique_ptr<RWMol> outputMol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(outputMol);
     std::string outputSmiles{MolToSmiles(*outputMol)};
     REQUIRE(outputSmiles == "CC(=O)O");
@@ -778,7 +778,7 @@ M  END
             MolStandardize::NO_EVENT);
 
     std::unique_ptr<RWMol> mol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(mol);
 
     std::string smiles{MolToSmiles(*mol)};
@@ -825,7 +825,7 @@ M  END
     REQUIRE(result_a.status & MolStandardize::PROTONATION_CHANGED);
 
     std::unique_ptr<RWMol> mol_a(
-        MolBlockToMol(result_a.outputMolBlock, false, false));
+        MolBlockToMol(result_a.outputMolData, false, false));
     REQUIRE(mol_a);
 
     std::string smiles_a{MolToSmiles(*mol_a)};
@@ -870,7 +870,7 @@ M  END
     REQUIRE(result_b.status & MolStandardize::PROTONATION_CHANGED);
 
     std::unique_ptr<RWMol> mol_b(
-        MolBlockToMol(result_b.outputMolBlock, false, false));
+        MolBlockToMol(result_b.outputMolData, false, false));
     REQUIRE(mol_b);
 
     std::string smiles_b{MolToSmiles(*mol_b)};
@@ -917,7 +917,7 @@ M  END
     REQUIRE(result.status & MolStandardize::NORMALIZATION_APPLIED);
 
     std::unique_ptr<RWMol> mol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(mol);
 
     std::string smiles{MolToSmiles(*mol)};
@@ -975,7 +975,7 @@ M  END
             (MolStandardize::NORMALIZATION_APPLIED |
              MolStandardize::PROTONATION_CHANGED));
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CN1CCCN=C1N");
@@ -1024,7 +1024,7 @@ M  END
             (MolStandardize::NORMALIZATION_APPLIED |
              MolStandardize::PROTONATION_CHANGED));
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CN1CCCN=C1N");
@@ -1073,7 +1073,7 @@ M  END
             (MolStandardize::NORMALIZATION_APPLIED |
              MolStandardize::PROTONATION_CHANGED));
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CN1C=CC(N)=NC1");
@@ -1122,7 +1122,7 @@ M  END
             (MolStandardize::NORMALIZATION_APPLIED |
              MolStandardize::PROTONATION_CHANGED));
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CN1C=CC(N)=NC1");
@@ -1170,13 +1170,13 @@ M  END
              MolStandardize::FRAGMENTS_REMOVED));
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "NCC(=O)O");
 
     std::unique_ptr<RWMol> outputMol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(outputMol);
     std::string outputSmiles{MolToSmiles(*outputMol)};
     REQUIRE(outputSmiles == "[NH3+]CC(=O)[O-]");
@@ -1225,13 +1225,13 @@ M  END
             MolStandardize::NO_EVENT);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "C[N+](C)(C)CC(=O)O");
 
     std::unique_ptr<RWMol> outputMol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(outputMol);
     std::string outputSmiles{MolToSmiles(*outputMol)};
     REQUIRE(outputSmiles == "C[N+](C)(C)CC(=O)[O-]");
@@ -1272,10 +1272,10 @@ M  END
             MolStandardize::NO_EVENT);
     REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
             MolStandardize::PROTONATION_CHANGED);
-    REQUIRE(result.parentMolBlock == result.outputMolBlock);
+    REQUIRE(result.parentMolData == result.outputMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CN(C)C");
@@ -1349,10 +1349,10 @@ M  END
             (MolStandardize::METALS_DISCONNECTED |
              MolStandardize::FRAGMENTS_REMOVED |
              MolStandardize::PROTONATION_CHANGED));
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "[H][C@](C)(F)CCC[S+]([O-])C1=CC=C(C(=O)O)C=C1");
@@ -1423,10 +1423,10 @@ M  END
              //| MolStandardize::NORMALIZATION_APPLIED
              | MolStandardize::FRAGMENTS_REMOVED |
              MolStandardize::PROTONATION_CHANGED));
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "[2H]CCCC[S+]([O-])C1=CC=C(C(=O)O)C=C1");
@@ -1496,10 +1496,10 @@ M  END
             (MolStandardize::METALS_DISCONNECTED |
              MolStandardize::FRAGMENTS_REMOVED |
              MolStandardize::PROTONATION_CHANGED));
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "[H]CCCC[S+]([O-])C1=CC=C(C(=O)O)C=C1");
@@ -1568,10 +1568,10 @@ M  END
             (MolStandardize::METALS_DISCONNECTED |
              MolStandardize::FRAGMENTS_REMOVED |
              MolStandardize::PROTONATION_CHANGED));
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CC(C)C[S+]([O-])C1=CC=C(C(=O)O)C=C1");
@@ -1635,10 +1635,10 @@ M  END
             MolStandardize::NO_EVENT);
     REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
             MolStandardize::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CCC(C)(F)Cl");
@@ -1701,9 +1701,9 @@ M  END
             MolStandardize::NO_EVENT);
     REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
             MolStandardize::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CC=CC");
@@ -1774,9 +1774,9 @@ M  END
             MolStandardize::NO_EVENT);
     REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
             MolStandardize::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CC=CC(C)(F)Cl");
@@ -1850,9 +1850,9 @@ M  END
             MolStandardize::NO_EVENT);
     REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
             MolStandardize::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CC=CC(C)(F)Cl");
@@ -1928,9 +1928,9 @@ M  END
             MolStandardize::NO_EVENT);
     REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
             MolStandardize::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CC1=CCCCCC1");
@@ -1999,9 +1999,9 @@ M  END
             MolStandardize::NO_EVENT);
     REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
             MolStandardize::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CC=C(C)C");
@@ -2083,9 +2083,9 @@ M  END
             MolStandardize::NO_EVENT);
     REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
             MolStandardize::NO_EVENT);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
 
@@ -2143,16 +2143,16 @@ M  END
     REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
             MolStandardize::NORMALIZATION_APPLIED);
 
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> inputMol(
-        MolBlockToMol(result.inputMolBlock, false, false));
+        MolBlockToMol(result.inputMolData, false, false));
     REQUIRE(inputMol);
     std::string inputSmiles{MolToSmiles(*inputMol)};
     REQUIRE(inputSmiles == "C[SH](=O)=O");
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CS(=O)O");
@@ -2200,10 +2200,10 @@ M  END
     REQUIRE((result.status & MolStandardize::STRUCTURE_MODIFICATION) ==
             MolStandardize::NO_EVENT);
 
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "C1=CC=C[CH+]C=C1");

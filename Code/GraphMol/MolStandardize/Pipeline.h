@@ -140,9 +140,9 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT PipelineResult {
   PipelineStatus status;
   PipelineStage stage;
   PipelineLog log;
-  std::string inputMolBlock;
-  std::string outputMolBlock;
-  std::string parentMolBlock;
+  std::string inputMolData;
+  std::string outputMolData;
+  std::string parentMolData;
 
   void append(PipelineStatus newStatus, const std::string& info);
 };
