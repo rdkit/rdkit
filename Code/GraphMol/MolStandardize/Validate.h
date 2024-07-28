@@ -127,6 +127,13 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NeutralValidation : public ValidationMethod {
 };
 
 //! The IsotopeValidation class logs if molecule contains isotopes.
+/*!
+  <b>Notes:</b>
+  - By default, this class will return an error every time an isotopic
+    number is specified. When the `strict` constructor parameter is passed a
+    `true` argument, an error is returned only if the specified isotopic number
+    is not found in the RDKit periodic table.
+*/
 class RDKIT_MOLSTANDARDIZE_EXPORT IsotopeValidation : public ValidationMethod {
  public:
   IsotopeValidation(bool strict = false) : strict(strict){};
@@ -195,7 +202,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT DisallowedAtomsValidation
 };
 
 //! The DisallowedRadicalValidation class reports an error if any
-/// unstable radicalic atoms are found.
+/// unstable radical atoms are found.
+/// The allowed radicals are [N]=O and [O]-N.
 class RDKIT_MOLSTANDARDIZE_EXPORT DisallowedRadicalValidation
     : public ValidationMethod {
  public:

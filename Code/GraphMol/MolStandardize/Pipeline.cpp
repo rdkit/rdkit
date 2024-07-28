@@ -168,7 +168,7 @@ RWMOL_SPTR Pipeline::prepareForValidation(RWMOL_SPTR mol,
   } catch (MolSanitizeException &) {
     result.append(
         PREPARE_FOR_VALIDATION_ERROR,
-        "An unexpected error occurred while preparing the molecule for validation.");
+        "An error occurred while preparing the molecule for validation.");
   }
 
   return mol;
@@ -261,7 +261,7 @@ RWMOL_SPTR Pipeline::prepareForStandardization(RWMOL_SPTR mol,
   } catch (MolSanitizeException &) {
     result.append(
         PREPARE_FOR_STANDARDIZATION_ERROR,
-        "An unexpected error occurred while preparing the molecule for standardization.");
+        "An error occurred while preparing the molecule for standardization.");
   }
 
   return mol;
@@ -283,7 +283,7 @@ RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult &result) const {
   } catch (...) {
     result.append(
         METAL_STANDARDIZATION_ERROR,
-        "An unexpected error occurred while processing the bonding of metal species.");
+        "An error occurred while processing the bonding of metal species.");
     return mol;
   }
 
@@ -311,7 +311,7 @@ RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult &result) const {
   } catch (...) {
     result.append(
         NORMALIZER_STANDARDIZATION_ERROR,
-        "An unexpected error occurred while normalizing the representation of some functional groups");
+        "An error occurred while normalizing the representation of some functional groups");
     return mol;
   }
 
@@ -329,7 +329,7 @@ RWMOL_SPTR Pipeline::standardize(RWMOL_SPTR mol, PipelineResult &result) const {
   } catch (...) {
     result.append(
         FRAGMENT_STANDARDIZATION_ERROR,
-        "An unexpected error occurred while removing the disconnected fragments");
+        "An error occurred while removing the disconnected fragments");
     return mol;
   }
 
@@ -526,7 +526,7 @@ Pipeline::RWMOL_SPTR_PAIR Pipeline::makeParent(RWMOL_SPTR mol,
   } catch (...) {
     result.append(
         CHARGE_STANDARDIZATION_ERROR,
-        "An unexpected error occurred while normalizing the compound's charge status");
+        "An error occurred while normalizing the compound's charge status");
     return {{}, {}};
   }
 
@@ -583,9 +583,8 @@ void Pipeline::serialize(RWMOL_SPTR_PAIR output, PipelineResult &result) const {
     result.append(OUTPUT_ERROR, "Can't write molecule to output format: " +
                                     std::string(e.what()));
   } catch (...) {
-    result.append(
-        OUTPUT_ERROR,
-        "An unexpected error occurred while serializing the output structures.");
+    result.append(OUTPUT_ERROR,
+                  "An error occurred while serializing the output structures.");
   }
 }
 

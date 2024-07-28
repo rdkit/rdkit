@@ -278,7 +278,7 @@ std::vector<ValidationErrorInfo> DisallowedRadicalValidation::validate(
     unsigned int degree = atom->getDegree();
     if ((atomicNum == 7 || atomicNum == 8) && numRadicalElectrons == 1 &&
         degree == 1) {
-      unsigned int neighborAtomicNum{};
+      unsigned int neighborAtomicNum = 0;
       Bond::BondType bondType = Bond::BondType::UNSPECIFIED;
       for (auto neighbor : mol.atomNeighbors(atom)) {
         // only one iteration is performed, because degree == 1
@@ -423,8 +423,10 @@ std::vector<ValidationErrorInfo> Is2DValidation::validate(
   // because no coordinates were assigned and all atoms appear to be placed in
   // the origin)
 
-  double min_x{}, max_x{};
-  double min_y{}, max_y{};
+  double min_x = std::numeric_limits<double>::max();
+  double max_x = std::numeric_limits<double>::min();
+  double min_y = std::numeric_limits<double>::max();
+  double max_y = std::numeric_limits<double>::min();
   for (const auto &p : conf.getPositions()) {
     min_x = std::min(p.x, min_x);
     max_x = std::max(p.x, max_x);
@@ -450,17 +452,15 @@ double Layout2DValidation::squaredMedianBondLength(const ROMol &mol,
                                                    const Conformer &conf) {
   // Compute the squared value of the median bond length, but exclude the bonds
   // of null length.
-  double median{};
+  double median = 0.0;
   unsigned int numBonds = mol.getNumBonds();
   if (numBonds) {
     std::vector<double> values;
     values.reserve(numBonds);
     for (const auto &bond : mol.bonds()) {
-      auto p1 = conf.getAtomPos(bond->getBeginAtomIdx());
-      auto p2 = conf.getAtomPos(bond->getEndAtomIdx());
-      auto dx = p2.x - p1.x;
-      auto dy = p2.y - p1.y;
-      auto value = dx * dx + dy * dy;
+      const auto &p1 = conf.getAtomPos(bond->getBeginAtomIdx());
+      const auto &p2 = conf.getAtomPos(bond->getEndAtomIdx());
+      auto value = (p1 - p2).lengthSq();
       if (value > 0.) {
         values.push_back(value);
       }
@@ -514,9 +514,7 @@ std::vector<ValidationErrorInfo> Layout2DValidation::validate(
     const auto &pi = conf.getAtomPos(i);
     for (unsigned int j = i + 1; j < natoms; ++j) {
       const auto &pj = conf.getAtomPos(j);
-      auto dx = pj.x - pi.x;
-      auto dy = pj.y - pi.y;
-      auto d2 = dx * dx + dy * dy;
+      auto d2 = (pi - pj).lengthSq();
       if (d2 < atomClashThreshold) {
         errors.push_back("ERROR: [Layout2DValidation] Atom " +
                          std::to_string(i) + " is too close to atom " +
@@ -541,7 +539,7 @@ std::vector<ValidationErrorInfo> Layout2DValidation::validate(
     unsigned int j = bond->getEndAtomIdx();
     const auto &pj = conf.getAtomPos(j);
 
-    auto ll = (pi.x - pj.x) * (pi.x - pj.x) + (pi.y - pj.y) * (pi.y - pj.y);
+    auto ll = (pi - pj).lengthSq();
 
     // check for exceedingly long bonds
     auto bondLengthThreshold = bondLengthLimit * bondLengthLimit * reference;
@@ -581,9 +579,11 @@ std::vector<ValidationErrorInfo> Layout2DValidation::validate(
           i---------------j
                   b
        */
-      auto rr = (pk.x - pi.x) * (pk.x - pi.x) + (pk.y - pi.y) * (pk.y - pi.y);
-      auto bb = (pj.x - pi.x) * (pj.x - pi.x) + (pj.y - pi.y) * (pj.y - pi.y);
-      auto rb = (pk.x - pi.x) * (pj.x - pi.x) + (pk.y - pi.y) * (pj.y - pi.y);
+      auto vik = pk - pi;
+      auto vij = pj - pi;
+      auto rr = vik.lengthSq();
+      auto bb = vij.lengthSq();
+      auto rb = vik.dotProduct(vij);
       static constexpr double EPS{
           1.e-7};  // prevent dividing by zero in extreme cases
       auto kb = (rr * bb - rb * rb) / (bb + EPS);
@@ -641,7 +641,7 @@ struct NeighborsInfo {
 
 NeighborsInfo::NeighborsInfo(const ROMol &mol, const Atom *atom) {
   for (auto bond : mol.atomBonds(atom)) {
-    BondInfo info{};
+    BondInfo info;
     info.bond = bond;
     if (bond->getBeginAtom() == atom) {
       // do not consider the bond direction
@@ -679,11 +679,10 @@ NeighborsInfo::NeighborsInfo(const ROMol &mol, const Atom *atom) {
   }
 
   const auto &conf = mol.getConformer();
-  auto p = conf.getAtomPos(atom->getIdx());
-
-  auto bond0 = bonds[0].bond;
-  auto atom0 = bond0->getOtherAtom(atom);
-  auto v0 = conf.getAtomPos(atom0->getIdx()) - p;
+  const auto &p = conf.getAtomPos(atom->getIdx());
+  const auto bond0 = bonds[0].bond;
+  const auto atom0 = bond0->getOtherAtom(atom);
+  const auto v0 = conf.getAtomPos(atom0->getIdx()) - p;
 
   // sort the neighbors based on the angle they form
   // with the first one
@@ -719,11 +718,13 @@ void check3CoordinatedStereo(const ROMol &mol, const Atom *atom,
     }
     // check for the colinearity of the stereocenter and the other two ligands.
     const auto &conf = mol.getConformer();
-    auto p = conf.getAtomPos(atom->getIdx());
-    auto atoma = neighborsInfo.bonds[(i + 1) % 3].bond->getOtherAtom(atom);
-    auto va = conf.getAtomPos(atoma->getIdx()) - p;
-    auto atomb = neighborsInfo.bonds[(i + 2) % 3].bond->getOtherAtom(atom);
-    auto vb = conf.getAtomPos(atomb->getIdx()) - p;
+    const auto &p = conf.getAtomPos(atom->getIdx());
+    const auto atoma =
+        neighborsInfo.bonds[(i + 1) % 3].bond->getOtherAtom(atom);
+    const auto va = conf.getAtomPos(atoma->getIdx()) - p;
+    const auto atomb =
+        neighborsInfo.bonds[(i + 2) % 3].bond->getOtherAtom(atom);
+    const auto vb = conf.getAtomPos(atomb->getIdx()) - p;
 
     auto angle = va.angleTo(vb);
 
@@ -811,17 +812,17 @@ void check4CoordinatedStereo(const ROMol &mol, const Atom *atom,
         // count how many of the other bonds lie on the opposite half-plane,
         // i.e. form an angle > pi/4 with the stereo bond.
         unsigned int opposed = 0;
-        auto p = conf.getAtomPos(atom->getIdx());
-        auto bondi = neighborsInfo.bonds[i].bond;
-        auto atomi = bondi->getOtherAtom(atom);
-        auto vi = conf.getAtomPos(atomi->getIdx()) - p;
+        const auto &p = conf.getAtomPos(atom->getIdx());
+        const auto bondi = neighborsInfo.bonds[i].bond;
+        const auto atomi = bondi->getOtherAtom(atom);
+        const auto vi = conf.getAtomPos(atomi->getIdx()) - p;
         for (unsigned int j = 0; j < 4; ++j) {
           if (j == i) {
             continue;
           }
-          auto bondj = neighborsInfo.bonds[j].bond;
-          auto atomj = bondj->getOtherAtom(atom);
-          auto vj = conf.getAtomPos(atomj->getIdx()) - p;
+          const auto bondj = neighborsInfo.bonds[j].bond;
+          const auto atomj = bondj->getOtherAtom(atom);
+          const auto vj = conf.getAtomPos(atomj->getIdx()) - p;
           if (vi.angleTo(vj) > 95. * M_PI / 180.) {
             ++opposed;
           }
@@ -852,14 +853,14 @@ void check4CoordinatedStereo(const ROMol &mol, const Atom *atom,
         auto j = (i + 1) % 4;
         auto k = (i + 2) % 4;
         auto l = (i + 3) % 4;
-        auto atomj = neighborsInfo.bonds[j].bond->getOtherAtom(atom);
-        auto atomk = neighborsInfo.bonds[k].bond->getOtherAtom(atom);
-        auto atoml = neighborsInfo.bonds[l].bond->getOtherAtom(atom);
-        auto pj = conf.getAtomPos(atomj->getIdx());
-        auto pk = conf.getAtomPos(atomk->getIdx());
-        auto pl = conf.getAtomPos(atoml->getIdx());
-        auto v1 = pj - pk;
-        auto v2 = pl - pk;
+        const auto atomj = neighborsInfo.bonds[j].bond->getOtherAtom(atom);
+        const auto atomk = neighborsInfo.bonds[k].bond->getOtherAtom(atom);
+        const auto atoml = neighborsInfo.bonds[l].bond->getOtherAtom(atom);
+        const auto &pj = conf.getAtomPos(atomj->getIdx());
+        const auto &pk = conf.getAtomPos(atomk->getIdx());
+        const auto &pl = conf.getAtomPos(atoml->getIdx());
+        const auto v1 = pj - pk;
+        const auto v2 = pl - pk;
         auto angle = v1.signedAngleTo(v2);
         if (angle < 185. * M_PI / 180.) {
           errors.push_back(
