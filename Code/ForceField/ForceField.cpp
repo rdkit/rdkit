@@ -212,7 +212,8 @@ double ForceField::distance(unsigned int i, unsigned int j, double *pos) {
   return res;
 }
 
-double ForceField::distance(unsigned int i, unsigned int j, double *pos) const {
+double ForceField::distance2(unsigned int i, unsigned int j,
+                             double *pos) const {
   PRECONDITION(df_init, "not initialized");
   URANGE_CHECK(i, d_numPoints);
   URANGE_CHECK(j, d_numPoints);
@@ -244,7 +245,10 @@ double ForceField::distance(unsigned int i, unsigned int j, double *pos) const {
     }
 #endif
   }
-  res = sqrt(res);
+  return res;
+}
+double ForceField::distance(unsigned int i, unsigned int j, double *pos) const {
+  auto res = sqrt(distance2(i, j, pos));
   return res;
 }
 
